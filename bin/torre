@@ -1,0 +1,172 @@
+#!/usr/bin/env bash
+# torre — control de la Torre de Control agentica.
+#
+# Resuelve el repo desde el directorio actual, igual que hace la torre para
+# identificar a cada agente. Fuera de un repo, usa los atajos por proyecto
+# (torrestk / torreecom / torrefp) o pasá --repo <ruta>.
+#
+#   torre on       arma el repo: habilita coordinacion y entrega
+#   torre off      desarma sin borrar estado; solo permite inspeccion y liberar locks
+#   torre status    quien esta registrado, en que estado y quien tiene los locks
+#   torre log      sigue el registro en vivo (ctrl-c para salir)
+#   torre unlock   libera un lock cuya sesion murio (pide confirmacion)
+#   torre reset    borra el estado de la torre en este repo
+#
+# El interruptor es un archivo y no depende de que el MCP funcione. `torre off`
+# lo elimina desde core para esperar cualquier escritura protegida en curso.
+
+set -euo pipefail
+
+CORE="$HOME/.config/opencode/control-tower/core.mjs"
+
+repo_dir=""
+args=()
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --repo) repo_dir="${2:-}"; shift 2 ;;
+        *) args+=("$1"); shift ;;
+    esac
+done
+set -- "${args[@]:-}"
+
+cd "${repo_dir:-$PWD}" 2>/dev/null || { echo "torre: no existe $repo_dir" >&2; exit 1; }
+
+if ! common=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null); then
+    cat >&2 <<'EOF'
+torre: esto no es un repositorio git.
+
+Pará dentro de un repo, o usá un atajo por proyecto:
+  torrestk    Servi-Task-U
+  torreecom   ecom-ecuador
+  torrefp     Finanzas-Personales
+EOF
+    exit 1
+fi
+
+ROOT="$common/control-tower"
+ACTIVE="$ROOT/ACTIVE"
+DB="$ROOT/tower.db"
+PROJECT=$(basename "$(dirname "$(dirname "$common")")")
+
+estado() { [[ -f "$ACTIVE" ]] && echo "ARMADA" || echo "desarmada"; }
+
+tabla() {
+    if [[ ! -f "$DB" ]]; then
+        echo "  (nadie registrado todavia)"
+        return
+    fi
+    bun -e '
+      const t = await import(process.argv[1])
+      const h = t.open(process.argv[2])
+      const s = t.status(h)
+      const pad = (v, n) => String(v ?? "-").slice(0, n).padEnd(n)
+      if (s.agents.length === 0) console.log("  (nadie registrado todavia)")
+      else console.log(`  ${pad("agente", 14)}${pad("rol", 14)}${pad("rama", 30)}${pad("estado", 14)}cola`)
+      for (const a of s.agents) {
+        console.log(`  ${pad(a.name, 14)}${pad(a.role, 14)}${pad(a.branch, 30)}${pad(a.state, 14)}${a.pending} pend`)
+      }
+      const l = s.locks.map((x) => `${x.name} → ${x.holder}`).join(", ")
+      console.log(`\n  locks: ${l || "ninguno"}`)
+      const parados = s.agents.filter((a) => t.NEEDS_HUMAN.includes(a.state))
+      if (parados.length > 0) {
+        console.log(`\n  TE NECESITAN: ${parados.map((a) => `${a.name} (${a.state})`).join(", ")}`)
+        for (const a of parados) if (a.note) console.log(`    ${a.name}: ${a.note}`)
+      }
+      h.db.close()
+    ' "$CORE" "$PWD" 2>/dev/null || echo "  (no se pudo leer el estado)"
+}
+
+case "${1:-}" in
+    on)
+        mkdir -p "$ROOT"
+        touch "$ACTIVE"
+        echo "torre · $PROJECT · ARMADA"
+        echo "  los agentes registrados van a recibir mensajes al terminar cada turno"
+        echo "  para cortar: torre off"
+        ;;
+    off)
+        bun -e '
+          const t = await import(process.argv[1])
+          const h = t.open(process.argv[2])
+          try { t.deactivate(h) } finally { h.db?.close() }
+        ' "$CORE" "$PWD"
+        echo "torre · $PROJECT · desarmada"
+        echo "  estado, mensajes e historial preservados; no se aceptan operaciones nuevas"
+        echo "  siguen disponibles: torre status y torre unlock; para reanudar: torre on"
+        ;;
+    status | "")
+        echo "torre · $PROJECT · $(estado)"
+        echo
+        tabla
+        ;;
+    log)
+        mkdir -p "$ROOT"
+        touch "$ROOT/tower.log"
+        echo "torre · $PROJECT · $(estado) · siguiendo el loop (ctrl-c para salir)"
+        echo
+        # Las lineas que requieren intervencion humana van en rojo: mirando
+        # pasar mensajes no se puede distinguir "avanza" de "se paro para
+        # siempre", que es justo lo unico que necesitas ver a tiempo.
+        tail -n 20 -f "$ROOT/tower.log" | awk '
+            /TE NECESITA:/ { printf "\033[1;31m%s\033[0m\n", $0; fflush(); next }
+            /waking/       { printf "\033[0;36m%s\033[0m\n", $0; fflush(); next }
+            /lock|esperando/ { printf "\033[0;33m%s\033[0m\n", $0; fflush(); next }
+                           { print; fflush() }
+        '
+        ;;
+    unlock)
+        # Salida cuando la sesion que tenia el token murio: sin esto, la unica
+        # via es `reset`, que ademas borra estado y cola.
+        if [[ ! -f "$DB" ]]; then echo "torre · $PROJECT · no hay torre iniciada"; exit 0; fi
+        bun -e '
+          const t = await import(process.argv[1])
+          const h = t.open(process.argv[2])
+          const name = process.argv[3]
+          const held = t.status(h).locks
+          if (held.length === 0) { console.log("  no hay locks tomados"); h.db.close(); process.exit(0) }
+          if (!name) {
+            console.log("  locks tomados:")
+            for (const l of held) console.log(`    ${l.name} → ${l.holder} (desde ${l.acquired_at})`)
+            console.log("\n  liberá con: torre unlock <lock>")
+            h.db.close(); process.exit(0)
+          }
+          const target = held.find((l) => l.name === name)
+          if (!target) { console.log(`  nadie tiene "${name}"`); h.db.close(); process.exit(0) }
+          console.log(`  ${name} lo tiene ${target.holder} desde ${target.acquired_at}`)
+          h.db.close()
+          process.exit(10)
+        ' "$CORE" "$PWD" "${2:-}" || rc=$?
+        # El `|| rc=$?` es obligatorio: con `set -e`, el exit 10 que usamos
+        # como "hay algo que liberar" abortaria el script antes de preguntar.
+        [[ "${rc:-0}" -ne 10 ]] && exit 0
+        printf '\n  Liberarlo a la fuerza? Solo hacelo si esa sesion ya no existe. [s/N]: '
+        read -r ok
+        if [[ "$ok" =~ ^[SsYy]$ ]]; then
+            bun -e '
+              const t = await import(process.argv[1])
+              const h = t.open(process.argv[2])
+              const r = t.forceRelease(h, process.argv[3])
+              console.log(`  ${process.argv[3]} liberado (lo tenía ${r.was})`)
+              h.db.close()
+            ' "$CORE" "$PWD" "$2"
+        else
+            echo "  cancelado"
+        fi
+        ;;
+    reset)
+        # Confirmacion explicita: se pierde el estado, la cola y los locks.
+        printf 'Borrar todo el estado de la torre en %s? [s/N]: ' "$PROJECT"
+        read -r ok
+        if [[ "$ok" =~ ^[SsYy]$ ]]; then
+            rm -rf "$ROOT"
+            echo "torre · $PROJECT · estado borrado"
+        else
+            echo "cancelado"
+        fi
+        ;;
+    *)
+        echo "torre: no conozco \"$1\"" >&2
+        echo "usá: torre [on|off|status|log|unlock|reset] [--repo <ruta>]" >&2
+        exit 1
+        ;;
+esac
