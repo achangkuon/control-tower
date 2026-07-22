@@ -6,6 +6,7 @@ import {
   mkdtempSync,
   readFileSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from "node:fs"
 import { dirname, join } from "node:path"
@@ -48,6 +49,28 @@ const runTorre = (cwd, command) =>
 
 const arm = (cwd) => runTorre(cwd, "on")
 const disarm = (cwd) => runTorre(cwd, "off")
+
+const callMcp = async (cwd, request) => {
+  const child = Bun.spawn([process.execPath, mcpPath], {
+    cwd,
+    stdin: "pipe",
+    stdout: "pipe",
+    stderr: "pipe",
+  })
+
+  child.stdin.write(`${JSON.stringify(request)}\n`)
+  child.stdin.end()
+
+  const [stdout, stderr, exitCode] = await Promise.all([
+    new Response(child.stdout).text(),
+    new Response(child.stderr).text(),
+    child.exited,
+  ])
+
+  expect(exitCode).toBe(0)
+  expect(stderr).toBe("")
+  return JSON.parse(stdout.trim())
+}
 
 const close = (...handles) => {
   for (const handle of handles) handle.db?.close()
@@ -262,38 +285,86 @@ describe("fail-closed core semantics", () => {
       close(handle)
     }
   })
+
+  test("inactive register preserves an existing database mtime", () => {
+    const { main } = createRepository()
+    arm(main)
+    const activeHandle = tower.open(main)
+    tower.register(activeHandle, "orchestrator")
+    close(activeHandle)
+    disarm(main)
+
+    const place = tower.locate(main)
+    const activePath = join(place.root, "ACTIVE")
+    const dbPath = join(place.root, "tower.db")
+    const inactiveHandle = tower.open(main)
+
+    try {
+      expect(existsSync(activePath)).toBe(false)
+      const before = statSync(dbPath, { bigint: true }).mtimeNs
+      expect(() => tower.register(inactiveHandle, "agent")).toThrow(tower.INACTIVE_ERROR)
+      expect(statSync(dbPath, { bigint: true }).mtimeNs).toBe(before)
+    } finally {
+      close(inactiveHandle)
+    }
+  })
 })
 
 test("fresh disarmed MCP rejection happens before tower state is created", async () => {
   const { main } = createRepository()
   const place = tower.locate(main)
-  const child = Bun.spawn([process.execPath, mcpPath], {
-    cwd: main,
-    stdin: "pipe",
-    stdout: "pipe",
-    stderr: "pipe",
+  const response = await callMcp(main, {
+    jsonrpc: "2.0",
+    id: 1,
+    method: "tools/call",
+    params: { name: "tower_register", arguments: { role: "orchestrator" } },
   })
-
-  child.stdin.write(
-    `${JSON.stringify({
-      jsonrpc: "2.0",
-      id: 1,
-      method: "tools/call",
-      params: { name: "tower_register", arguments: { role: "orchestrator" } },
-    })}\n`,
-  )
-  child.stdin.end()
-
-  const [stdout, stderr, exitCode] = await Promise.all([
-    new Response(child.stdout).text(),
-    new Response(child.stderr).text(),
-    child.exited,
-  ])
-
-  expect(exitCode).toBe(0)
-  expect(stderr).toBe("")
-  const response = JSON.parse(stdout.trim())
   expect(response.result.isError).toBe(true)
   expect(response.result.content[0].text).toContain(tower.INACTIVE_ERROR)
   expect(existsSync(place.root)).toBe(false)
+})
+
+test("disarmed status labels retained agent rows as stale", () => {
+  const { main } = createRepository()
+  arm(main)
+  const handle = tower.open(main)
+  tower.register(handle, "orchestrator")
+  close(handle)
+  disarm(main)
+
+  const output = runTorre(main, "status")
+  expect(output).toContain("desarmada")
+  expect(output).toContain("registros retenidos (STALE)")
+  expect(output).toContain("no representan sesiones activas")
+})
+
+test("MCP tool contract keeps status visible and gates mutation behind status", async () => {
+  const { main } = createRepository()
+  const response = await callMcp(main, {
+    jsonrpc: "2.0",
+    id: 1,
+    method: "tools/list",
+    params: {},
+  })
+  const tools = response.result.tools
+  const byName = new Map(tools.map((tool) => [tool.name, tool]))
+
+  expect(byName.has("tower_status")).toBe(true)
+  expect(byName.get("tower_status").description).toStartWith("Call this before any other")
+  for (const name of [
+    "tower_register",
+    "tower_send",
+    "tower_set_state",
+    "tower_acquire",
+    "tower_transfer",
+    "tower_receive",
+  ]) {
+    expect(byName.get(name).description).toStartWith("Call tower_status first.")
+    expect(byName.get(name).description).toContain("active:true")
+  }
+  expect(byName.get("tower_release").description).toStartWith("Call tower_status first.")
+  expect(byName.get("tower_release").description).toContain("active:false")
+  expect(byName.get("tower_register").inputSchema.properties.role.description).toContain(
+    "orchestrator is reserved for the Main worktree",
+  )
 })

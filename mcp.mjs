@@ -9,18 +9,21 @@
 
 import * as tower from "./core.mjs"
 
+const ACTIVE_PRECONDITION =
+  "Call tower_status first. Do not call this tool unless it reports active:true."
+
 const TOOLS = [
   {
     name: "tower_register",
-    description:
-      "Join the tower as this worktree. Identity is derived from the working directory, not declared. Call once at session start, before anything else. Rejected while the tower is off.",
+    description: `${ACTIVE_PRECONDITION} Join the tower as this worktree. Identity is derived from the working directory, not declared. The Main worktree uses orchestrator; other worktrees use agent.`,
     inputSchema: {
       type: "object",
       properties: {
         role: {
           type: "string",
           enum: ["orchestrator", "agent"],
-          description: "orchestrator assigns and verifies; agent implements",
+          description:
+            "orchestrator is reserved for the Main worktree; all other worktrees use agent",
         },
       },
       required: ["role"],
@@ -29,13 +32,12 @@ const TOOLS = [
   {
     name: "tower_status",
     description:
-      "Whether the tower is active, every agent, its state, pending message count, and who holds each lock. Available while the tower is off.",
+      "Call this before any other tower tool. Reports whether the tower is active, every agent, its state, pending message count, and who holds each lock. Available while the tower is off.",
     inputSchema: { type: "object", properties: {} },
   },
   {
     name: "tower_send",
-    description:
-      "Queue a message for another agent. It is delivered when that agent's session next goes idle; it is never lost if the recipient is busy. Rejected while the tower is off.",
+    description: `${ACTIVE_PRECONDITION} Queue a message for another agent. It is delivered when that agent's session next goes idle; it is never lost if the recipient is busy.`,
     inputSchema: {
       type: "object",
       properties: {
@@ -47,7 +49,7 @@ const TOOLS = [
   },
   {
     name: "tower_set_state",
-    description: `Update your own state. Rejected while the tower is off. One of: ${tower.STATES.join(", ")}.`,
+    description: `${ACTIVE_PRECONDITION} Update your own state. One of: ${tower.STATES.join(", ")}.`,
     inputSchema: {
       type: "object",
       properties: {
@@ -61,8 +63,7 @@ const TOOLS = [
   },
   {
     name: "tower_acquire",
-    description:
-      "Request an exclusive lock. Rejected while the tower is off. Returns granted:false with the current holder if someone else has it — do not proceed in that case. 'git-delivery' gates push/PR; 'db-writer' gates schema or data mutation. Parallel work is fine; delivery is not.",
+    description: `${ACTIVE_PRECONDITION} Request an exclusive lock. Returns granted:false with the current holder if someone else has it — do not proceed in that case. 'git-delivery' gates push/PR; 'db-writer' gates schema or data mutation. Parallel work is fine; delivery is not.`,
     inputSchema: {
       type: "object",
       properties: { lock: { type: "string", enum: tower.LOCKS } },
@@ -72,7 +73,7 @@ const TOOLS = [
   {
     name: "tower_release",
     description:
-      "Release a lock you hold. Available while the tower is off so locks can be cleared safely. Release git-delivery only after the merge is verified on the remote.",
+      "Call tower_status first. Release a lock you hold. While active:false, use this only to recover a lock safely; do not attempt normal coordination. Release git-delivery only after the merge is verified on the remote.",
     inputSchema: {
       type: "object",
       properties: { lock: { type: "string", enum: tower.LOCKS } },
@@ -81,8 +82,7 @@ const TOOLS = [
   },
   {
     name: "tower_transfer",
-    description:
-      "Hand a lock you hold to another agent in one step, without it ever being free in between. Rejected while the tower is off. The orchestrator reserves 'git-delivery', then transfers it to the unit whose turn it is, so the holder is always whoever is actually delivering. Only the holder can transfer.",
+    description: `${ACTIVE_PRECONDITION} Hand a lock you hold to another agent in one step, without it ever being free in between. The orchestrator reserves 'git-delivery', then transfers it to the unit whose turn it is, so the holder is always whoever is actually delivering. Only the holder can transfer.`,
     inputSchema: {
       type: "object",
       properties: {
@@ -94,8 +94,7 @@ const TOOLS = [
   },
   {
     name: "tower_receive",
-    description:
-      "Pull your next queued message manually. Rejected while the tower is off, leaving the message pending. Sessions are normally woken with it automatically, so reach for this only when checking on purpose.",
+    description: `${ACTIVE_PRECONDITION} Pull your next queued message manually. Sessions are normally woken with it automatically, so reach for this only when checking on purpose.`,
     inputSchema: { type: "object", properties: {} },
   },
 ]

@@ -60,6 +60,9 @@ tabla() {
       const h = t.open(process.argv[2])
       const s = t.status(h)
       const pad = (v, n) => String(v ?? "-").slice(0, n).padEnd(n)
+      if (!s.active && s.agents.length > 0) {
+        console.log("  AVISO: registros retenidos (STALE); son historial y no representan sesiones activas.\n")
+      }
       if (s.agents.length === 0) console.log("  (nadie registrado todavia)")
       else console.log(`  ${pad("agente", 14)}${pad("rol", 14)}${pad("rama", 30)}${pad("estado", 14)}cola`)
       for (const a of s.agents) {
