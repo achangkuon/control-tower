@@ -5,10 +5,10 @@
 - Mode: Strict TDD (`bun test`)
 - Delivery strategy: `auto-chain`
 - Chain strategy: `feature-branch-chain`
-- Current autonomous work unit: P1 and P1-FC complete with Judgment Day approval; P2 is the next boundary
+- Current autonomous work unit: P2 complete; P3 is the next boundary
 - Branch: `feat/control-tower/autonomous-continuation`
-- Completed: 10/50 tasks (`0.1`, `0.2`, `1.1`, `1.2`, `1.3`, `1.4`, `1F.1`, `1F.2`, `1F.3`, `1F.4`)
-- Every P2+ task remains unchecked.
+- Completed: 14/50 tasks (`0.1`, `0.2`, `1.1`, `1.2`, `1.3`, `1.4`, `1F.1`, `1F.2`, `1F.3`, `1F.4`, `2.1`, `2.2`, `2.3`, `2.4`)
+- P2 is complete; every P3+ task remains unchecked.
 
 ## Completed tasks
 
@@ -740,5 +740,28 @@ project/user skill paths were present; loaded
 - Judge A: clean (`findings: []`). Judge B: clean (`findings: []`).
 - Verification: migration 27/27 with 131 assertions; fail-closed 8/8 with 70 assertions; syntax, whitespace, and runtime guards passed.
 - Ledger: `evidence/judgment-day-p1-forward-compatibility.md`.
+
+**JUDGMENT: APPROVED ✅**
+
+---
+
+## P2 Slice 2 identity/mode implementation
+- **Scope/status:** Tasks `2.1`–`2.3` completed under resumed Strict TDD; `2.4` completed by parent Judgment Day, P3+ remains out of scope, and all pre-P2 history above is preserved.
+### TDD and implementation evidence
+| Gate | Concise evidence |
+|---|---|
+| Inherited state | Existing migration/identity tests were already GREEN (30/0/150 and 7/0/53); historical RED from the interrupted process is unavailable and was **not claimed**. |
+| Observed RED → GREEN | Unknown continuation route was rejected before DB access (RED 0/1/6: DB-open error; GREEN 1/0/7: unknown tool); receive now accepts only omitted/plain-empty-object payload (RED 0/1/2: array misclassified; GREEN 1/0/8: `CT_PAYLOAD_INVALID`). |
+| Automatic gate | CT-R4-S2 stale generation (`binding_epoch`) now yields `CT_FENCE_MISMATCH` before other tuple classification (RED 0/1/3; GREEN 1/0/5); CT-R4-S4/S5/S6 triangulation stayed GREEN (1/0/9). |
+| Migration/mode | Exact 3,627-byte Migration 002 (`sha256:22371db1fb23c72d4049b177080cd8e08eb0029e5ad7e20df709ebf6ec505b12`) adds the exact v2 manifest, OFF lease seed, replay/conflict, rollback/busy, and legacy-preservation contracts. |
+| Identity/compatibility | Immutable server-created `Ctx`, fenced ACTIVE rebind/replay/MULTIPLEXED conflict history, and deferred read-only non-consuming receive are internal only; MCP still advertises exactly eight legacy tools and preserves legacy register/consuming-receive source behavior. |
+### Verification, boundary, and terminal Judgment Day
+| Evidence | Result |
+|---|---|
+| Final verification | `bun test test/migration.test.mjs test/identity.test.mjs test/fail-closed.test.mjs` → **45 pass, 0 fail, 288 assertions**; production/test syntax and whitespace passed. |
+| Workload/guards | **730/800** implementation/test authored lines; actual and legacy `ACTIVE`/`tower.db` absent; note SHA-256 `73bbb0e58573eef187dbf22b026cb1594df614e7749c516908bdadc9b553f7e0` preserved. |
+| Runtime/deviations/risks | N/A: no enabled adapter/public continuation route and only isolated fixtures mutated; inherited RED was not claimed, an invalid Bun test-module syntax command was replaced by parse-only `node --check`, pre-existing `.gitignore` was untouched, and JD suspects/warnings remain follow-ups. |
+| Exact rollback boundary | Revert only P2 hunks in `core.mjs`, `mcp.mjs`, `test/migration.test.mjs`, `test/identity.test.mjs`, the receive-classification wording in `design.md`, the three P2 implementation checkmarks plus parent `2.4`, and this section/ledger; preserve all pre-P2 history, do not down-migrate real DBs, and leave schema-2 data inert/OFF. |
+| JD identity/merge | Target `86d7988ce1d31f5996a19d75fbb30049de737d0eb47fbe8a1a4133b3083aff9f`, base `badaf71f7fd0e72a80510cdf0414d2e4d0896bc0`; confirmed severe **0**, suspect severe **2**, contradictions **0**, warnings **3**, corrections **0/2**. No severe finding was confirmed by both judges, so none was corrected; all five IDs remain in `evidence/judgment-day-slice-2-round-1.md` as follow-ups. |
 
 **JUDGMENT: APPROVED ✅**

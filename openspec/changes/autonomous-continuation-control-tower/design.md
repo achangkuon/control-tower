@@ -387,7 +387,7 @@ Continuation `receive` accepts no request object. One read-only deferred SQLite 
 
 1. Mode `OFF` → `CT_CONTINUATION_OFF`; `ROLLING_BACK` → `CT_ROLLBACK_IN_PROGRESS`.
 2. Any conflict history or any `MULTIPLEXED` binding in scope → `CT_SESSION_MULTIPLEXED`.
-3. Zero, more than one, or a full-tuple mismatch against the sole ACTIVE binding → `CT_SESSION_ISOLATION_UNPROVEN` (an epoch-only mismatch is `CT_FENCE_MISMATCH`).
+3. Zero or more than one ACTIVE binding → `CT_SESSION_ISOLATION_UNPROVEN`. Against the sole ACTIVE binding, a stale `ctx.binding_epoch` → `CT_FENCE_MISMATCH` before remaining tuple classification; any equal-epoch non-epoch mismatch → `CT_SESSION_ISOLATION_UNPROVEN`.
 4. With one exact ACTIVE binding and no delivery schema yet, P2 returns exactly `{delivery:null}`.
 
 P2 receive performs no `BEGIN IMMEDIATE`, update, budget use, or legacy `message` query; the deferred read transaction commits or rolls back without changing pages. P4 replaces only the final null lookup with the persisted continuation-delivery peek. It never calls legacy consuming `receive(handle)`.

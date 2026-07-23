@@ -23,7 +23,7 @@ import {
   appendFileSync, chmodSync, closeSync, constants, existsSync, fchmodSync, fsyncSync, linkSync,
   lstatSync, mkdirSync, openSync, readFileSync, realpathSync, rmSync, unlinkSync, writeFileSync,
 } from "node:fs"
-import { basename, join, normalize } from "node:path"
+import { basename, isAbsolute, join, normalize } from "node:path"
 
 export const STATES = [
   "PLANNED",
@@ -111,6 +111,72 @@ CREATE TABLE ct_idempotency (
 `
 export const MIGRATION_001_CHECKSUM = sha256(Buffer.from(MIGRATION_001_SQL))
 export const SUPERSEDED_MIGRATION_001_CHECKSUM = "sha256:47f63b10e516ac977e1cc26723b064eb037a4a2cdb84246b1c183903b909eb41"
+export const MIGRATION_002_SQL = `CREATE TABLE ct_claimant_binding (
+  binding_id TEXT PRIMARY KEY CHECK(length(binding_id) = 43),
+  effective_uid INTEGER NOT NULL CHECK(effective_uid >= 0),
+  canonical_repo TEXT NOT NULL CHECK(length(canonical_repo) > 0),
+  git_common_dir TEXT NOT NULL CHECK(length(git_common_dir) > 0),
+  worktree TEXT NOT NULL CHECK(length(worktree) > 0),
+  branch TEXT NOT NULL CHECK(length(branch) > 0),
+  host_process_instance TEXT NOT NULL CHECK(length(host_process_instance) > 0),
+  plugin_instance TEXT NOT NULL CHECK(length(plugin_instance) > 0),
+  root_session_id TEXT NOT NULL CHECK(length(root_session_id) > 0),
+  mcp_process_instance TEXT NOT NULL CHECK(length(mcp_process_instance) > 0),
+  pid_start_marker TEXT NOT NULL CHECK(length(pid_start_marker) > 0),
+  binding_epoch INTEGER NOT NULL CHECK(binding_epoch > 0),
+  binding_status TEXT NOT NULL CHECK(binding_status IN ('ACTIVE', 'RETIRED', 'MULTIPLEXED')),
+  identity_digest TEXT NOT NULL UNIQUE CHECK(length(identity_digest) = 71),
+  created_at TEXT NOT NULL CHECK(length(created_at) = 24),
+  ended_at TEXT,
+  CHECK((binding_status = 'ACTIVE' AND ended_at IS NULL) OR
+        (binding_status IN ('RETIRED', 'MULTIPLEXED') AND ended_at IS NOT NULL)),
+  UNIQUE(effective_uid, canonical_repo, git_common_dir, plugin_instance, binding_epoch)
+);
+CREATE UNIQUE INDEX ct_claimant_binding_one_active
+ON ct_claimant_binding(effective_uid, canonical_repo, git_common_dir, plugin_instance)
+WHERE binding_status = 'ACTIVE';
+CREATE INDEX ct_claimant_binding_context_lookup
+ON ct_claimant_binding(effective_uid, canonical_repo, git_common_dir, plugin_instance,
+                       binding_status, binding_epoch);
+CREATE TABLE ct_claimant_conflict (
+  conflict_id TEXT PRIMARY KEY CHECK(length(conflict_id) = 43),
+  plugin_scope_digest TEXT NOT NULL CHECK(length(plugin_scope_digest) = 71),
+  incumbent_binding_id TEXT NOT NULL CHECK(length(incumbent_binding_id) = 43),
+  attempted_binding_id TEXT NOT NULL CHECK(length(attempted_binding_id) = 43),
+  incumbent_identity_digest TEXT NOT NULL CHECK(length(incumbent_identity_digest) = 71),
+  attempted_identity_digest TEXT NOT NULL CHECK(length(attempted_identity_digest) = 71),
+  request_identity TEXT NOT NULL UNIQUE CHECK(length(request_identity) = 36),
+  request_digest TEXT NOT NULL CHECK(length(request_digest) = 71),
+  cas_digest TEXT NOT NULL CHECK(length(cas_digest) = 71),
+  conflict_digest TEXT NOT NULL UNIQUE CHECK(length(conflict_digest) = 71),
+  detected_at TEXT NOT NULL CHECK(length(detected_at) = 24),
+  CHECK(incumbent_binding_id <> attempted_binding_id),
+  CHECK(incumbent_identity_digest <> attempted_identity_digest)
+);
+CREATE INDEX ct_claimant_conflict_scope_history
+ON ct_claimant_conflict(plugin_scope_digest, detected_at, conflict_id);
+CREATE TRIGGER ct_claimant_conflict_no_update
+BEFORE UPDATE ON ct_claimant_conflict
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_CONFLICT');
+END;
+CREATE TRIGGER ct_claimant_conflict_no_delete
+BEFORE DELETE ON ct_claimant_conflict
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_CONFLICT');
+END;
+CREATE TABLE ct_rollback_lease (
+  id INTEGER PRIMARY KEY CHECK(id = 1),
+  rollback_epoch INTEGER NOT NULL DEFAULT 0 CHECK(rollback_epoch >= 0),
+  lease_status TEXT NOT NULL DEFAULT 'NONE' CHECK(lease_status IN ('NONE', 'ACTIVE', 'EXPIRED')),
+  lease_version INTEGER NOT NULL DEFAULT 0 CHECK(lease_version >= 0),
+  owner_main_binding_id TEXT,
+  lease_expires_at TEXT,
+  CHECK((lease_status = 'NONE' AND owner_main_binding_id IS NULL AND lease_expires_at IS NULL) OR
+        (lease_status IN ('ACTIVE', 'EXPIRED') AND owner_main_binding_id IS NOT NULL AND lease_expires_at IS NOT NULL))
+);
+`
+export const MIGRATION_002_CHECKSUM = sha256(Buffer.from(MIGRATION_002_SQL))
 const MANIFEST_SQL = `SELECT type, name, tbl_name, sql
 FROM sqlite_master
 WHERE name IN ('agent','message','message_pending','lock',
@@ -124,9 +190,19 @@ const LEGACY_SQL = new Map([
   ["index:message_pending:message", "CREATE INDEX message_pending ON message(recipient,id)WHERE consumed_at IS NULL"],
   ["table:lock:lock", "CREATE TABLE lock(name TEXT PRIMARY KEY,holder TEXT,acquired_at TEXT)"],
 ])
-const CT_SQL = new Map(MIGRATION_001_SQL.trimEnd().split(";\n").map((sql) => sql.replace(/;$/, "")).map((sql) => [sql.match(/^CREATE TABLE (\w+)/)[1], sql]))
+const schemaObjects = (sql) => {
+  const db = new Database(":memory:")
+  try {
+    db.run(sql)
+    return new Map(db.query(`SELECT type,name,tbl_name,sql FROM sqlite_master
+      WHERE name GLOB 'ct_*' AND name NOT LIKE 'sqlite_%' ORDER BY type,name`).all().map((row) => [row.name, row]))
+  } finally { db.close() }
+}
+const V1_OBJECTS = schemaObjects(MIGRATION_001_SQL)
+const V2_OBJECTS = new Map([...V1_OBJECTS, ...schemaObjects(MIGRATION_002_SQL)])
 const SCHEMA_MANIFESTS = new Map([
-  [1, { objects: CT_SQL, migrations: new Map([[1, MIGRATION_001_CHECKSUM]]) }],
+  [1, { objects: V1_OBJECTS, migrations: new Map([[1, MIGRATION_001_CHECKSUM]]) }],
+  [2, { objects: V2_OBJECTS, migrations: new Map([[1, MIGRATION_001_CHECKSUM], [2, MIGRATION_002_CHECKSUM]]) }],
 ])
 
 export const deriveCanonicalMainContext = (cwd) => {
@@ -244,18 +320,26 @@ const inspectSchema = (db) => {
   const manifest = SCHEMA_MANIFESTS.get(version)
   if (!manifest || migrations.length !== manifest.migrations.size || migrations.some(({ version: migrationVersion, ddl_checksum }) =>
     manifest.migrations.get(migrationVersion) !== ddl_checksum)) throw ctError("CT_SCHEMA_INVALID")
-  if (continuation.length !== manifest.objects.size || continuation.some((row) =>
-    row.type !== "table" || row.tbl_name !== row.name || manifest.objects.get(row.name) !== row.sql)) throw ctError("CT_SCHEMA_INVALID")
+  if (continuation.length !== manifest.objects.size || continuation.some((row) => {
+    const expected = manifest.objects.get(row.name)
+    return !expected || row.type !== expected.type || row.tbl_name !== expected.tbl_name || row.sql !== expected.sql
+  })) throw ctError("CT_SCHEMA_INVALID")
   return version
 }
-const validateContinuationState = (db, authority) => {
+const continuationState = (db, authority, expectedVersion) => {
   const rows = db.query("SELECT * FROM ct_continuation_state").all()
-  if (rows.length !== 1 || rows[0].id !== 1 || rows[0].schema_version !== 1) throw ctError("CT_SCHEMA_INVALID")
+  if (rows.length !== 1 || rows[0].id !== 1 || rows[0].schema_version !== expectedVersion) throw ctError("CT_SCHEMA_INVALID")
   const state = rows[0]
   if (state.anchor_id !== authority.anchor.anchor_id ||
       state.anchor_secret_digest !== sha256(Buffer.from(authority.anchor.anchor_secret, "base64url")) ||
       state.config_digest !== authority.anchor.config_digest) throw ctError("CT_ANCHOR_MISMATCH")
-  if (state.anchor_epoch !== 1 || state.mode !== "OFF") throw ctError("CT_FENCE_MISMATCH")
+  if (state.anchor_epoch !== 1 || !["OFF", "ON", "ROLLING_BACK"].includes(state.mode)) throw ctError("CT_FENCE_MISMATCH")
+  return state
+}
+const validateContinuationState = (db, authority, version = 1) => {
+  const state = continuationState(db, authority, version)
+  if (state.mode !== "OFF") throw ctError("CT_FENCE_MISMATCH")
+  return state
 }
 const busy = (error) => error?.code === "SQLITE_BUSY" || /locked|busy/i.test(error?.message ?? "")
 
@@ -263,33 +347,51 @@ export const bootstrapAdmin = (request, cwd = process.cwd()) => {
   let context, authority
   try { context = deriveCanonicalMainContext(cwd); authority = readAnchor(context) }
   catch (error) { throw error.code ? error : ctError("CT_ANCHOR_MISMATCH", error) }
-  if (!uuid.test(request?.request_identity ?? "")) throw ctError("CT_SCHEMA_INVALID")
+  if (!uuid.test(request?.request_identity ?? "") || request.expected_mode !== "OFF" || ![1, 2].includes(request.target_schema_version)) throw ctError("CT_SCHEMA_INVALID")
   const dbPath = join(authority.root, "tower.db")
   if (!existsSync(dbPath)) throw ctError("CT_SCHEMA_INVALID")
   const db = new Database(dbPath); db.run("PRAGMA busy_timeout = 250")
+  const target = request.target_schema_version
+  const scope = target === 1 ? "admin-bootstrap" : "schema:1->2"
+  const requestValue = { request_identity: request.request_identity, expected_anchor_id: request.expected_anchor_id, expected_schema_version: request.expected_schema_version, target_schema_version: target, expected_mode: "OFF" }
+  const request_digest = requestDigest(requestValue)
+  const casValue = { expected_anchor_id: request.expected_anchor_id, expected_schema_version: request.expected_schema_version, target_schema_version: target, expected_mode: "OFF", derived_anchor_epoch: 1, derived_config_digest: authority.anchor.config_digest }
+  if (target === 2) Object.assign(casValue, { expected_rollback_epoch: 0, expected_lease_version: 0, expected_lease_status: "NONE" })
+  const cas_digest = requestDigest(casValue)
   try {
-    if (request.target_schema_version !== 1 || request.expected_mode !== "OFF") throw ctError("CT_SCHEMA_INVALID")
-    const requestValue = { request_identity: request.request_identity, expected_anchor_id: request.expected_anchor_id, expected_schema_version: request.expected_schema_version, target_schema_version: 1, expected_mode: "OFF" }
-    const request_digest = requestDigest(requestValue)
-    const cas_digest = requestDigest({ expected_anchor_id: request.expected_anchor_id, expected_schema_version: request.expected_schema_version, target_schema_version: 1, expected_mode: "OFF", derived_anchor_epoch: 1, derived_config_digest: authority.anchor.config_digest })
     const apply = db.transaction(() => {
       const version = inspectSchema(db)
-      if (version === 1) {
-        const row = db.query("SELECT * FROM ct_idempotency WHERE operation='bootstrapAdmin' AND scope_key='admin-bootstrap'").get()
+      if (version === target) {
+        const row = db.query("SELECT * FROM ct_idempotency WHERE operation='bootstrapAdmin' AND scope_key=?").get(scope)
         if (!row || row.request_identity !== request.request_identity || row.request_digest !== request_digest || row.cas_digest !== cas_digest) throw ctError("CT_IDEMPOTENCY_CONFLICT")
-        validateContinuationState(db, authority)
+        validateContinuationState(db, authority, target)
+        if (target === 2) validateLease(db)
         return { ...JSON.parse(row.response_json), replayed: true }
       }
-      if (request.expected_anchor_id !== authority.anchor.anchor_id || request.expected_schema_version !== 0) throw ctError("CT_FENCE_MISMATCH")
-      const response = { anchor_id: authority.anchor.anchor_id, schema_version: 1, mode: "OFF", replayed: false }
-      db.run(MIGRATION_001_SQL)
+      if (target === 1) {
+        if (version !== 0) throw ctError("CT_SCHEMA_INVALID")
+        if (request.expected_anchor_id !== authority.anchor.anchor_id || request.expected_schema_version !== 0) throw ctError("CT_FENCE_MISMATCH")
+        const response = { anchor_id: authority.anchor.anchor_id, schema_version: 1, mode: "OFF", replayed: false }
+        db.run(MIGRATION_001_SQL)
+        const applied = new Date().toISOString()
+        db.run("INSERT INTO ct_schema_migration VALUES (1,?,?)", [MIGRATION_001_CHECKSUM, applied])
+        db.run("INSERT INTO ct_continuation_state VALUES (1,?,?,?,?,1,'OFF')", [authority.anchor.anchor_id, 1, sha256(Buffer.from(authority.anchor.anchor_secret, "base64url")), authority.anchor.config_digest])
+        db.run("INSERT INTO ct_idempotency VALUES ('bootstrapAdmin','admin-bootstrap',?,?,?,?,?)", [request.request_identity, request_digest, cas_digest, jcs(response), applied])
+        assertAdminCommit(db, authority, 1)
+        return response
+      }
+      if (version !== 1) throw ctError("CT_SCHEMA_INVALID")
+      if (db.query("SELECT 1 FROM ct_idempotency WHERE operation='bootstrapAdmin' AND scope_key=?").get(scope)) throw ctError("CT_IDEMPOTENCY_CONFLICT")
+      validateContinuationState(db, authority, 1)
+      if (request.expected_anchor_id !== authority.anchor.anchor_id || request.expected_schema_version !== 1) throw ctError("CT_FENCE_MISMATCH")
+      db.run(MIGRATION_002_SQL)
+      db.run("INSERT INTO ct_rollback_lease VALUES (1,0,'NONE',0,NULL,NULL)")
+      if (db.run("UPDATE ct_continuation_state SET schema_version=2 WHERE id=1 AND schema_version=1").changes !== 1) throw ctError("CT_SCHEMA_INVALID")
       const applied = new Date().toISOString()
-      db.run("INSERT INTO ct_schema_migration VALUES (1,?,?)", [MIGRATION_001_CHECKSUM, applied])
-      db.run("INSERT INTO ct_continuation_state VALUES (1,?,?,?,?,1,'OFF')", [authority.anchor.anchor_id, 1, sha256(Buffer.from(authority.anchor.anchor_secret, "base64url")), authority.anchor.config_digest])
-      db.run("INSERT INTO ct_idempotency VALUES ('bootstrapAdmin','admin-bootstrap',?,?,?,?,?)", [request.request_identity, request_digest, cas_digest, jcs(response), applied])
-      if (readFileSync(authority.path, "utf8") !== authority.bytes) throw ctError("CT_ANCHOR_MISMATCH")
-      if (inspectSchema(db) !== 1) throw ctError("CT_SCHEMA_INVALID")
-      validateContinuationState(db, authority)
+      db.run("INSERT INTO ct_schema_migration VALUES (2,?,?)", [MIGRATION_002_CHECKSUM, applied])
+      const response = { anchor_id: authority.anchor.anchor_id, schema_version: 2, mode: "OFF", replayed: false }
+      db.run("INSERT INTO ct_idempotency VALUES ('bootstrapAdmin',?,?,?,?,?,?)", [scope, request.request_identity, request_digest, cas_digest, jcs(response), applied])
+      assertAdminCommit(db, authority, 2); validateLease(db)
       return response
     })
     return apply.immediate()
@@ -298,6 +400,193 @@ export const bootstrapAdmin = (request, cwd = process.cwd()) => {
     if (busy(error)) throw ctError("CT_BUSY", error)
     throw ctError("CT_SCHEMA_INVALID", error)
   } finally { db.close() }
+}
+
+const assertAdminCommit = (db, authority, version) => {
+  if (readFileSync(authority.path, "utf8") !== authority.bytes) throw ctError("CT_ANCHOR_MISMATCH")
+  if (inspectSchema(db) !== version) throw ctError("CT_SCHEMA_INVALID")
+  validateContinuationState(db, authority, version)
+}
+const validateLease = (db) => {
+  const rows = db.query("SELECT * FROM ct_rollback_lease").all()
+  if (rows.length !== 1) throw ctError("CT_SCHEMA_INVALID")
+  const lease = rows[0]
+  if (!Number.isSafeInteger(lease.rollback_epoch) || lease.rollback_epoch < 0 || !Number.isSafeInteger(lease.lease_version) || lease.lease_version < 0 ||
+      !["NONE", "ACTIVE", "EXPIRED"].includes(lease.lease_status) ||
+      (lease.lease_status === "NONE" ? lease.owner_main_binding_id !== null || lease.lease_expires_at !== null : typeof lease.owner_main_binding_id !== "string" || !rfc3339Milliseconds.test(lease.lease_expires_at ?? ""))) throw ctError("CT_SCHEMA_INVALID")
+  return lease
+}
+
+const opaque = (value, limit = 256) => typeof value === "string" && Buffer.byteLength(value) >= 1 && Buffer.byteLength(value) <= limit && !value.includes("\0")
+const absolutePath = (value) => typeof value === "string" && value.length > 0 && !value.includes("\0") && isAbsolute(value) && normalize(value) === value
+const safeEpoch = (value) => Number.isSafeInteger(value) && value >= 0
+const forbiddenCtxKeys = new Set(["ctx", "actor", "role", "session", "effective_uid", "canonical_repo", "git_common_dir", "worktree", "branch", "host_process_instance", "plugin_instance", "root_session_id", "mcp_process_instance", "pid_start_marker", "binding_epoch"])
+const registrationKeys = ["expected_binding_epoch", "expected_binding_state", "request_identity"]
+const bindingFields = ["effective_uid", "canonical_repo", "git_common_dir", "worktree", "branch", "host_process_instance", "plugin_instance", "root_session_id", "mcp_process_instance", "pid_start_marker", "binding_epoch"]
+const sameRootFields = bindingFields.filter((field) => !["mcp_process_instance", "pid_start_marker", "binding_epoch"].includes(field))
+const makeId = () => randomBytes(32).toString("base64url")
+const tuple = (ctx, epoch = ctx.binding_epoch) => Object.fromEntries(bindingFields.map((field) => [field, field === "binding_epoch" ? epoch : ctx[field]]))
+const scope = (ctx) => ({ effective_uid: ctx.effective_uid, canonical_repo: ctx.canonical_repo, git_common_dir: ctx.git_common_dir, plugin_instance: ctx.plugin_instance })
+const equalFields = (left, right, fields) => fields.every((field) => left[field] === right[field])
+const freezeCtx = (value) => Object.freeze(Object.assign(Object.create(null), value))
+
+const continuationAuthority = (cwd) => {
+  try {
+    const canonical = deriveCanonicalMainContext(cwd)
+    return { authority: readAnchor(canonical), cwd }
+  } catch (error) { throw error.code ? error : ctError("CT_ANCHOR_MISMATCH", error) }
+}
+const continuationHandle = (cwd, payloadInvalid = false) => {
+  const resolved = continuationAuthority(cwd)
+  const dbPath = join(resolved.authority.root, "tower.db")
+  if (!existsSync(dbPath)) throw ctError("CT_SCHEMA_INVALID")
+  const db = new Database(dbPath); db.run("PRAGMA busy_timeout = 250")
+  return { ...resolved, db, payloadInvalid }
+}
+const gateContinuation = ({ db, authority }) => {
+  if (inspectSchema(db) !== 2) throw ctError("CT_SCHEMA_INVALID")
+  const state = continuationState(db, authority, 2)
+  const lease = validateLease(db)
+  if (state.mode === "OFF") throw ctError("CT_CONTINUATION_OFF")
+  if (state.mode === "ROLLING_BACK") throw ctError("CT_ROLLBACK_IN_PROGRESS")
+  if (lease.lease_status !== "NONE" || lease.owner_main_binding_id !== null || lease.lease_expires_at !== null) throw ctError("CT_SCHEMA_INVALID")
+  return lease
+}
+const assertRegisterRequest = (request) => {
+  if (!request || Object.getPrototypeOf(request) !== Object.prototype || Object.keys(request).some((key) => forbiddenCtxKeys.has(key)) ||
+      JSON.stringify(Object.keys(request).sort()) !== JSON.stringify(registrationKeys) || !uuid.test(request.request_identity ?? "") ||
+      !safeEpoch(request.expected_binding_epoch) || !["ABSENT", "ACTIVE"].includes(request.expected_binding_state)) throw ctError("CT_PAYLOAD_INVALID")
+}
+const createCtxFactory = ({ trustedMetadata, processIdentity, cwd, authority }, stableProcess) => () => {
+  let host, processSnapshot, derived
+  try {
+    host = trustedMetadata.snapshot(); processSnapshot = processIdentity.snapshot()
+    const git_common_dir = normalize(realpathSync(git(cwd, ["rev-parse", "--path-format=absolute", "--git-common-dir"])))
+    const worktree = normalize(realpathSync(git(cwd, ["rev-parse", "--show-toplevel"])))
+    const branch = git(cwd, ["symbolic-ref", "--short", "HEAD"])
+    derived = { effective_uid: process.geteuid(), canonical_repo: authority.anchor.context.canonical_repo, git_common_dir, worktree, branch }
+    if (git_common_dir !== authority.anchor.context.git_common_dir) throw new Error("wrong repository")
+  } catch (error) { throw ctError("CT_SESSION_ISOLATION_UNPROVEN", error) }
+  const copiedProcess = { mcp_process_instance: processSnapshot?.mcp_process_instance, pid_start_marker: processSnapshot?.pid_start_marker }
+  const copiedHost = { host_process_instance: host?.host_process_instance, plugin_instance: host?.plugin_instance, root_session_id: host?.root_session_id, binding_epoch: host?.binding_epoch }
+  if (![copiedHost.host_process_instance, copiedHost.plugin_instance, copiedHost.root_session_id].every((value) => opaque(value)) || !safeEpoch(copiedHost.binding_epoch) ||
+      !isBase64url32(copiedProcess.mcp_process_instance) || !opaque(copiedProcess.pid_start_marker, 128) || !Number.isSafeInteger(derived.effective_uid) || derived.effective_uid < 0 ||
+      ![derived.canonical_repo, derived.git_common_dir, derived.worktree].every(absolutePath) || !opaque(derived.branch, 255)) throw ctError("CT_SESSION_ISOLATION_UNPROVEN")
+  if (stableProcess.value && !equalFields(stableProcess.value, copiedProcess, ["mcp_process_instance", "pid_start_marker"])) throw ctError("CT_SESSION_ISOLATION_UNPROVEN")
+  stableProcess.value ??= copiedProcess
+  return freezeCtx({ ...derived, ...copiedHost, ...copiedProcess })
+}
+
+export const createContinuationDispatcher = ({ cwd = process.cwd(), trustedMetadata, processIdentity }) => {
+  if (!trustedMetadata?.snapshot || !processIdentity?.snapshot) throw ctError("CT_SESSION_ISOLATION_UNPROVEN")
+  const stableProcess = { value: null }
+  return (operation, request) => {
+    if (!["register", "receive"].includes(operation)) throw ctError("CT_PAYLOAD_INVALID")
+    const handle = continuationHandle(cwd, operation === "receive" && request !== undefined && (typeof request !== "object" || request === null || Object.getPrototypeOf(request) !== Object.prototype || Object.keys(request).length > 0))
+    const ctx = createCtxFactory({ trustedMetadata, processIdentity, cwd: handle.cwd, authority: handle.authority }, stableProcess)
+    try { return operation === "register" ? continuationRegister(handle, ctx, request) : continuationReceive(handle, ctx) }
+    finally { handle.db.close() }
+  }
+}
+
+export const assertClaimantBinding = (row, authority) => {
+  if (!row || !isBase64url32(row.binding_id) || !safeEpoch(row.binding_epoch) || row.binding_epoch === 0 || !["ACTIVE", "RETIRED", "MULTIPLEXED"].includes(row.binding_status) ||
+      !Number.isSafeInteger(row.effective_uid) || row.effective_uid < 0 || row.canonical_repo !== authority.anchor.context.canonical_repo || row.git_common_dir !== authority.anchor.context.git_common_dir ||
+      ![row.canonical_repo, row.git_common_dir, row.worktree].every(absolutePath) || !opaque(row.branch, 255) ||
+      ![row.host_process_instance, row.plugin_instance, row.root_session_id].every((value) => opaque(value)) || !isBase64url32(row.mcp_process_instance) || !opaque(row.pid_start_marker, 128) ||
+      !/^sha256:[0-9a-f]{64}$/.test(row.identity_digest) || !rfc3339Milliseconds.test(row.created_at) ||
+      (row.binding_status === "ACTIVE" ? row.ended_at !== null : !rfc3339Milliseconds.test(row.ended_at ?? ""))) throw ctError("CT_SESSION_ISOLATION_UNPROVEN")
+  if (row.identity_digest !== requestDigest(tuple(row))) throw ctError("CT_SESSION_ISOLATION_UNPROVEN")
+  return row
+}
+const scopeBindings = (db, ctx, authority) => db.query(`SELECT * FROM ct_claimant_binding
+  WHERE effective_uid=? AND canonical_repo=? AND git_common_dir=? AND plugin_instance=? ORDER BY binding_epoch`).all(ctx.effective_uid, ctx.canonical_repo, ctx.git_common_dir, ctx.plugin_instance).map((row) => assertClaimantBinding(row, authority))
+const throwStored = (response) => { if (response.error) throw ctError(response.error); return { ...response, replayed: true } }
+
+export const continuationRegister = (handle, ctxFactory, request) => {
+  const { db, authority } = handle
+  try {
+    const result = db.transaction(() => {
+      const lease = gateContinuation(handle)
+      assertRegisterRequest(request)
+      const ctx = ctxFactory()
+      const pluginScopeDigest = requestDigest(scope(ctx))
+      const target = tuple(ctx, request.expected_binding_epoch + 1)
+      const request_digest = requestDigest(request)
+      const cas_digest = requestDigest({ plugin_scope_digest: pluginScopeDigest, ctx_identity_digest: requestDigest(tuple(ctx)), target_identity_digest: requestDigest(target), expected_binding_epoch: request.expected_binding_epoch, expected_binding_state: request.expected_binding_state, mode: "ON", observed_rollback_epoch: lease.rollback_epoch, observed_lease_version: lease.lease_version, observed_lease_status: "NONE" })
+      const scopeKey = `claimant:${pluginScopeDigest}:epoch:${target.binding_epoch}`
+      const committed = db.query("SELECT * FROM ct_idempotency WHERE operation='register' AND request_identity=?").all(request.request_identity)
+      if (committed.length) {
+        if (committed.length !== 1 || committed[0].scope_key !== scopeKey || committed[0].request_digest !== request_digest || committed[0].cas_digest !== cas_digest) throw ctError("CT_IDEMPOTENCY_CONFLICT")
+        return throwStored(JSON.parse(committed[0].response_json))
+      }
+      const bindings = scopeBindings(db, ctx, authority)
+      if (bindings.some(({ binding_status }) => binding_status === "MULTIPLEXED")) throw ctError("CT_SESSION_MULTIPLEXED")
+      if (bindings.length === 0) {
+        if (ctx.binding_epoch !== 0 || request.expected_binding_epoch !== 0 || request.expected_binding_state !== "ABSENT") throw ctError("CT_FENCE_MISMATCH")
+        return insertActive(db, target, request, request_digest, cas_digest, scopeKey)
+      }
+      const active = bindings.filter(({ binding_status }) => binding_status === "ACTIVE")
+      if (active.length !== 1) throw ctError("CT_SESSION_ISOLATION_UNPROVEN")
+      const incumbent = active[0]
+      if (ctx.binding_epoch !== incumbent.binding_epoch || request.expected_binding_epoch !== incumbent.binding_epoch || request.expected_binding_state !== "ACTIVE") throw ctError("CT_FENCE_MISMATCH")
+      if (equalFields(incumbent, ctx, sameRootFields)) {
+        if (incumbent.mcp_process_instance === ctx.mcp_process_instance || incumbent.pid_start_marker === ctx.pid_start_marker) throw ctError("CT_SESSION_ISOLATION_UNPROVEN")
+        db.run("UPDATE ct_claimant_binding SET binding_status='RETIRED',ended_at=? WHERE binding_id=?", [now(), incumbent.binding_id])
+        return insertActive(db, target, request, request_digest, cas_digest, scopeKey)
+      }
+      return insertConflict(db, incumbent, target, request, request_digest, cas_digest, scopeKey, pluginScopeDigest)
+    }).immediate()
+    if (result?.error) throw ctError(result.error)
+    return result
+  } catch (error) {
+    if (error.code?.startsWith("CT_")) throw error
+    if (busy(error)) throw ctError("CT_BUSY", error)
+    throw ctError("CT_SESSION_ISOLATION_UNPROVEN", error)
+  }
+}
+const insertBinding = (db, target, status, endedAt = null, bindingId = makeId()) => {
+  const values = [bindingId, ...bindingFields.map((field) => target[field]), status, requestDigest(target), now(), endedAt]
+  db.run(`INSERT INTO ct_claimant_binding(binding_id,${bindingFields.join(",")},binding_status,identity_digest,created_at,ended_at) VALUES (${values.map(() => "?").join(",")})`, values)
+  return bindingId
+}
+const storeRegister = (db, scopeKey, request, request_digest, cas_digest, response) => db.run("INSERT INTO ct_idempotency VALUES ('register',?,?,?,?,?,?)", [scopeKey, request.request_identity, request_digest, cas_digest, jcs(response), now()])
+const insertActive = (db, target, request, request_digest, cas_digest, scopeKey) => {
+  const response = { binding_id: insertBinding(db, target, "ACTIVE"), binding_epoch: target.binding_epoch, binding_status: "ACTIVE", replayed: false }
+  storeRegister(db, scopeKey, request, request_digest, cas_digest, response)
+  return response
+}
+const insertConflict = (db, incumbent, target, request, request_digest, cas_digest, scopeKey, pluginScopeDigest) => {
+  const detected = now(), attemptedId = makeId(), conflictId = makeId()
+  db.run("UPDATE ct_claimant_binding SET binding_status='MULTIPLEXED',ended_at=? WHERE binding_id=?", [detected, incumbent.binding_id])
+  insertBinding(db, target, "MULTIPLEXED", detected, attemptedId)
+  const conflict = { plugin_scope_digest: pluginScopeDigest, incumbent_binding_id: incumbent.binding_id, attempted_binding_id: attemptedId, incumbent_identity_digest: incumbent.identity_digest, attempted_identity_digest: requestDigest(target), request_identity: request.request_identity, request_digest, cas_digest }
+  db.run(`INSERT INTO ct_claimant_conflict(conflict_id,${Object.keys(conflict).join(",")},conflict_digest,detected_at) VALUES (${Array(Object.keys(conflict).length + 3).fill("?").join(",")})`, [conflictId, ...Object.values(conflict), requestDigest(conflict), detected])
+  storeRegister(db, scopeKey, request, request_digest, cas_digest, { error: "CT_SESSION_MULTIPLEXED" })
+  return { error: "CT_SESSION_MULTIPLEXED" }
+}
+
+export const continuationReceive = (handle, ctxFactory) => {
+  const { db, authority } = handle
+  try {
+    return db.transaction(() => {
+      gateContinuation(handle)
+      if (handle.payloadInvalid) throw ctError("CT_PAYLOAD_INVALID")
+      const ctx = ctxFactory(), pluginScopeDigest = requestDigest(scope(ctx))
+      if (db.query("SELECT 1 FROM ct_claimant_conflict WHERE plugin_scope_digest=? LIMIT 1").get(pluginScopeDigest)) throw ctError("CT_SESSION_MULTIPLEXED")
+      const bindings = scopeBindings(db, ctx, authority)
+      if (bindings.some(({ binding_status }) => binding_status === "MULTIPLEXED")) throw ctError("CT_SESSION_MULTIPLEXED")
+      const active = bindings.filter(({ binding_status }) => binding_status === "ACTIVE")
+      if (active.length !== 1) throw ctError("CT_SESSION_ISOLATION_UNPROVEN")
+      if (active[0].binding_epoch !== ctx.binding_epoch) throw ctError("CT_FENCE_MISMATCH")
+      if (!equalFields(active[0], ctx, bindingFields)) throw ctError("CT_SESSION_ISOLATION_UNPROVEN")
+      return { delivery: null }
+    })()
+  } catch (error) {
+    if (error.code?.startsWith("CT_")) throw error
+    if (busy(error)) throw ctError("CT_BUSY", error)
+    throw ctError("CT_SESSION_ISOLATION_UNPROVEN", error)
+  }
 }
 
 /** Repo-scoped paths and this session's identity, derived from a directory. */

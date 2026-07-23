@@ -97,6 +97,72 @@ CREATE TABLE ct_idempotency (
 `
 const supersededMigration001Checksum = "sha256:47f63b10e516ac977e1cc26723b064eb037a4a2cdb84246b1c183903b909eb41"
 const correctedMigration001Checksum = "sha256:961501e0f605e0052afd8b9ad091112667fa1c1ee3496f0f4320f63541d6e8fc"
+const expectedMigration002Checksum = "sha256:22371db1fb23c72d4049b177080cd8e08eb0029e5ad7e20df709ebf6ec505b12"
+const expectedMigration002Sql = `CREATE TABLE ct_claimant_binding (
+  binding_id TEXT PRIMARY KEY CHECK(length(binding_id) = 43),
+  effective_uid INTEGER NOT NULL CHECK(effective_uid >= 0),
+  canonical_repo TEXT NOT NULL CHECK(length(canonical_repo) > 0),
+  git_common_dir TEXT NOT NULL CHECK(length(git_common_dir) > 0),
+  worktree TEXT NOT NULL CHECK(length(worktree) > 0),
+  branch TEXT NOT NULL CHECK(length(branch) > 0),
+  host_process_instance TEXT NOT NULL CHECK(length(host_process_instance) > 0),
+  plugin_instance TEXT NOT NULL CHECK(length(plugin_instance) > 0),
+  root_session_id TEXT NOT NULL CHECK(length(root_session_id) > 0),
+  mcp_process_instance TEXT NOT NULL CHECK(length(mcp_process_instance) > 0),
+  pid_start_marker TEXT NOT NULL CHECK(length(pid_start_marker) > 0),
+  binding_epoch INTEGER NOT NULL CHECK(binding_epoch > 0),
+  binding_status TEXT NOT NULL CHECK(binding_status IN ('ACTIVE', 'RETIRED', 'MULTIPLEXED')),
+  identity_digest TEXT NOT NULL UNIQUE CHECK(length(identity_digest) = 71),
+  created_at TEXT NOT NULL CHECK(length(created_at) = 24),
+  ended_at TEXT,
+  CHECK((binding_status = 'ACTIVE' AND ended_at IS NULL) OR
+        (binding_status IN ('RETIRED', 'MULTIPLEXED') AND ended_at IS NOT NULL)),
+  UNIQUE(effective_uid, canonical_repo, git_common_dir, plugin_instance, binding_epoch)
+);
+CREATE UNIQUE INDEX ct_claimant_binding_one_active
+ON ct_claimant_binding(effective_uid, canonical_repo, git_common_dir, plugin_instance)
+WHERE binding_status = 'ACTIVE';
+CREATE INDEX ct_claimant_binding_context_lookup
+ON ct_claimant_binding(effective_uid, canonical_repo, git_common_dir, plugin_instance,
+                       binding_status, binding_epoch);
+CREATE TABLE ct_claimant_conflict (
+  conflict_id TEXT PRIMARY KEY CHECK(length(conflict_id) = 43),
+  plugin_scope_digest TEXT NOT NULL CHECK(length(plugin_scope_digest) = 71),
+  incumbent_binding_id TEXT NOT NULL CHECK(length(incumbent_binding_id) = 43),
+  attempted_binding_id TEXT NOT NULL CHECK(length(attempted_binding_id) = 43),
+  incumbent_identity_digest TEXT NOT NULL CHECK(length(incumbent_identity_digest) = 71),
+  attempted_identity_digest TEXT NOT NULL CHECK(length(attempted_identity_digest) = 71),
+  request_identity TEXT NOT NULL UNIQUE CHECK(length(request_identity) = 36),
+  request_digest TEXT NOT NULL CHECK(length(request_digest) = 71),
+  cas_digest TEXT NOT NULL CHECK(length(cas_digest) = 71),
+  conflict_digest TEXT NOT NULL UNIQUE CHECK(length(conflict_digest) = 71),
+  detected_at TEXT NOT NULL CHECK(length(detected_at) = 24),
+  CHECK(incumbent_binding_id <> attempted_binding_id),
+  CHECK(incumbent_identity_digest <> attempted_identity_digest)
+);
+CREATE INDEX ct_claimant_conflict_scope_history
+ON ct_claimant_conflict(plugin_scope_digest, detected_at, conflict_id);
+CREATE TRIGGER ct_claimant_conflict_no_update
+BEFORE UPDATE ON ct_claimant_conflict
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_CONFLICT');
+END;
+CREATE TRIGGER ct_claimant_conflict_no_delete
+BEFORE DELETE ON ct_claimant_conflict
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_CONFLICT');
+END;
+CREATE TABLE ct_rollback_lease (
+  id INTEGER PRIMARY KEY CHECK(id = 1),
+  rollback_epoch INTEGER NOT NULL DEFAULT 0 CHECK(rollback_epoch >= 0),
+  lease_status TEXT NOT NULL DEFAULT 'NONE' CHECK(lease_status IN ('NONE', 'ACTIVE', 'EXPIRED')),
+  lease_version INTEGER NOT NULL DEFAULT 0 CHECK(lease_version >= 0),
+  owner_main_binding_id TEXT,
+  lease_expires_at TEXT,
+  CHECK((lease_status = 'NONE' AND owner_main_binding_id IS NULL AND lease_expires_at IS NULL) OR
+        (lease_status IN ('ACTIVE', 'EXPIRED') AND owner_main_binding_id IS NOT NULL AND lease_expires_at IS NOT NULL))
+);
+`
 const captureError = (operation) => {
   try {
     operation()
@@ -544,6 +610,78 @@ describe("P1 owner-provisioned anchor and Migration 001", () => {
     expect(after.query("SELECT name FROM sqlite_master WHERE name IN ('ct_schema_migration','ct_continuation_state','ct_idempotency')").all()).toEqual([])
     expect(after.query("SELECT state FROM agent WHERE name='legacy'").get()).toEqual({ state: "READY" })
     after.close()
+  })
+})
+
+describe("P2 Migration 002", () => {
+  const provisionV1 = () => {
+    const { main } = createMainFixture()
+    const context = tower.deriveCanonicalMainContext(main)
+    const anchor = tower.provisionMainAuthorityAnchor({ request_identity: randomUUID(), expected_config_digest: digest(canonical(context)) }, main)
+    seedLegacy(main)
+    tower.bootstrapAdmin({ request_identity: randomUUID(), expected_anchor_id: anchor.anchor_id, expected_schema_version: 0, target_schema_version: 1, expected_mode: "OFF" }, main)
+    return { main, context, anchor, dbPath: join(context.git_common_dir, "control-tower", "tower.db") }
+  }
+  const upgradeRequest = (anchor, request_identity = randomUUID()) => ({
+    request_identity, expected_anchor_id: anchor.anchor_id,
+    expected_schema_version: 1, target_schema_version: 2, expected_mode: "OFF",
+  })
+
+  test("pins exact Migration 002 bytes, checksum, manifest, lease seed, and replay", () => {
+    const fixture = provisionV1()
+    const request = upgradeRequest(fixture.anchor)
+
+    expect(tower.MIGRATION_002_SQL).toBe(expectedMigration002Sql)
+    expect(Buffer.byteLength(tower.MIGRATION_002_SQL)).toBe(3627)
+    expect(digest(tower.MIGRATION_002_SQL)).toBe(expectedMigration002Checksum)
+    expect(tower.MIGRATION_002_CHECKSUM).toBe(expectedMigration002Checksum)
+    expect(tower.bootstrapAdmin(request, fixture.main)).toEqual({ anchor_id: fixture.anchor.anchor_id, schema_version: 2, mode: "OFF", replayed: false })
+
+    const db = new Database(fixture.dbPath, { readonly: true })
+    expect(db.query("SELECT version,ddl_checksum FROM ct_schema_migration ORDER BY version").all()).toEqual([
+      { version: 1, ddl_checksum: correctedMigration001Checksum },
+      { version: 2, ddl_checksum: expectedMigration002Checksum },
+    ])
+    expect(db.query("SELECT rollback_epoch,lease_status,lease_version,owner_main_binding_id,lease_expires_at FROM ct_rollback_lease").get()).toEqual({ rollback_epoch: 0, lease_status: "NONE", lease_version: 0, owner_main_binding_id: null, lease_expires_at: null })
+    expect(db.query("SELECT name,state FROM agent").get()).toEqual({ name: "legacy", state: "READY" })
+    expect(db.query("SELECT name FROM sqlite_master WHERE name GLOB 'ct_*' ORDER BY name").all().map(({ name }) => name)).toEqual([
+      "ct_claimant_binding", "ct_claimant_binding_context_lookup", "ct_claimant_binding_one_active",
+      "ct_claimant_conflict", "ct_claimant_conflict_no_delete", "ct_claimant_conflict_no_update",
+      "ct_claimant_conflict_scope_history", "ct_continuation_state", "ct_idempotency", "ct_rollback_lease", "ct_schema_migration",
+    ])
+    db.close()
+    expect(tower.bootstrapAdmin(request, fixture.main)).toEqual({ anchor_id: fixture.anchor.anchor_id, schema_version: 2, mode: "OFF", replayed: true })
+    expect(errorCode(() => tower.bootstrapAdmin(upgradeRequest(fixture.anchor), fixture.main))).toBe("CT_IDEMPOTENCY_CONFLICT")
+  })
+
+  test("Migration 002 DDL failure rolls back all v2 state", () => {
+    const fixture = provisionV1()
+    const before = new Database(fixture.dbPath, { readonly: true })
+    const legacy = before.query("SELECT * FROM agent").all()
+    before.close()
+    const mode = lstatSync(fixture.dbPath).mode & 0o777
+    chmodSync(fixture.dbPath, 0o400)
+    try {
+      expect(errorCode(() => tower.bootstrapAdmin(upgradeRequest(fixture.anchor), fixture.main))).toBe("CT_SCHEMA_INVALID")
+    } finally { chmodSync(fixture.dbPath, mode) }
+    const db = new Database(fixture.dbPath, { readonly: true })
+    expect(db.query("SELECT version FROM ct_schema_migration").all()).toEqual([{ version: 1 }])
+    expect(db.query("SELECT name FROM sqlite_master WHERE name IN ('ct_claimant_binding','ct_claimant_conflict','ct_rollback_lease')").all()).toEqual([])
+    expect(db.query("SELECT * FROM agent").all()).toEqual(legacy)
+    db.close()
+  })
+
+  test("Migration 002 writer wait is bounded and retryable", () => {
+    const fixture = provisionV1()
+    const request = upgradeRequest(fixture.anchor)
+    const locker = new Database(fixture.dbPath)
+    locker.run("BEGIN IMMEDIATE")
+    const started = Date.now()
+    expect(errorCode(() => tower.bootstrapAdmin(request, fixture.main))).toBe("CT_BUSY")
+    expect(Date.now() - started).toBeGreaterThanOrEqual(200)
+    expect(Date.now() - started).toBeLessThan(1500)
+    locker.run("ROLLBACK"); locker.close()
+    expect(tower.bootstrapAdmin(request, fixture.main)).toMatchObject({ schema_version: 2, replayed: false })
   })
 })
 

@@ -12,7 +12,7 @@ import * as tower from "./core.mjs"
 const ACTIVE_PRECONDITION =
   "Call tower_status first. Do not call this tool unless it reports active:true."
 
-const TOOLS = [
+const LEGACY_TOOLS = new Map([
   {
     name: "tower_register",
     description: `${ACTIVE_PRECONDITION} Join the tower as this worktree. Identity is derived from the working directory, not declared. The Main worktree uses orchestrator; other worktrees use agent.`,
@@ -97,7 +97,8 @@ const TOOLS = [
     description: `${ACTIVE_PRECONDITION} Pull your next queued message manually. Sessions are normally woken with it automatically, so reach for this only when checking on purpose.`,
     inputSchema: { type: "object", properties: {} },
   },
-]
+].map((tool) => [tool.name, tool]))
+const CONTINUATION_TOOLS = new Map()
 
 const GUARDED_TOOLS = new Set([
   "tower_register",
@@ -109,6 +110,8 @@ const GUARDED_TOOLS = new Set([
 ])
 
 const call = (name, args) => {
+  if (CONTINUATION_TOOLS.has(name)) return CONTINUATION_TOOLS.get(name)(args)
+  if (!LEGACY_TOOLS.has(name)) throw new Error(`unknown tool "${name}"`)
   // Reject before opening SQLite when possible. Every guarded core operation
   // checks again, so disarming between this precheck and dispatch is still safe.
   if (GUARDED_TOOLS.has(name)) {
@@ -159,7 +162,7 @@ const handle = (req) => {
         serverInfo: { name: "control-tower", version: "0.1.0" },
       }
     case "tools/list":
-      return { tools: TOOLS }
+      return { tools: [...LEGACY_TOOLS.values(), ...CONTINUATION_TOOLS.values()] }
     case "tools/call": {
       try {
         const result = call(params.name, params.arguments ?? {})
