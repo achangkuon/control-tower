@@ -79,7 +79,7 @@ The console keeps no "current project" in its session state. Every envelope must
 
 ## The Command Set
 
-Fourteen verbs. Closed. `target` is `tower` or `agent`. `Legal states` are the subset of the ten `core.mjs` states the target agent may be in; any other state is a refusal, not a queue.
+Thirteen verbs. Closed. `target` is `tower` or `agent`. `Legal states` are the subset of the ten `core.mjs` states the target agent may be in; any other state is a refusal, not a queue.
 
 | Verb | Params | Preconditions | Legal agent states | Risk |
 |---|---|---|---|---|
@@ -96,14 +96,23 @@ Fourteen verbs. Closed. `target` is `tower` or `agent`. `Legal states` are the s
 | `CV_ANSWER` | `tower_id`, `escalation_id`, `verdict∈{APPROVE,REJECT}`, `note?` | escalation OPEN and claimed by the console | `BLOCKED`, `WAITING_HUMAN` | R1 |
 | `CV_MERGE_MAIN` | `tower_id`, `agent`, `pr_url`, `confirm_token` | evidence card issued and unexpired | `PR_OPEN` | **R2** |
 | `CV_DB_PUSH` | `tower_id`, `agent`, `environment`, `confirm_token` | evidence card issued; holds `db-writer` | `WORKING`, `READY` | **R2** |
-| `CV_FORCE_UNLOCK` | `tower_id`, `lock∈{git-delivery,db-writer}`, `confirm_token` | lock currently held | — (tower-level) | **R2** |
+
+There is **no verb that releases a lock the console does not hold**. See *Excluded by decision* below.
 
 Notes on the sharper edges:
 
-- **`CV_PAUSE` is refused on `DELIVERING` and `PR_OPEN`.** Pausing mid-delivery strands the `git-delivery` lock with no holder able to release it (`release()` allows only the holder, `core.mjs:784`), leaving `torre unlock` as the only exit. The refusal names `CV_STOP_DELIVERY` as the correct verb; it does not silently substitute it.
+- **`CV_PAUSE` is refused on `DELIVERING` and `PR_OPEN`.** Pausing mid-delivery strands the `git-delivery` lock with no holder able to release it (`release()` allows only the holder, `core.mjs:784`). The refusal names `CV_STOP_DELIVERY` as the correct verb; it does not silently substitute it. If the lock is already stranded, the recovery path is `torre unlock` at the machine — the console has no verb for it.
 - **`CV_GRANT_DELIVERY` maps to `transfer()`, which only the holder may perform.** So it is relayed to `Main`, which reserves and transfers — the existing pattern documented at `core.mjs:802`. The console cannot transfer a lock it does not hold, and it never holds one (an unregistered session has no `agent` row and `acquire()` refuses it, `core.mjs:764`).
-- **`CV_FORCE_UNLOCK` maps to `forceRelease()`**, which `core.mjs:837` deliberately does **not** expose over MCP because it is the one human-only door. Exposing it to the console is a real widening of that door and is why it carries R2 and a confirm token.
+- **Any refusal caused by a held lock carries the holder's last trace line.** When a command cannot proceed because `git-delivery` or `db-writer` is held, the refusal reports lock name, holder, `acquired_at` and elapsed time, the holder's state, and its **last line from `tower.log`**. Adopted so the maintainer can see *why* work is stuck from the phone, and decide whether it is progressing slowly or dead, without opening the laptop. The trace is read-only and validator-gathered.
 - **`CV_ANSWER`'s escalation binding is a deferred binding.** The escalation record shape comes from P4/P5. This design fixes only the *addressing* rule (below) and the verdict enum; the payload shape is TBD.
+
+### Excluded by decision: no force-unlock verb
+
+An earlier draft of this design proposed `CV_FORCE_UNLOCK`, mapping to `forceRelease()`. **The maintainer removed it.** The set is thirteen verbs, not fourteen.
+
+Reason, recorded: `core.mjs:846` deliberately withholds `forceRelease` from every non-human transport, and the code's own comment states the intent plainly — *"only a person standing at a terminal can open it."* Agents must never be able to take a token from each other; that is the guarantee the lock exists to provide. Exposing the one human-only door to a Telegram-reachable console would have been the largest single widening in the vocabulary, and it would have widened it precisely where the Tower is most deliberate.
+
+**Operational consequence**: a lock stranded by a dead session is cleared with `torre unlock` at the machine, which is what that command is for (`bin/torre`, "libera un lock cuya sesion murio (pide confirmacion)"). From the phone the maintainer can *see* the stranded lock — `CV_STATUS` reports holders, and any lock-blocked refusal now carries the holder's last trace line — but he cannot clear it remotely. Diagnosis is remote; that one recovery action stays physical.
 
 ### Alignment with the existing Hermes reply vocabulary
 
@@ -128,12 +137,14 @@ Notes on the sharper edges:
 | **A0 — Read** | `status()`, agent rows, lock holders | Direct (`CV_STATUS`, `CV_INSPECT`) | Available even while the tower is `off`; no write path |
 | **A1 — Main's local authority** | Everything a `Main` may do today: `send`, `setState`, `acquire`/`transfer`, delivery ordering | **Indirect only** — relayed into `Main`'s inbox | `Main` executes under its own server-resolved `Ctx` (CT-R10). Ceiling = `Main`'s ceiling, unchanged |
 | **A2 — Admin / binding** | `provisionMainAuthorityAnchor`, `bootstrapAdmin`, `bootstrapMain`, `activate`, `beginRollback`, `rebindMain`, `finishRollback` | **None. Not in the vocabulary.** | CT-R3 makes the two provisioning ops CLI/admin-transport only; the verbs simply do not exist, so a request for them fails at parse with `CV_UNKNOWN_VERB` |
+| **AH — Human-at-terminal** | `forceRelease` (`torre unlock`), `torre on` / `torre off` / `torre reset` | **None. Not in the vocabulary.** | `forceRelease` is deliberately not an MCP tool (`core.mjs:846`); the `ACTIVE` file is a filesystem switch, not an operation. These stay physical by design, not by omission |
 
-Three properties fall out:
+Four properties fall out:
 
 1. **The console is not a `Ctx` source.** CT-R3 states that without an adapter capability supplying trusted metadata, continuation dispatch is *unavailable* rather than accepting caller metadata. The console MUST NOT be registered as that adapter — recorded here as a hard constraint for whoever builds P7–P9.
 2. **Authority excess is refused, never downgraded.** If `Main` rejects a relayed order, the console reports the stable error code and stops. It does not retry with a narrower command, does not ask another tower, and does not attempt an admin route.
 3. **`torre on`/`torre off` stay physical.** The `ACTIVE` file is checked twice under `BEGIN IMMEDIATE` (`activeWrite`, `core.mjs:621`). A tower that is off refuses every A1 relay regardless of what the console believes, and the console has no `CV_ARM`/`CV_DISARM` verb — arming a tower remains something done at the keyboard.
+4. **Lock rescue stays physical too.** There is no console path to `forceRelease`. A lock stranded by a dead session is visible from the phone and clearable only at the machine, with `torre unlock`. This is the AH tier above, and it is the deliberate limit of remote operation: the console can tell him what is stuck and why, and cannot take a token from whoever holds it.
 
 ---
 
@@ -150,7 +161,7 @@ Three properties fall out:
 | 3. Addressing | validator | `CV_UNKNOWN_TOWER`, `CV_TOWER_MISMATCH` |
 | 4. Liveness | validator, against live `status()` | `CV_UNKNOWN_AGENT`, `CV_TOWER_INACTIVE` |
 | 5. State legality | validator | `CV_ILLEGAL_STATE` (names the current state and the legal set) |
-| 6. Risk gate | validator | `CV_CONFIRMATION_REQUIRED`, `CV_TOKEN_EXPIRED` |
+| 6. Risk gate | validator | `CV_CONFIRMATION_REQUIRED`, `CV_TOKEN_EXPIRED` (10-minute lifetime), `CV_CONFIRMATION_PENDING` (single-flight per tower) |
 | 7. Core | `core.mjs` | the core's own errors, unchanged |
 
 Non-negotiable rules for stage 1:
@@ -212,22 +223,28 @@ Combined with D4 (no ambient tower context), a message like "yes, approve it" ca
 | Command | Evidence card contents (validator-gathered, read-only) |
 |---|---|
 | `CV_MERGE_MAIN` | PR URL from `agent.pr_url`; PR title, head branch, base branch; `gh pr checks` result; mergeable state; commits-behind-`origin/main`; current holder of `git-delivery`; the agent's `note` |
-| `CV_DB_PUSH` | Target project and environment; whether local `main` is current with `origin/main`; holder of `db-writer`; names (not contents) of migrations pending; **most recent backup reference and its age, or an explicit `BACKUP: NONE FOUND`** |
-| `CV_FORCE_UNLOCK` | Lock name, current holder, `acquired_at` and elapsed time, that holder's state and last trace line |
+| `CV_DB_PUSH` | Target project and environment; whether local `main` is current with `origin/main`; holder of `db-writer`; names (not contents) of migrations pending |
+
+Where either card must report a lock holder, it includes that holder's `acquired_at`, elapsed time, state, and **last trace line**, per the rule above.
 
 **Flow**: card rendered to the chat → validator issues a fresh `confirm_token` → the maintainer replies with the exact token → pre-router consumes it → command executes → **echo-back** states what was done.
+
+**Token expiry — 10 minutes.** A confirm token is valid for ten minutes from issue; after that it is refused with `CV_TOKEN_EXPIRED` and a fresh card must be requested. The rationale is not replay protection, it is *staleness*: an evidence card describes the project at the instant it was rendered. Confirming hours later approves against state that has since changed — a merge that was clean when the card was drawn, a migration set that has since grown — so the text he read would no longer describe what executes. Ten minutes keeps the card and the world close enough that the description holds.
+
+**Single-flight per tower.** At most one high-risk command may await confirmation in a given tower at a time. A second R2 request while one is outstanding is refused with `CV_CONFIRMATION_PENDING`, naming the command already waiting. This exists so two cards arriving in sequence cannot be confused for one another: with one token live per tower, a reply cannot be matched against the wrong command. Single-flight is scoped **per tower**, not globally — two different towers may each hold one outstanding card, since their tokens are distinct and their targets are separately addressed.
 
 **Recorded afterward**, in all three places:
 1. `trace()` to `tower.log` with a `CONSOLE:` flag (the existing shared-trace convention, `core.mjs:62`), so `torre log` shows a phone-originated action as such.
 2. A console audit row: envelope, evidence digest, token, timestamp, resulting core response.
 3. Echo-back to the chat, per the proposal's echo-back control, so an unexpected action is visible rather than silent.
 
-### Recommendations — for the maintainer's decision, not imposed
+### Declined safeguard: no backup-absent warning on `db push`
 
-- **REC-1**: `CV_DB_PUSH` renders `BACKUP: NONE FOUND` in red and requires a longer, distinct confirm token when no backup reference is found. It still executes if he confirms. This is the closest satisfiable analog to his own `coordinador_multi_agente` rule, which cannot be satisfied from a phone.
-- **REC-2**: confirm tokens expire after **10 minutes**. A token issued before he got in the car should not still be live when he arrives.
-- **REC-3**: R2 commands are **single-flight per tower** — one outstanding evidence card at a time, so a stale card cannot be confirmed against a changed world.
-- **REC-4**: `CV_FORCE_UNLOCK` echoes the holder's last trace line in its card, since "the session died" is the only justification for the command and is exactly what the card should let him check.
+A backup-presence check was proposed for `CV_DB_PUSH` — the evidence card would have carried the most recent backup reference and its age, or an explicit `BACKUP: NONE FOUND`, and would have required a longer, distinct confirm token in the absent case. **The maintainer considered it and declined it.** It is recorded here rather than silently omitted, because a mitigation that was weighed and rejected is a different fact from one that was never considered.
+
+What it would have covered: the `finanzas` entry in Hermes' `project-registry.yaml` warns that `data/finanzas.db` may hold real financial data requiring backup and authorization before non-reversible writes. The check would have surfaced, at the moment of confirmation, whether that precondition was satisfiable — the closest analog to that rule that a phone can reach.
+
+Standing accepted exposure, stated factually: a non-reversible production write can be triggered from a device that cannot verify a backup exists. This does not narrow `CV_DB_PUSH`; the verb keeps its full capability, its evidence card, its confirm token, and its audit record. No substitute check is added in the declined one's place.
 
 ---
 
@@ -255,11 +272,15 @@ Additional applicable row specific to this design:
 
 | Layer | What | Approach |
 |---|---|---|
-| Unit | Vocabulary table completeness; state legality per verb; refusal codes; digest computation | `bun test`, pure functions over the table; assert the verb set equals the fourteen and that legal-state sets are subsets of `core.mjs` `STATES` |
+| Unit | Vocabulary table completeness; state legality per verb; refusal codes; digest computation | `bun test`, pure functions over the table; assert the verb set equals exactly the thirteen (no force-unlock verb) and that legal-state sets are subsets of `core.mjs` `STATES` |
 | Unit | Fail-closed dispatch | Assert no `default:` execution branch: unknown verb throws before any tower is opened, mirroring `mcp.mjs` |
 | Integration | Relay lands in `Main`'s inbox; illegal state refused; inactive tower refused | Temp git repo + real `core.mjs`, per existing test conventions |
 | Integration | Cross-tower misrouting | Two temp repos; envelope with tower A's id and tower B's escalation → refusal, and assert **no row changed in either database** |
-| Integration | R2 confirm flow | Card issued → wrong token, expired token, and model-authored token all refused; correct token executes exactly once |
+| Integration | R2 confirm flow | Card issued → wrong token and model-authored token refused; correct token executes exactly once |
+| Integration | Token expiry | Token confirmed at 9m59s executes; at 10m00s+ → `CV_TOKEN_EXPIRED` and no core call is made |
+| Integration | Single-flight | Second R2 request in the same tower while one is outstanding → `CV_CONFIRMATION_PENDING`; the same second request in a *different* tower is accepted; a reply token never matches a command in another tower |
+| Integration | Lock-blocked refusal detail | Refusal on a held lock includes holder, elapsed time, state, and the holder's last `tower.log` line |
+| Unit | No force-unlock path | Assert `forceRelease` is unreachable from the console: not exported through `bin/torre-console`, absent from the verb table, and an envelope naming it → `CV_UNKNOWN_VERB` |
 
 ---
 
@@ -277,6 +298,6 @@ Additional applicable row specific to this design:
 ## Open Questions
 
 - [ ] The console's relay currently has no legitimate sender identity: `send()` derives the sender from cwd (`core.mjs:606`), so a console writing into a tower would appear as some worktree. A small additive core primitive is needed. **This is the one genuine core change the vocabulary implies, and its shape is blocked on P4–P6.**
-- [ ] Whether `CV_FORCE_UNLOCK` should exist at all, given `core.mjs:837` deliberately withholds `forceRelease` from every non-human transport. Included here because the maintainer chose full capability; flagged as the single largest widening in the set.
+- [x] ~~Whether a force-unlock verb should exist.~~ **Resolved 2026-07-23: no.** Removed from the vocabulary; `forceRelease` stays human-and-terminal-only. See *Excluded by decision*.
 - [ ] `CV_RUN_TESTS` has no tower primitive behind it — it is a relayed instruction, so "re-run tests" is only as reliable as the `Main` that receives it. Whether it needs a real primitive is a spec-phase question.
 - [ ] Registry format for `tower_id` (proposal open question 2) is assumed here, not decided.
