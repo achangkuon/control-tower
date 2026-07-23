@@ -5,10 +5,10 @@
 - Mode: Strict TDD (`bun test`)
 - Delivery strategy: `auto-chain`
 - Chain strategy: `feature-branch-chain`
-- Current autonomous work unit: P2 complete; P3 is the next boundary
+- Current autonomous work unit: P3 complete; P4 is the next boundary
 - Branch: `feat/control-tower/autonomous-continuation`
-- Completed: 14/50 tasks (`0.1`, `0.2`, `1.1`, `1.2`, `1.3`, `1.4`, `1F.1`, `1F.2`, `1F.3`, `1F.4`, `2.1`, `2.2`, `2.3`, `2.4`)
-- P2 is complete; every P3+ task remains unchecked.
+- Completed: 18/50 tasks (`0.1`, `0.2`, `1.1`, `1.2`, `1.3`, `1.4`, `1F.1`, `1F.2`, `1F.3`, `1F.4`, `2.1`, `2.2`, `2.3`, `2.4`, `3.1`, `3.2`, `3.3`, `3.4`)
+- P3 is complete; every P4+ task remains unchecked.
 
 ## Completed tasks
 
@@ -763,5 +763,124 @@ project/user skill paths were present; loaded
 | Runtime/deviations/risks | N/A: no enabled adapter/public continuation route and only isolated fixtures mutated; inherited RED was not claimed, an invalid Bun test-module syntax command was replaced by parse-only `node --check`, pre-existing `.gitignore` was untouched, and JD suspects/warnings remain follow-ups. |
 | Exact rollback boundary | Revert only P2 hunks in `core.mjs`, `mcp.mjs`, `test/migration.test.mjs`, `test/identity.test.mjs`, the receive-classification wording in `design.md`, the three P2 implementation checkmarks plus parent `2.4`, and this section/ledger; preserve all pre-P2 history, do not down-migrate real DBs, and leave schema-2 data inert/OFF. |
 | JD identity/merge | Target `86d7988ce1d31f5996a19d75fbb30049de737d0eb47fbe8a1a4133b3083aff9f`, base `badaf71f7fd0e72a80510cdf0414d2e4d0896bc0`; confirmed severe **0**, suspect severe **2**, contradictions **0**, warnings **3**, corrections **0/2**. No severe finding was confirmed by both judges, so none was corrected; all five IDs remain in `evidence/judgment-day-slice-2-round-1.md` as follow-ups. |
+
+**JUDGMENT: APPROVED ✅**
+
+---
+
+## P3 bounded design correction — no apply work
+
+P3 apply correctly stopped before RED because schema 2 had no approved Main/activation persistence, CT-R3 completion scenarios depended on P5, and CT-R11 rollback quiescence/termination proof depended on P6. No production code, test, runtime, Tower, review, or delivery action was performed; tasks `3.1`–`3.4` remain unchecked.
+
+The bounded correction defines byte-exact Migration 003 (`2457` bytes; `sha256:c382e9322a5934f1db3cb9685a345d8141a6263102ef9f027ca03396338a65b6`), exact schema-2→3 bootstrap/CAS/replay/rollback, canonical `main_binding_v1`, immutable activation/precondition history, read-only status, and capability-gated P3 exposure. CT-R3-S1/S3/S4 now map to P5; CT-R11-S4/S5 map to P6; cumulative scenario projections and inverse traceability are explicit without weakening the normative requirements. P3 remains forecast at 620–780 implementation/test lines with a mandatory P3-A/P3-B chain stop if the concrete forecast exceeds 800.
+
+Next action is a fresh P3 apply beginning with genuine Migration 003/Main/API RED. This note records design correction only and claims no implementation or test evidence.
+
+### P3 fresh-context gate corrective rerun
+
+The one allowed design rerun corrected only the three gate findings: `CT-R6-S3` implementation/test ownership now belongs to P5; activation uses a persisted request-identity-free logical transition scope with exhaustive OFF/ON lookup classifications; and first-Main CAS plus bootstrap/status payload, mode, lease, anchor, schema, and Main-state errors are total. Migration 003 remains byte-identical at 2457 bytes with the same checksum and six objects. P3 now forecasts 650–800 authored lines with concrete independently green P3-A Migration/Main and P3-B activation/status/MCP boundaries if it would exceed 800. Tasks `3.1`–`3.4` remain unchecked; no source, test, runtime, review, or delivery work occurred. Next action is the fresh-context design gate; P3 RED may start only if it passes.
+
+---
+
+## P3-A partial progress — Migration 003 and persisted Main bootstrap
+
+- Boundary: P3-A only. Migration 003, schema `2→3`, `main_binding_v1`, and internal constructor-capability `bootstrapMain` are implemented. Activation, status, MCP exposure, and every P4+ behavior remain unavailable.
+- Task state: tasks `3.1`–`3.4` remain unchecked because they span the complete P3 slice.
+- Skill resolution: `paths-injected` — chained PR and work-unit commit skills were loaded before task-specific work.
+
+### Strict TDD evidence
+
+1. P2 safety net before edits: `bun test test/migration.test.mjs test/identity.test.mjs test/fail-closed.test.mjs` → exit 0; 45 pass, 0 fail, 288 assertions.
+2. Genuine RED before production edits:
+   - `bun test test/migration.test.mjs -t 'P3-A Migration 003'` → exit 1; 0 pass, 3 fail, 3 assertions. `MIGRATION_003_SQL` was absent and schema-3 bootstrap requests returned pre-P3 errors.
+   - `bun test test/identity.test.mjs -t 'P3-A persisted canonical Main bootstrap'` → exit 1; 0 pass, 4 fail. Schema-3 fixture setup failed because `bootstrapAdmin` rejected target 3.
+3. GREEN:
+   - Migration focus → exit 0; 3 pass, 0 fail, 25 assertions.
+   - Main focus initially exposed one test-side precedence error: a new identity naming the already-committed epoch-1 scope correctly returned `CT_IDEMPOTENCY_CONFLICT`, not `CT_FENCE_MISMATCH`. After correcting that expectation and adding an uncommitted stale-scope fence, Main focus → exit 0; 4 pass, 0 fail, 30 assertions.
+4. TRIANGULATE/REFACTOR: added schema-3 preservation of P2 register/non-consuming receive and explicit P3-B route unavailability; final focused migration + Main commands → exit 0; 3 pass/25 assertions and 5 pass/34 assertions.
+5. Final commands: `bun test` → exit 0; 53 pass, 0 fail, 347 assertions. `git diff --check`, `node --check` for core/MCP/tests, and `bash -n bin/torre install.sh` → exit 0; no output.
+
+### Workload, preservation, and rollback
+
+- Implementation/test authored workload: **529 changed lines** (`504` additions + `25` deletions): `core.mjs` 213/23, `test/migration.test.mjs` 143/0, `test/identity.test.mjs` 148/2. This progress section adds **31** authored lines; no task/spec/design line was changed by P3-A.
+- Projected complete P3: **780–950 implementation/test lines**. P3-B has 271 lines remaining under the 800-line cumulative ceiling; treat any forecast above that as a delivery-budget risk before apply.
+- Runtime harness: N/A — P3-A adds no host adapter, public continuation MCP route, activation, delivery, polling, or live runtime boundary. Every mutation ran only in isolated temporary Git/Tower fixtures.
+- Preserved state: actual `.git/control-tower/{ACTIVE,tower.db}` and legacy `~/.config/opencode/control-tower/{ACTIVE,tower.db}` remained absent. Unrelated `.gitignore`, `.session-doc.json`, `NEXT-SESSION-off-enforcement.md`, and `session-handoff.md` were not edited; their entry-state dirty status was preserved.
+- Preserved hashes: `.gitignore` `394c70b7e3c0fc209cff55f29ab94ec7c064809fb605477646e5d92280cca5e1`; `.session-doc.json` `89bcae29fd174cc7c253ff7febc677c2049d25a1eb4a3d86e6ab0797baaee35e`; `NEXT-SESSION-off-enforcement.md` `73bbb0e58573eef187dbf22b026cb1594df614e7749c516908bdadc9b553f7e0`.
+- Rollback proof: wrong schema-2→3 CAS and read-only DDL failure leave only migrations 1/2, no Main/activation objects, exact lease seed, and the legacy row. Busy acquisition returns `CT_BUSY` and succeeds after lock release.
+- Rollback boundary: revert only P3-A hunks in `core.mjs`, `test/migration.test.mjs`, and `test/identity.test.mjs`, plus this section. Do not down-migrate real schema-3 databases; leave additive data inert/OFF.
+- Risk/next action: P3-B activation/status/MCP remains unimplemented. Continue only with the P3-B RED boundary and enforce the remaining cumulative workload budget.
+
+### P3-A automatic gate correction — Migration 003 precondition precedence
+
+- Scope: corrected only the verified Migration 003 ordering blocker; P3-B/P4+ and runtime state remain untouched.
+- RED: `bun test test/migration.test.mjs -t 'Migration 003 preconditions enforce OFF, lease, target scope, then request CAS'` → exit 1; 0 pass, 1 fail, 1 assertion; received `CT_IDEMPOTENCY_CONFLICT` instead of `CT_FENCE_MISMATCH`.
+- GREEN: the same command → exit 0; 1 pass, 0 fail, 4 assertions.
+- TRIANGULATE: the permanent test proves OFF before target scope, exact lease seed before target scope, target scope before request CAS, and absent target scope before request CAS; P3-A Migration focus → 4 pass, 0 fail, 29 assertions; Main focus → 5 pass, 0 fail, 34 assertions.
+- Complete focused suite: `bun test test/migration.test.mjs test/identity.test.mjs test/fail-closed.test.mjs` → exit 0; 54 pass, 0 fail, 351 assertions.
+- Full suite: `bun test` → exit 0; 54 pass, 0 fail, 351 assertions.
+- Exact Migration 003 SQL remains 2457 bytes with checksum `sha256:c382e9322a5934f1db3cb9685a345d8141a6263102ef9f027ca03396338a65b6`.
+- Workload: implementation/test is **556 changed lines** (`531` additions + `25` deletions), leaving **244** implementation/test lines; total P3-A including its 44 apply-progress lines is **600**, leaving **200** of the 800-line authored review budget.
+- Preservation: tasks `3.1`–`3.4` remain unchecked; actual and legacy `ACTIVE`/`tower.db` remain absent; unrelated dirty files retain their recorded entry hashes.
+- Next action: rerun the P3-A automatic gate. P3-B remains blocked pending that result.
+
+### P3-A manual test-only differential evidence closure
+
+- This is post-fix differential evidence closure, not a new implementation RED; the prior observed RED above remains the P3-A implementation RED.
+- The existing-target-scope case now simultaneously supplies a wrong request CAS and requires `CT_IDEMPOTENCY_CONFLICT`, so swapping target-scope and request-CAS checks would fail permanently.
+- Exact focused case: 1 pass, 0 fail, 4 assertions; P3-A Migration focus: 4 pass, 0 fail, 29 assertions; Main focus: 5 pass, 0 fail, 34 assertions.
+- Focused migration+identity+fail-closed and full `bun test`: each 54 pass, 0 fail, 351 assertions. Syntax, shell, whitespace, and exact Migration 003 byte/checksum checks passed.
+- HEAD-relative implementation/test workload remains **556 changed lines** (`531` additions + `25` deletions), leaving **244** of the 800-line P3 budget.
+- `core.mjs` remained unchanged at SHA-256 `112a82d73dd6d9cbe62a5eeef69fcb220223a9e67424a2f9488630b24346699c`; Migration 003 remains 2457 bytes at `sha256:c382e9322a5934f1db3cb9685a345d8141a6263102ef9f027ca03396338a65b6`.
+- Tasks `3.1`–`3.4` remain unchecked; actual and legacy `ACTIVE`/`tower.db`, P3-B/P4+, runtime state, production code, and unrelated dirty-file hashes remain untouched.
+
+---
+
+## P3-B selector activation, status, and capability-gated MCP
+
+- **Boundary:** Completed only P3-B after the approved P3-A gate. Selector-based `activate`, exact read-only `status`, and constructor-capability-gated runtime routes `bootstrapMain|activate|status|register|receive` are implemented. Tasks `3.1`–`3.3` are complete; parent-owned `3.4` remains unchecked. P4+ routes and `start` remain unavailable.
+- **Safety net:** Before P3-B test edits, `bun test` exited 0 with **54 pass, 0 fail, 351 assertions**. Migration 003 and all P3-A behavior were preserved.
+- **RED:** `bun test test/identity.test.mjs -t 'P3-B activation, status, and capability-gated MCP'` exited 1 with **0 pass, 1 fail, 1 module error** because `createMcpHandler` and all P3-B routes were absent.
+- **GREEN:** The same focused command first reached 3 pass/1 test-fixture failure/30 assertions because SQLite correctly rejected an impossible lease row; after correcting that fixture to a coherent mode/lease drift, it exited 0 with **4 pass, 0 fail, 33 assertions**.
+- **TRIANGULATE:** Added malformed evidence, stale Main epoch, active-claimant quiescence, retained historical activation scope, immutable activation triggers, coherent ROLLING_BACK status, selector drift, and exact capability exposure. The coherent ROLLING_BACK case first exposed historical-CAS validation using current lease state (**5 pass, 1 fail, 38 assertions**); the corrected historical/current selector split then passed. Final focused result: **6 pass, 0 fail, 40 assertions**.
+- **Final verification:** `bun test` exited 0 with **60 pass, 0 fail, 391 assertions**. `git diff --check`, Node parse checks for core/MCP/identity/migration tests, and `bash -n bin/torre install.sh` passed (`guards-ok`). The first checksum probe incorrectly used Node against `bun:sqlite` and failed with `ERR_UNSUPPORTED_ESM_URL_SCHEME`; corrected `bun -e` proved Migration 003 is exactly **2457 bytes** with `sha256:c382e9322a5934f1db3cb9685a345d8141a6263102ef9f027ca03396338a65b6`.
+- **Workload:** P3-B implementation/test is **541 changed lines**: `core.mjs` 166, `mcp.mjs` 171, and `test/identity.test.mjs` 204. Including three task checkbox replacements, three cumulative-header replacements, and this 13-line progress section, P3-B total authored workload is **566 lines**, below its independent 800-line ceiling. Cumulative P3 implementation/test is **1,097 lines**: P3-A 556 plus P3-B 541.
+- **Runtime harness:** N/A — no P7–P9 host adapter supplies production trusted capability, so default stdio MCP remains legacy-only. The in-process MCP integration test proves capability-enabled listing/calls; no actual Tower, adapter, polling, delivery, launch, recovery, or runtime mutation occurred.
+- **Rollback boundary:** Revert only P3-B hunks in `core.mjs`, `mcp.mjs`, and `test/identity.test.mjs`, the `3.1`–`3.3` checkbox flips, and this P3-B evidence/header update. Preserve P3-A Migration 003/Main bootstrap. Schema-3 activation rows remain inert if code is rolled back; no real database is down-migrated.
+- **Preservation:** Actual `.git/control-tower/{ACTIVE,tower.db}` and legacy `~/.config/opencode/control-tower/{ACTIVE,tower.db}` remain absent. Schema-2/P2 semantics, all eight legacy tools, no-`start`, and default no-capability continuation fencing pass. Unrelated `.gitignore`, `.session-doc.json`, `NEXT-SESSION-off-enforcement.md`, and `session-handoff.md` remain byte-identical at their entry hashes. No commit, push, PR, release, review lifecycle, Judgment Day, P4+, or public adapter route was performed.
+- **Next boundary:** Return to the parent for task `3.4` only.
+
+---
+
+## P3-B automatic gate correction
+- **Scope:** Closed only the malformed-Git status mapping, MCP explicit-null payload, and retained non-live claimant-conflict activation-proof blockers; tasks `3.1`–`3.3` remain complete and `3.4` remains unchecked.
+- **RED:** malformed-Git status → **0 pass, 1 fail, 1 assertion** (`ENOENT` instead of `CT_ANCHOR_MISMATCH`); MCP explicit null → **0 pass, 1 fail, 3 assertions** (successful status instead of `CT_PAYLOAD_INVALID`). The proof-only retained-history test was immediately GREEN (**1 pass, 0 fail, 5 assertions**), confirming no production defect rather than manufacturing a false RED.
+- **GREEN:** the two corrected regressions passed independently at **1/0/2** and **1/0/4**; the retained-history proof remained **1/0/5**. Production changes are one deterministic non-CT error mapping in `core.mjs` and one undefined-only MCP default in `mcp.mjs`.
+- **TRIANGULATE:** P3-B focus passed **9 tests, 0 fail, 51 assertions**, including two retained MULTIPLEXED rows, one immutable conflict, zero ACTIVE claimants, matching ACTIVE Main/NONE lease, and successful activation.
+- **Final:** migration + identity + fail-closed and full `bun test` each passed **63 tests, 0 fail, 402 assertions**; syntax, shell, whitespace, exact Migration 003 bytes/checksum, no-`start`, and OFF guards passed.
+- **Workload:** P3-B is **341 implementation + 251 test = 592 implementation/test lines** and **627 total authored lines** including cumulative evidence/task bookkeeping; cumulative P3 implementation/test is **1,148 lines** (P3-A 556 + P3-B 592).
+- **Preservation:** Migration 003 remains 2457 bytes at `sha256:c382e9322a5934f1db3cb9685a345d8141a6263102ef9f027ca03396338a65b6`; schema-2/P2, activation digests/classification, eight legacy tools, constructor gating, and unrelated dirty-file hashes are unchanged; actual and legacy `ACTIVE`/`tower.db` remain absent.
+- **Rollback/next:** Revert only these correction hunks in `core.mjs`, `mcp.mjs`, `test/identity.test.mjs`, and this section. Rerun the P3-B gate; no commit, runtime mutation, review, Judgment Day, or P4+ work occurred.
+
+## P3-B maintainer-authorized test-only gate closure
+- **Scope:** Post-fix differential evidence closure only; production was already correct, so no RED was fabricated and no production/runtime file changed. Tasks `3.1`–`3.3` remain checked and `3.4` remains unchecked.
+- **Assertion:** The retained-history test independently JCS/SHA-256 recomputes the persisted activation precondition with explicit `multiplexed_claimant_bindings:2` and `claimant_conflicts:1`; focused result: **1 pass, 0 fail, 6 assertions**.
+- **Verification:** P3-B focus passed **9/0/52**; focused migration+identity+fail-closed and full `bun test` each passed **63/0/403**. Diff, syntax, shell, Migration 003 checksum, no-`start`, checksum, and OFF guards passed.
+- **Workload:** P3-B is **341 implementation + 262 test = 603 implementation/test lines** and **646 total authored lines**; cumulative P3 implementation/test is **1,159 lines** (P3-A 556 + P3-B 603), within the independent 800-line P3-B ceiling.
+- **Preservation:** `core.mjs` stayed `4efeb6445f1db869f7f5b2dc8d42f3e19930ce42e47865119795d86e28172b84`; `mcp.mjs` stayed `a06948422b8e8a42f7d1b1f6b666f17e38bf95574051fc3a627682f544445175`; actual/legacy `ACTIVE` and `tower.db` remain absent, and unrelated dirty-file hashes are unchanged.
+- **Rollback/next:** Revert only the differential assertion hunk in `test/identity.test.mjs` and this closure note; rerun the P3-B gate. No P4+, activation/runtime mutation, commit, push, PR, review, or Judgment Day occurred.
+
+---
+
+## Slice 3 Judgment Day terminal evidence
+
+- **Frozen target:** base HEAD `76e6cd2ffac97f734ee88d01ece1ecd93e059e18`; combined snapshot patch SHA-256 `8d3ddac740d1edbaa9194ba1ebad5e6cdc8718d924c2361705a7964b57dc130b`. P3-A Migration/Main and P3-B activation/status/MCP were separately budgeted over that same immutable snapshot. Both judge pairs verified manifest/target identity, and the parent rehash after judging was byte-identical.
+- **Findings:** `CT-JD-S3-A-JA-001`, `CT-JD-S3-B-JA-001`, and `CT-JD-S3-B-JA-002` remain unfixed CRITICAL suspects. `CT-JD-S3-B-W01` remains an unfixed WARNING. Judge B's WARNING independently corroborating the root cause of `CT-JD-S3-B-JA-002` is informational only and does not severe-confirm it.
+- **Merge:** confirmed severe **0**; suspect severe **3**; contradictions **0**; unique standalone warnings **1**, plus the warning-level corroboration recorded inside `CT-JD-S3-B-JA-002`; corrections **0/2**; re-judgments **0**. No correction or re-judgment occurred.
+- **Terminal decision:** APPROVED because no severe finding was independently confirmed as severe by both blind judges. Every suspect and warning remains unfixed.
+- **Verification:** frozen target rehash byte-identical; `bun test` **63 pass, 0 fail, 403 assertions**; focused migration+identity+fail-closed **63 pass, 0 fail, 403 assertions**. Diff, Node/shell syntax, exact Migration 003 2457-byte/checksum, no-start, MCP route, and OFF/runtime guards passed.
+- **Workload:** P3-A **556 implementation/test lines**; P3-B **603 implementation/test lines** and **646 total authored**, within its independent 800 ceiling; cumulative P3 implementation/test **1,159**.
+- **Preservation:** actual/legacy `ACTIVE` and `tower.db` absent; unrelated dirty files preserved.
+- **Ledger:** `evidence/judgment-day-slice-3-round-1.md`.
 
 **JUDGMENT: APPROVED ✅**

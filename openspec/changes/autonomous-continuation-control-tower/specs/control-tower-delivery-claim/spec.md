@@ -6,6 +6,8 @@
 
 Handoff state and delivery state MUST be separate persisted rows, with at most one live delivery and one live claim per generation. Argument-free `receive()` MUST peek without mutation, returning `{delivery:null}` or `{delivery:{delivery_id,id,state,generation,purpose}}`. `claim({request_identity,delivery_id,id,es,eg,purpose})` MUST atomically recheck ACTIVE identity and ON mode, require `es:"PUBLISHED"` for WORK or `es:"COMPLETION_ATTESTED"` for ATTESTATION_REDELIVERY, CAS delivery PENDING→CLAIMED, consume at most one budget unit, snapshot identity, and create one token/hash, returning the common handoff shape plus `{delivery_id,purpose,token}`. `attestCompletion` and `complete` MUST bind the live claim; `status` MUST never expose tokens.
 
+P4 owns `CT-R6-S1/S2/S4/S5/S6` and the handoff/delivery projection of `CT-R3-S5`. Normative `CT-R6-S3` stays in this capability but P5 owns its implementation/test with real attestation and committed-result persistence. P4 MUST NOT claim or simulate that completion race.
+
 #### Scenario: CT-R6-S1 Claim/receive race
 - GIVEN one pending delivery, eligible handoff, and one budget unit
 - WHEN receive and claim race

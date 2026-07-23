@@ -431,3 +431,292 @@ Required P2 verification is `bun test test/migration.test.mjs test/identity.test
 P2 may change only `core.mjs`, `mcp.mjs`, `test/identity.test.mjs`, the Migration 002/P1-FC additions in `test/migration.test.mjs`, and cumulative OpenSpec evidence. Host adapters, legacy functions/tool schemas, lifecycle/delivery tables, and runtime paths are out of scope.
 
 P2 rollback reverts Migration 002, continuation core/dispatcher routes, and P2 tests/evidence. It does not drop tables from any real database; schema-2 records remain inert with mode OFF. P1-FC remains as the forward-compatible fresh-install baseline. If P1-FC itself is rolled back, P2 is again blocked.
+
+---
+
+# P3 Design Correction: Main Binding and Explicit Activation
+
+## Decision summary
+
+P3 uses **Migration 003**. It adds only canonical Main-binding history and immutable activation history; it does not create lifecycle, delivery, recovery-proof, rollback-inventory, or polling state. `bootstrapAdmin` owns the exact schema-2→3 transition while continuation remains OFF. `bootstrapMain`, `activate`, and `status` join the internal constructor-capability dispatcher beside P2 `register` and `receive`; production MCP still advertises only the eight legacy tools until a P7–P9 adapter supplies trusted metadata.
+
+Completion scenarios `CT-R3-S1/S3/S4` and the attestation single-use completion race `CT-R6-S3` remain normative but move to P5, where handoff, attestation, claim, and committed-result persistence exist. P4 retains `CT-R6-S1/S2/S4/S5/S6`. `CT-R11-S4/S5` move to P6, where rollback inventory, termination receipts, and quiescence persistence are introduced. P3 deliberately provides only the Main identity and activation foundations those later transitions reference.
+
+## Migration 003: Main and activation persistence
+
+`core.mjs` owns immutable `MIGRATION_003_SQL`. The exact UTF-8 byte stream has LF line endings, one terminal LF, no leading/trailing blank line, byte length **2457**, and checksum **`sha256:c382e9322a5934f1db3cb9685a345d8141a6263102ef9f027ca03396338a65b6`**:
+
+```sql
+CREATE TABLE ct_main_binding (
+  main_binding_id TEXT PRIMARY KEY CHECK(length(main_binding_id) = 43),
+  anchor_id TEXT NOT NULL CHECK(length(anchor_id) = 43),
+  anchor_epoch INTEGER NOT NULL CHECK(anchor_epoch = 1),
+  config_digest TEXT NOT NULL CHECK(length(config_digest) = 71),
+  host_process_instance TEXT NOT NULL CHECK(length(host_process_instance) > 0),
+  plugin_instance TEXT NOT NULL CHECK(length(plugin_instance) > 0),
+  root_session_id TEXT NOT NULL CHECK(length(root_session_id) > 0),
+  mcp_process_instance TEXT NOT NULL CHECK(length(mcp_process_instance) = 43),
+  pid_start_marker TEXT NOT NULL CHECK(length(pid_start_marker) > 0),
+  binding_epoch INTEGER NOT NULL CHECK(binding_epoch > 0),
+  main_session_id TEXT NOT NULL CHECK(length(main_session_id) > 0),
+  binding_status TEXT NOT NULL CHECK(binding_status IN ('ACTIVE', 'RETIRED')),
+  identity_digest TEXT NOT NULL UNIQUE CHECK(length(identity_digest) = 71),
+  created_at TEXT NOT NULL CHECK(length(created_at) = 24),
+  ended_at TEXT,
+  CHECK(main_session_id = root_session_id),
+  CHECK((binding_status = 'ACTIVE' AND ended_at IS NULL) OR
+        (binding_status = 'RETIRED' AND ended_at IS NOT NULL)),
+  UNIQUE(anchor_id, binding_epoch)
+);
+CREATE UNIQUE INDEX ct_main_binding_one_active
+ON ct_main_binding(anchor_id)
+WHERE binding_status = 'ACTIVE';
+CREATE INDEX ct_main_binding_history
+ON ct_main_binding(anchor_id, binding_epoch, binding_status);
+CREATE TABLE ct_activation (
+  activation_epoch INTEGER PRIMARY KEY CHECK(activation_epoch > 0),
+  main_binding_id TEXT NOT NULL CHECK(length(main_binding_id) = 43),
+  main_binding_epoch INTEGER NOT NULL CHECK(main_binding_epoch > 0),
+  evidence_digest TEXT NOT NULL CHECK(length(evidence_digest) = 71),
+  precondition_digest TEXT NOT NULL CHECK(length(precondition_digest) = 71),
+  request_identity TEXT NOT NULL UNIQUE CHECK(length(request_identity) = 36),
+  request_digest TEXT NOT NULL CHECK(length(request_digest) = 71),
+  cas_digest TEXT NOT NULL CHECK(length(cas_digest) = 71),
+  activation_digest TEXT NOT NULL UNIQUE CHECK(length(activation_digest) = 71),
+  activated_at TEXT NOT NULL CHECK(length(activated_at) = 24),
+  UNIQUE(main_binding_id, activation_epoch)
+);
+CREATE TRIGGER ct_activation_no_update
+BEFORE UPDATE ON ct_activation
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_ACTIVATION');
+END;
+CREATE TRIGGER ct_activation_no_delete
+BEFORE DELETE ON ct_activation
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_ACTIVATION');
+END;
+```
+
+`MIGRATION_003_CHECKSUM` MUST be computed from the constant. `test/migration.test.mjs` owns an independent literal byte stream, byte-length assertion, pinned checksum, exact SQLite object SQL, atomic rollback, and legacy/P2 preservation. Neither request data nor configuration may supply a migration checksum.
+
+The exact schema-3 manifest is schema 2 plus tables `ct_main_binding` and `ct_activation`; indexes `ct_main_binding_one_active` and `ct_main_binding_history`; and triggers `ct_activation_no_update` and `ct_activation_no_delete`. It contains exactly migration rows 1, 2, and 3 with their computed checksums and no other `ct_*` object. Schema 2 remains a valid P2 manifest: P2 `register`/`receive` keep their existing behavior on schema 2, and accept schema 3 without changing identity semantics. P3 operations require schema 3. Every schema version preserves the four exact legacy objects and all legacy rows.
+
+### Schema-2→3 bootstrap transaction
+
+`bootstrapAdmin` adds the sole transition `{expected_schema_version:2,target_schema_version:3,expected_mode:"OFF"}` under operation/scope `bootstrapAdmin/schema:2->3`. Its request digest remains the SHA-256 of JCS:
+
+```text
+{request_identity,expected_anchor_id,expected_schema_version:2,
+ target_schema_version:3,expected_mode:"OFF"}
+```
+
+Its CAS digest is the SHA-256 of JCS:
+
+```text
+{expected_anchor_id,expected_schema_version:2,target_schema_version:3,
+ expected_mode:"OFF",derived_anchor_epoch:1,derived_config_digest,
+ expected_rollback_epoch:0,expected_lease_version:0,
+ expected_lease_status:"NONE",expected_main_binding_state:"ABSENT",
+ expected_activation_epoch:0}
+```
+
+After anchor/config validation and bounded `BEGIN IMMEDIATE`, order is exact: schema-2 manifest/checksums → OFF continuation state → singleton lease exactly `(rollback_epoch=0,lease_status='NONE',lease_version=0,owner=NULL,expires=NULL)` → absence of the committed target scope → request CAS → execute `MIGRATION_003_SQL` → update exactly one continuation-state row `schema_version 2→3` → insert migration row 3 → insert the idempotency response → reread anchor bytes and validate the exact schema-3 manifest/state/lease plus zero Main and activation rows → commit. Response is exactly `{anchor_id,schema_version:3,mode:"OFF",replayed}`.
+
+At schema 3, an exact committed tuple replays only while persisted mode is still OFF and schema/anchor/state remain valid. A changed tuple or new identity for the committed scope is `CT_IDEMPOTENCY_CONFLICT`. Wrong version/mode/anchor CAS is `CT_FENCE_MISMATCH`; manifest/checksum/DDL/seed/update-count/cross-row failure is `CT_SCHEMA_INVALID`; lock expiry is `CT_BUSY`. Any failure rolls back every Migration 003 object/row, the schema-version update, and the idempotency row. Schema-2 claimant/conflict/lease data and all legacy bytes remain unchanged.
+
+## Exact `main_binding_v1`
+
+### Trusted inputs and persisted identity
+
+`bootstrapMain` accepts exactly `{request_identity,expected_anchor_id,expected_binding_epoch}`. The UUID and expected values are idempotency/CAS inputs only; they grant no authority. Caller `Ctx`, actor, role, session, UID, path, branch, process, PID, epoch, or extra keys are `CT_PAYLOAD_INVALID`.
+
+Authority comes only from a single immutable `Ctx` snapshot created by the P2 constructor capability. Before Main evaluation it MUST match the anchor context exactly:
+
+```text
+effective_uid  == anchor.context.trusted_uid
+canonical_repo == anchor.context.canonical_repo
+ git_common_dir == anchor.context.git_common_dir
+worktree       == anchor.context.main_worktree
+branch         == anchor.context.branch
+```
+
+Malformed/ambiguous trusted metadata is `CT_SESSION_ISOLATION_UNPROVEN`; a well-formed non-canonical context is `CT_ADMIN_REQUIRED`. No request field can repair either error.
+
+The canonical digest input is:
+
+```text
+main_binding_v1 = {
+  kind:"main_binding_v1",version:1,
+  anchor_id,anchor_epoch:1,config_digest,
+  authority_context:{canonical_repo,git_common_dir,main_worktree,branch,trusted_uid},
+  identity:{host_process_instance,plugin_instance,root_session_id,
+            mcp_process_instance,pid_start_marker,binding_epoch,
+            main_session_id:root_session_id}
+}
+identity_digest = SHA-256(UTF8(JCS(main_binding_v1)))
+```
+
+The row persists every identity member, `main_session_id=root_session_id`, anchor/config binding, ACTIVE/RETIRED status, digest, and timestamps. Opaque host/plugin/root/session strings retain the P2 1–256 UTF-8-byte/NUL-free rules; MCP identity is canonical 32-byte base64url; PID marker is 1–128 bytes; epoch is a positive safe integer; digests and timestamps use the existing lowercase-SHA-256 and RFC3339-millisecond validators. Row validation recomputes `identity_digest` with the current safe anchor. Exactly one ACTIVE row per anchor is permitted.
+
+### Bootstrap digests and transition
+
+For target epoch `E+1`:
+
+```text
+request_digest = SHA-256(UTF8(JCS({
+  request_identity,expected_anchor_id,expected_binding_epoch:E
+})))
+target_identity_digest = SHA-256(UTF8(JCS(main_binding_v1(E+1))))
+cas_digest = SHA-256(UTF8(JCS({
+  expected_anchor_id,expected_binding_epoch:E,target_binding_epoch:E+1,
+  target_identity_digest,schema_version:3,mode:"OFF",
+  observed_rollback_epoch,observed_lease_version,
+  observed_lease_status:"NONE",observed_active_main_binding_id,
+  observed_active_main_binding_epoch
+})))
+scope_key = "main:" + anchor_id + ":epoch:" + decimal(E+1)
+```
+
+For first binding, the CAS values are exactly `observed_active_main_binding_id:null` and `observed_active_main_binding_epoch:0`. For same-root rebind they are exactly the sole ACTIVE incumbent ID and epoch E. No empty string, omitted value, inferred target ID, or caller value is accepted for either field.
+
+After safe anchor/config resolution, failure to acquire the bounded writer returns `CT_BUSY`. Once `BEGIN IMMEDIATE` is held, `bootstrapMain` uses this total order:
+
+1. Exact schema-3 manifest/migrations and structurally valid continuation/Main/lease rows; malformed rows or digest/history SQL drift → `CT_SCHEMA_INVALID`, while continuation anchor/config/secret mismatch → `CT_ANCHOR_MISMATCH`.
+2. Mode: `ROLLING_BACK` → `CT_ROLLBACK_IN_PROGRESS`; `ON` → `CT_FENCE_MISMATCH`; only `OFF` continues.
+3. OFF lease: `NONE` with null owner/expiry continues at any valid persisted rollback epoch/lease version; `ACTIVE` → `CT_ROLLBACK_LEASE_ACTIVE`; `EXPIRED` → `CT_FENCE_MISMATCH`; invalid status/owner/expiry combinations → `CT_SCHEMA_INVALID`.
+4. Exact request shape; malformed/extra/forbidden fields → `CT_PAYLOAD_INVALID`.
+5. Immutable canonical-Main `Ctx`; malformed trusted metadata → `CT_SESSION_ISOLATION_UNPROVEN`, well-formed non-canonical context → `CT_ADMIN_REQUIRED`.
+6. Committed request/scope idempotency; changed identity/tuple or a new identity for a committed epoch scope → `CT_IDEMPOTENCY_CONFLICT`.
+7. Main-row cardinality and expected epoch CAS; malformed rows → `CT_SCHEMA_INVALID`, well-formed conflicting/non-unique history → `CT_MAIN_BINDING_CONFLICT`, stale Ctx/request epoch or wrong `expected_anchor_id` → `CT_FENCE_MISMATCH`.
+8. Identity decision and commit.
+
+First binding requires no history, `Ctx.binding_epoch=0`, and expected epoch 0. A same-root OFF rebind requires one ACTIVE row at E, `Ctx.binding_epoch=E`, equal host/plugin/root/Main-session identity, and both a new MCP instance and new PID-start marker; it retires the incumbent and inserts E+1 ACTIVE atomically. A different host/plugin/root/Main session or duplicate process identity is `CT_MAIN_BINDING_CONFLICT` without a new row.
+
+The committed response is exactly `{main_binding_id,binding_epoch,state:"ACTIVE",replayed}`. Exact replay reconstructs the original CAS pre-state from the committed target and its immediate predecessor (or ABSENT/0), verifies the stored request/CAS/response plus target identity, and accepts only the same non-epoch trusted Ctx with `Ctx.binding_epoch` equal to E (lost-result retry) or E+1 (already-observed result). It returns the stored response with only `replayed:true` and performs no retire/insert. Changed identity/tuple or a new identity for the committed scope is `CT_IDEMPOTENCY_CONFLICT`. Main binding creates no claimant, delivery, activation, lease, or legacy mutation.
+
+### Main-gated predicate
+
+Every P3 Main-gated call revalidates the safe anchor and all Main rows. It requires exactly one ACTIVE row, exact canonical-Main `Ctx` context, equality of host/plugin/root/MCP/PID/Main-session fields, and `Ctx.binding_epoch=row.binding_epoch`. No ACTIVE row or a non-epoch identity mismatch is `CT_WORKFLOW_MAIN_REQUIRED`; duplicate/conflicting Main history is `CT_MAIN_BINDING_CONFLICT`; an otherwise matching stale epoch is `CT_FENCE_MISMATCH`. Request-shape failure precedes this predicate only after schema/mode validation; no authority error mutates state.
+
+## Explicit activation and read-only status
+
+### Activation state, digests, and quiescence
+
+`activate` accepts one plain object with exactly `{request_identity,expected_mode:"OFF",expected_binding_epoch,evidence_digest}`. Invalid UUID/epoch/mode, extra/forbidden keys, arrays, null, or foreign prototypes are `CT_PAYLOAD_INVALID`. Missing or non-canonical lowercase `sha256:` evidence is specifically `CT_ACTIVATION_EVIDENCE_REQUIRED`. `evidence_digest` is an opaque integrity reference supplied by authorized Main, not authority or Tower-side policy interpretation.
+
+The logical transition selector intentionally excludes `request_identity` and uses only request plus persisted authority/lease fields:
+
+```text
+activation_transition_v1 = {
+  kind:"activation_transition_v1",version:1,
+  anchor_id,config_digest,expected_mode:"OFF",expected_binding_epoch,
+  main_binding_id,main_identity_digest,evidence_digest,
+  observed_rollback_epoch,observed_lease_version
+}
+transition_digest = SHA-256(UTF8(JCS(activation_transition_v1)))
+operation = "activate"
+scope_key = "activation:" + transition_digest
+request_digest = SHA-256(UTF8(JCS({
+  request_identity,expected_mode:"OFF",expected_binding_epoch,evidence_digest
+})))
+```
+
+Within the same writer snapshot P3 derives:
+
+```text
+activation_precondition_v1 = {
+  kind:"activation_precondition_v1",version:1,
+  schema_version:3,mode:"OFF",anchor_id,config_digest,
+  rollback_epoch:observed_rollback_epoch,
+  lease_version:observed_lease_version,lease_status:"NONE",
+  main_binding_id,main_binding_epoch,main_identity_digest,
+  prior_activation_epoch,
+  active_claimant_bindings:0,
+  multiplexed_claimant_bindings:<observed non-live count>,
+  claimant_conflicts:<observed immutable count>,
+  delivery_plane:"ABSENT_SCHEMA_3",
+  polling_plane:"UNAVAILABLE_BEFORE_P7"
+}
+precondition_digest = SHA-256(UTF8(JCS(activation_precondition_v1)))
+target_activation_epoch = prior_activation_epoch + 1
+cas_digest = SHA-256(UTF8(JCS({
+  transition_digest,expected_mode:"OFF",expected_binding_epoch,
+  main_binding_id,main_identity_digest,evidence_digest,
+  observed_rollback_epoch,observed_lease_version,
+  observed_lease_status:"NONE",prior_activation_epoch,
+  target_activation_epoch,precondition_digest
+})))
+```
+
+P3 quiescence is intentionally pre-delivery and exact: lease NONE, one matching ACTIVE Main, zero ACTIVE claimant rows, and the exact schema-3 manifest proving no lifecycle/delivery/polling objects exist. RETIRED/MULTIPLEXED claimant rows, immutable claimant-conflict history, retired Main rows, and prior activation rows are retained non-live audit data; their observed counts are bound into the precondition rather than required to be zero. Failure is `CT_NOT_QUIESCENT`; it is not a claim that P3 implements rollback quiescence.
+
+`prior_activation_epoch` is the maximum immutable activation epoch, or 0 when none exists; committed `activation_epoch` is exactly `prior_activation_epoch+1`. `activation_digest` is SHA-256 over JCS `{kind:"activation_v1",version:1,activation_epoch,main_binding_id,main_binding_epoch,evidence_digest,precondition_digest,request_identity,request_digest,cas_digest,activated_at}`. Success inserts one immutable activation row, inserts idempotency at operation/scope above, updates exactly one continuation-state row OFF→ON, rereads all three, and returns only `{mode:"ON",activation_epoch,replayed}`. It creates no claimant, handoff, delivery, claim, wake, recovery, or legacy row.
+
+### Total activation lookup and classification
+
+After safe anchor/config resolution, failure to acquire the bounded writer is `CT_BUSY`. Under `BEGIN IMMEDIATE`, validate exact schema-3/state/lease/Main/activation/idempotency structure first; malformed persisted rows, missing operation/scope pairs, or digest/response mismatches are `CT_SCHEMA_INVALID`, and continuation anchor/config drift is `CT_ANCHOR_MISMATCH`. `ROLLING_BACK` then returns `CT_ROLLBACK_IN_PROGRESS`. OFF and ON both require lease `NONE` with null owner/expiry; any ACTIVE/EXPIRED or cross-field lease state in those modes is `CT_SCHEMA_INVALID`. OFF and ON use these deterministic lanes after exact payload/evidence and trusted Main validation:
+
+**OFF lane**
+
+1. Derive incoming transition/scope/request/CAS digests from the current persisted Main, rollback epoch, lease version, and precondition.
+2. Lookup `activate` by `request_identity` and by exact `scope_key`. If either valid committed row exists, return `CT_IDEMPOTENCY_CONFLICT`; an old ON result never replays while current mode is OFF. If both lookups disagree structurally, return `CT_SCHEMA_INVALID`.
+3. Require `expected_binding_epoch` and trusted `Ctx.binding_epoch` to equal the ACTIVE Main epoch; mismatch is `CT_FENCE_MISMATCH`.
+4. Evaluate evidence/quiescence and commit.
+
+**ON lane**
+
+1. Require exactly one latest activation row, one matching `activate` idempotency row at its recomputed transition scope, exact stored request/CAS/response, and an ACTIVE Main/lease matching that row. Any mismatch is `CT_SCHEMA_INVALID` or, for well-formed conflicting Main cardinality, `CT_MAIN_BINDING_CONFLICT`.
+2. Recompute the incoming transition/scope and request digest from the incoming request plus current persisted Main/lease. Lookup `activate` by incoming `request_identity` and by incoming scope.
+3. **Exact replay:** identity lookup is the current committed row, incoming scope is its scope, request digest matches, and CAS recomputed from the immutable stored `precondition_digest`, `activation_epoch-1`, and `activation_epoch` matches. Return the stored response with only `replayed:true`.
+4. **Stale/changed request:** the request identity names any activation row but request/scope/CAS is not the exact current tuple, or the incoming scope names a prior activation; return `CT_IDEMPOTENCY_CONFLICT`.
+5. **Same logical transition conflict:** no identity row exists but incoming scope equals the current committed scope (therefore only `request_identity` differs); return `CT_IDEMPOTENCY_CONFLICT`.
+6. **Unrelated ON request:** neither identity nor scope is committed and incoming scope differs from the current transition; return `CT_FENCE_MISMATCH`.
+
+These cases are exhaustive because operation/request identity is unique, operation/scope is primary-keyed, and every valid ON state has exactly one latest activation/idempotency pair. No ON classification inserts or updates a row.
+
+### P3 `status()` shape
+
+P3 `status(request?)` accepts only omitted `request` (`undefined`) or a plain `Object.prototype` object with zero own keys. Null, arrays, non-empty objects, and foreign/null prototypes return `CT_PAYLOAD_INVALID` before filesystem or database access. Status is read-only and valid in OFF, ON, or ROLLING_BACK at exact schema 3.
+
+Its total validation/error order is:
+
+1. Request shape → `CT_PAYLOAD_INVALID` as above.
+2. Safe anchor/context: missing anchor → `CT_ANCHOR_REQUIRED`; unsafe/malformed anchor, Git/context mismatch, or anchor/config drift → `CT_ANCHOR_MISMATCH`.
+3. Database and exact schema-3 migration/object manifest → `CT_SCHEMA_INVALID` on missing DB, wrong version/checksum, unknown/missing object, or SQL mismatch.
+4. Singleton continuation state, lease row, Main rows, activation rows, and their idempotency rows: malformed field/digest/timestamp/status, wrong anchor/config reference, or missing/mismatched activation/idempotency pair → `CT_SCHEMA_INVALID`.
+5. Mode/lease coherence: OFF or ON requires lease `NONE` with null owner/expiry; ROLLING_BACK requires valid `ACTIVE|EXPIRED` lease with non-null owner/expiry. Any other combination → `CT_SCHEMA_INVALID`.
+6. Main cross-row coherence: more than one ACTIVE row, ACTIVE not at the maximum binding epoch, contradictory well-formed history, ON without exactly one ACTIVE Main, or ROLLING_BACK lease owner not equal to the sole ACTIVE Main → `CT_MAIN_BINDING_CONFLICT`. OFF may report zero or one ACTIVE Main.
+7. ON activation coherence: latest immutable activation must reference the sole ACTIVE Main/epoch and exact current activation idempotency row; mismatch → `CT_SCHEMA_INVALID`.
+8. Read lock still busy after the bounded wait → `CT_BUSY`; otherwise return the response.
+
+The exact response is:
+
+```text
+{
+  mode,schema_version:3,rollback_epoch,lease_status,
+  main_binding_status:"ABSENT"|"ACTIVE",
+  live_counts:{claims:0,deliveries:0,workers:<ACTIVE claimant count>},
+  pending_counts:{work:0,attestation:0}
+}
+```
+
+The zero claim/delivery/pending values are structural schema-3 facts, not fabricated lifecycle evidence. Later migrations may populate the same keys without changing shape. Status never returns IDs, identity tuples, evidence digests, tokens, anchor secret, or idempotency data, and never repairs state.
+
+## Dispatcher and exposure boundary
+
+P3's internal supported set is exactly `bootstrapMain`, `activate`, `status`, `register`, and `receive`. `provisionMainAuthorityAnchor` and `bootstrapAdmin` remain CLI/admin-only. A capability-backed continuation tool surface may list those five runtime operations with their exact schemas; without both trusted-metadata and process-identity constructor capabilities, `CONTINUATION_TOOLS` remains empty and production `mcp.mjs` lists only the eight legacy `tower_*` tools. P4–P6 operation names, including `complete`, `beginRollback`, `rebindMain`, and `finishRollback`, remain unlisted and direct dispatch returns `CT_PAYLOAD_INVALID` before database access. `start` remains absent in every mode.
+
+## Deferred scenario ownership without weakened requirements
+
+- `CT-R3-S1/S3/S4` and `CT-R6-S3` are P5-owned because only P5 has completion attestation, claim/token, and committed-result rows. P4 owns `CT-R6-S1/S2/S4/S5/S6` only. P3/P4 MUST NOT seed fake completion state or claim the single-use completion race. P5 isolated fixtures begin with exact P4 delivery/claim state plus an unused/missing/mismatched P5 attestation as each scenario requires.
+- `CT-R3-S5` is cumulative: P3 proves only administrative/binding/status shapes; P4 proves handoff/delivery; P5 proves attestation/completion. The stable requirement is complete only after P5.
+- `CT-R11-S3` is cumulative: P3 owns status/bootstrap/activation effects; P6 owns beginRollback/rebind/finish effects.
+- `CT-R11-S4/S5` are P6-owned. Migration 003 intentionally has no termination-receipt or rollback-quiescence table. P3 persists the old/new Main identity digest and immutable activation history that P6 proof rows must reference. Before P6, rollback/rebind/finish are unavailable and therefore cannot accept request-supplied proof.
+- P6 must introduce its own byte-checksummed additive migration before RED. Its isolated preconditions must persist `termination_receipt_v1` against the exact old `main_binding_id`/identity digest and a `quiescence_v1` snapshot against rollback epoch/lease version, live/pending counts, frozen inventory, and a trusted polling witness. A pre-P7 fixture may use only the explicit server-owned witness `polling_plane:"UNAVAILABLE_BEFORE_P7"`; request booleans or digests cannot prove termination/quiescence.
+
+## P3 rollback, preservation, and workload
+
+Migration failure rolls back to byte-identical schema 2. After a committed schema-3 migration, no automatic down-migration, `DROP`, table rebuild, row copy, or checksum alias exists. Reverting P3 code leaves schema-3 continuation data inert and rejected as `CT_SCHEMA_INVALID` by older code while the legacy queue remains usable; actual runtime activation is outside this work unit. P2 schema-2 fixtures and behavior remain supported, and schema-3 `register`/`receive` reuse the unchanged P2 identity predicate.
+
+P3 implementation/test scope is `core.mjs`, `mcp.mjs`, `test/migration.test.mjs`, and `test/identity.test.mjs`, plus cumulative OpenSpec evidence. Forecast: 650–800 authored implementation/test changed lines. Before production edits, any forecast above 800 MUST split into independently green chained boundaries: P3-A is Migration 003 + `bootstrapMain` (`CT-R8-S5` bootstrap, `CT-R10-S1..S5`); P3-B is `activate` + `status` + capability-gated MCP (P3 projections of `CT-R3-S2/S5`, `CT-R10-S6`, `CT-R11-S3`). No lifecycle, delivery, recovery, polling, adapter, publication, runtime, commit, push, or PR work belongs to P3.

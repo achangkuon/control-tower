@@ -177,6 +177,57 @@ CREATE TABLE ct_rollback_lease (
 );
 `
 export const MIGRATION_002_CHECKSUM = sha256(Buffer.from(MIGRATION_002_SQL))
+export const MIGRATION_003_SQL = `CREATE TABLE ct_main_binding (
+  main_binding_id TEXT PRIMARY KEY CHECK(length(main_binding_id) = 43),
+  anchor_id TEXT NOT NULL CHECK(length(anchor_id) = 43),
+  anchor_epoch INTEGER NOT NULL CHECK(anchor_epoch = 1),
+  config_digest TEXT NOT NULL CHECK(length(config_digest) = 71),
+  host_process_instance TEXT NOT NULL CHECK(length(host_process_instance) > 0),
+  plugin_instance TEXT NOT NULL CHECK(length(plugin_instance) > 0),
+  root_session_id TEXT NOT NULL CHECK(length(root_session_id) > 0),
+  mcp_process_instance TEXT NOT NULL CHECK(length(mcp_process_instance) = 43),
+  pid_start_marker TEXT NOT NULL CHECK(length(pid_start_marker) > 0),
+  binding_epoch INTEGER NOT NULL CHECK(binding_epoch > 0),
+  main_session_id TEXT NOT NULL CHECK(length(main_session_id) > 0),
+  binding_status TEXT NOT NULL CHECK(binding_status IN ('ACTIVE', 'RETIRED')),
+  identity_digest TEXT NOT NULL UNIQUE CHECK(length(identity_digest) = 71),
+  created_at TEXT NOT NULL CHECK(length(created_at) = 24),
+  ended_at TEXT,
+  CHECK(main_session_id = root_session_id),
+  CHECK((binding_status = 'ACTIVE' AND ended_at IS NULL) OR
+        (binding_status = 'RETIRED' AND ended_at IS NOT NULL)),
+  UNIQUE(anchor_id, binding_epoch)
+);
+CREATE UNIQUE INDEX ct_main_binding_one_active
+ON ct_main_binding(anchor_id)
+WHERE binding_status = 'ACTIVE';
+CREATE INDEX ct_main_binding_history
+ON ct_main_binding(anchor_id, binding_epoch, binding_status);
+CREATE TABLE ct_activation (
+  activation_epoch INTEGER PRIMARY KEY CHECK(activation_epoch > 0),
+  main_binding_id TEXT NOT NULL CHECK(length(main_binding_id) = 43),
+  main_binding_epoch INTEGER NOT NULL CHECK(main_binding_epoch > 0),
+  evidence_digest TEXT NOT NULL CHECK(length(evidence_digest) = 71),
+  precondition_digest TEXT NOT NULL CHECK(length(precondition_digest) = 71),
+  request_identity TEXT NOT NULL UNIQUE CHECK(length(request_identity) = 36),
+  request_digest TEXT NOT NULL CHECK(length(request_digest) = 71),
+  cas_digest TEXT NOT NULL CHECK(length(cas_digest) = 71),
+  activation_digest TEXT NOT NULL UNIQUE CHECK(length(activation_digest) = 71),
+  activated_at TEXT NOT NULL CHECK(length(activated_at) = 24),
+  UNIQUE(main_binding_id, activation_epoch)
+);
+CREATE TRIGGER ct_activation_no_update
+BEFORE UPDATE ON ct_activation
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_ACTIVATION');
+END;
+CREATE TRIGGER ct_activation_no_delete
+BEFORE DELETE ON ct_activation
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_ACTIVATION');
+END;
+`
+export const MIGRATION_003_CHECKSUM = sha256(Buffer.from(MIGRATION_003_SQL))
 const MANIFEST_SQL = `SELECT type, name, tbl_name, sql
 FROM sqlite_master
 WHERE name IN ('agent','message','message_pending','lock',
@@ -200,9 +251,11 @@ const schemaObjects = (sql) => {
 }
 const V1_OBJECTS = schemaObjects(MIGRATION_001_SQL)
 const V2_OBJECTS = new Map([...V1_OBJECTS, ...schemaObjects(MIGRATION_002_SQL)])
+const V3_OBJECTS = new Map([...V2_OBJECTS, ...schemaObjects(MIGRATION_003_SQL)])
 const SCHEMA_MANIFESTS = new Map([
   [1, { objects: V1_OBJECTS, migrations: new Map([[1, MIGRATION_001_CHECKSUM]]) }],
   [2, { objects: V2_OBJECTS, migrations: new Map([[1, MIGRATION_001_CHECKSUM], [2, MIGRATION_002_CHECKSUM]]) }],
+  [3, { objects: V3_OBJECTS, migrations: new Map([[1, MIGRATION_001_CHECKSUM], [2, MIGRATION_002_CHECKSUM], [3, MIGRATION_003_CHECKSUM]]) }],
 ])
 
 export const deriveCanonicalMainContext = (cwd) => {
@@ -347,25 +400,27 @@ export const bootstrapAdmin = (request, cwd = process.cwd()) => {
   let context, authority
   try { context = deriveCanonicalMainContext(cwd); authority = readAnchor(context) }
   catch (error) { throw error.code ? error : ctError("CT_ANCHOR_MISMATCH", error) }
-  if (!uuid.test(request?.request_identity ?? "") || request.expected_mode !== "OFF" || ![1, 2].includes(request.target_schema_version)) throw ctError("CT_SCHEMA_INVALID")
+  if (!uuid.test(request?.request_identity ?? "") || request.expected_mode !== "OFF" || ![1, 2, 3].includes(request.target_schema_version)) throw ctError("CT_SCHEMA_INVALID")
   const dbPath = join(authority.root, "tower.db")
   if (!existsSync(dbPath)) throw ctError("CT_SCHEMA_INVALID")
   const db = new Database(dbPath); db.run("PRAGMA busy_timeout = 250")
   const target = request.target_schema_version
-  const scope = target === 1 ? "admin-bootstrap" : "schema:1->2"
+  const scope = target === 1 ? "admin-bootstrap" : `schema:${target - 1}->${target}`
   const requestValue = { request_identity: request.request_identity, expected_anchor_id: request.expected_anchor_id, expected_schema_version: request.expected_schema_version, target_schema_version: target, expected_mode: "OFF" }
   const request_digest = requestDigest(requestValue)
   const casValue = { expected_anchor_id: request.expected_anchor_id, expected_schema_version: request.expected_schema_version, target_schema_version: target, expected_mode: "OFF", derived_anchor_epoch: 1, derived_config_digest: authority.anchor.config_digest }
-  if (target === 2) Object.assign(casValue, { expected_rollback_epoch: 0, expected_lease_version: 0, expected_lease_status: "NONE" })
+  if (target >= 2) Object.assign(casValue, { expected_rollback_epoch: 0, expected_lease_version: 0, expected_lease_status: "NONE" })
+  if (target === 3) Object.assign(casValue, { expected_main_binding_state: "ABSENT", expected_activation_epoch: 0 })
   const cas_digest = requestDigest(casValue)
   try {
-    const apply = db.transaction(() => {
+    return db.transaction(() => {
       const version = inspectSchema(db)
       if (version === target) {
         const row = db.query("SELECT * FROM ct_idempotency WHERE operation='bootstrapAdmin' AND scope_key=?").get(scope)
         if (!row || row.request_identity !== request.request_identity || row.request_digest !== request_digest || row.cas_digest !== cas_digest) throw ctError("CT_IDEMPOTENCY_CONFLICT")
         validateContinuationState(db, authority, target)
-        if (target === 2) validateLease(db)
+        if (target >= 2) validateLease(db)
+        if (target === 3) validateSchema3Persistence(db, authority)
         return { ...JSON.parse(row.response_json), replayed: true }
       }
       if (target === 1) {
@@ -373,28 +428,38 @@ export const bootstrapAdmin = (request, cwd = process.cwd()) => {
         if (request.expected_anchor_id !== authority.anchor.anchor_id || request.expected_schema_version !== 0) throw ctError("CT_FENCE_MISMATCH")
         const response = { anchor_id: authority.anchor.anchor_id, schema_version: 1, mode: "OFF", replayed: false }
         db.run(MIGRATION_001_SQL)
-        const applied = new Date().toISOString()
+        const applied = now()
         db.run("INSERT INTO ct_schema_migration VALUES (1,?,?)", [MIGRATION_001_CHECKSUM, applied])
         db.run("INSERT INTO ct_continuation_state VALUES (1,?,?,?,?,1,'OFF')", [authority.anchor.anchor_id, 1, sha256(Buffer.from(authority.anchor.anchor_secret, "base64url")), authority.anchor.config_digest])
         db.run("INSERT INTO ct_idempotency VALUES ('bootstrapAdmin','admin-bootstrap',?,?,?,?,?)", [request.request_identity, request_digest, cas_digest, jcs(response), applied])
         assertAdminCommit(db, authority, 1)
         return response
       }
-      if (version !== 1) throw ctError("CT_SCHEMA_INVALID")
+      if (version !== target - 1) throw ctError("CT_SCHEMA_INVALID")
+      if (target === 3) {
+        validateContinuationState(db, authority, version)
+        const lease = validateLease(db)
+        if (lease.rollback_epoch !== 0 || lease.lease_status !== "NONE" || lease.lease_version !== 0) throw ctError("CT_FENCE_MISMATCH")
+      }
       if (db.query("SELECT 1 FROM ct_idempotency WHERE operation='bootstrapAdmin' AND scope_key=?").get(scope)) throw ctError("CT_IDEMPOTENCY_CONFLICT")
-      validateContinuationState(db, authority, 1)
-      if (request.expected_anchor_id !== authority.anchor.anchor_id || request.expected_schema_version !== 1) throw ctError("CT_FENCE_MISMATCH")
-      db.run(MIGRATION_002_SQL)
-      db.run("INSERT INTO ct_rollback_lease VALUES (1,0,'NONE',0,NULL,NULL)")
-      if (db.run("UPDATE ct_continuation_state SET schema_version=2 WHERE id=1 AND schema_version=1").changes !== 1) throw ctError("CT_SCHEMA_INVALID")
-      const applied = new Date().toISOString()
-      db.run("INSERT INTO ct_schema_migration VALUES (2,?,?)", [MIGRATION_002_CHECKSUM, applied])
-      const response = { anchor_id: authority.anchor.anchor_id, schema_version: 2, mode: "OFF", replayed: false }
+      if (target !== 3) validateContinuationState(db, authority, version)
+      if (request.expected_anchor_id !== authority.anchor.anchor_id || request.expected_schema_version !== version) throw ctError("CT_FENCE_MISMATCH")
+      if (target === 2) {
+        db.run(MIGRATION_002_SQL)
+        db.run("INSERT INTO ct_rollback_lease VALUES (1,0,'NONE',0,NULL,NULL)")
+      } else db.run(MIGRATION_003_SQL)
+      if (db.run("UPDATE ct_continuation_state SET schema_version=? WHERE id=1 AND schema_version=?", [target, version]).changes !== 1) throw ctError("CT_SCHEMA_INVALID")
+      const applied = now()
+      db.run("INSERT INTO ct_schema_migration VALUES (?,?,?)", [target, target === 2 ? MIGRATION_002_CHECKSUM : MIGRATION_003_CHECKSUM, applied])
+      const response = { anchor_id: authority.anchor.anchor_id, schema_version: target, mode: "OFF", replayed: false }
       db.run("INSERT INTO ct_idempotency VALUES ('bootstrapAdmin',?,?,?,?,?,?)", [scope, request.request_identity, request_digest, cas_digest, jcs(response), applied])
-      assertAdminCommit(db, authority, 2); validateLease(db)
+      assertAdminCommit(db, authority, target); validateLease(db)
+      if (target === 3) {
+        const persisted = validateSchema3Persistence(db, authority)
+        if (persisted.rows.length !== 0) throw ctError("CT_SCHEMA_INVALID")
+      }
       return response
-    })
-    return apply.immediate()
+    }).immediate()
   } catch (error) {
     if (error.code?.startsWith("CT_")) throw error
     if (busy(error)) throw ctError("CT_BUSY", error)
@@ -434,7 +499,7 @@ const continuationAuthority = (cwd) => {
   try {
     const canonical = deriveCanonicalMainContext(cwd)
     return { authority: readAnchor(canonical), cwd }
-  } catch (error) { throw error.code ? error : ctError("CT_ANCHOR_MISMATCH", error) }
+  } catch (error) { throw error.code?.startsWith("CT_") ? error : ctError("CT_ANCHOR_MISMATCH", error) }
 }
 const continuationHandle = (cwd, payloadInvalid = false) => {
   const resolved = continuationAuthority(cwd)
@@ -444,8 +509,9 @@ const continuationHandle = (cwd, payloadInvalid = false) => {
   return { ...resolved, db, payloadInvalid }
 }
 const gateContinuation = ({ db, authority }) => {
-  if (inspectSchema(db) !== 2) throw ctError("CT_SCHEMA_INVALID")
-  const state = continuationState(db, authority, 2)
+  const version = inspectSchema(db)
+  if (![2, 3].includes(version)) throw ctError("CT_SCHEMA_INVALID")
+  const state = continuationState(db, authority, version)
   const lease = validateLease(db)
   if (state.mode === "OFF") throw ctError("CT_CONTINUATION_OFF")
   if (state.mode === "ROLLING_BACK") throw ctError("CT_ROLLBACK_IN_PROGRESS")
@@ -477,15 +543,306 @@ const createCtxFactory = ({ trustedMetadata, processIdentity, cwd, authority }, 
   return freezeCtx({ ...derived, ...copiedHost, ...copiedProcess })
 }
 
+const mainIdentityFields = ["host_process_instance", "plugin_instance", "root_session_id", "mcp_process_instance", "pid_start_marker"]
+const mainBindingValue = (authority, identity, binding_epoch) => ({
+  kind: "main_binding_v1", version: 1,
+  anchor_id: authority.anchor.anchor_id, anchor_epoch: 1, config_digest: authority.anchor.config_digest,
+  authority_context: authority.anchor.context,
+  identity: { ...Object.fromEntries(mainIdentityFields.map((field) => [field, identity[field]])), binding_epoch, main_session_id: identity.root_session_id },
+})
+const mainCasValue = (authority, expectedEpoch, targetDigest, lease, incumbent) => ({
+  expected_anchor_id: authority.anchor.anchor_id, expected_binding_epoch: expectedEpoch, target_binding_epoch: expectedEpoch + 1,
+  target_identity_digest: targetDigest, schema_version: 3, mode: "OFF",
+  observed_rollback_epoch: lease.rollback_epoch, observed_lease_version: lease.lease_version, observed_lease_status: "NONE",
+  observed_active_main_binding_id: incumbent?.main_binding_id ?? null,
+  observed_active_main_binding_epoch: incumbent?.binding_epoch ?? 0,
+})
+const assertMainBinding = (row, authority) => {
+  if (!row || !isBase64url32(row.main_binding_id) || row.anchor_id !== authority.anchor.anchor_id || row.anchor_epoch !== 1 || row.config_digest !== authority.anchor.config_digest ||
+      !mainIdentityFields.slice(0, 3).every((field) => opaque(row[field])) || !isBase64url32(row.mcp_process_instance) || !opaque(row.pid_start_marker, 128) ||
+      !safeEpoch(row.binding_epoch) || row.binding_epoch === 0 || row.main_session_id !== row.root_session_id || !["ACTIVE", "RETIRED"].includes(row.binding_status) ||
+      !/^sha256:[0-9a-f]{64}$/.test(row.identity_digest) || !rfc3339Milliseconds.test(row.created_at) ||
+      (row.binding_status === "ACTIVE" ? row.ended_at !== null : !rfc3339Milliseconds.test(row.ended_at ?? ""))) throw ctError("CT_SCHEMA_INVALID")
+  if (row.identity_digest !== requestDigest(mainBindingValue(authority, row, row.binding_epoch))) throw ctError("CT_SCHEMA_INVALID")
+  return row
+}
+const readMainRows = (db, authority) => db.query("SELECT * FROM ct_main_binding ORDER BY binding_epoch").all().map((row) => assertMainBinding(row, authority))
+const expectedMainCommit = (authority, rows, target, requestIdentity, lease) => {
+  const expectedEpoch = target.binding_epoch - 1
+  const predecessor = expectedEpoch === 0 ? null : rows.find(({ binding_epoch }) => binding_epoch === expectedEpoch)
+  if (expectedEpoch > 0 && !predecessor) throw ctError("CT_SCHEMA_INVALID")
+  const request = { request_identity: requestIdentity, expected_anchor_id: authority.anchor.anchor_id, expected_binding_epoch: expectedEpoch }
+  const response = { main_binding_id: target.main_binding_id, binding_epoch: target.binding_epoch, state: "ACTIVE", replayed: false }
+  return {
+    scope_key: `main:${authority.anchor.anchor_id}:epoch:${target.binding_epoch}`,
+    request_digest: requestDigest(request),
+    cas_digest: requestDigest(mainCasValue(authority, expectedEpoch, target.identity_digest, lease, predecessor)),
+    response_json: jcs(response), response,
+  }
+}
+const sha256Digest = /^sha256:[0-9a-f]{64}$/
+const activationTransition = (authority, main, evidence, lease) => ({
+  kind: "activation_transition_v1", version: 1, anchor_id: authority.anchor.anchor_id,
+  config_digest: authority.anchor.config_digest, expected_mode: "OFF", expected_binding_epoch: main.binding_epoch,
+  main_binding_id: main.main_binding_id, main_identity_digest: main.identity_digest, evidence_digest: evidence,
+  observed_rollback_epoch: lease.rollback_epoch, observed_lease_version: lease.lease_version,
+})
+const activationCas = (transitionDigest, main, evidence, lease, prior, target, preconditionDigest) => ({
+  transition_digest: transitionDigest, expected_mode: "OFF", expected_binding_epoch: main.binding_epoch,
+  main_binding_id: main.main_binding_id, main_identity_digest: main.identity_digest, evidence_digest: evidence,
+  observed_rollback_epoch: lease.rollback_epoch, observed_lease_version: lease.lease_version,
+  observed_lease_status: "NONE", prior_activation_epoch: prior, target_activation_epoch: target,
+  precondition_digest: preconditionDigest,
+})
+const activationValue = (row) => ({
+  kind: "activation_v1", version: 1, activation_epoch: row.activation_epoch,
+  main_binding_id: row.main_binding_id, main_binding_epoch: row.main_binding_epoch,
+  evidence_digest: row.evidence_digest, precondition_digest: row.precondition_digest,
+  request_identity: row.request_identity, request_digest: row.request_digest, cas_digest: row.cas_digest,
+  activated_at: row.activated_at,
+})
+const assertActivation = (row) => {
+  if (!row || !safeEpoch(row.activation_epoch) || row.activation_epoch === 0 || !isBase64url32(row.main_binding_id) ||
+      !safeEpoch(row.main_binding_epoch) || row.main_binding_epoch === 0 || ![row.evidence_digest, row.precondition_digest, row.request_digest, row.cas_digest, row.activation_digest].every((value) => sha256Digest.test(value ?? "")) ||
+      !uuid.test(row.request_identity ?? "") || !rfc3339Milliseconds.test(row.activated_at ?? "") ||
+      row.activation_digest !== requestDigest(activationValue(row))) throw ctError("CT_SCHEMA_INVALID")
+  return row
+}
+function validateSchema3Persistence(db, authority) {
+  const rows = readMainRows(db, authority), lease = validateLease(db)
+  const mainCommits = db.query("SELECT * FROM ct_idempotency WHERE operation='bootstrapMain' ORDER BY scope_key").all()
+  if (mainCommits.length !== rows.length) throw ctError("CT_SCHEMA_INVALID")
+  for (const row of mainCommits) {
+    if (!uuid.test(row.request_identity ?? "") || !rfc3339Milliseconds.test(row.committed_at ?? "")) throw ctError("CT_SCHEMA_INVALID")
+    let response
+    try { response = JSON.parse(row.response_json) } catch { throw ctError("CT_SCHEMA_INVALID") }
+    const target = rows.find(({ main_binding_id }) => main_binding_id === response.main_binding_id)
+    if (!target) throw ctError("CT_SCHEMA_INVALID")
+    const expected = expectedMainCommit(authority, rows, target, row.request_identity, lease)
+    const casValid = lease.lease_status === "NONE" ? row.cas_digest === expected.cas_digest : sha256Digest.test(row.cas_digest ?? "")
+    if (row.scope_key !== expected.scope_key || row.request_digest !== expected.request_digest || !casValid || row.response_json !== expected.response_json) throw ctError("CT_SCHEMA_INVALID")
+  }
+  const activations = db.query("SELECT * FROM ct_activation ORDER BY activation_epoch").all().map(assertActivation)
+  const activationCommits = db.query("SELECT * FROM ct_idempotency WHERE operation='activate' ORDER BY scope_key").all()
+  if (activations.length !== activationCommits.length) throw ctError("CT_SCHEMA_INVALID")
+  for (const [index, activation] of activations.entries()) {
+    if (activation.activation_epoch !== index + 1) throw ctError("CT_SCHEMA_INVALID")
+    const main = rows.find(({ main_binding_id, binding_epoch }) => main_binding_id === activation.main_binding_id && binding_epoch === activation.main_binding_epoch)
+    if (!main) throw ctError("CT_SCHEMA_INVALID")
+    const expectedRequest = { request_identity: activation.request_identity, expected_mode: "OFF", expected_binding_epoch: main.binding_epoch, evidence_digest: activation.evidence_digest }
+    const response = { mode: "ON", activation_epoch: activation.activation_epoch, replayed: false }
+    const committed = activationCommits.find(({ request_identity }) => request_identity === activation.request_identity)
+    const transitionDigest = requestDigest(activationTransition(authority, main, activation.evidence_digest, lease))
+    const exactCas = requestDigest(activationCas(transitionDigest, main, activation.evidence_digest, lease, activation.activation_epoch - 1, activation.activation_epoch, activation.precondition_digest))
+    const scopeValid = lease.lease_status === "NONE" ? committed?.scope_key === `activation:${transitionDigest}` : /^activation:sha256:[0-9a-f]{64}$/.test(committed?.scope_key ?? "")
+    const casValid = lease.lease_status === "NONE" ? committed?.cas_digest === exactCas : committed?.cas_digest === activation.cas_digest
+    if (!committed || !scopeValid || !casValid || committed.request_digest !== requestDigest(expectedRequest) ||
+        committed.response_json !== jcs(response) || committed.committed_at !== activation.activated_at ||
+        activation.request_digest !== committed.request_digest || activation.cas_digest !== committed.cas_digest) throw ctError("CT_SCHEMA_INVALID")
+  }
+  return { rows, lease, activations }
+}
+const assertMainRequest = (request) => {
+  const keys = ["expected_anchor_id", "expected_binding_epoch", "request_identity"]
+  if (!request || Object.getPrototypeOf(request) !== Object.prototype || JSON.stringify(Object.keys(request).sort()) !== JSON.stringify(keys) ||
+      Object.keys(request).some((key) => forbiddenCtxKeys.has(key)) || !uuid.test(request.request_identity ?? "") ||
+      typeof request.expected_anchor_id !== "string" || !safeEpoch(request.expected_binding_epoch)) throw ctError("CT_PAYLOAD_INVALID")
+}
+const assertCanonicalMainCtx = (ctx, authority) => {
+  const expected = authority.anchor.context
+  if (ctx.effective_uid !== expected.trusted_uid || ctx.canonical_repo !== expected.canonical_repo || ctx.git_common_dir !== expected.git_common_dir ||
+      ctx.worktree !== expected.main_worktree || ctx.branch !== expected.branch) throw ctError("CT_ADMIN_REQUIRED")
+}
+const coherentMain = (rows) => {
+  if (rows.length === 0) return null
+  const active = rows.filter(({ binding_status }) => binding_status === "ACTIVE")
+  if (active.length !== 1 || active[0] !== rows.at(-1) || rows.some((row, index) => row.binding_epoch !== index + 1 || (index < rows.length - 1 && row.binding_status !== "RETIRED"))) throw ctError("CT_MAIN_BINDING_CONFLICT")
+  return active[0]
+}
+const assertMainGate = (ctx, authority, main) => {
+  if (!main) throw ctError("CT_WORKFLOW_MAIN_REQUIRED")
+  const expected = authority.anchor.context
+  if (ctx.effective_uid !== expected.trusted_uid || ctx.canonical_repo !== expected.canonical_repo || ctx.git_common_dir !== expected.git_common_dir || ctx.worktree !== expected.main_worktree || ctx.branch !== expected.branch ||
+      !mainIdentityFields.every((field) => main[field] === ctx[field])) throw ctError("CT_WORKFLOW_MAIN_REQUIRED")
+  if (ctx.binding_epoch !== main.binding_epoch) throw ctError("CT_FENCE_MISMATCH")
+}
+const assertActivationRequest = (request) => {
+  const keys = Object.keys(request ?? {}).sort()
+  if (!request || Object.getPrototypeOf(request) !== Object.prototype || keys.some((key) => forbiddenCtxKeys.has(key)) ||
+      keys.some((key) => !["evidence_digest", "expected_binding_epoch", "expected_mode", "request_identity"].includes(key)) ||
+      !["expected_binding_epoch", "expected_mode", "request_identity"].every((key) => keys.includes(key)) ||
+      !uuid.test(request.request_identity ?? "") || request.expected_mode !== "OFF" || !safeEpoch(request.expected_binding_epoch)) throw ctError("CT_PAYLOAD_INVALID")
+  if (!sha256Digest.test(request.evidence_digest ?? "")) throw ctError("CT_ACTIVATION_EVIDENCE_REQUIRED")
+}
+const currentActivationCommit = (db, authority, main, lease, activation) => {
+  const transitionDigest = requestDigest(activationTransition(authority, main, activation.evidence_digest, lease))
+  const committed = db.query("SELECT * FROM ct_idempotency WHERE operation='activate' AND request_identity=?").get(activation.request_identity)
+  const expectedRequest = { request_identity: activation.request_identity, expected_mode: "OFF", expected_binding_epoch: main.binding_epoch, evidence_digest: activation.evidence_digest }
+  const expectedCas = requestDigest(activationCas(transitionDigest, main, activation.evidence_digest, lease, activation.activation_epoch - 1, activation.activation_epoch, activation.precondition_digest))
+  if (!committed || committed.scope_key !== `activation:${transitionDigest}` || committed.request_digest !== requestDigest(expectedRequest) || committed.cas_digest !== expectedCas || activation.cas_digest !== expectedCas) throw ctError("CT_SCHEMA_INVALID")
+  return committed
+}
+const activationPrecondition = (db, authority, main, lease, prior) => ({
+  kind: "activation_precondition_v1", version: 1, schema_version: 3, mode: "OFF",
+  anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
+  rollback_epoch: lease.rollback_epoch, lease_version: lease.lease_version, lease_status: "NONE",
+  main_binding_id: main.main_binding_id, main_binding_epoch: main.binding_epoch, main_identity_digest: main.identity_digest,
+  prior_activation_epoch: prior,
+  active_claimant_bindings: db.query("SELECT COUNT(*) AS count FROM ct_claimant_binding WHERE binding_status='ACTIVE'").get().count,
+  multiplexed_claimant_bindings: db.query("SELECT COUNT(*) AS count FROM ct_claimant_binding WHERE binding_status='MULTIPLEXED'").get().count,
+  claimant_conflicts: db.query("SELECT COUNT(*) AS count FROM ct_claimant_conflict").get().count,
+  delivery_plane: "ABSENT_SCHEMA_3", polling_plane: "UNAVAILABLE_BEFORE_P7",
+})
+
+export const continuationActivate = (handle, ctxFactory, request) => {
+  const { db, authority } = handle
+  try {
+    return db.transaction(() => {
+      if (inspectSchema(db) !== 3) throw ctError("CT_SCHEMA_INVALID")
+      const state = continuationState(db, authority, 3)
+      const persisted = validateSchema3Persistence(db, authority)
+      if (state.mode === "ROLLING_BACK") throw ctError("CT_ROLLBACK_IN_PROGRESS")
+      if (persisted.lease.lease_status !== "NONE" || persisted.lease.owner_main_binding_id !== null || persisted.lease.lease_expires_at !== null) throw ctError("CT_SCHEMA_INVALID")
+      assertActivationRequest(request)
+      const ctx = ctxFactory(), main = coherentMain(persisted.rows)
+      if (state.mode === "ON" && (!main || persisted.activations.length === 0)) throw ctError("CT_MAIN_BINDING_CONFLICT")
+      assertMainGate(ctx, authority, main)
+      const transitionDigest = requestDigest(activationTransition(authority, main, request.evidence_digest, persisted.lease))
+      const scopeKey = `activation:${transitionDigest}`, request_digest = requestDigest(request)
+      const byIdentity = db.query("SELECT * FROM ct_idempotency WHERE operation='activate' AND request_identity=?").get(request.request_identity)
+      const byScope = db.query("SELECT * FROM ct_idempotency WHERE operation='activate' AND scope_key=?").get(scopeKey)
+      if (state.mode === "ON") {
+        const current = persisted.activations.at(-1)
+        if (current.main_binding_id !== main.main_binding_id || current.main_binding_epoch !== main.binding_epoch) throw ctError("CT_SCHEMA_INVALID")
+        currentActivationCommit(db, authority, main, persisted.lease, current)
+        if (byIdentity && byScope && byIdentity.scope_key === byScope.scope_key && byIdentity.request_identity === byScope.request_identity &&
+            byIdentity.request_digest === request_digest && current.request_identity === request.request_identity && current.evidence_digest === request.evidence_digest) {
+          const expectedCas = requestDigest(activationCas(transitionDigest, main, request.evidence_digest, persisted.lease, current.activation_epoch - 1, current.activation_epoch, current.precondition_digest))
+          if (byIdentity.cas_digest !== expectedCas || current.cas_digest !== expectedCas) throw ctError("CT_SCHEMA_INVALID")
+          return { ...JSON.parse(byIdentity.response_json), replayed: true }
+        }
+        if (byIdentity || byScope) throw ctError("CT_IDEMPOTENCY_CONFLICT")
+        throw ctError("CT_FENCE_MISMATCH")
+      }
+      if (byIdentity || byScope) throw ctError("CT_IDEMPOTENCY_CONFLICT")
+      if (request.expected_binding_epoch !== main.binding_epoch) throw ctError("CT_FENCE_MISMATCH")
+      const prior = persisted.activations.at(-1)?.activation_epoch ?? 0
+      const precondition = activationPrecondition(db, authority, main, persisted.lease, prior)
+      if (precondition.active_claimant_bindings !== 0) throw ctError("CT_NOT_QUIESCENT")
+      const precondition_digest = requestDigest(precondition), target = prior + 1
+      const cas_digest = requestDigest(activationCas(transitionDigest, main, request.evidence_digest, persisted.lease, prior, target, precondition_digest))
+      const activated_at = now(), response = { mode: "ON", activation_epoch: target, replayed: false }
+      const activation = { activation_epoch: target, main_binding_id: main.main_binding_id, main_binding_epoch: main.binding_epoch, evidence_digest: request.evidence_digest, precondition_digest, request_identity: request.request_identity, request_digest, cas_digest, activated_at }
+      db.run(`INSERT INTO ct_activation(activation_epoch,main_binding_id,main_binding_epoch,evidence_digest,precondition_digest,request_identity,request_digest,cas_digest,activation_digest,activated_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?)`, [...Object.values(activation).slice(0, 8), requestDigest(activationValue(activation)), activated_at])
+      db.run("INSERT INTO ct_idempotency VALUES ('activate',?,?,?,?,?,?)", [scopeKey, request.request_identity, request_digest, cas_digest, jcs(response), activated_at])
+      if (db.run("UPDATE ct_continuation_state SET mode='ON' WHERE id=1 AND mode='OFF'").changes !== 1) throw ctError("CT_FENCE_MISMATCH")
+      validateSchema3Persistence(db, authority)
+      return response
+    }).immediate()
+  } catch (error) {
+    if (error.code?.startsWith("CT_")) throw error
+    if (busy(error)) throw ctError("CT_BUSY", error)
+    throw ctError("CT_SCHEMA_INVALID", error)
+  }
+}
+
+const assertStatusRequest = (request) => {
+  if (request !== undefined && (typeof request !== "object" || request === null || Object.getPrototypeOf(request) !== Object.prototype || Object.keys(request).length !== 0)) throw ctError("CT_PAYLOAD_INVALID")
+}
+export const continuationStatus = (handle) => {
+  const { db, authority } = handle
+  try {
+    return db.transaction(() => {
+      if (inspectSchema(db) !== 3) throw ctError("CT_SCHEMA_INVALID")
+      const state = continuationState(db, authority, 3)
+      const persisted = validateSchema3Persistence(db, authority)
+      const noneLease = persisted.lease.lease_status === "NONE" && persisted.lease.owner_main_binding_id === null && persisted.lease.lease_expires_at === null
+      if ((state.mode === "OFF" || state.mode === "ON") ? !noneLease : !["ACTIVE", "EXPIRED"].includes(persisted.lease.lease_status)) throw ctError("CT_SCHEMA_INVALID")
+      const main = coherentMain(persisted.rows)
+      if (state.mode === "ON") {
+        if (!main) throw ctError("CT_MAIN_BINDING_CONFLICT")
+        const current = persisted.activations.at(-1)
+        if (!current || current.main_binding_id !== main.main_binding_id || current.main_binding_epoch !== main.binding_epoch) throw ctError("CT_SCHEMA_INVALID")
+        currentActivationCommit(db, authority, main, persisted.lease, current)
+      }
+      if (state.mode === "ROLLING_BACK" && (!main || persisted.lease.owner_main_binding_id !== main.main_binding_id)) throw ctError("CT_MAIN_BINDING_CONFLICT")
+      const workers = db.query("SELECT COUNT(*) AS count FROM ct_claimant_binding WHERE binding_status='ACTIVE'").get().count
+      return { mode: state.mode, schema_version: 3, rollback_epoch: persisted.lease.rollback_epoch, lease_status: persisted.lease.lease_status,
+        main_binding_status: main ? "ACTIVE" : "ABSENT", live_counts: { claims: 0, deliveries: 0, workers }, pending_counts: { work: 0, attestation: 0 } }
+    })()
+  } catch (error) {
+    if (error.code?.startsWith("CT_")) throw error
+    if (busy(error)) throw ctError("CT_BUSY", error)
+    throw ctError("CT_SCHEMA_INVALID", error)
+  }
+}
+
+export const continuationBootstrapMain = (handle, ctxFactory, request) => {
+  const { db, authority } = handle
+  try {
+    return db.transaction(() => {
+      if (inspectSchema(db) !== 3) throw ctError("CT_SCHEMA_INVALID")
+      const state = continuationState(db, authority, 3)
+      const persisted = validateSchema3Persistence(db, authority)
+      if (state.mode === "ROLLING_BACK") throw ctError("CT_ROLLBACK_IN_PROGRESS")
+      if (state.mode === "ON") throw ctError("CT_FENCE_MISMATCH")
+      if (persisted.lease.lease_status === "ACTIVE") throw ctError("CT_ROLLBACK_LEASE_ACTIVE")
+      if (persisted.lease.lease_status === "EXPIRED") throw ctError("CT_FENCE_MISMATCH")
+      assertMainRequest(request)
+      const ctx = ctxFactory()
+      assertCanonicalMainCtx(ctx, authority)
+      const targetEpoch = request.expected_binding_epoch + 1
+      const targetDigest = requestDigest(mainBindingValue(authority, ctx, targetEpoch))
+      const scopeKey = `main:${authority.anchor.anchor_id}:epoch:${targetEpoch}`
+      const request_digest = requestDigest(request)
+      const byIdentity = db.query("SELECT * FROM ct_idempotency WHERE operation='bootstrapMain' AND request_identity=?").get(request.request_identity)
+      const byScope = db.query("SELECT * FROM ct_idempotency WHERE operation='bootstrapMain' AND scope_key=?").get(scopeKey)
+      if (byIdentity || byScope) {
+        if (!byIdentity || !byScope || byIdentity.scope_key !== byScope.scope_key || byIdentity.request_identity !== byScope.request_identity) throw ctError("CT_IDEMPOTENCY_CONFLICT")
+        const target = persisted.rows.find(({ binding_epoch }) => binding_epoch === targetEpoch)
+        const expected = target && expectedMainCommit(authority, persisted.rows, target, request.request_identity, persisted.lease)
+        if (!target || target.identity_digest !== targetDigest || byIdentity.request_digest !== request_digest || byIdentity.cas_digest !== expected.cas_digest ||
+            ![request.expected_binding_epoch, targetEpoch].includes(ctx.binding_epoch) || !mainIdentityFields.every((field) => target[field] === ctx[field])) throw ctError("CT_IDEMPOTENCY_CONFLICT")
+        return { ...expected.response, replayed: true }
+      }
+      const incumbent = coherentMain(persisted.rows)
+      if (request.expected_anchor_id !== authority.anchor.anchor_id || request.expected_binding_epoch !== (incumbent?.binding_epoch ?? 0) || ctx.binding_epoch !== (incumbent?.binding_epoch ?? 0)) throw ctError("CT_FENCE_MISMATCH")
+      if (incumbent) {
+        if (!["host_process_instance", "plugin_instance", "root_session_id"].every((field) => incumbent[field] === ctx[field]) ||
+            incumbent.mcp_process_instance === ctx.mcp_process_instance || incumbent.pid_start_marker === ctx.pid_start_marker) throw ctError("CT_MAIN_BINDING_CONFLICT")
+      }
+      const cas_digest = requestDigest(mainCasValue(authority, request.expected_binding_epoch, targetDigest, persisted.lease, incumbent))
+      const committed = now(), mainBindingId = makeId()
+      if (incumbent) db.run("UPDATE ct_main_binding SET binding_status='RETIRED',ended_at=? WHERE main_binding_id=?", [committed, incumbent.main_binding_id])
+      db.run(`INSERT INTO ct_main_binding(main_binding_id,anchor_id,anchor_epoch,config_digest,host_process_instance,plugin_instance,root_session_id,mcp_process_instance,pid_start_marker,binding_epoch,main_session_id,binding_status,identity_digest,created_at,ended_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,'ACTIVE',?,?,NULL)`, [mainBindingId, authority.anchor.anchor_id, 1, authority.anchor.config_digest, ...mainIdentityFields.map((field) => ctx[field]), targetEpoch, ctx.root_session_id, targetDigest, committed])
+      const response = { main_binding_id: mainBindingId, binding_epoch: targetEpoch, state: "ACTIVE", replayed: false }
+      db.run("INSERT INTO ct_idempotency VALUES ('bootstrapMain',?,?,?,?,?,?)", [scopeKey, request.request_identity, request_digest, cas_digest, jcs(response), committed])
+      validateSchema3Persistence(db, authority)
+      return response
+    }).immediate()
+  } catch (error) {
+    if (error.code?.startsWith("CT_")) throw error
+    if (busy(error)) throw ctError("CT_BUSY", error)
+    throw ctError("CT_SCHEMA_INVALID", error)
+  }
+}
+
 export const createContinuationDispatcher = ({ cwd = process.cwd(), trustedMetadata, processIdentity }) => {
   if (!trustedMetadata?.snapshot || !processIdentity?.snapshot) throw ctError("CT_SESSION_ISOLATION_UNPROVEN")
   const stableProcess = { value: null }
   return (operation, request) => {
-    if (!["register", "receive"].includes(operation)) throw ctError("CT_PAYLOAD_INVALID")
+    if (!["bootstrapMain", "activate", "status", "register", "receive"].includes(operation)) throw ctError("CT_PAYLOAD_INVALID")
+    if (operation === "status") assertStatusRequest(request)
     const handle = continuationHandle(cwd, operation === "receive" && request !== undefined && (typeof request !== "object" || request === null || Object.getPrototypeOf(request) !== Object.prototype || Object.keys(request).length > 0))
     const ctx = createCtxFactory({ trustedMetadata, processIdentity, cwd: handle.cwd, authority: handle.authority }, stableProcess)
-    try { return operation === "register" ? continuationRegister(handle, ctx, request) : continuationReceive(handle, ctx) }
-    finally { handle.db.close() }
+    try {
+      if (operation === "bootstrapMain") return continuationBootstrapMain(handle, ctx, request)
+      if (operation === "activate") return continuationActivate(handle, ctx, request)
+      if (operation === "status") return continuationStatus(handle)
+      return operation === "register" ? continuationRegister(handle, ctx, request) : continuationReceive(handle, ctx)
+    } finally { handle.db.close() }
   }
 }
 
