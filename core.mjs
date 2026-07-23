@@ -84,7 +84,7 @@ const isBase64url32 = (value) => typeof value === "string" && /^[A-Za-z0-9_-]{43
 const ANCHOR_NAME = "main_authority_anchor_v1.json"
 
 export const MIGRATION_001_SQL = `CREATE TABLE ct_schema_migration (
-  version INTEGER PRIMARY KEY CHECK(version = 1),
+  version INTEGER PRIMARY KEY CHECK(version >= 1),
   ddl_checksum TEXT NOT NULL UNIQUE,
   applied_at TEXT NOT NULL
 );
@@ -94,7 +94,7 @@ CREATE TABLE ct_continuation_state (
   anchor_epoch INTEGER NOT NULL CHECK(anchor_epoch = 1),
   anchor_secret_digest TEXT NOT NULL,
   config_digest TEXT NOT NULL,
-  schema_version INTEGER NOT NULL CHECK(schema_version = 1),
+  schema_version INTEGER NOT NULL CHECK(schema_version >= 1),
   mode TEXT NOT NULL DEFAULT 'OFF' CHECK(mode IN ('OFF', 'ON', 'ROLLING_BACK'))
 );
 CREATE TABLE ct_idempotency (
@@ -110,6 +110,7 @@ CREATE TABLE ct_idempotency (
 );
 `
 export const MIGRATION_001_CHECKSUM = sha256(Buffer.from(MIGRATION_001_SQL))
+export const SUPERSEDED_MIGRATION_001_CHECKSUM = "sha256:47f63b10e516ac977e1cc26723b064eb037a4a2cdb84246b1c183903b909eb41"
 const MANIFEST_SQL = `SELECT type, name, tbl_name, sql
 FROM sqlite_master
 WHERE name IN ('agent','message','message_pending','lock',
@@ -124,6 +125,9 @@ const LEGACY_SQL = new Map([
   ["table:lock:lock", "CREATE TABLE lock(name TEXT PRIMARY KEY,holder TEXT,acquired_at TEXT)"],
 ])
 const CT_SQL = new Map(MIGRATION_001_SQL.trimEnd().split(";\n").map((sql) => sql.replace(/;$/, "")).map((sql) => [sql.match(/^CREATE TABLE (\w+)/)[1], sql]))
+const SCHEMA_MANIFESTS = new Map([
+  [1, { objects: CT_SQL, migrations: new Map([[1, MIGRATION_001_CHECKSUM]]) }],
+])
 
 export const deriveCanonicalMainContext = (cwd) => {
   const common = normalize(realpathSync(git(cwd, ["rev-parse", "--path-format=absolute", "--git-common-dir"])))
@@ -228,10 +232,21 @@ const inspectSchema = (db) => {
   )) throw ctError("CT_SCHEMA_INVALID")
   const continuation = rows.filter(({ name }) => name.startsWith("ct_"))
   if (continuation.length === 0) return 0
-  if (continuation.length !== 3 || continuation.some((row) => row.type !== "table" || row.tbl_name !== row.name || CT_SQL.get(row.name) !== row.sql)) throw ctError("CT_SCHEMA_INVALID")
-  const migration = db.query("SELECT version,ddl_checksum FROM ct_schema_migration").all()
-  if (migration.length !== 1 || migration[0].version !== 1 || migration[0].ddl_checksum !== MIGRATION_001_CHECKSUM) throw ctError("CT_SCHEMA_INVALID")
-  return 1
+  const migrationTable = continuation.find(({ type, name, tbl_name }) =>
+    type === "table" && name === "ct_schema_migration" && tbl_name === name)
+  if (!migrationTable) throw ctError("CT_SCHEMA_INVALID")
+  const migrations = db.query("SELECT version,ddl_checksum FROM ct_schema_migration ORDER BY version").all()
+  if (migrations.some(({ version, ddl_checksum }) =>
+    version === 1 && ddl_checksum === SUPERSEDED_MIGRATION_001_CHECKSUM)) {
+    throw ctError("CT_SCHEMA_INVALID", new Error("SUPERSEDED_MIGRATION_001"))
+  }
+  const version = migrations.at(-1)?.version
+  const manifest = SCHEMA_MANIFESTS.get(version)
+  if (!manifest || migrations.length !== manifest.migrations.size || migrations.some(({ version: migrationVersion, ddl_checksum }) =>
+    manifest.migrations.get(migrationVersion) !== ddl_checksum)) throw ctError("CT_SCHEMA_INVALID")
+  if (continuation.length !== manifest.objects.size || continuation.some((row) =>
+    row.type !== "table" || row.tbl_name !== row.name || manifest.objects.get(row.name) !== row.sql)) throw ctError("CT_SCHEMA_INVALID")
+  return version
 }
 const validateContinuationState = (db, authority) => {
   const rows = db.query("SELECT * FROM ct_continuation_state").all()

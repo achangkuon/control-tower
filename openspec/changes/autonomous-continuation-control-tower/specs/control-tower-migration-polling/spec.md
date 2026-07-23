@@ -4,7 +4,9 @@
 
 ### Requirement: CT-R8 Out-of-band authority, additive migration, legacy continuity
 
-`provisionMainAuthorityAnchor({request_identity,expected_config_digest})` MUST run out of band from the local install/admin CLI before any runtime use: it derives and verifies the configured canonical repository, common dir, Main worktree, branch, and trusted UID, then atomically persists an unpredictable owner-only `main_authority_anchor_v1`, returning exactly `{anchor_id,anchor_epoch,state:"PROVISIONED",replayed}` (mismatch: `CT_ANCHOR_MISMATCH`). `bootstrapAdmin` MUST only validate that pre-existing anchor and migrate schema/mode to OFF, returning exactly `{anchor_id,schema_version,mode:"OFF",replayed}`; it MUST NOT create, replace, or authorize an anchor. Migration MUST be additive, leaving legacy rows and behavior unchanged. Any checksum, DDL, config, or anchor drift MUST fail closed with continuation OFF.
+`provisionMainAuthorityAnchor({request_identity,expected_config_digest})` MUST run out of band from the local install/admin CLI before any runtime use: it derives and verifies the configured canonical repository, common dir, Main worktree, branch, and trusted UID, then atomically persists an unpredictable owner-only `main_authority_anchor_v1`, returning exactly `{anchor_id,anchor_epoch,state:"PROVISIONED",replayed}` (mismatch: `CT_ANCHOR_MISMATCH`). `bootstrapAdmin` MUST only validate that pre-existing anchor and migrate schema/mode to OFF, returning exactly `{anchor_id,schema_version,mode:"OFF",replayed}`; it MUST NOT create, replace, or authorize an anchor.
+
+Migration MUST be additive, byte-checksummed, version-manifested, and leave legacy rows and behavior unchanged. Before P2, bounded prerequisite P1-FC MUST change fresh-install Migration 001 constraints from exact `= 1` to `>= 1`, re-run Slice 1, and receive scoped re-judgment. The superseded exact-v1 checksum MUST be rejected non-mutating; it MUST NOT be repaired with table rebuild/rename/copy. Migration 002 MAY then add only claimant-binding/conflict/lease objects and v2 rows, and update the singleton schema version `1→2` while mode remains OFF. Any checksum, DDL, config, anchor, lease, or version-specific manifest drift MUST fail closed with continuation OFF.
 
 #### Scenario: CT-R8-S1 Migration failure
 - GIVEN checksum or DDL validation fails
@@ -12,9 +14,10 @@
 - THEN migration rolls back, continuation stays OFF, and legacy behavior is retained
 
 #### Scenario: CT-R8-S2 Constraint and inactive receive
-- GIVEN duplicate active identities/attestations or inactive continuation
-- WHEN mutation or receive is attempted
-- THEN the error is atomic and no continuation or legacy message is consumed
+- GIVEN a duplicate ACTIVE claimant identity, a MULTIPLEXED claimant scope, or inactive continuation
+- WHEN P2 registration or continuation receive is attempted
+- THEN the error is atomic and no continuation delivery or legacy message is consumed
+- AND attestation single-use constraints remain covered by CT-R6-S3 when that schema is added
 
 #### Scenario: CT-R8-S3 Out-of-band anchor
 - GIVEN no runtime anchor exists and configured context is valid
@@ -62,7 +65,7 @@ Every supported host adapter MUST delegate polling, wake throttling, and stop-be
 
 ### Requirement: CT-R9 Cooperative threat boundary
 
-The system MUST address accidental duplicate sessions, stale state, crashes, scope drift, and wrong-session actions for cooperative same-UID agents. It MUST NOT claim protection from malicious local same-UID process bypasses.
+The system MUST address accidental duplicate sessions, stale state, crashes, scope drift, and wrong-session actions for cooperative same-UID agents. Host/plugin/root/epoch values MUST arrive through the adapter's constructor capability and MUST NOT be accepted from tool arguments, environment fields, or request payloads. Absence of that capability keeps continuation MCP routes unavailable. This capability boundary and server derivation MUST NOT claim protection from malicious local same-UID process bypasses.
 
 #### Scenario: CT-R9-S1 Trusted misuse
 - GIVEN a cooperative agent presents a wrong root, actor, or stale fence

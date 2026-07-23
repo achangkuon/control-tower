@@ -16,7 +16,8 @@ Judgment Day: required after each functional unit P1–P10; P0 is evidence-only 
 |---|---|---|---|
 | 0 | Frozen baseline | `bun test test/migration.test.mjs` | P0 tests/evidence only |
 | 1 | Anchor + Migration 001 | migration + fail-closed | Slice 1 core/CLI/install only |
-| 2 | Identity + mode | identity + fail-closed | Slice 2 core/MCP only |
+| 1-FC | Prerequisite fresh-install forward compatibility | migration + fail-closed + scoped Slice 1 re-judgment | Two Migration 001 predicates/validator/tests/evidence only; no DB rewrite |
+| 2 | Identity + mode | migration + identity + fail-closed | Migration 002 + Slice 2 core/internal dispatcher only; no public continuation MCP tools |
 | 3 | Main + API | identity + fail-closed | Slice 3 core/MCP only |
 | 4 | Delivery + claim | lifecycle + fail-closed | Slice 4 core/MCP only |
 | 5 | Lifecycle + attestation | lifecycle + fail-closed | Slice 5 core/MCP only |
@@ -36,11 +37,24 @@ Judgment Day: required after each functional unit P1–P10; P0 is evidence-only 
 - [x] 1.3 TRIANGULATE/REFACTOR: unsafe type/link/owner/mode, DDL rollback, bounded busy; rerun migration + fail-closed; record runtime N/A and rollback evidence.
 - [x] 1.4 Freeze Slice 1 target and run explicit two-judge Judgment Day; persist verdict. Correct only mutually confirmed severe IDs after required maintainer authorization. <!-- sdd-owner: parent -->
 
+## P1-FC — Required Slice 1 Forward-Compatibility Correction
+
+P2 is blocked until all four tasks below pass. There is no additive in-place solution for a database carrying the approved old `CHECK(... = 1)` schema.
+
+- [x] 1F.1 RED `test/migration.test.mjs`: pin corrected fresh-install Migration 001 bytes/checksum, detect the superseded checksum, prove exact schema-1 manifest, and prove non-mutating refusal rather than table rebuild/rename/copy.
+- [x] 1F.2 GREEN `core.mjs`: change only `CHECK(version >= 1)` and `CHECK(schema_version >= 1)`, add version-specific manifest selection, and keep Slice 1 responses/anchor/CLI behavior unchanged.
+- [x] 1F.3 TRIANGULATE/REFACTOR: rerun all 25 approved Slice 1 migration tests plus fail-closed; verify actual/legacy Tower OFF and absent/unchanged; append correction evidence without rewriting P0/P1 history.
+- [x] 1F.4 Freeze only the P1-FC target and run bounded two-judge re-judgment. Preserve the original Slice 1 ledger and authorization history. <!-- sdd-owner: parent -->
+
+Workload boundary: separate prerequisite unit, target ≤400 authored changed lines. Rollback reverts only P1-FC and leaves P2 blocked; no real database is down-migrated or destructively converted.
+
 ## P2 — Slice 2 Identity/Mode
-- [ ] 2.1 RED `test/identity.test.mjs`: `CT-R4-S1..S6,CT-R8-S2,CT-R9-S1,CT-R11-S1`.
-- [ ] 2.2 GREEN `core.mjs`, `mcp.mjs`: server-derived fences, non-consuming receive, OFF/mode/lease gates.
-- [ ] 2.3 TRIANGULATE/REFACTOR: duplicate/multiplexed/stale identities; rerun identity + fail-closed; record evidence.
+- [ ] 2.1 RED `test/migration.test.mjs` + `test/identity.test.mjs`: exact Migration 002 bytes/manifest/rollback and `CT-R4-S1..S6,CT-R8-S2,CT-R9-S1,CT-R11-S1`; use only isolated constructor-capability fixtures.
+- [ ] 2.2 GREEN `core.mjs`, `mcp.mjs`: additive claimant/conflict/lease schema; `continuationRegister` and argument-free non-consuming `continuationReceive`; immutable server-created Ctx; continuation routing kept unadvertised without a host-adapter capability. Preserve legacy `register(handle, role)`, consuming `receive(handle)`, all eight tools, and legacy source behavior.
+- [ ] 2.3 TRIANGULATE/REFACTOR: initial/same-root/multiplexed/stale identity, immutable conflict update/delete rejection, exact replay, OFF/ROLLING_BACK/lease gates, old-schema refusal, migration rollback/busy, and zero legacy-message consumption; rerun migration + identity + fail-closed; record evidence.
 - [ ] 2.4 Run and persist Slice 2 Judgment Day under the same bounded correction rule. <!-- sdd-owner: parent -->
+
+P2 workload/rollback boundary: target ≤800 authored changed lines for the standalone Unit 2; if forecast exceeds it, split Migration 002 and identity dispatch into chained review units without crossing scenario ownership. Rollback reverts only Migration 002/continuation dispatcher/P2 tests and leaves schema-2 data inert and OFF; P1-FC remains.
 
 ## P3 — Slice 3 Main/API
 - [ ] 3.1 RED `test/identity.test.mjs`: `CT-R3-S1..S5,CT-R8-S5,CT-R10-S1..S6,CT-R11-S3..S5`.

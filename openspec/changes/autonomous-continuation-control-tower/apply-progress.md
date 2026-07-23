@@ -5,10 +5,10 @@
 - Mode: Strict TDD (`bun test`)
 - Delivery strategy: `auto-chain`
 - Chain strategy: `feature-branch-chain`
-- Current autonomous work unit: P1 Slice 1 complete and Judgment Day approved; stop boundary enforced
+- Current autonomous work unit: P1 and P1-FC complete with Judgment Day approval; P2 is the next boundary
 - Branch: `feat/control-tower/autonomous-continuation`
-- Completed: 6/46 tasks (`0.1`, `0.2`, `1.1`, `1.2`, `1.3`, `1.4`)
-- Every P2+ task remains out of scope and unchecked.
+- Completed: 10/50 tasks (`0.1`, `0.2`, `1.1`, `1.2`, `1.3`, `1.4`, `1F.1`, `1F.2`, `1F.3`, `1F.4`)
+- Every P2+ task remains unchecked.
 
 ## Completed tasks
 
@@ -465,3 +465,280 @@ Bounded correction scope: only the confirmed severe concurrency finding
 **JUDGMENT: APPROVED ✅**
 
 ---
+
+## P2 Slice 2 apply attempt — blocked before RED
+
+### Structured status consumed
+
+- Change: `autonomous-continuation-control-tower`
+- Authoritative apply state: `ready`; completed baseline: 6/46; blockers: none
+- Artifact store: OpenSpec + Engram; this actor has no memory tools, so only this
+  cumulative OpenSpec artifact was updated and the parent must mirror Engram
+- Action context: `repo-local`; workspace and sole allowed edit root are
+  `/home/emili/projects/control-tower`; warnings: none
+- Delivery: `auto-chain`, `feature-branch-chain`, Unit 2 only, 800-line ceiling
+- Strict TDD: active with `bun test`
+
+### Result
+
+Status: `blocked`. No RED test or production edit was made because the approved
+spec/design does not define an exact implementable Slice 2 ingress and migration
+contract, and the apply instruction explicitly forbids inventing one.
+
+Exact contract gaps:
+
+1. `Ctx` is declared ingress-created/server-derived, but no MCP transport,
+   environment, process, or adapter mapping defines how `host_process_instance`,
+   `plugin_instance`, `root_session_id`, `mcp_process_instance`,
+   `pid_start_marker`, and `binding_epoch` are obtained or authenticated.
+   Existing `mcp.mjs` has only process cwd plus tool arguments. Accepting these
+   as request fields would violate the caller-claims prohibition.
+2. Migration 001 is byte-exact and its version-1 manifest permits exactly three
+   `ct_*` tables. Slice 2 requires durable claimant bindings, immutable
+   MULTIPLEXED conflict history, `rollback_epoch`, and lease foundation, but no
+   Migration 002 DDL/checksum/version/CAS/bootstrap transition is specified.
+   Creating these lazily in `register` would also violate OFF non-mutation.
+3. The preserved legacy API already uses `register(handle, role)` and consuming
+   `receive(handle)`, while continuation requires `register(request)` and
+   argument-free non-consuming `receive()`. No exact core/MCP namespace or
+   dispatch contract distinguishes the two without changing the legacy API.
+
+Required decision before retry: amend the design/spec with (a) the trusted Ctx
+construction boundary and exact MCP ingress mapping, (b) exact additive schema
+migration/bootstrap rules for Slice 2, and (c) the legacy/continuation API
+namespace or dispatch contract. Then rerun P2 from RED.
+
+### Safety-net and verification evidence
+
+- `bun test test/migration.test.mjs && bun test test/fail-closed.test.mjs` → exit
+  0; migration 25 pass, 0 fail, 121 assertions; fail-closed 8 pass, 0 fail,
+  70 assertions.
+- `git diff --check && bun --check core.mjs && bun --check mcp.mjs && bash -n
+  bin/torre install.sh` → exit 0; no output.
+- Actual canonical `ACTIVE`: absent; actual canonical `tower.db`: absent; legacy
+  `ACTIVE`: absent.
+- Runtime harness: N/A — blocked before implementation; no runtime command,
+  Tower call, activation, SQLite mutation, review, delivery, or publication ran.
+
+### Persisted task state and boundary
+
+- Tasks `2.1`, `2.2`, and `2.3` remain unchecked because no executable RED/GREEN/
+  triangulation evidence exists.
+- Parent-owned `2.4` is deferred unchanged. P3+ remains untouched.
+- Files changed by this blocked attempt: this appended `apply-progress.md`
+  section only.
+- Rollback boundary: remove only this `P2 Slice 2 apply attempt` section; preserve
+  all P0/P1/Judgment Day evidence and every task checkbox.
+- Skill resolution: `fallback-path` — parent-injected project/user skill paths
+  were absent; loaded `/home/emili/.agents/skills/work-unit-commits/SKILL.md`.
+
+---
+
+## P2 bounded design correction — no apply work
+
+The blocked P2 attempt above remains the historical apply result. A design-only correction now resolves its three ambiguity classes and identifies one mandatory prerequisite:
+
+- Trusted `Ctx` enters through a constructor-time host-adapter capability closed over by an internal continuation dispatcher; all repository/process fields are server-derived or observed, and no continuation MCP route is advertised before P7–P9 supplies that capability.
+- Legacy `register(handle, role)` and consuming `receive(handle)` remain separate from internal `continuationRegister` and argument-free non-consuming `continuationReceive`; no arity/type overload is allowed.
+- There is no additive in-place upgrade from the approved old Migration 001 constraints. New tasks `1F.1..1F.4` correct fresh-install Migration 001, reject the superseded checksum without table replacement, rerun Slice 1, and re-judge before exact additive Migration 002 may begin.
+- Migration 002 tables, constraints, indexes, immutable conflict triggers, lease seed, digests, transaction order, errors, test ownership, workload, and rollback are now specified in `design.md`.
+
+No RED, code, test, runtime, Tower, review, delivery, or cutover action was performed by this correction. The next apply boundary is P1-FC, not P2. The parent must mirror this design correction to Engram because memory tools are unavailable here.
+
+---
+
+## P1-FC fresh-install forward-compatibility correction
+
+This section preserves the prior blocked P2 attempt and every P0/P1/Judgment Day
+entry above. Only implementation-owned tasks `1F.1`–`1F.3` were executed;
+parent-owned `1F.4` and P2+ were not started.
+
+### Structured status produced and consumed
+
+```yaml
+schemaName: spec-driven
+changeName: autonomous-continuation-control-tower
+artifactStore: openspec
+planningHome: /home/emili/projects/control-tower/openspec
+changeRoot: openspec/changes/autonomous-continuation-control-tower
+artifacts:
+  proposal: done
+  specs: done
+  design: done
+  tasks: done
+  applyProgress: done
+  verifyReport: missing
+  syncReport: missing
+taskProgress:
+  total: 35
+  complete: 8
+  remaining: 27
+deferredParentActions:
+  total: 15
+  complete: 1
+  remaining: 14
+taskArtifactErrors: []
+applyState: ready
+dependencies:
+  apply: ready
+  verify: blocked
+  sync: blocked
+  archive: blocked
+actionContext:
+  mode: repo-local
+  workspaceRoot: /home/emili/projects/control-tower
+  allowedEditRoots:
+    - /home/emili/projects/control-tower
+  warnings: []
+nextRecommended: parent-lifecycle
+isNonAuthoritative: false
+```
+
+The native checkbox state remains `ready` because later implementation tasks exist,
+but P2 is dependency-blocked until the parent completes `1F.4`. The resolved delivery
+path was `auto-chain` / `feature-branch-chain`; this apply remained inside Unit 1-FC.
+
+### Completed tasks and persisted checkboxes
+
+- [x] 1F.1 Pinned the independently stated 854-byte corrected Migration 001 and
+  `sha256:961501e0f605e0052afd8b9ad091112667fa1c1ee3496f0f4320f63541d6e8fc`,
+  proved the exact v1 SQLite manifest, and identified the superseded dc31ef5
+  checksum with internal reason `SUPERSEDED_MIGRATION_001` while preserving exact
+  database bytes, root pages, schema rows, data rows, and runtime entry names.
+- [x] 1F.2 Changed only the two Migration 001 predicates to `>= 1`, exported the
+  superseded checksum, and selected exact object/checksum contracts through a
+  version-keyed schema manifest. Slice 1 anchor, responses, CLI, idempotency,
+  concurrency, busy, legacy, and OFF paths remain unchanged.
+- [x] 1F.3 Triangulated a corrected-schema replay containing an unexpected
+  `ct_unexpected` table; refusal was `CT_SCHEMA_INVALID` and byte-for-byte
+  non-mutating. The original 25-test migration suite plus both P1-FC tests and
+  fail-closed suite passed.
+- [ ] 1F.4 remains parent-owned and unchanged; no review actor or receipt was created.
+
+### Files and exact changed lines
+
+| File | Additions | Deletions | Purpose |
+|---|---:|---:|---|
+| `core.mjs` | 21 | 6 | Two corrected predicates, superseded checksum detection, version-specific manifest selection |
+| `test/migration.test.mjs` | 102 | 5 | Independent bytes/checksum/manifest RED, superseded refusal, unexpected-object triangulation |
+
+Implementation/test authored total: **134 changed lines** (`123` additions + `11`
+deletions), below the Unit 1-FC 400-line target. OpenSpec task/progress changes are
+cumulative evidence, not implementation scope. No legacy source/config, `.pi`, MCP,
+CLI, installer, plugin, adapter, runtime, or delivery file was edited by P1-FC.
+
+### TDD Cycle Evidence
+
+| Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
+|---|---|---|---|---|---|---|---|
+| 1F.1 | `test/migration.test.mjs` | Integration | 25/25 migration, 121 assertions; 8/8 fail-closed, 70 assertions | 0 pass, 2 fail, 4 assertions: old bytes and missing superseded export | First execution exposed one test-side final-semicolon representation error (1 pass/1 fail, 12 assertions); corrected fixture then 2 pass/0 fail, 16 assertions | Exact corrected install and exact old-checksum fixture take distinct commit/refusal paths | Test expectation now matches SQLite's semicolon-free `sqlite_master.sql`; focused tests green |
+| 1F.2 | `test/migration.test.mjs` | Integration | Same 33-test safety net | Covered by the two failing 1F.1 contracts before production edits | 2 pass, 0 fail, 16 assertions after the minimum production correction | Version-keyed manifest rejects any contract not registered for the observed latest migration version | Replaced the fixed three-object validator with one version-specific manifest registry; tests green |
+| 1F.3 | `test/migration.test.mjs` | Integration | Focused GREEN 2/2, 16 assertions | P1-FC RED already proved old schema acceptance lacked required detection | 2/2 focused GREEN | Added unexpected v1 `ct_*` object: combined focus 3 pass/0 fail, 19 assertions; byte digest unchanged after refusal | Final migration 27/27 and fail-closed 8/8; no further production refactor needed |
+
+### Test Summary
+
+- Tests written: 2 new integration tests; 1 existing integration test strengthened.
+- Final passing: 35 tests, 0 failures, 201 assertions across the required focused suites.
+- Layers used: Integration (3 P1-FC behavior tests); Unit 0; E2E 0.
+- Approval safety: all 25 existing migration tests and all 8 fail-closed tests passed
+  before production changes.
+- Pure functions created: 0; the schema registry is immutable module data.
+
+### Exact command evidence
+
+1. Safety net:
+   - `bun test test/migration.test.mjs` → exit 0; 25 pass, 0 fail, 121 assertions.
+   - `bun test test/fail-closed.test.mjs` → exit 0; 8 pass, 0 fail, 70 assertions.
+2. RED:
+   - `bun test test/migration.test.mjs -t "(CT-R8-S1 migrates exact bytes|superseded Migration 001)"`
+   - Exit 1; 0 pass, 2 fail, 4 assertions. Migration bytes still carried `= 1`;
+     `SUPERSEDED_MIGRATION_001_CHECKSUM` was absent.
+3. GREEN:
+   - First focused execution: exit 1; 1 pass, 1 fail, 12 assertions because the
+     independent expected manifest retained SQLite's stripped final semicolon.
+   - Corrected fixture execution: exit 0; 2 pass, 0 fail, 16 assertions.
+4. TRIANGULATE:
+   - Combined corrected/old/unexpected-object focus → exit 0; 3 pass, 0 fail,
+     19 assertions.
+5. Final focused verification:
+   - `bun test test/migration.test.mjs` → exit 0; 27 pass, 0 fail, 131 assertions.
+   - `bun test test/fail-closed.test.mjs` → exit 0; 8 pass, 0 fail, 70 assertions.
+   - `bash -n bin/torre install.sh && bun --check core.mjs` → exit 0; `syntax-ok`.
+   - `git diff --check` → exit 0; no output.
+
+### OFF/runtime and rollback evidence
+
+- Guard command proved absent: actual `.git/control-tower/ACTIVE`, actual
+  `.git/control-tower/tower.db`, legacy `~/.config/opencode/control-tower/ACTIVE`,
+  and legacy `~/.config/opencode/control-tower/tower.db`.
+- `NEXT-SESSION-off-enforcement.md` remained unchanged at SHA-256
+  `73bbb0e58573eef187dbf22b026cb1594df614e7749c516908bdadc9b553f7e0`.
+- Runtime harness: N/A — all mutating checks used isolated temporary Main/worktree
+  fixtures. No Tower, activation, runtime, review, delivery, commit, push, PR,
+  publication, or cutover action ran.
+- Rollback reverts only the P1-FC hunks in `core.mjs` and
+  `test/migration.test.mjs`, the three P1-FC task checkmarks, and this appended
+  section. It performs no down-migration or old-database rebuild and leaves P2
+  blocked. Existing fixture databases may be discarded; real databases are untouched.
+- Deviations from design: none. A test-only expected-manifest semicolon was corrected
+  during GREEN to match SQLite's documented stored SQL representation.
+
+### Remaining exact unchecked task lines
+
+- [ ] 1F.4 Freeze only the P1-FC target and run bounded two-judge re-judgment. Preserve the original Slice 1 ledger and authorization history. <!-- sdd-owner: parent -->
+- [ ] 2.1 RED `test/migration.test.mjs` + `test/identity.test.mjs`: exact Migration 002 bytes/manifest/rollback and `CT-R4-S1..S6,CT-R8-S2,CT-R9-S1,CT-R11-S1`; use only isolated constructor-capability fixtures.
+- [ ] 2.2 GREEN `core.mjs`, `mcp.mjs`: additive claimant/conflict/lease schema; `continuationRegister` and argument-free non-consuming `continuationReceive`; immutable server-created Ctx; continuation routing kept unadvertised without a host-adapter capability. Preserve legacy `register(handle, role)`, consuming `receive(handle)`, all eight tools, and legacy source behavior.
+- [ ] 2.3 TRIANGULATE/REFACTOR: initial/same-root/multiplexed/stale identity, immutable conflict update/delete rejection, exact replay, OFF/ROLLING_BACK/lease gates, old-schema refusal, migration rollback/busy, and zero legacy-message consumption; rerun migration + identity + fail-closed; record evidence.
+- [ ] 2.4 Run and persist Slice 2 Judgment Day under the same bounded correction rule. <!-- sdd-owner: parent -->
+- [ ] 3.1 RED `test/identity.test.mjs`: `CT-R3-S1..S5,CT-R8-S5,CT-R10-S1..S6,CT-R11-S3..S5`.
+- [ ] 3.2 GREEN `core.mjs`, `mcp.mjs`: Main binding, bootstrapMain, activation, exact responses/idempotency/errors/rollback.
+- [ ] 3.3 TRIANGULATE/REFACTOR: stale lease/epoch/config and activation-without-delivery; rerun identity + fail-closed; record evidence.
+- [ ] 3.4 Run and persist Slice 3 Judgment Day under the same bounded correction rule. <!-- sdd-owner: parent -->
+- [ ] 4.1 RED `test/lifecycle.test.mjs`: `CT-R2-S1..S3,CT-R6-S1..S6`.
+- [ ] 4.2 GREEN `core.mjs`, `mcp.mjs`: immutable payload, peek, atomic claim, budget, provenance, token races.
+- [ ] 4.3 TRIANGULATE/REFACTOR: concurrent claims and exhausted budgets; rerun lifecycle + fail-closed; record evidence.
+- [ ] 4.4 Run and persist Slice 4 Judgment Day under the same bounded correction rule. <!-- sdd-owner: parent -->
+- [ ] 5.1 RED `test/lifecycle.test.mjs`: `CT-R1-S1..S6,CT-R12-S1..S4`.
+- [ ] 5.2 GREEN `core.mjs`, `mcp.mjs`: ack, evidence/effects, completion attestation, compensation, revision; no `start` API.
+- [ ] 5.3 TRIANGULATE/REFACTOR: missing/consumed attestation and unprovable effects; rerun lifecycle + fail-closed; record evidence.
+- [ ] 5.4 Run and persist Slice 5 Judgment Day under the same bounded correction rule. <!-- sdd-owner: parent -->
+- [ ] 6.1 RED `test/recovery.test.mjs`: `CT-R7-S1..S12,CT-R11-S2`.
+- [ ] 6.2 GREEN `core.mjs`, `mcp.mjs`: proof-bound suspension/recovery, lease/rollback epoch, ON-only redelivery.
+- [ ] 6.3 TRIANGULATE/REFACTOR: stale proof/epoch, forbidden dispositions, zero-live finish; rerun recovery + fail-closed; record evidence.
+- [ ] 6.4 Run and persist Slice 6 Judgment Day under the same bounded correction rule. <!-- sdd-owner: parent -->
+- [ ] 7.1 RED `test/host-adapters.test.mjs` and `test/polling.test.mjs`: `CT-R5-S1..S5@OpenCode`, wake failure, throttling, dispose-before-peek/receive.
+- [ ] 7.2 GREEN `host/loop.mjs` + `plugin/tower-spike.js`: injected ports, root-only controller, OpenCode lifecycle mapping; no SQLite logic in adapter.
+- [ ] 7.3 TRIANGULATE/REFACTOR: child/root ordering and pending-delivery preservation; rerun adapter/polling/fail-closed; record evidence.
+- [ ] 7.4 Run and persist Slice 7 Judgment Day under the same bounded correction rule. <!-- sdd-owner: parent -->
+- [ ] 8.1 RED `test/host-adapters.test.mjs`: `CT-R5-S1..S5@Pi`, `agent_settled`, `ctx.isIdle()`, `session_shutdown`, and follow-up wake semantics.
+- [ ] 8.2 GREEN `adapters/pi/`: global Pi extension delegates only to `host/loop.mjs` and uses idle-safe message injection.
+- [ ] 8.3 TRIANGULATE/REFACTOR: reload/resume/shutdown and child isolation; rerun Pi adapter + fail-closed; record evidence.
+- [ ] 8.4 Run and persist Slice 8 Judgment Day under the same bounded correction rule. <!-- sdd-owner: parent -->
+- [ ] 9.1 RED `test/host-adapters.test.mjs`: `CT-R5-S1..S5@Claude`, `Stop`, `SessionEnd`, `stop_hook_active`, bounded `asyncRewake`, and subagent/teammate isolation.
+- [ ] 9.2 GREEN `adapters/claude/`: plugin hooks/scripts delegate only to `host/loop.mjs`; wake only after non-consuming pending peek.
+- [ ] 9.3 TRIANGULATE/REFACTOR: repeated Stop, hook timeout/failure, terminal cleanup; rerun Claude adapter + fail-closed; record evidence.
+- [ ] 9.4 Run and persist Slice 9 Judgment Day under the same bounded correction rule. <!-- sdd-owner: parent -->
+- [ ] 10.1 RED `test/runtime-publish.test.mjs`: allowlisted manifest, immutable existing release, failed probe, atomic `current`, backup/restore, and legacy-path preservation.
+- [ ] 10.2 GREEN `scripts/publish-runtime.mjs`, `install.sh`: stage/verify/fsync/rename `releases/<git-sha>`, then atomically switch `current`; host configs resolve only through `current`.
+- [ ] 10.3 TRIANGULATE/REFACTOR: interrupted publication and one-host probe failure restore prior state; verify `~/.config/opencode/control-tower` untouched and Tower OFF.
+- [ ] 10.4 Run and persist Slice 10 Judgment Day under the same bounded correction rule. <!-- sdd-owner: parent -->
+- [ ] 11.1 Run `bun test`; audit all 64 stable CT IDs bidirectionally and the three-host CT-R5 conformance matrix. <!-- sdd-owner: parent -->
+- [ ] 11.2 Verify Tower OFF, unchanged ACTIVE/DB/mtime, legacy continuity, host-neutral import boundaries, and no `start`, token, or anchor-secret exposure. <!-- sdd-owner: parent -->
+- [ ] 11.3 Verify candidate release and rollback evidence; update host configs only after all probes pass; preserve legacy source until cutover is proven. <!-- sdd-owner: parent -->
+- [ ] 11.4 Servi-Task-U gate: CT passes plus API/error/fence/evidence and OFF/quiescent/rollback evidence. <!-- sdd-owner: parent -->
+
+### P1-FC next boundary
+
+Return to parent lifecycle for bounded task `1F.4`. P2 remains blocked until that
+re-judgment is complete. Skill resolution: `fallback-path` — no parent-injected
+project/user skill paths were present; loaded
+`/home/emili/.agents/skills/work-unit-commits/SKILL.md`.
+
+## P1-FC Judgment Day terminal evidence
+
+- Frozen target: `3208975f5eecb3bb3974e8ce78a31b448624f4591712193f9072943282341990`.
+- Judge A: clean (`findings: []`). Judge B: clean (`findings: []`).
+- Verification: migration 27/27 with 131 assertions; fail-closed 8/8 with 70 assertions; syntax, whitespace, and runtime guards passed.
+- Ledger: `evidence/judgment-day-p1-forward-compatibility.md`.
+
+**JUDGMENT: APPROVED ✅**

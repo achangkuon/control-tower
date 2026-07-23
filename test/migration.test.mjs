@@ -10,6 +10,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  readdirSync,
   readlinkSync,
   rmSync,
   symlinkSync,
@@ -68,6 +69,42 @@ const canonical = (value) => {
 }
 const digest = (value) =>
   `sha256:${createHash("sha256").update(Buffer.from(value)).digest("hex")}`
+const correctedMigration001Sql = `CREATE TABLE ct_schema_migration (
+  version INTEGER PRIMARY KEY CHECK(version >= 1),
+  ddl_checksum TEXT NOT NULL UNIQUE,
+  applied_at TEXT NOT NULL
+);
+CREATE TABLE ct_continuation_state (
+  id INTEGER PRIMARY KEY CHECK(id = 1),
+  anchor_id TEXT NOT NULL UNIQUE,
+  anchor_epoch INTEGER NOT NULL CHECK(anchor_epoch = 1),
+  anchor_secret_digest TEXT NOT NULL,
+  config_digest TEXT NOT NULL,
+  schema_version INTEGER NOT NULL CHECK(schema_version >= 1),
+  mode TEXT NOT NULL DEFAULT 'OFF' CHECK(mode IN ('OFF', 'ON', 'ROLLING_BACK'))
+);
+CREATE TABLE ct_idempotency (
+  operation TEXT NOT NULL,
+  scope_key TEXT NOT NULL,
+  request_identity TEXT NOT NULL,
+  request_digest TEXT NOT NULL,
+  cas_digest TEXT NOT NULL,
+  response_json TEXT NOT NULL,
+  committed_at TEXT NOT NULL,
+  PRIMARY KEY (operation, scope_key),
+  UNIQUE (operation, request_identity)
+);
+`
+const supersededMigration001Checksum = "sha256:47f63b10e516ac977e1cc26723b064eb037a4a2cdb84246b1c183903b909eb41"
+const correctedMigration001Checksum = "sha256:961501e0f605e0052afd8b9ad091112667fa1c1ee3496f0f4320f63541d6e8fc"
+const captureError = (operation) => {
+  try {
+    operation()
+  } catch (error) {
+    return error
+  }
+  return null
+}
 const errorCode = (operation) => {
   try {
     operation()
@@ -238,12 +275,18 @@ describe("P1 owner-provisioned anchor and Migration 001", () => {
     const first = tower.bootstrapAdmin(request, main)
     const db = new Database(join(context.git_common_dir, "control-tower", "tower.db"))
 
-    expect(tower.MIGRATION_001_SQL).toHaveLength(852)
-    expect(tower.MIGRATION_001_CHECKSUM).toBe("sha256:47f63b10e516ac977e1cc26723b064eb037a4a2cdb84246b1c183903b909eb41")
+    expect(tower.MIGRATION_001_SQL).toBe(correctedMigration001Sql)
+    expect(Buffer.byteLength(tower.MIGRATION_001_SQL)).toBe(854)
+    expect(digest(tower.MIGRATION_001_SQL)).toBe(correctedMigration001Checksum)
+    expect(tower.MIGRATION_001_CHECKSUM).toBe(correctedMigration001Checksum)
     expect(first).toEqual({ anchor_id: anchor.anchor_id, schema_version: 1, mode: "OFF", replayed: false })
-    expect(db.query("SELECT name FROM sqlite_master WHERE name GLOB 'ct_*' ORDER BY name").all()).toEqual([
-      { name: "ct_continuation_state" }, { name: "ct_idempotency" }, { name: "ct_schema_migration" },
-    ])
+    const expectedManifest = correctedMigration001Sql.trimEnd().split(";\n").map((statement) => {
+      const sql = statement.replace(/;$/, "")
+      const name = sql.match(/^CREATE TABLE (\w+)/)[1]
+      return { type: "table", name, tbl_name: name, sql }
+    }).sort((left, right) => left.name.localeCompare(right.name))
+    expect(db.query(`SELECT type,name,tbl_name,sql FROM sqlite_master
+      WHERE name GLOB 'ct_*' AND name NOT LIKE 'sqlite_%' ORDER BY type,name`).all()).toEqual(expectedManifest)
     expect(db.query("SELECT name,state FROM agent").get()).toEqual({ name: "legacy", state: "READY" })
     db.close()
     expect(tower.bootstrapAdmin(request, main)).toEqual({ ...first, replayed: true })
@@ -253,6 +296,60 @@ describe("P1 owner-provisioned anchor and Migration 001", () => {
     drifted.run("UPDATE ct_continuation_state SET mode='ON' WHERE id=1")
     drifted.close()
     expect(errorCode(() => tower.bootstrapAdmin(request, main))).toBe("CT_FENCE_MISMATCH")
+  })
+
+  test("superseded Migration 001 is identified and refused without rebuild, rename, or copy", () => {
+    const { main } = createMainFixture()
+    const context = tower.deriveCanonicalMainContext(main)
+    const provisioned = tower.provisionMainAuthorityAnchor({ request_identity: randomUUID(), expected_config_digest: digest(canonical(context)) }, main)
+    seedLegacy(main)
+    const dbPath = join(context.git_common_dir, "control-tower", "tower.db")
+    const oldSql = correctedMigration001Sql.replaceAll(">= 1", "= 1")
+    expect(digest(oldSql)).toBe(supersededMigration001Checksum)
+    const db = new Database(dbPath)
+    db.run(oldSql)
+    db.run("INSERT INTO ct_schema_migration VALUES (1,?,'2026-07-22T00:00:00.000Z')", [supersededMigration001Checksum])
+    db.run("INSERT INTO ct_continuation_state VALUES (1,?,?,?,?,1,'OFF')", [provisioned.anchor_id, 1, "sha256:fixture", digest(canonical(context))])
+    db.close()
+    const snapshot = () => {
+      const readonly = new Database(dbPath, { readonly: true })
+      const manifest = readonly.query("SELECT type,name,tbl_name,rootpage,sql FROM sqlite_master ORDER BY type,name").all()
+      const migrations = readonly.query("SELECT * FROM ct_schema_migration").all()
+      const state = readonly.query("SELECT * FROM ct_continuation_state").all()
+      readonly.close()
+      return { bytes: digest(readFileSync(dbPath)), entries: readdirSync(dirname(dbPath)).sort(), manifest, migrations, state }
+    }
+    const before = snapshot()
+    const request = { request_identity: randomUUID(), expected_anchor_id: provisioned.anchor_id, expected_schema_version: 1, target_schema_version: 1, expected_mode: "OFF" }
+
+    const error = captureError(() => tower.bootstrapAdmin(request, main))
+
+    expect(tower.SUPERSEDED_MIGRATION_001_CHECKSUM).toBe(supersededMigration001Checksum)
+    expect(error?.code).toBe("CT_SCHEMA_INVALID")
+    expect(error?.cause?.message).toBe("SUPERSEDED_MIGRATION_001")
+    expect(snapshot()).toEqual(before)
+  })
+
+  test("schema-version-1 replay rejects unexpected continuation object drift non-mutating", () => {
+    const { main } = createMainFixture()
+    const context = tower.deriveCanonicalMainContext(main)
+    const provisioned = tower.provisionMainAuthorityAnchor({ request_identity: randomUUID(), expected_config_digest: digest(canonical(context)) }, main)
+    seedLegacy(main)
+    const request = { request_identity: randomUUID(), expected_anchor_id: provisioned.anchor_id, expected_schema_version: 0, target_schema_version: 1, expected_mode: "OFF" }
+    tower.bootstrapAdmin(request, main)
+    const dbPath = join(context.git_common_dir, "control-tower", "tower.db")
+    const drifted = new Database(dbPath)
+    drifted.run("CREATE TABLE ct_unexpected (id INTEGER)")
+    drifted.close()
+    const before = digest(readFileSync(dbPath))
+
+    expect(errorCode(() => tower.bootstrapAdmin(request, main))).toBe("CT_SCHEMA_INVALID")
+    expect(digest(readFileSync(dbPath))).toBe(before)
+    const after = new Database(dbPath, { readonly: true })
+    expect(after.query("SELECT name FROM sqlite_master WHERE name GLOB 'ct_*' ORDER BY name").all()).toEqual([
+      { name: "ct_continuation_state" }, { name: "ct_idempotency" }, { name: "ct_schema_migration" }, { name: "ct_unexpected" },
+    ])
+    after.close()
   })
 
   test("simultaneous identical bootstraps commit once and replay once", async () => {
