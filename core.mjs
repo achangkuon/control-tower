@@ -18,8 +18,12 @@
 
 import { Database } from "bun:sqlite"
 import { execFileSync } from "node:child_process"
-import { appendFileSync, existsSync, mkdirSync, rmSync } from "node:fs"
-import { basename, join } from "node:path"
+import { createHash, randomBytes } from "node:crypto"
+import {
+  appendFileSync, chmodSync, closeSync, constants, existsSync, fchmodSync, fsyncSync, linkSync,
+  lstatSync, mkdirSync, openSync, readFileSync, realpathSync, rmSync, unlinkSync, writeFileSync,
+} from "node:fs"
+import { basename, join, normalize } from "node:path"
 
 export const STATES = [
   "PLANNED",
@@ -65,6 +69,221 @@ export const trace = (root, actor, line, flag = "") => {
 
 const git = (cwd, args) =>
   execFileSync("git", args, { cwd, encoding: "utf8" }).trim()
+
+const ctError = (code, cause) => Object.assign(new Error(code, { cause }), { code })
+const jcs = (value) => {
+  if (value === null || typeof value !== "object") return JSON.stringify(value)
+  if (Array.isArray(value)) return `[${value.map(jcs).join(",")}]`
+  return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${jcs(value[key])}`).join(",")}}`
+}
+const sha256 = (value) => `sha256:${createHash("sha256").update(value).digest("hex")}`
+const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+const rfc3339Milliseconds = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
+const isBase64url32 = (value) => typeof value === "string" && /^[A-Za-z0-9_-]{43}$/.test(value) &&
+  Buffer.from(value, "base64url").length === 32 && Buffer.from(value, "base64url").toString("base64url") === value
+const ANCHOR_NAME = "main_authority_anchor_v1.json"
+
+export const MIGRATION_001_SQL = `CREATE TABLE ct_schema_migration (
+  version INTEGER PRIMARY KEY CHECK(version = 1),
+  ddl_checksum TEXT NOT NULL UNIQUE,
+  applied_at TEXT NOT NULL
+);
+CREATE TABLE ct_continuation_state (
+  id INTEGER PRIMARY KEY CHECK(id = 1),
+  anchor_id TEXT NOT NULL UNIQUE,
+  anchor_epoch INTEGER NOT NULL CHECK(anchor_epoch = 1),
+  anchor_secret_digest TEXT NOT NULL,
+  config_digest TEXT NOT NULL,
+  schema_version INTEGER NOT NULL CHECK(schema_version = 1),
+  mode TEXT NOT NULL DEFAULT 'OFF' CHECK(mode IN ('OFF', 'ON', 'ROLLING_BACK'))
+);
+CREATE TABLE ct_idempotency (
+  operation TEXT NOT NULL,
+  scope_key TEXT NOT NULL,
+  request_identity TEXT NOT NULL,
+  request_digest TEXT NOT NULL,
+  cas_digest TEXT NOT NULL,
+  response_json TEXT NOT NULL,
+  committed_at TEXT NOT NULL,
+  PRIMARY KEY (operation, scope_key),
+  UNIQUE (operation, request_identity)
+);
+`
+export const MIGRATION_001_CHECKSUM = sha256(Buffer.from(MIGRATION_001_SQL))
+const MANIFEST_SQL = `SELECT type, name, tbl_name, sql
+FROM sqlite_master
+WHERE name IN ('agent','message','message_pending','lock',
+               'ct_schema_migration','ct_continuation_state','ct_idempotency')
+   OR (name GLOB 'ct_*' AND name NOT LIKE 'sqlite_%')
+ORDER BY type, name;`
+const normalizeSchemaSql = (sql) => sql.replace(/\s+/g, " ").replace(/\s*([(),])\s*/g, "$1").trim()
+const LEGACY_SQL = new Map([
+  ["table:agent:agent", "CREATE TABLE agent(name TEXT PRIMARY KEY,role TEXT NOT NULL,worktree TEXT NOT NULL,branch TEXT,state TEXT NOT NULL,task TEXT,note TEXT,pr_url TEXT,updated_at TEXT NOT NULL)"],
+  ["table:message:message", "CREATE TABLE message(id INTEGER PRIMARY KEY AUTOINCREMENT,recipient TEXT NOT NULL,sender TEXT NOT NULL,text TEXT NOT NULL,created_at TEXT NOT NULL,consumed_at TEXT)"],
+  ["index:message_pending:message", "CREATE INDEX message_pending ON message(recipient,id)WHERE consumed_at IS NULL"],
+  ["table:lock:lock", "CREATE TABLE lock(name TEXT PRIMARY KEY,holder TEXT,acquired_at TEXT)"],
+])
+const CT_SQL = new Map(MIGRATION_001_SQL.trimEnd().split(";\n").map((sql) => sql.replace(/;$/, "")).map((sql) => [sql.match(/^CREATE TABLE (\w+)/)[1], sql]))
+
+export const deriveCanonicalMainContext = (cwd) => {
+  const common = normalize(realpathSync(git(cwd, ["rev-parse", "--path-format=absolute", "--git-common-dir"])))
+  const candidates = execFileSync("git", ["worktree", "list", "--porcelain", "-z"], { cwd, encoding: "utf8" })
+    .split("\0").filter((line) => line.startsWith("worktree ")).map((line) => line.slice(9))
+  const mains = candidates.filter((path) => normalize(realpathSync(git(path, ["rev-parse", "--path-format=absolute", "--absolute-git-dir"]))) === common)
+  if (mains.length !== 1) throw new Error("canonical Main is missing or ambiguous")
+  const main = normalize(realpathSync(mains[0]))
+  const branch = git(main, ["symbolic-ref", "--short", "HEAD"])
+  if (!branch) throw new Error("canonical Main branch is detached or ambiguous")
+  return { canonical_repo: main, git_common_dir: common, main_worktree: main, branch, trusted_uid: process.geteuid() }
+}
+
+export const isSafeAnchorEntry = (entry, expected) =>
+  entry.uid === expected.uid && entry.mode === expected.mode && entry.type === expected.type &&
+  (!expected.singleLink || entry.nlink === 1)
+const entrySafe = (stats, type, mode, uid, singleLink = false) => isSafeAnchorEntry(
+  { type: stats.isSymbolicLink() ? "symlink" : stats.isDirectory() ? "directory" : stats.isFile() ? "file" : "other", uid: stats.uid, mode: stats.mode & 0o777, nlink: stats.nlink },
+  { type, mode, uid, singleLink },
+)
+const ensureRuntime = (context, create) => {
+  const commonStats = lstatSync(context.git_common_dir)
+  if (!commonStats.isDirectory() || commonStats.isSymbolicLink()) throw ctError("CT_ANCHOR_MISMATCH")
+  const root = join(context.git_common_dir, "control-tower")
+  if (!existsSync(root) && create) {
+    mkdirSync(root, { mode: 0o700 })
+    chmodSync(root, 0o700)
+  }
+  if (!existsSync(root)) throw ctError("CT_ANCHOR_REQUIRED")
+  if (!entrySafe(lstatSync(root), "directory", 0o700, context.trusted_uid)) throw ctError("CT_ANCHOR_MISMATCH")
+  return root
+}
+const configDigest = (context) => sha256(Buffer.from(jcs(context)))
+const requestDigest = (value) => sha256(Buffer.from(jcs(value)))
+const anchorResponse = (anchor, replayed) => ({ anchor_id: anchor.anchor_id, anchor_epoch: 1, state: "PROVISIONED", replayed })
+const readAnchor = (context) => {
+  const root = ensureRuntime(context, false)
+  const path = join(root, ANCHOR_NAME)
+  if (!existsSync(path)) throw ctError("CT_ANCHOR_REQUIRED")
+  if (!entrySafe(lstatSync(path), "file", 0o600, context.trusted_uid, true)) throw ctError("CT_ANCHOR_MISMATCH")
+  try {
+    const bytes = readFileSync(path, "utf8")
+    const anchor = JSON.parse(bytes)
+    const keys = ["anchor_epoch","anchor_id","anchor_secret","config_digest","context","created_at","kind","provision_request_digest","provision_request_identity","version"]
+    if (bytes !== `${jcs(anchor)}\n` || JSON.stringify(Object.keys(anchor).sort()) !== JSON.stringify(keys) ||
+        anchor.kind !== "main_authority_anchor_v1" || anchor.version !== 1 || anchor.anchor_epoch !== 1 ||
+        anchor.config_digest !== configDigest(context) || jcs(anchor.context) !== jcs(context) ||
+        !isBase64url32(anchor.anchor_id) || !isBase64url32(anchor.anchor_secret) ||
+        anchor.anchor_id === anchor.anchor_secret || !rfc3339Milliseconds.test(anchor.created_at) ||
+        new Date(anchor.created_at).toISOString() !== anchor.created_at) throw new Error("anchor mismatch")
+    return { anchor, bytes, root, path }
+  } catch (error) {
+    if (error.code?.startsWith("CT_")) throw error
+    throw ctError("CT_ANCHOR_MISMATCH", error)
+  }
+}
+
+export const provisionMainAuthorityAnchor = (request, cwd = process.cwd()) => {
+  let context
+  try { context = deriveCanonicalMainContext(cwd) } catch (error) { throw ctError("CT_ANCHOR_MISMATCH", error) }
+  const expected = configDigest(context)
+  if (!uuid.test(request?.request_identity ?? "") || request?.expected_config_digest !== expected) throw ctError("CT_ANCHOR_MISMATCH")
+  let root
+  try { root = ensureRuntime(context, true) } catch (error) { throw error.code ? error : ctError("CT_ANCHOR_MISMATCH", error) }
+  const path = join(root, ANCHOR_NAME)
+  if (existsSync(path)) {
+    const { anchor } = readAnchor(context)
+    const digest = requestDigest({ request_identity: request.request_identity, expected_config_digest: expected })
+    if (anchor.provision_request_identity !== request.request_identity || anchor.provision_request_digest !== digest) throw ctError("CT_ANCHOR_MISMATCH")
+    return anchorResponse(anchor, true)
+  }
+  const anchor = {
+    kind: "main_authority_anchor_v1", version: 1,
+    anchor_id: randomBytes(32).toString("base64url"), anchor_secret: randomBytes(32).toString("base64url"), anchor_epoch: 1,
+    context, config_digest: expected, provision_request_identity: request.request_identity,
+    provision_request_digest: requestDigest({ request_identity: request.request_identity, expected_config_digest: expected }),
+    created_at: new Date().toISOString(),
+  }
+  const temp = join(root, `.${ANCHOR_NAME}.${randomBytes(12).toString("hex")}`)
+  let fd
+  try {
+    fd = openSync(temp, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600)
+    fchmodSync(fd, 0o600)
+    writeFileSync(fd, `${jcs(anchor)}\n`); fsyncSync(fd); closeSync(fd); fd = undefined
+    linkSync(temp, path); unlinkSync(temp)
+    readAnchor(context)
+    const dir = openSync(root, constants.O_RDONLY | constants.O_DIRECTORY); fsyncSync(dir); closeSync(dir)
+    return anchorResponse(anchor, false)
+  } catch (error) {
+    if (fd !== undefined) closeSync(fd)
+    rmSync(temp, { force: true })
+    if (error?.code === "EEXIST" || existsSync(path)) throw ctError("CT_ANCHOR_MISMATCH", error)
+    throw error
+  }
+}
+
+const inspectSchema = (db) => {
+  const rows = db.query(MANIFEST_SQL).all()
+  const legacy = rows.filter(({ name }) => !name.startsWith("ct_"))
+  if (legacy.length !== 4 || legacy.some((row) =>
+    LEGACY_SQL.get(`${row.type}:${row.name}:${row.tbl_name}`) !== normalizeSchemaSql(row.sql),
+  )) throw ctError("CT_SCHEMA_INVALID")
+  const continuation = rows.filter(({ name }) => name.startsWith("ct_"))
+  if (continuation.length === 0) return 0
+  if (continuation.length !== 3 || continuation.some((row) => row.type !== "table" || row.tbl_name !== row.name || CT_SQL.get(row.name) !== row.sql)) throw ctError("CT_SCHEMA_INVALID")
+  const migration = db.query("SELECT version,ddl_checksum FROM ct_schema_migration").all()
+  if (migration.length !== 1 || migration[0].version !== 1 || migration[0].ddl_checksum !== MIGRATION_001_CHECKSUM) throw ctError("CT_SCHEMA_INVALID")
+  return 1
+}
+const validateContinuationState = (db, authority) => {
+  const rows = db.query("SELECT * FROM ct_continuation_state").all()
+  if (rows.length !== 1 || rows[0].id !== 1 || rows[0].schema_version !== 1) throw ctError("CT_SCHEMA_INVALID")
+  const state = rows[0]
+  if (state.anchor_id !== authority.anchor.anchor_id ||
+      state.anchor_secret_digest !== sha256(Buffer.from(authority.anchor.anchor_secret, "base64url")) ||
+      state.config_digest !== authority.anchor.config_digest) throw ctError("CT_ANCHOR_MISMATCH")
+  if (state.anchor_epoch !== 1 || state.mode !== "OFF") throw ctError("CT_FENCE_MISMATCH")
+}
+const busy = (error) => error?.code === "SQLITE_BUSY" || /locked|busy/i.test(error?.message ?? "")
+
+export const bootstrapAdmin = (request, cwd = process.cwd()) => {
+  let context, authority
+  try { context = deriveCanonicalMainContext(cwd); authority = readAnchor(context) }
+  catch (error) { throw error.code ? error : ctError("CT_ANCHOR_MISMATCH", error) }
+  if (!uuid.test(request?.request_identity ?? "")) throw ctError("CT_SCHEMA_INVALID")
+  const dbPath = join(authority.root, "tower.db")
+  if (!existsSync(dbPath)) throw ctError("CT_SCHEMA_INVALID")
+  const db = new Database(dbPath); db.run("PRAGMA busy_timeout = 250")
+  try {
+    if (request.target_schema_version !== 1 || request.expected_mode !== "OFF") throw ctError("CT_SCHEMA_INVALID")
+    const requestValue = { request_identity: request.request_identity, expected_anchor_id: request.expected_anchor_id, expected_schema_version: request.expected_schema_version, target_schema_version: 1, expected_mode: "OFF" }
+    const request_digest = requestDigest(requestValue)
+    const cas_digest = requestDigest({ expected_anchor_id: request.expected_anchor_id, expected_schema_version: request.expected_schema_version, target_schema_version: 1, expected_mode: "OFF", derived_anchor_epoch: 1, derived_config_digest: authority.anchor.config_digest })
+    const apply = db.transaction(() => {
+      const version = inspectSchema(db)
+      if (version === 1) {
+        const row = db.query("SELECT * FROM ct_idempotency WHERE operation='bootstrapAdmin' AND scope_key='admin-bootstrap'").get()
+        if (!row || row.request_identity !== request.request_identity || row.request_digest !== request_digest || row.cas_digest !== cas_digest) throw ctError("CT_IDEMPOTENCY_CONFLICT")
+        validateContinuationState(db, authority)
+        return { ...JSON.parse(row.response_json), replayed: true }
+      }
+      if (request.expected_anchor_id !== authority.anchor.anchor_id || request.expected_schema_version !== 0) throw ctError("CT_FENCE_MISMATCH")
+      const response = { anchor_id: authority.anchor.anchor_id, schema_version: 1, mode: "OFF", replayed: false }
+      db.run(MIGRATION_001_SQL)
+      const applied = new Date().toISOString()
+      db.run("INSERT INTO ct_schema_migration VALUES (1,?,?)", [MIGRATION_001_CHECKSUM, applied])
+      db.run("INSERT INTO ct_continuation_state VALUES (1,?,?,?,?,1,'OFF')", [authority.anchor.anchor_id, 1, sha256(Buffer.from(authority.anchor.anchor_secret, "base64url")), authority.anchor.config_digest])
+      db.run("INSERT INTO ct_idempotency VALUES ('bootstrapAdmin','admin-bootstrap',?,?,?,?,?)", [request.request_identity, request_digest, cas_digest, jcs(response), applied])
+      if (readFileSync(authority.path, "utf8") !== authority.bytes) throw ctError("CT_ANCHOR_MISMATCH")
+      if (inspectSchema(db) !== 1) throw ctError("CT_SCHEMA_INVALID")
+      validateContinuationState(db, authority)
+      return response
+    })
+    return apply.immediate()
+  } catch (error) {
+    if (error.code?.startsWith("CT_")) throw error
+    if (busy(error)) throw ctError("CT_BUSY", error)
+    throw ctError("CT_SCHEMA_INVALID", error)
+  } finally { db.close() }
+}
 
 /** Repo-scoped paths and this session's identity, derived from a directory. */
 export const locate = (cwd) => {

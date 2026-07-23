@@ -17,7 +17,7 @@
 
 set -euo pipefail
 
-CORE="$HOME/.config/opencode/control-tower/core.mjs"
+CORE="${CONTROL_TOWER_CORE:-$HOME/.config/opencode/control-tower/core.mjs}"
 
 repo_dir=""
 args=()
@@ -49,6 +49,13 @@ DB="$ROOT/tower.db"
 PROJECT=$(basename "$(dirname "$(dirname "$common")")")
 
 estado() { [[ -f "$ACTIVE" ]] && echo "ARMADA" || echo "desarmada"; }
+flag() {
+    local wanted="$1"; shift
+    while [[ $# -gt 0 ]]; do
+        [[ "$1" == "$wanted" ]] && { printf '%s' "${2:-}"; return; }
+        shift
+    done
+}
 
 tabla() {
     if [[ ! -f "$DB" ]]; then
@@ -80,6 +87,18 @@ tabla() {
 }
 
 case "${1:-}" in
+    main-config)
+        bun -e 'const t=await import(process.argv[1]); const c=t.deriveCanonicalMainContext(process.cwd()); console.log(JSON.stringify({context:c}))' "$CORE"
+        ;;
+    provision-main)
+        bun -e 'const t=await import(process.argv[1]); console.log(JSON.stringify(t.provisionMainAuthorityAnchor({request_identity:process.argv[2],expected_config_digest:process.argv[3]},process.cwd())))' \
+          "$CORE" "$(flag --request-identity "${@:2}")" "$(flag --expected-config-digest "${@:2}")"
+        ;;
+    bootstrap-admin)
+        bun -e 'const t=await import(process.argv[1]); console.log(JSON.stringify(t.bootstrapAdmin({request_identity:process.argv[2],expected_anchor_id:process.argv[3],expected_schema_version:Number(process.argv[4]),target_schema_version:Number(process.argv[5]),expected_mode:process.argv[6]},process.cwd())))' \
+          "$CORE" "$(flag --request-identity "${@:2}")" "$(flag --expected-anchor-id "${@:2}")" \
+          "$(flag --expected-schema-version "${@:2}")" "$(flag --target-schema-version "${@:2}")" "$(flag --expected-mode "${@:2}")"
+        ;;
     on)
         mkdir -p "$ROOT"
         touch "$ACTIVE"
@@ -169,7 +188,7 @@ case "${1:-}" in
         ;;
     *)
         echo "torre: no conozco \"$1\"" >&2
-        echo "usá: torre [on|off|status|log|unlock|reset] [--repo <ruta>]" >&2
+        echo "usá: torre [main-config|provision-main|bootstrap-admin|on|off|status|log|unlock|reset] [--repo <ruta>]" >&2
         exit 1
         ;;
 esac

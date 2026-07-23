@@ -33,7 +33,7 @@
 
 ### Requirement: CT-R5 Root-only polling
 
-The plugin MUST poll only its bound root. Child creation, idle, or deletion MUST NOT start or stop root polling. Root deletion/disposal MUST stop polling before wake or receive, and lifecycle events MUST NOT consume without verified identity.
+Every supported host adapter MUST delegate polling, wake throttling, and stop-before-receive ordering to one host-neutral controller bound to exactly one proven root. OpenCode MUST map root `session.idle`/disposal and `promptAsync`; Pi MUST map `agent_settled`/`session_shutdown` and idle-safe message injection; Claude MUST map `Stop`/`SessionEnd` and bounded hook rewake. Child creation, idle, or deletion MUST NOT start or stop root polling. Root deletion, disposal, shutdown, or terminal stop MUST stop polling before wake or receive, and lifecycle events MUST NOT consume without verified identity. The five CT-R5 scenarios MUST run unchanged as a conformance matrix for OpenCode, Pi, and Claude; host adapters MUST NOT import or duplicate SQLite transition logic.
 
 #### Scenario: CT-R5-S1 Child deletion preserves polling
 - GIVEN a live bound root, child, and pending handoff
