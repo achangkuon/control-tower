@@ -587,7 +587,7 @@ describe("P3-B activation, status, and capability-gated MCP", () => {
     expect(explicitNull.content[0].text).toBe("ERROR: CT_PAYLOAD_INVALID")
   })
 
-  test("capability gate exposes exactly nine P3/P4-A2/P4-A3/P4-B routes while preserving legacy and future-route fences", () => {
+  test("capability gate exposes exactly fourteen P3/P4/P5 routes while preserving legacy and future-route fences", () => {
     const fixture = createFixture({ mode: "OFF", schema: 3 })
     const metadata = capability()
     const processIdentity = opaqueProcess()
@@ -599,18 +599,24 @@ describe("P3-B activation, status, and capability-gated MCP", () => {
       "tower_acquire", "tower_release", "tower_transfer", "tower_receive",
     ])
     expect(list(enabled)).toEqual([
-      ...list(disabled), "bootstrapMain", "activate", "status", "register", "receive", "create", "validate", "publish", "claim",
+      ...list(disabled), "bootstrapMain", "activate", "status", "register", "receive", "create", "validate", "publish", "claim", "ack", "attestCompletion", "complete", "reject", "revise",
     ])
-    // "create"/"validate"/"publish"/"claim" are capability-gated but still
-    // require schema 4; on this schema-3 fixture they fail CT_SCHEMA_INVALID
-    // rather than "unknown tool".
-    for (const name of ["start", "complete", "beginRollback", "rebindMain", "finishRollback"]) {
+    // "create"/"validate"/"publish"/"claim"/"ack"/"attestCompletion"/
+    // "complete"/"reject"/"revise" are capability-gated but still require
+    // schema 4; on this schema-3
+    // fixture they fail CT_SCHEMA_INVALID rather than "unknown tool".
+    for (const name of ["start", "beginRollback", "rebindMain", "finishRollback"]) {
       expect(enabled({ id: 2, method: "tools/call", params: { name, arguments: {} } }).isError).toBe(true)
     }
     expect(enabled({ id: 20, method: "tools/call", params: { name: "create", arguments: {} } }).isError).toBe(true)
     expect(enabled({ id: 21, method: "tools/call", params: { name: "validate", arguments: {} } }).isError).toBe(true)
     expect(enabled({ id: 22, method: "tools/call", params: { name: "publish", arguments: {} } }).isError).toBe(true)
     expect(enabled({ id: 23, method: "tools/call", params: { name: "claim", arguments: {} } }).isError).toBe(true)
+    expect(enabled({ id: 24, method: "tools/call", params: { name: "ack", arguments: {} } }).isError).toBe(true)
+    expect(enabled({ id: 25, method: "tools/call", params: { name: "attestCompletion", arguments: {} } }).isError).toBe(true)
+    expect(enabled({ id: 26, method: "tools/call", params: { name: "complete", arguments: {} } }).isError).toBe(true)
+    expect(enabled({ id: 27, method: "tools/call", params: { name: "reject", arguments: {} } }).isError).toBe(true)
+    expect(enabled({ id: 28, method: "tools/call", params: { name: "revise", arguments: {} } }).isError).toBe(true)
     const bootstrap = mcpResult(enabled({ id: 3, method: "tools/call", params: { name: "bootstrapMain", arguments: mainRequest(fixture.anchor) } }))
     metadata.binding_epoch = bootstrap.binding_epoch
     expect(mcpResult(enabled({ id: 4, method: "tools/call", params: { name: "status", arguments: {} } })).mode).toBe("OFF")

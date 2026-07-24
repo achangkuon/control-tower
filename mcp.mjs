@@ -188,6 +188,87 @@ const CONTINUATION_TOOL_DEFINITIONS = new Map([
       required: ["request_identity", "delivery_id", "id", "es", "eg", "purpose"],
     },
   },
+  {
+    name: "ack",
+    description: "Ack is the sole start operation: CAS a CLAIMED handoff to STARTED under the ACTIVE claimant identity, gated on a complete persisted effect manifest and its recomputed pre-start boundary.",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        request_identity: { type: "string" },
+        delivery_id: { type: "string" },
+        id: { type: "string" },
+        es: { type: "string", enum: ["CLAIMED"] },
+        eg: { type: "integer", minimum: 0 },
+        purpose: { type: "string", enum: ["WORK"] },
+        token: { type: "string" },
+        effect_manifest: { type: "object" },
+      },
+      required: ["request_identity", "delivery_id", "id", "es", "eg", "purpose", "token", "effect_manifest"],
+    },
+  },
+  {
+    name: "attestCompletion",
+    description: "Server-derive canonical attestation evidence for a STARTED handoff and CAS it to COMPLETION_ATTESTED, under the ACTIVE Main identity. The caller supplies no evidence or digest.",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        request_identity: { type: "string" },
+        id: { type: "string" },
+        es: { type: "string", enum: ["STARTED"] },
+        eg: { type: "integer", minimum: 0 },
+      },
+      required: ["request_identity", "id", "es", "eg"],
+    },
+  },
+  {
+    name: "complete",
+    description: "Complete is the claimant's sole completion operation: consume the single-use attestation, CAS a COMPLETION_ATTESTED handoff to COMPLETED, close the claim and delivery, and persist the committed result, under the ACTIVE claimant identity.",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        request_identity: { type: "string" },
+        delivery_id: { type: "string" },
+        id: { type: "string" },
+        es: { type: "string", enum: ["COMPLETION_ATTESTED"] },
+        eg: { type: "integer", minimum: 0 },
+        purpose: { type: "string", enum: ["WORK", "ATTESTATION_REDELIVERY"] },
+        token: { type: "string" },
+        attestation_digest: { type: "string" },
+        committed_result: { type: "object" },
+      },
+      required: ["request_identity", "delivery_id", "id", "es", "eg", "purpose", "token", "attestation_digest", "committed_result"],
+    },
+  },
+  {
+    name: "reject",
+    description: "Reject one unclaimed DRAFT, VALIDATED, or PUBLISHED handoff under ACTIVE Main authority, closing its PENDING delivery when present.",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        request_identity: { type: "string" },
+        id: { type: "string" },
+        es: { type: "string", enum: ["DRAFT", "VALIDATED", "PUBLISHED"] },
+        eg: { type: "integer", minimum: 0 },
+      },
+      required: ["request_identity", "id", "es", "eg"],
+    },
+  },
+  {
+    name: "revise",
+    description: "Create one immutable DRAFT revision N+1 from an exact REJECTED source under ACTIVE Main authority.",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        request_identity: { type: "string" },
+        source_id: { type: "string" },
+        lineage_id: { type: "string" },
+        revision: { type: "integer", minimum: 2 },
+        payload: { type: "object" },
+        payload_digest: { type: "string" },
+      },
+      required: ["request_identity", "source_id", "lineage_id", "revision", "payload", "payload_digest"],
+    },
+  },
 ].map((tool) => [tool.name, tool]))
 
 const GUARDED_TOOLS = new Set([
