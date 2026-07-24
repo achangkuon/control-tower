@@ -1017,6 +1017,13 @@ const schema4Transition = (row, previous) => {
 }
 function validateSchema4Persistence(db, authority) {
   try {
+    const futureHistoryPresent = db.query(`SELECT
+      EXISTS(SELECT 1 FROM ct_handoff WHERE generation<>0 OR state NOT IN ('DRAFT','VALIDATED','PUBLISHED','CLAIMED')) OR
+      EXISTS(SELECT 1 FROM ct_handoff_transition WHERE generation<>0 OR operation NOT IN ('CREATE','VALIDATE','PUBLISH','CLAIM')) OR
+      EXISTS(SELECT 1 FROM ct_delivery WHERE generation<>0 OR purpose<>'WORK' OR delivery_state NOT IN ('PENDING','CLAIMED') OR closed_at IS NOT NULL) OR
+      EXISTS(SELECT 1 FROM ct_claim WHERE generation<>0 OR purpose<>'WORK' OR claim_state<>'LIVE' OR closed_at IS NOT NULL) OR
+      EXISTS(SELECT 1 FROM ct_idempotency WHERE operation IN ('ack','attestCompletion','complete','reject','revise','recover')) AS invalid`).get().invalid
+    if (futureHistoryPresent) throw ctError("CT_SCHEMA_INVALID")
     const bindings = new Map(db.query("SELECT * FROM ct_claimant_binding").all().map((row) => [row.binding_id, assertClaimantBinding(row, authority)]))
     for (const row of db.query("SELECT * FROM ct_claimant_conflict").all()) {
       const incumbent = bindings.get(row.incumbent_binding_id), attempted = bindings.get(row.attempted_binding_id)
@@ -1637,11 +1644,373 @@ export const continuationCreate = (handle, ctxFactory, request) => {
   }
 }
 
+// P4-A3 validate/publish: live inert observations for fresh `validate` only.
+// Exact replay never re-reads Git/filesystem state; malformed structure,
+// unresolved references, or a failed digest/ancestry match is always
+// non-mutating CT_PAYLOAD_INVALID.
+const resolveFileNoFollow = (canonicalRepo, relativePath) => {
+  let current = canonicalRepo
+  for (const [index, segment] of relativePath.split("/").entries()) {
+    current = join(current, segment)
+    let stats
+    try { stats = lstatSync(current) } catch { throw ctError("CT_PAYLOAD_INVALID") }
+    if (stats.isSymbolicLink()) throw ctError("CT_PAYLOAD_INVALID")
+    const isLast = index === relativePath.split("/").length - 1
+    if (isLast ? !stats.isFile() : !stats.isDirectory()) throw ctError("CT_PAYLOAD_INVALID")
+  }
+  try { return readFileSync(current) } catch { throw ctError("CT_PAYLOAD_INVALID") }
+}
+const resolveCommitOid = (canonicalRepo, value) => {
+  try { return git(canonicalRepo, ["rev-parse", "--verify", `${value}^{commit}`]) } catch { throw ctError("CT_PAYLOAD_INVALID") }
+}
+const liveEvidenceReference = (canonicalRepo, reference) => {
+  if (reference.kind === "URL") {
+    if (reference.digest !== sha256(reference.value)) throw ctError("CT_PAYLOAD_INVALID")
+    return { kind: "URL", value: reference.value, digest: reference.digest, observed_digest: reference.digest, fetch: "NONE" }
+  }
+  if (reference.kind === "COMMIT") {
+    const resolvedOid = resolveCommitOid(canonicalRepo, reference.value)
+    if (resolvedOid !== reference.value) throw ctError("CT_PAYLOAD_INVALID")
+    return { kind: "COMMIT", value: reference.value, digest: reference.digest, observed_digest: sha256(reference.value), resolved_oid: resolvedOid }
+  }
+  const observedDigest = sha256(resolveFileNoFollow(canonicalRepo, reference.value))
+  if (observedDigest !== reference.digest) throw ctError("CT_PAYLOAD_INVALID")
+  return { kind: "FILE", value: reference.value, digest: reference.digest, observed_digest: observedDigest, node_type: "REGULAR" }
+}
+const liveValidationEvidence = (authority, handoff, payload, main) => {
+  const canonicalRepo = authority.anchor.context.canonical_repo
+  const resolvedOid = resolveCommitOid(canonicalRepo, payload.repository.source_merge.sha)
+  if (resolvedOid !== handoff.source_merge_sha) throw ctError("CT_PAYLOAD_INVALID")
+  const mainHeadOid = resolveCommitOid(canonicalRepo, "HEAD")
+  try { git(canonicalRepo, ["merge-base", "--is-ancestor", resolvedOid, mainHeadOid]) } catch { throw ctError("CT_PAYLOAD_INVALID") }
+  const references = payload.next_unit.references.map((reference) => liveEvidenceReference(canonicalRepo, reference))
+  return {
+    kind: "handoff_validation_evidence_v1", version: 1, id: handoff.id, lineage_id: handoff.lineage_id, revision: handoff.revision,
+    payload_digest: handoff.payload_digest, handoff_fingerprint: handoff.handoff_fingerprint, repository_fingerprint: handoff.repository_fingerprint,
+    git_common_dir_fingerprint: handoff.git_common_dir_fingerprint,
+    content: { next_unit_scope_digest: handoff.next_unit_scope_digest, dependencies_digest: handoff.dependencies_digest, references_digest: handoff.references_digest,
+      snapshots_digest: handoff.snapshots_digest, decision_summary_digest: handoff.decision_summary_digest },
+    provenance: { source_digest: payload.provenance.source_digest, provenance_digest: handoff.provenance_digest, producer_binding_id: handoff.producer_binding_id,
+      producer_identity_digest: handoff.producer_identity_digest, producer_ctx_digest: handoff.producer_ctx_digest },
+    source_merge: { requested_sha: handoff.source_merge_sha, resolved_oid: resolvedOid, url: handoff.source_merge_url, main_head_oid: mainHeadOid, is_ancestor: true },
+    references,
+    validator: { main_binding_id: main.main_binding_id, main_binding_epoch: main.binding_epoch, main_identity_digest: main.identity_digest },
+  }
+}
+
+const validateRequestKeys = ["eg", "es", "id", "payload_digest", "request_identity"]
+const assertValidateRequest = (request) => {
+  if (!request || Object.getPrototypeOf(request) !== Object.prototype || Object.keys(request).some((key) => forbiddenCtxKeys.has(key)) ||
+      JSON.stringify(Object.keys(request).sort()) !== JSON.stringify(validateRequestKeys) ||
+      !uuid.test(request.request_identity ?? "") || !isBase64url32(request.id) || request.es !== "DRAFT" ||
+      !safeEpoch(request.eg) || !sha256Digest.test(request.payload_digest ?? "")) throw ctError("CT_PAYLOAD_INVALID")
+}
+export const continuationValidate = (handle, ctxFactory, request) => {
+  const { db, authority } = handle
+  try {
+    return db.transaction(() => {
+      const version = inspectSchema(db)
+      if (version !== 4) throw ctError("CT_SCHEMA_INVALID")
+      const state = continuationState(db, authority, version)
+      const lease = validateLease(db)
+      validateSchema4CommitEvidence(db, authority)
+      const persisted = validateSchema3Persistence(db, authority)
+      validateSchema4Persistence(db, authority)
+      if (state.mode === "OFF") throw ctError("CT_CONTINUATION_OFF")
+      if (state.mode === "ROLLING_BACK") throw ctError("CT_ROLLBACK_IN_PROGRESS")
+      if (lease.lease_status !== "NONE" || lease.owner_main_binding_id !== null || lease.lease_expires_at !== null) throw ctError("CT_SCHEMA_INVALID")
+      assertValidateRequest(request)
+
+      // Exact ACTIVE Main predicate — same canonical-worktree/epoch gate
+      // bootstrapMain/activate already use.
+      const ctx = ctxFactory(), main = coherentMain(persisted.rows)
+      assertMainGate(ctx, authority, main)
+
+      const request_digest = requestDigest(request)
+      const scopeKey = `handoff:${request.id}:generation:${request.eg}:validate`
+      const byIdentity = db.query("SELECT * FROM ct_idempotency WHERE operation='validate' AND request_identity=?").get(request.request_identity)
+      const byScope = db.query("SELECT * FROM ct_idempotency WHERE operation='validate' AND scope_key=?").get(scopeKey)
+      if (byIdentity || byScope) {
+        if (!byIdentity || !byScope || byIdentity.scope_key !== byScope.scope_key || byIdentity.request_identity !== byScope.request_identity ||
+            byIdentity.request_digest !== request_digest) throw ctError("CT_IDEMPOTENCY_CONFLICT")
+        let envelope
+        try { envelope = JSON.parse(byIdentity.response_json) } catch { throw ctError("CT_SCHEMA_INVALID") }
+        if (envelope?.kind !== "validate_response_envelope_v1" || !envelope.public_response) throw ctError("CT_SCHEMA_INVALID")
+        return { ...envelope.public_response, replayed: true }
+      }
+
+      const handoff = db.query("SELECT * FROM ct_handoff WHERE id=?").get(request.id)
+      if (!handoff) throw ctError("CT_NOT_FOUND")
+      if (handoff.state !== request.es) throw ctError("CT_INVALID_TRANSITION")
+      if (handoff.generation !== request.eg || handoff.payload_digest !== request.payload_digest) throw ctError("CT_FENCE_MISMATCH")
+
+      // Fresh derivation only: read/verify the immutable handoff, perform the
+      // approved live observations, then derive validation_digest before
+      // constructing the complete CAS — never accepted from the request.
+      const payload = canonicalJson(handoff.payload_json, 65536)
+      const evidence = liveValidationEvidence(authority, handoff, payload, main)
+      const validationEvidenceJson = jcs(evidence)
+      const validationDigest = requestDigest(evidence)
+
+      const writerFence = { schema_version: 4, mode: "ON", anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
+        observed_rollback_epoch: lease.rollback_epoch, observed_lease_version: lease.lease_version, observed_lease_status: "NONE" }
+      const mainAuthority = { main_binding_id: main.main_binding_id, binding_epoch: main.binding_epoch, identity_digest: main.identity_digest }
+      const casValue = { kind: "validate_cas_v1", version: 1, writer_fence_v1: writerFence, main_authority_v1: mainAuthority,
+        id: request.id, expected_state: "DRAFT", expected_generation: request.eg, payload_digest: handoff.payload_digest,
+        handoff_fingerprint: handoff.handoff_fingerprint, validation_digest: validationDigest }
+      const cas_digest = requestDigest(casValue)
+      const validatedAt = now()
+
+      if (db.run("UPDATE ct_handoff SET state='VALIDATED', validation_evidence_json=?, validation_digest=?, validated_at=? WHERE id=? AND state='DRAFT'",
+        [validationEvidenceJson, validationDigest, validatedAt, request.id]).changes !== 1) throw ctError("CT_SCHEMA_INVALID")
+
+      const publicResponse = { id: request.id, state: "VALIDATED", generation: request.eg, replayed: false }
+      const response_digest = requestDigest(publicResponse)
+      db.run(`INSERT INTO ct_handoff_transition(transition_id,handoff_id,generation,operation,from_state,to_state,authority_kind,authority_binding_id,authority_identity_digest,
+        request_identity,request_digest,cas_digest,decision_digest,response_digest,occurred_at) VALUES (?,?,?,'VALIDATE','DRAFT','VALIDATED','MAIN',?,?,?,?,?,?,?,?)`,
+        [makeId(), request.id, request.eg, main.main_binding_id, main.identity_digest, request.request_identity, request_digest, cas_digest, validationDigest, response_digest, validatedAt])
+
+      const envelope = { kind: "validate_response_envelope_v1", version: 1, public_response: publicResponse,
+        evidence: { request, request_digest, scope_key: scopeKey, cas_input: casValue, cas_digest, validation_digest: validationDigest } }
+      db.run("INSERT INTO ct_idempotency VALUES ('validate',?,?,?,?,?,?)", [scopeKey, request.request_identity, request_digest, cas_digest, jcs(envelope), validatedAt])
+      return publicResponse
+    }).immediate()
+  } catch (error) {
+    if (error.code?.startsWith("CT_")) throw error
+    if (busy(error)) throw ctError("CT_BUSY", error)
+    throw ctError("CT_SCHEMA_INVALID", error)
+  }
+}
+
+const publishRequestKeys = ["eg", "es", "id", "request_identity"]
+const assertPublishRequest = (request) => {
+  if (!request || Object.getPrototypeOf(request) !== Object.prototype || Object.keys(request).some((key) => forbiddenCtxKeys.has(key)) ||
+      JSON.stringify(Object.keys(request).sort()) !== JSON.stringify(publishRequestKeys) ||
+      !uuid.test(request.request_identity ?? "") || !isBase64url32(request.id) || request.es !== "VALIDATED" || !safeEpoch(request.eg)) throw ctError("CT_PAYLOAD_INVALID")
+}
+export const continuationPublish = (handle, ctxFactory, request) => {
+  const { db, authority } = handle
+  try {
+    return db.transaction(() => {
+      const version = inspectSchema(db)
+      if (version !== 4) throw ctError("CT_SCHEMA_INVALID")
+      const state = continuationState(db, authority, version)
+      const lease = validateLease(db)
+      validateSchema4CommitEvidence(db, authority)
+      const persisted = validateSchema3Persistence(db, authority)
+      validateSchema4Persistence(db, authority)
+      if (state.mode === "OFF") throw ctError("CT_CONTINUATION_OFF")
+      if (state.mode === "ROLLING_BACK") throw ctError("CT_ROLLBACK_IN_PROGRESS")
+      if (lease.lease_status !== "NONE" || lease.owner_main_binding_id !== null || lease.lease_expires_at !== null) throw ctError("CT_SCHEMA_INVALID")
+      assertPublishRequest(request)
+
+      const ctx = ctxFactory(), main = coherentMain(persisted.rows)
+      assertMainGate(ctx, authority, main)
+
+      const request_digest = requestDigest(request)
+      const scopeKey = `handoff:${request.id}:generation:${request.eg}:publish`
+      const byIdentity = db.query("SELECT * FROM ct_idempotency WHERE operation='publish' AND request_identity=?").get(request.request_identity)
+      const byScope = db.query("SELECT * FROM ct_idempotency WHERE operation='publish' AND scope_key=?").get(scopeKey)
+      if (byIdentity || byScope) {
+        if (!byIdentity || !byScope || byIdentity.scope_key !== byScope.scope_key || byIdentity.request_identity !== byScope.request_identity ||
+            byIdentity.request_digest !== request_digest) throw ctError("CT_IDEMPOTENCY_CONFLICT")
+        let envelope
+        try { envelope = JSON.parse(byIdentity.response_json) } catch { throw ctError("CT_SCHEMA_INVALID") }
+        if (envelope?.kind !== "publish_response_envelope_v1" || !envelope.public_response) throw ctError("CT_SCHEMA_INVALID")
+        return { ...envelope.public_response, replayed: true }
+      }
+
+      const handoff = db.query("SELECT * FROM ct_handoff WHERE id=?").get(request.id)
+      if (!handoff) throw ctError("CT_NOT_FOUND")
+      if (handoff.state !== request.es) throw ctError("CT_INVALID_TRANSITION")
+      if (handoff.generation !== request.eg) throw ctError("CT_FENCE_MISMATCH")
+      if (db.query("SELECT 1 FROM ct_delivery WHERE handoff_id=? AND generation=?").get(request.id, request.eg)) throw ctError("CT_FENCE_MISMATCH")
+
+      // Fully reverify the persisted evidence/digest — never accept a caller
+      // validation_digest or regenerate the evidence from live observations.
+      const evidence = canonicalJson(handoff.validation_evidence_json, 65536)
+      const validationDigest = requestDigest(evidence)
+      if (validationDigest !== handoff.validation_digest) throw ctError("CT_SCHEMA_INVALID")
+
+      const writerFence = { schema_version: 4, mode: "ON", anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
+        observed_rollback_epoch: lease.rollback_epoch, observed_lease_version: lease.lease_version, observed_lease_status: "NONE" }
+      const mainAuthority = { main_binding_id: main.main_binding_id, binding_epoch: main.binding_epoch, identity_digest: main.identity_digest }
+      const casValue = { kind: "publish_cas_v1", version: 1, writer_fence_v1: writerFence, main_authority_v1: mainAuthority,
+        id: request.id, expected_state: "VALIDATED", expected_generation: request.eg, payload_digest: handoff.payload_digest,
+        handoff_fingerprint: handoff.handoff_fingerprint, validation_digest: validationDigest, expected_delivery: "ABSENT" }
+      const cas_digest = requestDigest(casValue)
+      const publishedAt = now(), deliveryId = makeId()
+
+      if (db.run("UPDATE ct_handoff SET state='PUBLISHED', published_at=? WHERE id=? AND state='VALIDATED'",
+        [publishedAt, request.id]).changes !== 1) throw ctError("CT_SCHEMA_INVALID")
+
+      db.run(`INSERT INTO ct_delivery(delivery_id,handoff_id,generation,purpose,delivery_state,handoff_state_snapshot,claim_id,created_at,claimed_at,closed_at)
+        VALUES (?,?,?,'WORK','PENDING','PUBLISHED',NULL,?,NULL,NULL)`, [deliveryId, request.id, request.eg, publishedAt])
+
+      const publicResponse = { id: request.id, state: "PUBLISHED", generation: request.eg, replayed: false }
+      const response_digest = requestDigest(publicResponse)
+      db.run(`INSERT INTO ct_handoff_transition(transition_id,handoff_id,generation,operation,from_state,to_state,authority_kind,authority_binding_id,authority_identity_digest,
+        request_identity,request_digest,cas_digest,decision_digest,response_digest,occurred_at) VALUES (?,?,?,'PUBLISH','VALIDATED','PUBLISHED','MAIN',?,?,?,?,?,?,?,?)`,
+        [makeId(), request.id, request.eg, main.main_binding_id, main.identity_digest, request.request_identity, request_digest, cas_digest, validationDigest, response_digest, publishedAt])
+
+      const envelope = { kind: "publish_response_envelope_v1", version: 1, public_response: publicResponse,
+        evidence: { request, request_digest, scope_key: scopeKey, cas_input: casValue, cas_digest, validation_digest: validationDigest, delivery_id: deliveryId } }
+      db.run("INSERT INTO ct_idempotency VALUES ('publish',?,?,?,?,?,?)", [scopeKey, request.request_identity, request_digest, cas_digest, jcs(envelope), publishedAt])
+      return publicResponse
+    }).immediate()
+  } catch (error) {
+    if (error.code?.startsWith("CT_")) throw error
+    if (busy(error)) throw ctError("CT_BUSY", error)
+    throw ctError("CT_SCHEMA_INVALID", error)
+  }
+}
+
+const claimRequestKeys = ["delivery_id", "eg", "es", "id", "purpose", "request_identity"]
+const assertClaimRequest = (request) => {
+  if (!request || Object.getPrototypeOf(request) !== Object.prototype || Object.keys(request).some((key) => forbiddenCtxKeys.has(key)) ||
+      JSON.stringify(Object.keys(request).sort()) !== JSON.stringify(claimRequestKeys) ||
+      !uuid.test(request.request_identity ?? "") || !isBase64url32(request.delivery_id) || !isBase64url32(request.id) ||
+      !["WORK", "ATTESTATION_REDELIVERY"].includes(request.purpose) || !safeEpoch(request.eg) ||
+      request.es !== (request.purpose === "WORK" ? "PUBLISHED" : "COMPLETION_ATTESTED")) throw ctError("CT_PAYLOAD_INVALID")
+}
+// P4-B: atomic claim. Only WORK/PUBLISHED deliveries can actually exist in
+// this slice (A3 creates those); the ATTESTATION_REDELIVERY branch is wired
+// structurally per the design amendment but its rows only appear once P5
+// creates COMPLETION_ATTESTED deliveries — a claim naming one today cannot
+// find a matching delivery and fails CT_NOT_FOUND/CT_INVALID_TRANSITION
+// before reaching any handoff-state mutation.
+export const continuationClaim = (handle, ctxFactory, request) => {
+  const { db, authority } = handle
+  try {
+    return db.transaction(() => {
+      const version = inspectSchema(db)
+      if (version !== 4) throw ctError("CT_SCHEMA_INVALID")
+      const state = continuationState(db, authority, version)
+      const lease = validateLease(db)
+      validateSchema4CommitEvidence(db, authority); validateSchema3Persistence(db, authority); validateSchema4Persistence(db, authority)
+      if (state.mode === "OFF") throw ctError("CT_CONTINUATION_OFF")
+      if (state.mode === "ROLLING_BACK") throw ctError("CT_ROLLBACK_IN_PROGRESS")
+      if (lease.lease_status !== "NONE" || lease.owner_main_binding_id !== null || lease.lease_expires_at !== null) throw ctError("CT_SCHEMA_INVALID")
+      assertClaimRequest(request)
+
+      // Exact ACTIVE claimant (CLAIMANT) predicate — identical shape to the
+      // predicate register/receive/create already use for this scope.
+      const ctx = ctxFactory(), pluginScopeDigest = requestDigest(scope(ctx))
+      if (db.query("SELECT 1 FROM ct_claimant_conflict WHERE plugin_scope_digest=? LIMIT 1").get(pluginScopeDigest)) throw ctError("CT_SESSION_MULTIPLEXED")
+      const bindings = scopeBindings(db, ctx, authority)
+      if (bindings.some(({ binding_status }) => binding_status === "MULTIPLEXED")) throw ctError("CT_SESSION_MULTIPLEXED")
+      const active = bindings.filter(({ binding_status }) => binding_status === "ACTIVE")
+      if (active.length !== 1) throw ctError("CT_SESSION_ISOLATION_UNPROVEN")
+      const claimant = active[0]
+      if (claimant.binding_epoch !== ctx.binding_epoch) throw ctError("CT_FENCE_MISMATCH")
+      if (!equalFields(claimant, ctx, bindingFields)) throw ctError("CT_SESSION_ISOLATION_UNPROVEN")
+
+      const request_digest = requestDigest(request)
+      const scopeKey = `delivery:${request.delivery_id}:claim`
+      const byIdentity = db.query("SELECT * FROM ct_idempotency WHERE operation='claim' AND request_identity=?").get(request.request_identity)
+      const byScope = db.query("SELECT * FROM ct_idempotency WHERE operation='claim' AND scope_key=?").get(scopeKey)
+      if (byIdentity || byScope) {
+        if (!byIdentity || !byScope || byIdentity.scope_key !== byScope.scope_key || byIdentity.request_identity !== byScope.request_identity ||
+            byIdentity.request_digest !== request_digest) throw ctError("CT_IDEMPOTENCY_CONFLICT")
+        let envelope
+        try { envelope = JSON.parse(byIdentity.response_json) } catch { throw ctError("CT_SCHEMA_INVALID") }
+        if (envelope?.kind !== "claim_response_envelope_v1" || !envelope.public_response) throw ctError("CT_SCHEMA_INVALID")
+        const { id, state: publicState, generation, delivery_id, purpose } = envelope.public_response
+        return { id, state: publicState, generation, replayed: true, delivery_id, purpose }
+      }
+
+      const delivery = db.query("SELECT * FROM ct_delivery WHERE delivery_id=?").get(request.delivery_id)
+      if (!delivery) throw ctError("CT_NOT_FOUND")
+      const handoff = db.query("SELECT * FROM ct_handoff WHERE id=?").get(request.id)
+      if (!handoff) throw ctError("CT_NOT_FOUND")
+
+      const repositoryFingerprint = requestDigest({ kind: "canonical_repo_v1", path: authority.anchor.context.canonical_repo })
+      const gitCommonDirFingerprint = requestDigest({ kind: "git_common_dir_v1", path: authority.anchor.context.git_common_dir })
+      if (delivery.purpose !== request.purpose || handoff.state !== request.es) throw ctError("CT_INVALID_TRANSITION")
+      if (delivery.handoff_id !== request.id || delivery.generation !== request.eg || handoff.generation !== request.eg ||
+          handoff.repository_fingerprint !== repositoryFingerprint || handoff.git_common_dir_fingerprint !== gitCommonDirFingerprint ||
+          delivery.delivery_state !== "PENDING" || delivery.claim_id !== null) throw ctError("CT_FENCE_MISMATCH")
+
+      const occurredAt = now()
+      const claimantCtx = tuple(ctx), claimantCtxJson = jcs(claimantCtx), claimantCtxDigest = requestDigest(claimantCtx)
+      const budgetScope = { kind: "session_budget_v1", version: 1, effective_uid: ctx.effective_uid, canonical_repo: ctx.canonical_repo,
+        git_common_dir: ctx.git_common_dir, plugin_instance: ctx.plugin_instance, root_session_id: ctx.root_session_id }
+      const budgetScopeJson = jcs(budgetScope), budgetScopeDigest = requestDigest(budgetScope)
+      const claimId = makeId(), tokenSalt = makeId()
+
+      const claimantFence = { kind: "claimant_fence_v1", version: 1, delivery_id: request.delivery_id, id: request.id, generation: request.eg, purpose: request.purpose,
+        claimant_binding_id: claimant.binding_id, claimant_identity_digest: claimant.identity_digest, claimant_ctx_digest: claimantCtxDigest,
+        observed_rollback_epoch: lease.rollback_epoch, observed_lease_version: lease.lease_version, budget_scope_digest: budgetScopeDigest, budget_sequence: 1 }
+      const claimantFenceDigest = requestDigest(claimantFence)
+      const tokenMaterial = { kind: "claim_token_v1", version: 1, claim_id: claimId, delivery_id: request.delivery_id, id: request.id,
+        generation: request.eg, purpose: request.purpose, claimant_fence_digest: claimantFenceDigest, token_salt: tokenSalt }
+      const token = createHmac("sha256", Buffer.from(authority.anchor.anchor_secret, "base64url")).update(jcs(tokenMaterial)).digest("base64url")
+      const tokenHash = sha256(Buffer.from(token))
+
+      const writerFence = { schema_version: 4, mode: "ON", anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
+        observed_rollback_epoch: lease.rollback_epoch, observed_lease_version: lease.lease_version, observed_lease_status: "NONE" }
+      const claimantAuthority = { binding_id: claimant.binding_id, identity_digest: claimant.identity_digest, ctx_digest: claimantCtxDigest }
+      const casValue = { kind: "claim_cas_v1", version: 1, writer_fence_v1: writerFence, claimant_authority_v1: claimantAuthority,
+        delivery_id: request.delivery_id, id: request.id, expected_delivery_state: "PENDING", expected_handoff_state: request.es,
+        expected_generation: request.eg, purpose: request.purpose, handoff_fingerprint: handoff.handoff_fingerprint, budget_scope_digest: budgetScopeDigest,
+        budget_limit: 1, observed_budget_consumed: 0, target_budget_sequence: 1, token_scheme: "hmac-sha256-anchor-v1" }
+      const cas_digest = requestDigest(casValue)
+
+      // Session budget: seed the absent scope, then CAS-consume 0->1. Any
+      // throw below rolls back this seed too, so an exhausted budget leaves
+      // the scope exactly as it was.
+      if (!db.query("SELECT 1 FROM ct_session_budget WHERE budget_scope_digest=?").get(budgetScopeDigest))
+        db.run("INSERT INTO ct_session_budget(budget_scope_digest,budget_scope_json,budget_limit,consumed_count,last_claim_id,created_at,updated_at) VALUES (?,?,1,0,NULL,?,?)",
+          [budgetScopeDigest, budgetScopeJson, occurredAt, occurredAt])
+      if (db.run("UPDATE ct_session_budget SET consumed_count=1,last_claim_id=?,updated_at=? WHERE budget_scope_digest=? AND consumed_count=0",
+        [claimId, occurredAt, budgetScopeDigest]).changes !== 1) throw ctError("CT_SESSION_BUDGET_EXHAUSTED")
+
+      db.run(`INSERT INTO ct_claim(claim_id,delivery_id,handoff_id,generation,purpose,claimant_binding_id,claimant_identity_digest,claimant_ctx_json,claimant_ctx_digest,
+        claimant_fence_digest,token_salt,token_hash,budget_scope_digest,budget_sequence,request_identity,request_digest,cas_digest,claim_state,created_at,closed_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?,?,'LIVE',?,NULL)`,
+        [claimId, request.delivery_id, request.id, request.eg, request.purpose, claimant.binding_id, claimant.identity_digest, claimantCtxJson, claimantCtxDigest,
+          claimantFenceDigest, tokenSalt, tokenHash, budgetScopeDigest, request.request_identity, request_digest, cas_digest, occurredAt])
+
+      if (db.run("UPDATE ct_delivery SET delivery_state='CLAIMED', claim_id=?, claimed_at=? WHERE delivery_id=? AND delivery_state='PENDING'",
+        [claimId, occurredAt, request.delivery_id]).changes !== 1) throw ctError("CT_SCHEMA_INVALID")
+
+      let toState = handoff.state
+      if (request.purpose === "WORK") {
+        if (db.run("UPDATE ct_handoff SET state='CLAIMED' WHERE id=? AND state='PUBLISHED'", [request.id]).changes !== 1) throw ctError("CT_SCHEMA_INVALID")
+        toState = "CLAIMED"
+      }
+
+      const publicResponseTemplate = { kind: "claim_response_v1", version: 1, id: request.id, state: toState, generation: request.eg,
+        delivery_id: request.delivery_id, purpose: request.purpose, replayed: false }
+      const response_digest = requestDigest(publicResponseTemplate)
+      const claimDecision = { kind: "claim_decision_v1", version: 1, delivery_id: request.delivery_id, id: request.id, from_state: request.es, to_state: toState,
+        generation: request.eg, purpose: request.purpose, claim_id: claimId, claimant_fence_digest: claimantFenceDigest, budget_scope_digest: budgetScopeDigest,
+        budget_sequence: 1, token_hash: tokenHash }
+      const decision_digest = requestDigest(claimDecision)
+
+      db.run(`INSERT INTO ct_handoff_transition(transition_id,handoff_id,generation,operation,from_state,to_state,authority_kind,authority_binding_id,authority_identity_digest,
+        request_identity,request_digest,cas_digest,decision_digest,response_digest,occurred_at) VALUES (?,?,?,'CLAIM',?,?,'CLAIMANT',?,?,?,?,?,?,?,?)`,
+        [makeId(), request.id, request.eg, request.es, toState, claimant.binding_id, claimant.identity_digest, request.request_identity, request_digest, cas_digest, decision_digest, response_digest, occurredAt])
+
+      const envelope = { kind: "claim_response_envelope_v1", version: 1, public_response: publicResponseTemplate,
+        evidence: { request, request_digest, scope_key: scopeKey, cas_input: casValue, cas_digest, claim_id: claimId, claimant_fence_digest: claimantFenceDigest,
+          budget_scope_digest: budgetScopeDigest, budget_sequence: 1, token_hash: tokenHash } }
+      db.run("INSERT INTO ct_idempotency VALUES ('claim',?,?,?,?,?,?)", [scopeKey, request.request_identity, request_digest, cas_digest, jcs(envelope), occurredAt])
+
+      return { id: request.id, state: toState, generation: request.eg, replayed: false, delivery_id: request.delivery_id, purpose: request.purpose, token }
+    }).immediate()
+  } catch (error) {
+    if (error.code?.startsWith("CT_")) throw error
+    if (busy(error)) throw ctError("CT_BUSY", error)
+    throw ctError("CT_SCHEMA_INVALID", error)
+  }
+}
+
 export const createContinuationDispatcher = ({ cwd = process.cwd(), trustedMetadata, processIdentity }) => {
   if (!trustedMetadata?.snapshot || !processIdentity?.snapshot) throw ctError("CT_SESSION_ISOLATION_UNPROVEN")
   const stableProcess = { value: null }
   return (operation, request) => {
-    if (!["bootstrapMain", "activate", "status", "register", "receive", "create"].includes(operation)) throw ctError("CT_PAYLOAD_INVALID")
+    if (!["bootstrapMain", "activate", "status", "register", "receive", "create", "validate", "publish", "claim"].includes(operation)) throw ctError("CT_PAYLOAD_INVALID")
     if (operation === "status") assertStatusRequest(request)
     const handle = continuationHandle(cwd, operation === "receive" && request !== undefined && (typeof request !== "object" || request === null || Object.getPrototypeOf(request) !== Object.prototype || Object.keys(request).length > 0))
     const ctx = createCtxFactory({ trustedMetadata, processIdentity, cwd: handle.cwd, authority: handle.authority }, stableProcess)
@@ -1650,6 +2019,9 @@ export const createContinuationDispatcher = ({ cwd = process.cwd(), trustedMetad
       if (operation === "activate") return continuationActivate(handle, ctx, request)
       if (operation === "status") return continuationStatus(handle)
       if (operation === "create") return continuationCreate(handle, ctx, request)
+      if (operation === "validate") return continuationValidate(handle, ctx, request)
+      if (operation === "publish") return continuationPublish(handle, ctx, request)
+      if (operation === "claim") return continuationClaim(handle, ctx, request)
       return operation === "register" ? continuationRegister(handle, ctx, request) : continuationReceive(handle, ctx)
     } finally { handle.db.close() }
   }
@@ -1746,7 +2118,30 @@ export const continuationReceive = (handle, ctxFactory) => {
       if (active.length !== 1) throw ctError("CT_SESSION_ISOLATION_UNPROVEN")
       if (active[0].binding_epoch !== ctx.binding_epoch) throw ctError("CT_FENCE_MISMATCH")
       if (!equalFields(active[0], ctx, bindingFields)) throw ctError("CT_SESSION_ISOLATION_UNPROVEN")
-      return { delivery: null }
+
+      // Deterministic non-consuming peek. Schema 2/3 never created the
+      // delivery/handoff/claim tables at all, so they have no eligible
+      // delivery by construction. On schema 4, gateContinuation already ran
+      // the full R1 validateSchema4Persistence over every ct_delivery/
+      // ct_handoff/ct_claim row in this same read transaction, so a malformed
+      // candidate already threw CT_SCHEMA_INVALID above — this query only
+      // selects among rows already proven coherent. Eligible pairs share this
+      // Ctx's schema-4 repository/common-dir fingerprints, agree on
+      // handoff_id and current generation, carry no claim row, and are
+      // PENDING with the matching handoff/snapshot state for their purpose; a
+      // simultaneous claim may commit before or after this snapshot, which is
+      // safe because only claim consumes and rechecks under a writer lock.
+      if (inspectSchema(db) !== 4) return { delivery: null }
+      const repositoryFingerprint = requestDigest({ kind: "canonical_repo_v1", path: authority.anchor.context.canonical_repo })
+      const gitCommonDirFingerprint = requestDigest({ kind: "git_common_dir_v1", path: authority.anchor.context.git_common_dir })
+      const delivery = db.query(`SELECT d.delivery_id AS delivery_id, h.id AS id, h.state AS state, d.generation AS generation, d.purpose AS purpose
+        FROM ct_delivery d JOIN ct_handoff h ON h.id = d.handoff_id LEFT JOIN ct_claim c ON c.delivery_id = d.delivery_id
+        WHERE d.delivery_state = 'PENDING' AND c.claim_id IS NULL AND d.generation = h.generation
+          AND h.repository_fingerprint = ? AND h.git_common_dir_fingerprint = ?
+          AND ((d.purpose = 'WORK' AND h.state = 'PUBLISHED' AND d.handoff_state_snapshot = 'PUBLISHED')
+            OR (d.purpose = 'ATTESTATION_REDELIVERY' AND h.state = 'COMPLETION_ATTESTED' AND d.handoff_state_snapshot = 'COMPLETION_ATTESTED'))
+        ORDER BY d.created_at ASC, d.delivery_id ASC LIMIT 1`).get(repositoryFingerprint, gitCommonDirFingerprint)
+      return { delivery: delivery ?? null }
     })()
   } catch (error) {
     if (error.code?.startsWith("CT_")) throw error
