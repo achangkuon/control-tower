@@ -5,10 +5,10 @@
 - Mode: Strict TDD (`bun test`)
 - Delivery strategy: `auto-chain`
 - Chain strategy: `feature-branch-chain`
-- Current autonomous work unit: P3 complete; P4 is the next boundary
+- Current autonomous work unit: persist the approved R2 deferral in design/tasks/apply-progress, then run one final P4-only A1c gate
 - Branch: `feat/control-tower/autonomous-continuation`
 - Completed: 18/50 tasks (`0.1`, `0.2`, `1.1`, `1.2`, `1.3`, `1.4`, `1F.1`, `1F.2`, `1F.3`, `1F.4`, `2.1`, `2.2`, `2.3`, `2.4`, `3.1`, `3.2`, `3.3`, `3.4`)
-- P3 is complete; every P4+ task remains unchecked.
+- P3 is complete at `f20d6a369b18b46890e8e98263dbf97d6973c427`; P4-A1a, P4-A1b, and P4-A1c-R1 passed their final gates. R2 was not started and its approved deferral is still pending persistence in design/tasks. P4 remains incomplete; tasks `4.1`–`4.4` remain unchecked.
 
 ## Completed tasks
 
@@ -884,3 +884,228 @@ The one allowed design rerun corrected only the three gate findings: `CT-R6-S3` 
 - **Ledger:** `evidence/judgment-day-slice-3-round-1.md`.
 
 **JUDGMENT: APPROVED ✅**
+
+---
+
+## P4 pre-production workload guard — split required
+
+- **Status:** P4 stopped before RED or production edits. Baseline `bun test` passed with **63 pass, 0 fail, 403 assertions**.
+- **Forecast:** The complete P4 delivery/claim unit is **1,150–1,500 authored implementation/test lines**, above the 800-line ceiling: lifecycle fixtures/tests 500–650, core persistence/validation/transactions 500–650, and MCP schemas/routes 150–200.
+- **P4-A green boundary:** immutable handoff/payload/provenance plus additive delivery-plane schema, `create|validate|publish`, and their capability-gated MCP routes; cover `CT-R2-S1..S3` and the handoff/delivery projection of `CT-R3-S5`; forecast **650–780** lines.
+- **P4-B green boundary:** non-consuming delivery peek plus atomic `claim`, claimant provenance/token hash, session-budget accounting/exhaustion, and receive/claim races; cover `CT-R6-S1..S2` and `CT-R6-S4..S6`; forecast **500–700** lines and depend on P4-A.
+- **Design prerequisite:** Before P4-A RED, an amendment must pin the additive migration SQL/checksum/manifest and schema-version transition, canonical payload fields/limits/fingerprints/digests, session-budget seed/scope/limit, claim token/hash and idempotency persistence, and exact P4 operation precedence. The current design ends at exact schema 3 and the Revision 11 source defines only aggregate signatures/order, so apply must not invent these contracts.
+- **TDD:** RED/GREEN/TRIANGULATE/REFACTOR are **N/A** because the workload guard stopped the unit before `test/lifecycle.test.mjs` was created.
+- **Runtime/rollback:** Runtime harness **N/A**; no runtime boundary is enabled. Rollback removes only this progress section. Tasks `4.1`–`4.4` remain unchecked.
+- **Preservation:** P3 HEAD `f20d6a369b18b46890e8e98263dbf97d6973c427`, exact Migration 003, default legacy-only MCP/no `start`, Tower OFF/runtime absence, and unrelated dirty files remain untouched.
+
+---
+
+## P4 bounded design amendment — chained green units, no apply work
+
+- **Status:** Design/planning only. The pre-RED workload stop above remains authoritative; no production/test/runtime file, project test, Tower/DB/ACTIVE state, review, delivery, commit, push, or PR was touched. Tasks `4.1`–`4.4` remain unchecked.
+- **P4-A:** Exact 11,867-byte Migration 004 (`sha256:646aaab22c76416639b0bc9e7c041604c7687b684197cf93104186b60955e86f`), 36-object schema-4 manifest, additive OFF-only 3→4 bootstrap, immutable canonical handoff/provenance, and capability-gated `create|validate|publish`; covers `CT-R2-S1..S3` and P4-A `CT-R3-S5`; independent forecast **650–780**.
+- **P4-B:** Deterministic non-consuming receive, atomic claim, full claimant fence snapshot, HMAC token returned/replayed with only salt/hash stored, and one-unit root-session budget; covers `CT-R6-S1..S2`, `CT-R6-S4..S6`, and P4-B `CT-R3-S5`; depends on green P4-A; independent forecast **500–700**.
+- **Ownership/preservation:** `CT-R6-S3` and every completion/attestation/effects behavior remain P5-owned; recovery/rollback/polling remain later-owned. P1–P3 behavior, exact Migration 003, eight default legacy MCP tools, constructor capability gate, no `start`, legacy rows, and committed P3 HEAD `f20d6a369b18b46890e8e98263dbf97d6973c427` are preserved.
+- **Next action:** Validate the P4 amendment. If valid, start genuine P4-A RED under its own 800-line ceiling; start P4-B RED only from green P4-A. If either concrete forecast exceeds 800, stop for a narrower green split rather than borrowing budget.
+- **Skill resolution:** `paths-injected` — cognitive documentation design, chained PR, and work-unit commit skills were loaded before task work.
+
+---
+
+## P4 design amendment — bounded corrective rerun evidence
+
+- **Scope/status:** Design/planning-only cumulative correction. No implementation, test execution, runtime/Tower mutation, review, commit, push, or PR occurred. Earlier P4 forecast/amendment entries remain historical evidence; this section supersedes their constants and split for the next gate. Tasks `4.1`–`4.4` remain unchecked.
+- **Migration 004:** The edited LF-only SQL is exactly **12,159 UTF-8 bytes**, **215 lines**, one terminal LF, checksum **`sha256:fb951119bd42f22aee7ed4f025298e12e604ff65cc7022aef4353fcba446ae57`**, and still yields five tables/four indexes/ten triggers, hence 36 named schema-4 `ct_*` objects including the 17 schema-3 objects. Python SQLite **3.53.3** accepted the extracted SQL in memory; all 19 new named objects existed, cross-operation same-identity transition inserts succeeded, and a same-operation duplicate was rejected. This was syntax/constraint verification only, not a project test.
+- **Total migration replay:** The schema-3 fresh lane now persists a canonical `bootstrap_schema4_response_v1` evidence envelope binding request, historical CAS input/digest, exact v3/v4 manifest digests, Migration 004 checksum, and public response. The schema-4 lane validates current structure and OFF/NONE first, replays only that exact operation-scoped evidence, accepts valid non-empty evolved schema-4 data without cleanup, and classifies malformed/missing evidence, wrong mode/lease, and changed tuple as `CT_SCHEMA_INVALID`, `CT_FENCE_MISMATCH`, and `CT_IDEMPOTENCY_CONFLICT` respectively. No schema-4 path fresh-runs or down-migrates.
+- **Validation/identity/claim:** `validation_evidence_json` and its exact `handoff_validation_evidence_v1` JCS membership, derivation, persistence, verification, and no-live-reread replay are pinned. Transition uniqueness is `UNIQUE(operation,request_identity)`, with cross-operation UUID reuse explicitly legal. CLAIM now has exact token-free decision and response-template digests; token hash is bound consistently and replay derives/hashes the bearer once without persisting or hashing a public bearer response.
+- **Green boundaries:** A1 Migration 004 + schema-4 P3 compatibility **580–740**; A2 canonical immutable payload/provenance + create **380–560**; A3 validate/publish + durable delivery **400–590**; B receive/peek + atomic claim/token/budget/races **520–720**. Dependencies are P3→A1→A2→A3→B. A2 owns partial create-side `CT-R2` coverage, A3 owns its completion, B owns `CT-R6-S1/S2/S4/S5/S6`; P3 retains `CT-R8-S5`, and P5 retains `CT-R6-S3`. Each boundary has a separate rollback and ≤800 ceiling; no task/scenario is claimed complete twice.
+- **Static preservation:** HEAD remains committed P3 `f20d6a369b18b46890e8e98263dbf97d6973c427`; `git diff --quiet HEAD -- core.mjs mcp.mjs test` passed. `core.mjs` remains `4efeb6445f1db869f7f5b2dc8d42f3e19930ce42e47865119795d86e28172b84`; `mcp.mjs` remains `a06948422b8e8a42f7d1b1f6b666f17e38bf95574051fc3a627682f544445175`. Actual `.git/control-tower/{ACTIVE,tower.db}` and legacy `~/.config/opencode/control-tower/{ACTIVE,tower.db}` remain absent.
+- **Unrelated dirty preservation:** `.gitignore` remains `394c70b7e3c0fc209cff55f29ab94ec7c064809fb605477646e5d92280cca5e1`; `.session-doc.json` remains `89bcae29fd174cc7c253ff7febc677c2049d25a1eb4a3d86e6ab0797baaee35e`; `NEXT-SESSION-off-enforcement.md` remains `73bbb0e58573eef187dbf22b026cb1594df614e7749c516908bdadc9b553f7e0`; pre-existing dirty `session-handoff.md` was not edited by this rerun and is currently `836e9c1afebf3cbb65fbc7b6d66b318a6c4caaf08bf7d17614519b9a8982a292`.
+- **Rollback/next:** Revert only this corrective amendment's hunks in `design.md`, the three genuinely affected specs, `tasks.md`, and this appended section. Next action is the fresh P4 design gate; no apply boundary may start unless it passes.
+- **Skill resolution:** `paths-injected`.
+
+---
+
+## P4 maintainer-authorized design closure after second gate
+
+- **Scope/status:** Design/spec/task/apply-progress closure only. No production/test/runtime file, project test, Tower/DB/ACTIVE state, review, Judgment Day, commit, push, or PR was touched. Tasks `4.1`–`4.4` remain unchecked.
+- **Fresh validate/publish:** `validate` now accepts exactly `{request_identity,id,es:"DRAFT",eg,payload_digest}` and `publish` exactly `{request_identity,id,es:"VALIDATED",eg}`. Neither accepts caller-owned `validation_digest`, evidence, authority, observation, timestamp, or preview output. Fresh validation derives canonical evidence, digest, CAS, and immutable replay envelope inside one writer transaction from constructor-owned Main/Ctx authority, persisted handoff payload/provenance, and approved live inert observations. Exact replay verifies persisted envelope/evidence/transition/idempotency links without live rereads; PUBLISH derives from persisted evidence. Public responses remain only `{id,state,generation,replayed}`.
+- **Narrow work units:** P4 is now P3→A1a→A1b→A1c→A2→A3→B. A1a pins unchanged SQL/checksum/manifest constants and tests without enabling schema 4 (**480–620**); A1b owns fresh 3→4, empty replay, rollback/busy, and P3 compatibility (**560–760**); A1c owns evolved/non-empty validation and total retry evidence (**440–660**); A2 remains payload/create (**380–560**); A3 is server-derived validate/publish/durable delivery (**430–620**); B remains receive/claim/token/budget/races (**520–720**). Every unit has explicit start/end/dependency/scenario ownership/rollback and an independent ≤800 ceiling; no scenario/task completion is duplicated.
+- **Migration preservation:** The Migration 004 SQL block is unchanged at **12,159 LF bytes**, **215 lines**, one terminal LF, and **`sha256:fb951119bd42f22aee7ed4f025298e12e604ff65cc7022aef4353fcba446ae57`**; manifest/checksum definitions remain unchanged. No SQLite/project test was run because no SQL byte changed.
+- **Preservation/next:** P3 HEAD remains `f20d6a369b18b46890e8e98263dbf97d6973c427`; production/tests and runtime/Tower remain untouched; unrelated dirty files remain outside this closure. Next action is the final fresh P4 design gate.
+- **Skill resolution:** `paths-injected`.
+
+---
+
+## P4 maintainer-authorized CT-R3-S5 spec closure
+
+- CT-R3-S5 now preserves token-free response families except for the claim-only one-time public bearer returned on fresh success; only the token hash and token-free response template persist, replay never rediscloses the bearer, and no other response gains a token. No route, ownership, scenario, requirement, production, test, runtime, or unrelated file was changed.
+
+---
+
+## P4 claim bearer propagation
+
+- Propagated the fixed fresh-only bearer contract through the P4 design and delivery/claim spec: fresh success returns `{id,state,generation,replayed:false,delivery_id,purpose,token}`; exact replay verifies persisted identity/CAS/token-hash commitments and returns `{id,state,generation,replayed:true,delivery_id,purpose}` without bearer reconstruction or redisclosure. `decision_digest`, the token-free response template/`response_digest`, operation-scoped idempotency, race-winner semantics, claim token hash, and P5 caller-provided-bearer validation remain bound; Migration 004 bytes/checksum and all six work-unit forecasts are unchanged. No production, test, task, runtime, route, authority, scenario-ownership, review, or delivery action occurred.
+
+---
+
+## P4-A1a Migration 004 definitions — green boundary
+
+- **Boundary/status:** P4-A1a only is green. `core.mjs` now exports the inert exact Migration 004 SQL/checksum and frozen 36-object schema-4 metadata; `test/migration.test.mjs` independently pins the full SQL and metadata. Bootstrap/schema acceptance remains capped at 3. Tasks `4.1`–`4.4` remain unchecked.
+- **Baseline:** Before new test or production edits, `bun test` → exit 0; **63 pass, 0 fail, 403 assertions**.
+- **RED:** `bun test test/migration.test.mjs -t 'P4-A1a Migration 004 definitions'` → exit 1; **1 pass, 2 fail, 9 assertions**. `MIGRATION_004_SQL` and `SCHEMA_004_MANIFEST` were both absent; the independent bootstrap/schema-3 preservation test already passed.
+- **GREEN:** The same focused command after the minimum production definitions → exit 0; **3 pass, 0 fail, 16 assertions**.
+- **TRIANGULATE:** Independent tests prove exact 12,159 LF bytes/215 lines/one terminal LF/checksum, SQLite parsing and exact SQL for 19 additions plus all 36 schema-4 objects/four migration checksums, and non-mutating target-4 rejection with only migrations 1–3 present.
+- **Final evidence:** `bun test test/migration.test.mjs` → exit 0; **37 pass, 0 fail, 195 assertions**. `bun test` → exit 0; **66 pass, 0 fail, 419 assertions**. Node syntax, shell syntax, `git diff --check`, exact Migration 001–004 byte/checksum guards, default eight-tool MCP/no-`start`, and actual/legacy OFF/runtime-absence guards passed.
+- **Workload:** `core.mjs` **230 additions + 0 deletions**; `test/migration.test.mjs` **283 additions + 0 deletions**; implementation/test total **513 additions + 0 deletions**. The evidence section plus cumulative-header correction contribute **18 additions + 2 deletions**, making P4-A1a **531 additions + 2 deletions = 533 authored changed lines total**, below the independent 800-line ceiling.
+- **Runtime harness:** N/A — P4-A1a adds inert definitions only; SQLite verification is test-local/in-memory or isolated temporary fixtures. No host adapter, lifecycle route, actual Tower, activation, delivery, claim, runtime mutation, review, Judgment Day, commit, push, PR, or release ran.
+- **Rollback boundary:** Revert only the P4-A1a definitions in `core.mjs`, the P4-A1a literal/tests in `test/migration.test.mjs`, and this section. Schema/runtime remains P3; no database down-migration or cleanup is involved.
+- **Preservation/next:** Migration 001–003 bytes/checksums, P1–P3 behavior, `mcp.mjs`, identity/fail-closed suites, default legacy-only MCP, no-`start`, unrelated dirty-file hashes, and absent actual/legacy `ACTIVE`/`tower.db` are preserved. P4-A1b is next; it alone may enable fresh schema 3→4 migration and empty replay.
+- **Skill resolution:** `paths-injected` — chained PR and work-unit commit skills loaded before task work.
+
+---
+
+## P4-A1c bounded validator correction — exact commitments and history
+
+- **Boundary:** Corrected only the read-only schema-4 persistence validator and its isolated fixture/tests. No A2/A3/B/P5 route or business mutation, runtime path, review, Judgment Day, commit, push, or PR was added.
+- **Engram merge:** Retrieved revision 39 of `sdd/autonomous-continuation-control-tower/apply-progress` and preserved its A1b dependency plus original A1c boundary before appending this correction.
+- **RED:** The permanent A1c focus exited 1 with **1 pass, 3 fail, 9 assertions**: valid-format wrong fence/token, operation/link/history drift, and exact payload/evidence/timestamp drift were accepted (`null`). A secondary resolved-OID differential exited 1 with **0/1/13** for the same reason.
+- **GREEN/TRIANGULATE:** The same focus passes **4/0/72**, covering exact claimant fence and anchor-secret HMAC/token hash; exact CREATE/VALIDATE/PUBLISH/CLAIM requests, scopes, CAS, envelopes, decisions, response digests, claim links, legal state/generation history, REVISE/RECOVER restrictions; and payload bounds/sorting, evidence/reference OIDs, provenance/fingerprints, and timestamp ordering.
+- **Verification:** A1b migration focus passes **6/0/47**, A1b identity focus **3/0/15**, P3-A identity focus **5/0/34**, focused migration+identity+fail-closed **78/0/549**, and full `bun test` **78/0/549**.
+- **Guards:** Node/shell syntax, `git diff --check`, Migration 001–004/full SQLite tests, Migration 004 **12,159 bytes/215 lines**, unrelated-file hashes, exact default MCP/no-`start`, unchecked tasks `4.1`–`4.4`, and no actual `ACTIVE`/`tower.db` pass.
+- **Workload:** Correction implementation/tests are **207 additions + 72 deletions = 279 authored lines**. Corrected A1c implementation/tests are **501 additions + 87 deletions = 588 lines**; this 15-line evidence append makes A1c **620 total authored lines**, below 800.
+- **Runtime/rollback:** Runtime harness **N/A** because only isolated temporary SQLite fixtures were exercised. Revert only this correction's `core.mjs`, `test/identity.test.mjs`, and evidence hunks; preserve A1a/A1b and never clean or down-migrate schema 4.
+- **Preservation/next:** Exact migrations, A1b replay/rollback/busy/fences, P3 behavior, OFF/non-mutating validation, unrelated/runtime state, and absent lifecycle routes remain intact. Tasks stay unchecked; next action is `rerun-p4a1c-gate`.
+- **Skill resolution:** `paths-injected` — `/home/emili/.agents/skills/work-unit-commits/SKILL.md` loaded before work.
+
+---
+
+## P4-A1b fresh Migration 004, empty replay, and P3 compatibility — green boundary
+
+- **Boundary/status:** Enabled only fresh schema `3→4`, pristine/empty schema-4 replay, and P3 routes on schema 4; no A1c evolved-row semantics, lifecycle route, delivery lookup, claim, task checkbox, runtime, review, or delivery action was added.
+- **Baseline:** Before P4-A1b test edits, `bun test` exited 0 with **66 pass, 0 fail, 419 assertions**.
+- **RED:** Migration focus exited 1 with **0 pass, 3 fail, 4 assertions**; identity focus exited 1 with **0 pass, 2 fail** because target schema 4 was rejected before execution.
+- **GREEN/TRIANGULATE:** Migration focus reached **3/0/29** and schema-4 identity compatibility **2/0/13**; exact evidence/replay, request/CAS/checksum/manifest/mode/lease classification, late partial-DDL rollback, bounded busy retry, fresh/historical Main CAS, activation digest, registration, null receive, status, and missing migration evidence are pinned.
+- **Final verification:** Focused migration + identity + fail-closed and full `bun test` each exited 0 with **70 pass, 0 fail, 457 assertions**; syntax, shell, diff, Migration 001–004 hashes, Migration 004 12,159-byte/215-line identity, default eight-tool MCP/no-`start`, unchecked tasks, OFF/runtime absence, and unrelated-hash guards passed.
+- **Workload:** Production/tests are **337 additions + 50 deletions = 387 authored lines** (`core.mjs` 145/33, migration test 115/17, identity test 77/0). This 15-line section plus two header replacements adds 17 and deletes 2, so total P4-A1b is **354 additions + 52 deletions = 406 authored lines**, below 800.
+- **Runtime harness:** N/A — all SQLite mutations occurred in isolated temporary fixtures; no host adapter, actual Tower, activation, delivery, polling, publication, commit, push, PR, or release ran.
+- **Rollback proof/boundary:** A trigger-induced failure after all Migration 004 DDL but before migration-row commit restored byte-identical schema 3; busy acquisition mutated nothing and retry succeeded. Revert only A1b execution/version branches and tests/evidence; preserve A1a constants and never down-migrate a real schema-4 database.
+- **Preservation:** P1–P3 behavior and Migration 001–004 hashes pass; exact schema-3 response shapes, historical schema-3 Main replay, legacy rows/eight MCP tools, no-`start`, unrelated dirty files, and absent actual/legacy `ACTIVE`/`tower.db` remain preserved. Tasks `4.1`–`4.4` remain unchecked.
+- **Next/skills:** P4-A1c is next for evolved/non-empty schema-4 validator and total retry only. Skill resolution: `paths-injected` (`chained-pr`, `work-unit-commits`).
+
+---
+
+## P4-A1b bounded gate correction — schema-specific Main CAS and precedence
+
+- **Boundary:** Corrected only the two verified A1b findings; the migration envelope's persisted pre-migration active Main epoch now selects schema-3 CAS for historical commits and schema-4 CAS for later commits. Caller input never selects the historical schema.
+- **RED:** `bun test test/identity.test.mjs -t 'rejects schema-3 and schema-4 Main CAS aliases across the persisted migration boundary'` → exit 1; **0 pass, 1 fail, 1 assertion**; historical schema-3 commit incorrectly accepted the schema-4 alias. The differential migration case already passed **1/0/4** before production correction.
+- **GREEN:** The two exact correction cases each exited 0: CAS aliases **1/0/2** and competing precedence **1/0/4**.
+- **TRIANGULATE:** A1b identity focus passed **3/0/15**, proving valid historical schema-3 replay, valid fresh schema-4 Main commit/activation, and both schema3→4 and schema4→3 alias rejection. A1b migration focus passed **4/0/33**, including checksum→manifest→committed-request→request-CAS differential faults.
+- **Verification:** `bun test test/migration.test.mjs test/identity.test.mjs test/fail-closed.test.mjs` and full `bun test` each exited 0 with **72 pass, 0 fail, 463 assertions**. Node and shell syntax plus `git diff --check` passed.
+- **Guards:** Migration 001–004 checksums passed; Migration 004 remains **12,159 bytes/215 lines**. Default MCP remains exactly eight legacy tools with no `start`; tasks `4.1`–`4.4` remain unchecked; actual/legacy `ACTIVE` and `tower.db` remain absent.
+- **Workload:** Correction implementation/tests are **74 additions + 6 deletions = 80 lines**; corrected A1b implementation/tests are **411 additions + 56 deletions = 467 lines**. This 14-line evidence append makes corrected total A1b **442 additions + 58 deletions = 500 authored lines**, below 800.
+- **Preservation:** Exact Migration 001–004 bytes/checksums, A1b fresh/empty migration behavior, valid P3 schema-3/schema-4 behavior, unrelated dirty-file hashes, runtime absence, and tasks remain preserved.
+- **Rollback/next:** Revert only this correction's `core.mjs`, identity/migration regression-test, and evidence hunks; preserve A1a/A1b data and never down-migrate. Next action is `rerun-p4a1b-gate`; no A1c+, runtime, review, Judgment Day, commit, push, or PR work occurred.
+
+---
+
+## P4-A1b maintainer correction — schema-4 replay fence precedence
+
+- **Boundary:** Corrected only bootstrap replay precedence: full schema-4 manifest/checksum safety and structural continuation/lease reads remain fail-closed, the current mode/lease fence now runs next, and exact schema `3→4` commit evidence remains mandatory afterward.
+- **RED:** `bun test test/migration.test.mjs -t 'schema-4 replay fences mode and lease before missing or malformed migration evidence'` exited 1 with **0 pass, 1 fail, 1 assertion**: mode `ON` plus missing evidence returned `CT_SCHEMA_INVALID` instead of `CT_FENCE_MISMATCH`.
+- **GREEN/TRIANGULATE:** The same permanent competing-fault matrix exited 0 with **1 pass, 0 fail, 8 assertions**, covering `ON`, `ROLLING_BACK`, and structurally valid ACTIVE lease against both missing and malformed evidence; both evidence faults under valid `OFF`/`NONE` remain `CT_SCHEMA_INVALID`. A1b migration and identity focuses passed **5/0/41** and **3/0/15**.
+- **Verification:** Focused migration+identity+fail-closed and full `bun test` each exited 0 with **73 pass, 0 fail, 471 assertions**; diff, Node, and shell syntax guards passed.
+- **Guards:** Migration 001–004 checksums passed; Migration 004 remains **12,159 bytes/215 lines**. Default MCP remains exactly eight legacy tools with no `start`; tasks `4.1`–`4.4` remain unchecked; actual/legacy `ACTIVE` and `tower.db` remain absent; unrelated dirty hashes are unchanged.
+- **Workload:** This correction is **30 additions + 1 deletion = 31 implementation/test lines**. Corrected A1b implementation/tests are **441 additions + 57 deletions = 498 lines**; this 12-line closure makes total A1b **484 additions + 59 deletions = 543 authored lines**, below 800.
+- **Preservation/rollback/next:** Schema-specific Main CAS, exact migration bytes/evidence, fresh/empty behavior, busy/rollback semantics, P1–P3, unrelated/runtime state, and all A1b boundaries remain intact. Revert only this ordering hunk, regression, and closure; next action is `rerun-p4a1b-gate`. No A1c+, runtime, review, Judgment Day, commit, push, or PR work occurred.
+
+---
+
+## P4-A1b final correction — request-fence precedence
+
+- **Boundary:** On exact empty schema-4 replay, wrong incoming `expected_schema_version` or `expected_mode` now returns `CT_FENCE_MISMATCH` after persisted evidence validation but before tuple/idempotency comparison; valid replay fences plus a changed committed tuple remain `CT_IDEMPOTENCY_CONFLICT`.
+- **RED:** The permanent differential test exited 1 with **0 pass, 1 fail, 1 assertion** because wrong expected schema version plus a changed identity returned `CT_IDEMPOTENCY_CONFLICT`.
+- **GREEN/TRIANGULATE:** The differential passed **1/0/6** with byte-identical non-mutation checks; A1b migration and identity focuses passed **6/0/47** and **3/0/15**, preserving evidence, mode/lease, CAS, fresh/empty, busy, and rollback precedence.
+- **Verification/guards:** Focused and full suites each passed **74/0/477**; Migration 001–004 hash focus passed **4/0/44**, default eight-tool MCP/no-`start` passed **1/0/11**, and Node/shell syntax, diff, unrelated-hash, unchecked-task, OFF/runtime-absence guards passed.
+- **Workload:** This correction is **19 implementation/test additions** plus this **11-line evidence append = 30 authored lines**. Corrected A1b is **460 additions + 57 deletions = 517 implementation/test lines** and **514 additions + 59 deletions = 573 total authored lines**, below 800.
+- **Preservation/next:** Prior mode/lease-before-evidence ordering, schema-specific Main CAS, exact migrations, A1b fresh/empty/busy/rollback behavior, P1–P3, A1c fail-closed boundary, tasks, unrelated/runtime state, and publication state remain unchanged. Next action is `rerun-p4a1b-gate`; no A1c+, runtime, review, Judgment Day, commit, push, or PR work occurred.
+---
+
+## P4-A1c evolved schema-4 validator and total replay — green boundary
+
+- **Boundary:** Replaced only A1b's empty-only schema-4 restriction with one read-only structural validator for claimant/Main history and all five P4 tables. It validates canonical JSON/digests, immutable authority/transition/idempotency links, generations, timestamps, delivery/claim/budget/token metadata, dormant P5 states, and factual status counts; no lifecycle mutation or route was added.
+- **Baseline:** Before A1c test edits, `bun test` exited 0 with **74 pass, 0 fail, 477 assertions**.
+- **RED:** `bun test test/identity.test.mjs -t 'P4-A1c evolved schema-4 validation and total replay'` exited 1 with **1 pass, 1 fail, 21 assertions**; coherent evolved P4/P5-shaped rows were rejected `CT_SCHEMA_INVALID` by `assertEmptySchema4`.
+- **GREEN/TRIANGULATE:** The focus now passes **2/0/39**. Exact evolved Migration 004 replay is read-only; changed committed identity is `CT_IDEMPOTENCY_CONFLICT`; current ON mode is `CT_FENCE_MISMATCH`; malformed payload/provenance/validation/ctx/transition/commit/token/budget/generation/delivery classes are `CT_SCHEMA_INVALID` and non-mutating; null-only receive and factual status counts remain exact.
+- **Verification:** A1b migration focus passes **6/0/47**; A1b identity compatibility passes **3/0/15**; final focused migration+identity+fail-closed and full `bun test` each pass **76/0/516**. Node/shell syntax, diff, exact Migration 001–004 checksums, Migration 004 12,159-byte/215-line identity, default eight-tool MCP/no-`start`, unchecked tasks, unrelated hashes, and OFF/runtime guards pass.
+- **Workload:** A1c implementation/tests are **294 additions + 15 deletions = 309 authored lines** (`core.mjs` 163/15; `test/identity.test.mjs` 131/0). This evidence/header merge adds **15 additions + 2 deletions**, making A1c **309 additions + 17 deletions = 326 total authored lines**, below 800.
+- **Runtime/rollback:** Runtime harness **N/A** — no P7–P9 adapter or public production capability exists; every SQLite mutation used isolated temporary fixtures. Revert only A1c validator/retry/status-count hunks in `core.mjs`, the A1c describe block in `test/identity.test.mjs`, the two header replacements, and this section; preserve A1a/A1b and never clean or down-migrate schema-4 rows.
+- **Preservation/next:** Migration 004 bytes/hash, A1b fences/CAS/rollback/busy behavior, valid schema-3 history and schema-4 P3 Main/activation/status/register/receive, legacy rows/eight tools, no-`start`, unrelated dirty files, and absent actual/legacy runtime remain preserved. Tasks `4.1`–`4.4` remain unchecked. P4-A2 is next; A2/A3/B/P5 behavior remains unavailable. No runtime/review/Judgment Day/commit/push/PR occurred.
+- **Skill resolution:** `paths-injected` — chained PR and work-unit commit skills loaded before task work.
+
+---
+
+## P4-A1c repeated-gate replan — R1/R2 corrective units
+
+- **Status/rationale:** The existing corrected A1c snapshot is preserved as an unapproved prerequisite baseline: **588 implementation/test lines**, with historical verification **78 pass/549 assertions**. Its repeated gate failed on structural reverse links, historical CAS/fence derivation, and absence of genuine dormant forward histories. The maintainer authorized stopping that correction loop and splitting the remaining work; A1c is not complete and A2 is blocked.
+- **R1 boundary:** Starts from the preserved A1c baseline and ends with exact handoff↔CREATE/VALIDATE, delivery↔PUBLISH/history, and claim↔CLAIM/idempotency reverse commitments. Historical CREATE/VALIDATE/PUBLISH/CLAIM CAS and fences must recompute from immutable canonical persisted envelopes and named immutable rows, never current lease/Main/claimant metadata. Paired valid/malformed differential coverage includes reverse links, operation scope, authority, request/CAS, decision/response, budget/token, and timestamps. Incremental forecast **360–520 implementation/test lines**; rollback removes only R1 helpers/tests/evidence and returns to the unapproved baseline.
+- **R2 boundary:** Starts only after the R1 gate passes and ends with genuine coherent schema-4-representable ACK, ATTEST_COMPLETION, COMPLETE, REJECT, and restricted SUSPEND_PENDING/REDELIVER_WORK RECOVER histories plus paired malformed sequence/generation/timestamp/cross-row proofs. These are validator-only dormant histories: no P5/P6 route, mutation, evidence/result/quiescence claim, stable scenario completion, or task completion. Incremental forecast **320–480 implementation/test lines**; rollback removes only R2 helpers/fixtures/evidence and returns to green R1.
+- **Dependency/ownership:** A1a→A1b→unapproved A1c baseline→R1→R2→A2→A3→B. A2 starts only after independent R1 and R2 gates pass. A2/A3/B scenario ownership and all P5/P6 ownership remain unchanged; native tasks `4.1`–`4.4` remain unchecked and the native task count remains **50**.
+- **Preservation:** Replan edits only `design.md`, `tasks.md`, and this cumulative artifact. Migration 004 remains **12,159 LF bytes/215 lines** at **`sha256:fb951119bd42f22aee7ed4f025298e12e604ff65cc7022aef4353fcba446ae57`**; P3 HEAD remains **`f20d6a369b18b46890e8e98263dbf97d6973c427`**. Production/tests/runtime and unrelated files are unchanged; no project test, runtime mutation, review/Judgment Day, commit, push, or PR occurred.
+- **Next:** Run `validate-a1c-replan`; on success, begin R1 only.
+- **Skill resolution:** `paths-injected` — cognitive documentation design, chained PR, and work-unit commit skills.
+---
+
+## P4-A1c-R1 reverse commitments and immutable historical fences — green boundary
+
+- **Boundary/forecast:** Implemented only R1 over the preserved unapproved A1c baseline. The pre-production incremental forecast remained the approved **360–520 implementation/test lines**, below 800; no R2/A2/A3/B/P5+ route, mutation, scenario completion, or task checkbox was added.
+- **Baseline:** Before R1 test edits, `bun test` exited 0 with **78 pass, 0 fail, 549 assertions**.
+- **RED:** `bun test test/identity.test.mjs -t 'P4-A1c evolved schema-4 validation and total replay'` exited 1 with **4 pass, 1 fail, 93 assertions**; the baseline rejected the valid canonical P4 envelopes when current lease epoch/version had evolved from the immutable historical writer fence.
+- **GREEN:** The same R1 focus exited 0 with **5 pass, 0 fail, 102 assertions**. CREATE/VALIDATE/PUBLISH/CLAIM token-free envelopes now bind exact request/scope/CAS/authority/decision/response commitments and historical claimant fences exclusively from immutable persisted evidence.
+- **TRIANGULATE:** Paired read-only faults reject orphan validation metadata, delivery, and claim rows; missing/wrong reverse transitions and operation-qualified idempotency; wrong request/scope/authority/CAS member; decision/response digest; claimant fence; budget/token hash; timestamps; and existing A1c payload/history drift. Valid history with historical lease `0/0` and current coherent lease `7/11` remains accepted.
+- **Focused verification:** A1b migration focus **6/0/47**; A1b+A1c identity focus **8/0/117**; P3-A+A1b identity focus **8/0/49**. Focused migration+identity+fail-closed and full `bun test` each exited 0 with **79 pass, 0 fail, 579 assertions**.
+- **Guards:** Migration 001–004 hash focus **4/0/44**; default MCP/no-`start` focus **1/0/11**; Node/MCP and shell syntax, `git diff --check`, unchecked tasks `4.1`–`4.4`, actual/legacy OFF/runtime absence, and unrelated-file hash guards passed. Migration 004 remains **12,159 LF bytes/215 lines** at `sha256:fb951119bd42f22aee7ed4f025298e12e604ff65cc7022aef4353fcba446ae57`.
+- **Workload:** R1 implementation/tests are **125 additions + 54 deletions = 179 authored lines** (`core.mjs` 85/39; `test/identity.test.mjs` 40/15). The cumulative header/evidence merge is **17 additions + 2 deletions = 19 lines**, making R1 **142 additions + 56 deletions = 198 total authored changed lines**, below 800.
+- **Runtime/rollback:** Runtime harness **N/A** — R1 is a read-only validator and all SQLite changes occurred only in isolated temporary fixtures. Rollback removes only the R1 validator/envelope/reverse-link hunks in `core.mjs`, the R1 fixture/tests in `test/identity.test.mjs`, the two header replacements, and this section; it preserves A1a/A1b and every schema-4 row without cleanup or down-migration.
+- **Preservation/next:** Exact migrations, A1b replay/precedence/rollback/busy behavior, P3 schema-3/schema-4 behavior, existing A1c payload/history checks, legacy rows/eight tools, no-`start`, unrelated dirty files, and absent actual/legacy runtime remain preserved. A1c remains unapproved, tasks `4.1`–`4.4` remain unchecked, and `validate-p4a1c-r1` is next; R2 alone follows a passing R1 gate.
+- **Skill resolution:** `paths-injected` — `/home/emili/.agents/skills/work-unit-commits/SKILL.md` and `/home/emili/.agents/skills/chained-pr/SKILL.md` were loaded before work.
+
+---
+
+## P4-A1c-R1 bounded proof-gap correction
+
+- **Boundary:** Corrected only R1 fixture chronology and the three dedicated reverse-link proofs. No R2/A2+, route, runtime, review/Judgment Day, commit, push, or PR work occurred.
+- **Corrected chronology:** Main bootstrap, activation, claimant registration, and CREATE→VALIDATE→PUBLISH→CLAIM now commit coherently at lease `0/0`; authority timestamps precede four strictly ordered transition timestamps. Only after that immutable history is complete does the fixture evolve the current coherent NONE lease to `7/11`. The nominal status and migration replay accept it read-only while all four persisted P4 envelopes retain writer fence `0/0`.
+- **RED:** The first corrected focus exposed a real production defect and exited **5 pass, 2 fail, 107 assertions**: schema-3 Main/activation persistence reconstructed historical authority CAS/scope from the later current NONE lease. No RED was fabricated for already-correct R1 reverse semantics.
+- **GREEN:** `validateSchema3Persistence` now performs exact seed-lease reconstruction only while the current lease is still `NONE/0/0`; after a valid later lease evolution it validates immutable stored Main/activation commitments without substituting the current epoch/version. The R1 focus exits **7/0/124**.
+- **Dedicated reverse proof:** Three otherwise coherent fixtures break only validation metadata↔VALIDATE, delivery timestamp↔PUBLISH/history, or claim envelope token-hash↔CLAIM/claim/fence commitments. Production rejects each read-only. A controlled test-local source mutation bypasses only the named `VALIDATE`, `PUBLISH`, or `CLAIM` reverse validator and makes its corresponding fixture replay successfully, proving the dedicated checks are mutation-discriminating rather than masked by earlier generic checks.
+- **Focused verification:** A1b migration **6/0/47**; A1b identity **3/0/15**; A1b+A1c identity **10/0/139**; P3-A identity **5/0/34**. Focused migration+identity+fail-closed and full `bun test` each pass **81/0/601**.
+- **Guards:** Migration 001–004 hash focus **4/0/44**; Migration 004 remains **12,159 LF bytes/215 lines** at `sha256:fb951119bd42f22aee7ed4f025298e12e604ff65cc7022aef4353fcba446ae57`. Node/MCP/test and shell syntax, `git diff --check`, default legacy-only MCP/no-`start`, actual/legacy OFF/runtime absence, unchecked tasks, and unrelated-file hashes pass.
+- **Workload:** This correction is **26 additions + 24 deletions in `core.mjs`** and **55 additions + 19 deletions in `test/identity.test.mjs`** = **124 implementation/test authored lines**. Corrected R1 is **303 implementation/test authored lines** (prior 179 + correction 124). Including prior 19 header/evidence lines plus this correction's **17 additions + 1 deletion = 18 evidence/header authored lines**, corrected R1 totals **340 authored lines**, below 800.
+- **Runtime/rollback:** Runtime harness is N/A; only isolated temporary Git/SQLite fixtures and temporary mutated module copies ran. Rollback removes this correction's seed/evolved-lease selector, reverse-validation mutation seam/refactor, fixture/proof additions, header replacement, and this section; A1a/A1b and persisted schema-4 rows remain untouched and are never down-migrated.
+- **Preservation/next:** Exact migrations, A1b replay/precedence/rollback/busy behavior, P3 and preserved A1c baseline semantics, read-only/no-route boundaries, legacy state, unrelated dirty files, and runtime absence are preserved. A1c remains unapproved; tasks `4.1`–`4.4` remain unchecked; rerun the R1 gate next, and only a passing gate may start R2.
+- **Skill resolution:** `none`.
+
+---
+
+## P4-A1c scope correction — cancel R2 and restore later-slice ownership
+
+- **Decision/rationale:** Maintainer authorization cancels P4-A1c-R2. Pulling dormant ACK/ATTEST_COMPLETION/COMPLETE/REJECT/RECOVER acceptance into P4 would validate future P5/P6 histories without their owning persistence, evidence, and total cross-row semantics. Earlier R2 planning entries remain historical rationale only; R2 is no longer an active P4 work unit, dependency, forecast, acceptance gate, or rollback boundary.
+- **Exact P4-only classification:** The final A1c gate may accept only coherent generation-0 P4 prefixes composed of CREATE, optional VALIDATE, optional PUBLISH with one PENDING WORK delivery, and optional CLAIM with one CLAIMED WORK delivery plus exactly one LIVE claim. Existing payload/provenance, operation-qualified idempotency, reverse-link, authority, immutable historical CAS/fence, delivery/claim, budget/token, and timestamp commitments remain mandatory. Any future operation row, future-only handoff state, nonzero generation, non-WORK delivery, close state/timestamp, or cross-row shape requiring ACK, ATTEST_COMPLETION, COMPLETE, REJECT, REVISE, RECOVER, or another later-slice operation is unsupported and must fail read-only as `CT_SCHEMA_INVALID`; P4 invents no acceptance semantics.
+- **Ownership/dependency:** ACK/ATTEST_COMPLETION/COMPLETE/REJECT persistence and validation acceptance return to P5; RECOVER persistence and validation acceptance return to P6. A2/A3/B scope, forecasts, rollback boundaries, and scenario ownership are unchanged. The active dependency is A1a→A1b→preserved unapproved A1c baseline→R1→fresh final A1c P4-only gate→A2→A3→B. The final gate has not passed; A2 remains blocked.
+- **Evidence/budgets:** All A1a, A1b, baseline, and R1 RED/GREEN/triangulation/guard evidence above remains authoritative. The preserved A1c baseline is **588 implementation/test lines** with historical **78/0/549** evidence; R1 retains its **360–520** incremental forecast and corrected **303 implementation/test / 340 total authored lines** evidence. Tasks `4.1`–`4.4` remain unchecked and completed task count remains **18/50**. No A2/A3/B forecast or stable CT scenario mapping changed.
+- **Rollback:** Revert only this scope-correction's `design.md`/`tasks.md` hunks, cumulative-header replacement, and this appended note to restore the superseded R2 plan. Do not remove or rewrite A1a/A1b/R1 implementation, tests, evidence, budgets, or persisted schema-4 rows.
+- **Preservation:** Migration 004 remains **12,159 LF bytes/215 lines** at `sha256:fb951119bd42f22aee7ed4f025298e12e604ff65cc7022aef4353fcba446ae57`; P3 HEAD remains `f20d6a369b18b46890e8e98263dbf97d6973c427`. This correction edits only `design.md`, `tasks.md`, and `apply-progress.md`; production, tests, runtime, and unrelated files are outside the write set. No project test, runtime mutation, review/Judgment Day, commit, push, or PR occurred.
+- **Next:** `validate-p4-only-a1c`.
+- **Skill resolution:** `paths-injected` — cognitive documentation design, chained PR, and work-unit commit skills.
+
+---
+
+## Current session-close checkpoint
+
+- P3 is complete, committed, and present on the remote branch at `f20d6a369b18b46890e8e98263dbf97d6973c427` (`feat(tower): add main activation authority`); no PR is open.
+- P4-A1a, P4-A1b, and P4-A1c-R1 passed their final gates. R1's final evidence is **81 pass, 0 fail, 601 assertions**; Migration 004 remains exactly **12,159 LF bytes/215 lines** at `sha256:fb951119bd42f22aee7ed4f025298e12e604ff65cc7022aef4353fcba446ae57`.
+- P4-A1c-R2 was not started; its worker command was aborted before work. The maintainer approved deferring ACK/ATTEST_COMPLETION/COMPLETE/REJECT validation to P5 and RECOVER validation to P6, but the design/tasks scope-correction worker was aborted. Therefore the preceding scope-correction note records intent only: the decision is **not yet persisted in `design.md` or `tasks.md`**.
+- Progress remains **18/50** with `4.1`–`4.4` unchecked. A2, A3, B, and 4.4 remain pending; P4 remains incomplete and uncommitted. The remote branch remains at P3, with no P4 push or PR.
+- **Exact next action:** persist the approved R2 deferral in `design.md`, `tasks.md`, and this cumulative artifact; run one final P4-only A1c gate without rerunning R1; then continue A2 → A3 → B → 4.4.
+- Actual and legacy Tower `ACTIVE`/`tower.db` remain absent. Preserve unrelated `.gitignore`, `.session-doc.json`, and `NEXT-SESSION-off-enforcement.md` unchanged.
+- **Learning:** delay came from both process overhead—many fresh gates and exact evidence bookkeeping—and a real architecture error: P5/P6 validation was pulled into P4. The next session must enforce slice ownership and bounded exit criteria.
