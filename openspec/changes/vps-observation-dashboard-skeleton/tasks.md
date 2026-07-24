@@ -236,36 +236,36 @@
 
 ### 7.1 RED — specify deployability without production mutation
 
-- [ ] 7.1.1 Add failing tests that `dashboard/scripts/hash-password.mjs` accepts a password through a non-logging operator input path, produces an Argon2id hash suitable for configuration, and never writes a plaintext password or usable credential into the repository.
-- [ ] 7.1.2 Add failing tests for `dashboard/deploy/control-tower-dashboard.service`: dedicated unprivileged user, loopback Bun entry point, external environment file, restart policy, `NoNewPrivileges`, `PrivateTmp`, `ProtectHome`, read-only filesystem policy, and no Control Tower database, worktree, SSH key, or operational socket access.
-- [ ] 7.1.3 Add failing tests for `dashboard/deploy/Caddyfile.example`: HTTPS/public boundary belongs to Caddy and reverse-proxies only to the loopback Bun listener without embedding credentials or protected values.
-- [ ] 7.1.4 Add failing tests for `dashboard/deploy/dashboard.env.example`: variable names and safe comments only, including all five auth variables and loopback host/port names, with no usable hash, secret, password, cookie, hostname, or production value.
-- [ ] 7.1.5 Add failing structural assertions for the immutable `releases/<release-id>/dashboard/` layout, external root-owned environment file, atomic `current` symlink, health/auth/content smoke sequence, and previous-release rollback without migration or Control Tower recovery.
-- [ ] 7.1.6 Run the focused command and capture the expected RED failures before creating scripts or deployment examples.
+- [x] 7.1.1 Add failing tests that `dashboard/scripts/hash-password.mjs` accepts a password through a non-logging operator input path, produces an Argon2id hash suitable for configuration, and never writes a plaintext password or usable credential into the repository.
+- [x] 7.1.2 Add failing tests for `dashboard/deploy/control-tower-dashboard.service`: dedicated unprivileged user, loopback Bun entry point, external environment file, restart policy, `NoNewPrivileges`, `PrivateTmp`, `ProtectHome`, read-only filesystem policy, and no Control Tower database, worktree, SSH key, or operational socket access.
+- [x] 7.1.3 Add failing tests for `dashboard/deploy/Caddyfile.example`: HTTPS/public boundary belongs to Caddy and reverse-proxies only to the loopback Bun listener without embedding credentials or protected values.
+- [x] 7.1.4 Add failing tests for `dashboard/deploy/dashboard.env.example`: variable names and safe comments only, including all five auth variables and loopback host/port names, with no usable hash, secret, password, cookie, hostname, or production value.
+- [x] 7.1.5 Add failing structural assertions for the immutable `releases/<release-id>/dashboard/` layout, external root-owned environment file, atomic `current` symlink, health/auth/content smoke sequence, and previous-release rollback without migration or Control Tower recovery.
+- [x] 7.1.6 Run the focused command and capture the expected RED failures before creating scripts or deployment examples.
 
 ### 7.2 GREEN — add the smallest operator-facing examples
 
-- [ ] 7.2.1 Implement `dashboard/scripts/hash-password.mjs` using `Bun.password.hash` with Argon2id, no argument echoing, no credential persistence, and clear failure behavior.
-- [ ] 7.2.2 Add the hardened systemd example that runs `/usr/bin/bun /opt/control-tower-dashboard/current/server.mjs` as an isolated user and exposes only the external root-owned environment file.
-- [ ] 7.2.3 Add the Caddy example with a placeholder hostname and loopback reverse proxy, keeping authentication in Bun and Caddy as the only public listener.
-- [ ] 7.2.4 Add the environment-name example with documentation placeholders only and no usable secrets or production values.
-- [ ] 7.2.5 Document in the examples the future user-approved rollout boundary: copy a self-contained immutable release, verify privately, switch `current` atomically, restart, run smoke checks, and revert the symlink/restart if any check fails.
-- [ ] 7.2.6 Run the focused command and capture the smallest GREEN result.
+- [x] 7.2.1 Implement `dashboard/scripts/hash-password.mjs` using `Bun.password.hash` with Argon2id, no argument echoing, no credential persistence, and clear failure behavior.
+- [x] 7.2.2 Add the hardened systemd example that runs `/usr/bin/bun /opt/control-tower-dashboard/current/server.mjs` as an isolated user and exposes only the external root-owned environment file.
+- [x] 7.2.3 Add the Caddy example with a placeholder hostname and loopback reverse proxy, keeping authentication in Bun and Caddy as the only public listener.
+- [x] 7.2.4 Add the environment-name example with documentation placeholders only and no usable secrets or production values.
+- [x] 7.2.5 Document in the examples the future user-approved rollout boundary: copy a self-contained immutable release, verify privately, switch `current` atomically, restart, run smoke checks, and revert the symlink/restart if any check fails.
+- [x] 7.2.6 Run the focused command and capture the smallest GREEN result.
 
 ### 7.3 TRIANGULATE — prove smoke and rollback boundaries are complete
 
-- [ ] 7.3.1 Add an architecture fixture for an attempted public Bun bind or environment file inside a release; prove the contract rejects both.
-- [ ] 7.3.2 Verify the planned smoke checklist covers `/healthz`, unauthenticated `/` and content non-disclosure, invalid login non-disclosure, one authenticated loading-to-populated or empty path, old credential/cookie rejection after rotation, and unchanged dashboard URL.
-- [ ] 7.3.3 Verify the rollback checklist restores only the previous dashboard release symlink and service process, requires no dashboard data migration, projection replay, queue repair, protocol downgrade, Tower database action, or P4-P6 recovery, and keeps credential revocation independent.
-- [ ] 7.3.4 Mark every real-host smoke, service restart, route change, credential rotation, rollout, and rollback action as blocked on explicit future user approval.
-- [ ] 7.3.5 Run the focused command and capture the triangulated GREEN result.
+- [x] 7.3.1 Add an architecture fixture for an attempted public Bun bind or environment file inside a release; prove the contract rejects both.
+- [x] 7.3.2 Verify the planned smoke checklist covers `/healthz`, unauthenticated `/` and content non-disclosure, invalid login non-disclosure, one authenticated loading-to-populated or empty path, old credential/cookie rejection after rotation, and unchanged dashboard URL.
+- [x] 7.3.3 Verify the rollback checklist restores only the previous dashboard release symlink and service process, requires no dashboard data migration, projection replay, queue repair, protocol downgrade, Tower database action, or P4-P6 recovery, and keeps credential revocation independent.
+- [x] 7.3.4 Mark every real-host smoke, service restart, route change, credential rotation, rollout, and rollback action as blocked on explicit future user approval.
+- [x] 7.3.5 Run the focused command and capture the triangulated GREEN result.
 
 ### 7.4 REFACTOR and complete the unit
 
-- [ ] 7.4.1 Remove duplication from deployment comments only while tests retain explicit security, isolation, smoke, and rollback assertions.
-- [ ] 7.4.2 Run the focused command; record exact pass counts/results.
-- [ ] 7.4.3 Run `bun test`; record the full result before marking Work Unit 6 complete.
-- [ ] 7.4.4 Record `Runtime harness: N/A` with the no-real-host reason, the rollback boundary, and the allowed-path diff check in `apply-progress.md`.
+- [x] 7.4.1 Remove duplication from deployment comments only while tests retain explicit security, isolation, smoke, and rollback assertions.
+- [x] 7.4.2 Run the focused command; record exact pass counts/results.
+- [x] 7.4.3 Run `bun test`; record the full result before marking Work Unit 6 complete.
+- [x] 7.4.4 Record `Runtime harness: N/A` with the no-real-host reason, the rollback boundary, and the allowed-path diff check in `apply-progress.md`.
 
 ## 8. Integrated Verification and Delivery Boundary
 
