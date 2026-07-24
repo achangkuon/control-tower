@@ -128,6 +128,21 @@ const CONTINUATION_TOOL_DEFINITIONS = new Map([
     },
   },
   { name: "receive", description: "Peek continuation delivery without consuming it.", inputSchema: { type: "object", properties: {}, additionalProperties: false } },
+  {
+    name: "create",
+    description: "Create an immutable DRAFT generation-0 handoff from the canonical payload, under the ACTIVE producer identity.",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        request_identity: { type: "string" },
+        lineage_id: { type: "string" },
+        revision: { type: "integer", minimum: 1 },
+        payload: { type: "object" },
+        payload_digest: { type: "string" },
+      },
+      required: ["request_identity", "lineage_id", "revision", "payload", "payload_digest"],
+    },
+  },
 ].map((tool) => [tool.name, tool]))
 
 const GUARDED_TOOLS = new Set([
