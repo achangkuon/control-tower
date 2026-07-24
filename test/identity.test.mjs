@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test"
 import { Database } from "bun:sqlite"
 import { execFileSync } from "node:child_process"
 import { createHash, createHmac, randomBytes, randomUUID } from "node:crypto"
-import { chmodSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { chmodSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
 import { fileURLToPath, pathToFileURL } from "node:url"
@@ -35,6 +35,106 @@ const activationRequest = (epoch = 1, evidence_digest = digest("activation-evide
 const mcpResult = (response) => {
   if (response.isError) throw new Error(response.content[0].text)
   return JSON.parse(response.content[0].text)
+}
+const validPayload = (context, overrides = {}) => {
+  const sourceMerge = { sha: "a".repeat(40), url: "https://example.invalid/merge" }
+  const referenceValue = "https://example.invalid/reference"
+  const nextUnit = {
+    unit_id: "create-unit", scope: "create test scope",
+    dependencies: [{ id: "dep-a", digest: digest("dep-a") }, { id: "dep-b", digest: digest("dep-b") }],
+    references: [{ kind: "URL", value: referenceValue, digest: digest(referenceValue) }],
+  }
+  const snapshots = [{ name: "snapshot-a", digest: digest("snapshot-a") }]
+  const sourceDigest = digest(canonical({ source_kind: "TEST", source_ref: "fixture", source_merge_sha: sourceMerge.sha, source_merge_url: sourceMerge.url }))
+  return {
+    kind: "control_tower_handoff_v1", version: 1,
+    lineage: { lineage_id: randomUUID(), revision: 1 },
+    repository: {
+      repository_fingerprint: digest(canonical({ kind: "canonical_repo_v1", path: context.canonical_repo })),
+      git_common_dir_fingerprint: digest(canonical({ kind: "git_common_dir_v1", path: context.git_common_dir })),
+      source_merge: sourceMerge,
+    },
+    next_unit: nextUnit, snapshots,
+    provenance: { source_kind: "TEST", source_ref: "fixture", source_digest: sourceDigest },
+    decision_summary: "fixture decision",
+    ...overrides,
+  }
+}
+const createPayloadRequest = (payload, request_identity = randomUUID()) =>
+  ({ request_identity, lineage_id: payload.lineage.lineage_id, revision: payload.lineage.revision, payload, payload_digest: digest(canonical(payload)) })
+const setupCreateFixture = () => {
+  const fixture = createFixture({ mode: "OFF", schema: 4 })
+  const mainMetadata = capability(), mainDispatch = dispatcher(fixture.main, mainMetadata)
+  const main = mainDispatch("bootstrapMain", mainRequest(fixture.anchor))
+  mainMetadata.binding_epoch = main.binding_epoch
+  mainDispatch("activate", activationRequest(main.binding_epoch))
+  const workerMetadata = capability({ plugin_instance: "worker-plugin", root_session_id: "worker-root" })
+  const workerDispatch = dispatcher(fixture.main, workerMetadata)
+  const registered = workerDispatch("register", registerRequest())
+  workerMetadata.binding_epoch = registered.binding_epoch
+  return { ...fixture, mainDispatch, workerDispatch, producerBindingId: registered.binding_id }
+}
+// P4-A3: `validate` reads live Git/filesystem state from the canonical repo,
+// so the fixture needs a real resolvable commit and a real tracked file.
+const setupValidateFixture = () => {
+  const fixture = setupCreateFixture()
+  writeFileSync(join(fixture.main, "unit.txt"), "fixture unit contents\n")
+  git(fixture.main, ["add", "unit.txt"])
+  git(fixture.main, ["commit", "-q", "-m", "add fixture file"])
+  const headOid = git(fixture.main, ["rev-parse", "HEAD"])
+  const fileDigest = digest(readFileSync(join(fixture.main, "unit.txt")))
+  return { ...fixture, headOid, fileDigest }
+}
+const validateReadyPayload = (fixture, overrides = {}) => {
+  const urlValue = "https://example.invalid/reference"
+  const references = [
+    { kind: "COMMIT", value: fixture.headOid, digest: digest("commit-marker") },
+    { kind: "FILE", value: "unit.txt", digest: fixture.fileDigest },
+    { kind: "URL", value: urlValue, digest: digest(urlValue) },
+  ]
+  const sourceMerge = { sha: fixture.headOid, url: "https://example.invalid/merge" }
+  const sourceDigest = digest(canonical({ source_kind: "TEST", source_ref: "fixture", source_merge_sha: sourceMerge.sha, source_merge_url: sourceMerge.url }))
+  return validPayload(fixture.context, {
+    repository: {
+      repository_fingerprint: digest(canonical({ kind: "canonical_repo_v1", path: fixture.context.canonical_repo })),
+      git_common_dir_fingerprint: digest(canonical({ kind: "git_common_dir_v1", path: fixture.context.git_common_dir })),
+      source_merge: sourceMerge,
+    },
+    next_unit: { unit_id: "validate-unit", scope: "validate test scope", dependencies: [], references },
+    provenance: { source_kind: "TEST", source_ref: "fixture", source_digest: sourceDigest },
+    ...overrides,
+  })
+}
+const badReferencePayload = (fixture, reference) => validPayload(fixture.context, {
+  repository: {
+    repository_fingerprint: digest(canonical({ kind: "canonical_repo_v1", path: fixture.context.canonical_repo })),
+    git_common_dir_fingerprint: digest(canonical({ kind: "git_common_dir_v1", path: fixture.context.git_common_dir })),
+    source_merge: { sha: fixture.headOid, url: "https://example.invalid/merge" },
+  },
+  next_unit: { unit_id: "bad-ref-unit", scope: "bad reference scope", dependencies: [], references: [reference] },
+  provenance: { source_kind: "TEST", source_ref: "fixture", source_digest: digest(canonical({ source_kind: "TEST", source_ref: "fixture", source_merge_sha: fixture.headOid, source_merge_url: "https://example.invalid/merge" })) },
+})
+const createReadyHandoff = (fixture, overrides = {}) => {
+  const payload = validateReadyPayload(fixture, overrides)
+  const request = createPayloadRequest(payload)
+  const created = fixture.workerDispatch("create", request)
+  return { payload, request, created }
+}
+const validateRequest = (created, payload_digest, overrides = {}) =>
+  ({ request_identity: randomUUID(), id: created.id, es: "DRAFT", eg: created.generation, payload_digest, ...overrides })
+const publishRequest = (handoffId, generation, overrides = {}) =>
+  ({ request_identity: randomUUID(), id: handoffId, es: "VALIDATED", eg: generation, ...overrides })
+const expectPayloadInvalidAndNoMutation = (fixture, payload) => {
+  const request = createPayloadRequest(payload)
+  const created = fixture.workerDispatch("create", request)
+  const vRequest = validateRequest(created, request.payload_digest)
+  expect(errorCode(() => fixture.mainDispatch("validate", vRequest))).toBe("CT_PAYLOAD_INVALID")
+  const db = new Database(fixture.dbPath, { readonly: true })
+  const handoff = db.query("SELECT state,validation_digest FROM ct_handoff WHERE id=?").get(created.id)
+  expect(handoff.state).toBe("DRAFT")
+  expect(handoff.validation_digest).toBeNull()
+  expect(db.query("SELECT COUNT(*) AS count FROM ct_idempotency WHERE operation='validate'").get().count).toBe(0)
+  db.close()
 }
 
 const createFixture = ({ mode = "ON", schema = 2 } = {}) => {
@@ -487,7 +587,7 @@ describe("P3-B activation, status, and capability-gated MCP", () => {
     expect(explicitNull.content[0].text).toBe("ERROR: CT_PAYLOAD_INVALID")
   })
 
-  test("capability gate exposes exactly five P3 routes while preserving legacy and future-route fences", () => {
+  test("capability gate exposes exactly nine P3/P4-A2/P4-A3/P4-B routes while preserving legacy and future-route fences", () => {
     const fixture = createFixture({ mode: "OFF", schema: 3 })
     const metadata = capability()
     const processIdentity = opaqueProcess()
@@ -499,11 +599,18 @@ describe("P3-B activation, status, and capability-gated MCP", () => {
       "tower_acquire", "tower_release", "tower_transfer", "tower_receive",
     ])
     expect(list(enabled)).toEqual([
-      ...list(disabled), "bootstrapMain", "activate", "status", "register", "receive",
+      ...list(disabled), "bootstrapMain", "activate", "status", "register", "receive", "create", "validate", "publish", "claim",
     ])
-    for (const name of ["start", "create", "complete", "beginRollback", "rebindMain", "finishRollback"]) {
+    // "create"/"validate"/"publish"/"claim" are capability-gated but still
+    // require schema 4; on this schema-3 fixture they fail CT_SCHEMA_INVALID
+    // rather than "unknown tool".
+    for (const name of ["start", "complete", "beginRollback", "rebindMain", "finishRollback"]) {
       expect(enabled({ id: 2, method: "tools/call", params: { name, arguments: {} } }).isError).toBe(true)
     }
+    expect(enabled({ id: 20, method: "tools/call", params: { name: "create", arguments: {} } }).isError).toBe(true)
+    expect(enabled({ id: 21, method: "tools/call", params: { name: "validate", arguments: {} } }).isError).toBe(true)
+    expect(enabled({ id: 22, method: "tools/call", params: { name: "publish", arguments: {} } }).isError).toBe(true)
+    expect(enabled({ id: 23, method: "tools/call", params: { name: "claim", arguments: {} } }).isError).toBe(true)
     const bootstrap = mcpResult(enabled({ id: 3, method: "tools/call", params: { name: "bootstrapMain", arguments: mainRequest(fixture.anchor) } }))
     metadata.binding_epoch = bootstrap.binding_epoch
     expect(mcpResult(enabled({ id: 4, method: "tools/call", params: { name: "status", arguments: {} } })).mode).toBe("OFF")
@@ -885,11 +992,22 @@ describe("P4-A1c evolved schema-4 validation and total replay", () => {
     return fixture
   }
 
-  test("R2 RED accepts only coherent schema-representable dormant forward histories read-only", () => {
-    for (const history of ["ACK", "ATTEST", "COMPLETE", "REJECT_DRAFT", "REJECT_VALIDATED", "REJECT_PUBLISHED", "RECOVER"]) {
+  test("P4-only gate rejects coherent future P5/P6 histories read-only", () => {
+    for (const [operation, history] of [["ACK", "ACK"], ["ATTEST_COMPLETION", "ATTEST"], ["COMPLETE", "COMPLETE"],
+      ["REJECT", "REJECT_DRAFT"], ["REJECT", "REJECT_VALIDATED"], ["REJECT", "REJECT_PUBLISHED"], ["RECOVER", "RECOVER"]]) {
       const fixture = setupDormant(history)
       const before = readFileSync(fixture.dbPath)
-      expect({ history, statusCode: errorCode(() => fixture.mainDispatch("status")) }).toEqual({ history, statusCode: null })
+      expect({ operation, statusCode: errorCode(() => fixture.mainDispatch("status")) }).toEqual({ operation, statusCode: "CT_SCHEMA_INVALID" })
+      expect(errorCode(() => tower.bootstrapAdmin(fixture.migrationRequest, fixture.main))).toBe("CT_SCHEMA_INVALID")
+      expect(readFileSync(fixture.dbPath)).toEqual(before)
+    }
+  })
+
+  test("P4-only gate accepts coherent CREATE/VALIDATE/PUBLISH/CLAIM prefixes read-only", () => {
+    for (const terminal of ["DRAFT", "VALIDATED", "PUBLISHED", "CLAIMED"]) {
+      const fixture = setupEvolved(null, terminal)
+      const before = readFileSync(fixture.dbPath)
+      expect({ terminal, statusCode: errorCode(() => fixture.mainDispatch("status")) }).toEqual({ terminal, statusCode: null })
       expect(fixture.mainDispatch("status").schema_version).toBe(4)
       expect(tower.bootstrapAdmin(fixture.migrationRequest, fixture.main)).toMatchObject({ schema_version: 4, replayed: true })
       expect(readFileSync(fixture.dbPath)).toEqual(before)
@@ -1117,5 +1235,650 @@ describe("P3-A persisted canonical Main bootstrap", () => {
     expect(after.query("SELECT * FROM ct_main_binding").all()).toEqual(before)
     expect(after.query("SELECT * FROM ct_activation").all()).toEqual([])
     after.close()
+  })
+})
+
+describe("P4-A2 canonical payload, provenance, and create", () => {
+  test("CT-R2-S1 creates an immutable DRAFT generation-0 handoff and replays exactly", () => {
+    const fixture = setupCreateFixture()
+    const payload = validPayload(fixture.context)
+    const request = createPayloadRequest(payload)
+
+    const response = fixture.workerDispatch("create", request)
+    expect(response).toMatchObject({ state: "DRAFT", generation: 0, replayed: false })
+    expect(response.id).toHaveLength(43)
+
+    const db = new Database(fixture.dbPath, { readonly: true })
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_handoff").get().count).toBe(1)
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_handoff_transition").get().count).toBe(1)
+    const handoff = db.query("SELECT * FROM ct_handoff").get()
+    expect(handoff.state).toBe("DRAFT")
+    expect(handoff.generation).toBe(0)
+    expect(handoff.lineage_id).toBe(payload.lineage.lineage_id)
+    expect(handoff.producer_binding_id).toBe(fixture.producerBindingId)
+    db.close()
+
+    expect(fixture.workerDispatch("create", request)).toEqual({ ...response, replayed: true })
+    const after = new Database(fixture.dbPath, { readonly: true })
+    expect(after.query("SELECT COUNT(*) AS count FROM ct_handoff").get().count).toBe(1)
+    expect(after.query("SELECT COUNT(*) AS count FROM ct_handoff_transition").get().count).toBe(1)
+    after.close()
+
+    // The full R1 schema-4 validator recomputes the CREATE reverse link,
+    // envelope, and every derived digest/fingerprint on read.
+    expect(fixture.mainDispatch("status")).toMatchObject({ mode: "ON", schema_version: 4 })
+  })
+
+  test("CT-R2-S2 rejects a changed accepted request at the same identity and a new identity naming the same scope", () => {
+    const fixture = setupCreateFixture()
+    const payload = validPayload(fixture.context)
+    const request = createPayloadRequest(payload)
+    fixture.workerDispatch("create", request)
+
+    const changedPayload = validPayload(fixture.context, { lineage: payload.lineage, decision_summary: "different decision" })
+    const changed = { ...request, payload: changedPayload, payload_digest: digest(canonical(changedPayload)) }
+    expect(errorCode(() => fixture.workerDispatch("create", changed))).toBe("CT_IDEMPOTENCY_CONFLICT")
+
+    const otherIdentity = { ...request, request_identity: randomUUID() }
+    expect(errorCode(() => fixture.workerDispatch("create", otherIdentity))).toBe("CT_IDEMPOTENCY_CONFLICT")
+
+    const db = new Database(fixture.dbPath, { readonly: true })
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_handoff").get().count).toBe(1)
+    db.close()
+  })
+
+  test("CT-R2-S3 rejects the malformed-payload matrix and digest/fingerprint mismatches without mutation", () => {
+    const fixture = setupCreateFixture()
+    const mutations = [
+      (payload) => ({ ...payload, kind: "wrong_kind" }),
+      (payload) => ({ ...payload, lineage: { ...payload.lineage, lineage_id: "not-a-uuid" } }),
+      (payload) => ({ ...payload, lineage: { ...payload.lineage, revision: 0 } }),
+      (payload) => ({ ...payload, decision_summary: "" }),
+      (payload) => ({ ...payload, next_unit: { ...payload.next_unit, dependencies: [...payload.next_unit.dependencies].reverse() } }),
+      (payload) => ({ ...payload, next_unit: { ...payload.next_unit, unit_id: "x".repeat(129) } }),
+      (payload) => ({ ...payload, repository: { ...payload.repository, repository_fingerprint: digest("wrong-repo") } }),
+      (payload) => ({ ...payload, repository: { ...payload.repository, git_common_dir_fingerprint: digest("wrong-common-dir") } }),
+      (payload) => ({ ...payload, provenance: { ...payload.provenance, source_digest: digest("wrong-source") } }),
+      (payload) => ({ ...payload, extra_field: true }),
+    ]
+    for (const mutate of mutations) {
+      const payload = mutate(validPayload(fixture.context))
+      const request = createPayloadRequest(payload)
+      expect(errorCode(() => fixture.workerDispatch("create", request))).toBe("CT_PAYLOAD_INVALID")
+    }
+    const wrongDigest = { ...createPayloadRequest(validPayload(fixture.context)), payload_digest: `sha256:${"0".repeat(64)}` }
+    expect(errorCode(() => fixture.workerDispatch("create", wrongDigest))).toBe("CT_PAYLOAD_INVALID")
+
+    const mismatchedTop = createPayloadRequest(validPayload(fixture.context))
+    mismatchedTop.revision = 2
+    expect(errorCode(() => fixture.workerDispatch("create", mismatchedTop))).toBe("CT_PAYLOAD_INVALID")
+
+    const db = new Database(fixture.dbPath, { readonly: true })
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_handoff").get().count).toBe(0)
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_idempotency WHERE operation='create'").get().count).toBe(0)
+    db.close()
+  })
+
+  test("CT-R2-S1 gates OFF and ROLLING_BACK before payload/authority checks", () => {
+    const off = setupCreateFixture()
+    const offDb = new Database(off.dbPath)
+    offDb.run("UPDATE ct_continuation_state SET mode='OFF'")
+    offDb.close()
+    expect(errorCode(() => off.workerDispatch("create", createPayloadRequest(validPayload(off.context))))).toBe("CT_CONTINUATION_OFF")
+
+    const rolling = setupCreateFixture()
+    const rollingDb = new Database(rolling.dbPath)
+    const activeMain = rollingDb.query("SELECT main_binding_id FROM ct_main_binding WHERE binding_status='ACTIVE'").get()
+    rollingDb.run("UPDATE ct_continuation_state SET mode='ROLLING_BACK'")
+    rollingDb.run("UPDATE ct_rollback_lease SET rollback_epoch=1,lease_status='ACTIVE',lease_version=1,owner_main_binding_id=?,lease_expires_at='2026-07-22T00:00:00.000Z'", [activeMain.main_binding_id])
+    rollingDb.close()
+    expect(errorCode(() => rolling.workerDispatch("create", createPayloadRequest(validPayload(rolling.context))))).toBe("CT_ROLLBACK_IN_PROGRESS")
+  })
+
+  test("CT-R2-S1 rejects a non-ACTIVE, multiplexed, or stale-epoch producer", () => {
+    const fixture = createFixture({ mode: "OFF", schema: 4 })
+    const mainMetadata = capability(), mainDispatch = dispatcher(fixture.main, mainMetadata)
+    const main = mainDispatch("bootstrapMain", mainRequest(fixture.anchor))
+    mainMetadata.binding_epoch = main.binding_epoch
+    mainDispatch("activate", activationRequest(main.binding_epoch))
+    const workerMetadata = capability({ plugin_instance: "worker-plugin", root_session_id: "worker-root" })
+    const workerDispatch = dispatcher(fixture.main, workerMetadata)
+
+    // never registered: no ACTIVE binding at all
+    expect(errorCode(() => workerDispatch("create", createPayloadRequest(validPayload(fixture.context))))).toBe("CT_SESSION_ISOLATION_UNPROVEN")
+
+    const registered = workerDispatch("register", registerRequest())
+    workerMetadata.binding_epoch = registered.binding_epoch
+
+    const stale = dispatcher(fixture.main, capability({ plugin_instance: "worker-plugin", root_session_id: "worker-root", binding_epoch: 999 }))
+    expect(errorCode(() => stale("create", createPayloadRequest(validPayload(fixture.context))))).toBe("CT_FENCE_MISMATCH")
+
+    // a second identity sharing the plugin scope but a different root session
+    // is a genuine conflict (same-root reconnects retire+replace instead).
+    const conflictMetadata = capability({ plugin_instance: "worker-plugin", root_session_id: "other-worker-root", binding_epoch: registered.binding_epoch })
+    expect(errorCode(() => dispatcher(fixture.main, conflictMetadata)("register", registerRequest(registered.binding_epoch, "ACTIVE")))).toBe("CT_SESSION_MULTIPLEXED")
+    expect(errorCode(() => workerDispatch("create", createPayloadRequest(validPayload(fixture.context))))).toBe("CT_SESSION_MULTIPLEXED")
+  })
+
+  test("CT-R2-S1 orders request shape before producer authority before full payload proof", () => {
+    const fixture = setupCreateFixture()
+    const validRequest = createPayloadRequest(validPayload(fixture.context))
+    const unregistered = dispatcher(fixture.main, capability({ plugin_instance: "ghost-plugin", root_session_id: "ghost-root" }))
+
+    expect(errorCode(() => unregistered("create", { ...validRequest, extra: true }))).toBe("CT_PAYLOAD_INVALID")
+
+    const malformedPayload = { ...validRequest, payload: { ...validRequest.payload, kind: "wrong_kind" } }
+    expect(errorCode(() => unregistered("create", malformedPayload))).toBe("CT_SESSION_ISOLATION_UNPROVEN")
+  })
+
+  test("MCP create tool round-trips through JSON with matching registered producer identity", () => {
+    const fixture = createFixture({ mode: "OFF", schema: 4 })
+    const mainMetadata = capability(), mainDispatch = dispatcher(fixture.main, mainMetadata)
+    const main = mainDispatch("bootstrapMain", mainRequest(fixture.anchor))
+    mainMetadata.binding_epoch = main.binding_epoch
+    mainDispatch("activate", activationRequest(main.binding_epoch))
+
+    const metadata = capability({ plugin_instance: "mcp-worker", root_session_id: "mcp-root" })
+    const processIdentity = opaqueProcess()
+    const enabled = createMcpHandler({ cwd: fixture.main, trustedMetadata: { snapshot: () => metadata }, processIdentity: { snapshot: () => processIdentity } })
+    const registered = mcpResult(enabled({ id: 0, method: "tools/call", params: { name: "register", arguments: registerRequest() } }))
+    metadata.binding_epoch = registered.binding_epoch
+
+    const payload = validPayload(fixture.context)
+    const request = createPayloadRequest(payload)
+    const first = mcpResult(enabled({ id: 1, method: "tools/call", params: { name: "create", arguments: request } }))
+    expect(first).toMatchObject({ state: "DRAFT", generation: 0, replayed: false })
+    const second = mcpResult(enabled({ id: 2, method: "tools/call", params: { name: "create", arguments: request } }))
+    expect(second).toEqual({ ...first, replayed: true })
+  })
+})
+
+describe("P4-A3 server-derived validate/publish and durable delivery", () => {
+  test("CT-R2-S1..S3/CT-R3-S5 validates a DRAFT handoff to VALIDATED without changing generation and replays exactly", () => {
+    const fixture = setupValidateFixture()
+    const { request: createRequest, created } = createReadyHandoff(fixture)
+    const vRequest = validateRequest(created, createRequest.payload_digest)
+
+    const response = fixture.mainDispatch("validate", vRequest)
+    expect(response).toMatchObject({ id: created.id, state: "VALIDATED", generation: 0, replayed: false })
+
+    const db = new Database(fixture.dbPath, { readonly: true })
+    const handoff = db.query("SELECT * FROM ct_handoff WHERE id=?").get(created.id)
+    expect(handoff.state).toBe("VALIDATED")
+    expect(handoff.generation).toBe(0)
+    expect(handoff.validation_digest).not.toBeNull()
+    expect(handoff.validated_at).not.toBeNull()
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_handoff_transition WHERE operation='VALIDATE'").get().count).toBe(1)
+    db.close()
+
+    expect(fixture.mainDispatch("validate", vRequest)).toEqual({ ...response, replayed: true })
+    const after = new Database(fixture.dbPath, { readonly: true })
+    expect(after.query("SELECT COUNT(*) AS count FROM ct_handoff_transition WHERE operation='VALIDATE'").get().count).toBe(1)
+    after.close()
+
+    // The full R1 schema-4 validator recomputes the VALIDATE reverse link,
+    // envelope, and evidence/digest on read.
+    expect(fixture.mainDispatch("status")).toMatchObject({ mode: "ON", schema_version: 4 })
+  })
+
+  test("CT-R2-S1..S3/CT-R3-S5 publishes a VALIDATED handoff to PUBLISHED, creates one PENDING WORK delivery, and replays exactly", () => {
+    const fixture = setupValidateFixture()
+    const { request: createRequest, created } = createReadyHandoff(fixture)
+    fixture.mainDispatch("validate", validateRequest(created, createRequest.payload_digest))
+
+    const pRequest = publishRequest(created.id, 0)
+    const response = fixture.mainDispatch("publish", pRequest)
+    expect(response).toMatchObject({ id: created.id, state: "PUBLISHED", generation: 0, replayed: false })
+
+    const db = new Database(fixture.dbPath, { readonly: true })
+    const handoff = db.query("SELECT * FROM ct_handoff WHERE id=?").get(created.id)
+    expect(handoff.state).toBe("PUBLISHED")
+    expect(handoff.published_at).not.toBeNull()
+    const deliveries = db.query("SELECT * FROM ct_delivery WHERE handoff_id=?").all(created.id)
+    expect(deliveries).toHaveLength(1)
+    expect(deliveries[0]).toMatchObject({ purpose: "WORK", delivery_state: "PENDING", handoff_state_snapshot: "PUBLISHED", claim_id: null, generation: 0 })
+    expect(deliveries[0].delivery_id).toHaveLength(43)
+    db.close()
+
+    expect(fixture.mainDispatch("publish", pRequest)).toEqual({ ...response, replayed: true })
+    const after = new Database(fixture.dbPath, { readonly: true })
+    expect(after.query("SELECT COUNT(*) AS count FROM ct_delivery").get().count).toBe(1)
+    after.close()
+
+    // Continuation `receive` is a non-consuming peek; P4-B projects this
+    // fresh PENDING WORK delivery instead of the pre-B {delivery:null}.
+    expect(fixture.workerDispatch("receive")).toEqual({ delivery: { delivery_id: deliveries[0].delivery_id, id: created.id, state: "PUBLISHED", generation: 0, purpose: "WORK" } })
+
+    expect(fixture.mainDispatch("status")).toMatchObject({ mode: "ON", schema_version: 4 })
+  })
+
+  test("CT-R2-S1..S3 rejects a changed accepted validate/publish request and a new identity naming the same committed scope", () => {
+    const fixture = setupValidateFixture()
+    const { request: createRequest, created } = createReadyHandoff(fixture)
+    const vRequest = validateRequest(created, createRequest.payload_digest)
+    fixture.mainDispatch("validate", vRequest)
+
+    const changedValidate = { ...vRequest, payload_digest: `sha256:${"0".repeat(64)}` }
+    expect(errorCode(() => fixture.mainDispatch("validate", changedValidate))).toBe("CT_IDEMPOTENCY_CONFLICT")
+    const sameScopeValidate = { ...vRequest, request_identity: randomUUID() }
+    expect(errorCode(() => fixture.mainDispatch("validate", sameScopeValidate))).toBe("CT_IDEMPOTENCY_CONFLICT")
+
+    const pRequest = publishRequest(created.id, 0)
+    fixture.mainDispatch("publish", pRequest)
+    const changedPublish = { ...pRequest, eg: 1 }
+    expect(errorCode(() => fixture.mainDispatch("publish", changedPublish))).toBe("CT_IDEMPOTENCY_CONFLICT")
+    const sameScopePublish = { ...pRequest, request_identity: randomUUID() }
+    expect(errorCode(() => fixture.mainDispatch("publish", sameScopePublish))).toBe("CT_IDEMPOTENCY_CONFLICT")
+
+    const db = new Database(fixture.dbPath, { readonly: true })
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_handoff_transition WHERE operation='VALIDATE'").get().count).toBe(1)
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_handoff_transition WHERE operation='PUBLISH'").get().count).toBe(1)
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_delivery").get().count).toBe(1)
+    db.close()
+  })
+
+  test("CT-R2-S1..S3 distinguishes wrong legal state (CT_INVALID_TRANSITION) from generation/payload fences (CT_FENCE_MISMATCH)", () => {
+    const fixture = setupValidateFixture()
+    const { request: createRequest, created } = createReadyHandoff(fixture)
+
+    // publish before validate: wrong legal state, never having consumed a
+    // publish scope for this handoff/generation.
+    expect(errorCode(() => fixture.mainDispatch("publish", publishRequest(created.id, 0)))).toBe("CT_INVALID_TRANSITION")
+
+    // wrong generation on an otherwise-correct DRAFT validate request
+    expect(errorCode(() => fixture.mainDispatch("validate", validateRequest(created, createRequest.payload_digest, { eg: 1 })))).toBe("CT_FENCE_MISMATCH")
+    // wrong payload_digest on an otherwise-correct DRAFT validate request
+    expect(errorCode(() => fixture.mainDispatch("validate", validateRequest(created, `sha256:${"1".repeat(64)}`)))).toBe("CT_FENCE_MISMATCH")
+
+    const validated = fixture.mainDispatch("validate", validateRequest(created, createRequest.payload_digest))
+    expect(validated.state).toBe("VALIDATED")
+
+    // wrong generation on an otherwise-correct VALIDATED publish request
+    expect(errorCode(() => fixture.mainDispatch("publish", publishRequest(created.id, 1)))).toBe("CT_FENCE_MISMATCH")
+
+    const published = fixture.mainDispatch("publish", publishRequest(created.id, 0))
+    expect(published.state).toBe("PUBLISHED")
+
+    const db = new Database(fixture.dbPath, { readonly: true })
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_handoff WHERE state='PUBLISHED'").get().count).toBe(1)
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_delivery").get().count).toBe(1)
+    db.close()
+  })
+
+  test("CT-R3-S5 requires the exact ACTIVE Main identity for validate and publish", () => {
+    const fixture = createFixture({ mode: "OFF", schema: 4 })
+    const mainMetadata = capability(), mainProcess = opaqueProcess()
+    const mainDispatch = dispatcher(fixture.main, mainMetadata, mainProcess)
+    const main = mainDispatch("bootstrapMain", mainRequest(fixture.anchor))
+    mainMetadata.binding_epoch = main.binding_epoch
+    mainDispatch("activate", activationRequest(main.binding_epoch))
+    const workerMetadata = capability({ plugin_instance: "worker-plugin", root_session_id: "worker-root" })
+    const workerDispatch = dispatcher(fixture.main, workerMetadata)
+    const registered = workerDispatch("register", registerRequest())
+    workerMetadata.binding_epoch = registered.binding_epoch
+
+    writeFileSync(join(fixture.main, "unit.txt"), "fixture unit contents\n")
+    git(fixture.main, ["add", "unit.txt"])
+    git(fixture.main, ["commit", "-q", "-m", "add fixture file"])
+    const headOid = git(fixture.main, ["rev-parse", "HEAD"])
+    const fileDigest = digest(readFileSync(join(fixture.main, "unit.txt")))
+
+    const payload = validateReadyPayload({ context: fixture.context, headOid, fileDigest })
+    const createRequest = createPayloadRequest(payload)
+    const created = workerDispatch("create", createRequest)
+    const vRequest = validateRequest(created, createRequest.payload_digest)
+
+    // the registered worker (PRODUCER/CLAIMANT identity) is not Main
+    expect(errorCode(() => workerDispatch("validate", vRequest))).toBe("CT_WORKFLOW_MAIN_REQUIRED")
+
+    // same exact host/plugin/root/process identity as Main, but a stale epoch
+    const liveEpoch = mainMetadata.binding_epoch
+    mainMetadata.binding_epoch = 999
+    expect(errorCode(() => mainDispatch("validate", vRequest))).toBe("CT_FENCE_MISMATCH")
+    mainMetadata.binding_epoch = liveEpoch
+
+    const validated = mainDispatch("validate", vRequest)
+    expect(validated.state).toBe("VALIDATED")
+
+    const pRequest = publishRequest(created.id, 0)
+    expect(errorCode(() => workerDispatch("publish", pRequest))).toBe("CT_WORKFLOW_MAIN_REQUIRED")
+    const published = mainDispatch("publish", pRequest)
+    expect(published.state).toBe("PUBLISHED")
+
+    const db = new Database(fixture.dbPath, { readonly: true })
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_handoff WHERE state='PUBLISHED'").get().count).toBe(1)
+    db.close()
+  })
+
+  test("P4-A3 fresh validate rejects unresolved ancestry, a missing commit, a symlinked FILE, and digest mismatches without mutation", () => {
+    const fixture = setupValidateFixture()
+
+    // missing/nonexistent COMMIT reference
+    expectPayloadInvalidAndNoMutation(fixture, badReferencePayload(fixture, { kind: "COMMIT", value: "f".repeat(40), digest: digest("missing-commit") }))
+
+    // FILE reference through a symlink is rejected even though the link
+    // target's bytes would otherwise match the declared digest
+    const linkPath = join(fixture.main, "linked.txt")
+    symlinkSync(join(fixture.main, "unit.txt"), linkPath)
+    expectPayloadInvalidAndNoMutation(fixture, badReferencePayload(fixture, { kind: "FILE", value: "linked.txt", digest: fixture.fileDigest }))
+
+    // FILE reference whose declared digest does not match the actual bytes
+    expectPayloadInvalidAndNoMutation(fixture, badReferencePayload(fixture, { kind: "FILE", value: "unit.txt", digest: digest("wrong-content") }))
+
+    // source_merge.sha resolves to a real commit that is not an ancestor of
+    // canonical Main HEAD
+    const unrelatedRoot = mkdtempSync(join(tmpdir(), "control-tower-unrelated-"))
+    temporaryDirectories.push(unrelatedRoot)
+    git(unrelatedRoot, ["init", "-q", "-b", "main"])
+    git(unrelatedRoot, ["config", "user.email", "tower-test@example.invalid"])
+    git(unrelatedRoot, ["config", "user.name", "Tower Test"])
+    git(unrelatedRoot, ["commit", "-q", "--allow-empty", "-m", "unrelated"])
+    git(fixture.main, ["fetch", "-q", unrelatedRoot, "main"])
+    const unrelatedOid = git(fixture.main, ["rev-parse", "FETCH_HEAD"])
+    const unrelatedSourceDigest = digest(canonical({ source_kind: "TEST", source_ref: "fixture", source_merge_sha: unrelatedOid, source_merge_url: "https://example.invalid/merge" }))
+    expectPayloadInvalidAndNoMutation(fixture, validPayload(fixture.context, {
+      repository: {
+        repository_fingerprint: digest(canonical({ kind: "canonical_repo_v1", path: fixture.context.canonical_repo })),
+        git_common_dir_fingerprint: digest(canonical({ kind: "git_common_dir_v1", path: fixture.context.git_common_dir })),
+        source_merge: { sha: unrelatedOid, url: "https://example.invalid/merge" },
+      },
+      provenance: { source_kind: "TEST", source_ref: "fixture", source_digest: unrelatedSourceDigest },
+    }))
+
+    // source_merge.sha that never resolves to any commit at all
+    const missingSha = "e".repeat(40)
+    const missingSourceDigest = digest(canonical({ source_kind: "TEST", source_ref: "fixture", source_merge_sha: missingSha, source_merge_url: "https://example.invalid/merge" }))
+    expectPayloadInvalidAndNoMutation(fixture, validPayload(fixture.context, {
+      repository: {
+        repository_fingerprint: digest(canonical({ kind: "canonical_repo_v1", path: fixture.context.canonical_repo })),
+        git_common_dir_fingerprint: digest(canonical({ kind: "git_common_dir_v1", path: fixture.context.git_common_dir })),
+        source_merge: { sha: missingSha, url: "https://example.invalid/merge" },
+      },
+      provenance: { source_kind: "TEST", source_ref: "fixture", source_digest: missingSourceDigest },
+    }))
+  })
+
+  test("CT-R2-S1/CT-R3-S5 gates OFF and ROLLING_BACK before validate/publish authority checks", () => {
+    const off = setupValidateFixture()
+    const { request: offCreateRequest, created: offCreated } = createReadyHandoff(off)
+    const offDb = new Database(off.dbPath)
+    offDb.run("UPDATE ct_continuation_state SET mode='OFF'")
+    offDb.close()
+    expect(errorCode(() => off.mainDispatch("validate", validateRequest(offCreated, offCreateRequest.payload_digest)))).toBe("CT_CONTINUATION_OFF")
+    expect(errorCode(() => off.mainDispatch("publish", publishRequest(offCreated.id, 0)))).toBe("CT_CONTINUATION_OFF")
+
+    const rolling = setupValidateFixture()
+    const { request: rollingCreateRequest, created: rollingCreated } = createReadyHandoff(rolling)
+    const rollingDb = new Database(rolling.dbPath)
+    const activeMain = rollingDb.query("SELECT main_binding_id FROM ct_main_binding WHERE binding_status='ACTIVE'").get()
+    rollingDb.run("UPDATE ct_continuation_state SET mode='ROLLING_BACK'")
+    rollingDb.run("UPDATE ct_rollback_lease SET rollback_epoch=1,lease_status='ACTIVE',lease_version=1,owner_main_binding_id=?,lease_expires_at='2026-07-22T00:00:00.000Z'", [activeMain.main_binding_id])
+    rollingDb.close()
+    expect(errorCode(() => rolling.mainDispatch("validate", validateRequest(rollingCreated, rollingCreateRequest.payload_digest)))).toBe("CT_ROLLBACK_IN_PROGRESS")
+    expect(errorCode(() => rolling.mainDispatch("publish", publishRequest(rollingCreated.id, 0)))).toBe("CT_ROLLBACK_IN_PROGRESS")
+  })
+
+  test("MCP validate and publish tools round-trip through JSON and complete the WORK delivery projection", () => {
+    const fixture = createFixture({ mode: "OFF", schema: 4 })
+    const mainMetadata = capability(), mainProcess = opaqueProcess()
+    const mainDispatch = dispatcher(fixture.main, mainMetadata, mainProcess)
+    const main = mainDispatch("bootstrapMain", mainRequest(fixture.anchor))
+    mainMetadata.binding_epoch = main.binding_epoch
+    mainDispatch("activate", activationRequest(main.binding_epoch))
+
+    writeFileSync(join(fixture.main, "unit.txt"), "fixture unit contents\n")
+    git(fixture.main, ["add", "unit.txt"])
+    git(fixture.main, ["commit", "-q", "-m", "add fixture file"])
+    const headOid = git(fixture.main, ["rev-parse", "HEAD"])
+    const fileDigest = digest(readFileSync(join(fixture.main, "unit.txt")))
+
+    const workerMetadata = capability({ plugin_instance: "mcp-worker", root_session_id: "mcp-root" })
+    const workerProcess = opaqueProcess()
+    const workerEnabled = createMcpHandler({ cwd: fixture.main, trustedMetadata: { snapshot: () => workerMetadata }, processIdentity: { snapshot: () => workerProcess } })
+    const registered = mcpResult(workerEnabled({ id: 0, method: "tools/call", params: { name: "register", arguments: registerRequest() } }))
+    workerMetadata.binding_epoch = registered.binding_epoch
+
+    const payload = validateReadyPayload({ context: fixture.context, headOid, fileDigest })
+    const createRequest = createPayloadRequest(payload)
+    const created = mcpResult(workerEnabled({ id: 1, method: "tools/call", params: { name: "create", arguments: createRequest } }))
+    expect(created).toMatchObject({ state: "DRAFT", generation: 0 })
+
+    const mainEnabled = createMcpHandler({ cwd: fixture.main, trustedMetadata: { snapshot: () => mainMetadata }, processIdentity: { snapshot: () => mainProcess } })
+    const vRequest = validateRequest(created, createRequest.payload_digest)
+    const validated = mcpResult(mainEnabled({ id: 2, method: "tools/call", params: { name: "validate", arguments: vRequest } }))
+    expect(validated).toMatchObject({ state: "VALIDATED", generation: 0, replayed: false })
+    expect(mcpResult(mainEnabled({ id: 3, method: "tools/call", params: { name: "validate", arguments: vRequest } }))).toEqual({ ...validated, replayed: true })
+
+    const pRequest = publishRequest(created.id, 0)
+    const published = mcpResult(mainEnabled({ id: 4, method: "tools/call", params: { name: "publish", arguments: pRequest } }))
+    expect(published).toMatchObject({ state: "PUBLISHED", generation: 0, replayed: false })
+    expect(mcpResult(mainEnabled({ id: 5, method: "tools/call", params: { name: "publish", arguments: pRequest } }))).toEqual({ ...published, replayed: true })
+
+    // P4-B projects the fresh PENDING WORK delivery instead of the pre-B
+    // {delivery:null}.
+    expect(mcpResult(workerEnabled({ id: 6, method: "tools/call", params: { name: "receive" } }))).toMatchObject({ delivery: { id: created.id, state: "PUBLISHED", generation: 0, purpose: "WORK" } })
+  })
+})
+
+describe("P4-B exact non-consuming receive and atomic claim", () => {
+  const absentId = () => randomBytes(32).toString("base64url")
+  const publishedHandoff = (fixture) => {
+    const { payload, request: createRequest, created } = createReadyHandoff(fixture)
+    fixture.mainDispatch("validate", validateRequest(created, createRequest.payload_digest))
+    const published = fixture.mainDispatch("publish", publishRequest(created.id, 0))
+    const db = new Database(fixture.dbPath, { readonly: true })
+    const deliveryId = db.query("SELECT delivery_id FROM ct_delivery WHERE handoff_id=?").get(created.id).delivery_id
+    db.close()
+    return { payload, created, published, deliveryId }
+  }
+  const claimRequest = (handoffId, deliveryId, generation, overrides = {}) =>
+    ({ request_identity: randomUUID(), delivery_id: deliveryId, id: handoffId, es: "PUBLISHED", eg: generation, purpose: "WORK", ...overrides })
+
+  test("CT-R6-S4 receive projects the PENDING WORK delivery after publish, stays a non-mutating peek, and returns null once claimed", () => {
+    const fixture = setupValidateFixture()
+    const { created, deliveryId } = publishedHandoff(fixture)
+
+    const peek = fixture.workerDispatch("receive")
+    expect(peek).toEqual({ delivery: { delivery_id: deliveryId, id: created.id, state: "PUBLISHED", generation: 0, purpose: "WORK" } })
+
+    // CT-R6-S5: receive again — the same delivery is still PENDING/claimable,
+    // with no budget, claim, or delivery mutation from the peek itself.
+    expect(fixture.workerDispatch("receive")).toEqual(peek)
+    const db = new Database(fixture.dbPath, { readonly: true })
+    expect(db.query("SELECT delivery_state FROM ct_delivery WHERE delivery_id=?").get(deliveryId).delivery_state).toBe("PENDING")
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_claim").get().count).toBe(0)
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_session_budget").get().count).toBe(0)
+    db.close()
+
+    const claimed = fixture.workerDispatch("claim", claimRequest(created.id, deliveryId, 0))
+    expect(claimed).toMatchObject({ id: created.id, state: "CLAIMED", generation: 0, replayed: false, delivery_id: deliveryId, purpose: "WORK" })
+    expect(fixture.workerDispatch("receive")).toEqual({ delivery: null })
+  })
+
+  test("CT-R6-S6 claim atomically creates one LIVE claim, CLAIMED delivery/handoff, and consumes one budget unit; exact replay withholds the token and consumes no extra unit", () => {
+    const fixture = setupValidateFixture()
+    const { created, deliveryId } = publishedHandoff(fixture)
+    const request = claimRequest(created.id, deliveryId, 0)
+
+    const response = fixture.workerDispatch("claim", request)
+    expect(response).toMatchObject({ id: created.id, state: "CLAIMED", generation: 0, replayed: false, delivery_id: deliveryId, purpose: "WORK" })
+    expect(response.token).toMatch(/^[A-Za-z0-9_-]{43}$/)
+
+    const db = new Database(fixture.dbPath, { readonly: true })
+    const claim = db.query("SELECT * FROM ct_claim WHERE delivery_id=?").get(deliveryId)
+    expect(claim.claim_state).toBe("LIVE")
+    expect(claim.token_hash).toBe(digest(Buffer.from(response.token)))
+    expect(claim.token_salt).not.toBe(response.token)
+    const delivery = db.query("SELECT * FROM ct_delivery WHERE delivery_id=?").get(deliveryId)
+    expect(delivery.delivery_state).toBe("CLAIMED")
+    expect(delivery.claim_id).toBe(claim.claim_id)
+    expect(db.query("SELECT state FROM ct_handoff WHERE id=?").get(created.id).state).toBe("CLAIMED")
+    const budget = db.query("SELECT * FROM ct_session_budget").get()
+    expect(budget.consumed_count).toBe(1)
+    expect(budget.last_claim_id).toBe(claim.claim_id)
+    db.close()
+
+    const replay = fixture.workerDispatch("claim", request)
+    expect(replay).toEqual({ id: created.id, state: "CLAIMED", generation: 0, replayed: true, delivery_id: deliveryId, purpose: "WORK" })
+    expect(replay.token).toBeUndefined()
+
+    const after = new Database(fixture.dbPath, { readonly: true })
+    expect(after.query("SELECT COUNT(*) AS count FROM ct_claim").get().count).toBe(1)
+    expect(after.query("SELECT consumed_count FROM ct_session_budget").get().consumed_count).toBe(1)
+    after.close()
+
+    // The full R1 schema-4 validator recomputes the CLAIM reverse link,
+    // envelope, claimant fence, token-hash commitment, and budget on read.
+    expect(fixture.mainDispatch("status")).toMatchObject({ mode: "ON", schema_version: 4 })
+  })
+
+  test("claim response/envelope keys never carry token/salt/hash beyond the one fresh public bearer", () => {
+    const fixture = setupValidateFixture()
+    const { created, deliveryId } = publishedHandoff(fixture)
+    const request = claimRequest(created.id, deliveryId, 0)
+
+    const fresh = fixture.workerDispatch("claim", request)
+    expect(Object.keys(fresh).sort()).toEqual(["delivery_id", "generation", "id", "purpose", "replayed", "state", "token"])
+    const replay = fixture.workerDispatch("claim", request)
+    expect(Object.keys(replay).sort()).toEqual(["delivery_id", "generation", "id", "purpose", "replayed", "state"])
+
+    expect(JSON.stringify(fixture.mainDispatch("status"))).not.toContain(fresh.token)
+    expect(fixture.workerDispatch("receive")).toEqual({ delivery: null })
+  })
+
+  test("CT-R6-S2 exhausts the one-claim session budget on a second distinct claim in the same root session scope", () => {
+    const fixture = setupValidateFixture()
+    const first = publishedHandoff(fixture)
+    fixture.workerDispatch("claim", claimRequest(first.created.id, first.deliveryId, 0))
+
+    const second = publishedHandoff(fixture)
+    expect(errorCode(() => fixture.workerDispatch("claim", claimRequest(second.created.id, second.deliveryId, 0)))).toBe("CT_SESSION_BUDGET_EXHAUSTED")
+
+    const db = new Database(fixture.dbPath, { readonly: true })
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_claim").get().count).toBe(1)
+    expect(db.query("SELECT delivery_state FROM ct_delivery WHERE delivery_id=?").get(second.deliveryId).delivery_state).toBe("PENDING")
+    expect(db.query("SELECT state FROM ct_handoff WHERE id=?").get(second.created.id).state).toBe("PUBLISHED")
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_idempotency WHERE operation='claim'").get().count).toBe(1)
+    expect(db.query("SELECT consumed_count FROM ct_session_budget").get().consumed_count).toBe(1)
+    db.close()
+  })
+
+  test("CT-R6-S1 two-claim serialization: a changed accepted request and a new identity naming the same committed delivery scope are CT_IDEMPOTENCY_CONFLICT", () => {
+    const fixture = setupValidateFixture()
+    const { created, deliveryId } = publishedHandoff(fixture)
+    const winner = claimRequest(created.id, deliveryId, 0)
+    const first = fixture.workerDispatch("claim", winner)
+    expect(first.replayed).toBe(false)
+
+    const changedTuple = { ...winner, purpose: "ATTESTATION_REDELIVERY", es: "COMPLETION_ATTESTED" }
+    expect(errorCode(() => fixture.workerDispatch("claim", changedTuple))).toBe("CT_IDEMPOTENCY_CONFLICT")
+    const sameScopeClaim = { ...winner, request_identity: randomUUID() }
+    expect(errorCode(() => fixture.workerDispatch("claim", sameScopeClaim))).toBe("CT_IDEMPOTENCY_CONFLICT")
+
+    const db = new Database(fixture.dbPath, { readonly: true })
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_claim").get().count).toBe(1)
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_idempotency WHERE operation='claim'").get().count).toBe(1)
+    db.close()
+  })
+
+  test("distinguishes incompatible handoff state/purpose (CT_INVALID_TRANSITION) from generation fences (CT_FENCE_MISMATCH), and CT_NOT_FOUND for an absent delivery or handoff", () => {
+    const fixture = setupValidateFixture()
+    const { created, deliveryId } = publishedHandoff(fixture)
+
+    // purpose/es naming ATTESTATION_REDELIVERY/COMPLETION_ATTESTED against a
+    // real WORK/PUBLISHED delivery: incompatible handoff state and purpose.
+    expect(errorCode(() => fixture.workerDispatch("claim", claimRequest(created.id, deliveryId, 0, { purpose: "ATTESTATION_REDELIVERY", es: "COMPLETION_ATTESTED" }))))
+      .toBe("CT_INVALID_TRANSITION")
+
+    // otherwise-correct request, wrong generation
+    expect(errorCode(() => fixture.workerDispatch("claim", claimRequest(created.id, deliveryId, 1)))).toBe("CT_FENCE_MISMATCH")
+
+    // absent delivery, real handoff
+    expect(errorCode(() => fixture.workerDispatch("claim", claimRequest(created.id, absentId(), 0)))).toBe("CT_NOT_FOUND")
+    // real delivery, absent handoff id
+    expect(errorCode(() => fixture.workerDispatch("claim", claimRequest(absentId(), deliveryId, 0)))).toBe("CT_NOT_FOUND")
+
+    const claimed = fixture.workerDispatch("claim", claimRequest(created.id, deliveryId, 0))
+    expect(claimed.state).toBe("CLAIMED")
+
+    const db = new Database(fixture.dbPath, { readonly: true })
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_claim").get().count).toBe(1)
+    db.close()
+  })
+
+  test("orders claim request shape before claimant authority before delivery/handoff existence before the CAS bucket", () => {
+    const fixture = setupValidateFixture()
+    const { created, deliveryId } = publishedHandoff(fixture)
+    const unregistered = dispatcher(fixture.main, capability({ plugin_instance: "ghost-plugin", root_session_id: "ghost-root" }))
+
+    // malformed shape wins even for an unregistered identity
+    expect(errorCode(() => unregistered("claim", { ...claimRequest(created.id, deliveryId, 0), extra: true }))).toBe("CT_PAYLOAD_INVALID")
+    // well-formed but unregistered identity wins over an absent delivery
+    expect(errorCode(() => unregistered("claim", claimRequest(created.id, absentId(), 0)))).toBe("CT_SESSION_ISOLATION_UNPROVEN")
+
+    // registered claimant: delivery existence before handoff existence before CAS
+    expect(errorCode(() => fixture.workerDispatch("claim", claimRequest(created.id, absentId(), 0)))).toBe("CT_NOT_FOUND")
+    expect(errorCode(() => fixture.workerDispatch("claim", claimRequest(absentId(), deliveryId, 0)))).toBe("CT_NOT_FOUND")
+    expect(errorCode(() => fixture.workerDispatch("claim", claimRequest(created.id, deliveryId, 1)))).toBe("CT_FENCE_MISMATCH")
+  })
+
+  test("CT-R6-S1/S4 gates OFF and ROLLING_BACK before claim request/authority checks", () => {
+    const off = setupValidateFixture()
+    const { created: offCreated, deliveryId: offDeliveryId } = publishedHandoff(off)
+    const offDb = new Database(off.dbPath)
+    offDb.run("UPDATE ct_continuation_state SET mode='OFF'")
+    offDb.close()
+    expect(errorCode(() => off.workerDispatch("claim", claimRequest(offCreated.id, offDeliveryId, 0)))).toBe("CT_CONTINUATION_OFF")
+
+    const rolling = setupValidateFixture()
+    const { created: rollingCreated, deliveryId: rollingDeliveryId } = publishedHandoff(rolling)
+    const rollingDb = new Database(rolling.dbPath)
+    const activeMain = rollingDb.query("SELECT main_binding_id FROM ct_main_binding WHERE binding_status='ACTIVE'").get()
+    rollingDb.run("UPDATE ct_continuation_state SET mode='ROLLING_BACK'")
+    rollingDb.run("UPDATE ct_rollback_lease SET rollback_epoch=1,lease_status='ACTIVE',lease_version=1,owner_main_binding_id=?,lease_expires_at='2026-07-22T00:00:00.000Z'", [activeMain.main_binding_id])
+    rollingDb.close()
+    expect(errorCode(() => rolling.workerDispatch("claim", claimRequest(rollingCreated.id, rollingDeliveryId, 0)))).toBe("CT_ROLLBACK_IN_PROGRESS")
+  })
+
+  test("MCP claim tool round-trips through JSON, returns a fresh bearer once, and receive projects then clears the delivery", () => {
+    const fixture = createFixture({ mode: "OFF", schema: 4 })
+    const mainMetadata = capability(), mainProcess = opaqueProcess()
+    const mainDispatch = dispatcher(fixture.main, mainMetadata, mainProcess)
+    const main = mainDispatch("bootstrapMain", mainRequest(fixture.anchor))
+    mainMetadata.binding_epoch = main.binding_epoch
+    mainDispatch("activate", activationRequest(main.binding_epoch))
+
+    writeFileSync(join(fixture.main, "unit.txt"), "fixture unit contents\n")
+    git(fixture.main, ["add", "unit.txt"])
+    git(fixture.main, ["commit", "-q", "-m", "add fixture file"])
+    const headOid = git(fixture.main, ["rev-parse", "HEAD"])
+    const fileDigest = digest(readFileSync(join(fixture.main, "unit.txt")))
+
+    const workerMetadata = capability({ plugin_instance: "mcp-worker", root_session_id: "mcp-root" })
+    const workerProcess = opaqueProcess()
+    const workerEnabled = createMcpHandler({ cwd: fixture.main, trustedMetadata: { snapshot: () => workerMetadata }, processIdentity: { snapshot: () => workerProcess } })
+    const registered = mcpResult(workerEnabled({ id: 0, method: "tools/call", params: { name: "register", arguments: registerRequest() } }))
+    workerMetadata.binding_epoch = registered.binding_epoch
+
+    const payload = validateReadyPayload({ context: fixture.context, headOid, fileDigest })
+    const createRequest = createPayloadRequest(payload)
+    const created = mcpResult(workerEnabled({ id: 1, method: "tools/call", params: { name: "create", arguments: createRequest } }))
+
+    const mainEnabled = createMcpHandler({ cwd: fixture.main, trustedMetadata: { snapshot: () => mainMetadata }, processIdentity: { snapshot: () => mainProcess } })
+    mcpResult(mainEnabled({ id: 2, method: "tools/call", params: { name: "validate", arguments: validateRequest(created, createRequest.payload_digest) } }))
+    mcpResult(mainEnabled({ id: 3, method: "tools/call", params: { name: "publish", arguments: publishRequest(created.id, 0) } }))
+
+    const peek = mcpResult(workerEnabled({ id: 4, method: "tools/call", params: { name: "receive" } }))
+    expect(peek.delivery).toMatchObject({ id: created.id, state: "PUBLISHED", generation: 0, purpose: "WORK" })
+
+    const cRequest = claimRequest(created.id, peek.delivery.delivery_id, 0)
+    const claimed = mcpResult(workerEnabled({ id: 5, method: "tools/call", params: { name: "claim", arguments: cRequest } }))
+    expect(claimed).toMatchObject({ state: "CLAIMED", generation: 0, replayed: false, delivery_id: peek.delivery.delivery_id, purpose: "WORK" })
+    expect(typeof claimed.token).toBe("string")
+
+    const replayed = mcpResult(workerEnabled({ id: 6, method: "tools/call", params: { name: "claim", arguments: cRequest } }))
+    expect(replayed).toEqual({ id: claimed.id, state: claimed.state, generation: claimed.generation, replayed: true, delivery_id: claimed.delivery_id, purpose: claimed.purpose })
+
+    expect(mcpResult(workerEnabled({ id: 7, method: "tools/call", params: { name: "receive" } }))).toEqual({ delivery: null })
   })
 })
