@@ -172,6 +172,22 @@ const CONTINUATION_TOOL_DEFINITIONS = new Map([
       required: ["request_identity", "id", "es", "eg"],
     },
   },
+  {
+    name: "claim",
+    description: "Atomically claim a PENDING WORK or ATTESTATION_REDELIVERY delivery under the ACTIVE claimant identity, consuming one session-budget unit and returning a one-time bearer token on fresh success only.",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        request_identity: { type: "string" },
+        delivery_id: { type: "string" },
+        id: { type: "string" },
+        es: { type: "string", enum: ["PUBLISHED", "COMPLETION_ATTESTED"] },
+        eg: { type: "integer", minimum: 0 },
+        purpose: { type: "string", enum: ["WORK", "ATTESTATION_REDELIVERY"] },
+      },
+      required: ["request_identity", "delivery_id", "id", "es", "eg", "purpose"],
+    },
+  },
 ].map((tool) => [tool.name, tool]))
 
 const GUARDED_TOOLS = new Set([

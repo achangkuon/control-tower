@@ -587,7 +587,7 @@ describe("P3-B activation, status, and capability-gated MCP", () => {
     expect(explicitNull.content[0].text).toBe("ERROR: CT_PAYLOAD_INVALID")
   })
 
-  test("capability gate exposes exactly eight P3/P4-A2/P4-A3 routes while preserving legacy and future-route fences", () => {
+  test("capability gate exposes exactly nine P3/P4-A2/P4-A3/P4-B routes while preserving legacy and future-route fences", () => {
     const fixture = createFixture({ mode: "OFF", schema: 3 })
     const metadata = capability()
     const processIdentity = opaqueProcess()
@@ -599,17 +599,18 @@ describe("P3-B activation, status, and capability-gated MCP", () => {
       "tower_acquire", "tower_release", "tower_transfer", "tower_receive",
     ])
     expect(list(enabled)).toEqual([
-      ...list(disabled), "bootstrapMain", "activate", "status", "register", "receive", "create", "validate", "publish",
+      ...list(disabled), "bootstrapMain", "activate", "status", "register", "receive", "create", "validate", "publish", "claim",
     ])
-    // "create"/"validate"/"publish" are capability-gated but still require
-    // schema 4; on this schema-3 fixture they fail CT_SCHEMA_INVALID rather
-    // than "unknown tool".
+    // "create"/"validate"/"publish"/"claim" are capability-gated but still
+    // require schema 4; on this schema-3 fixture they fail CT_SCHEMA_INVALID
+    // rather than "unknown tool".
     for (const name of ["start", "complete", "beginRollback", "rebindMain", "finishRollback"]) {
       expect(enabled({ id: 2, method: "tools/call", params: { name, arguments: {} } }).isError).toBe(true)
     }
     expect(enabled({ id: 20, method: "tools/call", params: { name: "create", arguments: {} } }).isError).toBe(true)
     expect(enabled({ id: 21, method: "tools/call", params: { name: "validate", arguments: {} } }).isError).toBe(true)
     expect(enabled({ id: 22, method: "tools/call", params: { name: "publish", arguments: {} } }).isError).toBe(true)
+    expect(enabled({ id: 23, method: "tools/call", params: { name: "claim", arguments: {} } }).isError).toBe(true)
     const bootstrap = mcpResult(enabled({ id: 3, method: "tools/call", params: { name: "bootstrapMain", arguments: mainRequest(fixture.anchor) } }))
     metadata.binding_epoch = bootstrap.binding_epoch
     expect(mcpResult(enabled({ id: 4, method: "tools/call", params: { name: "status", arguments: {} } })).mode).toBe("OFF")
@@ -1433,9 +1434,9 @@ describe("P4-A3 server-derived validate/publish and durable delivery", () => {
     expect(after.query("SELECT COUNT(*) AS count FROM ct_delivery").get().count).toBe(1)
     after.close()
 
-    // Continuation `receive` remains a non-consuming peek that still returns
-    // {delivery:null} through A3; B replaces this with a real projection.
-    expect(fixture.workerDispatch("receive")).toEqual({ delivery: null })
+    // Continuation `receive` is a non-consuming peek; P4-B projects this
+    // fresh PENDING WORK delivery instead of the pre-B {delivery:null}.
+    expect(fixture.workerDispatch("receive")).toEqual({ delivery: { delivery_id: deliveries[0].delivery_id, id: created.id, state: "PUBLISHED", generation: 0, purpose: "WORK" } })
 
     expect(fixture.mainDispatch("status")).toMatchObject({ mode: "ON", schema_version: 4 })
   })
@@ -1642,6 +1643,231 @@ describe("P4-A3 server-derived validate/publish and durable delivery", () => {
     expect(published).toMatchObject({ state: "PUBLISHED", generation: 0, replayed: false })
     expect(mcpResult(mainEnabled({ id: 5, method: "tools/call", params: { name: "publish", arguments: pRequest } }))).toEqual({ ...published, replayed: true })
 
-    expect(mcpResult(workerEnabled({ id: 6, method: "tools/call", params: { name: "receive" } }))).toEqual({ delivery: null })
+    // P4-B projects the fresh PENDING WORK delivery instead of the pre-B
+    // {delivery:null}.
+    expect(mcpResult(workerEnabled({ id: 6, method: "tools/call", params: { name: "receive" } }))).toMatchObject({ delivery: { id: created.id, state: "PUBLISHED", generation: 0, purpose: "WORK" } })
+  })
+})
+
+describe("P4-B exact non-consuming receive and atomic claim", () => {
+  const absentId = () => randomBytes(32).toString("base64url")
+  const publishedHandoff = (fixture) => {
+    const { payload, request: createRequest, created } = createReadyHandoff(fixture)
+    fixture.mainDispatch("validate", validateRequest(created, createRequest.payload_digest))
+    const published = fixture.mainDispatch("publish", publishRequest(created.id, 0))
+    const db = new Database(fixture.dbPath, { readonly: true })
+    const deliveryId = db.query("SELECT delivery_id FROM ct_delivery WHERE handoff_id=?").get(created.id).delivery_id
+    db.close()
+    return { payload, created, published, deliveryId }
+  }
+  const claimRequest = (handoffId, deliveryId, generation, overrides = {}) =>
+    ({ request_identity: randomUUID(), delivery_id: deliveryId, id: handoffId, es: "PUBLISHED", eg: generation, purpose: "WORK", ...overrides })
+
+  test("CT-R6-S4 receive projects the PENDING WORK delivery after publish, stays a non-mutating peek, and returns null once claimed", () => {
+    const fixture = setupValidateFixture()
+    const { created, deliveryId } = publishedHandoff(fixture)
+
+    const peek = fixture.workerDispatch("receive")
+    expect(peek).toEqual({ delivery: { delivery_id: deliveryId, id: created.id, state: "PUBLISHED", generation: 0, purpose: "WORK" } })
+
+    // CT-R6-S5: receive again — the same delivery is still PENDING/claimable,
+    // with no budget, claim, or delivery mutation from the peek itself.
+    expect(fixture.workerDispatch("receive")).toEqual(peek)
+    const db = new Database(fixture.dbPath, { readonly: true })
+    expect(db.query("SELECT delivery_state FROM ct_delivery WHERE delivery_id=?").get(deliveryId).delivery_state).toBe("PENDING")
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_claim").get().count).toBe(0)
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_session_budget").get().count).toBe(0)
+    db.close()
+
+    const claimed = fixture.workerDispatch("claim", claimRequest(created.id, deliveryId, 0))
+    expect(claimed).toMatchObject({ id: created.id, state: "CLAIMED", generation: 0, replayed: false, delivery_id: deliveryId, purpose: "WORK" })
+    expect(fixture.workerDispatch("receive")).toEqual({ delivery: null })
+  })
+
+  test("CT-R6-S6 claim atomically creates one LIVE claim, CLAIMED delivery/handoff, and consumes one budget unit; exact replay withholds the token and consumes no extra unit", () => {
+    const fixture = setupValidateFixture()
+    const { created, deliveryId } = publishedHandoff(fixture)
+    const request = claimRequest(created.id, deliveryId, 0)
+
+    const response = fixture.workerDispatch("claim", request)
+    expect(response).toMatchObject({ id: created.id, state: "CLAIMED", generation: 0, replayed: false, delivery_id: deliveryId, purpose: "WORK" })
+    expect(response.token).toMatch(/^[A-Za-z0-9_-]{43}$/)
+
+    const db = new Database(fixture.dbPath, { readonly: true })
+    const claim = db.query("SELECT * FROM ct_claim WHERE delivery_id=?").get(deliveryId)
+    expect(claim.claim_state).toBe("LIVE")
+    expect(claim.token_hash).toBe(digest(Buffer.from(response.token)))
+    expect(claim.token_salt).not.toBe(response.token)
+    const delivery = db.query("SELECT * FROM ct_delivery WHERE delivery_id=?").get(deliveryId)
+    expect(delivery.delivery_state).toBe("CLAIMED")
+    expect(delivery.claim_id).toBe(claim.claim_id)
+    expect(db.query("SELECT state FROM ct_handoff WHERE id=?").get(created.id).state).toBe("CLAIMED")
+    const budget = db.query("SELECT * FROM ct_session_budget").get()
+    expect(budget.consumed_count).toBe(1)
+    expect(budget.last_claim_id).toBe(claim.claim_id)
+    db.close()
+
+    const replay = fixture.workerDispatch("claim", request)
+    expect(replay).toEqual({ id: created.id, state: "CLAIMED", generation: 0, replayed: true, delivery_id: deliveryId, purpose: "WORK" })
+    expect(replay.token).toBeUndefined()
+
+    const after = new Database(fixture.dbPath, { readonly: true })
+    expect(after.query("SELECT COUNT(*) AS count FROM ct_claim").get().count).toBe(1)
+    expect(after.query("SELECT consumed_count FROM ct_session_budget").get().consumed_count).toBe(1)
+    after.close()
+
+    // The full R1 schema-4 validator recomputes the CLAIM reverse link,
+    // envelope, claimant fence, token-hash commitment, and budget on read.
+    expect(fixture.mainDispatch("status")).toMatchObject({ mode: "ON", schema_version: 4 })
+  })
+
+  test("claim response/envelope keys never carry token/salt/hash beyond the one fresh public bearer", () => {
+    const fixture = setupValidateFixture()
+    const { created, deliveryId } = publishedHandoff(fixture)
+    const request = claimRequest(created.id, deliveryId, 0)
+
+    const fresh = fixture.workerDispatch("claim", request)
+    expect(Object.keys(fresh).sort()).toEqual(["delivery_id", "generation", "id", "purpose", "replayed", "state", "token"])
+    const replay = fixture.workerDispatch("claim", request)
+    expect(Object.keys(replay).sort()).toEqual(["delivery_id", "generation", "id", "purpose", "replayed", "state"])
+
+    expect(JSON.stringify(fixture.mainDispatch("status"))).not.toContain(fresh.token)
+    expect(fixture.workerDispatch("receive")).toEqual({ delivery: null })
+  })
+
+  test("CT-R6-S2 exhausts the one-claim session budget on a second distinct claim in the same root session scope", () => {
+    const fixture = setupValidateFixture()
+    const first = publishedHandoff(fixture)
+    fixture.workerDispatch("claim", claimRequest(first.created.id, first.deliveryId, 0))
+
+    const second = publishedHandoff(fixture)
+    expect(errorCode(() => fixture.workerDispatch("claim", claimRequest(second.created.id, second.deliveryId, 0)))).toBe("CT_SESSION_BUDGET_EXHAUSTED")
+
+    const db = new Database(fixture.dbPath, { readonly: true })
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_claim").get().count).toBe(1)
+    expect(db.query("SELECT delivery_state FROM ct_delivery WHERE delivery_id=?").get(second.deliveryId).delivery_state).toBe("PENDING")
+    expect(db.query("SELECT state FROM ct_handoff WHERE id=?").get(second.created.id).state).toBe("PUBLISHED")
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_idempotency WHERE operation='claim'").get().count).toBe(1)
+    expect(db.query("SELECT consumed_count FROM ct_session_budget").get().consumed_count).toBe(1)
+    db.close()
+  })
+
+  test("CT-R6-S1 two-claim serialization: a changed accepted request and a new identity naming the same committed delivery scope are CT_IDEMPOTENCY_CONFLICT", () => {
+    const fixture = setupValidateFixture()
+    const { created, deliveryId } = publishedHandoff(fixture)
+    const winner = claimRequest(created.id, deliveryId, 0)
+    const first = fixture.workerDispatch("claim", winner)
+    expect(first.replayed).toBe(false)
+
+    const changedTuple = { ...winner, purpose: "ATTESTATION_REDELIVERY", es: "COMPLETION_ATTESTED" }
+    expect(errorCode(() => fixture.workerDispatch("claim", changedTuple))).toBe("CT_IDEMPOTENCY_CONFLICT")
+    const sameScopeClaim = { ...winner, request_identity: randomUUID() }
+    expect(errorCode(() => fixture.workerDispatch("claim", sameScopeClaim))).toBe("CT_IDEMPOTENCY_CONFLICT")
+
+    const db = new Database(fixture.dbPath, { readonly: true })
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_claim").get().count).toBe(1)
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_idempotency WHERE operation='claim'").get().count).toBe(1)
+    db.close()
+  })
+
+  test("distinguishes incompatible handoff state/purpose (CT_INVALID_TRANSITION) from generation fences (CT_FENCE_MISMATCH), and CT_NOT_FOUND for an absent delivery or handoff", () => {
+    const fixture = setupValidateFixture()
+    const { created, deliveryId } = publishedHandoff(fixture)
+
+    // purpose/es naming ATTESTATION_REDELIVERY/COMPLETION_ATTESTED against a
+    // real WORK/PUBLISHED delivery: incompatible handoff state and purpose.
+    expect(errorCode(() => fixture.workerDispatch("claim", claimRequest(created.id, deliveryId, 0, { purpose: "ATTESTATION_REDELIVERY", es: "COMPLETION_ATTESTED" }))))
+      .toBe("CT_INVALID_TRANSITION")
+
+    // otherwise-correct request, wrong generation
+    expect(errorCode(() => fixture.workerDispatch("claim", claimRequest(created.id, deliveryId, 1)))).toBe("CT_FENCE_MISMATCH")
+
+    // absent delivery, real handoff
+    expect(errorCode(() => fixture.workerDispatch("claim", claimRequest(created.id, absentId(), 0)))).toBe("CT_NOT_FOUND")
+    // real delivery, absent handoff id
+    expect(errorCode(() => fixture.workerDispatch("claim", claimRequest(absentId(), deliveryId, 0)))).toBe("CT_NOT_FOUND")
+
+    const claimed = fixture.workerDispatch("claim", claimRequest(created.id, deliveryId, 0))
+    expect(claimed.state).toBe("CLAIMED")
+
+    const db = new Database(fixture.dbPath, { readonly: true })
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_claim").get().count).toBe(1)
+    db.close()
+  })
+
+  test("orders claim request shape before claimant authority before delivery/handoff existence before the CAS bucket", () => {
+    const fixture = setupValidateFixture()
+    const { created, deliveryId } = publishedHandoff(fixture)
+    const unregistered = dispatcher(fixture.main, capability({ plugin_instance: "ghost-plugin", root_session_id: "ghost-root" }))
+
+    // malformed shape wins even for an unregistered identity
+    expect(errorCode(() => unregistered("claim", { ...claimRequest(created.id, deliveryId, 0), extra: true }))).toBe("CT_PAYLOAD_INVALID")
+    // well-formed but unregistered identity wins over an absent delivery
+    expect(errorCode(() => unregistered("claim", claimRequest(created.id, absentId(), 0)))).toBe("CT_SESSION_ISOLATION_UNPROVEN")
+
+    // registered claimant: delivery existence before handoff existence before CAS
+    expect(errorCode(() => fixture.workerDispatch("claim", claimRequest(created.id, absentId(), 0)))).toBe("CT_NOT_FOUND")
+    expect(errorCode(() => fixture.workerDispatch("claim", claimRequest(absentId(), deliveryId, 0)))).toBe("CT_NOT_FOUND")
+    expect(errorCode(() => fixture.workerDispatch("claim", claimRequest(created.id, deliveryId, 1)))).toBe("CT_FENCE_MISMATCH")
+  })
+
+  test("CT-R6-S1/S4 gates OFF and ROLLING_BACK before claim request/authority checks", () => {
+    const off = setupValidateFixture()
+    const { created: offCreated, deliveryId: offDeliveryId } = publishedHandoff(off)
+    const offDb = new Database(off.dbPath)
+    offDb.run("UPDATE ct_continuation_state SET mode='OFF'")
+    offDb.close()
+    expect(errorCode(() => off.workerDispatch("claim", claimRequest(offCreated.id, offDeliveryId, 0)))).toBe("CT_CONTINUATION_OFF")
+
+    const rolling = setupValidateFixture()
+    const { created: rollingCreated, deliveryId: rollingDeliveryId } = publishedHandoff(rolling)
+    const rollingDb = new Database(rolling.dbPath)
+    const activeMain = rollingDb.query("SELECT main_binding_id FROM ct_main_binding WHERE binding_status='ACTIVE'").get()
+    rollingDb.run("UPDATE ct_continuation_state SET mode='ROLLING_BACK'")
+    rollingDb.run("UPDATE ct_rollback_lease SET rollback_epoch=1,lease_status='ACTIVE',lease_version=1,owner_main_binding_id=?,lease_expires_at='2026-07-22T00:00:00.000Z'", [activeMain.main_binding_id])
+    rollingDb.close()
+    expect(errorCode(() => rolling.workerDispatch("claim", claimRequest(rollingCreated.id, rollingDeliveryId, 0)))).toBe("CT_ROLLBACK_IN_PROGRESS")
+  })
+
+  test("MCP claim tool round-trips through JSON, returns a fresh bearer once, and receive projects then clears the delivery", () => {
+    const fixture = createFixture({ mode: "OFF", schema: 4 })
+    const mainMetadata = capability(), mainProcess = opaqueProcess()
+    const mainDispatch = dispatcher(fixture.main, mainMetadata, mainProcess)
+    const main = mainDispatch("bootstrapMain", mainRequest(fixture.anchor))
+    mainMetadata.binding_epoch = main.binding_epoch
+    mainDispatch("activate", activationRequest(main.binding_epoch))
+
+    writeFileSync(join(fixture.main, "unit.txt"), "fixture unit contents\n")
+    git(fixture.main, ["add", "unit.txt"])
+    git(fixture.main, ["commit", "-q", "-m", "add fixture file"])
+    const headOid = git(fixture.main, ["rev-parse", "HEAD"])
+    const fileDigest = digest(readFileSync(join(fixture.main, "unit.txt")))
+
+    const workerMetadata = capability({ plugin_instance: "mcp-worker", root_session_id: "mcp-root" })
+    const workerProcess = opaqueProcess()
+    const workerEnabled = createMcpHandler({ cwd: fixture.main, trustedMetadata: { snapshot: () => workerMetadata }, processIdentity: { snapshot: () => workerProcess } })
+    const registered = mcpResult(workerEnabled({ id: 0, method: "tools/call", params: { name: "register", arguments: registerRequest() } }))
+    workerMetadata.binding_epoch = registered.binding_epoch
+
+    const payload = validateReadyPayload({ context: fixture.context, headOid, fileDigest })
+    const createRequest = createPayloadRequest(payload)
+    const created = mcpResult(workerEnabled({ id: 1, method: "tools/call", params: { name: "create", arguments: createRequest } }))
+
+    const mainEnabled = createMcpHandler({ cwd: fixture.main, trustedMetadata: { snapshot: () => mainMetadata }, processIdentity: { snapshot: () => mainProcess } })
+    mcpResult(mainEnabled({ id: 2, method: "tools/call", params: { name: "validate", arguments: validateRequest(created, createRequest.payload_digest) } }))
+    mcpResult(mainEnabled({ id: 3, method: "tools/call", params: { name: "publish", arguments: publishRequest(created.id, 0) } }))
+
+    const peek = mcpResult(workerEnabled({ id: 4, method: "tools/call", params: { name: "receive" } }))
+    expect(peek.delivery).toMatchObject({ id: created.id, state: "PUBLISHED", generation: 0, purpose: "WORK" })
+
+    const cRequest = claimRequest(created.id, peek.delivery.delivery_id, 0)
+    const claimed = mcpResult(workerEnabled({ id: 5, method: "tools/call", params: { name: "claim", arguments: cRequest } }))
+    expect(claimed).toMatchObject({ state: "CLAIMED", generation: 0, replayed: false, delivery_id: peek.delivery.delivery_id, purpose: "WORK" })
+    expect(typeof claimed.token).toBe("string")
+
+    const replayed = mcpResult(workerEnabled({ id: 6, method: "tools/call", params: { name: "claim", arguments: cRequest } }))
+    expect(replayed).toEqual({ id: claimed.id, state: claimed.state, generation: claimed.generation, replayed: true, delivery_id: claimed.delivery_id, purpose: claimed.purpose })
+
+    expect(mcpResult(workerEnabled({ id: 7, method: "tools/call", params: { name: "receive" } }))).toEqual({ delivery: null })
   })
 })
