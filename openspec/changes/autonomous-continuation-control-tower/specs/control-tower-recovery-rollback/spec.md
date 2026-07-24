@@ -6,6 +6,8 @@
 
 Main recovery MUST be manual, token-free, expected-generation-fenced, and bound to exact claimant identity. Receipts MUST be fresh (≤30 seconds), allowlisted server-side lifecycle/OS proofs binding issuer, verifier, method, observation, OS boot/session, exact host/plugin/root/MCP PID+start tuple, binding epoch, generation, and both-terminated result. `NOT_STARTED` on CLAIMED and `ROLLED_BACK` on STARTED MAY republish only with valid proof. `CANCELLED` and `POISONED` fence/clear claims, close delivery, record immutable disposition, keep generation unchanged, and create no PENDING delivery. Recovery MUST NOT complete a handoff and MUST NOT call the claimant-only `complete`.
 
+P6 owns `CT-R11-S4/S5` and versioned termination/quiescence persistence bound to P3 Main identity; request-supplied proof alone MUST NOT suffice.
+
 #### Scenario: CT-R7-S1 Insufficient proof
 - GIVEN a crashed CLAIMED/STARTED claimant with bare, stale, unavailable, or absent proof
 - WHEN recovery is requested

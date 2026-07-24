@@ -6,6 +6,8 @@
 
 The system MUST implement `DRAFT→VALIDATED→PUBLISHED→CLAIMED→STARTED→COMPLETION_ATTESTED→COMPLETED`. `ack` is the sole claimant start operation; no `start` API MAY exist. Main alone MAY validate, publish, reject, revise, recover, or attest. Producers MAY submit immutable content only. Rollback also permits the non-live `WORK_SUSPENDED` and `ATTESTATION_SUSPENDED` states.
 
+P5 owns full conformance for `CT-R3-S1`, `CT-R3-S3`, `CT-R3-S4`, and normative `CT-R6-S3`, plus the attestation/completion projection of `CT-R3-S5`. Its preconditions MUST use real P4 handoff/delivery/claim state and real P5 attestation/committed-result persistence; no earlier slice may seed synthetic completion rows or claim these races.
+
 #### Scenario: CT-R1-S1 Ack is the sole start
 - GIVEN an eligible CLAIMED handoff with a live fence, complete manifest, and valid revalidation evidence
 - WHEN the claimant calls `ack`
