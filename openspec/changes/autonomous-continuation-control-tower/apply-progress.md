@@ -1159,4 +1159,32 @@ The one allowed design rerun corrected only the three gate findings: `CT-R6-S3` 
 - **Preservation:** All prior P0–P3 and P4-A1a/A1b/A1c-baseline/R1/A2/A3 behavior, tests, and evidence are unchanged except the two `receive` assertions the design itself scopes to B. The eight legacy `tower_*` tools and default no-capability MCP handler remain exactly as before; `start` and every P5/P6 name (`ack`/`attestCompletion`/`complete`/`reject`/`revise`/`recover`/`beginRollback`/`rebindMain`/`finishRollback`) remain absent and fail `CT_PAYLOAD_INVALID` before database access. Production/tests/runtime outside `core.mjs`/`mcp.mjs`/`test/identity.test.mjs`/this file are untouched; no commit, push, PR, or review/Judgment Day ran.
 - **Next:** Task `4.4` (Slice 4 Judgment Day), parent-owned, after A1a/A1b/A1c-baseline/R1/final-A1c-P4-only-gate/A2/A3/B are all green.
 - **Skill resolution:** `none` — no `## Skills to load before work` block or skill registry was present in this invocation; proceeded on the phase skill (`sdd-apply`) and shared conventions alone.
-- **Skill resolution:** `none` — no `## Skills to load before work` block or skill registry was present in this invocation; proceeded on the phase skill (`sdd-apply`) and shared conventions alone.
+
+## Final A1c P4-only gate — parent evidence (recorded after A2/A3/B)
+
+The design conditioned A2 on a fresh final A1c P4-only gate passing over the preserved
+A1c baseline plus R1. This section records that evidence, which the per-unit sessions
+flagged as pending dedicated capture.
+
+- **Gate substance:** The A1c/R1 total schema-4 validator (`validateSchema4Persistence`)
+  runs read-only inside `gateContinuation` on every schema-4 continuation read, and
+  `status` invokes the full R1 validator, recomputing every reverse link, digest,
+  fingerprint, CAS, envelope, and fence on read. It accepts only coherent P4-native
+  prefixes (`CREATE null→DRAFT` gen0 PRODUCER; optional `VALIDATE DRAFT→VALIDATED` and
+  `PUBLISH VALIDATED→PUBLISHED` gen0 MAIN; optional WORK `CLAIM PUBLISHED→CLAIMED` gen0
+  CLAIMANT) and classifies every unsupported future history (non-`CREATE|VALIDATE|PUBLISH|CLAIM`
+  operation, non-`WORK` purpose, nonzero generation, close/rollover shapes needing
+  ACK/ATTEST_COMPLETION/COMPLETE/REJECT/REVISE/RECOVER) as read-only `CT_SCHEMA_INVALID`.
+- **Pass evidence:** `bun test` → **107 pass, 0 fail, 814 `expect()` calls across 3 files**
+  after A2, A3, and B landed. Post-`create`/`validate`/`publish`/`claim`, `status`
+  re-runs the R1 validator over the newly persisted DRAFT/VALIDATED/PUBLISHED/CLAIMED
+  handoff rows, CREATE/VALIDATE/PUBLISH/CLAIM transitions, PENDING/CLAIMED WORK delivery,
+  LIVE claim, and session-budget rows and passes — proving the write side matches the
+  already-committed read-side contract byte-for-byte. The unsupported-future-history
+  refusal remains covered by the preserved A1c/R1 tests in the green suite.
+- **Boundary:** This gate adds no implementation, route, mutation, or stable CT scenario;
+  it is the parent's confirmation that A2 was correctly unblocked. Migration 004 remains
+  exactly 12,159 LF bytes / 215 lines / `sha256:fb951119…446ae57`. Tower stayed OFF; no
+  real `ACTIVE`/`tower.db` was created or mutated.
+- **Remaining:** Task `4.4` (Slice 4 Judgment Day) — parent-owned, runs next over the full
+  A1a→A1b→A1c-baseline→R1→final-gate→A2→A3→B green sequence.
