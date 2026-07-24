@@ -5,11 +5,11 @@
 - Mode: Strict TDD (`bun test`)
 - Delivery strategy: `auto-chain`
 - Chain strategy: `feature-branch-chain`
-- Current autonomous work unit: P4-A3 (server-derived `validate|publish` + durable delivery) is next, dependent on green A2
+- Current autonomous work unit: P5 lifecycle/attestation is next; P4 is complete
 - Branch: `feat/control-tower/autonomous-continuation`
-- Completed: 18/50 tasks (`0.1`, `0.2`, `1.1`, `1.2`, `1.3`, `1.4`, `1F.1`, `1F.2`, `1F.3`, `1F.4`, `2.1`, `2.2`, `2.3`, `2.4`, `3.1`, `3.2`, `3.3`, `3.4`) — task `4.1`–`4.4` remain unchecked per design/tasks contract (they close only after A3, B, and 4.4 Judgment Day)
-- P3 is complete at `f20d6a369b18b46890e8e98263dbf97d6973c427`; P4-A1a, P4-A1b, and P4-A1c-R1 passed their final gates. `design.md`/`tasks.md` now persist the R2-cancellation/final-A1c-gate-boundary text (R2 removed from the active P4 dependency chain). **Flag for maintainer:** this apply-progress log has no separate entry recording that the standalone "fresh final A1c P4-only gate after R1" validation unit was itself run and passed before A2 started; A2 below was implemented on explicit orchestrator instruction that scoped this session to exactly P4-A2. The orchestrator should confirm/backfill that gate's own evidence before treating P4 as sequence-complete.
-- P4-A2 (canonical payload/provenance + capability-gated `create`) is implemented and green; see the P4-A2 section below for full evidence. P4 remains incomplete overall; A3, B, and `4.1`–`4.4` remain pending.
+- Completed: 22/50 tasks (`0.1`, `0.2`, `1.1`, `1.2`, `1.3`, `1.4`, `1F.1`, `1F.2`, `1F.3`, `1F.4`, `2.1`, `2.2`, `2.3`, `2.4`, `3.1`, `3.2`, `3.3`, `3.4`, `4.1`, `4.2`, `4.3`, `4.4`)
+- P3 is complete at `f20d6a369b18b46890e8e98263dbf97d6973c427`; P4-A1a, P4-A1b, P4-A1c-R1, the final A1c P4-only gate, P4-A2, P4-A3, and P4-B are green.
+- P4 is complete with Slice 4 Judgment Day approved. P5 lifecycle/attestation is the next boundary.
 
 ## Completed tasks
 
@@ -1188,3 +1188,15 @@ flagged as pending dedicated capture.
   real `ACTIVE`/`tower.db` was created or mutated.
 - **Remaining:** Task `4.4` (Slice 4 Judgment Day) — parent-owned, runs next over the full
   A1a→A1b→A1c-baseline→R1→final-gate→A2→A3→B green sequence.
+
+---
+
+## Slice 4 Judgment Day closure
+
+- **Frozen target:** base `f20d6a369b18b46890e8e98263dbf97d6973c427` → candidate `5b645ba8a39e193e867c9616f20d5c3e02ced166`; original scoped patch SHA-256 `06c8f6f34f916d80b5ccf5dfc9f8a7cde46c06e9087b51384574a2cbce4d2164`.
+- **Round-one merge:** one confirmed severe (`CT-JD-S4-001`), two suspect severe, zero contradictions, and four informational findings. The maintainer authorized only `CT-JD-S4-001`; every suspect and informational finding remains frozen and unfixed in `evidence/judgment-day-slice-4-round-1.md`.
+- **Correction:** `core.mjs` and `test/identity.test.mjs`; **21 additions + 3 deletions = 24 authored lines**; delta SHA-256 `62cf1aeca199bd246e412d5a4224741f25b0f665ab1d25c686cbed48018cc1dc`. RED proved coherent future history incorrectly succeeded instead of returning `CT_SCHEMA_INVALID`; GREEN future P5/P6 rejection passed **1/0/21**; coherent P4-prefix triangulation passed **1/0/16**.
+- **Scoped re-judgment:** Judge A clean; Judge B clean; no fix-caused defect. Budgets used: corrections **1/2**, re-judgments **1/2**.
+- **Independent final verification:** identity **58/0/515**; full `bun test` **108/0/823**; diff and syntax guards passed. Migration 004 remains **12,159 bytes / 215 lines** at `sha256:fb951119bd42f22aee7ed4f025298e12e604ff65cc7022aef4353fcba446ae57`; default MCP remains exactly eight legacy tools with no `start`; actual and legacy `ACTIVE` and `tower.db` remain absent.
+- **Preservation/rollback:** Rollback is limited to the authorized `CT-JD-S4-001` hunks in `core.mjs` and `test/identity.test.mjs`; reverting them restores the future-history acceptance defect and invalidates this approval. P4-native behavior, Migration 004, frozen suspect/informational findings, historical evidence, runtime absence, and unrelated state remain preserved.
+- **Terminal decision:** **APPROVED**. P4 is complete at **22/50** tasks; P5 lifecycle/attestation is next.

@@ -1017,6 +1017,13 @@ const schema4Transition = (row, previous) => {
 }
 function validateSchema4Persistence(db, authority) {
   try {
+    const futureHistoryPresent = db.query(`SELECT
+      EXISTS(SELECT 1 FROM ct_handoff WHERE generation<>0 OR state NOT IN ('DRAFT','VALIDATED','PUBLISHED','CLAIMED')) OR
+      EXISTS(SELECT 1 FROM ct_handoff_transition WHERE generation<>0 OR operation NOT IN ('CREATE','VALIDATE','PUBLISH','CLAIM')) OR
+      EXISTS(SELECT 1 FROM ct_delivery WHERE generation<>0 OR purpose<>'WORK' OR delivery_state NOT IN ('PENDING','CLAIMED') OR closed_at IS NOT NULL) OR
+      EXISTS(SELECT 1 FROM ct_claim WHERE generation<>0 OR purpose<>'WORK' OR claim_state<>'LIVE' OR closed_at IS NOT NULL) OR
+      EXISTS(SELECT 1 FROM ct_idempotency WHERE operation IN ('ack','attestCompletion','complete','reject','revise','recover')) AS invalid`).get().invalid
+    if (futureHistoryPresent) throw ctError("CT_SCHEMA_INVALID")
     const bindings = new Map(db.query("SELECT * FROM ct_claimant_binding").all().map((row) => [row.binding_id, assertClaimantBinding(row, authority)]))
     for (const row of db.query("SELECT * FROM ct_claimant_conflict").all()) {
       const incumbent = bindings.get(row.incumbent_binding_id), attempted = bindings.get(row.attempted_binding_id)
