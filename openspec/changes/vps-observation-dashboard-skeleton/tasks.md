@@ -278,28 +278,28 @@
 
 ### 8.1 Verify each contract independently
 
-- [ ] 8.1.1 Run `bun test test/dashboard/auth.test.mjs` and record the exact result.
-- [ ] 8.1.2 Run `bun test test/dashboard/view-model.test.mjs` and record the exact result.
-- [ ] 8.1.3 Run `bun test test/dashboard/render.test.mjs` and record the exact result.
-- [ ] 8.1.4 Run `bun test test/dashboard/server.test.mjs` and record the exact result.
-- [ ] 8.1.5 Run `bun test test/dashboard/architecture.test.mjs` and record the exact result.
-- [ ] 8.1.6 Run `bun test` and record the exact full-suite result; do not invent coverage, lint, format, build, or browser E2E commands because none are configured.
+- [x] 8.1.1 Run `bun test test/dashboard/auth.test.mjs` and record the exact result.
+- [x] 8.1.2 Run `bun test test/dashboard/view-model.test.mjs` and record the exact result.
+- [x] 8.1.3 Run `bun test test/dashboard/render.test.mjs` and record the exact result.
+- [x] 8.1.4 Run `bun test test/dashboard/server.test.mjs` and record the exact result.
+- [x] 8.1.5 Run `bun test test/dashboard/architecture.test.mjs` and record the exact result.
+- [x] 8.1.6 Run `bun test` and record the exact full-suite result; do not invent coverage, lint, format, build, or browser E2E commands because none are configured.
 
 ### 8.2 Verify traceability and isolation
 
-- [ ] 8.2.1 Trace authenticated access, generic failure, guard-before-source non-disclosure, secure sessions, revocation, and rotation to auth and HTTP evidence.
-- [ ] 8.2.2 Trace observation-only behavior, exact five-field allowlisting, extra-property removal, prohibited metadata absence, and escaping of all five values to view-model, renderer, route, and architecture evidence.
-- [ ] 8.2.3 Trace populated, loading, authentication-failure, empty, and generic unavailable states to renderer and HTTP evidence without claiming future transport/runtime semantics.
-- [ ] 8.2.4 Trace replaceable source behavior, fixture isolation, and the absence of payload, transport, persistence, freshness, and P4-P6 semantics to source-replacement and architecture evidence.
-- [ ] 8.2.5 Trace project grouping, readable state text, dark navy/cyan visual treatment, no desktop modules, wrapping, and exact manual 320 CSS pixel verification to CSS/renderer tests and recorded browser evidence.
-- [ ] 8.2.6 Trace VPS deployability, loopback-only Bun, Caddy/systemd examples, external revocable credentials, immutable release layout, smoke plan, and symlink rollback to deployment contract evidence.
-- [ ] 8.2.7 Confirm `git diff --name-only` contains only allowed paths and that unrelated dirty files remain byte-for-byte untouched.
+- [x] 8.2.1 Trace authenticated access, generic failure, guard-before-source non-disclosure, secure sessions, revocation, and rotation to auth and HTTP evidence.
+- [x] 8.2.2 Trace observation-only behavior, exact five-field allowlisting, extra-property removal, prohibited metadata absence, and escaping of all five values to view-model, renderer, route, and architecture evidence.
+- [x] 8.2.3 Trace populated, loading, authentication-failure, empty, and generic unavailable states to renderer and HTTP evidence without claiming future transport/runtime semantics.
+- [x] 8.2.4 Trace replaceable source behavior, fixture isolation, and the absence of payload, transport, persistence, freshness, and P4-P6 semantics to source-replacement and architecture evidence.
+- [x] 8.2.5 Trace project grouping, readable state text, dark navy/cyan visual treatment, no desktop modules, wrapping, and exact manual 320 CSS pixel verification to CSS/renderer tests and recorded browser evidence.
+- [x] 8.2.6 Trace VPS deployability, loopback-only Bun, Caddy/systemd examples, external revocable credentials, immutable release layout, smoke plan, and symlink rollback to deployment contract evidence.
+- [x] 8.2.7 Confirm `git diff --name-only` contains only allowed paths and that unrelated dirty files remain byte-for-byte untouched.
 
 ### 8.3 Preserve the delivery gate
 
-- [ ] 8.3.1 Record the final authored additions plus deletions by work unit and confirm every proposed delivery slice remains at or below 400 lines; if any slice exceeds 400, split its behavior boundary before requesting delivery or require explicit maintainer `size:exception`.
-- [ ] 8.3.2 Do not commit, push, create a PR, deploy, publish, rotate real credentials, restart a real service, or execute real rollback as part of apply or verify.
-- [ ] 8.3.3 Present the verified work-unit boundaries and workload result to the user for a separate delivery and chain-strategy decision.
+- [x] 8.3.1 Record the final authored additions plus deletions by work unit and confirm every proposed delivery slice remains at or below 400 lines; if any slice exceeds 400, split its behavior boundary before requesting delivery or require explicit maintainer `size:exception`.
+- [x] 8.3.2 Do not commit, push, create a PR, deploy, publish, rotate real credentials, restart a real service, or execute real rollback as part of apply or verify.
+- [x] 8.3.3 Present the verified work-unit boundaries and workload result to the user for a separate delivery and chain-strategy decision.
 
 ## 9. Dependency and Traceability Summary
 
@@ -315,9 +315,9 @@ Section 1 guardrails
                                                 -> Integrated verification
 ```
 
-- [ ] 9.1.1 Do not begin Work Unit 3 until Work Units 1 and 2 are green with full-suite evidence.
-- [ ] 9.1.2 Complete Work Units 3-6 in order because each extends the prior externally observable boundary.
-- [ ] 9.1.3 Keep tests with the behavior implemented in each work unit; do not create test-only or file-type-only delivery slices.
+- [x] 9.1.1 Do not begin Work Unit 3 until Work Units 1 and 2 are green with full-suite evidence.
+- [x] 9.1.2 Complete Work Units 3-6 in order because each extends the prior externally observable boundary.
+- [x] 9.1.3 Keep tests with the behavior implemented in each work unit; do not create test-only or file-type-only delivery slices.
 
 ### 9.2 Requirement ownership
 
