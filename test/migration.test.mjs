@@ -17,7 +17,7 @@ import {
   writeFileSync,
 } from "node:fs"
 import { tmpdir } from "node:os"
-import { dirname, join } from "node:path"
+import { dirname, join, relative, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import * as tower from "../core.mjs"
@@ -59,9 +59,17 @@ const expectedTrackedPaths = [
   "test/fixtures/paused-send.mjs",
   "validate-compact-message.py",
 ]
-const actualRuntimeRoot = join(packageRoot, ".git", "control-tower")
+// Resolve the runtime boundary from the shared Git common directory so the
+// assertion holds in both a normal clone (`.git/control-tower`) and a linked
+// worktree, where the canonical Tower lives under the Main clone's `.git`.
+const actualRuntimeRoot = join(
+  resolve(packageRoot, git(packageRoot, ["rev-parse", "--git-common-dir"])),
+  "control-tower",
+)
 const actualActivePath = join(actualRuntimeRoot, "ACTIVE")
-const expectedAbsentRuntimeBoundary = [{ path: ".git/control-tower", exists: false }]
+const expectedAbsentRuntimeBoundary = [
+  { path: relative(packageRoot, actualRuntimeRoot), exists: false },
+]
 const canonical = (value) => {
   if (value === null || typeof value !== "object") return JSON.stringify(value)
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`
