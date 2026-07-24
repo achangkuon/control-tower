@@ -193,37 +193,37 @@
 **Runtime harness:** Manual local browser verification at exactly 320 CSS pixels against the isolated loopback service; no automated browser E2E runner is configured. Record viewport, browser, result, and any screenshot path in `apply-progress.md`, but no credential value.  
 **Rollback boundary:** Revert only the Work Unit 5 presentation rules in `dashboard/public/styles.css` back to the minimal fixture-free Work Unit 3 asset and remove the Work Unit 5 responsive/architecture assertions; source, auth, and HTTP behavior remain functional but intentionally minimally styled.
 
-### 6.1 RED — specify mobile hierarchy, accessibility, and isolation
+### 6.1 RED and characterization — specify new mobile behavior and preserve inherited invariants
 
-- [ ] 6.1.1 Add failing CSS contract tests for a mobile-first single-column baseline, safe page padding, no fixed content width, no desktop grid/table dependency, and `overflow-wrap: anywhere` for long task and branch values.
-- [ ] 6.1.2 Add failing renderer assertions for the readable order project heading -> agent name -> state -> task title -> branch name, semantic project sections, explicit labels, and state text plus a non-color cue.
-- [ ] 6.1.3 Add failing absence checks for project counts, timestamps, paths, line counts, test results, source code, diffs, secrets, metrics, feeds, search, navigation rails, timelines, voice controls, commands, approvals, action controls, write forms, and additional operational modules.
-- [ ] 6.1.4 Add failing architecture tests that no file under `dashboard/` imports repository files outside `dashboard/`, including `core.mjs`, `mcp.mjs`, `bin/`, `plugin/`, bot/Telegram code, Tower runtime/database paths, real projection code, P4-P6 artifacts, or `autonomous-continuation-control-tower` artifacts.
-- [ ] 6.1.5 Add failing route-enumeration assertions that the authentication exchange is the only POST and no externally reachable operation can mutate, approve, command, or write operational state.
-- [ ] 6.1.6 Run both focused commands and capture the expected RED failures before implementing final presentation styles.
+- [x] 6.1.1 Add failing CSS contract tests for a mobile-first single-column baseline, safe page padding, no fixed content width, no desktop grid/table dependency, and `overflow-wrap: anywhere` for long task and branch values.
+- [x] 6.1.2 Add renderer characterization assertions for the inherited readable order project heading -> agent name -> state -> task title -> branch name, semantic project sections, explicit labels, and state text plus a non-color cue.
+- [x] 6.1.3 Add characterization absence checks for project counts, timestamps, paths, line counts, test results, source code, diffs, secrets, metrics, feeds, search, navigation rails, timelines, voice controls, commands, approvals, action controls, write forms, and additional operational modules.
+- [x] 6.1.4 Add architecture regression tests that no file under `dashboard/` imports repository files outside `dashboard/`, including `core.mjs`, `mcp.mjs`, `bin/`, `plugin/`, bot/Telegram code, Tower runtime/database paths, real projection code, P4-P6 artifacts, or `autonomous-continuation-control-tower` artifacts.
+- [x] 6.1.5 Add route-enumeration regression assertions that the authentication exchange is the only POST and no externally reachable operation can mutate, approve, command, or write operational state.
+- [x] 6.1.6 Run both focused commands; capture the genuine CSS RED while recording inherited renderer, import-isolation, and route contracts as green characterization evidence before implementing final presentation styles.
 
 ### 6.2 GREEN — implement the smallest mobile-first visual language
 
-- [ ] 6.2.1 Implement `dashboard/public/styles.css` with near-black navy background, lighter navy project surfaces, cyan/teal accents, restrained localized glow, high-contrast body text, muted labels, and explicit state text.
-- [ ] 6.2.2 Keep the page and records single-column from 320 CSS pixels upward; use vertical label/value rows, wrapping long task and branch values instead of clipping or horizontal scrolling, and a readable maximum width at larger viewports.
-- [ ] 6.2.3 Keep glow decorative, avoid motion-dependent meaning, honor reduced-motion/accessibility preferences, and preserve state meaning when color and glow are ignored.
-- [ ] 6.2.4 Apply touch-target sizing only to login controls; add no authenticated action affordance or desktop command-center module.
-- [ ] 6.2.5 Run both focused commands and capture the smallest GREEN result.
+- [x] 6.2.1 Implement `dashboard/public/styles.css` with near-black navy background, lighter navy project surfaces, cyan/teal accents, restrained localized glow, high-contrast body text, muted labels, and explicit state text.
+- [x] 6.2.2 Keep the page and records single-column from 320 CSS pixels upward; use vertical label/value rows, wrapping long task and branch values instead of clipping or horizontal scrolling, and a readable maximum width at larger viewports.
+- [x] 6.2.3 Keep glow decorative, avoid motion-dependent meaning, honor reduced-motion/accessibility preferences, and preserve state meaning when color and glow are ignored.
+- [x] 6.2.4 Apply touch-target sizing only to login controls; add no authenticated action affordance or desktop command-center module.
+- [x] 6.2.5 Run both focused commands and capture the smallest GREEN result.
 
 ### 6.3 TRIANGULATE — verify the 320 CSS pixel boundary manually
 
-- [ ] 6.3.1 Add long unbroken task and branch values, multiple projects, multiple agents, and multiple state strings; rerun the focused contract tests.
-- [ ] 6.3.2 Start only the isolated local loopback dashboard with generated disposable test configuration, authenticate locally, and set the browser viewport to exactly 320 CSS pixels; do not contact or mutate a real VPS.
-- [ ] 6.3.3 Manually verify and record that the page has no horizontal scroll; each agent is visibly inside the correct project; project name, agent name, state, task title, and branch name are all readable; long values wrap; state remains understandable without color/glow; and no extra data field, action, or desktop module appears.
-- [ ] 6.3.4 Manually inspect login failure, loading, populated, and empty states at the same viewport; record the browser/version, viewport, outcome, and screenshot/evidence location without recording credentials or protected cookie values.
-- [ ] 6.3.5 Run both focused commands and capture the triangulated GREEN result.
+- [x] 6.3.1 Add long unbroken task and branch values, multiple projects, multiple agents, and multiple state strings; rerun the focused contract tests.
+- [x] 6.3.2 Start only the isolated local loopback dashboard with generated disposable test configuration, authenticate locally, and set the browser viewport to exactly 320 CSS pixels; do not contact or mutate a real VPS.
+- [x] 6.3.3 Manually verify and record that the page has no horizontal scroll; each agent is visibly inside the correct project; project name, agent name, state, task title, and branch name are all readable; long values wrap; state remains understandable without color/glow; and no extra data field, action, or desktop module appears.
+- [x] 6.3.4 Manually inspect login failure, loading, populated, and empty states at the same viewport; record the browser/version, viewport, outcome, and screenshot/evidence location without recording credentials or protected cookie values.
+- [x] 6.3.5 Run both focused commands and capture the triangulated GREEN result.
 
 ### 6.4 REFACTOR and complete the unit
 
-- [ ] 6.4.1 Consolidate visual tokens and selectors only while the 320-pixel behavior, semantic hierarchy, exact-field boundary, and architecture tests remain green.
-- [ ] 6.4.2 Run both focused commands; record exact pass counts/results and the manual runtime-harness evidence.
-- [ ] 6.4.3 Run `bun test`; record the full result before marking Work Unit 5 complete.
-- [ ] 6.4.4 Record the rollback boundary and allowed-path diff check in `apply-progress.md`.
+- [x] 6.4.1 Consolidate visual tokens and selectors only while the 320-pixel behavior, semantic hierarchy, exact-field boundary, and architecture tests remain green.
+- [x] 6.4.2 Run both focused commands; record exact pass counts/results and the manual runtime-harness evidence.
+- [x] 6.4.3 Run `bun test`; record the full result before marking Work Unit 5 complete.
+- [x] 6.4.4 Record the rollback boundary and allowed-path diff check in `apply-progress.md`.
 
 ## 7. Work Unit 6 — Self-Contained Deployment Examples and Rollback Procedure
 

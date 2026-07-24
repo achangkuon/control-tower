@@ -76,4 +76,52 @@ describe("safe dashboard renderer", () => {
     expect(html).toContain(longBranch)
     expect(html).not.toContain("mock")
   })
+
+  test("keeps the semantic five-field hierarchy readable without color alone", () => {
+    const html = renderDashboardContent(populatedView)
+    const orderedTokens = [
+      "Control Tower", "<dt>Agent</dt>", "architect", "<dt>State</dt>",
+      "reviewing", "<dt>Task</dt>", "Protect the projection boundary",
+      "<dt>Branch</dt>", "feature/dashboard",
+    ]
+    let previous = -1
+    for (const token of orderedTokens) {
+      const current = html.indexOf(token)
+      expect(current).toBeGreaterThan(previous)
+      previous = current
+    }
+
+    expect(html).toContain('aria-labelledby="project-0"')
+    expect(html).toContain('class="state-marker" aria-hidden="true"')
+    expect(html).toContain('class="state-text">reviewing</span>')
+    expect(html.match(/<dt>(Agent|State|Task|Branch)<\/dt>/g)).toHaveLength(4)
+  })
+
+  test("contains no operational fields, desktop modules, or action controls", () => {
+    const html = renderDashboardContent(populatedView)
+    for (const prohibited of [
+      "Project count", "Timestamp", "File path", "Line count", "Test result",
+      "Source code", "Diff", "Secret", "Metrics", "Activity feed", "Search",
+      "Navigation rail", "Timeline", "Voice control", "Command", "Approval",
+    ]) expect(html).not.toContain(prohibited)
+    expect(html).not.toMatch(/<(?:button|form|input|select|textarea|nav)\b/i)
+  })
+
+  test("preserves project boundaries and long values across varied states", () => {
+    const long = `unbroken-${"x".repeat(180)}`
+    const html = renderDashboardContent({ kind: "populated", projects: [
+      { projectName: "Alpha", agents: [
+        { agentName: "one", state: "ready", taskTitle: long, branchName: long },
+        { agentName: "two", state: "blocked", taskTitle: "Second task", branchName: "feature/two" },
+      ] },
+      { projectName: "Beta", agents: [
+        { agentName: "three", state: "reviewing", taskTitle: "Third task", branchName: "feature/three" },
+      ] },
+    ] })
+
+    expect(html.match(/class="project-group"/g)).toHaveLength(2)
+    expect(html.match(/class="agent-record"/g)).toHaveLength(3)
+    expect(html.match(/class="state-text"/g)).toHaveLength(3)
+    expect(html.match(new RegExp(long, "g"))).toHaveLength(2)
+  })
 })

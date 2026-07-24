@@ -185,3 +185,32 @@ Remove only `dashboard/view-model.mjs`, `dashboard/render.mjs`, `test/dashboard/
 - Allowed WU4 paths are exactly seven implementation/test paths (including the two source files), this evidence, and WU4 checkbox replacements; unrelated `.gitignore`, `.session-doc.json`, prior artifacts, prohibited modules, styles, and later units remain untouched.
 - Final WU4 authored additions + deletions: **221** = 156 implementation/test lines + 27 progress lines + 38 replacement sides for 19 task checkboxes; **PASS** — 221 <= 400.
 - Work Unit 4 status: **COMPLETE**.
+
+## Work Unit 5 — Mobile-First Observation UI and Architecture Isolation
+
+### Start state, strict TDD, and inherited characterization
+
+- Expected/actual HEAD and `origin/master`: `cbe27655e633056569a9ef037fae52fa74205311`; baseline `bun test`: **PASS** — 144 pass, 0 fail, 1233 expect() calls across 8 files in 18.39s.
+- **RED (new WU5 behavior):** Added the mobile CSS contract before final styles. `bun test test/dashboard/architecture.test.mjs` failed as expected: 6 pass, 1 fail, 50 expect() calls; the first missing contract was `box-sizing: border-box`.
+- **CHARACTERIZATION (inherited WU1-WU4 invariants):** Renderer hierarchy/absence assertions passed with 6 pass, 0 fail, 57 expect() calls. Import-isolation and only-POST route checks also passed inside the architecture run. These green results preserve already-implemented boundaries; no historical RED is claimed for them.
+- **CONTRACT CORRECTION:** The maintainer approved classifying those inherited renderer, disclosure, import, and route checks as characterization/regression evidence. Strict RED remains required only for genuinely new WU5 mobile presentation behavior.
+- **GREEN:** Added the smallest mobile-first dark navy/cyan CSS with one-column flex hierarchy, safe responsive width/padding, vertical label/value rows, explicit state text, decorative marker, 44px login controls, and wrapping. Renderer: **PASS** — 6 pass, 0 fail, 57 expect() calls. Architecture: **PASS** — 7 pass, 0 fail, 59 expect() calls.
+- **TRIANGULATE:** Added multiple projects, multiple agents/states, and 180-character unbroken task/branch values. Renderer: **PASS** — 7 pass, 0 fail, 61 expect() calls. Architecture: **PASS** — 7 pass, 0 fail, 59 expect() calls.
+- **REFACTOR:** Consolidated visual tokens and shared surface/flex selectors while retaining the 320px, wrapping, reduced-motion, exact-field, and isolation contracts. Post-refactor renderer: **PASS** — 7/0/61; architecture: **PASS** — 7/0/59.
+
+### 320 CSS pixel browser evidence
+
+- Runtime used only `Bun.serve` on disposable `127.0.0.1:0`, generated in-memory auth material, an explicit same-origin login header, and Playwright Chromium `149.0.7827.55`; no credential value was printed or persisted and the server was stopped.
+- Viewport was exactly `320x900` CSS pixels at device scale 1. Login failure, loading, populated, and empty states each reported `innerWidth=clientWidth=scrollWidth=320` and `horizontalOverflow=false`.
+- Populated evidence: 2 projects, 3 agents, every agent inside its project, exact repeated labels `Agent/State/Task/Branch`, readable state text plus decorative `aria-hidden` markers, two long values with computed `overflow-wrap:anywhere`, and zero authenticated action controls.
+- Manual screenshot inspection confirmed the navy/cyan single-column hierarchy, visible text state, long-value wrapping, and no extra field/desktop module. Evidence: `/tmp/control-tower-wu5-login-failure-320.png`, `/tmp/control-tower-wu5-loading-320.png`, `/tmp/control-tower-wu5-populated-320.png`, `/tmp/control-tower-wu5-empty-320.png`.
+
+### Final verification, rollback, and workload
+
+- `bun test test/dashboard/render.test.mjs`: **PASS** — 7 pass, 0 fail, 61 expect() calls.
+- `bun test test/dashboard/architecture.test.mjs`: **PASS** — 7 pass, 0 fail, 59 expect() calls.
+- `bun test`: **PASS** — 150 pass, 0 fail, 1300 expect() calls across 8 files in 27.53s.
+- Rollback boundary: restore only `dashboard/public/styles.css` to its WU3 minimal asset, remove only WU5 assertions from `test/dashboard/render.test.mjs` and `test/dashboard/architecture.test.mjs`, remove this WU5 evidence, and revert WU5 checkbox replacements. WU1-WU4 behavior remains intact.
+- Allowed-path audit: WU5 changes are limited to the three presentation/test files above plus `tasks.md` and `apply-progress.md`; no application import or route changed, and the authentication exchange remains the only POST.
+- Authored additions + deletions: **281** = 210 presentation/test changes + 29 evidence lines + 42 task-contract replacement sides; limit result: **PASS** — 281 <= 400.
+- Work Unit 5 status: **COMPLETE**.
