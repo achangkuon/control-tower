@@ -143,6 +143,35 @@ const CONTINUATION_TOOL_DEFINITIONS = new Map([
       required: ["request_identity", "lineage_id", "revision", "payload", "payload_digest"],
     },
   },
+  {
+    name: "validate",
+    description: "Server-derive canonical validation evidence for a DRAFT handoff and CAS it to VALIDATED, under the ACTIVE Main identity.",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        request_identity: { type: "string" },
+        id: { type: "string" },
+        es: { type: "string", enum: ["DRAFT"] },
+        eg: { type: "integer", minimum: 0 },
+        payload_digest: { type: "string" },
+      },
+      required: ["request_identity", "id", "es", "eg", "payload_digest"],
+    },
+  },
+  {
+    name: "publish",
+    description: "Reverify persisted validation evidence, CAS a VALIDATED handoff to PUBLISHED, and create one PENDING WORK delivery, under the ACTIVE Main identity.",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        request_identity: { type: "string" },
+        id: { type: "string" },
+        es: { type: "string", enum: ["VALIDATED"] },
+        eg: { type: "integer", minimum: 0 },
+      },
+      required: ["request_identity", "id", "es", "eg"],
+    },
+  },
 ].map((tool) => [tool.name, tool]))
 
 const GUARDED_TOOLS = new Set([
