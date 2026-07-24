@@ -12,7 +12,7 @@ const ROUTES = new Map([
   ["/assets/styles.css", "GET"], ["/healthz", "GET"],
 ]);
 const LOGIN_FORM = (failed = false) => `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><link rel="stylesheet" href="/assets/styles.css"><title>Dashboard login</title></head><body><main><h1>Dashboard login</h1>${failed ? '<p role="alert">Authentication failed</p>' : ""}<form method="post" action="/auth/login"><label>Username <input name="username" autocomplete="username" required></label><label>Password <input name="password" type="password" autocomplete="current-password" required></label><button>Sign in</button></form></main></body></html>`;
-const SHELL = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><link rel="stylesheet" href="/assets/styles.css"><title>Observation dashboard</title></head><body><main><h1>Observation dashboard</h1><div id="dashboard-content"></div></main><script type="module" src="/assets/dashboard.js"></script></body></html>`;
+const SHELL = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><link rel="stylesheet" href="/assets/styles.css"><title>Observation dashboard</title></head><body><main><h1>Observation dashboard</h1><div id="dashboard-content" aria-busy="true"><p>Loading dashboard…</p></div></main><script type="module" src="/assets/dashboard.js"></script></body></html>`;
 
 const secured = (response, protectedRoute = false) => {
   const headers = new Headers(response.headers);
