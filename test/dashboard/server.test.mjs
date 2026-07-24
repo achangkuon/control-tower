@@ -14,19 +14,23 @@ const env = (overrides = {}) => ({
   DASHBOARD_AUTH_DISABLED: "false", ...overrides,
 });
 const launch = (overrides = {}, options = {}) => {
-  const counts = { factory: 0, handler: 0 };
+  const counts = { factory: 0, handler: 0 }, sourceCounts = { factory: 0, load: 0 };
   const contentFactory = options.factory ?? (() => () => new Response("placeholder"));
-  const protectedContentFactory = () => {
+  const protectedContentFactory = options.sourceFactory ? undefined : () => {
     counts.factory++; const handler = contentFactory();
     return (...args) => { counts.handler++; return handler(...args); };
   };
+  const sourceFactory = options.sourceFactory && (() => {
+    sourceCounts.factory++; const source = options.sourceFactory();
+    return { load: (...args) => { sourceCounts.load++; return source.load(...args); } };
+  });
   const server = startDashboardServer({ env: env(overrides), authDependencies: {
     now: () => 1_700_000_000_000, randomBytes: () => Buffer.alloc(16, 9),
     verifyPassword: async (password, hash) => password === "correct" && hash === overrides.DASHBOARD_AUTH_PASSWORD_HASH,
-  }, protectedContentFactory });
+  }, protectedContentFactory, sourceFactory });
   servers.push(server);
   const origin = `http://${server.hostname}:${server.port}`;
-  return { counts, origin, server, request: (path, init = {}) => fetch(origin + path, { redirect: "manual", ...init }) };
+  return { counts, sourceCounts, origin, server, request: (path, init = {}) => fetch(origin + path, { redirect: "manual", ...init }) };
 };
 const login = (h, body = "username=maintainer&password=correct", headers = {}) => h.request("/auth/login", {
   method: "POST", headers: { Origin: h.origin, "Content-Type": "application/x-www-form-urlencoded", ...headers }, body,
@@ -151,6 +155,49 @@ describe("guarded dashboard HTTP surface", () => {
     expect(h.server.hostname).toBe("127.0.0.1"); expect(h.server.port).toBeGreaterThan(0); expect(typeof h.server.stop).toBe("function");
     expect((await h.request("/healthz")).status).toBe(200);
     servers.pop().stop(true);
+  });
+
+  test("loading shell defers source construction until authenticated content resolution", async () => {
+    const record = { projectName: "Alpha", agentName: "architect", state: "ready", taskTitle: "Map source", branchName: "feature/source" };
+    const h = launch({ DASHBOARD_AUTH_PASSWORD_HASH: HASH }, { sourceFactory: () => ({ async load() { return [record]; } }) });
+    const cookie = cookieFrom(await login(h)); const shell = await h.request("/", { headers: { Cookie: cookie } }); const shellBody = await shell.text();
+    expect(shellBody).toContain('id="dashboard-content"'); expect(shellBody).toContain('aria-busy="true"'); expect(shellBody).toContain("Loading dashboard");
+    for (const value of Object.values(record)) expect(shellBody).not.toContain(value);
+    expect(h.sourceCounts).toEqual({ factory: 0, load: 0 });
+    expect(await (await h.request("/dashboard/content", { headers: { Cookie: cookie } })).text()).toContain('data-view="populated"');
+    expect(h.sourceCounts).toEqual({ factory: 1, load: 1 });
+  });
+
+  test("populated source replacement groups records and strips prohibited extras", async () => {
+    const records = [
+      { projectName: "Alpha", agentName: "architect", state: "ready", taskTitle: "Map source", branchName: "feature/source", secret: "PROHIBITED_EXTRA_SENTINEL" },
+      { projectName: "Beta", agentName: "tester", state: "checking", taskTitle: "Test source", branchName: "feature/tests", timestamp: "PROHIBITED_TIME" },
+      { projectName: "Alpha", agentName: "writer", state: "working", taskTitle: "Document source", branchName: "feature/docs" },
+    ];
+    const h = launch({ DASHBOARD_AUTH_PASSWORD_HASH: HASH }, { sourceFactory: () => ({ async load() { return records; } }) });
+    const cookie = cookieFrom(await login(h)); const response = await h.request("/dashboard/content", { headers: { Cookie: cookie } }); const body = await response.text();
+    expect(response.status).toBe(200); expect(body).toContain('data-view="populated"');
+    for (const value of ["Alpha", "Beta", "architect", "tester", "writer", "feature/source"]) expect(body).toContain(value);
+    expect(body.match(/class="project-group"/g)).toHaveLength(2); expect(body).not.toContain("PROHIBITED_EXTRA_SENTINEL"); expect(body).not.toContain("PROHIBITED_TIME");
+  });
+
+  test("empty and delayed sources remain distinct while resolution is pending", async () => {
+    let release; const gate = new Promise((resolve) => { release = resolve; });
+    const h = launch({ DASHBOARD_AUTH_PASSWORD_HASH: HASH }, { sourceFactory: () => ({ load: () => gate }) });
+    const cookie = cookieFrom(await login(h)); let settled = false;
+    const pending = h.request("/dashboard/content", { headers: { Cookie: cookie } }).then((response) => { settled = true; return response; });
+    await Bun.sleep(10); expect(h.sourceCounts).toEqual({ factory: 1, load: 1 }); expect(settled).toBeFalse();
+    release([]); const body = await (await pending).text(); expect(body).toContain('data-view="empty"'); expect(body).not.toContain('data-view="populated"');
+  });
+
+  test("invalid and throwing sources render generic unavailable content without leakage", async () => {
+    const cases = [() => ({ async load() { return [{ projectName: "BROKEN_SENTINEL" }]; } }), () => ({ async load() { throw new Error("SOURCE_STACK_SENTINEL"); } })];
+    for (const sourceFactory of cases) {
+      const h = launch({ DASHBOARD_AUTH_PASSWORD_HASH: HASH }, { sourceFactory }); const cookie = cookieFrom(await login(h));
+      const response = await h.request("/dashboard/content", { headers: { Cookie: cookie } }); const body = await response.text();
+      expect(response.status).toBe(200); expect(body).toContain('data-view="unavailable"'); expect(body).not.toContain('data-view="empty"');
+      for (const leak of ["BROKEN_SENTINEL", "SOURCE_STACK_SENTINEL", "Error:", "transport", "persistence", "freshness", "lifecycle", "P4"]) expect(body).not.toContain(leak);
+    }
   });
 
   test("guarded handler and factory errors are generic and non-disclosing", async () => {
