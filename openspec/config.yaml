@@ -1,0 +1,52 @@
+schema: spec-driven
+
+context: |
+  Project: control-tower standalone repository.
+  Stack: Bun 1.3.14, JavaScript ESM (.mjs), Bash, and Python.
+  Architecture: core.mjs owns SQLite; MCP, CLI, and plugin adapters call the core.
+  Testing: Bun test provides unit/integration-style coverage; no coverage tool is configured.
+  Style: Preserve the repository's existing Spanish-facing documentation and concise ESM conventions.
+  Runtime: Keep the Control Tower disarmed during SDD initialization; do not mutate runtime state.
+
+strict_tdd: true
+
+testing:
+  runner: bun
+  test_command: bun test
+  framework: bun:test
+  layers:
+    unit: true
+    integration: true
+    e2e: false
+  coverage:
+    available: false
+    command: null
+  quality:
+    linter: null
+    type_checker: null
+    formatter: null
+
+rules:
+  proposal:
+    - Include a rollback plan for risky changes.
+  specs:
+    - Use Given/When/Then scenarios.
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY).
+  design:
+    - Document architecture decisions with rationale.
+    - Keep the core/adapters boundary explicit.
+  tasks:
+    - Group tasks by phase with hierarchical numbering.
+    - Keep tasks completable in one session.
+  apply:
+    guidelines:
+      - Follow existing ESM, Bun, shell, and Python patterns.
+      - Keep the Control Tower disarmed; do not mutate runtime DB state.
+    tdd: true
+    test_command: bun test
+  verify:
+    test_command: bun test
+    build_command: null
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas.
