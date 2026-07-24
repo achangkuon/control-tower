@@ -10,6 +10,10 @@
 set -euo pipefail
 
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ "${1:-}" == "--provision-main" || "${1:-}" == "--bootstrap-admin" ]]; then
+    command="${1#--}"; shift
+    exec env CONTROL_TOWER_CORE="$SRC/core.mjs" "$SRC/bin/torre" "$command" "$@"
+fi
 OC_DIR="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}"
 OC_JSON="$OC_DIR/opencode.json"
 PLUGINS="$OC_DIR/plugins"
