@@ -214,3 +214,28 @@ Remove only `dashboard/view-model.mjs`, `dashboard/render.mjs`, `test/dashboard/
 - Allowed-path audit: WU5 changes are limited to the three presentation/test files above plus `tasks.md` and `apply-progress.md`; no application import or route changed, and the authentication exchange remains the only POST.
 - Authored additions + deletions: **281** = 210 presentation/test changes + 29 evidence lines + 42 task-contract replacement sides; limit result: **PASS** — 281 <= 400.
 - Work Unit 5 status: **COMPLETE**.
+
+## Work Unit 6 — Self-Contained Deployment Examples and Rollback Procedure
+
+### Start state
+
+- Expected/actual HEAD and `origin/master`: `cbe27655e633056569a9ef037fae52fa74205311`; baseline `bun test`: **PASS** — 150 pass, 0 fail, 1300 expect() calls across 8 files in 22.24s.
+- Existing WU1-WU5 changes and unrelated `.gitignore`, `.session-doc.json`, and `session-handoff.md` state were preserved; `dashboard/deploy/` and `dashboard/scripts/` did not exist.
+- No real VPS, service, proxy, route, certificate, credential, or Control Tower state was accessed or changed.
+
+### Strict TDD evidence
+
+- **RED:** Added all WU6 architecture contracts before implementation. After discarding one test-local variable-shadowing error, the accepted `bun test test/dashboard/architecture.test.mjs --test-name-pattern 'deploy|systemd|Caddy|environment|hash|rollback'` result was the expected **FAIL** — 0 pass, 5 fail, 1 expect() call; the hash script exited 1 and all four deployment examples were absent.
+- **GREEN:** Added the stdin-only Argon2id helper plus minimal systemd, Caddy, empty environment, immutable rollout, smoke, and rollback examples. One test-only false positive matching the required `DASHBOARD_SESSION_SECRET` key was corrected without implementation change; accepted result: **PASS** — 5 pass, 0 fail, 62 expect() calls.
+- **TRIANGULATE:** Added command-line-secret rejection and discriminating public-bind/release-local-environment fixtures while retaining complete smoke, rollback, and future-approval assertions. Result: **PASS** — 7 pass, 0 fail, 70 expect() calls.
+- **REFACTOR:** Removed a duplicated rollout copy instruction while retaining the standalone security boundary. Post-refactor focused result: **PASS** — 7 pass, 0 fail, 70 expect() calls.
+
+### Verification, rollback, and workload
+
+- Final focused command: **PASS** — 7 pass, 0 fail, 70 expect() calls, 1 file in 309ms.
+- Final `bun test`: **PASS** — 157 pass, 0 fail, 1370 expect() calls across 8 files in 18.69s.
+- Runtime harness: `N/A` — WU6 creates examples and a local hash helper only; real-host smoke, systemd/Caddy changes, public routing, credential rotation, rollout, restart, and rollback remain blocked on explicit future user approval. Post-suite process audit found no Bun dashboard or hash-helper process residue.
+- Rollback boundary: remove only `dashboard/scripts/hash-password.mjs`, `dashboard/deploy/`, the WU6 deployment cases/import additions in `test/dashboard/architecture.test.mjs`, this evidence, and WU6 checkbox replacements; WU1-WU5 remain unchanged.
+- Allowed-path audit: WU6 authored only the five new dashboard files, `test/dashboard/architecture.test.mjs`, `tasks.md`, and `apply-progress.md`; current dirty/untracked paths remain within the allowed roots or are preserved pre-existing files.
+- Authored additions + deletions: **349** = 282 final implementation/test sides + 42 replacement sides for 21 task checkboxes + 25 progress lines; limit result: **PASS** — 349 <= 400.
+- Work Unit 6 status: **COMPLETE**.

@@ -1,0 +1,38 @@
+[Unit]
+Description=Control Tower observation dashboard
+After=network-online.target
+Wants=network-online.target
+ConditionPathIsDirectory=/opt/control-tower-dashboard/current
+
+[Service]
+Type=simple
+User=control-tower-dashboard
+Group=control-tower-dashboard
+EnvironmentFile=/etc/control-tower-dashboard/dashboard.env
+WorkingDirectory=/opt/control-tower-dashboard/current
+ExecStart=/usr/bin/bun /opt/control-tower-dashboard/current/server.mjs
+Restart=on-failure
+RestartSec=5s
+UMask=0077
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectHome=true
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+IPAddressDeny=any
+IPAddressAllow=localhost
+ReadOnlyPaths=/opt/control-tower-dashboard
+InaccessiblePaths=-/var/lib/control-tower
+InaccessiblePaths=-/run/control-tower
+InaccessiblePaths=-/srv/control-tower
+InaccessiblePaths=-/root/.ssh
+
+[Install]
+WantedBy=multi-user.target
