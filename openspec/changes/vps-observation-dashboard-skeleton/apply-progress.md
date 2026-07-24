@@ -239,3 +239,21 @@ Remove only `dashboard/view-model.mjs`, `dashboard/render.mjs`, `test/dashboard/
 - Allowed-path audit: WU6 authored only the five new dashboard files, `test/dashboard/architecture.test.mjs`, `tasks.md`, and `apply-progress.md`; current dirty/untracked paths remain within the allowed roots or are preserved pre-existing files.
 - Authored additions + deletions: **349** = 282 final implementation/test sides + 42 replacement sides for 21 task checkboxes + 25 progress lines; limit result: **PASS** — 349 <= 400.
 - Work Unit 6 status: **COMPLETE**.
+
+## Integrated Verification
+
+### Result
+
+- Status: **PASS** — the defined dashboard skeleton is complete; real projection and real-host deployment remain out of scope.
+- Independent suites: auth **10/0/51**, view model **4/0/19**, renderer **7/0/61**, server **14/0/287**, architecture **14/0/129**.
+- Full `bun test`: **PASS** — 157 pass, 0 fail, 1370 expect() calls across 8 files in 21.74s.
+- Traceability: all Section 8.2 requirements pass; the reviewer matrix is in `verify-report.md`.
+
+### Runtime, isolation, and delivery evidence
+
+- The server suite repeated the isolated `Bun.serve` loopback HTTP harness and stopped cleanly.
+- Chromium 149 evidence at exactly 320 CSS px covers login failure, loading, populated, and empty states; recorded width metrics remain 320 with no horizontal overflow.
+- `git diff --check` passes; dashboard imports have 0 repository-boundary violations; post-suite dashboard/hash/browser process count is 0.
+- Final authored workload: WU1 **373**, WU2 **400**, WU3 **378**, WU4 **221**, WU5 **281**, WU6 **349**. Every behavior slice is <=400; WU5 and WU6 remain separate delivery slices.
+- Pre-existing `session-handoff.md` reconciliation and local-only `.gitignore`/`.session-doc.json` remain excluded.
+- Runtime rollback boundary: N/A. Revert only integrated verification artifact updates if this report is withdrawn.
