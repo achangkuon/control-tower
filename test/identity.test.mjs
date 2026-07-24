@@ -992,11 +992,22 @@ describe("P4-A1c evolved schema-4 validation and total replay", () => {
     return fixture
   }
 
-  test("R2 RED accepts only coherent schema-representable dormant forward histories read-only", () => {
-    for (const history of ["ACK", "ATTEST", "COMPLETE", "REJECT_DRAFT", "REJECT_VALIDATED", "REJECT_PUBLISHED", "RECOVER"]) {
+  test("P4-only gate rejects coherent future P5/P6 histories read-only", () => {
+    for (const [operation, history] of [["ACK", "ACK"], ["ATTEST_COMPLETION", "ATTEST"], ["COMPLETE", "COMPLETE"],
+      ["REJECT", "REJECT_DRAFT"], ["REJECT", "REJECT_VALIDATED"], ["REJECT", "REJECT_PUBLISHED"], ["RECOVER", "RECOVER"]]) {
       const fixture = setupDormant(history)
       const before = readFileSync(fixture.dbPath)
-      expect({ history, statusCode: errorCode(() => fixture.mainDispatch("status")) }).toEqual({ history, statusCode: null })
+      expect({ operation, statusCode: errorCode(() => fixture.mainDispatch("status")) }).toEqual({ operation, statusCode: "CT_SCHEMA_INVALID" })
+      expect(errorCode(() => tower.bootstrapAdmin(fixture.migrationRequest, fixture.main))).toBe("CT_SCHEMA_INVALID")
+      expect(readFileSync(fixture.dbPath)).toEqual(before)
+    }
+  })
+
+  test("P4-only gate accepts coherent CREATE/VALIDATE/PUBLISH/CLAIM prefixes read-only", () => {
+    for (const terminal of ["DRAFT", "VALIDATED", "PUBLISHED", "CLAIMED"]) {
+      const fixture = setupEvolved(null, terminal)
+      const before = readFileSync(fixture.dbPath)
+      expect({ terminal, statusCode: errorCode(() => fixture.mainDispatch("status")) }).toEqual({ terminal, statusCode: null })
       expect(fixture.mainDispatch("status").schema_version).toBe(4)
       expect(tower.bootstrapAdmin(fixture.migrationRequest, fixture.main)).toMatchObject({ schema_version: 4, replayed: true })
       expect(readFileSync(fixture.dbPath)).toEqual(before)
