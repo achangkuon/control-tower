@@ -128,6 +128,66 @@ const CONTINUATION_TOOL_DEFINITIONS = new Map([
     },
   },
   { name: "receive", description: "Peek continuation delivery without consuming it.", inputSchema: { type: "object", properties: {}, additionalProperties: false } },
+  {
+    name: "create",
+    description: "Create an immutable DRAFT generation-0 handoff from the canonical payload, under the ACTIVE producer identity.",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        request_identity: { type: "string" },
+        lineage_id: { type: "string" },
+        revision: { type: "integer", minimum: 1 },
+        payload: { type: "object" },
+        payload_digest: { type: "string" },
+      },
+      required: ["request_identity", "lineage_id", "revision", "payload", "payload_digest"],
+    },
+  },
+  {
+    name: "validate",
+    description: "Server-derive canonical validation evidence for a DRAFT handoff and CAS it to VALIDATED, under the ACTIVE Main identity.",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        request_identity: { type: "string" },
+        id: { type: "string" },
+        es: { type: "string", enum: ["DRAFT"] },
+        eg: { type: "integer", minimum: 0 },
+        payload_digest: { type: "string" },
+      },
+      required: ["request_identity", "id", "es", "eg", "payload_digest"],
+    },
+  },
+  {
+    name: "publish",
+    description: "Reverify persisted validation evidence, CAS a VALIDATED handoff to PUBLISHED, and create one PENDING WORK delivery, under the ACTIVE Main identity.",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        request_identity: { type: "string" },
+        id: { type: "string" },
+        es: { type: "string", enum: ["VALIDATED"] },
+        eg: { type: "integer", minimum: 0 },
+      },
+      required: ["request_identity", "id", "es", "eg"],
+    },
+  },
+  {
+    name: "claim",
+    description: "Atomically claim a PENDING WORK or ATTESTATION_REDELIVERY delivery under the ACTIVE claimant identity, consuming one session-budget unit and returning a one-time bearer token on fresh success only.",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        request_identity: { type: "string" },
+        delivery_id: { type: "string" },
+        id: { type: "string" },
+        es: { type: "string", enum: ["PUBLISHED", "COMPLETION_ATTESTED"] },
+        eg: { type: "integer", minimum: 0 },
+        purpose: { type: "string", enum: ["WORK", "ATTESTATION_REDELIVERY"] },
+      },
+      required: ["request_identity", "delivery_id", "id", "es", "eg", "purpose"],
+    },
+  },
 ].map((tool) => [tool.name, tool]))
 
 const GUARDED_TOOLS = new Set([

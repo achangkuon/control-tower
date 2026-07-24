@@ -17,7 +17,7 @@ import {
   writeFileSync,
 } from "node:fs"
 import { tmpdir } from "node:os"
-import { dirname, join } from "node:path"
+import { dirname, join, relative, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import * as tower from "../core.mjs"
@@ -59,9 +59,17 @@ const expectedTrackedPaths = [
   "test/fixtures/paused-send.mjs",
   "validate-compact-message.py",
 ]
-const actualRuntimeRoot = join(packageRoot, ".git", "control-tower")
+// Resolve the runtime boundary from the shared Git common directory so the
+// assertion holds in both a normal clone (`.git/control-tower`) and a linked
+// worktree, where the canonical Tower lives under the Main clone's `.git`.
+const actualRuntimeRoot = join(
+  resolve(packageRoot, git(packageRoot, ["rev-parse", "--git-common-dir"])),
+  "control-tower",
+)
 const actualActivePath = join(actualRuntimeRoot, "ACTIVE")
-const expectedAbsentRuntimeBoundary = [{ path: ".git/control-tower", exists: false }]
+const expectedAbsentRuntimeBoundary = [
+  { path: relative(packageRoot, actualRuntimeRoot), exists: false },
+]
 const canonical = (value) => {
   if (value === null || typeof value !== "object") return JSON.stringify(value)
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`
@@ -214,6 +222,230 @@ BEGIN
   SELECT RAISE(ABORT, 'CT_IMMUTABLE_ACTIVATION');
 END;
 `
+const expectedMigration004Checksum = "sha256:fb951119bd42f22aee7ed4f025298e12e604ff65cc7022aef4353fcba446ae57"
+const expectedMigration004Sql = `CREATE TABLE ct_handoff (
+  id TEXT PRIMARY KEY CHECK(length(id) = 43),
+  lineage_id TEXT NOT NULL CHECK(length(lineage_id) = 36),
+  revision INTEGER NOT NULL CHECK(revision >= 1),
+  state TEXT NOT NULL CHECK(state IN ('DRAFT', 'VALIDATED', 'PUBLISHED', 'CLAIMED', 'STARTED', 'COMPLETION_ATTESTED', 'COMPLETED', 'REJECTED', 'CANCELLED', 'POISONED', 'WORK_SUSPENDED', 'ATTESTATION_SUSPENDED')),
+  generation INTEGER NOT NULL DEFAULT 0 CHECK(generation >= 0),
+  payload_json TEXT NOT NULL CHECK(length(CAST(payload_json AS BLOB)) BETWEEN 1 AND 65536),
+  payload_digest TEXT NOT NULL CHECK(length(payload_digest) = 71),
+  handoff_fingerprint TEXT NOT NULL UNIQUE CHECK(length(handoff_fingerprint) = 71),
+  repository_fingerprint TEXT NOT NULL CHECK(length(repository_fingerprint) = 71),
+  git_common_dir_fingerprint TEXT NOT NULL CHECK(length(git_common_dir_fingerprint) = 71),
+  source_merge_sha TEXT NOT NULL CHECK(length(source_merge_sha) IN (40, 64)),
+  source_merge_url TEXT NOT NULL CHECK(length(source_merge_url) BETWEEN 1 AND 2048),
+  next_unit_scope_digest TEXT NOT NULL CHECK(length(next_unit_scope_digest) = 71),
+  dependencies_digest TEXT NOT NULL CHECK(length(dependencies_digest) = 71),
+  references_digest TEXT NOT NULL CHECK(length(references_digest) = 71),
+  snapshots_digest TEXT NOT NULL CHECK(length(snapshots_digest) = 71),
+  provenance_digest TEXT NOT NULL CHECK(length(provenance_digest) = 71),
+  decision_summary_digest TEXT NOT NULL CHECK(length(decision_summary_digest) = 71),
+  producer_binding_id TEXT NOT NULL CHECK(length(producer_binding_id) = 43),
+  producer_identity_digest TEXT NOT NULL CHECK(length(producer_identity_digest) = 71),
+  producer_ctx_json TEXT NOT NULL CHECK(length(CAST(producer_ctx_json AS BLOB)) BETWEEN 1 AND 4096),
+  producer_ctx_digest TEXT NOT NULL CHECK(length(producer_ctx_digest) = 71),
+  validation_evidence_json TEXT CHECK(validation_evidence_json IS NULL OR length(CAST(validation_evidence_json AS BLOB)) BETWEEN 1 AND 65536),
+  validation_digest TEXT CHECK(validation_digest IS NULL OR length(validation_digest) = 71),
+  created_at TEXT NOT NULL CHECK(length(created_at) = 24),
+  validated_at TEXT CHECK(validated_at IS NULL OR length(validated_at) = 24),
+  published_at TEXT CHECK(published_at IS NULL OR length(published_at) = 24),
+  UNIQUE(lineage_id, revision)
+);
+CREATE INDEX ct_handoff_state_order
+ON ct_handoff(state, created_at, id);
+CREATE TRIGGER ct_handoff_immutable_content
+BEFORE UPDATE ON ct_handoff
+WHEN NEW.id IS NOT OLD.id
+  OR NEW.lineage_id IS NOT OLD.lineage_id
+  OR NEW.revision IS NOT OLD.revision
+  OR NEW.payload_json IS NOT OLD.payload_json
+  OR NEW.payload_digest IS NOT OLD.payload_digest
+  OR NEW.handoff_fingerprint IS NOT OLD.handoff_fingerprint
+  OR NEW.repository_fingerprint IS NOT OLD.repository_fingerprint
+  OR NEW.git_common_dir_fingerprint IS NOT OLD.git_common_dir_fingerprint
+  OR NEW.source_merge_sha IS NOT OLD.source_merge_sha
+  OR NEW.source_merge_url IS NOT OLD.source_merge_url
+  OR NEW.next_unit_scope_digest IS NOT OLD.next_unit_scope_digest
+  OR NEW.dependencies_digest IS NOT OLD.dependencies_digest
+  OR NEW.references_digest IS NOT OLD.references_digest
+  OR NEW.snapshots_digest IS NOT OLD.snapshots_digest
+  OR NEW.provenance_digest IS NOT OLD.provenance_digest
+  OR NEW.decision_summary_digest IS NOT OLD.decision_summary_digest
+  OR NEW.producer_binding_id IS NOT OLD.producer_binding_id
+  OR NEW.producer_identity_digest IS NOT OLD.producer_identity_digest
+  OR NEW.producer_ctx_json IS NOT OLD.producer_ctx_json
+  OR NEW.producer_ctx_digest IS NOT OLD.producer_ctx_digest
+  OR NEW.created_at IS NOT OLD.created_at
+  OR (OLD.validation_evidence_json IS NOT NULL AND NEW.validation_evidence_json IS NOT OLD.validation_evidence_json)
+  OR (OLD.validation_digest IS NOT NULL AND NEW.validation_digest IS NOT OLD.validation_digest)
+  OR (OLD.validated_at IS NOT NULL AND NEW.validated_at IS NOT OLD.validated_at)
+  OR (OLD.published_at IS NOT NULL AND NEW.published_at IS NOT OLD.published_at)
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_HANDOFF');
+END;
+CREATE TRIGGER ct_handoff_no_delete
+BEFORE DELETE ON ct_handoff
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_HANDOFF');
+END;
+CREATE TABLE ct_handoff_transition (
+  transition_id TEXT PRIMARY KEY CHECK(length(transition_id) = 43),
+  handoff_id TEXT NOT NULL CHECK(length(handoff_id) = 43),
+  generation INTEGER NOT NULL CHECK(generation >= 0),
+  operation TEXT NOT NULL CHECK(operation IN ('CREATE', 'VALIDATE', 'PUBLISH', 'CLAIM', 'ACK', 'ATTEST_COMPLETION', 'COMPLETE', 'REJECT', 'REVISE', 'RECOVER')),
+  from_state TEXT CHECK(from_state IS NULL OR from_state IN ('DRAFT', 'VALIDATED', 'PUBLISHED', 'CLAIMED', 'STARTED', 'COMPLETION_ATTESTED', 'COMPLETED', 'REJECTED', 'CANCELLED', 'POISONED', 'WORK_SUSPENDED', 'ATTESTATION_SUSPENDED')),
+  to_state TEXT NOT NULL CHECK(to_state IN ('DRAFT', 'VALIDATED', 'PUBLISHED', 'CLAIMED', 'STARTED', 'COMPLETION_ATTESTED', 'COMPLETED', 'REJECTED', 'CANCELLED', 'POISONED', 'WORK_SUSPENDED', 'ATTESTATION_SUSPENDED')),
+  authority_kind TEXT NOT NULL CHECK(authority_kind IN ('PRODUCER', 'MAIN', 'CLAIMANT')),
+  authority_binding_id TEXT NOT NULL CHECK(length(authority_binding_id) = 43),
+  authority_identity_digest TEXT NOT NULL CHECK(length(authority_identity_digest) = 71),
+  request_identity TEXT NOT NULL CHECK(length(request_identity) = 36),
+  request_digest TEXT NOT NULL CHECK(length(request_digest) = 71),
+  cas_digest TEXT NOT NULL CHECK(length(cas_digest) = 71),
+  decision_digest TEXT CHECK(decision_digest IS NULL OR length(decision_digest) = 71),
+  response_digest TEXT NOT NULL CHECK(length(response_digest) = 71),
+  occurred_at TEXT NOT NULL CHECK(length(occurred_at) = 24),
+  UNIQUE(operation, request_identity)
+);
+CREATE INDEX ct_handoff_transition_history
+ON ct_handoff_transition(handoff_id, generation, occurred_at, transition_id);
+CREATE TRIGGER ct_handoff_transition_no_update
+BEFORE UPDATE ON ct_handoff_transition
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_HANDOFF_TRANSITION');
+END;
+CREATE TRIGGER ct_handoff_transition_no_delete
+BEFORE DELETE ON ct_handoff_transition
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_HANDOFF_TRANSITION');
+END;
+CREATE TABLE ct_delivery (
+  delivery_id TEXT PRIMARY KEY CHECK(length(delivery_id) = 43),
+  handoff_id TEXT NOT NULL CHECK(length(handoff_id) = 43),
+  generation INTEGER NOT NULL CHECK(generation >= 0),
+  purpose TEXT NOT NULL CHECK(purpose IN ('WORK', 'ATTESTATION_REDELIVERY')),
+  delivery_state TEXT NOT NULL CHECK(delivery_state IN ('PENDING', 'CLAIMED', 'CLOSED')),
+  handoff_state_snapshot TEXT NOT NULL CHECK(handoff_state_snapshot IN ('PUBLISHED', 'COMPLETION_ATTESTED')),
+  claim_id TEXT CHECK(claim_id IS NULL OR length(claim_id) = 43),
+  created_at TEXT NOT NULL CHECK(length(created_at) = 24),
+  claimed_at TEXT CHECK(claimed_at IS NULL OR length(claimed_at) = 24),
+  closed_at TEXT CHECK(closed_at IS NULL OR length(closed_at) = 24),
+  UNIQUE(handoff_id, generation),
+  CHECK((delivery_state = 'PENDING' AND claim_id IS NULL AND claimed_at IS NULL AND closed_at IS NULL) OR
+        (delivery_state = 'CLAIMED' AND claim_id IS NOT NULL AND claimed_at IS NOT NULL AND closed_at IS NULL) OR
+        (delivery_state = 'CLOSED' AND closed_at IS NOT NULL))
+);
+CREATE INDEX ct_delivery_pending_order
+ON ct_delivery(delivery_state, created_at, delivery_id);
+CREATE TRIGGER ct_delivery_immutable_identity
+BEFORE UPDATE ON ct_delivery
+WHEN NEW.delivery_id IS NOT OLD.delivery_id
+  OR NEW.handoff_id IS NOT OLD.handoff_id
+  OR NEW.generation IS NOT OLD.generation
+  OR NEW.purpose IS NOT OLD.purpose
+  OR NEW.handoff_state_snapshot IS NOT OLD.handoff_state_snapshot
+  OR NEW.created_at IS NOT OLD.created_at
+  OR (OLD.claim_id IS NOT NULL AND NEW.claim_id IS NOT OLD.claim_id)
+  OR (OLD.claimed_at IS NOT NULL AND NEW.claimed_at IS NOT OLD.claimed_at)
+  OR (OLD.closed_at IS NOT NULL AND NEW.closed_at IS NOT OLD.closed_at)
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_DELIVERY');
+END;
+CREATE TRIGGER ct_delivery_no_delete
+BEFORE DELETE ON ct_delivery
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_DELIVERY');
+END;
+CREATE TABLE ct_claim (
+  claim_id TEXT PRIMARY KEY CHECK(length(claim_id) = 43),
+  delivery_id TEXT NOT NULL UNIQUE CHECK(length(delivery_id) = 43),
+  handoff_id TEXT NOT NULL CHECK(length(handoff_id) = 43),
+  generation INTEGER NOT NULL CHECK(generation >= 0),
+  purpose TEXT NOT NULL CHECK(purpose IN ('WORK', 'ATTESTATION_REDELIVERY')),
+  claimant_binding_id TEXT NOT NULL CHECK(length(claimant_binding_id) = 43),
+  claimant_identity_digest TEXT NOT NULL CHECK(length(claimant_identity_digest) = 71),
+  claimant_ctx_json TEXT NOT NULL CHECK(length(CAST(claimant_ctx_json AS BLOB)) BETWEEN 1 AND 4096),
+  claimant_ctx_digest TEXT NOT NULL CHECK(length(claimant_ctx_digest) = 71),
+  claimant_fence_digest TEXT NOT NULL UNIQUE CHECK(length(claimant_fence_digest) = 71),
+  token_salt TEXT NOT NULL UNIQUE CHECK(length(token_salt) = 43),
+  token_hash TEXT NOT NULL UNIQUE CHECK(length(token_hash) = 71),
+  budget_scope_digest TEXT NOT NULL CHECK(length(budget_scope_digest) = 71),
+  budget_sequence INTEGER NOT NULL CHECK(budget_sequence >= 1),
+  request_identity TEXT NOT NULL UNIQUE CHECK(length(request_identity) = 36),
+  request_digest TEXT NOT NULL CHECK(length(request_digest) = 71),
+  cas_digest TEXT NOT NULL CHECK(length(cas_digest) = 71),
+  claim_state TEXT NOT NULL CHECK(claim_state IN ('LIVE', 'CLOSED')),
+  created_at TEXT NOT NULL CHECK(length(created_at) = 24),
+  closed_at TEXT CHECK(closed_at IS NULL OR length(closed_at) = 24),
+  UNIQUE(handoff_id, generation),
+  CHECK((claim_state = 'LIVE' AND closed_at IS NULL) OR
+        (claim_state = 'CLOSED' AND closed_at IS NOT NULL))
+);
+CREATE INDEX ct_claim_state_lookup
+ON ct_claim(claim_state, handoff_id, generation);
+CREATE TRIGGER ct_claim_immutable_identity
+BEFORE UPDATE ON ct_claim
+WHEN NEW.claim_id IS NOT OLD.claim_id
+  OR NEW.delivery_id IS NOT OLD.delivery_id
+  OR NEW.handoff_id IS NOT OLD.handoff_id
+  OR NEW.generation IS NOT OLD.generation
+  OR NEW.purpose IS NOT OLD.purpose
+  OR NEW.claimant_binding_id IS NOT OLD.claimant_binding_id
+  OR NEW.claimant_identity_digest IS NOT OLD.claimant_identity_digest
+  OR NEW.claimant_ctx_json IS NOT OLD.claimant_ctx_json
+  OR NEW.claimant_ctx_digest IS NOT OLD.claimant_ctx_digest
+  OR NEW.claimant_fence_digest IS NOT OLD.claimant_fence_digest
+  OR NEW.token_salt IS NOT OLD.token_salt
+  OR NEW.token_hash IS NOT OLD.token_hash
+  OR NEW.budget_scope_digest IS NOT OLD.budget_scope_digest
+  OR NEW.budget_sequence IS NOT OLD.budget_sequence
+  OR NEW.request_identity IS NOT OLD.request_identity
+  OR NEW.request_digest IS NOT OLD.request_digest
+  OR NEW.cas_digest IS NOT OLD.cas_digest
+  OR NEW.created_at IS NOT OLD.created_at
+  OR (OLD.closed_at IS NOT NULL AND NEW.closed_at IS NOT OLD.closed_at)
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_CLAIM');
+END;
+CREATE TRIGGER ct_claim_no_delete
+BEFORE DELETE ON ct_claim
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_CLAIM');
+END;
+CREATE TABLE ct_session_budget (
+  budget_scope_digest TEXT PRIMARY KEY CHECK(length(budget_scope_digest) = 71),
+  budget_scope_json TEXT NOT NULL CHECK(length(CAST(budget_scope_json AS BLOB)) BETWEEN 1 AND 4096),
+  budget_limit INTEGER NOT NULL DEFAULT 1 CHECK(budget_limit = 1),
+  consumed_count INTEGER NOT NULL DEFAULT 0 CHECK(consumed_count BETWEEN 0 AND budget_limit),
+  last_claim_id TEXT CHECK(last_claim_id IS NULL OR length(last_claim_id) = 43),
+  created_at TEXT NOT NULL CHECK(length(created_at) = 24),
+  updated_at TEXT NOT NULL CHECK(length(updated_at) = 24),
+  CHECK((consumed_count = 0 AND last_claim_id IS NULL) OR
+        (consumed_count > 0 AND last_claim_id IS NOT NULL))
+);
+CREATE TRIGGER ct_session_budget_immutable_scope
+BEFORE UPDATE ON ct_session_budget
+WHEN NEW.budget_scope_digest IS NOT OLD.budget_scope_digest
+  OR NEW.budget_scope_json IS NOT OLD.budget_scope_json
+  OR NEW.budget_limit IS NOT OLD.budget_limit
+  OR NEW.created_at IS NOT OLD.created_at
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_SESSION_BUDGET');
+END;
+CREATE TRIGGER ct_session_budget_no_delete
+BEFORE DELETE ON ct_session_budget
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_SESSION_BUDGET');
+END;
+`
+const expectedMigration004ObjectNames = [
+  "ct_claim_state_lookup", "ct_delivery_pending_order", "ct_handoff_state_order", "ct_handoff_transition_history",
+  "ct_claim", "ct_delivery", "ct_handoff", "ct_handoff_transition", "ct_session_budget",
+  "ct_claim_immutable_identity", "ct_claim_no_delete", "ct_delivery_immutable_identity", "ct_delivery_no_delete",
+  "ct_handoff_immutable_content", "ct_handoff_no_delete", "ct_handoff_transition_no_delete",
+  "ct_handoff_transition_no_update", "ct_session_budget_immutable_scope", "ct_session_budget_no_delete",
+]
 const captureError = (operation) => {
   try {
     operation()
@@ -851,6 +1083,234 @@ describe("P3-A Migration 003", () => {
     expect(Date.now() - started).toBeLessThan(1500)
     locker.run("ROLLBACK"); locker.close()
     expect(tower.bootstrapAdmin(request, fixture.main)).toMatchObject({ schema_version: 3, replayed: false })
+  })
+})
+
+describe("P4-A1a Migration 004 definitions", () => {
+  const manifestRows = (db) => db.query(`SELECT type,name,tbl_name,sql FROM sqlite_master
+    WHERE name GLOB 'ct_*' AND name NOT LIKE 'sqlite_%' ORDER BY type,name`).all()
+
+  test("pins exact LF bytes, line count, terminal newline, and checksum independently", () => {
+    expect(tower.MIGRATION_004_SQL).toBe(expectedMigration004Sql)
+    expect(Buffer.byteLength(tower.MIGRATION_004_SQL)).toBe(12159)
+    expect(tower.MIGRATION_004_SQL.split("\n").length - 1).toBe(215)
+    expect(tower.MIGRATION_004_SQL.endsWith("\n")).toBe(true)
+    expect(tower.MIGRATION_004_SQL.endsWith("\n\n")).toBe(false)
+    expect(tower.MIGRATION_004_SQL.includes("\r")).toBe(false)
+    expect(digest(tower.MIGRATION_004_SQL)).toBe(expectedMigration004Checksum)
+    expect(tower.MIGRATION_004_CHECKSUM).toBe(expectedMigration004Checksum)
+  })
+
+  test("pins all 19 new definitions and the complete 36-object schema-4 manifest", () => {
+    const additions = new Database(":memory:")
+    additions.run(expectedMigration004Sql)
+    const expectedAdditions = manifestRows(additions)
+    additions.close()
+    expect(expectedAdditions.map(({ name }) => name)).toEqual(expectedMigration004ObjectNames)
+    expect(expectedAdditions).toHaveLength(19)
+
+    const complete = new Database(":memory:")
+    complete.run(correctedMigration001Sql + expectedMigration002Sql + expectedMigration003Sql + expectedMigration004Sql)
+    const expectedObjects = manifestRows(complete)
+    complete.close()
+    expect(expectedObjects).toHaveLength(36)
+    expect(tower.SCHEMA_004_MANIFEST).toEqual({
+      schema_version: 4,
+      objects: expectedObjects,
+      migrations: [
+        { version: 1, ddl_checksum: correctedMigration001Checksum },
+        { version: 2, ddl_checksum: expectedMigration002Checksum },
+        { version: 3, ddl_checksum: expectedMigration003Checksum },
+        { version: 4, ddl_checksum: expectedMigration004Checksum },
+      ],
+    })
+  })
+
+})
+
+describe("P4-A1b fresh Migration 004 and empty replay", () => {
+  const provisionV3 = () => {
+    const { main } = createMainFixture()
+    const context = tower.deriveCanonicalMainContext(main)
+    const anchor = tower.provisionMainAuthorityAnchor({ request_identity: randomUUID(), expected_config_digest: digest(canonical(context)) }, main)
+    seedLegacy(main)
+    for (const [expected_schema_version, target_schema_version] of [[0, 1], [1, 2], [2, 3]]) {
+      tower.bootstrapAdmin({ request_identity: randomUUID(), expected_anchor_id: anchor.anchor_id, expected_schema_version, target_schema_version, expected_mode: "OFF" }, main)
+    }
+    return { main, context, anchor, dbPath: join(context.git_common_dir, "control-tower", "tower.db") }
+  }
+  const upgradeRequest = (anchor, request_identity = randomUUID()) => ({
+    request_identity, expected_anchor_id: anchor.anchor_id,
+    expected_schema_version: 3, target_schema_version: 4, expected_mode: "OFF",
+  })
+  const manifestEvidence = (db, schema_version) => ({
+    kind: "schema_manifest_evidence_v1", version: 1, schema_version,
+    objects: db.query(`SELECT type,name,tbl_name,sql FROM sqlite_master
+      WHERE name GLOB 'ct_*' AND name NOT LIKE 'sqlite_%' ORDER BY type,name`).all(),
+    migrations: db.query("SELECT version,ddl_checksum FROM ct_schema_migration ORDER BY version").all(),
+  })
+
+  test("fresh 3->4 commits exact evidence, zero successor rows, and public empty replay", () => {
+    const fixture = provisionV3(), request = upgradeRequest(fixture.anchor)
+    const before = new Database(fixture.dbPath, { readonly: true })
+    const schema3Digest = digest(canonical(manifestEvidence(before, 3)))
+    const preserved = {
+      legacy: before.query("SELECT * FROM agent").all(),
+      main: before.query("SELECT * FROM ct_main_binding").all(),
+      claimant: before.query("SELECT * FROM ct_claimant_binding").all(),
+    }
+    before.close()
+
+    expect(tower.bootstrapAdmin(request, fixture.main)).toEqual({ anchor_id: fixture.anchor.anchor_id, schema_version: 4, mode: "OFF", replayed: false })
+    const db = new Database(fixture.dbPath, { readonly: true })
+    const envelope = JSON.parse(db.query("SELECT response_json FROM ct_idempotency WHERE operation='bootstrapAdmin' AND scope_key='schema:3->4'").get().response_json)
+    const schema4Digest = digest(canonical(manifestEvidence(db, 4)))
+    expect(envelope).toEqual({
+      kind: "bootstrap_schema4_response_v1", version: 1,
+      public_response: { anchor_id: fixture.anchor.anchor_id, schema_version: 4, mode: "OFF", replayed: false },
+      evidence: {
+        request, request_digest: digest(canonical(request)),
+        cas_input: {
+          expected_anchor_id: fixture.anchor.anchor_id, expected_schema_version: 3, target_schema_version: 4,
+          expected_mode: "OFF", derived_anchor_epoch: 1, derived_config_digest: digest(canonical(fixture.context)),
+          observed_rollback_epoch: 0, observed_lease_version: 0, observed_lease_status: "NONE",
+          observed_active_main_binding_id: null, observed_active_main_binding_epoch: 0,
+          observed_activation_epoch: 0, active_claimant_bindings: 0, delivery_plane: "ABSENT_SCHEMA_3",
+        },
+        cas_digest: expect.any(String), migration_004_checksum: expectedMigration004Checksum,
+        schema_3_manifest_digest: schema3Digest, schema_4_manifest_digest: schema4Digest,
+      },
+    })
+    expect(envelope.evidence.cas_digest).toBe(digest(canonical(envelope.evidence.cas_input)))
+    expect(db.query("SELECT version,ddl_checksum FROM ct_schema_migration ORDER BY version").all().at(-1)).toEqual({ version: 4, ddl_checksum: expectedMigration004Checksum })
+    for (const table of ["ct_handoff", "ct_handoff_transition", "ct_delivery", "ct_claim", "ct_session_budget"]) {
+      expect(db.query(`SELECT COUNT(*) AS count FROM ${table}`).get().count).toBe(0)
+    }
+    expect(db.query("SELECT * FROM agent").all()).toEqual(preserved.legacy)
+    expect(db.query("SELECT * FROM ct_main_binding").all()).toEqual(preserved.main)
+    expect(db.query("SELECT * FROM ct_claimant_binding").all()).toEqual(preserved.claimant)
+    db.close()
+    expect(tower.bootstrapAdmin(request, fixture.main)).toEqual({ anchor_id: fixture.anchor.anchor_id, schema_version: 4, mode: "OFF", replayed: true })
+    expect(errorCode(() => tower.bootstrapAdmin({ ...request, request_identity: randomUUID() }, fixture.main))).toBe("CT_IDEMPOTENCY_CONFLICT")
+  })
+
+  test("fresh/replay precedence rejects mode, lease, request, checksum, manifest, and evidence drift", () => {
+    for (const mutate of [
+      (db) => db.run("UPDATE ct_continuation_state SET mode='ON'"),
+      (db) => db.run("UPDATE ct_rollback_lease SET lease_status='ACTIVE',owner_main_binding_id=?,lease_expires_at='2026-07-22T00:00:00.000Z'", ["x".repeat(43)]),
+    ]) {
+      const fixture = provisionV3(), request = upgradeRequest(fixture.anchor), db = new Database(fixture.dbPath)
+      mutate(db); db.close()
+      expect(errorCode(() => tower.bootstrapAdmin(request, fixture.main))).toBe("CT_FENCE_MISMATCH")
+    }
+    const wrongCas = provisionV3(), wrongRequest = upgradeRequest(wrongCas.anchor)
+    expect(errorCode(() => tower.bootstrapAdmin({ ...wrongRequest, expected_anchor_id: "wrong" }, wrongCas.main))).toBe("CT_FENCE_MISMATCH")
+
+    for (const [mutate, expected] of [
+      [(db) => db.run("UPDATE ct_schema_migration SET ddl_checksum=? WHERE version=4", [digest("wrong")]), "CT_SCHEMA_INVALID"],
+      [(db) => db.run("DROP TRIGGER ct_claim_no_delete"), "CT_SCHEMA_INVALID"],
+      [(db) => db.run("UPDATE ct_idempotency SET response_json='{}' WHERE operation='bootstrapAdmin' AND scope_key='schema:3->4'"), "CT_SCHEMA_INVALID"],
+      [(db) => db.run("UPDATE ct_idempotency SET cas_digest=? WHERE operation='bootstrapAdmin' AND scope_key='schema:3->4'", [digest("wrong-cas")]), "CT_SCHEMA_INVALID"],
+    ]) {
+      const fixture = provisionV3(), request = upgradeRequest(fixture.anchor)
+      tower.bootstrapAdmin(request, fixture.main)
+      const db = new Database(fixture.dbPath); mutate(db); db.close()
+      expect(errorCode(() => tower.bootstrapAdmin(request, fixture.main))).toBe(expected)
+    }
+  })
+
+  test("schema-4 replay request fences precede conflicting tuple comparison without mutation", () => {
+    const fixture = provisionV3(), request = upgradeRequest(fixture.anchor)
+    tower.bootstrapAdmin(request, fixture.main)
+    const before = readFileSync(fixture.dbPath)
+
+    for (const changedRequest of [
+      { ...request, request_identity: randomUUID(), expected_schema_version: 4 },
+      { ...request, request_identity: randomUUID(), expected_mode: "ON" },
+    ]) {
+      expect(errorCode(() => tower.bootstrapAdmin(changedRequest, fixture.main))).toBe("CT_FENCE_MISMATCH")
+      expect(readFileSync(fixture.dbPath)).toEqual(before)
+    }
+
+    expect(errorCode(() => tower.bootstrapAdmin({ ...request, request_identity: randomUUID() }, fixture.main))).toBe("CT_IDEMPOTENCY_CONFLICT")
+    expect(readFileSync(fixture.dbPath)).toEqual(before)
+  })
+
+  test("schema-4 replay fences mode and lease before missing or malformed migration evidence", () => {
+    const evidenceFaults = [
+      (db) => db.run("DELETE FROM ct_idempotency WHERE operation='bootstrapAdmin' AND scope_key='schema:3->4'"),
+      (db) => db.run("UPDATE ct_idempotency SET response_json='{}' WHERE operation='bootstrapAdmin' AND scope_key='schema:3->4'"),
+    ]
+    const fenceFaults = [
+      (db) => db.run("UPDATE ct_continuation_state SET mode='ON' WHERE id=1"),
+      (db) => db.run("UPDATE ct_continuation_state SET mode='ROLLING_BACK' WHERE id=1"),
+      (db) => db.run("UPDATE ct_rollback_lease SET lease_status='ACTIVE',owner_main_binding_id=?,lease_expires_at='2026-07-22T00:00:00.000Z' WHERE id=1", ["x".repeat(43)]),
+    ]
+
+    for (const evidenceFault of evidenceFaults) {
+      for (const fenceFault of fenceFaults) {
+        const fixture = provisionV3(), request = upgradeRequest(fixture.anchor)
+        tower.bootstrapAdmin(request, fixture.main)
+        const db = new Database(fixture.dbPath)
+        evidenceFault(db); fenceFault(db); db.close()
+        expect(errorCode(() => tower.bootstrapAdmin(request, fixture.main))).toBe("CT_FENCE_MISMATCH")
+      }
+
+      const fixture = provisionV3(), request = upgradeRequest(fixture.anchor)
+      tower.bootstrapAdmin(request, fixture.main)
+      const db = new Database(fixture.dbPath)
+      evidenceFault(db); db.close()
+      expect(errorCode(() => tower.bootstrapAdmin(request, fixture.main))).toBe("CT_SCHEMA_INVALID")
+    }
+  })
+
+  test("competing faults preserve checksum, manifest, committed request, then request-CAS precedence", () => {
+    const checksumFirst = provisionV3(), checksumRequest = upgradeRequest(checksumFirst.anchor)
+    tower.bootstrapAdmin(checksumRequest, checksumFirst.main)
+    const checksumDb = new Database(checksumFirst.dbPath)
+    checksumDb.run("UPDATE ct_schema_migration SET ddl_checksum=? WHERE version=1", [supersededMigration001Checksum])
+    checksumDb.run("DROP TRIGGER ct_claim_no_delete")
+    checksumDb.run("UPDATE ct_idempotency SET response_json='{}',cas_digest=? WHERE operation='bootstrapAdmin' AND scope_key='schema:3->4'", [digest("wrong-cas")])
+    checksumDb.close()
+    const checksumError = captureError(() => tower.bootstrapAdmin({ ...checksumRequest, request_identity: randomUUID(), expected_anchor_id: "wrong" }, checksumFirst.main))
+    expect(checksumError?.code).toBe("CT_SCHEMA_INVALID")
+    expect(checksumError?.cause?.message).toBe("SUPERSEDED_MIGRATION_001")
+
+    const manifestFirst = provisionV3(), manifestRequest = upgradeRequest(manifestFirst.anchor)
+    tower.bootstrapAdmin(manifestRequest, manifestFirst.main)
+    const manifestDb = new Database(manifestFirst.dbPath)
+    manifestDb.run("DROP TRIGGER ct_claim_no_delete")
+    manifestDb.close()
+    expect(errorCode(() => tower.bootstrapAdmin({ ...manifestRequest, request_identity: randomUUID(), expected_anchor_id: "wrong" }, manifestFirst.main))).toBe("CT_SCHEMA_INVALID")
+
+    const committedFirst = provisionV3(), committedRequest = upgradeRequest(committedFirst.anchor)
+    const committedDb = new Database(committedFirst.dbPath)
+    committedDb.run("INSERT INTO ct_idempotency VALUES ('bootstrapAdmin','schema:3->4',?,?,?,?,?)", [randomUUID(), digest("occupied-request"), digest("occupied-cas"), "{}", "2026-07-22T00:00:00.000Z"])
+    committedDb.close()
+    expect(errorCode(() => tower.bootstrapAdmin({ ...committedRequest, expected_anchor_id: "wrong" }, committedFirst.main))).toBe("CT_IDEMPOTENCY_CONFLICT")
+  })
+
+  test("partial DDL failure and bounded busy roll back fully and retry from byte-identical schema 3", () => {
+    const fixture = provisionV3(), request = upgradeRequest(fixture.anchor)
+    const blocker = new Database(fixture.dbPath)
+    blocker.run(`CREATE TRIGGER force_migration_004_failure BEFORE INSERT ON ct_schema_migration
+      WHEN NEW.version=4 BEGIN SELECT RAISE(ABORT, 'forced-late-migration-failure'); END`)
+    blocker.close()
+    const before = readFileSync(fixture.dbPath)
+    expect(errorCode(() => tower.bootstrapAdmin(request, fixture.main))).toBe("CT_SCHEMA_INVALID")
+    expect(readFileSync(fixture.dbPath)).toEqual(before)
+    const rolledBack = new Database(fixture.dbPath)
+    expect(rolledBack.query("SELECT version FROM ct_schema_migration ORDER BY version").all()).toEqual([{ version: 1 }, { version: 2 }, { version: 3 }])
+    expect(rolledBack.query("SELECT name FROM sqlite_master WHERE name IN ('ct_handoff','ct_handoff_transition','ct_delivery','ct_claim','ct_session_budget')").all()).toEqual([])
+    rolledBack.run("DROP TRIGGER force_migration_004_failure")
+    rolledBack.close()
+    const locker = new Database(fixture.dbPath); locker.run("BEGIN IMMEDIATE")
+    const started = Date.now()
+    expect(errorCode(() => tower.bootstrapAdmin(request, fixture.main))).toBe("CT_BUSY")
+    expect(Date.now() - started).toBeGreaterThanOrEqual(200)
+    expect(Date.now() - started).toBeLessThan(1500)
+    locker.run("ROLLBACK"); locker.close()
+    expect(tower.bootstrapAdmin(request, fixture.main)).toMatchObject({ schema_version: 4, replayed: false })
   })
 })
 
