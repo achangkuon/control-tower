@@ -445,6 +445,239 @@ BEGIN
 END;
 `
 export const MIGRATION_004_CHECKSUM = sha256(Buffer.from(MIGRATION_004_SQL))
+export const MIGRATION_005_SQL = `CREATE TABLE ct_termination_receipt (
+  receipt_id TEXT PRIMARY KEY CHECK(length(receipt_id) = 43),
+  subject_kind TEXT NOT NULL CHECK(subject_kind IN ('CLAIMANT', 'MAIN')),
+  subject_binding_id TEXT NOT NULL CHECK(length(subject_binding_id) = 43),
+  subject_identity_digest TEXT NOT NULL CHECK(length(subject_identity_digest) = 71),
+  subject_binding_epoch INTEGER NOT NULL CHECK(subject_binding_epoch > 0),
+  process_role TEXT NOT NULL CHECK(process_role IN ('HOST', 'MCP')),
+  pairing_digest TEXT NOT NULL CHECK(length(pairing_digest) = 71),
+  issuer TEXT NOT NULL CHECK(issuer = 'CT_MAIN_OBSERVER_V1'),
+  verifier TEXT NOT NULL CHECK(verifier = 'CT_MAIN_VERIFIER_V1'),
+  method TEXT NOT NULL CHECK(method = 'OS_PROCESS_TABLE_V1'),
+  observation TEXT NOT NULL CHECK(observation IN ('ABSENT', 'REPLACED')),
+  terminated INTEGER NOT NULL CHECK(terminated = 1),
+  os_boot_id TEXT NOT NULL CHECK(length(os_boot_id) BETWEEN 1 AND 256),
+  os_session_id TEXT NOT NULL CHECK(length(os_session_id) BETWEEN 1 AND 256),
+  host_process_instance TEXT NOT NULL CHECK(length(host_process_instance) > 0),
+  plugin_instance TEXT NOT NULL CHECK(length(plugin_instance) > 0),
+  root_session_id TEXT NOT NULL CHECK(length(root_session_id) > 0),
+  mcp_process_instance TEXT NOT NULL CHECK(length(mcp_process_instance) = 43),
+  pid_start_marker TEXT NOT NULL CHECK(length(pid_start_marker) BETWEEN 1 AND 128),
+  observed_start_marker TEXT CHECK(observed_start_marker IS NULL OR length(observed_start_marker) BETWEEN 1 AND 128),
+  rollback_epoch INTEGER NOT NULL CHECK(rollback_epoch >= 0),
+  lease_version INTEGER NOT NULL CHECK(lease_version >= 0),
+  generation INTEGER NOT NULL CHECK(generation >= 0),
+  handoff_id TEXT CHECK(handoff_id IS NULL OR length(handoff_id) = 43),
+  receipt_json TEXT NOT NULL CHECK(length(CAST(receipt_json AS BLOB)) BETWEEN 1 AND 8192),
+  receipt_digest TEXT NOT NULL UNIQUE CHECK(length(receipt_digest) = 71),
+  observed_at TEXT NOT NULL CHECK(length(observed_at) = 24),
+  recorded_at TEXT NOT NULL CHECK(length(recorded_at) = 24),
+  CHECK(recorded_at >= observed_at),
+  CHECK((subject_kind = 'CLAIMANT' AND handoff_id IS NOT NULL) OR
+        (subject_kind = 'MAIN' AND handoff_id IS NULL AND generation = 0)),
+  CHECK((observation = 'ABSENT' AND observed_start_marker IS NULL) OR
+        (observation = 'REPLACED' AND observed_start_marker IS NOT NULL AND observed_start_marker <> pid_start_marker)),
+  UNIQUE(subject_binding_id, subject_binding_epoch, process_role, rollback_epoch, generation)
+);
+CREATE INDEX ct_termination_receipt_subject_lookup
+ON ct_termination_receipt(subject_binding_id, subject_binding_epoch, rollback_epoch, generation, process_role);
+CREATE INDEX ct_termination_receipt_pairing
+ON ct_termination_receipt(pairing_digest, process_role);
+CREATE TRIGGER ct_termination_receipt_no_update
+BEFORE UPDATE ON ct_termination_receipt
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_TERMINATION_RECEIPT');
+END;
+CREATE TRIGGER ct_termination_receipt_no_delete
+BEFORE DELETE ON ct_termination_receipt
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_TERMINATION_RECEIPT');
+END;
+CREATE TABLE ct_quiescence_snapshot (
+  snapshot_id TEXT PRIMARY KEY CHECK(length(snapshot_id) = 43),
+  snapshot_kind TEXT NOT NULL CHECK(snapshot_kind IN ('ROLLBACK_FREEZE', 'ROLLBACK_FINISH')),
+  rollback_epoch INTEGER NOT NULL CHECK(rollback_epoch > 0),
+  lease_version INTEGER NOT NULL CHECK(lease_version > 0),
+  owner_main_binding_id TEXT NOT NULL CHECK(length(owner_main_binding_id) = 43),
+  owner_main_binding_epoch INTEGER NOT NULL CHECK(owner_main_binding_epoch > 0),
+  owner_main_identity_digest TEXT NOT NULL CHECK(length(owner_main_identity_digest) = 71),
+  live_claims INTEGER NOT NULL CHECK(live_claims >= 0),
+  live_deliveries INTEGER NOT NULL CHECK(live_deliveries >= 0),
+  live_workers INTEGER NOT NULL CHECK(live_workers >= 0),
+  pending_work INTEGER NOT NULL CHECK(pending_work >= 0),
+  pending_attestation INTEGER NOT NULL CHECK(pending_attestation >= 0),
+  frozen_inventory_json TEXT NOT NULL CHECK(length(CAST(frozen_inventory_json AS BLOB)) BETWEEN 1 AND 65536),
+  frozen_inventory_digest TEXT NOT NULL CHECK(length(frozen_inventory_digest) = 71),
+  polling_witness TEXT NOT NULL CHECK(polling_witness = 'UNAVAILABLE_BEFORE_P7'),
+  quiescence_json TEXT NOT NULL CHECK(length(CAST(quiescence_json AS BLOB)) BETWEEN 1 AND 65536),
+  quiescence_digest TEXT NOT NULL UNIQUE CHECK(length(quiescence_digest) = 71),
+  observed_at TEXT NOT NULL CHECK(length(observed_at) = 24),
+  CHECK(snapshot_kind = 'ROLLBACK_FREEZE' OR
+        (live_claims = 0 AND live_deliveries = 0 AND live_workers = 0 AND pending_work = 0 AND pending_attestation = 0)),
+  UNIQUE(rollback_epoch, snapshot_kind)
+);
+CREATE INDEX ct_quiescence_snapshot_epoch
+ON ct_quiescence_snapshot(rollback_epoch, snapshot_kind, observed_at);
+CREATE TRIGGER ct_quiescence_snapshot_no_update
+BEFORE UPDATE ON ct_quiescence_snapshot
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_QUIESCENCE_SNAPSHOT');
+END;
+CREATE TRIGGER ct_quiescence_snapshot_no_delete
+BEFORE DELETE ON ct_quiescence_snapshot
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_QUIESCENCE_SNAPSHOT');
+END;
+CREATE TABLE ct_rollback_epoch (
+  rollback_epoch INTEGER PRIMARY KEY CHECK(rollback_epoch > 0),
+  epoch_state TEXT NOT NULL CHECK(epoch_state IN ('OPEN', 'FINISHED')),
+  begin_owner_main_binding_id TEXT NOT NULL CHECK(length(begin_owner_main_binding_id) = 43),
+  begin_owner_main_binding_epoch INTEGER NOT NULL CHECK(begin_owner_main_binding_epoch > 0),
+  begin_owner_main_identity_digest TEXT NOT NULL CHECK(length(begin_owner_main_identity_digest) = 71),
+  prior_activation_epoch INTEGER NOT NULL CHECK(prior_activation_epoch > 0),
+  begin_lease_version INTEGER NOT NULL CHECK(begin_lease_version > 0),
+  begin_lease_expires_at TEXT NOT NULL CHECK(length(begin_lease_expires_at) = 24),
+  freeze_quiescence_digest TEXT NOT NULL CHECK(length(freeze_quiescence_digest) = 71),
+  finish_lease_version INTEGER CHECK(finish_lease_version IS NULL OR finish_lease_version > 0),
+  finish_quiescence_digest TEXT CHECK(finish_quiescence_digest IS NULL OR length(finish_quiescence_digest) = 71),
+  request_identity TEXT NOT NULL UNIQUE CHECK(length(request_identity) = 36),
+  request_digest TEXT NOT NULL CHECK(length(request_digest) = 71),
+  cas_digest TEXT NOT NULL CHECK(length(cas_digest) = 71),
+  rollback_digest TEXT NOT NULL UNIQUE CHECK(length(rollback_digest) = 71),
+  begun_at TEXT NOT NULL CHECK(length(begun_at) = 24),
+  finished_at TEXT CHECK(finished_at IS NULL OR length(finished_at) = 24),
+  CHECK((epoch_state = 'OPEN' AND finish_lease_version IS NULL AND finish_quiescence_digest IS NULL AND finished_at IS NULL) OR
+        (epoch_state = 'FINISHED' AND finish_lease_version IS NOT NULL AND finish_quiescence_digest IS NOT NULL AND finished_at IS NOT NULL))
+);
+CREATE UNIQUE INDEX ct_rollback_epoch_one_open
+ON ct_rollback_epoch(epoch_state)
+WHERE epoch_state = 'OPEN';
+CREATE TRIGGER ct_rollback_epoch_immutable_begin
+BEFORE UPDATE ON ct_rollback_epoch
+WHEN NEW.rollback_epoch IS NOT OLD.rollback_epoch
+  OR NEW.begin_owner_main_binding_id IS NOT OLD.begin_owner_main_binding_id
+  OR NEW.begin_owner_main_binding_epoch IS NOT OLD.begin_owner_main_binding_epoch
+  OR NEW.begin_owner_main_identity_digest IS NOT OLD.begin_owner_main_identity_digest
+  OR NEW.prior_activation_epoch IS NOT OLD.prior_activation_epoch
+  OR NEW.begin_lease_version IS NOT OLD.begin_lease_version
+  OR NEW.begin_lease_expires_at IS NOT OLD.begin_lease_expires_at
+  OR NEW.freeze_quiescence_digest IS NOT OLD.freeze_quiescence_digest
+  OR NEW.request_identity IS NOT OLD.request_identity
+  OR NEW.request_digest IS NOT OLD.request_digest
+  OR NEW.cas_digest IS NOT OLD.cas_digest
+  OR NEW.rollback_digest IS NOT OLD.rollback_digest
+  OR NEW.begun_at IS NOT OLD.begun_at
+  OR OLD.epoch_state = 'FINISHED'
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_ROLLBACK_EPOCH');
+END;
+CREATE TRIGGER ct_rollback_epoch_no_delete
+BEFORE DELETE ON ct_rollback_epoch
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_ROLLBACK_EPOCH');
+END;
+CREATE TABLE ct_main_rebind (
+  rebind_id TEXT PRIMARY KEY CHECK(length(rebind_id) = 43),
+  rollback_epoch INTEGER NOT NULL CHECK(rollback_epoch > 0),
+  old_main_binding_id TEXT NOT NULL CHECK(length(old_main_binding_id) = 43),
+  old_main_binding_epoch INTEGER NOT NULL CHECK(old_main_binding_epoch > 0),
+  old_main_identity_digest TEXT NOT NULL CHECK(length(old_main_identity_digest) = 71),
+  new_main_binding_id TEXT NOT NULL CHECK(length(new_main_binding_id) = 43),
+  new_main_binding_epoch INTEGER NOT NULL CHECK(new_main_binding_epoch > 0),
+  new_main_identity_digest TEXT NOT NULL CHECK(length(new_main_identity_digest) = 71),
+  termination_pairing_digest TEXT NOT NULL CHECK(length(termination_pairing_digest) = 71),
+  lease_version_before INTEGER NOT NULL CHECK(lease_version_before > 0),
+  lease_version_after INTEGER NOT NULL CHECK(lease_version_after > 0),
+  lease_expires_at TEXT NOT NULL CHECK(length(lease_expires_at) = 24),
+  request_identity TEXT NOT NULL UNIQUE CHECK(length(request_identity) = 36),
+  request_digest TEXT NOT NULL CHECK(length(request_digest) = 71),
+  cas_digest TEXT NOT NULL CHECK(length(cas_digest) = 71),
+  rebind_digest TEXT NOT NULL UNIQUE CHECK(length(rebind_digest) = 71),
+  occurred_at TEXT NOT NULL CHECK(length(occurred_at) = 24),
+  CHECK(old_main_binding_id <> new_main_binding_id),
+  CHECK(new_main_binding_epoch = old_main_binding_epoch + 1),
+  CHECK(lease_version_after = lease_version_before + 1),
+  UNIQUE(rollback_epoch, new_main_binding_id)
+);
+CREATE INDEX ct_main_rebind_epoch
+ON ct_main_rebind(rollback_epoch, occurred_at, rebind_id);
+CREATE TRIGGER ct_main_rebind_no_update
+BEFORE UPDATE ON ct_main_rebind
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_MAIN_REBIND');
+END;
+CREATE TRIGGER ct_main_rebind_no_delete
+BEFORE DELETE ON ct_main_rebind
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_MAIN_REBIND');
+END;
+CREATE TABLE ct_recovery_disposition (
+  disposition_id TEXT PRIMARY KEY CHECK(length(disposition_id) = 43),
+  handoff_id TEXT NOT NULL CHECK(length(handoff_id) = 43),
+  disposition TEXT NOT NULL CHECK(disposition IN ('NOT_STARTED', 'ROLLED_BACK', 'CANCELLED', 'POISONED', 'SUSPEND_PENDING', 'REDELIVER_WORK', 'SUSPEND_ATTESTATION', 'REDELIVER_ATTESTATION')),
+  from_state TEXT NOT NULL CHECK(from_state IN ('PUBLISHED', 'CLAIMED', 'STARTED', 'COMPLETION_ATTESTED', 'WORK_SUSPENDED', 'ATTESTATION_SUSPENDED')),
+  to_state TEXT NOT NULL CHECK(to_state IN ('PUBLISHED', 'CANCELLED', 'POISONED', 'WORK_SUSPENDED', 'ATTESTATION_SUSPENDED', 'COMPLETION_ATTESTED')),
+  from_generation INTEGER NOT NULL CHECK(from_generation >= 0),
+  to_generation INTEGER NOT NULL CHECK(to_generation >= 0),
+  mode TEXT NOT NULL CHECK(mode IN ('ON', 'ROLLING_BACK')),
+  rollback_epoch INTEGER NOT NULL CHECK(rollback_epoch >= 0),
+  lease_version INTEGER NOT NULL CHECK(lease_version >= 0),
+  main_binding_id TEXT NOT NULL CHECK(length(main_binding_id) = 43),
+  main_binding_epoch INTEGER NOT NULL CHECK(main_binding_epoch > 0),
+  main_identity_digest TEXT NOT NULL CHECK(length(main_identity_digest) = 71),
+  termination_pairing_digest TEXT CHECK(termination_pairing_digest IS NULL OR length(termination_pairing_digest) = 71),
+  rollback_proof_digest TEXT CHECK(rollback_proof_digest IS NULL OR length(rollback_proof_digest) = 71),
+  frozen_inventory_digest TEXT CHECK(frozen_inventory_digest IS NULL OR length(frozen_inventory_digest) = 71),
+  preserved_attestation_digest TEXT CHECK(preserved_attestation_digest IS NULL OR length(preserved_attestation_digest) = 71),
+  attestation_source_generation INTEGER CHECK(attestation_source_generation IS NULL OR attestation_source_generation >= 0),
+  closed_delivery_id TEXT CHECK(closed_delivery_id IS NULL OR length(closed_delivery_id) = 43),
+  closed_claim_id TEXT CHECK(closed_claim_id IS NULL OR length(closed_claim_id) = 43),
+  created_delivery_id TEXT CHECK(created_delivery_id IS NULL OR length(created_delivery_id) = 43),
+  request_identity TEXT NOT NULL UNIQUE CHECK(length(request_identity) = 36),
+  request_digest TEXT NOT NULL CHECK(length(request_digest) = 71),
+  cas_digest TEXT NOT NULL CHECK(length(cas_digest) = 71),
+  disposition_digest TEXT NOT NULL UNIQUE CHECK(length(disposition_digest) = 71),
+  occurred_at TEXT NOT NULL CHECK(length(occurred_at) = 24),
+  CHECK(to_generation = from_generation + (CASE WHEN disposition IN ('NOT_STARTED', 'ROLLED_BACK', 'REDELIVER_WORK', 'REDELIVER_ATTESTATION') THEN 1 ELSE 0 END)),
+  CHECK((disposition = 'NOT_STARTED' AND from_state = 'CLAIMED' AND to_state = 'PUBLISHED') OR
+        (disposition = 'ROLLED_BACK' AND from_state = 'STARTED' AND to_state = 'PUBLISHED') OR
+        (disposition = 'REDELIVER_WORK' AND from_state = 'WORK_SUSPENDED' AND to_state = 'PUBLISHED') OR
+        (disposition = 'SUSPEND_PENDING' AND from_state = 'PUBLISHED' AND to_state = 'WORK_SUSPENDED') OR
+        (disposition = 'SUSPEND_ATTESTATION' AND from_state = 'COMPLETION_ATTESTED' AND to_state = 'ATTESTATION_SUSPENDED') OR
+        (disposition = 'REDELIVER_ATTESTATION' AND from_state = 'ATTESTATION_SUSPENDED' AND to_state = 'COMPLETION_ATTESTED') OR
+        (disposition = 'CANCELLED' AND to_state = 'CANCELLED') OR
+        (disposition = 'POISONED' AND to_state = 'POISONED')),
+  CHECK(disposition NOT IN ('NOT_STARTED', 'ROLLED_BACK', 'SUSPEND_ATTESTATION') OR termination_pairing_digest IS NOT NULL),
+  CHECK(disposition NOT IN ('SUSPEND_PENDING', 'REDELIVER_WORK', 'REDELIVER_ATTESTATION') OR termination_pairing_digest IS NULL),
+  CHECK((disposition = 'ROLLED_BACK') = (rollback_proof_digest IS NOT NULL)),
+  CHECK((disposition IN ('SUSPEND_PENDING', 'SUSPEND_ATTESTATION')) = (frozen_inventory_digest IS NOT NULL)),
+  CHECK((disposition IN ('SUSPEND_ATTESTATION', 'REDELIVER_ATTESTATION')) = (preserved_attestation_digest IS NOT NULL)),
+  CHECK((preserved_attestation_digest IS NOT NULL) = (attestation_source_generation IS NOT NULL)),
+  CHECK((disposition IN ('NOT_STARTED', 'ROLLED_BACK', 'REDELIVER_WORK', 'REDELIVER_ATTESTATION')) = (created_delivery_id IS NOT NULL)),
+  CHECK(closed_claim_id IS NULL OR closed_delivery_id IS NOT NULL),
+  CHECK(mode = 'ON' OR disposition NOT IN ('NOT_STARTED', 'ROLLED_BACK', 'REDELIVER_WORK', 'REDELIVER_ATTESTATION')),
+  CHECK(mode = 'ROLLING_BACK' OR disposition NOT IN ('SUSPEND_PENDING', 'SUSPEND_ATTESTATION')),
+  CHECK(mode = 'ON' OR (rollback_epoch > 0 AND lease_version > 0)),
+  UNIQUE(handoff_id, from_generation, disposition)
+);
+CREATE INDEX ct_recovery_disposition_history
+ON ct_recovery_disposition(handoff_id, from_generation, occurred_at, disposition_id);
+CREATE INDEX ct_recovery_disposition_epoch
+ON ct_recovery_disposition(rollback_epoch, disposition, occurred_at);
+CREATE TRIGGER ct_recovery_disposition_no_update
+BEFORE UPDATE ON ct_recovery_disposition
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_RECOVERY_DISPOSITION');
+END;
+CREATE TRIGGER ct_recovery_disposition_no_delete
+BEFORE DELETE ON ct_recovery_disposition
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_RECOVERY_DISPOSITION');
+END;
+`
+export const MIGRATION_005_CHECKSUM = sha256(Buffer.from(MIGRATION_005_SQL))
 const MANIFEST_SQL = `SELECT type, name, tbl_name, sql
 FROM sqlite_master
 WHERE name IN ('agent','message','message_pending','lock',
@@ -470,6 +703,7 @@ const V1_OBJECTS = schemaObjects(MIGRATION_001_SQL)
 const V2_OBJECTS = new Map([...V1_OBJECTS, ...schemaObjects(MIGRATION_002_SQL)])
 const V3_OBJECTS = new Map([...V2_OBJECTS, ...schemaObjects(MIGRATION_003_SQL)])
 const V4_OBJECTS = new Map([...V3_OBJECTS, ...schemaObjects(MIGRATION_004_SQL)])
+const V5_OBJECTS = new Map([...V4_OBJECTS, ...schemaObjects(MIGRATION_005_SQL)])
 export const SCHEMA_004_MANIFEST = Object.freeze({
   schema_version: 4,
   objects: Object.freeze([...V4_OBJECTS.values()]
@@ -480,6 +714,24 @@ export const SCHEMA_004_MANIFEST = Object.freeze({
     Object.freeze({ version: 2, ddl_checksum: MIGRATION_002_CHECKSUM }),
     Object.freeze({ version: 3, ddl_checksum: MIGRATION_003_CHECKSUM }),
     Object.freeze({ version: 4, ddl_checksum: MIGRATION_004_CHECKSUM }),
+  ]),
+})
+// P6-A pins the schema-5 manifest definition only; no bootstrapAdmin target-version
+// branch, execution path, or SCHEMA_MANIFESTS lookup entry accepts or reaches schema 5
+// yet (P6-B owns the fresh 4->5 execution/version-acceptance work). This export exists
+// solely so tests can independently verify the complete 58-object schema-5 manifest and
+// the exact v1..v5 checksum chain ahead of that execution work.
+export const SCHEMA_005_MANIFEST = Object.freeze({
+  schema_version: 5,
+  objects: Object.freeze([...V5_OBJECTS.values()]
+    .sort((left, right) => left.type.localeCompare(right.type) || left.name.localeCompare(right.name))
+    .map((row) => Object.freeze({ ...row }))),
+  migrations: Object.freeze([
+    Object.freeze({ version: 1, ddl_checksum: MIGRATION_001_CHECKSUM }),
+    Object.freeze({ version: 2, ddl_checksum: MIGRATION_002_CHECKSUM }),
+    Object.freeze({ version: 3, ddl_checksum: MIGRATION_003_CHECKSUM }),
+    Object.freeze({ version: 4, ddl_checksum: MIGRATION_004_CHECKSUM }),
+    Object.freeze({ version: 5, ddl_checksum: MIGRATION_005_CHECKSUM }),
   ]),
 })
 const SCHEMA_MANIFESTS = new Map([
