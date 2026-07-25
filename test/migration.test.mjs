@@ -1979,6 +1979,7 @@ describe("P6-B fresh 4->5 migration, schema-5 validator, compatibility", () => {
   const forgeCancelOrPoisonRecovery = (fixture, disposition, overrides = {}) => {
     const db = new Database(fixture.dbPath)
     const main = db.query("SELECT * FROM ct_main_binding WHERE binding_status='ACTIVE'").get()
+    const handoff = db.query("SELECT handoff_fingerprint FROM ct_handoff WHERE id=?").get(fixture.handoffId)
     const occurredAt = new Date().toISOString()
     const transitionId = randomBytes(32).toString("base64url")
     const dispositionId = randomBytes(32).toString("base64url")
@@ -1986,30 +1987,38 @@ describe("P6-B fresh 4->5 migration, schema-5 validator, compatibility", () => {
     const scopeKey = `handoff:${fixture.handoffId}:generation:${fixture.generation}:${disposition.toLowerCase()}`
     const publicResponse = { id: fixture.handoffId, state: disposition, generation: fixture.generation, replayed: false }
     const responseDigest = digest(canonical(publicResponse))
-    const dispositionDigest = digest(canonical({
+    const decisionValue = {
       kind: "recover_decision_v1", version: 1, disposition, id: fixture.handoffId,
       from_state: "PUBLISHED", to_state: disposition, from_generation: fixture.generation, to_generation: fixture.generation,
       rollback_epoch: 0, closed_delivery_id: fixture.deliveryId, closed_claim_id: null, created_delivery_id: null,
       termination_pairing_digest: null, rollback_proof_digest: null, frozen_inventory_digest: null, preserved_attestation_digest: null,
-    }))
+      ...overrides.decision,
+    }
+    const dispositionDigest = digest(canonical(decisionValue))
+    const requestValue = {
+      request_identity: requestIdentity, id: fixture.handoffId, es: "PUBLISHED", eg: fixture.generation, action: disposition,
+      expected_rollback_epoch: 0, delivery_id: fixture.deliveryId, claim_id: null, rollback_proof: null, ...overrides.request,
+    }
+    const requestDigestValue = digest(canonical(requestValue))
     const casInput = {
       kind: `${disposition.toLowerCase()}_cas_v1`, version: 1,
       writer_fence_v1: { schema_version: 5, mode: "ON", anchor_id: fixture.anchor.anchor_id, config_digest: digest(canonical(fixture.context)),
         observed_rollback_epoch: 0, observed_lease_version: 0, observed_lease_status: "NONE" },
       main_authority_v1: { main_binding_id: main.main_binding_id, binding_epoch: main.binding_epoch, identity_digest: main.identity_digest },
-      id: fixture.handoffId, expected_state: "PUBLISHED", expected_generation: fixture.generation,
+      id: fixture.handoffId, disposition, expected_state: "PUBLISHED", expected_generation: fixture.generation, target_generation: fixture.generation,
+      expected_rollback_epoch: 0, expected_lease_version: 0, expected_lease_status: "NONE", expected_delivery_state: "PENDING",
+      expected_claim_state: "ABSENT", delivery_id: fixture.deliveryId, claim_id: null, handoff_fingerprint: handoff.handoff_fingerprint,
+      termination_pairing_digest: null, rollback_proof_digest: null, frozen_inventory_digest: null, preserved_attestation_digest: null,
+      ...overrides.cas,
     }
     const casDigest = digest(canonical(casInput))
-    const requestValue = { request_identity: requestIdentity, id: fixture.handoffId, es: "PUBLISHED", eg: fixture.generation,
-      action: disposition, expected_rollback_epoch: 0, delivery_id: null, claim_id: null, rollback_proof: null }
-    const requestDigestValue = digest(canonical(requestValue))
     const envelope = {
       kind: `${disposition.toLowerCase()}_response_envelope_v1`, version: 1, public_response: publicResponse,
       evidence: {
         request: requestValue, request_digest: requestDigestValue, scope_key: scopeKey, cas_input: casInput, cas_digest: casDigest,
         disposition_id: dispositionId, closed_delivery_id: fixture.deliveryId, closed_claim_id: null, created_delivery_id: null,
-        termination_pairing_digest: null, rollback_proof: null, rollback_proof_digest: null, frozen_inventory_digest: null,
-        preserved_attestation_digest: null, attestation_source_generation: null,
+        termination_pairing_digest: null, rollback_proof: null, rollback_proof_digest: overrides.evidenceRollbackProofDigest ?? null,
+        frozen_inventory_digest: null, preserved_attestation_digest: null, attestation_source_generation: null,
       },
     }
     db.run("UPDATE ct_delivery SET delivery_state='CLOSED', closed_at=? WHERE delivery_id=?", [occurredAt, fixture.deliveryId])
@@ -2027,7 +2036,7 @@ describe("P6-B fresh 4->5 migration, schema-5 validator, compatibility", () => {
          request_identity,request_digest,cas_digest,disposition_digest,occurred_at)
        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [dispositionId, fixture.handoffId, disposition, "PUBLISHED", disposition,
-        overrides.fromGeneration ?? fixture.generation, overrides.fromGeneration ?? fixture.generation, "ON", 0, 0,
+        overrides.fromGeneration ?? fixture.generation, overrides.fromGeneration ?? fixture.generation, "ON", 0, overrides.dispositionLeaseVersion ?? 0,
         main.main_binding_id, main.binding_epoch, main.identity_digest, null, null, null, null, null,
         overrides.closedDeliveryId !== undefined ? overrides.closedDeliveryId : fixture.deliveryId, null, null,
         requestIdentity, requestDigestValue, casDigest, dispositionDigest, occurredAt],
@@ -2049,6 +2058,18 @@ describe("P6-B fresh 4->5 migration, schema-5 validator, compatibility", () => {
     forgeCancelOrPoisonRecovery(fixture, "POISONED")
     const status = fixture.mainDispatch("status", undefined)
     expect(status.schema_version).toBe(5)
+  })
+
+  for (const [name, overrides] of [
+    ["request drift", { request: { delivery_id: null } }],
+    ["CAS drift", { cas: { expected_delivery_state: "CLAIMED" } }],
+    ["decision drift", { decision: { closed_claim_id: "x".repeat(43) } }],
+    ["proof-digest drift", { evidenceRollbackProofDigest: digest("forged-proof-digest") }],
+    ["disposition-row drift", { dispositionLeaseVersion: 7 }],
+  ]) test(`real RECOVER validator rejects ${name} despite internally consistent stored digests`, () => {
+    const fixture = provisionSchema5PublishedHandoff()
+    forgeCancelOrPoisonRecovery(fixture, "CANCELLED", overrides)
+    expect(errorCode(() => fixture.mainDispatch("status", undefined))).toBe("CT_SCHEMA_INVALID")
   })
 
   test("real RECOVER validator rejects a disposition row that disagrees with the reverse-linked (from_state,to_state) map", () => {

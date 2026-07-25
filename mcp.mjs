@@ -269,6 +269,25 @@ const CONTINUATION_TOOL_DEFINITIONS = new Map([
       required: ["request_identity", "source_id", "lineage_id", "revision", "payload", "payload_digest"],
     },
   },
+  {
+    name: "recover",
+    description: "Apply one ON-mode recovery disposition under ACTIVE Main authority, fenced to the exact handoff generation, delivery, claim, and rollback epoch.",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        request_identity: { type: "string" },
+        id: { type: "string" },
+        es: { type: "string", enum: ["PUBLISHED", "CLAIMED", "STARTED", "COMPLETION_ATTESTED"] },
+        eg: { type: "integer", minimum: 0 },
+        action: { type: "string", enum: ["NOT_STARTED", "ROLLED_BACK", "CANCELLED", "POISONED"] },
+        expected_rollback_epoch: { type: "integer", minimum: 0 },
+        delivery_id: { type: "string" },
+        claim_id: { anyOf: [{ type: "string" }, { type: "null" }] },
+        rollback_proof: { anyOf: [{ type: "object" }, { type: "null" }] },
+      },
+      required: ["request_identity", "id", "es", "eg", "action", "expected_rollback_epoch", "delivery_id", "claim_id", "rollback_proof"],
+    },
+  },
 ].map((tool) => [tool.name, tool]))
 // P6-C: recordTerminationReceipt additionally requires the processObserver
 // capability, so it is listed separately and only merged in when that

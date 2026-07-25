@@ -63,6 +63,22 @@ const mainRequest = (anchor, epoch = 0, request_identity = randomUUID()) => ({ r
 const registerRequest = (epoch = 0, state = "ABSENT", request_identity = randomUUID()) => ({ request_identity, expected_binding_epoch: epoch, expected_binding_state: state })
 const activationRequest = (epoch = 1, evidence_digest = digest("p6c-activation-evidence"), request_identity = randomUUID()) => ({ request_identity, expected_mode: "OFF", expected_binding_epoch: epoch, evidence_digest })
 const singleObserver = (result) => ({ observe: () => result })
+const effect = (effect_index = 0) => ({ effect_index, target_kind: "FILESYSTEM", target: `p6d-effect-${effect_index}`, operation: "write",
+  observability: "OBSERVABLE", compensatability: "COMPENSATABLE", pre_state_digest: digest(`p6d-pre-state-${effect_index}`) })
+const effectManifest = (id, generation, effects = [effect()]) => ({
+  kind: "effect_manifest_v1", version: 1, id, generation, effects,
+  pre_start_boundary_digest: digest(canonical({ kind: "effect_boundary_v1", version: 1, id, generation,
+    effects: effects.map(({ effect_index, target_kind, target, pre_state_digest }) => ({ effect_index, target_kind, target, pre_state_digest })) })),
+})
+const rollbackProof = (manifest, overrides = {}) => {
+  const receipts = manifest.effects.map((row) => ({ kind: "compensation_receipt_v1", version: 1, id: manifest.id, generation: manifest.generation,
+    effect_index: row.effect_index, target_kind: row.target_kind, target: row.target, compensation_operation: `undo-${row.operation}`,
+    read_back_digest: row.pre_state_digest, read_back_matches_pre_state: true, occurred_at: new Date().toISOString() }))
+  const observed_boundary_digest = digest(canonical({ kind: "effect_boundary_v1", version: 1, id: manifest.id, generation: manifest.generation,
+    effects: receipts.map(({ effect_index, target_kind, target, read_back_digest }) => ({ effect_index, target_kind, target, pre_state_digest: read_back_digest })) }))
+  return { kind: "rollback_proof_v1", version: 1, id: manifest.id, generation: manifest.generation,
+    pre_start_boundary_digest: manifest.pre_start_boundary_digest, receipts, observed_boundary_digest, boundary_equal: true, ...overrides }
+}
 
 // Real bootstrapAdmin 1->2->3->4->5, mirroring P6-A/B's own fixtures.
 const provisionV5 = () => {
@@ -80,7 +96,7 @@ const provisionV5 = () => {
 // and a real create->validate->publish->claim leaving the handoff CLAIMED
 // with exactly one LIVE claim — the crashed-claimant precondition CT-R7-S1
 // and CT-R7-S5 both describe.
-const buildClaimedFixture = () => {
+const buildClaimedFixture = ({ claim = true } = {}) => {
   const fixture = provisionV5()
   const mainIdentity = opaqueProcess(), mainMetadata = capability()
   const mainDispatch = dispatcher(fixture.main, mainMetadata, mainIdentity)
@@ -120,18 +136,19 @@ const buildClaimedFixture = () => {
   const before = new Database(fixture.dbPath, { readonly: true })
   const deliveryId = before.query("SELECT delivery_id FROM ct_delivery WHERE handoff_id=?").get(created.id).delivery_id
   before.close()
-  const claimed = workerDispatch("claim", { request_identity: randomUUID(), delivery_id: deliveryId, id: created.id, es: "PUBLISHED", eg: created.generation, purpose: "WORK" })
+  const claimed = claim ? workerDispatch("claim", { request_identity: randomUUID(), delivery_id: deliveryId, id: created.id, es: "PUBLISHED", eg: created.generation, purpose: "WORK" }) : null
 
   const rows = new Database(fixture.dbPath, { readonly: true })
   const workerRow = rows.query("SELECT * FROM ct_claimant_binding WHERE binding_id=?").get(registered.binding_id)
   const mainRow = rows.query("SELECT * FROM ct_main_binding WHERE main_binding_id=?").get(main.main_binding_id)
+  const claimRow = rows.query("SELECT claim_id FROM ct_claim WHERE handoff_id=? AND generation=?").get(created.id, created.generation)
   rows.close()
 
   return {
     fixture, mainDispatch, mainMetadata, mainIdentity, mainBindingId: main.main_binding_id, mainBindingEpoch: main.binding_epoch, mainIdentityDigest: mainRow.identity_digest,
     workerDispatch, workerMetadata, workerIdentity,
     workerBindingId: registered.binding_id, workerBindingEpoch: registered.binding_epoch, workerIdentityDigest: workerRow.identity_digest,
-    handoffId: created.id, generation: claimed.generation,
+    handoffId: created.id, generation: claimed?.generation ?? created.generation, deliveryId, claimId: claimRow?.claim_id ?? null, token: claimed?.token ?? null,
   }
 }
 // Adds one more DRAFT handoff (same claimant) and immediately rejects it,
@@ -168,6 +185,81 @@ const claimantRequest = (built, process_role, request_identity = randomUUID()) =
 })
 const bootId = () => `boot-${randomBytes(8).toString("hex")}`
 const sessionId = () => `session-${randomBytes(8).toString("hex")}`
+const recordClaimantPair = (built) => {
+  const boot = bootId(), session = sessionId()
+  const dispatch = dispatcher(built.fixture.main, built.mainMetadata, built.mainIdentity,
+    singleObserver({ status: "ABSENT", observed_start_marker: null, os_boot_id: boot, os_session_id: session }))
+  dispatch("recordTerminationReceipt", claimantRequest(built, "HOST"))
+  dispatch("recordTerminationReceipt", claimantRequest(built, "MCP"))
+}
+const insertStoredTerminationPair = (built, { observedAt = new Date().toISOString(), recordedAt = observedAt, receiptJsonFor = canonical } = {}) => {
+  const db = new Database(built.fixture.dbPath)
+  const subject = db.query("SELECT * FROM ct_claimant_binding WHERE binding_id=?").get(built.workerBindingId)
+  const boot = bootId(), session = sessionId()
+  const pairingValue = { kind: "termination_pairing_v1", version: 1, subject_binding_id: subject.binding_id, subject_identity_digest: subject.identity_digest,
+    subject_binding_epoch: subject.binding_epoch, rollback_epoch: 0, generation: built.generation, os_boot_id: boot, os_session_id: session, roles: ["HOST", "MCP"] }
+  const pairingDigest = digest(canonical(pairingValue))
+  for (const role of ["HOST", "MCP"]) {
+    const receiptValue = {
+      kind: "termination_receipt_v1", version: 1,
+      subject: { kind: "CLAIMANT", binding_id: subject.binding_id, identity_digest: subject.identity_digest, binding_epoch: subject.binding_epoch },
+      process: { role, host_process_instance: subject.host_process_instance, plugin_instance: subject.plugin_instance, root_session_id: subject.root_session_id,
+        mcp_process_instance: subject.mcp_process_instance, pid_start_marker: subject.pid_start_marker, observed_start_marker: null },
+      proof: { issuer: "CT_MAIN_OBSERVER_V1", verifier: "CT_MAIN_VERIFIER_V1", method: "OS_PROCESS_TABLE_V1", observation: "ABSENT", os_boot_id: boot, os_session_id: session, terminated: true },
+      binding: { rollback_epoch: 0, lease_version: 0, generation: built.generation, handoff_id: built.handoffId }, observed_at: observedAt,
+    }
+    db.run(`INSERT INTO ct_termination_receipt(receipt_id,subject_kind,subject_binding_id,subject_identity_digest,subject_binding_epoch,process_role,pairing_digest,
+      issuer,verifier,method,observation,terminated,os_boot_id,os_session_id,host_process_instance,plugin_instance,root_session_id,mcp_process_instance,pid_start_marker,
+      observed_start_marker,rollback_epoch,lease_version,generation,handoff_id,receipt_json,receipt_digest,observed_at,recorded_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,1,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [randomBytes(32).toString("base64url"), "CLAIMANT", subject.binding_id, subject.identity_digest, subject.binding_epoch, role, pairingDigest,
+        "CT_MAIN_OBSERVER_V1", "CT_MAIN_VERIFIER_V1", "OS_PROCESS_TABLE_V1", "ABSENT", boot, session, subject.host_process_instance, subject.plugin_instance,
+        subject.root_session_id, subject.mcp_process_instance, subject.pid_start_marker, null, 0, 0, built.generation, built.handoffId,
+        receiptJsonFor(receiptValue), digest(canonical(receiptValue)), observedAt, recordedAt])
+  }
+  db.close()
+}
+const recoverRequest = (built, action, overrides = {}) => ({
+  request_identity: randomUUID(), id: built.handoffId, es: action === "ROLLED_BACK" ? "STARTED" : "CLAIMED", eg: built.generation,
+  action, expected_rollback_epoch: 0, delivery_id: built.deliveryId, claim_id: built.claimId, rollback_proof: null, ...overrides,
+})
+const ackStarted = (built) => {
+  const manifest = effectManifest(built.handoffId, built.generation)
+  built.workerDispatch("ack", { request_identity: randomUUID(), delivery_id: built.deliveryId, id: built.handoffId, es: "CLAIMED", eg: built.generation,
+    purpose: "WORK", token: built.token, effect_manifest: manifest })
+  return manifest
+}
+const recoverClaimedHistory = (action) => {
+  const built = buildClaimedFixture()
+  const manifest = action === "ROLLED_BACK" ? ackStarted(built) : null
+  recordClaimantPair(built)
+  const request = recoverRequest(built, action, { rollback_proof: manifest ? rollbackProof(manifest) : null })
+  built.mainDispatch("recover", request)
+  expect(built.mainDispatch("status", undefined).schema_version).toBe(5)
+  return built
+}
+const mutableTerminationHistory = (built) => {
+  const db = new Database(built.fixture.dbPath)
+  db.run("DROP TRIGGER ct_termination_receipt_no_update")
+  db.run("DROP TRIGGER ct_termination_receipt_no_delete")
+  // Raw-history fixtures intentionally remove the record-operation envelopes:
+  // RECOVER must prove its own non-null digest from canonical source rows.
+  db.run("DELETE FROM ct_idempotency WHERE operation='recordTerminationReceipt'")
+  return db
+}
+const sealTerminationHistory = (db) => {
+  db.run(`CREATE TRIGGER ct_termination_receipt_no_update
+BEFORE UPDATE ON ct_termination_receipt
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_TERMINATION_RECEIPT');
+END`)
+  db.run(`CREATE TRIGGER ct_termination_receipt_no_delete
+BEFORE DELETE ON ct_termination_receipt
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_TERMINATION_RECEIPT');
+END`)
+  db.close()
+}
 
 describe("P6-C proof plane: recordTerminationReceipt", () => {
   test("records a fresh ABSENT receipt for a crashed CLAIMED claimant, exposes only the pinned public shape, and replays idempotently", () => {
@@ -305,6 +397,26 @@ describe("P6-C proof plane: validTerminationPairing (reused unmodified by later 
     expect(result.pairing_digest).toBe(result.host.pairing_digest)
   })
 
+  test("accepts a canonically stored receipt pair inside the freshness boundary", () => {
+    const built = buildClaimedFixture()
+    insertStoredTerminationPair(built, { observedAt: new Date(Date.now() - 29_000).toISOString() })
+    const db = openDb(built)
+    expect(tower.validTerminationPairing(db, pairingArgs(built)).pairing_digest).toMatch(/^sha256:[0-9a-f]{64}$/)
+    db.close()
+  })
+
+  for (const [name, options] of [
+    ["invalid observed_at", { observedAt: "x".repeat(24) }],
+    ["future observed_at", { observedAt: new Date(Date.now() + 10_000).toISOString() }],
+    ["receipt_json mismatch", { receiptJsonFor: () => "{}" }],
+  ]) test(`rejects ${name} with CT_RECOVERY_REQUIRED`, () => {
+    const built = buildClaimedFixture()
+    insertStoredTerminationPair(built, options)
+    const db = openDb(built)
+    expect(errorCode(() => tower.validTerminationPairing(db, pairingArgs(built)))).toBe("CT_RECOVERY_REQUIRED")
+    db.close()
+  })
+
   test("CT-R7-S5 — mismatched os_boot_id between HOST and MCP rows is rejected with CT_RECOVERY_REQUIRED", () => {
     const built = buildClaimedFixture()
     const session = sessionId()
@@ -386,6 +498,154 @@ describe("P6-C proof plane: validTerminationPairing (reused unmodified by later 
     const db = openDb(built)
     expect(errorCode(() => tower.validTerminationPairing(db, pairingArgs(built)))).toBe("CT_RECOVERY_REQUIRED")
     db.close()
+  })
+})
+
+describe("P6-D ON-mode recovery dispositions", () => {
+  test("CT-R7-S2/S12 — NOT_STARTED atomically fences CLAIMED, closes the old claim/delivery, republishes at generation +1, and replays exactly", () => {
+    const built = buildClaimedFixture()
+    recordClaimantPair(built)
+    const request = recoverRequest(built, "NOT_STARTED")
+    expect(built.mainDispatch("recover", request)).toEqual({ id: built.handoffId, state: "PUBLISHED", generation: 1, replayed: false })
+    expect(built.mainDispatch("recover", request)).toEqual({ id: built.handoffId, state: "PUBLISHED", generation: 1, replayed: true })
+
+    const db = new Database(built.fixture.dbPath, { readonly: true })
+    const handoff = db.query("SELECT state,generation FROM ct_handoff WHERE id=?").get(built.handoffId)
+    const deliveries = db.query("SELECT delivery_id,generation,delivery_state,purpose,claim_id FROM ct_delivery WHERE handoff_id=? ORDER BY generation").all(built.handoffId)
+    const claim = db.query("SELECT claim_state,closed_at FROM ct_claim WHERE claim_id=?").get(built.claimId)
+    const disposition = db.query("SELECT * FROM ct_recovery_disposition WHERE handoff_id=?").get(built.handoffId)
+    const transitions = db.query("SELECT operation,from_state,to_state,generation FROM ct_handoff_transition WHERE handoff_id=? AND operation='RECOVER'").all(built.handoffId)
+    const idempotency = db.query("SELECT COUNT(*) AS count FROM ct_idempotency WHERE operation='recover'").get().count
+    const proofRows = db.query("SELECT COUNT(*) AS count FROM ct_termination_receipt").get().count
+    db.close()
+    expect(handoff).toEqual({ state: "PUBLISHED", generation: 1 })
+    expect(deliveries).toEqual([
+      { delivery_id: built.deliveryId, generation: 0, delivery_state: "CLOSED", purpose: "WORK", claim_id: built.claimId },
+      { delivery_id: disposition.created_delivery_id, generation: 1, delivery_state: "PENDING", purpose: "WORK", claim_id: null },
+    ])
+    expect(claim.claim_state).toBe("CLOSED")
+    expect(claim.closed_at).toBe(disposition.occurred_at)
+    expect(disposition.disposition).toBe("NOT_STARTED")
+    expect(disposition.termination_pairing_digest).toMatch(/^sha256:[0-9a-f]{64}$/)
+    expect(transitions).toEqual([{ operation: "RECOVER", from_state: "CLAIMED", to_state: "PUBLISHED", generation: 1 }])
+    expect(idempotency).toBe(1)
+    expect(proofRows).toBe(2)
+  })
+
+  test("CT-R7-S6 — ROLLED_BACK recomputes a complete compensation boundary and republishes STARTED exactly once", () => {
+    const built = buildClaimedFixture()
+    const manifest = ackStarted(built)
+    recordClaimantPair(built)
+    const request = recoverRequest(built, "ROLLED_BACK", { rollback_proof: rollbackProof(manifest) })
+    expect(built.mainDispatch("recover", request)).toEqual({ id: built.handoffId, state: "PUBLISHED", generation: 1, replayed: false })
+    const db = new Database(built.fixture.dbPath, { readonly: true })
+    const disposition = db.query("SELECT disposition,from_state,to_state,from_generation,to_generation,rollback_proof_digest,created_delivery_id FROM ct_recovery_disposition").get()
+    const fresh = db.query("SELECT purpose,delivery_state,generation FROM ct_delivery WHERE delivery_id=?").get(disposition.created_delivery_id)
+    db.close()
+    expect(disposition).toEqual({ disposition: "ROLLED_BACK", from_state: "STARTED", to_state: "PUBLISHED", from_generation: 0, to_generation: 1,
+      rollback_proof_digest: digest(canonical(request.rollback_proof)), created_delivery_id: disposition.created_delivery_id })
+    expect(fresh).toEqual({ purpose: "WORK", delivery_state: "PENDING", generation: 1 })
+  })
+
+  test("CT-R7-S3 — absent or unequal rollback proof refuses republish and leaves STARTED state untouched", () => {
+    for (const proofKind of ["absent", "unequal"]) {
+      const built = buildClaimedFixture()
+      const manifest = ackStarted(built)
+      recordClaimantPair(built)
+      const proof = proofKind === "absent" ? null : rollbackProof(manifest, { boundary_equal: false })
+      expect(errorCode(() => built.mainDispatch("recover", recoverRequest(built, "ROLLED_BACK", { rollback_proof: proof })))).toBe("CT_RECOVERY_REQUIRED")
+      const db = new Database(built.fixture.dbPath, { readonly: true })
+      expect(db.query("SELECT state,generation FROM ct_handoff WHERE id=?").get(built.handoffId)).toEqual({ state: "STARTED", generation: 0 })
+      expect(db.query("SELECT COUNT(*) AS count FROM ct_recovery_disposition").get().count).toBe(0)
+      expect(db.query("SELECT COUNT(*) AS count FROM ct_delivery WHERE delivery_state='PENDING'").get().count).toBe(0)
+      db.close()
+    }
+  })
+
+  test("CT-R7-S4 — stale generation, wrong claim fence, missing pairing, and consumed attestation reject without a disposition", () => {
+    const stale = buildClaimedFixture()
+    recordClaimantPair(stale)
+    expect(errorCode(() => stale.mainDispatch("recover", recoverRequest(stale, "NOT_STARTED", { eg: stale.generation + 1 })))).toBe("CT_FENCE_MISMATCH")
+    expect(errorCode(() => stale.mainDispatch("recover", recoverRequest(stale, "NOT_STARTED", { claim_id: randomBytes(32).toString("base64url") })))).toBe("CT_FENCE_MISMATCH")
+
+    const unpaired = buildClaimedFixture()
+    const liveObserver = dispatcher(unpaired.fixture.main, unpaired.mainMetadata, unpaired.mainIdentity,
+      singleObserver({ status: "PRESENT", observed_start_marker: null, os_boot_id: bootId(), os_session_id: sessionId() }))
+    expect(errorCode(() => liveObserver("recordTerminationReceipt", claimantRequest(unpaired, "HOST")))).toBe("CT_RECOVERY_REQUIRED")
+    expect(errorCode(() => unpaired.mainDispatch("recover", recoverRequest(unpaired, "NOT_STARTED")))).toBe("CT_RECOVERY_REQUIRED")
+
+    const consumed = buildClaimedFixture()
+    ackStarted(consumed)
+    const attested = consumed.mainDispatch("attestCompletion", { request_identity: randomUUID(), id: consumed.handoffId, es: "STARTED", eg: consumed.generation })
+    const rows = new Database(consumed.fixture.dbPath, { readonly: true })
+    const attestationDigest = rows.query("SELECT decision_digest FROM ct_handoff_transition WHERE handoff_id=? AND operation='ATTEST_COMPLETION'").get(consumed.handoffId).decision_digest
+    rows.close()
+    consumed.workerDispatch("complete", { request_identity: randomUUID(), delivery_id: consumed.deliveryId, id: consumed.handoffId, es: attested.state,
+      eg: consumed.generation, purpose: "WORK", token: consumed.token, attestation_digest: attestationDigest,
+      committed_result: { kind: "committed_result_v1", version: 1, id: consumed.handoffId, generation: consumed.generation, attestation_digest: attestationDigest,
+        result_ref: "p6d-consumed", result_digest: digest("p6d-result"), effect_settlement_digest: digest("p6d-settlement") } })
+    expect(errorCode(() => consumed.mainDispatch("recover", recoverRequest(consumed, "CANCELLED", { es: "COMPLETION_ATTESTED" })))).toBe("CT_INVALID_TRANSITION")
+    for (const built of [stale, unpaired, consumed]) {
+      const db = new Database(built.fixture.dbPath, { readonly: true })
+      expect(db.query("SELECT COUNT(*) AS count FROM ct_recovery_disposition").get().count).toBe(0)
+      db.close()
+    }
+  })
+
+  test("CT-R7-S12 — CANCELLED closes live work with proof while POISONED fences unclaimed PUBLISHED work without creating delivery", () => {
+    const cancelled = buildClaimedFixture()
+    recordClaimantPair(cancelled)
+    expect(cancelled.mainDispatch("recover", recoverRequest(cancelled, "CANCELLED"))).toEqual({ id: cancelled.handoffId, state: "CANCELLED", generation: 0, replayed: false })
+    const poisoned = buildClaimedFixture({ claim: false })
+    const poisonRequest = recoverRequest(poisoned, "POISONED", { es: "PUBLISHED", claim_id: null })
+    expect(poisoned.mainDispatch("recover", poisonRequest)).toEqual({ id: poisoned.handoffId, state: "POISONED", generation: 0, replayed: false })
+    for (const [built, expected] of [[cancelled, "CANCELLED"], [poisoned, "POISONED"]]) {
+      const db = new Database(built.fixture.dbPath, { readonly: true })
+      expect(db.query("SELECT state,generation FROM ct_handoff WHERE id=?").get(built.handoffId)).toEqual({ state: expected, generation: 0 })
+      expect(db.query("SELECT COUNT(*) AS count FROM ct_delivery WHERE handoff_id=? AND delivery_state<>'CLOSED'").get(built.handoffId).count).toBe(0)
+      expect(db.query("SELECT COUNT(*) AS count FROM ct_recovery_disposition WHERE handoff_id=?").get(built.handoffId).count).toBe(1)
+      db.close()
+    }
+  })
+
+  for (const [name, action, mutate] of [
+    ["zero source receipts", "NOT_STARTED", (db) => db.run("DELETE FROM ct_termination_receipt")],
+    ["only one source role", "CANCELLED", (db) => db.run("DELETE FROM ct_termination_receipt WHERE process_role='MCP'")],
+    ["wrong source identity", "CANCELLED", (db) => db.run("UPDATE ct_termination_receipt SET subject_identity_digest=?", [digest("wrong-claimant")])],
+    ["wrong source pairing", "POISONED", (db) => db.run("UPDATE ct_termination_receipt SET pairing_digest=?", [digest("wrong-pairing")])],
+    ["noncanonical source receipt_json", "NOT_STARTED", (db) => db.run("UPDATE ct_termination_receipt SET receipt_json='{}' WHERE process_role='HOST'")],
+  ]) test(`historical ${action} rejects ${name} despite a self-consistent recovery envelope`, () => {
+    const built = recoverClaimedHistory(action)
+    const db = mutableTerminationHistory(built)
+    mutate(db)
+    sealTerminationHistory(db)
+    expect(errorCode(() => built.mainDispatch("status", undefined))).toBe("CT_SCHEMA_INVALID")
+  })
+
+  test("historical claim-bearing recovery accepts a canonical source pair after its live 30-second window expires", () => {
+    const built = recoverClaimedHistory("POISONED")
+    const db = mutableTerminationHistory(built)
+    const oldObservedAt = new Date(Date.now() - 60_000).toISOString()
+    for (const row of db.query("SELECT receipt_id,receipt_json FROM ct_termination_receipt").all()) {
+      const receipt = JSON.parse(row.receipt_json)
+      receipt.observed_at = oldObservedAt
+      db.run("UPDATE ct_termination_receipt SET receipt_json=?,receipt_digest=?,observed_at=?,recorded_at=? WHERE receipt_id=?",
+        [canonical(receipt), digest(canonical(receipt)), oldObservedAt, oldObservedAt, row.receipt_id])
+    }
+    sealTerminationHistory(db)
+    expect(built.mainDispatch("status", undefined).schema_version).toBe(5)
+  })
+
+  test("recover is capability-gated through MCP with the exact nine-field schema and no processObserver requirement", () => {
+    const built = buildClaimedFixture()
+    recordClaimantPair(built)
+    const handler = createMcpHandler({ cwd: built.fixture.main, trustedMetadata: { snapshot: () => built.mainMetadata }, processIdentity: { snapshot: () => built.mainIdentity } })
+    const tool = handler({ method: "tools/list" }).tools.find(({ name }) => name === "recover")
+    expect(tool.inputSchema.required.slice().sort()).toEqual(["action", "claim_id", "delivery_id", "eg", "es", "expected_rollback_epoch", "id", "request_identity", "rollback_proof"])
+    expect(tool.inputSchema.additionalProperties).toBe(false)
+    const result = handler({ method: "tools/call", params: { name: "recover", arguments: recoverRequest(built, "NOT_STARTED") } })
+    expect(result.isError).toBeUndefined()
+    expect(JSON.parse(result.content[0].text)).toEqual({ id: built.handoffId, state: "PUBLISHED", generation: 1, replayed: false })
   })
 })
 
