@@ -3251,11 +3251,223 @@ export const continuationRevise = (handle, ctxFactory, request) => {
   }
 }
 
-export const createContinuationDispatcher = ({ cwd = process.cwd(), trustedMetadata, processIdentity }) => {
+// P6-C: recordTerminationReceipt is server-only proof. The request merely
+// names a persisted binding and a process role; every other field (identity,
+// process tuple, PID-reuse observation, boot/session ids) is derived from the
+// constructor-owned processObserver capability and the persisted row, never
+// from the caller. Freshness is a 30-second window, re-verified at every use
+// by validTerminationPairing below — never a durable licence.
+const TERMINATION_RECEIPT_FRESHNESS_MS = 30_000
+const recordTerminationReceiptKeys = ["process_role", "request_identity", "subject_binding_epoch", "subject_binding_id", "subject_kind"]
+const assertRecordTerminationReceiptRequest = (request) => {
+  if (!request || Object.getPrototypeOf(request) !== Object.prototype || Object.keys(request).some((key) => forbiddenCtxKeys.has(key)) ||
+      JSON.stringify(Object.keys(request).sort()) !== JSON.stringify(recordTerminationReceiptKeys) ||
+      !uuid.test(request.request_identity ?? "") || !["CLAIMANT", "MAIN"].includes(request.subject_kind) ||
+      !isBase64url32(request.subject_binding_id) || !safeEpoch(request.subject_binding_epoch) || request.subject_binding_epoch === 0 ||
+      !["HOST", "MCP"].includes(request.process_role)) throw ctError("CT_PAYLOAD_INVALID")
+}
+// The rollback-owner-Main branch is structurally present for P6-E's rollback
+// plane (mode ROLLING_BACK), but is unreachable until beginRollback exists —
+// only mode ON is exercised by this unit's own tests.
+const recoveryMainAuthority = (persisted, state) => {
+  const main = coherentMain(persisted.rows)
+  if (state.mode === "ON") { if (!main) throw ctError("CT_WORKFLOW_MAIN_REQUIRED"); return main }
+  if (!main || persisted.lease.owner_main_binding_id !== main.main_binding_id) throw ctError("CT_MAIN_BINDING_CONFLICT")
+  return main
+}
+// The subject binding row is read, never asserted by the caller. MAIN names
+// the exact persisted ct_main_binding row (handoff_id NULL, generation 0);
+// CLAIMANT must own exactly one LIVE ct_claim, whose handoff/generation are
+// the claim's, never the caller's.
+const resolveTerminationSubject = (db, authority, request) => {
+  if (request.subject_kind === "MAIN") {
+    const row = db.query("SELECT * FROM ct_main_binding WHERE main_binding_id=?").get(request.subject_binding_id)
+    if (!row) throw ctError("CT_NOT_FOUND")
+    const asserted = assertMainBinding(row, authority)
+    if (asserted.binding_epoch !== request.subject_binding_epoch) throw ctError("CT_SCHEMA_INVALID")
+    return { binding_id: asserted.main_binding_id, binding_epoch: asserted.binding_epoch, identity_digest: asserted.identity_digest,
+      host_process_instance: asserted.host_process_instance, plugin_instance: asserted.plugin_instance, root_session_id: asserted.root_session_id,
+      mcp_process_instance: asserted.mcp_process_instance, pid_start_marker: asserted.pid_start_marker, handoff_id: null, generation: 0 }
+  }
+  const row = db.query("SELECT * FROM ct_claimant_binding WHERE binding_id=?").get(request.subject_binding_id)
+  if (!row) throw ctError("CT_NOT_FOUND")
+  const asserted = assertClaimantBinding(row, authority)
+  if (asserted.binding_epoch !== request.subject_binding_epoch) throw ctError("CT_SCHEMA_INVALID")
+  const claims = db.query("SELECT * FROM ct_claim WHERE claim_state='LIVE' AND claimant_binding_id=?").all(asserted.binding_id)
+  if (claims.length !== 1) throw ctError("CT_NOT_FOUND")
+  return { binding_id: asserted.binding_id, binding_epoch: asserted.binding_epoch, identity_digest: asserted.identity_digest,
+    host_process_instance: asserted.host_process_instance, plugin_instance: asserted.plugin_instance, root_session_id: asserted.root_session_id,
+    mcp_process_instance: asserted.mcp_process_instance, pid_start_marker: asserted.pid_start_marker, handoff_id: claims[0].handoff_id, generation: claims[0].generation }
+}
+const terminationReceiptValue = (request, subject, observation, observedAt, lease) => ({
+  kind: "termination_receipt_v1", version: 1,
+  subject: { kind: request.subject_kind, binding_id: subject.binding_id, identity_digest: subject.identity_digest, binding_epoch: subject.binding_epoch },
+  process: { role: request.process_role, host_process_instance: subject.host_process_instance, plugin_instance: subject.plugin_instance, root_session_id: subject.root_session_id,
+    mcp_process_instance: subject.mcp_process_instance, pid_start_marker: subject.pid_start_marker, observed_start_marker: observation.observed_start_marker ?? null },
+  proof: { issuer: "CT_MAIN_OBSERVER_V1", verifier: "CT_MAIN_VERIFIER_V1", method: "OS_PROCESS_TABLE_V1", observation: observation.status,
+    os_boot_id: observation.os_boot_id, os_session_id: observation.os_session_id, terminated: true },
+  binding: { rollback_epoch: lease.rollback_epoch, lease_version: lease.lease_version, generation: subject.generation, handoff_id: subject.handoff_id },
+  observed_at: observedAt,
+})
+const terminationPairingValue = (subject, observation, lease) => ({
+  kind: "termination_pairing_v1", version: 1, subject_binding_id: subject.binding_id, subject_identity_digest: subject.identity_digest,
+  subject_binding_epoch: subject.binding_epoch, rollback_epoch: lease.rollback_epoch, generation: subject.generation,
+  os_boot_id: observation.os_boot_id, os_session_id: observation.os_session_id, roles: ["HOST", "MCP"],
+})
+
+export const continuationRecordTerminationReceipt = (handle, ctxFactory, request, processObserver) => {
+  const { db, authority } = handle
+  if (!processObserver?.observe) throw ctError("CT_RECOVERY_REQUIRED")
+  try {
+    return db.transaction(() => {
+      const version = inspectSchema(db)
+      if (version !== 5) throw ctError("CT_SCHEMA_INVALID")
+      const state = continuationState(db, authority, version)
+      validateSchema4CommitEvidence(db, authority); validateSchema5CommitEvidence(db, authority)
+      const persisted = validateSchema3Persistence(db, authority)
+      validateSchema4Persistence(db, authority)
+      if (state.mode === "OFF") throw ctError("CT_CONTINUATION_OFF")
+      if (state.mode === "ON") {
+        if (persisted.lease.lease_status !== "NONE" || persisted.lease.owner_main_binding_id !== null || persisted.lease.lease_expires_at !== null) throw ctError("CT_SCHEMA_INVALID")
+      } else if (persisted.lease.lease_status !== "ACTIVE") throw ctError("CT_SCHEMA_INVALID")
+      assertRecordTerminationReceiptRequest(request)
+      const ctx = ctxFactory(), main = recoveryMainAuthority(persisted, state)
+      assertMainGate(ctx, authority, main)
+      const subject = resolveTerminationSubject(db, authority, request)
+
+      const scopeKey = `termination:${subject.binding_id}:epoch:${subject.binding_epoch}:generation:${subject.generation}:${request.process_role}`
+      const request_digest = requestDigest(request)
+      const byIdentity = db.query("SELECT * FROM ct_idempotency WHERE operation='recordTerminationReceipt' AND request_identity=?").get(request.request_identity)
+      const byScope = db.query("SELECT * FROM ct_idempotency WHERE operation='recordTerminationReceipt' AND scope_key=?").get(scopeKey)
+      if (byIdentity || byScope) {
+        if (!byIdentity || !byScope || byIdentity.scope_key !== byScope.scope_key || byIdentity.request_identity !== byScope.request_identity ||
+            byIdentity.request_digest !== request_digest) throw ctError("CT_IDEMPOTENCY_CONFLICT")
+        let envelope
+        try { envelope = JSON.parse(byIdentity.response_json) } catch { throw ctError("CT_SCHEMA_INVALID") }
+        if (envelope?.kind !== "record_termination_receipt_response_envelope_v1" || !envelope.public_response) throw ctError("CT_SCHEMA_INVALID")
+        return { ...envelope.public_response, replayed: true }
+      }
+
+      const observedAt = now()
+      const observation = processObserver.observe({ role: request.process_role, host_process_instance: subject.host_process_instance,
+        plugin_instance: subject.plugin_instance, root_session_id: subject.root_session_id, mcp_process_instance: subject.mcp_process_instance,
+        pid_start_marker: subject.pid_start_marker })
+      if (!observation || !["ABSENT", "REPLACED", "PRESENT", "AMBIGUOUS"].includes(observation.status) ||
+          !opaque(observation.os_boot_id, 256) || !opaque(observation.os_session_id, 256)) throw ctError("CT_SCHEMA_INVALID")
+      // CT-R7-S1's live process and CT-R7-S5's PID-reuse ambiguity: neither
+      // may ever be persisted as proof of termination.
+      if (observation.status === "PRESENT" || observation.status === "AMBIGUOUS") throw ctError("CT_RECOVERY_REQUIRED")
+      if (observation.status === "ABSENT" && observation.observed_start_marker != null) throw ctError("CT_SCHEMA_INVALID")
+      if (observation.status === "REPLACED" && (!opaque(observation.observed_start_marker, 128) || observation.observed_start_marker === subject.pid_start_marker)) throw ctError("CT_SCHEMA_INVALID")
+
+      const receiptValue = terminationReceiptValue(request, subject, observation, observedAt, persisted.lease)
+      const receiptJson = jcs(receiptValue)
+      if (Buffer.byteLength(receiptJson) > 8192) throw ctError("CT_SCHEMA_INVALID")
+      const receiptDigest = requestDigest(receiptValue)
+      const pairingDigest = requestDigest(terminationPairingValue(subject, observation, persisted.lease))
+      const recordedAt = now()
+      if (Date.parse(recordedAt) - Date.parse(observedAt) > TERMINATION_RECEIPT_FRESHNESS_MS) throw ctError("CT_RECOVERY_REQUIRED")
+
+      const writerFence = { schema_version: version, mode: state.mode, anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
+        observed_rollback_epoch: persisted.lease.rollback_epoch, observed_lease_version: persisted.lease.lease_version, observed_lease_status: persisted.lease.lease_status }
+      const mainAuthority = { main_binding_id: main.main_binding_id, binding_epoch: main.binding_epoch, identity_digest: main.identity_digest }
+      const casValue = { kind: "record_termination_receipt_cas_v1", version: 1, writer_fence_v1: writerFence, main_authority_v1: mainAuthority,
+        subject_kind: request.subject_kind, subject_binding_id: subject.binding_id, subject_binding_epoch: subject.binding_epoch,
+        subject_identity_digest: subject.identity_digest, process_role: request.process_role, handoff_id: subject.handoff_id, generation: subject.generation,
+        observation: observation.status, receipt_digest: receiptDigest }
+      const cas_digest = requestDigest(casValue)
+      const receiptId = makeId()
+
+      db.run(`INSERT INTO ct_termination_receipt(receipt_id,subject_kind,subject_binding_id,subject_identity_digest,subject_binding_epoch,process_role,pairing_digest,
+        issuer,verifier,method,observation,terminated,os_boot_id,os_session_id,host_process_instance,plugin_instance,root_session_id,mcp_process_instance,pid_start_marker,
+        observed_start_marker,rollback_epoch,lease_version,generation,handoff_id,receipt_json,receipt_digest,observed_at,recorded_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,1,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        [receiptId, request.subject_kind, subject.binding_id, subject.identity_digest, subject.binding_epoch, request.process_role, pairingDigest,
+          "CT_MAIN_OBSERVER_V1", "CT_MAIN_VERIFIER_V1", "OS_PROCESS_TABLE_V1", observation.status, observation.os_boot_id, observation.os_session_id,
+          subject.host_process_instance, subject.plugin_instance, subject.root_session_id, subject.mcp_process_instance, subject.pid_start_marker,
+          observation.observed_start_marker ?? null, persisted.lease.rollback_epoch, persisted.lease.lease_version, subject.generation, subject.handoff_id,
+          receiptJson, receiptDigest, observedAt, recordedAt])
+
+      const publicResponse = { subject_kind: request.subject_kind, process_role: request.process_role, recorded: true, replayed: false }
+      const envelope = { kind: "record_termination_receipt_response_envelope_v1", version: 1, public_response: publicResponse,
+        evidence: { request, request_digest, scope_key: scopeKey, cas_input: casValue, cas_digest, receipt_id: receiptId, pairing_digest: pairingDigest } }
+      db.run("INSERT INTO ct_idempotency VALUES ('recordTerminationReceipt',?,?,?,?,?,?)", [scopeKey, request.request_identity, request_digest, cas_digest, jcs(envelope), recordedAt])
+      return publicResponse
+    }).immediate()
+  } catch (error) {
+    if (error.code?.startsWith("CT_")) throw error
+    if (busy(error)) throw ctError("CT_BUSY", error)
+    throw ctError("CT_SCHEMA_INVALID", error)
+  }
+}
+
+// P6-C: pairing/freshness re-verification, reused unmodified by every later
+// P6 unit that consumes a termination proof (recover, rebindMain, ...).
+// Never trusts a caller-supplied digest or boolean — every member is
+// recomputed from the persisted rows named by the caller's subject/epoch.
+export const validTerminationPairing = (db, { subjectBindingId, subjectBindingEpoch, subjectIdentityDigest, rollbackEpoch, generation }) => {
+  const rows = db.query(`SELECT * FROM ct_termination_receipt WHERE subject_binding_id=? AND subject_binding_epoch=? AND rollback_epoch=? AND generation=?`)
+    .all(subjectBindingId, subjectBindingEpoch, rollbackEpoch, generation)
+  if (rows.length !== 2) throw ctError("CT_RECOVERY_REQUIRED")
+  const host = rows.find((row) => row.process_role === "HOST"), mcp = rows.find((row) => row.process_role === "MCP")
+  if (!host || !mcp) throw ctError("CT_RECOVERY_REQUIRED")
+  if (host.subject_identity_digest !== subjectIdentityDigest || mcp.subject_identity_digest !== subjectIdentityDigest ||
+      host.os_boot_id !== mcp.os_boot_id || host.os_session_id !== mcp.os_session_id) throw ctError("CT_RECOVERY_REQUIRED")
+  const expectedPairing = { kind: "termination_pairing_v1", version: 1, subject_binding_id: subjectBindingId, subject_identity_digest: subjectIdentityDigest,
+    subject_binding_epoch: subjectBindingEpoch, rollback_epoch: rollbackEpoch, generation, os_boot_id: host.os_boot_id, os_session_id: host.os_session_id, roles: ["HOST", "MCP"] }
+  const expectedPairingDigest = requestDigest(expectedPairing)
+  if (host.pairing_digest !== expectedPairingDigest || mcp.pairing_digest !== expectedPairingDigest) throw ctError("CT_RECOVERY_REQUIRED")
+  const nowMs = Date.now()
+  for (const row of [host, mcp]) {
+    const reconstructed = {
+      kind: "termination_receipt_v1", version: 1,
+      subject: { kind: row.subject_kind, binding_id: row.subject_binding_id, identity_digest: row.subject_identity_digest, binding_epoch: row.subject_binding_epoch },
+      process: { role: row.process_role, host_process_instance: row.host_process_instance, plugin_instance: row.plugin_instance, root_session_id: row.root_session_id,
+        mcp_process_instance: row.mcp_process_instance, pid_start_marker: row.pid_start_marker, observed_start_marker: row.observed_start_marker },
+      proof: { issuer: row.issuer, verifier: row.verifier, method: row.method, observation: row.observation, os_boot_id: row.os_boot_id, os_session_id: row.os_session_id, terminated: true },
+      binding: { rollback_epoch: row.rollback_epoch, lease_version: row.lease_version, generation: row.generation, handoff_id: row.handoff_id },
+      observed_at: row.observed_at,
+    }
+    if (requestDigest(reconstructed) !== row.receipt_digest) throw ctError("CT_RECOVERY_REQUIRED")
+    if (nowMs - Date.parse(row.observed_at) > TERMINATION_RECEIPT_FRESHNESS_MS) throw ctError("CT_RECOVERY_REQUIRED")
+  }
+  return { pairing_digest: expectedPairingDigest, host, mcp }
+}
+
+// P6-C: pure derivation only — persistence into ct_quiescence_snapshot is
+// P6-E's beginRollback/finishRollback. Uses the identical live/pending
+// queries continuationStatus already runs, so a snapshot can never disagree
+// with what a caller could observe in the same writer transaction.
+const nonTerminalHandoffStates = ["DRAFT", "VALIDATED", "PUBLISHED", "CLAIMED", "STARTED", "COMPLETION_ATTESTED", "WORK_SUSPENDED", "ATTESTATION_SUSPENDED"]
+export const deriveFrozenInventory = (db, rollbackEpoch) => ({
+  kind: "frozen_inventory_v1", version: 1, rollback_epoch: rollbackEpoch,
+  handoffs: db.query(`SELECT id, state, generation FROM ct_handoff WHERE state IN (${nonTerminalHandoffStates.map(() => "?").join(",")}) ORDER BY id ASC`)
+    .all(...nonTerminalHandoffStates),
+})
+export const deriveQuiescenceSnapshot = (db, { snapshotKind, rollbackEpoch, leaseVersion, owner, observedAt = now() }) => {
+  const liveClaims = db.query("SELECT COUNT(*) AS count FROM ct_claim WHERE claim_state='LIVE'").get().count
+  const liveDeliveries = db.query("SELECT COUNT(*) AS count FROM ct_delivery WHERE delivery_state IN ('PENDING','CLAIMED')").get().count
+  const liveWorkers = db.query("SELECT COUNT(*) AS count FROM ct_claimant_binding WHERE binding_status='ACTIVE'").get().count
+  const pendingWork = db.query("SELECT COUNT(*) AS count FROM ct_delivery WHERE delivery_state='PENDING' AND purpose='WORK'").get().count
+  const pendingAttestation = db.query("SELECT COUNT(*) AS count FROM ct_delivery WHERE delivery_state='PENDING' AND purpose='ATTESTATION_REDELIVERY'").get().count
+  const frozenInventory = deriveFrozenInventory(db, rollbackEpoch)
+  const value = {
+    kind: "quiescence_v1", version: 1, snapshot_kind: snapshotKind, rollback_epoch: rollbackEpoch, lease_version: leaseVersion,
+    owner: { main_binding_id: owner.main_binding_id, binding_epoch: owner.binding_epoch, main_identity_digest: owner.identity_digest },
+    live_counts: { claims: liveClaims, deliveries: liveDeliveries, workers: liveWorkers },
+    pending_counts: { work: pendingWork, attestation: pendingAttestation },
+    frozen_inventory_digest: requestDigest(frozenInventory),
+    polling_plane: "UNAVAILABLE_BEFORE_P7",
+    observed_at: observedAt,
+  }
+  return { value, digest: requestDigest(value), frozenInventory }
+}
+
+export const createContinuationDispatcher = ({ cwd = process.cwd(), trustedMetadata, processIdentity, processObserver }) => {
   if (!trustedMetadata?.snapshot || !processIdentity?.snapshot) throw ctError("CT_SESSION_ISOLATION_UNPROVEN")
   const stableProcess = { value: null }
   return (operation, request) => {
-    if (!["bootstrapMain", "activate", "status", "register", "receive", "create", "validate", "publish", "claim", "ack", "attestCompletion", "complete", "reject", "revise"].includes(operation)) throw ctError("CT_PAYLOAD_INVALID")
+    if (!["bootstrapMain", "activate", "status", "register", "receive", "create", "validate", "publish", "claim", "ack", "attestCompletion", "complete", "reject", "revise", "recordTerminationReceipt"].includes(operation)) throw ctError("CT_PAYLOAD_INVALID")
     if (operation === "status") assertStatusRequest(request)
     const handle = continuationHandle(cwd, operation === "receive" && request !== undefined && (typeof request !== "object" || request === null || Object.getPrototypeOf(request) !== Object.prototype || Object.keys(request).length > 0))
     const ctx = createCtxFactory({ trustedMetadata, processIdentity, cwd: handle.cwd, authority: handle.authority }, stableProcess)
@@ -3272,6 +3484,7 @@ export const createContinuationDispatcher = ({ cwd = process.cwd(), trustedMetad
       if (operation === "complete") return continuationComplete(handle, ctx, request)
       if (operation === "reject") return continuationReject(handle, ctx, request)
       if (operation === "revise") return continuationRevise(handle, ctx, request)
+      if (operation === "recordTerminationReceipt") return continuationRecordTerminationReceipt(handle, ctx, request, processObserver)
       return operation === "register" ? continuationRegister(handle, ctx, request) : continuationReceive(handle, ctx)
     } finally { handle.db.close() }
   }

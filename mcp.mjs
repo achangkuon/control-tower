@@ -270,6 +270,26 @@ const CONTINUATION_TOOL_DEFINITIONS = new Map([
     },
   },
 ].map((tool) => [tool.name, tool]))
+// P6-C: recordTerminationReceipt additionally requires the processObserver
+// capability, so it is listed separately and only merged in when that
+// capability is present — every other continuation tool is unaffected.
+const RECOVERY_TOOL_DEFINITIONS = new Map([
+  {
+    name: "recordTerminationReceipt",
+    description: "Record a server-observed termination proof for a persisted MAIN or CLAIMANT binding, under ACTIVE Main (or rollback-owner Main) authority. The request only names the binding and process role; the Tower observes termination itself via the processObserver capability.",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        request_identity: { type: "string" },
+        subject_kind: { type: "string", enum: ["CLAIMANT", "MAIN"] },
+        subject_binding_id: { type: "string" },
+        subject_binding_epoch: { type: "integer", minimum: 1 },
+        process_role: { type: "string", enum: ["HOST", "MCP"] },
+      },
+      required: ["request_identity", "subject_kind", "subject_binding_id", "subject_binding_epoch", "process_role"],
+    },
+  },
+].map((tool) => [tool.name, tool]))
 
 const GUARDED_TOOLS = new Set([
   "tower_register",
@@ -304,10 +324,12 @@ const makeCall = (cwd, continuationTools, dispatch) => (name, args) => {
 
 const send = (msg) => process.stdout.write(`${JSON.stringify(msg)}\n`)
 
-export const createMcpHandler = ({ cwd = process.cwd(), trustedMetadata, processIdentity } = {}) => {
+export const createMcpHandler = ({ cwd = process.cwd(), trustedMetadata, processIdentity, processObserver } = {}) => {
   const enabled = Boolean(trustedMetadata?.snapshot && processIdentity?.snapshot)
-  const continuationTools = enabled ? CONTINUATION_TOOL_DEFINITIONS : new Map()
-  const dispatch = enabled ? tower.createContinuationDispatcher({ cwd, trustedMetadata, processIdentity }) : null
+  const continuationTools = enabled
+    ? new Map([...CONTINUATION_TOOL_DEFINITIONS, ...(processObserver?.observe ? RECOVERY_TOOL_DEFINITIONS : [])])
+    : new Map()
+  const dispatch = enabled ? tower.createContinuationDispatcher({ cwd, trustedMetadata, processIdentity, processObserver }) : null
   const call = makeCall(cwd, continuationTools, dispatch)
   return (req) => {
     const { method, params } = req
