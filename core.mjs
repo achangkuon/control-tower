@@ -739,6 +739,9 @@ const SCHEMA_MANIFESTS = new Map([
   [2, { objects: V2_OBJECTS, migrations: new Map([[1, MIGRATION_001_CHECKSUM], [2, MIGRATION_002_CHECKSUM]]) }],
   [3, { objects: V3_OBJECTS, migrations: new Map([[1, MIGRATION_001_CHECKSUM], [2, MIGRATION_002_CHECKSUM], [3, MIGRATION_003_CHECKSUM]]) }],
   [4, { objects: V4_OBJECTS, migrations: new Map([[1, MIGRATION_001_CHECKSUM], [2, MIGRATION_002_CHECKSUM], [3, MIGRATION_003_CHECKSUM], [4, MIGRATION_004_CHECKSUM]]) }],
+  // P6-B wires schema 5 into the runtime dispatch map: inspectSchema/bootstrapAdmin
+  // now recognize a real schema-5 database, exactly mirroring the V4_OBJECTS shape.
+  [5, { objects: V5_OBJECTS, migrations: new Map([[1, MIGRATION_001_CHECKSUM], [2, MIGRATION_002_CHECKSUM], [3, MIGRATION_003_CHECKSUM], [4, MIGRATION_004_CHECKSUM], [5, MIGRATION_005_CHECKSUM]]) }],
 ])
 const manifestEvidence = (db, schema_version) => ({
   kind: "schema_manifest_evidence_v1", version: 1, schema_version,
@@ -897,16 +900,16 @@ export const bootstrapAdmin = (request, cwd = process.cwd()) => {
   let context, authority
   try { context = deriveCanonicalMainContext(cwd); authority = readAnchor(context) }
   catch (error) { throw error.code ? error : ctError("CT_ANCHOR_MISMATCH", error) }
-  if (!uuid.test(request?.request_identity ?? "") || ![1, 2, 3, 4].includes(request?.target_schema_version) ||
-      (request.target_schema_version !== 4 && request.expected_mode !== "OFF") ||
-      (request.target_schema_version === 4 && (Object.getPrototypeOf(request) !== Object.prototype ||
+  if (!uuid.test(request?.request_identity ?? "") || ![1, 2, 3, 4, 5].includes(request?.target_schema_version) ||
+      (![4, 5].includes(request.target_schema_version) && request.expected_mode !== "OFF") ||
+      ([4, 5].includes(request.target_schema_version) && (Object.getPrototypeOf(request) !== Object.prototype ||
         JSON.stringify(Object.keys(request).sort()) !== JSON.stringify(["expected_anchor_id", "expected_mode", "expected_schema_version", "request_identity", "target_schema_version"])))) throw ctError("CT_SCHEMA_INVALID")
   const dbPath = join(authority.root, "tower.db")
   if (!existsSync(dbPath)) throw ctError("CT_SCHEMA_INVALID")
   const db = new Database(dbPath); db.run("PRAGMA busy_timeout = 250")
   const target = request.target_schema_version
   const scope = target === 1 ? "admin-bootstrap" : `schema:${target - 1}->${target}`
-  const requestValue = { request_identity: request.request_identity, expected_anchor_id: request.expected_anchor_id, expected_schema_version: request.expected_schema_version, target_schema_version: target, expected_mode: target === 4 ? request.expected_mode : "OFF" }
+  const requestValue = { request_identity: request.request_identity, expected_anchor_id: request.expected_anchor_id, expected_schema_version: request.expected_schema_version, target_schema_version: target, expected_mode: [4, 5].includes(target) ? request.expected_mode : "OFF" }
   const request_digest = requestDigest(requestValue)
   const casValue = { expected_anchor_id: request.expected_anchor_id, expected_schema_version: request.expected_schema_version, target_schema_version: target, expected_mode: "OFF", derived_anchor_epoch: 1, derived_config_digest: authority.anchor.config_digest }
   if (target >= 2 && target < 4) Object.assign(casValue, { expected_rollback_epoch: 0, expected_lease_version: 0, expected_lease_status: "NONE" })
@@ -965,6 +968,64 @@ export const bootstrapAdmin = (request, cwd = process.cwd()) => {
         db.run("INSERT INTO ct_idempotency VALUES ('bootstrapAdmin','schema:3->4',?,?,?,?,?)", [request.request_identity, request_digest, cas_digest, jcs(envelope), applied])
         validateSchema4BootstrapEnvelope(db, db.query("SELECT * FROM ct_idempotency WHERE operation='bootstrapAdmin' AND scope_key='schema:3->4'").get(), authority, historicalCas)
         return publicResponse
+      }
+      // P6-B fresh/retry 4->5 lane. Unlike 3->4, this lane never requires an
+      // empty delivery plane: a schema-4 database with real handoff,
+      // transition, delivery, claim, and budget history migrates in place.
+      // It still requires mode OFF, lease NONE, and zero ACTIVE claimant
+      // bindings, and never down-migrates a real schema-5 database.
+      if (target === 5) {
+        if (![4, 5].includes(version)) throw ctError("CT_SCHEMA_INVALID")
+        const state = continuationState(db, authority, version)
+        const lease = validateLease(db)
+        validateSchema4CommitEvidence(db, authority)
+        const persisted = validateSchema3Persistence(db, authority)
+        validateSchema4Persistence(db, authority)
+        if (version === 5) validateSchema5CommitEvidence(db, authority)
+        if (state.mode !== "OFF" || lease.lease_status !== "NONE" || lease.owner_main_binding_id !== null || lease.lease_expires_at !== null) throw ctError("CT_FENCE_MISMATCH")
+        const main = coherentMain(persisted.rows)
+        const activeClaimants = db.query("SELECT COUNT(*) AS count FROM ct_claimant_binding WHERE binding_status='ACTIVE'").get().count
+        const currentHistoricalCas = {
+          expected_anchor_id: authority.anchor.anchor_id, expected_schema_version: 4, target_schema_version: 5,
+          expected_mode: "OFF", derived_anchor_epoch: 1, derived_config_digest: authority.anchor.config_digest,
+          observed_rollback_epoch: persisted.lease.rollback_epoch, observed_lease_version: persisted.lease.lease_version,
+          observed_lease_status: "NONE", observed_active_main_binding_id: main?.main_binding_id ?? null,
+          observed_active_main_binding_epoch: main?.binding_epoch ?? 0, observed_activation_epoch: persisted.activations.length,
+          active_claimant_bindings: activeClaimants, delivery_plane: "SCHEMA_4_VALIDATED", recovery_plane: "ABSENT_SCHEMA_4",
+        }
+        const committed5 = db.query("SELECT * FROM ct_idempotency WHERE operation='bootstrapAdmin' AND scope_key='schema:4->5'").get()
+        if (version === 5) {
+          const envelope = validateSchema5BootstrapEnvelope(db, committed5, authority)
+          const historicalCas = envelope.evidence.cas_input
+          cas_digest = requestDigest({ ...historicalCas, expected_anchor_id: request.expected_anchor_id, expected_schema_version: request.expected_schema_version, expected_mode: request.expected_mode })
+          if (request.expected_schema_version !== 4 || request.expected_mode !== "OFF") throw ctError("CT_FENCE_MISMATCH")
+          if (committed5.request_identity !== request.request_identity || committed5.request_digest !== request_digest || committed5.cas_digest !== cas_digest) throw ctError("CT_IDEMPOTENCY_CONFLICT")
+          return { ...envelope.public_response, replayed: true }
+        }
+        const historicalCas = currentHistoricalCas
+        cas_digest = requestDigest({ ...historicalCas, expected_anchor_id: request.expected_anchor_id, expected_schema_version: request.expected_schema_version, expected_mode: request.expected_mode })
+        if (committed5) throw ctError("CT_IDEMPOTENCY_CONFLICT")
+        if (activeClaimants !== 0) throw ctError("CT_FENCE_MISMATCH")
+        if (request.expected_anchor_id !== authority.anchor.anchor_id || request.expected_schema_version !== 4 || request.expected_mode !== "OFF") throw ctError("CT_FENCE_MISMATCH")
+        const schema4ManifestDigest = requestDigest(manifestEvidence(db, 4))
+        db.run(MIGRATION_005_SQL)
+        if (db.run("UPDATE ct_continuation_state SET schema_version=5 WHERE id=1 AND schema_version=4").changes !== 1) throw ctError("CT_SCHEMA_INVALID")
+        const applied5 = now()
+        db.run("INSERT INTO ct_schema_migration VALUES (5,?,?)", [MIGRATION_005_CHECKSUM, applied5])
+        if (readFileSync(authority.path, "utf8") !== authority.bytes) throw ctError("CT_ANCHOR_MISMATCH")
+        if (inspectSchema(db) !== 5) throw ctError("CT_SCHEMA_INVALID")
+        for (const table of ["ct_termination_receipt", "ct_quiescence_snapshot", "ct_rollback_epoch", "ct_main_rebind", "ct_recovery_disposition"]) {
+          if (db.query(`SELECT COUNT(*) AS count FROM ${table}`).get().count !== 0) throw ctError("CT_SCHEMA_INVALID")
+        }
+        const publicResponse5 = { anchor_id: authority.anchor.anchor_id, schema_version: 5, mode: "OFF", replayed: false }
+        const envelope5 = { kind: "bootstrap_schema5_response_v1", version: 1, public_response: publicResponse5, evidence: {
+          request: requestValue, request_digest, cas_input: historicalCas, cas_digest: requestDigest(historicalCas),
+          migration_005_checksum: MIGRATION_005_CHECKSUM, schema_4_manifest_digest: schema4ManifestDigest,
+          schema_5_manifest_digest: requestDigest(manifestEvidence(db, 5)),
+        } }
+        db.run("INSERT INTO ct_idempotency VALUES ('bootstrapAdmin','schema:4->5',?,?,?,?,?)", [request.request_identity, request_digest, cas_digest, jcs(envelope5), applied5])
+        validateSchema5BootstrapEnvelope(db, db.query("SELECT * FROM ct_idempotency WHERE operation='bootstrapAdmin' AND scope_key='schema:4->5'").get(), authority, historicalCas)
+        return publicResponse5
       }
       if (version === target) {
         const row = db.query("SELECT * FROM ct_idempotency WHERE operation='bootstrapAdmin' AND scope_key=?").get(scope)
@@ -1061,10 +1122,11 @@ const continuationHandle = (cwd, payloadInvalid = false) => {
 }
 const gateContinuation = ({ db, authority }) => {
   const version = inspectSchema(db)
-  if (![2, 3, 4].includes(version)) throw ctError("CT_SCHEMA_INVALID")
+  if (![2, 3, 4, 5].includes(version)) throw ctError("CT_SCHEMA_INVALID")
   const state = continuationState(db, authority, version)
   const lease = validateLease(db)
   if (version === 4) { validateSchema4CommitEvidence(db, authority); validateSchema3Persistence(db, authority); validateSchema4Persistence(db, authority) }
+  if (version === 5) { validateSchema4CommitEvidence(db, authority); validateSchema5CommitEvidence(db, authority); validateSchema3Persistence(db, authority); validateSchema4Persistence(db, authority) }
   if (state.mode === "OFF") throw ctError("CT_CONTINUATION_OFF")
   if (state.mode === "ROLLING_BACK") throw ctError("CT_ROLLBACK_IN_PROGRESS")
   if (lease.lease_status !== "NONE" || lease.owner_main_binding_id !== null || lease.lease_expires_at !== null) throw ctError("CT_SCHEMA_INVALID")
@@ -1144,7 +1206,25 @@ const mainCommitSchemaBoundary = (db, authority, rows) => {
       (epoch === 0 ? id !== null : !historicalMain)) throw ctError("CT_SCHEMA_INVALID")
   return epoch
 }
-const mainCommitSchemaVersion = (boundary, target) => boundary === null || target.binding_epoch <= boundary ? 3 : 4
+// P6-B mirrors mainCommitSchemaBoundary for the 4->5 migration boundary: a
+// Main binding created after this boundary embeds schema_version:5 in its
+// CAS (mainCasValue's schemaVersion argument), not 4, so historical CAS
+// reconstruction must know which of the two post-4 boundaries a given row
+// falls after.
+const mainCommitSchema5Boundary = (db, authority, rows) => {
+  if (!db.query("SELECT 1 FROM ct_schema_migration WHERE version=5").get()) return null
+  const committed = db.query("SELECT response_json FROM ct_idempotency WHERE operation='bootstrapAdmin' AND scope_key='schema:4->5'").get()
+  let envelope
+  try { envelope = JSON.parse(committed?.response_json) } catch { throw ctError("CT_SCHEMA_INVALID") }
+  const casInput = envelope?.evidence?.cas_input
+  const epoch = casInput?.observed_active_main_binding_epoch, id = casInput?.observed_active_main_binding_id
+  const historicalMain = epoch === 0 ? null : rows.find(({ binding_epoch, main_binding_id }) => binding_epoch === epoch && main_binding_id === id)
+  if (!safeEpoch(epoch) || casInput.expected_anchor_id !== authority.anchor.anchor_id ||
+      (epoch === 0 ? id !== null : !historicalMain)) throw ctError("CT_SCHEMA_INVALID")
+  return epoch
+}
+const mainCommitSchemaVersion = (boundary4, target, boundary5 = null) =>
+  boundary4 === null || target.binding_epoch <= boundary4 ? 3 : (boundary5 === null || target.binding_epoch <= boundary5 ? 4 : 5)
 const sha256Digest = /^sha256:[0-9a-f]{64}$/
 const activationTransition = (authority, main, evidence, lease) => ({
   kind: "activation_transition_v1", version: 1, anchor_id: authority.anchor.anchor_id,
@@ -1177,6 +1257,7 @@ function validateSchema3Persistence(db, authority) {
   const rows = readMainRows(db, authority), lease = validateLease(db)
   const currentLeaseIsHistoricalSeed = lease.lease_status === "NONE" && lease.rollback_epoch === 0 && lease.lease_version === 0
   const schemaBoundary = mainCommitSchemaBoundary(db, authority, rows)
+  const schema5Boundary = mainCommitSchema5Boundary(db, authority, rows)
   const mainCommits = db.query("SELECT * FROM ct_idempotency WHERE operation='bootstrapMain' ORDER BY scope_key").all()
   if (mainCommits.length !== rows.length) throw ctError("CT_SCHEMA_INVALID")
   for (const row of mainCommits) {
@@ -1185,7 +1266,7 @@ function validateSchema3Persistence(db, authority) {
     try { response = JSON.parse(row.response_json) } catch { throw ctError("CT_SCHEMA_INVALID") }
     const target = rows.find(({ main_binding_id }) => main_binding_id === response.main_binding_id)
     if (!target) throw ctError("CT_SCHEMA_INVALID")
-    const expected = expectedMainCommit(authority, rows, target, row.request_identity, lease, mainCommitSchemaVersion(schemaBoundary, target))
+    const expected = expectedMainCommit(authority, rows, target, row.request_identity, lease, mainCommitSchemaVersion(schemaBoundary, target, schema5Boundary))
     const casValid = currentLeaseIsHistoricalSeed ? row.cas_digest === expected.cas_digest : sha256Digest.test(row.cas_digest ?? "")
     if (row.scope_key !== expected.scope_key || row.request_digest !== expected.request_digest || !casValid || row.response_json !== expected.response_json) throw ctError("CT_SCHEMA_INVALID")
   }
@@ -1322,18 +1403,44 @@ export const validRollbackProof = (proof, id, generation, manifest, pre_start_bo
 }
 const schema4States = new Set(["DRAFT", "VALIDATED", "PUBLISHED", "CLAIMED", "STARTED", "COMPLETION_ATTESTED", "COMPLETED", "REJECTED", "CANCELLED", "POISONED", "WORK_SUSPENDED", "ATTESTATION_SUSPENDED"])
 const schema4ReverseLinkValid = (_operation, valid) => valid
+// P6-B (corrective): the total (from_state,to_state)->disposition map named
+// verbatim by design.md's "RECOVER envelopes" section; each pair is unique.
+const recoverDispositionPairs = new Map([
+  ["CLAIMED>PUBLISHED", "NOT_STARTED"],
+  ["STARTED>PUBLISHED", "ROLLED_BACK"],
+  ["PUBLISHED>WORK_SUSPENDED", "SUSPEND_PENDING"],
+  ["WORK_SUSPENDED>PUBLISHED", "REDELIVER_WORK"],
+  ["COMPLETION_ATTESTED>ATTESTATION_SUSPENDED", "SUSPEND_ATTESTATION"],
+  ["ATTESTATION_SUSPENDED>COMPLETION_ATTESTED", "REDELIVER_ATTESTATION"],
+])
+const recoverCancelPoisonSources = new Set(["PUBLISHED", "CLAIMED", "STARTED", "COMPLETION_ATTESTED"])
+const recoverDisposition = (row) => {
+  if (row.to_state === "CANCELLED" && recoverCancelPoisonSources.has(row.from_state)) return "CANCELLED"
+  if (row.to_state === "POISONED" && recoverCancelPoisonSources.has(row.from_state)) return "POISONED"
+  return recoverDispositionPairs.get(`${row.from_state}>${row.to_state}`) ?? null
+}
+const recoverGenerationIncrementDispositions = new Set(["NOT_STARTED", "ROLLED_BACK", "REDELIVER_WORK", "REDELIVER_ATTESTATION"])
 const schema4Transition = (row, previous) => {
   const fixed = { CREATE: [null, "DRAFT"], VALIDATE: ["DRAFT", "VALIDATED"], PUBLISH: ["VALIDATED", "PUBLISHED"], ACK: ["CLAIMED", "STARTED"],
     ATTEST_COMPLETION: ["STARTED", "COMPLETION_ATTESTED"], COMPLETE: ["COMPLETION_ATTESTED", "COMPLETED"], REVISE: [null, "DRAFT"] }[row.operation]
   if (fixed && (row.from_state !== fixed[0] || row.to_state !== fixed[1])) return false
   if (row.operation === "CLAIM" && !(row.from_state === "PUBLISHED" && row.to_state === "CLAIMED")) return false
   if (row.operation === "REJECT" && (!["DRAFT", "VALIDATED", "PUBLISHED"].includes(row.from_state) || row.to_state !== "REJECTED")) return false
-  if (row.operation === "RECOVER" && ![["PUBLISHED", "WORK_SUSPENDED"], ["WORK_SUSPENDED", "PUBLISHED"]].some(([from, to]) => row.from_state === from && row.to_state === to)) return false
+  if (row.operation === "RECOVER" && !recoverDisposition(row)) return false
   return ["CREATE", "REVISE"].includes(row.operation) ? previous === null : row.from_state === previous
 }
 function validateSchema4Persistence(db, authority) {
   try {
-    const futureHistoryPresent = db.query(`SELECT
+    const version = inspectSchema(db)
+    // P6-B (corrective): RECOVER accepted at schema 5 only; schema 4 keeps
+    // the exact original query, provably unchanged.
+    const futureHistoryPresent = version === 5
+      ? db.query(`SELECT
+      EXISTS(SELECT 1 FROM ct_handoff WHERE state NOT IN ('DRAFT','VALIDATED','PUBLISHED','CLAIMED','STARTED','COMPLETION_ATTESTED','COMPLETED','REJECTED','CANCELLED','POISONED','WORK_SUSPENDED','ATTESTATION_SUSPENDED')) OR
+      EXISTS(SELECT 1 FROM ct_handoff_transition WHERE operation NOT IN ('CREATE','VALIDATE','PUBLISH','CLAIM','ACK','ATTEST_COMPLETION','COMPLETE','REJECT','REVISE','RECOVER')) OR
+      EXISTS(SELECT 1 FROM ct_delivery WHERE purpose NOT IN ('WORK','ATTESTATION_REDELIVERY') OR delivery_state NOT IN ('PENDING','CLAIMED','CLOSED')) OR
+      EXISTS(SELECT 1 FROM ct_claim WHERE generation<>0 OR purpose<>'WORK' OR claim_state NOT IN ('LIVE','CLOSED')) AS invalid`).get().invalid
+      : db.query(`SELECT
       EXISTS(SELECT 1 FROM ct_handoff WHERE generation<>0 OR state NOT IN ('DRAFT','VALIDATED','PUBLISHED','CLAIMED','STARTED','COMPLETION_ATTESTED','COMPLETED','REJECTED')) OR
       EXISTS(SELECT 1 FROM ct_handoff_transition WHERE generation<>0 OR operation NOT IN ('CREATE','VALIDATE','PUBLISH','CLAIM','ACK','ATTEST_COMPLETION','COMPLETE','REJECT','REVISE')) OR
       EXISTS(SELECT 1 FROM ct_delivery WHERE generation<>0 OR purpose<>'WORK' OR delivery_state NOT IN ('PENDING','CLAIMED','CLOSED')) OR
@@ -1419,7 +1526,7 @@ function validateSchema4Persistence(db, authority) {
           !committed || committed.request_digest !== row.request_digest || committed.cas_digest !== row.cas_digest || committed.committed_at !== row.occurred_at || jcs(response) !== committed.response_json ||
           (isP4Operation && (!exactKeys(response, ["evidence", "kind", "public_response", "version"]) || response.version !== 1 || !responseValue)) || row.response_digest !== requestDigest(responseValue)) throw ctError("CT_SCHEMA_INVALID")
       const history = transitions.get(row.handoff_id) ?? [], previous = history.at(-1)
-      const generationIncrement = row.operation === "RECOVER" && row.from_state === "WORK_SUSPENDED" && row.to_state === "PUBLISHED" ? 1 : 0
+      const generationIncrement = row.operation === "RECOVER" && recoverGenerationIncrementDispositions.has(recoverDisposition(row)) ? 1 : 0
       if (row.occurred_at < handoff.created_at || !schema4Transition(row, previous?.to_state ?? null) || (previous ? row.generation !== previous.generation + generationIncrement : row.generation !== 0) ||
           (row.operation === "CREATE" ? row.decision_digest !== null : row.decision_digest === null)) throw ctError("CT_SCHEMA_INVALID")
       history.push(row); transitions.set(row.handoff_id, history); transitionRecords.push({ row, committed, response })
@@ -1467,8 +1574,11 @@ function validateSchema4Persistence(db, authority) {
     }
     for (const budget of budgets.values()) if (budget.consumed_count === 1 && !claims.has(budget.last_claim_id)) throw ctError("CT_SCHEMA_INVALID")
 
+    // P6-B: a schema-5 database can hold P4/P5 writer fences recorded either
+    // before the migration (schema_version:4) or after (schema_version:5);
+    // both remain valid historical fences under mode ON.
     const validHistoricalWriterFence = (value) => exactKeys(value, ["anchor_id", "config_digest", "mode", "observed_lease_status", "observed_lease_version", "observed_rollback_epoch", "schema_version"]) &&
-      value.schema_version === 4 && value.mode === "ON" && value.anchor_id === authority.anchor.anchor_id && value.config_digest === authority.anchor.config_digest &&
+      [4, 5].includes(value.schema_version) && value.mode === "ON" && value.anchor_id === authority.anchor.anchor_id && value.config_digest === authority.anchor.config_digest &&
       value.observed_lease_status === "NONE" && safeEpoch(value.observed_rollback_epoch) && safeEpoch(value.observed_lease_version)
     const sameValue = (left, right) => jcs(left) === jcs(right)
     const recordsFor = (handoffId, operation) => transitionRecords.filter(({ row }) => row.handoff_id === handoffId && row.operation === operation)
@@ -1711,48 +1821,68 @@ function validateSchema4Persistence(db, authority) {
           row.authority_binding_id !== main?.main_binding_id || row.authority_identity_digest !== main?.identity_digest) throw ctError("CT_SCHEMA_INVALID")
     }
 
-    const dormantOperations = new Set(["RECOVER"])
     for (const { row, committed, response } of transitionRecords) {
-      if (!dormantOperations.has(row.operation)) continue
-      const handoff = handoffs.get(row.handoff_id)
-      const handoffClaims = [...claims.values()].filter((claim) => claim.handoff_id === row.handoff_id && claim.generation === row.generation)
-      const handoffDeliveries = [...deliveries.values()].filter((delivery) => delivery.handoff_id === row.handoff_id && delivery.generation === row.generation)
-      const claim = handoffClaims.length === 1 ? handoffClaims[0] : null
-      const delivery = claim ? deliveries.get(claim.delivery_id) : handoffDeliveries.length === 1 ? handoffDeliveries[0] : null
-      const disposition = row.operation === "RECOVER" ? row.from_state === "PUBLISHED" ? "SUSPEND_PENDING" : "REDELIVER_WORK" : null
-      const action = disposition ?? row.operation
-      const deliveryId = delivery?.delivery_id ?? null, claimId = claim?.claim_id ?? null
-      const expectedRequest = { request_identity: row.request_identity, id: row.handoff_id, es: row.from_state, eg: row.generation,
-        action, delivery_id: deliveryId, claim_id: claimId }
-      const scope = `handoff:${row.handoff_id}:generation:${row.generation}:${action.toLowerCase()}`
-      const authorityRow = row.authority_kind === "MAIN" ? mains.get(row.authority_binding_id) : bindings.get(row.authority_binding_id)
-      const authorityKey = row.authority_kind === "MAIN" ? "main_authority_v1" : "claimant_authority_v1"
-      const authorityValue = row.authority_kind === "MAIN"
-        ? authorityRow && { main_binding_id: authorityRow.main_binding_id, binding_epoch: authorityRow.binding_epoch, identity_digest: authorityRow.identity_digest }
-        : claim && { binding_id: claim.claimant_binding_id, identity_digest: claim.claimant_identity_digest, ctx_digest: claim.claimant_ctx_digest }
-      const writerFence = response?.evidence?.cas_input?.writer_fence_v1
-      const expectedCas = { kind: `${action.toLowerCase()}_cas_v1`, version: 1, writer_fence_v1: writerFence, [authorityKey]: authorityValue,
-        id: row.handoff_id, expected_state: row.from_state, expected_generation: row.generation, delivery_id: deliveryId, claim_id: claimId }
-      const publicResponse = { id: row.handoff_id, state: row.to_state, generation: row.generation, replayed: false }
-      const decision = requestDigest({ kind: "dormant_transition_decision_v1", version: 1, operation: row.operation, disposition, id: row.handoff_id,
-        from_state: row.from_state, to_state: row.to_state, generation: row.generation, delivery_id: deliveryId, claim_id: claimId })
-      if (!exactKeys(response, ["evidence", "kind", "public_response", "version"]) || response.kind !== `${action.toLowerCase()}_response_envelope_v1` || response.version !== 1 ||
-          !exactKeys(response.evidence, ["cas_digest", "cas_input", "request", "request_digest", "scope_key"]) || !sameValue(response.evidence.request, expectedRequest) ||
-          response.evidence.request_digest !== requestDigest(expectedRequest) || response.evidence.scope_key !== scope || committed.scope_key !== scope ||
-          !validHistoricalWriterFence(writerFence) || !sameValue(response.evidence.cas_input, expectedCas) || response.evidence.cas_digest !== requestDigest(expectedCas) ||
-          row.request_digest !== response.evidence.request_digest || row.cas_digest !== response.evidence.cas_digest || !sameValue(response.public_response, publicResponse) ||
-          row.response_digest !== requestDigest(publicResponse) || row.decision_digest !== decision) throw ctError("CT_SCHEMA_INVALID")
-      if (["ACK", "ATTEST_COMPLETION"].includes(row.operation) && (!claim || !delivery || delivery.claim_id !== claim.claim_id ||
-          !((claim.claim_state === "LIVE" && delivery.delivery_state === "CLAIMED") || (claim.claim_state === "CLOSED" && delivery.delivery_state === "CLOSED")) ||
-          claim.created_at > row.occurred_at || delivery.claimed_at > row.occurred_at)) throw ctError("CT_SCHEMA_INVALID")
-      if (row.operation === "COMPLETE" && (!claim || !delivery || claim.claim_state !== "CLOSED" || delivery.delivery_state !== "CLOSED" ||
-          claim.closed_at !== row.occurred_at || delivery.closed_at !== row.occurred_at)) throw ctError("CT_SCHEMA_INVALID")
-      if (row.operation === "REJECT" && (row.from_state === "PUBLISHED"
-        ? (!delivery || claim || delivery.delivery_state !== "CLOSED" || delivery.closed_at !== row.occurred_at)
-        : handoffDeliveries.length !== 0 || handoffClaims.length !== 0)) throw ctError("CT_SCHEMA_INVALID")
-      if (disposition === "SUSPEND_PENDING" && (!delivery || claim || delivery.delivery_state !== "CLOSED" || delivery.closed_at !== row.occurred_at)) throw ctError("CT_SCHEMA_INVALID")
-      if (disposition === "REDELIVER_WORK" && (!delivery || claim || delivery.delivery_state !== "PENDING" || delivery.created_at !== row.occurred_at)) throw ctError("CT_SCHEMA_INVALID")
-      if (!handoff || row.occurred_at < handoff.created_at) throw ctError("CT_SCHEMA_INVALID")
+      if (["ACK", "ATTEST_COMPLETION", "COMPLETE", "REJECT"].includes(row.operation)) {
+        const handoff = handoffs.get(row.handoff_id)
+        const handoffClaims = [...claims.values()].filter((claim) => claim.handoff_id === row.handoff_id && claim.generation === row.generation)
+        const handoffDeliveries = [...deliveries.values()].filter((delivery) => delivery.handoff_id === row.handoff_id && delivery.generation === row.generation)
+        const claim = handoffClaims.length === 1 ? handoffClaims[0] : null
+        const delivery = row.operation === "REJECT"
+          ? (claim ? deliveries.get(claim.delivery_id) : handoffDeliveries.length === 1 ? handoffDeliveries[0] : null)
+          : (claim ? deliveries.get(claim.delivery_id) : null)
+        if (["ACK", "ATTEST_COMPLETION"].includes(row.operation) && (!claim || !delivery || delivery.claim_id !== claim.claim_id ||
+            !((claim.claim_state === "LIVE" && delivery.delivery_state === "CLAIMED") || (claim.claim_state === "CLOSED" && delivery.delivery_state === "CLOSED")) ||
+            claim.created_at > row.occurred_at || delivery.claimed_at > row.occurred_at)) throw ctError("CT_SCHEMA_INVALID")
+        if (row.operation === "COMPLETE" && (!claim || !delivery || claim.claim_state !== "CLOSED" || delivery.delivery_state !== "CLOSED" ||
+            claim.closed_at !== row.occurred_at || delivery.closed_at !== row.occurred_at)) throw ctError("CT_SCHEMA_INVALID")
+        if (row.operation === "REJECT" && (row.from_state === "PUBLISHED"
+          ? (!delivery || claim || delivery.delivery_state !== "CLOSED" || delivery.closed_at !== row.occurred_at)
+          : handoffDeliveries.length !== 0 || handoffClaims.length !== 0)) throw ctError("CT_SCHEMA_INVALID")
+        if (!handoff || row.occurred_at < handoff.created_at) throw ctError("CT_SCHEMA_INVALID")
+      }
+    }
+
+    // P6-B (corrective): real RECOVER validator replacing `dormantOperations`
+    // (which guessed the disposition from `from_state` alone and had no proof
+    // member). Derives disposition from the map above, cross-checks every
+    // field against the reverse-linked ct_recovery_disposition row `recover()`
+    // (P6-D) writes. Reachable only at schema 5.
+    if (version === 5) {
+      const recoveryDispositions = new Map(db.query("SELECT * FROM ct_recovery_disposition").all()
+        .map((row) => [`${row.handoff_id}:${row.from_generation}:${row.disposition}`, row]))
+      for (const { row, committed, response } of transitionRecords) {
+        if (row.operation !== "RECOVER") continue
+        const disposition = recoverDisposition(row)
+        const generationIncrement = recoverGenerationIncrementDispositions.has(disposition) ? 1 : 0
+        const fromGeneration = row.generation - generationIncrement
+        const dispositionRow = recoveryDispositions.get(`${row.handoff_id}:${fromGeneration}:${disposition}`)
+        const handoff = handoffs.get(row.handoff_id)
+        const handoffClaims = [...claims.values()].filter((claim) => claim.handoff_id === row.handoff_id && claim.generation === fromGeneration)
+        const handoffDeliveries = [...deliveries.values()].filter((delivery) => delivery.handoff_id === row.handoff_id && delivery.generation === fromGeneration)
+        const claim = handoffClaims.length === 1 ? handoffClaims[0] : null
+        const delivery = claim ? deliveries.get(claim.delivery_id) : handoffDeliveries.length === 1 ? handoffDeliveries[0] : null
+        const createdDelivery = generationIncrement && dispositionRow ? deliveries.get(dispositionRow.created_delivery_id) : null
+        const authorityRow = row.authority_kind === "MAIN" ? mains.get(row.authority_binding_id) : null
+        const writerFence = response?.evidence?.cas_input?.writer_fence_v1
+        if (row.authority_kind !== "MAIN" || !authorityRow || !dispositionRow || dispositionRow.handoff_id !== row.handoff_id ||
+            dispositionRow.from_generation !== fromGeneration || dispositionRow.to_generation !== row.generation ||
+            dispositionRow.from_state !== row.from_state || dispositionRow.to_state !== row.to_state || dispositionRow.disposition !== disposition ||
+            dispositionRow.main_binding_id !== authorityRow.main_binding_id || dispositionRow.main_identity_digest !== authorityRow.identity_digest ||
+            dispositionRow.request_identity !== row.request_identity || dispositionRow.occurred_at !== row.occurred_at ||
+            dispositionRow.closed_delivery_id !== (delivery?.delivery_id ?? null) || dispositionRow.closed_claim_id !== (claim?.claim_id ?? null) ||
+            dispositionRow.created_delivery_id !== (createdDelivery?.delivery_id ?? null)) throw ctError("CT_SCHEMA_INVALID")
+        if (!validHistoricalWriterFence(writerFence) ||
+            !exactKeys(response, ["evidence", "kind", "public_response", "version"]) || response.kind !== `${disposition.toLowerCase()}_response_envelope_v1` || response.version !== 1 ||
+            !response.evidence || response.evidence.disposition_id !== dispositionRow.disposition_id || committed.scope_key !== response.evidence.scope_key ||
+            row.cas_digest !== response.evidence.cas_digest || row.request_digest !== response.evidence.request_digest ||
+            !sameValue(response.public_response, { id: row.handoff_id, state: row.to_state, generation: row.generation, replayed: false }) ||
+            row.response_digest !== requestDigest(response.public_response) || row.decision_digest !== dispositionRow.disposition_digest) throw ctError("CT_SCHEMA_INVALID")
+        const closesDelivery = ["NOT_STARTED", "ROLLED_BACK", "CANCELLED", "POISONED", "SUSPEND_PENDING", "SUSPEND_ATTESTATION"].includes(disposition)
+        if (closesDelivery && delivery && (delivery.delivery_state !== "CLOSED" || delivery.closed_at !== row.occurred_at)) throw ctError("CT_SCHEMA_INVALID")
+        if (["CANCELLED", "POISONED"].includes(disposition) && claim && (claim.claim_state !== "CLOSED" || claim.closed_at !== row.occurred_at)) throw ctError("CT_SCHEMA_INVALID")
+        if (generationIncrement && (!createdDelivery || createdDelivery.created_at !== row.occurred_at || createdDelivery.delivery_state !== "PENDING")) throw ctError("CT_SCHEMA_INVALID")
+        if (!handoff || row.occurred_at < handoff.created_at) throw ctError("CT_SCHEMA_INVALID")
+      }
     }
 
     const envelopeKinds = { CREATE: "create_response_envelope_v1", VALIDATE: "validate_response_envelope_v1", PUBLISH: "publish_response_envelope_v1", CLAIM: "claim_response_envelope_v1" }
@@ -1843,17 +1973,59 @@ function validateSchema4BootstrapEnvelope(db, row, authority, historicalCas = un
       !safeEpoch(casInput.observed_active_main_binding_epoch) || (casInput.observed_active_main_binding_id !== null && !isBase64url32(casInput.observed_active_main_binding_id)) ||
       casInput.observed_activation_epoch !== 0 || casInput.active_claimant_bindings !== 0 || casInput.delivery_plane !== "ABSENT_SCHEMA_3") throw ctError("CT_SCHEMA_INVALID")
   const publicResponse = { anchor_id: authority.anchor.anchor_id, schema_version: 4, mode: "OFF", replayed: false }
+  // Uses the frozen SCHEMA_MANIFESTS-derived digest, not a live db query: this
+  // envelope validator is now also reached while the live database is at
+  // schema 5 or later (P6-B), where a live `manifestEvidence(db, 4)` read
+  // would incorrectly pick up post-schema-4 objects/migrations. The frozen
+  // digest is exactly what a schema-4 database produced at migration time.
   const expected = { kind: "bootstrap_schema4_response_v1", version: 1, public_response: publicResponse, evidence: {
     request, request_digest: requestDigest(request), cas_input: casInput, cas_digest: requestDigest(casInput),
     migration_004_checksum: MIGRATION_004_CHECKSUM, schema_3_manifest_digest: expectedManifestDigest(3),
-    schema_4_manifest_digest: requestDigest(manifestEvidence(db, 4)),
+    schema_4_manifest_digest: expectedManifestDigest(4),
   } }
   if (row.request_digest !== expected.evidence.request_digest || row.cas_digest !== expected.evidence.cas_digest ||
-      expected.evidence.schema_4_manifest_digest !== expectedManifestDigest(4) || row.response_json !== jcs(expected)) throw ctError("CT_SCHEMA_INVALID")
+      row.response_json !== jcs(expected)) throw ctError("CT_SCHEMA_INVALID")
   return envelope
 }
 const validateSchema4CommitEvidence = (db, authority) => validateSchema4BootstrapEnvelope(db,
   db.query("SELECT * FROM ct_idempotency WHERE operation='bootstrapAdmin' AND scope_key='schema:3->4'").get(), authority)
+// P6-B mirrors validateSchema4BootstrapEnvelope for the 4->5 lane: unlike the
+// 3->4 envelope, the 4->5 CAS shape carries a real observed_activation_epoch
+// (not forced 0) and the "SCHEMA_4_VALIDATED"/"ABSENT_SCHEMA_4" markers
+// instead of "ABSENT_SCHEMA_3", since a non-empty delivery/recovery plane is
+// legal at this boundary.
+function validateSchema5BootstrapEnvelope(db, row, authority, historicalCas = undefined) {
+  if (!row || !uuid.test(row.request_identity ?? "") || !rfc3339Milliseconds.test(row.committed_at ?? "")) throw ctError("CT_SCHEMA_INVALID")
+  let envelope
+  try { envelope = JSON.parse(row.response_json) } catch { throw ctError("CT_SCHEMA_INVALID") }
+  const request = envelope?.evidence?.request
+  if (!request || Object.getPrototypeOf(request) !== Object.prototype ||
+      JSON.stringify(Object.keys(request).sort()) !== JSON.stringify(["expected_anchor_id", "expected_mode", "expected_schema_version", "request_identity", "target_schema_version"]) ||
+      request.request_identity !== row.request_identity || request.expected_anchor_id !== authority.anchor.anchor_id ||
+      request.expected_schema_version !== 4 || request.target_schema_version !== 5 || request.expected_mode !== "OFF") throw ctError("CT_SCHEMA_INVALID")
+  const casInput = historicalCas ?? envelope?.evidence?.cas_input
+  const casKeys = ["active_claimant_bindings", "delivery_plane", "derived_anchor_epoch", "derived_config_digest", "expected_anchor_id", "expected_mode", "expected_schema_version", "observed_activation_epoch", "observed_active_main_binding_epoch", "observed_active_main_binding_id", "observed_lease_status", "observed_lease_version", "observed_rollback_epoch", "recovery_plane", "target_schema_version"]
+  if (!casInput || JSON.stringify(Object.keys(casInput).sort()) !== JSON.stringify(casKeys) ||
+      casInput.expected_anchor_id !== authority.anchor.anchor_id || casInput.expected_schema_version !== 4 || casInput.target_schema_version !== 5 ||
+      casInput.expected_mode !== "OFF" || casInput.derived_anchor_epoch !== 1 || casInput.derived_config_digest !== authority.anchor.config_digest ||
+      !safeEpoch(casInput.observed_rollback_epoch) || !safeEpoch(casInput.observed_lease_version) || casInput.observed_lease_status !== "NONE" ||
+      !safeEpoch(casInput.observed_active_main_binding_epoch) || (casInput.observed_active_main_binding_id !== null && !isBase64url32(casInput.observed_active_main_binding_id)) ||
+      !safeEpoch(casInput.observed_activation_epoch) || casInput.active_claimant_bindings !== 0 ||
+      casInput.delivery_plane !== "SCHEMA_4_VALIDATED" || casInput.recovery_plane !== "ABSENT_SCHEMA_4") throw ctError("CT_SCHEMA_INVALID")
+  const publicResponse = { anchor_id: authority.anchor.anchor_id, schema_version: 5, mode: "OFF", replayed: false }
+  // Same frozen-digest fix as validateSchema4BootstrapEnvelope: never read
+  // live db objects here, since this validator can run at any schema >= 5.
+  const expected = { kind: "bootstrap_schema5_response_v1", version: 1, public_response: publicResponse, evidence: {
+    request, request_digest: requestDigest(request), cas_input: casInput, cas_digest: requestDigest(casInput),
+    migration_005_checksum: MIGRATION_005_CHECKSUM, schema_4_manifest_digest: expectedManifestDigest(4),
+    schema_5_manifest_digest: expectedManifestDigest(5),
+  } }
+  if (row.request_digest !== expected.evidence.request_digest || row.cas_digest !== expected.evidence.cas_digest ||
+      row.response_json !== jcs(expected)) throw ctError("CT_SCHEMA_INVALID")
+  return envelope
+}
+const validateSchema5CommitEvidence = (db, authority) => validateSchema5BootstrapEnvelope(db,
+  db.query("SELECT * FROM ct_idempotency WHERE operation='bootstrapAdmin' AND scope_key='schema:4->5'").get(), authority)
 const assertMainRequest = (request) => {
   const keys = ["expected_anchor_id", "expected_binding_epoch", "request_identity"]
   if (!request || Object.getPrototypeOf(request) !== Object.prototype || JSON.stringify(Object.keys(request).sort()) !== JSON.stringify(keys) ||
@@ -1905,7 +2077,7 @@ const activationPrecondition = (db, authority, main, lease, prior, schemaVersion
     multiplexed_claimant_bindings: db.query("SELECT COUNT(*) AS count FROM ct_claimant_binding WHERE binding_status='MULTIPLEXED'").get().count,
     claimant_conflicts: db.query("SELECT COUNT(*) AS count FROM ct_claimant_conflict").get().count,
   }
-  if (schemaVersion === 4) Object.assign(value, { delivery_plane: "SCHEMA_4_EMPTY",
+  if ([4, 5].includes(schemaVersion)) Object.assign(value, { delivery_plane: schemaVersion === 4 ? "SCHEMA_4_EMPTY" : "SCHEMA_5_EMPTY",
     handoffs: db.query("SELECT COUNT(*) AS count FROM ct_handoff").get().count,
     transitions: db.query("SELECT COUNT(*) AS count FROM ct_handoff_transition").get().count,
     deliveries: db.query("SELECT COUNT(*) AS count FROM ct_delivery").get().count,
@@ -1921,10 +2093,11 @@ export const continuationActivate = (handle, ctxFactory, request) => {
   try {
     return db.transaction(() => {
       const version = inspectSchema(db)
-      if (![3, 4].includes(version)) throw ctError("CT_SCHEMA_INVALID")
+      if (![3, 4, 5].includes(version)) throw ctError("CT_SCHEMA_INVALID")
       const state = continuationState(db, authority, version)
       const persisted = validateSchema3Persistence(db, authority)
       if (version === 4) { validateSchema4CommitEvidence(db, authority); validateSchema4Persistence(db, authority) }
+      if (version === 5) { validateSchema4CommitEvidence(db, authority); validateSchema5CommitEvidence(db, authority); validateSchema4Persistence(db, authority) }
       if (state.mode === "ROLLING_BACK") throw ctError("CT_ROLLBACK_IN_PROGRESS")
       if (persisted.lease.lease_status !== "NONE" || persisted.lease.owner_main_binding_id !== null || persisted.lease.lease_expires_at !== null) throw ctError("CT_SCHEMA_INVALID")
       assertActivationRequest(request)
@@ -1979,10 +2152,11 @@ export const continuationStatus = (handle) => {
   try {
     return db.transaction(() => {
       const version = inspectSchema(db)
-      if (![3, 4].includes(version)) throw ctError("CT_SCHEMA_INVALID")
+      if (![3, 4, 5].includes(version)) throw ctError("CT_SCHEMA_INVALID")
       const state = continuationState(db, authority, version)
       const persisted = validateSchema3Persistence(db, authority)
       const schema4 = version === 4 ? (validateSchema4CommitEvidence(db, authority), validateSchema4Persistence(db, authority)) : null
+      const schema5 = version === 5 ? (validateSchema4CommitEvidence(db, authority), validateSchema5CommitEvidence(db, authority), validateSchema4Persistence(db, authority)) : null
       const noneLease = persisted.lease.lease_status === "NONE" && persisted.lease.owner_main_binding_id === null && persisted.lease.lease_expires_at === null
       if ((state.mode === "OFF" || state.mode === "ON") ? !noneLease : !["ACTIVE", "EXPIRED"].includes(persisted.lease.lease_status)) throw ctError("CT_SCHEMA_INVALID")
       const main = coherentMain(persisted.rows)
@@ -1994,7 +2168,7 @@ export const continuationStatus = (handle) => {
       }
       if (state.mode === "ROLLING_BACK" && (!main || persisted.lease.owner_main_binding_id !== main.main_binding_id)) throw ctError("CT_MAIN_BINDING_CONFLICT")
       const workers = db.query("SELECT COUNT(*) AS count FROM ct_claimant_binding WHERE binding_status='ACTIVE'").get().count
-      const counts = schema4 ? {
+      const counts = (schema4 || schema5) ? {
         claims: db.query("SELECT COUNT(*) AS count FROM ct_claim WHERE claim_state='LIVE'").get().count,
         deliveries: db.query("SELECT COUNT(*) AS count FROM ct_delivery WHERE delivery_state IN ('PENDING','CLAIMED')").get().count,
         work: db.query("SELECT COUNT(*) AS count FROM ct_delivery WHERE delivery_state='PENDING' AND purpose='WORK'").get().count,
@@ -2015,10 +2189,11 @@ export const continuationBootstrapMain = (handle, ctxFactory, request) => {
   try {
     return db.transaction(() => {
       const version = inspectSchema(db)
-      if (![3, 4].includes(version)) throw ctError("CT_SCHEMA_INVALID")
+      if (![3, 4, 5].includes(version)) throw ctError("CT_SCHEMA_INVALID")
       const state = continuationState(db, authority, version)
       const persisted = validateSchema3Persistence(db, authority)
       if (version === 4) { validateSchema4CommitEvidence(db, authority); validateSchema4Persistence(db, authority) }
+      if (version === 5) { validateSchema4CommitEvidence(db, authority); validateSchema5CommitEvidence(db, authority); validateSchema4Persistence(db, authority) }
       if (state.mode === "ROLLING_BACK") throw ctError("CT_ROLLBACK_IN_PROGRESS")
       if (state.mode === "ON") throw ctError("CT_FENCE_MISMATCH")
       if (persisted.lease.lease_status === "ACTIVE") throw ctError("CT_ROLLBACK_LEASE_ACTIVE")
@@ -2036,7 +2211,8 @@ export const continuationBootstrapMain = (handle, ctxFactory, request) => {
         if (!byIdentity || !byScope || byIdentity.scope_key !== byScope.scope_key || byIdentity.request_identity !== byScope.request_identity) throw ctError("CT_IDEMPOTENCY_CONFLICT")
         const target = persisted.rows.find(({ binding_epoch }) => binding_epoch === targetEpoch)
         const schemaBoundary = target && mainCommitSchemaBoundary(db, authority, persisted.rows)
-        const expected = target && expectedMainCommit(authority, persisted.rows, target, request.request_identity, persisted.lease, mainCommitSchemaVersion(schemaBoundary, target))
+        const schema5Boundary = target && mainCommitSchema5Boundary(db, authority, persisted.rows)
+        const expected = target && expectedMainCommit(authority, persisted.rows, target, request.request_identity, persisted.lease, mainCommitSchemaVersion(schemaBoundary, target, schema5Boundary))
         if (!target || byIdentity.cas_digest !== expected.cas_digest || target.identity_digest !== targetDigest || byIdentity.request_digest !== request_digest ||
             ![request.expected_binding_epoch, targetEpoch].includes(ctx.binding_epoch) || !mainIdentityFields.every((field) => target[field] === ctx[field])) throw ctError("CT_IDEMPOTENCY_CONFLICT")
         return { ...expected.response, replayed: true }
@@ -2080,10 +2256,10 @@ export const continuationCreate = (handle, ctxFactory, request) => {
   try {
     return db.transaction(() => {
       const version = inspectSchema(db)
-      if (version !== 4) throw ctError("CT_SCHEMA_INVALID")
+      if (![4, 5].includes(version)) throw ctError("CT_SCHEMA_INVALID")
       const state = continuationState(db, authority, version)
       const lease = validateLease(db)
-      validateSchema4CommitEvidence(db, authority); validateSchema3Persistence(db, authority); validateSchema4Persistence(db, authority)
+      validateSchema4CommitEvidence(db, authority); if (version === 5) validateSchema5CommitEvidence(db, authority); validateSchema3Persistence(db, authority); validateSchema4Persistence(db, authority)
       if (state.mode === "OFF") throw ctError("CT_CONTINUATION_OFF")
       if (state.mode === "ROLLING_BACK") throw ctError("CT_ROLLBACK_IN_PROGRESS")
       if (lease.lease_status !== "NONE" || lease.owner_main_binding_id !== null || lease.lease_expires_at !== null) throw ctError("CT_SCHEMA_INVALID")
@@ -2102,7 +2278,7 @@ export const continuationCreate = (handle, ctxFactory, request) => {
       if (!equalFields(producer, ctx, bindingFields)) throw ctError("CT_SESSION_ISOLATION_UNPROVEN")
 
       const producerCtx = tuple(ctx), producerCtxJson = jcs(producerCtx), producerCtxDigest = requestDigest(producerCtx)
-      const writerFence = { schema_version: 4, mode: "ON", anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
+      const writerFence = { schema_version: version, mode: "ON", anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
         observed_rollback_epoch: lease.rollback_epoch, observed_lease_version: lease.lease_version, observed_lease_status: "NONE" }
       const producerAuthority = { binding_id: producer.binding_id, identity_digest: producer.identity_digest, ctx_digest: producerCtxDigest }
       const casValue = { kind: "create_cas_v1", version: 1, writer_fence_v1: writerFence, producer_authority_v1: producerAuthority,
@@ -2238,10 +2414,11 @@ export const continuationValidate = (handle, ctxFactory, request) => {
   try {
     return db.transaction(() => {
       const version = inspectSchema(db)
-      if (version !== 4) throw ctError("CT_SCHEMA_INVALID")
+      if (![4, 5].includes(version)) throw ctError("CT_SCHEMA_INVALID")
       const state = continuationState(db, authority, version)
       const lease = validateLease(db)
       validateSchema4CommitEvidence(db, authority)
+      if (version === 5) validateSchema5CommitEvidence(db, authority)
       const persisted = validateSchema3Persistence(db, authority)
       validateSchema4Persistence(db, authority)
       if (state.mode === "OFF") throw ctError("CT_CONTINUATION_OFF")
@@ -2280,7 +2457,7 @@ export const continuationValidate = (handle, ctxFactory, request) => {
       const validationEvidenceJson = jcs(evidence)
       const validationDigest = requestDigest(evidence)
 
-      const writerFence = { schema_version: 4, mode: "ON", anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
+      const writerFence = { schema_version: version, mode: "ON", anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
         observed_rollback_epoch: lease.rollback_epoch, observed_lease_version: lease.lease_version, observed_lease_status: "NONE" }
       const mainAuthority = { main_binding_id: main.main_binding_id, binding_epoch: main.binding_epoch, identity_digest: main.identity_digest }
       const casValue = { kind: "validate_cas_v1", version: 1, writer_fence_v1: writerFence, main_authority_v1: mainAuthority,
@@ -2321,10 +2498,11 @@ export const continuationPublish = (handle, ctxFactory, request) => {
   try {
     return db.transaction(() => {
       const version = inspectSchema(db)
-      if (version !== 4) throw ctError("CT_SCHEMA_INVALID")
+      if (![4, 5].includes(version)) throw ctError("CT_SCHEMA_INVALID")
       const state = continuationState(db, authority, version)
       const lease = validateLease(db)
       validateSchema4CommitEvidence(db, authority)
+      if (version === 5) validateSchema5CommitEvidence(db, authority)
       const persisted = validateSchema3Persistence(db, authority)
       validateSchema4Persistence(db, authority)
       if (state.mode === "OFF") throw ctError("CT_CONTINUATION_OFF")
@@ -2360,7 +2538,7 @@ export const continuationPublish = (handle, ctxFactory, request) => {
       const validationDigest = requestDigest(evidence)
       if (validationDigest !== handoff.validation_digest) throw ctError("CT_SCHEMA_INVALID")
 
-      const writerFence = { schema_version: 4, mode: "ON", anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
+      const writerFence = { schema_version: version, mode: "ON", anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
         observed_rollback_epoch: lease.rollback_epoch, observed_lease_version: lease.lease_version, observed_lease_status: "NONE" }
       const mainAuthority = { main_binding_id: main.main_binding_id, binding_epoch: main.binding_epoch, identity_digest: main.identity_digest }
       const casValue = { kind: "publish_cas_v1", version: 1, writer_fence_v1: writerFence, main_authority_v1: mainAuthority,
@@ -2412,10 +2590,10 @@ export const continuationClaim = (handle, ctxFactory, request) => {
   try {
     return db.transaction(() => {
       const version = inspectSchema(db)
-      if (version !== 4) throw ctError("CT_SCHEMA_INVALID")
+      if (![4, 5].includes(version)) throw ctError("CT_SCHEMA_INVALID")
       const state = continuationState(db, authority, version)
       const lease = validateLease(db)
-      validateSchema4CommitEvidence(db, authority); validateSchema3Persistence(db, authority); validateSchema4Persistence(db, authority)
+      validateSchema4CommitEvidence(db, authority); if (version === 5) validateSchema5CommitEvidence(db, authority); validateSchema3Persistence(db, authority); validateSchema4Persistence(db, authority)
       if (state.mode === "OFF") throw ctError("CT_CONTINUATION_OFF")
       if (state.mode === "ROLLING_BACK") throw ctError("CT_ROLLBACK_IN_PROGRESS")
       if (lease.lease_status !== "NONE" || lease.owner_main_binding_id !== null || lease.lease_expires_at !== null) throw ctError("CT_SCHEMA_INVALID")
@@ -2475,7 +2653,7 @@ export const continuationClaim = (handle, ctxFactory, request) => {
       const token = createHmac("sha256", Buffer.from(authority.anchor.anchor_secret, "base64url")).update(jcs(tokenMaterial)).digest("base64url")
       const tokenHash = sha256(Buffer.from(token))
 
-      const writerFence = { schema_version: 4, mode: "ON", anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
+      const writerFence = { schema_version: version, mode: "ON", anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
         observed_rollback_epoch: lease.rollback_epoch, observed_lease_version: lease.lease_version, observed_lease_status: "NONE" }
       const claimantAuthority = { binding_id: claimant.binding_id, identity_digest: claimant.identity_digest, ctx_digest: claimantCtxDigest }
       const casValue = { kind: "claim_cas_v1", version: 1, writer_fence_v1: writerFence, claimant_authority_v1: claimantAuthority,
@@ -2554,10 +2732,10 @@ export const continuationAck = (handle, ctxFactory, request) => {
   try {
     return db.transaction(() => {
       const version = inspectSchema(db)
-      if (version !== 4) throw ctError("CT_SCHEMA_INVALID")
+      if (![4, 5].includes(version)) throw ctError("CT_SCHEMA_INVALID")
       const state = continuationState(db, authority, version)
       const lease = validateLease(db)
-      validateSchema4CommitEvidence(db, authority); validateSchema3Persistence(db, authority); validateSchema4Persistence(db, authority)
+      validateSchema4CommitEvidence(db, authority); if (version === 5) validateSchema5CommitEvidence(db, authority); validateSchema3Persistence(db, authority); validateSchema4Persistence(db, authority)
       if (state.mode === "OFF") throw ctError("CT_CONTINUATION_OFF")
       if (state.mode === "ROLLING_BACK") throw ctError("CT_ROLLBACK_IN_PROGRESS")
       if (lease.lease_status !== "NONE" || lease.owner_main_binding_id !== null || lease.lease_expires_at !== null) throw ctError("CT_SCHEMA_INVALID")
@@ -2617,7 +2795,7 @@ export const continuationAck = (handle, ctxFactory, request) => {
       const { effect_manifest_digest, pre_start_boundary_digest } = manifestDigests
 
       const occurredAt = now()
-      const writerFence = { schema_version: 4, mode: "ON", anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
+      const writerFence = { schema_version: version, mode: "ON", anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
         observed_rollback_epoch: lease.rollback_epoch, observed_lease_version: lease.lease_version, observed_lease_status: "NONE" }
       const claimantAuthority = { binding_id: claimant.binding_id, identity_digest: claimant.identity_digest, ctx_digest: callerCtxDigest }
       const casValue = { kind: "ack_cas_v1", version: 1, writer_fence_v1: writerFence, claimant_authority_v1: claimantAuthority,
@@ -2672,10 +2850,11 @@ export const continuationAttestCompletion = (handle, ctxFactory, request) => {
   try {
     return db.transaction(() => {
       const version = inspectSchema(db)
-      if (version !== 4) throw ctError("CT_SCHEMA_INVALID")
+      if (![4, 5].includes(version)) throw ctError("CT_SCHEMA_INVALID")
       const state = continuationState(db, authority, version)
       const lease = validateLease(db)
       validateSchema4CommitEvidence(db, authority)
+      if (version === 5) validateSchema5CommitEvidence(db, authority)
       const persisted = validateSchema3Persistence(db, authority)
       validateSchema4Persistence(db, authority)
       if (state.mode === "OFF") throw ctError("CT_CONTINUATION_OFF")
@@ -2733,7 +2912,7 @@ export const continuationAttestCompletion = (handle, ctxFactory, request) => {
       }
       const attestationDigest = requestDigest(attestationEvidence)
 
-      const writerFence = { schema_version: 4, mode: "ON", anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
+      const writerFence = { schema_version: version, mode: "ON", anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
         observed_rollback_epoch: lease.rollback_epoch, observed_lease_version: lease.lease_version, observed_lease_status: "NONE" }
       const mainAuthority = { main_binding_id: main.main_binding_id, binding_epoch: main.binding_epoch, identity_digest: main.identity_digest }
       const casValue = { kind: "attest_cas_v1", version: 1, writer_fence_v1: writerFence, main_authority_v1: mainAuthority,
@@ -2792,10 +2971,10 @@ export const continuationComplete = (handle, ctxFactory, request) => {
   try {
     return db.transaction(() => {
       const version = inspectSchema(db)
-      if (version !== 4) throw ctError("CT_SCHEMA_INVALID")
+      if (![4, 5].includes(version)) throw ctError("CT_SCHEMA_INVALID")
       const state = continuationState(db, authority, version)
       const lease = validateLease(db)
-      validateSchema4CommitEvidence(db, authority); validateSchema3Persistence(db, authority); validateSchema4Persistence(db, authority)
+      validateSchema4CommitEvidence(db, authority); if (version === 5) validateSchema5CommitEvidence(db, authority); validateSchema3Persistence(db, authority); validateSchema4Persistence(db, authority)
       if (state.mode === "OFF") throw ctError("CT_CONTINUATION_OFF")
       if (state.mode === "ROLLING_BACK") throw ctError("CT_ROLLBACK_IN_PROGRESS")
       if (lease.lease_status !== "NONE" || lease.owner_main_binding_id !== null || lease.lease_expires_at !== null) throw ctError("CT_SCHEMA_INVALID")
@@ -2854,7 +3033,7 @@ export const continuationComplete = (handle, ctxFactory, request) => {
       if (!attestRow || request.attestation_digest !== attestRow.decision_digest) throw ctError("CT_FENCE_MISMATCH")
 
       const occurredAt = now()
-      const writerFence = { schema_version: 4, mode: "ON", anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
+      const writerFence = { schema_version: version, mode: "ON", anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
         observed_rollback_epoch: lease.rollback_epoch, observed_lease_version: lease.lease_version, observed_lease_status: "NONE" }
       const claimantAuthority = { binding_id: claimant.binding_id, identity_digest: claimant.identity_digest, ctx_digest: callerCtxDigest }
       const casValue = { kind: "complete_cas_v1", version: 1, writer_fence_v1: writerFence, claimant_authority_v1: claimantAuthority,
@@ -2904,9 +3083,10 @@ export const continuationReject = (handle, ctxFactory, request) => {
   try {
     return db.transaction(() => {
       const version = inspectSchema(db)
-      if (version !== 4) throw ctError("CT_SCHEMA_INVALID")
+      if (![4, 5].includes(version)) throw ctError("CT_SCHEMA_INVALID")
       const state = continuationState(db, authority, version), lease = validateLease(db)
       validateSchema4CommitEvidence(db, authority)
+      if (version === 5) validateSchema5CommitEvidence(db, authority)
       const persisted = validateSchema3Persistence(db, authority)
       validateSchema4Persistence(db, authority)
       if (state.mode === "OFF") throw ctError("CT_CONTINUATION_OFF")
@@ -2941,7 +3121,7 @@ export const continuationReject = (handle, ctxFactory, request) => {
       } else if (deliveries.length !== 0 || claims.length !== 0) throw ctError("CT_INVALID_TRANSITION")
 
       const occurredAt = now(), closedDeliveryId = delivery?.delivery_id ?? null
-      const writerFence = { schema_version: 4, mode: "ON", anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
+      const writerFence = { schema_version: version, mode: "ON", anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
         observed_rollback_epoch: lease.rollback_epoch, observed_lease_version: lease.lease_version, observed_lease_status: "NONE" }
       const mainAuthority = { main_binding_id: main.main_binding_id, binding_epoch: main.binding_epoch, identity_digest: main.identity_digest }
       const casValue = { kind: "reject_cas_v1", version: 1, writer_fence_v1: writerFence, main_authority_v1: mainAuthority,
@@ -2982,9 +3162,10 @@ export const continuationRevise = (handle, ctxFactory, request) => {
   try {
     return db.transaction(() => {
       const version = inspectSchema(db)
-      if (version !== 4) throw ctError("CT_SCHEMA_INVALID")
+      if (![4, 5].includes(version)) throw ctError("CT_SCHEMA_INVALID")
       const state = continuationState(db, authority, version), lease = validateLease(db)
       validateSchema4CommitEvidence(db, authority)
+      if (version === 5) validateSchema5CommitEvidence(db, authority)
       const persisted = validateSchema3Persistence(db, authority)
       validateSchema4Persistence(db, authority)
       if (state.mode === "OFF") throw ctError("CT_CONTINUATION_OFF")
@@ -3034,7 +3215,7 @@ export const continuationRevise = (handle, ctxFactory, request) => {
         provenance_digest: provenanceDigest, decision_summary_digest: decisionSummaryDigest,
         producer_binding_id: main.main_binding_id, producer_identity_digest: main.identity_digest, producer_ctx_digest: producerCtxDigest }
       const handoffFingerprint = requestDigest(fingerprint)
-      const writerFence = { schema_version: 4, mode: "ON", anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
+      const writerFence = { schema_version: version, mode: "ON", anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
         observed_rollback_epoch: lease.rollback_epoch, observed_lease_version: lease.lease_version, observed_lease_status: "NONE" }
       const mainAuthority = { main_binding_id: main.main_binding_id, binding_epoch: main.binding_epoch, identity_digest: main.identity_digest }
       const casValue = { kind: "revise_cas_v1", version: 1, writer_fence_v1: writerFence, main_authority_v1: mainAuthority,
@@ -3200,7 +3381,7 @@ export const continuationReceive = (handle, ctxFactory) => {
       // PENDING with the matching handoff/snapshot state for their purpose; a
       // simultaneous claim may commit before or after this snapshot, which is
       // safe because only claim consumes and rechecks under a writer lock.
-      if (inspectSchema(db) !== 4) return { delivery: null }
+      if (![4, 5].includes(inspectSchema(db))) return { delivery: null }
       const repositoryFingerprint = requestDigest({ kind: "canonical_repo_v1", path: authority.anchor.context.canonical_repo })
       const gitCommonDirFingerprint = requestDigest({ kind: "git_common_dir_v1", path: authority.anchor.context.git_common_dir })
       const delivery = db.query(`SELECT d.delivery_id AS delivery_id, h.id AS id, h.state AS state, d.generation AS generation, d.purpose AS purpose
