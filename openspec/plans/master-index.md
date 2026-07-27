@@ -16,8 +16,9 @@ Control Tower permanece plan-agnostic. Main, Policy y los agentes de fase interp
 | PRD V1 | Aprobado | [`../prd/sdd-tower-implementation-v1.md`](../prd/sdd-tower-implementation-v1.md) | Problema, experiencia, alcance y aceptación de producto |
 | RFC V1 | Aprobado | [`../rfc/sdd-tower-implementation-v1.md`](../rfc/sdd-tower-implementation-v1.md) | Arquitectura, roles, autoridad y adopción |
 | REQUIREMENTS V1 | Aprobado | [`../specs/sdd-tower-implementation-v1-requirements.md`](../specs/sdd-tower-implementation-v1-requirements.md) | Schemas, estados, contratos, errores y escenarios |
-| Plan Catalog | Pendiente | `manifest.yaml` | Índice machine-readable de planes |
-| OpenSpec changes de producto | Pendientes | `../changes/` | Propuestas, specs, diseños y tasks implementables |
+| Plan Catalog | Creado y validado | [`manifest.yaml`](manifest.yaml) | Índice machine-readable de planes |
+| Plan Manifest | Creado y validado | [`sdd-tower-implementation/manifest.yaml`](sdd-tower-implementation/manifest.yaml) | DAG machine-readable de 15 slices y referencias verificadas |
+| OpenSpec changes de producto | Proposals creados | `../changes/sdd-tower-*/proposal.md` | Nueve changes A–I; cada uno continúa en fase `spec` |
 
 `docs/architecture/sdd-tower-implementation.md` es material de exploración, no autoridad normativa. Debe reconciliarse por separado antes de cualquier entrega documental, sin reemplazar los tres documentos aprobados.
 
@@ -48,10 +49,10 @@ Reglas:
 | Definición de producto | Completa | Nada | PRD aprobado |
 | Arquitectura | Completa | Nada | RFC aprobado |
 | Contrato normativo | Completo | Nada | REQUIREMENTS aprobado |
-| Roadmap | En revisión | Aprobación del mantenedor | Este documento aprobado |
-| Plan Catalog | Pendiente | `manifest.yaml` y manifests por plan | Validación contra schema |
-| OpenSpec split | Pendiente | Crear cambios dependency-linked | Proposals/specs/design/tasks |
-| Implementación producto | No iniciada | Dependencias mecánicas + cambios aprobados | Apply por unidad |
+| Roadmap | Aprobado y mergeado | Mantener el punto de retoma actualizado | PR #47 / merge `0745f99` |
+| Plan Catalog | Creado y validado | Implementar su JSON Schema en Change A | Manifest check: 15 slices / 4 ArtifactRefs |
+| OpenSpec split | Proposals completos | Specs, designs y tasks de A–I | Estado nativo: `nextRecommended: spec` |
+| Implementación producto | No iniciada | Completar planning y dependencias por change | Apply por unidad |
 | Piloto end-to-end | No iniciado | Gates A–G de REQUIREMENTS | Verify report V1 |
 
 ### 4.2 Sustrato mecánico existente
@@ -325,22 +326,22 @@ Cambios posteriores deben crear una revisión explícita del documento correspon
 
 ## 10. Punto de retoma
 
-**Estado actual:** PRD, RFC y REQUIREMENTS V1 aprobados. Roadmap maestro creado y pendiente de aprobación. No comenzó implementación del producto macro.
+**Estado actual:** PRD, RFC, REQUIREMENTS, roadmap, Plan Catalog, Plan Manifest y proposals A–I aprobados estructuralmente y mergeados mediante PR #47 (`0745f99`). No comenzó implementación del producto macro.
 
-**Sustrato:** `autonomous-continuation-control-tower` está en 26/50; P6 es el primer slice pendiente. P7 y P8 están planificados y listos para apply según estado nativo, con dependencias de producto aún por declarar.
+**Sustrato:** el último snapshot de este plan registró `autonomous-continuation-control-tower` en 26/50; P6 era el primer slice pendiente. P7 y P8 conservan planning completo. Antes de actuar se MUST consultar estado nativo fresco porque el workstream mecánico avanza de forma independiente.
 
-**Próximo paso exacto después de aprobar este roadmap:**
+**Próximo paso exacto:**
 
-1. crear `openspec/plans/manifest.yaml`;
-2. crear `openspec/plans/sdd-tower-implementation/manifest.yaml`;
-3. crear los OpenSpec change shells A–I con relaciones dependency-linked;
-4. redactar y aprobar primero el proposal de Change A `sdd-tower-contract-schemas`;
-5. no iniciar apply de producto hasta que el change correspondiente complete planning y sus dependencias estén satisfechas.
+1. ejecutar `sdd-status` fresco para `sdd-tower-contract-schemas`;
+2. continuar Change A desde `spec`, sin repetir su proposal;
+3. aprobar secuencialmente spec, design y tasks de Change A;
+4. no iniciar apply de producto hasta que el change correspondiente complete planning y sus dependencias estén satisfechas;
+5. mantener A–I separados del sustrato plan-agnostic P6–P11.
 
 **Trabajo parcial que debe preservarse:**
 
-- cambios no commiteados en los documentos de esta rama;
 - `.gitignore` y `.codegraph/` sin rastrear, no pertenecen a esta fase;
+- cambios locales no incluidos en PR #47 bajo `docs/architecture/sdd-tower-implementation.md`;
 - el change mecánico principal y sus worktrees/sesiones se gestionan de forma independiente.
 
 ## 11. Vínculo con Engram
