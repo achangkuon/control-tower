@@ -269,6 +269,87 @@ const CONTINUATION_TOOL_DEFINITIONS = new Map([
       required: ["request_identity", "source_id", "lineage_id", "revision", "payload", "payload_digest"],
     },
   },
+  {
+    name: "recover",
+    description: "Apply one recovery disposition under ACTIVE Main (ON) or rollback-owner Main (ROLLING_BACK) authority, fenced to the exact handoff generation, delivery, claim, and rollback epoch.",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        request_identity: { type: "string" },
+        id: { type: "string" },
+        es: { type: "string", enum: ["PUBLISHED", "CLAIMED", "STARTED", "COMPLETION_ATTESTED", "WORK_SUSPENDED", "ATTESTATION_SUSPENDED"] },
+        eg: { type: "integer", minimum: 0 },
+        action: { type: "string", enum: ["NOT_STARTED", "ROLLED_BACK", "CANCELLED", "POISONED", "SUSPEND_PENDING", "SUSPEND_ATTESTATION", "REDELIVER_WORK", "REDELIVER_ATTESTATION"] },
+        expected_rollback_epoch: { type: "integer", minimum: 0 },
+        delivery_id: { anyOf: [{ type: "string" }, { type: "null" }] },
+        claim_id: { anyOf: [{ type: "string" }, { type: "null" }] },
+        rollback_proof: { anyOf: [{ type: "object" }, { type: "null" }] },
+      },
+      required: ["request_identity", "id", "es", "eg", "action", "expected_rollback_epoch", "delivery_id", "claim_id", "rollback_proof"],
+    },
+  },
+  {
+    name: "beginRollback",
+    description: "Freeze inventory, open a new rollback epoch, and transition mode ON to ROLLING_BACK under ACTIVE Main authority.",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        request_identity: { type: "string" },
+        expected_mode: { type: "string", enum: ["ON"] },
+        expected_binding_epoch: { type: "integer", minimum: 1 },
+        expected_activation_epoch: { type: "integer", minimum: 1 },
+      },
+      required: ["request_identity", "expected_mode", "expected_binding_epoch", "expected_activation_epoch"],
+    },
+  },
+  {
+    name: "rebindMain",
+    description: "Retire the old Main and bind a fresh ACTIVE Main after its termination is proven, transferring the rollback lease, under the canonical Main worktree context.",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        request_identity: { type: "string" },
+        expected_rollback_epoch: { type: "integer", minimum: 1 },
+        expected_lease_version: { type: "integer", minimum: 1 },
+        expected_binding_epoch: { type: "integer", minimum: 1 },
+      },
+      required: ["request_identity", "expected_rollback_epoch", "expected_lease_version", "expected_binding_epoch"],
+    },
+  },
+  {
+    name: "finishRollback",
+    description: "Prove zero live and pending work, close the rollback epoch, release the lease, and transition ROLLING_BACK to OFF under the lease-owner Main.",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        request_identity: { type: "string" },
+        expected_rollback_epoch: { type: "integer", minimum: 1 },
+        expected_lease_version: { type: "integer", minimum: 1 },
+        expected_binding_epoch: { type: "integer", minimum: 1 },
+      },
+      required: ["request_identity", "expected_rollback_epoch", "expected_lease_version", "expected_binding_epoch"],
+    },
+  },
+].map((tool) => [tool.name, tool]))
+// P6-C: recordTerminationReceipt additionally requires the processObserver
+// capability, so it is listed separately and only merged in when that
+// capability is present — every other continuation tool is unaffected.
+const RECOVERY_TOOL_DEFINITIONS = new Map([
+  {
+    name: "recordTerminationReceipt",
+    description: "Record a server-observed termination proof for a persisted MAIN or CLAIMANT binding, under ACTIVE Main (or rollback-owner Main) authority. The request only names the binding and process role; the Tower observes termination itself via the processObserver capability.",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        request_identity: { type: "string" },
+        subject_kind: { type: "string", enum: ["CLAIMANT", "MAIN"] },
+        subject_binding_id: { type: "string" },
+        subject_binding_epoch: { type: "integer", minimum: 1 },
+        process_role: { type: "string", enum: ["HOST", "MCP"] },
+      },
+      required: ["request_identity", "subject_kind", "subject_binding_id", "subject_binding_epoch", "process_role"],
+    },
+  },
 ].map((tool) => [tool.name, tool]))
 
 const GUARDED_TOOLS = new Set([
@@ -304,10 +385,12 @@ const makeCall = (cwd, continuationTools, dispatch) => (name, args) => {
 
 const send = (msg) => process.stdout.write(`${JSON.stringify(msg)}\n`)
 
-export const createMcpHandler = ({ cwd = process.cwd(), trustedMetadata, processIdentity } = {}) => {
+export const createMcpHandler = ({ cwd = process.cwd(), trustedMetadata, processIdentity, processObserver } = {}) => {
   const enabled = Boolean(trustedMetadata?.snapshot && processIdentity?.snapshot)
-  const continuationTools = enabled ? CONTINUATION_TOOL_DEFINITIONS : new Map()
-  const dispatch = enabled ? tower.createContinuationDispatcher({ cwd, trustedMetadata, processIdentity }) : null
+  const continuationTools = enabled
+    ? new Map([...CONTINUATION_TOOL_DEFINITIONS, ...(processObserver?.observe ? RECOVERY_TOOL_DEFINITIONS : [])])
+    : new Map()
+  const dispatch = enabled ? tower.createContinuationDispatcher({ cwd, trustedMetadata, processIdentity, processObserver }) : null
   const call = makeCall(cwd, continuationTools, dispatch)
   return (req) => {
     const { method, params } = req
