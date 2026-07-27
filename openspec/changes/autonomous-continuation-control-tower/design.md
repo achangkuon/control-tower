@@ -1409,3 +1409,525 @@ P5 plausibly exceeds 800 authored lines (five operations plus effect-manifest, a
 | P5-D Rejection & Revision | green P5-C | `reject` safe→REJECTED (PENDING delivery closed) and `revise` new immutable DRAFT N+1; exact source | `CT-R1-S4`, `CT-R1-S6`, `CT-R3-S3..S4` | 320–460 | revert only P5-D `reject`/`revise` handler/route/tests/evidence; preserve P5-A/B/C rows |
 
 Total P5 forecast is 1,440–2,060 authored lines across the four units in `core.mjs`, `mcp.mjs`, and `test/lifecycle.test.mjs`; each unit is independently ≤800. If any concrete pre-RED forecast crosses 800, stop and split that unit further (e.g. separate the compensation-shape definitions from `complete` within P5-C); budgets are never borrowed. The overall P5 rollback boundary reverts only P5 handlers/routes/tests/evidence: the dormant schema-4 rows return to inert (older code rejects any `STARTED`/`COMPLETION_ATTESTED`/`COMPLETED`/`REJECTED`/attestation/effect/committed-result row as an unsupported future history `CT_SCHEMA_INVALID`), every P4 handoff/delivery/claim/transition/idempotency/budget row is preserved byte-for-byte, and there is no down-migration and no Migration 004 byte change. `RECOVER`, STARTED-rollback execution, redelivery mutation, proof-bound quiescence, polling, activation, commit, push, and PR remain outside P5.
+
+---
+
+# P6 Design Amendment: Proof-Bound Recovery, Rollback, and Quiescence
+
+## Decision summary
+
+P6 introduces its **own additive Migration 005** and executes through **six sequential chained units** (P6-A … P6-F), each under its own independent 800-authored-line ceiling that can never be borrowed. Migration 005 adds exactly **22 new named `ct_*` objects** — five tables (`ct_termination_receipt`, `ct_quiescence_snapshot`, `ct_rollback_epoch`, `ct_main_rebind`, `ct_recovery_disposition`), seven indexes, ten triggers — producing an exact **58-object schema-5 manifest**. It alters **no Migration 004 byte and no Migration 004 checksum**, drops nothing, rebuilds nothing, and never down-migrates. P6 adds exactly **two new fail-closed codes** — `CT_RECOVERY_REQUIRED` and `CT_RECOVERY_DISPOSITION_FORBIDDEN` — named by `CT-R7-S1/S4` and `CT-R11-S2`; `CT-R7-S8` is malformed persisted history and therefore reuses `CT_SCHEMA_INVALID` at structural validation precedence. P6 adds exactly five runtime operations: `recordTerminationReceipt`, `recover`, `beginRollback`, `rebindMain`, `finishRollback`.
+
+The lifecycle CHECK members P6 needs are **already dormant in Migration 004** and are activated exactly as P5 activated its own: `ct_handoff.state` and `ct_handoff_transition.from_state`/`to_state` already contain `CANCELLED`, `POISONED`, `WORK_SUSPENDED`, and `ATTESTATION_SUSPENDED`; `ct_handoff_transition.operation` already contains `RECOVER`; `ct_delivery.purpose` and `ct_claim.purpose` already contain `ATTESTATION_REDELIVERY`; `ct_delivery.handoff_state_snapshot` already contains `COMPLETION_ATTESTED`. Three members named by the requirement text are **genuinely absent** from Migration 004 and are therefore *not* persisted handoff states: `ROLLING_BACK` is a `ct_continuation_state.mode` value (Migration 001), never a handoff state; `ROLLED_BACK` is a **disposition label**, so `CT-R7-S6`'s `STARTED→ROLLED_BACK→PUBLISHED` is persisted as one `RECOVER` transition `from_state='STARTED', to_state='PUBLISHED'` whose disposition is `ROLLED_BACK`; `UNKNOWN` is the unprovable-boundary outcome that P5 already mapped to `ct_handoff.state='POISONED'` (see the CT-R12-S4 rule above), and P6 keeps that mapping. Migration 005 adds no state, no operation, and no purpose member: every new object is a new table, index, or trigger.
+
+P6 covers `CT-R7-S1..S12`, `CT-R11-S2`, `CT-R11-S4`, `CT-R11-S5`, and the rollback/rebind/finish projection of `CT-R11-S3`. The polling plane (`P7`), host adapters (`P8`/`P9`), and the versioned runtime/cutover (`P10`) stay **entirely outside P6**: P6 persists only the explicit server-owned witness `polling_plane:"UNAVAILABLE_BEFORE_P7"` and never a real polling observation, never a host adapter, never a release artifact, and never a runtime activation.
+
+## Migration 005: proof, quiescence, rollback-epoch, rebind, and disposition foundation
+
+`core.mjs` will own immutable `MIGRATION_005_SQL`. Its exact UTF-8 byte stream is the following block with LF line endings, no leading or trailing blank line, exactly one terminal LF, byte length **14996**, exactly **231 lines**, and checksum **`sha256:9bd43721486bee4a23f2e4428fd0cb2c1813729f4eb89b7d500bd486ce237b98`**. Every byte is ASCII, so the byte length equals the character count of that literal. `MIGRATION_005_CHECKSUM = sha256(Buffer.from(MIGRATION_005_SQL))` is computed by the implementation from the constant, exactly as `MIGRATION_004_CHECKSUM` is; the literal below and the three pinned numbers above agree by construction, and the literal remains the normative byte source. **P6-A's first RED assertion** independently copies this literal and asserts all three pinned values — byte length, line count, and checksum — as constants, recording them in `apply-progress.md`; any later byte, line, or checksum drift is a RED failure. Requests and configuration can never supply, alias, override, or influence the checksum: it is derived from the frozen constant inside the process, and no accepted request shape in P1–P6 contains a checksum, DDL, object name, or manifest member.
+
+```sql
+CREATE TABLE ct_termination_receipt (
+  receipt_id TEXT PRIMARY KEY CHECK(length(receipt_id) = 43),
+  subject_kind TEXT NOT NULL CHECK(subject_kind IN ('CLAIMANT', 'MAIN')),
+  subject_binding_id TEXT NOT NULL CHECK(length(subject_binding_id) = 43),
+  subject_identity_digest TEXT NOT NULL CHECK(length(subject_identity_digest) = 71),
+  subject_binding_epoch INTEGER NOT NULL CHECK(subject_binding_epoch > 0),
+  process_role TEXT NOT NULL CHECK(process_role IN ('HOST', 'MCP')),
+  pairing_digest TEXT NOT NULL CHECK(length(pairing_digest) = 71),
+  issuer TEXT NOT NULL CHECK(issuer = 'CT_MAIN_OBSERVER_V1'),
+  verifier TEXT NOT NULL CHECK(verifier = 'CT_MAIN_VERIFIER_V1'),
+  method TEXT NOT NULL CHECK(method = 'OS_PROCESS_TABLE_V1'),
+  observation TEXT NOT NULL CHECK(observation IN ('ABSENT', 'REPLACED')),
+  terminated INTEGER NOT NULL CHECK(terminated = 1),
+  os_boot_id TEXT NOT NULL CHECK(length(os_boot_id) BETWEEN 1 AND 256),
+  os_session_id TEXT NOT NULL CHECK(length(os_session_id) BETWEEN 1 AND 256),
+  host_process_instance TEXT NOT NULL CHECK(length(host_process_instance) > 0),
+  plugin_instance TEXT NOT NULL CHECK(length(plugin_instance) > 0),
+  root_session_id TEXT NOT NULL CHECK(length(root_session_id) > 0),
+  mcp_process_instance TEXT NOT NULL CHECK(length(mcp_process_instance) = 43),
+  pid_start_marker TEXT NOT NULL CHECK(length(pid_start_marker) BETWEEN 1 AND 128),
+  observed_start_marker TEXT CHECK(observed_start_marker IS NULL OR length(observed_start_marker) BETWEEN 1 AND 128),
+  rollback_epoch INTEGER NOT NULL CHECK(rollback_epoch >= 0),
+  lease_version INTEGER NOT NULL CHECK(lease_version >= 0),
+  generation INTEGER NOT NULL CHECK(generation >= 0),
+  handoff_id TEXT CHECK(handoff_id IS NULL OR length(handoff_id) = 43),
+  receipt_json TEXT NOT NULL CHECK(length(CAST(receipt_json AS BLOB)) BETWEEN 1 AND 8192),
+  receipt_digest TEXT NOT NULL UNIQUE CHECK(length(receipt_digest) = 71),
+  observed_at TEXT NOT NULL CHECK(length(observed_at) = 24),
+  recorded_at TEXT NOT NULL CHECK(length(recorded_at) = 24),
+  CHECK(recorded_at >= observed_at),
+  CHECK((subject_kind = 'CLAIMANT' AND handoff_id IS NOT NULL) OR
+        (subject_kind = 'MAIN' AND handoff_id IS NULL AND generation = 0)),
+  CHECK((observation = 'ABSENT' AND observed_start_marker IS NULL) OR
+        (observation = 'REPLACED' AND observed_start_marker IS NOT NULL AND observed_start_marker <> pid_start_marker)),
+  UNIQUE(subject_binding_id, subject_binding_epoch, process_role, rollback_epoch, generation)
+);
+CREATE INDEX ct_termination_receipt_subject_lookup
+ON ct_termination_receipt(subject_binding_id, subject_binding_epoch, rollback_epoch, generation, process_role);
+CREATE INDEX ct_termination_receipt_pairing
+ON ct_termination_receipt(pairing_digest, process_role);
+CREATE TRIGGER ct_termination_receipt_no_update
+BEFORE UPDATE ON ct_termination_receipt
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_TERMINATION_RECEIPT');
+END;
+CREATE TRIGGER ct_termination_receipt_no_delete
+BEFORE DELETE ON ct_termination_receipt
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_TERMINATION_RECEIPT');
+END;
+CREATE TABLE ct_quiescence_snapshot (
+  snapshot_id TEXT PRIMARY KEY CHECK(length(snapshot_id) = 43),
+  snapshot_kind TEXT NOT NULL CHECK(snapshot_kind IN ('ROLLBACK_FREEZE', 'ROLLBACK_FINISH')),
+  rollback_epoch INTEGER NOT NULL CHECK(rollback_epoch > 0),
+  lease_version INTEGER NOT NULL CHECK(lease_version > 0),
+  owner_main_binding_id TEXT NOT NULL CHECK(length(owner_main_binding_id) = 43),
+  owner_main_binding_epoch INTEGER NOT NULL CHECK(owner_main_binding_epoch > 0),
+  owner_main_identity_digest TEXT NOT NULL CHECK(length(owner_main_identity_digest) = 71),
+  live_claims INTEGER NOT NULL CHECK(live_claims >= 0),
+  live_deliveries INTEGER NOT NULL CHECK(live_deliveries >= 0),
+  live_workers INTEGER NOT NULL CHECK(live_workers >= 0),
+  pending_work INTEGER NOT NULL CHECK(pending_work >= 0),
+  pending_attestation INTEGER NOT NULL CHECK(pending_attestation >= 0),
+  frozen_inventory_json TEXT NOT NULL CHECK(length(CAST(frozen_inventory_json AS BLOB)) BETWEEN 1 AND 65536),
+  frozen_inventory_digest TEXT NOT NULL CHECK(length(frozen_inventory_digest) = 71),
+  polling_witness TEXT NOT NULL CHECK(polling_witness = 'UNAVAILABLE_BEFORE_P7'),
+  quiescence_json TEXT NOT NULL CHECK(length(CAST(quiescence_json AS BLOB)) BETWEEN 1 AND 65536),
+  quiescence_digest TEXT NOT NULL UNIQUE CHECK(length(quiescence_digest) = 71),
+  observed_at TEXT NOT NULL CHECK(length(observed_at) = 24),
+  CHECK(snapshot_kind = 'ROLLBACK_FREEZE' OR
+        (live_claims = 0 AND live_deliveries = 0 AND live_workers = 0 AND pending_work = 0 AND pending_attestation = 0)),
+  UNIQUE(rollback_epoch, snapshot_kind)
+);
+CREATE INDEX ct_quiescence_snapshot_epoch
+ON ct_quiescence_snapshot(rollback_epoch, snapshot_kind, observed_at);
+CREATE TRIGGER ct_quiescence_snapshot_no_update
+BEFORE UPDATE ON ct_quiescence_snapshot
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_QUIESCENCE_SNAPSHOT');
+END;
+CREATE TRIGGER ct_quiescence_snapshot_no_delete
+BEFORE DELETE ON ct_quiescence_snapshot
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_QUIESCENCE_SNAPSHOT');
+END;
+CREATE TABLE ct_rollback_epoch (
+  rollback_epoch INTEGER PRIMARY KEY CHECK(rollback_epoch > 0),
+  epoch_state TEXT NOT NULL CHECK(epoch_state IN ('OPEN', 'FINISHED')),
+  begin_owner_main_binding_id TEXT NOT NULL CHECK(length(begin_owner_main_binding_id) = 43),
+  begin_owner_main_binding_epoch INTEGER NOT NULL CHECK(begin_owner_main_binding_epoch > 0),
+  begin_owner_main_identity_digest TEXT NOT NULL CHECK(length(begin_owner_main_identity_digest) = 71),
+  prior_activation_epoch INTEGER NOT NULL CHECK(prior_activation_epoch > 0),
+  begin_lease_version INTEGER NOT NULL CHECK(begin_lease_version > 0),
+  begin_lease_expires_at TEXT NOT NULL CHECK(length(begin_lease_expires_at) = 24),
+  freeze_quiescence_digest TEXT NOT NULL CHECK(length(freeze_quiescence_digest) = 71),
+  finish_lease_version INTEGER CHECK(finish_lease_version IS NULL OR finish_lease_version > 0),
+  finish_quiescence_digest TEXT CHECK(finish_quiescence_digest IS NULL OR length(finish_quiescence_digest) = 71),
+  request_identity TEXT NOT NULL UNIQUE CHECK(length(request_identity) = 36),
+  request_digest TEXT NOT NULL CHECK(length(request_digest) = 71),
+  cas_digest TEXT NOT NULL CHECK(length(cas_digest) = 71),
+  rollback_digest TEXT NOT NULL UNIQUE CHECK(length(rollback_digest) = 71),
+  begun_at TEXT NOT NULL CHECK(length(begun_at) = 24),
+  finished_at TEXT CHECK(finished_at IS NULL OR length(finished_at) = 24),
+  CHECK((epoch_state = 'OPEN' AND finish_lease_version IS NULL AND finish_quiescence_digest IS NULL AND finished_at IS NULL) OR
+        (epoch_state = 'FINISHED' AND finish_lease_version IS NOT NULL AND finish_quiescence_digest IS NOT NULL AND finished_at IS NOT NULL))
+);
+CREATE UNIQUE INDEX ct_rollback_epoch_one_open
+ON ct_rollback_epoch(epoch_state)
+WHERE epoch_state = 'OPEN';
+CREATE TRIGGER ct_rollback_epoch_immutable_begin
+BEFORE UPDATE ON ct_rollback_epoch
+WHEN NEW.rollback_epoch IS NOT OLD.rollback_epoch
+  OR NEW.begin_owner_main_binding_id IS NOT OLD.begin_owner_main_binding_id
+  OR NEW.begin_owner_main_binding_epoch IS NOT OLD.begin_owner_main_binding_epoch
+  OR NEW.begin_owner_main_identity_digest IS NOT OLD.begin_owner_main_identity_digest
+  OR NEW.prior_activation_epoch IS NOT OLD.prior_activation_epoch
+  OR NEW.begin_lease_version IS NOT OLD.begin_lease_version
+  OR NEW.begin_lease_expires_at IS NOT OLD.begin_lease_expires_at
+  OR NEW.freeze_quiescence_digest IS NOT OLD.freeze_quiescence_digest
+  OR NEW.request_identity IS NOT OLD.request_identity
+  OR NEW.request_digest IS NOT OLD.request_digest
+  OR NEW.cas_digest IS NOT OLD.cas_digest
+  OR NEW.rollback_digest IS NOT OLD.rollback_digest
+  OR NEW.begun_at IS NOT OLD.begun_at
+  OR OLD.epoch_state = 'FINISHED'
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_ROLLBACK_EPOCH');
+END;
+CREATE TRIGGER ct_rollback_epoch_no_delete
+BEFORE DELETE ON ct_rollback_epoch
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_ROLLBACK_EPOCH');
+END;
+CREATE TABLE ct_main_rebind (
+  rebind_id TEXT PRIMARY KEY CHECK(length(rebind_id) = 43),
+  rollback_epoch INTEGER NOT NULL CHECK(rollback_epoch > 0),
+  old_main_binding_id TEXT NOT NULL CHECK(length(old_main_binding_id) = 43),
+  old_main_binding_epoch INTEGER NOT NULL CHECK(old_main_binding_epoch > 0),
+  old_main_identity_digest TEXT NOT NULL CHECK(length(old_main_identity_digest) = 71),
+  new_main_binding_id TEXT NOT NULL CHECK(length(new_main_binding_id) = 43),
+  new_main_binding_epoch INTEGER NOT NULL CHECK(new_main_binding_epoch > 0),
+  new_main_identity_digest TEXT NOT NULL CHECK(length(new_main_identity_digest) = 71),
+  termination_pairing_digest TEXT NOT NULL CHECK(length(termination_pairing_digest) = 71),
+  lease_version_before INTEGER NOT NULL CHECK(lease_version_before > 0),
+  lease_version_after INTEGER NOT NULL CHECK(lease_version_after > 0),
+  lease_expires_at TEXT NOT NULL CHECK(length(lease_expires_at) = 24),
+  request_identity TEXT NOT NULL UNIQUE CHECK(length(request_identity) = 36),
+  request_digest TEXT NOT NULL CHECK(length(request_digest) = 71),
+  cas_digest TEXT NOT NULL CHECK(length(cas_digest) = 71),
+  rebind_digest TEXT NOT NULL UNIQUE CHECK(length(rebind_digest) = 71),
+  occurred_at TEXT NOT NULL CHECK(length(occurred_at) = 24),
+  CHECK(old_main_binding_id <> new_main_binding_id),
+  CHECK(new_main_binding_epoch = old_main_binding_epoch + 1),
+  CHECK(lease_version_after = lease_version_before + 1),
+  UNIQUE(rollback_epoch, new_main_binding_id)
+);
+CREATE INDEX ct_main_rebind_epoch
+ON ct_main_rebind(rollback_epoch, occurred_at, rebind_id);
+CREATE TRIGGER ct_main_rebind_no_update
+BEFORE UPDATE ON ct_main_rebind
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_MAIN_REBIND');
+END;
+CREATE TRIGGER ct_main_rebind_no_delete
+BEFORE DELETE ON ct_main_rebind
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_MAIN_REBIND');
+END;
+CREATE TABLE ct_recovery_disposition (
+  disposition_id TEXT PRIMARY KEY CHECK(length(disposition_id) = 43),
+  handoff_id TEXT NOT NULL CHECK(length(handoff_id) = 43),
+  disposition TEXT NOT NULL CHECK(disposition IN ('NOT_STARTED', 'ROLLED_BACK', 'CANCELLED', 'POISONED', 'SUSPEND_PENDING', 'REDELIVER_WORK', 'SUSPEND_ATTESTATION', 'REDELIVER_ATTESTATION')),
+  from_state TEXT NOT NULL CHECK(from_state IN ('PUBLISHED', 'CLAIMED', 'STARTED', 'COMPLETION_ATTESTED', 'WORK_SUSPENDED', 'ATTESTATION_SUSPENDED')),
+  to_state TEXT NOT NULL CHECK(to_state IN ('PUBLISHED', 'CANCELLED', 'POISONED', 'WORK_SUSPENDED', 'ATTESTATION_SUSPENDED', 'COMPLETION_ATTESTED')),
+  from_generation INTEGER NOT NULL CHECK(from_generation >= 0),
+  to_generation INTEGER NOT NULL CHECK(to_generation >= 0),
+  mode TEXT NOT NULL CHECK(mode IN ('ON', 'ROLLING_BACK')),
+  rollback_epoch INTEGER NOT NULL CHECK(rollback_epoch >= 0),
+  lease_version INTEGER NOT NULL CHECK(lease_version >= 0),
+  main_binding_id TEXT NOT NULL CHECK(length(main_binding_id) = 43),
+  main_binding_epoch INTEGER NOT NULL CHECK(main_binding_epoch > 0),
+  main_identity_digest TEXT NOT NULL CHECK(length(main_identity_digest) = 71),
+  termination_pairing_digest TEXT CHECK(termination_pairing_digest IS NULL OR length(termination_pairing_digest) = 71),
+  rollback_proof_digest TEXT CHECK(rollback_proof_digest IS NULL OR length(rollback_proof_digest) = 71),
+  frozen_inventory_digest TEXT CHECK(frozen_inventory_digest IS NULL OR length(frozen_inventory_digest) = 71),
+  preserved_attestation_digest TEXT CHECK(preserved_attestation_digest IS NULL OR length(preserved_attestation_digest) = 71),
+  attestation_source_generation INTEGER CHECK(attestation_source_generation IS NULL OR attestation_source_generation >= 0),
+  closed_delivery_id TEXT CHECK(closed_delivery_id IS NULL OR length(closed_delivery_id) = 43),
+  closed_claim_id TEXT CHECK(closed_claim_id IS NULL OR length(closed_claim_id) = 43),
+  created_delivery_id TEXT CHECK(created_delivery_id IS NULL OR length(created_delivery_id) = 43),
+  request_identity TEXT NOT NULL UNIQUE CHECK(length(request_identity) = 36),
+  request_digest TEXT NOT NULL CHECK(length(request_digest) = 71),
+  cas_digest TEXT NOT NULL CHECK(length(cas_digest) = 71),
+  disposition_digest TEXT NOT NULL UNIQUE CHECK(length(disposition_digest) = 71),
+  occurred_at TEXT NOT NULL CHECK(length(occurred_at) = 24),
+  CHECK(to_generation = from_generation + (CASE WHEN disposition IN ('NOT_STARTED', 'ROLLED_BACK', 'REDELIVER_WORK', 'REDELIVER_ATTESTATION') THEN 1 ELSE 0 END)),
+  CHECK((disposition = 'NOT_STARTED' AND from_state = 'CLAIMED' AND to_state = 'PUBLISHED') OR
+        (disposition = 'ROLLED_BACK' AND from_state = 'STARTED' AND to_state = 'PUBLISHED') OR
+        (disposition = 'REDELIVER_WORK' AND from_state = 'WORK_SUSPENDED' AND to_state = 'PUBLISHED') OR
+        (disposition = 'SUSPEND_PENDING' AND from_state = 'PUBLISHED' AND to_state = 'WORK_SUSPENDED') OR
+        (disposition = 'SUSPEND_ATTESTATION' AND from_state = 'COMPLETION_ATTESTED' AND to_state = 'ATTESTATION_SUSPENDED') OR
+        (disposition = 'REDELIVER_ATTESTATION' AND from_state = 'ATTESTATION_SUSPENDED' AND to_state = 'COMPLETION_ATTESTED') OR
+        (disposition = 'CANCELLED' AND to_state = 'CANCELLED') OR
+        (disposition = 'POISONED' AND to_state = 'POISONED')),
+  CHECK(disposition NOT IN ('NOT_STARTED', 'ROLLED_BACK', 'SUSPEND_ATTESTATION') OR termination_pairing_digest IS NOT NULL),
+  CHECK(disposition NOT IN ('SUSPEND_PENDING', 'REDELIVER_WORK', 'REDELIVER_ATTESTATION') OR termination_pairing_digest IS NULL),
+  CHECK((disposition = 'ROLLED_BACK') = (rollback_proof_digest IS NOT NULL)),
+  CHECK((disposition IN ('SUSPEND_PENDING', 'SUSPEND_ATTESTATION')) = (frozen_inventory_digest IS NOT NULL)),
+  CHECK((disposition IN ('SUSPEND_ATTESTATION', 'REDELIVER_ATTESTATION')) = (preserved_attestation_digest IS NOT NULL)),
+  CHECK((preserved_attestation_digest IS NOT NULL) = (attestation_source_generation IS NOT NULL)),
+  CHECK((disposition IN ('NOT_STARTED', 'ROLLED_BACK', 'REDELIVER_WORK', 'REDELIVER_ATTESTATION')) = (created_delivery_id IS NOT NULL)),
+  CHECK(closed_claim_id IS NULL OR closed_delivery_id IS NOT NULL),
+  CHECK(mode = 'ON' OR disposition NOT IN ('NOT_STARTED', 'ROLLED_BACK', 'REDELIVER_WORK', 'REDELIVER_ATTESTATION')),
+  CHECK(mode = 'ROLLING_BACK' OR disposition NOT IN ('SUSPEND_PENDING', 'SUSPEND_ATTESTATION')),
+  CHECK(mode = 'ON' OR (rollback_epoch > 0 AND lease_version > 0)),
+  UNIQUE(handoff_id, from_generation, disposition)
+);
+CREATE INDEX ct_recovery_disposition_history
+ON ct_recovery_disposition(handoff_id, from_generation, occurred_at, disposition_id);
+CREATE INDEX ct_recovery_disposition_epoch
+ON ct_recovery_disposition(rollback_epoch, disposition, occurred_at);
+CREATE TRIGGER ct_recovery_disposition_no_update
+BEFORE UPDATE ON ct_recovery_disposition
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_RECOVERY_DISPOSITION');
+END;
+CREATE TRIGGER ct_recovery_disposition_no_delete
+BEFORE DELETE ON ct_recovery_disposition
+BEGIN
+  SELECT RAISE(ABORT, 'CT_IMMUTABLE_RECOVERY_DISPOSITION');
+END;
+```
+
+Three DDL choices are deliberate and load-bearing rather than decorative:
+
+- `ct_quiescence_snapshot.polling_witness CHECK(polling_witness = 'UNAVAILABLE_BEFORE_P7')` makes any other witness value **unrepresentable** at schema 5. P7 must add its own byte-checksummed migration before a real polling witness can ever be stored; P6 never widens it.
+- The `ROLLBACK_FINISH` CHECK makes a finish snapshot with any nonzero live claim, delivery, worker, or pending count **unrepresentable**, so `CT-R11-S4` is enforced by the schema and not only by the handler.
+- `ct_termination_receipt.observation IN ('ABSENT','REPLACED')` plus `terminated = 1` plus the `observed_start_marker` CHECK make a receipt that records a **live** process, an ambiguous observation, or a same-incarnation PID unrepresentable. A non-terminating observation can never become a persisted proof row.
+
+### Exact schema-5 manifest
+
+Schema 5 contains the exact 36-object schema-4 manifest plus these objects and no other `ct_*` object:
+
+- tables: `ct_termination_receipt`, `ct_quiescence_snapshot`, `ct_rollback_epoch`, `ct_main_rebind`, `ct_recovery_disposition`;
+- indexes: `ct_termination_receipt_subject_lookup`, `ct_termination_receipt_pairing`, `ct_quiescence_snapshot_epoch`, `ct_rollback_epoch_one_open`, `ct_main_rebind_epoch`, `ct_recovery_disposition_history`, `ct_recovery_disposition_epoch`;
+- triggers: `ct_termination_receipt_no_update`, `ct_termination_receipt_no_delete`, `ct_quiescence_snapshot_no_update`, `ct_quiescence_snapshot_no_delete`, `ct_rollback_epoch_immutable_begin`, `ct_rollback_epoch_no_delete`, `ct_main_rebind_no_update`, `ct_main_rebind_no_delete`, `ct_recovery_disposition_no_update`, `ct_recovery_disposition_no_delete`.
+
+The complete manifest therefore has **58 named `ct_*` objects**: the 36 exact schema-4 objects, the five tables/seven indexes/ten triggers above, and no view. `ct_schema_migration` contains exactly versions `1..5` with the already-pinned v1/v2/v3/v4 checksums plus the Migration 005 checksum, and `SCHEMA_MANIFESTS` gains a `5` entry built as `new Map([...V4_OBJECTS, ...schemaObjects(MIGRATION_005_SQL)])` exactly as `V4_OBJECTS` was built. SQLite-owned `sqlite_autoindex_*` rows created by the new `UNIQUE(...)` table constraints remain excluded by the existing manifest query; `ct_rollback_epoch_one_open` is a **named** partial unique index and is therefore inside the manifest. All five new tables contain zero rows immediately after migration.
+
+### Schema-4→5 bootstrap, fresh lane, retry lane, and rollback-on-failure
+
+CLI-only `bootstrapAdmin` accepts `target_schema_version: 5` under operation/scope `bootstrapAdmin/schema:4->5`, with the same accepted request `{request_identity,expected_anchor_id,expected_schema_version,target_schema_version,expected_mode}` and the same exact-key/`Object.prototype` rejection the target-4 lane already applies. Digests are:
+
+```text
+request_digest = SHA-256(UTF8(JCS({
+  request_identity,expected_anchor_id,expected_schema_version:4,
+  target_schema_version:5,expected_mode:"OFF"
+})))
+cas_digest = SHA-256(UTF8(JCS({
+  expected_anchor_id,expected_schema_version:4,target_schema_version:5,
+  expected_mode:"OFF",derived_anchor_epoch:1,derived_config_digest,
+  observed_rollback_epoch,observed_lease_version,observed_lease_status:"NONE",
+  observed_active_main_binding_id,observed_active_main_binding_epoch,
+  observed_activation_epoch,active_claimant_bindings:0,
+  delivery_plane:"SCHEMA_4_VALIDATED",recovery_plane:"ABSENT_SCHEMA_4"
+})))
+```
+
+Unlike the 3→4 lane, the 4→5 lane does **not** require an empty delivery plane: a schema-4 database with real handoff/transition/delivery/claim/budget history migrates in place, and `observed_activation_epoch` is the real committed activation epoch rather than the forced `0`. It does require `mode='OFF'`, lease `NONE`, zero ACTIVE claimant bindings, and a fully valid schema-4 cross-row state under the existing P4/P5 validator. `observed_active_main_binding_id` is `null` with epoch `0` when Main is absent, otherwise the sole structurally valid ACTIVE Main; callers supply neither.
+
+**Fresh lane** (P6-B), after safe anchor/config validation and bounded `BEGIN IMMEDIATE`: exact schema-4 manifest/checksums → singleton continuation state at schema 4 and mode `OFF` → coherent `NONE` lease → the full schema-4 commit-evidence and persistence validators → zero ACTIVE claimants → no committed `schema:4->5` scope → request CAS. It then executes `MIGRATION_005_SQL`, updates exactly one continuation-state row `4→5`, inserts migration row 5, rereads the unchanged anchor bytes, revalidates `inspectSchema(db) === 5` against the exact 58-object manifest, and asserts **zero rows in all five new tables**. It derives `schema_4_manifest_digest`/`schema_5_manifest_digest` with the existing `schema_manifest_evidence_v1` shape and persists canonical JCS in the migration idempotency `response_json` as `{kind:"bootstrap_schema5_response_v1",version:1,public_response:{anchor_id,schema_version:5,mode:"OFF",replayed:false},evidence:{request,request_digest,cas_input,cas_digest,migration_005_checksum,schema_4_manifest_digest,schema_5_manifest_digest}}`. The public adapter returns only `public_response`; the evidence envelope is never accepted from a caller.
+
+**Retry lane** (P6-B): replay requires the exact current schema-5 manifest/checksums, one coherent continuation row at schema 5, mode `OFF`, lease `NONE`, migration row 5 with the pinned checksum, a valid full schema-5 cross-row state, and exactly one `bootstrapAdmin/schema:4->5` envelope whose canonical request, request digest, historical `cas_input`, CAS digest, both manifest digests, checksum, and `replayed:false` public response all recompute exactly. A valid **non-empty** recovery plane — receipts, snapshots, rollback epochs, rebinds, dispositions — does not invalidate replay and is never cleared: emptiness was a fresh-lane commit condition recorded in the predecessor/successor manifest evidence, not a permanent schema-5 invariant. Replay returns only `{anchor_id,schema_version:5,mode:"OFF",replayed:true}` and writes nothing.
+
+Precedence in either lane matches Migrations 003/004: anchor/config safety → version-selected manifest/checksums and structural cross-row validity → continuation mode/lease fence → committed target-scope evidence/classification → incoming request/CAS → bounded commit work. Malformed or missing migration evidence, checksum/object/SQL/cross-row drift is `CT_SCHEMA_INVALID`; `ON`/`ROLLING_BACK`, non-`NONE` lease, nonzero ACTIVE claimants, or a wrong requested version/mode is `CT_FENCE_MISMATCH`; a valid committed envelope with a changed same-operation identity or tuple is `CT_IDEMPOTENCY_CONFLICT`; anchor/config drift is `CT_ANCHOR_*`; writer expiry is `CT_BUSY`. **Any fresh-lane failure rolls back every v5 object plus the migration/state/idempotency changes and leaves schema 4 byte-identical; every retry-lane failure is read-only.** Migration 005 never alters or deletes a schema-1/2/3/4 table, index, trigger, row, payload, legacy row, Main/activation history, claimant history, lease, `ACTIVE` file, or runtime file. A schema greater than 5, or a schema-5 database without valid commit evidence, is never treated as a fresh migration and never triggers drop, rebuild, copy, or cleanup.
+
+## `termination_receipt_v1`: versioned proof bound to persisted identity
+
+`recordTerminationReceipt` is a capability-gated continuation operation requiring the ACTIVE Main (mode `ON`) or the rollback-owner Main at the matching epoch (mode `ROLLING_BACK`). It accepts exactly `{request_identity, subject_kind, subject_binding_id, subject_binding_epoch, process_role}` — **no digest, timestamp, PID, boolean, observation, issuer, verifier, method, or witness member exists in the request**, so a caller cannot assert termination at all; it can only name which persisted binding and which process role the server must observe for itself. Every other member is server-derived from (a) the immutable persisted binding row (`ct_claimant_binding` for `CLAIMANT`, `ct_main_binding` for `MAIN`), (b) the constructor-owned `processObserver` capability, and (c) the server clock.
+
+`processObserver` is a third constructor capability alongside the existing `trustedMetadata` and `processIdentity`, injected by `createContinuationDispatcher` and never reachable from a request. It exposes exactly `observe({role, host_process_instance, plugin_instance, root_session_id, mcp_process_instance, pid_start_marker})` returning `{status:"ABSENT"|"REPLACED"|"PRESENT"|"AMBIGUOUS", observed_start_marker, os_boot_id, os_session_id}`. `pid_start_marker` remains opaque to the Tower exactly as it is in P2/P3 — a stable OS-probe observation for the named PID — and the observer, not the Tower, re-probes it. Without a `processObserver`, `recordTerminationReceipt` fails closed `CT_RECOVERY_REQUIRED`, the route is not listed, and every recovery disposition that requires proof is unavailable.
+
+```text
+termination_receipt_v1 = {
+  kind:"termination_receipt_v1", version:1,
+  subject:{kind:"CLAIMANT"|"MAIN", binding_id, identity_digest, binding_epoch},
+  process:{role:"HOST"|"MCP", host_process_instance, plugin_instance, root_session_id,
+           mcp_process_instance, pid_start_marker, observed_start_marker},
+  proof:{issuer:"CT_MAIN_OBSERVER_V1", verifier:"CT_MAIN_VERIFIER_V1",
+         method:"OS_PROCESS_TABLE_V1", observation:"ABSENT"|"REPLACED",
+         os_boot_id, os_session_id, terminated:true},
+  binding:{rollback_epoch, lease_version, generation, handoff_id},
+  observed_at
+}
+receipt_json   = JCS(termination_receipt_v1)
+receipt_digest = SHA-256(UTF8(receipt_json))
+termination_pairing_v1 = {
+  kind:"termination_pairing_v1", version:1,
+  subject_binding_id, subject_identity_digest, subject_binding_epoch,
+  rollback_epoch, generation, os_boot_id, os_session_id, roles:["HOST","MCP"]
+}
+pairing_digest = SHA-256(UTF8(JCS(termination_pairing_v1)))
+```
+
+Derivation and rejection rules, all server-side and all non-mutating on failure:
+
+- **Identity binding.** `subject.identity_digest`, `subject.binding_epoch`, and every `process.*` tuple member are read from the persisted binding row; a request naming a binding id whose epoch, status, or identity digest does not reconstruct is `CT_SCHEMA_INVALID`. For `subject_kind='MAIN'` the row must be the **exact old** `main_binding_id` with its `identity_digest` — this is the P3-persisted old-Main identity that `design.md`'s P3 handoff note requires P6 proof rows to reference — and `handoff_id` is `NULL` with `generation = 0`. For `subject_kind='CLAIMANT'` the row must be the claimant named by the live `ct_claim` at the target handoff/generation, and `handoff_id`/`generation` are that claim's, not the caller's.
+- **Observation allowlist.** `PRESENT` (same incarnation still alive) is `CT_RECOVERY_REQUIRED` with no row — this is `CT-R7-S4`'s "live process". `AMBIGUOUS` (a process occupies the PID but its start marker cannot be read, i.e. possible PID reuse) is `CT_RECOVERY_REQUIRED` with no row — this is `CT-R7-S5`'s reused-PID rejection. Only `ABSENT` and `REPLACED` may be persisted, and `REPLACED` additionally requires `observed_start_marker <> pid_start_marker`, so a same-incarnation "termination" is unrepresentable.
+- **Freshness.** `observed_at` is the observer's own server-clock instant and `recorded_at` is the commit instant; recording refuses when `recorded_at - observed_at > 30_000 ms`. Freshness is re-verified **at every use**: a disposition, rebind, or finish that consumes a pairing recomputes `now - receipt.observed_at` for both rows and refuses `CT_RECOVERY_REQUIRED` when either exceeds 30 seconds. A receipt is therefore never a durable licence; it is a 30-second window.
+- **Epoch/lease/generation binding.** `binding.rollback_epoch`, `binding.lease_version`, and `binding.generation` are read from the live singleton lease and the target row. A receipt recorded at rollback epoch *E* or lease version *V* can never satisfy a disposition evaluated at a different epoch or lease version: the pairing digest changes, so the lookup simply finds nothing and the result is `CT_RECOVERY_REQUIRED`.
+- **Pairing validation.** A pairing is valid only when **exactly two** receipt rows share the `pairing_digest`, their `process_role` values are exactly `HOST` and `MCP`, their subject binding/epoch/identity digest, `os_boot_id`, `os_session_id`, `rollback_epoch`, and `generation` are identical, each row's recomputed `receipt_digest` equals its stored value, and both are fresh. One row, three rows, mixed roles, mixed boot ids, or a digest that does not recompute is `CT_RECOVERY_REQUIRED` — `CT-R7-S4`'s "invalid receipt pairing" and `CT-R7-S5`'s issuer/verifier/method/time/marker/epoch/generation mismatch class.
+- **Response.** `{subject_kind, process_role, recorded:true, replayed}` and nothing else: no digest, no PID, no marker, no identity tuple, no `os_boot_id`. Scope key is `termination:<subject_binding_id>:epoch:<subject_binding_epoch>:generation:<generation>:<process_role>` under operation `recordTerminationReceipt`; replay returns the stored public response with `replayed:true` and writes nothing.
+
+## `quiescence_v1`: snapshot bound to epoch, lease, inventory, and witness
+
+```text
+frozen_inventory_v1 = {
+  kind:"frozen_inventory_v1", version:1, rollback_epoch,
+  handoffs:[{id, state, generation}]              // every non-terminal handoff, ascending by id
+}
+frozen_inventory_digest = SHA-256(UTF8(JCS(frozen_inventory_v1)))
+quiescence_v1 = {
+  kind:"quiescence_v1", version:1,
+  snapshot_kind:"ROLLBACK_FREEZE"|"ROLLBACK_FINISH",
+  rollback_epoch, lease_version,
+  owner:{main_binding_id, binding_epoch, main_identity_digest},
+  live_counts:{claims, deliveries, workers},
+  pending_counts:{work, attestation},
+  frozen_inventory_digest,
+  polling_plane:"UNAVAILABLE_BEFORE_P7",
+  observed_at
+}
+quiescence_digest = SHA-256(UTF8(JCS(quiescence_v1)))
+```
+
+`live_counts` and `pending_counts` are computed by the same queries `status()` already uses — LIVE claims, `PENDING`+`CLAIMED` deliveries, ACTIVE claimant bindings, and PENDING deliveries split by purpose — inside the same writer snapshot, so a snapshot can never disagree with the status a caller could observe in that transaction. `owner` is the lease owner at snapshot time, which is the beginning Main for `ROLLBACK_FREEZE` and the possibly-rebound Main for `ROLLBACK_FINISH`. The exact preconditions each kind must prove:
+
+| Snapshot kind | Written by | Must prove |
+|---|---|---|
+| `ROLLBACK_FREEZE` | `beginRollback` | mode was `ON` with lease `NONE`; the new epoch is `prior + 1`; the frozen inventory names every non-terminal handoff with its exact state/generation; the server-owned polling witness is present |
+| `ROLLBACK_FINISH` | `finishRollback` | mode is `ROLLING_BACK` at the matching epoch; `live_counts.claims = live_counts.deliveries = live_counts.workers = 0`; `pending_counts.work = pending_counts.attestation = 0`; the server-owned polling witness is present |
+
+`finishRollback` refuses `CT_NOT_QUIESCENT` whenever any of those counts is nonzero, and the DDL makes a stored `ROLLBACK_FINISH` snapshot with a nonzero count impossible, so a fabricated finish proof cannot be persisted even by a defective handler. That is `CT-R11-S4`'s "OFF requires zero live rows and an atomic transition".
+
+## Trusted polling witness: structurally, not rhetorically, server-owned
+
+Design note P3 line 716 is binding and P6 satisfies it in three independent layers:
+
+1. **No request member exists.** `recordTerminationReceipt`, `recover`, `beginRollback`, `rebindMain`, and `finishRollback` each declare an exact sorted key allowlist checked with the existing `JSON.stringify(Object.keys(request).sort()) !== JSON.stringify(keys)` pattern plus the `forbiddenCtxKeys` guard. None of those key sets contains a polling, witness, liveness, quiesced, terminated, boolean, or proof-digest member. A caller cannot express the concept, so it cannot be forbidden-but-attempted; it is `CT_PAYLOAD_INVALID` at the request-shape rung before any database read.
+2. **No MCP schema member exists.** The five new `CONTINUATION_TOOL_DEFINITIONS` entries use `additionalProperties:false` with exactly those properties and explicit-null rejection, so the transport cannot carry one either.
+3. **No storable alternative value exists.** `ct_quiescence_snapshot.polling_witness` admits only the literal `'UNAVAILABLE_BEFORE_P7'`, written by the server. Even a compromised handler cannot persist a different witness without a new migration.
+
+Termination is proven only by server-observed `ct_termination_receipt` pairings; quiescence is proven only by server-derived `ct_quiescence_snapshot` rows. A request-supplied boolean or digest can never prove either, and the only caller-supplied evidence anywhere in P6 — the `rollback_proof_v1` for `ROLLED_BACK` — is fully recomputed server-side against the persisted `ACK` effect manifest before it is believed (below).
+
+## The eight recovery dispositions
+
+`recover` accepts exactly nine keys, always all present: `{request_identity, id, es, eg, action, expected_rollback_epoch, delivery_id, claim_id, rollback_proof}`. `action` is one of the eight dispositions; `es` is the exact expected pre-transition handoff state; `eg` is the exact expected pre-transition generation; `delivery_id`, `claim_id`, and `rollback_proof` are `null` exactly when the disposition names none. `expected_rollback_epoch` is mandatory in every mode: its absence is impossible (exact key set) and a stale value under `ROLLING_BACK` is `CT_ROLLBACK_IN_PROGRESS`, which together with the unchanged `gateContinuation` behaviour for ordinary writers gives `CT-R11-S2`'s "omission and stale attempts return `CT_ROLLBACK_IN_PROGRESS` without mutation".
+
+Each disposition is exactly one bounded `BEGIN IMMEDIATE` transaction that appends exactly one immutable `ct_handoff_transition` row with `operation='RECOVER'` and `authority_kind='MAIN'`, one immutable `ct_recovery_disposition` row, and one `ct_idempotency` row, and mutates only the columns named below. **Recovery never completes a handoff and never calls the claimant-only `complete`**, and this is structural, not advisory: `to_state='COMPLETED'` is outside the `ct_recovery_disposition.to_state` CHECK, `COMPLETE` is a different `operation` value written only by `continuationComplete`, and every disposition's state CAS names its own exact target.
+
+| Disposition | Mode / authority | Pre-state → post-state | Generation | Delivery / claim effect | Required proof |
+|---|---|---|---|---|---|
+| `NOT_STARTED` | `ON`, ACTIVE Main | `CLAIMED` → `PUBLISHED` | `eg` → `eg+1` | close old `CLAIMED` delivery and LIVE claim; create one fresh `PENDING` `WORK` delivery at `eg+1` | termination pairing for the claim's claimant |
+| `ROLLED_BACK` | `ON`, ACTIVE Main | `STARTED` → `PUBLISHED` | `eg` → `eg+1` | close old delivery and claim; create one fresh `PENDING` `WORK` delivery at `eg+1` | termination pairing **and** `rollback_proof_v1` with recomputed `boundary_equal = true` |
+| `CANCELLED` | `ON` or `ROLLING_BACK`, ACTIVE or rollback-owner Main | any of `PUBLISHED`/`CLAIMED`/`STARTED`/`COMPLETION_ATTESTED` → `CANCELLED` | unchanged | close any delivery and claim; **create none** | termination pairing iff a LIVE claim exists |
+| `POISONED` | `ON` or `ROLLING_BACK`, ACTIVE or rollback-owner Main | same pre-states → `POISONED` | unchanged | close any delivery and claim; **create none** | termination pairing iff a LIVE claim exists |
+| `SUSPEND_PENDING` | `ROLLING_BACK` only, rollback-owner Main at matching epoch | `PUBLISHED` → `WORK_SUSPENDED` | unchanged | close the `PENDING` `WORK` delivery; **create none** | frozen inventory of the open epoch; valid structural history necessarily has no claim because atomic `claim` changes PUBLISHED/PENDING to CLAIMED |
+| `REDELIVER_WORK` | `ON` only, ACTIVE Main | `WORK_SUSPENDED` → `PUBLISHED` | `eg` → `eg+1` | create one fresh `PENDING` `WORK` delivery at `eg+1` | none (the row is already non-live and claimless) |
+| `SUSPEND_ATTESTATION` | `ROLLING_BACK` only, rollback-owner Main at matching epoch | `COMPLETION_ATTESTED` → `ATTESTATION_SUSPENDED` | unchanged | close the `CLAIMED` delivery and LIVE claim; **create none**; preserve the attestation | termination pairing; frozen inventory |
+| `REDELIVER_ATTESTATION` | `ON` only, ACTIVE Main | `ATTESTATION_SUSPENDED` → `COMPLETION_ATTESTED` | `eg` → `eg+1` | create one fresh `PENDING` `ATTESTATION_REDELIVERY` delivery at `eg+1` with `handoff_state_snapshot='COMPLETION_ATTESTED'` | none (the row is already non-live and claimless) |
+
+The mode column is enforced twice: by the handler's disposition/mode rung and by the `ct_recovery_disposition` mode CHECKs, which make an `ON`-only disposition recorded under `ROLLING_BACK` — or the reverse — unrepresentable. This is `CT-R11-S2` in the schema: under `ROLLING_BACK`, `NOT_STARTED`, `ROLLED_BACK`, `REDELIVER_WORK`, and `REDELIVER_ATTESTATION` return `CT_RECOVERY_DISPOSITION_FORBIDDEN` with no mutation and no `PENDING` delivery. Under `OFF`, every disposition is `CT_CONTINUATION_OFF`.
+
+`CT-R7-S8` is a structural-invalidity characterization, not a reachable recovery rung. Atomic `claim` changes the handoff and delivery from `PUBLISHED`/`PENDING` to `CLAIMED` in the same transaction that creates the claim, so valid persisted history cannot contain a `PUBLISHED`/`PENDING` pair with a claim for that delivery. If tampered history presents that contradiction, the schema-5 cross-row validator returns `CT_SCHEMA_INVALID` without mutation at precedence rung 1, before mode, request, authority, idempotency, recovery fences, or proof semantics. P6 introduces no reservation/pre-claim state and does not reorder validation to make malformed history appear valid.
+
+`CT-R7-S3` is exact: `ROLLED_BACK` requires a structurally complete `rollback_proof_v1` for the handoff and generation whose `receipts` array has one entry per declared effect in the persisted `ACK` manifest. The server re-derives `pre_start_boundary_digest` from the persisted `ack` envelope, recomputes `observed_boundary_digest` and every `read_back_matches_pre_state` from the caller's read-back digests using the exported P5-C `validRollbackProof` rule, and requires `boundary_equal = true`. A proof that omits the handoff, the generation, or the pre-start boundary — or that names an `UNOBSERVABLE`, `NON_COMPENSATABLE`, undeclared, or mismatching effect — fails the recomputation and returns `CT_RECOVERY_REQUIRED` with the row still `STARTED`, never republished. Main's only remaining moves for such a row are `CANCELLED` or `POISONED`, which is the `UNKNOWN/POISONED` outcome `CT-R7-S3` and `CT-R12-S4` name. The caller's booleans are never trusted: `validRollbackProof` compares every asserted flag against the server's own recomputation and rejects disagreement.
+
+### RECOVER envelopes, digests, and the superseded dormant expectation
+
+```text
+scope_key    = "handoff:<id>:generation:<eg>:<action lowercased>"          // eg = PRE-transition generation
+request_digest = SHA-256(UTF8(JCS(the exact accepted nine-key request)))
+<action>_cas_v1 = {
+  kind:"<action lowercased>_cas_v1", version:1,
+  writer_fence_v1, main_authority_v1,
+  id, disposition, expected_state:es, expected_generation:eg, target_generation,
+  expected_rollback_epoch, expected_lease_version, expected_lease_status,
+  expected_delivery_state, expected_claim_state,
+  delivery_id, claim_id, handoff_fingerprint,
+  termination_pairing_digest, rollback_proof_digest,
+  frozen_inventory_digest, preserved_attestation_digest
+}
+cas_digest = SHA-256(UTF8(JCS(<action>_cas_v1)))
+recover_decision_v1 = {
+  kind:"recover_decision_v1", version:1, disposition, id,
+  from_state, to_state, from_generation, to_generation, rollback_epoch,
+  closed_delivery_id, closed_claim_id, created_delivery_id,
+  termination_pairing_digest, rollback_proof_digest,
+  frozen_inventory_digest, preserved_attestation_digest
+}
+decision_digest = SHA-256(UTF8(JCS(recover_decision_v1)))
+```
+
+Every derived member (`handoff_fingerprint`, `termination_pairing_digest`, `rollback_proof_digest`, `frozen_inventory_digest`, `preserved_attestation_digest`, `target_generation`, `created_delivery_id`) is computed by the server from immutable rows and the accepted request; none is accepted as a caller CAS input. The public response is exactly `{id, state:<to_state>, generation:<to_generation>, replayed}` and exposes no digest, authority, delivery id, claim id, receipt, or inventory. The stored envelope is `{kind:"<action lowercased>_response_envelope_v1",version:1,public_response,evidence:{request,request_digest,scope_key,cas_input,cas_digest,disposition_id,closed_delivery_id,closed_claim_id,created_delivery_id,termination_pairing_digest,rollback_proof,rollback_proof_digest,frozen_inventory_digest,preserved_attestation_digest,attestation_source_generation}}`, with `rollback_proof` present as `null` except for `ROLLED_BACK`.
+
+The `RECOVER` transition row is written at the **post-transition** generation, because the existing validator chain rule requires `row.generation = previous.generation + increment` and the last transition's generation to equal `ct_handoff.generation`. The scope key uses the **pre-transition** generation, because that is the only generation a caller can know before the server decides. Both are pinned here.
+
+**P6 supersedes the dormant `dormantOperations` expectation that P4/P5 left in `validateSchema4Persistence`.** That block encodes three forward-compatibility guesses that are unreachable today (`futureHistoryPresent` rejects every `RECOVER` row and every `operation='recover'` idempotency row before it runs) and that are wrong as written: it infers the disposition from `from_state` alone, which cannot distinguish `SUSPEND_PENDING` from `CANCELLED`/`POISONED` at `PUBLISHED`; its CAS shape has no proof member; and it expects `evidence.request.delivery_id` to name the **newly created** delivery, which no caller can supply. Because no persisted row can exist under those rules, replacing them changes the meaning of exactly zero bytes on disk. P6-B replaces that block with a real `RECOVER` validator built on the total `(from_state,to_state) → disposition` map — `(CLAIMED,PUBLISHED)=NOT_STARTED`, `(STARTED,PUBLISHED)=ROLLED_BACK`, `(PUBLISHED,WORK_SUSPENDED)=SUSPEND_PENDING`, `(WORK_SUSPENDED,PUBLISHED)=REDELIVER_WORK`, `(COMPLETION_ATTESTED,ATTESTATION_SUSPENDED)=SUSPEND_ATTESTATION`, `(ATTESTATION_SUSPENDED,COMPLETION_ATTESTED)=REDELIVER_ATTESTATION`, `(*,CANCELLED)=CANCELLED`, `(*,POISONED)=POISONED` — each pair being unique, so the disposition is derivable from the immutable row and cross-checked against the reverse-linked `ct_recovery_disposition` row.
+
+Four further validator extensions are required and are each confined to schema 5:
+
+- `schema4Transition` accepts `CLAIM` only as `PUBLISHED→CLAIMED`. An `ATTESTATION_REDELIVERY` claim leaves `ct_handoff.state='COMPLETION_ATTESTED'` (see `continuationClaim`, which mutates handoff state only when `purpose === 'WORK'`), so its `CLAIM` row is `COMPLETION_ATTESTED→COMPLETION_ATTESTED`. P6-F adds exactly that pair, gated on `purpose='ATTESTATION_REDELIVERY'`.
+- `validHistoricalWriterFence` requires `mode:"ON"`, `observed_lease_status:"NONE"`, and `schema_version:4`. P6 extends it to accept `schema_version ∈ {4,5}` for every operation, and `{mode:"ROLLING_BACK", observed_lease_status:"ACTIVE"}` **only** for `RECOVER` rows whose disposition is `SUSPEND_PENDING`, `SUSPEND_ATTESTATION`, `CANCELLED`, or `POISONED`. Historical schema-4 rows keep `schema_version:4` in their frozen CAS input and are never rewritten; new rows written at schema 5 carry `schema_version:5`.
+- The delivery reverse-link loop currently covers only `WORK` deliveries. P6 adds: every `ATTESTATION_REDELIVERY` delivery must reverse-link to exactly one `REDELIVER_ATTESTATION` disposition row at its generation, and every `WORK` delivery at a nonzero generation must reverse-link to exactly one `NOT_STARTED`, `ROLLED_BACK`, or `REDELIVER_WORK` disposition row.
+- The `futureHistoryPresent` gate stays **byte-for-byte unchanged at schema 4** and is replaced only on the schema-5 path. A schema-4 database under P6 code therefore behaves exactly as it does under P5 code, which is what makes the P6 rollback boundary trivially safe.
+
+### Attestation carry-forward across redelivery
+
+`continuationComplete` resolves the attestation by looking up the `ATTEST_COMPLETION` transition at `(id, eg)`. After `REDELIVER_ATTESTATION` the handoff sits at `eg+1` while the attestation was recorded at the source generation, so that lookup would find nothing and return `CT_FENCE_MISMATCH`. P6-F therefore extends exactly that one rung: when no `ATTEST_COMPLETION` transition exists at `(id, eg)`, resolve the unique `ct_recovery_disposition` row with `disposition='REDELIVER_ATTESTATION'`, `handoff_id=id`, `to_generation=eg`, require `request.attestation_digest = row.preserved_attestation_digest`, and require that digest to equal the `decision_digest` of the `ATTEST_COMPLETION` transition at `(id, row.attestation_source_generation)`. No other `complete` rung changes; the token, claim, delivery, state CAS, closure, and envelope rules are P5's, unmodified.
+
+`CT-R7-S11` needs **no** code change and is derived from what already exists: `assertAckRequest` accepts only `purpose:"WORK"` and `es:"CLAIMED"`, so an `ack` naming `ATTESTATION_REDELIVERY` is `CT_PAYLOAD_INVALID` at the request-shape rung, and the only state-legal `ack` shape finds `ct_handoff.state='COMPLETION_ATTESTED' ≠ 'CLAIMED'` and returns `CT_INVALID_TRANSITION` — the scenario's normative outcome. `WORK` redelivery keeps `ack`/execute unchanged because its handoff really is `PUBLISHED→CLAIMED`.
+
+## The rollback plane: `beginRollback`, `rebindMain`, `finishRollback`
+
+All three are Main-authority operations with exact request key sets, single bounded `BEGIN IMMEDIATE` transactions, and the response shapes `CT-R11` pins verbatim.
+
+**`beginRollback`** accepts exactly `{request_identity, expected_mode:"ON", expected_binding_epoch, expected_activation_epoch}`. It requires schema 5, mode `ON`, lease `NONE`, the single ACTIVE Main at the expected epoch, and the latest activation epoch equal to `expected_activation_epoch`. It writes one `ROLLBACK_FREEZE` snapshot, inserts one `ct_rollback_epoch` row at `prior + 1` in state `OPEN`, and updates the singleton lease to `{rollback_epoch: prior+1, lease_status:'ACTIVE', lease_version: prior_version+1, owner_main_binding_id: <this Main>, lease_expires_at}` and `ct_continuation_state.mode` `ON→ROLLING_BACK`. The `ct_rollback_epoch_one_open` partial unique index makes a second concurrent open epoch impossible. Scope key `rollback:<target_rollback_epoch>:begin`; response `{mode:"ROLLING_BACK", rollback_epoch, lease_version, lease_expires_at, replayed}`.
+
+**`rebindMain`** accepts exactly `{request_identity, expected_rollback_epoch, expected_lease_version, expected_binding_epoch}`. It requires schema 5, mode `ROLLING_BACK` at the matching epoch, a lease whose `lease_expires_at` is in the past — an `ACTIVE`, unexpired lease is `CT_ROLLBACK_LEASE_ACTIVE`, the existing code — and a fresh valid `MAIN` termination pairing for the old owner recorded at this exact rollback epoch. It waits only inside the existing bounded writer window; expiry is `CT_BUSY`. In one transaction it retires the old `ct_main_binding` row, inserts the new ACTIVE Main at `old_epoch + 1` under the canonical Main `Ctx` predicate, transfers the lease to the new owner with `lease_version + 1`, inserts one immutable `ct_main_rebind` row, and leaves every delivery closed and every handoff untouched. Scope key `rollback:<rollback_epoch>:rebind:<new_binding_epoch>`; response `{main_binding_id, binding_epoch, rollback_epoch, lease_version, lease_expires_at, replayed}`. That is `CT-R11-S5` exactly.
+
+**`finishRollback`** accepts exactly `{request_identity, expected_rollback_epoch, expected_lease_version, expected_binding_epoch}`. It requires schema 5, mode `ROLLING_BACK` at the matching epoch and lease version, and the current lease-owner Main at the expected binding epoch. It recomputes `quiescence_v1` with `snapshot_kind:"ROLLBACK_FINISH"` inside the same snapshot and refuses `CT_NOT_QUIESCENT` unless every live and pending count is zero. On success it writes the `ROLLBACK_FINISH` snapshot, updates the `ct_rollback_epoch` row to `FINISHED` with its finish lease version, quiescence digest, and timestamp, sets the lease back to `{lease_status:'NONE', owner_main_binding_id: NULL, lease_expires_at: NULL, lease_version + 1}` keeping `rollback_epoch`, and CASes `ct_continuation_state.mode` `ROLLING_BACK→OFF`. Scope key `rollback:<rollback_epoch>:finish`; response `{mode:"OFF", rollback_epoch, quiescence_digest, replayed}`. Suspended rows remain as non-live audit inventory; `finishRollback` never deletes, repairs, or completes one.
+
+`status()` keeps its exact `CT-R11` shape in every mode at schema 5 and changes only factual counts. `WORK_SUSPENDED`, `ATTESTATION_SUSPENDED`, `CANCELLED`, and `POISONED` handoffs are non-live: they contribute to no live or pending count, and they never make `status()` fail.
+
+## P6 precedence ladder and error taxonomy
+
+After safe anchor resolution, writer-lock acquisition failure is `CT_BUSY`. Under the lock every P6 mutation follows this deterministic ladder; no later rung masks an earlier one and every failure is non-mutating:
+
+1. exact schema-5/anchor/state/lease structure and full cross-row validity → `CT_SCHEMA_INVALID | CT_ANCHOR_MISMATCH`; this includes CT-R7-S8's impossible PUBLISHED/PENDING plus same-delivery claim history;
+2. mode gate — `OFF` → `CT_CONTINUATION_OFF` for every P6 operation, including recovery (`CT-R7`/`CT-R11`: OFF rejects recovery);
+3. exact request shape/JCS/key allowlist and request digest → `CT_PAYLOAD_INVALID`;
+4. rollback-epoch fence — under `ROLLING_BACK`, a stale or non-matching `expected_rollback_epoch` → `CT_ROLLBACK_IN_PROGRESS`; under `ON`, a non-matching one → `CT_FENCE_MISMATCH`;
+5. disposition/mode legality → `CT_RECOVERY_DISPOSITION_FORBIDDEN`;
+6. current authority — ACTIVE Main under `ON`, lease-owner Main at the matching epoch under `ROLLING_BACK` → `CT_WORKFLOW_MAIN_REQUIRED | CT_MAIN_BINDING_CONFLICT | CT_FENCE_MISMATCH`; `rebindMain`'s unexpired-lease case → `CT_ROLLBACK_LEASE_ACTIVE`;
+7. operation-qualified idempotency pair → exact persisted replay, `CT_IDEMPOTENCY_CONFLICT`, or malformed-pair `CT_SCHEMA_INVALID`;
+8. handoff, delivery, claim, rollback-epoch, or binding existence → `CT_NOT_FOUND`;
+9. legal-state/generation/purpose/fingerprint/claim/delivery fences → `CT_INVALID_TRANSITION` for a wrong-but-legal state (including a consumed attestation whose handoff is already `COMPLETED`), otherwise `CT_FENCE_MISMATCH` (including a stale generation);
+10. termination-pairing derivation, cardinality, role/boot/session/epoch/generation agreement, digest recomputation, liveness, PID-reuse ambiguity, and ≤30 s freshness → `CT_RECOVERY_REQUIRED`;
+11. `ROLLED_BACK` rollback-proof structure and recomputed `boundary_equal` → `CT_RECOVERY_REQUIRED`;
+12. `finishRollback` quiescence → `CT_NOT_QUIESCENT`;
+13. server derivation of inventory/quiescence/decision/CAS members → commit constraints → `CT_SCHEMA_INVALID`.
+
+P6 introduces exactly two new fail-closed codes — `CT_RECOVERY_REQUIRED` (bare, stale, unavailable, absent, ambiguous, live-process, unpaired, or unprovable proof) and `CT_RECOVERY_DISPOSITION_FORBIDDEN` (a disposition attempted in the wrong mode) — and reuses `CT_FENCE_MISMATCH`, `CT_INVALID_TRANSITION`, `CT_ROLLBACK_IN_PROGRESS`, `CT_ROLLBACK_LEASE_ACTIVE`, `CT_NOT_QUIESCENT`, `CT_CONTINUATION_OFF`, `CT_MAIN_BINDING_CONFLICT`, `CT_WORKFLOW_MAIN_REQUIRED`, `CT_IDEMPOTENCY_CONFLICT`, `CT_PAYLOAD_INVALID`, `CT_NOT_FOUND`, `CT_SCHEMA_INVALID`, `CT_ANCHOR_*`, and `CT_BUSY` for every other rung. CT-R7-S8 belongs to the existing `CT_SCHEMA_INVALID` structural bucket. Any error rolls back every handoff, delivery, claim, transition, receipt, snapshot, epoch, rebind, disposition, and idempotency change.
+
+## P6 fixtures (real persisted state only)
+
+Every valid P6 recovery precondition is produced by actually running the earlier operations; no fixture inserts a synthetic receipt, snapshot, or disposition. CT-R7-S8 is the sole malformed-history characterization: it starts from a real atomic claim, uses an isolated temporary database to restore only the contradictory PUBLISHED/PENDING projection while retaining that same-delivery claim, restores the disabled trigger, and invokes the public recovery path to prove structural `CT_SCHEMA_INVALID` precedence and table-level non-mutation.
+
+- **Schema.** Real `bootstrapAdmin` `1→2→3→4→5`, real `provisionMainAuthorityAnchor`, real `bootstrapMain`, real `activate`.
+- **Old-Main identity.** The persisted `ct_main_binding` row created by the real `bootstrapMain`, with its real `identity_digest` and `binding_epoch`; `rebindMain` fixtures bind their `MAIN` receipts to exactly that row.
+- **Termination receipts.** The claimant fixture registers under a **real spawned child process** whose observation feeds the binding's `pid_start_marker`; the fixture then terminates that process and calls the real `recordTerminationReceipt` twice (`HOST`, `MCP`) through a real `processObserver`. Negatives use a still-running process (`PRESENT`), a recycled PID with an unreadable marker (`AMBIGUOUS`), a single unpaired role, mismatched boot/session ids, a receipt older than 30 seconds, and a pairing recorded at a different rollback epoch or generation.
+- **Frozen inventory and lease.** Produced by a real `beginRollback` over real published/claimed/started/attested rows; the frozen inventory is the server's own snapshot of those rows, never a literal.
+- **Trusted polling witness.** Only the server-owned `polling_plane:"UNAVAILABLE_BEFORE_P7"` written by the server; no test ever supplies, patches, or asserts an alternative value into a request.
+- **Lifecycle state.** `CLAIMED` from real `create→validate→publish→claim`; `STARTED` from a real `ack` with a real effect manifest; `COMPLETION_ATTESTED` from a real `attestCompletion`; `WORK_SUSPENDED`/`ATTESTATION_SUSPENDED` only from real `SUSPEND_PENDING`/`SUSPEND_ATTESTATION` dispositions; redelivered rows only from real `REDELIVER_WORK`/`REDELIVER_ATTESTATION`.
+
+## P6 capability-gated exposure
+
+The five names `recordTerminationReceipt|recover|beginRollback|rebindMain|finishRollback` join the continuation dispatcher allow-list in `core.mjs` `createContinuationDispatcher` (alongside `bootstrapMain|activate|status|register|receive|create|validate|publish|claim|ack|attestCompletion|complete|reject|revise`) and the `CONTINUATION_TOOL_DEFINITIONS` map in `mcp.mjs`, each with `additionalProperties:false` schemas encoding the exact required fields, enums, and limits above and preserving explicit-null rejection. Default `createMcpHandler()` still lists exactly the eight legacy `tower_*` tools; the continuation names — now nineteen — are exposed only when the trusted-metadata and process-identity capabilities exist, and `recordTerminationReceipt` additionally requires the `processObserver` capability. `provisionMainAuthorityAnchor|bootstrapAdmin` remain CLI-only; `start` remains absent in every mode; unsupported names still fail `CT_PAYLOAD_INVALID` before database access. Schema acceptance is not authority; core repeats every check.
+
+## P6 chained verification, ownership, forecast, and rollback
+
+P6 far exceeds 800 authored lines (one migration plus five operations plus eight dispositions plus a proof plane), so it is split into six sequential chained units with independent ≤800 ceilings that cannot be borrowed. Dependencies P6-A→P6-B→P6-C→P6-D→P6-E→P6-F; P6-A starts from green P5-D. Each unit records its own RED/GREEN/triangulation, focused/full/fail-closed, syntax/diff, preservation, exact authored line count, start/end/dependency, and rollback evidence in `apply-progress.md`, and starts only from the prior gate-passed boundary.
+
+| Unit | Starts from / dependency | GREEN end state | RED scenario ownership | Forecast | Triangulation / rollback boundary |
+|---|---|---|---|---:|---|
+| P6-A Migration 005 pinning | green P5-D; no P6 predecessor | exact SQL literal, byte length, line count, checksum, 22 object definitions, and the complete 58-object schema-5 manifest are pinned; runtime still accepts at most schema 4 | none — constants only, no CT scenario completion claim | 460–620 | byte/line/checksum/object/manifest drift; revert only A constants/manifest definitions/tests/evidence; schema and runtime stay at P5 |
+| P6-B Fresh 4→5 migration, schema-5 validator, compatibility | green P6-A | atomic fresh `4→5`, exact schema-5 replay, DDL rollback, bounded busy, `RECOVER` history acceptance at schema 5 only, all P3/P4/P5 routes green on schema 4 **and** 5 | none — migration/validator only, no CT scenario completion claim | 560–760 | wrong mode/lease/claimant, DDL/busy/rollback, non-empty preservation, schema-4 behaviour byte-identical; revert B execution/version branches/validator/tests; never down-migrate a real schema 5 |
+| P6-C Proof plane | green P6-B | `recordTerminationReceipt` with server-only observation, pairing, freshness, PID-reuse rejection; `quiescence_v1`/`frozen_inventory_v1` derivation; `CT_RECOVERY_REQUIRED` | `CT-R7-S1`, `CT-R7-S5` | 480–660 | bare/stale/unavailable/absent/ambiguous/live/unpaired proof; revert only C observer capability/receipt/quiescence handlers/route/tests; preserve schema-5 rows byte-for-byte |
+| P6-D ON-mode dispositions | green P6-C | `recover` with `NOT_STARTED`, `ROLLED_BACK`, `CANCELLED`, `POISONED`; atomic republish/fence; `RECOVER` transition + disposition rows | `CT-R7-S2`, `CT-R7-S3`, `CT-R7-S4`, `CT-R7-S6`, `CT-R7-S12` | 560–760 | stale generation, wrong claimant, invalid pairing, consumed attestation, live process, absent/unequal rollback boundary; revert only D `recover` handler/route/tests; preserve C proof rows |
+| P6-E Rollback plane and suspension | green P6-D | `beginRollback`, `rebindMain`, `finishRollback`, `SUSPEND_PENDING`, `SUSPEND_ATTESTATION`; lease/epoch transfer; zero-live finish | `CT-R7-S7`, `CT-R7-S8`, `CT-R11-S3` rollback/rebind/finish projection, `CT-R11-S4`, `CT-R11-S5` | 580–780 | malformed claim-present history is `CT_SCHEMA_INVALID` before recovery semantics; unexpired lease, stale epoch/lease version, nonzero live/pending finish, non-owner Main; revert only E rollback-plane handlers/routes/tests; preserve C/D rows and leave any open epoch inert |
+| P6-F Redelivery and forbidden-mode closure | green P6-E | `REDELIVER_WORK`, `REDELIVER_ATTESTATION`, attestation carry-forward in `complete`, redelivery `CLAIM` acceptance, complete `CT-R11-S2` ladder | `CT-R7-S9`, `CT-R7-S10`, `CT-R7-S11`, `CT-R11-S2` | 420–600 | forbidden dispositions in `ROLLING_BACK`, redelivery `ack` rejection, missing/mismatched preserved attestation, duplicate redelivery scope; revert only F redelivery/`complete`-rung/`CLAIM`-pair changes/tests; preserve C/D/E rows |
+
+Total P6 forecast is **3,060–4,180 authored lines** across the six units in `core.mjs`, `mcp.mjs`, `test/recovery.test.mjs`, and `test/migration.test.mjs`; each unit is independently ≤800. If any concrete pre-RED forecast crosses 800, stop and split that unit further — the natural further splits are P6-C into receipts vs. quiescence, P6-D into republish vs. fence-only dispositions, and P6-E into `beginRollback`/`finishRollback` vs. `rebindMain` — and budgets are never borrowed. Strict TDD is independent per unit: preserve the prior green safety net, record a genuine RED before each unit's production edits, complete GREEN and triangulation under 800, and start the next unit only from the prior gate-passed boundary.
+
+### Scenario ownership map
+
+| Scenario | Unit | Scenario | Unit |
+|---|---|---|---|
+| `CT-R7-S1` Insufficient proof | P6-C | `CT-R7-S8` Malformed claim-present history rejected structurally | P6-E |
+| `CT-R7-S2` Valid disposition | P6-D | `CT-R7-S9` ON-only work redelivery | P6-F |
+| `CT-R7-S3` Absent rollback proof | P6-D | `CT-R7-S10` Attestation suspension and redelivery | P6-F |
+| `CT-R7-S4` Stale or invalid recovery | P6-D | `CT-R7-S11` Redelivery claimant cannot ack | P6-F |
+| `CT-R7-S5` Freshness verification | P6-C | `CT-R7-S12` Atomic dispositions | P6-D |
+| `CT-R7-S6` Compensated republish | P6-D | `CT-R11-S2` Recovery disposition gates | P6-F |
+| `CT-R7-S7` Pending work suspended | P6-E | `CT-R11-S3` rollback/rebind/finish projection | P6-E |
+| `CT-R11-S4` OFF follows quiescence | P6-E | `CT-R11-S5` Rebind uses expired lease and proof | P6-E |
+
+Every one of the sixteen assignments is owned by exactly one unit; none is unassigned and none is double-claimed. `CT-R11-S3` stays cumulative: P3 already owns its status/bootstrap/activation effects and P6-E adds only the rollback/rebind/finish effects. `CT-R7-S10` spans suspension and redelivery but is a single scenario, and P6-F owns it end to end because only P6-F can prove the redelivery half; P6-E records the `SUSPEND_ATTESTATION` half as fail-closed evidence without claiming the scenario.
+
+### Rollback boundary and explicit out-of-scope
+
+Reverting P6-A removes only inert constants and tests. Reverting P6-B or any later unit **never down-migrates**: schema-5 data stays inert, older code rejects it `CT_SCHEMA_INVALID`, and legacy behaviour remains available. Reverting any implementation unit removes only that unit's handlers, routes, capability wiring, tests, and evidence, and preserves byte-for-byte: every Migration 004 byte and checksum; every P3 anchor, Main, activation, lease, and claimant row; every P4 handoff, transition, delivery, claim, budget, and idempotency row; every P5 `STARTED`/`COMPLETION_ATTESTED`/`COMPLETED`/`REJECTED` row, attestation, effect manifest, and committed result; and every already-committed P6 receipt, snapshot, rollback epoch, rebind, and disposition row. The schema-4 code path is untouched by construction, so a schema-4 database under reverted P6 code behaves exactly as it did under P5.
+
+Explicitly outside P6: the polling plane and host-neutral loop (`P7`), the OpenCode/Pi/Claude adapters (`P7`/`P8`/`P9`), the versioned runtime and verified cutover (`P10`), any real polling witness value, any `start` API, any runtime activation of the Tower, any `ACTIVE` file or `tower.db` mutation outside a test's temporary root, and any commit, push, or PR. P6 also does not widen `ct_quiescence_snapshot.polling_witness`, does not add a state, operation, or purpose CHECK member, and does not touch a single byte of Migration 001, 002, 003, or 004.
