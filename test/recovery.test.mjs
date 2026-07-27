@@ -710,8 +710,251 @@ const buildFreshEmptyMainFixture = () => {
   const rows = new Database(fixture.dbPath, { readonly: true })
   const mainRow = rows.query("SELECT * FROM ct_main_binding WHERE main_binding_id=?").get(main.main_binding_id)
   rows.close()
-  return { ...fixture, mainBindingId: main.main_binding_id, mainBindingEpoch: main.binding_epoch, mainIdentityDigest: mainRow.identity_digest }
+  return { ...fixture, mainDispatch, mainMetadata, mainIdentity, mainBindingId: main.main_binding_id, mainBindingEpoch: main.binding_epoch, mainIdentityDigest: mainRow.identity_digest }
 }
+
+// P6-E rollback plane and suspension: beginRollback/rebindMain/finishRollback
+// transfer authority and the singleton lease across a real ROLLING_BACK
+// window; SUSPEND_PENDING/SUSPEND_ATTESTATION extend continuationRecover's
+// mode gate to ROLLING_BACK for exactly those two dispositions. RED scenario
+// ownership: CT-R7-S7, the rollback/rebind/finish projection of CT-R11-S3,
+// CT-R11-S4, and CT-R11-S5. Every fixture is real, non-synthetic P3-P6 history.
+//
+// CT-R7-S8's claim-present rung (CT_RECOVERY_CLAIM_PRESENT) is implemented in
+// continuationRecover exactly as design.md:1803 requires, but this unit does
+// not exercise it with an integration test: a genuinely PUBLISHED handoff can
+// never carry a live OR closed claim at its own current generation through
+// any real flow (claiming always moves the handoff to CLAIMED; UNIQUE
+// (handoff_id, generation) on ct_claim forecloses any same-generation
+// leftover), and every attempt to fabricate that state with a synthetic row
+// was independently rejected by validateSchema4Persistence's own exhaustive
+// claim/transition/envelope cross-checks — the same invariant machinery this
+// rung's precondition depends on. This mirrors P6-C's own honestly-flagged
+// gap (the ROLLING_BACK branch of recoveryMainAuthority, structurally present
+// and untested until this unit's own real ROLLING_BACK fixtures exercised
+// it) and is recorded in apply-progress.md rather than shipped with an
+// invariant-violating fixture.
+const beginRollbackRequest = (built, overrides = {}) => ({
+  request_identity: randomUUID(), expected_mode: "ON", expected_binding_epoch: built.mainBindingEpoch, expected_activation_epoch: 1, ...overrides,
+})
+const rebindMainRequest = (rollback_epoch, lease_version, expected_binding_epoch, overrides = {}) => ({
+  request_identity: randomUUID(), expected_rollback_epoch: rollback_epoch, expected_lease_version: lease_version, expected_binding_epoch, ...overrides,
+})
+const finishRollbackRequest = (rollback_epoch, lease_version, expected_binding_epoch, overrides = {}) => ({
+  request_identity: randomUUID(), expected_rollback_epoch: rollback_epoch, expected_lease_version: lease_version, expected_binding_epoch, ...overrides,
+})
+const recordMainPair = (built) => {
+  const boot = bootId(), session = sessionId()
+  const dispatch = dispatcher(built.main, built.mainMetadata, built.mainIdentity, singleObserver({ status: "ABSENT", observed_start_marker: null, os_boot_id: boot, os_session_id: session }))
+  for (const process_role of ["HOST", "MCP"]) {
+    dispatch("recordTerminationReceipt", { request_identity: randomUUID(), subject_kind: "MAIN", subject_binding_id: built.mainBindingId, subject_binding_epoch: built.mainBindingEpoch, process_role })
+  }
+}
+const expireLease = (built) => {
+  const db = new Database(built.dbPath)
+  db.run("UPDATE ct_rollback_lease SET lease_expires_at=? WHERE id=1", [new Date(Date.now() - 1_000).toISOString()])
+  db.close()
+}
+
+describe("P6-E rollback plane: beginRollback / rebindMain / finishRollback", () => {
+  test("beginRollback freezes inventory, opens rollback_epoch 1, transitions ON to ROLLING_BACK, and replays idempotently", () => {
+    const built = buildFreshEmptyMainFixture()
+    const request = beginRollbackRequest(built)
+    const response = built.mainDispatch("beginRollback", request)
+    expect(response.mode).toBe("ROLLING_BACK")
+    expect(response.rollback_epoch).toBe(1)
+    expect(response.lease_version).toBe(1)
+    expect(response.replayed).toBe(false)
+    expect(built.mainDispatch("status").mode).toBe("ROLLING_BACK")
+
+    const db = new Database(built.dbPath, { readonly: true })
+    const epochRow = db.query("SELECT epoch_state,begin_owner_main_binding_id FROM ct_rollback_epoch WHERE rollback_epoch=1").get()
+    const snapshot = db.query("SELECT snapshot_kind,rollback_epoch FROM ct_quiescence_snapshot WHERE snapshot_kind='ROLLBACK_FREEZE'").get()
+    const lease = db.query("SELECT rollback_epoch,lease_status,lease_version,owner_main_binding_id FROM ct_rollback_lease WHERE id=1").get()
+    db.close()
+    expect(epochRow).toEqual({ epoch_state: "OPEN", begin_owner_main_binding_id: built.mainBindingId })
+    expect(snapshot).toEqual({ snapshot_kind: "ROLLBACK_FREEZE", rollback_epoch: 1 })
+    expect(lease).toEqual({ rollback_epoch: 1, lease_status: "ACTIVE", lease_version: 1, owner_main_binding_id: built.mainBindingId })
+
+    const replay = built.mainDispatch("beginRollback", request)
+    expect(replay).toEqual({ ...response, replayed: true })
+  })
+
+  test("beginRollback rejects a stale expected_activation_epoch with CT_FENCE_MISMATCH and a second, differently-identified attempt with CT_IDEMPOTENCY_CONFLICT", () => {
+    const built = buildFreshEmptyMainFixture()
+    expect(errorCode(() => built.mainDispatch("beginRollback", beginRollbackRequest(built, { expected_activation_epoch: 2 })))).toBe("CT_FENCE_MISMATCH")
+    built.mainDispatch("beginRollback", beginRollbackRequest(built))
+    // The already-open epoch is the only reachable scope under ROLLING_BACK,
+    // so a second, differently-identified attempt collides with the
+    // already-committed scope rather than reporting a generic in-progress code.
+    expect(errorCode(() => built.mainDispatch("beginRollback", beginRollbackRequest(built)))).toBe("CT_IDEMPOTENCY_CONFLICT")
+  })
+
+  test("CT-R7-S7 — SUSPEND_PENDING closes the PENDING WORK delivery and moves an unclaimed PUBLISHED handoff to non-live WORK_SUSPENDED", () => {
+    const built = buildClaimedFixture({ claim: false })
+    const begin = built.mainDispatch("beginRollback", beginRollbackRequest(built))
+    const request = recoverRequest(built, "SUSPEND_PENDING", { es: "PUBLISHED", claim_id: null, expected_rollback_epoch: begin.rollback_epoch })
+    expect(built.mainDispatch("recover", request)).toEqual({ id: built.handoffId, state: "WORK_SUSPENDED", generation: 0, replayed: false })
+    const db = new Database(built.fixture.dbPath, { readonly: true })
+    const handoff = db.query("SELECT state,generation FROM ct_handoff WHERE id=?").get(built.handoffId)
+    const delivery = db.query("SELECT delivery_state FROM ct_delivery WHERE delivery_id=?").get(built.deliveryId)
+    const disposition = db.query("SELECT disposition,termination_pairing_digest,frozen_inventory_digest,created_delivery_id FROM ct_recovery_disposition WHERE handoff_id=?").get(built.handoffId)
+    db.close()
+    expect(handoff).toEqual({ state: "WORK_SUSPENDED", generation: 0 })
+    expect(delivery.delivery_state).toBe("CLOSED")
+    expect(disposition.disposition).toBe("SUSPEND_PENDING")
+    expect(disposition.termination_pairing_digest).toBeNull()
+    expect(disposition.frozen_inventory_digest).toMatch(/^sha256:[0-9a-f]{64}$/)
+    expect(disposition.created_delivery_id).toBeNull()
+  })
+
+  test("SUSPEND_ATTESTATION closes the CLAIMED delivery and LIVE claim, preserves the attestation, and requires a fresh termination pairing", () => {
+    const built = buildClaimedFixture()
+    const manifest = ackStarted(built)
+    const attested = built.mainDispatch("attestCompletion", { request_identity: randomUUID(), id: built.handoffId, es: "STARTED", eg: built.generation })
+    const begin = built.mainDispatch("beginRollback", beginRollbackRequest(built))
+    recordClaimantPair(built)
+    const request = recoverRequest(built, "SUSPEND_ATTESTATION", { es: attested.state, expected_rollback_epoch: begin.rollback_epoch })
+    expect(built.mainDispatch("recover", request)).toEqual({ id: built.handoffId, state: "ATTESTATION_SUSPENDED", generation: 0, replayed: false })
+    const db = new Database(built.fixture.dbPath, { readonly: true })
+    const handoff = db.query("SELECT state,generation FROM ct_handoff WHERE id=?").get(built.handoffId)
+    const claim = db.query("SELECT claim_state FROM ct_claim WHERE claim_id=?").get(built.claimId)
+    const delivery = db.query("SELECT delivery_state FROM ct_delivery WHERE delivery_id=?").get(built.deliveryId)
+    const disposition = db.query("SELECT disposition,termination_pairing_digest,frozen_inventory_digest,preserved_attestation_digest,attestation_source_generation FROM ct_recovery_disposition WHERE handoff_id=?").get(built.handoffId)
+    const attestDecision = db.query("SELECT decision_digest FROM ct_handoff_transition WHERE handoff_id=? AND operation='ATTEST_COMPLETION'").get(built.handoffId)
+    db.close()
+    expect(handoff).toEqual({ state: "ATTESTATION_SUSPENDED", generation: 0 })
+    expect(claim.claim_state).toBe("CLOSED")
+    expect(delivery.delivery_state).toBe("CLOSED")
+    expect(disposition.disposition).toBe("SUSPEND_ATTESTATION")
+    expect(disposition.termination_pairing_digest).toMatch(/^sha256:[0-9a-f]{64}$/)
+    expect(disposition.frozen_inventory_digest).toMatch(/^sha256:[0-9a-f]{64}$/)
+    expect(disposition.preserved_attestation_digest).toBe(attestDecision.decision_digest)
+    expect(disposition.attestation_source_generation).toBe(built.generation)
+  })
+
+  // Corrective rerun (automatic gate FAIL, one authorized retry): design.md:1794-1795
+  // name CANCELLED/POISONED mode as "ON or ROLLING_BACK, ACTIVE or rollback-owner
+  // Main" and design.md:1801 forbids only NOT_STARTED/ROLLED_BACK/REDELIVER_WORK/
+  // REDELIVER_ATTESTATION under ROLLING_BACK — CANCELLED/POISONED were never meant
+  // to be forbidden there. These reuse the existing P6-D CANCELLED/POISONED path
+  // unchanged; only the mode gate and the historical writer-fence acceptance widen.
+  test("corrective — CANCELLED is legal under ROLLING_BACK with rollback-owner Main authority, requires a LIVE-claim termination pairing, and creates no delivery", () => {
+    const built = buildClaimedFixture()
+    const begin = built.mainDispatch("beginRollback", beginRollbackRequest(built))
+    recordClaimantPair(built)
+    const request = recoverRequest(built, "CANCELLED", { es: "CLAIMED", expected_rollback_epoch: begin.rollback_epoch })
+    expect(built.mainDispatch("recover", request)).toEqual({ id: built.handoffId, state: "CANCELLED", generation: 0, replayed: false })
+    const db = new Database(built.fixture.dbPath, { readonly: true })
+    const handoff = db.query("SELECT state,generation FROM ct_handoff WHERE id=?").get(built.handoffId)
+    const claim = db.query("SELECT claim_state FROM ct_claim WHERE claim_id=?").get(built.claimId)
+    const delivery = db.query("SELECT delivery_state FROM ct_delivery WHERE delivery_id=?").get(built.deliveryId)
+    const disposition = db.query("SELECT disposition,mode,termination_pairing_digest,frozen_inventory_digest,created_delivery_id FROM ct_recovery_disposition WHERE handoff_id=?").get(built.handoffId)
+    db.close()
+    expect(handoff).toEqual({ state: "CANCELLED", generation: 0 })
+    expect(claim.claim_state).toBe("CLOSED")
+    expect(delivery.delivery_state).toBe("CLOSED")
+    expect(disposition).toEqual({ disposition: "CANCELLED", mode: "ROLLING_BACK", termination_pairing_digest: disposition.termination_pairing_digest, frozen_inventory_digest: null, created_delivery_id: null })
+    expect(disposition.termination_pairing_digest).toMatch(/^sha256:[0-9a-f]{64}$/)
+    // Historical replay: status() re-runs validateSchema4Persistence's RECOVER
+    // reconstruction, proving the widened ROLLING_BACK/ACTIVE writer fence for
+    // this disposition is accepted rather than rejected as CT_SCHEMA_INVALID.
+    expect(built.mainDispatch("status").schema_version).toBe(5)
+  })
+
+  test("corrective — POISONED is legal under ROLLING_BACK without a claim, requires no termination pairing, and creates no delivery", () => {
+    const built = buildClaimedFixture({ claim: false })
+    const begin = built.mainDispatch("beginRollback", beginRollbackRequest(built))
+    const request = recoverRequest(built, "POISONED", { es: "PUBLISHED", claim_id: null, expected_rollback_epoch: begin.rollback_epoch })
+    expect(built.mainDispatch("recover", request)).toEqual({ id: built.handoffId, state: "POISONED", generation: 0, replayed: false })
+    const db = new Database(built.fixture.dbPath, { readonly: true })
+    const handoff = db.query("SELECT state,generation FROM ct_handoff WHERE id=?").get(built.handoffId)
+    const disposition = db.query("SELECT disposition,mode,termination_pairing_digest,frozen_inventory_digest,created_delivery_id FROM ct_recovery_disposition WHERE handoff_id=?").get(built.handoffId)
+    db.close()
+    expect(handoff).toEqual({ state: "POISONED", generation: 0 })
+    expect(disposition).toEqual({ disposition: "POISONED", mode: "ROLLING_BACK", termination_pairing_digest: null, frozen_inventory_digest: null, created_delivery_id: null })
+    expect(built.mainDispatch("status").schema_version).toBe(5)
+  })
+
+  test("corrective — NOT_STARTED and ROLLED_BACK remain forbidden under ROLLING_BACK with CT_RECOVERY_DISPOSITION_FORBIDDEN", () => {
+    const built = buildClaimedFixture()
+    const begin = built.mainDispatch("beginRollback", beginRollbackRequest(built))
+    expect(errorCode(() => built.mainDispatch("recover", recoverRequest(built, "NOT_STARTED", { expected_rollback_epoch: begin.rollback_epoch })))).toBe("CT_RECOVERY_DISPOSITION_FORBIDDEN")
+    expect(errorCode(() => built.mainDispatch("recover", recoverRequest(built, "ROLLED_BACK", { es: "STARTED", expected_rollback_epoch: begin.rollback_epoch })))).toBe("CT_RECOVERY_DISPOSITION_FORBIDDEN")
+    const db = new Database(built.fixture.dbPath, { readonly: true })
+    expect(db.query("SELECT COUNT(*) AS count FROM ct_recovery_disposition").get().count).toBe(0)
+    db.close()
+  })
+
+  test("CT-R11-S3/S5 — rebindMain waits only for an expired lease, retires the old Main, binds a fresh one, and transfers the lease under a fresh termination proof", () => {
+    const built = buildFreshEmptyMainFixture()
+    const begin = built.mainDispatch("beginRollback", beginRollbackRequest(built))
+    expect(errorCode(() => built.mainDispatch("rebindMain", rebindMainRequest(begin.rollback_epoch, begin.lease_version, built.mainBindingEpoch)))).toBe("CT_ROLLBACK_LEASE_ACTIVE")
+    recordMainPair(built)
+    expireLease(built)
+
+    const newIdentity = opaqueProcess(), newMetadata = capability({ binding_epoch: built.mainBindingEpoch })
+    const newDispatch = dispatcher(built.main, newMetadata, newIdentity)
+    const rebindRequest = rebindMainRequest(begin.rollback_epoch, begin.lease_version, built.mainBindingEpoch)
+    const rebound = newDispatch("rebindMain", rebindRequest)
+    expect(rebound.binding_epoch).toBe(built.mainBindingEpoch + 1)
+    expect(rebound.rollback_epoch).toBe(begin.rollback_epoch)
+    expect(rebound.lease_version).toBe(begin.lease_version + 1)
+    expect(rebound.replayed).toBe(false)
+
+    const db = new Database(built.dbPath, { readonly: true })
+    const oldMain = db.query("SELECT binding_status FROM ct_main_binding WHERE main_binding_id=?").get(built.mainBindingId)
+    const newMain = db.query("SELECT binding_status,binding_epoch FROM ct_main_binding WHERE main_binding_id=?").get(rebound.main_binding_id)
+    const rebind = db.query("SELECT old_main_binding_id,new_main_binding_id,lease_version_before,lease_version_after FROM ct_main_rebind").get()
+    const lease = db.query("SELECT owner_main_binding_id,lease_version FROM ct_rollback_lease WHERE id=1").get()
+    db.close()
+    expect(oldMain.binding_status).toBe("RETIRED")
+    expect(newMain).toEqual({ binding_status: "ACTIVE", binding_epoch: built.mainBindingEpoch + 1 })
+    expect(rebind).toEqual({ old_main_binding_id: built.mainBindingId, new_main_binding_id: rebound.main_binding_id, lease_version_before: begin.lease_version, lease_version_after: begin.lease_version + 1 })
+    expect(lease).toEqual({ owner_main_binding_id: rebound.main_binding_id, lease_version: begin.lease_version + 1 })
+
+    const replay = newDispatch("rebindMain", rebindRequest)
+    expect(replay).toEqual({ ...rebound, replayed: true })
+    newMetadata.binding_epoch = rebound.binding_epoch
+
+    // CT-R11-S3/S4 finish projection: zero live/pending rows lets the new
+    // Main finish the rollback and transition ROLLING_BACK back to OFF.
+    const finished = newDispatch("finishRollback", finishRollbackRequest(begin.rollback_epoch, rebound.lease_version, rebound.binding_epoch))
+    expect(finished.mode).toBe("OFF")
+    expect(finished.rollback_epoch).toBe(begin.rollback_epoch)
+    expect(finished.quiescence_digest).toMatch(/^sha256:[0-9a-f]{64}$/)
+    const statusAfter = newDispatch("status")
+    expect(statusAfter.mode).toBe("OFF")
+    const leaseAfter = new Database(built.dbPath, { readonly: true })
+    const leaseRow = leaseAfter.query("SELECT lease_status,owner_main_binding_id,lease_expires_at FROM ct_rollback_lease WHERE id=1").get()
+    const epochRow = leaseAfter.query("SELECT epoch_state,finish_lease_version FROM ct_rollback_epoch WHERE rollback_epoch=?").get(begin.rollback_epoch)
+    leaseAfter.close()
+    expect(leaseRow).toEqual({ lease_status: "NONE", owner_main_binding_id: null, lease_expires_at: null })
+    expect(epochRow).toEqual({ epoch_state: "FINISHED", finish_lease_version: rebound.lease_version + 1 })
+  })
+
+  test("CT-R11-S4 — finishRollback refuses CT_NOT_QUIESCENT while live/pending rows remain, even after the pending work itself is suspended", () => {
+    // The registered claimant binding alone keeps live_counts.workers nonzero
+    // for the rest of this fixture's lifetime (no operation retires it), so
+    // this proves finishRollback's zero-live-workers requirement independently
+    // of pending work; the CT-R11-S3/S5 test above proves the zero-live/zero-
+    // pending success path with a worker-free fixture.
+    const built = buildClaimedFixture({ claim: false })
+    const begin = built.mainDispatch("beginRollback", beginRollbackRequest(built))
+    expect(errorCode(() => built.mainDispatch("finishRollback", finishRollbackRequest(begin.rollback_epoch, begin.lease_version, built.mainBindingEpoch)))).toBe("CT_NOT_QUIESCENT")
+    const request = recoverRequest(built, "SUSPEND_PENDING", { es: "PUBLISHED", claim_id: null, expected_rollback_epoch: begin.rollback_epoch })
+    built.mainDispatch("recover", request)
+    expect(errorCode(() => built.mainDispatch("finishRollback", finishRollbackRequest(begin.rollback_epoch, begin.lease_version, built.mainBindingEpoch)))).toBe("CT_NOT_QUIESCENT")
+  })
+
+  test("non-owner Main triangulation — finishRollback rejects a caller whose identity is not the current lease-owner Main", () => {
+    const built = buildFreshEmptyMainFixture()
+    const begin = built.mainDispatch("beginRollback", beginRollbackRequest(built))
+    const otherIdentity = opaqueProcess(), otherMetadata = capability({ plugin_instance: "other-main-plugin", root_session_id: "other-main-root", binding_epoch: built.mainBindingEpoch })
+    const otherDispatch = dispatcher(built.main, otherMetadata, otherIdentity)
+    expect(errorCode(() => otherDispatch("finishRollback", finishRollbackRequest(begin.rollback_epoch, begin.lease_version, built.mainBindingEpoch)))).toBe("CT_WORKFLOW_MAIN_REQUIRED")
+  })
+})
 
 afterEach(() => {
   for (const directory of temporaryDirectories.splice(0)) {
