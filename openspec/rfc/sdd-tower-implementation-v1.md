@@ -255,13 +255,15 @@ artifact_id: delta-tasker-notifications-001
 artifact_revision: 1
 repository_id: servitask
 repo_relative_path: openspec/changes/.../binding-delta.yaml
+media_type: application/yaml
+digest_mode: rfc8785-jcs
 source_commit: <git-sha>
 content_digest: sha256:<digest>
 manifest_revision: 4
 assignment_revision: 7
 ```
 
-Esto evita referencias circulares al commit o digest del propio archivo. REQUIREMENTS definirá canonicalización y cobertura exacta.
+Esto evita referencias circulares al commit o digest del propio archivo. YAML/JSON estructurado usa canonicalización RFC 8785; Markdown, logs y otros artefactos opacos usan SHA-256 sobre bytes exactos. REQUIREMENTS define la cobertura exacta mediante `media_type` y `digest_mode`.
 
 ### 6.3 Plan Manifest
 

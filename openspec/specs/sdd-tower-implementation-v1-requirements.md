@@ -35,7 +35,7 @@ Los YAML versionados MUST usar un subconjunto JSON-compatible de YAML 1.2:
 - timestamps representados como strings;
 - objetos con claves string.
 
-Para calcular `content_digest`:
+Los artefactos estructurados YAML/JSON MUST usar `digest_mode: rfc8785-jcs`. Para calcular su `content_digest`:
 
 1. parsear el documento a un valor JSON-compatible;
 2. rechazar construcciones no permitidas;
@@ -44,7 +44,9 @@ Para calcular `content_digest`:
 5. calcular SHA-256;
 6. emitir `sha256:<lowercase-hex>`.
 
-El digest MUST cubrir el objeto completo. `source_commit` y `content_digest` MUST vivir en un `artifact-ref` externo para evitar autorreferencia.
+Los artefactos opacos, incluyendo Markdown, logs y evidencia binaria, MUST usar `digest_mode: raw-bytes`; su SHA-256 se calcula sobre los bytes exactos almacenados en Git o en el store declarado, sin normalizar saltos de línea ni encoding.
+
+El ArtifactRef MUST declarar `media_type` y `digest_mode`. El digest MUST cubrir el contenido completo. `source_commit` y `content_digest` MUST vivir en un `artifact-ref` externo para evitar autorreferencia.
 
 ## 2. Ubicaciones canónicas
 
@@ -143,6 +145,8 @@ artifact_id: <artifact_id>
 artifact_revision: 1
 repository_id: <project_id>
 repo_relative_path: <repo_path>
+media_type: <media-type>
+digest_mode: <rfc8785-jcs|raw-bytes>
 source_commit: <git_sha>
 content_digest: <digest>
 manifest_revision: 4
@@ -152,6 +156,8 @@ assignment_revision: 7
 Reglas:
 
 - `repo_relative_path` MUST resolver dentro de `canonical_root` después de resolver symlinks.
+- `digest_mode: rfc8785-jcs` MUST usarse para YAML/JSON estructurado y `raw-bytes` para Markdown, logs y artefactos opacos.
+- `media_type` MUST coincidir con el tipo de artefacto validado.
 - `source_commit` MUST existir en el repositorio esperado.
 - El archivo leído desde `source_commit:path` MUST producir `content_digest`.
 - `manifest_revision` y `assignment_revision` MAY omitirse solo cuando no aplican.
