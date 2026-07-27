@@ -1,0 +1,8 @@
+schema: plan-catalog
+schema_version: 1
+project_id: control-tower
+catalog_revision: 1
+plans:
+  - plan_id: sdd-tower-implementation
+    manifest_ref: sdd-tower-implementation/manifest.yaml
+    roadmap_anchor: sdd-tower-implementation-v1
