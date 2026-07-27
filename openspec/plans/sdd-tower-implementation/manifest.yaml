@@ -23,7 +23,7 @@ artifact_refs:
     repo_relative_path: openspec/prd/sdd-tower-implementation-v1.md
     media_type: text/markdown
     digest_mode: raw-bytes
-    source_commit: a800456e6901b92faff5ea9ab4f51c5b362530bd
+    source_commit: 0745f99a3d9ab7f9c3676af4d1ca3adf0f0c5c95
     content_digest: sha256:bd8d630d9c1a80b566921980dd67b7e0c421cf7ba08528958ffad1431ec802b5
   rfc:
     schema: artifact-ref
@@ -34,7 +34,7 @@ artifact_refs:
     repo_relative_path: openspec/rfc/sdd-tower-implementation-v1.md
     media_type: text/markdown
     digest_mode: raw-bytes
-    source_commit: 30c55899d0ec899352d2cfd480b55a94fc154a7c
+    source_commit: 0745f99a3d9ab7f9c3676af4d1ca3adf0f0c5c95
     content_digest: sha256:a6272899bf76c141850ea1c38444d303b7dfcc84e1f7351c95bffb8557c82cce
   requirements:
     schema: artifact-ref
@@ -45,7 +45,7 @@ artifact_refs:
     repo_relative_path: openspec/specs/sdd-tower-implementation-v1-requirements.md
     media_type: text/markdown
     digest_mode: raw-bytes
-    source_commit: 30c55899d0ec899352d2cfd480b55a94fc154a7c
+    source_commit: 0745f99a3d9ab7f9c3676af4d1ca3adf0f0c5c95
     content_digest: sha256:277129f30b47c1b6fda0a6c81f6d8943d737a7b5ff5750455e2b41dce6e1e5a0
   roadmap:
     schema: artifact-ref
@@ -56,7 +56,7 @@ artifact_refs:
     repo_relative_path: openspec/plans/master-index.md
     media_type: text/markdown
     digest_mode: raw-bytes
-    source_commit: 7afd501d1250f7ea7a97be8031514cff9920cf7b
+    source_commit: e817135f592ee0a466053b0c50f92e3a99da6bda
     content_digest: sha256:7ae75fe2129d8bbebcb9d37496e9939aff3e9a44be28308357758a6d2f00112e
 jornada_policy:
   default_preset: standard
