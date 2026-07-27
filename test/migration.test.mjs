@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test"
 import { Database } from "bun:sqlite"
 import { execFileSync } from "node:child_process"
-import { createHash, randomUUID } from "node:crypto"
+import { createHash, randomBytes, randomUUID } from "node:crypto"
 import {
   chmodSync,
   existsSync,
@@ -1638,6 +1638,478 @@ describe("P6-A Migration 005 definitions", () => {
     expect(db.query("SELECT version FROM ct_schema_migration ORDER BY version").all()).toEqual([{ version: 1 }, { version: 2 }, { version: 3 }])
     expect(db.query(`SELECT name FROM sqlite_master WHERE name GLOB 'ct_termination_receipt*' OR name GLOB 'ct_quiescence_snapshot*' OR name GLOB 'ct_rollback_epoch*' OR name GLOB 'ct_main_rebind*' OR name GLOB 'ct_recovery_disposition*'`).all()).toEqual([])
     db.close()
+  })
+})
+
+// P6-B: real fresh 4->5 execution, exact schema-5 replay, DDL rollback,
+// bounded busy, and P3/P4/P5 route compatibility on schema 5. RED scenario
+// ownership is explicitly none — no CT-R7/CT-R11 recovery scenario is
+// exercised or claimed here; only bootstrapAdmin's migration lane and the
+// schema-version-gate widening are covered.
+describe("P6-B fresh 4->5 migration, schema-5 validator, compatibility", () => {
+  const schemaManifestEvidence = (db, schema_version) => ({
+    kind: "schema_manifest_evidence_v1", version: 1, schema_version,
+    objects: db.query(`SELECT type,name,tbl_name,sql FROM sqlite_master
+      WHERE name GLOB 'ct_*' AND name NOT LIKE 'sqlite_%' ORDER BY type,name`).all(),
+    migrations: db.query("SELECT version,ddl_checksum FROM ct_schema_migration ORDER BY version").all(),
+  })
+  const provisionV4 = () => {
+    const { main } = createMainFixture()
+    const context = tower.deriveCanonicalMainContext(main)
+    const anchor = tower.provisionMainAuthorityAnchor({ request_identity: randomUUID(), expected_config_digest: digest(canonical(context)) }, main)
+    seedLegacy(main)
+    for (const [expected_schema_version, target_schema_version] of [[0, 1], [1, 2], [2, 3], [3, 4]]) {
+      tower.bootstrapAdmin({ request_identity: randomUUID(), expected_anchor_id: anchor.anchor_id, expected_schema_version, target_schema_version, expected_mode: "OFF" }, main)
+    }
+    return { main, context, anchor, dbPath: join(context.git_common_dir, "control-tower", "tower.db") }
+  }
+  const upgradeRequest5 = (anchor, request_identity = randomUUID()) => ({
+    request_identity, expected_anchor_id: anchor.anchor_id,
+    expected_schema_version: 4, target_schema_version: 5, expected_mode: "OFF",
+  })
+  const opaqueProcess = () => ({ mcp_process_instance: randomBytes(32).toString("base64url"), pid_start_marker: `pid-start-${randomBytes(8).toString("hex")}` })
+  const capability = (overrides = {}) => ({ host_process_instance: "host-process-a", plugin_instance: "plugin-a", root_session_id: "root-a", binding_epoch: 0, ...overrides })
+  const dispatcher = (main, metadata, identity = opaqueProcess()) => tower.createContinuationDispatcher({
+    cwd: main, trustedMetadata: { snapshot: () => metadata }, processIdentity: { snapshot: () => identity },
+  })
+  const mainRequest6 = (anchor, epoch = 0, request_identity = randomUUID()) => ({ request_identity, expected_anchor_id: anchor.anchor_id, expected_binding_epoch: epoch })
+  const registerRequest6 = (epoch = 0, state = "ABSENT", request_identity = randomUUID()) => ({ request_identity, expected_binding_epoch: epoch, expected_binding_state: state })
+  const activationRequest6 = (epoch = 1, evidence_digest = digest("p6b-activation-evidence"), request_identity = randomUUID()) => ({ request_identity, expected_mode: "OFF", expected_binding_epoch: epoch, evidence_digest })
+  // Builds real, non-synthetic P4 history — one claimant registers, creates,
+  // validates, publishes, and claims a real handoff — then a genuine same-
+  // scope identity conflict retires *both* claimant bindings to MULTIPLEXED,
+  // proving the 4->5 lane's "zero ACTIVE claimant bindings" precondition can
+  // hold *alongside* real non-empty ct_handoff/ct_delivery/ct_claim/
+  // ct_session_budget rows, exactly as the design amendment requires.
+  const seedHandoffHistory = (fixture) => {
+    const mainMetadata = capability(), mainDispatch = dispatcher(fixture.main, mainMetadata)
+    const main = mainDispatch("bootstrapMain", mainRequest6(fixture.anchor))
+    mainMetadata.binding_epoch = main.binding_epoch
+    mainDispatch("activate", activationRequest6(main.binding_epoch))
+    const workerMetadata = capability({ plugin_instance: "worker-plugin", root_session_id: "worker-root" })
+    const workerDispatch = dispatcher(fixture.main, workerMetadata)
+    const registered = workerDispatch("register", registerRequest6())
+    workerMetadata.binding_epoch = registered.binding_epoch
+    writeFileSync(join(fixture.main, "p6b-unit.txt"), "p6-b fixture unit contents\n")
+    git(fixture.main, ["add", "p6b-unit.txt"])
+    git(fixture.main, ["commit", "-q", "-m", "add p6-b fixture file"])
+    const headOid = git(fixture.main, ["rev-parse", "HEAD"])
+    const fileDigest = digest(readFileSync(join(fixture.main, "p6b-unit.txt")))
+    const lineageId = randomUUID()
+    const sourceMerge = { sha: headOid, url: "https://example.invalid/p6b-merge" }
+    const payload = {
+      kind: "control_tower_handoff_v1", version: 1,
+      lineage: { lineage_id: lineageId, revision: 1 },
+      repository: {
+        repository_fingerprint: digest(canonical({ kind: "canonical_repo_v1", path: fixture.context.canonical_repo })),
+        git_common_dir_fingerprint: digest(canonical({ kind: "git_common_dir_v1", path: fixture.context.git_common_dir })),
+        source_merge: sourceMerge,
+      },
+      next_unit: { unit_id: "p6b-unit", scope: "p6-b fixture scope", dependencies: [], references: [{ kind: "FILE", value: "p6b-unit.txt", digest: fileDigest }] },
+      snapshots: [{ name: "p6b-snapshot", digest: digest("p6b-snapshot") }],
+      provenance: { source_kind: "TEST", source_ref: "p6b-fixture", source_digest: digest(canonical({ source_kind: "TEST", source_ref: "p6b-fixture", source_merge_sha: sourceMerge.sha, source_merge_url: sourceMerge.url })) },
+      decision_summary: "p6-b fixture decision",
+    }
+    const payload_digest = digest(canonical(payload))
+    const created = workerDispatch("create", { request_identity: randomUUID(), lineage_id: lineageId, revision: 1, payload, payload_digest })
+    mainDispatch("validate", { request_identity: randomUUID(), id: created.id, es: "DRAFT", eg: created.generation, payload_digest })
+    mainDispatch("publish", { request_identity: randomUUID(), id: created.id, es: "VALIDATED", eg: created.generation })
+    const before = new Database(fixture.dbPath, { readonly: true })
+    const deliveryId = before.query("SELECT delivery_id FROM ct_delivery WHERE handoff_id=?").get(created.id).delivery_id
+    before.close()
+    const claimed = workerDispatch("claim", { request_identity: randomUUID(), delivery_id: deliveryId, id: created.id, es: "PUBLISHED", eg: created.generation, purpose: "WORK" })
+    const conflictMetadata = capability({ plugin_instance: "worker-plugin", root_session_id: "worker-root-conflict", binding_epoch: registered.binding_epoch })
+    const conflictDispatch = dispatcher(fixture.main, conflictMetadata)
+    expect(errorCode(() => conflictDispatch("register", registerRequest6(registered.binding_epoch, "ACTIVE")))).toBe("CT_SESSION_MULTIPLEXED")
+    // Mode only returns ON->OFF through the full rollback plane (beginRollback
+    // + finishRollback), which is P6-E's, not P6-B's. This fixture directly
+    // restores mode OFF via raw SQL so the 4->5 lane's real precondition — a
+    // schema-4 database with real, non-empty, non-synthetic history sitting
+    // in mode OFF — can be exercised without depending on unimplemented units.
+    const modeDb = new Database(fixture.dbPath)
+    modeDb.run("UPDATE ct_continuation_state SET mode='OFF' WHERE id=1")
+    modeDb.close()
+    return { mainBindingId: main.main_binding_id, handoffId: created.id, deliveryId, claimId: claimed.claim_id, mainDispatch, mainMetadata }
+  }
+
+  test("fresh 4->5 commits exact evidence, preserves real non-empty history, zeroes successor rows, and replays", () => {
+    const fixture = provisionV4()
+    const history = seedHandoffHistory(fixture)
+    const before = new Database(fixture.dbPath, { readonly: true })
+    const schema4Digest = digest(canonical(schemaManifestEvidence(before, 4)))
+    const preserved = {
+      legacy: before.query("SELECT * FROM agent").all(),
+      main: before.query("SELECT * FROM ct_main_binding").all(),
+      handoff: before.query("SELECT * FROM ct_handoff").all(),
+      delivery: before.query("SELECT * FROM ct_delivery").all(),
+      claim: before.query("SELECT * FROM ct_claim").all(),
+      budget: before.query("SELECT * FROM ct_session_budget").all(),
+    }
+    expect(preserved.handoff.length).toBeGreaterThan(0)
+    expect(preserved.claim.length).toBeGreaterThan(0)
+    const activationEpoch = before.query("SELECT COUNT(*) AS count FROM ct_activation").get().count
+    expect(before.query("SELECT COUNT(*) AS count FROM ct_claimant_binding WHERE binding_status='ACTIVE'").get().count).toBe(0)
+    before.close()
+
+    const request = upgradeRequest5(fixture.anchor)
+    expect(tower.bootstrapAdmin(request, fixture.main)).toEqual({ anchor_id: fixture.anchor.anchor_id, schema_version: 5, mode: "OFF", replayed: false })
+    const db = new Database(fixture.dbPath, { readonly: true })
+    const envelope = JSON.parse(db.query("SELECT response_json FROM ct_idempotency WHERE operation='bootstrapAdmin' AND scope_key='schema:4->5'").get().response_json)
+    const schema5Digest = digest(canonical(schemaManifestEvidence(db, 5)))
+    expect(envelope).toEqual({
+      kind: "bootstrap_schema5_response_v1", version: 1,
+      public_response: { anchor_id: fixture.anchor.anchor_id, schema_version: 5, mode: "OFF", replayed: false },
+      evidence: {
+        request, request_digest: digest(canonical(request)),
+        cas_input: {
+          expected_anchor_id: fixture.anchor.anchor_id, expected_schema_version: 4, target_schema_version: 5,
+          expected_mode: "OFF", derived_anchor_epoch: 1, derived_config_digest: digest(canonical(fixture.context)),
+          observed_rollback_epoch: 0, observed_lease_version: 0, observed_lease_status: "NONE",
+          observed_active_main_binding_id: history.mainBindingId, observed_active_main_binding_epoch: 1,
+          observed_activation_epoch: activationEpoch, active_claimant_bindings: 0,
+          delivery_plane: "SCHEMA_4_VALIDATED", recovery_plane: "ABSENT_SCHEMA_4",
+        },
+        cas_digest: expect.any(String), migration_005_checksum: expectedMigration005Checksum,
+        schema_4_manifest_digest: schema4Digest, schema_5_manifest_digest: schema5Digest,
+      },
+    })
+    expect(envelope.evidence.cas_digest).toBe(digest(canonical(envelope.evidence.cas_input)))
+    expect(db.query("SELECT version,ddl_checksum FROM ct_schema_migration ORDER BY version").all().at(-1)).toEqual({ version: 5, ddl_checksum: expectedMigration005Checksum })
+    for (const table of ["ct_termination_receipt", "ct_quiescence_snapshot", "ct_rollback_epoch", "ct_main_rebind", "ct_recovery_disposition"]) {
+      expect(db.query(`SELECT COUNT(*) AS count FROM ${table}`).get().count).toBe(0)
+    }
+    expect(db.query("SELECT * FROM agent").all()).toEqual(preserved.legacy)
+    expect(db.query("SELECT * FROM ct_main_binding").all()).toEqual(preserved.main)
+    expect(db.query("SELECT * FROM ct_handoff").all()).toEqual(preserved.handoff)
+    expect(db.query("SELECT * FROM ct_delivery").all()).toEqual(preserved.delivery)
+    expect(db.query("SELECT * FROM ct_claim").all()).toEqual(preserved.claim)
+    expect(db.query("SELECT * FROM ct_session_budget").all()).toEqual(preserved.budget)
+    db.close()
+
+    expect(tower.bootstrapAdmin(request, fixture.main)).toEqual({ anchor_id: fixture.anchor.anchor_id, schema_version: 5, mode: "OFF", replayed: true })
+    expect(errorCode(() => tower.bootstrapAdmin({ ...request, request_identity: randomUUID() }, fixture.main))).toBe("CT_IDEMPOTENCY_CONFLICT")
+  })
+
+  test("fresh 4->5 fences wrong mode, active lease, nonzero claimants, and anchor drift before any DDL", () => {
+    for (const mutate of [
+      (db) => db.run("UPDATE ct_continuation_state SET mode='ON'"),
+      (db) => db.run("UPDATE ct_rollback_lease SET lease_status='ACTIVE',owner_main_binding_id=?,lease_expires_at='2026-07-22T00:00:00.000Z'", ["x".repeat(43)]),
+    ]) {
+      const fixture = provisionV4(), request = upgradeRequest5(fixture.anchor), db = new Database(fixture.dbPath)
+      mutate(db); db.close()
+      expect(errorCode(() => tower.bootstrapAdmin(request, fixture.main))).toBe("CT_FENCE_MISMATCH")
+      const untouched = new Database(fixture.dbPath, { readonly: true })
+      expect(untouched.query("SELECT version FROM ct_schema_migration ORDER BY version").all()).toEqual([{ version: 1 }, { version: 2 }, { version: 3 }, { version: 4 }])
+      untouched.close()
+    }
+    const claimantFixture = provisionV4()
+    const claimantMainMetadata = capability(), claimantMainDispatch = dispatcher(claimantFixture.main, claimantMainMetadata)
+    const claimantMain = claimantMainDispatch("bootstrapMain", mainRequest6(claimantFixture.anchor))
+    claimantMainMetadata.binding_epoch = claimantMain.binding_epoch
+    claimantMainDispatch("activate", activationRequest6(claimantMain.binding_epoch))
+    const workerMetadata = capability({ plugin_instance: "lingering-worker", root_session_id: "lingering-root" })
+    dispatcher(claimantFixture.main, workerMetadata)("register", registerRequest6())
+    // Isolate the "nonzero ACTIVE claimant bindings" rung from the mode gate:
+    // no real operation ever turns mode ON back to OFF while a claimant stays
+    // ACTIVE, so this fixes mode back to OFF directly, exactly like the
+    // mode/lease mutation fixtures above.
+    const claimantDb = new Database(claimantFixture.dbPath)
+    claimantDb.run("UPDATE ct_continuation_state SET mode='OFF' WHERE id=1")
+    claimantDb.close()
+    expect(errorCode(() => tower.bootstrapAdmin(upgradeRequest5(claimantFixture.anchor), claimantFixture.main))).toBe("CT_FENCE_MISMATCH")
+    const wrongAnchor = provisionV4()
+    expect(errorCode(() => tower.bootstrapAdmin({ ...upgradeRequest5(wrongAnchor.anchor), expected_anchor_id: "wrong" }, wrongAnchor.main))).toBe("CT_FENCE_MISMATCH")
+  })
+
+  test("partial DDL failure and bounded busy roll back fully and retry from byte-identical schema 4", () => {
+    const fixture = provisionV4(), request = upgradeRequest5(fixture.anchor)
+    const blocker = new Database(fixture.dbPath)
+    blocker.run(`CREATE TRIGGER force_migration_005_failure BEFORE INSERT ON ct_schema_migration
+      WHEN NEW.version=5 BEGIN SELECT RAISE(ABORT, 'forced-late-migration-failure'); END`)
+    blocker.close()
+    const before = readFileSync(fixture.dbPath)
+    expect(errorCode(() => tower.bootstrapAdmin(request, fixture.main))).toBe("CT_SCHEMA_INVALID")
+    expect(readFileSync(fixture.dbPath)).toEqual(before)
+    const rolledBack = new Database(fixture.dbPath)
+    expect(rolledBack.query("SELECT version FROM ct_schema_migration ORDER BY version").all()).toEqual([{ version: 1 }, { version: 2 }, { version: 3 }, { version: 4 }])
+    expect(rolledBack.query(`SELECT name FROM sqlite_master WHERE name GLOB 'ct_termination_receipt*' OR name GLOB 'ct_quiescence_snapshot*' OR name GLOB 'ct_rollback_epoch*' OR name GLOB 'ct_main_rebind*' OR name GLOB 'ct_recovery_disposition*'`).all()).toEqual([])
+    rolledBack.run("DROP TRIGGER force_migration_005_failure")
+    rolledBack.close()
+    const locker = new Database(fixture.dbPath); locker.run("BEGIN IMMEDIATE")
+    const started = Date.now()
+    expect(errorCode(() => tower.bootstrapAdmin(request, fixture.main))).toBe("CT_BUSY")
+    expect(Date.now() - started).toBeGreaterThanOrEqual(200)
+    expect(Date.now() - started).toBeLessThan(1500)
+    locker.run("ROLLBACK"); locker.close()
+    expect(tower.bootstrapAdmin(request, fixture.main)).toMatchObject({ schema_version: 5, replayed: false })
+  })
+
+  test("real P3/P4/P5 routes (register, create, validate, publish, claim, ack, attestCompletion, complete, status) stay green on a migrated schema-5 database", () => {
+    // A clean (never-activated) schema-4 fixture migrates directly: mode is
+    // already OFF and claimants are already zero, so this exercises the
+    // full P3 (bootstrapMain/activate/register) through P5
+    // (ack/attestCompletion/complete) chain built entirely fresh, after
+    // migration, against a real schema-5 database.
+    const fixture = provisionV4()
+    tower.bootstrapAdmin(upgradeRequest5(fixture.anchor), fixture.main)
+    const migratedDb = new Database(fixture.dbPath, { readonly: true })
+    expect(migratedDb.query("SELECT version FROM ct_schema_migration ORDER BY version").all().at(-1)).toEqual({ version: 5 })
+    migratedDb.close()
+
+    const mainMetadata = capability(), mainDispatch = dispatcher(fixture.main, mainMetadata)
+    const main = mainDispatch("bootstrapMain", mainRequest6(fixture.anchor))
+    mainMetadata.binding_epoch = main.binding_epoch
+    mainDispatch("activate", activationRequest6(main.binding_epoch))
+
+    const workerMetadata = capability({ plugin_instance: "post-migration-worker", root_session_id: "post-migration-root" })
+    const workerDispatch = dispatcher(fixture.main, workerMetadata)
+    const registered = workerDispatch("register", registerRequest6())
+    workerMetadata.binding_epoch = registered.binding_epoch
+    expect(registered.binding_status).toBe("ACTIVE")
+
+    const lineageId = randomUUID()
+    const sourceMerge = { sha: git(fixture.main, ["rev-parse", "HEAD"]), url: "https://example.invalid/p6b-post-merge" }
+    const payload = {
+      kind: "control_tower_handoff_v1", version: 1,
+      lineage: { lineage_id: lineageId, revision: 1 },
+      repository: {
+        repository_fingerprint: digest(canonical({ kind: "canonical_repo_v1", path: fixture.context.canonical_repo })),
+        git_common_dir_fingerprint: digest(canonical({ kind: "git_common_dir_v1", path: fixture.context.git_common_dir })),
+        source_merge: sourceMerge,
+      },
+      next_unit: { unit_id: "p6b-post-unit", scope: "p6-b post-migration scope", dependencies: [], references: [] },
+      snapshots: [], provenance: { source_kind: "TEST", source_ref: "p6b-post-fixture", source_digest: digest(canonical({ source_kind: "TEST", source_ref: "p6b-post-fixture", source_merge_sha: sourceMerge.sha, source_merge_url: sourceMerge.url })) },
+      decision_summary: "p6-b post-migration fixture decision",
+    }
+    const payload_digest = digest(canonical(payload))
+    const created = workerDispatch("create", { request_identity: randomUUID(), lineage_id: lineageId, revision: 1, payload, payload_digest })
+    expect(created.state).toBe("DRAFT")
+
+    mainDispatch("validate", { request_identity: randomUUID(), id: created.id, es: "DRAFT", eg: created.generation, payload_digest })
+    mainDispatch("publish", { request_identity: randomUUID(), id: created.id, es: "VALIDATED", eg: created.generation })
+    const readDb = new Database(fixture.dbPath, { readonly: true })
+    const deliveryId = readDb.query("SELECT delivery_id FROM ct_delivery WHERE handoff_id=?").get(created.id).delivery_id
+    readDb.close()
+    const claimed = workerDispatch("claim", { request_identity: randomUUID(), delivery_id: deliveryId, id: created.id, es: "PUBLISHED", eg: created.generation, purpose: "WORK" })
+    expect(claimed.state).toBe("CLAIMED")
+
+    const effect = { effect_index: 0, target_kind: "DATABASE", target: "table:p6b-post", operation: "UPDATE", observability: "OBSERVABLE", compensatability: "COMPENSATABLE", pre_state_digest: digest("p6b-post-pre-state") }
+    const boundary = { kind: "effect_boundary_v1", version: 1, id: created.id, generation: created.generation, effects: [{ effect_index: 0, target_kind: "DATABASE", target: "table:p6b-post", pre_state_digest: digest("p6b-post-pre-state") }] }
+    const effectManifest = { kind: "effect_manifest_v1", version: 1, id: created.id, generation: created.generation, effects: [effect], pre_start_boundary_digest: digest(canonical(boundary)) }
+    const started = workerDispatch("ack", { request_identity: randomUUID(), delivery_id: deliveryId, id: created.id, es: "CLAIMED", eg: created.generation, purpose: "WORK", token: claimed.token, effect_manifest: effectManifest })
+    expect(started.state).toBe("STARTED")
+
+    const attested = mainDispatch("attestCompletion", { request_identity: randomUUID(), id: created.id, es: "STARTED", eg: created.generation })
+    expect(attested.state).toBe("COMPLETION_ATTESTED")
+    const attestationDb = new Database(fixture.dbPath, { readonly: true })
+    const attestationDigest = attestationDb.query("SELECT decision_digest FROM ct_handoff_transition WHERE operation='ATTEST_COMPLETION' AND handoff_id=?").get(created.id).decision_digest
+    attestationDb.close()
+
+    const committedResult = {
+      kind: "committed_result_v1", version: 1, id: created.id, generation: created.generation, attestation_digest: attestationDigest,
+      result_digest: digest("p6b-post-committed-result"), result_ref: "https://example.invalid/p6b-post-result", effect_settlement_digest: digest("p6b-post-effect-settlement"),
+    }
+    const completed = workerDispatch("complete", { request_identity: randomUUID(), delivery_id: deliveryId, id: created.id, es: "COMPLETION_ATTESTED", eg: created.generation, purpose: "WORK", token: claimed.token, attestation_digest: attestationDigest, committed_result: committedResult })
+    expect(completed.state).toBe("COMPLETED")
+
+    const status = mainDispatch("status", undefined)
+    expect(status.schema_version).toBe(5)
+    expect(status.mode).toBe("ON")
+  })
+
+  // Corrective scope (gatekeeper-driven): the real RECOVER validator. No
+  // `recover()` exists before P6-D, so rows are hand-constructed against a
+  // real isolated schema-5 db — the `CT-JD-S5-001` "isolated
+  // trigger-restored" precedent. Only ON-mode, no-proof dispositions are
+  // exercised (CANCELLED/POISONED, unclaimed); SUSPEND_PENDING/
+  // SUSPEND_ATTESTATION are ROLLING_BACK-only, out of scope (apply-progress.md).
+  // Shared by both fixtures below: a real create->validate->publish handoff.
+  const publishHandoffFor = (fixture, mainDispatch, workerDispatch, label) => {
+    writeFileSync(join(fixture.main, `${label}.txt`), `${label} fixture unit contents\n`)
+    git(fixture.main, ["add", `${label}.txt`])
+    git(fixture.main, ["commit", "-q", "-m", `add ${label} fixture file`])
+    const sourceMerge = { sha: git(fixture.main, ["rev-parse", "HEAD"]), url: `https://example.invalid/${label}-merge` }
+    const lineageId = randomUUID()
+    const payload = {
+      kind: "control_tower_handoff_v1", version: 1,
+      lineage: { lineage_id: lineageId, revision: 1 },
+      repository: {
+        repository_fingerprint: digest(canonical({ kind: "canonical_repo_v1", path: fixture.context.canonical_repo })),
+        git_common_dir_fingerprint: digest(canonical({ kind: "git_common_dir_v1", path: fixture.context.git_common_dir })),
+        source_merge: sourceMerge,
+      },
+      next_unit: { unit_id: `${label}-unit`, scope: `${label} fixture scope`, dependencies: [], references: [] },
+      snapshots: [], provenance: { source_kind: "TEST", source_ref: `${label}-fixture`, source_digest: digest(canonical({ source_kind: "TEST", source_ref: `${label}-fixture`, source_merge_sha: sourceMerge.sha, source_merge_url: sourceMerge.url })) },
+      decision_summary: `${label} fixture decision`,
+    }
+    const payload_digest = digest(canonical(payload))
+    const created = workerDispatch("create", { request_identity: randomUUID(), lineage_id: lineageId, revision: 1, payload, payload_digest })
+    mainDispatch("validate", { request_identity: randomUUID(), id: created.id, es: "DRAFT", eg: created.generation, payload_digest })
+    mainDispatch("publish", { request_identity: randomUUID(), id: created.id, es: "VALIDATED", eg: created.generation })
+    const before = new Database(fixture.dbPath, { readonly: true })
+    const deliveryId = before.query("SELECT delivery_id FROM ct_delivery WHERE handoff_id=?").get(created.id).delivery_id
+    before.close()
+    return { handoffId: created.id, deliveryId, generation: created.generation }
+  }
+  const provisionSchema5PublishedHandoff = () => {
+    const fixture = provisionV4()
+    const mainMetadata = capability(), mainDispatch = dispatcher(fixture.main, mainMetadata)
+    const main = mainDispatch("bootstrapMain", mainRequest6(fixture.anchor))
+    mainMetadata.binding_epoch = main.binding_epoch
+    mainDispatch("activate", activationRequest6(main.binding_epoch))
+    const workerMetadata = capability({ plugin_instance: "recover-worker", root_session_id: "recover-root" })
+    const workerDispatch = dispatcher(fixture.main, workerMetadata)
+    const registered = workerDispatch("register", registerRequest6())
+    workerMetadata.binding_epoch = registered.binding_epoch
+    const published = publishHandoffFor(fixture, mainDispatch, workerDispatch, "p6b-recover")
+    // Retire the sole claimant (real conflict), then mode OFF as above.
+    const conflictMetadata = capability({ plugin_instance: "recover-worker", root_session_id: "recover-root-conflict", binding_epoch: registered.binding_epoch })
+    const conflictDispatch = dispatcher(fixture.main, conflictMetadata)
+    expect(errorCode(() => conflictDispatch("register", registerRequest6(registered.binding_epoch, "ACTIVE")))).toBe("CT_SESSION_MULTIPLEXED")
+    const modeDb = new Database(fixture.dbPath)
+    modeDb.run("UPDATE ct_continuation_state SET mode='OFF' WHERE id=1")
+    modeDb.close()
+    tower.bootstrapAdmin(upgradeRequest5(fixture.anchor), fixture.main)
+    return { ...fixture, mainMetadata, mainDispatch, ...published }
+  }
+  // Hand-constructs one CHECK-constrained RECOVER transition +
+  // ct_recovery_disposition row pair for a no-claim CANCELLED/POISONED
+  // disposition from a real PUBLISHED handoff — exactly what `recover()`
+  // (P6-D) would persist.
+  const forgeCancelOrPoisonRecovery = (fixture, disposition, overrides = {}) => {
+    const db = new Database(fixture.dbPath)
+    const main = db.query("SELECT * FROM ct_main_binding WHERE binding_status='ACTIVE'").get()
+    const handoff = db.query("SELECT handoff_fingerprint FROM ct_handoff WHERE id=?").get(fixture.handoffId)
+    const occurredAt = new Date().toISOString()
+    const transitionId = randomBytes(32).toString("base64url")
+    const dispositionId = randomBytes(32).toString("base64url")
+    const requestIdentity = randomUUID()
+    const scopeKey = `handoff:${fixture.handoffId}:generation:${fixture.generation}:${disposition.toLowerCase()}`
+    const publicResponse = { id: fixture.handoffId, state: disposition, generation: fixture.generation, replayed: false }
+    const responseDigest = digest(canonical(publicResponse))
+    const decisionValue = {
+      kind: "recover_decision_v1", version: 1, disposition, id: fixture.handoffId,
+      from_state: "PUBLISHED", to_state: disposition, from_generation: fixture.generation, to_generation: fixture.generation,
+      rollback_epoch: 0, closed_delivery_id: fixture.deliveryId, closed_claim_id: null, created_delivery_id: null,
+      termination_pairing_digest: null, rollback_proof_digest: null, frozen_inventory_digest: null, preserved_attestation_digest: null,
+      ...overrides.decision,
+    }
+    const dispositionDigest = digest(canonical(decisionValue))
+    const requestValue = {
+      request_identity: requestIdentity, id: fixture.handoffId, es: "PUBLISHED", eg: fixture.generation, action: disposition,
+      expected_rollback_epoch: 0, delivery_id: fixture.deliveryId, claim_id: null, rollback_proof: null, ...overrides.request,
+    }
+    const requestDigestValue = digest(canonical(requestValue))
+    const casInput = {
+      kind: `${disposition.toLowerCase()}_cas_v1`, version: 1,
+      writer_fence_v1: { schema_version: 5, mode: "ON", anchor_id: fixture.anchor.anchor_id, config_digest: digest(canonical(fixture.context)),
+        observed_rollback_epoch: 0, observed_lease_version: 0, observed_lease_status: "NONE" },
+      main_authority_v1: { main_binding_id: main.main_binding_id, binding_epoch: main.binding_epoch, identity_digest: main.identity_digest },
+      id: fixture.handoffId, disposition, expected_state: "PUBLISHED", expected_generation: fixture.generation, target_generation: fixture.generation,
+      expected_rollback_epoch: 0, expected_lease_version: 0, expected_lease_status: "NONE", expected_delivery_state: "PENDING",
+      expected_claim_state: "ABSENT", delivery_id: fixture.deliveryId, claim_id: null, handoff_fingerprint: handoff.handoff_fingerprint,
+      termination_pairing_digest: null, rollback_proof_digest: null, frozen_inventory_digest: null, preserved_attestation_digest: null,
+      ...overrides.cas,
+    }
+    const casDigest = digest(canonical(casInput))
+    const envelope = {
+      kind: `${disposition.toLowerCase()}_response_envelope_v1`, version: 1, public_response: publicResponse,
+      evidence: {
+        request: requestValue, request_digest: requestDigestValue, scope_key: scopeKey, cas_input: casInput, cas_digest: casDigest,
+        disposition_id: dispositionId, closed_delivery_id: fixture.deliveryId, closed_claim_id: null, created_delivery_id: null,
+        termination_pairing_digest: null, rollback_proof: null, rollback_proof_digest: overrides.evidenceRollbackProofDigest ?? null,
+        frozen_inventory_digest: null, preserved_attestation_digest: null, attestation_source_generation: null,
+      },
+    }
+    db.run("UPDATE ct_delivery SET delivery_state='CLOSED', closed_at=? WHERE delivery_id=?", [occurredAt, fixture.deliveryId])
+    db.run("UPDATE ct_handoff SET state=? WHERE id=?", [disposition, fixture.handoffId])
+    db.run(
+      "INSERT INTO ct_handoff_transition (transition_id,handoff_id,generation,operation,from_state,to_state,authority_kind,authority_binding_id,authority_identity_digest,request_identity,request_digest,cas_digest,decision_digest,response_digest,occurred_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+      [transitionId, fixture.handoffId, fixture.generation, "RECOVER", "PUBLISHED", disposition, "MAIN", main.main_binding_id, main.identity_digest,
+        requestIdentity, requestDigestValue, casDigest, dispositionDigest, responseDigest, occurredAt],
+    )
+    db.run(
+      `INSERT INTO ct_recovery_disposition
+        (disposition_id,handoff_id,disposition,from_state,to_state,from_generation,to_generation,mode,rollback_epoch,lease_version,
+         main_binding_id,main_binding_epoch,main_identity_digest,termination_pairing_digest,rollback_proof_digest,frozen_inventory_digest,
+         preserved_attestation_digest,attestation_source_generation,closed_delivery_id,closed_claim_id,created_delivery_id,
+         request_identity,request_digest,cas_digest,disposition_digest,occurred_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [dispositionId, fixture.handoffId, disposition, "PUBLISHED", disposition,
+        overrides.fromGeneration ?? fixture.generation, overrides.fromGeneration ?? fixture.generation, "ON", 0, overrides.dispositionLeaseVersion ?? 0,
+        main.main_binding_id, main.binding_epoch, main.identity_digest, null, null, null, null, null,
+        overrides.closedDeliveryId !== undefined ? overrides.closedDeliveryId : fixture.deliveryId, null, null,
+        requestIdentity, requestDigestValue, casDigest, dispositionDigest, occurredAt],
+    )
+    db.run("INSERT INTO ct_idempotency VALUES ('recover',?,?,?,?,?,?)", [scopeKey, requestIdentity, requestDigestValue, casDigest, canonical(envelope), occurredAt])
+    db.close()
+    return { transitionId, dispositionId, requestIdentity }
+  }
+
+  test("real RECOVER validator accepts a hand-constructed CANCELLED disposition at schema 5 only", () => {
+    const fixture = provisionSchema5PublishedHandoff()
+    forgeCancelOrPoisonRecovery(fixture, "CANCELLED")
+    const status = fixture.mainDispatch("status", undefined)
+    expect(status.schema_version).toBe(5)
+  })
+
+  test("real RECOVER validator accepts a hand-constructed POISONED disposition at schema 5 only", () => {
+    const fixture = provisionSchema5PublishedHandoff()
+    forgeCancelOrPoisonRecovery(fixture, "POISONED")
+    const status = fixture.mainDispatch("status", undefined)
+    expect(status.schema_version).toBe(5)
+  })
+
+  for (const [name, overrides] of [
+    ["request drift", { request: { delivery_id: null } }],
+    ["CAS drift", { cas: { expected_delivery_state: "CLAIMED" } }],
+    ["decision drift", { decision: { closed_claim_id: "x".repeat(43) } }],
+    ["proof-digest drift", { evidenceRollbackProofDigest: digest("forged-proof-digest") }],
+    ["disposition-row drift", { dispositionLeaseVersion: 7 }],
+  ]) test(`real RECOVER validator rejects ${name} despite internally consistent stored digests`, () => {
+    const fixture = provisionSchema5PublishedHandoff()
+    forgeCancelOrPoisonRecovery(fixture, "CANCELLED", overrides)
+    expect(errorCode(() => fixture.mainDispatch("status", undefined))).toBe("CT_SCHEMA_INVALID")
+  })
+
+  test("real RECOVER validator rejects a disposition row that disagrees with the reverse-linked (from_state,to_state) map", () => {
+    // A disposition/to_state mismatch is unrepresentable (Migration 005's own
+    // CHECK), so this proves the cross-check differently: a wrong
+    // from_generation can never be found by the real lookup key.
+    const fixture = provisionSchema5PublishedHandoff()
+    forgeCancelOrPoisonRecovery(fixture, "CANCELLED", { fromGeneration: 7 })
+    expect(errorCode(() => fixture.mainDispatch("status", undefined))).toBe("CT_SCHEMA_INVALID")
+  })
+
+  test("real RECOVER validator rejects a disposition row naming the wrong closed delivery", () => {
+    const fixture = provisionSchema5PublishedHandoff()
+    forgeCancelOrPoisonRecovery(fixture, "CANCELLED", { closedDeliveryId: "x".repeat(43) })
+    expect(errorCode(() => fixture.mainDispatch("status", undefined))).toBe("CT_SCHEMA_INVALID")
+  })
+
+  test("a schema-4 database still rejects any RECOVER row byte-for-byte as before (RECOVER acceptance is schema-5 only)", () => {
+    const fixture = provisionV4()
+    const mainMetadata = capability(), mainDispatch = dispatcher(fixture.main, mainMetadata)
+    const main = mainDispatch("bootstrapMain", mainRequest6(fixture.anchor))
+    mainMetadata.binding_epoch = main.binding_epoch
+    mainDispatch("activate", activationRequest6(main.binding_epoch))
+    const workerMetadata = capability({ plugin_instance: "recover-schema4-worker", root_session_id: "recover-schema4-root" })
+    const workerDispatch = dispatcher(fixture.main, workerMetadata)
+    const registeredSchema4 = workerDispatch("register", registerRequest6())
+    workerMetadata.binding_epoch = registeredSchema4.binding_epoch
+    const published = publishHandoffFor(fixture, mainDispatch, workerDispatch, "p6b-recover-schema4")
+    // ct_recovery_disposition doesn't exist at schema 4, so only a bare
+    // RECOVER transition row is inserted — futureHistoryPresent's operation
+    // allowlist alone must still reject it, byte-for-byte as before.
+    const db = new Database(fixture.dbPath)
+    const mainRow = db.query("SELECT * FROM ct_main_binding WHERE binding_status='ACTIVE'").get()
+    db.run(
+      "INSERT INTO ct_handoff_transition (transition_id,handoff_id,generation,operation,from_state,to_state,authority_kind,authority_binding_id,authority_identity_digest,request_identity,request_digest,cas_digest,decision_digest,response_digest,occurred_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+      [randomBytes(32).toString("base64url"), published.handoffId, published.generation, "RECOVER", "PUBLISHED", "CANCELLED", "MAIN", mainRow.main_binding_id, mainRow.identity_digest,
+        randomUUID(), digest("forged-request"), digest("forged-cas"), digest("forged-decision"), digest("forged-response"), new Date().toISOString()],
+    )
+    db.close()
+    expect(errorCode(() => mainDispatch("status", undefined))).toBe("CT_SCHEMA_INVALID")
   })
 })
 
