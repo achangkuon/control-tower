@@ -6,7 +6,7 @@ Proceed provisionally with a host-neutral polling controller and a thin OpenCode
 
 The first P7 implementation slice will keep polling state transient and will not persist a real polling witness. Migration 005, its checksum, its schema-5 manifest, and its `UNAVAILABLE_BEFORE_P7` constraint are immutable P6-owned inputs. If post-P6 reconciliation proves that a persisted witness is required, it must be proposed as a separate additive migration unit rather than folded into the loop or adapter.
 
-Planning may continue through proposal, specification, design, and tasks. Apply remains blocked until the merged P6 implementation and the OpenCode integration seams have been reconciled.
+Planning is complete. Apply remains blocked until the independent M0 `reconciliation.md` is approved against merged P6 evidence and the OpenCode integration seams. Native `apply-ready` or artifact presence does not satisfy this gate.
 
 ## Intent
 
@@ -83,7 +83,7 @@ Implementation should remain reviewable as behavior-based units: controller/stat
 
 ## Dependencies and apply gate
 
-P7 depends on the merged P6 continuation and schema work. Before any apply or implementation begins, the team must re-read and reconcile:
+P7 depends only on the merged P6 continuation and schema work; it has no Change A dependency. It participates in both integrated paths, `P6 → P7 → P8 → Change E` and `A → B/C → D → Change E`, without adding an A→P7/P8 edge. Before any apply or implementation begins, the team must re-read and reconcile:
 
 - the merged schema version, Migration 005 bytes/checksum, schema manifest, and exact `UNAVAILABLE_BEFORE_P7` constraint;
 - accepted `bootstrapAdmin` transitions and failure/retry behavior;
@@ -95,7 +95,7 @@ P7 depends on the merged P6 continuation and schema work. Before any apply or im
 - whether legacy queue compatibility remains required and where it can live without consuming before a successful wake;
 - whether transient polling is sufficient or a separate persisted-witness proposal is required.
 
-Until this reconciliation is recorded and its decision gaps are resolved, `sdd-apply` is blocked even if proposal, specs, design, and tasks are complete.
+Until the separate P7 record is approved and its decision gaps are resolved, `sdd-apply` is blocked even if proposal, specs, design, tasks, or native status say ready. P7 does not create, retire, recycle, or branch-switch worktrees and does not own host launch, inspect, stop, health, heartbeat, stop proof, session naming, `host_epoch`, or failover. Workspace Manager owns worktree lifecycle. Main owns `host_epoch` issuance and fencing authority; Change E owns launch/inspect/stop/health, heartbeat, stop proof, session naming, `host_epoch` enforcement, and exclusive failover.
 
 ## Risks and mitigations
 

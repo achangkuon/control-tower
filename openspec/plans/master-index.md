@@ -61,38 +61,33 @@ Snapshot obtenido mediante `gentle-ai sdd-status --json --instructions` el 2026-
 
 | Change | Progreso | Estado nativo | Siguiente paso |
 |---|---:|---|---|
-| `autonomous-continuation-control-tower` | 26/50 | `apply` ready; verify bloqueado | Continuar tareas pendientes desde P6 |
-| `p7-host-neutral-loop-opencode-adapter` | 0/28 | `apply` ready; verify bloqueado | Implementar después de satisfacer dependencia mecánica P6 |
-| `p8-slice-planning` | 0/8 | `apply` ready; verify bloqueado | Implementar después de P7 |
+| `autonomous-continuation-control-tower` | P6 completo | Mergeado mediante PRs #38–#45; cierre P6 en `e16d94b` | Preservar `apply-progress.md` como evidencia histórica |
+| `p7-host-neutral-loop-opencode-adapter` | 0/28 | Estado nativo `apply-ready`, pero integración bloqueada por M0 | Aprobar su registro independiente `reconciliation.md` |
+| `p8-slice-planning` | 0/8 | Estado nativo `apply-ready`, pero integración bloqueada por M0 | Esperar P7 reconciliado/integrado y aprobar su propio registro |
 
 Observaciones:
 
 - P0–P5 del sustrato están marcados completos.
-- P6 es el primer slice incompleto. Sus tasks registran un prerequisito de enmienda para proof/quiescence antes de sus cambios de producción.
+- P6 está completo y mergeado. La evidencia vigente es la cadena de PRs #38–#45, culminada por `e16d94b`; el `apply-progress.md` histórico se conserva byte-for-byte y no se usa como contador fresco.
 - P7 y P8 ya tienen proposal/spec/design/tasks; no deben repetir planificación.
+- `apply-ready` nativo no abre ninguno de los dos gates: P7 requiere su registro aprobado; P8 requiere P7 reconciliado e integrado más su propio registro aprobado.
 - P9 Claude, P10 runtime/cutover y P11 verificación/handoff permanecen dentro del change principal.
 - Este roadmap no modifica ni reabre esos contratos mecánicos.
 
 ## 5. Dependencias macro
 
 ```text
-Documentos aprobados
-        │
-        ▼
-A. Contract schemas + Plan Catalog
-        ├──────────────┐
-        ▼              ▼
-B. Project Registry   C. Workspace Manager
-        │              │
-        └──────┬───────┘
-               ▼
-D. Main + Policy + Jornada
-               │
-Mechanism P6 → P7 OpenCode → P8 Pi
-               │
-               ▼
-E. Host Launcher + single-host failover
-               │
+Mechanism path: P6 ──→ P7 OpenCode ──→ P8 Pi ──────────┐
+                                                       │
+Product path:   A ──┬──→ B ──┐                         │
+                    └──→ C ──┴──→ D ───────────────────┤
+                                                       ▼
+                                                E. Host Launcher
+Required edge: C → D. There is no A → P7 or A → P8 edge.
+P7 depends only on P6; P8 depends only on integrated P7.
+Change E owns launch/inspect/stop/health, heartbeat, stop proof,
+session naming, host-epoch enforcement, and exclusive failover.
+                                                │
         ┌──────┴────────┐
         ▼               ▼
 F. Telegram Delivery   G. Continuous Slice Loop
@@ -105,6 +100,8 @@ I. V1 Conformance Pilot
 ```
 
 Claude continúa como opt-in y no bloquea el piloto Pi/OpenCode.
+
+Invariantes de reconciliación: `P6 → P7 → P8 → Change E` y `A → B/C → D → Change E`; se preserva C→D, existe no A→P7/P8 edge y Change E conserva la autoridad de lifecycle/failover del host.
 
 ## 6. Roadmap por fase
 
@@ -136,21 +133,25 @@ Claude continúa como opt-in y no bloquea el piloto Pi/OpenCode.
 
 ### M1.1 — P6 Recovery/Rollback
 
-- [ ] Resolver el prerequisito documentado de proof/quiescence.
-- [ ] Implementar y verificar tareas 6.1–6.4.
-- [ ] Preservar Tower OFF, rollback y fail-closed.
+- [x] Resolver el prerequisito documentado de proof/quiescence.
+- [x] Implementar y verificar tareas 6.1–6.4.
+- [x] Preservar Tower OFF, rollback y fail-closed.
+
+**Proveniencia actual:** PRs #38–#45; cierre mergeado `e16d94b`. El archivo histórico `autonomous-continuation-control-tower/apply-progress.md` permanece sin reescritura.
 
 ### M1.2 — P7 OpenCode
 
 - [ ] Ejecutar el change ya planificado `p7-host-neutral-loop-opencode-adapter`.
 - [ ] Validar polling, wake y preservación de pending delivery.
 - [ ] No repetir proposal/spec/design/tasks.
+- [ ] Mantener apply bloqueado hasta aprobar su registro independiente M0; Change A no es dependencia.
 
 ### M1.3 — P8 Pi
 
 - [ ] Ejecutar el change ya planificado `p8-slice-planning`.
 - [ ] Validar idle-safe wake, resume y shutdown.
 - [ ] No repetir proposal/spec/design/tasks.
+- [ ] Mantener apply bloqueado hasta integrar P7 reconciliado y aprobar el registro independiente P8; Change A no es dependencia.
 
 ### M1.4 — P9–P11
 
@@ -328,7 +329,7 @@ Cambios posteriores deben crear una revisión explícita del documento correspon
 
 **Estado actual:** PRD, RFC, REQUIREMENTS, roadmap, Plan Catalog, Plan Manifest y proposals A–I aprobados estructuralmente y mergeados mediante PR #47 (`0745f99`). No comenzó implementación del producto macro.
 
-**Sustrato:** el último snapshot de este plan registró `autonomous-continuation-control-tower` en 26/50; P6 era el primer slice pendiente. P7 y P8 conservan planning completo. Antes de actuar se MUST consultar estado nativo fresco porque el workstream mecánico avanza de forma independiente.
+**Sustrato:** P6 está mergeado mediante PRs #38–#45 y cierra en `e16d94b`. P7 y P8 conservan planning completo, pero ambos permanecen bloqueados por sus gates M0 aunque el estado nativo diga `apply-ready`; P8 además espera evidencia de P7 reconciliado e integrado. Antes de actuar se MUST consultar estado nativo y evidencia de reconciliación frescos.
 
 **Próximo paso exacto:**
 

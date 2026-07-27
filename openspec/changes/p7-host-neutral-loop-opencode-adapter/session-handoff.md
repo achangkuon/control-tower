@@ -2,11 +2,9 @@
 
 ## Current decision
 
-P7 planning is complete through tasks in hybrid storage, but apply remains blocked. Do not begin implementation until P6 has merged, `reconciliation.md` has been completed and approved with merged evidence, and the P7 chain topology has been selected.
+P7 planning is complete through tasks in hybrid storage, but apply remains blocked. P6 is merged through PRs #38–#45, closing at `e16d94b`; its historical `apply-progress.md` remains untouched. Do not begin implementation until the independent M0 `reconciliation.md` is completed and approved and the P7 chain topology is selected. Native `apply-ready` does not bypass this gate.
 
-P6 implementation is active in a separate worktree and was not touched during this planning session:
-
-`/home/emili/projects/control-tower/Worktrees/tower-implementation`
+P7 depends only on merged P6, not Change A. Preserve both paths—`P6 → P7 → P8 → Change E` and `A → B/C → D → Change E`—without an A→P7/P8 edge.
 
 ## Planned delivery chain
 
@@ -29,6 +27,8 @@ Create and complete the reconciliation record at:
 
 Re-read the merged P6 schema, Migration 005 checksum and manifest, continuation and capability surfaces, OpenCode lifecycle fixtures, trusted non-consuming peek transport, exact `promptAsync` envelope, legacy compatibility decision, and transient-polling compatibility. Record concrete file, symbol, commit, and test evidence; obtain approval; then select the P7 chain topology. Only after all three apply gates are satisfied may P7-A1 begin with its first strict-TDD RED task.
 
+The record must also keep every project/plan/slice/assignment/jornada/session and host/plugin/root identity distinct; separate capability `binding_epoch`, Main-issued/Change-E-enforced `host_epoch`, and controller-local `generation`; and pin the assignment-bound in-container worktree, authorized base SHA, allowed branch, assignment, and session. Workspace Manager owns worktree lifecycle. Change E owns host lifecycle, heartbeat, stop proof, session naming, host-epoch enforcement, and exclusive failover. P7 owns neither boundary.
+
 ## Relevant artifacts
 
 - Exploration: `openspec/changes/p7-host-neutral-loop-opencode-adapter/exploration.md`
@@ -38,8 +38,8 @@ Re-read the merged P6 schema, Migration 005 checksum and manifest, continuation 
 - Tasks: `openspec/changes/p7-host-neutral-loop-opencode-adapter/tasks.md`
 - Required reconciliation record: `openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md`
 - This handoff: `openspec/changes/p7-host-neutral-loop-opencode-adapter/session-handoff.md`
-- Separate active P6 worktree: `/home/emili/projects/control-tower/Worktrees/tower-implementation`
+- Merged P6 provenance: PRs #38–#45; closing merge `e16d94b`
 
 ## Preservation statement
 
-This session performed planning and documentation only. No implementation, tests, reviews, 4R lenses, Judgment Day, commit, push, or PR actions ran. P6 implementation and its separate worktree were not touched. Unrelated `.gitignore` entries and P8 artifacts were not touched.
+This M0 amendment is documentation-only. It does not create a reconciliation record, implement P7, mutate runtime state, or grant worktree/host authority. The P7 normative specification, P6 historical apply progress, runtime/source/test files, and unrelated artifacts remain byte-for-byte unchanged.
