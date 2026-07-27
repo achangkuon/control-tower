@@ -5,10 +5,10 @@
 - Mode: Strict TDD (`bun test`)
 - Delivery strategy: `auto-chain`
 - Chain strategy: `feature-branch-chain`
-- Current autonomous work unit: P6-A, P6-B, P6-C, and P6-D are GREEN; P6-E rollback plane is the exact next boundary.
-- Branch: `p6-d-on-mode-dispositions` (current isolated worktree, based on committed green P6-C `d88c6d1`).
-- Completed: 26/50 native tasks through `5.4`; native tasks `6.1`–`6.4` remain unchecked until all six P6 chained units A→F are green.
-- P3, P4, and P5 are complete at their recorded boundaries. P6-A pinned Migration 005, P6-B enabled/validated schema 5, P6-C added the proof plane, and P6-D now adds ON-mode recovery dispositions.
+- Current autonomous work unit: Slice 6 is complete. P6-A→P6-F are GREEN, the CT-R7-S8 correction closes cumulative task `6.1`, and parent-owned Judgment Day task `6.4` is persisted as `JUDGMENT: APPROVED ✅`.
+- Branch: `p6-closure-claim-present-evidence` at committed P6-F base `90f49e8f8382f8847e9bf15285b0b7c566185a07`; the CT-R7-S8/Judgment Day closure is the current committed branch boundary.
+- Completed: 24/35 native task rows after completing Slice 6 tasks `6.1`–`6.4`; P7 is the next implementation boundary.
+- P3, P4, P5, and P6 are complete at their recorded boundaries. P6-A pinned Migration 005, P6-B enabled/validated schema 5, P6-C added the proof plane, P6-D added ON-mode recovery, P6-E added rollback/suspension, P6-F closed redelivery/forbidden-mode behavior, CT-R7-S8 now proves malformed claim-present history fails before recovery semantics, and explicit blind dual Judgment Day approved the frozen Slice 6 candidate with no two-judge-confirmed severe finding.
 
 ## Completed tasks
 
@@ -1437,3 +1437,161 @@ flagged as pending dedicated capture.
 - **Deviations/risks:** No design deviation remains for `CANCELLED`/`POISONED` after this correction. Deviations 1 (`CT-R7-S8` structurally unreachable) and 3 (`ROLLBACK_LEASE_DURATION_MS` not pinned by design) from the initial pass are unchanged and explicitly out of this corrective scope per the gate's own instruction; they remain surfaced to the maintainer separately.
 - **Next:** P6-F redelivery and forbidden-mode closure — `REDELIVER_WORK`, `REDELIVER_ATTESTATION`, attestation carry-forward in `complete`, redelivery `CLAIM` acceptance, and the complete `CT-R11-S2` ladder — starting only from this corrected green P6-E boundary. The `CANCELLED`/`POISONED`-under-`ROLLING_BACK` gap is closed; P6-F owns only its own four scenarios (`CT-R7-S9`, `CT-R7-S10`, `CT-R7-S11`, `CT-R11-S2`) with no remaining open question from P6-E. Slice 6 Judgment Day (task `6.4`) runs only after P6-F is also green.
 - **Skill resolution:** `paths-injected` — `/home/emili/.claude/skills/sdd-apply/SKILL.md`, `/home/emili/.claude/skills/_shared/sdd-phase-common.md`.
+---
+
+## P6-F Redelivery and forbidden-mode closure — detailed triangulation/evidence correction
+
+### Boundary, dependency, and implemented end state
+
+- **Corrective authorization:** This is the single bounded corrective rerun for the apply-boundary failure that found task `6.3` checked without a detailed P6-F section. It changes no production behavior or test permanently and does not address the separate missing-history warning.
+- **Structured status consumed:** authoritative OpenSpec `applyState: ready`; change `autonomous-continuation-control-tower`; action context `repo-local`; workspace/allowed edit root `/home/emili/projects/control-tower/Worktrees/tower-implementation`; warnings none. Delivery remains `auto-chain` / `feature-branch-chain`; this work is confined to P6-F.
+- **Base/start/dependency:** branch `p6-f-redelivery-closure`; committed start/base `4351b0b07492fd451094258e1639563b934d6c43`, the accepted green P6-E boundary. Dependencies P6-A→B→C→D→E were already green. The P6-F candidate remains uncommitted.
+- **Owned scenarios/end state:** `CT-R7-S9` implements ON-only `REDELIVER_WORK`, generation+1, one fresh PENDING WORK delivery, exact replay, and duplicate-scope conflict. `CT-R7-S10` implements real `SUSPEND_ATTESTATION→REDELIVER_ATTESTATION`, preserved-attestation carry-forward, generation+1, and one fresh PENDING `ATTESTATION_REDELIVERY`. `CT-R7-S11` proves the redelivery claimant cannot `ack` while attestation-bound `complete` succeeds. `CT-R11-S2` proves the complete ROLLING_BACK forbidden-disposition/stale-epoch ladder without mutation. The schema-5 historical validator accepts the redelivery CLAIM pair and reverse links while schema 4 remains unchanged.
+- **Permanent P6-F changed paths:** `core.mjs`, `mcp.mjs`, `test/recovery.test.mjs`. This correction permanently changes only this appended `apply-progress.md` section.
+
+### Strict TDD and mutation evidence
+
+This correction does not invent or retroactively claim the missing cumulative `6.1` RED evidence. Its RED is a narrow mutation proof owned by task `6.3`, followed by byte restoration and GREEN verification of the already-implemented P6-F candidate.
+
+| Phase | Exact evidence |
+|---|---|
+| RED / TRIANGULATE | After pre-mutation hashing, temporarily removed only `REDELIVER_WORK` from `onRecoverActions` in `core.mjs`, disabling the design-critical ON-mode legality branch. `bun test test/recovery.test.mjs -t "CT-R7-S9 — REDELIVER_WORK republishes"` exited **1**: **0 pass, 1 fail, 2 assertions, 47 filtered**. The existing P6-F test failed at its real `recover` call with exact error **`CT_PAYLOAD_INVALID`**, from `continuationRecover` (`core.mjs:3729`) into `test/recovery.test.mjs:995`, instead of accepting ON-only work redelivery. |
+| GREEN | Reinstated the exact original set member and reran `bun test test/recovery.test.mjs`: **48 pass, 0 fail, 232 assertions, 1 file**. |
+| REFACTOR | No candidate refactor was warranted: the mutation was reverted byte-for-byte before verification. `core.mjs` returned to SHA-256 **`5240e2c301e1816de14f680915d6040399d65bdf8062c05a0f57bd339e479133`**. All other candidate hashes also matched their pre-mutation values. No production/test bytes from the verified candidate remain changed by this correction. |
+
+### Byte capture and restoration proof
+
+Before the temporary mutation, SHA-256 was captured for every repository file that might be mutated or used to reconcile task evidence:
+
+- `core.mjs` — `5240e2c301e1816de14f680915d6040399d65bdf8062c05a0f57bd339e479133`
+- `mcp.mjs` — `a289f8f3806e61399e5405b00133e1e3c5eb7ffaa0480a9cfb095484f150ae59`
+- `test/recovery.test.mjs` — `f3786bc46d9b28ffe2a305d977520bbec177cdddc0a582fb3c20bf78758f2625`
+- `test/migration.test.mjs` — `1a7e8c66260b4d678a0941e0ca26cef0d4a0a96b862f03e5d1b19509db8f6bfb`
+- `test/identity.test.mjs` — `bfb9a384cc017aea876c30a74cdf714dd163bdbc7947846328fa5f129e95eaa4`
+- `apply-progress.md` — `ded0d64784db39023d1245020934946a28d007a2f050cce95696d11dc09fd61f` before this required append
+- `tasks.md` — `f541d361df0ffaa08949e3613ac832d584241b406c2008253f084828087264ce`
+
+Immediately after reverting the mutation and before running the final suites, `sha256sum -c` reported **OK for all seven paths**. The expected `apply-progress.md` hash changes only because this detailed section is now appended; `tasks.md` remains byte-identical.
+
+### Exact verification commands and results
+
+1. Mutation RED: `bun test test/recovery.test.mjs -t "CT-R7-S9 — REDELIVER_WORK republishes"` → exit 1; **0/1/2**, 47 filtered; intended `CT_PAYLOAD_INVALID` failure at the redelivery acceptance branch.
+2. Restored focused GREEN: `bun test test/recovery.test.mjs` → exit 0; **48 pass / 0 fail / 232 assertions**.
+3. Restored full regression: `bun test` → exit 0; **281 pass / 0 fail / 2,091 assertions across 11 files**. This run includes migration **60/0/325**, fail-closed **8/0/70**, and identity **58/0/520**.
+4. Changed-JS syntax: `node --check core.mjs`, `node --check mcp.mjs`, `node --check test/recovery.test.mjs` → exit 0, no output.
+5. Whitespace: `git diff --check` → exit 0, no output.
+6. Migration preservation script compared each current SQL literal with `git show 4351b0b:core.mjs`: Migration 004 `base_equal=true`, **12,159 bytes / 215 LF lines / 19 definitions / `sha256:fb951119bd42f22aee7ed4f025298e12e604ff65cc7022aef4353fcba446ae57`**; Migration 005 `base_equal=true`, **14,996 bytes / 231 LF lines / 22 definitions / `sha256:9bd43721486bee4a23f2e4428fd0cb2c1813729f4eb89b7d500bd486ce237b98`**.
+7. Tower-OFF guard after all tests: canonical common-dir `control-tower/ACTIVE` absent, canonical `control-tower/tower.db` absent, and legacy `~/.config/opencode/control-tower/ACTIVE` absent. No command targeted a real Tower database or ACTIVE state.
+
+### Workload, preservation, deviations, and rollback
+
+- **Exact P6-F implementation/test workload from `4351b0b`:** `core.mjs` **182 additions / 52 deletions**, `mcp.mjs` **3/3**, `test/recovery.test.mjs` **199/0** = **384 additions + 55 deletions = 439 authored lines**. This is inside the P6-F 420–600 forecast and below the independent 800-line ceiling. Evidence-only OpenSpec lines are excluded.
+- **Migration/schema preservation:** Migration 004/005 literals are byte-identical to the P6-E base; Migration 005 remains the exact 22-definition addition supporting the 58-object schema-5 manifest. No migration, manifest, schema, DB, or ACTIVE mutation was made by this correction.
+- **Design deviations/risks:** P6-F has no known design deviation after restoration. The pre-existing P6-E `CT-R7-S8` gap remains: the `CT_RECOVERY_CLAIM_PRESENT` rung is implemented, but no real integration test reaches the structurally unavailable PUBLISHED/PENDING-plus-any-claim state, so cumulative task `6.1` must remain unchecked. The pre-existing unpinned `ROLLBACK_LEASE_DURATION_MS=600000` P6-E note also remains unchanged. Neither issue is corrected or broadened here.
+- **P6-F rollback boundary:** Revert only P6-F redelivery/`complete`-carry-forward/CLAIM-pair validator hunks in `core.mjs`, the P6-F recover MCP schema delta in `mcp.mjs`, and the P6-F block/helpers in `test/recovery.test.mjs`; preserve P6-A through P6-E and all schema-5 rows inert/OFF. The temporary mutation itself is already fully reverted. This evidence correction can be rolled back by removing only this appended section.
+
+### Persisted tasks and remaining boundary
+
+- Task `6.2` remains honestly checked because the complete P6-A→F GREEN end state is present.
+- Task `6.3` remains checked because this appended section now supplies the missing P6-F detailed triangulation, exact verification, workload, preservation, and rollback evidence.
+- Task `6.1` remains exactly unchecked because the pre-existing P6-E `CT-R7-S8` real RED/integration-evidence gap is unresolved.
+- Parent-owned task `6.4` remains byte-for-byte unchecked in `tasks.md`: `- [ ] 6.4 Run and persist Slice 6 Judgment Day under the same bounded correction rule only after A, B, C, D, E, and F are all green. <!-- sdd-owner: parent -->`
+- Remaining implementation-owned work begins at the still-unchecked P7 tasks and continues through P10; none was started. Deferred parent lifecycle tasks `6.4`, `7.4`, `8.4`, `9.4`, `10.4`, and `11.1`–`11.4` remain untouched.
+
+### Corrective terminal boundary
+
+P6-F executable behavior and task `6.3` evidence are now reconciled. The apply phase must stop here and return to `parent-lifecycle`; it must not start P7, verification, review, Judgment Day, commit, push, PR, or publication from this corrective rerun.
+
+- **Skill resolution:** `paths-injected` — `/home/emili/.pi/agent/npm/node_modules/gentle-pi/skills/gentle-ai/SKILL.md`.
+---
+
+## P6 closure correction — CT-R7-S8 structural-invalidity characterization
+
+This section supersedes the historical P6-E/P6-F CT-R7-S8 gap statements above without rewriting them. The maintainer-approved correction classifies a PUBLISHED/PENDING handoff carrying a claim for that same delivery as malformed persisted history. Atomic `claim` changes both handoff and delivery to CLAIMED while creating the claim, so the old recovery-handler precondition is unreachable under valid history.
+
+### Structured status and boundary
+
+- Change: `autonomous-continuation-control-tower`; authoritative store: OpenSpec with Engram mirror.
+- Apply state / next recommendation consumed: `ready` / `apply`.
+- Action context: `repo-local`; workspace and sole edit root `/home/emili/projects/control-tower/Worktrees/tower-implementation`; warnings: none.
+- Delivery: `auto-chain` / `feature-branch-chain`; bounded P6 closure only; base `90f49e8f8382f8847e9bf15285b0b7c566185a07`; implementation/test ceiling 800 authored lines.
+- Strict TDD: active with `bun test`; no P7+, parent task 6.4, review, Judgment Day, commit, push, PR, publication, or real Tower mutation.
+
+### Decision and implementation
+
+- Revised CT-R7-S8 in the recovery spec, P6 design decision/precedence/taxonomy/fixtures/ownership, task wording/traceability, and the active admin error taxonomy. Structural validation now explicitly wins with `CT_SCHEMA_INVALID`; no reservation or pre-claim state was introduced and validation order did not move.
+- Added one integration characterization to `test/recovery.test.mjs`. It runs real provision→Migration 005→Main activation→register→create→validate→publish→claim→beginRollback history in an isolated temporary Git/SQLite root, disables and restores only `ct_delivery_immutable_identity` while restoring the impossible PUBLISHED/PENDING projection, retains the real same-delivery LIVE claim, calls public `recover`, and compares snapshots of every `ct_*` table before/after.
+- Removed the now-dead `CT_RECOVERY_CLAIM_PRESENT` branch from `continuationRecover`. Repository-scoped active-contract search found no remaining production/test/current-change reference after the taxonomy correction; archived source history and earlier cumulative evidence remain historical and were not rewritten.
+
+### TDD Cycle Evidence
+
+| Task | Test file | Layer | Safety net | RED | GREEN | TRIANGULATE | REFACTOR |
+|---|---|---|---|---|---|---|---|
+| 6.1 / CT-R7-S8 closure | `test/recovery.test.mjs` | Integration | recovery 48/0/232; migration 60/0/325; fail-closed 8/0/70; identity 58/0/520 | Corrected characterization was honestly GREEN: focused 1/0/3 because structural validation already enforced the decision. Mutation proof temporarily removed only `continuationRecover`'s structural-validation call; focused test failed 0/1, receiving obsolete `CT_RECOVERY_CLAIM_PRESENT` instead of `CT_SCHEMA_INVALID`. | After exact byte restoration and dead-branch cleanup, focused CT-R7-S8 and full recovery passed. | Real atomic claim history plus the isolated malformed projection exercises a different path from valid CT-R7-S7 suspension; all-table snapshot equality proves non-mutation. | Removed only the dead handler branch/comment and stale taxonomy; no recovery behavior, schema, or protocol expansion. |
+
+### Exact verification
+
+1. Characterization GREEN before production cleanup: `bun test test/recovery.test.mjs -t 'CT-R7-S8'` → **1 pass / 0 fail / 3 assertions**, 48 filtered.
+2. Discriminating mutation: with only the `validateSchema4Persistence(db, authority)` call temporarily removed from `continuationRecover`, the same command → **0 pass / 1 fail / 2 assertions**, receiving `CT_RECOVERY_CLAIM_PRESENT`; `core.mjs` was restored exactly from SHA-256 `5240e2c301e1816de14f680915d6040399d65bdf8062c05a0f57bd339e479133` back to the same hash before permanent cleanup.
+3. Recovery: `bun test test/recovery.test.mjs` → **49 pass / 0 fail / 235 assertions**.
+4. Migration: `bun test test/migration.test.mjs` → **60 pass / 0 fail / 325 assertions**.
+5. Fail-closed: `bun test test/fail-closed.test.mjs` → **8 pass / 0 fail / 70 assertions**.
+6. Identity: `bun test test/identity.test.mjs` → **58 pass / 0 fail / 520 assertions**.
+7. Full regression: `bun test` → **282 pass / 0 fail / 2,094 assertions across 11 files**.
+8. Changed JavaScript: `node --check core.mjs` and `node --check test/recovery.test.mjs` → exit 0; `git diff --check` → exit 0.
+9. Migration preservation against base `90f49e8`: Migration 004 base-equal at **12,159 bytes / 215 LF lines / 19 definitions / `sha256:fb951119bd42f22aee7ed4f025298e12e604ff65cc7022aef4353fcba446ae57`**; Migration 005 base-equal at **14,996 bytes / 231 LF lines / 22 definitions / `sha256:9bd43721486bee4a23f2e4428fd0cb2c1813729f4eb89b7d500bd486ce237b98`**. Migration tests also prove the 36/58-object manifests.
+10. Tower OFF: canonical and legacy `ACTIVE` and `tower.db` paths all absent after verification.
+
+### Files, workload, and rollback
+
+| File | Purpose |
+|---|---|
+| `core.mjs` | Remove dead claim-present recovery code/error branch |
+| `test/recovery.test.mjs` | Real-lifecycle malformed-history integration characterization and all-table snapshot proof |
+| `specs/control-tower-recovery-rollback/spec.md` | Correct CT-R7-S8 normative outcome and precedence |
+| `specs/control-tower-admin-authority/spec.md` | Remove obsolete active error-taxonomy member |
+| `design.md` | Correct decision, disposition explanation, precedence, taxonomy, fixture exception, workload row, and ownership |
+| `tasks.md` | Correct P6 summary/ownership/traceability and persist task 6.1 completion |
+| `apply-progress.md` | Append this cumulative closure evidence and update the current status header |
+
+- Exact implementation/test workload from base: `core.mjs` **0 additions / 5 deletions** plus `test/recovery.test.mjs` **32 additions / 14 deletions** = **32 additions + 19 deletions = 51 authored lines**, far below 800.
+- Exact total authored workload from base, including current OpenSpec corrections/evidence: **140 additions + 45 deletions = 185 authored lines across seven tracked files**.
+- Rollback boundary: revert only the dead-branch deletion, CT-R7-S8 test/helper/comment, current spec/design/task amendments, task 6.1 checkbox, status-header correction, and this section. Preserve all P6-A→F behavior/evidence, Migration 004/005 bytes, and parent task 6.4. No database down-migration exists.
+
+### Persisted tasks and remaining work
+
+- [x] 6.1 is now visibly checked in `tasks.md`; cumulative P6-A→F suites evidence every assigned CT-R7/CT-R11 scenario, including the corrected CT-R7-S8 characterization.
+- [x] 6.2 and 6.3 remain checked.
+- [ ] 6.4 remains parent-owned, byte-for-byte unchecked: `- [ ] 6.4 Run and persist Slice 6 Judgment Day under the same bounded correction rule only after A, B, C, D, E, and F are all green. <!-- sdd-owner: parent -->`
+
+Remaining implementation-owned lines, none started:
+
+- [ ] 7.1 RED `test/host-adapters.test.mjs` and `test/polling.test.mjs`: `CT-R5-S1..S5@OpenCode`, wake failure, throttling, dispose-before-peek/receive.
+- [ ] 7.2 GREEN `host/loop.mjs` + `plugin/tower-spike.js`: injected ports, root-only controller, OpenCode lifecycle mapping; no SQLite logic in adapter.
+- [ ] 7.3 TRIANGULATE/REFACTOR: child/root ordering and pending-delivery preservation; rerun adapter/polling/fail-closed; record evidence.
+- [ ] 8.1 RED `test/host-adapters.test.mjs`: `CT-R5-S1..S5@Pi`, `agent_settled`, `ctx.isIdle()`, `session_shutdown`, and follow-up wake semantics.
+- [ ] 8.2 GREEN `adapters/pi/`: global Pi extension delegates only to `host/loop.mjs` and uses idle-safe message injection.
+- [ ] 8.3 TRIANGULATE/REFACTOR: reload/resume/shutdown and child isolation; rerun Pi adapter + fail-closed; record evidence.
+- [ ] 9.1 RED `test/host-adapters.test.mjs`: `CT-R5-S1..S5@Claude`, `Stop`, `SessionEnd`, `stop_hook_active`, bounded `asyncRewake`, and subagent/teammate isolation.
+- [ ] 9.2 GREEN `adapters/claude/`: plugin hooks/scripts delegate only to `host/loop.mjs`; wake only after non-consuming pending peek.
+- [ ] 9.3 TRIANGULATE/REFACTOR: repeated Stop, hook timeout/failure, terminal cleanup; rerun Claude adapter + fail-closed; record evidence.
+- [ ] 10.1 RED `test/runtime-publish.test.mjs`: allowlisted manifest, immutable existing release, failed probe, atomic `current`, backup/restore, and legacy-path preservation.
+- [ ] 10.2 GREEN `scripts/publish-runtime.mjs`, `install.sh`: stage/verify/fsync/rename `releases/<git-sha>`, then atomically switch `current`; host configs resolve only through `current`.
+- [ ] 10.3 TRIANGULATE/REFACTOR: interrupted publication and one-host probe failure restore prior state; verify `~/.config/opencode/control-tower` untouched and Tower OFF.
+
+### Deviations and next boundary
+
+- Strict-TDD deviation avoided: no fabricated initial RED. The corrected characterization was already GREEN; the exact restored mutation proved it discriminates structural-validation precedence.
+- No design deviation or protocol/schema expansion. The pre-existing unpinned `ROLLBACK_LEASE_DURATION_MS=600000` note remains unchanged and outside this correction.
+- Stop after this bounded P6 closure. `sdd-apply` returns `parent-lifecycle`; it does not run parent-owned task 6.4 or start P7.
+- **Skill resolution:** `paths-injected` — `/home/emili/.pi/agent/npm/node_modules/gentle-pi/skills/gentle-ai/SKILL.md`, `/home/emili/.agents/skills/cognitive-doc-design/SKILL.md`, `/home/emili/.agents/skills/work-unit-commits/SKILL.md`.
+
+## Slice 6 parent lifecycle closure — explicit Judgment Day
+
+- **Maintainer authorization:** The maintainer explicitly required completion of task `6.4` and reaffirmed that the broken Gentle review lifecycle, receipts, `next_transition`, and automatic 4R rules remain suspended. Judgment Day therefore ran as two isolated blind read-only Pi children without Gentle lifecycle authority.
+- **Frozen target:** green merged Slice 5 base `9b69ff45b96090be2c97b8f263c6dbf2f63fd700`; exact candidate index tree `98065bb7b5a8a42e9a7d86816f2f03ec881436a6`; target identity `af2bee22d2f6278a32dd78215615602577bebea6fbd430daa895755eed17012e`; 10 exact tracked target paths; `.gitignore` and `.codegraph/` excluded.
+- **Blind dual result:** Judge A returned three CRITICAL suspects and three WARNING findings; Judge B independently returned one CRITICAL suspect. No severe finding was confirmed by both judges, no contradiction existed, and the bounded dual-corroboration rule therefore authorized no correction actor or re-judgment round.
+- **Merged ledger:** Four one-judge severe suspects and two informational findings are persisted with evidence in `evidence/judgment-day-slice-6-round-1.md`; the orphan-recovery-disposition subclaim received partial cross-judge corroboration only at WARNING severity, not two-judge severe confirmation.
+- **Independent final verification:** Candidate tree remained byte-identical before/after verification. Syntax and diff checks passed; recovery **49/0/235**, migration **60/0/325**, fail-closed **8/0/70**, identity **58/0/520**, full suite **282 pass / 0 fail / 2,094 assertions across 11 files**. Migration 004/005 checksums remained pinned; canonical and legacy Tower `ACTIVE`/`tower.db` remained absent.
+- **Persisted task state:** Task `6.4` is visibly checked in `tasks.md` and points to `evidence/judgment-day-slice-6-round-1.md`. No P7 work, correction, commit, push, PR, publication, Gentle lifecycle, receipt, or 4R action ran.
+- **Terminal verdict:** **JUDGMENT: APPROVED ✅**. Slice 6 tasks `6.1`–`6.4` are complete; P7 is the next implementation boundary.

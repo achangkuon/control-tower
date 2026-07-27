@@ -1459,11 +1459,24 @@ const recoverDisposition = (row) => {
   return recoverDispositionPairs.get(`${row.from_state}>${row.to_state}`) ?? null
 }
 const recoverGenerationIncrementDispositions = new Set(["NOT_STARTED", "ROLLED_BACK", "REDELIVER_WORK", "REDELIVER_ATTESTATION"])
-const schema4Transition = (row, previous) => {
+// P6-F: REDELIVER_WORK/REDELIVER_ATTESTATION name no delivery/claim to close
+// (design.md:1797/1799 — "none (the row is already non-live and
+// claimless)"), unlike every other disposition, so the historical
+// reconstruction and the live handler both force delivery/claim to null for
+// exactly these two actions rather than reusing the generic lookup.
+const recoverRedeliveryActions = new Set(["REDELIVER_WORK", "REDELIVER_ATTESTATION"])
+// P6-F: design.md:1841 adds exactly one new schema4Transition pair —
+// COMPLETION_ATTESTED->COMPLETION_ATTESTED — gated on purpose ==
+// 'ATTESTATION_REDELIVERY', because continuationClaim (unchanged since
+// P4-B) leaves the handoff state untouched for that purpose. Every other
+// CLAIM row keeps the original PUBLISHED->CLAIMED shape.
+const schema4Transition = (row, previous, purpose) => {
   const fixed = { CREATE: [null, "DRAFT"], VALIDATE: ["DRAFT", "VALIDATED"], PUBLISH: ["VALIDATED", "PUBLISHED"], ACK: ["CLAIMED", "STARTED"],
     ATTEST_COMPLETION: ["STARTED", "COMPLETION_ATTESTED"], COMPLETE: ["COMPLETION_ATTESTED", "COMPLETED"], REVISE: [null, "DRAFT"] }[row.operation]
   if (fixed && (row.from_state !== fixed[0] || row.to_state !== fixed[1])) return false
-  if (row.operation === "CLAIM" && !(row.from_state === "PUBLISHED" && row.to_state === "CLAIMED")) return false
+  if (row.operation === "CLAIM" && !(purpose === "ATTESTATION_REDELIVERY"
+    ? row.from_state === "COMPLETION_ATTESTED" && row.to_state === "COMPLETION_ATTESTED"
+    : row.from_state === "PUBLISHED" && row.to_state === "CLAIMED")) return false
   if (row.operation === "REJECT" && (!["DRAFT", "VALIDATED", "PUBLISHED"].includes(row.from_state) || row.to_state !== "REJECTED")) return false
   if (row.operation === "RECOVER" && !recoverDisposition(row)) return false
   return ["CREATE", "REVISE"].includes(row.operation) ? previous === null : row.from_state === previous
@@ -1478,7 +1491,7 @@ function validateSchema4Persistence(db, authority) {
       EXISTS(SELECT 1 FROM ct_handoff WHERE state NOT IN ('DRAFT','VALIDATED','PUBLISHED','CLAIMED','STARTED','COMPLETION_ATTESTED','COMPLETED','REJECTED','CANCELLED','POISONED','WORK_SUSPENDED','ATTESTATION_SUSPENDED')) OR
       EXISTS(SELECT 1 FROM ct_handoff_transition WHERE operation NOT IN ('CREATE','VALIDATE','PUBLISH','CLAIM','ACK','ATTEST_COMPLETION','COMPLETE','REJECT','REVISE','RECOVER')) OR
       EXISTS(SELECT 1 FROM ct_delivery WHERE purpose NOT IN ('WORK','ATTESTATION_REDELIVERY') OR delivery_state NOT IN ('PENDING','CLAIMED','CLOSED')) OR
-      EXISTS(SELECT 1 FROM ct_claim WHERE generation<>0 OR purpose<>'WORK' OR claim_state NOT IN ('LIVE','CLOSED')) AS invalid`).get().invalid
+      EXISTS(SELECT 1 FROM ct_claim WHERE purpose NOT IN ('WORK','ATTESTATION_REDELIVERY') OR claim_state NOT IN ('LIVE','CLOSED')) AS invalid`).get().invalid
       : db.query(`SELECT
       EXISTS(SELECT 1 FROM ct_handoff WHERE generation<>0 OR state NOT IN ('DRAFT','VALIDATED','PUBLISHED','CLAIMED','STARTED','COMPLETION_ATTESTED','COMPLETED','REJECTED')) OR
       EXISTS(SELECT 1 FROM ct_handoff_transition WHERE generation<>0 OR operation NOT IN ('CREATE','VALIDATE','PUBLISH','CLAIM','ACK','ATTEST_COMPLETION','COMPLETE','REJECT','REVISE')) OR
@@ -1566,7 +1579,7 @@ function validateSchema4Persistence(db, authority) {
           (isP4Operation && (!exactKeys(response, ["evidence", "kind", "public_response", "version"]) || response.version !== 1 || !responseValue)) || row.response_digest !== requestDigest(responseValue)) throw ctError("CT_SCHEMA_INVALID")
       const history = transitions.get(row.handoff_id) ?? [], previous = history.at(-1)
       const generationIncrement = row.operation === "RECOVER" && recoverGenerationIncrementDispositions.has(recoverDisposition(row)) ? 1 : 0
-      if (row.occurred_at < handoff.created_at || !schema4Transition(row, previous?.to_state ?? null) || (previous ? row.generation !== previous.generation + generationIncrement : row.generation !== 0) ||
+      if (row.occurred_at < handoff.created_at || !schema4Transition(row, previous?.to_state ?? null, row.operation === "CLAIM" ? responseValue?.purpose : undefined) || (previous ? row.generation !== previous.generation + generationIncrement : row.generation !== 0) ||
           (row.operation === "CREATE" ? row.decision_digest !== null : row.decision_digest === null)) throw ctError("CT_SCHEMA_INVALID")
       history.push(row); transitions.set(row.handoff_id, history); transitionRecords.push({ row, committed, response })
     }
@@ -1630,6 +1643,14 @@ function validateSchema4Persistence(db, authority) {
         value.mode === "ROLLING_BACK" && disposition !== null && rollingBackFenceDispositions.has(disposition) && value.observed_lease_status === "ACTIVE")
     const sameValue = (left, right) => jcs(left) === jcs(right)
     const recordsFor = (handoffId, operation) => transitionRecords.filter(({ row }) => row.handoff_id === handoffId && row.operation === operation)
+    const attestationDigestFor = (handoffId, generation) => {
+      const direct = recordsFor(handoffId, "ATTEST_COMPLETION").find(({ row }) => row.generation === generation)?.row?.decision_digest
+      if (direct || version !== 5) return direct ?? null
+      const redeliveries = db.query("SELECT preserved_attestation_digest,attestation_source_generation FROM ct_recovery_disposition WHERE handoff_id=? AND disposition='REDELIVER_ATTESTATION' AND to_generation=?").all(handoffId, generation)
+      if (redeliveries.length !== 1) return null
+      const source = recordsFor(handoffId, "ATTEST_COMPLETION").find(({ row }) => row.generation === redeliveries[0].attestation_source_generation)?.row
+      return source?.decision_digest === redeliveries[0].preserved_attestation_digest ? source.decision_digest : null
+    }
     const claimsByRequest = new Map([...claims.values()].map((claim) => [claim.request_identity, claim]))
 
     for (const [id, handoff] of handoffs) {
@@ -1643,6 +1664,16 @@ function validateSchema4Persistence(db, authority) {
         const redelivered = transitionRecords.find(({ row, response }) => row.handoff_id === id && row.operation === "RECOVER" && row.to_state === "PUBLISHED" &&
           row.generation === delivery.generation && response?.evidence?.created_delivery_id === delivery.delivery_id)
         if (!published && !redelivered) throw ctError("CT_SCHEMA_INVALID")
+      }
+      // P6-F: design.md:1843 — every ATTESTATION_REDELIVERY delivery must
+      // reverse-link to exactly one REDELIVER_ATTESTATION disposition row at
+      // its own generation; only a RECOVER row can ever create one (no
+      // PUBLISH/CLAIM path creates this purpose).
+      const attestationRedeliveryDeliveries = [...deliveries.values()].filter((delivery) => delivery.handoff_id === id && delivery.purpose === "ATTESTATION_REDELIVERY")
+      for (const delivery of attestationRedeliveryDeliveries) {
+        const redelivered = transitionRecords.find(({ row, response }) => row.handoff_id === id && row.operation === "RECOVER" && row.to_state === "COMPLETION_ATTESTED" &&
+          row.generation === delivery.generation && response?.evidence?.created_delivery_id === delivery.delivery_id)
+        if (!redelivered) throw ctError("CT_SCHEMA_INVALID")
       }
       for (const { response } of publishRecords) {
         const delivery = deliveries.get(response?.evidence?.delivery_id)
@@ -1689,12 +1720,25 @@ function validateSchema4Persistence(db, authority) {
       // row was recorded, so the current state/claim/delivery check accepts
       // every later-lifecycle value — the exact "current" top-of-history
       // check above already pinned STARTED as this row's own to_state.
-      const ackRecovery = recordsFor(row.handoff_id, "RECOVER").find(({ row: recoverRow }) => recoverRow.from_state === "STARTED" &&
-        (recoverRow.to_state === "PUBLISHED" ? recoverRow.generation === row.generation + 1 : recoverRow.generation === row.generation))
+      // P6-F (bug found and fixed — necessary for CT-R7-S10): the original
+      // P6-D/P6-E enumeration only recognized a RECOVER row sourced directly
+      // from STARTED, so it rejected the (COMPLETION_ATTESTED->ATTESTATION_
+      // SUSPENDED) and (ATTESTATION_SUSPENDED->COMPLETION_ATTESTED@+1) pairs
+      // this unit's own SUSPEND_ATTESTATION/REDELIVER_ATTESTATION dispositions
+      // legitimately produce two hops downstream of every real ATTEST_
+      // COMPLETION — status()/recover()/complete() all call
+      // validateSchema4Persistence, so this was a latent CT_SCHEMA_INVALID
+      // dead-end for every real SUSPEND_ATTESTATION disposition, not only a
+      // P6-F-introduced gap. Widened to recognize both, still driven only by
+      // a real, already-validated ct_recovery_disposition-backed row.
+      const ackRecovery = recordsFor(row.handoff_id, "RECOVER").find(({ row: recoverRow }) =>
+        (recoverRow.from_state === "STARTED" && (recoverRow.to_state === "PUBLISHED" ? recoverRow.generation === row.generation + 1 : recoverRow.generation === row.generation)) ||
+        (recoverRow.from_state === "ATTESTATION_SUSPENDED" && recoverRow.to_state === "COMPLETION_ATTESTED" && recoverRow.generation === row.generation + 1))?.row
       const currentAckStateValid = ackRecovery
         ? ackRecovery.to_state === "PUBLISHED" ? handoff?.state === "PUBLISHED" && handoff.generation === row.generation + 1
-          : ["CANCELLED", "POISONED"].includes(ackRecovery.to_state) && handoff?.state === ackRecovery.to_state && handoff.generation === row.generation
-        : ["STARTED", "COMPLETION_ATTESTED", "COMPLETED"].includes(handoff?.state) && handoff?.generation === row.generation
+          : ackRecovery.from_state === "ATTESTATION_SUSPENDED" ? ["COMPLETION_ATTESTED", "COMPLETED"].includes(handoff?.state) && handoff.generation === row.generation + 1
+            : ["CANCELLED", "POISONED"].includes(ackRecovery.to_state) && handoff?.state === ackRecovery.to_state && handoff.generation === row.generation
+        : ["STARTED", "COMPLETION_ATTESTED", "COMPLETED", "ATTESTATION_SUSPENDED"].includes(handoff?.state) && handoff?.generation === row.generation
       if (!currentAckStateValid || !claim || !["LIVE", "CLOSED"].includes(claim.claim_state) ||
           !delivery || !["CLAIMED", "CLOSED"].includes(delivery.delivery_state) || delivery.claim_id !== claim.claim_id || !manifestDigests ||
           !authorityBinding || authorityBinding.identity_digest !== cas.claimant_authority_v1.identity_digest ||
@@ -1750,11 +1794,26 @@ function validateSchema4Persistence(db, authority) {
         attestation_digest: expectedAttestationDigest, expected_attestation: "ABSENT" }
       const publicResponse = { id: row.handoff_id, state: "COMPLETION_ATTESTED", generation: row.generation, replayed: false }
       const attestationRecovery = recordsFor(row.handoff_id, "RECOVER").find(({ row: recoverRow }) =>
-        recoverRow.from_state === "COMPLETION_ATTESTED" && recoverRow.generation === row.generation)
+        recoverRow.from_state === "COMPLETION_ATTESTED" && recoverRow.generation === row.generation)?.row
+      // P6-F (bug found and fixed — necessary for CT-R7-S10): the original
+      // P6-D/P6-E enumeration recognized only CANCELLED/POISONED as a legal
+      // same-generation continuation of COMPLETION_ATTESTED, so a real
+      // SUSPEND_ATTESTATION disposition (also sourced from COMPLETION_ATTESTED
+      // at this exact generation) was rejected outright, and the outer
+      // unconditional `handoff.generation !== row.generation` guard rejected
+      // every subsequent REDELIVER_ATTESTATION too, since that disposition
+      // always increments generation. Both are now recognized, still driven
+      // only by real, already-validated ct_recovery_disposition-backed rows.
+      const redeliverAttestation = recordsFor(row.handoff_id, "RECOVER").find(({ row: recoverRow }) =>
+        recoverRow.from_state === "ATTESTATION_SUSPENDED" && recoverRow.to_state === "COMPLETION_ATTESTED" && recoverRow.generation === row.generation + 1)?.row
       const currentAttestationStateValid = attestationRecovery
-        ? ["CANCELLED", "POISONED"].includes(attestationRecovery.to_state) && handoff?.state === attestationRecovery.to_state
-        : ["COMPLETION_ATTESTED", "COMPLETED"].includes(handoff?.state)
-      if (!currentAttestationStateValid || handoff.generation !== row.generation || !claim || !["LIVE", "CLOSED"].includes(claim.claim_state) ||
+        ? attestationRecovery.to_state === "ATTESTATION_SUSPENDED"
+          ? redeliverAttestation
+            ? ["COMPLETION_ATTESTED", "COMPLETED"].includes(handoff?.state) && handoff.generation === row.generation + 1
+            : handoff?.state === "ATTESTATION_SUSPENDED" && handoff.generation === row.generation
+          : ["CANCELLED", "POISONED"].includes(attestationRecovery.to_state) && handoff?.state === attestationRecovery.to_state && handoff.generation === row.generation
+        : ["COMPLETION_ATTESTED", "COMPLETED"].includes(handoff?.state) && handoff.generation === row.generation
+      if (!currentAttestationStateValid || !claim || !["LIVE", "CLOSED"].includes(claim.claim_state) ||
           !delivery || !["CLAIMED", "CLOSED"].includes(delivery.delivery_state) || delivery.claim_id !== claim.claim_id || !manifestDigests || !expectedAttestationEvidence ||
           !main || main.identity_digest !== row.authority_identity_digest ||
           !exactKeys(response, ["evidence", "kind", "public_response", "version"]) || response.kind !== "attestCompletion_response_envelope_v1" || response.version !== 1 ||
@@ -1783,8 +1842,7 @@ function validateSchema4Persistence(db, authority) {
       const handoff = handoffs.get(row.handoff_id)
       const claim = [...claims.values()].find((entry) => entry.handoff_id === row.handoff_id && entry.generation === row.generation)
       const delivery = claim && deliveries.get(claim.delivery_id)
-      const attestRecord = recordsFor(row.handoff_id, "ATTEST_COMPLETION").find((entry) => entry.row.generation === row.generation)
-      const attestationDigest = attestRecord?.row?.decision_digest
+      const attestationDigest = attestationDigestFor(row.handoff_id, row.generation)
       const evidence = response?.evidence, cas = evidence?.cas_input
       const authorityBinding = bindings.get(cas?.claimant_authority_v1?.binding_id)
       const expectedRequest = claim && delivery && attestationDigest && evidence?.committed_result && { request_identity: row.request_identity, delivery_id: delivery.delivery_id, id: row.handoff_id,
@@ -1918,8 +1976,13 @@ function validateSchema4Persistence(db, authority) {
         const handoff = handoffs.get(row.handoff_id)
         const handoffClaims = [...claims.values()].filter((claim) => claim.handoff_id === row.handoff_id && claim.generation === fromGeneration)
         const handoffDeliveries = [...deliveries.values()].filter((delivery) => delivery.handoff_id === row.handoff_id && delivery.generation === fromGeneration)
-        const claim = handoffClaims.length === 1 ? handoffClaims[0] : null
-        const delivery = claim ? deliveries.get(claim.delivery_id) : handoffDeliveries.length === 1 ? handoffDeliveries[0] : null
+        // P6-F: REDELIVER_WORK/REDELIVER_ATTESTATION close no delivery/claim
+        // (design.md:1797/1799) even though a now-CLOSED row from the prior
+        // SUSPEND_PENDING/SUSPEND_ATTESTATION still exists at fromGeneration;
+        // the closed/claim references for these two dispositions are always null.
+        const isRedelivery = recoverRedeliveryActions.has(disposition)
+        const claim = isRedelivery ? null : (handoffClaims.length === 1 ? handoffClaims[0] : null)
+        const delivery = isRedelivery ? null : (claim ? deliveries.get(claim.delivery_id) : handoffDeliveries.length === 1 ? handoffDeliveries[0] : null)
         const createdDelivery = generationIncrement && dispositionRow ? deliveries.get(dispositionRow.created_delivery_id) : null
         const authorityRow = row.authority_kind === "MAIN" ? mains.get(row.authority_binding_id) : null
         const evidence = response?.evidence, cas = evidence?.cas_input, writerFence = cas?.writer_fence_v1
@@ -1952,6 +2015,18 @@ function validateSchema4Persistence(db, authority) {
           return Boolean(manifest && preStart && validRollbackProof(evidence?.rollback_proof, row.handoff_id, fromGeneration, manifest, preStart) &&
             evidence.rollback_proof.boundary_equal === true && rollbackProofDigest(evidence.rollback_proof) === dispositionRow.rollback_proof_digest)
         })()
+        const attestationRows = disposition === "SUSPEND_ATTESTATION" || disposition === "REDELIVER_ATTESTATION"
+          ? recordsFor(row.handoff_id, "ATTEST_COMPLETION").filter(({ row: attestRow }) => attestRow.generation === dispositionRow?.attestation_source_generation)
+          : []
+        const suspensionRows = disposition === "REDELIVER_ATTESTATION"
+          ? [...recoveryDispositions.values()].filter((candidate) => candidate.handoff_id === row.handoff_id && candidate.disposition === "SUSPEND_ATTESTATION" && candidate.to_generation === fromGeneration)
+          : []
+        const attestationSourceValid = disposition === "SUSPEND_ATTESTATION"
+          ? attestationRows.length === 1 && dispositionRow.preserved_attestation_digest === attestationRows[0].row.decision_digest && dispositionRow.attestation_source_generation === fromGeneration
+          : disposition === "REDELIVER_ATTESTATION"
+            ? attestationRows.length === 1 && suspensionRows.length === 1 && dispositionRow.preserved_attestation_digest === attestationRows[0].row.decision_digest &&
+              dispositionRow.preserved_attestation_digest === suspensionRows[0].preserved_attestation_digest && dispositionRow.attestation_source_generation === suspensionRows[0].attestation_source_generation
+            : dispositionRow?.preserved_attestation_digest === null && dispositionRow?.attestation_source_generation === null
         const claimant = claim ? bindings.get(claim.claimant_binding_id) : null
         let terminationPairingValid = !claim && dispositionRow?.termination_pairing_digest === null
         if (claim && claimant && dispositionRow?.termination_pairing_digest) {
@@ -1972,7 +2047,7 @@ function validateSchema4Persistence(db, authority) {
             dispositionRow.closed_delivery_id !== expectedDeliveryId || dispositionRow.closed_claim_id !== expectedClaimId ||
             dispositionRow.created_delivery_id !== expectedCreatedDeliveryId || dispositionRow.mode !== writerFence?.mode ||
             dispositionRow.rollback_epoch !== writerFence?.observed_rollback_epoch || dispositionRow.lease_version !== writerFence?.observed_lease_version) throw ctError("CT_SCHEMA_INVALID")
-        if (!validHistoricalWriterFence(writerFence, disposition) || !rollbackProofValid || !terminationPairingValid ||
+        if (!validHistoricalWriterFence(writerFence, disposition) || !rollbackProofValid || !terminationPairingValid || !attestationSourceValid ||
             !exactKeys(response, ["evidence", "kind", "public_response", "version"]) || response.kind !== `${disposition.toLowerCase()}_response_envelope_v1` || response.version !== 1 ||
             !exactKeys(evidence, ["attestation_source_generation", "cas_digest", "cas_input", "closed_claim_id", "closed_delivery_id", "created_delivery_id", "disposition_id", "frozen_inventory_digest", "preserved_attestation_digest", "request", "request_digest", "rollback_proof", "rollback_proof_digest", "scope_key", "termination_pairing_digest"]) ||
             !exactKeys(evidence.request, ["action", "claim_id", "delivery_id", "eg", "es", "expected_rollback_epoch", "id", "request_identity", "rollback_proof"]) ||
@@ -1990,7 +2065,7 @@ function validateSchema4Persistence(db, authority) {
         const closesDelivery = ["NOT_STARTED", "ROLLED_BACK", "CANCELLED", "POISONED", "SUSPEND_PENDING", "SUSPEND_ATTESTATION"].includes(disposition)
         if (closesDelivery && delivery && (delivery.delivery_state !== "CLOSED" || delivery.closed_at !== row.occurred_at)) throw ctError("CT_SCHEMA_INVALID")
         if (["NOT_STARTED", "ROLLED_BACK", "CANCELLED", "POISONED", "SUSPEND_ATTESTATION"].includes(disposition) && claim && (claim.claim_state !== "CLOSED" || claim.closed_at !== row.occurred_at)) throw ctError("CT_SCHEMA_INVALID")
-        if (generationIncrement && (!createdDelivery || createdDelivery.created_at !== row.occurred_at || createdDelivery.delivery_state !== "PENDING")) throw ctError("CT_SCHEMA_INVALID")
+        if (generationIncrement && (!createdDelivery || createdDelivery.created_at !== row.occurred_at || !["PENDING", "CLAIMED", "CLOSED"].includes(createdDelivery.delivery_state))) throw ctError("CT_SCHEMA_INVALID")
         if (!handoff || row.occurred_at < handoff.created_at) throw ctError("CT_SCHEMA_INVALID")
       }
     }
@@ -2235,7 +2310,10 @@ export const continuationActivate = (handle, ctxFactory, request) => {
       if (request.expected_binding_epoch !== main.binding_epoch) throw ctError("CT_FENCE_MISMATCH")
       const prior = persisted.activations.at(-1)?.activation_epoch ?? 0
       const precondition = activationPrecondition(db, authority, main, persisted.lease, prior, version)
-      if (precondition.active_claimant_bindings !== 0 || ["handoffs", "transitions", "deliveries", "claims", "budget_scopes"].some((field) => (precondition[field] ?? 0) !== 0)) throw ctError("CT_NOT_QUIESCENT")
+      const finishedRollback = version === 5 && persisted.lease.rollback_epoch > 0 && db.query("SELECT epoch_state FROM ct_rollback_epoch WHERE rollback_epoch=?").get(persisted.lease.rollback_epoch)?.epoch_state === "FINISHED"
+      const nonLiveHistoryOnly = finishedRollback && db.query("SELECT COUNT(*) AS count FROM ct_claim WHERE claim_state='LIVE'").get().count === 0 &&
+        db.query("SELECT COUNT(*) AS count FROM ct_delivery WHERE delivery_state IN ('PENDING','CLAIMED')").get().count === 0
+      if (precondition.active_claimant_bindings !== 0 || (!nonLiveHistoryOnly && ["handoffs", "transitions", "deliveries", "claims", "budget_scopes"].some((field) => (precondition[field] ?? 0) !== 0))) throw ctError("CT_NOT_QUIESCENT")
       const precondition_digest = requestDigest(precondition), target = prior + 1
       const cas_digest = requestDigest(activationCas(transitionDigest, main, request.evidence_digest, persisted.lease, prior, target, precondition_digest))
       const activated_at = now(), response = { mode: "ON", activation_epoch: target, replayed: false }
@@ -3139,8 +3217,25 @@ export const continuationComplete = (handle, ctxFactory, request) => {
       const presented = Buffer.from(tokenHash), stored = Buffer.from(claim.token_hash)
       if (presented.length !== stored.length || !timingSafeEqual(presented, stored)) throw ctError("CT_TOKEN_MISMATCH")
 
+      // P6-F: design.md:1848 — after REDELIVER_ATTESTATION the handoff sits
+      // at eg+1 while its attestation was recorded at the source generation,
+      // so the ordinary same-generation ATTEST_COMPLETION lookup finds
+      // nothing. Extend exactly this one rung: when no ATTEST_COMPLETION
+      // transition exists at (id, eg), resolve the unique
+      // ct_recovery_disposition row that redelivered this exact generation
+      // and require the caller's attestation_digest to equal its preserved
+      // digest, which must itself equal the decision_digest of the
+      // ATTEST_COMPLETION transition at its recorded source generation — no
+      // other complete rung changes.
       const attestRow = db.query("SELECT decision_digest FROM ct_handoff_transition WHERE handoff_id=? AND generation=? AND operation='ATTEST_COMPLETION'").get(request.id, request.eg)
-      if (!attestRow || request.attestation_digest !== attestRow.decision_digest) throw ctError("CT_FENCE_MISMATCH")
+      if (attestRow) {
+        if (request.attestation_digest !== attestRow.decision_digest) throw ctError("CT_FENCE_MISMATCH")
+      } else {
+        const redelivery = db.query("SELECT * FROM ct_recovery_disposition WHERE disposition='REDELIVER_ATTESTATION' AND handoff_id=? AND to_generation=?").get(request.id, request.eg)
+        if (!redelivery || request.attestation_digest !== redelivery.preserved_attestation_digest) throw ctError("CT_FENCE_MISMATCH")
+        const sourceAttestRow = db.query("SELECT decision_digest FROM ct_handoff_transition WHERE handoff_id=? AND generation=? AND operation='ATTEST_COMPLETION'").get(request.id, redelivery.attestation_source_generation)
+        if (!sourceAttestRow || redelivery.preserved_attestation_digest !== sourceAttestRow.decision_digest) throw ctError("CT_FENCE_MISMATCH")
+      }
 
       const occurredAt = now()
       const writerFence = { schema_version: version, mode: "ON", anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
@@ -3426,7 +3521,14 @@ const terminationPairingValue = (subject, observation, lease) => ({
 })
 
 const recoverRequestKeys = ["action", "claim_id", "delivery_id", "eg", "es", "expected_rollback_epoch", "id", "request_identity", "rollback_proof"]
-const onRecoverActions = new Set(["NOT_STARTED", "ROLLED_BACK", "CANCELLED", "POISONED"])
+// P6-F: design.md:1797/1799 name REDELIVER_WORK/REDELIVER_ATTESTATION as
+// "ON only, ACTIVE Main" — added to onRecoverActions (the ON-mode legality
+// gate) and, transitively, to allRecoverActions (the request-shape
+// allow-list) below. Neither name is ever added to
+// rollingBackOnlyRecoverActions, rollingBackLegalRecoverActions, or
+// rollingBackFenceDispositions — design.md:1801 forbids both of them under
+// ROLLING_BACK explicitly.
+const onRecoverActions = new Set(["NOT_STARTED", "ROLLED_BACK", "CANCELLED", "POISONED", "REDELIVER_WORK", "REDELIVER_ATTESTATION"])
 // P6-E (corrective): design.md:1794-1795 names CANCELLED/POISONED mode as "ON
 // or ROLLING_BACK, ACTIVE or rollback-owner Main" and design.md:1801 forbids
 // only NOT_STARTED/ROLLED_BACK/REDELIVER_WORK/REDELIVER_ATTESTATION under
@@ -3434,27 +3536,36 @@ const onRecoverActions = new Set(["NOT_STARTED", "ROLLED_BACK", "CANCELLED", "PO
 // separate sets: rollingBackOnlyRecoverActions gates the frozen-inventory-
 // digest proof (SUSPEND_PENDING/SUSPEND_ATTESTATION only, per the
 // ct_recovery_disposition CHECK), while rollingBackLegalRecoverActions gates
-// ROLLING_BACK-mode legality (adds CANCELLED/POISONED). REDELIVER_WORK/
-// REDELIVER_ATTESTATION (both ON-only) remain P6-F's own scope entirely.
+// ROLLING_BACK-mode legality (adds CANCELLED/POISONED).
 const rollingBackOnlyRecoverActions = new Set(["SUSPEND_PENDING", "SUSPEND_ATTESTATION"])
 const rollingBackLegalRecoverActions = new Set([...rollingBackOnlyRecoverActions, "CANCELLED", "POISONED"])
 const allRecoverActions = new Set([...onRecoverActions, ...rollingBackOnlyRecoverActions])
-const recoverToStates = { NOT_STARTED: "PUBLISHED", ROLLED_BACK: "PUBLISHED", CANCELLED: "CANCELLED", POISONED: "POISONED", SUSPEND_PENDING: "WORK_SUSPENDED", SUSPEND_ATTESTATION: "ATTESTATION_SUSPENDED" }
+const recoverToStates = { NOT_STARTED: "PUBLISHED", ROLLED_BACK: "PUBLISHED", CANCELLED: "CANCELLED", POISONED: "POISONED", SUSPEND_PENDING: "WORK_SUSPENDED", SUSPEND_ATTESTATION: "ATTESTATION_SUSPENDED",
+  REDELIVER_WORK: "PUBLISHED", REDELIVER_ATTESTATION: "COMPLETION_ATTESTED" }
 const assertRecoverRequest = (request) => {
   if (!request || Object.getPrototypeOf(request) !== Object.prototype || Object.keys(request).some((key) => forbiddenCtxKeys.has(key)) ||
       JSON.stringify(Object.keys(request).sort()) !== JSON.stringify(recoverRequestKeys) || !uuid.test(request.request_identity ?? "") ||
-      !isBase64url32(request.id) || !["PUBLISHED", "CLAIMED", "STARTED", "COMPLETION_ATTESTED"].includes(request.es) || !safeEpoch(request.eg) ||
-      !allRecoverActions.has(request.action) || !safeEpoch(request.expected_rollback_epoch) || !isBase64url32(request.delivery_id) ||
-      !(request.claim_id === null || isBase64url32(request.claim_id)) || !(request.rollback_proof === null || (request.rollback_proof && Object.getPrototypeOf(request.rollback_proof) === Object.prototype)))
+      !isBase64url32(request.id) || !["PUBLISHED", "CLAIMED", "STARTED", "COMPLETION_ATTESTED", "WORK_SUSPENDED", "ATTESTATION_SUSPENDED"].includes(request.es) || !safeEpoch(request.eg) ||
+      !allRecoverActions.has(request.action) || !safeEpoch(request.expected_rollback_epoch) ||
+      // P6-F: REDELIVER_WORK/REDELIVER_ATTESTATION name no delivery/claim to
+      // close (design.md:1786's "null exactly when the disposition names
+      // none"), so the accepted request must carry both as null; every
+      // other disposition still requires a non-null delivery_id.
+      !(recoverRedeliveryActions.has(request.action) ? request.delivery_id === null : isBase64url32(request.delivery_id)) ||
+      !(recoverRedeliveryActions.has(request.action) ? request.claim_id === null : (request.claim_id === null || isBase64url32(request.claim_id))) ||
+      !(request.rollback_proof === null || (request.rollback_proof && Object.getPrototypeOf(request.rollback_proof) === Object.prototype)))
     throw ctError("CT_PAYLOAD_INVALID")
 }
 
 // P6-D added ON-mode recovery; P6-E extends the same handler to accept mode
 // ROLLING_BACK for SUSPEND_PENDING/SUSPEND_ATTESTATION (ROLLING_BACK-only) and
 // for CANCELLED/POISONED (legal under both ON and ROLLING_BACK, per
-// design.md:1794-1795). Every accepted disposition closes the exact old
-// delivery/claim and appends one transition, disposition, and idempotency row
-// in the same transaction. REDELIVER_WORK/REDELIVER_ATTESTATION (ON-only) remain P6-F.
+// design.md:1794-1795). P6-F adds REDELIVER_WORK/REDELIVER_ATTESTATION
+// (ON-only): unlike every other disposition, these name no delivery/claim to
+// close — the prior SUSPEND_PENDING/SUSPEND_ATTESTATION already closed that
+// row — so no delivery/claim lookup runs for them and only a fresh PENDING
+// delivery is created. Every accepted disposition appends one transition,
+// disposition, and idempotency row in the same transaction.
 export const continuationRecover = (handle, ctxFactory, request) => {
   const { db, authority } = handle
   try {
@@ -3493,23 +3604,29 @@ export const continuationRecover = (handle, ctxFactory, request) => {
 
       const handoff = db.query("SELECT * FROM ct_handoff WHERE id=?").get(request.id)
       if (!handoff) throw ctError("CT_NOT_FOUND")
-      const expectedSource = { NOT_STARTED: "CLAIMED", ROLLED_BACK: "STARTED", SUSPEND_PENDING: "PUBLISHED", SUSPEND_ATTESTATION: "COMPLETION_ATTESTED" }[request.action]
+      const expectedSource = { NOT_STARTED: "CLAIMED", ROLLED_BACK: "STARTED", SUSPEND_PENDING: "PUBLISHED", SUSPEND_ATTESTATION: "COMPLETION_ATTESTED",
+        REDELIVER_WORK: "WORK_SUSPENDED", REDELIVER_ATTESTATION: "ATTESTATION_SUSPENDED" }[request.action]
       if (handoff.state !== request.es || (expectedSource ? request.es !== expectedSource : !recoverCancelPoisonSources.has(request.es))) throw ctError("CT_INVALID_TRANSITION")
       if (handoff.generation !== request.eg) throw ctError("CT_FENCE_MISMATCH")
-      const deliveries = db.query("SELECT * FROM ct_delivery WHERE handoff_id=? AND generation=?").all(request.id, request.eg)
-      const claims = db.query("SELECT * FROM ct_claim WHERE handoff_id=? AND generation=?").all(request.id, request.eg)
-      if (deliveries.length !== 1 || claims.length > 1) throw ctError("CT_SCHEMA_INVALID")
-      const delivery = deliveries[0], claim = claims[0] ?? null
-      // CT-R7-S8: a genuinely PUBLISHED/PENDING pair can never carry a real
-      // claim through any normal flow (claiming always moves the handoff to
-      // CLAIMED), so this rung exists purely as defense-in-depth and must run
-      // before every other fence/proof check, never masked by them.
-      if (request.action === "SUSPEND_PENDING" && claims.length > 0) throw ctError("CT_RECOVERY_CLAIM_PRESENT")
-      if (delivery.delivery_id !== request.delivery_id || delivery.purpose !== "WORK" || delivery.claim_id !== (claim?.claim_id ?? null) ||
-          request.claim_id !== (claim?.claim_id ?? null)) throw ctError("CT_FENCE_MISMATCH")
-      const claimedSource = ["CLAIMED", "STARTED", "COMPLETION_ATTESTED"].includes(request.es)
-      if (claimedSource !== Boolean(claim) || (claim && (claim.claim_state !== "LIVE" || delivery.delivery_state !== "CLAIMED")) ||
-          (!claim && (delivery.delivery_state !== "PENDING" || delivery.claim_id !== null))) throw ctError("CT_INVALID_TRANSITION")
+
+      // P6-F: REDELIVER_WORK/REDELIVER_ATTESTATION close no delivery/claim —
+      // the row at this exact generation is already CLOSED (by the prior
+      // SUSPEND_PENDING/SUSPEND_ATTESTATION) and design.md:1797/1799 require
+      // no proof and name no closure — so no delivery/claim lookup runs and
+      // both remain null, matching the null request fields asserted above.
+      const isRedelivery = recoverRedeliveryActions.has(request.action)
+      let delivery = null, claim = null
+      if (!isRedelivery) {
+        const deliveries = db.query("SELECT * FROM ct_delivery WHERE handoff_id=? AND generation=?").all(request.id, request.eg)
+        const claims = db.query("SELECT * FROM ct_claim WHERE handoff_id=? AND generation=?").all(request.id, request.eg)
+        if (deliveries.length !== 1 || claims.length > 1) throw ctError("CT_SCHEMA_INVALID")
+        delivery = deliveries[0]; claim = claims[0] ?? null
+        if (delivery.delivery_id !== request.delivery_id || delivery.purpose !== "WORK" || delivery.claim_id !== (claim?.claim_id ?? null) ||
+            request.claim_id !== (claim?.claim_id ?? null)) throw ctError("CT_FENCE_MISMATCH")
+        const claimedSource = ["CLAIMED", "STARTED", "COMPLETION_ATTESTED"].includes(request.es)
+        if (claimedSource !== Boolean(claim) || (claim && (claim.claim_state !== "LIVE" || delivery.delivery_state !== "CLAIMED")) ||
+            (!claim && (delivery.delivery_state !== "PENDING" || delivery.claim_id !== null))) throw ctError("CT_INVALID_TRANSITION")
+      }
 
       let terminationPairingDigest = null
       if (claim) {
@@ -3548,30 +3665,38 @@ export const continuationRecover = (handle, ctxFactory, request) => {
         if (!attested) throw ctError("CT_SCHEMA_INVALID")
         preservedAttestationDigestValue = attested.decision_digest
         attestationSourceGenerationValue = request.eg
+      } else if (request.action === "REDELIVER_ATTESTATION") {
+        const suspended = db.query("SELECT preserved_attestation_digest,attestation_source_generation FROM ct_recovery_disposition WHERE handoff_id=? AND disposition='SUSPEND_ATTESTATION' AND to_generation=?").all(request.id, request.eg)
+        if (suspended.length !== 1) throw ctError("CT_SCHEMA_INVALID")
+        const attested = db.query("SELECT decision_digest FROM ct_handoff_transition WHERE handoff_id=? AND generation=? AND operation='ATTEST_COMPLETION'").get(request.id, suspended[0].attestation_source_generation)
+        if (!attested || attested.decision_digest !== suspended[0].preserved_attestation_digest) throw ctError("CT_SCHEMA_INVALID")
+        preservedAttestationDigestValue = suspended[0].preserved_attestation_digest
+        attestationSourceGenerationValue = suspended[0].attestation_source_generation
       }
 
-      const increments = ["NOT_STARTED", "ROLLED_BACK"].includes(request.action)
+      const increments = recoverGenerationIncrementDispositions.has(request.action)
       const toState = recoverToStates[request.action], toGeneration = request.eg + (increments ? 1 : 0)
       const occurredAt = now(), createdDeliveryId = increments ? makeId() : null, dispositionId = makeId()
+      const createdDeliveryPurpose = request.action === "REDELIVER_ATTESTATION" ? "ATTESTATION_REDELIVERY" : "WORK"
       const writerFence = { schema_version: version, mode: state.mode, anchor_id: authority.anchor.anchor_id, config_digest: authority.anchor.config_digest,
         observed_rollback_epoch: persisted.lease.rollback_epoch, observed_lease_version: persisted.lease.lease_version, observed_lease_status: persisted.lease.lease_status }
       const mainAuthority = { main_binding_id: main.main_binding_id, binding_epoch: main.binding_epoch, identity_digest: main.identity_digest }
       const casValue = { kind: `${request.action.toLowerCase()}_cas_v1`, version: 1, writer_fence_v1: writerFence, main_authority_v1: mainAuthority,
         id: request.id, disposition: request.action, expected_state: request.es, expected_generation: request.eg, target_generation: toGeneration,
         expected_rollback_epoch: request.expected_rollback_epoch, expected_lease_version: persisted.lease.lease_version, expected_lease_status: persisted.lease.lease_status,
-        expected_delivery_state: delivery.delivery_state, expected_claim_state: claim?.claim_state ?? "ABSENT", delivery_id: delivery.delivery_id,
+        expected_delivery_state: delivery?.delivery_state ?? "ABSENT", expected_claim_state: claim?.claim_state ?? "ABSENT", delivery_id: delivery?.delivery_id ?? null,
         claim_id: claim?.claim_id ?? null, handoff_fingerprint: handoff.handoff_fingerprint, termination_pairing_digest: terminationPairingDigest,
         rollback_proof_digest: rollbackProofValueDigest, frozen_inventory_digest: frozenInventoryDigestValue, preserved_attestation_digest: preservedAttestationDigestValue }
       const cas_digest = requestDigest(casValue)
 
       if (db.run("UPDATE ct_handoff SET state=?,generation=? WHERE id=? AND state=? AND generation=?", [toState, toGeneration, request.id, request.es, request.eg]).changes !== 1) throw ctError("CT_SCHEMA_INVALID")
       if (claim && db.run("UPDATE ct_claim SET claim_state='CLOSED',closed_at=? WHERE claim_id=? AND claim_state='LIVE'", [occurredAt, claim.claim_id]).changes !== 1) throw ctError("CT_SCHEMA_INVALID")
-      if (db.run("UPDATE ct_delivery SET delivery_state='CLOSED',closed_at=? WHERE delivery_id=? AND delivery_state=?", [occurredAt, delivery.delivery_id, delivery.delivery_state]).changes !== 1) throw ctError("CT_SCHEMA_INVALID")
+      if (delivery && db.run("UPDATE ct_delivery SET delivery_state='CLOSED',closed_at=? WHERE delivery_id=? AND delivery_state=?", [occurredAt, delivery.delivery_id, delivery.delivery_state]).changes !== 1) throw ctError("CT_SCHEMA_INVALID")
       if (createdDeliveryId) db.run(`INSERT INTO ct_delivery(delivery_id,handoff_id,generation,purpose,delivery_state,handoff_state_snapshot,claim_id,created_at,claimed_at,closed_at)
-        VALUES (?,?,?,'WORK','PENDING','PUBLISHED',NULL,?,NULL,NULL)`, [createdDeliveryId, request.id, toGeneration, occurredAt])
+        VALUES (?,?,?,?,'PENDING',?,NULL,?,NULL,NULL)`, [createdDeliveryId, request.id, toGeneration, createdDeliveryPurpose, toState, occurredAt])
 
       const decisionValue = { kind: "recover_decision_v1", version: 1, disposition: request.action, id: request.id, from_state: request.es, to_state: toState,
-        from_generation: request.eg, to_generation: toGeneration, rollback_epoch: persisted.lease.rollback_epoch, closed_delivery_id: delivery.delivery_id,
+        from_generation: request.eg, to_generation: toGeneration, rollback_epoch: persisted.lease.rollback_epoch, closed_delivery_id: delivery?.delivery_id ?? null,
         closed_claim_id: claim?.claim_id ?? null, created_delivery_id: createdDeliveryId, termination_pairing_digest: terminationPairingDigest,
         rollback_proof_digest: rollbackProofValueDigest, frozen_inventory_digest: frozenInventoryDigestValue, preserved_attestation_digest: preservedAttestationDigestValue }
       const decision_digest = requestDigest(decisionValue)
@@ -3581,7 +3706,7 @@ export const continuationRecover = (handle, ctxFactory, request) => {
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         [dispositionId, request.id, request.action, request.es, toState, request.eg, toGeneration, state.mode, persisted.lease.rollback_epoch, persisted.lease.lease_version,
           main.main_binding_id, main.binding_epoch, main.identity_digest, terminationPairingDigest, rollbackProofValueDigest, frozenInventoryDigestValue, preservedAttestationDigestValue,
-          attestationSourceGenerationValue, delivery.delivery_id, claim?.claim_id ?? null, createdDeliveryId, request.request_identity, request_digest, cas_digest, decision_digest, occurredAt])
+          attestationSourceGenerationValue, delivery?.delivery_id ?? null, claim?.claim_id ?? null, createdDeliveryId, request.request_identity, request_digest, cas_digest, decision_digest, occurredAt])
       const publicResponse = { id: request.id, state: toState, generation: toGeneration, replayed: false }
       const response_digest = requestDigest(publicResponse)
       db.run(`INSERT INTO ct_handoff_transition(transition_id,handoff_id,generation,operation,from_state,to_state,authority_kind,authority_binding_id,authority_identity_digest,
@@ -3589,7 +3714,7 @@ export const continuationRecover = (handle, ctxFactory, request) => {
         [makeId(), request.id, toGeneration, request.es, toState, main.main_binding_id, main.identity_digest, request.request_identity, request_digest, cas_digest, decision_digest, response_digest, occurredAt])
       const envelope = { kind: `${request.action.toLowerCase()}_response_envelope_v1`, version: 1, public_response: publicResponse, evidence: {
         request, request_digest, scope_key: scopeKey, cas_input: casValue, cas_digest, disposition_id: dispositionId,
-        closed_delivery_id: delivery.delivery_id, closed_claim_id: claim?.claim_id ?? null, created_delivery_id: createdDeliveryId,
+        closed_delivery_id: delivery?.delivery_id ?? null, closed_claim_id: claim?.claim_id ?? null, created_delivery_id: createdDeliveryId,
         termination_pairing_digest: terminationPairingDigest, rollback_proof: rollbackProofValue, rollback_proof_digest: rollbackProofValueDigest,
         frozen_inventory_digest: frozenInventoryDigestValue, preserved_attestation_digest: preservedAttestationDigestValue, attestation_source_generation: attestationSourceGenerationValue } }
       db.run("INSERT INTO ct_idempotency VALUES ('recover',?,?,?,?,?,?)", [scopeKey, request.request_identity, request_digest, cas_digest, jcs(envelope), occurredAt])
