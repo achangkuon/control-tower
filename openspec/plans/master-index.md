@@ -338,11 +338,14 @@ Cambios posteriores deben crear una revisión explícita del documento correspon
 4. no iniciar apply de producto hasta que el change correspondiente complete planning y sus dependencias estén satisfechas;
 5. mantener A–I separados del sustrato plan-agnostic P6–P11.
 
-**Trabajo parcial que debe preservarse:**
+**Estado local reconciliado:**
 
-- `.gitignore` y `.codegraph/` sin rastrear, no pertenecen a esta fase;
-- cambios locales no incluidos en PR #47 bajo `docs/architecture/sdd-tower-implementation.md`;
-- el change mecánico principal y sus worktrees/sesiones se gestionan de forma independiente.
+- Main es el checkout canónico y debe finalizar limpio y sincronizado con `origin/master`.
+- Los homes `agent-tower`, `multi-agentic-dashboard` y `tower-implementation` fueron retirados de forma segura y recreados desde el `master` canónico, con `HEAD` detached para no revivir ramas de tarea obsoletas.
+- Antes de escribir, cada asignación debe crear una rama nueva y acotada desde la base canónica vigente; los worktrees reciclados no otorgan autoridad por sí mismos.
+- El cambio local no incluido en PR #47 bajo `docs/architecture/sdd-tower-implementation.md` se preservó fuera del repo en `Backups/worktree-recycle-2026-07-27-123457` antes de retirar su worktree.
+- No se borraron ramas locales o remotas.
+- Evidencia técnica: [`openspec/maintenance/2026-07-27-worktree-retirement.md`](../maintenance/2026-07-27-worktree-retirement.md).
 
 ## 11. Vínculo con Engram
 
