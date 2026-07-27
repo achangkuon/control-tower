@@ -269,6 +269,13 @@ BEGIN
 END`)
   db.close()
 }
+const snapshotContinuationTables = (dbPath) => {
+  const db = new Database(dbPath, { readonly: true })
+  const tables = db.query("SELECT name FROM sqlite_master WHERE type='table' AND name GLOB 'ct_*' ORDER BY name").all()
+  const snapshot = Object.fromEntries(tables.map(({ name }) => [name, db.query(`SELECT * FROM "${name}" ORDER BY rowid`).all()]))
+  db.close()
+  return snapshot
+}
 
 describe("P6-C proof plane: recordTerminationReceipt", () => {
   test("records a fresh ABSENT receipt for a crashed CLAIMED claimant, exposes only the pinned public shape, and replays idempotently", () => {
@@ -729,20 +736,11 @@ const buildFreshEmptyMainFixture = () => {
 // ownership: CT-R7-S7, the rollback/rebind/finish projection of CT-R11-S3,
 // CT-R11-S4, and CT-R11-S5. Every fixture is real, non-synthetic P3-P6 history.
 //
-// CT-R7-S8's claim-present rung (CT_RECOVERY_CLAIM_PRESENT) is implemented in
-// continuationRecover exactly as design.md:1803 requires, but this unit does
-// not exercise it with an integration test: a genuinely PUBLISHED handoff can
-// never carry a live OR closed claim at its own current generation through
-// any real flow (claiming always moves the handoff to CLAIMED; UNIQUE
-// (handoff_id, generation) on ct_claim forecloses any same-generation
-// leftover), and every attempt to fabricate that state with a synthetic row
-// was independently rejected by validateSchema4Persistence's own exhaustive
-// claim/transition/envelope cross-checks — the same invariant machinery this
-// rung's precondition depends on. This mirrors P6-C's own honestly-flagged
-// gap (the ROLLING_BACK branch of recoveryMainAuthority, structurally present
-// and untested until this unit's own real ROLLING_BACK fixtures exercised
-// it) and is recorded in apply-progress.md rather than shipped with an
-// invariant-violating fixture.
+// CT-R7-S8 is structural characterization, not a reachable recovery branch:
+// atomic claim moves PUBLISHED/PENDING to CLAIMED/CLAIMED. Its test starts from
+// that real lifecycle state, restores only the impossible PUBLISHED/PENDING
+// projection while retaining the persisted claim, then proves schema validation
+// rejects the malformed history before recovery semantics.
 const beginRollbackRequest = (built, overrides = {}) => ({
   request_identity: randomUUID(), expected_mode: "ON", expected_binding_epoch: built.mainBindingEpoch, expected_activation_epoch: 1, ...overrides,
 })
@@ -815,6 +813,26 @@ describe("P6-E rollback plane: beginRollback / rebindMain / finishRollback", () 
     expect(disposition.termination_pairing_digest).toBeNull()
     expect(disposition.frozen_inventory_digest).toMatch(/^sha256:[0-9a-f]{64}$/)
     expect(disposition.created_delivery_id).toBeNull()
+  })
+
+  test("CT-R7-S8 — malformed PUBLISHED/PENDING history retaining the same-delivery claim fails structural validation before recovery semantics", () => {
+    const built = buildClaimedFixture()
+    const begin = built.mainDispatch("beginRollback", beginRollbackRequest(built))
+    const tamper = new Database(built.fixture.dbPath)
+    const deliveryTrigger = tamper.query("SELECT sql FROM sqlite_master WHERE type='trigger' AND name='ct_delivery_immutable_identity'").get().sql
+    tamper.run("DROP TRIGGER ct_delivery_immutable_identity")
+    tamper.run("UPDATE ct_handoff SET state='PUBLISHED' WHERE id=?", [built.handoffId])
+    tamper.run("UPDATE ct_delivery SET delivery_state='PENDING',claim_id=NULL,claimed_at=NULL WHERE delivery_id=?", [built.deliveryId])
+    tamper.run(deliveryTrigger)
+    const malformed = tamper.query(`SELECT h.state AS handoff_state,d.delivery_state,d.claim_id AS delivery_claim_id,c.claim_id,c.delivery_id,c.claim_state
+      FROM ct_handoff h JOIN ct_delivery d ON d.handoff_id=h.id JOIN ct_claim c ON c.delivery_id=d.delivery_id WHERE h.id=?`).get(built.handoffId)
+    tamper.close()
+    expect(malformed).toEqual({ handoff_state: "PUBLISHED", delivery_state: "PENDING", delivery_claim_id: null, claim_id: built.claimId, delivery_id: built.deliveryId, claim_state: "LIVE" })
+
+    const before = snapshotContinuationTables(built.fixture.dbPath)
+    const request = recoverRequest(built, "SUSPEND_PENDING", { es: "PUBLISHED", expected_rollback_epoch: begin.rollback_epoch })
+    expect(errorCode(() => built.mainDispatch("recover", request))).toBe("CT_SCHEMA_INVALID")
+    expect(snapshotContinuationTables(built.fixture.dbPath)).toEqual(before)
   })
 
   test("SUSPEND_ATTESTATION closes the CLAIMED delivery and LIVE claim, preserves the attestation, and requires a fresh termination pairing", () => {
