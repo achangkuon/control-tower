@@ -56,8 +56,8 @@ artifact_refs:
     repo_relative_path: openspec/plans/master-index.md
     media_type: text/markdown
     digest_mode: raw-bytes
-    source_commit: a800456e6901b92faff5ea9ab4f51c5b362530bd
-    content_digest: sha256:b93babe502ba87e45f8a78c87da190ecfc7cf46044e74a0be940df20485e451b
+    source_commit: 7d68e5429968df25faee58362198f603613d4dcf
+    content_digest: sha256:7ae75fe2129d8bbebcb9d37496e9939aff3e9a44be28308357758a6d2f00112e
 jornada_policy:
   default_preset: standard
   allowed_presets:
