@@ -3621,11 +3621,6 @@ export const continuationRecover = (handle, ctxFactory, request) => {
         const claims = db.query("SELECT * FROM ct_claim WHERE handoff_id=? AND generation=?").all(request.id, request.eg)
         if (deliveries.length !== 1 || claims.length > 1) throw ctError("CT_SCHEMA_INVALID")
         delivery = deliveries[0]; claim = claims[0] ?? null
-        // CT-R7-S8: a genuinely PUBLISHED/PENDING pair can never carry a real
-        // claim through any normal flow (claiming always moves the handoff to
-        // CLAIMED), so this rung exists purely as defense-in-depth and must run
-        // before every other fence/proof check, never masked by them.
-        if (request.action === "SUSPEND_PENDING" && claims.length > 0) throw ctError("CT_RECOVERY_CLAIM_PRESENT")
         if (delivery.delivery_id !== request.delivery_id || delivery.purpose !== "WORK" || delivery.claim_id !== (claim?.claim_id ?? null) ||
             request.claim_id !== (claim?.claim_id ?? null)) throw ctError("CT_FENCE_MISMATCH")
         const claimedSource = ["CLAIMED", "STARTED", "COMPLETION_ATTESTED"].includes(request.es)
