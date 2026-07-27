@@ -43,10 +43,11 @@ P6 owns `CT-R11-S4/S5` and versioned termination/quiescence persistence bound to
 - WHEN rollback-owner Main at the matching epoch applies `SUSPEND_PENDING`
 - THEN delivery closes, disposition is immutable, state becomes non-live WORK_SUSPENDED, generation is unchanged, and no delivery is created
 
-#### Scenario: CT-R7-S8 Claim-present suspension rejected
-- GIVEN the frozen PUBLISHED/PENDING pair has any claim or claimant
-- WHEN `SUSPEND_PENDING` is requested
-- THEN it returns `CT_RECOVERY_CLAIM_PRESENT` without mutation and the exact termination path stays required
+#### Scenario: CT-R7-S8 Malformed claim-present history rejected structurally
+- GIVEN persisted history claims a PUBLISHED handoff has a PENDING WORK delivery while a claim for that same delivery also exists
+- WHEN any public recovery path, including `SUSPEND_PENDING`, reads that history
+- THEN it returns `CT_SCHEMA_INVALID` without mutation before recovery semantics, request fences, or proof evaluation
+- AND valid history cannot reach this precondition because atomic `claim` changes the handoff and delivery from PUBLISHED/PENDING to CLAIMED while creating the claim
 
 #### Scenario: CT-R7-S9 ON-only work redelivery
 - GIVEN WORK_SUSPENDED is non-live and a later explicit activation set mode ON
