@@ -22,6 +22,11 @@ Chain strategy: pending
 
 P7 apply is blocked until `openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md` is complete and approved. This gate is evidence-only: do not modify runtime, implementation, tests, P6 files, Migration 005, `core.mjs`, `mcp.mjs`, or unrelated `.gitignore` entries while reconciling.
 
+Native `apply-ready` does not bypass this gate. P7 depends only on merged P6, not Change A. Its record MUST preserve `P6 → P7 → P8 → Change E` and `A → B/C → D → Change E`, the C→D edge, and Change E ownership.
+
+- [ ] Record distinct project/plan/slice/assignment/jornada/session and host/plugin/root identities; prove `binding_epoch`, Main-issued/Change-E-enforced `host_epoch`, and controller-local `generation` are not conflated. <!-- sdd-owner: implementation -->
+- [ ] Pin the assignment-bound `Worktrees/<plan>/<lane>/<slice>` path inside the registered project container, authorized base SHA, allowed `plan/...` or `feat/...` branch, assignment, and session; confirm Workspace Manager owns lifecycle and P7 owns none. <!-- sdd-owner: implementation -->
+
 - [ ] Create `openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md` and record merged-base evidence for P6: merged commit, schema version, Migration 005 byte length/checksum, schema-5 manifest identity, accepted `bootstrapAdmin`/replay behavior, and unchanged `polling_witness = 'UNAVAILABLE_BEFORE_P7'`. <!-- sdd-owner: implementation -->
 - [ ] Reconcile the merged continuation and capability seams by recording concrete file/symbol/test evidence for the argument-free non-consuming receive/peek result, claim boundary, stable errors, dispatcher/MCP constructor capabilities, trusted process metadata, root ID, and binding-epoch continuity; confirm no P6 route, table, test, or reserved name conflicts with `host/loop.mjs` or the planned P7 tests. <!-- sdd-owner: implementation -->
 - [ ] Capture the pinned OpenCode version and real fixture evidence for root and child creation/idle/deletion, `parentID`, `sessionID`, incomplete metadata, event order, and the exact parentless root-proof rule in `reconciliation.md`. <!-- sdd-owner: implementation -->

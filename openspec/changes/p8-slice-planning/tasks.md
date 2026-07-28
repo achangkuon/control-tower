@@ -26,7 +26,10 @@ Chain strategy: pending
 
 ## Phase 1: Reconciliation Gate and RED Tests
 
+- P8 remains blocked until P7 is independently reconciled and integrated and P8's separate record is approved. Native `apply-ready` does not bypass either gate; P8 has no Change A dependency.
 - [ ] 1.1 **First and blocking task:** create `openspec/changes/p8-slice-planning/reconciliation.md` pinning merged P6 capability/root authority/pending preservation, P7 factory/lifecycle/wake/disposal/fixture, and Pi classifier/session/send/manifest contracts; do not begin any RED or implementation until every contract is concrete and approved.
+- [ ] 1.1a Record both DAG paths, C→D, no A→P7/P8 edge, and Change E ownership; keep all project/plan/slice/assignment/jornada/session and host/plugin/root identities distinct and separate `binding_epoch`, `host_epoch`, and controller `generation`.
+- [ ] 1.1b Pin the assignment-bound in-container worktree, authorized base SHA, allowed branch, assignment, and session; confirm Workspace Manager owns its lifecycle and P8 owns no worktree or host lifecycle/failover operation.
 - [ ] 1.2 RED in `test/host-adapters.test.mjs` for trusted root/child/ambiguous classification, idle-only settlement, forged event fields, same-root/same-generation resume idempotence, and conflicting resume failure with unchanged owner/generation/timers.
 - [ ] 1.3 RED in `test/host-adapters.test.mjs` for overlapping newer-generation replacement (dispose-before-bind), stale callbacks/completions inertness, synchronous root shutdown, exact `{ deliverAs: "followUp", triggerTurn: true }`, rejected-send preservation, and CT-R5-S1..S5.
 

@@ -6,6 +6,14 @@ P7 will add a transient, host-neutral polling state machine and make the OpenCod
 
 The baseline deliberately adds no polling witness and does not edit Migration 005, its checksum, its schema-5 manifest, or `polling_witness = 'UNAVAILABLE_BEFORE_P7'`. The implementation remains blocked until merged P6 and supported OpenCode behavior satisfy the reconciliation checklist in this design.
 
+M0 integration keeps P7 blocked until its independent `reconciliation.md` is approved. Native `apply-ready` is insufficient. P7 depends only on merged P6—not Change A—and preserves both DAG paths: `P6 → P7 → P8 → Change E` and `A → B/C → D → Change E` with the required C→D edge.
+
+### Integrated identity and authority boundary
+
+The reconciliation record MUST keep `project_id`, `plan_id`, `slice_id`, `assignment_id`, `jornada_id`, `session_id`, `host_process_instance`, `plugin_instance`, and `root_session_id` distinct. Capability `binding_epoch`, Main-issued/Change-E-enforced `host_epoch`, and this controller's process-local, non-authoritative `generation` are separate values and MUST NOT be substituted for one another.
+
+Assignment evidence pins `Worktrees/<plan>/<lane>/<slice>` inside the registered project container to an authorized base SHA, exactly `plan/<plan>/<slice>` or `feat/<plan>/<slice>`, the assignment, and the session. Workspace Manager alone owns worktree inspect/create/retire; P7 never creates, retires, recycles, or branch-switches a worktree. Change E alone owns host launch/inspect/stop/health, heartbeat, stop proof, session naming, `host_epoch` enforcement, and exclusive failover. P7 remains a substrate adapter, not product or mechanism authority.
+
 ## Scope and decision status
 
 ### Normative P7 decisions
@@ -423,6 +431,10 @@ The operational kill path is plugin disposal or removal from composition. Since 
 ## Apply-blocking reconciliation checklist
 
 Before `sdd-apply`, create and approve `openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md`. Every item below MUST include concrete merged-commit/file/test evidence; unchecked or ambiguous items keep apply blocked.
+
+- [ ] Validate the M0 Plan Manifest/ArtifactRefs and both DAG paths; prove no Change A dependency or A→P7/P8 edge and preserve Change E ownership.
+- [ ] Record each integrated identity separately, keep `binding_epoch`, `host_epoch`, and controller `generation` distinct, and reject missing or conflated evidence.
+- [ ] Pin the assignment-bound in-container worktree path, authorized base SHA, allowed branch shape, `assignment_id`, and `session_id`; confirm P7 has no worktree lifecycle authority.
 
 - [ ] P6 is merged into the P7 base. Record the merged commit and confirm the read-only worktree was not copied as an implementation source.
 - [ ] Record merged schema version, exact Migration 005 byte length/checksum, schema-5 manifest identity, accepted `bootstrapAdmin` transitions, replay behavior, and the unchanged `polling_witness = 'UNAVAILABLE_BEFORE_P7'` constraint.
