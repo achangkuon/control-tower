@@ -7,16 +7,18 @@
 | Estimated changed lines | 1,160–1,560 cumulative authored additions + deletions; 240–400 per behavior unit |
 | 400-line budget risk | High |
 | Chained PRs recommended | Yes |
-| Suggested split | P7-A1 → P7-A2 → P7-B → provisional P7-C; each is an autonomous ≤400-line review slice |
-| Delivery strategy | auto-forecast; pause for a topology decision before apply |
-| Chain strategy | pending |
+| Suggested split | P7-A1 → P7-A2 → P7-B → P7-C; each is an approved autonomous ≤400-line review slice |
+| Delivery strategy | auto-chain; four serial units, one active at a time |
+| Chain strategy | stacked-to-main |
 
-Decision needed before apply: Yes
+Decision needed before apply: No
 Chained PRs recommended: Yes
-Chain strategy: pending
+Chain strategy: stacked-to-main
 400-line budget risk: High
 
-**Recommended chain boundary:** plan four sequential review slices in the stated order; do not create branches or PRs until a P7-specific topology is approved.
+**Approved chain boundary:** four serial `stacked-to-main` slices in the stated
+order, with only one active at a time. Apply-time branch/base identities remain
+unallocated until the allocation step that precedes exact record approval.
 
 ## Apply Gate — Post-P6 Reconciliation (blocks every RED task)
 
@@ -24,17 +26,22 @@ P7 apply is blocked until `openspec/changes/p7-host-neutral-loop-opencode-adapte
 
 Native `apply-ready` does not bypass this gate. P7 depends only on merged P6, not Change A. Its record MUST preserve `P6 → P7 → P8 → Change E` and `A → B/C → D → Change E`, the C→D edge, and Change E ownership.
 
-- [ ] Record distinct project/plan/slice/assignment/jornada/session and host/plugin/root identities; prove `binding_epoch`, Main-issued/Change-E-enforced `host_epoch`, and controller-local `generation` are not conflated. <!-- sdd-owner: implementation -->
+- [x] Record distinct project/plan/slice/assignment/jornada/session and host/plugin/root identities; prove `binding_epoch`, Main-issued/Change-E-enforced `host_epoch`, and controller-local `generation` are not conflated. Concrete apply-time values remain pending in the allocation item below. <!-- sdd-owner: implementation -->
 - [ ] Pin the assignment-bound `Worktrees/<plan>/<lane>/<slice>` path inside the registered project container, authorized base SHA, allowed `plan/...` or `feat/...` branch, assignment, and session; confirm Workspace Manager owns lifecycle and P7 owns none. <!-- sdd-owner: implementation -->
 
-- [ ] Create `openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md` and record merged-base evidence for P6: merged commit, schema version, Migration 005 byte length/checksum, schema-5 manifest identity, accepted `bootstrapAdmin`/replay behavior, and unchanged `polling_witness = 'UNAVAILABLE_BEFORE_P7'`. <!-- sdd-owner: implementation -->
-- [ ] Reconcile the merged continuation and capability seams by recording concrete file/symbol/test evidence for the argument-free non-consuming receive/peek result, claim boundary, stable errors, dispatcher/MCP constructor capabilities, trusted process metadata, root ID, and binding-epoch continuity; confirm no P6 route, table, test, or reserved name conflicts with `host/loop.mjs` or the planned P7 tests. <!-- sdd-owner: implementation -->
-- [ ] Capture the pinned OpenCode version and real fixture evidence for root and child creation/idle/deletion, `parentID`, `sessionID`, incomplete metadata, event order, and the exact parentless root-proof rule in `reconciliation.md`. <!-- sdd-owner: implementation -->
-- [ ] Select and threat-model one trusted non-consuming `peek` transport in `reconciliation.md`; prove the OpenCode adapter will not import `core.mjs`, `mcp.mjs`, SQLite, or create a second public continuation API. <!-- sdd-owner: implementation -->
-- [ ] Pin the exact `client.session.promptAsync` request envelope and generic descriptor-free prompt in `reconciliation.md`; record the legacy queue-waker decision and, if it remains required, identify its separately approved non-consuming/non-lossy boundary. <!-- sdd-owner: implementation -->
-- [ ] Record whether transient polling is compatible with merged P6 rollback/quiescence semantics; if a persisted witness is required, stop P7 and require a separate additive migration proposal rather than modifying Migration 005. <!-- sdd-owner: implementation -->
-- [ ] Run `bun test` against the merged P6 baseline and record the exact Bun version and zero-failure result in `reconciliation.md`; reforecast P7-A1, P7-A2, P7-B, and P7-C at ≤400 authored changed lines with their allowed files and rollback boundaries. <!-- sdd-owner: implementation -->
+- [x] Create `openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md` and record merged-base evidence for P6: merged commit, schema version, Migration 005 byte length/checksum, schema-5 manifest identity, accepted `bootstrapAdmin`/replay behavior, and unchanged `polling_witness = 'UNAVAILABLE_BEFORE_P7'`. <!-- sdd-owner: implementation -->
+- [x] Reconcile the merged continuation and capability seams from approved decisions and source analysis: argument-free non-consuming receive/peek result, claim boundary, stable errors, dispatcher/MCP constructor capabilities, trusted process metadata, root-ID/binding-epoch continuity contract, and no P6 route/table/test/reserved-name conflict. Concrete runtime binding remains pending; no runtime proof is claimed. <!-- sdd-owner: implementation -->
+- [x] Capture exact OpenCode `1.18.7` package/plugin/SDK integrity, binary hash, isolated root/child/metadata/deletion/hook/prompt fixtures, and the trusted-host-binding plus non-consuming `session.get` root-proof rule in `reconciliation.md`. <!-- sdd-owner: implementation -->
+- [x] Select and threat-model the private injected capability-gated MCP `receive` peek port in `reconciliation.md`; forbid a second public API and leave production broker/process wiring to Change E. The current legacy plugin is not clean-adapter proof. <!-- sdd-owner: implementation -->
+- [x] Pin the exact legacy `client.session.promptAsync` request envelope and generic descriptor-free prompt in `reconciliation.md`; assert HTTP 204 separately, treat data `{}` as non-completion, and exclude consuming legacy automatic queue wake while preserving manual APIs. <!-- sdd-owner: implementation -->
+- [x] Record that transient polling is compatible with merged P6 rollback/quiescence semantics, including the accepted harmless late generic wake and continued receive→claim→ack authority boundary; do not claim a persisted witness. <!-- sdd-owner: implementation -->
+- [x] Run `bun test` against the merged P6 baseline and record the exact Bun version and zero-failure result in `reconciliation.md`; reforecast P7-A1, P7-A2, P7-B, and P7-C at ≤400 authored changed lines with their allowed files and rollback boundaries. <!-- sdd-owner: implementation -->
 - [ ] Mark the reconciliation gate approved in `reconciliation.md` only when every evidence item is concrete and all transport, root-proof, prompt, legacy, and transient-polling decisions are resolved; otherwise leave P7 apply blocked. <!-- sdd-owner: implementation -->
+
+Clean-adapter import conformance is an implementation-time P7-B/P7-C acceptance
+criterion, not completed readiness evidence and not a pre-allocation blocker.
+The explicit RED/REFACTOR tasks below must prove that the future adapter has no
+direct core/MCP/SQLite/database-path access and no consuming receive path.
 
 ## P7-A1 — Root Lifecycle and Synchronous Invalidation (depends on approved reconciliation)
 
@@ -60,21 +67,25 @@ Native `apply-ready` does not bypass this gate. P7 depends only on merged P6, no
 
 **Scope:** `plugin/tower-spike.js`, `test/helpers/host-adapter-conformance.mjs`, `test/host-adapters.test.mjs`. **Budget:** 320–400 authored changed lines. **Finish:** testable OpenCode lifecycle classification around the controller, with reusable CT-R5 conformance; trusted transport and production `promptAsync` composition remain P7-C work.
 
-- [ ] **RED:** Create failing parameterized conformance cases in `test/helpers/host-adapter-conformance.mjs` and OpenCode cases in `test/host-adapters.test.mjs` with stable IDs `CT-R5-S1@OpenCode` through `CT-R5-S5@OpenCode`, covering child deletion/creation/idle no-ops, matching-root deletion, plugin disposal, malformed metadata, and conflicting identities. <!-- sdd-owner: implementation -->
+- [ ] **RED:** Create failing parameterized conformance cases in `test/helpers/host-adapter-conformance.mjs` and OpenCode cases in `test/host-adapters.test.mjs` with stable IDs `CT-R5-S1@OpenCode` through `CT-R5-S5@OpenCode`, covering child deletion/creation/idle no-ops, matching-root deletion, plugin disposal, malformed metadata, and conflicting identities. Before adapter production work, add a failing static import-boundary case against the current legacy `plugin/tower-spike.js` that scans static imports, dynamic imports, and `require` specifiers and reports the exact forbidden match when any adapter path reaches `core.mjs`, `mcp.mjs`, `bun:sqlite`/SQLite modules, or a database module/path. <!-- sdd-owner: implementation -->
 - [ ] **GREEN:** Refactor `plugin/tower-spike.js` into a testable lifecycle adapter factory that classifies only reconciled proven root/child events, binds once, forwards exact bound-root settle/deletion to the controller, and invalidates synchronously on matching root deletion or plugin disposal. <!-- sdd-owner: implementation -->
 - [ ] **TRIANGULATE:** Add OpenCode event-order and incomplete-metadata variants to `test/host-adapters.test.mjs`; prove an unknown event is never treated as root, child cache cleanup cannot stop polling, and the generic helper exposes only host actions/observations rather than OpenCode field names. <!-- sdd-owner: implementation -->
 - [ ] **REFACTOR:** Reduce adapter and harness duplication while keeping `host/loop.mjs` host-neutral; verify `plugin/tower-spike.js` has no direct SQLite, `core.mjs`, `mcp.mjs`, consuming legacy `receive`, or delivery `claim` path. <!-- sdd-owner: implementation -->
 - [ ] Run `bun test test/host-adapters.test.mjs`, `bun test test/polling.test.mjs test/host-adapters.test.mjs test/fail-closed.test.mjs`, and `node --check plugin/tower-spike.js`; record exact results, an authored-line receipt from `git diff --numstat`, runtime harness scenario/result for CT-R5-S1..S5, and the rollback boundary “remove only adapter/fixture/conformance changes; retain the unused controller” in the P7-B completion note in this file. <!-- sdd-owner: implementation -->
 
-## P7-C — Reconciled Transport and Wake Composition (provisional; depends on P7-B)
+## P7-C — Reconciled Transport and Wake Composition (approved serial unit; depends on P7-B)
 
-**Blocked until:** `reconciliation.md` approves the concrete transport, root-proof rule, exact `promptAsync` envelope, and legacy-compatibility decision. **Budget:** 240–380 authored changed lines; split before RED if the approved files exceed this budget.
+**Blocked until:** apply-time identities are allocated, the exact bound
+reconciliation record is then approved, and approval evidence opens the gate.
+Transport, root proof, exact `promptAsync`, legacy
+auto-wake exclusion, transient behavior, and chain topology are resolved.
+**Budget:** 240–380 authored changed lines; split before RED if the approved files exceed this budget.
 
 **Stop condition:** if reconciliation requires a `core.mjs` or `mcp.mjs` change, stop this unit before RED. Require a design amendment and plan that seam as a separate ≤400-line unit; do not edit those files in P7-C.
 
-- [ ] **RED:** After the P7-C block is cleared, add failing cases in `test/host-adapters.test.mjs` (and only reconciliation-approved seam tests) for the selected non-consuming transport, fail-closed absence of trusted transport/root proof, byte-identical root/binding-epoch continuity, exact generic `promptAsync` mapping, wake rejection, and prohibition of descriptor/token/evidence/sender interpolation. <!-- sdd-owner: implementation -->
+- [ ] **RED:** After the P7-C block is cleared and before composition production work, add failing cases in `test/host-adapters.test.mjs` (and only reconciliation-approved seam tests) for the selected non-consuming transport, fail-closed absence of trusted transport/root proof, byte-identical root/binding-epoch continuity, exact generic `promptAsync` mapping, wake rejection, and prohibition of descriptor/token/evidence/sender interpolation. Add a failing composition-boundary scan over `plugin/tower-spike.js` and every reconciliation-approved seam file that reports any static/dynamic/`require` import reaching `core.mjs`, `mcp.mjs`, `bun:sqlite`/SQLite modules, or a database module/path; also snapshot the existing public continuation exports/routes and fail if P7 adds a second public continuation API instead of using the private injected port. <!-- sdd-owner: implementation -->
 - [ ] **GREEN:** Wire only reconciliation-approved dependencies in `plugin/tower-spike.js` and approved seam files so controller `peek` is trusted and non-consuming, `wake` calls `client.session.promptAsync` exactly once for the bound root, and missing proof/transport fails closed without legacy consuming fallback. <!-- sdd-owner: implementation -->
-- [ ] **TRIANGULATE:** Add isolated temporary-root transport coverage for the approved seam and legacy-decision variants; prove stable safe error classification, no second public continuation API, no direct core/SQLite import, and preserved pending delivery after rejected wakes. <!-- sdd-owner: implementation -->
+- [ ] **TRIANGULATE:** Add isolated temporary-root transport coverage for the approved seam and the fixed legacy auto-wake exclusion; prove stable safe error classification, no second public continuation API, no direct core/SQLite import, and preserved pending delivery after rejected wakes. Consuming legacy automatic wake is not a P7 variant. <!-- sdd-owner: implementation -->
 - [ ] **REFACTOR:** Consolidate composition boundaries and test fixtures without expanding authority or persistence; retain transient-only polling and keep Migration 005, schema manifest, P6 worktree, runtime configuration, and unrelated `.gitignore` untouched. <!-- sdd-owner: implementation -->
 - [ ] Run `bun test test/host-adapters.test.mjs`, the reconciliation-approved isolated transport test, `bun test test/polling.test.mjs test/host-adapters.test.mjs test/fail-closed.test.mjs`, `bun test`, `node --check plugin/tower-spike.js`, and `git diff --check`; record exact results, an authored-line receipt from `git diff --numstat`, runtime harness command/scenario/result, and the rollback boundary “revert only P7-C composition/seam changes with no schema rollback” in the P7-C completion note in this file. <!-- sdd-owner: implementation -->
 
@@ -83,3 +94,13 @@ Native `apply-ready` does not bypass this gate. P7 depends only on merged P6, no
 - Keep Control Tower disarmed and use deterministic or isolated temporary fixtures only; never mutate the actual runtime database.
 - Do not add persistence, a polling/quiescence witness, Migration 005 changes, P6 worktree changes, runtime publication/configuration, Pi/Claude adapters, or P8 work.
 - Do not start a later unit until its predecessor’s verification, receipt, runtime-harness record, and rollback boundary are complete.
+
+## Evidence boundary and canonical count
+
+Retry is source-only/unproven and must be established by P7-A2 deterministic RED
+tests. A successful provider turn was unexercised because the isolated fixture had
+no credentials or provider network traffic; it is not a readiness gate and must
+not be described as runtime-proven. The canonical plan has **30 tasks** in the
+approved serial `P7-A1 → P7-A2 → P7-B → P7-C` order. The roadmap's `0/28`
+counter is a later revision follow-up because current roadmap bytes are
+ArtifactRef-bound.

@@ -22,7 +22,7 @@ Chain strategy: stacked-to-main
 |---|---|---|---|---|---|
 | 1 | Align roadmap/catalog and bounded P7/P8 amendments | PR 1 | `git diff --check` | N/A — documentation only | Revert `master-index.md` and P7/P8 amendment files |
 | 2 | Publish revision-2 Plan Manifest and ArtifactRefs | PR 2 | YAML parse + `git diff --check` | N/A — no runtime state | Revert both `openspec/plans/*manifest.yaml` files |
-| 3 | Approve independent P7 reconciliation | PR 3 | Record invariant checker | N/A — evidence record only | Remove P7 `reconciliation.md` and gate amendments |
+| 3 | Prepare independent P7 reconciliation for exact approval | PR 3 | Record invariant checker | Isolated OpenCode 1.18.7 fixtures already captured; no apply runtime | Remove P7 `reconciliation.md` and gate amendments |
 | 4 | Approve P8, validate preservation, persist hybrid artifacts | PR 4 | Full validation command + `bun test` | N/A — no executable behavior | Revert P8 record/status and persistence receipt |
 
 ## Phase 1: Mechanical Roadmap/Catalog/Manifest Alignment
@@ -34,8 +34,24 @@ Chain strategy: stacked-to-main
 ## Phase 2: P7 Bounded Amendments and Reconciliation Record
 
 - [x] 2.1 Amend P7 `proposal.md`, `design.md`, `tasks.md`, and `session-handoff.md` with integrated IDs/epochs, worktree/authority boundaries, and the M0 apply gate; do not edit its normative spec.
-- [ ] 2.2 Create `openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md` with P6 evidence, manifest refs, DAG assertions, role/identity matrix, validation results, and explicit approval/block state.
-- [ ] 2.3 Binary check: P7 stays blocked without its approved record; missing IDs, conflated epochs, unauthorized SHA, or out-of-container worktree are rejected.
+- [x] 2.2 Create `openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md` with P6 evidence, manifest refs, DAG assertions, role/identity matrix, validation results, and explicit approval/block state.
+- [x] 2.3 Binary check: P7 stays blocked without its approved record; missing IDs, conflated epochs, unauthorized SHA, or out-of-container worktree are rejected.
+- [ ] 2.4 Allocate and bind the exact assignment/jornada/session/worktree/base/branch, host/plugin/root identities, and `binding_epoch`; request exact maintainer approval of that bound record; publish approval evidence and open the gate; only then begin the first RED, without rewriting preparation history.
+
+Readiness architecture/version/fixture decisions are resolved. Task `2.4` remains
+pending because apply-time allocation and the subsequent exact approval of the
+bound record have not occurred. `host_epoch` and controller `generation` remain non-blocking and
+unallocated. P7 has 30 canonical tasks; the revision-2 roadmap `0/28` counter remains
+unchanged because its exact bytes are ArtifactRef-bound. Correct that counter only
+in a later publication unit that can issue a new roadmap revision and digest.
+The approved delivery order is serial `P7-A1 → P7-A2 → P7-B → P7-C`, one active
+unit at a time. Retry is source-only/unproven and successful-provider behavior is
+unexercised without credentials/network; neither is a P7 readiness requirement.
+
+The committed JSON fixture and README reproduction procedure at precursor
+`44becc1153b24273796c1d6823f481179358757b` provide reproducible fixture
+evidence. Future clean-adapter import conformance remains an implementation-time
+A/B/C acceptance criterion, not a completed readiness item or allocation blocker.
 
 ## Phase 3: P8 Bounded Amendments and Reconciliation Record
 
