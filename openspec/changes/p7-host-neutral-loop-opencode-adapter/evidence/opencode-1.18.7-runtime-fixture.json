@@ -1,0 +1,740 @@
+{
+  "evidence_format": {
+    "schema": "p7-opencode-runtime-fixture",
+    "version": 1
+  },
+  "capture_profile": {
+    "host": "OpenCode",
+    "host_version": "1.18.7",
+    "sdk_contract": "default legacy nested client.session API",
+    "sanitized": true,
+    "deterministic": true,
+    "credentials_used": false,
+    "provider_traffic_generated": false
+  },
+  "runtime_integrity": {
+    "node": {
+      "version": "22.22.1"
+    },
+    "npm_cli": {
+      "version": "9.2.0",
+      "integrity": null,
+      "integrity_note": "The npm CLI is an environment executable, not a fixture package artifact."
+    },
+    "opencode_ai": {
+      "version": "1.18.7",
+      "npm_integrity": "sha512-/C4Bc+mHbTK+GvhiZ83rguwVSNBs1sCzooQ3CCOz7G8SBYqbsXajlm0OtZ7RaMEUWxHWeMvOnGi4RC4OpAnC/g==",
+      "installed_binary": "/home/emili/.npm-global/lib/node_modules/opencode-ai/bin/opencode.exe",
+      "installed_binary_sha256": "5a0ffa7a5504bdde023a0c59cfa009654c52186d135b3b762f28e032ca2833b5"
+    },
+    "plugin": {
+      "name": "@opencode-ai/plugin",
+      "version": "1.18.7",
+      "npm_integrity": "sha512-kXm5hqur5JiF/xJPaQYkuNn7vSl4ya09YgL/pIvIrggWCLFsfo1gXqNbONRcGW7m5Ih2k6kgMXFyjB9or1+dEg=="
+    },
+    "sdk": {
+      "name": "@opencode-ai/sdk",
+      "version": "1.18.7",
+      "npm_integrity": "sha512-5txVELvCxzC3O/MYnRKdTvBN3TqQjE3PaEks3kDRA/moWzMSUhdm15xCth/Mz/NPYyGTn2u4IdScdV9vLTfLRg=="
+    }
+  },
+  "isolation": {
+    "required_parent": "/tmp/opencode",
+    "fixture_root_template": "/tmp/opencode/p7-opencode-1.18.7.XXXXXX",
+    "workspace_relative_path": "workspace",
+    "environment_variable_names": [
+      "PATH",
+      "HOME",
+      "XDG_CONFIG_HOME",
+      "XDG_DATA_HOME",
+      "XDG_CACHE_HOME",
+      "OPENCODE_CONFIG_DIR",
+      "OPENCODE_DISABLE_AUTOUPDATE",
+      "OPENCODE_DISABLE_SHARE",
+      "BUN_INSTALL_CACHE_DIR",
+      "P7_CAPTURE_LOG"
+    ],
+    "environment_values_recorded": false,
+    "real_user_config_read": false,
+    "real_user_credentials_read": false,
+    "real_user_sessions_read": false
+  },
+  "server": {
+    "port_selection": "Bind an ephemeral 127.0.0.1 port, close the selector socket, and pass that integer to --port.",
+    "command_template": "<installed-opencode-binary> serve --hostname 127.0.0.1 --port <free-localhost-port> --print-logs --log-level DEBUG",
+    "argv": [
+      "/home/emili/.npm-global/lib/node_modules/opencode-ai/bin/opencode.exe",
+      "serve",
+      "--hostname",
+      "127.0.0.1",
+      "--port",
+      "<free-localhost-port>",
+      "--print-logs",
+      "--log-level",
+      "DEBUG"
+    ],
+    "pure_mode": false,
+    "pure_mode_reason": "The isolated capture plugin must load."
+  },
+  "fixture_values": {
+    "directory": "<isolated-workspace>",
+    "rootSessionId": "S01",
+    "childSessionId": "S02",
+    "deleteRootSessionId": "S05",
+    "deleteChildOneSessionId": "S06",
+    "deleteChildTwoSessionId": "S07",
+    "deleteGrandchildSessionId": "S08",
+    "promptRootSessionId": "S09"
+  },
+  "legacy_sdk_calls": {
+    "root_create": {
+      "code": "await client.session.create({ query: { directory }, body: { title: \"A-root\" }, throwOnError: true })",
+      "arguments": {
+        "query": {
+          "directory": "<isolated-workspace>"
+        },
+        "body": {
+          "title": "A-root"
+        },
+        "throwOnError": true
+      }
+    },
+    "root_get_immediate": {
+      "code": "await client.session.get({ path: { id: rootSessionId }, query: { directory }, throwOnError: true })",
+      "arguments": {
+        "path": {
+          "id": "S01"
+        },
+        "query": {
+          "directory": "<isolated-workspace>"
+        },
+        "throwOnError": true
+      }
+    },
+    "child_create": {
+      "code": "await client.session.create({ query: { directory }, body: { title: \"B-child\", parentID: rootSessionId }, throwOnError: true })",
+      "arguments": {
+        "query": {
+          "directory": "<isolated-workspace>"
+        },
+        "body": {
+          "title": "B-child",
+          "parentID": "S01"
+        },
+        "throwOnError": true
+      }
+    },
+    "root_children": {
+      "code": "await client.session.children({ path: { id: rootSessionId }, query: { directory }, throwOnError: true })",
+      "arguments": {
+        "path": {
+          "id": "S01"
+        },
+        "query": {
+          "directory": "<isolated-workspace>"
+        },
+        "throwOnError": true
+      }
+    },
+    "metadata_missing": {
+      "code": "await client.session.create({ query: { directory }, body: { title: \"C-missing\" }, throwOnError: true })",
+      "arguments": {
+        "query": {
+          "directory": "<isolated-workspace>"
+        },
+        "body": {
+          "title": "C-missing"
+        },
+        "throwOnError": true
+      }
+    },
+    "metadata_object": {
+      "code": "await client.session.create({ query: { directory }, body: { title: \"C-object\", metadata: { unrelated: \"host-valid-p7-invalid\" } }, throwOnError: true })",
+      "arguments": {
+        "query": {
+          "directory": "<isolated-workspace>"
+        },
+        "body": {
+          "title": "C-object",
+          "metadata": {
+            "unrelated": "host-valid-p7-invalid"
+          }
+        },
+        "throwOnError": true
+      }
+    },
+    "metadata_non_object": {
+      "code": "await client.session.create({ query: { directory }, body: { title: \"C-string\", metadata: \"not-an-object\" }, throwOnError: true })",
+      "arguments": {
+        "query": {
+          "directory": "<isolated-workspace>"
+        },
+        "body": {
+          "title": "C-string",
+          "metadata": "not-an-object"
+        },
+        "throwOnError": true
+      }
+    },
+    "delete_root_create": {
+      "code": "await client.session.create({ query: { directory }, body: { title: \"D-root\" }, throwOnError: true })",
+      "arguments": {
+        "query": {
+          "directory": "<isolated-workspace>"
+        },
+        "body": {
+          "title": "D-root"
+        },
+        "throwOnError": true
+      }
+    },
+    "delete_child_one_create": {
+      "code": "await client.session.create({ query: { directory }, body: { title: \"D-child-one\", parentID: deleteRootSessionId }, throwOnError: true })",
+      "arguments": {
+        "query": {
+          "directory": "<isolated-workspace>"
+        },
+        "body": {
+          "title": "D-child-one",
+          "parentID": "S05"
+        },
+        "throwOnError": true
+      }
+    },
+    "delete_child_two_create": {
+      "code": "await client.session.create({ query: { directory }, body: { title: \"D-child-two\", parentID: deleteRootSessionId }, throwOnError: true })",
+      "arguments": {
+        "query": {
+          "directory": "<isolated-workspace>"
+        },
+        "body": {
+          "title": "D-child-two",
+          "parentID": "S05"
+        },
+        "throwOnError": true
+      }
+    },
+    "delete_grandchild_create": {
+      "code": "await client.session.create({ query: { directory }, body: { title: \"D-grandchild\", parentID: deleteChildTwoSessionId }, throwOnError: true })",
+      "arguments": {
+        "query": {
+          "directory": "<isolated-workspace>"
+        },
+        "body": {
+          "title": "D-grandchild",
+          "parentID": "S07"
+        },
+        "throwOnError": true
+      }
+    },
+    "delete_child_one": {
+      "code": "await client.session.delete({ path: { id: deleteChildOneSessionId }, query: { directory }, throwOnError: true })",
+      "arguments": {
+        "path": {
+          "id": "S06"
+        },
+        "query": {
+          "directory": "<isolated-workspace>"
+        },
+        "throwOnError": true
+      }
+    },
+    "get_deleted_child": {
+      "code": "await client.session.get({ path: { id: deleteChildOneSessionId }, query: { directory }, throwOnError: false })",
+      "arguments": {
+        "path": {
+          "id": "S06"
+        },
+        "query": {
+          "directory": "<isolated-workspace>"
+        },
+        "throwOnError": false
+      }
+    },
+    "delete_root_recursive": {
+      "code": "await client.session.delete({ path: { id: deleteRootSessionId }, query: { directory }, throwOnError: true })",
+      "arguments": {
+        "path": {
+          "id": "S05"
+        },
+        "query": {
+          "directory": "<isolated-workspace>"
+        },
+        "throwOnError": true
+      }
+    },
+    "get_recursively_deleted_sessions": {
+      "code": "for (const id of [deleteGrandchildSessionId, deleteChildTwoSessionId, deleteRootSessionId]) await client.session.get({ path: { id }, query: { directory }, throwOnError: false })",
+      "ids_in_order": [
+        "S08",
+        "S07",
+        "S05"
+      ],
+      "common_arguments": {
+        "query": {
+          "directory": "<isolated-workspace>"
+        },
+        "throwOnError": false
+      }
+    },
+    "prompt_root_create": {
+      "code": "await client.session.create({ query: { directory }, body: { title: \"E-root\" }, throwOnError: true })",
+      "arguments": {
+        "query": {
+          "directory": "<isolated-workspace>"
+        },
+        "body": {
+          "title": "E-root"
+        },
+        "throwOnError": true
+      }
+    },
+    "prompt_async": {
+      "code": "await client.session.promptAsync({ path: { id: promptRootSessionId }, query: { directory }, body: { parts: [{ type: \"text\", text: \"A Control Tower continuation is pending. Use the continuation receive and claim tools to inspect and claim it.\" }] }, throwOnError: true })",
+      "arguments": {
+        "path": {
+          "id": "S09"
+        },
+        "query": {
+          "directory": "<isolated-workspace>"
+        },
+        "body": {
+          "parts": [
+            {
+              "type": "text",
+              "text": "A Control Tower continuation is pending. Use the continuation receive and claim tools to inspect and claim it."
+            }
+          ]
+        },
+        "throwOnError": true
+      }
+    },
+    "status_after_async_window": {
+      "code": "await client.session.status({ query: { directory }, throwOnError: true })",
+      "arguments": {
+        "query": {
+          "directory": "<isolated-workspace>"
+        },
+        "throwOnError": true
+      }
+    },
+    "abort_after_async_window": {
+      "code": "await client.session.abort({ path: { id: promptRootSessionId }, query: { directory }, throwOnError: true })",
+      "arguments": {
+        "path": {
+          "id": "S09"
+        },
+        "query": {
+          "directory": "<isolated-workspace>"
+        },
+        "throwOnError": true
+      }
+    },
+    "intentional_delay_concurrent_create": {
+      "code": "await Promise.all([client.session.create({ query: { directory }, body: { title: \"F-delay\" }, throwOnError: true }), client.session.create({ query: { directory }, body: { title: \"F-fast\" }, throwOnError: true })])",
+      "arguments": [
+        {
+          "query": {
+            "directory": "<isolated-workspace>"
+          },
+          "body": {
+            "title": "F-delay"
+          },
+          "throwOnError": true
+        },
+        {
+          "query": {
+            "directory": "<isolated-workspace>"
+          },
+          "body": {
+            "title": "F-fast"
+          },
+          "throwOnError": true
+        }
+      ]
+    }
+  },
+  "stable_aliases": {
+    "sessions": {
+      "S01": "A-root",
+      "S02": "B-child",
+      "S03": "C-missing",
+      "S04": "C-object",
+      "S05": "D-root",
+      "S06": "D-child-one",
+      "S07": "D-child-two",
+      "S08": "D-grandchild",
+      "S09": "E-root",
+      "S10": "F-delay",
+      "S11": "F-fast"
+    },
+    "messages": {
+      "M01": "promptAsync user message"
+    },
+    "parts": {
+      "P01": "promptAsync text part"
+    },
+    "events": {
+      "EV01": "receipt 1",
+      "EV02": "receipt 2",
+      "EV03": "receipt 3",
+      "EV04": "receipt 4",
+      "EV05": "receipt 5",
+      "EV06": "receipt 6",
+      "EV07": "receipt 7",
+      "EV08": "receipt 8",
+      "EV09": "receipt 9",
+      "EV10": "receipt 10",
+      "EV11": "receipt 11",
+      "EV12": "receipt 12",
+      "EV13": "receipt 13",
+      "EV14": "receipt 14",
+      "EV15": "receipt 15",
+      "EV16": "receipt 16",
+      "EV17": "receipt 17",
+      "EV18": "receipt 18",
+      "EV19": "receipt 19",
+      "EV20": "receipt 20",
+      "EV21": "receipt 21",
+      "EV22": "receipt 22",
+      "EV23": "receipt 23",
+      "EV24": "receipt 24",
+      "EV25": "receipt 25",
+      "EV26": "receipt 26"
+    }
+  },
+  "event_payload_shapes": {
+    "session_created_root": {
+      "id": "string(evt_*)",
+      "type": "session.created",
+      "properties": {
+        "sessionID": "string(ses_*)",
+        "info": {
+          "id": "string(ses_*)",
+          "slug": "string",
+          "version": "1.18.7",
+          "projectID": "string",
+          "directory": "string",
+          "path": "string",
+          "title": "string",
+          "cost": "number",
+          "tokens": {
+            "input": "number",
+            "output": "number",
+            "reasoning": "number",
+            "cache": {
+              "read": "number",
+              "write": "number"
+            }
+          },
+          "time": {
+            "created": "number",
+            "updated": "number"
+          }
+        }
+      }
+    },
+    "session_created_child": {
+      "base": "session_created_root",
+      "additional_info_fields": {
+        "parentID": "string(ses_*)"
+      }
+    },
+    "session_created_metadata": {
+      "base": "session_created_root",
+      "additional_info_fields": {
+        "metadata": {
+          "unrelated": "string"
+        }
+      }
+    },
+    "session_deleted_root": {
+      "id": "string(evt_*)",
+      "type": "session.deleted",
+      "properties": {
+        "sessionID": "string(ses_*)",
+        "info": "same session info fields as session_created_root"
+      }
+    },
+    "session_deleted_child": {
+      "base": "session_deleted_root",
+      "additional_info_fields": {
+        "parentID": "string(ses_*)"
+      }
+    },
+    "session_updated_prompt": {
+      "id": "string(evt_*)",
+      "type": "session.updated",
+      "properties": {
+        "sessionID": "string(ses_*)",
+        "info": {
+          "id": "string(ses_*)",
+          "slug": "string",
+          "projectID": "string",
+          "directory": "string",
+          "path": "string",
+          "title": "string",
+          "agent": "build",
+          "model": {
+            "id": "missing-model",
+            "providerID": "fixture-invalid",
+            "variant": "default"
+          },
+          "version": "1.18.7",
+          "cost": "number",
+          "tokens": "same token usage object as session_created_root",
+          "time": {
+            "created": "number",
+            "updated": "number"
+          }
+        }
+      }
+    },
+    "message_updated": {
+      "id": "string(evt_*)",
+      "type": "message.updated",
+      "properties": {
+        "sessionID": "string(ses_*)",
+        "info": {
+          "id": "string(msg_*)",
+          "role": "user",
+          "sessionID": "string(ses_*)",
+          "time": {
+            "created": "number"
+          },
+          "agent": "build",
+          "model": {
+            "providerID": "fixture-invalid",
+            "modelID": "missing-model"
+          }
+        }
+      }
+    },
+    "message_part_updated": {
+      "id": "string(evt_*)",
+      "type": "message.part.updated",
+      "properties": {
+        "sessionID": "string(ses_*)",
+        "part": {
+          "type": "text",
+          "text": "fixed prompt text",
+          "messageID": "string(msg_*)",
+          "sessionID": "string(ses_*)",
+          "id": "string(prt_*)"
+        },
+        "time": "number"
+      }
+    },
+    "session_status": {
+      "id": "string(evt_*)",
+      "type": "session.status",
+      "properties": {
+        "sessionID": "string(ses_*)",
+        "status": {
+          "type": "busy|idle"
+        }
+      }
+    },
+    "session_error": {
+      "id": "string(evt_*)",
+      "type": "session.error",
+      "properties": {
+        "sessionID": "string(ses_*)",
+        "error": {
+          "name": "UnknownError",
+          "data": {
+            "message": "string"
+          }
+        }
+      }
+    },
+    "session_idle": {
+      "id": "string(evt_*)",
+      "type": "session.idle",
+      "properties": {
+        "sessionID": "string(ses_*)"
+      }
+    }
+  },
+  "receipt_sequence": [
+    { "receipt": 1, "event": "EV01", "type": "session.created", "session": "S01", "shape": "session_created_root" },
+    { "receipt": 2, "event": "EV02", "type": "session.created", "session": "S02", "parent": "S01", "shape": "session_created_child" },
+    { "receipt": 3, "event": "EV03", "type": "session.created", "session": "S03", "shape": "session_created_root" },
+    { "receipt": 4, "event": "EV04", "type": "session.created", "session": "S04", "shape": "session_created_metadata" },
+    { "receipt": 5, "event": "EV05", "type": "session.created", "session": "S05", "shape": "session_created_root" },
+    { "receipt": 6, "event": "EV06", "type": "session.created", "session": "S06", "parent": "S05", "shape": "session_created_child" },
+    { "receipt": 7, "event": "EV07", "type": "session.created", "session": "S07", "parent": "S05", "shape": "session_created_child" },
+    { "receipt": 8, "event": "EV08", "type": "session.created", "session": "S08", "parent": "S07", "shape": "session_created_child" },
+    { "receipt": 9, "event": "EV09", "type": "session.deleted", "session": "S06", "parent": "S05", "shape": "session_deleted_child" },
+    { "receipt": 10, "event": "EV10", "type": "session.deleted", "session": "S08", "parent": "S07", "shape": "session_deleted_child" },
+    { "receipt": 11, "event": "EV11", "type": "session.deleted", "session": "S07", "parent": "S05", "shape": "session_deleted_child" },
+    { "receipt": 12, "event": "EV12", "type": "session.deleted", "session": "S05", "shape": "session_deleted_root" },
+    { "receipt": 13, "event": "EV13", "type": "session.created", "session": "S09", "shape": "session_created_root" },
+    { "receipt": 14, "event": "EV14", "type": "session.updated", "session": "S09", "shape": "session_updated_prompt" },
+    { "receipt": 15, "event": "EV15", "type": "message.updated", "session": "S09", "message": "M01", "shape": "message_updated" },
+    { "receipt": 16, "event": "EV16", "type": "message.part.updated", "session": "S09", "message": "M01", "part": "P01", "shape": "message_part_updated" },
+    { "receipt": 17, "event": "EV17", "type": "session.updated", "session": "S09", "shape": "session_updated_prompt" },
+    { "receipt": 18, "event": "EV18", "type": "session.status", "session": "S09", "status": "busy", "shape": "session_status" },
+    { "receipt": 19, "event": "EV19", "type": "session.error", "session": "S09", "error_name": "UnknownError", "error_message": "Model not found: fixture-invalid/missing-model.", "shape": "session_error" },
+    { "receipt": 20, "event": "EV20", "type": "session.status", "session": "S09", "status": "idle", "shape": "session_status" },
+    { "receipt": 21, "event": "EV21", "type": "session.idle", "session": "S09", "deprecated": true, "shape": "session_idle" },
+    { "receipt": 22, "event": "EV22", "type": "session.error", "session": "S09", "error_name": "UnknownError", "error_message_prefix": "ProviderModelNotFoundError: Model not found: fixture-invalid/missing-model.", "shape": "session_error" },
+    { "receipt": 23, "event": "EV23", "type": "session.status", "session": "S09", "status": "idle", "cause": "explicit abort cleanup", "shape": "session_status" },
+    { "receipt": 24, "event": "EV24", "type": "session.idle", "session": "S09", "deprecated": true, "cause": "explicit abort cleanup", "shape": "session_idle" },
+    { "receipt": 25, "event": "EV25", "type": "session.created", "session": "S10", "shape": "session_created_root" },
+    { "receipt": 26, "event": "EV26", "type": "session.created", "session": "S11", "shape": "session_created_root" }
+  ],
+  "hook_ordering": {
+    "recursive_delete": {
+      "hook_start_receipts": [10, 11, 12],
+      "semantic_order": ["S08", "S07", "S05"],
+      "all_started_before_first_finished": true,
+      "callback_get_results": [
+        { "receipt": 10, "session": "S08", "http_status": 404, "has_data": false, "has_error": true },
+        { "receipt": 11, "session": "S07", "http_status": 404, "has_data": false, "has_error": true },
+        { "receipt": 12, "session": "S05", "http_status": 404, "has_data": false, "has_error": true }
+      ]
+    },
+    "intentional_delay": {
+      "delay_ms": 180,
+      "order": [
+        "hook-start S10",
+        "hook-start S11",
+        "hook-end S11",
+        "hook-end S10"
+      ],
+      "completion_order_guaranteed": false
+    }
+  },
+  "scenario_outcomes": {
+    "A": {
+      "status": "PASS",
+      "root_create_http_status": 200,
+      "immediate_get_http_status": 200,
+      "response_event_get_id_match": true,
+      "parentID_present": false
+    },
+    "B": {
+      "status": "PASS",
+      "child_create_http_status": 200,
+      "children_http_status": 200,
+      "child_parent": "S01",
+      "listed_children": ["S02"],
+      "fork_used": false
+    },
+    "C": {
+      "status": "PASS",
+      "missing_metadata": { "http_status": 200, "create_event": true, "session": "S03" },
+      "object_metadata": { "http_status": 200, "create_event": true, "metadata_preserved": true, "session": "S04" },
+      "non_object_metadata": { "http_status": 400, "create_event": false }
+    },
+    "D": {
+      "status": "PASS",
+      "delete_child_http_status": 200,
+      "delete_root_http_status": 200,
+      "recursive_event_order": ["S08", "S07", "S05"],
+      "callback_get_statuses": [404, 404, 404],
+      "post_delete_get_statuses": { "S06": 404, "S08": 404, "S07": 404, "S05": 404 },
+      "idle_required": false
+    },
+    "E": {
+      "status": "PASS",
+      "admission_http_status": 204,
+      "sdk_result_data": {},
+      "sdk_result_data_type": "object",
+      "status_after_five_seconds_http_status": 200,
+      "status_after_five_seconds_data": {},
+      "abort_http_status": 200,
+      "lifecycle_receipts": [18, 19, 20, 21, 22],
+      "retry_observed": false,
+      "successful_provider_turn_observed": false
+    },
+    "F": {
+      "status": "PASS",
+      "delayed_session": "S10",
+      "fast_session": "S11",
+      "hook_order": ["start S10", "start S11", "end S11", "end S10"],
+      "completion_order_guaranteed": false
+    }
+  },
+  "observed_http_and_result_behavior": {
+    "session_create_success": { "http_status": 200, "result": "session object" },
+    "session_get_success": { "http_status": 200, "result": "session object" },
+    "session_children_success": { "http_status": 200, "result": "session array" },
+    "metadata_non_object": { "http_status": 400, "throwOnError_result": "throws Error" },
+    "session_delete_success": { "http_status": 200, "result": true },
+    "deleted_session_get": { "http_status": 404, "throwOnError_false_data": null, "has_error": true },
+    "prompt_async_admission": { "http_status": 204, "sdk_data": {}, "completion_evidence": false },
+    "session_status_after_failure_window": { "http_status": 200, "sdk_data": {} },
+    "session_abort": { "http_status": 200, "result": true }
+  },
+  "runtime_proven": [
+    "The installed binary and exact SDK/plugin packages are version 1.18.7 with the recorded integrities.",
+    "Root create response ID, immediate GET ID, event properties.sessionID, and event properties.info.id match.",
+    "A parentless root omits parentID; an explicitly parented child preserves parentID.",
+    "Missing metadata and object metadata are accepted; object metadata is preserved.",
+    "Structurally non-object metadata returns HTTP 400 and emits no session.created event.",
+    "Recursive deletion emits grandchild, child, then root receipts.",
+    "Deleted sessions already return HTTP 404 inside deletion callbacks and after deletion.",
+    "Deletion does not require an idle event.",
+    "Hook callbacks overlap and an intentional await can invert completion order.",
+    "The exact promptAsync envelope returns HTTP 204 with SDK data {} before asynchronous failure lifecycle events.",
+    "The controlled invalid-model case emits busy, error, status-idle, and deprecated session.idle events.",
+    "No credentials or provider traffic are required for the recorded failure path."
+  ],
+  "source_only_or_unexercised": [
+    {
+      "fact": "OpenCode session status retry",
+      "classification": "source-only/unproven",
+      "reason": "The 1.18.7 declarations include retry status, but the controlled invalid-model fixture emitted no retry."
+    },
+    {
+      "fact": "Successful provider turn lifecycle",
+      "classification": "unexercised",
+      "reason": "The fixture used no credentials and generated no model-provider traffic."
+    }
+  ],
+  "declaration_runtime_discrepancies": [
+    "Legacy SessionCreateData omits metadata, while the 1.18.7 runtime accepts and preserves object metadata.",
+    "Legacy event declarations omit top-level event.id, while runtime events include it.",
+    "Legacy session.created properties declare info, while runtime properties also include sessionID.",
+    "The promptAsync 204 response is declared void, while the default SDK exposes data as {}."
+  ],
+  "cleanup_proof": {
+    "server_termination": "A shell EXIT/INT/TERM trap sent TERM to the isolated server and waited for it.",
+    "process_remaining": false,
+    "listener_remaining": false,
+    "fixture_root_remaining": false,
+    "repository_runtime_files_modified": false,
+    "real_user_state_modified": false
+  },
+  "verification_rerun": {
+    "required": true,
+    "profile": "same versions, calls, payloads, invalid model, isolation, and no-credential environment",
+    "result": "PASS",
+    "differences": [],
+    "receipt_count": 26,
+    "scenario_results": {
+      "A": "PASS",
+      "B": "PASS",
+      "C": "PASS",
+      "D": "PASS",
+      "E": "PASS",
+      "F": "PASS"
+    },
+    "runtime_integrity_match": true,
+    "provider_traffic_generated": false,
+    "credentials_used": false,
+    "server_process_terminated": true,
+    "listener_remaining": false,
+    "fixture_root_removed_after_evidence_extraction": true,
+    "comparison_fields": [
+      "runtime integrity",
+      "scenario A-F outcomes",
+      "receipt types and stable relationships",
+      "event payload shapes",
+      "HTTP statuses and SDK data",
+      "cleanup proof"
+    ]
+  }
+}
