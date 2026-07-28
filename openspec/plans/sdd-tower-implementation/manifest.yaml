@@ -3,8 +3,8 @@ schema_version: 1
 artifact_id: plan-sdd-tower-implementation
 project_id: control-tower
 plan_id: sdd-tower-implementation
-artifact_revision: 1
-created_at: 2026-07-27T17:13:55Z
+artifact_revision: 2
+created_at: 2026-07-28T00:09:57Z
 producer:
   role: main
   identity: control-tower-main
@@ -51,13 +51,13 @@ artifact_refs:
     schema: artifact-ref
     schema_version: 1
     artifact_id: sdd-tower-implementation-v1-roadmap
-    artifact_revision: 1
+    artifact_revision: 2
     repository_id: control-tower
     repo_relative_path: openspec/plans/master-index.md
     media_type: text/markdown
     digest_mode: raw-bytes
-    source_commit: e817135f592ee0a466053b0c50f92e3a99da6bda
-    content_digest: sha256:7ae75fe2129d8bbebcb9d37496e9939aff3e9a44be28308357758a6d2f00112e
+    source_commit: b96e4d95896377b59f2a6bf5c5d6bc80ba5530d0
+    content_digest: sha256:197bf3f6e168398ce225baffdc6caac41bc8c9fa5feded2185c0c72c3b0a4fd5
 jornada_policy:
   default_preset: standard
   allowed_presets:
@@ -75,56 +75,127 @@ slices:
     dependencies: []
     openspec_change: autonomous-continuation-control-tower
     acceptance_refs:
-      - requirement-gate-f
+      - schema: artifact-ref
+        schema_version: 1
+        artifact_id: requirement-gate-f
+        artifact_revision: 1
+        repository_id: control-tower
+        repo_relative_path: openspec/specs/sdd-tower-implementation-v1-requirements.md
+        media_type: text/markdown
+        digest_mode: raw-bytes
+        source_commit: 0745f99a3d9ab7f9c3676af4d1ca3adf0f0c5c95
+        content_digest: sha256:277129f30b47c1b6fda0a6c81f6d8943d737a7b5ff5750455e2b41dce6e1e5a0
   - slice_id: mechanism-p7-opencode
     goal: Complete the host-neutral polling loop and OpenCode adapter.
     dependencies:
       - mechanism-p6-recovery
     openspec_change: p7-host-neutral-loop-opencode-adapter
     acceptance_refs:
-      - requirement-gate-c
+      - schema: artifact-ref
+        schema_version: 1
+        artifact_id: requirement-gate-c
+        artifact_revision: 1
+        repository_id: control-tower
+        repo_relative_path: openspec/specs/sdd-tower-implementation-v1-requirements.md
+        media_type: text/markdown
+        digest_mode: raw-bytes
+        source_commit: 0745f99a3d9ab7f9c3676af4d1ca3adf0f0c5c95
+        content_digest: sha256:277129f30b47c1b6fda0a6c81f6d8943d737a7b5ff5750455e2b41dce6e1e5a0
   - slice_id: mechanism-p8-pi
     goal: Complete the Pi adapter over the reconciled host-neutral controller.
     dependencies:
       - mechanism-p7-opencode
     openspec_change: p8-slice-planning
     acceptance_refs:
-      - requirement-gate-c
+      - schema: artifact-ref
+        schema_version: 1
+        artifact_id: requirement-gate-c
+        artifact_revision: 1
+        repository_id: control-tower
+        repo_relative_path: openspec/specs/sdd-tower-implementation-v1-requirements.md
+        media_type: text/markdown
+        digest_mode: raw-bytes
+        source_commit: 0745f99a3d9ab7f9c3676af4d1ca3adf0f0c5c95
+        content_digest: sha256:277129f30b47c1b6fda0a6c81f6d8943d737a7b5ff5750455e2b41dce6e1e5a0
   - slice_id: mechanism-p9-claude
     goal: Complete the optional Claude adapter conformance surface.
     dependencies:
       - mechanism-p7-opencode
     openspec_change: autonomous-continuation-control-tower
     acceptance_refs:
-      - requirement-host-conformance
+      - schema: artifact-ref
+        schema_version: 1
+        artifact_id: requirement-host-conformance
+        artifact_revision: 1
+        repository_id: control-tower
+        repo_relative_path: openspec/specs/sdd-tower-implementation-v1-requirements.md
+        media_type: text/markdown
+        digest_mode: raw-bytes
+        source_commit: 0745f99a3d9ab7f9c3676af4d1ca3adf0f0c5c95
+        content_digest: sha256:277129f30b47c1b6fda0a6c81f6d8943d737a7b5ff5750455e2b41dce6e1e5a0
   - slice_id: mechanism-p10-runtime
     goal: Publish a versioned runtime with verified cutover and rollback.
     dependencies:
       - mechanism-p8-pi
-      - mechanism-p9-claude
     openspec_change: autonomous-continuation-control-tower
     acceptance_refs:
-      - requirement-gate-b
+      - schema: artifact-ref
+        schema_version: 1
+        artifact_id: requirement-gate-b
+        artifact_revision: 1
+        repository_id: control-tower
+        repo_relative_path: openspec/specs/sdd-tower-implementation-v1-requirements.md
+        media_type: text/markdown
+        digest_mode: raw-bytes
+        source_commit: 0745f99a3d9ab7f9c3676af4d1ca3adf0f0c5c95
+        content_digest: sha256:277129f30b47c1b6fda0a6c81f6d8943d737a7b5ff5750455e2b41dce6e1e5a0
   - slice_id: mechanism-p11-verification
     goal: Complete CT-only verification and handoff evidence.
     dependencies:
       - mechanism-p10-runtime
     openspec_change: autonomous-continuation-control-tower
     acceptance_refs:
-      - requirement-gate-b
+      - schema: artifact-ref
+        schema_version: 1
+        artifact_id: requirement-gate-b
+        artifact_revision: 1
+        repository_id: control-tower
+        repo_relative_path: openspec/specs/sdd-tower-implementation-v1-requirements.md
+        media_type: text/markdown
+        digest_mode: raw-bytes
+        source_commit: 0745f99a3d9ab7f9c3676af4d1ca3adf0f0c5c95
+        content_digest: sha256:277129f30b47c1b6fda0a6c81f6d8943d737a7b5ff5750455e2b41dce6e1e5a0
   - slice_id: product-a-contract-schemas
     goal: Implement schemas, canonicalization, validators, fixtures, and Main store primitives.
     dependencies: []
     openspec_change: sdd-tower-contract-schemas
     acceptance_refs:
-      - requirement-gate-a
+      - schema: artifact-ref
+        schema_version: 1
+        artifact_id: requirement-gate-a
+        artifact_revision: 1
+        repository_id: control-tower
+        repo_relative_path: openspec/specs/sdd-tower-implementation-v1-requirements.md
+        media_type: text/markdown
+        digest_mode: raw-bytes
+        source_commit: 0745f99a3d9ab7f9c3676af4d1ca3adf0f0c5c95
+        content_digest: sha256:277129f30b47c1b6fda0a6c81f6d8943d737a7b5ff5750455e2b41dce6e1e5a0
   - slice_id: product-b-project-registry
     goal: Implement path-neutral project enrollment, resolution, and Main rederivation.
     dependencies:
       - product-a-contract-schemas
     openspec_change: sdd-tower-project-registry
     acceptance_refs:
-      - requirement-gate-b
+      - schema: artifact-ref
+        schema_version: 1
+        artifact_id: requirement-gate-b
+        artifact_revision: 1
+        repository_id: control-tower
+        repo_relative_path: openspec/specs/sdd-tower-implementation-v1-requirements.md
+        media_type: text/markdown
+        digest_mode: raw-bytes
+        source_commit: 0745f99a3d9ab7f9c3676af4d1ca3adf0f0c5c95
+        content_digest: sha256:277129f30b47c1b6fda0a6c81f6d8943d737a7b5ff5750455e2b41dce6e1e5a0
   - slice_id: product-c-workspace-manager
     goal: Implement deterministic inspect, create, and retire for ephemeral worktrees.
     dependencies:
@@ -132,16 +203,35 @@ slices:
       - product-b-project-registry
     openspec_change: sdd-tower-workspace-manager
     acceptance_refs:
-      - requirement-workspace-manager
+      - schema: artifact-ref
+        schema_version: 1
+        artifact_id: requirement-workspace-manager
+        artifact_revision: 1
+        repository_id: control-tower
+        repo_relative_path: openspec/specs/sdd-tower-implementation-v1-requirements.md
+        media_type: text/markdown
+        digest_mode: raw-bytes
+        source_commit: 0745f99a3d9ab7f9c3676af4d1ca3adf0f0c5c95
+        content_digest: sha256:277129f30b47c1b6fda0a6c81f6d8943d737a7b5ff5750455e2b41dce6e1e5a0
   - slice_id: product-d-main-policy-jornada
     goal: Implement Main routing, Policy, Support reports, jornadas, and assignments.
     dependencies:
       - product-a-contract-schemas
       - product-b-project-registry
+      - product-c-workspace-manager
       - mechanism-p6-recovery
     openspec_change: sdd-tower-main-policy-jornada
     acceptance_refs:
-      - requirement-gate-c
+      - schema: artifact-ref
+        schema_version: 1
+        artifact_id: requirement-gate-c
+        artifact_revision: 1
+        repository_id: control-tower
+        repo_relative_path: openspec/specs/sdd-tower-implementation-v1-requirements.md
+        media_type: text/markdown
+        digest_mode: raw-bytes
+        source_commit: 0745f99a3d9ab7f9c3676af4d1ca3adf0f0c5c95
+        content_digest: sha256:277129f30b47c1b6fda0a6c81f6d8943d737a7b5ff5750455e2b41dce6e1e5a0
   - slice_id: product-e-host-launcher
     goal: Implement single-host session launch and exclusive OpenCode-to-Pi failover.
     dependencies:
@@ -151,8 +241,26 @@ slices:
       - mechanism-p8-pi
     openspec_change: sdd-tower-host-launcher
     acceptance_refs:
-      - requirement-gate-c
-      - requirement-gate-f
+      - schema: artifact-ref
+        schema_version: 1
+        artifact_id: requirement-gate-c
+        artifact_revision: 1
+        repository_id: control-tower
+        repo_relative_path: openspec/specs/sdd-tower-implementation-v1-requirements.md
+        media_type: text/markdown
+        digest_mode: raw-bytes
+        source_commit: 0745f99a3d9ab7f9c3676af4d1ca3adf0f0c5c95
+        content_digest: sha256:277129f30b47c1b6fda0a6c81f6d8943d737a7b5ff5750455e2b41dce6e1e5a0
+      - schema: artifact-ref
+        schema_version: 1
+        artifact_id: requirement-gate-f
+        artifact_revision: 1
+        repository_id: control-tower
+        repo_relative_path: openspec/specs/sdd-tower-implementation-v1-requirements.md
+        media_type: text/markdown
+        digest_mode: raw-bytes
+        source_commit: 0745f99a3d9ab7f9c3676af4d1ca3adf0f0c5c95
+        content_digest: sha256:277129f30b47c1b6fda0a6c81f6d8943d737a7b5ff5750455e2b41dce6e1e5a0
   - slice_id: product-f-telegram-delivery
     goal: Implement idempotent delivery and exact Telegram merge authorization.
     dependencies:
@@ -161,7 +269,16 @@ slices:
       - product-d-main-policy-jornada
     openspec_change: sdd-tower-telegram-delivery
     acceptance_refs:
-      - requirement-gate-e
+      - schema: artifact-ref
+        schema_version: 1
+        artifact_id: requirement-gate-e
+        artifact_revision: 1
+        repository_id: control-tower
+        repo_relative_path: openspec/specs/sdd-tower-implementation-v1-requirements.md
+        media_type: text/markdown
+        digest_mode: raw-bytes
+        source_commit: 0745f99a3d9ab7f9c3676af4d1ca3adf0f0c5c95
+        content_digest: sha256:277129f30b47c1b6fda0a6c81f6d8943d737a7b5ff5750455e2b41dce6e1e5a0
   - slice_id: product-g-continuous-loop
     goal: Implement planning, reconciliation, Binding Delta publication, and next-slice continuation.
     dependencies:
@@ -172,7 +289,16 @@ slices:
       - product-f-telegram-delivery
     openspec_change: sdd-tower-continuous-slice-loop
     acceptance_refs:
-      - requirement-gate-d
+      - schema: artifact-ref
+        schema_version: 1
+        artifact_id: requirement-gate-d
+        artifact_revision: 1
+        repository_id: control-tower
+        repo_relative_path: openspec/specs/sdd-tower-implementation-v1-requirements.md
+        media_type: text/markdown
+        digest_mode: raw-bytes
+        source_commit: 0745f99a3d9ab7f9c3676af4d1ca3adf0f0c5c95
+        content_digest: sha256:277129f30b47c1b6fda0a6c81f6d8943d737a7b5ff5750455e2b41dce6e1e5a0
   - slice_id: product-h-campaigns
     goal: Implement ordered multi-repository campaigns with local Main authority and compensation.
     dependencies:
@@ -182,7 +308,16 @@ slices:
       - product-g-continuous-loop
     openspec_change: sdd-tower-multi-repo-campaigns
     acceptance_refs:
-      - requirement-gate-g
+      - schema: artifact-ref
+        schema_version: 1
+        artifact_id: requirement-gate-g
+        artifact_revision: 1
+        repository_id: control-tower
+        repo_relative_path: openspec/specs/sdd-tower-implementation-v1-requirements.md
+        media_type: text/markdown
+        digest_mode: raw-bytes
+        source_commit: 0745f99a3d9ab7f9c3676af4d1ca3adf0f0c5c95
+        content_digest: sha256:277129f30b47c1b6fda0a6c81f6d8943d737a7b5ff5750455e2b41dce6e1e5a0
   - slice_id: product-i-conformance
     goal: Validate the integrated V1 product through bounded end-to-end pilots.
     dependencies:
@@ -190,7 +325,16 @@ slices:
       - product-h-campaigns
     openspec_change: sdd-tower-v1-conformance-pilot
     acceptance_refs:
-      - requirement-gates-a-through-g
+      - schema: artifact-ref
+        schema_version: 1
+        artifact_id: requirement-gates-a-through-g
+        artifact_revision: 1
+        repository_id: control-tower
+        repo_relative_path: openspec/specs/sdd-tower-implementation-v1-requirements.md
+        media_type: text/markdown
+        digest_mode: raw-bytes
+        source_commit: 0745f99a3d9ab7f9c3676af4d1ca3adf0f0c5c95
+        content_digest: sha256:277129f30b47c1b6fda0a6c81f6d8943d737a7b5ff5750455e2b41dce6e1e5a0
 constraints:
   - Control Tower remains plan-agnostic.
   - Exactly one execution host is active per jornada.

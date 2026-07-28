@@ -28,8 +28,8 @@ Chain strategy: stacked-to-main
 ## Phase 1: Mechanical Roadmap/Catalog/Manifest Alignment
 
 - [x] 1.1 Snapshot preservation hashes; update `openspec/plans/master-index.md` for merged P6 provenance, both DAG paths, no A→P7/P8 edge, and evidence gates.
-- [ ] 1.2 Update `openspec/plans/manifest.yaml` to catalog revision 2 and the `sdd-tower-implementation` anchor; update plan manifest revision/roadmap ArtifactRef.
-- [ ] 1.3 Expand every `acceptance_refs` entry in `openspec/plans/sdd-tower-implementation/manifest.yaml` to validated ArtifactRefs, add C→D, and remove P9 from P10/P11 prerequisite closures.
+- [x] 1.2 Update `openspec/plans/manifest.yaml` to catalog revision 2 and the `sdd-tower-implementation` anchor; update plan manifest revision/roadmap ArtifactRef.
+- [x] 1.3 Expand every `acceptance_refs` entry in `openspec/plans/sdd-tower-implementation/manifest.yaml` to validated ArtifactRefs, add C→D, and remove P9 from P10/P11 prerequisite closures.
 
 ## Phase 2: P7 Bounded Amendments and Reconciliation Record
 
