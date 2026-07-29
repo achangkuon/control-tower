@@ -7,8 +7,8 @@
 | Campo | Detalle |
 |---|---|
 | Dependencias | Ninguna; este Plan fija la autoridad documental de V1. |
-| Outputs | PRD, RFC y REQUIREMENTS aprobados; roadmap; Plan Catalog; Plan Manifest con 15 `slice_id`; proposals A–I; Installable V1 revision 1; Autonomous V2 revision 1; product version map. |
-| Roadmap | `S0.1` está cerrada. Cualquier cambio posterior requiere una revisión explícita del documento autoritativo correspondiente. |
+| Outputs | PRD, RFC y REQUIREMENTS aprobados; roadmap; Plan Catalog; Plan Manifest con 15 `slice_id`; proposals A–I; Installable V1 revision 1; Autonomous V2 revision 1; product version map; convención canónica de nombres. |
+| Roadmap | `S0.1` y `S0.2` están cerradas. Cualquier cambio posterior requiere una revisión explícita del documento autoritativo correspondiente. |
 | Referencias | [PRD](../../prd/sdd-tower-implementation-v1.md), [RFC](../../rfc/sdd-tower-implementation-v1.md), [REQUIREMENTS](../../specs/sdd-tower-implementation-v1-requirements.md), [Plan Catalog](../manifest.yaml), [Plan Manifest](../sdd-tower-implementation/manifest.yaml), [Installable V1](../installable-v1/revisions/1/manifest.yaml), [Autonomous V2](../autonomous-v2/revisions/1/manifest.yaml), [version map](../product-version-map.yaml). |
 
 `docs/architecture/sdd-tower-implementation.md` conserva material de exploración y no reemplaza los tres contratos normativos.
@@ -42,3 +42,15 @@ Installable V1 revision 1 es el contrato de release activo. Autonomous V2 revisi
 - [x] Tarea 0.1.4.1 — Publicar el roadmap aprobado.
 - [x] Tarea 0.1.4.2 — Validar el Plan Catalog.
 - [x] Tarea 0.1.4.3 — Validar el Plan Manifest de 15 slices y sus ArtifactRefs.
+
+## Sesión 0.2 — Migración canónica de nombres
+
+**Estado:** ✅ COMPLETO
+
+**Evidencia:** [PR #69](https://github.com/achangkuon/control-tower/pull/69), merge `fa20b908f129b9f26b2b1fd7d341a170eea4384c`.
+
+### Módulo 0.2.1 — Convención y migración global
+
+- [x] Tarea 0.2.1.1 — Fijar la jerarquía Plan → Sesión → Módulo → Tarea, los estados cerrados y la estructura del índice maestro.
+- [x] Tarea 0.2.1.2 — Migrar la documentación de planificación sin renombrar entidades de dominio ni asignar IDs sin límite de PR demostrable.
+- [x] Tarea 0.2.1.3 — Integrar la migración global mediante PR #69 y registrar su merge canónico.
