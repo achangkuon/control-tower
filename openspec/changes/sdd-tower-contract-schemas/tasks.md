@@ -26,9 +26,9 @@ Chain strategy: pending
 
 ## Phase 1: WU1 — Schema Foundation (17 files)
 
-- [ ] 1.1 RED: Create `test/contracts/schema.test.mjs` and `test/fixtures/contracts/schema-cases-v1.json`; unknown fields, forbidden YAML, top-level/nested duplicates, and decoded-equivalent keys (`"a"`/`"\u0061"`) must fail `CT_SCHEMA_INVALID` with no effect. Run `bun test test/contracts/schema.test.mjs` (expected RED).
-- [ ] 1.2 GREEN: Create `package.json`, `bun.lock`, `schemas/{project-registry,artifact-ref,plan-catalog,plan-manifest,binding-delta,policy-report,jornada,assignment,authorization,campaign}-v1.schema.json`, `contracts/{errors,schema-registry,validate}.mjs`; make 1.1 pass with frozen diagnostics/extensions. Run `bun test test/contracts/schema.test.mjs`.
-- [ ] 1.3 REFACTOR/triangulate WU1: exercise headers, catalog/DAG resolution, manifest state exclusion, immutable delta links, and `CT_MANIFEST_INVALID`. Run `bun test test/contracts/schema.test.mjs`.
+- [x] 1.1 RED: Create `test/contracts/schema.test.mjs` and `test/fixtures/contracts/schema-cases-v1.json`; unknown fields, forbidden YAML, top-level/nested duplicates, and decoded-equivalent keys (`"a"`/`"\u0061"`) must fail `CT_SCHEMA_INVALID` with no effect. Run `bun test test/contracts/schema.test.mjs` (expected RED).
+- [x] 1.2 GREEN: Create `package.json`, `bun.lock`, `schemas/{project-registry,artifact-ref,plan-catalog,plan-manifest,binding-delta,policy-report,jornada,assignment,authorization,campaign}-v1.schema.json`, `contracts/{errors,schema-registry,validate}.mjs`; make 1.1 pass with frozen diagnostics/extensions. Run `bun test test/contracts/schema.test.mjs`.
+- [x] 1.3 REFACTOR/triangulate WU1: exercise headers, catalog/DAG resolution, manifest state exclusion, immutable delta links, and `CT_MANIFEST_INVALID`. Run `bun test test/contracts/schema.test.mjs`.
 
 ## Phase 2: WU2 — Canonicalization and ArtifactRefs (8 files)
 

@@ -1,0 +1,237 @@
+{
+  "projectRegistry": {
+    "schema": "project-registry",
+    "schema_version": 1,
+    "registry_revision": 3,
+    "projects": [
+      {
+        "project_id": "servitask",
+        "aliases": ["servitask", "servi-task"],
+        "canonical_root": "/home/user/projects/Servi-Task-U/Main",
+        "git_common_dir": "/home/user/projects/Servi-Task-U/Main/.git",
+        "expected_remote": "git@github.com:owner/servi-task-u.git",
+        "main_branch": "main",
+        "main_session": "servitask-main",
+        "manifest_path": "openspec/plans/manifest.yaml",
+        "roadmap_path": "openspec/plans/master-index.md",
+        "main_store_path": "/home/user/.local/state/control-tower/projects/servitask",
+        "allowed_hosts": ["pi", "opencode"],
+        "registry_entry_revision": 2
+      }
+    ]
+  },
+  "artifactRef": {
+    "schema": "artifact-ref",
+    "schema_version": 1,
+    "artifact_id": "requirements-v1",
+    "artifact_revision": 1,
+    "repository_id": "servitask",
+    "repo_relative_path": "openspec/specs/requirements.md",
+    "media_type": "text/markdown",
+    "digest_mode": "raw-bytes",
+    "source_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "content_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "planCatalog": {
+    "schema": "plan-catalog",
+    "schema_version": 1,
+    "project_id": "servitask",
+    "catalog_revision": 1,
+    "plans": [
+      {
+        "plan_id": "tasker-app",
+        "manifest_ref": "openspec/plans/tasker-app.yaml",
+        "roadmap_anchor": "tasker-app"
+      }
+    ]
+  },
+  "planManifest": {
+    "schema": "plan-manifest",
+    "schema_version": 1,
+    "artifact_id": "plan-tasker-app",
+    "project_id": "servitask",
+    "plan_id": "tasker-app",
+    "artifact_revision": 4,
+    "created_at": "2026-07-27T12:00:00Z",
+    "producer": {
+      "role": "main",
+      "identity": "servitask-main",
+      "direction": "product-intent-to-policy"
+    },
+    "objective": "Deliver notifications",
+    "artifact_refs": {
+      "prd": "openspec/prd/tasker-app.md",
+      "rfc": "openspec/rfc/tasker-app.md",
+      "requirements": "openspec/specs/tasker-app.md",
+      "roadmap": "openspec/plans/master-index.md"
+    },
+    "jornada_policy": {
+      "default_preset": "standard",
+      "allowed_presets": ["short", "standard", "extended"]
+    },
+    "delivery_policy": {
+      "automatic_commit": true,
+      "automatic_push": true,
+      "automatic_pr": true,
+      "automatic_merge": false
+    },
+    "slices": [
+      {
+        "slice_id": "foundation",
+        "goal": "Build the foundation",
+        "dependencies": [],
+        "openspec_change": "foundation",
+        "acceptance_refs": []
+      },
+      {
+        "slice_id": "notifications",
+        "goal": "Deliver notifications",
+        "dependencies": ["foundation"],
+        "openspec_change": "notifications",
+        "acceptance_refs": []
+      }
+    ],
+    "constraints": [],
+    "non_goals": [],
+    "binding_delta_refs": [],
+    "campaign_refs": []
+  },
+  "bindingDelta": {
+    "schema": "binding-delta",
+    "schema_version": 1,
+    "artifact_id": "delta-tasker-notifications",
+    "project_id": "servitask",
+    "plan_id": "tasker-app",
+    "artifact_revision": 1,
+    "created_at": "2026-07-27T15:00:00Z",
+    "producer": {
+      "role": "implementation",
+      "identity": "servitask-tasker-app-notifications-implementation-a1",
+      "direction": "implementation-to-policy"
+    },
+    "slice_id": "notifications",
+    "assignment_id": "assignment-notifications-7",
+    "assignment_revision": 7,
+    "inputs": {
+      "manifest": "openspec/plans/tasker-app.yaml",
+      "proposal": "openspec/changes/notifications/proposal.md",
+      "specs": ["openspec/changes/notifications/spec.md"],
+      "design": "openspec/changes/notifications/design.md",
+      "tasks": "openspec/changes/notifications/tasks.md",
+      "previous_delta": null
+    },
+    "git": {
+      "base_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "result_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "branch": "feat/tasker-app/notifications",
+      "pull_request": {"repository": "owner/repository", "number": 420}
+    },
+    "contracts": {"added": [], "changed": [], "removed": []},
+    "deviations": [],
+    "new_constraints": [],
+    "dependency_impact": [],
+    "next_slice_impact": [],
+    "verification_evidence": ["evidence/verify.json"],
+    "producer_drift_assessment": {
+      "classification": "compatible",
+      "categories": [],
+      "rationale": "No externally observable drift"
+    }
+  },
+  "policyReport": {
+    "schema": "policy-report",
+    "schema_version": 1,
+    "report_id": "policy-tasker-00042",
+    "project_id": "servitask",
+    "plan_id": "tasker-app",
+    "policy_identity": "servitask-tasker-app-policy",
+    "created_at": "2026-07-27T15:05:00Z",
+    "expires_at": "2026-07-27T15:35:00Z",
+    "inputs": {
+      "manifest_ref": "openspec/plans/tasker-app.yaml",
+      "binding_delta_refs": [],
+      "runtime_projection_revision": 42,
+      "jornada_id": "jornada-servitask-tasker-001",
+      "jornada_revision": 1
+    },
+    "decision": "READY_FOR_APPLY",
+    "eligible_slices": ["notifications"],
+    "blocked_slices": [],
+    "drift": {"classification": "COMPATIBLE", "categories": [], "rationale": "No material drift"},
+    "effective_limits": {},
+    "required_approvals": [],
+    "conflicts": [],
+    "evidence_refs": [],
+    "authority_attestation_ref": "tower-attestation-42"
+  },
+  "jornada": {
+    "schema": "jornada",
+    "schema_version": 1,
+    "jornada_id": "jornada-servitask-tasker-001",
+    "jornada_revision": 1,
+    "project_id": "servitask",
+    "registry_revision": 3,
+    "plan_id": "tasker-app",
+    "preset": "standard",
+    "preset_revision": 1,
+    "effective_limits": {"duration_seconds": 28800, "apply_slice_ceiling": 2, "planning_horizon": 2, "planner_ceiling": 3, "apply_ceiling": 2, "max_attempts_per_slice": 2},
+    "starts_at": "2026-07-27T12:00:00Z",
+    "expires_at": "2026-07-27T20:00:00Z",
+    "execution_host": "opencode",
+    "fallback_host": "pi",
+    "allowed_operations": ["CREATE_COMMIT", "PUSH_BRANCH", "CREATE_OR_UPDATE_PR"],
+    "manifest_ref": "openspec/plans/tasker-app.yaml",
+    "authorization_ref": "authorizations/start-jornada.json",
+    "state": "ACTIVE"
+  },
+  "assignment": {
+    "schema": "assignment",
+    "schema_version": 1,
+    "assignment_id": "assignment-notifications-7",
+    "assignment_revision": 7,
+    "project_id": "servitask",
+    "registry_revision": 3,
+    "plan_id": "tasker-app",
+    "slice_id": "notifications",
+    "role": "implementation",
+    "lane": "apply",
+    "jornada_id": "jornada-servitask-tasker-001",
+    "jornada_revision": 1,
+    "host": "opencode",
+    "host_epoch": 1,
+    "attempt": 1,
+    "session_name": "servitask-tasker-app-notifications-implementation-a1",
+    "workspace": {"path": "/tmp/worktrees/notifications", "branch": "feat/tasker-app/notifications", "base_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+    "inputs": [],
+    "expires_at": "2026-07-27T20:00:00Z"
+  },
+  "authorization": {
+    "schema": "authorization",
+    "schema_version": 1,
+    "authorization_id": "auth-merge-420-001",
+    "action": "MERGE_PR",
+    "project_id": "servitask",
+    "registry_revision": 3,
+    "plan_id": "tasker-app",
+    "jornada_id": "jornada-servitask-tasker-001",
+    "jornada_revision": 1,
+    "pr": {"repository": "owner/repository", "number": 420, "base_branch": "main", "base_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+    "required_checks_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "policy_report_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "created_at": "2026-07-27T15:00:00Z",
+    "expires_at": "2026-07-27T15:30:00Z",
+    "nonce_hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "state": "PENDING"
+  },
+  "campaign": {
+    "schema": "campaign",
+    "schema_version": 1,
+    "campaign_id": "campaign-contract-v2",
+    "campaign_revision": 1,
+    "lead": {"project_id": "control-tower", "main_identity": "control-tower-main"},
+    "steps": [
+      {"step_id": "producer", "project_id": "backend", "plan_id": "contract-v2", "depends_on": [], "expected_pr_ref": null, "preconditions": [], "post_checks": [], "compensation_ref": "compensations/backend.md"},
+      {"step_id": "consumer", "project_id": "frontend", "plan_id": "contract-v2", "depends_on": ["producer"], "expected_pr_ref": null, "preconditions": [], "post_checks": [], "compensation_ref": "compensations/frontend.md"}
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://control-tower.local/schemas/artifact-ref-v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "schema_version", "artifact_id", "artifact_revision", "repository_id", "repo_relative_path", "media_type", "digest_mode", "source_commit", "content_digest"],
+  "properties": {
+    "schema": {"const": "artifact-ref"}, "schema_version": {"const": 1},
+    "artifact_id": {"$ref": "#/$defs/slug"}, "artifact_revision": {"$ref": "#/$defs/revision"},
+    "repository_id": {"$ref": "#/$defs/slug"}, "repo_relative_path": {"$ref": "#/$defs/relativePath"},
+    "media_type": {"type": "string", "pattern": "^[a-z0-9.+-]+/[a-z0-9.+-]+$"},
+    "digest_mode": {"enum": ["rfc8785-jcs", "raw-bytes"]}, "source_commit": {"$ref": "#/$defs/gitSha"},
+    "content_digest": {"$ref": "#/$defs/digest"}, "manifest_revision": {"$ref": "#/$defs/revision"},
+    "assignment_revision": {"$ref": "#/$defs/revision"}, "extensions": {"$ref": "#/$defs/extensions"}
+  },
+  "$defs": {
+    "slug": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"}, "revision": {"type": "integer", "minimum": 1},
+    "gitSha": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "relativePath": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\u0000).+$"},
+    "timestamp": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"},
+    "extensions": {"type": "object", "propertyNames": {"pattern": "^[A-Za-z0-9.-]+/.+$"}, "additionalProperties": true},
+    "producer": {"type": "object", "additionalProperties": false, "required": ["role", "identity", "direction"], "properties": {"role": {"enum": ["main", "policy", "planning", "implementation"]}, "identity": {"type": "string", "minLength": 1}, "direction": {"type": "string", "minLength": 1}}},
+    "pointer": {"anyOf": [{"type": "string", "minLength": 1}, {"$ref": "#"}]}
+  }
+}
