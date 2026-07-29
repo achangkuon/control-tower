@@ -1,7 +1,7 @@
 # Índice Maestro / Hoja de Ruta — SDD Tower Implementation V1
 
 > **Fuente de verdad de planificación.** Los contratos normativos viven en PRD, RFC y REQUIREMENTS; este índice registra orden, dependencias, estado y punto de retoma sin duplicarlos.
-> **Última actualización:** 2026-07-27.
+> **Última actualización:** 2026-07-28.
 
 ## 1. Resultado objetivo
 
@@ -51,7 +51,7 @@ Reglas:
 | Contrato normativo | Completo | Nada | REQUIREMENTS aprobado |
 | Roadmap | Aprobado y mergeado | Mantener el punto de retoma actualizado | PR #47 / merge `0745f99` |
 | Plan Catalog | Creado y validado | Implementar su JSON Schema en Change A | Manifest check: 15 slices / 4 ArtifactRefs |
-| OpenSpec split | Proposals completos | Specs, designs y tasks de A–I | Estado nativo: `nextRecommended: spec` |
+| Installable V1 / Autonomous V2 split | Planning mergeado | Installable V1 debe completar tasks/forecast; Autonomous V2 puede comenzar Change A | PRs #60/#61; `master@1a10b38` |
 | Implementación producto | No iniciada | Completar planning y dependencias por change | Apply por unidad |
 | Piloto end-to-end | No iniciado | Gates A–G de REQUIREMENTS | Verify report V1 |
 
@@ -73,6 +73,9 @@ Observaciones:
 - `apply-ready` nativo no abre ninguno de los dos gates: P7 requiere su registro aprobado; P8 requiere P7 reconciliado e integrado más su propio registro aprobado.
 - P9 Claude, P10 runtime/cutover y P11 verificación/handoff permanecen dentro del change principal.
 - Este roadmap no modifica ni reabre esos contratos mecánicos.
+- PR #60 integró el planning de separación Installable V1 / Autonomous V2 hasta diseño; Installable V1 todavía debe completar `sdd-tasks` y revisar su forecast antes de RED.
+- PR #61 integró spec, design y tasks de Change A (`sdd-tower-contract-schemas`); su primer paso ejecutable es WU1 task 1.1 RED.
+- Los carriles limpios `Worktrees/installable-v1` y `Worktrees/autonomous-v2` parten de `master@1a10b38` y pueden avanzar en paralelo dentro de esos límites. Esto no inicia implementación ni modifica el gate separado de P7.
 
 ## 5. Dependencias macro
 
@@ -165,6 +168,8 @@ Invariantes de reconciliación: `P6 → P7 → P8 → Change E` y `A → B/C →
 
 **Depende de:** documentos aprobados.
 **Produce:** schemas V1, canonicalización, validators, golden fixtures, Plan Catalog y Main control-store primitives.
+
+**Estado:** spec, design y tasks mergeados mediante PR #61. Implementación no iniciada; próximo paso: WU1 task 1.1 RED en `Worktrees/autonomous-v2`.
 
 Módulos propuestos:
 
@@ -327,23 +332,18 @@ Cambios posteriores deben crear una revisión explícita del documento correspon
 
 ## 10. Punto de retoma
 
-**Estado actual:** PRD, RFC, REQUIREMENTS, roadmap, Plan Catalog, Plan Manifest y proposals A–I aprobados estructuralmente y mergeados mediante PR #47 (`0745f99`). No comenzó implementación del producto macro.
+**Estado actual:** PRD, RFC, REQUIREMENTS, roadmap, Plan Catalog, Plan Manifest y proposals A–I están mergeados. PR #60 integró el split Installable V1 / Autonomous V2 hasta diseño y PR #61 integró el planning completo de Change A. No comenzó implementación en ninguno de los dos carriles.
 
 **Sustrato:** P6 está mergeado mediante PRs #38–#45 y cierra en `e16d94b`. P7 y P8 conservan planning completo, pero ambos permanecen bloqueados por sus gates M0 aunque el estado nativo diga `apply-ready`; P8 además espera evidencia de P7 reconciliado e integrado. Antes de actuar se MUST consultar estado nativo y evidencia de reconciliación frescos.
 
-**Próximo paso exacto:**
-
-1. ejecutar `sdd-status` fresco para `sdd-tower-contract-schemas`;
-2. continuar Change A desde `spec`, sin repetir su proposal;
-3. aprobar secuencialmente spec, design y tasks de Change A;
-4. no iniciar apply de producto hasta que el change correspondiente complete planning y sus dependencias estén satisfechas;
-5. mantener A–I separados del sustrato plan-agnostic P6–P11.
+**Próximo paso exacto:** ejecutar trabajo paralelo en los dos carriles dedicados sin confundir sus gates: en `Worktrees/installable-v1`, completar `sdd-tasks` y revisar el Review Workload Forecast antes de RED; en `Worktrees/autonomous-v2`, comenzar Change A WU1 task 1.1 RED desde el planning mergeado. Mantener A–I separados del sustrato plan-agnostic P6–P11 y no usar estos carriles para autorizar P7/P8.
 
 **Estado local reconciliado:**
 
 - Main es el checkout canónico y debe finalizar limpio y sincronizado con `origin/master`.
-- Los homes `agent-tower`, `multi-agentic-dashboard` y `tower-implementation` fueron retirados de forma segura y recreados desde el `master` canónico, con `HEAD` detached para no revivir ramas de tarea obsoletas.
-- Antes de escribir, cada asignación debe crear una rama nueva y acotada desde la base canónica vigente; los worktrees reciclados no otorgan autoridad por sí mismos.
+- `Worktrees/installable-v1` y `Worktrees/autonomous-v2` son carriles dedicados, limpios y sincronizados con `origin/master@1a10b38`; sus ramas de implementación están 0 ahead/behind.
+- `Worktrees/agent-tower` permanece separado y sin cambios en `docs/p7-reconciliation-record@6e56728`; P7 conserva su gate de asignación/aprobación cerrado.
+- Antes de escribir, cada carril debe respetar su planning y gates vigentes; la existencia del worktree no otorga autoridad por sí misma.
 - El cambio local no incluido en PR #47 bajo `docs/architecture/sdd-tower-implementation.md` se preservó fuera del repo en `Backups/worktree-recycle-2026-07-27-123457` antes de retirar su worktree.
 - No se borraron ramas locales o remotas.
 - Evidencia técnica: [`openspec/maintenance/2026-07-27-worktree-retirement.md`](../maintenance/2026-07-27-worktree-retirement.md).
