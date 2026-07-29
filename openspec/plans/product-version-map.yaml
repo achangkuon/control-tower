@@ -1,0 +1,43 @@
+schema: control-tower-product-version-map
+schema_version: 1
+map_revision: 1
+products:
+  installable_v1:
+    plan_id: installable-control-tower-v1
+    active_revision: 1
+    manifest_ref: installable-v1/revisions/1/manifest.yaml
+    artifact_id: installable-control-tower-v1-r1
+    release_lane: installable-v1
+  autonomous_v2:
+    plan_id: autonomous-control-tower-v2
+    active_revision: 1
+    manifest_ref: autonomous-v2/revisions/1/manifest.yaml
+    artifact_id: autonomous-control-tower-v2-r1
+    release_lane: autonomous-v2
+publication:
+  requires_digest_validation: true
+  requires_dependency_validation: true
+  atomic_pointer:
+    strategy: validate-temp-fsync-rename
+    pointer_revision: 1
+    previous_pointer_revision: 0
+  rollback:
+    restore_pointer_revision: 0
+    retain_failed_revision: true
+    delete_historical_artifacts: false
+ownership:
+  active_owner: installable-v1-provenance
+  serialized_with: autonomous-v2
+  integration_checkpoint: v1-provenance-published
+  claims:
+    - owner: installable-v1-provenance
+      checkpoint: v1-provenance-published
+      paths:
+        - openspec/plans/master-index.md
+        - openspec/plans/manifest.yaml
+        - openspec/plans/product-version-map.yaml
+        - openspec/plans/installable-v1/revisions/1/manifest.yaml
+        - openspec/plans/autonomous-v2/revisions/1/manifest.yaml
+    - owner: autonomous-v2
+      checkpoint: v1-provenance-published
+      paths: []

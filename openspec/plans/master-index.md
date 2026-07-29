@@ -19,8 +19,17 @@ Control Tower permanece plan-agnostic. Main, Policy y los agentes de fase interp
 | Plan Catalog | Creado y validado | [`manifest.yaml`](manifest.yaml) | Índice machine-readable de planes |
 | Plan Manifest | Creado y validado | [`sdd-tower-implementation/manifest.yaml`](sdd-tower-implementation/manifest.yaml) | DAG machine-readable de 15 slices y referencias verificadas |
 | OpenSpec changes de producto | Proposals creados | `../changes/sdd-tower-*/proposal.md` | Nueve changes A–I; cada uno continúa en fase `spec` |
+| Installable V1 revision 1 | Active release contract | [`installable-v1/revisions/1/manifest.yaml`](installable-v1/revisions/1/manifest.yaml) | Local-first lifecycle, enrollment, authority, integrations, and release gates |
+| Autonomous V2 revision 1 | Preserved continuation | [`autonomous-v2/revisions/1/manifest.yaml`](autonomous-v2/revisions/1/manifest.yaml) | Revisioned A–I/P6–P11 continuation over released V1 contracts |
+| Product version map | Active canonical pointer | [`product-version-map.yaml`](product-version-map.yaml) | Atomic V1/V2 revision selection, ownership, checkpoints, and rollback metadata |
 
 `docs/architecture/sdd-tower-implementation.md` es material de exploración, no autoridad normativa. Debe reconciliarse por separado antes de cualquier entrega documental, sin reemplazar los tres documentos aprobados.
+
+### 2.1 Installable V1 / Autonomous V2 canonical publication
+
+The active release lane is **Installable V1 revision 1**. **Autonomous V2 revision 1** preserves the approved broad-V1 PRD, RFC, REQUIREMENTS, A–I, and P6–P11 inputs and depends on the exact released V1 ArtifactRef before autonomous execution.
+
+Canonical publication is serialized by the `installable-v1-provenance` owner at checkpoint `v1-provenance-published`. Autonomous V2 owns no canonical surface in this checkpoint and may consume the result only after digest and dependency validation. Rollback restores the prior pointer revision atomically while retaining both historical and failed-new revision bytes.
 
 ## 3. Regla de granularidad
 
