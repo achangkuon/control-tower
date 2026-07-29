@@ -2,9 +2,9 @@
 
 ## Current State and Next Action
 
-The change has completed **explore, propose, spec, and design**. Work stopped intentionally before `sdd-tasks`; no implementation or delivery work has begun.
+The change has completed **explore, propose, spec, and design**, and its planning package was merged through PR #60 at `master@67a266a`. Work stopped intentionally before `sdd-tasks`; no implementation work has begun.
 
-**Next exact action:** run `sdd-tasks` for `installable-v1-autonomous-v2-split`, then inspect the generated **Review Workload Forecast** before starting apply.
+**Next exact action:** in the clean `Worktrees/installable-v1` lane, run `sdd-tasks` for `installable-v1-autonomous-v2-split`, then inspect the generated **Review Workload Forecast** before starting RED. This may run in parallel with Change A implementation in `Worktrees/autonomous-v2`.
 
 ## Product Boundary
 
@@ -28,16 +28,15 @@ The change has completed **explore, propose, spec, and design**. Work stopped in
 
 | Item | Value |
 |---|---|
-| Worktree | `/home/emili/projects/control-tower/Worktrees/installable-v1-priority-gate` |
-| Branch | `docs/installable-v1-priority-gate` |
-| Base / upstream | `origin/master` at `a1c75b39d6d285f9f9be8f074df718d85504a177` |
-| HEAD | `a1c75b39d6d285f9f9be8f074df718d85504a177` |
-| Uncommitted state before this handoff | The change directory contained six untracked planning files: `exploration.md`, `proposal.md`, `design.md`, and the three capability specs. No tracked file modifications were present. |
+| Worktree | `/home/emili/projects/control-tower/Worktrees/installable-v1` |
+| Branch | `feat/installable-v1/implementation` |
+| Base / upstream | `origin/master` at `1a10b384997365a67f9158b6e5fac58999beb7c4` |
+| HEAD | `1a10b384997365a67f9158b6e5fac58999beb7c4` (0 ahead/behind at reconciliation) |
+| Planning delivery | PR #60 merged the seven planning files; the worktree is clean and no implementation has begun. |
 
 ## Session Boundary
 
 - No runtime code or behavior changed.
-- No commits were created and nothing was staged.
-- No push, pull request, merge, release, or other delivery occurred.
+- Planning was delivered through approved issue #58 and merged PR #60; no runtime or implementation delivery occurred.
 - Notion page `3a6e23cc93458168b498eb2fac0011ea` was updated non-destructively: the former SDD Tower roadmap/detail track was split into Installable Control Tower V1 and Autonomous Control Tower V2, with current status and next actions for both.
-- The next session must remain in planning until `sdd-tasks` is complete and its Review Workload Forecast has been inspected.
+- The Installable V1 lane must remain in planning until `sdd-tasks` is complete and its Review Workload Forecast has been inspected; the separate Autonomous V2 lane may begin its already-planned Change A WU1.

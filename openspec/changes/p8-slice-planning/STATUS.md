@@ -2,6 +2,8 @@
 
 Planning is complete and merged in PR #32 (`a0b6f9d0e078fde253e61b6b780e694deb789cc2`). The next implementation session MUST resume directly at `sdd-apply`; exploration, proposal, spec, design, and tasks MUST NOT be rerun. Apply remains blocked despite native `apply-ready` until integrated P7 evidence and P8's independent reconciliation record are both approved.
 
+The Installable V1 and Autonomous V2 planning PRs #60/#61 are merged at `master@1a10b384997365a67f9158b6e5fac58999beb7c4`, and their dedicated clean worktrees may proceed in parallel within their own planning gates. This does not authorize P7 or P8 apply: `Worktrees/agent-tower` remains separate at `docs/p7-reconciliation-record@6e56728`, and P7 still requires live assignment binding, exact approval, and integration before this P8 gate can advance.
+
 ## Apply Handoff
 
 1. Select the chained-PR strategy before apply because the forecast is 620–780 changed lines.
