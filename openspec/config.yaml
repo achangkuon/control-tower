@@ -36,8 +36,8 @@ rules:
     - Document architecture decisions with rationale.
     - Keep the core/adapters boundary explicit.
   tasks:
-    - Group tasks by phase with hierarchical numbering.
-    - Keep tasks completable in one session.
+    - Group each Tarea under a Módulo with positional hierarchical numbering.
+    - Keep each Tarea atomic and scoped to its Módulo.
   apply:
     guidelines:
       - Follow existing ESM, Bun, shell, and Python patterns.

@@ -2,7 +2,7 @@
 
 ## Technical Approach
 
-Build an ESM contract layer beside `core.mjs`: ten schemas, duplicate-safe parsing, RFC 8785 digests, ArtifactRef/idempotency proof, and a Main store. Change A wires no adapter, leaves Tower OFF, and performs no Change B registry lookup, alias resolution, enrollment, or identity/Main selection; it only accepts an already-selected trusted binding. P7/P8 remain independent until Change E.
+Build an ESM contract layer beside `core.mjs`: ten schemas, duplicate-safe parsing, RFC 8785 digests, ArtifactRef/idempotency proof, and a Main store. Change A wires no adapter, leaves Tower OFF, and performs no Change B registry lookup, alias resolution, enrollment, or identity/Main selection; it only accepts an already-selected trusted binding. The legacy P7/P8 changes remain independent until Change E.
 
 ## Architecture Decisions
 
@@ -54,7 +54,7 @@ All 29 files are creations.
 
 Pure APIs remain `parseStructured`, `canonicalize`, `digestArtifact`, `validate`, `verifyArtifactRef`, and `deriveIdempotencyIdentity`; results are frozen with stable `CT_*` errors. Idempotency is `ctv1:<sha256(JCS(input))>`: same input returns evidence, changed input conflicts, and unknown effects require inspection. Store paths reject escape/symlink/non-owner components and credentials; writes use `0700`/`0600`, `O_EXCL|O_NOFOLLOW`, fsync, and atomic link/rename.
 
-Strict-TDD units: **WU1 schemas (17 files)** writes unknown-field, forbidden-YAML, and duplicate-JSON RED fixtures/tests before validators; **WU2 canonicalization/ArtifactRef (8)** writes JCS, Git-mismatch, and idempotency RED tests first; **WU3 Main store (4)** writes authority/atomicity RED tests first. Chain WU1 → WU2 → WU3; each is forecastable and rollbackable.
+Strict-TDD Sesiones: **S2.1 schemas (17 files)** writes unknown-field, forbidden-YAML, and duplicate-JSON RED fixtures/tests before validators; **S2.2 canonicalization/ArtifactRef (8)** writes JCS, Git-mismatch, and idempotency RED tests first; **S2.3 Main store (4)** writes authority/atomicity RED tests first. Chain S2.1 → S2.2 → S2.3; each is forecastable and rollbackable.
 
 Main-store RED cases reject forged capability, worker cwd, Hermes, Support, and campaign leader A mutating project B. Opacity uses paired semantically different (`READY`/`BLOCKED`) Policy Reports and asserts identical mechanical treatment apart from opaque ref/digest values. A recursive static ESM-import test proves Tower entry points do not import `contracts`, schemas, `yaml`, OpenSpec, plan, or Policy parsers. E2E is N/A: no adapter wiring.
 
@@ -70,4 +70,4 @@ Main-store RED cases reject forged capability, worker cwd, Hermes, Support, and 
 
 ## Migration / Rollout
 
-Additive and disconnected: land WU1–WU3, lazily create the XDG store, then let B–I adopt exports. No Tower DB/data migration or P7/P8 dependency. Rollback removes the unpublished unit. Open questions: none.
+Additive and disconnected: land S2.1–S2.3, lazily create the XDG store, then let B–I adopt exports. No Tower DB/data migration or legacy P7/P8 dependency. Rollback removes the unpublished Sesión. Open questions: none.

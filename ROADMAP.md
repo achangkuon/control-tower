@@ -134,13 +134,13 @@ https://github.com/achangkuon/hermes-agent/pull/1
 
 ---
 
-## 2. Avance automático al siguiente módulo del plan
+## 2. Avance automático a la siguiente Sesión del Plan
 
 **Estado**: diseño acordado, sin implementar.
 
 ### El objetivo
 
-Hoy, cuando un agente termina el módulo que tenía asignado, el humano redacta y
+Hoy, cuando un agente termina la Sesión que tenía asignada, el humano redacta y
 manda el brief del siguiente. Se busca que ese salto ocurra solo, con gates
 humanos donde el usuario los quiera.
 
@@ -152,8 +152,8 @@ automático, sin criterio adentro del store. Su README es la regla:
 > No crea, borra ni mueve worktrees. No lanza sesiones. La torre coordina, no
 > ejecuta.
 
-Todo el valor de la torre es ser mecanismo puro. El criterio de "qué módulo
-sigue" cambia por proyecto, por plan y por semana; meterlo adentro arruina la
+Todo el valor de la torre es ser mecanismo puro. El criterio de "qué Sesión
+sigue" cambia por proyecto, por Plan y por semana; meterlo adentro arruina la
 única pieza en la que se puede confiar ciegamente.
 
 ### El diseño acordado
@@ -177,12 +177,12 @@ agente termina 2.2 → merge verificado
 
 Quien redacta el brief **no** es quien lo ejecuta.
 
-- El agente saliente es el mejor autor posible: acaba de vivir el módulo
+- El agente saliente es el mejor autor posible: acaba de vivir la Sesión
   anterior y conoce el delta entre lo que el plan decía y lo que pasó de verdad.
   Eso resuelve el problema del plan que envejece, que ni el humano ni Main
   pueden cubrir con la misma fidelidad.
 - La sesión entrante arranca con **contexto fresco**, sin arrastrar horas de
-  depuración del módulo anterior. Es la palanca de calidad más grande
+  depuración de la Sesión anterior. Es la palanca de calidad más grande
   disponible.
 
 ### Lo que ya existe y no hay que inventar
@@ -220,12 +220,12 @@ resulta puro trámite, automatizar con datos y no con entusiasmo.
    otro"*. Mitigación acordada: **el saliente propone, Main valida contra
    openspec, recién ahí el brief entra a la casilla.** Main no redacta, compara y
    aprueba o corta.
-2. **Base drift.** Cada módulo arranca sobre un `main` que se movió. Ya mordió
+2. **Base drift.** Cada Sesión arranca sobre un `main` que se movió. Ya mordió
    una vez (`18f6d47` → `81ec6da`, 2026-07-21). El paso de avance **debe**
    incluir rebase y review nuevo; no es adorno.
-3. **Fuga sin testigo.** Un agente que avanza seis módulos solo deja seis PRs sin
+3. **Fuga sin testigo.** Un agente que avanza seis Sesiones solo deja seis PRs sin
    leer. El guard de despertares no cubre esto: cuenta mensajes, no trabajo. Hace
-   falta un presupuesto aparte, de N módulos por corrida sin supervisión.
+   falta un presupuesto aparte, de N Sesiones por corrida sin supervisión.
 4. **La velocidad no escala como parece.** La cola serializa **entregas**, no
    trabajo. Tres agentes avanzando en paralelo llegan los tres a READY y hacen
    fila por el mismo token. Es por diseño y está bien, pero no hay que esperar
@@ -234,10 +234,10 @@ resulta puro trámite, automatizar con datos y no con entusiasmo.
 ### Primer paso sugerido, sin código
 
 No automatizar todavía la decisión de Main. Cambiar solo el reporte: cuando un
-agente llega a MERGED, que reporte *"módulo 2.2 cerrado, el siguiente es 2.3"*.
+agente llega a MERGED, que reporte *"S2.2 cerrada, la siguiente es S2.3"*.
 Main lee el plan, confirma que sigue vigente, y emite el handoff — o para y
 pregunta.
 
 Eso da el dato que decide todo lo demás: cuántas veces el plan seguía vigente. Si
-a los diez módulos aguantó nueve, automatizar es seguro. Si aguantó cuatro, se
+a las diez Sesiones aguantó nueve, automatizar es seguro. Si aguantó cuatro, se
 evitó un desastre.

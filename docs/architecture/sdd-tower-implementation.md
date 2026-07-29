@@ -154,7 +154,7 @@ The model scales only with bounded autonomy:
 
 1. **Planning horizon:** prepare at most a configured number of future slices.
 2. **WIP limit:** parallel apply is limited by the verified conflict graph and isolated worktrees.
-3. **Fresh execution context:** one executor session per slice or independently reviewable work unit.
+3. **Fresh execution context:** one executor session per slice or independently reviewable Sesión.
 4. **Mandatory reconciliation:** every prepared SDD is checked against the current merged base before apply.
 5. **Explicit dependencies:** eligibility comes from structured reports, never agent memory or Tower inference.
 6. **Serialized delivery:** implementation may be parallel; shared Git/DB delivery remains ordered.
@@ -167,9 +167,9 @@ The active implementation plan already targets all three required hosts through 
 
 | Slice | Host responsibility | Planned wake boundary |
 |---|---|---|
-| **P7** | Host-neutral controller plus OpenCode adapter | `client.session.promptAsync` after a non-consuming pending peek |
-| **P8** | Thin Pi adapter over the P7 controller | `pi.sendMessage(..., { deliverAs: "followUp", triggerTurn: true })` after current-root and idle revalidation |
-| **P9** | Thin Claude adapter over the P7 controller | Claude `Stop`/`SessionEnd` lifecycle with bounded `asyncRewake` and subagent isolation |
+| `mechanism-p7-opencode` | Host-neutral controller plus OpenCode adapter | `client.session.promptAsync` after a non-consuming pending peek |
+| `mechanism-p8-pi` | Thin Pi adapter over the `mechanism-p7-opencode` controller | `pi.sendMessage(..., { deliverAs: "followUp", triggerTurn: true })` after current-root and idle revalidation |
+| `mechanism-p9-claude` | Thin Claude adapter over the `mechanism-p7-opencode` controller | Claude `Stop`/`SessionEnd` lifecycle with bounded `asyncRewake` and subagent isolation |
 
 P11 already requires the shared `CT-R5-S1..S5` conformance matrix across OpenCode, Pi and Claude. Multi-host support is therefore not a missing capability.
 
@@ -183,9 +183,9 @@ P11 already requires the shared `CT-R5-S1..S5` conformance matrix across OpenCod
 - inject a visible message with `pi.sendMessage`;
 - trigger a new turn automatically when the recipient is idle.
 
-This is useful reference behavior for P8, but Intercom is not Tower authority. Its broker routes messages; it does not provide the Tower's immutable handoff, validation, claim, acknowledgement, completion, budget, lock or recovery guarantees.
+This is useful reference behavior for `mechanism-p8-pi`, but Intercom is not Tower authority. Its broker routes messages; it does not provide the Tower's immutable handoff, validation, claim, acknowledgement, completion, budget, lock or recovery guarantees.
 
-The incident exposes one boundary that must be explicit in P8 reconciliation and shared adapter conformance:
+The incident exposes one boundary that must be explicit in `mechanism-p8-pi` reconciliation and shared adapter conformance:
 
 > **Wake transport is not work authorization.**
 
@@ -202,7 +202,7 @@ host adapter detects pending work
 
 An unsolicited Intercom message, generic prompt or host lifecycle event cannot substitute for `receive → claim → ack`. The adapter must never embed domain payloads, bearer tokens, authority evidence or implementation instructions in its wake envelope.
 
-P8 reconciliation should inspect and pin the installed Pi/Intercom lifecycle behavior as evidence, then explicitly decide whether Intercom is only a reference implementation or an approved transport dependency. That decision must not weaken the host-neutral P7 contract or make P8 depend on an unvalidated message as authority.
+`mechanism-p8-pi` reconciliation should inspect and pin the installed Pi/Intercom lifecycle behavior as evidence, then explicitly decide whether Intercom is only a reference implementation or an approved transport dependency. That decision must not weaken the host-neutral `mechanism-p7-opencode` contract or make `mechanism-p8-pi` depend on an unvalidated message as authority.
 
 ## Skill topology candidate
 
