@@ -1,8 +1,10 @@
 # Proposal: P7-P8 Integrated Reconciliation
 
+> Terminology: P6 and P7 in this migrated document are legacy mechanism identifiers; P7 means `p7-host-neutral-loop-opencode-adapter`. Neither value denotes positional Plan P6 or Plan P7.
+
 ## Intent
 
-Define M0 as bounded roadmap/catalog/manifest and P7/P8 reconciliation. Preserve approved planning; native `apply-ready` is insufficient without approved reconciliation evidence.
+Define S1.9–S1.12 as bounded roadmap/catalog/manifest and P7/P8 reconciliation Sesiones. Preserve approved planning; native `apply-ready` is insufficient without approved reconciliation evidence.
 
 ## Scope
 
@@ -49,7 +51,7 @@ Define M0 as bounded roadmap/catalog/manifest and P7/P8 reconciliation. Preserve
 
 ## Rollback Plan
 
-Revert M0 documentation/manifest edits together; retain prior P7/P8 planning and P6 history. No runtime/data rollback is required.
+Revert S1.9–S1.12 documentation/manifest edits together; retain prior P7/P8 planning and P6 history. No runtime/data rollback is required.
 
 ## Dependencies
 

@@ -1,15 +1,17 @@
 # Exploration: P7-P8 Integrated Reconciliation
 
+> Terminology: P6 and P7 in this migrated document are legacy mechanism identifiers; P7 means `p7-host-neutral-loop-opencode-adapter`. Neither value denotes positional Plan P6 or Plan P7.
+
 ## Executive decision
 
-Preserve P7 and P8 through their existing planning artifacts and apply only bounded integration amendments. Do not rebuild either SDD lifecycle. M0 must first synchronize the roadmap/catalog/manifest, amend P7's proposal plus both designs/tasks, amend P8's designs/tasks, and create separate reconciliation records before either apply phase.
+Preserve P7 and P8 through their existing planning artifacts and apply only bounded integration amendments. Do not rebuild either SDD lifecycle. The reconciliation sequence must first synchronize the roadmap/catalog/manifest, amend P7's proposal plus both designs/tasks, amend P8's designs/tasks, and create separate reconciliation records before either apply phase.
 
 ## Current State
 
 - The checkout is clean at `68cc5da` (`origin/master`). P7 planning was merged by `9ad830b` (PR #30), P8 planning by `a0b6f9d` (PR #32), and the integrated A-I product architecture by `0745f99` (PR #47). Roadmap synchronization followed in `e817135` (PR #49), canonical ArtifactRef binding in `55efaf4` (PR #51), and worktree documentation in `68cc5da` (PR #53).
 - P7 has proposal/spec/design/tasks and a session handoff; P8 has proposal/spec/design/tasks and `STATUS.md`. Neither change has `reconciliation.md`. P7's spec and P8's proposal/spec already express the valid host-neutral boundaries and should be reused.
 - `gentle-ai sdd-status` reports P7 as `0/28`, P8 as `0/8`, and both `applyState: ready`; however it reports `artifactStore: openspec`, empty relationships, no state file, and no reconciliation gate. The native result is therefore structural existence, not integrated apply readiness. `sdd-continue` reproduces the same P7 status and does not resolve this gap.
-- Native P6 status is `30/50` with apply ready. The roadmap still says `26/50`, and P6's historical `apply-progress.md` still contains older branch/worktree counts. M0 should refresh the roadmap from native status without rewriting P6 history.
+- Native P6 status is `30/50` with apply ready. The roadmap still says `26/50`, and P6's historical `apply-progress.md` still contains older branch/worktree counts. S1.9 should refresh the roadmap from native status without rewriting P6 history.
 - The plan manifest contains 15 slices and 4 top-level ArtifactRefs, but its roadmap ref points to `e817135` and digest `7ae75fe...`; the current `master-index.md` at `68cc5da` hashes to `a714a645...`. The manifest ref is stale after the maintenance edit. The catalog's `roadmap_anchor: sdd-tower-implementation-v1` has no explicit matching anchor in the roadmap, and every `acceptance_refs` entry is a scalar such as `requirement-gate-c` although REQUIREMENTS defines these as ArtifactRefs.
 - The manifest currently makes optional mechanism P9 a hard dependency of P10, which then gates P11 and product Change I. This contradicts the roadmap's explicit statement that Claude is opt-in and does not block the Pi/OpenCode pilot. The manifest also lacks the required C-to-D edge if the integrated DAG is interpreted as `A -> B/C -> D -> E`.
 - The approved RFC is authoritative for roles and boundaries: Maintainer (human irreversible authority), Hermes (presentation), Main (per-project authority), Support (read-only decomposition), Policy (plan-local eligibility), Planning (future slice through tasks), Implementation (reconciliation/apply/verify/binding delta), and mechanism services (Control Tower, Workspace Manager, Host Launcher). P7/P8 are host adapters in the plan-agnostic substrate; they are not Main, Policy, Planning, Implementation, or Change A-I owners.
@@ -32,12 +34,12 @@ Preserve P7 and P8 through their existing planning artifacts and apply only boun
 | `openspec/changes/p8-slice-planning/proposal.md` | Reuse unchanged; it already depends only on reconciled P6/P7 and has no Change A dependency. |
 | `openspec/changes/p8-slice-planning/specs/control-tower-pi-adapter/spec.md` | Reuse unchanged; it already fixes Pi's authority, idle, wake, and pre-apply gate. |
 | `openspec/changes/p8-slice-planning/design.md` | Add the same bounded integrated-contract mapping, including P7 ArtifactRefs, all IDs, binding-vs-host epoch semantics, ephemeral-worktree non-ownership, and Change E consumption. Preserve the generation coordinator design. |
-| `openspec/changes/p8-slice-planning/tasks.md` | Expand task 1.1/reconciliation evidence and keep the three existing work units; require P7 integrated evidence before P8 RED and retain the no-A dependency. |
+| `openspec/changes/p8-slice-planning/tasks.md` | Expand reconciliation evidence and keep S1.17–S1.19; require P7 integrated evidence before P8 RED and retain the no-A dependency. |
 | `openspec/changes/p8-slice-planning/STATUS.md` | Correct “resume directly at apply” to “resume at reconciliation, then apply only after P7 integration and both gates pass.” |
-| `openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md` | Required future M0 artifact: merged P6 evidence plus integrated manifest/ArtifactRefs, IDs, epochs, worktree boundary, OpenCode proof, and E handoff. Not created in this read-only exploration. |
-| `openspec/changes/p8-slice-planning/reconciliation.md` | Required future M0 artifact: merged P6/P7 evidence plus Pi proof, shared ArtifactRefs/IDs/epochs, worktree boundary, and E handoff. Not created in this read-only exploration. |
-| `openspec/changes/autonomous-continuation-control-tower/apply-progress.md` | Historical P6 evidence; do not rewrite as part of M0. Treat its stale counts/branch path as evidence requiring roadmap clarification, not as current authority. |
-| `openspec/changes/sdd-tower-host-launcher/proposal.md` | No M0 rewrite required; use its existing C/D/P7/P8 dependency and host-epoch ownership as the downstream Change E contract. |
+| `openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md` | Required future S1.11 artifact: merged P6 evidence plus integrated manifest/ArtifactRefs, IDs, epochs, worktree boundary, OpenCode proof, and E handoff. Not created in this read-only exploration. |
+| `openspec/changes/p8-slice-planning/reconciliation.md` | Required future S1.12 artifact: merged P6/P7 evidence plus Pi proof, shared ArtifactRefs/IDs/epochs, worktree boundary, and E handoff. Not created in this read-only exploration. |
+| `openspec/changes/autonomous-continuation-control-tower/apply-progress.md` | Historical P6 evidence; do not rewrite as part of this reconciliation. Treat its stale counts/branch path as evidence requiring roadmap clarification, not as current authority. |
+| `openspec/changes/sdd-tower-host-launcher/proposal.md` | No reconciliation rewrite required; use its existing C/D/P7/P8 dependency and host-epoch ownership as the downstream Change E contract. |
 
 ## Approaches
 
@@ -53,7 +55,7 @@ Preserve P7 and P8 through their existing planning artifacts and apply only boun
 
 ## Recommendation
 
-Use bounded in-place reconciliation. M0 should first fix the catalog/manifest mechanical errors and refresh the roadmap from native status, then amend only the listed P7/P8 integration seams. Preserve P7's spec and P8's proposal/spec, keep Change A parallel to P7 reconciliation, require P8 to wait for an integrated P7, and leave implementation blocked until each change has an approved `reconciliation.md`. Change E remains the downstream owner of host launch and `host_epoch` failover.
+Use bounded in-place reconciliation. S1.9 and S1.10 should first fix the catalog/manifest mechanical errors and refresh the roadmap from native status, then S1.11 and S1.12 amend only the listed P7/P8 integration seams. Preserve P7's spec and P8's proposal/spec, keep Change A parallel to P7 reconciliation, require P8 to wait for an integrated P7, and leave implementation blocked until each change has an approved `reconciliation.md`. Change E remains the downstream owner of host launch and `host_epoch` failover.
 
 ## Risks
 
@@ -74,4 +76,4 @@ Use bounded in-place reconciliation. M0 should first fix the catalog/manifest me
 
 ## Ready for Proposal
 
-Yes — the exact files, bounded amendments, dependency corrections, and two reconciliation gates are identified. The orchestrator should tell the user that M0 is a documentation/graph reconciliation step, not a rebuilt P7/P8 lifecycle, and that apply remains blocked until both reconciliation records are approved.
+Yes — the exact files, bounded amendments, dependency corrections, and two reconciliation gates are identified. The orchestrator should tell the user that S1.9–S1.12 are documentation/graph reconciliation Sesiones, not a rebuilt P7/P8 lifecycle, and that apply remains blocked until both reconciliation records are approved.

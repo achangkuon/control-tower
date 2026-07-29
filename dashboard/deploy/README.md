@@ -1,6 +1,6 @@
 # Dashboard deployment boundary
 
-These files are operator-facing examples, not an automated deployment system. Every real-host smoke check, service restart, public route or certificate change, credential rotation, rollout, and rollback is blocked on **explicit future user approval**. Applying this work unit performs none of them.
+These files are operator-facing examples, not an automated deployment system. Every real-host smoke check, service restart, public route or certificate change, credential rotation, rollout, and rollback is blocked on **explicit future user approval**. Applying these examples performs none of them.
 
 ## Release and credential layout
 

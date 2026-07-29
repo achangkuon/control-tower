@@ -1,12 +1,14 @@
 # Proposal: P7 Host-Neutral Polling Loop and OpenCode Adapter
 
+> Terminology: P6 and P7 in this migrated document are legacy mechanism identifiers. P7 means `p7-host-neutral-loop-opencode-adapter`; neither value denotes positional Plan P6 or Plan P7.
+
 ## Decision summary
 
 Proceed provisionally with a host-neutral polling controller and a thin OpenCode lifecycle adapter. The controller will own root-session binding, non-consuming delivery peeks, throttling, wake serialization, bounded retry behavior, and synchronous disposal invalidation. The adapter will only classify OpenCode lifecycle events and invoke `client.session.promptAsync` for the proven root session.
 
-The first P7 implementation slice will keep polling state transient and will not persist a real polling witness. Migration 005, its checksum, its schema-5 manifest, and its `UNAVAILABLE_BEFORE_P7` constraint are immutable P6-owned inputs. If post-P6 reconciliation proves that a persisted witness is required, it must be proposed as a separate additive migration unit rather than folded into the loop or adapter.
+The baseline P7 implementation will keep polling state transient and will not persist a real polling witness. Migration 005, its checksum, its schema-5 manifest, and its `UNAVAILABLE_BEFORE_P7` constraint are immutable legacy P6-owned inputs. If post-legacy-P6 reconciliation proves that a persisted witness is required, it must be proposed as a separately planned Sesión rather than folded into the loop or adapter.
 
-Planning is complete. Apply remains blocked until the independent M0 `reconciliation.md` is approved against merged P6 evidence and the OpenCode integration seams. Native `apply-ready` or artifact presence does not satisfy this gate.
+Planning is complete. Apply remains blocked until the independent S1.11 `reconciliation.md` is approved against merged P6 evidence and the OpenCode integration seams. Native `apply-ready` or artifact presence does not satisfy this gate.
 
 ## Intent
 
@@ -42,7 +44,7 @@ This boundary cannot safely satisfy CT-R5 or serve as the shared lifecycle model
 - Pi or Claude adapters and their conformance runs.
 - Runtime publication, installation, host configuration, release cutover, or deployment owned by P10.
 - Actual Control Tower activation, delivery, runtime database mutation, or production-state changes.
-- Dashboard, Telegram, Servi-Task-U policy, work discovery, ownership, launching, or one-unit policy.
+- Dashboard, Telegram, Servi-Task-U policy, work discovery, ownership, launching, or single-Sesión policy.
 - Broad refactoring of legacy fail-closed behavior or invention of a second public continuation API.
 - Changes in the parallel P6 worktree or rewrites of the parent change artifacts.
 
@@ -67,7 +69,7 @@ Refactor `plugin/tower-spike.js` around that controller. The adapter will classi
 
 Keep the transport that supplies a continuation-aware non-consuming `peek` and the exact wake payload explicit in design. Neither may cause the adapter to fetch, consume, acknowledge, or derive authority over a domain delivery.
 
-Implementation should remain reviewable as behavior-based units: controller/state-machine coverage, OpenCode mapping coverage, and only then any reconciled compatibility hardening. A persisted-witness migration is not part of those units.
+Implementation should remain reviewable as S1.13–S1.16: controller/state-machine coverage, OpenCode mapping coverage, and only then any reconciled compatibility hardening. A persisted-witness migration is not part of those Sesiones.
 
 ## Affected areas
 
@@ -83,7 +85,7 @@ Implementation should remain reviewable as behavior-based units: controller/stat
 
 ## Dependencies and apply gate
 
-P7 depends only on the merged P6 continuation and schema work; it has no Change A dependency. It participates in both integrated paths, `P6 → P7 → P8 → Change E` and `A → B/C → D → Change E`, without adding an A→P7/P8 edge. Before any apply or implementation begins, the team must re-read and reconcile:
+P7 depends only on the merged P6 continuation and schema work; it has no Change A dependency. It participates in both integrated paths, `P6 → P7 → P8 → Change E` and `A → B/C → D → Change E`, without adding an A→P7/P8 edge. Before any apply or implementation begins, the team must consume the approved S1.11 record and verify that it reconciles:
 
 - the merged schema version, Migration 005 bytes/checksum, schema manifest, and exact `UNAVAILABLE_BEFORE_P7` constraint;
 - accepted `bootstrapAdmin` transitions and failure/retry behavior;
@@ -116,7 +118,7 @@ Until the separate P7 record is approved and its decision gaps are resolved, `sd
 
 P7 does not publish or cut over a runtime. The host-neutral controller and OpenCode adapter changes must remain independently revertible to the pre-P7 plugin behavior while leaving P6 schema and continuation authority untouched. Because the baseline slice adds no persistent witness schema and performs no runtime-state migration, rollback requires no database downgrade.
 
-If compatibility hardening is needed, keep it in a separate unit so it can be reverted without removing the controller contract. If a future persisted-witness migration is approved, it must define its own forward-safe rollback or disablement plan and must never roll back by editing Migration 005.
+If compatibility hardening is needed, keep it in a separate Sesión so it can be reverted without removing the controller contract. If a future persisted-witness migration is approved, it must define its own forward-safe rollback or disablement plan and must never roll back by editing Migration 005.
 
 ## Success criteria
 

@@ -1,5 +1,7 @@
 # Exploration: P7 Host-Neutral Loop and OpenCode Adapter
 
+> Terminology: P6 and P7 in this migrated document are legacy mechanism identifiers. P7 means `p7-host-neutral-loop-opencode-adapter`; neither value denotes positional Plan P6 or Plan P7.
+
 ## Executive decision
 
 Slice 7 should be implemented as a host-neutral polling controller plus a thin OpenCode lifecycle adapter. The controller must own root binding, non-consuming peeks, throttling, wake serialization, retry behavior, and disposal invalidation. The OpenCode adapter must only translate lifecycle events and call `promptAsync`; it must not import SQLite, call `core.receive`, claim delivery, or duplicate continuation/domain rules.
@@ -116,7 +118,7 @@ Consequences for P7:
 - P7 MUST NOT alter the Migration 005 SQL, checksum, schema-5 manifest, or the `UNAVAILABLE_BEFORE_P7` check.
 - P7's transient loop can run without a schema migration if it does not persist a real witness. This is the recommended first implementation boundary because CT-R5 is a runtime lifecycle contract, not a persistence requirement.
 - If P7 must record a real “poller quiesced/disposed” witness for `finishRollback` or status, it needs a separate additive migration before that write. SQLite cannot broaden the existing CHECK safely. A likely design is a new schema-6 witness table or sidecar linked to the immutable snapshot; rebuilding `ct_quiescence_snapshot` or editing Migration 005 is forbidden.
-- Any migration-006 work must be isolated from the loop/adapter work, independently byte-checksummed and tested, and coordinated with the P6-owned `core.mjs`/migration surface. It should not be smuggled into the adapter PR.
+- Any migration-006 work must be isolated from the loop/adapter work in its own Sesión, independently byte-checksummed and tested, and coordinated with the P6-owned `core.mjs`/migration surface. It should not be smuggled into the adapter PR.
 
 The post-P6 gate must reconcile the actual merged schema version, accepted `bootstrapAdmin` transitions, manifest validator, `continuationStatus`, dispatcher operation list, and capability requirements. The parent design/tasks are planning inputs, not proof that P6 implementation has landed.
 
@@ -140,26 +142,28 @@ No Pi/Claude adapter, runtime publication, install cutover, dashboard, Telegram,
 - **P6 parallel worktree:** `core.mjs`, `mcp.mjs`, migration/recovery tests, and parent design/tasks are active conflict surfaces. P7 must re-read their merged result and must not edit the parent change directory in the P7 workspace.
 - **P7 local runtime:** `plugin/tower-spike.js` is the main behavior replacement. It currently contains legacy queue semantics, so tests must prove that the refactor does not change Plan A fail-closed behavior or silently drop legacy messages if legacy support remains.
 - **Shared future adapter contract:** `host/loop.mjs` and `test/host-adapters.test.mjs` are consumed by P8/P9. Avoid OpenCode-specific names in the controller and freeze the lifecycle-port semantics now.
-- **Optional migration 006:** conflicts with P6's migration validator and schema manifest. Treat it as a separate chained unit, not as an incidental P7 code change.
+- **Optional migration 006:** conflicts with P6's migration validator and schema manifest. Treat it as a separate chained Sesión, not as an incidental P7 code change.
 - **P10:** install/runtime publication and actual cutover are downstream only. P7 must not modify `install.sh`, release paths, host configuration, or the actual Tower runtime.
 
-## Reviewable work-unit strategy
+## Reviewable Sesión strategy
 
-Use chained, behavior-based units; do not bundle the optional migration with runtime behavior. Each unit targets at most 400 authored added/deleted lines, with tests in the same unit:
+Use chained, behavior-based Sesiones; do not bundle the optional migration with runtime behavior. Each Sesión targets at most 400 authored added/deleted lines, with tests in the same Sesión:
 
-1. **P7-A — controller contract and state machine**: RED `test/polling.test.mjs`, then `host/loop.mjs`; deterministic fake scheduler/clock; root binding, non-consuming peek, throttle-before-peek, wake serialization/failure, and synchronous dispose. Target approximately 250–380 authored lines.
-2. **P7-B — OpenCode mapping**: RED additions in `test/host-adapters.test.mjs`, then the thin `plugin/tower-spike.js` adapter; root/child event classification, `session.deleted`, plugin disposal, and `promptAsync` mapping. Target approximately 220–360 authored lines.
-3. **P7-C — compatibility and boundary hardening**: only if required by the actual integration seam; add focused race/pending-delivery regressions and run the existing fail-closed suite without changing core behavior. Target approximately 180–300 authored lines.
-4. **Optional P7-M — real polling witness migration**: only after the post-P6 gate proves persistence is required. Keep migration constants, manifest/validator, schema transition, and migration tests in a separate <=400-line chain slice (or split again before RED if concrete size exceeds budget). The loop and adapter must remain reviewable without this unit.
+1. **S1.13 — controller lifecycle and invalidation**: RED `test/polling.test.mjs`, then `host/loop.mjs`; deterministic fake scheduler/clock; root binding, settled-only scheduling, and synchronous disposal. Target approximately 280–380 authored lines.
+2. **S1.14 — polling and wake safety**: extend the same controller/test files with throttle-before-peek, wake serialization/failure, retries, and pending preservation. Target approximately 320–400 authored lines.
+3. **S1.15 — OpenCode mapping**: RED additions in `test/host-adapters.test.mjs`, then the thin `plugin/tower-spike.js` adapter; root/child event classification, `session.deleted`, plugin disposal, and `promptAsync` mapping. Target approximately 320–400 authored lines.
+4. **S1.16 — compatibility and transport composition**: only after reconciliation approves the concrete integration seam; add focused race/pending-delivery regressions and run the existing fail-closed suite without changing core behavior. Target approximately 240–380 authored lines.
 
-Every unit needs a focused test result, runtime-harness result or explicit `N/A`, a rollback boundary, and an authored-line receipt. The P7 branch must stop before Judgment Day or P8; this exploration does not authorize apply or review lifecycle actions.
+A real polling-witness migration receives a newly planned Sesión only after the post-P6 gate proves persistence is required; no positional ID is assigned before that decision.
+
+Every Sesión needs a focused test result, runtime-harness result or explicit `N/A`, a rollback boundary, and an authored-line receipt. The P7 branch must stop before Judgment Day or P8; this exploration does not authorize apply or review lifecycle actions.
 
 ## Non-goals
 
 - Pi or Claude adapters and their conformance runs.
 - P10 versioned runtime publication, `current` cutover, host configuration changes, or deployment.
 - Actual Control Tower activation, delivery, database mutation, or runtime-state changes.
-- Dashboard, Telegram, Servi-Task-U policy, work discovery, ownership selection, launching, or one-unit policy.
+- Dashboard, Telegram, Servi-Task-U policy, work discovery, ownership selection, launching, or single-Sesión policy.
 - Rewriting Migration 005, weakening its witness CHECK, or creating a caller-controlled polling proof.
 - Adding `start`, moving SQLite/domain authority into adapters, or exposing claimant tokens/anchor secrets.
 - PRs, commits, pushes, Gentle AI reviews, 4R lenses, or Judgment Day.
@@ -181,6 +185,6 @@ Before P7 apply/implementation, revalidate:
 - the actual continuation `receive`/`claim` and dispatcher/capability APIs;
 - whether P6 has already added or reserved any polling tables, routes, or tests;
 - root/session identity fields and event shapes from the supported OpenCode host;
-- that the selected P7 work unit has no parent-design or P6-core conflict and remains within the 400-line budget.
+- that the selected P7 Sesión has no parent-design or P6-core conflict and remains within the 400-line budget.
 
 Until this gate passes, P7 may continue through proposal, spec, design, and tasks provisionally, but apply/implementation remains blocked.

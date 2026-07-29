@@ -1,12 +1,14 @@
 # Design: Host-Neutral Polling Loop and OpenCode Adapter
 
+> Terminology: P6 and P7 in this migrated document are legacy mechanism identifiers. P7 means `p7-host-neutral-loop-opencode-adapter`; neither value denotes positional Plan P6 or Plan P7.
+
 ## Decision summary
 
 P7 will add a transient, host-neutral polling state machine and make the OpenCode plugin a thin lifecycle and wake adapter. The controller owns one immutable root binding, one-shot scheduling, throttle-before-peek ordering, serialized wake attempts, bounded retries, and synchronous generation invalidation. The adapter owns OpenCode event classification and the `client.session.promptAsync` call. Neither layer owns SQLite, continuation transitions, delivery consumption, claims, or polling persistence.
 
 The baseline deliberately adds no polling witness and does not edit Migration 005, its checksum, its schema-5 manifest, or `polling_witness = 'UNAVAILABLE_BEFORE_P7'`. The implementation remains blocked until merged P6 and supported OpenCode behavior satisfy the reconciliation checklist in this design.
 
-M0 integration keeps P7 blocked until its independent `reconciliation.md` is approved. Native `apply-ready` is insufficient. P7 depends only on merged P6—not Change A—and preserves both DAG paths: `P6 → P7 → P8 → Change E` and `A → B/C → D → Change E` with the required C→D edge.
+S1.11 keeps P7 blocked until its independent `reconciliation.md` is approved. Native `apply-ready` is insufficient. P7 depends only on merged P6—not Change A—and preserves both DAG paths: `P6 → P7 → P8 → Change E` and `A → B/C → D → Change E` with the required C→D edge.
 
 ### Integrated identity and authority boundary
 
@@ -348,7 +350,7 @@ Allowed attributes are `generation`, `state`, `reason`, `delay_ms`, `window_atte
 | `test/helpers/host-adapter-conformance.mjs` | Add reusable CT-R5 harness contract for OpenCode, Pi, and Claude adapters. | Baseline P7 |
 | `test/host-adapters.test.mjs` | Run CT-R5-S1..S5 for OpenCode and OpenCode-specific malformed-event/prompt tests. | Baseline P7 |
 | `test/fail-closed.test.mjs` | Run unchanged as regression evidence. | No planned edit |
-| `core.mjs`, `mcp.mjs` | Reconciliation inputs only. Any required transport change needs an explicit design amendment and separate work unit. | Not baseline edit targets |
+| `core.mjs`, `mcp.mjs` | Reconciliation inputs only. Any required transport change needs an explicit design amendment and separate Sesión. | Not baseline edit targets |
 | `test/migration.test.mjs` | Run only if relevant; no baseline P7 edit. | Not an edit target |
 | Migration 005/P6 worktree | Immutable read-only dependency. | Never edit |
 
@@ -356,7 +358,7 @@ No install, publication, runtime configuration, Pi/Claude adapter, dashboard, Te
 
 ## Strict-TDD test strategy
 
-The repository has strict TDD enabled with `bun test`. Each behavior unit follows RED -> GREEN -> TRIANGULATE/REFACTOR, keeps tests with behavior, and records focused command, exact result, authored-line count, runtime harness result or `N/A`, and rollback boundary.
+The repository has strict TDD enabled with `bun test`. Each behavior-level Tarea follows RED -> GREEN -> TRIANGULATE/REFACTOR, keeps tests with behavior, and records focused command, exact result, authored-line count, runtime harness result or `N/A`, and rollback boundary.
 
 ### Controller tests
 
@@ -403,26 +405,26 @@ git diff --check
 
 An isolated P6-backed transport integration test may be added only after reconciliation. It must create temporary repositories/runtime roots, keep continuation OFF except within the fixture's explicit setup, and never mutate the actual Tower runtime database.
 
-## Behavior-based work units
+## Behavior-based Sesiones
 
-These are planning boundaries for later tasks, not PR creation instructions. Each unit includes its tests and targets at most 400 authored added/deleted lines.
+These are planning boundaries for later tasks, not PR creation instructions. Each Sesión includes its tests and targets at most 400 authored added/deleted lines.
 
-| Unit | Finished behavior | Files | Forecast | Focused verification | Rollback boundary |
+| Sesión | Finished behavior | Files | Forecast | Focused verification | Rollback boundary |
 |---|---|---|---:|---|---|
-| P7-A1 Root lifecycle and invalidation | Immutable bind, settle gating, one-shot generation scheduling, stale callback protection, synchronous idempotent disposal. | `host/loop.mjs`, `test/polling.test.mjs` | 280-380 | lifecycle/disposal subset of polling tests | Revert A1 controller/test blocks; no runtime adapter exists. |
-| P7-A2 Polling and wake safety | Throttle-before-peek, deterministic empty/error polling, serialized wake, global attempt window, retries, success pause, exhaustion. | same | 320-400 | full `test/polling.test.mjs` | Revert A2 additions; A1 remains inert and reviewable. |
-| P7-B OpenCode lifecycle conformance | Proven root/child mapping, CT-R5-S1..S5, synchronous root/plugin disposal, reusable host fixture. | `plugin/tower-spike.js`, `test/helpers/host-adapter-conformance.mjs`, `test/host-adapters.test.mjs` | 320-400 | host adapter suite | Revert adapter/fixture unit; completed controller remains unused. |
-| P7-C Reconciled transport and wake composition | Approved non-consuming transport, exact generic `promptAsync` mapping, capability identity continuity, fail-closed absence behavior, legacy decision. | adapter plus only approved seam files/tests | 240-380; split before RED if larger | adapter + isolated transport + fail-closed | Revert only composition/seam changes; no schema rollback. |
+| S1.13 Root lifecycle and invalidation | Immutable bind, settle gating, one-shot generation scheduling, stale callback protection, synchronous idempotent disposal. | `host/loop.mjs`, `test/polling.test.mjs` | 280-380 | lifecycle/disposal subset of polling tests | Revert S1.13 controller/test blocks; no runtime adapter exists. |
+| S1.14 Polling and wake safety | Throttle-before-peek, deterministic empty/error polling, serialized wake, global attempt window, retries, success pause, exhaustion. | same | 320-400 | full `test/polling.test.mjs` | Revert S1.14 additions; S1.13 remains inert and reviewable. |
+| S1.15 OpenCode lifecycle conformance | Proven root/child mapping, CT-R5-S1..S5, synchronous root/plugin disposal, reusable host fixture. | `plugin/tower-spike.js`, `test/helpers/host-adapter-conformance.mjs`, `test/host-adapters.test.mjs` | 320-400 | host adapter suite | Revert S1.15 adapter/fixture changes; completed controller remains unused. |
+| S1.16 Reconciled transport and wake composition | Approved non-consuming transport, exact generic `promptAsync` mapping, capability identity continuity, fail-closed absence behavior, legacy decision. | adapter plus only approved seam files/tests | 240-380; split before RED if larger | adapter + isolated transport + fail-closed | Revert only S1.16 composition/seam changes; no schema rollback. |
 
-A transport change in `core.mjs` or `mcp.mjs` is not automatically part of P7-C. If reconciliation requires one, it receives its own amended design and <=400-line work unit. No persisted-witness work unit exists in the baseline.
+A transport change in `core.mjs` or `mcp.mjs` is not automatically part of S1.16. If reconciliation requires one, it receives its own amended design and separately planned Sesión. No persisted-witness Sesión exists in the baseline.
 
 ## Rollback
 
 P7 has no database migration or persisted witness, so rollback requires no down-migration and cannot edit Migration 005.
 
-1. Revert P7-C to disable the transport/wake composition while retaining tested adapter/controller code.
-2. Revert P7-B to restore the pre-P7 plugin only if the recorded legacy compatibility decision permits it; otherwise disable the plugin entrypoint fail closed.
-3. Revert P7-A2 and P7-A1 independently to remove the unused controller and tests.
+1. Revert S1.16 to disable the transport/wake composition while retaining tested adapter/controller code.
+2. Revert S1.15 to restore the pre-P7 plugin only if the recorded legacy compatibility decision permits it; otherwise disable the plugin entrypoint fail closed.
+3. Revert S1.14 and S1.13 independently to remove the unused controller and tests.
 4. Leave all P6 schema, continuation, recovery, delivery, and authority rows untouched.
 5. Runtime publication or host configuration rollback remains P10-owned because P7 performs no cutover.
 
@@ -430,25 +432,25 @@ The operational kill path is plugin disposal or removal from composition. Since 
 
 ## Apply-blocking reconciliation checklist
 
-Before `sdd-apply`, create and approve `openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md`. Every item below MUST include concrete merged-commit/file/test evidence; unchecked or ambiguous items keep apply blocked.
+Before `sdd-apply`, S1.13–S1.16 MUST consume and validate the approved S1.11 `reconciliation.md`; they MUST NOT recreate or re-author it. Every item below MUST already have concrete merged-commit/file/test evidence; unchecked or ambiguous items keep apply blocked.
 
-- [ ] Validate the M0 Plan Manifest/ArtifactRefs and both DAG paths; prove no Change A dependency or A→P7/P8 edge and preserve Change E ownership.
-- [ ] Record each integrated identity separately, keep `binding_epoch`, `host_epoch`, and controller `generation` distinct, and reject missing or conflated evidence.
-- [ ] Pin the assignment-bound in-container worktree path, authorized base SHA, allowed branch shape, `assignment_id`, and `session_id`; confirm P7 has no worktree lifecycle authority.
+- [ ] Verify the approved record validates the S1.10 Plan Manifest/ArtifactRefs and both DAG paths, proves no Change A dependency or A→P7/P8 edge, and preserves Change E ownership.
+- [ ] Verify the approved record distinguishes every integrated identity, keeps `binding_epoch`, `host_epoch`, and controller `generation` separate, and rejects missing or conflated evidence.
+- [ ] Verify the approved record pins the assignment-bound in-container worktree path, authorized base SHA, allowed branch shape, `assignment_id`, and `session_id`, and confirms P7 has no worktree lifecycle authority.
 
-- [ ] P6 is merged into the P7 base. Record the merged commit and confirm the read-only worktree was not copied as an implementation source.
-- [ ] Record merged schema version, exact Migration 005 byte length/checksum, schema-5 manifest identity, accepted `bootstrapAdmin` transitions, replay behavior, and the unchanged `polling_witness = 'UNAVAILABLE_BEFORE_P7'` constraint.
-- [ ] Confirm no P6 polling table, route, test, or reserved name conflicts with `host/loop.mjs`, controller methods, trace names, or P7 tests.
-- [ ] Record the merged argument-free continuation receive signature, exact non-consuming descriptor result, claim boundary, error behavior, and schema-5 compatibility.
-- [ ] Record the merged dispatcher/MCP constructor-capability signatures and how production OpenCode supplies trusted metadata and process identity without request/environment authority.
-- [ ] Select and threat-model one trusted `peek` transport. Prove the plugin imports no core/SQLite implementation and no second public continuation API is created.
-- [ ] Prove root ID and binding epoch continuity across OpenCode lifecycle classification, trusted metadata, registration, receive, claim, and wake target.
-- [ ] Capture supported OpenCode version and real fixtures for root creation/idle/deletion, child creation/idle/deletion, `parentID`, `sessionID`, incomplete metadata, and event ordering. Define the exact root-proof rule.
-- [ ] Verify and pin the exact `client.session.promptAsync` call and generic prompt. Confirm prompt content contains no descriptor, token, evidence, sender, or domain payload.
-- [ ] Decide whether legacy queue waking remains required. If yes, approve a separate non-consuming/non-lossy compatibility boundary; if no, record the intentional behavior removal and regression expectations.
-- [ ] Confirm transient polling is sufficient for P7 and compatible with merged P6 `beginRollback`/`finishRollback` semantics. If persistence is required, stop P7 and propose a separate additive migration; never edit Migration 005.
+- [ ] Verify the approved record proves P6 is merged into the P7 base, identifies the merged commit, and confirms the read-only worktree was not copied as an implementation source.
+- [ ] Verify the approved record captures merged schema version, exact Migration 005 byte length/checksum, schema-5 manifest identity, accepted `bootstrapAdmin` transitions, replay behavior, and the unchanged `polling_witness = 'UNAVAILABLE_BEFORE_P7'` constraint.
+- [ ] Verify the approved record confirms no P6 polling table, route, test, or reserved name conflicts with `host/loop.mjs`, controller methods, trace names, or P7 tests.
+- [ ] Verify the approved record captures the merged argument-free continuation receive signature, exact non-consuming descriptor result, claim boundary, error behavior, and schema-5 compatibility.
+- [ ] Verify the approved record captures the merged dispatcher/MCP constructor-capability signatures and how production OpenCode supplies trusted metadata and process identity without request/environment authority.
+- [ ] Verify the approved record selects and threat-models one trusted `peek` transport and proves the plugin imports no core/SQLite implementation and creates no second public continuation API.
+- [ ] Verify the approved record proves root ID and binding epoch continuity across OpenCode lifecycle classification, trusted metadata, registration, receive, claim, and wake target.
+- [ ] Verify the approved record captures the supported OpenCode version and real fixtures for root creation/idle/deletion, child creation/idle/deletion, `parentID`, `sessionID`, incomplete metadata, and event ordering, with the exact root-proof rule.
+- [ ] Verify the approved record pins the exact `client.session.promptAsync` call and generic prompt and confirms prompt content contains no descriptor, token, evidence, sender, or domain payload.
+- [ ] Verify the approved record decides whether legacy queue waking remains required and documents either its approved non-consuming/non-lossy compatibility boundary or its intentional removal and regression expectations.
+- [ ] Verify the approved record confirms transient polling is sufficient for P7 and compatible with merged P6 `beginRollback`/`finishRollback` semantics. If persistence is required, stop P7 and propose a separate additive migration; never edit Migration 005.
 - [ ] Re-run the full merged baseline with the actual configured Bun version and record zero failures before the first RED edit.
-- [ ] Reforecast each behavior unit at <=400 authored changed lines and verify no unit touches parent artifacts, P6 worktree files, runtime publication/configuration, or unrelated `.gitignore` entries.
+- [ ] Reforecast S1.13, S1.14, S1.15, and S1.16 at <=400 authored changed lines and verify no Sesión touches parent artifacts, P6 worktree files, runtime publication/configuration, or unrelated `.gitignore` entries.
 
 ## Acceptance traceability
 

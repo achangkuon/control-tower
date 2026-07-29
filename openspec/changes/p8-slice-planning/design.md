@@ -1,5 +1,7 @@
 # Design: P8 — Pi Adapter
 
+> Terminology: P6 and P7 in this migrated document are legacy mechanism identifiers; P7 means `p7-host-neutral-loop-opencode-adapter`. Neither value denotes positional Plan P6 or Plan P7.
+
 ## Technical Approach
 
 Add a generation-scoped Pi extension over merged P7 `host/loop.mjs`. P7 retains polling, peek, retry, serialization, and invalidation; P8 supplies reconciled lifecycle classification, wake eligibility, generation ownership, and `pi.sendMessage`. Identity shapes remain opaque until reconciliation pins them.
@@ -77,7 +79,7 @@ Wake calls `pi.sendMessage(wakeEnvelope, { deliverAs: "followUp", triggerTurn: t
 
 No migration required. P8 never edits Migration 005 and performs no P10 installation, publication, activation, or cutover.
 
-Before any RED, `reconciliation.md` MUST pin merged evidence for P6 capability, root equivalence/current-session authority, pending preservation, and witness decision; P7 factory/lifecycle/wake/disposal/fixture contracts; Pi callback identity, root/child/shutdown proof, idle timing, current-session lookup, `sendMessage`, manifest/unload semantics; and process-shared coordinator lifetime. Missing proof keeps P8 blocked and fail closed.
+Before any RED, S1.17 MUST consume and validate the approved S1.12 `reconciliation.md`; it MUST NOT recreate or re-author it. The record MUST pin merged evidence for P6 capability, root equivalence/current-session authority, pending preservation, and witness decision; P7 factory/lifecycle/wake/disposal/fixture contracts; Pi callback identity, root/child/shutdown proof, idle timing, current-session lookup, `sendMessage`, manifest/unload semantics; and process-shared coordinator lifetime. Missing proof keeps P8 blocked and fail closed.
 
 The record MUST distinguish `project_id`, `plan_id`, `slice_id`, `assignment_id`, `jornada_id`, `session_id`, `host_process_instance`, `plugin_instance`, and `root_session_id`; it MUST keep capability `binding_epoch`, Main-issued/Change-E-enforced `host_epoch`, and process-local non-authoritative `generation` separate. Assignment evidence pins an authorized in-container `Worktrees/<plan>/<lane>/<slice>` path, base SHA, allowed branch, assignment, and session. Workspace Manager owns worktree lifecycle; Change E owns host lifecycle, heartbeat, stop proof, session naming, host-epoch enforcement, and exclusive failover. P8 owns neither.
 
