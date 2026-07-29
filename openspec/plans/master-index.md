@@ -1,11 +1,11 @@
 # Índice Maestro — SDD Tower Implementation V1
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-07-29 contra `origin/master` en `66e1fa18fb5c05169fd0e83763a5d16cd513abbb`.
+> Última reconciliación: 2026-07-29 contra `master` en `fa20b908f129b9f26b2b1fd7d341a170eea4384c`.
 
 ## 📍 Punto de retoma
 
-La documentación canónica, Installable V1 revision 1, Autonomous V2 revision 1 y el sustrato legacy P6 están integrados; `S2.1` cerró en PR #67.
+La migración canónica de nombres cerró como `S0.2` mediante PR #69, merge `fa20b908f129b9f26b2b1fd7d341a170eea4384c`; P0 permanece completo.
 Lo siguiente es completar `S1.11` y `S1.12`; `p7-host-neutral-loop-opencode-adapter` (legacy P7) y `p8-slice-planning` permanecen bloqueados hasta aprobar sus registros independientes.
 En paralelo, Change A continúa por `S2.2`; no depende de los changes legacy P7/P8 y no debe reabrir PRD, RFC ni REQUIREMENTS.
 Las responsabilidades aún sin límite de PR demostrable permanecen sin ID en el [apéndice de migración](plan-vocabulary-migration-appendix.md).
