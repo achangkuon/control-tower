@@ -1,0 +1,9 @@
+{
+  "name": "control-tower",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "ajv": "8.17.1",
+    "yaml": "2.8.1"
+  }
+}

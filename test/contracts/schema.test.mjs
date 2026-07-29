@@ -1,0 +1,144 @@
+import { describe, expect, test } from "bun:test"
+import { readFileSync } from "node:fs"
+import { dirname, join } from "node:path"
+import { fileURLToPath } from "node:url"
+
+import { validate } from "../../contracts/validate.mjs"
+
+const fixtures = JSON.parse(readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), "../fixtures/contracts/schema-cases-v1.json"),
+  "utf8",
+))
+
+const errorCode = (operation) => {
+  try {
+    operation()
+  } catch (error) {
+    return error.code
+  }
+  return null
+}
+
+describe("V1 schema boundary", () => {
+  for (const [name, payload] of Object.entries(fixtures)) {
+    test(`${name} accepts its declared contract`, () => {
+      const result = validate(name, payload)
+      expect(result).toEqual(payload)
+      expect(Object.isFrozen(result)).toBe(true)
+    })
+
+    test(`${name} rejects undeclared fields without mutating input`, () => {
+      const input = structuredClone(payload)
+      input.unexpected = "must fail closed"
+      const before = JSON.stringify(input)
+
+      expect(errorCode(() => validate(name, input))).toBe("CT_SCHEMA_INVALID")
+      expect(JSON.stringify(input)).toBe(before)
+    })
+  }
+
+  test("accepts explicitly namespaced extensions", () => {
+    const input = structuredClone(fixtures.artifactRef)
+    input.extensions = { "com.example/evidence": { retained: true } }
+
+    expect(validate("artifactRef", input).extensions).toEqual({
+      "com.example/evidence": { retained: true },
+    })
+  })
+
+  test("rejects an extension without a namespace", () => {
+    const input = structuredClone(fixtures.artifactRef)
+    input.extensions = { evidence: true }
+
+    expect(errorCode(() => validate("artifactRef", input))).toBe("CT_SCHEMA_INVALID")
+  })
+})
+
+describe("duplicate-safe structured parsing", () => {
+  test("accepts quoted timestamps but rejects an implicit timestamp in an otherwise valid document", () => {
+    const quoted = JSON.stringify(fixtures.planManifest)
+    expect(validate("planManifest", quoted).created_at).toBe("2026-07-27T12:00:00Z")
+
+    const implicit = quoted.replace('"2026-07-27T12:00:00Z"', "2026-07-27T12:00:00Z")
+    expect(errorCode(() => validate("planManifest", implicit))).toBe("CT_SCHEMA_INVALID")
+  })
+
+  test("rejects forbidden YAML syntax", () => {
+    const forbidden = [
+      "schema: artifact-ref\nschema_version: 1\nvalue: &shared x\ncopy: *shared\n",
+      "schema: artifact-ref\nschema_version: 1\ncreated_at: 2026-07-27\n",
+      "schema: artifact-ref\nschema_version: 1\nunsafe: 9007199254740993\n",
+      "schema: artifact-ref\nschema_version: 1\n1: non-string-key\n",
+      "schema: artifact-ref\nschema_version: 1\ntagged: !custom value\n",
+      "schema: artifact-ref\nschema_version: 1\nbase: &base {x: 1}\nmerged: {<<: *base}\n",
+    ]
+
+    for (const source of forbidden) {
+      expect(errorCode(() => validate("artifactRef", source))).toBe("CT_SCHEMA_INVALID")
+    }
+  })
+
+  test("rejects top-level, nested, and decoded-equivalent JSON keys", () => {
+    const duplicates = [
+      '{"schema":"artifact-ref","schema":"artifact-ref"}',
+      '{"outer":{"value":1,"value":2}}',
+      '{"a":1,"\\u0061":2}',
+    ]
+
+    for (const source of duplicates) {
+      expect(errorCode(() => validate("artifactRef", source))).toBe("CT_SCHEMA_INVALID")
+    }
+  })
+})
+
+describe("cross-field schema invariants", () => {
+  test("catalog IDs and references resolve uniquely", () => {
+    const duplicate = structuredClone(fixtures.planCatalog)
+    duplicate.plans.push(structuredClone(duplicate.plans[0]))
+    expect(errorCode(() => validate("planCatalog", duplicate))).toBe("CT_MANIFEST_INVALID")
+
+    const unresolved = structuredClone(fixtures.planCatalog)
+    unresolved.plans[0].manifest_ref = ""
+    expect(errorCode(() => validate("planCatalog", unresolved))).toBe("CT_MANIFEST_INVALID")
+  })
+
+  test("manifest dependencies resolve and remain acyclic", () => {
+    const unresolved = structuredClone(fixtures.planManifest)
+    unresolved.slices[1].dependencies = ["missing"]
+    expect(errorCode(() => validate("planManifest", unresolved))).toBe("CT_MANIFEST_INVALID")
+
+    const cyclic = structuredClone(fixtures.planManifest)
+    cyclic.slices[0].dependencies = ["notifications"]
+    expect(errorCode(() => validate("planManifest", cyclic))).toBe("CT_MANIFEST_INVALID")
+  })
+
+  test("manifest excludes mutable runtime state and automatic merge", () => {
+    const runtimeState = structuredClone(fixtures.planManifest)
+    runtimeState.session_id = "runtime-session"
+    expect(errorCode(() => validate("planManifest", runtimeState))).toBe("CT_MANIFEST_INVALID")
+
+    const automaticMerge = structuredClone(fixtures.planManifest)
+    automaticMerge.delivery_policy.automatic_merge = true
+    expect(errorCode(() => validate("planManifest", automaticMerge))).toBe("CT_MANIFEST_INVALID")
+  })
+
+  test("delta corrections link the immediately previous immutable revision", () => {
+    const correction = structuredClone(fixtures.bindingDelta)
+    correction.artifact_revision = 2
+    correction.inputs.previous_delta = { ...fixtures.artifactRef, artifact_revision: 1 }
+    expect(validate("bindingDelta", correction).artifact_revision).toBe(2)
+
+    correction.inputs.previous_delta.artifact_revision = 2
+    expect(errorCode(() => validate("bindingDelta", correction))).toBe("CT_MANIFEST_INVALID")
+
+    const missingLink = structuredClone(fixtures.bindingDelta)
+    missingLink.artifact_revision = 2
+    expect(errorCode(() => validate("bindingDelta", missingLink))).toBe("CT_MANIFEST_INVALID")
+  })
+
+  test("campaign step dependencies resolve and remain acyclic", () => {
+    const cyclic = structuredClone(fixtures.campaign)
+    cyclic.steps[0].depends_on = ["consumer"]
+    expect(errorCode(() => validate("campaign", cyclic))).toBe("CT_MANIFEST_INVALID")
+  })
+})

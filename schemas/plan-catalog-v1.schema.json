@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "https://control-tower.local/schemas/plan-catalog-v1.schema.json",
+  "type": "object", "additionalProperties": false, "required": ["schema", "schema_version", "project_id", "catalog_revision", "plans"],
+  "properties": {"schema": {"const": "plan-catalog"}, "schema_version": {"const": 1}, "project_id": {"$ref": "artifact-ref-v1.schema.json#/$defs/slug"}, "catalog_revision": {"$ref": "artifact-ref-v1.schema.json#/$defs/revision"}, "plans": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["plan_id", "manifest_ref", "roadmap_anchor"], "properties": {"plan_id": {"$ref": "artifact-ref-v1.schema.json#/$defs/slug"}, "manifest_ref": {"$ref": "artifact-ref-v1.schema.json#/$defs/pointer"}, "roadmap_anchor": {"$ref": "artifact-ref-v1.schema.json#/$defs/slug"}, "extensions": {"$ref": "artifact-ref-v1.schema.json#/$defs/extensions"}}}}, "extensions": {"$ref": "artifact-ref-v1.schema.json#/$defs/extensions"}}
+}
