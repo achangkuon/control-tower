@@ -1,49 +1,42 @@
-# Tasks: Installable V1 / Autonomous V2 Split
+# Tasks: Installable V1 release
 
 ## Review Workload Forecast
 
 | Field | Value |
 |---|---|
-| Estimated changed lines | 1,800–2,600 aggregate; each slice <=1,000 |
-| 400-line budget risk | High |
-| Chained PRs recommended | Yes |
-| Suggested split | PR 1 provenance → PR 2 lifecycle → PR 3 enrollment/hosts → PR 4 Support/Hermes/services → PR 5 conformance/V2 mapping |
-| Delivery strategy | auto-forecast |
+| Estimated changed lines | 320–400 for S8.2; maintainer-approved hard maximum 800 |
+| 400-line budget risk | Medium |
+| Chained PRs recommended | Yes; every PR targets `master` |
+| Delivery strategy | ask-on-risk |
 | Chain strategy | stacked-to-main |
 
-Decision needed before apply: No
+Decision needed before apply: Yes
 Chained PRs recommended: Yes
 Chain strategy: stacked-to-main
-400-line budget risk: High
+400-line budget risk: Medium
 
-### Suggested Work Units
+## Plan P8 — Installable V1 release
 
-| Unit | Goal | Likely PR | Focused test command | Runtime harness | Rollback boundary |
-|---|---|---|---|---|---|
-| 1 | Canonical V1/V2 provenance surfaces | PR 1 | `bun test test/provenance` | N/A: planning-only; validate manifests and digests | Revert `openspec/plans/{master-index.md,manifest.yaml,product-version-map.yaml}` and new revision manifests |
-| 2 | Versioned lifecycle and legacy migration | PR 2 | `bun test test/install` | Temp XDG homes/repos: install→failed upgrade→rollback→uninstall | Revert `install.sh`, `bin/torre`, `install/*`, `scripts/publish-runtime.mjs` |
-| 3 | Enrollment, layout, and optional hosts | PR 3 | `bun test test/registry test/layout test/host-adapters` | Two temp repos plus unsafe symlink/remote fixtures | Revert `registry/*`, `layout/*`, `adapters/{contract,opencode,pi,claude}/*` |
-| 4 | Read-only Support, bounded Hermes, services | PR 4 | `bun test test/support test/hermes test/services` | Mock host configs and Hermes denial/replay scenarios | Revert `support/*`, `adapters/hermes/*`, `services/{systemd,launchd}/*` |
-| 5 | Clean-machine conformance and V2 mapping | PR 5 | `bun test test/release` | Linux/WSL systemd and macOS launchd matrix | Revert `test/{install,registry,host-adapters,support,hermes,services,release}*` and V2 mapping artifacts |
+### S8.1 — Provenance surfaces (✅ COMPLETO)
 
-## Phase 1: Provenance and Ownership
+- [x] Historical tasks 1.1–1.3 are complete and trace to PR #65, merge `b1269a2d2f4b791c6f9e2e29650660160e99f382`.
 
-- [x] 1.1 RED: add `test/provenance/*` for documentation-like executable-path classes (`requirements.txt`, `CMakeLists.txt`, executable MD/MDX, `README.sh`), Git `-C`, escaping relative, mismatched absolute roots, digest mismatch, canonical consistency/rollback, and shared-file conflict.
-- [x] 1.2 GREEN: update `openspec/plans/master-index.md`, `manifest.yaml`, `product-version-map.yaml`, and V1/V2 revision manifests with ArtifactRefs, owners, checkpoints, dependencies, and release lane; never rewrite historical bytes.
-- [x] 1.3 REFACTOR: normalize raw-byte digests, relationship fields, and atomic pointer rollback; serialize this shared surface with Autonomous V2.
+### S8.2 — Immutable lifecycle foundation (implementation complete; pending independent verification)
 
-## Phase 2: Lifecycle and Enrollment
+PR boundary: one autonomous PR from `master@e4d8ad6`; focused test `bun test test/install`; runtime harness uses temporary XDG homes and temporary repositories for install → failed upgrade → rollback → uninstall. Rollback reverts exactly `test/install/version-store.test.mjs`, `test/install/lifecycle.test.mjs`, `install/version-store.mjs`, `install/active-pointer.mjs`, `install/lifecycle.mjs`, `install.sh`, `bin/torre`, and `scripts/publish-runtime.mjs`.
 
-- [ ] 2.1 RED→GREEN→REFACTOR: in `test/install/*`, then `install.sh`, `bin/torre`, `install/*.mjs`, and `scripts/publish-runtime.mjs`, prove immutable versions, active-pointer rollback, idempotence, preservation, and `CT_V2_ONLY`; keep `package.json`, `bun.lock`, `core.mjs`, and `mcp.mjs` untouched.
-- [ ] 2.2 RED→GREEN→REFACTOR: in `test/{registry,layout}/*`, then `registry/*.mjs` and `layout/*.mjs`, prove project isolation, realpath/Git validation, safe empty scaffolds, and fail-closed non-destructive behavior.
+Strict TDD ordering is RED → GREEN → REFACTOR within each Módulo; do not interleave these steps.
 
-## Phase 3: Integrations and Authority
+#### M8.2.1 — Version store and active pointer
 
-- [ ] 3.1 RED→GREEN→REFACTOR: add host denial/transaction tests, then `adapters/{contract,opencode,pi,claude}/*`, covering probe→plan→apply→verify→revert and absent optional hosts.
-- [ ] 3.2 RED→GREEN→REFACTOR: add Support/Hermes tests before `support/{manifest,agent,snapshot}.mjs` and `adapters/hermes/*.mjs`; enforce read-only snapshots, allowlist/replay safety, explicit Main routing, and rejection of shell/worker/Git/merge authority.
-- [ ] 3.3 RED→GREEN→REFACTOR: add service tests before `services/{systemd,launchd}/*`; preserve user-service boundaries and no daemon authority expansion.
+- [x] T8.2.1.1 RED: add `test/install/version-store.test.mjs` for immutable versions, pointer validation/rollback, preservation, and `CT_V2_ONLY` denial.
+- [x] T8.2.1.2 GREEN: add `install/version-store.mjs` and `install/active-pointer.mjs` with validation, atomic replacement, and old-version retention.
+- [x] T8.2.1.3 REFACTOR: normalize temp-file, fsync, rename, and deterministic failure paths; rerun `bun test test/install`.
 
-## Phase 4: Conformance and Handoff
+#### M8.2.2 — Lifecycle command wiring
 
-- [ ] 4.1 RED→GREEN→REFACTOR: add `test/{install,registry,host-adapters,support,hermes,services,release}*` clean-machine, interruption, rollback, preservation, and host-matrix evidence; run `bun test` with Tower OFF.
-- [ ] 4.2 Publish only new V2 revision/mapping artifacts after V1 release refs are stable; map A–I/P6–P11 with preserved/superseded/migrated relationships and record the external V2 ownership of `package.json`/`bun.lock`.
+- [x] T8.2.2.1 RED: add `test/install/lifecycle.test.mjs` for idempotent install/diagnose/upgrade/rollback/uninstall and failed-upgrade preservation of config/history.
+- [x] T8.2.2.2 GREEN: wire `install/lifecycle.mjs`, `install.sh`, `bin/torre`, and `scripts/publish-runtime.mjs` without touching `core.mjs`, `mcp.mjs`, `package.json`, or `bun.lock`.
+- [x] T8.2.2.3 REFACTOR: make the temporary-XDG/repository harness deterministic and record safe audit/rollback outcomes; rerun the focused test.
+
+Telegram is the priority for the first future dependency-safe Sesión; do not assign an ID before its one-PR boundary is proven. It MUST NOT gain shell, worker, Git, merge, delivery, or implicit project-selection authority.
