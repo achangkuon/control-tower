@@ -1,14 +1,14 @@
 # Índice Maestro — SDD Tower Implementation V1
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-07-29 contra `master` en `fa20b908f129b9f26b2b1fd7d341a170eea4384c`.
+> Última reconciliación: 2026-07-30 contra `origin/master` en `bbb59af9ca4de9223e0ec06474725f13329993b6`.
 
 ## 📍 Punto de retoma
 
-La migración canónica de nombres cerró como `S0.2` mediante PR #69, merge `fa20b908f129b9f26b2b1fd7d341a170eea4384c`; P0 permanece completo.
-Lo siguiente es completar `S1.11` y `S1.12`; `p7-host-neutral-loop-opencode-adapter` (legacy P7) y `p8-slice-planning` permanecen bloqueados hasta aprobar sus registros independientes.
-En paralelo, Change A continúa por `S2.2`; no depende de los changes legacy P7/P8 y no debe reabrir PRD, RFC ni REQUIREMENTS.
-Las responsabilidades aún sin límite de PR demostrable permanecen sin ID en el [apéndice de migración](plan-vocabulary-migration-appendix.md).
+`S2.2` cerró el issue #71 y se integró mediante PR #72 en `origin/master@bbb59af9ca4de9223e0ec06474725f13329993b6`; P2 continúa listo.
+El siguiente alcance aprobado es `S2.3` — Main Store and Boundaries — comenzando por `M2.3.1`; su implementación todavía no comenzó.
+P1 permanece bloqueado en `S1.11` y `S1.12`; `p7-host-neutral-loop-opencode-adapter` (legacy P7) y `p8-slice-planning` siguen esperando sus registros independientes.
+Las responsabilidades aún sin límite de PR demostrable permanecen sin ID en el [apéndice de migración](plan-vocabulary-migration-appendix.md); no se reabren PRD, RFC ni REQUIREMENTS.
 
 ## Granularidad
 
@@ -17,16 +17,18 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 
 ## 📊 Estado de un vistazo
 
-| ID | Plan | Estado | Est. | Dueño | Qué falta | Ref |
-|----|------|--------|------|-------|-----------|-----|
-| P0 | Documentación canónica | ✅ COMPLETO | — | Maintainer | — | [STATUS](plan-0/STATUS.md) |
-| P1 | Sustrato mecánico | 🔴 BLOQUEADO | — | Main | S1.11–S1.19 | [STATUS](plan-1/STATUS.md) |
-| P2 | Contratos y registro de producto | 🟢 LISTO | — | Main | S2.2, S2.3 | [STATUS](plan-2/STATUS.md) |
-| P3 | Workspace y orquestación | 📋 PLANIFICADO | — | Main | — | [STATUS](plan-3/STATUS.md) |
-| P4 | Hosts y línea exclusiva | 📋 PLANIFICADO | — | Main | — | [STATUS](plan-4/STATUS.md) |
-| P5 | Entrega y continuación | 📋 PLANIFICADO | — | Main | — | [STATUS](plan-5/STATUS.md) |
-| P6 | Campañas multiproyecto | 📋 PLANIFICADO | — | Main | — | [STATUS](plan-6/STATUS.md) |
-| P7 | Conformidad V1 | 📋 PLANIFICADO | — | Maintainer | — | [STATUS](plan-7/STATUS.md) |
+**Avance global:** 1/8 Planes cerrados (13%) · Sesiones cerradas en Planes activos: 12/22 (55%).
+
+| ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |
+|----|------|--------|---|------|-------|-----------|-----|
+| P0 | Documentación canónica | ✅ COMPLETO | 100% (2/2 S) | — | Maintainer | — | [STATUS](plan-0/STATUS.md) |
+| P1 | Sustrato mecánico | 🔴 BLOQUEADO | — (legacy P9–P11 sin Sesiones definidas) | — | Main | S1.11–S1.19 | [STATUS](plan-1/STATUS.md) |
+| P2 | Contratos y registro de producto | 🟢 LISTO | — (Change B sin Sesiones definidas) | — | Main | S2.3 | [STATUS](plan-2/STATUS.md) |
+| P3 | Workspace y orquestación | 📋 PLANIFICADO | — (sin Sesiones definidas) | — | Main | — | [STATUS](plan-3/STATUS.md) |
+| P4 | Hosts y línea exclusiva | 📋 PLANIFICADO | — (sin Sesiones definidas) | — | Main | — | [STATUS](plan-4/STATUS.md) |
+| P5 | Entrega y continuación | 📋 PLANIFICADO | — (sin Sesiones definidas) | — | Main | — | [STATUS](plan-5/STATUS.md) |
+| P6 | Campañas multiproyecto | 📋 PLANIFICADO | — (sin Sesiones definidas) | — | Main | — | [STATUS](plan-6/STATUS.md) |
+| P7 | Conformidad V1 | 📋 PLANIFICADO | — (sin Sesiones definidas) | — | Maintainer | — | [STATUS](plan-7/STATUS.md) |
 
 ## 🗂️ Planes archivados
 
