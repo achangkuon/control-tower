@@ -10,6 +10,11 @@
 set -euo pipefail
 
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+case "${1:-}" in
+    install|diagnose|upgrade|rollback|uninstall)
+        exec bun "$SRC/install/lifecycle.mjs" "$@"
+        ;;
+esac
 if [[ "${1:-}" == "--provision-main" || "${1:-}" == "--bootstrap-admin" ]]; then
     command="${1#--}"; shift
     exec env CONTROL_TOWER_CORE="$SRC/core.mjs" "$SRC/bin/torre" "$command" "$@"

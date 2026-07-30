@@ -1,42 +1,27 @@
-# Session Handoff: Installable V1 / Autonomous V2 Split
+# Session Handoff: Installable V1 release
 
-## Current State and Next Action
+## Clean Boundary
 
-The change has completed **explore, propose, spec, and design**, and its planning package was merged through PR #60 at `master@67a266a`. Work stopped intentionally before `sdd-tasks`; no implementation work has begun.
+The planning candidate is at `/home/emili/projects/control-tower/Worktrees/installable-v1-s8-2-planning`, branch `docs/installable-v1-s8-2-planning`, based exactly on clean `master@e4d8ad63437e5c57dbf37edf86aadcc9c9fdab1d`. The candidate itself is not clean: its uncommitted diff is exactly the five approved planning paths listed below. The stale `docs/close-v1-v2-wu1` worktree was cleaned by discarding the four authorized obsolete copies; no content was carried forward.
 
-**Next exact action:** in the clean `Worktrees/installable-v1` lane, run `sdd-tasks` for `installable-v1-autonomous-v2-split`, then inspect the generated **Review Workload Forecast** before starting RED. This may run in parallel with Change A implementation in `Worktrees/autonomous-v2`.
+- `openspec/plans/master-index.md`
+- `openspec/plans/plan-8/STATUS.md`
+- `openspec/changes/installable-v1-autonomous-v2-split/tasks.md`
+- `openspec/changes/installable-v1-autonomous-v2-split/apply-progress.md`
+- `openspec/changes/installable-v1-autonomous-v2-split/session-handoff.md`
 
-## Product Boundary
+## Exact Next Action
 
-**Installable V1 is the immediate release priority.** The historical broad V1 becomes **Autonomous V2** through revisioned provenance: preserve historical PRD, RFC, REQUIREMENTS, A–I, P6–P11, P7/P8, and ArtifactRef bytes, then publish explicit `preserves`, `supersedes`, and migration relationships. Do not destructively rewrite historical artifacts.
+Ask the Maintainer for interactive approval to apply only `S8.2 Immutable lifecycle foundation`. The Maintainer-approved hard maximum is 800 changed lines; S8.2 remains forecast at 320–400 changed lines. After approval, execute `M8.2.1` then `M8.2.2` as one Strict TDD PR targeting `master`, using `bun test` and a temporary-XDG repository harness. Do not implement during this planning reconciliation.
 
-| Lane | Agreed scope |
-|---|---|
-| Installable V1 | A local-first Tower for multiple enrolled projects; each project's `Main/` is the sole orchestrator; local Support under `Worktrees/` is read-only and non-authoritative; workers are manually prepared and launched; Bun, Git, OpenCode, Pi, and Claude are detected and configured only when available or requested; Hermes is an optional bounded bridge; systemd and launchd are supported; install, diagnose, upgrade, rollback, and uninstall are versioned, idempotent, fail-closed, and preserve configuration and Tower history. |
-| Autonomous V2 | Automatic worker, session, assignment, worktree, and launch provisioning plus the preserved A–I/P6–P11/P7/P8 autonomous ecosystem, including authorized jornadas, continuation, failover, campaigns, and delivery. Hermes global presentation and remote intent remain separate from per-project Main authority and local Support. |
+## Completed Evidence
 
-## Completed SDD Phases
+`S8.1` provenance tasks 1.1–1.3 are ✅ COMPLETO through PR #65, merge `b1269a2d2f4b791c6f9e2e29650660160e99f382`. Its historical tests and rollback evidence remain preserved in `apply-progress.md`; the next base is the later clean `master` commit above.
 
-- [x] Explore: established the truthful V1 boundary, reusable runtime seams, V2 preservation map, and conflict surfaces.
-- [x] Propose: froze intent, scope, capabilities, authority, release gates, and provenance approach.
-- [x] Spec: completed `installable-control-tower-v1`, `autonomous-control-tower-v2`, and `control-tower-product-provenance` specifications.
-- [x] Design: defined additive module boundaries, immutable runtime releases, per-host transactions, Support denial, Hermes limits, implementation topology, and verification strategy.
-- [ ] Tasks: intentionally not started.
-- [ ] Apply, verify, archive: not started.
+## Ownership Exclusions
 
-## Repository State
+S8.2 owns only immutable version storage, active-pointer cutover, lifecycle commands, preservation, and tests. It excludes `core.mjs`, `mcp.mjs`, `package.json`, `bun.lock`, DB, runtime state, Tower processes, Autonomous V2 contract work, and all delivery actions.
 
-| Item | Value |
-|---|---|
-| Worktree | `/home/emili/projects/control-tower/Worktrees/installable-v1` |
-| Branch | `feat/installable-v1/implementation` |
-| Base / upstream | `origin/master` at `1a10b384997365a67f9158b6e5fac58999beb7c4` |
-| HEAD | `1a10b384997365a67f9158b6e5fac58999beb7c4` (0 ahead/behind at reconciliation) |
-| Planning delivery | PR #60 merged the seven planning files; the worktree is clean and no implementation has begun. |
+## Telegram Priority
 
-## Session Boundary
-
-- No runtime code or behavior changed.
-- Planning was delivered through approved issue #58 and merged PR #60; no runtime or implementation delivery occurred.
-- Notion page `3a6e23cc93458168b498eb2fac0011ea` was updated non-destructively: the former SDD Tower roadmap/detail track was split into Installable Control Tower V1 and Autonomous Control Tower V2, with current status and next actions for both.
-- The Installable V1 lane must remain in planning until `sdd-tasks` is complete and its Review Workload Forecast has been inspected; the separate Autonomous V2 lane may begin its already-planned Change A WU1.
+Telegram is the first priority among future work once its dependencies are safe (A, B, and D). Do not assign a Sesión ID until a one-PR boundary is proven. Telegram MUST NOT receive shell, worker selection/launch, Git, merge, delivery, or implicit project-selection authority; local operation remains complete without it.
