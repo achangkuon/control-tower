@@ -9,11 +9,11 @@
 | Chained PRs recommended | Yes |
 | Suggested split | S2.1 → S2.2 → S2.3 |
 | Delivery strategy | auto-chain |
-| Chain strategy | pending |
+| Chain strategy | stacked-to-main |
 
 Decision needed before apply: No
 Chained PRs recommended: Yes
-Chain strategy: pending
+Chain strategy: stacked-to-main
 400-line budget risk: High
 
 ### Suggested Sesiones
@@ -36,9 +36,9 @@ Chain strategy: pending
 
 ### Módulo 2.2.1 — Canonicalization and immutable refs
 
-- [ ] Tarea 2.2.1.1 RED: Create `test/contracts/{canonicalization,artifact-ref,idempotency}.test.mjs` and `test/fixtures/contracts/canonicalization-v1.json`; cover JCS/forbidden YAML, stale/mismatched refs, traversal/symlink/root escape, `requirements.txt`, `CMakeLists.txt`, executable MD/MDX, `README.sh`, fixed `git -C`, relative escape, foreign root rejection, and timeout/unknown-effect inspection. Run `bun test test/contracts/canonicalization.test.mjs test/contracts/artifact-ref.test.mjs test/contracts/idempotency.test.mjs` (expected RED).
-- [ ] Tarea 2.2.1.2 GREEN: Create `contracts/{canonicalize,artifact-ref,idempotency,index}.mjs`; prove UTF-16 JCS, opaque bytes, commit/blob binding, `CT_ARTIFACT_REF_INVALID`, `CT_IDEMPOTENCY_CONFLICT`, and no replay. Run `bun test test/contracts/canonicalization.test.mjs test/contracts/artifact-ref.test.mjs test/contracts/idempotency.test.mjs`.
-- [ ] Tarea 2.2.1.3 REFACTOR/triangulate S2.2: reject unsafe/non-finite/invalid-Unicode values, exclude self-reference, freeze results, and retain path guarantees. Run `bun test test/contracts/canonicalization.test.mjs test/contracts/artifact-ref.test.mjs test/contracts/idempotency.test.mjs`.
+- [x] Tarea 2.2.1.1 RED: Create `test/contracts/{canonicalization,artifact-ref,idempotency}.test.mjs` and `test/fixtures/contracts/canonicalization-v1.json`; cover JCS/forbidden YAML, stale/mismatched refs, traversal/symlink/root escape, `requirements.txt`, `CMakeLists.txt`, executable MD/MDX, `README.sh`, fixed `git -C`, relative escape, foreign root rejection, and timeout/unknown-effect inspection. Run `bun test test/contracts/canonicalization.test.mjs test/contracts/artifact-ref.test.mjs test/contracts/idempotency.test.mjs` (expected RED).
+- [x] Tarea 2.2.1.2 GREEN: Create `contracts/{canonicalize,artifact-ref,idempotency,index}.mjs`; prove UTF-16 JCS, opaque bytes, commit/blob binding, `CT_ARTIFACT_REF_INVALID`, `CT_IDEMPOTENCY_CONFLICT`, and no replay. Run `bun test test/contracts/canonicalization.test.mjs test/contracts/artifact-ref.test.mjs test/contracts/idempotency.test.mjs`.
+- [x] Tarea 2.2.1.3 REFACTOR/triangulate S2.2: reject unsafe/non-finite/invalid-Unicode and cyclic values, require exact byte inputs, exclude self-reference, deeply freeze parsed results, and retain path guarantees. Correction RED: 3 pass/2 fail; GREEN: 5 pass/0 fail; focused contracts: 14 pass/0 fail.
 
 ## Sesión 2.3 — Main Store and Boundaries (4 files)
 

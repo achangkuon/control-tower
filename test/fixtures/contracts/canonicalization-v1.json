@@ -1,0 +1,8 @@
+{
+  "equivalent": [
+    "schema: artifact-ref\nschema_version: 1\nartifact_id: example\n",
+    "{\"artifact_id\":\"example\",\"schema_version\":1,\"schema\":\"artifact-ref\"}"
+  ],
+  "utf16_order": {"\ue000": "bmp", "😀": "astral"},
+  "rfc_number_sample": {"numbers": [333333333.33333329, 1e+30, 4.5, 0.002, 1e-27]}
+}
