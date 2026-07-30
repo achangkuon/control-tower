@@ -44,6 +44,10 @@ Chain strategy: stacked-to-main
 
 ### Módulo 2.3.1 — Main authority and atomic store
 
-- [ ] Tarea 2.3.1.1 RED: Create `test/main-store.test.mjs`; forged capability, worker cwd, Hermes, Support, and foreign-campaign mutations must deny; permissions/credentials and failed writes preserve records; READY/BLOCKED reports stay mechanically identical; recursive imports exclude Tower→contracts/schema/YAML/OpenSpec/plan/Policy. Run `bun test test/main-store.test.mjs` (expected RED).
-- [ ] Tarea 2.3.1.2 GREEN: Create `main-store/{authority,store,index}.mjs`; implement startup-only trusted binding, WeakSet capability, owner-only `0700`/`0600` atomic CAS, terminal authorizations, and audit evidence. Run `bun test test/main-store.test.mjs`.
-- [ ] Tarea 2.3.1.3 REFACTOR/triangulate S2.3: verify Maintainer/Hermes/Main/Support/Policy/Planning/Implementation/Workspace Manager/Host Launcher/Tower/foreign-leader roles, the Change A/B boundary (no registry lookup, alias resolution, enrollment, identity/Main selection), Tower OFF, and no legacy P7/P8 dependency. Run `bun test test/main-store.test.mjs`.
+- [x] Tarea 2.3.1.1 RED: Create `test/main-store.test.mjs`; forged capability, worker cwd, Hermes, Support, and foreign-campaign mutations must deny; permissions/credentials and failed writes preserve records; READY/BLOCKED reports stay mechanically identical; recursive imports exclude Tower→contracts/schema/YAML/OpenSpec/plan/Policy. Run `bun test test/main-store.test.mjs` (expected RED).
+- [x] Tarea 2.3.1.2 GREEN: Create `main-store/{authority,store,index}.mjs`; implement startup-only trusted binding, WeakSet capability, owner-only `0700`/`0600` atomic CAS, terminal authorizations, and audit evidence. Run `bun test test/main-store.test.mjs`.
+- [x] Tarea 2.3.1.3 REFACTOR/triangulate S2.3: verify Maintainer/Hermes/Main/Support/Policy/Planning/Implementation/Workspace Manager/Host Launcher/Tower/foreign-leader roles, the Change A/B boundary (no registry lookup, alias resolution, enrollment, identity/Main selection), Tower OFF, and no legacy P7/P8 dependency. Run `bun test test/main-store.test.mjs`.
+
+Scoped remediation completed for T2.3.1.1–T2.3.1.3: deterministic RED probes now cover concurrent CAS exclusion, failure-atomic terminal authorization/audit evidence, and exact trusted `store_path`; focused and broader suites are GREEN without new paths.
+
+Final S2.3 correction completed: authority-instance capability isolation now rejects A→B token confusion while retaining A→A acceptance, explicit revocation, and forged-capability denial.
