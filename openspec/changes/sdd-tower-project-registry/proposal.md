@@ -1,51 +1,61 @@
-# Proposal: SDD Tower V1 Project Registry
+# Proposal: S2.4 — Registry Storage and XDG Path Resolution
 
-## Decision summary
+## Decision
 
-Create a path-neutral, locally bootstrapped project registry that lets Hermes resolve a project while preserving one authoritative Main per repository. Main rederives repository identity before every authority-sensitive operation.
+Assign **S2.4** only within Change B as one PR (estimated 250–400 authored lines). Shared planning documents remain unchanged. This is the correct first Sesión because every later registry consumer needs a durable contract, while storage can be verified without deciding bootstrap policy or changing authority behavior. Módulo and Tarea decomposition belongs to `sdd-tasks`.
 
 ## Intent
 
-Allow remote project selection without moving repositories under Hermes or trusting conversational aliases as authority.
+Establish a path-neutral, secure persistence foundation for `project-registry-v1` before enrollment, project resolution, adapters, or Main consume it.
 
-## In scope
+## Scope
 
-- Persist the versioned Project Registry under the approved XDG configuration boundary.
-- Support local enrollment, update, relocation preparation, and revision history.
-- Validate canonical root, Git common directory, expected remote, main branch, Main session, Plan Catalog, roadmap, control-store path, and allowed hosts.
-- Import compatible entries from the existing Hermes project allowlist without creating duplicates.
-- Resolve aliases as UX proposals and return an exact `project_id` plus registry revision.
-- Expose a read-only Hermes adapter for list, selection, and identity status.
-- Provide Main rederivation and fail-closed mismatch reports.
+### In Scope
 
-## Out of scope
+- Resolve `${XDG_CONFIG_HOME:-$HOME/.config}/control-tower/projects.yaml` without repository, worktree, Git-common-directory, or Hermes coupling.
+- Create and validate the parent directory with `0700`; load documents through existing strict registry contracts and enforce specified unique project IDs and globally unique aliases.
+- Save validated documents using same-filesystem temporary files, flush/fsync, atomic rename, and `0600`; reject stale expected revisions and preserve the previous document on failure.
+- Add focused Bun tests using temporary `HOME`/XDG roots.
 
-- Automatic repository relocation.
-- Direct worker routing from Hermes.
-- Jornada creation, workspace mutation, Telegram authorization, or delivery.
-- Filesystem ownership transfer to Hermes.
-- Plan interpretation inside Control Tower.
+### Out of Scope (Later Work)
+
+- Initial enrollment, update/relocation bootstrap, legacy Hermes import, or any legacy-field policy.
+- Read-only project/alias resolution; Hermes or Support adapters.
+- Main identity rederivation or other consumer behavior.
+- SQLite, Supabase, Main-store, or runtime mutation; Installable V1; P7/P8.
+
+## Capabilities
+
+### New Capabilities
+
+- `project-registry-storage`: XDG path resolution plus validated, owner-only, atomic registry persistence and revision fencing.
+
+### Modified Capabilities
+
+None.
+
+## Approach and Constraints
+
+Reuse `schemas/project-registry-v1.schema.json` and `contracts/{validate,schema-registry,canonicalize}.mjs`; add narrow `registry/*.mjs` storage APIs and `test/registry/*.test.mjs`. Do not expand the schema, infer missing legacy facts, connect consumers, or write outside temporary test roots. DB mode is `none`; strict TDD applies.
 
 ## Dependencies
 
-- `sdd-tower-contract-schemas`.
-- Approved PRD, RFC, and REQUIREMENTS.
+- Completed `sdd-tower-contract-schemas` (Change A).
+- Approved PRD, RFC, and REQUIREMENTS; Bun 1.3.14 test baseline.
 
-## New capabilities
+## Acceptance Outcomes
 
-- `sdd-tower-project-registry`
-- `sdd-tower-local-enrollment`
-- `sdd-tower-hermes-project-resolution`
+- [ ] XDG override/default behavior and path independence are proven.
+- [ ] `0700`/`0600`, validation, duplicate/unknown-field rejection, atomic failure preservation, and monotonic revision fencing are proven.
+- [ ] Focused registry, existing contract, and Main-store tests pass using isolated roots, with zero writes to `.git/control-tower/tower.db`.
 
-## Success criteria
+## Risks
 
-- [ ] Initial enrollment and root/remote relocation require a local operation.
-- [ ] Aliases never authorize an operation without exact project and registry revision.
-- [ ] Main detects root/common-dir/remote/branch/catalog drift before mutation.
-- [ ] Registry updates are atomic, owner-only, and monotonic.
-- [ ] Existing repositories remain in their current physical locations.
-- [ ] Wrong-project and ambiguous-alias scenarios fail closed.
+| Risk | Mitigation |
+|---|---|
+| Path or write failures corrupt prior state | Same-filesystem atomic replacement plus failure tests. |
+| Scope drifts into unresolved consumers | Keep adapters, bootstrap, Main, Installable V1, and P7/P8 excluded. |
 
-## Rollback plan
+## Rollback Boundary
 
-Disable the mutable registry commands and restore the previous registry revision. Preserve the existing Hermes read-only allowlist until the new registry is proven. Do not move or rewrite repositories during rollback.
+Revert only the new registry modules and tests. No consumer, repository, database, or runtime state changes; any created XDG registry file is inert and can be backed up or removed independently.
