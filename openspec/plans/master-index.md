@@ -8,7 +8,9 @@
 
 La taxonomía de lanes, el renombre de P7 y el nuevo [implementation-state](implementation-state.md) están entregados en el issue #99 y el PR #100, abierto y pendiente de revisión sobre `docs/plan-naming-close`. Ninguna Sesión cerró con esta entrega.
 
-La decisión abierta es **enumerar las Sesiones restantes de `installable-v1`**. La propuesta derivada de los cinco requisitos de su spec es `S8.3` enrollment y safe layout → `S8.4` Main authority y Support read-only → `S8.5` host detection (independiente, paralelizable con `S8.3`) → `S8.6` release evidence → `S8.7` bounded Hermes/Telegram. Aprobada la enumeración, P8 pasa de `—` a `29% (2/7 S)`. Necesita issue y PR propios.
+`installable-v1` quedó enumerado: `S8.3` enrollment y safe layout, `S8.4` Main authority y Support read-only, `S8.5` host detection, `S8.6` release evidence y `S8.7` bounded Hermes/Telegram cubren los cinco requisitos de la spec. P8 pasa a `29% (2/7 S)` y el lane ya no conserva responsabilidades sin ID.
+
+La próxima acción de `installable-v1` es ejecutar `S8.3` y `S8.5`, ambas 🟢 LISTO y sin dependencias entre sí: son las dos Sesiones que admiten agentes en paralelo dentro del lane.
 
 `S2.5` queda 🔵 EN CURSO: PR #94 integró la planificación en `8bcf090ef5a7a9b9c292bad51481a77a7d605b63` y PR #96 integró implementación + tests en `691aac05a3a3f155c7cc25dd08c03225763e829f`.
 La verificación técnica final está PASS con 0 CRITICAL, 5/5 requisitos, 9/9 escenarios, 12/12 tareas, focused 13/13 y combined 70/70; PR3 apply evidence y PR4 verify evidence permanecen locales y pendientes.
@@ -32,20 +34,20 @@ Definidos en [`product-version-map.yaml`](product-version-map.yaml). Un Plan per
 
 | Lane | Producto | Status | Planes | Avance |
 |------|----------|--------|--------|--------|
-| `installable-v1` | Installable Control Tower V1 | `active` | P8 | — (S8.1 y S8.2 cerradas; alcance restante sin Sesiones enumeradas) |
+| `installable-v1` | Installable Control Tower V1 | `active` | P8 | 29% (2/7 S) |
 | `autonomous-v2` | Autonomous Control Tower V2 | `dependency-blocked` | P1–P7 | 45% (14/31 S enumeradas) |
 | — | Base transversal | — | P0 | 100% (2/2 S) |
 
 `autonomous-v2` declara `required_release_refs: installable-control-tower-v1-r1` y las capacidades `install`, `enrollment` y `workspace`: V2 no puede cerrar antes que V1.
 
 El denominador de `autonomous-v2` es provisional: el Change B de P2 y la totalidad de P6 no tienen Sesiones enumeradas, así que el total de Sesiones va a subir.
-`installable-v1` no expone porcentaje porque su alcance restante (enrollment, resolución de proyecto/Main, Support read-only) todavía no demuestra límites de un PR. El alcance está aprobado; la descomposición en Sesiones es lo que falta.
+`installable-v1` sí tiene denominador cerrado: sus siete Sesiones cubren los cinco requisitos de la spec y no queda responsabilidad sin ID. `S8.3` y `S8.5` están 🟢 LISTO en paralelo.
 
 El "V1" que aparece en REQUIREMENTS, en los pilotos de conformidad y en los nombres `sdd-tower-*-v1-*` es la etiqueta amplia anterior al split de productos, registrada como `migrates: broad-v1-label-to-autonomous-v2`. No es el lane `installable-v1`.
 
 ## 📊 Estado de un vistazo
 
-**Avance global**: 1/9 Planes cerrados (11%) · Sesiones cerradas en planes activos: 16/33 (48%)
+**Avance global**: 1/9 Planes cerrados (11%) · Sesiones cerradas en planes activos: 16/38 (42%)
 
 | ID | Plan | Lane | Estado | % | Est. | Dueño | Qué falta | Ref |
 |----|------|------|--------|---|------|-------|-----------|-----|
@@ -57,7 +59,7 @@ El "V1" que aparece en REQUIREMENTS, en los pilotos de conformidad y en los nomb
 | P5 | Entrega y continuación | `autonomous-v2` | 📋 PLANIFICADO | 0% (0/3 S) | — | Main | S5.1, S5.2, S5.3 | [STATUS](plan-5/STATUS.md) |
 | P6 | Campañas multiproyecto | `autonomous-v2` | 📋 PLANIFICADO | — (sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-6/STATUS.md) |
 | P7 | Conformidad de release | `autonomous-v2` | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | S7.1 | [STATUS](plan-7/STATUS.md) |
-| P8 | Installable V1 release | `installable-v1` | 🔵 EN CURSO | — (trabajo restante sin Sesión enumerada) | 320–400 líneas | Maintainer | — | [STATUS](plan-8/STATUS.md) |
+| P8 | Installable V1 release | `installable-v1` | 🔵 EN CURSO | 29% (2/7 S) | — | Maintainer | S8.3–S8.7 | [STATUS](plan-8/STATUS.md) |
 
 ## 🗂️ Planes archivados
 
