@@ -210,3 +210,112 @@ Proceed with Approach 1. Before proposal, answer the product questions above and
 ## Ready for Proposal
 
 No — exploration is complete, but proposal should wait for maintainer answers to the business-rule, user-journey, compatibility, security, release, and first-slice questions above. Once those are fixed, run `sdd-propose` for the Installable V1 lane and create a separate explicit V2 reframe/migration proposal that references (rather than rewrites) the existing A–I and P6–P11 artifacts.
+
+---
+
+## Post-S8.2 Exploration: P8 enrollment, Main resolution, and local Support
+
+### Current State
+
+S8.2 is complete and the worktree is clean at `docs/close-v1-v2-wu1`, exactly at
+`origin/master`/merge-base `67c21b9` (the serialized documentation closure PR #80).
+The immutable lifecycle is delivered by PR #76, merge `a4ca761`; the shared
+planning/status documents deliberately leave P8's next Sesión unnumbered.
+
+The existing repository already contains the contract surface needed to define a
+narrow V1 boundary: `schemas/project-registry-v1.schema.json` and
+`contracts/validate.mjs` validate registry shape and unique aliases;
+`core.mjs:761-770` derives the canonical Main, Git common directory, branch, and
+trusted UID; and `main-store/authority.mjs` provides startup-only, exact-binding
+assertion. There is no `registry/`, `layout/`, or `support/` implementation yet.
+`core.open()` is not a read-only observer: it may create the Tower directory,
+enable WAL, and create legacy tables. Support therefore needs an independent
+read-only filesystem/Git/SQLite snapshot port and must not call the legacy open
+path or any writer operation.
+
+### Dependency and one-PR boundary
+
+The next dependency-ready capability is a **provisional, unnumbered P8 session**
+covering only:
+
+1. explicit local enrollment and fail-closed `Main/` + `Worktrees/` layout checks;
+2. exact project resolution (`project_id` + registry revision) followed by live
+   Main rederivation and `CT_PROJECT_IDENTITY_MISMATCH`-style denial; and
+3. a local Support snapshot/report boundary that is read-only, non-registering,
+   non-locking, non-delivering, and unable to create workers, sessions, or
+   worktrees.
+
+This is a technically defensible one-PR capability boundary because it can be
+implemented as additive `registry/`, `layout/`, and `support/` modules plus focused
+tests and a thin CLI dispatch, while leaving `core.mjs`, `mcp.mjs`, Main Store,
+database migrations, lifecycle files, host adapters, and Telegram untouched.
+The boundary is not yet a canonical Sesión: the exact authored-line forecast and
+task-level rollback proof do not exist. `sdd-tasks` must demonstrate that the
+candidate stays within the maintainer's 800-line hard maximum (preferably within
+the 400-line review budget or an explicitly chained strategy) before an ID is
+assigned.
+
+### Affected Areas
+
+- `registry/` — local owner-only registry persistence and exact project/alias resolution.
+- `layout/` — realpath, Git common-dir, remote/branch, ownership, `Main/`, and
+  `Worktrees/` validation; no relocation, recycling, reset, clean, stash, or replacement.
+- `support/` — read-only snapshot/report contract; no Tower registration, locks,
+  queue consumption, repository mutation, or delivery custody.
+- `bin/torre` — narrow `enroll`/resolution/diagnostic entry points only; preserve
+  existing lifecycle and `CT_V2_ONLY` behavior.
+- `test/registry/*`, `test/layout/*`, `test/support/*` — temporary Git/XDG fixtures,
+  alias ambiguity, identity drift, unsafe layout, and Support non-mutation cases.
+
+### Approaches
+
+1. **Additive V1 boundary (recommended)** — add local registry/layout/support
+   modules over existing schema, canonical Main derivation, and immutable lifecycle.
+   - Pros: preserves the S8.2 seam, avoids P6/P7/core conflicts, and proves local
+     operation without implying autonomy or Telegram authority.
+   - Cons: requires a new read-only SQLite port and a measured line forecast before
+     the Sesión can be numbered.
+   - Effort: Medium
+
+2. **Reuse the Autonomous V2 registry/Main/Policy proposals wholesale** — adopt the
+   existing project-registry and main-policy proposals as the V1 implementation.
+   - Pros: fewer new contract names.
+   - Cons: imports jornada, Policy, assignment, worker, delivery, and Telegram
+     semantics that are explicitly V2-only; it cannot be a safe one-PR V1 boundary.
+   - Effort: High and unsafe
+
+### Recommendation
+
+Run `sdd-propose` for this unnumbered P8 candidate, then `sdd-spec`, `sdd-design`,
+and `sdd-tasks`. Assign a positional Sesión ID only after the tasks forecast proves
+the one-PR boundary. Telegram remains excluded: its canonical proposal depends on
+the broader project registry and Main/Policy/Jornada contracts, and must follow this
+local enrollment/resolution/Support dependency closure.
+
+### Risks
+
+- Calling `core.open()` from Support would mutate Tower state despite a read-only
+  report request; use a readonly SQLite connection and immutable Git inspection.
+- Existing `project-registry-v1` schemas include V2-oriented fields; the V1 subset
+  must not accidentally authorize Policy, jornadas, workers, hosts, or delivery.
+- `bin/torre` and the shared Tower database are live coordination surfaces; changes
+  must remain additive and no DB mutation is permitted in planning or verification.
+- The current runtime has `ACTIVE` and `tower.db` in the shared Main common-dir;
+  this is an observed operational state, not permission to mutate it.
+
+### Planning Gaps Before Apply
+
+- A scoped proposal for this P8 boundary; the existing split proposal is too broad.
+- A delta spec with Given/When/Then scenarios for enrollment, exact Main resolution,
+  unsafe layout denial, Support read-only behavior, and V2-only denials.
+- A design documenting atomic registry writes, live rederivation, readonly SQLite,
+  and the core/adapters boundary without touching Main Store or migrations.
+- A tasks artifact with positional Plan → Sesión → Módulo → Tarea numbering, Strict
+  TDD order, rollback paths, changed-path allowlist, and measured budget forecast.
+- Verification evidence is intentionally not a pre-apply artifact; it follows apply.
+
+### Ready for Proposal
+
+Yes for an **unnumbered planning candidate** only. The next exact phase is
+`sdd-propose`; do not run `sdd-apply`, assign a Sesión ID, touch Telegram, mutate
+the database, or edit shared closure/status/master-index documents.
