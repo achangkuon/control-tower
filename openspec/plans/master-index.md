@@ -6,13 +6,13 @@
 
 ## 📍 Punto de retoma
 
-Los PRs #100, #102 y #104 están integrados: `master` en `112446d` lleva la taxonomía de lanes, el renombre de P7, [implementation-state](implementation-state.md) y la enumeración `S8.3`–`S8.7`. El PR #106 queda abierto con los contratos de ejecución de `S8.3` y `S2.5`. Ninguna Sesión cerró en esta entrega.
+`master` está en `8e421c7` con todo lo de la jornada integrado y **cero PRs abiertos**: taxonomía de lanes y renombre de P7 (#100), punto de retoma (#102), enumeración `S8.3`–`S8.7` (#104) y los contratos de ejecución de `S8.3` y `S2.5` (#106). También quedó [implementation-state](implementation-state.md), que mide código en vez de planificación. Ninguna Sesión cerró en esta entrega: lo entregado es planificación, no implementación.
 
 **La próxima acción es la primera sesión de Torre con dos agentes en paralelo**: `S8.3` en el lane `installable-v1` y `S2.5` en `autonomous-v2`. Paralelismo verificado en los tres predicados — sin dependencia mutua, `Área` disjunta (`enroll/**` contra `openspec/changes/sdd-tower-legacy-import-preflight/**`) y sin `Recurso` compartido. `S2.5` no toca código, así que el par no puede colisionar en fuente.
 
 Se eligió `S2.5` sobre `S3.1` deliberadamente: `S3.1` está 🟢 LISTO y el grafo la habilita, pero `S2.5` sigue 🔵 EN CURSO con evidencia sin entregar. Se cierra lo abierto antes de abrir lo nuevo.
 
-Antes de arrancar hay dos condiciones operativas: el MCP `control-tower` está configurado en Claude pero no se carga en una sesión ya iniciada — requiere reiniciar —, y el board conserva registros stale de sesiones anteriores que conviene limpiar. La Torre está ARMADA con `locks: ninguno`; el probe correcto es `bin/torre status`, no `.git/control-tower/ACTIVE`.
+Antes de arrancar hay tres condiciones operativas. El MCP `control-tower` está configurado en Claude pero no se carga en una sesión ya iniciada, así que hay que reiniciar. El board conserva registros stale: el agente `installable-v1` figura 🔵 WORKING sobre `docs/close-v1-v2-wu1`, una rama que no corresponde a ninguna Sesión enumerada y cuyo nombre usa vocabulario prohibido (`wu`); hay que aclarar qué contiene antes de asignarle `S8.3`. Y la Torre está ARMADA con `locks: ninguno` — el probe correcto es `bin/torre status`, no `.git/control-tower/ACTIVE`.
 
 `S8.3` **no admite ventana nocturna** hasta cerrar el `MAY` de aceptación de layouts existentes: el pre-flight rechaza toda Sesión donde una decisión de producto *pueda aparecer*. Atendida sí. `S2.5` pasa el gate limpio.
 
