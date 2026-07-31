@@ -7,9 +7,9 @@
 | Campo | Detalle |
 |---|---|
 | Lane | `installable-v1`. Único Plan del lane; es el producto que puede salir primero y solo. |
-| Dependencias | `origin/master@8139849df44a81ecac6eaafa0c9a2c847e08c77e`; `S8.1` y `S8.2` están verificadas y mergeadas. |
+| Dependencias | `origin/master@9d0842172728780ba089c168c110e2de8538228b`; `S8.1`, `S8.2` y `S8.3` están verificadas y mergeadas. |
 | Alcance aprobado | Release local-first con lifecycle versionado, inmutable, idempotente y reversible; sin activar autonomía. |
-| Próxima Sesión | `S8.3` y `S8.5` están 🟢 LISTO en paralelo; no comparten archivos ni dependencias. |
+| Próxima Sesión | `S8.4` y `S8.5` están 🟢 LISTO en paralelo; `S8.4` quedó habilitada por el cierre de `S8.3` y `S8.5` no tiene dependencias. |
 | Referencias | [Change](../../changes/installable-v1-autonomous-v2-split/), [tasks](../../changes/installable-v1-autonomous-v2-split/tasks.md), [handoff](../../changes/installable-v1-autonomous-v2-split/session-handoff.md), [spec](../../changes/installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). |
 
 ## Sesiones
@@ -18,8 +18,8 @@
 |---|---|---|---|---|---|
 | S8.1 | Provenance surfaces, tareas históricas 1.1–1.3 | ✅ COMPLETO | — | — | PR #65, merge `b1269a2d2f4b791c6f9e2e29650660160e99f382` |
 | S8.2 | Immutable lifecycle foundation | ✅ COMPLETO | Versioned lifecycle | — | issue #75; PR #76; candidato `d7ddd3d6221139ea399df66da1748458c748535d`; merge `a4ca761e0ad1d5f4bd3662ead7a00c30bff77b1b`; `verify-report.md`: PASS WITH WARNINGS, 0 CRITICAL |
-| S8.3 | Enrollment explícito de proyectos y validación de layout | 🟢 LISTO | Explicit project enrollment and safe layout | `registry/`, ya integrado | — |
-| S8.4 | Autoridad única de Main y briefs read-only de Support | 📋 PLANIFICADO | Sole Main authority and manual worker boundary | `S8.3` | — |
+| S8.3 | Enrollment explícito de proyectos y validación de layout | ✅ COMPLETO | Explicit project enrollment and safe layout | `registry/`, ya integrado | issue #109; PR #110; merge `9d0842172728780ba089c168c110e2de8538228b`; enrollment 10/10; registry 27/27; diff-check PASS |
+| S8.4 | Autoridad única de Main y briefs read-only de Support | 🟢 LISTO | Sole Main authority and manual worker boundary | `S8.3` | — |
 | S8.5 | Detección de hosts e integración opt-in | 🟢 LISTO | Optional host detection and integration | ninguna | — |
 | S8.6 | Evidencia de release en máquina limpia | 📋 PLANIFICADO | Versioned lifecycle and release evidence | `S8.3`, `S8.4`, `S8.5` | — |
 | S8.7 | Puente Hermes/Telegram acotado | 📋 PLANIFICADO | Optional bounded Hermes bridge | `S8.4` | — |
@@ -36,20 +36,20 @@ Se apoya en `registry/` (`resolveProjectRegistryPath`, `createProjectRegistrySto
 
 | Campo | Valor |
 |---|---|
-| Estado | 🟢 LISTO |
+| Estado | ✅ COMPLETO |
 | Depende de | `registry/`, integrado en `origin/master` |
 | Área | `enroll/**`, `test/enroll/**` |
 | Recurso | ninguno — sin DB, sin migraciones, sin token fuera de la entrega |
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
 
-- [ ] Con dos repositorios registrados explícitamente, identidad, rutas, cola e historial de cada uno resuelven sólo a su propio proyecto
-- [ ] Un `Main/Worktrees` sucio, con symlinks, incompatible o con remote equivocado reporta un error preciso y **no** reubica ni repara destructivamente
-- [ ] Ninguna ruta fuera de `Área` aparece en el diff
-- [ ] `core.mjs`, `mcp.mjs`, `package.json` y `bun.lock` quedan sin modificar
-- [ ] `bun test test/enroll` pasa completo, y `bun test` no introduce fallos nuevos respecto de la base
+- [x] Con dos repositorios registrados explícitamente, identidad, rutas, cola e historial de cada uno resuelven sólo a su propio proyecto
+- [x] Un `Main/Worktrees` sucio, con symlinks, incompatible o con remote equivocado reporta un error preciso y **no** reubica ni repara destructivamente
+- [x] Ninguna ruta fuera de `Área` aparece en el diff
+- [x] `core.mjs`, `mcp.mjs`, `package.json` y `bun.lock` quedan sin modificar
+- [x] `bun test test/enroll` pasa completo, y `bun test` no introduce fallos nuevos respecto de la base
 
-**Decisión de producto abierta — bloquea ejecución desatendida.** El requisito dice que los layouts existentes *MAY* aceptarse cuando el directorio común de Git, remote/branch, propiedad y rutas son seguros. Ese `MAY` es discreción: los casos borde de "layout raro pero no claramente inseguro" no están resueltos. `S8.3` puede ejecutarse atendida, con el maintainer disponible para resolverlos; **no admite ventana nocturna hasta cerrar el criterio**, porque el gate de pre-flight pregunta si una decisión de producto *puede aparecer*, no si ya está pendiente.
+**Evidencia verificada:** PR #110 mergeada el 2026-07-31 en `9d0842172728780ba089c168c110e2de8538228b`; issue #109 cerrado; enrollment 10/10, registry 27/27 y diff-check PASS sobre exactamente `enroll/index.mjs` y `test/enroll/enroll.test.mjs`.
 
 ### S8.4 — Autoridad única de Main y frontera de workers
 
@@ -77,8 +77,8 @@ Va última pese a su prioridad declarada: el propio [tasks.md](../../changes/ins
 
 `S8.2` entregó únicamente almacenamiento de versiones, puntero activo, install/diagnose/upgrade/rollback/uninstall, preservación de configuración e historial, y sus pruebas Strict TDD. No modificó `core.mjs`, `mcp.mjs`, `package.json`, `bun.lock`, DB ni estado de Tower.
 
-Con `S8.3`–`S8.7` enumeradas, P8 pasa a `29% (2/7 S)`. Todo el alcance aprobado del lane tiene ahora límite de un PR; no queda responsabilidad sin ID.
+Con `S8.3` cerrada, P8 queda en `43% (3/7 S)`. Todo el alcance aprobado del lane tiene límite de un PR; no queda responsabilidad sin ID.
 
 Cada Sesión es un PR dirigido a `master`. Telegram conserva su prioridad declarada pero se ejecuta en `S8.7`, después de que `S8.4` establezca la frontera de autoridad: no recibe shell, workers, Git, merge, delivery ni selección implícita de proyecto.
 
-`S8.3` y `S8.5` pueden ejecutarse en paralelo con agentes distintos. No comparten dependencias ni archivos de código. Sí comparten los cinco archivos de planificación reclamados por `installable-v1-provenance` en [`product-version-map.yaml`](../product-version-map.yaml), así que sus actualizaciones de estado deben serializarse.
+`S8.4` y `S8.5` pueden ejecutarse en paralelo con agentes distintos: `S8.4` quedó habilitada por `S8.3` y `S8.5` no tiene dependencias. Sus actualizaciones sobre los archivos de planificación reclamados por `installable-v1-provenance` en [`product-version-map.yaml`](../product-version-map.yaml) deben serializarse.
