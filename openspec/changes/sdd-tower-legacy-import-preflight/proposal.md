@@ -66,8 +66,8 @@ Revert the new module and tests. No registry, Git, database, runtime, or `ACTIVE
 
 ## Success Criteria
 
-- [ ] Exact legacy parsing and same-`id` duplicate failures are deterministic.
-- [ ] Existing validation/canonicalization is reused; incomplete facts are not guessed.
-- [ ] Optional conflicts use canonical same-class comparisons through `load()`, with no cross-class inference, `save()`, or runtime mutation.
-- [ ] Failure output protects raw records, injected exceptions, credentials, and secrets while ready output carries the complete verified canonical entry.
-- [ ] Forecast holds and strict OpenSpec checks pass.
+- [x] Exact legacy parsing and same-`id` duplicate failures are deterministic.
+- [x] Existing validation/canonicalization is reused; incomplete facts are not guessed.
+- [x] Optional conflicts use canonical same-class comparisons through `load()`, with no cross-class inference, `save()`, or runtime mutation.
+- [x] Failure output protects raw records, injected exceptions, credentials, and secrets while ready output carries the complete verified canonical entry.
+- [x] Forecast holds and strict OpenSpec checks pass.
