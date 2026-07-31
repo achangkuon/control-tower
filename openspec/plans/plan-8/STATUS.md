@@ -6,6 +6,7 @@
 
 | Campo | Detalle |
 |---|---|
+| Lane | `installable-v1`. Único Plan del lane; es el producto que puede salir primero y solo. |
 | Dependencias | `origin/master@8139849df44a81ecac6eaafa0c9a2c847e08c77e`; `S8.1` y `S8.2` están verificadas y mergeadas. |
 | Alcance aprobado | Release local-first con lifecycle versionado, inmutable, idempotente y reversible; sin activar autonomía. |
 | Próxima Sesión | Sin ID: definir el primer límite restante de un PR a partir de las dependencias de enrollment, resolución de proyecto/Main y Support read-only. |
