@@ -6,11 +6,15 @@
 
 ## 📍 Punto de retoma
 
-La taxonomía de lanes, el renombre de P7 y el nuevo [implementation-state](implementation-state.md) están entregados en el issue #99 y el PR #100, abierto y pendiente de revisión sobre `docs/plan-naming-close`. Ninguna Sesión cerró con esta entrega.
+Los PRs #100, #102 y #104 están integrados: `master` en `112446d` lleva la taxonomía de lanes, el renombre de P7, [implementation-state](implementation-state.md) y la enumeración `S8.3`–`S8.7`. El PR #106 queda abierto con los contratos de ejecución de `S8.3` y `S2.5`. Ninguna Sesión cerró en esta entrega.
 
-`installable-v1` quedó enumerado: `S8.3` enrollment y safe layout, `S8.4` Main authority y Support read-only, `S8.5` host detection, `S8.6` release evidence y `S8.7` bounded Hermes/Telegram cubren los cinco requisitos de la spec. P8 pasa a `29% (2/7 S)` y el lane ya no conserva responsabilidades sin ID.
+**La próxima acción es la primera sesión de Torre con dos agentes en paralelo**: `S8.3` en el lane `installable-v1` y `S2.5` en `autonomous-v2`. Paralelismo verificado en los tres predicados — sin dependencia mutua, `Área` disjunta (`enroll/**` contra `openspec/changes/sdd-tower-legacy-import-preflight/**`) y sin `Recurso` compartido. `S2.5` no toca código, así que el par no puede colisionar en fuente.
 
-La próxima acción de `installable-v1` es ejecutar `S8.3` y `S8.5`, ambas 🟢 LISTO y sin dependencias entre sí: son las dos Sesiones que admiten agentes en paralelo dentro del lane.
+Se eligió `S2.5` sobre `S3.1` deliberadamente: `S3.1` está 🟢 LISTO y el grafo la habilita, pero `S2.5` sigue 🔵 EN CURSO con evidencia sin entregar. Se cierra lo abierto antes de abrir lo nuevo.
+
+Antes de arrancar hay dos condiciones operativas: el MCP `control-tower` está configurado en Claude pero no se carga en una sesión ya iniciada — requiere reiniciar —, y el board conserva registros stale de sesiones anteriores que conviene limpiar. La Torre está ARMADA con `locks: ninguno`; el probe correcto es `bin/torre status`, no `.git/control-tower/ACTIVE`.
+
+`S8.3` **no admite ventana nocturna** hasta cerrar el `MAY` de aceptación de layouts existentes: el pre-flight rechaza toda Sesión donde una decisión de producto *pueda aparecer*. Atendida sí. `S2.5` pasa el gate limpio.
 
 `S2.5` queda 🔵 EN CURSO: PR #94 integró la planificación en `8bcf090ef5a7a9b9c292bad51481a77a7d605b63` y PR #96 integró implementación + tests en `691aac05a3a3f155c7cc25dd08c03225763e829f`.
 La verificación técnica final está PASS con 0 CRITICAL, 5/5 requisitos, 9/9 escenarios, 12/12 tareas, focused 13/13 y combined 70/70; PR3 apply evidence y PR4 verify evidence permanecen locales y pendientes.

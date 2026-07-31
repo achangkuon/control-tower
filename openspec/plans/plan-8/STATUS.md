@@ -34,6 +34,23 @@ Registra proyectos, aísla identidad y estado de Torre, y valida el clon dueño 
 
 Se apoya en `registry/` (`resolveProjectRegistryPath`, `createProjectRegistryStore`, `preflightLegacyImport`), construido en el lane `autonomous-v2` y ya integrado.
 
+| Campo | Valor |
+|---|---|
+| Estado | 🟢 LISTO |
+| Depende de | `registry/`, integrado en `origin/master` |
+| Área | `enroll/**`, `test/enroll/**` |
+| Recurso | ninguno — sin DB, sin migraciones, sin token fuera de la entrega |
+
+**Criterios de aceptación** — todos deben pasar para cerrar:
+
+- [ ] Con dos repositorios registrados explícitamente, identidad, rutas, cola e historial de cada uno resuelven sólo a su propio proyecto
+- [ ] Un `Main/Worktrees` sucio, con symlinks, incompatible o con remote equivocado reporta un error preciso y **no** reubica ni repara destructivamente
+- [ ] Ninguna ruta fuera de `Área` aparece en el diff
+- [ ] `core.mjs`, `mcp.mjs`, `package.json` y `bun.lock` quedan sin modificar
+- [ ] `bun test test/enroll` pasa completo, y `bun test` no introduce fallos nuevos respecto de la base
+
+**Decisión de producto abierta — bloquea ejecución desatendida.** El requisito dice que los layouts existentes *MAY* aceptarse cuando el directorio común de Git, remote/branch, propiedad y rutas son seguros. Ese `MAY` es discreción: los casos borde de "layout raro pero no claramente inseguro" no están resueltos. `S8.3` puede ejecutarse atendida, con el maintainer disponible para resolverlos; **no admite ventana nocturna hasta cerrar el criterio**, porque el gate de pre-flight pregunta si una decisión de producto *puede aparecer*, no si ya está pendiente.
+
 ### S8.4 — Autoridad única de Main y frontera de workers
 
 `Main/` es el único orquestador V1 de cada proyecto registrado. Support puede preparar briefs read-only de decomposición, conflicto o capacidad, pero no se registra, no toma locks, no muta repositorios y no entrega. Los workers se preparan a mano: V1 no crea sesiones, worktrees, workers, assignments ni lanzamientos.

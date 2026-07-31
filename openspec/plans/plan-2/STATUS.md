@@ -31,3 +31,22 @@ Change B conserva responsabilidades posteriores a `S2.5` sin Sesiones enumeradas
 **Evidencia:** `S2.2` cerró el issue #71 y se integró mediante PR #72 en `bbb59af9ca4de9223e0ec06474725f13329993b6` desde el candidato `ec4a05c66f5c295eba9f9cddc3611f24208ad37a`: 10 paths, 449 líneas authored y contracts test 44/44. `S2.3` cerró el issue #77 y se integró mediante PR #78 con la evidencia indicada arriba.
 
 **Próxima acción:** entregar PR3 con la evidencia apply de `S2.5`; PR4 con la evidencia verify permanece pendiente y local.
+
+### Contrato de ejecución — S2.5
+
+| Campo | Valor |
+|---|---|
+| Estado | 🔵 EN CURSO |
+| Depende de | `S2.4`, cerrada mediante PR #90 |
+| Área | `openspec/changes/sdd-tower-legacy-import-preflight/**` — sólo documentos de evidencia |
+| Recurso | ninguno — sin DB, sin migraciones; el token de entrega lo serializa la Torre |
+
+Lo que resta de `S2.5` es **entrega de evidencia, no implementación**. El código se integró en PR #96; `apply-progress.md` y `verify-report.md` existen sin versionar en el worktree `Worktrees/autonomous-v2`, sobre la rama `docs/checkpoint-s2.5` en `43b9a58`. El agente debe partir de ese worktree: los archivos no están en `Main`.
+
+**Criterios de aceptación** — todos deben pasar para cerrar:
+
+- [ ] `apply-progress.md` versionado y entregado como PR3, trazando las 12/12 tareas al commit que las implementó
+- [ ] `verify-report.md` versionado y entregado como PR4, con 5/5 requisitos, 9/9 escenarios y 0 CRITICAL
+- [ ] Ninguna ruta fuera de `Área` aparece en ninguno de los dos diffs — cero cambios de código
+- [ ] `plan-2/STATUS.md` y `master-index` quedan reconciliados con `S2.5` en ✅ COMPLETO y P2 recalculado
+- [ ] Las responsabilidades restantes de Change B quedan explícitamente sin ID, con su razón registrada
