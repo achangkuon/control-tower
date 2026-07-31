@@ -2,6 +2,7 @@
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
 > Última reconciliación: 2026-07-31 contra `origin/master` en `2cc7c80281ce266efa5eac073a63e5e91c0af466`.
+> Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md).
 
 ## 📍 Punto de retoma
 
