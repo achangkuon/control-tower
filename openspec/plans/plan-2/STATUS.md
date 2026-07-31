@@ -41,7 +41,7 @@ Change B conserva responsabilidades posteriores a `S2.5` sin Sesiones enumeradas
 | Área | `openspec/changes/sdd-tower-legacy-import-preflight/**` — sólo documentos de evidencia |
 | Recurso | ninguno — sin DB, sin migraciones; el token de entrega lo serializa la Torre |
 
-Lo que resta de `S2.5` es **entrega de evidencia, no implementación**. El código se integró en PR #96; `apply-progress.md` y `verify-report.md` existen sin versionar en `Main`.
+Lo que resta de `S2.5` es **entrega de evidencia, no implementación**. El código se integró en PR #96; `apply-progress.md` y `verify-report.md` existen sin versionar en el worktree `Worktrees/autonomous-v2`, sobre la rama `docs/checkpoint-s2.5` en `43b9a58`. El agente debe partir de ese worktree: los archivos no están en `Main`.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
 
