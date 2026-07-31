@@ -6,12 +6,18 @@
 
 ## 📍 Punto de retoma
 
+La taxonomía de lanes, el renombre de P7 y el nuevo [implementation-state](implementation-state.md) están entregados en el issue #99 y el PR #100, abierto y pendiente de revisión sobre `docs/plan-naming-close`. Ninguna Sesión cerró con esta entrega.
+
+La decisión abierta es **enumerar las Sesiones restantes de `installable-v1`**. La propuesta derivada de los cinco requisitos de su spec es `S8.3` enrollment y safe layout → `S8.4` Main authority y Support read-only → `S8.5` host detection (independiente, paralelizable con `S8.3`) → `S8.6` release evidence → `S8.7` bounded Hermes/Telegram. Aprobada la enumeración, P8 pasa de `—` a `29% (2/7 S)`. Necesita issue y PR propios.
+
 `S2.5` queda 🔵 EN CURSO: PR #94 integró la planificación en `8bcf090ef5a7a9b9c292bad51481a77a7d605b63` y PR #96 integró implementación + tests en `691aac05a3a3f155c7cc25dd08c03225763e829f`.
 La verificación técnica final está PASS con 0 CRITICAL, 5/5 requisitos, 9/9 escenarios, 12/12 tareas, focused 13/13 y combined 70/70; PR3 apply evidence y PR4 verify evidence permanecen locales y pendientes.
-La próxima acción es entregar PR3 con la evidencia apply de `S2.5`; P2 queda 🔵 EN CURSO y Change B conserva responsabilidades posteriores sin Sesiones enumeradas.
+La próxima acción de `autonomous-v2` es entregar PR3 con la evidencia apply de `S2.5`; P2 queda 🔵 EN CURSO y Change B conserva responsabilidades posteriores sin Sesiones enumeradas.
 La cadena restante es `S3.2` → `S5.1` → `S4.1` → `S5.2` → `S5.3` → `S7.1`; ninguna Tarea de implementación está completa.
 P8 debe definir el primer límite restante de un PR desde las dependencias de enrollment, resolución de proyecto/Main y Support read-only; `S8.1` y `S8.2` están ✅ COMPLETO.
 P1 permanece bloqueado en `S1.11` y `S1.12`; las responsabilidades sin límite de PR demostrable permanecen sin ID en el [apéndice de migración](plan-vocabulary-migration-appendix.md).
+
+Los dos lanes pueden avanzar en paralelo con tres restricciones verificadas: los cinco archivos de planificación reclamados en [`product-version-map.yaml`](product-version-map.yaml) pertenecen a `installable-v1-provenance` y `autonomous-v2` declara `paths: []`; el enrollment de V1 se apoya sobre `registry/`, ya integrado desde el lane V2; y `autonomous-v2` no puede cerrar sin la capacidad `enrollment` de V1.
 
 ## Granularidad
 
