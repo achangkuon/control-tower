@@ -1,0 +1,4 @@
+{
+  "policy": "solo",
+  "_comment": "Solo project, not in production: delivery is a direct commit + push to master, no PR required. `git push` counts as shipping, so the documentation close gate still applies. Remove this file (or set policy to \"strict\") to restore the PR-based flow."
+}
