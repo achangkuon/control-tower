@@ -1,7 +1,9 @@
 # Estado de implementación — Control Tower
 
 > Este documento mide **código**, no planificación. El [master-index](master-index.md) dice qué está planificado y qué Sesiones cerraron; este archivo dice qué existe, qué corre y qué está desplegado.
-> Medición: 2026-07-31 sobre `master` en `d072e509`, que integra `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`.
+> Medición del inventario de módulos y de las pruebas: 2026-07-31 sobre `master` en `d072e509`, que integra `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`. **No se volvió a medir el código el 2026-08-01** — lo que se agregó ese día es la brecha 5, observada sobre `master@a4aa3a6`.
+>
+> **Nota de vocabulario (2026-08-01):** la columna `Lane` de la tabla de módulos ya no nombra dos productos. Tras la [unificación](release-chain.md), `installable-v1` y `autonomous-v2` son afinidad de trabajo y nada más. El corte que sí sigue siendo real está en código: `bin/torre:28` rechaza capacidades con `CT_V2_ONLY`, y pasa a ser un flag opt-in apagado por defecto en vez de una frontera de producto.
 
 ## ⚠️ Hallazgo principal: construido ≠ desplegado
 
@@ -62,6 +64,28 @@ Otras dos condiciones previas sin runbook: un worktree nuevo no tiene `node_modu
 | 2 | ~~`S8.5` está 🟢 LISTO pero **UNASSIGNED**~~ | **Superada el 2026-07-31.** `S8.5` y `S8.6` pasaron a 🟡 DIFERIDO por decisión del maintainer; el despacho vigente es `S8.8` y después `S8.7`. |
 | 3 | `core.mjs` tiene 4646 líneas y ningún lane lo reclama | El sustrato que efectivamente corre queda fuera de la contabilidad de ambos productos. Sigue abierta; no bloquea V1. |
 | 4 | Se documentaba más de lo que se construía | 42 commits `docs` contra 34 de código; 32 de los últimos 40 sin merge eran docs; 17 changes abiertos contra 2 archivados. **Corregida** por la [regla de ejecución V1](v1-execution-rule.md) y por el archivado del 2026-07-31. |
+| 5 | El registro de la Torre no coincide con los worktrees reales | Observada el 2026-08-01 con `torre status` y `git worktree list` sobre `master@a4aa3a6`. Ver detalle abajo. Sigue abierta. |
+
+## Brecha 5 — deriva del registro de la Torre
+
+`torre status` lista **seis** agentes registrados. Existen **tres** worktrees además de `Main` y `claude`.
+
+| Agente registrado | Worktree | Estado real |
+|---|---|---|
+| `Main` | `Main` | Existe · `a4aa3a6` |
+| `v1` | `Worktrees/v1` | Existe · `3e648ac`. **La rama registrada no es la del worktree**: la Torre anota `fix/installable-v1/m8-8-4-runt…`, el worktree está en `fix/installable-v1/m8-8-4-adoption-preflight` |
+| `v2` | `Worktrees/v2` | Existe · `3e648ac` |
+| `autonomous-v2` | — | **No existe.** Retirado en la consolidación a tres slots |
+| `installable-v1` | — | **No existe.** Ídem |
+| `multi-agentic-*` | — | **No existe, y tiene 1 mensaje pendiente en cola** que ningún proceso va a consumir |
+
+Consecuencias operativas:
+
+1. **La capacidad que reporta la Torre es ficción.** Tres de seis agentes no pueden tomar trabajo.
+2. **El mensaje encolado se pierde en silencio.** `receive` sólo lee filas no consumidas y nada las reproduce; no hay error, no hay aviso.
+3. **`Worktrees/support-agent` no está registrado y así debe seguir** — Support es read-only por diseño y nunca se registra. Pero está en `3e648ac`, o sea **sin `release-chain.md`**: cualquier brief que se le pida antes de actualizarlo va a salir incompleto.
+
+No se corrigió nada de esto: desregistrar agentes y purgar cola son mutaciones del registro de la Torre, y esta sesión no tiene ni la autoridad ni el transporte para hacerlas.
 
 ## Qué NO mide este documento
 

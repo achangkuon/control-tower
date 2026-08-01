@@ -7,7 +7,8 @@
 | Campo | Detalle |
 |---|---|
 | Lane | `installable-v1`, ahora sólo como afinidad de trabajo. Desde la [unificación del 2026-08-01](../release-chain.md) no es una identidad de producto: hay un roadmap único y P8 dejó de ser "el producto que sale primero y solo". |
-| Dependencias | `master@d280214c8de78f90e88982d90642427b55a72f2b`, que integra `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`; `S8.1`–`S8.4` están verificadas y mergeadas; `M8.8.1` está mergeado vía PR #132. |
+| Dependencias | `master@a4aa3a6`, que integra `d280214c8de78f90e88982d90642427b55a72f2b` y `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`; `S8.1`–`S8.4` están verificadas y mergeadas; `M8.8.1` está mergeado vía PR #132. |
+| Bloqueo operativo | Antes de despachar cualquier Sesión hay que sanear el registro de la Torre: tres de los seis agentes registrados no tienen worktree y uno de ellos retiene un mensaje en cola que nadie va a consumir. Ver [brecha 5](../implementation-state.md). No es un bloqueo de alcance; es que la capacidad reportada no es real. |
 | Alcance aprobado | Release local-first con lifecycle versionado, inmutable, idempotente y reversible; sin activar autonomía. |
 | Próxima acción | Esperar la próxima instrucción sellada del maintainer; no iniciar ni asignar `M8.8.2`, `M8.8.3` o `S8.7` todavía. `S8.5` y `S8.6` quedan 🟡 DIFERIDO. |
 | Flujo | P8 corre bajo la [regla de ejecución V1](../v1-execution-rule.md): de `tasks.md` directo a implementación, sin exploration/proposal/design y sin PR de cierre separada. |
