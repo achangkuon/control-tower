@@ -1,35 +1,25 @@
 # Control Tower — reglas del proyecto
 
-## Política de entrega: commit directo, sin PR
+> **La política de entrega de este repo vive en [`AGENTS.md`](AGENTS.md).**
+> Ese es el archivo canónico y aplica a todos los agentes. Leelo antes de entregar.
 
-Este repo es **personal y todavía no sale a producción**. La entrega es un
-**commit directo a `master` + push**. No se abren PRs.
+Resumen: la entrega es un **commit directo a `master` + push**, sin PR. No cargues
+`branch-pr` ni `chained-pr`.
 
-Esto anula, y solo para este repo, el paso de entrega de `torre-control-entregas`
-que carga `branch-pr`. Al entregar:
+## Específico de Claude Code
 
-- Commiteá con conventional commits y pusheá a `master`.
-- No cargues `branch-pr` ni `chained-pr`.
-- No abras PR ni esperes review de nadie.
+Claude Code es el **único** agente donde esto está enforced por un gate duro:
+`~/.claude/hooks/doc-guard.sh`, cableado en `~/.claude/settings.json` como hooks
+`PostToolUse` y `Stop`.
 
-Sigue vigente todo lo demás: conventional commits, Strict TDD Mode, SDD, engram y
-las reglas de delegación.
+Consecuencias prácticas:
 
-### Lo que reemplaza al PR
+- Un `git push` en este repo marca la sesión como entregada, y el cierre queda
+  bloqueado hasta actualizar la documentación.
+- **Pushear primero, documentar después.** Si actualizás los docs y después
+  pusheás, el marcador `shipped` queda adelante de `docs` y el gate se re-arma.
+- El `doc-check` solo reconoce rutas que matcheen `STATUS.md`. Actualizar
+  `master-index.md` no libera el gate por sí solo, aunque sea el índice de verdad.
 
-El PR acá no corría ningún check: `master` no tiene branch protection ni rulesets,
-y el repo no tiene `.github/`. Lo único que aportaba era la unidad de revert, así
-que a cambio:
-
-- **Un commit = una unidad revertible.** Si una tarea no se puede revertir con un
-  solo `git revert`, va en commits separados.
-- **El Documentation Close Gate sigue activo.** `.doc-guard.json` declara
-  `policy: "solo"`, y por eso `git push` cuenta como entrega para
-  `~/.claude/hooks/doc-guard.sh`. Pushear sin actualizar `STATUS.md` +
-  `master-index` bloquea el cierre de sesión igual que antes lo hacía un PR.
-
-### Volver al flujo con PR
-
-Poné `policy: "strict"` en `.doc-guard.json` (o borrá el archivo) y eliminá esta
-sección. El default global es `strict`: cualquier repo que no declare nada exige
-PR, así que los proyectos delicados no dependen de este archivo.
+En opencode, PI o cualquier otro agente el gate **no existe** — ver la tabla de
+alcance en [`AGENTS.md`](AGENTS.md).
