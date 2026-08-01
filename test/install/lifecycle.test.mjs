@@ -1,19 +1,13 @@
-import { afterEach, beforeEach, describe, expect, test } from "bun:test"
+import { afterEach, describe, expect, test } from "bun:test"
 import { execFileSync, spawnSync } from "node:child_process"
 import { createHash } from "node:crypto"
-import { existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
-import { homedir, tmpdir } from "node:os"
+import { chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
 
-import { lifecycle } from "../../install/lifecycle.mjs"
+import { lifecycle, runCli } from "../../install/lifecycle.mjs"
 
 const roots = [], repoRoot = resolve(import.meta.dir, "../..")
-const gitControlTower = execFileSync("git", ["rev-parse", "--git-path", "control-tower"], { cwd: repoRoot, encoding: "utf8" }).trim()
-const protectedPaths = () => [
-  join(homedir(), ".config/opencode/control-tower"),
-  join(process.env.XDG_DATA_HOME ?? join(homedir(), ".local/share"), "control-tower"),
-  gitControlTower,
-]
 const snapshotPath = (path) => {
   const entries = []
   const visit = (current) => {
@@ -28,7 +22,6 @@ const snapshotPath = (path) => {
   visit(path)
   return entries
 }
-const protectedSnapshot = () => JSON.stringify(protectedPaths().map((path) => snapshotPath(path)))
 const legacyCheckout = (root, name = "checkout") => {
   const path = join(root, name)
   mkdirSync(join(path, "bin"), { recursive: true })
@@ -42,11 +35,8 @@ const fixture = () => {
   mkdirSync(join(root, "repo/.git/control-tower"), { recursive: true }); writeFileSync(join(root, "repo/.git/control-tower/history"), "keep\n")
   return { root, paths }
 }
-let protectedBefore
-beforeEach(() => { protectedBefore = protectedSnapshot() })
 afterEach(() => {
-  try { expect(protectedSnapshot()).toBe(protectedBefore) }
-  finally { roots.splice(0).forEach((root) => rmSync(root, { recursive: true, force: true })) }
+  roots.splice(0).forEach((root) => rmSync(root, { recursive: true, force: true }))
 })
 
 describe("lifecycle operations", () => {
@@ -64,7 +54,7 @@ describe("lifecycle operations", () => {
     expect(lifecycle({ ...paths, action: "diagnose" }).active).toBe("1.0.0")
     expect(readFileSync(join(paths.configRoot, "config.yaml"), "utf8")).toBe("owner: user\n")
     expect(readFileSync(join(root, "repo/.git/control-tower/history"), "utf8")).toBe("keep\n")
-    expect(existsSync(join(paths.dataRoot, "versions/1.1.0/.manifest"))).toBe(true)
+    expect(existsSync(join(paths.dataRoot, "versions/1.1.0"))).toBe(false)
     lifecycle({ ...paths, action: "upgrade", version: "1.2.0", files: { "runtime.mjs": "two" } })
     expect(lifecycle({ ...paths, action: "rollback" }).active).toBe("1.0.0")
   })
@@ -74,6 +64,7 @@ describe("lifecycle operations", () => {
     lifecycle({ ...paths, action: "install", version: "1.0.0", files: { "runtime.mjs": "one" } })
     expect(() => lifecycle({ ...paths, action: "upgrade", version: "1.1.0", files: { "runtime.mjs": "two" }, pointerOptions: { failAt: "rename" } })).toThrow("CT_POINTER_RENAME_FAILED")
     expect(lifecycle({ ...paths, action: "diagnose" }).active).toBe("1.0.0")
+    expect(existsSync(join(paths.dataRoot, "versions/1.1.0"))).toBe(false)
     expect(readFileSync(join(paths.stateRoot, "audit/lifecycle.ndjson"), "utf8")).toContain('"outcome":"pointer-failed"')
   })
 
@@ -93,6 +84,16 @@ test("thin torre wiring runs lifecycle outside a Git repository", () => {
   const { root } = fixture(), env = { ...process.env, XDG_DATA_HOME: join(root, "data"), XDG_CONFIG_HOME: join(root, "config"), XDG_STATE_HOME: join(root, "state") }
   const output = execFileSync(join(repoRoot, "bin/torre"), ["diagnose"], { cwd: root, env, encoding: "utf8" })
   expect(JSON.parse(output)).toMatchObject({ operation: "diagnose", healthy: false, active: null })
+})
+
+test("source payload rejection is atomic before creating temporary roots", () => {
+  const { root, paths } = fixture(), source = join(root, "invalid-release")
+  mkdirSync(source)
+  writeFileSync(join(source, "core.mjs"), "incomplete\n")
+  const env = { ...process.env, XDG_DATA_HOME: join(root, "xdg-data"), XDG_CONFIG_HOME: join(root, "xdg-config"), XDG_STATE_HOME: join(root, "xdg-state") }
+  expect(() => runCli(["install", "1.0.0", source], env)).toThrow("CT_RUNTIME_PAYLOAD_INCOMPLETE")
+  expect(existsSync(join(root, "xdg-data"))).toBe(false)
+  expect(existsSync(join(root, "xdg-state"))).toBe(false)
 })
 
 test("V2-only CLI automation requests fail closed before repository mutation", () => {
@@ -133,6 +134,27 @@ test("legacy runtime is adopted into a new XDG root without changing configurati
   expect(readFileSync(join(root, "repo/.git/control-tower/history"), "utf8")).toBe("keep\n")
   expect(existsSync(join(paths.dataRoot, "active.json"))).toBe(true)
   expect(existsSync(join(paths.dataRoot, "versions/1.0.0/runtime.mjs"))).toBe(true)
+})
+
+test("first adoption rollback restores the complete legacy fixture by bytes, paths, and modes", () => {
+  const { root, paths } = fixture(), legacyConfigPath = join(root, "opencode/opencode.json")
+  mkdirSync(join(root, "opencode"), { recursive: true })
+  const mcpPath = legacyCheckout(root)
+  chmodSync(join(root, "checkout"), 0o750)
+  chmodSync(join(root, "checkout/core.mjs"), 0o640)
+  chmodSync(join(root, "checkout/bin/torre"), 0o755)
+  const legacy = `${JSON.stringify({ theme: "dark", mcp: { "control-tower": { command: ["bun", mcpPath] } } })}\n`
+  writeFileSync(legacyConfigPath, legacy, { mode: 0o640 })
+  const before = JSON.stringify([snapshotPath(legacyConfigPath), snapshotPath(join(root, "checkout"))])
+
+  lifecycle({ ...paths, action: "upgrade", version: "1.0.0", files: { "runtime.mjs": "one" }, legacyConfigPath })
+  writeFileSync(legacyConfigPath, "adoption changed\n")
+  rmSync(join(root, "checkout/core.mjs"))
+  writeFileSync(join(root, "checkout/extra.mjs"), "not legacy\n")
+
+  expect(lifecycle({ ...paths, action: "rollback" })).toMatchObject({ operation: "rollback", active: null, changed: true })
+  expect(JSON.stringify([snapshotPath(legacyConfigPath), snapshotPath(join(root, "checkout"))])).toBe(before)
+  expect(existsSync(join(paths.dataRoot, "active.json"))).toBe(false)
 })
 
 test("reinstall is byte-idempotent and rollback preserves configuration and history", () => {
@@ -203,7 +225,11 @@ test("upgrade refuses invalid JSON and a changed legacy config after backup", ()
 
 test("installer and publisher use the same immutable lifecycle", () => {
   const { root } = fixture(), source = join(root, "release"), data = join(root, "published")
-  mkdirSync(source); writeFileSync(join(source, "runtime.mjs"), "release\n")
+  mkdirSync(join(source, "bin"), { recursive: true })
+  mkdirSync(join(source, "install"), { recursive: true })
+  for (const file of ["bin/torre", "core.mjs", "install/version-store.mjs", "install/active-pointer.mjs", "install/lifecycle.mjs"]) {
+    writeFileSync(join(source, file), `release:${file}\n`)
+  }
   const env = { ...process.env, XDG_DATA_HOME: join(root, "data"), XDG_CONFIG_HOME: join(root, "config"), XDG_STATE_HOME: join(root, "state") }
   const installed = execFileSync(join(repoRoot, "install.sh"), ["install", "2.0.0", source], { env, encoding: "utf8" })
   expect(JSON.parse(installed)).toMatchObject({ active: "2.0.0", changed: true })

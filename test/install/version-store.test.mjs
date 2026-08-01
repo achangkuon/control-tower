@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { mkdtempSync, readFileSync, rmSync } from "node:fs"
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -25,6 +25,18 @@ describe("immutable version store", () => {
     storeVersion(root, "1.0.0", { "runtime.mjs": "one" })
     expect(() => storeVersion(root, "1.0.0", { "runtime.mjs": "changed" })).toThrow("CT_VERSION_IMMUTABLE")
     expect(() => storeVersion(root, "../escape", { "runtime.mjs": "bad" })).toThrow("CT_VERSION_INVALID")
+  })
+
+  test("rejects invalid members before creating a version root", () => {
+    const root = fixture()
+    expect(() => storeVersion(root, "1.0.0", { "../escape": "bad" })).toThrow("CT_VERSION_PATH_INVALID")
+    expect(existsSync(join(root, "versions"))).toBe(false)
+  })
+
+  test("does not include a supplied manifest in the immutable digest", () => {
+    const root = fixture()
+    storeVersion(root, "1.0.0", { "runtime.mjs": "one", ".manifest": "ignored" })
+    expect(() => storeVersion(root, "1.0.0", { "runtime.mjs": "one", ".manifest": "different" })).not.toThrow()
   })
 })
 

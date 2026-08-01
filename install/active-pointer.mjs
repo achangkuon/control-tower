@@ -40,3 +40,10 @@ export function rollbackActivePointer(dataRoot, options) {
   if (!current?.previous) throw new Error("CT_ROLLBACK_UNAVAILABLE")
   return replaceActivePointer(dataRoot, current.previous, options)
 }
+
+export function clearActivePointer(dataRoot) {
+  const path = join(dataRoot, "active.json")
+  const changed = existsSync(path)
+  rmSync(path, { force: true })
+  return changed
+}

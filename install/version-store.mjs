@@ -3,10 +3,23 @@ import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync 
 import { dirname, join } from "node:path"
 
 const validVersion = /^[0-9A-Za-z][0-9A-Za-z._-]*$/
-const digest = (files) => createHash("sha256").update(JSON.stringify(Object.entries(files).sort())).digest("hex")
+const entriesForStorage = (files) => Object.entries(files ?? {}).filter(([path]) => path !== ".manifest")
+const validateFiles = (files) => {
+  if (!files || typeof files !== "object" || Array.isArray(files)) throw new Error("CT_VERSION_FILES_INVALID")
+  for (const [path, contents] of Object.entries(files)) {
+    if (!path || path.startsWith("/") || path.split("/").includes("..")) throw new Error("CT_VERSION_PATH_INVALID")
+    if (!(typeof contents === "string" || Buffer.isBuffer(contents) || contents instanceof Uint8Array)) {
+      throw new Error("CT_VERSION_FILES_INVALID")
+    }
+  }
+}
+const digest = (files) => createHash("sha256")
+  .update(JSON.stringify(entriesForStorage(files).sort(([left], [right]) => left.localeCompare(right))
+    .map(([path, contents]) => [path, Buffer.from(contents).toString("base64")]))).digest("hex")
 
 export function storeVersion(dataRoot, version, files) {
   if (!validVersion.test(version)) throw new Error("CT_VERSION_INVALID")
+  validateFiles(files)
   const versions = join(dataRoot, "versions"), target = join(versions, version)
   const manifest = `${digest(files)}\n`
   if (existsSync(target)) {
@@ -18,8 +31,7 @@ export function storeVersion(dataRoot, version, files) {
   rmSync(temporary, { recursive: true, force: true })
   try {
     mkdirSync(temporary, { mode: 0o700 })
-    for (const [path, contents] of Object.entries(files)) {
-      if (path.startsWith("/") || path.split("/").includes("..")) throw new Error("CT_VERSION_PATH_INVALID")
+    for (const [path, contents] of entriesForStorage(files)) {
       const destination = join(temporary, path)
       mkdirSync(dirname(destination), { recursive: true })
       writeFileSync(destination, contents, { mode: 0o500 })

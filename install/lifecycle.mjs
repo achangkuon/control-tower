@@ -1,9 +1,11 @@
 #!/usr/bin/env bun
-import { appendFileSync, existsSync, fsyncSync, mkdirSync, openSync, closeSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs"
-import { dirname, isAbsolute, join, relative } from "node:path"
+import { appendFileSync, chmodSync, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, closeSync, readFileSync, readdirSync, realpathSync, rmSync, renameSync, writeFileSync } from "node:fs"
+import { createHash } from "node:crypto"
+import { dirname, isAbsolute, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
-import { readActivePointer, replaceActivePointer, rollbackActivePointer } from "./active-pointer.mjs"
+import { clearActivePointer, readActivePointer, replaceActivePointer, rollbackActivePointer } from "./active-pointer.mjs"
+import { readRuntimePayload } from "./runtime-payload.mjs"
 import { storeVersion } from "./version-store.mjs"
 
 const audit = (stateRoot, record) => {
@@ -21,10 +23,59 @@ const verifyLegacyCheckout = (path) => {
   if (resolved !== path || !["core.mjs", "install.sh", "bin/torre"].every((item) => existsSync(join(root, item)))) {
     throw new Error("CT_LEGACY_STATE_UNKNOWN: checkout root is not verifiable")
   }
+  return root
 }
 
-const migrateLegacyInstaller = (stateRoot, legacyConfigPath) => {
-  if (!legacyConfigPath || !existsSync(legacyConfigPath)) return
+const snapshotTree = (root) => {
+  const entries = []
+  const visit = (current, path = "") => {
+    let stat
+    try { stat = lstatSync(current) } catch { throw new Error("CT_LEGACY_STATE_UNKNOWN: checkout changed during migration") }
+    if (stat.isSymbolicLink()) throw new Error("CT_LEGACY_STATE_UNKNOWN: checkout contains a symlink")
+    const entry = { path, type: stat.isDirectory() ? "directory" : stat.isFile() ? "file" : "other", mode: stat.mode & 0o777 }
+    if (entry.type === "other") throw new Error("CT_LEGACY_STATE_UNKNOWN: checkout contains a special file")
+    if (entry.type === "file") {
+      const contents = readFileSync(current)
+      entry.sha256 = createHash("sha256").update(contents).digest("hex")
+    }
+    entries.push(entry)
+    if (entry.type === "directory") {
+      for (const child of readdirSync(current).sort()) visit(join(current, child), path ? `${path}/${child}` : child)
+    }
+  }
+  visit(root)
+  return entries
+}
+
+const copyTree = (source, destination) => {
+  const stat = lstatSync(source)
+  if (stat.isSymbolicLink()) throw new Error("CT_LEGACY_STATE_UNKNOWN: journal contains a symlink")
+  if (stat.isDirectory()) {
+    mkdirSync(destination, { recursive: true, mode: stat.mode & 0o777 })
+    chmodSync(destination, stat.mode & 0o777)
+    for (const child of readdirSync(source).sort()) copyTree(join(source, child), join(destination, child))
+    return
+  }
+  if (!stat.isFile()) throw new Error("CT_LEGACY_STATE_UNKNOWN: journal contains a special file")
+  writeFileSync(destination, readFileSync(source), { mode: stat.mode & 0o777 })
+  chmodSync(destination, stat.mode & 0o777)
+}
+
+const legacyJournalPaths = (stateRoot) => {
+  const directory = join(stateRoot, "install-journal")
+  return {
+    directory,
+    backup: join(directory, "legacy-opencode.json"),
+    metadata: join(directory, "legacy-fixture.json"),
+    checkout: join(directory, "legacy-checkout"),
+  }
+}
+
+const prepareLegacyInstaller = (legacyConfigPath) => {
+  if (!legacyConfigPath || !existsSync(legacyConfigPath)) return null
+  let configStat
+  try { configStat = lstatSync(legacyConfigPath) } catch { throw new Error("CT_LEGACY_STATE_UNKNOWN: configuration disappeared") }
+  if (!configStat.isFile() || configStat.isSymbolicLink()) throw new Error("CT_LEGACY_STATE_UNKNOWN: configuration is not a regular file")
   const bytes = readFileSync(legacyConfigPath, "utf8")
   let config
   try { config = JSON.parse(bytes) } catch { throw new Error("CT_LEGACY_STATE_UNKNOWN: invalid OpenCode configuration") }
@@ -33,15 +84,64 @@ const migrateLegacyInstaller = (stateRoot, legacyConfigPath) => {
   if (!Array.isArray(command) || command.length < 2 || typeof command[1] !== "string" || !command[1].endsWith("/mcp.mjs")) {
     throw new Error("CT_LEGACY_STATE_UNKNOWN: control-tower command is not verifiable")
   }
-  verifyLegacyCheckout(command[1])
-  const directory = join(stateRoot, "install-journal"), backup = join(directory, "legacy-opencode.json")
-  mkdirSync(directory, { recursive: true, mode: 0o700 })
-  if (existsSync(backup) && readFileSync(backup, "utf8") !== bytes) {
-    throw new Error("CT_LEGACY_STATE_UNKNOWN: backup differs from current configuration")
+  const checkoutPath = verifyLegacyCheckout(command[1])
+  return {
+    configPath: legacyConfigPath,
+    configMode: configStat.mode & 0o777,
+    configBytes: bytes,
+    checkoutPath,
+    checkout: snapshotTree(checkoutPath),
   }
-  if (readFileSync(legacyConfigPath, "utf8") !== bytes) throw new Error("CT_LEGACY_STATE_UNKNOWN: configuration changed during migration")
-  if (!existsSync(backup)) writeFileSync(backup, bytes, { mode: 0o600 })
-  appendFileSync(join(directory, "migration.ndjson"), `${JSON.stringify({ operation: "checkout-installer-migration", outcome: "backed-up", source: legacyConfigPath })}\n`, { mode: 0o600 })
+}
+
+const persistLegacyInstaller = (stateRoot, fixture) => {
+  if (!fixture) return { created: false }
+  const paths = legacyJournalPaths(stateRoot)
+  const journalExists = existsSync(paths.metadata)
+  if (journalExists) {
+    let existing
+    try { existing = JSON.parse(readFileSync(paths.metadata, "utf8")) } catch { throw new Error("CT_LEGACY_STATE_UNKNOWN: invalid migration journal") }
+    if (existing.configPath !== fixture.configPath || existing.checkoutPath !== fixture.checkoutPath
+      || existing.configBytes !== fixture.configBytes || existing.configMode !== fixture.configMode
+      || JSON.stringify(existing.checkout) !== JSON.stringify(fixture.checkout)) {
+      throw new Error("CT_LEGACY_STATE_UNKNOWN: backup differs from current configuration")
+    }
+    if (!existsSync(paths.backup) || !existsSync(paths.checkout)) throw new Error("CT_LEGACY_STATE_UNKNOWN: migration journal is incomplete")
+    return { created: false }
+  }
+  mkdirSync(paths.directory, { recursive: true, mode: 0o700 })
+  writeFileSync(paths.backup, fixture.configBytes, { mode: 0o600 })
+  chmodSync(paths.backup, fixture.configMode)
+  copyTree(fixture.checkoutPath, paths.checkout)
+  const temporary = `${paths.metadata}.tmp-${process.pid}`
+  try {
+    writeFileSync(temporary, `${JSON.stringify(fixture)}\n`, { mode: 0o600 })
+    renameSync(temporary, paths.metadata)
+  } catch (error) {
+    rmSync(temporary, { force: true })
+    throw new Error(`CT_LEGACY_STATE_UNKNOWN: ${error.message}`)
+  }
+  appendFileSync(join(paths.directory, "migration.ndjson"), `${JSON.stringify({ operation: "checkout-installer-migration", outcome: "backed-up", source: fixture.configPath })}\n`, { mode: 0o600 })
+  return { created: true, paths }
+}
+
+const restoreLegacyInstaller = (stateRoot) => {
+  const paths = legacyJournalPaths(stateRoot)
+  if (!existsSync(paths.metadata)) return null
+  let fixture
+  try { fixture = JSON.parse(readFileSync(paths.metadata, "utf8")) } catch { throw new Error("CT_LEGACY_STATE_UNKNOWN: invalid migration journal") }
+  if (!isAbsolute(fixture.configPath) || !isAbsolute(fixture.checkoutPath) || !existsSync(paths.backup) || !existsSync(paths.checkout)) {
+    throw new Error("CT_LEGACY_STATE_UNKNOWN: migration journal is incomplete")
+  }
+  const config = readFileSync(paths.backup)
+  const checkout = snapshotTree(paths.checkout)
+  if (JSON.stringify(checkout) !== JSON.stringify(fixture.checkout)) throw new Error("CT_LEGACY_STATE_UNKNOWN: migration journal changed")
+  mkdirSync(dirname(fixture.configPath), { recursive: true })
+  writeFileSync(fixture.configPath, config, { mode: fixture.configMode })
+  chmodSync(fixture.configPath, fixture.configMode)
+  rmSync(fixture.checkoutPath, { recursive: true, force: true })
+  copyTree(paths.checkout, fixture.checkoutPath)
+  return fixture
 }
 
 export function lifecycle({ action, version, files, dataRoot, configRoot, stateRoot, legacyConfigPath, failValidation = false, pointerOptions }) {
@@ -51,15 +151,23 @@ export function lifecycle({ action, version, files, dataRoot, configRoot, stateR
     return { operation: action, healthy, active: before?.version ?? null }
   }
   if (action === "install" || action === "upgrade") {
-    if (action === "upgrade") migrateLegacyInstaller(stateRoot, legacyConfigPath)
-    const stored = storeVersion(dataRoot, version, files)
+    const legacy = action === "upgrade" ? prepareLegacyInstaller(legacyConfigPath) : null
     if (failValidation) {
       audit(stateRoot, { operation: action, version, outcome: "validation-failed", active: before?.version ?? null })
       throw new Error("CT_UPGRADE_VALIDATION_FAILED")
     }
+    const stored = storeVersion(dataRoot, version, files)
+    let journal
+    try { journal = persistLegacyInstaller(stateRoot, legacy) }
+    catch (error) {
+      if (stored.created) rmSync(join(dataRoot, "versions", version), { recursive: true, force: true })
+      throw error
+    }
     let pointer
     try { pointer = replaceActivePointer(dataRoot, version, pointerOptions) }
     catch (error) {
+      if (stored.created) rmSync(join(dataRoot, "versions", version), { recursive: true, force: true })
+      if (journal?.created) rmSync(journal.paths.directory, { recursive: true, force: true })
       audit(stateRoot, { operation: action, version, outcome: "pointer-failed", active: before?.version ?? null, code: error.message })
       throw error
     }
@@ -69,6 +177,15 @@ export function lifecycle({ action, version, files, dataRoot, configRoot, stateR
     return { operation: action, active: pointer.version, changed, stored: stored.created }
   }
   if (action === "rollback") {
+    const current = readActivePointer(dataRoot)
+    if (current?.previous === null) {
+      const restored = restoreLegacyInstaller(stateRoot)
+      if (restored) {
+        const changed = clearActivePointer(dataRoot)
+        audit(stateRoot, { operation: action, outcome: "legacy-restored", version: current.version, active: null })
+        return { operation: action, active: null, changed, restored: restored.checkoutPath }
+      }
+    }
     const pointer = rollbackActivePointer(dataRoot, pointerOptions)
     audit(stateRoot, { operation: action, version: pointer.version, outcome: "active", previous: pointer.previous })
     return { operation: action, active: pointer.version, changed: true }
@@ -82,19 +199,13 @@ export function lifecycle({ action, version, files, dataRoot, configRoot, stateR
   throw new Error("CT_LIFECYCLE_ACTION_INVALID")
 }
 
-const filesFrom = (root) => Object.fromEntries(readdirSync(root, { recursive: true, withFileTypes: true })
-  .filter((entry) => entry.isFile()).map((entry) => {
-    const path = join(entry.parentPath, entry.name)
-    return [relative(root, path), readFileSync(path)]
-  }))
-
 export function runCli([action = "diagnose", version, source], env = process.env) {
   const roots = {
     dataRoot: join(env.XDG_DATA_HOME ?? join(env.HOME, ".local/share"), "control-tower"),
     configRoot: join(env.XDG_CONFIG_HOME ?? join(env.HOME, ".config"), "control-tower"),
     stateRoot: join(env.XDG_STATE_HOME ?? join(env.HOME, ".local/state"), "control-tower"),
   }
-  const files = source ? filesFrom(source) : undefined
+  const files = source ? readRuntimePayload(source) : undefined
   return lifecycle({ ...roots, action, version, files, legacyConfigPath: join(env.XDG_CONFIG_HOME ?? join(env.HOME, ".config"), "opencode/opencode.json"), failValidation: env.CT_FAIL_VALIDATION === "1" })
 }
 
