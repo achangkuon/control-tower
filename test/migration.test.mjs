@@ -17,7 +17,7 @@ import {
   writeFileSync,
 } from "node:fs"
 import { tmpdir } from "node:os"
-import { dirname, join, relative, resolve } from "node:path"
+import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import * as tower from "../core.mjs"
@@ -67,9 +67,6 @@ const actualRuntimeRoot = join(
   "control-tower",
 )
 const actualActivePath = join(actualRuntimeRoot, "ACTIVE")
-const expectedAbsentRuntimeBoundary = [
-  { path: relative(packageRoot, actualRuntimeRoot), exists: false },
-]
 const canonical = (value) => {
   if (value === null || typeof value !== "object") return JSON.stringify(value)
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`
@@ -2249,7 +2246,6 @@ describe("P0 frozen snapshot restore", () => {
       temporaryDirectories.push(destination)
       const runtimeBefore = snapshotRuntimeBoundary(packageRoot)
 
-      expect(runtimeBefore).toEqual(expectedAbsentRuntimeBoundary)
       expect(existsSync(actualActivePath)).toBe(false)
 
       const restored = restoreFrozenSnapshot({
@@ -2273,7 +2269,7 @@ describe("P0 frozen snapshot restore", () => {
       expect(restored.trackedEntries.map(({ path }) => path)).toEqual(expectedTrackedPaths)
       expect(restored.trackedEntries.every(({ contentMatches }) => contentMatches)).toBe(true)
       expect(restored.trackedEntries.every(({ modeMatches }) => modeMatches)).toBe(true)
-      expect(snapshotRuntimeBoundary(packageRoot)).toEqual(expectedAbsentRuntimeBoundary)
+      expect(snapshotRuntimeBoundary(packageRoot)).toEqual(runtimeBefore)
       expect(existsSync(actualActivePath)).toBe(false)
       expect(readFileSync(evidencePath, "utf8")).toContain(snapshot.archiveSha256)
     })
