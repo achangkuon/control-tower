@@ -18,7 +18,9 @@ Lo que corre a diario **no es** el código de este repositorio.
 
 `bin/torre` resuelve el runtime con `CONTROL_TOWER_CORE:-$HOME/.config/opencode/control-tower/core.mjs`. Las operaciones diarias (`on`, `off`, `status`, `log`, `unlock`, `reset`) ejecutan ese archivo de 398 líneas, no el del repositorio.
 
-Además **no existe data-root XDG de `installable-v1`**: el lifecycle versionado que entregó `S8.2` está implementado y probado, pero no hay ninguna instalación hecha a través de él.
+> **Corrección del 2026-08-01.** La medición del 2026-07-31 afirmaba que *no existía* data-root XDG. **Es falso desde que corrió `M8.8.2`.** Verificado hoy: `~/.local/share/control-tower/` existe con `active.json` y dos versiones instaladas (`b72e450…` y `d280214c…`), y `torre diagnose` devuelve `{"healthy":true,"active":"b72e450…"}`.
+>
+> Lo que sigue siendo cierto es el encabezado de esta sección: **el runtime en uso no es el instalado.** `bin/torre` todavía resuelve al checkout legado porque `M8.8.3` no ejecutó el corte — el payload instalado omite `core.mjs`. La adopción está *iniciada y es reversible*, no ausente. La corrige `M8.8.4`, sellado y sin integrar.
 
 Esto es exactamente lo que el manifest de `installable-v1` declara resolver: `migrates: checkout-bound-installer-to-versioned-installable-v1`. El problema está diagnosticado y el remedio construido; falta la adopción.
 
@@ -60,7 +62,7 @@ Otras dos condiciones previas sin runbook: un worktree nuevo no tiene `node_modu
 
 | # | Brecha | Consecuencia |
 |---|--------|--------------|
-| 1 | El runtime en uso es un checkout de 2026-07-21 divergente y sin remote | Todo lo construido desde entonces no está en producción. **Asignada a `S8.8`**, la Sesión de mayor palanca de P8. |
+| 1 | El runtime en uso sigue siendo el checkout legado de 2026-07-21, pese a que la versión XDG ya está instalada | El corte no se hizo: el payload publicado omite `core.mjs`. Lo corrige `M8.8.4` — sellado, con test RED en rama, sin integrar — y después `M8.8.3` reanuda el corte atendido. Sigue abierta. |
 | 2 | ~~`S8.5` está 🟢 LISTO pero **UNASSIGNED**~~ | **Superada el 2026-07-31.** `S8.5` y `S8.6` pasaron a 🟡 DIFERIDO por decisión del maintainer; el despacho vigente es `S8.8` y después `S8.7`. |
 | 3 | `core.mjs` tiene 4646 líneas y ningún lane lo reclama | El sustrato que efectivamente corre queda fuera de la contabilidad de ambos productos. Sigue abierta; no bloquea V1. |
 | 4 | Se documentaba más de lo que se construía | 42 commits `docs` contra 34 de código; 32 de los últimos 40 sin merge eran docs; 17 changes abiertos contra 2 archivados. **Corregida** por la [regla de ejecución V1](v1-execution-rule.md) y por el archivado del 2026-07-31. |

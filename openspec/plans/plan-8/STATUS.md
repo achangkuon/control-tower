@@ -25,7 +25,7 @@
 | S8.5 | Detección de hosts e integración opt-in | 🟡 DIFERIDO | Optional host detection and integration | ninguna | Diferida el 2026-07-31: la integración es opt-in y su ausencia es diagnóstico, no fallo de instalación |
 | S8.6 | Evidencia de release en máquina limpia | 🟡 DIFERIDO | Versioned lifecycle and release evidence | `S8.3`, `S8.4` | Diferida el 2026-07-31: se cubre con validación manual durante `S8.8` en vez de una Sesión formal |
 | S8.7 | Puente Hermes/Telegram | 📋 PLANIFICADO | Optional bounded Hermes bridge (amendado por `S0.3`) | `S8.4` ✅, `S8.8`, `S0.3`, `S5.1` | Alcance ampliado el 2026-08-01: presenta autorizaciones y transporta callback acotado. Ya no está 🟢 LISTO — espera `S0.3` y `S5.1` |
-| S8.8 | Adopción del instalable en el runtime en uso | 🔵 EN CURSO | Versioned lifecycle | `S8.2` ✅ | `M8.8.1` ✅ COMPLETO; `M8.8.2` y `M8.8.3` pendientes; PR #132, merge `d280214c` |
+| S8.8 | Adopción del instalable en el runtime en uso | 🔵 EN CURSO | Versioned lifecycle | `S8.2` ✅ | `M8.8.1` ✅ COMPLETO (PR #132, merge `d280214c`). `M8.8.2` ✅ ejecutado: data-root XDG creado, `torre diagnose` → `healthy:true` sobre `b72e450`. `M8.8.3` 🔴 BLOQUEADO: el payload instalado omite `core.mjs`, el corte no se hizo. `M8.8.4` sellado y sin integrar, corrige el payload |
 
 Las Sesiones se derivan de los cinco requisitos de la [spec de Installable V1](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). `S8.2` construyó el lifecycle versionado; `S8.8` lo pone efectivamente en uso, que es la parte del requisito que quedaba abierta.
 

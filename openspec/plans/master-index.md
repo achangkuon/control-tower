@@ -10,7 +10,7 @@
 
 **La primera versión no se declara hasta que el maintainer pueda aprobar desde Telegram** las decisiones que requieren su autoridad, sobre un objetivo exacto y con sobre de un solo uso. Eso incorpora `sdd-tower-implementation-v1-requirements.md` §16–§17 al alcance que sale. Son **once Sesiones** en una cadena casi lineal.
 
-**Lo último cerrado:** `M8.8.1`, vía PR #132, merge `d280214c`. **`S8.8` sigue 🔵 EN CURSO** con `M8.8.2` y `M8.8.3` pendientes, ambos 👤 ATENDIDOS — mutan la máquina real y no se ejecutan de forma autónoma.
+**`S8.8` sigue 🔵 EN CURSO, y su estado real es más avanzado de lo que estos documentos decían.** `M8.8.1` ✅ COMPLETO vía PR #132. **`M8.8.2` ya se ejecutó**: el data-root XDG existe en `~/.local/share/control-tower/` con `active.json` y dos versiones instaladas, y `torre diagnose` devuelve `healthy:true` sobre `b72e450`. **`M8.8.3` está 🔴 BLOQUEADO**: el corte no se hizo porque el payload instalado omite `core.mjs`. `M8.8.4` es el Módulo sellado que corrige ese payload; su test RED vive en `fix/installable-v1/m8-8-4-*`, sin integrar.
 
 **Decisión pendiente del maintainer:** levantar el freno de ejecución. Hasta que eso ocurra no se inician ni asignan `M8.8.2`, `M8.8.3` ni ninguna Sesión de la cadena. Listas para arrancar el día que se levante: `S0.3`, `S3.1` y la continuación de `S8.8`.
 
