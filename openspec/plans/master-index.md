@@ -1,7 +1,7 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-01 contra `master` en `3e648ac`.
+> Última reconciliación: 2026-08-01 contra `ccf81ce` + implementación `3d2ef57`.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md).
 
 ## 📍 Punto de retoma
@@ -10,11 +10,11 @@
 
 **La primera versión no se declara hasta que el maintainer pueda aprobar desde Telegram** las decisiones que requieren su autoridad, sobre un objetivo exacto y con sobre de un solo uso. Eso incorpora `sdd-tower-implementation-v1-requirements.md` §16–§17 al alcance que sale. Son **once Sesiones** en una cadena casi lineal.
 
-**`S8.8` sigue 🔵 EN CURSO, y su estado real es más avanzado de lo que estos documentos decían.** `M8.8.1` ✅ COMPLETO vía PR #132. **`M8.8.2` ya se ejecutó**: el data-root XDG existe en `~/.local/share/control-tower/` con `active.json` y dos versiones instaladas, y `torre diagnose` devuelve `healthy:true` sobre `b72e450`. **`M8.8.3` está 🔴 BLOQUEADO**: el corte no se hizo porque el payload instalado omite `core.mjs`. `M8.8.4` es el Módulo sellado que corrige ese payload; su test RED vive en `fix/installable-v1/m8-8-4-*`, sin integrar.
+**`S8.8` sigue 🔵 EN CURSO, y su estado real es más avanzado de lo que estos documentos decían.** `M8.8.1` ✅ COMPLETO vía PR #132. **`M8.8.2` ya se ejecutó**: el data-root XDG existe en `~/.local/share/control-tower/` con `active.json` y dos versiones instaladas, y `torre diagnose` devuelve `healthy:true` sobre `b72e450`. **`M8.8.3` está 🔴 BLOQUEADO**: el corte no se hizo porque el payload instalado omite `core.mjs`. **`M8.8.4` ✅ COMPLETO** en `3d2ef57`: payload 5/0, instalación 27/0 y suite aislada completa 442/0; no hubo efectos sobre runtime/DB reales y el fixture descartable fue destruido.
 
-**Decisión pendiente del maintainer:** levantar el freno de ejecución. Hasta que eso ocurra no se inician ni asignan `M8.8.2`, `M8.8.3` ni ninguna Sesión de la cadena. Listas para arrancar el día que se levante: `S0.3`, `S3.1` y la continuación de `S8.8`.
+**Próximo trabajo de la cadena:** levantar el freno de ejecución y continuar, de forma atendida, la secuencia de prerrequisito/adopción real de `M8.8.2`; `M8.8.3` sigue 🔴 BLOQUEADO y no se adelanta. Hasta que eso ocurra no se inician ni asignan `M8.8.2`, `M8.8.3` ni ninguna Sesión de la cadena. Listas para arrancar el día que se levante: `S3.1` y la continuación de `S8.8`; `S0.3` ya está ✅ COMPLETO.
 
-**Bloqueo técnico previo a construir autorización:** `schemas/authorization-v1.schema.json` y `main-store/store.mjs:118` no coinciden, y dos specs vigentes se contradicen sobre si el puente puede transportar merge. Lo primero es de `S5.1`; lo segundo lo amenda `S0.3`.
+**Bloqueo técnico previo a construir autorización:** `schemas/authorization-v1.schema.json` y `main-store/store.mjs:118` no coinciden. Esto es de `S5.1`; la enmienda de `S0.3` ya está ✅ COMPLETA y la spec canónica permite que el puente transporte el callback acotado sin otorgarle autoridad.
 
 ## Granularidad
 

@@ -10,7 +10,7 @@
 | Dependencias | `master@a4aa3a6`, que integra `d280214c8de78f90e88982d90642427b55a72f2b` y `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`; `S8.1`–`S8.4` están verificadas y mergeadas; `M8.8.1` está mergeado vía PR #132. |
 | Bloqueo operativo | Antes de despachar cualquier Sesión hay que sanear el registro de la Torre: tres de los seis agentes registrados no tienen worktree y uno de ellos retiene un mensaje en cola que nadie va a consumir. Ver [brecha 5](../implementation-state.md). No es un bloqueo de alcance; es que la capacidad reportada no es real. |
 | Alcance aprobado | Release local-first con lifecycle versionado, inmutable, idempotente y reversible; sin activar autonomía. |
-| Próxima acción | Esperar la próxima instrucción sellada del maintainer; no iniciar ni asignar `M8.8.2`, `M8.8.3` o `S8.7` todavía. `S8.5` y `S8.6` quedan 🟡 DIFERIDO. |
+| Próxima acción | Levantar el freno con instrucción atendida del maintainer y continuar la secuencia de prerrequisito/adopción real de `M8.8.2`; `M8.8.3` sigue bloqueado y no se adelanta. `S8.7` espera `S8.8` y `S5.1`; `S0.3` está ✅ COMPLETO. `S8.5` y `S8.6` quedan 🟡 DIFERIDO. |
 | Flujo | P8 corre bajo la [regla de ejecución V1](../v1-execution-rule.md): de `tasks.md` directo a implementación, sin exploration/proposal/design y sin PR de cierre separada. |
 | Referencias | [tasks de V1](../../changes/v1-release/tasks.md); [change archivado](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/), [spec](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). |
 
@@ -24,8 +24,8 @@
 | S8.4 | Autoridad única de Main y briefs read-only de Support | ✅ COMPLETO | Sole Main authority and manual worker boundary | `S8.3` | issue #123 cerrado; PR #122 (contrato) y PR #126 (implementación); merge `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`; candidato `9458c78`; enfocada 22/22, acotada 59/59, suite completa 431/431 con Torre desarmada; diff-check PASS sobre exactamente los 4 archivos del Área |
 | S8.5 | Detección de hosts e integración opt-in | 🟡 DIFERIDO | Optional host detection and integration | ninguna | Diferida el 2026-07-31: la integración es opt-in y su ausencia es diagnóstico, no fallo de instalación |
 | S8.6 | Evidencia de release en máquina limpia | 🟡 DIFERIDO | Versioned lifecycle and release evidence | `S8.3`, `S8.4` | Diferida el 2026-07-31: se cubre con validación manual durante `S8.8` en vez de una Sesión formal |
-| S8.7 | Puente Hermes/Telegram | 📋 PLANIFICADO | Optional bounded Hermes bridge (amendado por `S0.3`) | `S8.4` ✅, `S8.8`, `S0.3`, `S5.1` | Alcance ampliado el 2026-08-01: presenta autorizaciones y transporta callback acotado. Ya no está 🟢 LISTO — espera `S0.3` y `S5.1` |
-| S8.8 | Adopción del instalable en el runtime en uso | 🔵 EN CURSO | Versioned lifecycle | `S8.2` ✅ | `M8.8.1` ✅ COMPLETO (PR #132, merge `d280214c`). `M8.8.2` ✅ ejecutado: data-root XDG creado, `torre diagnose` → `healthy:true` sobre `b72e450`. `M8.8.3` 🔴 BLOQUEADO: el payload instalado omite `core.mjs`, el corte no se hizo. `M8.8.4` sellado y sin integrar, corrige el payload |
+| S8.7 | Puente Hermes/Telegram | 📋 PLANIFICADO | Optional bounded Hermes bridge (amendado por `S0.3`) | `S8.4` ✅, `S0.3` ✅, `S8.8`, `S5.1` | Alcance ampliado el 2026-08-01: presenta autorizaciones y transporta callback acotado. `S0.3` está completo; quedan `S8.8` y `S5.1` |
+| S8.8 | Adopción del instalable en el runtime en uso | 🔵 EN CURSO | Versioned lifecycle | `S8.2` ✅ | `M8.8.1` ✅ COMPLETO (PR #132, merge `d280214c`). `M8.8.2` ✅ ejecutado: data-root XDG creado, `torre diagnose` → `healthy:true` sobre `b72e450`. `M8.8.3` 🔴 BLOQUEADO: el payload instalado omite `core.mjs`, el corte no se hizo. `M8.8.4` ✅ COMPLETO en `3d2ef57`: payload 5/0, instalación 27/0, suite aislada 442/0 y sin efectos reales |
 
 Las Sesiones se derivan de los cinco requisitos de la [spec de Installable V1](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). `S8.2` construyó el lifecycle versionado; `S8.8` lo pone efectivamente en uso, que es la parte del requisito que quedaba abierta.
 
@@ -156,6 +156,7 @@ Absorbe la validación práctica que `S8.6` haría de forma formal: la instalaci
 | `M8.8.1` Cobertura legado → XDG | 🔒 SELLABLE, autónomo | `install/**`, `test/install/**` | PR #132 mergeada; ejecución autónoma verificada sin instalación real |
 | `M8.8.2` Diagnóstico y adopción real | 👤 ATENDIDO | `bin/torre`, data-root XDG, `~/.config/opencode/control-tower/` | `torre install` real sobre la máquina del maintainer |
 | `M8.8.3` Corte al runtime legado | 👤 ATENDIDO | ídem | Repunta `bin/torre`; un fallo deja la Torre inoperable |
+| `M8.8.4` Preflight de adopción y payload verificable | 🔒 SELLABLE, autónomo | `install/**`, `scripts/publish-runtime.mjs`, `test/install/**` | Valida el payload cerrado y deja segura la continuación atendida de `M8.8.2` |
 
 El motivo es duro: **un contrato sellado no autoriza efectos fuera del repositorio**, y nadie debería despertarse con `torre` roto porque un agente repuntó el runtime sin supervisión. El contrato de `M8.8.1` vive en [`seal-M8.8.1.md`](../../changes/v1-release/seal-M8.8.1.md).
 
@@ -186,7 +187,36 @@ El motivo es duro: **un contrato sellado no autoriza efectos fuera del repositor
 
 **Evidencia de cierre:** issue #131 cerrado por PR #132; implementación `b7715ed34357b6e5ea25d920d558a9137efe2558`; merge en `master` como `d280214c8de78f90e88982d90642427b55a72f2b`. La reconciliación autorizada del baseline reemplaza `429 pass / 2 fail` por `433 pass / 0 fail`: los dos tests históricos P0 ahora pasan y M8.8.1 agrega dos tests.
 
-`S8.8` cierra sólo cuando los tres Módulos pasan. `M8.8.1` sellada no es la Sesión cerrada.
+`S8.8` cierra sólo cuando la secuencia atendida de `M8.8.2` y el corte de `M8.8.3` estén completos; `M8.8.4` ✅ COMPLETO es un prerrequisito y no otorga crédito parcial a la Sesión.
+
+#### M8.8.4 — Preflight de adopción y payload verificable
+
+Corrige el cierre del payload publicado antes de reanudar la adopción atendida. El payload canónico queda limitado a cinco archivos, rechaza miembros faltantes, extraños o symlinks, y la validación ocurre antes de crear raíces temporales. El lifecycle conserva limpieza atómica de versiones y puntero fallidos y el rollback de primera adopción restaura el fixture legado completo.
+
+| Campo | Valor |
+|---|---|
+| Estado | ✅ COMPLETO |
+| Modo | 🔒 SELLABLE, autónomo; no autoriza adopción real |
+| Depende de | `M8.8.1` ✅ COMPLETO |
+| Área | `install/**`, `scripts/publish-runtime.mjs`, `test/install/**` |
+| Recurso | data-root descartable; sin runtime real, DB ni token de entrega |
+
+**Tareas** — todas completadas:
+
+- [x] `T8.8.4.1` RED: cubrir el cierre exacto del payload y rechazar miembros faltantes, extraños, traversal y symlinks
+- [x] `T8.8.4.2` GREEN: validar el payload canónico desde publicación e instalación antes de cualquier mutación
+- [x] `T8.8.4.3` REFACTOR: conservar digest inmutable, limpieza atómica y rollback completo de la primera adopción
+- [x] `T8.8.4.4` VERIFY: ejecutar pruebas enfocadas y suite completa en checkout aislado con fixture descartable
+
+**Criterios de aceptación** — todos verificados:
+
+- [x] Payload canónico: `5 pass / 0 fail`
+- [x] Instalación y lifecycle enfocados: `27 pass / 0 fail`
+- [x] Suite aislada completa: `442 pass / 0 fail`, `2688 expect()` calls en 24 archivos
+- [x] La instalación congelada preserva el lock y no produce efectos sobre runtime o DB reales; el fixture descartable se destruye al finalizar
+- [x] La implementación queda referenciada por `3d2ef57` y acotada a `install/**`, `scripts/publish-runtime.mjs` y `test/install/**`
+
+**Evidencia de cierre:** implementación `3d2ef57`; payload 5/0, instalación 27/0 y suite aislada completa 442/0. `bun install --frozen-lockfile` pasó, el lock permaneció intacto, no se accedió ni mutó el runtime o la DB reales y todos los recursos del checkout/fixture descartable fueron eliminados. `M8.8.4` deja habilitada la continuación atendida de `M8.8.2`, pero no cambia el estado de `M8.8.2` ni adelanta `M8.8.3`.
 
 ### S8.5 — Detección de hosts e integración opt-in
 
@@ -208,12 +238,12 @@ Va última pese a su prioridad declarada: el propio [tasks.md](../../changes/arc
 
 `S8.2` entregó únicamente almacenamiento de versiones, puntero activo, install/diagnose/upgrade/rollback/uninstall, preservación de configuración e historial, y sus pruebas Strict TDD. No modificó `core.mjs`, `mcp.mjs`, `package.json`, `bun.lock`, DB ni estado de Tower.
 
-Con `S8.4` cerrada y `S8.8` enumerada, P8 permanece en `50% (4/8 S)` — `M8.8.1` es un Módulo y no otorga crédito parcial a la Sesión. Todo el alcance aprobado del lane tiene límite de un PR; no queda responsabilidad sin ID.
+Con `S8.4` cerrada y `S8.8` enumerada, P8 permanece en `50% (4/8 S)` — `M8.8.1` y `M8.8.4` son Módulos y no otorgan crédito parcial a la Sesión. Todo el alcance aprobado del lane tiene límite de un PR; no queda responsabilidad sin ID.
 
 Cada Sesión es una unidad entregable dirigida a `master`. **Desde el 2026-08-01 (`46edd14`) eso es un commit directo + push, no un PR** — ver [Política de entrega](../../../AGENTS.md). El alcance de la Sesión no cambia: sigue siendo el que entraría en un PR. Las referencias a PRs de las Sesiones ya cerradas son historia y quedan como están.
 
-**El alcance de `S8.7` cambió con la [unificación del 2026-08-01](../release-chain.md).** Ya no es sólo estado más arm/disarm: el puente además **presenta** una autorización creada por Main y **transporta** el callback acotado de aprobación o rechazo. Lo que no cambia es el principio — Hermes presenta; Main crea, valida y consume. El puente sigue sin recibir shell, workers, Git, merge directo, delivery ni selección implícita de proyecto. Por eso `S8.7` ahora depende también de `S0.3`, que amenda la spec que hoy le prohibiría transportar ese callback, y de `S5.1`, que es donde nace la autorización que el puente presenta.
+**El alcance de `S8.7` cambió con la [unificación del 2026-08-01](../release-chain.md).** Ya no es sólo estado más arm/disarm: el puente además **presenta** una autorización creada por Main y **transporta** el callback acotado de aprobación o rechazo. Lo que no cambia es el principio — Hermes presenta; Main crea, valida y consume. El puente sigue sin recibir shell, workers, Git, merge directo, delivery ni selección implícita de proyecto. `S0.3` ya está ✅ COMPLETO y su enmienda permite ese transporte acotado; los bloqueos restantes de `S8.7` son `S8.8` y `S5.1`, donde nace la autorización que el puente presenta.
 
-**Orden de ejecución:** `S8.8` primero — sin adopción, todo lo demás sigue sin correr en la máquina real. `S8.7` va al final de la cadena, después de `S5.1` y `S0.3`. `S8.5` y `S8.6` quedan fuera del camino por decisión explícita del maintainer del 2026-07-31, que también reemplaza el estado `UNASSIGNED` que traía `S8.5`. La cadena completa y su grafo están en [release-chain](release-chain.md).
+**Orden de ejecución:** `S8.8` primero — sin adopción, todo lo demás sigue sin correr en la máquina real. `S8.7` va al final de la cadena, después de `S5.1`; `S0.3` ya está ✅ COMPLETO. `S8.5` y `S8.6` quedan fuera del camino por decisión explícita del maintainer del 2026-07-31, que también reemplaza el estado `UNASSIGNED` que traía `S8.5`. La cadena completa y su grafo están en [release-chain](release-chain.md).
 
 Las actualizaciones sobre los archivos de planificación reclamados por `installable-v1-provenance` en [`product-version-map.yaml`](../product-version-map.yaml) deben serializarse.
