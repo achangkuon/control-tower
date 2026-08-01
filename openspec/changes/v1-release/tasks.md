@@ -23,7 +23,8 @@ es el que corre no prueba nada.
 
 ## S8.8 — Adopción del instalable en el runtime en uso
 
-**Área:** `install/**`, `bin/torre`, `test/install/**`
+**Área sellada (`M8.8.1`):** `install/**`, `test/install/**` — nada más.
+**Área atendida (`M8.8.2`, `M8.8.3`):** `bin/torre`, data-root XDG, `~/.config/opencode/control-tower/`.
 **Recurso:** data-root XDG. Sin migraciones de DB, sin token de entrega.
 **Depende de:** `S8.2` ✅
 
@@ -32,35 +33,54 @@ de él. `bin/torre:20` resuelve el runtime como
 `CONTROL_TOWER_CORE:-$HOME/.config/opencode/control-tower/core.mjs`: un checkout independiente,
 sin remote, de 398 líneas, congelado en `681a0e5` el 2026-07-21.
 
-### M8.8.1 — Diagnóstico del estado actual
+> **S8.8 sigue siendo UNA Sesión.** Lo que se parte no es la Sesión sino la **forma de ejecución**:
+> `M8.8.1` es sellable y un agente la corre solo; `M8.8.2` y `M8.8.3` mutan la máquina real del
+> maintainer y **son atendidas**. Un contrato sellado no autoriza efectos fuera del repositorio,
+> y nadie debería despertarse con `torre` roto porque un agente repuntó el runtime a las 3am.
 
-- [ ] T8.8.1.1 Ejecutar `torre diagnose` y registrar textualmente qué reporta sobre data-root, puntero activo y versión resuelta
-- [ ] T8.8.1.2 Capturar el estado del runtime en uso: ruta, SHA del checkout, tamaño, fecha y ausencia de remote
-- [ ] T8.8.1.3 Registrar qué configuración e historial existen hoy bajo `~/.config/opencode/control-tower/` y deben sobrevivir a la instalación
+### M8.8.1 — Cobertura del caso legado → XDG · 🔒 SELLABLE, autónomo
 
-### M8.8.2 — Instalación versionada real
+Único Módulo que un implementador puede ejecutar sin supervisión. Todo ocurre dentro del
+repositorio: sin `torre install` real, sin tocar `~/.config/`, sin mover el runtime en uso.
 
-- [ ] T8.8.2.1 RED: extender `test/install/lifecycle.test.mjs` con el caso de instalar sobre una máquina que ya tiene un runtime legado sin data-root XDG, preservando configuración e historial
-- [ ] T8.8.2.2 GREEN: ajustar `install/lifecycle.mjs` sólo si el caso falla; si pasa sin cambios, dejar constancia de que la cobertura ya existía
-- [ ] T8.8.2.3 Ejecutar `torre install` real y verificar que el data-root XDG queda creado con la versión y el puntero activo correctos
-- [ ] T8.8.2.4 Confirmar que la configuración y el historial previos siguen íntegros después de instalar
+- [ ] T8.8.1.1 RED: extender `test/install/lifecycle.test.mjs` con el caso de instalar sobre una máquina que ya tiene un runtime legado sin data-root XDG, preservando configuración e historial. El fixture usa un data-root temporal, **nunca** `$HOME`
+- [ ] T8.8.1.2 RED: agregar el caso de idempotencia — instalar dos veces seguidas produce exactamente el mismo estado — y el de `rollback` sin pérdida de configuración ni historial
+- [ ] T8.8.1.3 GREEN: ajustar `install/lifecycle.mjs`, `install/active-pointer.mjs` o `install/version-store.mjs` sólo si algún caso falla. Si pasan sin cambios, dejar constancia escrita de que la cobertura ya existía en lugar de inventar código
+- [ ] T8.8.1.4 REFACTOR: normalizar errores estables y volver a correr `bun test test/install`
 
-### M8.8.3 — Corte al runtime legado
+**Criterios de aceptación de M8.8.1** — cierran el sello:
+
+- [ ] Los tres casos nuevos —legado→XDG, idempotencia y rollback— existen y pasan
+- [ ] `bun test test/install` pasa completo
+- [ ] `bun test` no introduce fallos nuevos respecto de la base de 429 pass / 2 fail preexistentes
+- [ ] Ninguna ruta fuera de `install/**` y `test/install/**` aparece en el diff
+- [ ] Ningún test escribe fuera de su directorio temporal: `~/.config/opencode/control-tower/`, el data-root XDG real y `.git/control-tower/` quedan idénticos byte a byte
+
+### M8.8.2 — Diagnóstico y adopción real · 👤 ATENDIDO
+
+**No sellar. No ejecutar de forma autónoma.** Requiere al maintainer presente.
+
+- [ ] T8.8.2.1 Ejecutar `torre diagnose` y registrar textualmente qué reporta sobre data-root, puntero activo y versión resuelta
+- [ ] T8.8.2.2 Capturar el estado del runtime en uso: ruta, SHA del checkout, tamaño, fecha y ausencia de remote
+- [ ] T8.8.2.3 Respaldar `~/.config/opencode/control-tower/` completo antes de tocar nada
+- [ ] T8.8.2.4 Ejecutar `torre install` real y verificar que el data-root XDG queda creado con la versión y el puntero activo correctos
+- [ ] T8.8.2.5 Confirmar que la configuración y el historial previos siguen íntegros después de instalar
+
+### M8.8.3 — Corte al runtime legado · 👤 ATENDIDO
 
 - [ ] T8.8.3.1 Repuntar `bin/torre` al runtime instalado y dejar el checkout legado intacto como respaldo, sin borrarlo
 - [ ] T8.8.3.2 Verificar `on`, `off`, `status`, `log`, `unlock` y `reset` contra el runtime instalado, uno por uno
 - [ ] T8.8.3.3 Ejecutar `torre rollback` y confirmar que vuelve a la versión anterior sin pérdida de configuración
-- [ ] T8.8.3.4 Reinstalar hacia adelante y confirmar idempotencia: instalar dos veces seguidas no produce un estado distinto
+- [ ] T8.8.3.4 Reinstalar hacia adelante y confirmar idempotencia en la máquina real
 
-### Criterios de aceptación S8.8
+### Criterios de aceptación S8.8 — la Sesión cierra cuando todos pasan
 
+- [ ] `M8.8.1` cerrada con su sello verificado
 - [ ] `torre diagnose` reporta un data-root XDG existente con puntero activo válido
 - [ ] El runtime resuelto por `bin/torre` es el instalado, no el checkout de `~/.config/opencode/control-tower/`
 - [ ] Las seis operaciones diarias corren contra el runtime instalado
 - [ ] `rollback` y la reinstalación hacia adelante funcionan sin pérdida de configuración ni de historial
-- [ ] `bun test test/install` pasa completo
-- [ ] `bun test` no introduce fallos nuevos respecto de la base de 429 pass / 2 fail preexistentes
-- [ ] Ninguna ruta fuera del `Área` aparece en el diff
+- [ ] El checkout legado sigue existiendo como respaldo
 
 ---
 
