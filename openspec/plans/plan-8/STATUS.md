@@ -148,6 +148,18 @@ La consecuencia es que **nada de lo construido después del 2026-07-21 está en 
 
 Absorbe la validación práctica que `S8.6` haría de forma formal: la instalación real en la máquina del maintainer es la evidencia de smoke y rollback.
 
+**Modo de ejecución — la Sesión es una, la ejecución se parte.** No se crea una Sesión nueva: eso inventaría un nivel que la convención no tiene. Lo que cambia es quién puede correr cada Módulo.
+
+| Módulo | Modo | Área | Motivo |
+|---|---|---|---|
+| `M8.8.1` Cobertura legado → XDG | 🔒 SELLABLE, autónomo | `install/**`, `test/install/**` | Todo ocurre dentro del repositorio, contra un data-root temporal, sin instalación real |
+| `M8.8.2` Diagnóstico y adopción real | 👤 ATENDIDO | `bin/torre`, data-root XDG, `~/.config/opencode/control-tower/` | `torre install` real sobre la máquina del maintainer |
+| `M8.8.3` Corte al runtime legado | 👤 ATENDIDO | ídem | Repunta `bin/torre`; un fallo deja la Torre inoperable |
+
+El motivo es duro: **un contrato sellado no autoriza efectos fuera del repositorio**, y nadie debería despertarse con `torre` roto porque un agente repuntó el runtime sin supervisión. El contrato de `M8.8.1` vive en [`seal-M8.8.1.md`](../../changes/v1-release/seal-M8.8.1.md).
+
+`S8.8` cierra sólo cuando los tres Módulos pasan. `M8.8.1` sellada no es la Sesión cerrada.
+
 ### S8.5 — Detección de hosts e integración opt-in
 
 Detecta Bun, Git y las instalaciones disponibles de OpenCode, Pi y Claude, e informa versiones y capacidades. La integración es opt-in y se limita a los hosts presentes; un host opcional ausente es diagnóstico, nunca un fallo de instalación. Una configuración de host insegura cierra fail-closed.

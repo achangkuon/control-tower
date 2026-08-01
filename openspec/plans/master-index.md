@@ -8,7 +8,11 @@
 
 **`S8.4` está ✅ COMPLETO.** Cerró mediante issue #123 y PR #126, y su reconciliación documental mediante PR #128, integrada en `master@d072e509`. Verificada, no asumida: 22/22 en `test/support/support.test.mjs`, 59/59 en el grupo del contrato, y diff-check exacto sobre los 4 archivos del `Área` en el candidato `9458c78`.
 
-**El foco es V1 y sólo V1.** Las próximas Sesiones son `S8.8` (adopción del instalable) y después `S8.7` (puente Telegram acotado), en ese orden y sin excepción: verificar el puente contra un runtime que no es el que corre no prueba nada. Ambas están en [`changes/v1-release/tasks.md`](../changes/v1-release/tasks.md), ejecutables por **un solo agente y sin Torre de Control**.
+**El foco es V1 y sólo V1.** Las próximas Sesiones son `S8.8` (adopción del instalable) y después `S8.7` (puente Telegram acotado), en ese orden y sin excepción: verificar el puente contra un runtime que no es el que corre no prueba nada. Ambas están en [`changes/v1-release/tasks.md`](../changes/v1-release/tasks.md).
+
+**Forma de entrega acordada el 2026-07-31 — pipeline atendido, sello por sello.** El maintainer planifica y sella una Sesión; recién ahí un implementador la ejecuta, mientras el maintainer diseña la siguiente. Como el maintainer está presente, la alcanzabilidad es `live` y **el modo nocturno no aplica**: no hace falta Torre, y la [regla de ejecución V1](v1-execution-rule.md) queda vigente sin enmiendas. Propiedad de rutas mientras ambos corren: el planificador escribe sólo `openspec/changes/v1-release/**`; el implementador escribe código, pruebas y `plan-8/STATUS.md`. Nunca los dos sobre el mismo archivo.
+
+`S8.8` tiene su ejecución partida en Módulos sellados y atendidos — ver [plan-8/STATUS](plan-8/STATUS.md). El contrato del único Módulo autónomo está en [`seal-M8.8.1.md`](../changes/v1-release/seal-M8.8.1.md).
 
 `S8.5` y `S8.6` quedan 🟡 DIFERIDO por decisión del maintainer del 2026-07-31 — esto reemplaza el estado `UNASSIGNED` que traía `S8.5`. No están descartadas: `S8.6` sigue siendo el cierre formal de la evidencia de release, así que V1 podrá darse por usable pero no por certificado en máquina limpia.
 
