@@ -1,7 +1,7 @@
 # Estado de implementación — Control Tower
 
 > Este documento mide **código**, no planificación. El [master-index](master-index.md) dice qué está planificado y qué Sesiones cerraron; este archivo dice qué existe, qué corre y qué está desplegado.
-> Medición: 2026-07-31 sobre `Main` en `2cc7c80281ce266efa5eac073a63e5e91c0af466`.
+> Medición: 2026-07-31 sobre `master` en `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`.
 
 ## ⚠️ Hallazgo principal: construido ≠ desplegado
 
@@ -31,32 +31,31 @@ Esto es exactamente lo que el manifest de `installable-v1` declara resolver: `mi
 | `contracts/` | 322 | `autonomous-v2` | `schema-registry`, `canonicalize`, `artifact-ref`, `idempotency`, `validate`, `errors`. Entregado por P2 Change A. |
 | `registry/` | 337 | `autonomous-v2` | `store`, `path`, `legacy-import`. Entregado por `S2.4` y `S2.5`. |
 | `main-store/` | 183 | `autonomous-v2` | `authority`, `store`. Entregado por P2 Change A. |
+| `support/agent.mjs` | 49 | `installable-v1` | Entrada `createSupportBrief`; valida la solicitud y mantiene Support read-only. Entregado por `S8.4`. |
+| `support/manifest.mjs` | 99 | `installable-v1` | Resuelve el roadmap y los STATUS permitidos con validación fail-closed. Entregado por `S8.4`. |
+| `support/snapshot.mjs` | 52 | `installable-v1` | Captura fuentes, Git y Tower DB en modo read-only/query-only. Entregado por `S8.4`. |
+| `test/support/support.test.mjs` | 172 | `installable-v1` | Prueba enfocada del contrato, rechazos y testigos de no mutación de `S8.4`. |
 | `console/` | 173 | `autonomous-v2` | `validate`, `vocabulary`. |
-| `dashboard/` | 390 | — fuera de lane | `app`, `auth`, `render`, `server`, `view-model` y fuentes mock. Skeleton archivado, sin fuente real. |
+| `dashboard/` | 392 | — fuera de lane | `app`, `auth`, `render`, `server`, `view-model` y fuentes mock. Skeleton archivado, sin fuente real. |
 
 La frontera V1/V2 **está aplicada en código**, no sólo en documentos: `bin/torre` corta las capacidades V2 con `CT_V2_ONLY`.
 
 ## Estado de las pruebas
 
-`bun test` sobre `Main`, con dependencias instaladas:
+Verificación de `S8.4` sobre el candidato `9458c78ee8fa00e4edfe0869beb6743308ad7f03`, integrado sin cambios de tree en `master@6fbd97c3b1f84735db61ccbd1fd510482206e4eb`:
 
 ```
-397 pass · 2 fail · 2552 expect() calls · 399 tests en 21 archivos
+focused: 22/22 · scoped: 59/59 · full: 431/431
 ```
 
-Los 2 fallos **no son regresiones**. Son `P0 frozen snapshot restore` sobre `f583df7` y `71ab571`, y fallan con `Control Tower must be OFF: .git/control-tower/ACTIVE is present`. Es el fail-closed funcionando: la Torre está armada en este checkout y las pruebas de restauración se niegan a correr. Con la Torre desarmada corren.
-
-Dos condiciones previas que no están documentadas en ningún runbook y hacen fallar la suite a quien la corra en frío:
-
-1. `Main` no tiene `node_modules`. Sin `bun install`, 8 fallos y 6 errores por `Cannot find package 'yaml'`.
-2. El runner es `bun`, no `node`. `node --test test/` falla con `MODULE_NOT_FOUND`.
+Los testigos Strict TDD y de no mutación pasaron. La corrección del prerrequisito de migración se integró previamente mediante PR #125 en `88b1c5198c08cefbe886df62c3cb4f97214d1506`.
 
 ## Brechas reales
 
 | # | Brecha | Consecuencia |
 |---|--------|--------------|
 | 1 | El runtime en uso es un checkout de 2026-07-21 divergente y sin remote | Todo lo construido desde entonces no está en producción. La adopción de `installable-v1` es el desbloqueo. |
-| 2 | El alcance restante de `installable-v1` no tiene Sesiones enumeradas | El lane que debería salir primero es el único sin denominador. No se puede medir ni comprometer. |
+| 2 | `S8.5` está 🟢 LISTO pero **UNASSIGNED** | La siguiente Sesión de `installable-v1` no fue despachada por esta reconciliación documental. |
 | 3 | `core.mjs` tiene 4646 líneas y ningún lane lo reclama | El sustrato que efectivamente corre queda fuera de la contabilidad de ambos productos. |
 
 ## Qué NO mide este documento

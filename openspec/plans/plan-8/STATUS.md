@@ -7,9 +7,9 @@
 | Campo | Detalle |
 |---|---|
 | Lane | `installable-v1`. Único Plan del lane; es el producto que puede salir primero y solo. |
-| Dependencias | `origin/master@9d0842172728780ba089c168c110e2de8538228b`; `S8.1`, `S8.2` y `S8.3` están verificadas y mergeadas. |
+| Dependencias | `origin/master@6fbd97c3b1f84735db61ccbd1fd510482206e4eb`; `S8.1`–`S8.4` están verificadas y mergeadas. |
 | Alcance aprobado | Release local-first con lifecycle versionado, inmutable, idempotente y reversible; sin activar autonomía. |
-| Próxima Sesión | `S8.5` está 🟢 LISTO. `S8.4` tiene contrato ejecutable pero queda 🔴 BLOQUEADO hasta la validación de Main y la aprobación issue-first. |
+| Próxima Sesión | `S8.5` está 🟢 LISTO y **UNASSIGNED**. Autonomous V2 también permanece **UNASSIGNED** y fuera de esta unidad documental. |
 | Referencias | [Change](../../changes/installable-v1-autonomous-v2-split/), [tasks](../../changes/installable-v1-autonomous-v2-split/tasks.md), [handoff](../../changes/installable-v1-autonomous-v2-split/session-handoff.md), [spec](../../changes/installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). |
 
 ## Sesiones
@@ -19,8 +19,8 @@
 | S8.1 | Provenance surfaces, tareas históricas 1.1–1.3 | ✅ COMPLETO | — | — | PR #65, merge `b1269a2d2f4b791c6f9e2e29650660160e99f382` |
 | S8.2 | Immutable lifecycle foundation | ✅ COMPLETO | Versioned lifecycle | — | issue #75; PR #76; candidato `d7ddd3d6221139ea399df66da1748458c748535d`; merge `a4ca761e0ad1d5f4bd3662ead7a00c30bff77b1b`; `verify-report.md`: PASS WITH WARNINGS, 0 CRITICAL |
 | S8.3 | Enrollment explícito de proyectos y validación de layout | ✅ COMPLETO | Explicit project enrollment and safe layout | `registry/`, ya integrado | issue #109; PR #110; merge `9d0842172728780ba089c168c110e2de8538228b`; enrollment 10/10; registry 27/27; diff-check PASS |
-| S8.4 | Autoridad única de Main y briefs read-only de Support | 🔴 BLOQUEADO | Sole Main authority and manual worker boundary | `S8.3` | Contrato versionado; falta validación de Main y aprobación issue-first |
-| S8.5 | Detección de hosts e integración opt-in | 🟢 LISTO | Optional host detection and integration | ninguna | — |
+| S8.4 | Autoridad única de Main y briefs read-only de Support | ✅ COMPLETO | Sole Main authority and manual worker boundary | `S8.3` | issue #123 cerrado; PR #126 mergeada en `6fbd97c3b1f84735db61ccbd1fd510482206e4eb` |
+| S8.5 | Detección de hosts e integración opt-in | 🟢 LISTO | Optional host detection and integration | ninguna | **UNASSIGNED** — sin owner ni despacho |
 | S8.6 | Evidencia de release en máquina limpia | 📋 PLANIFICADO | Versioned lifecycle and release evidence | `S8.3`, `S8.4`, `S8.5` | — |
 | S8.7 | Puente Hermes/Telegram acotado | 📋 PLANIFICADO | Optional bounded Hermes bridge | `S8.4` | — |
 
@@ -59,7 +59,7 @@ La denegación `CT_V2_ONLY` de `bin/torre` ya cubre parte de esta frontera.
 
 | Campo | Valor |
 |---|---|
-| Estado | 🔴 BLOQUEADO — implementación pendiente de validación de Main y aprobación issue-first |
+| Estado | ✅ COMPLETO |
 | Owner | `installable-v1` |
 | Depende de | `S8.3` ✅ COMPLETO |
 | Área | `support/manifest.mjs`, `support/agent.mjs`, `support/snapshot.mjs`, `test/support/**` |
@@ -98,31 +98,33 @@ Las fuentes quedan limitadas al `manifest_path`, al roadmap validado, a esos STA
 
 #### M8.4.1 — Contrato read-only de Support
 
-- [ ] T8.4.1.1 RED: agregar `test/support/support.test.mjs` para esquema exacto, traversal roadmap→STATUS, SQLite read-only/query-only, resolución aislada, orden determinista y rechazo fail-closed
-- [ ] T8.4.1.2 GREEN: agregar únicamente `support/manifest.mjs`, `support/snapshot.mjs` y `support/agent.mjs` con los tres exports definidos y sin superficie de escritura
-- [ ] T8.4.1.3 REFACTOR: mantener consultas y exports fijos, normalizar errores estables y volver a ejecutar la prueba enfocada
+- [x] T8.4.1.1 RED: agregar `test/support/support.test.mjs` para esquema exacto, traversal roadmap→STATUS, SQLite read-only/query-only, resolución aislada, orden determinista y rechazo fail-closed
+- [x] T8.4.1.2 GREEN: agregar únicamente `support/manifest.mjs`, `support/snapshot.mjs` y `support/agent.mjs` con los tres exports definidos y sin superficie de escritura
+- [x] T8.4.1.3 REFACTOR: mantener consultas y exports fijos, normalizar errores estables y volver a ejecutar la prueba enfocada
 
 **Pruebas exactas:**
 
 - `bun test test/support/support.test.mjs`
 - `bun test test/registry test/enroll test/support`
 - `bun test`
-- `git diff --name-only <S8.4_CONTRACT_COMMIT_SHA>...HEAD` debe listar únicamente `support/manifest.mjs`, `support/agent.mjs`, `support/snapshot.mjs` y rutas bajo `test/support/**`; `<S8.4_CONTRACT_COMMIT_SHA>` se reemplaza en el issue de implementación por el SHA inmutable del commit que versiona este contrato, antes de autorizar apply
+- `git diff --name-only 88b1c5198c08cefbe886df62c3cb4f97214d1506...9458c78ee8fa00e4edfe0869beb6743308ad7f03` lista únicamente `support/manifest.mjs`, `support/agent.mjs`, `support/snapshot.mjs` y `test/support/support.test.mjs`
 
 El fixture enfocado debe capturar antes y después existencia, bytes, modo, inode, tamaño, `mtimeNs` y `ctimeNs` de `projects.yaml`, `.git/control-tower/tower.db`, sus archivos `-wal`/`-shm` y cada fuente; además debe comparar `git status --porcelain=v1`, la lista de worktrees y el estado de locks. Todos los valores deben permanecer idénticos tanto en éxito como en cada rechazo, y una DB ausente no puede crear DB, WAL ni SHM.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
 
-- [ ] Los tres exports y los tres archivos de Support coinciden exactamente con la superficie definida; `createSupportBrief` acepta sólo el input y los ports exactos, resuelve un proyecto registrado y devuelve exactamente el output versionado y determinista definido arriba
-- [ ] Los tres `report_type` producen observaciones trazables únicamente a fuentes permitidas, sin otorgar autoridad de orquestación a Support
-- [ ] El traversal parte de `roadmap_path`, resuelve sólo links `Ref` exactos y falla cerrado para todas las condiciones de ruta, symlink, escape, ausencia, tipo, duplicidad y ambigüedad enumeradas
-- [ ] La DB se abre read-only sin creación, `PRAGMA query_only` queda verificado en `ON`, sólo corren consultas fijas y ausencia/error no crea ni modifica DB/WAL/SHM
-- [ ] Identidad, ruta o esquema inválido y toda solicitud V2 fallan cerrado con código estable antes de cualquier capacidad no necesaria
-- [ ] Support no registra agentes, toma locks, migra DB, crea sesiones/worktrees/workers/assignments/launches, ejecuta entrega Git ni escribe archivos
-- [ ] Los testigos de bytes, existencia y metadatos de fuentes/DB/WAL/SHM, Git, worktrees y locks son idénticos antes y después en éxito y rechazo
-- [ ] Las tres pruebas exactas pasan y ninguna ruta fuera de `Área` aparece en el diff de implementación
+- [x] Los tres exports y los tres archivos de Support coinciden exactamente con la superficie definida; `createSupportBrief` acepta sólo el input y los ports exactos, resuelve un proyecto registrado y devuelve exactamente el output versionado y determinista definido arriba
+- [x] Los tres `report_type` producen observaciones trazables únicamente a fuentes permitidas, sin otorgar autoridad de orquestación a Support
+- [x] El traversal parte de `roadmap_path`, resuelve sólo links `Ref` exactos y falla cerrado para todas las condiciones de ruta, symlink, escape, ausencia, tipo, duplicidad y ambigüedad enumeradas
+- [x] La DB se abre read-only sin creación, `PRAGMA query_only` queda verificado en `ON`, sólo corren consultas fijas y ausencia/error no crea ni modifica DB/WAL/SHM
+- [x] Identidad, ruta o esquema inválido y toda solicitud V2 fallan cerrado con código estable antes de cualquier capacidad no necesaria
+- [x] Support no registra agentes, toma locks, migra DB, crea sesiones/worktrees/workers/assignments/launches, ejecuta entrega Git ni escribe archivos
+- [x] Los testigos de bytes, existencia y metadatos de fuentes/DB/WAL/SHM, Git, worktrees y locks son idénticos antes y después en éxito y rechazo
+- [x] Las tres pruebas exactas pasan y ninguna ruta fuera de `Área` aparece en el diff de implementación
 
-**Rollback y frontera de no mutación:** revertir únicamente futuros cambios en `support/manifest.mjs`, `support/agent.mjs`, `support/snapshot.mjs` y `test/support/**`. S8.4 puede leer la DB sólo mediante el modo exacto definido; no puede crearla, migrarla ni modificar DB/WAL/SHM. Tampoco puede modificar `registry/**`, `enroll/**`, `install/**`, `bin/**`, otros archivos bajo `support/**`, `core.mjs`, `mcp.mjs`, `package.json`, `bun.lock`, configuración, registro, estado de Tower ni repositorios inspeccionados. Este contrato no autoriza implementación: el apply sigue bloqueado hasta validación de Main, binding de `<S8.4_CONTRACT_COMMIT_SHA>` y aprobación issue-first.
+**Evidencia de cierre:** issue #123 cerrado; PR #126 mergeada; candidato `9458c78ee8fa00e4edfe0869beb6743308ad7f03`; merge `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`; tree compartido `0a2b61d3939fd7c2f4ffa9fcf0ab246411f317a1`; baseline y binding contractual inmutable `f2d1132f51236b66269b55b356f3c7f11a759b14`. El diff exacto contiene cuatro archivos modo `100644` — `support/agent.mjs`, `support/manifest.mjs`, `support/snapshot.mjs` y `test/support/support.test.mjs` — con 372 inserciones y 0 eliminaciones. Pasaron la prueba enfocada 22/22, la prueba acotada 59/59 y la suite completa 431/431; los testigos Strict TDD y de no mutación pasaron. La corrección del prerrequisito de migración se integró antes mediante PR #125 en `88b1c5198c08cefbe886df62c3cb4f97214d1506`; por eso la prueba del alcance de implementación usa ese parent del candidato, no el baseline contractual.
+
+**Rollback y frontera de no mutación:** revertir juntos los cuatro archivos entregados — `support/manifest.mjs`, `support/agent.mjs`, `support/snapshot.mjs` y `test/support/support.test.mjs` — preservando la frontera que impide crear, migrar o modificar DB/WAL/SHM y que prohíbe mutar registro, estado de Tower, locks, worktrees o repositorios inspeccionados. El rollback no autoriza cambios en `registry/**`, `enroll/**`, `install/**`, `bin/**`, otros archivos bajo `support/**`, `core.mjs`, `mcp.mjs`, `package.json`, `bun.lock` ni configuración.
 
 ### S8.5 — Detección de hosts e integración opt-in
 
@@ -144,8 +146,8 @@ Va última pese a su prioridad declarada: el propio [tasks.md](../../changes/ins
 
 `S8.2` entregó únicamente almacenamiento de versiones, puntero activo, install/diagnose/upgrade/rollback/uninstall, preservación de configuración e historial, y sus pruebas Strict TDD. No modificó `core.mjs`, `mcp.mjs`, `package.json`, `bun.lock`, DB ni estado de Tower.
 
-Con `S8.3` cerrada, P8 queda en `43% (3/7 S)`. Todo el alcance aprobado del lane tiene límite de un PR; no queda responsabilidad sin ID.
+Con `S8.4` cerrada, P8 queda en `57% (4/7 S)`. Todo el alcance aprobado del lane tiene límite de un PR; no queda responsabilidad sin ID.
 
 Cada Sesión es un PR dirigido a `master`. Telegram conserva su prioridad declarada pero se ejecuta en `S8.7`, después de que `S8.4` establezca la frontera de autoridad: no recibe shell, workers, Git, merge, delivery ni selección implícita de proyecto.
 
-Cuando Main valide el contrato y exista aprobación issue-first, `S8.4` podrá ejecutarse en paralelo con `S8.5`: sus dependencias, `Área` y `Recurso` son disjuntos. Sus actualizaciones sobre los archivos de planificación reclamados por `installable-v1-provenance` en [`product-version-map.yaml`](../product-version-map.yaml) deben serializarse.
+`S8.5` permanece 🟢 LISTO y **UNASSIGNED**; este cierre documental no la despacha. Autonomous V2 permanece **UNASSIGNED** y fuera de esta unidad documental.

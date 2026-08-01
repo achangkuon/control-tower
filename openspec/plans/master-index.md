@@ -1,16 +1,16 @@
 # Índice Maestro — SDD Tower Implementation V1
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-07-31 contra `origin/master` en `f4f90bf7f185043953ecbd1ecd11c2f5ef1112a6`.
+> Última reconciliación: 2026-08-01 contra `master` en `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md).
 
 ## 📍 Punto de retoma
 
-`S2.5` cerró mediante PR #114 (evidencia apply) y PR #116 (evidencia verify), ambas integradas en `master@f4f90bf7f185043953ecbd1ecd11c2f5ef1112a6`. P2 conserva responsabilidades posteriores de Change B sin Sesiones enumeradas, por lo que su porcentaje no es calculable.
+`S8.4` cerró mediante issue #123 y PR #126, integrada en `master@6fbd97c3b1f84735db61ccbd1fd510482206e4eb`; P8 avanza a `57% (4/7 S)`.
 
-Las próximas Sesiones ejecutables son `S8.4`, `S8.5` y `S3.1`, todas 🟢 LISTO. `S8.4` y `S8.5` pueden avanzar en paralelo si sus áreas y recursos se mantienen disjuntos; `S3.1` pertenece a Autonomous V2.
+`S8.5` está 🟢 LISTO pero **UNASSIGNED**. Autonomous V2 también permanece **UNASSIGNED**; esta reconciliación no despacha ninguno de los dos alcances.
 
-P1 permanece 🔴 BLOQUEADO en `S1.11` y `S1.12`. Las responsabilidades sin límite de un PR demostrable permanecen sin ID en el [apéndice de migración](plan-vocabulary-migration-appendix.md).
+P1 permanece 🔴 BLOQUEADO en `S1.11` y `S1.12`. P2 conserva responsabilidades posteriores de Change B sin Sesiones enumeradas; las demás responsabilidades sin límite de un PR demostrable permanecen sin ID en el [apéndice de migración](plan-vocabulary-migration-appendix.md).
 
 ## Granularidad
 
@@ -19,7 +19,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.config/opencode/skills/_
 
 ## 📊 Estado de un vistazo
 
-**Avance global**: 1/9 Planes cerrados (11%) · Sesiones cerradas en planes activos: 18/38 (47%)
+**Avance global**: 1/9 Planes cerrados (11%) · Sesiones cerradas en planes activos: 19/38 (50%)
 
 | ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |
 |----|------|--------|---|------|-------|-----------|-----|
@@ -31,7 +31,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.config/opencode/skills/_
 | P5 | Entrega y continuación | 📋 PLANIFICADO | 0% (0/3 S) | — | Main | S5.1, S5.2, S5.3 | [STATUS](plan-5/STATUS.md) |
 | P6 | Campañas multiproyecto | 📋 PLANIFICADO | — (sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-6/STATUS.md) |
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | S7.1 | [STATUS](plan-7/STATUS.md) |
-| P8 | Installable V1 release | 🔵 EN CURSO | 43% (3/7 S) | — | Maintainer | S8.4, S8.5, S8.6, S8.7 | [STATUS](plan-8/STATUS.md) |
+| P8 | Installable V1 release | 🔵 EN CURSO | 57% (4/7 S) | — | Maintainer | S8.5, S8.6, S8.7 | [STATUS](plan-8/STATUS.md) |
 
 ## 🗂️ Planes archivados
 
