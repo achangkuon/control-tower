@@ -72,7 +72,11 @@ V1 MUST install an immutable versioned runtime with an active-version record and
 
 ### Requirement: Optional bounded Hermes bridge
 
-Hermes/Telegram MAY be enabled explicitly for state presentation and bounded arm/disarm or intent instructions to the enrolled project's Main only. It MUST NOT expose raw shell, worker selection or launch, Git delivery, merge, or hidden project authority. Local CLI and Support operation MUST remain complete when Hermes is absent.
+Hermes/Telegram MAY be enabled explicitly for state presentation, bounded arm/disarm or intent instructions to the enrolled project's Main, and transport of an exact approval or rejection callback for an authorization that Main already created.
+
+Presenting a decision and holding authority are distinct, and the boundary between them is normative: Hermes MUST NOT create, mint, extend, revive, or consume an authorization, and free text MUST NOT authorize. Every merge effect MUST remain bound to a Main-created authorization that Main alone validates and consumes.
+
+It MUST NOT expose raw shell, worker selection or launch, hidden project authority, or any Git delivery or merge effect that is not bound to such an authorization. Local CLI and Support operation MUST remain complete when Hermes is absent.
 
 #### Scenario: Local fallback works
 
@@ -82,6 +86,12 @@ Hermes/Telegram MAY be enabled explicitly for state presentation and bounded arm
 
 #### Scenario: Remote authority is rejected
 
-- GIVEN Hermes sends a worker-launch, shell, Git-delivery, or merge request
+- GIVEN Hermes sends a worker-launch, shell, or hidden-authority request, or a Git-delivery or merge request that carries no Main-created authorization
 - WHEN V1 evaluates the request
 - THEN it rejects the request and records no repository or worker mutation
+
+#### Scenario: Unbound approval callback fails closed
+
+- GIVEN an approval or rejection callback arrives whose user or chat identity is not allowlisted, or whose authorization is absent, expired, already consumed, or bound to a different target
+- WHEN V1 evaluates the callback
+- THEN it fails closed with a stable error code and records no repository, worker, or authorization mutation

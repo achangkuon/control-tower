@@ -57,10 +57,15 @@ Installable V1 revision 1 es el contrato de release activo. Autonomous V2 revisi
 
 ## Sesión 0.3 — Enmienda del requisito de puente acotado
 
-**Estado:** 🟢 LISTO
+**Estado:** ✅ COMPLETO
 **Depende de:** —
-**Área:** `openspec/specs/**`, `openspec/changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/**`, `openspec/plans/product-version-map.yaml`
+**Área:** `openspec/specs/**`, `openspec/changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/**`, `openspec/plans/product-version-map.yaml`, `openspec/plans/plan-0/STATUS.md`
 **Recurso:** — (sin DB, sin migraciones, sin token de entrega)
+
+> **Corrección del `Área`, 2026-08-01.** La declaración original omitía este mismo
+> `STATUS.md`. La [regla de ejecución](../v1-execution-rule.md) obliga a actualizarlo en el
+> mismo commit que el trabajo, así que sin él la Sesión no podía cerrarse sin violar su
+> propio criterio de frontera. Es un defecto de la definición, no un desvío de la ejecución.
 
 Existen hoy dos documentos vigentes que describen la misma versión y se contradicen:
 
@@ -75,21 +80,35 @@ El principio de §16.1 no se toca — **Hermes presenta; Main crea, valida y con
 
 ### Módulo 0.3.1 — Enmienda del requisito
 
-- [ ] Tarea 0.3.1.1 — Reescribir el requisito *Optional bounded Hermes bridge* para distinguir explícitamente presentación y transporte de callback acotado, que quedan permitidos, de creación y consumo de autoridad, que siguen siendo exclusivos de Main.
-- [ ] Tarea 0.3.1.2 — Reescribir el escenario *Remote authority is rejected* para que rechace lo que debe rechazar —shell cruda, lanzamiento de workers, selección implícita de proyecto y toda solicitud de merge que no porte una autorización creada por Main— sin rechazar el callback acotado.
-- [ ] Tarea 0.3.1.3 — Agregar el escenario complementario: un callback que llega sin autorización `PENDING` vigente, o con identidad fuera de la allowlist, falla cerrado y no muta nada.
+- [x] Tarea 0.3.1.1 — Reescribir el requisito *Optional bounded Hermes bridge* para distinguir explícitamente presentación y transporte de callback acotado, que quedan permitidos, de creación y consumo de autoridad, que siguen siendo exclusivos de Main.
+- [x] Tarea 0.3.1.2 — Reescribir el escenario *Remote authority is rejected* para que rechace lo que debe rechazar —shell cruda, lanzamiento de workers, selección implícita de proyecto y toda solicitud de merge que no porte una autorización creada por Main— sin rechazar el callback acotado.
+- [x] Tarea 0.3.1.3 — Agregar el escenario complementario: un callback que llega sin autorización `PENDING` vigente, o con identidad fuera de la allowlist, falla cerrado y no muta nada.
 
 ### Módulo 0.3.2 — Reconciliación de autoridad
 
-- [ ] Tarea 0.3.2.1 — Registrar en `product-version-map.yaml` que las etiquetas `installable-v1` y `autonomous-v2` dejan de ser identidades de producto, conservando las revisiones históricas sin eliminarlas.
-- [ ] Tarea 0.3.2.2 — Verificar con `rg` que ningún documento normativo vigente siga afirmando que el puente debe rechazar todo merge, y corregir los que queden.
-- [ ] Tarea 0.3.2.3 — Confirmar que §16 y §17 de REQUIREMENTS no requieren cambios: la enmienda alinea la spec derivada con ellos, no al revés.
+- [x] Tarea 0.3.2.1 — Registrar en `product-version-map.yaml` que las etiquetas `installable-v1` y `autonomous-v2` dejan de ser identidades de producto, conservando las revisiones históricas sin eliminarlas.
+- [x] Tarea 0.3.2.2 — Verificar con `rg` que ningún documento normativo vigente siga afirmando que el puente debe rechazar todo merge, y corregir los que queden.
+- [x] Tarea 0.3.2.3 — Confirmar que §16 y §17 de REQUIREMENTS no requieren cambios: la enmienda alinea la spec derivada con ellos, no al revés.
 
 **Criterios de aceptación de S0.3** — todos deben pasar para cerrar:
 
-- [ ] Ningún documento normativo vigente contradice a otro sobre si el puente puede transportar un callback de merge
-- [ ] El texto amendado mantiene explícito que Hermes no crea ni consume autoridad
-- [ ] Existe un escenario que obliga a fallar cerrado ante callback sin autorización vigente o identidad no allowlisted
-- [ ] Existe un escenario que sigue rechazando shell cruda, lanzamiento de workers y selección implícita de proyecto
-- [ ] `product-version-map.yaml` conserva todas las revisiones históricas
-- [ ] El diff no toca ninguna ruta fuera del `Área`
+- [x] Ningún documento normativo vigente contradice a otro sobre si el puente puede transportar un callback de merge
+- [x] El texto amendado mantiene explícito que Hermes no crea ni consume autoridad
+- [x] Existe un escenario que obliga a fallar cerrado ante callback sin autorización vigente o identidad no allowlisted
+- [x] Existe un escenario que sigue rechazando shell cruda, lanzamiento de workers y selección implícita de proyecto
+- [x] `product-version-map.yaml` conserva todas las revisiones históricas
+- [x] El diff no toca ninguna ruta fuera del `Área`
+
+### Evidencia de cierre
+
+| Verificación | Resultado |
+|---|---|
+| Barrido de contradicciones (`rg` sobre `specs/`, `prd/`, `rfc/`) | Sólo quedan enunciados **compatibles**: la regla vigente es «merge exige autorización creada por Main», que es lo que dice REQUIREMENTS §16.4 |
+| §16 y §17 de REQUIREMENTS | Intactos — la enmienda alineó la spec derivada, no la autoridad |
+| `bun test test/provenance/` | **17 pass · 0 fail** |
+| Parseo de `product-version-map.yaml` | OK; `release_lane` sin cambios en ambos productos |
+| Diff-check del `Área` | 2 archivos, ambos dentro |
+
+### Alcance sin ID surgido en esta Sesión
+
+`T0.3.2.1` quedó registrado como **nota en el YAML, no como campo machine-readable**. Convertirlo en un campo con su test exige tocar `test/provenance/provenance.test.mjs:116-117`, que está **fuera del `Área`** y fija ambos `release_lane`. No se le abre Sesión propia: es una línea de test que puede viajar con cualquier Sesión futura que ya toque `test/provenance/**`, y hasta entonces la autoridad de la unificación vive en [release-chain](../release-chain.md), que sí es canónica.

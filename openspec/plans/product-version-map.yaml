@@ -1,3 +1,17 @@
+# NOTA — 2026-08-01, unificación de producto.
+#
+# `release_lane` ya NO identifica un producto. Desde la decisión registrada en
+# openspec/plans/release-chain.md hay UN solo producto y UNA sola primera versión;
+# `installable-v1` y `autonomous-v2` sobreviven únicamente como afinidad de trabajo.
+#
+# Los valores de abajo se conservan exactamente como están, a propósito:
+#   - las revisiones históricas y sus `artifact_id` no se eliminan;
+#   - `autonomous-control-tower-v2-r1` declara `required_release_refs` contra
+#     `installable-control-tower-v1-r1`, y romper ese identificador rompe la trazabilidad;
+#   - test/provenance/provenance.test.mjs:116-117 fija ambos `release_lane`.
+#
+# Convertir esta nota en un campo machine-readable exige tocar ese test, que está
+# fuera del Área de S0.3. Es alcance nuevo y necesita su propia Sesión.
 schema: control-tower-product-version-map
 schema_version: 1
 map_revision: 1
