@@ -64,6 +64,7 @@ export function lifecycle({ action, version, files, dataRoot, configRoot, stateR
       throw error
     }
     const changed = before?.version !== pointer.version
+    if (!changed && !stored.created) return { operation: action, active: pointer.version, changed, stored: stored.created }
     audit(stateRoot, { operation: action, version, outcome: "active", previous: pointer.previous, changed })
     return { operation: action, active: pointer.version, changed, stored: stored.created }
   }
