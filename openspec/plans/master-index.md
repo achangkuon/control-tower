@@ -1,7 +1,7 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-01 contra `ccf81ce` + implementación `3d2ef57`.
+> Última reconciliación: 2026-08-01 contra `1250ffac` + implementación `3d2ef57`.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md).
 
 ## 📍 Punto de retoma
