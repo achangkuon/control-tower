@@ -209,7 +209,7 @@ Va última pese a su prioridad declarada: el propio [tasks.md](../../changes/arc
 
 Con `S8.4` cerrada y `S8.8` enumerada, P8 permanece en `50% (4/8 S)` — `M8.8.1` es un Módulo y no otorga crédito parcial a la Sesión. Todo el alcance aprobado del lane tiene límite de un PR; no queda responsabilidad sin ID.
 
-Cada Sesión es un PR dirigido a `master`. Telegram conserva su prioridad declarada y se ejecuta en `S8.7`, ahora desbloqueada porque `S8.4` ya estableció la frontera de autoridad: no recibe shell, workers, Git, merge, delivery ni selección implícita de proyecto.
+Cada Sesión es una unidad entregable dirigida a `master`. **Desde el 2026-08-01 (`46edd14`) eso es un commit directo + push, no un PR** — ver [Política de entrega](../../../CLAUDE.md). El alcance de la Sesión no cambia: sigue siendo el que entraría en un PR. Las referencias a PRs de las Sesiones ya cerradas son historia y quedan como están. Telegram conserva su prioridad declarada y se ejecuta en `S8.7`, ahora desbloqueada porque `S8.4` ya estableció la frontera de autoridad: no recibe shell, workers, Git, merge, delivery ni selección implícita de proyecto.
 
 **Orden de ejecución para llegar a un V1 usable:** `S8.8` primero — sin adopción, todo lo demás sigue sin correr en la máquina real — y `S8.7` después. `S8.5` y `S8.6` quedan fuera de ese camino por decisión explícita del maintainer del 2026-07-31, que también reemplaza el estado `UNASSIGNED` que traía `S8.5`. Autonomous V2 permanece **UNASSIGNED** y fuera de esta unidad documental.
 
