@@ -7,9 +7,9 @@
 | Campo | Detalle |
 |---|---|
 | Lane | `installable-v1`. Único Plan del lane; es el producto que puede salir primero y solo. |
-| Dependencias | `master@d072e509`, que integra `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`; `S8.1`–`S8.4` están verificadas y mergeadas. |
+| Dependencias | `master@d280214c8de78f90e88982d90642427b55a72f2b`, que integra `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`; `S8.1`–`S8.4` están verificadas y mergeadas; `M8.8.1` está mergeado vía PR #132. |
 | Alcance aprobado | Release local-first con lifecycle versionado, inmutable, idempotente y reversible; sin activar autonomía. |
-| Próxima Sesión | `S8.8` (adopción del instalable) y luego `S8.7` (Telegram). `S8.5` y `S8.6` quedan 🟡 DIFERIDO por decisión del maintainer: no bloquean el primer uso real. |
+| Próxima acción | Esperar la próxima instrucción sellada del maintainer; no iniciar ni asignar `M8.8.2`, `M8.8.3` o `S8.7` todavía. `S8.5` y `S8.6` quedan 🟡 DIFERIDO. |
 | Flujo | P8 corre bajo la [regla de ejecución V1](../v1-execution-rule.md): de `tasks.md` directo a implementación, sin exploration/proposal/design y sin PR de cierre separada. |
 | Referencias | [tasks de V1](../../changes/v1-release/tasks.md); [change archivado](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/), [spec](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). |
 
@@ -24,7 +24,7 @@
 | S8.5 | Detección de hosts e integración opt-in | 🟡 DIFERIDO | Optional host detection and integration | ninguna | Diferida el 2026-07-31: la integración es opt-in y su ausencia es diagnóstico, no fallo de instalación |
 | S8.6 | Evidencia de release en máquina limpia | 🟡 DIFERIDO | Versioned lifecycle and release evidence | `S8.3`, `S8.4` | Diferida el 2026-07-31: se cubre con validación manual durante `S8.8` en vez de una Sesión formal |
 | S8.7 | Puente Hermes/Telegram acotado | 🟢 LISTO | Optional bounded Hermes bridge | `S8.4` ✅ | Desbloqueada por el cierre de `S8.4` |
-| S8.8 | Adopción del instalable en el runtime en uso | 🟢 LISTO | Versioned lifecycle | `S8.2` ✅ | — |
+| S8.8 | Adopción del instalable en el runtime en uso | 🔵 EN CURSO | Versioned lifecycle | `S8.2` ✅ | `M8.8.1` ✅ COMPLETO; `M8.8.2` y `M8.8.3` pendientes; PR #132, merge `d280214c` |
 
 Las Sesiones se derivan de los cinco requisitos de la [spec de Installable V1](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). `S8.2` construyó el lifecycle versionado; `S8.8` lo pone efectivamente en uso, que es la parte del requisito que quedaba abierta.
 
@@ -140,7 +140,7 @@ La consecuencia es que **nada de lo construido después del 2026-07-21 está en 
 
 | Campo | Valor |
 |---|---|
-| Estado | 🟢 LISTO |
+| Estado | 🔵 EN CURSO |
 | Owner | `installable-v1` |
 | Depende de | `S8.2` ✅ COMPLETO |
 | Área | `install/**`, `bin/torre`, `test/install/**` |
@@ -152,11 +152,38 @@ Absorbe la validación práctica que `S8.6` haría de forma formal: la instalaci
 
 | Módulo | Modo | Área | Motivo |
 |---|---|---|---|
-| `M8.8.1` Cobertura legado → XDG | 🔒 SELLABLE, autónomo | `install/**`, `test/install/**` | Todo ocurre dentro del repositorio, contra un data-root temporal, sin instalación real |
+| `M8.8.1` Cobertura legado → XDG | 🔒 SELLABLE, autónomo | `install/**`, `test/install/**` | PR #132 mergeada; ejecución autónoma verificada sin instalación real |
 | `M8.8.2` Diagnóstico y adopción real | 👤 ATENDIDO | `bin/torre`, data-root XDG, `~/.config/opencode/control-tower/` | `torre install` real sobre la máquina del maintainer |
 | `M8.8.3` Corte al runtime legado | 👤 ATENDIDO | ídem | Repunta `bin/torre`; un fallo deja la Torre inoperable |
 
 El motivo es duro: **un contrato sellado no autoriza efectos fuera del repositorio**, y nadie debería despertarse con `torre` roto porque un agente repuntó el runtime sin supervisión. El contrato de `M8.8.1` vive en [`seal-M8.8.1.md`](../../changes/v1-release/seal-M8.8.1.md).
+
+#### M8.8.1 — Cobertura del caso legado → XDG
+
+| Campo | Valor |
+|---|---|
+| Estado | ✅ COMPLETO |
+| Modo | 🔒 SELLABLE, autónomo |
+| Depende de | `S8.2` ✅ COMPLETO |
+| Área | `install/**`, `test/install/**` |
+| Recurso | data-root temporal; sin migraciones de DB y sin token de entrega |
+
+**Tareas** — todas completadas:
+
+- [x] `T8.8.1.1` RED: cobertura de instalación sobre runtime legado sin data-root XDG, preservando configuración e historial
+- [x] `T8.8.1.2` RED: idempotencia de instalación y `rollback` sin pérdida de configuración ni historial
+- [x] `T8.8.1.3` GREEN: ajuste de `install/**` sólo donde fue necesario
+- [x] `T8.8.1.4` REFACTOR: errores estables y nueva ejecución de la prueba enfocada
+
+**Criterios de aceptación** — todos verificados:
+
+- [x] Los casos de legado → XDG, idempotencia y rollback existen y pasan
+- [x] Lifecycle enfocado: `13/13`; suite de instalación: `18/18`
+- [x] Suite completa: `433 pass / 0 fail`
+- [x] Los testigos de filesystem quedan idénticos antes y después
+- [x] El diff queda restringido estrictamente a `install/**` y `test/install/**`
+
+**Evidencia de cierre:** issue #131 cerrado por PR #132; implementación `b7715ed34357b6e5ea25d920d558a9137efe2558`; merge en `master` como `d280214c8de78f90e88982d90642427b55a72f2b`. La reconciliación autorizada del baseline reemplaza `429 pass / 2 fail` por `433 pass / 0 fail`: los dos tests históricos P0 ahora pasan y M8.8.1 agrega dos tests.
 
 `S8.8` cierra sólo cuando los tres Módulos pasan. `M8.8.1` sellada no es la Sesión cerrada.
 
@@ -180,7 +207,7 @@ Va última pese a su prioridad declarada: el propio [tasks.md](../../changes/arc
 
 `S8.2` entregó únicamente almacenamiento de versiones, puntero activo, install/diagnose/upgrade/rollback/uninstall, preservación de configuración e historial, y sus pruebas Strict TDD. No modificó `core.mjs`, `mcp.mjs`, `package.json`, `bun.lock`, DB ni estado de Tower.
 
-Con `S8.4` cerrada y `S8.8` enumerada, P8 queda en `50% (4/8 S)` — el denominador pasó de 7 a 8. Todo el alcance aprobado del lane tiene límite de un PR; no queda responsabilidad sin ID.
+Con `S8.4` cerrada y `S8.8` enumerada, P8 permanece en `50% (4/8 S)` — `M8.8.1` es un Módulo y no otorga crédito parcial a la Sesión. Todo el alcance aprobado del lane tiene límite de un PR; no queda responsabilidad sin ID.
 
 Cada Sesión es un PR dirigido a `master`. Telegram conserva su prioridad declarada y se ejecuta en `S8.7`, ahora desbloqueada porque `S8.4` ya estableció la frontera de autoridad: no recibe shell, workers, Git, merge, delivery ni selección implícita de proyecto.
 

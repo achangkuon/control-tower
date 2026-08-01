@@ -1,16 +1,16 @@
 # Índice Maestro — SDD Tower Implementation V1
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-07-31 contra `master` en `d072e509`.
+> Última reconciliación: 2026-08-01 contra `master` en `d280214c8de78f90e88982d90642427b55a72f2b`.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md).
 
 ## 📍 Punto de retoma
 
-**`S8.4` está ✅ COMPLETO.** Cerró mediante issue #123 y PR #126, y su reconciliación documental mediante PR #128, integrada en `master@d072e509`. Verificada, no asumida: 22/22 en `test/support/support.test.mjs`, 59/59 en el grupo del contrato, y diff-check exacto sobre los 4 archivos del `Área` en el candidato `9458c78`.
+**`M8.8.1` está ✅ COMPLETO y mergeado.** PR #132 cerró el issue #131; implementación `b7715ed34357b6e5ea25d920d558a9137efe2558` y merge `d280214c8de78f90e88982d90642427b55a72f2b`. Pasaron lifecycle 13/13, instalación 18/18, suite completa 433 pass / 0 fail, inmutabilidad del filesystem y diff estricto del `Área`.
 
-**El foco es V1 y sólo V1.** Las próximas Sesiones son `S8.8` (adopción del instalable) y después `S8.7` (puente Telegram acotado), en ese orden y sin excepción: verificar el puente contra un runtime que no es el que corre no prueba nada. Ambas están en [`changes/v1-release/tasks.md`](../changes/v1-release/tasks.md).
+**`S8.8` sigue 🔵 EN CURSO.** Restan `M8.8.2` y `M8.8.3`; `S8.7` continúa después de `S8.8`, mientras `S8.5` y `S8.6` siguen 🟡 DIFERIDO. No hay otra implementación autorizada: la próxima acción es esperar la siguiente instrucción sellada del maintainer.
 
-**Forma de entrega acordada el 2026-07-31 — pipeline atendido, sello por sello.** El maintainer planifica y sella una Sesión; recién ahí un implementador la ejecuta, mientras el maintainer diseña la siguiente. Como el maintainer está presente, la alcanzabilidad es `live` y **el modo nocturno no aplica**: no hace falta Torre, y la [regla de ejecución V1](v1-execution-rule.md) queda vigente sin enmiendas. Propiedad de rutas mientras ambos corren: el planificador escribe sólo `openspec/changes/v1-release/**`; el implementador escribe código, pruebas y `plan-8/STATUS.md`. Nunca los dos sobre el mismo archivo.
+**La ejecución queda en espera.** No iniciar ni asignar `M8.8.2`, `M8.8.3` o `S8.7` hasta recibir la próxima instrucción sellada del maintainer. `S8.8` sólo cierra cuando los tres Módulos pasan.
 
 `S8.8` tiene su ejecución partida en Módulos sellados y atendidos — ver [plan-8/STATUS](plan-8/STATUS.md). El contrato del único Módulo autónomo está en [`seal-M8.8.1.md`](../changes/v1-release/seal-M8.8.1.md).
 
@@ -43,7 +43,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.config/opencode/skills/_
 | P5 | Entrega y continuación | 📋 PLANIFICADO | 0% (0/3 S) | — | Main | S5.1, S5.2, S5.3 | [STATUS](plan-5/STATUS.md) |
 | P6 | Campañas multiproyecto | 📋 PLANIFICADO | — (sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-6/STATUS.md) |
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | S7.1 | [STATUS](plan-7/STATUS.md) |
-| P8 | Installable V1 release | 🔵 EN CURSO | 50% (4/8 S) | — | Maintainer | S8.8, S8.7 (camino corto) · S8.5, S8.6 🟡 DIFERIDO | [STATUS](plan-8/STATUS.md) |
+| P8 | Installable V1 release | 🔵 EN CURSO | 50% (4/8 S) | — | Maintainer | S8.8, S8.7, S8.5, S8.6 | [STATUS](plan-8/STATUS.md) |
 
 ## 🗂️ Planes archivados
 
