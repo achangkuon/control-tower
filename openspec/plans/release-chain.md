@@ -63,7 +63,7 @@ graph LR
 | Orden | ID | Resultado | Estado | Depende de |
 |---|---|---|---|---|
 | — | `S8.8` | Adopción del instalable en el runtime en uso | 🔵 EN CURSO | `S8.2` ✅ |
-| — | `S0.3` | Enmienda del requisito de puente acotado | 🟢 LISTO | — |
+| ✅ | `S0.3` | Enmienda del requisito de puente acotado | ✅ COMPLETO | — |
 | — | `S3.1` | Workspace | 🟢 LISTO | `S2.4` ✅ |
 | 1 | `S3.2` | Orquestación | 📋 PLANIFICADO | `S3.1` |
 | 2 | `S5.1` | Authorization store + Telegram + validación Git/PR/check/SHA | 📋 PLANIFICADO | `S3.2` |
@@ -74,7 +74,11 @@ graph LR
 | 7 | `S8.7` | Puente Hermes/Telegram | 📋 PLANIFICADO | `S8.4` ✅, `S8.8`, `S0.3`, `S5.1` |
 | 8 | `S7.1` | Conformidad de release | 📋 PLANIFICADO | `S5.3`, `S8.7`, `S5.4` |
 
-**Once Sesiones.** Nueve ya enumeradas más dos nuevas — `S0.3` y `S5.4`.
+**Once Sesiones · 1 cerrada.** Nueve ya enumeradas más dos nuevas — `S0.3` y `S5.4`.
+
+`S0.3` cerró el 2026-08-01 en `9595b92`. Con eso, la contradicción entre specs sobre si el
+puente puede transportar un callback de merge **ya no existe**, y `S8.7` pierde uno de sus
+tres bloqueos: le quedan `S8.8` y `S5.1`.
 
 ## Capacidad paralela hoy
 
