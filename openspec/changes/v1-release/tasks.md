@@ -7,17 +7,22 @@
 > Baseline: `master@d072e509`. Estado de P8: `50% (4/8 S)`.
 > Ejecutor: **un solo agente, sin Torre de Control.**
 
-## Qué queda para un V1 usable
+## Qué queda para salir
+
+> **Desactualizado desde el 2026-08-01.** Este archivo cubre sólo las Sesiones de P8. La
+> cadena completa para declarar la primera versión —once Sesiones, con su grafo— vive en
+> [release-chain](../../plans/release-chain.md). Lo de acá abajo sigue siendo válido como
+> definición de `S8.8`; `S8.7` amplió su alcance y su contrato se reescribe cuando le toque.
 
 | Sesión | Resultado | Estado | Por qué |
 |---|---|---|---|
-| `S8.8` | Adopción del instalable | 🟢 LISTO | Sin esto nada de lo construido desde 2026-07-21 corre en la máquina real |
-| `S8.7` | Puente Hermes/Telegram acotado | 🟢 LISTO | Es lo que el socio va a usar |
+| `S8.8` | Adopción del instalable | 🔵 EN CURSO | Sin esto nada de lo construido desde 2026-07-21 corre en la máquina real |
+| `S8.7` | Puente Hermes/Telegram | 📋 PLANIFICADO | Es lo que el maintainer va a usar para aprobar a la distancia |
 
 `S8.5` y `S8.6` están 🟡 DIFERIDO. `S8.1`–`S8.4` están ✅ COMPLETO.
 
 **Orden obligatorio: `S8.8` antes que `S8.7`.** Verificar el puente contra un runtime que no
-es el que corre no prueba nada.
+es el que corre no prueba nada. Y `S8.7` ahora espera además a `S0.3` y `S5.1`.
 
 ---
 
@@ -90,10 +95,26 @@ repositorio: sin `torre install` real, sin tocar `~/.config/`, sin mover el runt
 **Recurso:** lectura del registro y del estado de Torre. Sin migraciones, sin locks, sin token de entrega.
 **Depende de:** `S8.4` ✅, `S8.8`
 
-> **Alcance:** este NO es el `proposal.md` de `sdd-tower-telegram-delivery`. Ese propone
-> autorización de commit, push, PR y merge por Telegram, depende de contratos que no existen,
-> y pertenece a V2. **S8.7 es un puente acotado:** presenta estado y acepta intención de
-> arm/disarm sobre el `Main` de un proyecto registrado. Nada más.
+> **⚠️ Alcance ampliado el 2026-08-01 — las Tareas de abajo quedaron cortas.**
+>
+> La versión original de `S8.7` era un puente que sólo presentaba estado y aceptaba
+> intención de arm/disarm, y excluía explícitamente el `proposal.md` de
+> `sdd-tower-telegram-delivery` por pertenecer a V2. **Esa exclusión ya no aplica:** la
+> [unificación](../../plans/release-chain.md) puso la aprobación remota dentro de la
+> primera versión, y la autoridad está en
+> [REQUIREMENTS §16–§17](../../specs/sdd-tower-implementation-v1-requirements.md).
+>
+> `S8.7` ahora incluye, además de `status | arm | disarm`: presentar una autorización
+> creada por Main y transportar el callback acotado de aprobación o rechazo, con fallback
+> textual `/ct approve <code>` y `/ct reject <code>`.
+>
+> Lo que NO cambia, y no se negocia: **Hermes presenta; Main crea, valida y consume.** El
+> texto libre nunca autoriza. Siguen prohibidos shell cruda, lanzamiento de workers,
+> selección implícita de proyecto y cualquier merge sin autorización creada por Main.
+>
+> Los `M8.7.1`–`M8.7.4` de abajo cubren el alcance viejo. Faltan los Módulos de
+> presentación y callback, y se escriben cuando `S0.3` y `S5.1` estén cerradas — antes no,
+> porque el contrato del sobre lo fija `S5.1`.
 
 Prohibido explícitamente: shell cruda, selección o lanzamiento de workers, entrega Git, merge,
 y autoridad implícita sobre proyectos. **La operación local por CLI debe seguir completa con
@@ -136,10 +157,14 @@ Hermes ausente** — el puente es opcional, nunca un camino obligatorio.
 
 ---
 
-## Cierre de V1
+## Cierre de P8
 
 Con `S8.8` y `S8.7` cerradas, P8 queda en `75% (6/8 S)` con `S8.5` y `S8.6` explícitamente
-diferidas. **Ahí V1 es usable por el socio.**
+diferidas.
+
+**Eso cierra P8, no la primera versión.** Desde el 2026-08-01 la versión se declara cuando
+cierra la [cadena de release](../../plans/release-chain.md) completa — once Sesiones, de las
+cuales P8 aporta dos.
 
 Cada Sesión actualiza `plan-8/STATUS.md` **en el mismo commit que su código**, con la evidencia
 como sección: comandos exactos, resultado numérico y diff-check del `Área`. Sin PR de cierre.

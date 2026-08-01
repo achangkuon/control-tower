@@ -1,14 +1,14 @@
 # Plan 0 — Documentación canónica
 
-**Estado:** ✅ COMPLETO
+**Estado:** 🔵 EN CURSO
 
 ## Resumen
 
 | Campo | Detalle |
 |---|---|
-| Dependencias | Ninguna; este Plan fija la autoridad documental de V1. |
+| Dependencias | Ninguna; este Plan fija la autoridad documental del producto. |
 | Outputs | PRD, RFC y REQUIREMENTS aprobados; roadmap; Plan Catalog; Plan Manifest con 15 `slice_id`; proposals A–I; Installable V1 revision 1; Autonomous V2 revision 1; product version map; convención canónica de nombres. |
-| Roadmap | `S0.1` y `S0.2` están cerradas. Cualquier cambio posterior requiere una revisión explícita del documento autoritativo correspondiente. |
+| Roadmap | `S0.1` y `S0.2` están cerradas. `S0.3` reabre el Plan: la unificación del 2026-08-01 dejó dos specs vigentes en contradicción y hay que amendar la autoridad, no interpretarla. |
 | Referencias | [PRD](../../prd/sdd-tower-implementation-v1.md), [RFC](../../rfc/sdd-tower-implementation-v1.md), [REQUIREMENTS](../../specs/sdd-tower-implementation-v1-requirements.md), [Plan Catalog](../manifest.yaml), [Plan Manifest](../sdd-tower-implementation/manifest.yaml), [Installable V1](../installable-v1/revisions/1/manifest.yaml), [Autonomous V2](../autonomous-v2/revisions/1/manifest.yaml), [version map](../product-version-map.yaml). |
 
 `docs/architecture/sdd-tower-implementation.md` conserva material de exploración y no reemplaza los tres contratos normativos.
@@ -54,3 +54,42 @@ Installable V1 revision 1 es el contrato de release activo. Autonomous V2 revisi
 - [x] Tarea 0.2.1.1 — Fijar la jerarquía Plan → Sesión → Módulo → Tarea, los estados cerrados y la estructura del índice maestro.
 - [x] Tarea 0.2.1.2 — Migrar la documentación de planificación sin renombrar entidades de dominio ni asignar IDs sin límite de PR demostrable.
 - [x] Tarea 0.2.1.3 — Integrar la migración global mediante PR #69 y registrar su merge canónico.
+
+## Sesión 0.3 — Enmienda del requisito de puente acotado
+
+**Estado:** 🟢 LISTO
+**Depende de:** —
+**Área:** `openspec/specs/**`, `openspec/changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/**`, `openspec/plans/product-version-map.yaml`
+**Recurso:** — (sin DB, sin migraciones, sin token de entrega)
+
+Existen hoy dos documentos vigentes que describen la misma versión y se contradicen:
+
+| Fuente | Qué dice |
+|---|---|
+| [REQUIREMENTS](../../specs/sdd-tower-implementation-v1-requirements.md) §16–§17 | La autorización de merge por Telegram está dentro del alcance: canal privado con allowlist, sobre inmutable, callback con token opaco, fallback `/ct approve <code>`, y revalidación previa al consumo. |
+| [spec de Installable V1](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md) `:73-87` | El puente **MUST NOT** exponer Git delivery ni merge, y el escenario *Remote authority is rejected* obliga a **rechazar** una solicitud de merge proveniente de Hermes. |
+
+La [unificación del 2026-08-01](../release-chain.md) puso la aprobación remota dentro de la primera versión, así que la contradicción pasó de latente a bloqueante. No se resuelve con una lectura favorable: en una frontera de autoridad, la ambigüedad es el incidente.
+
+El principio de §16.1 no se toca — **Hermes presenta; Main crea, valida y consume.** Lo que se amenda es la confusión entre *transportar una decisión* y *tener autoridad*.
+
+### Módulo 0.3.1 — Enmienda del requisito
+
+- [ ] Tarea 0.3.1.1 — Reescribir el requisito *Optional bounded Hermes bridge* para distinguir explícitamente presentación y transporte de callback acotado, que quedan permitidos, de creación y consumo de autoridad, que siguen siendo exclusivos de Main.
+- [ ] Tarea 0.3.1.2 — Reescribir el escenario *Remote authority is rejected* para que rechace lo que debe rechazar —shell cruda, lanzamiento de workers, selección implícita de proyecto y toda solicitud de merge que no porte una autorización creada por Main— sin rechazar el callback acotado.
+- [ ] Tarea 0.3.1.3 — Agregar el escenario complementario: un callback que llega sin autorización `PENDING` vigente, o con identidad fuera de la allowlist, falla cerrado y no muta nada.
+
+### Módulo 0.3.2 — Reconciliación de autoridad
+
+- [ ] Tarea 0.3.2.1 — Registrar en `product-version-map.yaml` que las etiquetas `installable-v1` y `autonomous-v2` dejan de ser identidades de producto, conservando las revisiones históricas sin eliminarlas.
+- [ ] Tarea 0.3.2.2 — Verificar con `rg` que ningún documento normativo vigente siga afirmando que el puente debe rechazar todo merge, y corregir los que queden.
+- [ ] Tarea 0.3.2.3 — Confirmar que §16 y §17 de REQUIREMENTS no requieren cambios: la enmienda alinea la spec derivada con ellos, no al revés.
+
+**Criterios de aceptación de S0.3** — todos deben pasar para cerrar:
+
+- [ ] Ningún documento normativo vigente contradice a otro sobre si el puente puede transportar un callback de merge
+- [ ] El texto amendado mantiene explícito que Hermes no crea ni consume autoridad
+- [ ] Existe un escenario que obliga a fallar cerrado ante callback sin autorización vigente o identidad no allowlisted
+- [ ] Existe un escenario que sigue rechazando shell cruda, lanzamiento de workers y selección implícita de proyecto
+- [ ] `product-version-map.yaml` conserva todas las revisiones históricas
+- [ ] El diff no toca ninguna ruta fuera del `Área`

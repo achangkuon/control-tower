@@ -6,7 +6,7 @@
 
 | Campo | Detalle |
 |---|---|
-| Lane | `installable-v1`. Único Plan del lane; es el producto que puede salir primero y solo. |
+| Lane | `installable-v1`, ahora sólo como afinidad de trabajo. Desde la [unificación del 2026-08-01](../release-chain.md) no es una identidad de producto: hay un roadmap único y P8 dejó de ser "el producto que sale primero y solo". |
 | Dependencias | `master@d280214c8de78f90e88982d90642427b55a72f2b`, que integra `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`; `S8.1`–`S8.4` están verificadas y mergeadas; `M8.8.1` está mergeado vía PR #132. |
 | Alcance aprobado | Release local-first con lifecycle versionado, inmutable, idempotente y reversible; sin activar autonomía. |
 | Próxima acción | Esperar la próxima instrucción sellada del maintainer; no iniciar ni asignar `M8.8.2`, `M8.8.3` o `S8.7` todavía. `S8.5` y `S8.6` quedan 🟡 DIFERIDO. |
@@ -23,7 +23,7 @@
 | S8.4 | Autoridad única de Main y briefs read-only de Support | ✅ COMPLETO | Sole Main authority and manual worker boundary | `S8.3` | issue #123 cerrado; PR #122 (contrato) y PR #126 (implementación); merge `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`; candidato `9458c78`; enfocada 22/22, acotada 59/59, suite completa 431/431 con Torre desarmada; diff-check PASS sobre exactamente los 4 archivos del Área |
 | S8.5 | Detección de hosts e integración opt-in | 🟡 DIFERIDO | Optional host detection and integration | ninguna | Diferida el 2026-07-31: la integración es opt-in y su ausencia es diagnóstico, no fallo de instalación |
 | S8.6 | Evidencia de release en máquina limpia | 🟡 DIFERIDO | Versioned lifecycle and release evidence | `S8.3`, `S8.4` | Diferida el 2026-07-31: se cubre con validación manual durante `S8.8` en vez de una Sesión formal |
-| S8.7 | Puente Hermes/Telegram acotado | 🟢 LISTO | Optional bounded Hermes bridge | `S8.4` ✅ | Desbloqueada por el cierre de `S8.4` |
+| S8.7 | Puente Hermes/Telegram | 📋 PLANIFICADO | Optional bounded Hermes bridge (amendado por `S0.3`) | `S8.4` ✅, `S8.8`, `S0.3`, `S5.1` | Alcance ampliado el 2026-08-01: presenta autorizaciones y transporta callback acotado. Ya no está 🟢 LISTO — espera `S0.3` y `S5.1` |
 | S8.8 | Adopción del instalable en el runtime en uso | 🔵 EN CURSO | Versioned lifecycle | `S8.2` ✅ | `M8.8.1` ✅ COMPLETO; `M8.8.2` y `M8.8.3` pendientes; PR #132, merge `d280214c` |
 
 Las Sesiones se derivan de los cinco requisitos de la [spec de Installable V1](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). `S8.2` construyó el lifecycle versionado; `S8.8` lo pone efectivamente en uso, que es la parte del requisito que quedaba abierta.
@@ -209,8 +209,10 @@ Va última pese a su prioridad declarada: el propio [tasks.md](../../changes/arc
 
 Con `S8.4` cerrada y `S8.8` enumerada, P8 permanece en `50% (4/8 S)` — `M8.8.1` es un Módulo y no otorga crédito parcial a la Sesión. Todo el alcance aprobado del lane tiene límite de un PR; no queda responsabilidad sin ID.
 
-Cada Sesión es una unidad entregable dirigida a `master`. **Desde el 2026-08-01 (`46edd14`) eso es un commit directo + push, no un PR** — ver [Política de entrega](../../../CLAUDE.md). El alcance de la Sesión no cambia: sigue siendo el que entraría en un PR. Las referencias a PRs de las Sesiones ya cerradas son historia y quedan como están. Telegram conserva su prioridad declarada y se ejecuta en `S8.7`, ahora desbloqueada porque `S8.4` ya estableció la frontera de autoridad: no recibe shell, workers, Git, merge, delivery ni selección implícita de proyecto.
+Cada Sesión es una unidad entregable dirigida a `master`. **Desde el 2026-08-01 (`46edd14`) eso es un commit directo + push, no un PR** — ver [Política de entrega](../../../AGENTS.md). El alcance de la Sesión no cambia: sigue siendo el que entraría en un PR. Las referencias a PRs de las Sesiones ya cerradas son historia y quedan como están.
 
-**Orden de ejecución para llegar a un V1 usable:** `S8.8` primero — sin adopción, todo lo demás sigue sin correr en la máquina real — y `S8.7` después. `S8.5` y `S8.6` quedan fuera de ese camino por decisión explícita del maintainer del 2026-07-31, que también reemplaza el estado `UNASSIGNED` que traía `S8.5`. Autonomous V2 permanece **UNASSIGNED** y fuera de esta unidad documental.
+**El alcance de `S8.7` cambió con la [unificación del 2026-08-01](../release-chain.md).** Ya no es sólo estado más arm/disarm: el puente además **presenta** una autorización creada por Main y **transporta** el callback acotado de aprobación o rechazo. Lo que no cambia es el principio — Hermes presenta; Main crea, valida y consume. El puente sigue sin recibir shell, workers, Git, merge directo, delivery ni selección implícita de proyecto. Por eso `S8.7` ahora depende también de `S0.3`, que amenda la spec que hoy le prohibiría transportar ese callback, y de `S5.1`, que es donde nace la autorización que el puente presenta.
+
+**Orden de ejecución:** `S8.8` primero — sin adopción, todo lo demás sigue sin correr en la máquina real. `S8.7` va al final de la cadena, después de `S5.1` y `S0.3`. `S8.5` y `S8.6` quedan fuera del camino por decisión explícita del maintainer del 2026-07-31, que también reemplaza el estado `UNASSIGNED` que traía `S8.5`. La cadena completa y su grafo están en [release-chain](release-chain.md).
 
 Las actualizaciones sobre los archivos de planificación reclamados por `installable-v1-provenance` en [`product-version-map.yaml`](../product-version-map.yaml) deben serializarse.
