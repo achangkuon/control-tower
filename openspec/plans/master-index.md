@@ -31,7 +31,12 @@ El tiempo es estimación, no límite. Ver `/home/emili/.config/opencode/skills/_
 
 > El denominador pasó de 39 a 43: se sumaron las 2 Sesiones ya cerradas de P0 —que vuelve a contar como Plan activo— más `S0.3` y `S5.4`, enumeradas el 2026-08-01.
 > Los Planes cerrados pasaron de 1 a 0 porque `S0.3` reabre P0. Un Plan con trabajo pendiente no está cerrado.
-> **Ninguno de estos porcentajes mide qué falta para salir.** Ocho de los nueve Planes tienen alcance fuera de la cadena de release. Para eso está [release-chain](release-chain.md): **11 Sesiones**, de las cuales 0 cerradas.
+> **Ninguno de estos porcentajes mide qué falta para salir.** Para eso está [release-chain](release-chain.md): **11 Sesiones**, de las cuales 0 cerradas.
+>
+> **La tabla de abajo está ordenada por ID, y el ID no es un orden de ejecución.** Es un nombre posicional: `P8` no va después de `P7`, y `P0` no es el primer paso. El orden lo dicta el grafo, no el número — ver [release-chain](release-chain.md).
+>
+> **En la cadena de release:** P0 (`S0.3`), P3, P4, P5, P7, P8 (`S8.7`, `S8.8`).
+> **Fuera de la cadena** — no bloquean la primera versión: P1 (ningún Plan de la cadena lo declara dependencia), el resto sin enumerar de P2, y P6.
 
 | ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |
 |----|------|--------|---|------|-------|-----------|-----|
