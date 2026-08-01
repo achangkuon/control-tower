@@ -27,20 +27,20 @@ El tiempo es estimación, no límite. Ver `/home/emili/.config/opencode/skills/_
 
 ## 📊 Estado de un vistazo
 
-**Avance global**: 0/9 Planes cerrados (0%) · Sesiones cerradas en planes activos: 21/43 (49%)
+**Avance global**: 1/9 Planes cerrados (11%) · Sesiones cerradas en planes activos: 22/43 (51%)
 
-> El denominador pasó de 39 a 43: se sumaron las 2 Sesiones ya cerradas de P0 —que vuelve a contar como Plan activo— más `S0.3` y `S5.4`, enumeradas el 2026-08-01.
-> Los Planes cerrados pasaron de 1 a 0 porque `S0.3` reabre P0. Un Plan con trabajo pendiente no está cerrado.
-> **Ninguno de estos porcentajes mide qué falta para salir.** Para eso está [release-chain](release-chain.md): **11 Sesiones**, de las cuales 0 cerradas.
+> El denominador pasó de 39 a 43: se sumaron las 2 Sesiones ya cerradas de P0 —que volvió a contar como Plan activo— más `S0.3` y `S5.4`, enumeradas el 2026-08-01.
+> P0 volvió a cerrar el 2026-08-01 con `S0.3` (`9595b92`), así que los Planes cerrados vuelven a 1. Reabrir y cerrar un Plan es normal cuando cambia la decisión de producto que ese Plan documenta.
+> **Ninguno de estos porcentajes mide qué falta para salir.** Para eso está [release-chain](release-chain.md): **11 Sesiones**, de las cuales 1 cerrada.
 >
 > **La tabla de abajo está ordenada por ID, y el ID no es un orden de ejecución.** Es un nombre posicional: `P8` no va después de `P7`, y `P0` no es el primer paso. El orden lo dicta el grafo, no el número — ver [release-chain](release-chain.md).
 >
-> **En la cadena de release:** P0 (`S0.3`), P3, P4, P5, P7, P8 (`S8.7`, `S8.8`).
+> **En la cadena de release:** P0 ✅, P3, P4, P5, P7, P8 (`S8.7`, `S8.8`).
 > **Fuera de la cadena** — no bloquean la primera versión: P1 (ningún Plan de la cadena lo declara dependencia), el resto sin enumerar de P2, y P6.
 
 | ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |
 |----|------|--------|---|------|-------|-----------|-----|
-| P0 | Documentación canónica | 🔵 EN CURSO | 67% (2/3 S) | — | Maintainer | S0.3 | [STATUS](plan-0/STATUS.md) |
+| P0 | Documentación canónica | ✅ COMPLETO | 100% (3/3 S) | — | Maintainer | — | [STATUS](plan-0/STATUS.md) |
 | P1 | Sustrato mecánico | 🔴 BLOQUEADO | 53% (10/19 S) | — | Main | S1.11–S1.19 | [STATUS](plan-1/STATUS.md) |
 | P2 | Contratos y registro de producto | 🔵 EN CURSO | — (responsabilidades restantes de Change B sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-2/STATUS.md) |
 | P3 | Workspace y orquestación | 🟢 LISTO | 0% (0/2 S) | — | Main | S3.1, S3.2 | [STATUS](plan-3/STATUS.md) |
