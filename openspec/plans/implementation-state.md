@@ -1,7 +1,7 @@
 # Estado de implementación — Control Tower
 
 > Este documento mide **código**, no planificación. El [master-index](master-index.md) dice qué está planificado y qué Sesiones cerraron; este archivo dice qué existe, qué corre y qué está desplegado.
-> Medición: 2026-07-31 sobre `master` en `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`.
+> Medición: 2026-07-31 sobre `master` en `d072e509`, que integra `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`.
 
 ## ⚠️ Hallazgo principal: construido ≠ desplegado
 
@@ -27,7 +27,7 @@ Esto es exactamente lo que el manifest de `installable-v1` declara resolver: `mi
 | `core.mjs` | 4646 | — legado | Sustrato monolítico. Es el ancestro del runtime en uso, no está modularizado ni cubierto por los lanes. |
 | `mcp.mjs` | 437 | — legado | Superficie MCP. |
 | `bin/torre` | — | ambos | Punto de entrada. Delega `install\|diagnose\|upgrade\|rollback\|uninstall` a `install/lifecycle.mjs`; rechaza `launch-worker\|create-worker\|create-session\|create-worktree` con `CT_V2_ONLY`. |
-| `install/` | 185 | `installable-v1` | `lifecycle`, `active-pointer`, `version-store`. Entregado por `S8.2`. |
+| `install/` | 185 | `installable-v1` | `lifecycle`, `active-pointer`, `version-store`. Entregado por `S8.2`. **Construido y probado, nunca usado** — lo adopta `S8.8`. |
 | `contracts/` | 322 | `autonomous-v2` | `schema-registry`, `canonicalize`, `artifact-ref`, `idempotency`, `validate`, `errors`. Entregado por P2 Change A. |
 | `registry/` | 337 | `autonomous-v2` | `store`, `path`, `legacy-import`. Entregado por `S2.4` y `S2.5`. |
 | `main-store/` | 183 | `autonomous-v2` | `authority`, `store`. Entregado por P2 Change A. |
@@ -50,13 +50,18 @@ focused: 22/22 · scoped: 59/59 · full: 431/431
 
 Los testigos Strict TDD y de no mutación pasaron. La corrección del prerrequisito de migración se integró previamente mediante PR #125 en `88b1c5198c08cefbe886df62c3cb4f97214d1506`.
 
+**Ese `full: 431/431` requiere la Torre desarmada.** Re-medido el 2026-07-31 en un worktree con la Torre armada, `bun test` da **429 pass · 2 fail**: los dos `P0 frozen snapshot restore` cortan con `Control Tower must be OFF: .git/control-tower/ACTIVE is present`. Es el fail-closed funcionando, no una regresión — pero quien corra la suite en frío va a ver los 2 fallos y debe saber por qué.
+
+Otras dos condiciones previas sin runbook: un worktree nuevo no tiene `node_modules` (sin `bun install` la suite rompe con `Cannot find package 'yaml'`), y el runner es `bun`, no `node`.
+
 ## Brechas reales
 
 | # | Brecha | Consecuencia |
 |---|--------|--------------|
-| 1 | El runtime en uso es un checkout de 2026-07-21 divergente y sin remote | Todo lo construido desde entonces no está en producción. La adopción de `installable-v1` es el desbloqueo. |
-| 2 | `S8.5` está 🟢 LISTO pero **UNASSIGNED** | La siguiente Sesión de `installable-v1` no fue despachada por esta reconciliación documental. |
-| 3 | `core.mjs` tiene 4646 líneas y ningún lane lo reclama | El sustrato que efectivamente corre queda fuera de la contabilidad de ambos productos. |
+| 1 | El runtime en uso es un checkout de 2026-07-21 divergente y sin remote | Todo lo construido desde entonces no está en producción. **Asignada a `S8.8`**, la Sesión de mayor palanca de P8. |
+| 2 | ~~`S8.5` está 🟢 LISTO pero **UNASSIGNED**~~ | **Superada el 2026-07-31.** `S8.5` y `S8.6` pasaron a 🟡 DIFERIDO por decisión del maintainer; el despacho vigente es `S8.8` y después `S8.7`. |
+| 3 | `core.mjs` tiene 4646 líneas y ningún lane lo reclama | El sustrato que efectivamente corre queda fuera de la contabilidad de ambos productos. Sigue abierta; no bloquea V1. |
+| 4 | Se documentaba más de lo que se construía | 42 commits `docs` contra 34 de código; 32 de los últimos 40 sin merge eran docs; 17 changes abiertos contra 2 archivados. **Corregida** por la [regla de ejecución V1](v1-execution-rule.md) y por el archivado del 2026-07-31. |
 
 ## Qué NO mide este documento
 
