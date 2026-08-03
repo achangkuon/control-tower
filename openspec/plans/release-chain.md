@@ -47,17 +47,20 @@ Y cuando, con Hermes ausente, la operación local por CLI sigue completa.
 ```mermaid
 graph LR
   S88["S8.8 adopción · 🔵"] --> S87["S8.7 puente · 📋"]
-  S03["S0.3 enmienda spec · 🟢"] --> S87
+  S03["S0.3 enmienda spec · ✅"] --> S87
   S31["S3.1 workspace · 🟢"] --> S32["S3.2 orquestación · 📋"]
-  S32 --> S51["S5.1 authorization store · 📋"]
+  S32 --> S33["S3.3 capability registry · 📋"]
+  S33 --> S51["S5.1 authorization store · 📋"]
   S51 --> S41["S4.1 hosts · 📋"]
   S41 --> S52["S5.2 entrega idempotente · 📋"]
+  S33 --> S52
   S52 --> S53["S5.3 continuación · 📋"]
   S51 --> S54["S5.4 ruteo de escalamiento · 📋"]
+  S54 --> S55["S5.5 decisión estacionada · 📋"]
   S51 --> S87
   S53 --> S71["S7.1 conformidad · 📋"]
   S87 --> S71
-  S54 --> S71
+  S55 --> S71
 ```
 
 | Orden | ID | Resultado | Estado | Depende de |
@@ -66,15 +69,26 @@ graph LR
 | ✅ | `S0.3` | Enmienda del requisito de puente acotado | ✅ COMPLETO | — |
 | — | `S3.1` | Workspace | 🟢 LISTO | `S2.4` ✅ |
 | 1 | `S3.2` | Orquestación | 📋 PLANIFICADO | `S3.1` |
-| 2 | `S5.1` | Authorization store + Telegram + validación Git/PR/check/SHA | 📋 PLANIFICADO | `S3.2` |
-| 3 | `S4.1` | Hosts y línea exclusiva | 📋 PLANIFICADO | `S3.1`, `S3.2`, `S5.1` |
-| 4 | `S5.2` | Entrega idempotente y post-check | 📋 PLANIFICADO | `S4.1` |
-| 5 | `S5.4` | Ruteo de escalamiento fuera/en casa | 📋 PLANIFICADO | `S5.1` |
-| 6 | `S5.3` | Continuación | 📋 PLANIFICADO | `S5.2` |
-| 7 | `S8.7` | Puente Hermes/Telegram | 📋 PLANIFICADO | `S8.4` ✅, `S8.8`, `S0.3`, `S5.1` |
-| 8 | `S7.1` | Conformidad de release | 📋 PLANIFICADO | `S5.3`, `S8.7`, `S5.4` |
+| 2 | `S3.3` | Agent Capability Registry | 📋 PLANIFICADO | `S3.2` |
+| 3 | `S5.1` | Authorization store + Telegram + validación Git/PR/check/SHA | 📋 PLANIFICADO | `S3.2`, `S3.3` |
+| 4 | `S4.1` | Hosts y línea exclusiva | 📋 PLANIFICADO | `S3.1`, `S3.2`, `S5.1` |
+| 5 | `S5.2` | Entrega idempotente y post-check | 📋 PLANIFICADO | `S4.1`, `S3.3` |
+| 6 | `S5.4` | Ruteo de escalamiento fuera/en casa | 📋 PLANIFICADO | `S5.1` |
+| 7 | `S5.5` | Decisión estacionada y continuación independiente | 📋 PLANIFICADO | `S5.4` |
+| 8 | `S5.3` | Continuación | 📋 PLANIFICADO | `S5.2` |
+| 9 | `S8.7` | Puente Hermes/Telegram | 📋 PLANIFICADO | `S8.4` ✅, `S8.8`, `S0.3`, `S5.1` |
+| 10 | `S7.1` | Conformidad de release | 📋 PLANIFICADO | `S5.3`, `S8.7`, `S5.5` |
 
-**Once Sesiones · 1 cerrada.** Nueve ya enumeradas más dos nuevas — `S0.3` y `S5.4`.
+**Trece Sesiones · 1 cerrada.** Once ya enumeradas más dos nuevas — `S3.3`, que estaba
+declarada como dependencia de `S5.1` y `S5.2` en
+[`autonomous-v2-role-routed-continuation`](../changes/autonomous-v2-role-routed-continuation/tasks.md)
+pero no figuraba en ningún plan ni en este grafo, y `S5.5`, que es la Sesión que hace la
+planificación **diferible**: registra la decisión que no se puede derivar, declara qué
+Sesiones quedan contaminadas, sigue con las independientes y retoma desde el checkpoint.
+
+`S7.1` pasa a depender de `S5.5` en vez de `S5.4`: verificar que el escalamiento **sale**
+no alcanza como conformidad de release si la Torre igual se queda esperando la respuesta.
+`S5.5` depende de `S5.4`, así que la cobertura de `S5.4` queda incluida.
 
 `S0.3` cerró el 2026-08-01 en `9595b92`. Con eso, la contradicción entre specs sobre si el
 puente puede transportar un callback de merge **ya no existe**, y `S8.7` pierde uno de sus
@@ -94,8 +108,10 @@ Hoy hay tres Sesiones que pueden empezar: `S8.8` (ya 🔵), `S0.3` y `S3.1`.
   paralelizar.**
 
 **Capacidad hoy: 2, con una tercera a confirmar.** Del punto 1 en adelante la cadena es
-casi lineal — `S3.2 → S5.1 → S4.1 → S5.2 → S5.3` es una sola hebra. Ese es el costo real
-del alcance elegido: no se compra con más agentes.
+casi lineal — `S3.2 → S3.3 → S5.1 → S4.1 → S5.2 → S5.3` es una sola hebra, y
+`S5.4 → S5.5` cuelga de `S5.1` como la única bifurcación real. `S5.4` y `S5.5` comparten
+prefijo de `Área` (`escalation/**`), así que entre ellas tampoco hay paralelismo. Ese es el
+costo real del alcance elegido: no se compra con más agentes.
 
 ## Enmienda pendiente — `S0.3`
 

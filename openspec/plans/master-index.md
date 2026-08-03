@@ -1,14 +1,14 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-03 contra `d232fdf` (delta de política/seguridad V2) + implementación `3d2ef57`.
+> Última reconciliación: 2026-08-03 contra `f603c2c` + enumeración de `S3.3` y `S5.5` + implementación `3d2ef57`.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md).
 
 ## 📍 Punto de retoma
 
 **Producto único desde el 2026-08-01.** Las etiquetas `installable-v1` y `autonomous-v2` dejan de ser identidades de producto: hay un solo roadmap y una sola primera versión. La decisión, su alcance y el grafo completo viven en [release-chain](release-chain.md). Los lanes sobreviven como afinidad de trabajo, y `CT_V2_ONLY` en `bin/torre:28` pasa a ser un flag de capacidad opt-in apagado por defecto — no se borra.
 
-**La primera versión no se declara hasta que el maintainer pueda aprobar desde Telegram** las decisiones que requieren su autoridad, sobre un objetivo exacto y con sobre de un solo uso. Eso incorpora `sdd-tower-implementation-v1-requirements.md` §16–§17 al alcance que sale. Son **once Sesiones** en una cadena casi lineal.
+**La primera versión no se declara hasta que el maintainer pueda aprobar desde Telegram** las decisiones que requieren su autoridad, sobre un objetivo exacto y con sobre de un solo uso. Eso incorpora `sdd-tower-implementation-v1-requirements.md` §16–§17 al alcance que sale. Son **trece Sesiones** en una cadena casi lineal.
 
 **`S8.8` sigue 🔵 EN CURSO, y su estado real es más avanzado de lo que estos documentos decían.** `M8.8.1` ✅ COMPLETO vía PR #132. **`M8.8.2` ya se ejecutó**: el data-root XDG existe en `~/.local/share/control-tower/` con `active.json` y dos versiones instaladas, y `torre diagnose` devuelve `healthy:true` sobre `b72e450`. **`M8.8.3` está 🔴 BLOQUEADO**: el corte no se hizo porque el payload instalado omite `core.mjs`. **`M8.8.4` ✅ COMPLETO** en `3d2ef57`: payload 5/0, instalación 27/0 y suite aislada completa 442/0; no hubo efectos sobre runtime/DB reales y el fixture descartable fue destruido.
 
@@ -22,6 +22,8 @@ Del mismo delta salen tres decisiones del loop: Support corre como **subagente n
 
 `S5.1` quedó con forecast 380–500 líneas, en el borde de encadenado de 400: se decide en apply, no ahora.
 
+**La cadena pasó de once a trece Sesiones el 2026-08-03, por enumeración, no por alcance nuevo.** `S3.3` (Agent Capability Registry) ya estaba declarada como dependencia de `S5.1` y `S5.2` en [`autonomous-v2-role-routed-continuation`](../changes/autonomous-v2-role-routed-continuation/tasks.md), pero no figuraba en ningún Plan ni en el grafo: el grafo decía `S3.2 → S5.1` y contradecía la dependencia declarada. Ahora está en `P3`. `S5.5` es nueva y cubre el hueco que faltaba para que la planificación sea **diferible**: registrar la decisión que no se puede derivar, declarar qué Sesiones quedan contaminadas, continuar sólo con las independientes y retomar desde el checkpoint exacto. `S7.1` pasa a depender de `S5.5` en vez de `S5.4` — verificar que el escalamiento sale no alcanza si la Torre igual se queda esperando la respuesta.
+
 ## Granularidad
 
 Plan → Sesión (1 unidad entregable) → Módulo (archivos) → Tarea (mín. 3).
@@ -33,11 +35,12 @@ El tiempo es estimación, no límite. Ver `/home/emili/.config/opencode/skills/_
 
 ## 📊 Estado de un vistazo
 
-**Avance global**: 1/9 Planes cerrados (11%) · Sesiones cerradas en planes activos: 22/43 (51%)
+**Avance global**: 1/9 Planes cerrados (11%) · Sesiones cerradas en planes activos: 22/45 (49%)
 
-> El denominador pasó de 39 a 43: se sumaron las 2 Sesiones ya cerradas de P0 —que volvió a contar como Plan activo— más `S0.3` y `S5.4`, enumeradas el 2026-08-01.
+> El denominador pasó de 43 a 45 el 2026-08-03: se enumeraron `S3.3` en P3 y `S5.5` en P5. Antes había pasado de 39 a 43 por las 2 Sesiones ya cerradas de P0 —que volvió a contar como Plan activo— más `S0.3` y `S5.4`, enumeradas el 2026-08-01.
+> **El porcentaje bajó de 51% a 49% sin que nada se rompiera.** Enumerar trabajo que ya existía pero no estaba contado mueve el denominador, no el avance. Un porcentaje que sólo sube es un porcentaje que miente.
 > P0 volvió a cerrar el 2026-08-01 con `S0.3` (`9595b92`), así que los Planes cerrados vuelven a 1. Reabrir y cerrar un Plan es normal cuando cambia la decisión de producto que ese Plan documenta.
-> **Ninguno de estos porcentajes mide qué falta para salir.** Para eso está [release-chain](release-chain.md): **11 Sesiones**, de las cuales 1 cerrada.
+> **Ninguno de estos porcentajes mide qué falta para salir.** Para eso está [release-chain](release-chain.md): **13 Sesiones**, de las cuales 1 cerrada.
 >
 > **La tabla de abajo está ordenada por ID, y el ID no es un orden de ejecución.** Es un nombre posicional: `P8` no va después de `P7`, y `P0` no es el primer paso. El orden lo dicta el grafo, no el número — ver [release-chain](release-chain.md).
 >
@@ -49,9 +52,9 @@ El tiempo es estimación, no límite. Ver `/home/emili/.config/opencode/skills/_
 | P0 | Documentación canónica | ✅ COMPLETO | 100% (3/3 S) | — | Maintainer | — | [STATUS](plan-0/STATUS.md) |
 | P1 | Sustrato mecánico | 🔴 BLOQUEADO | 53% (10/19 S) | — | Main | S1.11–S1.19 | [STATUS](plan-1/STATUS.md) |
 | P2 | Contratos y registro de producto | 🔵 EN CURSO | — (responsabilidades restantes de Change B sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-2/STATUS.md) |
-| P3 | Workspace y orquestación | 🟢 LISTO | 0% (0/2 S) | — | Main | S3.1, S3.2 | [STATUS](plan-3/STATUS.md) |
+| P3 | Workspace y orquestación | 🟢 LISTO | 0% (0/3 S) | — | Main | S3.1, S3.2, S3.3 | [STATUS](plan-3/STATUS.md) |
 | P4 | Hosts y línea exclusiva | 📋 PLANIFICADO | 0% (0/1 S) | — | Main | S4.1 | [STATUS](plan-4/STATUS.md) |
-| P5 | Entrega y continuación | 📋 PLANIFICADO | 0% (0/4 S) | — | Main | S5.1, S5.2, S5.3, S5.4 | [STATUS](plan-5/STATUS.md) |
+| P5 | Entrega y continuación | 📋 PLANIFICADO | 0% (0/5 S) | — | Main | S5.1, S5.2, S5.3, S5.4, S5.5 | [STATUS](plan-5/STATUS.md) |
 | P6 | Campañas multiproyecto | 📋 PLANIFICADO | — (sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-6/STATUS.md) |
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | S7.1 | [STATUS](plan-7/STATUS.md) |
 | P8 | Release instalable | 🔵 EN CURSO | 50% (4/8 S) | — | Maintainer | S8.8, S8.7, S8.5, S8.6 | [STATUS](plan-8/STATUS.md) |

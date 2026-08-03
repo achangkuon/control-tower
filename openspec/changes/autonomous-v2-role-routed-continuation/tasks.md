@@ -14,6 +14,8 @@ Chain strategy: pending
 
 `auto-forecast` is forecast-only; chain strategy pending. Implementation-ready after `S3.1`,`S8.4`. One PR per Sesión.
 
+**Scope note — this carrier is lane-scoped, not the product chain.** `S5.4` (escalation routing) and `S5.5` (parked decision, contamination scope, independent continuation) are enumerated directly in [`plan-5/STATUS.md`](../../plans/plan-5/STATUS.md) and are deliberately outside this delta; `S8.7` likewise. The dependency column below therefore lists only intra-lane predecessors. The product-wide graph — including `S5.5 → S7.1` and `S8.7 → S7.1` — lives in [`release-chain.md`](../../plans/release-chain.md), which is authoritative for release ordering. Do not reconcile the two by copying dependencies into this table.
+
 **All:** worktree; verify base/status/diff/`Área`, tests/runtime/invariants/forbidden.
 
 | Sesión | Depends; Área / forbidden | Resource/DB; edge | Test; runtime; rollback; close |

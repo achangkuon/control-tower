@@ -17,9 +17,9 @@
 
 | Campo | Detalle |
 |---|---|
-| Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2`, `S5.2` de `S4.1`, `S5.3` de `S5.2` y `S5.4` de `S5.1`. |
-| Outputs | F: authorization store, Telegram, validación Git/PR/check/SHA, entrega idempotente y post-check. G: planning horizon, reconciliación, apply/verify, Binding Delta y continuación del siguiente `slice_id`. Más el ruteo de escalamiento de `S5.4`. |
-| Roadmap | Ejecutar `S5.1`, esperar `S4.1`, continuar con `S5.2` y cerrar con `S5.3`. `S5.4` se abre apenas cierra `S5.1` y no depende del resto de la cadena. Cada Sesión es una unidad entregable a `master`. |
+| Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` y `S3.3`, `S5.2` de `S4.1` y `S3.3`, `S5.3` de `S5.2`, `S5.4` de `S5.1` y `S5.5` de `S5.4`. |
+| Outputs | F: authorization store, Telegram, validación Git/PR/check/SHA, entrega idempotente y post-check. G: planning horizon, reconciliación, apply/verify, Binding Delta y continuación del siguiente `slice_id`. Más el ruteo de escalamiento de `S5.4` y la planificación diferible de `S5.5`. |
+| Roadmap | Ejecutar `S5.1`, esperar `S4.1`, continuar con `S5.2` y cerrar con `S5.3`. `S5.4` se abre apenas cierra `S5.1` y no depende del resto de la cadena; `S5.5` sigue a `S5.4` por la misma hebra. Cada Sesión es una unidad entregable a `master`. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
 
 ## Sesión 5.1 — Change F candidate contracts
@@ -97,5 +97,84 @@ El modo es explícito y de dos valores: `local` cuando el maintainer está frent
 - [ ] `S5.4` no crea, valida ni consume autoridad: esa ruta sigue siendo exclusiva de `S5.1`
 - [ ] `bun test test/escalation` pasa completo y `bun test` no introduce fallos nuevos
 - [ ] El diff no toca ninguna ruta fuera del `Área`
+
+## Sesión 5.5 — Decisión estacionada y continuación independiente
+
+**Estado:** 📋 PLANIFICADO
+**Depende de:** `S5.4` integrada
+**Área:** `escalation/{parked,contamination,resume}.mjs`, `schemas/parked-decision-v1.schema.json`, `test/escalation/**`
+**Prohibido:** `continuation/**`, `core.mjs`, `mcp.mjs`, `delivery/**`
+**Recurso:** ledger append-only de decisiones estacionadas. Sin token de entrega.
+
+`S5.4` hace que la pregunta **salga**. `S5.5` es lo que hace que la Torre **no se quede
+esperando la respuesta**: es la Sesión que convierte la planificación en diferible.
+
+Hoy el formato de plan ya declara por adelantado dependencias, `Área`, `Recurso` y
+criterios binarios. Eso es el dato. Nadie lo **consume** todavía para decidir qué se
+estaciona y qué puede seguir. Sin esta Sesión, una sola decisión pendiente frena la
+corrida entera, que es exactamente el costo que el formato existía para evitar.
+
+`S5.5` **no crea, valida ni consume autoridad** —eso sigue siendo exclusivo de `S5.1`— y no
+duplica la emisión ni el ruteo de `S5.4`. Comparte prefijo de `Área` con `S5.4`, así que
+por diseño **nunca corren en paralelo**: `S5.5` sólo abre con `S5.4` integrada.
+
+### Las ocho clases que siempre escalan
+
+No son heurística: una decisión que cae en cualquiera de estas **nunca** se deriva sola,
+aunque exista autoridad aprobada y criterios falsificables.
+
+Contrato visible del producto · operaciones irreversibles · migraciones o pérdida de datos ·
+API pública · seguridad y permisos · dinero, precios o cuotas · expansión de alcance ·
+dependencias o evidencia contradictorias.
+
+### Módulo 5.5.1 — Registro de la decisión estacionada
+
+- [ ] Tarea 5.5.1.1 — RED: agregar `test/escalation/parked.test.mjs` para que una decisión no derivable produzca un registro inmutable con la pregunta exacta, la evidencia que la disparó, las opciones enumeradas con su consecuencia, la Sesión/Módulo de origen, el checkpoint y la clase de escalamiento.
+- [ ] Tarea 5.5.1.2 — RED: agregar el caso fail-closed — un registro sin opciones enumeradas, sin evidencia o sin checkpoint se rechaza; no se estaciona una pregunta que nadie puede contestar.
+- [ ] Tarea 5.5.1.3 — GREEN: implementar `escalation/parked.mjs` y `schemas/parked-decision-v1.schema.json` sobre el ledger append-only, reutilizando la solicitud de `S5.4` sin abrir una segunda ruta de escritura.
+- [ ] Tarea 5.5.1.4 — REFACTOR: normalizar códigos de error estables y volver a correr `bun test test/escalation`.
+
+### Módulo 5.5.2 — Scope de contaminación
+
+- [ ] Tarea 5.5.2.1 — RED: agregar `test/escalation/contamination.test.mjs` para que el scope se derive de la **enumeración del plan por digest** más el ledger inmutable, y falle si intenta leer engram.
+- [ ] Tarea 5.5.2.2 — RED: agregar los tres criterios de contaminación — dependencia en el grafo, `Área` o `Recurso` compartido, y criterio de aceptación que referencia la misma decisión — más el caso ambiguo, que resuelve a **contaminada**.
+- [ ] Tarea 5.5.2.3 — GREEN: implementar `escalation/contamination.mjs` y congelar el scope dentro del registro de la decisión, no fuera.
+- [ ] Tarea 5.5.2.4 — REFACTOR: verificar con testigos de bytes que calcular el scope es read-only sobre plan, registro, DB, WAL y SHM.
+
+### Módulo 5.5.3 — Selección de trabajo independiente
+
+- [ ] Tarea 5.5.3.1 — RED: agregar `test/escalation/independent.test.mjs` para que una Sesión sólo sea elegible si es 🟢 LISTO, no está en el scope congelado, no depende de la bloqueada en el grafo y tiene `Área` **y** `Recurso` disjuntos.
+- [ ] Tarea 5.5.3.2 — RED: agregar el caso de cero candidatos — la Torre se detiene y lo reporta; nunca inventa trabajo ni relaja un criterio para encontrar algo que hacer.
+- [ ] Tarea 5.5.3.3 — GREEN: implementar la selección como lectura, ejercida por Main. El worker no se autoasigna.
+
+### Módulo 5.5.4 — Retoma desde el checkpoint
+
+- [ ] Tarea 5.5.4.1 — RED: agregar `test/escalation/resume.test.mjs` para que una respuesta validada por `S5.1` cierre la decisión y levante el bloqueo **sólo** sobre las Sesiones del scope congelado, nunca sobre otras.
+- [ ] Tarea 5.5.4.2 — RED: agregar el caso de checkpoint rancio — si la base se movió desde que se estacionó, la retoma **no** es automática: exige reconciliación nueva.
+- [ ] Tarea 5.5.4.3 — RED: agregar el caso de respuesta no validada, vencida o de origen equivocado — no levanta nada y no muta el registro.
+- [ ] Tarea 5.5.4.4 — GREEN: implementar `escalation/resume.mjs` retomando desde el checkpoint exacto registrado.
+
+**Criterios de aceptación de S5.5** — todos deben pasar para cerrar:
+
+- [ ] Una decisión no derivable produce un registro inmutable con pregunta exacta, evidencia, opciones con consecuencia, origen, checkpoint y clase
+- [ ] Un registro sin opciones, sin evidencia o sin checkpoint falla cerrado
+- [ ] Una decisión de cualquiera de las ocho clases nunca se deriva, aunque haya autoridad y criterios disponibles
+- [ ] El scope de contaminación se deriva del plan por digest más el ledger, y **nunca** de engram
+- [ ] Un caso ambiguo resuelve a contaminada: sobre-incluir es un costo, sub-incluir es el incidente
+- [ ] El scope queda congelado dentro del registro y no se recalcula al retomar
+- [ ] Sólo continúan Sesiones 🟢 LISTO, fuera del scope, sin dependencia en el grafo y con `Área` y `Recurso` disjuntos
+- [ ] Con cero candidatos la Torre se detiene y lo reporta, sin relajar criterios
+- [ ] La selección la ejerce Main; el worker no se autoasigna
+- [ ] Una respuesta validada levanta el bloqueo sólo sobre el scope congelado y retoma desde el checkpoint exacto
+- [ ] Un checkpoint rancio exige reconciliación y no retoma solo
+- [ ] Una respuesta no validada, vencida o de origen equivocado no levanta nada ni muta el registro
+- [ ] `S5.5` no crea, valida ni consume autoridad, y no duplica la emisión ni el ruteo de `S5.4`
+- [ ] Calcular scope y elegibilidad es read-only, verificado por testigos de bytes en éxito y en rechazo
+- [ ] `bun test test/escalation` pasa completo y `bun test` no introduce fallos nuevos
+- [ ] El diff no toca `continuation/**`, `core.mjs`, `mcp.mjs` ni `delivery/**`
+
+**Forecast:** 300–400 líneas, contra el techo de encadenado de 400. Si en apply se pasa, se
+encadenan los Módulos bajo la misma Sesión — no se crea un nivel nuevo ni se parte en dos
+Sesiones sin decisión explícita.
 
 Las responsabilidades legacy de Telegram Delivery y continuación que aún no tienen límite de un PR permanecen sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).
