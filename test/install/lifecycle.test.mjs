@@ -68,6 +68,25 @@ describe("lifecycle operations", () => {
     expect(readFileSync(join(paths.stateRoot, "audit/lifecycle.ndjson"), "utf8")).toContain('"outcome":"pointer-failed"')
   })
 
+  test("diagnose reports unhealthy when an installed version is missing expected members", () => {
+    const { paths } = fixture()
+    const complete = { "bin/torre": "t", "core.mjs": "c", "install/active-pointer.mjs": "a", "install/lifecycle.mjs": "l", "install/version-store.mjs": "v" }
+    const expectedMembers = Object.keys(complete)
+    lifecycle({ ...paths, action: "install", version: "1.0.0", files: complete })
+    expect(lifecycle({ ...paths, action: "diagnose", expectedMembers })).toMatchObject({ healthy: true, active: "1.0.0" })
+
+    rmSync(join(paths.dataRoot, "versions/1.0.0/core.mjs"), { force: true })
+    const degraded = lifecycle({ ...paths, action: "diagnose", expectedMembers })
+    expect(degraded).toMatchObject({ healthy: false, active: "1.0.0" })
+    expect(degraded.missing).toEqual(["core.mjs"])
+  })
+
+  test("diagnose without expected members keeps reporting manifest-only health", () => {
+    const { paths } = fixture()
+    lifecycle({ ...paths, action: "install", version: "1.0.0", files: { "runtime.mjs": "one" } })
+    expect(lifecycle({ ...paths, action: "diagnose" })).toMatchObject({ healthy: true, active: "1.0.0" })
+  })
+
   test("uninstall is idempotent and preserves configuration, versions, audit, and repository history", () => {
     const { root, paths } = fixture()
     lifecycle({ ...paths, action: "install", version: "1.0.0", files: { "runtime.mjs": "one" } })

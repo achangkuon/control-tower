@@ -164,6 +164,7 @@ Absorbe la validación práctica que `S8.6` haría de forma formal: la instalaci
 | `M8.8.2` Diagnóstico y adopción real | 👤 ATENDIDO | `bin/torre`, data-root XDG, `~/.config/opencode/control-tower/` | `torre install` real sobre la máquina del maintainer |
 | `M8.8.3` Corte al runtime legado | 👤 ATENDIDO | ídem | Repunta `bin/torre`; un fallo deja la Torre inoperable |
 | `M8.8.4` Preflight de adopción y payload verificable | 🔒 SELLABLE, autónomo | `install/**`, `scripts/publish-runtime.mjs`, `test/install/**` | Valida el payload cerrado y deja segura la continuación atendida de `M8.8.2` |
+| `M8.8.5` `diagnose` detecta payload incompleto | 🔒 SELLABLE, autónomo | `install/lifecycle.mjs`, `test/install/**` | El instrumento que verifica la adopción no detectaba el modo de falla que bloquea `M8.8.3` |
 
 El motivo es duro: **un contrato sellado no autoriza efectos fuera del repositorio**, y nadie debería despertarse con `torre` roto porque un agente repuntó el runtime sin supervisión. El contrato de `M8.8.1` vive en [`seal-M8.8.1.md`](../../changes/v1-release/seal-M8.8.1.md).
 
@@ -224,6 +225,47 @@ Corrige el cierre del payload publicado antes de reanudar la adopción atendida.
 - [x] La implementación queda referenciada por `3d2ef57` y acotada a `install/**`, `scripts/publish-runtime.mjs` y `test/install/**`
 
 **Evidencia de cierre:** implementación `3d2ef57`; payload 5/0, instalación 27/0 y suite aislada completa 442/0. `bun install --frozen-lockfile` pasó, el lock permaneció intacto, no se accedió ni mutó el runtime o la DB reales y todos los recursos del checkout/fixture descartable fueron eliminados. `M8.8.4` deja habilitada la continuación atendida de `M8.8.2`, pero no cambia el estado de `M8.8.2` ni adelanta `M8.8.3`.
+
+#### M8.8.5 — `diagnose` detecta payload incompleto
+
+`M8.8.4` cerró el contrato del payload en la **publicación**. Este Módulo cierra el hueco correspondiente en la **verificación**: `diagnose` era el instrumento con el que se iba a comprobar que la adopción de `M8.8.2` había salido bien, y no detectaba el único modo de falla que hoy bloquea `M8.8.3`.
+
+El chequeo era `existsSync(<version>/.manifest)` — un archivo presente, nada más. El `.manifest` es un digest pelado, no enumera miembros. Por eso `torre diagnose` devolvía `healthy:true` sobre `b72e450`, a la que le falta `core.mjs`. Verificar la adopción con un instrumento ciego al modo de falla no es verificar.
+
+| Campo | Valor |
+|---|---|
+| Estado | ✅ COMPLETO |
+| Modo | 🔒 SELLABLE, autónomo; sólo lectura sobre el runtime real |
+| Depende de | `M8.8.4` ✅ COMPLETO |
+| Área | `install/lifecycle.mjs`, `test/install/**` |
+| Recurso | ninguno; sin migraciones de DB y sin token de entrega |
+
+**Decisiones:**
+
+- `derivable` — dónde vive la validación. **Criterio:** `lifecycle()` es el motor genérico y acepta `files` arbitrarios; el contrato del runtime lo conoce `runCli`. Falsificable: si los tests genéricos de lifecycle tuvieran que declarar los cinco miembros, la capa elegida estaba mal. **Autoridad:** el layering ya existente en `install/lifecycle.mjs:202`.
+- `derivable` — comportamiento sin `expectedMembers`. **Criterio:** se preserva la semántica anterior, así que ningún llamador genérico cambia. Falsificable por el test dedicado.
+
+**Tareas** — todas completadas:
+
+- [x] `T8.8.5.1` RED: cubrir que una versión instalada a la que le falta un miembro esperado reporte `healthy:false` y nombre el faltante, y que sin `expectedMembers` se preserve la salud por manifest
+- [x] `T8.8.5.2` GREEN: aceptar `expectedMembers` en `diagnose` y pasar `RUNTIME_PAYLOAD_FILES` desde `runCli`
+- [x] `T8.8.5.3` VERIFY: suite enfocada y suite completa, más el comando real contra el data-root del maintainer
+
+**Criterios de aceptación** — todos verificados:
+
+- [x] Una versión instalada sin un miembro esperado reporta `healthy:false` y lo enumera en `missing`
+- [x] Una versión completa reporta `healthy:true` con `missing: []`
+- [x] Sin `expectedMembers`, `diagnose` conserva exactamente la semántica anterior
+- [x] `lifecycle()` sigue siendo genérico: no importa el contrato del runtime en su firma obligatoria
+- [x] `bun test test/install` pasa completo
+- [x] `diagnose` es read-only: retorna antes de cualquier escritura, verificado en `install/lifecycle.mjs:149`
+- [x] El diff no toca ninguna ruta fuera del `Área`
+
+**Evidencia de cierre:** `test/install` 29/0; suite completa 448/2. Los dos fallos son `test/migration.test.mjs` — *P0 frozen snapshot restore* —, **preexistentes**: verificados en 58/2 sobre `HEAD` con los cambios guardados, así que no son regresión.
+
+Contra el data-root real del maintainer, el mismo comando pasó de `{"healthy":true}` a `{"healthy":false,"missing":["core.mjs"]}` sin mutar nada. Eso convierte el bloqueo de `M8.8.3` en una condición detectable por herramienta en vez de por inspección manual. **No adelanta `M8.8.2` ni `M8.8.3`**: sigue haciendo falta el `torre install` atendido.
+
+> **Nota de entorno:** este worktree no tenía `node_modules`. La primera corrida dio 348/10 con todos los fallos en `Cannot find package 'yaml'` (`package.json:7`), no en código. `bun install --frozen-lockfile` los resolvió dejando el lock intacto. Una medición de suite en un worktree sin dependencias no es un baseline.
 
 ### S8.5 — Detección de hosts e integración opt-in
 

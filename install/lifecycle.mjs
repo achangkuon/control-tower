@@ -5,7 +5,7 @@ import { dirname, isAbsolute, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { clearActivePointer, readActivePointer, replaceActivePointer, rollbackActivePointer } from "./active-pointer.mjs"
-import { readRuntimePayload } from "./runtime-payload.mjs"
+import { readRuntimePayload, RUNTIME_PAYLOAD_FILES } from "./runtime-payload.mjs"
 import { storeVersion } from "./version-store.mjs"
 
 const audit = (stateRoot, record) => {
@@ -144,11 +144,13 @@ const restoreLegacyInstaller = (stateRoot) => {
   return fixture
 }
 
-export function lifecycle({ action, version, files, dataRoot, configRoot, stateRoot, legacyConfigPath, failValidation = false, pointerOptions }) {
+export function lifecycle({ action, version, files, dataRoot, configRoot, stateRoot, legacyConfigPath, failValidation = false, pointerOptions, expectedMembers }) {
   const before = readActivePointer(dataRoot)
   if (action === "diagnose") {
-    const healthy = Boolean(before && existsSync(join(dataRoot, "versions", before.version, ".manifest")))
-    return { operation: action, healthy, active: before?.version ?? null }
+    const installed = before ? join(dataRoot, "versions", before.version) : null
+    const manifested = Boolean(installed && existsSync(join(installed, ".manifest")))
+    const missing = manifested && expectedMembers ? expectedMembers.filter((member) => !existsSync(join(installed, member))) : []
+    return { operation: action, healthy: manifested && missing.length === 0, active: before?.version ?? null, missing }
   }
   if (action === "install" || action === "upgrade") {
     const legacy = action === "upgrade" ? prepareLegacyInstaller(legacyConfigPath) : null
@@ -206,7 +208,7 @@ export function runCli([action = "diagnose", version, source], env = process.env
     stateRoot: join(env.XDG_STATE_HOME ?? join(env.HOME, ".local/state"), "control-tower"),
   }
   const files = source ? readRuntimePayload(source) : undefined
-  return lifecycle({ ...roots, action, version, files, legacyConfigPath: join(env.XDG_CONFIG_HOME ?? join(env.HOME, ".config"), "opencode/opencode.json"), failValidation: env.CT_FAIL_VALIDATION === "1" })
+  return lifecycle({ ...roots, action, version, files, expectedMembers: RUNTIME_PAYLOAD_FILES, legacyConfigPath: join(env.XDG_CONFIG_HOME ?? join(env.HOME, ".config"), "opencode/opencode.json"), failValidation: env.CT_FAIL_VALIDATION === "1" })
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
