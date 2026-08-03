@@ -147,6 +147,13 @@ La consecuencia es que **nada de lo construido después del 2026-07-21 está en 
 | Área | `install/**`, `bin/torre`, `test/install/**` |
 | Recurso | data-root XDG; **sin** migraciones de DB y sin token de entrega |
 
+**Decisiones:**
+
+- `derivable` — qué versión publicar en la adopción de `M8.8.2`. **Criterio:** el `HEAD` de `master` que contenga `3d2ef57`, porque es el commit que cierra el contrato de payload. Falsificable: si el payload publicado no valida contra `RUNTIME_PAYLOAD_FILES`, la elección estaba mal. **Autoridad:** `install/runtime-payload.mjs`.
+- `derivable` — si `M8.8.3` puede avanzar. **Criterio:** la versión activa en `~/.local/share/control-tower/versions/<sha>/` contiene los cinco miembros, `core.mjs` incluido. Falsificable por `ls`. Hoy da **no**: `b72e450` y `d280214c` tienen cuatro. **Autoridad:** el mismo contrato.
+- `escala` — ejecutar el `torre install` real. **Clase:** operaciones irreversibles. Muta `~/.local/share/control-tower/` y `~/.config/opencode/control-tower/`, fuera del repositorio. **Contamina:** `M8.8.3` (no puede cortar hacia un runtime que no existe todavía), `S8.7` (declara `S8.8` como dependencia). **Resuelta el 2026-08-03**: el maintainer levantó el freno de forma atendida.
+- `escala` — repuntar `bin/torre` al runtime instalado (`M8.8.3`). **Clase:** operaciones irreversibles. Un fallo deja la Torre inoperable. **Contamina:** `S8.7`. **Abierta** — y hoy además bloqueada por causa técnica propia, que es distinto de estar esperando autorización.
+
 Absorbe la validación práctica que `S8.6` haría de forma formal: la instalación real en la máquina del maintainer es la evidencia de smoke y rollback.
 
 **Modo de ejecución — la Sesión es una, la ejecución se parte.** No se crea una Sesión nueva: eso inventaría un nivel que la convención no tiene. Lo que cambia es quién puede correr cada Módulo.
