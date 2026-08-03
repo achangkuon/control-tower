@@ -6,6 +6,7 @@ export const RUNTIME_PAYLOAD_FILES = [
   "core.mjs",
   "install/active-pointer.mjs",
   "install/lifecycle.mjs",
+  "install/runtime-payload.mjs",
   "install/version-store.mjs",
 ]
 

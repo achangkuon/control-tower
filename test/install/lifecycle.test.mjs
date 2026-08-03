@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, test } from "bun:test"
 import { execFileSync, spawnSync } from "node:child_process"
 import { createHash } from "node:crypto"
-import { chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
+import { chmodSync, copyFileSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
 
 import { lifecycle, runCli } from "../../install/lifecycle.mjs"
+import { RUNTIME_PAYLOAD_FILES } from "../../install/runtime-payload.mjs"
 
 const roots = [], repoRoot = resolve(import.meta.dir, "../..")
 const snapshotPath = (path) => {
@@ -246,7 +247,7 @@ test("installer and publisher use the same immutable lifecycle", () => {
   const { root } = fixture(), source = join(root, "release"), data = join(root, "published")
   mkdirSync(join(source, "bin"), { recursive: true })
   mkdirSync(join(source, "install"), { recursive: true })
-  for (const file of ["bin/torre", "core.mjs", "install/version-store.mjs", "install/active-pointer.mjs", "install/lifecycle.mjs"]) {
+  for (const file of RUNTIME_PAYLOAD_FILES) {
     writeFileSync(join(source, file), `release:${file}\n`)
   }
   const env = { ...process.env, XDG_DATA_HOME: join(root, "data"), XDG_CONFIG_HOME: join(root, "config"), XDG_STATE_HOME: join(root, "state") }
@@ -255,4 +256,54 @@ test("installer and publisher use the same immutable lifecycle", () => {
   const published = execFileSync("bun", [join(repoRoot, "scripts/publish-runtime.mjs"), "2.0.0", data], { encoding: "utf8" })
   expect(JSON.parse(published)).toMatchObject({ version: "2.0.0", created: true })
   expect(existsSync(join(data, "versions/2.0.0/install/lifecycle.mjs"))).toBe(true)
+})
+
+test("stored torre diagnoses and installs autonomously from an isolated unrelated cwd", () => {
+  const root = mkdtempSync(join(tmpdir(), "ct-staged-runtime-")); roots.push(root)
+  const release = join(root, "detached-release"), publication = join(root, "xdg-data/control-tower")
+  const cwd = join(root, "unrelated-cwd"), home = join(root, "home"), config = join(root, "xdg-config")
+  const state = join(root, "xdg-state"), cache = join(root, "xdg-cache"), temporary = join(root, "tmp")
+  for (const directory of [release, cwd, home, config, state, cache, temporary]) mkdirSync(directory, { recursive: true })
+  for (const file of RUNTIME_PAYLOAD_FILES) {
+    const destination = join(release, file)
+    mkdirSync(join(destination, ".."), { recursive: true })
+    copyFileSync(join(repoRoot, file), destination)
+  }
+
+  const realTargets = [
+    join(process.env.HOME, ".local/share/control-tower"),
+    join(process.env.XDG_DATA_HOME ?? join(process.env.HOME, ".local/share"), "control-tower"),
+    join(process.env.XDG_CONFIG_HOME ?? join(process.env.HOME, ".config"), "control-tower"),
+    join(process.env.XDG_STATE_HOME ?? join(process.env.HOME, ".local/state"), "control-tower"),
+  ]
+  const realBefore = realTargets.map(snapshotPath)
+  const env = { PATH: process.env.PATH, HOME: home, XDG_DATA_HOME: join(root, "xdg-data"), XDG_CONFIG_HOME: config,
+    XDG_STATE_HOME: state, XDG_CACHE_HOME: cache, TMPDIR: temporary }
+  expect(Object.hasOwn(env, "CONTROL_TOWER_LIFECYCLE")).toBe(false)
+  expect(Object.hasOwn(env, "CONTROL_TOWER_CORE")).toBe(false)
+  expect(Object.hasOwn(env, "NODE_PATH")).toBe(false)
+
+  execFileSync("bun", [join(repoRoot, "scripts/publish-runtime.mjs"), "9.9.9", publication], { cwd, env, encoding: "utf8" })
+  const stagedTorre = join(publication, "versions/9.9.9/bin/torre")
+  const diagnose = spawnSync(stagedTorre, ["diagnose"], { cwd, env, encoding: "utf8" })
+  expect({ status: diagnose.status, stderr: diagnose.stderr }).toEqual({ status: 0, stderr: "" })
+  // `missing` lo agregó M8.8.5, posterior a la rama de la que se rescató este test.
+  // Sin versión activa la lista va vacía: no hay payload contra el cual comparar.
+  expect(JSON.parse(diagnose.stdout)).toEqual({ operation: "diagnose", healthy: false, active: null, missing: [] })
+
+  const installed = spawnSync(stagedTorre, ["install", "10.0.0", release], { cwd, env, encoding: "utf8" })
+  expect({ status: installed.status, stderr: installed.stderr }).toEqual({ status: 0, stderr: "" })
+  expect(JSON.parse(installed.stdout)).toMatchObject({ operation: "install", active: "10.0.0", changed: true, stored: true })
+  expect(JSON.parse(readFileSync(join(publication, "active.json"), "utf8"))).toEqual({ version: "10.0.0", previous: null })
+  expect(readdirSync(join(publication, "versions/10.0.0")).sort()).toEqual([".manifest", "bin", "core.mjs", "install"])
+
+  const files = Object.fromEntries(RUNTIME_PAYLOAD_FILES.map((file) => [file, readFileSync(join(release, file))]))
+  const expectedManifest = createHash("sha256").update(JSON.stringify(Object.entries(files).sort(([left], [right]) => left.localeCompare(right))
+    .map(([path, contents]) => [path, Buffer.from(contents).toString("base64")]))).digest("hex")
+  expect(readFileSync(join(publication, "versions/10.0.0/.manifest"), "utf8")).toBe(`${expectedManifest}\n`)
+  expect(realTargets.map(snapshotPath)).toEqual(realBefore)
+
+  rmSync(root, { recursive: true, force: true })
+  roots.splice(roots.indexOf(root), 1)
+  expect(existsSync(root)).toBe(false)
 })

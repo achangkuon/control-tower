@@ -6,6 +6,14 @@ import { join } from "node:path"
 import { RUNTIME_PAYLOAD_FILES, readRuntimePayload, validateRuntimePayload } from "../../install/runtime-payload.mjs"
 
 const roots = []
+const CANONICAL_RUNTIME_PAYLOAD = [
+  "bin/torre",
+  "core.mjs",
+  "install/active-pointer.mjs",
+  "install/lifecycle.mjs",
+  "install/runtime-payload.mjs",
+  "install/version-store.mjs",
+]
 const fixture = () => {
   const root = mkdtempSync(join(tmpdir(), "ct-runtime-payload-"))
   roots.push(root)
@@ -21,9 +29,10 @@ const payload = () => Object.fromEntries(RUNTIME_PAYLOAD_FILES.map((path) => [pa
 afterEach(() => roots.splice(0).forEach((root) => rmSync(root, { recursive: true, force: true })))
 
 describe("runtime payload closure", () => {
-  test("accepts exactly the five canonical regular files", () => {
+  test("accepts exactly the six canonical regular files", () => {
+    expect(RUNTIME_PAYLOAD_FILES).toEqual(CANONICAL_RUNTIME_PAYLOAD)
     const files = validateRuntimePayload(payload())
-    expect(Object.keys(files).sort()).toEqual([...RUNTIME_PAYLOAD_FILES].sort())
+    expect(Object.keys(files)).toEqual(CANONICAL_RUNTIME_PAYLOAD)
     expect(readRuntimePayload(fixture())).toEqual(files)
   })
 
