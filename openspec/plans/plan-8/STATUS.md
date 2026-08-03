@@ -10,7 +10,7 @@
 | Dependencias | `master@a4aa3a6`, que integra `d280214c8de78f90e88982d90642427b55a72f2b` y `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`; `S8.1`–`S8.4` están verificadas y mergeadas; `M8.8.1` está mergeado vía PR #132. |
 | Bloqueo operativo | Antes de despachar cualquier Sesión hay que sanear el registro de la Torre: tres de los seis agentes registrados no tienen worktree y uno de ellos retiene un mensaje en cola que nadie va a consumir. Ver [brecha 5](../implementation-state.md). No es un bloqueo de alcance; es que la capacidad reportada no es real. |
 | Alcance aprobado | Release local-first con lifecycle versionado, inmutable, idempotente y reversible; sin activar autonomía. |
-| Próxima acción | **`M8.8.2` ✅ COMPLETO el 2026-08-03**: adopción real ejecutada por el maintainer, activo `34f56a61c1908c003dc382e661ae87335498fd99` con `previous` `b72e450` para rollback. **La ejecución de `M8.8.3` se partió el 2026-08-03.** El payload sin `core.mjs` desapareció y `diagnose` lo confirma con `missing:[]`, pero el mecanismo del corte no existe: `bin/torre` nunca lee `active.json` y `CORE` defaultea a la ruta legada incluso en la versión instalada (`bin/torre:20`), así que copiar el entrypoint no corta nada y un symlink rompe `LIFECYCLE`. **La mitad implementable es ahora `M8.8.6` — 🟢 LISTO, 🔒 SELLABLE y autónomo**, con cero efectos fuera del repositorio; `M8.8.3` queda acotado al corte al PATH y sigue 👤 ATENDIDO. **`M8.8.6` es la próxima acción y es el primer Módulo sellado que se despacha bajo la §11.** `S8.7` espera `S8.8` y `S5.1`; `S0.3` está ✅ COMPLETO. `S8.5` y `S8.6` quedan 🟡 DIFERIDO. |
+| Próxima acción | 🔴 **`M8.8.2` REABIERTO el 2026-08-03 — el runtime instalado no carga.** `install/lifecycle.mjs:8` importa `./runtime-payload.mjs`, y ese archivo **no está en la versión instalada**: `bun <version>/install/lifecycle.mjs diagnose` devuelve `Cannot find module './runtime-payload.mjs'`. La causa es que `RUNTIME_PAYLOAD_FILES` declara cinco miembros y **no se incluye a sí mismo**, así que el validador confirma como completo un payload que no arranca. El `healthy:true` con el que se cerró salió del **checkout del repo**, no de la copia instalada. **Ejecutar `M8.8.3` sobre este runtime dejaba la Torre inoperable.** El arreglo —una línea en `RUNTIME_PAYLOAD_FILES` más tests— está sin commitear en el worktree `v1`, que está diez commits atrás. Orden correcto: cerrar el contrato del payload → reinstalar → verificar `diagnose` **desde la copia instalada** → `M8.8.6` → `M8.8.3`. Adopción previa: activo `34f56a61c1908c003dc382e661ae87335498fd99` con `previous` `b72e450` para rollback. **La ejecución de `M8.8.3` se partió el 2026-08-03.** El payload sin `core.mjs` desapareció y `diagnose` lo confirma con `missing:[]`, pero el mecanismo del corte no existe: `bin/torre` nunca lee `active.json` y `CORE` defaultea a la ruta legada incluso en la versión instalada (`bin/torre:20`), así que copiar el entrypoint no corta nada y un symlink rompe `LIFECYCLE`. **La mitad implementable es ahora `M8.8.6` — 🟢 LISTO, 🔒 SELLABLE y autónomo**, con cero efectos fuera del repositorio; `M8.8.3` queda acotado al corte al PATH y sigue 👤 ATENDIDO. **`M8.8.6` es la próxima acción y es el primer Módulo sellado que se despacha bajo la §11.** `S8.7` espera `S8.8` y `S5.1`; `S0.3` está ✅ COMPLETO. `S8.5` y `S8.6` quedan 🟡 DIFERIDO. |
 | Flujo | P8 corre bajo la [regla de ejecución V1](../v1-execution-rule.md): de `tasks.md` directo a implementación, sin exploration/proposal/design y sin PR de cierre separada. |
 | Referencias | [tasks de V1](../../changes/v1-release/tasks.md); [change archivado](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/), [spec](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). |
 
@@ -25,7 +25,7 @@
 | S8.5 | Detección de hosts e integración opt-in | 🟡 DIFERIDO | Optional host detection and integration | ninguna | Diferida el 2026-07-31: la integración es opt-in y su ausencia es diagnóstico, no fallo de instalación |
 | S8.6 | Evidencia de release en máquina limpia | 🟡 DIFERIDO | Versioned lifecycle and release evidence | `S8.3`, `S8.4` | Diferida el 2026-07-31: se cubre con validación manual durante `S8.8` en vez de una Sesión formal |
 | S8.7 | Puente Hermes/Telegram | 📋 PLANIFICADO | Optional bounded Hermes bridge (amendado por `S0.3`) | `S8.4` ✅, `S0.3` ✅, `S8.8`, `S5.1` | Alcance ampliado el 2026-08-01: presenta autorizaciones y transporta callback acotado. `S0.3` está completo; quedan `S8.8` y `S5.1` |
-| S8.8 | Adopción del instalable en el runtime en uso | 🔵 EN CURSO | Versioned lifecycle | `S8.2` ✅ | `M8.8.1` ✅ COMPLETO (PR #132, merge `d280214c`). `M8.8.2` ✅ COMPLETO: activo `34f56a6`, cinco miembros verificados, `diagnose` → `healthy:true, missing:[]`. `M8.8.3` 👤 ATENDIDO, depende de `M8.8.6`: sólo el corte al PATH. `M8.8.4` ✅ COMPLETO en `3d2ef57`. `M8.8.5` ✅ COMPLETO en `34f56a6`: `diagnose` detecta payload incompleto. **`M8.8.6` 🟢 LISTO y autónomo**: construye la resolución desde el puntero activo, que es lo que `M8.8.3` necesitaba y no existía |
+| S8.8 | Adopción del instalable en el runtime en uso | 🔵 EN CURSO | Versioned lifecycle | `S8.2` ✅ | `M8.8.1` ✅ COMPLETO (PR #132, merge `d280214c`). `M8.8.2` 🔴 **REABIERTO**: la versión instalada no carga —falta `install/runtime-payload.mjs`— y su `healthy:true` se midió desde el repo, no desde la copia instalada. `M8.8.3` 👤 ATENDIDO, depende de `M8.8.6`: sólo el corte al PATH. `M8.8.4` ✅ COMPLETO en `3d2ef57`, pero su contrato de payload estaba incompleto: omitía `install/runtime-payload.mjs`. `M8.8.5` ✅ COMPLETO en `34f56a6`; cerró un verde falso y dejó otro debajo, porque el contrato que consulta no se incluye a sí mismo. `M8.8.6` 🔴 **BLOQUEADO por `M8.8.2`**: construye la resolución hacia un runtime que hoy no arranca |
 
 Las Sesiones se derivan de los cinco requisitos de la [spec de Installable V1](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). `S8.2` construyó el lifecycle versionado; `S8.8` lo pone efectivamente en uso, que es la parte del requisito que quedaba abierta.
 
@@ -271,11 +271,18 @@ Consecuencia doble: **copiar** el entrypoint instalado a `~/.local/bin/` no cort
 
 Este Módulo construye ese mecanismo y **nada más**: no toca el PATH, no repunta nada y no muta el runtime real. Es la mitad reversible de lo que antes era un solo Módulo irreversible.
 
+> 🔴 **BLOQUEADO el 2026-08-03, el mismo día que se enumeró.** Este Módulo construye la resolución
+> hacia la versión activa, y esa versión **no carga**: le falta `install/runtime-payload.mjs`, que
+> `lifecycle.mjs:8` importa. Implementarlo ahora produciría un mecanismo correcto apuntando a un
+> runtime roto, y sus criterios de aceptación pasarían igual porque miden el repo. Primero hay que
+> cerrar el contrato del payload y reinstalar. El diseño de abajo sigue siendo válido; lo que
+> cambia es cuándo se despacha.
+
 | Campo | Valor |
 |---|---|
-| Estado | 🟢 LISTO |
+| Estado | 🔴 BLOQUEADO |
 | Modo | 🔒 SELLABLE, autónomo; cero efectos fuera del repositorio |
-| Depende de | `M8.8.5` ✅ COMPLETO |
+| Depende de | `M8.8.5` ✅ COMPLETO y `M8.8.2` 🔴 REABIERTO |
 | Área | `bin/torre`, `install/active-pointer.mjs`, `test/install/**` |
 | Prohibido | `~/.local/bin/**`, `~/.local/share/control-tower/**`, `~/.config/opencode/control-tower/**`, `core.mjs`, `mcp.mjs` |
 | Recurso | ninguno; sin DB, sin migraciones, sin token de entrega |
