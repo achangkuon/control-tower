@@ -291,9 +291,12 @@ Este Módulo construye ese mecanismo y **nada más**: no toca el PATH, no repunt
 
 | Campo | Valor |
 |---|---|
-| Estado | 🟢 LISTO |
+| Estado | 🔵 EN CURSO — despachado el 2026-08-03 |
 | Modo | 🔒 SELLABLE, autónomo; cero efectos fuera del repositorio |
 | Depende de | `M8.8.5` ✅ COMPLETO y `M8.8.2` ✅ COMPLETO |
+| Worktree | `/home/emili/projects/control-tower/Worktrees/s3-1`, rama `fix/installable-v1/m8-8-6-active-pointer-resolution`, base `origin/master@58a927a` |
+
+**Por qué no se despachó en `v1`**, que sería el worktree natural por Área: estaba en `e747572`, once commits atrás, con siete archivos modificados cuyo código ya se había rescatado a `master` en `fed8fb0`. Arrancar ahí habría puesto al agente a competir contra su propia versión ya mergeada. Ese worktree hay que limpiarlo antes de reutilizarlo; nada se pierde, porque el código vive en `fed8fb0` y sus docs quedaron superados.
 | Área | `bin/torre`, `install/active-pointer.mjs`, `test/install/**` |
 | Prohibido | `~/.local/bin/**`, `~/.local/share/control-tower/**`, `~/.config/opencode/control-tower/**`, `core.mjs`, `mcp.mjs` |
 | Recurso | ninguno; sin DB, sin migraciones, sin token de entrega |
