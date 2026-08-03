@@ -43,7 +43,11 @@ Claude, OpenCode, Codex, and Pi instruction files. The block points back to
 this repository's canonical `skills/session-kickoff/SKILL.md`.
 
 The installer preserves every byte outside that custom block, refuses files
-with missing or duplicate custom markers, and never invokes Gentle AI.
+with missing or duplicate custom markers, and never invokes Gentle AI. Before
+writing, it preflights every destination. Runtime skill roots may be created;
+instruction files and their parent directories must already exist as regular
+paths. Missing, wrong-type, symlinked, escaping, or managed-block-nested paths
+raise `InstallError` and leave all destinations untouched.
 
 Use `--check` to fail when runtime copies drift. Use `--dry-run` to print the
 planned changes without writing anything. Both modes accept `--home PATH` for

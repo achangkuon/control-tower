@@ -39,7 +39,7 @@ Activate for generic intent to start or continue a work session: “start”, �
 3. Load only the selected route. For `design-tasks`, `session-plan` refines the named Session's existing Tareas and persists a compact Engram delta.
 4. For `direct` or `design-tasks`, hand the fresh executor the approved Session contract, existing Módulos/Tareas, binary acceptance criteria, project instructions, applicable project skills, Strict TDD when active, and work-unit commit boundaries.
 5. Run every Módulo as `apply → tests → focused review → Engram checkpoint`; the executor does not create a second hierarchy or per-Module SDD.
-6. For `full-sdd`, run the managed pipeline once for the whole Session, then apply its resulting work.
+6. For `full-sdd`, run the managed pipeline once for the whole Session; its `sdd-apply` and `sdd-verify` stages produce and verify the result. Do not invoke a second executor or apply pass.
 7. Run one integral requirements/runtime verification, then load `session-doc` for final closure. Do not advance with a failed criterion.
 
 ## Output Contract

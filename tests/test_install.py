@@ -1,5 +1,7 @@
 import importlib.util
 from pathlib import Path
+import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -24,7 +26,8 @@ class InstallerTests(unittest.TestCase):
     def tearDown(self):
         self.tempdir.cleanup()
 
-    def _seed_runtime(self):
+    def _seed_runtime(self, home=None):
+        home = home or self.home
         old_block = (
             INSTALLER.START_MARKER
             + b"\n## Durable Session Skill Routing\n"
@@ -32,16 +35,31 @@ class InstallerTests(unittest.TestCase):
             + INSTALLER.END_MARKER
             + b"\n"
         )
-        for path in INSTALLER.manual_paths(self.home):
+        for path in INSTALLER.manual_paths(home):
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(b"managed-prefix\n" + old_block + b"managed-suffix\n")
 
     def test_install_is_idempotent_and_preserves_surrounding_manual_content(self):
+        preserved_mode = 0o640
+        mode_path = self.home / ".claude/CLAUDE.md"
+        mode_path.chmod(preserved_mode)
+        original_modes = {
+            path: stat.S_IMODE(path.stat().st_mode)
+            for path in INSTALLER.manual_paths(self.home)
+        }
         first = INSTALLER.apply(self.home, ROOT)
         self.assertTrue(first)
-        snapshots = {
-            path: path.read_bytes() for path in INSTALLER.manual_paths(self.home)
-        }
+        snapshots = {}
+        modes = {}
+        surrounding = {}
+        for path in INSTALLER.manual_paths(self.home):
+            content = path.read_bytes()
+            match = INSTALLER.BLOCK_RE.search(content)
+            self.assertIsNotNone(match)
+            assert match is not None
+            snapshots[path] = content
+            modes[path] = stat.S_IMODE(path.stat().st_mode)
+            surrounding[path] = (content[: match.start()], content[match.end() :])
         second = INSTALLER.apply(self.home, ROOT)
         self.assertEqual(second, [])
         self.assertEqual(
@@ -50,8 +68,12 @@ class InstallerTests(unittest.TestCase):
         )
         for path in INSTALLER.manual_paths(self.home):
             content = path.read_bytes()
-            self.assertIn(b"managed-prefix\n", content)
-            self.assertIn(b"managed-suffix\n", content)
+            match = INSTALLER.BLOCK_RE.search(content)
+            self.assertIsNotNone(match)
+            assert match is not None
+            self.assertEqual(surrounding[path], (content[: match.start()], content[match.end() :]))
+            self.assertEqual(modes[path], stat.S_IMODE(path.stat().st_mode))
+            self.assertEqual(original_modes[path], stat.S_IMODE(path.stat().st_mode))
             self.assertIn(ROOT.as_posix().encode(), content)
 
     def test_all_runtime_skill_paths_match_canonical_source(self):
@@ -88,6 +110,93 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
         self.assertIn("WOULD_UPDATE", result.stdout)
         self.assertFalse((self.home / ".agents/skills/session-kickoff/SKILL.md").exists())
+
+    def test_rejects_symlinked_runtime_parent_without_touching_external_sentinel(self):
+        external = Path(self.tempdir.name) / "external"
+        sentinel = external / "sentinel.txt"
+        external.mkdir()
+        sentinel.write_bytes(b"protected")
+        runtime_parent = self.home / ".agents"
+        runtime_parent.mkdir()
+        (runtime_parent / "skills").symlink_to(external, target_is_directory=True)
+
+        with self.assertRaises(INSTALLER.InstallError):
+            INSTALLER.apply(self.home, ROOT)
+        self.assertEqual(sentinel.read_bytes(), b"protected")
+        self.assertFalse((external / "session-kickoff").exists())
+
+    def test_rejects_symlinked_destination_without_touching_external_sentinel(self):
+        external = Path(self.tempdir.name) / "external-file"
+        external.write_bytes(b"protected")
+        destination = self.home / ".agents/skills/session-kickoff/SKILL.md"
+        destination.parent.mkdir(parents=True)
+        destination.symlink_to(external)
+
+        with self.assertRaises(INSTALLER.InstallError):
+            INSTALLER.apply(self.home, ROOT)
+        self.assertEqual(external.read_bytes(), b"protected")
+
+
+    def test_rejects_custom_block_nested_in_managed_block(self):
+        path = self.home / ".claude/CLAUDE.md"
+        old = path.read_bytes()
+        nested = (
+            b"<!-- gentle-ai:persona -->\n"
+            + old
+            + b"<!-- /gentle-ai:persona -->\n"
+        )
+        path.write_bytes(nested)
+
+        with self.assertRaises(INSTALLER.InstallError):
+            INSTALLER.apply(self.home, ROOT)
+        self.assertEqual(path.read_bytes(), nested)
+        self.assertFalse((self.home / ".agents").exists())
+
+    def test_wrong_type_destination_is_rejected_before_any_mutation(self):
+        wrong_type = self.home / ".agents/skills/session-plan/SKILL.md"
+        wrong_type.mkdir(parents=True)
+        sentinel = wrong_type / "sentinel"
+        sentinel.write_bytes(b"protected")
+        before = {path: path.read_bytes() for path in INSTALLER.manual_paths(self.home)}
+
+        with self.assertRaises(INSTALLER.InstallError):
+            INSTALLER.apply(self.home, ROOT)
+        self.assertEqual(before, {path: path.read_bytes() for path in INSTALLER.manual_paths(self.home)})
+        self.assertFalse((self.home / ".agents/skills/session-kickoff").exists())
+        self.assertEqual(sentinel.read_bytes(), b"protected")
+
+    def test_wrong_type_skill_directory_is_rejected_before_any_mutation(self):
+        wrong_type = self.home / ".agents/skills/session-plan"
+        wrong_type.parent.mkdir(parents=True)
+        wrong_type.write_bytes(b"protected")
+        before = {path: path.read_bytes() for path in INSTALLER.manual_paths(self.home)}
+
+        with self.assertRaises(INSTALLER.InstallError):
+            INSTALLER.apply(self.home, ROOT)
+        self.assertEqual(before, {path: path.read_bytes() for path in INSTALLER.manual_paths(self.home)})
+        self.assertFalse((self.home / ".agents/skills/session-kickoff").exists())
+        self.assertEqual(wrong_type.read_bytes(), b"protected")
+
+    def test_missing_instruction_file_or_directory_fails_without_runtime_mutation(self):
+        for missing_kind in ("file", "directory"):
+            with self.subTest(missing_kind=missing_kind):
+                with tempfile.TemporaryDirectory() as raw:
+                    home = Path(raw)
+                    self._seed_runtime(home)
+                    instruction = home / ".codex/AGENTS.md"
+                    if missing_kind == "file":
+                        instruction.unlink()
+                    else:
+                        shutil.rmtree(instruction.parent)
+                    with self.assertRaises(INSTALLER.InstallError):
+                        INSTALLER.apply(home, ROOT)
+                    self.assertFalse((home / ".agents").exists())
+
+    def test_full_sdd_wording_has_one_managed_apply_and_verify_pass(self):
+        content = (ROOT / "skills/session-kickoff/SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("its `sdd-apply` and `sdd-verify` stages produce and verify the result", content)
+        self.assertIn("Do not invoke a second executor or apply pass", content)
+        self.assertNotIn("then apply its resulting work", content)
 
 
 if __name__ == "__main__":
