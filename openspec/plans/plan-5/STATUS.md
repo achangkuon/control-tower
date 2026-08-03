@@ -38,7 +38,15 @@ Define identidad y freeze de `candidate_revision`, invalidación, sucesores, com
 > nuevo. `action` pasó a `MERGE`, el binding `pr` a `delivery` con `shape`, y los estados a
 > `PENDING|APPROVED|REJECTED|EXPIRED|REVOKED`. De paso se sumó `REJECTED` —el store no podía
 > registrar un rechazo— y `createAuthorization` ahora valida contra el schema en vez de contra un
-> array escrito a mano, que era la causa raíz del drift. Suite 446/2 (los 2 ambientales).
+> array escrito a mano, que era la causa raíz del drift.
+>
+> **Evidencia incompleta — leer antes de asumir verde.** La suite quedó en **446 pass / 2 fail**.
+> Los 2 que fallan son `migration.test.mjs` → *P0 frozen snapshot restore*, que se niega a correr
+> mientras exista `.git/control-tower/ACTIVE` en el worktree Main. Es ambiental, no una regresión:
+> el mismo par ya fallaba en `613a45d`. Pero son **justamente los tests que verifican restore
+> aislado sobre bytes trackeados**, así que este cambio **no tiene evidencia de que no afecte el
+> runtime**. Falta correr `bun test` con la Torre desarmada y confirmar 448/0. Hasta entonces, la
+> reconciliación está verificada a nivel contrato y unidad, no a nivel restore.
 
 ## Sesión 5.2 — Change F delivery adapters/reconciliation
 
