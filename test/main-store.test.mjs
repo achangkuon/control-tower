@@ -38,6 +38,32 @@ const code = (operation) => {
   try { operation() } catch (error) { return error?.code }
   return null
 }
+// A record that satisfies authorization-v1 and binds to the test binding above.
+// `direct-push` is deliberate: the delivery shape is project policy, so the
+// store must accept an authorization that never involves a pull request.
+const authorizationRecord = (id) => ({
+  schema: "authorization",
+  schema_version: 1,
+  authorization_id: id,
+  action: "MERGE",
+  project_id: "project-a",
+  registry_revision: 7,
+  plan_id: "plan-a",
+  jornada_id: "jornada-a",
+  jornada_revision: 1,
+  delivery: {
+    shape: "direct-push",
+    repository: "owner/repository",
+    target_branch: "master",
+    base_sha: "a".repeat(40),
+    head_sha: "b".repeat(40),
+  },
+  required_checks_digest: `sha256:${"a".repeat(64)}`,
+  policy_report_digest: `sha256:${"b".repeat(64)}`,
+  created_at: "2026-01-01T00:00:00Z",
+  expires_at: "2099-01-01T00:00:00.000Z",
+  nonce_hash: `sha256:${"c".repeat(64)}`,
+})
 const ref = (name) => Object.freeze({
   artifact_id: name,
   artifact_revision: 1,
@@ -154,31 +180,47 @@ describe("atomic owner-only Main store", () => {
 
   test("moves exact authorizations out of PENDING once and appends terminal audit evidence", () => {
     const { store } = setup()
-    const exact = {
-      actor: "MAIN", authorization_id: "auth-a", project_id: "project-a", revision: 7,
-      plan_id: "P2", jornada_id: "J1", target: "master", source_sha: "a".repeat(40),
-      target_sha: "b".repeat(40), checks: ["contracts"], expires_at: "2099-01-01T00:00:00.000Z",
-    }
-    expect(store.createAuthorization(exact).status).toBe("PENDING")
+    const exact = { actor: "MAIN", ...authorizationRecord("auth-a") }
+    expect(store.createAuthorization(exact).state).toBe("PENDING")
     const consumed = store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-a", decision: "APPROVED", expected_revision: 1 })
-    expect(consumed.status).toBe("APPROVED")
+    expect(consumed.state).toBe("APPROVED")
     expect(consumed.audit_ref.kind).toBe("authorization-terminal")
     expect(code(() => store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-a", decision: "REVOKED", expected_revision: 2 }))).toBe("CT_AUTH_TERMINAL")
-    expect(store.readAuthorization("auth-a").status).toBe("APPROVED")
+    expect(store.readAuthorization("auth-a").state).toBe("APPROVED")
+  })
+
+  test("records a rejected decision as its own terminal state", () => {
+    const { store } = setup()
+    store.createAuthorization({ actor: "MAIN", ...authorizationRecord("auth-rejected") })
+    const consumed = store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-rejected", decision: "REJECTED", expected_revision: 1 })
+    expect(consumed.state).toBe("REJECTED")
+    expect(consumed.terminal_audit.decision).toBe("REJECTED")
+    expect(store.readAuthorization("auth-rejected").state).toBe("REJECTED")
+  })
+
+  test("refuses an authorization that does not satisfy authorization-v1", () => {
+    const { store } = setup()
+    const { nonce_hash: _dropped, ...incomplete } = authorizationRecord("auth-incomplete")
+    expect(code(() => store.createAuthorization({ actor: "MAIN", ...incomplete }))).toBe("CT_AUTH_INVALID")
+
+    const foreignShape = authorizationRecord("auth-foreign-shape")
+    foreignShape.delivery = { ...foreignShape.delivery, number: 7 }
+    expect(code(() => store.createAuthorization({ actor: "MAIN", ...foreignShape }))).toBe("CT_AUTH_INVALID")
+  })
+
+  test("binds an authorization to the current registry revision", () => {
+    const { store } = setup()
+    const stale = { ...authorizationRecord("auth-stale"), registry_revision: 6 }
+    expect(code(() => store.createAuthorization({ actor: "MAIN", ...stale }))).toBe("CT_AUTH_INVALID")
   })
 
   test("persists no audit or partial state when terminal authorization replacement fails", () => {
     let failAuthorization = false
     const { root, store } = setup({ beforeCommit: (path) => { if (failAuthorization && path.includes("/authorizations/")) throw new Error("forced") } })
-    const exact = {
-      actor: "MAIN", authorization_id: "auth-failure", project_id: "project-a", revision: 7,
-      plan_id: "P2", jornada_id: "J1", target: "master", source_sha: "a".repeat(40),
-      target_sha: "b".repeat(40), checks: ["contracts"], expires_at: "2099-01-01T00:00:00.000Z",
-    }
-    store.createAuthorization(exact)
+    store.createAuthorization({ actor: "MAIN", ...authorizationRecord("auth-failure") })
     failAuthorization = true
     expect(code(() => store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-failure", decision: "APPROVED", expected_revision: 1 }))).toBe("CT_STORE_WRITE_FAILED")
-    expect(store.readAuthorization("auth-failure").status).toBe("PENDING")
+    expect(store.readAuthorization("auth-failure").state).toBe("PENDING")
     expect(existsSync(join(root, "audit")) ? readdirSync(join(root, "audit")) : []).toEqual([])
   })
 })

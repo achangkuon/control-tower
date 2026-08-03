@@ -2,6 +2,12 @@ import { chmodSync, closeSync, constants, existsSync, fsyncSync, lstatSync, mkdi
 import { dirname, isAbsolute, join } from "node:path"
 import { randomUUID } from "node:crypto"
 
+import { validate } from "../contracts/validate.mjs"
+
+// Terminal states an authorization may reach, mirroring authorization-v1's
+// `state` enum minus PENDING. REJECTED records a denied decision, which the
+// store previously could not express at all.
+const TERMINAL_STATES = new Set(["APPROVED", "REJECTED", "EXPIRED", "REVOKED"])
 const fail = (code, message, cause) => { throw Object.assign(new Error(message, { cause }), { code }) }
 const safeId = (value) => {
   if (typeof value !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(value)) fail("CT_STORE_INVALID", "Invalid store identifier")
@@ -115,25 +121,30 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
     },
     persistCampaign(input) { return commit("campaigns", input.campaign_id, input) },
     createAuthorization(input) {
-      const required = ["authorization_id", "project_id", "revision", "plan_id", "jornada_id", "target", "source_sha", "target_sha", "checks", "expires_at"]
-      if (required.some((key) => input?.[key] === undefined)) fail("CT_AUTH_INVALID", "Authorization is incomplete")
-      if (input.revision !== binding.revision) fail("CT_AUTH_INVALID", "Authorization revision mismatch")
-      return commit("authorizations", input.authorization_id, { ...input, status: "PENDING", expected_revision: 0 }, 0)
+      // The record is validated against authorization-v1 rather than an ad-hoc
+      // required list. A hand-maintained list beside a canonical schema is how
+      // the two drifted apart in the first place; this makes that impossible.
+      const { actor, expected_revision: _ignored, ...record } = input ?? {}
+      let authorization
+      try { authorization = validate("authorization", { ...record, state: "PENDING" }) }
+      catch (error) { fail("CT_AUTH_INVALID", "Authorization does not satisfy authorization-v1", error) }
+      if (authorization.registry_revision !== binding.revision) fail("CT_AUTH_INVALID", "Authorization revision mismatch")
+      return commit("authorizations", authorization.authorization_id, { ...authorization, actor, expected_revision: 0 }, 0)
     },
     consumeAuthorization(input) {
       assertMain({ ...input, project_id: binding.project_id })
-      if (!new Set(["APPROVED", "REVOKED", "EXPIRED"]).has(input.decision)) fail("CT_AUTH_INVALID", "Invalid terminal decision")
+      if (!TERMINAL_STATES.has(input.decision)) fail("CT_AUTH_INVALID", "Invalid terminal decision")
       const path = authorizationPath(input.authorization_id)
       if (!existsSync(path)) fail("CT_AUTH_INVALID", "Unknown authorization")
       const current = parse(path)
-      if (current.status !== "PENDING") fail("CT_AUTH_TERMINAL", "Authorization is terminal")
+      if (current.state !== "PENDING") fail("CT_AUTH_TERMINAL", "Authorization is terminal")
       if (input.expected_revision !== current.revision) fail("CT_CAS_MISMATCH", "Authorization revision changed")
       const audit = Object.freeze({
         kind: "authorization-terminal", authorization_id: input.authorization_id,
         decision: input.decision, project_id: binding.project_id,
       })
       const next = commit("authorizations", input.authorization_id, {
-        actor: "MAIN", ...current, status: input.decision, terminal_audit: audit,
+        actor: "MAIN", ...current, state: input.decision, terminal_audit: audit,
         audit_ref: { kind: audit.kind, record_path: path },
         expected_revision: current.revision,
       }, current.revision)

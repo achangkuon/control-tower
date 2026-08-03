@@ -52,6 +52,38 @@ describe("V1 schema boundary", () => {
 
     expect(errorCode(() => validate("artifactRef", input))).toBe("CT_SCHEMA_INVALID")
   })
+
+  test("authorizes a direct-push delivery that carries no pull request number", () => {
+    const input = structuredClone(fixtures.authorization)
+    input.delivery = { ...input.delivery, shape: "direct-push" }
+    delete input.delivery.number
+
+    expect(validate("authorization", input).delivery.shape).toBe("direct-push")
+  })
+
+  test("binds the pull request number to the pull-request shape only", () => {
+    const withoutNumber = structuredClone(fixtures.authorization)
+    delete withoutNumber.delivery.number
+    expect(errorCode(() => validate("authorization", withoutNumber))).toBe("CT_SCHEMA_INVALID")
+
+    const pushWithNumber = structuredClone(fixtures.authorization)
+    pushWithNumber.delivery.shape = "direct-push"
+    expect(errorCode(() => validate("authorization", pushWithNumber))).toBe("CT_SCHEMA_INVALID")
+  })
+
+  test("requires a delivery binding for MERGE and forbids one for START_JORNADA", () => {
+    const merge = structuredClone(fixtures.authorization)
+    delete merge.delivery
+    expect(errorCode(() => validate("authorization", merge))).toBe("CT_SCHEMA_INVALID")
+
+    const jornada = structuredClone(fixtures.authorization)
+    jornada.action = "START_JORNADA"
+    jornada.jornada_snapshot = {}
+    expect(errorCode(() => validate("authorization", jornada))).toBe("CT_SCHEMA_INVALID")
+
+    delete jornada.delivery
+    expect(validate("authorization", jornada).action).toBe("START_JORNADA")
+  })
 })
 
 describe("duplicate-safe structured parsing", () => {

@@ -112,14 +112,40 @@ autorización y **transportar** un callback acotado, manteniendo intacto el prin
 §16.1: *Hermes presenta; Main crea, valida y consume.* El puente nunca tiene autoridad;
 transporta la decisión de quien sí la tiene.
 
-## Drift a reconciliar antes de construir encima
+## Drift reconciliado — ✅ CERRADO el 2026-08-03
 
-`schemas/authorization-v1.schema.json` y `main-store/store.mjs:118` **no coinciden**:
+`schemas/authorization-v1.schema.json` y `main-store/store.mjs` **ya coinciden**. Se resolvió
+como prerrequisito, fuera del freno de ejecución, porque era un contrato que dos archivos leían
+distinto y no trabajo nuevo de `S5.1`.
 
-| Schema exige | Store exige |
-|---|---|
-| `pr` (objeto con `repository`, `number`, `base_branch`, `base_sha`, `head_sha`) | `target`, `source_sha`, `target_sha` |
-| `required_checks_digest`, `policy_report_digest` | `checks` |
+Eran **seis** divergencias, no las dos que este documento registraba:
+
+| Schema exigía | Store exigía | Resolución |
+|---|---|---|
+| `pr` (PR-specific), opcional | `target`, `source_sha`, `target_sha` | `delivery` con `shape` (`pull-request`/`direct-push`) |
+| `required_checks_digest`, `policy_report_digest` | `checks` | ganan los digests |
+| `registry_revision` + `jornada_revision` | un solo `revision` | ganan los dos del schema |
+| `nonce_hash`, `created_at`, `action`, `state`, `schema`, `schema_version` | no los exigía | el store los exige |
+| clave `state` | clave `status` | `state` |
+| valores `PENDING\|CONSUMED\|REJECTED\|EXPIRED\|REVOKED` | `PENDING\|APPROVED\|REVOKED\|EXPIRED` | `PENDING\|APPROVED\|REJECTED\|EXPIRED\|REVOKED` |
+
+**El schema mandaba**, por `sdd-tower-implementation-v1-requirements.md:111` (lista normativa) y
+`contracts/schema-registry.mjs:12`. Pero necesitaba enmienda antes de que el store se le adaptara:
+su `action` era `MERGE_PR` y su único binding de entrega era `pr`, las dos cosas atadas a entrega
+por pull request, incompatibles con el corte política/seguridad de `d232fdf`. Ahora `action` es
+`MERGE` y el binding es `delivery`, con condicionales que exigen `number` sólo en `pull-request`
+y prohíben `delivery` en `START_JORNADA`.
+
+**Dos cosas que la reconciliación destapó y arregló de paso:**
+
+- El store **no podía registrar un rechazo**. Sus decisiones terminales eran `APPROVED`, `REVOKED`
+  y `EXPIRED`; `REJECTED` no existía pese a estar en el enum canónico. Ahora sí.
+- `createAuthorization` validaba contra un array `required` escrito a mano al lado de un schema
+  canónico — que es exactamente cómo se produjo el drift. Ahora valida contra `authorization-v1`
+  vía `contracts/validate.mjs`, así que la clase de bug es estructuralmente imposible.
+
+`S5.1` sigue siendo la Sesión que toma posesión del authorization store; ya no arranca con un
+contrato roto debajo.
 
 Corresponde a `S5.1`, que es la Sesión que toma posesión del authorization store.
 
