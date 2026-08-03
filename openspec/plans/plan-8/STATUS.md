@@ -31,6 +31,15 @@ Las Sesiones se derivan de los cinco requisitos de la [spec de Installable V1](.
 
 **`S8.5` y `S8.6` están diferidas, no descartadas.** `S8.6` sigue siendo el cierre formal del requisito de evidencia de release; mientras esté 🟡 DIFERIDO, P8 puede darse por usable pero no por certificado en máquina limpia.
 
+**`S8.6` es la puerta de la distribución a terceros — decidido el 2026-08-03.** El maintainer evaluó darle un descargable a su socio y resolvió esperar. Motivo, con evidencia:
+
+- 🔴 **`install.sh` no deja una instalación funcional en una máquina limpia.** La línea 79 copia `bin/torre` a `~/.local/bin/`, y `bin/torre:20` resuelve `CORE` a `$HOME/.config/opencode/control-tower/core.mjs`. **`install.sh` nunca copia `core.mjs` a esa ruta** — no aparece en el script salvo en la línea 20, para `--provision-main`, con la variable seteada a mano. En la máquina del maintainer funciona porque ese directorio existe desde julio como residuo; en una máquina nueva no hay residuo que lo salve.
+- Es **el mismo modo de falla que `M8.8.2`**: algo que pasa porque la verificación se apoya en una copia local que en otra máquina no existe. `S8.6` es exactamente la Sesión que lo detectaría.
+- El maintainer todavía no corre el producto: `M8.8.3` está abierto y su Torre diaria sigue en `681a0e5`. Distribuir lo que uno no usa es entregar sin probar.
+- `S8.5` diferida implica que un tercero tendría que cablear la integración del host a mano.
+
+Orden acordado: cerrar `M8.8.6` y `M8.8.3` —con lo cual el maintainer pasa a correr el producto, que es la mejor prueba disponible— y recién entonces levantar `S8.6` de 🟡 DIFERIDO. El hueco de `core.mjs` en `install.sh` entra en su alcance.
+
 ## Alcance por Sesión
 
 ### S8.3 — Enrollment explícito y layout seguro
