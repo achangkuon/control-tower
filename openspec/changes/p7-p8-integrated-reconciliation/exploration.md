@@ -39,7 +39,7 @@ Preserve P7 and P8 through their existing planning artifacts and apply only boun
 | `openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md` | Required future S1.11 artifact: merged P6 evidence plus integrated manifest/ArtifactRefs, IDs, epochs, worktree boundary, OpenCode proof, and E handoff. Not created in this read-only exploration. |
 | `openspec/changes/p8-slice-planning/reconciliation.md` | Required future S1.12 artifact: merged P6/P7 evidence plus Pi proof, shared ArtifactRefs/IDs/epochs, worktree boundary, and E handoff. Not created in this read-only exploration. |
 | `openspec/changes/autonomous-continuation-control-tower/apply-progress.md` | Historical P6 evidence; do not rewrite as part of this reconciliation. Treat its stale counts/branch path as evidence requiring roadmap clarification, not as current authority. |
-| `openspec/changes/sdd-tower-host-launcher/proposal.md` | No reconciliation rewrite required; use its existing C/D/P7/P8 dependency and host-epoch ownership as the downstream Change E contract. |
+| `openspec/changes/sdd-tower-host-launcher/proposal.md` | No reconciliation rewrite required; use its existing C/D/P7/P8 dependency and host-epoch ownership as the downstream Change E contract. **Nota posterior:** ese proposal fue eliminado en `613a45d` por ser cáscara sin avance. La afirmación se conserva como registro histórico de esta exploración; la fuente viva del contrato es [`plan-4/STATUS.md`](../../plans/plan-4/STATUS.md). |
 
 ## Approaches
 

@@ -9,7 +9,7 @@
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` depende de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata es `S5.1`. |
 | Outputs | Adapter contract, launcher Pi/OpenCode, health, stop proof, host epoch y fallback exclusivo. |
 | Roadmap | Ejecutar `S4.1` después de integrar `S5.1`; el PR se dirige a `main`. Las responsabilidades legacy que aún no tienen límite de un PR permanecen sin ID. |
-| Referencias | [`sdd-tower-host-launcher`](../../changes/sdd-tower-host-launcher/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). |
+| Referencias | [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). El proposal `sdd-tower-host-launcher` fue eliminado en `613a45d` por ser cáscara sin avance; su intención vive en este STATUS. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
 

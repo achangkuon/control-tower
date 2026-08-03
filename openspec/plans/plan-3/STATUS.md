@@ -9,7 +9,7 @@
 | Dependencias | Las dependencias legacy de Changes C/D se conservan. Para Autonomous V2, `S3.1` parte de `origin/master@f110874`, con S2.4/project registry verificada y cerrada; `S3.2` depende de `S3.1`. |
 | Outputs | C: `inspect`, `create`, `retire`, receipts y wrapper legacy de `jornada.sh`. D: Main routing, Support briefs, Policy Reports, presets, snapshots, budgets y assignments. |
 | Roadmap | Ejecutar `S3.1`, ahora lista por el cierre de S2.4, y después `S3.2` en orden stacked-to-main. El trabajo posterior no enumerado de Change B no es dependencia de `S3.1`; las responsabilidades legacy sin límite de un PR permanecen sin ID. |
-| Referencias | [`sdd-tower-workspace-manager`](../../changes/sdd-tower-workspace-manager/), [`sdd-tower-main-policy-jornada`](../../changes/sdd-tower-main-policy-jornada/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/). |
+| Referencias | [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/). Los proposals `sdd-tower-workspace-manager` y `sdd-tower-main-policy-jornada` fueron eliminados en `613a45d` por ser cáscaras sin avance; su intención vive en este STATUS. |
 
 ## Sesión 3.1 — Change C Workspace checkpoint
 

@@ -10,7 +10,7 @@
 | Dependencias | Las dependencias de conformidad V1 se conservan. Para Autonomous V2, `S7.1` depende de `S5.3`. |
 | Outputs | Evidencia end-to-end contra Gates A–G de REQUIREMENTS mediante seis pilotos obligatorios. |
 | Roadmap | Ejecutar `S7.1` después de integrar `S5.3`; el PR se dirige a `main`. Los pilotos V1 restantes sólo reciben ID cuando demuestren un límite de un PR. |
-| Referencias | [`sdd-tower-v1-conformance-pilot`](../../changes/sdd-tower-v1-conformance-pilot/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [REQUIREMENTS](../../specs/sdd-tower-implementation-v1-requirements.md), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). |
+| Referencias | [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [REQUIREMENTS](../../specs/sdd-tower-implementation-v1-requirements.md), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). El proposal `sdd-tower-v1-conformance-pilot` fue eliminado en `613a45d` por ser cáscara sin avance; su intención vive en este STATUS. |
 
 ## Sesión 7.1 — Conformance pilot
 

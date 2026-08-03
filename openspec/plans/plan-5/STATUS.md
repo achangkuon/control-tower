@@ -9,7 +9,7 @@
 | Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2`, `S5.2` de `S4.1`, `S5.3` de `S5.2` y `S5.4` de `S5.1`. |
 | Outputs | F: authorization store, Telegram, validación Git/PR/check/SHA, entrega idempotente y post-check. G: planning horizon, reconciliación, apply/verify, Binding Delta y continuación del siguiente `slice_id`. Más el ruteo de escalamiento de `S5.4`. |
 | Roadmap | Ejecutar `S5.1`, esperar `S4.1`, continuar con `S5.2` y cerrar con `S5.3`. `S5.4` se abre apenas cierra `S5.1` y no depende del resto de la cadena. Cada Sesión es una unidad entregable a `master`. |
-| Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`sdd-tower-continuous-slice-loop`](../../changes/sdd-tower-continuous-slice-loop/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/). |
+| Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
 
 ## Sesión 5.1 — Change F candidate contracts
 
