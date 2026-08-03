@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "session-doc repo pointer (.session-doc.json)",
+  "description": "Committed at the repo root. Tells session-doc which Notion page tracks THIS project. Same value for every worktree of the project.",
+  "type": "object",
+  "required": ["notion_page_id"],
+  "properties": {
+    "notion_page_id": {
+      "type": "string",
+      "description": "Notion page id (32 hex chars, no dashes) of the project's status/Index page."
+    },
+    "notion_url": {
+      "type": "string",
+      "description": "Optional human-readable URL of the page."
+    },
+    "openspec_dir": {
+      "type": "string",
+      "default": "openspec",
+      "description": "Relative path to the openspec directory for technical session docs."
+    }
+  },
+  "examples": [
+    {
+      "notion_page_id": "387e23cc934581f99b44eb519210c801",
+      "notion_url": "https://app.notion.com/p/Pendientes-de-implementaci-n-Usuario-App-y-Tasker-App-387e23cc934581f99b44eb519210c801",
+      "openspec_dir": "openspec"
+    }
+  ]
+}
