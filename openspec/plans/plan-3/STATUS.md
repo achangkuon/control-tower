@@ -2,6 +2,17 @@
 
 **Estado:** 🟢 LISTO
 
+> **`S3.1` habilitada para arrancar el 2026-08-03 (`9fba0c0`).** El freno de ejecución de la
+> cadena fue levantado con instrucción atendida del maintainer, así que `S3.1` deja de estar
+> retenida por autorización: ya no queda nada aguas arriba que la frene. Junto con la
+> continuación de `S8.8`, es una de las dos entradas disponibles del grafo.
+>
+> **`S3.2` cambió de contrato antes de empezar.** El corte política/seguridad de `d232fdf` le suma
+> `M3.2.3` (resolución de la política de entrega declarada, con fail-closed al valor más
+> restrictivo) y le sube el forecast a 310–410 líneas. Detalle en
+> [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/).
+> El prerrequisito de `authorization-v1` que colgaba de `S5.1` quedó ✅ resuelto en `6d37642`.
+
 ## Resumen
 
 | Campo | Detalle |
