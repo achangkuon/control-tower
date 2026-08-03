@@ -10,7 +10,7 @@
 
 **La primera versión no se declara hasta que el maintainer pueda aprobar desde Telegram** las decisiones que requieren su autoridad, sobre un objetivo exacto y con sobre de un solo uso. Eso incorpora `sdd-tower-implementation-v1-requirements.md` §16–§17 al alcance que sale. Son **trece Sesiones** en una cadena casi lineal.
 
-**`S8.8` sigue 🔵 EN CURSO, y su estado real es más avanzado de lo que estos documentos decían.** `M8.8.1` ✅ COMPLETO vía PR #132. **`M8.8.2` ya se ejecutó**: el data-root XDG existe en `~/.local/share/control-tower/` con `active.json` y dos versiones instaladas, y `torre diagnose` devuelve `healthy:true` sobre `b72e450`. **`M8.8.3` está 🔴 BLOQUEADO**: el corte no se hizo porque el payload instalado omite `core.mjs`. **`M8.8.4` ✅ COMPLETO** en `3d2ef57`: payload 5/0, instalación 27/0 y suite aislada completa 442/0; no hubo efectos sobre runtime/DB reales y el fixture descartable fue destruido.
+**`S8.8` sigue 🔵 EN CURSO y le queda un solo Módulo.** `M8.8.1` ✅ COMPLETO vía PR #132. **`M8.8.2` ✅ COMPLETO el 2026-08-03**: adopción real ejecutada por el maintainer. El activo pasó de `b72e450` a `34f56a61c1908c003dc382e661ae87335498fd99`, con `previous` preservado para rollback; la versión instalada tiene los **cinco** miembros del payload —`core.mjs` incluido, con digest idéntico al del repo— y `torre diagnose` devuelve `healthy:true, missing:[]`. **`M8.8.3` pasó de 🔴 BLOQUEADO a 🟢 LISTO**: su causa técnica era justamente el payload sin `core.mjs`. **`M8.8.4` ✅ COMPLETO** en `3d2ef57` y **`M8.8.5` ✅ COMPLETO** en `34f56a6`.
 
 **Freno de ejecución LEVANTADO el 2026-08-03**, con instrucción atendida del maintainer. Quedan habilitadas para arrancar: `S3.1` y la continuación de `S8.8`. `S0.3` ya está ✅ COMPLETO.
 
