@@ -1,9 +1,34 @@
 import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
+import { fileURLToPath } from "node:url"
 
-export function readActivePointer(dataRoot) {
+import { RUNTIME_PAYLOAD_FILES } from "./runtime-payload.mjs"
+
+export function resolveDataRoot(env = process.env) {
+  return join(env.XDG_DATA_HOME ?? join(env.HOME, ".local/share"), "control-tower")
+}
+
+export function readActivePointer(dataRoot = resolveDataRoot()) {
   const path = join(dataRoot, "active.json")
   return existsSync(path) ? JSON.parse(readFileSync(path, "utf8")) : null
+}
+
+export function resolveActiveRuntime(dataRoot = resolveDataRoot()) {
+  const pointer = readActivePointer(dataRoot)
+  if (!pointer) return null
+  if (!pointer.version || pointer.version.includes("/") || pointer.version.includes("\\")) {
+    throw new Error("CT_ACTIVE_POINTER_INVALID")
+  }
+  const root = join(dataRoot, "versions", pointer.version)
+  const missing = RUNTIME_PAYLOAD_FILES.filter((member) => !existsSync(join(root, member)))
+  if (missing.length) throw new Error(`CT_ACTIVE_RUNTIME_INCOMPLETE: missing ${missing.join(",")}`)
+  return {
+    version: pointer.version,
+    previous: pointer.previous ?? null,
+    root,
+    core: join(root, "core.mjs"),
+    lifecycle: join(root, "install/lifecycle.mjs"),
+  }
 }
 
 const assertStored = (dataRoot, version) => {
@@ -46,4 +71,11 @@ export function clearActivePointer(dataRoot) {
   const changed = existsSync(path)
   rmSync(path, { force: true })
   return changed
+}
+
+// Recovery does not require the installed `torre` entrypoint: run this module
+// directly with the data-root to inspect active.json and its `previous` version.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  try { console.log(JSON.stringify(readActivePointer(process.argv[2] || resolveDataRoot()))) }
+  catch (error) { console.error(error.message); process.exitCode = 1 }
 }
