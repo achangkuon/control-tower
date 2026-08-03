@@ -10,7 +10,7 @@
 | Dependencias | `master@a4aa3a6`, que integra `d280214c8de78f90e88982d90642427b55a72f2b` y `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`; `S8.1`–`S8.4` están verificadas y mergeadas; `M8.8.1` está mergeado vía PR #132. |
 | Bloqueo operativo | Antes de despachar cualquier Sesión hay que sanear el registro de la Torre: tres de los seis agentes registrados no tienen worktree y uno de ellos retiene un mensaje en cola que nadie va a consumir. Ver [brecha 5](../implementation-state.md). No es un bloqueo de alcance; es que la capacidad reportada no es real. |
 | Alcance aprobado | Release local-first con lifecycle versionado, inmutable, idempotente y reversible; sin activar autonomía. |
-| Próxima acción | **`M8.8.2` ✅ COMPLETO el 2026-08-03**: adopción real ejecutada por el maintainer, activo `34f56a61c1908c003dc382e661ae87335498fd99` con `previous` `b72e450` para rollback. **`M8.8.3` pasó a 🟢 LISTO** —el payload sin `core.mjs` desapareció y `diagnose` lo confirma con `missing:[]`—, pero **es un Módulo de código, no un comando atendido: no basta con autorizarlo, falta implementarlo.** `bin/torre` nunca lee `active.json` y `CORE` defaultea a la ruta legada incluso en la versión instalada (`bin/torre:20`), así que copiar el entrypoint no corta nada. Primero hay que construir el mecanismo —que `CORE` y `LIFECYCLE` resuelvan desde el puntero activo— y recién después ejecutar el corte, que sí es irreversible. Detalle en `S8.8` → `M8.8.3`. `S8.7` espera `S8.8` y `S5.1`; `S0.3` está ✅ COMPLETO. `S8.5` y `S8.6` quedan 🟡 DIFERIDO. |
+| Próxima acción | **`M8.8.2` ✅ COMPLETO el 2026-08-03**: adopción real ejecutada por el maintainer, activo `34f56a61c1908c003dc382e661ae87335498fd99` con `previous` `b72e450` para rollback. **La ejecución de `M8.8.3` se partió el 2026-08-03.** El payload sin `core.mjs` desapareció y `diagnose` lo confirma con `missing:[]`, pero el mecanismo del corte no existe: `bin/torre` nunca lee `active.json` y `CORE` defaultea a la ruta legada incluso en la versión instalada (`bin/torre:20`), así que copiar el entrypoint no corta nada y un symlink rompe `LIFECYCLE`. **La mitad implementable es ahora `M8.8.6` — 🟢 LISTO, 🔒 SELLABLE y autónomo**, con cero efectos fuera del repositorio; `M8.8.3` queda acotado al corte al PATH y sigue 👤 ATENDIDO. **`M8.8.6` es la próxima acción y es el primer Módulo sellado que se despacha bajo la §11.** `S8.7` espera `S8.8` y `S5.1`; `S0.3` está ✅ COMPLETO. `S8.5` y `S8.6` quedan 🟡 DIFERIDO. |
 | Flujo | P8 corre bajo la [regla de ejecución V1](../v1-execution-rule.md): de `tasks.md` directo a implementación, sin exploration/proposal/design y sin PR de cierre separada. |
 | Referencias | [tasks de V1](../../changes/v1-release/tasks.md); [change archivado](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/), [spec](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). |
 
@@ -25,7 +25,7 @@
 | S8.5 | Detección de hosts e integración opt-in | 🟡 DIFERIDO | Optional host detection and integration | ninguna | Diferida el 2026-07-31: la integración es opt-in y su ausencia es diagnóstico, no fallo de instalación |
 | S8.6 | Evidencia de release en máquina limpia | 🟡 DIFERIDO | Versioned lifecycle and release evidence | `S8.3`, `S8.4` | Diferida el 2026-07-31: se cubre con validación manual durante `S8.8` en vez de una Sesión formal |
 | S8.7 | Puente Hermes/Telegram | 📋 PLANIFICADO | Optional bounded Hermes bridge (amendado por `S0.3`) | `S8.4` ✅, `S0.3` ✅, `S8.8`, `S5.1` | Alcance ampliado el 2026-08-01: presenta autorizaciones y transporta callback acotado. `S0.3` está completo; quedan `S8.8` y `S5.1` |
-| S8.8 | Adopción del instalable en el runtime en uso | 🔵 EN CURSO | Versioned lifecycle | `S8.2` ✅ | `M8.8.1` ✅ COMPLETO (PR #132, merge `d280214c`). `M8.8.2` ✅ COMPLETO: activo `34f56a6`, cinco miembros verificados, `diagnose` → `healthy:true, missing:[]`. `M8.8.3` 🟢 LISTO: desbloqueado técnicamente, pero **es código, no una decisión de autoridad** (`6f18aa2`) — falta construir la resolución desde el puntero activo. `M8.8.4` ✅ COMPLETO en `3d2ef57`. `M8.8.5` ✅ COMPLETO en `34f56a6`: `diagnose` detecta payload incompleto |
+| S8.8 | Adopción del instalable en el runtime en uso | 🔵 EN CURSO | Versioned lifecycle | `S8.2` ✅ | `M8.8.1` ✅ COMPLETO (PR #132, merge `d280214c`). `M8.8.2` ✅ COMPLETO: activo `34f56a6`, cinco miembros verificados, `diagnose` → `healthy:true, missing:[]`. `M8.8.3` 👤 ATENDIDO, depende de `M8.8.6`: sólo el corte al PATH. `M8.8.4` ✅ COMPLETO en `3d2ef57`. `M8.8.5` ✅ COMPLETO en `34f56a6`: `diagnose` detecta payload incompleto. **`M8.8.6` 🟢 LISTO y autónomo**: construye la resolución desde el puntero activo, que es lo que `M8.8.3` necesitaba y no existía |
 
 Las Sesiones se derivan de los cinco requisitos de la [spec de Installable V1](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). `S8.2` construyó el lifecycle versionado; `S8.8` lo pone efectivamente en uso, que es la parte del requisito que quedaba abierta.
 
@@ -152,7 +152,7 @@ La consecuencia es que **nada de lo construido después del 2026-07-21 está en 
 - `derivable` — qué versión publicar en la adopción de `M8.8.2`. **Criterio:** el `HEAD` de `master` que contenga `3d2ef57`, porque es el commit que cierra el contrato de payload. Falsificable: si el payload publicado no valida contra `RUNTIME_PAYLOAD_FILES`, la elección estaba mal. **Autoridad:** `install/runtime-payload.mjs`.
 - `derivable` — si `M8.8.3` puede avanzar. **Criterio:** la versión activa en `~/.local/share/control-tower/versions/<sha>/` contiene los cinco miembros, `core.mjs` incluido. Falsificable por `ls`. **Resuelta ✅ el 2026-08-03**: `34f56a6` los tiene los cinco y `diagnose` devuelve `missing:[]`. El criterio se evaluó dos veces con resultados opuestos —**no** sobre `b72e450`, **sí** sobre `34f56a6`— que es exactamente para lo que un criterio falsificable sirve. **Autoridad:** `install/runtime-payload.mjs`.
 - `escala` — ejecutar el `torre install` real. **Clase:** operaciones irreversibles. Muta `~/.local/share/control-tower/`, fuera del repositorio. **Contamina:** `M8.8.3` (no puede cortar hacia un runtime que no existe todavía), `S8.7` (declara `S8.8` como dependencia). **Resuelta y ejecutada el 2026-08-03** por el maintainer: activo `34f56a6`, `previous` `b72e450`, rollback disponible.
-- `escala` — repuntar `~/.local/bin/torre` al runtime instalado (`M8.8.3`). **Clase:** operaciones irreversibles. Un fallo deja la Torre inoperable, y el entrypoint del PATH es hoy un script bash del 2026-07-21 sin `install` ni `diagnose`, así que la recuperación no se hace con la propia herramienta. **Contamina:** `S8.7`. **ABIERTA**, y **no basta con autorizarla: falta implementarla.**
+- `escala` — repuntar `~/.local/bin/torre` al runtime instalado (`M8.8.3`). **Clase:** operaciones irreversibles. Un fallo deja la Torre inoperable, y el entrypoint del PATH es hoy un script bash del 2026-07-21 sin `install` ni `diagnose`, así que la recuperación no se hace con la propia herramienta. **Contamina:** `S8.7`. **ABIERTA**, y **no basta con autorizarla: falta implementarla.** El 2026-08-03 la parte implementable se separó en `M8.8.6`, autónomo y sellable; esta decisión queda acotada al corte en sí, que sigue siendo atendido. Autorizarla antes de que `M8.8.6` cierre no habilita nada.
 
 > **`M8.8.3` no es un comando atendido, es un Módulo de código.** Verificado el 2026-08-03: `bin/torre` **nunca lee `active.json`** —no hay resolución del runtime instalado en el script—, `CORE` sigue defaulteando a `$HOME/.config/opencode/control-tower/core.mjs` **incluso en la versión instalada** (`bin/torre:20`), y no existe código que instale el shim del PATH en `install/`, `scripts/` ni `bin/torre`.
 >
@@ -168,9 +168,12 @@ Absorbe la validación práctica que `S8.6` haría de forma formal: la instalaci
 |---|---|---|---|
 | `M8.8.1` Cobertura legado → XDG | 🔒 SELLABLE, autónomo | `install/**`, `test/install/**` | PR #132 mergeada; ejecución autónoma verificada sin instalación real |
 | `M8.8.2` Diagnóstico y adopción real | 👤 ATENDIDO | `bin/torre`, data-root XDG, `~/.config/opencode/control-tower/` | `torre install` real sobre la máquina del maintainer |
-| `M8.8.3` Corte al runtime legado | 👤 ATENDIDO | ídem | Repunta `bin/torre`; un fallo deja la Torre inoperable |
+| `M8.8.3` Corte al runtime legado | 👤 ATENDIDO | `~/.local/bin/torre`, PATH del maintainer | Repunta el entrypoint; un fallo deja la Torre inoperable. **Depende de `M8.8.6`** |
 | `M8.8.4` Preflight de adopción y payload verificable | 🔒 SELLABLE, autónomo | `install/**`, `scripts/publish-runtime.mjs`, `test/install/**` | Valida el payload cerrado y deja segura la continuación atendida de `M8.8.2` |
 | `M8.8.5` `diagnose` detecta payload incompleto | 🔒 SELLABLE, autónomo | `install/lifecycle.mjs`, `test/install/**` | El instrumento que verifica la adopción no detectaba el modo de falla que bloquea `M8.8.3` |
+| `M8.8.6` Resolución desde el puntero activo | 🔒 SELLABLE, autónomo | `bin/torre`, `install/active-pointer.mjs`, `test/install/**` | Construye el mecanismo que `M8.8.3` necesita, sin tocar el PATH ni el runtime real |
+
+**`M8.8.6` es posterior en número y previo en ejecución.** El ID es un nombre posicional, no un orden — la misma regla que el `master-index` aplica a los Planes. Se numera al final porque se enumeró al final; `M8.8.3` no se renumera porque el bloque `Decisiones` de esta Sesión ya lo referencia y reescribir un ID vigente rompe punteros.
 
 El motivo es duro: **un contrato sellado no autoriza efectos fuera del repositorio**, y nadie debería despertarse con `torre` roto porque un agente repuntó el runtime sin supervisión. El contrato de `M8.8.1` vive en [`seal-M8.8.1.md`](../../changes/v1-release/seal-M8.8.1.md).
 
@@ -256,6 +259,56 @@ El chequeo era `existsSync(<version>/.manifest)` — un archivo presente, nada m
 - [x] `T8.8.5.1` RED: cubrir que una versión instalada a la que le falta un miembro esperado reporte `healthy:false` y nombre el faltante, y que sin `expectedMembers` se preserve la salud por manifest
 - [x] `T8.8.5.2` GREEN: aceptar `expectedMembers` en `diagnose` y pasar `RUNTIME_PAYLOAD_FILES` desde `runCli`
 - [x] `T8.8.5.3` VERIFY: suite enfocada y suite completa, más el comando real contra el data-root del maintainer
+
+#### M8.8.6 — Resolución desde el puntero activo
+
+`M8.8.3` no puede ejecutarse porque el mecanismo que necesita no existe. Verificado contra el código el 2026-08-03:
+
+- `bin/torre:20` — `CORE="${CONTROL_TOWER_CORE:-$HOME/.config/opencode/control-tower/core.mjs}"`. El default apunta al checkout legado **incluso en la copia instalada**, y `active.json` no se lee en ninguna parte del script.
+- `bin/torre:21` — `LIFECYCLE` se resuelve con `dirname "${BASH_SOURCE[0]}"/..`, relativo al archivo. Bajo symlink, `${BASH_SOURCE[0]}` es el enlace y la ruta cae fuera de la instalación.
+
+Consecuencia doble: **copiar** el entrypoint instalado a `~/.local/bin/` no corta nada —sigue cargando el `core.mjs` legado— y **enlazarlo** rompe `LIFECYCLE`. Las dos formas obvias de hacer `M8.8.3` fallan, y por eso `M8.8.3` es código y no un comando.
+
+Este Módulo construye ese mecanismo y **nada más**: no toca el PATH, no repunta nada y no muta el runtime real. Es la mitad reversible de lo que antes era un solo Módulo irreversible.
+
+| Campo | Valor |
+|---|---|
+| Estado | 🟢 LISTO |
+| Modo | 🔒 SELLABLE, autónomo; cero efectos fuera del repositorio |
+| Depende de | `M8.8.5` ✅ COMPLETO |
+| Área | `bin/torre`, `install/active-pointer.mjs`, `test/install/**` |
+| Prohibido | `~/.local/bin/**`, `~/.local/share/control-tower/**`, `~/.config/opencode/control-tower/**`, `core.mjs`, `mcp.mjs` |
+| Recurso | ninguno; sin DB, sin migraciones, sin token de entrega |
+
+**Decisiones:**
+
+- `derivable` — de dónde sale el data-root. **Criterio:** el mismo que ya usa `install/lifecycle.mjs` para instalar; si el Módulo tuviera que inventar una segunda convención de ruta, la fuente elegida estaba mal. Falsificable: dos rutas distintas en el árbol para el mismo data-root. **Autoridad:** `install/lifecycle.mjs`.
+- `derivable` — cómo resuelve `bin/torre` cuando **no** hay puntero activo. **Criterio:** conserva exactamente el comportamiento de hoy —el default legado— porque un checkout de desarrollo no tiene data-root y debe seguir funcionando. Falsificable por un test que corra `bin/torre` sin `active.json` y espere la ruta actual. **Autoridad:** `bin/torre:20`.
+- `derivable` — qué hacer si el puntero existe pero la versión está incompleta. **Criterio:** falla cerrado nombrando el miembro faltante, reusando `RUNTIME_PAYLOAD_FILES`; no cae silenciosamente al legado, porque un fallback silencioso es exactamente el verde falso que `M8.8.5` acaba de eliminar. Falsificable por un fixture al que se le borra `core.mjs`. **Autoridad:** `install/runtime-payload.mjs`.
+- `derivable` — cómo sobrevive a un symlink. **Criterio:** la resolución no depende de `${BASH_SOURCE[0]}` cuando hay puntero activo. Falsificable por un test que enlace el entrypoint desde otro directorio y verifique que `LIFECYCLE` sigue resolviendo dentro de la instalación. **Autoridad:** `bin/torre:21`.
+
+**Ninguna decisión escala.** El Módulo no toca nada fuera del repositorio, así que no entra en ninguna de las ocho clases. Ése es el punto: es el trozo de `M8.8.3` que sí se puede sellar.
+
+**Tareas** (RED → GREEN → REFACTOR → VERIFY):
+
+- [ ] `T8.8.6.1` RED: agregar `test/install/entrypoint-resolution.test.mjs` — sin `active.json`, `CORE` y `LIFECYCLE` resuelven exactamente a las rutas de hoy
+- [ ] `T8.8.6.2` RED: con `active.json` válido, ambos resuelven dentro de `<dataRoot>/versions/<version>/` y no al checkout legado
+- [ ] `T8.8.6.3` RED: con puntero a una versión sin `core.mjs`, falla cerrado nombrando el faltante y **no** cae al legado
+- [ ] `T8.8.6.4` RED: invocado a través de un symlink desde otro directorio, `LIFECYCLE` sigue resolviendo dentro de la instalación
+- [ ] `T8.8.6.5` GREEN: implementar la resolución en `bin/torre` leyendo el puntero con `readActivePointer`, sin duplicar la convención de data-root
+- [ ] `T8.8.6.6` REFACTOR: dejar una ruta de recuperación que no dependa del entrypoint reemplazado —`previous` de `active.json` alcanzable sin el `torre` instalado— y documentarla en el propio script
+- [ ] `T8.8.6.7` VERIFY: `bun test test/install` enfocada y `bun test` completa **con la Torre desarmada**, más testigos de bytes de que no se tocó `~/.local/**` ni `~/.config/**`
+
+**Criterios de aceptación** — binarios, todos deben pasar para cerrar:
+
+- [ ] Sin `active.json`, `bin/torre` se comporta exactamente como hoy — verificado por test, no por lectura
+- [ ] Con `active.json` válido, `CORE` y `LIFECYCLE` resuelven dentro de la versión activa
+- [ ] Un puntero a una versión incompleta falla cerrado y nombra el miembro faltante; **no** hay fallback silencioso al legado
+- [ ] La invocación por symlink resuelve `LIFECYCLE` dentro de la instalación
+- [ ] Existe una ruta de recuperación documentada que no requiere el entrypoint instalado
+- [ ] `bun test test/install` pasa completo y `bun test` da `450 pass / 0 fail` o más, sin fallos nuevos
+- [ ] Testigos de bytes confirman cero escrituras en `~/.local/**`, `~/.config/**` y el data-root real
+- [ ] El diff no toca ninguna ruta fuera del `Área`
 
 **Criterios de aceptación** — todos verificados:
 

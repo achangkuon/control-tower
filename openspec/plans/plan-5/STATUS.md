@@ -40,13 +40,13 @@ Define identidad y freeze de `candidate_revision`, invalidación, sucesores, com
 > registrar un rechazo— y `createAuthorization` ahora valida contra el schema en vez de contra un
 > array escrito a mano, que era la causa raíz del drift.
 >
-> **Evidencia incompleta — leer antes de asumir verde.** La suite quedó en **446 pass / 2 fail**.
-> Los 2 que fallan son `migration.test.mjs` → *P0 frozen snapshot restore*, que se niega a correr
-> mientras exista `.git/control-tower/ACTIVE` en el worktree Main. Es ambiental, no una regresión:
-> el mismo par ya fallaba en `613a45d`. Pero son **justamente los tests que verifican restore
-> aislado sobre bytes trackeados**, así que este cambio **no tiene evidencia de que no afecte el
-> runtime**. Falta correr `bun test` con la Torre desarmada y confirmar 448/0. Hasta entonces, la
-> reconciliación está verificada a nivel contrato y unidad, no a nivel restore.
+> **Evidencia completa — verificada el 2026-08-03 con la Torre desarmada: `bun test` → 450 pass / 0
+> fail.** Durante la implementación la suite quedó en 446/2 porque `migration.test.mjs` → *P0 frozen
+> snapshot restore* se niega a correr mientras exista `.git/control-tower/ACTIVE`. Esos dos tests son
+> los que verifican **restore aislado sobre bytes trackeados**, así que hasta correrlos la
+> reconciliación estaba verificada a nivel contrato y unidad pero no a nivel restore. Ya corrieron y
+> pasan: el cambio no afecta el runtime. El total subió a 450 porque `M8.8.5` sumó dos tests de
+> `diagnose`.
 
 ## Sesión 5.2 — Change F delivery adapters/reconciliation
 
