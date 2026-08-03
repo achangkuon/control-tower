@@ -2,6 +2,17 @@
 
 **Estado:** 📋 PLANIFICADO
 
+> **Enmienda de contrato del 2026-08-03 (`d232fdf`) — ninguna Sesión cambió de estado.**
+> Los gates se partieron en pisos de seguridad (no configurables) y política declarada
+> por proyecto. Para este Plan eso significa: la **forma de entrega** y la **autorización
+> de merge** dejan de estar fijas y se resuelven del bloque `delivery-policy` de
+> [`AGENTS.md`](../../../AGENTS.md), con default fail-closed a humano; el **techo de
+> planificación** de `S5.3` se resuelve igual, con default 2. `S5.1` suma dos Módulos
+> nuevos —`M5.1.2` derivación del siguiente Módulo y comparación del claim del worker,
+> `M5.1.3` frontera del subagente Support— y su forecast pasó a 380–500 líneas, en el
+> borde de encadenado de 400: se decide en apply.
+> Contrato completo en [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/).
+
 ## Resumen
 
 | Campo | Detalle |

@@ -1,7 +1,7 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-01 contra `1250ffac` + implementación `3d2ef57`.
+> Última reconciliación: 2026-08-03 contra `d232fdf` (delta de política/seguridad V2) + implementación `3d2ef57`.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md).
 
 ## 📍 Punto de retoma
@@ -15,6 +15,12 @@
 **Próximo trabajo de la cadena:** levantar el freno de ejecución y continuar, de forma atendida, la secuencia de prerrequisito/adopción real de `M8.8.2`; `M8.8.3` sigue 🔴 BLOQUEADO y no se adelanta. Hasta que eso ocurra no se inician ni asignan `M8.8.2`, `M8.8.3` ni ninguna Sesión de la cadena. Listas para arrancar el día que se levante: `S3.1` y la continuación de `S8.8`; `S0.3` ya está ✅ COMPLETO.
 
 **Bloqueo técnico previo a construir autorización:** `schemas/authorization-v1.schema.json` y `main-store/store.mjs:118` no coinciden. Esto es de `S5.1`; la enmienda de `S0.3` ya está ✅ COMPLETA y la spec canónica permite que el puente transporte el callback acotado sin otorgarle autoridad.
+
+**Los gates de V2 se partieron en seguridad y política el 2026-08-03 (`d232fdf`).** Es delta de especificación: **ninguna Sesión cambió de estado y los porcentajes de abajo no se mueven**. Lo que cambió es el contrato que `S3.2`, `S5.1`, `S5.2` y `S7.1` van a implementar. Los pisos de seguridad —sin mutación temprana, inmutabilidad del candidato congelado, ledger append-only, autoridad única de Main, sin autoasignación del worker— quedan fuera del alcance de cualquier configuración. Pasan a ser política declarada por proyecto: autorización de merge, forma de entrega, techo de planificación y profundidad del cierre documental, en el bloque `delivery-policy` de [`AGENTS.md`](../../AGENTS.md), con default fail-closed al valor más restrictivo. Un repo sin ese bloque se comporta igual que antes de que existiera.
+
+Del mismo delta salen tres decisiones del loop: Support corre como **subagente nativo que Main lanza**, sin registro en la Torre ni elegibilidad de lock —lo que vuelve estructural la prohibición Support→Worker en vez de vigilada—; la delegación a subagentes con contexto aislado pasa a ser **capacidad de host requerida**, sin camino inline alternativo; y la derivación del siguiente Módulo lee la enumeración del plan por digest más el ledger inmutable `ct_delivery`/`ct_claim`, **nunca engram**, que hace upsert por `topic_key` y no está atado al contenido del repo. Eso mantiene la derivación correcta cuando el cierre de Módulo no toca documentación. Detalle en [`autonomous-v2-role-routed-continuation`](../changes/autonomous-v2-role-routed-continuation/).
+
+`S5.1` quedó con forecast 380–500 líneas, en el borde de encadenado de 400: se decide en apply, no ahora.
 
 ## Granularidad
 
