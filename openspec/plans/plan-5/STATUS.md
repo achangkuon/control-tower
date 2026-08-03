@@ -30,6 +30,16 @@
 
 Define identidad y freeze de `candidate_revision`, invalidación, sucesores, compatibilidad e idempotencia. La definición de `M5.1.1` y `T5.1.1.1`–`T5.1.1.3` vive en [`tasks.md`](../../changes/autonomous-v2-checkpointed-delivery/tasks.md#s51-change-f-contracts--m511-candidate).
 
+> **Prerrequisito ✅ RESUELTO el 2026-08-03 (`6d37642`).** `S5.1` toma posesión del authorization
+> store, y ese store arrancaba con un contrato roto: `schemas/authorization-v1.schema.json` y
+> `main-store/store.mjs` divergían en **seis** puntos, no en los dos que registraba
+> [release-chain](../release-chain.md). El peor: el store persistía `APPROVED`, un valor que el
+> enum canónico rechaza. Se reconcilió fuera del freno de ejecución por ser contrato, no trabajo
+> nuevo. `action` pasó a `MERGE`, el binding `pr` a `delivery` con `shape`, y los estados a
+> `PENDING|APPROVED|REJECTED|EXPIRED|REVOKED`. De paso se sumó `REJECTED` —el store no podía
+> registrar un rechazo— y `createAuthorization` ahora valida contra el schema en vez de contra un
+> array escrito a mano, que era la causa raíz del drift. Suite 446/2 (los 2 ambientales).
+
 ## Sesión 5.2 — Change F delivery adapters/reconciliation
 
 **Estado:** 📋 PLANIFICADO
