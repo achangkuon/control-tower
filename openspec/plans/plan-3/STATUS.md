@@ -217,17 +217,21 @@ fresca del candidato fue `CORROBORATED_FIXED`: los 14 criterios pasaron. El SHA-
 
 ## Sesión 3.3 — Agent Capability Registry
 
-**Estado:** 📋 PLANIFICADO
-**Depende de:** `S3.2` integrada
-**Área:** `capabilities/registry.mjs`, `schemas/agent-capability-registry-v1.schema.json`, `test/capabilities/**`
-**Prohibido:** `continuation/**`, `core.mjs`, `mcp.mjs`
+**Estado:** 🟢 LISTO
+**Depende de:** `S3.2` ✅
+**Área:** `capabilities/registry.mjs`, `schemas/agent-capability-registry-v1.schema.json`, `contracts/{schema-registry,validate}.mjs`, `test/capabilities/**`, `test/contracts/schema.test.mjs`, `test/fixtures/contracts/schema-cases-v1.json`
+**Prohibido:** `continuation/**`, `core.mjs`, `mcp.mjs`, `registry/**`, `main-store/store.mjs`, `policy/**`, `workspace/**`, `openspec/plans/**`, `openspec/specs/**`
 **Recurso:** ninguno. Escritura sólo por Main vía CAS, sin migraciones de DB, sin token de entrega.
+**Entrega:** commit directo a `master` + push, sin PR. **Dos commits**, igual que `S3.1` y `S3.2`.
 
-**Bloqueo técnico:** la decisión de disponibilidad ya está resuelta, pero el contrato ejecutable
-no está sellado. El `Área` actual no incluye `contracts/schema-registry.mjs`, necesario para
-registrar el schema; `capabilities/**` y `test/capabilities/**` no existen en este árbol; y los
-Módulos/Tareas todavía no declaran el alcance técnico verificado. Próxima acción: `session-plan`
-debe cerrar ese contrato antes de re-evaluar `S3.3` como 🟢 LISTO.
+**Por qué el `Área` incluye `contracts/**`:** un schema fuera del mapa `schemaFiles` de
+`contracts/schema-registry.mjs` **no tiene validador** —`validatorFor` devuelve `null` y
+`validate` tira `Unknown schema`—, y la unicidad de entradas es un invariante cross-field que
+vive en el mapa `invariants` de `contracts/validate.mjs`, igual que `projectRegistry`.
+
+**Por qué el `Prohibido` se acota:** `main-store/store.mjs` y `policy/**` son el `Área` de
+`S3.2`, ya cerrada — se importan, nunca se editan. `registry/**` queda prohibido por la decisión
+de escritura atómica de más abajo. `openspec/specs/**` está byte-pinned.
 
 Registro versionado y con alcance de proyecto de **qué puede hacer cada agente**. Es lo que
 permite que Main resuelva una capability por rol en vez de asumirla: `Main → capability
@@ -251,23 +255,131 @@ todos los bindings anteriores.**
 - `derivable` — qué hace una entrada vencida. **Criterio:** no resuelve, y el rechazo es explícito en vez de silencioso. Un rechazo silencioso es indistinguible de una capability ausente y manda al llamador a improvisar. Falsificable por el criterio de aceptación ya escrito. **Autoridad:** los criterios de aceptación de `S3.3`.
 - `derivable` — si el registry puede otorgar autoridad. **Criterio:** no. Otorga visibilidad y compatibilidad de invocación; la autoridad sigue siendo exclusiva de Main, y un agente no puede registrarse a sí mismo. Falsificable: cualquier ruta en la que una entrada del registro habilite una operación que Main no autorizó. **Autoridad:** el **Límite duro** declarado arriba en esta misma Sesión.
 - `derivable` — qué pasa con los bindings previos ante un update. **Criterio:** un update por CAS lleva el registro de `R1` a `R2` e invalida **todos** los bindings de `R1`. Falsificable: un binding de `R1` que siga resolviendo después de la transición. **Autoridad:** el alcance declarado de `S3.3`.
-- `escala` — cuánto dura por defecto la ventana de disponibilidad de una entrada. **Clase:** seguridad y permisos. **RESUELTA el 2026-08-04 por el maintainer:** expira con su Jornada. **Criterio:** una entrada de capability no resuelve después de que su Jornada alcanza un estado terminal. Falsificable: una entrada cuya revisión CAS siga vigente resuelve pese a que la Jornada expiró, fue cerrada o alcanzó otro estado terminal. **Autoridad:** decisión del maintainer del 2026-08-04, registrada en `plan-3/s3.3-capability-window`. La expiración por Jornada es la segunda capa de invalidación; el cambio de revisión por CAS `R1 → R2` sigue invalidando todos los bindings y no queda reemplazado. **Contaminaba:** `S5.1`, cuyo store de autorización resuelve contra entradas del registry, y `S5.4`, porque el `DENY` del que nace un escalamiento depende de que la entrada siga vigente.
+- `escala` — cuánto dura por defecto la ventana de disponibilidad de una entrada. **Clase:** seguridad y permisos. **RESUELTA el 2026-08-04 por el maintainer: expira con su Jornada, materializando `expires_at` al emitir la entrada.** **Criterio:** la entrada liga `jornada_id`, `jornada_revision` y el `expires_at` copiado de su Jornada, y la resolución falla cerrada ante binding ausente, `jornada_revision` que no coincide, o reloj pasado `expires_at`. Falsificable: una entrada que resuelva después de su `expires_at`, o sin binding de Jornada. La expiración por Jornada es la **segunda** capa de invalidación; el cambio de revisión por CAS `R1 → R2` sigue invalidando todos los bindings y no queda reemplazado. **Autoridad:** decisión del maintainer del 2026-08-04.
+  **Hueco aceptado explícitamente, y por qué:** una Jornada revocada **antes** de su `expires_at` deja la entrada resolviendo hasta que el reloj la alcance, porque no existe persistencia de Jornada a la que preguntarle —`policy/jornada.mjs` de `S3.2` es un resolvedor puro que recibe la Jornada como argumento, no un store—. Se acepta porque el registry otorga **visibilidad, nunca autoridad** (el **Límite duro** de arriba): una entrada zombi deja ver una capability que ya no corresponde, pero **no habilita ninguna operación sin autorización de Main**. El hueco es de visibilidad, no de permisos. **Lo cierra `S3.4`**, cuyo incremento de `jornada_revision` en toda transición hace que una Jornada terminada produzca drift y el binding falle cerrado, sin que el registry lea estado vivo. La garantía fuerte —"una entrada no resuelve después de un estado terminal"— es criterio de aceptación de `S3.4`, no de `S3.3`. **Contaminaba:** `S5.1` y `S5.4`, ambas destrabadas.
+- `escala` — de dónde sale la maquinaria de escritura atómica del registry. **Clase:** seguridad y permisos. **RESUELTA el 2026-08-04 por el maintainer: implementación propia dentro de `capabilities/registry.mjs`.** Se evaluó parametrizar `registry/store.mjs` —que ya resuelve lock, `fsync`, rename atómico, rollback y revisión de entrada por contenido canonicalizado (`:88-104`)— y se descartó para **no tocar un componente en producción con tests propios**. El costo aceptado es una segunda implementación de escritura atómica; a cambio `registry/**` entra al `Prohibido` y `S3.3` no puede romper el registro de proyectos. **Mitigación obligatoria:** las dos implementaciones rechazan idénticamente los cinco casos de seguridad, verificado por criterio de aceptación y no por lectura. Falsificable: un caso que una implementación rechace y la otra acepte. **Autoridad:** decisión del maintainer del 2026-08-04.
+- `derivable` — de dónde sale la autoridad de Main para escribir el registry. **Criterio:** `bindMainAuthority(...).assert(capability, expected)` de `main-store/authority.mjs`, importado **sin modificar**: capability infalsificable por `WeakSet`, de un solo uso al arranque, con binding rederivado y comparado. No se construye una segunda noción de "esto es Main". Falsificable: cualquier ruta que acepte un Main sin pasar por `assert`. **Autoridad:** `main-store/authority.mjs:15-36`.
 
 ### Módulo 3.3.1 — Registry
 
-- [ ] Tarea 3.3.1.1 — RED: agregar `test/capabilities/registry.test.mjs` para resolución por rol y proyecto, rechazo por expiración y por drift de schema, transición de revisión `R1 → R2` que invalida los bindings de `R1`, y rechazo del auto-registro.
-- [ ] Tarea 3.3.1.2 — GREEN: implementar `capabilities/registry.mjs` y `schemas/agent-capability-registry-v1.schema.json` con escritura CAS acotada al proyecto y ejercida sólo por Main.
-- [ ] Tarea 3.3.1.3 — REFACTOR: eliminar toda autoridad sombra y cualquier visibilidad todos-contra-todos; volver a correr `bun test test/capabilities`.
+- [ ] Tarea 3.3.1.1 — RED: agregar `test/capabilities/registry.test.mjs` para resolución por rol
+  y proyecto (un lookup en dos proyectos no cruza entradas), rechazo por expiración —**incluido
+  binding de Jornada ausente, `jornada_revision` que no coincide y reloj pasado `expires_at`**—,
+  rechazo por drift de schema declarado contra invocado, transición `R1 → R2` que invalida
+  **todos** los bindings de `R1`, rechazo del auto-registro, y **la paridad de seguridad de la
+  escritura atómica contra `registry/store.mjs`**: symlink, modos distintos de `0700`/`0600`,
+  dueño ajeno, lock ocupado y revisión desactualizada. Agregar el caso de contrato del schema
+  nuevo a `test/contracts/schema.test.mjs` y su fixture.
+- [ ] Tarea 3.3.1.2 — GREEN: implementar `schemas/agent-capability-registry-v1.schema.json`
+  —identidad de proyecto y de Main, `registry_revision` y `registry_entry_revision`, identidad y
+  rol de quien llama, capability, IDs de schema de entrada y salida, ref y digest de origen,
+  `jornada_id`/`jornada_revision` y `expires_at`—, registrarlo en `contracts/schema-registry.mjs`,
+  sumar su invariante de unicidad en `contracts/validate.mjs`, y escribir `capabilities/registry.mjs`
+  con su propia escritura atómica CAS y la autoridad de Main asertada vía `main-store/authority.mjs`.
+- [ ] Tarea 3.3.1.3 — REFACTOR: eliminar toda autoridad sombra y cualquier visibilidad
+  todos-contra-todos; dejar documentado en `capabilities/registry.mjs` que su escritura atómica es
+  deliberadamente un gemelo de `registry/store.mjs` y qué garantías debe conservar.
+  `bun test test/capabilities test/contracts test/registry`.
 
 **Criterios de aceptación de S3.3** — todos deben pasar para cerrar:
 
 - [ ] Una capability se resuelve por rol y por proyecto; un lookup en dos proyectos no cruza entradas
 - [ ] Una entrada vencida no resuelve, y el rechazo es explícito en vez de silencioso
+- [ ] Una entrada sin binding de Jornada, o con `jornada_revision` que no coincide, falla cerrada
 - [ ] Un update por CAS lleva el registro de `R1` a `R2` e invalida todos los bindings de `R1`
+- [ ] Una entrada nueva arranca en `registry_entry_revision: 1`, y su revisión sólo sube cuando el contenido canonicalizado cambia
 - [ ] Un agente que intenta registrarse a sí mismo falla cerrado
 - [ ] El drift entre el schema declarado y el invocado falla cerrado
+- [ ] Una escritura sin la capability de Main asertada falla cerrada
+- [ ] **Paridad de escritura atómica:** symlink, modos distintos de `0700`/`0600`, dueño ajeno, lock ocupado y revisión desactualizada se rechazan igual en `capabilities/registry.mjs` que en `registry/store.mjs`
 - [ ] El registry no crea, valida ni consume autoridad, y no habilita ninguna ruta Support → Worker
-- [ ] `bun test test/capabilities/registry.test.mjs` pasa completo y `bun test` no introduce fallos nuevos
-- [ ] El diff no toca `continuation/**`, `core.mjs` ni `mcp.mjs`, ni ninguna ruta fuera del `Área`
+- [ ] `agent-capability-registry-v1` está registrado en `contracts/schema-registry.mjs` y tiene su caso en el fixture de contratos
+- [ ] `bun test test/capabilities test/contracts test/registry` pasa completo
+- [ ] `bun test` no introduce fallos nuevos sobre la línea base de `S3.2` — 493/0/2842, con la Torre desarmada
+- [ ] El diff de implementación no toca ninguna ruta del `Prohibido`
+
+## Sesión 3.4 — Persistencia y ciclo de vida de Jornada
+
+**Estado:** 📋 PLANIFICADO
+**Depende de:** `S3.2` ✅, `S3.3`
+**Área:** `main-store/store.mjs`, `jornada/lifecycle.mjs`, `test/jornada/**`, `test/main-store.test.mjs`
+**Prohibido:** `core.mjs`, `mcp.mjs`, `registry/**`, `capabilities/**`, `continuation/**`, `policy/**`, `contracts/**`, `schemas/**`, `workspace/**`, `openspec/plans/**`, `openspec/specs/**`
+**Recurso:** Main / ninguno. CAS de filesystem, sin migraciones de DB, sin token de entrega.
+**Entrega:** commit directo a `master` + push, sin PR. Dos commits, igual que `S3.1`–`S3.3`.
+
+Enumerada el 2026-08-04 por decisión del maintainer. `schemas/jornada-v1.schema.json` existe
+como contrato **sin implementación**: nada crea, lee ni termina una Jornada. `jornada.sh` es el
+gestor legacy de worktrees, sin relación, y `core.mjs` la menciona una sola vez en un comentario
+(`:4329`). `policy/jornada.mjs`, que entregó `S3.2`, es un **resolvedor puro** — recibe la Jornada
+como argumento y no la persiste.
+
+**Por qué depende también de `S3.3`:** el criterio "una entrada de capability de una Jornada
+terminada deja de resolver" **no es verificable sin el registry**.
+
+**Por qué `schemas/**` y `contracts/**` están prohibidos:** `jornada-v1` ya está completo para
+persistir y ya está registrado en `contracts/schema-registry.mjs:11`. Esta Sesión **no necesita
+tocar ningún contrato**.
+
+**Alcance pasivo, sin revocación activa.** Terminar una Jornada invalida por drift de revisión;
+no dispara una cascada de revocación sobre capabilities ni autorizaciones vivas.
+
+**Decisiones:**
+
+- `derivable` — dónde viven los registros de Jornada. **Criterio:** `main-store/store.mjs`, siguiendo exactamente la forma de `createAuthorization`/`consumeAuthorization` (`:122-152`): validación contra el schema en vez de una lista escrita a mano, CAS con `expected_revision`, y `assertMain` como única puerta de escritura. Una Jornada es el mismo género de registro que una autorización. Falsificable: un segundo store de registros propiedad de Main en el árbol. **Autoridad:** `main-store/store.mjs`.
+- `derivable` — qué transiciones de estado son legales. **Criterio:** el enum `state` de `jornada-v1`, con los cuatro terminales —`REJECTED`, `EXPIRED`, `REVOKED`, `COMPLETED`— irreversibles, como `TERMINAL_STATES` y el gate `CT_AUTH_TERMINAL` de `main-store/store.mjs`. Falsificable: un estado terminal que vuelva a uno no terminal. **Autoridad:** `schemas/jornada-v1.schema.json` y el precedente de autorizaciones.
+- `derivable` — qué pasa con `jornada_revision` en una transición. **Criterio:** sube en **toda** transición, sin excepción. Es lo que cierra el hueco que `S3.3` aceptó: su entrada liga `jornada_revision`, así que una Jornada terminada produce drift y el binding falla cerrado sin que el registry lea estado vivo. Falsificable: una Jornada que cambie de estado sin cambiar de revisión. **Autoridad:** la decisión de disponibilidad de `S3.3`.
+- `derivable` — qué se hace con una Jornada vencida por reloj que nunca transicionó. **Criterio:** la lectura la reporta vencida sin necesitar una transición previa; no hay proceso de barrido, y su ausencia nunca es lo que mantiene viva una Jornada. Falsificable: una lectura que devuelva `ACTIVE` con el reloj pasado `expires_at`. **Autoridad:** el piso fail-closed del proyecto.
+- `escala` — si terminar una Jornada debe **además** revocar activamente las capabilities y autorizaciones vivas, en vez de sólo invalidarlas por drift. **Clase:** expansión de alcance, y seguridad y permisos. La invalidación pasiva ya alcanza para el hueco que `S3.3` aceptó, así que esto es alcance **adicional**, no faltante. **Contamina:** `S5.1`, cuyo store de autorización tendría que exponer una ruta de revocación en cascada que hoy no está en su alcance. **No contamina a `S3.4`**: sus criterios de aceptación no asumen la respuesta, y la Sesión queda enumerada como pasiva por decisión del maintainer del 2026-08-04.
+
+### Módulo 3.4.1 — Jornada store
+
+- [ ] Tarea 3.4.1.1 — RED: extender `test/main-store.test.mjs` con persistencia de una Jornada que
+  valida contra `jornada-v1`, rechazo de una que no lo satisface, rechazo de todo actor que no sea
+  `MAIN`, rechazo por proyecto ajeno, y colisión de CAS con `expected_revision` desactualizado.
+- [ ] Tarea 3.4.1.2 — GREEN: agregar `createJornada`, `readJornada` y `transitionJornada` a
+  `main-store/store.mjs`, reusando `commit`, `assertMain` y la validación contra schema que ya usa
+  `createAuthorization`; sin abrir una segunda ruta de escritura.
+- [ ] Tarea 3.4.1.3 — REFACTOR: confirmar que no quedó ninguna lista de campos escrita a mano al
+  lado del schema — la causa raíz del drift de `authorization-v1` reconciliado en `6d37642`.
+  `bun test test/main-store.test.mjs`.
+
+### Módulo 3.4.2 — Ciclo de vida
+
+- [ ] Tarea 3.4.2.1 — RED: agregar `test/jornada/lifecycle.test.mjs` para transiciones legales
+  contra el enum de `jornada-v1`, irreversibilidad de los cuatro estados terminales, incremento de
+  `jornada_revision` en **toda** transición, lectura vencida por reloj sin transición previa, y
+  —el criterio que cierra el hueco— que una entrada de capability ligada a una Jornada terminada
+  deje de resolver.
+- [ ] Tarea 3.4.2.2 — GREEN: implementar `jornada/lifecycle.mjs` sobre el store de `M3.4.1`, con la
+  máquina de estados y el incremento de revisión.
+- [ ] Tarea 3.4.2.3 — REFACTOR: dejar el vencimiento por reloj y el vencimiento por transición
+  resolviendo por el mismo camino, para que no puedan divergir.
+  `bun test test/jornada test/main-store.test.mjs test/capabilities`.
+
+**Criterios de aceptación de S3.4** — todos deben pasar para cerrar:
+
+- [ ] Una Jornada se persiste validando contra `jornada-v1` y falla cerrada si no lo satisface
+- [ ] Una escritura por un actor que no es Main falla cerrada
+- [ ] Una escritura sobre un proyecto ajeno falla cerrada
+- [ ] Una transición a `REJECTED`, `EXPIRED`, `REVOKED` o `COMPLETED` es irreversible
+- [ ] Toda transición incrementa `jornada_revision`
+- [ ] Una lectura con el reloj pasado `expires_at` reporta la Jornada vencida sin transición previa
+- [ ] **Una entrada de capability ligada a una Jornada terminada deja de resolver** — el hueco que aceptó `S3.3` queda cerrado
+- [ ] No queda ninguna lista de campos escrita a mano al lado del schema
+- [ ] `bun test test/jornada test/main-store.test.mjs test/capabilities` pasa completo
+- [ ] `bun test` no introduce fallos nuevos sobre la línea base que deje `S3.3`
+- [ ] El diff de implementación no toca ninguna ruta del `Prohibido`
+
+## Grafo del Plan 3
+
+```mermaid
+graph LR
+  S31["S3.1 workspace · ✅"] --> S32["S3.2 policy/jornada · ✅"]
+  S32 --> S33["S3.3 capability registry · 🟢"]
+  S33 --> S34["S3.4 ciclo de vida Jornada · 📋"]
+```
+
+Plan 3 es **una sola cadena**: capacidad derivada dentro del Plan, **1 agente**. `S3.4` no habilita
+paralelismo — comparte `main-store/store.mjs` con `S3.2` y depende de `S3.3`.
 
 Las responsabilidades legacy de Workspace Manager y Main/Policy que aún no tienen límite de un PR permanecen sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).

@@ -1,7 +1,7 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-04 contra `origin/master@3362b3b6aa51c1498970552ba59d8813b4274b8c` y `22c43ae`; cierre verificado de `S3.2`.
+> Última reconciliación: 2026-08-04 contra `origin/master@1f2b46c`; cierre verificado de `S3.2`, contrato ejecutable de `S3.3` sellado y `S3.4` enumerada.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md).
 
 ## 🔢 Orden de ejecución
@@ -10,15 +10,16 @@
 
 | # | Sesión | Plan | Estado | Qué es |
 |---|---|---|---|---|
-| ▶ | `S3.3` | P3 | 📋 PLANIFICADO | Agent Capability Registry; falta sellar su contrato técnico mediante `session-plan` |
-| 2 | `S5.1` | P5 | 📋 PLANIFICADO | Candidate contracts + authorization store |
-| 3 | `S4.1` | P4 | 📋 PLANIFICADO | Hosts y línea exclusiva — **cierra P4 entero** |
-| 4 | `S5.2` | P5 | 📋 PLANIFICADO | Entrega idempotente y reconciliación |
-| 5 | `S5.4` | P5 | 📋 PLANIFICADO | Ruteo de escalamiento fuera/en casa |
-| 6 | `S5.5` | P5 | 📋 PLANIFICADO | Decisión estacionada y continuación independiente |
-| 7 | `S5.3` | P5 | 📋 PLANIFICADO | Continuación desde base integrada |
-| 8 | `S8.7` | P8 | 📋 PLANIFICADO | Puente Hermes/Telegram — **acá entra la autenticación pendiente** |
-| 9 | `S7.1` | P7 | 📋 PLANIFICADO | Conformidad de release — **última de toda la cadena** |
+| ▶ | `S3.3` | P3 | 🟢 LISTO | Agent Capability Registry. **Es la próxima**, con su contrato ejecutable sellado |
+| 2 | `S3.4` | P3 | 📋 PLANIFICADO | Persistencia y ciclo de vida de Jornada — cierra el hueco que aceptó `S3.3` |
+| 3 | `S5.1` | P5 | 📋 PLANIFICADO | Candidate contracts + authorization store |
+| 4 | `S4.1` | P4 | 📋 PLANIFICADO | Hosts y línea exclusiva — **cierra P4 entero** |
+| 5 | `S5.2` | P5 | 📋 PLANIFICADO | Entrega idempotente y reconciliación |
+| 6 | `S5.4` | P5 | 📋 PLANIFICADO | Ruteo de escalamiento fuera/en casa |
+| 7 | `S5.5` | P5 | 📋 PLANIFICADO | Decisión estacionada y continuación independiente |
+| 8 | `S5.3` | P5 | 📋 PLANIFICADO | Continuación desde base integrada |
+| 9 | `S8.7` | P8 | 📋 PLANIFICADO | Puente Hermes/Telegram — **acá entra la autenticación pendiente** |
+| 10 | `S7.1` | P7 | 📋 PLANIFICADO | Conformidad de release — **última de toda la cadena** |
 
 `S0.3`, `S3.1`, `S3.2` y `S8.8` ✅ COMPLETO ya salieron de la fila. `S8.5` y `S8.6` están 🟡 DIFERIDO y fuera de este camino. El grafo completo, con sus aristas y la capacidad derivada, vive en [release-chain](release-chain.md).
 
@@ -26,9 +27,11 @@
 
 **`S3.2` ✅ COMPLETO en `22c43ae`, sobre `origin/master@3362b3b6aa51c1498970552ba59d8813b4274b8c`.** Sus tres Módulos y diez Tareas quedaron cerrados; los 14 criterios pasaron con validación fresca `CORROBORATED_FIXED`. La prueba enfocada dio 80/0/263 y la completa 493/0/2842, ambas con la Torre OFF; el SHA-256 byte-pinned de REQUIREMENTS permaneció `277129f30b47c1b6fda0a6c81f6d8943d737a7b5ff5750455e2b41dce6e1e5a0`.
 
-**Siguiente nodo: `S3.3` 📋 PLANIFICADO, no 🟢 LISTO.** Su decisión de disponibilidad ya está resuelta: una entrada expira con su Jornada y no puede resolver después de un estado terminal; es una segunda capa tras la invalidación de revisión CAS. Falta sellar su contrato técnico con `session-plan`: el Área no incorpora `contracts/schema-registry.mjs`, y `capabilities/**` y `test/capabilities/**` todavía no existen. Próxima acción: cerrar ese contrato y recién entonces re-evaluar elegibilidad.
+**`S3.3` 🟢 LISTO — su contrato ejecutable quedó sellado el 2026-08-04.** `Área` ampliada con `contracts/{schema-registry,validate}.mjs` (un schema fuera del mapa `schemaFiles` no tiene validador) y el fixture de contratos; `Prohibido` acotado con `registry/**`, `main-store/store.mjs` y `policy/**`. Trece criterios binarios, tres Tareas refinadas, y `bun test test/capabilities test/contracts test/registry` como prueba enfocada sobre la línea base 493/0/2842 de `S3.2`.
 
-**Capacidad de release: 0.** Ninguna Sesión de la cadena está 🟢 LISTO; `S3.3` requiere `session-plan`, `S5.1` espera `S3.3` y el resto depende transitivamente de esa rama. `installable-v1` y `autonomous-v2` siguen siendo afinidades de trabajo, no identidades de producto.
+**`S3.4` enumerada el 2026-08-04.** Persistencia y ciclo de vida de Jornada, alcance **pasivo**. `jornada-v1` existía como contrato sin implementación: `policy/jornada.mjs` de `S3.2` es un resolvedor puro que recibe la Jornada como argumento, no un store. P3 pasa de 3 a 4 Sesiones, y el `%` baja de `67% (2/3 S)` a `50% (2/4 S)` **sin perder trabajo**: creció el denominador porque se hizo visible alcance que ya existía sin ID (§8.7 del estándar).
+
+**Capacidad de release: 1.** Sólo `S3.3` está 🟢 LISTO. P3 es una sola cadena `S3.1 → S3.2 → S3.3 → S3.4`, así que no admite paralelismo interno; `S5.1` espera `S3.3` y el resto depende transitivamente de esa rama. `installable-v1` y `autonomous-v2` siguen siendo afinidades de trabajo, no identidades de producto.
 
 ## ⚖️ Decisiones vigentes
 
@@ -50,11 +53,13 @@
 
 9. **`plan-manifest-v1.delivery_policy` se renombró a `delivery_automation`.** Colisionaba con el bloque `delivery-policy` de [`AGENTS.md`](../../AGENTS.md) y son controles distintos: el del manifest declara **qué pasos de entrega están automatizados**; el de `AGENTS.md` declara **quién autoriza el merge**. El renombre alcanza el schema, el manifest vivo y el fixture/test, pero **no** el bloque de ejemplo de REQUIREMENTS: ese archivo está byte-pinned como input histórico por la revisión congelada 1 (`autonomous-v2/revisions/1/manifest.yaml:39-43`) y `provenance.test.mjs` falla cerrado ante cualquier drift. Corregir el ejemplo exige publicar una revisión nueva, no editar los bytes fijados — el mecanismo funcionando como fue diseñado. Enmienda puntual a la decisión "preserve accepted bytes" de [`design.md`](../changes/autonomous-v2-checkpointed-delivery/design.md), anotada ahí como excepción única.
 
-10. **La disponibilidad predeterminada de una capability vence con su Jornada.** Una entrada no puede resolver después de que su Jornada alcanza un estado terminal. Es una segunda capa de invalidación: el cambio CAS `R1 → R2` sigue invalidando todos los bindings por revisión y no queda sustituido por la expiración. Decisión del maintainer del 2026-08-04; gobierna `S3.3`, `S5.1` y `S5.4`.
+10. **La disponibilidad predeterminada de una capability vence con su Jornada, materializando `expires_at` al emitir la entrada.** La entrada liga `jornada_id`, `jornada_revision` y ese `expires_at`; falla cerrada ante binding ausente, revisión que no coincide o reloj vencido. Es la **segunda** capa de invalidación: el cambio CAS `R1 → R2` sigue invalidando todos los bindings y no queda sustituido. **Hueco aceptado a propósito:** una Jornada revocada antes de su `expires_at` deja la entrada viva hasta que el reloj la alcance, porque no existe persistencia de Jornada a la que preguntarle. Se acepta porque el registry otorga **visibilidad, nunca autoridad** — una entrada zombi deja *ver* una capability que ya no corresponde, pero no habilita ninguna operación sin autorización de Main. **Lo cierra `S3.4`**, cuyo incremento de `jornada_revision` en toda transición hace que una Jornada terminada produzca drift. Decisión del maintainer del 2026-08-04; gobierna `S3.3`, `S3.4`, `S5.1` y `S5.4`.
+11. **La escritura atómica del capability registry es propia de `S3.3`, no reusa `registry/store.mjs`.** Se prefirió aislamiento sobre reuso: no tocar un componente en producción con tests propios. `registry/**` entra al `Prohibido` de `S3.3`, que así no puede romper el registro de proyectos. El costo aceptado es una segunda implementación de escritura atómica, mitigada por un **criterio de aceptación de paridad** — symlink, modos distintos de `0700`/`0600`, dueño ajeno, lock ocupado y revisión desactualizada se rechazan idénticamente en ambas, verificado por test.
+12. **La persistencia y el ciclo de vida de Jornada se enumeran como `S3.4`, con alcance pasivo.** `jornada-v1` existía como contrato sin implementación. La Sesión persiste, transiciona y lee Jornadas, e incrementa `jornada_revision` en toda transición; **no** dispara revocación activa en cascada sobre capabilities ni autorizaciones vivas. P3 pasa de 3 a 4 Sesiones.
 
-**Sigue ABIERTA — una sola: la autenticación del puente.** Un chat de Telegram es un canal, no una identidad, y `S8.7` transporta autorizaciones que deciden merges. No bloquea nada hasta `S8.7`, décima en el orden de ejecución.
+**Siguen ABIERTAS — dos.** (1) **La autenticación del puente**: un chat de Telegram es un canal, no una identidad, y `S8.7` transporta autorizaciones que deciden merges; no bloquea nada hasta `S8.7`. (2) **Si terminar una Jornada debe revocar activamente** las capabilities y autorizaciones vivas, en vez de sólo invalidarlas por drift — clase expansión de alcance más seguridad y permisos. **Contamina `S5.1`**, y **no** contamina `S3.4`, que quedó enumerada como pasiva por decisión del maintainer.
 
-**Las trece Sesiones de la cadena tienen `Decisiones` declaradas** bajo la §11 del [estándar de planes](/home/emili/.claude/skills/_shared/plan-naming-convention.md): **57 en total**, 37 `derivable` con criterio falsificable y autoridad nombrada, 20 `escala` con su clase y su `Contamina:`. De esas 20, **5 ya están resueltas** por el maintainer — 2 el 2026-08-03 (`S5.1`) y 3 el 2026-08-04 (`S3.2` y `S3.3`). `S3.2` y `S3.3` no tienen decisiones `escala` abiertas.
+**Las catorce Sesiones de la cadena tienen `Decisiones` declaradas** bajo la §11 del [estándar de planes](/home/emili/.claude/skills/_shared/plan-naming-convention.md): **64 en total**, 42 `derivable` con criterio falsificable y autoridad nombrada, 22 `escala` con su clase y su `Contamina:`. De esas 22, **6 ya están resueltas** por el maintainer — 2 el 2026-08-03 (`S5.1`) y 4 el 2026-08-04 (`S3.2` y `S3.3`). `S3.2` y `S3.3` no tienen decisiones `escala` abiertas; `S3.4` tiene una que no la bloquea.
 
 **No se puede sellar implementación desatendida de la propia Torre.** El sello exige supervisión viva de la Torre —única ruta, Torre inactiva ⇒ `BLOCKED`— y los dos tests P0 de `test/migration.test.mjs` abortan si existe `.git/control-tower/ACTIVE`, marcador que `restore-fixture.mjs:93-101` resuelve por `--git-common-dir` y que comparten los seis worktrees. Torre armada ⇒ la verificación final falla, y ese gate es terminal sin reintento. Torre apagada ⇒ el sello no arranca. **Es específico de este repositorio**: para cualquier otro proyecto, sellar con la Torre armada funciona. Acá la ruta es escritor único con la Torre desarmada, sellando el **alcance** — criterios binarios y cero decisiones abiertas.
 
@@ -65,14 +70,14 @@ El tiempo es estimación, no límite. Ver `/home/emili/.config/opencode/skills/_
 
 ## 📊 Estado de un vistazo
 
-**Avance global**: 1/9 Planes cerrados (11%) · Sesiones cerradas en planes activos: 25/45 (56%)
+**Avance global**: 1/9 Planes cerrados (11%) · Sesiones cerradas en planes activos: 25/46 (54%)
 
 | ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |
 |----|------|--------|---|------|-------|-----------|-----|
 | P0 | Documentación canónica | ✅ COMPLETO | 100% (3/3 S) | — | Maintainer | — | [STATUS](plan-0/STATUS.md) |
 | P1 | Sustrato mecánico | 🔴 BLOQUEADO | 53% (10/19 S) | — | Main | S1.11–S1.19 | [STATUS](plan-1/STATUS.md) |
 | P2 | Contratos y registro de producto | 🔵 EN CURSO | — (responsabilidades restantes de Change B sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-2/STATUS.md) |
-| P3 | Workspace y orquestación | 📋 PLANIFICADO | 67% (2/3 S) | — | Main | S3.3 | [STATUS](plan-3/STATUS.md) |
+| P3 | Workspace y orquestación | 🟢 LISTO | 50% (2/4 S) | — | Main | S3.3, S3.4 | [STATUS](plan-3/STATUS.md) |
 | P4 | Hosts y línea exclusiva | 📋 PLANIFICADO | 0% (0/1 S) | — | Main | S4.1 | [STATUS](plan-4/STATUS.md) |
 | P5 | Entrega y continuación | 📋 PLANIFICADO | 0% (0/5 S) | — | Main | S5.1, S5.2, S5.3, S5.4, S5.5 | [STATUS](plan-5/STATUS.md) |
 | P6 | Campañas multiproyecto | 📋 PLANIFICADO | — (sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-6/STATUS.md) |
