@@ -26,7 +26,7 @@
 
 **Estado:** 📋 PLANIFICADO
 
-**Dependencias:** `S3.2` integrada.
+**Dependencias:** `S3.2` ✅ integrada, `S3.3` ✅ integrada en `4621d3f`. **Las dos están satisfechas desde el 2026-08-04.** Lo que mantiene esta Sesión en 📋 PLANIFICADO no son sus dependencias, sino que su contrato ejecutable no está sellado —no declara `Área` ni `Prohibido`— y que la decisión `escala` abierta sobre revocación activa al terminar una Jornada la contamina. Sellar exige cero decisiones `escala` abiertas, así que la decisión va primero.
 
 Define identidad y freeze de `candidate_revision`, invalidación, sucesores, compatibilidad e idempotencia. La definición de `M5.1.1` y `T5.1.1.1`–`T5.1.1.3` vive en [`tasks.md`](../../changes/autonomous-v2-checkpointed-delivery/tasks.md#s51-change-f-contracts--m511-candidate).
 

@@ -49,8 +49,8 @@ graph LR
   S88["S8.8 adopción · ✅"] --> S87["S8.7 puente · 📋"]
   S03["S0.3 enmienda spec · ✅"] --> S87
   S31["S3.1 workspace · ✅"] --> S32["S3.2 orquestación · ✅"]
-  S32 --> S33["S3.3 capability registry · 🟢"]
-  S33 --> S34["S3.4 ciclo de vida Jornada · 📋"]
+  S32 --> S33["S3.3 capability registry · ✅"]
+  S33 --> S34["S3.4 ciclo de vida Jornada · 🟢"]
   S33 --> S51["S5.1 authorization store · 📋"]
   S51 --> S41["S4.1 hosts · 📋"]
   S41 --> S52["S5.2 entrega idempotente · 📋"]
@@ -70,18 +70,18 @@ graph LR
 | ✅ | `S0.3` | Enmienda del requisito de puente acotado | ✅ COMPLETO | — |
 | ✅ | `S3.1` | Workspace | ✅ COMPLETO | `S2.4` ✅ |
 | ✅ | `S3.2` | Orquestación | ✅ COMPLETO | `S3.1` ✅; implementación `22c43ae`, 14/14 criterios `CORROBORATED_FIXED` |
-| 1 | `S3.3` | Agent Capability Registry | 🟢 LISTO | `S3.2` ✅; contrato ejecutable sellado el 2026-08-04 |
-| 2 | `S3.4` | Persistencia y ciclo de vida de Jornada | 📋 PLANIFICADO | `S3.2` ✅, `S3.3`; cierra el hueco de revocación temprana que aceptó `S3.3` |
-| 3 | `S5.1` | Authorization store + Telegram + validación Git/PR/check/SHA | 📋 PLANIFICADO | `S3.2`, `S3.3` |
-| 4 | `S4.1` | Hosts y línea exclusiva | 📋 PLANIFICADO | `S3.1`, `S3.2`, `S5.1` |
-| 5 | `S5.2` | Entrega idempotente y post-check | 📋 PLANIFICADO | `S4.1`, `S3.3` |
-| 6 | `S5.4` | Ruteo de escalamiento fuera/en casa | 📋 PLANIFICADO | `S5.1` |
-| 7 | `S5.5` | Decisión estacionada y continuación independiente | 📋 PLANIFICADO | `S5.4` |
-| 8 | `S5.3` | Continuación | 📋 PLANIFICADO | `S5.2` |
-| 9 | `S8.7` | Puente Hermes/Telegram | 📋 PLANIFICADO | `S8.4` ✅, `S8.8`, `S0.3`, `S5.1` |
-| 10 | `S7.1` | Conformidad de release | 📋 PLANIFICADO | `S5.3`, `S8.7`, `S5.5` |
+| ✅ | `S3.3` | Agent Capability Registry | ✅ COMPLETO | `S3.2` ✅; implementación `4621d3f`, 14/14 criterios verificados por el planner contra el SHA integrado |
+| 1 | `S3.4` | Persistencia y ciclo de vida de Jornada | 🟢 LISTO | `S3.2` ✅, `S3.3` ✅; revalidada el 2026-08-04 contra `4621d3f`; cierra el hueco de revocación temprana que aceptó `S3.3` |
+| 2 | `S5.1` | Authorization store + Telegram + validación Git/PR/check/SHA | 📋 PLANIFICADO | `S3.2` ✅, `S3.3` ✅ — **dependencias satisfechas**; falta sellar el contrato, y la decisión `escala` abierta de revocación activa lo impide |
+| 3 | `S4.1` | Hosts y línea exclusiva | 📋 PLANIFICADO | `S3.1` ✅, `S3.2` ✅, `S5.1` |
+| 4 | `S5.2` | Entrega idempotente y post-check | 📋 PLANIFICADO | `S4.1`, `S3.3` ✅ |
+| 5 | `S5.4` | Ruteo de escalamiento fuera/en casa | 📋 PLANIFICADO | `S5.1` |
+| 6 | `S5.5` | Decisión estacionada y continuación independiente | 📋 PLANIFICADO | `S5.4` |
+| 7 | `S5.3` | Continuación | 📋 PLANIFICADO | `S5.2` |
+| 8 | `S8.7` | Puente Hermes/Telegram | 📋 PLANIFICADO | `S8.4` ✅, `S8.8` ✅, `S0.3` ✅, `S5.1` |
+| 9 | `S7.1` | Conformidad de release | 📋 PLANIFICADO | `S5.3`, `S8.7`, `S5.5` |
 
-**Catorce Sesiones · 4 cerradas.** A las trece anteriores se suma `S3.4`, enumerada el
+**Catorce Sesiones · 5 cerradas.** A las trece anteriores se suma `S3.4`, enumerada el
 2026-08-04: `jornada-v1` existía como contrato **sin implementación**, y `policy/jornada.mjs`
 —que entregó `S3.2`— es un resolvedor puro que recibe la Jornada como argumento, no un store.
 Su alcance es **pasivo**: incrementa `jornada_revision` en toda transición, con lo que una
@@ -108,16 +108,32 @@ el único bloqueo declarado de `S8.7` es `S5.1`.
 Derivada del grafo, no declarada. Dos Sesiones corren juntas sólo si se cumplen las tres:
 independencia en el grafo, `Área` disjunta y `Recurso` disjunto.
 
-`S0.3`, `S3.1`, `S3.2` y `S8.8` están ✅ COMPLETO. `S3.3` es el siguiente nodo, con su decisión de
-disponibilidad resuelta **y su contrato ejecutable sellado el 2026-08-04**; las demás Sesiones de
-la cadena siguen 📋 PLANIFICADO o dependen de una predecesora.
+`S0.3`, `S3.1`, `S3.2`, `S3.3` y `S8.8` están ✅ COMPLETO. `S3.4` es el siguiente nodo, revalidado
+el 2026-08-04 contra `origin/master@4621d3f`; las demás Sesiones de la cadena siguen
+📋 PLANIFICADO o dependen de una predecesora.
 
-**Capacidad hoy: 1.** Sólo `S3.3` está 🟢 LISTO. `S3.4` depende de ella y además comparte
-`main-store/store.mjs` con `S3.2`, así que P3 no admite paralelismo interno: es una sola cadena
-`S3.1 → S3.2 → S3.3 → S3.4`. Desde ahí el resto es casi lineal — `S3.3 → S5.1 → S4.1 → S5.2 → S5.3` es una sola hebra, y
-`S5.4 → S5.5` cuelga de `S5.1` como la única bifurcación real. `S5.4` y `S5.5` comparten
-prefijo de `Área` (`escalation/**`), así que entre ellas tampoco hay paralelismo. Ese es el
-costo real del alcance elegido: no se compra con más agentes.
+**Capacidad de ejecución hoy: 1.** Sólo `S3.4` está 🟢 LISTO, y cierra P3. P3 no admite
+paralelismo interno: es una sola cadena `S3.1 → S3.2 → S3.3 → S3.4`, y `S3.4` además comparte
+`main-store/store.mjs` con `S3.2`. Desde ahí el resto es casi lineal —
+`S5.1 → S4.1 → S5.2 → S5.3` es una sola hebra, y `S5.4 → S5.5` cuelga de `S5.1` como la única
+bifurcación real. `S5.4` y `S5.5` comparten prefijo de `Área` (`escalation/**`), así que entre
+ellas tampoco hay paralelismo. Ese es el costo real del alcance elegido: no se compra con más
+agentes.
+
+**Lo que sí cambió con el cierre de `S3.3`: existe un segundo frente potencial, pero de
+planificación, no de ejecución.** `S5.1` tiene sus dos dependencias satisfechas —`S3.2` ✅ y
+`S3.3` ✅—, y ahí se termina lo que está determinado: **`S5.1` no declara `Área` ni `Prohibido`**,
+porque nunca recibió el sello de contrato ejecutable que `S3.2` y `S3.3` sí recibieron. Sin
+`Área` declarada no se puede derivar si colisiona con `S3.4`, y por lo tanto **no se puede
+afirmar paralelismo de ejecución**. Lo que la prosa sí dice es que `S5.1` "toma posesión del
+authorization store", que vive en `main-store/store.mjs` — el mismo archivo que `S3.4` tiene en
+su `Área`. La presunción razonable es colisión, y el sello es lo que la confirmaría o la
+descartaría.
+
+Así que la secuencia correcta es: primero el maintainer resuelve la decisión `escala` de
+revocación activa —que contamina `S5.1`—, después se sella `S5.1` con `session-plan`, y recién
+ahí el grafo dice si hay paralelismo real o sólo una segunda hebra de planificación mientras
+`S3.4` se ejecuta.
 
 ## Enmienda `S0.3` — ✅ COMPLETA
 
