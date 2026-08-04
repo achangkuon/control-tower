@@ -3,6 +3,7 @@ import { dirname, isAbsolute, join } from "node:path"
 import { randomUUID } from "node:crypto"
 
 import { validate } from "../contracts/validate.mjs"
+import { resolveJornadaLifecycle } from "../jornada/lifecycle.mjs"
 
 // Terminal states an authorization may reach, mirroring authorization-v1's
 // `state` enum minus PENDING. REJECTED records a denied decision, which the
@@ -112,6 +113,7 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
     return frozen({ ...structuredClone(next), record_path: path })
   }
   const authorizationPath = (id) => join(directory("authorizations"), `${safeId(id)}.json`)
+  const jornadaPath = (id) => join(directory("jornadas"), `${safeId(id)}.json`)
 
   return Object.freeze({
     persistReport(input) {
@@ -152,5 +154,29 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
       return next
     },
     readAuthorization(id) { return frozen(parse(authorizationPath(id))) },
+    createJornada(input) {
+      // jornada-v1 is the canonical record shape; do not duplicate its fields here.
+      const { actor, expected_revision: _ignored, ...record } = input ?? {}
+      let jornada
+      try { jornada = validate("jornada", record) }
+      catch (error) { fail("CT_JORNADA_INVALID", "Jornada does not satisfy jornada-v1", error) }
+      if (jornada.state !== "DRAFT") fail("CT_JORNADA_INVALID", "Jornada must start in DRAFT")
+      if (jornada.registry_revision !== binding.revision) fail("CT_JORNADA_INVALID", "Jornada revision mismatch")
+      return commit("jornadas", jornada.jornada_id, { ...jornada, actor, expected_revision: 0 }, 0)
+    },
+    readJornada(id) { return frozen(resolveJornadaLifecycle(parse(jornadaPath(id)))) },
+    transitionJornada(input) {
+      assertMain(input)
+      const path = jornadaPath(input.jornada_id)
+      if (!existsSync(path)) fail("CT_JORNADA_INVALID", "Unknown Jornada")
+      const current = parse(path)
+      if (input.expected_revision !== current.revision) fail("CT_CAS_MISMATCH", "Jornada revision changed")
+      const next = resolveJornadaLifecycle(current, { state: input.state })
+      const { actor: _actor, revision: _revision, revision_history: _history, ...record } = next
+      let jornada
+      try { jornada = validate("jornada", record) }
+      catch (error) { fail("CT_JORNADA_INVALID", "Jornada transition does not satisfy jornada-v1", error) }
+      return commit("jornadas", jornada.jornada_id, { ...jornada, actor: "MAIN", expected_revision: current.revision }, current.revision)
+    },
   })
 }

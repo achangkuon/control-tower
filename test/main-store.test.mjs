@@ -64,10 +64,41 @@ const authorizationRecord = (id) => ({
   expires_at: "2099-01-01T00:00:00.000Z",
   nonce_hash: `sha256:${"c".repeat(64)}`,
 })
+const jornadaRecord = (id) => ({
+  schema: "jornada",
+  schema_version: 1,
+  jornada_id: id,
+  jornada_revision: 1,
+  project_id: "project-a",
+  registry_revision: 7,
+  plan_id: "plan-a",
+  preset: "standard",
+  preset_revision: 1,
+  effective_limits: { apply_ceiling: 1 },
+  starts_at: "2026-01-01T00:00:00.000Z",
+  expires_at: "2099-01-01T00:00:00.000Z",
+  execution_host: "opencode",
+  allowed_operations: ["CREATE_COMMIT"],
+  manifest_ref: pointer("manifest-a"),
+  authorization_ref: pointer("authorization-a"),
+  state: "DRAFT",
+})
 const ref = (name) => Object.freeze({
   artifact_id: name,
   artifact_revision: 1,
   content_digest: `sha256:${name.padEnd(64, "0").slice(0, 64)}`,
+})
+const pointer = (name) => ({
+  schema: "artifact-ref",
+  schema_version: 1,
+  artifact_id: name,
+  artifact_revision: 1,
+  repository_id: "repository-a",
+  repo_relative_path: `${name}.json`,
+  media_type: "application/json",
+  digest_mode: "rfc8785-jcs",
+  source_commit: "a".repeat(40),
+  content_digest: `sha256:${"a".repeat(64)}`,
 })
 
 describe("startup-only Main authority", () => {
@@ -245,6 +276,28 @@ describe("atomic owner-only Main store", () => {
     expect(code(() => store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-failure", decision: "APPROVED", expected_revision: 1 }))).toBe("CT_STORE_WRITE_FAILED")
     expect(store.readAuthorization("auth-failure").state).toBe("PENDING")
     expect(existsSync(join(root, "audit")) ? readdirSync(join(root, "audit")) : []).toEqual([])
+  })
+
+  test("persists and reads only schema-valid Jornadas through Main CAS", () => {
+    const { store } = setup()
+    const created = store.createJornada({ actor: "MAIN", ...jornadaRecord("jornada-store") })
+    expect(created.state).toBe("DRAFT")
+    expect(created.jornada_revision).toBe(1)
+    const { record_path: _path, ...persisted } = created
+    expect(store.readJornada("jornada-store")).toEqual(persisted)
+
+    const { manifest_ref: _dropped, ...invalid } = jornadaRecord("jornada-invalid")
+    expect(code(() => store.createJornada({ actor: "MAIN", ...invalid }))).toBe("CT_JORNADA_INVALID")
+    expect(code(() => store.createJornada({ actor: "SUPPORT", ...jornadaRecord("jornada-support") }))).toBe("CT_AUTH_INVALID")
+    expect(code(() => store.createJornada({ actor: "MAIN", ...jornadaRecord("jornada-foreign"), project_id: "project-b" }))).toBe("CT_PROJECT_MISMATCH")
+    expect(code(() => store.createJornada({ actor: "MAIN", ...jornadaRecord("jornada-store"), expected_revision: 0 }))).toBe("CT_CAS_MISMATCH")
+  })
+
+  test("creates only canonical DRAFT Jornadas", () => {
+    const { store } = setup()
+    for (const state of ["PENDING_AUTHORIZATION", "ACTIVE", "PAUSED", "BLOCKED", "REJECTED", "EXPIRED", "REVOKED", "COMPLETED"]) {
+      expect(code(() => store.createJornada({ actor: "MAIN", ...jornadaRecord(`jornada-${state.toLowerCase()}`), state }))).toBe("CT_JORNADA_INVALID")
+    }
   })
 })
 
