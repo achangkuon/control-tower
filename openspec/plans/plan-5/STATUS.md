@@ -136,11 +136,21 @@ Define identidad y freeze de `candidate_revision`, invalidación, sucesores, com
 
 ## Sesión 5.2 — Change F delivery adapters/reconciliation
 
-**Estado:** 📋 PLANIFICADO
+**Estado:** 📋 PLANIFICADO — **contrato ejecutable sellado el 2026-08-04** sobre `origin/master@e4bad7a`. Espera a `S4.1`, no espera decisiones.
 
-**Dependencias:** `S4.1` integrada.
+**Depende de:** `S4.1`, `S3.3` ✅.
 
-Implementa commit, push y PR idempotentes, checks, revisión, autorización exacta y reconciliación de resultados desconocidos. La definición de `M5.2.1` y `T5.2.1.1`–`T5.2.1.4` vive en [`tasks.md`](../../changes/autonomous-v2-checkpointed-delivery/tasks.md#s52-change-f-delivery--m521-adaptersreconciliation).
+**Área:** `delivery/**`, `schemas/delivery-record-v1.schema.json`, `contracts/{schema-registry,validate}.mjs`, `test/delivery/**`, `test/contracts/schema.test.mjs`, `test/fixtures/contracts/schema-cases-v1.json`
+
+**Prohibido:** `core.mjs`, `mcp.mjs`, `main-store/store.mjs`, `continuation/**`, `escalation/**`, `hosts/**`, `capabilities/**`, `policy/**`, `jornada/**`, `registry/**`, `workspace/**`, `openspec/plans/**`, `openspec/specs/**`
+
+**Recurso:** Main / ninguno. Registro append-only propio por CAS de filesystem en `delivery/**`. **Sin migraciones de SQLite y sin `db-writer`** — ver la decisión de ledger más abajo.
+
+**Entrega:** commit directo a `master` + push, sin PR ([`AGENTS.md`](../../../AGENTS.md)). Dos commits, como `S3.1`–`S3.4`. Forecast **210–290 líneas** ([`role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/tasks.md)), por debajo del borde de encadenado de 400: no se parte.
+
+Implementa commit, push y PR idempotentes, checks, revisión, autorización exacta y reconciliación de resultados desconocidos.
+
+**Colisión de IDs en `M5.2.1` — resuelta como `derivable`, no escalada.** Igual que `M5.1.1`, está definido dos veces: `Adapters/reconciliation` en el [`tasks.md` de `checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/tasks.md#s52-change-f-delivery--m521-adaptersreconciliation) con **cuatro** Tareas, y `Main dispatch` en el [`tasks.md` de `role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/tasks.md) con **tres**. **Gobierna `Adapters/reconciliation`,** y acá no hizo falta escalarlo porque la evidencia es decisiva: la prosa de esta Sesión cita el rango `T5.2.1.1`–`T5.2.1.4`, y **sólo `checkpointed` tiene cuatro Tareas**. Lo confirman las tres decisiones `derivable` de abajo, todas de entrega y reconciliación, ninguna de despacho, más el precedente que el maintainer fijó en `M5.1.1`. **Consecuencia:** el contenido de Main dispatch —`continuation/coordinator.mjs`, `assignment-v2`, despacho Support/Worker— **sale del alcance de `S5.2`** y cae en el mismo bucket huérfano que el dry-run desplazado de `S5.1`, sin ID asignado.
 
 **Decisiones:**
 
@@ -149,6 +159,44 @@ Implementa commit, push y PR idempotentes, checks, revisión, autorización exac
 - `derivable` — qué identifica una entrega para efectos de idempotencia. **Criterio:** la `candidate_revision` congelada, no un identificador generado en el momento del intento. Falsificable: dos intentos sobre el mismo candidato que se consideren entregas distintas. **Autoridad:** `S5.1`.
 - `escala` — cuántas veces se reintenta antes de parar. **Clase:** operaciones irreversibles. **RESUELTA el 2026-08-04 por el maintainer: tres intentos, con reconciliación obligatoria antes de cada reintento.** Agotados los tres, para y escala. **El tope no es lo que evita la duplicación** —eso ya lo cierran las dos decisiones `derivable` de arriba: la reconciliación consulta el estado remoto real antes de reintentar y nunca asume que el efecto no ocurrió, y la identidad de idempotencia es la `candidate_revision` congelada, no un ID por intento—. El tope sólo acota **cuánto insiste** antes de rendirse. Si la reconciliación determina que el efecto **sí** ocurrió, se marca entregada y **no** se reintenta, sin importar el contador. Falsificable: un cuarto intento, o cualquier reintento emitido sin reconciliar antes. **Autoridad:** decisión del maintainer del 2026-08-04. **Contaminaba:** `S5.3` y `S7.1`, ambas destrabadas — su piloto de "cero efectos remotos duplicados" ahora tiene un número concreto que medir.
 - `escala` — qué se hace ante una entrega parcial que no se puede reconciliar. **Clase:** operaciones irreversibles. **RESUELTA el 2026-08-04 por el maintainer: frena esa entrega, no la Torre.** La entrega pasa a un estado terminal explícito `CT_DELIVERY_UNRECONCILED`, el candidato queda congelado, el ledger registra el estado, y **no se emite ninguna mutación remota adicional** — ni siquiera un revert, porque "no se puede reconciliar" significa que no se sabe qué ocurrió, y revertir a ciegas es una segunda mutación sobre estado desconocido. La decisión queda **estacionada** para el maintainer, con pregunta exacta y evidencia. **La Torre continúa con trabajo que no dependa de esa entrega.** Falsificable: cualquier efecto remoto emitido después de entrar en el estado terminal, o una Torre que se detenga entera ante una entrega irreconciliable de un solo proyecto. **Autoridad:** decisión del maintainer del 2026-08-04, y el floor de "sin mutación remota prematura". **Contaminaba:** `S5.3`, cuya base integrada asume un estado remoto conocido y por lo tanto debe **rechazar** una base marcada `CT_DELIVERY_UNRECONCILED`, y `S5.5`, que es donde vive la decisión estacionada. Ambas destrabadas.
+- `escala` — dónde vive el registro de entrega de git, y en particular el estado terminal `UNRECONCILED`. **Clase:** migraciones o pérdida de datos. **RESUELTA el 2026-08-04 por el maintainer: registro propio y append-only en `delivery/**`; `ct_delivery` no se toca y no hay migración.** El disparador fue concreto: `ct_delivery.delivery_state` tiene un `CHECK` duro a `PENDING|CLAIMED|CLOSED` (`core.mjs:333`), así que el estado nuevo no cabía sin migrar. **La razón de fondo es que son dos géneros distintos que comparten la palabra "delivery":** `ct_delivery` modela **handoffs de worker** —`handoff_id`, `generation`, `purpose WORK/ATTESTATION_REDELIVERY`, `claim_id`—, mientras que lo que `S5.2` entrega es commit, push y PR. El registro de `S5.2` liga `candidate_revision` —la identidad congelada de `S5.1`—, `shape`, el contador de intentos y `authorization_ref`. Falsificable: cualquier diff de `S5.2` que toque `core.mjs`, agregue una migración de SQLite o escriba en `ct_delivery`. **Autoridad:** decisión del maintainer del 2026-08-04, y el registro de que una migración no vence.
+  **Costo aceptado:** conviven dos ledgers append-only en el árbol. Se acepta porque modelan cosas distintas y ninguno es fuente de verdad del otro; el precio de unificarlos era una migración irreversible sobre una tabla en producción. **Corrige un dato del plan:** `plan-3/STATUS.md` decía que el `db-writer` aparecía en `S5.2`. Ya no: `S5.2` no escribe en el SQLite de la Torre.
+
+### Módulo M5.2.1 — Adapters y reconciliación
+
+- [ ] Tarea T5.2.1.1 — RED: remoto, refspec y head **explícitos**; ignorar la rama de tracking,
+  reconciliar antes del primer push, y bloquear cualquier destino que no coincida con el declarado.
+- [ ] Tarea T5.2.1.2 — RED: repositorio, head y base explícitos por argv, con entorno separado;
+  rechazar composición de comandos, prefijo de entorno y `--head` ausente.
+- [ ] Tarea T5.2.1.3 — RED: clasificación de resultados. Cuota o facturación → `quota_exhausted`;
+  caída, 5xx o timeout sondeado → `provider_unavailable`; checks incompletos → `checks_pending`;
+  ambiguo → `unknown` bloqueado. **Más los dos casos que resolvió el maintainer:** el tercer
+  reintento fallido para y escala, y un resultado ambiguo que no se puede reconciliar entra en
+  `UNRECONCILED` sin emitir ninguna mutación remota adicional.
+- [ ] Tarea T5.2.1.4 — GREEN/REFACTOR: la secuencia `commit → verificar commit/árbol → freeze →
+  push/PR`, con el registro append-only propio de `delivery/**` y el binding a la autorización de
+  `S5.1`, importada sin modificar. Registrar `delivery-record-v1` en `contracts/schema-registry.mjs`,
+  sumar su invariante en `contracts/validate.mjs` y su caso al fixture.
+  `bun test test/delivery test/contracts`.
+
+**Criterios de aceptación de S5.2** — todos deben pasar para cerrar:
+
+- [ ] La forma de entrega sale del bloque `delivery-policy` del proyecto, y un repositorio sin bloque resuelve al valor más restrictivo
+- [ ] Remoto, refspec y head son explícitos; la rama de tracking nunca decide el destino
+- [ ] Un destino que no coincide con el declarado se bloquea antes de emitir nada
+- [ ] Composición de comandos, prefijo de entorno y `--head` ausente se rechazan
+- [ ] Dos intentos sobre el mismo candidato se consideran la **misma** entrega: la identidad es la `candidate_revision` congelada, nunca un ID por intento
+- [ ] **Se reintenta como máximo tres veces, y cada reintento va precedido de reconciliación** contra el remoto real
+- [ ] **Si la reconciliación determina que el efecto sí ocurrió, se marca entregada y no se reintenta**, sin importar el contador
+- [ ] Un efecto que ocurrió con la respuesta perdida **no** produce un segundo efecto al reintentar
+- [ ] Cuota, caída, checks incompletos y ambigüedad se clasifican en `quota_exhausted`, `provider_unavailable`, `checks_pending` y `unknown` bloqueado
+- [ ] **Una entrega irreconciliable entra en `UNRECONCILED`, congela el candidato y no emite ninguna mutación remota adicional** — tampoco un revert
+- [ ] **La Torre continúa con trabajo independiente** después de una entrega `UNRECONCILED`; no se detiene entera
+- [ ] El registro de entrega es append-only y vive en `delivery/**`: **ninguna ruta escribe en `ct_delivery` ni requiere migración de SQLite**
+- [ ] La autorización se consume por el store de `S5.1`, importado sin modificar; `S5.2` no abre una segunda ruta de escritura ni crea autoridad
+- [ ] `delivery-record-v1` está registrado en `contracts/schema-registry.mjs` y tiene su caso en el fixture de contratos
+- [ ] `bun test test/delivery test/contracts` pasa completo y `bun test` no introduce fallos nuevos sobre la línea base que deje `S4.1`
+- [ ] El diff no toca ninguna ruta del `Prohibido` — en particular `core.mjs`
 
 ## Sesión 5.3 — Change G integrated-base continuation
 

@@ -102,7 +102,7 @@ permaneció OFF y no hubo efectos remotos de runtime.
 
 **Prohibido:** `core.mjs`, `mcp.mjs`, `registry/**`, `continuation/**`, `capabilities/**`, `workspace/**`, `openspec/plans/**`, `openspec/specs/**`. Los tres últimos son un **acote** sobre lo que declaraba el `tasks.md`: `workspace/**` acaba de cerrar con `S3.1`, `capabilities/**` es el `Área` de `S3.3`, y `openspec/specs/**` está byte-pinned (ver la trampa más abajo).
 
-**Recurso:** Main / ninguno. Sin migraciones de SQLite, sin `db-writer`, sin token de entrega. Las escrituras van por CAS de filesystem en `main-store/store.mjs` (root `0700`), nunca por el SQLite de la Torre; el `db-writer` recién aparece en `S5.2`.
+**Recurso:** Main / ninguno. Sin migraciones de SQLite, sin `db-writer`, sin token de entrega. Las escrituras van por CAS de filesystem en `main-store/store.mjs` (root `0700`), nunca por el SQLite de la Torre. **Corregido el 2026-08-04:** esta línea decía que el `db-writer` aparecía en `S5.2`. Ya no — al sellar `S5.2` el maintainer resolvió que su registro de entrega es propio y append-only en `delivery/**`, sin migraciones y sin escribir en el SQLite de la Torre. Hoy ninguna Sesión enumerada introduce un `db-writer`.
 
 **Entrega:** commit directo a `master` + push, sin PR ([`AGENTS.md`](../../../AGENTS.md)). **Dos commits**, como hizo `S3.1`: uno de implementación que respeta el `Prohibido`, y uno de cierre que toca `openspec/plans/**`. Es la única forma de que el diff de implementación no viole su propio `Prohibido` y el Documentation Close Gate quede satisfecho igual.
 
