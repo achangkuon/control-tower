@@ -96,6 +96,14 @@ permaneció OFF y no hubo efectos remotos de runtime.
 
 **Depende de:** `S3.1` ✅.
 
+**Área:** `schemas/{reconciled-checkpoint-v1,support-proposal-v1,policy-report-v2,assignment-v2,recovery-proof-v1,delivery-policy-v1}.schema.json`, `policy/**`, `contracts/{validate,schema-registry}.mjs`, `main-store/store.mjs`, `test/{contracts,policy}/**`, `test/main-store.test.mjs`
+
+**Prohibido:** `core.mjs`, `mcp.mjs`, `registry/**`, `continuation/**`, `capabilities/**`, `workspace/**`, `openspec/plans/**`, `openspec/specs/**`. Los tres últimos son un **acote** sobre lo que declaraba el `tasks.md`: `workspace/**` acaba de cerrar con `S3.1`, `capabilities/**` es el `Área` de `S3.3`, y `openspec/specs/**` está byte-pinned (ver la trampa más abajo).
+
+**Recurso:** Main / ninguno. Sin migraciones de SQLite, sin `db-writer`, sin token de entrega. Las escrituras van por CAS de filesystem en `main-store/store.mjs` (root `0700`), nunca por el SQLite de la Torre; el `db-writer` recién aparece en `S5.2`.
+
+**Entrega:** commit directo a `master` + push, sin PR ([`AGENTS.md`](../../../AGENTS.md)). **Dos commits**, como hizo `S3.1`: uno de implementación que respeta el `Prohibido`, y uno de cierre que toca `openspec/plans/**`. Es la única forma de que el diff de implementación no viole su propio `Prohibido` y el Documentation Close Gate quede satisfecho igual.
+
 Define floors globales, herencia, snapshots Policy/Jornada, excepciones acotadas y auditoría.
 
 **Son tres Módulos, no uno:** `M3.2.1` Authority/contracts, `M3.2.2` Policy/Jornada y
@@ -124,6 +132,71 @@ otra Sesión, no de esta.
 - `escala` — si una excepción acotada puede relajar un floor de seguridad. **Clase:** seguridad y permisos. **RESUELTA el 2026-08-04 por el maintainer: no, ninguno de los cinco.** Los floors —sin mutación temprana, inmutabilidad del candidato congelado, ledger append-only, autoridad única de Main, sin autoasignación del worker— quedan fuera del alcance tanto de la configuración como de toda excepción. Dos de los cinco no admiten una excepción *acotada* ni siquiera técnicamente: el ledger se aplica por triggers DDL (`core.mjs:346-363`), así que relajarlo exige una migración y **una migración no vence**; y una excepción sobre la autoridad de Main tendría que ser otorgada por Main (`main-store/store.mjs:89-94`), o sea autoelevación circular. La excepción conserva alcance real y no queda decorativa: `effective_limits`, `delivery.shape`, `planning.horizon_ceiling`, `allowed_operations` y `allowed_hosts` — que es donde hace falta, porque la herencia sólo acota y sin excepción un proyecto sobre-restringido no puede volver al valor global. Falsificable: cualquier ruta en la que una excepción registrada habilite una operación que el floor prohíbe. **Autoridad:** decisión del maintainer del 2026-08-04, en [master-index](../master-index.md). **Contaminaba:** `S5.1`, `S5.2` y `S7.1`, las tres destrabadas — sus criterios de aceptación siguen siendo del tipo "no existe ninguna ruta", falsificables por ausencia.
 - `escala` — qué queda registrado en la auditoría de una excepción. **Clase:** seguridad y permisos. **RESUELTA el 2026-08-04 por el maintainer.** El registro es un evento de autoridad §15.3 de [REQUIREMENTS](../../specs/sdd-tower-implementation-v1-requirements.md), no un género nuevo, y reutiliza los `$defs` de `artifact-ref-v1` más la forma ya probada de `authorization-v1`. Mínimo: identidad (`exception_id`, `project_id`, `registry_revision`, `plan_id`, `jornada_id/revision`), objetivo (`policy_revision` + `policy_digest`, `candidate_ref`), `excepted_rule` como enum cerrado, `declared_scope` verificable por máquina, `granted_by`, `authorization_ref`, `created_at`/`expires_at`, `resulting_action`/`final_outcome`, y `previous_entry_digest`/`entry_digest`. Tres definiciones que la acompañan: la justificación se persiste **sólo como digest más puntero externo** —nunca texto libre, que es por donde se filtra un secreto que `assertCredentialFree` no ve y que además haría irreconciliable el borrado de §22 con el append-only—; la excepción la otorga **sólo un humano y vence con la Jornada**, deliberadamente distinto de la autorización de merge (una hora); y la cadena de hash es **por entrega, no por proyecto**, para no serializar la punta contra CAS. Falsificable: un registro que no permita reconstruir quién la otorgó y contra qué revisión de política. **Autoridad:** §15.3 y §22 de REQUIREMENTS, más la decisión del maintainer del 2026-08-04. **Contaminaba:** `S7.1`, destrabada.
 - `derivable` — qué reglas pueden figurar en `excepted_rule`. **Criterio:** exactamente la superficie configurable, que es la que queda al excluir los cinco floors: `effective_limits`, `delivery.shape`, `delivery.target_branch`, `planning.horizon_ceiling`, `documentation_close.*`, `allowed_operations` y `allowed_hosts`. Dejó de ser `escala` al resolverse la decisión de floors: sin floors exceptuables, el enum ya no es una elección. Falsificable: un valor del enum que nombre un floor. **Autoridad:** la decisión de floors de arriba.
+
+### Módulo M3.2.1 — Authority/contracts
+
+- [ ] Tarea T3.2.1.1 — RED: extender `test/contracts/schema.test.mjs` con el drift de rol, proyecto
+  y schema, y `test/main-store.test.mjs` con que **un registro de autoridad persistido sin
+  identidad de actor falle cerrado**. Hoy `main-store/store.mjs:104,107` hace `actor: undefined` y
+  `delete next.actor` antes de escribir, así que ningún registro contesta quién lo otorgó —
+  contra §15.3 de [REQUIREMENTS](../../specs/sdd-tower-implementation-v1-requirements.md), que
+  exige identidad de actor en **todo** efecto de autoridad.
+- [ ] Tarea T3.2.1.2 — GREEN: implementar los cinco schemas `reconciled-checkpoint-v1`,
+  `support-proposal-v1`, `policy-report-v2`, `assignment-v2` y `recovery-proof-v1`; registrarlos en
+  `contracts/schema-registry.mjs`; escritura CAS ejercida sólo por Main; los códigos `CT_*`
+  deterministas del diseño (`CT_ROLE_FORBIDDEN`, `CT_REPORT_STALE`, `CT_NO_EXECUTABLE_SCOPE`,
+  `CT_POLICY_DENIED`, `CT_HORIZON_EXCEEDED`, `CT_POLICY_UNRESOLVED`, `CT_CLAIM_MISMATCH`,
+  `CT_HOST_CAPABILITY_MISSING`); y la persistencia de la identidad de quien otorga.
+- [ ] Tarea T3.2.1.3 — REFACTOR: preservar los bytes de los contratos V1 ya aceptados y dejar el
+  audit por digest con los campos de §15.3 completos. `bun test test/contracts test/main-store.test.mjs`.
+
+### Módulo M3.2.2 — Policy/Jornada
+
+- [ ] Tarea T3.2.2.1 — RED: agregar `test/policy/jornada.test.mjs` para Jornada inactiva y
+  **vencida** —incluido que `consumeAuthorization` rechace una autorización pasada su `expires_at`,
+  que hoy **no chequea en ningún punto** (`main-store/store.mjs:134-152`), dejando sin aplicación
+  tanto la regla de una hora como la de "vence con la Jornada"—, más techo de horizonte resuelto,
+  denegación, expansión, excepción y acciones irreversibles.
+- [ ] Tarea T3.2.2.2 — GREEN: implementar `policy/jornada.mjs` sobre `main-store/store.mjs`, con
+  **elegibilidad únicamente**: resuelve si algo puede ocurrir, nunca a quién se le asigna ni por
+  dónde se despacha. El `tasks.md` decía "extender `policy/delivery-policy.mjs`"; ese archivo
+  **no existe**, así que esta Tarea lo crea junto al directorio.
+- [ ] Tarea T3.2.2.3 — REFACTOR: preservar los Policy Reports V1 legibles junto a
+  `policy-report-v2`. `bun test test/policy`.
+
+### Módulo M3.2.3 — Delivery-policy resolution
+
+- [ ] Tarea T3.2.3.1 — RED: `test/policy/delivery-policy.test.mjs` para fuente ausente, no
+  parseable, con valor desconocido, sin ligar, y por symlink / que escapa / de raíz ajena. **Cada
+  campo sin resolver alcanza su valor más restrictivo y el motivo queda nombrado** con
+  `CT_POLICY_UNRESOLVED`.
+- [ ] Tarea T3.2.3.2 — RED: ningún valor de política **ni excepción** alcanza un floor; se rechaza
+  **nombrando el floor** en los cinco casos: mutación remota temprana, reescritura del candidato
+  congelado, borrado del ledger, autoasignación del worker y dispatch no-Main.
+- [ ] Tarea T3.2.3.3 — GREEN: implementar `schemas/delivery-policy-v1.schema.json` y
+  `policy/delivery-policy.mjs`, con lectura por digest desde la raíz canónica y el campo de binding
+  de revisión. **No liga contra `candidate_revision`:** ese contrato es de `S5.1` y todavía no
+  existe. Acá se define la forma; allá se liga. El `tasks.md` dice "revision binding into
+  `candidate_revision`" y es una dependencia hacia adelante, no trabajo de esta Sesión.
+- [ ] Tarea T3.2.3.4 — REFACTOR: un repositorio sin el bloque se comporta exactamente igual que
+  antes de que el bloque existiera. `bun test test/policy`.
+
+**Criterios de aceptación de S3.2** — todos deben pasar para cerrar:
+
+- [ ] Un campo de política ausente resuelve al valor más restrictivo y el motivo queda nombrado con `CT_POLICY_UNRESOLVED`
+- [ ] Un bloque no parseable, con valor desconocido, o no ligado, falla cerrado sin default permisivo
+- [ ] Una fuente de política por symlink, que escapa de la raíz, o de raíz ajena, se rechaza sin leerla
+- [ ] Una política de proyecto más permisiva que la global resuelve al valor global
+- [ ] Un repositorio sin bloque `delivery-policy` se comporta exactamente igual que antes de que el bloque existiera
+- [ ] Ningún valor de política ni excepción alcanza un floor: los cinco casos se rechazan nombrando el floor violado
+- [ ] Un registro de autoridad persistido sin identidad de actor falla cerrado, y esa identidad sobrevive al commit
+- [ ] Una autorización consumida pasado su `expires_at` se rechaza
+- [ ] Los seis schemas validan contra sus fixtures y están registrados en `contracts/schema-registry.mjs`
+- [ ] Los bytes de los contratos V1 aceptados no cambian y `test/provenance/provenance.test.mjs` sigue verde
+- [ ] Policy resuelve elegibilidad y nunca ruteo: ninguna ruta de `policy/**` crea ni modifica un assignment
+- [ ] `bun test test/contracts test/main-store.test.mjs test/policy` pasa completo
+- [ ] `bun test` no introduce fallos nuevos sobre la línea base de `S3.1` — 476/0/2779, con la Torre desarmada
+- [ ] El diff de implementación no toca ninguna ruta del `Prohibido`
 
 ## Sesión 3.3 — Agent Capability Registry
 
