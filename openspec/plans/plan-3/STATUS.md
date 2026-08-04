@@ -2,10 +2,10 @@
 
 **Estado:** 🟢 LISTO
 
-> **`S3.1` habilitada para arrancar el 2026-08-03 (`9fba0c0`).** El freno de ejecución de la
-> cadena fue levantado con instrucción atendida del maintainer, así que `S3.1` deja de estar
-> retenida por autorización: ya no queda nada aguas arriba que la frene. Junto con la
-> continuación de `S8.8`, es una de las dos entradas disponibles del grafo.
+> **`S3.1` ✅ COMPLETO en `d8924a6`.** `M3.1.1` captura el checkpoint canónico de repositorio,
+> base, resultado y evidencia sin efectos remotos. La verificación del candidato fue 11/0/23
+> enfocada y 476/0/2779 completa; la corrección de binding de evidencia quedó corroborada.
+> `S3.2` es ahora la entrada elegible del grafo.
 >
 > **`S3.2` cambió de contrato antes de empezar.** El corte política/seguridad de `d232fdf` le suma
 > `M3.2.3` (resolución de la política de entrega declarada, con fail-closed al valor más
@@ -17,31 +17,84 @@
 
 | Campo | Detalle |
 |---|---|
-| Dependencias | Las dependencias legacy de Changes C/D se conservan. Para Autonomous V2, `S3.1` parte de `origin/master@f110874`, con S2.4/project registry verificada y cerrada; `S3.2` depende de `S3.1` y `S3.3` de `S3.2`. |
+| Dependencias | Para Autonomous V2, `S3.1` partió de `master@33c2c6e` y quedó implementada en `d8924a6`, con `S2.4`/project registry verificada y cerrada; `S3.2` depende de `S3.1` y `S3.3` de `S3.2`. |
 | Outputs | C: `inspect`, `create`, `retire`, receipts y wrapper legacy de `jornada.sh`. D: Main routing, Support briefs, Policy Reports, presets, snapshots, budgets y assignments. Más el Agent Capability Registry de `S3.3`. |
-| Roadmap | Ejecutar `S3.1`, ahora lista por el cierre de S2.4, después `S3.2` y cerrar con `S3.3`. El trabajo posterior no enumerado de Change B no es dependencia de `S3.1`; las responsabilidades legacy sin límite de un PR permanecen sin ID. |
+| Roadmap | `S3.1` está cerrada; ejecutar `S3.2`, ahora lista por ese cierre, y después `S3.3`. El trabajo posterior no enumerado de Change B no fue dependencia de `S3.1`; las responsabilidades legacy sin límite de un PR permanecen sin ID. |
 | Referencias | [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/). Los proposals `sdd-tower-workspace-manager` y `sdd-tower-main-policy-jornada` fueron eliminados en `613a45d` por ser cáscaras sin avance; su intención vive en este STATUS. |
 
 ## Sesión 3.1 — Change C Workspace checkpoint
 
-**Estado:** 🟢 LISTO
+**Estado:** ✅ COMPLETO
 
-**Dependencias:** base `origin/master@f110874`; S2.4 Registry Storage and XDG Path Resolution verificada mediante PR #88 y cerrada mediante PR #90. No tiene predecesora dentro de la cadena aprobada.
+**Depende de:** `S2.4` ✅. Autoridad de base: `master@33c2c6e`; resultado: `d8924a6`. No tuvo predecesora dentro de la cadena aprobada.
 
-Captura canónica de repositorio, base y resultado sin efectos remotos. La definición de `M3.1.1` y `T3.1.1.1`–`T3.1.1.4` vive en [`tasks.md`](../../changes/autonomous-v2-checkpointed-delivery/tasks.md).
+**Área:** `workspace/checkpoint.mjs`, `test/workspace/checkpoint.test.mjs`
+
+**Recurso:** —
+
+Captura canónica de repositorio, base y resultado sin efectos remotos. Los artefactos de
+`autonomous-v2-checkpointed-delivery` son referencia histórica; este `STATUS` es el contrato
+ejecutable por la decisión documental vigente.
+
+### Módulo M3.1.1 — Checkpoint
+
+- [x] Tarea T3.1.1.1 — RED: selección Git por argv fijo y raíz canónica; rechazar `git -C`
+  inyectado, relativo que escapa y raíz absoluta que no coincide.
+- [x] Tarea T3.1.1.2 — RED: archivos y árbol explícitos; prohibir `commit -a`; rechazar drift
+  en staging e índice vacío.
+- [x] Tarea T3.1.1.3 — GREEN: implementar la captura.
+- [x] Tarea T3.1.1.4 — REFACTOR: evidencia por bytes y modo.
 
 **Decisiones:**
 
-- `derivable` — cómo se identifica canónicamente un repositorio. **Criterio:** la resolución que `S2.4` ya dejó verificada y cerrada; si esta Sesión tuviera que inventar una segunda convención de identidad, la fuente elegida estaba mal. Falsificable: dos identificadores distintos en el árbol para el mismo repositorio. **Autoridad:** `S2.4` Registry Storage and XDG Path Resolution, cerrada por PR #90.
-- `derivable` — qué se captura como `base`. **Criterio:** un OID de commit resuelto, nunca un nombre de rama. Una rama se mueve, y un checkpoint que se mueve no es un checkpoint. Falsificable: si el checkpoint siguiera siendo válido después de un `push --force` sobre la rama capturada, la elección estaba mal. **Autoridad:** `resolveCommitOid` en `core.mjs`.
-- `derivable` — qué cuenta como efecto remoto. **Criterio:** cualquier escritura fuera del repositorio capturado. El alcance de la Sesión ya dice "sin efectos remotos"; esto sólo lo vuelve verificable por testigos de bytes. Falsificable por una corrida de la suite que toque una ruta externa. **Autoridad:** el propio alcance de `S3.1`.
-- `derivable` — qué hacer si [`tasks.md`](../../changes/autonomous-v2-checkpointed-delivery/tasks.md) y este `STATUS` se contradicen sobre el alcance de `M3.1.1`. **Criterio:** gana el `STATUS`. **Resuelta el 2026-08-03 para todo el repositorio** — ver [master-index](../master-index.md). Falsificable: cualquier Tarea ejecutada según el `tasks.md` contra lo que dice su `STATUS`. **Autoridad:** la resolución global del árbitro documental.
+- `derivable` — cómo se selecciona Git y la raíz canónica. **Criterio:** toda invocación usa
+  `execFileSync("git", argv, { cwd })` con argv de sólo lectura y la raíz devuelta por
+  `rev-parse --show-toplevel` debe ser absoluta, normalizada y coincidir exactamente con la
+  raíz validada; se rechazan `-C`, relativos que escapan y absolutos distintos. Falsificable:
+  cualquiera de esos tres inputs llega a Git o produce una captura. **Autoridad:**
+  `validateEnrollmentLayout`/`defaultGit` en `enroll/index.mjs` y la matriz Git del diseño C.
+- `derivable` — qué referencias forman `base` y `result`. **Criterio:** cada una queda como OID
+  completo de commit y su OID de árbol resuelto explícitamente; nunca como nombre de rama ni
+  como estado implícito del índice. Falsificable: una rama, un OID abreviado o un árbol distinto
+  de `<commit>^{tree}` produce una captura aceptada. **Autoridad:** matriz Commit/Git de
+  `autonomous-v2-checkpointed-delivery/design.md` y el contrato de candidato que liga base,
+  resultado y tree.
+- `derivable` — cuándo rechazar el estado local antes de capturar. **Criterio:** staging no
+  vacío o distinto del árbol esperado se rechaza; no se emite `commit -a` ni otro argv mutante.
+  Falsificable: un recorder de Git observa un argv mutante, o un fixture con índice vacío/drift
+  devuelve una captura en vez de fallar cerrado. **Autoridad:** T3.1.1.2 aprobada y el patrón de
+  recorder de argv de `test/enroll/enroll.test.mjs`.
+- `derivable` — cómo se prueba la evidencia de bytes y modo. **Criterio:** los bytes de evidencia
+  usan `digestArtifact(bytes, "raw-bytes")` y la estructura de captura usa
+  `digestArtifact(value, "rfc8785-jcs")`; una modificación de bytes o del modo esperado cambia
+  el digest o falla la validación. Falsificable: dos entradas que difieren en bytes/modo conservan
+  el mismo digest válido. **Autoridad:** `canonicalize` y `digestArtifact` en
+  `contracts/canonicalize.mjs`.
+
+**Criterios de aceptación de S3.1** — todos pasaron para cerrar:
+
+- [x] Un fixture Git válido produce una captura inmutable con raíz canónica y OIDs completos de
+  commit y árbol para `base` y `result`.
+- [x] `git -C` inyectado, un relativo que escapa y una raíz absoluta distinta fallan cerrados sin
+  crear commit, modificar refs ni ejecutar un argv Git mutante.
+- [x] Un índice vacío, staging drift y cualquier intento de `commit -a` fallan cerrados; la
+  captura sólo acepta archivos y árboles identificados explícitamente.
+- [x] La evidencia de bytes `raw-bytes` y la estructura `rfc8785-jcs` producen digests SHA-256
+  verificables y cambian ante la alteración correspondiente.
+- [x] La captura no invoca red, push, fetch, PR ni escribe fuera del fixture Git.
+- [x] `bun test test/workspace/checkpoint.test.mjs` pasó 11/0/23 y `bun test` pasó 476/0/2779.
+- [x] El diff de M3.1.1 no toca ninguna ruta fuera de `workspace/checkpoint.mjs` y
+  `test/workspace/checkpoint.test.mjs`.
+
+**Evidencia de cierre:** implementación `d8924a6` (`feat(workspace): add canonical checkpoint
+capture`); la corrección que liga evidencia a la captura quedó `CORROBORATED_FIXED`. La Torre
+permaneció OFF y no hubo efectos remotos de runtime.
 
 ## Sesión 3.2 — Change D Global/project Policy/Jornada
 
-**Estado:** 📋 PLANIFICADO
+**Estado:** 🟢 LISTO
 
-**Dependencias:** `S3.1` integrada.
+**Depende de:** `S3.1` ✅.
 
 Define floors globales, herencia, snapshots Policy/Jornada, excepciones acotadas y auditoría. La definición de `M3.2.1` y `T3.2.1.1`–`T3.2.1.3` vive en [`tasks.md`](../../changes/autonomous-v2-checkpointed-delivery/tasks.md).
 

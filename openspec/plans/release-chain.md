@@ -46,9 +46,9 @@ Y cuando, con Hermes ausente, la operación local por CLI sigue completa.
 
 ```mermaid
 graph LR
-  S88["S8.8 adopción · 🔵"] --> S87["S8.7 puente · 📋"]
+  S88["S8.8 adopción · ✅"] --> S87["S8.7 puente · 📋"]
   S03["S0.3 enmienda spec · ✅"] --> S87
-  S31["S3.1 workspace · 🟢"] --> S32["S3.2 orquestación · 📋"]
+  S31["S3.1 workspace · ✅"] --> S32["S3.2 orquestación · 🟢"]
   S32 --> S33["S3.3 capability registry · 📋"]
   S33 --> S51["S5.1 authorization store · 📋"]
   S51 --> S41["S4.1 hosts · 📋"]
@@ -65,10 +65,10 @@ graph LR
 
 | Orden | ID | Resultado | Estado | Depende de |
 |---|---|---|---|---|
-| — | `S8.8` | Adopción del instalable en el runtime en uso | 🔵 EN CURSO | `S8.2` ✅ |
+| ✅ | `S8.8` | Adopción del instalable en el runtime en uso | ✅ COMPLETO | `S8.2` ✅ |
 | ✅ | `S0.3` | Enmienda del requisito de puente acotado | ✅ COMPLETO | — |
-| — | `S3.1` | Workspace | 🟢 LISTO | `S2.4` ✅ |
-| 1 | `S3.2` | Orquestación | 📋 PLANIFICADO | `S3.1` |
+| ✅ | `S3.1` | Workspace | ✅ COMPLETO | `S2.4` ✅ |
+| 1 | `S3.2` | Orquestación | 🟢 LISTO | `S3.1` ✅ |
 | 2 | `S3.3` | Agent Capability Registry | 📋 PLANIFICADO | `S3.2` |
 | 3 | `S5.1` | Authorization store + Telegram + validación Git/PR/check/SHA | 📋 PLANIFICADO | `S3.2`, `S3.3` |
 | 4 | `S4.1` | Hosts y línea exclusiva | 📋 PLANIFICADO | `S3.1`, `S3.2`, `S5.1` |
@@ -79,7 +79,7 @@ graph LR
 | 9 | `S8.7` | Puente Hermes/Telegram | 📋 PLANIFICADO | `S8.4` ✅, `S8.8`, `S0.3`, `S5.1` |
 | 10 | `S7.1` | Conformidad de release | 📋 PLANIFICADO | `S5.3`, `S8.7`, `S5.5` |
 
-**Trece Sesiones · 1 cerrada.** Once ya enumeradas más dos nuevas — `S3.3`, que estaba
+**Trece Sesiones · 3 cerradas.** Once ya enumeradas más dos nuevas — `S3.3`, que estaba
 declarada como dependencia de `S5.1` y `S5.2` en
 [`autonomous-v2-role-routed-continuation`](../changes/autonomous-v2-role-routed-continuation/tasks.md)
 pero no figuraba en ningún plan ni en este grafo, y `S5.5`, que es la Sesión que hace la
@@ -91,39 +91,35 @@ no alcanza como conformidad de release si la Torre igual se queda esperando la r
 `S5.5` depende de `S5.4`, así que la cobertura de `S5.4` queda incluida.
 
 `S0.3` cerró el 2026-08-01 en `9595b92`. Con eso, la contradicción entre specs sobre si el
-puente puede transportar un callback de merge **ya no existe**, y `S8.7` pierde uno de sus
-tres bloqueos: le quedan `S8.8` y `S5.1`.
+puente puede transportar un callback de merge **ya no existe**. Con `S8.8` también completa,
+el único bloqueo declarado de `S8.7` es `S5.1`.
 
 ## Capacidad paralela hoy
 
 Derivada del grafo, no declarada. Dos Sesiones corren juntas sólo si se cumplen las tres:
 independencia en el grafo, `Área` disjunta y `Recurso` disjunto.
 
-Hoy hay tres Sesiones que pueden empezar: `S8.8` (ya 🔵), `S0.3` y `S3.1`.
+Hoy sólo `S3.2` puede empezar: `S0.3`, `S3.1` y `S8.8` están ✅ COMPLETO, y las demás Sesiones de
+la cadena siguen 📋 PLANIFICADO o dependen de una predecesora.
 
-- `S8.8` × `S0.3`: independientes; `Área` disjunta (`bin/torre` + data-root XDG contra
-  `openspec/**`); `Recurso` disjunto. **Corren en paralelo.**
-- `S8.8` × `S3.1`: independientes en el grafo. `Área` a confirmar cuando `S3.1` enumere la
-  suya; `S8.8` reclama la máquina real del maintainer como `Recurso`. **Verificar antes de
-  paralelizar.**
-
-**Capacidad hoy: 2, con una tercera a confirmar.** Del punto 1 en adelante la cadena es
+**Capacidad hoy: 1 (`S3.2`).** Su única dependencia declarada, `S3.1`, está ✅ COMPLETO. Del punto
+1 en adelante la cadena es
 casi lineal — `S3.2 → S3.3 → S5.1 → S4.1 → S5.2 → S5.3` es una sola hebra, y
 `S5.4 → S5.5` cuelga de `S5.1` como la única bifurcación real. `S5.4` y `S5.5` comparten
 prefijo de `Área` (`escalation/**`), así que entre ellas tampoco hay paralelismo. Ese es el
 costo real del alcance elegido: no se compra con más agentes.
 
-## Enmienda pendiente — `S0.3`
+## Enmienda `S0.3` — ✅ COMPLETA
 
-Hay una **contradicción viva** entre dos documentos que hoy describen la primera versión:
+Había una contradicción entre dos documentos que describían la primera versión:
 
 | Fuente | Qué dice |
 |---|---|
 | `openspec/specs/sdd-tower-implementation-v1-requirements.md` §16–§17 | La autorización de merge por Telegram es parte del alcance. Define canal, sobre, callback, fallback textual y revalidación. |
 | `changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md:73-87` | El puente **MUST NOT** exponer Git delivery ni merge. El escenario *Remote authority is rejected* obliga a **rechazar** una solicitud de merge que venga de Hermes. |
 
-No se resuelve interpretando. En una frontera de autoridad, la ambigüedad es el incidente.
-`S0.3` amenda el requisito del puente acotado para que el puente pueda **presentar** una
+Se resolvió sin interpretación. En una frontera de autoridad, la ambigüedad es el incidente.
+`S0.3` enmendó el requisito del puente acotado para que el puente pueda **presentar** una
 autorización y **transportar** un callback acotado, manteniendo intacto el principio de
 §16.1: *Hermes presenta; Main crea, valida y consume.* El puente nunca tiene autoridad;
 transporta la decisión de quien sí la tiene.
