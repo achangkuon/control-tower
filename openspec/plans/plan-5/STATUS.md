@@ -48,6 +48,14 @@ Define identidad y freeze de `candidate_revision`, invalidación, sucesores, com
 > pasan: el cambio no afecta el runtime. El total subió a 450 porque `M8.8.5` sumó dos tests de
 > `diagnose`.
 
+**Decisiones:**
+
+- `derivable` — la forma del registro de autorización. **Criterio:** `schemas/authorization-v1.schema.json`, y el store valida **contra el schema**, nunca contra una lista escrita a mano. Escribir la lista dos veces fue la causa raíz de las seis divergencias que este prerrequisito acaba de reconciliar. Falsificable: cualquier enum o campo duplicado entre `main-store/store.mjs` y el schema. **Autoridad:** el schema, y la reconciliación `6d37642`.
+- `derivable` — qué vuelve inválido a un candidato congelado. **Criterio:** cualquier cambio en los bytes que produjeron su identidad. Un candidato cuya identidad sobrevive a una modificación de contenido no es un freeze. Falsificable: dos contenidos distintos que resuelvan a la misma `candidate_revision`. **Autoridad:** los floors de seguridad de `d232fdf` — inmutabilidad del candidato congelado.
+- `derivable` — cómo se comporta una operación repetida sobre el mismo candidato. **Criterio:** idempotente por identidad de candidato; repetir no produce un segundo efecto. Falsificable: dos invocaciones idénticas que generen dos efectos remotos. **Autoridad:** el alcance declarado de `S5.1`.
+- `escala` — cuánto vive una autorización antes de expirar. **Clase:** seguridad y permisos. El enum ya contempla `EXPIRED`, pero ninguna autoridad aprobada fija el plazo, y ese número decide si una aprobación otorgada anoche sigue valiendo hoy. **Contamina:** `S5.2`, que consume la autorización exacta, y `S5.5`, cuya decisión estacionada puede sobrevivir a la ventana.
+- `escala` — si un sucesor hereda la autorización de su predecesor. **Clase:** seguridad y permisos. Heredarla vuelve la aprobación transitiva sobre contenido que el maintainer no vio; no heredarla obliga a una aprobación por eslabón y puede volver impracticable la cadena. **Contamina:** `S5.3`, cuyo horizonte de dos Sesiones asume una respuesta, y `S8.7`, que transporta la aprobación.
+
 ## Sesión 5.2 — Change F delivery adapters/reconciliation
 
 **Estado:** 📋 PLANIFICADO
@@ -56,6 +64,14 @@ Define identidad y freeze de `candidate_revision`, invalidación, sucesores, com
 
 Implementa commit, push y PR idempotentes, checks, revisión, autorización exacta y reconciliación de resultados desconocidos. La definición de `M5.2.1` y `T5.2.1.1`–`T5.2.1.4` vive en [`tasks.md`](../../changes/autonomous-v2-checkpointed-delivery/tasks.md#s52-change-f-delivery--m521-adaptersreconciliation).
 
+**Decisiones:**
+
+- `derivable` — la forma de la entrega de cada proyecto. **Criterio:** el bloque `delivery-policy` de su `AGENTS.md`, con `shape` en `direct-push` o `pull-request`, y default fail-closed al valor más restrictivo cuando el bloque falta. Falsificable: un repositorio sin bloque que termine entregando por el camino más permisivo. **Autoridad:** [`AGENTS.md`](../../../AGENTS.md) y el corte de `d232fdf`.
+- `derivable` — qué hace la reconciliación ante un resultado desconocido. **Criterio:** consulta el estado remoto real antes de reintentar; nunca asume que el efecto no ocurrió. Un timeout no distingue "no llegó" de "llegó y la respuesta se perdió", y asumir lo primero es exactamente cómo se duplica una entrega. Falsificable: un test donde el efecto ocurrió, la respuesta se perdió, y el reintento produce un segundo efecto. **Autoridad:** el alcance declarado de `S5.2`.
+- `derivable` — qué identifica una entrega para efectos de idempotencia. **Criterio:** la `candidate_revision` congelada, no un identificador generado en el momento del intento. Falsificable: dos intentos sobre el mismo candidato que se consideren entregas distintas. **Autoridad:** `S5.1`.
+- `escala` — cuántas veces se reintenta antes de parar. **Clase:** operaciones irreversibles. Un reintento de más contra un remoto que sí recibió duplica efectos; uno de menos deja la entrega a medias sin nadie mirando. **Contamina:** `S5.3` y `S7.1`, cuyo piloto de "cero efectos remotos duplicados" mide exactamente esto.
+- `escala` — qué se hace ante una entrega parcial que no se puede reconciliar. **Clase:** operaciones irreversibles. Es el estado en el que el remoto quedó mutado y el sistema no puede determinar cómo. **Contamina:** `S5.3`, cuya base integrada asume un estado remoto conocido, y `S5.5`, que es donde esa decisión quedaría estacionada.
+
 ## Sesión 5.3 — Change G integrated-base continuation
 
 **Estado:** 📋 PLANIFICADO
@@ -63,6 +79,13 @@ Implementa commit, push y PR idempotentes, checks, revisión, autorización exac
 **Dependencias:** `S5.2` integrada.
 
 Aplica el horizonte de dos Sesiones, reconcilia la base integrada y habilita sucesores sólo desde evidencia fresca. La definición de `M5.3.1` y `T5.3.1.1`–`T5.3.1.3` vive en [`tasks.md`](../../changes/autonomous-v2-checkpointed-delivery/tasks.md#s53-change-g--m531-integrated-base).
+
+**Decisiones:**
+
+- `derivable` — cuántas Sesiones se planifican por delante. **Criterio:** `planning.horizon_ceiling` del bloque `delivery-policy`, hoy `2` en este repositorio. Es configuración declarada, no criterio del agente. Falsificable: una planificación que exceda el techo declarado. **Autoridad:** [`AGENTS.md`](../../../AGENTS.md).
+- `derivable` — de dónde se deriva el siguiente Módulo. **Criterio:** la enumeración del plan por digest más el ledger inmutable `ct_delivery`/`ct_claim`, **nunca** engram. Engram hace upsert por `topic_key` y no está atado al contenido del repositorio, así que un cierre de Módulo que no toca documentación lo deja mintiendo. Falsificable: una derivación que cambie de respuesta sin que cambie ni el plan ni el ledger. **Autoridad:** el delta de `d232fdf`.
+- `derivable` — qué es evidencia fresca. **Criterio:** evidencia producida contra la base ya integrada, no contra la que existía cuando el sucesor se planificó. Falsificable: un sucesor habilitado por evidencia anterior a la integración de su predecesor. **Autoridad:** el alcance declarado de `S5.3`.
+- `escala` — qué pasa cuando la base integrada divergió de la que el sucesor asumía. **Clase:** dependencias o evidencia contradictorias. Rebasar el sucesor cambia su contenido después de haber sido planificado; descartarlo tira trabajo hecho. **Contamina:** `S7.1`, cuyo piloto de rechazo de candidatos stale mide precisamente este caso.
 
 ## Sesión 5.4 — Ruteo de escalamiento fuera/en casa
 
@@ -76,6 +99,14 @@ Hoy, cuando un agente llega a una decisión que requiere autoridad del maintaine
 El modo es explícito y de dos valores: `local` cuando el maintainer está frente a la máquina, `remoto` cuando no. Ante estado ausente, ilegible o ambiguo el modo resuelve a `local`: no escalar es un inconveniente, escalar por un canal que no debía estar abierto es una fuga.
 
 `S5.4` produce y rutea la solicitud. **No la autoriza** — el sobre, el nonce y el consumo son de `S5.1`, y el transporte a Telegram es de `S8.7`.
+
+**Decisiones:**
+
+- `derivable` — a qué resuelve el modo ante estado ausente, ilegible o ambiguo. **Criterio:** `local`. No escalar es un inconveniente; escalar por un canal que no debía estar abierto es una fuga, y los dos costos no son comparables. Falsificable por un fixture con estado corrupto que emita hacia un transporte remoto. **Autoridad:** el alcance declarado de `S5.4`.
+- `derivable` — qué vuelve emitible a una solicitud. **Criterio:** objetivo exacto, origen y expiración; sin objetivo exacto falla cerrado. Una solicitud sin objetivo exacto se responde "depende" y cuesta un viaje completo. Falsificable por el criterio de aceptación ya escrito. **Autoridad:** los criterios de aceptación de `S5.4`.
+- `derivable` — dónde se persiste la solicitud emitida. **Criterio:** el authorization store de `S5.1`, sin abrir una segunda ruta de escritura. Dos rutas de escritura al mismo estado es la causa raíz que `6d37642` acaba de reparar en este mismo Plan. Falsificable: cualquier escritura de solicitudes fuera del store. **Autoridad:** `T5.4.1.2`.
+- `derivable` — qué pasa con la solicitud si el transporte remoto falla. **Criterio:** queda pendiente y recuperable localmente; el fallo de transporte **nunca** la consume ni la descarta. Falsificable por el caso de `M5.4.3`. **Autoridad:** los criterios de aceptación de `S5.4`.
+- `escala` — quién puede conmutar el modo de ruteo. **Clase:** seguridad y permisos. El conmutador decide si las preguntas del maintainer salen de la máquina, y un agente que pueda ponerlo en `remoto` puede abrirse su propio canal. **Contamina:** `S8.7`, que es el transporte, y `S5.5`, cuya continuación depende de si la pregunta llegó a salir.
 
 ### Módulo 5.4.1 — Emisión de solicitud de decisión
 
@@ -125,6 +156,15 @@ corrida entera, que es exactamente el costo que el formato existía para evitar.
 `S5.5` **no crea, valida ni consume autoridad** —eso sigue siendo exclusivo de `S5.1`— y no
 duplica la emisión ni el ruteo de `S5.4`. Comparte prefijo de `Área` con `S5.4`, así que
 por diseño **nunca corren en paralelo**: `S5.5` sólo abre con `S5.4` integrada.
+
+**Decisiones:**
+
+- `derivable` — de dónde sale el scope de contaminación. **Criterio:** la enumeración del plan por digest más el ledger inmutable, y **falla si intenta leer engram**. Engram hace upsert por `topic_key` y no está atado al contenido del repositorio, así que un cierre de Módulo que no toca documentación lo deja desactualizado sin avisar. Falsificable por `T5.5.2.1`. **Autoridad:** el delta de `d232fdf`.
+- `derivable` — qué hace un caso de contaminación ambiguo. **Criterio:** resuelve a **contaminada**. Sobre-incluir cuesta capacidad ociosa unas horas; sub-incluir entrega trabajo construido sobre una suposición que nadie aprobó, y aparece en el merge, cuando las dos implementaciones ya existen. Los costos no son simétricos. Falsificable por `T5.5.2.2`. **Autoridad:** §11 del [estándar de planes](/home/emili/.claude/skills/_shared/plan-naming-convention.md).
+- `derivable` — qué vuelve estacionable a una decisión. **Criterio:** pregunta exacta, evidencia, opciones enumeradas con su consecuencia, origen, checkpoint y clase. Sin opciones enumeradas no es una decisión, es una pregunta, y escalar "¿qué hacemos acá?" vuelve "depende". Falsificable por `T5.5.1.2`. **Autoridad:** el registro de decisión estacionada de §11.
+- `derivable` — qué hace la Torre con cero candidatos independientes. **Criterio:** se detiene y lo reporta; nunca inventa trabajo ni relaja un criterio para encontrar algo que hacer. Falsificable por `T5.5.3.2`. **Autoridad:** los criterios de aceptación de `S5.5`.
+- `derivable` — si el scope congelado puede recalcularse mientras la decisión sigue abierta. **Criterio:** no; se congela **dentro** del registro, no fuera. Un scope que se recalcula puede encoger después de que ya se eligió trabajo en base a él. Falsificable por `T5.5.2.3`. **Autoridad:** el `Recurso` append-only de esta Sesión.
+- `escala` — qué pasa con el trabajo ya hecho cuando la decisión estacionada se responde en contra. **Clase:** dependencias o evidencia contradictorias. Es el caso en el que la Torre eligió bien según el scope congelado y la respuesta igual invalida lo construido. **Contamina:** `S5.3`, cuya continuación consume el resultado, y `S7.1`, que lo verifica.
 
 ### Las ocho clases que siempre escalan
 

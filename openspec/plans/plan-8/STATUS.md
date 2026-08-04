@@ -508,6 +508,16 @@ Habilitable de forma explícita para presentar estado y dar instrucciones acotad
 
 Va última pese a su prioridad declarada: el propio [tasks.md](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/tasks.md) la condiciona a la primera Sesión segura por dependencias, y la frontera de autoridad que la hace segura la entrega `S8.4`.
 
+**Decisiones:**
+
+- `derivable` — qué puede hacer el puente. **Criterio:** presenta y transporta; **nunca** crea, valida ni consume autoridad. Main crea, valida y consume. Falsificable: cualquier camino en el que una acción del puente produzca un efecto que Main no haya autorizado. **Autoridad:** la frontera de autoridad de `S8.4` y la enmienda de `S0.3`.
+- `derivable` — qué queda explícitamente fuera. **Criterio:** shell cruda, selección o lanzamiento de workers, entrega Git, merge y selección implícita de proyecto. La lista es cerrada y está declarada arriba; ampliarla no es derivación sino expansión de alcance. Falsificable: una capacidad del puente que no esté en el alcance escrito. **Autoridad:** el alcance declarado de `S8.7`.
+- `derivable` — qué pasa con la operación local si Hermes no está. **Criterio:** sigue completa. El CLI y Support no pueden degradarse por la ausencia de un transporte opcional; un puente que se vuelve requisito dejó de ser acotado. Falsificable por una operación local que falle sólo con Hermes ausente. **Autoridad:** el alcance declarado de `S8.7`.
+- `derivable` — sobre qué proyecto actúa una instrucción entrante. **Criterio:** el proyecto registrado y nombrado explícitamente; nunca uno inferido del contexto de la conversación. Falsificable: una instrucción sin proyecto explícito que igual se ejecute. **Autoridad:** la prohibición de selección implícita de proyecto.
+- `escala` — cómo se autentica quien manda una instrucción por el puente. **Clase:** seguridad y permisos. Un chat de Telegram es un canal, no una identidad, y el puente presenta autorizaciones que deciden merges. **Contamina:** `S5.1`, donde nace la autorización que el puente transporta, y `S7.1`, cuyo piloto de denegación mide esta frontera.
+- `escala` — qué se muestra del estado por un canal externo. **Clase:** seguridad y permisos. "Presentar estado" puede incluir rutas, nombres de rama, diffs o contenido del repositorio, y el canal está fuera de la máquina. **Contamina:** ninguna Sesión aguas abajo por grafo, pero sí el contrato de privacidad del producto.
+- `escala` — qué pasa con un callback de aprobación que llega después de expirado. **Clase:** seguridad y permisos. Rechazarlo obliga a repetir el pedido; aceptarlo vuelve la expiración decorativa. **Contamina:** `S5.1`, que define la ventana, y `S5.5`, cuya decisión estacionada puede sobrevivirla.
+
 ## Límites y prioridad
 
 `S8.2` entregó únicamente almacenamiento de versiones, puntero activo, install/diagnose/upgrade/rollback/uninstall, preservación de configuración e historial, y sus pruebas Strict TDD. No modificó `core.mjs`, `mcp.mjs`, `package.json`, `bun.lock`, DB ni estado de Tower.

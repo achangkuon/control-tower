@@ -30,6 +30,13 @@
 
 Captura canónica de repositorio, base y resultado sin efectos remotos. La definición de `M3.1.1` y `T3.1.1.1`–`T3.1.1.4` vive en [`tasks.md`](../../changes/autonomous-v2-checkpointed-delivery/tasks.md).
 
+**Decisiones:**
+
+- `derivable` — cómo se identifica canónicamente un repositorio. **Criterio:** la resolución que `S2.4` ya dejó verificada y cerrada; si esta Sesión tuviera que inventar una segunda convención de identidad, la fuente elegida estaba mal. Falsificable: dos identificadores distintos en el árbol para el mismo repositorio. **Autoridad:** `S2.4` Registry Storage and XDG Path Resolution, cerrada por PR #90.
+- `derivable` — qué se captura como `base`. **Criterio:** un OID de commit resuelto, nunca un nombre de rama. Una rama se mueve, y un checkpoint que se mueve no es un checkpoint. Falsificable: si el checkpoint siguiera siendo válido después de un `push --force` sobre la rama capturada, la elección estaba mal. **Autoridad:** `resolveCommitOid` en `core.mjs`.
+- `derivable` — qué cuenta como efecto remoto. **Criterio:** cualquier escritura fuera del repositorio capturado. El alcance de la Sesión ya dice "sin efectos remotos"; esto sólo lo vuelve verificable por testigos de bytes. Falsificable por una corrida de la suite que toque una ruta externa. **Autoridad:** el propio alcance de `S3.1`.
+- `escala` — qué hacer si [`tasks.md`](../../changes/autonomous-v2-checkpointed-delivery/tasks.md) y este `STATUS` se contradicen sobre el alcance de `M3.1.1`. **Clase:** dependencias o evidencia contradictorias. La definición de las Tareas vive en un artefacto externo que este plan no controla, y ninguno de los dos es obviamente el ganador. **Contamina:** `S3.2`, que hereda el mismo patrón de definición externa.
+
 ## Sesión 3.2 — Change D Global/project Policy/Jornada
 
 **Estado:** 📋 PLANIFICADO
@@ -37,6 +44,14 @@ Captura canónica de repositorio, base y resultado sin efectos remotos. La defin
 **Dependencias:** `S3.1` integrada.
 
 Define floors globales, herencia, snapshots Policy/Jornada, excepciones acotadas y auditoría. La definición de `M3.2.1` y `T3.2.1.1`–`T3.2.1.3` vive en [`tasks.md`](../../changes/autonomous-v2-checkpointed-delivery/tasks.md).
+
+**Decisiones:**
+
+- `derivable` — qué valor toma un campo de política ausente. **Criterio:** el más restrictivo; un repositorio sin bloque `delivery-policy` se comporta exactamente igual que antes de que el bloque existiera. Falsificable: si un campo ausente habilitara algo que el bloque explícito no habilita, el default estaba mal. **Autoridad:** el corte política/seguridad de `d232fdf` y el bloque `delivery-policy` de [`AGENTS.md`](../../../AGENTS.md).
+- `derivable` — dónde vive la política declarada de un proyecto. **Criterio:** el bloque `delivery-policy` del `AGENTS.md` de ese proyecto, un solo lugar y legible por máquina. Falsificable: dos fuentes en el árbol que respondan la misma pregunta de política. **Autoridad:** [`AGENTS.md`](../../../AGENTS.md).
+- `derivable` — qué gana cuando la política global y la del proyecto difieren. **Criterio:** el valor más restrictivo de los dos, no el más específico. La herencia acota, nunca amplía. Falsificable: un proyecto que declare una política más permisiva que la global y termine ejecutando la permisiva. **Autoridad:** los floors de seguridad de `d232fdf`.
+- `escala` — si una excepción acotada puede relajar un floor de seguridad. **Clase:** seguridad y permisos. Los floors —sin mutación temprana, inmutabilidad del candidato congelado, ledger append-only, autoridad única de Main, sin autoasignación del worker— están declarados fuera del alcance de cualquier configuración, y una excepción que los tocara sería exactamente eso. **Contamina:** `S5.1`, `S5.2` y `S7.1`, cuyos criterios de aceptación asumen que los floors son inviolables.
+- `escala` — qué queda registrado en la auditoría de una excepción. **Clase:** seguridad y permisos. Una excepción que no deja rastro suficiente para reconstruir quién la otorgó y contra qué es indistinguible de no haber tenido política. **Contamina:** `S7.1`, que verifica conformidad de release contra ese rastro.
 
 ## Sesión 3.3 — Agent Capability Registry
 
@@ -61,6 +76,14 @@ La entrada declara identidad de proyecto y de Main, revisión de registro y de e
 identidad y rol de quien llama, la capability, los IDs de schema de entrada y salida, ref y
 digest de origen, y ventana de disponibilidad con expiración. **Un update por CAS invalida
 todos los bindings anteriores.**
+
+**Decisiones:**
+
+- `derivable` — la forma de una entrada del registro. **Criterio:** `schemas/agent-capability-registry-v1.schema.json`, que está en el `Área` de esta Sesión y enumera los campos: identidad de proyecto y de Main, revisión de registro y de entrada, identidad y rol de quien llama, capability, IDs de schema de entrada y salida, ref y digest de origen, y ventana de disponibilidad. Falsificable: un campo que el código exija y el schema no declare. **Autoridad:** el schema del `Área`.
+- `derivable` — qué hace una entrada vencida. **Criterio:** no resuelve, y el rechazo es explícito en vez de silencioso. Un rechazo silencioso es indistinguible de una capability ausente y manda al llamador a improvisar. Falsificable por el criterio de aceptación ya escrito. **Autoridad:** los criterios de aceptación de `S3.3`.
+- `derivable` — si el registry puede otorgar autoridad. **Criterio:** no. Otorga visibilidad y compatibilidad de invocación; la autoridad sigue siendo exclusiva de Main, y un agente no puede registrarse a sí mismo. Falsificable: cualquier ruta en la que una entrada del registro habilite una operación que Main no autorizó. **Autoridad:** el **Límite duro** declarado arriba en esta misma Sesión.
+- `derivable` — qué pasa con los bindings previos ante un update. **Criterio:** un update por CAS lleva el registro de `R1` a `R2` e invalida **todos** los bindings de `R1`. Falsificable: un binding de `R1` que siga resolviendo después de la transición. **Autoridad:** el alcance declarado de `S3.3`.
+- `escala` — cuánto dura por defecto la ventana de disponibilidad de una entrada. **Clase:** seguridad y permisos. Una ventana larga vuelve la expiración decorativa y deja capabilities vivas después de que su origen cambió; una corta convierte cada resolución en una renovación. Ninguna autoridad aprobada fija hoy ese número. **Contamina:** `S5.1`, cuyo store de autorización resuelve contra entradas del registry, y `S5.4`, porque el `DENY` del que nace un escalamiento depende de que la entrada siga vigente.
 
 ### Módulo 3.3.1 — Registry
 
