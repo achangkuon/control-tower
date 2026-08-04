@@ -20,14 +20,15 @@ set -euo pipefail
 ENTRYPOINT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 ACTIVE_CORE=""
 ACTIVE_LIFECYCLE=""
-if [[ -z "${CONTROL_TOWER_CORE:-}" || -z "${CONTROL_TOWER_LIFECYCLE:-}" ]]; then
+ACTIVE_POINTER="$ENTRYPOINT_DIR/../install/active-pointer.mjs"
+if [[ ( -z "${CONTROL_TOWER_CORE:-}" || -z "${CONTROL_TOWER_LIFECYCLE:-}" ) && -f "$ACTIVE_POINTER" ]]; then
     DATA_ROOT=$(bun -e 'const t=await import(process.argv[1]); process.stdout.write(t.resolveDataRoot(process.env))' \
-      "$ENTRYPOINT_DIR/../install/active-pointer.mjs")
+      "$ACTIVE_POINTER")
     if ! active_runtime=$(bun -e '
       const t = await import(process.argv[1])
       const runtime = t.resolveActiveRuntime(process.argv[2])
       if (runtime) process.stdout.write(`${runtime.core}\n${runtime.lifecycle}`)
-    ' "$ENTRYPOINT_DIR/../install/active-pointer.mjs" "$DATA_ROOT" 2>&1); then
+    ' "$ACTIVE_POINTER" "$DATA_ROOT" 2>&1); then
         printf '%s\n' "$active_runtime" >&2
         exit 1
     fi

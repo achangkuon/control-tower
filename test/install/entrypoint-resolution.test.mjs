@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test"
 import { createHash } from "node:crypto"
 import { spawnSync } from "node:child_process"
-import { lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
+import { copyFileSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
 
@@ -107,6 +107,34 @@ describe("entrypoint runtime resolution", () => {
     const lifecycle = run(entrypoint, ["diagnose"], item.env)
     expect({ status: lifecycle.status, stderr: lifecycle.stderr }).toEqual({ status: 0, stderr: "" })
     expect(JSON.parse(lifecycle.stdout)).toEqual({ operation: "diagnose", healthy: false, active: null, missing: [] })
+  })
+
+  test("an isolated copied entrypoint without active-pointer falls back to the legacy core", () => {
+    const item = isolated()
+    const copiedEntrypoint = join(item.root, "bin/torre")
+    mkdirSync(join(copiedEntrypoint, ".."), { recursive: true })
+    copyFileSync(entrypoint, copiedEntrypoint)
+    installLegacyCore(item.env.HOME)
+
+    const result = run(copiedEntrypoint, ["main-config"], item.env)
+    expect({ status: result.status, stderr: result.stderr }).toEqual({ status: 0, stderr: "" })
+    expect(JSON.parse(result.stdout)).toEqual({ context: { source: "legacy-core" } })
+  })
+
+  test("a broken active-pointer module in a copied entrypoint propagates its error", () => {
+    const item = isolated()
+    const copiedEntrypoint = join(item.root, "bin/torre")
+    const copiedPointer = join(item.root, "install/active-pointer.mjs")
+    mkdirSync(join(copiedEntrypoint, ".."), { recursive: true })
+    mkdirSync(join(copiedPointer, ".."), { recursive: true })
+    copyFileSync(entrypoint, copiedEntrypoint)
+    writeFileSync(copiedPointer, "this is not valid JavaScript")
+    installLegacyCore(item.env.HOME)
+
+    const result = run(copiedEntrypoint, ["main-config"], item.env)
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain("active-pointer.mjs")
+    expect(result.stdout).not.toContain("legacy-core")
   })
 
   test("with a valid active pointer resolves core and lifecycle inside the active version", () => {
