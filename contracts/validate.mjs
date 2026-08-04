@@ -84,6 +84,10 @@ const invariants = Object.freeze({
     if (value.artifact_revision > 1 && previous?.artifact_revision !== value.artifact_revision - 1) invalidManifest("Delta correction must link the previous revision")
   },
   campaign: (value) => { assertUnique(value.steps, "step_id", "Campaign step IDs must be unique"); assertDag(value.steps, "step_id", "depends_on") },
+  agentCapabilityRegistry: (value) => {
+    const keys = value.capabilities.map(({ agent_role, capability }) => `${agent_role}\0${capability}`)
+    if (new Set(keys).size !== keys.length) invalidManifest("Role capabilities must resolve uniquely")
+  },
 })
 
 export const validate = (schemaName, input) => {

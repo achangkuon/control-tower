@@ -148,6 +148,12 @@ describe("duplicate-safe structured parsing", () => {
 })
 
 describe("cross-field schema invariants", () => {
+  test("capability roles resolve uniquely", () => {
+    const duplicate = structuredClone(fixtures.agentCapabilityRegistry)
+    duplicate.capabilities.push(structuredClone(duplicate.capabilities[0]))
+    expect(errorCode(() => validate("agentCapabilityRegistry", duplicate))).toBe("CT_MANIFEST_INVALID")
+  })
+
   test("catalog IDs and references resolve uniquely", () => {
     const duplicate = structuredClone(fixtures.planCatalog)
     duplicate.plans.push(structuredClone(duplicate.plans[0]))

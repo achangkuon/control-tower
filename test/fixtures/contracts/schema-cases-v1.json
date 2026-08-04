@@ -223,6 +223,26 @@
     "nonce_hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
     "state": "PENDING"
   },
+  "agentCapabilityRegistry": {
+    "schema": "agent-capability-registry",
+    "schema_version": 1,
+    "project_id": "servitask",
+    "main_identity": "servitask-main",
+    "registry_revision": 1,
+    "capabilities": [{
+      "agent_identity": "servitask-support",
+      "agent_role": "SUPPORT",
+      "capability": "support-proposal",
+      "input_schema": "support-proposal",
+      "output_schema": "policy-report",
+      "source_ref": "capabilities/support.mjs",
+      "source_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "jornada_id": "jornada-servitask-tasker-001",
+      "jornada_revision": 1,
+      "expires_at": "2026-07-27T20:00:00Z",
+      "registry_entry_revision": 1
+    }]
+  },
   "campaign": {
     "schema": "campaign",
     "schema_version": 1,

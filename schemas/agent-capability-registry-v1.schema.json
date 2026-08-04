@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "https://control-tower.local/schemas/agent-capability-registry-v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "schema_version", "project_id", "main_identity", "registry_revision", "capabilities"],
+  "properties": {
+    "schema": {"const": "agent-capability-registry"}, "schema_version": {"const": 1},
+    "project_id": {"$ref": "artifact-ref-v1.schema.json#/$defs/slug"}, "main_identity": {"type": "string", "minLength": 1},
+    "registry_revision": {"$ref": "artifact-ref-v1.schema.json#/$defs/revision"},
+    "capabilities": {"type": "array", "items": {"$ref": "#/$defs/capability"}},
+    "extensions": {"$ref": "artifact-ref-v1.schema.json#/$defs/extensions"}
+  },
+  "$defs": {
+    "capability": {
+      "type": "object", "additionalProperties": false,
+      "required": ["agent_identity", "agent_role", "capability", "input_schema", "output_schema", "source_ref", "source_digest", "jornada_id", "jornada_revision", "expires_at", "registry_entry_revision"],
+      "properties": {
+        "agent_identity": {"type": "string", "minLength": 1}, "agent_role": {"enum": ["SUPPORT", "POLICY"]},
+        "capability": {"$ref": "artifact-ref-v1.schema.json#/$defs/slug"}, "input_schema": {"type": "string", "minLength": 1}, "output_schema": {"type": "string", "minLength": 1},
+        "source_ref": {"$ref": "artifact-ref-v1.schema.json#/$defs/relativePath"}, "source_digest": {"$ref": "artifact-ref-v1.schema.json#/$defs/digest"},
+        "jornada_id": {"$ref": "artifact-ref-v1.schema.json#/$defs/slug"}, "jornada_revision": {"$ref": "artifact-ref-v1.schema.json#/$defs/revision"},
+        "expires_at": {"$ref": "artifact-ref-v1.schema.json#/$defs/timestamp"}, "registry_entry_revision": {"$ref": "artifact-ref-v1.schema.json#/$defs/revision"},
+        "extensions": {"$ref": "artifact-ref-v1.schema.json#/$defs/extensions"}
+      }
+    }
+  }
+}
