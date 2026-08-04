@@ -51,7 +51,7 @@ graph LR
   S31["S3.1 workspace · ✅"] --> S32["S3.2 orquestación · ✅"]
   S32 --> S33["S3.3 capability registry · ✅"]
   S33 --> S34["S3.4 ciclo de vida Jornada · 🟢"]
-  S33 --> S51["S5.1 authorization store · 📋"]
+  S34 --> S51["S5.1 authorization store · 📋 sellada"]
   S51 --> S41["S4.1 hosts · 📋"]
   S41 --> S52["S5.2 entrega idempotente · 📋"]
   S33 --> S52
@@ -72,7 +72,7 @@ graph LR
 | ✅ | `S3.2` | Orquestación | ✅ COMPLETO | `S3.1` ✅; implementación `22c43ae`, 14/14 criterios `CORROBORATED_FIXED` |
 | ✅ | `S3.3` | Agent Capability Registry | ✅ COMPLETO | `S3.2` ✅; implementación `4621d3f`, 14/14 criterios verificados por el planner contra el SHA integrado |
 | 1 | `S3.4` | Persistencia y ciclo de vida de Jornada | 🟢 LISTO | `S3.2` ✅, `S3.3` ✅; revalidada el 2026-08-04 contra `4621d3f`; cierra el hueco de revocación temprana que aceptó `S3.3` |
-| 2 | `S5.1` | Authorization store + Telegram + validación Git/PR/check/SHA | 📋 PLANIFICADO | `S3.2` ✅, `S3.3` ✅ — **dependencias satisfechas**; falta sellar el contrato, y la decisión `escala` abierta de revocación activa lo impide |
+| 2 | `S5.1` | Authorization store + Telegram + validación Git/PR/check/SHA | 📋 PLANIFICADO | `S3.2` ✅, `S3.3` ✅, **`S3.4`**; contrato ejecutable **sellado el 2026-08-04**, cero decisiones `escala` abiertas. Depende de `S3.4` porque revalidar la Jornada exige `readJornada` |
 | 3 | `S4.1` | Hosts y línea exclusiva | 📋 PLANIFICADO | `S3.1` ✅, `S3.2` ✅, `S5.1` |
 | 4 | `S5.2` | Entrega idempotente y post-check | 📋 PLANIFICADO | `S4.1`, `S3.3` ✅ |
 | 5 | `S5.4` | Ruteo de escalamiento fuera/en casa | 📋 PLANIFICADO | `S5.1` |
@@ -120,20 +120,21 @@ bifurcación real. `S5.4` y `S5.5` comparten prefijo de `Área` (`escalation/**`
 ellas tampoco hay paralelismo. Ese es el costo real del alcance elegido: no se compra con más
 agentes.
 
-**Lo que sí cambió con el cierre de `S3.3`: existe un segundo frente potencial, pero de
-planificación, no de ejecución.** `S5.1` tiene sus dos dependencias satisfechas —`S3.2` ✅ y
-`S3.3` ✅—, y ahí se termina lo que está determinado: **`S5.1` no declara `Área` ni `Prohibido`**,
-porque nunca recibió el sello de contrato ejecutable que `S3.2` y `S3.3` sí recibieron. Sin
-`Área` declarada no se puede derivar si colisiona con `S3.4`, y por lo tanto **no se puede
-afirmar paralelismo de ejecución**. Lo que la prosa sí dice es que `S5.1` "toma posesión del
-authorization store", que vive en `main-store/store.mjs` — el mismo archivo que `S3.4` tiene en
-su `Área`. La presunción razonable es colisión, y el sello es lo que la confirmaría o la
-descartaría.
+**`S5.1` quedó sellada el 2026-08-04, y el sello confirmó la colisión en vez de descartarla.**
+El maintainer resolvió la decisión `escala` de revocación activa —invalidación pasiva por
+`jornada_revision`, sin cascada y sin garbage collector—, con lo que `S5.1` pasó a cero
+decisiones `escala` abiertas y recibió `Área`, `Prohibido`, `Recurso`, tres Módulos y veinte
+criterios binarios.
 
-Así que la secuencia correcta es: primero el maintainer resuelve la decisión `escala` de
-revocación activa —que contamina `S5.1`—, después se sella `S5.1` con `session-plan`, y recién
-ahí el grafo dice si hay paralelismo real o sólo una segunda hebra de planificación mientras
-`S3.4` se ejecuta.
+Lo que el sello descubrió es más fuerte que una colisión de `Área`: **la propia decisión creó
+una dependencia `S5.1` → `S3.4`.** Exigir Jornada `ACTIVE` y `jornada_revision` actual antes de
+un efecto irreversible obliga a leer una Jornada persistida, y `readJornada` la entrega `S3.4`
+en `T3.4.1.2`. Hoy no existe: `policy/jornada.mjs` es un resolvedor puro sin store. Además las
+dos comparten `main-store/store.mjs` en su `Área`. **Planificar en paralelo: sí, y ya se hizo.
+Implementar en simultáneo: no.**
+
+Así que la capacidad de ejecución sigue siendo 1, pero por una razón distinta a la de ayer: ya
+no falta contrato, falta la predecesora.
 
 ## Enmienda `S0.3` — ✅ COMPLETA
 

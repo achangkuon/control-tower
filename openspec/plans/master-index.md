@@ -1,7 +1,7 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-04 contra `origin/master@4621d3f`; cierre verificado de `S3.3` y `S3.4` habilitada tras revalidarse contra el SHA integrado.
+> Última reconciliación: 2026-08-04 contra `origin/master@3e9e8c7`; cierre verificado de `S3.3`, `S3.4` habilitada y contrato ejecutable de `S5.1` sellado.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md).
 
 ## 🔢 Orden de ejecución
@@ -11,7 +11,7 @@
 | # | Sesión | Plan | Estado | Qué es |
 |---|---|---|---|---|
 | ▶ | `S3.4` | P3 | 🟢 LISTO | Persistencia y ciclo de vida de Jornada. **Es la próxima** — cierra el hueco que aceptó `S3.3` y **cierra P3 entero** |
-| 2 | `S5.1` | P5 | 📋 PLANIFICADO | Candidate contracts + authorization store |
+| 2 | `S5.1` | P5 | 📋 PLANIFICADO | Candidate contracts + authorization store. **Contrato sellado**; espera `S3.4`, no espera decisiones |
 | 3 | `S4.1` | P4 | 📋 PLANIFICADO | Hosts y línea exclusiva — **cierra P4 entero** |
 | 4 | `S5.2` | P5 | 📋 PLANIFICADO | Entrega idempotente y reconciliación |
 | 5 | `S5.4` | P5 | 📋 PLANIFICADO | Ruteo de escalamiento fuera/en casa |
@@ -34,7 +34,11 @@
 
 **Capacidad de ejecución: 1.** Sólo `S3.4` está 🟢 LISTO. P3 es una sola cadena `S3.1 → S3.2 → S3.3 → S3.4`, así que no admite paralelismo interno.
 
-**Pero el horizonte cambió: `S5.1` dejó de estar bloqueada por dependencias.** Depende de `S3.2` ✅ y `S3.3` ✅, y las dos están integradas. Sigue 📋 PLANIFICADO por dos razones distintas, y conviene no confundirlas: (1) su contrato ejecutable **no está sellado** —le falta el paso de `session-plan` que `S3.3` sí recibió—, y (2) la decisión `escala` **abierta** sobre revocación activa al terminar una Jornada **la contamina**, porque su store de autorización tendría que exponer una ruta de revocación en cascada que hoy no está en su alcance. Sellar exige cero decisiones `escala` abiertas, así que **(2) bloquea a (1)**: mientras el maintainer no resuelva esa decisión, `S5.1` no es sellable. Resuelta la decisión, `S5.1` se vuelve un segundo frente de planificación real, en paralelo a la ejecución de `S3.4` — que es la condición que no existía durante `S3.3`.
+**`S5.1` quedó sellada el 2026-08-04, en paralelo a la ejecución de `S3.4`.** El maintainer resolvió la decisión `escala` de revocación activa —**invalidación pasiva**: terminar una Jornada incrementa `jornada_revision` y nada más, sin cascada y sin garbage collector—, y con eso `S5.1` pasó a cero decisiones `escala` abiertas. Recibió `Área`, `Prohibido`, `Recurso`, ownership explícito del authorization store, tres Módulos, diez Tareas y **veinte criterios binarios**.
+
+**El sello descubrió una dependencia nueva, y la produjo la propia decisión: `S5.1` → `S3.4`.** Exigir Jornada `ACTIVE` y `jornada_revision` actual antes de todo efecto irreversible obliga a leer una Jornada persistida, y `readJornada` la entrega `S3.4` en `T3.4.1.2`. Hoy no existe: `policy/jornada.mjs` es un resolvedor puro sin store. Sumado a que las dos comparten `main-store/store.mjs` en su `Área`, la conclusión es firme: **planificar en paralelo sí, implementar en simultáneo no.** `S5.1` sigue 📋 PLANIFICADO, pero ya no por falta de contrato — por falta de predecesora.
+
+**También resolvió una colisión de IDs que estaba escondida.** `M5.1.1` estaba definido dos veces con contenido incompatible: `Candidate` en `checkpointed-delivery` y `Dry-run reports` en `role-routed-continuation`. Gobierna **`Candidate`**, por tres señales del propio plan. La consecuencia es que el contenido de dry-run sale del alcance de `S5.1` y **queda sin ID asignado** — ver decisiones abiertas.
 
 `installable-v1` y `autonomous-v2` siguen siendo afinidades de trabajo, no identidades de producto.
 
@@ -62,9 +66,9 @@
 11. **La escritura atómica del capability registry es propia de `S3.3`, no reusa `registry/store.mjs`.** Se prefirió aislamiento sobre reuso: no tocar un componente en producción con tests propios. `registry/**` entra al `Prohibido` de `S3.3`, que así no puede romper el registro de proyectos. El costo aceptado es una segunda implementación de escritura atómica, mitigada por un **criterio de aceptación de paridad** — symlink, modos distintos de `0700`/`0600`, dueño ajeno, lock ocupado y revisión desactualizada se rechazan idénticamente en ambas, verificado por test.
 12. **La persistencia y el ciclo de vida de Jornada se enumeran como `S3.4`, con alcance pasivo.** `jornada-v1` existía como contrato sin implementación. La Sesión persiste, transiciona y lee Jornadas, e incrementa `jornada_revision` en toda transición; **no** dispara revocación activa en cascada sobre capabilities ni autorizaciones vivas. P3 pasa de 3 a 4 Sesiones.
 
-**Siguen ABIERTAS — dos.** (1) **La autenticación del puente**: un chat de Telegram es un canal, no una identidad, y `S8.7` transporta autorizaciones que deciden merges; no bloquea nada hasta `S8.7`. (2) **Si terminar una Jornada debe revocar activamente** las capabilities y autorizaciones vivas, en vez de sólo invalidarlas por drift — clase expansión de alcance más seguridad y permisos. **Contamina `S5.1`**, y **no** contamina `S3.4`, que quedó enumerada como pasiva por decisión del maintainer. **Desde el cierre de `S3.3` esta es la decisión que gobierna el horizonte:** `S5.1` ya tiene sus dependencias satisfechas, así que es lo único que impide sellarla y abrir un segundo frente.
+**Siguen ABIERTAS — dos.** (1) **La autenticación del puente**: un chat de Telegram es un canal, no una identidad, y `S8.7` transporta autorizaciones que deciden merges; no bloquea nada hasta `S8.7`. (2) **Dónde vive el contenido de dry-run que salió de `S5.1`** — `NO_SCOPE`, denegación, drift de horizonte y `reconcile→Support→Policy`, huérfanos desde que se resolvió la colisión de `M5.1.1` a favor de `Candidate`. **Clase:** expansión de alcance. **Contamina `S5.3`**, su destino natural, cuya continuación consumiría esos reportes. **No** contamina `S5.1`, que quedó sellada sin ese alcance, ni `S3.4`. No bloquea nada hasta `S5.3`, séptima en el orden de ejecución.
 
-**Las catorce Sesiones de la cadena tienen `Decisiones` declaradas** bajo la §11 del [estándar de planes](/home/emili/.claude/skills/_shared/plan-naming-convention.md): **64 en total**, 42 `derivable` con criterio falsificable y autoridad nombrada, 22 `escala` con su clase y su `Contamina:`. De esas 22, **6 ya están resueltas** por el maintainer — 2 el 2026-08-03 (`S5.1`) y 4 el 2026-08-04 (`S3.2` y `S3.3`). `S3.2` y `S3.3` no tienen decisiones `escala` abiertas; `S3.4` tiene una que no la bloquea.
+**Las catorce Sesiones de la cadena tienen `Decisiones` declaradas** bajo la §11 del [estándar de planes](/home/emili/.claude/skills/_shared/plan-naming-convention.md): **64 en total**, 42 `derivable` con criterio falsificable y autoridad nombrada, 22 `escala` con su clase y su `Contamina:`. De esas 22, **7 ya están resueltas** por el maintainer — 2 el 2026-08-03 (`S5.1`) y 5 el 2026-08-04 (`S3.2`, `S3.3` y la de revocación activa). Esa última queda **registrada en `S3.4` y en `S5.1`** porque gobierna a las dos, pero es **una sola decisión** y se cuenta una vez. `S3.2`, `S3.3`, `S3.4` y `S5.1` no tienen decisiones `escala` abiertas.
 
 **No se puede sellar implementación desatendida de la propia Torre.** El sello exige supervisión viva de la Torre —única ruta, Torre inactiva ⇒ `BLOCKED`— y los dos tests P0 de `test/migration.test.mjs` abortan si existe `.git/control-tower/ACTIVE`, marcador que `restore-fixture.mjs:93-101` resuelve por `--git-common-dir` y que comparten los seis worktrees. Torre armada ⇒ la verificación final falla, y ese gate es terminal sin reintento. Torre apagada ⇒ el sello no arranca. **Es específico de este repositorio**: para cualquier otro proyecto, sellar con la Torre armada funciona. Acá la ruta es escritor único con la Torre desarmada, sellando el **alcance** — criterios binarios y cero decisiones abiertas.
 

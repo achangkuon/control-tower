@@ -17,18 +17,38 @@
 
 | Campo | Detalle |
 |---|---|
-| Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` y `S3.3`, `S5.2` de `S4.1` y `S3.3`, `S5.3` de `S5.2`, `S5.4` de `S5.1` y `S5.5` de `S5.4`. |
+| Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1` y `S5.5` de `S5.4`. |
 | Outputs | F: authorization store, Telegram, validación Git/PR/check/SHA, entrega idempotente y post-check. G: planning horizon, reconciliación, apply/verify, Binding Delta y continuación del siguiente `slice_id`. Más el ruteo de escalamiento de `S5.4` y la planificación diferible de `S5.5`. |
-| Roadmap | Ejecutar `S5.1`, esperar `S4.1`, continuar con `S5.2` y cerrar con `S5.3`. `S5.4` se abre apenas cierra `S5.1` y no depende del resto de la cadena; `S5.5` sigue a `S5.4` por la misma hebra. Cada Sesión es una unidad entregable a `master`. |
+| Roadmap | Esperar `S3.4`, ejecutar `S5.1` —contrato sellado el 2026-08-04—, esperar `S4.1`, continuar con `S5.2` y cerrar con `S5.3`. `S5.4` se abre apenas cierra `S5.1` y no depende del resto de la cadena; `S5.5` sigue a `S5.4` por la misma hebra. Cada Sesión es una unidad entregable a `master`. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
 
 ## Sesión 5.1 — Change F candidate contracts
 
-**Estado:** 📋 PLANIFICADO
+**Estado:** 📋 PLANIFICADO — **contrato ejecutable sellado el 2026-08-04** sobre `origin/master@3e9e8c7`. No es 🟢 LISTO todavía: le falta `S3.4`, no le falta contrato.
 
-**Dependencias:** `S3.2` ✅ integrada, `S3.3` ✅ integrada en `4621d3f`. **Las dos están satisfechas desde el 2026-08-04.** Lo que mantiene esta Sesión en 📋 PLANIFICADO no son sus dependencias, sino que su contrato ejecutable no está sellado —no declara `Área` ni `Prohibido`— y que la decisión `escala` abierta sobre revocación activa al terminar una Jornada la contamina. Sellar exige cero decisiones `escala` abiertas, así que la decisión va primero.
+**Depende de:** `S3.2` ✅, `S3.3` ✅ integrada en `4621d3f`, **`S3.4`**.
 
-Define identidad y freeze de `candidate_revision`, invalidación, sucesores, compatibilidad e idempotencia. La definición de `M5.1.1` y `T5.1.1.1`–`T5.1.1.3` vive en [`tasks.md`](../../changes/autonomous-v2-checkpointed-delivery/tasks.md#s51-change-f-contracts--m511-candidate).
+**Por qué depende también de `S3.4` — es nuevo, y lo produjo la decisión del maintainer.** Exigir Jornada `ACTIVE` y `jornada_revision` actual antes de todo efecto irreversible obliga a **leer una Jornada persistida**. Hoy eso no existe: `policy/jornada.mjs`, que entregó `S3.2`, es un resolvedor puro que recibe la Jornada como argumento y no la persiste. `readJornada` la entrega `S3.4` en `T3.4.1.2`. Sin esa función, el criterio de revalidación no es implementable ni verificable.
+
+**Área:** `contracts/candidate-revision.mjs`, `schemas/candidate-revision-v1.schema.json`, `contracts/{schema-registry,validate}.mjs`, `main-store/store.mjs`, `continuation/{derivation,support}.mjs`, `test/continuation/**`, `test/main-store.test.mjs`, `test/contracts/schema.test.mjs`, `test/fixtures/contracts/schema-cases-v1.json`
+
+**Prohibido:** `core.mjs`, `mcp.mjs`, `delivery/**`, `jornada/**`, `capabilities/**`, `policy/**`, `registry/**`, `workspace/**`, `openspec/plans/**`, `openspec/specs/**`
+
+**Por qué el `Área` incluye `contracts/**`:** misma razón verificada en `S3.3`. Un schema fuera del mapa `schemaFiles` de `contracts/schema-registry.mjs` **no tiene validador** —`validatorFor` devuelve `null` y `validate` tira `Unknown schema`—, así que `candidate-revision-v1` no sirve de nada hasta quedar registrado, con su invariante cross-field en `contracts/validate.mjs` y su caso en el fixture.
+
+**Por qué `jornada/**` está prohibido pese a ser central:** `S5.1` **lee** la Jornada, nunca la escribe ni la transiciona. `jornada/lifecycle.mjs` es el `Área` de `S3.4` y se importa sin modificar, igual que `S3.3` consumió `main-store/authority.mjs`. Una segunda ruta de transición de Jornada sería una segunda noción de estado vivo.
+
+**Colisión declarada con `S3.4` sobre `main-store/store.mjs`.** Las dos Sesiones tienen ese archivo en su `Área`: `S3.4` le agrega `createJornada`/`readJornada`/`transitionJornada`, `S5.1` toma posesión del authorization store que ya vive ahí. **Planificar en paralelo: sí. Implementar en simultáneo: no.** Y no es sólo colisión de escritura — es dependencia dura: `S5.1` necesita llamar a una función que `S3.4` todavía no escribió.
+
+**Recurso:** Main / ninguno. Escritura por CAS de filesystem en `main-store/store.mjs` bajo `assertMain`, sin migraciones de SQLite, sin `db-writer` y sin token de entrega. La lectura del ledger para derivación es **sólo lectura** y nunca pasa por `core.mjs`, que queda opaco al plan.
+
+**Entrega:** commit directo a `master` + push, sin PR ([`AGENTS.md`](../../../AGENTS.md)). Forecast **380–500 líneas**, en el borde de encadenado de 400: se entrega **encadenada por Módulo** —`M5.1.1`, `M5.1.2`, `M5.1.3`, cada uno con su commit— más el commit documental de cierre, que es del planner.
+
+**Ownership del authorization store — explícito.** `S5.1` es su **único** dueño desde este sello. `createAuthorization` y `consumeAuthorization` (`main-store/store.mjs:122` y `:133`) sólo se modifican dentro de esta Sesión; cualquier otra los importa. `S3.4` toca el mismo archivo pero **no** esas funciones: agrega el género Jornada al lado, reusando `commit` y `assertMain`.
+
+Define identidad y freeze de `candidate_revision`, invalidación, sucesores, compatibilidad e idempotencia, más la derivación del siguiente Módulo y la frontera del subagente Support.
+
+**Colisión de IDs — resuelta el 2026-08-04 por el maintainer.** `M5.1.1` estaba definido dos veces con contenido incompatible: `Candidate` en el [`tasks.md` de `checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/tasks.md#s51-change-f-contracts--m511-candidate) (2026-07-30) y `Dry-run reports` en el [`tasks.md` de `role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/tasks.md) (2026-08-03). **Gobierna `Candidate`**, por tres señales del propio plan: el header dice que `d232fdf` *"suma dos Módulos nuevos"* —o sea `M5.1.1` no cambió—, la prosa de esta Sesión describe identidad y freeze, y sus tres decisiones `derivable` son todas sobre identidad de candidato. **Consecuencia:** el contenido de dry-run —`NO_SCOPE`, denegación, drift de horizonte, `reconcile→Support→Policy`— **sale del alcance de `S5.1`** y queda sin ID asignado; su destino natural es `S5.3`, pero moverlo es expansión de alcance y necesita decisión del maintainer.
 
 > **Prerrequisito ✅ RESUELTO el 2026-08-03 (`6d37642`).** `S5.1` toma posesión del authorization
 > store, y ese store arrancaba con un contrato roto: `schemas/authorization-v1.schema.json` y
@@ -55,6 +75,64 @@ Define identidad y freeze de `candidate_revision`, invalidación, sucesores, com
 - `derivable` — cómo se comporta una operación repetida sobre el mismo candidato. **Criterio:** idempotente por identidad de candidato; repetir no produce un segundo efecto. Falsificable: dos invocaciones idénticas que generen dos efectos remotos. **Autoridad:** el alcance declarado de `S5.1`.
 - `escala` — cuánto vive una autorización antes de expirar. **Clase:** seguridad y permisos. **RESUELTA el 2026-08-03 por el maintainer: una hora.** Cubre el caso real —aprobar desde el celular y que el agente ejecute en minutos— sin dejar una aprobación armada toda la noche. La expiración por tiempo es la **segunda** capa: la primera es la invalidación por contenido, que el candidato congelado ya provee. Falsificable: una autorización consumida más de una hora después de emitida. **Contaminaba:** `S5.2` y `S5.5`, ambas destrabadas.
 - `escala` — si un sucesor hereda la autorización de su predecesor. **Clase:** seguridad y permisos. **RESUELTA el 2026-08-03 por el maintainer, con una condición que la vuelve verificable: hereda hasta el horizonte declarado (`planning.horizon_ceiling`, hoy `2`) si y sólo si, en el momento de la aprobación, todas las Sesiones dentro de ese horizonte están selladas — cero decisiones `escala` abiertas.** Si alguna tiene una abierta, el horizonte **colapsa** ahí y la herencia se corta en la Sesión anterior. El razonamiento es que horizonte y sello son garantías distintas: el horizonte acota **hasta dónde** llega la aprobación, el sello garantiza que **lo que alcanza ya está determinado**. Sin el sello, heredar equivale a autorizar contenido que se define después de aprobado. Falsificable: un sucesor con una decisión `escala` abierta que ejecute bajo autorización heredada. **Contaminaba:** `S5.3` y `S8.7`, ambas destrabadas.
+- `escala` — si terminar una Jornada debe revocar activamente las capabilities y autorizaciones vivas. **Clase:** expansión de alcance, y seguridad y permisos. **RESUELTA el 2026-08-04 por el maintainer: no. La invalidación es pasiva.** Terminar una Jornada **incrementa `jornada_revision`** y nada más; no dispara cascada. Las capabilities y autorizaciones anteriores quedan inutilizables **al revalidar**, no al terminar: el que las quiera usar revalida contra la Jornada y falla cerrado por drift de revisión. `S5.1` exige Jornada `ACTIVE` y `jornada_revision` actual **antes de todo efecto irreversible**. Una capability equivalente se reemplaza naturalmente por `agent_role` + `capability`, sin ID nuevo. **La poda de capabilities discontinuadas queda fuera de alcance: no se construye garbage collector.** Falsificable: cualquier ruta que mute una capability o una autorización como efecto de terminar una Jornada, o cualquier efecto irreversible que se ejecute sin revalidar la Jornada. **Autoridad:** decisión del maintainer del 2026-08-04. **Contaminaba:** `S5.1`, destrabada — era la única decisión `escala` abierta que le quedaba.
+
+### Módulo M5.1.1 — Candidate
+
+- [ ] Tarea T5.1.1.1 — RED: verificación de commit/árbol final, freeze de identidad y `host_epoch`,
+  separación del ledger, invalidación, sucesor e idempotencia. Incluye **dos contenidos distintos que
+  no pueden resolver a la misma `candidate_revision`** y **una operación repetida sobre el mismo
+  candidato que no produce un segundo efecto**.
+- [ ] Tarea T5.1.1.2 — GREEN: implementar `schemas/candidate-revision-v1.schema.json` y
+  `contracts/candidate-revision.mjs`, registrar el schema en `contracts/schema-registry.mjs`, sumar su
+  invariante en `contracts/validate.mjs` y su caso al fixture de contratos, respetando la frontera del
+  ledger.
+- [ ] Tarea T5.1.1.3 — REFACTOR: unificar los digests de identidad y de evidencia por un solo camino,
+  para que no puedan divergir. `bun test test/contracts test/main-store.test.mjs`.
+
+### Módulo M5.1.2 — Derivación del siguiente Módulo y claim del Worker
+
+- [ ] Tarea T5.1.2.1 — RED: la derivación avanza sólo si el documento de plan no cambió desde el cierre
+  anterior; enumeración por digest y cumplimiento leído de `ct_delivery`/`ct_claim` en **sólo lectura**.
+- [ ] Tarea T5.1.2.2 — RED: memoria narrativa que declara un Módulo completo **sin** cumplimiento en el
+  ledger **no** avanza la derivación.
+- [ ] Tarea T5.1.2.3 — RED: un claim del Worker que coincide registra evidencia y **no otorga ningún
+  privilegio**; uno que no coincide produce `CT_CLAIM_MISMATCH`, sin assignment, nombrando los dos valores.
+- [ ] Tarea T5.1.2.4 — GREEN: traducción `handoff_id` → coordenada de plan **sólo** en registros
+  propiedad de Main; `core.mjs` queda opaco al plan. Toda operación de esta ruta revalida la Jornada
+  antes de cualquier efecto irreversible. `bun test test/continuation`.
+
+### Módulo M5.1.3 — Frontera del subagente Support
+
+- [ ] Tarea T5.1.3.1 — RED: Support no aparece **ni** en el board de la Torre **ni** en la tabla de
+  locks, y ninguna transferencia de lock puede nombrarlo.
+- [ ] Tarea T5.1.3.2 — RED: un host sin delegación a subagente de contexto aislado rechaza la
+  continuación autónoma con `CT_HOST_CAPABILITY_MISSING`; no existe ninguna ruta de sustituto en línea.
+- [ ] Tarea T5.1.3.3 — GREEN: Main persiste `support-proposal-v1`; el subagente **no** tiene entrada
+  propia en el registry. `bun test test/continuation test/main-store.test.mjs`.
+
+**Criterios de aceptación de S5.1** — todos deben pasar para cerrar:
+
+- [ ] Dos contenidos distintos nunca resuelven a la misma `candidate_revision`
+- [ ] Un candidato cuya identidad cambió no se consume bajo la autorización previa
+- [ ] Una operación repetida sobre el mismo candidato no produce un segundo efecto remoto
+- [ ] El authorization store valida contra `authorization-v1` y no contra ninguna lista de campos escrita a mano
+- [ ] Una autorización consumida más de una hora después de emitida se rechaza
+- [ ] **Todo efecto irreversible exige Jornada `ACTIVE` y `jornada_revision` actual**, y falla cerrado ante Jornada terminal, revisión desactualizada o Jornada ausente
+- [ ] Una autorización emitida bajo una `jornada_revision` anterior no se consume después de una transición de Jornada
+- [ ] **No existe revocación activa en cascada:** terminar una Jornada no muta ninguna capability ni ninguna autorización
+- [ ] **No existe garbage collector ni poda** de capabilities discontinuadas en ninguna ruta
+- [ ] Una capability equivalente se reemplaza por `agent_role` + `capability`, sin acuñar un ID nuevo
+- [ ] La derivación no avanza con memoria narrativa: sin cumplimiento en el ledger no hay avance
+- [ ] Un claim del Worker en desacuerdo produce `CT_CLAIM_MISMATCH`, sin assignment y nombrando ambos valores
+- [ ] Un claim del Worker que coincide registra evidencia y no otorga ningún privilegio
+- [ ] Support no figura en el board ni en la tabla de locks, y ninguna transferencia de lock puede nombrarlo
+- [ ] Un host sin delegación a subagente aislado rechaza la continuación con `CT_HOST_CAPABILITY_MISSING`, sin sustituto en línea
+- [ ] `core.mjs` sigue opaco al plan: ninguna coordenada de plan se resuelve fuera de registros propiedad de Main
+- [ ] `candidate-revision-v1` está registrado en `contracts/schema-registry.mjs` y tiene su caso en el fixture de contratos
+- [ ] `bun test test/continuation test/main-store.test.mjs test/contracts` pasa completo
+- [ ] `bun test` no introduce fallos nuevos sobre la línea base que deje `S3.4`
+- [ ] El diff de implementación no toca ninguna ruta del `Prohibido`
 
 ## Sesión 5.2 — Change F delivery adapters/reconciliation
 
