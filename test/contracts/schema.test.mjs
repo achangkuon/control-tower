@@ -61,6 +61,30 @@ describe("V1 schema boundary", () => {
     expect(validate("authorization", input).delivery.shape).toBe("direct-push")
   })
 
+  test("rejects support proposal role, project, and schema drift", () => {
+    const proposal = {
+      schema: "support-proposal",
+      schema_version: 1,
+      proposal_id: "proposal-a",
+      project_id: "project-a",
+      caller_role: "MAIN",
+      checkpoint_ref: "checkpoints/a.json",
+      plan_enumeration_digest: `sha256:${"a".repeat(64)}`,
+      ledger_digest: `sha256:${"b".repeat(64)}`,
+      worker_claim: "claim-a",
+      primary: { module_id: "M3.2.1", task_ids: ["T3.2.1.1"] },
+      alternatives: [],
+      conflicts: [],
+      evidence_refs: [],
+      expires_at: "2099-01-01T00:00:00.000Z",
+      state: "EXECUTABLE",
+    }
+    expect(validate("supportProposal", proposal)).toEqual(proposal)
+    expect(errorCode(() => validate("supportProposal", { ...proposal, caller_role: "WORKER" }))).toBe("CT_SCHEMA_INVALID")
+    expect(errorCode(() => validate("supportProposal", { ...proposal, project_id: "" }))).toBe("CT_SCHEMA_INVALID")
+    expect(errorCode(() => validate("supportProposal", { ...proposal, schema: "policy-report" }))).toBe("CT_SCHEMA_INVALID")
+  })
+
   test("binds the pull request number to the pull-request shape only", () => {
     const withoutNumber = structuredClone(fixtures.authorization)
     delete withoutNumber.delivery.number

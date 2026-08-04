@@ -101,10 +101,9 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
     if (expectedRevision !== undefined && expectedRevision !== revision) fail("CT_CAS_MISMATCH", "Store revision changed")
     const prior = current && Object.fromEntries(Object.entries(current).filter(([key]) => key !== "revision_history"))
     const next = {
-      ...input, actor: undefined, expected_revision: undefined, revision: revision + 1,
+      ...input, expected_revision: undefined, revision: revision + 1,
       revision_history: current ? [...(current.revision_history ?? []), prior] : [],
     }
-    delete next.actor
     delete next.expected_revision
     atomicWrite(path, next, () => {
       const committed = existsSync(path) ? parse(path) : null
@@ -138,6 +137,8 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
       if (!existsSync(path)) fail("CT_AUTH_INVALID", "Unknown authorization")
       const current = parse(path)
       if (current.state !== "PENDING") fail("CT_AUTH_TERMINAL", "Authorization is terminal")
+      const expiresAt = Date.parse(current.expires_at)
+      if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) fail("CT_AUTH_EXPIRED", "Authorization has expired")
       if (input.expected_revision !== current.revision) fail("CT_CAS_MISMATCH", "Authorization revision changed")
       const audit = Object.freeze({
         kind: "authorization-terminal", authorization_id: input.authorization_id,

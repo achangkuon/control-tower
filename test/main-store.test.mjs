@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs"
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { basename, dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -155,6 +155,14 @@ describe("atomic owner-only Main store", () => {
     expect(readdirSync(join(root, "campaigns")).length).toBe(1)
   })
 
+  test("persists the Main actor on every authority record", () => {
+    const { store } = setup()
+    const campaign = store.persistCampaign({ actor: "MAIN", project_id: "project-a", campaign_id: "campaign-actor", expected_revision: 0 })
+    expect(campaign.actor).toBe("MAIN")
+    expect(JSON.parse(readFileSync(campaign.record_path, "utf8")).actor).toBe("MAIN")
+    expect(code(() => store.persistCampaign({ project_id: "project-a", campaign_id: "campaign-no-actor", expected_revision: 0 }))).toBe("CT_AUTH_INVALID")
+  })
+
   test("permits exactly one concurrent CAS writer at one expected revision", async () => {
     const { root, store } = setup()
     store.persistCampaign({ actor: "MAIN", project_id: "project-a", campaign_id: "campaign-race", expected_revision: 0 })
@@ -187,6 +195,21 @@ describe("atomic owner-only Main store", () => {
     expect(consumed.audit_ref.kind).toBe("authorization-terminal")
     expect(code(() => store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-a", decision: "REVOKED", expected_revision: 2 }))).toBe("CT_AUTH_TERMINAL")
     expect(store.readAuthorization("auth-a").state).toBe("APPROVED")
+  })
+
+  test("rejects consumption after an authorization expires", () => {
+    const { store } = setup()
+    store.createAuthorization({ actor: "MAIN", ...authorizationRecord("auth-expired"), expires_at: "2020-01-01T00:00:00.000Z" })
+    expect(code(() => store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-expired", decision: "APPROVED", expected_revision: 1 }))).toBe("CT_AUTH_EXPIRED")
+    expect(store.readAuthorization("auth-expired").state).toBe("PENDING")
+  })
+
+  test("rejects an unparseable persisted authorization expiry before consumption", () => {
+    const { store } = setup()
+    const created = store.createAuthorization({ actor: "MAIN", ...authorizationRecord("auth-malformed-expiry") })
+    writeFileSync(created.record_path, `${JSON.stringify({ ...store.readAuthorization("auth-malformed-expiry"), expires_at: "not-a-timestamp" })}\n`)
+    expect(code(() => store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-malformed-expiry", decision: "APPROVED", expected_revision: 1 }))).toBe("CT_AUTH_EXPIRED")
+    expect(store.readAuthorization("auth-malformed-expiry").state).toBe("PENDING")
   })
 
   test("records a rejected decision as its own terminal state", () => {
