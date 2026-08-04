@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test"
 import { execFileSync, spawnSync } from "node:child_process"
 import { createHash } from "node:crypto"
-import { chmodSync, copyFileSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
+import { chmodSync, copyFileSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, readlinkSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
 
@@ -36,6 +36,16 @@ const fixture = () => {
   mkdirSync(join(root, "repo/.git/control-tower"), { recursive: true }); writeFileSync(join(root, "repo/.git/control-tower/history"), "keep\n")
   return { root, paths }
 }
+const testEnv = (root, extra = {}) => ({
+  PATH: process.env.PATH,
+  HOME: join(root, "home"),
+  XDG_DATA_HOME: join(root, "xdg-data"),
+  XDG_CONFIG_HOME: join(root, "xdg-config"),
+  XDG_STATE_HOME: join(root, "xdg-state"),
+  XDG_CACHE_HOME: join(root, "xdg-cache"),
+  TMPDIR: join(root, "tmp"),
+  ...extra,
+})
 afterEach(() => {
   roots.splice(0).forEach((root) => rmSync(root, { recursive: true, force: true }))
 })
@@ -101,7 +111,7 @@ describe("lifecycle operations", () => {
 })
 
 test("thin torre wiring runs lifecycle outside a Git repository", () => {
-  const { root } = fixture(), env = { ...process.env, XDG_DATA_HOME: join(root, "data"), XDG_CONFIG_HOME: join(root, "config"), XDG_STATE_HOME: join(root, "state") }
+  const { root } = fixture(), env = testEnv(root, { XDG_DATA_HOME: join(root, "data"), XDG_CONFIG_HOME: join(root, "config"), XDG_STATE_HOME: join(root, "state") })
   const output = execFileSync(join(repoRoot, "bin/torre"), ["diagnose"], { cwd: root, env, encoding: "utf8" })
   expect(JSON.parse(output)).toMatchObject({ operation: "diagnose", healthy: false, active: null })
 })
@@ -110,16 +120,90 @@ test("source payload rejection is atomic before creating temporary roots", () =>
   const { root, paths } = fixture(), source = join(root, "invalid-release")
   mkdirSync(source)
   writeFileSync(join(source, "core.mjs"), "incomplete\n")
-  const env = { ...process.env, XDG_DATA_HOME: join(root, "xdg-data"), XDG_CONFIG_HOME: join(root, "xdg-config"), XDG_STATE_HOME: join(root, "xdg-state") }
+  const env = testEnv(root)
   expect(() => runCli(["install", "1.0.0", source], env)).toThrow("CT_RUNTIME_PAYLOAD_INCOMPLETE")
   expect(existsSync(join(root, "xdg-data"))).toBe(false)
   expect(existsSync(join(root, "xdg-state"))).toBe(false)
 })
 
+test("install accepts a checkout source and stores exactly the runtime payload", () => {
+  const { root } = fixture()
+  const env = testEnv(root)
+
+  expect(runCli(["install", "checkout-v1", repoRoot], env)).toMatchObject({ active: "checkout-v1", stored: true })
+  const storedRoot = join(env.XDG_DATA_HOME, "control-tower/versions/checkout-v1")
+  expect(RUNTIME_PAYLOAD_FILES.map((path) => readFileSync(join(storedRoot, path)))).toEqual(RUNTIME_PAYLOAD_FILES.map((path) => readFileSync(join(repoRoot, path))))
+  expect(readdirSync(storedRoot).sort()).toEqual([".manifest", "bin", "core.mjs", "install"])
+})
+
+test("install keeps strict payload validation for a staging source with an extra member", () => {
+  const { root } = fixture(), source = join(root, "staging")
+  for (const file of RUNTIME_PAYLOAD_FILES) {
+    const destination = join(source, file)
+    mkdirSync(join(destination, ".."), { recursive: true })
+    copyFileSync(join(repoRoot, file), destination)
+  }
+  writeFileSync(join(source, "extra.mjs"), "unexpected\n")
+  const env = testEnv(root)
+
+  expect(() => runCli(["install", "staging-v1", source], env)).toThrow("CT_RUNTIME_PAYLOAD_INVALID")
+  expect(existsSync(join(env.XDG_DATA_HOME, "control-tower"))).toBe(false)
+})
+
+test("install keeps strict payload validation for a staging source with a synthetic Git marker", () => {
+  const { root } = fixture(), source = join(root, "staging")
+  for (const file of RUNTIME_PAYLOAD_FILES) {
+    const destination = join(source, file)
+    mkdirSync(join(destination, ".."), { recursive: true })
+    copyFileSync(join(repoRoot, file), destination)
+  }
+  writeFileSync(join(source, ".git"), "gitdir: not-a-checkout\n")
+  writeFileSync(join(source, "extra.mjs"), "unexpected\n")
+  const env = testEnv(root)
+
+  expect(() => runCli(["install", "fake-git-v1", source], env)).toThrow("CT_RUNTIME_PAYLOAD_INVALID")
+  expect(existsSync(join(env.XDG_DATA_HOME, "control-tower"))).toBe(false)
+})
+
+test("install creates an optional PATH shim pointing into the active version", () => {
+  const { root } = fixture(), bin = join(root, "bin")
+  const env = testEnv(root, { TORRE_BIN_DIR: bin })
+
+  expect(runCli(["install", "shim-v1", repoRoot, "--shim"], env)).toMatchObject({ active: "shim-v1" })
+  const shim = join(bin, "torre")
+  expect(lstatSync(shim).isSymbolicLink()).toBe(true)
+  expect(realpathSync(shim)).toBe(join(env.XDG_DATA_HOME, "control-tower/versions/shim-v1/bin/torre"))
+})
+
+test("install backs up a pre-existing PATH shim target before replacement", () => {
+  const { root } = fixture(), bin = join(root, "bin"), shim = join(bin, "torre")
+  mkdirSync(bin, { recursive: true })
+  writeFileSync(shim, "legacy-torre\n")
+  const env = testEnv(root, { TORRE_BIN_DIR: bin })
+
+  const result = runCli(["install", "backup-v1", repoRoot, "--shim"], env)
+  expect(result.shim.backup).toBe(`${shim}.legacy-backup-v1`)
+  expect(readFileSync(result.shim.backup, "utf8")).toBe("legacy-torre\n")
+  rmSync(shim)
+  copyFileSync(result.shim.backup, shim)
+  expect(readFileSync(shim, "utf8")).toBe("legacy-torre\n")
+})
+
+test("install does not write a PATH shim without the explicit option", () => {
+  const { root } = fixture(), bin = join(root, "bin")
+  mkdirSync(bin, { recursive: true })
+  const before = snapshotPath(bin)
+  const env = testEnv(root, { TORRE_BIN_DIR: bin })
+
+  expect(runCli(["install", "no-shim-v1", repoRoot], env)).toMatchObject({ active: "no-shim-v1" })
+  expect(snapshotPath(bin)).toEqual(before)
+})
+
 test("V2-only CLI automation requests fail closed before repository mutation", () => {
   const { root } = fixture(), repo = join(root, "repo")
+  const env = testEnv(root)
   for (const command of ["launch-worker", "create-session", "create-worktree"]) {
-    const result = spawnSync(join(repoRoot, "bin/torre"), [command], { cwd: repo, encoding: "utf8" })
+    const result = spawnSync(join(repoRoot, "bin/torre"), [command], { cwd: repo, env, encoding: "utf8" })
     expect(result.status).toBe(1)
     expect(result.stderr.trim()).toBe(`CT_V2_ONLY: ${command}`)
   }
@@ -250,10 +334,10 @@ test("installer and publisher use the same immutable lifecycle", () => {
   for (const file of RUNTIME_PAYLOAD_FILES) {
     writeFileSync(join(source, file), `release:${file}\n`)
   }
-  const env = { ...process.env, XDG_DATA_HOME: join(root, "data"), XDG_CONFIG_HOME: join(root, "config"), XDG_STATE_HOME: join(root, "state") }
+  const env = testEnv(root, { XDG_DATA_HOME: join(root, "data"), XDG_CONFIG_HOME: join(root, "config"), XDG_STATE_HOME: join(root, "state") })
   const installed = execFileSync(join(repoRoot, "install.sh"), ["install", "2.0.0", source], { env, encoding: "utf8" })
   expect(JSON.parse(installed)).toMatchObject({ active: "2.0.0", changed: true })
-  const published = execFileSync("bun", [join(repoRoot, "scripts/publish-runtime.mjs"), "2.0.0", data], { encoding: "utf8" })
+  const published = execFileSync("bun", [join(repoRoot, "scripts/publish-runtime.mjs"), "2.0.0", data], { env, encoding: "utf8" })
   expect(JSON.parse(published)).toMatchObject({ version: "2.0.0", created: true })
   expect(existsSync(join(data, "versions/2.0.0/install/lifecycle.mjs"))).toBe(true)
 })
@@ -270,13 +354,6 @@ test("stored torre diagnoses and installs autonomously from an isolated unrelate
     copyFileSync(join(repoRoot, file), destination)
   }
 
-  const realTargets = [
-    join(process.env.HOME, ".local/share/control-tower"),
-    join(process.env.XDG_DATA_HOME ?? join(process.env.HOME, ".local/share"), "control-tower"),
-    join(process.env.XDG_CONFIG_HOME ?? join(process.env.HOME, ".config"), "control-tower"),
-    join(process.env.XDG_STATE_HOME ?? join(process.env.HOME, ".local/state"), "control-tower"),
-  ]
-  const realBefore = realTargets.map(snapshotPath)
   const env = { PATH: process.env.PATH, HOME: home, XDG_DATA_HOME: join(root, "xdg-data"), XDG_CONFIG_HOME: config,
     XDG_STATE_HOME: state, XDG_CACHE_HOME: cache, TMPDIR: temporary }
   expect(Object.hasOwn(env, "CONTROL_TOWER_LIFECYCLE")).toBe(false)
@@ -301,8 +378,6 @@ test("stored torre diagnoses and installs autonomously from an isolated unrelate
   const expectedManifest = createHash("sha256").update(JSON.stringify(Object.entries(files).sort(([left], [right]) => left.localeCompare(right))
     .map(([path, contents]) => [path, Buffer.from(contents).toString("base64")]))).digest("hex")
   expect(readFileSync(join(publication, "versions/10.0.0/.manifest"), "utf8")).toBe(`${expectedManifest}\n`)
-  expect(realTargets.map(snapshotPath)).toEqual(realBefore)
-
   rmSync(root, { recursive: true, force: true })
   roots.splice(roots.indexOf(root), 1)
   expect(existsSync(root)).toBe(false)

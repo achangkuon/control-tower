@@ -1,4 +1,5 @@
 import { lstatSync, readdirSync, readFileSync } from "node:fs"
+import { spawnSync } from "node:child_process"
 import { isAbsolute, join, relative, resolve, sep } from "node:path"
 
 export const RUNTIME_PAYLOAD_FILES = [
@@ -81,4 +82,9 @@ export function readRuntimePayload(root, { strict = true } = {}) {
   return validateRuntimePayload(Object.fromEntries(
     RUNTIME_PAYLOAD_FILES.map((path) => [path, readMember(resolved, path)]),
   ))
+}
+
+export function isRuntimeCheckout(root) {
+  const result = spawnSync("git", ["-C", resolve(root), "rev-parse", "--is-inside-work-tree"], { encoding: "utf8" })
+  return result.status === 0 && result.stdout.trim() === "true"
 }

@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
-import { appendFileSync, chmodSync, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, closeSync, readFileSync, readdirSync, realpathSync, rmSync, renameSync, writeFileSync } from "node:fs"
+import { appendFileSync, chmodSync, copyFileSync, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, closeSync, readFileSync, readdirSync, realpathSync, rmSync, renameSync, symlinkSync, writeFileSync } from "node:fs"
 import { createHash } from "node:crypto"
-import { dirname, isAbsolute, join } from "node:path"
+import { dirname, isAbsolute, join, sep } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { clearActivePointer, readActivePointer, replaceActivePointer, rollbackActivePointer } from "./active-pointer.mjs"
-import { readRuntimePayload, RUNTIME_PAYLOAD_FILES } from "./runtime-payload.mjs"
+import { isRuntimeCheckout, readRuntimePayload, RUNTIME_PAYLOAD_FILES } from "./runtime-payload.mjs"
 import { storeVersion } from "./version-store.mjs"
 
 const audit = (stateRoot, record) => {
@@ -144,7 +144,31 @@ const restoreLegacyInstaller = (stateRoot) => {
   return fixture
 }
 
-export function lifecycle({ action, version, files, dataRoot, configRoot, stateRoot, legacyConfigPath, failValidation = false, pointerOptions, expectedMembers }) {
+const installPathShim = (dataRoot, version, shimPath) => {
+  if (!isAbsolute(shimPath)) throw new Error("CT_SHIM_PATH_INVALID")
+  const target = join(dataRoot, "versions", version, "bin/torre")
+  const versionsRoot = `${join(dataRoot, "versions")}${sep}`
+  let backup = null
+  try {
+    const stat = lstatSync(shimPath)
+    const existing = stat.isSymbolicLink() ? realpathSync(shimPath) : null
+    if (existing === target) return { path: shimPath, backup }
+    if (!existing?.startsWith(versionsRoot)) {
+      backup = `${shimPath}.legacy-${version}`
+      if (existsSync(backup)) throw new Error("CT_SHIM_BACKUP_EXISTS")
+      if (!stat.isFile() && !stat.isSymbolicLink()) throw new Error("CT_SHIM_TARGET_INVALID")
+      copyFileSync(shimPath, backup)
+    }
+    rmSync(shimPath)
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error
+  }
+  mkdirSync(dirname(shimPath), { recursive: true })
+  symlinkSync(target, shimPath)
+  return { path: shimPath, backup }
+}
+
+export function lifecycle({ action, version, files, dataRoot, configRoot, stateRoot, legacyConfigPath, failValidation = false, pointerOptions, expectedMembers, shimPath }) {
   const before = readActivePointer(dataRoot)
   if (action === "diagnose") {
     const installed = before ? join(dataRoot, "versions", before.version) : null
@@ -174,9 +198,10 @@ export function lifecycle({ action, version, files, dataRoot, configRoot, stateR
       throw error
     }
     const changed = before?.version !== pointer.version
-    if (!changed && !stored.created) return { operation: action, active: pointer.version, changed, stored: stored.created }
+    const shim = shimPath ? installPathShim(dataRoot, pointer.version, shimPath) : undefined
+    if (!changed && !stored.created) return { operation: action, active: pointer.version, changed, stored: stored.created, ...(shim ? { shim } : {}) }
     audit(stateRoot, { operation: action, version, outcome: "active", previous: pointer.previous, changed })
-    return { operation: action, active: pointer.version, changed, stored: stored.created }
+    return { operation: action, active: pointer.version, changed, stored: stored.created, ...(shim ? { shim } : {}) }
   }
   if (action === "rollback") {
     const current = readActivePointer(dataRoot)
@@ -201,14 +226,16 @@ export function lifecycle({ action, version, files, dataRoot, configRoot, stateR
   throw new Error("CT_LIFECYCLE_ACTION_INVALID")
 }
 
-export function runCli([action = "diagnose", version, source], env = process.env) {
+export function runCli([action = "diagnose", version, source, ...options], env = process.env) {
   const roots = {
     dataRoot: join(env.XDG_DATA_HOME ?? join(env.HOME, ".local/share"), "control-tower"),
     configRoot: join(env.XDG_CONFIG_HOME ?? join(env.HOME, ".config"), "control-tower"),
     stateRoot: join(env.XDG_STATE_HOME ?? join(env.HOME, ".local/state"), "control-tower"),
   }
-  const files = source ? readRuntimePayload(source) : undefined
-  return lifecycle({ ...roots, action, version, files, expectedMembers: RUNTIME_PAYLOAD_FILES, legacyConfigPath: join(env.XDG_CONFIG_HOME ?? join(env.HOME, ".config"), "opencode/opencode.json"), failValidation: env.CT_FAIL_VALIDATION === "1" })
+  if (options.some((option) => option !== "--shim")) throw new Error("CT_LIFECYCLE_OPTION_INVALID")
+  const files = source ? readRuntimePayload(source, { strict: !isRuntimeCheckout(source) }) : undefined
+  const shimPath = options.includes("--shim") ? join(env.TORRE_BIN_DIR ?? join(env.HOME, ".local/bin"), "torre") : undefined
+  return lifecycle({ ...roots, action, version, files, expectedMembers: RUNTIME_PAYLOAD_FILES, shimPath, legacyConfigPath: join(env.XDG_CONFIG_HOME ?? join(env.HOME, ".config"), "opencode/opencode.json"), failValidation: env.CT_FAIL_VALIDATION === "1" })
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
