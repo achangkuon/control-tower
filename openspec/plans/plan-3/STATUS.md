@@ -1,11 +1,12 @@
 # Plan 3 — Workspace y orquestación
 
-**Estado:** 🟢 LISTO
+**Estado:** 📋 PLANIFICADO
 
-> **`S3.1` ✅ COMPLETO en `d8924a6`.** `M3.1.1` captura el checkpoint canónico de repositorio,
-> base, resultado y evidencia sin efectos remotos. La verificación del candidato fue 11/0/23
-> enfocada y 476/0/2779 completa; la corrección de binding de evidencia quedó corroborada.
-> `S3.2` es ahora la entrada elegible del grafo.
+> **`S3.1` ✅ COMPLETO en `d8924a6`; `S3.2` ✅ COMPLETO en `22c43ae`.** `S3.2` deja
+> Policy/Jornada y la resolución fail-closed de delivery policy verificadas. El siguiente nodo
+> del grafo, `S3.3`, tiene su única decisión `escala` resuelta, pero sigue 📋 PLANIFICADO: su
+> `Área` no incluye `contracts/schema-registry.mjs`, no existen los paths `capabilities/**` ni
+> `test/capabilities/**`, y falta sellar su contrato técnico mediante `session-plan`.
 >
 > **`S3.2` cambió de contrato antes de empezar.** El corte política/seguridad de `d232fdf` le suma
 > `M3.2.3` (resolución de la política de entrega declarada, con fail-closed al valor más
@@ -17,9 +18,9 @@
 
 | Campo | Detalle |
 |---|---|
-| Dependencias | Para Autonomous V2, `S3.1` partió de `master@33c2c6e` y quedó implementada en `d8924a6`, con `S2.4`/project registry verificada y cerrada; `S3.2` depende de `S3.1` y `S3.3` de `S3.2`. |
+| Dependencias | Para Autonomous V2, `S3.1` partió de `master@33c2c6e` y quedó implementada en `d8924a6`, con `S2.4`/project registry verificada y cerrada; `S3.2` dependió de `S3.1` y `S3.3` depende de `S3.2` ✅. |
 | Outputs | C: `inspect`, `create`, `retire`, receipts y wrapper legacy de `jornada.sh`. D: Main routing, Support briefs, Policy Reports, presets, snapshots, budgets y assignments. Más el Agent Capability Registry de `S3.3`. |
-| Roadmap | `S3.1` está cerrada; ejecutar `S3.2`, ahora lista por ese cierre, y después `S3.3`. El trabajo posterior no enumerado de Change B no fue dependencia de `S3.1`; las responsabilidades legacy sin límite de un PR permanecen sin ID. |
+| Roadmap | `S3.1` y `S3.2` están cerradas. La duración predeterminada de disponibilidad de `S3.3` ya fue resuelta por el maintainer; antes de ejecutar la Sesión, `session-plan` debe sellar el contrato técnico, incluyendo el Área que requiere registrar su schema. El trabajo posterior no enumerado de Change B no fue dependencia de `S3.1`; las responsabilidades legacy sin límite de un PR permanecen sin ID. |
 | Referencias | [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/). Los proposals `sdd-tower-workspace-manager` y `sdd-tower-main-policy-jornada` fueron eliminados en `613a45d` por ser cáscaras sin avance; su intención vive en este STATUS. |
 
 ## Sesión 3.1 — Change C Workspace checkpoint
@@ -92,7 +93,7 @@ permaneció OFF y no hubo efectos remotos de runtime.
 
 ## Sesión 3.2 — Change D Global/project Policy/Jornada
 
-**Estado:** 🟢 LISTO
+**Estado:** ✅ COMPLETO
 
 **Depende de:** `S3.1` ✅.
 
@@ -135,68 +136,84 @@ otra Sesión, no de esta.
 
 ### Módulo M3.2.1 — Authority/contracts
 
-- [ ] Tarea T3.2.1.1 — RED: extender `test/contracts/schema.test.mjs` con el drift de rol, proyecto
+**Estado:** ✅ COMPLETO
+
+- [x] Tarea T3.2.1.1 — RED: extender `test/contracts/schema.test.mjs` con el drift de rol, proyecto
   y schema, y `test/main-store.test.mjs` con que **un registro de autoridad persistido sin
   identidad de actor falle cerrado**. Hoy `main-store/store.mjs:104,107` hace `actor: undefined` y
   `delete next.actor` antes de escribir, así que ningún registro contesta quién lo otorgó —
   contra §15.3 de [REQUIREMENTS](../../specs/sdd-tower-implementation-v1-requirements.md), que
   exige identidad de actor en **todo** efecto de autoridad.
-- [ ] Tarea T3.2.1.2 — GREEN: implementar los cinco schemas `reconciled-checkpoint-v1`,
+- [x] Tarea T3.2.1.2 — GREEN: implementar los cinco schemas `reconciled-checkpoint-v1`,
   `support-proposal-v1`, `policy-report-v2`, `assignment-v2` y `recovery-proof-v1`; registrarlos en
   `contracts/schema-registry.mjs`; escritura CAS ejercida sólo por Main; los códigos `CT_*`
   deterministas del diseño (`CT_ROLE_FORBIDDEN`, `CT_REPORT_STALE`, `CT_NO_EXECUTABLE_SCOPE`,
   `CT_POLICY_DENIED`, `CT_HORIZON_EXCEEDED`, `CT_POLICY_UNRESOLVED`, `CT_CLAIM_MISMATCH`,
   `CT_HOST_CAPABILITY_MISSING`); y la persistencia de la identidad de quien otorga.
-- [ ] Tarea T3.2.1.3 — REFACTOR: preservar los bytes de los contratos V1 ya aceptados y dejar el
+- [x] Tarea T3.2.1.3 — REFACTOR: preservar los bytes de los contratos V1 ya aceptados y dejar el
   audit por digest con los campos de §15.3 completos. `bun test test/contracts test/main-store.test.mjs`.
 
 ### Módulo M3.2.2 — Policy/Jornada
 
-- [ ] Tarea T3.2.2.1 — RED: agregar `test/policy/jornada.test.mjs` para Jornada inactiva y
+**Estado:** ✅ COMPLETO
+
+- [x] Tarea T3.2.2.1 — RED: agregar `test/policy/jornada.test.mjs` para Jornada inactiva y
   **vencida** —incluido que `consumeAuthorization` rechace una autorización pasada su `expires_at`,
   que hoy **no chequea en ningún punto** (`main-store/store.mjs:134-152`), dejando sin aplicación
   tanto la regla de una hora como la de "vence con la Jornada"—, más techo de horizonte resuelto,
   denegación, expansión, excepción y acciones irreversibles.
-- [ ] Tarea T3.2.2.2 — GREEN: implementar `policy/jornada.mjs` sobre `main-store/store.mjs`, con
+- [x] Tarea T3.2.2.2 — GREEN: implementar `policy/jornada.mjs` sobre `main-store/store.mjs`, con
   **elegibilidad únicamente**: resuelve si algo puede ocurrir, nunca a quién se le asigna ni por
   dónde se despacha. El `tasks.md` decía "extender `policy/delivery-policy.mjs`"; ese archivo
   **no existe**, así que esta Tarea lo crea junto al directorio.
-- [ ] Tarea T3.2.2.3 — REFACTOR: preservar los Policy Reports V1 legibles junto a
+- [x] Tarea T3.2.2.3 — REFACTOR: preservar los Policy Reports V1 legibles junto a
   `policy-report-v2`. `bun test test/policy`.
 
 ### Módulo M3.2.3 — Delivery-policy resolution
 
-- [ ] Tarea T3.2.3.1 — RED: `test/policy/delivery-policy.test.mjs` para fuente ausente, no
+**Estado:** ✅ COMPLETO
+
+- [x] Tarea T3.2.3.1 — RED: `test/policy/delivery-policy.test.mjs` para fuente ausente, no
   parseable, con valor desconocido, sin ligar, y por symlink / que escapa / de raíz ajena. **Cada
   campo sin resolver alcanza su valor más restrictivo y el motivo queda nombrado** con
   `CT_POLICY_UNRESOLVED`.
-- [ ] Tarea T3.2.3.2 — RED: ningún valor de política **ni excepción** alcanza un floor; se rechaza
+- [x] Tarea T3.2.3.2 — RED: ningún valor de política **ni excepción** alcanza un floor; se rechaza
   **nombrando el floor** en los cinco casos: mutación remota temprana, reescritura del candidato
   congelado, borrado del ledger, autoasignación del worker y dispatch no-Main.
-- [ ] Tarea T3.2.3.3 — GREEN: implementar `schemas/delivery-policy-v1.schema.json` y
+- [x] Tarea T3.2.3.3 — GREEN: implementar `schemas/delivery-policy-v1.schema.json` y
   `policy/delivery-policy.mjs`, con lectura por digest desde la raíz canónica y el campo de binding
   de revisión. **No liga contra `candidate_revision`:** ese contrato es de `S5.1` y todavía no
   existe. Acá se define la forma; allá se liga. El `tasks.md` dice "revision binding into
   `candidate_revision`" y es una dependencia hacia adelante, no trabajo de esta Sesión.
-- [ ] Tarea T3.2.3.4 — REFACTOR: un repositorio sin el bloque se comporta exactamente igual que
+- [x] Tarea T3.2.3.4 — REFACTOR: un repositorio sin el bloque se comporta exactamente igual que
   antes de que el bloque existiera. `bun test test/policy`.
 
 **Criterios de aceptación de S3.2** — todos deben pasar para cerrar:
 
-- [ ] Un campo de política ausente resuelve al valor más restrictivo y el motivo queda nombrado con `CT_POLICY_UNRESOLVED`
-- [ ] Un bloque no parseable, con valor desconocido, o no ligado, falla cerrado sin default permisivo
-- [ ] Una fuente de política por symlink, que escapa de la raíz, o de raíz ajena, se rechaza sin leerla
-- [ ] Una política de proyecto más permisiva que la global resuelve al valor global
-- [ ] Un repositorio sin bloque `delivery-policy` se comporta exactamente igual que antes de que el bloque existiera
-- [ ] Ningún valor de política ni excepción alcanza un floor: los cinco casos se rechazan nombrando el floor violado
-- [ ] Un registro de autoridad persistido sin identidad de actor falla cerrado, y esa identidad sobrevive al commit
-- [ ] Una autorización consumida pasado su `expires_at` se rechaza
-- [ ] Los seis schemas validan contra sus fixtures y están registrados en `contracts/schema-registry.mjs`
-- [ ] Los bytes de los contratos V1 aceptados no cambian y `test/provenance/provenance.test.mjs` sigue verde
-- [ ] Policy resuelve elegibilidad y nunca ruteo: ninguna ruta de `policy/**` crea ni modifica un assignment
-- [ ] `bun test test/contracts test/main-store.test.mjs test/policy` pasa completo
-- [ ] `bun test` no introduce fallos nuevos sobre la línea base de `S3.1` — 476/0/2779, con la Torre desarmada
-- [ ] El diff de implementación no toca ninguna ruta del `Prohibido`
+- [x] Un campo de política ausente resuelve al valor más restrictivo y el motivo queda nombrado con `CT_POLICY_UNRESOLVED`
+- [x] Un bloque no parseable, con valor desconocido, o no ligado, falla cerrado sin default permisivo
+- [x] Una fuente de política por symlink, que escapa de la raíz, o de raíz ajena, se rechaza sin leerla
+- [x] Una política de proyecto más permisiva que la global resuelve al valor global
+- [x] Un repositorio sin bloque `delivery-policy` se comporta exactamente igual que antes de que el bloque existiera
+- [x] Ningún valor de política ni excepción alcanza un floor: los cinco casos se rechazan nombrando el floor violado
+- [x] Un registro de autoridad persistido sin identidad de actor falla cerrado, y esa identidad sobrevive al commit
+- [x] Una autorización consumida pasado su `expires_at` se rechaza
+- [x] Los seis schemas validan contra sus fixtures y están registrados en `contracts/schema-registry.mjs`
+- [x] Los bytes de los contratos V1 aceptados no cambian y `test/provenance/provenance.test.mjs` sigue verde
+- [x] Policy resuelve elegibilidad y nunca ruteo: ninguna ruta de `policy/**` crea ni modifica un assignment
+- [x] `bun test test/contracts test/main-store.test.mjs test/policy` pasa completo
+- [x] `bun test` no introduce fallos nuevos sobre la línea base de `S3.1` — 476/0/2779, con la Torre desarmada
+- [x] El diff de implementación no toca ninguna ruta del `Prohibido`
+
+**Evidencia de cierre:** implementación `22c43ae` (`feat(policy): implement S3.2 policy and
+Jornada`) sobre `origin/master@3362b3b6aa51c1498970552ba59d8813b4274b8c`: exactamente 15
+archivos dentro de `Área`, 360 adiciones y 3 eliminaciones; ninguna ruta de `Prohibido` ni
+`openspec/plans/**` fue tocada. La validación enfocada final
+`bun test test/contracts test/main-store.test.mjs test/policy` pasó con 80 pass, 0 fail y 263
+expects; `bun test` pasó con 493 pass, 0 fail y 2842 expects, con la Torre OFF. La validación
+fresca del candidato fue `CORROBORATED_FIXED`: los 14 criterios pasaron. El SHA-256 de
+`REQUIREMENTS` permaneció exactamente
+`277129f30b47c1b6fda0a6c81f6d8943d737a7b5ff5750455e2b41dce6e1e5a0`.
 
 ## Sesión 3.3 — Agent Capability Registry
 
@@ -205,6 +222,12 @@ otra Sesión, no de esta.
 **Área:** `capabilities/registry.mjs`, `schemas/agent-capability-registry-v1.schema.json`, `test/capabilities/**`
 **Prohibido:** `continuation/**`, `core.mjs`, `mcp.mjs`
 **Recurso:** ninguno. Escritura sólo por Main vía CAS, sin migraciones de DB, sin token de entrega.
+
+**Bloqueo técnico:** la decisión de disponibilidad ya está resuelta, pero el contrato ejecutable
+no está sellado. El `Área` actual no incluye `contracts/schema-registry.mjs`, necesario para
+registrar el schema; `capabilities/**` y `test/capabilities/**` no existen en este árbol; y los
+Módulos/Tareas todavía no declaran el alcance técnico verificado. Próxima acción: `session-plan`
+debe cerrar ese contrato antes de re-evaluar `S3.3` como 🟢 LISTO.
 
 Registro versionado y con alcance de proyecto de **qué puede hacer cada agente**. Es lo que
 permite que Main resuelva una capability por rol en vez de asumirla: `Main → capability
@@ -228,7 +251,7 @@ todos los bindings anteriores.**
 - `derivable` — qué hace una entrada vencida. **Criterio:** no resuelve, y el rechazo es explícito en vez de silencioso. Un rechazo silencioso es indistinguible de una capability ausente y manda al llamador a improvisar. Falsificable por el criterio de aceptación ya escrito. **Autoridad:** los criterios de aceptación de `S3.3`.
 - `derivable` — si el registry puede otorgar autoridad. **Criterio:** no. Otorga visibilidad y compatibilidad de invocación; la autoridad sigue siendo exclusiva de Main, y un agente no puede registrarse a sí mismo. Falsificable: cualquier ruta en la que una entrada del registro habilite una operación que Main no autorizó. **Autoridad:** el **Límite duro** declarado arriba en esta misma Sesión.
 - `derivable` — qué pasa con los bindings previos ante un update. **Criterio:** un update por CAS lleva el registro de `R1` a `R2` e invalida **todos** los bindings de `R1`. Falsificable: un binding de `R1` que siga resolviendo después de la transición. **Autoridad:** el alcance declarado de `S3.3`.
-- `escala` — cuánto dura por defecto la ventana de disponibilidad de una entrada. **Clase:** seguridad y permisos. Una ventana larga vuelve la expiración decorativa y deja capabilities vivas después de que su origen cambió; una corta convierte cada resolución en una renovación. Ninguna autoridad aprobada fija hoy ese número. **Contamina:** `S5.1`, cuyo store de autorización resuelve contra entradas del registry, y `S5.4`, porque el `DENY` del que nace un escalamiento depende de que la entrada siga vigente.
+- `escala` — cuánto dura por defecto la ventana de disponibilidad de una entrada. **Clase:** seguridad y permisos. **RESUELTA el 2026-08-04 por el maintainer:** expira con su Jornada. **Criterio:** una entrada de capability no resuelve después de que su Jornada alcanza un estado terminal. Falsificable: una entrada cuya revisión CAS siga vigente resuelve pese a que la Jornada expiró, fue cerrada o alcanzó otro estado terminal. **Autoridad:** decisión del maintainer del 2026-08-04, registrada en `plan-3/s3.3-capability-window`. La expiración por Jornada es la segunda capa de invalidación; el cambio de revisión por CAS `R1 → R2` sigue invalidando todos los bindings y no queda reemplazado. **Contaminaba:** `S5.1`, cuyo store de autorización resuelve contra entradas del registry, y `S5.4`, porque el `DENY` del que nace un escalamiento depende de que la entrada siga vigente.
 
 ### Módulo 3.3.1 — Registry
 
