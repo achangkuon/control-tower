@@ -106,6 +106,16 @@ que es el que incorpora el corte de `d232fdf`. **Colisión de IDs — leela ante
 usa `T3.2.1.1`–`T3.2.1.3` para contenido distinto (`RED floors/inheritance/exception` en vez de
 `Git -C/escape/foreign-root`). Es referencia histórica y **no gobierna esta Sesión**.
 
+**Trampa conocida en el Área — no la "arregles".** `schemas/plan-manifest-v1.schema.json` declara
+`delivery_automation`, pero el bloque de ejemplo de
+[REQUIREMENTS](../../specs/sdd-tower-implementation-v1-requirements.md) todavía dice
+`delivery_policy`. La divergencia es **deliberada**: ese archivo está byte-pinned como input
+histórico por la revisión congelada 1
+([`autonomous-v2/revisions/1/manifest.yaml:39-43`](../autonomous-v2/revisions/1/manifest.yaml)) y
+`test/provenance/provenance.test.mjs:80-88` falla cerrado ante cualquier drift. Editarlo rompe la
+suite. Corregir el ejemplo exige **publicar una revisión nueva del manifest**, que es trabajo de
+otra Sesión, no de esta.
+
 **Decisiones:**
 
 - `derivable` — qué valor toma un campo de política ausente. **Criterio:** el más restrictivo; un repositorio sin bloque `delivery-policy` se comporta exactamente igual que antes de que el bloque existiera. Falsificable: si un campo ausente habilitara algo que el bloque explícito no habilita, el default estaba mal. **Autoridad:** el corte política/seguridad de `d232fdf` y el bloque `delivery-policy` de [`AGENTS.md`](../../../AGENTS.md).
