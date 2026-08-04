@@ -24,15 +24,19 @@
 
 ## Sesión 5.1 — Change F candidate contracts
 
-**Estado:** 🟢 LISTO — contrato ejecutable **sellado el 2026-08-04** en `c2d116c`, y su última dependencia integrada el mismo día.
+**Estado:** 🟢 LISTO — contrato **re-sellado el 2026-08-04**. El sello original quedó en `c2d116c`; `M5.1.3` se corrigió después porque no declaraba quién probaba la autoridad canónica de Main, y esa omisión frenó la Sesión con `M5.1.1` y `M5.1.2` ya entregados. Cero decisiones `escala` abiertas.
 
 **Depende de:** `S3.2` ✅, `S3.3` ✅ integrada en `4621d3f`, `S3.4` ✅ integrada en `b6dda84`.
 
 **Por qué depende también de `S3.4` — lo produjo la decisión del maintainer, y ya está satisfecho.** Exigir Jornada `ACTIVE` y `jornada_revision` actual antes de todo efecto irreversible obliga a **leer una Jornada persistida**. `policy/jornada.mjs`, que entregó `S3.2`, es un resolvedor puro que recibe la Jornada como argumento y no la persiste; `readJornada` la entrega `S3.4` en `T3.4.1.2`. Sin esa función el criterio de revalidación no era implementable ni verificable. Ahora lo es.
 
-**Área:** `contracts/candidate-revision.mjs`, `schemas/candidate-revision-v1.schema.json`, `contracts/{schema-registry,validate}.mjs`, `main-store/store.mjs`, `continuation/{derivation,support}.mjs`, `test/continuation/**`, `test/main-store.test.mjs`, `test/contracts/schema.test.mjs`, `test/fixtures/contracts/schema-cases-v1.json`
+**Área:** `contracts/candidate-revision.mjs`, `schemas/candidate-revision-v1.schema.json`, `contracts/{schema-registry,validate}.mjs`, `main-store/store.mjs`, `continuation/{derivation,support}.mjs`, `plugin/tower-spike.js`, `.opencode/agent/support-agent.md`, `test/continuation/**`, `test/plugin/tower-spike.test.mjs`, `test/main-store.test.mjs`, `test/contracts/schema.test.mjs`, `test/fixtures/contracts/schema-cases-v1.json`
 
-**Prohibido:** `core.mjs`, `mcp.mjs`, `delivery/**`, `jornada/**`, `capabilities/**`, `policy/**`, `registry/**`, `workspace/**`, `openspec/plans/**`, `openspec/specs/**`
+**Prohibido:** `core.mjs`, `mcp.mjs`, `delivery/**`, `jornada/**`, `capabilities/**`, `policy/**`, `registry/**`, `workspace/**`, `escalation/**`, `hosts/**`, `openspec/plans/**`, `openspec/specs/**`
+
+**Ampliación del `Área` del 2026-08-04 — tres paths, y sólo tres.** `plugin/tower-spike.js`, `.opencode/agent/support-agent.md` y `test/plugin/tower-spike.test.mjs` entraron al re-sellar `M5.1.3`. `continuation/support.mjs`, `test/continuation/support.test.mjs` y `test/main-store.test.mjs` **ya estaban** cubiertos por `continuation/{derivation,support}.mjs`, `test/continuation/**` y su propia entrada. `capabilities/**` y `registry/**` **siguen prohibidos**: la autoridad no se otorga por registry.
+
+**`core.mjs` sigue prohibido aunque la plugin lo importe.** `plugin/tower-spike.js:30` hace `import * as tower from "../control-tower/core.mjs"`. Importar no es editar — mismo patrón con el que `S3.3` consumió `main-store/authority.mjs` y `S5.1` consume `readJornada`.
 
 **Por qué el `Área` incluye `contracts/**`:** misma razón verificada en `S3.3`. Un schema fuera del mapa `schemaFiles` de `contracts/schema-registry.mjs` **no tiene validador** —`validatorFor` devuelve `null` y `validate` tira `Unknown schema`—, así que `candidate-revision-v1` no sirve de nada hasta quedar registrado, con su invariante cross-field en `contracts/validate.mjs` y su caso en el fixture.
 
@@ -76,6 +80,8 @@ Define identidad y freeze de `candidate_revision`, invalidación, sucesores, com
 - `escala` — cuánto vive una autorización antes de expirar. **Clase:** seguridad y permisos. **RESUELTA el 2026-08-03 por el maintainer: una hora.** Cubre el caso real —aprobar desde el celular y que el agente ejecute en minutos— sin dejar una aprobación armada toda la noche. La expiración por tiempo es la **segunda** capa: la primera es la invalidación por contenido, que el candidato congelado ya provee. Falsificable: una autorización consumida más de una hora después de emitida. **Contaminaba:** `S5.2` y `S5.5`, ambas destrabadas.
 - `escala` — si un sucesor hereda la autorización de su predecesor. **Clase:** seguridad y permisos. **RESUELTA el 2026-08-03 por el maintainer, con una condición que la vuelve verificable: hereda hasta el horizonte declarado (`planning.horizon_ceiling`, hoy `2`) si y sólo si, en el momento de la aprobación, todas las Sesiones dentro de ese horizonte están selladas — cero decisiones `escala` abiertas.** Si alguna tiene una abierta, el horizonte **colapsa** ahí y la herencia se corta en la Sesión anterior. El razonamiento es que horizonte y sello son garantías distintas: el horizonte acota **hasta dónde** llega la aprobación, el sello garantiza que **lo que alcanza ya está determinado**. Sin el sello, heredar equivale a autorizar contenido que se define después de aprobado. Falsificable: un sucesor con una decisión `escala` abierta que ejecute bajo autorización heredada. **Contaminaba:** `S5.3` y `S8.7`, ambas destrabadas.
 - `escala` — si terminar una Jornada debe revocar activamente las capabilities y autorizaciones vivas. **Clase:** expansión de alcance, y seguridad y permisos. **RESUELTA el 2026-08-04 por el maintainer: no. La invalidación es pasiva.** Terminar una Jornada **incrementa `jornada_revision`** y nada más; no dispara cascada. Las capabilities y autorizaciones anteriores quedan inutilizables **al revalidar**, no al terminar: el que las quiera usar revalida contra la Jornada y falla cerrado por drift de revisión. `S5.1` exige Jornada `ACTIVE` y `jornada_revision` actual **antes de todo efecto irreversible**. Una capability equivalente se reemplaza naturalmente por `agent_role` + `capability`, sin ID nuevo. **La poda de capabilities discontinuadas queda fuera de alcance: no se construye garbage collector.** Falsificable: cualquier ruta que mute una capability o una autorización como efecto de terminar una Jornada, o cualquier efecto irreversible que se ejecute sin revalidar la Jornada. **Autoridad:** decisión del maintainer del 2026-08-04. **Contaminaba:** `S5.1`, destrabada — era la única decisión `escala` abierta que le quedaba.
+- `escala` — **quién prueba la autoridad canónica de Main.** **Clase:** seguridad y permisos. **RESUELTA el 2026-08-04 por el maintainer: `plugin/tower-spike.js` es el único composition root que lo hace.** La plugin recibe `trustedBindingProvider` al inicializarse, liga y verifica `main_session_id` mediante `main-store/authority.mjs`, y **sólo después** de esa verificación obtiene el store y la capability protegidos. Rechaza todo `context.sessionID` distinto del Main ligado, y ante binding ausente, inválido o de otra sesión falla cerrado **antes** de cualquier spawn o persistencia. Support **nunca** recibe `main_store`, `capability` ni autoridad. **No se crea un adaptador Main separado** —una segunda noción de "esto es Main" es exactamente la clase de bug que `main-store/authority.mjs` existe para hacer imposible— **y no se usa el capability registry para otorgar autoridad**, porque el registry otorga visibilidad y compatibilidad de invocación, nunca autoridad (límite duro de `S3.3`). Falsificable: cualquier ruta que obtenga store o capability antes de la verificación, que acepte un `sessionID` ajeno, que entregue autoridad a Support, o que derive autoridad de una entrada del registry. **Autoridad:** decisión del maintainer del 2026-08-04, y `main-store/authority.mjs:15-36`.
+  **Por qué esto bloqueó `S5.1` en pleno vuelo.** El sello del 2026-08-04 en `c2d116c` describía `M5.1.3` como "frontera del subagente Support" y enumeraba qué **no** podía ver Support, pero **no decía quién probaba que Main era Main**. Aislamiento y wiring son dos preguntas distintas, y el contrato sólo respondía la primera. Agent 1 llegó a `M5.1.3` con los dos Módulos anteriores entregados y sin respuesta para la segunda. Es un hueco de contrato, no un error de implementación.
 
 ### Módulo M5.1.1 — Candidate
 
@@ -104,12 +110,36 @@ Define identidad y freeze de `candidate_revision`, invalidación, sucesores, com
 
 ### Módulo M5.1.3 — Frontera del subagente Support
 
-- [ ] Tarea T5.1.3.1 — RED: Support no aparece **ni** en el board de la Torre **ni** en la tabla de
-  locks, y ninguna transferencia de lock puede nombrarlo.
-- [ ] Tarea T5.1.3.2 — RED: un host sin delegación a subagente de contexto aislado rechaza la
-  continuación autónoma con `CT_HOST_CAPABILITY_MISSING`; no existe ninguna ruta de sustituto en línea.
-- [ ] Tarea T5.1.3.3 — GREEN: Main persiste `support-proposal-v1`; el subagente **no** tiene entrada
-  propia en el registry. `bun test test/continuation test/main-store.test.mjs`.
+**Re-sellado el 2026-08-04. El Módulo tiene dos mitades, y confundirlas fue lo que bloqueó la
+Sesión.** No son dos Módulos: son dos preguntas distintas que el contrato anterior mezclaba.
+
+1. **Aislamiento de Support** — qué *no* puede ser ni ver Support. Subagente **frío**, read-only,
+   sin board, sin locks, sin Worker, sin entrada de registry, y **sin ruta de sustituto en línea**.
+2. **Wiring de Main** — quién *prueba* que Main es Main. Es `plugin/tower-spike.js`, y sólo esa.
+
+- [ ] Tarea T5.1.3.1 — RED: **aislamiento de Support.** No aparece **ni** en el board de la Torre
+  **ni** en la tabla de locks, ninguna transferencia de lock puede nombrarlo, y no recibe `main_store`,
+  `capability` ni autoridad de ningún tipo. Verificado además con testigos de bytes: correr Support no
+  muta board, locks, Worker ni registry.
+- [ ] Tarea T5.1.3.2 — RED: **ausencia de sustituto.** Un host sin delegación a subagente de contexto
+  aislado rechaza la continuación autónoma con `CT_HOST_CAPABILITY_MISSING`; **no existe ninguna ruta
+  de fallback en línea** que ejecute Support dentro del contexto de Main.
+- [ ] Tarea T5.1.3.3 — RED/GREEN: **wiring de Main en `plugin/tower-spike.js`, el único composition
+  root que prueba la autoridad canónica de Main.** La plugin recibe `trustedBindingProvider` al
+  inicializarse, liga y verifica `main_session_id` mediante `main-store/authority.mjs` importado sin
+  modificar, y **recién después** de esa verificación obtiene el store y la capability. Rechaza todo
+  `context.sessionID` distinto del Main ligado. Ante binding **ausente, inválido o de otra sesión**
+  falla cerrado **antes** de cualquier spawn o persistencia. Valida la respuesta de Support contra
+  `support-proposal-v1` y persiste ella misma; el subagente no tiene entrada propia en el registry.
+  **No se crea un adaptador Main separado y no se usa el capability registry para otorgar autoridad.**
+  `bun test test/plugin test/continuation test/main-store.test.mjs`.
+
+**Estado actual del composition root, para que no se lea como trabajo ya hecho.**
+`TowerSpikePlugin` hoy recibe `{ client, worktree }` (`plugin/tower-spike.js:49`): **no** recibe
+`trustedBindingProvider`, **no** liga Main y **no** filtra por `sessionID`. Lo único que ya existe en
+la dirección correcta es `childSessions` (`:70`), el conjunto que mantiene a los subagentes nativos
+fuera de la vista de la Torre — es la primitiva de aislamiento sobre la que apoya `T5.1.3.1`, no el
+aislamiento completo.
 
 **Criterios de aceptación de S5.1** — todos deben pasar para cerrar:
 
@@ -128,6 +158,13 @@ Define identidad y freeze de `candidate_revision`, invalidación, sucesores, com
 - [ ] Un claim del Worker que coincide registra evidencia y no otorga ningún privilegio
 - [ ] Support no figura en el board ni en la tabla de locks, y ninguna transferencia de lock puede nombrarlo
 - [ ] Un host sin delegación a subagente aislado rechaza la continuación con `CT_HOST_CAPABILITY_MISSING`, sin sustituto en línea
+- [ ] **`plugin/tower-spike.js` es el único composition root que prueba la autoridad de Main:** no existe un segundo adaptador ni una segunda noción de "esto es Main" en el árbol
+- [ ] **Un `context.sessionID` distinto del Main ligado se rechaza**, y el rechazo nombra la sesión rechazada
+- [ ] **Binding ausente, inválido o de otra sesión falla cerrado ANTES de cualquier spawn o persistencia** — no después
+- [ ] **Un `main_store` simulado o construido por fuera de la verificación se rechaza:** el store y la capability sólo se obtienen después de que `main-store/authority.mjs` verifique el binding
+- [ ] **Support no recibe `main_store`, `capability` ni autoridad por ninguna ruta**, y su respuesta se valida contra `support-proposal-v1` antes de persistirse
+- [ ] **Correr Support no muta board, locks, Worker ni registry**, verificado por testigos de bytes en éxito y en rechazo
+- [ ] La autoridad no se deriva de ninguna entrada del capability registry
 - [ ] `core.mjs` sigue opaco al plan: ninguna coordenada de plan se resuelve fuera de registros propiedad de Main
 - [ ] `candidate-revision-v1` está registrado en `contracts/schema-registry.mjs` y tiene su caso en el fixture de contratos
 - [ ] `bun test test/continuation test/main-store.test.mjs test/contracts` pasa completo
