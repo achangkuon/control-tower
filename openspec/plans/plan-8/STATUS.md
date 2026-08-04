@@ -13,6 +13,7 @@
 | Próxima acción | ✅ **`M8.8.2` CERRADO el 2026-08-03, esta vez con la evidencia correcta.** Activo `012a2510a9758a9c764841b7f69c7760f0d88ab1`, `previous` `34f56a6` para rollback, y `bun ~/.local/share/control-tower/versions/012a251.../install/lifecycle.mjs diagnose` → `{"healthy":true,"missing":[]}` **ejecutando la copia instalada**, que es lo que la vez anterior no se hizo. `install/runtime-payload.mjs` está presente en la versión instalada. **`M8.8.6` ✅ COMPLETO en `a87c9e9`** y **`M8.8.3` ✅ COMPLETO el 2026-08-03**: el maintainer corre el producto. Activo `4f94001`, `~/.local/bin/torre` es un symlink al runtime instalado, respaldo en `torre.legacy-20260803`. El core pasó de 398 a 4.646 líneas — los 192 commits. **Próxima acción: `M8.8.7`** —regresión de distribución que introdujo `a87c9e9`— y después **`M8.8.8`**. Los dos 🔒 SELLABLES, enumerados con criterios binarios y cero decisiones abiertas. Con ésos cierra `S8.8`. Historia del fallo, abajo. ~~🔴 `M8.8.2` REABIERTO — el runtime instalado no carga.~~ `install/lifecycle.mjs:8` importa `./runtime-payload.mjs`, y ese archivo **no está en la versión instalada**: `bun <version>/install/lifecycle.mjs diagnose` devuelve `Cannot find module './runtime-payload.mjs'`. La causa es que `RUNTIME_PAYLOAD_FILES` declara cinco miembros y **no se incluye a sí mismo**, así que el validador confirma como completo un payload que no arranca. El `healthy:true` con el que se cerró salió del **checkout del repo**, no de la copia instalada. **Ejecutar `M8.8.3` sobre este runtime dejaba la Torre inoperable.** **El contrato quedó cerrado en `fed8fb0`** (rescatado del worktree `v1`): `RUNTIME_PAYLOAD_FILES` ahora incluye `install/runtime-payload.mjs` y son seis miembros. Suite 451/0 con la Torre desarmada. **Pero eso arregla el repositorio, no la instalación:** la versión activa `34f56a6` sigue sin el archivo y sigue sin cargar. Falta el paso 👤 ATENDIDO — republicar e instalar — y **verificar `diagnose` ejecutando la copia instalada, no la del repo**. Recién ahí `M8.8.2` cierra de verdad. Orden restante: reinstalar → verificar desde la copia instalada → `M8.8.6` → `M8.8.3`. **Procedimiento exacto de la reinstalación atendida**, para que la verificación no repita el error que causó todo esto: (1) republicar desde el `HEAD` de `master` que contenga `fed8fb0`; (2) `torre install`; (3) verificar corriendo **`bun ~/.local/share/control-tower/versions/<nuevo-sha>/install/lifecycle.mjs diagnose`** — la copia instalada, con ruta absoluta, **nunca** `bun install/lifecycle.mjs` desde el repo; (4) el criterio de cierre es `healthy:true` **y** que el comando cargue, que son dos cosas distintas: un módulo que no resuelve sus imports ni siquiera llega a imprimir. Rollback disponible con `previous` en `active.json`. Adopción previa: activo `34f56a61c1908c003dc382e661ae87335498fd99` con `previous` `b72e450` para rollback. **La ejecución de `M8.8.3` se partió el 2026-08-03.** El payload sin `core.mjs` desapareció y `diagnose` lo confirma con `missing:[]`, pero el mecanismo del corte no existe: `bin/torre` nunca lee `active.json` y `CORE` defaultea a la ruta legada incluso en la versión instalada (`bin/torre:20`), así que copiar el entrypoint no corta nada y un symlink rompe `LIFECYCLE`. **La mitad implementable se separó en `M8.8.6`**, con cero efectos fuera del repositorio; `M8.8.3` queda acotado al corte al PATH y sigue 👤 ATENDIDO. **`M8.8.6` ✅ COMPLETO en `a87c9e9`, el primer Módulo sellado que se despachó y cerró bajo la §11.** `S8.7` espera `S8.8` y `S5.1`; `S0.3` está ✅ COMPLETO. `S8.5` y `S8.6` quedan 🟡 DIFERIDO. |
 | Flujo | P8 corre bajo la [regla de ejecución V1](../v1-execution-rule.md): de `tasks.md` directo a implementación, sin exploration/proposal/design y sin PR de cierre separada. |
 | Referencias | [tasks de V1](../../changes/v1-release/tasks.md); [change archivado](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/), [spec](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). |
+| Actualización de cierre | `S8.8` ✅ COMPLETO tras `M8.8.7` (`e118f33`) y `M8.8.8` (`d56e8cb`): `bun test test/install` 44/0 y `bun test` 465/0, Torre desarmada. Próxima Sesión aprobada: `S3.1`; `S8.7` espera `S5.1`. |
 
 ## Sesiones
 
@@ -25,7 +26,7 @@
 | S8.5 | Detección de hosts e integración opt-in | 🟡 DIFERIDO | Optional host detection and integration | ninguna | Diferida el 2026-07-31: la integración es opt-in y su ausencia es diagnóstico, no fallo de instalación |
 | S8.6 | Evidencia de release en máquina limpia | 🟡 DIFERIDO | Versioned lifecycle and release evidence | `S8.3`, `S8.4` | Diferida el 2026-07-31: se cubre con validación manual durante `S8.8` en vez de una Sesión formal |
 | S8.7 | Puente Hermes/Telegram | 📋 PLANIFICADO | Optional bounded Hermes bridge (amendado por `S0.3`) | `S8.4` ✅, `S0.3` ✅, `S8.8`, `S5.1` | Alcance ampliado el 2026-08-01: presenta autorizaciones y transporta callback acotado. `S0.3` está completo; quedan `S8.8` y `S5.1` |
-| S8.8 | Adopción del instalable en el runtime en uso | 🔵 EN CURSO | Versioned lifecycle | `S8.2` ✅ | `M8.8.1` ✅ COMPLETO (PR #132, merge `d280214c`). `M8.8.2` ✅ **COMPLETO**: activo `012a251`, `previous` `34f56a6`, `diagnose` desde la **copia instalada** → `healthy:true, missing:[]`. Se reabrió el mismo día al descubrirse que la versión anterior no cargaba y que su evidencia se había medido desde el repo. `M8.8.3` 👤 ATENDIDO, depende de `M8.8.6`: sólo el corte al PATH. `M8.8.4` ✅ COMPLETO en `3d2ef57`, pero su contrato de payload estaba incompleto: omitía `install/runtime-payload.mjs`. `M8.8.5` ✅ COMPLETO en `34f56a6`; cerró un verde falso y dejó otro debajo, porque el contrato que consulta no se incluye a sí mismo. **`M8.8.6` ✅ COMPLETO** en `a87c9e9` y **`M8.8.3` ✅ COMPLETO** el 2026-08-03: el entrypoint del PATH es un symlink al runtime instalado y el maintainer corre el producto. **Quedan `M8.8.7`** —regresión de distribución de `a87c9e9`— **y `M8.8.8`** —automatizar el staging y el shim—, ambos 🔒 SELLABLES y 🟢 LISTOS |
+| S8.8 | Adopción del instalable en el runtime en uso | ✅ COMPLETO | Versioned lifecycle | `S8.2` ✅ | Todos los Módulos verificados. `M8.8.7` en `e118f33`: la copia aislada cae al legado y un puntero presente roto falla cerrado. `M8.8.8` en `d56e8cb`: checkout Git genuino, staging estricto incluso con `.git` sintético y shim opt-in. `bun test test/install` 44/0; `bun test` 465/0 con Torre desarmada; cero accesos a runtime real en los fixtures. |
 
 Las Sesiones se derivan de los cinco requisitos de la [spec de Installable V1](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). `S8.2` construyó el lifecycle versionado; `S8.8` lo pone efectivamente en uso, que es la parte del requisito que quedaba abierta.
 
@@ -150,7 +151,7 @@ La consecuencia es que **nada de lo construido después del 2026-07-21 está en 
 
 | Campo | Valor |
 |---|---|
-| Estado | 🔵 EN CURSO |
+| Estado | ✅ COMPLETO |
 | Owner | `installable-v1` |
 | Depende de | `S8.2` ✅ COMPLETO |
 | Área | `install/**`, `bin/torre`, `test/install/**` |
@@ -161,7 +162,7 @@ La consecuencia es que **nada de lo construido después del 2026-07-21 está en 
 - `derivable` — qué versión publicar en la adopción de `M8.8.2`. **Criterio:** el `HEAD` de `master` que contenga `3d2ef57`, porque es el commit que cierra el contrato de payload. Falsificable: si el payload publicado no valida contra `RUNTIME_PAYLOAD_FILES`, la elección estaba mal. **Autoridad:** `install/runtime-payload.mjs`.
 - `derivable` — si `M8.8.3` puede avanzar. **Criterio:** la versión activa en `~/.local/share/control-tower/versions/<sha>/` contiene los cinco miembros, `core.mjs` incluido. Falsificable por `ls`. **Resuelta ✅ el 2026-08-03**: `34f56a6` los tiene los cinco y `diagnose` devuelve `missing:[]`. El criterio se evaluó dos veces con resultados opuestos —**no** sobre `b72e450`, **sí** sobre `34f56a6`— que es exactamente para lo que un criterio falsificable sirve. **Autoridad:** `install/runtime-payload.mjs`.
 - `escala` — ejecutar el `torre install` real. **Clase:** operaciones irreversibles. Muta `~/.local/share/control-tower/`, fuera del repositorio. **Contamina:** `M8.8.3` (no puede cortar hacia un runtime que no existe todavía), `S8.7` (declara `S8.8` como dependencia). **Resuelta y ejecutada el 2026-08-03** por el maintainer: activo `34f56a6`, `previous` `b72e450`, rollback disponible.
-- `escala` — repuntar `~/.local/bin/torre` al runtime instalado (`M8.8.3`). **Clase:** operaciones irreversibles. Un fallo deja la Torre inoperable, y el entrypoint del PATH es hoy un script bash del 2026-07-21 sin `install` ni `diagnose`, así que la recuperación no se hace con la propia herramienta. **Contamina:** `S8.7`. **ABIERTA**, y **no basta con autorizarla: falta implementarla.** El 2026-08-03 la parte implementable se separó en `M8.8.6`, autónomo y sellable; esta decisión queda acotada al corte en sí, que sigue siendo atendido. Autorizarla antes de que `M8.8.6` cierre no habilita nada.
+- `escala` — repuntar `~/.local/bin/torre` al runtime instalado (`M8.8.3`). **Clase:** operaciones irreversibles. Un fallo deja la Torre inoperable, y el entrypoint del PATH era un script bash del 2026-07-21 sin `install` ni `diagnose`, así que la recuperación no se hace con la propia herramienta. **Contamina:** `S8.7`. **Resuelta y ejecutada el 2026-08-03**: `M8.8.6` construyó el mecanismo y `M8.8.3` realizó el corte atendido con respaldo restaurable.
 
 > **`M8.8.3` no es un comando atendido, es un Módulo de código.** Verificado el 2026-08-03: `bin/torre` **nunca lee `active.json`** —no hay resolución del runtime instalado en el script—, `CORE` sigue defaulteando a `$HOME/.config/opencode/control-tower/core.mjs` **incluso en la versión instalada** (`bin/torre:20`), y no existe código que instale el shim del PATH en `install/`, `scripts/` ni `bin/torre`.
 >
@@ -181,8 +182,8 @@ Absorbe la validación práctica que `S8.6` haría de forma formal: la instalaci
 | `M8.8.4` Preflight de adopción y payload verificable | 🔒 SELLABLE, autónomo | `install/**`, `scripts/publish-runtime.mjs`, `test/install/**` | Valida el payload cerrado y deja segura la continuación atendida de `M8.8.2` |
 | `M8.8.5` `diagnose` detecta payload incompleto | 🔒 SELLABLE, autónomo | `install/lifecycle.mjs`, `test/install/**` | El instrumento que verifica la adopción no detectaba el modo de falla que bloquea `M8.8.3` |
 | `M8.8.6` Resolución desde el puntero activo | 🔒 SELLABLE, autónomo — ✅ COMPLETO en `a87c9e9` | `bin/torre`, `install/active-pointer.mjs`, `test/install/**` | Construye el mecanismo que `M8.8.3` necesita, sin tocar el PATH ni el runtime real |
-| `M8.8.7` El entrypoint copiado no puede resolver | 🔒 SELLABLE, autónomo — 🟢 LISTO | `bin/torre`, `test/install/**` | Regresión introducida por `a87c9e9`: la copia que produce `install.sh` aborta en todo comando |
-| `M8.8.8` Instalación desde un checkout y shim del PATH | 🔒 SELLABLE, autónomo — 🟢 LISTO | `install/lifecycle.mjs`, `install/runtime-payload.mjs`, `test/install/**` | Automatiza lo que `M8.8.3` hizo a mano; el shim queda detrás de una opción apagada por defecto |
+| `M8.8.7` El entrypoint copiado no puede resolver | 🔒 SELLABLE, autónomo — ✅ COMPLETO en `e118f33` | `bin/torre`, `test/install/**` | La copia aislada vuelve al core legado cuando falta el mecanismo; un puntero presente roto sigue fallando cerrado |
+| `M8.8.8` Instalación desde un checkout y shim del PATH | 🔒 SELLABLE, autónomo — ✅ COMPLETO en `d56e8cb` | `install/lifecycle.mjs`, `install/runtime-payload.mjs`, `test/install/**` | Checkout Git genuino, staging estricto y shim opt-in con fixtures aislados |
 
 **Riesgo operativo de `M8.8.3` que no es técnico y conviene tener escrito.** El `torre` del PATH (`/home/emili/.local/bin/torre:20`) carga hoy `$HOME/.config/opencode/control-tower/core.mjs`, un checkout en `681a0e5` del 2026-07-21: **398 líneas y 15.7 KB**, contra las **4646 líneas y 384 KB** del repo. Son **192 commits** de diferencia, y `681a0e5` sí pertenece a esta historia — no es un fork. Nada de lo construido desde julio (`contracts/`, `registry/`, `main-store/`, `install/`, `support/`, la frontera `CT_V2_ONLY`, los schemas) está en lo que el maintainer usa a diario. **El día que `M8.8.3` cierre, la Torre de uso diario salta esos 192 commits de golpe.** No es un defecto del corte, pero sí la primera vez que se va a usar en serio lo construido, así que el `previous` de `active.json` tiene que estar a mano y verificado antes de ejecutarlo.
 
@@ -272,7 +273,7 @@ Los tests de `M8.8.6` no la detectaron porque todos ejercitan el entrypoint **de
 
 | Campo | Valor |
 |---|---|
-| Estado | 🟢 LISTO |
+| Estado | ✅ COMPLETO — entregado en `e118f33` |
 | Modo | 🔒 SELLABLE, autónomo; cero efectos fuera del repositorio |
 | Depende de | `M8.8.6` ✅ COMPLETO |
 | Área | `bin/torre`, `test/install/**` |
@@ -287,21 +288,23 @@ Los tests de `M8.8.6` no la detectaron porque todos ejercitan el entrypoint **de
 
 **Ninguna decisión escala.** No toca nada fuera del repositorio.
 
-**Tareas** (RED → GREEN → VERIFY):
+**Tareas** — todas completadas:
 
-- [ ] `T8.8.7.1` RED: copiar `bin/torre` a un directorio **sin** `install/` hermano y verificar que resuelve al default legado con `exit 0`, en vez de abortar
-- [ ] `T8.8.7.2` RED: con `active-pointer.mjs` presente pero inválido, verificar que **falla** y no cae al legado
-- [ ] `T8.8.7.3` GREEN: condicionar la resolución por puntero a que el módulo exista, conservando intactos los cuatro casos de `M8.8.6`
-- [ ] `T8.8.7.4` VERIFY: `bun test test/install` enfocada y `bun test` completa **con la Torre desarmada**
+- [x] `T8.8.7.1` RED: copiar `bin/torre` a un directorio **sin** `install/` hermano y verificar que resuelve al default legado con `exit 0`, en vez de abortar
+- [x] `T8.8.7.2` RED: con `active-pointer.mjs` presente pero inválido, verificar que **falla** y no cae al legado
+- [x] `T8.8.7.3` GREEN: condicionar la resolución por puntero a que el módulo exista, conservando intactos los cuatro casos de `M8.8.6`
+- [x] `T8.8.7.4` VERIFY: `bun test test/install` enfocada y `bun test` completa **con la Torre desarmada**
 
 **Criterios de aceptación** — binarios, todos deben pasar para cerrar:
 
-- [ ] Una copia aislada de `bin/torre` responde `exit 0` y resuelve al `CORE` legado
-- [ ] Un `active-pointer.mjs` presente pero roto propaga el error; **no** hay degradación silenciosa
-- [ ] Los cuatro casos de `M8.8.6` siguen pasando sin modificación: sin puntero, con puntero, versión incompleta, symlink
-- [ ] `bun test test/install` pasa completo
-- [ ] `bun test` da `457 pass / 0 fail` con la Torre desarmada
-- [ ] El diff no toca ninguna ruta fuera del `Área`
+- [x] Una copia aislada de `bin/torre` responde `exit 0` y resuelve al `CORE` legado
+- [x] Un `active-pointer.mjs` presente pero roto propaga el error; **no** hay degradación silenciosa
+- [x] Los cuatro casos de `M8.8.6` siguen pasando sin modificación: sin puntero, con puntero, versión incompleta, symlink
+- [x] `bun test test/install` pasa completo
+- [x] `bun test` da `465 pass / 0 fail` con la Torre desarmada
+- [x] El diff no toca ninguna ruta fuera del `Área`
+
+**Evidencia de cierre:** `e118f33` y verificación integral posterior sobre `d56e8cb`: `bun test test/install` 44/0 y `bun test` 465/0, con Torre desarmada. La prueba de copia aislada no requiere `install/` hermano; el puntero presente inválido propaga su error. No se tocaron rutas de runtime real.
 
 #### M8.8.8 — Instalación desde un checkout y shim del PATH
 
@@ -313,9 +316,9 @@ Los tests de `M8.8.6` no la detectaron porque todos ejercitan el entrypoint **de
 
 | Campo | Valor |
 |---|---|
-| Estado | 🟢 LISTO |
+| Estado | ✅ COMPLETO — entregado en `d56e8cb` |
 | Modo | 🔒 SELLABLE, autónomo; cero efectos fuera del repositorio |
-| Depende de | `M8.8.7` 🟢 LISTO |
+| Depende de | `M8.8.7` ✅ COMPLETO |
 | Área | `install/lifecycle.mjs`, `install/runtime-payload.mjs`, `test/install/**` |
 | Prohibido | `~/.local/bin/**`, `~/.local/share/control-tower/**`, `~/.config/opencode/control-tower/**`, `core.mjs`, `bin/torre` |
 | Recurso | ninguno; sin DB, sin migraciones, sin token de entrega |
@@ -329,28 +332,30 @@ Los tests de `M8.8.6` no la detectaron porque todos ejercitan el entrypoint **de
 
 **Ninguna decisión escala** mientras el shim quede detrás de una opción apagada por defecto y las pruebas usen un data-root de fixture. Ésa es la condición que mantiene el Módulo sellable.
 
-**Tareas** (RED → GREEN → REFACTOR → VERIFY):
+**Tareas** — todas completadas:
 
-- [ ] `T8.8.8.1` RED: `install` con un checkout como `source` almacena exactamente los seis miembros y nada más
-- [ ] `T8.8.8.2` RED: un directorio de staging con un miembro extra sigue siendo rechazado — `strict` no se debilitó
-- [ ] `T8.8.8.3` RED: con la opción de shim activada, el destino queda como symlink dentro de la versión activa
-- [ ] `T8.8.8.4` RED: con un archivo regular preexistente en el destino, se respalda antes de reemplazar y el respaldo se restaura con una copia de bytes
-- [ ] `T8.8.8.5` RED: sin la opción, no se escribe una sola ruta bajo el directorio de binarios del fixture
-- [ ] `T8.8.8.6` GREEN: implementar el origen-checkout y el shim opcional en `install/lifecycle.mjs`
-- [ ] `T8.8.8.7` REFACTOR: dejar `scripts/publish-runtime.mjs` y el nuevo camino compartiendo una sola derivación del payload, sin duplicar la enumeración
-- [ ] `T8.8.8.8` VERIFY: `bun test test/install` enfocada y `bun test` completa **con la Torre desarmada**, más testigos de bytes de que no se tocó `~/.local/**` ni `~/.config/**`
+- [x] `T8.8.8.1` RED: `install` con un checkout como `source` almacena exactamente los seis miembros y nada más
+- [x] `T8.8.8.2` RED: un directorio de staging con un miembro extra sigue siendo rechazado — `strict` no se debilitó, incluso con `.git` sintético
+- [x] `T8.8.8.3` RED: con la opción de shim activada, el destino queda como symlink dentro de la versión activa
+- [x] `T8.8.8.4` RED: con un archivo regular preexistente en el destino, se respalda antes de reemplazar y el respaldo se restaura con una copia de bytes
+- [x] `T8.8.8.5` RED: sin la opción, no se escribe una sola ruta bajo el directorio de binarios del fixture
+- [x] `T8.8.8.6` GREEN: implementar el origen-checkout y el shim opcional en `install/lifecycle.mjs`
+- [x] `T8.8.8.7` REFACTOR: dejar `scripts/publish-runtime.mjs` y el nuevo camino compartiendo una sola derivación del payload, sin duplicar la enumeración
+- [x] `T8.8.8.8` VERIFY: `bun test test/install` enfocada y `bun test` completa **con la Torre desarmada**, con `HOME` y XDG temporales y sin accesos a rutas reales
 
 **Criterios de aceptación** — binarios, todos deben pasar para cerrar:
 
-- [ ] `install` acepta un checkout como `source` y almacena los seis miembros exactos
-- [ ] Un staging con un miembro extra sigue siendo rechazado con `CT_RUNTIME_PAYLOAD_INVALID`
-- [ ] Con la opción activada, el shim queda como symlink resuelto dentro de la versión activa
-- [ ] Un destino preexistente se respalda antes de reemplazarse, y el respaldo se restaura sin la herramienta
-- [ ] Sin la opción, cero escrituras bajo el directorio de binarios del fixture
-- [ ] La enumeración del payload vive en un solo lugar
-- [ ] `bun test test/install` pasa completo y `bun test` da `457 pass / 0 fail` con la Torre desarmada
-- [ ] Testigos de bytes confirman cero escrituras en `~/.local/**`, `~/.config/**` y el data-root real
-- [ ] El diff no toca ninguna ruta fuera del `Área`
+- [x] `install` acepta un checkout Git genuino como `source` y almacena los seis miembros exactos
+- [x] Un staging con un miembro extra, incluso con `.git` sintético, sigue siendo rechazado con `CT_RUNTIME_PAYLOAD_INVALID`
+- [x] Con la opción activada, el shim queda como symlink resuelto dentro de la versión activa
+- [x] Un destino preexistente se respalda antes de reemplazarse, y el respaldo se restaura sin la herramienta
+- [x] Sin la opción, cero escrituras bajo el directorio de binarios del fixture
+- [x] La enumeración del payload vive en un solo lugar
+- [x] `bun test test/install` pasa completo y `bun test` da `465 pass / 0 fail` con la Torre desarmada
+- [x] Los fixtures usan `HOME` y XDG temporales; cero accesos a `~/.local/**`, `~/.config/**` y el data-root real
+- [x] El diff no toca ninguna ruta fuera del `Área`
+
+**Evidencia de cierre:** `d56e8cb` instala desde un checkout verificado por Git sin relajar `strict` para staging, y crea el shim sólo mediante `--shim`, con respaldo restaurable. La corrección integral aisló todos los subprocesos de prueba en `HOME` y XDG temporales. `bun test test/install` 44/0; `bun test` 465/0; Torre desarmada y ningún runtime real tocado.
 
 #### M8.8.4 — Preflight de adopción y payload verificable
 
@@ -488,7 +493,7 @@ Este Módulo construye ese mecanismo y **nada más**: no toca el PATH, no repunt
 
 **Fuera del candidato, por procedencia ajena al Módulo:** `.gitignore` —agrega `.atl/`, estado local del runtime de Pi— y `.bun-install-cache/`, el caché que materializó la dependencia `yaml` sin tocar `package.json` ni el lockfile. Quedan sin commitear en el worktree `s3-1`.
 
-**No cierra `S8.8` ni adelanta `M8.8.3`.** Construye el mecanismo; el corte al PATH sigue 👤 ATENDIDO.
+**Este Módulo no cerraba por sí solo `S8.8`:** construyó el mecanismo; el corte al PATH quedó atendido en `M8.8.3` y los Módulos posteriores `M8.8.7` y `M8.8.8` completaron la regresión de distribución y la automatización segura.
 
 > **Nota de verificación posterior a la entrega:** una recorrida de `bun test` con la Torre **armada** da 455/2, y los dos fallos son los `P0 frozen snapshot restore` de `test/migration.test.mjs`, que abortan en `assertRuntimeInactive` porque `.git/control-tower/ACTIVE` está presente. Es la precondición que `T8.8.6.7` ya exigía —"con la Torre desarmada"—, no una regresión: el guard corta antes de tocar nada del candidato.
 
@@ -522,12 +527,12 @@ Va última pese a su prioridad declarada: el propio [tasks.md](../../changes/arc
 
 `S8.2` entregó únicamente almacenamiento de versiones, puntero activo, install/diagnose/upgrade/rollback/uninstall, preservación de configuración e historial, y sus pruebas Strict TDD. No modificó `core.mjs`, `mcp.mjs`, `package.json`, `bun.lock`, DB ni estado de Tower.
 
-Con `S8.4` cerrada y `S8.8` enumerada, P8 permanece en `50% (4/8 S)` — `M8.8.1` y `M8.8.4` son Módulos y no otorgan crédito parcial a la Sesión. Todo el alcance aprobado del lane tiene límite de un PR; no queda responsabilidad sin ID.
+Con `S8.4` y `S8.8` cerradas, P8 queda en `63% (5/8 S)` — los Módulos no otorgan crédito parcial; el crédito de `S8.8` llega sólo tras completar todos sus criterios. Todo el alcance aprobado del lane tiene límite de un PR; no queda responsabilidad sin ID.
 
 Cada Sesión es una unidad entregable dirigida a `master`. **Desde el 2026-08-01 (`46edd14`) eso es un commit directo + push, no un PR** — ver [Política de entrega](../../../AGENTS.md). El alcance de la Sesión no cambia: sigue siendo el que entraría en un PR. Las referencias a PRs de las Sesiones ya cerradas son historia y quedan como están.
 
 **El alcance de `S8.7` cambió con la [unificación del 2026-08-01](../release-chain.md).** Ya no es sólo estado más arm/disarm: el puente además **presenta** una autorización creada por Main y **transporta** el callback acotado de aprobación o rechazo. Lo que no cambia es el principio — Hermes presenta; Main crea, valida y consume. El puente sigue sin recibir shell, workers, Git, merge directo, delivery ni selección implícita de proyecto. `S0.3` ya está ✅ COMPLETO y su enmienda permite ese transporte acotado; los bloqueos restantes de `S8.7` son `S8.8` y `S5.1`, donde nace la autorización que el puente presenta.
 
-**Orden de ejecución:** `S8.8` primero — sin adopción, todo lo demás sigue sin correr en la máquina real. `S8.7` va al final de la cadena, después de `S5.1`; `S0.3` ya está ✅ COMPLETO. `S8.5` y `S8.6` quedan fuera del camino por decisión explícita del maintainer del 2026-07-31, que también reemplaza el estado `UNASSIGNED` que traía `S8.5`. La cadena completa y su grafo están en [release-chain](release-chain.md).
+**Orden de ejecución:** `S8.8` está ✅ COMPLETO. La próxima Sesión aprobada es `S3.1`; `S8.7` va al final de la cadena, después de `S5.1`, y `S0.3` ya está ✅ COMPLETO. `S8.5` y `S8.6` quedan fuera del camino por decisión explícita del maintainer del 2026-07-31, que también reemplaza el estado `UNASSIGNED` que traía `S8.5`. La cadena completa y su grafo están en [release-chain](release-chain.md).
 
 Las actualizaciones sobre los archivos de planificación reclamados por `installable-v1-provenance` en [`product-version-map.yaml`](../product-version-map.yaml) deben serializarse.
