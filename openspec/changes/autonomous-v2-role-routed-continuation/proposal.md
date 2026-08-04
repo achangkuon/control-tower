@@ -16,7 +16,7 @@ Amend the existing Autonomous V2 implementation plan with explicit role-routed c
 
 ## Configurable Gates
 
-Safety floors are non-negotiable: no-early-mutation, candidate immutability after freeze, append-only ledger, sole-Main authority, no worker self-assignment, and fail-closed validation of every binding. Project policy resolves the rest — merge authorization, delivery shape, planning ceiling, and documentation close depth — declared once per project and bound to each candidate by revision and digest. Absent, unparseable, or unbound policy fails closed to the most restrictive setting. Policy MUST NOT relax a safety floor.
+There are exactly five safety floors, and they are non-negotiable: no-early-mutation, candidate immutability after freeze, append-only ledger, sole-Main authority, and no worker self-assignment. Fail-closed validation of every binding is a property of the whole system rather than a sixth floor, and is required regardless. Project policy resolves the rest — merge authorization, delivery shape, planning ceiling, and documentation close depth — declared once per project and bound to each candidate by revision and digest. Absent, unparseable, or unbound policy fails closed to the most restrictive setting. Neither policy nor a bounded exception MAY relax a safety floor; a bounded exception is granted by a human, expires with its Jornada, and reaches only the configurable surface.
 
 ## Decision Audit
 
@@ -28,7 +28,7 @@ Safety floors are non-negotiable: no-early-mutation, candidate immutability afte
 | Continuous continuation | superseded | [Plan 5 `S5.3`](../../plans/plan-5/STATUS.md): replace direct next-scope enablement with the approved flow. Its proposal shell was deleted in `613a45d`; the intent lives in that STATUS |
 | Agent registry/routing | extended | [RFC §§4–5](../../rfc/sdd-tower-implementation-v1.md): per-project, Main-owned capability registry |
 | Worker recovery | extended | [`control-tower-recovery-rollback/spec.md`](../autonomous-continuation-control-tower/specs/control-tower-recovery-rollback/spec.md): automatic reassignment only after exact proof |
-| Checkpoint safety floors | unchanged | [`autonomous-v2-checkpointed-delivery/spec.md`](../autonomous-v2-checkpointed-delivery/specs/autonomous-v2-checkpointed-delivery/spec.md): no-early-mutation, freeze immutability, append-only ledger |
+| Checkpoint safety floors | unchanged | [`autonomous-v2-checkpointed-delivery/spec.md`](../autonomous-v2-checkpointed-delivery/specs/autonomous-v2-checkpointed-delivery/spec.md): no-early-mutation, freeze immutability, append-only ledger, sole-Main authority, no worker self-assignment |
 | Delivery shape and merge authorization | amended | This change's delta: resolved from the project's declared delivery policy, failing closed to human authorization |
 | Planning horizon | amended | This change's delta: ceiling resolved from delivery policy, default two; eligibility is role-routed |
 

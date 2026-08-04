@@ -64,7 +64,7 @@ jornada_policy:
     - short
     - standard
     - extended
-delivery_policy:
+delivery_automation:
   automatic_commit: true
   automatic_push: true
   automatic_pr: true

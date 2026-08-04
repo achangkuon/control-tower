@@ -4,8 +4,8 @@
 
 ### Requirement: Policy ownership
 
-System MUST apply global safety floors, project Policy/Jornada snapshots, and bounded user-authorized exceptions. Tower MUST consume opaque refs. Safety floors are non-negotiable: no project policy, Jornada snapshot, or user-authorized exception MAY relax no-early-mutation, candidate immutability after freeze, or the append-only candidate ledger.
-(Previously: one sentence bound the no-early-mutation safety floor and the no-automatic-merge delivery policy under a single exception clause, making merge authorization non-configurable per project.)
+System MUST apply global safety floors, project Policy/Jornada snapshots, and bounded user-authorized exceptions. Tower MUST consume opaque refs. There are exactly five safety floors, and they are non-negotiable: no project policy, Jornada snapshot, or user-authorized exception MAY relax no-early-remote-mutation, candidate immutability after freeze, the append-only candidate ledger, sole-Main authority, or the prohibition on worker self-assignment. A bounded exception MAY only relax the configurable surface — `effective_limits`, `delivery.shape`, `delivery.target_branch`, `planning.horizon_ceiling`, `documentation_close.*`, `allowed_operations`, and `allowed_hosts` — MUST be granted by a human, and MUST expire with its Jornada.
+(Previously: this requirement named only three floors, omitting sole-Main authority and no worker self-assignment, and left the exception's own grantor and lifetime undefined. Before that, one sentence bound the no-early-mutation safety floor and the no-automatic-merge delivery policy under a single exception clause, making merge authorization non-configurable per project.)
 
 #### Scenario: Policy exception
 
@@ -15,9 +15,15 @@ System MUST apply global safety floors, project Policy/Jornada snapshots, and bo
 
 #### Scenario: Exception cannot reach a floor
 
-- GIVEN a bounded exception that would permit a remote effect before `DELIVERY_READY`
+- GIVEN a bounded exception naming any of the five safety floors
 - WHEN Main evaluates it
 - THEN it is rejected as a floor violation, no effect occurs, and the rejected floor is named
+
+#### Scenario: Exception grantor and lifetime
+
+- GIVEN a bounded exception issued by a non-human party, or one outliving its Jornada
+- WHEN Main evaluates it
+- THEN it is rejected and the unmet condition is named
 
 ### Requirement: Candidate identity
 

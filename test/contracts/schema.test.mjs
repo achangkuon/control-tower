@@ -150,7 +150,7 @@ describe("cross-field schema invariants", () => {
     expect(errorCode(() => validate("planManifest", runtimeState))).toBe("CT_MANIFEST_INVALID")
 
     const automaticMerge = structuredClone(fixtures.planManifest)
-    automaticMerge.delivery_policy.automatic_merge = true
+    automaticMerge.delivery_automation.automatic_merge = true
     expect(errorCode(() => validate("planManifest", automaticMerge))).toBe("CT_MANIFEST_INVALID")
   })
 

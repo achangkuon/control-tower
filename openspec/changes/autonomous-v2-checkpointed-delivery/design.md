@@ -8,7 +8,7 @@ Add contracts/adapters around plan-agnostic `core.mjs`/`mcp.mjs`. Main resolves 
 
 | Option | Decision |
 |---|---|
-| Modify V1 schemas | Add schemas through extension/pointer seams; preserve accepted bytes. |
+| Modify V1 schemas | Add schemas through extension/pointer seams; preserve accepted bytes. **Amended 2026-08-04 by the maintainer, once:** `plan-manifest-v1.delivery_policy` was renamed to `delivery_automation` because the name collided with the project `delivery-policy` block in `AGENTS.md`, which is a different control — the former declares which delivery steps are automated, the latter declares who authorizes the merge. Two controls one letter apart is a reading trap. The rename covers `schemas/plan-manifest-v1.schema.json`, `openspec/plans/sdd-tower-implementation/manifest.yaml`, and the contract fixture/test. It deliberately does **not** cover the example block in `openspec/specs/sdd-tower-implementation-v1-requirements.md`: that file is byte-pinned as a `raw-bytes` historical input by frozen revision 1 (`openspec/plans/autonomous-v2/revisions/1/manifest.yaml:39-43`), and `test/provenance/provenance.test.mjs:80-88` fails closed on any drift. Correcting the example therefore requires publishing a new manifest revision, not editing the pinned bytes — that is the mechanism working as designed. Until then the REQUIREMENTS example intentionally lags the schema. This is a one-time exception, not a new rule: seams and byte preservation remain the default. |
 | Tower interprets plans | Reject; Main/Policy interprets opaque Sesión/Módulo/Tarea refs. |
 | Mutable candidate | Freeze an envelope; bound changes create a successor. |
 | Retry timeout | Persist `UNKNOWN`; retry only after read-only absence proof. |
