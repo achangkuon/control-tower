@@ -24,11 +24,11 @@
 
 ## Sesión 5.1 — Change F candidate contracts
 
-**Estado:** 📋 PLANIFICADO — **contrato ejecutable sellado el 2026-08-04** sobre `origin/master@3e9e8c7`. No es 🟢 LISTO todavía: le falta `S3.4`, no le falta contrato.
+**Estado:** 🟢 LISTO — contrato ejecutable **sellado el 2026-08-04** en `c2d116c`, y su última dependencia integrada el mismo día.
 
-**Depende de:** `S3.2` ✅, `S3.3` ✅ integrada en `4621d3f`, **`S3.4`**.
+**Depende de:** `S3.2` ✅, `S3.3` ✅ integrada en `4621d3f`, `S3.4` ✅ integrada en `b6dda84`.
 
-**Por qué depende también de `S3.4` — es nuevo, y lo produjo la decisión del maintainer.** Exigir Jornada `ACTIVE` y `jornada_revision` actual antes de todo efecto irreversible obliga a **leer una Jornada persistida**. Hoy eso no existe: `policy/jornada.mjs`, que entregó `S3.2`, es un resolvedor puro que recibe la Jornada como argumento y no la persiste. `readJornada` la entrega `S3.4` en `T3.4.1.2`. Sin esa función, el criterio de revalidación no es implementable ni verificable.
+**Por qué depende también de `S3.4` — lo produjo la decisión del maintainer, y ya está satisfecho.** Exigir Jornada `ACTIVE` y `jornada_revision` actual antes de todo efecto irreversible obliga a **leer una Jornada persistida**. `policy/jornada.mjs`, que entregó `S3.2`, es un resolvedor puro que recibe la Jornada como argumento y no la persiste; `readJornada` la entrega `S3.4` en `T3.4.1.2`. Sin esa función el criterio de revalidación no era implementable ni verificable. Ahora lo es.
 
 **Área:** `contracts/candidate-revision.mjs`, `schemas/candidate-revision-v1.schema.json`, `contracts/{schema-registry,validate}.mjs`, `main-store/store.mjs`, `continuation/{derivation,support}.mjs`, `test/continuation/**`, `test/main-store.test.mjs`, `test/contracts/schema.test.mjs`, `test/fixtures/contracts/schema-cases-v1.json`
 

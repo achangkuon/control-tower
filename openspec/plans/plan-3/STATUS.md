@@ -1,14 +1,13 @@
 # Plan 3 — Workspace y orquestación
 
-**Estado:** 🟢 LISTO
+**Estado:** ✅ COMPLETO
 
-> **`S3.1` ✅ COMPLETO en `d8924a6`; `S3.2` ✅ COMPLETO en `22c43ae`; `S3.3` ✅ COMPLETO en
-> `4621d3f`.** `S3.3` deja el Agent Capability Registry con resolución por rol y proyecto,
-> expiración ligada a Jornada y paridad de escritura atómica verificada contra
-> `registry/store.mjs`. El siguiente nodo del grafo, `S3.4`, quedó 🟢 LISTO tras revalidarse
-> contra el SHA integrado: su `Área` no colisiona con el diff de `S3.3`, y el criterio que
-> cierra el hueco de revocación temprana es alcanzable importando `capabilities/registry.mjs`
-> sin editarlo.
+> **Plan 3 cerrado el 2026-08-04. `S3.1` en `d8924a6`, `S3.2` en `22c43ae`, `S3.3` en `4621d3f`
+> y `S3.4` en `b6dda84`.** La cadena entrega workspace checkpoint, Policy/Jornada con resolución
+> fail-closed de delivery policy, el Agent Capability Registry, y la persistencia y el ciclo de
+> vida de Jornada. `S3.4` cerró el hueco de revocación temprana que `S3.3` había aceptado a
+> propósito, y lo hizo **de forma pasiva**: una Jornada terminada invalida por drift de revisión
+> sin que nadie toque el registry.
 >
 > **`S3.2` cambió de contrato antes de empezar.** El corte política/seguridad de `d232fdf` le suma
 > `M3.2.3` (resolución de la política de entrega declarada, con fail-closed al valor más
@@ -22,7 +21,7 @@
 |---|---|
 | Dependencias | Para Autonomous V2, `S3.1` partió de `master@33c2c6e` y quedó implementada en `d8924a6`, con `S2.4`/project registry verificada y cerrada; `S3.2` dependió de `S3.1` y `S3.3` depende de `S3.2` ✅. |
 | Outputs | C: `inspect`, `create`, `retire`, receipts y wrapper legacy de `jornada.sh`. D: Main routing, Support briefs, Policy Reports, presets, snapshots, budgets y assignments. Más el Agent Capability Registry de `S3.3`. |
-| Roadmap | `S3.1`, `S3.2` y `S3.3` están cerradas. `S3.4` es la última de la cadena y quedó 🟢 LISTO tras revalidarse contra `origin/master@4621d3f`; su única decisión `escala` —revocación activa al terminar una Jornada— no la bloquea, porque sus criterios de aceptación no asumen la respuesta. El trabajo posterior no enumerado de Change B no fue dependencia de `S3.1`; las responsabilidades legacy sin límite de un PR permanecen sin ID. |
+| Roadmap | **Las cuatro Sesiones están cerradas; el Plan no tiene trabajo pendiente.** Su única decisión `escala` —revocación activa al terminar una Jornada— quedó RESUELTA el 2026-08-04 a favor de la invalidación pasiva. El trabajo posterior no enumerado de Change B no fue dependencia de `S3.1`; las responsabilidades legacy sin límite de un PR permanecen sin ID en el [apéndice de migración](../plan-vocabulary-migration-appendix.md). |
 | Referencias | [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/). Los proposals `sdd-tower-workspace-manager` y `sdd-tower-main-policy-jornada` fueron eliminados en `613a45d` por ser cáscaras sin avance; su intención vive en este STATUS. |
 
 ## Sesión 3.1 — Change C Workspace checkpoint
@@ -327,7 +326,7 @@ contra el reporte del implementador. El SHA-256 de `REQUIREMENTS` permaneció ex
 
 ## Sesión 3.4 — Persistencia y ciclo de vida de Jornada
 
-**Estado:** 🟢 LISTO
+**Estado:** ✅ COMPLETO
 **Depende de:** `S3.2` ✅, `S3.3` ✅
 **Área:** `main-store/store.mjs`, `jornada/lifecycle.mjs`, `test/jornada/**`, `test/main-store.test.mjs`
 **Prohibido:** `core.mjs`, `mcp.mjs`, `registry/**`, `capabilities/**`, `continuation/**`, `policy/**`, `contracts/**`, `schemas/**`, `workspace/**`, `openspec/plans/**`, `openspec/specs/**`
@@ -372,42 +371,68 @@ Jornada terminada, sin editar una sola línea de `capabilities/**`. Es el mismo 
 
 ### Módulo 3.4.1 — Jornada store
 
-- [ ] Tarea 3.4.1.1 — RED: extender `test/main-store.test.mjs` con persistencia de una Jornada que
+- [x] Tarea 3.4.1.1 — RED: extender `test/main-store.test.mjs` con persistencia de una Jornada que
   valida contra `jornada-v1`, rechazo de una que no lo satisface, rechazo de todo actor que no sea
   `MAIN`, rechazo por proyecto ajeno, y colisión de CAS con `expected_revision` desactualizado.
-- [ ] Tarea 3.4.1.2 — GREEN: agregar `createJornada`, `readJornada` y `transitionJornada` a
+- [x] Tarea 3.4.1.2 — GREEN: agregar `createJornada`, `readJornada` y `transitionJornada` a
   `main-store/store.mjs`, reusando `commit`, `assertMain` y la validación contra schema que ya usa
   `createAuthorization`; sin abrir una segunda ruta de escritura.
-- [ ] Tarea 3.4.1.3 — REFACTOR: confirmar que no quedó ninguna lista de campos escrita a mano al
+- [x] Tarea 3.4.1.3 — REFACTOR: confirmar que no quedó ninguna lista de campos escrita a mano al
   lado del schema — la causa raíz del drift de `authorization-v1` reconciliado en `6d37642`.
   `bun test test/main-store.test.mjs`.
 
 ### Módulo 3.4.2 — Ciclo de vida
 
-- [ ] Tarea 3.4.2.1 — RED: agregar `test/jornada/lifecycle.test.mjs` para transiciones legales
+- [x] Tarea 3.4.2.1 — RED: agregar `test/jornada/lifecycle.test.mjs` para transiciones legales
   contra el enum de `jornada-v1`, irreversibilidad de los cuatro estados terminales, incremento de
   `jornada_revision` en **toda** transición, lectura vencida por reloj sin transición previa, y
   —el criterio que cierra el hueco— que una entrada de capability ligada a una Jornada terminada
   deje de resolver.
-- [ ] Tarea 3.4.2.2 — GREEN: implementar `jornada/lifecycle.mjs` sobre el store de `M3.4.1`, con la
+- [x] Tarea 3.4.2.2 — GREEN: implementar `jornada/lifecycle.mjs` sobre el store de `M3.4.1`, con la
   máquina de estados y el incremento de revisión.
-- [ ] Tarea 3.4.2.3 — REFACTOR: dejar el vencimiento por reloj y el vencimiento por transición
+- [x] Tarea 3.4.2.3 — REFACTOR: dejar el vencimiento por reloj y el vencimiento por transición
   resolviendo por el mismo camino, para que no puedan divergir.
   `bun test test/jornada test/main-store.test.mjs test/capabilities`.
 
 **Criterios de aceptación de S3.4** — todos deben pasar para cerrar:
 
-- [ ] Una Jornada se persiste validando contra `jornada-v1` y falla cerrada si no lo satisface
-- [ ] Una escritura por un actor que no es Main falla cerrada
-- [ ] Una escritura sobre un proyecto ajeno falla cerrada
-- [ ] Una transición a `REJECTED`, `EXPIRED`, `REVOKED` o `COMPLETED` es irreversible
-- [ ] Toda transición incrementa `jornada_revision`
-- [ ] Una lectura con el reloj pasado `expires_at` reporta la Jornada vencida sin transición previa
-- [ ] **Una entrada de capability ligada a una Jornada terminada deja de resolver** — el hueco que aceptó `S3.3` queda cerrado
-- [ ] No queda ninguna lista de campos escrita a mano al lado del schema
-- [ ] `bun test test/jornada test/main-store.test.mjs test/capabilities` pasa completo
-- [ ] `bun test` no introduce fallos nuevos sobre la línea base que dejó `S3.3` — 503/0/2880, con la Torre desarmada
-- [ ] El diff de implementación no toca ninguna ruta del `Prohibido`
+- [x] Una Jornada se persiste validando contra `jornada-v1` y falla cerrada si no lo satisface
+- [x] Una escritura por un actor que no es Main falla cerrada
+- [x] Una escritura sobre un proyecto ajeno falla cerrada
+- [x] Una transición a `REJECTED`, `EXPIRED`, `REVOKED` o `COMPLETED` es irreversible
+- [x] Toda transición incrementa `jornada_revision`
+- [x] Una lectura con el reloj pasado `expires_at` reporta la Jornada vencida sin transición previa
+- [x] **Una entrada de capability ligada a una Jornada terminada deja de resolver** — el hueco que aceptó `S3.3` queda cerrado
+- [x] No queda ninguna lista de campos escrita a mano al lado del schema
+- [x] `bun test test/jornada test/main-store.test.mjs test/capabilities` pasa completo
+- [x] `bun test` no introduce fallos nuevos sobre la línea base que dejó `S3.3` — 503/0/2880, con la Torre desarmada
+- [x] El diff de implementación no toca ninguna ruta del `Prohibido`
+
+**Evidencia de cierre:** implementación `b6dda84888e654466851bbd771920cf1c971b05a`
+(`feat(jornada): persist lifecycle transitions`) sobre `origin/master@c2d116c`: exactamente
+4 archivos, los 4 dentro del `Área`, 247 adiciones y 0 eliminaciones; ninguna ruta de
+`Prohibido` ni `openspec/plans/**` fue tocada. Las dos validaciones enfocadas dieron
+`bun test test/main-store.test.mjs` 21/0/84 y
+`bun test test/jornada test/main-store.test.mjs test/capabilities` 35/0/153; `bun test` pasó con
+512 pass, 0 fail y 2931 expects, con la Torre OFF — la línea base de `S3.3` era 503/0/2880, así
+que la Sesión suma 9 tests y 51 expects sin introducir un solo fallo. Los 11 criterios pasaron
+con verificación fresca del planner contra el SHA integrado.
+
+**El hueco que aceptó `S3.3` quedó cerrado, y la prueba lo demuestra pasivo.**
+`test/jornada/lifecycle.test.mjs:111` —"passively invalidates a capability by Jornada revision
+drift **without changing its registry**"— resuelve una capability con la Jornada `ACTIVE`, la
+transiciona a `REVOKED`, y la misma capability pasa a fallar con
+`CT_CAPABILITY_JORNADA_MISMATCH` **sin que el registry se haya tocado**. Es exactamente la
+decisión del maintainer del 2026-08-04 materializada en test: invalidación por drift de revisión,
+nunca cascada. El test de `:130` cierra la otra mitad: una Jornada vencida por reloj **no**
+inventa una revisión sintética al leerse —`expired.jornada_revision === created.jornada_revision`—
+y la capability falla por `CT_CAPABILITY_EXPIRED`, de modo que la lectura nunca muta.
+
+**Una observación de la verificación, no bloqueante:** `createJornada` no llama a `assertMain`
+directamente, sino a través de `commit` (`main-store/store.mjs:97`), que es el mismo camino que
+usa `createAuthorization`. Es lo correcto —`T3.4.1.2` pedía explícitamente reusar `commit` y
+`assertMain` sin abrir una segunda ruta de escritura— pero se lee como un hueco hasta que uno
+sigue la llamada. Queda anotado para que la próxima lectura no repita la sospecha.
 
 ## Grafo del Plan 3
 
@@ -415,10 +440,11 @@ Jornada terminada, sin editar una sola línea de `capabilities/**`. Es el mismo 
 graph LR
   S31["S3.1 workspace · ✅"] --> S32["S3.2 policy/jornada · ✅"]
   S32 --> S33["S3.3 capability registry · ✅"]
-  S33 --> S34["S3.4 ciclo de vida Jornada · 🟢"]
+  S33 --> S34["S3.4 ciclo de vida Jornada · ✅"]
 ```
 
-Plan 3 es **una sola cadena**: capacidad derivada dentro del Plan, **1 agente**. `S3.4` no habilita
-paralelismo — comparte `main-store/store.mjs` con `S3.2` y depende de `S3.3`.
+**Plan 3 cerrado: las cuatro Sesiones están ✅ COMPLETO.** Fue **una sola cadena** de principio a
+fin, con capacidad derivada de **1 agente**: `S3.4` compartía `main-store/store.mjs` con `S3.2` y
+dependía de `S3.3`, así que nunca admitió paralelismo interno.
 
 Las responsabilidades legacy de Workspace Manager y Main/Policy que aún no tienen límite de un PR permanecen sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).
