@@ -167,10 +167,16 @@ Aplica el horizonte de dos Sesiones, reconcilia la base integrada y habilita suc
 
 ## Sesión 5.4 — Ruteo de escalamiento fuera/en casa
 
-**Estado:** 📋 PLANIFICADO
+**Estado:** 📋 PLANIFICADO — **contrato ejecutable sellado el 2026-08-04** sobre `origin/master@d32d413`. Espera a `S5.1`, no espera decisiones.
 **Depende de:** `S5.1`
 **Área:** `escalation/**`, `test/escalation/**`
-**Recurso:** estado de ruteo persistido. Sin migraciones de DB, sin token de entrega.
+**Prohibido:** `main-store/store.mjs`, `core.mjs`, `mcp.mjs`, `delivery/**`, `continuation/**`, `capabilities/**`, `policy/**`, `jornada/**`, `registry/**`, `contracts/**`, `schemas/**`, `openspec/plans/**`, `openspec/specs/**`
+**Recurso:** estado de ruteo persistido, propiedad de `escalation/**`. Sin migraciones de DB, sin `db-writer`, sin token de entrega.
+**Entrega:** commit directo a `master` + push, sin PR ([`AGENTS.md`](../../../AGENTS.md)). Dos commits, como `S3.1`–`S3.4`: uno de implementación y uno documental de cierre. Forecast **derivado** —no había uno en el registro, porque `S5.4` se enumeró después del corte de `d232fdf`—: ~200–280 líneas sobre tres Módulos y nueve Tareas, **por debajo** del borde de encadenado de 400, así que no se parte.
+
+**Por qué `main-store/store.mjs` está en el `Prohibido` aunque `S5.4` escriba ahí.** La solicitud emitida se persiste en el authorization store, que es **propiedad exclusiva de `S5.1`**. `S5.4` lo **llama**, nunca lo edita — es exactamente lo que exige la decisión `derivable` de más abajo: sin abrir una segunda ruta de escritura. Dos rutas al mismo estado es la causa raíz que `6d37642` reparó en este mismo Plan.
+
+**Por qué `schemas/**` y `contracts/**` están prohibidos.** El modo de ruteo es **estado interno de `escalation/**`, no un contrato entre agentes**: nadie fuera de ese módulo lo lee. La solicitud emitida sí es un contrato, pero su forma la define `S5.1` en el authorization store, no esta Sesión. `S5.4` no necesita registrar ningún schema nuevo.
 
 Hoy, cuando un agente llega a una decisión que requiere autoridad del maintainer, **se frena y espera**: no emite nada y nadie se entera. Un canal a Telegram sin esto es un tubo vacío. `S5.4` es la mitad que faltaba — que Main **emita** la solicitud de decisión y sepa **a dónde mandarla**.
 
@@ -184,7 +190,8 @@ El modo es explícito y de dos valores: `local` cuando el maintainer está frent
 - `derivable` — qué vuelve emitible a una solicitud. **Criterio:** objetivo exacto, origen y expiración; sin objetivo exacto falla cerrado. Una solicitud sin objetivo exacto se responde "depende" y cuesta un viaje completo. Falsificable por el criterio de aceptación ya escrito. **Autoridad:** los criterios de aceptación de `S5.4`.
 - `derivable` — dónde se persiste la solicitud emitida. **Criterio:** el authorization store de `S5.1`, sin abrir una segunda ruta de escritura. Dos rutas de escritura al mismo estado es la causa raíz que `6d37642` acaba de reparar en este mismo Plan. Falsificable: cualquier escritura de solicitudes fuera del store. **Autoridad:** `T5.4.1.2`.
 - `derivable` — qué pasa con la solicitud si el transporte remoto falla. **Criterio:** queda pendiente y recuperable localmente; el fallo de transporte **nunca** la consume ni la descarta. Falsificable por el caso de `M5.4.3`. **Autoridad:** los criterios de aceptación de `S5.4`.
-- `escala` — quién puede conmutar el modo de ruteo. **Clase:** seguridad y permisos. El conmutador decide si las preguntas del maintainer salen de la máquina, y un agente que pueda ponerlo en `remoto` puede abrirse su propio canal. **Contamina:** `S8.7`, que es el transporte, y `S5.5`, cuya continuación depende de si la pregunta llegó a salir.
+- `escala` — quién puede conmutar el modo de ruteo. **Clase:** seguridad y permisos. **RESUELTA el 2026-08-04 por el maintainer: sólo el maintainer, por dos vías autenticadas, y ningún agente.** Las dos vías son (1) **CLI local autenticada** y (2) **callback remoto autenticado** desde el teléfono. **Main y los agentes no pueden conmutarlo automáticamente por ninguna ruta** — el conmutador decide si las preguntas salen de la máquina, y un agente que pudiera ponerlo en `remoto` se abriría su propio canal. Ante identidad **ausente, inválida o ambigua** la resolución es `local`, igual que ante estado corrupto: los dos costos no son comparables. Falsificable: cualquier ruta en la que Main, un agente o una identidad no verificada cambie el modo, o en la que una identidad dudosa termine emitiendo hacia un transporte remoto. **Autoridad:** decisión del maintainer del 2026-08-04. **Contaminaba:** `S8.7` y `S5.5`, ambas destrabadas.
+  **La vía remota queda definida pero INHABILITADA, y eso es lo que evita la dependencia circular.** `S5.4` declara la frontera y el contrato del conmutador; **no inventa transporte ni autenticación**. Hasta que `S8.7` entregue autenticación válida, la ruta remota no se habilita: intentar conmutar a `remoto` por callback falla cerrado por autenticación ausente, y el modo permanece `local`. Así `S5.4` **funciona entera sin `S8.7`** —el conmutador local autenticado alcanza para operar—, y `S8.7` después sólo conecta el callback ya contratado. Falsificable: una ruta remota que funcione antes de que `S8.7` entregue autenticación, o un `S5.4` que no pueda operar en local sin `S8.7`. `S5.4` **no** pasa a depender de `S8.7`: el grafo sigue siendo `S5.1 → S5.4 → S5.5`.
 
 ### Módulo 5.4.1 — Emisión de solicitud de decisión
 
@@ -194,9 +201,9 @@ El modo es explícito y de dos valores: `local` cuando el maintainer está frent
 
 ### Módulo 5.4.2 — Modo de ruteo
 
-- [ ] Tarea 5.4.2.1 — RED: agregar `test/escalation/routing.test.mjs` para el conmutador `local` ↔ `remoto`, su idempotencia y su persistencia entre procesos.
-- [ ] Tarea 5.4.2.2 — RED: agregar el caso fail-closed — estado ausente, corrupto o ambiguo resuelve a `local` y no emite hacia ningún transporte remoto.
-- [ ] Tarea 5.4.2.3 — GREEN: implementar la resolución de modo y el despacho de la solicitud al transporte correspondiente.
+- [ ] Tarea 5.4.2.1 — RED: agregar `test/escalation/routing.test.mjs` para el conmutador `local` ↔ `remoto`, su idempotencia y su persistencia entre procesos, **más la frontera de autoridad**: conmutan sólo las dos vías autenticadas del maintainer —CLI local y callback remoto—, y **todo intento de Main o de un agente falla cerrado**, nombrando al actor rechazado.
+- [ ] Tarea 5.4.2.2 — RED: agregar los casos fail-closed. Estado ausente, corrupto o ambiguo resuelve a `local` y no emite hacia ningún transporte remoto; **identidad ausente, inválida o ambigua resuelve a `local` por el mismo camino**, sin ruta separada que pueda divergir.
+- [ ] Tarea 5.4.2.3 — GREEN: implementar la resolución de modo y el despacho de la solicitud al transporte correspondiente, **con la vía remota definida pero inhabilitada**: sin la autenticación que entrega `S8.7`, conmutar a `remoto` por callback falla cerrado y el modo queda `local`. La CLI local autenticada alcanza para operar la Sesión entera.
 
 ### Módulo 5.4.3 — Degradación y no mutación
 
@@ -208,12 +215,19 @@ El modo es explícito y de dos valores: `local` cuando el maintainer está frent
 
 - [ ] Un punto de decisión que requiere autoridad del maintainer emite una solicitud con objetivo exacto; una sin objetivo exacto falla cerrado
 - [ ] El modo de ruteo persiste entre procesos y conmutar es idempotente
+- [ ] **Sólo las dos vías autenticadas del maintainer conmutan el modo:** CLI local autenticada y callback remoto autenticado
+- [ ] **Main y cualquier agente fallan cerrado al intentar conmutar el modo**, y el rechazo nombra al actor
 - [ ] Estado de modo ausente, corrupto o ambiguo resuelve a `local` y no emite hacia ningún transporte remoto
+- [ ] **Identidad ausente, inválida o ambigua resuelve a `local`** por el mismo camino que el estado corrupto, sin una ruta separada que pueda divergir
+- [ ] **La vía remota está definida pero inhabilitada hasta `S8.7`:** conmutar a `remoto` por callback falla cerrado por autenticación ausente
+- [ ] **`S5.4` opera entera en modo `local` sin `S8.7`**: ninguna de sus rutas requiere el transporte para funcionar
+- [ ] `S5.4` no inventa transporte ni autenticación: no existe en su diff ninguna implementación de canal ni de verificación de identidad remota
 - [ ] Un fallo del transporte remoto deja la solicitud pendiente y recuperable, nunca consumida ni descartada
+- [ ] La solicitud emitida se persiste en el authorization store de `S5.1`, sin abrir una segunda ruta de escritura
 - [ ] Consultar el modo es read-only, verificado por testigos de bytes en éxito y en rechazo
 - [ ] `S5.4` no crea, valida ni consume autoridad: esa ruta sigue siendo exclusiva de `S5.1`
-- [ ] `bun test test/escalation` pasa completo y `bun test` no introduce fallos nuevos
-- [ ] El diff no toca ninguna ruta fuera del `Área`
+- [ ] `bun test test/escalation` pasa completo y `bun test` no introduce fallos nuevos sobre la línea base que deje `S5.1`
+- [ ] El diff no toca ninguna ruta del `Prohibido` ni ninguna fuera del `Área`
 
 ## Sesión 5.5 — Decisión estacionada y continuación independiente
 

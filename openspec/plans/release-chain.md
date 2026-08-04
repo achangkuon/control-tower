@@ -75,7 +75,7 @@ graph LR
 | 1 | `S5.1` | Authorization store + Telegram + validación Git/PR/check/SHA | 🟢 LISTO | `S3.2` ✅, `S3.3` ✅, `S3.4` ✅; contrato ejecutable **sellado el 2026-08-04** en `c2d116c`, cero decisiones `escala` abiertas |
 | 2 | `S4.1` | Hosts y línea exclusiva | 📋 PLANIFICADO | `S3.1` ✅, `S3.2` ✅, `S5.1` |
 | 3 | `S5.2` | Entrega idempotente y post-check | 📋 PLANIFICADO | `S4.1`, `S3.3` ✅ |
-| 4 | `S5.4` | Ruteo de escalamiento fuera/en casa | 📋 PLANIFICADO | `S5.1` |
+| 4 | `S5.4` | Ruteo de escalamiento fuera/en casa | 📋 PLANIFICADO | `S5.1`; contrato ejecutable **sellado el 2026-08-04**, cero decisiones `escala` abiertas. **No** depende de `S8.7`: la vía remota queda definida pero inhabilitada |
 | 5 | `S5.5` | Decisión estacionada y continuación independiente | 📋 PLANIFICADO | `S5.4` |
 | 6 | `S5.3` | Continuación | 📋 PLANIFICADO | `S5.2` |
 | 7 | `S8.7` | Puente Hermes/Telegram | 📋 PLANIFICADO | `S8.4` ✅, `S8.8` ✅, `S0.3` ✅, `S5.1` |
