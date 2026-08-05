@@ -23,15 +23,15 @@
 
 ## 📍 Punto de retoma
 
-**`S5.1` sigue 🟢 LISTO y `M5.1.3` quedó re-sellado el 2026-08-05, con 27 criterios binarios y cero decisiones `escala` abiertas.** El contrato suma exactamente `package.json`, `bun.lock` y `.opencode/plugins/tower-spike.js` al `Área`; `core.mjs` y `test/recovery.test.mjs` siguen explícitamente en el `Prohibido`. Esto es sello de planificación, no verificación de implementación.
+**`S5.1` sigue 🟢 LISTO y `M5.1.3` está re-sellado, pero el candidato `s5-1@dee52e3` sigue inválido y sin integrar.** El contrato tiene 27 criterios binarios, suma exactamente `package.json`, `bun.lock` y `.opencode/plugins/tower-spike.js` al `Área`, y mantiene `core.mjs` y `test/recovery.test.mjs` en el `Prohibido`. Es sello de planificación, no verificación de implementación.
 
-**El candidato `s5-1@dee52e3` es inválido y no está integrado.** Mezcla compatibilidad schema-v6 —que `S5.1` no posee— en `core.mjs` y `test/recovery.test.mjs`, y su composition root obtiene el binding mediante un reader de `core.mjs`. El test mockea ese reader, por lo que puede quedar verde sin probar el contrato de inyección.
+**Resultado binario del mapa: la `S5.1` corregida NO necesita schema v6.** La prueba aislada ejecutó la inyección sobre core schema-v5 con 3/0 y 7/0 tests; al quitar el reader auto-obtenido no queda ningún consumidor probado de schema-v6 que mapear. **No se enumera una Sesión de v6: no existe, y ese trabajo no bloquea la cadena de release.**
 
-**El bloqueo dejó de ser una decisión del maintainer y pasó a ser una corrección de código.** El límite ya está decidido: `TowerSpikePlugin` recibe `trustedBindingProvider` al inicializarse, no lo fabrica ni retiene un reader nuevo en `core.mjs`, y falla cerrado antes de spawn o persistencia ante provider o binding ausente, inválido o de otra sesión. Recién el candidato corregido puede verificar los 27 criterios de `S5.1`.
+**La dirección de confianza queda cerrada:** un inicializador confiable aguas arriba inyecta `trustedBindingProvider` en `TowerSpikePlugin`; la plugin valida `context.sessionID`, liga autoridad y recién entonces crea el Main store. `createMainStore` consume `authority` y `capability` ya emitidas, por lo que **no puede originar el provider** sin invertir la confianza y crear una segunda fuente de identidad de Main.
 
-**Cola inmediata:** corregir `s5-1`, verificarlo contra el contrato re-sellado e integrarlo; después ejecutar `S4.1`, que sigue 📋 PLANIFICADO y depende de `S5.1`. `S5.2` espera `S4.1`; `S5.4` y `S8.7` siguen esperando la integración de `S5.1`; el resto del orden permanece sin cambios.
+**El único bloqueo actual es corrección de código.** El candidato debe eliminar la dependencia de schema-v6 y del reader de `core.mjs`, implementar el provider confiable de producción prometido por `M5.1.3`, y recién después verificar los 27 criterios de `S5.1`.
 
-**La compatibilidad schema-v6 todavía no tiene Sesión enumerada.** Agente Soporte debe cerrar el mapa acotado de consumidores y dependencias y entregarlo a `planificador-granular`; este punto de retoma no inventa ID, estado ni arista antes de esa evidencia.
+**Cola inmediata:** corregir, verificar e integrar `S5.1`; después ejecutar `S4.1`, que sigue 📋 PLANIFICADO y conserva su dependencia directa de `S5.1` corregida e integrada, **sin arista nueva**. `S5.2` espera `S4.1`; `S5.4` y `S8.7` esperan `S5.1`; el resto del orden permanece sin cambios.
 
 ## ⚖️ Decisiones vigentes
 
