@@ -1,8 +1,14 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs"
+import { Database } from "bun:sqlite"
+import { execFileSync } from "node:child_process"
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
+
+import { createAgentCapabilityRegistry } from "../../capabilities/registry.mjs"
+import * as tower from "../../core.mjs"
+import { bindMainAuthority } from "../../main-store/authority.mjs"
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), "../..")
 const directories = []
@@ -28,10 +34,82 @@ const defaultClient = (calls, output = proposal()) => ({
   },
 })
 
-const loadPlugin = async ({ client, omitProvider = false, providerError, providerValue, drift = false } = {}) => {
-  const root = mkdtempSync(join(tmpdir(), "ct-plugin-"))
+const git = (cwd, args) => execFileSync("git", args, { cwd, encoding: "utf8" }).trim()
+const capabilityDocument = () => ({
+  schema: "agent-capability-registry", schema_version: 1, project_id: "project-a", main_identity: "main-session-a", registry_revision: 1,
+  capabilities: [{
+    agent_identity: "support-a", agent_role: "SUPPORT", capability: "support-proposal",
+    input_schema: "support-proposal", output_schema: "policy-report",
+    source_ref: "capabilities/support.mjs", source_digest: `sha256:${"a".repeat(64)}`,
+    jornada_id: "jornada-a", jornada_revision: 1, expires_at: "2099-01-01T00:00:00.000Z", registry_entry_revision: 1,
+  }],
+})
+const canonicalIsolationResources = () => {
+  const root = mkdtempSync(join(tmpdir(), "ct-plugin-canonical-"))
   directories.push(root)
+  const main = join(root, "Main"), worker = join(root, "Worker")
+  mkdirSync(main)
+  git(main, ["init", "-q", "-b", "master"])
+  git(main, ["config", "user.email", "tower@example.invalid"])
+  git(main, ["config", "user.name", "Tower Test"])
+  writeFileSync(join(main, "README.md"), "canonical isolation fixture\n")
+  git(main, ["add", "README.md"])
+  git(main, ["commit", "-q", "-m", "fixture"])
+  git(main, ["worktree", "add", "-q", "-b", "worker", worker])
+
+  const place = tower.locate(main)
+  mkdirSync(place.root, { recursive: true, mode: 0o700 })
+  writeFileSync(join(place.root, "ACTIVE"), "", { mode: 0o600 })
+  const mainHandle = tower.open(main), workerHandle = tower.open(worker)
+  tower.register(mainHandle, "MAIN")
+  tower.setState(mainHandle, { state: "READY", task: "canonical witness" })
+  tower.register(workerHandle, "WORKER")
+  tower.setState(workerHandle, { state: "WORKING", task: "worker witness" })
+  expect(tower.acquire(mainHandle, "git-delivery")).toEqual({ granted: true, holder: "Main" })
+  expect(tower.acquire(workerHandle, "db-writer")).toEqual({ granted: true, holder: "Worker" })
+  workerHandle.db.close()
+  mainHandle.db.close()
+
+  const dbPath = join(place.root, "tower.db")
+  const database = new Database(dbPath)
+  database.run("PRAGMA wal_checkpoint(TRUNCATE)")
+  const agents = database.query("SELECT name, role, state, task FROM agent ORDER BY name").all()
+  const locks = database.query("SELECT name, holder FROM lock ORDER BY name").all()
+  database.close()
+  expect(agents).toEqual([
+    { name: "Main", role: "MAIN", state: "READY", task: "canonical witness" },
+    { name: "Worker", role: "WORKER", state: "WORKING", task: "worker witness" },
+  ])
+  expect(locks).toEqual([
+    { name: "db-writer", holder: "Worker" },
+    { name: "git-delivery", holder: "Main" },
+  ])
+
+  const storeRoot = join(root, "main-store"), registryPath = join(root, "state", "capabilities.json")
   const binding = {
+    project_id: "project-a", revision: 1, repository_root: main, git_common_dir: dirname(place.root),
+    remote: "git@example.invalid:a.git", branch: "master", main_session_id: "main-session-a", store_path: storeRoot, epoch: 3,
+  }
+  const authority = bindMainAuthority({ trustedBindingProvider: () => binding, rederiveBinding: () => ({ ...binding }) })
+  const registry = createAgentCapabilityRegistry({ registryPath, authority, capability: authority.capability })
+  registry.save({ document: capabilityDocument(), expectedRevision: 0 })
+  expect(registry.load()).toEqual(capabilityDocument())
+  return { root, main, worker, dbPath, registryPath, storeRoot, binding }
+}
+const canonicalSnapshot = ({ dbPath, registryPath }) => ({
+  tower: readFileSync(dbPath),
+  registry: readFileSync(registryPath),
+})
+const expectCanonicalSnapshot = ({ dbPath, registryPath }, snapshot) => {
+  expect(readFileSync(dbPath)).toEqual(snapshot.tower)
+  expect(readFileSync(registryPath)).toEqual(snapshot.registry)
+}
+
+const loadPlugin = async ({ client, omitProvider = false, providerError, providerValue, drift = false, resources } = {}) => {
+  const root = resources?.storeRoot ?? mkdtempSync(join(tmpdir(), "ct-plugin-"))
+  if (!resources) directories.push(root)
+  const worktree = resources?.main ?? projectRoot
+  const binding = resources?.binding ?? {
     project_id: "project-a", revision: 7, repository_root: projectRoot, git_common_dir: join(projectRoot, ".git"),
     remote: "git@example.invalid:a.git", branch: "master", main_session_id: "main-session-a", store_path: root, epoch: 3,
   }
@@ -44,7 +122,7 @@ const loadPlugin = async ({ client, omitProvider = false, providerError, provide
   }
   const calls = []
   const input = {
-    client: client ?? defaultClient(calls), project: { id: "project-a" }, directory: projectRoot, worktree: projectRoot,
+    client: client ?? defaultClient(calls), project: { id: "project-a" }, directory: worktree, worktree,
     experimental_workspace: { register: () => {} }, serverUrl: new URL("http://127.0.0.1"), $: {},
   }
   const { TowerSpikePlugin } = await import("../../plugin/tower-spike.js")
@@ -52,20 +130,11 @@ const loadPlugin = async ({ client, omitProvider = false, providerError, provide
   return { binding, calls, plugin, providerCalls: () => providerCalls, root }
 }
 
-const execute = (plugin, input = proposal(), sessionID = "main-session-a", abort = new AbortController().signal) =>
+const execute = (plugin, input = proposal(), sessionID = "main-session-a", abort = new AbortController().signal, worktree = projectRoot) =>
   plugin.tool.control_tower_support.execute({ proposal: input }, {
-    sessionID, messageID: "message-main", agent: "main", directory: projectRoot, worktree: projectRoot, abort,
+    sessionID, messageID: "message-main", agent: "main", directory: worktree, worktree, abort,
     metadata: () => {}, ask: async () => {},
   })
-
-const sentinelSnapshot = (root) => {
-  const files = ["board.json", "locks.json", "worker.json", "registry.json"]
-  for (const file of files) writeFileSync(join(root, file), `${file}:unchanged\n`)
-  return Object.fromEntries(files.map((file) => [file, readFileSync(join(root, file), "utf8")]))
-}
-const expectSentinels = (root, snapshot) => {
-  for (const [file, bytes] of Object.entries(snapshot)) expect(readFileSync(join(root, file), "utf8")).toBe(bytes)
-}
 
 afterEach(() => directories.splice(0).forEach((path) => rmSync(path, { recursive: true, force: true })))
 
@@ -118,20 +187,22 @@ describe("OpenCode Support bridge", () => {
     expect(readdirSync(join(loaded.root, "support-proposals"))).toHaveLength(1)
   })
 
-  test("never sends authority to Support and preserves board, locks, Worker, and registry bytes", async () => {
-    const success = await loadPlugin()
-    const successBytes = sentinelSnapshot(success.root)
-    await execute(success.plugin)
-    expectSentinels(success.root, successBytes)
+  test("never sends authority to Support and preserves canonical Tower and capability registry bytes", async () => {
+    const successResources = canonicalIsolationResources()
+    const success = await loadPlugin({ resources: successResources })
+    const successBytes = canonicalSnapshot(successResources)
+    await execute(success.plugin, proposal(), "main-session-a", new AbortController().signal, successResources.main)
+    expectCanonicalSnapshot(successResources, successBytes)
     const promptBytes = success.calls.find(([name]) => name === "prompt")[1].body.parts[0].text
     expect(promptBytes).not.toMatch(/main_store|capability|authority/i)
 
-    const rejected = await loadPlugin()
-    const rejectedBytes = sentinelSnapshot(rejected.root)
+    const rejectedResources = canonicalIsolationResources()
+    const rejected = await loadPlugin({ resources: rejectedResources })
+    const rejectedBytes = canonicalSnapshot(rejectedResources)
     const poisoned = { context: { main_store: { path: "/forbidden" }, capability: "forbidden", authority: "forbidden" } }
-    expect(await code(() => execute(rejected.plugin, poisoned))).toBe("CT_AUTH_INVALID")
+    expect(await code(() => execute(rejected.plugin, poisoned, "main-session-a", new AbortController().signal, rejectedResources.main))).toBe("CT_AUTH_INVALID")
     expect(rejected.calls).toEqual([])
-    expectSentinels(rejected.root, rejectedBytes)
+    expectCanonicalSnapshot(rejectedResources, rejectedBytes)
   })
 
   test("fails closed without isolated host APIs or valid structured output, with no inline fallback", async () => {
