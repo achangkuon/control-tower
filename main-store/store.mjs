@@ -122,6 +122,8 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
   }
   const authorizationPath = (id) => join(directory("authorizations"), `${safeId(id)}.json`)
   const jornadaPath = (id) => join(directory("jornadas"), `${safeId(id)}.json`)
+  const handoffCoordinatePath = (id) => join(directory("handoff-coordinates"), `${safeId(id)}.json`)
+  const workerClaimPath = (id) => join(directory("worker-claims"), `${safeId(id)}.json`)
 
   return Object.freeze({
     persistReport(input) {
@@ -172,6 +174,27 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
         return frozen({ ...commit("candidate-effects", id, { actor: "MAIN", project_id: binding.project_id, candidate_revision: input.candidate_revision, expected_revision: 0 }, 0), admitted: true })
       } catch (error) {
         if (error.code === "CT_CAS_MISMATCH" && existsSync(path)) return frozen({ ...parse(path), admitted: false })
+        throw error
+      }
+    },
+    recordHandoffCoordinate(input) {
+      if (typeof input?.module_id !== "string" || input.module_id.length === 0) fail("CT_STORE_INVALID", "Module coordinate is required")
+      return commit("handoff-coordinates", input.handoff_id, input, 0)
+    },
+    readHandoffCoordinate(id) { return frozen(parse(handoffCoordinatePath(id))) },
+    recordWorkerClaim(input) {
+      assertMain(input)
+      if (input?.expected_claim !== input?.actual_claim) fail("CT_CLAIM_MISMATCH", `Worker claim mismatch: expected ${input?.expected_claim}, actual ${input?.actual_claim}`)
+      const replay = () => {
+        const current = parse(workerClaimPath(input.handoff_id))
+        if (current.project_id !== binding.project_id || current.expected_claim !== input.expected_claim || current.actual_claim !== input.actual_claim) fail("CT_CLAIM_MISMATCH", "Worker claim evidence conflicts")
+        return frozen({ ...current, replayed: true })
+      }
+      if (existsSync(workerClaimPath(input.handoff_id))) return replay()
+      try {
+        return frozen({ ...commit("worker-claims", input.handoff_id, { ...input, expected_revision: 0 }, 0), replayed: false })
+      } catch (error) {
+        if (error.code === "CT_CAS_MISMATCH" && existsSync(workerClaimPath(input.handoff_id))) return replay()
         throw error
       }
     },

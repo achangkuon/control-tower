@@ -343,6 +343,37 @@ describe("atomic owner-only Main store", () => {
     expect(code(() => store.createJornada({ actor: "MAIN", ...jornadaRecord("jornada-store"), expected_revision: 0 }))).toBe("CT_CAS_MISMATCH")
   })
 
+  test("keeps handoff coordinates and matching Worker claims in Main-owned records", () => {
+    const { store } = setup()
+    expect(store.recordHandoffCoordinate({ actor: "MAIN", project_id: "project-a", handoff_id: "handoff-a", module_id: "M5.1.2" }).module_id).toBe("M5.1.2")
+    expect(store.readHandoffCoordinate("handoff-a")).toMatchObject({ handoff_id: "handoff-a", module_id: "M5.1.2" })
+    expect(store.recordWorkerClaim({ actor: "MAIN", project_id: "project-a", handoff_id: "handoff-a", expected_claim: "M5.1.2", actual_claim: "M5.1.2" }).actual_claim).toBe("M5.1.2")
+    expect(store.recordWorkerClaim({ actor: "MAIN", project_id: "project-a", handoff_id: "handoff-a", expected_claim: "M5.1.2", actual_claim: "M5.1.2" }).replayed).toBe(true)
+    expect(code(() => store.recordWorkerClaim({ actor: "SUPPORT", project_id: "project-a", handoff_id: "handoff-a", expected_claim: "M5.1.2", actual_claim: "M5.1.2" }))).toBe("CT_AUTH_INVALID")
+    expect(code(() => store.recordWorkerClaim({ actor: "MAIN", project_id: "project-b", handoff_id: "handoff-a", expected_claim: "M5.1.2", actual_claim: "M5.1.2" }))).toBe("CT_PROJECT_MISMATCH")
+  })
+
+  test("serializes identical Worker claims across independent Main-store processes", async () => {
+    const { root } = setup()
+    const worker = String.raw`
+      import { existsSync, writeFileSync } from "node:fs";
+      import { bindMainAuthority, createMainStore } from "./main-store/index.mjs";
+      const [root, id] = process.argv.slice(1); const binding = { project_id:"project-a", revision:7, repository_root:"/repo/a", git_common_dir:"/repo/a/.git", remote:"git@example.invalid:a.git", branch:"main", main_session_id:"main-session-a", store_path:root, epoch:3 };
+      const authority = bindMainAuthority({ trustedBindingProvider:()=>binding, rederiveBinding:()=>({...binding}) });
+      const store = createMainStore({ root, authority, capability:authority.capability, beforeCommit:()=>{ writeFileSync(root+"/claim-ready-"+id, "1"); while (!(existsSync(root+"/claim-ready-a") && existsSync(root+"/claim-ready-b"))) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,2); } });
+      try { console.log(JSON.stringify(store.recordWorkerClaim({ actor:"MAIN", project_id:"project-a", handoff_id:"handoff-race", expected_claim:"M5.1.2", actual_claim:"M5.1.2" }))); } catch(error) { console.log(JSON.stringify({ code:error.code })); }
+    `
+    const run = (id) => Bun.spawn([process.execPath, "-e", worker, root, id], { cwd: projectRoot, env: { ...process.env, BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0" }, stdout: "pipe", stderr: "pipe" })
+    const processes = [run("a"), run("b")]
+    const results = await Promise.all(processes.map(async (process) => {
+      const output = await new Response(process.stdout).text()
+      await process.exited
+      return JSON.parse(output.trim())
+    }))
+    expect(results.filter(({ replayed }) => replayed === false)).toHaveLength(1)
+    expect(results.filter(({ replayed }) => replayed === true)).toHaveLength(1)
+  })
+
   test("creates only canonical DRAFT Jornadas", () => {
     const { store } = setup()
     for (const state of ["PENDING_AUTHORIZATION", "ACTIVE", "PAUSED", "BLOCKED", "REJECTED", "EXPIRED", "REVOKED", "COMPLETED"]) {
