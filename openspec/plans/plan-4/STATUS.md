@@ -1,6 +1,6 @@
 # Plan 4 — Hosts y línea exclusiva
 
-**Estado:** 📋 PLANIFICADO
+**Estado:** 🟢 LISTO
 
 ## Resumen
 
@@ -8,14 +8,14 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` depende de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata es `S5.1`. |
 | Outputs | Adapter contract, launcher Pi/OpenCode, health, stop proof, host epoch y fallback exclusivo. |
-| Roadmap | Ejecutar `S4.1` después de integrar `S5.1`; el PR se dirige a `main`. Las responsabilidades legacy que aún no tienen límite de un PR permanecen sin ID. |
+| Roadmap | `S5.1` está ✅ COMPLETO; `S4.1` es ejecutable. Las responsabilidades legacy que aún no tienen límite de un PR permanecen sin ID. |
 | Referencias | [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). El proposal `sdd-tower-host-launcher` fue eliminado en `613a45d` por ser cáscara sin avance; su intención vive en este STATUS. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
 
-**Estado:** 📋 PLANIFICADO — **contrato ejecutable sellado el 2026-08-04** sobre `origin/master@da68163`. Espera a `S5.1`, no espera decisiones.
+**Estado:** 🟢 LISTO — **contrato ejecutable sellado el 2026-08-04** sobre `origin/master@da68163`. `S5.1` está ✅ COMPLETO y no quedan decisiones `escala` abiertas propias.
 
-**Depende de:** `S3.1` ✅, `S3.2` ✅, `S5.1`; predecesora inmediata `S5.1`.
+**Depende de:** `S3.1` ✅, `S3.2` ✅, `S5.1` ✅; predecesora inmediata `S5.1`.
 
 **Área:** `hosts/candidate-fence.mjs`, `test/hosts/**`
 

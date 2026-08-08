@@ -46,17 +46,17 @@ Y cuando, con Hermes ausente, la operación local por CLI sigue completa.
 
 ```mermaid
 graph LR
-  S88["S8.8 adopción · ✅"] --> S87["S8.7 puente · 📋"]
+  S88["S8.8 adopción · ✅"] --> S87["S8.7 puente · 🔴"]
   S03["S0.3 enmienda spec · ✅"] --> S87
   S31["S3.1 workspace · ✅"] --> S32["S3.2 orquestación · ✅"]
   S32 --> S33["S3.3 capability registry · ✅"]
   S33 --> S34["S3.4 ciclo de vida Jornada · ✅"]
-  S34 --> S51["S5.1 authorization store · 🟢 sellada"]
-  S51 --> S41["S4.1 hosts · 📋"]
+  S34 --> S51["S5.1 candidate contracts · ✅"]
+  S51 --> S41["S4.1 hosts · 🟢"]
   S41 --> S52["S5.2 entrega idempotente · 📋"]
   S33 --> S52
   S52 --> S53["S5.3 continuación · 📋"]
-  S51 --> S54["S5.4 ruteo de escalamiento · 📋"]
+  S51 --> S54["S5.4 ruteo de escalamiento · 🟢"]
   S54 --> S55["S5.5 decisión estacionada · 📋"]
   S51 --> S87
   S53 --> S71["S7.1 conformidad · 📋"]
@@ -72,16 +72,16 @@ graph LR
 | ✅ | `S3.2` | Orquestación | ✅ COMPLETO | `S3.1` ✅; implementación `22c43ae`, 14/14 criterios `CORROBORATED_FIXED` |
 | ✅ | `S3.3` | Agent Capability Registry | ✅ COMPLETO | `S3.2` ✅; implementación `4621d3f`, 14/14 criterios verificados por el planner contra el SHA integrado |
 | ✅ | `S3.4` | Persistencia y ciclo de vida de Jornada | ✅ COMPLETO | `S3.2` ✅, `S3.3` ✅; implementación `b6dda84`, 11/11 criterios verificados por el planner contra el SHA integrado. **Cierra P3 entero** |
-| 1 | `S5.1` | Authorization store + Telegram + validación Git/PR/check/SHA | 🟢 LISTO | `S3.2` ✅, `S3.3` ✅, `S3.4` ✅; contrato ejecutable **sellado el 2026-08-04** en `c2d116c`, cero decisiones `escala` abiertas |
-| 2 | `S4.1` | Hosts y línea exclusiva | 📋 PLANIFICADO | `S3.1` ✅, `S3.2` ✅, `S5.1`; contrato ejecutable **sellado el 2026-08-04**, cero decisiones `escala` abiertas |
-| 3 | `S5.2` | Entrega idempotente y post-check | 📋 PLANIFICADO | `S4.1`, `S3.3` ✅; contrato ejecutable **sellado el 2026-08-04**, cero decisiones `escala` abiertas. Su registro de entrega es propio en `delivery/**`: sin migraciones y sin `db-writer` |
-| 4 | `S5.4` | Ruteo de escalamiento fuera/en casa | 📋 PLANIFICADO | `S5.1`; contrato ejecutable **sellado el 2026-08-04**, cero decisiones `escala` abiertas. **No** depende de `S8.7`: la vía remota queda definida pero inhabilitada |
-| 5 | `S5.5` | Decisión estacionada y continuación independiente | 📋 PLANIFICADO | `S5.4` |
-| 6 | `S5.3` | Continuación | 📋 PLANIFICADO | `S5.2` |
-| 7 | `S8.7` | Puente Hermes/Telegram | 📋 PLANIFICADO | `S8.4` ✅, `S8.8` ✅, `S0.3` ✅, `S5.1` |
-| 8 | `S7.1` | Conformidad de release | 📋 PLANIFICADO | `S5.3`, `S8.7`, `S5.5` |
+| ✅ | `S5.1` | Candidate contracts, authorization store y frontera Support | ✅ COMPLETO | `S3.2` ✅, `S3.3` ✅, `S3.4` ✅; candidato `c7c2472`, 27/27 criterios y 537/537 tests |
+| ▶ | `S4.1` | Hosts y línea exclusiva | 🟢 LISTO | `S3.1` ✅, `S3.2` ✅, `S5.1` ✅; contrato sellado, cero decisiones `escala` abiertas |
+| ▶ | `S5.4` | Ruteo de escalamiento fuera/en casa | 🟢 LISTO | `S5.1` ✅; contrato sellado, cero decisiones `escala` abiertas. **No** depende de `S8.7` |
+| 2 | `S5.2` | Entrega idempotente y post-check | 📋 PLANIFICADO | `S4.1`, `S3.3` ✅; contrato sellado, cero decisiones `escala` abiertas. Registro propio en `delivery/**` |
+| 2 | `S5.5` | Decisión estacionada y continuación independiente | 📋 PLANIFICADO | `S5.4` |
+| 3 | `S5.3` | Continuación | 📋 PLANIFICADO | `S5.2` |
+| — | `S8.7` | Puente Hermes/Telegram | 🔴 BLOQUEADO | Dependencias ✅; tres decisiones `escala` abiertas del maintainer |
+| 4 | `S7.1` | Conformidad de release | 📋 PLANIFICADO | `S5.3`, `S8.7`, `S5.5` |
 
-**Catorce Sesiones · 6 cerradas.** A las trece anteriores se suma `S3.4`, enumerada el
+**Catorce Sesiones · 7 cerradas.** A las trece anteriores se suma `S3.4`, enumerada el
 2026-08-04: `jornada-v1` existía como contrato **sin implementación**, y `policy/jornada.mjs`
 —que entregó `S3.2`— es un resolvedor puro que recibe la Jornada como argumento, no un store.
 Su alcance es **pasivo**: incrementa `jornada_revision` en toda transición, con lo que una
@@ -101,30 +101,17 @@ no alcanza como conformidad de release si la Torre igual se queda esperando la r
 
 `S0.3` cerró el 2026-08-01 en `9595b92`. Con eso, la contradicción entre specs sobre si el
 puente puede transportar un callback de merge **ya no existe**. Con `S8.8` también completa,
-el único bloqueo declarado de `S8.7` es `S5.1`.
+las dependencias de `S8.7` están satisfechas; quedan sus tres decisiones `escala` abiertas.
 
 ## Capacidad paralela hoy
 
-Derivada del grafo, no declarada. Dos Sesiones corren juntas sólo si se cumplen las tres:
-independencia en el grafo, `Área` disjunta y `Recurso` disjunto.
+La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas; no se declara como un número fijo.
 
-`S0.3`, `S3.1`, `S3.2`, `S3.3`, `S3.4` y `S8.8` están ✅ COMPLETO, y con `S3.4` cerró **P3 entero**.
-`S5.1` es el siguiente nodo, 🟢 LISTO con su contrato sellado; las demás Sesiones de la cadena
-siguen 📋 PLANIFICADO o dependen de una predecesora.
+`S5.1` está ✅ COMPLETO. `S4.1` y `S5.4` están 🟢 LISTO, son independientes en el grafo, tienen `Área` disjunta (`hosts/**` frente a `escalation/**`) y no comparten `Recurso`.
 
-**Capacidad de ejecución hoy: 1.** Sólo `S5.1` está 🟢 LISTO. `S4.1`, `S5.4` y `S8.7` cuelgan de
-ella, así que la cadena no se bifurca hasta integrarla. Desde ahí el resto es casi lineal —
-`S5.1 → S4.1 → S5.2 → S5.3` es una sola hebra, y `S5.4 → S5.5` cuelga de `S5.1` como la única
-bifurcación real. `S5.4` y `S5.5` comparten prefijo de `Área` (`escalation/**`), así que entre
-ellas tampoco hay paralelismo. Ese es el costo real del alcance elegido: no se compra con más
-agentes.
+**Capacidad de ejecución hoy: 2.** Pueden avanzar `S4.1` y `S5.4` en paralelo. `S5.2` espera a `S4.1`; `S5.5` espera a `S5.4`; `S5.3` espera a `S5.2`. `S8.7` tiene sus dependencias satisfechas pero sigue 🔴 BLOQUEADO por tres decisiones del maintainer.
 
-**Pero la capacidad de planificación es otra cosa, y ya se demostró.** `S5.1` se selló mientras
-`S3.4` se implementaba, y llegó a su turno con `Área`, `Prohibido`, `Recurso`, tres Módulos, diez
-Tareas y veinte criterios binarios ya escritos. Es la primera Sesión de la cadena que no gastó su
-turno decidiendo qué era. La condición para repetirlo es siempre la misma: **una decisión `escala`
-resuelta por adelantado**. Sellar `S5.4` mientras `S5.1` se implementa es el siguiente paso
-natural de esa mecánica.
+La planificación adelantada conserva el techo declarado de dos Sesiones. El siguiente cierre de cada hebra debe volver a derivar capacidad y contaminación desde el grafo vigente, no desde esta fotografía.
 
 ## Enmienda `S0.3` — ✅ COMPLETA
 
@@ -173,8 +160,7 @@ y prohíben `delivery` en `START_JORNADA`.
   canónico — que es exactamente cómo se produjo el drift. Ahora valida contra `authorization-v1`
   vía `contracts/validate.mjs`, así que la clase de bug es estructuralmente imposible.
 
-`S5.1` sigue siendo la Sesión que toma posesión del authorization store; ya no arranca con un
-contrato roto debajo.
+`S5.1` cerró como dueña del authorization store, sin el contrato roto que existía antes de su ejecución.
 
 Corresponde a `S5.1`, que es la Sesión que toma posesión del authorization store.
 
