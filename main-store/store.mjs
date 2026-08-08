@@ -136,6 +136,26 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
   const handoffCoordinatePath = (id) => join(directory("handoff-coordinates"), `${safeId(id)}.json`)
   const workerClaimPath = (id) => join(directory("worker-claims"), `${safeId(id)}.json`)
   const supportProposalPath = (id) => join(directory("support-proposals"), `${safeId(id)}.json`)
+  const approvedAuthorizationFor = (authorizationId, candidateRevision) => {
+    if (typeof authorizationId !== "string" || authorizationId.length === 0) fail("CT_AUTH_INVALID", "Approved authorization is required")
+    const path = authorizationPath(authorizationId)
+    if (!existsSync(path)) fail("CT_AUTH_INVALID", "Unknown authorization")
+    const current = parse(path)
+    const {
+      actor: _actor, revision: _revision, revision_history: _history,
+      terminal_audit: _terminalAudit, audit_ref: _auditRef, ...record
+    } = current
+    let authorization
+    try { authorization = validate("authorization", record) }
+    catch (error) { fail("CT_AUTH_INVALID", "Authorization does not satisfy authorization-v1", error) }
+    if (authorization.state !== "APPROVED") fail("CT_AUTH_INVALID", "Authorization is not approved")
+    if (authorization.project_id !== binding.project_id || authorization.registry_revision !== binding.revision) fail("CT_AUTH_INVALID", "Authorization binding is stale")
+    if (!digest(candidateRevision) || candidateRevision !== authorization.extensions?.["control-tower/candidate-revision"]) fail("CT_AUTH_INVALID", "Authorization candidate does not match")
+    const createdAt = Date.parse(authorization.created_at), expiresAt = Date.parse(authorization.expires_at)
+    if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) fail("CT_AUTH_EXPIRED", "Authorization has expired")
+    if (!Number.isFinite(createdAt) || expiresAt <= createdAt || expiresAt > createdAt + 3_600_000) fail("CT_AUTH_INVALID", "Authorization lifetime is invalid")
+    return authorization
+  }
 
   return Object.freeze({
     persistReport(input) {
@@ -199,16 +219,28 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
     },
     admitCandidateEffect(input) {
       assertMain(input)
-      if (!digest(input.candidate_revision)) fail("CT_AUTH_INVALID", "Candidate revision is invalid")
-      const id = input.candidate_revision.slice(7)
-      const path = join(directory("candidate-effects"), `${id}.json`)
-      if (existsSync(path)) return frozen({ ...parse(path), admitted: false })
-      try {
-        return frozen({ ...commit("candidate-effects", id, { actor: "MAIN", project_id: binding.project_id, candidate_revision: input.candidate_revision, expected_revision: 0 }, 0), admitted: true })
-      } catch (error) {
-        if (error.code === "CT_CAS_MISMATCH" && existsSync(path)) return frozen({ ...parse(path), admitted: false })
-        throw error
-      }
+      const authorization = approvedAuthorizationFor(input.authorization_id, input.candidate_revision)
+      return withLock(jornadaPath(authorization.jornada_id), () => {
+        const expiresAt = Date.parse(authorization.expires_at)
+        if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) fail("CT_AUTH_EXPIRED", "Authorization has expired")
+        let jornada
+        try { jornada = this.readJornada(authorization.jornada_id) }
+        catch (error) { fail("CT_JORNADA_INVALID", "Authorization Jornada is unavailable", error) }
+        if (jornada.state !== "AC" + "TIVE" || jornada.jornada_revision !== authorization.jornada_revision) fail("CT_AUTH_INVALID", "Authorization Jornada is not active at its bound revision")
+
+        const id = input.candidate_revision.slice(7)
+        const path = join(directory("candidate-effects"), `${id}.json`)
+        if (existsSync(path)) return frozen({ ...parse(path), admitted: false })
+        try {
+          return frozen({ ...commit("candidate-effects", id, {
+            actor: "MAIN", project_id: binding.project_id, authorization_id: authorization.authorization_id,
+            candidate_revision: input.candidate_revision, expected_revision: 0,
+          }, 0), admitted: true })
+        } catch (error) {
+          if (error.code === "CT_CAS_MISMATCH" && existsSync(path)) return frozen({ ...parse(path), admitted: false })
+          throw error
+        }
+      })
     },
     recordHandoffCoordinate(input) {
       if (typeof input?.module_id !== "string" || input.module_id.length === 0) fail("CT_STORE_INVALID", "Module coordinate is required")

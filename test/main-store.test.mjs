@@ -302,20 +302,80 @@ describe("atomic owner-only Main store", () => {
     expect(store.readAuthorization("auth-jornada").state).toBe("PENDING")
   })
 
-  test("binds consumption and persistent effect admission to one candidate revision", () => {
-    const { authority, root, store } = setup()
+  test("rejects candidate effects without a live approved authorization bound to the candidate", () => {
+    const { root, store } = setup()
+    const effectPath = join(root, "candidate-effects", candidateRevision.slice(7) + ".json")
+    const admit = (authorization_id, revision = candidateRevision) => store.admitCandidateEffect({
+      actor: "MAIN", project_id: "project-a", authorization_id, candidate_revision: revision,
+    })
+
+    expect(code(() => admit(undefined))).toBe("CT_AUTH_INVALID")
+    expect(code(() => admit("auth-absent"))).toBe("CT_AUTH_INVALID")
+    expect(existsSync(effectPath)).toBe(false)
+
     activateJornada(store)
-    store.createAuthorization({ actor: "MAIN", ...authorizationRecord("auth-candidate") })
-    expect(code(() => store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-candidate", decision: "APPROVED", expected_revision: 1 }))).toBe("CT_AUTH_INVALID")
-    expect(code(() => store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-candidate", candidate_revision: `sha256:${"e".repeat(64)}`, decision: "APPROVED", expected_revision: 1 }))).toBe("CT_AUTH_INVALID")
-    expect(store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-candidate", candidate_revision: candidateRevision, decision: "APPROVED", expected_revision: 1 }).state).toBe("APPROVED")
+    store.createAuthorization({ actor: "MAIN", ...authorizationRecord("auth-pending") })
+    expect(code(() => admit("auth-pending"))).toBe("CT_AUTH_INVALID")
+    store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-pending", candidate_revision: candidateRevision, decision: "APPROVED", expected_revision: 1 })
+    expect(code(() => admit("auth-pending", `sha256:${"e".repeat(64)}`))).toBe("CT_AUTH_INVALID")
+
+    const expired = store.createAuthorization({ actor: "MAIN", ...authorizationRecord("auth-expired-effect") })
+    store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-expired-effect", candidate_revision: candidateRevision, decision: "APPROVED", expected_revision: 1 })
+    writeFileSync(expired.record_path, `${JSON.stringify({ ...store.readAuthorization("auth-expired-effect"), state: "APPROVED", expires_at: "2020-01-01T00:00:00.000Z" })}\n`)
+    expect(code(() => admit("auth-expired-effect"))).toBe("CT_AUTH_EXPIRED")
+    expect(existsSync(effectPath)).toBe(false)
+  })
+
+  test("rejects candidate effects when the authorization Jornada is absent, inactive, or stale", () => {
+    const approved = (authorization_id) => {
+      const result = setup()
+      activateJornada(result.store)
+      result.store.createAuthorization({ actor: "MAIN", ...authorizationRecord(authorization_id) })
+      result.store.consumeAuthorization({ actor: "MAIN", authorization_id, candidate_revision: candidateRevision, decision: "APPROVED", expected_revision: 1 })
+      return result
+    }
+    const admit = ({ store }, authorization_id) => store.admitCandidateEffect({
+      actor: "MAIN", project_id: "project-a", authorization_id, candidate_revision: candidateRevision,
+    })
+
+    const absent = approved("auth-jornada-absent")
+    rmSync(join(absent.root, "jornadas", "jornada-a.json"))
+    expect(code(() => admit(absent, "auth-jornada-absent"))).toBe("CT_JORNADA_INVALID")
+
+    const inactive = approved("auth-jornada-inactive")
+    const inactivePath = join(inactive.root, "jornadas", "jornada-a.json")
+    writeFileSync(inactivePath, `${JSON.stringify({ ...inactive.store.readJornada("jornada-a"), state: "PAUSED" })}\n`)
+    expect(code(() => admit(inactive, "auth-jornada-inactive"))).toBe("CT_AUTH_INVALID")
+
+    const stale = approved("auth-jornada-stale")
+    stale.store.transitionJornada({ actor: "MAIN", project_id: "project-a", jornada_id: "jornada-a", state: "PAUSED", expected_revision: 3 })
+    stale.store.transitionJornada({ actor: "MAIN", project_id: "project-a", jornada_id: "jornada-a", state: "ACTIVE", expected_revision: 4 })
+    expect(code(() => admit(stale, "auth-jornada-stale"))).toBe("CT_AUTH_INVALID")
+    for (const result of [absent, inactive, stale]) expect(existsSync(join(result.root, "candidate-effects"))).toBe(false)
+  })
+
+  test("admits an approved candidate once while holding its Jornada lock through effect commit", () => {
+    let root
+    let observedJornadaLock = false
+    const result = setup({ beforeCommit: (path) => {
+      if (path.includes("/candidate-effects/")) observedJornadaLock = existsSync(join(root, "jornadas", "jornada-a.json.lock"))
+    } })
+    root = result.root
+    const { store } = result
+    activateJornada(store)
+    store.createAuthorization({ actor: "MAIN", ...authorizationRecord("auth-effect") })
+    store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-effect", candidate_revision: candidateRevision, decision: "APPROVED", expected_revision: 1 })
+    const input = { actor: "MAIN", project_id: "project-a", authorization_id: "auth-effect", candidate_revision: candidateRevision }
+
+    expect(store.admitCandidateEffect(input)).toMatchObject({ admitted: true, authorization_id: "auth-effect", candidate_revision: candidateRevision })
+    expect(observedJornadaLock).toBe(true)
 
     const replayAuthority = bindMainAuthority({ trustedBindingProvider: () => ({ ...binding, store_path: root }), rederiveBinding: () => ({ ...binding, store_path: root }) })
     const replay = createMainStore({ root, authority: replayAuthority, capability: replayAuthority.capability })
-    expect(store.admitCandidateEffect({ actor: "MAIN", project_id: "project-a", candidate_revision: candidateRevision }).admitted).toBe(true)
-    expect(replay.admitCandidateEffect({ actor: "MAIN", project_id: "project-a", candidate_revision: candidateRevision }).admitted).toBe(false)
-    expect(code(() => replay.admitCandidateEffect({ actor: "SUPPORT", project_id: "project-a", candidate_revision: candidateRevision }))).toBe("CT_AUTH_INVALID")
-    expect(code(() => replay.admitCandidateEffect({ actor: "MAIN", project_id: "project-b", candidate_revision: candidateRevision }))).toBe("CT_PROJECT_MISMATCH")
+    expect(replay.admitCandidateEffect(input)).toMatchObject({ admitted: false, authorization_id: "auth-effect", candidate_revision: candidateRevision })
+    expect(readdirSync(join(root, "candidate-effects"))).toHaveLength(1)
+    expect(code(() => replay.admitCandidateEffect({ ...input, actor: "SUPPORT" }))).toBe("CT_AUTH_INVALID")
+    expect(code(() => replay.admitCandidateEffect({ ...input, project_id: "project-b" }))).toBe("CT_PROJECT_MISMATCH")
   })
 
   test("bounds authorization lifetime and holds the Jornada lock through consumption", () => {
