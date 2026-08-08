@@ -1,5 +1,6 @@
 import { isAlias, isMap, isScalar, isSeq, parseDocument, visit } from "yaml"
 
+import { candidateRevision } from "./candidate-revision.mjs"
 import { failContract } from "./errors.mjs"
 import { validatorFor } from "./schema-registry.mjs"
 
@@ -87,6 +88,9 @@ const invariants = Object.freeze({
   agentCapabilityRegistry: (value) => {
     const keys = value.capabilities.map(({ agent_role, capability }) => `${agent_role}\0${capability}`)
     if (new Set(keys).size !== keys.length) invalidManifest("Role capabilities must resolve uniquely")
+  },
+  candidateRevision: (value) => {
+    if (candidateRevision(value) !== value.candidate_revision) invalid("Candidate revision must match its frozen identity")
   },
 })
 

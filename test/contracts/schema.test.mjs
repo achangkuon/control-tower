@@ -4,6 +4,7 @@ import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { validate } from "../../contracts/validate.mjs"
+import { freezeCandidate, isCurrentCandidate, successorCandidate } from "../../contracts/candidate-revision.mjs"
 
 const fixtures = JSON.parse(readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), "../fixtures/contracts/schema-cases-v1.json"),
@@ -148,6 +149,33 @@ describe("duplicate-safe structured parsing", () => {
 })
 
 describe("cross-field schema invariants", () => {
+  test("freezes distinct candidate bytes, rejects stale identity, links successors, and runs an effect once", () => {
+    const input = {
+      schema: "candidate-revision", schema_version: 1, project_id: "project-a", plan_id: "plan-a", session_id: "S5.1",
+      artifact_ref: "artifacts/a.json", base_sha: "a".repeat(40), result_sha: "b".repeat(40), tree_sha: "c".repeat(40),
+      commit_sha: "d".repeat(40), head_sha: "d".repeat(40), target: { repository: "owner/repository", branch: "master" },
+      assignment_id: "assignment-a", host_epoch: 1, policy_revision: 1, jornada_id: "jornada-a", jornada_revision: 3,
+      manifest_revision: 1, registry_revision: 7, capability_revision: 1, verification_digest: `sha256:${"e".repeat(64)}`,
+      required_checks_digest: `sha256:${"f".repeat(64)}`, required_reviews_digest: `sha256:${"0".repeat(64)}`,
+    }
+    const candidate = freezeCandidate(input)
+    const changed = freezeCandidate({ ...input, verification_digest: `sha256:${"1".repeat(64)}` })
+    expect(candidate.candidate_revision).not.toBe(changed.candidate_revision)
+    expect(isCurrentCandidate(candidate, input)).toBe(true)
+    expect(isCurrentCandidate(candidate, { ...input, host_epoch: 2 })).toBe(false)
+    expect(isCurrentCandidate(candidate, { ...input, artifact_ref: "artifacts/changed.json" })).toBe(false)
+    const successor = successorCandidate(candidate, { ...input, host_epoch: 2 })
+    expect(successor.predecessor_revision).toBe(candidate.candidate_revision)
+    expect(errorCode(() => successorCandidate(candidate, input))).toBe("CT_SCHEMA_INVALID")
+
+  })
+
+  test("requires candidate revisions to match their frozen identity", () => {
+    const candidate = structuredClone(fixtures.candidateRevision)
+    candidate.host_epoch = 2
+    expect(errorCode(() => validate("candidateRevision", candidate))).toBe("CT_SCHEMA_INVALID")
+  })
+
   test("capability roles resolve uniquely", () => {
     const duplicate = structuredClone(fixtures.agentCapabilityRegistry)
     duplicate.capabilities.push(structuredClone(duplicate.capabilities[0]))

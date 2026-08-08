@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "https://control-tower.local/schemas/candidate-revision-v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "schema_version", "candidate_revision", "project_id", "plan_id", "session_id", "artifact_ref", "base_sha", "result_sha", "tree_sha", "commit_sha", "head_sha", "target", "assignment_id", "host_epoch", "policy_revision", "jornada_id", "jornada_revision", "manifest_revision", "registry_revision", "capability_revision", "verification_digest", "required_checks_digest", "required_reviews_digest"],
+  "properties": {
+    "schema": {"const": "candidate-revision"}, "schema_version": {"const": 1}, "candidate_revision": {"$ref": "artifact-ref-v1.schema.json#/$defs/digest"},
+    "project_id": {"$ref": "artifact-ref-v1.schema.json#/$defs/slug"}, "plan_id": {"$ref": "artifact-ref-v1.schema.json#/$defs/slug"}, "session_id": {"type": "string", "minLength": 1}, "artifact_ref": {"type": "string", "minLength": 1},
+    "base_sha": {"$ref": "artifact-ref-v1.schema.json#/$defs/gitSha"}, "result_sha": {"$ref": "artifact-ref-v1.schema.json#/$defs/gitSha"}, "tree_sha": {"$ref": "artifact-ref-v1.schema.json#/$defs/gitSha"}, "commit_sha": {"$ref": "artifact-ref-v1.schema.json#/$defs/gitSha"}, "head_sha": {"$ref": "artifact-ref-v1.schema.json#/$defs/gitSha"},
+    "target": {"type": "object", "additionalProperties": false, "required": ["repository", "branch"], "properties": {"repository": {"type": "string", "pattern": "^[^/]+/[^/]+$"}, "branch": {"type": "string", "minLength": 1}}},
+    "assignment_id": {"$ref": "artifact-ref-v1.schema.json#/$defs/slug"}, "host_epoch": {"type": "integer", "minimum": 0}, "policy_revision": {"$ref": "artifact-ref-v1.schema.json#/$defs/revision"}, "jornada_id": {"$ref": "artifact-ref-v1.schema.json#/$defs/slug"}, "jornada_revision": {"$ref": "artifact-ref-v1.schema.json#/$defs/revision"}, "manifest_revision": {"$ref": "artifact-ref-v1.schema.json#/$defs/revision"}, "registry_revision": {"$ref": "artifact-ref-v1.schema.json#/$defs/revision"}, "capability_revision": {"$ref": "artifact-ref-v1.schema.json#/$defs/revision"},
+    "verification_digest": {"$ref": "artifact-ref-v1.schema.json#/$defs/digest"}, "required_checks_digest": {"$ref": "artifact-ref-v1.schema.json#/$defs/digest"}, "required_reviews_digest": {"$ref": "artifact-ref-v1.schema.json#/$defs/digest"}, "predecessor_revision": {"$ref": "artifact-ref-v1.schema.json#/$defs/digest"}
+  }
+}

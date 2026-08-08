@@ -9,6 +9,7 @@ import { resolveJornadaLifecycle } from "../jornada/lifecycle.mjs"
 // `state` enum minus PENDING. REJECTED records a denied decision, which the
 // store previously could not express at all.
 const TERMINAL_STATES = new Set(["APPROVED", "REJECTED", "EXPIRED", "REVOKED"])
+const digest = (value) => typeof value === "string" && /^sha256:[a-f0-9]{64}$/.test(value)
 const fail = (code, message, cause) => { throw Object.assign(new Error(message, { cause }), { code }) }
 const safeId = (value) => {
   if (typeof value !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(value)) fail("CT_STORE_INVALID", "Invalid store identifier")
@@ -50,12 +51,30 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
     if (!stats.isDirectory() || stats.isSymbolicLink() || stats.uid !== process.getuid() || (stats.mode & 0o777) !== 0o700) fail("CT_STORE_INVALID", "Unsafe store directory")
     return path
   }
+  const withLock = (path, operation) => {
+    const lock = `${path}.lock`
+    let descriptor
+    try {
+      const deadline = Date.now() + 5_000
+      while (descriptor === undefined) {
+        try { descriptor = openSync(lock, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW, 0o600) }
+        catch (error) {
+          if (error?.code !== "EEXIST" || Date.now() >= deadline) throw error
+          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 2)
+        }
+      }
+      return operation()
+    } finally {
+      if (descriptor !== undefined) {
+        closeSync(descriptor)
+        rmSync(lock, { force: true })
+      }
+    }
+  }
   const atomicWrite = (path, value, validate) => {
     const bytes = Buffer.from(`${JSON.stringify(value)}\n`)
     const temporary = join(dirname(path), `.${randomUUID()}.tmp`)
-    const lock = `${path}.lock`
     let descriptor
-    let lockDescriptor
     try {
       descriptor = openSync(temporary, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW, 0o600)
       writeFileSync(descriptor, bytes)
@@ -63,28 +82,17 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
       closeSync(descriptor)
       descriptor = undefined
       beforeCommit?.(path, value)
-      const deadline = Date.now() + 5_000
-      while (lockDescriptor === undefined) {
-        try { lockDescriptor = openSync(lock, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW, 0o600) }
-        catch (error) {
-          if (error?.code !== "EEXIST" || Date.now() >= deadline) throw error
-          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 2)
-        }
-      }
-      validate?.()
-      renameSync(temporary, path)
-      const directoryDescriptor = openSync(dirname(path), constants.O_RDONLY)
-      try { fsyncSync(directoryDescriptor) } finally { closeSync(directoryDescriptor) }
+      withLock(path, () => {
+        validate?.()
+        renameSync(temporary, path)
+        const directoryDescriptor = openSync(dirname(path), constants.O_RDONLY)
+        try { fsyncSync(directoryDescriptor) } finally { closeSync(directoryDescriptor) }
+      })
     } catch (error) {
       if (descriptor !== undefined) closeSync(descriptor)
       rmSync(temporary, { force: true })
       if (error?.code?.startsWith("CT_")) throw error
       fail("CT_STORE_WRITE_FAILED", "Atomic store write failed", error)
-    } finally {
-      if (lockDescriptor !== undefined) {
-        closeSync(lockDescriptor)
-        rmSync(lock, { force: true })
-      }
     }
   }
   const assertMain = (input) => {
@@ -130,6 +138,8 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
       try { authorization = validate("authorization", { ...record, state: "PENDING" }) }
       catch (error) { fail("CT_AUTH_INVALID", "Authorization does not satisfy authorization-v1", error) }
       if (authorization.registry_revision !== binding.revision) fail("CT_AUTH_INVALID", "Authorization revision mismatch")
+      const createdAt = Date.parse(authorization.created_at), expiresAt = Date.parse(authorization.expires_at)
+      if (!digest(authorization.extensions?.["control-tower/candidate-revision"]) || !Number.isFinite(createdAt) || !Number.isFinite(expiresAt) || expiresAt <= createdAt || expiresAt > createdAt + 3_600_000) fail("CT_AUTH_INVALID", "Authorization lifetime or candidate binding is invalid")
       return commit("authorizations", authorization.authorization_id, { ...authorization, actor, expected_revision: 0 }, 0)
     },
     consumeAuthorization(input) {
@@ -142,16 +152,28 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
       const expiresAt = Date.parse(current.expires_at)
       if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) fail("CT_AUTH_EXPIRED", "Authorization has expired")
       if (input.expected_revision !== current.revision) fail("CT_CAS_MISMATCH", "Authorization revision changed")
-      const audit = Object.freeze({
-        kind: "authorization-terminal", authorization_id: input.authorization_id,
-        decision: input.decision, project_id: binding.project_id,
+      if (!digest(input.candidate_revision) || input.candidate_revision !== current.extensions?.["control-tower/candidate-revision"]) fail("CT_AUTH_INVALID", "Authorization candidate does not match")
+      return withLock(jornadaPath(current.jornada_id), () => {
+        let jornada
+        try { jornada = this.readJornada(current.jornada_id) }
+        catch (error) { fail("CT_JORNADA_INVALID", "Authorization Jornada is unavailable", error) }
+        if (jornada.state !== "AC" + "TIVE" || jornada.jornada_revision !== current.jornada_revision) fail("CT_AUTH_INVALID", "Authorization Jornada is not active at its bound revision")
+        const audit = Object.freeze({ kind: "authorization-terminal", authorization_id: input.authorization_id, decision: input.decision, project_id: binding.project_id })
+        return commit("authorizations", input.authorization_id, { actor: "MAIN", ...current, state: input.decision, terminal_audit: audit, audit_ref: { kind: audit.kind, record_path: path }, expected_revision: current.revision }, current.revision)
       })
-      const next = commit("authorizations", input.authorization_id, {
-        actor: "MAIN", ...current, state: input.decision, terminal_audit: audit,
-        audit_ref: { kind: audit.kind, record_path: path },
-        expected_revision: current.revision,
-      }, current.revision)
-      return next
+    },
+    admitCandidateEffect(input) {
+      assertMain(input)
+      if (!digest(input.candidate_revision)) fail("CT_AUTH_INVALID", "Candidate revision is invalid")
+      const id = input.candidate_revision.slice(7)
+      const path = join(directory("candidate-effects"), `${id}.json`)
+      if (existsSync(path)) return frozen({ ...parse(path), admitted: false })
+      try {
+        return frozen({ ...commit("candidate-effects", id, { actor: "MAIN", project_id: binding.project_id, candidate_revision: input.candidate_revision, expected_revision: 0 }, 0), admitted: true })
+      } catch (error) {
+        if (error.code === "CT_CAS_MISMATCH" && existsSync(path)) return frozen({ ...parse(path), admitted: false })
+        throw error
+      }
     },
     readAuthorization(id) { return frozen(parse(authorizationPath(id))) },
     createJornada(input) {
