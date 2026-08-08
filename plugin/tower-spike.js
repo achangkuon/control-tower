@@ -26,8 +26,12 @@
 
 import { appendFile, stat } from "node:fs/promises"
 import { basename, join } from "node:path"
+import { tool } from "@opencode-ai/plugin"
 
-import * as tower from "../control-tower/core.mjs"
+import * as tower from "../core.mjs"
+import { persistSupportResult } from "../continuation/support.mjs"
+import { bindMainAuthority } from "../main-store/authority.mjs"
+import { createMainStore } from "../main-store/store.mjs"
 
 // Load-bearing, not polish: session.idle fires again after every wake, so a
 // bug here is two processes talking to each other until the tokens run out.
@@ -43,10 +47,41 @@ const WAKE_WINDOW_MS = 5 * 60 * 1000
 // How often a parked agent looks for mail. Cheap enough to be invisible,
 // slow enough that a handoff still feels immediate.
 const POLL_MS = 2000
+const SUPPORT_TOOLS = Object.freeze(Object.fromEntries([
+  "read", "glob", "grep", "list", "task", "bash", "edit", "write", "todowrite", "question",
+  "webfetch", "websearch", "lsp", "skill", "external_directory",
+].map((name) => [name, false])))
+const forbiddenSupportKey = /^(?:main_store|store|capability|authority|privilege|lock|worker)$/i
 
 const exists = async (path) => stat(path).then(() => true, () => false)
+const fail = (code, message, cause) => { throw Object.assign(new Error(message, { cause }), { code }) }
+const assertIsolatedSupportInput = (value, seen = new WeakSet()) => {
+  if (!value || typeof value !== "object") return
+  if (seen.has(value)) fail("CT_AUTH_INVALID", "Cyclic Support input is forbidden")
+  seen.add(value)
+  for (const [key, child] of Object.entries(value)) {
+    if (forbiddenSupportKey.test(key)) fail("CT_AUTH_INVALID", "Support input cannot carry Main authority")
+    assertIsolatedSupportInput(child, seen)
+  }
+  seen.delete(value)
+}
+const parseSupportOutput = (response) => {
+  const parts = response?.data?.parts
+  const text = Array.isArray(parts)
+    ? parts.filter((part) => part?.type === "text" && typeof part.text === "string").map((part) => part.text).join("").trim()
+    : ""
+  if (!text) fail("CT_HOST_CAPABILITY_MISSING", "Isolated Support subagent returned no structured proposal")
+  try {
+    const output = JSON.parse(text)
+    if (!output || typeof output !== "object" || Array.isArray(output)) throw new Error("Support output is not an object")
+    return output
+  } catch (error) {
+    if (error?.code?.startsWith("CT_")) throw error
+    fail("CT_HOST_CAPABILITY_MISSING", "Isolated Support subagent returned invalid JSON", error)
+  }
+}
 
-export const TowerSpikePlugin = async ({ client, worktree }) => {
+export const TowerSpikePlugin = async ({ client, directory, worktree }, { trustedBindingProvider } = {}) => {
   const agent = basename(worktree)
 
   let place
@@ -75,6 +110,68 @@ export const TowerSpikePlugin = async ({ client, worktree }) => {
   let throttled = false
   let waking = false
   let poll = null
+
+  const invokeSupport = async ({ sessionID, proposal, signal, callDirectory } = {}) => {
+    if (typeof sessionID !== "string" || sessionID.length === 0) fail("CT_AUTH_INVALID", "Main session is required")
+    if (typeof trustedBindingProvider !== "function") fail("CT_AUTH_INVALID", "Trusted Main binding provider is unavailable")
+
+    let binding
+    try { binding = trustedBindingProvider() } catch (error) { fail("CT_AUTH_INVALID", "Canonical Main binding is unavailable", error) }
+    if (!binding || sessionID !== binding.main_session_id) fail("CT_AUTH_INVALID", `Rejected Main session: ${sessionID}`)
+
+    let mainStore
+    try {
+      const authority = bindMainAuthority({
+        trustedBindingProvider: () => binding,
+        rederiveBinding: () => trustedBindingProvider(),
+      })
+      const capability = authority.capability
+      mainStore = createMainStore({ root: binding.store_path, authority, capability })
+    } catch (error) {
+      fail("CT_AUTH_INVALID", "Canonical Main binding is unavailable", error)
+    }
+
+    assertIsolatedSupportInput(proposal)
+    if (childSessions.has(sessionID) || typeof client?.session?.create !== "function" || typeof client.session.prompt !== "function" || signal?.aborted) {
+      fail("CT_HOST_CAPABILITY_MISSING", "Host cannot delegate to an isolated Support subagent")
+    }
+
+    try {
+      const query = { directory: callDirectory ?? directory ?? worktree }
+      const child = await client.session.create({
+        body: { parentID: sessionID, title: "Control Tower Support" },
+        query,
+      })
+      if (typeof child?.data?.id !== "string" || child.data.id.length === 0) throw new Error("Missing child session")
+      childSessions.add(child.data.id)
+      const response = await client.session.prompt({
+        path: { id: child.data.id },
+        query,
+        body: {
+          agent: "support-agent",
+          system: "Return exactly one JSON object satisfying support-proposal-v1. Do not wrap it in Markdown.",
+          tools: SUPPORT_TOOLS,
+          parts: [{ type: "text", text: JSON.stringify(proposal) }],
+        },
+      })
+      if (signal?.aborted) throw new Error("Support delegation aborted")
+      return JSON.stringify(persistSupportResult({ output: parseSupportOutput(response), main_store: mainStore }))
+    } catch (error) {
+      if (error?.code?.startsWith("CT_")) throw error
+      fail("CT_HOST_CAPABILITY_MISSING", "Isolated Support subagent failed", error)
+    }
+  }
+
+  const supportTool = tool({
+    description: "Ask isolated Support to return a read-only structured proposal",
+    args: { proposal: tool.schema.unknown() },
+    execute: ({ proposal }, context) => invokeSupport({
+      sessionID: context.sessionID,
+      proposal,
+      signal: context.abort,
+      callDirectory: context.directory,
+    }),
+  })
 
   const stopPolling = () => {
     if (poll) clearInterval(poll)
@@ -144,6 +241,7 @@ export const TowerSpikePlugin = async ({ client, worktree }) => {
   }
 
   return {
+    tool: { control_tower_support: supportTool },
     dispose: async () => stopPolling(),
     event: async ({ event }) => {
       const info = event?.properties?.info

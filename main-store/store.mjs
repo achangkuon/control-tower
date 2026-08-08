@@ -16,6 +16,7 @@ const safeId = (value) => {
   return value
 }
 const forbiddenKey = /(?:password|passwd|secret|token|credential|private[_-]?key|api[_-]?key)/i
+const forbiddenSupportKey = /^(?:assignment|authority|privilege|capability|lock|worker)$/i
 const assertCredentialFree = (value, seen = new WeakSet()) => {
   if (typeof value === "string" && (value.includes("-----BEGIN PRIVATE KEY-----") || /^[a-z][a-z0-9+.-]*:\/\/[^/@\s]+:[^/@\s]+@/i.test(value))) fail("CT_CREDENTIAL_FORBIDDEN", "Credentials cannot be persisted")
   if (!value || typeof value !== "object") return
@@ -24,6 +25,16 @@ const assertCredentialFree = (value, seen = new WeakSet()) => {
   for (const [key, child] of Object.entries(value)) {
     if (forbiddenKey.test(key)) fail("CT_CREDENTIAL_FORBIDDEN", "Credentials cannot be persisted")
     assertCredentialFree(child, seen)
+  }
+  seen.delete(value)
+}
+const assertSupportPayload = (value, seen = new WeakSet()) => {
+  if (!value || typeof value !== "object") return
+  if (seen.has(value)) fail("CT_STORE_INVALID", "Cyclic Support proposals are forbidden")
+  seen.add(value)
+  for (const [key, child] of Object.entries(value)) {
+    if (forbiddenSupportKey.test(key)) fail("CT_STORE_INVALID", "Support proposals cannot carry authority")
+    assertSupportPayload(child, seen)
   }
   seen.delete(value)
 }
@@ -124,6 +135,7 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
   const jornadaPath = (id) => join(directory("jornadas"), `${safeId(id)}.json`)
   const handoffCoordinatePath = (id) => join(directory("handoff-coordinates"), `${safeId(id)}.json`)
   const workerClaimPath = (id) => join(directory("worker-claims"), `${safeId(id)}.json`)
+  const supportProposalPath = (id) => join(directory("support-proposals"), `${safeId(id)}.json`)
 
   return Object.freeze({
     persistReport(input) {
@@ -131,6 +143,27 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
       return commit("reports", input.artifact_ref.artifact_id, input)
     },
     persistCampaign(input) { return commit("campaigns", input.campaign_id, input) },
+    persistSupportProposal(input) {
+      assertMain(input)
+      const { actor, expected_revision: _ignored, ...record } = input ?? {}
+      assertSupportPayload(record)
+      let proposal
+      try { proposal = validate("supportProposal", record) }
+      catch (error) { fail("CT_STORE_INVALID", "Support proposal does not satisfy support-proposal-v1", error) }
+      const replay = () => {
+        const current = parse(supportProposalPath(proposal.proposal_id))
+        const { actor: _actor, revision: _revision, revision_history: _history, ...prior } = current
+        if (JSON.stringify(prior) !== JSON.stringify(proposal)) fail("CT_STORE_INVALID", "Support proposal conflicts")
+        return frozen({ ...current, replayed: true })
+      }
+      if (existsSync(supportProposalPath(proposal.proposal_id))) return replay()
+      try {
+        return frozen({ ...commit("support-proposals", proposal.proposal_id, { ...proposal, actor, expected_revision: 0 }, 0), replayed: false })
+      } catch (error) {
+        if (error.code === "CT_CAS_MISMATCH" && existsSync(supportProposalPath(proposal.proposal_id))) return replay()
+        throw error
+      }
+    },
     createAuthorization(input) {
       // The record is validated against authorization-v1 rather than an ad-hoc
       // required list. A hand-maintained list beside a canonical schema is how

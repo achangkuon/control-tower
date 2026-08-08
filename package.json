@@ -3,6 +3,8 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@opencode-ai/plugin": "1.18.13",
+    "@opencode-ai/sdk": "1.18.13",
     "ajv": "8.17.1",
     "yaml": "2.8.1"
   }

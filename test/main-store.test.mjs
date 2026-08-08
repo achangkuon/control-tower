@@ -353,6 +353,47 @@ describe("atomic owner-only Main store", () => {
     expect(code(() => store.recordWorkerClaim({ actor: "MAIN", project_id: "project-b", handoff_id: "handoff-a", expected_claim: "M5.1.2", actual_claim: "M5.1.2" }))).toBe("CT_PROJECT_MISMATCH")
   })
 
+  test("persists Support proposals only through Main without assigning authority", () => {
+    const { root, store } = setup()
+    const proposal = {
+      schema: "support-proposal", schema_version: 1, proposal_id: "proposal-store", project_id: "project-a", caller_role: "MAIN",
+      checkpoint_ref: "evidence/checkpoint.json", plan_enumeration_digest: `sha256:${"a".repeat(64)}`, ledger_digest: `sha256:${"b".repeat(64)}`,
+      worker_claim: "claim-a", primary: { module_id: "M5.1.2", task_ids: ["T5.1.2.1"] }, alternatives: [], conflicts: [], evidence_refs: [], expires_at: "2099-01-01T00:00:00.000Z", state: "EXECUTABLE",
+    }
+    expect(store.persistSupportProposal({ actor: "MAIN", ...proposal })).toMatchObject({ proposal_id: "proposal-store", caller_role: "MAIN" })
+    expect(store.persistSupportProposal({ actor: "MAIN", ...proposal }).replayed).toBe(true)
+    expect(code(() => store.persistSupportProposal({ actor: "SUPPORT", ...proposal, proposal_id: "proposal-support" }))).toBe("CT_AUTH_INVALID")
+    expect(code(() => store.persistSupportProposal({ actor: "MAIN", ...proposal, project_id: "project-b", proposal_id: "proposal-foreign" }))).toBe("CT_PROJECT_MISMATCH")
+    const invalid = { ...proposal, proposal_id: "proposal-invalid", alternatives: [{ nested: { assignment: { id: "forbidden" } } }] }
+    expect(code(() => store.persistSupportProposal({ actor: "MAIN", ...invalid }))).toBe("CT_STORE_INVALID")
+    expect(existsSync(join(root, "support-proposals", "proposal-invalid.json"))).toBe(false)
+    const authority = { ...proposal, proposal_id: "proposal-authority", conflicts: [{ nested: { authority: "forbidden" } }] }
+    expect(code(() => store.persistSupportProposal({ actor: "MAIN", ...authority }))).toBe("CT_STORE_INVALID")
+    expect(existsSync(join(root, "support-proposals", "proposal-authority.json"))).toBe(false)
+  })
+
+  test("serializes identical Support proposals across independent Main-store processes", async () => {
+    const { root } = setup()
+    const worker = String.raw`
+      import { existsSync, writeFileSync } from "node:fs";
+      import { bindMainAuthority, createMainStore } from "./main-store/index.mjs";
+      const [root, id] = process.argv.slice(1); const binding = { project_id:"project-a", revision:7, repository_root:"/repo/a", git_common_dir:"/repo/a/.git", remote:"git@example.invalid:a.git", branch:"main", main_session_id:"main-session-a", store_path:root, epoch:3 };
+      const authority = bindMainAuthority({ trustedBindingProvider:()=>binding, rederiveBinding:()=>({...binding}) });
+      const store = createMainStore({ root, authority, capability:authority.capability, beforeCommit:()=>{ writeFileSync(root+"/proposal-ready-"+id, "1"); while (!(existsSync(root+"/proposal-ready-a") && existsSync(root+"/proposal-ready-b"))) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,2); } });
+      const proposal = { schema:"support-proposal", schema_version:1, proposal_id:"proposal-race", project_id:"project-a", caller_role:"MAIN", checkpoint_ref:"evidence/checkpoint.json", plan_enumeration_digest:"sha256:${"a".repeat(64)}", ledger_digest:"sha256:${"b".repeat(64)}", worker_claim:"claim-a", primary:{module_id:"M5.1.2",task_ids:["T5.1.2.1"]}, alternatives:[], conflicts:[], evidence_refs:[], expires_at:"2099-01-01T00:00:00.000Z", state:"EXECUTABLE" };
+      try { console.log(JSON.stringify(store.persistSupportProposal({ actor:"MAIN", ...proposal }))); } catch(error) { console.log(JSON.stringify({ code:error.code })); }
+    `
+    const run = (id) => Bun.spawn([process.execPath, "-e", worker, root, id], { cwd: projectRoot, env: { ...process.env, BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0" }, stdout: "pipe", stderr: "pipe" })
+    const processes = [run("a"), run("b")]
+    const results = await Promise.all(processes.map(async (process) => {
+      const output = await new Response(process.stdout).text()
+      await process.exited
+      return JSON.parse(output.trim())
+    }))
+    expect(results.filter(({ replayed }) => replayed === false)).toHaveLength(1)
+    expect(results.filter(({ replayed }) => replayed === true)).toHaveLength(1)
+  })
+
   test("serializes identical Worker claims across independent Main-store processes", async () => {
     const { root } = setup()
     const worker = String.raw`
