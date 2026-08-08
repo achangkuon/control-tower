@@ -1,6 +1,6 @@
 # Plan 0 — Documentación canónica
 
-**Estado:** 🔵 EN CURSO
+**Estado:** ✅ COMPLETO
 
 ## Resumen
 
@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Ninguna; este Plan fija la autoridad documental del producto. |
 | Outputs | PRD, RFC y REQUIREMENTS aprobados; roadmap; Plan Catalog; Plan Manifest con 15 `slice_id`; proposals A–I; Installable V1 revision 1; Autonomous V2 revision 1; product version map; convención canónica de nombres. |
-| Roadmap | `S0.1` y `S0.2` están cerradas. `S0.3` reabre el Plan: la unificación del 2026-08-01 dejó dos specs vigentes en contradicción y hay que amendar la autoridad, no interpretarla. |
+| Roadmap | `S0.1`, `S0.2` y `S0.3` están ✅ COMPLETO. `S0.3` enmendó la spec derivada y eliminó la contradicción sobre el callback acotado; P0 queda cerrado con 3/3 Sesiones. |
 | Referencias | [PRD](../../prd/sdd-tower-implementation-v1.md), [RFC](../../rfc/sdd-tower-implementation-v1.md), [REQUIREMENTS](../../specs/sdd-tower-implementation-v1-requirements.md), [Plan Catalog](../manifest.yaml), [Plan Manifest](../sdd-tower-implementation/manifest.yaml), [Installable V1](../installable-v1/revisions/1/manifest.yaml), [Autonomous V2](../autonomous-v2/revisions/1/manifest.yaml), [version map](../product-version-map.yaml). |
 
 `docs/architecture/sdd-tower-implementation.md` conserva material de exploración y no reemplaza los tres contratos normativos.
