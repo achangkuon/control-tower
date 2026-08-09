@@ -1,9 +1,17 @@
 import * as nodeFs from "node:fs"
-import { randomUUID } from "node:crypto"
-import { dirname, isAbsolute, join } from "node:path"
+import { createHash } from "node:crypto"
+import { isAbsolute, join, parse, resolve, sep } from "node:path"
 
 import { canonicalize } from "../contracts/canonicalize.mjs"
 import { validate } from "../contracts/validate.mjs"
+
+const EVENT_NAME = /^(\d{20})-([a-f0-9]{64})\.json$/
+const LOCK_NAME = ".candidate-fence.lock"
+const VIEW_NAME = "candidate-fence.view.json"
+const EVENT_KEYS = ["schema", "schema_version", "event", "exclusivity", "host_epoch", "previous_event_digest", "project_id", "candidate", "predecessor", "termination_proof_ref", "maintainer_decision_ref", "frozen_work"]
+const CANDIDATE_KEYS = ["project_id", "candidate_revision", "host_id", "base_sha", "runtime_binding_ref", "role_binding_ref", "assignment_ref", "work_ref"]
+const PREDECESSOR_KEYS = ["host_id", "host_epoch", "base_sha", "runtime_binding_ref", "role_binding_ref", "assignment_ref"]
+const DECISION_KEYS = ["schema", "schema_version", "status", "decision_ref", "project_id", "predecessor_host_id", "predecessor_host_epoch", "candidate_revision", "candidate_host_id", "base_sha", "runtime_binding_ref", "role_binding_ref", "assignment_ref", "expires_at"]
 
 const fail = (code, message, cause) => { throw Object.assign(new Error(message, { cause }), { code }) }
 const own = (stats) => typeof process.getuid !== "function" || stats.uid === process.getuid()
@@ -11,18 +19,19 @@ const mode = (stats) => stats.mode & 0o777
 const pause = (milliseconds) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds)
 const exactKeys = (value, keys) => value && typeof value === "object" && !Array.isArray(value)
   && Object.keys(value).sort().join("\0") === [...keys].sort().join("\0")
-const freeze = (value) => {
+const deepFreeze = (value) => {
   if (value && typeof value === "object" && !Object.isFrozen(value)) {
-    for (const child of Object.values(value)) freeze(child)
+    for (const child of Object.values(value)) deepFreeze(child)
     Object.freeze(value)
   }
   return value
 }
-const id = (value, label) => {
+const cloneFrozen = (value) => deepFreeze(structuredClone(value))
+const identifier = (value, label) => {
   if (typeof value !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(value)) fail("CT_FENCE_INVALID", `${label} is invalid`)
   return value
 }
-const ref = (value, label) => {
+const reference = (value, label) => {
   if (typeof value !== "string" || value.length === 0 || value.includes("\0") || isAbsolute(value) || value.split("/").includes("..")) fail("CT_FENCE_INVALID", `${label} is invalid`)
   return value
 }
@@ -30,276 +39,341 @@ const gitSha = (value, label) => {
   if (typeof value !== "string" || !/^[a-f0-9]{40,64}$/.test(value)) fail("CT_FENCE_INVALID", `${label} is invalid`)
   return value
 }
-const digest = (value, label) => {
-  if (typeof value !== "string" || !/^sha256:[a-f0-9]{64}$/.test(value)) fail("CT_FENCE_INVALID", `${label} is invalid`)
-  return value
-}
-
-const candidateKeys = ["project_id", "candidate_revision", "host_id", "base_sha", "runtime_binding_ref", "role_binding_ref", "assignment_ref", "work_ref"]
-const predecessorKeys = ["host_id", "host_epoch", "base_sha", "runtime_binding_ref", "role_binding_ref", "assignment_ref"]
-const eventKeys = ["event", "exclusivity", "host_epoch", "candidate", "predecessor", "termination_proof_ref", "frozen_work", "maintainer_decision_ref"]
-const ledgerKeys = ["schema", "schema_version", "project_id", "revision", "events"]
+const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex")
+const digestRef = (digest) => `sha256:${digest}`
+const canonicalBytes = (value) => Buffer.from(`${canonicalize(value)}\n`)
 
 const inspectCandidate = (value) => {
-  if (!exactKeys(value, candidateKeys)) fail("CT_FENCE_INVALID", "Candidate shape is invalid")
+  if (!exactKeys(value, CANDIDATE_KEYS)) fail("CT_FENCE_INVALID", "Candidate shape is invalid")
   return {
-    project_id: id(value.project_id, "Project"),
-    candidate_revision: digest(value.candidate_revision, "Candidate revision"),
-    host_id: id(value.host_id, "Host"),
+    project_id: identifier(value.project_id, "Project"),
+    candidate_revision: /^sha256:[a-f0-9]{64}$/.test(value.candidate_revision ?? "") ? value.candidate_revision : fail("CT_FENCE_INVALID", "Candidate revision is invalid"),
+    host_id: identifier(value.host_id, "Host"),
     base_sha: gitSha(value.base_sha, "Base SHA"),
-    runtime_binding_ref: ref(value.runtime_binding_ref, "Runtime binding"),
-    role_binding_ref: ref(value.role_binding_ref, "Role binding"),
-    assignment_ref: ref(value.assignment_ref, "Assignment"),
-    work_ref: ref(value.work_ref, "Work"),
+    runtime_binding_ref: reference(value.runtime_binding_ref, "Runtime binding"),
+    role_binding_ref: reference(value.role_binding_ref, "Role binding"),
+    assignment_ref: reference(value.assignment_ref, "Assignment"),
+    work_ref: reference(value.work_ref, "Work"),
   }
 }
 const inspectPredecessor = (value) => {
-  if (!exactKeys(value, predecessorKeys)) fail("CT_OWNERSHIP_UNCERTAIN", "Exact predecessor ownership is required")
-  if (!Number.isInteger(value.host_epoch) || value.host_epoch < 1) fail("CT_OWNERSHIP_UNCERTAIN", "Predecessor host epoch is invalid")
+  if (!exactKeys(value, PREDECESSOR_KEYS) || !Number.isInteger(value.host_epoch) || value.host_epoch < 1) fail("CT_OWNERSHIP_UNCERTAIN", "Exact predecessor ownership is required")
   return {
-    host_id: id(value.host_id, "Predecessor host"), host_epoch: value.host_epoch,
+    host_id: identifier(value.host_id, "Predecessor host"), host_epoch: value.host_epoch,
     base_sha: gitSha(value.base_sha, "Predecessor base SHA"),
-    runtime_binding_ref: ref(value.runtime_binding_ref, "Predecessor runtime binding"),
-    role_binding_ref: ref(value.role_binding_ref, "Predecessor role binding"),
-    assignment_ref: ref(value.assignment_ref, "Predecessor assignment"),
+    runtime_binding_ref: reference(value.runtime_binding_ref, "Predecessor runtime binding"),
+    role_binding_ref: reference(value.role_binding_ref, "Predecessor role binding"),
+    assignment_ref: reference(value.assignment_ref, "Predecessor assignment"),
   }
 }
-const assertPredecessor = (currentEvent, input) => {
+const assertPredecessor = (active, input) => {
   const predecessor = inspectPredecessor(input)
-  const current = currentEvent.candidate
-  if (predecessor.host_epoch !== currentEvent.host_epoch) fail("CT_OWNERSHIP_UNCERTAIN", "Predecessor host epoch does not match current ownership")
+  const current = active.candidate
+  if (predecessor.host_epoch !== active.host_epoch) fail("CT_OWNERSHIP_UNCERTAIN", "Predecessor epoch does not match current ownership")
   if (predecessor.host_id !== current.host_id) fail("CT_HOST_DRIFT", "Predecessor host drift")
   if (predecessor.base_sha !== current.base_sha) fail("CT_BASE_DRIFT", "Predecessor base drift")
   if (predecessor.runtime_binding_ref !== current.runtime_binding_ref) fail("CT_RUNTIME_DRIFT", "Predecessor runtime binding drift")
   if (predecessor.role_binding_ref !== current.role_binding_ref) fail("CT_ROLE_DRIFT", "Predecessor role binding drift")
-  if (predecessor.assignment_ref !== current.assignment_ref) fail("CT_OWNERSHIP_UNCERTAIN", "Predecessor assignment does not match current ownership")
+  if (predecessor.assignment_ref !== current.assignment_ref) fail("CT_OWNERSHIP_UNCERTAIN", "Predecessor assignment drift")
   return predecessor
 }
-const assertProof = (value, current) => {
-  if (!value || typeof value !== "object" || value.schema !== "recovery-proof") fail("CT_STOP_PROOF_REQUIRED", "Positive termination proof is required")
-  let proof
-  try { proof = validate("recoveryProof", value) }
-  catch (error) { fail("CT_STOP_PROOF_INVALID", "Termination proof is invalid", error) }
-  if (proof.project_id !== current.project_id) fail("CT_STOP_PROOF_INVALID", "Termination proof project does not match")
-  if (proof.old_assignment_ref !== current.assignment_ref) fail("CT_STOP_PROOF_INVALID", "Termination proof assignment does not match")
-  if (proof.base_sha !== current.base_sha) fail("CT_BASE_DRIFT", "Termination proof base drift")
-  if (proof.runtime_binding_ref !== current.runtime_binding_ref) fail("CT_RUNTIME_DRIFT", "Termination proof runtime binding drift")
-  if (proof.role_binding_ref !== current.role_binding_ref) fail("CT_ROLE_DRIFT", "Termination proof role binding drift")
-  return proof
+const assertDifferentHost = (active, candidate) => {
+  if (active.candidate.host_id === candidate.host_id) fail("CT_HOST_DRIFT", "New activation must use a different host")
 }
-const frozenWorkFor = (ledger, baseSha) => ledger?.events.find((event) => event.frozen_work?.base_sha === baseSha)?.frozen_work
-const assertUsableBase = (ledger, baseSha) => {
-  const frozenWork = frozenWorkFor(ledger, baseSha)
-  if (frozenWork) fail("CT_FROZEN_WORK_UNRESOLVED", `Base carries frozen work ${frozenWork.work_ref}`)
+const frozenWorkFor = (events, baseSha) => events.find((event) => event.frozen_work?.base_sha === baseSha)?.frozen_work
+const assertUsableBase = (events, baseSha) => {
+  const frozen = frozenWorkFor(events, baseSha)
+  if (frozen) fail("CT_FROZEN_WORK_UNRESOLVED", `Base carries frozen work ${frozen.work_ref}`)
 }
-const assertLedger = (value) => {
-  if (!exactKeys(value, ledgerKeys) || value.schema !== "candidate-fence-ledger" || value.schema_version !== 1
-    || !Number.isInteger(value.revision) || value.revision < 1 || !Array.isArray(value.events) || value.events.length !== value.revision) {
-    fail("CT_FENCE_INVALID", "Fence ledger is invalid")
+const assertExactPredecessorChain = (predecessor, previous) => {
+  const prior = previous.candidate
+  if (predecessor.host_epoch !== previous.host_epoch || predecessor.host_id !== prior.host_id || predecessor.base_sha !== prior.base_sha
+    || predecessor.runtime_binding_ref !== prior.runtime_binding_ref || predecessor.role_binding_ref !== prior.role_binding_ref
+    || predecessor.assignment_ref !== prior.assignment_ref) fail("CT_FENCE_TAMPERED", "Fence predecessor chain is invalid")
+}
+const assertEvent = (event, epoch, previous, previousDigest) => {
+  if (!exactKeys(event, EVENT_KEYS) || event.schema !== "candidate-fence-event" || event.schema_version !== 1
+    || event.host_epoch !== epoch || event.previous_event_digest !== (previousDigest === null ? null : digestRef(previousDigest))
+    || !["HOST_ADMITTED", "TAKEOVER_FORCED"].includes(event.event)) fail("CT_FENCE_TAMPERED", "Fence event shape or digest chain is invalid")
+  const candidate = inspectCandidate(event.candidate)
+  if (event.project_id !== candidate.project_id) fail("CT_FENCE_TAMPERED", "Fence event project is invalid")
+  if (previous === null) {
+    if (event.event !== "HOST_ADMITTED" || event.exclusivity !== "VERIFIED" || event.predecessor !== null
+      || event.termination_proof_ref !== null || event.maintainer_decision_ref !== null || event.frozen_work !== null) fail("CT_FENCE_TAMPERED", "Initial fence event is invalid")
+    return event
   }
-  id(value.project_id, "Ledger project")
-  for (const [index, event] of value.events.entries()) {
-    if (!exactKeys(event, eventKeys) || event.host_epoch !== index + 1 || !["HOST_ADMITTED", "TAKEOVER_FORCED"].includes(event.event)) fail("CT_FENCE_INVALID", "Fence event is invalid")
-    if (event.exclusivity !== (event.event === "TAKEOVER_FORCED" ? "BROKEN" : "VERIFIED")) fail("CT_FENCE_INVALID", "Fence exclusivity marker is invalid")
-    const candidate = inspectCandidate(event.candidate)
-    if (candidate.project_id !== value.project_id) fail("CT_FENCE_INVALID", "Fence event project is invalid")
-    if (index === 0) {
-      if (event.event !== "HOST_ADMITTED" || event.predecessor !== null || event.termination_proof_ref !== null
-        || event.frozen_work !== null || event.maintainer_decision_ref !== null) fail("CT_FENCE_INVALID", "Initial fence event is invalid")
-      continue
-    }
-    const previous = value.events[index - 1].candidate
-    const predecessor = inspectPredecessor(event.predecessor)
-    if (predecessor.host_epoch !== index || predecessor.host_id !== previous.host_id || predecessor.base_sha !== previous.base_sha
-      || predecessor.runtime_binding_ref !== previous.runtime_binding_ref || predecessor.role_binding_ref !== previous.role_binding_ref
-      || predecessor.assignment_ref !== previous.assignment_ref || candidate.host_id === previous.host_id) {
-      fail("CT_FENCE_INVALID", "Fence predecessor chain is invalid")
-    }
-    if (event.event === "TAKEOVER_FORCED") {
-      if (!exactKeys(event.frozen_work, ["state", "candidate_revision", "base_sha", "work_ref"]) || event.frozen_work.state !== "FROZEN"
-        || event.frozen_work.candidate_revision !== previous.candidate_revision || event.frozen_work.base_sha !== previous.base_sha
-        || event.frozen_work.work_ref !== previous.work_ref) fail("CT_FENCE_INVALID", "Forced takeover must freeze prior work")
-      ref(event.maintainer_decision_ref, "Maintainer decision")
-      if (event.termination_proof_ref !== null) fail("CT_FENCE_INVALID", "Forced takeover cannot claim termination proof")
-    } else {
-      ref(event.termination_proof_ref, "Termination proof")
-      if (event.frozen_work !== null || event.maintainer_decision_ref !== null) fail("CT_FENCE_INVALID", "Verified admission cannot carry takeover evidence")
+  if (event.project_id !== previous.project_id || candidate.host_id === previous.candidate.host_id) fail("CT_FENCE_TAMPERED", "Fence project or host chain is invalid")
+  const predecessor = inspectPredecessor(event.predecessor)
+  assertExactPredecessorChain(predecessor, previous)
+  if (event.event === "HOST_ADMITTED") {
+    if (event.exclusivity !== "VERIFIED" || event.frozen_work !== null || event.maintainer_decision_ref !== null) fail("CT_FENCE_TAMPERED", "Verified admission evidence is invalid")
+    reference(event.termination_proof_ref, "Termination proof")
+  } else {
+    if (event.exclusivity !== "BROKEN" || event.termination_proof_ref !== null) fail("CT_FENCE_TAMPERED", "Forced takeover evidence is invalid")
+    reference(event.maintainer_decision_ref, "Maintainer decision")
+    const prior = previous.candidate
+    if (!exactKeys(event.frozen_work, ["state", "candidate_revision", "base_sha", "work_ref"]) || event.frozen_work.state !== "FROZEN"
+      || event.frozen_work.candidate_revision !== prior.candidate_revision || event.frozen_work.base_sha !== prior.base_sha || event.frozen_work.work_ref !== prior.work_ref) {
+      fail("CT_FENCE_TAMPERED", "Forced takeover did not freeze prior work")
     }
   }
-  return value
+  return event
 }
 
-export const createCandidateFenceStore = ({ ledgerPath, fs = nodeFs, beforeCommit, lockTimeoutMs = 5_000 } = {}) => {
-  if (!isAbsolute(ledgerPath ?? "") || ledgerPath.includes("\0")) fail("CT_FENCE_PATH_INVALID", "Fence ledger path must be absolute")
-  const parent = dirname(ledgerPath), lockPath = `${ledgerPath}.lock`
+export const createCandidateFenceStore = ({ rootPath, fs = nodeFs, lockTimeoutMs = 5_000, resolveTerminationProof, authorizeMaintainerDecision } = {}) => {
+  if (!isAbsolute(rootPath ?? "") || rootPath.includes("\0") || resolve(rootPath) !== rootPath) fail("CT_FENCE_UNSAFE", "Trusted fence root must be an absolute canonical path")
+  if (!Number.isInteger(lockTimeoutMs) || lockTimeoutMs < 0) fail("CT_FENCE_INVALID", "Fence lock timeout is invalid")
+  if (typeof resolveTerminationProof !== "function" || typeof authorizeMaintainerDecision !== "function") fail("CT_FENCE_PORT_REQUIRED", "Canonical proof and maintainer-decision ports are required")
+  const lockPath = join(rootPath, LOCK_NAME)
   const unsafe = (message, cause) => fail("CT_FENCE_UNSAFE", message, cause)
-  const assertDirectory = (stats) => {
-    if (!stats.isDirectory() || stats.isSymbolicLink() || !own(stats) || mode(stats) !== 0o700) unsafe("Fence directory is unsafe")
+  const readFailed = (message, cause) => fail("CT_FENCE_READ_FAILED", message, cause)
+  const assertOwnerFile = (stats, label) => {
+    if (!stats.isFile() || stats.isSymbolicLink() || !own(stats) || mode(stats) !== 0o600 || stats.nlink !== 1) unsafe(`${label} is unsafe`)
   }
-  const inspectParent = ({ create = false } = {}) => {
-    if (create) {
-      const missing = []
-      let cursor = parent
-      while (true) {
-        try { fs.lstatSync(cursor); break } catch (error) {
-          if (error?.code !== "ENOENT") throw error
-          missing.push(cursor); cursor = dirname(cursor)
-        }
-      }
-      for (const path of missing.reverse()) { fs.mkdirSync(path, { mode: 0o700 }); fs.chmodSync(path, 0o700); assertDirectory(fs.lstatSync(path)) }
+  const assertRoot = () => {
+    const parsed = parse(rootPath)
+    let cursor = parsed.root
+    for (const component of rootPath.slice(parsed.root.length).split(sep).filter(Boolean)) {
+      cursor = join(cursor, component)
+      let stats
+      try { stats = fs.lstatSync(cursor) } catch (error) { unsafe("Trusted fence root must pre-exist", error) }
+      if (stats.isSymbolicLink()) unsafe("Trusted fence root contains a symlink component")
     }
     let stats
-    try { stats = fs.lstatSync(parent) } catch (error) {
-      if (!create && error?.code === "ENOENT") return null
-      fail("CT_FENCE_READ_FAILED", "Fence directory inspection failed", error)
-    }
-    assertDirectory(stats)
+    try { stats = fs.lstatSync(rootPath) } catch (error) { unsafe("Trusted fence root must pre-exist", error) }
+    if (!stats.isDirectory() || stats.isSymbolicLink() || !own(stats) || mode(stats) !== 0o700) unsafe("Trusted fence root must be an owner-only directory")
+    let real
+    try { real = fs.realpathSync(rootPath) } catch (error) { unsafe("Trusted fence root cannot be resolved", error) }
+    if (real !== rootPath) unsafe("Trusted fence root is not canonical")
     return stats
   }
-  const readCurrent = () => {
-    if (!inspectParent()) return { document: null, bytes: null }
+  const inspectNamedFile = (path, label, { read = false } = {}) => {
+    let descriptor
+    try {
+      descriptor = fs.openSync(path, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW)
+      assertOwnerFile(fs.fstatSync(descriptor), label)
+      return read ? fs.readFileSync(descriptor) : null
+    } catch (error) {
+      if (error?.code?.startsWith("CT_")) throw error
+      unsafe(`${label} cannot be opened safely`, error)
+    } finally { if (descriptor !== undefined) try { fs.closeSync(descriptor) } catch (error) { readFailed(`${label} descriptor close failed`, error) } }
+  }
+  const scan = () => {
+    assertRoot()
+    let names
+    try { names = fs.readdirSync(rootPath) } catch (error) { readFailed("Fence journal scan failed", error) }
+    const byEpoch = new Map()
+    for (const name of names) {
+      const path = join(rootPath, name)
+      if (name === LOCK_NAME || name === VIEW_NAME) { inspectNamedFile(path, name === LOCK_NAME ? "Fence lock" : "Fence view"); continue }
+      const match = EVENT_NAME.exec(name)
+      if (!match) fail("CT_FENCE_TAMPERED", `Unexpected fence journal entry: ${name}`)
+      const epoch = Number(match[1]), bytes = inspectNamedFile(path, "Fence event", { read: true })
+      const computed = sha256(bytes)
+      if (computed !== match[2]) fail("CT_FENCE_TAMPERED", "Fence event filename digest does not match bytes")
+      let event
+      try { event = JSON.parse(bytes.toString("utf8")) } catch (error) { fail("CT_FENCE_TAMPERED", "Fence event JSON is invalid", error) }
+      if (!bytes.equals(canonicalBytes(event))) fail("CT_FENCE_TAMPERED", "Fence event bytes are not canonical")
+      const values = byEpoch.get(epoch) ?? []
+      values.push({ event, digest: computed }); byEpoch.set(epoch, values)
+    }
+    for (const values of byEpoch.values()) if (values.length !== 1) fail("CT_FENCE_DUPLICATE_EPOCH", "Fence journal contains a duplicate epoch")
+    if (byEpoch.size === 0) return { view: null, fingerprint: "empty" }
+    const epochs = [...byEpoch.keys()].sort((left, right) => left - right)
+    for (const [index, epoch] of epochs.entries()) if (epoch !== index + 1) fail("CT_FENCE_GAP", "Fence journal contains an epoch gap")
+    const events = [], digests = []
+    for (const epoch of epochs) {
+      const { event, digest } = byEpoch.get(epoch)[0]
+      try { assertEvent(event, epoch, events.at(-1) ?? null, digests.at(-1) ?? null) }
+      catch (error) {
+        if (error?.code === "CT_FENCE_TAMPERED") throw error
+        fail("CT_FENCE_TAMPERED", "Fence event content is invalid", error)
+      }
+      events.push(event); digests.push(digest)
+    }
+    const view = { schema: "candidate-fence-journal", schema_version: 1, project_id: events[0].project_id, revision: events.length, events }
+    return { view, fingerprint: digests.join("\0") }
+  }
+  const inspectExistingLock = () => {
     let stats
-    try { stats = fs.lstatSync(ledgerPath) } catch (error) {
-      if (error?.code === "ENOENT") return { document: null, bytes: null }
-      fail("CT_FENCE_READ_FAILED", "Fence ledger inspection failed", error)
+    try { stats = fs.lstatSync(lockPath) } catch (error) {
+      if (error?.code === "ENOENT") return false
+      unsafe("Fence lock inspection failed", error)
     }
-    if (!stats.isFile() || stats.isSymbolicLink() || !own(stats) || mode(stats) !== 0o600) unsafe("Fence ledger is unsafe")
-    let descriptor
-    try {
-      descriptor = fs.openSync(ledgerPath, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW)
-      const opened = fs.fstatSync(descriptor)
-      if (!opened.isFile() || !own(opened) || mode(opened) !== 0o600) unsafe("Opened fence ledger is unsafe")
-      const bytes = fs.readFileSync(descriptor)
-      return { document: assertLedger(JSON.parse(bytes.toString("utf8"))), bytes }
-    } catch (error) {
-      if (error?.code?.startsWith("CT_")) throw error
-      fail("CT_FENCE_READ_FAILED", "Fence ledger read failed", error)
-    } finally { if (descriptor !== undefined) fs.closeSync(descriptor) }
+    assertOwnerFile(stats, "Fence lock")
+    return true
   }
-  const createdFile = (path, bytes) => {
-    let descriptor
+  const removeOwnedLock = (identity) => {
     try {
-      descriptor = fs.openSync(path, fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_WRONLY | fs.constants.O_NOFOLLOW, 0o600)
-      fs.fchmodSync(descriptor, 0o600)
-      const stats = fs.fstatSync(descriptor)
-      if (!stats.isFile() || !own(stats) || mode(stats) !== 0o600) unsafe("Fence temporary file is unsafe")
-      fs.writeFileSync(descriptor, bytes); fs.fsyncSync(descriptor); fs.closeSync(descriptor); descriptor = undefined
-    } catch (error) {
-      if (descriptor !== undefined) try { fs.closeSync(descriptor) } catch {}
-      try { fs.rmSync(path, { force: true }) } catch {}
-      if (error?.code?.startsWith("CT_")) throw error
-      fail("CT_FENCE_WRITE_FAILED", "Fence temporary write failed", error)
-    }
-  }
-  const syncParent = () => {
-    const descriptor = fs.openSync(parent, fs.constants.O_RDONLY | (fs.constants.O_DIRECTORY ?? 0))
-    try { fs.fsyncSync(descriptor) } finally { fs.closeSync(descriptor) }
+      const stats = fs.lstatSync(lockPath)
+      if (stats.dev === identity.dev && stats.ino === identity.ino && stats.isFile() && !stats.isSymbolicLink() && own(stats) && mode(stats) === 0o600 && stats.nlink === 1) fs.rmSync(lockPath)
+    } catch (error) { if (error?.code !== "ENOENT") throw error }
   }
   const acquireLock = () => {
     const deadline = Date.now() + lockTimeoutMs
     while (true) {
+      let descriptor
       try {
-        const descriptor = fs.openSync(lockPath, fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_WRONLY | fs.constants.O_NOFOLLOW, 0o600)
+        descriptor = fs.openSync(lockPath, fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_WRONLY | fs.constants.O_NOFOLLOW, 0o600)
         fs.fchmodSync(descriptor, 0o600)
-        return descriptor
+        const stats = fs.fstatSync(descriptor)
+        assertOwnerFile(stats, "Fence lock")
+        return { descriptor, identity: { dev: stats.dev, ino: stats.ino } }
       } catch (error) {
-        if (error?.code !== "EEXIST") fail("CT_FENCE_WRITE_FAILED", "Fence lock failed", error)
-        if (Date.now() >= deadline) fail("CT_FENCE_BUSY", "Fence ledger is busy")
-        pause(Math.min(2, Math.max(1, deadline - Date.now())))
+        if (descriptor !== undefined) {
+          let identity
+          try { const stats = fs.fstatSync(descriptor); identity = { dev: stats.dev, ino: stats.ino } } catch {}
+          try { fs.closeSync(descriptor) } catch {}
+          if (identity) try { removeOwnedLock(identity) } catch {}
+        }
+        if (error?.code === "EEXIST") {
+          inspectExistingLock()
+          if (Date.now() >= deadline) fail("CT_FENCE_BUSY", "Candidate fence is busy")
+          pause(Math.min(2, Math.max(1, deadline - Date.now())))
+          continue
+        }
+        if (error?.code?.startsWith("CT_")) throw error
+        fail("CT_FENCE_WRITE_FAILED", "Fence lock acquisition failed", error)
       }
     }
+  }
+  const releaseLock = ({ descriptor, identity }) => {
+    try { fs.closeSync(descriptor) } catch {}
+    try { removeOwnedLock(identity) } catch (error) { fail("CT_FENCE_WRITE_FAILED", "Owned fence lock cleanup failed", error) }
+  }
+  const syncRoot = (rootStats) => {
+    let descriptor
+    try {
+      descriptor = fs.openSync(rootPath, fs.constants.O_RDONLY | (fs.constants.O_DIRECTORY ?? 0) | fs.constants.O_NOFOLLOW)
+      const stats = fs.fstatSync(descriptor)
+      if (!stats.isDirectory() || !own(stats) || mode(stats) !== 0o700 || stats.dev !== rootStats.dev || stats.ino !== rootStats.ino) unsafe("Opened fence root is unsafe")
+      fs.fsyncSync(descriptor)
+      fs.closeSync(descriptor); descriptor = undefined
+    } finally { if (descriptor !== undefined) fs.closeSync(descriptor) }
+  }
+  const publish = (event) => {
+    const bytes = canonicalBytes(event), digest = sha256(bytes)
+    const finalPath = join(rootPath, `${String(event.host_epoch).padStart(20, "0")}-${digest}.json`)
+    let descriptor, created = false
+    try {
+      descriptor = fs.openSync(finalPath, fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_WRONLY | fs.constants.O_NOFOLLOW, 0o600)
+      created = true
+      fs.fchmodSync(descriptor, 0o600)
+      assertOwnerFile(fs.fstatSync(descriptor), "Fence event")
+      fs.writeFileSync(descriptor, bytes)
+      fs.fsyncSync(descriptor)
+      fs.closeSync(descriptor); descriptor = undefined
+      syncRoot(assertRoot())
+      return digest
+    } catch (error) {
+      if (descriptor !== undefined) try { fs.closeSync(descriptor) } catch {}
+      if (created) fail("CT_FENCE_DURABILITY_UNKNOWN", "Fence event durability is unknown; perform exact readback before any retry", error)
+      if (error?.code === "EEXIST") fail("CT_CAS_MISMATCH", "Fence epoch was already published", error)
+      if (error?.code?.startsWith("CT_")) throw error
+      fail("CT_FENCE_WRITE_FAILED", "Fence event create failed", error)
+    }
+  }
+  const resolveProof = (proofRef, active) => {
+    const requested = reference(proofRef, "Termination proof")
+    let value
+    try { value = resolveTerminationProof(requested) } catch (error) { fail("CT_STOP_PROOF_REQUIRED", "Canonical termination proof could not be resolved", error) }
+    if (!value || typeof value !== "object" || typeof value.then === "function" || value.status === "AMBIGUOUS") fail("CT_STOP_PROOF_REQUIRED", "Canonical positive termination proof is required")
+    let proof
+    try { proof = validate("recoveryProof", value) } catch (error) { fail("CT_STOP_PROOF_INVALID", "Canonical termination proof is invalid", error) }
+    if (proof.proof_id !== requested || proof.project_id !== active.project_id || proof.old_assignment_ref !== active.assignment_ref) fail("CT_STOP_PROOF_INVALID", "Termination proof provenance or ownership does not match")
+    if (proof.base_sha !== active.base_sha) fail("CT_BASE_DRIFT", "Termination proof base drift")
+    if (proof.runtime_binding_ref !== active.runtime_binding_ref) fail("CT_RUNTIME_DRIFT", "Termination proof runtime binding drift")
+    if (proof.role_binding_ref !== active.role_binding_ref) fail("CT_ROLE_DRIFT", "Termination proof role binding drift")
+    return requested
+  }
+  const resolveDecision = (decisionRef, predecessor, candidate) => {
+    const requested = reference(decisionRef, "Maintainer decision")
+    let value
+    try { value = authorizeMaintainerDecision(requested) } catch (error) { fail("CT_MAINTAINER_REQUIRED", "Human takeover decision could not be authorized", error) }
+    if (!exactKeys(value, DECISION_KEYS) || value.schema !== "candidate-fence-decision" || value.schema_version !== 1 || value.status !== "APPROVED" || value.decision_ref !== requested) fail("CT_MAINTAINER_REQUIRED", "Current approved human takeover decision is required")
+    if (!Number.isFinite(Date.parse(value.expires_at)) || Date.parse(value.expires_at) <= Date.now()) fail("CT_MAINTAINER_DECISION_INVALID", "Human takeover decision is expired")
+    if (value.project_id !== candidate.project_id || value.predecessor_host_id !== predecessor.host_id || value.predecessor_host_epoch !== predecessor.host_epoch
+      || value.candidate_revision !== candidate.candidate_revision || value.candidate_host_id !== candidate.host_id) fail("CT_MAINTAINER_DECISION_INVALID", "Human takeover decision ownership does not match")
+    if (value.base_sha !== candidate.base_sha) fail("CT_BASE_DRIFT", "Human takeover decision base drift")
+    if (value.runtime_binding_ref !== candidate.runtime_binding_ref) fail("CT_RUNTIME_DRIFT", "Human takeover decision runtime drift")
+    if (value.role_binding_ref !== candidate.role_binding_ref) fail("CT_ROLE_DRIFT", "Human takeover decision role drift")
+    if (value.assignment_ref !== candidate.assignment_ref) fail("CT_OWNERSHIP_UNCERTAIN", "Human takeover decision assignment drift")
+    return requested
   }
   const transact = (expectedRevision, build) => {
-    if (!Number.isInteger(expectedRevision) || expectedRevision < 0) fail("CT_CAS_MISMATCH", "Expected revision is invalid")
-    inspectParent({ create: true })
-    let lockDescriptor, temporary, renamed = false, priorBytes = null
+    if (!Number.isInteger(expectedRevision) || expectedRevision < 0) fail("CT_CAS_MISMATCH", "Expected journal revision is invalid")
+    assertRoot()
+    const lock = acquireLock()
     try {
-      lockDescriptor = acquireLock()
-      const current = readCurrent()
-      priorBytes = current.bytes
-      if ((current.document?.revision ?? 0) !== expectedRevision) fail("CT_CAS_MISMATCH", "Fence ledger revision changed")
-      const next = assertLedger(build(current.document))
-      const bytes = Buffer.from(`${canonicalize(next)}\n`)
-      temporary = join(parent, `.candidate-fence.${randomUUID()}.tmp`)
-      createdFile(temporary, bytes)
-      beforeCommit?.(ledgerPath, next)
-      fs.renameSync(temporary, ledgerPath); temporary = undefined; renamed = true
-      try { syncParent() } catch (error) {
-        if (priorBytes === null) fs.rmSync(ledgerPath, { force: true })
-        else {
-          const rollback = join(parent, `.candidate-fence.${randomUUID()}.rollback`)
-          createdFile(rollback, priorBytes)
-          try { fs.renameSync(rollback, ledgerPath) } finally { fs.rmSync(rollback, { force: true }) }
-        }
-        syncParent()
-        fail("CT_FENCE_WRITE_FAILED", "Fence directory sync failed", error)
-      }
-      return freeze(structuredClone(next))
-    } catch (error) {
-      if (error?.code?.startsWith("CT_")) throw error
-      if (renamed) fail("CT_FENCE_DURABILITY_UNKNOWN", "Fence durability is unknown; reload before retry", error)
-      fail("CT_FENCE_WRITE_FAILED", "Atomic fence write failed", error)
-    } finally {
-      if (temporary) try { fs.rmSync(temporary, { force: true }) } catch {}
-      if (lockDescriptor !== undefined) {
-        try { fs.closeSync(lockDescriptor) } catch {}
-        try { fs.rmSync(lockPath, { force: true }) } catch {}
-      }
+      const current = scan()
+      if ((current.view?.revision ?? 0) !== expectedRevision) fail("CT_CAS_MISMATCH", "Fence journal revision changed")
+      const event = build(current.view)
+      const revalidated = scan()
+      if (revalidated.fingerprint !== current.fingerprint || (revalidated.view?.revision ?? 0) !== expectedRevision) fail("CT_CAS_MISMATCH", "Fence journal changed before publish")
+      publish(event)
+      return cloneFrozen(scan().view)
+    } finally { releaseLock(lock) }
+  }
+  const initialEvent = (candidate) => ({
+    schema: "candidate-fence-event", schema_version: 1, event: "HOST_ADMITTED", exclusivity: "VERIFIED",
+    host_epoch: 1, previous_event_digest: null, project_id: candidate.project_id, candidate,
+    predecessor: null, termination_proof_ref: null, maintainer_decision_ref: null, frozen_work: null,
+  })
+  const nextEvent = (current, candidate, predecessor, evidence) => {
+    const previousName = fs.readdirSync(rootPath).find((name) => name.startsWith(`${String(current.revision).padStart(20, "0")}-`) && EVENT_NAME.test(name))
+    if (!previousName) fail("CT_FENCE_TAMPERED", "Current epoch event is missing")
+    return {
+      schema: "candidate-fence-event", schema_version: 1, host_epoch: current.revision + 1,
+      previous_event_digest: digestRef(EVENT_NAME.exec(previousName)[2]), project_id: candidate.project_id,
+      candidate, predecessor, ...evidence,
     }
   }
-  const append = (current, event) => ({
-    schema: "candidate-fence-ledger", schema_version: 1, project_id: event.candidate.project_id,
-    revision: (current?.revision ?? 0) + 1, events: [...(current?.events ?? []), event],
-  })
 
+  assertRoot()
   return Object.freeze({
     read() {
-      const current = readCurrent().document
-      return current === null ? null : freeze(structuredClone(current))
+      const current = scan().view
+      return current === null ? null : cloneFrozen(current)
     },
-    admit({ candidate: candidateInput, predecessor: predecessorInput, terminationProof, expectedRevision } = {}) {
-      const nextCandidate = inspectCandidate(candidateInput)
-      return transact(expectedRevision, (current) => {
-        if (current && current.project_id !== nextCandidate.project_id) fail("CT_PROJECT_MISMATCH", "Foreign project candidate")
-        if (!current) return append(null, {
-          event: "HOST_ADMITTED", exclusivity: "VERIFIED", host_epoch: 1, candidate: nextCandidate,
-          predecessor: null, termination_proof_ref: null, frozen_work: null, maintainer_decision_ref: null,
-        })
-        const active = current.events.at(-1)
-        const predecessor = assertPredecessor(active, predecessorInput)
-        if (nextCandidate.host_id === active.candidate.host_id) fail("CT_HOST_DRIFT", "New activation must use a different host")
-        assertUsableBase(current, nextCandidate.base_sha)
-        const proof = assertProof(terminationProof, active.candidate)
-        return append(current, {
-          event: "HOST_ADMITTED", exclusivity: "VERIFIED", host_epoch: active.host_epoch + 1,
-          candidate: nextCandidate, predecessor, termination_proof_ref: proof.proof_id,
-          frozen_work: null, maintainer_decision_ref: null,
+    admit(input = {}) {
+      const initialShape = exactKeys(input, ["candidate", "expectedRevision"])
+      const nextShape = exactKeys(input, ["candidate", "predecessor", "terminationProofRef", "expectedRevision"])
+      if (!initialShape && !nextShape) fail("CT_FENCE_INVALID", "Operational admission accepts only candidate, predecessor, proof ref, and expected revision")
+      const candidate = inspectCandidate(input.candidate)
+      return transact(input.expectedRevision, (current) => {
+        if (current === null) {
+          if (!initialShape) fail("CT_OWNERSHIP_UNCERTAIN", "Initial activation cannot claim predecessor evidence")
+          return initialEvent(candidate)
+        }
+        if (!nextShape || current.project_id !== candidate.project_id) fail("CT_PROJECT_MISMATCH", "Candidate project does not match journal")
+        const active = current.events.at(-1), predecessor = assertPredecessor(active, input.predecessor)
+        assertDifferentHost(active, candidate); assertUsableBase(current.events, candidate.base_sha)
+        const proofRef = resolveProof(input.terminationProofRef, active.candidate)
+        return nextEvent(current, candidate, predecessor, {
+          event: "HOST_ADMITTED", exclusivity: "VERIFIED", termination_proof_ref: proofRef,
+          maintainer_decision_ref: null, frozen_work: null,
         })
       })
     },
-    forceTakeover({ actor, candidate: candidateInput, predecessor: predecessorInput, maintainerDecisionRef, expectedRevision } = {}) {
-      if (actor !== "MAINTAINER") fail("CT_MAINTAINER_REQUIRED", "Forced takeover requires an explicit maintainer decision")
-      const decisionRef = ref(maintainerDecisionRef, "Maintainer decision")
-      const nextCandidate = inspectCandidate(candidateInput)
-      return transact(expectedRevision, (current) => {
-        if (!current || current.project_id !== nextCandidate.project_id) fail("CT_OWNERSHIP_UNCERTAIN", "Current predecessor ownership is required")
-        const active = current.events.at(-1)
-        const predecessor = assertPredecessor(active, predecessorInput)
-        if (nextCandidate.host_id === active.candidate.host_id) fail("CT_HOST_DRIFT", "Forced takeover must use a different host")
-        assertUsableBase(current, nextCandidate.base_sha)
-        return append(current, {
-          event: "TAKEOVER_FORCED", exclusivity: "BROKEN", host_epoch: active.host_epoch + 1,
-          candidate: nextCandidate, predecessor, termination_proof_ref: null,
+    forceTakeover(input = {}) {
+      if (!exactKeys(input, ["candidate", "predecessor", "maintainerDecisionRef", "expectedRevision"])) fail("CT_FENCE_INVALID", "Forced takeover accepts only candidate, predecessor, decision ref, and expected revision")
+      const candidate = inspectCandidate(input.candidate)
+      return transact(input.expectedRevision, (current) => {
+        if (current === null || current.project_id !== candidate.project_id) fail("CT_OWNERSHIP_UNCERTAIN", "Current predecessor ownership is required")
+        const active = current.events.at(-1), predecessor = assertPredecessor(active, input.predecessor)
+        assertDifferentHost(active, candidate); assertUsableBase(current.events, candidate.base_sha)
+        const decisionRef = resolveDecision(input.maintainerDecisionRef, predecessor, candidate)
+        return nextEvent(current, candidate, predecessor, {
+          event: "TAKEOVER_FORCED", exclusivity: "BROKEN", termination_proof_ref: null, maintainer_decision_ref: decisionRef,
           frozen_work: { state: "FROZEN", candidate_revision: active.candidate.candidate_revision, base_sha: active.candidate.base_sha, work_ref: active.candidate.work_ref },
-          maintainer_decision_ref: decisionRef,
         })
       })
     },
     assertBaseUsable({ projectId, baseSha } = {}) {
-      const project = id(projectId, "Project"), base = gitSha(baseSha, "Base SHA")
-      const current = readCurrent().document
+      const project = identifier(projectId, "Project"), base = gitSha(baseSha, "Base SHA")
+      const current = scan().view
       if (current && current.project_id !== project) fail("CT_PROJECT_MISMATCH", "Foreign project base")
-      assertUsableBase(current, base)
+      assertUsableBase(current?.events ?? [], base)
       return true
     },
   })
