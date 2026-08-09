@@ -69,7 +69,7 @@ Reglas binarias:
 - El fence compara los resultados de los puertos contra el estado canónico que acaba de derivar del journal y contra el candidato exacto; no confía en que el puerto haya hecho esa comparación por él.
 - La toma forzada conserva la decisión ya aprobada: sólo humana, epoch incrementado, `TAKEOVER_FORCED` legible y trabajo anterior `FROZEN` en el mismo evento.
 
-**Límite de integración:** `S4.1` define y prueba el seam fail-closed; cablear el composition root productivo queda fuera de `Área`. Sin ambos puertos, el constructor u operación rechaza antes de journal mutation. Ningún path prohibido se abre para simular ese cableado.
+**Límite de integración:** `S4.1` define y prueba el seam fail-closed; cablear el composition root productivo queda fuera de `Área`. Esa deuda conserva como owner la responsabilidad legacy Host Launcher que todavía no tiene ID; hasta que se enumere e integre, no existe una ruta productiva habilitada. Sin ambos puertos, el constructor u operación rechaza antes de journal mutation. Ningún path prohibido se abre para simular ese cableado.
 
 ### 2. Journal append-only y epoch anti-reuse
 
@@ -153,7 +153,7 @@ Todos deben pasar para cerrar:
 - [ ] La toma forzada sólo ocurre con decisión humana autorizada por puerto; avanza epoch y expone `TAKEOVER_FORCED`.
 - [ ] El trabajo desalojado queda `FROZEN` en el mismo evento y ninguna ruta lo adopta o descarta automáticamente.
 - [ ] Una base que arrastra trabajo congelado sin resolver se rechaza.
-- [ ] Todos los ancestros, root, event y lock verifican link safety, owner, mode, `O_NOFOLLOW`, `fstat` y `nlink === 1`.
+- [ ] El path del trusted root no contiene componentes symlink; root y directorios descendientes verifican owner/mode; event y lock se abren con `O_NOFOLLOW`, se validan por `fstat` y exigen `nlink === 1`.
 - [ ] El lock owner-only serializa dos procesos reales; hay un único winner y ningún lock/residuo/descriptores abiertos al terminar.
 - [ ] Todo rechazo pre-publicación deja cero mutación durable y conserva bytes existentes.
 - [ ] Todo fallo ambiguo post-create devuelve `CT_FENCE_DURABILITY_UNKNOWN`, no borra el epoch y obliga readback sin retry automático.
