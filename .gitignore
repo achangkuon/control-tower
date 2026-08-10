@@ -1,2 +1,4 @@
 /node_modules/
 /.codegraph/
+# Local Pi runtime state
+.atl/
