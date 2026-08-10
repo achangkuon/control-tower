@@ -35,8 +35,8 @@ Esto es exactamente lo que el manifest de `installable-v1` declara resolver: `mi
 | `contracts/` | 322 | `autonomous-v2` | `schema-registry`, `canonicalize`, `artifact-ref`, `idempotency`, `validate`, `errors`. Entregado por P2 Change A. |
 | `registry/` | 337 | `autonomous-v2` | `store`, `path`, `legacy-import`. Entregado por `S2.4` y `S2.5`. |
 | `main-store/` | 183 | `autonomous-v2` | `authority`, `store`. Entregado por P2 Change A. |
-| `escalation/request.mjs` | 30 | `autonomous-v2` | Emite solicitudes exactas mediante el authorization store canónico; no abre un segundo ledger. `S5.4`, candidato local `75549a7`. |
-| `escalation/routing.mjs` | 213 | `autonomous-v2` | Persiste el modo `local`/`remoto`, aplica frontera de autoridad y degrada sin consumir solicitudes. `S5.4`, candidato local `75549a7`. |
+| `escalation/request.mjs` | 30 | `autonomous-v2` | Emite solicitudes exactas mediante el authorization store canónico; no abre un segundo ledger. Entregado por `S5.4`, comportamiento `75549a7`, publicado en `origin/master`. |
+| `escalation/routing.mjs` | 213 | `autonomous-v2` | Persiste el modo `local`/`remoto`, aplica frontera de autoridad y degrada sin consumir solicitudes. Entregado por `S5.4`, comportamiento `75549a7`, publicado en `origin/master`. |
 | `test/escalation/**` | 335 | `autonomous-v2` | 16 pruebas de emisión, persistencia entre procesos, autoridad, concurrencia, degradación y no mutación; 78 expectations en el focused final. |
 | `support/agent.mjs` | 49 | `installable-v1` | Entrada `createSupportBrief`; valida la solicitud y mantiene Support read-only. Entregado por `S8.4`. |
 | `support/manifest.mjs` | 99 | `installable-v1` | Resuelve el roadmap y los STATUS permitidos con validación fail-closed. Entregado por `S8.4`. |
@@ -63,13 +63,13 @@ Otras dos condiciones previas sin runbook: un worktree nuevo no tiene `node_modu
 
 ## Corte actual de implementación — `S5.4`
 
-`S5.4` está ✅ COMPLETO en el candidato local de código `75549a781cd6ac19afc3e09e7466f7772f678fb7` (tree `835ed3e1d69540efae89b258813b194a0c555526`). Agrega exclusivamente `escalation/{request,routing}.mjs` y `test/escalation/{request,routing}.test.mjs`: 578 líneas, sin tocar el authorization store ni otra ruta prohibida. Los blobs coinciden con el sucesor aceptado `9c28ffd`; el recheck dirigido 8082 devolvió `findings: []` y `READY`.
+`S5.4` está ✅ COMPLETO y publicado en `origin/master`: los commits de comportamiento son `976b8d02bfda2d3ec9993e92a7b2f919ebc2d302` y `75549a781cd6ac19afc3e09e7466f7772f678fb7` (tree de comportamiento `835ed3e1d69540efae89b258813b194a0c555526`), el cierre documental es `f9f2869` y la reconciliación final está en `e82f4ae`. Agrega exclusivamente `escalation/{request,routing}.mjs` y `test/escalation/{request,routing}.test.mjs`: 578 líneas, sin tocar el authorization store ni otra ruta prohibida. Los blobs coinciden con el sucesor aceptado `9c28ffd`; el recheck dirigido 8082 devolvió `findings: []` y `READY`.
 
 La evidencia enfocada final es `bun test test/escalation` → 16 pass / 0 fail / 78 expectations. La verificación integral previa contra la misma base y los mismos blobs fue 569 pass / 0 fail / 3274 expectations / 37 archivos. No existe transporte remoto ni autenticación remota nueva: el repositorio sólo define la frontera y deja el callback inhabilitado hasta `S8.7`. Por eso no hay despliegue o prueba de canal que atribuirle a esta Sesión. La persistencia, concurrencia y degradación sí se ejercitan dentro del repositorio.
 
-El candidato completo —dos commits de comportamiento y un cierre documental— permanece sólo en `master` local; `origin/master` sigue en `70ea7c2`. No hay push, PR, mutación de Notion ni adopción de runtime. La afinidad `autonomous-v2` describe el área, no otro producto ni un despliegue.
+Los dos commits de comportamiento y el cierre documental están publicados por `origin/master@e82f4ae`. Es una entrega de repositorio: no implica adopción del runtime ni implementación de transporte o autenticación remota. La afinidad `autonomous-v2` describe el área, no otro producto ni un despliegue.
 
-**Planificación reconciliada:** P5 queda en 40% (2/5 S) y el avance activo global en 30/46 Sesiones (65%). `S5.5` está 🟢 LISTO y es el siguiente nodo ejecutable. `S5.2` está 🔴 BLOQUEADO por los hallazgos 1/3/5 del recheck 8193 y la decisión estacionada 8195; `S5.3` queda transitivamente 🔴 BLOQUEADO. La cadena conserva `S7.1` detrás de `S5.3`, `S8.7` y `S5.5`.
+**Planificación reconciliada:** P4 queda en 25% (1/4 S), P5 en 40% (2/5 S) y el avance activo global en 18/37 Sesiones (49%). La cadena tiene 9/17 Sesiones cerradas. `S5.5` está 🟢 LISTO y es el siguiente nodo ejecutable. `S5.2` está 🔴 BLOQUEADO por los hallazgos 1/3/5 del recheck 8193 y la decisión estacionada 8195; `S5.3` queda transitivamente 🔴 BLOQUEADO. La cadena conserva `S7.1` detrás de `S5.3`, `S8.7` y `S5.5`.
 
 ## Brechas reales
 

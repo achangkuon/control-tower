@@ -1,12 +1,12 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-10 contra los planes canónicos y la autoridad aceptada [Remote Control and Control Tower Complementarity](../../../../remote-control/openspec/decisions/remote-control-and-control-tower.md).
+> Última reconciliación: 2026-08-10 contra `origin/master@e82f4ae`, los planes canónicos y la autoridad aceptada [Remote Control and Control Tower Complementarity](../../../../remote-control/openspec/decisions/remote-control-and-control-tower.md).
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md).
 
 ## 📍 Punto de retoma
 
-`S5.4` está ✅ COMPLETO en el candidato local: 9/9 Tareas y 15/15 criterios, `bun test test/escalation` 16/0/78. La rama local conserva tres commits de integración/cierre sobre `origin/master@70ea7c2`; **no fue enviada** y necesita autorización de entrega separada.
+`S5.4` está ✅ COMPLETO y publicado en `origin/master`: comportamiento `976b8d0` + `75549a7`, cierre documental `f9f2869` y reconciliación final `e82f4ae`. Verificación: 9/9 Tareas, 15/15 criterios, `bun test test/escalation` 16/0/78 y suite completa 569/0/3274.
 
 El siguiente nodo ejecutable es `S5.5` 🟢 LISTO. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193 y la decisión estacionada 8195; `S5.3` queda bloqueada transitivamente.
 

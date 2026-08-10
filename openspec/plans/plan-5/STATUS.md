@@ -19,7 +19,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1` y `S5.5` de `S5.4`. |
 | Outputs | F: authorization store, Telegram, validación Git/PR/check/SHA, entrega idempotente y post-check. G: planning horizon, reconciliación, apply/verify, Binding Delta y continuación del siguiente `slice_id`. Más el ruteo de escalamiento de `S5.4` y la planificación diferible de `S5.5`. |
-| Roadmap | `S5.1` y `S5.4` están ✅ COMPLETO. `S5.5` queda 🟢 LISTO. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. El candidato de `S5.4` está integrado y documentado sólo en el `master` local; todavía no fue enviado al remoto. |
+| Roadmap | `S5.1` y `S5.4` están ✅ COMPLETO; `S5.4` está publicado y reconciliado en `origin/master@e82f4ae`. `S5.5` queda 🟢 LISTO. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
 
 ## Sesión 5.1 — Change F candidate contracts
@@ -250,12 +250,12 @@ Aplica el horizonte de dos Sesiones, reconcilia la base integrada y habilita suc
 
 ## Sesión 5.4 — Ruteo de escalamiento fuera/en casa
 
-**Estado:** ✅ COMPLETO — cierre técnico local verificado el 2026-08-10. Los bytes de comportamiento quedaron en `75549a781cd6ac19afc3e09e7466f7772f678fb7` (tree `835ed3e1d69540efae89b258813b194a0c555526`), sobre `master` local; todavía no fueron enviados a `origin/master`, que permanece en `70ea7c236a103ac331f863c1c4eb8c8baf1438c8`.
+**Estado:** ✅ COMPLETO — cierre técnico verificado y publicado el 2026-08-10. Los commits de comportamiento son `976b8d02bfda2d3ec9993e92a7b2f919ebc2d302` y `75549a781cd6ac19afc3e09e7466f7772f678fb7` (tree de comportamiento `835ed3e1d69540efae89b258813b194a0c555526`); el cierre documental es `f9f2869` y la reconciliación final está en `origin/master@e82f4ae`.
 **Depende de:** `S5.1` ✅
 **Área:** `escalation/**`, `test/escalation/**`
 **Prohibido:** `main-store/store.mjs`, `core.mjs`, `mcp.mjs`, `delivery/**`, `continuation/**`, `capabilities/**`, `policy/**`, `jornada/**`, `registry/**`, `contracts/**`, `schemas/**`, `openspec/plans/**`, `openspec/specs/**`
 **Recurso:** estado de ruteo persistido, propiedad de `escalation/**`. Sin migraciones de DB, sin `db-writer`, sin token de entrega.
-**Entrega:** commit directo a `master` + push, sin PR ([`AGENTS.md`](../../../AGENTS.md)). El forecast derivado de 200–280 líneas quedó superado: el resultado de comportamiento tiene **578 líneas añadidas** en cuatro paths. El maintainer aceptó la excepción y preservó dos commits de comportamiento con provenance —uno base y una corrección acotada posterior al review— en lugar de reescribir historia. El tercer commit es exclusivamente documental: existe porque la historia aceptada ya era inmutable y el Documentation Close Gate exige reconciliar el cierre técnico. La entrega remota sigue pendiente de una autorización separada ligada al candidato final.
+**Entrega:** commit directo a `master` + push, sin PR ([`AGENTS.md`](../../../AGENTS.md)). El forecast derivado de 200–280 líneas quedó superado: el resultado de comportamiento tiene **578 líneas añadidas** en cuatro paths. El maintainer aceptó la excepción y preservó dos commits de comportamiento con provenance —uno base y una corrección acotada posterior al review— en lugar de reescribir historia. El tercer commit es exclusivamente documental: existe porque la historia aceptada ya era inmutable y el Documentation Close Gate exige reconciliar el cierre técnico. La secuencia está publicada y reconciliada en `origin/master@e82f4ae`.
 
 **Por qué `main-store/store.mjs` está en el `Prohibido` aunque `S5.4` escriba ahí.** La solicitud emitida se persiste en el authorization store, que es **propiedad exclusiva de `S5.1`**. `S5.4` lo **llama**, nunca lo edita — es exactamente lo que exige la decisión `derivable` de más abajo: sin abrir una segunda ruta de escritura. Dos rutas al mismo estado es la causa raíz que `6d37642` reparó en este mismo Plan.
 
@@ -316,7 +316,7 @@ El modo es explícito y de dos valores: `local` cuando el maintainer está frent
 
 La tarjeta Telegram, el envío idempotente, el callback y sus TTLs son responsabilidad pendiente de `S8.7`; no se reclasifican como efecto ya implementado de `S5.4`.
 
-**Evidencia de cierre local.** La integración preservó los dos límites de comportamiento aceptados: `0ad88bb` → `976b8d02bfda2d3ec9993e92a7b2f919ebc2d302` (tree `0a516b146a3273b215df41f7f3bdfd3b89226be9`, parent `70ea7c2`) y `9c28ffd` → `75549a781cd6ac19afc3e09e7466f7772f678fb7` (tree `835ed3e1d69540efae89b258813b194a0c555526`, parent `976b8d0`). El primer commit agrega exactamente `escalation/{request,routing}.mjs` y `test/escalation/{request,routing}.test.mjs`; el segundo corrige únicamente `escalation/routing.mjs` y su test. El diff final contra la base son esos cuatro paths, 578 adiciones y ninguna ruta prohibida.
+**Evidencia de cierre publicado.** La integración preservó los dos límites de comportamiento aceptados: `0ad88bb` → `976b8d02bfda2d3ec9993e92a7b2f919ebc2d302` (tree `0a516b146a3273b215df41f7f3bdfd3b89226be9`, parent `70ea7c2`) y `9c28ffd` → `75549a781cd6ac19afc3e09e7466f7772f678fb7` (tree `835ed3e1d69540efae89b258813b194a0c555526`, parent `976b8d0`). El primer commit agrega exactamente `escalation/{request,routing}.mjs` y `test/escalation/{request,routing}.test.mjs`; el segundo corrige únicamente `escalation/routing.mjs` y su test. El diff final contra la base son esos cuatro paths, 578 adiciones y ninguna ruta prohibida.
 
 Los cuatro blobs finales son `6985fbbd1aedb18c1f3e213508a2153227b0cc1a`, `2c5fcac6b7271d7ed36232917c7b04255e2a9b24`, `37f81bc83e04338c556315c6881892e53b532107` y `f9d9388fe97db10be87e78b75852c59e981ce0b4`, idénticos al sucesor aceptado `9c28ffd`. Verificación por límite: primer commit `bun test test/escalation` → 13 pass / 0 fail / 58 expectations; segundo commit → 16 pass / 0 fail / 78 expectations. La compatibilidad previa contra la misma base y los mismos blobs dio `bun test` → 569 pass / 0 fail / 3274 expectations / 37 archivos. El recheck dirigido 8082 devolvió `findings: []` y `READY`; cerró seguridad de padres/lecturas, serialización real entre procesos y rechazo asíncrono del transporte.
 
@@ -324,7 +324,7 @@ No aplica un runtime externo: esta Sesión define ruteo y persistencia, pero del
 
 ## Sesión 5.5 — Decisión estacionada y continuación independiente
 
-**Estado:** 🟢 LISTO — `S5.4` está ✅ COMPLETO en el candidato local; la ejecución remota de ese candidato sigue pendiente de autorización de entrega.
+**Estado:** 🟢 LISTO — `S5.4` está ✅ COMPLETO y publicado en `origin/master@e82f4ae`.
 **Depende de:** `S5.4` ✅
 **Área:** `escalation/{parked,contamination,resume}.mjs`, `schemas/parked-decision-v1.schema.json`, `test/escalation/**`
 **Prohibido:** `continuation/**`, `core.mjs`, `mcp.mjs`, `delivery/**`
