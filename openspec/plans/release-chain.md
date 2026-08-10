@@ -52,7 +52,14 @@ graph LR
   S32 --> S33["S3.3 capability registry · ✅"]
   S33 --> S34["S3.4 ciclo de vida Jornada · ✅"]
   S34 --> S51["S5.1 candidate contracts · ✅"]
-  S51 --> S41["S4.1 hosts · ✅"]
+  S51 --> S41["S4.1 fence hosts · ✅"]
+  S41 --> S42["S4.2 raíz visible · 🔴"]
+  S116["S1.16 OpenCode wake · 🔴"] --> S42
+  S42 --> S43["S4.3 liveness · 🔴"]
+  S43 --> S44["S4.4 failover · 🔴"]
+  S117["S1.17 Pi RED · 🔴"] --> S44
+  S118["S1.18 Pi GREEN · 📋"] --> S44
+  S119["S1.19 Pi refactor · 📋"] --> S44
   S41 --> S52["S5.2 entrega idempotente · 🔴"]
   S33 --> S52
   S52 --> S53["S5.3 continuación · 🔴"]
@@ -60,6 +67,7 @@ graph LR
   S54 --> S55["S5.5 decisión estacionada · 🟢"]
   S51 --> S87
   S53 --> S71["S7.1 conformidad · 📋"]
+  S44 --> S71
   S87 --> S71
   S55 --> S71
 ```
@@ -74,15 +82,20 @@ graph LR
 | ✅ | `S3.4` | Persistencia y ciclo de vida de Jornada | ✅ COMPLETO | `S3.2` ✅, `S3.3` ✅; implementación `b6dda84`, 11/11 criterios verificados por el planner contra el SHA integrado. **Cierra P3 entero** |
 | ✅ | `S5.1` | Candidate contracts, authorization store y frontera Support | ✅ COMPLETO | `S3.2` ✅, `S3.3` ✅, `S3.4` ✅; candidato `c7c2472`, 27/27 criterios y 537/537 tests |
 | ✅ | `S4.1` | Hosts y línea exclusiva | ✅ COMPLETO | `S3.1` ✅, `S3.2` ✅, `S5.1` ✅; cierre técnico `1f5fea7`, 19/19 criterios |
+| — | `S4.2` | Lanzamiento visible de raíz OpenCode | 🔴 BLOQUEADO | `S4.1` ✅, `S1.16` 🔴; ruta `design-tasks`, interfaz Herdr/OpenCode pendiente |
+| — | `S4.3` | Inspección, liveness y rehidratación segura | 🔴 BLOQUEADO | `S4.2` 🔴, `S1.16` 🔴; ruta `design-tasks` |
+| — | `S4.4` | Enforzamiento de epoch y failover exclusivo | 🔴 BLOQUEADO | `S4.3` 🔴, `S1.17` 🔴, `S1.18`/`S1.19` 📋; ruta `full-sdd` |
 | ✅ | `S5.4` | Ruteo de escalamiento fuera/en casa | ✅ COMPLETO | `S5.1` ✅; candidato local `75549a7`, 9/9 Tareas, 15/15 criterios. **No** depende de `S8.7`; todavía no fue enviado al remoto |
 | — | `S5.2` | Entrega idempotente y post-check | 🔴 BLOQUEADO | `S4.1` ✅, `S3.3` ✅; recheck 8193 mantiene abiertos 1/3/5 y decisión 8195 estaciona el candidato NOT READY |
 | ▶ | `S5.5` | Decisión estacionada y continuación independiente | 🟢 LISTO | `S5.4` ✅ |
 | — | `S5.3` | Continuación | 🔴 BLOQUEADO | Bloqueo transitivo por `S5.2` |
-| — | `S8.7` | Puente Hermes/Telegram | 🔴 BLOQUEADO | Dependencias ✅; tres decisiones `escala` abiertas del maintainer |
+| — | `S8.7` | Puente Hermes/Telegram | 🔴 BLOQUEADO | Dependencias propias ✅ y decisiones Telegram resueltas; bloquea el inicializador confiable de producción pendiente |
 | 4 | `S7.1` | Conformidad de release | 📋 PLANIFICADO | `S5.3`, `S8.7`, `S5.5` |
 
-**Catorce Sesiones · 9 cerradas.** A las trece anteriores se suma `S3.4`, enumerada el
-2026-08-04: `jornada-v1` existía como contrato **sin implementación**, y `policy/jornada.mjs`
+**Diecisiete Sesiones · 9 cerradas.** A las catorce anteriores se suman `S4.2`–`S4.4`,
+que cierran el denominador de Host Launcher sin cambiar la dependencia ya satisfecha de
+`S5.2` sobre el fence `S4.1`. `S3.4`, enumerada el 2026-08-04, existía porque `jornada-v1`
+era contrato **sin implementación**, y `policy/jornada.mjs`
 —que entregó `S3.2`— es un resolvedor puro que recibe la Jornada como argumento, no un store.
 Su alcance es **pasivo**: incrementa `jornada_revision` en toda transición, con lo que una
 Jornada terminada invalida por drift las entradas de capability ligadas a ella; no dispara
@@ -100,14 +113,24 @@ no alcanza como conformidad de release si la Torre igual se queda esperando la r
 `S5.5` depende de `S5.4`, así que la cobertura de `S5.4` queda incluida.
 
 `S0.3` cerró el 2026-08-01 en `9595b92`. Con eso, la contradicción entre specs sobre si el
-puente puede transportar un callback de merge **ya no existe**. Con `S8.8` también completa,
-las dependencias de `S8.7` están satisfechas; quedan sus tres decisiones `escala` abiertas.
+puente puede transportar un callback de merge **ya no existe**. La decisión aceptada de
+2026-08-10 agrega que Remote Control y Tower comparten bot/gateway pero usan plugins,
+comandos, repositorios y releases separados; el interlock conserva una única autoridad.
+Tower adapta los contratos de identidad/scope hash, CAS, receipts, envío idempotente,
+privacidad y TTL sin importar código de Remote Control. `S8.7` conserva el bloqueo de
+seguridad sobre el inicializador confiable de producción.
+
+Hermes es opcional: con su gateway ausente, la operación local por CLI y Support sigue
+completa. Por ello los productos son independientemente liberables y el canal remoto nunca
+extiende la autorización sensible de implementación/entrega. El modo remoto Tower y cada
+solicitud Telegram-visible vencen separadamente tras ocho horas; un callback vencido falla
+cerrado y exige una solicitud/autorización nueva.
 
 ## Capacidad paralela hoy
 
 La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas; no se declara como un número fijo.
 
-`S4.1` y `S5.4` están ✅ COMPLETO; el cierre de `S5.4` es todavía un candidato local no enviado. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1/3/5 y `S5.3` queda bloqueada transitivamente. `S8.7` conserva tres decisiones `escala` abiertas.
+`S4.1` y `S5.4` están ✅ COMPLETO; `S4.2`–`S4.4` esperan los adapters lifecycle de P1 y no son elegibles. El cierre de `S5.4` es todavía un candidato local no enviado. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1/3/5 y `S5.3` queda bloqueada transitivamente. `S8.7` espera el inicializador confiable de producción.
 
 **Capacidad de ejecución hoy: 1.** Sólo `S5.5` está 🟢 LISTO: depende de `S5.4` ✅, ocupa `escalation/**` después de su cierre y no comparte un recurso vivo con otra Sesión elegible. `S7.1` conserva sus dependencias en `S5.3`, `S8.7` y `S5.5`; cerrar `S5.4` no elimina esa cadena.
 
@@ -171,6 +194,7 @@ Se registra explícitamente en lugar de esconderse:
 - **P2 — responsabilidades posteriores de Change B.** Sin límite de un PR demostrable. Ver
   el [apéndice de migración](plan-vocabulary-migration-appendix.md).
 - **P6 — Campañas multiproyecto.** Sin Sesiones enumeradas. Fuera de la cadena de release.
-- **P1 — `S1.11`–`S1.19`.** Enumeradas pero **fuera de la cadena**: ningún Plan de la
-  cadena declara a P1 como dependencia. No bloquea la primera versión.
+- **P1 — `S1.11`–`S1.19`.** `S1.16` y `S1.17`–`S1.19` entran ahora en la cadena como
+  adapters lifecycle requeridos por `S4.2`–`S4.4`; `S1.11`–`S1.15` permanecen fuera
+  hasta que una dependencia explícita los incorpore.
 - **P8 — `S8.5` y `S8.6`.** 🟡 DIFERIDO por decisión del 2026-07-31. Se mantienen fuera.

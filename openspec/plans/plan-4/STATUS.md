@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
 | Outputs | Adapter contract, launcher Pi/OpenCode, health, stop proof, host epoch y fallback exclusivo. |
-| Roadmap | `S5.1` y `S4.1` están ✅ COMPLETO. Las responsabilidades legacy que aún no tienen límite de un PR permanecen sin ID; por eso el Plan 4 sigue 🔵 EN CURSO y no tiene porcentaje derivable. |
+| Roadmap | `S4.1` está ✅ COMPLETO. `S4.2`–`S4.4` enumeran ahora toda la responsabilidad restante de Change E: lanzamiento visible, observabilidad/rehidratación y failover exclusivo. P4 queda con denominador cerrado de 4 Sesiones. |
 | Referencias | [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). El proposal `sdd-tower-host-launcher` fue eliminado en `613a45d` por ser cáscara sin avance; su intención vive en este STATUS. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
@@ -22,6 +22,8 @@
 **Prohibido:** `core.mjs`, `mcp.mjs`, `continuation/**`, `main-store/**`, `plugin/**`, `delivery/**`, `escalation/**`, `capabilities/**`, `policy/**`, `jornada/**`, `registry/**`, `workspace/**`, `contracts/**`, `schemas/**`, `openspec/plans/**`, `openspec/specs/**`
 
 **Recurso:** **línea exclusiva** — es el recurso que esta Sesión existe para proteger. Journal owner-only propio en `hosts/**`, sin SQLite ni un segundo canal de autoridad.
+
+**Ruta:** `design-tasks` — el fence requería endurecer el seam técnico de proof, decisión humana y journal antes de implementar. **Autoridad:** REQUIREMENTS §14.4, Change E y re-sellado del maintainer del 2026-08-09.
 
 **Entrega:** commit directo a `master` + push, sin PR ([`AGENTS.md`](../../../AGENTS.md)). El re-sellado autoriza **un único commit sucesor** de `25b8617`, no amend. Forecast revisado: **700–950 líneas authored contra la base** y **350–550 líneas cambiadas en la corrección**; riesgo de revisión **High (>400)**. Por decisión explícita del maintainer permanece una sola unidad de revisión bajo la política `direct-push`; no se cargan `branch-pr` ni `chained-pr`.
 
@@ -69,7 +71,7 @@ Reglas binarias:
 - El fence compara los resultados de los puertos contra el estado canónico que acaba de derivar del journal y contra el candidato exacto; no confía en que el puerto haya hecho esa comparación por él.
 - La toma forzada conserva la decisión ya aprobada: sólo humana, epoch incrementado, `TAKEOVER_FORCED` legible y trabajo anterior `FROZEN` en el mismo evento.
 
-**Límite de integración:** `S4.1` define y prueba el seam fail-closed; cablear el composition root productivo queda fuera de `Área`. Esa deuda conserva como owner la responsabilidad legacy Host Launcher que todavía no tiene ID; hasta que se enumere e integre, no existe una ruta productiva habilitada. Sin ambos puertos, el constructor u operación rechaza antes de journal mutation. Ningún path prohibido se abre para simular ese cableado.
+**Límite de integración:** `S4.1` define y prueba el seam fail-closed; el cableado productivo del composition root pertenece a `S4.2/M4.2.3`. Hasta que esa Sesión cierre, no existe una ruta productiva habilitada: sin ambos puertos, el constructor u operación rechaza antes de journal mutation. `S4.1` no abre rutas prohibidas para simular ese cableado.
 
 ### 2. Journal append-only y epoch anti-reuse
 
@@ -161,4 +163,151 @@ Todos deben pasar para cerrar:
 - [x] `bun test test/hosts` pasó 16/16 y `bun test` pasó 553/553 (553 pass / 0 fail; 3196 expectations, 35 files) sobre la base integrada.
 - [x] La corrección final se conservó sin amend durante el rebase autorizado: `03ecb5d` (predecesor) y `1f5fea7` (candidato de implementación verificado). El diff toca sólo `Área` y ninguna ruta de `Prohibido`.
 
-Las responsabilidades legacy de Host Launcher que aún no tienen límite de un PR permanecen sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).
+## Sesión 4.2 — Lanzamiento visible de raíz OpenCode
+
+**Estado:** 🔴 BLOQUEADO
+
+**Depende de:** `S4.1` ✅, `S1.16` 🔴.
+
+**Área:** `hosts/launcher.mjs`, `hosts/opencode-launcher.mjs`, `hosts/herdr.mjs`, `plugin/tower-spike.js`, `.opencode/plugins/tower-spike.js`, `test/hosts/launcher.test.mjs`, `test/hosts/opencode-launcher.test.mjs`, `test/hosts/herdr.test.mjs`, `test/plugin/tower-spike.test.mjs`
+
+**Recurso:** panel Herdr y una línea de host por `project_id`; sin DB, migraciones ni token de entrega.
+
+**Ruta:** `design-tasks` — la autoridad de producto está resuelta, pero el contrato técnico entre Herdr y el adapter OpenCode debe investigarse sin inventar comandos. **Autoridad:** decisión del maintainer de 2026-08-10 y [Remote Control and Control Tower Complementarity](../../../../../remote-control/openspec/decisions/remote-control-and-control-tower.md) §Decision/§Consequences.
+
+Después de aprobar un brief, Host Launcher crea un panel Herdr **nuevo y visible** en el worktree asignado, inicia allí una sesión OpenCode raíz con `gentle-orchestrator`, entrega el brief aprobado y publica su estado de raíz en Herdr. Los subagentes nativos de OpenCode siguen siendo internos: no sustituyen ni sobrescriben la identidad, el panel ni el estado de esa sesión raíz.
+
+**Decisiones:**
+- `derivable` — qué entidad representa la ejecución visible. **Criterio:** una sesión OpenCode raíz y un panel Herdr nuevos por lanzamiento aprobado; un subagente nativo no puede ocupar ni mutar ese estado. Falsificable: un lanzamiento aprobado queda representado sólo por un hijo nativo o reutiliza un panel raíz existente. **Autoridad:** decisión del maintainer de 2026-08-10.
+- `derivable` — qué recibe la sesión al nacer. **Criterio:** sólo el brief ya aprobado y las referencias de asignación; el launcher no crea autoridad ni amplía scope. Falsificable: un lanzamiento con brief no aprobado, o con contenido que habilite autoridad bearer, llega a ejecutar. **Autoridad:** REQUIREMENTS §14.1 y decisión del maintainer de 2026-08-10.
+
+**Criterios de aceptación** — todos deben pasar para cerrar:
+- [ ] Un brief aprobado crea exactamente un panel Herdr visible y una sesión OpenCode raíz nueva en el worktree asignado
+- [ ] La sesión raíz usa `gentle-orchestrator`, recibe el brief aprobado y expone su estado raíz en Herdr
+- [ ] Un subagente nativo no puede reemplazar, reutilizar ni modificar el panel, identidad o estado de la sesión raíz
+- [ ] Brief ausente/no aprobado, worktree no asignado o evidencia de host/epoch no vigente falla cerrado sin crear panel ni sesión
+- [ ] El único composition root productivo liga una vez los puertos de stop proof y decisión humana de `S4.1`; provider ausente, inválido o sustituible falla cerrado antes de lanzar o mutar journal
+- [ ] El diff no toca rutas fuera de `Área`
+
+### Módulo M4.2.1 — Lanzador raíz OpenCode
+
+**Paths:** `hosts/launcher.mjs`, `hosts/opencode-launcher.mjs`, `test/hosts/launcher.test.mjs`, `test/hosts/opencode-launcher.test.mjs`
+
+- [ ] Tarea T4.2.1.1 — RED: demostrar que un brief no aprobado, un worktree distinto del asignado o un epoch no vigente no inicia una sesión
+- [ ] Tarea T4.2.1.2 — GREEN: definir, tras `session-plan`, la creación de sesión raíz OpenCode ligada al brief, worktree, assignment y host epoch ya validados
+- [ ] Tarea T4.2.1.3 — REFACTOR: normalizar evidencia de creación y rechazos, preservando que ningún input del launcher otorga autoridad
+
+### Módulo M4.2.2 — Proyección visible Herdr
+
+**Paths:** `hosts/herdr.mjs`, `test/hosts/herdr.test.mjs`
+
+- [ ] Tarea T4.2.2.1 — RED: demostrar que un lanzamiento no crea/reutiliza el panel visible correcto, o que un hijo nativo puede clobber su estado
+- [ ] Tarea T4.2.2.2 — GREEN: definir, tras `session-plan`, la creación de panel nuevo y la proyección del estado de sesión raíz exclusivamente
+- [ ] Tarea T4.2.2.3 — REFACTOR: consolidar cleanup y errores tipados para que un fallo parcial no deje una identidad visible falsa
+
+### Módulo M4.2.3 — Cableado productivo del fence
+
+**Paths:** `plugin/tower-spike.js`, `.opencode/plugins/tower-spike.js`, `test/plugin/tower-spike.test.mjs`
+
+- [ ] Tarea T4.2.3.1 — RED: demostrar que provider de stop proof o decisión humana ausente, inválido o sustituible impide lanzar y publicar journal
+- [ ] Tarea T4.2.3.2 — GREEN: ligar una sola vez los puertos constructor-bound de `S4.1` desde el composition root productivo, sin exponerlos a inputs del launcher
+- [ ] Tarea T4.2.3.3 — REFACTOR: mantener la inyección separada de la autoridad de Main y verificar que no aparece una segunda ruta de wiring
+
+## Sesión 4.3 — Inspección, liveness y rehidratación segura
+
+**Estado:** 🔴 BLOQUEADO
+
+**Depende de:** `S4.2` 🔴, `S1.16` 🔴.
+
+**Área:** `hosts/inspect.mjs`, `hosts/health.mjs`, `hosts/stop-proof.mjs`, `hosts/rehydration.mjs`, `test/hosts/inspect.test.mjs`, `test/hosts/health.test.mjs`, `test/hosts/stop-proof.test.mjs`, `test/hosts/rehydration.test.mjs`
+
+**Recurso:** evidencia de proceso y panel Herdr; sin DB, migraciones ni token de entrega.
+
+**Ruta:** `design-tasks` — REQUIREMENTS fija la semántica de liveness y stop proof, pero el adapter y la evidencia real de Herdr/OpenCode todavía no tienen interfaz integrada. **Autoridad:** REQUIREMENTS §14.1–§14.4 y escenarios CT-V1-06 a CT-V1-10.
+
+Inspecciona sólo la sesión raíz declarada, aplica heartbeat de 15 segundos y sus estados `SUSPECTED`/`UNAVAILABLE`, obtiene stop proof canónico y rehidrata una proyección visible únicamente cuando identidad, assignment y epoch siguen coincidiendo.
+
+**Decisiones:**
+- `derivable` — cómo clasificar liveness. **Criterio:** 3 heartbeats ausentes producen `SUSPECTED`; 60 segundos sin heartbeat más health probe fallido producen `UNAVAILABLE`. Falsificable: cualquiera de los dos umbrales produce otro estado. **Autoridad:** REQUIREMENTS §14.3.
+- `derivable` — cuándo rehidratar el estado visible. **Criterio:** sólo con sesión raíz, assignment y host epoch exactos; datos ambiguos se rechazan. Falsificable: un estado de otro root/epoch reaparece como activo. **Autoridad:** REQUIREMENTS §14.4 y `S4.1`.
+
+**Criterios de aceptación** — todos deben pasar para cerrar:
+- [ ] `inspect`, `health` y heartbeat observan únicamente la sesión raíz ligada al assignment vigente
+- [ ] Tres heartbeats ausentes producen `SUSPECTED`; 60 segundos más health probe fallido producen `UNAVAILABLE`
+- [ ] Stop proof canónico se conserva con bindings exactos y una prueba ausente/ambigua falla cerrado
+- [ ] La rehidratación sólo restaura la proyección Herdr de la misma sesión raíz, assignment y host epoch
+- [ ] El diff no toca rutas fuera de `Área`
+
+### Módulo M4.3.1 — Inspección y liveness
+
+**Paths:** `hosts/inspect.mjs`, `hosts/health.mjs`, `test/hosts/inspect.test.mjs`, `test/hosts/health.test.mjs`
+
+- [ ] Tarea T4.3.1.1 — RED: cubrir root/session/assignment ajenos, tres heartbeats ausentes y health probe fallido al umbral de 60 segundos
+- [ ] Tarea T4.3.1.2 — GREEN: implementar inspección y clasificación usando sólo las referencias validadas por el launcher
+- [ ] Tarea T4.3.1.3 — REFACTOR: consolidar la evidencia de heartbeat y los errores de estado ambiguo
+
+### Módulo M4.3.2 — Stop proof y rehidratación
+
+**Paths:** `hosts/stop-proof.mjs`, `hosts/rehydration.mjs`, `test/hosts/stop-proof.test.mjs`, `test/hosts/rehydration.test.mjs`
+
+- [ ] Tarea T4.3.2.1 — RED: cubrir proof ausente/ambiguo y estado Herdr de root, assignment o epoch distintos
+- [ ] Tarea T4.3.2.2 — GREEN: enlazar la evidencia canónica de stop y rehidratar sólo la proyección cuya identidad coincide exactamente
+- [ ] Tarea T4.3.2.3 — REFACTOR: preservar readback y cleanup sin convertir la rehidratación en una nueva fuente de autoridad
+
+## Sesión 4.4 — Enforzamiento de epoch y failover exclusivo
+
+**Estado:** 🔴 BLOQUEADO
+
+**Depende de:** `S4.3` 🔴, `S1.17` 🔴, `S1.18` 📋, `S1.19` 📋.
+
+**Área:** `hosts/failover.mjs`, `hosts/epoch-enforcement.mjs`, `hosts/opencode-host.mjs`, `hosts/pi-host.mjs`, `test/hosts/failover.test.mjs`, `test/hosts/epoch-enforcement.test.mjs`, `test/hosts/opencode-host.test.mjs`, `test/hosts/pi-host.test.mjs`
+
+**Recurso:** línea exclusiva `host_epoch` emitida/fenced por Main; sin DB, migraciones ni token de entrega.
+
+**Ruta:** `full-sdd` — el contrato de producto está aprobado, pero la integración multi-host de recuperación, pruebas de proceso y rechazo de efectos stale necesita diseño técnico y modelo de amenazas propio. **Autoridad:** REQUIREMENTS §14.2–§14.4, CT-V1-05 a CT-V1-08, `S4.1` y la decisión del maintainer de 2026-08-10.
+
+Enforce el `host_epoch` emitido por Main y permite failover OpenCode → Pi sólo tras stop proof, expiración/cierre de claims y leases, inspección de worktree/Git/efectos y preservación de estado dirty. Nunca vuelve a usar el worktree cuando no puede probar que el writer anterior terminó.
+
+**Decisiones:**
+- `derivable` — cuándo permite fallback. **Criterio:** host fallback permitido/distinto, proof canónico positivo, claims/leases cerrados y evidencia de inspección íntegra; cualquier ausencia bloquea. Falsificable: Pi inicia sobre el mismo worktree sin todas esas pruebas. **Autoridad:** REQUIREMENTS §14.2–§14.4 y CT-V1-06/07.
+- `derivable` — cómo trata un mensaje o claim viejo. **Criterio:** todo binding con epoch distinto del vigente devuelve `CT_ASSIGNMENT_STALE`. Falsificable: un efecto de epoch anterior llega a persistir o ejecutar. **Autoridad:** CT-V1-08 y `S4.1`.
+
+**Criterios de aceptación** — todos deben pasar para cerrar:
+- [ ] Una jornada mantiene exactamente un execution host activo; Pi no tiene writer mientras OpenCode conserva el epoch vigente
+- [ ] Fallover OpenCode → Pi exige stop proof, cierre/expiración de claims y leases, inspección de worktree/Git/efectos y preservación de dirty state
+- [ ] Failover sin stop proof devuelve `CT_FAILOVER_UNSAFE` y no inicia Pi sobre el worktree existente
+- [ ] El failover incrementa el host epoch y todo claim, mensaje o efecto anterior devuelve `CT_ASSIGNMENT_STALE`
+- [ ] Main conserva emisión y fencing de epoch; Host Launcher sólo lo enforce
+- [ ] El diff no toca rutas fuera de `Área`
+
+### Módulo M4.4.1 — Enforzamiento de epoch
+
+**Paths:** `hosts/epoch-enforcement.mjs`, `hosts/opencode-host.mjs`, `hosts/pi-host.mjs`, `test/hosts/epoch-enforcement.test.mjs`, `test/hosts/opencode-host.test.mjs`, `test/hosts/pi-host.test.mjs`
+
+- [ ] Tarea T4.4.1.1 — RED: demostrar que dos hosts activos, un host no permitido o un claim/mensaje de epoch viejo fallan cerrados
+- [ ] Tarea T4.4.1.2 — GREEN: adaptar los contracts lifecycle de OpenCode/Pi sin asumir autoridad de launcher en `S1.16`–`S1.19`
+- [ ] Tarea T4.4.1.3 — REFACTOR: unificar validación de epoch y preservar la separación entre `binding_epoch`, `host_epoch` y generation local
+
+### Módulo M4.4.2 — Failover exclusivo
+
+**Paths:** `hosts/failover.mjs`, `test/hosts/failover.test.mjs`
+
+- [ ] Tarea T4.4.2.1 — RED: cubrir stop proof ausente, claims/leases vivos, worktree dirty y evidencia externa ambigua
+- [ ] Tarea T4.4.2.2 — GREEN: implementar la secuencia aprobada de stop, inspección, incremento de epoch y creación de attempts sólo en el fallback permitido
+- [ ] Tarea T4.4.2.3 — REFACTOR: verificar que no se reutiliza worktree ni se acepta efecto stale después de un failover o de un rechazo
+
+## Grafo de dependencias
+
+```mermaid
+graph LR
+  S41["S4.1 fence · ✅"] --> S42["S4.2 raíz visible · 🔴"]
+  S116["S1.16 OpenCode wake · 🔴"] --> S42
+  S42 --> S43["S4.3 liveness/rehidratación · 🔴"]
+  S116 --> S43
+  S43 --> S44["S4.4 failover · 🔴"]
+  S117["S1.17 Pi RED · 🔴"] --> S44
+  S118["S1.18 Pi GREEN · 📋"] --> S44
+  S119["S1.19 Pi refactor · 📋"] --> S44
+```
+
+No queda responsabilidad pendiente de Change E sin Sesión enumerada.

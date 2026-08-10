@@ -1,7 +1,7 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-10 contra el candidato local de código `75549a7`; cierre técnico de `S5.4` con 9/9 Tareas y 15/15 criterios. El cierre documental está en el mismo `master` local y todavía no fue enviado.
+> Última reconciliación: 2026-08-10 contra los planes canónicos y la autoridad aceptada [Remote Control and Control Tower Complementarity](../../../../remote-control/openspec/decisions/remote-control-and-control-tower.md).
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md).
 
 ## 📍 Punto de retoma
@@ -10,9 +10,9 @@
 
 El siguiente nodo ejecutable es `S5.5` 🟢 LISTO. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193 y la decisión estacionada 8195; `S5.3` queda bloqueada transitivamente.
 
-`S8.7` sigue 🔴 BLOQUEADO por autenticación, exposición de estado y callback expirado. La declaración de release también conserva la decisión abierta sobre quién origina `trustedBindingProvider` en producción.
+`S8.7` ya tiene resueltos su bot/plugins separados, proyección redactada y TTL de ocho horas; sigue 🔴 BLOQUEADO por la decisión de seguridad abierta sobre quién origina `trustedBindingProvider` en producción. La declaración de release conserva ese mismo bloqueo.
 
-El Plan 4 sigue 🔵 EN CURSO porque conserva responsabilidades legacy sin Sesiones enumeradas; no se le asigna porcentaje.
+P4 ya tiene el alcance restante enumerado: `S4.2` visible OpenCode/Herdr, `S4.3` liveness/rehidratación y `S4.4` epoch/failover. Sus dependencias `S1.16`–`S1.19` siguen bloqueadas o planificadas.
 
 ## Granularidad
 
@@ -21,7 +21,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 
 ## 📊 Estado de un vistazo
 
-**Avance global**: 2/9 Planes cerrados (22%) · Sesiones cerradas en planes activos: 30/46 (65%)
+**Avance global**: 2/9 Planes cerrados (22%) · Sesiones cerradas en planes activos: 18/37 (49%). Cálculo auditable: P1 `10/19` + P4 `1/4` + P5 `2/5` + P7 `0/1` + P8 `5/8`; P2 se excluye porque su STATUS declara trabajo pendiente sin Sesiones enumeradas, por lo que no tiene denominador de Plan derivable.
 
 | ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |
 |----|------|--------|---|------|-------|-----------|-----|
@@ -29,7 +29,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 | P1 | Sustrato mecánico | 🔴 BLOQUEADO | 53% (10/19 S) | — | Main | S1.11–S1.19 | [STATUS](plan-1/STATUS.md) |
 | P2 | Contratos y registro de producto | 🔵 EN CURSO | — (responsabilidades restantes de Change B sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-2/STATUS.md) |
 | P3 | Workspace y orquestación | ✅ COMPLETO | 100% (4/4 S) | — | Main | — | [STATUS](plan-3/STATUS.md) |
-| P4 | Hosts y línea exclusiva | 🔵 EN CURSO | — (responsabilidades legacy restantes sin Sesiones enumeradas) | — | Main | — | [STATUS · S4.1 completa](plan-4/STATUS.md) |
+| P4 | Hosts y línea exclusiva | 🔵 EN CURSO | 25% (1/4 S) | — | Main | S4.2, S4.3, S4.4 | [STATUS](plan-4/STATUS.md) |
 | P5 | Entrega y continuación | 🔵 EN CURSO | 40% (2/5 S) | — | Main | S5.2, S5.3, S5.5 | [STATUS](plan-5/STATUS.md) |
 | P6 | Campañas multiproyecto | 📋 PLANIFICADO | — (sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-6/STATUS.md) |
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | S7.1 | [STATUS](plan-7/STATUS.md) |

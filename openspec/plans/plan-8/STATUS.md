@@ -13,7 +13,7 @@
 | Próxima acción | ✅ **`M8.8.2` CERRADO el 2026-08-03, esta vez con la evidencia correcta.** Activo `012a2510a9758a9c764841b7f69c7760f0d88ab1`, `previous` `34f56a6` para rollback, y `bun ~/.local/share/control-tower/versions/012a251.../install/lifecycle.mjs diagnose` → `{"healthy":true,"missing":[]}` **ejecutando la copia instalada**, que es lo que la vez anterior no se hizo. `install/runtime-payload.mjs` está presente en la versión instalada. **`M8.8.6` ✅ COMPLETO en `a87c9e9`** y **`M8.8.3` ✅ COMPLETO el 2026-08-03**: el maintainer corre el producto. Activo `4f94001`, `~/.local/bin/torre` es un symlink al runtime instalado, respaldo en `torre.legacy-20260803`. El core pasó de 398 a 4.646 líneas — los 192 commits. **Próxima acción: `M8.8.7`** —regresión de distribución que introdujo `a87c9e9`— y después **`M8.8.8`**. Los dos 🔒 SELLABLES, enumerados con criterios binarios y cero decisiones abiertas. Con ésos cierra `S8.8`. Historia del fallo, abajo. ~~🔴 `M8.8.2` REABIERTO — el runtime instalado no carga.~~ `install/lifecycle.mjs:8` importa `./runtime-payload.mjs`, y ese archivo **no está en la versión instalada**: `bun <version>/install/lifecycle.mjs diagnose` devuelve `Cannot find module './runtime-payload.mjs'`. La causa es que `RUNTIME_PAYLOAD_FILES` declara cinco miembros y **no se incluye a sí mismo**, así que el validador confirma como completo un payload que no arranca. El `healthy:true` con el que se cerró salió del **checkout del repo**, no de la copia instalada. **Ejecutar `M8.8.3` sobre este runtime dejaba la Torre inoperable.** **El contrato quedó cerrado en `fed8fb0`** (rescatado del worktree `v1`): `RUNTIME_PAYLOAD_FILES` ahora incluye `install/runtime-payload.mjs` y son seis miembros. Suite 451/0 con la Torre desarmada. **Pero eso arregla el repositorio, no la instalación:** la versión activa `34f56a6` sigue sin el archivo y sigue sin cargar. Falta el paso 👤 ATENDIDO — republicar e instalar — y **verificar `diagnose` ejecutando la copia instalada, no la del repo**. Recién ahí `M8.8.2` cierra de verdad. Orden restante: reinstalar → verificar desde la copia instalada → `M8.8.6` → `M8.8.3`. **Procedimiento exacto de la reinstalación atendida**, para que la verificación no repita el error que causó todo esto: (1) republicar desde el `HEAD` de `master` que contenga `fed8fb0`; (2) `torre install`; (3) verificar corriendo **`bun ~/.local/share/control-tower/versions/<nuevo-sha>/install/lifecycle.mjs diagnose`** — la copia instalada, con ruta absoluta, **nunca** `bun install/lifecycle.mjs` desde el repo; (4) el criterio de cierre es `healthy:true` **y** que el comando cargue, que son dos cosas distintas: un módulo que no resuelve sus imports ni siquiera llega a imprimir. Rollback disponible con `previous` en `active.json`. Adopción previa: activo `34f56a61c1908c003dc382e661ae87335498fd99` con `previous` `b72e450` para rollback. **La ejecución de `M8.8.3` se partió el 2026-08-03.** El payload sin `core.mjs` desapareció y `diagnose` lo confirma con `missing:[]`, pero el mecanismo del corte no existe: `bin/torre` nunca lee `active.json` y `CORE` defaultea a la ruta legada incluso en la versión instalada (`bin/torre:20`), así que copiar el entrypoint no corta nada y un symlink rompe `LIFECYCLE`. **La mitad implementable se separó en `M8.8.6`**, con cero efectos fuera del repositorio; `M8.8.3` queda acotado al corte al PATH y sigue 👤 ATENDIDO. **`M8.8.6` ✅ COMPLETO en `a87c9e9`, el primer Módulo sellado que se despachó y cerró bajo la §11.** `S8.7` espera `S8.8` y `S5.1`; `S0.3` está ✅ COMPLETO. `S8.5` y `S8.6` quedan 🟡 DIFERIDO. |
 | Flujo | P8 corre bajo la [regla de ejecución V1](../v1-execution-rule.md): de `tasks.md` directo a implementación, sin exploration/proposal/design y sin PR de cierre separada. |
 | Referencias | [tasks de V1](../../changes/v1-release/tasks.md); [change archivado](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/), [spec](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). |
-| Actualización de cierre | `S8.8` y `S5.1` están ✅ COMPLETO. `S8.7` tiene sus dependencias satisfechas y sigue 🔴 BLOQUEADO por tres decisiones `escala` del maintainer: autenticación, exposición de estado y callback expirado. |
+| Actualización de cierre | `S8.8` y `S5.1` están ✅ COMPLETO. Las tres decisiones propias de `S8.7` fueron resueltas el 2026-08-10; sigue 🔴 BLOQUEADO por la frontera de seguridad aún abierta sobre el inicializador confiable de producción (`trustedBindingProvider`), que no se puede eludir al conectar el puente. |
 
 ## Sesiones
 
@@ -25,7 +25,7 @@
 | S8.4 | Autoridad única de Main y briefs read-only de Support | ✅ COMPLETO | Sole Main authority and manual worker boundary | `S8.3` | issue #123 cerrado; PR #122 (contrato) y PR #126 (implementación); merge `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`; candidato `9458c78`; enfocada 22/22, acotada 59/59, suite completa 431/431 con Torre desarmada; diff-check PASS sobre exactamente los 4 archivos del Área |
 | S8.5 | Detección de hosts e integración opt-in | 🟡 DIFERIDO | Optional host detection and integration | ninguna | Diferida el 2026-07-31: la integración es opt-in y su ausencia es diagnóstico, no fallo de instalación |
 | S8.6 | Evidencia de release en máquina limpia | 🟡 DIFERIDO | Versioned lifecycle and release evidence | `S8.3`, `S8.4` | Diferida el 2026-07-31: se cubre con validación manual durante `S8.8` en vez de una Sesión formal |
-| S8.7 | Puente Hermes/Telegram | 🔴 BLOQUEADO | Optional bounded Hermes bridge (amendado por `S0.3`) | `S8.4` ✅, `S0.3` ✅, `S8.8` ✅, `S5.1` ✅ | Dependencias satisfechas; bloquean tres decisiones `escala` del maintainer: autenticación, exposición de estado y callback expirado |
+| S8.7 | Puente Hermes/Telegram | 🔴 BLOQUEADO | Optional bounded Hermes bridge (amendado por `S0.3`) | `S8.4` ✅, `S0.3` ✅, `S8.8` ✅, `S5.1` ✅ | Sus decisiones propias están resueltas; preserva el bloqueo de seguridad no relacionado: inicializador confiable de producción pendiente |
 | S8.8 | Adopción del instalable en el runtime en uso | ✅ COMPLETO | Versioned lifecycle | `S8.2` ✅ | Todos los Módulos verificados. `M8.8.7` en `e118f33`: la copia aislada cae al legado y un puntero presente roto falla cerrado. `M8.8.8` en `d56e8cb`: checkout Git genuino, staging estricto incluso con `.git` sintético y shim opt-in. `bun test test/install` 44/0; `bun test` 465/0 con Torre desarmada; cero accesos a runtime real en los fixtures. |
 
 Las Sesiones se derivan de los cinco requisitos de la [spec de Installable V1](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). `S8.2` construyó el lifecycle versionado; `S8.8` lo pone efectivamente en uso, que es la parte del requisito que quedaba abierta.
@@ -513,15 +513,72 @@ Habilitable de forma explícita para presentar estado y dar instrucciones acotad
 
 Va última pese a su prioridad declarada: el propio [tasks.md](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/tasks.md) la condiciona a la primera Sesión segura por dependencias, y la frontera de autoridad que la hace segura la entrega `S8.4`.
 
+**Estado:** 🔴 BLOQUEADO — las decisiones Telegram propias están resueltas, pero el inicializador confiable de producción para `trustedBindingProvider` sigue sin Sesión asignada. El puente no puede inicializar una ruta que lo eluda.
+
+**Depende de:** `S8.4` ✅, `S0.3` ✅, `S8.8` ✅, `S5.1` ✅.
+
+**Área:** `hermes-plugin/control-tower.mjs`, `telegram/projection.mjs`, `telegram/bridge.mjs`, `test/hermes-plugin/control-tower.test.mjs`, `test/telegram/projection.test.mjs`, `test/telegram/bridge.test.mjs`
+
+**Recurso:** credencial y camino outbound de Telegram propiedad de Remote Control, consumidos sólo por un puerto de transporte inyectado; el plugin Tower no lee token, no importa código de Remote Control y sólo conecta el worktree `Main` de cada repositorio.
+
+**Ruta:** `blocked` — la decisión de seguridad sobre quién origina `trustedBindingProvider` en producción está abierta. Con ese provider resuelto, el contrato aprobado requiere `full-sdd`: nuevo plugin Hermes, privacidad externa, callbacks CAS e idempotencia de transporte. **Autoridad:** [Remote Control and Control Tower Complementarity](../../../../../remote-control/openspec/decisions/remote-control-and-control-tower.md) §§Decision–Consequences, decisión del maintainer de 2026-08-10 y registro de decisiones abierto #6.
+
 **Decisiones:**
 
 - `derivable` — qué puede hacer el puente. **Criterio:** presenta y transporta; **nunca** crea, valida ni consume autoridad. Main crea, valida y consume. Falsificable: cualquier camino en el que una acción del puente produzca un efecto que Main no haya autorizado. **Autoridad:** la frontera de autoridad de `S8.4` y la enmienda de `S0.3`.
 - `derivable` — qué queda explícitamente fuera. **Criterio:** shell cruda, selección o lanzamiento de workers, entrega Git, merge y selección implícita de proyecto. La lista es cerrada y está declarada arriba; ampliarla no es derivación sino expansión de alcance. Falsificable: una capacidad del puente que no esté en el alcance escrito. **Autoridad:** el alcance declarado de `S8.7`.
 - `derivable` — qué pasa con la operación local si Hermes no está. **Criterio:** sigue completa. El CLI y Support no pueden degradarse por la ausencia de un transporte opcional; un puente que se vuelve requisito dejó de ser acotado. Falsificable por una operación local que falle sólo con Hermes ausente. **Autoridad:** el alcance declarado de `S8.7`.
 - `derivable` — sobre qué proyecto actúa una instrucción entrante. **Criterio:** el proyecto registrado y nombrado explícitamente; nunca uno inferido del contexto de la conversación. Falsificable: una instrucción sin proyecto explícito que igual se ejecute. **Autoridad:** la prohibición de selección implícita de proyecto.
-- `escala` — cómo se autentica quien manda una instrucción por el puente. **Clase:** seguridad y permisos. Un chat de Telegram es un canal, no una identidad, y el puente presenta autorizaciones que deciden merges. **Contamina:** `S5.1`, donde nace la autorización que el puente transporta, y `S7.1`, cuyo piloto de denegación mide esta frontera.
-- `escala` — qué se muestra del estado por un canal externo. **Clase:** seguridad y permisos. "Presentar estado" puede incluir rutas, nombres de rama, diffs o contenido del repositorio, y el canal está fuera de la máquina. **Contamina:** ninguna Sesión aguas abajo por grafo, pero sí el contrato de privacidad del producto.
-- `escala` — qué pasa con un callback de aprobación que llega después de expirado. **Clase:** seguridad y permisos. Rechazarlo obliga a repetir el pedido; aceptarlo vuelve la expiración decorativa. **Contamina:** `S5.1`, que define la ventana, y `S5.5`, cuya decisión estacionada puede sobrevivirla.
+- `escala` — cómo se autentica quien manda una instrucción por el puente. **Clase:** seguridad y permisos. **RESUELTA el 2026-08-10:** Remote Control y Control Tower usan el mismo bot/gateway Hermes, pero plugins separados; Remote Control posee `/remote`, Tower posee `/torre remote`, y el interlock existente conserva una sola autoridad activa. No se fusionan productos, repositorios, plugins ni release paths. **Contamina:** `S7.1`, cuyo piloto de denegación mide esta frontera.
+- `escala` — qué se muestra del estado por un canal externo. **Clase:** seguridad y permisos. **RESUELTA el 2026-08-10:** sólo una tarjeta operacional redactada: proyecto, Sesión/Módulo, decisión exacta, opciones/consecuencias, estado, referencias de evidencia y expiración. Código, diffs, logs completos, IDs crudos y secretos no cruzan el límite. Main autoriza/redacta; Hermes presenta/transporta. **Contamina:** el contrato de privacidad del producto.
+- `escala` — qué pasa con un callback de aprobación que llega después de expirado. **Clase:** seguridad y permisos. **RESUELTA el 2026-08-10:** modo remoto de Tower y cada solicitud visible vencen por separado a las ocho horas; callbacks expirados fallan cerrados y exigen solicitud/autorización nueva. El reloj sensible de implementación/entrega sigue siendo independiente y menor. **Contamina:** `S5.5`, cuya decisión estacionada puede sobrevivir la solicitud visible.
+- `escala` — si el puente puede inicializarse sin un `trustedBindingProvider` de producción. **Clase:** seguridad y permisos. Sigue abierta la decisión registrada #6: el lado receptor de `S5.1` existe, pero nadie posee todavía el origen confiable. **Contamina:** `S8.7`; no se sustituye por identidad de chat, plugin Hermes ni un provider fabricado.
+
+**Criterios de aceptación** — todos deben pasar para cerrar:
+- [ ] `/torre remote` pertenece sólo al plugin Tower y `/remote` sólo al plugin Remote Control; el interlock rechaza toda autoridad simultánea
+- [ ] El puente acepta sólo un `project_id` registrado y un request identity exacto `(project_id, native_id, relay_revision)` con `scope_hash`; nunca selecciona proyecto, worktree o worker implícitamente
+- [ ] Main crea, valida y consume la decisión mediante CAS; el plugin sólo presenta/transfiere y callbacks repetidos no producen una segunda decisión ni un segundo envío
+- [ ] Toda tarjeta saliente contiene sólo proyecto, Sesión/Módulo, decisión, opciones/consecuencias, estado, referencias de evidencia y expiración; rechaza código, diffs, logs completos, IDs crudos y secretos
+- [ ] Modo remoto Tower y solicitud visible vencen por separado a las ocho horas; callback vencido falla cerrado y la autorización sensible de `S5.1` conserva su reloj independiente
+- [ ] La credencial/outbound sigue siendo de Remote Control: Tower usa un puerto inyectado, no importa su código ni conecta worktrees distintos de `Main`
+- [ ] Hermes ausente deja completa la operación local de CLI y Support, y un transporte caído conserva la solicitud pendiente y recuperable localmente
+- [ ] Provider confiable ausente, inválido o sustituible bloquea el puente antes de aceptar callback, cambiar modo o emitir transporte
+- [ ] El diff no toca rutas fuera de `Área`
+
+### Módulo M8.7.1 — Plugin Tower y frontera de comandos
+
+**Paths:** `hermes-plugin/control-tower.mjs`, `test/hermes-plugin/control-tower.test.mjs`
+
+- [ ] Tarea T8.7.1.1 — RED: demostrar que `/remote`, proyecto implícito, worktree no `Main`, shell, worker o entrega Git son rechazados por el plugin Tower
+- [ ] Tarea T8.7.1.2 — GREEN: implementar el comando `/torre remote` con request identity/scope hash exactos y sólo el puerto de Main autorizado
+- [ ] Tarea T8.7.1.3 — REFACTOR: fijar errores de frontera y probar que el plugin no lee token ni importa código de Remote Control
+
+### Módulo M8.7.2 — Proyección operacional redactada
+
+**Paths:** `telegram/projection.mjs`, `test/telegram/projection.test.mjs`
+
+- [ ] Tarea T8.7.2.1 — RED: cubrir exclusión de código, diff, log completo, ID crudo, secreto y cualquier campo fuera de la tarjeta aprobada
+- [ ] Tarea T8.7.2.2 — GREEN: proyectar únicamente los campos aprobados desde la solicitud canónica creada por Main, con expiración visible
+- [ ] Tarea T8.7.2.3 — REFACTOR: canonicalizar la proyección y su digest para que datos equivalentes no cambien identidad ni privacidad
+
+### Módulo M8.7.3 — Callback, TTL y transporte idempotente
+
+**Paths:** `telegram/bridge.mjs`, `test/telegram/bridge.test.mjs`
+
+- [ ] Tarea T8.7.3.1 — RED: cubrir CAS de callback repetido, scope hash distinto, modo/request vencidos y provider confiable ausente o sustituible
+- [ ] Tarea T8.7.3.2 — GREEN: usar el puerto outbound de Remote Control para envío idempotente y delegar creación/validación/consumo de decisión exclusivamente a Main
+- [ ] Tarea T8.7.3.3 — REFACTOR: separar los TTL remotos de ocho horas del reloj de `S5.1`, conservando solicitud pendiente cuando Hermes/transporte no está disponible
+
+## Grafo de dependencias de S8.7
+
+```mermaid
+graph LR
+  S03["S0.3 puente acotado · ✅"] --> S87["S8.7 Hermes/Telegram · 🔴"]
+  S84["S8.4 autoridad Main · ✅"] --> S87
+  S88["S8.8 runtime · ✅"] --> S87
+  S51["S5.1 autorización · ✅"] --> S87
+  DTP["Decisión: trustedBindingProvider · 🔴"] --> S87
+```
 
 ## Límites y prioridad
 
@@ -531,8 +588,8 @@ Con `S8.4` y `S8.8` cerradas, P8 queda en `63% (5/8 S)` — los Módulos no otor
 
 Cada Sesión es una unidad entregable dirigida a `master`. **Desde el 2026-08-01 (`46edd14`) eso es un commit directo + push, no un PR** — ver [Política de entrega](../../../AGENTS.md). El alcance de la Sesión no cambia: sigue siendo el que entraría en un PR. Las referencias a PRs de las Sesiones ya cerradas son historia y quedan como están.
 
-**El alcance de `S8.7` cambió con la [unificación del 2026-08-01](../release-chain.md).** Ya no es sólo estado más arm/disarm: el puente además **presenta** una autorización creada por Main y **transporta** el callback acotado de aprobación o rechazo. Lo que no cambia es el principio — Hermes presenta; Main crea, valida y consume. El puente sigue sin recibir shell, workers, Git, merge directo, delivery ni selección implícita de proyecto. `S0.3`, `S8.8` y `S5.1` están ✅ COMPLETO, por lo que todas las dependencias del puente están satisfechas. `S8.7` sigue 🔴 BLOQUEADO por sus tres decisiones `escala` abiertas: autenticación, exposición de estado y callback expirado.
+**El alcance de `S8.7` cambió con la [unificación del 2026-08-01](../release-chain.md).** Ya no es sólo estado más arm/disarm: el puente además **presenta** una autorización creada por Main y **transporta** el callback acotado de aprobación o rechazo. Lo que no cambia es el principio — Hermes presenta; Main crea, valida y consume. Remote Control conserva su credencial y camino outbound; Tower adapta contratos durables (identidad/scope hash, CAS, receipts, envío idempotente, privacidad y TTL) sin importar código de Remote Control, y sólo conecta el worktree `Main` de cada repositorio. El puente sigue sin recibir shell, workers, Git, merge directo, delivery ni selección implícita de proyecto. `S0.3`, `S8.8` y `S5.1` están ✅ COMPLETO. `S8.7` conserva 🔴 BLOQUEADO hasta que se asigne/resuelva el inicializador confiable de producción, decisión de seguridad ajena que no se puede soslayar con Telegram.
 
-**Orden de ejecución:** `S8.7` permanece fuera de la cola ejecutable hasta que el maintainer resuelva esas tres decisiones. `S8.5` y `S8.6` quedan fuera del camino por decisión explícita del maintainer del 2026-07-31, que también reemplaza el estado `UNASSIGNED` que traía `S8.5`. La cadena completa y su grafo están en [release-chain](../release-chain.md).
+**Orden de ejecución:** `S8.7` permanece fuera de la cola ejecutable hasta que se asigne/resuelva el inicializador confiable de producción. `S8.5` y `S8.6` quedan fuera del camino por decisión explícita del maintainer del 2026-07-31, que también reemplaza el estado `UNASSIGNED` que traía `S8.5`. La cadena completa y su grafo están en [release-chain](../release-chain.md).
 
 Las actualizaciones sobre los archivos de planificación reclamados por `installable-v1-provenance` en [`product-version-map.yaml`](../product-version-map.yaml) deben serializarse.

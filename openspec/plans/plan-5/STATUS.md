@@ -263,6 +263,8 @@ Aplica el horizonte de dos Sesiones, reconcilia la base integrada y habilita suc
 
 Hoy, cuando un agente llega a una decisión que requiere autoridad del maintainer, **se frena y espera**: no emite nada y nadie se entera. Un canal a Telegram sin esto es un tubo vacío. `S5.4` es la mitad que faltaba — que Main **emita** la solicitud de decisión y sepa **a dónde mandarla**.
 
+La decisión aceptada el 2026-08-10 delimita el seam remoto sin ampliar esta Sesión: Main sigue siendo autor de la solicitud y de su proyección; Hermes sólo la presenta/transporta. Cuando `S8.7` conecte el canal, recibe una tarjeta operacional redactada con proyecto, Sesión/Módulo, decisión exacta, opciones/consecuencias, estado, referencias de evidencia y expiración; nunca código, diffs, logs completos, IDs crudos ni secretos. El modo remoto y cada solicitud visible vencen independientemente a las ocho horas. Eso no extiende la autorización sensible de implementación/entrega de `S5.1`, que conserva su reloj menor e independiente. Referencia: [Remote Control and Control Tower Complementarity](../../../../../remote-control/openspec/decisions/remote-control-and-control-tower.md) y decisiones del maintainer de 2026-08-10.
+
 El modo es explícito y de dos valores: `local` cuando el maintainer está frente a la máquina, `remoto` cuando no. Ante estado ausente, ilegible o ambiguo el modo resuelve a `local`: no escalar es un inconveniente, escalar por un canal que no debía estar abierto es una fuga.
 
 `S5.4` produce y rutea la solicitud. **No la autoriza** — el sobre, el nonce y el consumo son de `S5.1`, y el transporte a Telegram es de `S8.7`.
@@ -311,6 +313,8 @@ El modo es explícito y de dos valores: `local` cuando el maintainer está frent
 - [x] `S5.4` no crea, valida ni consume autoridad: esa ruta sigue siendo exclusiva de `S5.1`
 - [x] `bun test test/escalation` pasa completo y `bun test` no introduce fallos nuevos sobre la línea base que deje `S5.1`
 - [x] El diff no toca ninguna ruta del `Prohibido` ni ninguna fuera del `Área`
+
+La tarjeta Telegram, el envío idempotente, el callback y sus TTLs son responsabilidad pendiente de `S8.7`; no se reclasifican como efecto ya implementado de `S5.4`.
 
 **Evidencia de cierre local.** La integración preservó los dos límites de comportamiento aceptados: `0ad88bb` → `976b8d02bfda2d3ec9993e92a7b2f919ebc2d302` (tree `0a516b146a3273b215df41f7f3bdfd3b89226be9`, parent `70ea7c2`) y `9c28ffd` → `75549a781cd6ac19afc3e09e7466f7772f678fb7` (tree `835ed3e1d69540efae89b258813b194a0c555526`, parent `976b8d0`). El primer commit agrega exactamente `escalation/{request,routing}.mjs` y `test/escalation/{request,routing}.test.mjs`; el segundo corrige únicamente `escalation/routing.mjs` y su test. El diff final contra la base son esos cuatro paths, 578 adiciones y ninguna ruta prohibida.
 

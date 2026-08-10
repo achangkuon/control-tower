@@ -27,7 +27,7 @@ Invariantes de reconciliación:
 - `legacy P6 → legacy P7 → P8 → Change E` y `A → B/C → D → Change E` permanecen independientes hasta converger en E.
 - C→D es obligatorio; no existe un edge A→legacy P7/P8.
 - Legacy P7 depende sólo de legacy P6; P8 depende de legacy P7 integrado.
-- Change E conserva launch/inspect/stop/health, heartbeat, stop proof, session naming, enforcement de `host_epoch` y failover exclusivo.
+- Change E está enumerado en `P4/S4.1`–`S4.4`; no conserva responsabilidad pendiente sin Sesión.
 - Main conserva la autoridad de emisión y fencing de `host_epoch`.
 - Claude permanece opt-in y no bloquea el piloto Pi/OpenCode.
 
@@ -98,14 +98,6 @@ Invariantes de reconciliación:
 - Change D: autorización de assignment.
 - Change D: reconciliación pause/revoke/expiry/recovery.
 
-## Plan 4
-
-- Change E: capabilities y launch/inspect/stop/health.
-- Change E: session naming y exact reuse.
-- Change E: heartbeat y liveness.
-- Change E: failover OpenCode → Pi.
-- Change E: conformidad y rechazo de stale epoch.
-
 ## Plan 5
 
 - Change F: estado y store de authorization.
@@ -130,9 +122,9 @@ Invariantes de reconciliación:
 
 ## Plan 7
 
-- Piloto `short` con OpenCode y un slice.
+- Piloto `short` con OpenCode y un `slice_id`.
 - Failover preautorizado OpenCode → Pi.
-- Piloto `standard` con dos slices y Binding Delta.
+- Piloto `standard` con dos valores de `slice_id` y Binding Delta.
 - Autorización Telegram con SHA drift y replay negativo.
 - Recovery desde dirty worktree.
 - Campaña de dos repositorios con compensation.

@@ -195,23 +195,15 @@ nueva arranca en el mismo worktree, o sea la misma identidad (`basename(worktree
 Cero mecanismo nuevo. `tower_register` es idempotente (`ON CONFLICT(name) DO
 UPDATE`), así que registrarse de nuevo es seguro.
 
-### El hueco abierto: quién enciende la sesión nueva
+### Resolución: quién enciende la sesión nueva
 
-La torre no lanza sesiones, por decisión explícita. El plugin solo despierta una
-sesión **que ya existe y está estacionada**; no puede crear una. Además el
-sondeo arranca recién cuando la sesión completa su primer turno, así que la
-sesión nueva necesita un empujón inicial aunque el mensaje ya la esté esperando.
-
-`herdr` está instalado (`/home/linuxbrew/.linuxbrew/bin/herdr`, config en
-`~/.config/herdr`) y es el lanzador de sesiones.
-
-**Decisión pendiente**: lanzamiento manual como gate humano, o explorar si herdr
-puede lanzar sesiones por comando.
-
-**Recomendación**: arrancar **manual**. Es una tecla, con el brief ya escrito y
-validado esperando; no hay nada que pensar, solo decidir si sigue. Es el punto de
-control más barato posible y nada avanza sin supervisión. Si a las veinte veces
-resulta puro trámite, automatizar con datos y no con entusiasmo.
+El límite histórico del plugin sigue: sólo despierta una sesión ya estacionada y no
+crea sesiones. La responsabilidad de lanzamiento pertenece ahora a Host Launcher.
+Tras la aprobación humana del brief, crea un panel Herdr nuevo y visible, inicia una
+sesión OpenCode raíz `gentle-orchestrator` en el worktree asignado, entrega el brief
+y proyecta allí el estado raíz. Los subagentes nativos de OpenCode son internos y no
+pueden ocupar ni clobber ese panel/estado. El diseño se enumera en `P4/S4.2`; no hay
+decisión pendiente de visibilidad.
 
 ### Los riesgos, en orden
 
@@ -233,10 +225,10 @@ resulta puro trámite, automatizar con datos y no con entusiasmo.
 
 ### Primer paso sugerido, sin código
 
-No automatizar todavía la decisión de Main. Cambiar solo el reporte: cuando un
-agente llega a MERGED, que reporte *"S2.2 cerrada, la siguiente es S2.3"*.
-Main lee el plan, confirma que sigue vigente, y emite el handoff — o para y
-pregunta.
+No automatizar la decisión de Main. Cuando un agente llega a MERGED, reporta
+*"S2.2 cerrada, la siguiente es S2.3"*. Main lee el plan, confirma que sigue
+vigente y aprueba o rechaza el handoff. Tras la aprobación, el lanzamiento visible
+de la sesión raíz es automático; la decisión humana no.
 
 Eso da el dato que decide todo lo demás: cuántas veces el plan seguía vigente. Si
 a las diez Sesiones aguantó nueve, automatizar es seguro. Si aguantó cuatro, se
