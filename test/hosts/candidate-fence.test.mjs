@@ -5,6 +5,7 @@ import { basename, dirname, join } from "node:path"
 import { tmpdir } from "node:os"
 
 import { canonicalize } from "../../contracts/canonicalize.mjs"
+import { candidateRevision } from "../../contracts/candidate-revision.mjs"
 import * as fenceModule from "../../hosts/candidate-fence.mjs"
 
 const roots = []
@@ -15,17 +16,19 @@ const capture = (operation) => {
   catch (cause) { return { value: null, code: cause?.code, message: cause?.message } }
 }
 const sha = (letter) => `sha256:${letter.repeat(64)}`
-const candidate = (hostId, overrides = {}) => ({
-  project_id: "project-a",
-  candidate_revision: sha(hostId.at(-1)),
-  host_id: hostId,
-  base_sha: hostId.at(-1).repeat(40),
-  runtime_binding_ref: `bindings/${hostId}-runtime.json`,
-  role_binding_ref: `bindings/${hostId}-role.json`,
-  assignment_ref: `assignments/${hostId}.json`,
-  work_ref: `work/${hostId}.json`,
-  ...overrides,
-})
+const candidate = (hostId, overrides = {}) => {
+  const value = {
+    project_id: "project-a",
+    host_id: hostId,
+    base_sha: hostId.at(-1).repeat(40),
+    runtime_binding_ref: `bindings/${hostId}-runtime.json`,
+    role_binding_ref: `bindings/${hostId}-role.json`,
+    assignment_ref: `assignments/${hostId}.json`,
+    work_ref: `work/${hostId}.json`,
+    ...overrides,
+  }
+  return { ...value, candidate_revision: overrides.candidate_revision ?? candidateRevision(value) }
+}
 const predecessor = (value, hostEpoch = 1, overrides = {}) => ({
   host_id: value.host_id,
   host_epoch: hostEpoch,
@@ -287,6 +290,19 @@ describe("single-host candidate fence", () => {
     }
   })
 
+  test("rejects a forced takeover whose work reference no longer matches the approved revision", () => {
+    const context = fixture()
+    const oldHost = candidate("host-a"), approvedHost = candidate("host-b")
+    admitInitial(context.store, oldHost)
+    const reference = authorize(context, oldHost, approvedHost)
+    const mutatedHost = { ...approvedHost, work_ref: "work/host-b-mutated.json" }
+
+    expect(capture(() => context.store.forceTakeover({ candidate: mutatedHost, predecessor: predecessor(oldHost), maintainerDecisionRef: reference, expectedRevision: 1 })).code)
+      .toBe("CT_FENCE_INVALID")
+    expect(eventNames(context.root)).toHaveLength(1)
+    expect(context.store.read().events).toHaveLength(1)
+  })
+
   test("ignores a rolled-back view cache and never reuses an epoch", () => {
     const context = fixture()
     const first = candidate("host-a"), second = candidate("host-b"), third = candidate("host-c")
@@ -367,11 +383,13 @@ describe("single-host candidate fence", () => {
   test("serializes two real processes with one epoch winner and cleans the owner lock", async () => {
     const context = fixture()
     const worker = String.raw`
+      import { candidateRevision } from "./contracts/candidate-revision.mjs";
       import { createCandidateFenceStore } from "./hosts/candidate-fence.mjs";
       const [rootPath, hostId, ready] = process.argv.slice(1);
       await Bun.write(ready, "ready\n");
       const store = createCandidateFenceStore({ rootPath, ledgerPath: rootPath+"/.candidate-fence", lockTimeoutMs:15000, resolveTerminationProof(){}, authorizeMaintainerDecision(){} });
-      try { console.log(JSON.stringify(store.admit({ candidate:{ project_id:"project-a", candidate_revision:"sha256:"+hostId.at(-1).repeat(64), host_id:hostId, base_sha:hostId.at(-1).repeat(40), runtime_binding_ref:"bindings/"+hostId+"-runtime.json", role_binding_ref:"bindings/"+hostId+"-role.json", assignment_ref:"assignments/"+hostId+".json", work_ref:"work/"+hostId+".json" }, expectedRevision:0 }))); }
+      const candidate = { project_id:"project-a", host_id:hostId, base_sha:hostId.at(-1).repeat(40), runtime_binding_ref:"bindings/"+hostId+"-runtime.json", role_binding_ref:"bindings/"+hostId+"-role.json", assignment_ref:"assignments/"+hostId+".json", work_ref:"work/"+hostId+".json" };
+      try { console.log(JSON.stringify(store.admit({ candidate:{ ...candidate, candidate_revision:candidateRevision(candidate) }, expectedRevision:0 }))); }
       catch (error) { console.log(JSON.stringify({code:error.code})); process.exitCode=2; }
     `
     const readyA = join(dirname(context.root), `${basename(context.root)}-ready-a`)

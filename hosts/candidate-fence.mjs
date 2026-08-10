@@ -3,6 +3,7 @@ import { createHash } from "node:crypto"
 import { isAbsolute, join, parse, resolve, sep } from "node:path"
 
 import { canonicalize } from "../contracts/canonicalize.mjs"
+import { candidateRevision } from "../contracts/candidate-revision.mjs"
 import { validate } from "../contracts/validate.mjs"
 
 const EVENT_NAME = /^(\d{20})-([a-f0-9]{64})\.json$/
@@ -45,7 +46,7 @@ const canonicalBytes = (value) => Buffer.from(`${canonicalize(value)}\n`)
 
 const inspectCandidate = (value) => {
   if (!exactKeys(value, CANDIDATE_KEYS)) fail("CT_FENCE_INVALID", "Candidate shape is invalid")
-  return {
+  const candidate = {
     project_id: identifier(value.project_id, "Project"),
     candidate_revision: /^sha256:[a-f0-9]{64}$/.test(value.candidate_revision ?? "") ? value.candidate_revision : fail("CT_FENCE_INVALID", "Candidate revision is invalid"),
     host_id: identifier(value.host_id, "Host"),
@@ -55,6 +56,8 @@ const inspectCandidate = (value) => {
     assignment_ref: reference(value.assignment_ref, "Assignment"),
     work_ref: reference(value.work_ref, "Work"),
   }
+  if (candidate.candidate_revision !== candidateRevision(candidate)) fail("CT_FENCE_INVALID", "Candidate revision does not match candidate identity")
+  return candidate
 }
 const inspectPredecessor = (value) => {
   if (!exactKeys(value, PREDECESSOR_KEYS) || !Number.isInteger(value.host_epoch) || value.host_epoch < 1) fail("CT_OWNERSHIP_UNCERTAIN", "Exact predecessor ownership is required")
