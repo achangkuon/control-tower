@@ -19,7 +19,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1` y `S5.5` de `S5.4`. |
 | Outputs | F: authorization store, Telegram, validación Git/PR/check/SHA, entrega idempotente y post-check. G: planning horizon, reconciliación, apply/verify, Binding Delta y continuación del siguiente `slice_id`. Más el ruteo de escalamiento de `S5.4` y la planificación diferible de `S5.5`. |
-| Roadmap | `S5.1` está ✅ COMPLETO. `S5.4` queda 🟢 LISTO y abre la hebra `S5.4 → S5.5`; `S4.1` también queda 🟢 LISTO en P4 y abre la hebra `S4.1 → S5.2 → S5.3`. Cada Sesión es una unidad entregable a `master`. |
+| Roadmap | `S5.1` y `S5.4` están ✅ COMPLETO. `S5.5` queda 🟢 LISTO. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. El candidato de `S5.4` está integrado y documentado sólo en el `master` local; todavía no fue enviado al remoto. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
 
 ## Sesión 5.1 — Change F candidate contracts
@@ -171,7 +171,7 @@ Define identidad y freeze de `candidate_revision`, invalidación, sucesores, com
 
 ## Sesión 5.2 — Change F delivery adapters/reconciliation
 
-**Estado:** 📋 PLANIFICADO — **contrato ejecutable sellado el 2026-08-04** sobre `origin/master@e4bad7a`. Espera a `S4.1`, no espera decisiones.
+**Estado:** 🔴 BLOQUEADO — el contrato sigue sellado, y `S4.1` ya está ✅ COMPLETO, pero el recheck dirigido 8193 dejó abiertos los hallazgos 1, 3 y 5: recuperación de lock tras crash, TOCTOU de directorio padre y estado `delivered` prematuro para PR recién creado. La decisión 8195 estacionó el candidato congelado en `Worktrees/s5-1` como NOT READY; no hay una segunda corrección autorizada.
 
 **Depende de:** `S4.1`, `S3.3` ✅.
 
@@ -235,7 +235,7 @@ Implementa commit, push y PR idempotentes, checks, revisión, autorización exac
 
 ## Sesión 5.3 — Change G integrated-base continuation
 
-**Estado:** 📋 PLANIFICADO
+**Estado:** 🔴 BLOQUEADO — bloqueo transitivo: `S5.2` no está integrada y permanece estacionada como NOT READY por la decisión 8195.
 
 **Dependencias:** `S5.2` integrada.
 
@@ -250,12 +250,12 @@ Aplica el horizonte de dos Sesiones, reconcilia la base integrada y habilita suc
 
 ## Sesión 5.4 — Ruteo de escalamiento fuera/en casa
 
-**Estado:** 🟢 LISTO — **contrato ejecutable sellado el 2026-08-04** sobre `origin/master@d32d413`. `S5.1` está ✅ COMPLETO y no quedan decisiones `escala` abiertas propias.
+**Estado:** ✅ COMPLETO — cierre técnico local verificado el 2026-08-10. Los bytes de comportamiento quedaron en `75549a781cd6ac19afc3e09e7466f7772f678fb7` (tree `835ed3e1d69540efae89b258813b194a0c555526`), sobre `master` local; todavía no fueron enviados a `origin/master`, que permanece en `70ea7c236a103ac331f863c1c4eb8c8baf1438c8`.
 **Depende de:** `S5.1` ✅
 **Área:** `escalation/**`, `test/escalation/**`
 **Prohibido:** `main-store/store.mjs`, `core.mjs`, `mcp.mjs`, `delivery/**`, `continuation/**`, `capabilities/**`, `policy/**`, `jornada/**`, `registry/**`, `contracts/**`, `schemas/**`, `openspec/plans/**`, `openspec/specs/**`
 **Recurso:** estado de ruteo persistido, propiedad de `escalation/**`. Sin migraciones de DB, sin `db-writer`, sin token de entrega.
-**Entrega:** commit directo a `master` + push, sin PR ([`AGENTS.md`](../../../AGENTS.md)). Dos commits, como `S3.1`–`S3.4`: uno de implementación y uno documental de cierre. Forecast **derivado** —no había uno en el registro, porque `S5.4` se enumeró después del corte de `d232fdf`—: ~200–280 líneas sobre tres Módulos y nueve Tareas, **por debajo** del borde de encadenado de 400, así que no se parte.
+**Entrega:** commit directo a `master` + push, sin PR ([`AGENTS.md`](../../../AGENTS.md)). El forecast derivado de 200–280 líneas quedó superado: el resultado de comportamiento tiene **578 líneas añadidas** en cuatro paths. El maintainer aceptó la excepción y preservó dos commits de comportamiento con provenance —uno base y una corrección acotada posterior al review— en lugar de reescribir historia. El tercer commit es exclusivamente documental: existe porque la historia aceptada ya era inmutable y el Documentation Close Gate exige reconciliar el cierre técnico. La entrega remota sigue pendiente de una autorización separada ligada al candidato final.
 
 **Por qué `main-store/store.mjs` está en el `Prohibido` aunque `S5.4` escriba ahí.** La solicitud emitida se persiste en el authorization store, que es **propiedad exclusiva de `S5.1`**. `S5.4` lo **llama**, nunca lo edita — es exactamente lo que exige la decisión `derivable` de más abajo: sin abrir una segunda ruta de escritura. Dos rutas al mismo estado es la causa raíz que `6d37642` reparó en este mismo Plan.
 
@@ -278,44 +278,50 @@ El modo es explícito y de dos valores: `local` cuando el maintainer está frent
 
 ### Módulo 5.4.1 — Emisión de solicitud de decisión
 
-- [ ] Tarea 5.4.1.1 — RED: agregar `test/escalation/request.test.mjs` para que un punto de decisión produzca una solicitud con objetivo exacto, origen y expiración, y para que una solicitud sin objetivo exacto falle cerrado.
-- [ ] Tarea 5.4.1.2 — GREEN: implementar la emisión reutilizando el authorization store de `S5.1`, sin abrir una segunda ruta de escritura.
-- [ ] Tarea 5.4.1.3 — REFACTOR: normalizar códigos de error estables y volver a correr `bun test test/escalation`.
+- [x] Tarea 5.4.1.1 — RED: agregar `test/escalation/request.test.mjs` para que un punto de decisión produzca una solicitud con objetivo exacto, origen y expiración, y para que una solicitud sin objetivo exacto falle cerrado.
+- [x] Tarea 5.4.1.2 — GREEN: implementar la emisión reutilizando el authorization store de `S5.1`, sin abrir una segunda ruta de escritura.
+- [x] Tarea 5.4.1.3 — REFACTOR: normalizar códigos de error estables y volver a correr `bun test test/escalation`.
 
 ### Módulo 5.4.2 — Modo de ruteo
 
-- [ ] Tarea 5.4.2.1 — RED: agregar `test/escalation/routing.test.mjs` para el conmutador `local` ↔ `remoto`, su idempotencia y su persistencia entre procesos, **más la frontera de autoridad**: conmutan sólo las dos vías autenticadas del maintainer —CLI local y callback remoto—, y **todo intento de Main o de un agente falla cerrado**, nombrando al actor rechazado.
-- [ ] Tarea 5.4.2.2 — RED: agregar los casos fail-closed. Estado ausente, corrupto o ambiguo resuelve a `local` y no emite hacia ningún transporte remoto; **identidad ausente, inválida o ambigua resuelve a `local` por el mismo camino**, sin ruta separada que pueda divergir.
-- [ ] Tarea 5.4.2.3 — GREEN: implementar la resolución de modo y el despacho de la solicitud al transporte correspondiente, **con la vía remota definida pero inhabilitada**: sin la autenticación que entrega `S8.7`, conmutar a `remoto` por callback falla cerrado y el modo queda `local`. La CLI local autenticada alcanza para operar la Sesión entera.
+- [x] Tarea 5.4.2.1 — RED: agregar `test/escalation/routing.test.mjs` para el conmutador `local` ↔ `remoto`, su idempotencia y su persistencia entre procesos, **más la frontera de autoridad**: conmutan sólo las dos vías autenticadas del maintainer —CLI local y callback remoto—, y **todo intento de Main o de un agente falla cerrado**, nombrando al actor rechazado.
+- [x] Tarea 5.4.2.2 — RED: agregar los casos fail-closed. Estado ausente, corrupto o ambiguo resuelve a `local` y no emite hacia ningún transporte remoto; **identidad ausente, inválida o ambigua resuelve a `local` por el mismo camino**, sin ruta separada que pueda divergir.
+- [x] Tarea 5.4.2.3 — GREEN: implementar la resolución de modo y el despacho de la solicitud al transporte correspondiente, **con la vía remota definida pero inhabilitada**: sin la autenticación que entrega `S8.7`, conmutar a `remoto` por callback falla cerrado y el modo queda `local`. La CLI local autenticada alcanza para operar la Sesión entera.
 
 ### Módulo 5.4.3 — Degradación y no mutación
 
-- [ ] Tarea 5.4.3.1 — RED: agregar el caso de transporte remoto ausente o caído estando en modo `remoto`.
-- [ ] Tarea 5.4.3.2 — GREEN: confirmar que la solicitud queda pendiente y recuperable localmente, y que el fallo de transporte nunca la consume ni la descarta.
-- [ ] Tarea 5.4.3.3 — Verificar con testigos de bytes que consultar el modo de ruteo no muta registro, DB, WAL, SHM ni estado de Torre.
+- [x] Tarea 5.4.3.1 — RED: agregar el caso de transporte remoto ausente o caído estando en modo `remoto`.
+- [x] Tarea 5.4.3.2 — GREEN: confirmar que la solicitud queda pendiente y recuperable localmente, y que el fallo de transporte nunca la consume ni la descarta.
+- [x] Tarea 5.4.3.3 — Verificar con testigos de bytes que consultar el modo de ruteo no muta registro, DB, WAL, SHM ni estado de Torre.
 
 **Criterios de aceptación de S5.4** — todos deben pasar para cerrar:
 
-- [ ] Un punto de decisión que requiere autoridad del maintainer emite una solicitud con objetivo exacto; una sin objetivo exacto falla cerrado
-- [ ] El modo de ruteo persiste entre procesos y conmutar es idempotente
-- [ ] **Sólo las dos vías autenticadas del maintainer conmutan el modo:** CLI local autenticada y callback remoto autenticado
-- [ ] **Main y cualquier agente fallan cerrado al intentar conmutar el modo**, y el rechazo nombra al actor
-- [ ] Estado de modo ausente, corrupto o ambiguo resuelve a `local` y no emite hacia ningún transporte remoto
-- [ ] **Identidad ausente, inválida o ambigua resuelve a `local`** por el mismo camino que el estado corrupto, sin una ruta separada que pueda divergir
-- [ ] **La vía remota está definida pero inhabilitada hasta `S8.7`:** conmutar a `remoto` por callback falla cerrado por autenticación ausente
-- [ ] **`S5.4` opera entera en modo `local` sin `S8.7`**: ninguna de sus rutas requiere el transporte para funcionar
-- [ ] `S5.4` no inventa transporte ni autenticación: no existe en su diff ninguna implementación de canal ni de verificación de identidad remota
-- [ ] Un fallo del transporte remoto deja la solicitud pendiente y recuperable, nunca consumida ni descartada
-- [ ] La solicitud emitida se persiste en el authorization store de `S5.1`, sin abrir una segunda ruta de escritura
-- [ ] Consultar el modo es read-only, verificado por testigos de bytes en éxito y en rechazo
-- [ ] `S5.4` no crea, valida ni consume autoridad: esa ruta sigue siendo exclusiva de `S5.1`
-- [ ] `bun test test/escalation` pasa completo y `bun test` no introduce fallos nuevos sobre la línea base que deje `S5.1`
-- [ ] El diff no toca ninguna ruta del `Prohibido` ni ninguna fuera del `Área`
+- [x] Un punto de decisión que requiere autoridad del maintainer emite una solicitud con objetivo exacto; una sin objetivo exacto falla cerrado
+- [x] El modo de ruteo persiste entre procesos y conmutar es idempotente
+- [x] **Sólo las dos vías autenticadas del maintainer conmutan el modo:** CLI local autenticada y callback remoto autenticado
+- [x] **Main y cualquier agente fallan cerrado al intentar conmutar el modo**, y el rechazo nombra al actor
+- [x] Estado de modo ausente, corrupto o ambiguo resuelve a `local` y no emite hacia ningún transporte remoto
+- [x] **Identidad ausente, inválida o ambigua resuelve a `local`** por el mismo camino que el estado corrupto, sin una ruta separada que pueda divergir
+- [x] **La vía remota está definida pero inhabilitada hasta `S8.7`:** conmutar a `remoto` por callback falla cerrado por autenticación ausente
+- [x] **`S5.4` opera entera en modo `local` sin `S8.7`**: ninguna de sus rutas requiere el transporte para funcionar
+- [x] `S5.4` no inventa transporte ni autenticación: no existe en su diff ninguna implementación de canal ni de verificación de identidad remota
+- [x] Un fallo del transporte remoto deja la solicitud pendiente y recuperable, nunca consumida ni descartada
+- [x] La solicitud emitida se persiste en el authorization store de `S5.1`, sin abrir una segunda ruta de escritura
+- [x] Consultar el modo es read-only, verificado por testigos de bytes en éxito y en rechazo
+- [x] `S5.4` no crea, valida ni consume autoridad: esa ruta sigue siendo exclusiva de `S5.1`
+- [x] `bun test test/escalation` pasa completo y `bun test` no introduce fallos nuevos sobre la línea base que deje `S5.1`
+- [x] El diff no toca ninguna ruta del `Prohibido` ni ninguna fuera del `Área`
+
+**Evidencia de cierre local.** La integración preservó los dos límites de comportamiento aceptados: `0ad88bb` → `976b8d02bfda2d3ec9993e92a7b2f919ebc2d302` (tree `0a516b146a3273b215df41f7f3bdfd3b89226be9`, parent `70ea7c2`) y `9c28ffd` → `75549a781cd6ac19afc3e09e7466f7772f678fb7` (tree `835ed3e1d69540efae89b258813b194a0c555526`, parent `976b8d0`). El primer commit agrega exactamente `escalation/{request,routing}.mjs` y `test/escalation/{request,routing}.test.mjs`; el segundo corrige únicamente `escalation/routing.mjs` y su test. El diff final contra la base son esos cuatro paths, 578 adiciones y ninguna ruta prohibida.
+
+Los cuatro blobs finales son `6985fbbd1aedb18c1f3e213508a2153227b0cc1a`, `2c5fcac6b7271d7ed36232917c7b04255e2a9b24`, `37f81bc83e04338c556315c6881892e53b532107` y `f9d9388fe97db10be87e78b75852c59e981ce0b4`, idénticos al sucesor aceptado `9c28ffd`. Verificación por límite: primer commit `bun test test/escalation` → 13 pass / 0 fail / 58 expectations; segundo commit → 16 pass / 0 fail / 78 expectations. La compatibilidad previa contra la misma base y los mismos blobs dio `bun test` → 569 pass / 0 fail / 3274 expectations / 37 archivos. El recheck dirigido 8082 devolvió `findings: []` y `READY`; cerró seguridad de padres/lecturas, serialización real entre procesos y rechazo asíncrono del transporte.
+
+No aplica un runtime externo: esta Sesión define ruteo y persistencia, pero deliberadamente no implementa transporte ni autenticación remota. La persistencia entre procesos, concurrencia, degradación y reutilización del store canónico sí están cubiertas por pruebas. Rollback: revertir primero el commit documental de cierre, después `75549a7` para retirar el hardening acotado y finalmente `976b8d0` para retirar los cuatro paths de comportamiento; ninguno de esos límites arrastra trabajo ajeno.
 
 ## Sesión 5.5 — Decisión estacionada y continuación independiente
 
-**Estado:** 📋 PLANIFICADO
-**Depende de:** `S5.4` integrada
+**Estado:** 🟢 LISTO — `S5.4` está ✅ COMPLETO en el candidato local; la ejecución remota de ese candidato sigue pendiente de autorización de entrega.
+**Depende de:** `S5.4` ✅
 **Área:** `escalation/{parked,contamination,resume}.mjs`, `schemas/parked-decision-v1.schema.json`, `test/escalation/**`
 **Prohibido:** `continuation/**`, `core.mjs`, `mcp.mjs`, `delivery/**`
 **Recurso:** ledger append-only de decisiones estacionadas. Sin token de entrega.

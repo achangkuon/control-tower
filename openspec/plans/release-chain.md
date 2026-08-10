@@ -52,12 +52,12 @@ graph LR
   S32 --> S33["S3.3 capability registry · ✅"]
   S33 --> S34["S3.4 ciclo de vida Jornada · ✅"]
   S34 --> S51["S5.1 candidate contracts · ✅"]
-  S51 --> S41["S4.1 hosts · 🟢"]
-  S41 --> S52["S5.2 entrega idempotente · 📋"]
+  S51 --> S41["S4.1 hosts · ✅"]
+  S41 --> S52["S5.2 entrega idempotente · 🔴"]
   S33 --> S52
-  S52 --> S53["S5.3 continuación · 📋"]
-  S51 --> S54["S5.4 ruteo de escalamiento · 🟢"]
-  S54 --> S55["S5.5 decisión estacionada · 📋"]
+  S52 --> S53["S5.3 continuación · 🔴"]
+  S51 --> S54["S5.4 ruteo de escalamiento · ✅"]
+  S54 --> S55["S5.5 decisión estacionada · 🟢"]
   S51 --> S87
   S53 --> S71["S7.1 conformidad · 📋"]
   S87 --> S71
@@ -73,15 +73,15 @@ graph LR
 | ✅ | `S3.3` | Agent Capability Registry | ✅ COMPLETO | `S3.2` ✅; implementación `4621d3f`, 14/14 criterios verificados por el planner contra el SHA integrado |
 | ✅ | `S3.4` | Persistencia y ciclo de vida de Jornada | ✅ COMPLETO | `S3.2` ✅, `S3.3` ✅; implementación `b6dda84`, 11/11 criterios verificados por el planner contra el SHA integrado. **Cierra P3 entero** |
 | ✅ | `S5.1` | Candidate contracts, authorization store y frontera Support | ✅ COMPLETO | `S3.2` ✅, `S3.3` ✅, `S3.4` ✅; candidato `c7c2472`, 27/27 criterios y 537/537 tests |
-| ▶ | `S4.1` | Hosts y línea exclusiva | 🟢 LISTO | `S3.1` ✅, `S3.2` ✅, `S5.1` ✅; contrato sellado, cero decisiones `escala` abiertas |
-| ▶ | `S5.4` | Ruteo de escalamiento fuera/en casa | 🟢 LISTO | `S5.1` ✅; contrato sellado, cero decisiones `escala` abiertas. **No** depende de `S8.7` |
-| 2 | `S5.2` | Entrega idempotente y post-check | 📋 PLANIFICADO | `S4.1`, `S3.3` ✅; contrato sellado, cero decisiones `escala` abiertas. Registro propio en `delivery/**` |
-| 2 | `S5.5` | Decisión estacionada y continuación independiente | 📋 PLANIFICADO | `S5.4` |
-| 3 | `S5.3` | Continuación | 📋 PLANIFICADO | `S5.2` |
+| ✅ | `S4.1` | Hosts y línea exclusiva | ✅ COMPLETO | `S3.1` ✅, `S3.2` ✅, `S5.1` ✅; cierre técnico `1f5fea7`, 19/19 criterios |
+| ✅ | `S5.4` | Ruteo de escalamiento fuera/en casa | ✅ COMPLETO | `S5.1` ✅; candidato local `75549a7`, 9/9 Tareas, 15/15 criterios. **No** depende de `S8.7`; todavía no fue enviado al remoto |
+| — | `S5.2` | Entrega idempotente y post-check | 🔴 BLOQUEADO | `S4.1` ✅, `S3.3` ✅; recheck 8193 mantiene abiertos 1/3/5 y decisión 8195 estaciona el candidato NOT READY |
+| ▶ | `S5.5` | Decisión estacionada y continuación independiente | 🟢 LISTO | `S5.4` ✅ |
+| — | `S5.3` | Continuación | 🔴 BLOQUEADO | Bloqueo transitivo por `S5.2` |
 | — | `S8.7` | Puente Hermes/Telegram | 🔴 BLOQUEADO | Dependencias ✅; tres decisiones `escala` abiertas del maintainer |
 | 4 | `S7.1` | Conformidad de release | 📋 PLANIFICADO | `S5.3`, `S8.7`, `S5.5` |
 
-**Catorce Sesiones · 7 cerradas.** A las trece anteriores se suma `S3.4`, enumerada el
+**Catorce Sesiones · 9 cerradas.** A las trece anteriores se suma `S3.4`, enumerada el
 2026-08-04: `jornada-v1` existía como contrato **sin implementación**, y `policy/jornada.mjs`
 —que entregó `S3.2`— es un resolvedor puro que recibe la Jornada como argumento, no un store.
 Su alcance es **pasivo**: incrementa `jornada_revision` en toda transición, con lo que una
@@ -107,9 +107,9 @@ las dependencias de `S8.7` están satisfechas; quedan sus tres decisiones `escal
 
 La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas; no se declara como un número fijo.
 
-`S5.1` está ✅ COMPLETO. `S4.1` y `S5.4` están 🟢 LISTO, son independientes en el grafo, tienen `Área` disjunta (`hosts/**` frente a `escalation/**`) y no comparten `Recurso`.
+`S4.1` y `S5.4` están ✅ COMPLETO; el cierre de `S5.4` es todavía un candidato local no enviado. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1/3/5 y `S5.3` queda bloqueada transitivamente. `S8.7` conserva tres decisiones `escala` abiertas.
 
-**Capacidad de ejecución hoy: 2.** Pueden avanzar `S4.1` y `S5.4` en paralelo. `S5.2` espera a `S4.1`; `S5.5` espera a `S5.4`; `S5.3` espera a `S5.2`. `S8.7` tiene sus dependencias satisfechas pero sigue 🔴 BLOQUEADO por tres decisiones del maintainer.
+**Capacidad de ejecución hoy: 1.** Sólo `S5.5` está 🟢 LISTO: depende de `S5.4` ✅, ocupa `escalation/**` después de su cierre y no comparte un recurso vivo con otra Sesión elegible. `S7.1` conserva sus dependencias en `S5.3`, `S8.7` y `S5.5`; cerrar `S5.4` no elimina esa cadena.
 
 La planificación adelantada conserva el techo declarado de dos Sesiones. El siguiente cierre de cada hebra debe volver a derivar capacidad y contaminación desde el grafo vigente, no desde esta fotografía.
 

@@ -1,7 +1,7 @@
 # Estado de implementación — Control Tower
 
 > Este documento mide **código**, no planificación. El [master-index](master-index.md) dice qué está planificado y qué Sesiones cerraron; este archivo dice qué existe, qué corre y qué está desplegado.
-> Medición del inventario de módulos y de las pruebas: 2026-07-31 sobre `master` en `d072e509`, que integra `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`. **No se volvió a medir el código el 2026-08-01** — lo que se agregó ese día es la brecha 5, observada sobre `master@a4aa3a6`.
+> Medición histórica del inventario de módulos y de las pruebas: 2026-07-31 sobre `master` en `d072e509`, que integra `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`. **No se volvió a medir todo el código el 2026-08-01** — lo que se agregó ese día es la brecha 5, observada sobre `master@a4aa3a6`. La actualización del 2026-08-10 es acotada a los cuatro paths nuevos de `S5.4`; no reetiqueta las cifras históricas como medición global actual.
 >
 > **Nota de vocabulario (2026-08-01):** la columna `Lane` de la tabla de módulos ya no nombra dos productos. Tras la [unificación](release-chain.md), `installable-v1` y `autonomous-v2` son afinidad de trabajo y nada más. El corte que sí sigue siendo real está en código: `bin/torre:28` rechaza capacidades con `CT_V2_ONLY`, y pasa a ser un flag opt-in apagado por defecto en vez de una frontera de producto.
 
@@ -35,6 +35,9 @@ Esto es exactamente lo que el manifest de `installable-v1` declara resolver: `mi
 | `contracts/` | 322 | `autonomous-v2` | `schema-registry`, `canonicalize`, `artifact-ref`, `idempotency`, `validate`, `errors`. Entregado por P2 Change A. |
 | `registry/` | 337 | `autonomous-v2` | `store`, `path`, `legacy-import`. Entregado por `S2.4` y `S2.5`. |
 | `main-store/` | 183 | `autonomous-v2` | `authority`, `store`. Entregado por P2 Change A. |
+| `escalation/request.mjs` | 30 | `autonomous-v2` | Emite solicitudes exactas mediante el authorization store canónico; no abre un segundo ledger. `S5.4`, candidato local `75549a7`. |
+| `escalation/routing.mjs` | 213 | `autonomous-v2` | Persiste el modo `local`/`remoto`, aplica frontera de autoridad y degrada sin consumir solicitudes. `S5.4`, candidato local `75549a7`. |
+| `test/escalation/**` | 335 | `autonomous-v2` | 16 pruebas de emisión, persistencia entre procesos, autoridad, concurrencia, degradación y no mutación; 78 expectations en el focused final. |
 | `support/agent.mjs` | 49 | `installable-v1` | Entrada `createSupportBrief`; valida la solicitud y mantiene Support read-only. Entregado por `S8.4`. |
 | `support/manifest.mjs` | 99 | `installable-v1` | Resuelve el roadmap y los STATUS permitidos con validación fail-closed. Entregado por `S8.4`. |
 | `support/snapshot.mjs` | 52 | `installable-v1` | Captura fuentes, Git y Tower DB en modo read-only/query-only. Entregado por `S8.4`. |
@@ -57,6 +60,16 @@ Los testigos Strict TDD y de no mutación pasaron. La corrección del prerrequis
 **Ese `full: 431/431` requiere la Torre desarmada.** Re-medido el 2026-07-31 en un worktree con la Torre armada, `bun test` da **429 pass · 2 fail**: los dos `P0 frozen snapshot restore` cortan con `Control Tower must be OFF: .git/control-tower/ACTIVE is present`. Es el fail-closed funcionando, no una regresión — pero quien corra la suite en frío va a ver los 2 fallos y debe saber por qué.
 
 Otras dos condiciones previas sin runbook: un worktree nuevo no tiene `node_modules` (sin `bun install` la suite rompe con `Cannot find package 'yaml'`), y el runner es `bun`, no `node`.
+
+## Corte actual de implementación — `S5.4`
+
+`S5.4` está ✅ COMPLETO en el candidato local de código `75549a781cd6ac19afc3e09e7466f7772f678fb7` (tree `835ed3e1d69540efae89b258813b194a0c555526`). Agrega exclusivamente `escalation/{request,routing}.mjs` y `test/escalation/{request,routing}.test.mjs`: 578 líneas, sin tocar el authorization store ni otra ruta prohibida. Los blobs coinciden con el sucesor aceptado `9c28ffd`; el recheck dirigido 8082 devolvió `findings: []` y `READY`.
+
+La evidencia enfocada final es `bun test test/escalation` → 16 pass / 0 fail / 78 expectations. La verificación integral previa contra la misma base y los mismos blobs fue 569 pass / 0 fail / 3274 expectations / 37 archivos. No existe transporte remoto ni autenticación remota nueva: el repositorio sólo define la frontera y deja el callback inhabilitado hasta `S8.7`. Por eso no hay despliegue o prueba de canal que atribuirle a esta Sesión. La persistencia, concurrencia y degradación sí se ejercitan dentro del repositorio.
+
+El candidato completo —dos commits de comportamiento y un cierre documental— permanece sólo en `master` local; `origin/master` sigue en `70ea7c2`. No hay push, PR, mutación de Notion ni adopción de runtime. La afinidad `autonomous-v2` describe el área, no otro producto ni un despliegue.
+
+**Planificación reconciliada:** P5 queda en 40% (2/5 S) y el avance activo global en 30/46 Sesiones (65%). `S5.5` está 🟢 LISTO y es el siguiente nodo ejecutable. `S5.2` está 🔴 BLOQUEADO por los hallazgos 1/3/5 del recheck 8193 y la decisión estacionada 8195; `S5.3` queda transitivamente 🔴 BLOQUEADO. La cadena conserva `S7.1` detrás de `S5.3`, `S8.7` y `S5.5`.
 
 ## Brechas reales
 
