@@ -1,12 +1,12 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-10 contra `5e1c8b8`; cierre técnico verificado de `S4.1` con 19/19 criterios.
+> Última reconciliación: 2026-08-10 contra `1f5fea7`; cierre técnico verificado de `S4.1` con 19/19 criterios.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md).
 
 ## 📍 Punto de retoma
 
-`S4.1` está ✅ COMPLETO sobre `5e1c8b8`: 19/19 criterios verificados; `bun test test/hosts` pasó 15/15 y `bun test` pasó 552/552.
+`S4.1` está ✅ COMPLETO sobre `1f5fea7`: 19/19 criterios verificados; `bun test test/hosts` pasó 16/16 y `bun test` pasó 553/553 (553 pass / 0 fail; 3196 expectations, 35 files).
 
 `S5.4` está 🟢 LISTO. El Plan 4 sigue 🔵 EN CURSO porque conserva responsabilidades legacy sin Sesiones enumeradas; no se le asigna porcentaje.
 
