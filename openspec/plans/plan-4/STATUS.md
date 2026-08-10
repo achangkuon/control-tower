@@ -1,19 +1,19 @@
 # Plan 4 — Hosts y línea exclusiva
 
-**Estado:** 🟢 LISTO
+**Estado:** 🔵 EN CURSO
 
 ## Resumen
 
 | Campo | Detalle |
 |---|---|
-| Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` depende de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata es `S5.1`. |
+| Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
 | Outputs | Adapter contract, launcher Pi/OpenCode, health, stop proof, host epoch y fallback exclusivo. |
-| Roadmap | `S5.1` está ✅ COMPLETO; `S4.1` está re-sellada para una única corrección sucesora. Las responsabilidades legacy que aún no tienen límite de un PR permanecen sin ID. |
+| Roadmap | `S5.1` y `S4.1` están ✅ COMPLETO. Las responsabilidades legacy que aún no tienen límite de un PR permanecen sin ID; por eso el Plan 4 sigue 🔵 EN CURSO y no tiene porcentaje derivable. |
 | Referencias | [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). El proposal `sdd-tower-host-launcher` fue eliminado en `613a45d` por ser cáscara sin avance; su intención vive en este STATUS. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
 
-**Estado:** 🟢 LISTO — **contrato `design-tasks` re-sellado el 2026-08-09** sobre `origin/master@76655f4ba55a5a651185d995c097510331bf5d68`. El candidato predecesor `25b86175a39c2ddf53699789611bcebe98c3f82b` quedó **NOT READY**; la autoridad aprobada abajo permite una única corrección sucesora, sin amend.
+**Estado:** ✅ COMPLETO — contrato `design-tasks` re-sellado el 2026-08-09 sobre `origin/master@76655f4ba55a5a651185d995c097510331bf5d68`. La corrección sucesora fue verificada y se integró localmente mediante el rebase autorizado sobre `master` y fast-forward. El candidato predecesor `25b86175a39c2ddf53699789611bcebe98c3f82b` permanece **NOT READY** como límite de rollback.
 
 **Depende de:** `S3.1` ✅, `S3.2` ✅, `S5.1` ✅; predecesora inmediata `S5.1`.
 
@@ -133,32 +133,32 @@ No quedan decisiones `escala` abiertas propias de `S4.1`.
 
 ### Módulo M4.1.1 — Fence
 
-- [ ] Tarea T4.1.1.1 — **RED:** demostrar que fallan los ataques de procedencia y autoridad fabricadas, rollback de vista a prefijo, gap/duplicate/tampering, ancestros symlink, event/lock symlink o hardlink, owner/mode inseguros, writers multiproceso, timeout y fallos de persistencia antes/después de publish. Los tests deben quedar rojos contra `25b8617` por la razón esperada.
-- [ ] Tarea T4.1.1.2 — **GREEN:** reemplazar inputs proof/actor por refs más puertos constructor-owned; verificar bindings exactos; sustituir el ledger mutable por eventos per-epoch encadenados por digest y publicados no-replace; preservar takeover humano, freeze y base rejection en el mismo evento.
-- [ ] Tarea T4.1.1.3 — **REFACTOR:** preservar errores tipados, garantizar cero mutación durable antes de publish, prohibir rollback que borre un epoch publicado y exigir readback tras `DURABILITY_UNKNOWN`; ejecutar evidencia de todas las ramas y cleanup. `bun test test/hosts` y luego `bun test` una vez post-GREEN.
+- [x] Tarea T4.1.1.1 — **RED:** demostrar que fallan los ataques de procedencia y autoridad fabricadas, rollback de vista a prefijo, gap/duplicate/tampering, ancestros symlink, event/lock symlink o hardlink, owner/mode inseguros, writers multiproceso, timeout y fallos de persistencia antes/después de publish. Los tests quedaron rojos contra `25b8617` por la razón esperada.
+- [x] Tarea T4.1.1.2 — **GREEN:** reemplazar inputs proof/actor por refs más puertos constructor-owned; verificar bindings exactos; sustituir el ledger mutable por eventos per-epoch encadenados por digest y publicados no-replace; preservar takeover humano, freeze y base rejection en el mismo evento.
+- [x] Tarea T4.1.1.3 — **REFACTOR:** preservar errores tipados, garantizar cero mutación durable antes de publish, prohibir rollback que borre un epoch publicado y exigir readback tras `DURABILITY_UNKNOWN`; ejecutar evidencia de todas las ramas y cleanup. `bun test test/hosts` y luego `bun test` pasaron una vez post-GREEN.
 
 ## Criterios de aceptación de S4.1
 
 Todos deben pasar para cerrar:
 
-- [ ] Un host sin prueba canónica positiva del anterior no se admite; silencio, ausencia o ambigüedad nunca cuentan como proof.
-- [ ] El caller operacional pasa sólo `terminationProofRef` o `maintainerDecisionRef`; proof envelopes, autoridades y `actor: "MAINTAINER"` son rechazados.
-- [ ] Los puertos de proof y decisión se fijan en el constructor y son controlados por composition root/Main; inputs caller-fabricados no pueden sustituirlos.
-- [ ] Project, predecessor, base, runtime, role y assignment coinciden exactamente entre journal, candidate y resultado del puerto, o falla cerrado.
-- [ ] El fence no crea, valida, consume ni delega autoridad.
-- [ ] El host epoch es monótono, nunca se reutiliza, no depende del reloj y dos activaciones distintas jamás comparten epoch.
-- [ ] El estado se deriva de eventos inmutables encadenados por digest; no existe un ledger mutable autoritativo ni migración SQLite.
-- [ ] Gap, duplicate epoch, bytes alterados, digest previo inválido o vista retrocedida fallan cerrado; una vista a prefijo nunca habilita epoch reuse.
-- [ ] La publicación final es no-replace/O_EXCL equivalente y un evento publicado nunca se borra como rollback.
-- [ ] La toma forzada sólo ocurre con decisión humana autorizada por puerto; avanza epoch y expone `TAKEOVER_FORCED`.
-- [ ] El trabajo desalojado queda `FROZEN` en el mismo evento y ninguna ruta lo adopta o descarta automáticamente.
-- [ ] Una base que arrastra trabajo congelado sin resolver se rechaza.
-- [ ] El path del trusted root no contiene componentes symlink; root y directorios descendientes verifican owner/mode; event y lock se abren con `O_NOFOLLOW`, se validan por `fstat` y exigen `nlink === 1`.
-- [ ] El lock owner-only serializa dos procesos reales; hay un único winner y ningún lock/residuo/descriptores abiertos al terminar.
-- [ ] Todo rechazo pre-publicación deja cero mutación durable y conserva bytes existentes.
-- [ ] Todo fallo ambiguo post-create devuelve `CT_FENCE_DURABILITY_UNKNOWN`, no borra el epoch y obliga readback sin retry automático.
-- [ ] Los tests de persistencia ejecutan success, rechazo, concurrencia, cleanup y cada failpoint declarado.
-- [ ] `bun test test/hosts` pasa completo y `bun test` no introduce regresiones sobre la base integrada.
-- [ ] El sucesor es un único commit descendiente directo de `25b8617`, sin amend, y el diff no toca ninguna ruta fuera de `Área` ni ninguna ruta de `Prohibido`.
+- [x] Un host sin prueba canónica positiva del anterior no se admite; silencio, ausencia o ambigüedad nunca cuentan como proof.
+- [x] El caller operacional pasa sólo `terminationProofRef` o `maintainerDecisionRef`; proof envelopes, autoridades y `actor: "MAINTAINER"` son rechazados.
+- [x] Los puertos de proof y decisión se fijan en el constructor y son controlados por composition root/Main; inputs caller-fabricados no pueden sustituirlos.
+- [x] Project, predecessor, base, runtime, role y assignment coinciden exactamente entre journal, candidate y resultado del puerto, o falla cerrado.
+- [x] El fence no crea, valida, consume ni delega autoridad.
+- [x] El host epoch es monótono, nunca se reutiliza, no depende del reloj y dos activaciones distintas jamás comparten epoch.
+- [x] El estado se deriva de eventos inmutables encadenados por digest; no existe un ledger mutable autoritativo ni migración SQLite.
+- [x] Gap, duplicate epoch, bytes alterados, digest previo inválido o vista retrocedida fallan cerrado; una vista a prefijo nunca habilita epoch reuse.
+- [x] La publicación final es no-replace/O_EXCL equivalente y un evento publicado nunca se borra como rollback.
+- [x] La toma forzada sólo ocurre con decisión humana autorizada por puerto; avanza epoch y expone `TAKEOVER_FORCED`.
+- [x] El trabajo desalojado queda `FROZEN` en el mismo evento y ninguna ruta lo adopta o descarta automáticamente.
+- [x] Una base que arrastra trabajo congelado sin resolver se rechaza.
+- [x] El path del trusted root no contiene componentes symlink; root y directorios descendientes verifican owner/mode; event y lock se abren con `O_NOFOLLOW`, se validan por `fstat` y exigen `nlink === 1`.
+- [x] El lock owner-only serializa dos procesos reales; hay un único winner y ningún lock/residuo/descriptores abiertos al terminar.
+- [x] Todo rechazo pre-publicación deja cero mutación durable y conserva bytes existentes.
+- [x] Todo fallo ambiguo post-create devuelve `CT_FENCE_DURABILITY_UNKNOWN`, no borra el epoch y obliga readback sin retry automático.
+- [x] Los tests de persistencia ejecutan success, rechazo, concurrencia, cleanup y cada failpoint declarado.
+- [x] `bun test test/hosts` pasa completo y `bun test` no introduce regresiones sobre la base integrada.
+- [x] La corrección se conservó como dos commits sin amend durante el rebase autorizado: `03ecb5d` (predecesor) y `5e1c8b8` (su único sucesor). El diff toca sólo `Área` y ninguna ruta de `Prohibido`.
 
 Las responsabilidades legacy de Host Launcher que aún no tienen límite de un PR permanecen sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).
