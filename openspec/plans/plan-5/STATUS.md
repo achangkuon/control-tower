@@ -17,10 +17,27 @@
 
 | Campo | Detalle |
 |---|---|
-| Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1` y `S5.5` de `S5.4`. |
-| Outputs | F: authorization store, Telegram, validación Git/PR/check/SHA, entrega idempotente y post-check. G: planning horizon, reconciliación, apply/verify, Binding Delta y continuación del siguiente `slice_id`. Más el ruteo de escalamiento de `S5.4` y la planificación diferible de `S5.5`. |
-| Roadmap | `S5.1` y `S5.4` están ✅ COMPLETO; `S5.4` está publicado y reconciliado en `origin/master@e82f4ae`. `S5.5` queda 🟢 LISTO. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
+| Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1`, y la cadena contractual `S5.4 → S5.6 → S5.7 → S5.8 → S5.5`. |
+| Outputs | F: authorization store, Telegram, validación Git/PR/check/SHA, entrega idempotente y post-check. G: planning horizon, reconciliación, apply/verify, Binding Delta y continuación del siguiente `slice_id`. Más el ruteo de escalamiento de `S5.4`, los contratos canónicos prerrequisito de `S5.6`–`S5.8` y la planificación diferible de `S5.5`. |
+| Roadmap | `S5.1` y `S5.4` están ✅ COMPLETO; `S5.4` está publicado y reconciliado en `origin/master@d114677`. `S5.6` queda 🟢 LISTO; `S5.7`, `S5.8` y `S5.5` quedan 📋 PLANIFICADO por grafo. La representación terminal de `S5.8` quedó resuelta por el maintainer como registro explícito y atómico dentro del mismo main-store. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
+
+## Grafo de dependencias
+
+```mermaid
+graph LR
+  S32["S3.2 orquestación · ✅"] --> S51["S5.1 candidate contracts · ✅"]
+  S33["S3.3 capability registry · ✅"] --> S51
+  S34["S3.4 Jornada · ✅"] --> S51
+  S51 --> S54["S5.4 ruteo · ✅"]
+  S54 --> S56["S5.6 snapshot de Sesión · 🟢"]
+  S56 --> S57["S5.7 decisión/respuesta · 📋"]
+  S57 --> S58["S5.8 binding de respuesta · 📋"]
+  S58 --> S55["S5.5 continuación diferible · 📋"]
+  S41["S4.1 fence hosts · ✅"] --> S52["S5.2 entrega · 🔴"]
+  S33 --> S52
+  S52 --> S53["S5.3 continuación · 🔴"]
+```
 
 ## Sesión 5.1 — Change F candidate contracts
 
@@ -250,12 +267,12 @@ Aplica el horizonte de dos Sesiones, reconcilia la base integrada y habilita suc
 
 ## Sesión 5.4 — Ruteo de escalamiento fuera/en casa
 
-**Estado:** ✅ COMPLETO — cierre técnico verificado y publicado el 2026-08-10. Los commits de comportamiento son `976b8d02bfda2d3ec9993e92a7b2f919ebc2d302` y `75549a781cd6ac19afc3e09e7466f7772f678fb7` (tree de comportamiento `835ed3e1d69540efae89b258813b194a0c555526`); el cierre documental es `f9f2869` y la reconciliación final está en `origin/master@e82f4ae`.
+**Estado:** ✅ COMPLETO — cierre técnico verificado y publicado el 2026-08-10. Los commits de comportamiento son `976b8d02bfda2d3ec9993e92a7b2f919ebc2d302` y `75549a781cd6ac19afc3e09e7466f7772f678fb7` (tree de comportamiento `835ed3e1d69540efae89b258813b194a0c555526`); el cierre documental es `f9f2869` y la reconciliación final está en `origin/master@d114677`.
 **Depende de:** `S5.1` ✅
 **Área:** `escalation/**`, `test/escalation/**`
 **Prohibido:** `main-store/store.mjs`, `core.mjs`, `mcp.mjs`, `delivery/**`, `continuation/**`, `capabilities/**`, `policy/**`, `jornada/**`, `registry/**`, `contracts/**`, `schemas/**`, `openspec/plans/**`, `openspec/specs/**`
 **Recurso:** estado de ruteo persistido, propiedad de `escalation/**`. Sin migraciones de DB, sin `db-writer`, sin token de entrega.
-**Entrega:** commit directo a `master` + push, sin PR ([`AGENTS.md`](../../../AGENTS.md)). El forecast derivado de 200–280 líneas quedó superado: el resultado de comportamiento tiene **578 líneas añadidas** en cuatro paths. El maintainer aceptó la excepción y preservó dos commits de comportamiento con provenance —uno base y una corrección acotada posterior al review— en lugar de reescribir historia. El tercer commit es exclusivamente documental: existe porque la historia aceptada ya era inmutable y el Documentation Close Gate exige reconciliar el cierre técnico. La secuencia está publicada y reconciliada en `origin/master@e82f4ae`.
+**Entrega:** commit directo a `master` + push, sin PR ([`AGENTS.md`](../../../AGENTS.md)). El forecast derivado de 200–280 líneas quedó superado: el resultado de comportamiento tiene **578 líneas añadidas** en cuatro paths. El maintainer aceptó la excepción y preservó dos commits de comportamiento con provenance —uno base y una corrección acotada posterior al review— en lugar de reescribir historia. El tercer commit es exclusivamente documental: existe porque la historia aceptada ya era inmutable y el Documentation Close Gate exige reconciliar el cierre técnico. La secuencia está publicada y reconciliada en `origin/master@d114677`.
 
 **Por qué `main-store/store.mjs` está en el `Prohibido` aunque `S5.4` escriba ahí.** La solicitud emitida se persiste en el authorization store, que es **propiedad exclusiva de `S5.1`**. `S5.4` lo **llama**, nunca lo edita — es exactamente lo que exige la decisión `derivable` de más abajo: sin abrir una segunda ruta de escritura. Dos rutas al mismo estado es la causa raíz que `6d37642` reparó en este mismo Plan.
 
@@ -324,11 +341,17 @@ No aplica un runtime externo: esta Sesión define ruteo y persistencia, pero del
 
 ## Sesión 5.5 — Decisión estacionada y continuación independiente
 
-**Estado:** 🟢 LISTO — `S5.4` está ✅ COMPLETO y publicado en `origin/master@e82f4ae`.
-**Depende de:** `S5.4` ✅
-**Área:** `escalation/{parked,contamination,resume}.mjs`, `schemas/parked-decision-v1.schema.json`, `test/escalation/**`
-**Prohibido:** `continuation/**`, `core.mjs`, `mcp.mjs`, `delivery/**`
+**Estado:** 📋 PLANIFICADO — espera el contrato terminal de `S5.8`; no existe un bloqueo externo adicional.
+**Depende de:** `S5.8`
+**Área:** `escalation/{parked,contamination,resume}.mjs`, `test/escalation/**`
+**Prohibido:** `continuation/**`, `core.mjs`, `mcp.mjs`, `delivery/**`, `contracts/**`, `schemas/**`, `main-store/store.mjs`
 **Recurso:** ledger append-only de decisiones estacionadas. Sin token de entrega.
+
+**Route:** `full-sdd` una vez que `S5.8` cierre; los contratos quedan fijados por los prerrequisitos y el SDD cubre el comportamiento integral de ledger, contaminación, selección y retoma.
+
+`S5.6`–`S5.8` poseen los contratos canónicos que esta Sesión consume: snapshot de Sesión,
+registro/respuesta y binding de opción seleccionada bajo autoridad de `S5.1`. `S5.5` no los
+redefine, registra ni valida por una ruta local.
 
 `S5.4` hace que la pregunta **salga**. `S5.5` es lo que hace que la Torre **no se quede
 esperando la respuesta**: es la Sesión que convierte la planificación en diferible.
@@ -364,12 +387,12 @@ dependencias o evidencia contradictorias.
 
 - [ ] Tarea 5.5.1.1 — RED: agregar `test/escalation/parked.test.mjs` para que una decisión no derivable produzca un registro inmutable con la pregunta exacta, la evidencia que la disparó, las opciones enumeradas con su consecuencia, la Sesión/Módulo de origen, el checkpoint y la clase de escalamiento.
 - [ ] Tarea 5.5.1.2 — RED: agregar el caso fail-closed — un registro sin opciones enumeradas, sin evidencia o sin checkpoint se rechaza; no se estaciona una pregunta que nadie puede contestar.
-- [ ] Tarea 5.5.1.3 — GREEN: implementar `escalation/parked.mjs` y `schemas/parked-decision-v1.schema.json` sobre el ledger append-only, reutilizando la solicitud de `S5.4` sin abrir una segunda ruta de escritura.
+- [ ] Tarea 5.5.1.3 — GREEN: implementar `escalation/parked.mjs` sobre el ledger append-only, consumiendo el contrato `parked-decision-v1` entregado por `S5.7` y reutilizando la solicitud de `S5.4` sin abrir una segunda ruta de escritura.
 - [ ] Tarea 5.5.1.4 — REFACTOR: normalizar códigos de error estables y volver a correr `bun test test/escalation`.
 
 ### Módulo 5.5.2 — Scope de contaminación
 
-- [ ] Tarea 5.5.2.1 — RED: agregar `test/escalation/contamination.test.mjs` para que el scope se derive de la **enumeración del plan por digest** más el ledger inmutable, y falle si intenta leer engram.
+- [ ] Tarea 5.5.2.1 — RED: agregar `test/escalation/contamination.test.mjs` para que el scope consuma el snapshot canónico de `S5.6`, ligado a los **bytes y digest exactos del plan**, más el ledger inmutable, y falle si intenta leer engram o parsear el plan por una segunda ruta.
 - [ ] Tarea 5.5.2.2 — RED: agregar los tres criterios de contaminación — dependencia en el grafo, `Área` o `Recurso` compartido, y criterio de aceptación que referencia la misma decisión — más el caso ambiguo, que resuelve a **contaminada**.
 - [ ] Tarea 5.5.2.3 — GREEN: implementar `escalation/contamination.mjs` y congelar el scope dentro del registro de la decisión, no fuera.
 - [ ] Tarea 5.5.2.4 — REFACTOR: verificar con testigos de bytes que calcular el scope es read-only sobre plan, registro, DB, WAL y SHM.
@@ -382,7 +405,7 @@ dependencias o evidencia contradictorias.
 
 ### Módulo 5.5.4 — Retoma desde el checkpoint
 
-- [ ] Tarea 5.5.4.1 — RED: agregar `test/escalation/resume.test.mjs` para que una respuesta validada por `S5.1` cierre la decisión y levante el bloqueo **sólo** sobre las Sesiones del scope congelado, nunca sobre otras.
+- [ ] Tarea 5.5.4.1 — RED: agregar `test/escalation/resume.test.mjs` para que una respuesta terminal de `S5.8`, validada por `S5.1` y ligada al `parked_decision_id` más un `option_id` enumerado, cierre la decisión y levante el bloqueo **sólo** sobre las Sesiones del scope congelado, nunca sobre otras.
 - [ ] Tarea 5.5.4.2 — RED: agregar el caso de checkpoint rancio — si la base se movió desde que se estacionó, la retoma **no** es automática: exige reconciliación nueva.
 - [ ] Tarea 5.5.4.3 — RED: agregar el caso de respuesta no validada, vencida o de origen equivocado — no levanta nada y no muta el registro.
 - [ ] Tarea 5.5.4.4 — GREEN: implementar `escalation/resume.mjs` retomando desde el checkpoint exacto registrado.
@@ -392,22 +415,196 @@ dependencias o evidencia contradictorias.
 - [ ] Una decisión no derivable produce un registro inmutable con pregunta exacta, evidencia, opciones con consecuencia, origen, checkpoint y clase
 - [ ] Un registro sin opciones, sin evidencia o sin checkpoint falla cerrado
 - [ ] Una decisión de cualquiera de las ocho clases nunca se deriva, aunque haya autoridad y criterios disponibles
-- [ ] El scope de contaminación se deriva del plan por digest más el ledger, y **nunca** de engram
+- [ ] El scope de contaminación se deriva del snapshot canónico de `S5.6`, ligado a bytes/digest exactos, más el ledger, y **nunca** de engram ni de un segundo parser
 - [ ] Un caso ambiguo resuelve a contaminada: sobre-incluir es un costo, sub-incluir es el incidente
 - [ ] El scope queda congelado dentro del registro y no se recalcula al retomar
 - [ ] Sólo continúan Sesiones 🟢 LISTO, fuera del scope, sin dependencia en el grafo y con `Área` y `Recurso` disjuntos
 - [ ] Con cero candidatos la Torre se detiene y lo reporta, sin relajar criterios
 - [ ] La selección la ejerce Main; el worker no se autoasigna
-- [ ] Una respuesta validada levanta el bloqueo sólo sobre el scope congelado y retoma desde el checkpoint exacto
+- [ ] Sólo una respuesta terminal de `S5.8`, validada por `S5.1` y ligada al `parked_decision_id` más un `option_id` enumerado, levanta el bloqueo sobre el scope congelado y retoma desde el checkpoint exacto
 - [ ] Un checkpoint rancio exige reconciliación y no retoma solo
 - [ ] Una respuesta no validada, vencida o de origen equivocado no levanta nada ni muta el registro
-- [ ] `S5.5` no crea, valida ni consume autoridad, y no duplica la emisión ni el ruteo de `S5.4`
+- [ ] `S5.5` no crea, registra, valida ni consume contratos o autoridad, y no duplica el parser de `S5.6`, la respuesta de `S5.8`, ni la emisión o el ruteo de `S5.4`
 - [ ] Calcular scope y elegibilidad es read-only, verificado por testigos de bytes en éxito y en rechazo
 - [ ] `bun test test/escalation` pasa completo y `bun test` no introduce fallos nuevos
-- [ ] El diff no toca `continuation/**`, `core.mjs`, `mcp.mjs` ni `delivery/**`
+- [ ] El diff no toca `continuation/**`, `core.mjs`, `mcp.mjs`, `delivery/**`, `contracts/**`, `schemas/**` ni `main-store/store.mjs`
 
 **Forecast:** 300–400 líneas, contra el techo de encadenado de 400. Si en apply se pasa, se
 encadenan los Módulos bajo la misma Sesión — no se crea un nivel nuevo ni se parte en dos
 Sesiones sin decisión explícita.
+
+## Sesión 5.6 — Contrato canónico de snapshot de Sesión
+
+**Estado:** 🟢 LISTO — `S5.4` está ✅ COMPLETO y el maintainer aprobó que el contrato viva en una Sesión prerrequisito, no dentro de `S5.5`.
+
+**Depende de:** `S5.4` ✅
+
+**Área:** `contracts/session-plan-snapshot.mjs`, `schemas/session-plan-snapshot-v1.schema.json`, `contracts/{schema-registry,validate}.mjs`, `test/contracts/{session-plan-snapshot,schema}.test.mjs`, `test/fixtures/contracts/schema-cases-v1.json`
+
+**Prohibido:** `continuation/**`, `escalation/**`, `main-store/**`, `core.mjs`, `mcp.mjs`, `delivery/**`, `openspec/plans/**`, `openspec/specs/**`
+
+**Recurso:** registro canónico de contratos y fixture compartido, en exclusividad durante la Sesión. Sin DB, sin token de entrega.
+
+**Route:** `full-sdd` — contrato visible y parser canónico nuevo; proposal/spec/design deben fijar la representación sin ampliar la responsabilidad aprobada. **Autoridad:** decisión del maintainer del 2026-08-10 y readiness técnica Engram 8261.
+
+**Runtime y rollback:** biblioteca pura, sin adopción por runtime ni mutación de estado vivo. Rollback por revert del commit de esta Sesión, retirando en el mismo límite schema, registro, parser y fixtures.
+
+**Decisiones:**
+
+- `escala` — quién posee el snapshot/parser y los contratos de decisión/respuesta que necesita `S5.5`. **Clase:** expansión de alcance, contrato visible del producto, API pública y seguridad y permisos. **RESUELTA el 2026-08-10 por el maintainer:** los posee una cadena de Sesiones prerrequisito; `S5.5` sólo consume el resultado y no valida localmente. **Contaminaba:** `S5.5`.
+- `derivable` — qué identidad fija el snapshot. **Criterio:** bytes exactos del plan más `digestArtifact(..., "raw-bytes")`; cualquier drift rechaza el snapshot completo. Falsificable: aceptar los mismos datos parseados desde bytes distintos. **Autoridad:** responsabilidad aprobada 2 y el digest canónico existente.
+- `derivable` — qué expone el parser. **Criterio:** sólo IDs/estado, grafo, `Área`, `Recurso`, `Decisiones`, criterios binarios y contaminación semántica presentes en esos bytes; ausencia o ambigüedad falla cerrado. Falsificable: completar un campo desde engram, defaults narrativos u otra fuente. **Autoridad:** responsabilidad aprobada 2.
+- `derivable` — cuántos parsers canónicos existen. **Criterio:** uno; no importa ni modifica `continuation/**` y ningún consumidor vuelve a parsear Markdown. Falsificable: dos entradas que produzcan snapshots independientes para los mismos bytes. **Autoridad:** responsabilidad aprobada 2.
+
+### Módulo 5.6.1 — Identidad y schema del snapshot
+
+- [ ] Tarea 5.6.1.1 — RED: fijar casos para bytes/digest exactos, drift de un byte, encoding inválido y campos obligatorios ausentes.
+- [ ] Tarea 5.6.1.2 — GREEN: implementar `session-plan-snapshot-v1` con identidad inmutable y referencias cerradas a Sesiones.
+- [ ] Tarea 5.6.1.3 — REFACTOR: reutilizar `digestArtifact` y eliminar cualquier digest o lista de campos duplicada.
+
+### Módulo 5.6.2 — Parser único del contrato de Sesión
+
+- [ ] Tarea 5.6.2.1 — RED: cubrir grafo, `Área`, `Recurso`, `Decisiones`, criterios binarios y contaminación semántica contra fixtures representativos.
+- [ ] Tarea 5.6.2.2 — RED: ambigüedad, duplicados, referencias inexistentes o formato parcial fallan cerrado y no producen snapshot.
+- [ ] Tarea 5.6.2.3 — GREEN: implementar `contracts/session-plan-snapshot.mjs` sin importar `continuation/**` ni leer engram.
+- [ ] Tarea 5.6.2.4 — REFACTOR: ordenar salidas canónicamente y probar determinismo sobre los mismos bytes.
+
+### Módulo 5.6.3 — Registro y frontera read-only
+
+- [ ] Tarea 5.6.3.1 — RED: el schema sin entrada en `schemaFiles`, invariante y fixture se considera incompleto.
+- [ ] Tarea 5.6.3.2 — GREEN: registrar el schema, sumar invariantes cross-field y casos válidos/inválidos al fixture compartido.
+- [ ] Tarea 5.6.3.3 — REFACTOR: verificar con testigos de bytes que parsear y validar no muta plan, DB, WAL, SHM ni estado de Torre.
+
+**Criterios de aceptación de S5.6** — todos deben pasar para cerrar:
+
+- [ ] El snapshot liga bytes exactos y digest raw-bytes; un byte de drift lo invalida
+- [ ] El contrato expone grafo, `Área`, `Recurso`, `Decisiones`, criterios binarios y contaminación semántica
+- [ ] Ausencia, duplicado, referencia inexistente o ambigüedad falla cerrado sin snapshot parcial
+- [ ] El parser no lee engram ni ninguna fuente narrativa
+- [ ] No se importa, modifica ni duplica el parser privado de `continuation/**`
+- [ ] Los mismos bytes producen bytes canónicos idénticos y el mismo digest
+- [ ] `session-plan-snapshot-v1` está registrado en `schemaFiles`, validado por el camino canónico y cubierto por fixture
+- [ ] Parser y validación son read-only, verificados por testigos de bytes en éxito y rechazo
+- [ ] `bun test test/contracts` pasa completo y `bun test` no introduce fallos nuevos
+- [ ] El diff no toca ninguna ruta fuera del `Área` ni ninguna del `Prohibido`
+
+**Forecast:** 320–400 líneas. Si el diseño demuestra que no cabe en un cambio revisable, vuelve al planner antes de apply; no se agrega un nivel.
+
+## Sesión 5.7 — Contratos canónicos de decisión estacionada y respuesta
+
+**Estado:** 📋 PLANIFICADO — espera `S5.6`, que posee el snapshot al que ambos contratos quedan ligados.
+
+**Depende de:** `S5.6`
+
+**Área:** `contracts/{parked-decision,schema-registry,validate}.mjs`, `schemas/{parked-decision-v1,parked-decision-response-v1}.schema.json`, `test/contracts/{parked-decision,schema}.test.mjs`, `test/fixtures/contracts/schema-cases-v1.json`
+
+**Prohibido:** `escalation/**`, `main-store/**`, `continuation/**`, `core.mjs`, `mcp.mjs`, `delivery/**`, `schemas/session-plan-snapshot-v1.schema.json`, `contracts/session-plan-snapshot.mjs`, `openspec/plans/**`, `openspec/specs/**`
+
+**Recurso:** registro canónico de contratos y fixture compartido, después de `S5.6`. Sin DB, sin token de entrega.
+
+`S5.7` es la única dueña del schema versionado `parked-decision-response-v1`, su registro, invariantes y fixtures. `S5.8` lo consume sin modificar `contracts/**`, `schemas/**` ni `test/contracts/**`.
+
+**Route:** `full-sdd` — dos contratos visibles y sus invariantes de binding requieren proposal/spec/design antes de implementarse. **Autoridad:** responsabilidades aprobadas 1 y 4 del maintainer.
+
+**Runtime y rollback:** contratos puros, sin ledger, authority store ni adopción por runtime. Rollback por revert del límite completo; ningún schema queda registrado sin módulo, invariantes y fixture.
+
+**Decisiones:**
+
+- `derivable` — forma mínima de una decisión estacionada. **Criterio:** pregunta exacta, evidencia, opciones con consecuencia, origen, checkpoint, clase y scope congelado ligado al `session_plan_snapshot_digest`; faltar uno rechaza todo. Falsificable por el fixture inválido correspondiente. **Autoridad:** §11 del estándar y responsabilidad aprobada 1.
+- `derivable` — identidad de una opción. **Criterio:** `option_id` estable y único dentro de `parked_decision_id`; texto libre nunca identifica la selección. Falsificable: dos opciones con el mismo ID o una respuesta ligada sólo por etiqueta. **Autoridad:** responsabilidad aprobada 3.
+- `derivable` — qué prueba el contrato de respuesta. **Criterio:** liga criptográficamente un `parked_decision_id`, exactamente un `option_id` enumerado, el digest del snapshot y la autorización de `S5.1`; el schema no otorga autoridad por sí mismo. Falsificable: cambiar cualquiera de esos valores sin invalidar el binding. **Autoridad:** responsabilidades aprobadas 1 y 3.
+
+### Módulo 5.7.1 — Contrato de decisión estacionada
+
+- [ ] Tarea 5.7.1.1 — RED: cubrir todos los campos de §11, opciones únicas y scope congelado ligado al snapshot de `S5.6`.
+- [ ] Tarea 5.7.1.2 — GREEN: implementar `parked-decision-v1` y su construcción canónica sin persistencia.
+- [ ] Tarea 5.7.1.3 — REFACTOR: unificar IDs, timestamps y digests con los `$defs` canónicos existentes.
+
+### Módulo 5.7.2 — Contrato de respuesta seleccionada
+
+- [ ] Tarea 5.7.2.1 — RED: una respuesta debe nombrar decisión, opción enumerada, snapshot y autorización exactos; cada mismatch falla cerrado.
+- [ ] Tarea 5.7.2.2 — GREEN: implementar `parked-decision-response-v1` con binding canónico y sin capacidad de autoafirmar validación.
+- [ ] Tarea 5.7.2.3 — REFACTOR: probar que etiquetas, orden de objeto o texto narrativo no sustituyen `option_id` ni alteran el digest canónico.
+
+### Módulo 5.7.3 — Registro e invariantes cruzadas
+
+- [ ] Tarea 5.7.3.1 — RED: ambos schemas desconocidos fallan hasta entrar por el registro, invariantes y fixture compartidos.
+- [ ] Tarea 5.7.3.2 — GREEN: registrar ambos schemas y validar unicidad de opciones y consistencia de bindings.
+- [ ] Tarea 5.7.3.3 — REFACTOR: cerrar casos válidos/inválidos y correr `bun test test/contracts` sobre el registro real.
+
+**Criterios de aceptación de S5.7** — todos deben pasar para cerrar:
+
+- [ ] `parked-decision-v1` exige todos los campos de §11 y scope congelado ligado al snapshot de `S5.6`
+- [ ] Opciones sin ID, duplicadas o sin consecuencia se rechazan
+- [ ] `parked-decision-response-v1` liga decisión, una opción enumerada, snapshot y autorización exactos
+- [ ] Cambiar decisión, opción, snapshot o autorización invalida el binding
+- [ ] Texto, etiqueta u orden de propiedades nunca sustituye la identidad canónica
+- [ ] El contrato de respuesta no crea, valida ni consume autoridad
+- [ ] Ambos schemas pasan únicamente por `contracts/schema-registry.mjs` y `contracts/validate.mjs`
+- [ ] Ambos tienen invariantes y casos válidos/inválidos en el fixture compartido
+- [ ] `bun test test/contracts` pasa completo y `bun test` no introduce fallos nuevos
+- [ ] El diff no toca ninguna ruta fuera del `Área` ni ninguna del `Prohibido`
+
+**Forecast:** 260–360 líneas. Cabe en un cambio revisable y queda serializado detrás de `S5.6` por el registro compartido.
+
+## Sesión 5.8 — Binding de opción seleccionada en la autoridad canónica
+
+**Estado:** 📋 PLANIFICADO — espera los contratos registrados de `S5.7`; no conserva una decisión de maintainer abierta.
+
+**Depende de:** `S5.7`
+
+**Área:** `main-store/store.mjs`, `test/main-store.test.mjs`
+
+**Prohibido:** `escalation/**`, `continuation/**`, `core.mjs`, `mcp.mjs`, `delivery/**`, `contracts/**`, `schemas/**`, `test/contracts/**`, `test/fixtures/contracts/schema-cases-v1.json`, `openspec/plans/**`, `openspec/specs/**`
+
+**Recurso:** authorization store de Main, bajo `assertMain` y su mismo lock/transacción; exclusividad sobre sus transiciones. Sin DB y sin token de entrega.
+
+**Route:** `full-sdd` — modifica el borde de seguridad de `S5.1` y debe probar atomicidad, idempotencia y owner único sin crear authority, assertion o store paralelo. **Autoridad:** responsabilidades aprobadas 3 y 4 y decisión Option B del maintainer.
+
+**Runtime y rollback:** sólo extiende el store receptor de `S5.1`; no conecta Telegram, no retoma `S5.5` y no adopta runtime externo. Rollback por revert de `main-store/store.mjs` y su test en el mismo límite; el schema versionado de `S5.7` permanece porque no pertenece a esta Sesión y no hay migración.
+
+**Decisiones:**
+
+- `escala` — cómo se representa la respuesta terminal dentro de la autoridad canónica de `S5.1`. **Clase:** contrato visible del producto, API pública y seguridad y permisos. **RESUELTA por el maintainer el 2026-08-10 — Option B:** registro explícito `parked-decision-response-v1`, persistido atómicamente dentro del **mismo** main-store, lock y transacción que llevan la autorización a estado terminal. Liga `authorization_id`, `parked_decision_id`, exactamente un `option_id` enumerado, snapshot/digest de Sesión y revisión. Replay byte-idéntico es idempotente; cualquier mismatch falla cerrado sin transición parcial. Se prohíben assertion del caller, semántica sólo en `extensions`, archivo/store sombra y segundo writer. Falsificable: observar sólo uno de los dos efectos persistidos, aceptar un option no enumerado, permitir replay divergente o escribir fuera de la transacción bajo `assertMain`. **Origen:** `S5.8`, `M5.8.1`. **Contaminaba:** `S5.8`, `S5.5` y `S7.1`.
+- `derivable` — dónde termina una respuesta seleccionada. **Criterio:** el registro explícito y la transición terminal ocurren dentro del authorization store de `S5.1`, bajo el mismo `assertMain`, lock y transacción; no existe método, archivo o store alternativo. Falsificable: persistencia terminal fuera de `main-store/store.mjs` o visibilidad de un solo efecto. **Autoridad:** Option B y floor de autoridad única de Main.
+- `derivable` — qué acepta el store como selección. **Criterio:** un `parked-decision-response-v1` validado cuyo binding coincide con autorización PENDING, `parked_decision_id`, snapshot y `option_id` enumerado; ningún booleano o assertion del caller. Falsificable por mismatch individual de cada binding. **Autoridad:** responsabilidad aprobada 3.
+- `derivable` — cómo responde un replay. **Criterio:** replay byte-idéntico es idempotente; opción, digest, origen o revisión distintos fallan cerrado sin segunda transición. Falsificable: dos efectos terminales para el mismo binding. **Autoridad:** idempotencia existente de `S5.1` y responsabilidad aprobada 3.
+
+### Módulo 5.8.1 — Terminal response bajo Main
+
+- [ ] Tarea 5.8.1.1 — RED: caller sin autoridad, authorization no PENDING, expirada o de origen distinto no registra respuesta ni muta bytes.
+- [ ] Tarea 5.8.1.2 — GREEN: extender el store canónico para validar y persistir la respuesta seleccionada bajo `assertMain`.
+- [ ] Tarea 5.8.1.3 — REFACTOR: mantener una sola transición terminal y una sola validación contra schemas canónicos.
+
+### Módulo 5.8.2 — Binding criptográfico e idempotencia
+
+- [ ] Tarea 5.8.2.1 — RED: mismatch de decisión, opción, snapshot, autorización o revisión falla cerrado nombrando el binding rechazado.
+- [ ] Tarea 5.8.2.2 — RED: replay exacto es idempotente; replay con otra opción o bytes produce cero efectos adicionales.
+- [ ] Tarea 5.8.2.3 — GREEN/REFACTOR: ligar la respuesta terminal al digest canónico y al registro de autorización sin aceptar assertions del caller, y eliminar todo binding duplicado.
+
+### Módulo 5.8.3 — Compatibilidad y owner único del authorization store
+
+- [ ] Tarea 5.8.3.1 — RED: autorizaciones MERGE/START_JORNADA existentes conservan validación y transiciones sin respuesta estacionada.
+- [ ] Tarea 5.8.3.2 — GREEN: consumir `parked-decision-response-v1` desde `S5.7` sin modificar schema, registro, invariantes ni fixtures, y sin migrar registros previos.
+- [ ] Tarea 5.8.3.3 — REFACTOR: ejecutar el main-store contra el contrato registrado y verificar ausencia de shadow store, segundo writer, authority o ruta de caller assertion.
+
+**Criterios de aceptación de S5.8** — todos deben pasar para cerrar:
+
+- [ ] Sólo Main, por el authorization store canónico de `S5.1`, registra una respuesta seleccionada
+- [ ] El registro `parked-decision-response-v1` y la transición terminal de la autorización se persisten atómicamente bajo el mismo `assertMain`, lock y transacción
+- [ ] La respuesta liga criptográficamente `authorization_id`, `parked_decision_id`, exactamente un `option_id` enumerado, snapshot/digest de Sesión y revisión
+- [ ] La opción debe existir en la decisión estacionada validada; texto o assertions del caller no cuentan
+- [ ] Autorización no PENDING, expirada, consumida o de origen distinto falla cerrado sin mutación
+- [ ] Cada mismatch de binding falla cerrado y nombra el valor rechazado
+- [ ] Replay exacto es idempotente y replay divergente produce cero efectos adicionales
+- [ ] No existe segundo store, archivo sombra, segundo writer, método de autoridad ni persistencia fuera de `main-store/store.mjs`
+- [ ] No existe semántica terminal sólo en `extensions` ni assertion del caller que sustituya el registro versionado
+- [ ] `S5.8` consume el schema de `S5.7` sin modificar `contracts/**`, `schemas/**`, `test/contracts/**` ni fixtures
+- [ ] MERGE y START_JORNADA existentes conservan compatibilidad sin migración
+- [ ] `S5.8` no implementa ledger, contaminación, selección independiente ni retoma de `S5.5`
+- [ ] `bun test test/main-store.test.mjs` pasa completo contra el contrato registrado de `S5.7` y `bun test` no introduce fallos nuevos
+- [ ] El diff no toca ninguna ruta fuera del `Área` ni ninguna del `Prohibido`
+
+**Forecast:** 280–390 líneas. Cabe en un cambio revisable; cualquier migración, escritura fuera de la transacción atómica o segundo borde de autoridad vuelve a bloquear y escalar.
 
 Las responsabilidades legacy de Telegram Delivery y continuación que aún no tienen límite de un PR permanecen sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).

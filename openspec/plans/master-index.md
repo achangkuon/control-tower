@@ -1,14 +1,16 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-10 contra `origin/master@e82f4ae`, los planes canónicos y la autoridad aceptada [Remote Control and Control Tower Complementarity](../../../../remote-control/openspec/decisions/remote-control-and-control-tower.md).
+> Última reconciliación: 2026-08-10 contra `origin/master@d114677`, los planes canónicos, la autoridad aceptada [Remote Control and Control Tower Complementarity](../../../../remote-control/openspec/decisions/remote-control-and-control-tower.md) y la decisión del maintainer de separar los contratos prerrequisito de `S5.5`.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md).
 
 ## 📍 Punto de retoma
 
-`S5.4` está ✅ COMPLETO y publicado en `origin/master`: comportamiento `976b8d0` + `75549a7`, cierre documental `f9f2869` y reconciliación final `e82f4ae`. Verificación: 9/9 Tareas, 15/15 criterios, `bun test test/escalation` 16/0/78 y suite completa 569/0/3274.
+`S5.4` está ✅ COMPLETO y publicado en `origin/master`: comportamiento `976b8d0` + `75549a7`, cierre documental `f9f2869` y reconciliación final `d114677`. Verificación: 9/9 Tareas, 15/15 criterios, `bun test test/escalation` 16/0/78 y suite completa 569/0/3274.
 
-El siguiente nodo ejecutable es `S5.5` 🟢 LISTO. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193 y la decisión estacionada 8195; `S5.3` queda bloqueada transitivamente.
+El maintainer resolvió que los contratos canónicos faltantes de `S5.5` viven en tres Sesiones prerrequisito, no adentro de `S5.5`: `S5.6` snapshot/parser → `S5.7` decisión/respuesta → `S5.8` binding bajo autoridad de `S5.1`. Para `S5.8` eligió Option B: registro explícito y transición terminal atómicos dentro del mismo main-store. El siguiente nodo ejecutable es `S5.6` 🟢 LISTO; `S5.7`, `S5.8` y `S5.5` están 📋 PLANIFICADO.
+
+`S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193 y la decisión estacionada 8195; `S5.3` queda bloqueada transitivamente.
 
 `S8.7` ya tiene resueltos su bot/plugins separados, proyección redactada y TTL de ocho horas; sigue 🔴 BLOQUEADO por la decisión de seguridad abierta sobre quién origina `trustedBindingProvider` en producción. La declaración de release conserva ese mismo bloqueo.
 
@@ -21,7 +23,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 
 ## 📊 Estado de un vistazo
 
-**Avance global**: 2/9 Planes cerrados (22%) · Sesiones cerradas en planes activos: 18/37 (49%). Cálculo auditable: P1 `10/19` + P4 `1/4` + P5 `2/5` + P7 `0/1` + P8 `5/8`; P2 se excluye porque su STATUS declara trabajo pendiente sin Sesiones enumeradas, por lo que no tiene denominador de Plan derivable.
+**Avance global**: 2/9 Planes cerrados (22%) · Sesiones cerradas en planes activos: 18/40 (45%). Cálculo auditable: P1 `10/19` + P4 `1/4` + P5 `2/8` + P7 `0/1` + P8 `5/8`; P2 se excluye porque su STATUS declara trabajo pendiente sin Sesiones enumeradas, por lo que no tiene denominador de Plan derivable.
 
 | ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |
 |----|------|--------|---|------|-------|-----------|-----|
@@ -30,7 +32,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 | P2 | Contratos y registro de producto | 🔵 EN CURSO | — (responsabilidades restantes de Change B sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-2/STATUS.md) |
 | P3 | Workspace y orquestación | ✅ COMPLETO | 100% (4/4 S) | — | Main | — | [STATUS](plan-3/STATUS.md) |
 | P4 | Hosts y línea exclusiva | 🔵 EN CURSO | 25% (1/4 S) | — | Main | S4.2, S4.3, S4.4 | [STATUS](plan-4/STATUS.md) |
-| P5 | Entrega y continuación | 🔵 EN CURSO | 40% (2/5 S) | — | Main | S5.2, S5.3, S5.5 | [STATUS](plan-5/STATUS.md) |
+| P5 | Entrega y continuación | 🔵 EN CURSO | 25% (2/8 S) | — | Main | S5.2, S5.3, S5.5, S5.6, S5.7, S5.8 | [STATUS](plan-5/STATUS.md) |
 | P6 | Campañas multiproyecto | 📋 PLANIFICADO | — (sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-6/STATUS.md) |
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | S7.1 | [STATUS](plan-7/STATUS.md) |
 | P8 | Release instalable | 🔵 EN CURSO | 63% (5/8 S) | — | Maintainer | S8.7, S8.5, S8.6 | [STATUS](plan-8/STATUS.md) |

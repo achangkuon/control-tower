@@ -64,7 +64,10 @@ graph LR
   S33 --> S52
   S52 --> S53["S5.3 continuación · 🔴"]
   S51 --> S54["S5.4 ruteo de escalamiento · ✅"]
-  S54 --> S55["S5.5 decisión estacionada · 🟢"]
+  S54 --> S56["S5.6 snapshot de Sesión · 🟢"]
+  S56 --> S57["S5.7 decisión/respuesta · 📋"]
+  S57 --> S58["S5.8 binding de respuesta · 📋"]
+  S58 --> S55["S5.5 decisión estacionada · 📋"]
   S51 --> S87
   S53 --> S71["S7.1 conformidad · 📋"]
   S44 --> S71
@@ -85,32 +88,36 @@ graph LR
 | — | `S4.2` | Lanzamiento visible de raíz OpenCode | 🔴 BLOQUEADO | `S4.1` ✅, `S1.16` 🔴; ruta `design-tasks`, interfaz Herdr/OpenCode pendiente |
 | — | `S4.3` | Inspección, liveness y rehidratación segura | 🔴 BLOQUEADO | `S4.2` 🔴, `S1.16` 🔴; ruta `design-tasks` |
 | — | `S4.4` | Enforzamiento de epoch y failover exclusivo | 🔴 BLOQUEADO | `S4.3` 🔴, `S1.17` 🔴, `S1.18`/`S1.19` 📋; ruta `full-sdd` |
-| ✅ | `S5.4` | Ruteo de escalamiento fuera/en casa | ✅ COMPLETO | `S5.1` ✅; publicado en `origin/master` mediante `976b8d0`, `75549a7`, `f9f2869` y reconciliado en `e82f4ae`; 9/9 Tareas, 15/15 criterios. **No** depende de `S8.7` |
+| ✅ | `S5.4` | Ruteo de escalamiento fuera/en casa | ✅ COMPLETO | `S5.1` ✅; publicado en `origin/master` mediante `976b8d0`, `75549a7`, `f9f2869` y reconciliado en `d114677`; 9/9 Tareas, 15/15 criterios. **No** depende de `S8.7` |
 | — | `S5.2` | Entrega idempotente y post-check | 🔴 BLOQUEADO | `S4.1` ✅, `S3.3` ✅; recheck 8193 mantiene abiertos 1/3/5 y decisión 8195 estaciona el candidato NOT READY |
-| ▶ | `S5.5` | Decisión estacionada y continuación independiente | 🟢 LISTO | `S5.4` ✅ |
+| ▶ | `S5.6` | Contrato canónico de snapshot de Sesión | 🟢 LISTO | `S5.4` ✅; route `full-sdd` |
+| — | `S5.7` | Contratos canónicos de decisión estacionada y respuesta | 📋 PLANIFICADO | `S5.6`; route `full-sdd` |
+| — | `S5.8` | Binding de opción seleccionada en autoridad canónica | 📋 PLANIFICADO | `S5.7`; Option B resuelta; route `full-sdd` |
+| — | `S5.5` | Decisión estacionada y continuación independiente | 📋 PLANIFICADO | `S5.8` |
 | — | `S5.3` | Continuación | 🔴 BLOQUEADO | Bloqueo transitivo por `S5.2` |
 | — | `S8.7` | Puente Hermes/Telegram | 🔴 BLOQUEADO | Dependencias propias ✅ y decisiones Telegram resueltas; bloquea el inicializador confiable de producción pendiente |
 | 4 | `S7.1` | Conformidad de release | 📋 PLANIFICADO | `S5.3`, `S8.7`, `S5.5` |
 
-**Diecisiete Sesiones · 9 cerradas.** A las catorce anteriores se suman `S4.2`–`S4.4`,
-que cierran el denominador de Host Launcher sin cambiar la dependencia ya satisfecha de
-`S5.2` sobre el fence `S4.1`. `S3.4`, enumerada el 2026-08-04, existía porque `jornada-v1`
-era contrato **sin implementación**, y `policy/jornada.mjs`
-—que entregó `S3.2`— es un resolvedor puro que recibe la Jornada como argumento, no un store.
-Su alcance es **pasivo**: incrementa `jornada_revision` en toda transición, con lo que una
-Jornada terminada invalida por drift las entradas de capability ligadas a ella; no dispara
-revocación activa en cascada.
+**Veinte Sesiones · 9 cerradas.** `S5.6`–`S5.8` agregan tres unidades revisables y
+secuenciales entre `S5.4` y `S5.5`: snapshot/parser canónico, contratos de decisión/respuesta
+y binding terminal bajo la autoridad exclusiva de `S5.1`. La separación fue aprobada por el
+maintainer porque expandir `S5.5` ad hoc o validar localmente duplicaba contratos y autoridad.
 
-De las trece anteriores, once ya estaban enumeradas más dos nuevas — `S3.3`, que estaba
-declarada como dependencia de `S5.1` y `S5.2` en
-[`autonomous-v2-role-routed-continuation`](../changes/autonomous-v2-role-routed-continuation/tasks.md)
-pero no figuraba en ningún plan ni en este grafo, y `S5.5`, que es la Sesión que hace la
+Las tres Sesiones nuevas no implementan ledger, contaminación, selección de trabajo ni retoma:
+entregan contratos estables que `S5.5` consume. `S5.5` sigue siendo la Sesión que hace la
 planificación **diferible**: registra la decisión que no se puede derivar, declara qué
 Sesiones quedan contaminadas, sigue con las independientes y retoma desde el checkpoint.
 
+`S3.4`, enumerada el 2026-08-04, existía porque `jornada-v1` era contrato **sin implementación**,
+y `policy/jornada.mjs` —que entregó `S3.2`— es un resolvedor puro que recibe la Jornada como
+argumento, no un store. Su alcance es **pasivo**: incrementa `jornada_revision` en toda
+transición, con lo que una Jornada terminada invalida por drift las entradas de capability
+ligadas a ella; no dispara revocación activa en cascada.
+
 `S7.1` pasa a depender de `S5.5` en vez de `S5.4`: verificar que el escalamiento **sale**
 no alcanza como conformidad de release si la Torre igual se queda esperando la respuesta.
-`S5.5` depende de `S5.4`, así que la cobertura de `S5.4` queda incluida.
+`S5.5` depende transitivamente de `S5.4` a través de `S5.6`–`S5.8`, así que la cobertura
+de `S5.4` queda incluida.
 
 `S0.3` cerró el 2026-08-01 en `9595b92`. Con eso, la contradicción entre specs sobre si el
 puente puede transportar un callback de merge **ya no existe**. La decisión aceptada de
@@ -130,9 +137,9 @@ cerrado y exige una solicitud/autorización nueva.
 
 La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas; no se declara como un número fijo.
 
-`S4.1` y `S5.4` están ✅ COMPLETO; `S5.4` está publicado y reconciliado en `origin/master@e82f4ae`. `S4.2`–`S4.4` esperan los adapters lifecycle de P1 y no son elegibles. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1/3/5 y `S5.3` queda bloqueada transitivamente. `S8.7` espera el inicializador confiable de producción.
+`S4.1` y `S5.4` están ✅ COMPLETO; `S5.4` está publicado y reconciliado en `origin/master@d114677`. `S4.2`–`S4.4` esperan los adapters lifecycle de P1 y no son elegibles. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1/3/5 y `S5.3` queda bloqueada transitivamente. `S8.7` espera el inicializador confiable de producción.
 
-**Capacidad de ejecución hoy: 1.** Sólo `S5.5` está 🟢 LISTO: depende de `S5.4` ✅, ocupa `escalation/**` después de su cierre y no comparte un recurso vivo con otra Sesión elegible. `S7.1` conserva sus dependencias en `S5.3`, `S8.7` y `S5.5`; cerrar `S5.4` no elimina esa cadena.
+**Capacidad de ejecución hoy: 1.** Sólo `S5.6` está 🟢 LISTO: depende de `S5.4` ✅ y toma en exclusividad el registro canónico de contratos. `S5.7`, `S5.8` y `S5.5` esperan la cadena; Option B ya resolvió la representación terminal y no queda un bloqueo de maintainer en esa hebra. `S7.1` conserva sus dependencias en `S5.3`, `S8.7` y `S5.5`.
 
 La planificación adelantada conserva el techo declarado de dos Sesiones. El siguiente cierre de cada hebra debe volver a derivar capacidad y contaminación desde el grafo vigente, no desde esta fotografía.
 
