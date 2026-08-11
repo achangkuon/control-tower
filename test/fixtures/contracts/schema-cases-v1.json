@@ -32,6 +32,26 @@
     "source_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "content_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
   },
+  "sessionPlanSnapshot": {
+    "schema": "session-plan-snapshot",
+    "schema_version": 1,
+    "source": {
+      "digest_mode": "raw-bytes",
+      "content_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "snapshot_digest": "sha256:4b5b25e4d6a3f2fc742284c2ead405596505bca47bd53489b034d8b7bcc4628f",
+    "target": {
+      "session_id": "S5.6",
+      "title": "Canonical identity",
+      "status": "LISTO",
+      "depends_on": [],
+      "area": ["contracts/session-plan-snapshot.mjs"],
+      "resource": "canonical contract registry",
+      "decisions": [],
+      "acceptance_criteria": [{"checked": false, "text": "Exact bytes remain authoritative."}]
+    },
+    "graph": {"local_session_ids": ["S5.6"], "external_session_ids": [], "edges": []}
+  },
   "planCatalog": {
     "schema": "plan-catalog",
     "schema_version": 1,

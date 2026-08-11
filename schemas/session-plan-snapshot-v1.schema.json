@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://control-tower.local/schemas/session-plan-snapshot-v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "schema_version", "source", "snapshot_digest", "target", "graph"],
+  "properties": {
+    "schema": {"const": "session-plan-snapshot"},
+    "schema_version": {"const": 1},
+    "source": {"$ref": "#/$defs/source"},
+    "snapshot_digest": {"$ref": "artifact-ref-v1.schema.json#/$defs/digest"},
+    "target": {"$ref": "#/$defs/target"},
+    "graph": {"$ref": "#/$defs/graph"}
+  },
+  "$defs": {
+    "sessionId": {"type": "string", "pattern": "^S[1-9][0-9]*\\.[1-9][0-9]*$"},
+    "sessionIds": {"type": "array", "items": {"$ref": "#/$defs/sessionId"}, "uniqueItems": true},
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["digest_mode", "content_digest"],
+      "properties": {
+        "digest_mode": {"const": "raw-bytes"},
+        "content_digest": {"$ref": "artifact-ref-v1.schema.json#/$defs/digest"}
+      }
+    },
+    "criterion": {
+      "type": "object", "additionalProperties": false,
+      "required": ["checked", "text"],
+      "properties": {"checked": {"type": "boolean"}, "text": {"type": "string", "minLength": 1}}
+    },
+    "contamination": {
+      "oneOf": [
+        {"type": "object", "additionalProperties": false, "required": ["state", "session_ids"], "properties": {"state": {"const": "none"}, "session_ids": {"type": "array", "maxItems": 0}}},
+        {"type": "object", "additionalProperties": false, "required": ["state", "session_ids"], "properties": {"state": {"enum": ["active", "historical"]}, "session_ids": {"type": "array", "$ref": "#/$defs/sessionIds", "minItems": 1}}}
+      ]
+    },
+    "decision": {
+      "oneOf": [
+        {"type": "object", "additionalProperties": false, "required": ["kind", "body", "criterion", "authority"], "properties": {"kind": {"const": "derivable"}, "body": {"type": "string", "minLength": 1}, "criterion": {"type": "string", "minLength": 1}, "authority": {"type": "string", "minLength": 1}}},
+        {"type": "object", "additionalProperties": false, "required": ["kind", "body", "classes", "resolution", "contamination"], "properties": {"kind": {"const": "escala"}, "body": {"type": "string", "minLength": 1}, "classes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["contrato visible del producto", "operaciones irreversibles", "migraciones o pérdida de datos", "API pública", "seguridad y permisos", "dinero, precios o cuotas", "expansión de alcance", "dependencias o evidencia contradictorias"]}}, "resolution": {"enum": ["open", "resolved"]}, "contamination": {"$ref": "#/$defs/contamination"}}}
+      ]
+    },
+    "target": {
+      "type": "object", "additionalProperties": false,
+      "required": ["session_id", "title", "status", "depends_on", "area", "resource", "decisions", "acceptance_criteria"],
+      "properties": {
+        "session_id": {"$ref": "#/$defs/sessionId"}, "title": {"type": "string", "minLength": 1},
+        "status": {"enum": ["PLANIFICADO", "LISTO", "EN CURSO", "BLOQUEADO", "DIFERIDO", "COMPLETO", "ARCHIVADO"]},
+        "depends_on": {"$ref": "#/$defs/sessionIds"}, "area": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "resource": {"type": "string", "minLength": 1}, "decisions": {"type": "array", "items": {"$ref": "#/$defs/decision"}},
+        "acceptance_criteria": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/criterion"}}
+      }
+    },
+    "edge": {"type": "object", "additionalProperties": false, "required": ["from", "to"], "properties": {"from": {"$ref": "#/$defs/sessionId"}, "to": {"$ref": "#/$defs/sessionId"}}},
+    "graph": {
+      "type": "object", "additionalProperties": false,
+      "required": ["local_session_ids", "external_session_ids", "edges"],
+      "properties": {"local_session_ids": {"type": "array", "$ref": "#/$defs/sessionIds", "minItems": 1}, "external_session_ids": {"$ref": "#/$defs/sessionIds"}, "edges": {"type": "array", "items": {"$ref": "#/$defs/edge"}}}
+    }
+  }
+}

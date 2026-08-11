@@ -1,6 +1,7 @@
 import { isAlias, isMap, isScalar, isSeq, parseDocument, visit } from "yaml"
 
 import { candidateRevision } from "./candidate-revision.mjs"
+import { sessionPlanSnapshotDigest } from "./session-plan-snapshot.mjs"
 import { failContract } from "./errors.mjs"
 import { validatorFor } from "./schema-registry.mjs"
 
@@ -66,6 +67,33 @@ const hasManifestRuntimeState = (value) => {
   const runtimeFields = ["session_id", "worktree", "lease", "lock", "attempt", "heartbeat", "host_epoch"]
   return runtimeFields.some((field) => Object.hasOwn(value, field))
 }
+const assertSessionSnapshot = (value) => {
+  if (sessionPlanSnapshotDigest(value) !== value.snapshot_digest) invalid("Session snapshot digest must match its frozen identity")
+  const local = new Set(value.graph.local_session_ids), external = new Set(value.graph.external_session_ids)
+  if ([...local].some((id) => external.has(id))) invalid("Session graph identity domains must be disjoint")
+  if (!local.has(value.target.session_id) || external.has(value.target.session_id)) invalid("Session snapshot target must be plan-local")
+  const nodes = new Set([...local, ...external]), edgeKeys = new Set(), inbound = []
+  const adjacency = new Map([...nodes].map((id) => [id, []]))
+  for (const edge of value.graph.edges) {
+    if (!nodes.has(edge.from) || !nodes.has(edge.to)) invalid("Session graph edge endpoint must resolve")
+    const key = `${edge.from}\0${edge.to}`
+    if (edgeKeys.has(key)) invalid("Session graph edges must be unique")
+    edgeKeys.add(key); adjacency.get(edge.from).push(edge.to)
+    if (edge.to === value.target.session_id) inbound.push(edge.from)
+  }
+  const visiting = new Set(), visited = new Set()
+  const walk = (id) => {
+    if (visiting.has(id)) invalid("Session dependency graph must be acyclic")
+    if (visited.has(id)) return
+    visiting.add(id); for (const next of adjacency.get(id)) walk(next); visiting.delete(id); visited.add(id)
+  }
+  for (const id of nodes) walk(id)
+  if (JSON.stringify([...new Set(inbound)].sort()) !== JSON.stringify([...value.target.depends_on].sort())) invalid("Target dependencies must equal inbound graph edges")
+  const contamination = value.target.decisions.flatMap((decision) => decision.kind === "escala" ? decision.contamination.session_ids : [])
+  if (contamination.some((id) => !nodes.has(id))) invalid("Decision contamination must resolve in the Session graph")
+  if (new Set(value.target.decisions.map(({ body }) => body)).size !== value.target.decisions.length) invalid("Decision bodies must be unique")
+  if (new Set(value.target.acceptance_criteria.map(({ text }) => text)).size !== value.target.acceptance_criteria.length) invalid("Acceptance criteria must be unique")
+}
 const invariants = Object.freeze({
   projectRegistry: (value) => {
     assertUnique(value.projects, "project_id", "Project IDs must be unique")
@@ -92,6 +120,7 @@ const invariants = Object.freeze({
   candidateRevision: (value) => {
     if (candidateRevision(value) !== value.candidate_revision) invalid("Candidate revision must match its frozen identity")
   },
+  sessionPlanSnapshot: assertSessionSnapshot,
 })
 
 export const validate = (schemaName, input) => {

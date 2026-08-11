@@ -4,6 +4,8 @@ import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { validate } from "../../contracts/validate.mjs"
+import { schemaNames } from "../../contracts/schema-registry.mjs"
+import { sessionPlanSnapshotDigest } from "../../contracts/session-plan-snapshot.mjs"
 import { freezeCandidate, isCurrentCandidate, successorCandidate } from "../../contracts/candidate-revision.mjs"
 
 const fixtures = JSON.parse(readFileSync(
@@ -21,6 +23,11 @@ const errorCode = (operation) => {
 }
 
 describe("V1 schema boundary", () => {
+  test("registers and fixtures the session snapshot identity contract", () => {
+    expect(schemaNames).toContain("sessionPlanSnapshot")
+    expect(fixtures.sessionPlanSnapshot).toBeDefined()
+  })
+
   for (const [name, payload] of Object.entries(fixtures)) {
     test(`${name} accepts its declared contract`, () => {
       const result = validate(name, payload)
@@ -149,6 +156,32 @@ describe("duplicate-safe structured parsing", () => {
 })
 
 describe("cross-field schema invariants", () => {
+  test("session snapshot identity and references fail through CT_SCHEMA_INVALID", () => {
+    const fixture = fixtures.sessionPlanSnapshot
+    const reseal = (mutate) => {
+      const value = structuredClone(fixture)
+      mutate(value)
+      value.snapshot_digest = sessionPlanSnapshotDigest(value)
+      return value
+    }
+    const escalation = {
+      kind: "escala", body: "Resolve authority", classes: ["seguridad y permisos"], resolution: "open",
+      contamination: { state: "active", session_ids: ["S9.9"] },
+    }
+    const invalidSnapshots = [
+      { ...fixture, snapshot_digest: `sha256:${"0".repeat(64)}` },
+      reseal((value) => value.graph.external_session_ids.push("S5.6")),
+      reseal((value) => { value.graph.local_session_ids = ["S5.5"]; value.graph.external_session_ids = ["S5.6"] }),
+      reseal((value) => value.graph.edges.push({ from: "S9.9", to: "S5.6" })),
+      reseal((value) => { value.graph.local_session_ids.push("S5.5"); value.target.depends_on.push("S5.5") }),
+      reseal((value) => { value.target.decisions = [escalation] }),
+      reseal((value) => value.target.acceptance_criteria.push(structuredClone(value.target.acceptance_criteria[0]))),
+      reseal((value) => { value.target.decisions = [{ ...escalation, contamination: { state: "none", session_ids: [] } }, { ...escalation, contamination: { state: "none", session_ids: [] } }] }),
+      reseal((value) => { value.graph.local_session_ids.push("S5.5"); value.target.depends_on.push("S5.5"); value.graph.edges.push({ from: "S5.5", to: "S5.6" }, { from: "S5.6", to: "S5.5" }) }),
+    ]
+    for (const value of invalidSnapshots) expect(errorCode(() => validate("sessionPlanSnapshot", value))).toBe("CT_SCHEMA_INVALID")
+  })
+
   test("freezes distinct candidate bytes, rejects stale identity, links successors, and runs an effect once", () => {
     const input = {
       schema: "candidate-revision", schema_version: 1, project_id: "project-a", plan_id: "plan-a", session_id: "S5.1",
