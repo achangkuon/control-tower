@@ -8,11 +8,13 @@
 
 `S5.6` está ✅ COMPLETO y publicado en `origin/master@75ddcf9`: implementación `20e06c5` + `8cf7aab` + `10ae5e0` + `4de42fe`, evidencia `f0103fd`, 10/10 Tareas, 10/10 criterios, focused 75/0/348 y suite completa 588/0/3452. El cambio quedó archivado y la spec canónica sincronizada.
 
-El próximo nodo ejecutable es `S5.7` 🟢 LISTO. Después siguen `S5.8` y `S5.5`, ambas 📋 PLANIFICADO. Option B permanece resuelta para `S5.8`: registro explícito y transición terminal atómicos dentro del mismo main-store.
+`S5.7` sigue 🟢 LISTO y es el próximo nodo ejecutable de la hebra P5. Después `S5.8` y `S5.5`, ambas 📋 PLANIFICADO; Option B permanece resuelta para `S5.8`.
 
-`S5.2` sigue 🔴 BLOQUEADO por los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193 y la decisión estacionada 8195; `S5.3` conserva el bloqueo transitivo. `S8.7` sigue 🔴 BLOQUEADO por el inicializador confiable de producción pendiente.
+**Pero la acción más barata disponible no es `S5.7`: es verificar si `S1.11` y `S1.12` siguen 🔴 BLOQUEADO de verdad.** Sus prerrequisitos `S1.9` y `S1.10` están ✅ COMPLETO y sus Tareas son «evidence record only», sin dependencia de código. Si el bloqueo es estado obsoleto, las dos pasan a 🟢 LISTO y la hebra P1→P4 abre en paralelo con P5 — capacidad 2 en vez de 1, con `Área` y `Recurso` disjuntos. Si es real, hay que enumerar qué la destraba.
 
-P4 conserva `S4.2`–`S4.4` detrás de `S1.16`–`S1.19`. Fuera de la transición derivada de `S5.7` a 🟢 LISTO, ningún estado ajeno a `S5.6` cambió en este cierre.
+`S5.2` sigue 🔴 BLOQUEADO por los hallazgos 1, 3 y 5 del recheck 8193 y la decisión estacionada 8195; `S5.3` conserva el bloqueo transitivo. `S8.7` sigue 🔴 BLOQUEADO por el inicializador confiable de producción pendiente.
+
+**Tres decisiones esperan al maintainer:** si `S3.5` y `S3.6` viven en P3 —lo que reabre un Plan cerrado—, qué se hace con el candidato estacionado de `S5.2`, y quién origina `trustedBindingProvider` en producción para `S8.7`.
 
 ### Auditoría de alcance del 2026-08-11
 
