@@ -1,7 +1,7 @@
 # Estado de implementación — Control Tower
 
 > Este documento mide **código**, no planificación. El [master-index](master-index.md) dice qué está planificado y qué Sesiones cerraron; este archivo dice qué existe, qué corre y qué está desplegado.
-> Medición histórica del inventario de módulos y de las pruebas: 2026-07-31 sobre `master` en `d072e509`, que integra `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`. **No se volvió a medir todo el código el 2026-08-01** — lo que se agregó ese día es la brecha 5, observada sobre `master@a4aa3a6`. La actualización del 2026-08-10 es acotada a los cuatro paths nuevos de `S5.4`; no reetiqueta las cifras históricas como medición global actual.
+> Medición histórica del inventario de módulos y de las pruebas: 2026-07-31 sobre `master` en `d072e509`, que integra `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`. **No se volvió a medir todo el código el 2026-08-01** — lo que se agregó ese día es la brecha 5, observada sobre `master@a4aa3a6`. Las actualizaciones del 2026-08-10 (`S5.4`) y 2026-08-11 (`S5.6`) son cortes acotados a sus paths verificados; no reetiquetan las cifras históricas como medición global actual.
 >
 > **Nota de vocabulario (2026-08-01):** la columna `Lane` de la tabla de módulos ya no nombra dos productos. Tras la [unificación](release-chain.md), `installable-v1` y `autonomous-v2` son afinidad de trabajo y nada más. El corte que sí sigue siendo real está en código: `bin/torre:28` rechaza capacidades con `CT_V2_ONLY`, y pasa a ser un flag opt-in apagado por defecto en vez de una frontera de producto.
 
@@ -32,7 +32,10 @@ Esto es exactamente lo que el manifest de `installable-v1` declara resolver: `mi
 | `mcp.mjs` | 437 | — legado | Superficie MCP. |
 | `bin/torre` | — | ambos | Punto de entrada. Delega `install\|diagnose\|upgrade\|rollback\|uninstall` a `install/lifecycle.mjs`; rechaza `launch-worker\|create-worker\|create-session\|create-worktree` con `CT_V2_ONLY`. |
 | `install/` | 185 | `installable-v1` | `lifecycle`, `active-pointer`, `version-store`. Entregado por `S8.2`. **Construido y probado, nunca usado** — lo adopta `S8.8`. |
-| `contracts/` | 322 | `autonomous-v2` | `schema-registry`, `canonicalize`, `artifact-ref`, `idempotency`, `validate`, `errors`. Entregado por P2 Change A. |
+| `contracts/` | 322 | `autonomous-v2` | Medición histórica: `schema-registry`, `canonicalize`, `artifact-ref`, `idempotency`, `validate`, `errors`. Entregado por P2 Change A. |
+| `contracts/session-plan-snapshot.mjs` | 191 | `autonomous-v2` | Parser canónico read-only de S5.6, ligado a bytes/digest exactos del plan; cierre técnico local `f0103fd`, publicación pendiente. |
+| `schemas/session-plan-snapshot-v1.schema.json` | 60 | `autonomous-v2` | Contrato cerrado y versionado de S5.6, registrado por la ruta canónica. |
+| `test/contracts/session-plan-snapshot.test.mjs` | 280 | `autonomous-v2` | 14 pruebas de identidad, gramática, rechazo, determinismo, aislamiento y testigos read-only de S5.6. |
 | `registry/` | 337 | `autonomous-v2` | `store`, `path`, `legacy-import`. Entregado por `S2.4` y `S2.5`. |
 | `main-store/` | 183 | `autonomous-v2` | `authority`, `store`. Entregado por P2 Change A. |
 | `escalation/request.mjs` | 30 | `autonomous-v2` | Emite solicitudes exactas mediante el authorization store canónico; no abre un segundo ledger. Entregado por `S5.4`, comportamiento `75549a7`, publicado en `origin/master`. |
@@ -69,7 +72,15 @@ La evidencia enfocada final es `bun test test/escalation` → 16 pass / 0 fail /
 
 Los dos commits de comportamiento y el cierre documental están publicados por `origin/master@e82f4ae`. Es una entrega de repositorio: no implica adopción del runtime ni implementación de transporte o autenticación remota. La afinidad `autonomous-v2` describe el área, no otro producto ni un despliegue.
 
-**Planificación reconciliada:** P4 queda en 25% (1/4 S), P5 en 40% (2/5 S) y el avance activo global en 18/37 Sesiones (49%). La cadena tiene 9/17 Sesiones cerradas. `S5.5` está 🟢 LISTO y es el siguiente nodo ejecutable. `S5.2` está 🔴 BLOQUEADO por los hallazgos 1/3/5 del recheck 8193 y la decisión estacionada 8195; `S5.3` queda transitivamente 🔴 BLOQUEADO. La cadena conserva `S7.1` detrás de `S5.3`, `S8.7` y `S5.5`.
+**Planificación reconciliada:** P4 queda en 25% (1/4 S), P5 en 38% (3/8 S) y el avance activo global en 19/40 Sesiones (48%). La cadena tiene 10/20 Sesiones cerradas. `S5.7` está 🟢 LISTO y es el siguiente nodo ejecutable; `S5.8` y `S5.5` continúan 📋 PLANIFICADO. `S5.2` está 🔴 BLOQUEADO por los hallazgos 1/3/5 del recheck 8193 y la decisión estacionada 8195; `S5.3` queda transitivamente 🔴 BLOQUEADO. La cadena conserva `S7.1` detrás de `S5.3`, `S8.7` y `S5.5`.
+
+## Corte actual de implementación — `S5.6`
+
+`S5.6` está ✅ COMPLETO en local y aún no publicado. Los límites de comportamiento son `20e06c5` (identidad), `8cf7aab` (corrección de evidencia), `10ae5e0` (parser canónico) y `4de42fe` (hardening read-only); `f0103fd` congela el verify PASS. El change completo quedó archivado en [`2026-08-11-s5-6-canonical-session-snapshot`](../changes/archive/2026-08-11-s5-6-canonical-session-snapshot/) y la spec normativa se sincronizó en [`session-plan-snapshot`](../specs/session-plan-snapshot/spec.md).
+
+La implementación agrega exactamente siete paths aprobados: schema, registro, validación, parser y tres superficies de prueba/fixture. El parser resuelve el grafo Plan 5 en dominios local y graph-only externo, conserva el contrato completo de la Sesión objetivo y rechaza drift, ambigüedad o referencias inconsistentes con `CT_SCHEMA_INVALID`. No importa `continuation/**`, Engram, DB, Tower, runtime ni writers.
+
+Verificación final: 31/31 escenarios, 10/10 Tareas y 10/10 criterios; `bun test test/contracts` 75/0/348 y `bun test` 588/0/3452. Los testigos de Plan 5, input CRLF, DB, WAL, SHM y Tower permanecieron byte-idénticos en éxito y rechazo. Runtime harness: N/A, biblioteca pura sin adopción externa. Rollback normal, sin migración ni reparación de datos: revertir `4de42fe`, `10ae5e0`, `8cf7aab` y `20e06c5`.
 
 ## Brechas reales
 

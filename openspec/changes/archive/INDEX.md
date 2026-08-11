@@ -5,6 +5,7 @@ Ver la [regla de ejecución V1](../../plans/v1-execution-rule.md).
 
 | Fecha | Change | Evidencia |
 |---|---|---|
+| 2026-08-11 | `s5-6-canonical-session-snapshot` | tasks 10/10; scenarios 31/31; acceptance 10/10; `verify-report.md`: PASS |
 | 2026-07-31 | `installable-v1-autonomous-v2-split` | tasks 7/7; `verify-report.md`: PASS WITH WARNINGS, 0 CRITICAL |
 | 2026-07-31 | `sdd-tower-legacy-import-preflight` | tasks 12/12; `verify-report.md`: pass |
 | 2026-07-31 | `sdd-tower-project-registry` | tasks 14/14; `verify-report.md`: pass |

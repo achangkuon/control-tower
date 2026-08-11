@@ -19,7 +19,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1`, y la cadena contractual `S5.4 → S5.6 → S5.7 → S5.8 → S5.5`. |
 | Outputs | F: authorization store, Telegram, validación Git/PR/check/SHA, entrega idempotente y post-check. G: planning horizon, reconciliación, apply/verify, Binding Delta y continuación del siguiente `slice_id`. Más el ruteo de escalamiento de `S5.4`, los contratos canónicos prerrequisito de `S5.6`–`S5.8` y la planificación diferible de `S5.5`. |
-| Roadmap | `S5.1` y `S5.4` están ✅ COMPLETO; `S5.4` está publicado y reconciliado en `origin/master@d114677`. `S5.6` queda 🟢 LISTO; `S5.7`, `S5.8` y `S5.5` quedan 📋 PLANIFICADO por grafo. La representación terminal de `S5.8` quedó resuelta por el maintainer como registro explícito y atómico dentro del mismo main-store. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
+| Roadmap | `S5.1`, `S5.4` y `S5.6` están ✅ COMPLETO; `S5.6` cerró técnicamente en local y todavía no fue publicado. `S5.7` queda 🟢 LISTO; `S5.8` y `S5.5` continúan 📋 PLANIFICADO por grafo. La representación terminal de `S5.8` quedó resuelta por el maintainer como registro explícito y atómico dentro del mismo main-store. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
 
 ## Grafo de dependencias
@@ -30,8 +30,8 @@ graph LR
   S33["S3.3 capability registry · ✅"] --> S51
   S34["S3.4 Jornada · ✅"] --> S51
   S51 --> S54["S5.4 ruteo · ✅"]
-  S54 --> S56["S5.6 snapshot de Sesión · 🟢"]
-  S56 --> S57["S5.7 decisión/respuesta · 📋"]
+  S54 --> S56["S5.6 snapshot de Sesión · ✅"]
+  S56 --> S57["S5.7 decisión/respuesta · 🟢"]
   S57 --> S58["S5.8 binding de respuesta · 📋"]
   S58 --> S55["S5.5 continuación diferible · 📋"]
   S41["S4.1 fence hosts · ✅"] --> S52["S5.2 entrega · 🔴"]
@@ -435,7 +435,7 @@ Sesiones sin decisión explícita.
 
 ## Sesión 5.6 — Contrato canónico de snapshot de Sesión
 
-**Estado:** 🟢 LISTO — `S5.4` está ✅ COMPLETO y el maintainer aprobó que el contrato viva en una Sesión prerrequisito, no dentro de `S5.5`.
+**Estado:** ✅ COMPLETO — cierre técnico local verificado el 2026-08-11. El contrato quedó implementado, verificado y archivado; todavía no fue publicado.
 
 **Depende de:** `S5.4` ✅
 
@@ -447,7 +447,11 @@ Sesiones sin decisión explícita.
 
 **Route:** `full-sdd` — contrato visible y parser canónico nuevo; proposal/spec/design deben fijar la representación sin ampliar la responsabilidad aprobada. **Autoridad:** decisión del maintainer del 2026-08-10 y readiness técnica Engram 8261.
 
-**Runtime y rollback:** biblioteca pura, sin adopción por runtime ni mutación de estado vivo. Rollback por revert del commit de esta Sesión, retirando en el mismo límite schema, registro, parser y fixtures.
+**Cierre técnico local:** comportamiento en `20e06c5`, corrección acotada en `8cf7aab`, parser canónico en `10ae5e0` y hardening read-only en `4de42fe`. La evidencia independiente quedó congelada por `f0103fd` en [`verify-report.md`](../../changes/archive/2026-08-11-s5-6-canonical-session-snapshot/verify-report.md): 31/31 escenarios, 10/10 Tareas y 10/10 criterios. Verificación final: `bun test test/contracts` → 75 pass / 0 fail / 348 expectations; `bun test` → 588 pass / 0 fail / 3452 expectations.
+
+**Scope y testigos read-only:** el diff de implementación toca exactamente los siete paths aprobados y ninguno del `Prohibido`. Plan 5, input CRLF, DB, WAL, SHM y Tower permanecieron byte-idénticos en éxito y rechazo; el parser sólo importa canonicalización, errores y validación canónica, sin fallback narrativo, runtime ni writer. Runtime harness: **N/A**, biblioteca pura sin adopción externa ni estado vivo.
+
+**Rollback:** revertir en orden `4de42fe`, `10ae5e0`, `8cf7aab` y `20e06c5`. No hay migración, snapshot persistido, reparación de datos ni estado runtime que revertir.
 
 **Decisiones:**
 
@@ -458,41 +462,41 @@ Sesiones sin decisión explícita.
 
 ### Módulo 5.6.1 — Identidad y schema del snapshot
 
-- [ ] Tarea 5.6.1.1 — RED: fijar casos para bytes/digest exactos, drift de un byte, encoding inválido y campos obligatorios ausentes.
-- [ ] Tarea 5.6.1.2 — GREEN: implementar `session-plan-snapshot-v1` con identidad inmutable y referencias cerradas a Sesiones.
-- [ ] Tarea 5.6.1.3 — REFACTOR: reutilizar `digestArtifact` y eliminar cualquier digest o lista de campos duplicada.
+- [x] Tarea 5.6.1.1 — RED: fijar casos para bytes/digest exactos, drift de un byte, encoding inválido y campos obligatorios ausentes.
+- [x] Tarea 5.6.1.2 — GREEN: implementar `session-plan-snapshot-v1` con identidad inmutable y referencias cerradas a Sesiones.
+- [x] Tarea 5.6.1.3 — REFACTOR: reutilizar `digestArtifact` y eliminar cualquier digest o lista de campos duplicada.
 
 ### Módulo 5.6.2 — Parser único del contrato de Sesión
 
-- [ ] Tarea 5.6.2.1 — RED: cubrir grafo, `Área`, `Recurso`, `Decisiones`, criterios binarios y contaminación semántica contra fixtures representativos.
-- [ ] Tarea 5.6.2.2 — RED: ambigüedad, duplicados, referencias inexistentes o formato parcial fallan cerrado y no producen snapshot.
-- [ ] Tarea 5.6.2.3 — GREEN: implementar `contracts/session-plan-snapshot.mjs` sin importar `continuation/**` ni leer engram.
-- [ ] Tarea 5.6.2.4 — REFACTOR: ordenar salidas canónicamente y probar determinismo sobre los mismos bytes.
+- [x] Tarea 5.6.2.1 — RED: cubrir grafo, `Área`, `Recurso`, `Decisiones`, criterios binarios y contaminación semántica contra fixtures representativos.
+- [x] Tarea 5.6.2.2 — RED: ambigüedad, duplicados, referencias inexistentes o formato parcial fallan cerrado y no producen snapshot.
+- [x] Tarea 5.6.2.3 — GREEN: implementar `contracts/session-plan-snapshot.mjs` sin importar `continuation/**` ni leer engram.
+- [x] Tarea 5.6.2.4 — REFACTOR: ordenar salidas canónicamente y probar determinismo sobre los mismos bytes.
 
 ### Módulo 5.6.3 — Registro y frontera read-only
 
-- [ ] Tarea 5.6.3.1 — RED: el schema sin entrada en `schemaFiles`, invariante y fixture se considera incompleto.
-- [ ] Tarea 5.6.3.2 — GREEN: registrar el schema, sumar invariantes cross-field y casos válidos/inválidos al fixture compartido.
-- [ ] Tarea 5.6.3.3 — REFACTOR: verificar con testigos de bytes que parsear y validar no muta plan, DB, WAL, SHM ni estado de Torre.
+- [x] Tarea 5.6.3.1 — RED: el schema sin entrada en `schemaFiles`, invariante y fixture se considera incompleto.
+- [x] Tarea 5.6.3.2 — GREEN: registrar el schema, sumar invariantes cross-field y casos válidos/inválidos al fixture compartido.
+- [x] Tarea 5.6.3.3 — REFACTOR: verificar con testigos de bytes que parsear y validar no muta plan, DB, WAL, SHM ni estado de Torre.
 
 **Criterios de aceptación de S5.6** — todos deben pasar para cerrar:
 
-- [ ] El snapshot liga bytes exactos y digest raw-bytes; un byte de drift lo invalida
-- [ ] El contrato expone grafo, `Área`, `Recurso`, `Decisiones`, criterios binarios y contaminación semántica
-- [ ] Ausencia, duplicado, referencia inexistente o ambigüedad falla cerrado sin snapshot parcial
-- [ ] El parser no lee engram ni ninguna fuente narrativa
-- [ ] No se importa, modifica ni duplica el parser privado de `continuation/**`
-- [ ] Los mismos bytes producen bytes canónicos idénticos y el mismo digest
-- [ ] `session-plan-snapshot-v1` está registrado en `schemaFiles`, validado por el camino canónico y cubierto por fixture
-- [ ] Parser y validación son read-only, verificados por testigos de bytes en éxito y rechazo
-- [ ] `bun test test/contracts` pasa completo y `bun test` no introduce fallos nuevos
-- [ ] El diff no toca ninguna ruta fuera del `Área` ni ninguna del `Prohibido`
+- [x] El snapshot liga bytes exactos y digest raw-bytes; un byte de drift lo invalida
+- [x] El contrato expone grafo, `Área`, `Recurso`, `Decisiones`, criterios binarios y contaminación semántica
+- [x] Ausencia, duplicado, referencia inexistente o ambigüedad falla cerrado sin snapshot parcial
+- [x] El parser no lee engram ni ninguna fuente narrativa
+- [x] No se importa, modifica ni duplica el parser privado de `continuation/**`
+- [x] Los mismos bytes producen bytes canónicos idénticos y el mismo digest
+- [x] `session-plan-snapshot-v1` está registrado en `schemaFiles`, validado por el camino canónico y cubierto por fixture
+- [x] Parser y validación son read-only, verificados por testigos de bytes en éxito y rechazo
+- [x] `bun test test/contracts` pasa completo y `bun test` no introduce fallos nuevos
+- [x] El diff no toca ninguna ruta fuera del `Área` ni ninguna del `Prohibido`
 
-**Forecast:** 320–400 líneas. Si el diseño demuestra que no cabe en un cambio revisable, vuelve al planner antes de apply; no se agrega un nivel.
+**Resultado de workload:** diff final de implementación 626 adiciones + 1 eliminación en los siete paths aprobados. Los límites conductuales fueron 338, 290 y 49 líneas authored respectivamente; cada uno quedó por debajo de 400 y es revertible de forma independiente.
 
 ## Sesión 5.7 — Contratos canónicos de decisión estacionada y respuesta
 
-**Estado:** 📋 PLANIFICADO — espera `S5.6`, que posee el snapshot al que ambos contratos quedan ligados.
+**Estado:** 🟢 LISTO — `S5.6` está ✅ COMPLETO y no queda otra dependencia ni decisión abierta para iniciar esta Sesión.
 
 **Depende de:** `S5.6`
 
