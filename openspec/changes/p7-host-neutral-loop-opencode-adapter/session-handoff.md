@@ -1,12 +1,12 @@
-# P7 Session Handoff — Planning Complete, Apply Blocked
+# P7 Session Handoff — Bounded Apply Contract Approved
 
 > Terminology: P6 and P7 in this migrated document are legacy mechanism identifiers. P7 means `p7-host-neutral-loop-opencode-adapter`; neither value denotes positional Plan P6 or Plan P7.
 
 ## Current decision
 
-P7 planning is complete through tasks in hybrid storage, but apply remains blocked. P6 is merged through PRs #38–#45, closing at `e16d94b`; its historical `apply-progress.md` remains untouched. Do not begin implementation until the independent S1.11 `reconciliation.md` is completed and approved and the P7 chain topology is selected. Native `apply-ready` does not bypass this gate.
+P7 planning is complete through tasks in hybrid storage. S1.11 defines a maintainer-approved bounded apply contract, explicitly not production readiness, tied to the frozen candidate by Engram observation 8423. P6 is merged through PRs #38–#45, closing at `e16d94b`; its historical `apply-progress.md` remains untouched. Do not begin implementation until the P7 chain topology is selected.
 
-P7 depends only on merged P6, not Change A. Preserve both paths—`P6 → P7 → P8 → Change E` and `A → B/C → D → Change E`—without an A→P7/P8 edge.
+The contract selects Option A: Host Launcher / Change E injects an opaque consumer capability carrying non-consuming peek, immutable proven root identity, and validated `binding_epoch`; P7 consumes it and fails closed on absence or drift. P7 must not import `core.mjs`, `mcp.mjs`, or SQLite, expose a second/public continuation API, or manufacture provider authority. P7 depends only on merged P6, not Change A. Preserve both paths—`P6 → P7 → P8 → Change E` and `A → B/C → D → Change E`—without an A→P7/P8 edge.
 
 ## Planned delivery chain
 
@@ -15,21 +15,17 @@ P7 depends only on merged P6, not Change A. Preserve both paths—`P6 → P7 →
 | 1 | S1.13 — root lifecycle and synchronous invalidation | 280–380 authored lines |
 | 2 | S1.14 — polling and wake safety | 320–400 authored lines |
 | 3 | S1.15 — OpenCode lifecycle conformance | 320–400 authored lines |
-| 4 | S1.16 — reconciled transport and wake composition | 240–380 authored lines; provisional |
+| 4 | S1.16 — trusted consumer transport and wake composition | 240–380 authored lines |
 
-Planned order: **S1.13 → S1.14 → S1.15 → provisional S1.16**.
+Planned order: **S1.13 → S1.14 → S1.15 → S1.16**.
 
 The cumulative forecast is **1,160–1,560 authored added/deleted lines**, with every Sesión constrained to **≤400 authored lines**. The chain topology is still pending and must be selected before apply.
 
-## Next executable action after P6 merges
+## Next executable action
 
-Create and complete the reconciliation record at:
+Select the P7 chain topology. After that selection, S1.13 may begin with its first strict-TDD RED task under the bounded apply approval recorded in Engram observation 8423.
 
-`openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md`
-
-Re-read the merged P6 schema, Migration 005 checksum and manifest, continuation and capability surfaces, OpenCode lifecycle fixtures, trusted non-consuming peek transport, exact `promptAsync` envelope, legacy compatibility decision, and transient-polling compatibility. Record concrete file, symbol, commit, and test evidence; obtain approval; then select the P7 chain topology. Only after all three apply gates are satisfied may S1.13 begin with its first strict-TDD RED task.
-
-The record must also keep every project/plan/slice/assignment/jornada/session and host/plugin/root identity distinct; separate capability `binding_epoch`, Main-issued/Change-E-enforced `host_epoch`, and controller-local `generation`; and pin the assignment-bound in-container worktree, authorized base SHA, allowed branch, assignment, and session. Workspace Manager owns worktree lifecycle. Change E owns host lifecycle, heartbeat, stop proof, session naming, host-epoch enforcement, and exclusive failover. P7 owns neither boundary.
+R1/R2 close as consumer-conformance obligations across already-authorized P7 Sesiones. R3 lifecycle/root-classification evidence is deferred to existing S1.15. R4 pinned-envelope consumer evidence is deferred to existing S1.16, which does not own provider construction. Legacy automatic wake must remain available through a bounded, non-consuming, non-lossy compatibility route; legacy cases must not degrade to manual queue handling. Concrete Change E provider/injection implementation and proof remain later obligations, not evidence of S1.11 apply completion. No new Sesión is assigned here; if later provider work requires decomposition, stop for `planificador-granular`.
 
 ## Relevant artifacts
 
@@ -44,4 +40,4 @@ The record must also keep every project/plan/slice/assignment/jornada/session an
 
 ## Preservation statement
 
-This S1.9 amendment is documentation-only. It does not create a reconciliation record, implement P7, mutate runtime state, or grant worktree/host authority. The P7 normative specification, P6 historical apply progress, runtime/source/test files, and unrelated artifacts remain byte-for-byte unchanged.
+This S1.11 documentary transition records the maintainer's T1.11.1.3 bounded apply approval. It does not claim apply completion or production readiness, implement P7 or the Change E provider, mutate runtime state, or grant worktree/host authority. The P7 normative specification, P6 historical apply progress, runtime/source/test files, and unrelated artifacts remain byte-for-byte unchanged.

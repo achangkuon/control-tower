@@ -6,9 +6,9 @@
 
 P7 will add a transient, host-neutral polling state machine and make the OpenCode plugin a thin lifecycle and wake adapter. The controller owns one immutable root binding, one-shot scheduling, throttle-before-peek ordering, serialized wake attempts, bounded retries, and synchronous generation invalidation. The adapter owns OpenCode event classification and the `client.session.promptAsync` call. Neither layer owns SQLite, continuation transitions, delivery consumption, claims, or polling persistence.
 
-The baseline deliberately adds no polling witness and does not edit Migration 005, its checksum, its schema-5 manifest, or `polling_witness = 'UNAVAILABLE_BEFORE_P7'`. The implementation remains blocked until merged P6 and supported OpenCode behavior satisfy the reconciliation checklist in this design.
+The baseline deliberately adds no polling witness and does not edit Migration 005, its checksum, its schema-5 manifest, or `polling_witness = 'UNAVAILABLE_BEFORE_P7'`. S1.11 approves only a bounded apply contract, explicitly not production readiness.
 
-S1.11 keeps P7 blocked until its independent `reconciliation.md` is approved. Native `apply-ready` is insufficient. P7 depends only on merged P6—not Change A—and preserves both DAG paths: `P6 → P7 → P8 → Change E` and `A → B/C → D → Change E` with the required C→D edge.
+The bounded contract requires fresh structural revalidation and exact maintainer approval before P7 apply. It selects Option A: Host Launcher / Change E injects an opaque consumer capability carrying non-consuming peek, immutable proven root identity, and validated `binding_epoch`; P7 consumes it and fails closed on absence or drift. P7 depends only on merged P6—not Change A—and preserves both DAG paths: `P6 → P7 → P8 → Change E` and `A → B/C → D → Change E` with the required C→D edge.
 
 ### Integrated identity and authority boundary
 
@@ -37,18 +37,19 @@ These decisions follow from the proposal and specification and are not reopened 
 | Adapter boundary | OpenCode-specific event fields and prompt payloads remain outside `host/loop.mjs`. The controller has no OpenCode, SQLite, core, MCP, or filesystem import. |
 | Delivery boundary | A wake prompt contains no domain payload, bearer, claim token, continuation evidence, or descriptor fields. The resumed agent uses the separately guarded continuation `receive` and `claim` routes. |
 
-### Provisional seams requiring post-P6 reconciliation
+### Approved bounded seam and deferred evidence ownership
 
-The following are intentionally not implementation guarantees. They MUST be resolved and recorded before apply:
+The bounded S1.11 contract establishes these implementation constraints:
 
-1. The concrete transport that implements the controller's `peek` port without importing `core.mjs` into the OpenCode adapter or opening SQLite there.
-2. How the OpenCode plugin and capability-enabled MCP process share stable `host_process_instance`, `plugin_instance`, proven `root_session_id`, and committed `binding_epoch` without accepting them from request or environment authority.
-3. The supported OpenCode event shapes that prove a parentless root, identify children, and identify deletion targets.
-4. The exact `promptAsync` request shape supported by the pinned OpenCode version.
-5. Whether the existing legacy queue waker remains required and, if so, its separately bounded non-lossy compatibility location.
-6. Confirmation that P6 rollback and quiescence behavior accepts the P7 transient baseline without a persisted polling witness.
+1. **Option A:** Host Launcher / Change E injects one opaque consumer capability carrying non-consuming peek, immutable proven root identity, and validated `binding_epoch`.
+2. P7 consumes that capability and fails closed on absence or byte drift. It does not import `core.mjs`, `mcp.mjs`, or SQLite, expose a second/public continuation API, or manufacture provider authority.
+3. R1/R2 are consumer-conformance obligations closed across the already-authorized P7 Sesiones. Concrete Change E provider/injection implementation and proof remain a later obligation.
+4. R3 supported OpenCode lifecycle/root-classification evidence is deferred to existing S1.15.
+5. R4 pinned `promptAsync` envelope consumer evidence is deferred to existing S1.16; S1.16 does not own provider construction.
+6. Legacy automatic wake is preserved through a bounded, non-consuming, non-lossy compatibility route. Legacy cases must not degrade to manual queue handling.
+7. P6 rollback and quiescence behavior accepts the transient baseline without a persisted polling witness.
 
-The current P7 worktree is schema-4-era code. The read-only P6 worktree currently demonstrates Migration 005 constants and the immutable `UNAVAILABLE_BEFORE_P7` constraint, while its inspected dispatcher and continuation receive surfaces still reflect the pre-merge implementation boundary. Those observations identify conflicts; they do not authorize P7 to code against the P6 worktree.
+None of the deferred evidence is pre-approval evidence for the bounded S1.11 contract, and none converts that contract into production readiness. No new Session is assigned here; later provider work that needs decomposition must stop for `planificador-granular`.
 
 ## Architecture
 
@@ -86,7 +87,7 @@ Root deletion/plugin dispose
 synchronous generation invalidation -> abort -> timer detach/cancel -> host cleanup
 ```
 
-The composition root may inject a P6-backed transport after reconciliation. The controller and OpenCode classifier do not know whether the transport is in-process, an MCP bridge, or another trusted local channel. That choice cannot weaken constructor-capability authority or expose a second public continuation API.
+Host Launcher / Change E injects the Option A opaque consumer capability. The controller and OpenCode classifier treat its transport and identity proof as opaque, fail closed on absence or drift, and cannot weaken constructor-capability authority, expose a second/public continuation API, or manufacture provider authority. Concrete provider/injection implementation and proof remain a later Change E obligation.
 
 ## Controller contract
 
@@ -121,7 +122,7 @@ loop.getState()                    // frozen, descriptor-free diagnostic snapsho
 | `trace` | Receives fixed event names and bounded safe metadata. Trace failures are swallowed. Raw descriptors, prompt content, tokens, request payloads, and raw host errors are forbidden. |
 | `now` | Returns finite, non-negative, monotonic integer milliseconds. Regression or malformed time pauses the cycle before peek and emits `poll.clock_invalid`. |
 
-The production transport may normalize P6's current candidate `{delivery: descriptor|null}` response to `descriptor|null`. That response shape remains provisional until P6 merges. The controller does not import or call the dispatcher itself.
+The injected consumer capability may normalize P6's `{delivery: descriptor|null}` response to `descriptor|null`. The controller does not import or call the dispatcher itself, and P7 never imports `core.mjs`, `mcp.mjs`, or SQLite.
 
 ### Policy
 
@@ -222,8 +223,7 @@ No `await` occurs in these steps. A callback queued before step 2 sees a stale g
 ```js
 createOpenCodeAdapter({
   client,
-  continuationTransport, // provisional P6-reconciled peek capability
-  rootIdentitySource,     // provisional reconciled proof source
+  continuationCapability, // injected Option A peek + immutable root + validated binding_epoch
   schedule,
   cancel,
   now,
@@ -232,7 +232,7 @@ createOpenCodeAdapter({
 })
 ```
 
-The production `TowerSpikePlugin` composition must fail closed with no polling when the trusted transport or root proof is unavailable. It must not fall back to legacy consuming `tower.receive`, direct SQLite, an environment-supplied root, or an unverified idle ID.
+The production `TowerSpikePlugin` consumer composition must fail closed with no polling when the injected capability is absent or its root/`binding_epoch` drifts. It must not fall back to legacy consuming `tower.receive`, direct SQLite, an environment-supplied root, an unverified idle ID, or manufactured provider authority. The separately bounded legacy automatic-wake compatibility route remains non-consuming and non-lossy.
 
 ### Event classification
 
@@ -267,20 +267,20 @@ client.session.promptAsync({
 })
 ```
 
-The wording and SDK envelope above are the preferred provisional shape and MUST be pinned by adapter RED tests after verifying the supported SDK. No descriptor field is interpolated. A prompt rejection propagates to the controller's retry policy; it does not consume, claim, acknowledge, or remove the descriptor.
+The wording and SDK envelope above define the bounded consumer mapping; S1.16 owns pinned adapter RED evidence against the supported SDK. No descriptor, token, evidence, sender, or domain field is interpolated. A prompt rejection propagates to the controller's retry policy; it does not consume, claim, acknowledge, or remove the descriptor.
 
 ### Trusted metadata and transport seam
 
-The adapter must not create a second authority path. The reconciled composition must satisfy all of these:
+Option A gives the adapter one injected opaque consumer capability. P7 must satisfy all of these consumer obligations:
 
-- `peek` reaches the existing argument-free, non-consuming continuation receive behavior under the same constructor-bound `Ctx` used by registration and claim.
-- The root ID used by lifecycle classification, controller binding, trusted metadata, receive, and `promptAsync` is byte-identical.
-- The binding epoch comes only from the accepted registration transition and is updated atomically in the capability provider, not from an event or request.
-- Default MCP behavior without both trusted metadata and process identity remains legacy-only and fail closed.
+- `peek` is non-consuming and reaches the existing argument-free continuation receive behavior through the injected capability.
+- The capability's immutable root ID is used byte-identically by lifecycle classification, controller binding, and `promptAsync`.
+- The capability's validated `binding_epoch` is never derived from an event, request, or environment and cannot be manufactured by P7.
+- Absence or drift fails closed; there is no consuming fallback.
 - Transport errors preserve their stable `CT_*` code for safe trace classification, while raw details and delivery descriptors remain private.
-- No adapter import reaches `core.mjs`, `mcp.mjs`, `bun:sqlite`, or a database path.
+- No adapter import reaches `core.mjs`, `mcp.mjs`, `bun:sqlite`, or a database path, and no second/public continuation API is exposed.
 
-If the merged architecture cannot satisfy this without a new core/MCP route, apply stops for a separate design amendment. P7 must not invent a second public continuation API during implementation.
+Concrete Change E provider/injection implementation and proof remain later obligations. If later provider work needs plan decomposition, stop for `planificador-granular`; do not assign a new Session in this design.
 
 ## Data ownership
 
@@ -338,7 +338,7 @@ Allowed attributes are `generation`, `state`, `reason`, `delay_ms`, `window_atte
 | trace throws | Swallow; state machine continues. | Repair trace sink independently. |
 | process crash | All transient polling state disappears; no witness is claimed. | Host restarts and proves/binds a new plugin lifecycle. |
 | already-issued prompt completes after disposal | Completion is ignored by controller and cannot schedule more work. | The resumed agent still must pass continuation identity and claim fences. |
-| legacy compatibility is required but unresolved | Apply remains blocked; do not silently remove or consume legacy messages. | Approve a separate non-lossy compatibility unit. |
+| legacy automatic wake regresses | Fail the consumer contract; do not consume, lose, or route legacy cases to manual queue handling. | Preserve the bounded non-consuming, non-lossy compatibility route and its regression evidence. |
 
 ## Candidate file changes
 
@@ -414,9 +414,9 @@ These are planning boundaries for later tasks, not PR creation instructions. Eac
 | S1.13 Root lifecycle and invalidation | Immutable bind, settle gating, one-shot generation scheduling, stale callback protection, synchronous idempotent disposal. | `host/loop.mjs`, `test/polling.test.mjs` | 280-380 | lifecycle/disposal subset of polling tests | Revert S1.13 controller/test blocks; no runtime adapter exists. |
 | S1.14 Polling and wake safety | Throttle-before-peek, deterministic empty/error polling, serialized wake, global attempt window, retries, success pause, exhaustion. | same | 320-400 | full `test/polling.test.mjs` | Revert S1.14 additions; S1.13 remains inert and reviewable. |
 | S1.15 OpenCode lifecycle conformance | Proven root/child mapping, CT-R5-S1..S5, synchronous root/plugin disposal, reusable host fixture. | `plugin/tower-spike.js`, `test/helpers/host-adapter-conformance.mjs`, `test/host-adapters.test.mjs` | 320-400 | host adapter suite | Revert S1.15 adapter/fixture changes; completed controller remains unused. |
-| S1.16 Reconciled transport and wake composition | Approved non-consuming transport, exact generic `promptAsync` mapping, capability identity continuity, fail-closed absence behavior, legacy decision. | adapter plus only approved seam files/tests | 240-380; split before RED if larger | adapter + isolated transport + fail-closed | Revert only S1.16 composition/seam changes; no schema rollback. |
+| S1.16 Trusted consumer transport and wake composition | R4 pinned generic `promptAsync` evidence, Option A consumer identity continuity, fail-closed absence/drift, and bounded non-lossy legacy automatic wake. | adapter plus only approved consumer seam files/tests | 240-380; split before RED if larger | adapter consumer + isolated capability + fail-closed | Revert only S1.16 consumer composition/seam changes; no schema rollback. |
 
-A transport change in `core.mjs` or `mcp.mjs` is not automatically part of S1.16. If reconciliation requires one, it receives its own amended design and separately planned Sesión. No persisted-witness Sesión exists in the baseline.
+S1.16 does not construct or prove the Change E provider/injection. Any later provider work that needs decomposition stops for `planificador-granular`; this design assigns no new Session. No persisted-witness Session exists in the baseline.
 
 ## Rollback
 
@@ -430,27 +430,19 @@ P7 has no database migration or persisted witness, so rollback requires no down-
 
 The operational kill path is plugin disposal or removal from composition. Since all P7 state is transient, process exit also removes timers and counters, but it is not represented as a persistent quiescence proof.
 
-## Apply-blocking reconciliation checklist
+## Bounded apply gate
 
-Before `sdd-apply`, S1.13–S1.16 MUST consume and validate the approved S1.11 `reconciliation.md`; they MUST NOT recreate or re-author it. Every item below MUST already have concrete merged-commit/file/test evidence; unchecked or ambiguous items keep apply blocked.
+Before apply, S1.13–S1.16 MUST consume the freshly structurally revalidated and exactly maintainer-approved S1.11 `reconciliation.md`; they MUST NOT recreate or re-author it. Approval covers only this bounded contract, not production readiness:
 
-- [ ] Verify the approved record validates the S1.10 Plan Manifest/ArtifactRefs and both DAG paths, proves no Change A dependency or A→P7/P8 edge, and preserves Change E ownership.
-- [ ] Verify the approved record distinguishes every integrated identity, keeps `binding_epoch`, `host_epoch`, and controller `generation` separate, and rejects missing or conflated evidence.
-- [ ] Verify the approved record pins the assignment-bound in-container worktree path, authorized base SHA, allowed branch shape, `assignment_id`, and `session_id`, and confirms P7 has no worktree lifecycle authority.
-
-- [ ] Verify the approved record proves P6 is merged into the P7 base, identifies the merged commit, and confirms the read-only worktree was not copied as an implementation source.
-- [ ] Verify the approved record captures merged schema version, exact Migration 005 byte length/checksum, schema-5 manifest identity, accepted `bootstrapAdmin` transitions, replay behavior, and the unchanged `polling_witness = 'UNAVAILABLE_BEFORE_P7'` constraint.
-- [ ] Verify the approved record confirms no P6 polling table, route, test, or reserved name conflicts with `host/loop.mjs`, controller methods, trace names, or P7 tests.
-- [ ] Verify the approved record captures the merged argument-free continuation receive signature, exact non-consuming descriptor result, claim boundary, error behavior, and schema-5 compatibility.
-- [ ] Verify the approved record captures the merged dispatcher/MCP constructor-capability signatures and how production OpenCode supplies trusted metadata and process identity without request/environment authority.
-- [ ] Verify the approved record selects and threat-models one trusted `peek` transport and proves the plugin imports no core/SQLite implementation and creates no second public continuation API.
-- [ ] Verify the approved record proves root ID and binding epoch continuity across OpenCode lifecycle classification, trusted metadata, registration, receive, claim, and wake target.
-- [ ] Verify the approved record captures the supported OpenCode version and real fixtures for root creation/idle/deletion, child creation/idle/deletion, `parentID`, `sessionID`, incomplete metadata, and event ordering, with the exact root-proof rule.
-- [ ] Verify the approved record pins the exact `client.session.promptAsync` call and generic prompt and confirms prompt content contains no descriptor, token, evidence, sender, or domain payload.
-- [ ] Verify the approved record decides whether legacy queue waking remains required and documents either its approved non-consuming/non-lossy compatibility boundary or its intentional removal and regression expectations.
-- [ ] Verify the approved record confirms transient polling is sufficient for P7 and compatible with merged P6 `beginRollback`/`finishRollback` semantics. If persistence is required, stop P7 and propose a separate additive migration; never edit Migration 005.
-- [ ] Re-run the full merged baseline with the actual configured Bun version and record zero failures before the first RED edit.
-- [ ] Reforecast S1.13, S1.14, S1.15, and S1.16 at <=400 authored changed lines and verify no Sesión touches parent artifacts, P6 worktree files, runtime publication/configuration, or unrelated `.gitignore` entries.
+- [ ] Preserve validated Plan Manifest/ArtifactRefs, DAG paths, identity separation, epoch separation, base/worktree pin, merged P6 evidence, and transient polling baseline.
+- [ ] Consume Option A only: an opaque capability injected by Host Launcher / Change E with non-consuming peek, immutable proven root identity, and validated `binding_epoch`; fail closed on absence or drift.
+- [ ] Keep P7 free of `core.mjs`, `mcp.mjs`, SQLite, a second/public continuation API, and manufactured provider authority.
+- [ ] Close R1/R2 as consumer-conformance obligations across already-authorized P7 Sesiones.
+- [ ] Capture R3 lifecycle/root-classification fixtures in existing S1.15.
+- [ ] Capture R4 pinned-envelope consumer evidence in existing S1.16 without constructing the provider.
+- [ ] Preserve legacy automatic wake through a bounded, non-consuming, non-lossy compatibility route; legacy cases cannot degrade to manual queue handling.
+- [ ] Keep concrete Change E provider/injection implementation and proof as a later obligation. If it needs decomposition, stop for `planificador-granular`; do not assign a new Session here.
+- [ ] Re-run the full merged baseline with the configured Bun version before the first RED edit and keep each already-authorized Sesión within its assigned files and budget.
 
 ## Acceptance traceability
 
@@ -463,7 +455,7 @@ Before `sdd-apply`, S1.13–S1.16 MUST consume and validate the approved S1.11 `
 | Wake serialization/failure | `WAKING`, one-shot scheduling, pre-call accounting, retry table |
 | Pending preservation | non-consuming fresh peek; no receive/claim/ack; prompt has no descriptor payload |
 | CT-R5-S2/S5 and stale callback | generation capture, synchronous disposal steps, deferred-race tests |
-| OpenCode mapping | event table and provisional exact `promptAsync` envelope |
+| OpenCode mapping | event table plus S1.16 pinned-envelope consumer evidence |
 | Reusable conformance | parameterized host fixture with stable CT-R5 IDs |
 | Transient scope | data ownership, no migration/witness, rollback without database changes |
 | Reconciliation gate | explicit evidence checklist and required `reconciliation.md` |

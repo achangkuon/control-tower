@@ -9,7 +9,7 @@
 | Estimated changed lines | 1,160–1,560 cumulative authored additions + deletions; 240–400 per Sesión |
 | 400-line budget risk | High |
 | Chained PRs recommended | Yes |
-| Suggested split | S1.13 → S1.14 → S1.15 → provisional S1.16; each is an autonomous ≤400-line Sesión |
+| Suggested split | S1.13 → S1.14 → S1.15 → S1.16; each is an autonomous ≤400-line Sesión |
 | Delivery strategy | auto-forecast; pause for a topology decision before apply |
 | Chain strategy | pending |
 
@@ -20,11 +20,11 @@ Chain strategy: pending
 
 **Recommended chain boundary:** plan four sequential Sesiones in the stated order; do not create branches or PRs until a P7-specific topology is approved.
 
-## Apply prerequisite — Approved S1.11 reconciliation
+## Apply prerequisite — Bounded S1.11 contract approval
 
-S1.11 owns creation and approval of `openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md`; its canonical Módulo and Tareas live in [`p7-p8-integrated-reconciliation/tasks.md`](../p7-p8-integrated-reconciliation/tasks.md#sesión-111--p7-reconciliation-record). S1.13–S1.16 consume and validate that approved record; they do not recreate or re-author it.
+S1.11 owns preparation and exact maintainer approval of the bounded apply contract in `openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md`; its canonical Módulo and Tareas live in [`p7-p8-integrated-reconciliation/tasks.md`](../p7-p8-integrated-reconciliation/tasks.md#sesión-111--p7-reconciliation-record). The contract is explicitly not a production-readiness determination. S1.13–S1.16 consume the approved contract and close its P7 consumer-conformance obligations; they do not recreate or re-author it.
 
-Native `apply-ready` does not bypass this gate. P7 depends only on merged P6, not Change A. The approved record MUST preserve `P6 → P7 → P8 → Change E` and `A → B/C → D → Change E`, the C→D edge, and Change E ownership.
+The contract selects Option A: Host Launcher / Change E injects an opaque consumer capability carrying non-consuming peek, immutable proven root identity, and validated `binding_epoch`; P7 consumes it and fails closed on absence or drift. P7 must not import `core.mjs`, `mcp.mjs`, or SQLite, expose a second/public continuation API, or manufacture provider authority. Concrete Change E provider/injection implementation and proof remain later obligations. P7 depends only on merged P6, not Change A, and preserves `P6 → P7 → P8 → Change E` and `A → B/C → D → Change E`, the C→D edge, and Change E ownership.
 
 ## Sesión 1.13 — Root Lifecycle and Synchronous Invalidation
 
@@ -56,6 +56,8 @@ Native `apply-ready` does not bypass this gate. P7 depends only on merged P6, no
 
 **Scope:** `plugin/tower-spike.js`, `test/helpers/host-adapter-conformance.mjs`, `test/host-adapters.test.mjs`. **Budget:** 320–400 authored changed lines. **Finish:** testable OpenCode lifecycle classification around the controller, with reusable CT-R5 conformance; trusted transport and production `promptAsync` composition remain S1.16 work.
 
+**Ownership boundary:** S1.15 owns R3 fixture/root-proof evidence. R3 fixture evidence is deferred to existing S1.15.
+
 - [ ] Tarea 1.15.1.1 **RED:** Create failing parameterized conformance cases in `test/helpers/host-adapter-conformance.mjs` and OpenCode cases in `test/host-adapters.test.mjs` with stable IDs `CT-R5-S1@OpenCode` through `CT-R5-S5@OpenCode`, covering child deletion/creation/idle no-ops, matching-root deletion, plugin disposal, malformed metadata, and conflicting identities. <!-- sdd-owner: implementation -->
 - [ ] Tarea 1.15.1.2 **GREEN:** Refactor `plugin/tower-spike.js` into a testable lifecycle adapter factory that classifies only reconciled proven root/child events, binds once, forwards exact bound-root settle/deletion to the controller, and invalidates synchronously on matching root deletion or plugin disposal. <!-- sdd-owner: implementation -->
 - [ ] Tarea 1.15.1.3 **TRIANGULATE:** Add OpenCode event-order and incomplete-metadata variants to `test/host-adapters.test.mjs`; prove an unknown event is never treated as root, child cache cleanup cannot stop polling, and the generic helper exposes only host actions/observations rather than OpenCode field names. <!-- sdd-owner: implementation -->
@@ -64,15 +66,15 @@ Native `apply-ready` does not bypass this gate. P7 depends only on merged P6, no
 
 ## Sesión 1.16 — Reconciled Transport and Wake Composition
 
-### Módulo 1.16.1 — Trusted transport and wake composition
+### Módulo 1.16.1 — Trusted consumer transport and wake composition
 
-**Blocked until:** `reconciliation.md` approves the concrete transport, root-proof rule, exact `promptAsync` envelope, and legacy-compatibility decision. **Budget:** 240–380 authored changed lines; split before RED if the approved files exceed this budget.
+**Blocked until:** `reconciliation.md` receives fresh structural revalidation and exact maintainer approval of the bounded apply contract. **Budget:** 240–380 authored changed lines; split before RED if the approved consumer files exceed this budget.
 
-**Stop condition:** if reconciliation requires a `core.mjs` or `mcp.mjs` change, stop S1.16 before RED. Require a design amendment and plan that seam as a separate Sesión; do not edit those files in S1.16.
+**Ownership boundary:** S1.16 owns R4 pinned-envelope consumer evidence plus its assigned Option A consumer conformance. It does not construct or prove the Change E provider/injection. If consumer work cannot proceed without `core.mjs`, `mcp.mjs`, SQLite, a second/public continuation API, or manufactured provider authority, stop before RED; later provider implementation that needs decomposition must go to `planificador-granular`, without assigning a Session here.
 
-- [ ] Tarea 1.16.1.1 **RED:** After the S1.16 block is cleared, add failing cases in `test/host-adapters.test.mjs` (and only reconciliation-approved seam tests) for the selected non-consuming transport, fail-closed absence of trusted transport/root proof, byte-identical root/binding-epoch continuity, exact generic `promptAsync` mapping, wake rejection, and prohibition of descriptor/token/evidence/sender interpolation. <!-- sdd-owner: implementation -->
-- [ ] Tarea 1.16.1.2 **GREEN:** Wire only reconciliation-approved dependencies in `plugin/tower-spike.js` and approved seam files so controller `peek` is trusted and non-consuming, `wake` calls `client.session.promptAsync` exactly once for the bound root, and missing proof/transport fails closed without legacy consuming fallback. <!-- sdd-owner: implementation -->
-- [ ] Tarea 1.16.1.3 **TRIANGULATE:** Add isolated temporary-root transport coverage for the approved seam and legacy-decision variants; prove stable safe error classification, no second public continuation API, no direct core/SQLite import, and preserved pending delivery after rejected wakes. <!-- sdd-owner: implementation -->
+- [ ] Tarea 1.16.1.1 **RED:** After bounded-contract approval, add failing cases in `test/host-adapters.test.mjs` (and only approved consumer-seam tests) for the injected non-consuming capability, fail-closed absence or drift of trusted root/`binding_epoch`, exact generic `promptAsync` mapping, wake rejection, legacy automatic-wake preservation, and prohibition of descriptor/token/evidence/sender/domain interpolation. <!-- sdd-owner: implementation -->
+- [ ] Tarea 1.16.1.2 **GREEN:** Wire only approved consumer dependencies in `plugin/tower-spike.js` and approved consumer seam files so controller `peek` is trusted and non-consuming, `wake` calls `client.session.promptAsync` exactly once for the bound root, legacy automatic wake remains bounded/non-consuming/non-lossy, and missing or drifting proof/transport fails closed. <!-- sdd-owner: implementation -->
+- [ ] Tarea 1.16.1.3 **TRIANGULATE:** Add isolated consumer-capability and legacy compatibility coverage; prove stable safe error classification, no second/public continuation API, no `core.mjs`/`mcp.mjs`/SQLite import, no provider-authority manufacture, preserved pending delivery after rejected wakes, and no degradation to manual queue handling. <!-- sdd-owner: implementation -->
 - [ ] Tarea 1.16.1.4 **REFACTOR:** Consolidate composition boundaries and test fixtures without expanding authority or persistence; retain transient-only polling and keep Migration 005, schema manifest, P6 worktree, runtime configuration, and unrelated `.gitignore` untouched. <!-- sdd-owner: implementation -->
 - [ ] Tarea 1.16.1.5 Run `bun test test/host-adapters.test.mjs`, the reconciliation-approved isolated transport test, `bun test test/polling.test.mjs test/host-adapters.test.mjs test/fail-closed.test.mjs`, `bun test`, `node --check plugin/tower-spike.js`, and `git diff --check`; record exact results, an authored-line receipt from `git diff --numstat`, runtime harness command/scenario/result, and the rollback boundary “revert only S1.16 composition/seam changes with no schema rollback” in the S1.16 completion note in this file. <!-- sdd-owner: implementation -->
 

@@ -47,9 +47,9 @@ Chain strategy: stacked-to-main
 
 ### Módulo 1.11.1 — P7 evidence and gate
 
-- [ ] Tarea 1.11.1.1 Create `openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md` with P6 evidence, manifest refs, DAG assertions, role/identity matrix, validation results, and explicit approval/block state.
-- [ ] Tarea 1.11.1.2 Binary check: P7 stays blocked without its approved record; missing IDs, conflated epochs, unauthorized SHA, or out-of-container worktree are rejected.
-- [ ] Tarea 1.11.1.3 Approve the P7 gate only after the record and binary checks are complete.
+- [x] Tarea 1.11.1.1 Create `openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md` with P6 evidence, manifest refs, DAG assertions, role/identity matrix, validation results, and explicit approval/block state.
+- [x] Tarea 1.11.1.2 Binary check: P7 stays blocked without its approved record; missing IDs, conflated epochs, unauthorized SHA, or out-of-container worktree are rejected.
+- [x] Tarea 1.11.1.3 Approve the P7 gate only after the record and binary checks are complete.
 
 ## Sesión 1.12 — P8 Reconciliation and Preservation
 
