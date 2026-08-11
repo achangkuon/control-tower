@@ -1,0 +1,5 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://control-tower.local/schemas/parked-decision-response-v1.schema.json","type":"object","additionalProperties":false,
+  "required":["schema","schema_version","response_id","response_digest","authorization_id","authorization_revision","parked_decision_id","parked_decision_digest","option_id","session_plan_snapshot_digest","responded_at"],
+  "properties":{"schema":{"const":"parked-decision-response"},"schema_version":{"const":1},"response_id":{"$ref":"artifact-ref-v1.schema.json#/$defs/slug"},"response_digest":{"$ref":"artifact-ref-v1.schema.json#/$defs/digest"},"authorization_id":{"$ref":"artifact-ref-v1.schema.json#/$defs/slug"},"authorization_revision":{"$ref":"artifact-ref-v1.schema.json#/$defs/revision"},"parked_decision_id":{"$ref":"artifact-ref-v1.schema.json#/$defs/slug"},"parked_decision_digest":{"$ref":"artifact-ref-v1.schema.json#/$defs/digest"},"option_id":{"$ref":"artifact-ref-v1.schema.json#/$defs/slug"},"session_plan_snapshot_digest":{"$ref":"artifact-ref-v1.schema.json#/$defs/digest"},"responded_at":{"$ref":"artifact-ref-v1.schema.json#/$defs/timestamp"}}
+}

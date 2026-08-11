@@ -40,6 +40,16 @@ describe("V1 schema boundary", () => {
     expect(JSON.stringify(input)).toBe(before)
   })
 
+  test("registers both parked decision contracts with shared fixtures and invariants", () => {
+    expect(schemaNames).toEqual(expect.arrayContaining(["parkedDecision", "parkedDecisionResponse"]))
+    expect(validate("parkedDecision", fixtures.parkedDecision).options).toHaveLength(2)
+    expect(validate("parkedDecisionResponse", fixtures.parkedDecisionResponse).option_id).toBe("option-a")
+    const duplicate = structuredClone(fixtures.parkedDecision); duplicate.options[1].option_id = "option-a"
+    const drifted = structuredClone(fixtures.parkedDecisionResponse); drifted.authorization_revision += 1
+    expect(errorCode(() => validate("parkedDecision", duplicate))).toBe("CT_SCHEMA_INVALID")
+    expect(errorCode(() => validate("parkedDecisionResponse", drifted))).toBe("CT_SCHEMA_INVALID")
+  })
+
   for (const [name, payload] of Object.entries(fixtures)) {
     test(`${name} accepts its declared contract`, () => {
       const result = validate(name, payload)

@@ -11,6 +11,7 @@ const schemaFiles = Object.freeze({
   jornada: "jornada-v1.schema.json", assignment: "assignment-v1.schema.json",
   authorization: "authorization-v1.schema.json", campaign: "campaign-v1.schema.json",
   candidateRevision: "candidate-revision-v1.schema.json", sessionPlanSnapshot: "session-plan-snapshot-v1.schema.json",
+  parkedDecision: "parked-decision-v1.schema.json", parkedDecisionResponse: "parked-decision-response-v1.schema.json",
   reconciledCheckpoint: "reconciled-checkpoint-v1.schema.json", supportProposal: "support-proposal-v1.schema.json",
   policyReportV2: "policy-report-v2.schema.json", assignmentV2: "assignment-v2.schema.json",
   recoveryProof: "recovery-proof-v1.schema.json", deliveryPolicy: "delivery-policy-v1.schema.json",

@@ -52,6 +52,23 @@
     },
     "graph": {"local_session_ids": ["S5.6"], "external_session_ids": ["S5.4"], "edges": [{"from": "S5.4", "to": "S5.6"}]}
   },
+  "parkedDecision": {
+    "schema": "parked-decision", "schema_version": 1, "parked_decision_id": "parked-s5-7-001",
+    "question": "Which option should resume S5.7?",
+    "evidence": [{"path": "openspec/plans/plan-5/STATUS.md", "line_start": 501, "line_end": 556, "contradiction": "Work cannot resume without one selected option."}],
+    "options": [{"option_id": "option-a", "label": "Resume", "consequence": "Resume only frozen scope."}, {"option_id": "option-b", "label": "Stop", "consequence": "Keep scope blocked."}],
+    "origin": {"session_id": "S5.7", "module_id": "M5.7.2"}, "checkpoint": "Before response persistence.",
+    "decision_class": "seguridad y permisos", "created_at": "2026-08-11T13:00:00Z",
+    "frozen_scope": {"session_plan_snapshot_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "session_ids": ["S5.7"], "area": ["contracts/parked-decision.mjs"], "resources": ["canonical contract registry"]},
+    "parked_decision_digest": "sha256:a718a0f44e7f727c81c5970292ac6659c40ed940054b3e628be4c84a4de34c13"
+  },
+  "parkedDecisionResponse": {
+    "schema": "parked-decision-response", "schema_version": 1, "response_id": "response-s5-7-001",
+    "authorization_id": "auth-s5-7-001", "authorization_revision": 2,
+    "parked_decision_id": "parked-s5-7-001", "parked_decision_digest": "sha256:a718a0f44e7f727c81c5970292ac6659c40ed940054b3e628be4c84a4de34c13",
+    "option_id": "option-a", "session_plan_snapshot_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "responded_at": "2026-08-11T13:05:00Z", "response_digest": "sha256:0ddbbac0176679eb2eec317190cecf2b42b4310ac6eb4f6799863ec77ed1c8a2"
+  },
   "planCatalog": {
     "schema": "plan-catalog",
     "schema_version": 1,

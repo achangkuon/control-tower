@@ -1,6 +1,7 @@
 import { isAlias, isMap, isScalar, isSeq, parseDocument, visit } from "yaml"
 
 import { candidateRevision } from "./candidate-revision.mjs"
+import { parkedDecisionDigest, parkedDecisionResponseDigest } from "./parked-decision.mjs"
 import { sessionPlanSnapshotDigest } from "./session-plan-snapshot.mjs"
 import { failContract } from "./errors.mjs"
 import { validatorFor } from "./schema-registry.mjs"
@@ -94,6 +95,16 @@ const assertSessionSnapshot = (value) => {
   if (new Set(value.target.decisions.map(({ body }) => body)).size !== value.target.decisions.length) invalid("Decision bodies must be unique")
   if (new Set(value.target.acceptance_criteria.map(({ text }) => text)).size !== value.target.acceptance_criteria.length) invalid("Acceptance criteria must be unique")
 }
+const assertParkedDecision = (value) => {
+  if (parkedDecisionDigest(value) !== value.parked_decision_digest) invalid("Parked decision digest must match its frozen identity")
+  const optionIds = value.options.map(({ option_id }) => option_id)
+  if (new Set(optionIds).size !== optionIds.length) invalid("Parked decision option IDs must be unique")
+  if (value.evidence.some(({ line_start, line_end }) => line_start > line_end)) invalid("Parked decision evidence range must be ordered")
+  if (!value.frozen_scope.session_ids.includes(value.origin.session_id)) invalid("Parked decision origin must belong to its frozen scope")
+}
+const assertParkedDecisionResponse = (value) => {
+  if (parkedDecisionResponseDigest(value) !== value.response_digest) invalid("Parked decision response digest must match its frozen identity")
+}
 const invariants = Object.freeze({
   projectRegistry: (value) => {
     assertUnique(value.projects, "project_id", "Project IDs must be unique")
@@ -121,6 +132,8 @@ const invariants = Object.freeze({
     if (candidateRevision(value) !== value.candidate_revision) invalid("Candidate revision must match its frozen identity")
   },
   sessionPlanSnapshot: assertSessionSnapshot,
+  parkedDecision: assertParkedDecision,
+  parkedDecisionResponse: assertParkedDecisionResponse,
 })
 
 export const validate = (schemaName, input) => {
