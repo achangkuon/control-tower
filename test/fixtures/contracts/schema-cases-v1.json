@@ -39,18 +39,18 @@
       "digest_mode": "raw-bytes",
       "content_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     },
-    "snapshot_digest": "sha256:4b5b25e4d6a3f2fc742284c2ead405596505bca47bd53489b034d8b7bcc4628f",
+    "snapshot_digest": "sha256:5e2928127eb5338769b72105396f9b7e4a6eda2a7b5cea9d7eb63370b3480563",
     "target": {
       "session_id": "S5.6",
       "title": "Canonical identity",
       "status": "LISTO",
-      "depends_on": [],
+      "depends_on": ["S5.4"],
       "area": ["contracts/session-plan-snapshot.mjs"],
       "resource": "canonical contract registry",
       "decisions": [],
       "acceptance_criteria": [{"checked": false, "text": "Exact bytes remain authoritative."}]
     },
-    "graph": {"local_session_ids": ["S5.6"], "external_session_ids": [], "edges": []}
+    "graph": {"local_session_ids": ["S5.6"], "external_session_ids": ["S5.4"], "edges": [{"from": "S5.4", "to": "S5.6"}]}
   },
   "planCatalog": {
     "schema": "plan-catalog",

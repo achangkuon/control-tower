@@ -48,6 +48,7 @@ const minimalTarget = (text, targetSessionId) => {
 }
 
 export function sessionPlanSnapshotDigest(snapshot) {
+  if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot)) invalid("Snapshot must be an object", "type", "snapshot")
   const { snapshot_digest: _snapshotDigest, ...identity } = snapshot
   return digestArtifact(identity, "rfc8785-jcs")
 }
@@ -56,7 +57,7 @@ export function parseSessionPlanSnapshot(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) invalid("Parser input must be an object", "type", "input")
   const { plan_bytes: planBytes, target_session_id: targetSessionId, expected_plan_digest: expectedDigest } = input
   if (!(planBytes instanceof Uint8Array)) invalid("Plan content must be bytes", "type", "plan_bytes")
-  if (!sessionIdPattern.test(targetSessionId)) invalid("Target Session ID is invalid", "type", "target_session_id")
+  if (typeof targetSessionId !== "string" || !sessionIdPattern.test(targetSessionId)) invalid("Target Session ID is invalid", "type", "target_session_id")
   const contentDigest = digestArtifact(planBytes, "raw-bytes")
   if (expectedDigest !== undefined && expectedDigest !== contentDigest) invalid("Plan digest does not match exact bytes", "digest_mismatch", "expected_plan_digest")
   const target = minimalTarget(decodePlan(planBytes), targetSessionId)

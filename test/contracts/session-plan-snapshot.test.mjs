@@ -25,10 +25,11 @@ const captured = async (operation) => {
 }
 
 describe("session plan snapshot identity", () => {
-  test("initializes the parser and validator in either Bun ESM import order", () => {
+  test("executes parser and validator semantics in either Bun ESM import order", () => {
+    const exercise = (imports) => `${imports}; const bytes=Buffer.from(${JSON.stringify(source)}); const snapshot=parseSessionPlanSnapshot({plan_bytes:bytes,target_session_id:"S5.6"}); const checked=validate("sessionPlanSnapshot",snapshot); if(checked.target.session_id!=="S5.6"||!Object.isFrozen(checked))throw new Error("semantic assertion failed")`
     const imports = [
-      `await import("./contracts/session-plan-snapshot.mjs"); await import("./contracts/validate.mjs")`,
-      `await import("./contracts/validate.mjs"); await import("./contracts/session-plan-snapshot.mjs")`,
+      exercise(`const {parseSessionPlanSnapshot}=await import("./contracts/session-plan-snapshot.mjs"); const {validate}=await import("./contracts/validate.mjs")`),
+      exercise(`const {validate}=await import("./contracts/validate.mjs"); const {parseSessionPlanSnapshot}=await import("./contracts/session-plan-snapshot.mjs")`),
     ]
     for (const script of imports) {
       const result = Bun.spawnSync({ cmd: ["bun", "-e", script], cwd: process.cwd(), stdout: "pipe", stderr: "pipe" })
@@ -62,6 +63,16 @@ describe("session plan snapshot identity", () => {
     expect(Object.isFrozen(error)).toBe(true)
   })
 
+  test("rejects line-ending byte drift as CT_SCHEMA_INVALID without a partial value", async () => {
+    const { parseSessionPlanSnapshot } = await loadParser()
+    const expected = digestArtifact(bytes, "raw-bytes")
+    const crlf = Buffer.from(source.replaceAll("\n", "\r\n"))
+    const error = await captured(() => parseSessionPlanSnapshot({ plan_bytes: crlf, target_session_id: "S5.6", expected_plan_digest: expected }))
+
+    expect(error).toBeInstanceOf(ContractError)
+    expect(error.code).toBe("CT_SCHEMA_INVALID")
+  })
+
   test("accepts Buffer bytes and rejects fatal UTF-8 without mutating input", async () => {
     const { parseSessionPlanSnapshot } = await loadParser()
     const invalid = Buffer.from([0xc3, 0x28])
@@ -70,6 +81,23 @@ describe("session plan snapshot identity", () => {
 
     expect(error.code).toBe("CT_SCHEMA_INVALID")
     expect(invalid).toEqual(before)
+  })
+
+  test("guards public null, primitive, and Symbol inputs with frozen contract errors", async () => {
+    const { parseSessionPlanSnapshot, sessionPlanSnapshotDigest } = await loadParser()
+    const operations = [
+      () => sessionPlanSnapshotDigest(null), () => sessionPlanSnapshotDigest(7), () => sessionPlanSnapshotDigest(Symbol("snapshot")),
+      () => parseSessionPlanSnapshot(null), () => parseSessionPlanSnapshot(7), () => parseSessionPlanSnapshot(Symbol("input")),
+      () => parseSessionPlanSnapshot({ plan_bytes: bytes, target_session_id: null }),
+      () => parseSessionPlanSnapshot({ plan_bytes: bytes, target_session_id: 7 }),
+      () => parseSessionPlanSnapshot({ plan_bytes: bytes, target_session_id: Symbol("target") }),
+    ]
+    for (const operation of operations) {
+      const error = await captured(operation)
+      expect(error).toBeInstanceOf(ContractError)
+      expect(error.code).toBe("CT_SCHEMA_INVALID")
+      expect(Object.isFrozen(error)).toBe(true)
+    }
   })
 
   test("rejects a missing target or required identity field without a partial snapshot", async () => {

@@ -23,9 +23,21 @@ const errorCode = (operation) => {
 }
 
 describe("V1 schema boundary", () => {
-  test("registers and fixtures the session snapshot identity contract", () => {
+  test("registers and fixtures a closed local-to-external session graph", () => {
+    const fixture = fixtures.sessionPlanSnapshot
     expect(schemaNames).toContain("sessionPlanSnapshot")
-    expect(fixtures.sessionPlanSnapshot).toBeDefined()
+    expect(fixture.graph.local_session_ids).toContain("S5.6")
+    expect(fixture.graph.external_session_ids).toEqual(["S5.4"])
+    expect(fixture.graph.edges).toEqual([{ from: "S5.4", to: "S5.6" }])
+    expect(validate("sessionPlanSnapshot", fixture).target.depends_on).toEqual(["S5.4"])
+  })
+
+  test("rejects a missing required session snapshot field without mutating input", () => {
+    const input = structuredClone(fixtures.sessionPlanSnapshot)
+    delete input.target.resource
+    const before = JSON.stringify(input)
+    expect(errorCode(() => validate("sessionPlanSnapshot", input))).toBe("CT_SCHEMA_INVALID")
+    expect(JSON.stringify(input)).toBe(before)
   })
 
   for (const [name, payload] of Object.entries(fixtures)) {
