@@ -1,6 +1,6 @@
 # Plan 1 — Sustrato mecánico
 
-**Estado:** 🔴 BLOQUEADO
+**Estado:** 🔵 EN CURSO
 
 ## Resumen
 
@@ -30,13 +30,31 @@ Legacy P6 se integró mediante PRs #38–#45 y cerró en `e16d94b`. Su [`apply-p
 
 ## Sesión 1.11 — Reconciliación independiente legacy P7
 
-**Estado:** 🔴 BLOQUEADO
+**Estado:** 🟢 LISTO — **corregido el 2026-08-11.** Figuraba 🔴 BLOQUEADO sin que ningún documento de planificación declarara el bloqueo: se buscó en este `STATUS`, en [master-index](../master-index.md), en [release-chain](../release-chain.md) y en el [registro de decisiones](../decision-register.md), y no existe. Sus únicos prerrequisitos, `S1.9` (`b96e4d9`) y `S1.10` (`a1c75b3`), están ✅ COMPLETO con todas sus Tareas cerradas. Su entregable `p7-host-neutral-loop-opencode-adapter/reconciliation.md` **no existe porque el trabajo no se empezó**, no porque algo lo impida. 🔴 BLOQUEADO significa *no puede avanzar sin un desbloqueo externo*; acá no hay ninguno pendiente.
+
+**Depende de:** `S1.9` ✅, `S1.10` ✅
+**Área:** `openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md` y sus enmiendas de gate
+**Recurso:** ninguno. Torre desarmada; sin estado de runtime.
+**Ruta:** `direct` — el alcance está aprobado y sus tres Tareas son explícitas. **Autoridad:** [`p7-p8-integrated-reconciliation/tasks.md`](../../changes/p7-p8-integrated-reconciliation/tasks.md#sesión-111--p7-reconciliation-record).
+
+**Decisiones:**
+
+- `escala` — la aprobación del gate P7 (`T1.11.1.3`). **Clase:** seguridad y permisos. Aprobar un gate es un acto de autoridad, no una derivación: un agente puede redactar el registro y correr los chequeos binarios, nunca declarar aprobado el resultado. **Contamina:** `S1.13`–`S1.16`, que consumen el registro aprobado. **Consecuencia operativa: esta Sesión no es candidata a modo nocturno.**
 
 La definición canónica de esta Sesión, incluidos `M1.11.1` y `T1.11.1.1`–`T1.11.1.3`, vive en [`p7-p8-integrated-reconciliation/tasks.md`](../../changes/p7-p8-integrated-reconciliation/tasks.md#sesión-111--p7-reconciliation-record). Este `STATUS` no redefine sus Tareas.
 
 ## Sesión 1.12 — Reconciliación independiente P8
 
-**Estado:** 🔴 BLOQUEADO
+**Estado:** 🟢 LISTO — **corregido el 2026-08-11** por el mismo motivo que `S1.11`: ningún documento declara su bloqueo y sus prerrequisitos están cerrados. Es `PR 4` de la misma change, después de `S1.11`.
+
+**Depende de:** `S1.11`
+**Área:** `openspec/changes/p8-slice-planning/reconciliation.md`, `STATUS` de P8 y el recibo de persistencia
+**Recurso:** ninguno. Torre desarmada; sin comportamiento ejecutable.
+**Ruta:** `direct` — seis Tareas explícitas con comando de validación y frontera de rollback declarados. **Autoridad:** [`p7-p8-integrated-reconciliation/tasks.md`](../../changes/p7-p8-integrated-reconciliation/tasks.md#sesión-112--p8-reconciliation-and-preservation).
+
+**Decisiones:**
+
+- `escala` — la aprobación del gate P8 (`T1.12.1.3`). **Clase:** seguridad y permisos. Mismo razonamiento que `S1.11`. **Contamina:** `S1.17`. **Consecuencia operativa: no es candidata a modo nocturno.**
 
 La definición canónica de esta Sesión, incluidos `M1.12.1` y `T1.12.1.1`–`T1.12.1.7`, vive en [`p7-p8-integrated-reconciliation/tasks.md`](../../changes/p7-p8-integrated-reconciliation/tasks.md#sesión-112--p8-reconciliation-and-preservation). Este `STATUS` no redefine sus Tareas.
 
@@ -61,8 +79,8 @@ La definición canónica de esta Sesión, incluidos `M1.12.1` y `T1.12.1.1`–`T
 
 | ID | Ruta actual | Ruta proyectada al destrabar | Motivo |
 |---|---|---|---|
-| `S1.16` | `blocked` | `design-tasks` | Su Tarea `1.16.1.1` arranca «After the S1.16 block is cleared»: consume el `reconciliation.md` aprobado que **posee `S1.11`**, hoy 🔴 BLOQUEADO. Al destrabar hay que elegir el seam de transporte no consumidor desde el registro aprobado, sin inventarlo: eso es elaboración técnica sobre Tareas existentes, no un contrato nuevo. |
-| `S1.17` | `blocked` | `direct` | `p8-slice-planning/tasks.md:31` — «P8 remains blocked until legacy P7 is independently reconciled and integrated and P8's separate record is approved», o sea `S1.11` **y** `S1.12`. Al destrabar sólo aterriza pruebas RED contra contratos ya aprobados, con alcance, comando de verificación y rollback escritos. |
+| `S1.16` | `blocked` por `S1.11` 🟢 | `design-tasks` | Su Tarea `1.16.1.1` arranca «After the S1.16 block is cleared»: consume el `reconciliation.md` aprobado que **posee `S1.11`**, hoy 🟢 LISTO y sin empezar. Al destrabar hay que elegir el seam de transporte no consumidor desde el registro aprobado, sin inventarlo: eso es elaboración técnica sobre Tareas existentes, no un contrato nuevo. |
+| `S1.17` | `blocked` por `S1.11`/`S1.12` 🟢 | `direct` | `p8-slice-planning/tasks.md:31` — «P8 remains blocked until legacy P7 is independently reconciled and integrated and P8's separate record is approved», o sea `S1.11` **y** `S1.12`. Al destrabar sólo aterriza pruebas RED contra contratos ya aprobados, con alcance, comando de verificación y rollback escritos. |
 | `S1.18` | `direct` | — | Implementación GREEN contra el RED de `S1.17`, con alcance exacto (`adapters/pi/`), comando `bun test test/host-adapters.test.mjs` y rollback declarados en `p8-slice-planning/tasks.md:24`. Ninguna decisión de diseño abierta. **Depende de** `S1.17`. |
 | `S1.19` | `direct` | — | Refactor de seams y regresión compartida; verificación sólo por fixtures, rollback sin schema (`p8-slice-planning/tasks.md:25`). **Depende de** `S1.18`. |
 
@@ -78,6 +96,6 @@ La definición canónica de esta Sesión, incluidos `M1.12.1` y `T1.12.1.1`–`T
 
 Por lo tanto `S1.11`, `S1.12`, `S1.13`, `S1.14` y `S1.15` **entran en la cadena de release**: sin ellas, `S1.16` y `S1.17` no pueden arrancar, y sin ésas no hay `S4.2`–`S4.4` ni `S7.1`.
 
-**Observación adicional sin resolver:** `S1.11` y `S1.12` figuran 🔴 BLOQUEADO, pero sus prerrequisitos `S1.9` y `S1.10` están ✅ COMPLETO y sus Tareas son «evidence record only», sin dependencia de código. Puede tratarse de un estado obsoleto. Verificarlo antes de planificar la rama: si el bloqueo ya no existe, `S1.11` y `S1.12` son 🟢 LISTO y la cadena arranca hoy.
+**Verificado y resuelto el 2026-08-11:** el bloqueo de `S1.11` y `S1.12` era **estado obsoleto**. Ningún documento de planificación lo declaraba y sus prerrequisitos ya estaban cerrados. Las dos pasan a 🟢 LISTO y este Plan pasa de 🔴 BLOQUEADO a 🔵 EN CURSO. Es la tercera desincronización del tablero encontrada en la misma auditoría, después de la brecha 1 —cerrada y declarada abierta siete días— y del registro de la Torre.
 
 Legacy P9–P11 todavía no tienen límites de PR demostrables. Sus responsabilidades se preservan sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).

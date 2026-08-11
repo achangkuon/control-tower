@@ -10,7 +10,9 @@
 
 `S5.7` sigue 🟢 LISTO y es el próximo nodo ejecutable de la hebra P5. Después `S5.8` y `S5.5`, ambas 📋 PLANIFICADO; Option B permanece resuelta para `S5.8`.
 
-**Pero la acción más barata disponible no es `S5.7`: es verificar si `S1.11` y `S1.12` siguen 🔴 BLOQUEADO de verdad.** Sus prerrequisitos `S1.9` y `S1.10` están ✅ COMPLETO y sus Tareas son «evidence record only», sin dependencia de código. Si el bloqueo es estado obsoleto, las dos pasan a 🟢 LISTO y la hebra P1→P4 abre en paralelo con P5 — capacidad 2 en vez de 1, con `Área` y `Recurso` disjuntos. Si es real, hay que enumerar qué la destraba.
+**Verificado el 2026-08-11: el bloqueo de `S1.11` y `S1.12` era estado obsoleto.** Ningún documento de planificación lo declaraba y sus prerrequisitos `S1.9` y `S1.10` ya estaban ✅ COMPLETO. Las dos pasan a 🟢 LISTO, ruta `direct`, y **P1 pasa de 🔴 BLOQUEADO a 🔵 EN CURSO**.
+
+**Capacidad de ejecución hoy: 2.** `S1.11` y `S5.7` son grafo-independientes, con `Área` disjunta —registros de `openspec/changes/**` contra `contracts/`+`schemas/`— y `Recurso` disjunto. Las dos hebras abren en paralelo. `S1.12` sigue a `S1.11` dentro de su misma change.
 
 `S5.2` sigue 🔴 BLOQUEADO por los hallazgos 1, 3 y 5 del recheck 8193 y la decisión estacionada 8195; `S5.3` conserva el bloqueo transitivo. `S8.7` sigue 🔴 BLOQUEADO por el inicializador confiable de producción pendiente.
 
@@ -44,7 +46,7 @@ Sesión read-only de evaluación pedida por el maintainer. No cambió estados ni
 
 `S1.11`–`S1.15` entran en la cadena: sin ellas no arrancan `S1.16` ni `S1.17`, y sin ésas no hay `S4.2`–`S4.4` ni `S7.1`. **El resto conocido pasa de 14 a 19 Sesiones**, más `S3.5` y `S3.6` si se aprueban.
 
-**Sin resolver:** `S1.11` y `S1.12` figuran 🔴 BLOQUEADO, pero `S1.9` y `S1.10` están ✅ COMPLETO y sus Tareas son «evidence record only». Puede ser estado obsoleto. Verificarlo primero: si el bloqueo ya no existe, las dos son 🟢 LISTO y la rama arranca hoy.
+**Resuelto el 2026-08-11:** era estado obsoleto. `S1.11` y `S1.12` son 🟢 LISTO y la rama arranca hoy. Tercera desincronización del tablero encontrada en esta auditoría, después de la brecha 1 y del registro de la Torre.
 
 ### Rutas clasificadas el 2026-08-11
 
@@ -74,7 +76,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 | ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |
 |----|------|--------|---|------|-------|-----------|-----|
 | P0 | Documentación canónica | ✅ COMPLETO | 100% (3/3 S) | — | Maintainer | — | [STATUS](plan-0/STATUS.md) |
-| P1 | Sustrato mecánico | 🔴 BLOQUEADO | 53% (10/19 S) | — | Main | S1.11–S1.19 | [STATUS](plan-1/STATUS.md) |
+| P1 | Sustrato mecánico | 🔵 EN CURSO | 53% (10/19 S) | — | Main | S1.11–S1.19 | [STATUS](plan-1/STATUS.md) |
 | P2 | Contratos y registro de producto | 🔵 EN CURSO | — (responsabilidades restantes de Change B sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-2/STATUS.md) |
 | P3 | Workspace y orquestación | ✅ COMPLETO | 100% (4/4 S) | — | Main | — | [STATUS](plan-3/STATUS.md) |
 | P4 | Hosts y línea exclusiva | 🔵 EN CURSO | 25% (1/4 S) | — | Main | S4.2, S4.3, S4.4 | [STATUS](plan-4/STATUS.md) |
