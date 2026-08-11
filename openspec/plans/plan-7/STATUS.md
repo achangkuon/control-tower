@@ -18,6 +18,8 @@
 
 **Dependencias:** `S4.4`, `S5.3`, `S5.5` y `S8.7` integradas.
 
+**Ruta:** `blocked` — conserva una decisión `escala` propia sin resolver: qué se hace con un gate de REQUIREMENTS que ningún piloto cubre. **Clase:** dependencias o evidencia contradictorias. Declarar conformidad sobre un gate no ejercido afirma algo que no se midió; agregar el piloto faltante expande el alcance de la Sesión. Ninguna de las dos es del agente. **Ruta proyectada al destrabar: `design-tasks`** — los Gates A–G ya están fijados por REQUIREMENTS y `M7.1.1` con `T7.1.1.1`–`T7.1.1.4` existen; lo que falta elegir es el diseño de la evidencia atribuible por piloto, no un contrato de producto nuevo. **Autoridad:** la decisión `escala` declarada abajo y REQUIREMENTS §Gates A–G. *(Clasificada el 2026-08-11.)*
+
 Produce evidencia atribuible a `candidate_revision` para cero efectos remotos tempranos o duplicados, rechazo de candidatos stale, recovery y denegación desde una base no integrada. La definición de `M7.1.1` y `T7.1.1.1`–`T7.1.1.4` vive en [`tasks.md`](../../changes/autonomous-v2-checkpointed-delivery/tasks.md#s71-pilot--m711-safety).
 
 **Decisiones:**

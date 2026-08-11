@@ -192,6 +192,8 @@ Define identidad y freeze de `candidate_revision`, invalidación, sucesores, com
 
 **Depende de:** `S4.1`, `S3.3` ✅.
 
+**Ruta:** `blocked` — la decisión 8195 estacionó el candidato como NOT READY y no existe una segunda corrección autorizada; los hallazgos 1, 3 y 5 del recheck 8193 siguen abiertos. Una decisión de operaciones irreversibles abierta es `blocked` antes de SDD o implementación. **Ruta proyectada al destrabar: `direct`** — el alcance está aprobado y completo: `Área`, `Recurso`, seis `Decisiones` todas resueltas, quince criterios binarios y `T5.2.1.1`–`T5.2.1.4` en orden RED → GREEN. No queda decisión de diseño técnico que elegir, así que no corresponde `design-tasks` ni `full-sdd`. **Autoridad:** decisión 8195 y el alcance declarado de esta Sesión. *(Clasificada el 2026-08-11.)*
+
 **Área:** `delivery/**`, `schemas/delivery-record-v1.schema.json`, `contracts/{schema-registry,validate}.mjs`, `test/delivery/**`, `test/contracts/schema.test.mjs`, `test/fixtures/contracts/schema-cases-v1.json`
 
 **Prohibido:** `core.mjs`, `mcp.mjs`, `main-store/store.mjs`, `continuation/**`, `escalation/**`, `hosts/**`, `capabilities/**`, `policy/**`, `jornada/**`, `registry/**`, `workspace/**`, `openspec/plans/**`, `openspec/specs/**`
@@ -255,6 +257,8 @@ Implementa commit, push y PR idempotentes, checks, revisión, autorización exac
 **Estado:** 🔴 BLOQUEADO — bloqueo transitivo: `S5.2` no está integrada y permanece estacionada como NOT READY por la decisión 8195.
 
 **Dependencias:** `S5.2` integrada.
+
+**Ruta:** `blocked` — además del bloqueo transitivo por `S5.2`, esta Sesión conserva una decisión `escala` propia sin resolver: qué pasa cuando la base integrada divergió de la que el sucesor asumía. **Clase:** dependencias o evidencia contradictorias. **Ruta proyectada al destrabar: `design-tasks`** — la respuesta elige entre rebasar el sucesor —que cambia su contenido después de planificado— y descartarlo —que tira trabajo hecho—, y esa elección reescribe `T5.3.1.1`–`T5.3.1.3`. Es una decisión técnica sobre Tareas existentes, no un contrato de producto nuevo, así que no corresponde `full-sdd`. **Autoridad:** la decisión `escala` declarada abajo. *(Clasificada el 2026-08-11.)*
 
 Aplica el horizonte de dos Sesiones, reconcilia la base integrada y habilita sucesores sólo desde evidencia fresca. La definición de `M5.3.1` y `T5.3.1.1`–`T5.3.1.3` vive en [`tasks.md`](../../changes/autonomous-v2-checkpointed-delivery/tasks.md#s53-change-g--m531-integrated-base).
 

@@ -57,4 +57,27 @@ La definición canónica de esta Sesión, incluidos `M1.12.1` y `T1.12.1.1`–`T
 | S1.18 | Pi adapter GREEN | 📋 PLANIFICADO | [`tasks.md`](../../changes/p8-slice-planning/tasks.md) |
 | S1.19 | Refactor y regresión | 📋 PLANIFICADO | [`tasks.md`](../../changes/p8-slice-planning/tasks.md) |
 
+## Rutas de ejecución — clasificadas el 2026-08-11
+
+| ID | Ruta actual | Ruta proyectada al destrabar | Motivo |
+|---|---|---|---|
+| `S1.16` | `blocked` | `design-tasks` | Su Tarea `1.16.1.1` arranca «After the S1.16 block is cleared»: consume el `reconciliation.md` aprobado que **posee `S1.11`**, hoy 🔴 BLOQUEADO. Al destrabar hay que elegir el seam de transporte no consumidor desde el registro aprobado, sin inventarlo: eso es elaboración técnica sobre Tareas existentes, no un contrato nuevo. |
+| `S1.17` | `blocked` | `direct` | `p8-slice-planning/tasks.md:31` — «P8 remains blocked until legacy P7 is independently reconciled and integrated and P8's separate record is approved», o sea `S1.11` **y** `S1.12`. Al destrabar sólo aterriza pruebas RED contra contratos ya aprobados, con alcance, comando de verificación y rollback escritos. |
+| `S1.18` | `direct` | — | Implementación GREEN contra el RED de `S1.17`, con alcance exacto (`adapters/pi/`), comando `bun test test/host-adapters.test.mjs` y rollback declarados en `p8-slice-planning/tasks.md:24`. Ninguna decisión de diseño abierta. **Depende de** `S1.17`. |
+| `S1.19` | `direct` | — | Refactor de seams y regresión compartida; verificación sólo por fixtures, rollback sin schema (`p8-slice-planning/tasks.md:25`). **Depende de** `S1.18`. |
+
+**Decisión latente en `S1.16`, hoy no disparada:** su condición de parada dice que si la reconciliación exige tocar `core.mjs` o `mcp.mjs`, la Sesión **para antes del RED** y ese seam se planifica como Sesión aparte. **Clase:** expansión de alcance. **Contamina:** `S4.2`, `S4.3` y `S4.4`, que dependen de `S1.16`.
+
+### 🔴 La cadena de release está incompleta
+
+[`release-chain.md`](../release-chain.md) incorpora `S1.16`–`S1.19` y deja `S1.11`–`S1.15` fuera «hasta que una dependencia explícita los incorpore». **Esa dependencia explícita existe y está escrita:**
+
+- `p7-host-neutral-loop-opencode-adapter/tasks.md:25` — «`S1.11` owns creation and approval of `reconciliation.md`; `S1.13`–`S1.16` consume and validate that approved record».
+- `p8-slice-planning/tasks.md:31` — `S1.17` exige legacy P7 reconciliado e integrado **y** el registro propio de P8 aprobado, es decir `S1.11` y `S1.12`.
+- El Roadmap de este Plan (fila `Roadmap` del resumen) — «Completar `S1.11` y `S1.12`; después ejecutar `S1.13`–`S1.19`».
+
+Por lo tanto `S1.11`, `S1.12`, `S1.13`, `S1.14` y `S1.15` **entran en la cadena de release**: sin ellas, `S1.16` y `S1.17` no pueden arrancar, y sin ésas no hay `S4.2`–`S4.4` ni `S7.1`.
+
+**Observación adicional sin resolver:** `S1.11` y `S1.12` figuran 🔴 BLOQUEADO, pero sus prerrequisitos `S1.9` y `S1.10` están ✅ COMPLETO y sus Tareas son «evidence record only», sin dependencia de código. Puede tratarse de un estado obsoleto. Verificarlo antes de planificar la rama: si el bloqueo ya no existe, `S1.11` y `S1.12` son 🟢 LISTO y la cadena arranca hoy.
+
 Legacy P9–P11 todavía no tienen límites de PR demostrables. Sus responsabilidades se preservan sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).

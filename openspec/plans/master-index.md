@@ -34,7 +34,31 @@ Sesión read-only de evaluación pedida por el maintainer. No cambió estados ni
 
 **Remediación ejecutada en la misma sesión.** La brecha 5 pasó a ✅ CERRADA: registro de la Torre saneado, cola en cero y ramas de `Main` y `v2` corregidas. Se podaron las ramas ya integradas —110 → 24 locales, 86 → 18 remotas— sin tocar las cuatro ocupadas por worktrees vivos ni el trabajo sin integrar. `s5-1` y `s5-6` **no** se registran por decisión del maintainer: el registro es un acto del agente al arrancar, y ambos worktrees están ociosos. Detalle y deuda derivada en [implementation-state](implementation-state.md).
 
-**Alcance nuevo detectado, todavía sin enumerar:** una Sesión para la ejecución de Jornada —consumir `execution-contract.schema.json` en vez de reconstruirlo— y otra para el modo de supervisión que resuelve la brecha 7. Ninguna de las dos está en las catorce.
+**Alcance nuevo, enumerado el 2026-08-11 como `S3.5` y `S3.6`** en [plan-3](plan-3/STATUS.md): ejecución del contrato sellado de Jornada (ruta `design-tasks`) y supervisión sin armado local, que resuelve la brecha 7 (ruta `full-sdd`). **Su ubicación escala:** aceptarlas en P3 reabre un Plan ✅ COMPLETO y cambia su denominador de `4` a `6`. Hasta que el maintainer decida, P3 conserva `100% (4/4 S)` y las dos cuentan como alcance sin ID asignado.
+
+### 🔴 La cadena de release está incompleta — hallazgo del 2026-08-11
+
+[release-chain](release-chain.md) incorpora `S1.16`–`S1.19` y deja `S1.11`–`S1.15` fuera «hasta que una dependencia explícita los incorpore». **Esa dependencia existe y está escrita en tres lugares**: `p7-host-neutral-loop-opencode-adapter/tasks.md:25` (`S1.13`–`S1.16` consumen el registro que posee `S1.11`), `p8-slice-planning/tasks.md:31` (`S1.17` exige `S1.11` y `S1.12`) y el Roadmap de [plan-1](plan-1/STATUS.md).
+
+`S1.11`–`S1.15` entran en la cadena: sin ellas no arrancan `S1.16` ni `S1.17`, y sin ésas no hay `S4.2`–`S4.4` ni `S7.1`. **El resto conocido pasa de 14 a 19 Sesiones**, más `S3.5` y `S3.6` si se aprueban.
+
+**Sin resolver:** `S1.11` y `S1.12` figuran 🔴 BLOQUEADO, pero `S1.9` y `S1.10` están ✅ COMPLETO y sus Tareas son «evidence record only». Puede ser estado obsoleto. Verificarlo primero: si el bloqueo ya no existe, las dos son 🟢 LISTO y la rama arranca hoy.
+
+### Rutas clasificadas el 2026-08-11
+
+Siete Sesiones carecían de ruta declarada — no nueve, como registró una medición previa: `S5.5` y `S8.7` ya la tenían.
+
+| ID | Ruta actual | Proyectada al destrabar |
+|---|---|---|
+| `S5.2` | `blocked` | `direct` |
+| `S5.3` | `blocked` | `design-tasks` |
+| `S7.1` | `blocked` | `design-tasks` |
+| `S1.16` | `blocked` | `design-tasks` |
+| `S1.17` | `blocked` | `direct` |
+| `S1.18` | `direct` | — |
+| `S1.19` | `direct` | — |
+
+Ninguna de las siete requiere `full-sdd`. Las cuatro `blocked` lo están por decisiones abiertas o registros no aprobados, **nunca por falta de especificación**: `S5.2` ya tiene quince criterios binarios y sus cuatro Tareas en orden RED → GREEN. El costo de proceso observado no venía de `full-sdd` mal aplicado a estas Sesiones, sino de que nunca se les asignó ruta.
 
 ## Granularidad
 
