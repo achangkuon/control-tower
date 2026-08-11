@@ -353,6 +353,19 @@
     "required_checks_digest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
     "required_reviews_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
   },
+  "deliveryRecord": {
+    "schema": "delivery-record",
+    "schema_version": 1,
+    "candidate_revision": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "revision": 1,
+    "previous_revision": 0,
+    "state": "DELIVERED",
+    "shape": "direct-push",
+    "authorization_ref": "auth-a",
+    "attempt": 1,
+    "reconciled": false,
+    "created_at": "2026-08-10T00:00:00.000Z"
+  },
   "agentCapabilityRegistry": {
     "schema": "agent-capability-registry",
     "schema_version": 1,

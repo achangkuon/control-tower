@@ -184,6 +184,9 @@ const invariants = Object.freeze({
     // Only the ASSUMPTION genus carries one; the schema's oneOf guarantees the pair is present or absent together.
     if (value.governed_by === "ASSUMPTION" && explicitAssumptionDigest(value.assumption) !== value.assumption_digest) invalid("Explicit assumption digest must match its canonical content")
   },
+  deliveryRecord: (value) => {
+    if (value.previous_revision !== value.revision - 1) invalid("Delivery record must link the immediately previous revision")
+  },
 })
 
 export const validate = (schemaName, input) => {

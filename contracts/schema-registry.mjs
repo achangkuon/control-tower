@@ -14,6 +14,7 @@ const schemaFiles = Object.freeze({
   parkedDecision: "parked-decision-v1.schema.json", parkedDecisionResponse: "parked-decision-response-v1.schema.json",
   checkpointCapture: "checkpoint-capture-v1.schema.json", reconciledCheckpoint: "reconciled-checkpoint-v1.schema.json",
   parkedCheckpointBinding: "parked-checkpoint-binding-v1.schema.json", supportProposal: "support-proposal-v1.schema.json",
+  deliveryRecord: "delivery-record-v1.schema.json",
   policyReportV2: "policy-report-v2.schema.json", assignmentV2: "assignment-v2.schema.json",
   recoveryProof: "recovery-proof-v1.schema.json", deliveryPolicy: "delivery-policy-v1.schema.json",
   agentCapabilityRegistry: "agent-capability-registry-v1.schema.json",
