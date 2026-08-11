@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test"
-import { readFileSync } from "node:fs"
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 
 import { canonicalize, digestArtifact } from "../../contracts/canonicalize.mjs"
 import { ContractError } from "../../contracts/errors.mjs"
@@ -59,7 +61,8 @@ graph TD
 ## Sesión 5.7 — Future
 `
 const bytes = Buffer.from(source)
-const plan5Bytes = readFileSync(new URL("../../openspec/plans/plan-5/STATUS.md", import.meta.url))
+const plan5Url = new URL("../../openspec/plans/plan-5/STATUS.md", import.meta.url)
+const plan5Bytes = readFileSync(plan5Url)
 const loadParser = () => import("../../contracts/session-plan-snapshot.mjs")
 const captured = async (operation) => {
   try { await operation() } catch (error) { return error }
@@ -231,5 +234,47 @@ describe("session plan snapshot identity", () => {
     const second = parseSessionPlanSnapshot({ plan_bytes: input, target_session_id: "S5.6" })
     expect(canonicalize(first)).toBe(canonicalize(second))
     expect(first.snapshot_digest).toBe(second.snapshot_digest)
+  })
+
+  test("leaves Plan 5, input, DB, WAL, SHM, and Tower witnesses unchanged on success and rejection", async () => {
+    const { parseSessionPlanSnapshot } = await loadParser()
+    const expectedPlanDigest = digestArtifact(plan5Bytes, "raw-bytes")
+    const cases = [
+      { name: "success", input: Buffer.from(plan5Bytes), expectedError: false },
+      { name: "CRLF rejection", input: Buffer.from(plan5Bytes.toString("utf8").replaceAll("\n", "\r\n")), expectedError: true },
+    ]
+    for (const { name, input, expectedError } of cases) {
+      const root = mkdtempSync(join(tmpdir(), "s5-6-read-only-"))
+      try {
+        const sentinels = new Map([
+          [join(root, "control-tower.db"), Buffer.from("DB_SENTINEL_V1")],
+          [join(root, "control-tower.db-wal"), Buffer.from("WAL_SENTINEL_V1")],
+          [join(root, "control-tower.db-shm"), Buffer.from("SHM_SENTINEL_V1")],
+          [join(root, "tower-state"), Buffer.from("TOWER_SENTINEL_V1")],
+        ])
+        for (const [path, content] of sentinels) writeFileSync(path, content)
+        const planBefore = readFileSync(plan5Url), inputBefore = Buffer.from(input)
+        const sentinelBefore = new Map([...sentinels].map(([path]) => [path, readFileSync(path)]))
+        const error = await captured(() => parseSessionPlanSnapshot({
+          plan_bytes: input, target_session_id: "S5.6", expected_plan_digest: expectedPlanDigest,
+        }))
+
+        expect(`${name}:${error?.code ?? "accepted"}`).toBe(`${name}:${expectedError ? "CT_SCHEMA_INVALID" : "accepted"}`)
+        expect(readFileSync(plan5Url)).toEqual(planBefore)
+        expect(input).toEqual(inputBefore)
+        for (const [path, content] of sentinelBefore) expect(readFileSync(path)).toEqual(content)
+      } finally { rmSync(root, { recursive: true, force: true }) }
+    }
+  })
+
+  test("keeps parser imports canonical and excludes fallback, runtime, and writer routes", () => {
+    const parserSource = readFileSync(new URL("../../contracts/session-plan-snapshot.mjs", import.meta.url), "utf8")
+    const imports = [...parserSource.matchAll(/^import .* from "([^"]+)"$/gmu)].map((match) => match[1])
+    expect(imports).toEqual(["./canonicalize.mjs", "./errors.mjs", "./validate.mjs"])
+    const forbidden = [
+      "continuation/", "engram", "main-store", "delivery/", "escalation/", "core.mjs", "mcp.mjs",
+      "node:fs", "writeFile", "appendFile", "unlinkSync", "rmSync", "Bun.write", "Database",
+    ]
+    for (const token of forbidden) expect(parserSource.includes(token)).toBe(false)
   })
 })
