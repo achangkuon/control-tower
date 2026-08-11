@@ -34,21 +34,21 @@ This ordering does not create another Módulo or Tarea. It only respects the dep
 
 ## Módulo M5.6.1 — Identidad y schema del snapshot
 
-- [ ] **Tarea T5.6.1.1 — RED: freeze exact source identity and mandatory shape failures.**
+- [x] **Tarea T5.6.1.1 — RED: freeze exact source identity and mandatory shape failures.**
   - Allowed paths: `test/contracts/session-plan-snapshot.test.mjs`, `test/contracts/schema.test.mjs`.
   - Precondition: T5.6.3.1 has already demonstrated that an unregistered/invariant-free contract is incomplete; no S5.6 source module or schema exists.
   - Work: add failing cases for `Uint8Array`/Buffer input, exact `digestArtifact(..., "raw-bytes")`, one-byte and line-ending drift, optional expected digest mismatch, fatal UTF-8, missing target ID, and missing required target/schema fields. The RED must fail because S5.6 behavior is absent, not because the test is malformed.
   - Completion/evidence: record the failing test names and expected `CT_SCHEMA_INVALID` assertions in apply-progress; input bytes remain unchanged during every RED.
   - Focused command: `bun test test/contracts/session-plan-snapshot.test.mjs test/contracts/schema.test.mjs`.
 
-- [ ] **Tarea T5.6.1.2 — GREEN: establish the versioned identity contract and minimal parser path.**
+- [x] **Tarea T5.6.1.2 — GREEN: establish the versioned identity contract and minimal parser path.**
   - Allowed paths: `contracts/session-plan-snapshot.mjs`, `schemas/session-plan-snapshot-v1.schema.json`, `test/contracts/session-plan-snapshot.test.mjs`.
   - Precondition: T5.6.1.1 and T5.6.3.1 are red for the intended reasons; execute together with T5.6.3.2 so the public API never lands against an unknown schema.
   - Work: add the closed 2020-12 schema shape and `$defs`; implement `parseSessionPlanSnapshot` input/source guards, fatal UTF-8, exact raw-byte binding, the minimal headed-target path needed by the identity cases, and `sessionPlanSnapshotDigest` without self-reference. Return only a frozen value accepted by the canonical validator.
   - Completion/evidence: identity cases pass; one-byte drift and invalid encoding return only `CT_SCHEMA_INVALID`; `snapshot_digest` and `source.content_digest` have distinct verified meanings; no partial value escapes.
   - Focused command: `bun test test/contracts/session-plan-snapshot.test.mjs test/contracts/schema.test.mjs`.
 
-- [ ] **Tarea T5.6.1.3 — REFACTOR/TRIANGULATE: remove duplicate digest and identity knowledge.**
+- [x] **Tarea T5.6.1.3 — REFACTOR/TRIANGULATE: remove duplicate digest and identity knowledge.**
   - Allowed paths: `contracts/session-plan-snapshot.mjs`, `contracts/validate.mjs`, `test/contracts/session-plan-snapshot.test.mjs`, `test/contracts/schema.test.mjs`.
   - Precondition: paired GREEN T5.6.1.2/T5.6.3.2 passes, including the Bun ESM initialization case.
   - Work: ensure raw identity calls the existing `digestArtifact` directly; ensure snapshot identity is computed by one exported helper used by parser and validator; remove copied digest regexes and duplicate field-omission lists; triangulate with two different valid snapshots and one stale digest.
@@ -57,28 +57,28 @@ This ordering does not create another Módulo or Tarea. It only respects the dep
 
 ## Módulo M5.6.2 — Parser único del contrato de Sesión
 
-- [ ] **Tarea T5.6.2.1 — RED: specify complete two-domain Session semantics.**
+- [x] **Tarea T5.6.2.1 — RED: specify complete two-domain Session semantics.**
   - Allowed paths: `test/contracts/session-plan-snapshot.test.mjs`.
   - Precondition: behavioral commit 1 is green and exposes only the registered identity foundation.
   - Work: add representative failing cases for the authoritative Plan 5 S5.6 target; local/external graph partition; S3.2/S3.3/S3.4/S4.1 reference-only closure; status, dependencies, `Área`, `Recurso`, both decision arms, active/historical/none contamination, and acceptance criteria isolated from task checkboxes.
   - Completion/evidence: every positive expectation fails because the complete parser is absent; the test proves graph-only nodes have no execution fields and the plan-local target has all required fields.
   - Focused command: `bun test test/contracts/session-plan-snapshot.test.mjs`.
 
-- [ ] **Tarea T5.6.2.2 — RED: lock the rejection matrix before implementation.**
+- [x] **Tarea T5.6.2.2 — RED: lock the rejection matrix before implementation.**
   - Allowed paths: `test/contracts/session-plan-snapshot.test.mjs`, `test/contracts/schema.test.mjs`.
   - Precondition: T5.6.2.1 is red and its representative source is structurally valid.
   - Work: add failing cases for absent/duplicate target; missing/multiple/conflicting graph declarations; unresolved aliases/edges; duplicate edges; cycles; cross-domain ID conflicts; incomplete/duplicate fields; unsupported status; malformed decision labels/classes; non-binary or duplicate criteria; unresolved contamination; external fallback; graph-only target promotion; and dependency-edge mismatch.
   - Completion/evidence: every rejection expects frozen `ContractError` code `CT_SCHEMA_INVALID`, zero partial output, and unchanged input. Add an explicit assertion that S5.6 invariants do not route through `CT_MANIFEST_INVALID` helpers.
   - Focused command: `bun test test/contracts/session-plan-snapshot.test.mjs test/contracts/schema.test.mjs`.
 
-- [ ] **Tarea T5.6.2.3 — GREEN: implement the sole anchored Markdown parser.**
+- [x] **Tarea T5.6.2.3 — GREEN: implement the sole anchored Markdown parser.**
   - Allowed paths: `contracts/session-plan-snapshot.mjs`, `contracts/validate.mjs`, `test/contracts/session-plan-snapshot.test.mjs`, `test/contracts/schema.test.mjs`.
   - Precondition: T5.6.2.1 and T5.6.2.2 fail for their named missing behaviors; registry/schema/identity foundation is green.
   - Work: implement one fatal UTF-8 pipeline for the unique graph section, Mermaid declarations/edges, headed Session sections, target selection, closed status, both dependency labels, area code spans, resource text, anchored decisions/classes/resolution/contamination, and named binary criteria. Resolve external graph-only dependencies without promotion. Add S5.6-specific cross-field helpers that call the existing `invalid`/`CT_SCHEMA_INVALID` path; do not reuse generic manifest graph helpers unchanged. Parse no Engram, runtime, default, or continuation source.
   - Completion/evidence: authoritative Plan 5 S5.6 produces a schema-valid frozen snapshot; every negative matrix case fails closed; S3.2/S3.3/S3.4/S4.1 are reference-only; the import graph contains no `continuation/**` dependency.
   - Focused command: `bun test test/contracts/session-plan-snapshot.test.mjs test/contracts/schema.test.mjs`.
 
-- [ ] **Tarea T5.6.2.4 — TRIANGULATE/REFACTOR: canonicalize ordering and prove determinism.**
+- [x] **Tarea T5.6.2.4 — TRIANGULATE/REFACTOR: canonicalize ordering and prove determinism.**
   - Allowed paths: `contracts/session-plan-snapshot.mjs`, `contracts/validate.mjs`, `test/contracts/session-plan-snapshot.test.mjs`.
   - Precondition: T5.6.2.3 is green across the complete positive and rejection matrix.
   - Work: sort set-like dependencies, area, node IDs, contamination IDs, and edges; preserve authored decision/criterion order; normalize only parsed boundary whitespace; prove identical bytes/target yield byte-identical `canonicalize(snapshot)` output and digest across repeated calls; prove changed raw bytes invalidate the old binding even when parsed semantics are equal.
@@ -87,21 +87,21 @@ This ordering does not create another Módulo or Tarea. It only respects the dep
 
 ## Módulo M5.6.3 — Registro y frontera read-only
 
-- [ ] **Tarea T5.6.3.1 — RED: prove schema-only wiring is incomplete.**
+- [x] **Tarea T5.6.3.1 — RED: prove schema-only wiring is incomplete.**
   - Allowed paths: `test/contracts/schema.test.mjs`, `test/contracts/session-plan-snapshot.test.mjs`.
   - Precondition: no S5.6 registry entry, invariant, or fixture exists.
   - Work: add failing assertions that `sessionPlanSnapshot` must appear in `schemaNames`, validate through `validate`, enforce snapshot/graph/reference invariants, exist in the shared fixture, and initialize correctly when parser and validator import each other under Bun ESM.
   - Completion/evidence: RED names the missing registry/invariant/fixture/module-initialization behavior; failures are not satisfied by direct AJV construction or a second validator.
   - Focused command: `bun test test/contracts/schema.test.mjs test/contracts/session-plan-snapshot.test.mjs`.
 
-- [ ] **Tarea T5.6.3.2 — GREEN: wire the sole canonical registry, invariants, and fixture.**
+- [x] **Tarea T5.6.3.2 — GREEN: wire the sole canonical registry, invariants, and fixture.**
   - Allowed paths: `contracts/schema-registry.mjs`, `contracts/validate.mjs`, `contracts/session-plan-snapshot.mjs`, `test/contracts/schema.test.mjs`, `test/contracts/session-plan-snapshot.test.mjs`, `test/fixtures/contracts/schema-cases-v1.json`.
   - Precondition: T5.6.3.1 and T5.6.1.1 are red; execute as the paired GREEN with T5.6.1.2.
   - Work: register exactly one `sessionPlanSnapshot` schema; add the valid fixture; enforce snapshot digest, disjoint graph domains, target locality, edge closure/DAG, dependency-edge equality, contamination closure, and duplicate decision/criterion rejection through S5.6-specific `CT_SCHEMA_INVALID` invariants. Add the Bun ESM import/module-initialization test for the parser↔validator helper cycle.
   - Completion/evidence: shared fixture loop validates/freezes the payload and rejects undeclared fields; each cross-field mutation returns `CT_SCHEMA_INVALID`; importing parser then validator and validator then parser initializes and runs without TDZ/undefined-export failure.
   - Focused command: `bun test test/contracts/schema.test.mjs test/contracts/session-plan-snapshot.test.mjs`.
 
-- [ ] **Tarea T5.6.3.3 — REFACTOR/HARDEN: prove read-only isolation and final compatibility.**
+- [x] **Tarea T5.6.3.3 — REFACTOR/HARDEN: prove read-only isolation and final compatibility.**
   - Allowed paths: `contracts/session-plan-snapshot.mjs`, `contracts/validate.mjs`, `test/contracts/session-plan-snapshot.test.mjs`, `test/contracts/schema.test.mjs`.
   - Precondition: behavioral commits 1 and 2 are green; all parser/schema semantics are implemented.
   - Work: add before/after byte witnesses for Plan 5, input bytes, temporary DB/WAL/SHM/Tower sentinels on success and rejection; assert no forbidden imports or writer APIs; run negative scope checks; refactor only if witnesses expose a mutation path. Then run focused and full verification once on the exact final bytes.
