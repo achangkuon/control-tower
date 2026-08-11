@@ -1,9 +1,17 @@
 import { describe, expect, test } from "bun:test"
+import { readFileSync } from "node:fs"
 
-import { digestArtifact } from "../../contracts/canonicalize.mjs"
+import { canonicalize, digestArtifact } from "../../contracts/canonicalize.mjs"
 import { ContractError } from "../../contracts/errors.mjs"
 
 const source = `# Plan
+
+## Grafo de dependencias
+
+\`\`\`mermaid
+graph LR
+  S56["S5.6 canonical identity · 🟢"]
+\`\`\`
 
 ## Sesión 5.6 — Canonical identity
 
@@ -17,7 +25,41 @@ const source = `# Plan
 
 - [ ] Exact bytes remain authoritative.
 `
+const richSource = `# Plan
+
+## Grafo de dependencias
+
+\`\`\`mermaid
+graph TD
+  S57["S5.7 future · 📋"]
+  S54["S5.4 routing · ✅"] --> S56["S5.6 canonical parser · 🟢"]
+  S55["S5.5 continuation · 📋"]
+  S56 --> S57
+\`\`\`
+
+## Sesión 5.6 — Canonical parser
+
+**Estado:** 🟢 LISTO — ready
+**Depende de:** \`S5.4\` ✅
+**Área:** \`z/path\`, \`a/path\`
+**Recurso:** canonical registry
+**Decisiones:**
+- \`derivable\` — choose identity. **Criterio:** exact bytes. **Autoridad:** approved contract.
+- \`escala\` — active impact. **Clase:** seguridad y permisos. **Contamina:** \`S5.7\`.
+- \`escala\` — resolved impact. **Clase:** dependencias o evidencia contradictorias. **RESUELTA por el maintainer.** **Contaminaba:** \`S5.5\`.
+- \`escala\` — no semantic impact. **Clase:** operaciones irreversibles.
+
+### Módulo 5.6.2 — Parser
+- [ ] Tarea 5.6.2.1 — this is not an acceptance criterion.
+
+**Criterios de aceptación de S5.6** — required
+- [ ] First observable result.
+- [x] Second observable result.
+
+## Sesión 5.7 — Future
+`
 const bytes = Buffer.from(source)
+const plan5Bytes = readFileSync(new URL("../../openspec/plans/plan-5/STATUS.md", import.meta.url))
 const loadParser = () => import("../../contracts/session-plan-snapshot.mjs")
 const captured = async (operation) => {
   try { await operation() } catch (error) { return error }
@@ -108,5 +150,86 @@ describe("session plan snapshot identity", () => {
 
     expect(missingTarget.code).toBe("CT_SCHEMA_INVALID")
     expect(incomplete.code).toBe("CT_SCHEMA_INVALID")
+  })
+
+  test("parses the authoritative Plan 5 target with external graph-only references", async () => {
+    const { parseSessionPlanSnapshot } = await loadParser()
+    const snapshot = parseSessionPlanSnapshot({ plan_bytes: plan5Bytes, target_session_id: "S5.6" })
+
+    expect(snapshot.target.session_id).toBe("S5.6")
+    expect(snapshot.target.depends_on).toEqual(["S5.4"])
+    expect(snapshot.target.decisions).toHaveLength(4)
+    expect(snapshot.target.decisions[0]).toMatchObject({ kind: "escala", resolution: "resolved", contamination: { state: "historical", session_ids: ["S5.5"] } })
+    expect(snapshot.target.acceptance_criteria).toHaveLength(10)
+    expect(snapshot.graph.external_session_ids).toEqual(["S3.2", "S3.3", "S3.4", "S4.1"])
+    expect(snapshot.graph.local_session_ids).toEqual(["S5.1", "S5.2", "S5.3", "S5.4", "S5.5", "S5.6", "S5.7", "S5.8"])
+    expect(snapshot.graph.edges).toHaveLength(11)
+  })
+
+  test("preserves complete target semantics and all contamination states", async () => {
+    const { parseSessionPlanSnapshot } = await loadParser()
+    const snapshot = parseSessionPlanSnapshot({ plan_bytes: Buffer.from(richSource), target_session_id: "S5.6" })
+
+    expect(snapshot.target).toMatchObject({ status: "LISTO", depends_on: ["S5.4"], area: ["a/path", "z/path"], resource: "canonical registry" })
+    expect(snapshot.target.decisions.map(({ kind }) => kind)).toEqual(["derivable", "escala", "escala", "escala"])
+    expect(snapshot.target.decisions[1].contamination).toEqual({ state: "active", session_ids: ["S5.7"] })
+    expect(snapshot.target.decisions[2]).toMatchObject({ resolution: "resolved", contamination: { state: "historical", session_ids: ["S5.5"] } })
+    expect(snapshot.target.decisions[3].contamination).toEqual({ state: "none", session_ids: [] })
+    expect(snapshot.target.acceptance_criteria).toEqual([{ checked: false, text: "First observable result." }, { checked: true, text: "Second observable result." }])
+    expect(snapshot.graph).toEqual({
+      local_session_ids: ["S5.6", "S5.7"], external_session_ids: ["S5.4", "S5.5"],
+      edges: [{ from: "S5.4", to: "S5.6" }, { from: "S5.6", to: "S5.7" }],
+    })
+  })
+
+  test("accepts both dependency labels and the seven closed statuses", async () => {
+    const { parseSessionPlanSnapshot } = await loadParser()
+    expect(parseSessionPlanSnapshot({ plan_bytes: Buffer.from(richSource.replace("**Depende de:**", "**Dependencias:**")), target_session_id: "S5.6" }).target.depends_on).toEqual(["S5.4"])
+    const statuses = [["📋", "PLANIFICADO"], ["🟢", "LISTO"], ["🔵", "EN CURSO"], ["🔴", "BLOQUEADO"], ["🟡", "DIFERIDO"], ["✅", "COMPLETO"], ["📚", "ARCHIVADO"]]
+    for (const [marker, status] of statuses) {
+      const plan = richSource.replace("🟢 LISTO — ready", `${marker} ${status} — ready`)
+      expect(parseSessionPlanSnapshot({ plan_bytes: Buffer.from(plan), target_session_id: "S5.6" }).target.status).toBe(status)
+    }
+  })
+
+  test("fails closed for the complete graph, target, decision, and criteria rejection matrix", async () => {
+    const { parseSessionPlanSnapshot } = await loadParser()
+    const graph = source.slice(source.indexOf("## Grafo"), source.indexOf("## Sesión"))
+    const target = source.slice(source.indexOf("## Sesión"))
+    const cases = [
+      ["missing graph", source.replace(graph, "")], ["duplicate graph", `${graph}${source}`],
+      ["multiple fence", source.replace("```\n\n## Sesión", "```\n```mermaid\ngraph LR\n```\n\n## Sesión")],
+      ["unresolved alias", source.replace("S56[", "UNKNOWN --> S56[")],
+      ["duplicate node", source.replace("  S56[\"S5.6 canonical identity · 🟢\"]", "  S56[\"S5.6 canonical identity · 🟢\"]\n  ALT[\"S5.6 duplicate · 🟢\"]")],
+      ["duplicate target", `${source}\n${target}`],
+      ["duplicate field", source.replace("**Recurso:** canonical contract registry", "**Recurso:** canonical contract registry\n**Recurso:** duplicate")],
+      ["unsupported status", source.replace("🟢 LISTO", "🟢 READY")],
+      ["non-binary criterion", source.replace("- [ ] Exact", "- [~] Exact")],
+      ["duplicate edge", richSource.replace("  S56 --> S57", "  S56 --> S57\n  S56 --> S57")],
+      ["cycle", richSource.replace("  S56 --> S57", "  S56 --> S57\n  S57 --> S56")],
+      ["dependency mismatch", richSource.replace("S54[\"S5.4 routing · ✅\"] --> S56", "S54[\"S5.4 routing · ✅\"] --> S57")],
+      ["unresolved contamination", richSource.replace("**Contamina:** `S5.7`", "**Contamina:** `S9.9`")],
+      ["malformed class", richSource.replace("**Clase:** seguridad y permisos", "**Clase:** unknown")],
+      ["duplicate criterion", richSource.replace("- [x] Second observable result.", "- [x] Second observable result.\n- [x] Second observable result.")],
+    ]
+    for (const [name, text] of cases) {
+      const input = Buffer.from(text), before = Buffer.from(input)
+      const error = await captured(() => parseSessionPlanSnapshot({ plan_bytes: input, target_session_id: name === "graph-only target" ? "S5.4" : "S5.6" }))
+      expect(`${name}:${error?.code}`).toBe(`${name}:CT_SCHEMA_INVALID`)
+      expect(error).toBeInstanceOf(ContractError)
+      expect(Object.isFrozen(error)).toBe(true)
+      expect(input).toEqual(before)
+    }
+    const graphOnly = await captured(() => parseSessionPlanSnapshot({ plan_bytes: Buffer.from(richSource), target_session_id: "S5.4" }))
+    expect(graphOnly.code).toBe("CT_SCHEMA_INVALID")
+  })
+
+  test("orders set-like output and remains deterministic for identical bytes", async () => {
+    const { parseSessionPlanSnapshot } = await loadParser()
+    const input = Buffer.from(richSource)
+    const first = parseSessionPlanSnapshot({ plan_bytes: input, target_session_id: "S5.6" })
+    const second = parseSessionPlanSnapshot({ plan_bytes: input, target_session_id: "S5.6" })
+    expect(canonicalize(first)).toBe(canonicalize(second))
+    expect(first.snapshot_digest).toBe(second.snapshot_digest)
   })
 })
