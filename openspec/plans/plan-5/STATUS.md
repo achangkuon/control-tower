@@ -19,7 +19,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1`, y la cadena contractual `S5.4 → S5.6 → S5.7 → S5.8 → S5.5`. |
 | Outputs | F: authorization store, Telegram, validación Git/PR/check/SHA, entrega idempotente y post-check. G: planning horizon, reconciliación, apply/verify, Binding Delta y continuación del siguiente `slice_id`. Más el ruteo de escalamiento de `S5.4`, los contratos canónicos prerrequisito de `S5.6`–`S5.8` y la planificación diferible de `S5.5`. |
-| Roadmap | `S5.1`, `S5.4` y `S5.6` están ✅ COMPLETO; `S5.6` cerró técnicamente en local y todavía no fue publicado. `S5.7` queda 🟢 LISTO; `S5.8` y `S5.5` continúan 📋 PLANIFICADO por grafo. La representación terminal de `S5.8` quedó resuelta por el maintainer como registro explícito y atómico dentro del mismo main-store. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
+| Roadmap | `S5.1`, `S5.4` y `S5.6` están ✅ COMPLETO; `S5.6` fue publicado en `origin/master@75ddcf9`. `S5.7` queda 🟢 LISTO; `S5.8` y `S5.5` continúan 📋 PLANIFICADO por grafo. La representación terminal de `S5.8` quedó resuelta por el maintainer como registro explícito y atómico dentro del mismo main-store. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
 
 ## Grafo de dependencias
@@ -435,7 +435,7 @@ Sesiones sin decisión explícita.
 
 ## Sesión 5.6 — Contrato canónico de snapshot de Sesión
 
-**Estado:** ✅ COMPLETO — cierre técnico local verificado el 2026-08-11. El contrato quedó implementado, verificado y archivado; todavía no fue publicado.
+**Estado:** ✅ COMPLETO — implementado, verificado, archivado y publicado en `origin/master@75ddcf9` el 2026-08-11.
 
 **Depende de:** `S5.4` ✅
 
@@ -447,7 +447,7 @@ Sesiones sin decisión explícita.
 
 **Route:** `full-sdd` — contrato visible y parser canónico nuevo; proposal/spec/design deben fijar la representación sin ampliar la responsabilidad aprobada. **Autoridad:** decisión del maintainer del 2026-08-10 y readiness técnica Engram 8261.
 
-**Cierre técnico local:** comportamiento en `20e06c5`, corrección acotada en `8cf7aab`, parser canónico en `10ae5e0` y hardening read-only en `4de42fe`. La evidencia independiente quedó congelada por `f0103fd` en [`verify-report.md`](../../changes/archive/2026-08-11-s5-6-canonical-session-snapshot/verify-report.md): 31/31 escenarios, 10/10 Tareas y 10/10 criterios. Verificación final: `bun test test/contracts` → 75 pass / 0 fail / 348 expectations; `bun test` → 588 pass / 0 fail / 3452 expectations.
+**Cierre y publicación:** comportamiento en `20e06c5`, corrección acotada en `8cf7aab`, parser canónico en `10ae5e0`, hardening read-only en `4de42fe`, evidencia en `f0103fd` y archivo/publicación en `75ddcf9`. El [`verify-report.md`](../../changes/archive/2026-08-11-s5-6-canonical-session-snapshot/verify-report.md) confirma 31/31 escenarios, 10/10 Tareas y 10/10 criterios. Verificación final: `bun test test/contracts` → 75 pass / 0 fail / 348 expectations; `bun test` → 588 pass / 0 fail / 3452 expectations.
 
 **Scope y testigos read-only:** el diff de implementación toca exactamente los siete paths aprobados y ninguno del `Prohibido`. Plan 5, input CRLF, DB, WAL, SHM y Tower permanecieron byte-idénticos en éxito y rechazo; el parser sólo importa canonicalización, errores y validación canónica, sin fallback narrativo, runtime ni writer. Runtime harness: **N/A**, biblioteca pura sin adopción externa ni estado vivo.
 

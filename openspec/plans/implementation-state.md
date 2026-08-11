@@ -33,7 +33,7 @@ Esto es exactamente lo que el manifest de `installable-v1` declara resolver: `mi
 | `bin/torre` | — | ambos | Punto de entrada. Delega `install\|diagnose\|upgrade\|rollback\|uninstall` a `install/lifecycle.mjs`; rechaza `launch-worker\|create-worker\|create-session\|create-worktree` con `CT_V2_ONLY`. |
 | `install/` | 185 | `installable-v1` | `lifecycle`, `active-pointer`, `version-store`. Entregado por `S8.2`. **Construido y probado, nunca usado** — lo adopta `S8.8`. |
 | `contracts/` | 322 | `autonomous-v2` | Medición histórica: `schema-registry`, `canonicalize`, `artifact-ref`, `idempotency`, `validate`, `errors`. Entregado por P2 Change A. |
-| `contracts/session-plan-snapshot.mjs` | 191 | `autonomous-v2` | Parser canónico read-only de S5.6, ligado a bytes/digest exactos del plan; cierre técnico local `f0103fd`, publicación pendiente. |
+| `contracts/session-plan-snapshot.mjs` | 191 | `autonomous-v2` | Parser canónico read-only de S5.6, ligado a bytes/digest exactos del plan; verificado en `f0103fd` y publicado en `origin/master@75ddcf9`. |
 | `schemas/session-plan-snapshot-v1.schema.json` | 60 | `autonomous-v2` | Contrato cerrado y versionado de S5.6, registrado por la ruta canónica. |
 | `test/contracts/session-plan-snapshot.test.mjs` | 280 | `autonomous-v2` | 14 pruebas de identidad, gramática, rechazo, determinismo, aislamiento y testigos read-only de S5.6. |
 | `registry/` | 337 | `autonomous-v2` | `store`, `path`, `legacy-import`. Entregado por `S2.4` y `S2.5`. |

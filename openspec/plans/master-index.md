@@ -1,12 +1,12 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-11 contra el cierre técnico local `f0103fd`, su [verify PASS](../changes/archive/2026-08-11-s5-6-canonical-session-snapshot/verify-report.md), los planes canónicos y `origin/master@d536c4a`. La publicación sigue pendiente de autorización humana exacta.
+> Última reconciliación: 2026-08-11 contra el cierre publicado de `S5.6` en `origin/master@75ddcf9`, su [verify PASS](../changes/archive/2026-08-11-s5-6-canonical-session-snapshot/verify-report.md) y los planes canónicos.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md).
 
 ## 📍 Punto de retoma
 
-`S5.6` está ✅ COMPLETO en el cierre técnico local: implementación `20e06c5` + `8cf7aab` + `10ae5e0` + `4de42fe`, evidencia `f0103fd`, 10/10 Tareas, 10/10 criterios, focused 75/0/348 y suite completa 588/0/3452. El cambio quedó archivado y la spec sincronizada; todavía no fue publicado.
+`S5.6` está ✅ COMPLETO y publicado en `origin/master@75ddcf9`: implementación `20e06c5` + `8cf7aab` + `10ae5e0` + `4de42fe`, evidencia `f0103fd`, 10/10 Tareas, 10/10 criterios, focused 75/0/348 y suite completa 588/0/3452. El cambio quedó archivado y la spec canónica sincronizada.
 
 El próximo nodo ejecutable es `S5.7` 🟢 LISTO. Después siguen `S5.8` y `S5.5`, ambas 📋 PLANIFICADO. Option B permanece resuelta para `S5.8`: registro explícito y transición terminal atómicos dentro del mismo main-store.
 

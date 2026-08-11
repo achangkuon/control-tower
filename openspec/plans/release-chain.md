@@ -90,7 +90,7 @@ graph LR
 | — | `S4.4` | Enforzamiento de epoch y failover exclusivo | 🔴 BLOQUEADO | `S4.3` 🔴, `S1.17` 🔴, `S1.18`/`S1.19` 📋; ruta `full-sdd` |
 | ✅ | `S5.4` | Ruteo de escalamiento fuera/en casa | ✅ COMPLETO | `S5.1` ✅; publicado en `origin/master` mediante `976b8d0`, `75549a7`, `f9f2869` y reconciliado en `d114677`; 9/9 Tareas, 15/15 criterios. **No** depende de `S8.7` |
 | — | `S5.2` | Entrega idempotente y post-check | 🔴 BLOQUEADO | `S4.1` ✅, `S3.3` ✅; recheck 8193 mantiene abiertos 1/3/5 y decisión 8195 estaciona el candidato NOT READY |
-| ✅ | `S5.6` | Contrato canónico de snapshot de Sesión | ✅ COMPLETO | `S5.4` ✅; cierre técnico local `f0103fd`, 10/10 Tareas, 10/10 criterios, focused 75/0/348 y full 588/0/3452; publicación pendiente |
+| ✅ | `S5.6` | Contrato canónico de snapshot de Sesión | ✅ COMPLETO | `S5.4` ✅; publicado en `origin/master@75ddcf9`, 10/10 Tareas, 10/10 criterios, focused 75/0/348 y full 588/0/3452 |
 | ▶ | `S5.7` | Contratos canónicos de decisión estacionada y respuesta | 🟢 LISTO | `S5.6` ✅; route `full-sdd` |
 | — | `S5.8` | Binding de opción seleccionada en autoridad canónica | 📋 PLANIFICADO | `S5.7`; Option B resuelta; route `full-sdd` |
 | — | `S5.5` | Decisión estacionada y continuación independiente | 📋 PLANIFICADO | `S5.8` |
@@ -137,7 +137,7 @@ cerrado y exige una solicitud/autorización nueva.
 
 La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas; no se declara como un número fijo.
 
-`S4.1`, `S5.4` y `S5.6` están ✅ COMPLETO; `S5.6` tiene cierre técnico local verificado y publicación pendiente. `S4.2`–`S4.4` esperan los adapters lifecycle de P1 y no son elegibles. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1/3/5 y `S5.3` queda bloqueada transitivamente. `S8.7` espera el inicializador confiable de producción.
+`S4.1`, `S5.4` y `S5.6` están ✅ COMPLETO; `S5.6` quedó verificado, archivado y publicado en `origin/master@75ddcf9`. `S4.2`–`S4.4` esperan los adapters lifecycle de P1 y no son elegibles. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1/3/5 y `S5.3` queda bloqueada transitivamente. `S8.7` espera el inicializador confiable de producción.
 
 **Capacidad de ejecución hoy: 1.** Sólo `S5.7` está 🟢 LISTO: depende de `S5.6` ✅ y toma a continuación el registro canónico de contratos. `S5.8` y `S5.5` esperan la cadena; Option B ya resolvió la representación terminal y no queda un bloqueo de maintainer en esa hebra. `S7.1` conserva sus dependencias en `S5.3`, `S8.7` y `S5.5`.
 
