@@ -14,6 +14,24 @@ El próximo nodo ejecutable es `S5.7` 🟢 LISTO. Después siguen `S5.8` y `S5.5
 
 P4 conserva `S4.2`–`S4.4` detrás de `S1.16`–`S1.19`. Fuera de la transición derivada de `S5.7` a 🟢 LISTO, ningún estado ajeno a `S5.6` cambió en este cierre.
 
+### Auditoría de alcance del 2026-08-11
+
+Sesión read-only de evaluación pedida por el maintainer. No cambió estados ni dependencias de Sesiones; sí corrigió documentos que reportaban mal el estado. Sus salidas son la re-medición global de [implementation-state](implementation-state.md) y la [comparación de alcance](scope-comparison.md).
+
+**Cuatro correcciones documentales:**
+
+1. **La brecha 1 estaba cerrada hacía siete días.** El corte de runtime se ejecutó el 2026-08-03; `~/.local/bin/torre` es symlink al runtime instalado y el `core.mjs` activo es byte-idéntico al del repositorio. `implementation-state` sostuvo «construido ≠ desplegado» sin re-medir.
+2. **La brecha 4 se reabrió.** 132 commits `docs` contra 70 de código (1,9 : 1) en todo el historial; la corrección declarada el 2026-07-31 no movió la proporción.
+3. **La contradicción `S7.1` ↔ `S4.4`** entre el grafo y la tabla de [release-chain](release-chain.md) valía siete Sesiones. **Resuelta por el maintainer: gana el grafo, se construyen las catorce restantes.**
+4. **`decision-register.md` afirmaba que el bloqueo del sellado desatendido era específico de este repositorio.** No lo es: `remote-control` falla también.
+
+**Dos brechas nuevas, ambas sin Sesión que las cubra:**
+
+- **Brecha 6** — el contrato del payload (`scanClosure`) rechaza estructuralmente todo directorio que no sea `bin` o `install`, así que el 44% del código de producto no puede viajar en el artefacto instalable.
+- **Brecha 7** — la Torre no puede supervisar un repositorio sin estar armada dentro de ese repositorio, lo que bloquea el sellado desatendido en los dos repositorios en uso.
+
+**Decisiones del maintainer tomadas en esta sesión:** el dashboard queda retirado del alcance y se reemplaza por una TUI, cuyo requisito se escribe después de cerrar la Torre; `jornada/` consume `execution-contract.schema.json` en vez de reconstruir el sellado; la clasificación de ruta de las Sesiones sin ruta se resuelve con `planificador-granular`.
+
 ## Granularidad
 
 Plan → Sesión (1 PR) → Módulo (archivos) → Tarea (mín. 3).

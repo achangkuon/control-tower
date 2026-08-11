@@ -96,7 +96,16 @@ graph LR
 | — | `S5.5` | Decisión estacionada y continuación independiente | 📋 PLANIFICADO | `S5.8` |
 | — | `S5.3` | Continuación | 🔴 BLOQUEADO | Bloqueo transitivo por `S5.2` |
 | — | `S8.7` | Puente Hermes/Telegram | 🔴 BLOQUEADO | Dependencias propias ✅ y decisiones Telegram resueltas; bloquea el inicializador confiable de producción pendiente |
-| 4 | `S7.1` | Conformidad de release | 📋 PLANIFICADO | `S5.3`, `S8.7`, `S5.5` |
+| 4 | `S7.1` | Conformidad de release | 📋 PLANIFICADO | `S4.4`, `S5.3`, `S8.7`, `S5.5` |
+
+> **Contradicción reconciliada el 2026-08-11.** Hasta esta fecha el grafo Mermaid declaraba
+> `S44 --> S71` y esta tabla omitía `S4.4`, con la prosa sin mencionar su retiro. Las dos
+> lecturas tenían autoridad idéntica dentro del mismo archivo, y la diferencia valía siete
+> Sesiones — `S4.2`–`S4.4` más `S1.16`–`S1.19`, la mitad del trabajo restante.
+>
+> **Resuelta por el maintainer: gana el grafo.** `S7.1` depende de `S4.4`; la rama de
+> recuperación y failover entra en la cadena de release. La tabla se corrige para coincidir.
+> La decisión fue explícita —construir las catorce Sesiones restantes— y no una derivación.
 
 **Veinte Sesiones · 10 cerradas.** `S5.6`–`S5.8` agregan tres unidades revisables y
 secuenciales entre `S5.4` y `S5.5`: snapshot/parser canónico, contratos de decisión/respuesta

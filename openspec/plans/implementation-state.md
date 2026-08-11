@@ -1,118 +1,229 @@
 # Estado de implementación — Control Tower
 
 > Este documento mide **código**, no planificación. El [master-index](master-index.md) dice qué está planificado y qué Sesiones cerraron; este archivo dice qué existe, qué corre y qué está desplegado.
-> Medición histórica del inventario de módulos y de las pruebas: 2026-07-31 sobre `master` en `d072e509`, que integra `6fbd97c3b1f84735db61ccbd1fd510482206e4eb`. **No se volvió a medir todo el código el 2026-08-01** — lo que se agregó ese día es la brecha 5, observada sobre `master@a4aa3a6`. Las actualizaciones del 2026-08-10 (`S5.4`) y 2026-08-11 (`S5.6`) son cortes acotados a sus paths verificados; no reetiquetan las cifras históricas como medición global actual.
 >
-> **Nota de vocabulario (2026-08-01):** la columna `Lane` de la tabla de módulos ya no nombra dos productos. Tras la [unificación](release-chain.md), `installable-v1` y `autonomous-v2` son afinidad de trabajo y nada más. El corte que sí sigue siendo real está en código: `bin/torre:28` rechaza capacidades con `CT_V2_ONLY`, y pasa a ser un flag opt-in apagado por defecto en vez de una frontera de producto.
-
-## ⚠️ Hallazgo principal: construido ≠ desplegado
-
-Lo que corre a diario **no es** el código de este repositorio.
-
-| | Runtime en uso | Repositorio |
-|---|---|---|
-| Ruta | `~/.config/opencode/control-tower/core.mjs` | `Main/core.mjs` |
-| Tamaño | 15.7 KB · 398 líneas | 384 KB · 4646 líneas |
-| Fecha | 2026-07-21 | 2026-07-31 |
-| Origen | checkout git independiente, sin remote, en `681a0e5` | `origin/master` |
-
-`bin/torre` resuelve el runtime con `CONTROL_TOWER_CORE:-$HOME/.config/opencode/control-tower/core.mjs`. Las operaciones diarias (`on`, `off`, `status`, `log`, `unlock`, `reset`) ejecutan ese archivo de 398 líneas, no el del repositorio.
-
-> **Corrección del 2026-08-01.** La medición del 2026-07-31 afirmaba que *no existía* data-root XDG. **Es falso desde que corrió `M8.8.2`.** Verificado hoy: `~/.local/share/control-tower/` existe con `active.json` y dos versiones instaladas (`b72e450…` y `d280214c…`), y `torre diagnose` devuelve `{"healthy":true,"active":"b72e450…"}`.
+> **Medición global: 2026-08-10 sobre `origin/master@b360c8a`.** Esta es la primera re-medición completa desde el 2026-07-31. Reemplaza las cifras históricas y los cortes acotados de `S5.4` y `S5.6`. Inventario de módulos, suite de pruebas, estado de despliegue y las cinco brechas fueron re-observados directamente, no heredados.
 >
-> Lo que sigue siendo cierto es el encabezado de esta sección: **el runtime en uso no es el instalado.** `bin/torre` todavía resuelve al checkout legado porque `M8.8.3` no ejecutó el corte — el payload instalado omite `core.mjs`. La adopción está *iniciada y es reversible*, no ausente. La corrige `M8.8.4`, sellado y sin integrar.
+> **Nota de vocabulario (2026-08-01, vigente):** la columna `Lane` no nombra dos productos. Tras la [unificación](release-chain.md), `installable-v1` y `autonomous-v2` son afinidad de trabajo. El corte real en código es `bin/torre`, que rechaza capacidades con `CT_V2_ONLY` como flag opt-in apagado por defecto.
 
-Esto es exactamente lo que el manifest de `installable-v1` declara resolver: `migrates: checkout-bound-installer-to-versioned-installable-v1`. El problema está diagnosticado y el remedio construido; falta la adopción.
+## ✅ Corrección mayor: el corte de runtime se ejecutó
 
-## Inventario de módulos
+**La afirmación «lo que corre a diario no es el código de este repositorio» quedó obsoleta el 2026-08-03 y este documento la sostuvo una semana de más.**
 
-| Módulo | Líneas | Lane | Estado |
-|--------|--------|------|--------|
-| `core.mjs` | 4646 | — legado | Sustrato monolítico. Es el ancestro del runtime en uso, no está modularizado ni cubierto por los lanes. |
-| `mcp.mjs` | 437 | — legado | Superficie MCP. |
-| `bin/torre` | — | ambos | Punto de entrada. Delega `install\|diagnose\|upgrade\|rollback\|uninstall` a `install/lifecycle.mjs`; rechaza `launch-worker\|create-worker\|create-session\|create-worktree` con `CT_V2_ONLY`. |
-| `install/` | 185 | `installable-v1` | `lifecycle`, `active-pointer`, `version-store`. Entregado por `S8.2`. **Construido y probado, nunca usado** — lo adopta `S8.8`. |
-| `contracts/` | 322 | `autonomous-v2` | Medición histórica: `schema-registry`, `canonicalize`, `artifact-ref`, `idempotency`, `validate`, `errors`. Entregado por P2 Change A. |
-| `contracts/session-plan-snapshot.mjs` | 191 | `autonomous-v2` | Parser canónico read-only de S5.6, ligado a bytes/digest exactos del plan; verificado en `f0103fd` y publicado en `origin/master@75ddcf9`. |
-| `schemas/session-plan-snapshot-v1.schema.json` | 60 | `autonomous-v2` | Contrato cerrado y versionado de S5.6, registrado por la ruta canónica. |
-| `test/contracts/session-plan-snapshot.test.mjs` | 280 | `autonomous-v2` | 14 pruebas de identidad, gramática, rechazo, determinismo, aislamiento y testigos read-only de S5.6. |
-| `registry/` | 337 | `autonomous-v2` | `store`, `path`, `legacy-import`. Entregado por `S2.4` y `S2.5`. |
-| `main-store/` | 183 | `autonomous-v2` | `authority`, `store`. Entregado por P2 Change A. |
-| `escalation/request.mjs` | 30 | `autonomous-v2` | Emite solicitudes exactas mediante el authorization store canónico; no abre un segundo ledger. Entregado por `S5.4`, comportamiento `75549a7`, publicado en `origin/master`. |
-| `escalation/routing.mjs` | 213 | `autonomous-v2` | Persiste el modo `local`/`remoto`, aplica frontera de autoridad y degrada sin consumir solicitudes. Entregado por `S5.4`, comportamiento `75549a7`, publicado en `origin/master`. |
-| `test/escalation/**` | 335 | `autonomous-v2` | 16 pruebas de emisión, persistencia entre procesos, autoridad, concurrencia, degradación y no mutación; 78 expectations en el focused final. |
-| `support/agent.mjs` | 49 | `installable-v1` | Entrada `createSupportBrief`; valida la solicitud y mantiene Support read-only. Entregado por `S8.4`. |
-| `support/manifest.mjs` | 99 | `installable-v1` | Resuelve el roadmap y los STATUS permitidos con validación fail-closed. Entregado por `S8.4`. |
-| `support/snapshot.mjs` | 52 | `installable-v1` | Captura fuentes, Git y Tower DB en modo read-only/query-only. Entregado por `S8.4`. |
-| `test/support/support.test.mjs` | 172 | `installable-v1` | Prueba enfocada del contrato, rechazos y testigos de no mutación de `S8.4`. |
-| `console/` | 173 | `autonomous-v2` | `validate`, `vocabulary`. |
-| `dashboard/` | 392 | — fuera de lane | `app`, `auth`, `render`, `server`, `view-model` y fuentes mock. Skeleton archivado, sin fuente real. |
+Verificado el 2026-08-10:
 
-La frontera V1/V2 **está aplicada en código**, no sólo en documentos: `bin/torre` corta las capacidades V2 con `CT_V2_ONLY`.
+| Comprobación | Resultado |
+|---|---|
+| `~/.local/bin/torre` | symlink → `versions/4f9400191afa32e26daae3c19ed722d8fd1700f5/bin/torre` (2026-08-03 18:54) |
+| `torre diagnose` | `{"operation":"diagnose","healthy":true,"active":"4f940019…","missing":[]}` |
+| md5 `core.mjs` instalado | `be2991486f8e45029d3998a1a057ab13` |
+| md5 `Main/core.mjs` | `be2991486f8e45029d3998a1a057ab13` — **idéntico** |
+| md5 legado `~/.config/opencode/control-tower/core.mjs` | `1ba9a58984eccd113ec52f3f2bf1f9b5` — **distinto, no se alcanza** |
+
+`bin/torre` resuelve el runtime desde `install/active-pointer.mjs` contra el data-root XDG. La ruta legada `$HOME/.config/opencode/control-tower/core.mjs` sobrevive únicamente como fallback en la expansión de `CORE` y no se ejecuta mientras el puntero activo resuelva.
+
+La versión activa corresponde al commit `4f94001` (2026-08-03). Los commits que cerraron el corte son `3d2ef57`, `34f56a6`, `fed8fb0`, `a87c9e9`, `e118f33` y `d56e8cb`, entre el 1 y el 3 de agosto.
+
+**Causa del error sostenido:** las actualizaciones del 2026-08-10 (`S5.4`) y 2026-08-11 (`S5.6`) fueron cortes acotados a sus paths verificados y ninguna re-observó el runtime. La sección se propagó sin re-medición durante siete días, y el `master-index` replicó la brecha 1 como abierta.
+
+### Ramas `M8.8.x` — ninguna está bloqueada
+
+Auditadas las siete el 2026-08-10:
+
+| Rama | Estado real |
+|---|---|
+| `feat/installable-v1/m8-8-1-legacy-xdg-coverage` | ancestro de `master` — label muerto |
+| `docs/v1-m8-8-1-closure` | ancestro de `master` — label muerto |
+| `feat/installable-v1/m8-8-3-runtime-cutover` | ancestro de `master`, **sin commits propios** |
+| `fix/installable-v1/m8-8-4-adoption-preflight` | ancestro de `master`, **sin commits propios** |
+| `fix/installable-v1/m8-8-6-active-pointer-resolution` | ancestro de `master` — label muerto |
+| `fix/installable-v1/m8-8-7-copied-entrypoint` | ancestro de `master`, **sin commits propios** |
+| `fix/installable-v1/m8-8-4-runtime-payload` | no integrada: 1 commit con `test/install/runtime-payload.test.mjs` (56 líneas, RED) |
+
+La única no integrada es un duplicado huérfano: `test/install/runtime-payload.test.mjs` ya existe en `origin/master` con otro blob, producto de que el trabajo se rehizo por la vía `3d2ef57 → d56e8cb`. No hay trabajo pendiente en ninguna de las siete; hay ramas sin podar.
+
+## ⚠️ Hallazgo principal vigente: se despliega el sustrato, no el producto
+
+El corte de runtime resolvió *qué* código corre. No resolvió *cuánto*.
+
+`RUNTIME_PAYLOAD_FILES` (en `install/runtime-payload.mjs`) define un cierre cerrado de seis archivos. Todo lo demás queda fuera del artefacto instalable.
+
+**Desplegado — 5.338 líneas, 6 archivos**
+
+| Archivo | Líneas |
+|---|---:|
+| `core.mjs` | 4.646 |
+| `install/lifecycle.mjs` | 244 |
+| `bin/torre` | 225 |
+| `install/runtime-payload.mjs` | 90 |
+| `install/active-pointer.mjs` | 81 |
+| `install/version-store.mjs` | 52 |
+
+**No desplegado — 4.141 líneas, 17 superficies**
+
+| Módulo | Líneas | Estado |
+|---|---:|---|
+| `mcp.mjs` | 437 | Superficie MCP legada. |
+| `dashboard/` | 413 | Skeleton autenticado read-only con fuente mock. Sin fuente real. |
+| `hosts/` | 383 | Lanzamiento e inspección de hosts. |
+| `registry/` | 337 | `store`, `path`, `legacy-import`. `S2.4`, `S2.5`. |
+| `main-store/` | 331 | `authority`, `store`. P2 Change A. |
+| `plugin/` | 268 | Superficie de plugin. |
+| `escalation/` | 243 | `request` (30), `routing` (213). `S5.4`. |
+| `contracts/` | 577 | Base P2 Change A + `session-plan-snapshot.mjs` (191) de `S5.6`. |
+| `schemas/` | 202 | 19 contratos JSON versionados, incl. `session-plan-snapshot-v1`. |
+| `support/` | 200 | `agent`, `manifest`, `snapshot`. `S8.4`. |
+| `capabilities/` | 174 | — |
+| `console/` | 173 | `validate`, `vocabulary`. |
+| `enroll/` | 140 | Enrollment explícito de proyectos. |
+| `policy/` | 116 | — |
+| `workspace/` | 89 | — |
+| `continuation/` | 35 | — |
+| `jornada/` | 23 | — |
+
+**El 44% del código de producto no viaja en el artefacto instalable.**
+
+### Observación estructural: los módulos del producto son los más chicos
+
+`jornada/` tiene 23 líneas y `continuation/` tiene 35. Son los dos módulos más pequeños del repositorio y nombran las dos capacidades centrales del producto: la Jornada autónoma y la continuación entre Sesiones. Ninguno de los dos se despliega.
+
+Por contraste, `core.mjs` — el sustrato monolítico que ningún lane reclama — concentra el 87% de todo lo que efectivamente corre.
+
+Esta es la asimetría que este documento debe reportar: **el sustrato está desplegado y el producto no está construido.**
+
+## Inventario agregado
+
+| Superficie | Líneas | Archivos |
+|---|---:|---:|
+| Producto (`.mjs`/`.js`) | 9.031 | — |
+| Contratos (`schemas/*.json`) | 202 | 19 |
+| Pruebas | 12.645 | 38 archivos ejecutados |
+| Documentación (`openspec/**.md`) | 19.826 | 126 |
+
+Ratio documentación : código de producto = **2,2 : 1**.
 
 ## Estado de las pruebas
 
-Verificación de `S8.4` sobre el candidato `9458c78ee8fa00e4edfe0869beb6743308ad7f03`, integrado sin cambios de tree en `master@6fbd97c3b1f84735db61ccbd1fd510482206e4eb`:
+Medido el 2026-08-10 en `Worktrees/s5-6` sobre `origin/master@b360c8a`, Torre desarmada:
 
 ```
-focused: 22/22 · scoped: 59/59 · full: 431/431
+bun test → 588 pass · 0 fail · 3452 expect() · 38 archivos · 77,96 s
 ```
 
-Los testigos Strict TDD y de no mutación pasaron. La corrección del prerrequisito de migración se integró previamente mediante PR #125 en `88b1c5198c08cefbe886df62c3cb4f97214d1506`.
+Coincide con la evidencia de verificación de `S5.6`. Precondiciones confirmadas y aún sin runbook:
 
-**Ese `full: 431/431` requiere la Torre desarmada.** Re-medido el 2026-07-31 en un worktree con la Torre armada, `bun test` da **429 pass · 2 fail**: los dos `P0 frozen snapshot restore` cortan con `Control Tower must be OFF: .git/control-tower/ACTIVE is present`. Es el fail-closed funcionando, no una regresión — pero quien corra la suite en frío va a ver los 2 fallos y debe saber por qué.
+1. **La Torre debe estar desarmada.** Con `.git/control-tower/ACTIVE` presente, los dos `P0 frozen snapshot restore` cortan con `Control Tower must be OFF`. Es el fail-closed funcionando, no una regresión.
+2. **El runner es `bun`, no `node`.**
+3. **Un worktree nuevo no tiene `node_modules`;** sin `bun install` la suite rompe con `Cannot find package 'yaml'`.
+4. **Ruido nuevo, no cubierto:** la corrida emite dos `fatal: Needed a single revision` en stderr. No hacen fallar ninguna prueba, pero indican que alguna superficie invoca `git rev-parse` contra una revisión inexistente y traga el error. Sin diagnosticar.
 
-Otras dos condiciones previas sin runbook: un worktree nuevo no tiene `node_modules` (sin `bun install` la suite rompe con `Cannot find package 'yaml'`), y el runner es `bun`, no `node`.
+## Cortes de implementación publicados
 
-## Corte actual de implementación — `S5.4`
+### `S5.4` — enrutamiento de escalación
 
-`S5.4` está ✅ COMPLETO y publicado en `origin/master`: los commits de comportamiento son `976b8d02bfda2d3ec9993e92a7b2f919ebc2d302` y `75549a781cd6ac19afc3e09e7466f7772f678fb7` (tree de comportamiento `835ed3e1d69540efae89b258813b194a0c555526`), el cierre documental es `f9f2869` y la reconciliación final está en `e82f4ae`. Agrega exclusivamente `escalation/{request,routing}.mjs` y `test/escalation/{request,routing}.test.mjs`: 578 líneas, sin tocar el authorization store ni otra ruta prohibida. Los blobs coinciden con el sucesor aceptado `9c28ffd`; el recheck dirigido 8082 devolvió `findings: []` y `READY`.
+✅ COMPLETO y publicado. Comportamiento en `976b8d0` y `75549a7` (tree `835ed3e`), cierre documental `f9f2869`, reconciliación `e82f4ae`. Agrega `escalation/{request,routing}.mjs` y sus pruebas: 578 líneas, sin tocar el authorization store. Recheck 8082: `findings: []`, `READY`. Enfocada: `bun test test/escalation` → 16/0/78.
 
-La evidencia enfocada final es `bun test test/escalation` → 16 pass / 0 fail / 78 expectations. La verificación integral previa contra la misma base y los mismos blobs fue 569 pass / 0 fail / 3274 expectations / 37 archivos. No existe transporte remoto ni autenticación remota nueva: el repositorio sólo define la frontera y deja el callback inhabilitado hasta `S8.7`. Por eso no hay despliegue o prueba de canal que atribuirle a esta Sesión. La persistencia, concurrencia y degradación sí se ejercitan dentro del repositorio.
+No existe transporte ni autenticación remota: el repositorio define la frontera y deja el callback inhabilitado hasta `S8.7`.
 
-Los dos commits de comportamiento y el cierre documental están publicados por `origin/master@e82f4ae`. Es una entrega de repositorio: no implica adopción del runtime ni implementación de transporte o autenticación remota. La afinidad `autonomous-v2` describe el área, no otro producto ni un despliegue.
+### `S5.6` — snapshot canónico de Sesión
 
-**Planificación reconciliada:** P4 queda en 25% (1/4 S), P5 en 38% (3/8 S) y el avance activo global en 19/40 Sesiones (48%). La cadena tiene 10/20 Sesiones cerradas. `S5.7` está 🟢 LISTO y es el siguiente nodo ejecutable; `S5.8` y `S5.5` continúan 📋 PLANIFICADO. `S5.2` está 🔴 BLOQUEADO por los hallazgos 1/3/5 del recheck 8193 y la decisión estacionada 8195; `S5.3` queda transitivamente 🔴 BLOQUEADO. La cadena conserva `S7.1` detrás de `S5.3`, `S8.7` y `S5.5`.
+✅ COMPLETO y publicado en `origin/master@b360c8a`. Límites de comportamiento `20e06c5`, `8cf7aab`, `10ae5e0`, `4de42fe`; `f0103fd` congela el verify PASS. Change archivado en [`2026-08-11-s5-6-canonical-session-snapshot`](../changes/archive/2026-08-11-s5-6-canonical-session-snapshot/); spec normativa en [`session-plan-snapshot`](../specs/session-plan-snapshot/spec.md).
 
-## Corte actual de implementación — `S5.6`
+Siete paths aprobados: schema, registro, validación, parser y tres superficies de prueba/fixture. El parser resuelve el grafo Plan 5 en dominios local y graph-only externo y rechaza drift, ambigüedad o referencias inconsistentes con `CT_SCHEMA_INVALID`. No importa `continuation/**`, Engram, DB, Tower, runtime ni writers. Biblioteca pura, sin adopción externa.
 
-`S5.6` está ✅ COMPLETO en local y aún no publicado. Los límites de comportamiento son `20e06c5` (identidad), `8cf7aab` (corrección de evidencia), `10ae5e0` (parser canónico) y `4de42fe` (hardening read-only); `f0103fd` congela el verify PASS. El change completo quedó archivado en [`2026-08-11-s5-6-canonical-session-snapshot`](../changes/archive/2026-08-11-s5-6-canonical-session-snapshot/) y la spec normativa se sincronizó en [`session-plan-snapshot`](../specs/session-plan-snapshot/spec.md).
+Verificación: 31/31 escenarios, 10/10 Tareas, 10/10 criterios.
 
-La implementación agrega exactamente siete paths aprobados: schema, registro, validación, parser y tres superficies de prueba/fixture. El parser resuelve el grafo Plan 5 en dominios local y graph-only externo, conserva el contrato completo de la Sesión objetivo y rechaza drift, ambigüedad o referencias inconsistentes con `CT_SCHEMA_INVALID`. No importa `continuation/**`, Engram, DB, Tower, runtime ni writers.
+**Costo medido de la Sesión, ruta `full-sdd`:**
 
-Verificación final: 31/31 escenarios, 10/10 Tareas y 10/10 criterios; `bun test test/contracts` 75/0/348 y `bun test` 588/0/3452. Los testigos de Plan 5, input CRLF, DB, WAL, SHM y Tower permanecieron byte-idénticos en éxito y rechazo. Runtime harness: N/A, biblioteca pura sin adopción externa. Rollback normal, sin migración ni reparación de datos: revertir `4de42fe`, `10ae5e0`, `8cf7aab` y `20e06c5`.
+| Superficie | Líneas |
+|---|---:|
+| Código de producto | 282 |
+| Pruebas | 345 |
+| Documentación `openspec/` | ~1.395 |
+
+Ratio documentación : código = **4,9 : 1** para una biblioteca pura de 282 líneas sin consumidores.
 
 ## Brechas reales
 
-| # | Brecha | Consecuencia |
-|---|--------|--------------|
-| 1 | El runtime en uso sigue siendo el checkout legado de 2026-07-21, pese a que la versión XDG ya está instalada | El corte no se hizo: el payload publicado omite `core.mjs`. Lo corrige `M8.8.4` — sellado, con test RED en rama, sin integrar — y después `M8.8.3` reanuda el corte atendido. Sigue abierta. |
-| 2 | ~~`S8.5` está 🟢 LISTO pero **UNASSIGNED**~~ | **Superada el 2026-07-31.** `S8.5` y `S8.6` pasaron a 🟡 DIFERIDO por decisión del maintainer; el despacho vigente es `S8.8` y después `S8.7`. |
-| 3 | `core.mjs` tiene 4646 líneas y ningún lane lo reclama | El sustrato que efectivamente corre queda fuera de la contabilidad de ambos productos. Sigue abierta; no bloquea V1. |
-| 4 | Se documentaba más de lo que se construía | 42 commits `docs` contra 34 de código; 32 de los últimos 40 sin merge eran docs; 17 changes abiertos contra 2 archivados. **Corregida** por la [regla de ejecución V1](v1-execution-rule.md) y por el archivado del 2026-07-31. |
-| 5 | El registro de la Torre no coincide con los worktrees reales | Observada el 2026-08-01 con `torre status` y `git worktree list` sobre `master@a4aa3a6`. Ver detalle abajo. Sigue abierta. |
+| # | Brecha | Estado 2026-08-10 |
+|---|---|---|
+| 1 | El runtime en uso es el checkout legado | ✅ **CERRADA el 2026-08-03.** Verificada por symlink, `diagnose` y md5 idéntico. La brecha permaneció declarada abierta siete días de más. |
+| 2 | `S8.5` LISTO pero UNASSIGNED | Superada el 2026-07-31. `S8.5` y `S8.6` en 🟡 DIFERIDO por decisión del maintainer. |
+| 3 | `core.mjs` tiene 4.646 líneas y ningún lane lo reclama | **Abierta y agravada.** Es el 87% de lo que corre. No bloquea V1, pero ninguna Sesión enumerada lo reclama ni lo modulariza. |
+| 4 | Se documentaba más de lo que se construía | 🔴 **REABIERTA.** Ver abajo. La corrección declarada el 2026-07-31 no se sostuvo. |
+| 5 | El registro de la Torre no coincide con los worktrees reales | **Abierta y cambiada de forma.** Ver abajo. |
+| 6 | El 44% del código de producto no se despliega | **Nueva y estructural.** No es que falte una Sesión que lo empaquete: el contrato del payload lo **prohíbe**. Ver abajo. |
+| 7 | La Torre no puede supervisar un repositorio sin estar armada dentro de ese repositorio | **Nueva.** Bloquea el modo nocturno en los dos repositorios en uso. Ver abajo. |
+
+## Brecha 6 — el payload rechaza estructuralmente el resto del código
+
+`scanClosure` (`install/runtime-payload.mjs:57`) **rechaza todo directorio que no sea `bin` o `install`**. Está documentado en `plan-8/STATUS.md:313`:
+
+> «`runCli` llama a `readRuntimePayload(source)` en modo **strict**, y `scanClosure` rechaza todo directorio que no sea `bin` o `install`. Un checkout del repositorio **nunca** puede ser `source`: falla en `console/`, y detrás vienen `contracts/`, `test/` y `openspec/`.»
+
+Consecuencia: `contracts/`, `registry/`, `main-store/`, `escalation/`, `capabilities/`, `console/`, `hosts/`, `workspace/`, `enroll/`, `policy/`, `jornada/` y `continuation/` **no pueden entrar al artefacto instalable** sin modificar `RUNTIME_PAYLOAD_FILES` y `scanClosure`.
+
+Ninguna Sesión enumerada declara ese cambio. `S4.2/M4.2.3` cablea el composition root del fence, que es otra cosa: habilita la ruta productiva dentro del repositorio, no el empaquetado.
+
+**Riesgo declarado:** se pueden cerrar todas las Sesiones restantes y que la mitad del producto siga sin viajar en la instalación.
+
+## Brecha 7 — la Torre no puede supervisarse a sí misma ni a Remote Control
+
+El sellado de implementación desatendida exige supervisión viva de la Torre. Los dos repositorios en uso tienen una razón de diseño para exigir lo contrario:
+
+| Repositorio | Mecanismo | Efecto con la Torre armada |
+|---|---|---|
+| `control-tower` | `test/helpers/restore-fixture.mjs:90` — `assertRuntimeInactive` lanza si existe `ACTIVE` | Los dos tests P0 abortan → la verificación final falla → `BLOCKED` terminal sin reintento |
+| `remote-control` | `src/tower-guard.js:226` — `allowed = remote && off` | El relay entra en `status: "frozen"`; se congela justo la función que se está construyendo |
+
+Con la Torre desarmada, el sello no arranca (`NOT_READY`). Con la Torre armada, rompe. No hay estado que satisfaga ambos.
+
+`decision-register.md:52` registra este bloqueo como **específico de `control-tower`** («para cualquier otro proyecto, sellar con la Torre armada funciona»). Esa afirmación **no se sostiene**: `remote-control` falla también, por un mecanismo distinto y deliberado.
+
+El requisito real que se deriva: **la Torre necesita poder supervisar un repositorio sin estar armada dentro de ese repositorio.** No existe Sesión enumerada que lo cubra.
+
+## Brecha 4 — reabierta
+
+Declarada «corregida» el 2026-07-31 por la [regla de ejecución V1](v1-execution-rule.md) y el archivado. Re-medida sobre `origin/master@b360c8a`:
+
+| Ventana | `docs` | Código (`feat`+`fix`+`test`) | Ratio |
+|---|---:|---:|---|
+| Historial completo | 132 | 70 | **1,9 : 1** |
+| Últimos 40 commits | 25 | 14 | **1,8 : 1** |
+
+Changes abiertos: **9**. Archivados: **6**.
+
+El ratio no mejoró tras la corrección declarada. La regla de ejecución V1 no cambió la proporción observable.
 
 ## Brecha 5 — deriva del registro de la Torre
 
-`torre status` lista **seis** agentes registrados. Existen **tres** worktrees además de `Main` y `claude`.
+Re-observada el 2026-08-10 con `torre status` y `git worktree list`. La Torre reporta STALE y advierte que los registros son historial.
 
-| Agente registrado | Worktree | Estado real |
-|---|---|---|
-| `Main` | `Main` | Existe · `a4aa3a6` |
-| `v1` | `Worktrees/v1` | Existe · `3e648ac`. **La rama registrada no es la del worktree**: la Torre anota `fix/installable-v1/m8-8-4-runt…`, el worktree está en `fix/installable-v1/m8-8-4-adoption-preflight` |
-| `v2` | `Worktrees/v2` | Existe · `3e648ac` |
-| `autonomous-v2` | — | **No existe.** Retirado en la consolidación a tres slots |
-| `installable-v1` | — | **No existe.** Ídem |
-| `multi-agentic-*` | — | **No existe, y tiene 1 mensaje pendiente en cola** que ningún proceso va a consumir |
+| Agente registrado | Rama registrada | Estado | Worktree real |
+|---|---|---|---|
+| `Main` | `docs/autonomous-v2-checkpointe…` | WORKING | Existe, pero está en `master` — **la rama registrada no es la del worktree** |
+| `s0-3` | `docs/s0-3-bridge-amendment` | COMPLETE | **No existe** |
+| `s3-1` | `fix/installable-v1/m8-8-6-acti…` | COMPLETE | **No existe** |
+| `v1` | `fix/installable-v1/m8-8-4-adop…` | COMPLETE | **No existe** — el worktree fue eliminado |
+| `v2` | `feat/autonomous-v2/role-routed…` | ASSIGNED · **2 pendientes** | Existe, en `feat/plan-5/s5-4-escalation-routing` — rama distinta |
+
+Worktrees reales no registrados: `Worktrees/s5-1` (en `feat/plan-5/s5-2-delivery-workflow`) y `Worktrees/s5-6` (en `feat/plan-5/s5-6-session-snapshot`). `Worktrees/support-agent` no está registrado y así debe seguir: Support es read-only por diseño.
 
 Consecuencias operativas:
 
-1. **La capacidad que reporta la Torre es ficción.** Tres de seis agentes no pueden tomar trabajo.
-2. **El mensaje encolado se pierde en silencio.** `receive` sólo lee filas no consumidas y nada las reproduce; no hay error, no hay aviso.
-3. **`Worktrees/support-agent` no está registrado y así debe seguir** — Support es read-only por diseño y nunca se registra. Pero está en `3e648ac`, o sea **sin `release-chain.md`**: cualquier brief que se le pida antes de actualizarlo va a salir incompleto.
+1. **La capacidad que reporta la Torre es ficción.** Tres de cinco agentes registrados no existen.
+2. **Ningún agente registrado tiene la rama correcta.** Los dos que existen (`Main`, `v2`) están en ramas distintas a las anotadas.
+3. **El trabajo real es invisible para la Torre.** Las dos Sesiones activas (`S5.2`, `S5.6`) corren en worktrees que la Torre no conoce.
+4. **Hay 2 mensajes encolados para `v2`** bajo una rama que ya no es la suya. `receive` sólo lee filas no consumidas y nada las reproduce.
 
-No se corrigió nada de esto: desregistrar agentes y purgar cola son mutaciones del registro de la Torre, y esta sesión no tiene ni la autoridad ni el transporte para hacerlas.
+No se corrigió nada: desregistrar agentes y purgar cola son mutaciones del registro, y una sesión de Support read-only no tiene autoridad para ejecutarlas.
+
+## Deriva de checkout observada
+
+`Main` está **11 commits atrás** de `origin/master` al momento de esta medición. Los 11 son la Sesión `S5.6` completa, publicada el 2026-08-10. Cualquier medición o brief tomado desde `Main` sin actualizar reporta un estado anterior a `S5.6`.
 
 ## Qué NO mide este documento
 
 Cobertura de pruebas por módulo, rendimiento, y el grado de conformidad contra los Gates A–G de REQUIREMENTS. Esa evidencia es el output de `S7.1` y todavía no existe.
+
+Tampoco mide qué parte del loop autónomo está resuelta fuera del repositorio, en las skills que ya operan en producción. Esa comparación es una decisión de producto pendiente, no una medición de código.

@@ -7,16 +7,16 @@
 | Campo | Detalle |
 |---|---|
 | Lane | `autonomous-v2`. Este Plan NO pertenece al lane `installable-v1` y no bloquea su release. |
-| Dependencias | Las dependencias de conformidad V1 se conservan. Para Autonomous V2, `S7.1` depende de `S5.3`. |
+| Dependencias | Las dependencias de conformidad V1 se conservan. Para Autonomous V2, `S7.1` depende de `S4.4`, `S5.3`, `S5.5` y `S8.7`. **Corregido el 2026-08-11:** este STATUS declaraba sólo `S5.3`, la tabla de [release-chain](../release-chain.md) declaraba `S5.3`, `S8.7` y `S5.5`, y su grafo Mermaid además `S4.4`. Las tres lecturas divergían. El maintainer resolvió que gana el grafo. |
 | Outputs | Evidencia end-to-end contra Gates A–G de REQUIREMENTS mediante seis pilotos obligatorios. |
-| Roadmap | Ejecutar `S7.1` después de integrar `S5.3`; el PR se dirige a `main`. Los pilotos V1 restantes sólo reciben ID cuando demuestren un límite de un PR. |
+| Roadmap | Ejecutar `S7.1` después de integrar `S4.4`, `S5.3`, `S5.5` y `S8.7`; el PR se dirige a `main`. Los pilotos V1 restantes sólo reciben ID cuando demuestren un límite de un PR. |
 | Referencias | [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [REQUIREMENTS](../../specs/sdd-tower-implementation-v1-requirements.md), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). El proposal `sdd-tower-v1-conformance-pilot` fue eliminado en `613a45d` por ser cáscara sin avance; su intención vive en este STATUS. |
 
 ## Sesión 7.1 — Conformance pilot
 
 **Estado:** 📋 PLANIFICADO
 
-**Dependencias:** `S5.3` integrada.
+**Dependencias:** `S4.4`, `S5.3`, `S5.5` y `S8.7` integradas.
 
 Produce evidencia atribuible a `candidate_revision` para cero efectos remotos tempranos o duplicados, rechazo de candidatos stale, recovery y denegación desde una base no integrada. La definición de `M7.1.1` y `T7.1.1.1`–`T7.1.1.4` vive en [`tasks.md`](../../changes/autonomous-v2-checkpointed-delivery/tasks.md#s71-pilot--m711-safety).
 
