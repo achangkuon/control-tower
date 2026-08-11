@@ -30,7 +30,11 @@ Sesión read-only de evaluación pedida por el maintainer. No cambió estados ni
 - **Brecha 6** — el contrato del payload (`scanClosure`) rechaza estructuralmente todo directorio que no sea `bin` o `install`, así que el 44% del código de producto no puede viajar en el artefacto instalable.
 - **Brecha 7** — la Torre no puede supervisar un repositorio sin estar armada dentro de ese repositorio, lo que bloquea el sellado desatendido en los dos repositorios en uso.
 
-**Decisiones del maintainer tomadas en esta sesión:** el dashboard queda retirado del alcance y se reemplaza por una TUI, cuyo requisito se escribe después de cerrar la Torre; `jornada/` consume `execution-contract.schema.json` en vez de reconstruir el sellado; la clasificación de ruta de las Sesiones sin ruta se resuelve con `planificador-granular`.
+**Decisiones del maintainer tomadas en esta sesión:** el dashboard queda retirado del alcance y se reemplaza por una TUI, cuyo requisito se escribe después de cerrar la Torre; `jornada/` consume `execution-contract.schema.json` en vez de reconstruir el sellado; la clasificación de ruta de las Sesiones sin ruta se resuelve con `planificador-granular`; se construyen las catorce Sesiones restantes.
+
+**Remediación ejecutada en la misma sesión.** La brecha 5 pasó a ✅ CERRADA: registro de la Torre saneado, cola en cero y ramas de `Main` y `v2` corregidas. Se podaron las ramas ya integradas —110 → 24 locales, 86 → 18 remotas— sin tocar las cuatro ocupadas por worktrees vivos ni el trabajo sin integrar. `s5-1` y `s5-6` **no** se registran por decisión del maintainer: el registro es un acto del agente al arrancar, y ambos worktrees están ociosos. Detalle y deuda derivada en [implementation-state](implementation-state.md).
+
+**Alcance nuevo detectado, todavía sin enumerar:** una Sesión para la ejecución de Jornada —consumir `execution-contract.schema.json` en vez de reconstruirlo— y otra para el modo de supervisión que resuelve la brecha 7. Ninguna de las dos está en las catorce.
 
 ## Granularidad
 

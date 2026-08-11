@@ -14,6 +14,7 @@
 | Flujo | P8 corre bajo la [regla de ejecución V1](../v1-execution-rule.md): de `tasks.md` directo a implementación, sin exploration/proposal/design y sin PR de cierre separada. |
 | Referencias | [tasks de V1](../../changes/v1-release/tasks.md); [change archivado](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/), [spec](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). |
 | Actualización de cierre | `S8.8` y `S5.1` están ✅ COMPLETO. Las tres decisiones propias de `S8.7` fueron resueltas el 2026-08-10; sigue 🔴 BLOQUEADO por la frontera de seguridad aún abierta sobre el inicializador confiable de producción (`trustedBindingProvider`), que no se puede eludir al conectar el puente. |
+| Mantenimiento operativo · 2026-08-11 | El registro que expone `torre status` fue saneado: se desregistraron tres agentes sin worktree, se purgó la cola y se corrigieron las ramas de `Main` y `v2`. **Deuda que esto destapa, dentro del dominio de P8:** el producto instalado no tiene forma soportada de corregir su propio registro. El único comando es `torre reset` (`bin/torre:209-218`), que hace `rm -rf "$ROOT"` y pide confirmación interactiva; un desregistro puntual o una purga de cola exigen hoy tocar SQLite a mano. No bloquea ninguna Sesión enumerada y no tiene ID todavía. Detalle en [implementation-state](../implementation-state.md). |
 
 ## Sesiones
 

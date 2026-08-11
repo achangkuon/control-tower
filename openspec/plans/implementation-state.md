@@ -151,7 +151,7 @@ Ratio documentación : código = **4,9 : 1** para una biblioteca pura de 282 lí
 | 2 | `S8.5` LISTO pero UNASSIGNED | Superada el 2026-07-31. `S8.5` y `S8.6` en 🟡 DIFERIDO por decisión del maintainer. |
 | 3 | `core.mjs` tiene 4.646 líneas y ningún lane lo reclama | **Abierta y agravada.** Es el 87% de lo que corre. No bloquea V1, pero ninguna Sesión enumerada lo reclama ni lo modulariza. |
 | 4 | Se documentaba más de lo que se construía | 🔴 **REABIERTA.** Ver abajo. La corrección declarada el 2026-07-31 no se sostuvo. |
-| 5 | El registro de la Torre no coincide con los worktrees reales | **Abierta y cambiada de forma.** Ver abajo. |
+| 5 | El registro de la Torre no coincide con los worktrees reales | ✅ **CERRADA el 2026-08-11.** Saneada en la misma sesión que la observó. Ver abajo. |
 | 6 | El 44% del código de producto no se despliega | **Nueva y estructural.** No es que falte una Sesión que lo empaquete: el contrato del payload lo **prohíbe**. Ver abajo. |
 | 7 | La Torre no puede supervisar un repositorio sin estar armada dentro de ese repositorio | **Nueva.** Bloquea el modo nocturno en los dos repositorios en uso. Ver abajo. |
 
@@ -195,7 +195,45 @@ Changes abiertos: **9**. Archivados: **6**.
 
 El ratio no mejoró tras la corrección declarada. La regla de ejecución V1 no cambió la proporción observable.
 
-## Brecha 5 — deriva del registro de la Torre
+## Brecha 5 — deriva del registro de la Torre — ✅ CERRADA el 2026-08-11
+
+**Remediación aplicada.** Estado resultante, verificado con `torre status`:
+
+| Agente | Rama registrada | Real |
+|---|---|---|
+| `Main` | `master` | ✅ coincide |
+| `v2` | `feat/plan-5/s5-4-escalation-routing` | ✅ coincide |
+
+Cola: **0 pendientes**. Registros muertos: **ninguno**.
+
+Acciones ejecutadas, con respaldo previo en `.git/control-tower/tower.db.bak-20260811`:
+
+- Desregistrados `s0-3`, `s3-1` y `v1` — sus worktrees no existen.
+- Purgados los mensajes `378` y `397`, encolados para `v2`. Ambos eran órdenes de cierre de sesión del 1 y el 3 de agosto, ya cumplidas.
+- Corregida la rama de `Main` (`docs/autonomous-v2-checkpointed-delivery` → `master`) y la de `v2` (`feat/autonomous-v2/role-routed-continuation` → `feat/plan-5/s5-4-escalation-routing`).
+
+**Decisión del maintainer: `s5-1` y `s5-6` NO se registran.** `tower_register` deriva la identidad del directorio de trabajo — registrarse es un acto del agente al arrancar, no algo que se le hace desde afuera. Los dos worktrees están ociosos. La ausencia de registro para un worktree ocioso no es deriva; los registros muertos sí lo eran, y ya no están.
+
+**Vía usada y por qué.** No existe comando de desregistro. El único mecanismo es `torre reset`, que ejecuta `rm -rf "$ROOT"` (`bin/torre:209-218`) y pide confirmación interactiva: habría borrado estado, cola, locks e historial completo. Se optó por SQL directo sobre `agent` y `message`, previa verificación de que ninguna de las dos tablas tiene claves foráneas ni triggers.
+
+**Deuda que esto deja registrada:** la Torre no tiene forma soportada de corregir su propio registro sin borrarlo entero. Un desregistro puntual y una purga de cola son operaciones legítimas de mantenimiento y hoy exigen tocar SQLite a mano.
+
+## Higiene de ramas — ✅ SANEADA el 2026-08-11
+
+| | Antes | Después |
+|---|---:|---:|
+| Ramas locales | 110 | **24** |
+| Ramas remotas | 86 | **18** |
+
+Se podaron todas las ramas ya integradas en `master`, locales y remotas. Sus commits viven en `master`, así que no se perdió trabajo y las referencias de PR de GitHub siguen resolviendo.
+
+Excluidas de la poda: `master` y las cuatro ocupadas por worktrees vivos — `feat/plan-5/s5-2-delivery-workflow`, `feat/plan-5/s5-4-escalation-routing`, `feat/plan-5/s5-6-session-snapshot` y `support/read-only`.
+
+Las 24 locales restantes son trabajo genuinamente sin integrar, con último commit entre el 2026-07-23 y el 2026-08-05. No se tocaron.
+
+Aparte se borró `fix/installable-v1/m8-8-4-runtime-payload`, local y remota: un commit con `test/install/runtime-payload.test.mjs` en RED, cuyo archivo ya existe en `master` con otro blob porque el trabajo se rehizo por la vía `3d2ef57 → d56e8cb`. Una rama huérfana no aparece en `--merged`, así que una poda basada sólo en esa lista la deja viva.
+
+## Brecha 5 — observación original del 2026-08-01
 
 Re-observada el 2026-08-10 con `torre status` y `git worktree list`. La Torre reporta STALE y advierte que los registros son historial.
 
