@@ -19,7 +19,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1`, y la cadena contractual `S5.4 → S5.6 → S5.7 → S5.8 → S5.5`. |
 | Outputs | F: authorization store, Telegram, validación Git/PR/check/SHA, entrega idempotente y post-check. G: planning horizon, reconciliación, apply/verify, Binding Delta y continuación del siguiente `slice_id`. Más el ruteo de escalamiento de `S5.4`, los contratos canónicos prerrequisito de `S5.6`–`S5.8` y la planificación diferible de `S5.5`. |
-| Roadmap | `S5.1`, `S5.4` y `S5.6` están ✅ COMPLETO; `S5.6` fue publicado en `origin/master@75ddcf9`. `S5.7` queda 🟢 LISTO; `S5.8` y `S5.5` continúan 📋 PLANIFICADO por grafo. La representación terminal de `S5.8` quedó resuelta por el maintainer como registro explícito y atómico dentro del mismo main-store. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
+| Roadmap | `S5.1`, `S5.4`, `S5.6` y `S5.7` están ✅ COMPLETO; `S5.7` está integrado en el tip local y se publicará con este cierre documental en el mismo push atómico futuro. `S5.8` pasa a 🟢 LISTO porque su única dependencia cerró y no conserva decisiones abiertas; `S5.5` continúa 📋 PLANIFICADO por grafo. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
 
 ## Grafo de dependencias
@@ -31,8 +31,8 @@ graph LR
   S34["S3.4 Jornada · ✅"] --> S51
   S51 --> S54["S5.4 ruteo · ✅"]
   S54 --> S56["S5.6 snapshot de Sesión · ✅"]
-  S56 --> S57["S5.7 decisión/respuesta · 🟢"]
-  S57 --> S58["S5.8 binding de respuesta · 📋"]
+  S56 --> S57["S5.7 decisión/respuesta · ✅"]
+  S57 --> S58["S5.8 binding de respuesta · 🟢"]
   S58 --> S55["S5.5 continuación diferible · 📋"]
   S41["S4.1 fence hosts · ✅"] --> S52["S5.2 entrega · 🔴"]
   S33 --> S52
@@ -500,7 +500,7 @@ Sesiones sin decisión explícita.
 
 ## Sesión 5.7 — Contratos canónicos de decisión estacionada y respuesta
 
-**Estado:** 🟢 LISTO — `S5.6` está ✅ COMPLETO y no queda otra dependencia ni decisión abierta para iniciar esta Sesión.
+**Estado:** ✅ COMPLETO — las nueve Tareas y los diez criterios pasaron sobre los bytes finales integrados en `c822f43ac570ac4f3d80bfe8f3eca50ca032acd9`. El cierre se reconciliará en el mismo commit documental y push atómico futuro que publique el tip local integrado; todavía no existe prueba de entrega remota.
 
 **Depende de:** `S5.6`
 
@@ -524,42 +524,44 @@ Sesiones sin decisión explícita.
 
 ### Módulo 5.7.1 — Contrato de decisión estacionada
 
-- [ ] Tarea 5.7.1.1 — RED: cubrir todos los campos de §11, opciones únicas y scope congelado ligado al snapshot de `S5.6`.
-- [ ] Tarea 5.7.1.2 — GREEN: implementar `parked-decision-v1` y su construcción canónica sin persistencia.
-- [ ] Tarea 5.7.1.3 — REFACTOR: unificar IDs, timestamps y digests con los `$defs` canónicos existentes.
+- [x] Tarea 5.7.1.1 — RED: cubrir todos los campos de §11, opciones únicas y scope congelado ligado al snapshot de `S5.6`.
+- [x] Tarea 5.7.1.2 — GREEN: implementar `parked-decision-v1` y su construcción canónica sin persistencia.
+- [x] Tarea 5.7.1.3 — REFACTOR: unificar IDs, timestamps y digests con los `$defs` canónicos existentes.
 
 ### Módulo 5.7.2 — Contrato de respuesta seleccionada
 
-- [ ] Tarea 5.7.2.1 — RED: una respuesta debe nombrar decisión, opción enumerada, snapshot y autorización exactos; cada mismatch falla cerrado.
-- [ ] Tarea 5.7.2.2 — GREEN: implementar `parked-decision-response-v1` con binding canónico y sin capacidad de autoafirmar validación.
-- [ ] Tarea 5.7.2.3 — REFACTOR: probar que etiquetas, orden de objeto o texto narrativo no sustituyen `option_id` ni alteran el digest canónico.
+- [x] Tarea 5.7.2.1 — RED: una respuesta debe nombrar decisión, opción enumerada, snapshot y autorización exactos; cada mismatch falla cerrado.
+- [x] Tarea 5.7.2.2 — GREEN: implementar `parked-decision-response-v1` con binding canónico y sin capacidad de autoafirmar validación.
+- [x] Tarea 5.7.2.3 — REFACTOR: probar que etiquetas, orden de objeto o texto narrativo no sustituyen `option_id` ni alteran el digest canónico.
 
 ### Módulo 5.7.3 — Registro e invariantes cruzadas
 
-- [ ] Tarea 5.7.3.1 — RED: ambos schemas desconocidos fallan hasta entrar por el registro, invariantes y fixture compartidos.
-- [ ] Tarea 5.7.3.2 — GREEN: registrar ambos schemas y validar unicidad de opciones y consistencia de bindings.
-- [ ] Tarea 5.7.3.3 — REFACTOR: cerrar casos válidos/inválidos y correr `bun test test/contracts` sobre el registro real.
+- [x] Tarea 5.7.3.1 — RED: ambos schemas desconocidos fallan hasta entrar por el registro, invariantes y fixture compartidos.
+- [x] Tarea 5.7.3.2 — GREEN: registrar ambos schemas y validar unicidad de opciones y consistencia de bindings.
+- [x] Tarea 5.7.3.3 — REFACTOR: cerrar casos válidos/inválidos y correr `bun test test/contracts` sobre el registro real.
 
 **Criterios de aceptación de S5.7** — todos deben pasar para cerrar:
 
-- [ ] `parked-decision-v1` exige todos los campos de §11 y scope congelado ligado al snapshot de `S5.6`
-- [ ] Opciones sin ID, duplicadas o sin consecuencia se rechazan
-- [ ] `parked-decision-response-v1` liga decisión, una opción enumerada, snapshot y autorización exactos
-- [ ] Cambiar decisión, opción, snapshot o autorización invalida el binding
-- [ ] Texto, etiqueta u orden de propiedades nunca sustituye la identidad canónica
-- [ ] El contrato de respuesta no crea, valida ni consume autoridad
-- [ ] Ambos schemas pasan únicamente por `contracts/schema-registry.mjs` y `contracts/validate.mjs`
-- [ ] Ambos tienen invariantes y casos válidos/inválidos en el fixture compartido
-- [ ] `bun test test/contracts` pasa completo y `bun test` no introduce fallos nuevos
-- [ ] El diff no toca ninguna ruta fuera del `Área` ni ninguna del `Prohibido`
+- [x] `parked-decision-v1` exige todos los campos de §11 y scope congelado ligado al snapshot de `S5.6`
+- [x] Opciones sin ID, duplicadas o sin consecuencia se rechazan
+- [x] `parked-decision-response-v1` liga decisión, una opción enumerada, snapshot y autorización exactos
+- [x] Cambiar decisión, opción, snapshot o autorización invalida el binding
+- [x] Texto, etiqueta u orden de propiedades nunca sustituye la identidad canónica
+- [x] El contrato de respuesta no crea, valida ni consume autoridad
+- [x] Ambos schemas pasan únicamente por `contracts/schema-registry.mjs` y `contracts/validate.mjs`
+- [x] Ambos tienen invariantes y casos válidos/inválidos en el fixture compartido
+- [x] `bun test test/contracts` pasa completo y `bun test` no introduce fallos nuevos
+- [x] El diff no toca ninguna ruta fuera del `Área` ni ninguna del `Prohibido`
 
-**Forecast:** 260–360 líneas. Cabe en un cambio revisable y queda serializado detrás de `S5.6` por el registro compartido.
+**Evidencia de cierre local.** El [`verify-report.md`](../../changes/s5-7-parked-decision-contracts/verify-report.md) registra PASS: focused `85/0/391`, suite completa `598/0/3495`, `git diff --check` limpio y 173 adiciones en los nueve paths aprobados de implementación. Runtime harness: N/A, biblioteca de contratos pura y sin consumidor runtime. Rollback: un `git revert` del commit local integrado `c822f43`; no hay migración ni reparación de datos.
+
+**Resultado de workload:** 380 adiciones totales incluyendo artefactos de cambio; el candidato final quedó por debajo de 400 líneas.
 
 ## Sesión 5.8 — Binding de opción seleccionada en la autoridad canónica
 
-**Estado:** 📋 PLANIFICADO — espera los contratos registrados de `S5.7`; no conserva una decisión de maintainer abierta.
+**Estado:** 🟢 LISTO — `S5.7` está ✅ COMPLETO en el tip integrado local; su única decisión `escala` está resuelta por Option B y las restantes son `derivable`. No queda otra dependencia ni decisión abierta. La entrega remota de `S5.7` y de este cambio de estado todavía no está probada y ocurrirá en el mismo push atómico futuro.
 
-**Depende de:** `S5.7`
+**Depende de:** `S5.7` ✅
 
 **Área:** `main-store/store.mjs`, `test/main-store.test.mjs`
 
