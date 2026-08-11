@@ -10,7 +10,7 @@ const schemaFiles = Object.freeze({
   bindingDelta: "binding-delta-v1.schema.json", policyReport: "policy-report-v1.schema.json",
   jornada: "jornada-v1.schema.json", assignment: "assignment-v1.schema.json",
   authorization: "authorization-v1.schema.json", campaign: "campaign-v1.schema.json",
-  candidateRevision: "candidate-revision-v1.schema.json",
+  candidateRevision: "candidate-revision-v1.schema.json", deliveryRecord: "delivery-record-v1.schema.json",
   reconciledCheckpoint: "reconciled-checkpoint-v1.schema.json", supportProposal: "support-proposal-v1.schema.json",
   policyReportV2: "policy-report-v2.schema.json", assignmentV2: "assignment-v2.schema.json",
   recoveryProof: "recovery-proof-v1.schema.json", deliveryPolicy: "delivery-policy-v1.schema.json",

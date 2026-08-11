@@ -176,6 +176,20 @@ describe("cross-field schema invariants", () => {
     expect(errorCode(() => validate("candidateRevision", candidate))).toBe("CT_SCHEMA_INVALID")
   })
 
+  test("keeps historical candidates valid while policy report digest changes frozen identity", () => {
+    expect(validate("candidateRevision", fixtures.candidateRevision)).toEqual(fixtures.candidateRevision)
+    const { candidate_revision: _revision, ...identity } = fixtures.candidateRevision
+    const bound = freezeCandidate({ ...identity, policy_report_digest: `sha256:${"9".repeat(64)}` })
+    expect(bound.policy_report_digest).toBe(`sha256:${"9".repeat(64)}`)
+    expect(bound.candidate_revision).not.toBe(fixtures.candidateRevision.candidate_revision)
+  })
+
+  test("binds delivery ledger revisions and terminal states to the frozen candidate", () => {
+    expect(validate("deliveryRecord", fixtures.deliveryRecord)).toEqual(fixtures.deliveryRecord)
+    expect(errorCode(() => validate("deliveryRecord", { ...fixtures.deliveryRecord, revision: 2 }))).toBe("CT_SCHEMA_INVALID")
+    expect(errorCode(() => validate("deliveryRecord", { ...fixtures.deliveryRecord, candidate_revision: "attempt-a" }))).toBe("CT_SCHEMA_INVALID")
+  })
+
   test("capability roles resolve uniquely", () => {
     const duplicate = structuredClone(fixtures.agentCapabilityRegistry)
     duplicate.capabilities.push(structuredClone(duplicate.capabilities[0]))

@@ -92,6 +92,9 @@ const invariants = Object.freeze({
   candidateRevision: (value) => {
     if (candidateRevision(value) !== value.candidate_revision) invalid("Candidate revision must match its frozen identity")
   },
+  deliveryRecord: (value) => {
+    if (value.previous_revision !== value.revision - 1) invalid("Delivery record must link the immediately previous revision")
+  },
 })
 
 export const validate = (schemaName, input) => {
