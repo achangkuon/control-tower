@@ -1,0 +1,28 @@
+{
+  "schema": "sdd-hybrid-persistence-receipt/v1",
+  "authorized_base": "3db3c121d48a07d7696afe6a88de044f30ea4695",
+  "approval_observation_id": 8483,
+  "verified_at": "2026-08-11T19:37:55Z",
+  "entries": [
+    {
+      "topic": "sdd/p8-slice-planning/reconciliation",
+      "observation_id": 8498,
+      "path": "openspec/changes/p8-slice-planning/reconciliation.md",
+      "content_sha256": "73f8afbfa20e04a919d60e7d9e0a45eb500ff989a5f59f8522f8a5e62120c4dd"
+    },
+    {
+      "topic": "sdd/p8-slice-planning/status",
+      "observation_id": 6513,
+      "path": "openspec/changes/p8-slice-planning/STATUS.md",
+      "content_sha256": "21515f17afbaae20fb66a56fc7eed5570ede29ab466d24526d8af0ce6582a1d6"
+    },
+    {
+      "topic": "sdd/p7-p8-integrated-reconciliation/tasks",
+      "observation_id": 6608,
+      "path": "openspec/changes/p7-p8-integrated-reconciliation/tasks.md",
+      "content_sha256": "406cdae692740c9e0deaa07d1beea46bdf95c8afc54515ed5e2b9fe5f477a941"
+    }
+  ],
+  "agreement": "MATCH",
+  "tower_state": "DISARMED"
+}

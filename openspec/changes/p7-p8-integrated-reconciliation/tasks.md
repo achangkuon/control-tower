@@ -55,11 +55,11 @@ Chain strategy: stacked-to-main
 
 ### Módulo 1.12.1 — P8 evidence and final validation
 
-- [ ] Tarea 1.12.1.1 Create `openspec/changes/p8-slice-planning/reconciliation.md` referencing—not absorbing—the integrated P7 record, with independent refs, boundaries, validation, and approval.
-- [ ] Tarea 1.12.1.2 Binary check: P8 remains blocked without both approved records; invalid digest, identity, epoch, branch, or worktree evidence is non-approvable.
-- [ ] Tarea 1.12.1.3 Approve the P8 gate only after integrated P7 and the independent P8 record pass.
+- [x] Tarea 1.12.1.1 Create `openspec/changes/p8-slice-planning/reconciliation.md` referencing—not absorbing—the integrated P7 record, with independent refs, boundaries, validation, and approval.
+- [x] Tarea 1.12.1.2 Binary check: P8 remains blocked without both approved records; invalid digest, identity, epoch, branch, or worktree evidence is non-approvable.
+- [x] Tarea 1.12.1.3 Approve the P8 gate only after integrated P7 and the independent P8 record pass.
 
-- [ ] Tarea 1.12.1.4 Parse both manifests; resolve every ArtifactRef source path, recompute digests, verify revisions, unique slices, acyclicity, C→D, both DAGs, no A→P7/P8, and no P9→P10/P11 gate.
-- [ ] Tarea 1.12.1.5 Prove unchanged hashes for P6 `apply-progress.md`, P7 spec, P8 proposal/spec, canonical PRD/RFC/REQUIREMENTS, and all runtime/source/test files; run `git diff --check` and `bun test`.
-- [ ] Tarea 1.12.1.6 Persist the completed task/reconciliation artifacts to matching Engram `sdd/...` topics and verify filesystem/OpenSpec and Engram contents agree; leave Tower disarmed.
-- [ ] Tarea 1.12.1.7 Confirm the design threat matrix remains N/A; no runtime RED tests are required for this documentation-only change.
+- [x] Tarea 1.12.1.4 Parse both manifests; resolve every ArtifactRef source path, recompute digests, verify revisions, unique slices, acyclicity, C→D, both DAGs, no A→P7/P8, and no P9→P10/P11 gate.
+- [x] Tarea 1.12.1.5 Prove unchanged hashes for P6 `apply-progress.md`, P7 spec, P8 proposal/spec, canonical PRD/RFC/REQUIREMENTS, and all runtime/source/test files; run `git diff --check` and `bun test`.
+- [x] Tarea 1.12.1.6 Persist the completed task/reconciliation artifacts to matching Engram `sdd/...` topics and verify filesystem/OpenSpec and Engram contents agree; leave Tower disarmed.
+- [x] Tarea 1.12.1.7 Confirm the design threat matrix remains N/A; no runtime RED tests are required for this documentation-only change.

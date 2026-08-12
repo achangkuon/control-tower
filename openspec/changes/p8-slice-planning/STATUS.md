@@ -1,15 +1,15 @@
 # P8 Pi Adapter Status
 
-Planning is complete and merged in PR #32 (`a0b6f9d0e078fde253e61b6b780e694deb789cc2`). S1.17 MUST resume directly at validation of the approved reconciliation record; exploration, proposal, spec, design, and tasks MUST NOT be rerun. Apply remains blocked despite native `apply-ready` until integrated `p7-host-neutral-loop-opencode-adapter` evidence and P8's independent reconciliation record are both approved.
+Planning is complete and merged in PR #32 (`a0b6f9d0e078fde253e61b6b780e694deb789cc2`). The bounded P7 reconciliation record is approved and integrated at `a1dce220dae594006bda0722d0bdb640cf4b9be7`; it remains prerequisite evidence, not P7 runtime/apply completion. P8's independent S1.12 record is **APPROVED / COMPLETE**, with maintainer approval in Engram observation 8483 at `2026-08-11T19:17:33Z`, bound to base `3db3c121d48a07d7696afe6a88de044f30ea4695` and both frozen pre-approval document hashes. This evidence permits only S1.17 entry at T1.17.1.1 to validate that exact record; exploration, proposal, spec, design, and tasks MUST NOT be rerun.
 
-The Installable V1 and Autonomous V2 planning PRs #60/#61 are merged at `master@1a10b384997365a67f9158b6e5fac58999beb7c4`, and their dedicated clean worktrees may proceed in parallel within their own planning gates. This does not authorize P7 or P8 apply: `Worktrees/agent-tower` remains separate at `docs/p7-reconciliation-record@6e56728`, and P7 still requires live assignment binding, exact approval, and integration before this P8 gate can advance.
+The Installable V1 and Autonomous V2 planning PRs #60/#61 are merged at `master@1a10b384997365a67f9158b6e5fac58999beb7c4`, and their dedicated clean worktrees may proceed in parallel within their own planning gates. This does not authorize P8 apply or satisfy its independent gate.
 
 ## Apply Handoff
 
 1. Select the chained-PR strategy before apply because the forecast is 620–780 changed lines.
 2. Start with `tasks.md` T1.17.1.1 and consume and verify the approved S1.12 `reconciliation.md`; do not recreate or re-author it.
-3. Keep apply blocked until legacy P7 is independently reconciled and integrated and the merged legacy P6/legacy P7/Pi contracts are pinned in an approved, separate P8 record.
+3. Keep RED and runtime implementation blocked until T1.17.1.1 validation passes. S1.12 approval alone does not authorize installation, delivery, production readiness, commit, push, or Tower.
 4. Preserve both DAG paths and C→D without any Change A dependency for legacy P7/P8. Main retains `host_epoch` issuance and fencing authority; Change E owns host launch/inspect/stop/health, heartbeat, stop proof, session naming, `host_epoch` enforcement, and exclusive failover.
 5. Reject missing/conflated identities or epochs and any worktree evidence not pinned to the registered container, authorized base SHA, allowed branch, assignment, and session.
 
-Do not begin RED tests or implementation before approved-record validation passes. Preserve the Slice 6/7 artifacts, Migration 005, P10, and Tower runtime state outside status references.
+Do not begin RED tests or runtime implementation before approved-record validation passes. Preserve the prior verified structural and regression evidence without claiming a new test run: `/tmp/pi-bash-85651b86eeea4749.log`, SHA-256 `0036a6179102a1deb9a4a11e5be0e4c7af747b24ccc5c6467dc69d2756b34a4e`, 598 pass, 0 fail, 3,495 `expect()` calls, 39 files, 56.50s; the source aggregate remained unchanged. Preserve the Slice 6/7 artifacts, Migration 005, P10, and Tower runtime state outside status references.
