@@ -56,11 +56,20 @@ The contract selects Option A: Host Launcher / Change E injects an opaque consum
 
 **Scope:** `host/loop.mjs`, `test/polling.test.mjs`. **Budget:** 320–400 authored changed lines. **Finish:** throttle-before-peek, deterministic polling, serialized wake, bounded retries, and pending-delivery preservation; S1.13 remains independently revertible.
 
-- [ ] Tarea 1.14.1.1 **RED:** Add failing deterministic cases in `test/polling.test.mjs` for throttle-before-peek and exact window reopening, empty/rejected peek scheduling, one in-flight wake, pre-call attempt accounting, synchronous wake throw, asynchronous wake rejection, and a pending sentinel that remains unconsumed/unclaimed. <!-- sdd-owner: implementation -->
-- [ ] Tarea 1.14.1.2 **GREEN:** Extend `host/loop.mjs` with validated frozen policy, monotonic sliding-window accounting, throttle scheduling before storage access, fresh non-consuming `peek` per tick, serialized `wake`, and safe trace events required by the RED cases. <!-- sdd-owner: implementation -->
-- [ ] Tarea 1.14.1.3 **TRIANGULATE:** Add cases for retry delays exactly `1000`, `2000`, and `4000` ms; fresh re-peek on every retry; fourth failure exhaustion; successful wake pausing in `AWAITING_SETTLE`; global-window retention across a later root settle; and malformed/regressing clock or scheduler failure pausing before peek. <!-- sdd-owner: implementation -->
-- [ ] Tarea 1.14.1.4 **REFACTOR:** Remove duplicated scheduling/accounting paths in `host/loop.mjs` and stabilize fake-scheduler helpers in `test/polling.test.mjs` while retaining opaque descriptors, no descriptor logging, and no consumption/claim behavior. <!-- sdd-owner: implementation -->
-- [ ] Tarea 1.14.1.5 Run `bun test test/polling.test.mjs` and `node --check host/loop.mjs`; record exact results, an authored-line receipt from `git diff --numstat`, runtime harness result `N/A` (deterministic injected ports are the runtime boundary), and the rollback boundary “remove only S1.14 polling/wake blocks while retaining inert S1.13 lifecycle behavior” in the S1.14 completion note in this file. <!-- sdd-owner: implementation -->
+- [x] Tarea 1.14.1.1 **RED:** Add failing deterministic cases in `test/polling.test.mjs` for throttle-before-peek and exact window reopening, empty/rejected peek scheduling, one in-flight wake, pre-call attempt accounting, synchronous wake throw, asynchronous wake rejection, and a pending sentinel that remains unconsumed/unclaimed. <!-- sdd-owner: implementation -->
+- [x] Tarea 1.14.1.2 **GREEN:** Extend `host/loop.mjs` with validated frozen policy, monotonic sliding-window accounting, throttle scheduling before storage access, fresh non-consuming `peek` per tick, serialized `wake`, and safe trace events required by the RED cases. <!-- sdd-owner: implementation -->
+- [x] Tarea 1.14.1.3 **TRIANGULATE:** Add cases for retry delays exactly `1000`, `2000`, and `4000` ms; fresh re-peek on every retry; fourth failure exhaustion; successful wake pausing in `AWAITING_SETTLE`; global-window retention across a later root settle; and malformed/regressing clock or scheduler failure pausing before peek. <!-- sdd-owner: implementation -->
+- [x] Tarea 1.14.1.4 **REFACTOR:** Remove duplicated scheduling/accounting paths in `host/loop.mjs` and stabilize fake-scheduler helpers in `test/polling.test.mjs` while retaining opaque descriptors, no descriptor logging, and no consumption/claim behavior. <!-- sdd-owner: implementation -->
+- [x] Tarea 1.14.1.5 Run `bun test test/polling.test.mjs` and `node --check host/loop.mjs`; record exact results, an authored-line receipt from `git diff --numstat`, runtime harness result `N/A` (deterministic injected ports are the runtime boundary), and the rollback boundary “remove only S1.14 polling/wake blocks while retaining inert S1.13 lifecycle behavior” in the S1.14 completion note in this file. <!-- sdd-owner: implementation -->
+
+**S1.14 completion note (2026-08-12):**
+- Focused test: `bun test test/polling.test.mjs` — PASS, 18 pass, 0 fail, 175 expect calls.
+- Syntax check: `node --check host/loop.mjs` — PASS, exit 0 with no output.
+- Full suite: `bun test` — PASS, 628 pass, 0 fail, 3,793 expect calls across 40 files in 75.64s.
+- Authored-line receipt: `host/loop.mjs` +142/-38 and `test/polling.test.mjs` +207/-5 = 392 authored changed lines.
+- Runtime harness: `N/A` — deterministic injected clock, scheduler, `peek`, and `wake` ports are the process-local runtime boundary.
+- Rollback boundary: remove only S1.14 polling/wake blocks while retaining inert S1.13 lifecycle behavior.
+- Reliability review: typed `UNAVAILABLE` — direct `review-reliability` dispatch required a controller-owned candidate lineage while the native review lifecycle is suspended; no lineage was created and no verdict was fabricated.
 
 ## Sesión 1.15 — OpenCode Lifecycle Conformance
 

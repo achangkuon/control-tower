@@ -3,10 +3,21 @@ import { readFileSync } from "node:fs"
 
 import { createPollingLoop } from "../host/loop.mjs"
 
+const POLICY = Object.freeze({
+  pollIntervalMs: 2_000,
+  wakeWindowMs: 5 * 60_000,
+  maxWakeAttemptsPerWindow: 15,
+  retryDelaysMs: Object.freeze([1_000, 2_000, 4_000]),
+})
+
 const deferred = () => {
+  let reject
   let resolve
-  const promise = new Promise((resolvePromise) => { resolve = resolvePromise })
-  return { promise, resolve }
+  const promise = new Promise((resolvePromise, rejectPromise) => {
+    reject = rejectPromise
+    resolve = resolvePromise
+  })
+  return { promise, reject, resolve }
 }
 
 const flush = async () => {
@@ -16,11 +27,14 @@ const flush = async () => {
 
 const createHarness = ({
   cancelThrows = false,
+  nowPort,
   peek = async () => null,
+  policy = POLICY,
+  scheduleThrows = false,
   traceThrows = false,
   wake = async () => {},
 } = {}) => {
-  const calls = { cancel: [], peek: [], schedule: [], trace: [], wake: [] }
+  const calls = { cancel: [], now: [], peek: [], schedule: [], trace: [], wake: [] }
   const queue = []
   let now = 0
 
@@ -30,12 +44,18 @@ const createHarness = ({
       handle.canceled = true
       if (cancelThrows) throw new Error("cancel failed")
     },
-    now: () => now,
+    now() {
+      const value = nowPort ? nowPort() : now
+      calls.now.push(value)
+      return value
+    },
     peek(input) {
       calls.peek.push(input)
       return peek(input)
     },
+    policy,
     schedule(callback, delayMs) {
+      if (scheduleThrows) throw new Error("schedule failed")
       const handle = { at: now + delayMs, callback, canceled: false, delayMs }
       calls.schedule.push(handle)
       queue.push(handle)
@@ -56,7 +76,8 @@ const createHarness = ({
     now = handle.at
     return handle.callback()
   }
-  return { calls, loop, queue, runNext }
+  const setNow = (value) => { now = value }
+  return { calls, loop, queue, runNext, setNow }
 }
 const bindAndSettle = (harness, root = "root-A") => {
   expect(harness.loop.bindRoot(root)).toBe(true)
@@ -210,5 +231,186 @@ describe("host-neutral polling lifecycle", () => {
     const source = readFileSync(new URL("../host/loop.mjs", import.meta.url), "utf8")
     expect(source).not.toMatch(/(?:opencode|sqlite|core\.mjs|mcp\.mjs)/i)
     expect(source).not.toMatch(/\.(?:receive|claim)\s*\(/)
+  })
+})
+
+describe("polling and wake safety", () => {
+  test("requires the exact deeply frozen baseline policy", () => {
+    const mutable = { ...POLICY, retryDelaysMs: [1_000, 2_000, 4_000] }
+    const wrong = Object.freeze({ ...POLICY, pollIntervalMs: 1_999 })
+    const shallow = Object.freeze({ ...mutable })
+
+    for (const policy of [null, mutable, shallow, wrong]) {
+      expect(() => createHarness({ policy })).toThrow(TypeError)
+    }
+    expect(() => createPollingLoop({
+      cancel() {}, now() { return 0 }, peek() {}, schedule() {}, trace() {}, wake() {},
+    })).toThrow(TypeError)
+    expect(() => createHarness()).not.toThrow()
+  })
+
+  test("ordinary polling schedules after empty and rejected peeks", async () => {
+    let attempt = 0
+    const harness = createHarness({
+      peek: async () => {
+        attempt += 1
+        if (attempt === 1) return null
+        throw Object.assign(new Error("transport private"), { name: "TransportError" })
+      },
+    })
+    bindAndSettle(harness)
+
+    await harness.runNext()
+    expect(harness.calls.schedule.map(({ delayMs }) => delayMs)).toEqual([0, 2_000])
+    expect(harness.loop.getState()).toMatchObject({ cycleAttempts: 0, state: "POLLING" })
+
+    await harness.runNext()
+    expect(harness.calls.schedule.map(({ delayMs }) => delayMs)).toEqual([0, 2_000, 2_000])
+    expect(harness.calls.wake).toHaveLength(0)
+    expect(harness.calls.trace.at(-2)).toMatchObject({
+      attributes: { name: "TransportError" },
+      event: "poll.peek_failed",
+    })
+  })
+
+  test("records one attempt before a serialized wake invocation", async () => {
+    const pendingWake = deferred()
+    const descriptor = Object.freeze({ opaque: "pending" })
+    let observed
+    let harness
+    harness = createHarness({
+      peek: async () => descriptor,
+      wake: () => {
+        observed = harness.loop.getState()
+        return pendingWake.promise
+      },
+    })
+    bindAndSettle(harness)
+    const duplicate = harness.queue[0].callback
+
+    const running = harness.runNext()
+    await flush()
+    await duplicate()
+    expect(observed).toMatchObject({
+      cycleAttempts: 1,
+      state: "WAKING",
+      wakeInFlight: true,
+      windowAttempts: 1,
+    })
+    expect(harness.calls.peek).toHaveLength(1)
+    expect(harness.calls.wake).toHaveLength(1)
+    expect(harness.loop.rootSettled("root-A")).toBe(true)
+    expect(harness.calls.schedule).toHaveLength(1)
+
+    pendingWake.resolve()
+    await running
+    expect(harness.loop.getState()).toMatchObject({
+      state: "AWAITING_SETTLE",
+      wakeInFlight: false,
+    })
+  })
+
+  test("contains synchronous throws and asynchronous rejections without consuming pending work", async () => {
+    const pending = Object.freeze({ marker: "still-pending" })
+    const store = [pending]
+    const failures = [
+      () => { throw new Error("sync private") },
+      async () => { throw new Error("async private") },
+    ]
+
+    for (const wake of failures) {
+      const harness = createHarness({ peek: async () => store[0], wake })
+      bindAndSettle(harness)
+      await expect(harness.runNext()).resolves.toBeUndefined()
+      expect(harness.loop.getState()).toMatchObject({
+        cycleAttempts: 1, state: "RETRY_WAIT", wakeInFlight: false, windowAttempts: 1,
+      })
+      expect(harness.calls.schedule.at(-1).delayMs).toBe(1_000)
+      expect(harness.calls.wake[0].descriptor).toBe(pending)
+      expect(store).toEqual([pending])
+    }
+  })
+
+  test("re-peeks for exact bounded retries and exhausts on the fourth failure", async () => {
+    let sequence = 0
+    const harness = createHarness({
+      peek: async () => Object.freeze({ sequence: sequence += 1 }),
+      wake: async () => { throw new Error("offline") },
+    })
+    bindAndSettle(harness)
+
+    for (let attempt = 1; attempt <= 4; attempt += 1) {
+      await harness.runNext()
+      expect(harness.loop.getState().cycleAttempts).toBe(attempt)
+    }
+
+    expect(harness.calls.schedule.map(({ delayMs }) => delayMs)).toEqual([
+      0,
+      1_000,
+      2_000,
+      4_000,
+    ])
+    expect(harness.calls.peek).toHaveLength(4)
+    expect(new Set(harness.calls.wake.map(({ descriptor }) => descriptor)).size).toBe(4)
+    expect(harness.loop.getState()).toMatchObject({
+      cycleAttempts: 4,
+      state: "RETRY_EXHAUSTED",
+      timerScheduled: false,
+      windowAttempts: 4,
+    })
+    expect(harness.queue).toHaveLength(0)
+    expect(harness.calls.trace.at(-1).event).toBe("poll.retry_exhausted")
+  })
+
+  test("retains the global window across settle and reopens at the exact boundary", async () => {
+    const pending = Object.freeze({ pending: true })
+    const harness = createHarness({ peek: async () => pending })
+    expect(harness.loop.bindRoot("root-A")).toBe(true)
+
+    for (let attempt = 0; attempt < 15; attempt += 1) {
+      expect(harness.loop.rootSettled("root-A")).toBe(true)
+      await harness.runNext()
+      expect(harness.loop.getState().state).toBe("AWAITING_SETTLE")
+    }
+    expect(harness.calls.peek).toHaveLength(15)
+    expect(harness.loop.getState().windowAttempts).toBe(15)
+
+    expect(harness.loop.rootSettled("root-A")).toBe(true)
+    await harness.runNext()
+    expect(harness.loop.getState()).toMatchObject({ state: "THROTTLED", windowAttempts: 15 })
+    expect(harness.calls.peek).toHaveLength(15)
+    expect(harness.calls.schedule.at(-1).delayMs).toBe(300_000)
+
+    await harness.runNext()
+    expect(harness.calls.peek).toHaveLength(16)
+    expect(harness.calls.wake).toHaveLength(16)
+    expect(harness.loop.getState()).toMatchObject({ state: "AWAITING_SETTLE", windowAttempts: 1 })
+  })
+
+  test("pauses on malformed or regressing time before another peek", async () => {
+    const malformed = createHarness({ nowPort: () => Number.NaN })
+    bindAndSettle(malformed)
+    await malformed.runNext()
+    expect(malformed.calls.peek).toHaveLength(0)
+    expect(malformed.loop.getState().state).toBe("PAUSED")
+
+    const times = [10, 9]
+    const regressing = createHarness({ nowPort: () => times.shift() })
+    bindAndSettle(regressing)
+    await regressing.runNext()
+    expect(regressing.calls.peek).toHaveLength(1)
+    await regressing.runNext()
+    expect(regressing.calls.peek).toHaveLength(1)
+    expect(regressing.loop.getState().state).toBe("PAUSED")
+    expect(regressing.calls.trace.at(-1).event).toBe("poll.clock_invalid")
+  })
+
+  test("pauses when scheduling fails before storage access", () => {
+    const harness = createHarness({ scheduleThrows: true })
+    expect(harness.loop.bindRoot("root-A")).toBe(true)
+    expect(harness.loop.rootSettled("root-A")).toBe(true)
+    expect(harness.loop.getState()).toMatchObject({ state: "PAUSED", timerScheduled: false })
+    expect(harness.calls.peek).toHaveLength(0)
+    expect(harness.calls.wake).toHaveLength(0)
   })
 })
