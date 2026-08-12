@@ -73,7 +73,7 @@ graph LR
   S54 --> S56["S5.6 snapshot de Sesión · ✅"]
   S56 --> S57["S5.7 decisión/respuesta · ✅"]
   S57 --> S58["S5.8 binding de respuesta · ✅"]
-  S58 --> S59["S5.9 binding de checkpoint · 🔴"]
+  S58 --> S59["S5.9 binding de checkpoint · 🟢"]
   S59 --> S510["S5.10 binding de trabajo completado · 🔴"]
   S510 --> S55["S5.5 decisión estacionada · 🔴"]
   S51 --> S87
@@ -110,9 +110,9 @@ graph LR
 | ✅ | `S5.6` | Contrato canónico de snapshot de Sesión | ✅ COMPLETO | `S5.4` ✅; publicado en `origin/master@75ddcf9`, 10/10 Tareas, 10/10 criterios, focused 75/0/348 y full 588/0/3452 |
 | ✅ | `S5.7` | Contratos canónicos de decisión estacionada y respuesta | ✅ COMPLETO | `S5.6` ✅; publicado en `origin/master@3db3c121` e integrado en `master@427b14e` |
 | ✅ | `S5.8` | Binding de opción seleccionada en autoridad canónica | ✅ COMPLETO | `S5.7` ✅; integrada y verificada localmente en `master@427b14e` mediante `6bb7019`, focused 42/0/250 y full 610/0/3618, sin push remoto |
-| — | `S5.9` | Binding autoritativo del checkpoint estacionado | 🔴 BLOQUEADO | `S5.8` ✅; route `blocked`: Main store aprobado sólo como owner, contrato/API/seguridad requieren autoridad explícita del maintainer antes de SDD |
-| — | `S5.10` | Binding inmutable del trabajo independiente completado | 🔴 BLOQUEADO | `S5.9` integrada; route `blocked`: provenance contractual y seguridad propias siguen sin resolver |
-| — | `S5.5` | Decisión estacionada y continuación independiente | 🔴 BLOQUEADO | `S5.10` integrada; transitivamente `S5.9` y `S5.8` ✅ |
+| ▶ | `S5.9` | Binding autoritativo del checkpoint estacionado | 🟢 LISTO | `S5.8` ✅; route `full-sdd`: contrato y frontera aprobados, con guard producer-owned fail-closed antes de tasks/apply |
+| — | `S5.10` | Binding inmutable del trabajo independiente completado | 🔴 BLOQUEADO | `S5.9` integrada y su propio contrato de provenance/seguridad resuelto; route `blocked` |
+| — | `S5.5` | Decisión estacionada y continuación independiente | 🔴 BLOQUEADO | `S5.10` integrada; transitivamente `S5.9` y `S5.8` ✅; pausada antes de tasks/apply |
 | — | `S5.3` | Continuación | 🔴 BLOQUEADO | Bloqueo transitivo por `S5.2` |
 | — | `S8.7` | Puente Hermes/Telegram | 🔴 BLOQUEADO | Dependencias propias ✅ y decisiones Telegram resueltas; bloquea el inicializador confiable de producción pendiente |
 | 4 | `S7.1` | Conformidad de release | 📋 PLANIFICADO | `S4.4`, `S5.3`, `S8.7`, `S5.5` |
@@ -166,7 +166,7 @@ cerrado y exige una solicitud/autorización nueva.
 
 La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas; no se declara como un número fijo.
 
-`S1.13` está ✅ COMPLETO, integrada y verificada en el `master` local `794611f`; `origin/master` permanece en `3db3c121`, por lo que no hay publicación remota ni actualización de Notion. `S1.14` queda 🟢 LISTO, sin avance acreditado. En P5, `S5.9` y `S5.10` están 🔴 BLOQUEADO con route `blocked`: la ubicación Main store está aprobada, pero sus contratos públicos y fronteras de seguridad requieren autoridad explícita del maintainer antes de SDD; `S5.10` además espera la integración de `S5.9`. `S5.5` permanece 🔴 BLOQUEADO hasta integrar ambas. La próxima acción canónica sigue siendo resolver el contrato público y de seguridad de `S5.9`, no ejecutar.
+`S1.13` está ✅ COMPLETO, integrada, verificada y documentada en el `master` local; `origin/master` permanece en `3db3c121`, por lo que no hay publicación remota ni actualización de Notion. `S1.14` queda 🟢 LISTO de forma independiente, sin avance acreditado. En P5, el contrato público y la frontera de seguridad de `S5.9` están resueltos: `S5.9` queda 🟢 LISTO con route `full-sdd` y es la próxima Sesión ejecutable; puede comenzar SDD automático híbrido, que debe probar el guard producer-owned antes de tasks/apply y fallar cerrado hacia un prerrequisito nuevo si no hay evidencia canónica suficiente. `S5.10` sigue 🔴 BLOQUEADO hasta integrar `S5.9` y resolver su contrato propio; `S5.5` permanece 🔴 BLOQUEADO y pausada antes de tasks/apply hasta integrar ambas.
 
 La capacidad se sigue derivando, no se fija como cupo. `S1.15`–`S1.16` esperan `S1.14`; `S1.17` mantiene su bloqueo propio por `assignment_id`, `session_id` y capacidad de binding Workspace Manager/Main reales ausentes y, con él, `S1.18`–`S1.19` y `S4.4`. `S5.2`/`S5.3`, `S5.5`, `S8.7`, `S10.1` y `S10.2` conservan sus bloqueos registrados. `S10.2` además carece de `Área` y queda excluida de capacidad. `S7.1` mantiene dependencias en `S4.4`, `S5.3`, `S8.7` y `S5.5`.
 

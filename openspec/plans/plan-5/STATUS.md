@@ -19,7 +19,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1`, y la cadena contractual `S5.4 → S5.6 → S5.7 → S5.8 → S5.9 → S5.10 → S5.5`. |
 | Outputs | F: authorization store, Telegram, validación Git/PR/check/SHA, entrega idempotente y post-check. G: planning horizon, reconciliación, apply/verify, Binding Delta y continuación del siguiente `slice_id`. Más el ruteo de escalamiento de `S5.4`, los contratos canónicos prerrequisito de `S5.6`–`S5.10` y la planificación diferible de `S5.5`. |
-| Roadmap | `S5.1`, `S5.4`, `S5.6`, `S5.7` y `S5.8` están ✅ COMPLETO e integradas en el `master` local; `S5.7` está publicada y `S5.8` permanece sin publicación remota. La reconciliación del 2026-08-12 probó dos prerrequisitos ausentes: ningún contrato liga el valor exacto de `parked.checkpoint` a la evidencia canónica de checkpoint/reconciliación, y ningún artefacto liga trabajo independiente completado a la decisión y opción/supuesto exactos bajo los que corrió. El Main store está aprobado sólo como owner persistente de `S5.9` y `S5.10`; ambas quedan 🔴 BLOQUEADO antes de SDD por sus decisiones abiertas de contrato/API/seguridad. `S5.5` queda 🔴 BLOQUEADO hasta integrar ambas. `S5.2` conserva los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
+| Roadmap | `S5.1`, `S5.4`, `S5.6`, `S5.7` y `S5.8` están ✅ COMPLETO e integradas en el `master` local; `S5.7` está publicada y `S5.8` permanece sin publicación remota. La reconciliación del 2026-08-12 probó dos prerrequisitos ausentes: ningún contrato liga el valor exacto de `parked.checkpoint` a la evidencia canónica de checkpoint/reconciliación, y ningún artefacto liga trabajo independiente completado a la decisión y opción/supuesto exactos bajo los que corrió. El maintainer resolvió la forma contractual y la frontera de seguridad de `S5.9`, que queda 🟢 LISTO con route `full-sdd`; el SDD automático híbrido debe probar primero que el flujo de parking puede suministrar evidencia canónica producer-owned de captura y reconciliación, o detenerse y escalar un prerrequisito nuevo antes de tasks/apply. `S5.10` conserva su decisión contractual propia y sigue 🔴 BLOQUEADO; `S5.5` queda 🔴 BLOQUEADO hasta integrar ambas. `S5.2` conserva los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
 
 ## Grafo de dependencias
@@ -33,7 +33,7 @@ graph LR
   S54 --> S56["S5.6 snapshot de Sesión · ✅"]
   S56 --> S57["S5.7 decisión/respuesta · ✅"]
   S57 --> S58["S5.8 binding de respuesta · ✅"]
-  S58 --> S59["S5.9 binding de checkpoint · 🔴"]
+  S58 --> S59["S5.9 binding de checkpoint · 🟢"]
   S59 --> S510["S5.10 binding de trabajo completado · 🔴"]
   S510 --> S55["S5.5 continuación diferible · 🔴"]
   S41["S4.1 fence hosts · ✅"] --> S52["S5.2 entrega · 🔴"]
@@ -626,9 +626,9 @@ Sesiones sin decisión explícita.
 
 **Resultado:** persistir bajo autoridad exclusiva de Main una prueba inmutable que liga el valor exacto de `parked.checkpoint` a la captura canónica y a la evidencia de reconciliación que identifican el mismo punto de retoma.
 
-**Estado:** 🔴 BLOQUEADO — el Main store está aprobado como owner y ubicación persistente, pero la forma pública/versionada, la API y la frontera de seguridad requieren autoridad explícita del maintainer antes de iniciar SDD.
+**Estado:** 🟢 LISTO — `S5.8` está ✅ COMPLETO y el maintainer resolvió la forma pública/versionada, la API y la frontera de seguridad del binding. Esto no afirma que los productores ya entreguen la provenance necesaria: el SDD debe probarlo antes de tasks/apply.
 
-**Route:** `blocked` — la decisión de ownership no decide el contrato/API ni la frontera de seguridad, y esas clases siempre escalan. Se detiene antes de SDD o implementación hasta recibir autoridad explícita del maintainer. **Autoridad:** decisión del maintainer del 2026-08-12 y evidencia A verificada contra `workspace/checkpoint.mjs`, `schemas/reconciled-checkpoint-v1.schema.json` y `schemas/parked-decision-v1.schema.json`.
+**Route:** `full-sdd` — puede comenzar automáticamente en modo híbrido para fijar proposal/spec/design del contrato aprobado y demostrar el prerrequisito producer-owned. Si el flujo de parking no puede suministrar captura canónica y reconciliación canónica `VALID` sin assertion del caller, `S5.9` se detiene antes de tasks/apply y escala una nueva Sesión prerrequisito; no infiere ni reconstruye esa evidencia. **Autoridad:** decisión del maintainer del 2026-08-12, registrada en [`decision-register.md`](../decision-register.md), y evidencia A verificada contra `workspace/checkpoint.mjs`, `schemas/reconciled-checkpoint-v1.schema.json` y `schemas/parked-decision-v1.schema.json`.
 
 **Depende de:** `S5.8` ✅ integrada.
 
@@ -640,7 +640,7 @@ Sesiones sin decisión explícita.
 
 **Decisiones:**
 
-- `escala` — cuál es la forma pública exacta y versionada del binding, qué identidades/digests exige y qué transición lo vuelve inmutable. **Clase:** contrato visible del producto, API pública y seguridad y permisos. La decisión del maintainer resuelve **dónde** persiste —Main store—, no esta forma ni su frontera de autoridad. Quedan prohibidos un assertion del caller, inferir equivalencia por texto desde `S5.5` y cualquier store o writer paralelo. **Contamina:** `S5.5`.
+- `escala` — cuál es la forma pública exacta y versionada del binding, qué identidades/digests exige y qué transición lo vuelve inmutable. **Clase:** contrato visible del producto, API pública y seguridad y permisos. **RESUELTA el 2026-08-12 por el maintainer:** registro standalone, inmutable y versionado `parked-checkpoint-binding-v1` en Main store, sellado al estacionar la decisión sólo después de disponer de captura canónica y reconciliación canónica `VALID`. Tiene readback autoritativo dedicado por identidad de decisión estacionada; Main store es writer único bajo su autoridad, lock y transacción canónicos. Replay canónico exacto es idempotente y replay divergente falla cerrado. El binding exige identidad/digest exactos de la decisión estacionada, valor exacto de `parked.checkpoint`, identidad/digest de captura canónica, identidad/digest y estado `VALID` de reconciliación canónica, más los cross-bindings de repositorio/proyecto/assignment/generation/base/result necesarios para probar que nombran el mismo checkpoint. Se prohíben assertions del caller, inferencia o parsing local de `S5.5`, reconstrucción narrativa, reemplazo mutable, semántica sólo en `extensions`, shadow store y segundo writer. **Falsificador:** si el flujo de parking no puede suministrar evidencia canónica producer-owned de captura y reconciliación sin assertion del caller, `S5.9` se detiene antes de tasks/apply y escala un prerrequisito nuevo; el SDD debe probarlo. **Contaminaba:** `S5.5`.
 
 ### Módulo 5.9.1 — Evidencia canónica y persistencia bajo Main
 
@@ -654,11 +654,11 @@ Cada Tarea es una unidad de commit/direct-push revisable y revertible por sí so
 **Criterios de aceptación de S5.9** — todos deben pasar para cerrar:
 
 - [ ] Existe un único binding autoritativo persistido en Main store entre el valor exacto de `parked.checkpoint`, la captura canónica y la evidencia `reconciled-checkpoint-v1` correspondiente
-- [ ] La forma pública/versionada y la frontera de seguridad fueron decididas explícitamente durante SDD antes de tasks/apply; la ubicación Main store no se usa para inferirlas
+- [ ] El SDD codifica el contrato aprobado `parked-checkpoint-binding-v1` y prueba antes de tasks/apply que el flujo de parking suministra evidencia canónica producer-owned de captura y reconciliación `VALID`; si no puede, detiene `S5.9` y escala un prerrequisito nuevo
 - [ ] Mismatch de valor, digest, repositorio, base/result, assignment/generation o evidencia de reconciliación falla cerrado sin mutación parcial
 - [ ] Caller assertion, texto equivalente y una inferencia local de `S5.5` no sustituyen evidencia canónica
 - [ ] Replay byte-idéntico es idempotente y replay divergente produce cero efectos adicionales
-- [ ] Persistencia, inmutabilidad y readback ocurren bajo el writer, lock y transacción canónicos de Main; no existe store ni writer paralelo
+- [ ] Sellado al estacionar, persistencia, inmutabilidad y readback autoritativo dedicado por identidad de decisión estacionada ocurren bajo el writer, lock y transacción canónicos de Main; no existe store ni writer paralelo
 - [ ] Los productores `workspace/checkpoint.mjs` y `reconciled-checkpoint-v1` se consumen sin una segunda ruta de captura o reconciliación
 - [ ] El diff de implementación no toca ningún path fuera de `Área`
 
@@ -702,6 +702,6 @@ Cada Tarea es una unidad de commit/direct-push revisable y revertible por sí so
 - [ ] `S5.5` consume la prueba sin inferirla localmente y `S7.1` puede atribuir la evidencia al candidato y supuesto exactos
 - [ ] El diff de implementación no toca ningún path fuera de `Área`
 
-**Cómputo del Plan 5:** `5/10 S = 50%`. Sólo `S5.1`, `S5.4`, `S5.6`, `S5.7` y `S5.8` cuentan; `S5.2`, `S5.3`, `S5.5`, `S5.9` y `S5.10` tienen estado 🔴 BLOQUEADO y aportan cero crédito.
+**Cómputo del Plan 5:** `5/10 S = 50%`. Sólo `S5.1`, `S5.4`, `S5.6`, `S5.7` y `S5.8` cuentan; `S5.2`, `S5.3`, `S5.5` y `S5.10` están 🔴 BLOQUEADO, mientras `S5.9` está 🟢 LISTO. Ninguna aporta crédito hasta `COMPLETO`.
 
 Las responsabilidades legacy de Telegram Delivery y continuación que aún no tienen límite de un PR permanecen sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).

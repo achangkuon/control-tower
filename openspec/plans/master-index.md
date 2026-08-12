@@ -1,18 +1,18 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-12 contra `master@794611f925f4fd2cb0de0b69cfdf2798d011543d` (tree `34bed8b7bd062c8e3cdcce20153c0a378053dcf7`). `origin/master` permanece en `3db3c121`; este snapshot es local y no publicado.
+> Última reconciliación: 2026-08-12 contra `master@28bbc1f020796025ac7b40193c41d9f5f3d2e0a2`. `origin/master` permanece en `3db3c121`; este snapshot es local y no publicado.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md).
 
 ## 📍 Punto de retoma
 
-`S1.13` es el último cierre integrado y verificado en el `master` local `794611f`: implementación `2bbeddb` más corrección de compatibilidad de fixture `794611f`, con suite final 620/0. `origin/master` sigue en `3db3c121`, por lo que no hay publicación remota ni claim de shipment.
+`S1.13` es el último cierre integrado, verificado y documentado en el `master` local; el snapshot canónico actual es `28bbc1f`. `origin/master` sigue en `3db3c121`, por lo que no hubo push, publicación remota ni claim de shipment.
 
-`S1.14` queda 🟢 LISTO, sin crédito de progreso. La próxima decisión canónica sigue siendo del maintainer sobre `S5.9`: forma pública/API y frontera de seguridad. `S5.10` continúa 🔴 BLOQUEADO por `S5.9` integrada y por sus propias decisiones de provenance contractual y seguridad; `S5.5` permanece 🔴 BLOQUEADO hasta integrar ambas. El orden serial sigue `S5.8` ✅ → `S5.9` 🔴 → `S5.10` 🔴 → `S5.5` 🔴.
+La decisión contractual de `S5.9` quedó resuelta: `S5.9` está 🟢 LISTO con route `full-sdd` y es la próxima Sesión ejecutable. Puede comenzar SDD automático híbrido, que debe probar antes de tasks/apply que el flujo de parking suministra evidencia canónica producer-owned de captura y reconciliación; si no, se detiene y escala un prerrequisito nuevo.
 
-P10 queda 🔴 BLOQUEADO con `0/2 S`: `S10.1` espera la decisión sobre ejecución antes/sin supervisión y `S10.2` espera la arquitectura visible/de seguridad, la reconciliación del interlock de `remote-control` y un `Área` explícita. `S1.17`, `S5.2`/`S5.3`, `S5.5` y `S8.7` conservan sus bloqueos registrados.
+`S5.10` continúa 🔴 BLOQUEADO hasta integrar `S5.9` y resolver su propio contrato de provenance y seguridad. `S5.5` permanece 🔴 BLOQUEADO y pausada antes de tasks/apply hasta integrar `S5.9` y `S5.10`. El orden serial sigue `S5.8` ✅ → `S5.9` 🟢 → `S5.10` 🔴 → `S5.5` 🔴.
 
-P9 es un candidato de planificación separado, ya autorizado pero todavía sin integrar; no forma parte del denominador Git-canónico. Notion se difiere porque no hubo push ni entrega remota; el parent reconciliará ese snapshot por separado.
+`S1.14` también está 🟢 LISTO de forma independiente, sin crédito de progreso. `S1.17`, `S5.2`/`S5.3`, `S8.7`, `S10.1` y `S10.2` conservan sus bloqueos registrados; P9 sigue fuera del denominador Git-canónico.
 
 ## Granularidad
 
