@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Legacy P7 depende sólo de legacy P6; P8 depende de legacy P7 reconciliado e integrado. Change A no es dependencia de ninguno. |
 | Outputs | Recovery/rollback fail-closed; controller host-neutral y adapter OpenCode; adapter Pi; adapter Claude opt-in; runtime versionado; verificación CT-only. |
-| Roadmap | `S1.11` está ✅ COMPLETO y publicado en `origin/master@3db3c121`. `S1.12` y `S1.13` están ✅ COMPLETO e integradas en el `master` local; `S1.13` cerró en `master@794611f` mediante la implementación `2bbeddb` y la corrección de compatibilidad de fixture `794611f`. El push remoto y Notion siguen pendientes. `S1.14` queda 🟢 LISTO y la cadena continúa `S1.14 → S1.15 → S1.16`. `S1.17` es una Sesión downstream distinta y sigue 🔴 BLOQUEADO por identidades y capacidad runtime reales ausentes. Legacy P9–P11 esperan límites de PR demostrables. |
+| Roadmap | `S1.11` está ✅ COMPLETO y publicado en `origin/master@3db3c121`. `S1.12`–`S1.14` están ✅ COMPLETO e integradas en el `master` local; `S1.14` cerró en `master@9886af9` mediante la implementación y evidencia canónica del mismo commit. El push remoto y Notion siguen pendientes. `S1.15` queda 🟢 LISTO sólo porque su dependencia `S1.14` cerró; la cadena continúa `S1.15 → S1.16`, sin crédito para `S1.15` ni Sesiones posteriores. `S1.17` es una Sesión downstream distinta y sigue 🔴 BLOQUEADO por identidades y capacidad runtime reales ausentes. Legacy P9–P11 esperan límites de PR demostrables. |
 | Referencias | [`autonomous-continuation-control-tower`](../../changes/autonomous-continuation-control-tower/), [`p7-host-neutral-loop-opencode-adapter`](../../changes/p7-host-neutral-loop-opencode-adapter/), [`p8-slice-planning`](../../changes/p8-slice-planning/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). |
 
 Legacy P6 se integró mediante PRs #38–#45 y cerró en `e16d94b`. Su [`apply-progress.md`](../../changes/autonomous-continuation-control-tower/apply-progress.md) es evidencia histórica y permanece sin reescritura.
@@ -63,8 +63,8 @@ La definición canónica de esta Sesión, incluidos `M1.12.1` y `T1.12.1.1`–`T
 ```mermaid
 graph LR
   S112["S1.12 reconciliación P8 · ✅"] --> S113["S1.13 lifecycle · ✅"]
-  S113 --> S114["S1.14 polling · 🟢"]
-  S114 --> S115["S1.15 conformidad · 📋"]
+  S113 --> S114["S1.14 polling · ✅"]
+  S114 --> S115["S1.15 conformidad · 🟢"]
   S115 --> S116["S1.16 transporte · 📋"]
 ```
 
@@ -73,8 +73,8 @@ graph LR
 | ID | Resultado | Estado | Depende de | Ref |
 |---|---|---|---|---|
 | S1.13 | Root lifecycle e invalidación sincrónica | ✅ COMPLETO | `S1.12` ✅ | [`tasks.md`](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md) |
-| S1.14 | Polling y wake safety | 🟢 LISTO | `S1.13` ✅ | [`tasks.md`](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md) |
-| S1.15 | Conformidad lifecycle OpenCode | 📋 PLANIFICADO | `S1.14` | [`tasks.md`](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md) |
+| S1.14 | Polling y wake safety | ✅ COMPLETO | `S1.13` ✅ | [`tasks.md`](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md) |
+| S1.15 | Conformidad lifecycle OpenCode | 🟢 LISTO | `S1.14` ✅ | [`tasks.md`](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md) |
 | S1.16 | Transporte reconciliado y composición wake | 📋 PLANIFICADO | `S1.15` | [`tasks.md`](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md) |
 
 ## Sesión 1.13 — Root lifecycle e invalidación sincrónica
@@ -103,29 +103,39 @@ graph LR
 
 ## Sesión 1.14 — Polling y wake safety
 
-**Estado:** 🟢 LISTO
+**Estado:** ✅ COMPLETO — integrada y verificada localmente en `master@9886af9ee289d78a35b404b06351f930ecb43309`, cuyo padre es `fee4f5b`. El commit integra exactamente `host/loop.mjs`, `test/polling.test.mjs` y el [`tasks.md` canónico](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md#sesión-114--polling-and-wake-safety). Este cierre no está publicado: `origin/master` permanece en `3db3c121`.
 
 **Depende de:** `S1.13` ✅
 **Área:** `host/loop.mjs`, `test/polling.test.mjs`
 **Recurso:** —. Clock, scheduler, `peek` y `wake` son puertos inyectados y deterministas, locales al proceso; sin adapter, DB, estado de Torre, runtime externo, token de release, proceso host compartido, host SDK, SQLite, `core.mjs` ni `mcp.mjs`.
 **Ruta:** `direct` — contrato acotado y cinco Tareas preexistentes, sin decisión pública, de autoridad, persistencia o composición abierta. **Autoridad:** [`tasks.md`](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md#sesión-114--polling-and-wake-safety), `S1.11` y el lifecycle inerte integrado por `S1.13`.
 
-**Decisiones:** —. La política de polling, serialización de wake, reintentos y preservación no consumidora ya está fijada por las Tareas aprobadas; cualquier necesidad de tocar un path fuera de `Área` detiene la Sesión y escala expansión de alcance.
+**Decisiones:** —. La política de polling, serialización de wake, reintentos y preservación no consumidora ya estaba fijada por las Tareas aprobadas; el cierre no expandió `Área` ni autoridad.
 
 ### Módulo 1.14.1 — Polling y comportamiento de wake
 
-`T1.14.1.1`–`T1.14.1.5` viven en el [`tasks.md` canónico](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md#sesión-114--polling-and-wake-safety) y preservan RED → GREEN → TRIANGULATE → REFACTOR → verificación. Presupuesto: 320–400 líneas authored; `S1.13` debe permanecer revertible de forma independiente.
+`T1.14.1.1`–`T1.14.1.5` están completas en el [`tasks.md` canónico](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md#sesión-114--polling-and-wake-safety), que preserva RED → GREEN → TRIANGULATE → REFACTOR → verificación. El cambio registra 392 líneas authored de implementación y pruebas, dentro del presupuesto de 320–400; `S1.13` permanece revertible de forma independiente.
 
-**Criterios de aceptación de S1.14** — todos deben pasar para cerrar:
+**Criterios de aceptación de S1.14** — todos pasaron:
 
-- [ ] El throttle se evalúa antes de cada `peek` y la ventana monotónica reabre exactamente cuando corresponde
-- [ ] Cada tick usa un `peek` fresco y no consumidor; un descriptor pendiente permanece sin consumir ni reclamar
-- [ ] Existe un solo `wake` en vuelo, el intento se contabiliza antes de invocarlo y los fallos sincrónicos o asincrónicos no rompen el controller
-- [ ] Los reintentos ocurren exactamente a 1000, 2000 y 4000 ms, reejecutan `peek` y el cuarto fallo agota la secuencia sin inventar trabajo
-- [ ] Un `wake` exitoso pausa en `AWAITING_SETTLE`; settle posterior conserva la ventana global y clock/scheduler inválidos pausan antes de acceder a storage
-- [ ] `bun test test/polling.test.mjs`, `node --check host/loop.mjs` y la suite integral pasan sobre los bytes finales
-- [ ] Runtime harness queda `N/A` porque los puertos inyectados deterministas son la frontera process-local
-- [ ] El diff de implementación no toca ningún path fuera de `Área` y el rollback remueve sólo bloques S1.14, preservando el lifecycle inerte de S1.13
+- [x] El throttle se evalúa antes de cada `peek` y la ventana monotónica reabre exactamente cuando corresponde
+- [x] Cada tick usa un `peek` fresco y no consumidor; un descriptor pendiente permanece sin consumir ni reclamar
+- [x] Existe un solo `wake` en vuelo, el intento se contabiliza antes de invocarlo y los fallos sincrónicos o asincrónicos no rompen el controller
+- [x] Los reintentos ocurren exactamente a 1000, 2000 y 4000 ms, reejecutan `peek` y el cuarto fallo agota la secuencia sin inventar trabajo
+- [x] Un `wake` exitoso pausa en `AWAITING_SETTLE`; settle posterior conserva la ventana global y clock/scheduler inválidos pausan antes de acceder a storage
+- [x] `bun test test/polling.test.mjs`, `node --check host/loop.mjs` y la suite integral pasan sobre los bytes finales
+- [x] Runtime harness queda `N/A` porque los puertos inyectados deterministas son la frontera process-local
+- [x] El diff de implementación no toca ningún path fuera de `Área` y el rollback remueve sólo bloques S1.14, preservando el lifecycle inerte de S1.13
+
+**Evidencia exacta de cierre:**
+
+- Focused: `bun test test/polling.test.mjs` — PASS, 18 pass, 0 fail, 175 expect calls.
+- Sintaxis: `node --check host/loop.mjs` — PASS, exit 0 sin output.
+- Suite completa: `bun test` — PASS, 628 pass, 0 fail, 3.793 expect calls en 40 archivos.
+- Receipt de implementación: 392 líneas authored — `host/loop.mjs` +142/-38 y `test/polling.test.mjs` +207/-5.
+- Runtime harness: `N/A` — clock, scheduler, `peek` y `wake` inyectados y deterministas forman la frontera local al proceso.
+- Rollback: remover sólo los bloques de polling/wake de `S1.14`, conservando el lifecycle inerte de `S1.13`.
+- Review lens: `UNAVAILABLE` tipado — el dispatch directo de `review-reliability` exigía lineage de candidato controlada por el controller mientras el lifecycle nativo de review estaba suspendido; no se creó lineage ni se fabricó veredicto.
 
 ## Sesiones P8
 
@@ -139,7 +149,7 @@ graph LR
 
 | ID | Estado | Ruta | Motivo |
 |---|---|---|---|
-| `S1.16` | 📋 PLANIFICADO | `design-tasks` | Los registros aprobados de `S1.11` y `S1.12` ya existen y `S1.13` está cerrada, pero la cadena autorizada exige cerrar antes `S1.14 → S1.15`. Luego se elige el seam de transporte no consumidor desde ese registro, sin inventarlo. |
+| `S1.16` | 📋 PLANIFICADO | `design-tasks` | Los registros aprobados de `S1.11` y `S1.12` ya existen y `S1.13`–`S1.14` están cerradas, pero la cadena autorizada exige cerrar antes `S1.15`. Luego se elige el seam de transporte no consumidor desde ese registro, sin inventarlo. |
 | `S1.17` | 🔴 BLOQUEADO | `direct` al destrabar | Es downstream y distinta de `S1.12`. `T1.17.1.1`–`.2` pasaron; `.3` no puede validar un assignment-bound worktree sin `assignment_id`, `session_id` y capacidad de binding Workspace Manager/Main reales; `.4`–`.5` no empezaron. Al destrabar sólo aterriza pruebas RED contra contratos ya aprobados. |
 | `S1.18` | 📋 PLANIFICADO | `direct` | Depende de `S1.17`. Implementación GREEN con alcance exacto (`adapters/pi/`), comando `bun test test/host-adapters.test.mjs` y rollback declarados. |
 | `S1.19` | 📋 PLANIFICADO | `direct` | Depende de `S1.18`. Refactor de seams y regresión compartida; verificación sólo por fixtures y rollback sin schema. |
@@ -156,6 +166,6 @@ graph LR
 
 Por lo tanto `S1.11`, `S1.12`, `S1.13`, `S1.14` y `S1.15` **entran en la cadena de release**: sin ellas, `S1.16` y `S1.17` no pueden arrancar, y sin ésas no hay `S4.2`–`S4.4` ni `S7.1`.
 
-**Reconciliado el 2026-08-12:** `S1.11` está ✅ COMPLETO en `origin/master@3db3c121`; `S1.12` y `S1.13` están ✅ COMPLETO, integradas y verificadas localmente, con el último cierre en `master@794611f`, pero todavía no publicadas. La cadena pendiente queda `S1.14 → S1.15 → S1.16`; `S1.14` pasa a 🟢 LISTO y `S1.15`–`S1.16` permanecen 📋 PLANIFICADO. `S1.17` conserva su bloqueo propio: faltan `assignment_id`, `session_id` y capacidad runtime reales, una capacidad de binding que Workspace Manager/Main todavía no expone. El cierre de `S1.13` no elimina ese bloqueo externo.
+**Reconciliado el 2026-08-12:** `S1.11` está ✅ COMPLETO en `origin/master@3db3c121`; `S1.12`–`S1.14` están ✅ COMPLETO, integradas y verificadas localmente, con el último cierre en `master@9886af9`, pero todavía no publicadas. La cadena pendiente queda `S1.15 → S1.16`; `S1.15` pasa a 🟢 LISTO sólo por la dependencia cerrada y `S1.16` permanece 📋 PLANIFICADO. `S1.17` conserva su bloqueo propio: faltan `assignment_id`, `session_id` y capacidad runtime reales, una capacidad de binding que Workspace Manager/Main todavía no expone. El cierre de `S1.14` no elimina ese bloqueo externo.
 
 Legacy P9–P11 todavía no tienen límites de PR demostrables. Sus responsabilidades se preservan sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).
