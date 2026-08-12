@@ -17,9 +17,9 @@
 
 | Campo | Detalle |
 |---|---|
-| Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1`, y la cadena contractual `S5.4 → S5.6 → S5.7 → S5.8 → S5.5`. |
-| Outputs | F: authorization store, Telegram, validación Git/PR/check/SHA, entrega idempotente y post-check. G: planning horizon, reconciliación, apply/verify, Binding Delta y continuación del siguiente `slice_id`. Más el ruteo de escalamiento de `S5.4`, los contratos canónicos prerrequisito de `S5.6`–`S5.8` y la planificación diferible de `S5.5`. |
-| Roadmap | `S5.1`, `S5.4`, `S5.6`, `S5.7` y `S5.8` están ✅ COMPLETO. `S5.8` quedó integrada y verificada sólo en `master@6bb7019`; el push remoto y Notion siguen pendientes. Como su única dependencia declarada ya cerró, `S5.5` pasa a 🟢 LISTO. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
+| Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1`, y la cadena contractual `S5.4 → S5.6 → S5.7 → S5.8 → S5.9 → S5.10 → S5.5`. |
+| Outputs | F: authorization store, Telegram, validación Git/PR/check/SHA, entrega idempotente y post-check. G: planning horizon, reconciliación, apply/verify, Binding Delta y continuación del siguiente `slice_id`. Más el ruteo de escalamiento de `S5.4`, los contratos canónicos prerrequisito de `S5.6`–`S5.10` y la planificación diferible de `S5.5`. |
+| Roadmap | `S5.1`, `S5.4`, `S5.6`, `S5.7` y `S5.8` están ✅ COMPLETO e integradas en el `master` local; `S5.7` está publicada y `S5.8` permanece sin publicación remota. La reconciliación del 2026-08-12 probó dos prerrequisitos ausentes: ningún contrato liga el valor exacto de `parked.checkpoint` a la evidencia canónica de checkpoint/reconciliación, y ningún artefacto liga trabajo independiente completado a la decisión y opción/supuesto exactos bajo los que corrió. El Main store está aprobado sólo como owner persistente de `S5.9` y `S5.10`; ambas quedan 🔴 BLOQUEADO antes de SDD por sus decisiones abiertas de contrato/API/seguridad. `S5.5` queda 🔴 BLOQUEADO hasta integrar ambas. `S5.2` conserva los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
 
 ## Grafo de dependencias
@@ -33,7 +33,9 @@ graph LR
   S54 --> S56["S5.6 snapshot de Sesión · ✅"]
   S56 --> S57["S5.7 decisión/respuesta · ✅"]
   S57 --> S58["S5.8 binding de respuesta · ✅"]
-  S58 --> S55["S5.5 continuación diferible · 🟢"]
+  S58 --> S59["S5.9 binding de checkpoint · 🔴"]
+  S59 --> S510["S5.10 binding de trabajo completado · 🔴"]
+  S510 --> S55["S5.5 continuación diferible · 🔴"]
   S41["S4.1 fence hosts · ✅"] --> S52["S5.2 entrega · 🔴"]
   S33 --> S52
   S52 --> S53["S5.3 continuación · 🔴"]
@@ -345,17 +347,18 @@ No aplica un runtime externo: esta Sesión define ruteo y persistencia, pero del
 
 ## Sesión 5.5 — Decisión estacionada y continuación independiente
 
-**Estado:** 🟢 LISTO — su única dependencia declarada, `S5.8`, está ✅ COMPLETO en la integración local verificada. No existe un bloqueo externo adicional.
-**Depende de:** `S5.8` ✅
+**Estado:** 🔴 BLOQUEADO — `S5.8` está ✅ COMPLETO, pero la reconciliación del 2026-08-12 probó dos prerrequisitos externos ausentes. `S5.5` no puede entrar en tasks/apply hasta que `S5.9` y `S5.10` estén integradas: hoy no existe binding autoritativo entre el valor exacto de `parked.checkpoint` y la evidencia canónica de checkpoint/reconciliación, ni binding inmutable entre trabajo independiente completado y la decisión más opción/supuesto exactos bajo los que corrió. No se acredita avance parcial.
+**Depende de:** `S5.10` integrada; transitivamente `S5.9` y `S5.8` ✅
 **Área:** `escalation/{parked,contamination,resume}.mjs`, `test/escalation/**`
 **Prohibido:** `continuation/**`, `core.mjs`, `mcp.mjs`, `delivery/**`, `contracts/**`, `schemas/**`, `main-store/store.mjs`
 **Recurso:** ledger append-only de decisiones estacionadas. Sin token de entrega.
 
-**Route:** `full-sdd`; `S5.8` ya cerró y los contratos quedaron fijados por los prerrequisitos. El SDD cubre el comportamiento integral de ledger, contaminación, selección y retoma.
+**Route:** `full-sdd`, bloqueada antes de tasks/apply. `S5.6`–`S5.8` fijaron snapshot, decisión/respuesta y selección terminal, pero `S5.9` y `S5.10` deben fijar los dos bindings prerrequisito restantes. Después de su integración, el SDD de `S5.5` cubre el comportamiento integral de ledger, contaminación, selección y retoma.
 
-`S5.6`–`S5.8` poseen los contratos canónicos que esta Sesión consume: snapshot de Sesión,
-registro/respuesta y binding de opción seleccionada bajo autoridad de `S5.1`. `S5.5` no los
-redefine, registra ni valida por una ruta local.
+`S5.6`–`S5.10` poseen los contratos canónicos que esta Sesión consume: snapshot de Sesión,
+registro/respuesta, binding de opción seleccionada, binding del checkpoint exacto y binding del
+trabajo independiente completado bajo su opción/supuesto. `S5.5` no los redefine, registra ni
+valida por una ruta local.
 
 `S5.4` hace que la pregunta **salga**. `S5.5` es lo que hace que la Torre **no se quede
 esperando la respuesta**: es la Sesión que convierte la planificación en diferible.
@@ -618,5 +621,87 @@ Sesiones sin decisión explícita.
 **Evidencia de cierre local:** ocho blobs idénticos al candidato congelado, 375 líneas authored de implementación y `verify-report` PASS. Focused `42/0/250`; suite completa `610/0/3618` en 39 archivos. El cierre está integrado en `master@6bb7019` pero no publicado en `origin/master`; no se actualiza Notion hasta una entrega remota.
 
 **Forecast:** 280–390 líneas. El resultado de implementación fue 375 líneas authored y quedó dentro del rango; no introdujo migración, escritura fuera de la transacción atómica ni segundo borde de autoridad.
+
+## Sesión 5.9 — Binding autoritativo del checkpoint estacionado
+
+**Resultado:** persistir bajo autoridad exclusiva de Main una prueba inmutable que liga el valor exacto de `parked.checkpoint` a la captura canónica y a la evidencia de reconciliación que identifican el mismo punto de retoma.
+
+**Estado:** 🔴 BLOQUEADO — el Main store está aprobado como owner y ubicación persistente, pero la forma pública/versionada, la API y la frontera de seguridad requieren autoridad explícita del maintainer antes de iniciar SDD.
+
+**Route:** `blocked` — la decisión de ownership no decide el contrato/API ni la frontera de seguridad, y esas clases siempre escalan. Se detiene antes de SDD o implementación hasta recibir autoridad explícita del maintainer. **Autoridad:** decisión del maintainer del 2026-08-12 y evidencia A verificada contra `workspace/checkpoint.mjs`, `schemas/reconciled-checkpoint-v1.schema.json` y `schemas/parked-decision-v1.schema.json`.
+
+**Depende de:** `S5.8` ✅ integrada.
+
+**Área:** `main-store/store.mjs`, `contracts/**`, `schemas/**`, `test/main-store.test.mjs`, `test/contracts/**`, `test/fixtures/contracts/schema-cases-v1.json`
+
+**Prohibido:** `workspace/checkpoint.mjs`, `escalation/**`, `continuation/**`, `core.mjs`, `mcp.mjs`, `delivery/**`, `openspec/specs/**`
+
+**Recurso:** Main store — mismo writer, lock y transacción canónicos que `S5.8`; exclusividad serial con `S5.10`. Sin DB y sin token de entrega.
+
+**Decisiones:**
+
+- `escala` — cuál es la forma pública exacta y versionada del binding, qué identidades/digests exige y qué transición lo vuelve inmutable. **Clase:** contrato visible del producto, API pública y seguridad y permisos. La decisión del maintainer resuelve **dónde** persiste —Main store—, no esta forma ni su frontera de autoridad. Quedan prohibidos un assertion del caller, inferir equivalencia por texto desde `S5.5` y cualquier store o writer paralelo. **Contamina:** `S5.5`.
+
+### Módulo 5.9.1 — Evidencia canónica y persistencia bajo Main
+
+Cada Tarea es una unidad de commit/direct-push revisable y revertible por sí sola.
+
+- [ ] Tarea 5.9.1.1 — RED: demostrar que el `checkpoint` textual de `parked-decision-v1`, `captureCheckpoint` y `reconciled-checkpoint-v1` hoy pueden variar independientemente sin que ningún contrato rechace el desacople.
+- [ ] Tarea 5.9.1.2 — RED: fijar rechazo binario para mismatch de valor exacto, digest, repositorio, base/result, assignment/generation o evidencia de reconciliación; caller assertion y lectura inferida por `S5.5` no cuentan.
+- [ ] Tarea 5.9.1.3 — GREEN: implementar el contrato aprobado y persistir el binding por el writer canónico del Main store, sin modificar los productores existentes ni abrir un segundo store.
+- [ ] Tarea 5.9.1.4 — REFACTOR: cerrar idempotencia de replay exacto, rechazo de replay divergente y atomicidad/readback sobre los bytes persistidos.
+
+**Criterios de aceptación de S5.9** — todos deben pasar para cerrar:
+
+- [ ] Existe un único binding autoritativo persistido en Main store entre el valor exacto de `parked.checkpoint`, la captura canónica y la evidencia `reconciled-checkpoint-v1` correspondiente
+- [ ] La forma pública/versionada y la frontera de seguridad fueron decididas explícitamente durante SDD antes de tasks/apply; la ubicación Main store no se usa para inferirlas
+- [ ] Mismatch de valor, digest, repositorio, base/result, assignment/generation o evidencia de reconciliación falla cerrado sin mutación parcial
+- [ ] Caller assertion, texto equivalente y una inferencia local de `S5.5` no sustituyen evidencia canónica
+- [ ] Replay byte-idéntico es idempotente y replay divergente produce cero efectos adicionales
+- [ ] Persistencia, inmutabilidad y readback ocurren bajo el writer, lock y transacción canónicos de Main; no existe store ni writer paralelo
+- [ ] Los productores `workspace/checkpoint.mjs` y `reconciled-checkpoint-v1` se consumen sin una segunda ruta de captura o reconciliación
+- [ ] El diff de implementación no toca ningún path fuera de `Área`
+
+## Sesión 5.10 — Binding inmutable del trabajo independiente completado
+
+**Resultado:** persistir bajo autoridad exclusiva de Main una prueba inmutable que liga trabajo independiente completado a la decisión estacionada exacta y a la opción o supuesto explícito bajo el que se ejecutó.
+
+**Estado:** 🔴 BLOQUEADO — además de depender de `S5.9` integrada, su contrato visible de provenance del trabajo completado, la representación de opción/supuesto y la frontera de seguridad siguen sin autoridad explícita del maintainer.
+
+**Route:** `blocked` — la ubicación Main store no resuelve la forma pública/versionada ni el momento de sellado seguro; esas decisiones siempre escalan. Se detiene antes de SDD o implementación hasta recibir autoridad explícita del maintainer y satisfacer la dependencia de `S5.9`. **Autoridad:** decisión del maintainer del 2026-08-12 y evidencia B verificada contra `parked-decision-v1`, `parked-decision-response-v1` y el `terminal_audit` actual del Main store, que ligan la respuesta pero no el trabajo completado bajo ella.
+
+**Depende de:** `S5.9` integrada.
+
+**Área:** `main-store/store.mjs`, `contracts/**`, `schemas/**`, `test/main-store.test.mjs`, `test/contracts/**`, `test/fixtures/contracts/schema-cases-v1.json`
+
+**Prohibido:** `workspace/checkpoint.mjs`, `escalation/**`, `continuation/**`, `core.mjs`, `mcp.mjs`, `delivery/**`, `openspec/specs/**`
+
+**Recurso:** Main store — mismo writer, lock y transacción canónicos que `S5.9`; exclusividad serial. Sin DB y sin token de entrega.
+
+**Decisiones:**
+
+- `escala` — cuál es la forma pública exacta y versionada del binding, cómo representa opción seleccionada frente a supuesto explícito, y en qué momento el trabajo queda sellado como completado sin permitir una declaración retrospectiva del caller. **Clase:** contrato visible del producto, API pública y seguridad y permisos. La decisión del maintainer resuelve **dónde** persiste —Main store—, no estas semánticas. Quedan prohibidos caller assertion, inferencia local de `S5.5` y reconstrucción narrativa posterior. **Contamina:** `S5.5`, `S7.1` — la conformidad exige evidencia atribuible al candidato exacto y la decisión contraria a trabajo ya hecho ya contamina su piloto.
+
+### Módulo 5.10.1 — Provenance del trabajo completado bajo decisión
+
+Cada Tarea es una unidad de commit/direct-push revisable y revertible por sí sola.
+
+- [ ] Tarea 5.10.1.1 — RED: demostrar que una evidencia de trabajo completado puede existir hoy sin identidad inmutable de la decisión estacionada ni de la opción/supuesto bajo el que corrió.
+- [ ] Tarea 5.10.1.2 — RED: fijar rechazo binario para mismatch de candidato/evidencia de trabajo, decisión/digest, opción enumerada o supuesto explícito, snapshot y revisión; una declaración posterior del caller no cuenta.
+- [ ] Tarea 5.10.1.3 — GREEN: implementar el contrato aprobado y persistir el binding por el writer canónico del Main store, serializado después de `S5.9` y sin abrir un segundo store.
+- [ ] Tarea 5.10.1.4 — REFACTOR: cerrar inmutabilidad, replay exacto, replay divergente, atomicidad y readback de la provenance completa.
+
+**Criterios de aceptación de S5.10** — todos deben pasar para cerrar:
+
+- [ ] Existe un único binding autoritativo e inmutable en Main store entre evidencia exacta de trabajo completado, decisión estacionada exacta y opción enumerada o supuesto explícito bajo el que corrió
+- [ ] La forma pública/versionada, la representación de opción/supuesto y el momento de sellado fueron decididos explícitamente durante SDD antes de tasks/apply; la ubicación Main store no se usa para inferirlos
+- [ ] El binding nombra una identidad inmutable del trabajo/candidato y no puede construirse sólo después de completado mediante assertion del caller o narrativa
+- [ ] Mismatch de trabajo, decisión/digest, opción/supuesto, snapshot o revisión falla cerrado sin mutación parcial
+- [ ] Replay byte-idéntico es idempotente y replay divergente produce cero efectos adicionales
+- [ ] Persistencia, inmutabilidad y readback ocurren bajo el writer, lock y transacción canónicos de Main; no existe store ni writer paralelo
+- [ ] `S5.5` consume la prueba sin inferirla localmente y `S7.1` puede atribuir la evidencia al candidato y supuesto exactos
+- [ ] El diff de implementación no toca ningún path fuera de `Área`
+
+**Cómputo del Plan 5:** `5/10 S = 50%`. Sólo `S5.1`, `S5.4`, `S5.6`, `S5.7` y `S5.8` cuentan; `S5.2`, `S5.3`, `S5.5`, `S5.9` y `S5.10` tienen estado 🔴 BLOQUEADO y aportan cero crédito.
 
 Las responsabilidades legacy de Telegram Delivery y continuación que aún no tienen límite de un PR permanecen sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).

@@ -73,7 +73,9 @@ graph LR
   S54 --> S56["S5.6 snapshot de Sesión · ✅"]
   S56 --> S57["S5.7 decisión/respuesta · ✅"]
   S57 --> S58["S5.8 binding de respuesta · ✅"]
-  S58 --> S55["S5.5 decisión estacionada · 🟢"]
+  S58 --> S59["S5.9 binding de checkpoint · 🔴"]
+  S59 --> S510["S5.10 binding de trabajo completado · 🔴"]
+  S510 --> S55["S5.5 decisión estacionada · 🔴"]
   S51 --> S87
   S53 --> S71["S7.1 conformidad · 📋"]
   S44 --> S71
@@ -106,9 +108,11 @@ graph LR
 | ✅ | `S5.4` | Ruteo de escalamiento fuera/en casa | ✅ COMPLETO | `S5.1` ✅; publicado en `origin/master` mediante `976b8d0`, `75549a7`, `f9f2869` y reconciliado en `d114677`; 9/9 Tareas, 15/15 criterios. **No** depende de `S8.7` |
 | — | `S5.2` | Entrega idempotente y post-check | 🔴 BLOQUEADO | `S4.1` ✅, `S3.3` ✅; recheck 8193 mantiene abiertos 1/3/5 y decisión 8195 estaciona el candidato NOT READY |
 | ✅ | `S5.6` | Contrato canónico de snapshot de Sesión | ✅ COMPLETO | `S5.4` ✅; publicado en `origin/master@75ddcf9`, 10/10 Tareas, 10/10 criterios, focused 75/0/348 y full 588/0/3452 |
-| ✅ | `S5.7` | Contratos canónicos de decisión estacionada y respuesta | ✅ COMPLETO | `S5.6` ✅; publicado en `origin/master@3db3c121` |
-| ✅ | `S5.8` | Binding de opción seleccionada en autoridad canónica | ✅ COMPLETO | `S5.7` ✅; integrada y verificada localmente en `master@6bb7019`, focused 42/0/250 y full 610/0/3618, sin push remoto |
-| ▶ | `S5.5` | Decisión estacionada y continuación independiente | 🟢 LISTO | `S5.8` ✅ |
+| ✅ | `S5.7` | Contratos canónicos de decisión estacionada y respuesta | ✅ COMPLETO | `S5.6` ✅; publicado en `origin/master@3db3c121` e integrado en `master@427b14e` |
+| ✅ | `S5.8` | Binding de opción seleccionada en autoridad canónica | ✅ COMPLETO | `S5.7` ✅; integrada y verificada localmente en `master@427b14e` mediante `6bb7019`, focused 42/0/250 y full 610/0/3618, sin push remoto |
+| — | `S5.9` | Binding autoritativo del checkpoint estacionado | 🔴 BLOQUEADO | `S5.8` ✅; route `blocked`: Main store aprobado sólo como owner, contrato/API/seguridad requieren autoridad explícita del maintainer antes de SDD |
+| — | `S5.10` | Binding inmutable del trabajo independiente completado | 🔴 BLOQUEADO | `S5.9` integrada; route `blocked`: provenance contractual y seguridad propias siguen sin resolver |
+| — | `S5.5` | Decisión estacionada y continuación independiente | 🔴 BLOQUEADO | `S5.10` integrada; transitivamente `S5.9` y `S5.8` ✅ |
 | — | `S5.3` | Continuación | 🔴 BLOQUEADO | Bloqueo transitivo por `S5.2` |
 | — | `S8.7` | Puente Hermes/Telegram | 🔴 BLOQUEADO | Dependencias propias ✅ y decisiones Telegram resueltas; bloquea el inicializador confiable de producción pendiente |
 | 4 | `S7.1` | Conformidad de release | 📋 PLANIFICADO | `S4.4`, `S5.3`, `S8.7`, `S5.5` |
@@ -122,12 +126,13 @@ graph LR
 > recuperación y failover entra en la cadena de release. La tabla se corrige para coincidir.
 > La decisión histórica fue explícita —construir las catorce Sesiones que ese corte enumeraba como restantes— y no una derivación; la reconciliación actual agrega los prerrequisitos omitidos sin reescribir aquella evidencia.
 
-**Veintinueve Sesiones · 14 cerradas (48%).** Re-enumeración independiente: los 29 nodos de la tabla son `S8.8`, `S0.3`, `S3.1`–`S3.4`, `S5.1`, `S4.1`–`S4.4`, `S1.11`–`S1.19`, `S5.2`–`S5.8`, `S8.7` y `S7.1`. El numerador suma los doce cierres previos más `S1.12` y `S5.8`; sólo `COMPLETO` cuenta. `S10.1` y `S10.2` quedan fuera de estos 29 nodos: incluir P10 en la primera release es una decisión de alcance que el maintainer todavía no tomó. Esta métrica mide sólo la cadena de release y no reemplaza el `23/42` de planificación del [master-index](master-index.md). `S5.6`–`S5.8` agregan tres unidades revisables y
-secuenciales entre `S5.4` y `S5.5`: snapshot/parser canónico, contratos de decisión/respuesta
-y binding terminal bajo la autoridad exclusiva de `S5.1`. La separación fue aprobada por el
-maintainer porque expandir `S5.5` ad hoc o validar localmente duplicaba contratos y autoridad.
+**Treinta y una Sesiones · 14 cerradas (45%).** Re-enumeración independiente: los 31 nodos de la tabla son `S8.8`, `S0.3`, `S3.1`–`S3.4`, `S5.1`, `S4.1`–`S4.4`, `S1.11`–`S1.19`, `S5.2`–`S5.10`, `S8.7` y `S7.1`. El numerador suma los doce cierres previos más `S1.12` y `S5.8`; sólo `COMPLETO` cuenta. `S10.1` y `S10.2` quedan fuera de estos 31 nodos: incluir P10 en la primera release es una decisión de alcance que el maintainer todavía no tomó. Esta métrica mide sólo la cadena de release y no reemplaza el `23/44` de planificación del [master-index](master-index.md). `S5.6`–`S5.10` agregan cinco unidades revisables y
+secuenciales entre `S5.4` y `S5.5`: snapshot/parser canónico, contratos de decisión/respuesta,
+binding terminal, binding autoritativo de checkpoint y binding inmutable del trabajo completado
+bajo la autoridad exclusiva de Main. La separación fue aprobada por el maintainer porque expandir
+`S5.5` ad hoc o validar localmente duplicaba contratos y autoridad.
 
-Las tres Sesiones nuevas no implementan ledger, contaminación, selección de trabajo ni retoma:
+Las cinco Sesiones nuevas no implementan ledger, contaminación, selección de trabajo ni retoma:
 entregan contratos estables que `S5.5` consume. `S5.5` sigue siendo la Sesión que hace la
 planificación **diferible**: registra la decisión que no se puede derivar, declara qué
 Sesiones quedan contaminadas, sigue con las independientes y retoma desde el checkpoint.
@@ -161,9 +166,9 @@ cerrado y exige una solicitud/autorización nueva.
 
 La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas; no se declara como un número fijo.
 
-`S1.12` y `S5.8` están ✅ COMPLETO, integradas y verificadas en el `master` local `6bb7019`; `origin/master` permanece en `3db3c121`, por lo que no hay publicación remota ni actualización de Notion. `S1.13` y `S5.5` están 🟢 LISTO y son independientes entre sí: no existe dependencia transitiva; `host/loop.mjs` + `test/polling.test.mjs` no se superponen con `escalation/{parked,contamination,resume}.mjs` + `test/escalation/**`; y `Recurso: —` de la frontera determinista local al proceso no comparte el ledger append-only reclamado por `S5.5`. La capacidad conjunta admite ambas Sesiones; aquí no se asignan agentes.
+`S1.12` y `S5.8` están ✅ COMPLETO, integradas y verificadas en el `master` local `427b14e`; `origin/master` permanece en `3db3c121`, por lo que no hay publicación remota ni actualización de Notion. `S1.13` es un candidato todavía no integrado y no cuenta como cierre. En P5, `S5.9` y `S5.10` están 🔴 BLOQUEADO con route `blocked`: la ubicación Main store está aprobada, pero sus contratos públicos y fronteras de seguridad requieren autoridad explícita del maintainer antes de SDD; `S5.10` además espera la integración de `S5.9`. `S5.5` permanece 🔴 BLOQUEADO hasta integrar ambas. La próxima acción es resolver el contrato público y de seguridad de `S5.9`, no ejecutar.
 
-La capacidad se sigue derivando, no se fija como cupo. `S1.14`–`S1.16` esperan `S1.13`; `S1.17` mantiene su bloqueo propio por `assignment_id`, `session_id` y capacidad de binding Workspace Manager/Main reales ausentes y, con él, `S1.18`–`S1.19` y `S4.4`. `S5.2`/`S5.3`, `S8.7`, `S10.1` y `S10.2` conservan sus bloqueos registrados. `S10.2` además carece de `Área` y queda excluida de capacidad. `S7.1` mantiene dependencias en `S4.4`, `S5.3`, `S8.7` y `S5.5`.
+La capacidad se sigue derivando, no se fija como cupo. `S1.14`–`S1.16` esperan la integración de `S1.13`; `S1.17` mantiene su bloqueo propio por `assignment_id`, `session_id` y capacidad de binding Workspace Manager/Main reales ausentes y, con él, `S1.18`–`S1.19` y `S4.4`. `S5.2`/`S5.3`, `S5.5`, `S8.7`, `S10.1` y `S10.2` conservan sus bloqueos registrados. `S10.2` además carece de `Área` y queda excluida de capacidad. `S7.1` mantiene dependencias en `S4.4`, `S5.3`, `S8.7` y `S5.5`.
 
 La planificación adelantada conserva el techo declarado de dos Sesiones. El siguiente cierre de cada hebra debe volver a derivar capacidad y contaminación desde el grafo vigente, no desde esta fotografía.
 
