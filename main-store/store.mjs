@@ -3,6 +3,8 @@ import { dirname, isAbsolute, join } from "node:path"
 import { randomUUID } from "node:crypto"
 
 import { validate } from "../contracts/validate.mjs"
+import { canonicalize } from "../contracts/canonicalize.mjs"
+import { assertParkedDecisionResponseBinding, parkedDecisionResponseDigest } from "../contracts/parked-decision.mjs"
 import { resolveJornadaLifecycle } from "../jornada/lifecycle.mjs"
 
 // Terminal states an authorization may reach, mirroring authorization-v1's
@@ -46,6 +48,34 @@ const frozen = (value) => {
   return value
 }
 const parse = (path) => JSON.parse(readFileSync(path, "utf8"))
+const render = (value) => typeof value === "string" ? value : value && typeof value === "object" ? canonicalize(value) : JSON.stringify(value)
+const bindingError = (name, expected, actual) => fail("CT_AUTH_RESPONSE_BINDING", `Rejected response binding ${name}: expected ${render(expected)}, actual ${render(actual)}`)
+const equalBinding = (name, expected, actual) => { if (canonicalize(expected) !== canonicalize(actual)) bindingError(name, expected, actual) }
+const authorizationRecord = (value) => {
+  const { actor: _actor, revision: _revision, revision_history: _history, terminal_audit: _audit, audit_ref: _ref, ...record } = value
+  try { return validate("authorization", record) }
+  catch (error) { fail("CT_AUTH_INVALID", "Authorization does not satisfy authorization-v1", error) }
+}
+const responsePair = (input) => {
+  const hasParked = input.parked_decision !== undefined, hasResponse = input.parked_decision_response !== undefined
+  if (hasParked !== hasResponse) fail("CT_AUTH_RESPONSE_INVALID", "Parked decision and response must be supplied together")
+  if (!hasParked) return null
+  try {
+    const parked = validate("parkedDecision", structuredClone(input.parked_decision))
+    const detached = structuredClone(input.parked_decision_response), suppliedDigest = detached.response_digest
+    const expectedDigest = parkedDecisionResponseDigest(detached), digestDrift = digest(suppliedDigest) && suppliedDigest !== expectedDigest
+    const response = validate("parkedDecisionResponse", digestDrift ? { ...detached, response_digest: expectedDigest } : detached)
+    equalBinding("parked_decision_id", parked.parked_decision_id, response.parked_decision_id)
+    equalBinding("parked_decision_digest", parked.parked_decision_digest, response.parked_decision_digest)
+    if (!parked.options.some(({ option_id }) => option_id === response.option_id)) bindingError("option_id", parked.options.map(({ option_id }) => option_id), response.option_id)
+    equalBinding("session_plan_snapshot_digest", parked.frozen_scope.session_plan_snapshot_digest, response.session_plan_snapshot_digest)
+    assertParkedDecisionResponseBinding(response, parked)
+    return { parked, response, bytes: canonicalize(response), digestDrift: digestDrift && { expected: expectedDigest, actual: suppliedDigest } }
+  } catch (error) {
+    if (error?.code === "CT_AUTH_RESPONSE_BINDING") throw error
+    fail("CT_AUTH_RESPONSE_INVALID", "Parked decision response is invalid", error)
+  }
+}
 
 export const createMainStore = ({ root, authority, capability, beforeCommit } = {}) => {
   if (!isAbsolute(root ?? "") || !authority || typeof authority.assert !== "function") fail("CT_STORE_INVALID", "A bound absolute store is required")
@@ -85,7 +115,7 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
   const atomicWrite = (path, value, validate) => {
     const bytes = Buffer.from(`${JSON.stringify(value)}\n`)
     const temporary = join(dirname(path), `.${randomUUID()}.tmp`)
-    let descriptor
+    let descriptor, renamed = false
     try {
       descriptor = openSync(temporary, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW, 0o600)
       writeFileSync(descriptor, bytes)
@@ -96,6 +126,7 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
       withLock(path, () => {
         validate?.()
         renameSync(temporary, path)
+        renamed = true
         const directoryDescriptor = openSync(dirname(path), constants.O_RDONLY)
         try { fsyncSync(directoryDescriptor) } finally { closeSync(directoryDescriptor) }
       })
@@ -103,7 +134,7 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
       if (descriptor !== undefined) closeSync(descriptor)
       rmSync(temporary, { force: true })
       if (error?.code?.startsWith("CT_")) throw error
-      fail("CT_STORE_WRITE_FAILED", "Atomic store write failed", error)
+      fail("CT_STORE_WRITE_FAILED", renamed ? "Atomic replacement completed; directory durability is indeterminate" : "Atomic store write failed", error)
     }
   }
   const assertMain = (input) => {
@@ -200,21 +231,47 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
     consumeAuthorization(input) {
       assertMain({ ...input, project_id: binding.project_id })
       if (!TERMINAL_STATES.has(input.decision)) fail("CT_AUTH_INVALID", "Invalid terminal decision")
-      const path = authorizationPath(input.authorization_id)
+      const pair = responsePair(input), path = authorizationPath(input.authorization_id)
       if (!existsSync(path)) fail("CT_AUTH_INVALID", "Unknown authorization")
-      const current = parse(path)
-      if (current.state !== "PENDING") fail("CT_AUTH_TERMINAL", "Authorization is terminal")
-      const expiresAt = Date.parse(current.expires_at)
-      if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) fail("CT_AUTH_EXPIRED", "Authorization has expired")
-      if (input.expected_revision !== current.revision) fail("CT_CAS_MISMATCH", "Authorization revision changed")
-      if (!digest(input.candidate_revision) || input.candidate_revision !== current.extensions?.["control-tower/candidate-revision"]) fail("CT_AUTH_INVALID", "Authorization candidate does not match")
-      return withLock(jornadaPath(current.jornada_id), () => {
+      const located = parse(path)
+      return withLock(jornadaPath(located.jornada_id), () => {
+        const current = parse(path)
+        let anchor = current, replay = false
+        if (current.state !== "PENDING") {
+          if (!pair || !current.terminal_audit?.parked_decision_response) fail("CT_AUTH_TERMINAL", "Authorization is terminal")
+          const predecessor = current.revision_history?.at(-1), audit = current.terminal_audit
+          if (!predecessor || predecessor.state !== "PENDING" || current.revision !== predecessor.revision + 1 || audit.authorization_revision !== predecessor.revision || audit.authorization_id !== current.authorization_id) fail("CT_AUTH_INVALID", "Terminal authorization predecessor is incoherent")
+          anchor = predecessor; replay = true
+        }
+        if (pair || replay) authorizationRecord(anchor)
+        if (replay && canonicalize([current.project_id, current.registry_revision, current.extensions?.["control-tower/candidate-revision"], current.extensions?.["control-tower/decision-origin"], current.extensions?.["control-tower/decision-target"]]) !== canonicalize([anchor.project_id, anchor.registry_revision, anchor.extensions?.["control-tower/candidate-revision"], anchor.extensions?.["control-tower/decision-origin"], anchor.extensions?.["control-tower/decision-target"]])) fail("CT_AUTH_INVALID", "Terminal authorization context is incoherent")
+        if (anchor.authorization_id !== input.authorization_id) fail("CT_AUTH_INVALID", "Authorization identity does not match")
+        if (anchor.project_id !== binding.project_id || anchor.registry_revision !== binding.revision) fail("CT_AUTH_INVALID", "Authorization binding is stale")
+        if (!digest(input.candidate_revision) || input.candidate_revision !== anchor.extensions?.["control-tower/candidate-revision"]) fail("CT_AUTH_INVALID", "Authorization candidate does not match")
+        if (input.expected_revision !== anchor.revision) fail("CT_CAS_MISMATCH", "Authorization revision changed")
+        if (pair) {
+          equalBinding("authorization_id", anchor.authorization_id, pair.response.authorization_id)
+          equalBinding("authorization_revision", anchor.revision, pair.response.authorization_revision)
+          const origin = anchor.extensions?.["control-tower/decision-origin"], target = anchor.extensions?.["control-tower/decision-target"]
+          if (origin === undefined) bindingError("origin", null, pair.parked.origin)
+          if (target === undefined) bindingError("decision_target", null, pair.parked.question)
+          equalBinding("origin", origin, pair.parked.origin)
+          equalBinding("decision_target", target, pair.parked.question)
+          if (pair.digestDrift) bindingError("response_digest", pair.digestDrift.expected, pair.digestDrift.actual)
+        }
+        if (replay) {
+          const persisted = current.terminal_audit.parked_decision_response
+          if (current.state !== input.decision || current.terminal_audit.decision !== input.decision || persisted.response_digest !== pair.response.response_digest || canonicalize(persisted) !== pair.bytes) fail("CT_AUTH_RESPONSE_REPLAY_DIVERGENT", "Terminal response replay diverges")
+          return frozen({ ...structuredClone(current), replayed: true })
+        }
+        const expiresAt = Date.parse(anchor.expires_at)
+        if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) fail("CT_AUTH_EXPIRED", "Authorization has expired")
         let jornada
-        try { jornada = this.readJornada(current.jornada_id) }
+        try { jornada = this.readJornada(anchor.jornada_id) }
         catch (error) { fail("CT_JORNADA_INVALID", "Authorization Jornada is unavailable", error) }
-        if (jornada.state !== "AC" + "TIVE" || jornada.jornada_revision !== current.jornada_revision) fail("CT_AUTH_INVALID", "Authorization Jornada is not active at its bound revision")
-        const audit = Object.freeze({ kind: "authorization-terminal", authorization_id: input.authorization_id, decision: input.decision, project_id: binding.project_id })
-        return commit("authorizations", input.authorization_id, { actor: "MAIN", ...current, state: input.decision, terminal_audit: audit, audit_ref: { kind: audit.kind, record_path: path }, expected_revision: current.revision }, current.revision)
+        if (jornada.state !== "AC" + "TIVE" || jornada.jornada_revision !== anchor.jornada_revision) fail("CT_AUTH_INVALID", "Authorization Jornada is not active at its bound revision")
+        const audit = Object.freeze({ kind: "authorization-terminal", authorization_id: input.authorization_id, authorization_revision: anchor.revision, decision: input.decision, project_id: binding.project_id, ...(pair && { parked_decision_origin: pair.parked.origin, parked_decision_response: pair.response }) })
+        return commit("authorizations", input.authorization_id, { actor: "MAIN", ...current, state: input.decision, terminal_audit: audit, audit_ref: { kind: audit.kind, record_path: path }, expected_revision: anchor.revision }, anchor.revision)
       })
     },
     admitCandidateEffect(input) {

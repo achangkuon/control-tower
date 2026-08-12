@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs"
+import { chmodSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { basename, dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { bindMainAuthority, createMainStore } from "../main-store/index.mjs"
+import { createParkedDecision, createParkedDecisionResponse, parkedDecisionResponseDigest } from "../contracts/parked-decision.mjs"
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 const temporaryDirectories = []
@@ -63,9 +64,27 @@ const authorizationRecord = (id) => ({
   created_at: "2099-01-01T00:00:00Z",
   expires_at: "2099-01-01T01:00:00.000Z",
   nonce_hash: `sha256:${"c".repeat(64)}`,
-  extensions: { "control-tower/candidate-revision": candidateRevision },
+  extensions: {
+    "control-tower/candidate-revision": candidateRevision,
+    "control-tower/decision-origin": { session_id: "S5.8", module_id: "M5.8.1" },
+    "control-tower/decision-target": "Which canonical option should authorize this transition?",
+  },
 })
 const candidateRevision = `sha256:${"d".repeat(64)}`
+const parkedResponse = (authorization_id, overrides = {}) => {
+  const parked_decision = createParkedDecision({
+    schema: "parked-decision", schema_version: 1, parked_decision_id: `parked-${authorization_id}`,
+    question: "Which canonical option should authorize this transition?",
+    evidence: [{ path: "openspec/changes/s5-8-response-binding/design.md", line_start: 1, line_end: 2, contradiction: "Main requires one selected option." }],
+    options: [{ option_id: "option-a", label: "Approve", consequence: "Apply the terminal transition." }, { option_id: "option-b", label: "Reject", consequence: "Reject the terminal transition." }],
+    origin: { session_id: "S5.8", module_id: "M5.8.1" }, checkpoint: "Before terminal authorization.",
+    decision_class: "seguridad y permisos", created_at: "2026-08-11T13:00:00Z",
+    frozen_scope: { session_plan_snapshot_digest: `sha256:${"e".repeat(64)}`, session_ids: ["S5.8"], area: ["main-store/store.mjs"], resources: ["Main authorization store"] },
+  })
+  const parked_decision_response = createParkedDecisionResponse({ parked_decision, response_id: `response-${authorization_id}`, authorization_id, authorization_revision: 1, option_id: "option-a", responded_at: "2026-08-11T13:05:00Z", ...overrides })
+  return { parked_decision, parked_decision_response }
+}
+const responseRequest = (authorization_id, overrides = {}) => ({ actor: "MAIN", authorization_id, candidate_revision: candidateRevision, decision: "APPROVED", expected_revision: 1, ...parkedResponse(authorization_id), ...overrides })
 const jornadaRecord = (id) => ({
   schema: "jornada",
   schema_version: 1,
@@ -234,6 +253,273 @@ describe("atomic owner-only Main store", () => {
     expect(consumed.audit_ref.kind).toBe("authorization-terminal")
     expect(code(() => store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-a", candidate_revision: candidateRevision, decision: "REVOKED", expected_revision: 2 }))).toBe("CT_AUTH_TERMINAL")
     expect(store.readAuthorization("auth-a").state).toBe("APPROVED")
+  })
+
+  test("atomically binds one canonical parked response and replays exact canonical bytes", () => {
+    let root, lockObserved = false
+    const result = setup({ beforeCommit: (path) => { if (path.includes("/authorizations/") && existsSync(path)) lockObserved = existsSync(join(root, "jornadas", "jornada-a.json.lock")) } })
+    root = result.root; activateJornada(result.store)
+    const created = result.store.createAuthorization({ actor: "MAIN", ...authorizationRecord("auth-response") })
+    const request = responseRequest("auth-response"), consumed = result.store.consumeAuthorization(request)
+    expect(consumed.terminal_audit.parked_decision_response).toEqual(request.parked_decision_response)
+    expect(consumed.revision_history.at(-1)).toMatchObject({ state: "PENDING", revision: 1 })
+    expect(lockObserved).toBe(true)
+    const terminal = readFileSync(created.record_path)
+    expect(result.store.consumeAuthorization({ ...request, parked_decision_response: Object.fromEntries(Object.entries(request.parked_decision_response).reverse()) })).toMatchObject({ revision: 2, replayed: true })
+    expect(readFileSync(created.record_path)).toEqual(terminal)
+  })
+
+  test("rejects invalid pairs and stable binding or replay divergence without changing bytes", () => {
+    const { store } = setup(); activateJornada(store)
+    const created = store.createAuthorization({ actor: "MAIN", ...authorizationRecord("auth-bindings") })
+    const request = responseRequest("auth-bindings"), before = readFileSync(created.record_path)
+    expect(code(() => store.consumeAuthorization({ ...request, parked_decision: undefined }))).toBe("CT_AUTH_RESPONSE_INVALID")
+    const badDigest = { ...request.parked_decision_response, response_digest: `sha256:${"f".repeat(64)}` }
+    let error
+    try { store.consumeAuthorization({ ...request, parked_decision_response: badDigest }) } catch (caught) { error = caught }
+    expect(error?.code).toBe("CT_AUTH_RESPONSE_BINDING")
+    expect(error?.message).toBe(`Rejected response binding response_digest: expected ${parkedDecisionResponseDigest(badDigest)}, actual ${badDigest.response_digest}`)
+    expect(readFileSync(created.record_path)).toEqual(before)
+    store.consumeAuthorization(request)
+    const terminal = readFileSync(created.record_path)
+    const divergent = createParkedDecisionResponse({ parked_decision: request.parked_decision, response_id: "response-different", authorization_id: "auth-bindings", authorization_revision: 1, option_id: "option-a", responded_at: "2026-08-11T13:05:00Z" })
+    expect(code(() => store.consumeAuthorization({ ...request, parked_decision_response: divergent }))).toBe("CT_AUTH_RESPONSE_REPLAY_DIVERGENT")
+    expect(readFileSync(created.record_path)).toEqual(terminal)
+  })
+
+  test("checks authoritative origin, revision, candidate, and legacy terminal", () => {
+    for (const [id, mutate, expected] of [
+      ["auth-response-revision", (request) => ({ ...request, expected_revision: 2 }), "CT_CAS_MISMATCH"],
+      ["auth-response-candidate", (request) => ({ ...request, candidate_revision: `sha256:${"a".repeat(64)}` }), "CT_AUTH_INVALID"],
+      ["auth-response-origin", (request) => ({ ...request, parked_decision: createParkedDecision({ ...request.parked_decision, parked_decision_digest: undefined, origin: { session_id: "S5.8", module_id: "M5.8.2" } }) }), "CT_AUTH_RESPONSE_BINDING"],
+    ]) {
+      const { store } = setup(); activateJornada(store)
+      const created = store.createAuthorization({ actor: "MAIN", ...authorizationRecord(id) }), before = readFileSync(created.record_path)
+      expect(code(() => store.consumeAuthorization(mutate(responseRequest(id))))).toBe(expected)
+      expect(readFileSync(created.record_path)).toEqual(before)
+    }
+    const { store } = setup(); activateJornada(store)
+    store.createAuthorization({ actor: "MAIN", ...authorizationRecord("auth-legacy-terminal") })
+    store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-legacy-terminal", candidate_revision: candidateRevision, decision: "APPROVED", expected_revision: 1 })
+    expect(code(() => store.consumeAuthorization(responseRequest("auth-legacy-terminal")))).toBe("CT_AUTH_TERMINAL")
+  })
+
+  test("byte-witnesses selected-response authority and lifecycle rejection", () => {
+    const reject = ({ id, authorization = {}, request = {}, mutate, expected = "CT_AUTH_INVALID" }) => {
+      const result = setup(); activateJornada(result.store)
+      const created = result.store.createAuthorization({ actor: "MAIN", ...authorizationRecord(id), ...authorization })
+      if (mutate) mutate(result, created)
+      const before = readFileSync(created.record_path)
+      const rejection = code(() => result.store.consumeAuthorization({ ...responseRequest(id), ...request }))
+      if (expected) expect(rejection).toBe(expected); else expect(rejection).not.toBe(null)
+      expect(readFileSync(created.record_path)).toEqual(before)
+    }
+    reject({ id: "auth-non-main-response", request: { actor: "SUPPORT" }, expected: "CT_AUTH_INVALID" })
+    const revoked = setup(); activateJornada(revoked.store)
+    const revokedRecord = revoked.store.createAuthorization({ actor: "MAIN", ...authorizationRecord("auth-revoked-response") })
+    const revokedBytes = readFileSync(revokedRecord.record_path); revoked.authority.revoke(revoked.capability)
+    expect(code(() => revoked.store.consumeAuthorization(responseRequest("auth-revoked-response")))).toBe("CT_AUTH_INVALID")
+    expect(readFileSync(revokedRecord.record_path)).toEqual(revokedBytes)
+    for (const missing of ["parked_decision", "parked_decision_response"]) reject({ id: `auth-missing-${missing.replaceAll("_", "-")}`, request: { [missing]: undefined }, expected: "CT_AUTH_RESPONSE_INVALID" })
+    for (const [name, value] of [["expired", "2020-01-01T00:00:00.000Z"], ["malformed-expiry", "not-a-timestamp"]]) reject({ id: `auth-response-${name}`, mutate: ({ store }, created) => writeFileSync(created.record_path, `${JSON.stringify({ ...store.readAuthorization(`auth-response-${name}`), expires_at: value })}\n`), expected: null })
+    reject({ id: "auth-response-inactive-jornada", mutate: ({ store, root }) => writeFileSync(join(root, "jornadas", "jornada-a.json"), `${JSON.stringify({ ...store.readJornada("jornada-a"), state: "PAUSED" })}\n`) })
+    reject({ id: "auth-response-stale-jornada", authorization: { jornada_revision: 2 } })
+    for (const [name, field, value] of [["foreign-project", "project_id", "project-b"], ["foreign-registry", "registry_revision", 6], ["absent-origin", "control-tower/decision-origin"], ["absent-target", "control-tower/decision-target"]]) reject({
+      id: `auth-response-${name}`,
+      mutate: ({ store }, created) => { const record = structuredClone(store.readAuthorization(`auth-response-${name}`)); if (field.startsWith("control-tower/")) delete record.extensions[field]; else record[field] = value; writeFileSync(created.record_path, `${JSON.stringify(record)}\n`) },
+      expected: field.startsWith("control-tower/") ? "CT_AUTH_RESPONSE_BINDING" : "CT_AUTH_INVALID",
+    })
+  })
+
+  test("checks the complete terminal context gate before response replay", () => {
+    const cases = [
+      ["project", (record) => { record.project_id = "project-b" }], ["registry", (record) => { record.registry_revision = 6 }],
+      ["candidate", (record) => { record.extensions["control-tower/candidate-revision"] = `sha256:${"9".repeat(64)}` }],
+      ["consumed-revision", (record) => { record.revision_history.at(-1).revision = 2 }],
+      ["origin", (record) => { delete record.extensions["control-tower/decision-origin"] }], ["target", (record) => { delete record.extensions["control-tower/decision-target"] }],
+    ]
+    for (const [name, mutate] of cases) {
+      const { store } = setup(); activateJornada(store)
+      const id = `auth-terminal-context-${name}`, created = store.createAuthorization({ actor: "MAIN", ...authorizationRecord(id) }), request = responseRequest(id)
+      store.consumeAuthorization(request)
+      const record = structuredClone(store.readAuthorization(id)); mutate(record); writeFileSync(created.record_path, `${JSON.stringify(record)}\n`)
+      const before = readFileSync(created.record_path)
+      expect([name, code(() => store.consumeAuthorization(request))]).not.toEqual([name, null])
+      expect(readFileSync(created.record_path)).toEqual(before)
+    }
+  })
+
+  test("keeps response mode additive and preserves bytes on pre-replacement failure", () => {
+    let failAuthorization = false
+    const { store } = setup({ beforeCommit: (path) => { if (failAuthorization && path.includes("/authorizations/")) throw new Error("forced") } })
+    activateJornada(store)
+    store.createAuthorization({ actor: "MAIN", ...authorizationRecord("auth-legacy") })
+    expect(store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-legacy", candidate_revision: candidateRevision, decision: "APPROVED", expected_revision: 1 }).terminal_audit.parked_decision_response).toBeUndefined()
+    const created = store.createAuthorization({ actor: "MAIN", ...authorizationRecord("auth-response-failure") }), before = readFileSync(created.record_path)
+    failAuthorization = true
+    expect(code(() => store.consumeAuthorization(responseRequest("auth-response-failure")))).toBe("CT_STORE_WRITE_FAILED")
+    expect(readFileSync(created.record_path)).toEqual(before)
+  })
+
+  test("reports post-replacement durability failure and reconciles by exact replay", () => {
+    let breakDirectoryFsync = false, authorizationDirectory
+    const { store } = setup({ beforeCommit: (path) => {
+      if (breakDirectoryFsync && path.includes("/authorizations/")) {
+        authorizationDirectory = dirname(path)
+        chmodSync(authorizationDirectory, 0o300)
+      }
+    } })
+    activateJornada(store)
+    store.createAuthorization({ actor: "MAIN", ...authorizationRecord("auth-durability") })
+    const request = responseRequest("auth-durability")
+    breakDirectoryFsync = true
+    let error
+    try { store.consumeAuthorization(request) } catch (caught) { error = caught }
+    finally { if (authorizationDirectory) chmodSync(authorizationDirectory, 0o700) }
+    expect(error?.code).toBe("CT_STORE_WRITE_FAILED")
+    expect(error?.message).toContain("durability is indeterminate")
+    const terminal = store.readAuthorization("auth-durability")
+    expect(terminal).toMatchObject({ state: "APPROVED", revision: 2 })
+    expect(terminal.revision_history).toHaveLength(1)
+    expect(store.consumeAuthorization(request)).toMatchObject({ replayed: true, revision: 2 })
+    expect(store.readAuthorization("auth-durability").revision_history).toHaveLength(1)
+  })
+
+  test("names the full independently resealed binding matrix and preserves pending bytes", () => {
+    const resealParked = (parked, changes) => createParkedDecision({ ...parked, parked_decision_digest: undefined, ...changes })
+    const resealResponse = (parked, response, changes = {}) => createParkedDecisionResponse({
+      parked_decision: parked, response_id: response.response_id, authorization_id: response.authorization_id,
+      authorization_revision: response.authorization_revision, option_id: response.option_id,
+      responded_at: response.responded_at, ...changes,
+    })
+    const resealRawResponse = (response, changes) => {
+      const changed = { ...response, ...changes, response_digest: undefined }
+      changed.response_digest = parkedDecisionResponseDigest(changed)
+      return changed
+    }
+    const cases = [
+      ["authorization_id", (parked, response) => [parked, resealResponse(parked, response, { authorization_id: "auth-other" })]],
+      ["authorization_revision", (parked, response) => [parked, resealResponse(parked, response, { authorization_revision: 2 })]],
+      ["parked_decision_id", (parked, response) => [resealParked(parked, { parked_decision_id: "parked-other" }), response]],
+      ["parked_decision_digest", (parked, response) => [resealParked(parked, { checkpoint: `${parked.checkpoint} changed` }), response]],
+      ["option_id", (parked, response) => { const changed = resealParked(parked, { options: parked.options.map((option) => option.option_id === response.option_id ? { ...option, option_id: "option-c" } : option) }); return [changed, resealRawResponse(response, { parked_decision_digest: changed.parked_decision_digest })] }],
+      ["session_plan_snapshot_digest", (parked, response) => { const changed = resealParked(parked, { frozen_scope: { ...parked.frozen_scope, session_plan_snapshot_digest: `sha256:${"9".repeat(64)}` } }); return [changed, resealRawResponse(response, { parked_decision_digest: changed.parked_decision_digest })] }],
+      ["origin", (parked, response) => { const changed = resealParked(parked, { origin: { ...parked.origin, module_id: "M5.8.2" } }); return [changed, resealResponse(changed, response)] }],
+      ["decision_target", (parked, response) => { const changed = resealParked(parked, { question: `${parked.question} changed` }); return [changed, resealResponse(changed, response)] }],
+    ]
+    for (const [bindingName, drift] of cases) {
+      const { store } = setup(); activateJornada(store)
+      const id = `auth-drift-${bindingName.replaceAll("_", "-")}`, created = store.createAuthorization({ actor: "MAIN", ...authorizationRecord(id) })
+      const request = responseRequest(id), before = readFileSync(created.record_path)
+      const [parked_decision, parked_decision_response] = drift(request.parked_decision, request.parked_decision_response)
+      let error
+      try { store.consumeAuthorization({ ...request, parked_decision, parked_decision_response }) } catch (caught) { error = caught }
+      expect(error?.code).toBe("CT_AUTH_RESPONSE_BINDING")
+      expect(error?.message).toContain(`binding ${bindingName}`)
+      expect(readFileSync(created.record_path)).toEqual(before)
+    }
+  })
+
+  test("orders stable binding rejection before a well-formed divergent response digest", () => {
+    const { store } = setup(); activateJornada(store)
+    const created = store.createAuthorization({ actor: "MAIN", ...authorizationRecord("auth-binding-order") })
+    const request = responseRequest("auth-binding-order"), before = readFileSync(created.record_path)
+    const response = { ...request.parked_decision_response, authorization_id: "auth-other", response_digest: `sha256:${"9".repeat(64)}` }
+    let error
+    try { store.consumeAuthorization({ ...request, parked_decision_response: response }) } catch (caught) { error = caught }
+    expect(error?.code).toBe("CT_AUTH_RESPONSE_BINDING")
+    expect(error?.message).toContain("binding authorization_id")
+    expect(readFileSync(created.record_path)).toEqual(before)
+  })
+
+  test("preserves response-less MERGE and START_JORNADA result and record shapes", () => {
+    for (const action of ["MERGE", "START_JORNADA"]) {
+      const { store } = setup(); activateJornada(store)
+      const id = `auth-compatible-${action.toLowerCase().replaceAll("_", "-")}`
+      const authorization = { ...authorizationRecord(id), action }
+      if (action === "START_JORNADA") { delete authorization.delivery; authorization.jornada_snapshot = {} }
+      const created = store.createAuthorization({ actor: "MAIN", ...authorization })
+      const result = store.consumeAuthorization({ actor: "MAIN", authorization_id: id, candidate_revision: candidateRevision, decision: "APPROVED", expected_revision: 1 })
+      const persisted = store.readAuthorization(id)
+      expect(result).toMatchObject({ action, state: "APPROVED", revision: 2 })
+      expect(persisted).toEqual(Object.fromEntries(Object.entries(result).filter(([key]) => key !== "record_path")))
+      expect(persisted.terminal_audit.parked_decision_response).toBeUndefined()
+      expect(created.revision).toBe(1)
+    }
+  })
+
+  test("rejects stable-binding and complete-response replay divergence without growth", () => {
+    const { store } = setup(); activateJornada(store)
+    const id = "auth-replay-matrix", created = store.createAuthorization({ actor: "MAIN", ...authorizationRecord(id) })
+    const request = responseRequest(id)
+    store.consumeAuthorization(request)
+    const terminal = readFileSync(created.record_path)
+    const reseal = (parked, changes = {}) => createParkedDecisionResponse({
+      parked_decision: parked, response_id: request.parked_decision_response.response_id, authorization_id: id,
+      authorization_revision: 1, option_id: "option-a", responded_at: request.parked_decision_response.responded_at, ...changes,
+    })
+    const changedOrigin = createParkedDecision({ ...request.parked_decision, parked_decision_digest: undefined, origin: { ...request.parked_decision.origin, module_id: "M5.8.2" } })
+    const changedSnapshot = createParkedDecision({ ...request.parked_decision, parked_decision_digest: undefined, frozen_scope: { ...request.parked_decision.frozen_scope, session_plan_snapshot_digest: `sha256:${"9".repeat(64)}` } })
+    const divergent = [
+      [{ ...request, parked_decision_response: reseal(request.parked_decision, { authorization_revision: 2 }) }, "CT_AUTH_RESPONSE_BINDING"],
+      [{ ...request, parked_decision_response: reseal(request.parked_decision, { option_id: "option-b" }) }, "CT_AUTH_RESPONSE_REPLAY_DIVERGENT"],
+      [{ ...request, parked_decision: changedOrigin, parked_decision_response: reseal(changedOrigin) }, "CT_AUTH_RESPONSE_BINDING"],
+      [{ ...request, parked_decision: changedSnapshot, parked_decision_response: reseal(changedSnapshot) }, "CT_AUTH_RESPONSE_REPLAY_DIVERGENT"],
+      [{ ...request, parked_decision_response: { ...request.parked_decision_response, response_digest: `sha256:${"9".repeat(64)}` } }, "CT_AUTH_RESPONSE_BINDING"],
+      [{ ...request, decision: "REJECTED" }, "CT_AUTH_RESPONSE_REPLAY_DIVERGENT"],
+      [{ ...request, parked_decision_response: reseal(request.parked_decision, { response_id: "response-other" }) }, "CT_AUTH_RESPONSE_REPLAY_DIVERGENT"],
+      [{ ...request, parked_decision_response: reseal(request.parked_decision, { responded_at: "2026-08-11T13:06:00Z" }) }, "CT_AUTH_RESPONSE_REPLAY_DIVERGENT"],
+    ]
+    for (const [candidate, expected] of divergent) {
+      expect(code(() => store.consumeAuthorization(candidate))).toBe(expected)
+      expect(readFileSync(created.record_path)).toEqual(terminal)
+    }
+    expect(store.readAuthorization(id)).toMatchObject({ revision: 2, revision_history: [{ revision: 1 }] })
+  })
+
+  test("serializes identical and competing response callers across independent processes", async () => {
+    const worker = String.raw`
+      import { bindMainAuthority, createMainStore } from "./main-store/index.mjs";
+      const [root, encoded] = process.argv.slice(1), request = JSON.parse(encoded);
+      const binding = { project_id:"project-a", revision:7, repository_root:"/repo/a", git_common_dir:"/repo/a/.git", remote:"git@example.invalid:a.git", branch:"main", main_session_id:"main-session-a", store_path:root, epoch:3 };
+      const authority = bindMainAuthority({ trustedBindingProvider:()=>binding, rederiveBinding:()=>({...binding}) });
+      const store = createMainStore({ root, authority, capability:authority.capability });
+      try { const result=store.consumeAuthorization(request); console.log(JSON.stringify({ok:true,replayed:result.replayed??false,revision:result.revision})); }
+      catch(error) { console.log(JSON.stringify({ok:false,code:error.code})); }
+    `
+    const run = (root, request) => Bun.spawn([process.execPath, "-e", worker, root, JSON.stringify(request)], {
+      cwd: projectRoot, env: { ...process.env, BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0" }, stdout: "pipe", stderr: "pipe",
+    })
+    const race = async (requests) => {
+      const processes = requests.map((request) => run(requests.root, request))
+      return Promise.all(processes.map(async (process) => {
+        const output = await new Response(process.stdout).text()
+        await process.exited
+        return JSON.parse(output.trim())
+      }))
+    }
+    for (const competing of [false, true]) {
+      const { root, store } = setup(); activateJornada(store)
+      const id = `auth-response-race-${competing ? "competing" : "identical"}`
+      store.createAuthorization({ actor: "MAIN", ...authorizationRecord(id) })
+      const first = responseRequest(id)
+      const second = competing ? { ...first, parked_decision_response: createParkedDecisionResponse({
+        parked_decision: first.parked_decision, response_id: "response-competing", authorization_id: id,
+        authorization_revision: 1, option_id: "option-a", responded_at: first.parked_decision_response.responded_at,
+      }) } : first
+      const requests = [first, second]; requests.root = root
+      const results = await race(requests)
+      const terminal = store.readAuthorization(id)
+      expect(terminal).toMatchObject({ revision: 2, state: "APPROVED" })
+      expect(terminal.revision_history).toHaveLength(1)
+      if (competing) {
+        expect(results.filter(({ ok }) => ok)).toHaveLength(1)
+        expect(results.filter(({ code }) => code === "CT_AUTH_RESPONSE_REPLAY_DIVERGENT")).toHaveLength(1)
+      } else {
+        expect(results.filter(({ ok }) => ok)).toHaveLength(2)
+        expect(results.filter(({ replayed }) => replayed)).toHaveLength(1)
+      }
+    }
   })
 
   test("rejects consumption after an authorization expires", () => {
