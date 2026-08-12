@@ -165,8 +165,8 @@ describe("session plan snapshot identity", () => {
     expect(snapshot.target.decisions[0]).toMatchObject({ kind: "escala", resolution: "resolved", contamination: { state: "historical", session_ids: ["S5.5"] } })
     expect(snapshot.target.acceptance_criteria).toHaveLength(10)
     expect(snapshot.graph.external_session_ids).toEqual(["S3.2", "S3.3", "S3.4", "S4.1"])
-    expect(snapshot.graph.local_session_ids).toEqual(["S5.1", "S5.10", "S5.2", "S5.3", "S5.4", "S5.5", "S5.6", "S5.7", "S5.8", "S5.9"])
-    expect(snapshot.graph.edges).toHaveLength(13)
+    expect(snapshot.graph.local_session_ids).toEqual(["S5.1", "S5.10", "S5.11", "S5.12", "S5.2", "S5.3", "S5.4", "S5.5", "S5.6", "S5.7", "S5.8", "S5.9"])
+    expect(snapshot.graph.edges).toHaveLength(15)
   })
 
   test("preserves complete target semantics and all contamination states", async () => {
