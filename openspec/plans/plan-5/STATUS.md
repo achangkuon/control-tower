@@ -19,7 +19,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1`, y la cadena contractual `S5.4 → S5.6 → S5.7 → S5.8 → S5.11 → S5.12 → S5.9 → S5.10 → S5.5`. |
 | Outputs | F: authorization store, Telegram, validación Git/PR/check/SHA, entrega idempotente y post-check. G: planning horizon, reconciliación, apply/verify, Binding Delta y continuación del siguiente `slice_id`. Más el ruteo de escalamiento de `S5.4`, los contratos canónicos prerrequisito de `S5.6`–`S5.10`, los productores de provenance de `S5.11`, la composición Main→parking de `S5.12` y la planificación diferible de `S5.5`. |
-| Roadmap | `S5.1`, `S5.4`, `S5.6`, `S5.7` y `S5.8` están ✅ COMPLETO e integradas en el `master` local; `S5.7` está publicada y `S5.8` permanece sin publicación remota. El falsificador de diseño de `S5.9` falló en el archivo no trackeado `design.md` del worktree separado `s5-9`, SHA-256 `a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1`, Engram 8604; no es una identidad Git: captura no tiene identidad estable/proyecto/assignment/generation ni ruta runtime hasta parking; reconciliación es sólo schema/fixture, sin productor ni digest; parking no transporta ninguno. La autoridad nueva enumera dos prerrequisitos: `S5.11` queda 🟢 LISTO para producir provenance canónica y `S5.12` queda 📋 PLANIFICADO para la única composición Main→parking. `S5.9` pasa a 🔴 BLOQUEADO, route `full-sdd` pausada antes de tasks/apply, hasta integrar ambos; sus proposal/spec/design y el falsificador siguen fuera de este Git canónico en el worktree/Engram, no integrados. `S5.10` y `S5.5` conservan sus bloqueos. `S5.2` mantiene los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
+| Roadmap | `S5.1`, `S5.4`, `S5.6`, `S5.7` y `S5.8` están ✅ COMPLETO e integradas en el `master` local; `S5.7` está publicada y `S5.8` permanece sin publicación remota. `S5.11` está 🔵 EN CURSO en la fase apply de su ruta `full-sdd`: proposal/spec/design intento 2 y tasks pasaron sus gatekeepers; el worker retomó apply bajo Strict TDD tras la corrección de compatibilidad autorizada, dentro de una frontera exacta de once paths y con la `size:exception` 760–960 preservada. `S5.12` permanece 📋 PLANIFICADO y depende de integrar `S5.11`. `S5.9` permanece 🔴 BLOQUEADO hasta integrar ambas Sesiones; sus proposal/spec/design y el falsificador siguen fuera de este Git canónico, sin integrar. `S5.10` y `S5.5` conservan sus bloqueos. `S5.2` mantiene los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
 
 ## Grafo de dependencias
@@ -33,7 +33,7 @@ graph LR
   S54 --> S56["S5.6 snapshot de Sesión · ✅"]
   S56 --> S57["S5.7 decisión/respuesta · ✅"]
   S57 --> S58["S5.8 binding de respuesta · ✅"]
-  S58 --> S511["S5.11 provenance de checkpoint · 🟢"]
+  S58 --> S511["S5.11 provenance de checkpoint · 🔵"]
   S511 --> S512["S5.12 composición Main→parking · 📋"]
   S512 --> S59["S5.9 binding de checkpoint · 🔴"]
   S59 --> S510["S5.10 binding de trabajo completado · 🔴"]
@@ -628,13 +628,13 @@ Sesiones sin decisión explícita.
 
 **Resultado:** la captura y la reconciliación producen artefactos inmutables con identidad y digest propios, más los bindings cruzados necesarios para que Main pueda probar que ambos nombran el mismo checkpoint sin aceptar afirmaciones del caller.
 
-**Estado:** 🟢 LISTO — `S5.8` está ✅ COMPLETO y la decisión de autoridad del maintainer fija owner, prohibiciones y criterio falsificable. El techo de horizonte queda ocupado exactamente por `S5.11` y su sucesora `S5.12`.
+**Estado:** 🔵 EN CURSO — ejecución activa en el worktree `/home/emili/projects/control-tower/Worktrees/s5-11`, branch `feat/plan-5/s5-11-provenance-producers`, base `5892bd17491b21e86e1e82ab6cbaaf03637a790b`. Proposal/spec/design intento 2 y tasks pasaron sus gatekeepers. El maintainer autorizó expandir el Área por un único path, `test/contracts/s3-2-schemas.test.mjs`, exclusivamente para migrar el fixture obsoleto `reconciledCheckpoint` de S3.2 a la forma canónica v1 corregida y completa; esto resolvió la evidencia de compatibilidad bloqueada y el worker retomó apply bajo Strict TDD. La frontera exacta queda en once paths, sin debilitamiento de schema, fork de versión, cambio de productor, otro path ni ciclo de corrección. La `size:exception` permanece acotada al forecast 760–960, no hay PR ni PR encadenado, y rige hard stop si se superan 960 líneas o se cruza la frontera. Todavía no se acredita ningún Módulo, Tarea ni criterio.
 
 **Route:** `full-sdd` — crea contratos visibles/versionados y un productor runtime nuevo en una frontera de seguridad; proposal/spec/design deben fijar la forma exacta sin mover composición ni persistencia a los productores. **Razón:** el contrato público y los bindings de seguridad necesitan escenarios antes de tasks/apply. **Autoridad:** decisión de composición Main-owned del maintainer y falsificador en el archivo no trackeado `design.md` del worktree separado `s5-9`, SHA-256 `a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1`, Engram 8604; no es una identidad Git.
 
 **Depende de:** `S5.8` ✅ integrada.
 
-**Área:** `workspace/checkpoint.mjs`, `workspace/reconciliation.mjs`, `schemas/{checkpoint-capture-v1,reconciled-checkpoint-v1}.schema.json`, `contracts/{schema-registry,validate}.mjs`, `test/workspace/{checkpoint,reconciliation}.test.mjs`, `test/contracts/schema.test.mjs`, `test/fixtures/contracts/schema-cases-v1.json`
+**Área:** `workspace/checkpoint.mjs`, `workspace/reconciliation.mjs`, `schemas/{checkpoint-capture-v1,reconciled-checkpoint-v1}.schema.json`, `contracts/{schema-registry,validate}.mjs`, `test/workspace/{checkpoint,reconciliation}.test.mjs`, `test/contracts/schema.test.mjs`, `test/contracts/s3-2-schemas.test.mjs`, `test/fixtures/contracts/schema-cases-v1.json`
 
 **Recurso:** productores canónicos de checkpoint-provenance y registro canónico de contratos/fixture. Sin mutación del Main store, sin DB y sin token de entrega.
 
@@ -790,6 +790,6 @@ Cada Tarea es una unidad de commit/direct-push revisable y revertible por sí so
 - [ ] `S5.5` consume la prueba sin inferirla localmente y `S7.1` puede atribuir la evidencia al candidato y supuesto exactos
 - [ ] El diff de implementación no toca ningún path fuera de `Área`
 
-**Cómputo del Plan 5:** `5/12 S = 42%`. Sólo `S5.1`, `S5.4`, `S5.6`, `S5.7` y `S5.8` cuentan; `S5.11` está 🟢 LISTO, `S5.12` está 📋 PLANIFICADO y `S5.2`, `S5.3`, `S5.5`, `S5.9` y `S5.10` están 🔴 BLOQUEADO. Ninguna aporta crédito hasta `COMPLETO`.
+**Cómputo del Plan 5:** `5/12 S = 42%`. Sólo `S5.1`, `S5.4`, `S5.6`, `S5.7` y `S5.8` cuentan; `S5.11` está 🔵 EN CURSO y todavía aporta cero crédito, `S5.12` está 📋 PLANIFICADO y `S5.2`, `S5.3`, `S5.5`, `S5.9` y `S5.10` están 🔴 BLOQUEADO. Ninguna aporta crédito hasta `COMPLETO`.
 
 Las responsabilidades legacy de Telegram Delivery y continuación que aún no tienen límite de un PR permanecen sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).

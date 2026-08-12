@@ -56,8 +56,8 @@ graph LR
   S111["S1.11 reconciliación P7 · ✅"] --> S112["S1.12 reconciliación P8 · ✅"]
   S112 --> S113["S1.13 lifecycle · ✅"]
   S113 --> S114["S1.14 polling · ✅"]
-  S114 --> S115["S1.15 conformidad · 🟢"]
-  S115 --> S116["S1.16 OpenCode wake · 📋"]
+  S114 --> S115["S1.15 conformidad · ✅"]
+  S115 --> S116["S1.16 OpenCode wake · 🟢"]
   S116 --> S42["S4.2 raíz visible · 🔴"]
   S41 --> S42
   S42 --> S43["S4.3 liveness · 🔴"]
@@ -73,7 +73,7 @@ graph LR
   S54 --> S56["S5.6 snapshot de Sesión · ✅"]
   S56 --> S57["S5.7 decisión/respuesta · ✅"]
   S57 --> S58["S5.8 binding de respuesta · ✅"]
-  S58 --> S511["S5.11 provenance de checkpoint · 🟢"]
+  S58 --> S511["S5.11 provenance de checkpoint · 🔵"]
   S511 --> S512["S5.12 composición Main→parking · 📋"]
   S512 --> S59["S5.9 binding de checkpoint · 🔴"]
   S59 --> S510["S5.10 binding de trabajo completado · 🔴"]
@@ -99,10 +99,10 @@ graph LR
 | ✅ | `S1.12` | Reconciliación independiente P8 | ✅ COMPLETO | `S1.11` ✅; integrada y verificada localmente en `master@6bb7019`, sin push remoto |
 | ✅ | `S1.13` | Root lifecycle e invalidación sincrónica | ✅ COMPLETO | `S1.12` ✅; integrada localmente en `master@794611f` mediante `2bbeddb`, compatibilidad de fixture en `794611f`, focused 10/0/73 y full 620/0/3691, sin push remoto |
 | ✅ | `S1.14` | Polling y wake safety | ✅ COMPLETO | `S1.13` ✅; integrada localmente en `master@9886af9`, focused 18/0/175, full 628/0/3793, 392 líneas authored, sin push remoto |
-| ▶ | `S1.15` | Conformidad lifecycle OpenCode | 🟢 LISTO | `S1.14` ✅; habilitada sólo por dependencia, sin crédito de progreso |
-| — | `S1.16` | Transporte reconciliado y composición wake | 📋 PLANIFICADO | `S1.15` 🟢 |
-| — | `S4.2` | Lanzamiento visible de raíz OpenCode | 🔴 BLOQUEADO | `S4.1` ✅, `S1.16` 📋; ruta `design-tasks`, interfaz Herdr/OpenCode pendiente |
-| — | `S4.3` | Inspección, liveness y rehidratación segura | 🔴 BLOQUEADO | `S4.2` 🔴, `S1.16` 📋; ruta `design-tasks` |
+| ✅ | `S1.15` | Conformidad lifecycle OpenCode | ✅ COMPLETO | `S1.14` ✅; integrada localmente en `master@428b3ed` (tree `388b4ca`) después del fixture `6c968e0`; full 643/0/3818 en 41 archivos, 399 líneas authored, sin push remoto |
+| ▶ | `S1.16` | Transporte reconciliado y composición wake | 🟢 LISTO | `S1.15` ✅; siguiente Sesión soportada por su única dependencia cerrada, sin inicio ni crédito |
+| — | `S4.2` | Lanzamiento visible de raíz OpenCode | 🔴 BLOQUEADO | `S4.1` ✅, `S1.16` 🟢; ruta `design-tasks`, interfaz Herdr/OpenCode pendiente |
+| — | `S4.3` | Inspección, liveness y rehidratación segura | 🔴 BLOQUEADO | `S4.2` 🔴, `S1.16` 🟢; ruta `design-tasks` |
 | — | `S1.17` | Gate de reconciliación y pruebas RED Pi | 🔴 BLOQUEADO | `S1.12` ✅; `T1.17.1.1`–`.2` pasaron, `.3` carece de `assignment_id`, `session_id` y capacidad de binding Workspace Manager/Main reales, `.4`–`.5` no iniciaron |
 | — | `S1.18` | Pi adapter GREEN | 📋 PLANIFICADO | `S1.17` 🔴 |
 | — | `S1.19` | Refactor y regresión Pi | 📋 PLANIFICADO | `S1.18` 📋 |
@@ -112,7 +112,7 @@ graph LR
 | ✅ | `S5.6` | Contrato canónico de snapshot de Sesión | ✅ COMPLETO | `S5.4` ✅; publicado en `origin/master@75ddcf9`, 10/10 Tareas, 10/10 criterios, focused 75/0/348 y full 588/0/3452 |
 | ✅ | `S5.7` | Contratos canónicos de decisión estacionada y respuesta | ✅ COMPLETO | `S5.6` ✅; publicado en `origin/master@3db3c121` e integrado en `master@427b14e` |
 | ✅ | `S5.8` | Binding de opción seleccionada en autoridad canónica | ✅ COMPLETO | `S5.7` ✅; integrada y verificada localmente en `master@427b14e` mediante `6bb7019`, focused 42/0/250 y full 610/0/3618, sin push remoto |
-| ▶ | `S5.11` | Productores canónicos de provenance del checkpoint | 🟢 LISTO | `S5.8` ✅; route `full-sdd`, autoridad Main-owned resuelta y falsificador en el archivo no trackeado `design.md` del worktree separado `s5-9`, SHA-256 `a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1`, Engram 8604; no es identidad Git |
+| ▶ | `S5.11` | Productores canónicos de provenance del checkpoint | 🔵 EN CURSO | `S5.8` ✅; apply activo bajo excepción de tamaño autorizada por el maintainer; autoridad Main-owned resuelta y falsificador en el archivo no trackeado `design.md` del worktree separado `s5-9`, SHA-256 `a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1`, Engram 8604; no es identidad Git y aporta cero hasta el cierre |
 | — | `S5.12` | Composición única de productores hacia parking bajo Main | 📋 PLANIFICADO | `S5.11` integrada; route `design-tasks`, dependencia pendiente |
 | — | `S5.9` | Binding autoritativo del checkpoint estacionado | 🔴 BLOQUEADO | `S5.12` integrada; route `full-sdd` pausada antes de tasks/apply; proposal/spec/design y falsificador permanecen no integrados en el worktree separado `s5-9`; el archivo no trackeado `design.md` tiene SHA-256 `a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1` / Engram 8604 y no es identidad Git |
 | — | `S5.10` | Binding inmutable del trabajo independiente completado | 🔴 BLOQUEADO | `S5.9` integrada y su propio contrato de provenance/seguridad resuelto; route `blocked` |
@@ -130,7 +130,7 @@ graph LR
 > recuperación y failover entra en la cadena de release. La tabla se corrige para coincidir.
 > La decisión histórica fue explícita —construir las catorce Sesiones que ese corte enumeraba como restantes— y no una derivación; la reconciliación actual agrega los prerrequisitos omitidos sin reescribir aquella evidencia.
 
-**Treinta y tres Sesiones · 16/33 cerradas (48%).** Re-enumeración independiente: los 33 nodos de la tabla son `S8.8`, `S0.3`, `S3.1`–`S3.4`, `S5.1`, `S4.1`–`S4.4`, `S1.11`–`S1.19`, `S5.2`–`S5.12`, `S8.7` y `S7.1`. El numerador suma los quince cierres previos más `S1.14`; sólo `COMPLETO` cuenta. `S10.1` y `S10.2` quedan fuera de estos 33 nodos: incluir P10 en la primera release es una decisión de alcance que el maintainer todavía no tomó. Esta métrica mide sólo la cadena de release y no reemplaza el `25/46` de planificación del [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
+**Treinta y tres Sesiones · 17/33 cerradas (52%).** Re-enumeración independiente: los 33 nodos de la tabla son `S8.8`, `S0.3`, `S3.1`–`S3.4`, `S5.1`, `S4.1`–`S4.4`, `S1.11`–`S1.19`, `S5.2`–`S5.12`, `S8.7` y `S7.1`. El numerador suma los dieciséis cierres previos más `S1.15`; sólo `COMPLETO` cuenta y `S5.11` aporta cero mientras está `EN CURSO`. `S10.1` y `S10.2` quedan fuera de estos 33 nodos: incluir P10 en la primera release es una decisión de alcance que el maintainer todavía no tomó. Esta métrica mide sólo la cadena de release y no reemplaza el `26/46` de planificación del [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
 secuenciales entre `S5.4` y `S5.5`: snapshot/parser canónico, contratos de decisión/respuesta,
 binding terminal, productores de provenance, composición Main→parking, binding autoritativo de
 checkpoint y binding inmutable del trabajo completado bajo la autoridad exclusiva de Main. La
@@ -172,9 +172,9 @@ cerrado y exige una solicitud/autorización nueva.
 
 La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas; no se declara como un número fijo.
 
-`S1.14` está ✅ COMPLETO, integrada, verificada y documentada; Notion quedó actualizado y el `master` local canónico previo a esta reconciliación es `bfe6d34`. `origin/master` permanece en `3db3c121`, por lo que no hay publicación remota. `S1.15` queda 🟢 LISTO sólo por el cierre de su dependencia y sin avance acreditado. En P5, `S5.11` queda 🟢 LISTO y `S5.12` 📋 PLANIFICADO; juntas satisfacen exactamente el techo de horizonte `2`. `S5.9` queda 🔴 BLOQUEADO con route `full-sdd` pausada antes de tasks/apply; sus artefactos permanecen no integrados en el worktree separado `s5-9`, cuyo archivo no trackeado `design.md` tiene SHA-256 `a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1` / Engram 8604 y no representa commit ni blob Git. `S5.10` y `S5.5` conservan sus bloqueos detrás de la cadena `S5.11 → S5.12 → S5.9`.
+`S1.15` está ✅ COMPLETO, integrada y verificada localmente en `master@428b3ed` (tree `388b4ca`) después del fixture `6c968e0`. `origin/master` permanece en `3db3c121`, por lo que no hay publicación remota. `S1.16` queda 🟢 LISTO como siguiente Sesión soportada por su única dependencia cerrada, sin inicio ni crédito. En P5, `S5.11` está 🔵 EN CURSO bajo la excepción de tamaño autorizada por el maintainer y aporta cero hasta cerrar; `S5.12` permanece 📋 PLANIFICADO. `S5.9`, `S5.10` y `S5.5` conservan sus bloqueos detrás de la cadena `S5.11 → S5.12 → S5.9 → S5.10 → S5.5`.
 
-La capacidad se sigue derivando, no se fija como cupo. `S1.16` espera `S1.15`; `S1.17` mantiene su bloqueo propio por `assignment_id`, `session_id` y capacidad de binding Workspace Manager/Main reales ausentes y, con él, `S1.18`–`S1.19` y `S4.4`. `S5.2`/`S5.3`, `S5.9`/`S5.10`/`S5.5`, `S8.7`, `S10.1` y `S10.2` conservan sus bloqueos registrados. `S5.12` espera la integración de `S5.11`; `S10.2` además carece de `Área` y queda excluida de capacidad. `S7.1` mantiene dependencias en `S4.4`, `S5.3`, `S8.7` y `S5.5`.
+La capacidad se sigue derivando, no se fija como cupo. `S1.17` mantiene su bloqueo propio por `assignment_id`, `session_id` y capacidad de binding Workspace Manager/Main reales ausentes y, con él, `S1.18`–`S1.19` y `S4.4`. `S5.2`/`S5.3`, `S5.9`/`S5.10`/`S5.5`, `S8.7`, `S10.1` y `S10.2` conservan sus bloqueos registrados. `S5.12` espera la integración de `S5.11`; `S10.2` además carece de `Área` y queda excluida de capacidad. `S7.1` mantiene dependencias en `S4.4`, `S5.3`, `S8.7` y `S5.5`.
 
 La planificación adelantada ocupa exactamente el techo declarado de dos Sesiones con `S5.11` y `S5.12`; no se abre una tercera por delante. El siguiente cierre de cada hebra debe volver a derivar capacidad y contaminación desde el grafo vigente, no desde esta fotografía.
 
