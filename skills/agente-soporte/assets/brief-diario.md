@@ -50,6 +50,21 @@ credential. Cross it against the ready Sesiones; that intersection is the brief'
 | **Entregables hoy** | N | `<IDs, or why zero>` |
 | **Lanzables hoy** | N | `<IDs>` |
 
+## 🎯 Objetivo del día
+
+**Recomendación (proyección, no avance real):** avanzar `<Planes>` cerrando
+`<Sesiones>`; ejecutar `<Módulos>` no suma crédito porcentual hasta que cierre su Sesión.
+
+| Alcance auditable | Línea base | Cierres objetivo | Objetivo proyectado | Δ pp |
+|---|---|---|---|---|
+| Plan `<ID>` | `<cerradas/enumeradas S> (<%>)` | `<S IDs>` | `<cerradas/enumeradas S> (<%>)` | `<+N pp>` |
+| Sesiones de planes activos | `<cerradas/enumeradas S> (<%>)` | `<S IDs>` | `<cerradas/enumeradas S> (<%>)` | `<+N pp>` |
+| Planes cerrados | `<cerrados/total P> (<%>)` | `<P IDs, si cierran todas sus S>` | `<cerrados/total P> (<%>)` | `<+N pp>` |
+
+- **Desbloquea:** `<Sesiones/Planes habilitados por estos cierres, o ninguno>`
+- **Condiciones:** `<criterios, dependencias y autoridad requeridos para cerrar>`
+- **Confianza:** `<alta | media | baja>` — `<evidencia o incertidumbre>`
+
 ## ⚠️ <N> decisiones tuyas están frenando <M> de <P> Sesiones pendientes
 
 | Decisión | Dónde | Desbloquea |
@@ -96,6 +111,24 @@ Si algún número no cierra, el brief está mal.
    not something to average away.
 7. **Never invent a state.** Only the seven canonical states appear. An undeclared
    `Área` or `Recurso` is reported as missing, not guessed.
+8. **Project from an audited baseline.** Copy the current fractions from reconciled
+   sources, name the Sesiones proposed for closure, then recompute each target and its
+   delta in percentage points. Show current → projected with both fraction and percent.
+9. **Credit only closed Sesiones.** A Plan moves only when an enumerated Sesión reaches
+   `COMPLETO` or `ARCHIVADO`; `EN CURSO`, Módulos, Tareas, hours, and effort contribute
+   zero. List Módulos only as today's execution work. A Plan closes only when all its
+   enumerated Sesiones close.
+10. **Keep global measures separate.** Report closed Plans / total Plans and closed
+    Sesiones / enumerated Sesiones across active Plans as distinct projections. Never
+    blend them into one product-global percentage.
+11. **Use scenarios, never invented certainty.** If pending work is not fully enumerated,
+    the denominator is open, or sources disagree, show `—` with the reason. A conditional
+    target is allowed only as an explicit scenario with named assumptions and required
+    conditions; do not present it as the target state.
+12. **Price the unlock separately.** Name the Sesiones or Plans made eligible by each
+    proposed closure, without adding that downstream work to today's projected credit.
+13. **Keep forecast distinct from fact.** The objective is a recommendation, not a
+    promise, assignment, dispatch, reservation, state mutation, or actual progress.
 
 ## What the brief never does
 

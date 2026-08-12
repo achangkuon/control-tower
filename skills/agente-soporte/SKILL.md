@@ -4,7 +4,7 @@ description: "Trigger: support, daily brief, capacity, conflicts, assignments, r
 license: Apache-2.0
 metadata:
   author: gentleman-programming
-  version: "2.0"
+  version: "2.1"
 ---
 
 ## Activation Contract
@@ -35,7 +35,7 @@ session start/continue intent or approved-scope decomposition; those belong to
 ## Execution Steps
 
 1. Gather repository instructions, canonical index/status, reservations, plan/spec, Git, and forge authority.
-2. Define executable Sesiones, conflict edges, dependencies, DB ownership, and requested/recommended/maximum-safe counts.
+2. Define executable Sesiones, conflict edges, dependencies, DB ownership, and requested/recommended/maximum-safe counts. For a daily brief, derive today's named Plan/Sesión/Módulo objective with an auditable baseline → projected target.
 3. Verify worktree, branch, scope, resources, and queue position for each proposed assignment.
 4. Present sources, rationale, blockers, and confidence; obtain explicit approval before drafting delivery.
 5. Draft one bounded brief per agent and send the approved set only to the orchestrator, then stop.
@@ -44,7 +44,10 @@ session start/continue intent or approved-scope decomposition; those belong to
 
 Return sources, Sesiones, conflict edges, the three counts, `worktree | branch |
 scope | db_mode | dependencies` per assignment, queue rationale, blockers, and
-confidence. End with `skill_resolution: paths-injected`.
+confidence. Every daily brief also returns the objective projection: baseline, named
+closure targets, projected target, percentage-point delta, execution Módulos,
+unlocks, required conditions, and confidence, explicitly distinguished from actual
+progress. End with `skill_resolution: paths-injected`.
 
 ## References
 
