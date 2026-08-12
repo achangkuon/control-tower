@@ -17,9 +17,9 @@
 
 | Campo | Detalle |
 |---|---|
-| Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1`, y la cadena contractual `S5.4 → S5.6 → S5.7 → S5.8 → S5.9 → S5.10 → S5.5`. |
-| Outputs | F: authorization store, Telegram, validación Git/PR/check/SHA, entrega idempotente y post-check. G: planning horizon, reconciliación, apply/verify, Binding Delta y continuación del siguiente `slice_id`. Más el ruteo de escalamiento de `S5.4`, los contratos canónicos prerrequisito de `S5.6`–`S5.10` y la planificación diferible de `S5.5`. |
-| Roadmap | `S5.1`, `S5.4`, `S5.6`, `S5.7` y `S5.8` están ✅ COMPLETO e integradas en el `master` local; `S5.7` está publicada y `S5.8` permanece sin publicación remota. La reconciliación del 2026-08-12 probó dos prerrequisitos ausentes: ningún contrato liga el valor exacto de `parked.checkpoint` a la evidencia canónica de checkpoint/reconciliación, y ningún artefacto liga trabajo independiente completado a la decisión y opción/supuesto exactos bajo los que corrió. El maintainer resolvió la forma contractual y la frontera de seguridad de `S5.9`, que queda 🟢 LISTO con route `full-sdd`; el SDD automático híbrido debe probar primero que el flujo de parking puede suministrar evidencia canónica producer-owned de captura y reconciliación, o detenerse y escalar un prerrequisito nuevo antes de tasks/apply. `S5.10` conserva su decisión contractual propia y sigue 🔴 BLOQUEADO; `S5.5` queda 🔴 BLOQUEADO hasta integrar ambas. `S5.2` conserva los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
+| Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1`, y la cadena contractual `S5.4 → S5.6 → S5.7 → S5.8 → S5.11 → S5.12 → S5.9 → S5.10 → S5.5`. |
+| Outputs | F: authorization store, Telegram, validación Git/PR/check/SHA, entrega idempotente y post-check. G: planning horizon, reconciliación, apply/verify, Binding Delta y continuación del siguiente `slice_id`. Más el ruteo de escalamiento de `S5.4`, los contratos canónicos prerrequisito de `S5.6`–`S5.10`, los productores de provenance de `S5.11`, la composición Main→parking de `S5.12` y la planificación diferible de `S5.5`. |
+| Roadmap | `S5.1`, `S5.4`, `S5.6`, `S5.7` y `S5.8` están ✅ COMPLETO e integradas en el `master` local; `S5.7` está publicada y `S5.8` permanece sin publicación remota. El falsificador de diseño de `S5.9` falló en el archivo no trackeado `design.md` del worktree separado `s5-9`, SHA-256 `a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1`, Engram 8604; no es una identidad Git: captura no tiene identidad estable/proyecto/assignment/generation ni ruta runtime hasta parking; reconciliación es sólo schema/fixture, sin productor ni digest; parking no transporta ninguno. La autoridad nueva enumera dos prerrequisitos: `S5.11` queda 🟢 LISTO para producir provenance canónica y `S5.12` queda 📋 PLANIFICADO para la única composición Main→parking. `S5.9` pasa a 🔴 BLOQUEADO, route `full-sdd` pausada antes de tasks/apply, hasta integrar ambos; sus proposal/spec/design y el falsificador siguen fuera de este Git canónico en el worktree/Engram, no integrados. `S5.10` y `S5.5` conservan sus bloqueos. `S5.2` mantiene los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
 
 ## Grafo de dependencias
@@ -33,7 +33,9 @@ graph LR
   S54 --> S56["S5.6 snapshot de Sesión · ✅"]
   S56 --> S57["S5.7 decisión/respuesta · ✅"]
   S57 --> S58["S5.8 binding de respuesta · ✅"]
-  S58 --> S59["S5.9 binding de checkpoint · 🟢"]
+  S58 --> S511["S5.11 provenance de checkpoint · 🟢"]
+  S511 --> S512["S5.12 composición Main→parking · 📋"]
+  S512 --> S59["S5.9 binding de checkpoint · 🔴"]
   S59 --> S510["S5.10 binding de trabajo completado · 🔴"]
   S510 --> S55["S5.5 continuación diferible · 🔴"]
   S41["S4.1 fence hosts · ✅"] --> S52["S5.2 entrega · 🔴"]
@@ -347,16 +349,16 @@ No aplica un runtime externo: esta Sesión define ruteo y persistencia, pero del
 
 ## Sesión 5.5 — Decisión estacionada y continuación independiente
 
-**Estado:** 🔴 BLOQUEADO — `S5.8` está ✅ COMPLETO, pero la reconciliación del 2026-08-12 probó dos prerrequisitos externos ausentes. `S5.5` no puede entrar en tasks/apply hasta que `S5.9` y `S5.10` estén integradas: hoy no existe binding autoritativo entre el valor exacto de `parked.checkpoint` y la evidencia canónica de checkpoint/reconciliación, ni binding inmutable entre trabajo independiente completado y la decisión más opción/supuesto exactos bajo los que corrió. No se acredita avance parcial.
-**Depende de:** `S5.10` integrada; transitivamente `S5.9` y `S5.8` ✅
+**Estado:** 🔴 BLOQUEADO — `S5.8` está ✅ COMPLETO, pero la reconciliación del 2026-08-12 probó dos prerrequisitos externos ausentes. `S5.5` no puede entrar en tasks/apply hasta completar la cadena `S5.11 → S5.12 → S5.9 → S5.10`: hoy no existe binding autoritativo entre el valor exacto de `parked.checkpoint` y la evidencia canónica de checkpoint/reconciliación, ni binding inmutable entre trabajo independiente completado y la decisión más opción/supuesto exactos bajo los que corrió. No se acredita avance parcial.
+**Depende de:** `S5.10` integrada; transitivamente `S5.9`, `S5.12`, `S5.11` y `S5.8` ✅
 **Área:** `escalation/{parked,contamination,resume}.mjs`, `test/escalation/**`
 **Prohibido:** `continuation/**`, `core.mjs`, `mcp.mjs`, `delivery/**`, `contracts/**`, `schemas/**`, `main-store/store.mjs`
 **Recurso:** ledger append-only de decisiones estacionadas. Sin token de entrega.
 
-**Route:** `full-sdd`, bloqueada antes de tasks/apply. `S5.6`–`S5.8` fijaron snapshot, decisión/respuesta y selección terminal, pero `S5.9` y `S5.10` deben fijar los dos bindings prerrequisito restantes. Después de su integración, el SDD de `S5.5` cubre el comportamiento integral de ledger, contaminación, selección y retoma.
+**Route:** `full-sdd`, bloqueada antes de tasks/apply. `S5.6`–`S5.8` fijaron snapshot, decisión/respuesta y selección terminal; `S5.11` y `S5.12` deben producir y transportar provenance canónica, y `S5.9`/`S5.10` deben fijar los dos bindings restantes. Después de integrar toda la cadena, el SDD de `S5.5` cubre el comportamiento integral de ledger, contaminación, selección y retoma.
 
-`S5.6`–`S5.10` poseen los contratos canónicos que esta Sesión consume: snapshot de Sesión,
-registro/respuesta, binding de opción seleccionada, binding del checkpoint exacto y binding del
+`S5.6`–`S5.12` poseen los contratos, productores, composición y bindings canónicos que esta Sesión consume: snapshot de Sesión,
+registro/respuesta, binding de opción seleccionada, provenance producer-owned, transporte inmutable hasta parking, binding del checkpoint exacto y binding del
 trabajo independiente completado bajo su opción/supuesto. `S5.5` no los redefine, registra ni
 valida por una ruta local.
 
@@ -622,15 +624,101 @@ Sesiones sin decisión explícita.
 
 **Forecast:** 280–390 líneas. El resultado de implementación fue 375 líneas authored y quedó dentro del rango; no introdujo migración, escritura fuera de la transacción atómica ni segundo borde de autoridad.
 
+## Sesión 5.11 — Productores canónicos de provenance del checkpoint
+
+**Resultado:** la captura y la reconciliación producen artefactos inmutables con identidad y digest propios, más los bindings cruzados necesarios para que Main pueda probar que ambos nombran el mismo checkpoint sin aceptar afirmaciones del caller.
+
+**Estado:** 🟢 LISTO — `S5.8` está ✅ COMPLETO y la decisión de autoridad del maintainer fija owner, prohibiciones y criterio falsificable. El techo de horizonte queda ocupado exactamente por `S5.11` y su sucesora `S5.12`.
+
+**Route:** `full-sdd` — crea contratos visibles/versionados y un productor runtime nuevo en una frontera de seguridad; proposal/spec/design deben fijar la forma exacta sin mover composición ni persistencia a los productores. **Razón:** el contrato público y los bindings de seguridad necesitan escenarios antes de tasks/apply. **Autoridad:** decisión de composición Main-owned del maintainer y falsificador en el archivo no trackeado `design.md` del worktree separado `s5-9`, SHA-256 `a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1`, Engram 8604; no es una identidad Git.
+
+**Depende de:** `S5.8` ✅ integrada.
+
+**Área:** `workspace/checkpoint.mjs`, `workspace/reconciliation.mjs`, `schemas/{checkpoint-capture-v1,reconciled-checkpoint-v1}.schema.json`, `contracts/{schema-registry,validate}.mjs`, `test/workspace/{checkpoint,reconciliation}.test.mjs`, `test/contracts/schema.test.mjs`, `test/fixtures/contracts/schema-cases-v1.json`
+
+**Recurso:** productores canónicos de checkpoint-provenance y registro canónico de contratos/fixture. Sin mutación del Main store, sin DB y sin token de entrega.
+
+**Decisiones:**
+
+- `escala` — quién crea la provenance que `S5.9` necesita. **Clase:** contrato visible del producto, API pública y seguridad y permisos. **RESUELTA por el maintainer:** cada productor crea y posee su artefacto canónico; Main sólo los compone y transporta. Se prohíben identidad sintetizada por consumidores, assertion del caller, store sombra y segundo writer. **Contamina:** `S5.11`, `S5.12`, `S5.9`; transitivamente `S5.10` y `S5.5`.
+- `derivable` — qué vuelve estable a la captura. **Criterio:** el productor emite identidad/digest canónicos ligados a proyecto, assignment, generation, repositorio y base/result; cambiar cualquiera invalida el artefacto. Falsificable: dos checkpoints distintos conservan identidad válida. **Autoridad:** decisión del maintainer y faltantes probados por el falsificador.
+- `derivable` — qué vuelve utilizable a la reconciliación. **Criterio:** un productor real emite identidad/digest propios y estado `VALID`, ligado a la identidad/digest exactos de captura; schema o fixture sin productor no satisfacen el criterio. Falsificable: parking recibe una reconciliación construida sólo desde datos del caller. **Autoridad:** decisión del maintainer y `reconciled-checkpoint-v1` vigente.
+
+### Módulo 5.11.1 — Identidad canónica de captura
+
+- [ ] Tarea 5.11.1.1 — RED: demostrar que la captura vigente carece de identidad estable, `project_id`, `assignment_id` y `generation`, y que un consumidor puede inventarlos sin rechazo.
+- [ ] Tarea 5.11.1.2 — GREEN: implementar `checkpoint-capture-v1` y hacer que `captureCheckpoint` produzca identidad/digest y bindings cruzados canónicos sin mutar Main store.
+- [ ] Tarea 5.11.1.3 — REFACTOR: registrar schema e invariantes, eliminar listas/digests duplicados y probar determinismo y drift por cada binding.
+
+### Módulo 5.11.2 — Productor canónico de reconciliación
+
+- [ ] Tarea 5.11.2.1 — RED: probar que `reconciled-checkpoint-v1` hoy puede aparecer como fixture válido sin productor, digest propio ni vínculo a la captura exacta.
+- [ ] Tarea 5.11.2.2 — GREEN: implementar `workspace/reconciliation.mjs` para producir identidad/digest, estado `VALID` y cross-bindings desde la captura canónica y evidencia reconciliada.
+- [ ] Tarea 5.11.2.3 — REFACTOR: unificar canonicalización, cerrar mismatch de proyecto/assignment/generation/repositorio/base/result y verificar que ningún consumidor sintetiza el artefacto.
+
+**Criterios de aceptación de S5.11** — todos deben pasar para cerrar:
+
+- [ ] `captureCheckpoint` produce un artefacto inmutable `checkpoint-capture-v1` con identidad/digest y proyecto, assignment, generation, repositorio y base/result exactos
+- [ ] Existe un productor runtime canónico de reconciliación; schema y fixture por sí solos no cuentan
+- [ ] La reconciliación producida tiene identidad/digest propios, estado `VALID` y liga la captura exacta y todos sus cross-bindings
+- [ ] Drift de identidad, digest, proyecto, assignment, generation, repositorio, base o result falla cerrado
+- [ ] Ningún caller o consumidor puede afirmar, completar o sintetizar provenance faltante
+- [ ] Los productores no mutan Main store, no estacionan decisiones y no abren store, writer ni ingress alternativo
+- [ ] Schemas, registro, invariantes y fixtures pasan por el camino canónico único
+- [ ] El diff de implementación no toca ningún path fuera de `Área`
+
+## Sesión 5.12 — Composición única de productores hacia parking bajo Main
+
+**Resultado:** Main invoca los productores canónicos mediante capabilities ligadas en constructor, conserva sus artefactos inmutables sin cambios y los entrega juntos a una sola transacción de parking.
+
+**Estado:** 📋 PLANIFICADO — la autoridad está resuelta, pero `S5.11` debe integrarse antes de elaborar o ejecutar la composición.
+
+**Route:** `design-tasks` — la geometría de autoridad ya está decidida y no requiere proposal/spec nuevos; `session-plan` debe elegir el seam técnico acotado y detallar la única entrada aprobada antes del executor. **Razón:** queda diseño de composición, no una decisión pública abierta. **Autoridad:** decisión Main-owned del maintainer y productores que entregará `S5.11`.
+
+**Depende de:** `S5.11` integrada.
+
+**Área:** `escalation/request.mjs`, `escalation/parking-composition.mjs`, `main-store/store.mjs` sólo para el ingress de parking aprobado, `test/escalation/{request,parking-composition}.test.mjs`, `test/main-store.test.mjs`
+
+**Recurso:** composición de Main y transacción única de parking; exclusividad sobre el ingress de parking del Main store. Sin DB y sin token de entrega.
+
+**Decisiones:**
+
+- `escala` — quién compone productores y parking. **Clase:** contrato visible del producto, API pública y seguridad y permisos. **RESUELTA por el maintainer:** Main crea la composición, invoca capabilities constructor-bound y transporta los dos artefactos sin cambios a una transacción. Es la misma decisión durable declarada en `S5.11`, no una segunda autoridad. **Contamina:** `S5.11`, `S5.12`, `S5.9`; transitivamente `S5.10` y `S5.5`.
+- `derivable` — qué significa transportar sin cambios. **Criterio:** parking recibe las mismas identidades, digests y bindings producidos; cualquier clon enriquecido, normalización semántica o síntesis del consumer falla por igualdad canónica. Falsificable: Main puede alterar un campo y aun estacionar. **Autoridad:** decisión Main-owned.
+- `derivable` — cuántos ingresos y writers existen. **Criterio:** uno: el ingress aprobado de `main-store/store.mjs`, bajo una sola transacción de parking. Falsificable: un método alternativo, efecto parcial, store sombra o segundo writer persiste cualquiera de los dos artefactos. **Autoridad:** floor de autoridad única de Main y decisión Main-owned.
+
+### Módulo 5.12.1 — Composition root constructor-bound
+
+- [ ] Tarea 5.12.1.1 — RED: rechazar producers ausentes/no ligados, artefactos aportados por el caller y toda ruta que invoque parking sin captura y reconciliación canónicas.
+- [ ] Tarea 5.12.1.2 — GREEN: implementar el seam acotado bajo `escalation/` para que Main invoque ambas capabilities ligadas en constructor y transporte sus resultados exactos.
+- [ ] Tarea 5.12.1.3 — REFACTOR: probar orden determinista, una sola invocación por productor y ausencia de alternate ingress, fallback o síntesis del consumer.
+
+### Módulo 5.12.2 — Ingress y transacción única de parking
+
+- [ ] Tarea 5.12.2.1 — RED: probar atomicidad: mismatch o fallo de cualquier artefacto deja decisión, captura y reconciliación sin persistencia parcial.
+- [ ] Tarea 5.12.2.2 — GREEN: extender sólo el ingress aprobado de `main-store/store.mjs` para recibir ambos artefactos sin cambios dentro de la transacción única de parking.
+- [ ] Tarea 5.12.2.3 — REFACTOR: cerrar replay exacto, replay divergente, readback y testigos de bytes contra shadow store, segundo writer o mutación posterior.
+
+**Criterios de aceptación de S5.12** — todos deben pasar para cerrar:
+
+- [ ] Main es el único composition root y recibe capture/reconciliation/parking como capabilities ligadas en constructor
+- [ ] Main invoca los productores canónicos; el caller no suministra ni afirma provenance
+- [ ] Los artefactos de captura y reconciliación llegan al parking con identidad, digest y bindings canónicos sin cambios
+- [ ] Una sola transacción de parking persiste la decisión y ambos artefactos o no persiste ninguno
+- [ ] Sólo existe el ingress aprobado en `main-store/store.mjs`; no hay fallback, alternate ingress, store sombra ni segundo writer
+- [ ] Replay exacto es idempotente y mismatch/replay divergente falla cerrado sin efecto parcial
+- [ ] `S5.12` no crea contratos alternativos ni sintetiza identidad, digest, estado `VALID` o cross-bindings
+- [ ] El diff de implementación no toca ningún path fuera de `Área`
+
 ## Sesión 5.9 — Binding autoritativo del checkpoint estacionado
 
 **Resultado:** persistir bajo autoridad exclusiva de Main una prueba inmutable que liga el valor exacto de `parked.checkpoint` a la captura canónica y a la evidencia de reconciliación que identifican el mismo punto de retoma.
 
-**Estado:** 🟢 LISTO — `S5.8` está ✅ COMPLETO y el maintainer resolvió la forma pública/versionada, la API y la frontera de seguridad del binding. Esto no afirma que los productores ya entreguen la provenance necesaria: el SDD debe probarlo antes de tasks/apply.
+**Estado:** 🔴 BLOQUEADO — el falsificador producer-owned del archivo no trackeado `design.md` en el worktree separado `s5-9`, SHA-256 `a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1` / Engram 8604, que no es una identidad Git, falló: captura, reconciliación y parking no pueden hoy suministrar la provenance exigida. `S5.9` queda pausada antes de tasks/apply hasta integrar `S5.11` y `S5.12`; no se acredita avance parcial ni se afirma que sus artefactos de diseño estén integrados.
 
-**Route:** `full-sdd` — puede comenzar automáticamente en modo híbrido para fijar proposal/spec/design del contrato aprobado y demostrar el prerrequisito producer-owned. Si el flujo de parking no puede suministrar captura canónica y reconciliación canónica `VALID` sin assertion del caller, `S5.9` se detiene antes de tasks/apply y escala una nueva Sesión prerrequisito; no infiere ni reconstruye esa evidencia. **Autoridad:** decisión del maintainer del 2026-08-12, registrada en [`decision-register.md`](../decision-register.md), y evidencia A verificada contra `workspace/checkpoint.mjs`, `schemas/reconciled-checkpoint-v1.schema.json` y `schemas/parked-decision-v1.schema.json`.
+**Route:** `full-sdd`, pausada antes de tasks/apply. Proposal/spec/design existen sólo en el worktree separado `s5-9`; el archivo no trackeado `design.md` tiene SHA-256 `a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1` y la evidencia está en Engram 8604. No forman parte de este Git canónico y ese digest no identifica un commit ni un blob Git. Tras integrar `S5.11` y `S5.12`, se retoma desde ese checkpoint reconciliado para probar que el flujo real suministra captura canónica y reconciliación `VALID` sin assertion del caller. **Razón:** el contrato aprobado sigue requiriendo SDD, pero sus dependencias producer→composition están ausentes. **Autoridad:** decisión del maintainer del 2026-08-12, decisión Main-owned posterior registrada en [`decision-register.md`](../decision-register.md), y evidencia A verificada contra `workspace/checkpoint.mjs`, `schemas/reconciled-checkpoint-v1.schema.json` y `schemas/parked-decision-v1.schema.json`.
 
-**Depende de:** `S5.8` ✅ integrada.
+**Depende de:** `S5.12` integrada; transitivamente `S5.11` y `S5.8` ✅.
 
 **Área:** `main-store/store.mjs`, `contracts/**`, `schemas/**`, `test/main-store.test.mjs`, `test/contracts/**`, `test/fixtures/contracts/schema-cases-v1.json`
 
@@ -640,7 +728,7 @@ Sesiones sin decisión explícita.
 
 **Decisiones:**
 
-- `escala` — cuál es la forma pública exacta y versionada del binding, qué identidades/digests exige y qué transición lo vuelve inmutable. **Clase:** contrato visible del producto, API pública y seguridad y permisos. **RESUELTA el 2026-08-12 por el maintainer:** registro standalone, inmutable y versionado `parked-checkpoint-binding-v1` en Main store, sellado al estacionar la decisión sólo después de disponer de captura canónica y reconciliación canónica `VALID`. Tiene readback autoritativo dedicado por identidad de decisión estacionada; Main store es writer único bajo su autoridad, lock y transacción canónicos. Replay canónico exacto es idempotente y replay divergente falla cerrado. El binding exige identidad/digest exactos de la decisión estacionada, valor exacto de `parked.checkpoint`, identidad/digest de captura canónica, identidad/digest y estado `VALID` de reconciliación canónica, más los cross-bindings de repositorio/proyecto/assignment/generation/base/result necesarios para probar que nombran el mismo checkpoint. Se prohíben assertions del caller, inferencia o parsing local de `S5.5`, reconstrucción narrativa, reemplazo mutable, semántica sólo en `extensions`, shadow store y segundo writer. **Falsificador:** si el flujo de parking no puede suministrar evidencia canónica producer-owned de captura y reconciliación sin assertion del caller, `S5.9` se detiene antes de tasks/apply y escala un prerrequisito nuevo; el SDD debe probarlo. **Contaminaba:** `S5.5`.
+- `escala` — cuál es la forma pública exacta y versionada del binding, qué identidades/digests exige y qué transición lo vuelve inmutable. **Clase:** contrato visible del producto, API pública y seguridad y permisos. **RESUELTA el 2026-08-12 por el maintainer:** registro standalone, inmutable y versionado `parked-checkpoint-binding-v1` en Main store, sellado al estacionar la decisión sólo después de disponer de captura canónica y reconciliación canónica `VALID`. Tiene readback autoritativo dedicado por identidad de decisión estacionada; Main store es writer único bajo su autoridad, lock y transacción canónicos. Replay canónico exacto es idempotente y replay divergente falla cerrado. El binding exige identidad/digest exactos de la decisión estacionada, valor exacto de `parked.checkpoint`, identidad/digest de captura canónica, identidad/digest y estado `VALID` de reconciliación canónica, más los cross-bindings de repositorio/proyecto/assignment/generation/base/result necesarios para probar que nombran el mismo checkpoint. Se prohíben assertions del caller, inferencia o parsing local de `S5.5`, reconstrucción narrativa, reemplazo mutable, semántica sólo en `extensions`, shadow store y segundo writer. **Falsificador:** si el flujo de parking no puede suministrar evidencia canónica producer-owned de captura y reconciliación sin assertion del caller, `S5.9` se detiene antes de tasks/apply y escala un prerrequisito nuevo; la ejecución fallida está preservada en el archivo no trackeado `design.md` del worktree separado `s5-9`, SHA-256 `a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1`, Engram 8604, no como identidad Git. **Contaminaba:** `S5.5`.
 
 ### Módulo 5.9.1 — Evidencia canónica y persistencia bajo Main
 
@@ -654,7 +742,7 @@ Cada Tarea es una unidad de commit/direct-push revisable y revertible por sí so
 **Criterios de aceptación de S5.9** — todos deben pasar para cerrar:
 
 - [ ] Existe un único binding autoritativo persistido en Main store entre el valor exacto de `parked.checkpoint`, la captura canónica y la evidencia `reconciled-checkpoint-v1` correspondiente
-- [ ] El SDD codifica el contrato aprobado `parked-checkpoint-binding-v1` y prueba antes de tasks/apply que el flujo de parking suministra evidencia canónica producer-owned de captura y reconciliación `VALID`; si no puede, detiene `S5.9` y escala un prerrequisito nuevo
+- [ ] Al retomar después de integrar `S5.11` y `S5.12`, el SDD prueba antes de tasks/apply que el flujo real suministra evidencia canónica producer-owned de captura y reconciliación `VALID`; el falsificador fallido permanece como evidencia no integrada en el archivo no trackeado `design.md` del worktree separado `s5-9`, SHA-256 `a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1`, Engram 8604; no es identidad Git ni implementación
 - [ ] Mismatch de valor, digest, repositorio, base/result, assignment/generation o evidencia de reconciliación falla cerrado sin mutación parcial
 - [ ] Caller assertion, texto equivalente y una inferencia local de `S5.5` no sustituyen evidencia canónica
 - [ ] Replay byte-idéntico es idempotente y replay divergente produce cero efectos adicionales
@@ -702,6 +790,6 @@ Cada Tarea es una unidad de commit/direct-push revisable y revertible por sí so
 - [ ] `S5.5` consume la prueba sin inferirla localmente y `S7.1` puede atribuir la evidencia al candidato y supuesto exactos
 - [ ] El diff de implementación no toca ningún path fuera de `Área`
 
-**Cómputo del Plan 5:** `5/10 S = 50%`. Sólo `S5.1`, `S5.4`, `S5.6`, `S5.7` y `S5.8` cuentan; `S5.2`, `S5.3`, `S5.5` y `S5.10` están 🔴 BLOQUEADO, mientras `S5.9` está 🟢 LISTO. Ninguna aporta crédito hasta `COMPLETO`.
+**Cómputo del Plan 5:** `5/12 S = 42%`. Sólo `S5.1`, `S5.4`, `S5.6`, `S5.7` y `S5.8` cuentan; `S5.11` está 🟢 LISTO, `S5.12` está 📋 PLANIFICADO y `S5.2`, `S5.3`, `S5.5`, `S5.9` y `S5.10` están 🔴 BLOQUEADO. Ninguna aporta crédito hasta `COMPLETO`.
 
 Las responsabilidades legacy de Telegram Delivery y continuación que aún no tienen límite de un PR permanecen sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).

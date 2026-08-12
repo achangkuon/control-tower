@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Legacy P7 depende sólo de legacy P6; P8 depende de legacy P7 reconciliado e integrado. Change A no es dependencia de ninguno. |
 | Outputs | Recovery/rollback fail-closed; controller host-neutral y adapter OpenCode; adapter Pi; adapter Claude opt-in; runtime versionado; verificación CT-only. |
-| Roadmap | `S1.11` está ✅ COMPLETO y publicado en `origin/master@3db3c121`. `S1.12`–`S1.14` están ✅ COMPLETO e integradas en el `master` local; `S1.14` cerró en `master@9886af9` mediante la implementación y evidencia canónica del mismo commit. El push remoto y Notion siguen pendientes. `S1.15` queda 🟢 LISTO sólo porque su dependencia `S1.14` cerró; la cadena continúa `S1.15 → S1.16`, sin crédito para `S1.15` ni Sesiones posteriores. `S1.17` es una Sesión downstream distinta y sigue 🔴 BLOQUEADO por identidades y capacidad runtime reales ausentes. Legacy P9–P11 esperan límites de PR demostrables. |
+| Roadmap | `S1.11` está ✅ COMPLETO y publicado en `origin/master@3db3c121`. `S1.12`–`S1.14` están ✅ COMPLETO e integradas en el `master` local; la implementación y evidencia de `S1.14` están en `9886af9` y su cierre documental en `bfe6d34`. El push remoto sigue pendiente; Notion ya está actualizado. `S1.15` queda 🟢 LISTO sólo porque su dependencia `S1.14` cerró; la cadena continúa `S1.15 → S1.16`, sin crédito para `S1.15` ni Sesiones posteriores. `S1.17` es una Sesión downstream distinta y sigue 🔴 BLOQUEADO por identidades y capacidad runtime reales ausentes. Legacy P9–P11 esperan límites de PR demostrables. |
 | Referencias | [`autonomous-continuation-control-tower`](../../changes/autonomous-continuation-control-tower/), [`p7-host-neutral-loop-opencode-adapter`](../../changes/p7-host-neutral-loop-opencode-adapter/), [`p8-slice-planning`](../../changes/p8-slice-planning/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). |
 
 Legacy P6 se integró mediante PRs #38–#45 y cerró en `e16d94b`. Su [`apply-progress.md`](../../changes/autonomous-continuation-control-tower/apply-progress.md) es evidencia histórica y permanece sin reescritura.
@@ -136,6 +136,34 @@ graph LR
 - Runtime harness: `N/A` — clock, scheduler, `peek` y `wake` inyectados y deterministas forman la frontera local al proceso.
 - Rollback: remover sólo los bloques de polling/wake de `S1.14`, conservando el lifecycle inerte de `S1.13`.
 - Review lens: `UNAVAILABLE` tipado — el dispatch directo de `review-reliability` exigía lineage de candidato controlada por el controller mientras el lifecycle nativo de review estaba suspendido; no se creó lineage ni se fabricó veredicto.
+
+## Sesión 1.15 — Conformidad lifecycle OpenCode
+
+**Resultado:** el adapter OpenCode clasifica el lifecycle alrededor del controller mediante una harness de conformidad CT-R5 reutilizable, sin asumir transporte confiable ni composición production `promptAsync` de `S1.16`.
+
+**Estado:** 🟢 LISTO — `S1.14` está ✅ COMPLETO. No se acredita implementación, Tarea ni criterio de `S1.15`, `S1.16` o una Sesión posterior.
+
+**Depende de:** `S1.14` ✅ COMPLETO
+**Área:** `plugin/tower-spike.js`, `test/helpers/host-adapter-conformance.mjs`, `test/host-adapters.test.mjs`
+**Recurso:** —. Fixtures y harness de conformidad deterministas, aislados y locales al proceso; runtime harness `N/A`. Sin DB del adapter, estado de Torre, runtime externo o compartido, proceso host compartido ni token de entrega.
+**Ruta:** `direct` — el alcance, Módulo y cinco Tareas ya están fijados en el [`tasks.md` canónico](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md#sesión-115--opencode-lifecycle-conformance), sin decisión pública, de autoridad, persistencia o composición abierta.
+
+**Decisiones:** —. Si la implementación exige ampliar `Área`, consumir runtime compartido, abrir persistencia/autoridad o adelantar transporte confiable o composición production `promptAsync` de `S1.16`, se detiene antes del RED y la expansión se escala como alcance nuevo; no se deriva dentro de `S1.15`.
+
+### Módulo 1.15.1 — Adapter OpenCode y harness compartida
+
+`M1.15.1` y `T1.15.1.1`–`T1.15.1.5` permanecen pendientes en el [`tasks.md` canónico](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md#sesión-115--opencode-lifecycle-conformance), que conserva RED → GREEN → TRIANGULATE → REFACTOR → verificación. Este `STATUS` registra el contrato de ejecución sin redefinir Tareas ni acreditar trabajo downstream.
+
+**Criterios de aceptación de S1.15** — todos deben pasar para cerrar:
+
+- [ ] La harness parametrizada y los casos OpenCode cubren `CT-R5-S1@OpenCode`–`CT-R5-S5@OpenCode`, incluidos no-op de creación/eliminación/idle de child, eliminación de root coincidente, disposición de plugin, metadata malformada e identidades en conflicto
+- [ ] `plugin/tower-spike.js` expone una factory testeable que clasifica sólo eventos reconciliados de root/child probado, liga una vez, reenvía settle/eliminación sólo para el root ligado e invalida sincrónicamente ante eliminación de ese root o disposición
+- [ ] Las variantes de orden e información incompleta prueban que un evento desconocido nunca se trata como root, limpiar cache de child no detiene polling y la helper genérica no filtra nombres de campos OpenCode
+- [ ] `host/loop.mjs` permanece host-neutral y `plugin/tower-spike.js` no incorpora SQLite, `core.mjs`, `mcp.mjs`, `receive` consumidor ni una ruta de `claim` de entrega
+- [ ] `bun test test/host-adapters.test.mjs`, la suite focused indicada en `T1.15.1.5` y `node --check plugin/tower-spike.js` pasan sobre los bytes finales; se registran receipt de líneas, escenarios CT-R5, runtime harness `N/A` y rollback exacto
+- [ ] El diff de implementación no toca ningún path fuera de `Área` y el rollback remueve sólo cambios de adapter/fixtures/conformidad de `S1.15`, conservando el controller sin usar
+
+**Prueba de no interferencia con `S5.11`/`S5.12`:** no existe arista de dependencia entre esas Sesiones y `S1.15`; los tres paths de `Área` no intersectan `workspace/**`, `schemas/**`, `contracts/**`, `test/workspace/**`, `test/contracts/**`, `test/fixtures/contracts/**`, `escalation/**`, `main-store/store.mjs`, `test/escalation/**` ni `test/main-store.test.mjs`. `S1.15` declara `Recurso: —` y no reclama productores de provenance, registro de contratos/fixtures, composición Main, ingress o transacción de parking. Por grafo, `Área` y `Recurso`, su ejecución puede ser paralela sin compartir runtime.
 
 ## Sesiones P8
 
