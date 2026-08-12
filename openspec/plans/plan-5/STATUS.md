@@ -19,7 +19,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1`, y la cadena contractual `S5.4 → S5.6 → S5.7 → S5.8 → S5.5`. |
 | Outputs | F: authorization store, Telegram, validación Git/PR/check/SHA, entrega idempotente y post-check. G: planning horizon, reconciliación, apply/verify, Binding Delta y continuación del siguiente `slice_id`. Más el ruteo de escalamiento de `S5.4`, los contratos canónicos prerrequisito de `S5.6`–`S5.8` y la planificación diferible de `S5.5`. |
-| Roadmap | `S5.1`, `S5.4`, `S5.6` y `S5.7` están ✅ COMPLETO; `S5.7` está publicado en `origin/master@3db3c121`. `S5.8` está 🔵 EN CURSO en un candidato pausado con `41 pass / 1 fail`; el maintainer fijó `CT_AUTH_RESPONSE_BINDING` como contrato correcto, pero todavía no existe una corrida posterior. `S5.5` continúa 📋 PLANIFICADO por grafo. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
+| Roadmap | `S5.1`, `S5.4`, `S5.6`, `S5.7` y `S5.8` están ✅ COMPLETO. `S5.8` quedó integrada y verificada sólo en `master@6bb7019`; el push remoto y Notion siguen pendientes. Como su única dependencia declarada ya cerró, `S5.5` pasa a 🟢 LISTO. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
 
 ## Grafo de dependencias
@@ -32,8 +32,8 @@ graph LR
   S51 --> S54["S5.4 ruteo · ✅"]
   S54 --> S56["S5.6 snapshot de Sesión · ✅"]
   S56 --> S57["S5.7 decisión/respuesta · ✅"]
-  S57 --> S58["S5.8 binding de respuesta · 🔵"]
-  S58 --> S55["S5.5 continuación diferible · 📋"]
+  S57 --> S58["S5.8 binding de respuesta · ✅"]
+  S58 --> S55["S5.5 continuación diferible · 🟢"]
   S41["S4.1 fence hosts · ✅"] --> S52["S5.2 entrega · 🔴"]
   S33 --> S52
   S52 --> S53["S5.3 continuación · 🔴"]
@@ -345,13 +345,13 @@ No aplica un runtime externo: esta Sesión define ruteo y persistencia, pero del
 
 ## Sesión 5.5 — Decisión estacionada y continuación independiente
 
-**Estado:** 📋 PLANIFICADO — espera el contrato terminal de `S5.8`; no existe un bloqueo externo adicional.
-**Depende de:** `S5.8`
+**Estado:** 🟢 LISTO — su única dependencia declarada, `S5.8`, está ✅ COMPLETO en la integración local verificada. No existe un bloqueo externo adicional.
+**Depende de:** `S5.8` ✅
 **Área:** `escalation/{parked,contamination,resume}.mjs`, `test/escalation/**`
 **Prohibido:** `continuation/**`, `core.mjs`, `mcp.mjs`, `delivery/**`, `contracts/**`, `schemas/**`, `main-store/store.mjs`
 **Recurso:** ledger append-only de decisiones estacionadas. Sin token de entrega.
 
-**Route:** `full-sdd` una vez que `S5.8` cierre; los contratos quedan fijados por los prerrequisitos y el SDD cubre el comportamiento integral de ledger, contaminación, selección y retoma.
+**Route:** `full-sdd`; `S5.8` ya cerró y los contratos quedaron fijados por los prerrequisitos. El SDD cubre el comportamiento integral de ledger, contaminación, selección y retoma.
 
 `S5.6`–`S5.8` poseen los contratos canónicos que esta Sesión consume: snapshot de Sesión,
 registro/respuesta y binding de opción seleccionada bajo autoridad de `S5.1`. `S5.5` no los
@@ -559,7 +559,7 @@ Sesiones sin decisión explícita.
 
 ## Sesión 5.8 — Binding de opción seleccionada en la autoridad canónica
 
-**Estado:** 🔵 EN CURSO — `S5.7` está ✅ COMPLETO en remoto y el candidato acotado modifica sólo `main-store/store.mjs` y `test/main-store.test.mjs`, además de artefactos locales del cambio. El último resultado enfocado preservado es `41 pass / 1 fail / 247 expectations`: la implementación devolvió `CT_AUTH_RESPONSE_BINDING` donde el test esperaba `CT_AUTH_INVALID`. El maintainer seleccionó `CT_AUTH_RESPONSE_BINDING` como contrato correcto y aprobó el brief acotado, pero aún no existe una corrida posterior a esa decisión; por lo tanto `S5.8` no está completa.
+**Estado:** ✅ COMPLETO — integrada localmente mediante `6bb7019` en `master@6bb7019c66cf60e9ac874f05a176f946f9bd4589` (tree `1d34341f394cbeced9495e8384252dd975f9cab4`). Los ocho blobs coinciden con el candidato congelado; la implementación suma 375 líneas authored y el `verify-report` registra PASS. Verificación sobre los bytes integrados: `bun test test/main-store.test.mjs` → 42 pass / 0 fail / 250 expectations; `bun test` → 610 pass / 0 fail / 3618 expectations / 39 archivos. Este cierre es local: `origin/master` sigue en `3db3c121`, sin push ni publicación remota, y Notion queda pendiente hasta que ocurra una entrega remota.
 
 **Depende de:** `S5.7` ✅
 
@@ -582,39 +582,41 @@ Sesiones sin decisión explícita.
 
 ### Módulo 5.8.1 — Terminal response bajo Main
 
-- [ ] Tarea 5.8.1.1 — RED: caller sin autoridad, authorization no PENDING, expirada o de origen distinto no registra respuesta ni muta bytes.
-- [ ] Tarea 5.8.1.2 — GREEN: extender el store canónico para validar y persistir la respuesta seleccionada bajo `assertMain`.
-- [ ] Tarea 5.8.1.3 — REFACTOR: mantener una sola transición terminal y una sola validación contra schemas canónicos.
+- [x] Tarea 5.8.1.1 — RED: caller sin autoridad, authorization no PENDING, expirada o de origen distinto no registra respuesta ni muta bytes.
+- [x] Tarea 5.8.1.2 — GREEN: extender el store canónico para validar y persistir la respuesta seleccionada bajo `assertMain`.
+- [x] Tarea 5.8.1.3 — REFACTOR: mantener una sola transición terminal y una sola validación contra schemas canónicos.
 
 ### Módulo 5.8.2 — Binding criptográfico e idempotencia
 
-- [ ] Tarea 5.8.2.1 — RED: mismatch de decisión, opción, snapshot, autorización o revisión falla cerrado nombrando el binding rechazado.
-- [ ] Tarea 5.8.2.2 — RED: replay exacto es idempotente; replay con otra opción o bytes produce cero efectos adicionales.
-- [ ] Tarea 5.8.2.3 — GREEN/REFACTOR: ligar la respuesta terminal al digest canónico y al registro de autorización sin aceptar assertions del caller, y eliminar todo binding duplicado.
+- [x] Tarea 5.8.2.1 — RED: mismatch de decisión, opción, snapshot, autorización o revisión falla cerrado nombrando el binding rechazado.
+- [x] Tarea 5.8.2.2 — RED: replay exacto es idempotente; replay con otra opción o bytes produce cero efectos adicionales.
+- [x] Tarea 5.8.2.3 — GREEN/REFACTOR: ligar la respuesta terminal al digest canónico y al registro de autorización sin aceptar assertions del caller, y eliminar todo binding duplicado.
 
 ### Módulo 5.8.3 — Compatibilidad y owner único del authorization store
 
-- [ ] Tarea 5.8.3.1 — RED: autorizaciones MERGE/START_JORNADA existentes conservan validación y transiciones sin respuesta estacionada.
-- [ ] Tarea 5.8.3.2 — GREEN: consumir `parked-decision-response-v1` desde `S5.7` sin modificar schema, registro, invariantes ni fixtures, y sin migrar registros previos.
-- [ ] Tarea 5.8.3.3 — REFACTOR: ejecutar el main-store contra el contrato registrado y verificar ausencia de shadow store, segundo writer, authority o ruta de caller assertion.
+- [x] Tarea 5.8.3.1 — RED: autorizaciones MERGE/START_JORNADA existentes conservan validación y transiciones sin respuesta estacionada.
+- [x] Tarea 5.8.3.2 — GREEN: consumir `parked-decision-response-v1` desde `S5.7` sin modificar schema, registro, invariantes ni fixtures, y sin migrar registros previos.
+- [x] Tarea 5.8.3.3 — REFACTOR: ejecutar el main-store contra el contrato registrado y verificar ausencia de shadow store, segundo writer, authority o ruta de caller assertion.
 
 **Criterios de aceptación de S5.8** — todos deben pasar para cerrar:
 
-- [ ] Sólo Main, por el authorization store canónico de `S5.1`, registra una respuesta seleccionada
-- [ ] El registro `parked-decision-response-v1` y la transición terminal de la autorización se persisten atómicamente bajo el mismo `assertMain`, lock y transacción
-- [ ] La respuesta liga criptográficamente `authorization_id`, `parked_decision_id`, exactamente un `option_id` enumerado, snapshot/digest de Sesión y revisión
-- [ ] La opción debe existir en la decisión estacionada validada; texto o assertions del caller no cuentan
-- [ ] Autorización no PENDING, expirada, consumida o de origen distinto falla cerrado sin mutación
-- [ ] Cada mismatch de binding falla cerrado y nombra el valor rechazado
-- [ ] Replay exacto es idempotente y replay divergente produce cero efectos adicionales
-- [ ] No existe segundo store, archivo sombra, segundo writer, método de autoridad ni persistencia fuera de `main-store/store.mjs`
-- [ ] No existe semántica terminal sólo en `extensions` ni assertion del caller que sustituya el registro versionado
-- [ ] `S5.8` consume el schema de `S5.7` sin modificar `contracts/**`, `schemas/**`, `test/contracts/**` ni fixtures
-- [ ] MERGE y START_JORNADA existentes conservan compatibilidad sin migración
-- [ ] `S5.8` no implementa ledger, contaminación, selección independiente ni retoma de `S5.5`
-- [ ] `bun test test/main-store.test.mjs` pasa completo contra el contrato registrado de `S5.7` y `bun test` no introduce fallos nuevos
-- [ ] El diff no toca ninguna ruta fuera del `Área` ni ninguna del `Prohibido`
+- [x] Sólo Main, por el authorization store canónico de `S5.1`, registra una respuesta seleccionada
+- [x] El registro `parked-decision-response-v1` y la transición terminal de la autorización se persisten atómicamente bajo el mismo `assertMain`, lock y transacción
+- [x] La respuesta liga criptográficamente `authorization_id`, `parked_decision_id`, exactamente un `option_id` enumerado, snapshot/digest de Sesión y revisión
+- [x] La opción debe existir en la decisión estacionada validada; texto o assertions del caller no cuentan
+- [x] Autorización no PENDING, expirada, consumida o de origen distinto falla cerrado sin mutación
+- [x] Cada mismatch de binding falla cerrado y nombra el valor rechazado
+- [x] Replay exacto es idempotente y replay divergente produce cero efectos adicionales
+- [x] No existe segundo store, archivo sombra, segundo writer, método de autoridad ni persistencia fuera de `main-store/store.mjs`
+- [x] No existe semántica terminal sólo en `extensions` ni assertion del caller que sustituya el registro versionado
+- [x] `S5.8` consume el schema de `S5.7` sin modificar `contracts/**`, `schemas/**`, `test/contracts/**` ni fixtures
+- [x] MERGE y START_JORNADA existentes conservan compatibilidad sin migración
+- [x] `S5.8` no implementa ledger, contaminación, selección independiente ni retoma de `S5.5`
+- [x] `bun test test/main-store.test.mjs` pasa completo contra el contrato registrado de `S5.7` y `bun test` no introduce fallos nuevos
+- [x] El diff no toca ninguna ruta fuera del `Área` ni ninguna del `Prohibido`
 
-**Forecast:** 280–390 líneas. Cabe en un cambio revisable; cualquier migración, escritura fuera de la transacción atómica o segundo borde de autoridad vuelve a bloquear y escalar.
+**Evidencia de cierre local:** ocho blobs idénticos al candidato congelado, 375 líneas authored de implementación y `verify-report` PASS. Focused `42/0/250`; suite completa `610/0/3618` en 39 archivos. El cierre está integrado en `master@6bb7019` pero no publicado en `origin/master`; no se actualiza Notion hasta una entrega remota.
+
+**Forecast:** 280–390 líneas. El resultado de implementación fue 375 líneas authored y quedó dentro del rango; no introdujo migración, escritura fuera de la transacción atómica ni segundo borde de autoridad.
 
 Las responsabilidades legacy de Telegram Delivery y continuación que aún no tienen límite de un PR permanecen sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).

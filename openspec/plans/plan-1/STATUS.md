@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Legacy P7 depende sólo de legacy P6; P8 depende de legacy P7 reconciliado e integrado. Change A no es dependencia de ninguno. |
 | Outputs | Recovery/rollback fail-closed; controller host-neutral y adapter OpenCode; adapter Pi; adapter Claude opt-in; runtime versionado; verificación CT-only. |
-| Roadmap | `S1.11` está ✅ COMPLETO y publicado en `origin/master@3db3c121`. `S1.12` está 🔵 EN CURSO en un candidato documental pausado; después sigue la cadena explícita `S1.12 → S1.13 → S1.14 → S1.15 → S1.16`. `S1.17` es una Sesión downstream distinta y sigue 🔴 BLOQUEADO. Legacy P9–P11 esperan límites de PR demostrables. |
+| Roadmap | `S1.11` está ✅ COMPLETO y publicado en `origin/master@3db3c121`. `S1.12` está ✅ COMPLETO, integrada y verificada sólo en `master@6bb7019`; el push remoto y Notion siguen pendientes. `S1.13` queda 🟢 LISTO y abre la cadena explícita `S1.13 → S1.14 → S1.15 → S1.16`. `S1.17` es una Sesión downstream distinta y sigue 🔴 BLOQUEADO por identidades y capacidad runtime reales ausentes. Legacy P9–P11 esperan límites de PR demostrables. |
 | Referencias | [`autonomous-continuation-control-tower`](../../changes/autonomous-continuation-control-tower/), [`p7-host-neutral-loop-opencode-adapter`](../../changes/p7-host-neutral-loop-opencode-adapter/), [`p8-slice-planning`](../../changes/p8-slice-planning/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). |
 
 Legacy P6 se integró mediante PRs #38–#45 y cerró en `e16d94b`. Su [`apply-progress.md`](../../changes/autonomous-continuation-control-tower/apply-progress.md) es evidencia histórica y permanece sin reescritura.
@@ -45,7 +45,7 @@ La definición canónica de esta Sesión, incluidos `M1.11.1` y `T1.11.1.1`–`T
 
 ## Sesión 1.12 — Reconciliación independiente P8
 
-**Estado:** 🔵 EN CURSO — `S1.11` está ✅ COMPLETO en remoto y el candidato acotado existe en `Worktrees/s1-12`. El checkpoint preserva sólo `tasks.md`, `STATUS.md`, `reconciliation.md` y `persistence-receipt.json`; no hay runtime ni cierre publicado de `S1.12`. Los siete checks documentales aparecen satisfechos dentro del candidato, pero una Sesión cuenta como ✅ COMPLETO sólo después de integrarse y verificarse.
+**Estado:** ✅ COMPLETO — integrada localmente en `master@6bb7019c66cf60e9ac874f05a176f946f9bd4589` (tree `1d34341f394cbeced9495e8384252dd975f9cab4`) mediante `5823ed6`. Los cuatro blobs coinciden con el candidato congelado y pasaron los checks de recibo, `ArtifactRef` y hashes. Este cierre es local: `origin/master` sigue en `3db3c121`, sin push ni publicación remota, y Notion queda pendiente hasta que ocurra una entrega remota.
 
 **Depende de:** `S1.11` ✅
 **Área:** `openspec/changes/p8-slice-planning/reconciliation.md`, `STATUS` de P8 y el recibo de persistencia
@@ -54,7 +54,7 @@ La definición canónica de esta Sesión, incluidos `M1.11.1` y `T1.11.1.1`–`T
 
 **Decisiones:**
 
-- `escala` — la aprobación del gate P8 (`T1.12.1.3`). **Clase:** seguridad y permisos. Mismo razonamiento que `S1.11`. **Contamina:** `S1.17`. **Consecuencia operativa: no es candidata a modo nocturno.**
+- `escala` — la aprobación del gate P8 (`T1.12.1.3`). **Clase:** seguridad y permisos. **RESUELTA en el candidato integrado y verificado:** los checks de recibo, `ArtifactRef` y hashes pasaron sobre los cuatro blobs congelados. El cierre de `S1.12` no destraba `S1.17`: esa Sesión conserva su bloqueo externo por `assignment_id`, `session_id` y capacidad runtime reales ausentes. **Consecuencia operativa: `S1.17` no es candidata a modo nocturno.**
 
 La definición canónica de esta Sesión, incluidos `M1.12.1` y `T1.12.1.1`–`T1.12.1.7`, vive en [`p7-p8-integrated-reconciliation/tasks.md`](../../changes/p7-p8-integrated-reconciliation/tasks.md#sesión-112--p8-reconciliation-and-preservation). Este `STATUS` no redefine sus Tareas.
 
@@ -62,7 +62,7 @@ La definición canónica de esta Sesión, incluidos `M1.12.1` y `T1.12.1.1`–`T
 
 ```mermaid
 graph LR
-  S112["S1.12 reconciliación P8 · 🔵"] --> S113["S1.13 lifecycle · 📋"]
+  S112["S1.12 reconciliación P8 · ✅"] --> S113["S1.13 lifecycle · 🟢"]
   S113 --> S114["S1.14 polling · 📋"]
   S114 --> S115["S1.15 conformidad · 📋"]
   S115 --> S116["S1.16 transporte · 📋"]
@@ -72,10 +72,12 @@ graph LR
 
 | ID | Resultado | Estado | Depende de | Ref |
 |---|---|---|---|---|
-| S1.13 | Root lifecycle e invalidación sincrónica | 📋 PLANIFICADO | `S1.12` | [`tasks.md`](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md) |
+| S1.13 | Root lifecycle e invalidación sincrónica | 🟢 LISTO | `S1.12` ✅ | [`tasks.md`](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md) |
 | S1.14 | Polling y wake safety | 📋 PLANIFICADO | `S1.13` | [`tasks.md`](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md) |
 | S1.15 | Conformidad lifecycle OpenCode | 📋 PLANIFICADO | `S1.14` | [`tasks.md`](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md) |
 | S1.16 | Transporte reconciliado y composición wake | 📋 PLANIFICADO | `S1.15` | [`tasks.md`](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md) |
+
+**Contrato ejecutable de `S1.13`:** su [`tasks.md`](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md#sesión-113--root-lifecycle-and-synchronous-invalidation) gobierna `Área: host/loop.mjs, test/polling.test.mjs` y `Recurso: —`. La derivación se apoya en el contrato ya aprobado: scheduler/controller falso, determinista y local al proceso, sin composición de adapter, DB, estado de Torre, runtime externo, token de release, proceso host compartido, host SDK, SQLite, `core.mjs` ni `mcp.mjs`; runtime harness `N/A`. No cambia comportamiento, Tareas ni scope.
 
 ## Sesiones P8
 
@@ -89,8 +91,8 @@ graph LR
 
 | ID | Estado | Ruta | Motivo |
 |---|---|---|---|
-| `S1.16` | 📋 PLANIFICADO | `design-tasks` | El registro aprobado de `S1.11` ya existe, pero la cadena autorizada exige cerrar antes `S1.12 → S1.13 → S1.14 → S1.15`. Luego se elige el seam de transporte no consumidor desde ese registro, sin inventarlo. |
-| `S1.17` | 🔴 BLOQUEADO | `direct` al destrabar | Es downstream y distinta de `S1.12`. `T1.17.1.1`–`.2` pasaron; `.3` no puede validar un assignment-bound worktree sin `assignment_id`, `session_id` y capacidad runtime reales; `.4`–`.5` no empezaron. Al destrabar sólo aterriza pruebas RED contra contratos ya aprobados. |
+| `S1.16` | 📋 PLANIFICADO | `design-tasks` | Los registros aprobados de `S1.11` y `S1.12` ya existen, pero la cadena autorizada exige cerrar antes `S1.13 → S1.14 → S1.15`. Luego se elige el seam de transporte no consumidor desde ese registro, sin inventarlo. |
+| `S1.17` | 🔴 BLOQUEADO | `direct` al destrabar | Es downstream y distinta de `S1.12`. `T1.17.1.1`–`.2` pasaron; `.3` no puede validar un assignment-bound worktree sin `assignment_id`, `session_id` y capacidad de binding Workspace Manager/Main reales; `.4`–`.5` no empezaron. Al destrabar sólo aterriza pruebas RED contra contratos ya aprobados. |
 | `S1.18` | 📋 PLANIFICADO | `direct` | Depende de `S1.17`. Implementación GREEN con alcance exacto (`adapters/pi/`), comando `bun test test/host-adapters.test.mjs` y rollback declarados. |
 | `S1.19` | 📋 PLANIFICADO | `direct` | Depende de `S1.18`. Refactor de seams y regresión compartida; verificación sólo por fixtures y rollback sin schema. |
 
@@ -106,6 +108,6 @@ graph LR
 
 Por lo tanto `S1.11`, `S1.12`, `S1.13`, `S1.14` y `S1.15` **entran en la cadena de release**: sin ellas, `S1.16` y `S1.17` no pueden arrancar, y sin ésas no hay `S4.2`–`S4.4` ni `S7.1`.
 
-**Reconciliado el 2026-08-12:** `S1.11` está ✅ COMPLETO en `origin/master@3db3c121`; `S1.12` está 🔵 EN CURSO en su candidato documental y no se contabiliza como cerrada. La cadena posterior queda formalizada como `S1.12 → S1.13 → S1.14 → S1.15 → S1.16`; por eso `S1.13`–`S1.16` permanecen 📋 PLANIFICADO. `S1.17` conserva su bloqueo propio y no se vuelve elegible por confundir el checkpoint de `S1.12` con cierre publicado.
+**Reconciliado el 2026-08-12:** `S1.11` está ✅ COMPLETO en `origin/master@3db3c121`; `S1.12` está ✅ COMPLETO, integrada y verificada localmente en `master@6bb7019`, pero todavía no publicada. La cadena posterior queda formalizada como `S1.13 → S1.14 → S1.15 → S1.16`; `S1.13` pasa a 🟢 LISTO y `S1.14`–`S1.16` permanecen 📋 PLANIFICADO. `S1.17` conserva su bloqueo propio: faltan `assignment_id`, `session_id` y capacidad runtime reales, una capacidad de binding que Workspace Manager/Main todavía no expone. El cierre de `S1.12` no elimina ese bloqueo externo.
 
 Legacy P9–P11 todavía no tienen límites de PR demostrables. Sus responsabilidades se preservan sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).

@@ -449,90 +449,9 @@ dependía de `S3.3`, así que nunca admitió paralelismo interno.
 
 Las responsabilidades legacy de Workspace Manager y Main/Policy que aún no tienen límite de un PR permanecen sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).
 
-## Alcance nuevo — enumerado el 2026-08-11, pendiente de aprobación de ubicación
+## Nota histórica de ubicación — resuelta el 2026-08-12
 
-La auditoría de alcance del 2026-08-11 detectó dos responsabilidades sin Sesión. Se
-enumeran acá porque su materia —ejecución y supervisión de la Jornada— es la de este Plan.
-
-> **`escala` — en qué Plan viven `S3.5` y `S3.6`.** **Clase:** expansión de alcance.
-> Aceptarlas acá **reabre P3**, hoy ✅ COMPLETO con `4/4 S`, y cambia su denominador a `6`.
-> La alternativa es abrir un Plan nuevo para la ejecución autónoma. No es derivable: ningún
-> criterio falsificable distingue las dos ubicaciones, y reabrir un Plan cerrado altera el
-> avance global publicado. **Contamina:** el `%` de P3 y el conteo de Sesiones del
-> [master-index](../master-index.md). **Decisión del maintainer.**
->
-> Mientras no se apruebe, P3 conserva `✅ COMPLETO · 100% (4/4 S)` y estas dos Sesiones
-> cuentan como alcance sin ID asignado.
-
-## Sesión 3.5 — Ejecución del contrato sellado de Jornada
-
-**Estado:** 📋 PLANIFICADO
-**Depende de:** `S3.4` ✅
-**Área:** `jornada/**`, `test/jornada/**`
-**Prohibido:** `core.mjs`, `mcp.mjs`, `main-store/store.mjs`, `escalation/**`, `delivery/**`, `contracts/**`, `schemas/**`
-**Recurso:** ninguno. No reclama el token de entrega ni escribe en el SQLite de la Torre.
-
-**Ruta:** `design-tasks` — el contrato ya existe y es externo: `execution-contract.schema.json`
-de `unattended-implementation`, 407 líneas en uso real. No hay contrato de producto que fijar,
-así que no corresponde `full-sdd`; sí hay que elegir cómo se lee, se valida y se persiste un
-schema que vive fuera del repositorio. **Autoridad:** decisión del maintainer del 2026-08-11.
-
-`jornada/` tiene hoy 23 líneas y `policy/jornada.mjs` es un resolvedor puro que recibe la
-Jornada como argumento. Sellar el contrato **ya lo hace la skill**; lo que falta es ejecutarlo.
-
-**Decisiones:**
-
-- `derivable` — de dónde sale el contrato. **Criterio:** `execution-contract.schema.json` de
-  `unattended-implementation`, consumido por copia versionada dentro de `schemas/`, nunca leído
-  desde `~/.claude/` en runtime. Falsificable: cualquier ruta que lea fuera del repositorio.
-  **Autoridad:** decisión del maintainer del 2026-08-11.
-- `derivable` — qué hace un contrato vencido. **Criterio:** falla cerrado por `expires_at`; no
-  se ejecuta ni se renueva solo. Falsificable: una ejecución posterior a `expires_at`.
-  **Autoridad:** el propio schema.
-- `escala` — si `S3.5` puede ejecutar sin la supervisión de `S3.6`. **Clase:** operaciones
-  irreversibles. **Contamina:** `S3.6`, y el orden de las dos.
-
-**Criterios de aceptación** — todos deben pasar para cerrar:
-
-- [ ] Un contrato válido se lee, valida contra el schema versionado y persiste antes de ejecutar
-- [ ] Un contrato con digest que no coincide se rechaza y no ejecuta nada
-- [ ] Un contrato vencido por `expires_at` falla cerrado
-- [ ] La ejecución respeta repositorio, worktree, rama, `base_sha` y `sesion_id` exactos del contrato
-- [ ] Ninguna ruta lee `~/.claude/` en runtime
-- [ ] El diff no toca ninguna ruta del `Prohibido`
-
-## Sesión 3.6 — Supervisión sin armado local
-
-**Estado:** 📋 PLANIFICADO
-**Depende de:** `S3.5`
-**Área:** por definir — la resuelve la elaboración técnica de `session-plan`
-**Recurso:** el centinela `ACTIVE` del repositorio supervisado
-
-**Ruta:** `full-sdd` — cambia la semántica de un centinela del que dependen dos productos y la
-frontera de autoridad de la Torre. Es contrato visible y toca seguridad y permisos, así que
-exige proposal, spec y design antes de implementar. **Autoridad:** brecha 7 de
-[implementation-state](../implementation-state.md).
-
-Resuelve la brecha 7: el sellado desatendido exige la Torre armada, y los dos repositorios en
-uso tienen una razón de diseño para exigirla apagada — `control-tower` aborta sus dos tests P0
-con `ACTIVE` presente (`test/helpers/restore-fixture.mjs:90`) y `remote-control` congela su relay
-(`src/tower-guard.js:226`, `allowed = remote && off`). Hoy no existe estado que satisfaga ambos.
-
-**Decisiones:**
-
-- `escala` — si la supervisión se expresa como un modo nuevo del centinela, como un centinela
-  separado, o como supervisión externa al repositorio supervisado. **Clase:** contrato visible
-  del producto, y seguridad y permisos. **Contamina:** `S3.5`, `remote-control`, y los dos tests
-  P0 de `test/migration.test.mjs`.
-- `escala` — si `remote-control` debe cambiar su interlock o permanecer intacto. **Clase:**
-  dependencias o evidencia contradictorias. La decisión aceptada del 2026-08-08 dice que el
-  interlock **no se retira**; una supervisión que lo atraviese la contradice. **Contamina:** la
-  decisión de complementariedad ya aceptada.
-
-**Criterios de aceptación** — todos deben pasar para cerrar:
-
-- [ ] La Torre supervisa una ejecución sellada en un repositorio sin que ese repositorio quede armado
-- [ ] `bun test` pasa completo durante una supervisión activa sobre este mismo repositorio
-- [ ] `relayEligibility` de `remote-control` sigue devolviendo `frozen` cuando la Torre está armada en su repositorio
-- [ ] Una supervisión ausente o vencida falla cerrado; no se degrada a ejecución sin supervisar
-- [ ] El diff no toca ninguna ruta fuera del `Área` que fije la elaboración técnica
+El 2026-08-11 se enumeraron provisionalmente dos responsabilidades como `S3.5` y `S3.6`
+mientras se escalaba su ubicación. El maintainer resolvió abrir un Plan nuevo: esos contratos
+migraron a [`P10`, como `S10.1` y `S10.2`](../plan-10/STATUS.md). La ubicación provisional no
+reabre este Plan ni altera su historia de cierre: **P3 permanece ✅ COMPLETO · 100% (4/4 S)**.

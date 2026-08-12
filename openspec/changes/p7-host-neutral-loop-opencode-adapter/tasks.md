@@ -28,6 +28,10 @@ The contract selects Option A: Host Launcher / Change E injects an opaque consum
 
 ## Sesión 1.13 — Root Lifecycle and Synchronous Invalidation
 
+**Área:** `host/loop.mjs`, `test/polling.test.mjs`.
+
+**Recurso:** —. The boundary is a process-local deterministic fake scheduler/controller with no adapter composition, database, Tower state, external runtime, release token, shared host process, host SDK, SQLite, `core.mjs`, or `mcp.mjs`. Runtime harness: `N/A`.
+
 ### Módulo 1.13.1 — Controller lifecycle
 
 **Scope:** `host/loop.mjs`, `test/polling.test.mjs`. **Budget:** 280–380 authored changed lines. **Finish:** one immutable proven root, settled-only one-shot scheduling, generation guards, and synchronous idempotent invalidation; no adapter composition.

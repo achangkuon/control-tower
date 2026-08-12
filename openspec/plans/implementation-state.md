@@ -2,7 +2,7 @@
 
 > Este documento mide **código**, no planificación. El [master-index](master-index.md) dice qué está planificado y qué Sesiones cerraron; este archivo dice qué existe, qué corre y qué está desplegado.
 >
-> **Snapshot fuente actual: 2026-08-12 sobre `origin/master@3db3c121d48a07d7696afe6a88de044f30ea4695`, idéntico al `master` local.** Git confirma que `S1.11` y `S5.7` están publicados en ese tip. La última re-medición completa de inventario, runtime y suite sigue siendo la del 2026-08-10 sobre `origin/master@b360c8a`; se conserva como evidencia histórica y no se presenta como una corrida fresca. Entre ambos snapshots se integraron el contrato de `S5.7` y documentación, sin cambios en `install/**`, `bin/torre` ni `core.mjs`. No se reran tests, `diagnose`, hashes instalados ni conteos globales para esta reconciliación.
+> **Snapshot fuente actual: 2026-08-12 sobre `master@6bb7019c66cf60e9ac874f05a176f946f9bd4589`, tree `1d34341f394cbeced9495e8384252dd975f9cab4`.** Es una integración local verificada y limpia antes de este cierre documental; `origin/master` permanece en `3db3c121`, por lo que no hay publicación remota. La cadena local es `d4028af` (reconciliación documental) → `5823ed6` (`S1.12`) → `6bb7019` (`S5.8`). La última re-medición completa de inventario y runtime sigue siendo la del 2026-08-10 sobre `origin/master@b360c8a`; se conserva como evidencia histórica y no se presenta como una medición fresca. En cambio, las pruebas sí se ejecutaron sobre los bytes exactos del snapshot local actual: focused `42/0/250` y suite completa `610/0/3618` en 39 archivos. No se re-ejecutaron `diagnose`, hashes instalados ni conteos globales.
 >
 > **Nota de vocabulario (2026-08-01, vigente):** la columna `Lane` no nombra dos productos. Tras la [unificación](release-chain.md), `installable-v1` y `autonomous-v2` son afinidad de trabajo. El corte real en código es `bin/torre`, que rechaza capacidades con `CT_V2_ONLY` como flag opt-in apagado por defecto.
 
@@ -81,7 +81,7 @@ El corte de runtime resolvió *qué* código corre. No resolvió *cuánto*.
 | `continuation/` | 35 | — |
 | `jornada/` | 23 | — |
 
-**En la medición del 2026-08-10, el 44% del código de producto no viajaba en el artefacto instalable.** El tip actual agregó contratos de `S5.7` fuera del payload y no modificó su cierre de archivos; la brecha sigue abierta, pero esta reconciliación no inventa un porcentaje fresco.
+**En la medición del 2026-08-10, el 44% del código de producto no viajaba en el artefacto instalable.** El tip local actual agregó contratos de `S5.7` y la adopción de `S5.8` fuera del payload, sin modificar su cierre de archivos; la brecha sigue abierta, pero esta reconciliación no inventa un porcentaje fresco.
 
 ### Observación estructural: los módulos del producto son los más chicos
 
@@ -104,13 +104,14 @@ Ratio documentación : código de producto = **2,2 : 1**.
 
 ## Estado de las pruebas
 
-Última corrida medida el 2026-08-10 en `Worktrees/s5-6` sobre `origin/master@b360c8a`, Torre desarmada. No se volvió a ejecutar para `3db3c121`:
+Corrida actual sobre los bytes exactos integrados en `master@6bb7019` (tree `1d34341`), antes de este cierre documental:
 
 ```
-bun test → 588 pass · 0 fail · 3452 expect() · 38 archivos · 77,96 s
+bun test test/main-store.test.mjs → 42 pass · 0 fail · 250 expect()
+bun test → 610 pass · 0 fail · 3618 expect() · 39 archivos
 ```
 
-Coincide con la evidencia de verificación de `S5.6`. Precondiciones confirmadas y aún sin runbook:
+No es evidencia de publicación: `origin/master` continúa en `3db3c121`. La medición histórica de `S5.6` sobre `origin/master@b360c8a` fue `588/0/3452` en 38 archivos y se conserva en su sección; no debe confundirse con la corrida actual. Precondiciones confirmadas y aún sin runbook:
 
 1. **La Torre debe estar desarmada.** Con `.git/control-tower/ACTIVE` presente, los dos `P0 frozen snapshot restore` cortan con `Control Tower must be OFF`. Es el fail-closed funcionando, no una regresión.
 2. **El runner es `bun`, no `node`.**
@@ -147,7 +148,15 @@ Ratio documentación : código = **4,9 : 1** para una biblioteca pura de 282 lí
 
 ✅ COMPLETO y publicado en `origin/master@3db3c121`. El límite de comportamiento es `c822f43`: agrega `contracts/parked-decision.mjs`, dos schemas versionados y sus entradas de registro, validación, fixtures y pruebas. Git verifica que esos paths están en el tip remoto; la evidencia histórica de cierre registra focused `85/0/391` y suite completa `598/0/3495`, pero esta reconciliación no volvió a ejecutar esos comandos.
 
-El corte es una biblioteca de contratos pura: no conecta Telegram, no persiste respuestas en el authorization store y no modifica el payload instalable. Esa adopción pertenece a `S5.8`, cuyo candidato sigue 🔵 EN CURSO y sin resultado posterior a la decisión `CT_AUTH_RESPONSE_BINDING` del maintainer.
+El corte es una biblioteca de contratos pura: no conecta Telegram, no persiste respuestas en el authorization store y no modifica el payload instalable. Esa adopción pertenece a `S5.8`, ahora ✅ COMPLETO e integrada sólo en el `master` local `6bb7019`; el tip remoto todavía no contiene ese cierre.
+
+### `S1.12` — reconciliación independiente P8
+
+✅ COMPLETO e integrada localmente mediante `5823ed6`, dentro de `master@6bb7019`. Los cuatro blobs coinciden con el candidato congelado y pasaron los checks de recibo, `ArtifactRef` y hashes. Es un corte documental de reconciliación: no agrega runtime. `origin/master` sigue en `3db3c121`, así que el cierre no está publicado.
+
+### `S5.8` — binding terminal bajo autoridad canónica
+
+✅ COMPLETO e integrada localmente mediante `6bb7019`. Los ocho blobs coinciden con el candidato congelado; la implementación tiene 375 líneas authored y el `verify-report` registra PASS. Verificación del snapshot integrado: focused `42/0/250`; suite completa `610/0/3618` en 39 archivos. Extiende el authorization store canónico sin conectar Telegram, implementar `S5.5` ni modificar el payload instalable. El push remoto y Notion siguen pendientes.
 
 ## Brechas reales
 
@@ -159,7 +168,7 @@ El corte es una biblioteca de contratos pura: no conecta Telegram, no persiste r
 | 4 | Se documentaba más de lo que se construía | 🔴 **REABIERTA.** Ver abajo. La corrección declarada el 2026-07-31 no se sostuvo. |
 | 5 | El registro de la Torre no coincide con los worktrees reales | ✅ **CERRADA el 2026-08-11.** Saneada en la misma sesión que la observó. Ver abajo. |
 | 6 | El 44% del código de producto no se despliega | **Nueva y estructural.** No es que falte una Sesión que lo empaquete: el contrato del payload lo **prohíbe**. Ver abajo. |
-| 7 | La Torre no puede supervisar un repositorio sin estar armada dentro de ese repositorio | **Nueva.** Bloquea el modo nocturno en los dos repositorios en uso. Ver abajo. |
+| 7 | La Torre no puede supervisar un repositorio sin estar armada dentro de ese repositorio | **Abierta y enumerada en P10.** `S10.2` cubre la supervisión y `S10.1` la ejecución sellada relacionada; ambas están 🔴 BLOQUEADO por decisiones que siempre escalan. Ver abajo. |
 
 ## Brecha 6 — el payload rechaza estructuralmente el resto del código
 
@@ -186,7 +195,7 @@ Con la Torre desarmada, el sello no arranca (`NOT_READY`). Con la Torre armada, 
 
 `decision-register.md:52` registra este bloqueo como **específico de `control-tower`** («para cualquier otro proyecto, sellar con la Torre armada funciona»). Esa afirmación **no se sostiene**: `remote-control` falla también, por un mecanismo distinto y deliberado.
 
-El requisito real que se deriva: **la Torre necesita poder supervisar un repositorio sin estar armada dentro de ese repositorio.** No existe Sesión enumerada que lo cubra.
+El requisito real que se deriva: **la Torre necesita poder supervisar un repositorio sin estar armada dentro de ese repositorio.** P10 lo enumera en `S10.2`, con `S10.1` como responsabilidad relacionada de ejecución sellada. La brecha sigue abierta: `S10.1` está 🔴 BLOQUEADO por la decisión sobre ejecutar antes o sin supervisión; `S10.2` está 🔴 BLOQUEADO por la arquitectura visible/de seguridad, la evidencia contradictoria del interlock de `remote-control` y la ausencia de un `Área` aprobada.
 
 ## Brecha 4 — reabierta
 
@@ -264,7 +273,7 @@ No se corrigió nada: desregistrar agentes y purgar cola son mutaciones del regi
 
 ## Deriva de checkout observada
 
-La deriva histórica de 11 commits observada el 2026-08-10 quedó cerrada. El 2026-08-12, `Main`, `master` y `origin/master` resuelven al mismo SHA `3db3c121d48a07d7696afe6a88de044f30ea4695`. Este dato sólo prueba alineación Git; no vuelve frescas las mediciones de runtime o tests del snapshot anterior.
+La deriva histórica de 11 commits observada el 2026-08-10 quedó cerrada en su momento. El 2026-08-12, `Main` y `master` resuelven al SHA local `6bb7019c66cf60e9ac874f05a176f946f9bd4589`, mientras `origin/master` permanece en `3db3c121d48a07d7696afe6a88de044f30ea4695`; la diferencia son tres commits locales todavía no publicados. Este dato prueba el estado Git actual. Las pruebas `42/0/250` y `610/0/3618` sí pertenecen a los bytes integrados actuales; las mediciones de runtime, payload e inventario siguen siendo históricas.
 
 ## Qué NO mide este documento
 
