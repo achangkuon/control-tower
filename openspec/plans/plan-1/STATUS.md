@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Legacy P7 depende sólo de legacy P6; P8 depende de legacy P7 reconciliado e integrado. Change A no es dependencia de ninguno. |
 | Outputs | Recovery/rollback fail-closed; controller host-neutral y adapter OpenCode; adapter Pi; adapter Claude opt-in; runtime versionado; verificación CT-only. |
-| Roadmap | `S1.11` está ✅ COMPLETO en el tip integrado local; `S1.12` queda 🟢 LISTO. Después sigue la cadena explícita `S1.12 → S1.13 → S1.14 → S1.15 → S1.16`; `S1.16` permanece 📋 PLANIFICADO. Legacy P9–P11 esperan límites de PR demostrables. |
+| Roadmap | `S1.11` está ✅ COMPLETO y publicado en `origin/master@3db3c121`. `S1.12` está 🔵 EN CURSO en un candidato documental pausado; después sigue la cadena explícita `S1.12 → S1.13 → S1.14 → S1.15 → S1.16`. `S1.17` es una Sesión downstream distinta y sigue 🔴 BLOQUEADO. Legacy P9–P11 esperan límites de PR demostrables. |
 | Referencias | [`autonomous-continuation-control-tower`](../../changes/autonomous-continuation-control-tower/), [`p7-host-neutral-loop-opencode-adapter`](../../changes/p7-host-neutral-loop-opencode-adapter/), [`p8-slice-planning`](../../changes/p8-slice-planning/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). |
 
 Legacy P6 se integró mediante PRs #38–#45 y cerró en `e16d94b`. Su [`apply-progress.md`](../../changes/autonomous-continuation-control-tower/apply-progress.md) es evidencia histórica y permanece sin reescritura.
@@ -30,7 +30,7 @@ Legacy P6 se integró mediante PRs #38–#45 y cerró en `e16d94b`. Su [`apply-p
 
 ## Sesión 1.11 — Reconciliación independiente legacy P7
 
-**Estado:** ✅ COMPLETO — las tres Tareas quedaron cerradas en `a1dce22`: existe el registro P7, los chequeos binarios están documentados y el gate acotado fue aprobado por el maintainer. El commit está integrado en el tip local `a1dce220dae594006bda0722d0bdb640cf4b9be7` (tree `061de580c92feb577033c4255ce629267cbc7d62`), pero todavía no hay prueba de entrega remota. Este cierre queda reconciliado como parte del mismo commit documental y push atómico futuro; no afirma que ese push ya ocurrió.
+**Estado:** ✅ COMPLETO — las tres Tareas quedaron cerradas en `a1dce22`: existe el registro P7, los chequeos binarios están documentados y el gate acotado fue aprobado por el maintainer. El cierre está publicado en `origin/master@3db3c121d48a07d7696afe6a88de044f30ea4695`; `a1dce22` es ancestro de ese tip remoto.
 
 **Depende de:** `S1.9` ✅, `S1.10` ✅
 **Área:** `openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md` y sus enmiendas de gate
@@ -45,7 +45,7 @@ La definición canónica de esta Sesión, incluidos `M1.11.1` y `T1.11.1.1`–`T
 
 ## Sesión 1.12 — Reconciliación independiente P8
 
-**Estado:** 🟢 LISTO — `S1.11` está ✅ COMPLETO en el tip integrado local y no queda otro prerrequisito declarado. La habilitación y el cierre de `S1.11` se entregan juntos en el futuro push atómico; la entrega remota todavía no está probada.
+**Estado:** 🔵 EN CURSO — `S1.11` está ✅ COMPLETO en remoto y el candidato acotado existe en `Worktrees/s1-12`. El checkpoint preserva sólo `tasks.md`, `STATUS.md`, `reconciliation.md` y `persistence-receipt.json`; no hay runtime ni cierre publicado de `S1.12`. Los siete checks documentales aparecen satisfechos dentro del candidato, pero una Sesión cuenta como ✅ COMPLETO sólo después de integrarse y verificarse.
 
 **Depende de:** `S1.11` ✅
 **Área:** `openspec/changes/p8-slice-planning/reconciliation.md`, `STATUS` de P8 y el recibo de persistencia
@@ -62,7 +62,7 @@ La definición canónica de esta Sesión, incluidos `M1.12.1` y `T1.12.1.1`–`T
 
 ```mermaid
 graph LR
-  S112["S1.12 reconciliación P8 · 🟢"] --> S113["S1.13 lifecycle · 📋"]
+  S112["S1.12 reconciliación P8 · 🔵"] --> S113["S1.13 lifecycle · 📋"]
   S113 --> S114["S1.14 polling · 📋"]
   S114 --> S115["S1.15 conformidad · 📋"]
   S115 --> S116["S1.16 transporte · 📋"]
@@ -81,7 +81,7 @@ graph LR
 
 | ID | Resultado | Estado | Ref |
 |---|---|---|---|
-| S1.17 | Gate de reconciliación y pruebas RED | 🔴 BLOQUEADO | [`tasks.md`](../../changes/p8-slice-planning/tasks.md) |
+| S1.17 | Gate de reconciliación y pruebas RED | 🔴 BLOQUEADO — `T1.17.1.1`–`.2` pasaron; `.3` carece de `assignment_id`, `session_id` y capacidad runtime reales; `.4`–`.5` no iniciaron | [`tasks.md`](../../changes/p8-slice-planning/tasks.md) |
 | S1.18 | Pi adapter GREEN | 📋 PLANIFICADO | [`tasks.md`](../../changes/p8-slice-planning/tasks.md) |
 | S1.19 | Refactor y regresión | 📋 PLANIFICADO | [`tasks.md`](../../changes/p8-slice-planning/tasks.md) |
 
@@ -90,7 +90,7 @@ graph LR
 | ID | Estado | Ruta | Motivo |
 |---|---|---|---|
 | `S1.16` | 📋 PLANIFICADO | `design-tasks` | El registro aprobado de `S1.11` ya existe, pero la cadena autorizada exige cerrar antes `S1.12 → S1.13 → S1.14 → S1.15`. Luego se elige el seam de transporte no consumidor desde ese registro, sin inventarlo. |
-| `S1.17` | 🔴 BLOQUEADO | `direct` al destrabar | `p8-slice-planning/tasks.md:31` exige `S1.12` y legacy P7 reconciliado e integrado. Al destrabar sólo aterriza pruebas RED contra contratos ya aprobados. |
+| `S1.17` | 🔴 BLOQUEADO | `direct` al destrabar | Es downstream y distinta de `S1.12`. `T1.17.1.1`–`.2` pasaron; `.3` no puede validar un assignment-bound worktree sin `assignment_id`, `session_id` y capacidad runtime reales; `.4`–`.5` no empezaron. Al destrabar sólo aterriza pruebas RED contra contratos ya aprobados. |
 | `S1.18` | 📋 PLANIFICADO | `direct` | Depende de `S1.17`. Implementación GREEN con alcance exacto (`adapters/pi/`), comando `bun test test/host-adapters.test.mjs` y rollback declarados. |
 | `S1.19` | 📋 PLANIFICADO | `direct` | Depende de `S1.18`. Refactor de seams y regresión compartida; verificación sólo por fixtures y rollback sin schema. |
 
@@ -106,6 +106,6 @@ graph LR
 
 Por lo tanto `S1.11`, `S1.12`, `S1.13`, `S1.14` y `S1.15` **entran en la cadena de release**: sin ellas, `S1.16` y `S1.17` no pueden arrancar, y sin ésas no hay `S4.2`–`S4.4` ni `S7.1`.
 
-**Reconciliado el 2026-08-11:** `S1.11` queda ✅ COMPLETO en el tip integrado local y `S1.12` pasa a 🟢 LISTO. La cadena posterior queda formalizada como `S1.12 → S1.13 → S1.14 → S1.15 → S1.16`; por eso `S1.16` permanece 📋 PLANIFICADO. La entrega remota de este cierre todavía no está probada: los estados se publicarán junto con los commits integrados en el mismo push atómico futuro.
+**Reconciliado el 2026-08-12:** `S1.11` está ✅ COMPLETO en `origin/master@3db3c121`; `S1.12` está 🔵 EN CURSO en su candidato documental y no se contabiliza como cerrada. La cadena posterior queda formalizada como `S1.12 → S1.13 → S1.14 → S1.15 → S1.16`; por eso `S1.13`–`S1.16` permanecen 📋 PLANIFICADO. `S1.17` conserva su bloqueo propio y no se vuelve elegible por confundir el checkpoint de `S1.12` con cierre publicado.
 
 Legacy P9–P11 todavía no tienen límites de PR demostrables. Sus responsabilidades se preservan sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).

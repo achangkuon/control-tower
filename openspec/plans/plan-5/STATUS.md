@@ -19,7 +19,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1`, y la cadena contractual `S5.4 → S5.6 → S5.7 → S5.8 → S5.5`. |
 | Outputs | F: authorization store, Telegram, validación Git/PR/check/SHA, entrega idempotente y post-check. G: planning horizon, reconciliación, apply/verify, Binding Delta y continuación del siguiente `slice_id`. Más el ruteo de escalamiento de `S5.4`, los contratos canónicos prerrequisito de `S5.6`–`S5.8` y la planificación diferible de `S5.5`. |
-| Roadmap | `S5.1`, `S5.4`, `S5.6` y `S5.7` están ✅ COMPLETO; `S5.7` está integrado en el tip local y se publicará con este cierre documental en el mismo push atómico futuro. `S5.8` pasa a 🟢 LISTO porque su única dependencia cerró y no conserva decisiones abiertas; `S5.5` continúa 📋 PLANIFICADO por grafo. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
+| Roadmap | `S5.1`, `S5.4`, `S5.6` y `S5.7` están ✅ COMPLETO; `S5.7` está publicado en `origin/master@3db3c121`. `S5.8` está 🔵 EN CURSO en un candidato pausado con `41 pass / 1 fail`; el maintainer fijó `CT_AUTH_RESPONSE_BINDING` como contrato correcto, pero todavía no existe una corrida posterior. `S5.5` continúa 📋 PLANIFICADO por grafo. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
 
 ## Grafo de dependencias
@@ -32,7 +32,7 @@ graph LR
   S51 --> S54["S5.4 ruteo · ✅"]
   S54 --> S56["S5.6 snapshot de Sesión · ✅"]
   S56 --> S57["S5.7 decisión/respuesta · ✅"]
-  S57 --> S58["S5.8 binding de respuesta · 🟢"]
+  S57 --> S58["S5.8 binding de respuesta · 🔵"]
   S58 --> S55["S5.5 continuación diferible · 📋"]
   S41["S4.1 fence hosts · ✅"] --> S52["S5.2 entrega · 🔴"]
   S33 --> S52
@@ -500,7 +500,7 @@ Sesiones sin decisión explícita.
 
 ## Sesión 5.7 — Contratos canónicos de decisión estacionada y respuesta
 
-**Estado:** ✅ COMPLETO — las nueve Tareas y los diez criterios pasaron sobre los bytes finales integrados en `c822f43ac570ac4f3d80bfe8f3eca50ca032acd9`. El cierre se reconciliará en el mismo commit documental y push atómico futuro que publique el tip local integrado; todavía no existe prueba de entrega remota.
+**Estado:** ✅ COMPLETO — las nueve Tareas y los diez criterios pasaron sobre los bytes finales integrados en `c822f43ac570ac4f3d80bfe8f3eca50ca032acd9`. El cierre está publicado en `origin/master@3db3c121d48a07d7696afe6a88de044f30ea4695`; `c822f43` es ancestro de ese tip remoto.
 
 **Depende de:** `S5.6`
 
@@ -559,7 +559,7 @@ Sesiones sin decisión explícita.
 
 ## Sesión 5.8 — Binding de opción seleccionada en la autoridad canónica
 
-**Estado:** 🟢 LISTO — `S5.7` está ✅ COMPLETO en el tip integrado local; su única decisión `escala` está resuelta por Option B y las restantes son `derivable`. No queda otra dependencia ni decisión abierta. La entrega remota de `S5.7` y de este cambio de estado todavía no está probada y ocurrirá en el mismo push atómico futuro.
+**Estado:** 🔵 EN CURSO — `S5.7` está ✅ COMPLETO en remoto y el candidato acotado modifica sólo `main-store/store.mjs` y `test/main-store.test.mjs`, además de artefactos locales del cambio. El último resultado enfocado preservado es `41 pass / 1 fail / 247 expectations`: la implementación devolvió `CT_AUTH_RESPONSE_BINDING` donde el test esperaba `CT_AUTH_INVALID`. El maintainer seleccionó `CT_AUTH_RESPONSE_BINDING` como contrato correcto y aprobó el brief acotado, pero aún no existe una corrida posterior a esa decisión; por lo tanto `S5.8` no está completa.
 
 **Depende de:** `S5.7` ✅
 

@@ -1,20 +1,20 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-11 contra el tip integrado local `a1dce220dae594006bda0722d0bdb640cf4b9be7` (tree `061de580c92feb577033c4255ce629267cbc7d62`). La entrega remota todavía no está probada.
+> Última reconciliación: 2026-08-12 contra `origin/master@3db3c121d48a07d7696afe6a88de044f30ea4695`, idéntico al `master` local.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md).
 
 ## 📍 Punto de retoma
 
-`S1.11` y `S5.7` quedan ✅ COMPLETO sobre el tip integrado local; este cierre sólo se vuelve entrega publicada cuando los commits integrados y este commit documental salgan juntos en el mismo push atómico futuro. No hay prueba de entrega remota todavía.
+`S1.11` y `S5.7` están ✅ COMPLETO y publicados en `origin/master@3db3c121`; ya no existe deriva entre el cierre local y la entrega remota de esas Sesiones.
 
-Los próximos nodos ejecutables después de ese push son `S1.12` y `S5.8`, ambos 🟢 LISTO, con `Área` y `Recurso` disjuntos. En P1 rige la cadena exacta `S1.12 → S1.13 → S1.14 → S1.15 → S1.16`; `S1.16` permanece 📋 PLANIFICADO.
+`S1.12` y `S5.8` están 🔵 EN CURSO en candidatos separados y pausados. `S1.12` conserva sólo artefactos de reconciliación sin publicar; `S5.8` conserva el checkpoint enfocado `41 pass / 1 fail`, y el maintainer ya fijó `CT_AUTH_RESPONSE_BINDING` como contrato correcto, pero todavía no existe una corrida posterior a esa decisión.
 
-`S5.2` sigue 🔴 BLOQUEADO por los hallazgos 1, 3 y 5 del recheck 8193; `S5.3` conserva el bloqueo transitivo. `S8.7` sigue 🔴 BLOQUEADO por el inicializador confiable de producción pendiente.
+`S1.17` sigue 🔴 BLOQUEADO y separado de `S1.12`: `T1.17.1.1`–`.2` pasaron, `.3` carece de `assignment_id`, `session_id` y capacidad runtime reales, y `.4`–`.5` no empezaron. La cadena `S1.12 → S1.13 → S1.14 → S1.15 → S1.16` conserva sus dependencias explícitas.
 
-Siguen escaladas al maintainer la ubicación de `S3.5`/`S3.6`, el destino del candidato estacionado de `S5.2` y el origen de `trustedBindingProvider` en producción para `S8.7`.
+`S5.2`/`S5.3` y `S8.7` siguen 🔴 BLOQUEADO por sus evidencias ya registradas.
 
-Notion queda diferido hasta que exista un push remoto probado; este cierre local no lo modifica.
+Este trabajo reconcilia documentación sin cerrar una Sesión nueva; Notion queda fuera de alcance.
 
 ## Granularidad
 

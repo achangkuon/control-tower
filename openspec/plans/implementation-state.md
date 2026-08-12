@@ -2,7 +2,7 @@
 
 > Este documento mide **código**, no planificación. El [master-index](master-index.md) dice qué está planificado y qué Sesiones cerraron; este archivo dice qué existe, qué corre y qué está desplegado.
 >
-> **Medición global: 2026-08-10 sobre `origin/master@b360c8a`.** Esta es la primera re-medición completa desde el 2026-07-31. Reemplaza las cifras históricas y los cortes acotados de `S5.4` y `S5.6`. Inventario de módulos, suite de pruebas, estado de despliegue y las cinco brechas fueron re-observados directamente, no heredados.
+> **Snapshot fuente actual: 2026-08-12 sobre `origin/master@3db3c121d48a07d7696afe6a88de044f30ea4695`, idéntico al `master` local.** Git confirma que `S1.11` y `S5.7` están publicados en ese tip. La última re-medición completa de inventario, runtime y suite sigue siendo la del 2026-08-10 sobre `origin/master@b360c8a`; se conserva como evidencia histórica y no se presenta como una corrida fresca. Entre ambos snapshots se integraron el contrato de `S5.7` y documentación, sin cambios en `install/**`, `bin/torre` ni `core.mjs`. No se reran tests, `diagnose`, hashes instalados ni conteos globales para esta reconciliación.
 >
 > **Nota de vocabulario (2026-08-01, vigente):** la columna `Lane` no nombra dos productos. Tras la [unificación](release-chain.md), `installable-v1` y `autonomous-v2` son afinidad de trabajo. El corte real en código es `bin/torre`, que rechaza capacidades con `CT_V2_ONLY` como flag opt-in apagado por defecto.
 
@@ -10,7 +10,7 @@
 
 **La afirmación «lo que corre a diario no es el código de este repositorio» quedó obsoleta el 2026-08-03 y este documento la sostuvo una semana de más.**
 
-Verificado el 2026-08-10:
+Verificado el 2026-08-10 y no re-observado en esta reconciliación:
 
 | Comprobación | Resultado |
 |---|---|
@@ -48,7 +48,7 @@ El corte de runtime resolvió *qué* código corre. No resolvió *cuánto*.
 
 `RUNTIME_PAYLOAD_FILES` (en `install/runtime-payload.mjs`) define un cierre cerrado de seis archivos. Todo lo demás queda fuera del artefacto instalable.
 
-**Desplegado — 5.338 líneas, 6 archivos**
+**Desplegado — 5.338 líneas, 6 archivos (medición 2026-08-10 sobre `b360c8a`)**
 
 | Archivo | Líneas |
 |---|---:|
@@ -59,7 +59,7 @@ El corte de runtime resolvió *qué* código corre. No resolvió *cuánto*.
 | `install/active-pointer.mjs` | 81 |
 | `install/version-store.mjs` | 52 |
 
-**No desplegado — 4.141 líneas, 17 superficies**
+**No desplegado — 4.141 líneas, 17 superficies (medición 2026-08-10 sobre `b360c8a`; no recomputada tras `S5.7`)**
 
 | Módulo | Líneas | Estado |
 |---|---:|---|
@@ -81,7 +81,7 @@ El corte de runtime resolvió *qué* código corre. No resolvió *cuánto*.
 | `continuation/` | 35 | — |
 | `jornada/` | 23 | — |
 
-**El 44% del código de producto no viaja en el artefacto instalable.**
+**En la medición del 2026-08-10, el 44% del código de producto no viajaba en el artefacto instalable.** El tip actual agregó contratos de `S5.7` fuera del payload y no modificó su cierre de archivos; la brecha sigue abierta, pero esta reconciliación no inventa un porcentaje fresco.
 
 ### Observación estructural: los módulos del producto son los más chicos
 
@@ -91,7 +91,7 @@ Por contraste, `core.mjs` — el sustrato monolítico que ningún lane reclama �
 
 Esta es la asimetría que este documento debe reportar: **el sustrato está desplegado y el producto no está construido.**
 
-## Inventario agregado
+## Inventario agregado — última medición completa: `b360c8a`
 
 | Superficie | Líneas | Archivos |
 |---|---:|---:|
@@ -104,7 +104,7 @@ Ratio documentación : código de producto = **2,2 : 1**.
 
 ## Estado de las pruebas
 
-Medido el 2026-08-10 en `Worktrees/s5-6` sobre `origin/master@b360c8a`, Torre desarmada:
+Última corrida medida el 2026-08-10 en `Worktrees/s5-6` sobre `origin/master@b360c8a`, Torre desarmada. No se volvió a ejecutar para `3db3c121`:
 
 ```
 bun test → 588 pass · 0 fail · 3452 expect() · 38 archivos · 77,96 s
@@ -142,6 +142,12 @@ Verificación: 31/31 escenarios, 10/10 Tareas, 10/10 criterios.
 | Documentación `openspec/` | ~1.395 |
 
 Ratio documentación : código = **4,9 : 1** para una biblioteca pura de 282 líneas sin consumidores.
+
+### `S5.7` — contratos canónicos de decisión estacionada y respuesta
+
+✅ COMPLETO y publicado en `origin/master@3db3c121`. El límite de comportamiento es `c822f43`: agrega `contracts/parked-decision.mjs`, dos schemas versionados y sus entradas de registro, validación, fixtures y pruebas. Git verifica que esos paths están en el tip remoto; la evidencia histórica de cierre registra focused `85/0/391` y suite completa `598/0/3495`, pero esta reconciliación no volvió a ejecutar esos comandos.
+
+El corte es una biblioteca de contratos pura: no conecta Telegram, no persiste respuestas en el authorization store y no modifica el payload instalable. Esa adopción pertenece a `S5.8`, cuyo candidato sigue 🔵 EN CURSO y sin resultado posterior a la decisión `CT_AUTH_RESPONSE_BINDING` del maintainer.
 
 ## Brechas reales
 
@@ -258,7 +264,7 @@ No se corrigió nada: desregistrar agentes y purgar cola son mutaciones del regi
 
 ## Deriva de checkout observada
 
-`Main` está **11 commits atrás** de `origin/master` al momento de esta medición. Los 11 son la Sesión `S5.6` completa, publicada el 2026-08-10. Cualquier medición o brief tomado desde `Main` sin actualizar reporta un estado anterior a `S5.6`.
+La deriva histórica de 11 commits observada el 2026-08-10 quedó cerrada. El 2026-08-12, `Main`, `master` y `origin/master` resuelven al mismo SHA `3db3c121d48a07d7696afe6a88de044f30ea4695`. Este dato sólo prueba alineación Git; no vuelve frescas las mediciones de runtime o tests del snapshot anterior.
 
 ## Qué NO mide este documento
 

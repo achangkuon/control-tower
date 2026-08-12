@@ -53,20 +53,26 @@ graph LR
   S33 --> S34["S3.4 ciclo de vida Jornada · ✅"]
   S34 --> S51["S5.1 candidate contracts · ✅"]
   S51 --> S41["S4.1 fence hosts · ✅"]
-  S41 --> S42["S4.2 raíz visible · 🔴"]
-  S116["S1.16 OpenCode wake · 🔴"] --> S42
+  S111["S1.11 reconciliación P7 · ✅"] --> S112["S1.12 reconciliación P8 · 🔵"]
+  S112 --> S113["S1.13 lifecycle · 📋"]
+  S113 --> S114["S1.14 polling · 📋"]
+  S114 --> S115["S1.15 conformidad · 📋"]
+  S115 --> S116["S1.16 OpenCode wake · 📋"]
+  S116 --> S42["S4.2 raíz visible · 🔴"]
+  S41 --> S42
   S42 --> S43["S4.3 liveness · 🔴"]
+  S112 --> S117["S1.17 Pi RED · 🔴"]
+  S117 --> S118["S1.18 Pi GREEN · 📋"]
+  S118 --> S119["S1.19 Pi refactor · 📋"]
   S43 --> S44["S4.4 failover · 🔴"]
-  S117["S1.17 Pi RED · 🔴"] --> S44
-  S118["S1.18 Pi GREEN · 📋"] --> S44
-  S119["S1.19 Pi refactor · 📋"] --> S44
+  S119 --> S44
   S41 --> S52["S5.2 entrega idempotente · 🔴"]
   S33 --> S52
   S52 --> S53["S5.3 continuación · 🔴"]
   S51 --> S54["S5.4 ruteo de escalamiento · ✅"]
   S54 --> S56["S5.6 snapshot de Sesión · ✅"]
-  S56 --> S57["S5.7 decisión/respuesta · 🟢"]
-  S57 --> S58["S5.8 binding de respuesta · 📋"]
+  S56 --> S57["S5.7 decisión/respuesta · ✅"]
+  S57 --> S58["S5.8 binding de respuesta · 🔵"]
   S58 --> S55["S5.5 decisión estacionada · 📋"]
   S51 --> S87
   S53 --> S71["S7.1 conformidad · 📋"]
@@ -85,15 +91,24 @@ graph LR
 | ✅ | `S3.4` | Persistencia y ciclo de vida de Jornada | ✅ COMPLETO | `S3.2` ✅, `S3.3` ✅; implementación `b6dda84`, 11/11 criterios verificados por el planner contra el SHA integrado. **Cierra P3 entero** |
 | ✅ | `S5.1` | Candidate contracts, authorization store y frontera Support | ✅ COMPLETO | `S3.2` ✅, `S3.3` ✅, `S3.4` ✅; candidato `c7c2472`, 27/27 criterios y 537/537 tests |
 | ✅ | `S4.1` | Hosts y línea exclusiva | ✅ COMPLETO | `S3.1` ✅, `S3.2` ✅, `S5.1` ✅; cierre técnico `1f5fea7`, 19/19 criterios |
-| — | `S4.2` | Lanzamiento visible de raíz OpenCode | 🔴 BLOQUEADO | `S4.1` ✅, `S1.16` 🔴; ruta `design-tasks`, interfaz Herdr/OpenCode pendiente |
-| — | `S4.3` | Inspección, liveness y rehidratación segura | 🔴 BLOQUEADO | `S4.2` 🔴, `S1.16` 🔴; ruta `design-tasks` |
-| — | `S4.4` | Enforzamiento de epoch y failover exclusivo | 🔴 BLOQUEADO | `S4.3` 🔴, `S1.17` 🔴, `S1.18`/`S1.19` 📋; ruta `full-sdd` |
+| ✅ | `S1.11` | Reconciliación independiente legacy P7 | ✅ COMPLETO | `S1.9` ✅, `S1.10` ✅; publicado en `origin/master@3db3c121` |
+| ▶ | `S1.12` | Reconciliación independiente P8 | 🔵 EN CURSO | `S1.11` ✅; candidato documental pausado, sin cierre publicado |
+| — | `S1.13` | Root lifecycle e invalidación sincrónica | 📋 PLANIFICADO | `S1.12` 🔵 |
+| — | `S1.14` | Polling y wake safety | 📋 PLANIFICADO | `S1.13` 📋 |
+| — | `S1.15` | Conformidad lifecycle OpenCode | 📋 PLANIFICADO | `S1.14` 📋 |
+| — | `S1.16` | Transporte reconciliado y composición wake | 📋 PLANIFICADO | `S1.15` 📋 |
+| — | `S4.2` | Lanzamiento visible de raíz OpenCode | 🔴 BLOQUEADO | `S4.1` ✅, `S1.16` 📋; ruta `design-tasks`, interfaz Herdr/OpenCode pendiente |
+| — | `S4.3` | Inspección, liveness y rehidratación segura | 🔴 BLOQUEADO | `S4.2` 🔴, `S1.16` 📋; ruta `design-tasks` |
+| — | `S1.17` | Gate de reconciliación y pruebas RED Pi | 🔴 BLOQUEADO | `S1.12` 🔵; `T1.17.1.1`–`.2` pasaron, `.3` carece de identidades/capacidad runtime reales, `.4`–`.5` no iniciaron |
+| — | `S1.18` | Pi adapter GREEN | 📋 PLANIFICADO | `S1.17` 🔴 |
+| — | `S1.19` | Refactor y regresión Pi | 📋 PLANIFICADO | `S1.18` 📋 |
+| — | `S4.4` | Enforzamiento de epoch y failover exclusivo | 🔴 BLOQUEADO | `S4.3` 🔴, `S1.19` 📋; ruta `full-sdd` |
 | ✅ | `S5.4` | Ruteo de escalamiento fuera/en casa | ✅ COMPLETO | `S5.1` ✅; publicado en `origin/master` mediante `976b8d0`, `75549a7`, `f9f2869` y reconciliado en `d114677`; 9/9 Tareas, 15/15 criterios. **No** depende de `S8.7` |
 | — | `S5.2` | Entrega idempotente y post-check | 🔴 BLOQUEADO | `S4.1` ✅, `S3.3` ✅; recheck 8193 mantiene abiertos 1/3/5 y decisión 8195 estaciona el candidato NOT READY |
 | ✅ | `S5.6` | Contrato canónico de snapshot de Sesión | ✅ COMPLETO | `S5.4` ✅; publicado en `origin/master@75ddcf9`, 10/10 Tareas, 10/10 criterios, focused 75/0/348 y full 588/0/3452 |
-| ▶ | `S5.7` | Contratos canónicos de decisión estacionada y respuesta | 🟢 LISTO | `S5.6` ✅; route `full-sdd` |
-| — | `S5.8` | Binding de opción seleccionada en autoridad canónica | 📋 PLANIFICADO | `S5.7`; Option B resuelta; route `full-sdd` |
-| — | `S5.5` | Decisión estacionada y continuación independiente | 📋 PLANIFICADO | `S5.8` |
+| ✅ | `S5.7` | Contratos canónicos de decisión estacionada y respuesta | ✅ COMPLETO | `S5.6` ✅; publicado en `origin/master@3db3c121` |
+| ▶ | `S5.8` | Binding de opción seleccionada en autoridad canónica | 🔵 EN CURSO | `S5.7` ✅; checkpoint `41 pass / 1 fail`; `CT_AUTH_RESPONSE_BINDING` aprobado, sin nueva corrida |
+| — | `S5.5` | Decisión estacionada y continuación independiente | 📋 PLANIFICADO | `S5.8` 🔵 |
 | — | `S5.3` | Continuación | 🔴 BLOQUEADO | Bloqueo transitivo por `S5.2` |
 | — | `S8.7` | Puente Hermes/Telegram | 🔴 BLOQUEADO | Dependencias propias ✅ y decisiones Telegram resueltas; bloquea el inicializador confiable de producción pendiente |
 | 4 | `S7.1` | Conformidad de release | 📋 PLANIFICADO | `S4.4`, `S5.3`, `S8.7`, `S5.5` |
@@ -105,9 +120,9 @@ graph LR
 >
 > **Resuelta por el maintainer: gana el grafo.** `S7.1` depende de `S4.4`; la rama de
 > recuperación y failover entra en la cadena de release. La tabla se corrige para coincidir.
-> La decisión fue explícita —construir las catorce Sesiones restantes— y no una derivación.
+> La decisión histórica fue explícita —construir las catorce Sesiones que ese corte enumeraba como restantes— y no una derivación; la reconciliación actual agrega los prerrequisitos omitidos sin reescribir aquella evidencia.
 
-**Veinte Sesiones · 10 cerradas.** `S5.6`–`S5.8` agregan tres unidades revisables y
+**Veintinueve Sesiones · 12 cerradas (41%).** Este denominador enumera los 20 nodos que ya figuraban en la tabla más `S1.11`–`S1.19`, exigidas por el grafo declarado de P1. El numerador suma los diez cierres previos, `S1.11` y `S5.7`; `S1.12` y `S5.8` no reciben crédito parcial. Esta métrica mide sólo la cadena de release y no reemplaza el `21/40` de planificación del [master-index](master-index.md). `S5.6`–`S5.8` agregan tres unidades revisables y
 secuenciales entre `S5.4` y `S5.5`: snapshot/parser canónico, contratos de decisión/respuesta
 y binding terminal bajo la autoridad exclusiva de `S5.1`. La separación fue aprobada por el
 maintainer porque expandir `S5.5` ad hoc o validar localmente duplicaba contratos y autoridad.
@@ -146,9 +161,9 @@ cerrado y exige una solicitud/autorización nueva.
 
 La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas; no se declara como un número fijo.
 
-`S4.1`, `S5.4` y `S5.6` están ✅ COMPLETO; `S5.6` quedó verificado, archivado y publicado en `origin/master@75ddcf9`. `S4.2`–`S4.4` esperan los adapters lifecycle de P1 y no son elegibles. `S5.2` está 🔴 BLOQUEADO por los hallazgos abiertos 1/3/5 y `S5.3` queda bloqueada transitivamente. `S8.7` espera el inicializador confiable de producción.
+`S1.11` y `S5.7` están ✅ COMPLETO y publicados en `origin/master@3db3c121`. Las dos hebras reanudables están 🔵 EN CURSO en candidatos disjuntos: `S1.12` preserva únicamente artefactos documentales de reconciliación, y `S5.8` preserva `41 pass / 1 fail` antes de aplicar el contrato `CT_AUTH_RESPONSE_BINDING` ya seleccionado por el maintainer. Ninguna cuenta como cerrada y no existe una corrida nueva de `S5.8`.
 
-**Capacidad de ejecución hoy: 1.** Sólo `S5.7` está 🟢 LISTO: depende de `S5.6` ✅ y toma a continuación el registro canónico de contratos. `S5.8` y `S5.5` esperan la cadena; Option B ya resolvió la representación terminal y no queda un bloqueo de maintainer en esa hebra. `S7.1` conserva sus dependencias en `S5.3`, `S8.7` y `S5.5`.
+La capacidad se sigue derivando, no se fija como cupo. `S1.13`–`S1.16` esperan `S1.12`; `S1.17` mantiene su bloqueo propio por evidencia runtime faltante y, con él, `S1.18`–`S1.19` y `S4.4`. `S5.5` espera `S5.8`; `S5.2`/`S5.3` y `S8.7` conservan sus bloqueos registrados. `S7.1` mantiene dependencias en `S4.4`, `S5.3`, `S8.7` y `S5.5`.
 
 La planificación adelantada conserva el techo declarado de dos Sesiones. El siguiente cierre de cada hebra debe volver a derivar capacidad y contaminación desde el grafo vigente, no desde esta fotografía.
 
@@ -210,7 +225,4 @@ Se registra explícitamente en lugar de esconderse:
 - **P2 — responsabilidades posteriores de Change B.** Sin límite de un PR demostrable. Ver
   el [apéndice de migración](plan-vocabulary-migration-appendix.md).
 - **P6 — Campañas multiproyecto.** Sin Sesiones enumeradas. Fuera de la cadena de release.
-- **P1 — `S1.11`–`S1.19`.** `S1.16` y `S1.17`–`S1.19` entran ahora en la cadena como
-  adapters lifecycle requeridos por `S4.2`–`S4.4`; `S1.11`–`S1.15` permanecen fuera
-  hasta que una dependencia explícita los incorpore.
 - **P8 — `S8.5` y `S8.6`.** 🟡 DIFERIDO por decisión del 2026-07-31. Se mantienen fuera.
