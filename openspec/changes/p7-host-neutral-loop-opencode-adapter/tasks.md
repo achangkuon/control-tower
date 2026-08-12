@@ -36,11 +36,19 @@ The contract selects Option A: Host Launcher / Change E injects an opaque consum
 
 **Scope:** `host/loop.mjs`, `test/polling.test.mjs`. **Budget:** 280–380 authored changed lines. **Finish:** one immutable proven root, settled-only one-shot scheduling, generation guards, and synchronous idempotent invalidation; no adapter composition.
 
-- [ ] Tarea 1.13.1.1 **RED:** Add failing deterministic cases in `test/polling.test.mjs` using a fake clock, FIFO one-shot scheduler, and deferred ports for invalid/first/repeated/conflicting root binding; exact-root settle gating; duplicate settled no-ops; queued stale callbacks; and root/plugin disposal before queued or deferred work. <!-- sdd-owner: implementation -->
-- [ ] Tarea 1.13.1.2 **GREEN:** Add `host/loop.mjs` with injected ports and `createPollingLoop` lifecycle methods sufficient to pass the lifecycle cases: first-write-wins opaque root binding, bound-root-only settle/deletion, one owned one-shot callback, generation rotation, and synchronous disposal before cancel/trace. <!-- sdd-owner: implementation -->
-- [ ] Tarea 1.13.1.3 **TRIANGULATE:** Extend `test/polling.test.mjs` with cancellation-throw and trace-throw cases plus disposal during deferred `peek` and deferred `wake` settlement; prove stale callbacks and completions perform no later `peek`, `wake`, `receive`, or `claim`. <!-- sdd-owner: implementation -->
-- [ ] Tarea 1.13.1.4 **REFACTOR:** Simplify `host/loop.mjs` and test helpers without changing behavior; preserve a host-SDK/SQLite/core/MCP-free controller boundary and frozen descriptor-free diagnostic state. <!-- sdd-owner: implementation -->
-- [ ] Tarea 1.13.1.5 Run `bun test test/polling.test.mjs` and `node --check host/loop.mjs`; record exact results, an authored-line receipt from `git diff --numstat`, runtime harness result `N/A` (deterministic fake scheduler is the process-local boundary), and the rollback boundary “remove only S1.13 blocks from `host/loop.mjs` and `test/polling.test.mjs`” in the S1.13 completion note in this file. <!-- sdd-owner: implementation -->
+- [x] Tarea 1.13.1.1 **RED:** Add failing deterministic cases in `test/polling.test.mjs` using a fake clock, FIFO one-shot scheduler, and deferred ports for invalid/first/repeated/conflicting root binding; exact-root settle gating; duplicate settled no-ops; queued stale callbacks; and root/plugin disposal before queued or deferred work. <!-- sdd-owner: implementation -->
+- [x] Tarea 1.13.1.2 **GREEN:** Add `host/loop.mjs` with injected ports and `createPollingLoop` lifecycle methods sufficient to pass the lifecycle cases: first-write-wins opaque root binding, bound-root-only settle/deletion, one owned one-shot callback, generation rotation, and synchronous disposal before cancel/trace. <!-- sdd-owner: implementation -->
+- [x] Tarea 1.13.1.3 **TRIANGULATE:** Extend `test/polling.test.mjs` with cancellation-throw and trace-throw cases plus disposal during deferred `peek` and deferred `wake` settlement; prove stale callbacks and completions perform no later `peek`, `wake`, `receive`, or `claim`. <!-- sdd-owner: implementation -->
+- [x] Tarea 1.13.1.4 **REFACTOR:** Simplify `host/loop.mjs` and test helpers without changing behavior; preserve a host-SDK/SQLite/core/MCP-free controller boundary and frozen descriptor-free diagnostic state. <!-- sdd-owner: implementation -->
+- [x] Tarea 1.13.1.5 Run `bun test test/polling.test.mjs` and `node --check host/loop.mjs`; record exact results, an authored-line receipt from `git diff --numstat`, runtime harness result `N/A` (deterministic fake scheduler is the process-local boundary), and the rollback boundary “remove only S1.13 blocks from `host/loop.mjs` and `test/polling.test.mjs`” in the S1.13 completion note in this file. <!-- sdd-owner: implementation -->
+
+**S1.13 completion note (2026-08-12):**
+- Focused test: `bun test test/polling.test.mjs` — PASS, 10 pass, 0 fail, 73 expect calls.
+- Syntax check: `node --check host/loop.mjs` — PASS, exit 0 with no output.
+- Full suite after `bun install --frozen-lockfile`: `bun test` — PASS, 620 pass, 0 fail, 3,691 expect calls across 40 files in 57.98s; tracked `bun.lock` and `package.json` hashes and status remained unchanged.
+- Authored-line receipt: `host/loop.mjs` 164 additions + `test/polling.test.mjs` 214 additions = 378 authored lines.
+- Runtime harness: `N/A` — the deterministic fake clock, FIFO one-shot scheduler, and deferred ports are the process-local runtime boundary.
+- Rollback boundary: remove only S1.13 blocks from `host/loop.mjs` and `test/polling.test.mjs`.
 
 ## Sesión 1.14 — Polling and Wake Safety
 
