@@ -38,6 +38,9 @@ const fixture = (content = "result\n") => {
 }
 
 const request = (value, overrides = {}) => ({
+  project_id: "control-tower",
+  assignment_id: "assignment-s5-11",
+  generation: 3,
   repositoryRoot: value.root,
   base: value.base,
   result: value.result,
@@ -53,23 +56,71 @@ const errorCode = async (operation) => {
 describe("checkpoint capture", () => {
   test("captures canonical repository, full commit/tree identities, and immutable byte evidence", async () => {
     const value = fixture()
-    const { captureCheckpoint } = await loadCapture()
+    const { captureCheckpoint, assertCanonicalCheckpointCapture } = await loadCapture()
     const calls = []
     const capture = captureCheckpoint(request(value), { git(cwd, args) { calls.push([cwd, args]); return git(cwd, args) } })
 
     expect(capture).toEqual({
+      schema: "checkpoint-capture",
+      schema_version: 1,
+      checkpoint_id: expect.stringMatching(/^checkpoint-[a-f0-9]{64}$/),
+      digest: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
+      project_id: "control-tower",
+      assignment_id: "assignment-s5-11",
+      generation: 3,
       repository_root: value.root,
+      git_common_dir: join(value.root, ".git"),
       base: value.base,
       result: value.result,
       files: [{ path: "tracked.txt", mode: "raw-bytes", git_mode: "100644", digest: "sha256:5656fafa00d4f294bcb606cf4f7d4fa877390e46f583e8b3c8744ace104a31d1" }],
-      digest: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
     })
+    expect(assertCanonicalCheckpointCapture(capture)).toBe(capture)
+    expect(Object.getPrototypeOf(capture)).toBe(Object.prototype)
     expect(Object.isFrozen(capture)).toBeTrue()
     expect(Object.isFrozen(capture.base)).toBeTrue()
     expect(Object.isFrozen(capture.result)).toBeTrue()
     expect(Object.isFrozen(capture.files)).toBeTrue()
     expect(Object.isFrozen(capture.files[0])).toBeTrue()
     expect(calls.every(([, args]) => !args.includes("-C") && !args.includes("commit") && !args.includes("push") && !args.includes("fetch"))).toBeTrue()
+  })
+
+  test("separates enumerable integrity from exact live producer origin", async () => {
+    const value = fixture()
+    const { captureCheckpoint, assertCanonicalCheckpointCapture } = await loadCapture()
+    const { validate } = await import("../../contracts/validate.mjs")
+    const capture = captureCheckpoint(request(value), { git })
+    const repeated = captureCheckpoint(request(value), { git })
+
+    expect(repeated).not.toBe(capture)
+    expect(repeated.checkpoint_id).toBe(capture.checkpoint_id)
+    expect(repeated.digest).toBe(capture.digest)
+    expect(validate("checkpointCapture", structuredClone(capture))).toEqual(capture)
+    expect(Object.keys(capture)).toEqual([
+      "schema", "schema_version", "checkpoint_id", "digest", "project_id", "assignment_id", "generation",
+      "repository_root", "git_common_dir", "base", "result", "files",
+    ])
+    expect(Reflect.ownKeys(capture)).toEqual(Object.keys(capture))
+    expect(Object.getOwnPropertySymbols(capture)).toEqual([])
+    expect(JSON.parse(JSON.stringify(capture))).toEqual(capture)
+
+    for (const copy of [structuredClone(capture), { ...capture }, JSON.parse(JSON.stringify(capture)), new Proxy(capture, {})]) {
+      expect(await errorCode(() => assertCanonicalCheckpointCapture(copy))).toBe("CT_PROVENANCE_ORIGIN_INVALID")
+    }
+  })
+
+  test("rejects producer-owned output claims and incomplete capture context", async () => {
+    const value = fixture()
+    const { captureCheckpoint } = await loadCapture()
+    const claims = [
+      { schema: "checkpoint-capture" }, { schema_version: 1 }, { checkpoint_id: `checkpoint-${"a".repeat(64)}` },
+      { digest: `sha256:${"a".repeat(64)}` }, { repository_root: value.root }, { git_common_dir: join(value.root, ".git") },
+      { provenance: {} }, { origin: true }, { artifact: {} },
+    ]
+    for (const claim of claims) expect(await errorCode(() => captureCheckpoint(request(value, claim), { git }))).toBe("CT_CHECKPOINT_UNSAFE")
+    for (const missing of ["project_id", "assignment_id", "generation"]) {
+      const input = request(value); delete input[missing]
+      expect(await errorCode(() => captureCheckpoint(input, { git }))).toBe("CT_CHECKPOINT_UNSAFE")
+    }
   })
 
   test.each([

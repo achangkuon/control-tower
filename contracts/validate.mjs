@@ -1,5 +1,6 @@
 import { isAlias, isMap, isScalar, isSeq, parseDocument, visit } from "yaml"
 
+import { digestArtifact } from "./canonicalize.mjs"
 import { candidateRevision } from "./candidate-revision.mjs"
 import { parkedDecisionDigest, parkedDecisionResponseDigest } from "./parked-decision.mjs"
 import { sessionPlanSnapshotDigest } from "./session-plan-snapshot.mjs"
@@ -15,6 +16,32 @@ const deepFreeze = (value) => {
   }
   return value
 }
+const captureContent = (value) => ({
+  schema: value.schema, schema_version: value.schema_version,
+  project_id: value.project_id, assignment_id: value.assignment_id, generation: value.generation,
+  repository_root: value.repository_root, git_common_dir: value.git_common_dir,
+  base: value.base, result: value.result, files: value.files,
+})
+export const checkpointCaptureIdentity = (value) => `checkpoint-${digestArtifact({
+  domain: "control-tower/checkpoint-capture/identity/v1", content: captureContent(value),
+}, "rfc8785-jcs").slice("sha256:".length)}`
+export const checkpointCaptureDigest = (value) => digestArtifact({
+  domain: "control-tower/checkpoint-capture/artifact/v1",
+  artifact: { ...captureContent(value), checkpoint_id: checkpointCaptureIdentity(value) },
+}, "rfc8785-jcs")
+const reconciliationContent = (value) => ({
+  schema: value.schema, schema_version: value.schema_version, state: value.state, capture: value.capture,
+  project_id: value.project_id, assignment_id: value.assignment_id, generation: value.generation,
+  repository_root: value.repository_root, git_common_dir: value.git_common_dir,
+  base: value.base, result: value.result, evidence: value.evidence,
+})
+export const reconciledCheckpointIdentity = (value) => `reconciliation-${digestArtifact({
+  domain: "control-tower/reconciled-checkpoint/identity/v1", content: reconciliationContent(value),
+}, "rfc8785-jcs").slice("sha256:".length)}`
+export const reconciledCheckpointDigest = (value) => digestArtifact({
+  domain: "control-tower/reconciled-checkpoint/artifact/v1",
+  artifact: { ...reconciliationContent(value), reconciliation_id: reconciledCheckpointIdentity(value) },
+}, "rfc8785-jcs")
 const inspectYamlNode = (_key, node) => {
   if (isAlias(node) || node?.anchor || node?.tag) invalid("YAML aliases, anchors, and tags are forbidden")
   if (isMap(node)) {
@@ -105,6 +132,17 @@ const assertParkedDecision = (value) => {
 const assertParkedDecisionResponse = (value) => {
   if (parkedDecisionResponseDigest(value) !== value.response_digest) invalid("Parked decision response digest must match its frozen identity")
 }
+const assertCheckpointCapture = (value) => {
+  if (checkpointCaptureIdentity(value) !== value.checkpoint_id) invalid("Checkpoint identity must match its canonical content")
+  if (checkpointCaptureDigest(value) !== value.digest) invalid("Checkpoint digest must match its canonical artifact")
+  const paths = value.files.map(({ path }) => path)
+  if (new Set(paths).size !== paths.length) invalid("Checkpoint file paths must be unique")
+  if (JSON.stringify(paths) !== JSON.stringify([...paths].sort())) invalid("Checkpoint files must be sorted by path")
+}
+const assertReconciledCheckpoint = (value) => {
+  if (reconciledCheckpointIdentity(value) !== value.reconciliation_id) invalid("Reconciliation identity must match its canonical content")
+  if (reconciledCheckpointDigest(value) !== value.digest) invalid("Reconciliation digest must match its canonical artifact")
+}
 const invariants = Object.freeze({
   projectRegistry: (value) => {
     assertUnique(value.projects, "project_id", "Project IDs must be unique")
@@ -134,6 +172,8 @@ const invariants = Object.freeze({
   sessionPlanSnapshot: assertSessionSnapshot,
   parkedDecision: assertParkedDecision,
   parkedDecisionResponse: assertParkedDecisionResponse,
+  checkpointCapture: assertCheckpointCapture,
+  reconciledCheckpoint: assertReconciledCheckpoint,
 })
 
 export const validate = (schemaName, input) => {
@@ -150,4 +190,17 @@ export const validate = (schemaName, input) => {
   }
   invariants[schemaName]?.(value)
   return deepFreeze(value)
+}
+
+export const validateCheckpointProvenancePair = (captureInput, reconciliationInput) => {
+  const capture = validate("checkpointCapture", captureInput)
+  const reconciliation = validate("reconciledCheckpoint", reconciliationInput)
+  const mismatch = reconciliation.capture.checkpoint_id !== capture.checkpoint_id || reconciliation.capture.digest !== capture.digest ||
+    reconciliation.project_id !== capture.project_id || reconciliation.assignment_id !== capture.assignment_id ||
+    reconciliation.generation !== capture.generation || reconciliation.repository_root !== capture.repository_root ||
+    reconciliation.git_common_dir !== capture.git_common_dir || reconciliation.base.commit !== capture.base.commit ||
+    reconciliation.base.tree !== capture.base.tree || reconciliation.result.commit !== capture.result.commit ||
+    reconciliation.result.tree !== capture.result.tree
+  if (mismatch) invalid("Checkpoint capture and reconciliation must bind the exact same checkpoint")
+  return deepFreeze({ capture, reconciliation })
 }

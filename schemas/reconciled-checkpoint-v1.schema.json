@@ -1,5 +1,46 @@
 {
-  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://control-tower.local/schemas/reconciled-checkpoint-v1.schema.json","type":"object","additionalProperties":false,
-  "required":["schema","schema_version","checkpoint_id","project_id","assignment_id","generation","repository","base_sha","result_sha","manifest_ref","candidate_ref","ledger_digest","runtime_projection_revision","host_epoch","jornada_id","jornada_revision","registry_revision","capability_revision","state"],
-  "properties":{"schema":{"const":"reconciled-checkpoint"},"schema_version":{"const":1},"checkpoint_id":{"$ref":"artifact-ref-v1.schema.json#/$defs/slug"},"project_id":{"$ref":"artifact-ref-v1.schema.json#/$defs/slug"},"assignment_id":{"$ref":"artifact-ref-v1.schema.json#/$defs/slug"},"generation":{"type":"integer","minimum":0},"repository":{"type":"object","additionalProperties":false,"required":["root","git_common_dir","remote","ref"],"properties":{"root":{"type":"string","pattern":"^/"},"git_common_dir":{"type":"string","pattern":"^/"},"remote":{"type":"string","minLength":1},"ref":{"type":"string","minLength":1}}},"base_sha":{"$ref":"artifact-ref-v1.schema.json#/$defs/gitSha"},"result_sha":{"$ref":"artifact-ref-v1.schema.json#/$defs/gitSha"},"manifest_ref":{"$ref":"artifact-ref-v1.schema.json#/$defs/pointer"},"candidate_ref":{"$ref":"artifact-ref-v1.schema.json#/$defs/pointer"},"ledger_digest":{"$ref":"artifact-ref-v1.schema.json#/$defs/digest"},"runtime_projection_revision":{"type":"integer","minimum":0},"host_epoch":{"type":"integer","minimum":0},"jornada_id":{"$ref":"artifact-ref-v1.schema.json#/$defs/slug"},"jornada_revision":{"$ref":"artifact-ref-v1.schema.json#/$defs/revision"},"registry_revision":{"$ref":"artifact-ref-v1.schema.json#/$defs/revision"},"capability_revision":{"$ref":"artifact-ref-v1.schema.json#/$defs/revision"},"state":{"enum":["VALID","INVALID"]}}
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://control-tower.local/schemas/reconciled-checkpoint-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "reconciliation_id", "digest", "state", "capture", "project_id", "assignment_id", "generation", "repository_root", "git_common_dir", "base", "result", "evidence"],
+  "properties": {
+    "schema": {"const": "reconciled-checkpoint"},
+    "schema_version": {"const": 1},
+    "reconciliation_id": {"type": "string", "pattern": "^reconciliation-[0-9a-f]{64}$"},
+    "digest": {"$ref": "artifact-ref-v1.schema.json#/$defs/digest"},
+    "state": {"const": "VALID"},
+    "capture": {
+      "type": "object", "additionalProperties": false, "required": ["checkpoint_id", "digest"],
+      "properties": {
+        "checkpoint_id": {"type": "string", "pattern": "^checkpoint-[0-9a-f]{64}$"},
+        "digest": {"$ref": "artifact-ref-v1.schema.json#/$defs/digest"}
+      }
+    },
+    "project_id": {"$ref": "artifact-ref-v1.schema.json#/$defs/slug"},
+    "assignment_id": {"$ref": "artifact-ref-v1.schema.json#/$defs/slug"},
+    "generation": {"type": "integer", "minimum": 0},
+    "repository_root": {"type": "string", "pattern": "^/"},
+    "git_common_dir": {"type": "string", "pattern": "^/"},
+    "base": {"$ref": "checkpoint-capture-v1.schema.json#/$defs/gitIdentity"},
+    "result": {"$ref": "checkpoint-capture-v1.schema.json#/$defs/gitIdentity"},
+    "evidence": {"$ref": "#/$defs/evidence"}
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["manifest_ref", "candidate_ref", "ledger_digest", "runtime_projection_revision", "host_epoch", "jornada_id", "jornada_revision", "registry_revision", "capability_revision"],
+      "properties": {
+        "manifest_ref": {"type": "string", "minLength": 1},
+        "candidate_ref": {"type": "string", "minLength": 1},
+        "ledger_digest": {"$ref": "artifact-ref-v1.schema.json#/$defs/digest"},
+        "runtime_projection_revision": {"type": "integer", "minimum": 0},
+        "host_epoch": {"type": "integer", "minimum": 0},
+        "jornada_id": {"$ref": "artifact-ref-v1.schema.json#/$defs/slug"},
+        "jornada_revision": {"$ref": "artifact-ref-v1.schema.json#/$defs/revision"},
+        "registry_revision": {"$ref": "artifact-ref-v1.schema.json#/$defs/revision"},
+        "capability_revision": {"$ref": "artifact-ref-v1.schema.json#/$defs/revision"}
+      }
+    }
+  }
 }

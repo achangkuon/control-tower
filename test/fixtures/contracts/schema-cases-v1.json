@@ -20,6 +20,44 @@
       }
     ]
   },
+  "checkpointCapture": {
+    "schema": "checkpoint-capture",
+    "schema_version": 1,
+    "checkpoint_id": "checkpoint-38403785bf1f669c67533cf948471227c450fd09951ff483506d4dc0552a3452",
+    "digest": "sha256:c5c97fdfeebb36f873b504831d0d9f19f438bd2350507a73ee9460268095098d",
+    "project_id": "control-tower",
+    "assignment_id": "assignment-s5-11",
+    "generation": 3,
+    "repository_root": "/home/user/projects/control-tower",
+    "git_common_dir": "/home/user/projects/control-tower/.git",
+    "base": {"commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "tree": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+    "result": {"commit": "cccccccccccccccccccccccccccccccccccccccc", "tree": "dddddddddddddddddddddddddddddddddddddddd"},
+    "files": [{"path": "tracked.txt", "mode": "raw-bytes", "git_mode": "100644", "digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}]
+  },
+  "reconciledCheckpoint": {
+    "schema": "reconciled-checkpoint",
+    "schema_version": 1,
+    "reconciliation_id": "reconciliation-843ae01b98e14fc69a8338421ca65bde184534b684fbe73c17f34535c21a8795",
+    "digest": "sha256:fb6ccffc6e1a6e062ddfa298169406d233a04def5b3ba4aed28ced3dffb04516",
+    "state": "VALID",
+    "capture": {
+      "checkpoint_id": "checkpoint-38403785bf1f669c67533cf948471227c450fd09951ff483506d4dc0552a3452",
+      "digest": "sha256:c5c97fdfeebb36f873b504831d0d9f19f438bd2350507a73ee9460268095098d"
+    },
+    "project_id": "control-tower",
+    "assignment_id": "assignment-s5-11",
+    "generation": 3,
+    "repository_root": "/home/user/projects/control-tower",
+    "git_common_dir": "/home/user/projects/control-tower/.git",
+    "base": {"commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "tree": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+    "result": {"commit": "cccccccccccccccccccccccccccccccccccccccc", "tree": "dddddddddddddddddddddddddddddddddddddddd"},
+    "evidence": {
+      "manifest_ref": "openspec/plans/manifest.yaml", "candidate_ref": "candidates/s5-11.json",
+      "ledger_digest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "runtime_projection_revision": 4, "host_epoch": 2, "jornada_id": "jornada-s5-11", "jornada_revision": 3,
+      "registry_revision": 7, "capability_revision": 5
+    }
+  },
   "artifactRef": {
     "schema": "artifact-ref",
     "schema_version": 1,

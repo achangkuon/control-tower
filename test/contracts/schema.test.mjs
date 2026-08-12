@@ -23,6 +23,90 @@ const errorCode = (operation) => {
 }
 
 describe("V1 schema boundary", () => {
+  test("registers origin-neutral reconciliation integrity and exact pair bindings", async () => {
+    const contracts = await import("../../contracts/validate.mjs")
+    expect(schemaNames).toEqual(expect.arrayContaining(["checkpointCapture", "reconciledCheckpoint"]))
+    expect(contracts.reconciledCheckpointIdentity(fixtures.reconciledCheckpoint)).toBe(fixtures.reconciledCheckpoint.reconciliation_id)
+    expect(contracts.reconciledCheckpointDigest(fixtures.reconciledCheckpoint)).toBe(fixtures.reconciledCheckpoint.digest)
+    expect(validate("reconciledCheckpoint", fixtures.reconciledCheckpoint)).toEqual(fixtures.reconciledCheckpoint)
+    expect(contracts.validateCheckpointProvenancePair(fixtures.checkpointCapture, fixtures.reconciledCheckpoint)).toEqual({
+      capture: fixtures.checkpointCapture, reconciliation: fixtures.reconciledCheckpoint,
+    })
+  })
+
+  test("rejects reconciliation tamper and every cross-artifact mismatch", async () => {
+    const contracts = await import("../../contracts/validate.mjs")
+    const reseal = (value) => {
+      value.reconciliation_id = contracts.reconciledCheckpointIdentity(value)
+      value.digest = contracts.reconciledCheckpointDigest(value)
+      return value
+    }
+    for (const mutate of [
+      (value) => { value.capture.checkpoint_id = `checkpoint-${"0".repeat(64)}` },
+      (value) => { value.capture.digest = `sha256:${"0".repeat(64)}` },
+      (value) => { value.project_id = "project-b" }, (value) => { value.assignment_id = "assignment-b" },
+      (value) => { value.generation += 1 }, (value) => { value.repository_root = "/tmp/other" },
+      (value) => { value.git_common_dir = "/tmp/other/.git" }, (value) => { value.base.commit = "0".repeat(40) },
+      (value) => { value.base.tree = "1".repeat(40) }, (value) => { value.result.commit = "2".repeat(40) },
+      (value) => { value.result.tree = "3".repeat(40) },
+    ]) {
+      const mismatch = structuredClone(fixtures.reconciledCheckpoint); mutate(mismatch); reseal(mismatch)
+      expect(validate("reconciledCheckpoint", mismatch)).toEqual(mismatch)
+      expect(errorCode(() => contracts.validateCheckpointProvenancePair(fixtures.checkpointCapture, mismatch))).toBe("CT_SCHEMA_INVALID")
+    }
+    for (const mutate of [
+      (value) => { value.reconciliation_id = `reconciliation-${"f".repeat(64)}` },
+      (value) => { value.digest = `sha256:${"f".repeat(64)}` },
+      (value) => { value.state = "INVALID" },
+      (value) => { value.evidence.host_epoch += 1 },
+    ]) {
+      const tamper = structuredClone(fixtures.reconciledCheckpoint); mutate(tamper)
+      expect(errorCode(() => validate("reconciledCheckpoint", tamper))).toBe("CT_SCHEMA_INVALID")
+    }
+  })
+
+  test("registers origin-neutral checkpoint capture integrity", async () => {
+    const contracts = await import("../../contracts/validate.mjs")
+    expect(schemaNames).toContain("checkpointCapture")
+    expect(fixtures.checkpointCapture.schema).toBe("checkpoint-capture")
+    expect(contracts.checkpointCaptureIdentity(fixtures.checkpointCapture)).toBe(fixtures.checkpointCapture.checkpoint_id)
+    expect(contracts.checkpointCaptureDigest(fixtures.checkpointCapture)).toBe(fixtures.checkpointCapture.digest)
+    expect(validate("checkpointCapture", fixtures.checkpointCapture)).toEqual(fixtures.checkpointCapture)
+
+    for (const mutate of [
+      (value) => { value.checkpoint_id = `checkpoint-${"f".repeat(64)}` },
+      (value) => { value.digest = `sha256:${"f".repeat(64)}` },
+      (value) => { value.project_id = "project-b" },
+      (value) => { value.assignment_id = "assignment-b" },
+      (value) => { value.generation += 1 },
+      (value) => { value.repository_root = "/tmp/other" },
+      (value) => { value.git_common_dir = "/tmp/other/.git" },
+      (value) => { value.base.commit = "0".repeat(40) },
+      (value) => { value.base.tree = "1".repeat(40) },
+      (value) => { value.result.commit = "2".repeat(40) },
+      (value) => { value.result.tree = "3".repeat(40) },
+      (value) => { value.files[0].path = "other.txt" },
+      (value) => { value.files[0].mode = "rfc8785-jcs" },
+      (value) => { value.files[0].git_mode = "100755" },
+      (value) => { value.files[0].digest = `sha256:${"f".repeat(64)}` },
+    ]) {
+      const drift = structuredClone(fixtures.checkpointCapture); mutate(drift)
+      expect(errorCode(() => validate("checkpointCapture", drift))).toBe("CT_SCHEMA_INVALID")
+    }
+
+    const reseal = (value) => {
+      value.checkpoint_id = contracts.checkpointCaptureIdentity(value)
+      value.digest = contracts.checkpointCaptureDigest(value)
+      return value
+    }
+    const duplicate = structuredClone(fixtures.checkpointCapture)
+    duplicate.files.push(structuredClone(duplicate.files[0]))
+    const unsorted = structuredClone(fixtures.checkpointCapture)
+    unsorted.files.push({ ...structuredClone(unsorted.files[0]), path: "a.txt" })
+    expect(errorCode(() => validate("checkpointCapture", reseal(duplicate)))).toBe("CT_SCHEMA_INVALID")
+    expect(errorCode(() => validate("checkpointCapture", reseal(unsorted)))).toBe("CT_SCHEMA_INVALID")
+  })
+
   test("registers and fixtures a closed local-to-external session graph", () => {
     const fixture = fixtures.sessionPlanSnapshot
     expect(schemaNames).toContain("sessionPlanSnapshot")

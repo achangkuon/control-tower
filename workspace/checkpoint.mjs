@@ -1,14 +1,14 @@
 import { execFileSync } from "node:child_process"
-import { isAbsolute, normalize, relative } from "node:path"
+import { isAbsolute, normalize, relative, resolve } from "node:path"
 
 import { digestArtifact } from "../contracts/canonicalize.mjs"
+import { failContract } from "../contracts/errors.mjs"
+import { checkpointCaptureDigest, checkpointCaptureIdentity, validate } from "../contracts/validate.mjs"
 
 const fail = (message, cause) => { throw Object.assign(new Error(message, { cause }), { code: "CT_CHECKPOINT_UNSAFE" }) }
 const oid = /^[a-f0-9]{40,64}$/u
-const defaultGit = (cwd, args) => execFileSync("git", args, {
-  cwd,
-  stdio: ["ignore", "pipe", "pipe"],
-})
+const slug = /^[a-z0-9][a-z0-9-]*$/u
+const defaultGit = (cwd, args) => execFileSync("git", args, { cwd, stdio: ["ignore", "pipe", "pipe"] })
 const gitRead = (git, cwd, args, label) => {
   try { return git(cwd, args) }
   catch (error) { fail(`Cannot inspect ${label}`, error) }
@@ -26,12 +26,14 @@ const freeze = (value) => {
   }
   return value
 }
+const record = (value) => value !== null && typeof value === "object" && !Array.isArray(value)
+const exactKeys = (value, keys) => record(value) && Object.keys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key))
 const assertRoot = (root) => {
   if (typeof root !== "string" || root.includes("\0") || !isAbsolute(root) || normalize(root) !== root) fail("Repository root must be a normalized absolute path")
   return root
 }
 const assertIdentity = (identity, label, git, root) => {
-  if (!identity || typeof identity !== "object" || !oid.test(identity.commit) || !oid.test(identity.tree)) fail(`${label} must use full commit and tree OIDs`)
+  if (!exactKeys(identity, ["commit", "tree"]) || !oid.test(identity.commit) || !oid.test(identity.tree)) fail(`${label} must use full commit and tree OIDs`)
   const commit = gitText(git, root, ["rev-parse", `${identity.commit}^{commit}`], `${label} commit`)
   const tree = gitText(git, root, ["rev-parse", `${identity.commit}^{tree}`], `${label} tree`)
   if (commit !== identity.commit || tree !== identity.tree) fail(`${label} identity does not resolve exactly`)
@@ -52,7 +54,9 @@ const stagedArtifact = (git, root, path) => {
 const evidence = (files, git, root) => {
   if (!Array.isArray(files) || files.length === 0) fail("Checkpoint requires explicit evidence files")
   const seen = new Set()
-  return files.map(({ path, bytes, mode }) => {
+  return files.map((file) => {
+    if (!exactKeys(file, ["path", "bytes", "mode"])) fail("Evidence entries must use the closed input contract")
+    const { path, bytes, mode } = file
     const safePath = assertPath(path)
     if (seen.has(safePath)) fail("Evidence file paths must be unique")
     seen.add(safePath)
@@ -64,11 +68,45 @@ const evidence = (files, git, root) => {
     return { path: safePath, mode, git_mode: staged.git_mode, digest: digestArtifact(content, mode) }
   }).sort((left, right) => left.path.localeCompare(right.path))
 }
+const assertFrozenPlain = (value) => {
+  if (!record(value) || Object.getPrototypeOf(value) !== Object.prototype || !Object.isFrozen(value)) return false
+  const inspect = (child) => {
+    if (!child || typeof child !== "object") return true
+    if (!Object.isFrozen(child) || !Array.isArray(child) && Object.getPrototypeOf(child) !== Object.prototype) return false
+    return Object.values(child).every(inspect)
+  }
+  return Object.values(value).every(inspect)
+}
 
-export const captureCheckpoint = ({ repositoryRoot, base, result, files }, { git = defaultGit } = {}) => {
+class CanonicalCheckpointCapture {
+  #origin = true
+  constructor(value) { Object.assign(this, value) }
+  static owns(value) { return value !== null && (typeof value === "object" || typeof value === "function") && #origin in value }
+}
+const materialize = (value) => {
+  const artifact = new CanonicalCheckpointCapture(value)
+  Object.setPrototypeOf(artifact, Object.prototype)
+  return freeze(artifact)
+}
+
+export const assertCanonicalCheckpointCapture = (value) => {
+  if (!CanonicalCheckpointCapture.owns(value)) failContract("CT_PROVENANCE_ORIGIN_INVALID", "Checkpoint capture lacks exact live producer origin")
+  if (!assertFrozenPlain(value)) failContract("CT_PROVENANCE_ORIGIN_INVALID", "Checkpoint capture transport is not deeply frozen and plain")
+  validate("checkpointCapture", value)
+  return value
+}
+
+export const captureCheckpoint = (request, { git = defaultGit } = {}) => {
+  const requestKeys = ["project_id", "assignment_id", "generation", "repositoryRoot", "base", "result", "files"]
+  if (!exactKeys(request, requestKeys) || !slug.test(request.project_id) || !slug.test(request.assignment_id) ||
+      !Number.isSafeInteger(request.generation) || request.generation < 0) fail("Checkpoint request is incomplete or asserts producer-owned output")
+  const { project_id, assignment_id, generation, repositoryRoot, base, result, files } = request
   const root = assertRoot(repositoryRoot)
   const canonicalRoot = gitText(git, root, ["rev-parse", "--show-toplevel"], "repository root")
   if (!isAbsolute(canonicalRoot) || normalize(canonicalRoot) !== canonicalRoot || canonicalRoot !== root) fail("Repository root does not match Git canonical root")
+  const commonInput = gitText(git, root, ["rev-parse", "--git-common-dir"], "Git common directory")
+  const gitCommonDir = normalize(isAbsolute(commonInput) ? commonInput : resolve(root, commonInput))
+  if (!isAbsolute(gitCommonDir)) fail("Git common directory is not canonical")
 
   const canonicalBase = assertIdentity(base, "Base", git, root)
   const canonicalResult = assertIdentity(result, "Result", git, root)
@@ -79,11 +117,14 @@ export const captureCheckpoint = ({ repositoryRoot, base, result, files }, { git
 
   const artifacts = evidence(files, git, root)
   if (staged.join("\0") !== artifacts.map(({ path }) => path).join("\0")) fail("Explicit evidence files differ from staged files")
-  const checkpoint = {
-    repository_root: root,
-    base: canonicalBase,
-    result: canonicalResult,
-    files: artifacts,
+  const content = {
+    schema: "checkpoint-capture", schema_version: 1, project_id, assignment_id, generation,
+    repository_root: root, git_common_dir: gitCommonDir, base: canonicalBase, result: canonicalResult, files: artifacts,
   }
-  return freeze({ ...checkpoint, digest: digestArtifact(checkpoint, "rfc8785-jcs") })
+  const checkpoint_id = checkpointCaptureIdentity(content)
+  const digest = checkpointCaptureDigest({ ...content, checkpoint_id })
+  const { schema, schema_version, ...bindings } = content
+  const candidate = { schema, schema_version, checkpoint_id, digest, ...bindings }
+  const validated = validate("checkpointCapture", candidate)
+  return assertCanonicalCheckpointCapture(materialize(validated))
 }
