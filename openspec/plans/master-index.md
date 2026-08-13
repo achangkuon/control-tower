@@ -1,20 +1,20 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-13 contra `master@cebcaebafe6f8ad71311c87a2c7de3db39f3491d`; `origin/master` coincide exactamente con ese SHA. `S5.12` fue entregada en `e7b1437f8c98c5856236e06e4c1fb5c40e9dc8ef` dentro del push `3db3c121d48a07d7696afe6a88de044f30ea4695..cebcaebafe6f8ad71311c87a2c7de3db39f3491d`.
+> Última reconciliación: 2026-08-13 contra la implementación `da4e3914830f87d028113dfe451fdbe101b7847a` y su cierre documental; ambos forman la entrega directa de `S1.16` a `master`.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md).
 
 ## 📍 Punto de retoma
 
-`S5.12` cerró y fue publicada: implementación `e7b1437f8c98c5856236e06e4c1fb5c40e9dc8ef`, política `6f3252ae6c555b5b5da96d33d18a7fbd1aaa812a`, documentación preparada `cebcaebafe6f8ad71311c87a2c7de3db39f3491d`; `master == origin/master == cebcaeb`. `S5.9` queda 🟢 LISTO tras reevaluar dependencia, autoridad, `Área`, `Recurso` y decisiones; debe reconciliar sus artefactos externos antes de tasks/apply. `S1.16` y `S10.1` siguen 🟢 LISTO.
+`S1.16` cerró en `da4e391`; su consumer OpenCode está verificado, pero el provider/injection productivo sigue perteneciendo a `S4.2/M4.2.3`. La entrega directa incluye la implementación y este cierre documental.
 
-`S9.1` permanece planning-only y en cuarentena antes de tasks/apply: transporte `#1b` y la contradicción del rollback floor siguen sin resolver; `S9.2` continúa 🔴 BLOQUEADO. P9 no reabre P3 ni altera el orden de hosts.
+`S4.2` pasa la reevaluación independiente de dependencia, autoridad, `Área`, `Recurso` y decisiones y queda 🟢 LISTO para `design-tasks`; esto no acredita readiness de producción. `S5.9` y `S10.1` siguen 🟢 LISTO.
 
-Control Tower sigue siendo un producto, un roadmap y un release. OpenCode va primero; Pi sigue como segundo host/fallback obligatorio. P10 conserva `S3.4 → S10.1 → S10.2 → S7.1`, con `S10.1` siempre effect-incapable y las dos decisiones de `S10.2` abiertas.
+`S9.1` permanece planning-only y en cuarentena antes de tasks/apply: transporte `#1b` y rollback floor siguen sin resolver; `S9.2` continúa 🔴 BLOQUEADO. P9 no reabre P3 ni altera el orden de hosts.
 
-Con la Torre apagada, sesiones peer Pi homogéneas sólo pueden coordinarse por Intercom con autorización explícita del maintainer; es un método interino, no autoridad Tower. La hermeticidad clean-clone del registry sigue como deuda sin ID.
+Control Tower sigue siendo un producto, un roadmap y un release. OpenCode va primero; Pi sigue como segundo host/fallback obligatorio. P10 conserva `S3.4 → S10.1 → S10.2 → S7.1`, con `S10.1` effect-incapable y las decisiones de `S10.2` abiertas.
 
-Permanecen bloqueadas `S1.17`, `S5.2`/`S5.3`, `S5.10`/`S5.5`, `S8.7` y `S10.2`. La capacidad debe reevaluarse por grafo, `Área`, `Recurso` y contaminación antes de trabajo paralelo.
+Permanecen bloqueadas `S1.17`, `S4.3`/`S4.4`, `S5.2`/`S5.3`, `S5.10`/`S5.5`, `S8.7` y `S10.2`; con la Torre apagada, la capacidad se reevalúa por grafo, `Área`, `Recurso` y contaminación.
 
 ## Granularidad
 
@@ -23,12 +23,12 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 
 ## 📊 Estado de un vistazo
 
-**Avance global**: 2/11 Planes cerrados (18%) · Sesiones cerradas en planes activos: 28/48 (58%). Cálculo auditable: P1 `15/19` + P4 `1/4` + P5 `7/12` + P7 `0/1` + P8 `5/8` + P9 `0/2` + P10 `0/2` = `28/48`; P2 se excluye porque su STATUS declara trabajo pendiente sin Sesiones enumeradas, por lo que no tiene denominador de Plan derivable.
+**Avance global**: 2/11 Planes cerrados (18%) · Sesiones cerradas en planes activos: 29/48 (60%). Cálculo auditable: P1 `16/19` + P4 `1/4` + P5 `7/12` + P7 `0/1` + P8 `5/8` + P9 `0/2` + P10 `0/2` = `29/48`; P2 se excluye porque su STATUS declara trabajo pendiente sin Sesiones enumeradas, por lo que no tiene denominador de Plan derivable.
 
 | ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |
 |----|------|--------|---|------|-------|-----------|-----|
 | P0 | Documentación canónica | ✅ COMPLETO | 100% (3/3 S) | — | Maintainer | — | [STATUS](plan-0/STATUS.md) |
-| P1 | Sustrato mecánico | 🔵 EN CURSO | 79% (15/19 S) | — | Main | S1.16, S1.17, S1.18, S1.19 | [STATUS](plan-1/STATUS.md) |
+| P1 | Sustrato mecánico | 🔵 EN CURSO | 84% (16/19 S) | — | Main | S1.17, S1.18, S1.19 | [STATUS](plan-1/STATUS.md) |
 | P2 | Contratos y registro de producto | 🔵 EN CURSO | — (responsabilidades restantes de Change B sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-2/STATUS.md) |
 | P3 | Workspace y orquestación | ✅ COMPLETO | 100% (4/4 S) | — | Main | — | [STATUS](plan-3/STATUS.md) |
 | P4 | Hosts y línea exclusiva | 🔵 EN CURSO | 25% (1/4 S) | — | Main | S4.2, S4.3, S4.4 | [STATUS](plan-4/STATUS.md) |

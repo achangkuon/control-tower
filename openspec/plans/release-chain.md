@@ -65,8 +65,8 @@ graph LR
   S112 --> S113["S1.13 lifecycle · ✅"]
   S113 --> S114["S1.14 polling · ✅"]
   S114 --> S115["S1.15 conformidad · ✅"]
-  S115 --> S116["S1.16 OpenCode wake · 🟢"]
-  S116 --> S42["S4.2 raíz visible · 🔴"]
+  S115 --> S116["S1.16 OpenCode wake · ✅"]
+  S116 --> S42["S4.2 raíz visible · 🟢"]
   S41 --> S42
   S42 --> S43["S4.3 liveness · 🔴"]
   S112 --> S117["S1.17 Pi RED · 🔴"]
@@ -104,13 +104,13 @@ graph LR
 | ✅ | `S5.1` | Candidate contracts, authorization store y frontera Support | ✅ COMPLETO | `S3.2` ✅, `S3.3` ✅, `S3.4` ✅; candidato `c7c2472`, 27/27 criterios y 537/537 tests |
 | ✅ | `S4.1` | Hosts y línea exclusiva | ✅ COMPLETO | `S3.1` ✅, `S3.2` ✅, `S5.1` ✅; cierre técnico `1f5fea7`, 19/19 criterios |
 | ✅ | `S1.11` | Reconciliación independiente legacy P7 | ✅ COMPLETO | `S1.9` ✅, `S1.10` ✅; publicado en `origin/master@3db3c121` |
-| ✅ | `S1.12` | Reconciliación independiente P8 | ✅ COMPLETO | `S1.11` ✅; integrada y verificada localmente en `master@6bb7019`, sin push remoto |
-| ✅ | `S1.13` | Root lifecycle e invalidación sincrónica | ✅ COMPLETO | `S1.12` ✅; integrada localmente en `master@794611f` mediante `2bbeddb`, compatibilidad de fixture en `794611f`, focused 10/0/73 y full 620/0/3691, sin push remoto |
-| ✅ | `S1.14` | Polling y wake safety | ✅ COMPLETO | `S1.13` ✅; integrada localmente en `master@9886af9`, focused 18/0/175, full 628/0/3793, 392 líneas authored, sin push remoto |
-| ✅ | `S1.15` | Conformidad lifecycle OpenCode | ✅ COMPLETO | `S1.14` ✅; integrada localmente en `master@428b3ed` (tree `388b4ca`) después del fixture `6c968e0`; full 643/0/3818 en 41 archivos, 399 líneas authored, sin push remoto |
-| ▶ | `S1.16` | Transporte reconciliado y composición wake | 🟢 LISTO | `S1.15` ✅; siguiente Sesión soportada por su única dependencia cerrada, sin inicio ni crédito |
-| — | `S4.2` | Lanzamiento visible de raíz OpenCode | 🔴 BLOQUEADO | `S4.1` ✅, `S1.16` 🟢; ruta `design-tasks`, interfaz Herdr/OpenCode pendiente |
-| — | `S4.3` | Inspección, liveness y rehidratación segura | 🔴 BLOQUEADO | `S4.2` 🔴, `S1.16` 🟢; ruta `design-tasks` |
+| ✅ | `S1.12` | Reconciliación independiente P8 | ✅ COMPLETO | `S1.11` ✅; `6bb7019` es ancestro de `origin/master@a3d9e51` |
+| ✅ | `S1.13` | Root lifecycle e invalidación sincrónica | ✅ COMPLETO | `S1.12` ✅; `794611f` es ancestro de `origin/master@a3d9e51`; focused 10/0/73 y full 620/0/3691 |
+| ✅ | `S1.14` | Polling y wake safety | ✅ COMPLETO | `S1.13` ✅; `9886af9` es ancestro de `origin/master@a3d9e51`; focused 18/0/175, full 628/0/3793, 392 líneas authored |
+| ✅ | `S1.15` | Conformidad lifecycle OpenCode | ✅ COMPLETO | `S1.14` ✅; `428b3ed` y documentación `e37a159` son ancestros de `origin/master@a3d9e51`; full 643/0/3818 en 41 archivos, 399 líneas authored |
+| ✅ | `S1.16` | Transporte reconciliado y composición wake | ✅ COMPLETO | `S1.15` ✅; implementación `da4e391`, parent `a3d9e51`; focused expandida 49/0/304, full 671/0/4020 en 43 archivos, 298 líneas authored; la entrega directa incluye este cierre documental |
+| ▶ | `S4.2` | Lanzamiento visible de raíz OpenCode | 🟢 LISTO | `S4.1` ✅, `S1.16` ✅; autoridad, `Área`, `Recurso` y decisiones propias soportan `design-tasks`. Debe diseñar y probar Herdr/OpenCode y el provider/injection productivo; no está production-ready |
+| — | `S4.3` | Inspección, liveness y rehidratación segura | 🔴 BLOQUEADO | `S4.2` 🟢, `S1.16` ✅; ruta `design-tasks` sólo después de cerrar `S4.2` |
 | — | `S1.17` | Gate de reconciliación y pruebas RED Pi | 🔴 BLOQUEADO | `S1.12` ✅; `T1.17.1.1`–`.2` pasaron, `.3` carece de `assignment_id`, `session_id` y capacidad de binding Workspace Manager/Main reales, `.4`–`.5` no iniciaron |
 | — | `S1.18` | Pi adapter GREEN | 📋 PLANIFICADO | `S1.17` 🔴 |
 | — | `S1.19` | Refactor y regresión Pi | 📋 PLANIFICADO | `S1.18` 📋 |
@@ -140,7 +140,7 @@ graph LR
 > recuperación y failover entra en la cadena de release. La tabla se corrige para coincidir.
 > La decisión histórica fue explícita —construir las catorce Sesiones que ese corte enumeraba como restantes— y no una derivación; la reconciliación actual agrega los prerrequisitos omitidos sin reescribir aquella evidencia.
 
-**Treinta y cinco Sesiones · 19/35 cerradas (54%).** Re-enumeración independiente: los 35 nodos de la tabla son `S8.8`, `S0.3`, `S3.1`–`S3.4`, `S5.1`, `S4.1`–`S4.4`, `S1.11`–`S1.19`, `S5.2`–`S5.12`, `S8.7`, `S10.1`, `S10.2` y `S7.1`. El numerador suma los dieciocho cierres previos más `S5.12`; sólo `COMPLETO` cuenta. `S5.9` y `S10.1` aportan cero mientras están `LISTO`; `S10.2` aporta cero mientras está `BLOQUEADO`. P10 integra explícitamente la primera release mediante `S3.4 → S10.1 → S10.2 → S7.1`. Esta métrica mide sólo la cadena de release y no reemplaza el `28/48` de planificación del [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
+**Treinta y cinco Sesiones · 20/35 cerradas (57%).** Re-enumeración independiente: los 35 nodos de la tabla son `S8.8`, `S0.3`, `S3.1`–`S3.4`, `S5.1`, `S4.1`–`S4.4`, `S1.11`–`S1.19`, `S5.2`–`S5.12`, `S8.7`, `S10.1`, `S10.2` y `S7.1`. El numerador suma los diecinueve cierres previos más `S1.16`; sólo `COMPLETO` cuenta. `S4.2`, `S5.9` y `S10.1` aportan cero mientras están `LISTO`; `S10.2` aporta cero mientras está `BLOQUEADO`. P10 integra explícitamente la primera release mediante `S3.4 → S10.1 → S10.2 → S7.1`. Esta métrica mide sólo la cadena de release y no reemplaza el `29/48` de planificación del [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
 secuenciales entre `S5.4` y `S5.5`: snapshot/parser canónico, contratos de decisión/respuesta,
 binding terminal, productores de provenance, composición Main→parking, binding autoritativo de
 checkpoint y binding inmutable del trabajo completado bajo la autoridad exclusiva de Main. La
@@ -182,9 +182,9 @@ cerrado y exige una solicitud/autorización nueva.
 
 La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas; no se declara como un número fijo.
 
-`S5.12` está ✅ COMPLETO y publicada; el HEAD técnico y remoto coinciden en `master == origin/master == cebcaebafe6f8ad71311c87a2c7de3db39f3491d`. `S1.16`, `S5.9` y `S10.1` quedan 🟢 LISTO, sin inicio ni crédito.
+`S1.16` está ✅ COMPLETO en `da4e391`; la entrega directa incluye su cierre documental. El consumer está cerrado, pero la composición productiva del provider/injection no: pertenece a `S4.2/M4.2.3`.
 
-La capacidad se sigue derivando, no se fija como cupo. `S1.17` mantiene su bloqueo propio por `assignment_id`, `session_id` y capacidad de binding Workspace Manager/Main reales ausentes y, con él, `S1.18`–`S1.19` y `S4.4`. `S5.2`/`S5.3`, `S5.10`/`S5.5`, `S8.7` y `S10.2` conservan sus bloqueos registrados. `S5.9` debe reconciliar sus artefactos externos y ejecutar su falsificador antes de tasks/apply, pero dependencia, autoridad, `Área`, `Recurso` y decisiones propias están despejadas. `S10.1` sigue siempre effect-incapable; `S10.2` carece de `Área` y queda excluida de capacidad. `S7.1` mantiene sus dependencias previas y agrega `S10.1` y `S10.2`.
+La capacidad se sigue derivando, no se fija como cupo. `S4.2`, `S5.9` y `S10.1` están 🟢 LISTO; `S4.2` sólo queda habilitada para `design-tasks` y debe probar Herdr/OpenCode, stop-proof/decision providers y wiring productivo antes de cualquier claim de readiness. `S1.17` mantiene su bloqueo propio por `assignment_id`, `session_id` y capacidad de binding Workspace Manager/Main reales ausentes y, con él, `S1.18`–`S1.19` y `S4.4`. `S4.3`, `S5.2`/`S5.3`, `S5.10`/`S5.5`, `S8.7` y `S10.2` conservan sus bloqueos registrados. `S5.9` debe reconciliar sus artefactos externos y ejecutar su falsificador antes de tasks/apply. `S10.1` sigue siempre effect-incapable; `S10.2` carece de `Área` y queda excluida de capacidad. `S7.1` mantiene sus dependencias previas y agrega `S10.1` y `S10.2`.
 
 El siguiente inicio debe volver a derivar capacidad y contaminación desde el grafo vigente, no desde esta fotografía. Ningún nodo posterior a `S5.9` recibe crédito: `S5.10`, `S5.5` y `S7.1` conservan sus condiciones propias.
 

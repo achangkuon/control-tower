@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
 | Outputs | Adapter contract, launcher Pi/OpenCode, health, stop proof, host epoch y fallback exclusivo. |
-| Roadmap | `S4.1` está ✅ COMPLETO. `S4.2`–`S4.4` enumeran ahora toda la responsabilidad restante de Change E: lanzamiento visible, observabilidad/rehidratación y failover exclusivo. P4 queda con denominador cerrado de 4 Sesiones. |
+| Roadmap | `S4.1` está ✅ COMPLETO. `S1.16` también cerró, por lo que `S4.2` queda 🟢 LISTO para `design-tasks`, sin acreditar implementación ni readiness de producción. `S4.3` y `S4.4` permanecen 🔴 BLOQUEADO por sus dependencias propias. `S4.2`–`S4.4` enumeran toda la responsabilidad restante de Change E y P4 conserva un denominador cerrado de 4 Sesiones. |
 | Referencias | [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). El proposal `sdd-tower-host-launcher` fue eliminado en `613a45d` por ser cáscara sin avance; su intención vive en este STATUS. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
@@ -165,9 +165,9 @@ Todos deben pasar para cerrar:
 
 ## Sesión 4.2 — Lanzamiento visible de raíz OpenCode
 
-**Estado:** 🔴 BLOQUEADO
+**Estado:** 🟢 LISTO — sus dependencias están completas y la autoridad, `Área`, `Recurso` y decisiones existentes permiten iniciar únicamente la ruta `design-tasks`. Este estado no acredita implementación ni readiness de producción.
 
-**Depende de:** `S4.1` ✅, `S1.16` 🔴.
+**Depende de:** `S4.1` ✅, `S1.16` ✅.
 
 **Área:** `hosts/launcher.mjs`, `hosts/opencode-launcher.mjs`, `hosts/herdr.mjs`, `plugin/tower-spike.js`, `.opencode/plugins/tower-spike.js`, `test/hosts/launcher.test.mjs`, `test/hosts/opencode-launcher.test.mjs`, `test/hosts/herdr.test.mjs`, `test/plugin/tower-spike.test.mjs`
 
@@ -217,7 +217,7 @@ Después de aprobar un brief, Host Launcher crea un panel Herdr **nuevo y visibl
 
 **Estado:** 🔴 BLOQUEADO
 
-**Depende de:** `S4.2` 🔴, `S1.16` 🔴.
+**Depende de:** `S4.2` 🟢, `S1.16` ✅.
 
 **Área:** `hosts/inspect.mjs`, `hosts/health.mjs`, `hosts/stop-proof.mjs`, `hosts/rehydration.mjs`, `test/hosts/inspect.test.mjs`, `test/hosts/health.test.mjs`, `test/hosts/stop-proof.test.mjs`, `test/hosts/rehydration.test.mjs`
 
@@ -300,8 +300,8 @@ Enforce el `host_epoch` emitido por Main y permite failover OpenCode → Pi sól
 
 ```mermaid
 graph LR
-  S41["S4.1 fence · ✅"] --> S42["S4.2 raíz visible · 🔴"]
-  S116["S1.16 OpenCode wake · 🔴"] --> S42
+  S41["S4.1 fence · ✅"] --> S42["S4.2 raíz visible · 🟢"]
+  S116["S1.16 OpenCode wake · ✅"] --> S42
   S42 --> S43["S4.3 liveness/rehidratación · 🔴"]
   S116 --> S43
   S43 --> S44["S4.4 failover · 🔴"]
