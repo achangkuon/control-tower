@@ -1,22 +1,20 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-13 sobre la base `master@53b471cd2e621b844fc043ced844e9c034887952` (`53b471c`). El ref local `origin/master` permanece en `3db3c121`; el candidato PREPARED de `S5.12` está importado en el working tree y no fue commiteado, pusheado ni publicado.
+> Última reconciliación: 2026-08-13 contra `master@cebcaebafe6f8ad71311c87a2c7de3db39f3491d`; `origin/master` coincide exactamente con ese SHA. `S5.12` fue entregada en `e7b1437f8c98c5856236e06e4c1fb5c40e9dc8ef` dentro del push `3db3c121d48a07d7696afe6a88de044f30ea4695..cebcaebafe6f8ad71311c87a2c7de3db39f3491d`.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md).
 
 ## 📍 Punto de retoma
 
-`S1.15` y `S5.11` están cerradas técnica y localmente. `S1.16` queda 🟢 LISTO. `S5.12` queda 🔵 EN CURSO con un candidato **PREPARED** exacto ya importado en Main: la verificación funcional final está verde y la desviación procedimental está registrada; quedan el commit selectivo y un único push directo ordenado con los documentos de cierre. No aporta crédito.
+`S5.12` cerró y fue publicada: implementación `e7b1437f8c98c5856236e06e4c1fb5c40e9dc8ef`, política `6f3252ae6c555b5b5da96d33d18a7fbd1aaa812a`, documentación preparada `cebcaebafe6f8ad71311c87a2c7de3db39f3491d`; `master == origin/master == cebcaeb`. `S5.9` queda 🟢 LISTO tras reevaluar dependencia, autoridad, `Área`, `Recurso` y decisiones; debe reconciliar sus artefactos externos antes de tasks/apply. `S1.16` y `S10.1` siguen 🟢 LISTO.
 
-`S9.1` queda planning-only y en cuarentena antes de tasks/apply. Sus artefactos permanecen intactos; transporte `#1b` y la contradicción del rollback floor siguen sin resolver. `S9.2` continúa 🔴 BLOQUEADO. P9 no reabre P3 ni altera el orden de hosts.
+`S9.1` permanece planning-only y en cuarentena antes de tasks/apply: transporte `#1b` y la contradicción del rollback floor siguen sin resolver; `S9.2` continúa 🔴 BLOQUEADO. P9 no reabre P3 ni altera el orden de hosts.
 
-Control Tower es un producto, un roadmap y un release. OpenCode sigue primero (`S1.13`–`S1.15` ✅ COMPLETO; `S1.16` 🟢 LISTO) y Pi sigue siendo el segundo host/fallback obligatorio (`S1.17` 🔴 BLOQUEADO; `S1.18`–`S1.19` sin implementar). P10 entra en la cadena: `S3.4 → S10.1 → S10.2 → S7.1`; `S10.1` queda 🟢 LISTO por `design-tasks`, siempre effect-incapable, y `S10.2` conserva sus dos decisiones abiertas.
+Control Tower sigue siendo un producto, un roadmap y un release. OpenCode va primero; Pi sigue como segundo host/fallback obligatorio. P10 conserva `S3.4 → S10.1 → S10.2 → S7.1`, con `S10.1` siempre effect-incapable y las dos decisiones de `S10.2` abiertas.
 
-Con la Torre apagada, sesiones peer Pi homogéneas pueden coordinarse por Intercom sólo con autorización explícita del maintainer. Es un método interino de desarrollo, no autoridad Tower ni cambio del orden de hosts.
+Con la Torre apagada, sesiones peer Pi homogéneas sólo pueden coordinarse por Intercom con autorización explícita del maintainer; es un método interino, no autoridad Tower. La hermeticidad clean-clone del registry sigue como deuda sin ID.
 
-La hermeticidad clean-clone del registry queda como deuda separada y todavía no tiene ID de Sesión; no invalida el cierre post-integración de `S5.11` sobre Main. `S1.17`, `S5.2`/`S5.3`, `S5.9`/`S5.10`/`S5.5`, `S8.7` y `S10.2` conservan sus bloqueos.
-
-No se acredita ninguna Sesión posterior. La capacidad debe reevaluarse por grafo, `Área`, `Recurso` y contaminación antes de ejecutar trabajo en paralelo.
+Permanecen bloqueadas `S1.17`, `S5.2`/`S5.3`, `S5.10`/`S5.5`, `S8.7` y `S10.2`. La capacidad debe reevaluarse por grafo, `Área`, `Recurso` y contaminación antes de trabajo paralelo.
 
 ## Granularidad
 
@@ -25,7 +23,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 
 ## 📊 Estado de un vistazo
 
-**Avance global**: 2/11 Planes cerrados (18%) · Sesiones cerradas en planes activos: 27/48 (56%). Cálculo auditable: P1 `15/19` + P4 `1/4` + P5 `6/12` + P7 `0/1` + P8 `5/8` + P9 `0/2` + P10 `0/2` = `27/48`; P2 se excluye porque su STATUS declara trabajo pendiente sin Sesiones enumeradas, por lo que no tiene denominador de Plan derivable.
+**Avance global**: 2/11 Planes cerrados (18%) · Sesiones cerradas en planes activos: 28/48 (58%). Cálculo auditable: P1 `15/19` + P4 `1/4` + P5 `7/12` + P7 `0/1` + P8 `5/8` + P9 `0/2` + P10 `0/2` = `28/48`; P2 se excluye porque su STATUS declara trabajo pendiente sin Sesiones enumeradas, por lo que no tiene denominador de Plan derivable.
 
 | ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |
 |----|------|--------|---|------|-------|-----------|-----|
@@ -34,7 +32,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 | P2 | Contratos y registro de producto | 🔵 EN CURSO | — (responsabilidades restantes de Change B sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-2/STATUS.md) |
 | P3 | Workspace y orquestación | ✅ COMPLETO | 100% (4/4 S) | — | Main | — | [STATUS](plan-3/STATUS.md) |
 | P4 | Hosts y línea exclusiva | 🔵 EN CURSO | 25% (1/4 S) | — | Main | S4.2, S4.3, S4.4 | [STATUS](plan-4/STATUS.md) |
-| P5 | Entrega y continuación | 🔵 EN CURSO | 50% (6/12 S) | — | Main | S5.2, S5.3, S5.5, S5.9, S5.10, S5.12 | [STATUS](plan-5/STATUS.md) |
+| P5 | Entrega y continuación | 🔵 EN CURSO | 58% (7/12 S) | — | Main | S5.2, S5.3, S5.5, S5.9, S5.10 | [STATUS](plan-5/STATUS.md) |
 | P6 | Campañas multiproyecto | 📋 PLANIFICADO | — (sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-6/STATUS.md) |
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | S7.1 | [STATUS](plan-7/STATUS.md) |
 | P8 | Release instalable | 🔵 EN CURSO | 63% (5/8 S) | — | Maintainer | S8.7, S8.5, S8.6 | [STATUS](plan-8/STATUS.md) |

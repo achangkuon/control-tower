@@ -82,8 +82,8 @@ graph LR
   S56 --> S57["S5.7 decisión/respuesta · ✅"]
   S57 --> S58["S5.8 binding de respuesta · ✅"]
   S58 --> S511["S5.11 provenance de checkpoint · ✅"]
-  S511 --> S512["S5.12 composición Main→parking · 🔵"]
-  S512 --> S59["S5.9 binding de checkpoint · 🔴"]
+  S511 --> S512["S5.12 composición Main→parking · ✅"]
+  S512 --> S59["S5.9 binding de checkpoint · 🟢"]
   S59 --> S510["S5.10 binding de trabajo completado · 🔴"]
   S510 --> S55["S5.5 decisión estacionada · 🔴"]
   S51 --> S87
@@ -121,8 +121,8 @@ graph LR
 | ✅ | `S5.7` | Contratos canónicos de decisión estacionada y respuesta | ✅ COMPLETO | `S5.6` ✅; publicado en `origin/master@3db3c121` e integrado en `master@427b14e` |
 | ✅ | `S5.8` | Binding de opción seleccionada en autoridad canónica | ✅ COMPLETO | `S5.7` ✅; integrada y verificada localmente en `master@427b14e` mediante `6bb7019`, focused 42/0/250 y full 610/0/3618, sin push remoto |
 | ✅ | `S5.11` | Productores canónicos de provenance del checkpoint | ✅ COMPLETO | `S5.8` ✅; integrada y verificada localmente en `master@b4d7fcd` (tree `7873570`), 12/12 criterios, full 656/0/3941 en 42 archivos, 620 líneas authored bajo `size:exception`, sin push remoto |
-| ▶ | `S5.12` | Composición única de productores hacia parking bajo Main | 🔵 EN CURSO | `S5.11` ✅ integrada; candidato PREPARED y verificado, pendiente de entrega por push directo, sin crédito |
-| — | `S5.9` | Binding autoritativo del checkpoint estacionado | 🔴 BLOQUEADO | `S5.12` integrada; route `full-sdd` pausada antes de tasks/apply; proposal/spec/design y falsificador permanecen no integrados en el worktree separado `s5-9`; el archivo no trackeado `design.md` tiene SHA-256 `a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1` / Engram 8604 y no es identidad Git |
+| ✅ | `S5.12` | Composición única de productores hacia parking bajo Main | ✅ COMPLETO | `S5.11` ✅; implementación `e7b1437f8c98c5856236e06e4c1fb5c40e9dc8ef`, 8/8 criterios, focused 52/0/306, full 663/0/3986 y publicación probada en `origin/master@cebcaeb` |
+| ▶ | `S5.9` | Binding autoritativo del checkpoint estacionado | 🟢 LISTO | `S5.12` ✅; dependencia, autoridad, `Área`, `Recurso` y decisiones propias reevaluadas sin bloqueo restante; route `full-sdd` retoma antes de tasks/apply y reconcilia proposal/spec/design externos |
 | — | `S5.10` | Binding inmutable del trabajo independiente completado | 🔴 BLOQUEADO | `S5.9` integrada y su propio contrato de provenance/seguridad resuelto; route `blocked` |
 | — | `S5.5` | Decisión estacionada y continuación independiente | 🔴 BLOQUEADO | `S5.10` integrada; transitivamente `S5.9`, `S5.12`, `S5.11` y `S5.8` ✅; pausada antes de tasks/apply |
 | — | `S5.3` | Continuación | 🔴 BLOQUEADO | Bloqueo transitivo por `S5.2` |
@@ -140,7 +140,7 @@ graph LR
 > recuperación y failover entra en la cadena de release. La tabla se corrige para coincidir.
 > La decisión histórica fue explícita —construir las catorce Sesiones que ese corte enumeraba como restantes— y no una derivación; la reconciliación actual agrega los prerrequisitos omitidos sin reescribir aquella evidencia.
 
-**Treinta y cinco Sesiones · 18/35 cerradas (51%).** Re-enumeración independiente: los 35 nodos de la tabla son `S8.8`, `S0.3`, `S3.1`–`S3.4`, `S5.1`, `S4.1`–`S4.4`, `S1.11`–`S1.19`, `S5.2`–`S5.12`, `S8.7`, `S10.1`, `S10.2` y `S7.1`. El numerador suma los diecisiete cierres previos más `S5.11`; sólo `COMPLETO` cuenta. `S5.12` aporta cero mientras está 🔵 EN CURSO con disposición PREPARED y pendiente de entrega directa; `S10.1` aporta cero mientras está `LISTO` y `S10.2`, mientras está `BLOQUEADO`. P10 integra explícitamente la primera release mediante `S3.4 → S10.1 → S10.2 → S7.1`. Esta métrica mide sólo la cadena de release y no reemplaza el `27/48` de planificación del [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
+**Treinta y cinco Sesiones · 19/35 cerradas (54%).** Re-enumeración independiente: los 35 nodos de la tabla son `S8.8`, `S0.3`, `S3.1`–`S3.4`, `S5.1`, `S4.1`–`S4.4`, `S1.11`–`S1.19`, `S5.2`–`S5.12`, `S8.7`, `S10.1`, `S10.2` y `S7.1`. El numerador suma los dieciocho cierres previos más `S5.12`; sólo `COMPLETO` cuenta. `S5.9` y `S10.1` aportan cero mientras están `LISTO`; `S10.2` aporta cero mientras está `BLOQUEADO`. P10 integra explícitamente la primera release mediante `S3.4 → S10.1 → S10.2 → S7.1`. Esta métrica mide sólo la cadena de release y no reemplaza el `28/48` de planificación del [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
 secuenciales entre `S5.4` y `S5.5`: snapshot/parser canónico, contratos de decisión/respuesta,
 binding terminal, productores de provenance, composición Main→parking, binding autoritativo de
 checkpoint y binding inmutable del trabajo completado bajo la autoridad exclusiva de Main. La
@@ -182,11 +182,11 @@ cerrado y exige una solicitud/autorización nueva.
 
 La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas; no se declara como un número fijo.
 
-`S1.15` y `S5.11` están ✅ COMPLETO e integradas localmente; el HEAD técnico es `master@b4d7fcd` (tree `7873570`). El ref local `origin/master` permanece en `3db3c121`, por lo que no hay push ni publicación remota. `S1.16` queda 🟢 LISTO, soportada por su dependencia cerrada y sin inicio ni crédito. `S5.12` está 🔵 EN CURSO con disposición PREPARED y verificación completa, pendiente de entrega por push directo y sin crédito.
+`S5.12` está ✅ COMPLETO y publicada; el HEAD técnico y remoto coinciden en `master == origin/master == cebcaebafe6f8ad71311c87a2c7de3db39f3491d`. `S1.16`, `S5.9` y `S10.1` quedan 🟢 LISTO, sin inicio ni crédito.
 
-La capacidad se sigue derivando, no se fija como cupo. `S1.17` mantiene su bloqueo propio por `assignment_id`, `session_id` y capacidad de binding Workspace Manager/Main reales ausentes y, con él, `S1.18`–`S1.19` y `S4.4`. `S5.2`/`S5.3`, `S5.9`/`S5.10`/`S5.5`, `S8.7` y `S10.2` conservan sus bloqueos registrados. `S5.12` es el nodo activo de la cadena `S5.11 → S5.12 → S5.9 → S5.10 → S5.5`; ningún nodo posterior recibe crédito. `S10.1` también está 🟢 LISTO por ruta `design-tasks`, siempre effect-incapable; `S10.2` carece de `Área` y queda excluida de capacidad. `S7.1` mantiene sus dependencias previas y agrega `S10.1` y `S10.2`.
+La capacidad se sigue derivando, no se fija como cupo. `S1.17` mantiene su bloqueo propio por `assignment_id`, `session_id` y capacidad de binding Workspace Manager/Main reales ausentes y, con él, `S1.18`–`S1.19` y `S4.4`. `S5.2`/`S5.3`, `S5.10`/`S5.5`, `S8.7` y `S10.2` conservan sus bloqueos registrados. `S5.9` debe reconciliar sus artefactos externos y ejecutar su falsificador antes de tasks/apply, pero dependencia, autoridad, `Área`, `Recurso` y decisiones propias están despejadas. `S10.1` sigue siempre effect-incapable; `S10.2` carece de `Área` y queda excluida de capacidad. `S7.1` mantiene sus dependencias previas y agrega `S10.1` y `S10.2`.
 
-El siguiente inicio debe volver a derivar capacidad y contaminación desde el grafo vigente, no desde esta fotografía. El cierre de `S5.11` habilitó sólo `S5.12`, ahora 🔵 EN CURSO con disposición PREPARED y entrega directa pendiente; no acredita ni destraba por sí solo `S5.9`, `S5.10`, `S5.5` o `S7.1`.
+El siguiente inicio debe volver a derivar capacidad y contaminación desde el grafo vigente, no desde esta fotografía. Ningún nodo posterior a `S5.9` recibe crédito: `S5.10`, `S5.5` y `S7.1` conservan sus condiciones propias.
 
 ## Enmienda `S0.3` — ✅ COMPLETA
 
