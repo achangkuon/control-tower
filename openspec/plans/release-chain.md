@@ -56,7 +56,8 @@ graph LR
   S31["S3.1 workspace · ✅"] --> S32["S3.2 orquestación · ✅"]
   S32 --> S33["S3.3 capability registry · ✅"]
   S33 --> S34["S3.4 ciclo de vida Jornada · ✅"]
-  S34 --> S101["S10.1 ejecución effect-incapable · 🟢"]
+  S34 --> S103["S10.3 contrato versionado · 🟢"]
+  S103 --> S101["S10.1 preparación persistida · 📋"]
   S101 --> S102["S10.2 supervisión válida · 🔴"]
   S102 --> S71
   S34 --> S51["S5.1 candidate contracts · ✅"]
@@ -127,9 +128,10 @@ graph LR
 | — | `S5.5` | Decisión estacionada y continuación independiente | 🔴 BLOQUEADO | `S5.10` integrada; transitivamente `S5.9`, `S5.12`, `S5.11` y `S5.8` ✅; pausada antes de tasks/apply |
 | — | `S5.3` | Continuación | 🔴 BLOQUEADO | Bloqueo transitivo por `S5.2` |
 | — | `S8.7` | Puente Hermes/Telegram | 🔴 BLOQUEADO | Dependencias propias ✅ y decisiones Telegram resueltas; bloquea el inicializador confiable de producción pendiente |
-| ▶ | `S10.1` | Ejecución del contrato sellado de Jornada | 🟢 LISTO | `S3.4` ✅; route `design-tasks`; puede construirse primero sólo effect-incapable y no aporta crédito |
+| ▶ | `S10.3` | Contrato de ejecución versionado | 🟢 LISTO | `S3.4` ✅; route `direct`, copia pasiva exacta y excepción exclusiva del artefacto indivisible |
+| — | `S10.1` | Preparación persistida de Jornada | 📋 PLANIFICADO | `S10.3`; route `design-tasks`, owner pasivo Jornada-local y cero efectos |
 | — | `S10.2` | Supervisión válida sin armado local | 🔴 BLOQUEADO | `S10.1`; decisión pendiente entre modo nuevo de `ACTIVE`, centinela separado o supervisión externa, más decisión separada sobre el interlock de `remote-control` |
-| 4 | `S7.1` | Conformidad de release | 📋 PLANIFICADO | `S4.4`, `S5.3`, `S8.7`, `S5.5`, `S10.1`, `S10.2` |
+| 4 | `S7.1` | Conformidad de release | 📋 PLANIFICADO | `S4.4`, `S5.3`, `S8.7`, `S5.5`, `S10.2` |
 
 > **Contradicción reconciliada el 2026-08-11.** Hasta esta fecha el grafo Mermaid declaraba
 > `S44 --> S71` y esta tabla omitía `S4.4`, con la prosa sin mencionar su retiro. Las dos
@@ -140,7 +142,7 @@ graph LR
 > recuperación y failover entra en la cadena de release. La tabla se corrige para coincidir.
 > La decisión histórica fue explícita —construir las catorce Sesiones que ese corte enumeraba como restantes— y no una derivación; la reconciliación actual agrega los prerrequisitos omitidos sin reescribir aquella evidencia.
 
-**Treinta y cinco Sesiones · 20/35 cerradas (57%).** Re-enumeración independiente: los 35 nodos de la tabla son `S8.8`, `S0.3`, `S3.1`–`S3.4`, `S5.1`, `S4.1`–`S4.4`, `S1.11`–`S1.19`, `S5.2`–`S5.12`, `S8.7`, `S10.1`, `S10.2` y `S7.1`. El numerador suma los diecinueve cierres previos más `S1.16`; sólo `COMPLETO` cuenta. `S4.2`, `S5.9` y `S10.1` aportan cero mientras están `LISTO`; `S10.2` aporta cero mientras está `BLOQUEADO`. P10 integra explícitamente la primera release mediante `S3.4 → S10.1 → S10.2 → S7.1`. Esta métrica mide sólo la cadena de release y no reemplaza el `29/48` de planificación del [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
+**Treinta y seis Sesiones · 20/36 cerradas (56%).** Re-enumeración independiente: se agrega `S10.3` a los 35 nodos previos. El numerador sigue en veinte; sólo `COMPLETO` cuenta. `S4.2`, `S5.9` y `S10.3` aportan cero mientras están `LISTO`; `S10.1` aporta cero en `PLANIFICADO` y `S10.2` en `BLOQUEADO`. P10 integra la release mediante `S3.4 → S10.3 → S10.1 → S10.2 → S7.1`. Esta métrica no reemplaza el `29/49` de planificación del [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
 secuenciales entre `S5.4` y `S5.5`: snapshot/parser canónico, contratos de decisión/respuesta,
 binding terminal, productores de provenance, composición Main→parking, binding autoritativo de
 checkpoint y binding inmutable del trabajo completado bajo la autoridad exclusiva de Main. La
@@ -184,7 +186,7 @@ La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas; no s
 
 `S1.16` está ✅ COMPLETO en `da4e391`; la entrega directa incluye su cierre documental. El consumer está cerrado, pero la composición productiva del provider/injection no: pertenece a `S4.2/M4.2.3`.
 
-La capacidad se sigue derivando, no se fija como cupo. `S4.2`, `S5.9` y `S10.1` están 🟢 LISTO; `S4.2` sólo queda habilitada para `design-tasks` y debe probar Herdr/OpenCode, stop-proof/decision providers y wiring productivo antes de cualquier claim de readiness. `S1.17` mantiene su bloqueo propio por `assignment_id`, `session_id` y capacidad de binding Workspace Manager/Main reales ausentes y, con él, `S1.18`–`S1.19` y `S4.4`. `S4.3`, `S5.2`/`S5.3`, `S5.10`/`S5.5`, `S8.7` y `S10.2` conservan sus bloqueos registrados. `S5.9` debe reconciliar sus artefactos externos y ejecutar su falsificador antes de tasks/apply. `S10.1` sigue siempre effect-incapable; `S10.2` carece de `Área` y queda excluida de capacidad. `S7.1` mantiene sus dependencias previas y agrega `S10.1` y `S10.2`.
+La capacidad se sigue derivando, no se fija como cupo. `S4.2`, `S5.9` y `S10.3` están 🟢 LISTO; `S4.2` sólo queda habilitada para `design-tasks` y debe probar Herdr/OpenCode, stop-proof/decision providers y wiring productivo antes de cualquier claim de readiness. `S1.17` mantiene su bloqueo propio por `assignment_id`, `session_id` y capacidad de binding Workspace Manager/Main reales ausentes y, con él, `S1.18`–`S1.19` y `S4.4`. `S4.3`, `S5.2`/`S5.3`, `S5.10`/`S5.5`, `S8.7` y `S10.2` conservan sus bloqueos registrados. `S5.9` debe reconciliar sus artefactos externos y ejecutar su falsificador antes de tasks/apply. `S10.1` queda 📋 PLANIFICADO hasta cerrar `S10.3` y seguirá effect-incapable; `S10.2` carece de `Área` y queda excluida. `S7.1` mantiene sus dependencias previas y la cadena transitiva de P10.
 
 El siguiente inicio debe volver a derivar capacidad y contaminación desde el grafo vigente, no desde esta fotografía. Ningún nodo posterior a `S5.9` recibe crédito: `S5.10`, `S5.5` y `S7.1` conservan sus condiciones propias.
 

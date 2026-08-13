@@ -1,90 +1,107 @@
 # Plan 10 — Ejecución y supervisión autónoma de Jornada
 
 **Estado:** 🟢 LISTO
-**Avance:** 0% (0/2 S)
+**Avance:** 0% (0/3 S)
 
 > El maintainer resolvió la ubicación provisional del 2026-08-11: las responsabilidades antes
 > enumeradas como `S3.5`/`S3.6` forman un Plan nuevo y pasan a ser `S10.1`/`S10.2`. P3 permanece
 > ✅ COMPLETO con `4/4 S`. P9 conserva su alcance separado de slots físicos de Jornada y caché
 > externa de Bun; no se integra ni se modifica mediante esta decisión.
 
-`S10.1` puede avanzar por `design-tasks` bajo una restricción aprobada: puede construirse antes
-de `S10.2` sólo mientras sea incapaz de producir efectos. Ningún efecto autónomo puede ejecutarse
-hasta que `S10.2` aporte supervisión válida y vigente. `S10.2` sigue bloqueada y su arquitectura
-no se deriva ni se anticipa desde `S10.1`.
+`S10.3` incorpora primero el contrato versionado como artefacto pasivo. Después, `S10.1`
+valida, prepara y persiste bajo ownership exclusivo de Jornada, siempre sin efectos; `S10.2`
+conserva la arquitectura productora de supervisión y sus decisiones abiertas.
 
 ## Resumen auditable
 
 | Campo | Contrato |
 |---|---|
 | Autoridad | Decisión explícita del maintainer: Plan nuevo P10 para las responsabilidades provisionales `S3.5`/`S3.6`, renumeradas `S10.1`/`S10.2`. |
-| Estado | 🟢 LISTO: `S10.1` puede iniciar elaboración técnica; `S10.2` permanece 🔴 BLOQUEADO. |
-| Orden | `S3.4 → S10.1 → S10.2 → S7.1`; ningún efecto atraviesa `S10.1` sin supervisión válida y vigente. |
-| Capacidad derivada | `S10.1` es elegible para `design-tasks`; `S10.2` no tiene `Área` definida y se excluye de capacidad. |
-| Avance | 0% (0/2 S): ninguna Sesión está ✅ COMPLETO ni 📚 ARCHIVADO. |
-| Release | P10 forma parte del producto, roadmap y release únicos; aporta 0/2 al denominador. |
+| Estado | 🟢 LISTO: `S10.3` puede ejecutarse; `S10.1` queda 📋 PLANIFICADO y `S10.2` 🔴 BLOQUEADO. |
+| Orden | `S3.4 → S10.3 → S10.1 → S10.2 → S7.1`. |
+| Capacidad derivada | Sólo `S10.3` es elegible; `S10.1` espera su prerrequisito y `S10.2` no tiene `Área`. |
+| Avance | 0% (0/3 S): ninguna Sesión está ✅ COMPLETO ni 📚 ARCHIVADO. |
+| Release | P10 forma parte del producto, roadmap y release únicos; aporta 0/3 al denominador. |
 
-La jerarquía canónica es `Plan → Sesión → Módulo → Tarea`. `S10.1` puede elaborar sus Módulos y
-Tareas mediante `design-tasks`; `S10.2` se detiene en Sesión mientras sus decisiones impiden fijar
-archivos. La elaboración sólo puede usar `M10.x.y` y `T10.x.y.z`, sin crear un quinto nivel.
+La jerarquía canónica es `Plan → Sesión → Módulo → Tarea`; `S10.3` y `S10.1` quedan enumeradas
+abajo. `S10.2` se detiene en Sesión mientras sus decisiones impiden fijar archivos.
 
 ## Sesiones
 
 | ID | Resultado | Estado | Ruta | Motivo | Autoridad | Depende de | Área | Recurso |
 |---|---|---|---|---|---|---|---|---|
-| `S10.1` | Ejecución del contrato sellado de Jornada | 🟢 LISTO | `design-tasks` | Puede construirse primero sólo effect-incapable; la elaboración define gate, interfaz y prueba binaria sin decidir la arquitectura de `S10.2`. | Decisión explícita del maintainer del 2026-08-13. | `S3.4` ✅ | `jornada/**`, `test/jornada/**`, `schemas/execution-contract-v1.schema.json` | —; sin token de entrega ni SQLite de la Torre. |
-| `S10.2` | Supervisión sin armado local | 🔴 BLOQUEADO | `blocked` | Están abiertas la arquitectura visible/de seguridad y la contradicción del interlock de `remote-control`; `Área` sigue sin definir. | Brecha 7 de [implementation-state](../implementation-state.md). | `S10.1` | **Sin definir**; debe fijarse después de resolver las decisiones escaladas. | Centinela `ACTIVE` del repositorio supervisado. |
+| `S10.3` | Contrato de ejecución versionado | 🟢 LISTO | `direct` | Copia pasiva, exacta e indivisible con verificación estructural. | Decisión explícita del maintainer. | `S3.4` ✅ | `schemas/execution-contract-v1.schema.json` | — |
+| `S10.1` | Preparación persistida de Jornada | 📋 PLANIFICADO | `design-tasks` | Diseño compacto del owner pasivo y gate consumidor, sin arquitectura productora. | Decisión explícita del maintainer. | `S10.3` | `jornada/**`, `test/jornada/**` | —; sin token de entrega ni SQLite de la Torre. |
+| `S10.2` | Supervisión sin armado local | 🔴 BLOQUEADO | `blocked` | Arquitectura visible/de seguridad e interlock abiertos; `Área` sin definir. | Brecha 7 de [implementation-state](../implementation-state.md). | `S10.1` | **Sin definir** | Centinela `ACTIVE` del repositorio supervisado. |
 
-## Sesión 10.1 — Ejecución del contrato sellado de Jornada
+## Sesión 10.3 — Contrato de ejecución versionado
 
 **Estado:** 🟢 LISTO
 
 **Depende de:** `S3.4` ✅
 
-**Área:** `jornada/**`, `test/jornada/**`, `schemas/execution-contract-v1.schema.json`
+**Área:** `schemas/execution-contract-v1.schema.json`
 
-**Prohibido:** `core.mjs`, `mcp.mjs`, `main-store/store.mjs`, `escalation/**`, `delivery/**`, `contracts/**`, `schemas/**` excepto exclusivamente `schemas/execution-contract-v1.schema.json`
+**Recurso:** —
 
-**Recurso:** —. No reclama el token de entrega ni escribe en el SQLite de la Torre.
-
-**Ruta:** `design-tasks` — `session-plan` debe definir el gate/interfaz effect-incapable y su
-prueba binaria antes de implementación, sin proposal/spec y sin prejuzgar la arquitectura de
-`S10.2`. **Autoridad:** opción 1 aprobada explícitamente por el maintainer el 2026-08-13, además
-de las decisiones previas de ubicación y contrato.
-
-El contrato externo ya existe: `execution-contract.schema.json` de
-`unattended-implementation`, con 407 líneas en uso real. `jornada/` tiene hoy 23 líneas y
-`policy/jornada.mjs` es un resolvedor puro que recibe la Jornada como argumento. Sellar el
-contrato ya lo hace la skill; la responsabilidad pendiente es ejecutarlo.
+**Ruta:** `direct` — artefacto pasivo, sin runtime ni tests; sólo copia y readback estructural.
 
 **Decisiones:**
-
-- **RESUELTA por el maintainer** — la copia versionada del `execution-contract.schema.json` externo
-  vive exactamente en `schemas/execution-contract-v1.schema.json`, siguiendo la convención
-  `<contrato>-v1.schema.json` ya establecida en `schemas/`. Sólo ese archivo se incorpora al `Área`;
-  ningún otro path de `schemas/**` queda permitido. **Criterio falsificable:** falla si el runtime lee
-  `~/.claude/`, si la copia vive bajo otro nombre o ruta, o si el diff modifica cualquier otro schema.
-  **Autoridad:** decisión explícita del maintainer para la corrección final del contrato de `S10.1`.
-- `derivable` — qué hace un contrato vencido. **Criterio:** falla cerrado por `expires_at`; no
-  se ejecuta ni se renueva solo. Falsificable: una ejecución posterior a `expires_at`.
-  **Autoridad:** el propio schema.
-- `escala` — **RESUELTA por el maintainer:** `S10.1` puede construirse antes de `S10.2` sólo
-  mientras sea incapaz de producir efectos; ningún efecto autónomo puede ejecutarse hasta recibir
-  supervisión válida y vigente. La clase sigue siendo **operaciones irreversibles**; no se deriva la
-  decisión de producto. **Criterio falsificable:** cualquier camino que produzca un efecto sin
-  evidencia actual y válida de supervisión viola el contrato. **Autoridad:** opción 1 aprobada
-  explícitamente por el maintainer el 2026-08-13. Con esa autoridad, la forma técnica del gate,
-  interfaz y prueba binaria es `derivable`; la arquitectura de `S10.2` no lo es.
+- `escala` — **RESUELTA por el maintainer:** copia byte a byte desde `/home/emili/.agents/skills/unattended-implementation/assets/execution-contract.schema.json`; destino exacto de 17.297 bytes, 407 líneas y SHA-256 `2f4838aa244b30e280c5c558286b0e4d9fbb503a0ef1808ffc27501c1540fddc`. La excepción autoriza sólo este contrato activo indivisible, no otras líneas ni overflow de `S10.1`. **Clase:** expansión de alcance; contrato visible del producto. **Contaminaba:** `S10.3`, `S10.1`, `S10.2`, `S7.1`.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
+- [ ] El destino es byte-idéntico al origen y coincide en bytes, líneas y SHA-256
+- [ ] No se normaliza, genera ni modifica ningún otro archivo de runtime, schema o test
+- [ ] Ningún runtime lee `~/.claude/`; la fuente se consulta sólo durante la copia estructural
+- [ ] La excepción de tamaño se atribuye exclusivamente a este artefacto indivisible
 
-- [ ] Un contrato válido se lee, valida contra el schema versionado y persiste antes de ejecutar
-- [ ] Un contrato con digest que no coincide se rechaza y no ejecuta nada
-- [ ] Un contrato vencido por `expires_at` falla cerrado
-- [ ] Sin evidencia válida y vigente de supervisión, todo camino es incapaz de producir efectos
-- [ ] La ejecución respeta repositorio, worktree, rama, `base_sha` y `sesion_id` exactos del contrato
-- [ ] Ninguna ruta lee `~/.claude/` en runtime
-- [ ] El diff no toca ninguna ruta del `Prohibido`
+### Módulo 10.3.1 — Copia estructural del contrato
+- `T10.3.1.1` **RED:** comprobar origen, identidad esperada y ausencia de mutaciones ajenas.
+- `T10.3.1.2` **GREEN:** copiar exactamente al único path de `Área`, sin transformación.
+- `T10.3.1.3` **REFACTOR:** releer destino y corroborar bytes, líneas, hash y diff exclusivo.
+
+## Sesión 10.1 — Preparación persistida de Jornada
+
+**Estado:** 📋 PLANIFICADO
+
+**Depende de:** `S10.3`
+
+**Área:** `jornada/**`, `test/jornada/**`
+
+**Prohibido:** `core.mjs`, `mcp.mjs`, `main-store/store.mjs`, `escalation/**`, `delivery/**`, `contracts/**`, todo `schemas/**`; Main store y SQLite.
+
+**Recurso:** —.
+
+**Ruta:** `design-tasks` — elaboración compacta del owner pasivo y gate consumidor; sin proposal/spec ni diseño productor de `S10.2`.
+
+**Decisiones:**
+- `derivable` — contrato vencido falla cerrado por `expires_at` y nunca se renueva solo. **Autoridad:** schema versionado. **Falsificador:** aceptar una preparación posterior al vencimiento.
+- `escala` — **RESUELTA por el maintainer:** una única capability/root inyectada, pasiva y owner-only bajo `jornada/**` persiste antes de declarar `prepared`; no Main store, SQLite ni writer alternativo. **Clase:** seguridad y permisos; API pública. **Contaminaba:** `S10.1`, `S10.2`, `S7.1`.
+- `escala` — **RESUELTA por el maintainer:** `S10.1` consume evidencia opaca de supervisión sólo como gate y permanece incapaz de efectos; `S10.2` conserva arquitectura y producción de evidencia. **Clase:** operaciones irreversibles. **Contaminaba:** `S10.1`, `S10.2`, `S7.1`.
+
+**Criterios de aceptación** — todos deben pasar para cerrar:
+- [ ] JSON canónico, digest, `expires_at`, repositorio, worktree, rama, `base_sha` y `sesion_id` exactos se validan antes de persistir o declarar `prepared`
+- [ ] Contrato inválido, divergente o vencido falla cerrado, con cero llamadas de persistencia y sin estado `prepared`
+- [ ] Evidencia opaca de supervisión válida, vigente y coincidente se verifica después del contrato/contexto y antes de persistir; si está ausente, inválida, divergente o vencida hay cero llamadas de persistencia y no existe estado `prepared`
+- [ ] Sólo después de validar contrato, contexto y supervisión, una única llamada a la capability/root owner-only persiste pasivamente bajo `jornada/**`; únicamente su éxito permite devolver `prepared`
+- [ ] `S10.1` no diseña ni produce evidencia de supervisión
+- [ ] No existe executor ni acceso a subprocess, Git, remoto, Main store o SQLite; ningún camino produce efectos
+- [ ] El diff no toca ninguna ruta fuera de `Área` ni ninguna ruta del `Prohibido`
+
+### Módulo 10.1.1 — Validación canónica de contrato y contexto
+- `T10.1.1.1` **RED:** cubrir rechazo de JSON/digest/expiry e identidad exacta divergentes con cero persistencia y sin `prepared`.
+- `T10.1.1.2` **GREEN:** validar contrato y contexto en una representación prevalidada, sin persistir ni declarar `prepared`.
+- `T10.1.1.3` **REFACTOR:** centralizar invariantes y confirmar cero acceso a executor, subprocess, Git o remoto.
+
+### Módulo 10.1.2 — Gate consumidor de supervisión
+- `T10.1.2.1` **RED:** cubrir evidencia opaca ausente, inválida, divergente o vencida con cero llamadas de persistencia y sin `prepared`.
+- `T10.1.2.2` **GREEN:** verificar evidencia válida, vigente y coincidente sólo después del contrato/contexto, sin persistir ni declarar `prepared`.
+- `T10.1.2.3` **REFACTOR:** probar frontera effect-incapable y ausencia de diseño productor de `S10.2`.
+
+### Módulo 10.1.3 — Persistencia pasiva owner-only
+- `T10.1.3.1` **RED:** cubrir root/capability ausente, ajena o fallida y prohibir `prepared` prematuro.
+- `T10.1.3.2` **GREEN:** después de validar contrato, contexto y supervisión, persistir una sola vez bajo el root inyectado de Jornada; únicamente el éxito devuelve `prepared`.
+- `T10.1.3.3` **REFACTOR:** aislar readback/errores sin Main store, SQLite ni writer alternativo.
 
 ## Sesión 10.2 — Supervisión sin armado local
 
@@ -145,10 +162,11 @@ tienen una razón de diseño para exigirla apagada. `control-tower` aborta sus d
 
 ```mermaid
 graph LR
-  S34["S3.4 ciclo de vida Jornada · ✅"] --> S101["S10.1 ejecución sellada · 🟢"]
+  S34["S3.4 ciclo de vida Jornada · ✅"] --> S103["S10.3 contrato versionado · 🟢"]
+  S103 --> S101["S10.1 preparación persistida · 📋"]
   S101 --> S102["S10.2 supervisión sin armado · 🔴"]
   S102 --> S71["S7.1 conformidad de release · 📋"]
 ```
 
-**Avance derivado:** 0% (0/2 S). **Capacidad derivada:** `S10.1` es elegible para
-`design-tasks`; `S10.2` permanece 🔴 BLOQUEADO, carece de `Área` y no recibe crédito.
+**Avance derivado:** 0% (0/3 S). **Capacidad derivada:** sólo `S10.3` está 🟢 LISTO;
+`S10.1` espera el prerrequisito y `S10.2` permanece 🔴 BLOQUEADO sin `Área`.

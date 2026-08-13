@@ -8,11 +8,11 @@
 
 `S1.16` cerró en `da4e391`; su consumer OpenCode está verificado, pero el provider/injection productivo sigue perteneciendo a `S4.2/M4.2.3`. La entrega directa incluye la implementación y este cierre documental.
 
-`S4.2` pasa la reevaluación independiente de dependencia, autoridad, `Área`, `Recurso` y decisiones y queda 🟢 LISTO para `design-tasks`; esto no acredita readiness de producción. `S5.9` y `S10.1` siguen 🟢 LISTO.
+`S4.2` y `S5.9` siguen 🟢 LISTO. En P10, `S10.3` queda 🟢 LISTO para la copia pasiva exacta; `S10.1` pasa a 📋 PLANIFICADO hasta cerrar ese prerrequisito.
 
 `S9.1` permanece planning-only y en cuarentena antes de tasks/apply: transporte `#1b` y rollback floor siguen sin resolver; `S9.2` continúa 🔴 BLOQUEADO. P9 no reabre P3 ni altera el orden de hosts.
 
-Control Tower sigue siendo un producto, un roadmap y un release. OpenCode va primero; Pi sigue como segundo host/fallback obligatorio. P10 conserva `S3.4 → S10.1 → S10.2 → S7.1`, con `S10.1` effect-incapable y las decisiones de `S10.2` abiertas.
+Control Tower sigue siendo un producto, un roadmap y un release. OpenCode va primero; Pi sigue como segundo host/fallback obligatorio. P10 encadena `S3.4 → S10.3 → S10.1 → S10.2 → S7.1`; `S10.1` es effect-incapable y `S10.2` conserva sus decisiones abiertas.
 
 Permanecen bloqueadas `S1.17`, `S4.3`/`S4.4`, `S5.2`/`S5.3`, `S5.10`/`S5.5`, `S8.7` y `S10.2`; con la Torre apagada, la capacidad se reevalúa por grafo, `Área`, `Recurso` y contaminación.
 
@@ -23,7 +23,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 
 ## 📊 Estado de un vistazo
 
-**Avance global**: 2/11 Planes cerrados (18%) · Sesiones cerradas en planes activos: 29/48 (60%). Cálculo auditable: P1 `16/19` + P4 `1/4` + P5 `7/12` + P7 `0/1` + P8 `5/8` + P9 `0/2` + P10 `0/2` = `29/48`; P2 se excluye porque su STATUS declara trabajo pendiente sin Sesiones enumeradas, por lo que no tiene denominador de Plan derivable.
+**Avance global**: 2/11 Planes cerrados (18%) · Sesiones cerradas en planes activos: 29/49 (59%). Cálculo auditable: P1 `16/19` + P4 `1/4` + P5 `7/12` + P7 `0/1` + P8 `5/8` + P9 `0/2` + P10 `0/3` = `29/49`; P2 se excluye porque su STATUS declara trabajo pendiente sin Sesiones enumeradas, por lo que no tiene denominador de Plan derivable.
 
 | ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |
 |----|------|--------|---|------|-------|-----------|-----|
@@ -37,7 +37,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | S7.1 | [STATUS](plan-7/STATUS.md) |
 | P8 | Release instalable | 🔵 EN CURSO | 63% (5/8 S) | — | Maintainer | S8.7, S8.5, S8.6 | [STATUS](plan-8/STATUS.md) |
 | P9 | Slots seguros de Jornada y caché externa de Bun | 🟢 LISTO | 0% (0/2 S) | — | Maintainer | S9.1, S9.2 | [STATUS](plan-9/STATUS.md) |
-| P10 | Ejecución y supervisión autónoma de Jornada | 🟢 LISTO | 0% (0/2 S) | — | Maintainer | S10.1, S10.2 | [STATUS](plan-10/STATUS.md) |
+| P10 | Ejecución y supervisión autónoma de Jornada | 🟢 LISTO | 0% (0/3 S) | — | Maintainer | S10.3, S10.1, S10.2 | [STATUS](plan-10/STATUS.md) |
 
 ## 🗂️ Planes archivados
 

@@ -7,7 +7,7 @@
 | Campo | Detalle |
 |---|---|
 | Producto y release | Control Tower es un producto, un roadmap y un release. `installable-v1`, `autonomous-v2` y “V1/V2” son sólo etiquetas de artefactos históricos. |
-| Dependencias | `S7.1` conserva `S4.4`, `S5.3`, `S5.5` y `S8.7`, y agrega `S10.1` y `S10.2`. La cadena requerida es `S3.4 → S10.1 → S10.2 → S7.1`. |
+| Dependencias | `S7.1` conserva `S4.4`, `S5.3`, `S5.5` y `S8.7`; P10 llega por `S3.4 → S10.3 → S10.1 → S10.2 → S7.1`. |
 | Outputs | Evidencia end-to-end contra Gates A–G de REQUIREMENTS mediante seis pilotos obligatorios. |
 | Roadmap | Ejecutar `S7.1` después de integrar `S4.4`, `S5.3`, `S5.5`, `S8.7`, `S10.1` y `S10.2`; el PR se dirige a `main`. Los pilotos con etiqueta histórica V1 sólo reciben ID cuando demuestren un límite de un PR. |
 | Referencias | [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [REQUIREMENTS](../../specs/sdd-tower-implementation-v1-requirements.md), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). El proposal `sdd-tower-v1-conformance-pilot` fue eliminado en `613a45d` por ser cáscara sin avance; su intención vive en este STATUS. |
@@ -16,7 +16,7 @@
 
 **Estado:** 📋 PLANIFICADO
 
-**Dependencias:** `S4.4`, `S5.3`, `S5.5`, `S8.7`, `S10.1` y `S10.2` integradas.
+**Dependencias:** `S4.4`, `S5.3`, `S5.5`, `S8.7` y `S10.2` integradas; esta última exige transitivamente `S10.3` y `S10.1`.
 
 **Ruta:** `blocked` — conserva una decisión `escala` propia sin resolver: qué se hace con un gate de REQUIREMENTS que ningún piloto cubre. **Clase:** dependencias o evidencia contradictorias. Declarar conformidad sobre un gate no ejercido afirma algo que no se midió; agregar el piloto faltante expande el alcance de la Sesión. Ninguna de las dos es del agente. **Ruta proyectada al destrabar: `design-tasks`** — los Gates A–G ya están fijados por REQUIREMENTS y `M7.1.1` con `T7.1.1.1`–`T7.1.1.4` existen; lo que falta elegir es el diseño de la evidencia atribuible por piloto, no un contrato de producto nuevo. **Autoridad:** la decisión `escala` declarada abajo y REQUIREMENTS §Gates A–G. *(Clasificada el 2026-08-11.)*
 
