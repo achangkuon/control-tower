@@ -49,6 +49,8 @@ export const createPollingLoop = ({ cancel, now, peek, policy, schedule, trace, 
   }
   const errorName = (error) => typeof error?.name === "string"
     && /^[A-Za-z][A-Za-z0-9]{0,63}$/.test(error.name) ? error.name : "Error"
+  const errorCode = (error) => typeof error?.code === "string"
+    && /^CT_[A-Z0-9_]{1,60}$/.test(error.code) ? error.code : undefined
   const current = (captured) =>
     state !== "DISPOSED" && captured === generation && aborter?.signal.aborted === false
   const pauseForClock = (reason) => {
@@ -109,7 +111,9 @@ export const createPollingLoop = ({ cancel, now, peek, policy, schedule, trace, 
   const scheduleRetryOrExhaust = (error) => {
     waking = false
     ticking = false
+    const code = errorCode(error)
     safeTrace("poll.wake_failed", {
+      ...(code ? { code } : {}),
       cycle_attempt: cycleAttempts,
       generation,
       name: errorName(error),
@@ -157,7 +161,10 @@ export const createPollingLoop = ({ cancel, now, peek, policy, schedule, trace, 
       if (current(captured)) {
         ticking = false
         state = "POLLING"
-        safeTrace("poll.peek_failed", { generation, name: errorName(error), state })
+        const code = errorCode(error)
+        safeTrace("poll.peek_failed", {
+          ...(code ? { code } : {}), generation, name: errorName(error), state,
+        })
         scheduleTick(config.pollIntervalMs)
       }
       return

@@ -6,6 +6,7 @@ import { tool } from "@opencode-ai/plugin"
 import { persistSupportResult } from "../continuation/support.mjs"
 import { bindMainAuthority } from "../main-store/authority.mjs"
 import { createMainStore } from "../main-store/store.mjs"
+import { createPollingLoop } from "../host/loop.mjs"
 
 const SUPPORT_TOOLS = Object.freeze(Object.fromEntries([
   "read", "glob", "grep", "list", "task", "bash", "edit", "write", "todowrite", "question",
@@ -104,8 +105,76 @@ export const createOpenCodeLifecycleAdapter = ({ controller, provenRootSessionId
   })
 }
 
-export const TowerSpikePlugin = async ({ client, directory, worktree }, { lifecycle, trustedBindingProvider } = {}) => {
-  const lifecycleAdapter = lifecycle ? createOpenCodeLifecycleAdapter(lifecycle) : null
+const validBindingEpoch = (value) => Number.isSafeInteger(value) && value > 0
+
+export const createOpenCodeAdapter = ({
+  cancel, client, continuationCapability, now, policy, schedule, trace,
+} = {}) => {
+  let bindingEpoch
+  let peek
+  let rootSessionId
+  try {
+    bindingEpoch = continuationCapability?.binding_epoch
+    peek = continuationCapability?.peek
+    rootSessionId = continuationCapability?.root_session_id
+  } catch {
+    return null
+  }
+  if (typeof peek !== "function"
+    || !validSessionId(rootSessionId)
+    || !validBindingEpoch(bindingEpoch)) return null
+
+  let controller
+  const safeTrace = (event, attributes) => {
+    try { trace(event, Object.freeze(attributes)) } catch {}
+  }
+  const authorityCurrent = () => {
+    try {
+      return continuationCapability.root_session_id === rootSessionId
+        && continuationCapability.binding_epoch === bindingEpoch
+    } catch {
+      return false
+    }
+  }
+  const assertAuthority = () => {
+    if (authorityCurrent()) return
+    controller.dispose("auth-invalid")
+    safeTrace("opencode.auth_invalid", { code: "CT_AUTH_INVALID" })
+    fail("CT_AUTH_INVALID", "OpenCode continuation authority changed")
+  }
+  const settleUnderAuthority = async (operation) => {
+    assertAuthority()
+    let failed = false
+    let failure
+    let value
+    try { value = await operation() } catch (error) { failed = true; failure = error }
+    assertAuthority()
+    if (failed) throw failure
+    return value
+  }
+
+  controller = createPollingLoop({
+    cancel,
+    now,
+    policy,
+    schedule,
+    trace,
+    peek: (input) => settleUnderAuthority(() => peek.call(continuationCapability, input)),
+    wake: () => settleUnderAuthority(() => client.session.promptAsync({
+      path: { id: rootSessionId },
+      body: { parts: [{ type: "text", text: "Continue from the pending task in Control Tower." }] },
+    })),
+  })
+  return createOpenCodeLifecycleAdapter({ controller, provenRootSessionId: rootSessionId })
+}
+
+export const TowerSpikePlugin = async (
+  { client, directory, worktree },
+  { lifecycle, trustedBindingProvider, ...transport } = {},
+) => {
+  const lifecycleAdapter = lifecycle
+    ? createOpenCodeLifecycleAdapter(lifecycle)
+    : createOpenCodeAdapter({ ...transport, client })
 
   // Native subagents live and die inside this session. The tower must never
   // see them, and we must never wake one by mistake.

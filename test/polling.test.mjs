@@ -273,6 +273,23 @@ describe("polling and wake safety", () => {
     })
   })
 
+  test("preserves a bounded stable CT classification for adapter failures", async () => {
+    const harness = createHarness({
+      peek: async () => {
+        throw Object.assign(new Error("private binding details"), {
+          code: "CT_AUTH_INVALID",
+          name: "Error",
+        })
+      },
+    })
+    bindAndSettle(harness)
+    await harness.runNext()
+    expect(harness.calls.trace.at(-2)).toMatchObject({
+      attributes: { code: "CT_AUTH_INVALID" },
+      event: "poll.peek_failed",
+    })
+  })
+
   test("records one attempt before a serialized wake invocation", async () => {
     const pendingWake = deferred()
     const descriptor = Object.freeze({ opaque: "pending" })
