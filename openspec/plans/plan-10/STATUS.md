@@ -1,6 +1,6 @@
 # Plan 10 — Ejecución y supervisión autónoma de Jornada
 
-**Estado:** 🔴 BLOQUEADO
+**Estado:** 🟢 LISTO
 **Avance:** 0% (0/2 S)
 
 > El maintainer resolvió la ubicación provisional del 2026-08-11: las responsabilidades antes
@@ -8,38 +8,36 @@
 > ✅ COMPLETO con `4/4 S`. P9 conserva su alcance separado de slots físicos de Jornada y caché
 > externa de Bun; no se integra ni se modifica mediante esta decisión.
 
-El Plan no puede avanzar ahora. Sus dos Sesiones contienen decisiones de clases que siempre
-escalan. La relación `S10.1 → S10.2` conserva el orden histórico planificado, pero no autoriza
-implementar ejecución sin supervisión: ningún trabajo de implementación empieza hasta resolver
-las decisiones contaminantes y reconciliar explícitamente el grafo si la respuesta exige otro
-orden.
+`S10.1` puede avanzar por `design-tasks` bajo una restricción aprobada: puede construirse antes
+de `S10.2` sólo mientras sea incapaz de producir efectos. Ningún efecto autónomo puede ejecutarse
+hasta que `S10.2` aporte supervisión válida y vigente. `S10.2` sigue bloqueada y su arquitectura
+no se deriva ni se anticipa desde `S10.1`.
 
 ## Resumen auditable
 
 | Campo | Contrato |
 |---|---|
 | Autoridad | Decisión explícita del maintainer: Plan nuevo P10 para las responsabilidades provisionales `S3.5`/`S3.6`, renumeradas `S10.1`/`S10.2`. |
-| Estado | 🔴 BLOQUEADO: ninguna Sesión puede avanzar sin decisiones externas. |
-| Orden histórico | `S10.1 → S10.2`; se preserva sin invertirlo silenciosamente. |
-| Capacidad derivada | 0 Sesiones elegibles. `S10.1` y `S10.2` están bloqueadas; además `S10.2` no tiene `Área` definida y se excluye de todo cálculo de capacidad. |
+| Estado | 🟢 LISTO: `S10.1` puede iniciar elaboración técnica; `S10.2` permanece 🔴 BLOQUEADO. |
+| Orden | `S3.4 → S10.1 → S10.2 → S7.1`; ningún efecto atraviesa `S10.1` sin supervisión válida y vigente. |
+| Capacidad derivada | `S10.1` es elegible para `design-tasks`; `S10.2` no tiene `Área` definida y se excluye de capacidad. |
 | Avance | 0% (0/2 S): ninguna Sesión está ✅ COMPLETO ni 📚 ARCHIVADO. |
-| Release | P10 queda fuera del denominador vigente de la primera release hasta que el maintainer decida explícitamente su inclusión. |
+| Release | P10 forma parte del producto, roadmap y release únicos; aporta 0/2 al denominador. |
 
-La jerarquía canónica es `Plan → Sesión → Módulo → Tarea`. Este Plan se detiene en el nivel
-Sesión mientras las decisiones escaladas impiden fijar módulos por archivos y tareas ejecutables;
-cuando se destrabe, la elaboración sólo puede usar `M10.x.y` y `T10.x.y.z`, sin crear un quinto
-nivel ni renombrar los cuatro niveles canónicos.
+La jerarquía canónica es `Plan → Sesión → Módulo → Tarea`. `S10.1` puede elaborar sus Módulos y
+Tareas mediante `design-tasks`; `S10.2` se detiene en Sesión mientras sus decisiones impiden fijar
+archivos. La elaboración sólo puede usar `M10.x.y` y `T10.x.y.z`, sin crear un quinto nivel.
 
 ## Sesiones
 
 | ID | Resultado | Estado | Ruta | Motivo | Autoridad | Depende de | Área | Recurso |
 |---|---|---|---|---|---|---|---|---|
-| `S10.1` | Ejecución del contrato sellado de Jornada | 🔴 BLOQUEADO | `blocked` | Está abierta la decisión de operaciones irreversibles sobre ejecutar antes o sin supervisión. | Decisiones de ubicación del Plan y de la copia versionada del schema tomadas por el maintainer. | `S3.4` ✅ | `jornada/**`, `test/jornada/**`, `schemas/execution-contract-v1.schema.json` | —; sin token de entrega ni SQLite de la Torre. |
+| `S10.1` | Ejecución del contrato sellado de Jornada | 🟢 LISTO | `design-tasks` | Puede construirse primero sólo effect-incapable; la elaboración define gate, interfaz y prueba binaria sin decidir la arquitectura de `S10.2`. | Decisión explícita del maintainer del 2026-08-13. | `S3.4` ✅ | `jornada/**`, `test/jornada/**`, `schemas/execution-contract-v1.schema.json` | —; sin token de entrega ni SQLite de la Torre. |
 | `S10.2` | Supervisión sin armado local | 🔴 BLOQUEADO | `blocked` | Están abiertas la arquitectura visible/de seguridad y la contradicción del interlock de `remote-control`; `Área` sigue sin definir. | Brecha 7 de [implementation-state](../implementation-state.md). | `S10.1` | **Sin definir**; debe fijarse después de resolver las decisiones escaladas. | Centinela `ACTIVE` del repositorio supervisado. |
 
 ## Sesión 10.1 — Ejecución del contrato sellado de Jornada
 
-**Estado:** 🔴 BLOQUEADO
+**Estado:** 🟢 LISTO
 
 **Depende de:** `S3.4` ✅
 
@@ -49,10 +47,10 @@ nivel ni renombrar los cuatro niveles canónicos.
 
 **Recurso:** —. No reclama el token de entrega ni escribe en el SQLite de la Torre.
 
-**Ruta:** `blocked` — antes se proyectaba `design-tasks`, pero una decisión abierta sobre
-operaciones irreversibles detiene toda elaboración e implementación. Una vez resuelta, la ruta
-sólo puede reclasificarse contra la respuesta aprobada. **Autoridad:** decisión del maintainer del
-2026-08-11 para el contrato provisional y decisión posterior que fija P10 como ubicación.
+**Ruta:** `design-tasks` — `session-plan` debe definir el gate/interfaz effect-incapable y su
+prueba binaria antes de implementación, sin proposal/spec y sin prejuzgar la arquitectura de
+`S10.2`. **Autoridad:** opción 1 aprobada explícitamente por el maintainer el 2026-08-13, además
+de las decisiones previas de ubicación y contrato.
 
 El contrato externo ya existe: `execution-contract.schema.json` de
 `unattended-implementation`, con 407 líneas en uso real. `jornada/` tiene hoy 23 líneas y
@@ -70,23 +68,20 @@ contrato ya lo hace la skill; la responsabilidad pendiente es ejecutarlo.
 - `derivable` — qué hace un contrato vencido. **Criterio:** falla cerrado por `expires_at`; no
   se ejecuta ni se renueva solo. Falsificable: una ejecución posterior a `expires_at`.
   **Autoridad:** el propio schema.
-- `escala` — **Pregunta exacta:** ¿puede existir la ejecución de `S10.1` antes de que la
-  supervisión de `S10.2` esté disponible, o toda ejecución debe quedar prohibida hasta que la
-  supervisión exista y esté vigente? **Clase:** operaciones irreversibles.
-  **Evidencia:** el orden provisional fue `S3.5 → S3.6`, pero el criterio de `S10.2` exige que una
-  supervisión ausente o vencida falle cerrada y no degrade a ejecución sin supervisar.
-  **Opciones y consecuencias:** (1) permitir construir ejecución antes de supervisión, manteniéndola
-  incapaz de producir efectos hasta que exista supervisión válida; preserva `S10.1 → S10.2`; (2)
-  exigir supervisión antes de construir o habilitar ejecución; obliga al maintainer a reconciliar
-  el grafo y el alcance, sin invertirlo por derivación. **Origen:** `S10.1`.
-  **Checkpoint:** antes de `session-plan`, SDD, pruebas o implementación. **Contamina:** toda
-  `S10.1`, `S10.2` y el orden entre ambas.
+- `escala` — **RESUELTA por el maintainer:** `S10.1` puede construirse antes de `S10.2` sólo
+  mientras sea incapaz de producir efectos; ningún efecto autónomo puede ejecutarse hasta recibir
+  supervisión válida y vigente. La clase sigue siendo **operaciones irreversibles**; no se deriva la
+  decisión de producto. **Criterio falsificable:** cualquier camino que produzca un efecto sin
+  evidencia actual y válida de supervisión viola el contrato. **Autoridad:** opción 1 aprobada
+  explícitamente por el maintainer el 2026-08-13. Con esa autoridad, la forma técnica del gate,
+  interfaz y prueba binaria es `derivable`; la arquitectura de `S10.2` no lo es.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
 
 - [ ] Un contrato válido se lee, valida contra el schema versionado y persiste antes de ejecutar
 - [ ] Un contrato con digest que no coincide se rechaza y no ejecuta nada
 - [ ] Un contrato vencido por `expires_at` falla cerrado
+- [ ] Sin evidencia válida y vigente de supervisión, todo camino es incapaz de producir efectos
 - [ ] La ejecución respeta repositorio, worktree, rama, `base_sha` y `sesion_id` exactos del contrato
 - [ ] Ninguna ruta lee `~/.claude/` en runtime
 - [ ] El diff no toca ninguna ruta del `Prohibido`
@@ -95,8 +90,9 @@ contrato ya lo hace la skill; la responsabilidad pendiente es ejecutarlo.
 
 **Estado:** 🔴 BLOQUEADO
 
-**Depende de:** `S10.1`. Esta dependencia conserva el orden provisional de 2026-08-11; no habilita
-la implementación de `S10.1` mientras su decisión contaminante siga abierta.
+**Depende de:** `S10.1`. La dependencia conserva el orden aprobado; `S10.1` puede construirse
+effect-incapable, pero ningún efecto se habilita antes de que esta Sesión entregue supervisión
+válida y vigente.
 
 **Área:** **sin definir**. La resolución de arquitectura debe fijarla explícitamente antes de
 elaborar o ejecutar la Sesión. No se adivina y, mientras falte, `S10.2` queda excluida de capacidad.
@@ -149,10 +145,10 @@ tienen una razón de diseño para exigirla apagada. `control-tower` aborta sus d
 
 ```mermaid
 graph LR
-  S34["S3.4 ciclo de vida Jornada · ✅"] --> S101["S10.1 ejecución sellada · 🔴"]
+  S34["S3.4 ciclo de vida Jornada · ✅"] --> S101["S10.1 ejecución sellada · 🟢"]
   S101 --> S102["S10.2 supervisión sin armado · 🔴"]
+  S102 --> S71["S7.1 conformidad de release · 📋"]
 ```
 
-**Avance derivado:** 0% (0/2 S). **Capacidad derivada:** 0. Ambas Sesiones están 🔴 BLOQUEADO;
-`S10.2` además carece de `Área`. No existe carril de implementación hasta que el maintainer
-resuelva las decisiones contaminantes.
+**Avance derivado:** 0% (0/2 S). **Capacidad derivada:** `S10.1` es elegible para
+`design-tasks`; `S10.2` permanece 🔴 BLOQUEADO, carece de `Área` y no recibe crédito.

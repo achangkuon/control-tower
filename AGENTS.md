@@ -19,11 +19,55 @@ Esto anula, y solo para este repo, el paso de entrega de `torre-control-entregas
 que carga `branch-pr`. Sigue vigente todo lo demás: conventional commits,
 Strict TDD Mode, SDD, engram y las reglas de delegación.
 
+## Decisiones de autoridad del mantenedor
+
+Una decisión pendiente cuya autoridad pertenece al mantenedor se clasifica como
+**desbloqueable por decisión**. No se convierte silenciosamente en un bloqueo externo
+ni se resuelve por inferencia del agente.
+
+Antes de comenzar implementación —y siempre antes de RED cuando Strict TDD está
+activo— el agente debe preparar y hacer **una sola pregunta exacta** que incluya:
+
+- la evidencia concreta que origina la decisión;
+- las opciones enumeradas y la consecuencia de cada una;
+- la clase de decisión;
+- el alcance `Contamina:`;
+- el checkpoint exacto desde el cual se retomará.
+
+La respuesta se registra junto con ese paquete **antes de RED**. Las ocho clases que
+siempre escalan siguen siendo un conjunto cerrado: contrato visible del producto,
+operaciones irreversibles, migraciones o pérdida de datos, API pública, seguridad y
+permisos, dinero/precios/cuotas, expansión de alcance, y dependencias o evidencia
+contradictorias.
+
+Si una Sesión no declara `Área` o `Recurso`, no se puede afirmar que aporta capacidad
+paralela segura hasta completar esos campos. Esa ausencia no impide investigar la
+decisión ni preparar el paquete anterior; solo impide autorizar ejecución paralela.
+
+## Preferencias de ejecución y presupuesto de cambio
+
+- **Toda ruta declarada se ejecuta automáticamente** en el happy path, sin pausas entre
+  sus pasos internos. `full-sdd` ejecuta su pipeline completo una vez para toda la Sesión.
+  `direct` usa el diseño y las Tareas ya aprobados; `design-tasks` hace primero su
+  elaboración técnica compacta. Ambas continúan automáticamente por
+  diseño/Tareas → apply → tests → checkpoint sin inventar proposal/spec ni inflarse a
+  `full-sdd`.
+- El presupuesto duro aplica a **todas las rutas**: máximo **400 líneas authored**
+  —adiciones más eliminaciones— por unidad de commit directo que sea independientemente
+  verificable y revertible. No hay excepciones de tamaño silenciosas.
+- Un forecast superior a 400 se implementa como unidades secuenciales de trabajo,
+  cada una en su propio commit directo verificable y revertible; este repo no usa PRs
+  ni PRs encadenados.
+- Si ese desglose impide que una Sesión conserve un alcance coherente, se divide en dos
+  o más Sesiones bajo la jerarquía canónica `Plan → Sesión → Módulo → Tarea`. No se
+  crea un quinto nivel ni se renombra ninguno de los cuatro.
+
 ## Declaración de política — forma legible por máquina
 
-La prosa de este archivo es para humanos. El bloque de abajo es la **misma
-política en forma parseable**, y es lo que lee la Torre para resolver sus gates
-configurables. Si prosa y bloque se contradicen, **el bloque es el que rige** y
+La prosa de este archivo es para humanos. El bloque de abajo expresa en forma
+parseable la **política de entrega configurable** que lee la Torre; las reglas de
+decisión, rutas y presupuesto anteriores no forman parte de `delivery-policy` v1.
+Si la prosa de entrega y el bloque se contradicen, **el bloque es el que rige** y
 la contradicción es un bug que hay que arreglar en el mismo commit.
 
 ```yaml
