@@ -1,7 +1,7 @@
 # Plan 10 — Ejecución y supervisión autónoma de Jornada
 
-**Estado:** 🟢 LISTO
-**Avance:** 0% (0/3 S)
+**Estado:** 🔵 EN CURSO
+**Avance:** 33% (1/3 S)
 
 > El maintainer resolvió la ubicación provisional del 2026-08-11: las responsabilidades antes
 > enumeradas como `S3.5`/`S3.6` forman un Plan nuevo y pasan a ser `S10.1`/`S10.2`. P3 permanece
@@ -17,11 +17,11 @@ conserva la arquitectura productora de supervisión y sus decisiones abiertas.
 | Campo | Contrato |
 |---|---|
 | Autoridad | Decisión explícita del maintainer: Plan nuevo P10 para las responsabilidades provisionales `S3.5`/`S3.6`, renumeradas `S10.1`/`S10.2`. |
-| Estado | 🟢 LISTO: `S10.3` puede ejecutarse; `S10.1` queda 📋 PLANIFICADO y `S10.2` 🔴 BLOQUEADO. |
+| Estado | 🔵 EN CURSO: `S10.3` está ✅ COMPLETO, `S10.1` queda 🟢 LISTO y `S10.2` 🔴 BLOQUEADO. |
 | Orden | `S3.4 → S10.3 → S10.1 → S10.2 → S7.1`. |
-| Capacidad derivada | Sólo `S10.3` es elegible; `S10.1` espera su prerrequisito y `S10.2` no tiene `Área`. |
-| Avance | 0% (0/3 S): ninguna Sesión está ✅ COMPLETO ni 📚 ARCHIVADO. |
-| Release | P10 forma parte del producto, roadmap y release únicos; aporta 0/3 al denominador. |
+| Capacidad derivada | `S10.1` es elegible tras cerrar su prerrequisito; `S10.2` no tiene `Área`. |
+| Avance | 33% (1/3 S): sólo `S10.3` está ✅ COMPLETO. |
+| Release | P10 forma parte del producto, roadmap y release únicos; aporta 1/3 al denominador. |
 
 La jerarquía canónica es `Plan → Sesión → Módulo → Tarea`; `S10.3` y `S10.1` quedan enumeradas
 abajo. `S10.2` se detiene en Sesión mientras sus decisiones impiden fijar archivos.
@@ -30,13 +30,13 @@ abajo. `S10.2` se detiene en Sesión mientras sus decisiones impiden fijar archi
 
 | ID | Resultado | Estado | Ruta | Motivo | Autoridad | Depende de | Área | Recurso |
 |---|---|---|---|---|---|---|---|---|
-| `S10.3` | Contrato de ejecución versionado | 🟢 LISTO | `direct` | Copia pasiva, exacta e indivisible con verificación estructural. | Decisión explícita del maintainer. | `S3.4` ✅ | `schemas/execution-contract-v1.schema.json` | — |
-| `S10.1` | Preparación persistida de Jornada | 📋 PLANIFICADO | `design-tasks` | Diseño compacto del owner pasivo y gate consumidor, sin arquitectura productora. | Decisión explícita del maintainer. | `S10.3` | `jornada/**`, `test/jornada/**` | —; sin token de entrega ni SQLite de la Torre. |
+| `S10.3` | Contrato de ejecución versionado | ✅ COMPLETO | `direct` | Copia pasiva, exacta e indivisible con verificación estructural. | Decisión explícita del maintainer. | `S3.4` ✅ | `schemas/execution-contract-v1.schema.json` | — |
+| `S10.1` | Preparación persistida de Jornada | 🟢 LISTO | `design-tasks` | Diseño compacto del owner pasivo y gate consumidor, sin arquitectura productora. | Decisión explícita del maintainer. | `S10.3` ✅ | `jornada/**`, `test/jornada/**` | —; sin token de entrega ni SQLite de la Torre. |
 | `S10.2` | Supervisión sin armado local | 🔴 BLOQUEADO | `blocked` | Arquitectura visible/de seguridad e interlock abiertos; `Área` sin definir. | Brecha 7 de [implementation-state](../implementation-state.md). | `S10.1` | **Sin definir** | Centinela `ACTIVE` del repositorio supervisado. |
 
 ## Sesión 10.3 — Contrato de ejecución versionado
 
-**Estado:** 🟢 LISTO
+**Estado:** ✅ COMPLETO
 
 **Depende de:** `S3.4` ✅
 
@@ -50,21 +50,21 @@ abajo. `S10.2` se detiene en Sesión mientras sus decisiones impiden fijar archi
 - `escala` — **RESUELTA por el maintainer:** copia byte a byte desde `/home/emili/.agents/skills/unattended-implementation/assets/execution-contract.schema.json`; destino exacto de 17.297 bytes, 407 líneas y SHA-256 `2f4838aa244b30e280c5c558286b0e4d9fbb503a0ef1808ffc27501c1540fddc`. La excepción autoriza sólo este contrato activo indivisible, no otras líneas ni overflow de `S10.1`. **Clase:** expansión de alcance; contrato visible del producto. **Contaminaba:** `S10.3`, `S10.1`, `S10.2`, `S7.1`.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
-- [ ] El destino es byte-idéntico al origen y coincide en bytes, líneas y SHA-256
-- [ ] No se normaliza, genera ni modifica ningún otro archivo de runtime, schema o test
-- [ ] Ningún runtime lee `~/.claude/`; la fuente se consulta sólo durante la copia estructural
-- [ ] La excepción de tamaño se atribuye exclusivamente a este artefacto indivisible
+- [x] El destino es byte-idéntico al origen y coincide en bytes, líneas y SHA-256
+- [x] No se normaliza, genera ni modifica ningún otro archivo de runtime, schema o test
+- [x] Ningún runtime lee `~/.claude/`; la fuente se consulta sólo durante la copia estructural
+- [x] La excepción de tamaño se atribuye exclusivamente a este artefacto indivisible
 
 ### Módulo 10.3.1 — Copia estructural del contrato
-- `T10.3.1.1` **RED:** comprobar origen, identidad esperada y ausencia de mutaciones ajenas.
-- `T10.3.1.2` **GREEN:** copiar exactamente al único path de `Área`, sin transformación.
-- `T10.3.1.3` **REFACTOR:** releer destino y corroborar bytes, líneas, hash y diff exclusivo.
+- [x] `T10.3.1.1` **RED:** origen confirmado en 17.297 bytes, 407 líneas y SHA-256 `2f4838aa244b30e280c5c558286b0e4d9fbb503a0ef1808ffc27501c1540fddc`; destino ausente y worktree limpio en `cdd0d09bcdd4d2104e54a7265d1dc3742ceea2e7`.
+- [x] `T10.3.1.2` **GREEN:** copia byte-idéntica creada únicamente en `schemas/execution-contract-v1.schema.json`, sin transformación.
+- [x] `T10.3.1.3` **REFACTOR:** `cmp` confirmó identidad; readback confirmó 17.297 bytes, 407 líneas, SHA-256 esperado y modo Git `100644`. JSON parseó y conservó Draft 2020-12, `$id`, `type: object`, `additionalProperties: false`, 17 propiedades requeridas y `$defs` estructuralmente presentes. Runtime harness: N/A, artefacto pasivo sin frontera ejecutable.
 
 ## Sesión 10.1 — Preparación persistida de Jornada
 
-**Estado:** 📋 PLANIFICADO
+**Estado:** 🟢 LISTO
 
-**Depende de:** `S10.3`
+**Depende de:** `S10.3` ✅
 
 **Área:** `jornada/**`, `test/jornada/**`
 
@@ -162,11 +162,11 @@ tienen una razón de diseño para exigirla apagada. `control-tower` aborta sus d
 
 ```mermaid
 graph LR
-  S34["S3.4 ciclo de vida Jornada · ✅"] --> S103["S10.3 contrato versionado · 🟢"]
-  S103 --> S101["S10.1 preparación persistida · 📋"]
+  S34["S3.4 ciclo de vida Jornada · ✅"] --> S103["S10.3 contrato versionado · ✅"]
+  S103 --> S101["S10.1 preparación persistida · 🟢"]
   S101 --> S102["S10.2 supervisión sin armado · 🔴"]
   S102 --> S71["S7.1 conformidad de release · 📋"]
 ```
 
-**Avance derivado:** 0% (0/3 S). **Capacidad derivada:** sólo `S10.3` está 🟢 LISTO;
-`S10.1` espera el prerrequisito y `S10.2` permanece 🔴 BLOQUEADO sin `Área`.
+**Avance derivado:** 33% (1/3 S). **Capacidad derivada:** `S10.1` está 🟢 LISTO tras
+cerrar `S10.3`; `S10.2` permanece 🔴 BLOQUEADO sin `Área`.

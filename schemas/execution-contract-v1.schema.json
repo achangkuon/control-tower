@@ -1,0 +1,407 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gentle-ai.local/schemas/unattended-execution-contract-v1.json",
+  "title": "Sealed Unattended Execution Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "contract_id",
+    "sealed_at",
+    "expires_at",
+    "contract_digest",
+    "repository",
+    "artifacts",
+    "assignment",
+    "permissions",
+    "ownership",
+    "artifact_policy",
+    "tower",
+    "chain",
+    "validation",
+    "candidate_recipe",
+    "retries",
+    "terminal"
+  ],
+  "properties": {
+    "schema_version": { "const": "gentle-ai.unattended-execution-contract/v1" },
+    "contract_id": { "$ref": "#/$defs/nonEmpty" },
+    "sealed_at": { "$ref": "#/$defs/dateTime" },
+    "expires_at": { "$ref": "#/$defs/dateTime" },
+    "contract_digest": { "$ref": "#/$defs/sha256" },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["identity", "root", "common_dir", "worktree", "branch", "base_ref", "base_sha"],
+      "properties": {
+        "identity": { "$ref": "#/$defs/nonEmpty" },
+        "root": { "$ref": "#/$defs/absolutePath" },
+        "common_dir": { "$ref": "#/$defs/absolutePath" },
+        "worktree": { "$ref": "#/$defs/absolutePath" },
+        "branch": { "$ref": "#/$defs/nonEmpty" },
+        "base_ref": { "$ref": "#/$defs/nonEmpty" },
+        "base_sha": { "$ref": "#/$defs/gitSha" }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "locator", "sha256"],
+        "properties": {
+          "kind": { "enum": ["proposal", "spec", "design", "tasks", "status", "config", "instruction", "other"] },
+          "locator": { "$ref": "#/$defs/nonEmpty" },
+          "sha256": { "$ref": "#/$defs/sha256" }
+        }
+      }
+    },
+    "assignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sesion_id", "task_ids", "objective", "continuation"],
+      "properties": {
+        "sesion_id": { "$ref": "#/$defs/nonEmpty" },
+        "task_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/nonEmpty" } },
+        "objective": { "$ref": "#/$defs/nonEmpty" },
+        "continuation": { "const": "none" }
+      }
+    },
+    "permissions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["read_paths", "edit_paths", "commands", "network", "processes", "cleanup_paths", "denied_paths", "denied_effects", "prohibitions"],
+      "properties": {
+        "read_paths": { "$ref": "#/$defs/pathList" },
+        "edit_paths": { "$ref": "#/$defs/pathList" },
+        "commands": { "$ref": "#/$defs/stringList" },
+        "network": { "$ref": "#/$defs/stringList" },
+        "processes": { "$ref": "#/$defs/stringList" },
+        "cleanup_paths": { "$ref": "#/$defs/pathList" },
+        "denied_paths": { "$ref": "#/$defs/pathList" },
+        "denied_effects": { "$ref": "#/$defs/stringListNonEmpty" },
+        "prohibitions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["commit", "amend", "rebase", "tag", "push", "pr_create", "pr_update", "merge", "release", "deploy", "db_mutation", "global_closure", "token_request", "token_acquire", "token_transfer", "token_release", "unlisted_sesion"],
+          "properties": {
+            "commit": { "const": true },
+            "amend": { "const": true },
+            "rebase": { "const": true },
+            "tag": { "const": true },
+            "push": { "const": true },
+            "pr_create": { "const": true },
+            "pr_update": { "const": true },
+            "merge": { "const": true },
+            "release": { "const": true },
+            "deploy": { "const": true },
+            "db_mutation": { "const": true },
+            "global_closure": { "const": true },
+            "token_request": { "const": true },
+            "token_acquire": { "const": true },
+            "token_transfer": { "const": true },
+            "token_release": { "const": true },
+            "unlisted_sesion": { "const": true }
+          }
+        }
+      }
+    },
+    "ownership": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exclusive_paths", "package_manifests", "lockfiles", "generated_outputs", "sdd_progress_files", "shared_resources", "known_conflicts"],
+      "properties": {
+        "exclusive_paths": { "$ref": "#/$defs/pathList" },
+        "package_manifests": { "$ref": "#/$defs/pathList" },
+        "lockfiles": { "$ref": "#/$defs/pathList" },
+        "generated_outputs": { "$ref": "#/$defs/pathList" },
+        "sdd_progress_files": { "$ref": "#/$defs/pathList" },
+        "shared_resources": { "$ref": "#/$defs/stringList" },
+        "known_conflicts": { "$ref": "#/$defs/stringList" }
+      }
+    },
+    "artifact_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authored_tracked", "generated_tracked", "ephemeral_untracked", "forbidden_generated", "ignore_policy", "cleanup_policy", "node_modules", "codegraph", "caches"],
+      "properties": {
+        "authored_tracked": { "$ref": "#/$defs/pathList" },
+        "generated_tracked": { "$ref": "#/$defs/pathList" },
+        "ephemeral_untracked": { "$ref": "#/$defs/pathList" },
+        "forbidden_generated": { "$ref": "#/$defs/pathList" },
+        "ignore_policy": { "$ref": "#/$defs/nonEmpty" },
+        "cleanup_policy": { "$ref": "#/$defs/nonEmpty" },
+        "node_modules": { "$ref": "#/$defs/localArtifactDisposition" },
+        "codegraph": { "$ref": "#/$defs/localArtifactDisposition" },
+        "caches": { "$ref": "#/$defs/localArtifactDisposition" }
+      }
+    },
+    "tower": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "mode_locked", "git_delivery_token", "active_marker_scope"],
+      "properties": {
+        "mode": { "const": "active-supervision" },
+        "mode_locked": { "const": true },
+        "git_delivery_token": { "const": "forbidden" },
+        "active_marker_scope": { "const": ".git/control-tower/ACTIVE" }
+      }
+    },
+    "chain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strategy", "delivery_strategy", "budget_risk", "chained_recommended", "decision_needed", "position", "total", "base_target_map", "line_budget", "rollback_boundary"],
+      "properties": {
+        "strategy": { "enum": ["single-pr", "stacked-to-main", "feature-branch-chain", "size-exception"] },
+        "delivery_strategy": { "enum": ["ask-on-risk", "auto-chain", "single-pr", "exception-ok"] },
+        "budget_risk": { "enum": ["Low", "Medium", "High"] },
+        "chained_recommended": { "type": "boolean" },
+        "decision_needed": { "const": false },
+        "position": { "type": "integer", "minimum": 1 },
+        "total": { "type": "integer", "minimum": 1 },
+        "base_target_map": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["sesion_id", "branch", "base", "target"],
+            "properties": {
+              "sesion_id": { "$ref": "#/$defs/nonEmpty" },
+              "branch": { "$ref": "#/$defs/nonEmpty" },
+              "base": { "$ref": "#/$defs/nonEmpty" },
+              "target": { "$ref": "#/$defs/nonEmpty" }
+            }
+          }
+        },
+        "line_budget": { "type": "integer", "minimum": 1, "maximum": 400 },
+        "rollback_boundary": { "$ref": "#/$defs/nonEmpty" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "budget_risk": { "const": "High" } }, "required": ["budget_risk"] },
+          "then": { "properties": { "chained_recommended": { "const": true } } }
+        },
+        {
+          "if": { "properties": { "strategy": { "enum": ["stacked-to-main", "feature-branch-chain"] } }, "required": ["strategy"] },
+          "then": { "properties": { "chained_recommended": { "const": true } } }
+        },
+        {
+          "if": { "properties": { "strategy": { "const": "size-exception" } }, "required": ["strategy"] },
+          "then": { "properties": { "delivery_strategy": { "const": "exception-ok" } } }
+        },
+        {
+          "if": { "properties": { "delivery_strategy": { "const": "auto-chain" } }, "required": ["delivery_strategy"] },
+          "then": { "properties": { "strategy": { "enum": ["stacked-to-main", "feature-branch-chain"] } } }
+        }
+      ]
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["live_tower_active", "method", "source_root_realpath", "source_common_dir_realpath", "clone_root_realpath", "clone_common_dir_realpath", "baseline_commands", "candidate_commands"],
+      "properties": {
+        "live_tower_active": { "const": true },
+        "method": { "const": "separate-regular-clone" },
+        "source_root_realpath": { "$ref": "#/$defs/absolutePath" },
+        "source_common_dir_realpath": { "$ref": "#/$defs/absolutePath" },
+        "clone_root_realpath": { "$ref": "#/$defs/absolutePath" },
+        "clone_common_dir_realpath": { "$ref": "#/$defs/absolutePath" },
+        "baseline_commands": { "$ref": "#/$defs/stringListNonEmpty" },
+        "candidate_commands": { "$ref": "#/$defs/stringListNonEmpty" }
+      }
+    },
+    "candidate_recipe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entries", "identity_algorithm", "staging_required", "commit_required"],
+      "properties": {
+        "entries": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "mode", "class"],
+            "properties": {
+              "path": { "$ref": "#/$defs/nonEmpty" },
+              "mode": { "type": "string", "pattern": "^[0-7]{6}$" },
+              "class": { "enum": ["authored-tracked", "generated-tracked"] }
+            }
+          }
+        },
+        "identity_algorithm": { "const": "sorted-path-mode-size-sha256" },
+        "staging_required": { "const": true },
+        "commit_required": { "const": false }
+      }
+    },
+    "retries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["same_input_transient_before_final_verification", "implementation_corrections_before_final_verification", "authorization_scope", "final_verification_attempts", "retries_after_final_verification_failure", "corrections_after_final_verification_failure"],
+      "properties": {
+        "same_input_transient_before_final_verification": { "const": 1 },
+        "implementation_corrections_before_final_verification": { "const": 2 },
+        "authorization_scope": { "const": 0 },
+        "final_verification_attempts": { "const": 1 },
+        "retries_after_final_verification_failure": { "const": 0 },
+        "corrections_after_final_verification_failure": { "const": 0 }
+      }
+    },
+    "terminal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["states", "ready_definition", "occupied_ready_slot"],
+      "properties": {
+        "states": { "type": "array", "prefixItems": [{ "const": "READY" }, { "const": "BLOCKED" }], "items": false },
+        "ready_definition": { "const": "exact-staged-uncommitted-candidate" },
+        "occupied_ready_slot": { "const": "preserve-and-block-with-evidence" }
+      }
+    },
+    "runtime_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "terminal_evidence", "retry_counters", "final_verification"],
+      "properties": {
+        "state": { "enum": ["READY", "BLOCKED"] },
+        "observed_candidate": { "$ref": "#/$defs/observedCandidate" },
+        "baseline_evidence": { "$ref": "#/$defs/evidenceList" },
+        "candidate_evidence": { "$ref": "#/$defs/evidenceList" },
+        "terminal_evidence": { "$ref": "#/$defs/stringListNonEmpty" },
+        "retry_counters": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["same_input_transient_before_final_verification", "implementation_corrections_before_final_verification", "authorization_scope", "retries_after_final_verification_failure", "corrections_after_final_verification_failure"],
+          "properties": {
+            "same_input_transient_before_final_verification": { "type": "integer", "minimum": 0, "maximum": 1 },
+            "implementation_corrections_before_final_verification": { "type": "integer", "minimum": 0, "maximum": 2 },
+            "authorization_scope": { "const": 0 },
+            "retries_after_final_verification_failure": { "const": 0 },
+            "corrections_after_final_verification_failure": { "const": 0 }
+          }
+        },
+        "final_verification": {
+          "oneOf": [
+            { "$ref": "#/$defs/finalVerificationNotRun" },
+            { "$ref": "#/$defs/finalVerificationPassed" },
+            { "$ref": "#/$defs/finalVerificationFailed" }
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "required": ["observed_candidate", "baseline_evidence", "candidate_evidence"],
+          "properties": {
+            "state": { "const": "READY" },
+            "final_verification": { "$ref": "#/$defs/finalVerificationPassed" }
+          }
+        },
+        {
+          "properties": {
+            "state": { "const": "BLOCKED" },
+            "final_verification": {
+              "oneOf": [
+                { "$ref": "#/$defs/finalVerificationNotRun" },
+                { "$ref": "#/$defs/finalVerificationFailed" }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "nonEmpty": { "type": "string", "minLength": 1, "pattern": "^(?!.*(?:TBD|TODO|PENDING|PLACEHOLDER|<[^>]+>)).+$" },
+    "absolutePath": { "type": "string", "pattern": "^/[^\\u0000]+$" },
+    "dateTime": { "type": "string", "format": "date-time" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "gitSha": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "stringList": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/nonEmpty" } },
+    "stringListNonEmpty": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/nonEmpty" } },
+    "pathList": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/nonEmpty" } },
+    "finalVerificationNotRun": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attempts", "status"],
+      "properties": {
+        "attempts": { "const": 0 },
+        "status": { "const": "not_run" }
+      }
+    },
+    "finalVerificationPassed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attempts", "status"],
+      "properties": {
+        "attempts": { "const": 1 },
+        "status": { "const": "passed" }
+      }
+    },
+    "finalVerificationFailed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attempts", "status"],
+      "properties": {
+        "attempts": { "const": 1 },
+        "status": { "const": "failed" }
+      }
+    },
+    "localArtifactDisposition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["disposition", "paths"],
+      "properties": {
+        "disposition": { "enum": ["absent", "read-only", "ephemeral", "generated-tracked", "forbidden"] },
+        "paths": { "$ref": "#/$defs/pathList" }
+      }
+    },
+    "evidenceList": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["command", "exit_code", "stdout_sha256", "stderr_sha256", "started_at", "ended_at"],
+        "properties": {
+          "command": { "$ref": "#/$defs/nonEmpty" },
+          "exit_code": { "type": "integer" },
+          "stdout_sha256": { "$ref": "#/$defs/sha256" },
+          "stderr_sha256": { "$ref": "#/$defs/sha256" },
+          "started_at": { "$ref": "#/$defs/dateTime" },
+          "ended_at": { "$ref": "#/$defs/dateTime" }
+        }
+      }
+    },
+    "observedCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entries", "tree_sha256", "staged", "committed"],
+      "properties": {
+        "entries": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "mode", "size_bytes", "sha256", "class"],
+            "properties": {
+              "path": { "$ref": "#/$defs/nonEmpty" },
+              "mode": { "type": "string", "pattern": "^[0-7]{6}$" },
+              "size_bytes": { "type": "integer", "minimum": 0 },
+              "sha256": { "$ref": "#/$defs/sha256" },
+              "class": { "enum": ["authored-tracked", "generated-tracked"] }
+            }
+          }
+        },
+        "tree_sha256": { "$ref": "#/$defs/sha256" },
+        "staged": { "const": true },
+        "committed": { "const": false }
+      }
+    }
+  }
+}
