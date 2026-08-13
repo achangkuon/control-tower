@@ -19,7 +19,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1`, y la cadena contractual `S5.4 → S5.6 → S5.7 → S5.8 → S5.11 → S5.12 → S5.9 → S5.10 → S5.5`. |
 | Outputs | F: authorization store, Telegram, validación Git/PR/check/SHA, entrega idempotente y post-check. G: planning horizon, reconciliación, apply/verify, Binding Delta y continuación del siguiente `slice_id`. Más el ruteo de escalamiento de `S5.4`, los contratos canónicos prerrequisito de `S5.6`–`S5.10`, los productores de provenance de `S5.11`, la composición Main→parking de `S5.12` y la planificación diferible de `S5.5`. |
-| Roadmap | `S5.1`, `S5.4`, `S5.6`, `S5.7`, `S5.8` y `S5.11` están ✅ COMPLETO e integradas en el `master` local. `S5.11` cerró en `b4d7fcd` (tree `7873570`) con los 12/12 criterios y la verificación post-integración completa en Main; no hubo push ni publicación remota. `S5.12` queda 🟢 LISTO porque su única dependencia está integrada, sin inicio ni crédito. `S5.9` permanece 🔴 BLOQUEADO hasta integrar `S5.12`; sus proposal/spec/design y el falsificador siguen fuera de este Git canónico, sin integrar. `S5.10` y `S5.5` conservan sus bloqueos. `S5.2` mantiene los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
+| Roadmap | `S5.1`, `S5.4`, `S5.6`, `S5.7`, `S5.8` y `S5.11` están ✅ COMPLETO e integradas en el `master` local. `S5.11` cerró en `b4d7fcd` (tree `7873570`) con los 12/12 criterios y la verificación post-integración completa en Main; no hubo push ni publicación remota. `S5.12` queda 🔵 EN CURSO con un candidato **PREPARED** exacto ya importado y verificado en Main, pendiente de commit selectivo y entrega por push directo; aporta cero crédito. `S5.9` permanece 🔴 BLOQUEADO hasta entregar `S5.12`; sus proposal/spec/design y el falsificador siguen fuera de este Git canónico, sin integrar. `S5.10` y `S5.5` conservan sus bloqueos. `S5.2` mantiene los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193; `S5.3` queda transitivamente 🔴 BLOQUEADO. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
 
 ## Grafo de dependencias
@@ -34,7 +34,7 @@ graph LR
   S56 --> S57["S5.7 decisión/respuesta · ✅"]
   S57 --> S58["S5.8 binding de respuesta · ✅"]
   S58 --> S511["S5.11 provenance de checkpoint · ✅"]
-  S511 --> S512["S5.12 composición Main→parking · 🟢"]
+  S511 --> S512["S5.12 composición Main→parking · 🔵"]
   S512 --> S59["S5.9 binding de checkpoint · 🔴"]
   S59 --> S510["S5.10 binding de trabajo completado · 🔴"]
   S510 --> S55["S5.5 continuación diferible · 🔴"]
@@ -677,13 +677,13 @@ Sesiones sin decisión explícita.
 
 **Resultado:** Main invoca los productores canónicos mediante capabilities ligadas en constructor, conserva sus artefactos inmutables sin cambios y los entrega juntos a una sola transacción de parking.
 
-**Estado:** 🟢 LISTO — la autoridad está resuelta y `S5.11` está integrada; la Sesión puede entrar en su route `design-tasks`, pero todavía no empezó y aporta cero crédito.
+**Estado:** 🔵 EN CURSO — **PREPARED** describe la disposición del candidato, no un estado adicional. Los bytes y modos exactos del candidato congelado ya están importados y verificados en Main; faltan el commit selectivo y un único push directo ordenado con estos documentos. Sin push no hay entrega y la Sesión aporta cero crédito.
 
-**Route:** `design-tasks` — la geometría de autoridad ya está decidida y no requiere proposal/spec nuevos; `session-plan` debe elegir el seam técnico acotado y detallar la única entrada aprobada antes del executor. **Razón:** queda diseño de composición, no una decisión pública abierta. **Autoridad:** decisión Main-owned del maintainer y productores que entregará `S5.11`.
+**Route:** `design-tasks` — ejecutada para fijar el seam técnico acotado sin proposal/spec nuevos; el candidato resultante queda preparado bajo la autoridad Main-owned ya resuelta.
 
 **Depende de:** `S5.11` integrada.
 
-**Área:** `escalation/request.mjs`, `escalation/parking-composition.mjs`, `main-store/store.mjs` sólo para el ingress de parking aprobado, `test/escalation/{request,parking-composition}.test.mjs`, `test/main-store.test.mjs`
+**Área:** `escalation/parking-composition.mjs`, `main-store/store.mjs`, `test/escalation/parking-composition.test.mjs`, `test/main-store.test.mjs`
 
 **Recurso:** composición de Main y transacción única de parking; exclusividad sobre el ingress de parking del Main store. Sin DB y sin token de entrega.
 
@@ -716,13 +716,17 @@ Sesiones sin decisión explícita.
 - [ ] `S5.12` no crea contratos alternativos ni sintetiza identidad, digest, estado `VALID` o cross-bindings
 - [ ] El diff de implementación no toca ningún path fuera de `Área`
 
+**Evidencia PREPARED del candidato congelado:** base `53b471cd2e621b844fc043ced844e9c034887952` (`53b471c`), manifest ordenado `6211c027009991f1970ca4fe898b88b7ffdc04b2ff0a5a186385d47bfd191a1b` y exactamente los cuatro paths de `Área`, con 238 líneas authored. En Main pasaron los 8/8 criterios: aggregate focused exacto 52 pass / 0 fail / 306 expectations y suite completa 663 pass / 0 fail / 3986 expectations en 43 archivos. Antes del aggregate exacto se ejecutó por error un comando focused menor, 49 pass / 0 fail / 295 expectations; queda registrado como desviación procedural y no reemplaza la evidencia exacta. El límite runtime ejerció un Git temporal real: `captureCheckpoint → reconcileCheckpoint → composition → Main-store atomic parking → frozen readback`.
+
+Los criterios de cierre permanecen sin marcar porque falta la entrega remota, no por falta de verificación: `S5.12` sigue 🔵 EN CURSO y **PREPARED**. Rollback exacto: eliminar `escalation/parking-composition.mjs` y `test/escalation/parking-composition.test.mjs`; revertir los hunks de `S5.12` en `main-store/store.mjs`, incluida la restauración de la línea reemplazada del import de `validate`; y revertir los hunks de `S5.12` en `test/main-store.test.mjs`. Los dos archivos existentes contienen 123 adiciones y 1 eliminación; no hay schema, migración, contrato, efecto remoto ni reparación de datos.
+
 ## Sesión 5.9 — Binding autoritativo del checkpoint estacionado
 
 **Resultado:** persistir bajo autoridad exclusiva de Main una prueba inmutable que liga el valor exacto de `parked.checkpoint` a la captura canónica y a la evidencia de reconciliación que identifican el mismo punto de retoma.
 
-**Estado:** 🔴 BLOQUEADO — el falsificador producer-owned del archivo no trackeado `design.md` en el worktree separado `s5-9`, SHA-256 `a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1` / Engram 8604, que no es una identidad Git, falló: captura, reconciliación y parking no pueden hoy suministrar la provenance exigida. `S5.9` queda pausada antes de tasks/apply hasta integrar `S5.11` y `S5.12`; no se acredita avance parcial ni se afirma que sus artefactos de diseño estén integrados.
+**Estado:** 🔴 BLOQUEADO — el falsificador producer-owned del archivo no trackeado `design.md` en el worktree separado `s5-9`, SHA-256 `a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1` / Engram 8604, que no es una identidad Git, probó el faltante original. `S5.12` ya tiene un candidato PREPARED y verificado que cubre esa composición, pero aún no está entregado; `S5.9` queda pausada antes de tasks/apply sin crédito y sus artefactos de diseño siguen fuera de este Git canónico.
 
-**Route:** `full-sdd`, pausada antes de tasks/apply. Proposal/spec/design existen sólo en el worktree separado `s5-9`; el archivo no trackeado `design.md` tiene SHA-256 `a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1` y la evidencia está en Engram 8604. No forman parte de este Git canónico y ese digest no identifica un commit ni un blob Git. Tras integrar `S5.11` y `S5.12`, se retoma desde ese checkpoint reconciliado para probar que el flujo real suministra captura canónica y reconciliación `VALID` sin assertion del caller. **Razón:** el contrato aprobado sigue requiriendo SDD, pero sus dependencias producer→composition están ausentes. **Autoridad:** decisión del maintainer del 2026-08-12, decisión Main-owned posterior registrada en [`decision-register.md`](../decision-register.md), y evidencia A verificada contra `workspace/checkpoint.mjs`, `schemas/reconciled-checkpoint-v1.schema.json` y `schemas/parked-decision-v1.schema.json`.
+**Route:** `full-sdd`, pausada antes de tasks/apply. Proposal/spec/design existen sólo en el worktree separado `s5-9`; el archivo no trackeado `design.md` tiene SHA-256 `a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1` y la evidencia está en Engram 8604. No forman parte de este Git canónico y ese digest no identifica un commit ni un blob Git. Tras entregar `S5.12`, se retoma desde ese checkpoint reconciliado para probar que el flujo real suministra captura canónica y reconciliación `VALID` sin assertion del caller. **Razón:** el contrato aprobado sigue requiriendo SDD y la dependencia producer→composition aún no está cerrada por entrega. **Autoridad:** decisión del maintainer del 2026-08-12, decisión Main-owned posterior registrada en [`decision-register.md`](../decision-register.md), y evidencia A verificada contra `workspace/checkpoint.mjs`, `schemas/reconciled-checkpoint-v1.schema.json` y `schemas/parked-decision-v1.schema.json`.
 
 **Depende de:** `S5.12` integrada; transitivamente `S5.11` y `S5.8` ✅.
 
@@ -796,6 +800,6 @@ Cada Tarea es una unidad de commit/direct-push revisable y revertible por sí so
 - [ ] `S5.5` consume la prueba sin inferirla localmente y `S7.1` puede atribuir la evidencia al candidato y supuesto exactos
 - [ ] El diff de implementación no toca ningún path fuera de `Área`
 
-**Cómputo del Plan 5:** `6/12 S = 50%`. Sólo `S5.1`, `S5.4`, `S5.6`, `S5.7`, `S5.8` y `S5.11` cuentan; `S5.12` está 🟢 LISTO sin inicio ni crédito, y `S5.2`, `S5.3`, `S5.5`, `S5.9` y `S5.10` están 🔴 BLOQUEADO. Ninguna Sesión posterior aporta crédito hasta `COMPLETO`.
+**Cómputo del Plan 5:** `6/12 S = 50%`. Sólo `S5.1`, `S5.4`, `S5.6`, `S5.7`, `S5.8` y `S5.11` cuentan; `S5.12` está 🔵 EN CURSO con candidato PREPARED y cero crédito, y `S5.2`, `S5.3`, `S5.5`, `S5.9` y `S5.10` están 🔴 BLOQUEADO. Ninguna Sesión posterior aporta crédito hasta `COMPLETO`.
 
 Las responsabilidades legacy de Telegram Delivery y continuación que aún no tienen límite de un PR permanecen sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).

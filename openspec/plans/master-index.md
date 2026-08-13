@@ -1,16 +1,20 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-13 contra `master@349646f3dc6d30ab08c1e1d01039024dd6ab9f30` (tree `ca0323fe81397b07d058f483ce8848a77e88332b`). El ref local `origin/master` permanece en `3db3c121`; este snapshot técnico no fue pusheado ni publicado.
+> Última reconciliación: 2026-08-13 sobre la base `master@53b471cd2e621b844fc043ced844e9c034887952` (`53b471c`). El ref local `origin/master` permanece en `3db3c121`; el candidato PREPARED de `S5.12` está importado en el working tree y no fue commiteado, pusheado ni publicado.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md).
 
 ## 📍 Punto de retoma
 
-`S1.15` y `S5.11` están cerradas técnica y localmente. `S1.16` y `S5.12` quedan 🟢 LISTO como siguientes Sesiones de P1 y P5, respectivamente, sin inicio ni crédito.
+`S1.15` y `S5.11` están cerradas técnica y localmente. `S1.16` queda 🟢 LISTO. `S5.12` queda 🔵 EN CURSO con un candidato **PREPARED** exacto ya importado en Main: la verificación funcional final está verde y la desviación procedimental está registrada; quedan el commit selectivo y un único push directo ordenado con los documentos de cierre. No aporta crédito.
 
-Engram 8506 resolvió el contrato visible de `S9.1`, que queda 🟢 LISTO para una única ruta `full-sdd` de planificación para toda la Sesión; no autoriza implementación ni entrega. `S9.2` sigue 🔴 BLOQUEADO por dependencia de `S9.1` y por la frontera fast-frozen de caché aún sin aprobar. P9 no reabre P3, no absorbe `S3.5`/`S3.6` y no detiene ni desplaza `S1.12`/`S5.8`.
+`S9.1` queda planning-only y en cuarentena antes de tasks/apply. Sus artefactos permanecen intactos; transporte `#1b` y la contradicción del rollback floor siguen sin resolver. `S9.2` continúa 🔴 BLOQUEADO. P9 no reabre P3 ni altera el orden de hosts.
 
-La hermeticidad clean-clone del registry queda como deuda separada y todavía no tiene ID de Sesión; no invalida el cierre post-integración de `S5.11` sobre Main. `S1.17`, `S5.2`/`S5.3`, `S5.9`/`S5.10`/`S5.5`, `S8.7`, `S10.1` y `S10.2` conservan sus bloqueos.
+Control Tower es un producto, un roadmap y un release. OpenCode sigue primero (`S1.13`–`S1.15` ✅ COMPLETO; `S1.16` 🟢 LISTO) y Pi sigue siendo el segundo host/fallback obligatorio (`S1.17` 🔴 BLOQUEADO; `S1.18`–`S1.19` sin implementar). P10 entra en la cadena: `S3.4 → S10.1 → S10.2 → S7.1`; `S10.1` queda 🟢 LISTO por `design-tasks`, siempre effect-incapable, y `S10.2` conserva sus dos decisiones abiertas.
+
+Con la Torre apagada, sesiones peer Pi homogéneas pueden coordinarse por Intercom sólo con autorización explícita del maintainer. Es un método interino de desarrollo, no autoridad Tower ni cambio del orden de hosts.
+
+La hermeticidad clean-clone del registry queda como deuda separada y todavía no tiene ID de Sesión; no invalida el cierre post-integración de `S5.11` sobre Main. `S1.17`, `S5.2`/`S5.3`, `S5.9`/`S5.10`/`S5.5`, `S8.7` y `S10.2` conservan sus bloqueos.
 
 No se acredita ninguna Sesión posterior. La capacidad debe reevaluarse por grafo, `Área`, `Recurso` y contaminación antes de ejecutar trabajo en paralelo.
 
@@ -35,7 +39,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | S7.1 | [STATUS](plan-7/STATUS.md) |
 | P8 | Release instalable | 🔵 EN CURSO | 63% (5/8 S) | — | Maintainer | S8.7, S8.5, S8.6 | [STATUS](plan-8/STATUS.md) |
 | P9 | Slots seguros de Jornada y caché externa de Bun | 🟢 LISTO | 0% (0/2 S) | — | Maintainer | S9.1, S9.2 | [STATUS](plan-9/STATUS.md) |
-| P10 | Ejecución y supervisión autónoma de Jornada | 🔴 BLOQUEADO | 0% (0/2 S) | — | Maintainer | S10.1, S10.2 | [STATUS](plan-10/STATUS.md) |
+| P10 | Ejecución y supervisión autónoma de Jornada | 🟢 LISTO | 0% (0/2 S) | — | Maintainer | S10.1, S10.2 | [STATUS](plan-10/STATUS.md) |
 
 ## 🗂️ Planes archivados
 
