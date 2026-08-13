@@ -2,9 +2,11 @@ import { chmodSync, closeSync, constants, existsSync, fsyncSync, lstatSync, mkdi
 import { dirname, isAbsolute, join } from "node:path"
 import { randomUUID } from "node:crypto"
 
-import { validate } from "../contracts/validate.mjs"
+import { validate, validateCheckpointProvenancePair } from "../contracts/validate.mjs"
 import { canonicalize } from "../contracts/canonicalize.mjs"
 import { assertParkedDecisionResponseBinding, parkedDecisionResponseDigest } from "../contracts/parked-decision.mjs"
+import { assertCanonicalCheckpointCapture } from "../workspace/checkpoint.mjs"
+import { assertCanonicalReconciledCheckpoint } from "../workspace/reconciliation.mjs"
 import { resolveJornadaLifecycle } from "../jornada/lifecycle.mjs"
 
 // Terminal states an authorization may reach, mirroring authorization-v1's
@@ -13,6 +15,8 @@ import { resolveJornadaLifecycle } from "../jornada/lifecycle.mjs"
 const TERMINAL_STATES = new Set(["APPROVED", "REJECTED", "EXPIRED", "REVOKED"])
 const digest = (value) => typeof value === "string" && /^sha256:[a-f0-9]{64}$/.test(value)
 const fail = (code, message, cause) => { throw Object.assign(new Error(message, { cause }), { code }) }
+const exactKeys = (value, keys) => value && typeof value === "object" && !Array.isArray(value)
+  && Object.keys(value).sort().join("\0") === [...keys].sort().join("\0")
 const safeId = (value) => {
   if (typeof value !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(value)) fail("CT_STORE_INVALID", "Invalid store identifier")
   return value
@@ -167,6 +171,7 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
   const handoffCoordinatePath = (id) => join(directory("handoff-coordinates"), `${safeId(id)}.json`)
   const workerClaimPath = (id) => join(directory("worker-claims"), `${safeId(id)}.json`)
   const supportProposalPath = (id) => join(directory("support-proposals"), `${safeId(id)}.json`)
+  const parkingPath = (id) => join(directory("decision-parkings"), `${safeId(id)}.json`)
   const approvedAuthorizationFor = (authorizationId, candidateRevision) => {
     if (typeof authorizationId !== "string" || authorizationId.length === 0) fail("CT_AUTH_INVALID", "Approved authorization is required")
     const path = authorizationPath(authorizationId)
@@ -189,6 +194,37 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
   }
 
   return Object.freeze({
+    parkDecision(input) {
+      if (!exactKeys(input, ["actor", "project_id", "parked_decision", "checkpoint_capture", "reconciled_checkpoint"])) fail("CT_PARKING_INPUT_INVALID", "Parking requires one closed canonical input")
+      assertMain(input)
+      let parked, capture, reconciliation
+      try {
+        parked = validate("parkedDecision", input.parked_decision)
+        capture = assertCanonicalCheckpointCapture(input.checkpoint_capture)
+        reconciliation = assertCanonicalReconciledCheckpoint(input.reconciled_checkpoint)
+        validateCheckpointProvenancePair(capture, reconciliation)
+      } catch (error) {
+        if (error?.code === "CT_PROVENANCE_ORIGIN_INVALID") throw error
+        fail("CT_PARKING_INVALID", "Parking artifacts are invalid or mismatched", error)
+      }
+      if (capture.project_id !== binding.project_id) fail("CT_PROJECT_MISMATCH", "Checkpoint provenance belongs to a foreign project")
+      const record = { actor: "MAIN", project_id: binding.project_id, parked_decision: parked, checkpoint_capture: capture, reconciled_checkpoint: reconciliation }
+      const path = parkingPath(parked.parked_decision_id)
+      const replay = () => {
+        const current = parse(path)
+        const { revision: _revision, revision_history: _history, ...prior } = current
+        if (canonicalize(prior) !== canonicalize(record)) fail("CT_PARKING_REPLAY_DIVERGENT", "Parking replay diverges from persisted canonical bytes")
+        return frozen({ ...current, record_path: path, replayed: true })
+      }
+      if (existsSync(path)) return replay()
+      try {
+        return frozen({ ...commit("decision-parkings", parked.parked_decision_id, { ...record, expected_revision: 0 }, 0), replayed: false })
+      } catch (error) {
+        if (error.code === "CT_CAS_MISMATCH" && existsSync(path)) return replay()
+        throw error
+      }
+    },
+    readParking(id) { return frozen(parse(parkingPath(id))) },
     persistReport(input) {
       if (!input?.artifact_ref || typeof input.artifact_ref !== "object") fail("CT_STORE_INVALID", "Opaque ArtifactRef is required")
       return commit("reports", input.artifact_ref.artifact_id, input)

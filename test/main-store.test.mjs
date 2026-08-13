@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test"
+import { execFileSync } from "node:child_process"
 import { chmodSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { basename, dirname, join, resolve } from "node:path"
@@ -6,6 +7,9 @@ import { fileURLToPath } from "node:url"
 
 import { bindMainAuthority, createMainStore } from "../main-store/index.mjs"
 import { createParkedDecision, createParkedDecisionResponse, parkedDecisionResponseDigest } from "../contracts/parked-decision.mjs"
+import { createParkingComposition } from "../escalation/parking-composition.mjs"
+import { captureCheckpoint } from "../workspace/checkpoint.mjs"
+import { reconcileCheckpoint } from "../workspace/reconciliation.mjs"
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 const temporaryDirectories = []
@@ -85,6 +89,24 @@ const parkedResponse = (authorization_id, overrides = {}) => {
   return { parked_decision, parked_decision_response }
 }
 const responseRequest = (authorization_id, overrides = {}) => ({ actor: "MAIN", authorization_id, candidate_revision: candidateRevision, decision: "APPROVED", expected_revision: 1, ...parkedResponse(authorization_id), ...overrides })
+const git = (cwd, args) => {
+  const output = execFileSync("git", args, { cwd, stdio: ["ignore", "pipe", "pipe"] })
+  return args[0] === "cat-file" || args.includes("-z") ? output : output.toString("utf8").trim()
+}
+const provenance = (suffix = "a") => {
+  const root = mkdtempSync(join(tmpdir(), "ct-parking-provenance-")); temporaryDirectories.push(root)
+  git(root, ["init", "-q", "-b", "main"]); git(root, ["config", "user.email", "tower-test@example.invalid"]); git(root, ["config", "user.name", "Tower Test"])
+  writeFileSync(join(root, "tracked.txt"), "base\n"); git(root, ["add", "tracked.txt"]); git(root, ["commit", "-q", "-m", "base"])
+  const base = { commit: git(root, ["rev-parse", "HEAD"]), tree: git(root, ["rev-parse", "HEAD^{tree}"]) }
+  const content = `result-${suffix}\n`; writeFileSync(join(root, "tracked.txt"), content); git(root, ["add", "tracked.txt"]); git(root, ["commit", "-q", "-m", "result"])
+  const result = { commit: git(root, ["rev-parse", "HEAD"]), tree: git(root, ["rev-parse", "HEAD^{tree}"]) }
+  git(root, ["reset", "-q", "--mixed", base.commit]); git(root, ["add", "tracked.txt"])
+  const checkpoint_request = { project_id: "project-a", assignment_id: `assignment-s5-12-${suffix}`, generation: 1, repositoryRoot: root, base, result, files: [{ path: "tracked.txt", bytes: new TextEncoder().encode(content), mode: "raw-bytes" }] }
+  const checkpoint_capture = captureCheckpoint(checkpoint_request, { git })
+  const reconciliation_evidence = { project_id: checkpoint_capture.project_id, assignment_id: checkpoint_capture.assignment_id, generation: checkpoint_capture.generation, repository_root: checkpoint_capture.repository_root, git_common_dir: checkpoint_capture.git_common_dir, base, result, manifest_ref: "openspec/plans/manifest.yaml", candidate_ref: "candidates/s5-12.json", ledger_digest: `sha256:${"f".repeat(64)}`, runtime_projection_revision: 4, host_epoch: 2, jornada_id: "jornada-s5-12", jornada_revision: 3, registry_revision: 7, capability_revision: 5 }
+  return { checkpoint_request, reconciliation_evidence, checkpoint_capture, reconciled_checkpoint: reconcileCheckpoint({ capture: checkpoint_capture, evidence: reconciliation_evidence }) }
+}
+const parkingInput = (parked_decision, evidence, overrides = {}) => ({ actor: "MAIN", project_id: "project-a", parked_decision, checkpoint_capture: evidence.checkpoint_capture, reconciled_checkpoint: evidence.reconciled_checkpoint, ...overrides })
 const jornadaRecord = (id) => ({
   schema: "jornada",
   schema_version: 1,
@@ -200,6 +222,70 @@ describe("atomic owner-only Main store", () => {
     expect(code(() => store.persistReport({ actor: "MAIN", project_id: "project-a", artifact_ref: ref("report-a"), expected_revision: 1 }))).toBe("CT_STORE_WRITE_FAILED")
     expect(readFileSync(first.record_path)).toEqual(original)
     expect(readdirSync(dirname(first.record_path)).some((name) => name.includes(".tmp"))).toBe(false)
+  })
+
+  test("atomically parks one canonical decision and both live provenance artifacts", () => {
+    const { root, store } = setup()
+    const parked = parkedResponse("parking-a").parked_decision, evidence = provenance()
+    const first = store.parkDecision(parkingInput(parked, evidence))
+    const bytes = readFileSync(first.record_path)
+
+    expect(first.parked_decision).toEqual(parked)
+    expect(first.checkpoint_capture).toEqual(evidence.checkpoint_capture)
+    expect(first.reconciled_checkpoint).toEqual(evidence.reconciled_checkpoint)
+    expect([first.revision, first.replayed]).toEqual([1, false])
+    expect(basename(dirname(first.record_path))).toBe("decision-parkings")
+    expect(readdirSync(dirname(first.record_path))).toEqual(["parked-parking-a.json"])
+    expect(store.parkDecision(parkingInput(parked, evidence))).toMatchObject({ revision: 1, replayed: true })
+    expect(readFileSync(first.record_path)).toEqual(bytes)
+    const readback = store.readParking(parked.parked_decision_id)
+    expect(readback).toEqual(JSON.parse(bytes))
+    expect(Object.isFrozen(readback)).toBeTrue()
+    expect(Object.isFrozen(readback.checkpoint_capture.files)).toBeTrue()
+    expect(existsSync(join(root, "checkpoint-captures"))).toBeFalse()
+    expect(existsSync(join(root, "reconciled-checkpoints"))).toBeFalse()
+  })
+
+  test("runs the real producer-to-Main-to-parking path without caller provenance", () => {
+    const { store } = setup(), fixture = provenance("composition")
+    const parked_decision = parkedResponse("parking-composition").parked_decision
+    const composition = createParkingComposition({
+      checkpointProducer: (input) => captureCheckpoint(input, { git }),
+      reconciliationProducer: reconcileCheckpoint,
+      parkingStore: store,
+    })
+    const result = composition.park({ parked_decision, checkpoint_request: fixture.checkpoint_request, reconciliation_evidence: fixture.reconciliation_evidence })
+
+    expect(result.replayed).toBeFalse()
+    expect(result.checkpoint_capture).toEqual(fixture.checkpoint_capture)
+    expect(result.reconciled_checkpoint).toEqual(fixture.reconciled_checkpoint)
+    expect(store.readParking(parked_decision.parked_decision_id)).toMatchObject({ parked_decision, revision: 1 })
+  })
+
+  test("rejects noncanonical, mismatched, divergent, or failed parking without partial state", () => {
+    let failParking = false
+    const { root, store } = setup({ beforeCommit: (path) => { if (failParking && path.includes("/decision-parkings/")) throw new Error("forced") } })
+    const parked = parkedResponse("parking-reject").parked_decision, firstEvidence = provenance("first"), secondEvidence = provenance("second")
+    const path = join(root, "decision-parkings", "parked-parking-reject.json")
+
+    for (const invalid of [
+      parkingInput(parked, { ...firstEvidence, checkpoint_capture: structuredClone(firstEvidence.checkpoint_capture) }),
+      parkingInput(parked, { checkpoint_capture: firstEvidence.checkpoint_capture, reconciled_checkpoint: secondEvidence.reconciled_checkpoint }),
+      parkingInput(parked, firstEvidence, { provenance: {} }),
+      parkingInput(parked, firstEvidence, { actor: "SUPPORT" }),
+      parkingInput(parked, firstEvidence, { project_id: "project-b" }),
+    ]) expect(code(() => store.parkDecision(invalid))).not.toBe(null)
+    expect(existsSync(path)).toBeFalse()
+
+    failParking = true
+    expect(code(() => store.parkDecision(parkingInput(parked, firstEvidence)))).toBe("CT_STORE_WRITE_FAILED")
+    expect(existsSync(path)).toBeFalse()
+    failParking = false
+    store.parkDecision(parkingInput(parked, firstEvidence))
+    const bytes = readFileSync(path)
+    const divergent = createParkedDecision({ ...parked, parked_decision_digest: undefined, checkpoint: `${parked.checkpoint} changed` })
+    expect(code(() => store.parkDecision(parkingInput(divergent, firstEvidence)))).toBe("CT_PARKING_REPLAY_DIVERGENT")
+    expect(readFileSync(path)).toEqual(bytes)
   })
 
   test("enforces CAS and foreign-project separation without changing prior state", () => {
