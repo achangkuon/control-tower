@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 import { appendFileSync, chmodSync, constants, copyFileSync, existsSync, fsyncSync, linkSync, lstatSync, mkdirSync, openSync, closeSync, readFileSync, readdirSync, realpathSync, rmSync, renameSync, symlinkSync, writeFileSync } from "node:fs"
 import { createHash, randomUUID } from "node:crypto"
+import { spawnSync } from "node:child_process"
 import { basename, dirname, isAbsolute, join, sep } from "node:path"
 import { fileURLToPath } from "node:url"
 
@@ -16,6 +17,7 @@ const audit = (stateRoot, record) => {
 }
 
 const hostRuntimeRecord = (versionRoot) => join(versionRoot, "host-runtime.json")
+const HERDR_CONTRACT = Object.freeze({ schema: "herdr.agent_root_observation", schema_version: 1, capabilities: ["pane_bound", "opencode_session_lineage"] })
 const secureExecutable = (path, name) => {
   if (!path) throw new Error("CT_HOST_RUNTIME_REQUIRED")
   if (typeof path !== "string" || !isAbsolute(path)) throw new Error("CT_HOST_RUNTIME_INVALID")
@@ -42,7 +44,17 @@ const validateHostRuntimeRecord = (record, version) => {
       || !["dev", "ino", "size", "mtimeMs", "ctimeMs", "uid", "mode", "nlink"].every((key) => typeof executable[key] === "number")) throw new Error("CT_HOST_RUNTIME_RECORD_INVALID")
   }
   if (record.herdr.path === record.opencode.path) throw new Error("CT_HOST_RUNTIME_RECORD_INVALID")
+  if (JSON.stringify(record.herdr_contract) !== JSON.stringify(HERDR_CONTRACT)) throw new Error("CT_HOST_RUNTIME_RECORD_INVALID")
   return record
+}
+
+const verifyHerdrContract = (path) => {
+  const result = spawnSync(path, ["contract", "agent-root-observation", "--json"], { encoding: "utf8", timeout: 1_000, env: Object.freeze({ PATH: "" }) })
+  if (result.error || result.status !== 0) throw new Error("CT_HOST_RUNTIME_CONTRACT")
+  let contract
+  try { contract = JSON.parse(result.stdout) } catch { throw new Error("CT_HOST_RUNTIME_CONTRACT") }
+  if (JSON.stringify(contract) !== JSON.stringify(HERDR_CONTRACT)) throw new Error("CT_HOST_RUNTIME_CONTRACT")
+  return contract
 }
 
 export function readHostRuntimeIdentity(dataRoot, version) {
@@ -58,7 +70,7 @@ export function readHostRuntimeIdentity(dataRoot, version) {
 const captureHostRuntimeIdentity = (version, { herdrBin, opencodeBin }) => {
   const herdr = secureExecutable(herdrBin, "herdr"), opencode = secureExecutable(opencodeBin, "opencode")
   if (herdr.path === opencode.path) throw new Error("CT_HOST_RUNTIME_INVALID")
-  return { schema: "control-tower.host-runtime/v1", runtimeVersion: version, herdr, opencode }
+  return { schema: "control-tower.host-runtime/v1", runtimeVersion: version, herdr, opencode, herdr_contract: verifyHerdrContract(herdr.path) }
 }
 
 const storeHostRuntimeIdentity = (versionRoot, record, { beforePublish } = {}) => {

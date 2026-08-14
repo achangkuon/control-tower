@@ -34,7 +34,7 @@ const fixture = () => {
   const paths = { dataRoot: join(root, "data/control-tower"), configRoot: join(root, "config/control-tower"), stateRoot: join(root, "state/control-tower") }
   const herdrBin = join(root, "bin/herdr"), opencodeBin = join(root, "bin/opencode")
   mkdirSync(dirname(herdrBin), { recursive: true })
-  writeFileSync(herdrBin, "#!/bin/sh\nexit 0\n", { mode: 0o700 })
+  writeFileSync(herdrBin, "#!/bin/sh\nif [ \"$1 $2 $3\" = \"contract agent-root-observation --json\" ]; then printf '{\"schema\":\"herdr.agent_root_observation\",\"schema_version\":1,\"capabilities\":[\"pane_bound\",\"opencode_session_lineage\"]}\\n'; fi\n", { mode: 0o700 })
   writeFileSync(opencodeBin, "#!/bin/sh\nexit 0\n", { mode: 0o700 })
   paths.herdrBin = herdrBin
   paths.opencodeBin = opencodeBin
@@ -143,6 +143,28 @@ test("attended installs require explicit Herdr and OpenCode executable identitie
   expect(existsSync(join(env.XDG_DATA_HOME, "control-tower"))).toBe(false)
 })
 
+test("installer rejects Herdr without the required root-observation contract before storing a runtime", () => {
+  const { root, paths } = fixture(), env = testEnv(root)
+  writeFileSync(paths.herdrBin, "#!/bin/sh\nprintf '{}\\n'\n", { mode: 0o700 })
+
+  expect(() => runCli(["install", "1.0.0", repoRoot, ...hostArgs(paths)], env)).toThrow("CT_HOST_RUNTIME_CONTRACT")
+  expect(existsSync(join(env.XDG_DATA_HOME, "control-tower"))).toBe(false)
+})
+
+test("installer rejects malformed, failed, timed-out, and incompatible Herdr contracts", () => {
+  for (const script of [
+    "#!/bin/sh\nprintf '{bad}\\n'\n",
+    "#!/bin/sh\nexit 2\n",
+    "#!/bin/sh\nsleep 2\n",
+    "#!/bin/sh\nprintf '{\"schema\":\"herdr.agent_root_observation\",\"schema_version\":1,\"capabilities\":[\"pane_bound\",\"opencode_session_lineage\",\"extra\"]}\\n'\n",
+  ]) {
+    const { root, paths } = fixture(), env = testEnv(root)
+    writeFileSync(paths.herdrBin, script, { mode: 0o700 })
+    expect(() => runCli(["install", "1.0.0", repoRoot, ...hostArgs(paths)], env)).toThrow("CT_HOST_RUNTIME_CONTRACT")
+    expect(existsSync(join(env.XDG_DATA_HOME, "control-tower"))).toBe(false)
+  }
+})
+
 test("attended CLI rejects unsafe or mismatched executable inputs before installing", () => {
   const item = fixture(), env = testEnv(item.root), relative = "bin/herdr", link = join(item.root, "bin/herdr-link")
   symlinkSync(item.paths.herdrBin, link)
@@ -181,7 +203,7 @@ test("reentrant installs retain the winning immutable host-runtime record", () =
 test("conflicting reentrant installs preserve the winner and active pointer", () => {
   const { root, paths } = fixture(), alternateHerdr = join(root, "alternate/herdr")
   mkdirSync(dirname(alternateHerdr), { recursive: true })
-  writeFileSync(alternateHerdr, "#!/bin/sh\necho alternate\n", { mode: 0o700 })
+  writeFileSync(alternateHerdr, "#!/bin/sh\n# alternate\nif [ \"$1 $2 $3\" = \"contract agent-root-observation --json\" ]; then printf '{\"schema\":\"herdr.agent_root_observation\",\"schema_version\":1,\"capabilities\":[\"pane_bound\",\"opencode_session_lineage\"]}\\n'; fi\n", { mode: 0o700 })
   const nested = { ...paths, herdrBin: alternateHerdr, action: "install", version: "1.0.0", files: { "runtime.mjs": "one" } }
   const outer = { ...paths, action: "install", version: "1.0.0", files: { "runtime.mjs": "one" }, hostRuntimeOptions: { beforePublish: () => lifecycle(nested) } }
 
@@ -420,7 +442,7 @@ test("stored torre diagnoses and installs autonomously from an isolated unrelate
   }
   const herdrBin = join(root, "bin/herdr"), opencodeBin = join(root, "bin/opencode")
   mkdirSync(dirname(herdrBin), { recursive: true })
-  writeFileSync(herdrBin, "#!/bin/sh\nexit 0\n", { mode: 0o700 })
+  writeFileSync(herdrBin, "#!/bin/sh\nif [ \"$1 $2 $3\" = \"contract agent-root-observation --json\" ]; then printf '{\"schema\":\"herdr.agent_root_observation\",\"schema_version\":1,\"capabilities\":[\"pane_bound\",\"opencode_session_lineage\"]}\\n'; fi\n", { mode: 0o700 })
   writeFileSync(opencodeBin, "#!/bin/sh\nexit 0\n", { mode: 0o700 })
 
   const env = { PATH: process.env.PATH, HOME: home, XDG_DATA_HOME: join(root, "xdg-data"), XDG_CONFIG_HOME: config,
