@@ -169,7 +169,7 @@ Todos deben pasar para cerrar:
 
 **Depende de:** `S4.1` ✅, `S1.16` ✅.
 
-**Área:** `hosts/launcher.mjs`, `hosts/opencode-launcher.mjs`, `hosts/herdr.mjs`, `plugin/tower-spike.js`, `.opencode/plugins/tower-spike.js`, `test/hosts/launcher.test.mjs`, `test/hosts/opencode-launcher.test.mjs`, `test/hosts/herdr.test.mjs`, `test/plugin/tower-spike.test.mjs`
+**Área:** `bin/torre`, `hosts/launcher.mjs`, `hosts/opencode-launcher.mjs`, `hosts/herdr.mjs`, `hosts/launch-worker.mjs`, `hosts/launch-worker-cli.mjs`, `hosts/production-provider.mjs`, `main-store/store.mjs`, `main-store/launch-consumer.mjs`, `jornada/lifecycle.mjs`, `install/runtime-payload.mjs`, `plugin/tower-spike.js`, `.opencode/plugins/tower-spike.js`, `test/hosts/launcher.test.mjs`, `test/hosts/opencode-launcher.test.mjs`, `test/hosts/herdr.test.mjs`, `test/hosts/launch-worker.test.mjs`, `test/hosts/production-provider.test.mjs`, `test/main-store.test.mjs`, `test/install/launch-worker-cli.test.mjs`, `test/install/runtime-payload.test.mjs`, `test/install/lifecycle.test.mjs`, `test/install/entrypoint-resolution.test.mjs`, `test/plugin/tower-spike.test.mjs`
 
 **Recurso:** panel Herdr y una línea de host por `project_id`; sin DB, migraciones ni token de entrega.
 
@@ -180,6 +180,7 @@ Después de aprobar un brief, Host Launcher crea un panel Herdr **nuevo y visibl
 **Decisiones:**
 - `derivable` — qué entidad representa la ejecución visible. **Criterio:** una sesión OpenCode raíz y un panel Herdr nuevos por lanzamiento aprobado; un subagente nativo no puede ocupar ni mutar ese estado. Falsificable: un lanzamiento aprobado queda representado sólo por un hijo nativo o reutiliza un panel raíz existente. **Autoridad:** decisión del maintainer de 2026-08-10.
 - `derivable` — qué recibe la sesión al nacer. **Criterio:** sólo el brief ya aprobado y las referencias de asignación; el launcher no crea autoridad ni amplía scope. Falsificable: un lanzamiento con brief no aprobado, o con contenido que habilite autoridad bearer, llega a ejecutar. **Autoridad:** REQUIREMENTS §14.1 y decisión del maintainer de 2026-08-10.
+- `escala` — dónde reside el provider productivo que consume la binding Main y opera Herdr/OpenCode. **Clase:** seguridad y permisos; expansión de alcance. **RESUELTA por el maintainer:** provider determinista empaquetado con `torre`, resuelto sólo desde el runtime instalado; `--request-ref` es opaco y ningún módulo/path del caller selecciona runtime o autoridad. **Contamina:** `S4.2` solamente. **Autoridad:** decisiones del maintainer #8725/#8730.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
 - [ ] Un brief aprobado crea exactamente un panel Herdr visible y una sesión OpenCode raíz nueva en el worktree asignado

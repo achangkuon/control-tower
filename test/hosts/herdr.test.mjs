@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test"
 
 import { createHerdrAdapter } from "../../hosts/herdr.mjs"
 
-const receipt = Object.freeze({ brief: "Approved work only", brief_ref: "briefs/a.json", assignment_ref: "assignments/a.json", project_id: "project-a", candidate_revision: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", worktree: "/work/a", host_epoch: 3, pane_id: "pane-a", root_session_id: "root-a" })
+const receipt = Object.freeze({ brief: "Approved work only", brief_ref: "briefs/a.json", assignment_ref: "assignments/a.json", project_id: "project-a", candidate_revision: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", fence_path: "/runtime/fence-a", worktree: "/work/a", host_epoch: 3, pane_id: "pane-a", root_session_id: "root-a" })
 const code = async (operation) => { try { await operation() } catch (error) { return error.code }; return null }
 
 describe("Herdr visible root adapter", () => {

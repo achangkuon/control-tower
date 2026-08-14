@@ -14,10 +14,13 @@ const CANONICAL_RUNTIME_PAYLOAD = [
   "hosts/launch-worker-cli.mjs",
   "hosts/launch-worker.mjs",
   "hosts/opencode-launcher.mjs",
+  "hosts/production-provider.mjs",
   "install/active-pointer.mjs",
   "install/lifecycle.mjs",
   "install/runtime-payload.mjs",
   "install/version-store.mjs",
+  "jornada/lifecycle.mjs",
+  "main-store/launch-consumer.mjs",
 ]
 const fixture = () => {
   const root = mkdtempSync(join(tmpdir(), "ct-runtime-payload-"))

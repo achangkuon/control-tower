@@ -133,7 +133,7 @@ test("install accepts a checkout source and stores exactly the runtime payload",
   expect(runCli(["install", "checkout-v1", repoRoot], env)).toMatchObject({ active: "checkout-v1", stored: true })
   const storedRoot = join(env.XDG_DATA_HOME, "control-tower/versions/checkout-v1")
   expect(RUNTIME_PAYLOAD_FILES.map((path) => readFileSync(join(storedRoot, path)))).toEqual(RUNTIME_PAYLOAD_FILES.map((path) => readFileSync(join(repoRoot, path))))
-  expect(readdirSync(storedRoot).sort()).toEqual([".manifest", "bin", "core.mjs", "hosts", "install"])
+  expect(readdirSync(storedRoot).sort()).toEqual([".manifest", "bin", "core.mjs", "hosts", "install", "jornada", "main-store"])
 })
 
 test("install keeps strict payload validation for a staging source with an extra member", () => {
@@ -373,7 +373,7 @@ test("stored torre diagnoses and installs autonomously from an isolated unrelate
   expect({ status: installed.status, stderr: installed.stderr }).toEqual({ status: 0, stderr: "" })
   expect(JSON.parse(installed.stdout)).toMatchObject({ operation: "install", active: "10.0.0", changed: true, stored: true })
   expect(JSON.parse(readFileSync(join(publication, "active.json"), "utf8"))).toEqual({ version: "10.0.0", previous: null })
-  expect(readdirSync(join(publication, "versions/10.0.0")).sort()).toEqual([".manifest", "bin", "core.mjs", "hosts", "install"])
+  expect(readdirSync(join(publication, "versions/10.0.0")).sort()).toEqual([".manifest", "bin", "core.mjs", "hosts", "install", "jornada", "main-store"])
 
   const files = Object.fromEntries(RUNTIME_PAYLOAD_FILES.map((file) => [file, readFileSync(join(release, file))]))
   const expectedManifest = createHash("sha256").update(JSON.stringify(Object.entries(files).sort(([left], [right]) => left.localeCompare(right))

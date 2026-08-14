@@ -10,10 +10,13 @@ export const RUNTIME_PAYLOAD_FILES = [
   "hosts/launch-worker-cli.mjs",
   "hosts/launch-worker.mjs",
   "hosts/opencode-launcher.mjs",
+  "hosts/production-provider.mjs",
   "install/active-pointer.mjs",
   "install/lifecycle.mjs",
   "install/runtime-payload.mjs",
   "install/version-store.mjs",
+  "jornada/lifecycle.mjs",
+  "main-store/launch-consumer.mjs",
 ]
 
 const expected = new Set(RUNTIME_PAYLOAD_FILES)
@@ -59,7 +62,7 @@ const scanClosure = (root) => {
     if (stat.isSymbolicLink()) fail("CT_RUNTIME_PAYLOAD_INVALID", `symlink ${current}`)
     if (stat.isDirectory()) {
       const path = relative(root, current).split(sep).join("/")
-      if (path && path !== "bin" && path !== "hosts" && path !== "install") fail("CT_RUNTIME_PAYLOAD_INVALID", `unexpected directory ${path}`)
+      if (path && !["bin", "hosts", "install", "jornada", "main-store"].includes(path)) fail("CT_RUNTIME_PAYLOAD_INVALID", `unexpected directory ${path}`)
       for (const entry of readdirSync(current)) visit(join(current, entry))
       return
     }

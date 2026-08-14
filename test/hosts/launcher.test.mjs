@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test"
 
 import { createHostLauncher } from "../../hosts/launcher.mjs"
 
-const approved = Object.freeze({ brief: "Approved work only", brief_ref: "briefs/a.json", assignment_ref: "assignments/a.json", project_id: "project-a", candidate_revision: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", worktree: "/work/a", host_epoch: 3 })
+const approved = Object.freeze({ brief: "Approved work only", brief_ref: "briefs/a.json", assignment_ref: "assignments/a.json", project_id: "project-a", candidate_revision: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", fence_path: "/runtime/fence-a", worktree: "/work/a", host_epoch: 3 })
 const errorCode = async (operation) => {
   try { await operation() } catch (error) { return error.code }
   return null
@@ -46,6 +46,6 @@ describe("visible root host launcher", () => {
     const receipt = await succeeded(approved)
     expect(Object.isFrozen(receipt)).toBeTrue()
     expect(receipt).toEqual(projected)
-    expect(Object.keys(receipt).sort()).toEqual(["assignment_ref", "brief", "brief_ref", "candidate_revision", "host_epoch", "pane_id", "project_id", "root_session_id", "worktree"])
+    expect(Object.keys(receipt).sort()).toEqual(["assignment_ref", "brief", "brief_ref", "candidate_revision", "fence_path", "host_epoch", "pane_id", "project_id", "root_session_id", "worktree"])
   })
 })

@@ -4,7 +4,7 @@ import { createLaunchWorkerRuntime } from "../../hosts/launch-worker.mjs"
 
 const binding = Object.freeze({
   assignment_ref: "assignments/a.json", brief: "Approved work only", brief_ref: "briefs/a.json",
-  candidate_revision: `sha256:${"a".repeat(64)}`, host_epoch: 3, project_id: "project-a", worktree: "/work/a",
+  candidate_revision: `sha256:${"a".repeat(64)}`, fence_path: "/runtime/fence-a", host_epoch: 3, project_id: "project-a", worktree: "/work/a",
 })
 
 describe("packaged launch-worker runtime", () => {

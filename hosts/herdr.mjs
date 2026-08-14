@@ -1,4 +1,4 @@
-const RECEIPT_KEYS = Object.freeze(["assignment_ref", "brief", "brief_ref", "candidate_revision", "host_epoch", "pane_id", "project_id", "root_session_id", "worktree"])
+const RECEIPT_KEYS = Object.freeze(["assignment_ref", "brief", "brief_ref", "candidate_revision", "fence_path", "host_epoch", "pane_id", "project_id", "root_session_id", "worktree"])
 const fail = (code, message) => { throw Object.assign(new Error(message), { code }) }
 const exact = (value) => value && typeof value === "object" && Object.isFrozen(value)
   && Object.keys(value).sort().join("\0") === [...RECEIPT_KEYS].sort().join("\0")

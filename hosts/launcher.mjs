@@ -1,4 +1,4 @@
-const KEYS = Object.freeze(["assignment_ref", "brief", "brief_ref", "candidate_revision", "host_epoch", "project_id", "worktree"])
+const KEYS = Object.freeze(["assignment_ref", "brief", "brief_ref", "candidate_revision", "fence_path", "host_epoch", "project_id", "worktree"])
 const fail = (code, message) => { throw Object.assign(new Error(message), { code }) }
 const same = (left, right) => KEYS.every((key) => left[key] === right[key])
 const exact = (value) => value && typeof value === "object" && !Array.isArray(value)
