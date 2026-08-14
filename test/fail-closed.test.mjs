@@ -43,6 +43,7 @@ const createRepository = () => {
 const runTorre = (cwd, command) =>
   execFileSync("bash", [torrePath, command], {
     cwd,
+    env: { ...process.env, XDG_DATA_HOME: join(cwd, ".xdg-data") },
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   })
@@ -145,6 +146,7 @@ describe("fail-closed core semantics", () => {
 
     const off = Bun.spawn(["bash", torrePath, "off"], {
       cwd: main,
+      env: { ...process.env, XDG_DATA_HOME: join(main, ".xdg-data") },
       stdout: "pipe",
       stderr: "pipe",
     })
