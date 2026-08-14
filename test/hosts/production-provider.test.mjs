@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from "bun:test"
 import { execFileSync } from "node:child_process"
-import { mkdtempSync, rmSync } from "node:fs"
+import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
 
@@ -25,8 +25,9 @@ const fixture = () => {
   store.transitionJornada({ actor: "MAIN", project_id: "project-a", jornada_id: "jornada-a", state: "PENDING_AUTHORIZATION", expected_revision: 1 }); store.transitionJornada({ actor: "MAIN", project_id: "project-a", jornada_id: "jornada-a", state: "ACTIVE", expected_revision: 2 })
   store.createAuthorization({ actor: "MAIN", schema: "authorization", schema_version: 1, authorization_id: "auth-a", action: "MERGE", project_id: "project-a", registry_revision: 1, plan_id: "plan-a", jornada_id: "jornada-a", jornada_revision: 3, delivery: { shape: "direct-push", repository: "owner/repository", target_branch: "master", base_sha: "a".repeat(40), head_sha: "b".repeat(40) }, required_checks_digest: `sha256:${"a".repeat(64)}`, policy_report_digest: `sha256:${"b".repeat(64)}`, created_at: "2099-01-01T00:00:00Z", expires_at: "2099-01-01T01:00:00.000Z", nonce_hash: `sha256:${"c".repeat(64)}`, extensions: { "control-tower/candidate-revision": candidate } })
   store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-a", candidate_revision: candidate, decision: "APPROVED", expected_revision: 1 })
-  store.issueLaunchBinding({ actor: "MAIN", project_id: "project-a", request_ref: "request-a", authorization_id: "auth-a", brief: "Approved", brief_ref: "briefs/a.json", assignment_ref: "assignments/a.json", worktree: worker, candidate_revision: candidate, host_epoch: 2, fence_path: "/runtime/fence-a" })
-  return { main, worker }
+  store.registerAssignmentLocation({ actor: "MAIN", project_id: "project-a", assignment_ref: "assignments/a.json", worktree: worker, fence_path: "/runtime/fence-a" })
+  store.issueLaunchBinding({ actor: "MAIN", project_id: "project-a", request_ref: "request-a", authorization_id: "auth-a", brief: "Approved", brief_ref: "briefs/a.json", assignment_ref: "assignments/a.json", candidate_revision: candidate, host_epoch: 2 })
+  return { main, worker, storePath }
 }
 
 afterEach(() => directories.splice(0).forEach((path) => rmSync(path, { recursive: true, force: true })))
@@ -52,4 +53,16 @@ test("deterministic provider consumes a Main binding once and drives documented 
 test("fails before binding consumption outside a Herdr-managed process", () => {
   const { main } = fixture()
   expect(() => createProductionProvider({ cwd: main, environment: {} })).toThrow("Herdr-managed process context")
+})
+
+test("rejects a binding from an old published Main epoch before starting host processes", async () => {
+  const { main, storePath } = fixture(), calls = []
+  const records = join(storePath, "epoch-records")
+  writeFileSync(join(records, "2.json"), JSON.stringify({ epoch: 2, project_id: "project-a" }), { mode: 0o600 })
+  writeFileSync(join(storePath, "current-epoch.json"), JSON.stringify({ epoch: 2, project_id: "project-a" }), { mode: 0o600 })
+  chmodSync(join(records, "2.json"), 0o600); chmodSync(join(storePath, "current-epoch.json"), 0o600)
+  const provider = createProductionProvider({ cwd: main, environment: { HERDR_ENV: "1" }, run: (command, args) => { calls.push([command, args]); return { status: 0, stdout: "{}" } } })
+
+  expect(await code(() => createLaunchWorkerRuntime(provider).launchWorker({ request_ref: "request-a" }))).toBe("CT_LAUNCH_BINDING_STALE")
+  expect(calls).toEqual([])
 })

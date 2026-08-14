@@ -811,6 +811,20 @@ describe("atomic owner-only Main store", () => {
     expect(JSON.parse(readFileSync(join(root, "assignment-locations", "assignments%2Frace.json.json"), "utf8"))).toMatchObject({ worktree: "/worktrees/first", fence_path: "/runtime/fence-first" })
   })
 
+  test("publishes immutable Main epochs before atomically advancing the current epoch pointer", () => {
+    const { root } = setup()
+    expect(JSON.parse(readFileSync(join(root, "epoch-records", "3.json"), "utf8"))).toEqual({ epoch: 3, project_id: "project-a" })
+    expect(JSON.parse(readFileSync(join(root, "current-epoch.json"), "utf8"))).toEqual({ epoch: 3, project_id: "project-a" })
+
+    const rotated = { ...binding, store_path: root, epoch: 4 }
+    const authority = bindMainAuthority({ trustedBindingProvider: () => rotated, rederiveBinding: () => ({ ...rotated }) })
+    createMainStore({ root, authority, capability: authority.capability })
+
+    expect(JSON.parse(readFileSync(join(root, "epoch-records", "3.json"), "utf8"))).toEqual({ epoch: 3, project_id: "project-a" })
+    expect(JSON.parse(readFileSync(join(root, "epoch-records", "4.json"), "utf8"))).toEqual({ epoch: 4, project_id: "project-a" })
+    expect(JSON.parse(readFileSync(join(root, "current-epoch.json"), "utf8"))).toEqual({ epoch: 4, project_id: "project-a" })
+  })
+
   test("fails closed before issuing or consuming a launch binding with stale authority or lifecycle", () => {
     const { root, store } = setup()
     const request = {

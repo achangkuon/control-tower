@@ -176,6 +176,29 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
   const parkingPath = (id) => join(directory("decision-parkings"), `${safeId(id)}.json`)
   const launchBindingPath = (id) => join(directory("launch-bindings"), `${safeId(id)}.json`)
   const launchConsumptionPath = (id) => join(directory("launch-consumptions"), `${safeId(id)}.json`)
+  const epochRecordPath = (epoch) => join(directory("epoch-records"), `${epoch}.json`)
+  const currentEpochPath = join(root, "current-epoch.json")
+  const safeEpochFile = (path) => {
+    const stats = lstatSync(path)
+    return stats.isFile() && !stats.isSymbolicLink() && stats.uid === process.getuid() && (stats.mode & 0o777) === 0o600 && stats.nlink === 1
+  }
+  const publishCurrentEpoch = () => {
+    const record = { project_id: binding.project_id, epoch: binding.epoch }, recordPath = epochRecordPath(binding.epoch)
+    if (existsSync(recordPath)) {
+      if (!safeEpochFile(recordPath) || !exactKeys(parse(recordPath), ["epoch", "project_id"]) || parse(recordPath).project_id !== record.project_id || parse(recordPath).epoch !== record.epoch) {
+        fail("CT_EPOCH_AUTHORITY_INVALID", "Epoch record is invalid")
+      }
+    } else {
+      atomicWrite(recordPath, record, () => { if (existsSync(recordPath)) fail("CT_EPOCH_AUTHORITY_INVALID", "Epoch record already exists") })
+    }
+    if (existsSync(currentEpochPath) && !safeEpochFile(currentEpochPath)) fail("CT_EPOCH_AUTHORITY_INVALID", "Current epoch pointer is invalid")
+    atomicWrite(currentEpochPath, record, () => {
+      if (!existsSync(recordPath) || !safeEpochFile(recordPath) || !exactKeys(parse(recordPath), ["epoch", "project_id"]) || parse(recordPath).project_id !== record.project_id || parse(recordPath).epoch !== record.epoch) {
+        fail("CT_EPOCH_AUTHORITY_INVALID", "Epoch record changed during publication")
+      }
+    })
+  }
+  publishCurrentEpoch()
   const approvedAuthorizationFor = (authorizationId, candidateRevision) => {
     if (typeof authorizationId !== "string" || authorizationId.length === 0) fail("CT_AUTH_INVALID", "Approved authorization is required")
     const path = authorizationPath(authorizationId)
