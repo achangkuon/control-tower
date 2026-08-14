@@ -42,10 +42,10 @@ describe("visible root host launcher", () => {
     expect(await errorCode(() => failed(approved))).toBe("CT_LAUNCH_FAILED")
     expect(closed).toEqual(["pane-new"])
     let projected
-    const succeeded = createHostLauncher({ approvedBinding: () => approved, herdr: { createPane: async () => ({ pane_id: "pane-new", close: async () => {} }), bindRoot: async (record) => { projected = record; return true } }, opencode: { startRoot: async () => ({ root_session_id: "root-new" }) } })
+    const succeeded = createHostLauncher({ approvedBinding: () => approved, herdr: { createPane: async () => ({ pane_id: "pane-new", close: async () => {} }), bindRoot: async (record) => { projected = record; return true } }, opencode: { startRoot: async () => ({ root_session_id: "root-new", terminal_id: "terminal-new" }) } })
     const receipt = await succeeded(approved)
     expect(Object.isFrozen(receipt)).toBeTrue()
     expect(receipt).toEqual(projected)
-    expect(Object.keys(receipt).sort()).toEqual(["assignment_ref", "brief", "brief_ref", "candidate_revision", "fence_path", "host_epoch", "pane_id", "project_id", "root_session_id", "worktree"])
+    expect(Object.keys(receipt).sort()).toEqual(["assignment_ref", "brief", "brief_ref", "candidate_revision", "fence_path", "host_epoch", "pane_id", "project_id", "root_session_id", "terminal_id", "worktree"])
   })
 })

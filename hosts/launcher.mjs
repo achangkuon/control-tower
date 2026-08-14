@@ -16,12 +16,12 @@ export const createHostLauncher = ({ approvedBinding, herdr, opencode } = {}) =>
       pane = await herdr.createPane({ worktree: approved.worktree })
       if (typeof pane?.pane_id !== "string" || !pane.pane_id) fail("CT_LAUNCH_FAILED", "Herdr did not create a fresh pane")
       const root = await opencode.startRoot({ pane_id: pane.pane_id, worktree: approved.worktree, brief: approved.brief, brief_ref: approved.brief_ref })
-      if (!rootId(root?.root_session_id)) fail("CT_LAUNCH_FAILED", "OpenCode did not return a root identity")
-      const record = Object.freeze({ ...approved, pane_id: pane.pane_id, root_session_id: root.root_session_id })
+      if (!rootId(root?.root_session_id) || !rootId(root?.terminal_id)) fail("CT_LAUNCH_FAILED", "OpenCode did not return a root identity")
+      const record = Object.freeze({ ...approved, pane_id: pane.pane_id, root_session_id: root.root_session_id, terminal_id: root.terminal_id })
       if (await herdr.bindRoot(record) !== true) fail("CT_LAUNCH_FAILED", "Herdr rejected the root binding")
       return record
     } catch (error) {
-      if (pane?.pane_id && typeof pane.close === "function") await pane.close(pane.pane_id)
+      if (pane?.pane_id && typeof pane.close === "function") { try { await pane.close(pane.pane_id) } catch {} }
       if (error?.code) throw error
       fail("CT_LAUNCH_FAILED", "Visible root launch failed")
     }

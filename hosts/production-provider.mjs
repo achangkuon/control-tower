@@ -11,6 +11,7 @@ import { createOpenCodeLauncher } from "./opencode-launcher.mjs"
 const fail = (code, message) => { throw Object.assign(new Error(message), { code }) }
 const parse = (result) => {
   if (result?.status !== 0) fail("CT_LAUNCH_REJECTED", "Host process prerequisite failed")
+  if (typeof result.stdout !== "string" || result.stdout.length > 65_536) fail("CT_LAUNCH_REJECTED", "Host process returned unsafe output")
   try { return JSON.parse(result.stdout) } catch { fail("CT_LAUNCH_REJECTED", "Host process returned invalid JSON") }
 }
 const sessionId = (value) => value?.result?.agent?.agent_session_id ?? value?.result?.agent?.session_id
@@ -35,7 +36,7 @@ export const createProductionProvider = ({ run = (command, args, options) => spa
     closePane: (paneId) => parse(command("herdr", ["pane", "close", paneId])),
     projectRoot: ({ pane_id: paneId }) => {
       const observed = parse(command("herdr", ["agent", "get", sessions.get(paneId)]))
-      return { root_session_id: sessionId(observed), state: "ROOT" }
+      return observed?.result?.agent?.agent_root_observation
     },
     publish: (record) => {
       const name = sessions.get(record.pane_id)
@@ -52,7 +53,9 @@ export const createProductionProvider = ({ run = (command, args, options) => spa
       if (typeof id !== "string" || id.length === 0) fail("CT_LAUNCH_REJECTED", "Herdr did not report an OpenCode root session")
       sessions.set(paneId, name)
       roots.set(id, name)
-      return { id }
+      const terminal_id = started?.result?.agent?.terminal_id
+      if (typeof terminal_id !== "string" || !terminal_id || terminal_id.includes("\0")) fail("CT_LAUNCH_REJECTED", "Herdr did not report an OpenCode terminal")
+      return { id, terminal_id }
     },
     prompt: ({ root_session_id: rootId, brief }) => {
       const name = roots.get(rootId)

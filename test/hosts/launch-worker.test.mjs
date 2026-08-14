@@ -16,13 +16,13 @@ describe("packaged launch-worker runtime", () => {
         createPane: async ({ worktree }) => { calls.push(["pane", worktree]); return { pane_id: "pane-a", close: async () => {} } },
         bindRoot: async (receipt) => { calls.push(["bind", receipt]); return true },
       },
-      opencode: { startRoot: async ({ brief }) => { calls.push(["root", brief]); return { root_session_id: "root-a" } } },
+      opencode: { startRoot: async ({ brief }) => { calls.push(["root", brief]); return { root_session_id: "root-a", terminal_id: "terminal-a" } } },
     })
 
-    await expect(runtime.launchWorker({ request_ref: "request-a" })).resolves.toEqual({ ...binding, pane_id: "pane-a", root_session_id: "root-a" })
+    await expect(runtime.launchWorker({ request_ref: "request-a" })).resolves.toEqual({ ...binding, pane_id: "pane-a", root_session_id: "root-a", terminal_id: "terminal-a" })
     expect(calls).toEqual([
       ["consume", "request-a"], ["pane", "/work/a"], ["root", "Approved work only"],
-      ["bind", { ...binding, pane_id: "pane-a", root_session_id: "root-a" }],
+      ["bind", { ...binding, pane_id: "pane-a", root_session_id: "root-a", terminal_id: "terminal-a" }],
     ])
   })
 
