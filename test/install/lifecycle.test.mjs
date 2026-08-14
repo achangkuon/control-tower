@@ -168,6 +168,28 @@ test("installs an immutable owner-protected versioned host-runtime record", () =
   expect(lstatSync(record).mode & 0o777).toBe(0o600)
 })
 
+test("reentrant installs retain the winning immutable host-runtime record", () => {
+  const { paths } = fixture(), nested = { ...paths, action: "install", version: "1.0.0", files: { "runtime.mjs": "one" } }
+  let reentrant = 0
+  const outer = lifecycle({ ...nested, hostRuntimeOptions: { beforePublish: () => { reentrant += 1; lifecycle(nested) } } })
+
+  expect(reentrant).toBe(1)
+  expect(outer.active).toBe("1.0.0")
+  expect(readHostRuntimeIdentity(paths.dataRoot, "1.0.0").runtimeVersion).toBe("1.0.0")
+})
+
+test("conflicting reentrant installs preserve the winner and active pointer", () => {
+  const { root, paths } = fixture(), alternateHerdr = join(root, "alternate/herdr")
+  mkdirSync(dirname(alternateHerdr), { recursive: true })
+  writeFileSync(alternateHerdr, "#!/bin/sh\necho alternate\n", { mode: 0o700 })
+  const nested = { ...paths, herdrBin: alternateHerdr, action: "install", version: "1.0.0", files: { "runtime.mjs": "one" } }
+  const outer = { ...paths, action: "install", version: "1.0.0", files: { "runtime.mjs": "one" }, hostRuntimeOptions: { beforePublish: () => lifecycle(nested) } }
+
+  expect(() => lifecycle(outer)).toThrow("CT_HOST_RUNTIME_IMMUTABLE")
+  expect(lifecycle({ ...paths, action: "diagnose" }).active).toBe("1.0.0")
+  expect(readHostRuntimeIdentity(paths.dataRoot, "1.0.0").herdr.path).toBe(alternateHerdr)
+})
+
 test("install accepts a checkout source and stores exactly the runtime payload", () => {
   const { root, paths } = fixture()
   const env = testEnv(root)

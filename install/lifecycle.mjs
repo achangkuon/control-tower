@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
-import { appendFileSync, chmodSync, constants, copyFileSync, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, closeSync, readFileSync, readdirSync, realpathSync, rmSync, renameSync, symlinkSync, writeFileSync } from "node:fs"
-import { createHash } from "node:crypto"
+import { appendFileSync, chmodSync, constants, copyFileSync, existsSync, fsyncSync, linkSync, lstatSync, mkdirSync, openSync, closeSync, readFileSync, readdirSync, realpathSync, rmSync, renameSync, symlinkSync, writeFileSync } from "node:fs"
+import { createHash, randomUUID } from "node:crypto"
 import { basename, dirname, isAbsolute, join, sep } from "node:path"
 import { fileURLToPath } from "node:url"
 
@@ -61,26 +61,32 @@ const captureHostRuntimeIdentity = (version, { herdrBin, opencodeBin }) => {
   return { schema: "control-tower.host-runtime/v1", runtimeVersion: version, herdr, opencode }
 }
 
-const storeHostRuntimeIdentity = (versionRoot, record) => {
+const storeHostRuntimeIdentity = (versionRoot, record, { beforePublish } = {}) => {
   const { runtimeVersion: version } = record
   const bytes = `${JSON.stringify(record)}\n`, path = hostRuntimeRecord(versionRoot)
-  if (existsSync(path)) {
+  const temporary = join(versionRoot, `.host-runtime-${process.pid}-${randomUUID()}.tmp`)
+  let descriptor, published = false
+  try {
+    descriptor = openSync(temporary, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW, 0o600)
+    writeFileSync(descriptor, bytes)
+    fsyncSync(descriptor)
+    closeSync(descriptor)
+    descriptor = undefined
+    chmodSync(temporary, 0o600)
+    beforePublish?.()
+    linkSync(temporary, path)
+    published = true
+  } catch (error) {
+    if (descriptor !== undefined) closeSync(descriptor)
+    rmSync(temporary, { force: true })
+    if (error.code !== "EEXIST") throw error
     if (readFileSync(path, "utf8") !== bytes) throw new Error("CT_HOST_RUNTIME_IMMUTABLE")
     readHostRuntimeIdentity(dirname(dirname(versionRoot)), version)
     return { path, created: false }
   }
-  let descriptor
-  try {
-    descriptor = openSync(path, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW, 0o600)
-    writeFileSync(descriptor, bytes)
-    fsyncSync(descriptor)
-  } catch (error) {
-    if (descriptor !== undefined) closeSync(descriptor)
-    rmSync(path, { force: true })
-    throw error
-  }
-  closeSync(descriptor)
-  chmodSync(path, 0o600)
+  rmSync(temporary, { force: true })
+  if (!published) throw new Error("CT_HOST_RUNTIME_IMMUTABLE")
+  readHostRuntimeIdentity(dirname(dirname(versionRoot)), version)
   return { path, created: true }
 }
 
@@ -237,7 +243,7 @@ const installPathShim = (dataRoot, version, shimPath) => {
   return { path: shimPath, backup }
 }
 
-export function lifecycle({ action, version, files, dataRoot, configRoot, stateRoot, legacyConfigPath, failValidation = false, pointerOptions, expectedMembers, shimPath, herdrBin, opencodeBin }) {
+export function lifecycle({ action, version, files, dataRoot, configRoot, stateRoot, legacyConfigPath, failValidation = false, pointerOptions, expectedMembers, shimPath, herdrBin, opencodeBin, hostRuntimeOptions }) {
   const before = readActivePointer(dataRoot)
   if (action === "diagnose") {
     const installed = before ? join(dataRoot, "versions", before.version) : null
@@ -254,9 +260,9 @@ export function lifecycle({ action, version, files, dataRoot, configRoot, stateR
     }
     const stored = storeVersion(dataRoot, version, files)
     let hostRuntime
-    try { hostRuntime = storeHostRuntimeIdentity(stored.path, identity) }
+    try { hostRuntime = storeHostRuntimeIdentity(stored.path, identity, hostRuntimeOptions) }
     catch (error) {
-      if (stored.created) rmSync(stored.path, { recursive: true, force: true })
+      if (stored.created && !existsSync(hostRuntimeRecord(stored.path))) rmSync(stored.path, { recursive: true, force: true })
       throw error
     }
     let journal
