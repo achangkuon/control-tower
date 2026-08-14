@@ -771,7 +771,7 @@ describe("atomic owner-only Main store", () => {
     const consumed = store.consumeLaunchBinding("request-launch-a")
     expect(consumed).toEqual({
       assignment_ref: "assignments/launch-a.json", brief: "Implement the approved assignment.", brief_ref: "briefs/launch-a.json",
-      candidate_revision: candidateRevision, host_epoch: 3, project_id: "project-a", worktree: "/worktrees/launch-a",
+      candidate_revision: candidateRevision, fence_path: "/runtime/fence-a", host_epoch: 3, project_id: "project-a", worktree: "/worktrees/launch-a",
     })
     expect(code(() => store.consumeLaunchBinding("request-launch-a"))).toBe("CT_LAUNCH_BINDING_CONSUMED")
     expect(existsSync(join(root, "launch-consumptions", "request-launch-a.json"))).toBe(true)

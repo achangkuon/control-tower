@@ -385,7 +385,7 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
         atomicWrite(consumption, { request_ref: requestRef, binding_path: path }, () => {
           if (existsSync(consumption)) fail("CT_LAUNCH_BINDING_CONSUMED", "Launch binding was already consumed")
         })
-        return frozen({ assignment_ref: record.assignment_ref, brief: record.brief, brief_ref: record.brief_ref, candidate_revision: record.candidate_revision, host_epoch: record.host_epoch, project_id: record.project_id, worktree: record.worktree })
+        return frozen({ assignment_ref: record.assignment_ref, brief: record.brief, brief_ref: record.brief_ref, candidate_revision: record.candidate_revision, fence_path: record.fence_path, host_epoch: record.host_epoch, project_id: record.project_id, worktree: record.worktree })
       })
     },
     recordHandoffCoordinate(input) {
