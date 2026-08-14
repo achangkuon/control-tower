@@ -1,5 +1,5 @@
 import { chmodSync, closeSync, constants, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs"
-import { dirname, isAbsolute, join } from "node:path"
+import { dirname, isAbsolute, join, resolve } from "node:path"
 import { randomUUID } from "node:crypto"
 
 import { validate, validateCheckpointProvenancePair } from "../contracts/validate.mjs"
@@ -97,6 +97,7 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
     if (!stats.isDirectory() || stats.isSymbolicLink() || stats.uid !== process.getuid() || (stats.mode & 0o777) !== 0o700) fail("CT_STORE_INVALID", "Unsafe store directory")
     return path
   }
+  const assignmentLocationPath = (assignmentRef) => join(directory("assignment-locations"), `${encodeURIComponent(assignmentRef)}.json`)
   const withLock = (path, operation) => {
     const lock = `${path}.lock`
     let descriptor
@@ -346,9 +347,9 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
       })
     },
     issueLaunchBinding(input) {
-      const keys = ["actor", "project_id", "request_ref", "authorization_id", "brief", "brief_ref", "assignment_ref", "worktree", "candidate_revision", "host_epoch", "fence_path"]
+      const keys = ["actor", "project_id", "request_ref", "authorization_id", "brief", "brief_ref", "assignment_ref", "candidate_revision", "host_epoch"]
       if (!exactKeys(input, keys) || !safeRef(input.brief) || !safeRef(input.brief_ref) || !safeRef(input.assignment_ref)
-        || !isAbsolute(input.worktree) || !digest(input.candidate_revision) || !Number.isSafeInteger(input.host_epoch) || input.host_epoch < 1 || !isAbsolute(input.fence_path)) {
+        || !digest(input.candidate_revision) || !Number.isSafeInteger(input.host_epoch) || input.host_epoch < 1) {
         fail("CT_LAUNCH_BINDING_INVALID", "Launch binding input is invalid")
       }
       assertMain(input)
@@ -357,9 +358,20 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
         const jornada = activeLaunchJornada(authorization)
         const path = launchBindingPath(input.request_ref)
         if (existsSync(path)) fail("CT_LAUNCH_BINDING_IMMUTABLE", "Launch binding already exists")
+        const locationPath = assignmentLocationPath(input.assignment_ref)
+        if (!existsSync(locationPath)) fail("CT_ASSIGNMENT_LOCATION_MISSING", "Assignment location is unavailable")
+        const location = parse(locationPath)
+        if (!exactKeys(location, ["assignment_ref", "fence_path", "project_id", "worktree"])
+          || location.assignment_ref !== input.assignment_ref || location.project_id !== binding.project_id
+          || !isAbsolute(location.worktree) || resolve(location.worktree) !== location.worktree
+          || !isAbsolute(location.fence_path) || resolve(location.fence_path) !== location.fence_path) {
+          fail("CT_ASSIGNMENT_LOCATION_INVALID", "Assignment location is invalid")
+        }
         const { actor: _actor, ...record } = input
         const bindingRecord = {
           ...record,
+          worktree: location.worktree,
+          fence_path: location.fence_path,
           jornada_id: jornada.jornada_id,
           jornada_revision: jornada.jornada_revision,
           active_epoch: binding.epoch,
@@ -370,6 +382,21 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
         })
         return frozen({ ...structuredClone(bindingRecord), record_path: path })
       })
+    },
+    registerAssignmentLocation(input) {
+      const keys = ["actor", "project_id", "assignment_ref", "worktree", "fence_path"]
+      if (!exactKeys(input, keys) || !safeRef(input.assignment_ref) || !isAbsolute(input.worktree) || resolve(input.worktree) !== input.worktree
+        || !isAbsolute(input.fence_path) || resolve(input.fence_path) !== input.fence_path) {
+        fail("CT_ASSIGNMENT_LOCATION_INVALID", "Assignment location input is invalid")
+      }
+      assertMain(input)
+      const path = assignmentLocationPath(input.assignment_ref)
+      if (existsSync(path)) fail("CT_ASSIGNMENT_LOCATION_IMMUTABLE", "Assignment location already exists")
+      const { actor: _actor, ...record } = input
+      atomicWrite(path, record, () => {
+        if (existsSync(path)) fail("CT_ASSIGNMENT_LOCATION_IMMUTABLE", "Assignment location already exists")
+      })
+      return frozen(structuredClone(record))
     },
     consumeLaunchBinding(requestRef) {
       const path = launchBindingPath(requestRef), consumption = launchConsumptionPath(requestRef)

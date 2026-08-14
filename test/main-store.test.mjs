@@ -758,15 +758,16 @@ describe("atomic owner-only Main store", () => {
     const request = {
       actor: "MAIN", project_id: "project-a", request_ref: "request-launch-a", authorization_id: "auth-launch",
       brief: "Implement the approved assignment.", brief_ref: "briefs/launch-a.json", assignment_ref: "assignments/launch-a.json",
-      worktree: "/worktrees/launch-a", candidate_revision: candidateRevision, host_epoch: 3, fence_path: "/runtime/fence-a",
+      candidate_revision: candidateRevision, host_epoch: 3,
     }
 
+    store.registerAssignmentLocation({ actor: "MAIN", project_id: "project-a", assignment_ref: request.assignment_ref, worktree: "/worktrees/launch-a", fence_path: "/runtime/fence-a" })
     const issued = store.issueLaunchBinding(request)
     expect(issued).toMatchObject({ request_ref: request.request_ref, authorization_id: request.authorization_id, candidate_revision: candidateRevision, jornada_id: "jornada-a", jornada_revision: 3 })
     expect(issued.actor).toBeUndefined()
     expect(Object.isFrozen(issued)).toBeTrue()
     expect(readFileSync(issued.record_path, "utf8")).toContain('"request_ref":"request-launch-a"')
-    expect(code(() => store.issueLaunchBinding({ ...request, worktree: "/worktrees/other" }))).toBe("CT_LAUNCH_BINDING_IMMUTABLE")
+    expect(code(() => store.issueLaunchBinding({ ...request, worktree: "/worktrees/other" }))).toBe("CT_LAUNCH_BINDING_INVALID")
 
     const consumed = store.consumeLaunchBinding("request-launch-a")
     expect(consumed).toEqual({
@@ -777,12 +778,45 @@ describe("atomic owner-only Main store", () => {
     expect(existsSync(join(root, "launch-consumptions", "request-launch-a.json"))).toBe(true)
   })
 
+  test("derives immutable launch locations from Main-owned assignment records", () => {
+    const { root, store } = setup()
+    activateJornada(store)
+    store.createAuthorization({ actor: "MAIN", ...authorizationRecord("auth-location") })
+    store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-location", candidate_revision: candidateRevision, decision: "APPROVED", expected_revision: 1 })
+    const location = { actor: "MAIN", project_id: "project-a", assignment_ref: "assignments/location-a.json", worktree: "/worktrees/location-a", fence_path: "/runtime/fence-location-a" }
+
+    expect(store.registerAssignmentLocation(location)).toMatchObject({ assignment_ref: location.assignment_ref, worktree: location.worktree, fence_path: location.fence_path })
+    expect(code(() => store.registerAssignmentLocation({ ...location, worktree: "/worktrees/substituted" }))).toBe("CT_ASSIGNMENT_LOCATION_IMMUTABLE")
+    expect(code(() => store.issueLaunchBinding({ actor: "MAIN", project_id: "project-a", request_ref: "request-location-a", authorization_id: "auth-location", brief: "Approved", brief_ref: "briefs/location-a.json", assignment_ref: location.assignment_ref, candidate_revision: candidateRevision, host_epoch: 3 }))).toBe(null)
+    expect(store.consumeLaunchBinding("request-location-a")).toMatchObject({ worktree: location.worktree, fence_path: location.fence_path })
+    expect(readFileSync(join(root, "launch-bindings", "request-location-a.json"), "utf8")).toContain('"worktree":"/worktrees/location-a"')
+    expect(code(() => store.issueLaunchBinding({ actor: "MAIN", project_id: "project-a", request_ref: "request-location-missing", authorization_id: "auth-location", brief: "Approved", brief_ref: "briefs/location-missing.json", assignment_ref: "assignments/missing.json", candidate_revision: candidateRevision, host_epoch: 3 }))).toBe("CT_ASSIGNMENT_LOCATION_MISSING")
+    expect(existsSync(join(root, "launch-bindings", "request-location-missing.json"))).toBe(false)
+    writeFileSync(join(root, "assignment-locations", "assignments%2Flocation-a.json.json"), JSON.stringify({ assignment_ref: location.assignment_ref, project_id: "project-a", worktree: "/worktrees/../substituted", fence_path: location.fence_path }))
+    expect(code(() => store.issueLaunchBinding({ actor: "MAIN", project_id: "project-a", request_ref: "request-location-invalid", authorization_id: "auth-location", brief: "Approved", brief_ref: "briefs/location-invalid.json", assignment_ref: location.assignment_ref, candidate_revision: candidateRevision, host_epoch: 3 }))).toBe("CT_ASSIGNMENT_LOCATION_INVALID")
+    expect(existsSync(join(root, "launch-bindings", "request-location-invalid.json"))).toBe(false)
+  })
+
+  test("preserves the first assignment location when conflicting registration races issuance", () => {
+    let raced = false
+    const { root, store } = setup({ beforeCommit: (path) => {
+      if (!raced && path.includes("/assignment-locations/")) {
+        raced = true
+        store.registerAssignmentLocation({ actor: "MAIN", project_id: "project-a", assignment_ref: "assignments/race.json", worktree: "/worktrees/first", fence_path: "/runtime/fence-first" })
+      }
+    } })
+    const conflicting = { actor: "MAIN", project_id: "project-a", assignment_ref: "assignments/race.json", worktree: "/worktrees/second", fence_path: "/runtime/fence-second" }
+
+    expect(code(() => store.registerAssignmentLocation(conflicting))).toBe("CT_ASSIGNMENT_LOCATION_IMMUTABLE")
+    expect(JSON.parse(readFileSync(join(root, "assignment-locations", "assignments%2Frace.json.json"), "utf8"))).toMatchObject({ worktree: "/worktrees/first", fence_path: "/runtime/fence-first" })
+  })
+
   test("fails closed before issuing or consuming a launch binding with stale authority or lifecycle", () => {
     const { root, store } = setup()
     const request = {
       actor: "MAIN", project_id: "project-a", request_ref: "request-launch-b", authorization_id: "missing",
       brief: "Implement the approved assignment.", brief_ref: "briefs/launch-b.json", assignment_ref: "assignments/launch-b.json",
-      worktree: "/worktrees/launch-b", candidate_revision: candidateRevision, host_epoch: 3, fence_path: "/runtime/fence-b",
+      candidate_revision: candidateRevision, host_epoch: 3,
     }
     expect(code(() => store.issueLaunchBinding(request))).toBe("CT_AUTH_INVALID")
     expect(existsSync(join(root, "launch-bindings"))).toBe(false)
@@ -790,6 +824,7 @@ describe("atomic owner-only Main store", () => {
     activateJornada(store)
     store.createAuthorization({ actor: "MAIN", ...authorizationRecord("auth-launch-b") })
     store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-launch-b", candidate_revision: candidateRevision, decision: "APPROVED", expected_revision: 1 })
+    store.registerAssignmentLocation({ actor: "MAIN", project_id: "project-a", assignment_ref: request.assignment_ref, worktree: "/worktrees/launch-b", fence_path: "/runtime/fence-b" })
     const issued = store.issueLaunchBinding({ ...request, authorization_id: "auth-launch-b" })
     store.transitionJornada({ actor: "MAIN", project_id: "project-a", jornada_id: "jornada-a", state: "PAUSED", expected_revision: 3 })
     expect(code(() => store.consumeLaunchBinding(issued.request_ref))).toBe("CT_LAUNCH_BINDING_STALE")
