@@ -210,6 +210,18 @@ test("attended CLI rejects unsafe or mismatched executable inputs before install
     expect(() => validateActiveHostRuntime(paths.dataRoot, "1.0.0", runtime)).toThrow("CT_HOST_RUNTIME_CHANGED")
   })
 
+  test("rejects Herdr that replaces itself while the contract probe is running", () => {
+    const { paths } = fixture()
+    lifecycle({ ...paths, action: "install", version: "1.0.0", files: { "runtime.mjs": "one" } })
+    const runtime = join(paths.dataRoot, "versions/1.0.0"), marker = `${paths.herdrBin}.mutate`
+    writeFileSync(paths.herdrBin, "#!/bin/sh\nif [ -f " + marker + " ]; then printf '#!/bin/sh\\nexit 99\\n' > \"$0\"; fi\nif [ \"$1 $2 $3\" = \"contract agent-root-observation --json\" ]; then printf '{\"schema\":\"herdr.agent_root_observation\",\"schema_version\":1,\"capabilities\":[\"pane_bound\",\"opencode_session_lineage\"]}\\n'; fi\n", { mode: 0o700 })
+    // Reinstall records the initially valid bytes; only the contract subprocess mutates them.
+    lifecycle({ ...paths, action: "install", version: "1.0.1", files: { "runtime.mjs": "two" } })
+    writeFileSync(marker, "mutate\n")
+    expect(() => validateActiveHostRuntime(paths.dataRoot, "1.0.1", join(paths.dataRoot, "versions/1.0.1"))).toThrow("CT_HOST_RUNTIME_CHANGED")
+    expect(readFileSync(paths.herdrBin, "utf8")).toContain("exit 99")
+  })
+
   test("rejects a runtime root that is not the version named by active.json", () => {
     const { paths } = fixture()
     lifecycle({ ...paths, action: "install", version: "1.0.0", files: { "runtime.mjs": "one" } })

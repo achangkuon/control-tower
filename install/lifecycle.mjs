@@ -87,9 +87,10 @@ export function validateActiveHostRuntime(dataRoot, version, runtimeRoot) {
     }
     return actual.path
   }
-  const herdr = validate("herdr"), opencode = validate("opencode")
-  verifyHerdrContract(herdr)
-  return Object.freeze({ version, herdr, opencode, environment: Object.freeze({ PATH: "" }) })
+  verifyHerdrContract(validate("herdr"))
+  // The probe is itself an executable boundary: do not carry its pre-probe
+  // identity across it, even when the contract output was canonical.
+  return Object.freeze({ version, herdr: validate("herdr"), opencode: validate("opencode"), environment: Object.freeze({ PATH: "" }) })
 }
 
 const captureHostRuntimeIdentity = (version, { herdrBin, opencodeBin }) => {
