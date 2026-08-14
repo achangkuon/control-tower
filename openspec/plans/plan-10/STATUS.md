@@ -22,6 +22,7 @@ conserva la arquitectura productora de supervisión y sus decisiones abiertas.
 | Capacidad derivada | P10 aporta capacidad desde el 2026-08-14: `S10.2` está 🟢 LISTO con `Área` fijada. La capacidad concurrente sigue incluyendo `S4.2` y `S5.9`. |
 | Avance | 67% (2/3 S): `S10.3` y `S10.1` están ✅ COMPLETO. |
 | Release | P10 forma parte del producto, roadmap y release únicos; aporta 1/3 al denominador. |
+| Publicación | El desbloqueo de `S10.2` está publicado en `origin/master@b845911cbc569f1d525d20ffc28a06dcfda4fa49` (2026-08-14). Es un corte documental: resuelve decisiones y reconcilia estado, no agrega runtime ni acredita implementación. |
 
 La jerarquía canónica es `Plan → Sesión → Módulo → Tarea`; `S10.3` y `S10.1` quedan enumeradas
 abajo. `S10.2` ya no se detiene en Sesión: la decisión 26 fijó su `Área` y la elaboración técnica debe

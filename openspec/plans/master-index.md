@@ -1,7 +1,7 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-14 contra la resolución de las nueve decisiones `escala` que quedaban abiertas, sobre `origin/master@82546e5`.
+> Última reconciliación: 2026-08-14 contra la resolución de las nueve decisiones `escala` que quedaban abiertas. Publicada en `origin/master@b845911cbc569f1d525d20ffc28a06dcfda4fa49`, con padre `82546e5`. Entrega directa desde el worktree `support-agent` por autorización explícita del maintainer, con `Main` ocupado; la frontera read-only de Support se levantó para este corte y no queda derogada.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md).
 
 ## 📍 Punto de retoma
