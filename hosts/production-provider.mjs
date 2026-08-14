@@ -9,11 +9,50 @@ import { createHerdrAdapter } from "./herdr.mjs"
 import { createOpenCodeLauncher } from "./opencode-launcher.mjs"
 
 const fail = (code, message) => { throw Object.assign(new Error(message), { code }) }
-const parse = (result) => {
+const duplicates = (input) => {
+  let index = 0
+  const whitespace = () => { while (/\s/.test(input[index] ?? "")) index += 1 }
+  const string = () => {
+    const start = index++
+    while (index < input.length) {
+      if (input[index] === "\\") { index += 2; continue }
+      if (input[index++] === '"') return JSON.parse(input.slice(start, index))
+    }
+    throw new SyntaxError("unterminated string")
+  }
+  const value = () => {
+    whitespace()
+    if (input[index] === "{") return object()
+    if (input[index] === "[") {
+      index += 1; whitespace()
+      if (input[index] === "]") { index += 1; return }
+      while (true) { value(); whitespace(); if (input[index] === "]") { index += 1; return }; if (input[index++] !== ",") throw new SyntaxError("array") }
+    }
+    if (input[index] === '"') return string()
+    const start = index
+    while (index < input.length && !/[\s,\]}]/.test(input[index])) index += 1
+    if (start === index) throw new SyntaxError("value")
+  }
+  const object = () => {
+    index += 1; whitespace()
+    const keys = new Set()
+    if (input[index] === "}") { index += 1; return }
+    while (true) {
+      whitespace(); if (input[index] !== '"') throw new SyntaxError("key")
+      const key = string(); if (keys.has(key)) throw new SyntaxError("duplicate key"); keys.add(key)
+      whitespace(); if (input[index++] !== ":") throw new SyntaxError("colon")
+      value(); whitespace(); if (input[index] === "}") { index += 1; return }; if (input[index++] !== ",") throw new SyntaxError("object")
+    }
+  }
+  value(); whitespace()
+  if (index !== input.length) throw new SyntaxError("trailing")
+}
+export const parseHostOutput = (result) => {
   if (result?.status !== 0) fail("CT_LAUNCH_REJECTED", "Host process prerequisite failed")
   if (typeof result.stdout !== "string" || result.stdout.length > 65_536) fail("CT_LAUNCH_REJECTED", "Host process returned unsafe output")
-  try { return JSON.parse(result.stdout) } catch { fail("CT_LAUNCH_REJECTED", "Host process returned invalid JSON") }
+  try { duplicates(result.stdout); return JSON.parse(result.stdout) } catch { fail("CT_LAUNCH_REJECTED", "Host process returned invalid JSON") }
 }
+const parse = parseHostOutput
 const sessionId = (value) => value?.result?.agent?.agent_session_id ?? value?.result?.agent?.session_id
 const agentName = (paneId) => `ctopencode-${String(paneId).replace(/[^a-z0-9]/gi, "").toLowerCase()}`
 
