@@ -51,6 +51,7 @@ const validateHostRuntimeRecord = (record, version) => {
 const verifyHerdrContract = (path) => {
   const result = spawnSync(path, ["contract", "agent-root-observation", "--json"], { encoding: "utf8", timeout: 1_000, env: Object.freeze({ PATH: "" }) })
   if (result.error || result.status !== 0) throw new Error("CT_HOST_RUNTIME_CONTRACT")
+  if (result.stdout !== `${JSON.stringify(HERDR_CONTRACT)}\n`) throw new Error("CT_HOST_RUNTIME_CONTRACT")
   let contract
   try { contract = JSON.parse(result.stdout) } catch { throw new Error("CT_HOST_RUNTIME_CONTRACT") }
   if (JSON.stringify(contract) !== JSON.stringify(HERDR_CONTRACT)) throw new Error("CT_HOST_RUNTIME_CONTRACT")

@@ -165,6 +165,17 @@ test("installer rejects malformed, failed, timed-out, and incompatible Herdr con
   }
 })
 
+test("installer rejects duplicate or oversized Herdr contract output", () => {
+  for (const output of [
+    '{"schema":"herdr.agent_root_observation","schema":"herdr.agent_root_observation","schema_version":1,"capabilities":["pane_bound","opencode_session_lineage"]}',
+    `${'{'.repeat(65_537)}`,
+  ]) {
+    const { root, paths } = fixture(), env = testEnv(root)
+    writeFileSync(paths.herdrBin, `#!/bin/sh\nprintf '%s\\n' '${output}'\n`, { mode: 0o700 })
+    expect(() => runCli(["install", "1.0.0", repoRoot, ...hostArgs(paths)], env)).toThrow("CT_HOST_RUNTIME_CONTRACT")
+  }
+})
+
 test("attended CLI rejects unsafe or mismatched executable inputs before installing", () => {
   const item = fixture(), env = testEnv(item.root), relative = "bin/herdr", link = join(item.root, "bin/herdr-link")
   symlinkSync(item.paths.herdrBin, link)
