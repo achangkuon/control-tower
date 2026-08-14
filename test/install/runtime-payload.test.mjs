@@ -9,6 +9,11 @@ const roots = []
 const CANONICAL_RUNTIME_PAYLOAD = [
   "bin/torre",
   "core.mjs",
+  "hosts/herdr.mjs",
+  "hosts/launcher.mjs",
+  "hosts/launch-worker-cli.mjs",
+  "hosts/launch-worker.mjs",
+  "hosts/opencode-launcher.mjs",
   "install/active-pointer.mjs",
   "install/lifecycle.mjs",
   "install/runtime-payload.mjs",
@@ -29,7 +34,7 @@ const payload = () => Object.fromEntries(RUNTIME_PAYLOAD_FILES.map((path) => [pa
 afterEach(() => roots.splice(0).forEach((root) => rmSync(root, { recursive: true, force: true })))
 
 describe("runtime payload closure", () => {
-  test("accepts exactly the six canonical regular files", () => {
+  test("accepts exactly the packaged CLI and host runtime files", () => {
     expect(RUNTIME_PAYLOAD_FILES).toEqual(CANONICAL_RUNTIME_PAYLOAD)
     const files = validateRuntimePayload(payload())
     expect(Object.keys(files)).toEqual(CANONICAL_RUNTIME_PAYLOAD)

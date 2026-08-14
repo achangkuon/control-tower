@@ -3,7 +3,7 @@ import { execFileSync, spawnSync } from "node:child_process"
 import { createHash } from "node:crypto"
 import { chmodSync, copyFileSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, readlinkSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { join, resolve } from "node:path"
+import { dirname, join, resolve } from "node:path"
 
 import { lifecycle, runCli } from "../../install/lifecycle.mjs"
 import { RUNTIME_PAYLOAD_FILES } from "../../install/runtime-payload.mjs"
@@ -133,7 +133,7 @@ test("install accepts a checkout source and stores exactly the runtime payload",
   expect(runCli(["install", "checkout-v1", repoRoot], env)).toMatchObject({ active: "checkout-v1", stored: true })
   const storedRoot = join(env.XDG_DATA_HOME, "control-tower/versions/checkout-v1")
   expect(RUNTIME_PAYLOAD_FILES.map((path) => readFileSync(join(storedRoot, path)))).toEqual(RUNTIME_PAYLOAD_FILES.map((path) => readFileSync(join(repoRoot, path))))
-  expect(readdirSync(storedRoot).sort()).toEqual([".manifest", "bin", "core.mjs", "install"])
+  expect(readdirSync(storedRoot).sort()).toEqual([".manifest", "bin", "core.mjs", "hosts", "install"])
 })
 
 test("install keeps strict payload validation for a staging source with an extra member", () => {
@@ -202,7 +202,7 @@ test("install does not write a PATH shim without the explicit option", () => {
 test("V2-only CLI automation requests fail closed before repository mutation", () => {
   const { root } = fixture(), repo = join(root, "repo")
   const env = testEnv(root)
-  for (const command of ["launch-worker", "create-session", "create-worktree"]) {
+  for (const command of ["create-session", "create-worktree"]) {
     const result = spawnSync(join(repoRoot, "bin/torre"), [command], { cwd: repo, env, encoding: "utf8" })
     expect(result.status).toBe(1)
     expect(result.stderr.trim()).toBe(`CT_V2_ONLY: ${command}`)
@@ -332,6 +332,7 @@ test("installer and publisher use the same immutable lifecycle", () => {
   mkdirSync(join(source, "bin"), { recursive: true })
   mkdirSync(join(source, "install"), { recursive: true })
   for (const file of RUNTIME_PAYLOAD_FILES) {
+    mkdirSync(dirname(join(source, file)), { recursive: true })
     writeFileSync(join(source, file), `release:${file}\n`)
   }
   const env = testEnv(root, { XDG_DATA_HOME: join(root, "data"), XDG_CONFIG_HOME: join(root, "config"), XDG_STATE_HOME: join(root, "state") })
@@ -372,7 +373,7 @@ test("stored torre diagnoses and installs autonomously from an isolated unrelate
   expect({ status: installed.status, stderr: installed.stderr }).toEqual({ status: 0, stderr: "" })
   expect(JSON.parse(installed.stdout)).toMatchObject({ operation: "install", active: "10.0.0", changed: true, stored: true })
   expect(JSON.parse(readFileSync(join(publication, "active.json"), "utf8"))).toEqual({ version: "10.0.0", previous: null })
-  expect(readdirSync(join(publication, "versions/10.0.0")).sort()).toEqual([".manifest", "bin", "core.mjs", "install"])
+  expect(readdirSync(join(publication, "versions/10.0.0")).sort()).toEqual([".manifest", "bin", "core.mjs", "hosts", "install"])
 
   const files = Object.fromEntries(RUNTIME_PAYLOAD_FILES.map((file) => [file, readFileSync(join(release, file))]))
   const expectedManifest = createHash("sha256").update(JSON.stringify(Object.entries(files).sort(([left], [right]) => left.localeCompare(right))

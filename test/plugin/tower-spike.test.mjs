@@ -9,7 +9,6 @@ import { fileURLToPath } from "node:url"
 import { createAgentCapabilityRegistry } from "../../capabilities/registry.mjs"
 import * as tower from "../../core.mjs"
 import { bindMainAuthority } from "../../main-store/authority.mjs"
-import { createVisibleRootLaunch } from "../../plugin/tower-spike.js"
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), "../..")
 const directories = []
@@ -140,34 +139,9 @@ const execute = (plugin, input = proposal(), sessionID = "main-session-a", abort
 afterEach(() => directories.splice(0).forEach((path) => rmSync(path, { recursive: true, force: true })))
 
 describe("OpenCode Support bridge", () => {
-  test("binds S4.1 proof, decision, and approved launch providers once with no caller substitution", async () => {
-    const calls = [], binding = Object.freeze({ brief: "approved", brief_ref: "briefs/a.json", assignment_ref: "assignments/a.json", project_id: "project-a", candidate_revision: `sha256:${"a".repeat(64)}`, worktree: "/work/a", host_epoch: 3 })
-    const launch = createVisibleRootLaunch({
-      stopProofProvider: () => { calls.push("proof"); return Object.freeze({ ref: "proof-a" }) },
-      humanDecisionProvider: () => { calls.push("decision"); return Object.freeze({ ref: "decision-a" }) },
-      launchBindingProvider: () => { calls.push("binding"); return binding },
-      createLauncher: (ports) => { calls.push(ports); return async () => "launched" },
-    })
-    expect(await launch()).toBe("launched")
-    expect(calls.slice(0, 3)).toEqual(["proof", "decision", "binding"])
-    expect(calls[3]).toMatchObject({ stopProof: { ref: "proof-a" }, humanDecision: { ref: "decision-a" }, approvedBinding: binding })
-    expect(await code(() => launch({ stopProofProvider: () => ({}) }))).toBe("CT_LAUNCH_REJECTED")
-    expect(await code(() => launch())).toBe("CT_LAUNCH_REJECTED")
-  })
-
-  test("rejects absent, invalid, drifting, or caller-substituted root providers before pane or journal effects", () => {
-    let effects = 0
-    const valid = () => Object.freeze({ ref: "evidence-a" })
-    const binding = () => Object.freeze({ brief: "approved", brief_ref: "briefs/a.json", assignment_ref: "assignments/a.json", project_id: "project-a", candidate_revision: `sha256:${"a".repeat(64)}`, worktree: "/work/a", host_epoch: 3 })
-    for (const overrides of [
-      { stopProofProvider: undefined },
-      { humanDecisionProvider: () => ({ ref: "unfrozen" }) },
-      { launchBindingProvider: () => ({}) },
-      { stopProofProvider: () => { throw new Error("drift") } },
-    ]) {
-      expect(() => createVisibleRootLaunch({ stopProofProvider: valid, humanDecisionProvider: valid, launchBindingProvider: binding, createLauncher: () => { effects += 1 }, ...overrides })).toThrow("Root launch authority")
-    }
-    expect(effects).toBe(0)
+  test("does not expose in-session root launching", async () => {
+    const loaded = await loadPlugin()
+    expect(loaded.plugin.launchVisibleRoot).toBeUndefined()
   })
 
   test("declares a real restricted Support subagent and runtime plugin entrypoint", () => {

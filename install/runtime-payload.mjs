@@ -5,6 +5,11 @@ import { isAbsolute, join, relative, resolve, sep } from "node:path"
 export const RUNTIME_PAYLOAD_FILES = [
   "bin/torre",
   "core.mjs",
+  "hosts/herdr.mjs",
+  "hosts/launcher.mjs",
+  "hosts/launch-worker-cli.mjs",
+  "hosts/launch-worker.mjs",
+  "hosts/opencode-launcher.mjs",
   "install/active-pointer.mjs",
   "install/lifecycle.mjs",
   "install/runtime-payload.mjs",
@@ -54,7 +59,7 @@ const scanClosure = (root) => {
     if (stat.isSymbolicLink()) fail("CT_RUNTIME_PAYLOAD_INVALID", `symlink ${current}`)
     if (stat.isDirectory()) {
       const path = relative(root, current).split(sep).join("/")
-      if (path && path !== "bin" && path !== "install") fail("CT_RUNTIME_PAYLOAD_INVALID", `unexpected directory ${path}`)
+      if (path && path !== "bin" && path !== "hosts" && path !== "install") fail("CT_RUNTIME_PAYLOAD_INVALID", `unexpected directory ${path}`)
       for (const entry of readdirSync(current)) visit(join(current, entry))
       return
     }
