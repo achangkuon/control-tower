@@ -57,7 +57,7 @@ graph LR
   S32 --> S33["S3.3 capability registry · ✅"]
   S33 --> S34["S3.4 ciclo de vida Jornada · ✅"]
   S34 --> S103["S10.3 contrato versionado · ✅"]
-  S103 --> S101["S10.1 preparación persistida · 🟢"]
+  S103 --> S101["S10.1 preparación persistida · ✅"]
   S101 --> S102["S10.2 supervisión válida · 🔴"]
   S102 --> S71
   S34 --> S51["S5.1 candidate contracts · ✅"]
@@ -129,7 +129,7 @@ graph LR
 | — | `S5.3` | Continuación | 🔴 BLOQUEADO | Bloqueo transitivo por `S5.2` |
 | — | `S8.7` | Puente Hermes/Telegram | 🔴 BLOQUEADO | Dependencias propias ✅ y decisiones Telegram resueltas; bloquea el inicializador confiable de producción pendiente |
 | ✅ | `S10.3` | Contrato de ejecución versionado | ✅ COMPLETO | `S3.4` ✅; candidato exacto basado en `cdd0d09`, 17.297 bytes, 407 líneas, SHA-256 `2f4838aa244b30e280c5c558286b0e4d9fbb503a0ef1808ffc27501c1540fddc`; entrega directa aún no autorizada |
-| ▶ | `S10.1` | Preparación persistida de Jornada | 🟢 LISTO | `S10.3` ✅; route `design-tasks`, owner pasivo Jornada-local y cero efectos |
+| ✅ | `S10.1` | Preparación persistida de Jornada | ✅ COMPLETO | `S10.3` ✅; candidato técnico verificado, focused 8/0/144 y full 679/0/4164 en 44 archivos; owner pasivo Jornada-local y cero efectos |
 | — | `S10.2` | Supervisión válida sin armado local | 🔴 BLOQUEADO | `S10.1`; decisión pendiente entre modo nuevo de `ACTIVE`, centinela separado o supervisión externa, más decisión separada sobre el interlock de `remote-control` |
 | 4 | `S7.1` | Conformidad de release | 📋 PLANIFICADO | `S4.4`, `S5.3`, `S8.7`, `S5.5`, `S10.2` |
 
@@ -142,7 +142,7 @@ graph LR
 > recuperación y failover entra en la cadena de release. La tabla se corrige para coincidir.
 > La decisión histórica fue explícita —construir las catorce Sesiones que ese corte enumeraba como restantes— y no una derivación; la reconciliación actual agrega los prerrequisitos omitidos sin reescribir aquella evidencia.
 
-**Treinta y seis Sesiones · 21/36 cerradas (58%).** Sólo `COMPLETO` cuenta: `S10.3` incrementa el numerador a veintiuno; `S4.2`, `S5.9` y `S10.1` aportan cero mientras están `LISTO`, y `S10.2` aporta cero en `BLOQUEADO`. P10 integra la release mediante `S3.4 → S10.3 → S10.1 → S10.2 → S7.1`. Esta métrica no reemplaza el `30/49` de planificación del [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
+**Treinta y seis Sesiones · 22/36 cerradas (61%).** Sólo `COMPLETO` cuenta: `S10.1` incrementa el numerador a veintidós; `S4.2` y `S5.9` aportan cero mientras están `LISTO`, y `S10.2` aporta cero en `BLOQUEADO`. P10 integra la release mediante `S3.4 → S10.3 → S10.1 → S10.2 → S7.1`. Esta métrica no reemplaza el `31/49` de planificación del [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
 secuenciales entre `S5.4` y `S5.5`: snapshot/parser canónico, contratos de decisión/respuesta,
 binding terminal, productores de provenance, composición Main→parking, binding autoritativo de
 checkpoint y binding inmutable del trabajo completado bajo la autoridad exclusiva de Main. La
@@ -186,7 +186,7 @@ La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas; no s
 
 `S1.16` está ✅ COMPLETO en `da4e391`; la entrega directa incluye su cierre documental. El consumer está cerrado, pero la composición productiva del provider/injection no: pertenece a `S4.2/M4.2.3`.
 
-La capacidad se sigue derivando, no se fija como cupo. `S4.2`, `S5.9` y `S10.1` están 🟢 LISTO; `S10.3` está ✅ COMPLETO como candidato pendiente de autorización de entrega directa. `S4.2` sólo queda habilitada para `design-tasks` y debe probar Herdr/OpenCode, stop-proof/decision providers y wiring productivo antes de cualquier claim de readiness. `S1.17` mantiene su bloqueo propio por `assignment_id`, `session_id` y capacidad de binding Workspace Manager/Main reales ausentes y, con él, `S1.18`–`S1.19` y `S4.4`. `S4.3`, `S5.2`/`S5.3`, `S5.10`/`S5.5`, `S8.7` y `S10.2` conservan sus bloqueos registrados. `S5.9` debe reconciliar sus artefactos externos y ejecutar su falsificador antes de tasks/apply. `S10.1` queda 🟢 LISTO tras cerrar `S10.3` y seguirá effect-incapable; `S10.2` carece de `Área` y queda excluida. `S7.1` mantiene sus dependencias previas y la cadena transitiva de P10.
+La capacidad se sigue derivando, no se fija como cupo. `S4.2` y `S5.9` están 🟢 LISTO; `S10.1` está ✅ COMPLETO como candidato técnico verificado. `S4.2` sólo queda habilitada para `design-tasks` y debe probar Herdr/OpenCode, stop-proof/decision providers y wiring productivo antes de cualquier claim de readiness. `S1.17` mantiene su bloqueo propio por `assignment_id`, `session_id` y capacidad de binding Workspace Manager/Main reales ausentes y, con él, `S1.18`–`S1.19` y `S4.4`. `S4.3`, `S5.2`/`S5.3`, `S5.10`/`S5.5`, `S8.7` y `S10.2` conservan sus bloqueos registrados. `S5.9` debe reconciliar sus artefactos externos y ejecutar su falsificador antes de tasks/apply. `S10.2` carece de `Área` y queda excluida; `S7.1` mantiene sus dependencias previas y la cadena transitiva de P10.
 
 El siguiente inicio debe volver a derivar capacidad y contaminación desde el grafo vigente, no desde esta fotografía. Ningún nodo posterior a `S5.9` recibe crédito: `S5.10`, `S5.5` y `S7.1` conservan sus condiciones propias.
 

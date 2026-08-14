@@ -1,7 +1,7 @@
 # Plan 10 — Ejecución y supervisión autónoma de Jornada
 
-**Estado:** 🔵 EN CURSO
-**Avance:** 33% (1/3 S)
+**Estado:** 🟢 LISTO
+**Avance:** 67% (2/3 S)
 
 > El maintainer resolvió la ubicación provisional del 2026-08-11: las responsabilidades antes
 > enumeradas como `S3.5`/`S3.6` forman un Plan nuevo y pasan a ser `S10.1`/`S10.2`. P3 permanece
@@ -17,10 +17,10 @@ conserva la arquitectura productora de supervisión y sus decisiones abiertas.
 | Campo | Contrato |
 |---|---|
 | Autoridad | Decisión explícita del maintainer: Plan nuevo P10 para las responsabilidades provisionales `S3.5`/`S3.6`, renumeradas `S10.1`/`S10.2`. |
-| Estado | 🔵 EN CURSO: `S10.3` está ✅ COMPLETO, `S10.1` queda 🟢 LISTO y `S10.2` 🔴 BLOQUEADO. |
+| Estado | 🟢 LISTO: `S10.3` y `S10.1` están ✅ COMPLETO; `S10.2` sigue 🔴 BLOQUEADO. |
 | Orden | `S3.4 → S10.3 → S10.1 → S10.2 → S7.1`. |
-| Capacidad derivada | `S10.1` es elegible tras cerrar su prerrequisito; `S10.2` no tiene `Área`. |
-| Avance | 33% (1/3 S): sólo `S10.3` está ✅ COMPLETO. |
+| Capacidad derivada | P10 no aporta capacidad mientras `S10.2` siga sin `Área`; la capacidad siguiente permanece en `S4.2` y `S5.9`. |
+| Avance | 67% (2/3 S): `S10.3` y `S10.1` están ✅ COMPLETO. |
 | Release | P10 forma parte del producto, roadmap y release únicos; aporta 1/3 al denominador. |
 
 La jerarquía canónica es `Plan → Sesión → Módulo → Tarea`; `S10.3` y `S10.1` quedan enumeradas
@@ -31,7 +31,7 @@ abajo. `S10.2` se detiene en Sesión mientras sus decisiones impiden fijar archi
 | ID | Resultado | Estado | Ruta | Motivo | Autoridad | Depende de | Área | Recurso |
 |---|---|---|---|---|---|---|---|---|
 | `S10.3` | Contrato de ejecución versionado | ✅ COMPLETO | `direct` | Copia pasiva, exacta e indivisible con verificación estructural. | Decisión explícita del maintainer. | `S3.4` ✅ | `schemas/execution-contract-v1.schema.json` | — |
-| `S10.1` | Preparación persistida de Jornada | 🟢 LISTO | `design-tasks` | Diseño compacto del owner pasivo y gate consumidor, sin arquitectura productora. | Decisión explícita del maintainer. | `S10.3` ✅ | `jornada/**`, `test/jornada/**` | —; sin token de entrega ni SQLite de la Torre. |
+| `S10.1` | Preparación persistida de Jornada | ✅ COMPLETO | `design-tasks` | Owner pasivo y gate consumidor verificados, sin arquitectura productora ni efectos. | Decisión explícita del maintainer. | `S10.3` ✅ | `jornada/**`, `test/jornada/**` | —; sin token de entrega ni SQLite de la Torre. |
 | `S10.2` | Supervisión sin armado local | 🔴 BLOQUEADO | `blocked` | Arquitectura visible/de seguridad e interlock abiertos; `Área` sin definir. | Brecha 7 de [implementation-state](../implementation-state.md). | `S10.1` | **Sin definir** | Centinela `ACTIVE` del repositorio supervisado. |
 
 ## Sesión 10.3 — Contrato de ejecución versionado
@@ -62,7 +62,7 @@ abajo. `S10.2` se detiene en Sesión mientras sus decisiones impiden fijar archi
 
 ## Sesión 10.1 — Preparación persistida de Jornada
 
-**Estado:** 🟢 LISTO
+**Estado:** ✅ COMPLETO
 
 **Depende de:** `S10.3` ✅
 
@@ -80,28 +80,30 @@ abajo. `S10.2` se detiene en Sesión mientras sus decisiones impiden fijar archi
 - `escala` — **RESUELTA por el maintainer:** `S10.1` consume evidencia opaca de supervisión sólo como gate y permanece incapaz de efectos; `S10.2` conserva arquitectura y producción de evidencia. **Clase:** operaciones irreversibles. **Contaminaba:** `S10.1`, `S10.2`, `S7.1`.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
-- [ ] JSON canónico, digest, `expires_at`, repositorio, worktree, rama, `base_sha` y `sesion_id` exactos se validan antes de persistir o declarar `prepared`
-- [ ] Contrato inválido, divergente o vencido falla cerrado, con cero llamadas de persistencia y sin estado `prepared`
-- [ ] Evidencia opaca de supervisión válida, vigente y coincidente se verifica después del contrato/contexto y antes de persistir; si está ausente, inválida, divergente o vencida hay cero llamadas de persistencia y no existe estado `prepared`
-- [ ] Sólo después de validar contrato, contexto y supervisión, una única llamada a la capability/root owner-only persiste pasivamente bajo `jornada/**`; únicamente su éxito permite devolver `prepared`
-- [ ] `S10.1` no diseña ni produce evidencia de supervisión
-- [ ] No existe executor ni acceso a subprocess, Git, remoto, Main store o SQLite; ningún camino produce efectos
-- [ ] El diff no toca ninguna ruta fuera de `Área` ni ninguna ruta del `Prohibido`
+- [x] JSON canónico, digest, `expires_at`, repositorio, worktree, rama, `base_sha` y `sesion_id` exactos se validan antes de persistir o declarar `prepared`
+- [x] Contrato inválido, divergente o vencido falla cerrado, con cero llamadas de persistencia y sin estado `prepared`
+- [x] Evidencia opaca de supervisión válida, vigente y coincidente se verifica después del contrato/contexto y antes de persistir; si está ausente, inválida, divergente o vencida hay cero llamadas de persistencia y no existe estado `prepared`
+- [x] Sólo después de validar contrato, contexto y supervisión, una única llamada a la capability/root owner-only persiste pasivamente bajo `jornada/**`; únicamente su éxito permite devolver `prepared`
+- [x] `S10.1` no diseña ni produce evidencia de supervisión
+- [x] No existe executor ni acceso a subprocess, Git, remoto, Main store o SQLite; ningún camino produce efectos
+- [x] El diff no toca ninguna ruta fuera de `Área` ni ninguna ruta del `Prohibido`
 
 ### Módulo 10.1.1 — Validación canónica de contrato y contexto
-- `T10.1.1.1` **RED:** cubrir rechazo de JSON/digest/expiry e identidad exacta divergentes con cero persistencia y sin `prepared`.
-- `T10.1.1.2` **GREEN:** validar contrato y contexto en una representación prevalidada, sin persistir ni declarar `prepared`.
-- `T10.1.1.3` **REFACTOR:** centralizar invariantes y confirmar cero acceso a executor, subprocess, Git o remoto.
+- [x] `T10.1.1.1` **RED:** rechazo de JSON/digest/expiry e identidad exacta divergentes con cero persistencia y sin `prepared`.
+- [x] `T10.1.1.2` **GREEN:** contrato y contexto validados en una representación prevalidada, sin persistir ni declarar `prepared`.
+- [x] `T10.1.1.3` **REFACTOR:** invariantes centralizadas; cero acceso a executor, subprocess, Git o remoto.
 
 ### Módulo 10.1.2 — Gate consumidor de supervisión
-- `T10.1.2.1` **RED:** cubrir evidencia opaca ausente, inválida, divergente o vencida con cero llamadas de persistencia y sin `prepared`.
-- `T10.1.2.2` **GREEN:** verificar evidencia válida, vigente y coincidente sólo después del contrato/contexto, sin persistir ni declarar `prepared`.
-- `T10.1.2.3` **REFACTOR:** probar frontera effect-incapable y ausencia de diseño productor de `S10.2`.
+- [x] `T10.1.2.1` **RED:** evidencia opaca ausente, inválida, divergente o vencida deja cero persistencia y ningún `prepared`.
+- [x] `T10.1.2.2` **GREEN:** evidencia válida, vigente y coincidente se verifica sólo después del contrato/contexto.
+- [x] `T10.1.2.3` **REFACTOR:** frontera effect-incapable y ausencia de diseño productor de `S10.2` verificadas.
 
 ### Módulo 10.1.3 — Persistencia pasiva owner-only
-- `T10.1.3.1` **RED:** cubrir root/capability ausente, ajena o fallida y prohibir `prepared` prematuro.
-- `T10.1.3.2` **GREEN:** después de validar contrato, contexto y supervisión, persistir una sola vez bajo el root inyectado de Jornada; únicamente el éxito devuelve `prepared`.
-- `T10.1.3.3` **REFACTOR:** aislar readback/errores sin Main store, SQLite ni writer alternativo.
+- [x] `T10.1.3.1` **RED:** root/capability ausente, ajena o fallida prohíbe `prepared` prematuro.
+- [x] `T10.1.3.2` **GREEN:** tras validar contrato, contexto y supervisión, una sola persistencia owner-only permite devolver `prepared`.
+- [x] `T10.1.3.3` **REFACTOR:** readback/errores aislados sin Main store, SQLite ni writer alternativo.
+
+**Evidencia de cierre:** implementación `6b9bd64adc4456dccdd2fe758d24ed23fb2cc3de13e3b267877ec34ec90e3390`, tests `961e7ccd1b8e4a26a4bc80e144722389c4fb0a9405080c25cd9260e7e70211e1`, patch `d6d8871213c5fca46f81652016eac9868f3366f37aeabbf632be917c26d6c0b0`; 306 líneas ejecutables authored. Focused Bun: 8/0, 144 assertions; full: 679/0, 4164 assertions, 44 archivos. Todos los criterios y las 9 Tareas pasan; la frontera sólo valida, consume evidencia opaca y persiste una vez por capability Jornada inyectada, sin subprocess, Git, remoto, Main store, SQLite ni productor de supervisión. Verificación estructural/integral: PASS; lens consultivo no disponible por exigir lineage mientras RDD/4R está suspendido, sin implicar fallo ni aprobación del candidato.
 
 ## Sesión 10.2 — Supervisión sin armado local
 
@@ -163,10 +165,9 @@ tienen una razón de diseño para exigirla apagada. `control-tower` aborta sus d
 ```mermaid
 graph LR
   S34["S3.4 ciclo de vida Jornada · ✅"] --> S103["S10.3 contrato versionado · ✅"]
-  S103 --> S101["S10.1 preparación persistida · 🟢"]
+  S103 --> S101["S10.1 preparación persistida · ✅"]
   S101 --> S102["S10.2 supervisión sin armado · 🔴"]
   S102 --> S71["S7.1 conformidad de release · 📋"]
 ```
 
-**Avance derivado:** 33% (1/3 S). **Capacidad derivada:** `S10.1` está 🟢 LISTO tras
-cerrar `S10.3`; `S10.2` permanece 🔴 BLOQUEADO sin `Área`.
+**Avance derivado:** 67% (2/3 S). **Capacidad derivada:** `S10.2` permanece 🔴 BLOQUEADO sin `Área`; P10 no aporta capacidad elegible.
