@@ -1,7 +1,9 @@
 import { spawnSync } from "node:child_process"
-import { join } from "node:path"
+import { dirname, join } from "node:path"
+import { fileURLToPath } from "node:url"
 
 import { deriveCanonicalMainContext } from "../core.mjs"
+import { validateActiveHostRuntime } from "../install/lifecycle.mjs"
 import { createLaunchBindingConsumer } from "../main-store/launch-consumer.mjs"
 import { createHerdrAdapter } from "./herdr.mjs"
 import { createOpenCodeLauncher } from "./opencode-launcher.mjs"
@@ -14,11 +16,19 @@ const parse = (result) => {
 const sessionId = (value) => value?.result?.agent?.agent_session_id ?? value?.result?.agent?.session_id
 const agentName = (paneId) => `ctopencode-${String(paneId).replace(/[^a-z0-9]/gi, "").toLowerCase()}`
 
-export const createProductionProvider = ({ cwd = process.cwd(), environment = process.env, run = (command, args, options) => spawnSync(command, args, { ...options, encoding: "utf8" }) } = {}) => {
-  if (environment.HERDR_ENV !== "1") fail("CT_LAUNCH_REJECTED", "Herdr-managed process context is required")
-  const context = deriveCanonicalMainContext(cwd)
+const installedRuntime = () => {
+  const root = dirname(dirname(fileURLToPath(import.meta.url))), versions = dirname(root), dataRoot = dirname(versions)
+  return { dataRoot, version: root.slice(versions.length + 1), root }
+}
+
+export const createProductionProvider = ({ run = (command, args, options) => spawnSync(command, args, { ...options, encoding: "utf8" }) } = {}) => {
+  const installed = installedRuntime()
+  const context = deriveCanonicalMainContext(process.cwd())
   const consumer = createLaunchBindingConsumer({ root: join(context.git_common_dir, "control-tower", "main-store") })
-  const command = (name, args) => run(name, args, { cwd })
+  const command = (name, args) => {
+    const identity = validateActiveHostRuntime(installed.dataRoot, installed.version, installed.root)
+    return run(identity[name], args, { cwd: process.cwd(), env: identity.environment })
+  }
   const sessions = new Map(), roots = new Map()
   const herdr = createHerdrAdapter({
     createPane: ({ cwd: worktree }) => ({ pane_id: parse(command("herdr", ["pane", "split", "--current", "--direction", "right", "--cwd", worktree, "--no-focus"]))?.result?.pane?.pane_id }),

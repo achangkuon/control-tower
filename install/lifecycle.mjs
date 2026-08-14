@@ -68,6 +68,30 @@ export function readHostRuntimeIdentity(dataRoot, version) {
   catch (error) { if (error.message.startsWith("CT_HOST_RUNTIME_")) throw error; throw new Error("CT_HOST_RUNTIME_RECORD_INVALID") }
 }
 
+// The launch path rechecks this immutable installer record immediately before
+// every host command. It deliberately derives all executable authority here.
+export function validateActiveHostRuntime(dataRoot, version, runtimeRoot) {
+  const pointerPath = join(dataRoot, "active.json")
+  let root, pointer
+  try { root = lstatSync(dataRoot); pointer = lstatSync(pointerPath) } catch { throw new Error("CT_HOST_RUNTIME_ACTIVE_MISMATCH") }
+  if (!root.isDirectory() || root.isSymbolicLink() || root.uid !== process.getuid() || (root.mode & 0o777) !== 0o700
+    || !pointer.isFile() || pointer.isSymbolicLink() || pointer.uid !== process.getuid() || pointer.nlink !== 1 || (pointer.mode & 0o777) !== 0o600) throw new Error("CT_HOST_RUNTIME_ACTIVE_MISMATCH")
+  let active
+  try { active = JSON.parse(readFileSync(pointerPath, "utf8")) } catch { throw new Error("CT_HOST_RUNTIME_ACTIVE_MISMATCH") }
+  if (!active || active.version !== version || runtimeRoot !== join(dataRoot, "versions", version)) throw new Error("CT_HOST_RUNTIME_ACTIVE_MISMATCH")
+  const record = readHostRuntimeIdentity(dataRoot, version)
+  const validate = (name) => {
+    const expected = record[name], actual = secureExecutable(expected.path, name)
+    for (const key of ["path", "sha256", "dev", "ino", "size", "mtimeMs", "ctimeMs", "uid", "mode", "nlink"]) {
+      if (actual[key] !== expected[key]) throw new Error("CT_HOST_RUNTIME_CHANGED")
+    }
+    return actual.path
+  }
+  const herdr = validate("herdr"), opencode = validate("opencode")
+  verifyHerdrContract(herdr)
+  return Object.freeze({ version, herdr, opencode, environment: Object.freeze({ PATH: "" }) })
+}
+
 const captureHostRuntimeIdentity = (version, { herdrBin, opencodeBin }) => {
   const herdr = secureExecutable(herdrBin, "herdr"), opencode = secureExecutable(opencodeBin, "opencode")
   if (herdr.path === opencode.path) throw new Error("CT_HOST_RUNTIME_INVALID")

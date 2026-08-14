@@ -5,7 +5,7 @@ import { chmodSync, copyFileSync, existsSync, lstatSync, mkdirSync, mkdtempSync,
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 
-import { lifecycle, readHostRuntimeIdentity, runCli } from "../../install/lifecycle.mjs"
+import { lifecycle, readHostRuntimeIdentity, runCli, validateActiveHostRuntime } from "../../install/lifecycle.mjs"
 import { RUNTIME_PAYLOAD_FILES } from "../../install/runtime-payload.mjs"
 
 const roots = [], repoRoot = resolve(import.meta.dir, "../..")
@@ -193,13 +193,28 @@ test("attended CLI rejects unsafe or mismatched executable inputs before install
   expect(() => runCli(["install", "1.0.0", repoRoot, "--herdr-bin", item.paths.opencodeBin, "--opencode-bin", item.paths.opencodeBin], env)).toThrow("CT_HOST_RUNTIME_INVALID")
 })
 
-test("installs an immutable owner-protected versioned host-runtime record", () => {
+  test("installs an immutable owner-protected versioned host-runtime record", () => {
   const item = fixture(), env = testEnv(item.root)
   expect(runCli(["install", "1.0.0", repoRoot, ...hostArgs(item.paths)], env)).toMatchObject({ active: "1.0.0" })
   const record = join(env.XDG_DATA_HOME, "control-tower/versions/1.0.0/host-runtime.json")
   expect(JSON.parse(readFileSync(record, "utf8"))).toMatchObject({ schema: "control-tower.host-runtime/v1", runtimeVersion: "1.0.0", herdr: { path: item.paths.herdrBin }, opencode: { path: item.paths.opencodeBin } })
   expect(lstatSync(record).mode & 0o777).toBe(0o600)
-})
+  })
+
+  test("revalidates the active exact executable identity and contract before host effects", () => {
+    const { paths } = fixture()
+    lifecycle({ ...paths, action: "install", version: "1.0.0", files: { "runtime.mjs": "one" } })
+    const runtime = join(paths.dataRoot, "versions/1.0.0")
+    expect(validateActiveHostRuntime(paths.dataRoot, "1.0.0", runtime)).toMatchObject({ herdr: paths.herdrBin, opencode: paths.opencodeBin })
+    writeFileSync(paths.herdrBin, "#!/bin/sh\nexit 1\n", { mode: 0o700 })
+    expect(() => validateActiveHostRuntime(paths.dataRoot, "1.0.0", runtime)).toThrow("CT_HOST_RUNTIME_CHANGED")
+  })
+
+  test("rejects a runtime root that is not the version named by active.json", () => {
+    const { paths } = fixture()
+    lifecycle({ ...paths, action: "install", version: "1.0.0", files: { "runtime.mjs": "one" } })
+    expect(() => validateActiveHostRuntime(paths.dataRoot, "other", join(paths.dataRoot, "versions/other"))).toThrow("CT_HOST_RUNTIME_ACTIVE_MISMATCH")
+  })
 
 test("reentrant installs retain the winning immutable host-runtime record", () => {
   const { paths } = fixture(), nested = { ...paths, action: "install", version: "1.0.0", files: { "runtime.mjs": "one" } }

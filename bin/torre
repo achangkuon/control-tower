@@ -18,6 +18,12 @@
 set -euo pipefail
 
 ENTRYPOINT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+if [[ "${1:-}" == "launch-worker" ]]; then
+    # This command has no legacy compatibility path: its provider is packaged
+    # beside this executable and validates the installed runtime identity.
+    exec bun "$ENTRYPOINT_DIR/../hosts/launch-worker-cli.mjs" "${@:2}"
+fi
+
 ACTIVE_CORE=""
 ACTIVE_LIFECYCLE=""
 ACTIVE_POINTER="$ENTRYPOINT_DIR/../install/active-pointer.mjs"
@@ -43,14 +49,6 @@ LIFECYCLE="${CONTROL_TOWER_LIFECYCLE:-${ACTIVE_LIFECYCLE:-$ENTRYPOINT_DIR/../ins
 case "${1:-}" in
     install|diagnose|upgrade|rollback|uninstall)
         exec bun "$LIFECYCLE" "$@"
-        ;;
-    launch-worker)
-        if [[ -n "$ACTIVE_CORE" ]]; then
-            LAUNCH_RUNTIME="$(dirname "$ACTIVE_CORE")/hosts/launch-worker-cli.mjs"
-        else
-            LAUNCH_RUNTIME="$ENTRYPOINT_DIR/../hosts/launch-worker-cli.mjs"
-        fi
-        exec bun "$LAUNCH_RUNTIME" "${@:2}"
         ;;
     create-worker|create-session|create-worktree)
         echo "CT_V2_ONLY: $1" >&2
