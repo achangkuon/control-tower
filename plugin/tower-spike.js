@@ -106,6 +106,29 @@ export const createOpenCodeLifecycleAdapter = ({ controller, provenRootSessionId
 }
 
 const validBindingEpoch = (value) => Number.isSafeInteger(value) && value > 0
+const launchBindingKeys = Object.freeze(["assignment_ref", "brief", "brief_ref", "candidate_revision", "host_epoch", "project_id", "worktree"])
+const frozenEvidence = (value) => value && typeof value === "object" && !Array.isArray(value) && Object.isFrozen(value) && typeof value.ref === "string" && value.ref.length > 0
+const frozenLaunchBinding = (value) => value && typeof value === "object" && !Array.isArray(value) && Object.isFrozen(value)
+  && Object.keys(value).sort().join("\0") === [...launchBindingKeys].sort().join("\0")
+
+export const createVisibleRootLaunch = ({ stopProofProvider, humanDecisionProvider, launchBindingProvider, createLauncher } = {}) => {
+  if ([stopProofProvider, humanDecisionProvider, launchBindingProvider, createLauncher].some((provider) => typeof provider !== "function")) throw new TypeError("Root launch authority is required")
+  let stopProof, humanDecision, approvedBinding
+  try {
+    stopProof = stopProofProvider()
+    humanDecision = humanDecisionProvider()
+    approvedBinding = launchBindingProvider()
+  } catch { throw new TypeError("Root launch authority is unavailable") }
+  if (!frozenEvidence(stopProof) || !frozenEvidence(humanDecision) || !frozenLaunchBinding(approvedBinding)) throw new TypeError("Root launch authority is invalid")
+  const launcher = createLauncher(Object.freeze({ stopProof, humanDecision, approvedBinding }))
+  if (typeof launcher !== "function") throw new TypeError("Root launch authority is invalid")
+  let used = false
+  return async function launchVisibleRoot(input) {
+    if (arguments.length !== 0 || used) fail("CT_LAUNCH_REJECTED", "Visible root launch accepts no caller authority")
+    used = true
+    return launcher()
+  }
+}
 
 export const createOpenCodeAdapter = ({
   cancel, client, continuationCapability, now, policy, schedule, trace,
@@ -170,11 +193,12 @@ export const createOpenCodeAdapter = ({
 
 export const TowerSpikePlugin = async (
   { client, directory, worktree },
-  { lifecycle, trustedBindingProvider, ...transport } = {},
+  { lifecycle, trustedBindingProvider, visibleRoot, ...transport } = {},
 ) => {
   const lifecycleAdapter = lifecycle
     ? createOpenCodeLifecycleAdapter(lifecycle)
     : createOpenCodeAdapter({ ...transport, client })
+  const launchVisibleRoot = visibleRoot === undefined ? null : createVisibleRootLaunch(visibleRoot)
 
   // Native subagents live and die inside this session. The tower must never
   // see them, and we must never wake one by mistake.
@@ -244,6 +268,7 @@ export const TowerSpikePlugin = async (
 
   return {
     tool: { control_tower_support: supportTool },
+    launchVisibleRoot,
     dispose: () => lifecycleAdapter?.dispose() ?? false,
     event: ({ event }) => {
       const info = event?.properties?.info
