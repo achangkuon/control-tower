@@ -21,6 +21,7 @@ const safeId = (value) => {
   if (typeof value !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(value)) fail("CT_STORE_INVALID", "Invalid store identifier")
   return value
 }
+const safeRef = (value) => typeof value === "string" && value.length > 0 && !value.includes("\0")
 const forbiddenKey = /(?:password|passwd|secret|token|credential|private[_-]?key|api[_-]?key)/i
 const forbiddenSupportKey = /^(?:assignment|authority|privilege|capability|lock|worker)$/i
 const assertCredentialFree = (value, seen = new WeakSet()) => {
@@ -172,6 +173,8 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
   const workerClaimPath = (id) => join(directory("worker-claims"), `${safeId(id)}.json`)
   const supportProposalPath = (id) => join(directory("support-proposals"), `${safeId(id)}.json`)
   const parkingPath = (id) => join(directory("decision-parkings"), `${safeId(id)}.json`)
+  const launchBindingPath = (id) => join(directory("launch-bindings"), `${safeId(id)}.json`)
+  const launchConsumptionPath = (id) => join(directory("launch-consumptions"), `${safeId(id)}.json`)
   const approvedAuthorizationFor = (authorizationId, candidateRevision) => {
     if (typeof authorizationId !== "string" || authorizationId.length === 0) fail("CT_AUTH_INVALID", "Approved authorization is required")
     const path = authorizationPath(authorizationId)
@@ -191,6 +194,13 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
     if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) fail("CT_AUTH_EXPIRED", "Authorization has expired")
     if (!Number.isFinite(createdAt) || expiresAt <= createdAt || expiresAt > createdAt + 3_600_000) fail("CT_AUTH_INVALID", "Authorization lifetime is invalid")
     return authorization
+  }
+  const activeLaunchJornada = (authorization) => {
+    let jornada
+    try { jornada = resolveJornadaLifecycle(parse(jornadaPath(authorization.jornada_id))) }
+    catch (error) { fail("CT_JORNADA_INVALID", "Launch authorization Jornada is unavailable", error) }
+    if (jornada.state !== "AC" + "TIVE" || jornada.jornada_revision !== authorization.jornada_revision) fail("CT_LAUNCH_BINDING_STALE", "Launch authorization Jornada is not active at its bound revision")
+    return jornada
   }
 
   return Object.freeze({
@@ -333,6 +343,49 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
           if (error.code === "CT_CAS_MISMATCH" && existsSync(path)) return frozen({ ...parse(path), admitted: false })
           throw error
         }
+      })
+    },
+    issueLaunchBinding(input) {
+      const keys = ["actor", "project_id", "request_ref", "authorization_id", "brief", "brief_ref", "assignment_ref", "worktree", "candidate_revision", "host_epoch", "fence_path"]
+      if (!exactKeys(input, keys) || !safeRef(input.brief) || !safeRef(input.brief_ref) || !safeRef(input.assignment_ref)
+        || !isAbsolute(input.worktree) || !digest(input.candidate_revision) || !Number.isSafeInteger(input.host_epoch) || input.host_epoch < 1 || !isAbsolute(input.fence_path)) {
+        fail("CT_LAUNCH_BINDING_INVALID", "Launch binding input is invalid")
+      }
+      assertMain(input)
+      const authorization = approvedAuthorizationFor(input.authorization_id, input.candidate_revision)
+      return withLock(jornadaPath(authorization.jornada_id), () => {
+        const jornada = activeLaunchJornada(authorization)
+        const path = launchBindingPath(input.request_ref)
+        if (existsSync(path)) fail("CT_LAUNCH_BINDING_IMMUTABLE", "Launch binding already exists")
+        const { actor: _actor, ...record } = input
+        const bindingRecord = {
+          ...record,
+          jornada_id: jornada.jornada_id,
+          jornada_revision: jornada.jornada_revision,
+          active_epoch: binding.epoch,
+        }
+        atomicWrite(path, bindingRecord, () => {
+          if (existsSync(path)) fail("CT_LAUNCH_BINDING_IMMUTABLE", "Launch binding already exists")
+          activeLaunchJornada(authorization)
+        })
+        return frozen({ ...structuredClone(bindingRecord), record_path: path })
+      })
+    },
+    consumeLaunchBinding(requestRef) {
+      const path = launchBindingPath(requestRef), consumption = launchConsumptionPath(requestRef)
+      if (!existsSync(path)) fail("CT_LAUNCH_BINDING_INVALID", "Launch binding is unavailable")
+      const record = parse(path)
+      const keys = ["request_ref", "authorization_id", "brief", "brief_ref", "assignment_ref", "worktree", "candidate_revision", "host_epoch", "fence_path", "project_id", "jornada_id", "jornada_revision", "active_epoch"]
+      if (!exactKeys(record, keys) || record.request_ref !== requestRef || record.project_id !== binding.project_id || record.active_epoch !== binding.epoch) fail("CT_LAUNCH_BINDING_STALE", "Launch binding is stale")
+      return withLock(jornadaPath(record.jornada_id), () => {
+        const authorization = approvedAuthorizationFor(record.authorization_id, record.candidate_revision)
+        if (authorization.jornada_id !== record.jornada_id || authorization.jornada_revision !== record.jornada_revision) fail("CT_LAUNCH_BINDING_STALE", "Launch binding authorization drifted")
+        activeLaunchJornada(authorization)
+        if (existsSync(consumption)) fail("CT_LAUNCH_BINDING_CONSUMED", "Launch binding was already consumed")
+        atomicWrite(consumption, { request_ref: requestRef, binding_path: path }, () => {
+          if (existsSync(consumption)) fail("CT_LAUNCH_BINDING_CONSUMED", "Launch binding was already consumed")
+        })
+        return frozen({ assignment_ref: record.assignment_ref, brief: record.brief, brief_ref: record.brief_ref, candidate_revision: record.candidate_revision, host_epoch: record.host_epoch, project_id: record.project_id, worktree: record.worktree })
       })
     },
     recordHandoffCoordinate(input) {

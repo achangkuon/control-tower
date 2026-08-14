@@ -750,6 +750,52 @@ describe("atomic owner-only Main store", () => {
     expect(code(() => replay.admitCandidateEffect({ ...input, project_id: "project-b" }))).toBe("CT_PROJECT_MISMATCH")
   })
 
+  test("issues one immutable lifecycle-bound launch binding and consumes it only once", () => {
+    const { root, store } = setup()
+    activateJornada(store)
+    store.createAuthorization({ actor: "MAIN", ...authorizationRecord("auth-launch") })
+    store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-launch", candidate_revision: candidateRevision, decision: "APPROVED", expected_revision: 1 })
+    const request = {
+      actor: "MAIN", project_id: "project-a", request_ref: "request-launch-a", authorization_id: "auth-launch",
+      brief: "Implement the approved assignment.", brief_ref: "briefs/launch-a.json", assignment_ref: "assignments/launch-a.json",
+      worktree: "/worktrees/launch-a", candidate_revision: candidateRevision, host_epoch: 3, fence_path: "/runtime/fence-a",
+    }
+
+    const issued = store.issueLaunchBinding(request)
+    expect(issued).toMatchObject({ request_ref: request.request_ref, authorization_id: request.authorization_id, candidate_revision: candidateRevision, jornada_id: "jornada-a", jornada_revision: 3 })
+    expect(issued.actor).toBeUndefined()
+    expect(Object.isFrozen(issued)).toBeTrue()
+    expect(readFileSync(issued.record_path, "utf8")).toContain('"request_ref":"request-launch-a"')
+    expect(code(() => store.issueLaunchBinding({ ...request, worktree: "/worktrees/other" }))).toBe("CT_LAUNCH_BINDING_IMMUTABLE")
+
+    const consumed = store.consumeLaunchBinding("request-launch-a")
+    expect(consumed).toEqual({
+      assignment_ref: "assignments/launch-a.json", brief: "Implement the approved assignment.", brief_ref: "briefs/launch-a.json",
+      candidate_revision: candidateRevision, host_epoch: 3, project_id: "project-a", worktree: "/worktrees/launch-a",
+    })
+    expect(code(() => store.consumeLaunchBinding("request-launch-a"))).toBe("CT_LAUNCH_BINDING_CONSUMED")
+    expect(existsSync(join(root, "launch-consumptions", "request-launch-a.json"))).toBe(true)
+  })
+
+  test("fails closed before issuing or consuming a launch binding with stale authority or lifecycle", () => {
+    const { root, store } = setup()
+    const request = {
+      actor: "MAIN", project_id: "project-a", request_ref: "request-launch-b", authorization_id: "missing",
+      brief: "Implement the approved assignment.", brief_ref: "briefs/launch-b.json", assignment_ref: "assignments/launch-b.json",
+      worktree: "/worktrees/launch-b", candidate_revision: candidateRevision, host_epoch: 3, fence_path: "/runtime/fence-b",
+    }
+    expect(code(() => store.issueLaunchBinding(request))).toBe("CT_AUTH_INVALID")
+    expect(existsSync(join(root, "launch-bindings"))).toBe(false)
+
+    activateJornada(store)
+    store.createAuthorization({ actor: "MAIN", ...authorizationRecord("auth-launch-b") })
+    store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-launch-b", candidate_revision: candidateRevision, decision: "APPROVED", expected_revision: 1 })
+    const issued = store.issueLaunchBinding({ ...request, authorization_id: "auth-launch-b" })
+    store.transitionJornada({ actor: "MAIN", project_id: "project-a", jornada_id: "jornada-a", state: "PAUSED", expected_revision: 3 })
+    expect(code(() => store.consumeLaunchBinding(issued.request_ref))).toBe("CT_LAUNCH_BINDING_STALE")
+    expect(existsSync(join(root, "launch-consumptions", "request-launch-b.json"))).toBe(false)
+  })
+
   test("bounds authorization lifetime and holds the Jornada lock through consumption", () => {
     const { root, store } = setup({ beforeCommit: (path) => {
       if (path.includes("/authorizations/") && existsSync(path)) expect(existsSync(join(root, "jornadas", "jornada-a.json.lock"))).toBe(true)
