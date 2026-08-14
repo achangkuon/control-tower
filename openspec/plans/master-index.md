@@ -1,16 +1,25 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-13 contra el candidato técnico de entrega de `S10.1`, basado en `a95149be491cb24ee940206805d57c24dd0ee776`.
+> Última reconciliación: 2026-08-14 contra la resolución de las nueve decisiones `escala` que quedaban abiertas, sobre `origin/master@82546e5`.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md).
 
 ## 📍 Punto de retoma
 
-`S10.1` cerró técnicamente como candidato de entrega: contrato/contexto y supervisión opaca fallan cerrado antes de persistir; sólo una persistencia owner-only exitosa devuelve `prepared`. Focused Bun pasó 8/0 (144 assertions) y full 679/0 (4164 assertions, 44 archivos).
+**El maintainer resolvió las nueve decisiones `escala` que quedaban abiertas en la cadena de release, en una sola sesión el 2026-08-14. El registro cierra en 34/34 resueltas y cero abiertas sobre la cadena — es la primera vez.** Detalle, opción elegida y razón de cada una en las decisiones 25–33 del [registro](decision-register.md). **Fuera de la cadena sobrevive una:** `S9.2` (`plan-9/STATUS.md:269`), sobre la frontera `bun ci` en raíz Pi fresca. No contamina la cadena y su `Recurso` es Pi, que quedó fuera del alcance el mismo día.
 
-P10 queda 🟢 LISTO en 67% (2/3 S). `S10.2` conserva decisiones y `Área` abiertas, por lo que permanece 🔴 BLOQUEADO; `S4.2` y `S5.9` siguen como próxima capacidad 🟢 LISTO.
+Disparador: una auditoría de alcance midió que **ocho de las nueve Sesiones restantes esperaban una decisión y no trabajo**, lo que explica la caída de velocidad de 117 → 78 → 55 commits/semana entre W31 y W33, y un ratio `docs`:código de 2,6:1 desde el 1 de agosto.
 
-La entrega sigue este candidato inmutable; después se documenta el SHA remoto en Notion y se vuelve a derivar capacidad.
+Efecto medido, y **no es uniforme**:
+
+- `S10.2` pasa de 🔴 BLOQUEADO a **🟢 LISTO** — decisiones 26 y 27; el centinela separado fuera del repositorio le fija el `Área` que faltaba. P10 aporta capacidad por primera vez.
+- `S5.10` queda limpia de decisión — decisión 30, precedente `S5.8`; sigue 🔴 sólo porque `S5.9` no está integrada.
+- `S8.7` deja de estar bloqueada por decisión y pasa a estarlo **por prerrequisito**: la decisión 25 le da dueño al inicializador confiable (`enroll/**`) pero esa Sesión todavía hay que enumerarla.
+- `S5.3`, `S5.5` y `S7.1` quedan limpias de decisión y siguen 🔴 por dependencia.
+
+**Lo que no cierra**, y sigue exigiendo acción del maintainer sin ser decisión `escala`: la segunda corrección autorizada de `S5.2` (hallazgos 1, 3 y 5 del recheck 8193), el dueño ausente de la brecha 6 —el 44% del código que `scanClosure` prohíbe empaquetar— y la Sesión `enroll/**` sin enumerar.
+
+Próxima capacidad 🟢 LISTO: `S4.2` —ya en curso en `Worktrees/implementation-slot`—, `S5.9` y ahora `S10.2`. Esta reconciliación es documental y no re-mide runtime, payload ni inventario.
 
 ## Granularidad
 
@@ -33,7 +42,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | S7.1 | [STATUS](plan-7/STATUS.md) |
 | P8 | Release instalable | 🔵 EN CURSO | 63% (5/8 S) | — | Maintainer | S8.7, S8.5, S8.6 | [STATUS](plan-8/STATUS.md) |
 | P9 | Slots seguros de Jornada y caché externa de Bun | 🟢 LISTO | 0% (0/2 S) | — | Maintainer | S9.1, S9.2 | [STATUS](plan-9/STATUS.md) |
-| P10 | Ejecución y supervisión autónoma de Jornada | 🟢 LISTO | 67% (2/3 S) | — | Maintainer | S10.2 | [STATUS](plan-10/STATUS.md) |
+| P10 | Ejecución y supervisión autónoma de Jornada | 🟢 LISTO | 67% (2/3 S) | — | Maintainer | S10.2 (🟢 LISTO desde 2026-08-14) | [STATUS](plan-10/STATUS.md) |
 
 ## 🗂️ Planes archivados
 
