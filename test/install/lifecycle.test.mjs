@@ -5,7 +5,7 @@ import { chmodSync, copyFileSync, existsSync, lstatSync, mkdirSync, mkdtempSync,
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 
-import { lifecycle, runCli } from "../../install/lifecycle.mjs"
+import { lifecycle, readHostRuntimeIdentity, runCli } from "../../install/lifecycle.mjs"
 import { RUNTIME_PAYLOAD_FILES } from "../../install/runtime-payload.mjs"
 
 const roots = [], repoRoot = resolve(import.meta.dir, "../..")
@@ -32,10 +32,17 @@ const legacyCheckout = (root, name = "checkout") => {
 const fixture = () => {
   const root = mkdtempSync(join(tmpdir(), "ct-lifecycle-")); roots.push(root)
   const paths = { dataRoot: join(root, "data/control-tower"), configRoot: join(root, "config/control-tower"), stateRoot: join(root, "state/control-tower") }
+  const herdrBin = join(root, "bin/herdr"), opencodeBin = join(root, "bin/opencode")
+  mkdirSync(dirname(herdrBin), { recursive: true })
+  writeFileSync(herdrBin, "#!/bin/sh\nexit 0\n", { mode: 0o700 })
+  writeFileSync(opencodeBin, "#!/bin/sh\nexit 0\n", { mode: 0o700 })
+  paths.herdrBin = herdrBin
+  paths.opencodeBin = opencodeBin
   mkdirSync(paths.configRoot, { recursive: true }); writeFileSync(join(paths.configRoot, "config.yaml"), "owner: user\n")
   mkdirSync(join(root, "repo/.git/control-tower"), { recursive: true }); writeFileSync(join(root, "repo/.git/control-tower/history"), "keep\n")
   return { root, paths }
 }
+const hostArgs = ({ herdrBin, opencodeBin }) => ["--herdr-bin", herdrBin, "--opencode-bin", opencodeBin]
 const testEnv = (root, extra = {}) => ({
   PATH: process.env.PATH,
   HOME: join(root, "home"),
@@ -67,7 +74,9 @@ describe("lifecycle operations", () => {
     expect(readFileSync(join(root, "repo/.git/control-tower/history"), "utf8")).toBe("keep\n")
     expect(existsSync(join(paths.dataRoot, "versions/1.1.0"))).toBe(false)
     lifecycle({ ...paths, action: "upgrade", version: "1.2.0", files: { "runtime.mjs": "two" } })
+    expect(readHostRuntimeIdentity(paths.dataRoot, "1.2.0").runtimeVersion).toBe("1.2.0")
     expect(lifecycle({ ...paths, action: "rollback" }).active).toBe("1.0.0")
+    expect(readHostRuntimeIdentity(paths.dataRoot, "1.0.0").runtimeVersion).toBe("1.0.0")
   })
 
   test("pointer failure is audited and leaves the active version safe", () => {
@@ -76,6 +85,7 @@ describe("lifecycle operations", () => {
     expect(() => lifecycle({ ...paths, action: "upgrade", version: "1.1.0", files: { "runtime.mjs": "two" }, pointerOptions: { failAt: "rename" } })).toThrow("CT_POINTER_RENAME_FAILED")
     expect(lifecycle({ ...paths, action: "diagnose" }).active).toBe("1.0.0")
     expect(existsSync(join(paths.dataRoot, "versions/1.1.0"))).toBe(false)
+    expect(existsSync(join(paths.dataRoot, "versions/1.1.0/host-runtime.json"))).toBe(false)
     expect(readFileSync(join(paths.stateRoot, "audit/lifecycle.ndjson"), "utf8")).toContain('"outcome":"pointer-failed"')
   })
 
@@ -126,14 +136,46 @@ test("source payload rejection is atomic before creating temporary roots", () =>
   expect(existsSync(join(root, "xdg-state"))).toBe(false)
 })
 
+test("attended installs require explicit Herdr and OpenCode executable identities", () => {
+  const { root } = fixture(), env = testEnv(root)
+
+  expect(() => runCli(["install", "1.0.0", repoRoot], env)).toThrow("CT_HOST_RUNTIME_REQUIRED")
+  expect(existsSync(join(env.XDG_DATA_HOME, "control-tower"))).toBe(false)
+})
+
+test("attended CLI rejects unsafe or mismatched executable inputs before installing", () => {
+  const item = fixture(), env = testEnv(item.root), relative = "bin/herdr", link = join(item.root, "bin/herdr-link")
+  symlinkSync(item.paths.herdrBin, link)
+  chmodSync(item.paths.opencodeBin, 0o600)
+  for (const args of [
+    ["--opencode-bin", item.paths.opencodeBin],
+    ["--herdr-bin", relative, "--opencode-bin", item.paths.opencodeBin],
+    ["--herdr-bin", link, "--opencode-bin", item.paths.opencodeBin],
+    ["--herdr-bin", dirname(item.paths.herdrBin), "--opencode-bin", item.paths.opencodeBin],
+  ]) {
+    expect(() => runCli(["install", "1.0.0", repoRoot, ...args], env)).toThrow("CT_HOST_RUNTIME_")
+    expect(existsSync(join(env.XDG_DATA_HOME, "control-tower"))).toBe(false)
+  }
+  chmodSync(item.paths.opencodeBin, 0o700)
+  expect(() => runCli(["install", "1.0.0", repoRoot, "--herdr-bin", item.paths.opencodeBin, "--opencode-bin", item.paths.opencodeBin], env)).toThrow("CT_HOST_RUNTIME_INVALID")
+})
+
+test("installs an immutable owner-protected versioned host-runtime record", () => {
+  const item = fixture(), env = testEnv(item.root)
+  expect(runCli(["install", "1.0.0", repoRoot, ...hostArgs(item.paths)], env)).toMatchObject({ active: "1.0.0" })
+  const record = join(env.XDG_DATA_HOME, "control-tower/versions/1.0.0/host-runtime.json")
+  expect(JSON.parse(readFileSync(record, "utf8"))).toMatchObject({ schema: "control-tower.host-runtime/v1", runtimeVersion: "1.0.0", herdr: { path: item.paths.herdrBin }, opencode: { path: item.paths.opencodeBin } })
+  expect(lstatSync(record).mode & 0o777).toBe(0o600)
+})
+
 test("install accepts a checkout source and stores exactly the runtime payload", () => {
-  const { root } = fixture()
+  const { root, paths } = fixture()
   const env = testEnv(root)
 
-  expect(runCli(["install", "checkout-v1", repoRoot], env)).toMatchObject({ active: "checkout-v1", stored: true })
+  expect(runCli(["install", "checkout-v1", repoRoot, ...hostArgs(paths)], env)).toMatchObject({ active: "checkout-v1", stored: true })
   const storedRoot = join(env.XDG_DATA_HOME, "control-tower/versions/checkout-v1")
   expect(RUNTIME_PAYLOAD_FILES.map((path) => readFileSync(join(storedRoot, path)))).toEqual(RUNTIME_PAYLOAD_FILES.map((path) => readFileSync(join(repoRoot, path))))
-  expect(readdirSync(storedRoot).sort()).toEqual([".manifest", "bin", "core.mjs", "hosts", "install", "jornada", "main-store"])
+  expect(readdirSync(storedRoot).sort()).toEqual([".manifest", "bin", "core.mjs", "host-runtime.json", "hosts", "install", "jornada", "main-store"])
 })
 
 test("install keeps strict payload validation for a staging source with an extra member", () => {
@@ -166,22 +208,22 @@ test("install keeps strict payload validation for a staging source with a synthe
 })
 
 test("install creates an optional PATH shim pointing into the active version", () => {
-  const { root } = fixture(), bin = join(root, "bin")
+  const { root, paths } = fixture(), bin = join(root, "bin")
   const env = testEnv(root, { TORRE_BIN_DIR: bin })
 
-  expect(runCli(["install", "shim-v1", repoRoot, "--shim"], env)).toMatchObject({ active: "shim-v1" })
+  expect(runCli(["install", "shim-v1", repoRoot, ...hostArgs(paths), "--shim"], env)).toMatchObject({ active: "shim-v1" })
   const shim = join(bin, "torre")
   expect(lstatSync(shim).isSymbolicLink()).toBe(true)
   expect(realpathSync(shim)).toBe(join(env.XDG_DATA_HOME, "control-tower/versions/shim-v1/bin/torre"))
 })
 
 test("install backs up a pre-existing PATH shim target before replacement", () => {
-  const { root } = fixture(), bin = join(root, "bin"), shim = join(bin, "torre")
+  const { root, paths } = fixture(), bin = join(root, "bin"), shim = join(bin, "torre")
   mkdirSync(bin, { recursive: true })
   writeFileSync(shim, "legacy-torre\n")
   const env = testEnv(root, { TORRE_BIN_DIR: bin })
 
-  const result = runCli(["install", "backup-v1", repoRoot, "--shim"], env)
+  const result = runCli(["install", "backup-v1", repoRoot, ...hostArgs(paths), "--shim"], env)
   expect(result.shim.backup).toBe(`${shim}.legacy-backup-v1`)
   expect(readFileSync(result.shim.backup, "utf8")).toBe("legacy-torre\n")
   rmSync(shim)
@@ -190,12 +232,12 @@ test("install backs up a pre-existing PATH shim target before replacement", () =
 })
 
 test("install does not write a PATH shim without the explicit option", () => {
-  const { root } = fixture(), bin = join(root, "bin")
+  const { root, paths } = fixture(), bin = join(root, "bin")
   mkdirSync(bin, { recursive: true })
   const before = snapshotPath(bin)
   const env = testEnv(root, { TORRE_BIN_DIR: bin })
 
-  expect(runCli(["install", "no-shim-v1", repoRoot], env)).toMatchObject({ active: "no-shim-v1" })
+  expect(runCli(["install", "no-shim-v1", repoRoot, ...hostArgs(paths)], env)).toMatchObject({ active: "no-shim-v1" })
   expect(snapshotPath(bin)).toEqual(before)
 })
 
@@ -328,7 +370,7 @@ test("upgrade refuses invalid JSON and a changed legacy config after backup", ()
 })
 
 test("installer and publisher use the same immutable lifecycle", () => {
-  const { root } = fixture(), source = join(root, "release"), data = join(root, "published")
+  const { root, paths } = fixture(), source = join(root, "release"), data = join(root, "published")
   mkdirSync(join(source, "bin"), { recursive: true })
   mkdirSync(join(source, "install"), { recursive: true })
   for (const file of RUNTIME_PAYLOAD_FILES) {
@@ -336,7 +378,7 @@ test("installer and publisher use the same immutable lifecycle", () => {
     writeFileSync(join(source, file), `release:${file}\n`)
   }
   const env = testEnv(root, { XDG_DATA_HOME: join(root, "data"), XDG_CONFIG_HOME: join(root, "config"), XDG_STATE_HOME: join(root, "state") })
-  const installed = execFileSync(join(repoRoot, "install.sh"), ["install", "2.0.0", source], { env, encoding: "utf8" })
+  const installed = execFileSync(join(repoRoot, "install.sh"), ["install", "2.0.0", source, ...hostArgs(paths)], { env, encoding: "utf8" })
   expect(JSON.parse(installed)).toMatchObject({ active: "2.0.0", changed: true })
   const published = execFileSync("bun", [join(repoRoot, "scripts/publish-runtime.mjs"), "2.0.0", data], { env, encoding: "utf8" })
   expect(JSON.parse(published)).toMatchObject({ version: "2.0.0", created: true })
@@ -354,6 +396,10 @@ test("stored torre diagnoses and installs autonomously from an isolated unrelate
     mkdirSync(join(destination, ".."), { recursive: true })
     copyFileSync(join(repoRoot, file), destination)
   }
+  const herdrBin = join(root, "bin/herdr"), opencodeBin = join(root, "bin/opencode")
+  mkdirSync(dirname(herdrBin), { recursive: true })
+  writeFileSync(herdrBin, "#!/bin/sh\nexit 0\n", { mode: 0o700 })
+  writeFileSync(opencodeBin, "#!/bin/sh\nexit 0\n", { mode: 0o700 })
 
   const env = { PATH: process.env.PATH, HOME: home, XDG_DATA_HOME: join(root, "xdg-data"), XDG_CONFIG_HOME: config,
     XDG_STATE_HOME: state, XDG_CACHE_HOME: cache, TMPDIR: temporary }
@@ -369,11 +415,11 @@ test("stored torre diagnoses and installs autonomously from an isolated unrelate
   // Sin versión activa la lista va vacía: no hay payload contra el cual comparar.
   expect(JSON.parse(diagnose.stdout)).toEqual({ operation: "diagnose", healthy: false, active: null, missing: [] })
 
-  const installed = spawnSync(stagedTorre, ["install", "10.0.0", release], { cwd, env, encoding: "utf8" })
+  const installed = spawnSync(stagedTorre, ["install", "10.0.0", release, "--herdr-bin", herdrBin, "--opencode-bin", opencodeBin], { cwd, env, encoding: "utf8" })
   expect({ status: installed.status, stderr: installed.stderr }).toEqual({ status: 0, stderr: "" })
   expect(JSON.parse(installed.stdout)).toMatchObject({ operation: "install", active: "10.0.0", changed: true, stored: true })
   expect(JSON.parse(readFileSync(join(publication, "active.json"), "utf8"))).toEqual({ version: "10.0.0", previous: null })
-  expect(readdirSync(join(publication, "versions/10.0.0")).sort()).toEqual([".manifest", "bin", "core.mjs", "hosts", "install", "jornada", "main-store"])
+  expect(readdirSync(join(publication, "versions/10.0.0")).sort()).toEqual([".manifest", "bin", "core.mjs", "host-runtime.json", "hosts", "install", "jornada", "main-store"])
 
   const files = Object.fromEntries(RUNTIME_PAYLOAD_FILES.map((file) => [file, readFileSync(join(release, file))]))
   const expectedManifest = createHash("sha256").update(JSON.stringify(Object.entries(files).sort(([left], [right]) => left.localeCompare(right))

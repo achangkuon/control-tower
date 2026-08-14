@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
-import { appendFileSync, chmodSync, copyFileSync, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, closeSync, readFileSync, readdirSync, realpathSync, rmSync, renameSync, symlinkSync, writeFileSync } from "node:fs"
+import { appendFileSync, chmodSync, constants, copyFileSync, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, closeSync, readFileSync, readdirSync, realpathSync, rmSync, renameSync, symlinkSync, writeFileSync } from "node:fs"
 import { createHash } from "node:crypto"
-import { dirname, isAbsolute, join, sep } from "node:path"
+import { basename, dirname, isAbsolute, join, sep } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { clearActivePointer, readActivePointer, replaceActivePointer, rollbackActivePointer } from "./active-pointer.mjs"
@@ -13,6 +13,75 @@ const audit = (stateRoot, record) => {
   mkdirSync(directory, { recursive: true, mode: 0o700 })
   appendFileSync(path, `${JSON.stringify(record)}\n`, { mode: 0o600 })
   const fd = openSync(path, "r"); try { fsyncSync(fd) } finally { closeSync(fd) }
+}
+
+const hostRuntimeRecord = (versionRoot) => join(versionRoot, "host-runtime.json")
+const secureExecutable = (path, name) => {
+  if (!path) throw new Error("CT_HOST_RUNTIME_REQUIRED")
+  if (typeof path !== "string" || !isAbsolute(path)) throw new Error("CT_HOST_RUNTIME_INVALID")
+  let initial
+  try { initial = lstatSync(path) } catch { throw new Error("CT_HOST_RUNTIME_INVALID") }
+  if (!initial.isFile() || initial.isSymbolicLink() || initial.uid !== process.getuid() || initial.nlink !== 1
+    || (initial.mode & 0o022) !== 0 || (initial.mode & 0o100) === 0) throw new Error("CT_HOST_RUNTIME_INVALID")
+  let canonical
+  try { canonical = realpathSync(path) } catch { throw new Error("CT_HOST_RUNTIME_INVALID") }
+  if (canonical !== path || basename(canonical) !== name) throw new Error("CT_HOST_RUNTIME_INVALID")
+  const bytes = readFileSync(canonical), final = lstatSync(canonical)
+  for (const key of ["dev", "ino", "size", "mtimeMs", "ctimeMs", "uid", "mode", "nlink"]) {
+    if (initial[key] !== final[key]) throw new Error("CT_HOST_RUNTIME_CHANGED")
+  }
+  return { path: canonical, sha256: createHash("sha256").update(bytes).digest("hex"), dev: final.dev, ino: final.ino,
+    size: final.size, mtimeMs: final.mtimeMs, ctimeMs: final.ctimeMs, uid: final.uid, mode: final.mode & 0o777, nlink: final.nlink }
+}
+
+const validateHostRuntimeRecord = (record, version) => {
+  if (!record || record.schema !== "control-tower.host-runtime/v1" || record.runtimeVersion !== version) throw new Error("CT_HOST_RUNTIME_RECORD_INVALID")
+  for (const name of ["herdr", "opencode"]) {
+    const executable = record[name]
+    if (!executable || basename(executable.path ?? "") !== name || typeof executable.sha256 !== "string" || !/^[0-9a-f]{64}$/.test(executable.sha256)
+      || !["dev", "ino", "size", "mtimeMs", "ctimeMs", "uid", "mode", "nlink"].every((key) => typeof executable[key] === "number")) throw new Error("CT_HOST_RUNTIME_RECORD_INVALID")
+  }
+  if (record.herdr.path === record.opencode.path) throw new Error("CT_HOST_RUNTIME_RECORD_INVALID")
+  return record
+}
+
+export function readHostRuntimeIdentity(dataRoot, version) {
+  const versionRoot = join(dataRoot, "versions", version), recordPath = hostRuntimeRecord(versionRoot)
+  let directory, file
+  try { directory = lstatSync(versionRoot); file = lstatSync(recordPath) } catch { throw new Error("CT_HOST_RUNTIME_RECORD_MISSING") }
+  if (!directory.isDirectory() || directory.isSymbolicLink() || directory.uid !== process.getuid() || (directory.mode & 0o777) !== 0o700
+    || !file.isFile() || file.isSymbolicLink() || file.uid !== process.getuid() || file.nlink !== 1 || (file.mode & 0o777) !== 0o600) throw new Error("CT_HOST_RUNTIME_RECORD_INVALID")
+  try { return validateHostRuntimeRecord(JSON.parse(readFileSync(recordPath, "utf8")), version) }
+  catch (error) { if (error.message.startsWith("CT_HOST_RUNTIME_")) throw error; throw new Error("CT_HOST_RUNTIME_RECORD_INVALID") }
+}
+
+const captureHostRuntimeIdentity = (version, { herdrBin, opencodeBin }) => {
+  const herdr = secureExecutable(herdrBin, "herdr"), opencode = secureExecutable(opencodeBin, "opencode")
+  if (herdr.path === opencode.path) throw new Error("CT_HOST_RUNTIME_INVALID")
+  return { schema: "control-tower.host-runtime/v1", runtimeVersion: version, herdr, opencode }
+}
+
+const storeHostRuntimeIdentity = (versionRoot, record) => {
+  const { runtimeVersion: version } = record
+  const bytes = `${JSON.stringify(record)}\n`, path = hostRuntimeRecord(versionRoot)
+  if (existsSync(path)) {
+    if (readFileSync(path, "utf8") !== bytes) throw new Error("CT_HOST_RUNTIME_IMMUTABLE")
+    readHostRuntimeIdentity(dirname(dirname(versionRoot)), version)
+    return { path, created: false }
+  }
+  let descriptor
+  try {
+    descriptor = openSync(path, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW, 0o600)
+    writeFileSync(descriptor, bytes)
+    fsyncSync(descriptor)
+  } catch (error) {
+    if (descriptor !== undefined) closeSync(descriptor)
+    rmSync(path, { force: true })
+    throw error
+  }
+  closeSync(descriptor)
+  chmodSync(path, 0o600)
+  return { path, created: true }
 }
 
 const verifyLegacyCheckout = (path) => {
@@ -168,7 +237,7 @@ const installPathShim = (dataRoot, version, shimPath) => {
   return { path: shimPath, backup }
 }
 
-export function lifecycle({ action, version, files, dataRoot, configRoot, stateRoot, legacyConfigPath, failValidation = false, pointerOptions, expectedMembers, shimPath }) {
+export function lifecycle({ action, version, files, dataRoot, configRoot, stateRoot, legacyConfigPath, failValidation = false, pointerOptions, expectedMembers, shimPath, herdrBin, opencodeBin }) {
   const before = readActivePointer(dataRoot)
   if (action === "diagnose") {
     const installed = before ? join(dataRoot, "versions", before.version) : null
@@ -177,22 +246,31 @@ export function lifecycle({ action, version, files, dataRoot, configRoot, stateR
     return { operation: action, healthy: manifested && missing.length === 0, active: before?.version ?? null, missing }
   }
   if (action === "install" || action === "upgrade") {
+    const identity = captureHostRuntimeIdentity(version, { herdrBin, opencodeBin })
     const legacy = action === "upgrade" ? prepareLegacyInstaller(legacyConfigPath) : null
     if (failValidation) {
       audit(stateRoot, { operation: action, version, outcome: "validation-failed", active: before?.version ?? null })
       throw new Error("CT_UPGRADE_VALIDATION_FAILED")
     }
     const stored = storeVersion(dataRoot, version, files)
+    let hostRuntime
+    try { hostRuntime = storeHostRuntimeIdentity(stored.path, identity) }
+    catch (error) {
+      if (stored.created) rmSync(stored.path, { recursive: true, force: true })
+      throw error
+    }
     let journal
     try { journal = persistLegacyInstaller(stateRoot, legacy) }
     catch (error) {
       if (stored.created) rmSync(join(dataRoot, "versions", version), { recursive: true, force: true })
+      else if (hostRuntime.created) rmSync(hostRuntime.path, { force: true })
       throw error
     }
     let pointer
     try { pointer = replaceActivePointer(dataRoot, version, pointerOptions) }
     catch (error) {
       if (stored.created) rmSync(join(dataRoot, "versions", version), { recursive: true, force: true })
+      else if (hostRuntime.created) rmSync(hostRuntime.path, { force: true })
       if (journal?.created) rmSync(journal.paths.directory, { recursive: true, force: true })
       audit(stateRoot, { operation: action, version, outcome: "pointer-failed", active: before?.version ?? null, code: error.message })
       throw error
@@ -232,10 +310,20 @@ export function runCli([action = "diagnose", version, source, ...options], env =
     configRoot: join(env.XDG_CONFIG_HOME ?? join(env.HOME, ".config"), "control-tower"),
     stateRoot: join(env.XDG_STATE_HOME ?? join(env.HOME, ".local/state"), "control-tower"),
   }
-  if (options.some((option) => option !== "--shim")) throw new Error("CT_LIFECYCLE_OPTION_INVALID")
+  let herdrBin, opencodeBin, shimPath
+  for (let index = 0; index < options.length; index += 1) {
+    const option = options[index]
+    if (option === "--shim" && !shimPath) { shimPath = join(env.TORRE_BIN_DIR ?? join(env.HOME, ".local/bin"), "torre"); continue }
+    if ((option === "--herdr-bin" || option === "--opencode-bin") && options[index + 1] && !options[index + 1].startsWith("--")) {
+      if (option === "--herdr-bin" && !herdrBin) herdrBin = options[++index]
+      else if (option === "--opencode-bin" && !opencodeBin) opencodeBin = options[++index]
+      else throw new Error("CT_LIFECYCLE_OPTION_INVALID")
+      continue
+    }
+    throw new Error("CT_LIFECYCLE_OPTION_INVALID")
+  }
   const files = source ? readRuntimePayload(source, { strict: !isRuntimeCheckout(source) }) : undefined
-  const shimPath = options.includes("--shim") ? join(env.TORRE_BIN_DIR ?? join(env.HOME, ".local/bin"), "torre") : undefined
-  return lifecycle({ ...roots, action, version, files, expectedMembers: RUNTIME_PAYLOAD_FILES, shimPath, legacyConfigPath: join(env.XDG_CONFIG_HOME ?? join(env.HOME, ".config"), "opencode/opencode.json"), failValidation: env.CT_FAIL_VALIDATION === "1" })
+  return lifecycle({ ...roots, action, version, files, expectedMembers: RUNTIME_PAYLOAD_FILES, shimPath, herdrBin, opencodeBin, legacyConfigPath: join(env.XDG_CONFIG_HOME ?? join(env.HOME, ".config"), "opencode/opencode.json"), failValidation: env.CT_FAIL_VALIDATION === "1" })
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
