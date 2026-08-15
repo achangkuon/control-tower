@@ -825,6 +825,70 @@ describe("atomic owner-only Main store", () => {
     expect(JSON.parse(readFileSync(join(root, "current-epoch.json"), "utf8"))).toEqual({ epoch: 4, project_id: "project-a" })
   })
 
+  test("serializes epoch rotation against binding consumption without post-publication old-epoch effects", async () => {
+    const waitFor = (path) => {
+      const deadline = Date.now() + 1_000
+      while (!existsSync(path)) {
+        if (Date.now() >= deadline) throw new Error(`barrier unavailable: ${path}`)
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 2)
+      }
+    }
+    const seed = (request_ref) => {
+      const fixture = setup(), { root, store } = fixture
+      activateJornada(store)
+      store.createAuthorization({ actor: "MAIN", ...authorizationRecord(`auth-${request_ref}`) })
+      store.consumeAuthorization({ actor: "MAIN", authorization_id: `auth-${request_ref}`, candidate_revision: candidateRevision, decision: "APPROVED", expected_revision: 1 })
+      store.registerAssignmentLocation({ actor: "MAIN", project_id: "project-a", assignment_ref: `assignments/${request_ref}.json`, worktree: `/worktrees/${request_ref}`, fence_path: `/runtime/${request_ref}` })
+      store.issueLaunchBinding({ actor: "MAIN", project_id: "project-a", request_ref, authorization_id: `auth-${request_ref}`, brief: "Approved", brief_ref: `briefs/${request_ref}.json`, assignment_ref: `assignments/${request_ref}.json`, candidate_revision: candidateRevision, host_epoch: 3 })
+      return fixture
+    }
+    const consumer = String.raw`
+      import { existsSync, writeFileSync } from "node:fs";
+      import { createLaunchBindingConsumer } from "./main-store/launch-consumer.mjs";
+      const [root, request, barrier] = process.argv.slice(1);
+      const wait = (name) => { while (!existsSync(barrier+"/"+name)) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,2); };
+      try {
+        writeFileSync(barrier+"/consumer-started", "1");
+        const binding = createLaunchBindingConsumer({ root, testEpochTransactionHook: (event) => { if (event === "contended") return writeFileSync(barrier+"/consumer-contended", "1"); writeFileSync(barrier+"/consumer-acquired", "1"); wait("consumer-go"); } }).consume(request);
+        writeFileSync(barrier+"/host-effect", JSON.stringify(binding)); console.log(JSON.stringify({ ok:true }));
+      } catch (error) { console.log(JSON.stringify({ ok:false, code:error.code })); }
+    `
+    const rotation = String.raw`
+      import { existsSync, writeFileSync } from "node:fs";
+      import { bindMainAuthority, createMainStore } from "./main-store/index.mjs";
+      const [root, barrier] = process.argv.slice(1); const binding = { project_id:"project-a", revision:7, repository_root:"/repo/a", git_common_dir:"/repo/a/.git", remote:"git@example.invalid:a.git", branch:"main", main_session_id:"main-session-a", store_path:root, epoch:4 };
+      const authority = bindMainAuthority({ trustedBindingProvider:()=>binding, rederiveBinding:()=>({...binding}) });
+      writeFileSync(barrier+"/rotation-started", "1"); createMainStore({ root, authority, capability:authority.capability, testEpochTransactionHook: (event) => { if (event === "contended") return writeFileSync(barrier+"/rotation-contended", "1"); writeFileSync(barrier+"/rotation-acquired", "1"); while (!existsSync(barrier+"/rotation-go")) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,2); } }); console.log(JSON.stringify({ ok:true }));
+    `
+    const spawn = (source, args) => Bun.spawn([process.execPath, "-e", source, ...args], { cwd: projectRoot, env: { ...process.env, NODE_ENV: "test", BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0" }, stdout: "pipe", stderr: "pipe" })
+    const result = async (process) => { const output = await new Response(process.stdout).text(); await process.exited; return JSON.parse(output.trim()) }
+
+    const first = seed("epoch-consumer-first"), firstBarrier = mkdtempSync(join(tmpdir(), "ct-epoch-a-")); temporaryDirectories.push(firstBarrier)
+    const oldConsumer = spawn(consumer, [first.root, "epoch-consumer-first", firstBarrier]); waitFor(join(firstBarrier, "consumer-acquired"))
+    const contendingRotation = spawn(rotation, [first.root, firstBarrier]); waitFor(join(firstBarrier, "rotation-started"))
+    waitFor(join(firstBarrier, "rotation-contended"))
+    expect(JSON.parse(readFileSync(join(first.root, "current-epoch.json"), "utf8"))).toEqual({ epoch: 3, project_id: "project-a" })
+    writeFileSync(join(firstBarrier, "consumer-go"), "1")
+    expect(await result(oldConsumer)).toEqual({ ok: true })
+    expect(JSON.parse(readFileSync(join(first.root, "launch-consumptions", "epoch-consumer-first.json"), "utf8"))).toMatchObject({ request_ref: "epoch-consumer-first" })
+    expect(readdirSync(join(first.root, "launch-consumptions"))).toEqual(["epoch-consumer-first.json"])
+    expect(JSON.parse(readFileSync(join(firstBarrier, "host-effect"), "utf8"))).toMatchObject({ project_id: "project-a" })
+    waitFor(join(firstBarrier, "rotation-acquired")); expect(JSON.parse(readFileSync(join(first.root, "current-epoch.json"), "utf8"))).toEqual({ epoch: 3, project_id: "project-a" })
+    writeFileSync(join(firstBarrier, "rotation-go"), "1"); expect(await result(contendingRotation)).toEqual({ ok: true })
+    expect(JSON.parse(readFileSync(join(first.root, "current-epoch.json"), "utf8"))).toEqual({ epoch: 4, project_id: "project-a" })
+
+    const second = seed("epoch-rotation-first"), secondBarrier = mkdtempSync(join(tmpdir(), "ct-epoch-b-")); temporaryDirectories.push(secondBarrier)
+    const firstRotation = spawn(rotation, [second.root, secondBarrier]); waitFor(join(secondBarrier, "rotation-acquired"))
+    const staleConsumer = spawn(consumer, [second.root, "epoch-rotation-first", secondBarrier]); waitFor(join(secondBarrier, "consumer-started"))
+    waitFor(join(secondBarrier, "consumer-contended"))
+    writeFileSync(join(secondBarrier, "rotation-go"), "1"); expect(await result(firstRotation)).toEqual({ ok: true })
+    waitFor(join(secondBarrier, "consumer-acquired")); expect(JSON.parse(readFileSync(join(second.root, "current-epoch.json"), "utf8"))).toEqual({ epoch: 4, project_id: "project-a" })
+    writeFileSync(join(secondBarrier, "consumer-go"), "1")
+    expect(await result(staleConsumer)).toEqual({ ok: false, code: "CT_LAUNCH_BINDING_STALE" })
+    expect(existsSync(join(second.root, "launch-consumptions", "epoch-rotation-first.json"))).toBe(false)
+    expect(existsSync(join(secondBarrier, "host-effect"))).toBe(false)
+  })
+
   test("fails closed before issuing or consuming a launch binding with stale authority or lifecycle", () => {
     const { root, store } = setup()
     const request = {

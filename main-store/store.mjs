@@ -82,7 +82,7 @@ const responsePair = (input) => {
   }
 }
 
-export const createMainStore = ({ root, authority, capability, beforeCommit } = {}) => {
+export const createMainStore = ({ root, authority, capability, beforeCommit, testEpochTransactionHook } = {}) => {
   if (!isAbsolute(root ?? "") || !authority || typeof authority.assert !== "function") fail("CT_STORE_INVALID", "A bound absolute store is required")
   const binding = authority.assert(capability, { store_path: root })
   mkdirSync(root, { recursive: true, mode: 0o700 })
@@ -98,7 +98,7 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
     return path
   }
   const assignmentLocationPath = (assignmentRef) => join(directory("assignment-locations"), `${encodeURIComponent(assignmentRef)}.json`)
-  const withLock = (path, operation) => {
+  const withLock = (path, operation, testHook) => {
     const lock = `${path}.lock`
     let descriptor
     try {
@@ -106,6 +106,7 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
       while (descriptor === undefined) {
         try { descriptor = openSync(lock, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW, 0o600) }
         catch (error) {
+          if (error?.code === "EEXIST") testHook?.("contended")
           if (error?.code !== "EEXIST" || Date.now() >= deadline) throw error
           Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 2)
         }
@@ -183,6 +184,7 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
     return stats.isFile() && !stats.isSymbolicLink() && stats.uid === process.getuid() && (stats.mode & 0o777) === 0o600 && stats.nlink === 1
   }
   const publishCurrentEpoch = () => withLock(join(root, "epoch-transaction"), () => {
+    if (process.env.NODE_ENV === "test") testEpochTransactionHook?.("acquired")
     const record = { project_id: binding.project_id, epoch: binding.epoch }, recordPath = epochRecordPath(binding.epoch)
     if (existsSync(recordPath)) {
       if (!safeEpochFile(recordPath) || !exactKeys(parse(recordPath), ["epoch", "project_id"]) || parse(recordPath).project_id !== record.project_id || parse(recordPath).epoch !== record.epoch) {
@@ -201,7 +203,7 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
         fail("CT_EPOCH_AUTHORITY_INVALID", "Epoch record changed during publication")
       }
     })
-  })
+  }, process.env.NODE_ENV === "test" ? testEpochTransactionHook : undefined)
   publishCurrentEpoch()
   const approvedAuthorizationFor = (authorizationId, candidateRevision) => {
     if (typeof authorizationId !== "string" || authorizationId.length === 0) fail("CT_AUTH_INVALID", "Approved authorization is required")

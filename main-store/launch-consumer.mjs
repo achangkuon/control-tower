@@ -11,7 +11,7 @@ const validRef = (value) => typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9
 const bindingKeys = ["request_ref", "authorization_id", "brief", "brief_ref", "assignment_ref", "worktree", "candidate_revision", "host_epoch", "fence_path", "project_id", "jornada_id", "jornada_revision", "active_epoch"]
 const epochKeys = ["epoch", "project_id"]
 
-export const createLaunchBindingConsumer = ({ root } = {}) => {
+export const createLaunchBindingConsumer = ({ root, testEpochTransactionHook } = {}) => {
   if (!isAbsolute(root ?? "") || !existsSync(root)) fail("CT_LAUNCH_BINDING_INVALID", "Main launch store is unavailable")
   const rootStats = lstatSync(root)
   if (!rootStats.isDirectory() || rootStats.isSymbolicLink() || rootStats.uid !== process.getuid() || (rootStats.mode & 0o777) !== 0o700) fail("CT_LAUNCH_BINDING_INVALID", "Main launch store is unsafe")
@@ -33,10 +33,12 @@ export const createLaunchBindingConsumer = ({ root } = {}) => {
       while (descriptor === undefined) {
         try { descriptor = openSync(path, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW, 0o600) }
         catch (error) {
+          if (process.env.NODE_ENV === "test" && error?.code === "EEXIST") testEpochTransactionHook?.("contended")
           if (error?.code !== "EEXIST" || Date.now() >= deadline) fail("CT_LAUNCH_BINDING_STALE", "Main epoch transaction is unavailable")
           Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 2)
         }
       }
+      if (process.env.NODE_ENV === "test") testEpochTransactionHook?.("acquired")
       return operation()
     } finally {
       if (descriptor !== undefined) { closeSync(descriptor); rmSync(path, { force: true }) }
