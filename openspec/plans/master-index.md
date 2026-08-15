@@ -1,16 +1,18 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-13 contra el candidato técnico de entrega de `S10.1`, basado en `a95149be491cb24ee940206805d57c24dd0ee776`.
+> Última reconciliación: 2026-08-15 contra `origin/master@8dab97e601e7c55e1c4324fe47aa0b16a7e8d5d8` y la resolución del maintainer para S4.2.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md).
 
 ## 📍 Punto de retoma
 
-`S10.1` cerró técnicamente como candidato de entrega: contrato/contexto y supervisión opaca fallan cerrado antes de persistir; sólo una persistencia owner-only exitosa devuelve `prepared`. Focused Bun pasó 8/0 (144 assertions) y full 679/0 (4164 assertions, 44 archivos).
+Las nueve decisiones `escala` de la cadena de release están resueltas; fuera de ella sobrevive `S9.2` sobre la frontera `bun ci` en raíz Pi fresca, sin contaminar la cadena por su recurso Pi.
 
-P10 queda 🟢 LISTO en 67% (2/3 S). `S10.2` conserva decisiones y `Área` abiertas, por lo que permanece 🔴 BLOQUEADO. `S4.2` permanece 🔴 BLOQUEADO: el candidato local `6ff1ca27` pasó focused 123/123 y full 717/717 como `PASS_LOCAL_BLOCKED_EXTERNAL`, pero Herdr instalado `0.8.0` no expone v1.
+`S4.2` queda 🟢 LISTO por readiness técnica: el candidato local `6ff1ca27` pasó focused 123/123 y full 717/717. Esta etiqueta no acredita activación productiva ni `✅ COMPLETO`; Herdr `0.8.0` aún no expone v1, por lo que siguen pendientes su entrega, instalación y la conformance/runtime verification real.
 
-El retoma de `S4.2` es esperar al maintainer de Herdr en la Discussion [#2830](https://github.com/herdrdev/herdr/discussions/2830). No se modifica su 25% (1/4 S): ninguna Sesión adicional cerró.
+Lo pendiente es `S5.2`, el dueño de la brecha 6, la enumeración de `enroll/**` y la entrega externa de Herdr v1 para activar S4.2.
+
+Próxima capacidad 🟢 LISTO: `S4.2`, `S5.9` y `S10.2`. P4 conserva 25% (1/4 S): no cerró ninguna Sesión adicional.
 
 ## Granularidad
 
@@ -33,7 +35,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | S7.1 | [STATUS](plan-7/STATUS.md) |
 | P8 | Release instalable | 🔵 EN CURSO | 63% (5/8 S) | — | Maintainer | S8.7, S8.5, S8.6 | [STATUS](plan-8/STATUS.md) |
 | P9 | Slots seguros de Jornada y caché externa de Bun | 🟢 LISTO | 0% (0/2 S) | — | Maintainer | S9.1, S9.2 | [STATUS](plan-9/STATUS.md) |
-| P10 | Ejecución y supervisión autónoma de Jornada | 🟢 LISTO | 67% (2/3 S) | — | Maintainer | S10.2 | [STATUS](plan-10/STATUS.md) |
+| P10 | Ejecución y supervisión autónoma de Jornada | 🟢 LISTO | 67% (2/3 S) | — | Maintainer | S10.2 (🟢 LISTO desde 2026-08-14) | [STATUS](plan-10/STATUS.md) |
 
 ## 🗂️ Planes archivados
 

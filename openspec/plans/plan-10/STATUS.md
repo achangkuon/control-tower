@@ -17,14 +17,16 @@ conserva la arquitectura productora de supervisión y sus decisiones abiertas.
 | Campo | Contrato |
 |---|---|
 | Autoridad | Decisión explícita del maintainer: Plan nuevo P10 para las responsabilidades provisionales `S3.5`/`S3.6`, renumeradas `S10.1`/`S10.2`. |
-| Estado | 🟢 LISTO: `S10.3` y `S10.1` están ✅ COMPLETO; `S10.2` sigue 🔴 BLOQUEADO. |
+| Estado | 🟢 LISTO: `S10.3` y `S10.1` están ✅ COMPLETO; `S10.2` pasó de 🔴 BLOQUEADO a 🟢 LISTO el 2026-08-14 al resolverse las decisiones 26 y 27. |
 | Orden | `S3.4 → S10.3 → S10.1 → S10.2 → S7.1`. |
-| Capacidad derivada | P10 no aporta capacidad mientras `S10.2` siga sin `Área`; la capacidad siguiente permanece en `S4.2` y `S5.9`. |
+| Capacidad derivada | P10 aporta capacidad desde el 2026-08-14: `S10.2` está 🟢 LISTO con `Área` fijada. La capacidad concurrente sigue incluyendo `S4.2` y `S5.9`. |
 | Avance | 67% (2/3 S): `S10.3` y `S10.1` están ✅ COMPLETO. |
 | Release | P10 forma parte del producto, roadmap y release únicos; aporta 1/3 al denominador. |
+| Publicación | El desbloqueo de `S10.2` está publicado en `origin/master@b845911cbc569f1d525d20ffc28a06dcfda4fa49` (2026-08-14), con el registro del SHA publicado en `2dbe8e8` y un tercer commit de cierre documental encima. Es un corte documental: resuelve decisiones y reconcilia estado, no agrega runtime ni acredita implementación. |
 
 La jerarquía canónica es `Plan → Sesión → Módulo → Tarea`; `S10.3` y `S10.1` quedan enumeradas
-abajo. `S10.2` se detiene en Sesión mientras sus decisiones impiden fijar archivos.
+abajo. `S10.2` ya no se detiene en Sesión: la decisión 26 fijó su `Área` y la elaboración técnica debe
+enumerar las rutas exactas del repositorio antes de apply.
 
 ## Sesiones
 
@@ -32,7 +34,7 @@ abajo. `S10.2` se detiene en Sesión mientras sus decisiones impiden fijar archi
 |---|---|---|---|---|---|---|---|---|
 | `S10.3` | Contrato de ejecución versionado | ✅ COMPLETO | `direct` | Copia pasiva, exacta e indivisible con verificación estructural. | Decisión explícita del maintainer. | `S3.4` ✅ | `schemas/execution-contract-v1.schema.json` | — |
 | `S10.1` | Preparación persistida de Jornada | ✅ COMPLETO | `design-tasks` | Owner pasivo y gate consumidor verificados, sin arquitectura productora ni efectos. | Decisión explícita del maintainer. | `S10.3` ✅ | `jornada/**`, `test/jornada/**` | —; sin token de entrega ni SQLite de la Torre. |
-| `S10.2` | Supervisión sin armado local | 🔴 BLOQUEADO | `blocked` | Arquitectura visible/de seguridad e interlock abiertos; `Área` sin definir. | Brecha 7 de [implementation-state](../implementation-state.md). | `S10.1` | **Sin definir** | Centinela `ACTIVE` del repositorio supervisado. |
+| `S10.2` | Supervisión sin armado local | 🟢 LISTO | `design-tasks` | Arquitectura e interlock resueltos el 2026-08-14; `Área` fijada por la decisión 26. | Brecha 7 de [implementation-state](../implementation-state.md) y decisiones 26–27. | `S10.1` ✅ | `~/.local/state/control-tower/supervision/**` más las rutas del repositorio que lo escriben, leen y validan | Centinela separado fuera del repositorio supervisado. |
 
 ## Sesión 10.3 — Contrato de ejecución versionado
 
@@ -107,21 +109,27 @@ abajo. `S10.2` se detiene en Sesión mientras sus decisiones impiden fijar archi
 
 ## Sesión 10.2 — Supervisión sin armado local
 
-**Estado:** 🔴 BLOQUEADO
+**Estado:** 🟢 LISTO — las dos decisiones `escala` quedaron resueltas el 2026-08-14 (decisiones 26 y
+27 del [registro](../decision-register.md)) y con eso el `Área` quedó fijada. `S10.1` está ✅ COMPLETO,
+así que no queda dependencia ni decisión pendiente. No acredita implementación ni readiness de producción.
 
-**Depende de:** `S10.1`. La dependencia conserva el orden aprobado; `S10.1` puede construirse
+**Depende de:** `S10.1` ✅. La dependencia conserva el orden aprobado; `S10.1` puede construirse
 effect-incapable, pero ningún efecto se habilita antes de que esta Sesión entregue supervisión
 válida y vigente.
 
-**Área:** **sin definir**. La resolución de arquitectura debe fijarla explícitamente antes de
-elaborar o ejecutar la Sesión. No se adivina y, mientras falte, `S10.2` queda excluida de capacidad.
+**Área:** `~/.local/state/control-tower/supervision/**` como ubicación del centinela separado, más las
+rutas del repositorio que lo escriben, leen y validan. La elaboración técnica debe enumerar esas rutas
+exactas antes de apply; lo que la decisión 26 fija es que el centinela **no** vive dentro del
+repositorio supervisado.
 
-**Recurso:** centinela `ACTIVE` del repositorio supervisado.
+**Recurso:** centinela separado fuera del repositorio supervisado, bajo
+`~/.local/state/control-tower/supervision/<project-id>`. **Ya no** es el centinela `ACTIVE` del
+repositorio supervisado: ese era precisamente el mecanismo que la decisión 26 descartó.
 
-**Ruta:** `blocked` — cambia la semántica visible de supervisión y la frontera de autoridad de la
-Torre, toca seguridad y permisos, y parte de evidencia contradictoria. Sólo después de resolver
-las decisiones puede clasificarse la elaboración posterior. **Autoridad:** brecha 7 de
-[implementation-state](../implementation-state.md).
+**Ruta:** `design-tasks` — cambia la semántica visible de supervisión, pero la arquitectura ya está
+elegida por la decisión 26 y la frontera con `remote-control` por la 27, así que lo que falta es
+elaboración técnica sobre un contrato ya fijado y no un contrato de producto nuevo. **Autoridad:**
+brecha 7 de [implementation-state](../implementation-state.md) y las decisiones 26 y 27.
 
 Resuelve la brecha 7: el sellado desatendido exige la Torre armada, y los dos repositorios en uso
 tienen una razón de diseño para exigirla apagada. `control-tower` aborta sus dos tests P0 con
@@ -130,27 +138,31 @@ tienen una razón de diseño para exigirla apagada. `control-tower` aborta sus d
 
 **Decisiones:**
 
-- `escala` — **Pregunta exacta:** ¿la supervisión sin armar el repositorio supervisado se expresa
-  como un modo nuevo del centinela, un centinela separado o supervisión externa al repositorio?
+- `escala` — **RESUELTA por el maintainer el 2026-08-14 (decisión 26): centinela separado fuera del
+  repositorio supervisado**, bajo `~/.local/state/control-tower/supervision/<project-id>`.
+  **Pregunta que resolvía:** ¿la supervisión sin armar el repositorio supervisado se expresa como un
+  modo nuevo del centinela, un centinela separado o supervisión externa al repositorio?
   **Clase:** contrato visible del producto; seguridad y permisos. **Evidencia:** los dos tests P0
   de `control-tower` abortan con `ACTIVE`, mientras el sellado exige supervisión viva.
-  **Opciones y consecuencias:** (1) modo nuevo de `ACTIVE`, que cambia su contrato visible y sus
-  consumidores; (2) centinela separado, que agrega una segunda señal y exige definir autoridad y
-  precedencia; (3) supervisión externa, que evita armar el repositorio pero exige fijar identidad,
-  vigencia y prueba de liveness fuera de él. **Origen:** `S10.2`.
-  **Checkpoint:** antes de proposal, spec, design, definición de `Área` o implementación.
-  **Contamina:** toda `S10.2`, `S10.1`, `remote-control` y los dos tests P0 de
-  `test/migration.test.mjs`.
-- `escala` — **Pregunta exacta:** ¿`remote-control` conserva intacto su interlock o se autoriza un
-  cambio explícito para reconocer la nueva supervisión? **Clase:** dependencias o evidencia
+  **Por qué se descartaron las otras dos:** un modo nuevo de `ACTIVE` seguiría escribiendo el
+  marcador dentro del repositorio supervisado, que es exactamente lo que aborta los dos tests P0 y
+  congela el relay; la supervisión externa resuelve la brecha al precio de la arquitectura más grande
+  de las tres. El centinela afuera satisface «supervisar sin armar» con la superficie mínima, y tiene
+  precedente en `~/.local/state/control-tower/night/`. **Efecto:** fija el `Área` que faltaba y saca a
+  `S10.2` de la exclusión de capacidad. **Falsificable:** cualquier ruta de supervisión que escriba un
+  marcador dentro del repositorio supervisado. **Contaminaba:** toda `S10.2`, `S10.1`,
+  `remote-control` y los dos tests P0 de `test/migration.test.mjs`.
+- `escala` — **RESUELTA por el maintainer el 2026-08-14 (decisión 27): el interlock se conserva
+  intacto.** **Pregunta que resolvía:** ¿`remote-control` conserva intacto su interlock o se autoriza
+  un cambio explícito para reconocer la nueva supervisión? **Clase:** dependencias o evidencia
   contradictorias; contrato visible del producto; seguridad y permisos. **Evidencia:**
   `src/tower-guard.js:226` define `allowed = remote && off`, y la decisión aceptada del 2026-08-08
-  dice que el interlock no se retira; atravesarlo contradice esa autoridad.
-  **Opciones y consecuencias:** (1) conservarlo intacto, lo que obliga a que la supervisión sea
-  externa o invisible para ese interlock; (2) autorizar un cambio acotado de contrato, que exige
-  nueva autoridad de producto y seguridad antes de tocar `remote-control`. **Origen:** `S10.2`.
-  **Checkpoint:** antes de proposal, spec, design, definición de `Área` o implementación.
-  **Contamina:** toda `S10.2` y la decisión de complementariedad aceptada.
+  dice que el interlock no se retira; atravesarlo contradice esa autoridad. **Resolución:** con el
+  centinela fuera del repositorio nada lo arma, así que la condición sigue dando verdadero sin cambio
+  alguno. Cero líneas de `remote-control`, la decisión de complementariedad queda entera y no se
+  arriesga la única superficie ya validada en vivo. Es consecuencia directa de la decisión 26.
+  **Falsificable:** cualquier diff de esta Sesión que toque `remote-control`. **Contaminaba:** toda
+  `S10.2` y la decisión de complementariedad aceptada.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
 
@@ -166,8 +178,8 @@ tienen una razón de diseño para exigirla apagada. `control-tower` aborta sus d
 graph LR
   S34["S3.4 ciclo de vida Jornada · ✅"] --> S103["S10.3 contrato versionado · ✅"]
   S103 --> S101["S10.1 preparación persistida · ✅"]
-  S101 --> S102["S10.2 supervisión sin armado · 🔴"]
+  S101 --> S102["S10.2 supervisión sin armado · 🟢"]
   S102 --> S71["S7.1 conformidad de release · 📋"]
 ```
 
-**Avance derivado:** 67% (2/3 S). **Capacidad derivada:** `S10.2` permanece 🔴 BLOQUEADO sin `Área`; P10 no aporta capacidad elegible.
+**Avance derivado:** 67% (2/3 S) — `S10.2` en 🟢 LISTO aporta cero, no hay crédito parcial. **Capacidad derivada:** `S10.2` pasa a capacidad elegible por `design-tasks` desde el 2026-08-14, con `Área` fijada por la decisión 26. P10 aporta capacidad por primera vez.

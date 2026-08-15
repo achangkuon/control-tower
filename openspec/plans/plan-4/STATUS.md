@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
 | Outputs | Adapter contract, launcher Pi/OpenCode, health, stop proof, host epoch y fallback exclusivo. |
-| Roadmap | `S4.1` y `S1.16` están ✅ COMPLETO. `S4.2` implementó y probó el candidato local hasta `e48d7c5`, pero permanece 🔴 BLOQUEADO para activación productiva: Herdr instalado `0.8.0` no ofrece la capacidad v1 requerida. `S4.3` y `S4.4` permanecen 🔴 BLOQUEADO por sus dependencias propias. `S4.2`–`S4.4` enumeran toda la responsabilidad restante de Change E y P4 conserva un denominador cerrado de 4 Sesiones. |
+| Roadmap | `S4.1` y `S1.16` están ✅ COMPLETO. `S4.2` está 🟢 LISTO por readiness técnica del candidato local; la activación productiva sigue pendiente de Herdr v1 entregado e instalado y de la verificación real. `S4.3` y `S4.4` permanecen 🔴 BLOQUEADO por sus dependencias propias. `S4.2`–`S4.4` enumeran toda la responsabilidad restante de Change E y P4 conserva un denominador cerrado de 4 Sesiones. |
 | Referencias | [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). El proposal `sdd-tower-host-launcher` fue eliminado en `613a45d` por ser cáscara sin avance; su intención vive en este STATUS. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
@@ -165,7 +165,7 @@ Todos deben pasar para cerrar:
 
 ## Sesión 4.2 — Lanzamiento visible de raíz OpenCode
 
-**Estado:** 🔴 BLOQUEADO — el candidato local Control Tower `6ff1ca27fad75aa94b9a3fd66eb48a2860a601e2` (tree `1261ce2663b42273b72269b8d78fdab905a82f3d`) mantiene binding Main, publicación/rotación de epoch y consumo bajo una única transacción owner-only; preflight Linux/WSL abre y fija los inodos Herdr/OpenCode, valida identidad/hash/stat y conformance antes del consumo, y toda invocación posterior ejecuta el descriptor heredado por `/proc/self/fd/3` con ambiente saneado, timeout, límite de salida y kill. El resultado integral local es `PASS_LOCAL_BLOCKED_EXTERNAL`: focused 123/123 y full 717/717. Un fallo posterior al consumo es un intento final acotado: devuelve evidencia que exige a Main emitir una binding nueva. La activación productiva no puede avanzar: Herdr instalado `0.8.0` no expone la capacidad v1. El candidato upstream local `/home/emili/projects/herdr-s4-2` en `f977cb03baf4537cc7db873f2d4a7976b138c662` implementa el contrato aprobado, pero sigue sin push, release ni instalación; no es una dependencia entregada. El candidato Control Tower queda además tres commits de documentación detrás de `origin/master`; esa integración posterior puede cambiar su base y exige revalidación final.
+**Estado:** 🟢 LISTO — por resolución explícita del maintainer, esta etiqueta acredita readiness técnica del candidato local Control Tower `6ff1ca27fad75aa94b9a3fd66eb48a2860a601e2` (tree `1261ce2663b42273b72269b8d78fdab905a82f3d`), no activación productiva ni `✅ COMPLETO`. El candidato mantiene binding Main, publicación/rotación de epoch y consumo bajo una única transacción owner-only; preflight Linux/WSL abre y fija los inodos Herdr/OpenCode, valida identidad/hash/stat y conformance antes del consumo, y toda invocación posterior ejecuta el descriptor heredado por `/proc/self/fd/3` con ambiente saneado, timeout, límite de salida y kill. El resultado integral local es `PASS_LOCAL_BLOCKED_EXTERNAL`: focused 123/123 y full 717/717. Un fallo posterior al consumo es un intento final acotado: devuelve evidencia que exige a Main emitir una binding nueva. La activación productiva sigue pendiente: Herdr instalado `0.8.0` no expone la capacidad v1. El candidato upstream local `/home/emili/projects/herdr-s4-2` en `f977cb03baf4537cc7db873f2d4a7976b138c662` implementa el contrato aprobado, pero sigue sin push, release ni instalación; no es una dependencia entregada. El candidato Control Tower queda además tres commits de documentación detrás de `origin/master`; esa integración posterior puede cambiar su base y exige revalidación final.
 
 **Depende de:** `S4.1` ✅, `S1.16` ✅.
 
@@ -230,7 +230,7 @@ Después de aprobar un brief, Host Launcher crea un panel Herdr **nuevo y visibl
 
 **Estado:** 🔴 BLOQUEADO
 
-**Depende de:** `S4.2` 🔴, `S1.16` ✅.
+**Depende de:** `S4.2` 🟢, `S1.16` ✅.
 
 **Área:** `hosts/inspect.mjs`, `hosts/health.mjs`, `hosts/stop-proof.mjs`, `hosts/rehydration.mjs`, `test/hosts/inspect.test.mjs`, `test/hosts/health.test.mjs`, `test/hosts/stop-proof.test.mjs`, `test/hosts/rehydration.test.mjs`
 
@@ -313,7 +313,7 @@ Enforce el `host_epoch` emitido por Main y permite failover OpenCode → Pi sól
 
 ```mermaid
 graph LR
-  S41["S4.1 fence · ✅"] --> S42["S4.2 raíz visible · 🔴"]
+  S41["S4.1 fence · ✅"] --> S42["S4.2 raíz visible · 🟢"]
   S116["S1.16 OpenCode wake · ✅"] --> S42
   S42 --> S43["S4.3 liveness/rehidratación · 🔴"]
   S116 --> S43

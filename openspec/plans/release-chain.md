@@ -58,7 +58,7 @@ graph LR
   S33 --> S34["S3.4 ciclo de vida Jornada · ✅"]
   S34 --> S103["S10.3 contrato versionado · ✅"]
   S103 --> S101["S10.1 preparación persistida · ✅"]
-  S101 --> S102["S10.2 supervisión válida · 🔴"]
+  S101 --> S102["S10.2 supervisión válida · 🟢"]
   S102 --> S71
   S34 --> S51["S5.1 candidate contracts · ✅"]
   S51 --> S41["S4.1 fence hosts · ✅"]
@@ -124,14 +124,14 @@ graph LR
 | ✅ | `S5.11` | Productores canónicos de provenance del checkpoint | ✅ COMPLETO | `S5.8` ✅; integrada y verificada localmente en `master@b4d7fcd` (tree `7873570`), 12/12 criterios, full 656/0/3941 en 42 archivos, 620 líneas authored bajo `size:exception`, sin push remoto |
 | ✅ | `S5.12` | Composición única de productores hacia parking bajo Main | ✅ COMPLETO | `S5.11` ✅; implementación `e7b1437f8c98c5856236e06e4c1fb5c40e9dc8ef`, 8/8 criterios, focused 52/0/306, full 663/0/3986 y publicación probada en `origin/master@cebcaeb` |
 | ▶ | `S5.9` | Binding autoritativo del checkpoint estacionado | 🟢 LISTO | `S5.12` ✅; dependencia, autoridad, `Área`, `Recurso` y decisiones propias reevaluadas sin bloqueo restante; route `full-sdd` retoma antes de tasks/apply y reconcilia proposal/spec/design externos |
-| — | `S5.10` | Binding inmutable del trabajo independiente completado | 🔴 BLOQUEADO | `S5.9` integrada y su propio contrato de provenance/seguridad resuelto; route `blocked` |
-| — | `S5.5` | Decisión estacionada y continuación independiente | 🔴 BLOQUEADO | `S5.10` integrada; transitivamente `S5.9`, `S5.12`, `S5.11` y `S5.8` ✅; pausada antes de tasks/apply |
-| — | `S5.3` | Continuación | 🔴 BLOQUEADO | Bloqueo transitivo por `S5.2` |
-| — | `S8.7` | Puente Hermes/Telegram | 🔴 BLOQUEADO | Dependencias propias ✅ y decisiones Telegram resueltas; bloquea el inicializador confiable de producción pendiente |
+| — | `S5.10` | Binding inmutable del trabajo independiente completado | 🔴 BLOQUEADO | Sólo por dependencia desde el 2026-08-14: `S5.9` integrada. Su contrato de provenance/seguridad quedó resuelto por la decisión 30 —precedente `S5.8`—; ruta proyectada `design-tasks` |
+| — | `S5.5` | Decisión estacionada y continuación independiente | 🔴 BLOQUEADO | `S5.10` integrada; transitivamente `S5.9`, `S5.12`, `S5.11` y `S5.8` ✅; pausada antes de tasks/apply. Su decisión propia quedó resuelta por la 31 |
+| — | `S5.3` | Continuación | 🔴 BLOQUEADO | Bloqueo transitivo por `S5.2`. Sus decisiones propias quedaron resueltas por las 28 y 29 |
+| — | `S8.7` | Puente Hermes/Telegram | 🔴 BLOQUEADO | Dependencias propias ✅ y **cero decisiones abiertas** desde el 2026-08-14. El bloqueo restante es un prerrequisito, no una decisión: la decisión 25 asignó el inicializador confiable a una Sesión nueva con dueño `enroll/**` que todavía hay que enumerar |
 | ✅ | `S10.3` | Contrato de ejecución versionado | ✅ COMPLETO | `S3.4` ✅; candidato exacto basado en `cdd0d09`, 17.297 bytes, 407 líneas, SHA-256 `2f4838aa244b30e280c5c558286b0e4d9fbb503a0ef1808ffc27501c1540fddc`; entrega directa aún no autorizada |
 | ✅ | `S10.1` | Preparación persistida de Jornada | ✅ COMPLETO | `S10.3` ✅; candidato técnico verificado, focused 8/0/144 y full 679/0/4164 en 44 archivos; owner pasivo Jornada-local y cero efectos |
-| — | `S10.2` | Supervisión válida sin armado local | 🔴 BLOQUEADO | `S10.1`; decisión pendiente entre modo nuevo de `ACTIVE`, centinela separado o supervisión externa, más decisión separada sobre el interlock de `remote-control` |
-| 4 | `S7.1` | Conformidad de release | 📋 PLANIFICADO | `S4.4`, `S5.3`, `S8.7`, `S5.5`, `S10.2` |
+| ▶ | `S10.2` | Supervisión válida sin armado local | 🟢 LISTO | `S10.1` ✅; decisiones 26 y 27 resueltas el 2026-08-14 — centinela separado fuera del repositorio supervisado e interlock de `remote-control` intacto. Con eso quedó fijada el `Área` y la ruta pasa a `design-tasks` |
+| 4 | `S7.1` | Conformidad de release | 📋 PLANIFICADO | `S4.4`, `S5.3`, `S8.7`, `S5.5`, `S10.2`. Sus dos decisiones propias quedaron resueltas el 2026-08-14: el piloto se corre sobre `control-tower` mismo (32) y un rojo bloquea sólo sobre un Gate A–G (33) |
 
 > **Contradicción reconciliada el 2026-08-11.** Hasta esta fecha el grafo Mermaid declaraba
 > `S44 --> S71` y esta tabla omitía `S4.4`, con la prosa sin mencionar su retiro. Las dos
@@ -186,7 +186,9 @@ La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas; no s
 
 `S1.16` está ✅ COMPLETO en `da4e391`; la entrega directa incluye su cierre documental. El consumer está cerrado, pero la composición productiva del provider/injection no: pertenece a `S4.2/M4.2.3`.
 
-La capacidad se sigue derivando, no se fija como cupo. `S4.2` y `S5.9` están 🟢 LISTO; `S10.1` está ✅ COMPLETO como candidato técnico verificado. `S4.2` sólo queda habilitada para `design-tasks` y debe probar Herdr/OpenCode, stop-proof/decision providers y wiring productivo antes de cualquier claim de readiness. `S1.17` mantiene su bloqueo propio por `assignment_id`, `session_id` y capacidad de binding Workspace Manager/Main reales ausentes y, con él, `S1.18`–`S1.19` y `S4.4`. `S4.3`, `S5.2`/`S5.3`, `S5.10`/`S5.5`, `S8.7` y `S10.2` conservan sus bloqueos registrados. `S5.9` debe reconciliar sus artefactos externos y ejecutar su falsificador antes de tasks/apply. `S10.2` carece de `Área` y queda excluida; `S7.1` mantiene sus dependencias previas y la cadena transitiva de P10.
+La capacidad se sigue derivando, no se fija como cupo. `S4.2`, `S5.9` y —desde el 2026-08-14— `S10.2` están 🟢 LISTO; `S10.1` está ✅ COMPLETO como candidato técnico verificado. `S4.2` sólo queda habilitada para `design-tasks` y debe probar Herdr/OpenCode, stop-proof/decision providers y wiring productivo antes de cualquier claim de readiness. `S1.17` mantiene su bloqueo propio por `assignment_id`, `session_id` y capacidad de binding Workspace Manager/Main reales ausentes y, con él, `S1.18`–`S1.19` y `S4.4`. `S4.3`, `S5.2`/`S5.3`, `S5.10`/`S5.5` y `S8.7` conservan sus bloqueos registrados, pero desde el 2026-08-14 **ninguno es por decisión abierta**: `S5.3`, `S5.5`, `S5.10` y `S7.1` quedaron limpias de decisión y bloqueadas sólo por dependencia, y `S8.7` por el prerrequisito `enroll/**` de la decisión 25. `S5.9` debe reconciliar sus artefactos externos y ejecutar su falsificador antes de tasks/apply. `S10.2` recibió su `Área` con la decisión 26 y entra en capacidad; `S7.1` mantiene sus dependencias previas y la cadena transitiva de P10.
+
+**Estado de decisiones al 2026-08-14: 34/34 `escala` resueltas, cero abiertas en esta cadena.** Lo que la frena ya no es autoridad pendiente sino tres responsabilidades sin dueño ni decisión: la segunda corrección autorizada de `S5.2`, el dueño de la brecha 6 y la Sesión `enroll/**` sin enumerar. Fuera de esta cadena queda abierta la decisión de `S9.2`, que no la contamina. Ver el [registro](decision-register.md).
 
 El siguiente inicio debe volver a derivar capacidad y contaminación desde el grafo vigente, no desde esta fotografía. Ningún nodo posterior a `S5.9` recibe crédito: `S5.10`, `S5.5` y `S7.1` conservan sus condiciones propias.
 
