@@ -2,7 +2,7 @@
 
 > Este documento mide **código**, no planificación. El [master-index](master-index.md) dice qué está planificado y qué Sesiones cerraron; este archivo dice qué existe, qué corre y qué está desplegado.
 >
-> **Snapshot fuente actual: 2026-08-12 sobre `master@6bb7019c66cf60e9ac874f05a176f946f9bd4589`, tree `1d34341f394cbeced9495e8384252dd975f9cab4`.** Es una integración local verificada y limpia antes de este cierre documental; `origin/master` permanece en `3db3c121`, por lo que no hay publicación remota. La cadena local es `d4028af` (reconciliación documental) → `5823ed6` (`S1.12`) → `6bb7019` (`S5.8`). La última re-medición completa de inventario y runtime sigue siendo la del 2026-08-10 sobre `origin/master@b360c8a`; se conserva como evidencia histórica y no se presenta como una medición fresca. En cambio, las pruebas sí se ejecutaron sobre los bytes exactos del snapshot local actual: focused `42/0/250` y suite completa `610/0/3618` en 39 archivos. No se re-ejecutaron `diagnose`, hashes instalados ni conteos globales.
+> **Snapshot fuente actual: 2026-08-15 sobre el candidato local de comportamiento `44f23adbb80bed974246aa3761573a388e5761bf`, tree `d5343fda0373c5152ad94bc248db5a5d0ccf8031`.** `origin/master` permanece en `a4a39fabccc52971941f7f4d5e1c415f19d5e766`, por lo que no hay publicación remota. La última re-medición completa de inventario y runtime sigue siendo la del 2026-08-10 sobre `origin/master@b360c8a`; se conserva como evidencia histórica y no se presenta como una medición fresca. Las pruebas de S10.2 sí se ejecutaron sobre los bytes exactos del candidato: focused `4/0/22` y suite completa `721/0/4361` en 52 archivos durante supervisión externa válida. No se re-ejecutaron `diagnose`, hashes instalados ni conteos globales.
 >
 > **Nota de vocabulario (2026-08-01, vigente):** la columna `Lane` no nombra dos productos. Tras la [unificación](release-chain.md), `installable-v1` y `autonomous-v2` son afinidad de trabajo. El corte real en código es `bin/torre`, que rechaza capacidades con `CT_V2_ONLY` como flag opt-in apagado por defecto.
 
@@ -104,14 +104,15 @@ Ratio documentación : código de producto = **2,2 : 1**.
 
 ## Estado de las pruebas
 
-Corrida actual sobre los bytes exactos integrados en `master@6bb7019` (tree `1d34341`), antes de este cierre documental:
+Corrida de S10.2 sobre los bytes exactos de `44f23adbb80bed974246aa3761573a388e5761bf` (tree `d5343fda0373c5152ad94bc248db5a5d0ccf8031`), antes de este cierre documental:
 
 ```
-bun test test/main-store.test.mjs → 42 pass · 0 fail · 250 expect()
-bun test → 610 pass · 0 fail · 3618 expect() · 39 archivos
+bun test test/supervision/state.test.mjs → 4 pass · 0 fail · 22 expect()
+bun test → 721 pass · 0 fail · 4361 expect() · 52 archivos
+remote-control focused → 2 pass · 0 fail · 14 expect() · limpio en 6e81d3c
 ```
 
-No es evidencia de publicación: `origin/master` continúa en `3db3c121`. La medición histórica de `S5.6` sobre `origin/master@b360c8a` fue `588/0/3452` en 38 archivos y se conserva en su sección; no debe confundirse con la corrida actual. Precondiciones confirmadas y aún sin runbook:
+La suite completa corrió mientras la supervisión externa del repositorio era válida; `ACTIVE` permaneció ausente y el centinela externo fue limpiado. No es evidencia de publicación: `origin/master` continúa en `a4a39fabccc52971941f7f4d5e1c415f19d5e766`. La medición histórica de `S5.6` sobre `origin/master@b360c8a` fue `588/0/3452` en 38 archivos y se conserva en su sección; no debe confundirse con la corrida actual. Precondiciones confirmadas y aún sin runbook:
 
 1. **La Torre debe estar desarmada.** Con `.git/control-tower/ACTIVE` presente, los dos `P0 frozen snapshot restore` cortan con `Control Tower must be OFF`. Es el fail-closed funcionando, no una regresión.
 2. **El runner es `bun`, no `node`.**
@@ -119,6 +120,14 @@ No es evidencia de publicación: `origin/master` continúa en `3db3c121`. La med
 4. **Ruido nuevo, no cubierto:** la corrida emite dos `fatal: Needed a single revision` en stderr. No hacen fallar ninguna prueba, pero indican que alguna superficie invoca `git rev-parse` contra una revisión inexistente y traga el error. Sin diagnosticar.
 
 ## Cortes de implementación publicados
+
+### `S10.2` — supervisión externa sin armado local
+
+✅ COMPLETO como candidato local, todavía sin publicación remota. El comportamiento `44f23adbb80bed974246aa3761573a388e5761bf` agrega `supervision/state.mjs` y `test/supervision/state.test.mjs` sobre el plan enumerado en `8377803752228966fb8d50efae4ae5dd01a090e6`; su tree es `d5343fda0373c5152ad94bc248db5a5d0ccf8031`.
+
+El productor publica estado canónico bajo `~/.local/state/control-tower/supervision/<project-id>` con directorio `0700`, archivo y lock `0600`, escritura atómica y binding exacto de proyecto, repositorio, worktree, `base_sha`, `sesion_id`, digest de contrato y vencimiento. El lector y validador fallan cerrado ante ausencia, formato inválido, permisos inseguros, symlinks, identidad ajena, divergencia o expiración. El seam real inyectado de `S10.1` acepta sólo evidencia válida, vigente y coincidente.
+
+Focused 4/0/22; full 721/0/4361 en 52 archivos durante supervisión externa válida; verificación externa de `remote-control` 2/0/14 y limpia en `6e81d3c`. No se crea `.git/control-tower/ACTIVE`, no se toca `remote-control` y no se usa Main store, SQLite ni token de entrega. `review-reliability` quedó tipado como no disponible/procedural por la suspensión del lifecycle; no se presenta como PASS.
 
 ### `S5.4` — enrutamiento de escalación
 
@@ -168,7 +177,7 @@ El corte es una biblioteca de contratos pura: no conecta Telegram, no persiste r
 | 4 | Se documentaba más de lo que se construía | 🔴 **REABIERTA.** Ver abajo. La corrección declarada el 2026-07-31 no se sostuvo. |
 | 5 | El registro de la Torre no coincide con los worktrees reales | ✅ **CERRADA el 2026-08-11.** Saneada en la misma sesión que la observó. Ver abajo. |
 | 6 | El 44% del código de producto no se despliega | **Nueva y estructural.** No es que falte una Sesión que lo empaquete: el contrato del payload lo **prohíbe**. Ver abajo. |
-| 7 | La Torre no puede supervisar un repositorio sin estar armada dentro de ese repositorio | **Abierta y enumerada en P10.** `S10.2` cubre la supervisión y `S10.1` la ejecución sellada relacionada; ambas están 🔴 BLOQUEADO por decisiones que siempre escalan. Ver abajo. |
+| 7 | La Torre no puede supervisar un repositorio sin estar armada dentro de ese repositorio | ✅ **CERRADA localmente por S10.2.** Estado externo fail-closed y seam real de `S10.1` verificados en `44f23ad`; publicación remota pendiente. Ver abajo. |
 
 ## Brecha 6 — el payload rechaza estructuralmente el resto del código
 
@@ -182,20 +191,13 @@ Ninguna Sesión enumerada declara ese cambio. `S4.2/M4.2.3` cablea el compositio
 
 **Riesgo declarado:** se pueden cerrar todas las Sesiones restantes y que la mitad del producto siga sin viajar en la instalación.
 
-## Brecha 7 — la Torre no puede supervisarse a sí misma ni a Remote Control
+## Brecha 7 — ✅ cerrada localmente por supervisión externa
 
-El sellado de implementación desatendida exige supervisión viva de la Torre. Los dos repositorios en uso tienen una razón de diseño para exigir lo contrario:
+El sellado de implementación desatendida necesitaba supervisión viva sin crear `.git/control-tower/ACTIVE` dentro del repositorio supervisado. Las decisiones 26 y 27 eligieron un centinela separado bajo `~/.local/state/control-tower/supervision/<project-id>` y conservaron intacto el interlock de `remote-control`.
 
-| Repositorio | Mecanismo | Efecto con la Torre armada |
-|---|---|---|
-| `control-tower` | `test/helpers/restore-fixture.mjs:90` — `assertRuntimeInactive` lanza si existe `ACTIVE` | Los dos tests P0 abortan → la verificación final falla → `BLOCKED` terminal sin reintento |
-| `remote-control` | `src/tower-guard.js:226` — `allowed = remote && off` | El relay entra en `status: "frozen"`; se congela justo la función que se está construyendo |
+`S10.2` implementa ese contrato en `44f23adbb80bed974246aa3761573a388e5761bf`: productor, lector y validador atan exactamente la identidad y vencimiento; los estados ausentes, malformados, inseguros, enlazados simbólicamente, ajenos, divergentes o vencidos fallan cerrado. El seam consumidor real de `S10.1` sólo prepara con evidencia válida, vigente y coincidente.
 
-Con la Torre desarmada, el sello no arranca (`NOT_READY`). Con la Torre armada, rompe. No hay estado que satisfaga ambos.
-
-`decision-register.md:52` registra este bloqueo como **específico de `control-tower`** («para cualquier otro proyecto, sellar con la Torre armada funciona»). Esa afirmación **no se sostiene**: `remote-control` falla también, por un mecanismo distinto y deliberado.
-
-El requisito real que se deriva: **la Torre necesita poder supervisar un repositorio sin estar armada dentro de ese repositorio.** P10 lo enumera en `S10.2`, con `S10.1` como responsabilidad relacionada de ejecución sellada. La brecha sigue abierta: `S10.1` está 🔴 BLOQUEADO por la decisión sobre ejecutar antes o sin supervisión; `S10.2` está 🔴 BLOQUEADO por la arquitectura visible/de seguridad, la evidencia contradictoria del interlock de `remote-control` y la ausencia de un `Área` aprobada.
+La prueba integral pasó con supervisión externa válida sobre este repositorio: 721/0/4361 en 52 archivos, `ACTIVE` ausente y centinela limpiado. `remote-control` permaneció byte-limpio en `6e81d3c` y su verificación enfocada pasó 2/0/14. La brecha de código está cerrada en el candidato local; publicación remota y actualización de Notion siguen pendientes.
 
 ## Brecha 4 — reabierta
 

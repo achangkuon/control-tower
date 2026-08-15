@@ -58,7 +58,7 @@ graph LR
   S33 --> S34["S3.4 ciclo de vida Jornada · ✅"]
   S34 --> S103["S10.3 contrato versionado · ✅"]
   S103 --> S101["S10.1 preparación persistida · ✅"]
-  S101 --> S102["S10.2 supervisión válida · 🟢"]
+  S101 --> S102["S10.2 supervisión válida · ✅"]
   S102 --> S71
   S34 --> S51["S5.1 candidate contracts · ✅"]
   S51 --> S41["S4.1 fence hosts · ✅"]
@@ -130,7 +130,7 @@ graph LR
 | — | `S8.7` | Puente Hermes/Telegram | 🔴 BLOQUEADO | Dependencias propias ✅ y **cero decisiones abiertas** desde el 2026-08-14. El bloqueo restante es un prerrequisito, no una decisión: la decisión 25 asignó el inicializador confiable a una Sesión nueva con dueño `enroll/**` que todavía hay que enumerar |
 | ✅ | `S10.3` | Contrato de ejecución versionado | ✅ COMPLETO | `S3.4` ✅; candidato exacto basado en `cdd0d09`, 17.297 bytes, 407 líneas, SHA-256 `2f4838aa244b30e280c5c558286b0e4d9fbb503a0ef1808ffc27501c1540fddc`; entrega directa aún no autorizada |
 | ✅ | `S10.1` | Preparación persistida de Jornada | ✅ COMPLETO | `S10.3` ✅; candidato técnico verificado, focused 8/0/144 y full 679/0/4164 en 44 archivos; owner pasivo Jornada-local y cero efectos |
-| ▶ | `S10.2` | Supervisión válida sin armado local | 🟢 LISTO | `S10.1` ✅; decisiones 26 y 27 resueltas el 2026-08-14 — centinela separado fuera del repositorio supervisado e interlock de `remote-control` intacto. Con eso quedó fijada el `Área` y la ruta pasa a `design-tasks` |
+| ✅ | `S10.2` | Supervisión válida sin armado local | ✅ COMPLETO | `S10.1` ✅; comportamiento local `44f23adbb80bed974246aa3761573a388e5761bf`, tree `d5343fda0373c5152ad94bc248db5a5d0ccf8031`; focused 4/0/22, full 721/0/4361 en 52 archivos durante supervisión externa válida y `remote-control` 2/0/14 sin cambios |
 | 4 | `S7.1` | Conformidad de release | 📋 PLANIFICADO | `S4.4`, `S5.3`, `S8.7`, `S5.5`, `S10.2`. Sus dos decisiones propias quedaron resueltas el 2026-08-14: el piloto se corre sobre `control-tower` mismo (32) y un rojo bloquea sólo sobre un Gate A–G (33) |
 
 > **Contradicción reconciliada el 2026-08-11.** Hasta esta fecha el grafo Mermaid declaraba
@@ -142,7 +142,7 @@ graph LR
 > recuperación y failover entra en la cadena de release. La tabla se corrige para coincidir.
 > La decisión histórica fue explícita —construir las catorce Sesiones que ese corte enumeraba como restantes— y no una derivación; la reconciliación actual agrega los prerrequisitos omitidos sin reescribir aquella evidencia.
 
-**Treinta y seis Sesiones · 22/36 cerradas (61%).** Sólo `COMPLETO` cuenta: `S10.1` incrementa el numerador a veintidós; `S4.2` y `S5.9` aportan cero mientras están `LISTO`, y `S10.2` aporta cero en `BLOQUEADO`. P10 integra la release mediante `S3.4 → S10.3 → S10.1 → S10.2 → S7.1`. Esta métrica no reemplaza el `31/49` de planificación del [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
+**Treinta y seis Sesiones · 23/36 cerradas (64%).** Sólo `COMPLETO` cuenta: `S10.2` incrementa el numerador a veintitrés; `S4.2` y `S5.9` aportan cero mientras están `LISTO`. P10 queda completo dentro de la release mediante `S3.4 → S10.3 → S10.1 → S10.2 → S7.1`. Esta métrica no reemplaza el `29/46` de Sesiones activas del [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
 secuenciales entre `S5.4` y `S5.5`: snapshot/parser canónico, contratos de decisión/respuesta,
 binding terminal, productores de provenance, composición Main→parking, binding autoritativo de
 checkpoint y binding inmutable del trabajo completado bajo la autoridad exclusiva de Main. La
@@ -186,7 +186,7 @@ La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas; no s
 
 `S1.16` está ✅ COMPLETO en `da4e391`; la entrega directa incluye su cierre documental. El consumer está cerrado, pero la composición productiva del provider/injection no: pertenece a `S4.2/M4.2.3`.
 
-La capacidad se sigue derivando, no se fija como cupo. `S4.2`, `S5.9` y —desde el 2026-08-14— `S10.2` están 🟢 LISTO; `S10.1` está ✅ COMPLETO como candidato técnico verificado. `S4.2` sólo queda habilitada para `design-tasks` y debe probar Herdr/OpenCode, stop-proof/decision providers y wiring productivo antes de cualquier claim de readiness. `S1.17` mantiene su bloqueo propio por `assignment_id`, `session_id` y capacidad de binding Workspace Manager/Main reales ausentes y, con él, `S1.18`–`S1.19` y `S4.4`. `S4.3`, `S5.2`/`S5.3`, `S5.10`/`S5.5` y `S8.7` conservan sus bloqueos registrados, pero desde el 2026-08-14 **ninguno es por decisión abierta**: `S5.3`, `S5.5`, `S5.10` y `S7.1` quedaron limpias de decisión y bloqueadas sólo por dependencia, y `S8.7` por el prerrequisito `enroll/**` de la decisión 25. `S5.9` debe reconciliar sus artefactos externos y ejecutar su falsificador antes de tasks/apply. `S10.2` recibió su `Área` con la decisión 26 y entra en capacidad; `S7.1` mantiene sus dependencias previas y la cadena transitiva de P10.
+La capacidad se sigue derivando, no se fija como cupo. `S4.2` y `S5.9` están 🟢 LISTO; `S10.1` y `S10.2` están ✅ COMPLETO como candidatos técnicos verificados. `S4.2` sólo queda habilitada para `design-tasks` y debe probar Herdr/OpenCode, stop-proof/decision providers y wiring productivo antes de cualquier claim de readiness. `S1.17` mantiene su bloqueo propio por `assignment_id`, `session_id` y capacidad de binding Workspace Manager/Main reales ausentes y, con él, `S1.18`–`S1.19` y `S4.4`. `S4.3`, `S5.2`/`S5.3`, `S5.10`/`S5.5` y `S8.7` conservan sus bloqueos registrados, pero desde el 2026-08-14 **ninguno es por decisión abierta**: `S5.3`, `S5.5`, `S5.10` y `S7.1` quedaron limpias de decisión y bloqueadas sólo por dependencia, y `S8.7` por el prerrequisito `enroll/**` de la decisión 25. `S5.9` debe reconciliar sus artefactos externos y ejecutar su falsificador antes de tasks/apply. `S10.2` cerró localmente dentro de su `Área`; `S7.1` mantiene sus demás dependencias y recibe P10 completo como prerrequisito.
 
 **Estado de decisiones al 2026-08-14: 34/34 `escala` resueltas, cero abiertas en esta cadena.** Lo que la frena ya no es autoridad pendiente sino tres responsabilidades sin dueño ni decisión: la segunda corrección autorizada de `S5.2`, el dueño de la brecha 6 y la Sesión `enroll/**` sin enumerar. Fuera de esta cadena queda abierta la decisión de `S9.2`, que no la contamina. Ver el [registro](decision-register.md).
 

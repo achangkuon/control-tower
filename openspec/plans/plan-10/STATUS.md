@@ -1,7 +1,7 @@
 # Plan 10 — Ejecución y supervisión autónoma de Jornada
 
-**Estado:** 🟢 LISTO
-**Avance:** 67% (2/3 S)
+**Estado:** ✅ COMPLETO
+**Avance:** 100% (3/3 S)
 
 > El maintainer resolvió la ubicación provisional del 2026-08-11: las responsabilidades antes
 > enumeradas como `S3.5`/`S3.6` forman un Plan nuevo y pasan a ser `S10.1`/`S10.2`. P3 permanece
@@ -10,19 +10,19 @@
 
 `S10.3` incorpora primero el contrato versionado como artefacto pasivo. Después, `S10.1`
 valida, prepara y persiste bajo ownership exclusivo de Jornada, siempre sin efectos; `S10.2`
-conserva la arquitectura productora de supervisión y sus decisiones abiertas.
+conserva la arquitectura productora de supervisión ya verificada y sus decisiones resueltas.
 
 ## Resumen auditable
 
 | Campo | Contrato |
 |---|---|
 | Autoridad | Decisión explícita del maintainer: Plan nuevo P10 para las responsabilidades provisionales `S3.5`/`S3.6`, renumeradas `S10.1`/`S10.2`. |
-| Estado | 🟢 LISTO: `S10.3` y `S10.1` están ✅ COMPLETO; `S10.2` pasó de 🔴 BLOQUEADO a 🟢 LISTO el 2026-08-14 al resolverse las decisiones 26 y 27. |
+| Estado | ✅ COMPLETO: `S10.3`, `S10.1` y `S10.2` están verificadas; `S10.2` cerró localmente el 2026-08-15. |
 | Orden | `S3.4 → S10.3 → S10.1 → S10.2 → S7.1`. |
-| Capacidad derivada | P10 aporta capacidad desde el 2026-08-14: `S10.2` está 🟢 LISTO con `Área` fijada. La capacidad concurrente sigue incluyendo `S4.2` y `S5.9`. |
-| Avance | 67% (2/3 S): `S10.3` y `S10.1` están ✅ COMPLETO. |
-| Release | P10 forma parte del producto, roadmap y release únicos; aporta 1/3 al denominador. |
-| Publicación | El desbloqueo de `S10.2` está publicado en `origin/master@b845911cbc569f1d525d20ffc28a06dcfda4fa49` (2026-08-14), con el registro del SHA publicado en `2dbe8e8` y un tercer commit de cierre documental encima. Es un corte documental: resuelve decisiones y reconcilia estado, no agrega runtime ni acredita implementación. |
+| Capacidad derivada | P10 ya no aporta una Sesión ejecutable: sus 3/3 Sesiones están ✅ COMPLETO. La capacidad concurrente conserva `S4.2` y `S5.9`. |
+| Avance | 100% (3/3 S). |
+| Release | P10 forma parte del producto, roadmap y release únicos; sus tres Sesiones están cerradas. |
+| Publicación | Candidato local de comportamiento `44f23adbb80bed974246aa3761573a388e5761bf`, tree `d5343fda0373c5152ad94bc248db5a5d0ccf8031`; `origin/master` permanece en `a4a39fabccc52971941f7f4d5e1c415f19d5e766`. No acredita publicación remota. |
 
 La jerarquía canónica es `Plan → Sesión → Módulo → Tarea`; las tres Sesiones quedan enumeradas
 abajo. Para `S10.2`, la decisión 26 y la elaboración técnica fijaron el `Área` exacta en
@@ -34,7 +34,7 @@ abajo. Para `S10.2`, la decisión 26 y la elaboración técnica fijaron el `Áre
 |---|---|---|---|---|---|---|---|---|
 | `S10.3` | Contrato de ejecución versionado | ✅ COMPLETO | `direct` | Copia pasiva, exacta e indivisible con verificación estructural. | Decisión explícita del maintainer. | `S3.4` ✅ | `schemas/execution-contract-v1.schema.json` | — |
 | `S10.1` | Preparación persistida de Jornada | ✅ COMPLETO | `design-tasks` | Owner pasivo y gate consumidor verificados, sin arquitectura productora ni efectos. | Decisión explícita del maintainer. | `S10.3` ✅ | `jornada/**`, `test/jornada/**` | —; sin token de entrega ni SQLite de la Torre. |
-| `S10.2` | Supervisión sin armado local | 🟢 LISTO | `design-tasks` | Arquitectura e interlock resueltos el 2026-08-14; `Área` fijada por la decisión 26. | Brecha 7 de [implementation-state](../implementation-state.md) y decisiones 26–27. | `S10.1` ✅ | `supervision/state.mjs`, `test/supervision/state.test.mjs` | Writer/lock exclusivo por proyecto en `~/.local/state/control-tower/supervision/<project-id>`; sin Main store, SQLite, token de entrega ni `ACTIVE` local. |
+| `S10.2` | Supervisión sin armado local | ✅ COMPLETO | `design-tasks` | Estado externo fail-closed y seam real de `S10.1` verificados sin armar el repositorio. | Brecha 7 de [implementation-state](../implementation-state.md) y decisiones 26–27. | `S10.1` ✅ | `supervision/state.mjs`, `test/supervision/state.test.mjs` | Writer/lock exclusivo por proyecto en `~/.local/state/control-tower/supervision/<project-id>`; sin Main store, SQLite, token de entrega ni `ACTIVE` local. |
 
 ## Sesión 10.3 — Contrato de ejecución versionado
 
@@ -109,9 +109,9 @@ abajo. Para `S10.2`, la decisión 26 y la elaboración técnica fijaron el `Áre
 
 ## Sesión 10.2 — Supervisión sin armado local
 
-**Estado:** 🟢 LISTO — las dos decisiones `escala` quedaron resueltas el 2026-08-14 (decisiones 26 y
-27 del [registro](../decision-register.md)) y con eso el `Área` quedó fijada. `S10.1` está ✅ COMPLETO,
-así que no queda dependencia ni decisión pendiente. No acredita implementación ni readiness de producción.
+**Estado:** ✅ COMPLETO — las decisiones 26 y 27 fijaron la arquitectura y el `Área`; la implementación
+local `44f23adbb80bed974246aa3761573a388e5761bf` entrega el estado externo fail-closed y el seam real
+de `S10.1`. La publicación remota sigue pendiente.
 
 **Depende de:** `S10.1` ✅. La dependencia conserva el orden aprobado; `S10.1` puede construirse
 effect-incapable, pero ningún efecto se habilita antes de que esta Sesión entregue supervisión
@@ -163,21 +163,21 @@ tienen una razón de diseño para exigirla apagada. `control-tower` aborta sus d
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
 
-- [ ] La Torre supervisa una ejecución sellada en un repositorio sin que ese repositorio quede armado
-- [ ] El productor, lector y validador externos atan exactamente proyecto, repositorio, worktree, `base_sha`, `sesion_id`, digest del contrato y vencimiento
-- [ ] Estado malformado, inseguro, enlazado simbólicamente, ajeno o divergente también falla cerrado
-- [ ] El seam consumidor real inyectado por `S10.1` acepta sólo supervisión válida, vigente y coincidente
-- [ ] No se crea `.git/control-tower/ACTIVE` ni se usa writer, lock o transacción del Main store, SQLite o token de entrega
-- [ ] `bun test` pasa completo durante una supervisión activa sobre este mismo repositorio
-- [ ] `relayEligibility` de `remote-control` sigue devolviendo `frozen` cuando la Torre está armada en su repositorio
-- [ ] `remote-control` queda sin cambios
-- [ ] Una supervisión ausente o vencida falla cerrado; no se degrada a ejecución sin supervisar
-- [ ] El diff no toca ninguna ruta fuera del `Área` que fije la elaboración técnica
+- [x] La Torre supervisa una ejecución sellada en un repositorio sin que ese repositorio quede armado
+- [x] El productor, lector y validador externos atan exactamente proyecto, repositorio, worktree, `base_sha`, `sesion_id`, digest del contrato y vencimiento
+- [x] Estado malformado, inseguro, enlazado simbólicamente, ajeno o divergente también falla cerrado
+- [x] El seam consumidor real inyectado por `S10.1` acepta sólo supervisión válida, vigente y coincidente
+- [x] No se crea `.git/control-tower/ACTIVE` ni se usa writer, lock o transacción del Main store, SQLite o token de entrega
+- [x] `bun test` pasa completo durante una supervisión activa sobre este mismo repositorio
+- [x] `relayEligibility` de `remote-control` sigue devolviendo `frozen` cuando la Torre está armada en su repositorio
+- [x] `remote-control` queda sin cambios
+- [x] Una supervisión ausente o vencida falla cerrado; no se degrada a ejecución sin supervisar
+- [x] El diff no toca ninguna ruta fuera del `Área` que fije la elaboración técnica
 
 ### Módulo 10.2.1 — Estado externo de supervisión
-- [ ] `T10.2.1.1` **RED:** especificar en `test/supervision/state.test.mjs` el productor, lector, validador y seam consumidor real inyectado por `S10.1`; observar el fallo para el caso válido y para estado ausente, malformado, inseguro, enlazado simbólicamente, ajeno, vencido o divergente, incluyendo divergencias de proyecto, repositorio, worktree, `base_sha`, `sesion_id` y digest del contrato.
-- [ ] `T10.2.1.2` **GREEN:** implementar en `supervision/state.mjs` la escritura y lectura fail-closed con binding exacto y vencimiento, usando sólo el writer/lock exclusivo por proyecto en `~/.local/state/control-tower/supervision/<project-id>`; integrar el seam inyectado sin crear `.git/control-tower/ACTIVE` ni acceder a Main store, SQLite, token de entrega o `remote-control`.
-- [ ] `T10.2.1.3` **REFACTOR:** consolidar validación y errores sin ampliar `Área`; ejecutar la prueba enfocada y luego `bun test` completo mientras exista supervisión activa sobre este repositorio, verificar que `relayEligibility` conserva `frozen`, que `remote-control` no cambió y que el diff queda confinado a los dos archivos declarados.
+- [x] `T10.2.1.1` **RED:** la prueba de comportamiento observó el fallo esperado antes de existir `supervision/state.mjs`; cubre productor, lector, validador, seam real de `S10.1` y rechazos ausente, malformado, inseguro, enlazado simbólicamente, ajeno, vencido o divergente.
+- [x] `T10.2.1.2` **GREEN:** `supervision/state.mjs` publica y lee fail-closed con binding exacto, vencimiento y writer/lock exclusivo por proyecto, sin crear `ACTIVE` ni acceder a Main store, SQLite, token de entrega o `remote-control`.
+- [x] `T10.2.1.3` **REFACTOR:** validación y errores quedaron consolidados dentro del `Área`; focused 4/0/22, full 721/0/4361 en 52 archivos durante supervisión externa válida y verificación `remote-control` 2/0/14, con centinela limpiado.
 
 **Previsión de carga:** 260–360 líneas authored en un único commit independientemente verificable y
 revertible, por debajo de 400. **Regla de parada:** si la implementación alcanza 400 líneas authored,
@@ -190,8 +190,10 @@ y revertibles; no crear otra Sesión ni otro nivel.
 graph LR
   S34["S3.4 ciclo de vida Jornada · ✅"] --> S103["S10.3 contrato versionado · ✅"]
   S103 --> S101["S10.1 preparación persistida · ✅"]
-  S101 --> S102["S10.2 supervisión sin armado · 🟢"]
+  S101 --> S102["S10.2 supervisión sin armado · ✅"]
   S102 --> S71["S7.1 conformidad de release · 📋"]
 ```
 
-**Avance derivado:** 67% (2/3 S) — `S10.2` en 🟢 LISTO aporta cero, no hay crédito parcial. **Capacidad derivada:** `S10.2` pasa a capacidad elegible por `design-tasks` desde el 2026-08-14, con `Área` fijada por la decisión 26. P10 aporta capacidad por primera vez.
+**Evidencia de cierre:** comportamiento `44f23adbb80bed974246aa3761573a388e5761bf`, parent `8377803752228966fb8d50efae4ae5dd01a090e6`, tree `d5343fda0373c5152ad94bc248db5a5d0ccf8031`. Focused `bun test test/supervision/state.test.mjs`: 4/0/22; suite completa durante supervisión externa válida: 721/0/4361 en 52 archivos; `remote-control` enfocado: 2/0/14 y limpio en `6e81d3c`. `ACTIVE` estuvo ausente y el centinela externo se limpió. Los 10 criterios y las 3 Tareas pasan. `review-reliability` quedó tipado como no disponible/procedural por la suspensión del lifecycle; no es PASS ni se reintentó.
+
+**Avance derivado:** 100% (3/3 S). P10 está ✅ COMPLETO y ya no aporta capacidad ejecutable.
