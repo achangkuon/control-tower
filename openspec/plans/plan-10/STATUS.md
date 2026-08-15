@@ -24,9 +24,9 @@ conserva la arquitectura productora de supervisión y sus decisiones abiertas.
 | Release | P10 forma parte del producto, roadmap y release únicos; aporta 1/3 al denominador. |
 | Publicación | El desbloqueo de `S10.2` está publicado en `origin/master@b845911cbc569f1d525d20ffc28a06dcfda4fa49` (2026-08-14), con el registro del SHA publicado en `2dbe8e8` y un tercer commit de cierre documental encima. Es un corte documental: resuelve decisiones y reconcilia estado, no agrega runtime ni acredita implementación. |
 
-La jerarquía canónica es `Plan → Sesión → Módulo → Tarea`; `S10.3` y `S10.1` quedan enumeradas
-abajo. `S10.2` ya no se detiene en Sesión: la decisión 26 fijó su `Área` y la elaboración técnica debe
-enumerar las rutas exactas del repositorio antes de apply.
+La jerarquía canónica es `Plan → Sesión → Módulo → Tarea`; las tres Sesiones quedan enumeradas
+abajo. Para `S10.2`, la decisión 26 y la elaboración técnica fijaron el `Área` exacta en
+`supervision/state.mjs` y `test/supervision/state.test.mjs` antes de apply.
 
 ## Sesiones
 
@@ -34,7 +34,7 @@ enumerar las rutas exactas del repositorio antes de apply.
 |---|---|---|---|---|---|---|---|---|
 | `S10.3` | Contrato de ejecución versionado | ✅ COMPLETO | `direct` | Copia pasiva, exacta e indivisible con verificación estructural. | Decisión explícita del maintainer. | `S3.4` ✅ | `schemas/execution-contract-v1.schema.json` | — |
 | `S10.1` | Preparación persistida de Jornada | ✅ COMPLETO | `design-tasks` | Owner pasivo y gate consumidor verificados, sin arquitectura productora ni efectos. | Decisión explícita del maintainer. | `S10.3` ✅ | `jornada/**`, `test/jornada/**` | —; sin token de entrega ni SQLite de la Torre. |
-| `S10.2` | Supervisión sin armado local | 🟢 LISTO | `design-tasks` | Arquitectura e interlock resueltos el 2026-08-14; `Área` fijada por la decisión 26. | Brecha 7 de [implementation-state](../implementation-state.md) y decisiones 26–27. | `S10.1` ✅ | `~/.local/state/control-tower/supervision/**` más las rutas del repositorio que lo escriben, leen y validan | Centinela separado fuera del repositorio supervisado. |
+| `S10.2` | Supervisión sin armado local | 🟢 LISTO | `design-tasks` | Arquitectura e interlock resueltos el 2026-08-14; `Área` fijada por la decisión 26. | Brecha 7 de [implementation-state](../implementation-state.md) y decisiones 26–27. | `S10.1` ✅ | `supervision/state.mjs`, `test/supervision/state.test.mjs` | Writer/lock exclusivo por proyecto en `~/.local/state/control-tower/supervision/<project-id>`; sin Main store, SQLite, token de entrega ni `ACTIVE` local. |
 
 ## Sesión 10.3 — Contrato de ejecución versionado
 
@@ -117,14 +117,11 @@ así que no queda dependencia ni decisión pendiente. No acredita implementació
 effect-incapable, pero ningún efecto se habilita antes de que esta Sesión entregue supervisión
 válida y vigente.
 
-**Área:** `~/.local/state/control-tower/supervision/**` como ubicación del centinela separado, más las
-rutas del repositorio que lo escriben, leen y validan. La elaboración técnica debe enumerar esas rutas
-exactas antes de apply; lo que la decisión 26 fija es que el centinela **no** vive dentro del
-repositorio supervisado.
+**Área:** `supervision/state.mjs`, `test/supervision/state.test.mjs`
 
-**Recurso:** centinela separado fuera del repositorio supervisado, bajo
-`~/.local/state/control-tower/supervision/<project-id>`. **Ya no** es el centinela `ACTIVE` del
-repositorio supervisado: ese era precisamente el mecanismo que la decisión 26 descartó.
+**Recurso:** namespace exclusivo de writer/lock por proyecto bajo
+`~/.local/state/control-tower/supervision/<project-id>`; sin writer, lock o transacción del Main store,
+sin SQLite, token de entrega ni `ACTIVE` dentro del repositorio supervisado.
 
 **Ruta:** `design-tasks` — cambia la semántica visible de supervisión, pero la arquitectura ya está
 elegida por la decisión 26 y la frontera con `remote-control` por la 27, así que lo que falta es
@@ -167,10 +164,25 @@ tienen una razón de diseño para exigirla apagada. `control-tower` aborta sus d
 **Criterios de aceptación** — todos deben pasar para cerrar:
 
 - [ ] La Torre supervisa una ejecución sellada en un repositorio sin que ese repositorio quede armado
+- [ ] El productor, lector y validador externos atan exactamente proyecto, repositorio, worktree, `base_sha`, `sesion_id`, digest del contrato y vencimiento
+- [ ] Estado malformado, inseguro, enlazado simbólicamente, ajeno o divergente también falla cerrado
+- [ ] El seam consumidor real inyectado por `S10.1` acepta sólo supervisión válida, vigente y coincidente
+- [ ] No se crea `.git/control-tower/ACTIVE` ni se usa writer, lock o transacción del Main store, SQLite o token de entrega
 - [ ] `bun test` pasa completo durante una supervisión activa sobre este mismo repositorio
 - [ ] `relayEligibility` de `remote-control` sigue devolviendo `frozen` cuando la Torre está armada en su repositorio
+- [ ] `remote-control` queda sin cambios
 - [ ] Una supervisión ausente o vencida falla cerrado; no se degrada a ejecución sin supervisar
 - [ ] El diff no toca ninguna ruta fuera del `Área` que fije la elaboración técnica
+
+### Módulo 10.2.1 — Estado externo de supervisión
+- [ ] `T10.2.1.1` **RED:** especificar en `test/supervision/state.test.mjs` el productor, lector, validador y seam consumidor real inyectado por `S10.1`; observar el fallo para el caso válido y para estado ausente, malformado, inseguro, enlazado simbólicamente, ajeno, vencido o divergente, incluyendo divergencias de proyecto, repositorio, worktree, `base_sha`, `sesion_id` y digest del contrato.
+- [ ] `T10.2.1.2` **GREEN:** implementar en `supervision/state.mjs` la escritura y lectura fail-closed con binding exacto y vencimiento, usando sólo el writer/lock exclusivo por proyecto en `~/.local/state/control-tower/supervision/<project-id>`; integrar el seam inyectado sin crear `.git/control-tower/ACTIVE` ni acceder a Main store, SQLite, token de entrega o `remote-control`.
+- [ ] `T10.2.1.3` **REFACTOR:** consolidar validación y errores sin ampliar `Área`; ejecutar la prueba enfocada y luego `bun test` completo mientras exista supervisión activa sobre este repositorio, verificar que `relayEligibility` conserva `frozen`, que `remote-control` no cambió y que el diff queda confinado a los dos archivos declarados.
+
+**Previsión de carga:** 260–360 líneas authored en un único commit independientemente verificable y
+revertible, por debajo de 400. **Regla de parada:** si la implementación alcanza 400 líneas authored,
+detenerse antes de continuar y separar por comportamiento en commits independientemente verificables
+y revertibles; no crear otra Sesión ni otro nivel.
 
 ## Grafo del Plan 10
 
