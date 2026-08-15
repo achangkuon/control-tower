@@ -8,9 +8,9 @@
 
 `S10.1` cerró técnicamente como candidato de entrega: contrato/contexto y supervisión opaca fallan cerrado antes de persistir; sólo una persistencia owner-only exitosa devuelve `prepared`. Focused Bun pasó 8/0 (144 assertions) y full 679/0 (4164 assertions, 44 archivos).
 
-P10 queda 🟢 LISTO en 67% (2/3 S). `S10.2` conserva decisiones y `Área` abiertas, por lo que permanece 🔴 BLOQUEADO; `S4.2` y `S5.9` siguen como próxima capacidad 🟢 LISTO.
+P10 queda 🟢 LISTO en 67% (2/3 S). `S10.2` conserva decisiones y `Área` abiertas, por lo que permanece 🔴 BLOQUEADO. `S4.2` permanece 🔴 BLOQUEADO: el candidato local `6ff1ca27` pasó focused 123/123 y full 717/717 como `PASS_LOCAL_BLOCKED_EXTERNAL`, pero Herdr instalado `0.8.0` no expone v1.
 
-La entrega sigue este candidato inmutable; después se documenta el SHA remoto en Notion y se vuelve a derivar capacidad.
+El retoma de `S4.2` es esperar al maintainer de Herdr en la Discussion [#2830](https://github.com/herdrdev/herdr/discussions/2830). No se modifica su 25% (1/4 S): ninguna Sesión adicional cerró.
 
 ## Granularidad
 
