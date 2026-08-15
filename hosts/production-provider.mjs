@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process"
-import { closeSync, constants, existsSync, fstatSync, openSync, readFileSync } from "node:fs"
+import { closeSync, constants, existsSync, fstatSync, openSync, readFileSync, readSync } from "node:fs"
 import { createHash } from "node:crypto"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -58,24 +58,29 @@ const parse = parseHostOutput
 const sessionId = (value) => value?.result?.agent?.agent_session_id ?? value?.result?.agent?.session_id
 const agentName = (paneId) => `ctopencode-${String(paneId).replace(/[^a-z0-9]/gi, "").toLowerCase()}`
 const paneIdentifier = (value) => typeof value === "string" && /^w[123456789ABCDEFGHJKMNPQRSTVWXYZ0]+:p[123456789ABCDEFGHJKMNPQRSTVWXYZ0]+$/.test(value)
-const pinRuntime = (installed) => {
+// Kept separate to test the descriptor boundary without exposing it to CLI callers.
+export const createPinnedHostRuntime = (installed) => {
   if (process.platform !== "linux" || !existsSync("/proc/self/fd")) fail("CT_LAUNCH_REJECTED", "Linux procfs is required for host execution")
   let active
   try { active = JSON.parse(readFileSync(join(installed.dataRoot, "active.json"), "utf8")) } catch { fail("CT_LAUNCH_REJECTED", "Active host runtime is invalid") }
   if (!active || active.version !== installed.version || installed.root !== join(installed.dataRoot, "versions", installed.version)) fail("CT_LAUNCH_REJECTED", "Active host runtime is invalid")
   const record = readHostRuntimeIdentity(installed.dataRoot, installed.version), descriptors = {}
+  const readPinned = (descriptor, size) => {
+    const bytes = Buffer.alloc(size), length = readSync(descriptor, bytes, 0, size, 0)
+    return bytes.subarray(0, length)
+  }
   const matches = (name, stat, bytes) => ["dev", "ino", "size", "uid", "nlink"].every((key) => stat[key] === record[name][key])
     && (stat.mode & 0o777) === record[name].mode
     && createHash("sha256").update(bytes).digest("hex") === record[name].sha256
   try {
     for (const name of ["herdr", "opencode"]) {
       const descriptor = openSync(record[name].path, constants.O_RDONLY | constants.O_NOFOLLOW)
-      const stat = fstatSync(descriptor), bytes = readFileSync(`/proc/self/fd/${descriptor}`)
+      const stat = fstatSync(descriptor), bytes = readPinned(descriptor, stat.size)
       if (!stat.isFile() || !matches(name, stat, bytes)) fail("CT_LAUNCH_REJECTED", "Pinned host executable is invalid")
       descriptors[name] = descriptor
     }
     const run = (name, args) => {
-      const descriptor = descriptors[name], before = fstatSync(descriptor), bytes = readFileSync(`/proc/self/fd/${descriptor}`)
+      const descriptor = descriptors[name], before = fstatSync(descriptor), bytes = readPinned(descriptor, before.size)
       if (!before.isFile() || !matches(name, before, bytes)) fail("CT_LAUNCH_REJECTED", "Pinned host executable changed")
       const result = spawnSync("/proc/self/fd/3", args, { cwd: process.cwd(), env: { PATH: "" }, encoding: "utf8", timeout: 1_000, maxBuffer: 65_536, killSignal: "SIGKILL", stdio: ["ignore", "pipe", "pipe", descriptor] })
       if (result.error || result.signal || String(result.stdout ?? "").length > 65_536 || String(result.stderr ?? "").length > 65_536) fail("CT_LAUNCH_REJECTED", "Pinned host process exceeded its boundary")
@@ -133,7 +138,7 @@ export const createProductionProvider = ({ } = {}) => {
     },
   })
   return Object.freeze({
-    preflight: () => { runtime = pinRuntime(installed); return runtime.close },
+    preflight: () => { runtime = createPinnedHostRuntime(installed); return runtime.close },
     consumeBinding: (requestRef) => consumer.consume(requestRef), herdr, opencode,
   })
 }

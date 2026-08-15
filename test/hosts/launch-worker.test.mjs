@@ -37,4 +37,13 @@ describe("packaged launch-worker runtime", () => {
     await expect(runtime.launchWorker({ request_ref: "request-a" })).rejects.toMatchObject({ code: "CT_LAUNCH_BINDING_INVALID" })
     expect(effects).toBe(0)
   })
+
+  test("leaves the binding unconsumed when runtime preflight fails, then reports a bounded final attempt", async () => {
+    let consumed = 0
+    const invalid = createLaunchWorkerRuntime({ preflight: () => { throw Object.assign(new Error("invalid runtime"), { code: "CT_LAUNCH_REJECTED" }) }, consumeBinding: () => { consumed += 1; return binding }, herdr: {}, opencode: {} })
+    await expect(invalid.launchWorker({ request_ref: "request-a" })).rejects.toMatchObject({ code: "CT_LAUNCH_REJECTED" })
+    expect(consumed).toBe(0)
+    const final = createLaunchWorkerRuntime({ preflight: () => () => {}, consumeBinding: () => binding, herdr: { createPane: async () => { throw Object.assign(new Error("timeout"), { code: "CT_LAUNCH_REJECTED" }) }, bindRoot: async () => true }, opencode: {} })
+    await expect(final.launchWorker({ request_ref: "request-a" })).rejects.toMatchObject({ code: "CT_LAUNCH_FINAL_ATTEMPT_FAILED", evidence: { request_ref: "request-a", replacement_binding_required: true } })
+  })
 })
