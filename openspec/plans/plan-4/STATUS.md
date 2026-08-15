@@ -165,7 +165,7 @@ Todos deben pasar para cerrar:
 
 ## Sesión 4.2 — Lanzamiento visible de raíz OpenCode
 
-**Estado:** 🔴 BLOQUEADO — el candidato local alcanza `e48d7c557c64580fbcb74e2f575ac5ba72698dbe` con implementación y pruebas de assignment-location, publicación de epoch, identidad ejecutable atendida, provider empaquetado y contractos Herdr v1. La activación productiva no puede avanzar: Herdr instalado `0.8.0` no expone la capacidad v1. El candidato upstream local `f977cb03baf4537cc7db873f2d4a7976b138c662` implementa el contrato aprobado, pero sigue sin push, release ni instalación; no es una dependencia entregada.
+**Estado:** 🔴 BLOQUEADO — el candidato local mantiene binding Main, publicación/rotación de epoch y consumo bajo una única transacción owner-only; preflight Linux/WSL abre y fija los inodos Herdr/OpenCode, valida identidad/hash/stat y conformance antes del consumo, y toda invocación posterior ejecuta el descriptor heredado por `/proc/self/fd/3` con ambiente saneado, timeout, límite de salida y kill. Un fallo posterior al consumo es un intento final acotado: devuelve evidencia que exige a Main emitir una binding nueva. La activación productiva no puede avanzar: Herdr instalado `0.8.0` no expone la capacidad v1. El candidato upstream local `f977cb03baf4537cc7db873f2d4a7976b138c662` implementa el contrato aprobado, pero sigue sin push, release ni instalación; no es una dependencia entregada.
 
 **Depende de:** `S4.1` ✅, `S1.16` ✅.
 
@@ -194,9 +194,9 @@ Después de aprobar un brief, Host Launcher crea un panel Herdr **nuevo y visibl
 - [x] El candidato local crea un panel Herdr visible y una sesión OpenCode raíz nueva en el worktree asignado mediante una binding Main canónica
 - [x] La sesión raíz usa `gentle-orchestrator`, recibe el brief aprobado y publica su estado raíz con identidad y root lineage Herdr v1 explícitos
 - [x] Un subagente nativo no puede reemplazar, reutilizar ni modificar el panel, identidad o estado de la sesión raíz; el bootstrap plugin fue removido
-- [x] Brief ausente/no aprobado, worktree no asignado, assignment-location inválido, epoch no vigente, identidad runtime distinta, root lineage no observado o claves Herdr duplicadas fallan cerrado
+- [x] Brief ausente/no aprobado, worktree no asignado, assignment-location inválido, epoch no vigente, identidad runtime distinta, root lineage no observado, IDs de panel option-shaped o claves Herdr duplicadas fallan cerrado; un epoch stale no se consume
 - [x] El composition root productivo liga una vez los puertos de stop proof y decisión humana de `S4.1`; provider ausente, inválido o sustituible falla cerrado antes de lanzar o mutar journal
-- [x] Installer/payload generan y verifican la identidad ejecutable versionada; `bin/torre` no permite sustituir runtime, provider ni bootstrap con inputs del caller
+- [x] Installer/payload generan y verifican la identidad ejecutable versionada; en Linux/WSL el provider fija descriptores Herdr/OpenCode y ejecuta `/proc/self/fd/3`, no pathname, con ambiente saneado, timeout, salida acotada y kill; el reemplazo de pathname no cambia el inodo ejecutado. La mutación in-place por el mismo uid entre revalidación y exec sigue siendo un riesgo residual detectado antes de cada exec cuando altera identidad/hash/stat.
 - [x] El candidato y sus pruebas tocan sólo `Área`
 - [ ] Herdr v1 está entregado e instalado, y la conformance/runtime verification real más la verificación integral del candidato pasan
 

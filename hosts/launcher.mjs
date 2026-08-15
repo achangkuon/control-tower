@@ -23,7 +23,7 @@ export const createHostLauncher = ({ approvedBinding, herdr, opencode } = {}) =>
     } catch (error) {
       if (pane?.pane_id && typeof pane.close === "function") { try { await pane.close(pane.pane_id) } catch {} }
       if (error?.code) throw error
-      fail("CT_LAUNCH_FAILED", "Visible root launch failed")
+      fail("CT_LAUNCH_FAILED", `Visible root launch failed: ${error?.message ?? "unknown"}`)
     }
   }
 }

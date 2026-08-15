@@ -5,6 +5,7 @@ const exact = (value) => value && typeof value === "object" && Object.isFrozen(v
   && Object.keys(value).sort().join("\0") === [...RECEIPT_KEYS].sort().join("\0")
 const root = (value) => typeof value === "string" && value.length > 0 && !value.includes("\0")
 const bounded = (value) => root(value) && value.length <= 512
+const paneId = (value) => typeof value === "string" && /^w[123456789ABCDEFGHJKMNPQRSTVWXYZ0]+:p[123456789ABCDEFGHJKMNPQRSTVWXYZ0]+$/.test(value)
 const observation = (value, record) => value && typeof value === "object" && !Array.isArray(value)
   && Object.keys(value).sort().join("\0") === [...OBSERVATION_KEYS].sort().join("\0")
   && value.schema === "herdr.agent_root_observation" && value.schema_version === 1
@@ -26,7 +27,7 @@ export const createHerdrAdapter = ({ createPane, closePane, projectRoot, publish
     async createPane({ worktree } = {}) {
       if (typeof worktree !== "string" || !worktree) fail("CT_LAUNCH_REJECTED", "Assigned worktree is required")
       const pane = await createPane({ cwd: worktree })
-      if (!root(pane?.pane_id) || owned.has(pane.pane_id)) fail("CT_LAUNCH_REJECTED", "Herdr did not create a fresh pane")
+       if (!paneId(pane?.pane_id) || owned.has(pane.pane_id)) fail("CT_LAUNCH_REJECTED", "Herdr did not create a fresh pane")
       owned.add(pane.pane_id)
       return Object.freeze({ pane_id: pane.pane_id, close: closeOwned })
     },

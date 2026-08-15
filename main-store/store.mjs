@@ -182,7 +182,7 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
     const stats = lstatSync(path)
     return stats.isFile() && !stats.isSymbolicLink() && stats.uid === process.getuid() && (stats.mode & 0o777) === 0o600 && stats.nlink === 1
   }
-  const publishCurrentEpoch = () => {
+  const publishCurrentEpoch = () => withLock(join(root, "epoch-transaction"), () => {
     const record = { project_id: binding.project_id, epoch: binding.epoch }, recordPath = epochRecordPath(binding.epoch)
     if (existsSync(recordPath)) {
       if (!safeEpochFile(recordPath) || !exactKeys(parse(recordPath), ["epoch", "project_id"]) || parse(recordPath).project_id !== record.project_id || parse(recordPath).epoch !== record.epoch) {
@@ -191,13 +191,17 @@ export const createMainStore = ({ root, authority, capability, beforeCommit } = 
     } else {
       atomicWrite(recordPath, record, () => { if (existsSync(recordPath)) fail("CT_EPOCH_AUTHORITY_INVALID", "Epoch record already exists") })
     }
-    if (existsSync(currentEpochPath) && !safeEpochFile(currentEpochPath)) fail("CT_EPOCH_AUTHORITY_INVALID", "Current epoch pointer is invalid")
+    if (existsSync(currentEpochPath)) {
+      if (!safeEpochFile(currentEpochPath)) fail("CT_EPOCH_AUTHORITY_INVALID", "Current epoch pointer is invalid")
+      const current = parse(currentEpochPath)
+      if (exactKeys(current, ["epoch", "project_id"]) && current.epoch === record.epoch && current.project_id === record.project_id) return
+    }
     atomicWrite(currentEpochPath, record, () => {
       if (!existsSync(recordPath) || !safeEpochFile(recordPath) || !exactKeys(parse(recordPath), ["epoch", "project_id"]) || parse(recordPath).project_id !== record.project_id || parse(recordPath).epoch !== record.epoch) {
         fail("CT_EPOCH_AUTHORITY_INVALID", "Epoch record changed during publication")
       }
     })
-  }
+  })
   publishCurrentEpoch()
   const approvedAuthorizationFor = (authorizationId, candidateRevision) => {
     if (typeof authorizationId !== "string" || authorizationId.length === 0) fail("CT_AUTH_INVALID", "Approved authorization is required")

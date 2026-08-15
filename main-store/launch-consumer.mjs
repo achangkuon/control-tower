@@ -24,6 +24,24 @@ export const createLaunchBindingConsumer = ({ root } = {}) => {
     return path
   }
   const bindings = directory("launch-bindings"), consumptions = directory("launch-consumptions", true)
+  // Main uses this same owner-only lock when publishing or rotating current-epoch.
+  const withEpochTransaction = (operation) => {
+    const path = join(root, "epoch-transaction.lock")
+    let descriptor
+    try {
+      const deadline = Date.now() + 5_000
+      while (descriptor === undefined) {
+        try { descriptor = openSync(path, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW, 0o600) }
+        catch (error) {
+          if (error?.code !== "EEXIST" || Date.now() >= deadline) fail("CT_LAUNCH_BINDING_STALE", "Main epoch transaction is unavailable")
+          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 2)
+        }
+      }
+      return operation()
+    } finally {
+      if (descriptor !== undefined) { closeSync(descriptor); rmSync(path, { force: true }) }
+    }
+  }
   const safeEpochRecord = (path) => {
     let descriptor
     try {
@@ -41,6 +59,7 @@ export const createLaunchBindingConsumer = ({ root } = {}) => {
   return Object.freeze({
     consume(requestRef) {
       if (!validRef(requestRef)) fail("CT_LAUNCH_BINDING_INVALID", "Launch request ref is invalid")
+      return withEpochTransaction(() => {
       const bindingPath = join(bindings, `${requestRef}.json`), consumptionPath = join(consumptions, `${requestRef}.json`)
       if (!existsSync(bindingPath)) fail("CT_LAUNCH_BINDING_INVALID", "Launch binding is unavailable")
       const record = parse(bindingPath)
@@ -63,6 +82,7 @@ export const createLaunchBindingConsumer = ({ root } = {}) => {
         fail("CT_LAUNCH_BINDING_INVALID", "Launch binding consumption failed")
       } finally { if (descriptor !== undefined) closeSync(descriptor) }
       return Object.freeze({ assignment_ref: record.assignment_ref, brief: record.brief, brief_ref: record.brief_ref, candidate_revision: record.candidate_revision, fence_path: record.fence_path, host_epoch: record.host_epoch, project_id: record.project_id, worktree: record.worktree })
+      })
     },
   })
 }
