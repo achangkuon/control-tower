@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
 | Outputs | Adapter contract, launcher Pi/OpenCode, health, stop proof, host epoch y fallback exclusivo. |
-| Roadmap | `S4.1` está ✅ COMPLETO. `S1.16` también cerró, por lo que `S4.2` queda 🟢 LISTO para `design-tasks`, sin acreditar implementación ni readiness de producción. `S4.3` y `S4.4` permanecen 🔴 BLOQUEADO por sus dependencias propias. `S4.2`–`S4.4` enumeran toda la responsabilidad restante de Change E y P4 conserva un denominador cerrado de 4 Sesiones. |
+| Roadmap | `S4.1` y `S1.16` están ✅ COMPLETO. `S4.2` implementó y probó el candidato local hasta `e48d7c5`, pero permanece 🔴 BLOQUEADO para activación productiva: Herdr instalado `0.8.0` no ofrece la capacidad v1 requerida. `S4.3` y `S4.4` permanecen 🔴 BLOQUEADO por sus dependencias propias. `S4.2`–`S4.4` enumeran toda la responsabilidad restante de Change E y P4 conserva un denominador cerrado de 4 Sesiones. |
 | Referencias | [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). El proposal `sdd-tower-host-launcher` fue eliminado en `613a45d` por ser cáscara sin avance; su intención vive en este STATUS. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
@@ -165,60 +165,70 @@ Todos deben pasar para cerrar:
 
 ## Sesión 4.2 — Lanzamiento visible de raíz OpenCode
 
-**Estado:** 🟢 LISTO — sus dependencias están completas y la autoridad, `Área`, `Recurso` y decisiones existentes permiten iniciar únicamente la ruta `design-tasks`. Este estado no acredita implementación ni readiness de producción.
+**Estado:** 🔴 BLOQUEADO — el candidato local alcanza `e48d7c557c64580fbcb74e2f575ac5ba72698dbe` con implementación y pruebas de assignment-location, publicación de epoch, identidad ejecutable atendida, provider empaquetado y contractos Herdr v1. La activación productiva no puede avanzar: Herdr instalado `0.8.0` no expone la capacidad v1. El candidato upstream local `f977cb03baf4537cc7db873f2d4a7976b138c662` implementa el contrato aprobado, pero sigue sin push, release ni instalación; no es una dependencia entregada.
 
 **Depende de:** `S4.1` ✅, `S1.16` ✅.
 
-**Área:** `bin/torre`, `hosts/launcher.mjs`, `hosts/opencode-launcher.mjs`, `hosts/herdr.mjs`, `hosts/launch-worker.mjs`, `hosts/launch-worker-cli.mjs`, `hosts/production-provider.mjs`, `main-store/store.mjs`, `main-store/launch-consumer.mjs`, `jornada/lifecycle.mjs`, `install/runtime-payload.mjs`, `plugin/tower-spike.js`, `.opencode/plugins/tower-spike.js`, `test/hosts/launcher.test.mjs`, `test/hosts/opencode-launcher.test.mjs`, `test/hosts/herdr.test.mjs`, `test/hosts/launch-worker.test.mjs`, `test/hosts/production-provider.test.mjs`, `test/main-store.test.mjs`, `test/install/launch-worker-cli.test.mjs`, `test/install/runtime-payload.test.mjs`, `test/install/lifecycle.test.mjs`, `test/install/entrypoint-resolution.test.mjs`, `test/plugin/tower-spike.test.mjs`
+**Área:** `main-store/store.mjs`, `main-store/launch-consumer.mjs`, `bin/torre`, `hosts/launcher.mjs`, `hosts/opencode-launcher.mjs`, `hosts/herdr.mjs`, `hosts/launch-worker.mjs`, `hosts/launch-worker-cli.mjs`, `hosts/production-provider.mjs`, `jornada/lifecycle.mjs`, `install/runtime-payload.mjs`, `install/lifecycle.mjs`, `plugin/tower-spike.js`, `.opencode/plugins/tower-spike.js`, `test/main-store.test.mjs`, `test/hosts/launcher.test.mjs`, `test/hosts/opencode-launcher.test.mjs`, `test/hosts/herdr.test.mjs`, `test/hosts/launch-worker.test.mjs`, `test/hosts/production-provider.test.mjs`, `test/install/launch-worker-cli.test.mjs`, `test/install/runtime-payload.test.mjs`, `test/install/lifecycle.test.mjs`, `test/install/entrypoint-resolution.test.mjs`, `test/plugin/tower-spike.test.mjs`
 
 **Recurso:** panel Herdr y una línea de host por `project_id`; sin DB, migraciones ni token de entrega.
 
-**Ruta:** `design-tasks` — la autoridad de producto está resuelta, pero el contrato técnico entre Herdr y el adapter OpenCode debe investigarse sin inventar comandos. **Autoridad:** decisión del maintainer de 2026-08-10 y [Remote Control and Control Tower Complementarity](../../../../../remote-control/openspec/decisions/remote-control-and-control-tower.md) §Decision/§Consequences.
+**Ruta:** `design-tasks` ejecutada para el candidato local; queda bloqueada sólo la activación externa. **Autoridad:** decisiones del maintainer de 2026-08-10 y [Remote Control and Control Tower Complementarity](../../../../../remote-control/openspec/decisions/remote-control-and-control-tower.md) §Decision/§Consequences.
 
 Después de aprobar un brief, Host Launcher crea un panel Herdr **nuevo y visible** en el worktree asignado, inicia allí una sesión OpenCode raíz con `gentle-orchestrator`, entrega el brief aprobado y publica su estado de raíz en Herdr. Los subagentes nativos de OpenCode siguen siendo internos: no sustituyen ni sobrescriben la identidad, el panel ni el estado de esa sesión raíz.
 
 **Decisiones:**
-- `derivable` — qué entidad representa la ejecución visible. **Criterio:** una sesión OpenCode raíz y un panel Herdr nuevos por lanzamiento aprobado; un subagente nativo no puede ocupar ni mutar ese estado. Falsificable: un lanzamiento aprobado queda representado sólo por un hijo nativo o reutiliza un panel raíz existente. **Autoridad:** decisión del maintainer de 2026-08-10.
-- `derivable` — qué recibe la sesión al nacer. **Criterio:** sólo el brief ya aprobado y las referencias de asignación; el launcher no crea autoridad ni amplía scope. Falsificable: un lanzamiento con brief no aprobado, o con contenido que habilite autoridad bearer, llega a ejecutar. **Autoridad:** REQUIREMENTS §14.1 y decisión del maintainer de 2026-08-10.
-- `escala` — dónde reside el provider productivo que consume la binding Main y opera Herdr/OpenCode. **Clase:** seguridad y permisos; expansión de alcance. **RESUELTA por el maintainer:** provider determinista empaquetado con `torre`, resuelto sólo desde el runtime instalado; `--request-ref` es opaco y ningún módulo/path del caller selecciona runtime o autoridad. **Contamina:** `S4.2` solamente. **Autoridad:** decisiones del maintainer #8725/#8730.
+- `escala` — límite empaquetado de `torre`. **Clase:** seguridad y permisos. **RESUELTA por el maintainer:** el launcher productivo corre sólo el runtime instalado de `torre`; inputs del caller no seleccionan core, lifecycle ni ejecutable. **Contamina:** `S4.2`, `S4.3`.
+- `escala` — registro dedicado de launch binding. **Clase:** seguridad y permisos. **RESUELTA por el maintainer:** Main emite un registro dedicado y opaco para cada lanzamiento; el consumer no acepta identidad, epoch o ubicación fabricados por el caller. **Contamina:** `S4.2`, `S4.3`.
+- `escala` — provider empaquetado. **Clase:** seguridad y permisos. **RESUELTA por el maintainer:** el provider Herdr/OpenCode es determinista, va empaquetado con `torre` y se resuelve sólo desde el runtime instalado; `--request-ref` permanece opaco. **Contamina:** `S4.2`.
+- `escala` — registro de assignment-location. **Clase:** seguridad y permisos. **RESUELTA por el maintainer:** Main persiste y valida el worktree y fence path canónicos de la asignación antes de emitir o consumir una binding. **Contamina:** `S4.2`, `S4.3`.
+- `escala` — registros de epoch y puntero current. **Clase:** seguridad y permisos. **RESUELTA por el maintainer:** Main publica epochs secuenciados y un puntero vigente; emisión y consumo revalidan el epoch activo contra ese estado. **Contamina:** `S4.2`, `S4.3`, `S4.4`.
+- `escala` — identidad ejecutable versionada generada por installer. **Clase:** seguridad y permisos. **RESUELTA por el maintainer:** install lifecycle genera la identidad absoluta y versionada del ejecutable; no se deriva de entorno, `PATH` ni argumento del caller. **Contamina:** `S4.2`.
+- `escala` — bootstrap absoluto atendido. **Clase:** seguridad y permisos. **RESUELTA por el maintainer:** el lanzamiento atendido usa el bootstrap absoluto instalado y conserva la identidad OpenCode raíz; subagentes no la reemplazan. **Contamina:** `S4.2`, `S4.3`.
+- `escala` — IDs explícitos de Herdr v1. **Clase:** dependencias o evidencia contradictorias. **RESUELTA por el maintainer:** la integración exige IDs explícitos de panel y root lineage v1, con rechazo de claves duplicadas y revalidación de identidad/runtime antes de proyectar estado. **Contamina:** `S4.2`, `S4.3`.
+- `escala` — confianza same-user. **Clase:** seguridad y permisos. **RESUELTA por el maintainer:** sólo el mismo usuario local puede operar el panel y proceso asociados; cualquier identidad distinta falla cerrado. **Contamina:** `S4.2`, `S4.3`.
+- `escala` — selección TUI atómica y secuenciada. **Clase:** seguridad y permisos. **RESUELTA por el maintainer:** la selección observada de panel es atómica, secuenciada y ligada al root lineage esperado; no se acepta una proyección ambigua. **Contamina:** `S4.2`, `S4.3`.
+- `escala` — entrega externa de Herdr v1. **Clase:** dependencias o evidencia contradictorias. **ABIERTA:** Herdr instalado `0.8.0` carece de la capacidad v1. El candidato local upstream `f977cb03baf4537cc7db873f2d4a7976b138c662` implementa el contrato, pero no está pushed, released ni installed. **Contamina:** `S4.2`, `S4.3`. **Checkpoint:** review, delivery y release upstream; upgrade local aprobado e integración/reinstalación; conformance/runtime verification real de Control Tower; verificación integral del candidato. Sin push todavía.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
-- [ ] Un brief aprobado crea exactamente un panel Herdr visible y una sesión OpenCode raíz nueva en el worktree asignado
-- [ ] La sesión raíz usa `gentle-orchestrator`, recibe el brief aprobado y expone su estado raíz en Herdr
-- [ ] Un subagente nativo no puede reemplazar, reutilizar ni modificar el panel, identidad o estado de la sesión raíz
-- [ ] Brief ausente/no aprobado, worktree no asignado o evidencia de host/epoch no vigente falla cerrado sin crear panel ni sesión
-- [ ] El único composition root productivo liga una vez los puertos de stop proof y decisión humana de `S4.1`; provider ausente, inválido o sustituible falla cerrado antes de lanzar o mutar journal
-- [ ] El diff no toca rutas fuera de `Área`
+- [x] El candidato local crea un panel Herdr visible y una sesión OpenCode raíz nueva en el worktree asignado mediante una binding Main canónica
+- [x] La sesión raíz usa `gentle-orchestrator`, recibe el brief aprobado y publica su estado raíz con identidad y root lineage Herdr v1 explícitos
+- [x] Un subagente nativo no puede reemplazar, reutilizar ni modificar el panel, identidad o estado de la sesión raíz; el bootstrap plugin fue removido
+- [x] Brief ausente/no aprobado, worktree no asignado, assignment-location inválido, epoch no vigente, identidad runtime distinta, root lineage no observado o claves Herdr duplicadas fallan cerrado
+- [x] El composition root productivo liga una vez los puertos de stop proof y decisión humana de `S4.1`; provider ausente, inválido o sustituible falla cerrado antes de lanzar o mutar journal
+- [x] Installer/payload generan y verifican la identidad ejecutable versionada; `bin/torre` no permite sustituir runtime, provider ni bootstrap con inputs del caller
+- [x] El candidato y sus pruebas tocan sólo `Área`
+- [ ] Herdr v1 está entregado e instalado, y la conformance/runtime verification real más la verificación integral del candidato pasan
 
 ### Módulo M4.2.1 — Lanzador raíz OpenCode
 
 **Paths:** `hosts/launcher.mjs`, `hosts/opencode-launcher.mjs`, `test/hosts/launcher.test.mjs`, `test/hosts/opencode-launcher.test.mjs`
 
-- [ ] Tarea T4.2.1.1 — RED: demostrar que un brief no aprobado, un worktree distinto del asignado o un epoch no vigente no inicia una sesión
-- [ ] Tarea T4.2.1.2 — GREEN: definir, tras `session-plan`, la creación de sesión raíz OpenCode ligada al brief, worktree, assignment y host epoch ya validados
-- [ ] Tarea T4.2.1.3 — REFACTOR: normalizar evidencia de creación y rechazos, preservando que ningún input del launcher otorga autoridad
+- [x] Tarea T4.2.1.1 — RED: se demostró que brief no aprobado, worktree distinto, assignment-location inválido o epoch no vigente no inician una sesión
+- [x] Tarea T4.2.1.2 — GREEN: la sesión raíz OpenCode queda ligada al brief, worktree, assignment y host epoch canónicos
+- [x] Tarea T4.2.1.3 — REFACTOR: se normalizó evidencia de creación y rechazos sin que inputs del launcher otorguen autoridad
 
 ### Módulo M4.2.2 — Proyección visible Herdr
 
 **Paths:** `hosts/herdr.mjs`, `test/hosts/herdr.test.mjs`
 
-- [ ] Tarea T4.2.2.1 — RED: demostrar que un lanzamiento no crea/reutiliza el panel visible correcto, o que un hijo nativo puede clobber su estado
-- [ ] Tarea T4.2.2.2 — GREEN: definir, tras `session-plan`, la creación de panel nuevo y la proyección del estado de sesión raíz exclusivamente
-- [ ] Tarea T4.2.2.3 — REFACTOR: consolidar cleanup y errores tipados para que un fallo parcial no deje una identidad visible falsa
+- [x] Tarea T4.2.2.1 — RED: se demostró rechazo de panel/root lineage incorrecto, claves duplicadas y proyección de hijo nativo
+- [x] Tarea T4.2.2.2 — GREEN: se implementó panel nuevo y proyección exclusiva de la sesión raíz con IDs Herdr v1 explícitos
+- [x] Tarea T4.2.2.3 — REFACTOR: se consolidaron cleanup, errores tipados y revalidación de identidad/runtime antes de publicar estado
 
 ### Módulo M4.2.3 — Cableado productivo del fence
 
 **Paths:** `plugin/tower-spike.js`, `.opencode/plugins/tower-spike.js`, `test/plugin/tower-spike.test.mjs`
 
-- [ ] Tarea T4.2.3.1 — RED: demostrar que provider de stop proof o decisión humana ausente, inválido o sustituible impide lanzar y publicar journal
-- [ ] Tarea T4.2.3.2 — GREEN: ligar una sola vez los puertos constructor-bound de `S4.1` desde el composition root productivo, sin exponerlos a inputs del launcher
-- [ ] Tarea T4.2.3.3 — REFACTOR: mantener la inyección separada de la autoridad de Main y verificar que no aparece una segunda ruta de wiring
+- [x] Tarea T4.2.3.1 — RED: se demostró que provider, identidad ejecutable, assignment-location o epoch ausente, inválido o sustituible impiden lanzar y publicar journal
+- [x] Tarea T4.2.3.2 — GREEN: Main liga una vez los puertos constructor-bound de `S4.1`, la binding dedicada y el provider empaquetado sin exponerlos al launcher
+- [x] Tarea T4.2.3.3 — REFACTOR: se mantuvo la inyección separada de autoridad Main, con installer/payload como única identidad ejecutable y sin segunda ruta de wiring
 
 ## Sesión 4.3 — Inspección, liveness y rehidratación segura
 
 **Estado:** 🔴 BLOQUEADO
 
-**Depende de:** `S4.2` 🟢, `S1.16` ✅.
+**Depende de:** `S4.2` 🔴, `S1.16` ✅.
 
 **Área:** `hosts/inspect.mjs`, `hosts/health.mjs`, `hosts/stop-proof.mjs`, `hosts/rehydration.mjs`, `test/hosts/inspect.test.mjs`, `test/hosts/health.test.mjs`, `test/hosts/stop-proof.test.mjs`, `test/hosts/rehydration.test.mjs`
 
@@ -301,7 +311,7 @@ Enforce el `host_epoch` emitido por Main y permite failover OpenCode → Pi sól
 
 ```mermaid
 graph LR
-  S41["S4.1 fence · ✅"] --> S42["S4.2 raíz visible · 🟢"]
+  S41["S4.1 fence · ✅"] --> S42["S4.2 raíz visible · 🔴"]
   S116["S1.16 OpenCode wake · ✅"] --> S42
   S42 --> S43["S4.3 liveness/rehidratación · 🔴"]
   S116 --> S43
