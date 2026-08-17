@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Legacy P7 depende sólo de legacy P6; P8 depende de legacy P7 reconciliado e integrado. Change A no es dependencia de ninguno. |
 | Outputs | Recovery/rollback fail-closed; controller host-neutral y adapter OpenCode; adapter Pi; adapter Claude opt-in; runtime versionado; verificación CT-only. |
-| Roadmap | `S1.11`–`S1.15` están ✅ COMPLETO y publicadas. `S1.16` está ✅ COMPLETO, integrada y verificada en `da4e3914830f87d028113dfe451fdbe101b7847a`; la entrega directa incluye esta implementación y su cierre documental. `S1.17` es una Sesión downstream distinta y sigue 🔴 BLOQUEADO por identidades y capacidad runtime reales ausentes. P1 queda en 84% (16/19 S). Legacy P9–P11 esperan límites de PR demostrables. |
+| Roadmap | La base OpenCode `S1.11`–`S1.16` está ✅ COMPLETO. `S1.17`–`S1.19` preservan IDs como alcance Pi/Intercom posterior 🟡 DIFERIDO y no bloquean el cierre OpenCode. P1 conserva 84% (16/19 S). |
 | Referencias | [`autonomous-continuation-control-tower`](../../changes/autonomous-continuation-control-tower/), [`p7-host-neutral-loop-opencode-adapter`](../../changes/p7-host-neutral-loop-opencode-adapter/), [`p8-slice-planning`](../../changes/p8-slice-planning/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). |
 
 Legacy P6 se integró mediante PRs #38–#45 y cerró en `e16d94b`. Su [`apply-progress.md`](../../changes/autonomous-continuation-control-tower/apply-progress.md) es evidencia histórica y permanece sin reescritura.
@@ -225,20 +225,22 @@ graph LR
 
 ## Sesiones P8
 
+Las tres Sesiones son alcance posterior 🟡 DIFERIDO. **Autoridad:** rebase del maintainer 2026-08-17. **Área:** `adapters/pi/**`, `test/host-adapters.test.mjs`. **Recurso:** runtime Pi/Intercom, separado de OpenCode. **Decisiones:** `derivable` — Intercom sólo transporta wake/comunicación y nunca autoriza; falsificador: un wake habilita despacho o entrega. **Criterio común:** ningún cambio de estas Sesiones bloquea, relocaliza o modifica la ruta OpenCode.
+
 | ID | Resultado | Estado | Ref |
 |---|---|---|---|
-| S1.17 | Gate de reconciliación y pruebas RED | 🔴 BLOQUEADO — `T1.17.1.1`–`.2` pasaron; `.3` carece de `assignment_id`, `session_id` y capacidad runtime reales; `.4`–`.5` no iniciaron | [`tasks.md`](../../changes/p8-slice-planning/tasks.md) |
-| S1.18 | Pi adapter GREEN | 📋 PLANIFICADO | [`tasks.md`](../../changes/p8-slice-planning/tasks.md) |
-| S1.19 | Refactor y regresión | 📋 PLANIFICADO | [`tasks.md`](../../changes/p8-slice-planning/tasks.md) |
+| S1.17 | Gate y RED Pi/Intercom | 🟡 DIFERIDO | [`tasks.md`](../../changes/p8-slice-planning/tasks.md) |
+| S1.18 | Adapter Pi/Intercom | 🟡 DIFERIDO | [`tasks.md`](../../changes/p8-slice-planning/tasks.md) |
+| S1.19 | Regresión Pi/Intercom | 🟡 DIFERIDO | [`tasks.md`](../../changes/p8-slice-planning/tasks.md) |
 
 ## Rutas de ejecución — reconciliadas el 2026-08-11
 
 | ID | Estado | Ruta | Motivo |
 |---|---|---|---|
 | `S1.16` | ✅ COMPLETO | `design-tasks` | El seam consumidor reconciliado está integrado y verificado localmente en `da4e391`; el provider/injection productivo de Change E permanece en `S4.2/M4.2.3`. |
-| `S1.17` | 🔴 BLOQUEADO | `direct` al destrabar | Es downstream y distinta de `S1.12`. `T1.17.1.1`–`.2` pasaron; `.3` no puede validar un assignment-bound worktree sin `assignment_id`, `session_id` y capacidad de binding Workspace Manager/Main reales; `.4`–`.5` no empezaron. Al destrabar sólo aterriza pruebas RED contra contratos ya aprobados. |
-| `S1.18` | 📋 PLANIFICADO | `direct` | Depende de `S1.17`. Implementación GREEN con alcance exacto (`adapters/pi/`), comando `bun test test/host-adapters.test.mjs` y rollback declarados. |
-| `S1.19` | 📋 PLANIFICADO | `direct` | Depende de `S1.18`. Refactor de seams y regresión compartida; verificación sólo por fixtures y rollback sin schema. |
+| `S1.17` | 🟡 DIFERIDO | `direct` al reactivar | Pi/Intercom posterior; no es prerequisito OpenCode. |
+| `S1.18` | 🟡 DIFERIDO | `direct` | Depende de `S1.17` al reactivar. |
+| `S1.19` | 🟡 DIFERIDO | `direct` | Depende de `S1.18` al reactivar. |
 
 **Condición de parada de `S1.16`, no disparada:** la implementación cerró sin tocar `core.mjs` ni `mcp.mjs`, sin SQLite, API pública nueva o autoridad fabricada. La composición productiva del provider/injection sigue perteneciendo a `S4.2/M4.2.3`; el cierre consumidor no acredita readiness de producción.
 
@@ -252,6 +254,6 @@ graph LR
 
 Por lo tanto `S1.11`, `S1.12`, `S1.13`, `S1.14` y `S1.15` **entran en la cadena de release**: sin ellas, `S1.16` y `S1.17` no pueden arrancar, y sin ésas no hay `S4.2`–`S4.4` ni `S7.1`.
 
-**Reconciliado el 2026-08-13:** `S1.11`–`S1.15` están ✅ COMPLETO y publicadas. `S1.16` está ✅ COMPLETO mediante `da4e391`; la entrega directa incluye la implementación y este cierre documental. `S1.17` conserva su bloqueo propio: faltan `assignment_id`, `session_id` y capacidad runtime reales, una capacidad de binding que Workspace Manager/Main todavía no expone. El cierre de `S1.16` no elimina ese bloqueo externo.
+**Reconciliado el 2026-08-17:** `S1.11`–`S1.16` están ✅ COMPLETO. `S1.17`–`S1.19` quedan 🟡 DIFERIDO como trabajo Pi/Intercom posterior y no son dependencia de `S4.2`–`S4.4` ni `S7.1`.
 
 Legacy P9–P11 todavía no tienen límites de PR demostrables. Sus responsabilidades se preservan sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).

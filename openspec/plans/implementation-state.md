@@ -2,7 +2,7 @@
 
 > Este documento mide **código**, no planificación. El [master-index](master-index.md) dice qué está planificado y qué Sesiones cerraron; este archivo dice qué existe, qué corre y qué está desplegado.
 >
-> **Snapshot fuente actual: 2026-08-15 sobre el candidato local de comportamiento `44f23adbb80bed974246aa3761573a388e5761bf`, tree `d5343fda0373c5152ad94bc248db5a5d0ccf8031`.** `origin/master` permanece en `a4a39fabccc52971941f7f4d5e1c415f19d5e766`, por lo que no hay publicación remota. La última re-medición completa de inventario y runtime sigue siendo la del 2026-08-10 sobre `origin/master@b360c8a`; se conserva como evidencia histórica y no se presenta como una medición fresca. Las pruebas de S10.2 sí se ejecutaron sobre los bytes exactos del candidato: focused `4/0/22` y suite completa `721/0/4361` en 52 archivos durante supervisión externa válida. No se re-ejecutaron `diagnose`, hashes instalados ni conteos globales.
+> **Snapshot fuente actual: 2026-08-17 sobre `origin/master@3ec8536`.** S10.2 ya está publicado por los tres commits de sincronización; sus métricas locales siguen siendo evidencia histórica, no una re-medición de runtime. Esta rebase sólo cambia planificación: Moshi es interfaz humana, Main despacha, Herdr supervisa internamente la raíz OpenCode y la recuperación es same-host WSL.
 >
 > **Nota de vocabulario (2026-08-01, vigente):** la columna `Lane` no nombra dos productos. Tras la [unificación](release-chain.md), `installable-v1` y `autonomous-v2` son afinidad de trabajo. El corte real en código es `bin/torre`, que rechaza capacidades con `CT_V2_ONLY` como flag opt-in apagado por defecto.
 
@@ -112,7 +112,7 @@ bun test → 721 pass · 0 fail · 4361 expect() · 52 archivos
 remote-control focused → 2 pass · 0 fail · 14 expect() · limpio en 6e81d3c
 ```
 
-La suite completa corrió mientras la supervisión externa del repositorio era válida; `ACTIVE` permaneció ausente y el centinela externo fue limpiado. No es evidencia de publicación: `origin/master` continúa en `a4a39fabccc52971941f7f4d5e1c415f19d5e766`. La medición histórica de `S5.6` sobre `origin/master@b360c8a` fue `588/0/3452` en 38 archivos y se conserva en su sección; no debe confundirse con la corrida actual. Precondiciones confirmadas y aún sin runbook:
+La suite completa corrió mientras la supervisión externa del repositorio era válida; `ACTIVE` permaneció ausente y el centinela externo fue limpiado. La publicación posterior de S10.2 está en `origin/master@3ec8536`; la medición histórica de `S5.6` sobre `origin/master@b360c8a` fue `588/0/3452` en 38 archivos y se conserva en su sección; no debe confundirse con la corrida actual. Precondiciones confirmadas y aún sin runbook:
 
 1. **La Torre debe estar desarmada.** Con `.git/control-tower/ACTIVE` presente, los dos `P0 frozen snapshot restore` cortan con `Control Tower must be OFF`. Es el fail-closed funcionando, no una regresión.
 2. **El runner es `bun`, no `node`.**
@@ -123,7 +123,7 @@ La suite completa corrió mientras la supervisión externa del repositorio era v
 
 ### `S10.2` — supervisión externa sin armado local
 
-✅ COMPLETO como candidato local, todavía sin publicación remota. El comportamiento `44f23adbb80bed974246aa3761573a388e5761bf` agrega `supervision/state.mjs` y `test/supervision/state.test.mjs` sobre el plan enumerado en `8377803752228966fb8d50efae4ae5dd01a090e6`; su tree es `d5343fda0373c5152ad94bc248db5a5d0ccf8031`.
+✅ COMPLETO y publicado en `origin/master@3ec8536`. El comportamiento `44f23adbb80bed974246aa3761573a388e5761bf` agrega `supervision/state.mjs` y `test/supervision/state.test.mjs` sobre el plan enumerado en `8377803752228966fb8d50efae4ae5dd01a090e6`; su tree es `d5343fda0373c5152ad94bc248db5a5d0ccf8031`.
 
 El productor publica estado canónico bajo `~/.local/state/control-tower/supervision/<project-id>` con directorio `0700`, archivo y lock `0600`, escritura atómica y binding exacto de proyecto, repositorio, worktree, `base_sha`, `sesion_id`, digest de contrato y vencimiento. El lector y validador fallan cerrado ante ausencia, formato inválido, permisos inseguros, symlinks, identidad ajena, divergencia o expiración. El seam real inyectado de `S10.1` acepta sólo evidencia válida, vigente y coincidente.
 
@@ -133,7 +133,7 @@ Focused 4/0/22; full 721/0/4361 en 52 archivos durante supervisión externa vál
 
 ✅ COMPLETO y publicado. Comportamiento en `976b8d0` y `75549a7` (tree `835ed3e`), cierre documental `f9f2869`, reconciliación `e82f4ae`. Agrega `escalation/{request,routing}.mjs` y sus pruebas: 578 líneas, sin tocar el authorization store. Recheck 8082: `findings: []`, `READY`. Enfocada: `bun test test/escalation` → 16/0/78.
 
-No existe transporte ni autenticación remota: el repositorio define la frontera y deja el callback inhabilitado hasta `S8.7`.
+No existe transporte ni autenticación remota en la ruta activa: `S8.7` fue archivada por la rebase Moshi/Main/OpenCode.
 
 ### `S5.6` — snapshot canónico de Sesión
 

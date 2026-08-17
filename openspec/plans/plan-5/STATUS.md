@@ -18,8 +18,8 @@
 | Campo | Detalle |
 |---|---|
 | Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1`, y la cadena contractual `S5.4 → S5.6 → S5.7 → S5.8 → S5.11 → S5.12 → S5.9 → S5.10 → S5.5`. |
-| Outputs | F: authorization store, Telegram, validación Git/PR/check/SHA, entrega idempotente y post-check. G: planning horizon, reconciliación, apply/verify, Binding Delta y continuación del siguiente `slice_id`. Más el ruteo de escalamiento de `S5.4`, los contratos canónicos prerrequisito de `S5.6`–`S5.10`, los productores de provenance de `S5.11`, la composición Main→parking de `S5.12` y la planificación diferible de `S5.5`. |
-| Roadmap | `S5.1`, `S5.4`, `S5.6`, `S5.7`, `S5.8`, `S5.11` y `S5.12` están ✅ COMPLETO. `S5.12` fue entregada en `e7b1437f8c98c5856236e06e4c1fb5c40e9dc8ef`, con política en `6f3252ae6c555b5b5da96d33d18a7fbd1aaa812a` y documentación preparada en `cebcaebafe6f8ad71311c87a2c7de3db39f3491d`; `master` y `origin/master` coinciden en este último SHA. `S5.9` queda 🟢 LISTO: su dependencia `S5.12` está satisfecha, su decisión `escala` está resuelta y `Área`/`Recurso` están definidos; proposal/spec/design y el falsificador siguen fuera de este Git canónico y deben reconciliarse al retomar. `S5.10` y `S5.5` conservan sus bloqueos, pero desde el 2026-08-14 son **sólo de dependencia**: las decisiones 30 y 31 cerraron las suyas. `S5.2` mantiene los hallazgos abiertos 1, 3 y 5 del recheck dirigido 8193 y es lo único de P5 que exige acción del maintainer que no es una decisión `escala` — necesita una segunda corrección autorizada; `S5.3` queda transitivamente 🔴 BLOQUEADO por eso, con sus propias decisiones 28 y 29 ya resueltas. |
+| Outputs | Entrega idempotente por política `direct-push`, checkpoints durables y loop planner N+1 / implementer N. Main conserva la autoridad; Moshi sólo muestra escalamiento. |
+| Roadmap | `S5.1`, `S5.4`, `S5.6`–`S5.8`, `S5.11` y `S5.12` están ✅ COMPLETO. `S5.9` está 🟢 LISTO. `S5.2` conserva corrección técnica pendiente bajo push directo; `S5.3` y `S5.5` quedan detrás de sus dependencias como continuación planner/implementer y park/resume acotado. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
 
 ## Grafo de dependencias
@@ -40,7 +40,7 @@ graph LR
   S510 --> S55["S5.5 continuación diferible · 🔴"]
   S41["S4.1 fence hosts · ✅"] --> S52["S5.2 entrega · 🔴"]
   S33 --> S52
-  S52 --> S53["S5.3 continuación · 🔴"]
+   S52 --> S53["S5.3 planner/implementer · 📋"]
 ```
 
 ## Sesión 5.1 — Change F candidate contracts
@@ -204,9 +204,9 @@ Define identidad y freeze de `candidate_revision`, invalidación, sucesores, com
 
 **Recurso:** Main / ninguno. Registro append-only propio por CAS de filesystem en `delivery/**`. **Sin migraciones de SQLite y sin `db-writer`** — ver la decisión de ledger más abajo.
 
-**Entrega:** commit directo a `master` + push, sin PR ([`AGENTS.md`](../../../AGENTS.md)). Dos commits, como `S3.1`–`S3.4`. Forecast **210–290 líneas** ([`role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/tasks.md)), por debajo del borde de encadenado de 400: no se parte.
+**Entrega:** commit directo a `master` + push, sin PR ([`AGENTS.md`](../../../AGENTS.md)). Cada commit debe permanecer independientemente verificable/revertible y dentro de 400 líneas authored; si el forecast excede, se separa en commits secuenciales.
 
-Implementa commit, push y PR idempotentes, checks, revisión, autorización exacta y reconciliación de resultados desconocidos.
+Implementa commit y push idempotentes a `master`, checks, autorización exacta y reconciliación de resultados desconocidos; no crea ni depende de PR.
 
 **Colisión de IDs en `M5.2.1` — resuelta como `derivable`, no escalada.** Igual que `M5.1.1`, está definido dos veces: `Adapters/reconciliation` en el [`tasks.md` de `checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/tasks.md#s52-change-f-delivery--m521-adaptersreconciliation) con **cuatro** Tareas, y `Main dispatch` en el [`tasks.md` de `role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/tasks.md) con **tres**. **Gobierna `Adapters/reconciliation`,** y acá no hizo falta escalarlo porque la evidencia es decisiva: la prosa de esta Sesión cita el rango `T5.2.1.1`–`T5.2.1.4`, y **sólo `checkpointed` tiene cuatro Tareas**. Lo confirman las tres decisiones `derivable` de abajo, todas de entrega y reconciliación, ninguna de despacho, más el precedente que el maintainer fijó en `M5.1.1`. **Consecuencia:** el contenido de Main dispatch —`continuation/coordinator.mjs`, `assignment-v2`, despacho Support/Worker— **sale del alcance de `S5.2`** y cae en el mismo bucket huérfano que el dry-run desplazado de `S5.1`, sin ID asignado.
 
@@ -232,7 +232,7 @@ Implementa commit, push y PR idempotentes, checks, revisión, autorización exac
   reintento fallido para y escala, y un resultado ambiguo que no se puede reconciliar entra en
   `UNRECONCILED` sin emitir ninguna mutación remota adicional.
 - [ ] Tarea T5.2.1.4 — GREEN/REFACTOR: la secuencia `commit → verificar commit/árbol → freeze →
-  push/PR`, con el registro append-only propio de `delivery/**` y el binding a la autorización de
+  push directo a master`, con el registro append-only propio de `delivery/**` y el binding a la autorización de
   `S5.1`, importada sin modificar. Registrar `delivery-record-v1` en `contracts/schema-registry.mjs`,
   sumar su invariante en `contracts/validate.mjs` y su caso al fixture.
   `bun test test/delivery test/contracts`.
@@ -256,15 +256,19 @@ Implementa commit, push y PR idempotentes, checks, revisión, autorización exac
 - [ ] `bun test test/delivery test/contracts` pasa completo y `bun test` no introduce fallos nuevos sobre la línea base que deje `S4.1`
 - [ ] El diff no toca ninguna ruta del `Prohibido` — en particular `core.mjs`
 
-## Sesión 5.3 — Change G integrated-base continuation
+## Sesión 5.3 — Continuación planner/implementer
 
-**Estado:** 🔴 BLOQUEADO — bloqueo transitivo: `S5.2` no está integrada y permanece estacionada como NOT READY por la decisión 8195.
+**Estado:** 📋 PLANIFICADO — espera `S5.2` integrada; no tiene decisión propia abierta.
 
-**Dependencias:** `S5.2` integrada.
+**Depende de:** `S5.2`.
 
-**Ruta:** `blocked` **sólo por dependencia** desde el 2026-08-14 — las dos decisiones `escala` propias quedaron resueltas (decisiones 29 y 28), así que lo único que la detiene es que `S5.2` no está integrada. **Ruta proyectada al destrabar: `design-tasks`** — la decisión 29 fija preservar/`UNRECONCILED`/escalar y la 28 le suma las cuatro responsabilidades de dry-run huérfanas, y ambas reescriben `T5.3.1.1`–`T5.3.1.3`. Es elaboración técnica sobre Tareas existentes, no un contrato de producto nuevo, así que no corresponde `full-sdd`. **Autoridad:** decisiones 28 y 29 del [registro](../decision-register.md). *(Clasificada el 2026-08-11; decisiones resueltas el 2026-08-14.)*
+**Área:** `continuation/**`, `test/continuation/**`.
 
-Aplica el horizonte de dos Sesiones, reconcilia la base integrada y habilita sucesores sólo desde evidencia fresca. La definición de `M5.3.1` y `T5.3.1.1`–`T5.3.1.3` vive en [`tasks.md`](../../changes/autonomous-v2-checkpointed-delivery/tasks.md#s53-change-g--m531-integrated-base).
+**Recurso:** autoridad de despacho Main; sin DB, migraciones ni token de entrega.
+
+**Ruta:** `design-tasks` al destrabar — el planner prepara sólo N+1 hasta Tareas y el implementer ejecuta N mediante apply/tests/verify. **Autoridad:** rebase del maintainer 2026-08-17 y política `planning.horizon_ceiling: 2`.
+
+Prepara N+1 desde la base integrada y evidencia fresca; el implementer conserva N hasta verificarlo. Main es el único despachador y ningún wake otorga autorización. La definición histórica de tareas queda preservada como evidencia.
 
 **Decisiones:**
 
@@ -273,6 +277,12 @@ Aplica el horizonte de dos Sesiones, reconcilia la base integrada y habilita suc
 - `derivable` — qué es evidencia fresca. **Criterio:** evidencia producida contra la base ya integrada, no contra la que existía cuando el sucesor se planificó. Falsificable: un sucesor habilitado por evidencia anterior a la integración de su predecesor. **Autoridad:** el alcance declarado de `S5.3`.
 - `escala` — **RESUELTA por el maintainer el 2026-08-14 (decisión 29): preservar el sucesor, marcarlo `UNRECONCILED` y escalar.** Qué pasa cuando la base integrada divergió de la que el sucesor asumía. **Clase:** dependencias o evidencia contradictorias. Rebasar el sucesor cambia su contenido después de haber sido planificado; descartarlo tira trabajo hecho. **Resolución:** ninguna de las dos automáticamente. Es derivable de las reglas de negocio 9 y 10 del PRD —drift material o ambiguo requiere decisión humana, y el estado parcial se preserva y bloquea en vez de limpiarse para aparentar progreso—. **Falsificable:** cualquier ruta que rebase o descarte un sucesor divergente sin decisión humana. **Contaminaba:** `S7.1`, cuyo piloto de rechazo de candidatos stale mide precisamente este caso.
 - `escala` — **RESUELTA por el maintainer el 2026-08-14 (decisión 28): el contenido de dry-run huérfano de `S5.1` se absorbe en esta Sesión.** `NO_SCOPE`, denegación, drift de horizonte y `reconcile→Support→Policy` quedaron sin dueño al resolver `M5.1.1` a favor de `Candidate`, y `S5.3` ya era su destino natural. **Clase:** expansión de alcance. **Efecto:** no se enumera Sesión nueva, así que el denominador de P5 no cambia; la elaboración técnica de `S5.3` debe incorporar esas cuatro responsabilidades a sus Tareas. **Contaminaba:** `S5.3`.
+
+**Criterios de aceptación** — todos deben pasar para cerrar:
+- [ ] El planner deja N+1 especificado hasta Tareas sobre la base integrada y el implementer ejecuta sólo N
+- [ ] Main es el único despachador; ningún wake, agente o interfaz humana concede autorización
+- [ ] Una base divergente preserva el sucesor y escala, sin rebase o descarte automático
+- [ ] El diff no toca rutas fuera del Área que fije la elaboración técnica
 
 ## Sesión 5.4 — Ruteo de escalamiento fuera/en casa
 
@@ -287,13 +297,13 @@ Aplica el horizonte de dos Sesiones, reconcilia la base integrada y habilita suc
 
 **Por qué `schemas/**` y `contracts/**` están prohibidos.** El modo de ruteo es **estado interno de `escalation/**`, no un contrato entre agentes**: nadie fuera de ese módulo lo lee. La solicitud emitida sí es un contrato, pero su forma la define `S5.1` en el authorization store, no esta Sesión. `S5.4` no necesita registrar ningún schema nuevo.
 
-Hoy, cuando un agente llega a una decisión que requiere autoridad del maintainer, **se frena y espera**: no emite nada y nadie se entera. Un canal a Telegram sin esto es un tubo vacío. `S5.4` es la mitad que faltaba — que Main **emita** la solicitud de decisión y sepa **a dónde mandarla**.
+`S5.4` conserva el registro local de solicitud de decisión. En la ruta activa, Main presenta el escalamiento a Moshi; Telegram/Hermes y sus callbacks quedan archivados y no son una dependencia.
 
-La decisión aceptada el 2026-08-10 delimita el seam remoto sin ampliar esta Sesión: Main sigue siendo autor de la solicitud y de su proyección; Hermes sólo la presenta/transporta. Cuando `S8.7` conecte el canal, recibe una tarjeta operacional redactada con proyecto, Sesión/Módulo, decisión exacta, opciones/consecuencias, estado, referencias de evidencia y expiración; nunca código, diffs, logs completos, IDs crudos ni secretos. El modo remoto y cada solicitud visible vencen independientemente a las ocho horas. Eso no extiende la autorización sensible de implementación/entrega de `S5.1`, que conserva su reloj menor e independiente. Referencia: [Remote Control and Control Tower Complementarity](../../../../../remote-control/openspec/decisions/remote-control-and-control-tower.md) y decisiones del maintainer de 2026-08-10.
+La evidencia histórica del seam remoto permanece en el historial de S5.4, pero no gobierna la ruta activa. Main conserva creación, validación y consumo de cualquier decisión; Moshi no agrega autorización.
 
 El modo es explícito y de dos valores: `local` cuando el maintainer está frente a la máquina, `remoto` cuando no. Ante estado ausente, ilegible o ambiguo el modo resuelve a `local`: no escalar es un inconveniente, escalar por un canal que no debía estar abierto es una fuga.
 
-`S5.4` produce y rutea la solicitud. **No la autoriza** — el sobre, el nonce y el consumo son de `S5.1`, y el transporte a Telegram es de `S8.7`.
+`S5.4` produce y rutea la solicitud local. **No la autoriza**: creación, validación y consumo siguen en `S5.1`; la ruta activa la presenta Moshi sin conceder autoridad.
 
 **Decisiones:**
 
@@ -302,7 +312,7 @@ El modo es explícito y de dos valores: `local` cuando el maintainer está frent
 - `derivable` — dónde se persiste la solicitud emitida. **Criterio:** el authorization store de `S5.1`, sin abrir una segunda ruta de escritura. Dos rutas de escritura al mismo estado es la causa raíz que `6d37642` acaba de reparar en este mismo Plan. Falsificable: cualquier escritura de solicitudes fuera del store. **Autoridad:** `T5.4.1.2`.
 - `derivable` — qué pasa con la solicitud si el transporte remoto falla. **Criterio:** queda pendiente y recuperable localmente; el fallo de transporte **nunca** la consume ni la descarta. Falsificable por el caso de `M5.4.3`. **Autoridad:** los criterios de aceptación de `S5.4`.
 - `escala` — quién puede conmutar el modo de ruteo. **Clase:** seguridad y permisos. **RESUELTA el 2026-08-04 por el maintainer: sólo el maintainer, por dos vías autenticadas, y ningún agente.** Las dos vías son (1) **CLI local autenticada** y (2) **callback remoto autenticado** desde el teléfono. **Main y los agentes no pueden conmutarlo automáticamente por ninguna ruta** — el conmutador decide si las preguntas salen de la máquina, y un agente que pudiera ponerlo en `remoto` se abriría su propio canal. Ante identidad **ausente, inválida o ambigua** la resolución es `local`, igual que ante estado corrupto: los dos costos no son comparables. Falsificable: cualquier ruta en la que Main, un agente o una identidad no verificada cambie el modo, o en la que una identidad dudosa termine emitiendo hacia un transporte remoto. **Autoridad:** decisión del maintainer del 2026-08-04. **Contaminaba:** `S8.7` y `S5.5`, ambas destrabadas.
-  **La vía remota queda definida pero INHABILITADA, y eso es lo que evita la dependencia circular.** `S5.4` declara la frontera y el contrato del conmutador; **no inventa transporte ni autenticación**. Hasta que `S8.7` entregue autenticación válida, la ruta remota no se habilita: intentar conmutar a `remoto` por callback falla cerrado por autenticación ausente, y el modo permanece `local`. Así `S5.4` **funciona entera sin `S8.7`** —el conmutador local autenticado alcanza para operar—, y `S8.7` después sólo conecta el callback ya contratado. Falsificable: una ruta remota que funcione antes de que `S8.7` entregue autenticación, o un `S5.4` que no pueda operar en local sin `S8.7`. `S5.4` **no** pasa a depender de `S8.7`: el grafo sigue siendo `S5.1 → S5.4 → S5.5`.
+  **La vía remota/callback es evidencia histórica archivada.** `S5.4` conserva su frontera local; Moshi puede hacer visible la solicitud pero no concede autorización. La ruta activa sigue `S5.1 → S5.4 → S5.5`.
 
 ### Módulo 5.4.1 — Emisión de solicitud de decisión
 
@@ -340,7 +350,7 @@ El modo es explícito y de dos valores: `local` cuando el maintainer está frent
 - [x] `bun test test/escalation` pasa completo y `bun test` no introduce fallos nuevos sobre la línea base que deje `S5.1`
 - [x] El diff no toca ninguna ruta del `Prohibido` ni ninguna fuera del `Área`
 
-La tarjeta Telegram, el envío idempotente, el callback y sus TTLs son responsabilidad pendiente de `S8.7`; no se reclasifican como efecto ya implementado de `S5.4`.
+La tarjeta Telegram, el envío idempotente, callback y TTLs fueron archivados con `S8.7`; no se reclasifican como efecto de `S5.4` ni como trabajo pendiente.
 
 **Evidencia de cierre publicado.** La integración preservó los dos límites de comportamiento aceptados: `0ad88bb` → `976b8d02bfda2d3ec9993e92a7b2f919ebc2d302` (tree `0a516b146a3273b215df41f7f3bdfd3b89226be9`, parent `70ea7c2`) y `9c28ffd` → `75549a781cd6ac19afc3e09e7466f7772f678fb7` (tree `835ed3e1d69540efae89b258813b194a0c555526`, parent `976b8d0`). El primer commit agrega exactamente `escalation/{request,routing}.mjs` y `test/escalation/{request,routing}.test.mjs`; el segundo corrige únicamente `escalation/routing.mjs` y su test. El diff final contra la base son esos cuatro paths, 578 adiciones y ninguna ruta prohibida.
 
@@ -348,23 +358,22 @@ Los cuatro blobs finales son `6985fbbd1aedb18c1f3e213508a2153227b0cc1a`, `2c5fca
 
 No aplica un runtime externo: esta Sesión define ruteo y persistencia, pero deliberadamente no implementa transporte ni autenticación remota. La persistencia entre procesos, concurrencia, degradación y reutilización del store canónico sí están cubiertas por pruebas. Rollback: revertir primero el commit documental de cierre, después `75549a7` para retirar el hardening acotado y finalmente `976b8d0` para retirar los cuatro paths de comportamiento; ninguno de esos límites arrastra trabajo ajeno.
 
-## Sesión 5.5 — Decisión estacionada y continuación independiente
+## Sesión 5.5 — Parking y retoma del loop
 
-**Estado:** 🔴 BLOQUEADO — `S5.8` está ✅ COMPLETO, pero la reconciliación del 2026-08-12 probó dos prerrequisitos externos ausentes. `S5.5` no puede entrar en tasks/apply hasta completar la cadena `S5.11 → S5.12 → S5.9 → S5.10`: hoy no existe binding autoritativo entre el valor exacto de `parked.checkpoint` y la evidencia canónica de checkpoint/reconciliación, ni binding inmutable entre trabajo independiente completado y la decisión más opción/supuesto exactos bajo los que corrió. No se acredita avance parcial.
+**Estado:** 📋 PLANIFICADO — espera `S5.10` integrada. Sus contratos previos quedan como prerrequisitos, pero no crea maquinaria nueva de contaminación dinámica.
 **Depende de:** `S5.10` integrada; transitivamente `S5.9`, `S5.12`, `S5.11` y `S5.8` ✅
-**Área:** `escalation/{parked,contamination,resume}.mjs`, `test/escalation/**`
+**Área:** `escalation/{parked,resume}.mjs`, `test/escalation/**`
 **Prohibido:** `continuation/**`, `core.mjs`, `mcp.mjs`, `delivery/**`, `contracts/**`, `schemas/**`, `main-store/store.mjs`
 **Recurso:** ledger append-only de decisiones estacionadas. Sin token de entrega.
 
-**Route:** `full-sdd`, bloqueada antes de tasks/apply. `S5.6`–`S5.8` fijaron snapshot, decisión/respuesta y selección terminal; `S5.11` y `S5.12` deben producir y transportar provenance canónica, y `S5.9`/`S5.10` deben fijar los dos bindings restantes. Después de integrar toda la cadena, el SDD de `S5.5` cubre el comportamiento integral de ledger, contaminación, selección y retoma.
+**Ruta:** `design-tasks` al destrabar. **Autoridad:** rebase del maintainer 2026-08-17; dependencias, `Área`, `Recurso` y `Decisiones` declarados del plan son la única base de parking/resume.
 
 `S5.6`–`S5.12` poseen los contratos, productores, composición y bindings canónicos que esta Sesión consume: snapshot de Sesión,
 registro/respuesta, binding de opción seleccionada, provenance producer-owned, transporte inmutable hasta parking, binding del checkpoint exacto y binding del
 trabajo independiente completado bajo su opción/supuesto. `S5.5` no los redefine, registra ni
 valida por una ruta local.
 
-`S5.4` hace que la pregunta **salga**. `S5.5` es lo que hace que la Torre **no se quede
-esperando la respuesta**: es la Sesión que convierte la planificación en diferible.
+`S5.4` conserva el registro local de la pregunta. `S5.5` estaciona el checkpoint durable y permite que el planner prepare N+1 mientras el implementer concluye N; Moshi sólo hace visible una escalación de Main.
 
 Hoy el formato de plan ya declara por adelantado dependencias, `Área`, `Recurso` y
 criterios binarios. Eso es el dato. Nadie lo **consume** todavía para decidir qué se
@@ -376,13 +385,9 @@ duplica la emisión ni el ruteo de `S5.4`. Comparte prefijo de `Área` con `S5.4
 por diseño **nunca corren en paralelo**: `S5.5` sólo abre con `S5.4` integrada.
 
 **Decisiones:**
-
-- `derivable` — de dónde sale el scope de contaminación. **Criterio:** la enumeración del plan por digest más el ledger inmutable, y **falla si intenta leer engram**. Engram hace upsert por `topic_key` y no está atado al contenido del repositorio, así que un cierre de Módulo que no toca documentación lo deja desactualizado sin avisar. Falsificable por `T5.5.2.1`. **Autoridad:** el delta de `d232fdf`.
-- `derivable` — qué hace un caso de contaminación ambiguo. **Criterio:** resuelve a **contaminada**. Sobre-incluir cuesta capacidad ociosa unas horas; sub-incluir entrega trabajo construido sobre una suposición que nadie aprobó, y aparece en el merge, cuando las dos implementaciones ya existen. Los costos no son simétricos. Falsificable por `T5.5.2.2`. **Autoridad:** §11 del [estándar de planes](/home/emili/.claude/skills/_shared/plan-naming-convention.md).
-- `derivable` — qué vuelve estacionable a una decisión. **Criterio:** pregunta exacta, evidencia, opciones enumeradas con su consecuencia, origen, checkpoint y clase. Sin opciones enumeradas no es una decisión, es una pregunta, y escalar "¿qué hacemos acá?" vuelve "depende". Falsificable por `T5.5.1.2`. **Autoridad:** el registro de decisión estacionada de §11.
-- `derivable` — qué hace la Torre con cero candidatos independientes. **Criterio:** se detiene y lo reporta; nunca inventa trabajo ni relaja un criterio para encontrar algo que hacer. Falsificable por `T5.5.3.2`. **Autoridad:** los criterios de aceptación de `S5.5`.
-- `derivable` — si el scope congelado puede recalcularse mientras la decisión sigue abierta. **Criterio:** no; se congela **dentro** del registro, no fuera. Un scope que se recalcula puede encoger después de que ya se eligió trabajo en base a él. Falsificable por `T5.5.2.3`. **Autoridad:** el `Recurso` append-only de esta Sesión.
-- `escala` — **RESUELTA por el maintainer el 2026-08-14 (decisión 31): preservar, marcar contaminado y escalar la disposición.** Qué pasa con el trabajo ya hecho cuando la decisión estacionada se responde en contra. **Clase:** dependencias o evidencia contradictorias. Es el caso en el que la Torre eligió bien según el scope congelado y la respuesta igual invalida lo construido. **Resolución:** nunca descartar automático, y tampoco rescate parcial automático — aunque el binding de la decisión 30 permita *probar* bajo qué opción o supuesto corrió cada pieza, decidir qué sobrevive es del maintainer y no de la infraestructura. Misma regla 10 del PRD y consistente con la decisión 29. **Dependencia de la resolución:** la decisión 30 es lo que hace decidible a esta; sin ese binding no se puede nombrar qué quedó inválido y habría que tratar el lote entero. **Falsificable:** cualquier ruta que descarte o rescate trabajo invalidado sin disposición humana. **Contaminaba:** `S5.3`, cuya continuación consume el resultado, y `S7.1`, que lo verifica.
+- `derivable` — qué puede continuar. **Criterio:** sólo la dependencia declarada, `Área`, `Recurso` y `Decisiones` del plan vigente; no hay análisis dinámico adicional. Falsificable: continuar una Sesión que contradiga esos campos.
+- `derivable` — qué se retoma. **Criterio:** el checkpoint durable exacto y el mismo worktree asignado; base divergente exige reconciliación. Falsificable: retomar otro checkpoint o worktree.
+- `escala` — disposición de trabajo contradicho. **Clase:** dependencias o evidencia contradictorias. **RESUELTA:** se preserva y escala; nunca se descarta o rescata automáticamente. **Contamina:** `S5.3`, `S7.1`.
 
 ### Las ocho clases que siempre escalan
 
@@ -400,22 +405,21 @@ dependencias o evidencia contradictorias.
 - [ ] Tarea 5.5.1.3 — GREEN: implementar `escalation/parked.mjs` sobre el ledger append-only, consumiendo el contrato `parked-decision-v1` entregado por `S5.7` y reutilizando la solicitud de `S5.4` sin abrir una segunda ruta de escritura.
 - [ ] Tarea 5.5.1.4 — REFACTOR: normalizar códigos de error estables y volver a correr `bun test test/escalation`.
 
-### Módulo 5.5.2 — Scope de contaminación
+### Módulo 5.5.2 — Dependencias declaradas
 
-- [ ] Tarea 5.5.2.1 — RED: agregar `test/escalation/contamination.test.mjs` para que el scope consuma el snapshot canónico de `S5.6`, ligado a los **bytes y digest exactos del plan**, más el ledger inmutable, y falle si intenta leer engram o parsear el plan por una segunda ruta.
-- [ ] Tarea 5.5.2.2 — RED: agregar los tres criterios de contaminación — dependencia en el grafo, `Área` o `Recurso` compartido, y criterio de aceptación que referencia la misma decisión — más el caso ambiguo, que resuelve a **contaminada**.
-- [ ] Tarea 5.5.2.3 — GREEN: implementar `escalation/contamination.mjs` y congelar el scope dentro del registro de la decisión, no fuera.
-- [ ] Tarea 5.5.2.4 — REFACTOR: verificar con testigos de bytes que calcular el scope es read-only sobre plan, registro, DB, WAL y SHM.
+- [ ] Tarea 5.5.2.1 — RED: rechazar continuación que contradiga `Depende de`, `Área`, `Recurso` o `Decisiones` declarados.
+- [ ] Tarea 5.5.2.2 — GREEN: implementar la lectura de esos campos sin parser o maquinaria de contaminación adicional.
+- [ ] Tarea 5.5.2.3 — REFACTOR: verificar readback y no mutación fuera del checkpoint.
 
 ### Módulo 5.5.3 — Selección de trabajo independiente
 
-- [ ] Tarea 5.5.3.1 — RED: agregar `test/escalation/independent.test.mjs` para que una Sesión sólo sea elegible si es 🟢 LISTO, no está en el scope congelado, no depende de la bloqueada en el grafo y tiene `Área` **y** `Recurso` disjuntos.
+- [ ] Tarea 5.5.3.1 — RED: agregar `test/escalation/independent.test.mjs` para que una Sesión sólo sea elegible si es 🟢 LISTO y respeta `Depende de`, `Área`, `Recurso` y `Decisiones` declarados.
 - [ ] Tarea 5.5.3.2 — RED: agregar el caso de cero candidatos — la Torre se detiene y lo reporta; nunca inventa trabajo ni relaja un criterio para encontrar algo que hacer.
 - [ ] Tarea 5.5.3.3 — GREEN: implementar la selección como lectura, ejercida por Main. El worker no se autoasigna.
 
 ### Módulo 5.5.4 — Retoma desde el checkpoint
 
-- [ ] Tarea 5.5.4.1 — RED: agregar `test/escalation/resume.test.mjs` para que una respuesta terminal de `S5.8`, validada por `S5.1` y ligada al `parked_decision_id` más un `option_id` enumerado, cierre la decisión y levante el bloqueo **sólo** sobre las Sesiones del scope congelado, nunca sobre otras.
+- [ ] Tarea 5.5.4.1 — RED: agregar `test/escalation/resume.test.mjs` para que una respuesta terminal validada por Main retome sólo el checkpoint exacto del worktree asignado.
 - [ ] Tarea 5.5.4.2 — RED: agregar el caso de checkpoint rancio — si la base se movió desde que se estacionó, la retoma **no** es automática: exige reconciliación nueva.
 - [ ] Tarea 5.5.4.3 — RED: agregar el caso de respuesta no validada, vencida o de origen equivocado — no levanta nada y no muta el registro.
 - [ ] Tarea 5.5.4.4 — GREEN: implementar `escalation/resume.mjs` retomando desde el checkpoint exacto registrado.
@@ -424,18 +428,16 @@ dependencias o evidencia contradictorias.
 
 - [ ] Una decisión no derivable produce un registro inmutable con pregunta exacta, evidencia, opciones con consecuencia, origen, checkpoint y clase
 - [ ] Un registro sin opciones, sin evidencia o sin checkpoint falla cerrado
-- [ ] Una decisión de cualquiera de las ocho clases nunca se deriva, aunque haya autoridad y criterios disponibles
-- [ ] El scope de contaminación se deriva del snapshot canónico de `S5.6`, ligado a bytes/digest exactos, más el ledger, y **nunca** de engram ni de un segundo parser
-- [ ] Un caso ambiguo resuelve a contaminada: sobre-incluir es un costo, sub-incluir es el incidente
-- [ ] El scope queda congelado dentro del registro y no se recalcula al retomar
-- [ ] Sólo continúan Sesiones 🟢 LISTO, fuera del scope, sin dependencia en el grafo y con `Área` y `Recurso` disjuntos
-- [ ] Con cero candidatos la Torre se detiene y lo reporta, sin relajar criterios
+- [ ] Una decisión de cualquiera de las ocho clases se escala y no se deriva
+- [ ] La continuación usa sólo `Depende de`, `Área`, `Recurso` y `Decisiones` declarados; no crea contaminación dinámica
+- [ ] Sólo continúan Sesiones compatibles con esos campos y el checkpoint durable
+- [ ] Sin continuación compatible, Main estaciona y reporta sin inventar trabajo
 - [ ] La selección la ejerce Main; el worker no se autoasigna
-- [ ] Sólo una respuesta terminal de `S5.8`, validada por `S5.1` y ligada al `parked_decision_id` más un `option_id` enumerado, levanta el bloqueo sobre el scope congelado y retoma desde el checkpoint exacto
+- [ ] Sólo una respuesta terminal validada por Main permite retomar desde el checkpoint exacto
 - [ ] Un checkpoint rancio exige reconciliación y no retoma solo
 - [ ] Una respuesta no validada, vencida o de origen equivocado no levanta nada ni muta el registro
 - [ ] `S5.5` no crea, registra, valida ni consume contratos o autoridad, y no duplica el parser de `S5.6`, la respuesta de `S5.8`, ni la emisión o el ruteo de `S5.4`
-- [ ] Calcular scope y elegibilidad es read-only, verificado por testigos de bytes en éxito y en rechazo
+- [ ] Verificar elegibilidad es read-only, verificado por testigos de bytes en éxito y en rechazo
 - [ ] `bun test test/escalation` pasa completo y `bun test` no introduce fallos nuevos
 - [ ] El diff no toca `continuation/**`, `core.mjs`, `mcp.mjs`, `delivery/**`, `contracts/**`, `schemas/**` ni `main-store/store.mjs`
 
@@ -765,9 +767,9 @@ Cada Tarea es una unidad de commit/direct-push revisable y revertible por sí so
 
 **Resultado:** persistir bajo autoridad exclusiva de Main una prueba inmutable que liga trabajo independiente completado a la decisión estacionada exacta y a la opción o supuesto explícito bajo el que se ejecutó.
 
-**Estado:** 🔴 BLOQUEADO **sólo por dependencia** desde el 2026-08-14 — el contrato visible de provenance del trabajo completado, la representación de opción/supuesto y el momento de sellado quedaron resueltos por la decisión 30. Lo único que la detiene es que `S5.9` no está integrada; `S5.9` está 🟢 LISTO.
+**Estado:** 📋 PLANIFICADO — el contrato visible de provenance, la representación de opción/supuesto y el momento de sellado quedaron resueltos por la decisión 30; espera `S5.9` integrada.
 
-**Route:** `blocked` por dependencia, con ruta proyectada al destrabar **`design-tasks`** — la decisión 30 ya eligió la forma pública, la representación exclusiva de opción/supuesto y el instante de sellado siguiendo el precedente de `S5.8`, así que lo que falta es elaboración técnica sobre un contrato fijado y no un contrato de producto nuevo. **Autoridad:** decisiones del maintainer del 2026-08-12 y del 2026-08-14 (decisión 30), más la evidencia B verificada contra `parked-decision-v1`, `parked-decision-response-v1` y el `terminal_audit` actual del Main store, que ligan la respuesta pero no el trabajo completado bajo ella.
+**Ruta:** `design-tasks` al satisfacer la dependencia — la decisión 30 ya eligió la forma pública, la representación exclusiva de opción/supuesto y el instante de sellado siguiendo el precedente de `S5.8`. **Autoridad:** decisiones del maintainer 2026-08-12 y 2026-08-14 (decisión 30).
 
 **Depende de:** `S5.9` integrada.
 
@@ -801,6 +803,6 @@ Cada Tarea es una unidad de commit/direct-push revisable y revertible por sí so
 - [ ] `S5.5` consume la prueba sin inferirla localmente y `S7.1` puede atribuir la evidencia al candidato y supuesto exactos
 - [ ] El diff de implementación no toca ningún path fuera de `Área`
 
-**Cómputo del Plan 5:** `7/12 S = 58%`. Cuentan `S5.1`, `S5.4`, `S5.6`, `S5.7`, `S5.8`, `S5.11` y `S5.12`; `S5.9` está 🟢 LISTO y `S5.2`, `S5.3`, `S5.5` y `S5.10` están 🔴 BLOQUEADO. Ninguna Sesión posterior aporta crédito hasta `COMPLETO`.
+**Cómputo del Plan 5:** `7/12 S = 58%`. Cuentan `S5.1`, `S5.4`, `S5.6`, `S5.7`, `S5.8`, `S5.11` y `S5.12`; `S5.9` está 🟢 LISTO, `S5.2` está 🔴 BLOQUEADO y `S5.3`, `S5.5`, `S5.10` están 📋 PLANIFICADO. Ninguna Sesión posterior aporta crédito hasta `COMPLETO`.
 
 Las responsabilidades legacy de Telegram Delivery y continuación que aún no tienen límite de un PR permanecen sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).

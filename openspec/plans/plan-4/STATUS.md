@@ -7,8 +7,8 @@
 | Campo | Detalle |
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
-| Outputs | Adapter contract, launcher Pi/OpenCode, health, stop proof, host epoch y fallback exclusivo. |
-| Roadmap | `S4.1` y `S1.16` están ✅ COMPLETO. `S4.2` está 🟢 LISTO por readiness técnica del candidato local; la activación productiva sigue pendiente de Herdr v1 entregado e instalado y de la verificación real. `S4.3` y `S4.4` permanecen 🔴 BLOQUEADO por sus dependencias propias. `S4.2`–`S4.4` enumeran toda la responsabilidad restante de Change E y P4 conserva un denominador cerrado de 4 Sesiones. |
+| Outputs | Lanzamiento/inspección de raíz OpenCode, liveness Herdr interno y recuperación same-host WSL. |
+| Roadmap | `S4.1` y `S1.16` están ✅ COMPLETO. `S4.2` es 🟢 LISTO: Main despacha y Herdr interno crea/supervisa el panel, sin autoridad externa. `S4.3` y `S4.4` son 📋 PLANIFICADO después de ese límite. P4 conserva 1/4 S. |
 | Referencias | [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). El proposal `sdd-tower-host-launcher` fue eliminado en `613a45d` por ser cáscara sin avance; su intención vive en este STATUS. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
@@ -165,17 +165,17 @@ Todos deben pasar para cerrar:
 
 ## Sesión 4.2 — Lanzamiento visible de raíz OpenCode
 
-**Estado:** 🟢 LISTO — por resolución explícita del maintainer, esta etiqueta acredita readiness técnica del candidato local Control Tower `6ff1ca27fad75aa94b9a3fd66eb48a2860a601e2` (tree `1261ce2663b42273b72269b8d78fdab905a82f3d`), no activación productiva ni `✅ COMPLETO`. El candidato mantiene binding Main, publicación/rotación de epoch y consumo bajo una única transacción owner-only; preflight Linux/WSL abre y fija los inodos Herdr/OpenCode, valida identidad/hash/stat y conformance antes del consumo, y toda invocación posterior ejecuta el descriptor heredado por `/proc/self/fd/3` con ambiente saneado, timeout, límite de salida y kill. El resultado integral local es `PASS_LOCAL_BLOCKED_EXTERNAL`: focused 123/123 y full 717/717. Un fallo posterior al consumo es un intento final acotado: devuelve evidencia que exige a Main emitir una binding nueva. La activación productiva sigue pendiente: Herdr instalado `0.8.0` no expone la capacidad v1. El candidato upstream local `/home/emili/projects/herdr-s4-2` en `f977cb03baf4537cc7db873f2d4a7976b138c662` implementa el contrato aprobado, pero sigue sin push, release ni instalación; no es una dependencia entregada. El candidato Control Tower queda además tres commits de documentación detrás de `origin/master`; esa integración posterior puede cambiar su base y exige revalidación final.
+**Estado:** 🟢 LISTO — Main es el único despachador y Herdr es sólo el sustrato interno same-host que crea/posee el panel y liga la raíz OpenCode verificada. Moshi es interfaz humana, no proveedor de despacho. La evidencia local conserva binding Main, epoch y preflight Linux/WSL; no se exige release externo de Herdr ni se habilita host remoto.
 
 **Depende de:** `S4.1` ✅, `S1.16` ✅.
 
 **Área:** `main-store/store.mjs`, `main-store/launch-consumer.mjs`, `bin/torre`, `hosts/launcher.mjs`, `hosts/opencode-launcher.mjs`, `hosts/herdr.mjs`, `hosts/launch-worker.mjs`, `hosts/launch-worker-cli.mjs`, `hosts/production-provider.mjs`, `jornada/lifecycle.mjs`, `install/runtime-payload.mjs`, `install/lifecycle.mjs`, `plugin/tower-spike.js`, `.opencode/plugins/tower-spike.js`, `test/main-store.test.mjs`, `test/hosts/launcher.test.mjs`, `test/hosts/opencode-launcher.test.mjs`, `test/hosts/herdr.test.mjs`, `test/hosts/launch-worker.test.mjs`, `test/hosts/production-provider.test.mjs`, `test/install/launch-worker-cli.test.mjs`, `test/install/runtime-payload.test.mjs`, `test/install/lifecycle.test.mjs`, `test/install/entrypoint-resolution.test.mjs`, `test/plugin/tower-spike.test.mjs`
 
-**Recurso:** panel Herdr y una línea de host por `project_id`; sin DB, migraciones ni token de entrega.
+**Recurso:** panel Herdr interno y una línea OpenCode por `project_id`; sin DB, migraciones ni token de entrega.
 
-**Ruta:** `design-tasks` ejecutada para el candidato local; queda bloqueada sólo la activación externa. **Autoridad:** decisiones del maintainer de 2026-08-10 y [Remote Control and Control Tower Complementarity](../../../../../remote-control/openspec/decisions/remote-control-and-control-tower.md) §Decision/§Consequences.
+**Ruta:** `design-tasks`. **Autoridad:** decisión de rebase del maintainer 2026-08-17: Main → Herdr interno → raíz OpenCode, con Moshi sólo humano-visible.
 
-Después de aprobar un brief, Host Launcher crea un panel Herdr **nuevo y visible** en el worktree asignado, inicia allí una sesión OpenCode raíz con `gentle-orchestrator`, entrega el brief aprobado y publica su estado de raíz en Herdr. Los subagentes nativos de OpenCode siguen siendo internos: no sustituyen ni sobrescriben la identidad, el panel ni el estado de esa sesión raíz.
+Después del brief aprobado, Main despacha un root OpenCode en el worktree asignado. Herdr crea/posee el panel local y supervisa ese root; los subagentes siguen internos y no sustituyen la identidad raíz. Moshi no despacha ni autoriza.
 
 **Decisiones:**
 - `escala` — límite empaquetado de `torre`. **Clase:** seguridad y permisos. **RESUELTA por el maintainer:** el launcher productivo corre sólo el runtime instalado de `torre`; inputs del caller no seleccionan core, lifecycle ni ejecutable. **Contamina:** `S4.2`, `S4.3`.
@@ -188,7 +188,7 @@ Después de aprobar un brief, Host Launcher crea un panel Herdr **nuevo y visibl
 - `escala` — IDs explícitos de Herdr v1. **Clase:** dependencias o evidencia contradictorias. **RESUELTA por el maintainer:** la integración exige IDs explícitos de panel y root lineage v1, con rechazo de claves duplicadas y revalidación de identidad/runtime antes de proyectar estado. **Contamina:** `S4.2`, `S4.3`.
 - `escala` — confianza same-user. **Clase:** seguridad y permisos. **RESUELTA por el maintainer:** sólo el mismo usuario local puede operar el panel y proceso asociados; cualquier identidad distinta falla cerrado. **Contamina:** `S4.2`, `S4.3`.
 - `escala` — selección TUI atómica y secuenciada. **Clase:** seguridad y permisos. **RESUELTA por el maintainer:** la selección observada de panel es atómica, secuenciada y ligada al root lineage esperado; no se acepta una proyección ambigua. **Contamina:** `S4.2`, `S4.3`.
-- `escala` — entrega externa de Herdr v1. **Clase:** dependencias o evidencia contradictorias. **ABIERTA:** Herdr instalado `0.8.0` carece de la capacidad v1. El candidato local upstream `/home/emili/projects/herdr-s4-2` en `f977cb03baf4537cc7db873f2d4a7976b138c662` implementa el contrato, pero no está pushed, released ni installed. La vía permitida por la política upstream es la Discussion verificada [#2830](https://github.com/herdrdev/herdr/discussions/2830), `Expose root lineage for OpenCode agent sessions`; no hubo push de código remoto. **Owner externo:** maintainer de Herdr. **Contamina:** `S4.2`, `S4.3`. **Checkpoint:** esperar la respuesta del maintainer en Discussion #2830. Si acepta la dirección y abre contribución: entrega/release upstream, upgrade local de Herdr aprobado e integración/reinstalación, integrar los tres commits de documentación de `origin/master`, corregir o reevaluar el WARNING asesor de delimitación del root `session_id`, conformance/runtime verification real de Control Tower, revalidación final del candidato y autorización humana de direct-push.
+- `derivable` — recuperación del proceso local. **Criterio:** Herdr sólo reabre/reatacha el root OpenCode del worktree y checkpoint asignados bajo WSL; cualquier identidad, host o worktree distinto falla cerrado. **Autoridad:** rebase del maintainer 2026-08-17. Falsificable: una recuperación que relocalice o habilite otro host.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
 - [x] El candidato local crea un panel Herdr visible y una sesión OpenCode raíz nueva en el worktree asignado mediante una binding Main canónica
@@ -198,7 +198,7 @@ Después de aprobar un brief, Host Launcher crea un panel Herdr **nuevo y visibl
 - [x] El composition root productivo liga una vez los puertos de stop proof y decisión humana de `S4.1`; provider ausente, inválido o sustituible falla cerrado antes de lanzar o mutar journal
 - [x] Installer/payload generan y verifican la identidad ejecutable versionada; en Linux/WSL el provider fija descriptores Herdr/OpenCode y ejecuta `/proc/self/fd/3`, no pathname, con ambiente saneado, timeout, salida acotada y kill; el reemplazo de pathname no cambia el inodo ejecutado. La mutación in-place por el mismo uid entre revalidación y exec sigue siendo un riesgo residual detectado antes de cada exec cuando altera identidad/hash/stat.
 - [x] El candidato y sus pruebas tocan sólo `Área`
-- [ ] Herdr v1 está entregado e instalado, y la conformance/runtime verification real más la verificación integral del candidato pasan
+- [ ] Main puede despachar el root asignado y Herdr interno puede supervisarlo/reabrirlo sólo en el mismo host WSL
 
 **WARNING asesor no bloqueante:** antes de la integración final, la validación/delimitación canónica del root `session_id` de Control Tower debe corregirse o reevaluarse. No se cierra silenciosamente con este candidato local.
 
@@ -228,15 +228,15 @@ Después de aprobar un brief, Host Launcher crea un panel Herdr **nuevo y visibl
 
 ## Sesión 4.3 — Inspección, liveness y rehidratación segura
 
-**Estado:** 🔴 BLOQUEADO
+**Estado:** 📋 PLANIFICADO
 
-**Depende de:** `S4.2` 🟢, `S1.16` ✅.
+**Depende de:** `S4.2`.
 
 **Área:** `hosts/inspect.mjs`, `hosts/health.mjs`, `hosts/stop-proof.mjs`, `hosts/rehydration.mjs`, `test/hosts/inspect.test.mjs`, `test/hosts/health.test.mjs`, `test/hosts/stop-proof.test.mjs`, `test/hosts/rehydration.test.mjs`
 
 **Recurso:** evidencia de proceso y panel Herdr; sin DB, migraciones ni token de entrega.
 
-**Ruta:** `design-tasks` — REQUIREMENTS fija la semántica de liveness y stop proof, pero el adapter y la evidencia real de Herdr/OpenCode todavía no tienen interfaz integrada. **Autoridad:** REQUIREMENTS §14.1–§14.4 y escenarios CT-V1-06 a CT-V1-10.
+**Ruta:** `design-tasks` — prepara liveness del sustrato Herdr interno y evidencia de root OpenCode. **Autoridad:** rebase del maintainer 2026-08-17.
 
 Inspecciona sólo la sesión raíz declarada, aplica heartbeat de 15 segundos y sus estados `SUSPECTED`/`UNAVAILABLE`, obtiene stop proof canónico y rehidrata una proyección visible únicamente cuando identidad, assignment y epoch siguen coincidiendo.
 
@@ -267,47 +267,47 @@ Inspecciona sólo la sesión raíz declarada, aplica heartbeat de 15 segundos y 
 - [ ] Tarea T4.3.2.2 — GREEN: enlazar la evidencia canónica de stop y rehidratar sólo la proyección cuya identidad coincide exactamente
 - [ ] Tarea T4.3.2.3 — REFACTOR: preservar readback y cleanup sin convertir la rehidratación en una nueva fuente de autoridad
 
-## Sesión 4.4 — Enforzamiento de epoch y failover exclusivo
+## Sesión 4.4 — Recuperación same-host WSL y epoch
 
-**Estado:** 🔴 BLOQUEADO
+**Estado:** 📋 PLANIFICADO
 
-**Depende de:** `S4.3` 🔴, `S1.17` 🔴, `S1.18` 📋, `S1.19` 📋.
+**Depende de:** `S4.3`.
 
-**Área:** `hosts/failover.mjs`, `hosts/epoch-enforcement.mjs`, `hosts/opencode-host.mjs`, `hosts/pi-host.mjs`, `test/hosts/failover.test.mjs`, `test/hosts/epoch-enforcement.test.mjs`, `test/hosts/opencode-host.test.mjs`, `test/hosts/pi-host.test.mjs`
+**Área:** `hosts/recovery.mjs`, `hosts/epoch-enforcement.mjs`, `hosts/opencode-host.mjs`, `test/hosts/recovery.test.mjs`, `test/hosts/epoch-enforcement.test.mjs`, `test/hosts/opencode-host.test.mjs`
 
-**Recurso:** línea exclusiva `host_epoch` emitida/fenced por Main; sin DB, migraciones ni token de entrega.
+**Recurso:** línea exclusiva `recovery_epoch` emitida/fenced por Main; sin DB, migraciones ni token de entrega.
 
-**Ruta:** `full-sdd` — el contrato de producto está aprobado, pero la integración multi-host de recuperación, pruebas de proceso y rechazo de efectos stale necesita diseño técnico y modelo de amenazas propio. **Autoridad:** REQUIREMENTS §14.2–§14.4, CT-V1-05 a CT-V1-08, `S4.1` y la decisión del maintainer de 2026-08-10.
+**Ruta:** `design-tasks` — recuperación acotada al mismo host/worktree/checkpoint, sin contrato multi-host. **Autoridad:** rebase del maintainer 2026-08-17.
 
-Enforce el `host_epoch` emitido por Main y permite failover OpenCode → Pi sólo tras stop proof, expiración/cierre de claims y leases, inspección de worktree/Git/efectos y preservación de estado dirty. Nunca vuelve a usar el worktree cuando no puede probar que el writer anterior terminó.
+Enforce el `recovery_epoch` emitido por Main y sólo recupera/reabre OpenCode en WSL con el mismo worktree y checkpoint asignados. Nunca relocaliza a otro host ni reutiliza estado ambiguo.
 
 **Decisiones:**
-- `derivable` — cuándo permite fallback. **Criterio:** host fallback permitido/distinto, proof canónico positivo, claims/leases cerrados y evidencia de inspección íntegra; cualquier ausencia bloquea. Falsificable: Pi inicia sobre el mismo worktree sin todas esas pruebas. **Autoridad:** REQUIREMENTS §14.2–§14.4 y CT-V1-06/07.
+- `derivable` — cuándo permite recuperación. **Criterio:** sólo mismo host WSL, worktree y checkpoint asignados con proof canónico positivo; cualquier diferencia bloquea. Falsificable: otro host o worktree inicia.
 - `derivable` — cómo trata un mensaje o claim viejo. **Criterio:** todo binding con epoch distinto del vigente devuelve `CT_ASSIGNMENT_STALE`. Falsificable: un efecto de epoch anterior llega a persistir o ejecutar. **Autoridad:** CT-V1-08 y `S4.1`.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
-- [ ] Una jornada mantiene exactamente un execution host activo; Pi no tiene writer mientras OpenCode conserva el epoch vigente
-- [ ] Fallover OpenCode → Pi exige stop proof, cierre/expiración de claims y leases, inspección de worktree/Git/efectos y preservación de dirty state
-- [ ] Failover sin stop proof devuelve `CT_FAILOVER_UNSAFE` y no inicia Pi sobre el worktree existente
-- [ ] El failover incrementa el host epoch y todo claim, mensaje o efecto anterior devuelve `CT_ASSIGNMENT_STALE`
+- [ ] Una jornada mantiene exactamente una raíz OpenCode activa en el host WSL asignado
+- [ ] La recuperación reabre sólo el root OpenCode del mismo worktree/checkpoint tras stop proof e inspección íntegra
+- [ ] Recuperación sin stop proof o con host/worktree distinto devuelve `CT_RECOVERY_UNSAFE` y no inicia nada
+- [ ] La recuperación válida incrementa el `recovery_epoch` y todo claim, mensaje o efecto anterior devuelve `CT_ASSIGNMENT_STALE`
 - [ ] Main conserva emisión y fencing de epoch; Host Launcher sólo lo enforce
 - [ ] El diff no toca rutas fuera de `Área`
 
 ### Módulo M4.4.1 — Enforzamiento de epoch
 
-**Paths:** `hosts/epoch-enforcement.mjs`, `hosts/opencode-host.mjs`, `hosts/pi-host.mjs`, `test/hosts/epoch-enforcement.test.mjs`, `test/hosts/opencode-host.test.mjs`, `test/hosts/pi-host.test.mjs`
+**Paths:** `hosts/epoch-enforcement.mjs`, `hosts/opencode-host.mjs`, `test/hosts/epoch-enforcement.test.mjs`, `test/hosts/opencode-host.test.mjs`
 
-- [ ] Tarea T4.4.1.1 — RED: demostrar que dos hosts activos, un host no permitido o un claim/mensaje de epoch viejo fallan cerrados
-- [ ] Tarea T4.4.1.2 — GREEN: adaptar los contracts lifecycle de OpenCode/Pi sin asumir autoridad de launcher en `S1.16`–`S1.19`
+- [ ] Tarea T4.4.1.1 — RED: demostrar que dos roots, host/worktree no permitido o epoch viejo fallan cerrados
+- [ ] Tarea T4.4.1.2 — GREEN: adaptar sólo el lifecycle OpenCode sin asumir autoridad de launcher
 - [ ] Tarea T4.4.1.3 — REFACTOR: unificar validación de epoch y preservar la separación entre `binding_epoch`, `host_epoch` y generation local
 
-### Módulo M4.4.2 — Failover exclusivo
+### Módulo M4.4.2 — Recuperación same-host WSL
 
-**Paths:** `hosts/failover.mjs`, `test/hosts/failover.test.mjs`
+**Paths:** `hosts/recovery.mjs`, `test/hosts/recovery.test.mjs`
 
-- [ ] Tarea T4.4.2.1 — RED: cubrir stop proof ausente, claims/leases vivos, worktree dirty y evidencia externa ambigua
-- [ ] Tarea T4.4.2.2 — GREEN: implementar la secuencia aprobada de stop, inspección, incremento de epoch y creación de attempts sólo en el fallback permitido
-- [ ] Tarea T4.4.2.3 — REFACTOR: verificar que no se reutiliza worktree ni se acepta efecto stale después de un failover o de un rechazo
+- [ ] Tarea T4.4.2.1 — RED: cubrir stop proof ausente, worktree/checkpoint distinto y evidencia ambigua
+- [ ] Tarea T4.4.2.2 — GREEN: implementar stop, inspección, epoch y reapertura sólo del root OpenCode local
+- [ ] Tarea T4.4.2.3 — REFACTOR: verificar que no se relocaliza ni acepta efecto stale después de un rechazo
 
 ## Grafo de dependencias
 
@@ -315,12 +315,8 @@ Enforce el `host_epoch` emitido por Main y permite failover OpenCode → Pi sól
 graph LR
   S41["S4.1 fence · ✅"] --> S42["S4.2 raíz visible · 🟢"]
   S116["S1.16 OpenCode wake · ✅"] --> S42
-  S42 --> S43["S4.3 liveness/rehidratación · 🔴"]
-  S116 --> S43
-  S43 --> S44["S4.4 failover · 🔴"]
-  S117["S1.17 Pi RED · 🔴"] --> S44
-  S118["S1.18 Pi GREEN · 📋"] --> S44
-  S119["S1.19 Pi refactor · 📋"] --> S44
+   S42 --> S43["S4.3 liveness/rehidratación · 📋"]
+   S43 --> S44["S4.4 recuperación WSL · 📋"]
 ```
 
 No queda responsabilidad pendiente de Change E sin Sesión enumerada.

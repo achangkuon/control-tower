@@ -17,12 +17,12 @@ conserva la arquitectura productora de supervisión ya verificada y sus decision
 | Campo | Contrato |
 |---|---|
 | Autoridad | Decisión explícita del maintainer: Plan nuevo P10 para las responsabilidades provisionales `S3.5`/`S3.6`, renumeradas `S10.1`/`S10.2`. |
-| Estado | ✅ COMPLETO: `S10.3`, `S10.1` y `S10.2` están verificadas; `S10.2` cerró localmente el 2026-08-15. |
+| Estado | ✅ COMPLETO: `S10.3`, `S10.1` y `S10.2` están verificadas; `S10.2` está publicada en `origin/master@3ec8536`. |
 | Orden | `S3.4 → S10.3 → S10.1 → S10.2 → S7.1`. |
 | Capacidad derivada | P10 ya no aporta una Sesión ejecutable: sus 3/3 Sesiones están ✅ COMPLETO. La capacidad concurrente conserva `S4.2` y `S5.9`. |
 | Avance | 100% (3/3 S). |
 | Release | P10 forma parte del producto, roadmap y release únicos; sus tres Sesiones están cerradas. |
-| Publicación | Candidato local de comportamiento `44f23adbb80bed974246aa3761573a388e5761bf`, tree `d5343fda0373c5152ad94bc248db5a5d0ccf8031`; `origin/master` permanece en `a4a39fabccc52971941f7f4d5e1c415f19d5e766`. No acredita publicación remota. |
+| Publicación | Comportamiento `44f23adbb80bed974246aa3761573a388e5761bf`, tree `d5343fda0373c5152ad94bc248db5a5d0ccf8031`, publicado en `origin/master@3ec8536`. |
 
 La jerarquía canónica es `Plan → Sesión → Módulo → Tarea`; las tres Sesiones quedan enumeradas
 abajo. Para `S10.2`, la decisión 26 y la elaboración técnica fijaron el `Área` exacta en
@@ -110,8 +110,8 @@ abajo. Para `S10.2`, la decisión 26 y la elaboración técnica fijaron el `Áre
 ## Sesión 10.2 — Supervisión sin armado local
 
 **Estado:** ✅ COMPLETO — las decisiones 26 y 27 fijaron la arquitectura y el `Área`; la implementación
-local `44f23adbb80bed974246aa3761573a388e5761bf` entrega el estado externo fail-closed y el seam real
-de `S10.1`. La publicación remota sigue pendiente.
+`44f23adbb80bed974246aa3761573a388e5761bf` entrega el estado externo fail-closed y el seam real
+de `S10.1`, publicada en `origin/master@3ec8536`.
 
 **Depende de:** `S10.1` ✅. La dependencia conserva el orden aprobado; `S10.1` puede construirse
 effect-incapable, pero ningún efecto se habilita antes de que esta Sesión entregue supervisión
