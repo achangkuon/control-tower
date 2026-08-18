@@ -1,20 +1,20 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-18 contra `master@401e8b4`; el candidato local todavía no tiene commit. La autoridad vigente es Moshi → Main → Herdr 0.8 interno → raíz OpenCode; Pi/Intercom queda diferido.
+> Última reconciliación: 2026-08-18 contra `master@61a5aa2`. La autoridad vigente es Moshi → Main → raíz primaria OpenCode con TUI adjunta no autoritativa; Herdr no pertenece al lifecycle crítico.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md).
 
 ## 📍 Punto de retoma
 
-`S4.2` queda ✅ COMPLETO en el candidato local verificado y pendiente de autorización para commit/push: Main lanza y custodia la raíz mediante Herdr 0.8; inspección/liveness/rehidratación siguen en `S4.3` y reapertura/recuperación en `S4.4`.
+`S4.2` está ✅ COMPLETO en `61a5aa2`; la decisión 37 preserva esa historia y enumera `S4.5` para migrar el lifecycle futuro a Main-owned backend/root con TUI adjunta no autoritativa.
 
-Las 35 decisiones `escala` de la ruta OpenCode están resueltas. Pi/Intercom, campañas y recuperación multi-host siguen fuera de esta cola.
+`S4.5` está 🟢 LISTO y decision-clean: 38 fija backend aislado por worktree y 39 fija Herdr sólo como vista temporal reemplazable. La 40 resuelve recuperación: vista perdida reconecta la raíz viva; muerte probada crea raíz/epoch sucesores desde autoridad durable, sin resucitar el ID anterior. Las 39 decisiones `escala` de la cadena están resueltas; `S4.3` y `S4.4` esperan sus dependencias, y la decisión externa de `S9.2` permanece fuera de esta cadena.
 
-La capacidad inmediata es `S5.9` y `S4.3`. `S5.2` conserva su corrección técnica pendiente; `S5.3` y `S5.5` esperan sus dependencias.
+La capacidad inmediata es `S5.9` y `S4.5`: sus paths y recursos son disjuntos. `S5.2` conserva su corrección técnica pendiente.
 
 ## 🎯 Cola de ejecución
 
-`#1 S5.9` · `#2 S4.3` · `#3 S5.10` · `#4 S4.4` · `#5 S5.3` · `#6 S5.5` · `#7 S7.1` — recalculada 2026-08-18. Las posiciones posteriores esperan sus dependencias; Pi/Intercom y S8.7 no integran esta cola.
+`#1 S5.9` · `#2 S4.5` · `#3 S4.3` · `#4 S5.10` · `#5 S4.4` · `#6 S5.3` · `#7 S5.5` · `#8 S7.1` — recalculada 2026-08-18. La decisión 40 no cambia edges ni concede crédito: `S4.4` sigue en #5 detrás de `S4.3`; Pi/Intercom y S8.7 no integran esta cola.
 
 ## Granularidad
 
@@ -23,7 +23,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 
 ## 📊 Estado de un vistazo
 
-**Avance global**: 3/11 Planes cerrados (27%) · Sesiones cerradas en planes activos: 31/46 (67%). Cálculo auditable: P1 `16/19` + P4 `2/4` + P5 `7/12` + P7 `0/1` + P8 `6/8` + P9 `0/2` = `31/46`; P10 se excluye porque cerró 3/3 S. P2 no tiene denominador derivable.
+**Avance global**: 3/11 Planes cerrados (27%) · Sesiones cerradas en planes activos: 31/47 (66%). Cálculo auditable: P1 `16/19` + P4 `2/5` + P5 `7/12` + P7 `0/1` + P8 `6/8` + P9 `0/2` = `31/47`; P10 se excluye porque cerró 3/3 S. P2 no tiene denominador derivable.
 
 | ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |
 |----|------|--------|---|------|-------|-----------|-----|
@@ -31,7 +31,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 | P1 | Sustrato mecánico | 🔵 EN CURSO | 84% (16/19 S) | — | Main | S1.17, S1.18, S1.19 | [STATUS](plan-1/STATUS.md) |
 | P2 | Contratos y registro de producto | 🔵 EN CURSO | — (responsabilidades restantes de Change B sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-2/STATUS.md) |
 | P3 | Workspace y orquestación | ✅ COMPLETO | 100% (4/4 S) | — | Main | — | [STATUS](plan-3/STATUS.md) |
-| P4 | Hosts y línea exclusiva | 🔵 EN CURSO | 50% (2/4 S) | — | Main | S4.3, S4.4 | [STATUS](plan-4/STATUS.md) |
+| P4 | Hosts y línea exclusiva | 🔵 EN CURSO | 40% (2/5 S) | — | Main | S4.5, S4.3, S4.4 | [STATUS](plan-4/STATUS.md) |
 | P5 | Entrega y continuación | 🔵 EN CURSO | 58% (7/12 S) | — | Main | S5.2, S5.3, S5.5, S5.9, S5.10 | [STATUS](plan-5/STATUS.md) |
 | P6 | Campañas multiproyecto | 📋 PLANIFICADO | — (sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-6/STATUS.md) |
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | S7.1 | [STATUS](plan-7/STATUS.md) |

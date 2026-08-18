@@ -27,7 +27,7 @@ Invariantes de reconciliación:
 - `legacy P6 → legacy P7 → P8 → Change E` y `A → B/C → D → Change E` permanecen independientes hasta converger en E.
 - C→D es obligatorio; no existe un edge A→legacy P7/P8.
 - Legacy P7 depende sólo de legacy P6; P8 depende de legacy P7 integrado.
-- Change E está enumerado en `P4/S4.1`–`S4.4`; no conserva responsabilidad pendiente sin Sesión.
+- El alcance activo de hosts está enumerado en `P4/S4.1`–`S4.5`; `S4.5` precede a los IDs estables `S4.3`/`S4.4` sin renumerarlos.
 - Main conserva la autoridad de emisión y fencing de `host_epoch`.
 - Claude permanece opt-in y no bloquea el piloto Pi/OpenCode.
 

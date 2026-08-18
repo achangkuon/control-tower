@@ -8,9 +8,9 @@
 |---|---|
 | Producto y release | Control Tower es un producto, un roadmap y un release. `installable-v1`, `autonomous-v2` y “V1/V2” son sólo etiquetas de artefactos históricos. |
 | Dependencias | `S7.1` depende de `S4.4`, `S5.3`, `S5.5` y `S10.2`; Pi e `S8.7` no son prerequisitos. |
-| Outputs | Conformidad Main → Herdr interno → OpenCode, loop planner/implementer, escalamiento Moshi, recuperación WSL y direct-push. |
+| Outputs | Conformidad Main → backend/raíz primaria OpenCode con TUI no autoritativa, loop planner/implementer, escalamiento Moshi, recuperación WSL y direct-push. |
 | Roadmap | Ejecutar `S7.1` después de integrar sus cuatro dependencias, en commit directo a `master`; Pi/Intercom queda diferido. |
-| Referencias | [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [REQUIREMENTS](../../specs/sdd-tower-implementation-v1-requirements.md), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). El proposal `sdd-tower-v1-conformance-pilot` fue eliminado en `613a45d` por ser cáscara sin avance; su intención vive en este STATUS. |
+| Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), [REQUIREMENTS histórico](../../specs/sdd-tower-implementation-v1-requirements.md), decisiones 37–40 / Engram 9040/9042/9043/9044 y [Plan Manifest](../sdd-tower-implementation/manifest.yaml). |
 
 ## Sesión 7.1 — Conformance pilot
 
@@ -20,22 +20,25 @@
 **Área:** `openspec/plans/**`, `test/**`, `hosts/**`, `escalation/**`, `continuation/**` exclusivamente para los pilotos declarados.
 **Recurso:** token de entrega Main, sin DB/migración.
 
-**Ruta:** `design-tasks` al satisfacer dependencias. **Autoridad:** rebase del maintainer 2026-08-17 y REQUIREMENTS §Gates A–G.
+**Ruta:** `design-tasks` al satisfacer dependencias; queda decision-clean. **Autoridad:** decisiones 37–40 / Engram 9040/9042/9043/9044, Main-Owned Visible Root spec y REQUIREMENTS §Gates A–G.
 
-Produce evidencia atribuible a `candidate_revision` para despacho exclusivo Main, supervisión Herdr interna, raíz OpenCode, planner N+1/implementer N, Moshi-visible escalation, recuperación exacta WSL y `commit → verificar árbol → push directo`.
+Produce evidencia atribuible a `candidate_revision` para despacho exclusivo Main, backend/proceso/root-session Main-owned, TUI adjunta no autoritativa, planner N+1/implementer N, escalamiento Moshi, recuperación exacta WSL y `commit → verificar árbol → push directo`.
 
 **Decisiones:**
 
 - `derivable` — contra qué se mide la conformidad. **Criterio:** los Gates A–G de [REQUIREMENTS](../../specs/sdd-tower-implementation-v1-requirements.md), tal como están escritos, sin reinterpretarlos desde el código que se está verificando. Un piloto que ajusta el gate al comportamiento observado no verifica nada. Falsificable: cualquier criterio de piloto que no se pueda trazar a un gate enumerado. **Autoridad:** REQUIREMENTS.
 - `derivable` — qué hace atribuible a una evidencia. **Criterio:** queda ligada a un `candidate_revision` concreto e inmutable. Evidencia que no nombra el candidato exacto no distingue una corrida verde de otra roja del mismo piloto. Falsificable: una pieza de evidencia que se pueda reproducir contra dos candidatos distintos. **Autoridad:** el alcance declarado de `S7.1`.
 - `derivable` — si un piloto puede correr contra un entorno preparado a mano. **Criterio:** no. El piloto tiene que partir de la misma ruta que usa la entrega real; un entorno amasado para el test es la misma clase de verde falso que la Sesión existe para detectar. Falsificable: un piloto que pase con un estado que la ruta normal no puede producir. **Autoridad:** el requisito de evidencia end-to-end de este Plan.
-- `derivable` — qué hosts cubre. **Criterio:** sólo Main/Herdr/OpenCode same-host WSL; Pi/Intercom no es condición de conformidad. Falsificable: un gate OpenCode que exija Pi.
+- `derivable` — qué hosts cubre. **Criterio:** sólo Main/OpenCode same-host WSL; una vista Herdr opcional no integra la prueba crítica y Pi/Intercom no es condición. Falsificable: un gate que exige Herdr o Pi para mantener viva la raíz. **Autoridad:** decisión 37.
+- `escala` — decisión 38 **RESUELTA**: cada worktree asignado usa backend, proceso, puerto loopback, secreto, root binding y evidencia Main-owned aislados. Pregunta original: ¿topología per-worktree o compartida? **Resolución:** per-worktree; se descarta compartir por fencing y blast radius. **Falsificable:** dos worktrees comparten identidad o un fallo cruza bindings. **Clase:** contrato visible del producto; seguridad y permisos. **Contaminaba:** `S7.1`.
+- `escala` — decisión 39 **RESUELTA**: Herdr queda temporalmente sólo como launcher reemplazable de un pane `opencode attach` sobre la raíz ya creada por Main. Pregunta original: ¿launcher directo o Herdr view-only? **Resolución:** Herdr view-only, sin autoridad/lifecycle y con fallback manual; launcher directo diferido. **Falsificable:** el pane es raíz/transporte, Intercom integra el camino, close/fallo altera lifecycle o falta attach manual. **Clase:** contrato visible del producto; seguridad y permisos; dependencias o evidencia contradictorias. **Contaminaba:** `S7.1`.
+- `escala` — decisión 40 **RESUELTA**: pérdida sólo de vista reconecta el mismo root vivo; muerte probada crea backend/raíz nuevos, incrementa `recovery_epoch`, conserva lineage del predecesor terminal y rechaza efectos stale. El brief sigue binding/epoch Main → Git/worktree/candidato → OpenSpec → Engram seleccionado → checkpoint durable; Engram no es autoridad única y Notion no participa. **Descartado:** resucitar el mismo ID o restaurar memoria/subagentes de proceso. **Falsificable:** cambia root/epoch por pérdida de vista, se reutiliza el ID muerto, falta lineage/fencing o una fuente contextual gobierna runtime. **Clase:** contrato visible del producto; seguridad y permisos; dependencias o evidencia contradictorias. **Contaminaba:** `S7.1`.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
-- [ ] Sólo Main despacha una raíz OpenCode en el worktree asignado; Herdr no planifica ni despacha y Moshi no autoriza
+- [ ] Sólo Main posee/despacha backend y raíz primary por worktree; child y TUI no reemplazan identidad ni autoridad
 - [ ] Planner prepara N+1 hasta Tareas e implementer ejecuta N con apply/tests/verify
 - [ ] El escalamiento visible a Moshi conserva la autoridad en Main; un wake no autoriza
-- [ ] La recuperación WSL reabre sólo el worktree y checkpoint exactos; no hay relocalización/failover multi-host
+- [ ] La pérdida de vista reconecta el root vivo; la muerte probada crea raíz/epoch sucesores en el mismo worktree/checkpoint, con stop proof, lineage, brief durable ordenado y rechazo stale, sin resurrección ni relocalización multi-host
 - [ ] La entrega usa commit directo a `master`, verificación de árbol y push, sin PR y con commits <=400 líneas authored
 - [ ] Ningún criterio exige Telegram, Hermes, Remote Control, callbacks, TTL/replay ni Pi
 - `escala` — **RESUELTA por el maintainer el 2026-08-14 (decisión 32): correr el piloto sobre `control-tower` mismo.** Qué se hace con un gate que ningún piloto cubre. **Clase:** dependencias o evidencia contradictorias. Declarar conformidad con un gate no ejercido es afirmar algo que no se midió; agregar el piloto que falta expande el alcance de la Sesión. Ninguna de las dos es del agente. **Resolución:** ninguna de las dos. `control-tower` es el único repositorio bajo control completo del maintainer y ya estaba pendiente prender la Torre, apagada desde el 2026-08-04, así que el piloto se corre acá. Convierte una decisión bloqueada en trabajo ejecutable y produce la evidencia atribuible que la Sesión necesita, sin expandir su alcance ni declarar sobre el vacío. **Falsificable:** una declaración de conformidad emitida sin evidencia de piloto sobre este repositorio. **Contaminaba:** la declaración de release misma.

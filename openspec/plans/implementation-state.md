@@ -2,7 +2,7 @@
 
 > Este documento mide **código**, no planificación. El [master-index](master-index.md) dice qué está planificado y qué Sesiones cerraron; este archivo dice qué existe, qué corre y qué está desplegado.
 >
-> **Snapshot fuente actual: 2026-08-18 sobre el candidato local basado en `master@401e8b4`, todavía sin commit.** `S4.2` cierra lanzamiento/custodia inicial con Herdr 0.8; `S4.3` conserva liveness/rehidratación y `S4.4` reapertura/recuperación. Las mediciones históricas etiquetadas por SHA no se reinterpretan.
+> **Snapshot fuente actual: 2026-08-18 sobre `origin/master@61a5aa2`.** `S4.2` entregó lanzamiento/custodia inicial con Herdr 0.8. Las decisiones 37–40 y `S4.5` son planificación no implementada para backend/root Main-owned por worktree, Herdr view-only y recuperación lógica mediante raíz/epoch sucesores después de muerte probada; `S4.3`/`S4.4` tampoco están implementadas. Ninguna prueba actual acredita reconexión o recovery nuevo, y las mediciones históricas por SHA no se reinterpretan.
 >
 > **Nota de vocabulario (2026-08-01, vigente):** la columna `Lane` no nombra dos productos. Tras la [unificación](release-chain.md), `installable-v1` y `autonomous-v2` son afinidad de trabajo. El corte real en código es `bin/torre`, que rechaza capacidades con `CT_V2_ONLY` como flag opt-in apagado por defecto.
 
@@ -104,7 +104,7 @@ Ratio documentación : código de producto = **2,2 : 1**.
 
 ## Estado de las pruebas
 
-Corrida integral del candidato S4.2 sobre `master@401e8b4`: focused 128/128 y `bun test` 723/723, 4.379 expectativas en 52 archivos; `ACTIVE` ausente y `git diff --check` limpio. La corrida S10.2 siguiente queda como evidencia histórica de sus bytes exactos `44f23adbb80bed974246aa3761573a388e5761bf` (tree `d5343fda0373c5152ad94bc248db5a5d0ccf8031`):
+Corrida integral del candidato S4.2 publicado en `61a5aa2`: focused 128/128 y `bun test` 723/723, 4.379 expectativas en 52 archivos; `ACTIVE` ausente y `git diff --check` limpio. La corrida S10.2 siguiente queda como evidencia histórica de sus bytes exactos `44f23adbb80bed974246aa3761573a388e5761bf` (tree `d5343fda0373c5152ad94bc248db5a5d0ccf8031`):
 
 ```
 bun test test/supervision/state.test.mjs → 4 pass · 0 fail · 22 expect()
@@ -123,7 +123,7 @@ La suite completa corrió mientras la supervisión externa del repositorio era v
 
 ### `S4.2` — lanzamiento y custodia inicial OpenCode
 
-✅ COMPLETO en el candidato local sin commit. Main consume la binding canónica; el runtime instalado fija Herdr 0.8.0/OpenCode por identidad y descriptor; `agent_started`/`agent_info` deben coincidir en agente, cwd, pane, terminal y `session_id` canónico antes de prompt o proyección. Los registros nuevos no exigen el comando v1 ausente; los v1 legados siguen fail-closed. La entrega directa y el despliegue permanecen pendientes de autorización humana. `S4.3`/`S4.4` no están implementadas por este corte.
+✅ COMPLETO y publicado en `61a5aa2be1759811435d8696a4428251341704b3`. El runtime fija Herdr 0.8.0/OpenCode y valida `agent_started`/`agent_info`; esa evidencia conserva valor histórico. No acredita que Main cree primero backend/root por worktree y Herdr después sólo adjunte una vista no crítica, ni acredita `S4.3`/`S4.4`: `S4.5` enumera esa migración futura y sigue sin implementación.
 
 ### `S10.2` — supervisión externa sin armado local
 

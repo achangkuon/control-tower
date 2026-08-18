@@ -19,7 +19,7 @@ conserva la arquitectura productora de supervisión ya verificada y sus decision
 | Autoridad | Decisión explícita del maintainer: Plan nuevo P10 para las responsabilidades provisionales `S3.5`/`S3.6`, renumeradas `S10.1`/`S10.2`. |
 | Estado | ✅ COMPLETO: `S10.3`, `S10.1` y `S10.2` están verificadas; `S10.2` está publicada en `origin/master@3ec8536`. |
 | Orden | `S3.4 → S10.3 → S10.1 → S10.2 → S7.1`. |
-| Capacidad derivada | P10 ya no aporta una Sesión ejecutable: sus 3/3 Sesiones están ✅ COMPLETO. La capacidad concurrente conserva `S4.2` y `S5.9`. |
+| Capacidad derivada | P10 ya no aporta una Sesión ejecutable: sus 3/3 Sesiones están ✅ COMPLETO. La capacidad concurrente vigente conserva `S4.5` —decision-clean y ejecutable por sus tres Módulos en secuencia— y `S5.9`. |
 | Avance | 100% (3/3 S). |
 | Release | P10 forma parte del producto, roadmap y release únicos; sus tres Sesiones están cerradas. |
 | Publicación | Comportamiento `44f23adbb80bed974246aa3761573a388e5761bf`, tree `d5343fda0373c5152ad94bc248db5a5d0ccf8031`, publicado en `origin/master@3ec8536`. |

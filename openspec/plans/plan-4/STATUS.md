@@ -7,9 +7,9 @@
 | Campo | Detalle |
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
-| Outputs | Lanzamiento/inspección de raíz OpenCode, liveness Herdr interno y recuperación same-host WSL. |
-| Roadmap | `S4.1`, `S1.16` y `S4.2` están ✅ COMPLETO. `S4.3` queda 🟢 LISTO para inspección/liveness/rehidratación y `S4.4` permanece 📋 PLANIFICADO para reapertura/recuperación. P4 alcanza 2/4 S. |
-| Referencias | [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). El proposal `sdd-tower-host-launcher` fue eliminado en `613a45d` por ser cáscara sin avance; su intención vive en este STATUS. |
+| Outputs | Raíz primaria Main-owned con TUI adjunta no autoritativa, inspección/liveness por proceso/sesión y recuperación same-host WSL. |
+| Roadmap | `S4.1`, `S1.16` y `S4.2` están ✅ COMPLETO. `S4.5` queda 🟢 LISTO y decision-clean antes de `S4.3`; sus tres Módulos tienen autoridad resuelta. `S4.3` y `S4.4` permanecen 📋 PLANIFICADO sólo por dependencias; la decisión 40 dejó `M4.4.2` decision-clean. P4 alcanza 2/5 S (40%). |
+| Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), decisiones 37–40 / Engram 9040/9042/9043/9044, [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). REQUIREMENTS §14 permanece byte-pinned como base histórica; esta spec enmienda el lifecycle futuro. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
 
@@ -165,7 +165,7 @@ Todos deben pasar para cerrar:
 
 ## Sesión 4.2 — Lanzamiento visible de raíz OpenCode
 
-**Estado:** ✅ COMPLETO — el candidato local basado en `master@401e8b4` verifica el límite aprobado Main → Herdr 0.8.0 → raíz OpenCode: focused 128/128 y full 723/723, `git diff --check` limpio y 189 líneas authored de código/pruebas. S4.2 posee sólo lanzamiento y custodia inicial; `S4.3` conserva inspección/liveness/rehidratación y `S4.4` reapertura/recuperación. La entrega directa sigue pendiente de autorización humana.
+**Estado:** ✅ COMPLETO — entregada en `61a5aa2be1759811435d8696a4428251341704b3`: focused 128/128 y full 723/723. Preserva como historia el lanzamiento/custodia inicial Main → Herdr 0.8 → raíz OpenCode; la decisión 37 no reescribe esos bytes y asigna la arquitectura futura a `S4.5`.
 
 **Depende de:** `S4.1` ✅, `S1.16` ✅.
 
@@ -176,6 +176,8 @@ Todos deben pasar para cerrar:
 **Ruta:** `design-tasks`. **Autoridad:** decisión de rebase del maintainer 2026-08-17: Main → Herdr interno → raíz OpenCode, con Moshi sólo humano-visible.
 
 Después del brief aprobado, Main despacha un root OpenCode en el worktree asignado. Herdr crea/posee el panel local y supervisa ese root; los subagentes siguen internos y no sustituyen la identidad raíz. Moshi no despacha ni autoriza.
+
+**Límite histórico:** esta sección describe los bytes entregados; toda contaminación futura Herdr/pane queda supersedida por la decisión 37 y se ejecuta en `S4.5`.
 
 **Decisiones:**
 - `escala` — límite empaquetado de `torre`. **Clase:** seguridad y permisos. **RESUELTA por el maintainer:** el launcher productivo corre sólo el runtime instalado de `torre`; inputs del caller no seleccionan core, lifecycle ni ejecutable. **Contamina:** `S4.2`, `S4.3`.
@@ -225,97 +227,153 @@ Después del brief aprobado, Main despacha un root OpenCode en el worktree asign
 - [x] Tarea T4.2.3.2 — GREEN: Main conserva binding/provider empaquetados y valida versión más respuestas `agent_started`/`agent_info` antes de proyectar
 - [x] Tarea T4.2.3.3 — REFACTOR: registros nuevos declaran compatibilidad 0.8, los v1 legados siguen fail-closed y no existe segunda ruta de wiring
 
-## Sesión 4.3 — Inspección, liveness y rehidratación segura
+## Sesión 4.5 — Raíz primaria Main-owned con vista adjunta
 
-**Estado:** 🟢 LISTO
+**Estado:** 🟢 LISTO — decision-clean; las decisiones 37–39 habilitan el avance secuencial por `M4.5.1`–`M4.5.3`.
 
-**Depende de:** `S4.2`.
+**Depende de:** `S4.2` ✅.
 
-**Área:** `hosts/inspect.mjs`, `hosts/health.mjs`, `hosts/stop-proof.mjs`, `hosts/rehydration.mjs`, `test/hosts/inspect.test.mjs`, `test/hosts/health.test.mjs`, `test/hosts/stop-proof.test.mjs`, `test/hosts/rehydration.test.mjs`
+**Área:** `hosts/root-binding.mjs`, `hosts/opencode-server.mjs`, `hosts/root-identity.mjs`, `hosts/opencode-view.mjs`, `hosts/herdr.mjs`, `hosts/production-provider.mjs`, `main-store/launch-consumer.mjs`, `install/lifecycle.mjs`, `install/runtime-payload.mjs`, `test/hosts/root-binding.test.mjs`, `test/hosts/opencode-server.test.mjs`, `test/hosts/root-identity.test.mjs`, `test/hosts/opencode-view.test.mjs`, `test/hosts/herdr.test.mjs`, `test/hosts/production-provider.test.mjs`, `test/install/lifecycle.test.mjs`, `test/install/runtime-payload.test.mjs`
 
-**Recurso:** evidencia de proceso y panel Herdr; sin DB, migraciones ni token de entrega.
+**Recurso:** namespace owner-only de backend/proceso/puerto loopback/secreto/binding de raíz por worktree asignado y una vista TUI local; sin Main store, DB, migraciones ni token de entrega.
 
-**Ruta:** `design-tasks` — prepara liveness del sustrato Herdr interno y evidencia de root OpenCode. **Autoridad:** rebase del maintainer 2026-08-17.
+**Ruta:** `design-tasks` — compactar el contrato interno per-worktree y el adapter Herdr view-only temporal de los tres Módulos antes de ejecutar. **Autoridad:** decisiones 37–39, Engram 9040/9042/9043.
 
-Inspecciona sólo la sesión raíz declarada, aplica heartbeat de 15 segundos y sus estados `SUSPECTED`/`UNAVAILABLE`, obtiene stop proof canónico y rehidrata una proyección visible únicamente cuando identidad, assignment y epoch siguen coincidiendo.
+**Entrega:** commit directo a `master`, sin PR; cada unidad debe ser independientemente verificable/revertible y ≤400 líneas authored.
 
 **Decisiones:**
-- `derivable` — cómo clasificar liveness. **Criterio:** 3 heartbeats ausentes producen `SUSPECTED`; 60 segundos sin heartbeat más health probe fallido producen `UNAVAILABLE`. Falsificable: cualquiera de los dos umbrales produce otro estado. **Autoridad:** REQUIREMENTS §14.3.
-- `derivable` — cuándo rehidratar el estado visible. **Criterio:** sólo con sesión raíz, assignment y host epoch exactos; datos ambiguos se rechazan. Falsificable: un estado de otro root/epoch reaparece como activo. **Autoridad:** REQUIREMENTS §14.4 y `S4.1`.
+- `escala` — decisión 37 **RESUELTA**: Main posee backend/raíz y la TUI adjunta no autoriza ni condiciona lifecycle. **Clase:** contrato visible del producto; seguridad y permisos; expansión de alcance; dependencias o evidencia contradictorias. **Contaminaba:** `S4.5`, `S4.3`, `S4.4`, `S7.1`.
+- `derivable` — prueba primary/child. **Criterio:** sólo `gentle-orchestrator` sin `parentID` ocupa el binding raíz; hijos allowlisted pueden ejecutar pero nunca reemplazarlo. Falsificable: un child ID pasa readback como raíz. **Autoridad:** decisión 37.
+- `derivable` — independencia de vista. **Criterio:** attach usa el root ID persistido; input TUI es steering y cierre/fallo no altera backend, root ni epoch. Falsificable: la vista concede autoridad o su muerte detiene la raíz. **Autoridad:** decisión 37.
+- `escala` — **RESUELTA por el maintainer el 2026-08-18 (decisión 38): un backend Main-owned aislado por worktree asignado.** Pregunta original: ¿backend por worktree o compartido entre worktrees? **Clase:** contrato visible del producto; seguridad y permisos. **Evidencia:** Engram 9040 no elegía topología; 9035/9037 recomendaban aislamiento. **Resolución:** cada backend tiene proceso, puerto loopback, secreto, root binding y evidencia propios; se descarta compartir por fencing y blast radius cross-worktree. **Falsificable:** dos worktrees comparten cualquiera de esas identidades o un fallo afecta al otro. **Contaminaba:** `M4.5.2`, `S4.5`, `S4.3`, `S4.4`, `S7.1`.
+- `escala` — **RESUELTA por el maintainer el 2026-08-18 (decisión 39): Herdr queda temporalmente sólo como launcher reemplazable de una vista `opencode attach`.** Pregunta original: ¿launcher directo Main-owned o Herdr temporal view-only? **Clase:** contrato visible del producto; seguridad y permisos; dependencias o evidencia contradictorias. **Evidencia:** 9040 permitía ambas políticas sin elegir. **Resolución:** Main crea primero backend/raíz; Herdr después abre el pane sobre el root exacto, sin autoridad ni efecto de lifecycle, con attach manual obligatorio. Se difiere el launcher directo como mejora reemplazable. **Falsificable:** el pane es raíz/transporte, Intercom integra el camino, una entrada autoriza Main, close/fallo altera backend/root/epoch o falta fallback manual. **Contaminaba:** `M4.5.3`, `S4.5`, `S7.1`.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
-- [ ] `inspect`, `health` y heartbeat observan únicamente la sesión raíz ligada al assignment vigente
-- [ ] Tres heartbeats ausentes producen `SUSPECTED`; 60 segundos más health probe fallido producen `UNAVAILABLE`
-- [ ] Stop proof canónico se conserva con bindings exactos y una prueba ausente/ambigua falla cerrado
-- [ ] La rehidratación sólo restaura la proyección Herdr de la misma sesión raíz, assignment y host epoch
-- [ ] El diff no toca rutas fuera de `Área`
+- [ ] Main persiste exactamente una raíz primaria `gentle-orchestrator` por assignment/worktree, ligada a backend, proceso, sesión y epoch exactos
+- [ ] Cada worktree asignado usa un backend Main-owned aislado con proceso, puerto loopback, secreto, root binding y evidencia propios; ninguna identidad se comparte entre worktrees
+- [ ] Hijos nativos allowlisted conservan delegación pero ningún child ID reemplaza el root binding
+- [ ] Main abre automáticamente, después de crear backend/raíz, un pane Herdr que ejecuta `opencode attach` sobre el root ID exacto
+- [ ] Steering TUI no autoriza despacho, entrega, seguridad, identidad ni transición Main; el pane no es la raíz e Intercom no es transporte
+- [ ] Cerrar/fallar Herdr o la TUI no detiene, reemplaza ni invalida backend, raíz o epoch
+- [ ] El operador siempre puede adjuntar manualmente `opencode attach` al root exacto cuando falla el launcher visible
+- [ ] Herdr no integra el launch de backend/root ni health, stop, rehidratación o recovery críticos; el launcher directo Main-owned queda diferido como reemplazo compatible
+- [ ] Binding ausente/ambiguo/ajeno falla cerrado y el diff no toca paths fuera de `Área`
 
-### Módulo M4.3.1 — Inspección y liveness
+**Forecast de revisión:** aun con las decisiones 38/39 resueltas, falta `session-plan` para garantizar una sola unidad ≤400. Se permite una unidad sólo si el forecast integral queda ≤400; si lo supera, `M4.5.1`–`M4.5.2` y `M4.5.3` deben ser commits secuenciales verificables, o una Sesión nueva si no pueden quedar independientemente revertibles. Nunca se agrega un quinto nivel ni excepción silenciosa.
 
-**Paths:** `hosts/inspect.mjs`, `hosts/health.mjs`, `test/hosts/inspect.test.mjs`, `test/hosts/health.test.mjs`
+### Módulo M4.5.1 — Binding durable de raíz primaria
+**Paths:** `hosts/root-binding.mjs`, `hosts/root-identity.mjs`, `test/hosts/root-binding.test.mjs`, `test/hosts/root-identity.test.mjs`
+- [ ] Tarea T4.5.1.1 — RED: rechazar binding ambiguo/ajeno, rol no primary y child ID como raíz
+- [ ] Tarea T4.5.1.2 — GREEN: persistir/readback exacto de assignment, worktree, backend, proceso, root session, agente y epoch
+- [ ] Tarea T4.5.1.3 — REFACTOR: aislar validación primary/child y cleanup owner-only sin autoridad caller
 
-- [ ] Tarea T4.3.1.1 — RED: cubrir root/session/assignment ajenos, tres heartbeats ausentes y health probe fallido al umbral de 60 segundos
-- [ ] Tarea T4.3.1.2 — GREEN: implementar inspección y clasificación usando sólo las referencias validadas por el launcher
-- [ ] Tarea T4.3.1.3 — REFACTOR: consolidar la evidencia de heartbeat y los errores de estado ambiguo
+### Módulo M4.5.2 — Backend OpenCode Main-owned por worktree · 🟢 LISTO tras M4.5.1
+**Paths:** `hosts/opencode-server.mjs`, `hosts/production-provider.mjs`, `main-store/launch-consumer.mjs`, `test/hosts/opencode-server.test.mjs`, `test/hosts/production-provider.test.mjs`
+**Checkpoint resuelto:** decisión 38 / Engram 9042 elige un backend aislado por worktree; se retoma antes de RED `T4.5.2.1` sobre el candidato reconciliado.
+- [ ] Tarea T4.5.2.1 — RED: rechazar proceso, puerto, secreto o root binding compartidos/ajenos y probar que la muerte de una vista no mata el backend
+- [ ] Tarea T4.5.2.2 — GREEN: lanzar desde Main un backend por worktree con loopback, secreto, evidencia y raíz primary exactos
+- [ ] Tarea T4.5.2.3 — REFACTOR: aislar lifecycle/cleanup por worktree y separar backend/root de cualquier launcher visible
 
-### Módulo M4.3.2 — Stop proof y rehidratación
+### Módulo M4.5.3 — Herdr temporal como vista TUI no autoritativa · 🟢 LISTO tras M4.5.2
+**Paths:** `hosts/opencode-view.mjs`, `hosts/herdr.mjs`, `install/lifecycle.mjs`, `install/runtime-payload.mjs`, `test/hosts/opencode-view.test.mjs`, `test/hosts/herdr.test.mjs`, `test/install/lifecycle.test.mjs`, `test/install/runtime-payload.test.mjs`
+**Checkpoint resuelto:** decisión 39 / Engram 9043 elige Herdr view-only temporal; se retoma antes de RED `T4.5.3.1` sobre el candidato reconciliado.
+- [ ] Tarea T4.5.3.1 — RED: rechazar pane/root ajeno, autoridad desde view o Intercom, lifecycle acoplado y ausencia de fallback manual
+- [ ] Tarea T4.5.3.2 — GREEN: tras backend/root Main-owned, abrir Herdr con `opencode attach` al root exacto y exponer el comando manual equivalente
+- [ ] Tarea T4.5.3.3 — REFACTOR: aislar el adapter Herdr reemplazable fuera de launch/health/stop/rehidratación/recovery críticos
 
-**Paths:** `hosts/stop-proof.mjs`, `hosts/rehydration.mjs`, `test/hosts/stop-proof.test.mjs`, `test/hosts/rehydration.test.mjs`
-
-- [ ] Tarea T4.3.2.1 — RED: cubrir proof ausente/ambiguo y estado Herdr de root, assignment o epoch distintos
-- [ ] Tarea T4.3.2.2 — GREEN: enlazar la evidencia canónica de stop y rehidratar sólo la proyección cuya identidad coincide exactamente
-- [ ] Tarea T4.3.2.3 — REFACTOR: preservar readback y cleanup sin convertir la rehidratación en una nueva fuente de autoridad
-
-## Sesión 4.4 — Recuperación same-host WSL y epoch
+## Sesión 4.3 — Inspección, liveness y rehidratación segura
 
 **Estado:** 📋 PLANIFICADO
 
-**Depende de:** `S4.3`.
+**Depende de:** `S4.5`.
 
-**Área:** `hosts/recovery.mjs`, `hosts/epoch-enforcement.mjs`, `hosts/opencode-host.mjs`, `test/hosts/recovery.test.mjs`, `test/hosts/epoch-enforcement.test.mjs`, `test/hosts/opencode-host.test.mjs`
+**Área:** `hosts/inspect.mjs`, `hosts/health.mjs`, `hosts/stop-proof.mjs`, `hosts/rehydration.mjs`, `test/hosts/inspect.test.mjs`, `test/hosts/health.test.mjs`, `test/hosts/stop-proof.test.mjs`, `test/hosts/rehydration.test.mjs`
 
-**Recurso:** línea exclusiva `recovery_epoch` emitida/fenced por Main; sin DB, migraciones ni token de entrega.
+**Recurso:** evidencia backend/proceso/root-session; sin DB, migraciones ni token de entrega.
 
-**Ruta:** `design-tasks` — recuperación acotada al mismo host/worktree/checkpoint, sin contrato multi-host. **Autoridad:** rebase del maintainer 2026-08-17.
-
-Enforce el `recovery_epoch` emitido por Main y sólo recupera/reabre OpenCode en WSL con el mismo worktree y checkpoint asignados. Nunca relocaliza a otro host ni reutiliza estado ambiguo.
+**Ruta:** `design-tasks` — liveness y rehidratación consumen sólo el binding Main-owned de `S4.5`. **Autoridad:** decisión 37, REQUIREMENTS §14.3–§14.4.
 
 **Decisiones:**
-- `derivable` — cuándo permite recuperación. **Criterio:** sólo mismo host WSL, worktree y checkpoint asignados con proof canónico positivo; cualquier diferencia bloquea. Falsificable: otro host o worktree inicia.
-- `derivable` — cómo trata un mensaje o claim viejo. **Criterio:** todo binding con epoch distinto del vigente devuelve `CT_ASSIGNMENT_STALE`. Falsificable: un efecto de epoch anterior llega a persistir o ejecutar. **Autoridad:** CT-V1-08 y `S4.1`.
+- `derivable` — 3 heartbeats ausentes ⇒ `SUSPECTED`; 60 segundos + health probe fallido ⇒ `UNAVAILABLE`. Falsificable: otro umbral. **Autoridad:** REQUIREMENTS §14.3.
+- `derivable` — rehidratar sólo la proyección de backend/proceso/root/assignment/epoch exactos. Falsificable: estado ajeno reaparece activo. **Autoridad:** decisión 37 y `S4.1`.
 
-**Criterios de aceptación** — todos deben pasar para cerrar:
-- [ ] Una jornada mantiene exactamente una raíz OpenCode activa en el host WSL asignado
-- [ ] La recuperación reabre sólo el root OpenCode del mismo worktree/checkpoint tras stop proof e inspección íntegra
-- [ ] Recuperación sin stop proof o con host/worktree distinto devuelve `CT_RECOVERY_UNSAFE` y no inicia nada
-- [ ] La recuperación válida incrementa el `recovery_epoch` y todo claim, mensaje o efecto anterior devuelve `CT_ASSIGNMENT_STALE`
-- [ ] Main conserva emisión y fencing de epoch; Host Launcher sólo lo enforce
-- [ ] El diff no toca rutas fuera de `Área`
+**Criterios de aceptación:**
+- [ ] `inspect`, `health` y heartbeat observan sólo backend, proceso y raíz ligados al assignment vigente
+- [ ] Los umbrales `SUSPECTED`/`UNAVAILABLE` y stop proof canónico pasan con bindings exactos
+- [ ] Rehidratación restaura una proyección, nunca crea/reemplaza raíz ni depende de pane/TUI/Herdr
+- [ ] Vista ausente no cambia health y el diff queda dentro de `Área`
 
-### Módulo M4.4.1 — Enforzamiento de epoch
+### Módulo M4.3.1 — Inspección y liveness
+**Paths:** `hosts/inspect.mjs`, `hosts/health.mjs`, `test/hosts/inspect.test.mjs`, `test/hosts/health.test.mjs`
+- [ ] Tarea T4.3.1.1 — RED: cubrir backend/proceso/root/assignment ajenos y ambos umbrales
+- [ ] Tarea T4.3.1.2 — GREEN: clasificar desde proceso y root-session validados
+- [ ] Tarea T4.3.1.3 — REFACTOR: consolidar heartbeat y errores ambiguos sin observar la vista
 
-**Paths:** `hosts/epoch-enforcement.mjs`, `hosts/opencode-host.mjs`, `test/hosts/epoch-enforcement.test.mjs`, `test/hosts/opencode-host.test.mjs`
+### Módulo M4.3.2 — Stop proof y rehidratación
+**Paths:** `hosts/stop-proof.mjs`, `hosts/rehydration.mjs`, `test/hosts/stop-proof.test.mjs`, `test/hosts/rehydration.test.mjs`
+- [ ] Tarea T4.3.2.1 — RED: cubrir proof ausente/ambiguo y backend/root/epoch distintos
+- [ ] Tarea T4.3.2.2 — GREEN: ligar stop proof y rehidratar sólo la proyección exacta
+- [ ] Tarea T4.3.2.3 — REFACTOR: preservar readback/cleanup sin crear autoridad ni raíz
 
-- [ ] Tarea T4.4.1.1 — RED: demostrar que dos roots, host/worktree no permitido o epoch viejo fallan cerrados
-- [ ] Tarea T4.4.1.2 — GREEN: adaptar sólo el lifecycle OpenCode sin asumir autoridad de launcher
-- [ ] Tarea T4.4.1.3 — REFACTOR: unificar validación de epoch y preservar la separación entre `binding_epoch`, `host_epoch` y generation local
+## Sesión 4.4 — Recuperación lógica same-host con raíz sucesora
 
-### Módulo M4.4.2 — Recuperación same-host WSL
+**Estado:** 📋 PLANIFICADO — decision-clean; espera `S4.3`.
 
+**Depende de:** `S4.3`.
+
+**Área:** `hosts/recovery.mjs`, `hosts/epoch-enforcement.mjs`, `test/hosts/recovery.test.mjs`, `test/hosts/epoch-enforcement.test.mjs`
+
+**Recurso:** binding Main-owned de backend/proceso/raíz, `recovery_epoch`, lineage del predecesor y checkpoint durable; sin DB, migraciones ni token de entrega.
+
+**Ruta:** `design-tasks` — una sola transición determinista same-host/worktree/checkpoint: raíz viva ⇒ reconectar vista; backend/raíz muertos ⇒ raíz sucesora. **Autoridad:** decisiones 37–40, Engram 9040/9044 y REQUIREMENTS §14.4.
+
+**Decisiones:**
+- `derivable` — recuperar sólo mismo host WSL, worktree/checkpoint y stop proof positivo. Falsificable: otro host/worktree inicia. **Autoridad:** REQUIREMENTS §14.4.
+- `derivable` — epoch distinto ⇒ `CT_ASSIGNMENT_STALE`. Falsificable: un efecto viejo persiste. **Autoridad:** CT-V1-08 y `S4.1`.
+- `escala` — decisión 40 **RESUELTA por el maintainer el 2026-08-18 (Engram 9044):** pérdida sólo de vista reconecta `opencode attach` a la misma raíz viva sin cambiar epoch; muerte probada de backend/raíz marca el predecesor terminal/stale, incrementa `recovery_epoch` y crea backend/raíz/TUI sucesores nuevos en el mismo worktree/checkpoint. El mismo `root_session_id` no se resucita. No se recuperan subagentes ni memoria in-flight; el contexto se reconstruye desde autoridad durable. **Clase:** contrato visible del producto; seguridad y permisos; dependencias o evidencia contradictorias. **Contaminaba:** `M4.4.2`, `S4.4`, `S7.1`.
+
+**Orden de autoridad del brief de recuperación:**
+1. binding Main-owned y epoch vigente;
+2. evidencia Git/worktree/candidato pendiente;
+3. OpenSpec canónico (`master-index`, `STATUS`, criterios y decisiones);
+4. contexto Engram seleccionado;
+5. checkpoint durable más reciente con pruebas, evidencia y próximo comando.
+
+Engram aporta contexto y nunca decide por sí solo; Notion no es autoridad runtime. Una contradicción entre fuentes falla cerrado y vuelve a Main.
+
+**Criterios de aceptación:**
+- [ ] Si backend y raíz siguen vivos, perder Herdr/TUI sólo vuelve a adjuntar la vista al mismo root y conserva `recovery_epoch`
+- [ ] Recovery por muerte exige stop proof canónico, mismo host/worktree/checkpoint y lineage del predecesor terminal; cualquier drift falla `CT_RECOVERY_UNSAFE` sin iniciar nada
+- [ ] Main incrementa `recovery_epoch`, crea backend aislado y raíz primaria nuevos mediante el owner de `S4.5`, persiste un `root_session_id` distinto y abre automáticamente la nueva TUI adjunta
+- [ ] El brief respeta el orden de autoridad declarado; Engram no sustituye Git/OpenSpec/checkpoint y Notion no participa
+- [ ] Todo claim, mensaje o efecto del epoch previo devuelve `CT_ASSIGNMENT_STALE`; el root anterior nunca se reutiliza ni resucita
+- [ ] No se reconstruye memoria de proceso/subagentes, no se relocaliza multi-host y el diff queda dentro de `Área`
+
+**Ahorro y forecast:** la decisión 40 elimina la rama de resurrección del mismo ID, su experimento de persistencia/ownership, la recuperación de memoria/subagentes y un segundo owner de creación de raíz. Quedan dos Módulos y una sola transición de crash. No se atribuye un ahorro de líneas sin diseño: `session-plan` debe medir el forecast antes de RED. `S4.3` y `S4.4` permanecen separadas porque liveness/readback y la mutación irreversible de epoch/raíz tienen criterios, paths y unidad de revert distintos; no existe evidencia para fusionarlas.
+
+### Módulo M4.4.1 — Fencing de epoch y lineage terminal
+**Paths:** `hosts/epoch-enforcement.mjs`, `test/hosts/epoch-enforcement.test.mjs`
+- [ ] Tarea T4.4.1.1 — RED: rechazar dos roots activos, predecesor no terminal, lineage roto y todo efecto de epoch previo
+- [ ] Tarea T4.4.1.2 — GREEN: fencear epoch y registrar la relación predecessor→successor bajo binding Main-owned
+- [ ] Tarea T4.4.1.3 — REFACTOR: separar validación de lineage/epoch de creación de backend, raíz o vista
+
+### Módulo M4.4.2 — Reconexión de vista o recuperación con raíz sucesora · 🟢 LISTO tras M4.4.1
 **Paths:** `hosts/recovery.mjs`, `test/hosts/recovery.test.mjs`
-
-- [ ] Tarea T4.4.2.1 — RED: cubrir stop proof ausente, worktree/checkpoint distinto y evidencia ambigua
-- [ ] Tarea T4.4.2.2 — GREEN: implementar stop, inspección, epoch y reapertura sólo del root OpenCode local
-- [ ] Tarea T4.4.2.3 — REFACTOR: verificar que no se relocaliza ni acepta efecto stale después de un rechazo
+**Checkpoint resuelto:** decisión 40 / Engram 9044; retomar antes de RED `T4.4.2.1` sobre el candidato reconciliado.
+- [ ] Tarea T4.4.2.1 — RED: distinguir vista perdida con raíz viva de muerte probada; cubrir stop proof ausente, drift, brief incompleto, ID reutilizado y efecto stale
+- [ ] Tarea T4.4.2.2 — GREEN: reconectar la misma raíz viva o, tras muerte, componer el brief ordenado y solicitar al owner de `S4.5` backend/raíz/TUI sucesores nuevos
+- [ ] Tarea T4.4.2.3 — REFACTOR: mantener recovery como coordinador lógico sin memoria de subagentes, ownership duplicado ni ruta de resurrección
 
 ## Grafo de dependencias
 
 ```mermaid
 graph LR
-  S41["S4.1 fence · ✅"] --> S42["S4.2 raíz visible · ✅"]
+  S41["S4.1 fence · ✅"] --> S42["S4.2 Herdr inicial · ✅"]
   S116["S1.16 OpenCode wake · ✅"] --> S42
-   S42 --> S43["S4.3 liveness/rehidratación · 🟢"]
-   S43 --> S44["S4.4 recuperación WSL · 📋"]
+  S42 --> S45["S4.5 raíz Main-owned · 🟢"]
+  S45 --> S43["S4.3 liveness/rehidratación · 📋"]
+  S43 --> S44["S4.4 recuperación WSL · 📋"]
+  S44 --> S71["S7.1 conformidad · 📋"]
 ```
 
-No queda responsabilidad pendiente de Change E sin Sesión enumerada.
+No queda responsabilidad activa de hosts sin Sesión enumerada; 38/39 están resueltas en `S4.5` y la 40 deja `S4.4/M4.4.2` decision-clean. El estado 📋 de `S4.3`, `S4.4` y `S7.1` proviene sólo del grafo.
