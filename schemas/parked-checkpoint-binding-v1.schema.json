@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://control-tower.local/schemas/parked-checkpoint-binding-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "parked_decision_id", "parked_decision_digest", "parked_checkpoint", "capture_checkpoint_id", "capture_checkpoint_digest", "reconciled_checkpoint_id", "reconciled_checkpoint_digest", "reconciliation_state", "repository", "project_id", "assignment_id", "generation", "base_sha", "result_sha", "binding_digest"],
+  "properties": {
+    "schema": {"const": "parked-checkpoint-binding"},
+    "schema_version": {"const": 1},
+    "parked_decision_id": {"$ref": "artifact-ref-v1.schema.json#/$defs/slug"},
+    "parked_decision_digest": {"$ref": "artifact-ref-v1.schema.json#/$defs/digest"},
+    "parked_checkpoint": {"type": "string", "minLength": 1},
+    "capture_checkpoint_id": {"type": "string", "pattern": "^checkpoint-[0-9a-f]{64}$"},
+    "capture_checkpoint_digest": {"$ref": "artifact-ref-v1.schema.json#/$defs/digest"},
+    "reconciled_checkpoint_id": {"type": "string", "pattern": "^reconciliation-[0-9a-f]{64}$"},
+    "reconciled_checkpoint_digest": {"$ref": "artifact-ref-v1.schema.json#/$defs/digest"},
+    "reconciliation_state": {"const": "VALID"},
+    "repository": {"type": "string", "pattern": "^/"},
+    "project_id": {"$ref": "artifact-ref-v1.schema.json#/$defs/slug"},
+    "assignment_id": {"$ref": "artifact-ref-v1.schema.json#/$defs/slug"},
+    "generation": {"type": "integer", "minimum": 0},
+    "base_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "result_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "binding_digest": {"$ref": "artifact-ref-v1.schema.json#/$defs/digest"}
+  }
+}

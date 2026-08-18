@@ -58,6 +58,16 @@
       "registry_revision": 7, "capability_revision": 5
     }
   },
+  "parkedCheckpointBinding": {
+    "schema": "parked-checkpoint-binding", "schema_version": 1,
+    "parked_decision_id": "parked-s5-7-001", "parked_decision_digest": "sha256:a718a0f44e7f727c81c5970292ac6659c40ed940054b3e628be4c84a4de34c13",
+    "parked_checkpoint": "Before response persistence.",
+    "capture_checkpoint_id": "checkpoint-38403785bf1f669c67533cf948471227c450fd09951ff483506d4dc0552a3452", "capture_checkpoint_digest": "sha256:c5c97fdfeebb36f873b504831d0d9f19f438bd2350507a73ee9460268095098d",
+    "reconciled_checkpoint_id": "reconciliation-843ae01b98e14fc69a8338421ca65bde184534b684fbe73c17f34535c21a8795", "reconciled_checkpoint_digest": "sha256:fb6ccffc6e1a6e062ddfa298169406d233a04def5b3ba4aed28ced3dffb04516",
+    "reconciliation_state": "VALID", "repository": "/home/user/projects/control-tower", "project_id": "control-tower", "assignment_id": "assignment-s5-11", "generation": 3,
+    "base_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "result_sha": "cccccccccccccccccccccccccccccccccccccccc",
+    "binding_digest": "sha256:12dca41defb9bcf07059a494508e91fdfdbe29de64156094a859cfb96ac29106"
+  },
   "artifactRef": {
     "schema": "artifact-ref",
     "schema_version": 1,

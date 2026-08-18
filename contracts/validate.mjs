@@ -3,6 +3,7 @@ import { isAlias, isMap, isScalar, isSeq, parseDocument, visit } from "yaml"
 import { digestArtifact } from "./canonicalize.mjs"
 import { candidateRevision } from "./candidate-revision.mjs"
 import { parkedDecisionDigest, parkedDecisionResponseDigest } from "./parked-decision.mjs"
+import { parkedCheckpointBindingDigest } from "./parked-checkpoint-binding.mjs"
 import { sessionPlanSnapshotDigest } from "./session-plan-snapshot.mjs"
 import { failContract } from "./errors.mjs"
 import { validatorFor } from "./schema-registry.mjs"
@@ -174,6 +175,9 @@ const invariants = Object.freeze({
   parkedDecisionResponse: assertParkedDecisionResponse,
   checkpointCapture: assertCheckpointCapture,
   reconciledCheckpoint: assertReconciledCheckpoint,
+  parkedCheckpointBinding: (value) => {
+    if (parkedCheckpointBindingDigest(value) !== value.binding_digest) invalid("Parked checkpoint binding digest must match its canonical content")
+  },
 })
 
 export const validate = (schemaName, input) => {

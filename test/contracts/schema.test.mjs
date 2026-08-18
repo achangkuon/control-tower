@@ -23,6 +23,12 @@ const errorCode = (operation) => {
 }
 
 describe("V1 schema boundary", () => {
+  test("registers the closed parked checkpoint binding fixture", () => {
+    expect(schemaNames).toContain("parkedCheckpointBinding")
+    expect(validate("parkedCheckpointBinding", fixtures.parkedCheckpointBinding)).toEqual(fixtures.parkedCheckpointBinding)
+    expect(errorCode(() => validate("parkedCheckpointBinding", { ...fixtures.parkedCheckpointBinding, extra: true }))).toBe("CT_SCHEMA_INVALID")
+  })
+
   test("registers origin-neutral reconciliation integrity and exact pair bindings", async () => {
     const contracts = await import("../../contracts/validate.mjs")
     expect(schemaNames).toEqual(expect.arrayContaining(["checkpointCapture", "reconciledCheckpoint"]))
