@@ -34,7 +34,7 @@ const fixture = () => {
   const paths = { dataRoot: join(root, "data/control-tower"), configRoot: join(root, "config/control-tower"), stateRoot: join(root, "state/control-tower") }
   const herdrBin = join(root, "bin/herdr"), opencodeBin = join(root, "bin/opencode")
   mkdirSync(dirname(herdrBin), { recursive: true })
-  writeFileSync(herdrBin, "#!/bin/sh\nif [ \"$1 $2 $3\" = \"contract agent-root-observation --json\" ]; then printf '{\"schema\":\"herdr.agent_root_observation\",\"schema_version\":1,\"capabilities\":[\"pane_bound\",\"opencode_session_lineage\"]}\\n'; fi\n", { mode: 0o700 })
+  writeFileSync(herdrBin, "#!/bin/sh\nif [ \"$1\" = \"--version\" ]; then printf 'herdr 0.8.0\\n'; fi\n", { mode: 0o700 })
   writeFileSync(opencodeBin, "#!/bin/sh\nexit 0\n", { mode: 0o700 })
   paths.herdrBin = herdrBin
   paths.opencodeBin = opencodeBin
@@ -143,20 +143,27 @@ test("attended installs require explicit Herdr and OpenCode executable identitie
   expect(existsSync(join(env.XDG_DATA_HOME, "control-tower"))).toBe(false)
 })
 
-test("installer rejects Herdr without the required root-observation contract before storing a runtime", () => {
+test("installer accepts pinned Herdr 0.8.0 without the unavailable root-observation command", () => {
   const { root, paths } = fixture(), env = testEnv(root)
-  writeFileSync(paths.herdrBin, "#!/bin/sh\nprintf '{}\\n'\n", { mode: 0o700 })
+  writeFileSync(paths.herdrBin, "#!/bin/sh\nif [ \"$1\" = \"--version\" ]; then printf 'herdr 0.8.0\\n'; else exit 64; fi\n", { mode: 0o700 })
+
+  expect(runCli(["install", "1.0.0", repoRoot, ...hostArgs(paths)], env)).toMatchObject({ active: "1.0.0" })
+})
+
+test("installer rejects Herdr without the required 0.8.0 compatibility version before storing a runtime", () => {
+  const { root, paths } = fixture(), env = testEnv(root)
+  writeFileSync(paths.herdrBin, "#!/bin/sh\nprintf 'herdr unknown\\n'\n", { mode: 0o700 })
 
   expect(() => runCli(["install", "1.0.0", repoRoot, ...hostArgs(paths)], env)).toThrow("CT_HOST_RUNTIME_CONTRACT")
   expect(existsSync(join(env.XDG_DATA_HOME, "control-tower"))).toBe(false)
 })
 
-test("installer rejects malformed, failed, timed-out, and incompatible Herdr contracts", () => {
+test("installer rejects malformed, failed, timed-out, and incompatible Herdr versions", () => {
   for (const script of [
-    "#!/bin/sh\nprintf '{bad}\\n'\n",
+    "#!/bin/sh\nprintf 'bad\\n'\n",
     "#!/bin/sh\nexit 2\n",
     "#!/bin/sh\nsleep 2\n",
-    "#!/bin/sh\nprintf '{\"schema\":\"herdr.agent_root_observation\",\"schema_version\":1,\"capabilities\":[\"pane_bound\",\"opencode_session_lineage\",\"extra\"]}\\n'\n",
+    "#!/bin/sh\nprintf 'herdr 0.9.0\\n'\n",
   ]) {
     const { root, paths } = fixture(), env = testEnv(root)
     writeFileSync(paths.herdrBin, script, { mode: 0o700 })
@@ -165,10 +172,10 @@ test("installer rejects malformed, failed, timed-out, and incompatible Herdr con
   }
 })
 
-test("installer rejects duplicate or oversized Herdr contract output", () => {
+test("installer rejects ambiguous or oversized Herdr version output", () => {
   for (const output of [
-    '{"schema":"herdr.agent_root_observation","schema":"herdr.agent_root_observation","schema_version":1,"capabilities":["pane_bound","opencode_session_lineage"]}',
-    `${'{'.repeat(65_537)}`,
+    "herdr 0.8.0\\nherdr 0.8.0",
+    "x".repeat(4_097),
   ]) {
     const { root, paths } = fixture(), env = testEnv(root)
     writeFileSync(paths.herdrBin, `#!/bin/sh\nprintf '%s\\n' '${output}'\n`, { mode: 0o700 })
@@ -196,12 +203,13 @@ test("attended CLI rejects unsafe or mismatched executable inputs before install
   test("installs an immutable owner-protected versioned host-runtime record", () => {
   const item = fixture(), env = testEnv(item.root)
   expect(runCli(["install", "1.0.0", repoRoot, ...hostArgs(item.paths)], env)).toMatchObject({ active: "1.0.0" })
-  const record = join(env.XDG_DATA_HOME, "control-tower/versions/1.0.0/host-runtime.json")
-  expect(JSON.parse(readFileSync(record, "utf8"))).toMatchObject({ schema: "control-tower.host-runtime/v1", runtimeVersion: "1.0.0", herdr: { path: item.paths.herdrBin }, opencode: { path: item.paths.opencodeBin } })
+  const record = join(env.XDG_DATA_HOME, "control-tower/versions/1.0.0/host-runtime.json"), stored = JSON.parse(readFileSync(record, "utf8"))
+  expect(stored).toMatchObject({ schema: "control-tower.host-runtime/v1", runtimeVersion: "1.0.0", herdr: { path: item.paths.herdrBin }, opencode: { path: item.paths.opencodeBin }, herdr_runtime: { schema: "control-tower.herdr-runtime/v1", version: "0.8.0" } })
+  expect(stored.herdr_contract).toBeUndefined()
   expect(lstatSync(record).mode & 0o777).toBe(0o600)
   })
 
-  test("revalidates the active exact executable identity and contract before host effects", () => {
+  test("revalidates the active exact executable identity and compatibility before host effects", () => {
     const { paths } = fixture()
     lifecycle({ ...paths, action: "install", version: "1.0.0", files: { "runtime.mjs": "one" } })
     const runtime = join(paths.dataRoot, "versions/1.0.0")
@@ -210,12 +218,12 @@ test("attended CLI rejects unsafe or mismatched executable inputs before install
     expect(() => validateActiveHostRuntime(paths.dataRoot, "1.0.0", runtime)).toThrow("CT_HOST_RUNTIME_CHANGED")
   })
 
-  test("rejects Herdr that replaces itself while the contract probe is running", () => {
+  test("rejects Herdr that replaces itself while the compatibility probe is running", () => {
     const { paths } = fixture()
     lifecycle({ ...paths, action: "install", version: "1.0.0", files: { "runtime.mjs": "one" } })
     const runtime = join(paths.dataRoot, "versions/1.0.0"), marker = `${paths.herdrBin}.mutate`
-    writeFileSync(paths.herdrBin, "#!/bin/sh\nif [ -f " + marker + " ]; then printf '#!/bin/sh\\nexit 99\\n' > \"$0\"; fi\nif [ \"$1 $2 $3\" = \"contract agent-root-observation --json\" ]; then printf '{\"schema\":\"herdr.agent_root_observation\",\"schema_version\":1,\"capabilities\":[\"pane_bound\",\"opencode_session_lineage\"]}\\n'; fi\n", { mode: 0o700 })
-    // Reinstall records the initially valid bytes; only the contract subprocess mutates them.
+    writeFileSync(paths.herdrBin, "#!/bin/sh\nif [ -f " + marker + " ]; then printf '#!/bin/sh\\nexit 99\\n' > \"$0\"; fi\nif [ \"$1\" = \"--version\" ]; then printf 'herdr 0.8.0\\n'; fi\n", { mode: 0o700 })
+    // Reinstall records the initially valid bytes; only the compatibility subprocess mutates them.
     lifecycle({ ...paths, action: "install", version: "1.0.1", files: { "runtime.mjs": "two" } })
     writeFileSync(marker, "mutate\n")
     expect(() => validateActiveHostRuntime(paths.dataRoot, "1.0.1", join(paths.dataRoot, "versions/1.0.1"))).toThrow("CT_HOST_RUNTIME_CHANGED")
@@ -241,7 +249,7 @@ test("reentrant installs retain the winning immutable host-runtime record", () =
 test("conflicting reentrant installs preserve the winner and active pointer", () => {
   const { root, paths } = fixture(), alternateHerdr = join(root, "alternate/herdr")
   mkdirSync(dirname(alternateHerdr), { recursive: true })
-  writeFileSync(alternateHerdr, "#!/bin/sh\n# alternate\nif [ \"$1 $2 $3\" = \"contract agent-root-observation --json\" ]; then printf '{\"schema\":\"herdr.agent_root_observation\",\"schema_version\":1,\"capabilities\":[\"pane_bound\",\"opencode_session_lineage\"]}\\n'; fi\n", { mode: 0o700 })
+  writeFileSync(alternateHerdr, "#!/bin/sh\n# alternate\nif [ \"$1\" = \"--version\" ]; then printf 'herdr 0.8.0\\n'; fi\n", { mode: 0o700 })
   const nested = { ...paths, herdrBin: alternateHerdr, action: "install", version: "1.0.0", files: { "runtime.mjs": "one" } }
   const outer = { ...paths, action: "install", version: "1.0.0", files: { "runtime.mjs": "one" }, hostRuntimeOptions: { beforePublish: () => lifecycle(nested) } }
 
@@ -480,7 +488,7 @@ test("stored torre diagnoses and installs autonomously from an isolated unrelate
   }
   const herdrBin = join(root, "bin/herdr"), opencodeBin = join(root, "bin/opencode")
   mkdirSync(dirname(herdrBin), { recursive: true })
-  writeFileSync(herdrBin, "#!/bin/sh\nif [ \"$1 $2 $3\" = \"contract agent-root-observation --json\" ]; then printf '{\"schema\":\"herdr.agent_root_observation\",\"schema_version\":1,\"capabilities\":[\"pane_bound\",\"opencode_session_lineage\"]}\\n'; fi\n", { mode: 0o700 })
+  writeFileSync(herdrBin, "#!/bin/sh\nif [ \"$1\" = \"--version\" ]; then printf 'herdr 0.8.0\\n'; fi\n", { mode: 0o700 })
   writeFileSync(opencodeBin, "#!/bin/sh\nexit 0\n", { mode: 0o700 })
 
   const env = { PATH: process.env.PATH, HOME: home, XDG_DATA_HOME: join(root, "xdg-data"), XDG_CONFIG_HOME: config,

@@ -63,9 +63,9 @@ graph LR
   S113 --> S114["S1.14 polling · ✅"]
   S114 --> S115["S1.15 conformidad · ✅"]
   S115 --> S116["S1.16 OpenCode wake · ✅"]
-  S116 --> S42["S4.2 raíz visible · 🟢"]
+  S116 --> S42["S4.2 raíz visible · ✅"]
   S41 --> S42
-   S42 --> S43["S4.3 liveness · 📋"]
+   S42 --> S43["S4.3 liveness · 🟢"]
    S43 --> S44["S4.4 recuperación WSL · 📋"]
   S41 --> S52["S5.2 entrega idempotente · 🔴"]
   S33 --> S52
@@ -100,8 +100,8 @@ graph LR
 | ✅ | `S1.14` | Polling y wake safety | ✅ COMPLETO | `S1.13` ✅; `9886af9` es ancestro de `origin/master@a3d9e51`; focused 18/0/175, full 628/0/3793, 392 líneas authored |
 | ✅ | `S1.15` | Conformidad lifecycle OpenCode | ✅ COMPLETO | `S1.14` ✅; `428b3ed` y documentación `e37a159` son ancestros de `origin/master@a3d9e51`; full 643/0/3818 en 41 archivos, 399 líneas authored |
 | ✅ | `S1.16` | Transporte reconciliado y composición wake | ✅ COMPLETO | `S1.15` ✅; implementación `da4e391`, parent `a3d9e51`; focused expandida 49/0/304, full 671/0/4020 en 43 archivos, 298 líneas authored; la entrega directa incluye este cierre documental |
-| ▶ | `S4.2` | Lanzamiento visible de raíz OpenCode | 🟢 LISTO | `S4.1` ✅, `S1.16` ✅; autoridad, `Área`, `Recurso` y decisiones propias soportan `design-tasks`. Debe diseñar y probar Herdr/OpenCode y el provider/injection productivo; no está production-ready |
-| — | `S4.3` | Inspección, liveness y rehidratación segura | 📋 PLANIFICADO | `S4.2`; ruta `design-tasks` tras cerrar `S4.2` |
+| ✅ | `S4.2` | Lanzamiento visible de raíz OpenCode | ✅ COMPLETO | Candidato local basado en `master@401e8b4`: Main + Herdr 0.8 custodian la raíz inicial; focused 128/128, full 723/723, 189 líneas authored de código/pruebas; commit/push pendiente de autorización |
+| ▶ | `S4.3` | Inspección, liveness y rehidratación segura | 🟢 LISTO | `S4.2` ✅; ruta `design-tasks`, sin absorber reapertura/recuperación de `S4.4` |
 | — | `S1.17` | Gate y RED Pi/Intercom | 🟡 DIFERIDO | trabajo posterior host-neutral; no bloquea OpenCode |
 | — | `S1.18` | Adapter Pi/Intercom | 🟡 DIFERIDO | `S1.17` diferida |
 | — | `S1.19` | Regresión Pi/Intercom | 🟡 DIFERIDO | `S1.18` diferida |
@@ -132,7 +132,7 @@ graph LR
 > recuperación y failover entra en la cadena de release. La tabla se corrige para coincidir.
 > La decisión histórica fue explícita —construir las catorce Sesiones que ese corte enumeraba como restantes— y no una derivación; la reconciliación actual agrega los prerrequisitos omitidos sin reescribir aquella evidencia.
 
-**Treinta y seis Sesiones históricas · 24/36 cerradas o archivadas (67%).** `S8.7` queda archivada por supersesión y no integra la ruta activa. `S4.2` y `S5.9` aportan cero mientras están `LISTO`. P10 queda completo dentro de la release mediante `S3.4 → S10.3 → S10.1 → S10.2 → S7.1`. Esta métrica no reemplaza el `30/46` de Sesiones activas del [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
+**Treinta y seis Sesiones históricas · 25/36 cerradas o archivadas (69%).** `S8.7` queda archivada por supersesión y no integra la ruta activa. `S5.9` aporta cero mientras está `LISTO`. P10 queda completo dentro de la release mediante `S3.4 → S10.3 → S10.1 → S10.2 → S7.1`. Esta métrica no reemplaza el `31/46` de Sesiones activas del [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
 secuenciales entre `S5.4` y `S5.5`: snapshot/parser canónico, contratos de decisión/respuesta,
 binding terminal, productores de provenance, composición Main→parking, binding autoritativo de
 checkpoint y binding inmutable del trabajo completado bajo la autoridad exclusiva de Main. La
@@ -167,11 +167,11 @@ El comportamiento Hermes/Telegram restante es evidencia histórica archivada; no
 
 La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas; no se declara como un número fijo.
 
-`S1.16` está ✅ COMPLETO en `da4e391`; la entrega directa incluye su cierre documental. El consumer está cerrado, pero la composición productiva del provider/injection no: pertenece a `S4.2/M4.2.3`.
+`S1.16` y `S4.2` están ✅ COMPLETO; la composición productiva inicial Main → Herdr 0.8 → raíz OpenCode queda cerrada sin invadir liveness o recuperación.
 
-La capacidad se sigue derivando, no se fija como cupo. `S4.2` y `S5.9` están 🟢 LISTO. `S4.3`, `S4.4`, `S5.3`, `S5.10`, `S5.5` y `S7.1` están 📋 PLANIFICADO por sus dependencias; `S5.2` es el único 🔴 BLOQUEADO. `S1.17`–`S1.19` son 🟡 DIFERIDO y `S8.7` está 📚 ARCHIVADO, fuera de esta cadena.
+La capacidad se sigue derivando, no se fija como cupo. `S5.9` y `S4.3` están 🟢 LISTO. `S4.4`, `S5.3`, `S5.10`, `S5.5` y `S7.1` están 📋 PLANIFICADO por sus dependencias; `S5.2` es el único 🔴 BLOQUEADO. `S1.17`–`S1.19` son 🟡 DIFERIDO y `S8.7` está 📚 ARCHIVADO.
 
-**Estado de decisiones al 2026-08-17: 34/34 `escala` resueltas, cero abiertas en esta cadena.** Quedan la segunda corrección autorizada de `S5.2` y el dueño de la brecha 6. El prerrequisito `enroll/**` pertenecía al puente Telegram/Hermes archivado con `S8.7`; no es responsabilidad activa. Fuera de esta cadena queda abierta la decisión de `S9.2`, sin dependencia declarada sobre esta ruta. Ver el [registro](decision-register.md).
+**Estado de decisiones al 2026-08-18: 35/35 `escala` resueltas, cero abiertas en esta cadena.** Quedan la segunda corrección autorizada de `S5.2` y el dueño de la brecha 6. El prerrequisito `enroll/**` pertenecía al puente Telegram/Hermes archivado con `S8.7`; no es responsabilidad activa. Fuera de esta cadena queda abierta la decisión de `S9.2`, sin dependencia declarada sobre esta ruta. Ver el [registro](decision-register.md).
 
 El siguiente inicio debe derivar capacidad desde el grafo y los campos declarados vigentes, no desde esta fotografía. Ningún nodo posterior a `S5.9` recibe crédito: `S5.10`, `S5.5` y `S7.1` conservan sus condiciones propias.
 

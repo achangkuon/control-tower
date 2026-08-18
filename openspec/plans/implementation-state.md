@@ -2,7 +2,7 @@
 
 > Este documento mide **código**, no planificación. El [master-index](master-index.md) dice qué está planificado y qué Sesiones cerraron; este archivo dice qué existe, qué corre y qué está desplegado.
 >
-> **Snapshot fuente actual: 2026-08-17 sobre `origin/master@3ec8536`.** S10.2 ya está publicado por los tres commits de sincronización; sus métricas locales siguen siendo evidencia histórica, no una re-medición de runtime. Esta rebase sólo cambia planificación: Moshi es interfaz humana, Main despacha, Herdr supervisa internamente la raíz OpenCode y la recuperación es same-host WSL.
+> **Snapshot fuente actual: 2026-08-18 sobre el candidato local basado en `master@401e8b4`, todavía sin commit.** `S4.2` cierra lanzamiento/custodia inicial con Herdr 0.8; `S4.3` conserva liveness/rehidratación y `S4.4` reapertura/recuperación. Las mediciones históricas etiquetadas por SHA no se reinterpretan.
 >
 > **Nota de vocabulario (2026-08-01, vigente):** la columna `Lane` no nombra dos productos. Tras la [unificación](release-chain.md), `installable-v1` y `autonomous-v2` son afinidad de trabajo. El corte real en código es `bin/torre`, que rechaza capacidades con `CT_V2_ONLY` como flag opt-in apagado por defecto.
 
@@ -46,9 +46,9 @@ La única no integrada es un duplicado huérfano: `test/install/runtime-payload.
 
 El corte de runtime resolvió *qué* código corre. No resolvió *cuánto*.
 
-`RUNTIME_PAYLOAD_FILES` (en `install/runtime-payload.mjs`) define un cierre cerrado de seis archivos. Todo lo demás queda fuera del artefacto instalable.
+`RUNTIME_PAYLOAD_FILES` sigue siendo un allowlist cerrado, pero `S4.2` lo amplió a 14 archivos: agrega seis adapters `hosts/**`, `jornada/lifecycle.mjs` y `main-store/launch-consumer.mjs`. Las tablas siguientes conservan la medición histórica del 2026-08-10; ya no describen el payload candidato actual y no se inventa un porcentaje fresco.
 
-**Desplegado — 5.338 líneas, 6 archivos (medición 2026-08-10 sobre `b360c8a`)**
+**Desplegado — 5.338 líneas, 6 archivos (medición histórica 2026-08-10 sobre `b360c8a`)**
 
 | Archivo | Líneas |
 |---|---:|
@@ -104,7 +104,7 @@ Ratio documentación : código de producto = **2,2 : 1**.
 
 ## Estado de las pruebas
 
-Corrida de S10.2 sobre los bytes exactos de `44f23adbb80bed974246aa3761573a388e5761bf` (tree `d5343fda0373c5152ad94bc248db5a5d0ccf8031`), antes de este cierre documental:
+Corrida integral del candidato S4.2 sobre `master@401e8b4`: focused 128/128 y `bun test` 723/723, 4.379 expectativas en 52 archivos; `ACTIVE` ausente y `git diff --check` limpio. La corrida S10.2 siguiente queda como evidencia histórica de sus bytes exactos `44f23adbb80bed974246aa3761573a388e5761bf` (tree `d5343fda0373c5152ad94bc248db5a5d0ccf8031`):
 
 ```
 bun test test/supervision/state.test.mjs → 4 pass · 0 fail · 22 expect()
@@ -119,7 +119,11 @@ La suite completa corrió mientras la supervisión externa del repositorio era v
 3. **Un worktree nuevo no tiene `node_modules`;** sin `bun install` la suite rompe con `Cannot find package 'yaml'`.
 4. **Ruido nuevo, no cubierto:** la corrida emite dos `fatal: Needed a single revision` en stderr. No hacen fallar ninguna prueba, pero indican que alguna superficie invoca `git rev-parse` contra una revisión inexistente y traga el error. Sin diagnosticar.
 
-## Cortes de implementación publicados
+## Cortes de implementación
+
+### `S4.2` — lanzamiento y custodia inicial OpenCode
+
+✅ COMPLETO en el candidato local sin commit. Main consume la binding canónica; el runtime instalado fija Herdr 0.8.0/OpenCode por identidad y descriptor; `agent_started`/`agent_info` deben coincidir en agente, cwd, pane, terminal y `session_id` canónico antes de prompt o proyección. Los registros nuevos no exigen el comando v1 ausente; los v1 legados siguen fail-closed. La entrega directa y el despliegue permanecen pendientes de autorización humana. `S4.3`/`S4.4` no están implementadas por este corte.
 
 ### `S10.2` — supervisión externa sin armado local
 
@@ -185,9 +189,9 @@ El corte es una biblioteca de contratos pura: no conecta Telegram, no persiste r
 
 > «`runCli` llama a `readRuntimePayload(source)` en modo **strict**, y `scanClosure` rechaza todo directorio que no sea `bin` o `install`. Un checkout del repositorio **nunca** puede ser `source`: falla en `console/`, y detrás vienen `contracts/`, `test/` y `openspec/`.»
 
-Consecuencia: `contracts/`, `registry/`, `main-store/`, `escalation/`, `capabilities/`, `console/`, `hosts/`, `workspace/`, `enroll/`, `policy/`, `jornada/` y `continuation/` **no pueden entrar al artefacto instalable** sin modificar `RUNTIME_PAYLOAD_FILES` y `scanClosure`.
+Consecuencia actual: sólo los archivos exactos de `RUNTIME_PAYLOAD_FILES` pueden entrar. `S4.2` agregó su subset de `hosts/`, `jornada/lifecycle.mjs` y `main-store/launch-consumer.mjs`; `contracts/`, `registry/`, `escalation/`, `capabilities/`, `console/`, `workspace/`, `enroll/`, `policy/`, `continuation/` y los demás archivos no enumerados siguen excluidos.
 
-Ninguna Sesión enumerada declara ese cambio. `S4.2/M4.2.3` cablea el composition root del fence, que es otra cosa: habilita la ruta productiva dentro del repositorio, no el empaquetado.
+Ninguna Sesión enumera todavía el cierre instalable del resto del producto. `S4.2/M4.2.3` resuelve su launcher empaquetado, no la brecha completa.
 
 **Riesgo declarado:** se pueden cerrar todas las Sesiones restantes y que la mitad del producto siga sin viajar en la instalación.
 

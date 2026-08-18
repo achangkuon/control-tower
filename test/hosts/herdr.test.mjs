@@ -4,7 +4,7 @@ import { createHerdrAdapter } from "../../hosts/herdr.mjs"
 
 const receipt = Object.freeze({ brief: "Approved work only", brief_ref: "briefs/a.json", assignment_ref: "assignments/a.json", project_id: "project-a", candidate_revision: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", fence_path: "/runtime/fence-a", worktree: "/work/a", host_epoch: 3, pane_id: "w1:p1", terminal_id: "terminal-a", root_session_id: "root-a" })
 const code = async (operation) => { try { await operation() } catch (error) { return error.code }; return null }
-const observation = Object.freeze({ schema: "herdr.agent_root_observation", schema_version: 1, capabilities: ["pane_bound", "opencode_session_lineage"], pane_id: "w1:p1", terminal_id: "terminal-a", source: "herdr:opencode", agent: "opencode", session_id: "root-a", parent_id: null })
+const observation = Object.freeze({ schema: "control-tower.herdr-root-custody", schema_version: 1, pane_id: "w1:p1", terminal_id: "terminal-a", source: "herdr:opencode", agent: "opencode", session_id: "root-a" })
 
 describe("Herdr visible root adapter", () => {
   test("creates only a fresh pane at the assigned cwd and never closes a foreign pane", async () => {
@@ -18,7 +18,7 @@ describe("Herdr visible root adapter", () => {
     expect(calls).toEqual([{ cwd: "/work/a" }, { cwd: "/work/a" }, ["close", "w1:p1"]])
   })
 
-  test("publishes only an exact proven root, never a child or wrong assignment/epoch", async () => {
+  test("publishes only exact validated custody, never an extra or wrong assignment/epoch", async () => {
     const published = []
     const herdr = createHerdrAdapter({ createPane: async () => ({ pane_id: "w1:p1" }), closePane: async () => {}, projectRoot: async () => observation, publish: async (value) => { published.push(value); return true } })
     await herdr.createPane({ worktree: "/work/a" })
@@ -41,7 +41,7 @@ describe("Herdr visible root adapter", () => {
     expect(published).toEqual([receipt])
   })
 
-  test("rejects missing, malformed, duplicate, oversized, child, and mismatched server observations before projection", async () => {
+  test("rejects missing, malformed, extra, oversized, and mismatched custody observations before projection", async () => {
     for (const observed of [null, { ...observation, parent_id: "parent" }, { ...observation, pane_id: "other" }, { ...observation, terminal_id: "other" }, { ...observation, session_id: "other" }, { ...observation, source: "caller" }, { ...observation, capabilities: ["pane_bound", "pane_bound"] }, { ...observation, session_id: "x".repeat(513) }]) {
       const closed = [], published = []
       const herdr = createHerdrAdapter({ createPane: async () => ({ pane_id: "w1:p1" }), closePane: async (id) => closed.push(id), projectRoot: async () => observed, publish: async (value) => { published.push(value); return true } })

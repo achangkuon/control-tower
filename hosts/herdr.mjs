@@ -1,5 +1,5 @@
 const RECEIPT_KEYS = Object.freeze(["assignment_ref", "brief", "brief_ref", "candidate_revision", "fence_path", "host_epoch", "pane_id", "project_id", "root_session_id", "terminal_id", "worktree"])
-const OBSERVATION_KEYS = Object.freeze(["agent", "capabilities", "pane_id", "parent_id", "schema", "schema_version", "session_id", "source", "terminal_id"])
+const OBSERVATION_KEYS = Object.freeze(["agent", "pane_id", "schema", "schema_version", "session_id", "source", "terminal_id"])
 const fail = (code, message) => { throw Object.assign(new Error(message), { code }) }
 const exact = (value) => value && typeof value === "object" && Object.isFrozen(value)
   && Object.keys(value).sort().join("\0") === [...RECEIPT_KEYS].sort().join("\0")
@@ -8,9 +8,8 @@ const bounded = (value) => root(value) && value.length <= 512
 const paneId = (value) => typeof value === "string" && /^w[123456789ABCDEFGHJKMNPQRSTVWXYZ0]+:p[123456789ABCDEFGHJKMNPQRSTVWXYZ0]+$/.test(value)
 const observation = (value, record) => value && typeof value === "object" && !Array.isArray(value)
   && Object.keys(value).sort().join("\0") === [...OBSERVATION_KEYS].sort().join("\0")
-  && value.schema === "herdr.agent_root_observation" && value.schema_version === 1
-  && Array.isArray(value.capabilities) && value.capabilities.join("\0") === "pane_bound\0opencode_session_lineage"
-  && value.parent_id === null && value.source === "herdr:opencode" && value.agent === "opencode"
+  && value.schema === "control-tower.herdr-root-custody" && value.schema_version === 1
+  && value.source === "herdr:opencode" && value.agent === "opencode"
   && [value.pane_id, value.terminal_id, value.session_id].every(bounded)
   && value.pane_id === record.pane_id && value.terminal_id === record.terminal_id && value.session_id === record.root_session_id
 
