@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto"
 import { validate, validateCheckpointProvenancePair } from "../contracts/validate.mjs"
 import { canonicalize } from "../contracts/canonicalize.mjs"
 import { assertParkedDecisionResponseBinding, parkedDecisionResponseDigest } from "../contracts/parked-decision.mjs"
+import { assertParkedCheckpointBinding, createParkedCheckpointBinding } from "../contracts/parked-checkpoint-binding.mjs"
 import { assertCanonicalCheckpointCapture } from "../workspace/checkpoint.mjs"
 import { assertCanonicalReconciledCheckpoint } from "../workspace/reconciliation.mjs"
 import { resolveJornadaLifecycle } from "../jornada/lifecycle.mjs"
@@ -248,7 +249,11 @@ export const createMainStore = ({ root, authority, capability, beforeCommit, tes
         fail("CT_PARKING_INVALID", "Parking artifacts are invalid or mismatched", error)
       }
       if (capture.project_id !== binding.project_id) fail("CT_PROJECT_MISMATCH", "Checkpoint provenance belongs to a foreign project")
-      const record = { actor: "MAIN", project_id: binding.project_id, parked_decision: parked, checkpoint_capture: capture, reconciled_checkpoint: reconciliation }
+      let parked_checkpoint_binding
+      try {
+        parked_checkpoint_binding = createParkedCheckpointBinding({ parked_decision: parked, checkpoint_capture: capture, reconciled_checkpoint: reconciliation })
+      } catch (error) { fail("CT_PARKING_INVALID", "Parking binding is invalid", error) }
+      const record = { actor: "MAIN", project_id: binding.project_id, parked_decision: parked, checkpoint_capture: capture, reconciled_checkpoint: reconciliation, parked_checkpoint_binding }
       const path = parkingPath(parked.parked_decision_id)
       const replay = () => {
         const current = parse(path)
@@ -265,6 +270,26 @@ export const createMainStore = ({ root, authority, capability, beforeCommit, tes
       }
     },
     readParking(id) { return frozen(parse(parkingPath(id))) },
+    readParkedCheckpointBinding(id) {
+      const path = parkingPath(id)
+      if (!existsSync(path)) fail("CT_PARKING_BINDING_NOT_FOUND", "Parked checkpoint binding does not exist")
+      try {
+        const record = parse(path)
+        if (!exactKeys(record, ["actor", "project_id", "parked_decision", "checkpoint_capture", "reconciled_checkpoint", "parked_checkpoint_binding", "revision", "revision_history"])
+          || record.actor !== "MAIN" || record.project_id !== binding.project_id
+          || record.revision !== 1 || !Array.isArray(record.revision_history) || record.revision_history.length !== 0) {
+          throw new Error("Parking envelope is not canonical")
+        }
+        const parked = validate("parkedDecision", record.parked_decision)
+        const capture = validate("checkpointCapture", record.checkpoint_capture)
+        const reconciliation = validate("reconciledCheckpoint", record.reconciled_checkpoint)
+        validateCheckpointProvenancePair(capture, reconciliation)
+        if (capture.project_id !== binding.project_id || id !== parked.parked_decision_id || id !== record.parked_checkpoint_binding?.parked_decision_id) throw new Error("Binding identity mismatch")
+        return frozen(structuredClone(assertParkedCheckpointBinding(record.parked_checkpoint_binding, {
+          parked_decision: parked, checkpoint_capture: capture, reconciled_checkpoint: reconciliation,
+        })))
+      } catch (error) { fail("CT_PARKING_BINDING_INVALID", "Persisted parked checkpoint binding is invalid", error) }
+    },
     persistReport(input) {
       if (!input?.artifact_ref || typeof input.artifact_ref !== "object") fail("CT_STORE_INVALID", "Opaque ArtifactRef is required")
       return commit("reports", input.artifact_ref.artifact_id, input)
