@@ -1,7 +1,7 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-18 contra `master@8d4b28a`. La autoridad vigente es Moshi → Main → raíz primaria OpenCode con TUI adjunta no autoritativa; Herdr no pertenece al lifecycle crítico.
+> Última reconciliación: 2026-08-18 contra `master@dc06cdf`. La autoridad vigente es Moshi → Main → raíz primaria OpenCode con TUI adjunta no autoritativa; Herdr no pertenece al lifecycle crítico.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md).
 
 ## 📍 Punto de retoma
@@ -10,9 +10,11 @@
 
 `S4.2` está ✅ COMPLETO en `61a5aa2`; la decisión 37 preserva esa historia y enumera `S4.5` para migrar el lifecycle futuro a Main-owned backend/root con TUI adjunta no autoritativa.
 
-`S4.5` está 🟢 LISTO y decision-clean: 38 fija backend aislado por worktree y 39 fija Herdr sólo como vista temporal reemplazable. La 40 resuelve recuperación: vista perdida reconecta la raíz viva; muerte probada crea raíz/epoch sucesores desde autoridad durable, sin resucitar el ID anterior. Las 39 decisiones `escala` de la cadena están resueltas; `S4.3` y `S4.4` esperan sus dependencias, y la decisión externa de `S9.2` permanece fuera de esta cadena.
+**`S4.5` está 🔵 EN CURSO: `M4.5.1` entregado en `dc06cdf`.** La elaboración técnica confirmó que **no entra en una sola unidad**: forecast integral 800–1270 líneas authored, así que se ejecuta como tres commits directos secuenciales, uno por Módulo. `M4.5.1` cerró en 348 líneas con la suite en 751/0. Siguen `M4.5.2` (backend OpenCode aislado por worktree) y `M4.5.3` (Herdr degradado a vista no autoritativa); cada uno puede cruzar 400 por sí solo, y si ocurre se parte más.
 
-La capacidad inmediata es `S4.5`, que aún requiere `session-plan` antes de ejecutar porque su forecast no garantiza una sola unidad ≤400. `S5.2` conserva su corrección técnica pendiente.
+Las decisiones 38 y 39 fijan backend aislado por worktree y Herdr como vista temporal reemplazable; la 40 resuelve recuperación. Las 39 decisiones `escala` de la cadena están resueltas; `S4.3` y `S4.4` esperan sus dependencias, y la decisión externa de `S9.2` permanece fuera de esta cadena. `S5.2` conserva su corrección técnica pendiente.
+
+**Verificado contra el runtime instalado el 2026-08-18**, no sólo contra los documentos: `opencode serve --port --hostname 127.0.0.1` da el backend loopback de la decisión 38; `opencode attach <url> --session <id>` adjunta a la **sesión exacta**, que es lo que hace implementable la 39; `--password`/`OPENCODE_SERVER_PASSWORD` provee el secreto por worktree; y `gentle-orchestrator (primary)` existe con `task: {"*": "deny"}` más allowlist de hijos. OpenCode está en 1.18.18, no en el 1.18.7 que citaba la evidencia previa.
 
 **`S9.1` está 🔵 EN CURSO y BLOQUEADA por una decisión del maintainer.** Su planificación está completa —nueve Módulos, veintisiete Tareas, nueve commits directos secuenciales de ≤400 líneas— pero la ejecución va `1/9 M` y `3/27 T`. `M9.1.1` está congelado y el candidato terminal de `M9.1.2` **no está aceptado, ni es reutilizable, ni entregable**: quedó como evidencia de diagnóstico. La próxima acción exacta es `await-fresh-rewrite-authorization` — el maintainer debe autorizar por separado descartarlo y reescribirlo antes de un RED fresco. `S9.1` no reanuda hasta entonces. `S9.3` quedó enumerada como Sesión nueva y arrastra el denominador global de 47 a 48; está 🔴 BLOQUEADA por autoridad de transporte.
 
@@ -35,7 +37,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 | P1 | Sustrato mecánico | 🔵 EN CURSO | 84% (16/19 S) | — | Main | S1.17, S1.18, S1.19 | [STATUS](plan-1/STATUS.md) |
 | P2 | Contratos y registro de producto | 🔵 EN CURSO | — (responsabilidades restantes de Change B sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-2/STATUS.md) |
 | P3 | Workspace y orquestación | ✅ COMPLETO | 100% (4/4 S) | — | Main | — | [STATUS](plan-3/STATUS.md) |
-| P4 | Hosts y línea exclusiva | 🔵 EN CURSO | 40% (2/5 S) | — | Main | S4.5, S4.3, S4.4 | [STATUS](plan-4/STATUS.md) |
+| P4 | Hosts y línea exclusiva | 🔵 EN CURSO | 40% (2/5 S) | — | Main | S4.5 (🔵 1/3 M), S4.3, S4.4 | [STATUS](plan-4/STATUS.md) |
 | P5 | Entrega y continuación | 🔵 EN CURSO | 67% (8/12 S) | — | Main | S5.2, S5.3, S5.5, S5.10 | [STATUS](plan-5/STATUS.md) |
 | P6 | Campañas multiproyecto | 📋 PLANIFICADO | — (sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-6/STATUS.md) |
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | S7.1 | [STATUS](plan-7/STATUS.md) |

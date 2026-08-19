@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
 | Outputs | Raíz primaria Main-owned con TUI adjunta no autoritativa, inspección/liveness por proceso/sesión y recuperación same-host WSL. |
-| Roadmap | `S4.1`, `S1.16` y `S4.2` están ✅ COMPLETO. `S4.5` queda 🟢 LISTO y decision-clean antes de `S4.3`; sus tres Módulos tienen autoridad resuelta. `S4.3` y `S4.4` permanecen 📋 PLANIFICADO sólo por dependencias; la decisión 40 dejó `M4.4.2` decision-clean. P4 alcanza 2/5 S (40%). |
+| Roadmap | `S4.1`, `S1.16` y `S4.2` están ✅ COMPLETO. `S4.5` está 🔵 EN CURSO: `M4.5.1` entregado en `dc06cdf`, quedan `M4.5.2` y `M4.5.3` como commits directos secuenciales. No aporta crédito hasta cerrar. `S4.3` y `S4.4` permanecen 📋 PLANIFICADO sólo por dependencias; la decisión 40 dejó `M4.4.2` decision-clean. P4 alcanza 2/5 S (40%). |
 | Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), decisiones 37–40 / Engram 9040/9042/9043/9044, [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). REQUIREMENTS §14 permanece byte-pinned como base histórica; esta spec enmienda el lifecycle futuro. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
@@ -229,7 +229,7 @@ Después del brief aprobado, Main despacha un root OpenCode en el worktree asign
 
 ## Sesión 4.5 — Raíz primaria Main-owned con vista adjunta
 
-**Estado:** 🟢 LISTO — decision-clean; las decisiones 37–39 habilitan el avance secuencial por `M4.5.1`–`M4.5.3`.
+**Estado:** 🔵 EN CURSO — `M4.5.1` ✅ entregado en `dc06cdf`; siguen `M4.5.2` y `M4.5.3`. La elaboración técnica del 2026-08-18 (Engram 9064) fijó que S4.5 **no entra en una sola unidad ≤400**: forecast integral 800–1270 líneas authored, ejecutado como tres commits directos secuenciales, uno por Módulo. `M4.5.2` y `M4.5.3` pueden cruzar 400 por sí solos; si ocurre se parten más, sin excepción silenciosa.
 
 **Depende de:** `S4.2` ✅.
 
@@ -263,11 +263,22 @@ Después del brief aprobado, Main despacha un root OpenCode en el worktree asign
 
 ### Módulo M4.5.1 — Binding durable de raíz primaria
 **Paths:** `hosts/root-binding.mjs`, `hosts/root-identity.mjs`, `test/hosts/root-binding.test.mjs`, `test/hosts/root-identity.test.mjs`
-- [ ] Tarea T4.5.1.1 — RED: rechazar binding ambiguo/ajeno, rol no primary y child ID como raíz
-- [ ] Tarea T4.5.1.2 — GREEN: persistir/readback exacto de assignment, worktree, backend, proceso, root session, agente y epoch
-- [ ] Tarea T4.5.1.3 — REFACTOR: aislar validación primary/child y cleanup owner-only sin autoridad caller
+- [x] Tarea T4.5.1.1 — RED: rechazar binding ambiguo/ajeno, rol no primary y child ID como raíz
+- [x] Tarea T4.5.1.2 — GREEN: persistir/readback exacto de assignment, worktree, backend, proceso, root session, agente y epoch
+- [x] Tarea T4.5.1.3 — REFACTOR: aislar validación primary/child y cleanup owner-only sin autoridad caller
 
-### Módulo M4.5.2 — Backend OpenCode Main-owned por worktree · 🟢 LISTO tras M4.5.1
+**Entregado el 2026-08-18 en `dc06cdf`** — `feat(hosts): bind a proven Main-owned primary root`. **348 líneas authored** (`hosts/root-binding.mjs` 92, `hosts/root-identity.mjs` 35, sus dos tests 221), bajo el límite de 400 y por encima del forecast de 240–340 de la elaboración técnica. Suite completa **751 pass / 0 fail** contra un baseline de 731/0.
+
+**Hallazgo de diseño de este Módulo.** Un `session_id` hijo satisface **exactamente la misma gramática** `^ses_[A-Za-z0-9]{26}$` que uno raíz, así que validar la forma no distingue primary de child. La primera implementación aceptaba cualquier id bien formado y era vulnerable a que un caller atara un hijo como raíz. El REFACTOR lo cerró con dos mecanismos:
+
+1. `parseRootIdentity` exige que `parentID` **esté presente y sea explícitamente `null`**. Un campo ausente no puede distinguir «no tiene padre» de «el padre no fue reportado», así que la ausencia se rechaza.
+2. La identidad probada se acuña con un **campo privado de clase infalsificable**, siguiendo el patrón ya establecido en `workspace/checkpoint.mjs:93`. `bind` sólo acepta esa identidad: una copia, un `structuredClone`, un round-trip por JSON o un objeto armado a mano fallan cerrado con `CT_ROOT_IDENTITY_INVALID`.
+
+Esto satisface por construcción el criterio «ningún child ID reemplaza el root binding», sin depender de que un llamador se comporte bien.
+
+**Frontera del store:** directorios `0700`, archivos `0600`, lecturas `O_NOFOLLOW` con revalidación `dev`/`ino`, y sellado `O_EXCL` — un segundo `bind` para el mismo assignment falla cerrado incluso byte-idéntico, garantizando «exactamente una raíz primaria por assignment/worktree». Un registro inválido no deja rastro: ni siquiera crea el directorio. `release` valida el registro antes de borrar y recibe un ref, nunca un path del caller.
+
+### Módulo M4.5.2 — Backend OpenCode Main-owned por worktree · 🟢 LISTO (M4.5.1 entregado)
 **Paths:** `hosts/opencode-server.mjs`, `hosts/production-provider.mjs`, `main-store/launch-consumer.mjs`, `test/hosts/opencode-server.test.mjs`, `test/hosts/production-provider.test.mjs`
 **Checkpoint resuelto:** decisión 38 / Engram 9042 elige un backend aislado por worktree; se retoma antes de RED `T4.5.2.1` sobre el candidato reconciliado.
 - [ ] Tarea T4.5.2.1 — RED: rechazar proceso, puerto, secreto o root binding compartidos/ajenos y probar que la muerte de una vista no mata el backend
@@ -370,7 +381,7 @@ Engram aporta contexto y nunca decide por sí solo; Notion no es autoridad runti
 graph LR
   S41["S4.1 fence · ✅"] --> S42["S4.2 Herdr inicial · ✅"]
   S116["S1.16 OpenCode wake · ✅"] --> S42
-  S42 --> S45["S4.5 raíz Main-owned · 🟢"]
+  S42 --> S45["S4.5 raíz Main-owned · 🔵"]
   S45 --> S43["S4.3 liveness/rehidratación · 📋"]
   S43 --> S44["S4.4 recuperación WSL · 📋"]
   S44 --> S71["S7.1 conformidad · 📋"]
