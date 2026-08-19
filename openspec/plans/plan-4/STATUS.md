@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
 | Outputs | Raíz primaria Main-owned con TUI adjunta no autoritativa, inspección/liveness por proceso/sesión y recuperación same-host WSL. |
-| Roadmap | `S4.1`, `S1.16`, `S4.2` y `S4.5` están ✅ COMPLETO. `S4.5` cerró con los nueve criterios verificados sobre `8fac8b3` (776 pass / 0 fail / 4.793 expectations); la decisión 42 autorizó exclusivamente sus dos fixtures de payload retroactivamente omitidos del Área. `S4.3` y `S4.4` permanecen 📋 PLANIFICADO sólo por dependencias. P4 alcanza 3/5 S (60%). |
+| Roadmap | `S4.1`, `S1.16`, `S4.2`, `S4.5` y `S4.3` están ✅ COMPLETO. `S4.3` cerró sobre `555acbe` (822 pass / 0 fail / 5.043 expectations) tras el set 4R completo; la decisión 43 amplió su Área al schema `recovery-proof-v1` y a las dos fixtures que asertan contra él. `S4.4` permanece 📋 PLANIFICADO sólo por dependencia. P4 alcanza 4/5 S (80%). |
 | Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), decisiones 37–42 / Engram 9040/9042/9043/9044/9079, [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). REQUIREMENTS §14 permanece byte-pinned como base histórica; esta spec enmienda el lifecycle futuro. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
@@ -349,11 +349,11 @@ El validator scoped final no encontró bloqueantes. Su único warning —un `rel
 
 ## Sesión 4.3 — Inspección, liveness y rehidratación segura
 
-**Estado:** 📋 PLANIFICADO
+**Estado:** ✅ COMPLETO — entregada en `555acbe` el 2026-08-19. Cuatro commits directos: `c14b65a` (M4.3.1, 335 líneas), `920639d` (M4.3.2, 282), `1a0e23a` (correcciones 4R, +194/−84) y `555acbe` (decisión 43, +27/−6). Suite 822 pass / 0 fail / 5.043 expectations, desde una base de 776.
 
 **Depende de:** `S4.5`.
 
-**Área:** `hosts/inspect.mjs`, `hosts/health.mjs`, `hosts/stop-proof.mjs`, `hosts/rehydration.mjs`, `test/hosts/inspect.test.mjs`, `test/hosts/health.test.mjs`, `test/hosts/stop-proof.test.mjs`, `test/hosts/rehydration.test.mjs`
+**Área:** `hosts/inspect.mjs`, `hosts/health.mjs`, `hosts/stop-proof.mjs`, `hosts/rehydration.mjs`, `test/hosts/inspect.test.mjs`, `test/hosts/health.test.mjs`, `test/hosts/stop-proof.test.mjs`, `test/hosts/rehydration.test.mjs`; ampliada por la decisión 43 a `schemas/recovery-proof-v1.schema.json`, `test/contracts/s3-2-schemas.test.mjs` y `test/hosts/candidate-fence.test.mjs`
 
 **Recurso:** evidencia backend/proceso/root-session; sin DB, migraciones ni token de entrega.
 
@@ -362,28 +362,29 @@ El validator scoped final no encontró bloqueantes. Su único warning —un `rel
 **Decisiones:**
 - `derivable` — 3 heartbeats ausentes ⇒ `SUSPECTED`; 60 segundos + health probe fallido ⇒ `UNAVAILABLE`. Falsificable: otro umbral. **Autoridad:** REQUIREMENTS §14.3.
 - `derivable` — rehidratar sólo la proyección de backend/proceso/root/assignment/epoch exactos. Falsificable: estado ajeno reaparece activo. **Autoridad:** decisión 37 y `S4.1`.
+- `escala` — **RESUELTA por el maintainer el 2026-08-19 (decisión 43): extender `recovery-proof-v1` con un `host_epoch` requerido.** Pregunta original: la prueba canónica cruzaba sólo proyecto, assignment y workspace, y los tres sobreviven a un `release`, así que una prueba del predecesor ligaba al host vivo y afirmaba que el backend en ejecución se había detenido. **Clase:** API pública; dependencias o evidencia contradictorias. **Evidencia:** R4 probó la alcanzabilidad — `root-binding.release` borra el archivo, el mismo `assignment_ref` se re-liga con `host_epoch` nuevo, y la decisión 40 pone el sucesor en el mismo worktree. `recovery-proof-v1` y el root binding no compartían ningún campo de frescura; `generation` y `host_epoch` son contadores de dominios distintos y equipararlos habría sido incorrecto, no conservador. **Resolución:** el campo es requerido, lo que hoy es seguro porque **ningún productor emite `recovery-proof`** — el contrato se define antes de su primer emisor, no se migra bajo uno. Descartadas: achicar el record (dejaba a `S4.4` sin cómo cumplir §14.4 paso 3) y frescura aserida por el llamador (prohibida en toda la base). **Falsificable:** una prueba de otro epoch liga, o una sin `host_epoch` valida. **Contamina:** `S4.3`, `S4.4`, `S7.1`.
 
 **Criterios de aceptación:**
-- [ ] `inspect`, `health` y heartbeat observan sólo backend, proceso y raíz ligados al assignment vigente
-- [ ] Los umbrales `SUSPECTED`/`UNAVAILABLE` y stop proof canónico pasan con bindings exactos
-- [ ] Rehidratación restaura una proyección, nunca crea/reemplaza raíz ni depende de pane/TUI/Herdr
-- [ ] Vista ausente no cambia health y el diff queda dentro de `Área`
+- [x] `inspect`, `health` y heartbeat observan sólo backend, proceso y raíz ligados al assignment vigente
+- [x] Los umbrales `SUSPECTED`/`UNAVAILABLE` y stop proof canónico pasan con bindings exactos
+- [x] Rehidratación restaura una proyección, nunca crea/reemplaza raíz ni depende de pane/TUI/Herdr
+- [x] Vista ausente no cambia health y el diff queda dentro de `Área` (ampliada por la decisión 43)
 
 ### Módulo M4.3.1 — Inspección y liveness
 **Paths:** `hosts/inspect.mjs`, `hosts/health.mjs`, `test/hosts/inspect.test.mjs`, `test/hosts/health.test.mjs`
-- [ ] Tarea T4.3.1.1 — RED: cubrir backend/proceso/root/assignment ajenos y ambos umbrales
-- [ ] Tarea T4.3.1.2 — GREEN: clasificar desde proceso y root-session validados
-- [ ] Tarea T4.3.1.3 — REFACTOR: consolidar heartbeat y errores ambiguos sin observar la vista
+- [x] Tarea T4.3.1.1 — RED: cubrir backend/proceso/root/assignment ajenos y ambos umbrales
+- [x] Tarea T4.3.1.2 — GREEN: clasificar desde proceso y root-session validados
+- [x] Tarea T4.3.1.3 — REFACTOR: consolidar heartbeat y errores ambiguos sin observar la vista
 
 ### Módulo M4.3.2 — Stop proof y rehidratación
 **Paths:** `hosts/stop-proof.mjs`, `hosts/rehydration.mjs`, `test/hosts/stop-proof.test.mjs`, `test/hosts/rehydration.test.mjs`
-- [ ] Tarea T4.3.2.1 — RED: cubrir proof ausente/ambiguo y backend/root/epoch distintos
-- [ ] Tarea T4.3.2.2 — GREEN: ligar stop proof y rehidratar sólo la proyección exacta
-- [ ] Tarea T4.3.2.3 — REFACTOR: preservar readback/cleanup sin crear autoridad ni raíz
+- [x] Tarea T4.3.2.1 — RED: cubrir proof ausente/ambiguo y backend/root/epoch distintos
+- [x] Tarea T4.3.2.2 — GREEN: ligar stop proof y rehidratar sólo la proyección exacta
+- [x] Tarea T4.3.2.3 — REFACTOR: preservar readback/cleanup sin crear autoridad ni raíz
 
 ## Sesión 4.4 — Recuperación lógica same-host con raíz sucesora
 
-**Estado:** 📋 PLANIFICADO — decision-clean; espera `S4.3`.
+**Estado:** 🟢 LISTO — decision-clean; `S4.3` cerró, así que su dependencia está satisfecha.
 
 **Depende de:** `S4.3`.
 
