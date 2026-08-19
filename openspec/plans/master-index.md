@@ -1,7 +1,7 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-18 contra `master@529b273`. La autoridad vigente es Moshi → Main → raíz primaria OpenCode con TUI adjunta no autoritativa; Herdr no pertenece al lifecycle crítico.
+> Última reconciliación: 2026-08-18 contra `master@a3e35ca`. La autoridad vigente es Moshi → Main → raíz primaria OpenCode con TUI adjunta no autoritativa; Herdr no pertenece al lifecycle crítico.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md).
 
 ## 📍 Punto de retoma
@@ -10,7 +10,7 @@
 
 `S4.2` está ✅ COMPLETO en `61a5aa2`; la decisión 37 preserva esa historia y enumera `S4.5` para migrar el lifecycle futuro a Main-owned backend/root con TUI adjunta no autoritativa.
 
-**`S4.5` está 🔵 EN CURSO con `2/3 M`.** `M4.5.1` (`dc06cdf`) y `M4.5.2` (`ff680f4` + `529b273`) están entregados; suite **767 pass / 0 fail**. La **decisión A** del maintainer resolvió el bloqueo: OpenCode 1.18.18 nunca reporta `parentID` en una raíz —el campo es opcional y `POST /api/session` no puede pedir un padre—, así que la ausencia no prueba nada, pero **Main sí puede probarlo porque Main hace la llamada**. Tres candados evitan que eso sea una afirmación pelada: identidad sólo para la sesión recién creada, reassert del schema contra el backend vivo antes de cada creación, y agente verificado por readback. Queda `M4.5.3`. La elaboración técnica confirmó que **no entra en una sola unidad**: forecast integral 800–1270 líneas authored, así que se ejecuta como tres commits directos secuenciales, uno por Módulo. `M4.5.1` cerró en 348 líneas con la suite en 751/0. Siguen `M4.5.2` (backend OpenCode aislado por worktree) y `M4.5.3` (Herdr degradado a vista no autoritativa); cada uno puede cruzar 400 por sí solo, y si ocurre se parte más.
+**`S4.5` tiene sus `3/3 M` entregados** (`dc06cdf`, `ff680f4`, `529b273`, `a3e35ca`; **991 líneas authored** en cuatro unidades revertibles, suite **774 pass / 0 fail**), y sigue 🔵 EN CURSO a la espera de una **revisión de riesgo independiente** sobre los nueve criterios antes de declararse ✅ COMPLETO. La **decisión A** del maintainer resolvió el bloqueo: OpenCode 1.18.18 nunca reporta `parentID` en una raíz —el campo es opcional y `POST /api/session` no puede pedir un padre—, así que la ausencia no prueba nada, pero **Main sí puede probarlo porque Main hace la llamada**. Tres candados evitan que eso sea una afirmación pelada: identidad sólo para la sesión recién creada, reassert del schema contra el backend vivo antes de cada creación, y agente verificado por readback. Queda `M4.5.3`. La elaboración técnica confirmó que **no entra en una sola unidad**: forecast integral 800–1270 líneas authored, así que se ejecuta como tres commits directos secuenciales, uno por Módulo. `M4.5.1` cerró en 348 líneas con la suite en 751/0. Siguen `M4.5.2` (backend OpenCode aislado por worktree) y `M4.5.3` (Herdr degradado a vista no autoritativa); cada uno puede cruzar 400 por sí solo, y si ocurre se parte más.
 
 Las decisiones 38 y 39 fijan backend aislado por worktree y Herdr como vista temporal reemplazable; la 40 resuelve recuperación. Las 39 decisiones `escala` de la cadena están resueltas; `S4.3` y `S4.4` esperan sus dependencias, y la decisión externa de `S9.2` permanece fuera de esta cadena. `S5.2` conserva su corrección técnica pendiente.
 
@@ -37,7 +37,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 | P1 | Sustrato mecánico | 🔵 EN CURSO | 84% (16/19 S) | — | Main | S1.17, S1.18, S1.19 | [STATUS](plan-1/STATUS.md) |
 | P2 | Contratos y registro de producto | 🔵 EN CURSO | — (responsabilidades restantes de Change B sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-2/STATUS.md) |
 | P3 | Workspace y orquestación | ✅ COMPLETO | 100% (4/4 S) | — | Main | — | [STATUS](plan-3/STATUS.md) |
-| P4 | Hosts y línea exclusiva | 🔵 EN CURSO | 40% (2/5 S) | — | Main | S4.5 (🔵 2/3 M), S4.3, S4.4 | [STATUS](plan-4/STATUS.md) |
+| P4 | Hosts y línea exclusiva | 🔵 EN CURSO | 40% (2/5 S) | — | Main | S4.5 (🔵 3/3 M, en revisión), S4.3, S4.4 | [STATUS](plan-4/STATUS.md) |
 | P5 | Entrega y continuación | 🔵 EN CURSO | 67% (8/12 S) | — | Main | S5.2, S5.3, S5.5, S5.10 | [STATUS](plan-5/STATUS.md) |
 | P6 | Campañas multiproyecto | 📋 PLANIFICADO | — (sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-6/STATUS.md) |
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | S7.1 | [STATUS](plan-7/STATUS.md) |

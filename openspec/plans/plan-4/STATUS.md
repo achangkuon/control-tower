@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
 | Outputs | Raíz primaria Main-owned con TUI adjunta no autoritativa, inspección/liveness por proceso/sesión y recuperación same-host WSL. |
-| Roadmap | `S4.1`, `S1.16` y `S4.2` están ✅ COMPLETO. `S4.5` está 🔵 EN CURSO con `2/3 M`: `M4.5.1` (`dc06cdf`) y `M4.5.2` (`ff680f4` + `529b273`) están ✅; queda `M4.5.3`. La decisión A del maintainer resolvió que la paternidad de la raíz se prueba por construcción, con tres candados. No aporta crédito hasta cerrar. `S4.3` y `S4.4` permanecen 📋 PLANIFICADO sólo por dependencias; la decisión 40 dejó `M4.4.2` decision-clean. P4 alcanza 2/5 S (40%). |
+| Roadmap | `S4.1`, `S1.16` y `S4.2` están ✅ COMPLETO. `S4.5` está 🔵 EN CURSO con **`3/3 M` entregados** (`dc06cdf`, `ff680f4`, `529b273`, `a3e35ca`; 991 líneas, suite 774/0), pendiente sólo de una revisión de riesgo independiente antes de declararse ✅ COMPLETO. No aporta crédito hasta cerrar. `S4.3` y `S4.4` permanecen 📋 PLANIFICADO sólo por dependencias; la decisión 40 dejó `M4.4.2` decision-clean. P4 alcanza 2/5 S (40%). |
 | Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), decisiones 37–40 / Engram 9040/9042/9043/9044, [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). REQUIREMENTS §14 permanece byte-pinned como base histórica; esta spec enmienda el lifecycle futuro. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
@@ -229,7 +229,7 @@ Después del brief aprobado, Main despacha un root OpenCode en el worktree asign
 
 ## Sesión 4.5 — Raíz primaria Main-owned con vista adjunta
 
-**Estado:** 🔵 EN CURSO — `M4.5.1` ✅ (`dc06cdf`) y `M4.5.2` ✅ (`ff680f4` + `529b273`); queda sólo `M4.5.3`, la degradación de Herdr a vista no autoritativa. La decisión A del maintainer resolvió cómo se prueba la paternidad de la raíz. Suite 767/0. La elaboración técnica del 2026-08-18 (Engram 9064) fijó que S4.5 **no entra en una sola unidad ≤400**: forecast integral 800–1270 líneas authored, ejecutado como tres commits directos secuenciales, uno por Módulo. `M4.5.2` y `M4.5.3` pueden cruzar 400 por sí solos; si ocurre se parten más, sin excepción silenciosa.
+**Estado:** 🔵 EN CURSO — los **tres Módulos están entregados** (`M4.5.1` `dc06cdf`; `M4.5.2` `ff680f4`+`529b273`; `M4.5.3` `a3e35ca`), 991 líneas authored en cuatro unidades revertibles, suite **774/0**. El cierre a ✅ COMPLETO espera una revisión de riesgo independiente sobre los nueve criterios. La elaboración técnica del 2026-08-18 (Engram 9064) fijó que S4.5 **no entra en una sola unidad ≤400**: forecast integral 800–1270 líneas authored, ejecutado como tres commits directos secuenciales, uno por Módulo. `M4.5.2` y `M4.5.3` pueden cruzar 400 por sí solos; si ocurre se parten más, sin excepción silenciosa.
 
 **Depende de:** `S4.2` ✅.
 
@@ -323,12 +323,30 @@ Por lo tanto la respuesta real del servidor **no puede alimentar `parseRootIdent
 - [ ] Tarea T4.5.2.2 — GREEN: lanzar desde Main un backend por worktree con loopback, secreto, evidencia y raíz primary exactos
 - [ ] Tarea T4.5.2.3 — REFACTOR: aislar lifecycle/cleanup por worktree y separar backend/root de cualquier launcher visible
 
-### Módulo M4.5.3 — Herdr temporal como vista TUI no autoritativa · 🟢 LISTO tras M4.5.2
+### Módulo M4.5.3 — Herdr temporal como vista TUI no autoritativa · ✅ COMPLETO
 **Paths:** `hosts/opencode-view.mjs`, `hosts/herdr.mjs`, `install/lifecycle.mjs`, `install/runtime-payload.mjs`, `test/hosts/opencode-view.test.mjs`, `test/hosts/herdr.test.mjs`, `test/install/lifecycle.test.mjs`, `test/install/runtime-payload.test.mjs`
 **Checkpoint resuelto:** decisión 39 / Engram 9043 elige Herdr view-only temporal; se retoma antes de RED `T4.5.3.1` sobre el candidato reconciliado.
-- [ ] Tarea T4.5.3.1 — RED: rechazar pane/root ajeno, autoridad desde view o Intercom, lifecycle acoplado y ausencia de fallback manual
-- [ ] Tarea T4.5.3.2 — GREEN: tras backend/root Main-owned, abrir Herdr con `opencode attach` al root exacto y exponer el comando manual equivalente
-- [ ] Tarea T4.5.3.3 — REFACTOR: aislar el adapter Herdr reemplazable fuera de launch/health/stop/rehidratación/recovery críticos
+- [x] Tarea T4.5.3.1 — RED: rechazar pane/root ajeno, autoridad desde view o Intercom, lifecycle acoplado y ausencia de fallback manual
+- [x] Tarea T4.5.3.2 — GREEN: tras backend/root Main-owned, abrir Herdr con `opencode attach` al root exacto y exponer el comando manual equivalente
+- [x] Tarea T4.5.3.3 — REFACTOR: aislar el adapter Herdr reemplazable fuera de launch/health/stop/rehidratación/recovery críticos
+
+**Entregado el 2026-08-18 en `a3e35ca`** — `feat(hosts): demote Herdr to a non-authoritative view`. **159 líneas authored**; suite completa **774 pass / 0 fail**.
+
+**La vista no tiene superficie de autoridad, y eso es estructural, no una prohibición.** `hosts/opencode-view.mjs` conserva un handle únicamente al pane que abrió: no guarda backend, raíz ni epoch, así que no puede arrancarlos, detenerlos, promptearlos, bindearlos ni reasignarles epoch. Cerrar recibe un pane id propio; una URL de backend, un `root_session_id` o un worktree **no son handles** y se rechazan con `CT_VIEW_REJECTED`.
+
+**Herdr entra por `herdr pane run`**, que ejecuta un comando en un pane **sin involucrar su maquinaria de agent custody** (`herdr agent start`/`get`/`report-agent`). Por eso la raíz visible nunca se vuelve un agente de Herdr y el pane nunca se vuelve la raíz. El adapter queda fuera de launch, health, stop, rehidratación y recovery críticos: sólo abre y cierra un pane.
+
+**`opencode attach <url> --session <id>`** apunta a la sesión **exacta**, no a la que el servidor considere actual. Sin ese flag la decisión 39 habría sido una aspiración; con él es una llamada.
+
+**El fallback manual se deriva del target, no del resultado del lanzamiento**, así que existe funcione o no el launcher. Una vista que no abre queda **degradada, no fatal**: falla con `CT_VIEW_UNAVAILABLE` y devuelve en el error el comando exacto que el operador puede correr a mano.
+
+## Cierre de S4.5 — pendiente de verificación independiente
+
+Los tres Módulos están entregados en `master`: `dc06cdf`, `ff680f4`, `529b273` y `a3e35ca`, **991 líneas authored** en cuatro unidades independientemente revertibles, contra un forecast de 800–1270. Suite **774 pass / 0 fail**.
+
+**La Sesión NO se declara ✅ COMPLETO todavía.** Cuatro commits de código sobre una frontera de seguridad —identidad de raíz, secreto por worktree, aislamiento de backend, autoridad de la vista— no se cierran con la sola palabra de quien los escribió. Está corriendo una revisión de riesgo independiente contra los nueve criterios de aceptación, con mandato adversarial: intentar atar un child ID como raíz pese a los tres candados, buscar fugas del secreto por argv/logs/comando del pane/fallback manual, atacar la frontera de la vista, revisar el spawn detached de larga vida por huérfanos y fds, y marcar cualquier test que pase por el motivo equivocado.
+
+El estado pasa a ✅ COMPLETO sólo cuando esa revisión vuelva sin hallazgos bloqueantes, y sus hallazgos se registran acá tal como lleguen.
 
 ## Sesión 4.3 — Inspección, liveness y rehidratación segura
 
