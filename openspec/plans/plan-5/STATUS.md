@@ -192,7 +192,9 @@ Define identidad y freeze de `candidate_revision`, invalidación, sucesores, com
 
 ## Sesión 5.2 — Change F delivery adapters/reconciliation
 
-**Estado:** 🔴 BLOQUEADO — el contrato sigue sellado, y `S4.1` ya está ✅ COMPLETO, pero el recheck dirigido 8193 dejó abiertos los hallazgos 1, 3 y 5: recuperación de lock tras crash, TOCTOU de directorio padre y estado `delivered` prematuro para PR recién creado. La decisión 8195 estacionó el candidato congelado en `Worktrees/s5-1` como NOT READY; no hay una segunda corrección autorizada.
+**Estado:** 🔴 BLOQUEADO — el contrato sigue sellado, y `S4.1` ya está ✅ COMPLETO, pero el recheck dirigido 8193 dejó abiertos los hallazgos 1, 3 y 5: recuperación de lock tras crash, TOCTOU de directorio padre y estado `delivered` prematuro para PR recién creado.
+
+> **Hallazgo 1 localizado en el código el 2026-08-19.** La auditoría de pendientes lo ubicó en `main-store/store.mjs:104-124`: `withLock` borra el archivo de lock **sólo** en el `finally` del proceso que lo creó, así que un writer muerto por SIGKILL, OOM o crash lo deja para siempre. Toda escritura posterior a ese record agota el deadline de 5 s y falla `CT_STORE_WRITE_FAILED`, sin TTL, sin verificación de PID y sin ruta de ruptura. El mismo helper respalda `parkDecision`, `createAuthorization`, `bindCompletedWork` y todo `commit`, así que el defecto excede a `S5.2`. La lente R4 de `S5.10` lo reportó de forma independiente y lo clasificó **preexistente**, no atribuible a esa Sesión. Esto convierte el hallazgo 1 de una observación en un defecto con dirección de arreglo —recuperación por TTL más prueba de que el proceso escritor terminó, el mismo criterio que §14.4 ya exige para reutilizar un worktree— pero **no lo cierra**: sigue sin haber una segunda corrección autorizada, y `S5.2` sigue 🔴 BLOQUEADO. `S5.3` sigue detrás. La decisión 8195 estacionó el candidato congelado en `Worktrees/s5-1` como NOT READY; no hay una segunda corrección autorizada.
 
 **Depende de:** `S4.1`, `S3.3` ✅.
 
