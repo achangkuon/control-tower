@@ -59,8 +59,8 @@ test("rejects duplicate raw JSON object keys before host response semantics", ()
 // asserted to still lack any parent field; and the agent is verified by readback, never asserted.
 
 const rootId = `ses_${"a".repeat(26)}`
-const created = { data: { agent: "gentle-orchestrator", cost: 0, id: rootId, location: {}, projectID: "prj", time: {}, title: "", tokens: {} } }
-const readback = { data: { ...created.data } }
+const created = { data: { cost: 0, id: rootId, location: {}, projectID: "prj", time: {}, title: "", tokens: {} } }
+const readback = { data: { ...created.data, agent: "gentle-orchestrator" } }
 const creationSchema = { type: "object", additionalProperties: false, properties: { agent: {}, id: {}, location: {}, model: {} } }
 const thrown = (operation) => { try { operation() } catch (error) { return error.code }; return null }
 
@@ -100,12 +100,10 @@ test("asserts the creation endpoint still cannot be asked for a parent", () => {
 test("mints a root descriptor only from a session it created and re-read", () => {
   expect(parseCreatedRoot(created, readback, rootId)).toEqual({ agent: "gentle-orchestrator", id: rootId, parentID: null })
   for (const [bad, note] of [
-    [[{ data: { ...created.data, agent: "build" } }, readback], "create reports another agent"],
     [[created, { data: { ...readback.data, agent: "build" } }], "readback drifted to another agent"],
     [[created, { data: { ...readback.data, id: `ses_${"b".repeat(26)}` } }], "readback is a different session"],
     [[{ data: { ...created.data, id: "root-a" } }, readback], "non-canonical id"],
     [[{ data: { ...created.data, id: "--help" } }, readback], "option-shaped id"],
-    [[{ data: { ...created.data, agent: undefined } }, readback], "no agent reported"],
     [[{ data: { ...created.data, parentID: rootId } }, readback], "create reported a parent"],
     [[created, { data: { ...readback.data, parentID: rootId } }], "readback reported a parent"],
     [[null, readback], "no create response"],

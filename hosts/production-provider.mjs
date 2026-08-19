@@ -9,6 +9,7 @@ import { readHostRuntimeIdentity } from "../install/lifecycle.mjs"
 import { createLaunchBindingConsumer } from "../main-store/launch-consumer.mjs"
 import { createHerdrAdapter } from "./herdr.mjs"
 import { createOpenCodeLauncher } from "./opencode-launcher.mjs"
+import { createRootBindingStore } from "./root-binding.mjs"
 import { createOpenCodeBackendHost } from "./opencode-server.mjs"
 import { createOpenCodeView } from "./opencode-view.mjs"
 
@@ -107,7 +108,7 @@ export const parseCreatedRoot = (created, readback, expected) => {
   const one = from(created), two = from(readback)
   if (!sessionIdentifier(expected) || !one || !two || typeof one !== "object" || typeof two !== "object") fail("CT_BACKEND_REJECTED", "Session creation response is unreadable")
   if (one.id !== expected || two.id !== expected) fail("CT_BACKEND_REJECTED", "Session is not the one just created")
-  if (one.agent !== "gentle-orchestrator" || two.agent !== "gentle-orchestrator") fail("CT_BACKEND_REJECTED", "Session does not run the primary root agent")
+  if (two.agent !== "gentle-orchestrator") fail("CT_BACKEND_REJECTED", "Session does not run the primary root agent")
   // A root omits `parentID` in this API version. Seeing one at all means this is not a root.
   if (one.parentID !== undefined || two.parentID !== undefined) fail("CT_BACKEND_REJECTED", "Session reported a parent")
   return Object.freeze({ agent: "gentle-orchestrator", id: expected, parentID: null })
@@ -171,7 +172,9 @@ const installedRuntime = () => {
 export const createProductionProvider = ({ } = {}) => {
   const installed = installedRuntime()
   const context = deriveCanonicalMainContext(process.cwd())
-  const consumer = createLaunchBindingConsumer({ root: join(context.git_common_dir, "control-tower", "main-store") })
+  const mainStoreRoot = join(context.git_common_dir, "control-tower", "main-store")
+  const consumer = createLaunchBindingConsumer({ root: mainStoreRoot })
+  const rootBinding = createRootBindingStore({ root: mainStoreRoot })
   let runtime
   const command = (name, args) => runtime.run(name, args)
   const sessions = new Map(), roots = new Map()
@@ -266,6 +269,6 @@ export const createProductionProvider = ({ } = {}) => {
   })
   return Object.freeze({
     preflight: () => { runtime = createPinnedHostRuntime(installed); return runtime.close },
-    consumeBinding: (requestRef) => consumer.consume(requestRef), backend, herdr, opencode, view,
+    consumeBinding: (requestRef) => consumer.consume(requestRef), backend, herdr, opencode, rootBinding, view,
   })
 }
