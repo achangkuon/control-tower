@@ -22,14 +22,14 @@ export const createOpenCodeBackendHost = ({ spawn, randomSecret, createRoot } = 
   const backends = new Map()
   const taken = (pick) => [...backends.values()].some(pick)
   return Object.freeze({
-    start(request) {
+    async start(request) {
       if (!validRequest(request)) fail("CT_BACKEND_REJECTED", "Backend start request is invalid")
       const { assignment_ref, host_epoch, project_id, worktree } = request
       if (backends.has(worktree) || taken((backend) => backend.assignment_ref === assignment_ref)) fail("CT_BACKEND_EXISTS", "Worktree or assignment already owns a backend")
       const secret = randomSecret()
       if (!secretValue(secret) || taken((backend) => backend.secret === secret)) fail("CT_BACKEND_REJECTED", "Backend secret is weak or already in use")
       let started
-      try { started = spawn({ worktree, secret }) } catch { fail("CT_BACKEND_REJECTED", "Backend process could not be started") }
+      try { started = await spawn({ worktree, secret }) } catch { fail("CT_BACKEND_REJECTED", "Backend process could not be started") }
       if (!started || typeof started !== "object" || typeof started.stop !== "function"
         || !positive(started.pid) || !loopback(started.url)
         || taken((backend) => backend.pid === started.pid || backend.url === started.url)) {
@@ -37,7 +37,7 @@ export const createOpenCodeBackendHost = ({ spawn, randomSecret, createRoot } = 
         fail("CT_BACKEND_REJECTED", "Backend process is shared, foreign or not on loopback")
       }
       let identity
-      try { identity = parseRootIdentity(createRoot({ secret, url: started.url, worktree })) } catch { identity = null }
+      try { identity = parseRootIdentity(await createRoot({ secret, url: started.url, worktree })) } catch { identity = null }
       if (identity === null) {
         // The backend exists but has no proven root, so it is not a backend we may keep.
         try { started.stop() } catch {}

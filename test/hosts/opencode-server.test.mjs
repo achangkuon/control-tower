@@ -6,7 +6,7 @@ import { ROOT_AGENT } from "../../hosts/root-identity.mjs"
 const sessionId = (letter) => `ses_${letter.repeat(26)}`
 const request = Object.freeze({ assignment_ref: "assignment-a", host_epoch: 3, project_id: "project-a", worktree: "/work/a" })
 const other = Object.freeze({ assignment_ref: "assignment-b", host_epoch: 3, project_id: "project-a", worktree: "/work/b" })
-const code = (operation) => { try { operation() } catch (error) { return error.code }; return null }
+const code = async (operation) => { try { await operation() } catch (error) { return error.code }; return null }
 
 const ports = (overrides = {}) => {
   const spawned = [], stopped = []
@@ -24,9 +24,9 @@ const ports = (overrides = {}) => {
 }
 
 describe("Main-owned OpenCode backend host", () => {
-  test("starts one isolated backend per worktree and returns a bindable record", () => {
+  test("starts one isolated backend per worktree and returns a bindable record", async () => {
     const host = createOpenCodeBackendHost(ports())
-    const started = host.start(request)
+    const started = await host.start(request)
     expect(Object.keys(started).sort()).toEqual(["assignment_ref", "backend_pid", "backend_url", "host_epoch", "project_id", "root_identity", "worktree"])
     expect(started.backend_url).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/)
     expect(started.backend_pid).toBeGreaterThan(0)
@@ -34,25 +34,25 @@ describe("Main-owned OpenCode backend host", () => {
     expect(Object.isFrozen(started)).toBe(true)
   })
 
-  test("never shares a process, port, secret or root across worktrees", () => {
+  test("never shares a process, port, secret or root across worktrees", async () => {
     const wiring = ports()
     const host = createOpenCodeBackendHost(wiring)
-    const a = host.start(request), b = host.start(other)
+    const a = await host.start(request), b = await host.start(other)
     for (const key of ["backend_pid", "backend_url", "worktree", "assignment_ref"]) expect(a[key]).not.toBe(b[key])
     expect(a.root_identity.root_session_id).not.toBe(b.root_identity.root_session_id)
     expect(wiring.spawned[0].secret).not.toBe(wiring.spawned[1].secret)
     expect(wiring.spawned.map(({ worktree }) => worktree)).toEqual(["/work/a", "/work/b"])
   })
 
-  test("refuses a second backend for a worktree or assignment already owned", () => {
+  test("refuses a second backend for a worktree or assignment already owned", async () => {
     const host = createOpenCodeBackendHost(ports())
-    host.start(request)
-    expect(code(() => host.start(request))).toBe("CT_BACKEND_EXISTS")
-    expect(code(() => host.start({ ...request, assignment_ref: "assignment-c" }))).toBe("CT_BACKEND_EXISTS")
-    expect(code(() => host.start({ ...other, assignment_ref: request.assignment_ref }))).toBe("CT_BACKEND_EXISTS")
+    await host.start(request)
+    expect(await code(() => host.start(request))).toBe("CT_BACKEND_EXISTS")
+    expect(await code(() => host.start({ ...request, assignment_ref: "assignment-c" }))).toBe("CT_BACKEND_EXISTS")
+    expect(await code(() => host.start({ ...other, assignment_ref: request.assignment_ref }))).toBe("CT_BACKEND_EXISTS")
   })
 
-  test("rejects a backend the runtime reported as shared, foreign or off loopback", () => {
+  test("rejects a backend the runtime reported as shared, foreign or off loopback", async () => {
     for (const spawn of [
       () => ({ pid: 4301, url: "http://10.0.0.5:4096", stop: () => {} }),
       () => ({ pid: 4301, url: "http://0.0.0.0:4096", stop: () => {} }),
@@ -68,25 +68,25 @@ describe("Main-owned OpenCode backend host", () => {
       () => { throw new Error("spawn failed") },
     ]) {
       const host = createOpenCodeBackendHost(ports({ spawn }))
-      expect(code(() => host.start(request))).toBe("CT_BACKEND_REJECTED")
+      expect(await code(() => host.start(request))).toBe("CT_BACKEND_REJECTED")
       expect(host.owns(request.worktree)).toBe(false)
     }
   })
 
-  test("rejects a weak or reused secret before any process is spawned", () => {
+  test("rejects a weak or reused secret before any process is spawned", async () => {
     for (const randomSecret of [() => "short", () => "", () => null, () => "a".repeat(4097), () => 42]) {
       const wiring = ports({ randomSecret })
       const host = createOpenCodeBackendHost(wiring)
-      expect(code(() => host.start(request))).toBe("CT_BACKEND_REJECTED")
+      expect(await code(() => host.start(request))).toBe("CT_BACKEND_REJECTED")
       expect(wiring.spawned).toEqual([])
     }
     const fixed = ports({ randomSecret: () => `secret-${"z".repeat(48)}` })
     const host = createOpenCodeBackendHost(fixed)
-    host.start(request)
-    expect(code(() => host.start(other))).toBe("CT_BACKEND_REJECTED")
+    await host.start(request)
+    expect(await code(() => host.start(other))).toBe("CT_BACKEND_REJECTED")
   })
 
-  test("refuses a root the backend did not prove parentless, and stops the backend it started", () => {
+  test("refuses a root the backend did not prove parentless, and stops the backend it started", async () => {
     for (const createRoot of [
       () => ({ agent: ROOT_AGENT, id: sessionId("a"), parentID: sessionId("z") }),
       () => ({ agent: "build", id: sessionId("a"), parentID: null }),
@@ -98,21 +98,21 @@ describe("Main-owned OpenCode backend host", () => {
     ]) {
       const wiring = ports({ createRoot })
       const host = createOpenCodeBackendHost(wiring)
-      expect(code(() => host.start(request))).toBe("CT_BACKEND_REJECTED")
+      expect(await code(() => host.start(request))).toBe("CT_BACKEND_REJECTED")
       expect(wiring.stopped).toEqual(["/work/a"])
       expect(host.owns(request.worktree)).toBe(false)
     }
   })
 
-  test("creates the root against its own backend, never a caller supplied endpoint", () => {
+  test("creates the root against its own backend, never a caller supplied endpoint", async () => {
     const seen = []
     const wiring = ports({ createRoot: (input) => { seen.push(input); return { agent: ROOT_AGENT, id: sessionId("a"), parentID: null } } })
     const host = createOpenCodeBackendHost(wiring)
-    const started = host.start(request)
+    const started = await host.start(request)
     expect(seen).toEqual([{ secret: wiring.spawned[0].secret, url: started.backend_url, worktree: "/work/a" }])
   })
 
-  test("exposes no view, pane or terminal surface at all", () => {
+  test("exposes no view, pane or terminal surface at all", async () => {
     const host = createOpenCodeBackendHost(ports())
     expect(Object.isFrozen(host)).toBe(true)
     expect(Object.keys(host).sort()).toEqual(["owns", "start", "stop"])
@@ -121,44 +121,44 @@ describe("Main-owned OpenCode backend host", () => {
 
   // Decision 39: the view is not the root. Nothing a view can do reaches the backend, because the
   // backend host has no view surface to reach through — losing a pane cannot express a stop here.
-  test("keeps the backend alive and owned when a visible view would have died", () => {
+  test("keeps the backend alive and owned when a visible view would have died", async () => {
     const wiring = ports()
     const host = createOpenCodeBackendHost(wiring)
-    const started = host.start(request)
+    const started = await host.start(request)
     // The only way to stop a backend is to name the worktree it belongs to. A view has no such handle,
     // so its death is not expressible here — which is exactly why it cannot take the backend with it.
     expect(host.owns(request.worktree)).toBe(true)
     expect(wiring.stopped).toEqual([])
-    expect(code(() => host.stop(started.backend_url))).toBe("CT_BACKEND_REJECTED")
-    expect(code(() => host.stop(String(started.backend_pid)))).toBe("CT_BACKEND_REJECTED")
+    expect(await code(() => host.stop(started.backend_url))).toBe("CT_BACKEND_REJECTED")
+    expect(await code(() => host.stop(String(started.backend_pid)))).toBe("CT_BACKEND_REJECTED")
     expect(host.owns(request.worktree)).toBe(true)
     expect(wiring.stopped).toEqual([])
   })
 
-  test("stops only a backend it owns and forgets it exactly once", () => {
+  test("stops only a backend it owns and forgets it exactly once", async () => {
     const wiring = ports()
     const host = createOpenCodeBackendHost(wiring)
-    host.start(request)
+    await host.start(request)
     expect(host.stop(request.worktree)).toBe(true)
     expect(wiring.stopped).toEqual(["/work/a"])
     expect(host.owns(request.worktree)).toBe(false)
     for (const worktree of [request.worktree, "/work/unknown", "--help", "", null]) {
-      expect(code(() => host.stop(worktree))).toBe("CT_BACKEND_REJECTED")
+      expect(await code(() => host.stop(worktree))).toBe("CT_BACKEND_REJECTED")
     }
     expect(wiring.stopped).toEqual(["/work/a"])
   })
 
-  test("rejects an ambiguous start request before spawning anything", () => {
+  test("rejects an ambiguous start request before spawning anything", async () => {
     const wiring = ports()
     const host = createOpenCodeBackendHost(wiring)
     const { host_epoch, ...missing } = request
     for (const invalid of [null, undefined, "", [request], missing, { ...request, extra: true }, { ...request, worktree: "relative" }, { ...request, worktree: "" }, { ...request, assignment_ref: "../escape" }, { ...request, assignment_ref: "--help" }, { ...request, project_id: "" }, { ...request, host_epoch: 0 }, { ...request, host_epoch: -1 }]) {
-      expect(code(() => host.start(invalid))).toBe("CT_BACKEND_REJECTED")
+      expect(await code(() => host.start(invalid))).toBe("CT_BACKEND_REJECTED")
     }
     expect(wiring.spawned).toEqual([])
   })
 
-  test("requires every port and grants no default wiring", () => {
+  test("requires every port and grants no default wiring", async () => {
     const full = ports()
     for (const key of ["spawn", "randomSecret", "createRoot"]) {
       const partial = { ...full }
