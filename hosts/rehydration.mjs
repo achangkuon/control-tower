@@ -4,7 +4,7 @@ const CLAIM_KEYS = Object.freeze(["assignment_ref", "host_epoch", "project_id", 
 // Identity before authority: a claim about someone else's assignment was never ours to call stale.
 const OWNERSHIP_KEYS = Object.freeze(["assignment_ref", "project_id", "worktree"])
 
-const fail = (code, message) => { throw Object.assign(new Error(message), { code }) }
+const fail = (code, message, cause) => { throw Object.assign(new Error(message), { code, ...(cause === undefined ? {} : { cause }) }) }
 const exact = (value, keys) => value !== null && typeof value === "object" && !Array.isArray(value)
   && Object.keys(value).sort().join("\0") === [...keys].sort().join("\0")
 const validRef = (value) => typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(value) && !value.includes("..")
@@ -25,7 +25,7 @@ export const createRehydration = ({ rootBinding } = {}) => {
       try { binding = rootBinding.read(claim.assignment_ref) } catch (error) {
         // The store's own typed refusal is the finding. Anything untyped is our failure to read, not evidence.
         if (error?.code?.startsWith("CT_")) throw error
-        fail("CT_REHYDRATION_INVALID", "Root binding could not be read")
+        fail("CT_REHYDRATION_INVALID", "Root binding could not be read", error)
       }
       if (OWNERSHIP_KEYS.some((key) => binding?.[key] !== claim[key])) fail("CT_REHYDRATION_FOREIGN", "Rehydration claim names another assignment, project or worktree")
       // CT-V1-08: an epoch that is not the bound one has no authority, whether it is older or newer.

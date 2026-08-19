@@ -1,7 +1,7 @@
 import { validate } from "../contracts/validate.mjs"
 
-// The projection this module derives. It is a binding between an already-canonical proof and the root it stopped.
-const BOUND_KEYS = Object.freeze(["assignment_ref", "backend_pid", "backend_url", "disposition", "generation", "host_epoch", "project_id", "root_session_id", "termination_proof_ref", "worktree"])
+// The projection this module derives. It is a binding between an already-canonical proof and a root binding.
+const PROOF_BINDING_KEYS = Object.freeze(["assignment_ref", "backend_pid", "backend_url", "disposition", "generation", "host_epoch", "project_id", "root_session_id", "termination_proof_ref", "worktree"])
 const REQUEST_KEYS = Object.freeze(["assignment_ref", "termination_proof_ref"])
 
 const fail = (code, message, cause) => { throw Object.assign(new Error(message), { code, ...(cause === undefined ? {} : { cause }) }) }
@@ -12,8 +12,11 @@ const validRef = (value) => typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9
 export const createStopProofBinder = ({ resolveTerminationProof, rootBinding } = {}) => {
   if (typeof resolveTerminationProof !== "function" || typeof rootBinding?.read !== "function") throw new TypeError("Canonical stop proof ports are required")
   return Object.freeze({
-    // Termination truth is owned elsewhere and observed there. This only proves that an already-canonical
-    // proof is about THIS backend, root and worktree, so nothing here can mint, assert or weaken a proof.
+    // Termination truth is owned elsewhere and observed there, so nothing here can mint, assert or weaken a
+    // proof. What this DOES prove is narrower than the record it returns: the canonical proof carries no
+    // backend, session or epoch field, so only project, assignment and workspace are actually cross-checked.
+    // The backend_pid, backend_url, root_session_id and host_epoch below are copied from the binding and are
+    // NOT proven by the proof to have stopped.
     bind(request) {
       if (!exact(request, REQUEST_KEYS) || !validRef(request.assignment_ref) || !validRef(request.termination_proof_ref)) {
         fail("CT_STOP_PROOF_INVALID", "Stop proof binding accepts only an assignment and a canonical proof reference")
@@ -24,7 +27,7 @@ export const createStopProofBinder = ({ resolveTerminationProof, rootBinding } =
         if (error?.code?.startsWith("CT_")) throw error
         fail("CT_STOP_PROOF_INVALID", "Root binding could not be read", error)
       }
-      if (binding?.assignment_ref !== assignment_ref) fail("CT_STOP_PROOF_INVALID", "Root binding answers for another assignment")
+      if (binding?.assignment_ref !== assignment_ref) fail("CT_STOP_PROOF_FOREIGN", "Root binding answers for another assignment")
       let value
       try { value = resolveTerminationProof(termination_proof_ref) } catch (error) { fail("CT_STOP_PROOF_REQUIRED", "Canonical termination proof could not be resolved", error) }
       // An unresolved, deferred or ambiguous observation is not proof that anything stopped.
@@ -38,7 +41,7 @@ export const createStopProofBinder = ({ resolveTerminationProof, rootBinding } =
       // worktree (decision 38) means a proof about another workspace stopped another host entirely.
       if (proof.workspace_path !== binding.worktree) fail("CT_STOP_PROOF_INVALID", "Termination proof stopped another workspace")
       const bound = { ...binding, disposition: proof.disposition, generation: proof.generation, termination_proof_ref }
-      return Object.freeze(Object.fromEntries(BOUND_KEYS.map((key) => [key, bound[key]])))
+      return Object.freeze(Object.fromEntries(PROOF_BINDING_KEYS.map((key) => [key, bound[key]])))
     },
   })
 }

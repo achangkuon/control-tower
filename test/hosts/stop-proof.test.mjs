@@ -35,7 +35,9 @@ describe("Canonical stop proof bound to the Main-owned root", () => {
     expect(() => createStopProofBinder(ports)).not.toThrow()
   })
 
-  test("binds a positive canonical proof to the exact backend, root and worktree it stopped", () => {
+  // What the proof actually cross-checks is project, assignment and workspace. The backend, root and
+  // epoch in the record come from the binding: the canonical proof carries no such field to check them against.
+  test("binds a positive canonical proof to the project, assignment and workspace it names", () => {
     const { binder, resolved } = setup()
     const bound = binder.bind(request)
     expect(bound).toEqual({
@@ -104,7 +106,7 @@ describe("Canonical stop proof bound to the Main-owned root", () => {
     expect(code(() => missing.binder.bind(request))).toBe("CT_ROOT_BINDING_INVALID")
     expect(missing.resolved).toEqual([])
     const mismatched = setup({ read: () => ({ ...binding, assignment_ref: "assignment-b" }) })
-    expect(code(() => mismatched.binder.bind(request))).toBe("CT_STOP_PROOF_INVALID")
+    expect(code(() => mismatched.binder.bind(request))).toBe("CT_STOP_PROOF_FOREIGN")
     expect(mismatched.resolved).toEqual([])
   })
 })

@@ -38,12 +38,12 @@ describe("Root projection rehydration", () => {
     const { calls, rehydration } = setup()
     rehydration.rehydrate(claim)
     expect(Object.keys(rehydration)).toEqual(["rehydrate"])
-    for (const key of ["bind", "release", "start", "stop", "attach"]) expect(typeof rehydration[key]).toBe("undefined")
     expect(calls.every(([operation]) => operation === "read")).toBe(true)
   })
 
+  // The projection is the durable binding and nothing more: no view state can enter it even if the store leaks some.
   test("never returns a pane, view, terminal or any state outside the binding", () => {
-    const { rehydration } = setup()
+    const { rehydration } = setup({ read: () => ({ ...binding, pane_id: "pane-7", terminal_id: "term-7", attached: true }) })
     const projection = rehydration.rehydrate(claim)
     expect(Object.keys(projection).sort()).toEqual(["agent", "assignment_ref", "backend_pid", "backend_url", "host_epoch", "project_id", "root_session_id", "worktree"])
   })
