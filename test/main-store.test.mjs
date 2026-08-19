@@ -9,6 +9,7 @@ import { bindMainAuthority, createMainStore } from "../main-store/index.mjs"
 import { createParkedDecision, createParkedDecisionResponse, parkedDecisionResponseDigest } from "../contracts/parked-decision.mjs"
 import { createParkingComposition } from "../escalation/parking-composition.mjs"
 import { createCompletedWorkBinding } from "../contracts/completed-work-binding.mjs"
+import { freezeCandidate } from "../contracts/candidate-revision.mjs"
 import { captureCheckpoint } from "../workspace/checkpoint.mjs"
 import { reconcileCheckpoint } from "../workspace/reconciliation.mjs"
 
@@ -1116,10 +1117,11 @@ describe("opaque and disconnected boundaries", () => {
 
 describe("completed work binding", () => {
   const cases = JSON.parse(readFileSync(join(projectRoot, "test/fixtures/contracts/schema-cases-v1.json"), "utf8"))
-  const candidate = () => { const { candidate_revision: _frozen, ...identity } = cases.candidateRevision; return identity }
+  // The work must sit inside the decision's frozen scope, so the candidate is the S5.7 work that decision froze.
+  const candidate = () => { const { candidate_revision: _frozen, ...identity } = cases.candidateRevision; return { ...identity, session_id: "S5.7" } }
   const assumption = Object.freeze({
     statement: "No maintainer option applied, so the work proceeded under the frozen scope only.",
-    origin: { session_id: "S5.10", module_id: "M5.10.1" },
+    origin: { session_id: "S5.7", module_id: "M5.7.2" },
   })
   const optionInput = () => ({
     actor: "MAIN", project_id: "project-a", candidate: candidate(),
@@ -1179,12 +1181,60 @@ describe("completed work binding", () => {
     expect(code(() => store.bindCompletedWork({ ...optionInput(), actor: "WORKER" }))).toBe("CT_AUTH_INVALID")
   })
 
-  test("refuses work whose candidate contradicts the decision it claims to have run under", () => {
+  // The linkage that makes this THIS work's decision: outside the frozen scope, nothing may be sealed.
+  test("refuses work whose Sesión the decision never froze", () => {
+    const { store, root } = setup()
+    const foreign = { ...candidate(), session_id: "S7.3" }
+    expect(code(() => store.bindCompletedWork({ ...optionInput(), candidate: foreign }))).toBe("CT_WORK_BINDING_INVALID")
+    expect(code(() => store.bindCompletedWork({ ...assumedInput(), candidate: foreign }))).toBe("CT_WORK_BINDING_INVALID")
+    expect(code(() => store.bindCompletedWork({ ...assumedInput(), assumption: { ...assumption, origin: { session_id: "S7.3", module_id: "M7.3.1" } } }))).toBe("CT_WORK_BINDING_INVALID")
+    expect(existsSync(join(root, "completed-work-bindings"))).toBeFalse()
+  })
+
+  test("refuses a response that selects an unenumerated option or a candidate that forges its own revision", () => {
     const { store } = setup()
     const response = { ...cases.parkedDecisionResponse, option_id: "option-z" }
     expect(code(() => store.bindCompletedWork({ ...optionInput(), parked_decision_response: response }))).toBe("CT_WORK_BINDING_INVALID")
     const forged = { ...candidate(), candidate_revision: `sha256:${"0".repeat(64)}` }
     expect(code(() => store.bindCompletedWork({ ...optionInput(), candidate: forged }))).toBe("CT_WORK_BINDING_INVALID")
+  })
+
+  // A coherently foreign payload under an envelope that names our project: the envelope check alone misses it.
+  test("refuses a readback whose binding belongs to another project even when the envelope claims ours", () => {
+    const { store, root } = setup()
+    const foreign = createCompletedWorkBinding({
+      candidate: { ...candidate(), project_id: "project-b" },
+      parked_decision: cases.parkedDecision, parked_decision_response: cases.parkedDecisionResponse,
+    })
+    mkdirSync(join(root, "completed-work-bindings"), { recursive: true, mode: 0o700 })
+    writeFileSync(join(root, "completed-work-bindings", `${foreign.binding_id}.json`), `${JSON.stringify({
+      actor: "MAIN", project_id: "project-a", candidate: freezeCandidate({ ...candidate(), project_id: "project-b" }),
+      parked_decision: cases.parkedDecision, parked_decision_response: cases.parkedDecisionResponse,
+      completed_work_binding: foreign, revision: 1, revision_history: [],
+    })}\n`)
+    expect(code(() => store.readCompletedWorkBinding(foreign.binding_id))).toBe("CT_WORK_BINDING_INVALID")
+  })
+
+  // A record we cannot read is our failure, not a verdict: an operator must be able to retry rather than
+  // treat the attribution as permanently corrupt.
+  test("separates a record it cannot read from a record that is invalid", () => {
+    const { store } = setup()
+    const result = store.bindCompletedWork(optionInput())
+    writeFileSync(result.record_path, "{ truncated")
+    expect(code(() => store.readCompletedWorkBinding(expected().binding_id))).toBe("CT_WORK_BINDING_UNREADABLE")
+    writeFileSync(result.record_path, JSON.stringify({ actor: "MAIN", project_id: "project-a" }))
+    expect(code(() => store.readCompletedWorkBinding(expected().binding_id))).toBe("CT_WORK_BINDING_INVALID")
+  })
+
+  // Losing the CAS race to a concurrent identical writer must land on the same replay, not on a failure.
+  test("recovers a lost commit race into an idempotent replay", () => {
+    let inject = false
+    const { store } = setup({ beforeCommit: (path, value) => { if (inject) { inject = false; writeFileSync(path, `${JSON.stringify(value)}\n`) } } })
+    inject = true
+    const result = store.bindCompletedWork(optionInput())
+    expect(result.replayed).toBe(true)
+    expect(result.revision).toBe(1)
+    expect(result.completed_work_binding).toEqual(expected())
   })
 
   test("reads back nothing for an unknown binding rather than inventing one", () => {

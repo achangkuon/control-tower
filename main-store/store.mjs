@@ -279,18 +279,23 @@ export const createMainStore = ({ root, authority, capability, beforeCommit, tes
       const underAssumption = exactKeys(input, ["actor", "project_id", "candidate", "parked_decision", "assumption"])
       if (underOption === underAssumption) fail("CT_WORK_BINDING_INPUT_INVALID", "Completed work binding requires one closed input naming exactly one enumerated option or one explicit assumption")
       assertMain(input)
-      let candidate, completed_work_binding
+      let candidate, completed_work_binding, parked, response
       try {
+        // Persist the VALIDATED artifacts, never the caller's representation: `validate` accepts a YAML string
+        // as readily as an object, and replay compares canonical bytes, so storing raw input would make an
+        // identical retry in the other representation look like a re-attribution and lock the candidate out.
+        parked = validate("parkedDecision", input.parked_decision)
+        response = underOption ? validate("parkedDecisionResponse", input.parked_decision_response) : undefined
         candidate = freezeCandidate(input.candidate)
         completed_work_binding = createCompletedWorkBinding({
-          candidate: input.candidate, parked_decision: input.parked_decision,
-          ...(underOption ? { parked_decision_response: input.parked_decision_response } : { assumption: input.assumption }),
+          candidate: input.candidate, parked_decision: parked,
+          ...(underOption ? { parked_decision_response: response } : { assumption: input.assumption }),
         })
       } catch (error) { fail("CT_WORK_BINDING_INVALID", "Completed work binding sources are invalid or mismatched", error) }
       if (completed_work_binding.project_id !== binding.project_id) fail("CT_PROJECT_MISMATCH", "Completed work belongs to a foreign project")
       const record = {
-        actor: "MAIN", project_id: binding.project_id, candidate, parked_decision: input.parked_decision,
-        ...(underOption ? { parked_decision_response: input.parked_decision_response } : { assumption: input.assumption }),
+        actor: "MAIN", project_id: binding.project_id, candidate, parked_decision: parked,
+        ...(underOption ? { parked_decision_response: response } : { assumption: completed_work_binding.assumption }),
         completed_work_binding,
       }
       const path = completedWorkBindingPath(completed_work_binding.binding_id)
@@ -311,8 +316,11 @@ export const createMainStore = ({ root, authority, capability, beforeCommit, tes
     readCompletedWorkBinding(id) {
       const path = completedWorkBindingPath(id)
       if (!existsSync(path)) fail("CT_WORK_BINDING_NOT_FOUND", "Completed work binding does not exist")
+      let record
+      // A record we could not read is our failure, not a verdict on the work. Conflating the two would make a
+      // retryable fault look like permanently corrupt provenance and refuse the attribution forever.
+      try { record = parse(path) } catch (error) { fail("CT_WORK_BINDING_UNREADABLE", "Completed work binding could not be read", error) }
       try {
-        const record = parse(path)
         const base = ["actor", "project_id", "candidate", "parked_decision", "completed_work_binding", "revision", "revision_history"]
         const underOption = exactKeys(record, [...base, "parked_decision_response"])
         if (underOption === exactKeys(record, [...base, "assumption"])) throw new Error("Completed work envelope is not canonical")
@@ -321,6 +329,9 @@ export const createMainStore = ({ root, authority, capability, beforeCommit, tes
           throw new Error("Completed work envelope is not canonical")
         }
         if (id !== record.completed_work_binding?.binding_id) throw new Error("Binding identity mismatch")
+        // The envelope's project is not the binding's: pin the derived one too, or a record whose candidate
+        // belongs to another project reads back as ours.
+        if (record.completed_work_binding.project_id !== binding.project_id) throw new Error("Binding project mismatch")
         return frozen(structuredClone(assertCompletedWorkBinding(record.completed_work_binding, {
           candidate: record.candidate, parked_decision: record.parked_decision,
           ...(underOption ? { parked_decision_response: record.parked_decision_response } : { assumption: record.assumption }),

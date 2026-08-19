@@ -4,6 +4,7 @@ import { digestArtifact } from "./canonicalize.mjs"
 import { candidateRevision } from "./candidate-revision.mjs"
 import { parkedDecisionDigest, parkedDecisionResponseDigest } from "./parked-decision.mjs"
 import { parkedCheckpointBindingDigest } from "./parked-checkpoint-binding.mjs"
+import { completedWorkBindingDigest, explicitAssumptionDigest } from "./completed-work-binding.mjs"
 import { sessionPlanSnapshotDigest } from "./session-plan-snapshot.mjs"
 import { failContract } from "./errors.mjs"
 import { validatorFor } from "./schema-registry.mjs"
@@ -177,6 +178,11 @@ const invariants = Object.freeze({
   reconciledCheckpoint: assertReconciledCheckpoint,
   parkedCheckpointBinding: (value) => {
     if (parkedCheckpointBindingDigest(value) !== value.binding_digest) invalid("Parked checkpoint binding digest must match its canonical content")
+  },
+  completedWorkBinding: (value) => {
+    if (completedWorkBindingDigest(value) !== value.binding_digest) invalid("Completed work binding digest must match its canonical content")
+    // Only the ASSUMPTION genus carries one; the schema's oneOf guarantees the pair is present or absent together.
+    if (value.governed_by === "ASSUMPTION" && explicitAssumptionDigest(value.assumption) !== value.assumption_digest) invalid("Explicit assumption digest must match its canonical content")
   },
 })
 

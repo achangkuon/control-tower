@@ -4,6 +4,7 @@ import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { freezeCandidate } from "../../contracts/candidate-revision.mjs"
+import { validate } from "../../contracts/validate.mjs"
 import {
   assertCompletedWorkBinding,
   completedWorkBindingDigest,
@@ -11,10 +12,11 @@ import {
 } from "../../contracts/completed-work-binding.mjs"
 
 const fixtures = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../fixtures/contracts/schema-cases-v1.json"), "utf8"))
-const candidate = () => { const { candidate_revision: _frozen, ...identity } = fixtures.candidateRevision; return identity }
+// The work must live inside the decision's frozen scope, so the candidate is the S5.7 work that decision froze.
+const candidate = () => { const { candidate_revision: _frozen, ...identity } = fixtures.candidateRevision; return { ...identity, session_id: "S5.7" } }
 const assumption = () => ({
   statement: "No maintainer option applied, so the work proceeded under the frozen scope only.",
-  origin: { session_id: "S5.10", module_id: "M5.10.1" },
+  origin: { session_id: "S5.7", module_id: "M5.7.2" },
 })
 const underOption = () => ({ candidate: candidate(), parked_decision: fixtures.parkedDecision, parked_decision_response: fixtures.parkedDecisionResponse })
 const underAssumption = () => ({ candidate: candidate(), parked_decision: fixtures.parkedDecision, assumption: assumption() })
@@ -117,6 +119,46 @@ describe("completed work binding", () => {
       expect(code(() => assertCompletedWorkBinding(reseal(binding, mutate), underOption()))).toBe("CT_SCHEMA_INVALID")
     }
     expect(assertCompletedWorkBinding(binding, underOption())).toEqual(binding)
+  })
+
+  // Three-way agreement: the decision's own origin is already held to its frozen scope by assertParkedDecision,
+  // and the work and the assumption that governed it must sit in that same scope or nothing is sealed.
+  test("refuses work whose Sesión lies outside the decision's frozen scope", () => {
+    const foreign = { ...candidate(), session_id: "S7.3" }
+    expect(code(() => createCompletedWorkBinding({ ...underOption(), candidate: foreign }))).toBe("CT_SCHEMA_INVALID")
+    expect(code(() => createCompletedWorkBinding({ ...underAssumption(), candidate: foreign }))).toBe("CT_SCHEMA_INVALID")
+  })
+
+  test("refuses an assumption raised by a Sesión the decision never froze", () => {
+    const foreign = { ...assumption(), origin: { session_id: "S7.3", module_id: "M7.3.1" } }
+    expect(code(() => createCompletedWorkBinding({ ...underAssumption(), assumption: foreign }))).toBe("CT_SCHEMA_INVALID")
+  })
+
+  // Load-bearing invariant: widening binding_id would let two contradictory attributions of one candidate
+  // live under different store paths instead of colliding into a divergent replay.
+  test("derives binding_id from the work revision alone, so both genera name the same binding", () => {
+    const option = createCompletedWorkBinding(underOption()), assumed = createCompletedWorkBinding(underAssumption())
+    expect(option.binding_id).toBe(`completed-work-${option.candidate_revision.slice("sha256:".length)}`)
+    expect(assumed.binding_id).toBe(option.binding_id)
+    expect(option.governed_by).not.toBe(assumed.governed_by)
+  })
+
+  // The schema is the last line of defence for a record that never came through createCompletedWorkBinding.
+  test("the schema itself refuses a hybrid or genus-less record, independently of the contract", () => {
+    const option = createCompletedWorkBinding(underOption()), assumed = createCompletedWorkBinding(underAssumption())
+    const hybrid = { ...option, assumption: assumed.assumption, assumption_digest: assumed.assumption_digest }
+    const { option_id: _dropped, ...genusless } = option
+    for (const value of [hybrid, genusless, { ...assumed, option_id: "option-a" }, { ...option, governed_by: "ASSUMPTION" }]) {
+      expect(code(() => validate("completedWorkBinding", value))).toBe("CT_SCHEMA_INVALID")
+    }
+  })
+
+  // A standalone consumer validates the record and trusts the seal, so validate must enforce it on its own.
+  test("validate alone refuses a forged seal, without needing the sources", () => {
+    const option = createCompletedWorkBinding(underOption()), assumed = createCompletedWorkBinding(underAssumption())
+    expect(validate("completedWorkBinding", option)).toEqual(option)
+    expect(code(() => validate("completedWorkBinding", { ...option, binding_digest: `sha256:${"0".repeat(64)}` }))).toBe("CT_SCHEMA_INVALID")
+    expect(code(() => validate("completedWorkBinding", { ...assumed, assumption_digest: `sha256:${"0".repeat(64)}` }))).toBe("CT_SCHEMA_INVALID")
   })
 
   test("refuses a binding whose digest does not match its own content", () => {
