@@ -3,7 +3,9 @@ const fail = (code, message, extra = {}) => { throw Object.assign(new Error(mess
 const exact = (value) => value !== null && typeof value === "object" && !Array.isArray(value)
   && Object.keys(value).sort().join("\0") === [...TARGET_KEYS].sort().join("\0")
 const bounded = (value) => typeof value === "string" && value.length > 0 && value.length <= 512 && !value.includes("\0")
-const loopback = (value) => bounded(value) && /^http:\/\/127\.0\.0\.1:(?:[1-9][0-9]{0,4})$/.test(value)
+// The grammar alone would admit 99999, which is not a port. 65535 is the last one there is, so the
+// range is checked numerically rather than spelled out as an unreadable alternation.
+const loopback = (value) => bounded(value) && Number(/^http:\/\/127\.0\.0\.1:([1-9][0-9]{0,4})$/.exec(value)?.[1] ?? NaN) <= 65535
 const rootSession = (value) => typeof value === "string" && /^ses_[A-Za-z0-9]{26}$/.test(value)
 const paneIdentifier = (value) => typeof value === "string" && /^w[123456789ABCDEFGHJKMNPQRSTVWXYZ0]+:p[123456789ABCDEFGHJKMNPQRSTVWXYZ0]+$/.test(value)
 

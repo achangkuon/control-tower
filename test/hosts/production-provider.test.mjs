@@ -120,3 +120,11 @@ test("refuses to mint a root for any session other than the one just created", (
     expect(thrown(() => parseCreatedRoot(created, readback, expected))).toBe("CT_BACKEND_REJECTED")
   }
 })
+
+// 65535 is the last port there is; a grammar admitting 99999 is not validating a port.
+test("refuses an announced port that cannot exist", () => {
+  for (const port of [65536, 99999]) {
+    expect(thrown(() => parseServerAnnouncement(`opencode server listening on http://127.0.0.1:${port}\n`))).toBe("CT_BACKEND_REJECTED")
+  }
+  expect(parseServerAnnouncement("opencode server listening on http://127.0.0.1:65535\n")).toBe("http://127.0.0.1:65535")
+})

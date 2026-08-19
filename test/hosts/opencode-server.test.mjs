@@ -170,4 +170,11 @@ describe("Main-owned OpenCode backend host", () => {
       expect(() => createOpenCodeBackendHost({ ...full, spawn: port })).toThrow(TypeError)
     }
   })
+
+  test("refuses a spawned backend announcing a port that cannot exist", async () => {
+    for (const port of [65536, 99999]) {
+      const wiring = ports({ spawn: ({ worktree }) => ({ pid: 4321, url: `http://127.0.0.1:${port}`, stop: () => wiring.stopped.push(worktree) }) })
+      expect(await code(() => createOpenCodeBackendHost(wiring).start(request))).toBe("CT_BACKEND_REJECTED")
+    }
+  })
 })

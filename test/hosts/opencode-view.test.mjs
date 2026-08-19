@@ -93,4 +93,11 @@ describe("Non-authoritative OpenCode view", () => {
     }
     expect(() => createOpenCodeView()).toThrow(TypeError)
   })
+
+  test("refuses a target whose port cannot exist", async () => {
+    for (const port of [65536, 99999]) {
+      const view = createOpenCodeView(ports())
+      expect(await code(() => view.attach({ ...binding, backend_url: `http://127.0.0.1:${port}` }))).toBe("CT_VIEW_REJECTED")
+    }
+  })
 })

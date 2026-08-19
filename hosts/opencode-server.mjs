@@ -9,7 +9,9 @@ const bounded = (value) => typeof value === "string" && value.length > 0 && valu
 const positive = (value) => Number.isSafeInteger(value) && value > 0
 const absolute = (value) => bounded(value) && value.startsWith("/")
 // Decision 38: the backend is reachable only from this machine, on its own loopback port.
-const loopback = (value) => bounded(value) && /^http:\/\/127\.0\.0\.1:(?:[1-9][0-9]{0,4})$/.test(value)
+// The grammar alone would admit 99999, which is not a port. 65535 is the last one there is, so the
+// range is checked numerically rather than spelled out as an unreadable alternation.
+const loopback = (value) => bounded(value) && Number(/^http:\/\/127\.0\.0\.1:([1-9][0-9]{0,4})$/.exec(value)?.[1] ?? NaN) <= 65535
 // Long enough that it cannot be guessed, bounded so it cannot be used to smuggle a payload.
 const secretValue = (value) => typeof value === "string" && value.length >= 32 && value.length <= 4096 && !value.includes("\0")
 

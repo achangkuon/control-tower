@@ -15,7 +15,9 @@ const validRef = (value) => typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9
 const bounded = (value) => typeof value === "string" && value.length > 0 && value.length <= 512 && !value.includes("\0")
 const positive = (value) => Number.isSafeInteger(value) && value > 0
 // Decision 38: each worktree owns an isolated loopback backend. A non-loopback origin is never this backend.
-const loopback = (value) => bounded(value) && /^http:\/\/127\.0\.0\.1:(?:[1-9][0-9]{0,4})$/.test(value)
+// The grammar alone would admit 99999, which is not a port. 65535 is the last one there is, so the
+// range is checked numerically rather than spelled out as an unreadable alternation.
+const loopback = (value) => bounded(value) && Number(/^http:\/\/127\.0\.0\.1:([1-9][0-9]{0,4})$/.exec(value)?.[1] ?? NaN) <= 65535
 const owned = (stats) => stats.uid === process.getuid() && !stats.isSymbolicLink()
 
 // Shared field rules. The root identity is validated separately, because only its brand proves primary-vs-child.

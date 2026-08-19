@@ -151,4 +151,12 @@ describe("Bound host liveness classification", () => {
     expect(Object.isFrozen(verdict)).toBe(true)
     expect(Object.keys(verdict).sort()).toEqual(["elapsed_ms", "probe", "probe_cause", "state"])
   })
+
+  test("refuses a bound backend url whose port cannot exist", async () => {
+    const { health } = setup()
+    for (const port of [65536, 99999]) {
+      expect(await code(() => health.classify({ ...heard(0), binding: { ...binding, backend_url: `http://127.0.0.1:${port}` } }))).toBe("CT_HOST_HEALTH_INVALID")
+    }
+    expect((await health.classify({ ...heard(0), binding: { ...binding, backend_url: "http://127.0.0.1:65535" } })).state).toBe("LIVE")
+  })
 })

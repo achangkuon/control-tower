@@ -80,7 +80,8 @@ export const parseOpenCodeAgent = (value, expected) => {
 // and `POST /api/session` structurally cannot be asked for a parent, so "no parent" is a fact about
 // the call, not a reading of the response — which never reports `parentID` for a root. Three locks
 // keep that honest, and each is enforced by one function below.
-const loopbackOrigin = (value) => typeof value === "string" && /^http:\/\/127\.0\.0\.1:(?:[1-9][0-9]{0,4})$/.test(value)
+// Same bound as the host predicates: an announced 99999 is not a port this backend can be listening on.
+const loopbackOrigin = (value) => typeof value === "string" && Number(/^http:\/\/127\.0\.0\.1:([1-9][0-9]{0,4})$/.exec(value)?.[1] ?? NaN) <= 65535
 
 // The backend announces its own address; the caller never supplies one.
 export const parseServerAnnouncement = (output) => {

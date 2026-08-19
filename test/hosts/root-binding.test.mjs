@@ -154,4 +154,11 @@ describe("root binding store directory safety", () => {
     const store = createRootBindingStore({ root })
     expect(code(() => store.bind(input))).toBe("CT_ROOT_BINDING_INVALID")
   })
+
+  test("refuses a backend url whose port cannot exist, and accepts the last one that can", () => {
+    const { store } = setup()
+    expect(code(() => store.bind({ ...input, backend_url: "http://127.0.0.1:65536" }))).toBe("CT_ROOT_BINDING_INVALID")
+    expect(code(() => store.bind({ ...input, backend_url: "http://127.0.0.1:99999" }))).toBe("CT_ROOT_BINDING_INVALID")
+    expect(store.bind({ ...input, backend_url: "http://127.0.0.1:65535" }).backend_url).toBe("http://127.0.0.1:65535")
+  })
 })
