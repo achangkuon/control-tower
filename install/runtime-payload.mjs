@@ -11,6 +11,7 @@ export const RUNTIME_PAYLOAD_FILES = [
   "hosts/launch-worker.mjs",
   "hosts/opencode-launcher.mjs",
   "hosts/opencode-server.mjs",
+  "hosts/opencode-view.mjs",
   "hosts/production-provider.mjs",
   "hosts/root-binding.mjs",
   "hosts/root-identity.mjs",

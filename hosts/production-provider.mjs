@@ -10,6 +10,7 @@ import { createLaunchBindingConsumer } from "../main-store/launch-consumer.mjs"
 import { createHerdrAdapter } from "./herdr.mjs"
 import { createOpenCodeLauncher } from "./opencode-launcher.mjs"
 import { createOpenCodeBackendHost } from "./opencode-server.mjs"
+import { createOpenCodeView } from "./opencode-view.mjs"
 
 const fail = (code, message) => { throw Object.assign(new Error(message), { code }) }
 const duplicates = (input) => {
@@ -251,8 +252,20 @@ export const createProductionProvider = ({ } = {}) => {
       return parseCreatedRoot(created, await call(url, secret, "GET", `/api/session/${id}`), id)
     },
   })
+  // Decision 39: Herdr survives only as a replaceable launcher for a view. `pane run` executes a
+  // command in a pane without touching Herdr's agent custody, so the visible root never becomes a
+  // Herdr agent and the pane never becomes the root.
+  const view = createOpenCodeView({
+    openPane: ({ command: attach, cwd }) => {
+      const pane = parse(command("herdr", ["pane", "split", "--current", "--direction", "right", "--cwd", cwd, "--no-focus"]))?.result?.pane?.pane_id
+      if (!paneIdentifier(pane)) fail("CT_VIEW_UNAVAILABLE", "Herdr did not create a fresh view pane")
+      parse(command("herdr", ["pane", "run", pane, ...attach]))
+      return { pane_id: pane }
+    },
+    closePane: (paneId) => { parse(command("herdr", ["pane", "close", paneId])); return true },
+  })
   return Object.freeze({
     preflight: () => { runtime = createPinnedHostRuntime(installed); return runtime.close },
-    consumeBinding: (requestRef) => consumer.consume(requestRef), backend, herdr, opencode,
+    consumeBinding: (requestRef) => consumer.consume(requestRef), backend, herdr, opencode, view,
   })
 }
