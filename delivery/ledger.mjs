@@ -1,4 +1,4 @@
-import { closeSync, constants, fstatSync, fsyncSync, linkSync, lstatSync, mkdirSync, openSync, readFileSync, readdirSync, realpathSync, unlinkSync, writeFileSync } from "node:fs"
+import { closeSync, constants, existsSync, fstatSync, fsyncSync, linkSync, lstatSync, mkdirSync, openSync, readFileSync, readdirSync, realpathSync, unlinkSync, writeFileSync } from "node:fs"
 import { join, resolve } from "node:path"
 
 import { validate } from "../contracts/validate.mjs"
@@ -32,6 +32,29 @@ const readRecord = (path) => {
   catch (error) { if (error?.code === "CT_DELIVERY_LEDGER_UNSAFE") throw error; fail("CT_DELIVERY_LEDGER_UNSAFE", "Unreadable delivery ledger record") }
   finally { closeSync(fd) }
 }
+// Validating a directory by pathname and then using that pathname again is two steps a
+// same-uid peer can wedge itself between. Where procfs exists every child is reached
+// through the pinned descriptor, so renaming the pathname cannot redirect the work;
+// elsewhere (macOS, which has no `/dev/fd` directory traversal) the pathname identity is
+// revalidated around the operation, which detects the swap instead of preventing it.
+// Exported so the boundary test asserts the guarantee this platform actually provides.
+export const pinnedByDescriptor = process.platform === "linux" && existsSync("/proc/self/fd")
+const withPinnedDirectory = async (path, operation) => {
+  let fd
+  try { fd = openSync(path, constants.O_RDONLY | (constants.O_DIRECTORY ?? 0) | constants.O_NOFOLLOW) }
+  catch { fail("CT_DELIVERY_LEDGER_UNSAFE", "Delivery ledger directory cannot be pinned") }
+  try {
+    const pinned = secureStat(fstatSync(fd), "directory"), base = pinnedByDescriptor ? `/proc/self/fd/${fd}` : path
+    const assertPinned = () => {
+      if (pinnedByDescriptor) return
+      const current = statOrNull(path)
+      if (!current || current.dev !== pinned.dev || current.ino !== pinned.ino) fail("CT_DELIVERY_LEDGER_UNSAFE", "Delivery ledger directory changed")
+      secureStat(current, "directory")
+    }
+    assertPinned()
+    return await operation({ base, child: (name) => join(base, name), sync: () => fsyncSync(fd), assertPinned })
+  } finally { closeSync(fd) }
+}
 const holderAlive = (pid) => { try { process.kill(pid, 0); return true } catch (error) { return error?.code !== "ESRCH" } }
 // The lock writes {pid, candidate_revision}; read it back so a holder killed before its `finally`
 // does not strand its candidate_revision forever. A soft read: anything unreadable stays held.
@@ -62,13 +85,17 @@ export const createDeliveryLedger = ({ root, clock = () => new Date().toISOStrin
     const directory = join(root, directoryName(candidateRevision)), stat = statOrNull(directory)
     if (!stat) return Object.freeze([])
     secureStat(stat, "directory")
-    const names = readdirSync(directory).sort()
-    if (names.some((name) => !/^\d{6}\.json$/.test(name))) fail("CT_DELIVERY_LEDGER_UNSAFE", "Unexpected delivery ledger entry")
-    const records = names.map((name) => validate("deliveryRecord", readRecord(join(directory, name))))
-    records.forEach((record, index) => {
-      if (record.candidate_revision !== candidateRevision || record.revision !== index + 1) fail("CT_DELIVERY_LEDGER_INVALID", "Delivery ledger history is not contiguous")
+    return withPinnedDirectory(directory, async ({ base, child, assertPinned }) => {
+      let names
+      try { names = readdirSync(base).sort() } catch { fail("CT_DELIVERY_LEDGER_UNSAFE", "Delivery ledger directory is unreadable") }
+      if (names.some((name) => !/^\d{6}\.json$/.test(name))) fail("CT_DELIVERY_LEDGER_UNSAFE", "Unexpected delivery ledger entry")
+      const records = names.map((name) => validate("deliveryRecord", readRecord(child(name))))
+      records.forEach((record, index) => {
+        if (record.candidate_revision !== candidateRevision || record.revision !== index + 1) fail("CT_DELIVERY_LEDGER_INVALID", "Delivery ledger history is not contiguous")
+      })
+      assertPinned()
+      return Object.freeze(records)
     })
-    return Object.freeze(records)
   }
   const withCandidateLock = async (candidateRevision, operation) => {
     const key = directoryName(candidateRevision)
@@ -118,22 +145,25 @@ export const createDeliveryLedger = ({ root, clock = () => new Date().toISOStrin
     const directory = join(root, directoryName(input.candidate_revision))
     if (!statOrNull(directory)) { mkdirSync(directory, { mode: 0o700 }); syncDirectory(root) }
     secureDirectory(directory)
-    const finalPath = join(directory, `${String(record.revision).padStart(6, "0")}.json`)
-    if (statOrNull(finalPath)) fail("CT_CAS_MISMATCH", "Delivery ledger revision changed")
-    const temporaryPath = join(directory, `.${String(record.revision).padStart(6, "0")}.${process.pid}.tmp`)
-    let fd
-    try {
-      fd = openSync(temporaryPath, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW, 0o600)
-      secureStat(fstatSync(fd), "record"); writeFileSync(fd, `${JSON.stringify(record)}\n`); fsyncSync(fd); closeSync(fd); fd = undefined
-      try { linkSync(temporaryPath, finalPath) } catch (error) { if (error?.code === "EEXIST") fail("CT_CAS_MISMATCH", "Delivery ledger revision changed"); throw error }
-      unlinkSync(temporaryPath); syncDirectory(directory)
-    } catch (error) {
-      if (fd !== undefined) closeSync(fd)
-      const temporary = statOrNull(temporaryPath)
-      if (temporary?.isFile() && temporary.uid === owner && temporary.nlink === 1) unlinkSync(temporaryPath)
-      throw error
-    }
-    return validate("deliveryRecord", readRecord(finalPath))
+    return withPinnedDirectory(directory, async ({ child, sync, assertPinned }) => {
+      const finalPath = child(`${String(record.revision).padStart(6, "0")}.json`)
+      if (statOrNull(finalPath)) fail("CT_CAS_MISMATCH", "Delivery ledger revision changed")
+      const temporaryPath = child(`.${String(record.revision).padStart(6, "0")}.${process.pid}.tmp`)
+      let fd
+      try {
+        fd = openSync(temporaryPath, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW, 0o600)
+        secureStat(fstatSync(fd), "record"); writeFileSync(fd, `${JSON.stringify(record)}\n`); fsyncSync(fd); closeSync(fd); fd = undefined
+        try { linkSync(temporaryPath, finalPath) } catch (error) { if (error?.code === "EEXIST") fail("CT_CAS_MISMATCH", "Delivery ledger revision changed"); throw error }
+        unlinkSync(temporaryPath); sync()
+      } catch (error) {
+        if (fd !== undefined) closeSync(fd)
+        const temporary = statOrNull(temporaryPath)
+        if (temporary?.isFile() && temporary.uid === owner && temporary.nlink === 1) unlinkSync(temporaryPath)
+        throw error
+      }
+      assertPinned()
+      return validate("deliveryRecord", readRecord(finalPath))
+    })
   }
   const append = async (input, expectedRevision) => held.has(directoryName(input?.candidate_revision))
     ? appendUnlocked(input, expectedRevision)

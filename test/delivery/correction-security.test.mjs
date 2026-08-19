@@ -6,7 +6,7 @@ import { pathToFileURL } from "node:url"
 import { createHash } from "node:crypto"
 
 import { candidateRevision } from "../../contracts/candidate-revision.mjs"
-import { createDeliveryLedger } from "../../delivery/ledger.mjs"
+import { createDeliveryLedger, pinnedByDescriptor } from "../../delivery/ledger.mjs"
 import { executeDelivery } from "../../delivery/workflow.mjs"
 
 const digest = (value) => `sha256:${createHash("sha256").update(value).digest("hex")}`
@@ -116,6 +116,42 @@ await ledger.withCandidateLock(${JSON.stringify(revision)}, async () => { await 
     const unnamedRoot = root(); writeFileSync(join(unnamedRoot, lockName), "", { mode: 0o600 })
     expect(await code(() => createDeliveryLedger({ root: unnamedRoot }).withCandidateLock(revision, async () => {}))).toBe("CT_DELIVERY_LEDGER_BUSY")
   }, 30_000)
+
+  test("a candidate directory swapped mid-operation never yields foreign records nor an untyped failure", async () => {
+    const ledgerRoot = root(), name = revision.slice(7)
+    const real = join(ledgerRoot, name), moved = join(ledgerRoot, `${name}.moved`), foreign = root()
+    mkdirSync(real, { mode: 0o700 })
+    writeFileSync(join(real, "000001.json"), recordBytes(), { mode: 0o600 })
+    writeFileSync(join(foreign, "000001.json"), recordBytes({ authorization_ref: "auth-foreign" }), { mode: 0o600 })
+    // A same-uid peer renaming the validated directory away and dropping a symlink in its place.
+    const swapper = Bun.spawn([process.execPath, "-e", `
+const { renameSync, symlinkSync, unlinkSync } = require("node:fs")
+const [real, moved, foreign] = ${JSON.stringify([real, moved, foreign])}
+while (true) {
+  try { renameSync(real, moved); symlinkSync(foreign, real) } catch {}
+  try { unlinkSync(real); renameSync(moved, real) } catch {}
+}`], { stdout: "ignore", stderr: "ignore" })
+    const ledger = createDeliveryLedger({ root: ledgerRoot })
+    let reads = 0, foreignReads = 0
+    const untyped = new Set()
+    try {
+      for (let attempt = 0; attempt < 4_000; attempt++) {
+        try {
+          const history = await ledger.history(revision)
+          reads++
+          if (history.some((entry) => entry.authorization_ref === "auth-foreign")) foreignReads++
+        } catch (error) {
+          if (error?.code !== "CT_DELIVERY_LEDGER_UNSAFE") untyped.add(error?.code ?? String(error))
+        }
+      }
+    } finally { swapper.kill(9); await swapper.exited }
+    expect(reads).toBeGreaterThan(100)
+    expect([...untyped]).toEqual([])
+    // Prevention needs a pinned descriptor. Without procfs the pathname is only revalidated
+    // around the operation, which measurably narrows the window (179 leaks -> 3 in this
+    // harness) but cannot close it, so only the fail-closed invariants hold there.
+    if (pinnedByDescriptor) expect(foreignReads).toBe(0)
+  }, 60_000)
 })
 
 describe("canonical authorization binding", () => {
