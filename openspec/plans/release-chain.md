@@ -75,7 +75,7 @@ graph LR
   S57 --> S58["S5.8 binding de respuesta · ✅"]
   S58 --> S511["S5.11 provenance de checkpoint · ✅"]
   S511 --> S512["S5.12 composición Main→parking · ✅"]
-  S512 --> S59["S5.9 binding de checkpoint · 🟢"]
+  S512 --> S59["S5.9 binding de checkpoint · ✅"]
    S59 --> S510["S5.10 binding de trabajo completado · 📋"]
    S510 --> S55["S5.5 parking/retoma · 📋"]
    S53 --> S71["S7.1 conformidad · 📋"]
@@ -113,7 +113,7 @@ graph LR
 | ✅ | `S5.8` | Binding de opción seleccionada en autoridad canónica | ✅ COMPLETO | `S5.7` ✅; integrada y verificada localmente en `master@427b14e` mediante `6bb7019`, focused 42/0/250 y full 610/0/3618, sin push remoto |
 | ✅ | `S5.11` | Productores canónicos de provenance del checkpoint | ✅ COMPLETO | `S5.8` ✅; integrada y verificada localmente en `master@b4d7fcd` (tree `7873570`), 12/12 criterios, full 656/0/3941 en 42 archivos, 620 líneas authored bajo `size:exception`, sin push remoto |
 | ✅ | `S5.12` | Composición única de productores hacia parking bajo Main | ✅ COMPLETO | `S5.11` ✅; implementación `e7b1437f8c98c5856236e06e4c1fb5c40e9dc8ef`, 8/8 criterios, focused 52/0/306, full 663/0/3986 y publicación probada en `origin/master@cebcaeb` |
-| ▶ | `S5.9` | Binding autoritativo del checkpoint estacionado | 🟢 LISTO | `S5.12` ✅; dependencia, autoridad, `Área`, `Recurso` y decisiones propias reevaluadas sin bloqueo restante; route `full-sdd` retoma antes de tasks/apply y reconcilia proposal/spec/design externos |
+| ✅ | `S5.9` | Binding autoritativo del checkpoint estacionado | ✅ COMPLETO | Entregada el 2026-08-18 en `3c3040d`, `754c698` y `8d4b28a`; `full-sdd` completo hasta verify, 7/8 criterios con evidencia de runtime y el criterio 2 enmendado por la decisión 41 |
 | — | `S5.10` | Binding inmutable del trabajo independiente completado | 📋 PLANIFICADO | `S5.9`; ruta `design-tasks` |
 | — | `S5.5` | Parking y retoma del loop | 📋 PLANIFICADO | `S5.10`; planner N+1 / implementer N |
 | — | `S5.3` | Continuación planner/implementer | 📋 PLANIFICADO | `S5.2`; decisiones propias resueltas |
@@ -132,7 +132,7 @@ graph LR
 > recuperación y failover entra en la cadena de release. La tabla se corrige para coincidir.
 > La decisión histórica fue explícita —construir las catorce Sesiones que ese corte enumeraba como restantes— y no una derivación; la reconciliación actual agrega los prerrequisitos omitidos sin reescribir aquella evidencia.
 
-**Treinta y siete Sesiones históricas · 25/37 cerradas o archivadas (68%).** `S8.7` queda archivada y no integra la ruta activa. `S4.5` y `S5.9` aportan cero mientras están `LISTO`. P10 queda completo mediante `S3.4 → S10.3 → S10.1 → S10.2 → S7.1`. Esta métrica no reemplaza el `31/47` de Sesiones activas del [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
+**Treinta y siete Sesiones históricas · 26/37 cerradas o archivadas (70%).** `S8.7` queda archivada y no integra la ruta activa. `S5.9` ya cerró; `S4.5` aporta cero mientras está `LISTO`. P10 queda completo mediante `S3.4 → S10.3 → S10.1 → S10.2 → S7.1`. Esta métrica no reemplaza el `32/47` de Sesiones activas del [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
 secuenciales entre `S5.4` y `S5.5`: snapshot/parser canónico, contratos de decisión/respuesta,
 binding terminal, productores de provenance, composición Main→parking, binding autoritativo de
 checkpoint y binding inmutable del trabajo completado bajo la autoridad exclusiva de Main. La
@@ -169,11 +169,11 @@ La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas; no s
 
 `S1.16` y `S4.2` están ✅ COMPLETO; `S4.5` preserva la entrega histórica y reemplaza la propiedad crítica Herdr para trabajo futuro.
 
-La capacidad inmediata admite `S5.9` y `S4.5`: paths y recursos disjuntos. Las decisiones 38/39 habilitan `S4.5/M4.5.1`–`M4.5.3` en secuencia. `S4.3`, `S4.4`, `S5.3`, `S5.10`, `S5.5` y `S7.1` están 📋 PLANIFICADO; `S5.2` sigue 🔴 BLOQUEADO.
+La capacidad inmediata es `S4.5`, que requiere `session-plan` antes de ejecutar. Las decisiones 38/39 habilitan `S4.5/M4.5.1`–`M4.5.3` en secuencia. `S4.3`, `S4.4`, `S5.3`, `S5.10`, `S5.5` y `S7.1` están 📋 PLANIFICADO; `S5.2` sigue 🔴 BLOQUEADO.
 
 **Estado de decisiones al 2026-08-18: 39/39 `escala` resueltas y cero abiertas en esta cadena.** La 38 eligió backend aislado por worktree, la 39 Herdr view-only temporal y la 40 recuperación lógica con raíz sucesora tras muerte probada. Quedan la segunda corrección autorizada de `S5.2` y el dueño de la brecha 6; son trabajo/residuo, no decisiones abiertas. El prerrequisito `enroll/**` pertenecía al puente Telegram/Hermes archivado con `S8.7`; no es responsabilidad activa. Fuera de esta cadena queda abierta la decisión independiente de `S9.2`, sin dependencia declarada sobre esta ruta. Ver el [registro](decision-register.md).
 
-El siguiente inicio debe derivar capacidad desde el grafo y los campos vigentes, no desde esta fotografía. Ningún sucesor de `S5.9` o `S4.5` recibe crédito: `S5.10`, `S4.3`, `S4.4`, `S5.5` y `S7.1` conservan sus condiciones.
+El siguiente inicio debe derivar capacidad desde el grafo y los campos vigentes, no desde esta fotografía. Ningún sucesor de `S5.9` o `S4.5` recibe crédito por el cierre de `S5.9`: `S5.10`, `S4.3`, `S4.4`, `S5.5` y `S7.1` conservan sus condiciones.
 
 ## Enmienda `S0.3` — ✅ COMPLETA
 

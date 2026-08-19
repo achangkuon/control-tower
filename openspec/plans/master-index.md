@@ -6,7 +6,7 @@
 
 ## 📍 Punto de retoma
 
-**`S5.9` está entregada en `master` (`3c3040d`, `754c698`, `8d4b28a`) pero NO cerrada.** El código pasa 7/8 criterios con evidencia de runtime y `master` queda en 731 pass / 0 fail. Falta **una sola enmienda del maintainer**: la cláusula de preservación del criterio 2 quedó refutada porque el `design.md` del falsificador fallido (`a349747c…`) ya no existe y Engram 8604 fue upserteado al diseño reconciliado. Hasta que se enmiende, `S5.9` sigue 🔵 EN CURSO y **no aporta crédito**. Detalle en [plan-5/STATUS](plan-5/STATUS.md).
+**`S5.9` está ✅ COMPLETO**, entregada el 2026-08-18 en `3c3040d`, `754c698` y `8d4b28a`, con `master` en 731 pass / 0 fail. Siete criterios pasan con evidencia de runtime; el octavo quedó enmendado por la **decisión 41**: la cláusula que exigía preservar el falsificador fallido se cierra como pérdida aceptada y documentada, porque un upsert sobre `topic_key` mutable de Engram destruyó el artefacto que este plan fijaba por hash. La regla derivada —evidencia durable en Git o en identificador inmutable, nunca en una clave que se sobreescribe— vive en el [registro de decisiones](decision-register.md).
 
 `S4.2` está ✅ COMPLETO en `61a5aa2`; la decisión 37 preserva esa historia y enumera `S4.5` para migrar el lifecycle futuro a Main-owned backend/root con TUI adjunta no autoritativa.
 
@@ -18,7 +18,7 @@ La capacidad inmediata es `S4.5`, que aún requiere `session-plan` antes de ejec
 
 ## 🎯 Cola de ejecución
 
-`#1 S4.5` · `#2 S4.3` · `#3 S5.10` · `#4 S4.4` · `#5 S5.3` · `#6 S5.5` · `#7 S7.1` — recalculada 2026-08-18 tras entregar `S5.9`. `S5.10` conserva su posición detrás de `S4.3` y depende de `S5.9` **integrada**, que ya lo está en `master` aunque la Sesión no haya cerrado formalmente. La decisión 40 no cambia edges ni concede crédito; Pi/Intercom y S8.7 no integran esta cola.
+`#1 S4.5` · `#2 S4.3` · `#3 S5.10` · `#4 S4.4` · `#5 S5.3` · `#6 S5.5` · `#7 S7.1` — recalculada 2026-08-18 tras entregar `S5.9`. `S5.10` conserva su posición detrás de `S4.3`; su dependencia `S5.9` **integrada** está satisfecha. La decisión 40 no cambia edges ni concede crédito; Pi/Intercom y S8.7 no integran esta cola.
 
 ## Granularidad
 
@@ -27,7 +27,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 
 ## 📊 Estado de un vistazo
 
-**Avance global**: 3/11 Planes cerrados (27%) · Sesiones cerradas en planes activos: 31/47 (66%). Cálculo auditable: P1 `16/19` + P4 `2/5` + P5 `7/12` + P7 `0/1` + P8 `6/8` + P9 `0/2` = `31/47`; P10 se excluye porque cerró 3/3 S. P2 no tiene denominador derivable.
+**Avance global**: 3/11 Planes cerrados (27%) · Sesiones cerradas en planes activos: 32/47 (68%). Cálculo auditable: P1 `16/19` + P4 `2/5` + P5 `8/12` + P7 `0/1` + P8 `6/8` + P9 `0/2` = `32/47`; P10 se excluye porque cerró 3/3 S. P2 no tiene denominador derivable.
 
 | ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |
 |----|------|--------|---|------|-------|-----------|-----|
@@ -36,7 +36,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 | P2 | Contratos y registro de producto | 🔵 EN CURSO | — (responsabilidades restantes de Change B sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-2/STATUS.md) |
 | P3 | Workspace y orquestación | ✅ COMPLETO | 100% (4/4 S) | — | Main | — | [STATUS](plan-3/STATUS.md) |
 | P4 | Hosts y línea exclusiva | 🔵 EN CURSO | 40% (2/5 S) | — | Main | S4.5, S4.3, S4.4 | [STATUS](plan-4/STATUS.md) |
-| P5 | Entrega y continuación | 🔵 EN CURSO | 58% (7/12 S) | — | Main | S5.9 (entregada, falta enmienda), S5.2, S5.3, S5.5, S5.10 | [STATUS](plan-5/STATUS.md) |
+| P5 | Entrega y continuación | 🔵 EN CURSO | 67% (8/12 S) | — | Main | S5.2, S5.3, S5.5, S5.10 | [STATUS](plan-5/STATUS.md) |
 | P6 | Campañas multiproyecto | 📋 PLANIFICADO | — (sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-6/STATUS.md) |
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | S7.1 | [STATUS](plan-7/STATUS.md) |
 | P8 | Release instalable | 🔵 EN CURSO | 75% (6/8 S) | — | Maintainer | S8.5, S8.6 | [STATUS](plan-8/STATUS.md) |
