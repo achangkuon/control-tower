@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
 | Outputs | Raíz primaria Main-owned con TUI adjunta no autoritativa, inspección/liveness por proceso/sesión y recuperación same-host WSL. |
-| Roadmap | `S4.1`, `S1.16`, `S4.2`, `S4.5` y `S4.3` están ✅ COMPLETO. `S4.3` cerró sobre `555acbe` (822 pass / 0 fail / 5.043 expectations) tras el set 4R completo; la decisión 43 amplió su Área al schema `recovery-proof-v1` y a las dos fixtures que asertan contra él. `S4.4` pasa a 🔴 BLOQUEADO el 2026-08-19: su dependencia está satisfecha, pero arrastra una decisión de clase escalable sin resolver sobre el identificador del contador de epoch. P4 alcanza 4/5 S (80%). |
+| Roadmap | `S4.1`, `S1.16`, `S4.2`, `S4.5` y `S4.3` están ✅ COMPLETO. `S4.3` cerró sobre `555acbe` (822 pass / 0 fail / 5.043 expectations) tras el set 4R completo; la decisión 43 amplió su Área al schema `recovery-proof-v1` y a las dos fixtures que asertan contra él. `S4.4` queda 🟢 LISTO y decision-clean tras la decisión 45, que alineó el contador de epoch a `host_epoch`. P4 alcanza 4/5 S (80%). |
 | Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), decisiones 37–42 / Engram 9040/9042/9043/9044/9079, [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). REQUIREMENTS §14 permanece byte-pinned como base histórica; esta spec enmienda el lifecycle futuro. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
@@ -384,21 +384,21 @@ El validator scoped final no encontró bloqueantes. Su único warning —un `rel
 
 ## Sesión 4.4 — Recuperación lógica same-host con raíz sucesora
 
-**Estado:** 🔴 BLOQUEADO — su dependencia `S4.3` está satisfecha, pero la elaboración técnica del 2026-08-19 halló una decisión de clase escalable **sin resolver** sobre el identificador del contador de epoch (abajo). La convención frena antes de RED cuando una decisión de clase siempre-escala queda abierta. **No es un bloqueo de alcance ni de dependencia: es una pregunta de una línea al maintainer.**
+**Estado:** 🟢 LISTO — decision-clean. `S4.3` cerró y la decisión 45 del 2026-08-19 resolvió el último punto abierto: `recovery_epoch` y `host_epoch` son el mismo contador, y el plan queda alineado a `host_epoch`.
 
 **Depende de:** `S4.3`.
 
 **Área:** `hosts/recovery.mjs`, `hosts/epoch-enforcement.mjs`, `test/hosts/recovery.test.mjs`, `test/hosts/epoch-enforcement.test.mjs`
 
-**Recurso:** binding Main-owned de backend/proceso/raíz, `recovery_epoch`, lineage del predecesor y checkpoint durable; sin DB, migraciones ni token de entrega.
+**Recurso:** binding Main-owned de backend/proceso/raíz, `host_epoch`, lineage del predecesor y checkpoint durable; sin DB, migraciones ni token de entrega.
 
 **Ruta:** `design-tasks` — una sola transición determinista same-host/worktree/checkpoint: raíz viva ⇒ reconectar vista; backend/raíz muertos ⇒ raíz sucesora. **Autoridad:** decisiones 37–40, Engram 9040/9044 y REQUIREMENTS §14.4.
 
 **Decisiones:**
-- `escala` — **ABIERTA (hallada el 2026-08-19, sin resolver): ¿`recovery_epoch` y `host_epoch` son el mismo contador?** La decisión 40 y el criterio de aceptación 3 de esta Sesión dicen `recovery_epoch`. Ese identificador **no existe en el código ni en `openspec/specs/sdd-tower-implementation-v1-requirements.md`**: cero ocurrencias en ambos. Lo que sí existe es `host_epoch`, campo del root binding Main-owned que entregó `S4.5`, y §14.4 paso 7 dice literalmente *incrementar `host_epoch`*. **Clase:** dependencias o evidencia contradictorias; contrato visible del producto. **Por qué importa antes de RED:** si son el mismo, corresponde alinear el plan a `host_epoch` y esta Sesión no gana alcance; si son dos contadores distintos, el segundo tiene que vivir en el binding Main-owned —**fuera del `Área` de `S4.4`**— y haría falta una ampliación de Área registrada, como la decisión 42 en `S4.5` y la 43 en `S4.3`. **Falsificable:** aparece un `recovery_epoch` con dueño y persistencia en la spec o el código, o el plan se alinea a `host_epoch` y ningún criterio queda sin satisfacer. **Contamina:** `S4.4`, `S7.1`.
+- `escala` — **RESUELTA por el maintainer el 2026-08-19 (decisión 45): `recovery_epoch` y `host_epoch` son el mismo contador; el plan se alinea a `host_epoch`.** Pregunta original: la decisión 40, sus restatements y esta Sesión decían `recovery_epoch`, un identificador ausente del código y de `openspec/specs/sdd-tower-implementation-v1-requirements.md`, cuyo §14.4 paso 7 dice *incrementar `host_epoch`* — el campo que el root binding Main-owned de `S4.5` sí persiste. **Clase:** dependencias o evidencia contradictorias; contrato visible del producto. **Evidencia:** el nombre existía además en `openspec/specs/main-owned-visible-root/spec.md`, en dos cláusulas MUST, de modo que el drift era entre dos specs y no una invención del plan. **Resolución:** un solo contador, `host_epoch`; no se crea un segundo registro ni se amplía el `Área`, y esta Sesión no gana alcance. **Falsificable:** aparece un `recovery_epoch` con dueño y persistencia propios, o algún criterio de `S4.4` deja de satisfacerse al nombrar `host_epoch`. **Contamina:** `S4.4`, `S7.1`.
 - `derivable` — recuperar sólo mismo host WSL, worktree/checkpoint y stop proof positivo. Falsificable: otro host/worktree inicia. **Autoridad:** REQUIREMENTS §14.4.
 - `derivable` — epoch distinto ⇒ `CT_ASSIGNMENT_STALE`. Falsificable: un efecto viejo persiste. **Autoridad:** CT-V1-08 y `S4.1`.
-- `escala` — decisión 40 **RESUELTA por el maintainer el 2026-08-18 (Engram 9044):** pérdida sólo de vista reconecta `opencode attach` a la misma raíz viva sin cambiar epoch; muerte probada de backend/raíz marca el predecesor terminal/stale, incrementa `recovery_epoch` y crea backend/raíz/TUI sucesores nuevos en el mismo worktree/checkpoint. El mismo `root_session_id` no se resucita. No se recuperan subagentes ni memoria in-flight; el contexto se reconstruye desde autoridad durable. **Clase:** contrato visible del producto; seguridad y permisos; dependencias o evidencia contradictorias. **Contaminaba:** `M4.4.2`, `S4.4`, `S7.1`.
+- `escala` — decisión 40 **RESUELTA por el maintainer el 2026-08-18 (Engram 9044):** pérdida sólo de vista reconecta `opencode attach` a la misma raíz viva sin cambiar epoch; muerte probada de backend/raíz marca el predecesor terminal/stale, incrementa `host_epoch` —nombrado `recovery_epoch` en la redacción original, alineado por la decisión 45— y crea backend/raíz/TUI sucesores nuevos en el mismo worktree/checkpoint. El mismo `root_session_id` no se resucita. No se recuperan subagentes ni memoria in-flight; el contexto se reconstruye desde autoridad durable. **Clase:** contrato visible del producto; seguridad y permisos; dependencias o evidencia contradictorias. **Contaminaba:** `M4.4.2`, `S4.4`, `S7.1`.
 
 **Orden de autoridad del brief de recuperación:**
 1. binding Main-owned y epoch vigente;
@@ -410,9 +410,9 @@ El validator scoped final no encontró bloqueantes. Su único warning —un `rel
 Engram aporta contexto y nunca decide por sí solo; Notion no es autoridad runtime. Una contradicción entre fuentes falla cerrado y vuelve a Main.
 
 **Criterios de aceptación:**
-- [ ] Si backend y raíz siguen vivos, perder Herdr/TUI sólo vuelve a adjuntar la vista al mismo root y conserva `recovery_epoch`
+- [ ] Si backend y raíz siguen vivos, perder Herdr/TUI sólo vuelve a adjuntar la vista al mismo root y conserva `host_epoch`
 - [ ] Recovery por muerte exige stop proof canónico, mismo host/worktree/checkpoint y lineage del predecesor terminal; cualquier drift falla `CT_RECOVERY_UNSAFE` sin iniciar nada
-- [ ] Main incrementa `recovery_epoch`, crea backend aislado y raíz primaria nuevos mediante el owner de `S4.5`, persiste un `root_session_id` distinto y abre automáticamente la nueva TUI adjunta
+- [ ] Main incrementa `host_epoch`, crea backend aislado y raíz primaria nuevos mediante el owner de `S4.5`, persiste un `root_session_id` distinto y abre automáticamente la nueva TUI adjunta
 - [ ] El brief respeta el orden de autoridad declarado; Engram no sustituye Git/OpenSpec/checkpoint y Notion no participa
 - [ ] Todo claim, mensaje o efecto del epoch previo devuelve `CT_ASSIGNMENT_STALE`; el root anterior nunca se reutiliza ni resucita
 - [ ] No se reconstruye memoria de proceso/subagentes, no se relocaliza multi-host y el diff queda dentro de `Área`

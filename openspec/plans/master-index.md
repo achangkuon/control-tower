@@ -18,9 +18,9 @@ P5 pasa a 9/12 S (75%). `S5.5` y `S4.4` quedan 🟢 LISTO, y la cola la encabeza
 
 ## 🎯 Cola de ejecución
 
-`#1 S5.5` · `#2 S7.1` — recalculada 2026-08-19 tras cerrar `S5.10` y **corregida el mismo día**: la versión previa listaba `S5.3` en `#2`, pero `S5.3` espera `S5.2` integrada y `S5.2` está 🔴 BLOQUEADO, así que no era ejecutable. **Una Sesión entra en esta cola sólo si toda su cadena de dependencias está satisfecha.**
+`#1 S4.4` · `#2 S5.5` · `#3 S7.1` — recalculada 2026-08-19 tras cerrar `S5.10` y **corregida el mismo día**: la versión previa listaba `S5.3` en `#2`, pero `S5.3` espera `S5.2` integrada y `S5.2` está 🔴 BLOQUEADO, así que no era ejecutable. **Una Sesión entra en esta cola sólo si toda su cadena de dependencias está satisfecha.**
 
-**`S4.4` salió de la cola el mismo día y pasó a 🔴 BLOQUEADO**, por la misma regla: su dependencia `S4.3` está satisfecha, pero arrastra una decisión de clase escalable sin resolver, y la convención frena antes de RED cuando una decisión siempre-escala queda abierta. La contradicción es de nomenclatura: la decisión 40 y su criterio 3 dicen `recovery_epoch`, un identificador que **no existe ni en el código ni en REQUIREMENTS**, mientras §14.4 paso 7 dice `host_epoch`, que sí existe como campo del root binding. Hay que resolver si son el mismo contador antes de RED; si fueran dos, el segundo viviría en el binding Main-owned, fuera del `Área` de `S4.4`. `S5.5` sube a 🟢 LISTO porque `S5.10` quedó integrada, y es la única Sesión sin ninguna decisión previa pendiente. Pi/Intercom y S8.7 no integran esta cola.
+`S4.4` recupera la cabeza: la **decisión 45** del mismo día resolvió su último punto abierto —`recovery_epoch` y `host_epoch` son el mismo contador, y el plan quedó alineado a `host_epoch` en los dos planes y en la spec de capacidad que lo nombraba—, así que vuelve a 🟢 LISTO y decision-clean sin ganar alcance. `S5.5` sube a 🟢 LISTO porque `S5.10` quedó integrada, y es la única Sesión sin ninguna decisión previa pendiente. Pi/Intercom y S8.7 no integran esta cola.
 
 ## Granularidad
 
@@ -37,7 +37,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 | P1 | Sustrato mecánico | 🔵 EN CURSO | 84% (16/19 S) | — | Main | — · `S1.17`–`S1.19` 🟡 DIFERIDO (Pi/Intercom) | [STATUS](plan-1/STATUS.md) |
 | P2 | Contratos y registro de producto | 🔵 EN CURSO | — (responsabilidades restantes de Change B sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-2/STATUS.md) |
 | P3 | Workspace y orquestación | ✅ COMPLETO | 100% (4/4 S) | — | Main | — | [STATUS](plan-3/STATUS.md) |
-| P4 | Hosts y línea exclusiva | 🔵 EN CURSO | 80% (4/5 S) | — | Main | `S4.4` 🔴 (decisión abierta: `recovery_epoch`) | [STATUS](plan-4/STATUS.md) |
+| P4 | Hosts y línea exclusiva | 🔵 EN CURSO | 80% (4/5 S) | — | Main | `S4.4` 🟢 | [STATUS](plan-4/STATUS.md) |
 | P5 | Entrega y continuación | 🔵 EN CURSO | 75% (9/12 S) | — | Main | `S5.5` 🟢 · `S5.2` 🔴 · `S5.3` 🔴 (espera `S5.2`) | [STATUS](plan-5/STATUS.md) |
 | P6 | Campañas multiproyecto | 📋 PLANIFICADO | — (sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-6/STATUS.md) |
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | S7.1 | [STATUS](plan-7/STATUS.md) |

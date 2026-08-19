@@ -63,7 +63,7 @@ No backend/root launch, health, stop, rehydration or recovery proof MAY depend o
 
 ### Requirement: View loss reconnects the live root
 
-When the backend and primary root remain alive, loss of Herdr, pane or TUI MUST be treated only as view loss. Main MUST reopen `opencode attach` against the same persisted `root_session_id`; it MUST NOT increment `recovery_epoch`, create a backend or root, or mark the live root stale.
+When the backend and primary root remain alive, loss of Herdr, pane or TUI MUST be treated only as view loss. Main MUST reopen `opencode attach` against the same persisted `root_session_id`; it MUST NOT increment `host_epoch`, create a backend or root, or mark the live root stale.
 
 #### Scenario: View disappears while root remains healthy
 
@@ -74,7 +74,7 @@ When the backend and primary root remain alive, loss of Herdr, pane or TUI MUST 
 
 ### Requirement: Proven root death creates a fresh logical successor
 
-After canonical proof that the backend and primary root are dead, Main MUST mark the predecessor root terminal/stale, increment `recovery_epoch`, create a fresh isolated backend and a fresh primary `gentle-orchestrator` root in the same assigned worktree, persist explicit predecessor lineage, and automatically open a new attached TUI. The successor `root_session_id` MUST differ from the predecessor. Main MUST reject every message, claim or effect bound to the prior epoch. The old root MUST NOT be reused or resurrected.
+After canonical proof that the backend and primary root are dead, Main MUST mark the predecessor root terminal/stale, increment `host_epoch`, create a fresh isolated backend and a fresh primary `gentle-orchestrator` root in the same assigned worktree, persist explicit predecessor lineage, and automatically open a new attached TUI. The successor `root_session_id` MUST differ from the predecessor. Main MUST reject every message, claim or effect bound to the prior epoch. The old root MUST NOT be reused or resurrected.
 
 #### Scenario: Backend and root are proven dead
 
