@@ -18,7 +18,9 @@ P5 pasa a 9/12 S (75%). `S5.5` y `S4.4` quedan 🟢 LISTO, y la cola la encabeza
 
 ## 🎯 Cola de ejecución
 
-`#1 S4.4` · `#2 S5.3` · `#3 S5.5` · `#4 S7.1` — recalculada 2026-08-19 tras cerrar `S5.10`. `S4.4` encabeza, decision-clean desde la decisión 40 y con `S4.3` satisfecha; `S5.5` sube a 🟢 LISTO porque `S5.10` quedó integrada. Pi/Intercom y S8.7 no integran esta cola.
+`#1 S4.4` · `#2 S5.5` · `#3 S7.1` — recalculada 2026-08-19 tras cerrar `S5.10` y **corregida el mismo día**: la versión previa listaba `S5.3` en `#2`, pero `S5.3` espera `S5.2` integrada y `S5.2` está 🔴 BLOQUEADO, así que no era ejecutable. **Una Sesión entra en esta cola sólo si toda su cadena de dependencias está satisfecha.**
+
+`S4.4` encabeza, decision-clean desde la decisión 40 y con `S4.3` satisfecha, pero arrastra una contradicción de nomenclatura sin resolver: la decisión 40 y su criterio 3 dicen `recovery_epoch`, un identificador que **no existe ni en el código ni en REQUIREMENTS**, mientras §14.4 paso 7 dice `host_epoch`, que sí existe como campo del root binding. Hay que resolver si son el mismo contador antes de RED; si fueran dos, el segundo viviría en el binding Main-owned, fuera del `Área` de `S4.4`. `S5.5` sube a 🟢 LISTO porque `S5.10` quedó integrada, y es la única Sesión sin ninguna decisión previa pendiente. Pi/Intercom y S8.7 no integran esta cola.
 
 ## Granularidad
 
@@ -32,16 +34,18 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 | ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |
 |----|------|--------|---|------|-------|-----------|-----|
 | P0 | Documentación canónica | ✅ COMPLETO | 100% (3/3 S) | — | Maintainer | — | [STATUS](plan-0/STATUS.md) |
-| P1 | Sustrato mecánico | 🔵 EN CURSO | 84% (16/19 S) | — | Main | S1.17, S1.18, S1.19 | [STATUS](plan-1/STATUS.md) |
+| P1 | Sustrato mecánico | 🔵 EN CURSO | 84% (16/19 S) | — | Main | — · `S1.17`–`S1.19` 🟡 DIFERIDO (Pi/Intercom) | [STATUS](plan-1/STATUS.md) |
 | P2 | Contratos y registro de producto | 🔵 EN CURSO | — (responsabilidades restantes de Change B sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-2/STATUS.md) |
 | P3 | Workspace y orquestación | ✅ COMPLETO | 100% (4/4 S) | — | Main | — | [STATUS](plan-3/STATUS.md) |
 | P4 | Hosts y línea exclusiva | 🔵 EN CURSO | 80% (4/5 S) | — | Main | S4.4 | [STATUS](plan-4/STATUS.md) |
-| P5 | Entrega y continuación | 🔵 EN CURSO | 75% (9/12 S) | — | Main | S5.2, S5.3, S5.5 | [STATUS](plan-5/STATUS.md) |
+| P5 | Entrega y continuación | 🔵 EN CURSO | 75% (9/12 S) | — | Main | `S5.5` 🟢 · `S5.2` 🔴 · `S5.3` 🔴 (espera `S5.2`) | [STATUS](plan-5/STATUS.md) |
 | P6 | Campañas multiproyecto | 📋 PLANIFICADO | — (sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-6/STATUS.md) |
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | S7.1 | [STATUS](plan-7/STATUS.md) |
-| P8 | Release instalable | 🔵 EN CURSO | 75% (6/8 S) | — | Maintainer | S8.5, S8.6 | [STATUS](plan-8/STATUS.md) |
+| P8 | Release instalable | 🔵 EN CURSO | 75% (6/8 S) | — | Maintainer | — · `S8.5` y `S8.6` 🟡 DIFERIDO | [STATUS](plan-8/STATUS.md) |
 | P9 | Slots seguros de Jornada y caché externa de Bun | 🔵 EN CURSO | 0% (0/3 S) | — | Maintainer | S9.1 (🔵, esperando autorización), S9.2, S9.3 | [STATUS](plan-9/STATUS.md) |
 | P10 | Ejecución y supervisión autónoma de Jornada | ✅ COMPLETO | 100% (3/3 S) | — | Maintainer | — | [STATUS](plan-10/STATUS.md) |
+
+> **Cómo leer `Qué falta`.** Enumera trabajo que alguien puede empezar o destrabar, con su estado. **🟡 DIFERIDO no es trabajo pendiente**: es alcance pospuesto deliberadamente y con razón registrada, y se anota aparte para que no infle lo que resta. El `%` sí conserva las Sesiones diferidas en el denominador, porque están enumeradas; por eso P1 y P8 no llegan al 100% aunque no les quede trabajo activo.
 
 ## 🗂️ Planes archivados
 
