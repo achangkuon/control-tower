@@ -11,8 +11,8 @@
 #   --ejecutar
 #       pull --ff-only del tronco + rebase de los worktrees limpios que
 #       solo estan atrasados (sin trabajo propio = sin riesgo de conflicto).
-#   --reciclar <ruta-worktree> --nueva-rama <nombre> [--borrar-rama-vieja]
-#       deja ese worktree en una rama nueva sacada del tronco fresco.
+#   --reciclar <ruta-worktree>
+#       sintaxis compatible temporalmente no disponible (retorna 69 sin efectos).
 #
 # El tronco (main/master) se autodetecta desde origin/HEAD. Forzalo con
 # la variable de entorno JORNADA_TRUNK=<rama> si hiciera falta.
@@ -23,17 +23,20 @@
 #   ./jornada.sh
 #   ./jornada.sh --sin-fetch
 #   ./jornada.sh --ejecutar
-#   ./jornada.sh --reciclar /ruta/Worktrees/autonomous-continuation --nueva-rama feat/control-tower/x --borrar-rama-vieja
+#   ./jornada.sh --reciclar /ruta/Worktrees/autonomous-continuation  # no disponible
 # ------------------------------------------------------------
 set -u
 
 # ---- Parseo de flags ----
-SIN_FETCH=0; EJECUTAR=0; RECICLAR=""; NUEVA_RAMA=""; BORRAR_RAMA_VIEJA=0; MERGEAR_PR=""
+SIN_FETCH=0; EJECUTAR=0; RECICLAR=""; RECICLAR_REQUESTED=0; NUEVA_RAMA=""; BORRAR_RAMA_VIEJA=0; MERGEAR_PR=""
 while [ $# -gt 0 ]; do
     case "$1" in
         --sin-fetch)          SIN_FETCH=1 ;;
         --ejecutar)           EJECUTAR=1 ;;
-        --reciclar)           RECICLAR="${2:-}"; shift ;;
+        --reciclar)
+            RECICLAR_REQUESTED=1
+            if [ $# -gt 1 ]; then RECICLAR="$2"; shift; fi
+            ;;
         --nueva-rama)         NUEVA_RAMA="${2:-}"; shift ;;
         --borrar-rama-vieja)  BORRAR_RAMA_VIEJA=1 ;;
         --mergear-pr)         MERGEAR_PR="${2:-}"; shift ;;
@@ -41,6 +44,13 @@ while [ $# -gt 0 ]; do
     esac
     shift
 done
+
+# Baseline de seguridad one-way: la sintaxis se reconoce, pero S9.1 no autoriza
+# transporte ni reciclaje exitoso. Este interlock debe preceder todo efecto.
+if [ "$RECICLAR_REQUESTED" -eq 1 ]; then
+    echo "CT_RECYCLE_UNAVAILABLE: --reciclar is unavailable; no recycling transport is authorized." >&2
+    exit 69
+fi
 
 # ---- Colores (solo si la salida es una terminal) ----
 if [ -t 1 ]; then
@@ -250,37 +260,8 @@ if [ -n "$MERGEAR_PR" ]; then
         echo "${C_RED}ABORTADO: el PR se mergeo, pero no se pudieron actualizar las referencias remotas.${C_RESET}"
         exit 1
     fi
-    echo "${C_GREEN}  OK: PR #$pr_number mergeado. La rama queda intacta hasta reciclarla.${C_RESET}"
+    echo "${C_GREEN}  OK: PR #$pr_number mergeado. La rama queda intacta.${C_RESET}"
     compute_estados
-fi
-
-# ---- ACCION PUNTUAL: RECICLAR ----
-if [ -n "$RECICLAR" ]; then
-    echo; echo "${C_MAGENTA}========== RECICLAR WORKTREE ==========${C_RESET}"
-    if [ -z "$NUEVA_RAMA" ]; then
-        echo "${C_RED}ABORTADO: --reciclar necesita tambien --nueva-rama <nombre>.${C_RESET}"; exit 1
-    fi
-    RECICLAR="$(to_unix "$RECICLAR")"
-    sucio="$(git -C "$RECICLAR" status --porcelain 2>/dev/null)" || { echo "${C_RED}ABORTADO: no se pudo validar el estado de '$RECICLAR'.${C_RESET}"; exit 1; }
-    if [ -n "$sucio" ]; then
-        echo "${C_RED}ABORTADO: '$RECICLAR' tiene cambios sin commitear. Cerralos o stash primero.${C_RESET}"
-        echo "$sucio"; exit 1
-    fi
-    rama_vieja="$(git -C "$RECICLAR" branch --show-current 2>/dev/null)"
-    if ! git -C "$RECICLAR" switch -c "$NUEVA_RAMA" "$RTRUNK" --no-track; then
-        echo "${C_RED}ABORTADO: no se pudo crear '$NUEVA_RAMA' (ya existe?).${C_RESET}"; exit 1
-    fi
-    echo "${C_GREEN}  OK: '$RECICLAR' ahora en '$NUEVA_RAMA' (desde $RTRUNK).${C_RESET}"
-    if [ "$BORRAR_RAMA_VIEJA" -eq 1 ] && [ -n "$rama_vieja" ] && [ "$rama_vieja" != "$TRUNK" ] && [ "$rama_vieja" != "$NUEVA_RAMA" ]; then
-        cherry="$(git -C "$mainPath" cherry "$RTRUNK" "$rama_vieja" 2>/dev/null)" || { echo "${C_RED}ABORTADO: no se pudo verificar si '$rama_vieja' esta mergeada; no se borro.${C_RESET}"; exit 1; }
-        if printf '%s\n' "$cherry" | grep -q '^+'; then
-            echo "${C_YELLOW}  OJO: '$rama_vieja' tiene commits que NO estan en $TRUNK. La dejo intacta.${C_RESET}"
-        else
-            git -C "$mainPath" branch -D "$rama_vieja" >/dev/null 2>&1 || { echo "${C_RED}ABORTADO: no se pudo borrar la rama vieja '$rama_vieja'.${C_RESET}"; exit 1; }
-            echo "${C_GREEN}  OK: rama vieja '$rama_vieja' borrada (su contenido ya esta en $TRUNK).${C_RESET}"
-        fi
-    fi
-    discover_worktrees || exit 1
 fi
 
 compute_estados
@@ -320,7 +301,7 @@ for est in "${ESTADOS[@]}"; do
         DIRTY)       resumen="$dirtyN cambio(s) sin commitear"; color="$C_YELLOW" ;;
         UNPUSHED)    resumen="$unpushed commit(s) sin pushear"; color="$C_YELLOW" ;;
         PENDING_PR)  resumen="pusheado, falta mergear el PR"; color="$C_YELLOW" ;;
-        MERGED)      resumen="rama ya mergeada (squash) -> reciclar"; color="$C_YELLOW" ;;
+        MERGED)      resumen="rama ya mergeada (squash); reciclaje no disponible"; color="$C_YELLOW" ;;
         BEHIND)      resumen="limpio, $behind atras de $TRUNK"; color="$C_YELLOW" ;;
         UPTODATE)    resumen="al dia, sin pendientes"; color="$C_GREEN" ;;
         DETACHED)    resumen="HEAD detached (sin rama)"; color="$C_RED" ;;
@@ -340,8 +321,7 @@ for est in "${ESTADOS[@]}"; do
     case "$sit" in
         UPTODATE)
             paso=$((paso+1))
-            echo; echo "${C_GREEN}  $paso) $n - listo para arrancar tarea nueva:${C_RESET}"
-            echo "${C_GREEN}       ./jornada.sh --reciclar \"$path\" --nueva-rama feat/$ag/<tarea>${C_RESET}" ;;
+            echo; echo "${C_GREEN}  $paso) $n - listo; reciclaje automatico no disponible.${C_RESET}" ;;
         MAIN_BEHIND)
             paso=$((paso+1))
             echo; echo "${C_YELLOW}  $paso) $TRUNK - actualizar la carpeta de referencia:${C_RESET}"
@@ -372,13 +352,12 @@ for est in "${ESTADOS[@]}"; do
             echo "${C_GRAY}       (verifica PR unico, CI/merge limpio y draft antes de mergear)${C_RESET}" ;;
         MERGED)
             paso=$((paso+1))
-            echo; echo "${C_YELLOW}  $paso) $n - rama ya mergeada (squash). Reciclala a una tarea nueva:${C_RESET}"
-            echo "${C_GREEN}       ./jornada.sh --reciclar \"$path\" --nueva-rama feat/$ag/<tarea> --borrar-rama-vieja${C_RESET}" ;;
+            echo; echo "${C_YELLOW}  $paso) $n - rama mergeada; reciclaje automatico no disponible.${C_RESET}" ;;
         BEHIND)
             paso=$((paso+1))
             echo; echo "${C_YELLOW}  $paso) $n - limpio pero $behind atras de $TRUNK:${C_RESET}"
             echo "${C_YELLOW}       git -C \"$path\" rebase $RTRUNK   (o --ejecutar lo hace solo)${C_RESET}"
-            echo "${C_YELLOW}       o tarea nueva: ./jornada.sh --reciclar \"$path\" --nueva-rama feat/$ag/<tarea>${C_RESET}" ;;
+            echo "${C_YELLOW}       Para una tarea nueva, el reciclaje automatico no esta disponible.${C_RESET}" ;;
         DETACHED)
             paso=$((paso+1))
             echo; echo "${C_RED}  $paso) $n - HEAD detached. Pasate a una rama:${C_RESET}"
