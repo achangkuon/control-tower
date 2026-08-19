@@ -12,7 +12,7 @@ const binding = Object.freeze({
 const proof = Object.freeze({
   schema: "recovery-proof", schema_version: 1, proof_id: "stop-proof-a", project_id: "project-a",
   old_claim_ref: "claim-a", old_delivery_ref: "delivery-a", old_assignment_ref: "assignment-a", generation: 4,
-  disposition: "ROLLED_BACK", termination_pairing_ref: "pairing-a", effect_readback: {}, repository_root: "/repo",
+  disposition: "ROLLED_BACK", host_epoch: 3, termination_pairing_ref: "pairing-a", effect_readback: {}, repository_root: "/repo",
   workspace_path: "/work/a", base_sha: "0".repeat(40), mode: "ON", runtime_binding_ref: "runtime-a", role_binding_ref: "role-a",
 })
 const request = Object.freeze({ assignment_ref: "assignment-a", termination_proof_ref: "stop-proof-a" })
@@ -88,6 +88,22 @@ describe("Canonical stop proof bound to the Main-owned root", () => {
       const { binder } = setup({ resolve: () => value })
       expect(code(() => binder.bind(request))).toBe("CT_STOP_PROOF_INVALID")
     }
+  })
+
+  // Decision 43. The same assignment_ref and worktree can be re-bound at a new host epoch after a release,
+  // and S4.4 creates its successor in that same worktree, so provenance alone cannot tell a proof about the
+  // live host from a proof about the predecessor it replaced. Only the epoch can.
+  test("refuses a proof from any host epoch other than the bound one", () => {
+    for (const host_epoch of [2, 4]) {
+      const { binder } = setup({ resolve: () => ({ ...proof, host_epoch }) })
+      expect(code(() => binder.bind(request))).toBe("CT_STOP_PROOF_INVALID")
+    }
+  })
+
+  test("refuses a proof that carries no host epoch at all", () => {
+    const { host_epoch, ...epochless } = proof
+    const { binder } = setup({ resolve: () => epochless })
+    expect(code(() => binder.bind(request))).toBe("CT_STOP_PROOF_INVALID")
   })
 
   test("refuses a ref that is not canonical and never resolves anything for it", () => {

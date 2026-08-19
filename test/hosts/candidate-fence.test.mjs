@@ -47,6 +47,7 @@ const terminationProof = (value, overrides = {}) => ({
   old_delivery_ref: `deliveries/${value.host_id}.json`,
   old_assignment_ref: value.assignment_ref,
   generation: 1,
+  host_epoch: 1,
   disposition: "NOT_STARTED",
   termination_pairing_ref: `termination/${value.host_id}.json`,
   effect_readback: {},
