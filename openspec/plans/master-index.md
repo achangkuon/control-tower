@@ -14,7 +14,7 @@
 
 La capacidad inmediata es `S4.5`, que aún requiere `session-plan` antes de ejecutar porque su forecast no garantiza una sola unidad ≤400. `S5.2` conserva su corrección técnica pendiente.
 
-**⚠️ Trabajo sin commitear en worktrees.** El worktree `s9-1-planning` tiene modificaciones sin commitear a este archivo y a `plan-9/STATUS.md`, más artefactos untracked de `S9.1`. Colisiona con cualquier cierre que escriba este índice; resolverlo antes de asignar `S9.1`. Fue exactamente el modo de fallo que casi pierde `S5.9`: trabajo completo, aplicado y untracked durante tres días.
+**`S9.1` está 🔵 EN CURSO y BLOQUEADA por una decisión del maintainer.** Su planificación está completa —nueve Módulos, veintisiete Tareas, nueve commits directos secuenciales de ≤400 líneas— pero la ejecución va `1/9 M` y `3/27 T`. `M9.1.1` está congelado y el candidato terminal de `M9.1.2` **no está aceptado, ni es reutilizable, ni entregable**: quedó como evidencia de diagnóstico. La próxima acción exacta es `await-fresh-rewrite-authorization` — el maintainer debe autorizar por separado descartarlo y reescribirlo antes de un RED fresco. `S9.1` no reanuda hasta entonces. `S9.3` quedó enumerada como Sesión nueva y arrastra el denominador global de 47 a 48; está 🔴 BLOQUEADA por autoridad de transporte.
 
 ## 🎯 Cola de ejecución
 
@@ -27,7 +27,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 
 ## 📊 Estado de un vistazo
 
-**Avance global**: 3/11 Planes cerrados (27%) · Sesiones cerradas en planes activos: 32/47 (68%). Cálculo auditable: P1 `16/19` + P4 `2/5` + P5 `8/12` + P7 `0/1` + P8 `6/8` + P9 `0/2` = `32/47`; P10 se excluye porque cerró 3/3 S. P2 no tiene denominador derivable.
+**Avance global**: 3/11 Planes cerrados (27%) · Sesiones cerradas en planes activos: 32/48 (67%). Cálculo auditable: P1 `16/19` + P4 `2/5` + P5 `8/12` + P7 `0/1` + P8 `6/8` + P9 `0/3` = `32/48`; el denominador subió de 47 a 48 porque `S9.3` quedó enumerada en el Plan 9; P10 se excluye porque cerró 3/3 S. P2 no tiene denominador derivable.
 
 | ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |
 |----|------|--------|---|------|-------|-----------|-----|
@@ -40,7 +40,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 | P6 | Campañas multiproyecto | 📋 PLANIFICADO | — (sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-6/STATUS.md) |
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | S7.1 | [STATUS](plan-7/STATUS.md) |
 | P8 | Release instalable | 🔵 EN CURSO | 75% (6/8 S) | — | Maintainer | S8.5, S8.6 | [STATUS](plan-8/STATUS.md) |
-| P9 | Slots seguros de Jornada y caché externa de Bun | 🟢 LISTO | 0% (0/2 S) | — | Maintainer | S9.1, S9.2 | [STATUS](plan-9/STATUS.md) |
+| P9 | Slots seguros de Jornada y caché externa de Bun | 🔵 EN CURSO | 0% (0/3 S) | — | Maintainer | S9.1 (🔵, esperando autorización), S9.2, S9.3 | [STATUS](plan-9/STATUS.md) |
 | P10 | Ejecución y supervisión autónoma de Jornada | ✅ COMPLETO | 100% (3/3 S) | — | Maintainer | — | [STATUS](plan-10/STATUS.md) |
 
 ## 🗂️ Planes archivados
