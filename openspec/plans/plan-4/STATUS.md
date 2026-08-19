@@ -8,8 +8,8 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
 | Outputs | Raíz primaria Main-owned con TUI adjunta no autoritativa, inspección/liveness por proceso/sesión y recuperación same-host WSL. |
-| Roadmap | `S4.1`, `S1.16` y `S4.2` están ✅ COMPLETO. `S4.5` está 🔵 EN CURSO con **`3/3 M` entregados** (`dc06cdf`, `ff680f4`, `529b273`, `a3e35ca`; 991 líneas, suite 774/0), pendiente sólo de una revisión de riesgo independiente antes de declararse ✅ COMPLETO. No aporta crédito hasta cerrar. `S4.3` y `S4.4` permanecen 📋 PLANIFICADO sólo por dependencias; la decisión 40 dejó `M4.4.2` decision-clean. P4 alcanza 2/5 S (40%). |
-| Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), decisiones 37–40 / Engram 9040/9042/9043/9044, [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). REQUIREMENTS §14 permanece byte-pinned como base histórica; esta spec enmienda el lifecycle futuro. |
+| Roadmap | `S4.1`, `S1.16`, `S4.2` y `S4.5` están ✅ COMPLETO. `S4.5` cerró con los nueve criterios verificados sobre `8fac8b3` (776 pass / 0 fail / 4.793 expectations); la decisión 42 autorizó exclusivamente sus dos fixtures de payload retroactivamente omitidos del Área. `S4.3` y `S4.4` permanecen 📋 PLANIFICADO sólo por dependencias. P4 alcanza 3/5 S (60%). |
+| Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), decisiones 37–42 / Engram 9040/9042/9043/9044/9079, [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). REQUIREMENTS §14 permanece byte-pinned como base histórica; esta spec enmienda el lifecycle futuro. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
 
@@ -229,11 +229,11 @@ Después del brief aprobado, Main despacha un root OpenCode en el worktree asign
 
 ## Sesión 4.5 — Raíz primaria Main-owned con vista adjunta
 
-**Estado:** 🔵 EN CURSO — los **tres Módulos están entregados** (`M4.5.1` `dc06cdf`; `M4.5.2` `ff680f4`+`529b273`; `M4.5.3` `a3e35ca`), 991 líneas authored en cuatro unidades revertibles, suite **774/0**. El cierre a ✅ COMPLETO espera una revisión de riesgo independiente sobre los nueve criterios. La elaboración técnica del 2026-08-18 (Engram 9064) fijó que S4.5 **no entra en una sola unidad ≤400**: forecast integral 800–1270 líneas authored, ejecutado como tres commits directos secuenciales, uno por Módulo. `M4.5.2` y `M4.5.3` pueden cruzar 400 por sí solos; si ocurre se parten más, sin excepción silenciosa.
+**Estado:** ✅ COMPLETO — los tres Módulos se entregaron en `dc06cdf`, `ff680f4`, `529b273` y `a3e35ca`; `8fac8b3` corrigió los dos bloqueos del primer 4R y endureció las fallas parciales. La revisión scoped final no encontró bloqueantes. Strict TDD: RED 3 pass / 2 fallos esperados; GREEN enfocado 14 pass / 0 fail / 88 expectations; suite completa 776 pass / 0 fail / 4.793 expectations; harness instalado pasó `herdr pane run ... opencode attach <loopback-url> --session <root-id>`. La elaboración técnica del 2026-08-18 (Engram 9064) fijó tres Módulos y cuatro commits directos revertibles.
 
 **Depende de:** `S4.2` ✅.
 
-**Área:** `hosts/root-binding.mjs`, `hosts/opencode-server.mjs`, `hosts/root-identity.mjs`, `hosts/opencode-view.mjs`, `hosts/herdr.mjs`, `hosts/production-provider.mjs`, `main-store/launch-consumer.mjs`, `install/lifecycle.mjs`, `install/runtime-payload.mjs`, `test/hosts/root-binding.test.mjs`, `test/hosts/opencode-server.test.mjs`, `test/hosts/root-identity.test.mjs`, `test/hosts/opencode-view.test.mjs`, `test/hosts/herdr.test.mjs`, `test/hosts/production-provider.test.mjs`, `test/install/lifecycle.test.mjs`, `test/install/runtime-payload.test.mjs`
+**Área:** `hosts/root-binding.mjs`, `hosts/opencode-server.mjs`, `hosts/root-identity.mjs`, `hosts/opencode-view.mjs`, `hosts/herdr.mjs`, `hosts/production-provider.mjs`, `main-store/launch-consumer.mjs`, `install/lifecycle.mjs`, `install/runtime-payload.mjs`, `test/hosts/root-binding.test.mjs`, `test/hosts/opencode-server.test.mjs`, `test/hosts/root-identity.test.mjs`, `test/hosts/opencode-view.test.mjs`, `test/hosts/herdr.test.mjs`, `test/hosts/production-provider.test.mjs`, `test/install/lifecycle.test.mjs`, `test/install/runtime-payload.test.mjs`, `test/install/entrypoint-resolution.test.mjs`, `test/install/launch-worker-cli.test.mjs`
 
 **Recurso:** namespace owner-only de backend/proceso/puerto loopback/secreto/binding de raíz por worktree asignado y una vista TUI local; sin Main store, DB, migraciones ni token de entrega.
 
@@ -247,17 +247,18 @@ Después del brief aprobado, Main despacha un root OpenCode en el worktree asign
 - `derivable` — independencia de vista. **Criterio:** attach usa el root ID persistido; input TUI es steering y cierre/fallo no altera backend, root ni epoch. Falsificable: la vista concede autoridad o su muerte detiene la raíz. **Autoridad:** decisión 37.
 - `escala` — **RESUELTA por el maintainer el 2026-08-18 (decisión 38): un backend Main-owned aislado por worktree asignado.** Pregunta original: ¿backend por worktree o compartido entre worktrees? **Clase:** contrato visible del producto; seguridad y permisos. **Evidencia:** Engram 9040 no elegía topología; 9035/9037 recomendaban aislamiento. **Resolución:** cada backend tiene proceso, puerto loopback, secreto, root binding y evidencia propios; se descarta compartir por fencing y blast radius cross-worktree. **Falsificable:** dos worktrees comparten cualquiera de esas identidades o un fallo afecta al otro. **Contaminaba:** `M4.5.2`, `S4.5`, `S4.3`, `S4.4`, `S7.1`.
 - `escala` — **RESUELTA por el maintainer el 2026-08-18 (decisión 39): Herdr queda temporalmente sólo como launcher reemplazable de una vista `opencode attach`.** Pregunta original: ¿launcher directo Main-owned o Herdr temporal view-only? **Clase:** contrato visible del producto; seguridad y permisos; dependencias o evidencia contradictorias. **Evidencia:** 9040 permitía ambas políticas sin elegir. **Resolución:** Main crea primero backend/raíz; Herdr después abre el pane sobre el root exacto, sin autoridad ni efecto de lifecycle, con attach manual obligatorio. Se difiere el launcher directo como mejora reemplazable. **Falsificable:** el pane es raíz/transporte, Intercom integra el camino, una entrada autoriza Main, close/fallo altera backend/root/epoch o falta fallback manual. **Contaminaba:** `M4.5.3`, `S4.5`, `S7.1`.
+- `escala` — **RESUELTA por el maintainer el 2026-08-18 (decisión 42 / Engram 9079):** ampliar retroactivamente y exclusivamente el Área a `test/install/entrypoint-resolution.test.mjs` y `test/install/launch-worker-cli.test.mjs`, fixtures obligatorios del payload/runtime instalado. **Clase:** expansión de alcance; dependencias o evidencia contradictorias. **Contaminaba:** sólo `S4.5` y sus dependientes `S4.3`, `S4.4`, `S7.1`. No autoriza otros paths ni relaja un floor de seguridad.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
-- [ ] Main persiste exactamente una raíz primaria `gentle-orchestrator` por assignment/worktree, ligada a backend, proceso, sesión y epoch exactos
-- [ ] Cada worktree asignado usa un backend Main-owned aislado con proceso, puerto loopback, secreto, root binding y evidencia propios; ninguna identidad se comparte entre worktrees
-- [ ] Hijos nativos allowlisted conservan delegación pero ningún child ID reemplaza el root binding
-- [ ] Main abre automáticamente, después de crear backend/raíz, un pane Herdr que ejecuta `opencode attach` sobre el root ID exacto
-- [ ] Steering TUI no autoriza despacho, entrega, seguridad, identidad ni transición Main; el pane no es la raíz e Intercom no es transporte
-- [ ] Cerrar/fallar Herdr o la TUI no detiene, reemplaza ni invalida backend, raíz o epoch
-- [ ] El operador siempre puede adjuntar manualmente `opencode attach` al root exacto cuando falla el launcher visible
-- [ ] Herdr no integra el launch de backend/root ni health, stop, rehidratación o recovery críticos; el launcher directo Main-owned queda diferido como reemplazo compatible
-- [ ] Binding ausente/ambiguo/ajeno falla cerrado y el diff no toca paths fuera de `Área`
+- [x] Main persiste exactamente una raíz primaria `gentle-orchestrator` por assignment/worktree, ligada a backend, proceso, sesión y epoch exactos
+- [x] Cada worktree asignado usa un backend Main-owned aislado con proceso, puerto loopback, secreto, root binding y evidencia propios; ninguna identidad se comparte entre worktrees
+- [x] Hijos nativos allowlisted conservan delegación pero ningún child ID reemplaza el root binding
+- [x] Main abre automáticamente, después de crear backend/raíz, un pane Herdr que ejecuta `opencode attach` sobre el root ID exacto
+- [x] Steering TUI no autoriza despacho, entrega, seguridad, identidad ni transición Main; el pane no es la raíz e Intercom no es transporte
+- [x] Cerrar/fallar Herdr o la TUI no detiene, reemplaza ni invalida backend, raíz o epoch
+- [x] El operador siempre puede adjuntar manualmente `opencode attach` al root exacto cuando falla el launcher visible
+- [x] Herdr no integra el launch de backend/root ni health, stop, rehidratación o recovery críticos; el launcher directo Main-owned queda diferido como reemplazo compatible
+- [x] Binding ausente/ambiguo/ajeno falla cerrado y el diff no toca paths fuera de `Área`, ampliada exclusivamente por la decisión 42 a los dos fixtures de payload/runtime instalado
 
 **Forecast de revisión:** aun con las decisiones 38/39 resueltas, falta `session-plan` para garantizar una sola unidad ≤400. Se permite una unidad sólo si el forecast integral queda ≤400; si lo supera, `M4.5.1`–`M4.5.2` y `M4.5.3` deben ser commits secuenciales verificables, o una Sesión nueva si no pueden quedar independientemente revertibles. Nunca se agrega un quinto nivel ni excepción silenciosa.
 
@@ -300,7 +301,7 @@ Esto satisface por construcción el criterio «ningún child ID reemplaza el roo
 
 **Bug de empaquetado que este cableado destapó:** el payload instalado tampoco cargaba `hosts/root-binding.mjs` ni `hosts/root-identity.mjs` de `M4.5.1`. La brecha estaba latente porque nada los importaba todavía; un `torre` instalado habría fallado al resolver el provider.
 
-**⚠️ Dos paths fuera del `Área` declarada:** `test/install/entrypoint-resolution.test.mjs` y `test/install/launch-worker-cli.test.mjs` asertan la lista del payload y fabrican un runtime instalado. Ampliar el payload los deja rojos **por fixture, no por comportamiento**. Se actualizó únicamente su lista de archivos. Se declara explícitamente en vez de silenciarlo: el `Área` de `S4.5` no anticipó que tocar el payload arrastra a sus fixtures.
+**Alcance ampliado por decisión 42 / Engram 9079:** `test/install/entrypoint-resolution.test.mjs` y `test/install/launch-worker-cli.test.mjs` asertan la lista del payload y fabrican un runtime instalado. Ampliar el payload los deja rojos **por fixture, no por comportamiento**; la autoridad agrega exclusivamente esos dos paths y no normaliza ningún otro drift.
 
 **Hallazgo de seguridad verificado:** `opencode serve` arranca **sin autenticación** si falta `OPENCODE_SERVER_PASSWORD` — avisa `server is unsecured` y `GET /session` responde `200` sin credenciales. El secreto por worktree de la decisión 38 es obligatorio, no un endurecimiento opcional.
 
@@ -340,13 +341,11 @@ Por lo tanto la respuesta real del servidor **no puede alimentar `parseRootIdent
 
 **El fallback manual se deriva del target, no del resultado del lanzamiento**, así que existe funcione o no el launcher. Una vista que no abre queda **degradada, no fatal**: falla con `CT_VIEW_UNAVAILABLE` y devuelve en el error el comando exacto que el operador puede correr a mano.
 
-## Cierre de S4.5 — pendiente de verificación independiente
+## Cierre de S4.5 — verificado
 
-Los tres Módulos están entregados en `master`: `dc06cdf`, `ff680f4`, `529b273` y `a3e35ca`, **991 líneas authored** en cuatro unidades independientemente revertibles, contra un forecast de 800–1270. Suite **774 pass / 0 fail**.
+El 4R inicial encontró dos bloqueos deterministas: producción todavía usaba el lanzamiento legacy Herdr-owned y el parser de creación exigía un `agent` imposible en la respuesta `POST`. `8fac8b3` los corrigió: producción ejecuta `backend.start` → `rootBinding.bind` durable → `view.attach` no autoritativo; creación puede omitir `agent`, pero conserva ID creado exacto, schema vivo parentless y readback exacto del agente. Si falla el binding, detiene best-effort el backend no ligado; si falla la vista, conserva el binding y expone únicamente el attach manual exacto.
 
-**La Sesión NO se declara ✅ COMPLETO todavía.** Cuatro commits de código sobre una frontera de seguridad —identidad de raíz, secreto por worktree, aislamiento de backend, autoridad de la vista— no se cierran con la sola palabra de quien los escribió. Está corriendo una revisión de riesgo independiente contra los nueve criterios de aceptación, con mandato adversarial: intentar atar un child ID como raíz pese a los tres candados, buscar fugas del secreto por argv/logs/comando del pane/fallback manual, atacar la frontera de la vista, revisar el spawn detached de larga vida por huérfanos y fds, y marcar cualquier test que pase por el motivo equivocado.
-
-El estado pasa a ✅ COMPLETO sólo cuando esa revisión vuelva sin hallazgos bloqueantes, y sus hallazgos se registran acá tal como lleguen.
+El validator scoped final no encontró bloqueantes. Su único warning —un `release?.()` de preflight que podría ocultar un error tipado— es preexistente en la base y queda fuera de S4.5; no se atribuye a esta Sesión. Los nueve criterios pasan, incluido el noveno tras la ampliación exclusiva autorizada por la decisión 42. S4.5 queda ✅ COMPLETO.
 
 ## Sesión 4.3 — Inspección, liveness y rehidratación segura
 
