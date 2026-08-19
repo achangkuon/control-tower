@@ -1117,124 +1117,113 @@ describe("opaque and disconnected boundaries", () => {
 
 describe("completed work binding", () => {
   const cases = JSON.parse(readFileSync(join(projectRoot, "test/fixtures/contracts/schema-cases-v1.json"), "utf8"))
-  // The work must sit inside the decision's frozen scope, so the candidate is the S5.7 work that decision froze.
-  const candidate = () => { const { candidate_revision: _frozen, ...identity } = cases.candidateRevision; return { ...identity, session_id: "S5.7" } }
+  // The work must sit inside the decision's frozen scope, and parkedResponse freezes S5.8.
+  const candidate = () => { const { candidate_revision: _frozen, ...identity } = cases.candidateRevision; return { ...identity, session_id: "S5.8" } }
+  const revision = () => freezeCandidate(candidate()).candidate_revision
   const assumption = Object.freeze({
     statement: "No maintainer option applied, so the work proceeded under the frozen scope only.",
-    origin: { session_id: "S5.7", module_id: "M5.7.2" },
+    origin: { session_id: "S5.8", module_id: "M5.8.1" },
   })
-  const optionInput = () => ({
-    actor: "MAIN", project_id: "project-a", candidate: candidate(),
-    parked_decision: cases.parkedDecision, parked_decision_response: cases.parkedDecisionResponse,
-  })
-  const assumedInput = () => ({
-    actor: "MAIN", project_id: "project-a", candidate: candidate(),
-    parked_decision: cases.parkedDecision, assumption,
-  })
-  const expected = () => createCompletedWorkBinding({
-    candidate: candidate(), parked_decision: cases.parkedDecision, parked_decision_response: cases.parkedDecisionResponse,
-  })
+  // A binding may only name sources this store actually holds: a parked decision it parked, and an
+  // authorization it approved for this exact candidate. Building that state IS the precondition under test.
+  const governed = (store, id = "auth-work-a") => {
+    activateJornada(store)
+    const { parked_decision, parked_decision_response } = parkedResponse(id)
+    const base = authorizationRecord(id)
+    store.createAuthorization({ actor: "MAIN", ...base, extensions: { ...base.extensions, "control-tower/candidate-revision": revision() } })
+    store.consumeAuthorization({ actor: "MAIN", authorization_id: id, candidate_revision: revision(), decision: "APPROVED", expected_revision: 1, parked_decision, parked_decision_response })
+    store.parkDecision(parkingInput(parked_decision, provenance()))
+    return { parked_decision, parked_decision_response }
+  }
+  const optionInput = (g) => ({ actor: "MAIN", project_id: "project-a", candidate: candidate(), parked_decision: g.parked_decision, parked_decision_response: g.parked_decision_response })
+  const assumedInput = (g) => ({ actor: "MAIN", project_id: "project-a", candidate: candidate(), parked_decision: g.parked_decision, assumption })
+  const expected = (g) => createCompletedWorkBinding({ candidate: candidate(), parked_decision: g.parked_decision, parked_decision_response: g.parked_decision_response })
 
   test("persists the binding through the canonical writer and reads back the exact derived record", () => {
-    const { store, root } = setup()
-    const result = store.bindCompletedWork(optionInput())
+    const { store, root } = setup(), g = governed(store)
+    const result = store.bindCompletedWork(optionInput(g))
     expect(result.replayed).toBe(false)
     expect(result.revision).toBe(1)
-    expect(result.completed_work_binding).toEqual(expected())
-    expect(store.readCompletedWorkBinding(expected().binding_id)).toEqual(expected())
-    expect(existsSync(join(root, "completed-work-bindings", `${expected().binding_id}.json`))).toBe(true)
+    expect(result.completed_work_binding).toEqual(expected(g))
+    expect(store.readCompletedWorkBinding(expected(g).binding_id)).toEqual(expected(g))
+    expect(existsSync(join(root, "completed-work-bindings", `${expected(g).binding_id}.json`))).toBe(true)
   })
 
   test("records an explicit assumption under the same writer, with its own derived digest", () => {
-    const { store } = setup()
-    const result = store.bindCompletedWork(assumedInput())
+    const { store } = setup(), g = governed(store)
+    const result = store.bindCompletedWork(assumedInput(g))
     expect(result.completed_work_binding.governed_by).toBe("ASSUMPTION")
     expect(result.completed_work_binding.assumption).toEqual(assumption)
     expect(Object.hasOwn(result.completed_work_binding, "option_id")).toBe(false)
     expect(store.readCompletedWorkBinding(result.completed_work_binding.binding_id)).toEqual(result.completed_work_binding)
   })
 
-  test("byte-identical replay is idempotent and adds no second effect", () => {
+  // The heart of it: a self-consistent decision and response are computable offline, so deriving from them
+  // is caller assertion with extra steps unless this store actually holds both.
+  test("refuses a decision this store never parked, however well-formed the artifacts are", () => {
+    const { store, root } = setup()
+    const forged = parkedResponse("auth-never-parked")
+    expect(code(() => store.bindCompletedWork(optionInput(forged)))).toBe("CT_WORK_BINDING_UNPARKED")
+    expect(code(() => store.bindCompletedWork(assumedInput(forged)))).toBe("CT_WORK_BINDING_UNPARKED")
+    expect(existsSync(join(root, "completed-work-bindings"))).toBeFalse()
+  })
+
+  test("refuses an option whose authorization this store never approved for this work", () => {
     const { store } = setup()
-    const first = store.bindCompletedWork(optionInput())
-    const second = store.bindCompletedWork(optionInput())
+    const { parked_decision, parked_decision_response } = parkedResponse("auth-unapproved")
+    store.parkDecision(parkingInput(parked_decision, provenance()))
+    expect(code(() => store.bindCompletedWork(optionInput({ parked_decision, parked_decision_response })))).toBe("CT_AUTH_INVALID")
+    // The assumption genus applies no option, so it needs the parking only — and that one is real.
+    expect(store.bindCompletedWork(assumedInput({ parked_decision })).completed_work_binding.governed_by).toBe("ASSUMPTION")
+  })
+
+  // A self-consistent pair reusing the id of a decision parked here: only the persisted digest catches it.
+  test("refuses a parked decision whose persisted digest differs from the one supplied", () => {
+    const { store } = setup(), g = governed(store)
+    const divergent = createParkedDecision({ ...g.parked_decision, parked_decision_digest: undefined, checkpoint: `${g.parked_decision.checkpoint} changed` })
+    const response = createParkedDecisionResponse({ parked_decision: divergent, response_id: "response-divergent", authorization_id: "auth-work-a", authorization_revision: 1, option_id: "option-a", responded_at: "2026-08-11T13:05:00Z" })
+    expect(divergent.parked_decision_id).toBe(g.parked_decision.parked_decision_id)
+    expect(code(() => store.bindCompletedWork({ ...optionInput(g), parked_decision: divergent, parked_decision_response: response }))).toBe("CT_WORK_BINDING_UNPARKED")
+  })
+
+  test("byte-identical replay is idempotent and adds no second effect", () => {
+    const { store } = setup(), g = governed(store)
+    const first = store.bindCompletedWork(optionInput(g))
+    const second = store.bindCompletedWork(optionInput(g))
     expect(second).toMatchObject({ revision: 1, replayed: true })
     expect(second.completed_work_binding).toEqual(first.completed_work_binding)
     expect(readFileSync(second.record_path, "utf8")).toBe(readFileSync(first.record_path, "utf8"))
   })
 
-  // The same work cannot be re-attributed to a different genus or decision after the fact.
   test("divergent replay fails closed and leaves the persisted bytes untouched", () => {
-    const { store } = setup()
-    const first = store.bindCompletedWork(optionInput())
+    const { store } = setup(), g = governed(store)
+    const first = store.bindCompletedWork(optionInput(g))
     const before = readFileSync(first.record_path, "utf8")
-    expect(code(() => store.bindCompletedWork(assumedInput()))).toBe("CT_WORK_BINDING_REPLAY_DIVERGENT")
+    expect(code(() => store.bindCompletedWork(assumedInput(g)))).toBe("CT_WORK_BINDING_REPLAY_DIVERGENT")
     expect(readFileSync(first.record_path, "utf8")).toBe(before)
   })
 
   test("refuses both genera at once, neither genus, a foreign project and a non-Main actor", () => {
-    const { store } = setup()
-    expect(code(() => store.bindCompletedWork({ ...optionInput(), assumption }))).toBe("CT_WORK_BINDING_INPUT_INVALID")
-    const { parked_decision_response: _dropped, ...neither } = optionInput()
+    const { store } = setup(), g = governed(store)
+    expect(code(() => store.bindCompletedWork({ ...optionInput(g), assumption }))).toBe("CT_WORK_BINDING_INPUT_INVALID")
+    const { parked_decision_response: _dropped, ...neither } = optionInput(g)
     expect(code(() => store.bindCompletedWork(neither))).toBe("CT_WORK_BINDING_INPUT_INVALID")
-    expect(code(() => store.bindCompletedWork({ ...optionInput(), project_id: "project-b" }))).toBe("CT_PROJECT_MISMATCH")
-    expect(code(() => store.bindCompletedWork({ ...optionInput(), actor: "WORKER" }))).toBe("CT_AUTH_INVALID")
+    expect(code(() => store.bindCompletedWork({ ...optionInput(g), project_id: "project-b" }))).toBe("CT_PROJECT_MISMATCH")
+    expect(code(() => store.bindCompletedWork({ ...optionInput(g), actor: "WORKER" }))).toBe("CT_AUTH_INVALID")
   })
 
-  // The linkage that makes this THIS work's decision: outside the frozen scope, nothing may be sealed.
   test("refuses work whose Sesión the decision never froze", () => {
-    const { store, root } = setup()
+    const { store } = setup(), g = governed(store)
     const foreign = { ...candidate(), session_id: "S7.3" }
-    expect(code(() => store.bindCompletedWork({ ...optionInput(), candidate: foreign }))).toBe("CT_WORK_BINDING_INVALID")
-    expect(code(() => store.bindCompletedWork({ ...assumedInput(), candidate: foreign }))).toBe("CT_WORK_BINDING_INVALID")
-    expect(code(() => store.bindCompletedWork({ ...assumedInput(), assumption: { ...assumption, origin: { session_id: "S7.3", module_id: "M7.3.1" } } }))).toBe("CT_WORK_BINDING_INVALID")
-    expect(existsSync(join(root, "completed-work-bindings"))).toBeFalse()
+    expect(code(() => store.bindCompletedWork({ ...optionInput(g), candidate: foreign }))).toBe("CT_WORK_BINDING_INVALID")
+    expect(code(() => store.bindCompletedWork({ ...assumedInput(g), candidate: foreign }))).toBe("CT_WORK_BINDING_INVALID")
+    expect(code(() => store.bindCompletedWork({ ...assumedInput(g), assumption: { ...assumption, origin: { session_id: "S7.3", module_id: "M7.3.1" } } }))).toBe("CT_WORK_BINDING_INVALID")
   })
 
   test("refuses a response that selects an unenumerated option or a candidate that forges its own revision", () => {
-    const { store } = setup()
-    const response = { ...cases.parkedDecisionResponse, option_id: "option-z" }
-    expect(code(() => store.bindCompletedWork({ ...optionInput(), parked_decision_response: response }))).toBe("CT_WORK_BINDING_INVALID")
-    const forged = { ...candidate(), candidate_revision: `sha256:${"0".repeat(64)}` }
-    expect(code(() => store.bindCompletedWork({ ...optionInput(), candidate: forged }))).toBe("CT_WORK_BINDING_INVALID")
-  })
-
-  // A coherently foreign payload under an envelope that names our project: the envelope check alone misses it.
-  test("refuses a readback whose binding belongs to another project even when the envelope claims ours", () => {
-    const { store, root } = setup()
-    const foreign = createCompletedWorkBinding({
-      candidate: { ...candidate(), project_id: "project-b" },
-      parked_decision: cases.parkedDecision, parked_decision_response: cases.parkedDecisionResponse,
-    })
-    mkdirSync(join(root, "completed-work-bindings"), { recursive: true, mode: 0o700 })
-    writeFileSync(join(root, "completed-work-bindings", `${foreign.binding_id}.json`), `${JSON.stringify({
-      actor: "MAIN", project_id: "project-a", candidate: freezeCandidate({ ...candidate(), project_id: "project-b" }),
-      parked_decision: cases.parkedDecision, parked_decision_response: cases.parkedDecisionResponse,
-      completed_work_binding: foreign, revision: 1, revision_history: [],
-    })}\n`)
-    expect(code(() => store.readCompletedWorkBinding(foreign.binding_id))).toBe("CT_WORK_BINDING_INVALID")
-  })
-
-  // A record we cannot read is our failure, not a verdict: an operator must be able to retry rather than
-  // treat the attribution as permanently corrupt.
-  test("separates a record it cannot read from a record that is invalid", () => {
-    const { store } = setup()
-    const result = store.bindCompletedWork(optionInput())
-    writeFileSync(result.record_path, "{ truncated")
-    expect(code(() => store.readCompletedWorkBinding(expected().binding_id))).toBe("CT_WORK_BINDING_UNREADABLE")
-    writeFileSync(result.record_path, JSON.stringify({ actor: "MAIN", project_id: "project-a" }))
-    expect(code(() => store.readCompletedWorkBinding(expected().binding_id))).toBe("CT_WORK_BINDING_INVALID")
-  })
-
-  // Losing the CAS race to a concurrent identical writer must land on the same replay, not on a failure.
-  test("recovers a lost commit race into an idempotent replay", () => {
-    let inject = false
-    const { store } = setup({ beforeCommit: (path, value) => { if (inject) { inject = false; writeFileSync(path, `${JSON.stringify(value)}\n`) } } })
-    inject = true
-    const result = store.bindCompletedWork(optionInput())
-    expect(result.replayed).toBe(true)
-    expect(result.revision).toBe(1)
-    expect(result.completed_work_binding).toEqual(expected())
+    const { store } = setup(), g = governed(store)
+    expect(code(() => store.bindCompletedWork({ ...optionInput(g), parked_decision_response: { ...g.parked_decision_response, option_id: "option-z" } }))).toBe("CT_WORK_BINDING_INVALID")
+    expect(code(() => store.bindCompletedWork({ ...optionInput(g), candidate: { ...candidate(), candidate_revision: `sha256:${"0".repeat(64)}` } }))).toBe("CT_WORK_BINDING_INVALID")
   })
 
   test("reads back nothing for an unknown binding rather than inventing one", () => {
@@ -1242,20 +1231,19 @@ describe("completed work binding", () => {
     expect(code(() => store.readCompletedWorkBinding("completed-work-missing"))).toBe("CT_WORK_BINDING_NOT_FOUND")
   })
 
-  // T5.10.1.4 — a failed write leaves nothing behind, so no half-attributed work can ever be read.
   test("writes atomically: a failing commit persists no partial record", () => {
     let failing = false
     const { store, root } = setup({ beforeCommit: () => { if (failing) throw new Error("commit barrier") } })
-    const path = join(root, "completed-work-bindings", `${expected().binding_id}.json`)
+    const g = governed(store)
+    const path = join(root, "completed-work-bindings", `${expected(g).binding_id}.json`)
     failing = true
-    expect(code(() => store.bindCompletedWork(optionInput()))).toBe("CT_STORE_WRITE_FAILED")
+    expect(code(() => store.bindCompletedWork(optionInput(g)))).toBe("CT_STORE_WRITE_FAILED")
     expect(existsSync(path)).toBeFalse()
     failing = false
-    store.bindCompletedWork(optionInput())
+    store.bindCompletedWork(optionInput(g))
     expect(existsSync(path)).toBeTrue()
   })
 
-  // The record is provenance, so a readback re-derives it from its own stored sources instead of trusting bytes.
   test("refuses a persisted record whose stored provenance no longer derives its binding", () => {
     for (const tamper of [
       (record) => { record.completed_work_binding.option_id = "option-b" },
@@ -1267,22 +1255,57 @@ describe("completed work binding", () => {
       (record) => { record.actor = "WORKER" },
       (record) => { record.assumption = assumption },
     ]) {
-      const { store } = setup()
-      const result = store.bindCompletedWork(optionInput())
+      const { store } = setup(), g = governed(store)
+      const result = store.bindCompletedWork(optionInput(g))
       const record = JSON.parse(readFileSync(result.record_path, "utf8"))
       tamper(record)
       writeFileSync(result.record_path, JSON.stringify(record))
-      expect(code(() => store.readCompletedWorkBinding(expected().binding_id))).toBe("CT_WORK_BINDING_INVALID")
+      expect(code(() => store.readCompletedWorkBinding(expected(g).binding_id))).toBe("CT_WORK_BINDING_INVALID")
     }
   })
 
+  // A coherently foreign payload under an envelope that names our project: the envelope check alone misses it.
+  test("refuses a readback whose binding belongs to another project even when the envelope claims ours", () => {
+    const { store, root } = setup(), g = governed(store)
+    const foreignCandidate = { ...candidate(), project_id: "project-b" }
+    const foreign = createCompletedWorkBinding({ candidate: foreignCandidate, parked_decision: g.parked_decision, parked_decision_response: g.parked_decision_response })
+    mkdirSync(join(root, "completed-work-bindings"), { recursive: true, mode: 0o700 })
+    writeFileSync(join(root, "completed-work-bindings", `${foreign.binding_id}.json`), `${JSON.stringify({
+      actor: "MAIN", project_id: "project-a", candidate: freezeCandidate(foreignCandidate),
+      parked_decision: g.parked_decision, parked_decision_response: g.parked_decision_response,
+      completed_work_binding: foreign, revision: 1, revision_history: [],
+    })}\n`)
+    expect(code(() => store.readCompletedWorkBinding(foreign.binding_id))).toBe("CT_WORK_BINDING_INVALID")
+  })
+
+  // A record we cannot read is our failure, not a verdict on the work.
+  test("separates a record it cannot read from a record that is invalid", () => {
+    const { store } = setup(), g = governed(store)
+    const result = store.bindCompletedWork(optionInput(g))
+    writeFileSync(result.record_path, "{ truncated")
+    expect(code(() => store.readCompletedWorkBinding(expected(g).binding_id))).toBe("CT_WORK_BINDING_UNREADABLE")
+    writeFileSync(result.record_path, JSON.stringify({ actor: "MAIN", project_id: "project-a" }))
+    expect(code(() => store.readCompletedWorkBinding(expected(g).binding_id))).toBe("CT_WORK_BINDING_INVALID")
+  })
+
+  test("recovers a lost commit race into an idempotent replay", () => {
+    let inject = false
+    const { store } = setup({ beforeCommit: (path, value) => { if (inject && path.includes("completed-work-bindings")) { inject = false; writeFileSync(path, `${JSON.stringify(value)}\n`) } } })
+    const g = governed(store)
+    inject = true
+    const result = store.bindCompletedWork(optionInput(g))
+    expect(result.replayed).toBe(true)
+    expect(result.revision).toBe(1)
+    expect(result.completed_work_binding).toEqual(expected(g))
+  })
+
   test("returns a deeply frozen binding, so a reader cannot mutate the provenance it was handed", () => {
-    const { store } = setup()
-    const result = store.bindCompletedWork(optionInput())
-    const readback = store.readCompletedWorkBinding(expected().binding_id)
+    const { store } = setup(), g = governed(store)
+    const result = store.bindCompletedWork(optionInput(g))
+    const readback = store.readCompletedWorkBinding(expected(g).binding_id)
     expect(Object.isFrozen(result.completed_work_binding)).toBeTrue()
     expect(Object.isFrozen(readback)).toBeTrue()
     expect(() => { "use strict"; readback.option_id = "option-b" }).toThrow(TypeError)
-    expect(store.readCompletedWorkBinding(expected().binding_id).option_id).toBe("option-a")
+    expect(store.readCompletedWorkBinding(expected(g).binding_id).option_id).toBe("option-a")
   })
 })

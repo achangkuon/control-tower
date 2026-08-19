@@ -293,6 +293,17 @@ export const createMainStore = ({ root, authority, capability, beforeCommit, tes
         })
       } catch (error) { fail("CT_WORK_BINDING_INVALID", "Completed work binding sources are invalid or mismatched", error) }
       if (completed_work_binding.project_id !== binding.project_id) fail("CT_PROJECT_MISMATCH", "Completed work belongs to a foreign project")
+      // Decision 30 forbids caller assertion, and both digests above are computable offline, so deriving from
+      // caller-supplied artifacts is only caller assertion with extra steps. The decision must actually have
+      // been parked HERE, and the option must trace to an authorization this store approved for THIS work.
+      const parkedPath = parkingPath(parked.parked_decision_id)
+      if (!existsSync(parkedPath)) fail("CT_WORK_BINDING_UNPARKED", "Parked decision was never parked in this store")
+      let persisted
+      try { persisted = validate("parkedDecision", parse(parkedPath).parked_decision) }
+      catch (error) { fail("CT_WORK_BINDING_UNPARKED", "Persisted parked decision could not be resolved", error) }
+      if (persisted.parked_decision_digest !== parked.parked_decision_digest) fail("CT_WORK_BINDING_UNPARKED", "Parked decision differs from the one parked in this store")
+      // An assumption means no option was applied, so there is no authorization to resolve — only the parking.
+      if (underOption) approvedAuthorizationFor(response.authorization_id, candidate.candidate_revision)
       const record = {
         actor: "MAIN", project_id: binding.project_id, candidate, parked_decision: parked,
         ...(underOption ? { parked_decision_response: response } : { assumption: completed_work_binding.assumption }),
