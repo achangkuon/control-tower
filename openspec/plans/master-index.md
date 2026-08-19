@@ -1,7 +1,7 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-19 contra `master@468b733`. La autoridad vigente es Moshi → Main → raíz primaria OpenCode con TUI adjunta no autoritativa; Herdr no pertenece al lifecycle crítico.
+> Última reconciliación: 2026-08-19 contra `master@c79866b`. La autoridad vigente es Moshi → Main → raíz primaria OpenCode con TUI adjunta no autoritativa; Herdr no pertenece al lifecycle crítico.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md).
 
 ## 📍 Punto de retoma
@@ -15,6 +15,8 @@ De ahí salió una **regla derivada aplicable a todo el repositorio**, anotada e
 P5 pasa a 9/12 S (75%). `S5.5` y `S4.4` quedan 🟢 LISTO, y la cola la encabeza `S4.4`. Sigue sin dueño ni Sesión la cláusula de §14.3 sobre defaults versionados de liveness, y `S5.2` conserva su corrección técnica pendiente.
 
 **`S9.1` está 🔵 EN CURSO y BLOQUEADA por una decisión del maintainer.** Su planificación está completa —nueve Módulos, veintisiete Tareas, nueve commits directos secuenciales de ≤400 líneas— pero la ejecución va `1/9 M` y `3/27 T`. `M9.1.1` está congelado y el candidato terminal de `M9.1.2` **no está aceptado, ni es reutilizable, ni entregable**: quedó como evidencia de diagnóstico. La próxima acción exacta es `await-fresh-rewrite-authorization` — el maintainer debe autorizar por separado descartarlo y reescribirlo antes de un RED fresco. `S9.1` no reanuda hasta entonces. `S9.3` está 🔴 BLOQUEADA por autoridad de transporte.
+
+**Deuda auditada y triada el mismo día.** Una auditoría de pendientes verificó cinco deudas técnicas contra el código, y la **decisión 46** las resolvió todas. Entregada: el piso de puerto loopback, acotado en cinco predicados con test de borde en cada uno (`1bc14d6`). Aceptadas como residuales documentados: el acoplamiento de expiración y el supuesto reclamable de `S5.10`. Pendiente de enumerar: una Sesión para los defaults de liveness versionados de §14.3. Y el lock huérfano de `withLock` —hallazgo 1 de los tres que bloquean `S5.2`, ubicado en `main-store/store.mjs:104-124`— se arreglará **dentro** de la segunda corrección de `S5.2`, de modo que **`S5.2`, `S5.3` y esa deuda esperan todas la misma autorización del maintainer**.
 
 ## 🎯 Cola de ejecución
 
