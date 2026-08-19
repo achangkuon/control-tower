@@ -1,0 +1,31 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://control-tower.local/schemas/completed-work-binding-v1.schema.json","type":"object","additionalProperties":false,
+  "required":["schema","schema_version","binding_id","candidate_revision","project_id","plan_id","session_id","assignment_id","base_sha","result_sha","tree_sha","parked_decision_id","parked_decision_digest","session_plan_snapshot_digest","governed_by","binding_digest"],
+  "oneOf":[
+    {"required":["governed_by","option_id"],"properties":{"governed_by":{"const":"OPTION"}},"not":{"anyOf":[{"required":["assumption"]},{"required":["assumption_digest"]}]}},
+    {"required":["governed_by","assumption","assumption_digest"],"properties":{"governed_by":{"const":"ASSUMPTION"}},"not":{"required":["option_id"]}}
+  ],
+  "properties":{
+    "schema":{"const":"completed-work-binding"},"schema_version":{"const":1},
+    "binding_id":{"$ref":"artifact-ref-v1.schema.json#/$defs/slug"},
+    "candidate_revision":{"$ref":"artifact-ref-v1.schema.json#/$defs/digest"},
+    "project_id":{"$ref":"artifact-ref-v1.schema.json#/$defs/slug"},
+    "plan_id":{"$ref":"artifact-ref-v1.schema.json#/$defs/slug"},
+    "session_id":{"type":"string","minLength":1},
+    "assignment_id":{"$ref":"artifact-ref-v1.schema.json#/$defs/slug"},
+    "base_sha":{"$ref":"artifact-ref-v1.schema.json#/$defs/gitSha"},
+    "result_sha":{"$ref":"artifact-ref-v1.schema.json#/$defs/gitSha"},
+    "tree_sha":{"$ref":"artifact-ref-v1.schema.json#/$defs/gitSha"},
+    "parked_decision_id":{"$ref":"artifact-ref-v1.schema.json#/$defs/slug"},
+    "parked_decision_digest":{"$ref":"artifact-ref-v1.schema.json#/$defs/digest"},
+    "session_plan_snapshot_digest":{"$ref":"artifact-ref-v1.schema.json#/$defs/digest"},
+    "governed_by":{"enum":["OPTION","ASSUMPTION"]},
+    "option_id":{"$ref":"artifact-ref-v1.schema.json#/$defs/slug"},
+    "assumption":{"type":"object","additionalProperties":false,"required":["statement","origin"],"properties":{
+      "statement":{"type":"string","minLength":20},
+      "origin":{"type":"object","additionalProperties":false,"required":["session_id","module_id"],"properties":{
+        "session_id":{"type":"string","minLength":1},"module_id":{"type":"string","minLength":1}}}}},
+    "assumption_digest":{"$ref":"artifact-ref-v1.schema.json#/$defs/digest"},
+    "binding_digest":{"$ref":"artifact-ref-v1.schema.json#/$defs/digest"}
+  }
+}

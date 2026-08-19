@@ -58,6 +58,25 @@
       "registry_revision": 7, "capability_revision": 5
     }
   },
+  "completedWorkBinding": {
+    "schema": "completed-work-binding",
+    "schema_version": 1,
+    "binding_id": "completed-work-f33a2229d04b3bcbebc9f55a6c867613c5b978d6519d7900cc1afd4fd3eb0578",
+    "candidate_revision": "sha256:f33a2229d04b3bcbebc9f55a6c867613c5b978d6519d7900cc1afd4fd3eb0578",
+    "project_id": "project-a",
+    "plan_id": "plan-a",
+    "session_id": "S5.1",
+    "assignment_id": "assignment-a",
+    "base_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "result_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "tree_sha": "cccccccccccccccccccccccccccccccccccccccc",
+    "parked_decision_id": "parked-s5-7-001",
+    "parked_decision_digest": "sha256:a718a0f44e7f727c81c5970292ac6659c40ed940054b3e628be4c84a4de34c13",
+    "session_plan_snapshot_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "governed_by": "OPTION",
+    "option_id": "option-a",
+    "binding_digest": "sha256:938d56bb76c0a520756bf74e156b9af076337a311b78c72a27d6797a3b1e0feb"
+  },
   "parkedCheckpointBinding": {
     "schema": "parked-checkpoint-binding", "schema_version": 1,
     "parked_decision_id": "parked-s5-7-001", "parked_decision_digest": "sha256:a718a0f44e7f727c81c5970292ac6659c40ed940054b3e628be4c84a4de34c13",
