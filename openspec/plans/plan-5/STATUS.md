@@ -229,6 +229,9 @@ Implementa commit y push idempotentes a `master`, checks, autorización exacta y
 
 ### Módulo M5.2.1 — Adapters y reconciliación
 
+**Estado de ejecución al autorizarse la corrección (2026-08-19).** Las cuatro Tareas están **implementadas en el candidato estacionado** —rama `feat/plan-5/s5-2-delivery-workflow`, 783 inserciones sobre `master`: `delivery/{git-adapter,ledger,pull-request-adapter,reconciliation,workflow}.mjs`, `schemas/delivery-record-v1.schema.json` y cinco archivos de test—. Siguen sin tildar porque el candidato quedó NOT READY por la decisión 8195, no porque falte escribirlas. **Lo que la decisión 47 autoriza no es un RED → GREEN fresco de `T5.2.1.1`–`T5.2.1.4`, sino tres correcciones acotadas sobre lo ya escrito** (hallazgos 1, 3 y 5 del recheck 8193). Un ejecutor que arranque de cero estaría reimplementando trabajo que existe y que ya pasó todo lo demás del recheck.
+
+
 - [ ] Tarea T5.2.1.1 — RED: remoto, refspec y head **explícitos**; ignorar la rama de tracking,
   reconciliar antes del primer push, y bloquear cualquier destino que no coincida con el declarado.
 - [ ] Tarea T5.2.1.2 — RED: repositorio, head y base explícitos por argv, con entorno separado;
