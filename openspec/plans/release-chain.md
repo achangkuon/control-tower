@@ -63,7 +63,7 @@ graph LR
   S115 --> S116["S1.16 OpenCode wake · ✅"]
   S116 --> S42["S4.2 Herdr inicial · ✅"]
   S41 --> S42
-  S42 --> S45["S4.5 raíz Main-owned · 🔴"]
+  S42 --> S45["S4.5 raíz Main-owned · 🔵"]
   S45 --> S43["S4.3 liveness · 📋"]
   S43 --> S44["S4.4 recuperación WSL · 📋"]
   S41 --> S52["S5.2 entrega idempotente · 🔴"]

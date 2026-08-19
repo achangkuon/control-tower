@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
 | Outputs | Raíz primaria Main-owned con TUI adjunta no autoritativa, inspección/liveness por proceso/sesión y recuperación same-host WSL. |
-| Roadmap | `S4.1`, `S1.16` y `S4.2` están ✅ COMPLETO. `S4.5` está 🔴 BLOQUEADO por una decisión del maintainer: `M4.5.1` (`dc06cdf`) y la primera unidad de `M4.5.2` (`ff680f4`) están entregadas, pero el cableado productivo espera resolver cómo se prueba la paternidad de la raíz contra la API real de OpenCode 1.18.18. No aporta crédito hasta cerrar. `S4.3` y `S4.4` permanecen 📋 PLANIFICADO sólo por dependencias; la decisión 40 dejó `M4.4.2` decision-clean. P4 alcanza 2/5 S (40%). |
+| Roadmap | `S4.1`, `S1.16` y `S4.2` están ✅ COMPLETO. `S4.5` está 🔵 EN CURSO con `2/3 M`: `M4.5.1` (`dc06cdf`) y `M4.5.2` (`ff680f4` + `529b273`) están ✅; queda `M4.5.3`. La decisión A del maintainer resolvió que la paternidad de la raíz se prueba por construcción, con tres candados. No aporta crédito hasta cerrar. `S4.3` y `S4.4` permanecen 📋 PLANIFICADO sólo por dependencias; la decisión 40 dejó `M4.4.2` decision-clean. P4 alcanza 2/5 S (40%). |
 | Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), decisiones 37–40 / Engram 9040/9042/9043/9044, [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). REQUIREMENTS §14 permanece byte-pinned como base histórica; esta spec enmienda el lifecycle futuro. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
@@ -229,7 +229,7 @@ Después del brief aprobado, Main despacha un root OpenCode en el worktree asign
 
 ## Sesión 4.5 — Raíz primaria Main-owned con vista adjunta
 
-**Estado:** 🔴 BLOQUEADO — `M4.5.1` ✅ en `dc06cdf` y la primera unidad de `M4.5.2` ✅ en `ff680f4`; el cableado productivo de `M4.5.2` espera una decisión del maintainer sobre cómo se prueba la paternidad de la raíz contra la API real de OpenCode 1.18.18. Sigue `M4.5.3`. La elaboración técnica del 2026-08-18 (Engram 9064) fijó que S4.5 **no entra en una sola unidad ≤400**: forecast integral 800–1270 líneas authored, ejecutado como tres commits directos secuenciales, uno por Módulo. `M4.5.2` y `M4.5.3` pueden cruzar 400 por sí solos; si ocurre se parten más, sin excepción silenciosa.
+**Estado:** 🔵 EN CURSO — `M4.5.1` ✅ (`dc06cdf`) y `M4.5.2` ✅ (`ff680f4` + `529b273`); queda sólo `M4.5.3`, la degradación de Herdr a vista no autoritativa. La decisión A del maintainer resolvió cómo se prueba la paternidad de la raíz. Suite 767/0. La elaboración técnica del 2026-08-18 (Engram 9064) fijó que S4.5 **no entra en una sola unidad ≤400**: forecast integral 800–1270 líneas authored, ejecutado como tres commits directos secuenciales, uno por Módulo. `M4.5.2` y `M4.5.3` pueden cruzar 400 por sí solos; si ocurre se parten más, sin excepción silenciosa.
 
 **Depende de:** `S4.2` ✅.
 
@@ -278,7 +278,33 @@ Esto satisface por construcción el criterio «ningún child ID reemplaza el roo
 
 **Frontera del store:** directorios `0700`, archivos `0600`, lecturas `O_NOFOLLOW` con revalidación `dev`/`ino`, y sellado `O_EXCL` — un segundo `bind` para el mismo assignment falla cerrado incluso byte-idéntico, garantizando «exactamente una raíz primaria por assignment/worktree». Un registro inválido no deja rastro: ni siquiera crea el directorio. `release` valida el registro antes de borrar y recibe un ref, nunca un path del caller.
 
-### Módulo M4.5.2 — Backend OpenCode Main-owned por worktree · 🔴 BLOQUEADO por decisión del maintainer
+### Módulo M4.5.2 — Backend OpenCode Main-owned por worktree · ✅ COMPLETO
+
+- [x] Tarea T4.5.2.1 — RED: rechazar proceso, puerto, secreto o root binding compartidos/ajenos y probar que la muerte de una vista no mata el backend
+- [x] Tarea T4.5.2.2 — GREEN: lanzar desde Main un backend por worktree con loopback, secreto, evidencia y raíz primary exactos
+- [x] Tarea T4.5.2.3 — REFACTOR: aislar lifecycle/cleanup por worktree y separar backend/root de cualquier launcher visible
+
+**Entregado en dos unidades secuenciales:** `ff680f4` (host aislado, 232 líneas) y `529b273` (cableado bajo la decisión 41-bis, 252 líneas). Suite completa **767 pass / 0 fail**. Total 484 líneas en dos unidades independientemente revertibles, tal como exigía el forecast de 300–480 al superar el límite de una sola.
+
+**Decisión A del maintainer (2026-08-18) — la paternidad de la raíz se prueba por construcción.** La verificación contra OpenCode 1.18.18 estableció que una sesión raíz **nunca reporta `parentID`**: el campo es opcional en `Session`, `GlobalSession` y `SessionV2Info`; `POST /api/session` no puede pedir un padre (`additionalProperties: false`, sin campo de padre); y ni siquiera un `fork` lo reporta. La ausencia es la codificación de «sin padre», así que la respuesta no puede probarlo — pero Main sí, porque Main hace la llamada.
+
+**Se descartaron** debilitar `parseRootIdentity` para aceptar la ausencia, porque volvería aceptable esa inferencia desde cualquier origen y fallaría en silencio; y probar la paternidad positivamente, porque **no existe el mecanismo**: `GET /session/{id}/children` responde hacia abajo, no hacia arriba, y enumerar todas las sesiones sería `O(n)`, con ventana de carrera y apoyado igual en una ausencia.
+
+**Los tres candados que separan la decisión A de una afirmación pelada:**
+
+1. **Identidad sólo para lo recién creado.** `parseCreatedRoot` recibe el id que esa misma llamada creó; una sesión meramente consultada no puede lavarse como raíz.
+2. **El schema se reasserta contra el backend vivo antes de cada creación.** Si una versión futura de OpenCode acepta un padre, `assertParentlessSessionCreation` rompe ruidoso en vez de etiquetar mal a un hijo.
+3. **El agente se verifica por readback** de esa sesión exacta, nunca se afirma — es la mitad que la API sí reporta.
+
+**Frontera de transporte:** el backend corre como proceso detached de larga vida en su propio puerto loopback con secreto de 32 bytes, y **anuncia su propia dirección**; el caller nunca la suministra. Un demonio no puede usar el `spawnSync` acotado existente —1s de timeout— así que `serve` conserva el mismo descriptor pinneado sin ese límite.
+
+**Bug de empaquetado que este cableado destapó:** el payload instalado tampoco cargaba `hosts/root-binding.mjs` ni `hosts/root-identity.mjs` de `M4.5.1`. La brecha estaba latente porque nada los importaba todavía; un `torre` instalado habría fallado al resolver el provider.
+
+**⚠️ Dos paths fuera del `Área` declarada:** `test/install/entrypoint-resolution.test.mjs` y `test/install/launch-worker-cli.test.mjs` asertan la lista del payload y fabrican un runtime instalado. Ampliar el payload los deja rojos **por fixture, no por comportamiento**. Se actualizó únicamente su lista de archivos. Se declara explícitamente en vez de silenciarlo: el `Área` de `S4.5` no anticipó que tocar el payload arrastra a sus fixtures.
+
+**Hallazgo de seguridad verificado:** `opencode serve` arranca **sin autenticación** si falta `OPENCODE_SERVER_PASSWORD` — avisa `server is unsecured` y `GET /session` responde `200` sin credenciales. El secreto por worktree de la decisión 38 es obligatorio, no un endurecimiento opcional.
+
+### Módulo M4.5.2 — registro histórico del bloqueo (resuelto)
 
 **Primera unidad entregada el 2026-08-18 en `ff680f4`** — `feat(hosts): own an isolated OpenCode backend per worktree`. `hosts/opencode-server.mjs` (59) más su test (173) = **232 líneas authored**; suite completa **763 pass / 0 fail**. El módulo aísla proceso, puerto loopback, secreto y raíz por worktree, con puertos inyectados y sin implementación propia de proceso, cripto ni transporte. Es aditivo: todavía no está cableado en producción.
 
@@ -393,7 +419,7 @@ Engram aporta contexto y nunca decide por sí solo; Notion no es autoridad runti
 graph LR
   S41["S4.1 fence · ✅"] --> S42["S4.2 Herdr inicial · ✅"]
   S116["S1.16 OpenCode wake · ✅"] --> S42
-  S42 --> S45["S4.5 raíz Main-owned · 🔴"]
+  S42 --> S45["S4.5 raíz Main-owned · 🔵"]
   S45 --> S43["S4.3 liveness/rehidratación · 📋"]
   S43 --> S44["S4.4 recuperación WSL · 📋"]
   S44 --> S71["S7.1 conformidad · 📋"]
