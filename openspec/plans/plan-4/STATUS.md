@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
 | Outputs | Raíz primaria Main-owned con TUI adjunta no autoritativa, inspección/liveness por proceso/sesión y recuperación same-host WSL. |
-| Roadmap | `S4.1`, `S1.16` y `S4.2` están ✅ COMPLETO. `S4.5` está 🔵 EN CURSO: `M4.5.1` entregado en `dc06cdf`, quedan `M4.5.2` y `M4.5.3` como commits directos secuenciales. No aporta crédito hasta cerrar. `S4.3` y `S4.4` permanecen 📋 PLANIFICADO sólo por dependencias; la decisión 40 dejó `M4.4.2` decision-clean. P4 alcanza 2/5 S (40%). |
+| Roadmap | `S4.1`, `S1.16` y `S4.2` están ✅ COMPLETO. `S4.5` está 🔴 BLOQUEADO por una decisión del maintainer: `M4.5.1` (`dc06cdf`) y la primera unidad de `M4.5.2` (`ff680f4`) están entregadas, pero el cableado productivo espera resolver cómo se prueba la paternidad de la raíz contra la API real de OpenCode 1.18.18. No aporta crédito hasta cerrar. `S4.3` y `S4.4` permanecen 📋 PLANIFICADO sólo por dependencias; la decisión 40 dejó `M4.4.2` decision-clean. P4 alcanza 2/5 S (40%). |
 | Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), decisiones 37–40 / Engram 9040/9042/9043/9044, [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). REQUIREMENTS §14 permanece byte-pinned como base histórica; esta spec enmienda el lifecycle futuro. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
@@ -229,7 +229,7 @@ Después del brief aprobado, Main despacha un root OpenCode en el worktree asign
 
 ## Sesión 4.5 — Raíz primaria Main-owned con vista adjunta
 
-**Estado:** 🔵 EN CURSO — `M4.5.1` ✅ entregado en `dc06cdf`; siguen `M4.5.2` y `M4.5.3`. La elaboración técnica del 2026-08-18 (Engram 9064) fijó que S4.5 **no entra en una sola unidad ≤400**: forecast integral 800–1270 líneas authored, ejecutado como tres commits directos secuenciales, uno por Módulo. `M4.5.2` y `M4.5.3` pueden cruzar 400 por sí solos; si ocurre se parten más, sin excepción silenciosa.
+**Estado:** 🔴 BLOQUEADO — `M4.5.1` ✅ en `dc06cdf` y la primera unidad de `M4.5.2` ✅ en `ff680f4`; el cableado productivo de `M4.5.2` espera una decisión del maintainer sobre cómo se prueba la paternidad de la raíz contra la API real de OpenCode 1.18.18. Sigue `M4.5.3`. La elaboración técnica del 2026-08-18 (Engram 9064) fijó que S4.5 **no entra en una sola unidad ≤400**: forecast integral 800–1270 líneas authored, ejecutado como tres commits directos secuenciales, uno por Módulo. `M4.5.2` y `M4.5.3` pueden cruzar 400 por sí solos; si ocurre se parten más, sin excepción silenciosa.
 
 **Depende de:** `S4.2` ✅.
 
@@ -278,7 +278,19 @@ Esto satisface por construcción el criterio «ningún child ID reemplaza el roo
 
 **Frontera del store:** directorios `0700`, archivos `0600`, lecturas `O_NOFOLLOW` con revalidación `dev`/`ino`, y sellado `O_EXCL` — un segundo `bind` para el mismo assignment falla cerrado incluso byte-idéntico, garantizando «exactamente una raíz primaria por assignment/worktree». Un registro inválido no deja rastro: ni siquiera crea el directorio. `release` valida el registro antes de borrar y recibe un ref, nunca un path del caller.
 
-### Módulo M4.5.2 — Backend OpenCode Main-owned por worktree · 🟢 LISTO (M4.5.1 entregado)
+### Módulo M4.5.2 — Backend OpenCode Main-owned por worktree · 🔴 BLOQUEADO por decisión del maintainer
+
+**Primera unidad entregada el 2026-08-18 en `ff680f4`** — `feat(hosts): own an isolated OpenCode backend per worktree`. `hosts/opencode-server.mjs` (59) más su test (173) = **232 líneas authored**; suite completa **763 pass / 0 fail**. El módulo aísla proceso, puerto loopback, secreto y raíz por worktree, con puertos inyectados y sin implementación propia de proceso, cripto ni transporte. Es aditivo: todavía no está cableado en producción.
+
+**El cableado productivo está BLOQUEADO.** La verificación contra el runtime instalado (OpenCode 1.18.18) encontró una contradicción entre el contrato de `M4.5.1` y la API real:
+
+- `POST /api/session` devuelve un objeto cuyas claves son exactamente `cost`, `id`, `location`, `projectID`, `time`, `title`, `tokens`. **No incluye `parentID` ni `agent`.**
+- El request body declara `additionalProperties: false` y acepta sólo `id`, `agent`, `model`, `location`. **No acepta `parentID`**: se verificó empíricamente que enviarlo no crea un hijo, crea otra sesión raíz.
+- `parseRootIdentity` (entregado en `dc06cdf`) exige `parentID` **presente y explícitamente `null`**, precisamente para no inferir la paternidad desde una ausencia.
+
+Por lo tanto la respuesta real del servidor **no puede alimentar `parseRootIdentity` tal como está**. Resolver esto es decisión del maintainer, no derivable. **Clase:** contrato visible del producto; seguridad y permisos. **Contamina:** el cableado de `M4.5.2`, `M4.5.3` y el contrato ya entregado de `M4.5.1`. **Checkpoint exacto de retoma:** el cableado de `hosts/production-provider.mjs`, sobre `ff680f4`, sin tocar el módulo ya entregado.
+
+**Hallazgo de seguridad colateral, ya verificado:** `opencode serve` arranca **sin autenticación** si falta `OPENCODE_SERVER_PASSWORD`, emitiendo `Warning: OPENCODE_SERVER_PASSWORD is not set; server is unsecured`, y `GET /session` responde `200` sin credenciales. El secreto por worktree de la decisión 38 no es un endurecimiento opcional: sin él, cualquier proceso local del mismo usuario alcanza el backend. El módulo entregado ya lo exige antes de spawnear.
 **Paths:** `hosts/opencode-server.mjs`, `hosts/production-provider.mjs`, `main-store/launch-consumer.mjs`, `test/hosts/opencode-server.test.mjs`, `test/hosts/production-provider.test.mjs`
 **Checkpoint resuelto:** decisión 38 / Engram 9042 elige un backend aislado por worktree; se retoma antes de RED `T4.5.2.1` sobre el candidato reconciliado.
 - [ ] Tarea T4.5.2.1 — RED: rechazar proceso, puerto, secreto o root binding compartidos/ajenos y probar que la muerte de una vista no mata el backend
@@ -381,7 +393,7 @@ Engram aporta contexto y nunca decide por sí solo; Notion no es autoridad runti
 graph LR
   S41["S4.1 fence · ✅"] --> S42["S4.2 Herdr inicial · ✅"]
   S116["S1.16 OpenCode wake · ✅"] --> S42
-  S42 --> S45["S4.5 raíz Main-owned · 🔵"]
+  S42 --> S45["S4.5 raíz Main-owned · 🔴"]
   S45 --> S43["S4.3 liveness/rehidratación · 📋"]
   S43 --> S44["S4.4 recuperación WSL · 📋"]
   S44 --> S71["S7.1 conformidad · 📋"]
