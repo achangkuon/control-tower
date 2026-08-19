@@ -360,7 +360,7 @@ No aplica un runtime externo: esta Sesión define ruteo y persistencia, pero del
 
 ## Sesión 5.5 — Parking y retoma del loop
 
-**Estado:** 📋 PLANIFICADO — espera `S5.10` integrada. Sus contratos previos quedan como prerrequisitos, pero no crea maquinaria nueva de contaminación dinámica.
+**Estado:** 🟢 LISTO — `S5.10` está integrada en `468b733`, así que su dependencia está satisfecha. Sus contratos previos quedan como prerrequisitos, pero no crea maquinaria nueva de contaminación dinámica.
 **Depende de:** `S5.10` integrada; transitivamente `S5.9`, `S5.12`, `S5.11` y `S5.8` ✅
 **Área:** `escalation/{parked,resume}.mjs`, `test/escalation/**`
 **Prohibido:** `continuation/**`, `core.mjs`, `mcp.mjs`, `delivery/**`, `contracts/**`, `schemas/**`, `main-store/store.mjs`
@@ -795,7 +795,7 @@ Cada Tarea es una unidad de commit/direct-push revisable y revertible por sí so
 
 **Resultado:** persistir bajo autoridad exclusiva de Main una prueba inmutable que liga trabajo independiente completado a la decisión estacionada exacta y a la opción o supuesto explícito bajo el que se ejecutó.
 
-**Estado:** 📋 PLANIFICADO — el contrato visible de provenance, la representación de opción/supuesto y el momento de sellado quedaron resueltos por la decisión 30; espera `S5.9` integrada.
+**Estado:** ✅ COMPLETO — entregada en `468b733` el 2026-08-19. Cuatro commits directos: `44444cf` (contrato, schema y registry, 231 líneas), `98419e1` (writer del Main store, 202), `5d1a268` (correcciones 4R) y `468b733` (decisión 44). Suite 857 pass / 0 fail / 5.160 expectations, desde una base de 822.
 
 **Ruta:** `design-tasks` al satisfacer la dependencia — la decisión 30 ya eligió la forma pública, la representación exclusiva de opción/supuesto y el instante de sellado siguiendo el precedente de `S5.8`. **Autoridad:** decisiones del maintainer 2026-08-12 y 2026-08-14 (decisión 30).
 
@@ -809,28 +809,33 @@ Cada Tarea es una unidad de commit/direct-push revisable y revertible por sí so
 
 **Decisiones:**
 
+- `escala` — **RESUELTA por el maintainer el 2026-08-19 (decisión 44): `bindCompletedWork` resuelve las fuentes que nombra.** Pregunta original: ¿el registro standalone puede sellarse a partir de artefactos que el caller trae, o el store debe resolverlos contra su propio estado persistido? **Clase:** contrato visible del producto; seguridad y permisos. **Evidencia:** `parked_decision_digest` y `response_digest` son funciones puras del contenido que el caller provee, así que ambos se computan offline; derivar de ellos era caller assertion con pasos intermedios, y un caller MAIN obtenía un registro autoritativo para una opción nunca estacionada y nunca aprobada. Las lentes se contradijeron —R1 lo calificó CRITICAL, R3 lo consideró un límite deliberado del "registro standalone"— y el maintainer resolvió a favor de R1: *standalone* describe la forma del registro, no exime de verificar en escritura que las fuentes existieron. **Resolución:** la decisión debe existir en las parkings de este store con digest persistido coincidente, y una opción debe trazar a una autorización que este store aprobó para esa revisión exacta de candidato, por el mismo `approvedAuthorizationFor` que ya guarda admisión de candidato y consumo de lanzamiento. El género de supuesto no aplica opción, así que resuelve sólo la parking. **Acoplamiento declarado:** `approvedAuthorizationFor` valida expiración, de modo que el sellado debe ocurrir dentro de la ventana de la autorización; se usó el helper de la casa a propósito para no crear una segunda noción de autorización válida. **Falsificable:** un binding se sella con una decisión que este store nunca estacionó, o con una autorización inexistente, no aprobada o ligada a otro candidato. **Contamina:** `S5.10`, `S5.5`, `S7.1`.
 - `escala` — **RESUELTA por el maintainer el 2026-08-14 (decisión 30): sigue el precedente de `S5.8`, la Option B de la decisión 18.** Cuál es la forma pública exacta y versionada del binding, cómo representa opción seleccionada frente a supuesto explícito, y en qué momento el trabajo queda sellado como completado sin permitir una declaración retrospectiva del caller. **Clase:** contrato visible del producto, API pública y seguridad y permisos. **Resolución:** registro standalone, inmutable y versionado dentro del Main store, bajo el **mismo** `assertMain`, lock y transacción canónicos; liga **exactamente uno** de `option_id` enumerado o digest de supuesto explícito —nunca los dos, nunca ninguno—; sella en el momento en que se congela la `candidate_revision` del trabajo, o sea antes de que el caller pueda hablar, lo que hace la declaración retrospectiva estructuralmente imposible en vez de prohibida por convención. **Descartadas:** un campo polimórfico, porque admite estados donde no se sabe cuál género gobierna; y dos registros separados, porque exigen dos writers y dos readbacks consistentes. Siguen prohibidos caller assertion, inferencia local de `S5.5`, reconstrucción narrativa posterior, semántica sólo en `extensions`, shadow store y segundo writer. **Falsificable:** un registro que acepte ambos géneros a la vez o ninguno, que sea mutable, o que sea escribible después de congelada la `candidate_revision`. **Contaminaba:** `S5.5`, `S7.1` — la conformidad exige evidencia atribuible al candidato exacto y la decisión contraria a trabajo ya hecho contaminaba su piloto.
 
 ### Módulo 5.10.1 — Provenance del trabajo completado bajo decisión
 
 Cada Tarea es una unidad de commit/direct-push revisable y revertible por sí sola.
 
-- [ ] Tarea 5.10.1.1 — RED: demostrar que una evidencia de trabajo completado puede existir hoy sin identidad inmutable de la decisión estacionada ni de la opción/supuesto bajo el que corrió.
-- [ ] Tarea 5.10.1.2 — RED: fijar rechazo binario para mismatch de candidato/evidencia de trabajo, decisión/digest, opción enumerada o supuesto explícito, snapshot y revisión; una declaración posterior del caller no cuenta.
-- [ ] Tarea 5.10.1.3 — GREEN: implementar el contrato aprobado y persistir el binding por el writer canónico del Main store, serializado después de `S5.9` y sin abrir un segundo store.
-- [ ] Tarea 5.10.1.4 — REFACTOR: cerrar inmutabilidad, replay exacto, replay divergente, atomicidad y readback de la provenance completa.
+- [x] Tarea 5.10.1.1 — RED: demostrar que una evidencia de trabajo completado puede existir hoy sin identidad inmutable de la decisión estacionada ni de la opción/supuesto bajo el que corrió.
+- [x] Tarea 5.10.1.2 — RED: fijar rechazo binario para mismatch de candidato/evidencia de trabajo, decisión/digest, opción enumerada o supuesto explícito, snapshot y revisión; una declaración posterior del caller no cuenta.
+- [x] Tarea 5.10.1.3 — GREEN: implementar el contrato aprobado y persistir el binding por el writer canónico del Main store, serializado después de `S5.9` y sin abrir un segundo store.
+- [x] Tarea 5.10.1.4 — REFACTOR: cerrar inmutabilidad, replay exacto, replay divergente, atomicidad y readback de la provenance completa.
 
 **Criterios de aceptación de S5.10** — todos deben pasar para cerrar:
 
-- [ ] Existe un único binding autoritativo e inmutable en Main store entre evidencia exacta de trabajo completado, decisión estacionada exacta y opción enumerada o supuesto explícito bajo el que corrió
-- [ ] La forma pública/versionada, la representación de opción/supuesto y el momento de sellado fueron decididos explícitamente durante SDD antes de tasks/apply; la ubicación Main store no se usa para inferirlos
-- [ ] El binding nombra una identidad inmutable del trabajo/candidato y no puede construirse sólo después de completado mediante assertion del caller o narrativa
-- [ ] Mismatch de trabajo, decisión/digest, opción/supuesto, snapshot o revisión falla cerrado sin mutación parcial
-- [ ] Replay byte-idéntico es idempotente y replay divergente produce cero efectos adicionales
-- [ ] Persistencia, inmutabilidad y readback ocurren bajo el writer, lock y transacción canónicos de Main; no existe store ni writer paralelo
-- [ ] `S5.5` consume la prueba sin inferirla localmente y `S7.1` puede atribuir la evidencia al candidato y supuesto exactos
-- [ ] El diff de implementación no toca ningún path fuera de `Área`
+- [x] Existe un único binding autoritativo e inmutable en Main store entre evidencia exacta de trabajo completado, decisión estacionada exacta y opción enumerada o supuesto explícito bajo el que corrió
+- [x] La forma pública/versionada, la representación de opción/supuesto y el momento de sellado fueron decididos explícitamente durante SDD antes de tasks/apply; la ubicación Main store no se usa para inferirlos
+- [x] El binding nombra una identidad inmutable del trabajo/candidato y no puede construirse sólo después de completado mediante assertion del caller o narrativa
+- [x] Mismatch de trabajo, decisión/digest, opción/supuesto, snapshot o revisión falla cerrado sin mutación parcial
+- [x] Replay byte-idéntico es idempotente y replay divergente produce cero efectos adicionales
+- [x] Persistencia, inmutabilidad y readback ocurren bajo el writer, lock y transacción canónicos de Main; no existe store ni writer paralelo
+- [x] `S5.5` consume la prueba sin inferirla localmente y `S7.1` puede atribuir la evidencia al candidato y supuesto exactos — **verificado por construcción, no por ejecución.** `S5.5` y `S7.1` están 📋 PLANIFICADO y `S5.5` depende de `S5.10` integrada, así que verificarlo ejecutando es imposible en principio: la dirección de la dependencia exige que `S5.10` cierre primero. El registro expone `candidate_revision`, `project_id`, `plan_id`, `session_id`, `assignment_id`, `base_sha`, `result_sha`, `tree_sha`, `parked_decision_id`, `parked_decision_digest`, `session_plan_snapshot_digest`, `governed_by` y su carga —`option_id`, o `assumption` más `assumption_digest`—, de modo que a un consumidor no le queda nada que inferir localmente. La lente R3 evaluó ese criterio como satisfecho en esa forma.
+- [x] El diff de implementación no toca ningún path fuera de `Área`
 
-**Cómputo del Plan 5:** `8/12 S = 67%`. Cuentan `S5.1`, `S5.4`, `S5.6`, `S5.7`, `S5.8`, `S5.9`, `S5.11` y `S5.12`; `S5.2` está 🔴 BLOQUEADO y `S5.3`, `S5.5`, `S5.10` están 📋 PLANIFICADO. Ninguna Sesión posterior aporta crédito hasta `COMPLETO`.
+**Revisión 4R y correcciones.** El set completo halló una atribución falsa que las tres primeras Tareas no veían. Tres de las cuatro lentes coincidieron en que el binding nunca cruzaba el candidato contra la decisión: cruzaba respuesta↔decisión y candidato↔su propia identidad congelada, pero no candidato↔decisión, y la fixture entregada era ella misma un caso —trabajo de `S5.1` ligado a una decisión con alcance `S5.7`—. `5d1a268` exige que el trabajo, y el origen del supuesto, caigan dentro del `frozen_scope`, replicando el criterio que `assertParkedDecision` ya aplica al origen de la propia decisión. El mismo commit agregó el invariante de digest en `validate()`, fijó el proyecto del binding en el readback —agujero probado alcanzable—, pasó a persistir artefactos validados en vez de la representación del caller, y separó "no pude leer" de "es inválido".
+
+**Desvío declarado sobre las unidades de commit.** El Módulo pide una unidad por Tarea. Se entregó en dos unidades funcionales más dos de corrección, porque `T5.10.1.1` y `T5.10.1.2` son RED puro y la entrega de este repo es push directo a `master` sin PR: commitear tests fallando dejaría `master` en rojo. Cada unidad es revertible por sí sola.
+
+**Cómputo del Plan 5:** `9/12 S = 75%`. Cuentan `S5.1`, `S5.4`, `S5.6`, `S5.7`, `S5.8`, `S5.9`, `S5.10`, `S5.11` y `S5.12`; `S5.2` está 🔴 BLOQUEADO, `S5.5` está 🟢 LISTO y `S5.3` está 📋 PLANIFICADO. Ninguna Sesión posterior aporta crédito hasta `COMPLETO`.
 
 Las responsabilidades legacy de Telegram Delivery y continuación que aún no tienen límite de un PR permanecen sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).
