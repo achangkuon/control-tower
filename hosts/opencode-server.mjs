@@ -1,0 +1,59 @@
+import { parseRootIdentity } from "./root-identity.mjs"
+
+const REQUEST_KEYS = Object.freeze(["assignment_ref", "host_epoch", "project_id", "worktree"])
+const fail = (code, message) => { throw Object.assign(new Error(message), { code }) }
+const exact = (value, keys) => value !== null && typeof value === "object" && !Array.isArray(value)
+  && Object.keys(value).sort().join("\0") === [...keys].sort().join("\0")
+const validRef = (value) => typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(value) && !value.includes("..")
+const bounded = (value) => typeof value === "string" && value.length > 0 && value.length <= 512 && !value.includes("\0")
+const positive = (value) => Number.isSafeInteger(value) && value > 0
+const absolute = (value) => bounded(value) && value.startsWith("/")
+// Decision 38: the backend is reachable only from this machine, on its own loopback port.
+const loopback = (value) => bounded(value) && /^http:\/\/127\.0\.0\.1:(?:[1-9][0-9]{0,4})$/.test(value)
+// Long enough that it cannot be guessed, bounded so it cannot be used to smuggle a payload.
+const secretValue = (value) => typeof value === "string" && value.length >= 32 && value.length <= 4096 && !value.includes("\0")
+
+const validRequest = (value) => exact(value, REQUEST_KEYS)
+  && validRef(value.assignment_ref) && bounded(value.project_id) && absolute(value.worktree) && positive(value.host_epoch)
+
+export const createOpenCodeBackendHost = ({ spawn, randomSecret, createRoot } = {}) => {
+  if ([spawn, randomSecret, createRoot].some((port) => typeof port !== "function")) throw new TypeError("OpenCode backend ports are required")
+  // Identity is owned per worktree; every value below is checked for reuse so nothing is ever shared.
+  const backends = new Map()
+  const taken = (pick) => [...backends.values()].some(pick)
+  return Object.freeze({
+    start(request) {
+      if (!validRequest(request)) fail("CT_BACKEND_REJECTED", "Backend start request is invalid")
+      const { assignment_ref, host_epoch, project_id, worktree } = request
+      if (backends.has(worktree) || taken((backend) => backend.assignment_ref === assignment_ref)) fail("CT_BACKEND_EXISTS", "Worktree or assignment already owns a backend")
+      const secret = randomSecret()
+      if (!secretValue(secret) || taken((backend) => backend.secret === secret)) fail("CT_BACKEND_REJECTED", "Backend secret is weak or already in use")
+      let started
+      try { started = spawn({ worktree, secret }) } catch { fail("CT_BACKEND_REJECTED", "Backend process could not be started") }
+      if (!started || typeof started !== "object" || typeof started.stop !== "function"
+        || !positive(started.pid) || !loopback(started.url)
+        || taken((backend) => backend.pid === started.pid || backend.url === started.url)) {
+        try { started?.stop?.() } catch {}
+        fail("CT_BACKEND_REJECTED", "Backend process is shared, foreign or not on loopback")
+      }
+      let identity
+      try { identity = parseRootIdentity(createRoot({ secret, url: started.url, worktree })) } catch { identity = null }
+      if (identity === null) {
+        // The backend exists but has no proven root, so it is not a backend we may keep.
+        try { started.stop() } catch {}
+        fail("CT_BACKEND_REJECTED", "Backend did not create a proven primary root")
+      }
+      backends.set(worktree, Object.freeze({ assignment_ref, pid: started.pid, secret, stop: started.stop, url: started.url }))
+      return Object.freeze({ assignment_ref, backend_pid: started.pid, backend_url: started.url, host_epoch, project_id, root_identity: identity, worktree })
+    },
+    owns(worktree) { return absolute(worktree) && backends.has(worktree) },
+    // Only a worktree names a backend. A url, pid or pane is not a handle, so no view can reach this.
+    stop(worktree) {
+      const backend = absolute(worktree) ? backends.get(worktree) : undefined
+      if (backend === undefined) fail("CT_BACKEND_REJECTED", "Backend is not owned by this host")
+      backends.delete(worktree)
+      backend.stop()
+      return true
+    },
+  })
+}
