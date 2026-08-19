@@ -6,6 +6,8 @@ import { validate, validateCheckpointProvenancePair } from "../contracts/validat
 import { canonicalize } from "../contracts/canonicalize.mjs"
 import { assertParkedDecisionResponseBinding, parkedDecisionResponseDigest } from "../contracts/parked-decision.mjs"
 import { assertParkedCheckpointBinding, createParkedCheckpointBinding } from "../contracts/parked-checkpoint-binding.mjs"
+import { assertCompletedWorkBinding, createCompletedWorkBinding } from "../contracts/completed-work-binding.mjs"
+import { freezeCandidate } from "../contracts/candidate-revision.mjs"
 import { assertCanonicalCheckpointCapture } from "../workspace/checkpoint.mjs"
 import { assertCanonicalReconciledCheckpoint } from "../workspace/reconciliation.mjs"
 import { resolveJornadaLifecycle } from "../jornada/lifecycle.mjs"
@@ -176,6 +178,7 @@ export const createMainStore = ({ root, authority, capability, beforeCommit, tes
   const workerClaimPath = (id) => join(directory("worker-claims"), `${safeId(id)}.json`)
   const supportProposalPath = (id) => join(directory("support-proposals"), `${safeId(id)}.json`)
   const parkingPath = (id) => join(directory("decision-parkings"), `${safeId(id)}.json`)
+  const completedWorkBindingPath = (id) => join(directory("completed-work-bindings"), `${safeId(id)}.json`)
   const launchBindingPath = (id) => join(directory("launch-bindings"), `${safeId(id)}.json`)
   const launchConsumptionPath = (id) => join(directory("launch-consumptions"), `${safeId(id)}.json`)
   const epochRecordPath = (epoch) => join(directory("epoch-records"), `${epoch}.json`)
@@ -268,6 +271,61 @@ export const createMainStore = ({ root, authority, capability, beforeCommit, tes
         if (error.code === "CT_CAS_MISMATCH" && existsSync(path)) return replay()
         throw error
       }
+    },
+    // Decision 30: a standalone, immutable, versioned record under the same assertMain, lock and transaction.
+    // It is sealed from the frozen candidate identity, so the caller cannot declare afterwards what governed it.
+    bindCompletedWork(input) {
+      const underOption = exactKeys(input, ["actor", "project_id", "candidate", "parked_decision", "parked_decision_response"])
+      const underAssumption = exactKeys(input, ["actor", "project_id", "candidate", "parked_decision", "assumption"])
+      if (underOption === underAssumption) fail("CT_WORK_BINDING_INPUT_INVALID", "Completed work binding requires one closed input naming exactly one enumerated option or one explicit assumption")
+      assertMain(input)
+      let candidate, completed_work_binding
+      try {
+        candidate = freezeCandidate(input.candidate)
+        completed_work_binding = createCompletedWorkBinding({
+          candidate: input.candidate, parked_decision: input.parked_decision,
+          ...(underOption ? { parked_decision_response: input.parked_decision_response } : { assumption: input.assumption }),
+        })
+      } catch (error) { fail("CT_WORK_BINDING_INVALID", "Completed work binding sources are invalid or mismatched", error) }
+      if (completed_work_binding.project_id !== binding.project_id) fail("CT_PROJECT_MISMATCH", "Completed work belongs to a foreign project")
+      const record = {
+        actor: "MAIN", project_id: binding.project_id, candidate, parked_decision: input.parked_decision,
+        ...(underOption ? { parked_decision_response: input.parked_decision_response } : { assumption: input.assumption }),
+        completed_work_binding,
+      }
+      const path = completedWorkBindingPath(completed_work_binding.binding_id)
+      const replay = () => {
+        const current = parse(path)
+        const { revision: _revision, revision_history: _history, ...prior } = current
+        if (canonicalize(prior) !== canonicalize(record)) fail("CT_WORK_BINDING_REPLAY_DIVERGENT", "Completed work binding replay diverges from persisted canonical bytes")
+        return frozen({ ...current, record_path: path, replayed: true })
+      }
+      if (existsSync(path)) return replay()
+      try {
+        return frozen({ ...commit("completed-work-bindings", completed_work_binding.binding_id, { ...record, expected_revision: 0 }, 0), replayed: false })
+      } catch (error) {
+        if (error.code === "CT_CAS_MISMATCH" && existsSync(path)) return replay()
+        throw error
+      }
+    },
+    readCompletedWorkBinding(id) {
+      const path = completedWorkBindingPath(id)
+      if (!existsSync(path)) fail("CT_WORK_BINDING_NOT_FOUND", "Completed work binding does not exist")
+      try {
+        const record = parse(path)
+        const base = ["actor", "project_id", "candidate", "parked_decision", "completed_work_binding", "revision", "revision_history"]
+        const underOption = exactKeys(record, [...base, "parked_decision_response"])
+        if (underOption === exactKeys(record, [...base, "assumption"])) throw new Error("Completed work envelope is not canonical")
+        if (record.actor !== "MAIN" || record.project_id !== binding.project_id
+          || record.revision !== 1 || !Array.isArray(record.revision_history) || record.revision_history.length !== 0) {
+          throw new Error("Completed work envelope is not canonical")
+        }
+        if (id !== record.completed_work_binding?.binding_id) throw new Error("Binding identity mismatch")
+        return frozen(structuredClone(assertCompletedWorkBinding(record.completed_work_binding, {
+          candidate: record.candidate, parked_decision: record.parked_decision,
+          ...(underOption ? { parked_decision_response: record.parked_decision_response } : { assumption: record.assumption }),
+        })))
+      } catch (error) { fail("CT_WORK_BINDING_INVALID", "Persisted completed work binding is invalid", error) }
     },
     readParking(id) { return frozen(parse(parkingPath(id))) },
     readParkedCheckpointBinding(id) {

@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url"
 import { bindMainAuthority, createMainStore } from "../main-store/index.mjs"
 import { createParkedDecision, createParkedDecisionResponse, parkedDecisionResponseDigest } from "../contracts/parked-decision.mjs"
 import { createParkingComposition } from "../escalation/parking-composition.mjs"
+import { createCompletedWorkBinding } from "../contracts/completed-work-binding.mjs"
 import { captureCheckpoint } from "../workspace/checkpoint.mjs"
 import { reconcileCheckpoint } from "../workspace/reconciliation.mjs"
 
@@ -1110,5 +1111,128 @@ describe("opaque and disconnected boundaries", () => {
     }
     for (const entry of ["core.mjs", "mcp.mjs"]) walk(entry)
     expect(visited.size).toBeGreaterThan(1)
+  })
+})
+
+describe("completed work binding", () => {
+  const cases = JSON.parse(readFileSync(join(projectRoot, "test/fixtures/contracts/schema-cases-v1.json"), "utf8"))
+  const candidate = () => { const { candidate_revision: _frozen, ...identity } = cases.candidateRevision; return identity }
+  const assumption = Object.freeze({
+    statement: "No maintainer option applied, so the work proceeded under the frozen scope only.",
+    origin: { session_id: "S5.10", module_id: "M5.10.1" },
+  })
+  const optionInput = () => ({
+    actor: "MAIN", project_id: "project-a", candidate: candidate(),
+    parked_decision: cases.parkedDecision, parked_decision_response: cases.parkedDecisionResponse,
+  })
+  const assumedInput = () => ({
+    actor: "MAIN", project_id: "project-a", candidate: candidate(),
+    parked_decision: cases.parkedDecision, assumption,
+  })
+  const expected = () => createCompletedWorkBinding({
+    candidate: candidate(), parked_decision: cases.parkedDecision, parked_decision_response: cases.parkedDecisionResponse,
+  })
+
+  test("persists the binding through the canonical writer and reads back the exact derived record", () => {
+    const { store, root } = setup()
+    const result = store.bindCompletedWork(optionInput())
+    expect(result.replayed).toBe(false)
+    expect(result.revision).toBe(1)
+    expect(result.completed_work_binding).toEqual(expected())
+    expect(store.readCompletedWorkBinding(expected().binding_id)).toEqual(expected())
+    expect(existsSync(join(root, "completed-work-bindings", `${expected().binding_id}.json`))).toBe(true)
+  })
+
+  test("records an explicit assumption under the same writer, with its own derived digest", () => {
+    const { store } = setup()
+    const result = store.bindCompletedWork(assumedInput())
+    expect(result.completed_work_binding.governed_by).toBe("ASSUMPTION")
+    expect(result.completed_work_binding.assumption).toEqual(assumption)
+    expect(Object.hasOwn(result.completed_work_binding, "option_id")).toBe(false)
+    expect(store.readCompletedWorkBinding(result.completed_work_binding.binding_id)).toEqual(result.completed_work_binding)
+  })
+
+  test("byte-identical replay is idempotent and adds no second effect", () => {
+    const { store } = setup()
+    const first = store.bindCompletedWork(optionInput())
+    const second = store.bindCompletedWork(optionInput())
+    expect(second).toMatchObject({ revision: 1, replayed: true })
+    expect(second.completed_work_binding).toEqual(first.completed_work_binding)
+    expect(readFileSync(second.record_path, "utf8")).toBe(readFileSync(first.record_path, "utf8"))
+  })
+
+  // The same work cannot be re-attributed to a different genus or decision after the fact.
+  test("divergent replay fails closed and leaves the persisted bytes untouched", () => {
+    const { store } = setup()
+    const first = store.bindCompletedWork(optionInput())
+    const before = readFileSync(first.record_path, "utf8")
+    expect(code(() => store.bindCompletedWork(assumedInput()))).toBe("CT_WORK_BINDING_REPLAY_DIVERGENT")
+    expect(readFileSync(first.record_path, "utf8")).toBe(before)
+  })
+
+  test("refuses both genera at once, neither genus, a foreign project and a non-Main actor", () => {
+    const { store } = setup()
+    expect(code(() => store.bindCompletedWork({ ...optionInput(), assumption }))).toBe("CT_WORK_BINDING_INPUT_INVALID")
+    const { parked_decision_response: _dropped, ...neither } = optionInput()
+    expect(code(() => store.bindCompletedWork(neither))).toBe("CT_WORK_BINDING_INPUT_INVALID")
+    expect(code(() => store.bindCompletedWork({ ...optionInput(), project_id: "project-b" }))).toBe("CT_PROJECT_MISMATCH")
+    expect(code(() => store.bindCompletedWork({ ...optionInput(), actor: "WORKER" }))).toBe("CT_AUTH_INVALID")
+  })
+
+  test("refuses work whose candidate contradicts the decision it claims to have run under", () => {
+    const { store } = setup()
+    const response = { ...cases.parkedDecisionResponse, option_id: "option-z" }
+    expect(code(() => store.bindCompletedWork({ ...optionInput(), parked_decision_response: response }))).toBe("CT_WORK_BINDING_INVALID")
+    const forged = { ...candidate(), candidate_revision: `sha256:${"0".repeat(64)}` }
+    expect(code(() => store.bindCompletedWork({ ...optionInput(), candidate: forged }))).toBe("CT_WORK_BINDING_INVALID")
+  })
+
+  test("reads back nothing for an unknown binding rather than inventing one", () => {
+    const { store } = setup()
+    expect(code(() => store.readCompletedWorkBinding("completed-work-missing"))).toBe("CT_WORK_BINDING_NOT_FOUND")
+  })
+
+  // T5.10.1.4 — a failed write leaves nothing behind, so no half-attributed work can ever be read.
+  test("writes atomically: a failing commit persists no partial record", () => {
+    let failing = false
+    const { store, root } = setup({ beforeCommit: () => { if (failing) throw new Error("commit barrier") } })
+    const path = join(root, "completed-work-bindings", `${expected().binding_id}.json`)
+    failing = true
+    expect(code(() => store.bindCompletedWork(optionInput()))).toBe("CT_STORE_WRITE_FAILED")
+    expect(existsSync(path)).toBeFalse()
+    failing = false
+    store.bindCompletedWork(optionInput())
+    expect(existsSync(path)).toBeTrue()
+  })
+
+  // The record is provenance, so a readback re-derives it from its own stored sources instead of trusting bytes.
+  test("refuses a persisted record whose stored provenance no longer derives its binding", () => {
+    for (const tamper of [
+      (record) => { record.completed_work_binding.option_id = "option-b" },
+      (record) => { record.completed_work_binding.candidate_revision = `sha256:${"0".repeat(64)}` },
+      (record) => { record.parked_decision_response.option_id = "option-b" },
+      (record) => { record.candidate.base_sha = "d".repeat(40) },
+      (record) => { record.completed_work_binding.governed_by = "ASSUMPTION" },
+      (record) => { record.revision = 2 },
+      (record) => { record.actor = "WORKER" },
+      (record) => { record.assumption = assumption },
+    ]) {
+      const { store } = setup()
+      const result = store.bindCompletedWork(optionInput())
+      const record = JSON.parse(readFileSync(result.record_path, "utf8"))
+      tamper(record)
+      writeFileSync(result.record_path, JSON.stringify(record))
+      expect(code(() => store.readCompletedWorkBinding(expected().binding_id))).toBe("CT_WORK_BINDING_INVALID")
+    }
+  })
+
+  test("returns a deeply frozen binding, so a reader cannot mutate the provenance it was handed", () => {
+    const { store } = setup()
+    const result = store.bindCompletedWork(optionInput())
+    const readback = store.readCompletedWorkBinding(expected().binding_id)
+    expect(Object.isFrozen(result.completed_work_binding)).toBeTrue()
+    expect(Object.isFrozen(readback)).toBeTrue()
+    expect(() => { "use strict"; readback.option_id = "option-b" }).toThrow(TypeError)
+    expect(store.readCompletedWorkBinding(expected().binding_id).option_id).toBe("option-a")
   })
 })
