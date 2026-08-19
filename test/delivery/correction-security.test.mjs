@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { appendFileSync, chmodSync, linkSync, mkdirSync, mkdtempSync, readFileSync, symlinkSync, writeFileSync } from "node:fs"
+import { appendFileSync, chmodSync, linkSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, symlinkSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { pathToFileURL } from "node:url"
@@ -14,6 +14,7 @@ const revision = `sha256:${"a".repeat(64)}`
 const baseRecord = { candidate_revision: revision, shape: "direct-push", authorization_ref: "auth-a", state: "DELIVERED", attempt: 1, reconciled: false }
 const code = async (operation) => { try { await operation() } catch (error) { return error.code } return null }
 const root = () => mkdtempSync(join(tmpdir(), "ct-delivery-secure-"))
+const statOrNull = (path) => { try { return lstatSync(path) } catch { return null } }
 const recordBytes = (overrides = {}) => `${JSON.stringify({ schema: "delivery-record", schema_version: 1, candidate_revision: revision,
   revision: 1, previous_revision: 0, state: "DELIVERED", shape: "direct-push", authorization_ref: "auth-a",
   attempt: 1, reconciled: false, created_at: "2026-08-10T00:00:00.000Z", ...overrides })}\n`
@@ -83,6 +84,38 @@ else { for (let index = 0; index < 2; index++) { const history = await ledger.hi
       expect(readFileSync(join(ledgerRoot, "effects"), "utf8").trim().split("\n")).toHaveLength(mode === "delivered" ? 1 : 3)
     }
   })
+
+  test("reclaims a candidate lock whose holder died, and never reclaims a live or unidentified one", async () => {
+    const moduleUrl = pathToFileURL(join(process.cwd(), "delivery/ledger.mjs")).href
+    const source = `import { createDeliveryLedger } from ${JSON.stringify(moduleUrl)};
+const [root] = process.argv.slice(2); const ledger = createDeliveryLedger({ root });
+await ledger.withCandidateLock(${JSON.stringify(revision)}, async () => { await Bun.sleep(600_000) });`
+    const lockName = `.${revision.slice(7)}.lock`
+    const spawnHolder = async (ledgerRoot) => {
+      const child = join(ledgerRoot, "holder.mjs"); writeFileSync(child, source)
+      const held = Bun.spawn([process.execPath, child, ledgerRoot], { stdout: "pipe", stderr: "pipe" })
+      for (let attempt = 0; attempt < 600; attempt++) {
+        try { if (readFileSync(join(ledgerRoot, lockName), "utf8").includes("\"pid\"")) return held } catch {}
+        await Bun.sleep(10)
+      }
+      held.kill(9); throw new Error("holder never took the candidate lock")
+    }
+
+    const crashedRoot = root(), crashed = await spawnHolder(crashedRoot)
+    crashed.kill(9); await crashed.exited
+    expect(readFileSync(join(crashedRoot, lockName), "utf8")).toContain("\"pid\"")
+    let reclaimed = false
+    await createDeliveryLedger({ root: crashedRoot }).withCandidateLock(revision, async () => { reclaimed = true })
+    expect(reclaimed).toBe(true)
+    expect(statOrNull(join(crashedRoot, lockName))).toBeNull()
+
+    const liveRoot = root(), live = await spawnHolder(liveRoot)
+    expect(await code(() => createDeliveryLedger({ root: liveRoot }).withCandidateLock(revision, async () => {}))).toBe("CT_DELIVERY_LEDGER_BUSY")
+    live.kill(9); await live.exited
+
+    const unnamedRoot = root(); writeFileSync(join(unnamedRoot, lockName), "", { mode: 0o600 })
+    expect(await code(() => createDeliveryLedger({ root: unnamedRoot }).withCandidateLock(revision, async () => {}))).toBe("CT_DELIVERY_LEDGER_BUSY")
+  }, 30_000)
 })
 
 describe("canonical authorization binding", () => {

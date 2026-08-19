@@ -32,6 +32,20 @@ const readRecord = (path) => {
   catch (error) { if (error?.code === "CT_DELIVERY_LEDGER_UNSAFE") throw error; fail("CT_DELIVERY_LEDGER_UNSAFE", "Unreadable delivery ledger record") }
   finally { closeSync(fd) }
 }
+const holderAlive = (pid) => { try { process.kill(pid, 0); return true } catch (error) { return error?.code !== "ESRCH" } }
+// The lock writes {pid, candidate_revision}; read it back so a holder killed before its `finally`
+// does not strand its candidate_revision forever. A soft read: anything unreadable stays held.
+const readLockHolder = (path) => {
+  let fd
+  try { fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW) } catch { return null }
+  try {
+    const stat = fstatSync(fd)
+    if (stat.nlink !== 1 || (stat.mode & 0o777) !== 0o600 || owner !== null && stat.uid !== owner) return null
+    const holder = JSON.parse(readFileSync(fd, "utf8"))
+    if (!Number.isSafeInteger(holder?.pid) || holder.pid <= 0) return null
+    return { pid: holder.pid, candidateRevision: holder.candidate_revision, dev: stat.dev, ino: stat.ino }
+  } catch { return null } finally { closeSync(fd) }
+}
 const validateRoot = (root) => {
   if (typeof root !== "string" || !root.startsWith("/") || root !== resolve(root)) fail("CT_DELIVERY_LEDGER_UNSAFE", "Canonical delivery ledger root is required")
   try {
@@ -68,6 +82,12 @@ export const createDeliveryLedger = ({ root, clock = () => new Date().toISOStrin
         const lock = statOrNull(path)
         if (!lock) continue
         secureStat(lock, "record")
+        const holder = readLockHolder(path)
+        if (holder?.candidateRevision === candidateRevision && !holderAlive(holder.pid)) {
+          const stale = statOrNull(path)
+          if (stale && stale.dev === holder.dev && stale.ino === holder.ino) { unlinkSync(path); syncDirectory(root) }
+          continue
+        }
         if (Date.now() >= deadline) fail("CT_DELIVERY_LEDGER_BUSY", "Candidate delivery is locked")
         await Bun.sleep(10)
       }
