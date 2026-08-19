@@ -19,7 +19,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1`, y la cadena contractual `S5.4 → S5.6 → S5.7 → S5.8 → S5.11 → S5.12 → S5.9 → S5.10 → S5.5`. |
 | Outputs | Entrega idempotente por política `direct-push`, checkpoints durables y loop planner N+1 / implementer N. Main conserva la autoridad; Moshi sólo muestra escalamiento. |
-| Roadmap | `S5.1`, `S5.4`, `S5.6`–`S5.8`, `S5.11` y `S5.12` están ✅ COMPLETO. `S5.9` está 🟢 LISTO. `S5.2` conserva corrección técnica pendiente bajo push directo; `S5.3` y `S5.5` quedan detrás de sus dependencias como continuación planner/implementer y park/resume acotado. |
+| Roadmap | `S5.1`, `S5.4`, `S5.6`–`S5.8`, `S5.11` y `S5.12` están ✅ COMPLETO. `S5.9` está 🔵 EN CURSO: entregada en `master` (`3c3040d`, `754c698`, `8d4b28a`) con 7/8 criterios verificados, pendiente sólo de la enmienda del maintainer a la cláusula de preservación del criterio 2; no aporta crédito hasta cerrar. `S5.2` conserva corrección técnica pendiente bajo push directo; `S5.3` y `S5.5` quedan detrás de sus dependencias como continuación planner/implementer y park/resume acotado. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
 
 ## Grafo de dependencias
@@ -35,7 +35,7 @@ graph LR
   S57 --> S58["S5.8 binding de respuesta · ✅"]
   S58 --> S511["S5.11 provenance de checkpoint · ✅"]
   S511 --> S512["S5.12 composición Main→parking · ✅"]
-  S512 --> S59["S5.9 binding de checkpoint · 🟢"]
+  S512 --> S59["S5.9 binding de checkpoint · 🔵"]
   S59 --> S510["S5.10 binding de trabajo completado · 🔴"]
   S510 --> S55["S5.5 continuación diferible · 🔴"]
   S41["S4.1 fence hosts · ✅"] --> S52["S5.2 entrega · 🔴"]
@@ -727,9 +727,31 @@ Rollback exacto: eliminar `escalation/parking-composition.mjs` y `test/escalatio
 
 **Resultado:** persistir bajo autoridad exclusiva de Main una prueba inmutable que liga el valor exacto de `parked.checkpoint` a la captura canónica y a la evidencia de reconciliación que identifican el mismo punto de retoma.
 
-**Estado:** 🟢 LISTO — reevaluación completa: `S5.12` está ✅ COMPLETO y publicada, por lo que la dependencia producer→composition quedó satisfecha; la forma pública y la frontera de seguridad de `S5.9` están resueltas por autoridad explícita, y `Área` y `Recurso` están definidos. No queda decisión `escala` abierta propia. Proposal/spec/design y el falsificador permanecen fuera de este Git canónico y deben reconciliarse al retomar; eso preserva evidencia, pero no es un bloqueo de autoridad ni de dependencia.
+**Estado:** 🔵 EN CURSO — **implementación entregada el 2026-08-18, cierre pendiente de una sola enmienda del maintainer.** El código está en `master` y `full-sdd` completó tasks, apply y verify. Siete de los ocho criterios de aceptación pasan con evidencia de runtime; el octavo pendiente es la **cláusula de preservación** del criterio 2, refutada por el verify y descrita abajo. No queda decisión `escala` abierta propia ni dependencia insatisfecha: es desbloqueable por decisión, no un bloqueo externo. Hasta que esa enmienda se resuelva, `S5.9` **no aporta crédito** al porcentaje del Plan 5.
 
-**Route:** `full-sdd`, lista para retomar antes de tasks/apply. Proposal/spec/design existen sólo en el worktree separado `s5-9`; el archivo no trackeado `design.md` tiene SHA-256 `a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1` y la evidencia está en Engram 8604. No forman parte de este Git canónico y ese digest no identifica un commit ni un blob Git. La retoma debe reconciliar ese checkpoint y probar antes de tasks/apply que el flujo real suministra captura canónica y reconciliación `VALID` sin assertion del caller. **Autoridad:** decisión del maintainer del 2026-08-12, decisión Main-owned registrada en [`decision-register.md`](../decision-register.md), `S5.12` entregada en `e7b1437f8c98c5856236e06e4c1fb5c40e9dc8ef` y evidencia A verificada contra `workspace/checkpoint.mjs`, `schemas/reconciled-checkpoint-v1.schema.json` y `schemas/parked-decision-v1.schema.json`.
+**Entrega (2026-08-18):** tres commits directos a `master`, sin PR, sobre base `a8d7dde`:
+
+| Commit | Contenido | Líneas authored |
+|---|---|---:|
+| `3c3040d` | `feat(contracts): seal parked-checkpoint-binding-v1 contract` | 147 |
+| `754c698` | `feat(main-store): persist authoritative parked checkpoint binding` | 103 |
+| `8d4b28a` | `docs(s5-9): record parked checkpoint binding SDD artifacts` | evidencia SDD |
+
+Cada candidato de código quedó por debajo de las 400 líneas y es independientemente revertible: se midió el candidato A **en aislamiento** (728 pass / 0 fail) antes de que existiera B. Baselines del mismo día: `master@a8d7dde` solo 723 pass / 0 fail; A+B 731 pass / 0 fail / 4.428 assertions. La línea `fatal: Needed a single revision` en stderr es preexistente en `master` y no es un fallo.
+
+**Verify:** 7 PASS · 1 PARTIAL · 0 FAIL · 0 CRITICAL, en [`verify-report.md`](../../changes/s5-9-parked-checkpoint-binding/verify-report.md) y Engram 9060. Confirmó además cero paths fuera de `Área` y cero dentro de `Prohibido`.
+
+**Route:** `full-sdd`, completada. Proposal, spec, design, tasks, apply-progress y verify-report ya **no** están fuera de este Git canónico: viven trackeados en `openspec/changes/s5-9-parked-checkpoint-binding/` desde `8d4b28a`. **Autoridad:** decisión del maintainer del 2026-08-12, decisión Main-owned registrada en [`decision-register.md`](../decision-register.md), `S5.12` entregada en `e7b1437f8c98c5856236e06e4c1fb5c40e9dc8ef` y evidencia A verificada contra `workspace/checkpoint.mjs`, `schemas/reconciled-checkpoint-v1.schema.json` y `schemas/parked-decision-v1.schema.json`.
+
+**⚠️ Corrección de evidencia — decisión abierta del maintainer.** Este documento afirmaba que el `design.md` del worktree `s5-9` tenía SHA-256 `a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1` y preservaba un falsificador **fallido**. Las dos afirmaciones quedaron desactualizadas:
+
+1. El `design.md` entregado en `8d4b28a` tiene SHA-256 `93e850eb4e3b9bd7db72f6d4f2cad1767fe420bd516e0b27f5204e39dedab1c5`. El digest `a349747c…` no corresponde a ningún artefacto existente.
+2. El falsificador **no falló**: `test/main-store.test.mjs:257-272` ejecuta el camino real `captureCheckpoint → reconcileCheckpoint → createParkingComposition → parkDecision → readParkedCheckpointBinding` sobre un repositorio Git temporal, pasando sólo inputs. La propiedad del productor la imponen *brands* privados de módulo (`workspace/checkpoint.mjs:93`, `workspace/reconciliation.mjs:54`) que un caller no puede forjar; el control negativo rechaza un `structuredClone` de la captura.
+3. La evidencia del intento fallido **se perdió**: Engram 8604 fue upserteado sobre el mismo `topic_key` al diseño reconciliado que pasó, así que tampoco conserva el veredicto negativo. Sólo sobrevive el hallazgo de fase spec en Engram 8602.
+
+La cláusula de preservación del criterio 2 es, por lo tanto, **inejecutable tal como está escrita**. Requiere una enmienda explícita del maintainer —pérdida aceptada y documentada, o reescritura del criterio— antes de que `S5.9` pueda pasar a ✅ COMPLETO. **Clase:** dependencias o evidencia contradictorias. **Contamina:** el cierre de `S5.9` y su fila en el [índice maestro](../master-index.md).
+
+**Lección durable registrada:** anclar evidencia durable a un `topic_key` mutable de Engram no la preserva; un upsert posterior la destruye en silencio. La evidencia que un plan fija por hash debe vivir en Git o en un identificador inmutable.
 
 **Depende de:** `S5.12` integrada; transitivamente `S5.11` y `S5.8` ✅.
 
@@ -747,21 +769,27 @@ Rollback exacto: eliminar `escalation/parking-composition.mjs` y `test/escalatio
 
 Cada Tarea es una unidad de commit/direct-push revisable y revertible por sí sola.
 
-- [ ] Tarea 5.9.1.1 — RED: demostrar que el `checkpoint` textual de `parked-decision-v1`, `captureCheckpoint` y `reconciled-checkpoint-v1` hoy pueden variar independientemente sin que ningún contrato rechace el desacople.
-- [ ] Tarea 5.9.1.2 — RED: fijar rechazo binario para mismatch de valor exacto, digest, repositorio, base/result, assignment/generation o evidencia de reconciliación; caller assertion y lectura inferida por `S5.5` no cuentan.
-- [ ] Tarea 5.9.1.3 — GREEN: implementar el contrato aprobado y persistir el binding por el writer canónico del Main store, sin modificar los productores existentes ni abrir un segundo store.
-- [ ] Tarea 5.9.1.4 — REFACTOR: cerrar idempotencia de replay exacto, rechazo de replay divergente y atomicidad/readback sobre los bytes persistidos.
+- [x] Tarea 5.9.1.1 — RED: demostrar que el `checkpoint` textual de `parked-decision-v1`, `captureCheckpoint` y `reconciled-checkpoint-v1` hoy pueden variar independientemente sin que ningún contrato rechace el desacople.
+- [x] Tarea 5.9.1.2 — RED: fijar rechazo binario para mismatch de valor exacto, digest, repositorio, base/result, assignment/generation o evidencia de reconciliación; caller assertion y lectura inferida por `S5.5` no cuentan.
+- [x] Tarea 5.9.1.3 — GREEN: implementar el contrato aprobado y persistir el binding por el writer canónico del Main store, sin modificar los productores existentes ni abrir un segundo store.
+- [x] Tarea 5.9.1.4 — REFACTOR: cerrar idempotencia de replay exacto, rechazo de replay divergente y atomicidad/readback sobre los bytes persistidos.
 
-**Criterios de aceptación de S5.9** — todos deben pasar para cerrar:
+**Criterios de aceptación de S5.9** — todos deben pasar para cerrar. Verificados el 2026-08-18 contra `master@8d4b28a`; las citas están en [`verify-report.md`](../../changes/s5-9-parked-checkpoint-binding/verify-report.md):
 
-- [ ] Existe un único binding autoritativo persistido en Main store entre el valor exacto de `parked.checkpoint`, la captura canónica y la evidencia `reconciled-checkpoint-v1` correspondiente
-- [ ] Al retomar después de integrar `S5.11` y `S5.12`, el SDD prueba antes de tasks/apply que el flujo real suministra evidencia canónica producer-owned de captura y reconciliación `VALID`; el falsificador fallido permanece como evidencia no integrada en el archivo no trackeado `design.md` del worktree separado `s5-9`, SHA-256 `a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1`, Engram 8604; no es identidad Git ni implementación
-- [ ] Mismatch de valor, digest, repositorio, base/result, assignment/generation o evidencia de reconciliación falla cerrado sin mutación parcial
-- [ ] Caller assertion, texto equivalente y una inferencia local de `S5.5` no sustituyen evidencia canónica
-- [ ] Replay byte-idéntico es idempotente y replay divergente produce cero efectos adicionales
-- [ ] Sellado al estacionar, persistencia, inmutabilidad y readback autoritativo dedicado por identidad de decisión estacionada ocurren bajo el writer, lock y transacción canónicos de Main; no existe store ni writer paralelo
-- [ ] Los productores `workspace/checkpoint.mjs` y `reconciled-checkpoint-v1` se consumen sin una segunda ruta de captura o reconciliación
-- [ ] El diff de implementación no toca ningún path fuera de `Área`
+- [x] Existe un único binding autoritativo persistido en Main store entre el valor exacto de `parked.checkpoint`, la captura canónica y la evidencia `reconciled-checkpoint-v1` correspondiente — `main-store/store.mjs:252-256`, `schemas/parked-checkpoint-binding-v1.schema.json:4-26`
+- [ ] **PARCIAL — pendiente de enmienda del maintainer.** Al retomar después de integrar `S5.11` y `S5.12`, el SDD prueba antes de tasks/apply que el flujo real suministra evidencia canónica producer-owned de captura y reconciliación `VALID`. **Esa mitad PASA** (`test/main-store.test.mjs:257-272`). La segunda mitad —que el falsificador fallido permanezca preservado en el `design.md` de SHA-256 `a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1` con evidencia en Engram 8604— queda **refutada**: ese artefacto ya no existe y Engram 8604 fue upserteado al diseño reconciliado. Ver la corrección de evidencia arriba
+- [x] Mismatch de valor, digest, repositorio, base/result, assignment/generation o evidencia de reconciliación falla cerrado sin mutación parcial — `contracts/validate.mjs:178-180,199-210`
+- [x] Caller assertion, texto equivalente y una inferencia local de `S5.5` no sustituyen evidencia canónica — brands privados de módulo en `workspace/checkpoint.mjs:93` y `workspace/reconciliation.mjs:54`; control negativo en `test/main-store.test.mjs:281`
+- [x] Replay byte-idéntico es idempotente y replay divergente produce cero efectos adicionales — `main-store/store.mjs:258-269`
+- [x] Sellado al estacionar, persistencia, inmutabilidad y readback autoritativo dedicado por identidad de decisión estacionada ocurren bajo el writer, lock y transacción canónicos de Main; no existe store ni writer paralelo — `main-store/store.mjs:273-292`
+- [x] Los productores `workspace/checkpoint.mjs` y `reconciled-checkpoint-v1` se consumen sin una segunda ruta de captura o reconciliación — productores sin modificar; verify confirma cero paths en `Prohibido`
+- [x] El diff de implementación no toca ningún path fuera de `Área` — nueve paths, todos dentro de `Área`
+
+**Hallazgos menores del verify, no bloqueantes y sin Sesión propia:**
+
+- `test/main-store.test.mjs:308-323` pasa por el motivo equivocado: crea el directorio sin modo `0o700`, así que dispara el chequeo de directorio inseguro (`main-store/store.mjs:93-99`) y prueba rechazo por modo, no rechazo de readback de proyecto ajeno. **No es un hueco de cobertura**: el comportamiento buscado sí está cubierto en `test/main-store.test.mjs:340-354`. Es un test redundante y engañoso, pendiente de limpieza.
+- `specs/parked-checkpoint-binding/spec.md:59` exige igualdad de identidad de ejecución "a través de la decisión estacionada", pero `parked-decision-v1` no lleva campos de repositorio/proyecto/assignment/generation/base/result: esa pata es vacua por construcción. El cross-binding real es captura↔reconciliación. Sobreafirmación de redacción en el spec; no afecta al criterio 3.
+- `readParkedCheckpointBinding` no hace `authority.assert` por llamada ni toma lock, siguiendo el precedente de `readParking`: la autoridad de readback es a nivel de instancia.
 
 ## Sesión 5.10 — Binding inmutable del trabajo independiente completado
 
@@ -803,6 +831,6 @@ Cada Tarea es una unidad de commit/direct-push revisable y revertible por sí so
 - [ ] `S5.5` consume la prueba sin inferirla localmente y `S7.1` puede atribuir la evidencia al candidato y supuesto exactos
 - [ ] El diff de implementación no toca ningún path fuera de `Área`
 
-**Cómputo del Plan 5:** `7/12 S = 58%`. Cuentan `S5.1`, `S5.4`, `S5.6`, `S5.7`, `S5.8`, `S5.11` y `S5.12`; `S5.9` está 🟢 LISTO, `S5.2` está 🔴 BLOQUEADO y `S5.3`, `S5.5`, `S5.10` están 📋 PLANIFICADO. Ninguna Sesión posterior aporta crédito hasta `COMPLETO`.
+**Cómputo del Plan 5:** `7/12 S = 58%`. Cuentan `S5.1`, `S5.4`, `S5.6`, `S5.7`, `S5.8`, `S5.11` y `S5.12`; `S5.9` está 🔵 EN CURSO —entregada pero sin cerrar—, `S5.2` está 🔴 BLOQUEADO y `S5.3`, `S5.5`, `S5.10` están 📋 PLANIFICADO. Ninguna Sesión posterior aporta crédito hasta `COMPLETO`.
 
 Las responsabilidades legacy de Telegram Delivery y continuación que aún no tienen límite de un PR permanecen sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).

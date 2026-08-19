@@ -1,20 +1,24 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-18 contra `master@61a5aa2`. La autoridad vigente es Moshi → Main → raíz primaria OpenCode con TUI adjunta no autoritativa; Herdr no pertenece al lifecycle crítico.
+> Última reconciliación: 2026-08-18 contra `master@8d4b28a`. La autoridad vigente es Moshi → Main → raíz primaria OpenCode con TUI adjunta no autoritativa; Herdr no pertenece al lifecycle crítico.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md).
 
 ## 📍 Punto de retoma
+
+**`S5.9` está entregada en `master` (`3c3040d`, `754c698`, `8d4b28a`) pero NO cerrada.** El código pasa 7/8 criterios con evidencia de runtime y `master` queda en 731 pass / 0 fail. Falta **una sola enmienda del maintainer**: la cláusula de preservación del criterio 2 quedó refutada porque el `design.md` del falsificador fallido (`a349747c…`) ya no existe y Engram 8604 fue upserteado al diseño reconciliado. Hasta que se enmiende, `S5.9` sigue 🔵 EN CURSO y **no aporta crédito**. Detalle en [plan-5/STATUS](plan-5/STATUS.md).
 
 `S4.2` está ✅ COMPLETO en `61a5aa2`; la decisión 37 preserva esa historia y enumera `S4.5` para migrar el lifecycle futuro a Main-owned backend/root con TUI adjunta no autoritativa.
 
 `S4.5` está 🟢 LISTO y decision-clean: 38 fija backend aislado por worktree y 39 fija Herdr sólo como vista temporal reemplazable. La 40 resuelve recuperación: vista perdida reconecta la raíz viva; muerte probada crea raíz/epoch sucesores desde autoridad durable, sin resucitar el ID anterior. Las 39 decisiones `escala` de la cadena están resueltas; `S4.3` y `S4.4` esperan sus dependencias, y la decisión externa de `S9.2` permanece fuera de esta cadena.
 
-La capacidad inmediata es `S5.9` y `S4.5`: sus paths y recursos son disjuntos. `S5.2` conserva su corrección técnica pendiente.
+La capacidad inmediata es `S4.5`, que aún requiere `session-plan` antes de ejecutar porque su forecast no garantiza una sola unidad ≤400. `S5.2` conserva su corrección técnica pendiente.
+
+**⚠️ Trabajo sin commitear en worktrees.** El worktree `s9-1-planning` tiene modificaciones sin commitear a este archivo y a `plan-9/STATUS.md`, más artefactos untracked de `S9.1`. Colisiona con cualquier cierre que escriba este índice; resolverlo antes de asignar `S9.1`. Fue exactamente el modo de fallo que casi pierde `S5.9`: trabajo completo, aplicado y untracked durante tres días.
 
 ## 🎯 Cola de ejecución
 
-`#1 S5.9` · `#2 S4.5` · `#3 S4.3` · `#4 S5.10` · `#5 S4.4` · `#6 S5.3` · `#7 S5.5` · `#8 S7.1` — recalculada 2026-08-18. La decisión 40 no cambia edges ni concede crédito: `S4.4` sigue en #5 detrás de `S4.3`; Pi/Intercom y S8.7 no integran esta cola.
+`#1 S4.5` · `#2 S4.3` · `#3 S5.10` · `#4 S4.4` · `#5 S5.3` · `#6 S5.5` · `#7 S7.1` — recalculada 2026-08-18 tras entregar `S5.9`. `S5.10` conserva su posición detrás de `S4.3` y depende de `S5.9` **integrada**, que ya lo está en `master` aunque la Sesión no haya cerrado formalmente. La decisión 40 no cambia edges ni concede crédito; Pi/Intercom y S8.7 no integran esta cola.
 
 ## Granularidad
 
@@ -32,7 +36,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 | P2 | Contratos y registro de producto | 🔵 EN CURSO | — (responsabilidades restantes de Change B sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-2/STATUS.md) |
 | P3 | Workspace y orquestación | ✅ COMPLETO | 100% (4/4 S) | — | Main | — | [STATUS](plan-3/STATUS.md) |
 | P4 | Hosts y línea exclusiva | 🔵 EN CURSO | 40% (2/5 S) | — | Main | S4.5, S4.3, S4.4 | [STATUS](plan-4/STATUS.md) |
-| P5 | Entrega y continuación | 🔵 EN CURSO | 58% (7/12 S) | — | Main | S5.2, S5.3, S5.5, S5.9, S5.10 | [STATUS](plan-5/STATUS.md) |
+| P5 | Entrega y continuación | 🔵 EN CURSO | 58% (7/12 S) | — | Main | S5.9 (entregada, falta enmienda), S5.2, S5.3, S5.5, S5.10 | [STATUS](plan-5/STATUS.md) |
 | P6 | Campañas multiproyecto | 📋 PLANIFICADO | — (sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-6/STATUS.md) |
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | S7.1 | [STATUS](plan-7/STATUS.md) |
 | P8 | Release instalable | 🔵 EN CURSO | 75% (6/8 S) | — | Maintainer | S8.5, S8.6 | [STATUS](plan-8/STATUS.md) |
