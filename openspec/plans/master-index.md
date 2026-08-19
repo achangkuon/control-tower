@@ -1,7 +1,7 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-19 contra `master@c79866b`. La autoridad vigente es Moshi → Main → raíz primaria OpenCode con TUI adjunta no autoritativa; Herdr no pertenece al lifecycle crítico.
+> Última reconciliación: 2026-08-19 contra `master@49c23aa`. La autoridad vigente es Moshi → Main → raíz primaria OpenCode con TUI adjunta no autoritativa; Herdr no pertenece al lifecycle crítico.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md).
 
 ## 📍 Punto de retoma
@@ -16,13 +16,13 @@ P5 pasa a 9/12 S (75%). `S5.5` y `S4.4` quedan 🟢 LISTO, y la cola la encabeza
 
 **`S9.1` está 🔵 EN CURSO y BLOQUEADA por una decisión del maintainer.** Su planificación está completa —nueve Módulos, veintisiete Tareas, nueve commits directos secuenciales de ≤400 líneas— pero la ejecución va `1/9 M` y `3/27 T`. `M9.1.1` está congelado y el candidato terminal de `M9.1.2` **no está aceptado, ni es reutilizable, ni entregable**: quedó como evidencia de diagnóstico. La próxima acción exacta es `await-fresh-rewrite-authorization` — el maintainer debe autorizar por separado descartarlo y reescribirlo antes de un RED fresco. `S9.1` no reanuda hasta entonces. `S9.3` está 🔴 BLOQUEADA por autoridad de transporte.
 
-**Deuda auditada y triada el mismo día.** Una auditoría de pendientes verificó cinco deudas técnicas contra el código, y la **decisión 46** las resolvió todas. Entregada: el piso de puerto loopback, acotado en cinco predicados con test de borde en cada uno (`1bc14d6`). Aceptadas como residuales documentados: el acoplamiento de expiración y el supuesto reclamable de `S5.10`. Pendiente de enumerar: una Sesión para los defaults de liveness versionados de §14.3. Y el lock huérfano de `withLock` —hallazgo 1 de los tres que bloquean `S5.2`, ubicado en `main-store/store.mjs:104-124`— se arreglará **dentro** de la segunda corrección de `S5.2`, de modo que **`S5.2`, `S5.3` y esa deuda esperan todas la misma autorización del maintainer**.
+**Deuda auditada y triada el mismo día.** Una auditoría de pendientes verificó cinco deudas técnicas contra el código, y la **decisión 46** las resolvió todas. Entregada: el piso de puerto loopback, acotado en cinco predicados con test de borde en cada uno (`1bc14d6`). Aceptadas como residuales documentados: el acoplamiento de expiración y el supuesto reclamable de `S5.10`. Pendiente de enumerar: una Sesión para los defaults de liveness versionados de §14.3. **Corregido el mismo día:** la auditoría atribuyó el hallazgo 1 de `S5.2` al `withLock` de `main-store/store.mjs`, y era falso —ese archivo está en el `Prohibido` de la Sesión—. El hallazgo 1 vive en `delivery/ledger.mjs`, dentro del `Área`. El lock huérfano de `main-store/store.mjs:104-124` es un defecto **real y distinto**, hallado por la lente R4 de `S5.10`, y **vuelve a quedar sin resolución**: cerrar `S5.2` ya no lo cierra. La decisión 47 autorizó la segunda corrección de `S5.2`, que pasa a 🟢 LISTO.
 
 ## 🎯 Cola de ejecución
 
-`#1 S4.4` · `#2 S5.5` · `#3 S7.1` — recalculada 2026-08-19 tras cerrar `S5.10` y **corregida el mismo día**: la versión previa listaba `S5.3` en `#2`, pero `S5.3` espera `S5.2` integrada y `S5.2` está 🔴 BLOQUEADO, así que no era ejecutable. **Una Sesión entra en esta cola sólo si toda su cadena de dependencias está satisfecha.**
+`#1 S5.2` · `#2 S4.4` · `#3 S5.5` · `#4 S7.1` — recalculada 2026-08-19 tras cerrar `S5.10` y **corregida el mismo día**: la versión previa listaba `S5.3` en `#2`, pero `S5.3` espera `S5.2` integrada y `S5.2` está 🔴 BLOQUEADO, así que no era ejecutable. **Una Sesión entra en esta cola sólo si toda su cadena de dependencias está satisfecha.**
 
-`S4.4` recupera la cabeza: la **decisión 45** del mismo día resolvió su último punto abierto —`recovery_epoch` y `host_epoch` son el mismo contador, y el plan quedó alineado a `host_epoch` en los dos planes y en la spec de capacidad que lo nombraba—, así que vuelve a 🟢 LISTO y decision-clean sin ganar alcance. `S5.5` sube a 🟢 LISTO porque `S5.10` quedó integrada, y es la única Sesión sin ninguna decisión previa pendiente. Pi/Intercom y S8.7 no integran esta cola.
+`S5.2` encabeza porque su cierre destraba `S5.3`, que lleva bloqueada detrás de ella desde el principio, y porque su candidato ya existe y sólo espera tres correcciones acotadas. `S4.4` la sigue: la **decisión 45** del mismo día resolvió su último punto abierto —`recovery_epoch` y `host_epoch` son el mismo contador, y el plan quedó alineado a `host_epoch` en los dos planes y en la spec de capacidad que lo nombraba—, así que vuelve a 🟢 LISTO y decision-clean sin ganar alcance. `S5.5` sube a 🟢 LISTO porque `S5.10` quedó integrada, y es la única Sesión sin ninguna decisión previa pendiente. Pi/Intercom y S8.7 no integran esta cola.
 
 ## Granularidad
 
@@ -40,7 +40,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 | P2 | Contratos y registro de producto | 🔵 EN CURSO | — (responsabilidades restantes de Change B sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-2/STATUS.md) |
 | P3 | Workspace y orquestación | ✅ COMPLETO | 100% (4/4 S) | — | Main | — | [STATUS](plan-3/STATUS.md) |
 | P4 | Hosts y línea exclusiva | 🔵 EN CURSO | 80% (4/5 S) | — | Main | `S4.4` 🟢 | [STATUS](plan-4/STATUS.md) |
-| P5 | Entrega y continuación | 🔵 EN CURSO | 75% (9/12 S) | — | Main | `S5.5` 🟢 · `S5.2` 🔴 · `S5.3` 🔴 (espera `S5.2`) | [STATUS](plan-5/STATUS.md) |
+| P5 | Entrega y continuación | 🔵 EN CURSO | 75% (9/12 S) | — | Main | `S5.2` 🟢 · `S5.5` 🟢 · `S5.3` 🔴 (espera `S5.2`) | [STATUS](plan-5/STATUS.md) |
 | P6 | Campañas multiproyecto | 📋 PLANIFICADO | — (sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-6/STATUS.md) |
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | S7.1 | [STATUS](plan-7/STATUS.md) |
 | P8 | Release instalable | 🔵 EN CURSO | 75% (6/8 S) | — | Maintainer | — · `S8.5` y `S8.6` 🟡 DIFERIDO | [STATUS](plan-8/STATUS.md) |
