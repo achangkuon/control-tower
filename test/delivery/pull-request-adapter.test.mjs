@@ -18,7 +18,10 @@ describe("argv-only pull request adapter", () => {
         : { exitCode: 0, stdout: "https://github.com/owner/repository/pull/42", stderr: "" }
     } })
 
-    expect((await adapter.create(input)).status).toBe("delivered")
+    // A pull request that did not exist a moment ago cannot have passing checks or an
+    // approving review yet, so creating one is never itself a delivered state.
+    const created = await adapter.create(input)
+    expect(created).toMatchObject({ status: "checks_pending", reconciled: true, mutated: true })
     expect(calls).toEqual([
       { command: "gh", argv: ["pr", "list", "--repo", "owner/repository", "--head", "feature/s5-2", "--base", "master", "--state", "all", "--json", "number,headRefName,baseRefName,state,isDraft,mergeStateStatus,statusCheckRollup,reviewDecision,mergedAt"], env: { GH_TOKEN: "secret" } },
       { command: "gh", argv: ["pr", "create", "--repo", "owner/repository", "--head", "feature/s5-2", "--base", "master", "--fill"], env: { GH_TOKEN: "secret" } },

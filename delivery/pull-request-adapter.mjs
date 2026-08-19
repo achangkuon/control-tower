@@ -44,7 +44,10 @@ export const createPullRequestAdapter = ({ run } = {}) => {
       if (inspected.status !== "absent") return Object.freeze({ status: "unknown", reconciled: false, mutated: false, evidence: inspected.result ?? null })
       const { value } = inspected
       const result = await run({ command: "gh", argv: ["pr", "create", "--repo", value.repository, "--head", value.head, "--base", value.base, "--fill"], env: value.env })
-      return Object.freeze({ status: result?.exitCode === 0 ? "delivered" : "unknown", reconciled: true, mutated: true, evidence: result ?? null })
+      // Creating the pull request is the effect, not the delivery. Checks and review cannot
+      // exist yet, so the freshly created request enters the same pending state a reconciled
+      // one would; only `reconcile` can later promote it to delivered.
+      return Object.freeze({ status: result?.exitCode === 0 ? "checks_pending" : "unknown", reconciled: true, mutated: true, evidence: result ?? null })
     },
   })
 }
