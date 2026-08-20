@@ -301,11 +301,17 @@ Implementa commit y push idempotentes a `master`, checks, autorización exacta y
 
 **Área:** `continuation/**`, `test/continuation/**`.
 
+**Implementación exacta:** `continuation/integrated-base.mjs` y `test/continuation/integrated-base.test.mjs`.
+
+**Prohibido:** cualquier otro path de implementación, en especial `core.mjs`, cualquier ruta SQLite o de DB, `db-writer`, migraciones, los archivos históricos `openspec/changes/autonomous-v2-checkpointed-delivery/tasks.md` y `openspec/changes/autonomous-v2-role-routed-continuation/tasks.md`, y todo primitive preexistente bajo `continuation/**` o `test/continuation/**`. Los primitives existentes se consumen sin modificarlos.
+
 **Recurso:** autoridad de despacho Main; sin DB, migraciones ni token de entrega.
 
-**Ruta:** `design-tasks` al destrabar — el planner prepara sólo N+1 hasta Tareas y el implementer ejecuta N mediante apply/tests/verify. **Autoridad:** rebase del maintainer 2026-08-17 y política `planning.horizon_ceiling: 2`.
+**Ruta:** `design-tasks`, elaboración concluida y lista para Strict TDD. El planner prepara sólo N+1 hasta Tareas bajo `planning.horizon_ceiling: 2`; el implementer ejecuta sólo N mediante apply/tests/verify. **Autoridad:** decisión del maintainer registrada en Engram obs 9133, rebase del maintainer 2026-08-17 y política `planning.horizon_ceiling: 2`.
 
-Prepara N+1 desde la base integrada y evidencia fresca; el implementer conserva N hasta verificarlo. Main es el único despachador y ningún wake otorga autorización. La definición histórica de tareas queda preservada como evidencia.
+**Autoridad canónica de tareas:** esta sección vigente de `S5.3` es la única autoridad para `M5.3.1` y `T5.3.1.1`–`T5.3.1.3`. Los dos cuerpos históricos duplicados —`openspec/changes/autonomous-v2-checkpointed-delivery/tasks.md` y `openspec/changes/autonomous-v2-role-routed-continuation/tasks.md`— se preservan sólo como evidencia y no autorizan implementación.
+
+**Forecast:** 180–280 líneas authored entre los dos paths exactos; un commit de comportamiento, dentro del límite de 400 líneas.
 
 **Decisiones:**
 
@@ -314,6 +320,12 @@ Prepara N+1 desde la base integrada y evidencia fresca; el implementer conserva 
 - `derivable` — qué es evidencia fresca. **Criterio:** evidencia producida contra la base ya integrada, no contra la que existía cuando el sucesor se planificó. Falsificable: un sucesor habilitado por evidencia anterior a la integración de su predecesor. **Autoridad:** el alcance declarado de `S5.3`.
 - `escala` — **RESUELTA por el maintainer el 2026-08-14 (decisión 29): preservar el sucesor, marcarlo `UNRECONCILED` y escalar.** Qué pasa cuando la base integrada divergió de la que el sucesor asumía. **Clase:** dependencias o evidencia contradictorias. Rebasar el sucesor cambia su contenido después de haber sido planificado; descartarlo tira trabajo hecho. **Resolución:** ninguna de las dos automáticamente. Es derivable de las reglas de negocio 9 y 10 del PRD —drift material o ambiguo requiere decisión humana, y el estado parcial se preserva y bloquea en vez de limpiarse para aparentar progreso—. **Falsificable:** cualquier ruta que rebase o descarte un sucesor divergente sin decisión humana. **Contaminaba:** `S7.1`, cuyo piloto de rechazo de candidatos stale mide precisamente este caso.
 - `escala` — **RESUELTA por el maintainer el 2026-08-14 (decisión 28): el contenido de dry-run huérfano de `S5.1` se absorbe en esta Sesión.** `NO_SCOPE`, denegación, drift de horizonte y `reconcile→Support→Policy` quedaron sin dueño al resolver `M5.1.1` a favor de `Candidate`, y `S5.3` ya era su destino natural. **Clase:** expansión de alcance. **Efecto:** no se enumera Sesión nueva, así que el denominador de P5 no cambia; la elaboración técnica de `S5.3` debe incorporar esas cuatro responsabilidades a sus Tareas. **Contaminaba:** `S5.3`.
+
+### Módulo 5.3.1 — Continuación planner/implementer desde base integrada fresca
+
+- [ ] Tarea 5.3.1.1 — RED: agregar en `test/continuation/integrated-base.test.mjs` pruebas de comportamiento que exijan que el planner prepare sólo N+1 hasta Tareas bajo `planning.horizon_ceiling: 2`, que el implementer ejecute sólo N y que toda evidencia habilitante se produzca contra la base ya integrada. Probar la secuencia exacta `reconcile → Support → Policy → Main dispatch` y demostrar despacho cero ante `NO_SCOPE`, denegación, evidencia stale o no integrada, overflow o drift del horizonte y cualquier caller que no sea Main; wake, agentes e interfaces humanas no conceden autoridad ni despachan.
+- [ ] Tarea 5.3.1.2 — GREEN: implementar el mínimo comportamiento en `continuation/integrated-base.mjs`, componiendo los primitives existentes sin modificarlos, para preparar N+1 y ejecutar N con evidencia fresca, respetar el techo 2 y permitir únicamente a Main despachar después de `reconcile → Support → Policy`; toda negativa de alcance, política, frescura, integración, horizonte o autoridad termina con despacho cero.
+- [ ] Tarea 5.3.1.3 — REFACTOR/triangulate: cubrir la base divergente y los límites alternos sin ampliar el Área. Un sucesor divergente se preserva byte por byte, se marca `UNRECONCILED`, se escala y nunca se rebasea, descarta ni despacha automáticamente; volver a probar además que los casos negativos permanecen en despacho cero y que ningún primitive preexistente fue modificado.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
 - [ ] El planner deja N+1 especificado hasta Tareas sobre la base integrada y el implementer ejecuta sólo N
