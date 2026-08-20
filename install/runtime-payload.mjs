@@ -2,11 +2,12 @@ import { lstatSync, readdirSync, readFileSync } from "node:fs"
 import { spawnSync } from "node:child_process"
 import { isAbsolute, join, relative, resolve, sep } from "node:path"
 
+// <generated:runtime-payload>
+// Regenerate exactly with: BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 bun scripts/payload-closure.mjs --write
 export const RUNTIME_PAYLOAD_FILES = [
   "bin/torre",
   "core.mjs",
   "hosts/herdr.mjs",
-  "hosts/launcher.mjs",
   "hosts/launch-worker-cli.mjs",
   "hosts/launch-worker.mjs",
   "hosts/opencode-launcher.mjs",
@@ -22,6 +23,7 @@ export const RUNTIME_PAYLOAD_FILES = [
   "jornada/lifecycle.mjs",
   "main-store/launch-consumer.mjs",
 ]
+// </generated:runtime-payload>
 
 const expected = new Set(RUNTIME_PAYLOAD_FILES)
 

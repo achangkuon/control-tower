@@ -12,7 +12,6 @@ const payloadMembers = [
   "bin/torre",
   "core.mjs",
   "hosts/herdr.mjs",
-  "hosts/launcher.mjs",
   "hosts/launch-worker-cli.mjs",
   "hosts/launch-worker.mjs",
   "hosts/opencode-launcher.mjs",
