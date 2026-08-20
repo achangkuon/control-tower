@@ -1,5 +1,5 @@
 ---
-verified_against: d43c09a616bf57483ea55b9a92fc28dd03577f34
+verified_against: c2bdf871cf2d0854b23983a153a0f322643df674
 verified_at: 2026-08-20
 standfirst: Dónde está el producto hoy, qué se movió, y las cinco decisiones que dependen de vos. Las cifras se miden solas contra el código; el juicio de abajo se escribe a mano y lleva estampado contra qué commit se verificó.
 ---
@@ -62,9 +62,9 @@ En simple: La Torre sabe armar la pregunta perfecta —con evidencia, opciones y
 Evidencia: Cero llamadores fuera de `test/` · ausente de `RUNTIME_PAYLOAD_FILES` · `S5.5` 🟢 LISTO
 
 ### B · estructural · Son dos productos en un repositorio, sin un solo cable entre ellos
-Lo técnico: El payload instalado es import-closed y funciona. Lo medido es otra cosa: ninguno de los archivos no instalados es importado por el payload. `core.mjs`, el 74% de lo que se instala, importa exclusivamente `node:*` y `bun:sqlite`. Quedan afuera `contracts/`, `registry/`, `escalation/`, `capabilities/`, `console/`, `workspace/`, `enroll/`, `policy/`, `continuation/`, `supervision/`, el `dashboard/` y casi todo `main-store/`.
+Lo técnico: El payload instalado es import-closed y funciona. Lo medido es otra cosa: ninguno de los archivos no instalados es importado por el payload. `core.mjs`, el 74% de lo que se instala, importa exclusivamente `node:*` y `bun:sqlite`. Quedan afuera `contracts/`, `registry/`, `escalation/`, `capabilities/`, `console/`, `workspace/`, `enroll/`, `policy/`, `continuation/`, `supervision/`, `delivery/` —recién entregado con `S5.2`—, el `dashboard/` y casi todo `main-store/`.
 En simple: Hay dos autos en el taller. Uno anda y es el que se entrega. El otro está impecablemente construido, pieza por pieza, y no tiene el motor conectado a nada. Abrir el camión no arregla nada: llegarían piezas sueltas. El trabajo real es enchufar esos módulos, y sigue sin estar enumerado ni asignado.
-Evidencia: Decisión 54 · `S8.9` 🟢 cubre el envío, no el cableado
+Evidencia: Decisión 54 · `S8.9` 🟢 cubre el envío, no el cableado · cada Sesión que cierra agranda la brecha: `S5.2` bajó el share instalado
 
 ### C · nuevo · La documentación del plan afirmó cosas falsas sobre el código dos veces en una semana
 Lo técnico: `M9.1.1` figuraba `✅ COMPLETO` y su código no existe en `master`. Y la auditoría de deudas atribuyó un hallazgo de `S5.2` a un archivo que la propia Sesión tiene prohibido tocar.

@@ -76,7 +76,11 @@ const DERIVED = { instrumentos: instruments, avance: progressTable, cola: queueL
 const warnings = (doc, m) => {
   const notes = []
   if (!m.git.clean) notes.push("<strong>Árbol sucio</strong> al medir: hay cambios sin commitear, así que esta radiografía no describe exactamente lo que está entregado.")
-  if (doc.meta.verified_against !== m.git.head) notes.push(`El texto escrito <strong>se escribió contra otro commit</strong> (<code>${escape(doc.meta.verified_against.slice(0, 7))}</code>) y se está mostrando sobre <code>${escape(m.git.short)}</code>. Los números están al día; el juicio puede no estarlo.`)
+  const judgment = m.git.judgment
+  const stamp = escape(doc.meta.verified_against.slice(0, 7))
+  if (judgment && !judgment.known) notes.push(`El juicio dice haberse verificado contra <code>${stamp}</code>, un commit que <strong>este repositorio no contiene</strong>. No se puede saber contra qué se escribió.`)
+  else if (judgment?.drifted) notes.push(`El juicio <strong>se escribió contra otro commit</strong> (<code>${stamp}</code>) y desde entonces entraron ${judgment.commits} commits que cambiaron el producto. Los números están al día; el juicio puede no estarlo.`)
+  else if (!judgment && doc.meta.verified_against !== m.git.head) notes.push(`El juicio <strong>se escribió contra otro commit</strong> (<code>${stamp}</code>) y se está mostrando sobre <code>${escape(m.git.short)}</code>.`)
   if (m.tests && !m.tests.at_head) notes.push(`El resultado de los tests está <strong>desactualizado</strong>: se registró en <code>${escape((m.tests.recorded_head ?? "").slice(0, 7))}</code>, no en este commit.`)
   if (!m.tests) notes.push("La suite <strong>nunca se registró</strong> para este commit. No se reporta un número inventado.")
   if (!notes.length) return ""

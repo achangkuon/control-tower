@@ -59,8 +59,9 @@ export function radiografia({ root, suite = null, check = false, out = REPORT } 
   }
 
   ensureIgnored(root)
-  const measurements = measureRepository(root)
-  const html = renderReport(parseAuthored(readFileSync(authoredPath, "utf8")), measurements)
+  const doc = parseAuthored(readFileSync(authoredPath, "utf8"))
+  const measurements = measureRepository(root, { judgmentSha: doc.meta.verified_against })
+  const html = renderReport(doc, measurements)
   const target = join(root, out)
   const current = existsSync(target) ? readFileSync(target, "utf8") : null
 

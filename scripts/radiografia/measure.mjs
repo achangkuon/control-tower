@@ -102,7 +102,22 @@ const relativeImportsOf = (root, file) => {
 // call the tree dirty because of its own output.
 export const GENERATED = Object.freeze(["radiografia.html", ".radiografia-cache.json"])
 
-const measureGit = (root, windowHours) => {
+const JUDGMENT = "openspec/plans/radiografia.md"
+
+// A judgment does not go stale because it was itself committed. Drift counts only commits
+// that changed something other than the judgment file — otherwise the warning fires on
+// every update and stops being read.
+const measureJudgment = (root, sha) => {
+  if (!sha) return null
+  let known = true
+  try { execFileSync("git", ["-C", root, "cat-file", "-e", `${sha}^{commit}`], { stdio: "ignore" }) } catch { known = false }
+  if (!known) return Object.freeze({ known: false, drifted: true, commits: null })
+  const since = git(root, "rev-list", `${sha}..HEAD`, "--", ".", `:(exclude)${JUDGMENT}`)
+  const commits = since === "" ? 0 : since.split("\n").length
+  return Object.freeze({ known: true, drifted: commits > 0, commits })
+}
+
+const measureGit = (root, windowHours, judgmentSha) => {
   const head = git(root, "rev-parse", "HEAD")
   const dirty = git(root, "status", "--porcelain").split("\n").filter(Boolean)
     .filter((entry) => !GENERATED.includes(entry.slice(3).trim()))
@@ -115,10 +130,11 @@ const measureGit = (root, windowHours) => {
     short: head.slice(0, 7),
     clean,
     recent: Object.freeze({ docs, code: subjects.length - docs, total: subjects.length, window_hours: windowHours }),
+    judgment: measureJudgment(root, judgmentSha),
   })
 }
 
-export function measureRepository(root, { windowHours = 24 } = {}) {
+export function measureRepository(root, { windowHours = 24, judgmentSha = null } = {}) {
   const indexPath = join(root, "openspec/plans/master-index.md")
   if (!existsSync(indexPath)) fail("CT_RADIOGRAFIA_NO_MASTER_INDEX", `missing ${indexPath}`)
   const index = readFileSync(indexPath, "utf8")
@@ -139,7 +155,7 @@ export function measureRepository(root, { windowHours = 24 } = {}) {
   const testFiles = listUnder(tracked, "test", (rel) => CODE_EXT.test(rel))
   const docLines = lines(listUnder(tracked, "openspec", (rel) => rel.endsWith(".md")))
 
-  const git_ = measureGit(root, windowHours)
+  const git_ = measureGit(root, windowHours, judgmentSha)
 
   return Object.freeze({
     measured_at: new Date().toISOString(),

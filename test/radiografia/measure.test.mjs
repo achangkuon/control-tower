@@ -186,3 +186,38 @@ describe("measureRepository", () => {
     expect(measureRepository(root).git.clean).toBe(false)
   })
 })
+
+describe("measureRepository — judgment drift", () => {
+  const seedFor = (root) => {
+    write(root, "openspec/plans/master-index.md", `# Índice\n\n**Avance global**: 1/2 Planes cerrados (50%) · Sesiones cerradas en planes activos: 1/2 (50%).\n${PLAN_TABLE}`)
+    write(root, "core.mjs", "export const a = 1\n")
+    write(root, "openspec/plans/radiografia.md", "---\nverified_against: x\n---\n")
+  }
+
+  test("does not call the judgment drifted when the only commit since touched the judgment itself", () => {
+    const root = repo(); seedFor(root)
+    const stamped = commit(root, "docs(plans): seed")
+    write(root, "openspec/plans/radiografia.md", "---\nverified_against: y\n---\n\nrevisado\n")
+    commit(root, "docs(radiografia): actualizar el juicio")
+    const drift = measureRepository(root, { judgmentSha: stamped }).git.judgment
+    expect(drift.known).toBe(true)
+    expect(drift.drifted).toBe(false)
+  })
+
+  test("calls the judgment drifted when product code landed after it was written", () => {
+    const root = repo(); seedFor(root)
+    const stamped = commit(root, "docs(plans): seed")
+    write(root, "core.mjs", "export const a = 2\n")
+    commit(root, "fix(core): bump")
+    const drift = measureRepository(root, { judgmentSha: stamped }).git.judgment
+    expect(drift.drifted).toBe(true)
+    expect(drift.commits).toBe(1)
+  })
+
+  test("treats a stamp the repository does not contain as unknown, never as current", () => {
+    const root = repo(); seedFor(root); commit(root, "docs(plans): seed")
+    const drift = measureRepository(root, { judgmentSha: "0".repeat(40) }).git.judgment
+    expect(drift.known).toBe(false)
+    expect(drift.drifted).toBe(true)
+  })
+})
