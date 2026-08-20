@@ -10,6 +10,8 @@
 
 `S5.3` queda 🟢 LISTO por dependencia satisfecha. P5 pasa a 83% (10/12 S) y el avance global de Sesiones activas a 72% (36/50). La próxima posición de ejecución es `S8.9`; después entra `S5.3`.
 
+**La radiografía del producto se genera sola desde el 2026-08-20**, por la **decisión 55**. El estado que lee el maintainer dejó de escribirse a mano: `scripts/radiografia.mjs` mide avance por Plan, cola, líneas, share instalado, módulos sin cablear y suite directamente de este índice y del repositorio, y `.githooks/pre-push` lo regenera en cada entrega — para cualquier agente, porque el disparo es git y no asistente. El juicio que ningún script deriva vive en [`radiografia.md`](radiografia.md) con sello `verified_against`, y el informe avisa solo cuando ese sello quedó atrás, cuando el árbol está sucio o cuando la suite se registró en otro commit. **Motivo directo:** las dos afirmaciones falsas sobre el código que este índice y `plan-9/STATUS.md` sostuvieron esta semana se detectaron por auditoría manual, no por una alarma. 47 tests nuevos; suite completa 935/0. Registrado en [plan-0](plan-0/STATUS.md); no consume ni desplaza ninguna Sesión enumerada.
+
 Siguen fuera de este cierre el lock huérfano de `main-store/store.mjs:104-124`, el cableado del producto no instalado, la Sesión `enroll/**`, los umbrales de liveness de §14.3, el tamaño del pool de `S9.4` y el soporte de macOS.
 
 ## 🎯 Cola de ejecución
