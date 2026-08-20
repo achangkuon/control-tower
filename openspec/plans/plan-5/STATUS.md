@@ -19,7 +19,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1`, y la cadena contractual `S5.4 → S5.6 → S5.7 → S5.8 → S5.11 → S5.12 → S5.9 → S5.10 → S5.5`. |
 | Outputs | Entrega idempotente por política `direct-push`, checkpoints durables y loop planner N+1 / implementer N. Main conserva la autoridad; Moshi sólo muestra escalamiento. |
-| Roadmap | `S5.1`, `S5.2`, `S5.4`, `S5.6`–`S5.12` están ✅ COMPLETO. `S5.2` cerró sobre el candidato `2145fd7` con 15/15 criterios funcionales y el gate de alcance separado en PASS; esto destraba `S5.3`, que pasa a 🟢 LISTO. `S5.5` también está 🟢 LISTO. |
+| Roadmap | `S5.1`–`S5.4` y `S5.6`–`S5.12` están ✅ COMPLETO. `S5.3` cerró sobre el comportamiento `4f07bfb` con sus cuatro criterios y el gate de alcance en PASS. Sólo `S5.5` sigue 🟢 LISTO. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
 
 ## Corrección operativa completada — no es una nueva Sesión
@@ -59,7 +59,7 @@ graph LR
   S510 --> S55["S5.5 continuación diferible · 🟢"]
   S41["S4.1 fence hosts · ✅"] --> S52["S5.2 entrega · ✅"]
   S33 --> S52
-   S52 --> S53["S5.3 planner/implementer · 🟢"]
+   S52 --> S53["S5.3 planner/implementer · ✅"]
 ```
 
 ## Sesión 5.1 — Change F candidate contracts
@@ -295,7 +295,7 @@ Implementa commit y push idempotentes a `master`, checks, autorización exacta y
 
 ## Sesión 5.3 — Continuación planner/implementer
 
-**Estado:** 🟢 LISTO — `S5.2` está ✅ COMPLETO y su dependencia quedó satisfecha; no tiene decisión propia abierta.
+**Estado:** ✅ COMPLETO — cierre técnico verificado sobre `4f07bfb719df6cfa6644a514ad147628584a3856` (tree `8b80dcc59babc0b46100135441fd9198896278b8`), con autoridad de planificación en `ced7277cbd452db34307460714edae8a1d4ec349` y base asignada `a05021d313f8566b22aadd377c38e41f88140ed4`. Los cuatro criterios pasan dentro del Área exacta.
 
 **Depende de:** `S5.2`.
 
@@ -307,11 +307,11 @@ Implementa commit y push idempotentes a `master`, checks, autorización exacta y
 
 **Recurso:** autoridad de despacho Main; sin DB, migraciones ni token de entrega.
 
-**Ruta:** `design-tasks`, elaboración concluida y lista para Strict TDD. El planner prepara sólo N+1 hasta Tareas bajo `planning.horizon_ceiling: 2`; el implementer ejecuta sólo N mediante apply/tests/verify. **Autoridad:** decisión del maintainer registrada en Engram obs 9133, rebase del maintainer 2026-08-17 y política `planning.horizon_ceiling: 2`.
+**Ruta:** `design-tasks`; la elaboración concluyó antes de la ejecución por Strict TDD. El planner prepara sólo N+1 hasta Tareas bajo `planning.horizon_ceiling: 2`; el implementer ejecuta sólo N mediante apply/tests/verify. **Autoridad:** decisión del maintainer registrada en Engram obs 9133, rebase del maintainer 2026-08-17 y política `planning.horizon_ceiling: 2`.
 
 **Autoridad canónica de tareas:** esta sección vigente de `S5.3` es la única autoridad para `M5.3.1` y `T5.3.1.1`–`T5.3.1.3`. Los dos cuerpos históricos duplicados —`openspec/changes/autonomous-v2-checkpointed-delivery/tasks.md` y `openspec/changes/autonomous-v2-role-routed-continuation/tasks.md`— se preservan sólo como evidencia y no autorizan implementación.
 
-**Forecast:** 180–280 líneas authored entre los dos paths exactos; un commit de comportamiento, dentro del límite de 400 líneas.
+**Forecast histórico:** 180–280 líneas authored entre los dos paths exactos. El resultado fue un commit de comportamiento de 201 líneas authored, dentro del límite de 400.
 
 **Decisiones:**
 
@@ -323,15 +323,17 @@ Implementa commit y push idempotentes a `master`, checks, autorización exacta y
 
 ### Módulo 5.3.1 — Continuación planner/implementer desde base integrada fresca
 
-- [ ] Tarea 5.3.1.1 — RED: agregar en `test/continuation/integrated-base.test.mjs` pruebas de comportamiento que exijan que el planner prepare sólo N+1 hasta Tareas bajo `planning.horizon_ceiling: 2`, que el implementer ejecute sólo N y que toda evidencia habilitante se produzca contra la base ya integrada. Probar la secuencia exacta `reconcile → Support → Policy → Main dispatch` y demostrar despacho cero ante `NO_SCOPE`, denegación, evidencia stale o no integrada, overflow o drift del horizonte y cualquier caller que no sea Main; wake, agentes e interfaces humanas no conceden autoridad ni despachan.
-- [ ] Tarea 5.3.1.2 — GREEN: implementar el mínimo comportamiento en `continuation/integrated-base.mjs`, componiendo los primitives existentes sin modificarlos, para preparar N+1 y ejecutar N con evidencia fresca, respetar el techo 2 y permitir únicamente a Main despachar después de `reconcile → Support → Policy`; toda negativa de alcance, política, frescura, integración, horizonte o autoridad termina con despacho cero.
-- [ ] Tarea 5.3.1.3 — REFACTOR/triangulate: cubrir la base divergente y los límites alternos sin ampliar el Área. Un sucesor divergente se preserva byte por byte, se marca `UNRECONCILED`, se escala y nunca se rebasea, descarta ni despacha automáticamente; volver a probar además que los casos negativos permanecen en despacho cero y que ningún primitive preexistente fue modificado.
+- [x] Tarea T5.3.1.1 — RED: agregar en `test/continuation/integrated-base.test.mjs` pruebas de comportamiento que exijan que el planner prepare sólo N+1 hasta Tareas bajo `planning.horizon_ceiling: 2`, que el implementer ejecute sólo N y que toda evidencia habilitante se produzca contra la base ya integrada. Probar la secuencia exacta `reconcile → Support → Policy → Main dispatch` y demostrar despacho cero ante `NO_SCOPE`, denegación, evidencia stale o no integrada, overflow o drift del horizonte y cualquier caller que no sea Main; wake, agentes e interfaces humanas no conceden autoridad ni despachan.
+- [x] Tarea T5.3.1.2 — GREEN: implementar el mínimo comportamiento en `continuation/integrated-base.mjs`, componiendo los primitives existentes sin modificarlos, para preparar N+1 y ejecutar N con evidencia fresca, respetar el techo 2 y permitir únicamente a Main despachar después de `reconcile → Support → Policy`; toda negativa de alcance, política, frescura, integración, horizonte o autoridad termina con despacho cero.
+- [x] Tarea T5.3.1.3 — REFACTOR/triangulate: cubrir la base divergente y los límites alternos sin ampliar el Área. Un sucesor divergente se preserva byte por byte, se marca `UNRECONCILED`, se escala y nunca se rebasea, descarta ni despacha automáticamente; volver a probar además que los casos negativos permanecen en despacho cero y que ningún primitive preexistente fue modificado.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
-- [ ] El planner deja N+1 especificado hasta Tareas sobre la base integrada y el implementer ejecuta sólo N
-- [ ] Main es el único despachador; ningún wake, agente o interfaz humana concede autorización
-- [ ] Una base divergente preserva el sucesor y escala, sin rebase o descarte automático
-- [ ] El diff no toca rutas fuera del Área que fije la elaboración técnica
+- [x] El planner deja N+1 especificado hasta Tareas sobre la base integrada y el implementer ejecuta sólo N
+- [x] Main es el único despachador; ningún wake, agente o interfaz humana concede autorización
+- [x] Una base divergente preserva el sucesor, lo marca `UNRECONCILED` y escala, sin rebase, descarte o despacho automático
+- [x] El diff toca sólo `continuation/integrated-base.mjs` y `test/continuation/integrated-base.test.mjs`, dentro del Área exacta
+
+**Evidencia de cierre.** La autoridad vigente permanece en Engram obs 9133 y las decisiones 28/29; se preservan el Área, el Prohibido, la ruta `design-tasks` y la autoridad canónica de tareas. Planificación: `ced7277cbd452db34307460714edae8a1d4ec349` (16 líneas authored). Comportamiento: `4f07bfb719df6cfa6644a514ad147628584a3856` (tree `8b80dcc59babc0b46100135441fd9198896278b8`, 201 líneas authored) sobre base asignada `a05021d313f8566b22aadd377c38e41f88140ed4`. Strict TDD: baseline recuperada 6 pass / 0 fail / 16 assertions / 2 archivos; RED del módulo ausente 0 pass / 1 fail / 1 error; focused nuevo 7 pass / 0 fail / 61 assertions; continuación final 13 pass / 0 fail / 77 assertions / 3 archivos; suite completa 942 pass / 0 fail / 5.460 assertions / 71 archivos / 118,24 s. El harness runtime es `N/A`: la frontera es orquestación pura inyectada, sin efectos DB, red, Git o Tower. `review-reliability` se intentó una vez sobre el candidato congelado y quedó no disponible con el resultado tipado exacto `review subagent dispatch has no current controller-owned candidate view lineage binding`; no se reintentó ni sustituyó. RDD permanece OFF y esta indisponibilidad advisory no bloquea el cierre. No hubo push: el parent conserva la entrega, en posición local `#2` después de `S8.9`; `S5.3` ya no integra la cola de implementación.
 
 ## Sesión 5.4 — Ruteo de escalamiento fuera/en casa
 

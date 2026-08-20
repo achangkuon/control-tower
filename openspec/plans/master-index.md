@@ -8,15 +8,15 @@
 
 **`S8.9` y la corrección operativa pre-push de la radiografía están entregadas en la base `e629ff0`.** La corrección hermética del test de production-provider quedó finalizada localmente en el candidato `ab5e968` (tree `e4a86e61425d162aedf90cbcb68b41db80477efa`) y toca sólo `test/hosts/production-provider.test.mjs`; la fuente productiva permanece intacta.
 
-La corrección hermética **no es una Sesión** y no altera estado, denominador ni porcentajes: P4 permanece en 80% (4/5 S), P8 en 78% (7/9 S) y el avance de Sesiones activas en 74% (37/50). La reconciliación de `S5.3` sigue siendo lo próximo.
+La corrección hermética **no es una Sesión** y no altera estado, denominador ni porcentajes: P4 permanece en 80% (4/5 S). `S5.3` queda ✅ COMPLETO en esta reconciliación local: P5 pasa a 92% (11/12 S), P8 permanece en 78% (7/9 S) y el avance de Sesiones activas pasa a 76% (38/50). La verificación fresca sobre el master entregado se registra antes de congelar el nuevo candidato.
 
 El cableado del producto no instalado, el lock huérfano de `main-store/store.mjs:104-124`, la Sesión `enroll/**`, los umbrales de liveness de §14.3, el tamaño del pool de `S9.4` y macOS siguen fuera de esta corrección.
 
 ## 🎯 Cola de ejecución
 
-`#1 S5.3` · `#2 S4.4` · `#3 S5.5` · `#4 S7.1` — recalculada 2026-08-20 al cerrar `S8.9`. **Una Sesión entra en esta cola sólo si toda su cadena de dependencias está satisfecha.**
+`#1 S4.4` · `#2 S5.5` · `#3 S7.1` — recalculada 2026-08-20 al reconciliar `S5.3`. **La cola incluye Sesiones 🟢 LISTO y 📋 PLANIFICADO en orden topológico; la posición no vuelve ejecutable una dependencia pendiente.**
 
-`S8.9` salió de la cola al cerrar. `S5.3`, `S4.4` y `S5.5` siguen 🟢 LISTO; `S7.1` cierra la cola porque espera `S4.4`, `S5.3` y `S5.5`.
+`S8.9` y `S5.3` salieron de la cola al cerrar. `S4.4` y `S5.5` siguen 🟢 LISTO; `S7.1` cierra la cola porque todavía espera a ambas.
 
 **Fuera de la cola, por dependencia y no por decisión:** las cuatro Sesiones de P9 —`S9.1` es la única ejecutable del Plan, y `S9.2`, `S9.3` y `S9.4` esperan detrás de ella—. `S9.1` no entra todavía porque su próximo paso es rediseñar `M9.1.1` bajo la decisión 52, no implementar. Pi/Intercom y `S8.7` no integran esta cola.
 
@@ -29,7 +29,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 
 ## 📊 Estado de un vistazo
 
-**Avance global**: 3/11 Planes cerrados (27%) · Sesiones cerradas en planes activos: 37/50 (74%). Cálculo auditable: P1 `16/19` + P4 `4/5` + P5 `10/12` + P7 `0/1` + P8 `7/9` + P9 `0/4` = `37/50`; P10 se excluye porque cerró 3/3 S. P2 no tiene denominador derivable.
+**Avance global**: 3/11 Planes cerrados (27%) · Sesiones cerradas en planes activos: 38/50 (76%). Cálculo auditable: P1 `16/19` + P4 `4/5` + P5 `11/12` + P7 `0/1` + P8 `7/9` + P9 `0/4` = `38/50`; P10 se excluye porque cerró 3/3 S. P2 no tiene denominador derivable.
 
 | ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |
 |----|------|--------|---|------|-------|-----------|-----|
@@ -38,7 +38,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 | P2 | Contratos y registro de producto | 🔵 EN CURSO | — (responsabilidades restantes de Change B sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-2/STATUS.md) |
 | P3 | Workspace y orquestación | ✅ COMPLETO | 100% (4/4 S) | — | Main | — | [STATUS](plan-3/STATUS.md) |
 | P4 | Hosts y línea exclusiva | 🔵 EN CURSO | 80% (4/5 S) | — | Main | `S4.4` 🟢 | [STATUS](plan-4/STATUS.md) |
-| P5 | Entrega y continuación | 🔵 EN CURSO | 83% (10/12 S) | — | Main | `S5.3` 🟢 · `S5.5` 🟢 | [STATUS](plan-5/STATUS.md) |
+| P5 | Entrega y continuación | 🔵 EN CURSO | 92% (11/12 S) | — | Main | `S5.5` 🟢 | [STATUS](plan-5/STATUS.md) |
 | P6 | Campañas multiproyecto | 📋 PLANIFICADO | — (sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-6/STATUS.md) |
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | S7.1 | [STATUS](plan-7/STATUS.md) |
 | P8 | Release instalable | 🔵 EN CURSO | 78% (7/9 S) | — | Maintainer | `S8.5`, `S8.6` | [STATUS](plan-8/STATUS.md) |
