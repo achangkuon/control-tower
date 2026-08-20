@@ -22,7 +22,8 @@ registra en P0 porque este Plan es dueño de la autoridad documental.
 | Campo | Detalle |
 |---|---|
 | Entregado | `radiografia.json`, `openspec/plans/radiografia.md`, `.githooks/pre-push`, sección nueva en [`AGENTS.md`](../../../AGENTS.md). **El motor es compartido** y vive en `~/projects/agent-workflows/radiografia/` desde la decisión 56 |
-| Commits | `0e31922`, `32a6c07`, `2a7af7a`, `3502c00`, `c2bdf87`, `365474c`, `56cd35b` — commits directos a `master`, sin PR |
+| Commits | `0e31922` → `56cd35b` (motor local), `ce2001f` (formatos de otros proyectos), `5361eda` (mudanza al motor compartido), `073b85a` y `39483cc` (cierre documental) — commits directos a `master`, sin PR |
+| Publicado | [Artifact `bb0891f6`](https://claude.ai/code/artifact/bb0891f6-06d2-489a-a010-8c65b5d78f60), republicado desde el HTML generado. Sólo Claude Code puede publicarlo; el resto de los agentes genera y deja el archivo en disco |
 | Tests | 57 en `agent-workflows/test/`, mudados de este repo con el motor. La suite de acá baja a **888 pass / 0 fail** por la mudanza, no por pérdida de cobertura |
 | Disparo | `.githooks/pre-push` — corre para cualquier agente porque es git, no asistente. Nunca bloquea un push. Si el motor no está en la máquina, lo omite y avisa |
 | Artefactos | `radiografia.html` y `.radiografia-cache.json` son build artifacts **gitignoreados** |
@@ -34,6 +35,17 @@ se detectaron por auditoría manual y no por una alarma. Las cifras del informe 
 las escribe nadie: salen medidas de `master-index.md` y del repositorio.
 
 **Aplicado a los cinco proyectos** por la decisión 56: Control Tower por commit directo, y ecom-ecuador, Servi-Task-U y Finanzas-Personales por PR, que es su política real. La skill `session-doc` **no se tocó**: sigue apuntando a Notion hasta que el maintainer decida migrarla.
+
+**Cierre verificado el 2026-08-20.** Última medición sobre `39483cc`, árbol limpio, suite
+**888 pass / 0 fail**, y el informe se regenera **sin una sola advertencia**: juicio al día,
+árbol limpio y suite registrada en este commit. Las tres advertencias que el motor sabe
+emitir —árbol sucio, juicio contra otro commit, suite de otro commit— se ejercitaron todas
+durante la sesión y las tres se apagaron al corregir su causa.
+
+**Residuo abierto, con dueño ninguno:** `~/projects/agent-workflows` **no tiene remoto**, así
+que el motor compartido existe sólo en esta máquina. El hook lo detecta y omite la
+generación sin bloquear el push, de modo que no rompe nada; pero hasta que ese repo tenga
+remoto, ningún otro host puede generar un informe. No se enumera en esta pasada.
 
 **Lo que el informe no puede hacer, dicho explícitamente.** No deriva juicio. La
 prosa vive en `openspec/plans/radiografia.md` y lleva `verified_against`; si entran
