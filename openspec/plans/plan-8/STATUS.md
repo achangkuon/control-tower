@@ -311,7 +311,7 @@ Los tests de `M8.8.6` no la detectaron porque todos ejercitan el entrypoint **de
 
 `M8.8.3` se ejecutó a mano porque no existe código que haga ninguna de las dos cosas que necesita. Verificado el 2026-08-03:
 
-- `runCli` llama a `readRuntimePayload(source)` en modo **strict**, y `scanClosure` rechaza todo directorio que no sea `bin` o `install` (`install/runtime-payload.mjs:57`). Un checkout del repositorio **nunca** puede ser `source`: falla en `console/`, y detrás vienen `contracts/`, `test/` y `openspec/`. El maintainer tuvo que armar un staging con `mktemp` y seis `cp`.
+- `runCli` llama a `readRuntimePayload(source)` en modo **strict**. ~~`scanClosure` rechaza todo directorio que no sea `bin` o `install`~~ **CORREGIDO el 2026-08-20:** `scanClosure` (`install/runtime-payload.mjs:57`) admite **cinco** directorios — `bin`, `hosts`, `install`, `jornada`, `main-store` — y el filtro real no es la lista de directorios sino la **igualdad exacta de conjunto** contra `RUNTIME_PAYLOAD_FILES`: si falta un archivo falla `CT_RUNTIME_PAYLOAD_INCOMPLETE` y si sobra uno falla `CT_RUNTIME_PAYLOAD_INVALID`. Un checkout del repositorio **nunca** puede ser `source`: falla en `console/`, y detrás vienen `contracts/`, `test/` y `openspec/`. El maintainer tuvo que armar un staging con `mktemp` y seis `cp`.
 - `scripts/publish-runtime.mjs` sí lee el repositorio en modo no-strict, pero sólo llama a `storeVersion`: **almacena y no repunta**. No hay un camino de un solo comando entre un checkout y una versión activa.
 - No existe código que instale el shim del PATH. `install.sh:79` copia `bin/torre`, y la copia está rota — ver `M8.8.7`. `install/lifecycle.mjs` no toca `~/.local/bin/` en ninguna acción.
 

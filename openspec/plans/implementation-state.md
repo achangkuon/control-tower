@@ -183,17 +183,62 @@ El corte es una biblioteca de contratos pura: no conecta Telegram, no persiste r
 | 6 | El 44% del código de producto no se despliega | **Nueva y estructural.** No es que falte una Sesión que lo empaquete: el contrato del payload lo **prohíbe**. Ver abajo. |
 | 7 | La Torre no puede supervisar un repositorio sin estar armada dentro de ese repositorio | ✅ **CERRADA localmente por S10.2.** Estado externo fail-closed y seam real de `S10.1` verificados en `44f23ad`; publicación remota pendiente. Ver abajo. |
 
-## Brecha 6 — el payload rechaza estructuralmente el resto del código
+## Brecha 6 — hay dos productos en un repositorio, sin un solo import compartido
 
-`scanClosure` (`install/runtime-payload.mjs:57`) **rechaza todo directorio que no sea `bin` o `install`**. Está documentado en `plan-8/STATUS.md:313`:
+**Re-medida el 2026-08-20. El diagnóstico anterior era correcto en el número y equivocado en la causa.**
 
-> «`runCli` llama a `readRuntimePayload(source)` en modo **strict**, y `scanClosure` rechaza todo directorio que no sea `bin` o `install`. Un checkout del repositorio **nunca** puede ser `source`: falla en `console/`, y detrás vienen `contracts/`, `test/` y `openspec/`.»
+### Lo que decía y era falso
 
-Consecuencia actual: sólo los archivos exactos de `RUNTIME_PAYLOAD_FILES` pueden entrar. `S4.2` agregó su subset de `hosts/`, `jornada/lifecycle.mjs` y `main-store/launch-consumer.mjs`; `contracts/`, `registry/`, `escalation/`, `capabilities/`, `console/`, `workspace/`, `enroll/`, `policy/`, `continuation/` y los demás archivos no enumerados siguen excluidos.
+Este documento y `plan-8/STATUS.md` afirmaban que `scanClosure` «rechaza todo directorio que no sea `bin` o `install`».
+Es falso: admite **cinco** — `bin`, `hosts`, `install`, `jornada`, `main-store`. Y el filtro real no es la lista de
+directorios: es la **igualdad exacta de conjunto** contra `RUNTIME_PAYLOAD_FILES` (`install/runtime-payload.mjs`).
+Falta un archivo ⇒ `CT_RUNTIME_PAYLOAD_INCOMPLETE`; sobra uno ⇒ `CT_RUNTIME_PAYLOAD_INVALID`. Es un conjunto sellado,
+no una lista de permitidos.
 
-Ninguna Sesión enumera todavía el cierre instalable del resto del producto. `S4.2/M4.2.3` resuelve su launcher empaquetado, no la brecha completa.
+### Lo medido
 
-**Riesgo declarado:** se pueden cerrar todas las Sesiones restantes y que la mitad del producto siga sin viajar en la instalación.
+| Medición | Resultado |
+|---|---|
+| Producto instalado | **6.260** líneas, 18 archivos |
+| Producto no instalado | **5.094** líneas, 53 archivos |
+| Total | 11.354 — se instala el **55%** |
+| ¿El payload es import-closed? | **Sí.** Ningún import de los 18 sale del conjunto |
+| Archivos no instalados importados por el payload | **0. Ninguno.** |
+| Archivos no instalados sin ningún importador fuera de tests | **26 de 53** |
+
+### La causa real
+
+**El instalable no está roto ni mutilado: es un producto coherente, cerrado y funcional, sólo que más chico.**
+El código no instalado no está «excluido del envío» — **no está conectado a nada**. Cero de los 53 archivos son
+importados por el producto que corre. `contracts/`, `registry/`, `escalation/`, `capabilities/`, `console/`,
+`workspace/`, `enroll/`, `policy/`, `continuation/`, `dashboard/`, `support/`, `supervision/` y casi todo
+`main-store/` forman una segunda arquitectura que ningún punto de entrada invoca.
+
+**Consecuencia operativa:** agregar esos archivos a `RUNTIME_PAYLOAD_FILES` **no cambiaría nada funcionalmente**.
+Se instalaría código muerto. La lista blanca es el síntoma; la causa es la ausencia de cableado.
+
+### Evidencia de que la lista escrita a mano ya derivó
+
+`hosts/launcher.mjs` (29 líneas, exporta `createHostLauncher`) **está en `RUNTIME_PAYLOAD_FILES` y no lo importa
+nadie** — ni el payload, ni el resto del producto. Sólo `test/hosts/launcher.test.mjs`. Se instala peso muerto hoy.
+
+### Arreglo de fondo propuesto, sin Sesión dueña todavía
+
+Derivar `RUNTIME_PAYLOAD_FILES` del **cierre de imports** calculado desde los puntos de entrada reales que `bin/torre`
+invoca — `install/active-pointer.mjs`, `install/lifecycle.mjs`, `core.mjs`, `hosts/launch-worker-cli.mjs`. Medido el
+2026-08-20: ese cierre da **16 archivos**, exactamente los declarados salvo el muerto `hosts/launcher.mjs`.
+Conserva la propiedad de seguridad —sigue siendo igualdad exacta contra un conjunto sellado— pero calculada en vez de
+tipeada, así que no puede volver a mentir y ninguna Sesión futura necesita acordarse de actualizar una lista.
+`bin/torre` es bash y carga por `bun -e`, así que las raíces deben declararse explícitamente; no son derivables de él.
+
+**Orden correcto, registrado para que no se invierta:** primero cablear, después enviar. Enviar antes de cablear
+sólo agrega peso muerto al instalable.
+
+**Riesgo declarado, vigente:** se pueden cerrar todas las Sesiones restantes y seguir teniendo dos productos disjuntos,
+uno instalado y otro no invocado por nadie.
+
+**Decisión pendiente del maintainer (2026-08-20):** si el payload derivado va como Sesión propia en P8 —su plan
+natural— o como arreglo puntual autorizado fuera de Sesión, al estilo del piso de puerto loopback de la decisión 46.
 
 ## Brecha 7 — ✅ cerrada localmente por supervisión externa
 
