@@ -17,6 +17,17 @@ python3 -m unittest discover -s tests -v
 Restart Claude, OpenCode, Codex, and Pi sessions after installation so each
 runtime reloads its skills and manual routing block.
 
+## Radiografía
+
+`radiografia/` is a project-agnostic engine that generates a self-contained HTML
+product report, written to be read by someone who does not program. It is driven by a
+committed `radiografia.json` in each project and fires from `.githooks/pre-push`, so it
+runs identically for Claude Code, OpenCode, Codex, Pi and a human — the trigger is git,
+not an assistant. It never blocks a push.
+
+See `radiografia/README.md`. Adopted today by control-tower, ecom-ecuador,
+Servi-Task-U and Finanzas-Personales.
+
 ## Routes
 
 | Route | Meaning |
