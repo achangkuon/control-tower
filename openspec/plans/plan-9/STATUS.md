@@ -19,6 +19,7 @@
 | Entrega | Commit directo a `master`, sin PR. Cada resultado independientemente verificable y revertible queda en un commit directo de ≤400 líneas authored. |
 | Próxima acción | `plan-M9.1.1-redesign`: rediseñar `M9.1.1` bajo la decisión 52 para que distinga la invocación manual del maintainer de la programática de Main, y decidir el tamaño del pool de `S9.4`. La autorización de reescritura que antes faltaba la otorgó la decisión 49. |
 | Dónde vive la implementación | Rama `work/s9-1-planning-20260817`, rebaseada sobre `master@e71161a` y **publicada en `origin`** el 2026-08-18. Contiene `workspace/slot-lifecycle.mjs`, `test/workspace/slot-lifecycle.test.mjs`, `test/jornada/reciclar.test.mjs` y cambios en `jornada.sh`; suite completa 739 pass / 0 fail. **No se entregó a `master` a propósito**: el candidato terminal de `M9.1.2` no está aceptado y su reescritura exige la autorización de arriba. Sólo esta planificación se integró. |
+| Cierre de decisiones | Decisiones 49–53 resueltas por el maintainer el 2026-08-20 y entregadas en `01a6fbd` (commit directo a `master`, sin PR). P9 queda **decision-clean salvo una**: el tamaño del pool de `S9.4`. `S9.1` es la única Sesión ejecutable del Plan; `S9.2`, `S9.3` y `S9.4` están dependency-blocked detrás de ella. |
 
 ## Sesión 9.1 — Baseline one-way y lifecycle seguro de slots físicos
 
