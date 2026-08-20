@@ -9,14 +9,14 @@ const args = process.argv.slice(2)
 const has = (flag) => args.includes(flag)
 
 if (has("--help")) {
-  console.log(`uso: bun scripts/radiografia.mjs [--with-tests] [--check]
+  console.log(`uso: bun <agent-workflows>/radiografia/run.mjs [--with-tests] [--check]
 
   (sin flags)    mide el repo y regenera el informe
   --with-tests   corre la suite primero y registra su resultado
   --check        no escribe nada; sale 1 si el informe quedó desactualizado
 
 El informe es un artefacto de build: no se commitea. El juicio escrito vive en el
-markdown que apunta `radiografia.json` y es lo único que se edita a mano.`)
+markdown que apunta radiografia.json y es lo unico que se edita a mano.`)
   process.exit(0)
 }
 
