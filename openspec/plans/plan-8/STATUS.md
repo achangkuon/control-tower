@@ -28,6 +28,7 @@
 | S8.5 | Detección de hosts e integración opt-in | 🟡 DIFERIDO | Optional host detection and integration | ninguna | Diferida el 2026-07-31: la integración es opt-in y su ausencia es diagnóstico, no fallo de instalación |
 | S8.6 | Evidencia de release en máquina limpia | 🟡 DIFERIDO | Versioned lifecycle and release evidence | `S8.3`, `S8.4` | Diferida el 2026-07-31: se cubre con validación manual durante `S8.8` en vez de una Sesión formal |
 | S8.7 | Puente Hermes/Telegram | 📚 ARCHIVADO | Supersedido por Moshi/Main/OpenCode | — | Evidencia histórica preservada; no es prerequisito activo |
+| S8.9 | Payload derivado y guardia de deriva | 🟢 LISTO | Versioned lifecycle | ninguna | Enumerada el 2026-08-20 por la decisión 54. Route `direct`. Reemplaza la lista escrita a mano de `RUNTIME_PAYLOAD_FILES` por una generada del cierre de imports, con guardia de deriva en test. Conserva el sello de igualdad exacta; la derivación es en tiempo de autoría, no de instalación. Saca del payload a `hosts/launcher.mjs`, hoy instalado sin importador |
 | S8.8 | Adopción del instalable en el runtime en uso | ✅ COMPLETO | Versioned lifecycle | `S8.2` ✅ | Todos los Módulos verificados. `M8.8.7` en `e118f33`: la copia aislada cae al legado y un puntero presente roto falla cerrado. `M8.8.8` en `d56e8cb`: checkout Git genuino, staging estricto incluso con `.git` sintético y shim opt-in. `bun test test/install` 44/0; `bun test` 465/0 con Torre desarmada; cero accesos a runtime real en los fixtures. |
 
 Las Sesiones se derivan de los cinco requisitos de la [spec de Installable V1](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). `S8.2` construyó el lifecycle versionado; `S8.8` lo pone efectivamente en uso, que es la parte del requisito que quedaba abierta.
@@ -498,6 +499,77 @@ Este Módulo construye ese mecanismo y **nada más**: no toca el PATH, no repunt
 **Este Módulo no cerraba por sí solo `S8.8`:** construyó el mecanismo; el corte al PATH quedó atendido en `M8.8.3` y los Módulos posteriores `M8.8.7` y `M8.8.8` completaron la regresión de distribución y la automatización segura.
 
 > **Nota de verificación posterior a la entrega:** una recorrida de `bun test` con la Torre **armada** da 455/2, y los dos fallos son los `P0 frozen snapshot restore` de `test/migration.test.mjs`, que abortan en `assertRuntimeInactive` porque `.git/control-tower/ACTIVE` está presente. Es la precondición que `T8.8.6.7` ya exigía —"con la Torre desarmada"—, no una regresión: el guard corta antes de tocar nada del candidato.
+
+### S8.9 — Payload derivado y guardia de deriva
+
+**Estado:** 🟢 LISTO · **Route:** `direct` · **Depende de:** nada. Ejecutable hoy.
+
+**Autoridad:** decisión 54 del maintainer del 2026-08-20, sobre la brecha 6 re-medida en [implementation-state](../implementation-state.md).
+
+#### El problema exacto
+
+`RUNTIME_PAYLOAD_FILES` (`install/runtime-payload.mjs:5-24`) es una lista de 18 rutas escrita a mano. El instalador exige **igualdad exacta** contra ella: falta un archivo ⇒ `CT_RUNTIME_PAYLOAD_INCOMPLETE`, sobra uno ⇒ `CT_RUNTIME_PAYLOAD_INVALID`. Esa propiedad de conjunto sellado es correcta y **no se toca**. Lo que falla es que la lista se mantiene a mano y ya derivó: `hosts/launcher.mjs` (29 líneas) está declarado y **no lo importa ningún módulo del payload** — sólo `test/hosts/launcher.test.mjs`. Se instala peso muerto.
+
+#### La forma elegida, y por qué
+
+La derivación ocurre **en tiempo de autoría**, no en tiempo de instalación. Se genera la lista, se committea, y un test recomputa el cierre y falla si difieren. El runtime instalado sigue leyendo un array literal.
+
+**Descartado: computar el cierre en tiempo de instalación.** Obligaría al runtime instalado a parsear sus propios imports para arrancar y haría que el instalador aceptara lo que el árbol de origen contenga — destruye exactamente el sello que esta Sesión debe preservar.
+
+**Área writable exacta:**
+
+- `install/runtime-payload.mjs` — la lista pasa a ser generada; conserva nombre, forma y semántica.
+- `scripts/payload-closure.mjs` — **nuevo**. Computa el cierre de imports desde raíces declaradas.
+- `test/install/payload-closure.test.mjs` — **nuevo**. Guardia de deriva.
+- `test/install/runtime-payload.test.mjs`, `test/install/entrypoint-resolution.test.mjs`, `test/install/lifecycle.test.mjs` — los tres hardcodean el conjunto esperado y deben reconciliarse.
+
+**Prohibido:** `core.mjs`; `hosts/**`; `main-store/**`; `install/lifecycle.mjs` e `install/active-pointer.mjs` —sólo **consumen** la constante y no cambian—; `scripts/publish-runtime.mjs`; y toda ruta fuera del `Área`.
+
+**Recurso:** el contrato `RUNTIME_PAYLOAD_FILES`. No solapa con ningún `Recurso` de P9.
+
+**Raíces de entrada declaradas.** `bin/torre` es bash y carga por `bun -e`, así que su cierre estático es vacío y las raíces **deben** declararse explícitamente: `install/active-pointer.mjs`, `install/lifecycle.mjs`, `core.mjs`, `hosts/launch-worker-cli.mjs`. Medido el 2026-08-20: ese cierre da **16 archivos** — los 17 declarados sin `bin/torre`, menos el inalcanzable `hosts/launcher.mjs`.
+
+#### Decisiones de S8.9
+
+- `derivable` — **la derivación es en tiempo de autoría con lista committeada.** **Autoridad:** la propiedad de conjunto sellado ya vigente en `install/runtime-payload.mjs`. **Criterio falsificable:** el instalador deja de fallar cerrado ante un conjunto que no coincide, o el runtime instalado necesita resolver imports para arrancar.
+- `derivable` — **`hosts/launcher.mjs` sale del payload por inalcanzable.** **Criterio falsificable:** algún módulo del payload lo importa. El archivo y su test **no se borran**: sale de la lista, no del repositorio.
+
+#### Módulo M8.9.1 — Cierre de imports computable · 📋 PLANIFICADO
+
+**Área:** `scripts/payload-closure.mjs`, `test/install/payload-closure.test.mjs`.
+
+- [ ] T8.9.1.1 — RED: tests que exigen que el cierre desde las cuatro raíces declaradas devuelva un conjunto ordenado y determinista, que resuelva imports relativos transitivos, y que falle explícito ante una raíz inexistente o un import irresoluble.
+- [ ] T8.9.1.2 — GREEN: implementar el cálculo del cierre. Sólo imports estáticos relativos; sin ejecutar el código analizado.
+- [ ] T8.9.1.3 — REFACTOR: consolidar el orden estable y probar idempotencia — dos corridas dan bytes idénticos.
+
+#### Módulo M8.9.2 — Guardia de deriva · 📋 PLANIFICADO
+
+**Área:** `test/install/payload-closure.test.mjs`.
+
+- [ ] T8.9.2.1 — RED: test que compara `RUNTIME_PAYLOAD_FILES` contra el cierre computado y falla nombrando sobrantes y faltantes por separado.
+- [ ] T8.9.2.2 — GREEN: hacerlo pasar reconciliando la lista con el cierre real, incluida la salida de `hosts/launcher.mjs`.
+- [ ] T8.9.2.3 — REFACTOR: probar que el guard detecta ambas direcciones de deriva, agregando y quitando una entrada de prueba.
+
+#### Módulo M8.9.3 — Reconciliar los conjuntos hardcodeados · 📋 PLANIFICADO
+
+**Área:** `install/runtime-payload.mjs`, `test/install/runtime-payload.test.mjs`, `test/install/entrypoint-resolution.test.mjs`, `test/install/lifecycle.test.mjs`.
+
+- [ ] T8.9.3.1 — RED: actualizar los tres conjuntos esperados al payload derivado; deben fallar contra la lista vieja.
+- [ ] T8.9.3.2 — GREEN: emitir la lista generada en `install/runtime-payload.mjs` con una marca que diga que es generada y cómo regenerarla.
+- [ ] T8.9.3.3 — REFACTOR: verificar que `install/active-pointer.mjs`, `install/lifecycle.mjs` y `scripts/publish-runtime.mjs` siguen funcionando sin cambios, y que `bun test test/install` pasa entero.
+
+#### Criterios de aceptación de S8.9
+
+- [ ] `RUNTIME_PAYLOAD_FILES` es igual, elemento a elemento, al cierre computado desde las cuatro raíces declaradas.
+- [ ] Existe un test que falla si la lista committeada y el cierre difieren, en **cualquiera** de las dos direcciones.
+- [ ] `hosts/launcher.mjs` ya no está en el payload; su archivo y su test siguen en el repositorio.
+- [ ] El instalador sigue fallando cerrado: falta un miembro ⇒ `CT_RUNTIME_PAYLOAD_INCOMPLETE`; sobra uno ⇒ `CT_RUNTIME_PAYLOAD_INVALID`.
+- [ ] El runtime instalado arranca sin resolver imports: `RUNTIME_PAYLOAD_FILES` sigue siendo un array literal.
+- [ ] `install/active-pointer.mjs`, `install/lifecycle.mjs` y `scripts/publish-runtime.mjs` no requieren cambio alguno.
+- [ ] `bun test test/install` pasa; la suite completa pasa con la Torre desarmada.
+- [ ] El diff no toca ninguna ruta fuera del `Área` ni ninguna del `Prohibido`.
+
+> **Esta Sesión no cablea nada.** Hace que el envío sea automático y honesto. El cableado del producto no instalado —darle consumidores reales a `contracts/`, `registry/`, `escalation/` y el resto— es trabajo aparte y sigue sin enumerar. Orden registrado: **primero cablear, después enviar**; S8.9 es la mitad "enviar", y se hace primero sólo porque vuelve gratis y automática la otra mitad.
 
 ### S8.5 — Detección de hosts e integración opt-in
 
