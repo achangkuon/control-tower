@@ -221,3 +221,40 @@ describe("measureRepository — judgment drift", () => {
     expect(drift.drifted).toBe(true)
   })
 })
+
+// Formatos reales tomados de Finanzas-Personales, Servi-Task-U y ecom-ecuador.
+describe("parsePlanTable — variantes reales de otros proyectos", () => {
+  test("reads a state cell that carries a dash-appended note without swallowing it into the state", () => {
+    const table = "| ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |\n|--|--|--|--|--|--|--|--|\n| P6 | Calendario | 🔵 EN CURSO — S6.6 bloqueada por gate manual | 83% (5/6 S) | — | Daniel | x | [c](y) |\n"
+    const [plan] = parsePlanTable(table)
+    expect(plan.state).toBe("EN CURSO")
+    expect(plan.state_note).toBe("S6.6 bloqueada por gate manual")
+  })
+
+  test("treats a bare percentage with no session fraction as unmeasured, because the standard derives it", () => {
+    const table = "| ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |\n|--|--|--|--|--|--|--|--|\n| P1 | Backend | 📚 ARCHIVADO | 100% | 4.5–5 h | — | — | [p](q) |\n"
+    const [plan] = parsePlanTable(table)
+    expect(plan.pct).toBeNull()
+    expect(plan.closed).toBeNull()
+    expect(plan.unmeasured_reason).toMatch(/sin fracción/i)
+  })
+
+  test("recognises every state in the closed vocabulary of seven", () => {
+    const states = ["📋 PLANIFICADO", "🟢 LISTO", "🔵 EN CURSO", "🔴 BLOQUEADO", "🟡 DIFERIDO", "✅ COMPLETO", "📚 ARCHIVADO"]
+    const rows = states.map((state, index) => `| P${index} | Plan | ${state} | 50% (1/2 S) | — | — | — | [r](s) |`).join("\n")
+    const parsed = parsePlanTable(`| ID |\n|--|\n${rows}\n`)
+    expect(parsed.map((plan) => plan.state)).toEqual(["PLANIFICADO", "LISTO", "EN CURSO", "BLOQUEADO", "DIFERIDO", "COMPLETO", "ARCHIVADO"])
+  })
+})
+
+describe("parseGlobalProgress — variantes reales", () => {
+  test("reads the colon inside the bold, as three of the five projects write it", () => {
+    const line = "**Avance global:** 3/5 Planes cerrados (60%) · Sesiones cerradas en Planes activos: 4/13 (31%)."
+    expect(parseGlobalProgress(line)).toEqual({ plans_closed: 3, plans_total: 5, sessions_closed: 4, sessions_total: 13 })
+  })
+
+  test("reads a much larger portfolio without truncating either figure", () => {
+    const line = "**Avance global**: 15/26 Planes cerrados (58%) · Sesiones cerradas en planes activos: 20/68 (29%)."
+    expect(parseGlobalProgress(line)).toEqual({ plans_closed: 15, plans_total: 26, sessions_closed: 20, sessions_total: 68 })
+  })
+})

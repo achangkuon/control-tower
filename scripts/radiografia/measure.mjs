@@ -33,11 +33,19 @@ export function parsePlanTable(markdown) {
     const cells = row.split("|").slice(1, -1).map((cell) => cell.trim())
     const [id, name, state, progress, , owner, remaining] = cells
     const fraction = progress.match(/(\d+)%\s*\((\d+)\s*\/\s*(\d+)\s*S\)/)
-    const reason = fraction ? null : (progress.match(/\((.+)\)/)?.[1] ?? progress)
+    // The standard derives the percentage from `Sesiones cerradas / Sesiones enumeradas`.
+    // A bare `100%` has no denominator to audit, so it is unmeasured, not complete.
+    const reason = fraction
+      ? null
+      : (progress.match(/\((.+)\)/)?.[1] ?? (/%/.test(progress) ? `${progress} sin fracción de Sesiones` : progress))
+    // Some projects append a note to the state cell after an em dash; the state is the
+    // vocabulary word, and the note is kept rather than mangled into it.
+    const [stateWord, ...noteParts] = state.split(/\s+—\s+/)
     return Object.freeze({
       id,
       name,
-      state: state.replace(/[^\p{L}\s]/gu, "").trim(),
+      state: stateWord.replace(/[^\p{L}\s]/gu, "").trim(),
+      state_note: noteParts.length ? noteParts.join(" — ").trim() : null,
       pct: fraction ? Number(fraction[1]) : null,
       closed: fraction ? Number(fraction[2]) : null,
       total: fraction ? Number(fraction[3]) : null,
@@ -57,7 +65,8 @@ export function parseQueue(markdown) {
 }
 
 export function parseGlobalProgress(markdown) {
-  const match = markdown.match(/Avance global\*{0,2}:\s*(\d+)\/(\d+)\s*Planes cerrados[^·]*·[^:]*:\s*(\d+)\/(\d+)/)
+  // Written as `**Avance global**:` here and `**Avance global:**` in three other projects.
+  const match = markdown.match(/Avance global:?\*{0,2}:?\s*(\d+)\/(\d+)\s*Planes cerrados[^·]*·[^:]*:\s*(\d+)\/(\d+)/)
   if (!match) fail("CT_RADIOGRAFIA_NO_GLOBAL_PROGRESS", "master-index has no `Avance global` line")
   return { plans_closed: Number(match[1]), plans_total: Number(match[2]), sessions_closed: Number(match[3]), sessions_total: Number(match[4]) }
 }
