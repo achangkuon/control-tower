@@ -1,18 +1,32 @@
 #!/usr/bin/env sh
-# Regenerates the product report at delivery time. Delivery in this repo is a direct
-# commit to master plus a push, so the push is the moment the report must be true.
+# Regenerates the product report at delivery time.
 #
 # Agent-agnostic on purpose: git runs it for Claude Code, opencode, PI, Codex and for a
 # human alike. Nothing here depends on which assistant is driving.
 #
-# It never blocks a push. A report is not a gate; a stale report just labels itself stale.
+# It NEVER blocks a push. A report is not a gate; a stale report labels itself stale.
 set -u
 
-root=$(git rev-parse --show-toplevel) || exit 0
+root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+[ -f "$root/radiografia.json" ] || exit 0
 command -v bun >/dev/null 2>&1 || exit 0
 
-printf 'radiografía: corriendo la suite y regenerando el informe...\n'
-if ! bun "$root/scripts/radiografia.mjs" --with-tests; then
-  printf 'radiografía: no se pudo regenerar. El push sigue.\n' >&2
+# Engine lookup, most specific first. A missing engine is not an error: the repo simply
+# has no report until agent-workflows is present on this machine.
+for candidate in \
+  "${RADIOGRAFIA_HOME:-}" \
+  "$HOME/projects/agent-workflows/radiografia" \
+  "$(dirname "$root")/agent-workflows/radiografia"
+do
+  [ -n "$candidate" ] && [ -f "$candidate/run.mjs" ] && engine="$candidate" && break
+done
+
+if [ -z "${engine:-}" ]; then
+  printf 'radiografía: motor no encontrado, se omite. El push sigue.\n' >&2
+  exit 0
 fi
+
+printf 'radiografía: regenerando el informe...\n'
+(cd "$root" && bun "$engine/run.mjs" --with-tests) || \
+  printf 'radiografía: no se pudo regenerar. El push sigue.\n' >&2
 exit 0

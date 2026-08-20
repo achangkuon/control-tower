@@ -1,0 +1,11 @@
+{
+  "project": "Control Tower",
+  "title": "Radiografía de la Torre",
+  "code": {
+    "extensions": [".mjs", ".js"],
+    "exclude": ["test", "node_modules", "openspec", "scripts"],
+    "extraProductFiles": ["bin/torre"]
+  },
+  "tests": { "command": ["bun", "test"] },
+  "payload": { "manifest": "install/runtime-payload.mjs", "symbol": "RUNTIME_PAYLOAD_FILES" }
+}

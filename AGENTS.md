@@ -68,19 +68,21 @@ El estado del producto se publica como un informe HTML autocontenido pensado par
 que el mantenedor —que no programa— entienda dónde está el proyecto sin leer
 `openspec/`. Se genera; no se escribe a mano.
 
-**Un solo comando, igual para todos los agentes:**
+**El motor es compartido y vive fuera de este repo**, en
+`~/projects/agent-workflows/radiografia/`, para que los cinco proyectos usen el
+mismo. Este repo sólo aporta su configuración y su juicio.
 
 ```sh
-bun scripts/radiografia.mjs              # mide y regenera (rápido, ~300 ms)
-bun scripts/radiografia.mjs --with-tests # además corre la suite y registra el resultado
-bun scripts/radiografia.mjs --check      # sale 1 si quedó desactualizado; no escribe
+bun ~/projects/agent-workflows/radiografia/run.mjs              # mide y regenera
+bun ~/projects/agent-workflows/radiografia/run.mjs --with-tests # además corre la suite
+bun ~/projects/agent-workflows/radiografia/run.mjs --check      # sale 1 si quedó viejo
 ```
 
 No usa ninguna capacidad de asistente. Claude Code, opencode, PI, Codex, un cron o
 una persona lo corren igual.
 
 **Se dispara solo en la entrega.** El hook `.githooks/pre-push` lo corre con la suite
-en cada `git push`. El hook **nunca bloquea** un push: un informe no es un gate.
+en cada `git push` y **nunca bloquea** un push: un informe no es un gate.
 `core.hooksPath` es configuración local y no viaja en el clon — en un worktree o
 clon nuevo hay que activarlo una vez:
 
@@ -93,6 +95,7 @@ git config core.hooksPath .githooks
 | Archivo | Quién lo escribe | Qué contiene |
 |---|---|---|
 | `openspec/plans/radiografia.md` | un agente, a mano | El juicio: qué significa cada número, qué está en riesgo, qué decisión es del mantenedor |
+| `radiografia.json` | una vez, al adoptar | Extensiones, directorios excluidos, comando de tests y el manifiesto del payload instalable |
 | `radiografia.html` | el generador | El informe. **Gitignoreado**: es artefacto de build, no se commitea ni se edita |
 | `.radiografia-cache.json` | el generador | Último resultado de la suite y en qué commit se midió. Gitignoreado |
 
@@ -102,8 +105,9 @@ y del repositorio. Esa es la razón de existir del generador — dos veces en un
 semana la documentación afirmó sobre el código cosas que eran falsas.
 
 Al cambiar el juicio, actualizá `verified_against` en el front matter al commit
-contra el que lo verificaste. Si no coincide con `HEAD`, el informe lo avisa solo,
-igual que avisa un árbol sucio o una suite registrada en otro commit.
+contra el que lo verificaste. Si entran commits que cambian el producto después de
+ese sello, el informe lo avisa solo, igual que avisa un árbol sucio o una suite
+registrada en otro commit.
 
 **Publicación.** El informe se publica como Artifact en claude.ai y **sólo Claude Code
 puede publicarlo** — es una herramienta suya. Los demás agentes lo generan y lo dejan
