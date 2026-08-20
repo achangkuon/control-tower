@@ -22,6 +22,25 @@
 | Roadmap | `S5.1`, `S5.2`, `S5.4`, `S5.6`–`S5.12` están ✅ COMPLETO. `S5.2` cerró sobre el candidato `2145fd7` con 15/15 criterios funcionales y el gate de alcance separado en PASS; esto destraba `S5.3`, que pasa a 🟢 LISTO. `S5.5` también está 🟢 LISTO. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
 
+## Corrección operativa completada — no es una nueva Sesión
+
+`S8.9` fue entregada en `11c2728`. Durante esa entrega, el hook obligatorio de pre-push de la radiografía volvió a ejecutar la suite completa y causó el incidente operativo. La corrección aprobada elimina únicamente `--with-tests`: la regeneración del informe se conserva, mientras la verificación vuelve a ser propiedad del agente bajo Gentle.
+
+Esta corrección **no fue solicitada por ningún nodo existente del Plan**, **no crea una nueva Sesión** y **no cambia el denominador ni los porcentajes** de P5. Es una corrección operativa completada, registrada aquí sin inventar Plan, Sesión, Módulo ni Tarea.
+
+**Evidencia mínima del candidato local `0b8e4ae`:**
+
+```diff
+-    (cd "$root" && bun "$engine/run.mjs" --with-tests) || \
++    (cd "$root" && bun "$engine/run.mjs") || \
+```
+
+- `sh -n .githooks/pre-push` → PASS.
+- Stub externo del motor → argumentos exactos `[]`.
+- `git diff --check` → PASS.
+- Suite Bun → no reejecutada por diseño: esta corrección elimina precisamente su ejecución duplicada del hook; la verificación permanece agent-owned.
+- `review-resilience` advisory → no disponible, con resultado tipado: el controller exigía lineage del candidato actual mientras RDD estaba OFF; no había actor de fallback.
+
 ## Grafo de dependencias
 
 ```mermaid
