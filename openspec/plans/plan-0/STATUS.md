@@ -11,6 +11,33 @@
 | Roadmap | `S0.1`, `S0.2` y `S0.3` están ✅ COMPLETO. `S0.3` enmendó la spec derivada y eliminó la contradicción sobre el callback acotado; P0 queda cerrado con 3/3 Sesiones. |
 | Referencias | [PRD](../../prd/sdd-tower-implementation-v1.md), [RFC](../../rfc/sdd-tower-implementation-v1.md), [REQUIREMENTS](../../specs/sdd-tower-implementation-v1-requirements.md), [Plan Catalog](../manifest.yaml), [Plan Manifest](../sdd-tower-implementation/manifest.yaml), [Installable V1](../installable-v1/revisions/1/manifest.yaml), [Autonomous V2](../autonomous-v2/revisions/1/manifest.yaml), [version map](../product-version-map.yaml). |
 
+## Radiografía del producto — entregada el 2026-08-20
+
+**Estado:** ✅ COMPLETO · fuera de Sesión, bajo la **decisión 55** del maintainer.
+
+Trabajo de infraestructura documental, no de producto: no toca `RUNTIME_PAYLOAD_FILES`
+ni ninguna pieza instalada, y no consume ni desplaza ninguna Sesión enumerada. Se
+registra en P0 porque este Plan es dueño de la autoridad documental.
+
+| Campo | Detalle |
+|---|---|
+| Entregado | `scripts/radiografia/{measure,render,cli}.mjs`, `scripts/radiografia.mjs`, `scripts/radiografia/style.css`, `.githooks/pre-push`, `openspec/plans/radiografia.md`, sección nueva en [`AGENTS.md`](../../../AGENTS.md) |
+| Commits | `0e31922`, `32a6c07`, `2a7af7a`, `3502c00`, `c2bdf87`, `365474c`, `56cd35b` — commits directos a `master`, sin PR |
+| Tests | 47 nuevos en `test/radiografia/`. Suite completa **935 pass / 0 fail** sobre `56cd35b` |
+| Disparo | `.githooks/pre-push` — corre para cualquier agente porque es git, no asistente. Nunca bloquea un push |
+| Artefactos | `radiografia.html` y `.radiografia-cache.json` son build artifacts **gitignoreados** |
+
+**Por qué existe.** Dos veces en una semana la documentación afirmó sobre el código
+cosas falsas —`M9.1.1` declarado completo sin estar en `master`, y un hallazgo de
+`S5.2` atribuido a un archivo que la Sesión tiene prohibido tocar—, y las dos veces
+se detectaron por auditoría manual y no por una alarma. Las cifras del informe ya no
+las escribe nadie: salen medidas de `master-index.md` y del repositorio.
+
+**Lo que el informe no puede hacer, dicho explícitamente.** No deriva juicio. La
+prosa vive en `openspec/plans/radiografia.md` y lleva `verified_against`; si entran
+commits que cambian el producto después de ese sello, el informe lo avisa solo, igual
+que avisa un árbol sucio o una suite registrada en otro commit.
+
 `docs/architecture/sdd-tower-implementation.md` conserva material de exploración y no reemplaza los tres contratos normativos.
 
 Installable V1 revision 1 es el contrato de release activo. Autonomous V2 revision 1 preserva la continuación A–I/P6–P11 y consume el ArtifactRef exacto del V1 publicado. `product-version-map.yaml` conserva el pointer canónico y el rollback atómico sin eliminar revisiones históricas.
