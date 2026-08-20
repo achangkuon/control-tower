@@ -97,9 +97,16 @@ const relativeImportsOf = (root, file) => {
   return specs.map(([, spec]) => relative(root, join(root, dirname(file), spec)))
 }
 
+// The report and its suite cache are build artifacts. They are gitignored, but the check
+// excludes them explicitly too: otherwise writing the report would make the next render
+// call the tree dirty because of its own output.
+export const GENERATED = Object.freeze(["radiografia.html", ".radiografia-cache.json"])
+
 const measureGit = (root, windowHours) => {
   const head = git(root, "rev-parse", "HEAD")
-  const clean = git(root, "status", "--porcelain") === ""
+  const dirty = git(root, "status", "--porcelain").split("\n").filter(Boolean)
+    .filter((entry) => !GENERATED.includes(entry.slice(3).trim()))
+  const clean = dirty.length === 0
   const since = new Date(Date.now() - windowHours * 3600_000).toISOString()
   const subjects = git(root, "log", `--since=${since}`, "--format=%s").split("\n").filter(Boolean)
   const docs = subjects.filter((subject) => /^docs\b/.test(subject)).length

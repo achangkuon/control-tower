@@ -26,7 +26,10 @@ export function parseAuthored(source) {
     if (pair) meta[pair[1]] = pair[2].trim()
   }
   if (!meta.verified_against) fail("CT_RADIOGRAFIA_UNSTAMPED", "front matter must declare `verified_against`")
-  return Object.freeze({ meta: Object.freeze(meta), body: match[2] })
+  // HTML comments carry the authoring instructions for this file; they document the
+  // conventions and must never reach the reader as escaped prose.
+  const body = match[2].replace(/<!--[\s\S]*?-->/g, "")
+  return Object.freeze({ meta: Object.freeze(meta), body })
 }
 
 const instruments = (m) => {

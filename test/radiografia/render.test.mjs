@@ -57,6 +57,13 @@ describe("parseAuthored", () => {
     expect(doc.meta.standfirst).toBe("Dónde está el producto hoy.")
   })
 
+  test("strips the authoring instructions so they never reach the reader", () => {
+    const authored = AUTHORED.replace("{{instrumentos}}", "<!--\ncómo se escribe: {{avance}}\n-->\n\n{{instrumentos}}")
+    const html = renderReport(parseAuthored(authored), MEASUREMENTS)
+    expect(html).not.toContain("cómo se escribe")
+    expect(html).not.toContain("&lt;!--")
+  })
+
   test("fails closed when the judgment does not say what it was verified against", () => {
     expect(() => parseAuthored("# sin front matter\n")).toThrow(/CT_RADIOGRAFIA_UNSTAMPED/)
   })

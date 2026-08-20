@@ -2,3 +2,6 @@
 /.codegraph/
 # Local Pi runtime state
 .atl/
+# Generado por scripts/radiografia.mjs — no se commitea
+/radiografia.html
+/.radiografia-cache.json
