@@ -27,6 +27,6 @@ if [ -z "${engine:-}" ]; then
 fi
 
 printf 'radiografía: regenerando el informe...\n'
-(cd "$root" && bun "$engine/run.mjs" --with-tests) || \
+(cd "$root" && bun "$engine/run.mjs") || \
   printf 'radiografía: no se pudo regenerar. El push sigue.\n' >&2
 exit 0
