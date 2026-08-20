@@ -21,10 +21,10 @@ registra en P0 porque este Plan es dueño de la autoridad documental.
 
 | Campo | Detalle |
 |---|---|
-| Entregado | `scripts/radiografia/{measure,render,cli}.mjs`, `scripts/radiografia.mjs`, `scripts/radiografia/style.css`, `.githooks/pre-push`, `openspec/plans/radiografia.md`, sección nueva en [`AGENTS.md`](../../../AGENTS.md) |
+| Entregado | `radiografia.json`, `openspec/plans/radiografia.md`, `.githooks/pre-push`, sección nueva en [`AGENTS.md`](../../../AGENTS.md). **El motor es compartido** y vive en `~/projects/agent-workflows/radiografia/` desde la decisión 56 |
 | Commits | `0e31922`, `32a6c07`, `2a7af7a`, `3502c00`, `c2bdf87`, `365474c`, `56cd35b` — commits directos a `master`, sin PR |
-| Tests | 47 nuevos en `test/radiografia/`. Suite completa **935 pass / 0 fail** sobre `56cd35b` |
-| Disparo | `.githooks/pre-push` — corre para cualquier agente porque es git, no asistente. Nunca bloquea un push |
+| Tests | 57 en `agent-workflows/test/`, mudados de este repo con el motor. La suite de acá baja a **888 pass / 0 fail** por la mudanza, no por pérdida de cobertura |
+| Disparo | `.githooks/pre-push` — corre para cualquier agente porque es git, no asistente. Nunca bloquea un push. Si el motor no está en la máquina, lo omite y avisa |
 | Artefactos | `radiografia.html` y `.radiografia-cache.json` son build artifacts **gitignoreados** |
 
 **Por qué existe.** Dos veces en una semana la documentación afirmó sobre el código
@@ -32,6 +32,8 @@ cosas falsas —`M9.1.1` declarado completo sin estar en `master`, y un hallazgo
 `S5.2` atribuido a un archivo que la Sesión tiene prohibido tocar—, y las dos veces
 se detectaron por auditoría manual y no por una alarma. Las cifras del informe ya no
 las escribe nadie: salen medidas de `master-index.md` y del repositorio.
+
+**Aplicado a los cinco proyectos** por la decisión 56: Control Tower por commit directo, y ecom-ecuador, Servi-Task-U y Finanzas-Personales por PR, que es su política real. La skill `session-doc` **no se tocó**: sigue apuntando a Notion hasta que el maintainer decida migrarla.
 
 **Lo que el informe no puede hacer, dicho explícitamente.** No deriva juicio. La
 prosa vive en `openspec/plans/radiografia.md` y lleva `verified_against`; si entran
