@@ -12,7 +12,7 @@
 | Alcance aprobado | Release local-first con lifecycle versionado, inmutable, idempotente y reversible; sin activar autonomía. |
 | Próxima acción | ✅ **`M8.8.2` CERRADO el 2026-08-03, esta vez con la evidencia correcta.** Activo `012a2510a9758a9c764841b7f69c7760f0d88ab1`, `previous` `34f56a6` para rollback, y `bun ~/.local/share/control-tower/versions/012a251.../install/lifecycle.mjs diagnose` → `{"healthy":true,"missing":[]}` **ejecutando la copia instalada**, que es lo que la vez anterior no se hizo. `install/runtime-payload.mjs` está presente en la versión instalada. **`M8.8.6` ✅ COMPLETO en `a87c9e9`** y **`M8.8.3` ✅ COMPLETO el 2026-08-03**: el maintainer corre el producto. Activo `4f94001`, `~/.local/bin/torre` es un symlink al runtime instalado, respaldo en `torre.legacy-20260803`. El core pasó de 398 a 4.646 líneas — los 192 commits. **Próxima acción: `M8.8.7`** —regresión de distribución que introdujo `a87c9e9`— y después **`M8.8.8`**. Los dos 🔒 SELLABLES, enumerados con criterios binarios y cero decisiones abiertas. Con ésos cierra `S8.8`. Historia del fallo, abajo. ~~🔴 `M8.8.2` REABIERTO — el runtime instalado no carga.~~ `install/lifecycle.mjs:8` importa `./runtime-payload.mjs`, y ese archivo **no está en la versión instalada**: `bun <version>/install/lifecycle.mjs diagnose` devuelve `Cannot find module './runtime-payload.mjs'`. La causa es que `RUNTIME_PAYLOAD_FILES` declara cinco miembros y **no se incluye a sí mismo**, así que el validador confirma como completo un payload que no arranca. El `healthy:true` con el que se cerró salió del **checkout del repo**, no de la copia instalada. **Ejecutar `M8.8.3` sobre este runtime dejaba la Torre inoperable.** **El contrato quedó cerrado en `fed8fb0`** (rescatado del worktree `v1`): `RUNTIME_PAYLOAD_FILES` ahora incluye `install/runtime-payload.mjs` y son seis miembros. Suite 451/0 con la Torre desarmada. **Pero eso arregla el repositorio, no la instalación:** la versión activa `34f56a6` sigue sin el archivo y sigue sin cargar. Falta el paso 👤 ATENDIDO — republicar e instalar — y **verificar `diagnose` ejecutando la copia instalada, no la del repo**. Recién ahí `M8.8.2` cierra de verdad. Orden restante: reinstalar → verificar desde la copia instalada → `M8.8.6` → `M8.8.3`. **Procedimiento exacto de la reinstalación atendida**, para que la verificación no repita el error que causó todo esto: (1) republicar desde el `HEAD` de `master` que contenga `fed8fb0`; (2) `torre install`; (3) verificar corriendo **`bun ~/.local/share/control-tower/versions/<nuevo-sha>/install/lifecycle.mjs diagnose`** — la copia instalada, con ruta absoluta, **nunca** `bun install/lifecycle.mjs` desde el repo; (4) el criterio de cierre es `healthy:true` **y** que el comando cargue, que son dos cosas distintas: un módulo que no resuelve sus imports ni siquiera llega a imprimir. Rollback disponible con `previous` en `active.json`. Adopción previa: activo `34f56a61c1908c003dc382e661ae87335498fd99` con `previous` `b72e450` para rollback. **La ejecución de `M8.8.3` se partió el 2026-08-03.** El payload sin `core.mjs` desapareció y `diagnose` lo confirma con `missing:[]`, pero el mecanismo del corte no existe: `bin/torre` nunca lee `active.json` y `CORE` defaultea a la ruta legada incluso en la versión instalada (`bin/torre:20`), así que copiar el entrypoint no corta nada y un symlink rompe `LIFECYCLE`. **La mitad implementable se separó en `M8.8.6`**, con cero efectos fuera del repositorio; `M8.8.3` queda acotado al corte al PATH y sigue 👤 ATENDIDO. **`M8.8.6` ✅ COMPLETO en `a87c9e9`, el primer Módulo sellado que se despachó y cerró bajo la §11.** `S8.7` espera `S8.8` y `S5.1`; `S0.3` está ✅ COMPLETO. `S8.5` y `S8.6` quedan 🟡 DIFERIDO. |
 | Flujo | P8 corre bajo la [regla de ejecución V1](../v1-execution-rule.md): de `tasks.md` directo a implementación, sin exploration/proposal/design y sin PR de cierre separada. |
-| Brecha 6 — RESUELTA su titularidad (2026-08-20) | **Dueño asignado: `S8.9`, por la decisión 54.** La brecha fue re-medida y su causa corregida: el instalable no está roto —sus 18 archivos son import-closed y funcionan—, pero **ninguno de los 53 archivos no instalados es importado por el payload**, y 26 no tienen importador alguno fuera de tests. Son dos productos disjuntos. Sumar archivos a `RUNTIME_PAYLOAD_FILES` no cambiaría nada funcionalmente: instalaría código muerto. El arreglo de fondo —**derivar la lista del cierre de imports** desde las raíces reales de `bin/torre`: `install/active-pointer.mjs`, `install/lifecycle.mjs`, `core.mjs`, `hosts/launch-worker-cli.mjs`— quedó enumerado como `S8.9`, 🟢 LISTO y ejecutable hoy. Medido: ese cierre da los mismos archivos menos `hosts/launcher.mjs`, que hoy se instala sin que nadie lo importe. Orden registrado y no negociable: **primero cablear, después enviar**; `S8.9` es la mitad "enviar". **El cableado del producto no instalado sigue sin enumerar y `S8.9` no lo cubre.** Detalle en [implementation-state](../implementation-state.md). |
+| Brecha 6 — cierre de envío verificado (2026-08-20) | **`S8.9` ✅ COMPLETO por la decisión 54 y su enmienda de contrato visible (Engram 9132).** El contrato exacto es `RUNTIME_PAYLOAD_FILES === ['bin/torre', ...staticJsClosure(fourRoots)]`, en orden canónico estable. `bin/torre` es el único asset no-JS explícito; las cuatro raíces son `install/active-pointer.mjs`, `install/lifecycle.mjs`, `core.mjs` y `hosts/launch-worker-cli.mjs`. `hosts/launcher.mjs` queda fuera por inalcanzable, sin borrar su archivo ni su test. **El cableado del producto no instalado sigue sin enumerar y `S8.9` no lo cubre.** Detalle en [implementation-state](../implementation-state.md). |
 | Referencias | [tasks de V1](../../changes/v1-release/tasks.md); [change archivado](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/), [spec](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). |
 | Actualización de cierre | `S8.8` y `S5.1` están ✅ COMPLETO. `S8.7` queda 📚 ARCHIVADO: Telegram/Hermes/Remote Control, callbacks y TTL/replay fueron retirados del producto activo por la autoridad Moshi/Main/OpenCode. No se enumera `enroll/**` para ese puente. |
 | Mantenimiento operativo · 2026-08-11 | El registro que expone `torre status` fue saneado: se desregistraron tres agentes sin worktree, se purgó la cola y se corrigieron las ramas de `Main` y `v2`. **Deuda que esto destapa, dentro del dominio de P8:** el producto instalado no tiene forma soportada de corregir su propio registro. El único comando es `torre reset` (`bin/torre:209-218`), que hace `rm -rf "$ROOT"` y pide confirmación interactiva; un desregistro puntual o una purga de cola exigen hoy tocar SQLite a mano. No bloquea ninguna Sesión enumerada y no tiene ID todavía. Detalle en [implementation-state](../implementation-state.md). |
@@ -28,7 +28,7 @@
 | S8.5 | Detección de hosts e integración opt-in | 🟡 DIFERIDO | Optional host detection and integration | ninguna | Diferida el 2026-07-31: la integración es opt-in y su ausencia es diagnóstico, no fallo de instalación |
 | S8.6 | Evidencia de release en máquina limpia | 🟡 DIFERIDO | Versioned lifecycle and release evidence | `S8.3`, `S8.4` | Diferida el 2026-07-31: se cubre con validación manual durante `S8.8` en vez de una Sesión formal |
 | S8.7 | Puente Hermes/Telegram | 📚 ARCHIVADO | Supersedido por Moshi/Main/OpenCode | — | Evidencia histórica preservada; no es prerequisito activo |
-| S8.9 | Payload derivado y guardia de deriva | 🟢 LISTO | Versioned lifecycle | ninguna | Enumerada el 2026-08-20 por la decisión 54. Route `direct`. Reemplaza la lista escrita a mano de `RUNTIME_PAYLOAD_FILES` por una generada del cierre de imports, con guardia de deriva en test. Conserva el sello de igualdad exacta; la derivación es en tiempo de autoría, no de instalación. Saca del payload a `hosts/launcher.mjs`, hoy instalado sin importador |
+| S8.9 | Payload derivado y guardia de deriva | ✅ COMPLETO | Versioned lifecycle | ninguna | Candidato rebasado `ebeb07450f9939fba09a69bddff68028657011ff`, tree `4d16d021aee910ea7ef81cab34ff26b1650b2944`, base/parent `e55a9d0214a817a02e6ae1c69455f0dd7d9a1796`; 8/8 criterios; focused 67/0, full 898/0 y harness runtime PASS |
 | S8.8 | Adopción del instalable en el runtime en uso | ✅ COMPLETO | Versioned lifecycle | `S8.2` ✅ | Todos los Módulos verificados. `M8.8.7` en `e118f33`: la copia aislada cae al legado y un puntero presente roto falla cerrado. `M8.8.8` en `d56e8cb`: checkout Git genuino, staging estricto incluso con `.git` sintético y shim opt-in. `bun test test/install` 44/0; `bun test` 465/0 con Torre desarmada; cero accesos a runtime real en los fixtures. |
 
 Las Sesiones se derivan de los cinco requisitos de la [spec de Installable V1](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). `S8.2` construyó el lifecycle versionado; `S8.8` lo pone efectivamente en uso, que es la parte del requisito que quedaba abierta.
@@ -502,74 +502,70 @@ Este Módulo construye ese mecanismo y **nada más**: no toca el PATH, no repunt
 
 ### S8.9 — Payload derivado y guardia de deriva
 
-**Estado:** 🟢 LISTO · **Route:** `direct` · **Depende de:** nada. Ejecutable hoy.
+**Estado:** ✅ COMPLETO · **Route:** `direct` · **Depende de:** —
 
-**Autoridad:** decisión 54 del maintainer del 2026-08-20, sobre la brecha 6 re-medida en [implementation-state](../implementation-state.md).
+**Autoridad:** decisión 54 y enmienda de contrato visible aprobada por el maintainer (Engram 9132).
 
-#### El problema exacto
+#### Problema, contradicción y resolución
 
-`RUNTIME_PAYLOAD_FILES` (`install/runtime-payload.mjs:5-24`) es una lista de 18 rutas escrita a mano. El instalador exige **igualdad exacta** contra ella: falta un archivo ⇒ `CT_RUNTIME_PAYLOAD_INCOMPLETE`, sobra uno ⇒ `CT_RUNTIME_PAYLOAD_INVALID`. Esa propiedad de conjunto sellado es correcta y **no se toca**. Lo que falla es que la lista se mantiene a mano y ya derivó: `hosts/launcher.mjs` (29 líneas) está declarado y **no lo importa ningún módulo del payload** — sólo `test/hosts/launcher.test.mjs`. Se instala peso muerto.
+El contrato original mantenía `RUNTIME_PAYLOAD_FILES` a mano. La decisión 54 autorizó derivarlo en tiempo de autoría desde imports estáticos, preservando la igualdad exacta del instalador. La primera implementación siguió literalmente ese cierre y expuso una contradicción: `bin/torre` es Bash, no aparece en el grafo JS, pero es el entrypoint visible del producto. El RED enfocado autoritativo quedó preservado: **65 pass / 1 fail**, porque omitía `bin/torre`.
 
-#### La forma elegida, y por qué
+Esto **no era derivable**: cambiar la presencia del ejecutable visible es contrato visible del producto. El maintainer resolvió la contradicción en Engram 9132. Invariante exacto:
 
-La derivación ocurre **en tiempo de autoría**, no en tiempo de instalación. Se genera la lista, se committea, y un test recomputa el cierre y falla si difieren. El runtime instalado sigue leyendo un array literal.
+```js
+RUNTIME_PAYLOAD_FILES === ['bin/torre', ...staticJsClosure(fourRoots)]
+```
 
-**Descartado: computar el cierre en tiempo de instalación.** Obligaría al runtime instalado a parsear sus propios imports para arrancar y haría que el instalador aceptara lo que el árbol de origen contenga — destruye exactamente el sello que esta Sesión debe preservar.
+El orden es canónico y estable. `bin/torre` es el único asset no-JS explícito. `fourRoots` contiene exactamente `install/active-pointer.mjs`, `install/lifecycle.mjs`, `core.mjs` y `hosts/launch-worker-cli.mjs`. `hosts/launcher.mjs` queda fuera porque es inalcanzable; su archivo y su test permanecen en el repositorio. La derivación ocurre durante la autoría y se committea como array literal: el runtime instalado no analiza imports para arrancar.
 
-**Área writable exacta:**
-
-- `install/runtime-payload.mjs` — la lista pasa a ser generada; conserva nombre, forma y semántica.
-- `scripts/payload-closure.mjs` — **nuevo**. Computa el cierre de imports desde raíces declaradas.
-- `test/install/payload-closure.test.mjs` — **nuevo**. Guardia de deriva.
-- `test/install/runtime-payload.test.mjs`, `test/install/entrypoint-resolution.test.mjs`, `test/install/lifecycle.test.mjs` — los tres hardcodean el conjunto esperado y deben reconciliarse.
-
-**Prohibido:** `core.mjs`; `hosts/**`; `main-store/**`; `install/lifecycle.mjs` e `install/active-pointer.mjs` —sólo **consumen** la constante y no cambian—; `scripts/publish-runtime.mjs`; y toda ruta fuera del `Área`.
-
-**Recurso:** el contrato `RUNTIME_PAYLOAD_FILES`. No solapa con ningún `Recurso` de P9.
-
-**Raíces de entrada declaradas.** `bin/torre` es bash y carga por `bun -e`, así que su cierre estático es vacío y las raíces **deben** declararse explícitamente: `install/active-pointer.mjs`, `install/lifecycle.mjs`, `core.mjs`, `hosts/launch-worker-cli.mjs`. Medido el 2026-08-20: ese cierre da **16 archivos** — los 17 declarados sin `bin/torre`, menos el inalcanzable `hosts/launcher.mjs`.
+| Campo | Valor |
+|---|---|
+| Área | `install/runtime-payload.mjs`, `scripts/payload-closure.mjs`, `test/install/payload-closure.test.mjs`, `test/install/runtime-payload.test.mjs`, `test/install/entrypoint-resolution.test.mjs`, `test/install/lifecycle.test.mjs` |
+| Prohibido | `core.mjs`, `hosts/**`, `main-store/**`, `install/lifecycle.mjs`, `install/active-pointer.mjs`, `scripts/publish-runtime.mjs` y toda ruta fuera del Área |
+| Recurso | contrato `RUNTIME_PAYLOAD_FILES` |
+| Candidato rebasado | `ebeb07450f9939fba09a69bddff68028657011ff` |
+| Tree | `4d16d021aee910ea7ef81cab34ff26b1650b2944` |
+| Base / parent / merge-base | `e55a9d0214a817a02e6ae1c69455f0dd7d9a1796` |
+| Reconciliación paralela | Rebase autorizado sobre los cinco commits de P0; `decision-register.md` conserva las decisiones remotas 55/56 y la decisión 54/enmienda 9132 de `S8.9` |
 
 #### Decisiones de S8.9
 
-- `derivable` — **la derivación es en tiempo de autoría con lista committeada.** **Autoridad:** la propiedad de conjunto sellado ya vigente en `install/runtime-payload.mjs`. **Criterio falsificable:** el instalador deja de fallar cerrado ante un conjunto que no coincide, o el runtime instalado necesita resolver imports para arrancar.
-- `derivable` — **`hosts/launcher.mjs` sale del payload por inalcanzable.** **Criterio falsificable:** algún módulo del payload lo importa. El archivo y su test **no se borran**: sale de la lista, no del repositorio.
+- `derivable` — la lista se genera y committea en tiempo de autoría, conservando el sello exacto. **Autoridad:** decisión 54. **Falsificador:** el instalador acepta deriva o el runtime instalado debe resolver imports.
+- `escala`, resuelta — `bin/torre` se conserva como único asset no-JS explícito delante del cierre JS. **Clase:** contrato visible del producto. **Evidencia:** RED 65/1. **Resolución:** Engram 9132. **Contaminaba:** los tres Módulos y los ocho criterios de `S8.9`.
+- `derivable` — `hosts/launcher.mjs` sale del payload por inalcanzable, sin borrar archivo ni test. **Falsificador:** una raíz o miembro alcanzable lo importa.
 
-#### Módulo M8.9.1 — Cierre de imports computable · 📋 PLANIFICADO
+#### Módulo M8.9.1 — Cierre de imports computable · ✅ COMPLETO
 
-**Área:** `scripts/payload-closure.mjs`, `test/install/payload-closure.test.mjs`.
+- [x] T8.9.1.1 — RED: cubrir cierre estático relativo, orden determinista y fallos por raíz/import irresoluble.
+- [x] T8.9.1.2 — GREEN: calcular sin ejecutar el código analizado.
+- [x] T8.9.1.3 — REFACTOR: consolidar orden estable e idempotencia.
 
-- [ ] T8.9.1.1 — RED: tests que exigen que el cierre desde las cuatro raíces declaradas devuelva un conjunto ordenado y determinista, que resuelva imports relativos transitivos, y que falle explícito ante una raíz inexistente o un import irresoluble.
-- [ ] T8.9.1.2 — GREEN: implementar el cálculo del cierre. Sólo imports estáticos relativos; sin ejecutar el código analizado.
-- [ ] T8.9.1.3 — REFACTOR: consolidar el orden estable y probar idempotencia — dos corridas dan bytes idénticos.
+#### Módulo M8.9.2 — Guardia de deriva · ✅ COMPLETO
 
-#### Módulo M8.9.2 — Guardia de deriva · 📋 PLANIFICADO
+- [x] T8.9.2.1 — RED: comparar lista committeada y cierre, nombrando faltantes y sobrantes.
+- [x] T8.9.2.2 — GREEN: reconciliar `['bin/torre', ...staticJsClosure(fourRoots)]` y retirar `hosts/launcher.mjs`.
+- [x] T8.9.2.3 — REFACTOR: cubrir ambas direcciones de deriva.
 
-**Área:** `test/install/payload-closure.test.mjs`.
+#### Módulo M8.9.3 — Reconciliar los conjuntos hardcodeados · ✅ COMPLETO
 
-- [ ] T8.9.2.1 — RED: test que compara `RUNTIME_PAYLOAD_FILES` contra el cierre computado y falla nombrando sobrantes y faltantes por separado.
-- [ ] T8.9.2.2 — GREEN: hacerlo pasar reconciliando la lista con el cierre real, incluida la salida de `hosts/launcher.mjs`.
-- [ ] T8.9.2.3 — REFACTOR: probar que el guard detecta ambas direcciones de deriva, agregando y quitando una entrada de prueba.
+- [x] T8.9.3.1 — RED: actualizar conjuntos esperados; la contradicción dejó 65 pass / 1 fail por omitir `bin/torre`.
+- [x] T8.9.3.2 — GREEN: emitir la lista generada con marca y comando de regeneración.
+- [x] T8.9.3.3 — REFACTOR: normalización convergente y verificación enfocada, completa y runtime.
 
-#### Módulo M8.9.3 — Reconciliar los conjuntos hardcodeados · 📋 PLANIFICADO
+#### Criterios de aceptación de S8.9 — 8/8
 
-**Área:** `install/runtime-payload.mjs`, `test/install/runtime-payload.test.mjs`, `test/install/entrypoint-resolution.test.mjs`, `test/install/lifecycle.test.mjs`.
+- [x] `RUNTIME_PAYLOAD_FILES` equivale elemento a elemento a `['bin/torre', ...staticJsClosure(fourRoots)]`, en orden canónico estable.
+- [x] La guardia falla ante deriva en cualquiera de las dos direcciones.
+- [x] `bin/torre` es el único asset no-JS explícito y las raíces JS son exactamente las cuatro aprobadas.
+- [x] `hosts/launcher.mjs` no integra el payload; su archivo y su test permanecen.
+- [x] El instalador conserva fallo cerrado ante miembros faltantes (`CT_RUNTIME_PAYLOAD_INCOMPLETE`) o extra (`CT_RUNTIME_PAYLOAD_INVALID`).
+- [x] La lista sigue siendo un array literal generado; el runtime instalado no resuelve imports al arrancar.
+- [x] Normalización convergente; fresh focused **67/0**, fresh full **898/0** y harness del `torre` instalado/almacenado **PASS** sobre los bytes rebasados.
+- [x] El commit toca exactamente los cinco paths del Área, 220 líneas authored; Prohibido y estado de Tower intactos.
 
-- [ ] T8.9.3.1 — RED: actualizar los tres conjuntos esperados al payload derivado; deben fallar contra la lista vieja.
-- [ ] T8.9.3.2 — GREEN: emitir la lista generada en `install/runtime-payload.mjs` con una marca que diga que es generada y cómo regenerarla.
-- [ ] T8.9.3.3 — REFACTOR: verificar que `install/active-pointer.mjs`, `install/lifecycle.mjs` y `scripts/publish-runtime.mjs` siguen funcionando sin cambios, y que `bun test test/install` pasa entero.
+**Evidencia fresca después del rebase.** `BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 bun scripts/payload-closure.mjs --write` devolvió `unchanged`; no hubo mutación fuente posterior. `BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 bun test test/install`: 67 pass / 0 fail / 240 expectations / 6 files / 4.58 s. `BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 bun test`: 898 pass / 0 fail / 5308 expectations / 68 files / 108.28 s. El harness ejecutó `diagnose`, `install` y `torre launch-worker` desde el runtime instalado/almacenado. El dispatch read-only `review-reliability` ya había quedado tipado como no disponible (`no current controller-owned candidate view lineage binding`) y no se repitió tras el rebase por instrucción expresa; fue asesor, no gate.
 
-#### Criterios de aceptación de S8.9
-
-- [ ] `RUNTIME_PAYLOAD_FILES` es igual, elemento a elemento, al cierre computado desde las cuatro raíces declaradas.
-- [ ] Existe un test que falla si la lista committeada y el cierre difieren, en **cualquiera** de las dos direcciones.
-- [ ] `hosts/launcher.mjs` ya no está en el payload; su archivo y su test siguen en el repositorio.
-- [ ] El instalador sigue fallando cerrado: falta un miembro ⇒ `CT_RUNTIME_PAYLOAD_INCOMPLETE`; sobra uno ⇒ `CT_RUNTIME_PAYLOAD_INVALID`.
-- [ ] El runtime instalado arranca sin resolver imports: `RUNTIME_PAYLOAD_FILES` sigue siendo un array literal.
-- [ ] `install/active-pointer.mjs`, `install/lifecycle.mjs` y `scripts/publish-runtime.mjs` no requieren cambio alguno.
-- [ ] `bun test test/install` pasa; la suite completa pasa con la Torre desarmada.
-- [ ] El diff no toca ninguna ruta fuera del `Área` ni ninguna del `Prohibido`.
-
-> **Esta Sesión no cablea nada.** Hace que el envío sea automático y honesto. El cableado del producto no instalado —darle consumidores reales a `contracts/`, `registry/`, `escalation/` y el resto— es trabajo aparte y sigue sin enumerar. Orden registrado: **primero cablear, después enviar**; S8.9 es la mitad "enviar", y se hace primero sólo porque vuelve gratis y automática la otra mitad.
+> **Esta Sesión no cablea nada.** El cableado del producto no instalado sigue sin enumerar. Orden preservado: primero cablear, después enviar; `S8.9` automatiza la mitad «enviar» sin expandir Área.
 
 ### S8.5 — Detección de hosts e integración opt-in
 
@@ -657,7 +653,7 @@ graph LR
 
 `S8.2` entregó únicamente almacenamiento de versiones, puntero activo, install/diagnose/upgrade/rollback/uninstall, preservación de configuración e historial, y sus pruebas Strict TDD. No modificó `core.mjs`, `mcp.mjs`, `package.json`, `bun.lock`, DB ni estado de Tower.
 
-Con `S8.4` y `S8.8` cerradas y `S8.7` archivada, P8 queda en `75% (6/8 S)`; `S8.5` y `S8.6` permanecen diferidas.
+Con `S8.9` cerrada, P8 queda en `78% (7/9 S)`; `S8.5` y `S8.6` permanecen 🟡 DIFERIDO.
 
 Cada Sesión es una unidad entregable dirigida a `master`. **Desde el 2026-08-01 (`46edd14`) eso es un commit directo + push, no un PR** — ver [Política de entrega](../../../AGENTS.md). El alcance de la Sesión no cambia: sigue siendo el que entraría en un PR. Las referencias a PRs de las Sesiones ya cerradas son historia y quedan como están.
 

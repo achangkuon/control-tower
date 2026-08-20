@@ -1,24 +1,22 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-20 contra `work/s5-2-corrections@2145fd7`. La autoridad vigente es Moshi → Main → raíz primaria OpenCode con TUI adjunta no autoritativa; Herdr no pertenece al lifecycle crítico.
+> Última reconciliación: 2026-08-20 contra `feat/s8.9-derived-runtime-payload@ebeb07450f9939fba09a69bddff68028657011ff` (tree `4d16d021aee910ea7ef81cab34ff26b1650b2944`, base/parent `e55a9d0214a817a02e6ae1c69455f0dd7d9a1796`). La rama ya contiene los cinco commits paralelos de P0 y conserva ambas historias del registro de decisiones. La autoridad vigente es Moshi → Main → raíz primaria OpenCode con TUI adjunta no autoritativa; Herdr no pertenece al lifecycle crítico.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md).
 
 ## 📍 Punto de retoma
 
-**`S5.2` está ✅ COMPLETO** sobre `work/s5-2-corrections@2145fd7` (tree `284c5b1`, base `origin/master@d43c09a`). Sus cuatro Tareas, 15/15 criterios funcionales y el gate separado de Área/Prohibido sobre exactamente 16 paths pasan; focused 141/0 y suite completa 888/0.
+**`S8.9` está ✅ COMPLETO** en el candidato rebasado `ebeb07450f9939fba09a69bddff68028657011ff`. El payload cumple `['bin/torre', ...staticJsClosure(fourRoots)]`: fresh focused 67/0, fresh suite completa 898/0 y harness del runtime instalado/almacenado PASS. P8 pasa a 78% (7/9 S) y el avance de Sesiones activas a 74% (37/50).
 
-`S5.3` queda 🟢 LISTO por dependencia satisfecha. P5 pasa a 83% (10/12 S) y el avance global de Sesiones activas a 72% (36/50). La próxima posición de ejecución es `S8.9`; después entra `S5.3`.
+La próxima posición ejecutable es `S5.3`. El cableado del producto no instalado, el lock huérfano de `main-store/store.mjs:104-124`, la Sesión `enroll/**`, los umbrales de liveness de §14.3, el tamaño del pool de `S9.4` y macOS siguen fuera de este cierre.
 
-**La radiografía del producto se genera sola desde el 2026-08-20**, por la **decisión 55**. El estado que lee el maintainer dejó de escribirse a mano: `scripts/radiografia.mjs` mide avance por Plan, cola, líneas, share instalado, módulos sin cablear y suite directamente de este índice y del repositorio, y `.githooks/pre-push` lo regenera en cada entrega — para cualquier agente, porque el disparo es git y no asistente. El juicio que ningún script deriva vive en [`radiografia.md`](radiografia.md) con sello `verified_against`, y el informe avisa solo cuando ese sello quedó atrás, cuando el árbol está sucio o cuando la suite se registró en otro commit. **Motivo directo:** las dos afirmaciones falsas sobre el código que este índice y `plan-9/STATUS.md` sostuvieron esta semana se detectaron por auditoría manual, no por una alarma. 47 tests nuevos; suite completa 935/0. Registrado en [plan-0](plan-0/STATUS.md); no consume ni desplaza ninguna Sesión enumerada.
-
-Siguen fuera de este cierre el lock huérfano de `main-store/store.mjs:104-124`, el cableado del producto no instalado, la Sesión `enroll/**`, los umbrales de liveness de §14.3, el tamaño del pool de `S9.4` y el soporte de macOS.
+El rebase autorizado sobre `origin/master@e55a9d0` preservó los cambios remotos de P0 y la decisión 54/enmienda 9132 de `S8.9`; no se tomó una versión wholesale del registro.
 
 ## 🎯 Cola de ejecución
 
-`#1 S8.9` · `#2 S5.3` · `#3 S4.4` · `#4 S5.5` · `#5 S7.1` — recalculada 2026-08-20 al cerrar `S5.2`. **Una Sesión entra en esta cola sólo si toda su cadena de dependencias está satisfecha.**
+`#1 S5.3` · `#2 S4.4` · `#3 S5.5` · `#4 S7.1` — recalculada 2026-08-20 al cerrar `S8.9`. **Una Sesión entra en esta cola sólo si toda su cadena de dependencias está satisfecha.**
 
-`S8.9` conserva prioridad por ser independiente y automatizar la deriva del payload. `S5.3` entra en `#2` porque `S5.2` ya cerró; `S4.4` y `S5.5` siguen 🟢 LISTO. `S7.1` cierra la cola porque espera `S4.4`, `S5.3` y `S5.5`.
+`S8.9` salió de la cola al cerrar. `S5.3`, `S4.4` y `S5.5` siguen 🟢 LISTO; `S7.1` cierra la cola porque espera `S4.4`, `S5.3` y `S5.5`.
 
 **Fuera de la cola, por dependencia y no por decisión:** las cuatro Sesiones de P9 —`S9.1` es la única ejecutable del Plan, y `S9.2`, `S9.3` y `S9.4` esperan detrás de ella—. `S9.1` no entra todavía porque su próximo paso es rediseñar `M9.1.1` bajo la decisión 52, no implementar. Pi/Intercom y `S8.7` no integran esta cola.
 
@@ -31,7 +29,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 
 ## 📊 Estado de un vistazo
 
-**Avance global**: 3/11 Planes cerrados (27%) · Sesiones cerradas en planes activos: 36/50 (72%). Cálculo auditable: P1 `16/19` + P4 `4/5` + P5 `10/12` + P7 `0/1` + P8 `6/9` + P9 `0/4` = `36/50`; P10 se excluye porque cerró 3/3 S. P2 no tiene denominador derivable.
+**Avance global**: 3/11 Planes cerrados (27%) · Sesiones cerradas en planes activos: 37/50 (74%). Cálculo auditable: P1 `16/19` + P4 `4/5` + P5 `10/12` + P7 `0/1` + P8 `7/9` + P9 `0/4` = `37/50`; P10 se excluye porque cerró 3/3 S. P2 no tiene denominador derivable.
 
 | ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |
 |----|------|--------|---|------|-------|-----------|-----|
@@ -43,7 +41,7 @@ El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/pl
 | P5 | Entrega y continuación | 🔵 EN CURSO | 83% (10/12 S) | — | Main | `S5.3` 🟢 · `S5.5` 🟢 | [STATUS](plan-5/STATUS.md) |
 | P6 | Campañas multiproyecto | 📋 PLANIFICADO | — (sin Sesiones enumeradas) | — | Main | — | [STATUS](plan-6/STATUS.md) |
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | S7.1 | [STATUS](plan-7/STATUS.md) |
-| P8 | Release instalable | 🔵 EN CURSO | 67% (6/9 S) | — | Maintainer | `S8.9` 🟢 LISTO (payload derivado, route `direct`, sin dependencias) · `S8.5` y `S8.6` 🟡 DIFERIDO | [STATUS](plan-8/STATUS.md) |
+| P8 | Release instalable | 🔵 EN CURSO | 78% (7/9 S) | — | Maintainer | `S8.5`, `S8.6` | [STATUS](plan-8/STATUS.md) |
 | P9 | Slots seguros de Jornada, caché externa de Bun y pool de asientos | 🔵 EN CURSO | 0% (0/4 S) | — | Maintainer | S9.1 (🔵, decision-clean, `0/9 M`), S9.2, S9.3 (falta enumerar Área/Recurso/Módulos), S9.4 (nueva, falta enumerar y decidir tamaño del pool) | [STATUS](plan-9/STATUS.md) |
 | P10 | Ejecución y supervisión autónoma de Jornada | ✅ COMPLETO | 100% (3/3 S) | — | Maintainer | — | [STATUS](plan-10/STATUS.md) |
 
