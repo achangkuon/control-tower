@@ -62,6 +62,55 @@ decisión ni preparar el paquete anterior; solo impide autorizar ejecución para
   o más Sesiones bajo la jerarquía canónica `Plan → Sesión → Módulo → Tarea`. No se
   crea un quinto nivel ni se renombra ninguno de los cuatro.
 
+## Radiografía del producto — se regenera al entregar
+
+El estado del producto se publica como un informe HTML autocontenido pensado para
+que el mantenedor —que no programa— entienda dónde está el proyecto sin leer
+`openspec/`. Se genera; no se escribe a mano.
+
+**Un solo comando, igual para todos los agentes:**
+
+```sh
+bun scripts/radiografia.mjs              # mide y regenera (rápido, ~300 ms)
+bun scripts/radiografia.mjs --with-tests # además corre la suite y registra el resultado
+bun scripts/radiografia.mjs --check      # sale 1 si quedó desactualizado; no escribe
+```
+
+No usa ninguna capacidad de asistente. Claude Code, opencode, PI, Codex, un cron o
+una persona lo corren igual.
+
+**Se dispara solo en la entrega.** El hook `.githooks/pre-push` lo corre con la suite
+en cada `git push`. El hook **nunca bloquea** un push: un informe no es un gate.
+`core.hooksPath` es configuración local y no viaja en el clon — en un worktree o
+clon nuevo hay que activarlo una vez:
+
+```sh
+git config core.hooksPath .githooks
+```
+
+**Qué edita cada quien:**
+
+| Archivo | Quién lo escribe | Qué contiene |
+|---|---|---|
+| `openspec/plans/radiografia.md` | un agente, a mano | El juicio: qué significa cada número, qué está en riesgo, qué decisión es del mantenedor |
+| `radiografia.html` | el generador | El informe. **Gitignoreado**: es artefacto de build, no se commitea ni se edita |
+| `.radiografia-cache.json` | el generador | Último resultado de la suite y en qué commit se midió. Gitignoreado |
+
+Las **cifras no se escriben nunca a mano**: avance por Plan, cola, líneas, share
+instalado y resultado de la suite salen medidos de `openspec/plans/master-index.md`
+y del repositorio. Esa es la razón de existir del generador — dos veces en una
+semana la documentación afirmó sobre el código cosas que eran falsas.
+
+Al cambiar el juicio, actualizá `verified_against` en el front matter al commit
+contra el que lo verificaste. Si no coincide con `HEAD`, el informe lo avisa solo,
+igual que avisa un árbol sucio o una suite registrada en otro commit.
+
+**Publicación.** El informe se publica como Artifact en claude.ai y **sólo Claude Code
+puede publicarlo** — es una herramienta suya. Los demás agentes lo generan y lo dejan
+en disco; el mantenedor lo abre local con `xdg-open radiografia.html`, y la próxima
+sesión de Claude Code lo republica a la misma URL. Que un agente no pueda publicar
+no es motivo para saltear la generación.
+
 ## Declaración de política — forma legible por máquina
 
 La prosa de este archivo es para humanos. El bloque de abajo expresa en forma
