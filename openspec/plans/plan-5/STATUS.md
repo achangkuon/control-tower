@@ -19,7 +19,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1`, y la cadena contractual `S5.4 → S5.6 → S5.7 → S5.8 → S5.11 → S5.12 → S5.9 → S5.10 → S5.5`. |
 | Outputs | Entrega idempotente por política `direct-push`, checkpoints durables y loop planner N+1 / implementer N. Main conserva la autoridad; Moshi sólo muestra escalamiento. |
-| Roadmap | `S5.1`, `S5.4`, `S5.6`–`S5.8`, `S5.11` y `S5.12` están ✅ COMPLETO. `S5.9` está ✅ COMPLETO: entregada en `master` (`3c3040d`, `754c698`, `8d4b28a`), con el criterio 2 enmendado por la decisión 41 como pérdida aceptada y documentada. `S5.2` conserva corrección técnica pendiente bajo push directo; `S5.3` y `S5.5` quedan detrás de sus dependencias como continuación planner/implementer y park/resume acotado. |
+| Roadmap | `S5.1`, `S5.2`, `S5.4`, `S5.6`–`S5.12` están ✅ COMPLETO. `S5.2` cerró sobre el candidato `2145fd7` con 15/15 criterios funcionales y el gate de alcance separado en PASS; esto destraba `S5.3`, que pasa a 🟢 LISTO. `S5.5` también está 🟢 LISTO. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
 
 ## Grafo de dependencias
@@ -36,11 +36,11 @@ graph LR
   S58 --> S511["S5.11 provenance de checkpoint · ✅"]
   S511 --> S512["S5.12 composición Main→parking · ✅"]
   S512 --> S59["S5.9 binding de checkpoint · ✅"]
-  S59 --> S510["S5.10 binding de trabajo completado · 🔴"]
-  S510 --> S55["S5.5 continuación diferible · 🔴"]
-  S41["S4.1 fence hosts · ✅"] --> S52["S5.2 entrega · 🔴"]
+  S59 --> S510["S5.10 binding de trabajo completado · ✅"]
+  S510 --> S55["S5.5 continuación diferible · 🟢"]
+  S41["S4.1 fence hosts · ✅"] --> S52["S5.2 entrega · ✅"]
   S33 --> S52
-   S52 --> S53["S5.3 planner/implementer · 📋"]
+   S52 --> S53["S5.3 planner/implementer · 🟢"]
 ```
 
 ## Sesión 5.1 — Change F candidate contracts
@@ -192,13 +192,13 @@ Define identidad y freeze de `candidate_revision`, invalidación, sucesores, com
 
 ## Sesión 5.2 — Change F delivery adapters/reconciliation
 
-**Estado:** 🟢 LISTO — **el maintainer autorizó la segunda corrección el 2026-08-19 (decisión 47)**, que era lo único que faltaba. El contrato sigue sellado y `S4.1` está ✅ COMPLETO. Quedan por cerrar los hallazgos 1, 3 y 5 del recheck dirigido 8193 —recuperación de lock tras crash, TOCTOU de directorio padre y estado `delivered` prematuro para PR recién creado—, los tres dentro del `Área`.
+**Estado:** ✅ COMPLETO — cierre técnico verificado sobre `work/s5-2-corrections@2145fd796c6bfdb9d426ceba037c7e3345b5e861` (tree `284c5b1c9ee8fa6aa45392302cc71897eb834bcc`), con base `origin/master@d43c09a616bf57483ea55b9a92fc28dd03577f34`. Las decisiones 47 y 48 autorizaron la corrección y el Área exacta; los hallazgos 1, 3 y 5 quedaron cerrados sin tocar rutas prohibidas.
 
-> **Hallazgo 1 localizado el 2026-08-19, con una corrección al primer intento.** Está en `delivery/ledger.mjs` del candidato estacionado, función `withCandidateLock`: toma el lock con `O_EXCL`, **escribe el `pid` del tenedor dentro del archivo**, y en el `finally` lo borra. Pero ante `EEXIST` nunca lee ese `pid` para decidir si el tenedor sigue vivo: sólo espera hasta agotar el deadline de 5 s y falla `CT_DELIVERY_LEDGER_BUSY`. Un writer muerto por SIGKILL, OOM o crash deja el archivo para siempre y esa `candidate_revision` no se puede volver a entregar nunca. La evidencia necesaria para recuperarlo **ya se está escribiendo**; falta consumirla. Está dentro del `Área` (`delivery/**`).
+> **Hallazgo 1 localizado el 2026-08-19 y cerrado en el candidato final.** Estaba en `delivery/ledger.mjs`, función `withCandidateLock`: ante `EEXIST` no consumía el `pid` ya persistido y un writer muerto podía bloquear para siempre esa `candidate_revision`. La corrección quedó dentro del `Área` (`delivery/**`) y su prueba pasa.
 >
 > **CORRECCIÓN.** La primera versión de esta nota ubicaba el hallazgo en `main-store/store.mjs:104-124` (`withLock`). **Es falso, y era imposible:** `main-store/store.mjs` está en el `Prohibido` de esta Sesión. Los dos locks comparten forma —`O_EXCL`, deadline de 5 s, limpieza sólo en el `finally`— y la auditoría los conflacionó por eso. El defecto de `main-store/store.mjs` **es real igual**, lo reportó de forma independiente la lente R4 de `S5.10` y sigue abierto, pero **no pertenece a `S5.2`** y no puede arreglarse dentro de esta corrección. La decisión 46 lo resolvió sobre esa premisa falsa y queda sin efecto para ese punto.
 >
-> **Candidato estacionado.** La decisión 8195 lo ubica en `Worktrees/s5-1`, worktree que **ya no existe**. El candidato **no se perdió**: vive en la rama `feat/plan-5/s5-2-delivery-workflow`, local y en `origin`, con 783 inserciones sobre `master`. El puntero del plan estaba obsoleto, no el artefacto.
+> **Historia del candidato.** La decisión 8195 lo ubicaba en `Worktrees/s5-1`, worktree que ya no existe. La rama preservó el artefacto y la corrección final quedó verificada en `work/s5-2-corrections@2145fd7`; el puntero anterior estaba obsoleto, no los bytes.
 
 **Depende de:** `S4.1`, `S3.3` ✅.
 
@@ -233,46 +233,50 @@ Implementa commit y push idempotentes a `master`, checks, autorización exacta y
 
 ### Módulo M5.2.1 — Adapters y reconciliación
 
-**Estado de ejecución al autorizarse la corrección (2026-08-19).** Las cuatro Tareas están **implementadas en el candidato estacionado** —rama `feat/plan-5/s5-2-delivery-workflow`, 783 inserciones sobre `master`: `delivery/{git-adapter,ledger,pull-request-adapter,reconciliation,workflow}.mjs`, `schemas/delivery-record-v1.schema.json` y cinco archivos de test—. Siguen sin tildar porque el candidato quedó NOT READY por la decisión 8195, no porque falte escribirlas. **Lo que la decisión 47 autoriza no es un RED → GREEN fresco de `T5.2.1.1`–`T5.2.1.4`, sino tres correcciones acotadas sobre lo ya escrito** (hallazgos 1, 3 y 5 del recheck 8193). Un ejecutor que arranque de cero estaría reimplementando trabajo que existe y que ya pasó todo lo demás del recheck.
+**Cierre de ejecución.** Las cuatro Tareas quedaron verificadas sobre el candidato inmutable; la segunda corrección se limitó a los hallazgos 1, 3 y 5 autorizados por la decisión 47.
 
-
-- [ ] Tarea T5.2.1.1 — RED: remoto, refspec y head **explícitos**; ignorar la rama de tracking,
+- [x] Tarea T5.2.1.1 — RED: remoto, refspec y head **explícitos**; ignorar la rama de tracking,
   reconciliar antes del primer push, y bloquear cualquier destino que no coincida con el declarado.
-- [ ] Tarea T5.2.1.2 — RED: repositorio, head y base explícitos por argv, con entorno separado;
+- [x] Tarea T5.2.1.2 — RED: repositorio, head y base explícitos por argv, con entorno separado;
   rechazar composición de comandos, prefijo de entorno y `--head` ausente.
-- [ ] Tarea T5.2.1.3 — RED: clasificación de resultados. Cuota o facturación → `quota_exhausted`;
+- [x] Tarea T5.2.1.3 — RED: clasificación de resultados. Cuota o facturación → `quota_exhausted`;
   caída, 5xx o timeout sondeado → `provider_unavailable`; checks incompletos → `checks_pending`;
   ambiguo → `unknown` bloqueado. **Más los dos casos que resolvió el maintainer:** el tercer
   reintento fallido para y escala, y un resultado ambiguo que no se puede reconciliar entra en
   `UNRECONCILED` sin emitir ninguna mutación remota adicional.
-- [ ] Tarea T5.2.1.4 — GREEN/REFACTOR: la secuencia `commit → verificar commit/árbol → freeze →
+- [x] Tarea T5.2.1.4 — GREEN/REFACTOR: la secuencia `commit → verificar commit/árbol → freeze →
   push directo a master`, con el registro append-only propio de `delivery/**` y el binding a la autorización de
   `S5.1`, importada sin modificar. Registrar `delivery-record-v1` en `contracts/schema-registry.mjs`,
   sumar su invariante en `contracts/validate.mjs` y su caso al fixture.
   `bun test test/delivery test/contracts`.
 
-**Criterios de aceptación de S5.2** — todos deben pasar para cerrar:
+**Criterios funcionales de aceptación de S5.2** — 15/15 verificados:
 
-- [ ] La forma de entrega sale del bloque `delivery-policy` del proyecto, y un repositorio sin bloque resuelve al valor más restrictivo
-- [ ] Remoto, refspec y head son explícitos; la rama de tracking nunca decide el destino
-- [ ] Un destino que no coincide con el declarado se bloquea antes de emitir nada
-- [ ] Composición de comandos, prefijo de entorno y `--head` ausente se rechazan
-- [ ] Dos intentos sobre el mismo candidato se consideran la **misma** entrega: la identidad es la `candidate_revision` congelada, nunca un ID por intento
-- [ ] **Se reintenta como máximo tres veces, y cada reintento va precedido de reconciliación** contra el remoto real
-- [ ] **Si la reconciliación determina que el efecto sí ocurrió, se marca entregada y no se reintenta**, sin importar el contador
-- [ ] Un efecto que ocurrió con la respuesta perdida **no** produce un segundo efecto al reintentar
-- [ ] Cuota, caída, checks incompletos y ambigüedad se clasifican en `quota_exhausted`, `provider_unavailable`, `checks_pending` y `unknown` bloqueado
-- [ ] **Una entrega irreconciliable entra en `UNRECONCILED`, congela el candidato y no emite ninguna mutación remota adicional** — tampoco un revert
-- [ ] **La Torre continúa con trabajo independiente** después de una entrega `UNRECONCILED`; no se detiene entera
-- [ ] El registro de entrega es append-only y vive en `delivery/**`: **ninguna ruta escribe en `ct_delivery` ni requiere migración de SQLite**
-- [ ] La autorización se consume por el store de `S5.1`, importado sin modificar; `S5.2` no abre una segunda ruta de escritura ni crea autoridad
-- [ ] `delivery-record-v1` está registrado en `contracts/schema-registry.mjs` y tiene su caso en el fixture de contratos
-- [ ] `bun test test/delivery test/contracts` pasa completo y `bun test` no introduce fallos nuevos sobre la línea base que deje `S4.1`
-- [ ] El diff no toca ninguna ruta del `Prohibido` — en particular `core.mjs`
+- [x] La forma de entrega sale del bloque `delivery-policy` del proyecto, y un repositorio sin bloque resuelve al valor más restrictivo
+- [x] Remoto, refspec y head son explícitos; la rama de tracking nunca decide el destino
+- [x] Un destino que no coincide con el declarado se bloquea antes de emitir nada
+- [x] Composición de comandos, prefijo de entorno y `--head` ausente se rechazan
+- [x] Dos intentos sobre el mismo candidato se consideran la **misma** entrega: la identidad es la `candidate_revision` congelada, nunca un ID por intento
+- [x] **Se reintenta como máximo tres veces, y cada reintento va precedido de reconciliación** contra el remoto real
+- [x] **Si la reconciliación determina que el efecto sí ocurrió, se marca entregada y no se reintenta**, sin importar el contador
+- [x] Un efecto que ocurrió con la respuesta perdida **no** produce un segundo efecto al reintentar
+- [x] Cuota, caída, checks incompletos y ambigüedad se clasifican en `quota_exhausted`, `provider_unavailable`, `checks_pending` y `unknown` bloqueado
+- [x] **Una entrega irreconciliable entra en `UNRECONCILED`, congela el candidato y no emite ninguna mutación remota adicional** — tampoco un revert
+- [x] **La Torre continúa con trabajo independiente** después de una entrega `UNRECONCILED`; no se detiene entera
+- [x] El registro de entrega es append-only y vive en `delivery/**`: **ninguna ruta escribe en `ct_delivery` ni requiere migración de SQLite**
+- [x] La autorización se consume por el store de `S5.1`, importado sin modificar; `S5.2` no abre una segunda ruta de escritura ni crea autoridad
+- [x] `delivery-record-v1` está registrado en `contracts/schema-registry.mjs` y tiene su caso en el fixture de contratos
+- [x] `bun test test/delivery test/contracts` pasa completo y `bun test` no introduce fallos nuevos sobre la línea base que deje `S4.1`
+
+**Gate de alcance separado:**
+
+- [x] Los 16 paths del candidato pertenecen al `Área` aprobada por las decisiones 47 y 48; el diff no toca ninguna ruta del `Prohibido`, en particular `core.mjs`.
+
+**Evidencia de cierre.** Focused: `BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 bun test test/delivery test/contracts` → 141 pass / 0 fail / 666 expectations / 14 archivos / 12,04 s. Completa: `BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 bun test` → 888 pass / 0 fail / 5.294 expectations / 67 archivos / 73,97 s. El gate de alcance pasó sobre exactamente 16 paths. No hubo harness runtime externo/live: los adapters se inyectan y las pruebas usan directorios y procesos temporales; no se ejerció ningún límite real remoto, GitHub, Tower, DB o red. La lente `review-risk` quedó **no disponible** con resultado tipado `no current controller-owned candidate view lineage binding`; es evidencia advisory y RDD permanece deliberadamente OFF.
 
 ## Sesión 5.3 — Continuación planner/implementer
 
-**Estado:** 📋 PLANIFICADO — espera `S5.2` integrada; no tiene decisión propia abierta.
+**Estado:** 🟢 LISTO — `S5.2` está ✅ COMPLETO y su dependencia quedó satisfecha; no tiene decisión propia abierta.
 
 **Depende de:** `S5.2`.
 
