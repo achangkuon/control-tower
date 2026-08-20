@@ -1,5 +1,5 @@
 ---
-verified_against: 7a2b88a94eb75201eddb9e66c1a8b0c3dfb5af97
+verified_against: 073b85a9c079e95e92f027ec09ce04c47124a769
 verified_at: 2026-08-20
 standfirst: Dónde está el producto hoy, qué se movió, y las cinco decisiones que dependen de vos. Las cifras se miden solas contra el código; el juicio de abajo se escribe a mano y lleva estampado contra qué commit se verificó.
 ---
