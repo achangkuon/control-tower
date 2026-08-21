@@ -153,3 +153,17 @@ El cerebro ya está: `console/validate.mjs` valida el comando contra el vocabula
 **Regla que se deriva de este orden.** Ninguna Sesión de cableado enchufa un módulo «porque está suelto». Enchufa **un comando**, y el módulo entra con él. Una Sesión que no pueda nombrar el comando que la justifica está reintroduciendo el defecto que este inventario existe para cerrar.
 
 **Los 373 líneas del cajón D quedan fuera de este orden** porque su destino no depende del ejecutor sino de decisiones ya asignadas: `capabilities/registry.mjs` se archiva dentro de la auditoría de P8, `hosts/{rehydration,stop-proof}.mjs` dependen de la de P4, `policy/delivery-policy.mjs` es candidato de la Fase 3 y `hosts/launcher.mjs` espera su archivado.
+
+## 6. El hueco queda visible en la suite
+
+`test/console-executor.test.mjs`, entregado en `master@e1a157b`, mantiene el hallazgo de la [decisión 60](decision-register.md) **dentro de la suite** en vez de sólo en este documento. Cada corrida de `bun test` lista los verbos validados que todavía no tienen ejecutor.
+
+```
+2 pass · 13 todo · 0 fail
+```
+
+**No falla**: los `todo` no cuentan como error. La lista se deriva de `VERBS`, así que agregar un verbo al vocabulario agrega su pendiente automáticamente, y mover un verbo a `EXECUTED` lo saca. Cuando los trece tengan ejecutor, el archivo se borra. Dos aserciones reales lo custodian: `EXECUTED` sólo puede nombrar verbos que existan, y el vocabulario debe declarar al menos uno.
+
+**Por qué existe.** Este proyecto registró dos veces en una semana que su documentación afirmó cosas falsas sobre el código, y las dos se detectaron por auditoría manual y no por una alarma. Un documento hay que acordarse de abrirlo; una señal en la suite aparece sola. Es el mismo criterio falsificable que el resto del registro, pero ejecutable.
+
+**Estado de la suite tras esta entrega:** 858 pass · 13 todo · 5 fail. Los cinco fallos pertenecen al candidato sin commitear de `S8.10` en el worktree `implementation-slot` —`CT_RUNTIME_PAYLOAD_INVALID: unexpected directory contracts`, tarea `T8.10.1.3`— y no los introdujo ninguna entrega de esta pasada.
