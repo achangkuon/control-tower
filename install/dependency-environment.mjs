@@ -150,19 +150,71 @@ export function bindDependencyEnvironment({ dataRoot, versionRoot, digest }) {
   } catch (cause) { if (cause.code === `${C}BINDING_INVALID`) throw cause; fail("BINDING_INVALID", cause) }
 }
 
-export async function materializeDependencyEnvironment(input, adapters = {}) {
+function readBindingDigest(versionRoot, error = "RETENTION_INVALID") {
+  const record = join(versionRoot, ".dependency-environment.json"), link = join(versionRoot, "node_modules")
+  try {
+    const present = (path) => { try { lstatSync(path); return true } catch (cause) { if (cause.code === "ENOENT") return false; fail(error, cause) } }
+    const hasRecord = present(record), hasLink = present(link)
+    if (!hasRecord && !hasLink) { if (!existsSync(join(versionRoot, "install/dependency-environment.mjs"))) return null; fail(error) }
+    if (!hasRecord || !hasLink) fail(error)
+    const metadata = JSON.parse(readFileSync(record, "utf8"))
+    if (!same(Object.keys(metadata ?? {}), ["schema", "digest"]) || metadata.schema !== 1 || !/^[a-f0-9]{64}$/.test(metadata.digest ?? "")) fail(error)
+    return metadata.digest
+  } catch (cause) { if (cause.code === `${C}${error}`) throw cause; fail(error, cause) }
+}
+
+export function dependencyEnvironmentRetention(dataRoot) {
+  try {
+    const versions = join(dataRoot, "versions"), environments = join(dataRoot, "dependency-environments"), referenced = new Set()
+    if (existsSync(versions)) {
+      safeDirectory(versions, "RETENTION_INVALID")
+      for (const name of readdirSync(versions).sort()) {
+        if (name.startsWith(".tmp-")) continue
+        const versionRoot = join(versions, name); safeDirectory(versionRoot, "RETENTION_INVALID")
+        const digest = readBindingDigest(versionRoot); if (digest) { verifyDependencyEnvironmentBinding({ dataRoot, versionRoot, digest }); referenced.add(digest) }
+      }
+    }
+    const candidates = [], temporaries = []
+    if (existsSync(environments)) {
+      safeDirectory(environments, "RETENTION_INVALID")
+      for (const name of readdirSync(environments).sort()) {
+        const path = join(environments, name), info = lstatSync(path)
+        if (!info.isDirectory() || info.isSymbolicLink()) fail("RETENTION_INVALID")
+        if (name.startsWith(".tmp-")) { if (!/^\.tmp-[a-f0-9]{64}-[0-9a-f-]{36}$/.test(name)) fail("RETENTION_INVALID"); temporaries.push(name); continue }
+        if (!/^[a-f0-9]{64}$/.test(name)) fail("RETENTION_INVALID")
+        publishedEnvironment(path, "RETENTION_INVALID", name)
+        if (!referenced.has(name)) candidates.push(name)
+      }
+    }
+    return { referenced: [...referenced].sort(), candidates, temporaries }
+  } catch (cause) { if (cause.code === `${C}RETENTION_INVALID`) throw cause; fail("RETENTION_INVALID", cause) }
+}
+
+function dependencyInput(input) {
   const { dataRoot, packageBytes, lockBytes, bun, host = { os: process.platform, cpu: process.arch } } = input ?? {}
   if (!isAbsolute(dataRoot ?? "") || !Buffer.isBuffer(packageBytes) || !Buffer.isBuffer(lockBytes) || bun?.version !== "1.3.14" || !Buffer.isBuffer(bun.bytes) || !isAbsolute(bun.path ?? "") || !host.os || !host.cpu) fail("INPUT_INVALID")
-  let lock
-  try { lock = Bun.JSONC.parse(lockBytes.toString()); const manifest = JSON.parse(packageBytes.toString()); if (!manifest || typeof manifest !== "object" || Array.isArray(manifest)) fail("INPUT_INVALID") } catch (cause) { if (cause.code?.startsWith(C)) throw cause; fail("INPUT_INVALID", cause) }
-  const expected = expectedFrom(lock, host), digest = hash(lockBytes), identity = { schema: 1, lockDigest: digest, packageDigest: hash(packageBytes), bun: { version: bun.version, digest: hash(bun.bytes) }, host }
+  try {
+    const lock = Bun.JSONC.parse(lockBytes.toString()), manifest = JSON.parse(packageBytes.toString()); if (!manifest || typeof manifest !== "object" || Array.isArray(manifest)) fail("INPUT_INVALID")
+    const digest = hash(lockBytes), identity = { schema: 1, lockDigest: digest, packageDigest: hash(packageBytes), bun: { version: bun.version, digest: hash(bun.bytes) }, host }
+    return { dataRoot, packageBytes, lockBytes, bun, host, lock, digest, identity, expected: expectedFrom(lock, host) }
+  } catch (cause) { if (cause.code?.startsWith(C)) throw cause; fail("INPUT_INVALID", cause) }
+}
+
+export function resolveDependencyEnvironment(input) {
+  const parsed = dependencyInput(input), path = join(parsed.dataRoot, "dependency-environments", parsed.digest)
+  if (!existsSync(path)) return null
+  return { created: false, digest: parsed.digest, path, metadata: validateExisting(path, parsed.identity, parsed.expected) }
+}
+
+export async function materializeDependencyEnvironment(input, adapters = {}) {
+  const { dataRoot, packageBytes, lockBytes, bun, host, lock, digest, identity, expected } = dependencyInput(input)
   const parent = join(dataRoot, "dependency-environments"), target = join(parent, digest)
   if (existsSync(target)) { const metadata = validateExisting(target, identity, expected); return { created: false, digest, path: target, metadata } }
   const operation = join(parent, `.tmp-${digest}-${randomUUID()}`), privateCache = join(operation, "private-cache"), home = join(operation, "home"), cwd = join(operation, "input")
   mkdirSync(parent, { recursive: true, mode: 0o700 }); safeDirectory(dataRoot, "ENV_INVALID"); safeDirectory(parent, "ENV_INVALID"); for (const path of [privateCache, home, `${home}/.cache`, `${home}/tmp`, cwd]) mkdirSync(path, { recursive: true, mode: 0o700 })
   try {
     const command = policy(privateCache, home), usingDefault = !adapters.discover
-    const discovered = await (adapters.discover ?? defaultDiscover)({ lock, host, bunPath: bun.path, cacheRun: adapters.cacheRun, env: command.env })
+    const discovered = expected.length ? await (adapters.discover ?? defaultDiscover)({ lock, host, bunPath: bun.path, cacheRun: adapters.cacheRun, env: command.env }) : []
     if (!Array.isArray(discovered)) fail("CACHE_INVALID")
     const candidates = new Map(), wanted = new Set(expected.map((item) => `${item.name}@${item.version}`))
     for (const entry of discovered) {
@@ -176,7 +228,7 @@ export async function materializeDependencyEnvironment(input, adapters = {}) {
     for (let index = 0; index < selected.length; index++) { mkdirSync(dirname(clonePaths[index]), { recursive: true }); cpSync(selected[index].path, clonePaths[index], { recursive: true, dereference: false, errorOnExist: true }) }
     const clone = sourceSnapshot(clonePaths); writeFileSync(join(cwd, "package.json"), packageBytes); writeFileSync(join(cwd, "bun.lock"), lockBytes)
     let outcome
-    try { outcome = await (adapters.run ?? defaultRun)({ cwd, cacheDir: privateCache, policy: command, bunPath: bun.path }) } catch (cause) { if (cause.name === "TimeoutError") fail("MATERIALIZATION_TIMEOUT", cause); if (cause.code?.startsWith(C)) throw cause; fail("MATERIALIZATION_FAILED", cause) }
+    try { if (expected.length) outcome = await (adapters.run ?? defaultRun)({ cwd, cacheDir: privateCache, policy: command, bunPath: bun.path }); else { mkdirSync(join(cwd, "node_modules")); outcome = { exitCode: 0 } } } catch (cause) { if (cause.name === "TimeoutError") fail("MATERIALIZATION_TIMEOUT", cause); if (cause.code?.startsWith(C)) throw cause; fail("MATERIALIZATION_FAILED", cause) }
     if (outcome?.exitCode !== 0) fail("MATERIALIZATION_FAILED")
     if (sourceSnapshot(sourcePaths).digest !== before.digest || sourceSnapshot(clonePaths).digest !== clone.digest) fail("SOURCE_CHANGED")
     if (!readFileSync(join(cwd, "package.json")).equals(packageBytes) || !readFileSync(join(cwd, "bun.lock")).equals(lockBytes)) fail("ENV_INVALID")

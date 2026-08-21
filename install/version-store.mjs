@@ -33,6 +33,22 @@ export function verifyVersion(dataRoot, version, files, { dependencyDigest } = {
   } catch (error) { if (error.code === "CT_DEPENDENCY_BINDING_INVALID" || error.message === "CT_VERSION_IMMUTABLE") throw error; immutable() }
 }
 
+export function readVersionDependencyEnvironment(dataRoot, version) {
+  if (!validVersion.test(version)) throw new Error("CT_VERSION_INVALID")
+  const versionRoot = join(dataRoot, "versions", version), record = join(versionRoot, ".dependency-environment.json"), link = join(versionRoot, "node_modules")
+  try {
+    const root = lstatSync(versionRoot); if (!root.isDirectory() || root.isSymbolicLink()) throw new Error("CT_DEPENDENCY_BINDING_INVALID")
+    const hasRecord = existsSync(record), hasLink = existsSync(link)
+    if (!hasRecord && !hasLink) {
+      if (existsSync(join(versionRoot, "install/dependency-environment.mjs"))) throw new Error("CT_DEPENDENCY_BINDING_INVALID")
+      return { legacy: true, dependencyDigest: null }
+    }
+    if (!hasRecord || !hasLink) throw new Error("CT_DEPENDENCY_BINDING_INVALID")
+    const metadata = JSON.parse(readFileSync(record, "utf8")), digest = metadata?.digest
+    return { legacy: false, ...verifyDependencyEnvironmentBinding({ dataRoot, versionRoot, digest }) }
+  } catch (error) { if (error.code === "CT_DEPENDENCY_BINDING_INVALID" || error.message === "CT_DEPENDENCY_BINDING_INVALID") throw error; throw new Error("CT_DEPENDENCY_BINDING_INVALID") }
+}
+
 export function storeVersion(dataRoot, version, files, options = {}) {
   if (!validVersion.test(version)) throw new Error("CT_VERSION_INVALID")
   validateFiles(files)

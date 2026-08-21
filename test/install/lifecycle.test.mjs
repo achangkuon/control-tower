@@ -42,6 +42,12 @@ const fixture = () => {
   mkdirSync(join(root, "repo/.git/control-tower"), { recursive: true }); writeFileSync(join(root, "repo/.git/control-tower/history"), "keep\n")
   return { root, paths }
 }
+const dependencyInput = (root, version = "1.0.0") => {
+  const cache = join(root, `cache-${version}`), packageBytes = Buffer.from(JSON.stringify({ name: "fixture", dependencies: { dep: version } })), lockBytes = Buffer.from(JSON.stringify({ lockfileVersion: 1, packages: { dep: [`dep@${version}`, "", {}] } })); mkdirSync(join(cache, "dep"), { recursive: true }); writeFileSync(join(cache, "dep/package.json"), JSON.stringify({ name: "dep", version })); writeFileSync(join(cache, "dep/index.js"), "export default 1\n")
+  let runs = 0
+  return { input: { packageBytes, lockBytes, bun: { version: "1.3.14", bytes: Buffer.from("bun"), path: "/fixture/bun" }, host: { os: "linux", cpu: "x64" } }, adapters: { discover: async () => [join(cache, "dep")], run: async ({ cwd }) => { runs++; const target = join(cwd, "node_modules/dep"); mkdirSync(target, { recursive: true }); writeFileSync(join(target, "package.json"), JSON.stringify({ name: "dep", version })); writeFileSync(join(target, "index.js"), "export default 1\n"); return { exitCode: 0 } } }, runs: () => runs, digest: createHash("sha256").update(lockBytes).digest("hex") }
+}
+const runtimeSource = (root, name = "release") => { const source = join(root, name); for (const file of RUNTIME_PAYLOAD_FILES) { const target = join(source, file); mkdirSync(dirname(target), { recursive: true }); copyFileSync(join(repoRoot, file), target) }; writeFileSync(join(source, "package.json"), `${JSON.stringify({ name: "fixture", private: true })}\n`); writeFileSync(join(source, "bun.lock"), `${JSON.stringify({ lockfileVersion: 1, packages: {} })}\n`); return source }
 const hostArgs = ({ herdrBin, opencodeBin }) => ["--herdr-bin", herdrBin, "--opencode-bin", opencodeBin]
 const testEnv = (root, extra = {}) => ({
   PATH: process.env.PATH,
@@ -108,6 +114,33 @@ describe("lifecycle operations", () => {
     expect(lifecycle({ ...paths, action: "diagnose" })).toMatchObject({ healthy: true, active: "1.0.0" })
   })
 
+  test("dependency activation reuses one environment and pointer failure leaves no published binding", async () => {
+    const { root, paths } = fixture(), dependency = dependencyInput(root), files = { "install/dependency-environment.mjs": "owner", "runtime.mjs": "one" }
+    await lifecycle({ ...paths, action: "install", version: "1.0.0", files, dependencyEnvironment: dependency.input, dependencyEnvironmentAdapters: dependency.adapters })
+    await lifecycle({ ...paths, action: "upgrade", version: "1.1.0", files: { ...files, "runtime.mjs": "two" }, dependencyEnvironment: dependency.input, dependencyEnvironmentAdapters: { discover: async () => { throw new Error("cache reused") }, run: async () => { throw new Error("network reused") } } })
+    expect(dependency.runs()).toBe(1)
+    expect(JSON.parse(readFileSync(join(paths.dataRoot, "versions/1.1.0/.dependency-environment.json"), "utf8"))).toEqual({ schema: 1, digest: dependency.digest })
+    const extra = join(paths.dataRoot, `dependency-environments/${dependency.digest}/node_modules/extra`); writeFileSync(extra, "corrupt")
+    expect(() => lifecycle({ ...paths, action: "diagnose" })).toThrow("CT_DEPENDENCY_BINDING_INVALID"); rmSync(extra)
+    expect(() => lifecycle({ ...paths, action: "diagnose" })).not.toThrow()
+    const failed = dependencyInput(root, "9.0.0"); await expect(lifecycle({ ...paths, action: "upgrade", version: "failed", files, dependencyEnvironment: failed.input, dependencyEnvironmentAdapters: { ...failed.adapters, run: async () => ({ exitCode: 1 }) } })).rejects.toThrow("CT_DEPENDENCY_MATERIALIZATION_FAILED")
+    expect(JSON.parse(readFileSync(join(paths.dataRoot, "active.json"), "utf8")).version).toBe("1.1.0"); expect(existsSync(join(paths.dataRoot, "versions/failed"))).toBe(false)
+    expect(() => lifecycle({ ...paths, action: "upgrade", version: "1.2.0", files, dependencyEnvironment: dependency.input, dependencyEnvironmentAdapters: dependency.adapters, pointerOptions: { failAt: "rename" } })).toThrow("CT_POINTER_RENAME_FAILED")
+    expect(JSON.parse(readFileSync(join(paths.dataRoot, "active.json"), "utf8")).version).toBe("1.1.0")
+    expect(existsSync(join(paths.dataRoot, "versions/1.2.0"))).toBe(false)
+  })
+
+  test("rollback validates and restores the prior code and dependency digest together", async () => {
+    const { root, paths } = fixture(), first = dependencyInput(root, "1.0.0"), second = dependencyInput(root, "2.0.0"), files = (value) => ({ "install/dependency-environment.mjs": "owner", "runtime.mjs": value })
+    await lifecycle({ ...paths, action: "install", version: "1.0.0", files: files("one"), dependencyEnvironment: first.input, dependencyEnvironmentAdapters: first.adapters })
+    await lifecycle({ ...paths, action: "upgrade", version: "2.0.0", files: files("two"), dependencyEnvironment: second.input, dependencyEnvironmentAdapters: second.adapters })
+    expect(await lifecycle({ ...paths, action: "rollback" })).toMatchObject({ active: "1.0.0", dependencyDigest: first.digest })
+    expect(readFileSync(join(paths.dataRoot, "versions/1.0.0/runtime.mjs"), "utf8")).toBe("one")
+    await lifecycle({ ...paths, action: "rollback" }); rmSync(join(paths.dataRoot, "versions/1.0.0/.dependency-environment.json"))
+    expect(() => lifecycle({ ...paths, action: "rollback" })).toThrow("CT_DEPENDENCY_BINDING_INVALID")
+    expect(JSON.parse(readFileSync(join(paths.dataRoot, "active.json"), "utf8")).version).toBe("2.0.0")
+  })
+
   test("uninstall is idempotent and preserves configuration, versions, audit, and repository history", () => {
     const { root, paths } = fixture()
     lifecycle({ ...paths, action: "install", version: "1.0.0", files: { "runtime.mjs": "one" } })
@@ -143,11 +176,11 @@ test("attended installs require explicit Herdr and OpenCode executable identitie
   expect(existsSync(join(env.XDG_DATA_HOME, "control-tower"))).toBe(false)
 })
 
-test("installer accepts pinned Herdr 0.8.0 without the unavailable root-observation command", () => {
+test("installer accepts pinned Herdr 0.8.0 without the unavailable root-observation command", async () => {
   const { root, paths } = fixture(), env = testEnv(root)
   writeFileSync(paths.herdrBin, "#!/bin/sh\nif [ \"$1\" = \"--version\" ]; then printf 'herdr 0.8.0\\n'; else exit 64; fi\n", { mode: 0o700 })
 
-  expect(runCli(["install", "1.0.0", repoRoot, ...hostArgs(paths)], env)).toMatchObject({ active: "1.0.0" })
+  expect(await runCli(["install", "1.0.0", runtimeSource(root), ...hostArgs(paths)], env)).toMatchObject({ active: "1.0.0" })
 })
 
 test("installer rejects Herdr without the required 0.8.0 compatibility version before storing a runtime", () => {
@@ -200,9 +233,9 @@ test("attended CLI rejects unsafe or mismatched executable inputs before install
   expect(() => runCli(["install", "1.0.0", repoRoot, "--herdr-bin", item.paths.opencodeBin, "--opencode-bin", item.paths.opencodeBin], env)).toThrow("CT_HOST_RUNTIME_INVALID")
 })
 
-  test("installs an immutable owner-protected versioned host-runtime record", () => {
+  test("installs an immutable owner-protected versioned host-runtime record", async () => {
   const item = fixture(), env = testEnv(item.root)
-  expect(runCli(["install", "1.0.0", repoRoot, ...hostArgs(item.paths)], env)).toMatchObject({ active: "1.0.0" })
+  expect(await runCli(["install", "1.0.0", runtimeSource(item.root), ...hostArgs(item.paths)], env)).toMatchObject({ active: "1.0.0" })
   const record = join(env.XDG_DATA_HOME, "control-tower/versions/1.0.0/host-runtime.json"), stored = JSON.parse(readFileSync(record, "utf8"))
   expect(stored).toMatchObject({ schema: "control-tower.host-runtime/v1", runtimeVersion: "1.0.0", herdr: { path: item.paths.herdrBin }, opencode: { path: item.paths.opencodeBin }, herdr_runtime: { schema: "control-tower.herdr-runtime/v1", version: "0.8.0" } })
   expect(stored.herdr_contract).toBeUndefined()
@@ -258,14 +291,15 @@ test("conflicting reentrant installs preserve the winner and active pointer", ()
   expect(readHostRuntimeIdentity(paths.dataRoot, "1.0.0").herdr.path).toBe(alternateHerdr)
 })
 
-test("install accepts a checkout source and stores exactly the runtime payload", () => {
-  const { root, paths } = fixture()
+test("install accepts a checkout source and stores exactly the runtime payload", async () => {
+  const { root, paths } = fixture(), source = runtimeSource(root)
+  execFileSync("git", ["init", "-q", source])
   const env = testEnv(root)
 
-  expect(runCli(["install", "checkout-v1", repoRoot, ...hostArgs(paths)], env)).toMatchObject({ active: "checkout-v1", stored: true })
+  expect(await runCli(["install", "checkout-v1", source, ...hostArgs(paths)], env)).toMatchObject({ active: "checkout-v1", stored: true })
   const storedRoot = join(env.XDG_DATA_HOME, "control-tower/versions/checkout-v1")
   expect(RUNTIME_PAYLOAD_FILES.map((path) => readFileSync(join(storedRoot, path)))).toEqual(RUNTIME_PAYLOAD_FILES.map((path) => readFileSync(join(repoRoot, path))))
-  expect(readdirSync(storedRoot).sort()).toEqual([".manifest", "bin", "core.mjs", "host-runtime.json", "hosts", "install", "jornada", "main-store"])
+  expect(readdirSync(storedRoot).sort()).toEqual([".dependency-environment.json", ".manifest", "bin", "core.mjs", "host-runtime.json", "hosts", "install", "jornada", "main-store", "node_modules"])
 })
 
 test("install keeps strict payload validation for a staging source with an extra member", () => {
@@ -297,23 +331,23 @@ test("install keeps strict payload validation for a staging source with a synthe
   expect(existsSync(join(env.XDG_DATA_HOME, "control-tower"))).toBe(false)
 })
 
-test("install creates an optional PATH shim pointing into the active version", () => {
+test("install creates an optional PATH shim pointing into the active version", async () => {
   const { root, paths } = fixture(), bin = join(root, "bin")
   const env = testEnv(root, { TORRE_BIN_DIR: bin })
 
-  expect(runCli(["install", "shim-v1", repoRoot, ...hostArgs(paths), "--shim"], env)).toMatchObject({ active: "shim-v1" })
+  expect(await runCli(["install", "shim-v1", runtimeSource(root), ...hostArgs(paths), "--shim"], env)).toMatchObject({ active: "shim-v1" })
   const shim = join(bin, "torre")
   expect(lstatSync(shim).isSymbolicLink()).toBe(true)
   expect(realpathSync(shim)).toBe(join(env.XDG_DATA_HOME, "control-tower/versions/shim-v1/bin/torre"))
 })
 
-test("install backs up a pre-existing PATH shim target before replacement", () => {
+test("install backs up a pre-existing PATH shim target before replacement", async () => {
   const { root, paths } = fixture(), bin = join(root, "bin"), shim = join(bin, "torre")
   mkdirSync(bin, { recursive: true })
   writeFileSync(shim, "legacy-torre\n")
   const env = testEnv(root, { TORRE_BIN_DIR: bin })
 
-  const result = runCli(["install", "backup-v1", repoRoot, ...hostArgs(paths), "--shim"], env)
+  const result = await runCli(["install", "backup-v1", runtimeSource(root), ...hostArgs(paths), "--shim"], env)
   expect(result.shim.backup).toBe(`${shim}.legacy-backup-v1`)
   expect(readFileSync(result.shim.backup, "utf8")).toBe("legacy-torre\n")
   rmSync(shim)
@@ -321,13 +355,13 @@ test("install backs up a pre-existing PATH shim target before replacement", () =
   expect(readFileSync(shim, "utf8")).toBe("legacy-torre\n")
 })
 
-test("install does not write a PATH shim without the explicit option", () => {
+test("install does not write a PATH shim without the explicit option", async () => {
   const { root, paths } = fixture(), bin = join(root, "bin")
   mkdirSync(bin, { recursive: true })
   const before = snapshotPath(bin)
   const env = testEnv(root, { TORRE_BIN_DIR: bin })
 
-  expect(runCli(["install", "no-shim-v1", repoRoot, ...hostArgs(paths)], env)).toMatchObject({ active: "no-shim-v1" })
+  expect(await runCli(["install", "no-shim-v1", runtimeSource(root), ...hostArgs(paths)], env)).toMatchObject({ active: "no-shim-v1" })
   expect(snapshotPath(bin)).toEqual(before)
 })
 
@@ -466,6 +500,7 @@ test("installer and publisher use the same immutable lifecycle", () => {
   for (const file of RUNTIME_PAYLOAD_FILES) {
     mkdirSync(dirname(join(source, file)), { recursive: true })
     writeFileSync(join(source, file), `release:${file}\n`)
+    if (file === RUNTIME_PAYLOAD_FILES.at(-1)) { writeFileSync(join(source, "package.json"), `${JSON.stringify({ name: "fixture", private: true })}\n`); writeFileSync(join(source, "bun.lock"), `${JSON.stringify({ lockfileVersion: 1, packages: {} })}\n`) }
   }
   const env = testEnv(root, { XDG_DATA_HOME: join(root, "data"), XDG_CONFIG_HOME: join(root, "config"), XDG_STATE_HOME: join(root, "state") })
   const installed = execFileSync(join(repoRoot, "install.sh"), ["install", "2.0.0", source, ...hostArgs(paths)], { env, encoding: "utf8" })
@@ -481,6 +516,7 @@ test("stored torre diagnoses and installs autonomously from an isolated unrelate
   const cwd = join(root, "unrelated-cwd"), home = join(root, "home"), config = join(root, "xdg-config")
   const state = join(root, "xdg-state"), cache = join(root, "xdg-cache"), temporary = join(root, "tmp")
   for (const directory of [release, cwd, home, config, state, cache, temporary]) mkdirSync(directory, { recursive: true })
+  writeFileSync(join(release, "package.json"), `${JSON.stringify({ name: "fixture", private: true })}\n`); writeFileSync(join(release, "bun.lock"), `${JSON.stringify({ lockfileVersion: 1, packages: {} })}\n`)
   for (const file of RUNTIME_PAYLOAD_FILES) {
     const destination = join(release, file)
     mkdirSync(join(destination, ".."), { recursive: true })
@@ -509,11 +545,12 @@ test("stored torre diagnoses and installs autonomously from an isolated unrelate
   expect({ status: installed.status, stderr: installed.stderr }).toEqual({ status: 0, stderr: "" })
   expect(JSON.parse(installed.stdout)).toMatchObject({ operation: "install", active: "10.0.0", changed: true, stored: true })
   expect(JSON.parse(readFileSync(join(publication, "active.json"), "utf8"))).toEqual({ version: "10.0.0", previous: null })
-  expect(readdirSync(join(publication, "versions/10.0.0")).sort()).toEqual([".manifest", "bin", "core.mjs", "host-runtime.json", "hosts", "install", "jornada", "main-store"])
+  expect(readdirSync(join(publication, "versions/10.0.0")).sort()).toEqual([".dependency-environment.json", ".manifest", "bin", "core.mjs", "host-runtime.json", "hosts", "install", "jornada", "main-store", "node_modules"])
 
   const files = Object.fromEntries(RUNTIME_PAYLOAD_FILES.map((file) => [file, readFileSync(join(release, file))]))
-  const expectedManifest = createHash("sha256").update(JSON.stringify(Object.entries(files).sort(([left], [right]) => left.localeCompare(right))
-    .map(([path, contents]) => [path, Buffer.from(contents).toString("base64")]))).digest("hex")
+  const entries = Object.entries(files).sort(([left], [right]) => left.localeCompare(right)).map(([path, contents]) => [path, Buffer.from(contents).toString("base64")])
+  entries.push([".dependency-environment", createHash("sha256").update(readFileSync(join(release, "bun.lock"))).digest("hex")])
+  const expectedManifest = createHash("sha256").update(JSON.stringify(entries)).digest("hex")
   expect(readFileSync(join(publication, "versions/10.0.0/.manifest"), "utf8")).toBe(`${expectedManifest}\n`)
   rmSync(root, { recursive: true, force: true })
   roots.splice(roots.indexOf(root), 1)

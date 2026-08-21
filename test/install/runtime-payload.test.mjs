@@ -76,6 +76,11 @@ describe("runtime payload closure", () => {
     expect(() => readRuntimePayload(root)).toThrow("CT_RUNTIME_PAYLOAD_")
   })
 
+  test("accepts canonical dependency inputs without packaging them as runtime members", () => {
+    const root = fixture(); writeFileSync(join(root, "package.json"), "{}\n"); writeFileSync(join(root, "bun.lock"), "lock bytes\n")
+    expect(Object.keys(readRuntimePayload(root))).toEqual(RUNTIME_PAYLOAD_FILES)
+  })
+
   test("rejects extra files in the source closure", () => {
     const root = fixture()
     writeFileSync(join(root, ".manifest"), "forbidden")

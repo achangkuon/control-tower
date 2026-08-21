@@ -5,7 +5,7 @@ import { tmpdir } from "node:os"
 import { join, relative } from "node:path"
 
 import { readActivePointer, replaceActivePointer, rollbackActivePointer } from "../../install/active-pointer.mjs"
-import { denyV2Only, storeVersion, verifyVersion } from "../../install/version-store.mjs"
+import { denyV2Only, readVersionDependencyEnvironment, storeVersion, verifyVersion } from "../../install/version-store.mjs"
 
 const roots = [], sha = (bytes) => createHash("sha256").update(bytes).digest("hex"), canonical = (value) => `${JSON.stringify(value)}\n`
 const fixture = () => { const root = mkdtempSync(join(tmpdir(), "ct-version-")); roots.push(root); return root }
@@ -83,6 +83,13 @@ describe("immutable version store", () => {
       (version, env) => { rmSync(join(env.target, "node_modules"), { recursive: true }); symlinkSync("elsewhere", join(env.target, "node_modules")) },
     ]
     for (const mutate of mutations) { const root = fixture(), env = environment(root); storeVersion(root, "1.0.0", { "runtime.mjs": "one" }, binding(env.digest)); mutate(join(root, "versions/1.0.0"), env); expect(() => verifyVersion(root, "1.0.0", { "runtime.mjs": "one" }, binding(env.digest))).toThrow("CT_DEPENDENCY_BINDING_INVALID") }
+  })
+
+  test("classifies only owner-free versions as legacy when dependency binding is absent", () => {
+    const root = fixture(), env = environment(root)
+    storeVersion(root, "legacy", { "runtime.mjs": "old" }); expect(readVersionDependencyEnvironment(root, "legacy")).toEqual({ legacy: true, dependencyDigest: null })
+    storeVersion(root, "bound", { "install/dependency-environment.mjs": "owner" }, binding(env.digest)); rmSync(join(root, "versions/bound/.dependency-environment.json")); rmSync(join(root, "versions/bound/node_modules"))
+    expect(() => readVersionDependencyEnvironment(root, "bound")).toThrow("CT_DEPENDENCY_BINDING_INVALID")
   })
 
   test("rejects reserved binding members and an environment-root symlink", () => {

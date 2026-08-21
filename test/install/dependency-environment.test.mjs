@@ -4,7 +4,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { createHash } from "node:crypto"
 import { createServer } from "node:net"
-import { materializeDependencyEnvironment } from "../../install/dependency-environment.mjs"
+import { dependencyEnvironmentRetention, materializeDependencyEnvironment } from "../../install/dependency-environment.mjs"
 
 const roots = [], temp = () => { const path = mkdtempSync(join(tmpdir(), "ct-deps-")); roots.push(path); return path }
 const json = (value) => Buffer.from(JSON.stringify(value)), sha = (value) => createHash("sha256").update(value).digest("hex")
@@ -101,5 +101,26 @@ describe("dependency environment owner", () => {
     const reused = await materializeDependencyEnvironment(f.input, { ...f.adapters, discover: async () => { throw new Error("copied twice") }, run: async () => { throw new Error("ran twice") } }); expect(reused.created).toBe(false); expect(f.calls()).toBe(2)
     chmodSync(join(reused.path, "metadata.json"), 0o600); const changed = { ...reused.metadata, sources: [{ ...reused.metadata.sources[0], digest: "0".repeat(64) }] }; writeFileSync(join(reused.path, "metadata.json"), `${JSON.stringify(changed)}\n`)
     expect(await code(materializeDependencyEnvironment(f.input, f.adapters))).toBe("CT_DEPENDENCY_ENV_IMMUTABLE")
+  })
+
+  test("retention scans every real version binding and never selects a referenced environment", async () => {
+    const left = setup(), right = setup({ lockBytes: lock({ a: ["a@2.0.0", "", {}] }), entries: [] })
+    right.input.dataRoot = left.input.dataRoot; right.adapters.discover = async () => [source(right.cache, "a", "2.0.0")]; right.adapters.run = async ({ cwd }) => { const path = join(cwd, "node_modules/a"); mkdirSync(path, { recursive: true }); writeFileSync(join(path, "package.json"), JSON.stringify({ name: "a", version: "2.0.0" })); return { exitCode: 0 } }
+    const first = await materializeDependencyEnvironment(left.input, left.adapters), second = await materializeDependencyEnvironment(right.input, right.adapters)
+    const spare = setup({ lockBytes: lock({ a: ["a@3.0.0", "", {}] }), entries: [] }); spare.input.dataRoot = left.input.dataRoot; spare.adapters.discover = async () => [source(spare.cache, "a", "3.0.0")]; spare.adapters.run = async ({ cwd }) => { const path = join(cwd, "node_modules/a"); mkdirSync(path, { recursive: true }); writeFileSync(join(path, "package.json"), JSON.stringify({ name: "a", version: "3.0.0" })); return { exitCode: 0 } }; const unused = (await materializeDependencyEnvironment(spare.input, spare.adapters)).digest
+    for (const [version, digest] of [["one", first.digest], ["two", first.digest], ["three", second.digest]]) { const root = join(left.input.dataRoot, "versions", version); mkdirSync(root, { recursive: true }); writeFileSync(join(root, ".dependency-environment.json"), `${JSON.stringify({ schema: 1, digest })}\n`, { mode: 0o400 }); symlinkSync(`../../dependency-environments/${digest}/node_modules`, join(root, "node_modules")) }
+    const temporary = `.tmp-${unused}-00000000-0000-4000-8000-000000000000`; mkdirSync(join(left.input.dataRoot, "dependency-environments", temporary))
+    expect(dependencyEnvironmentRetention(left.input.dataRoot)).toEqual({ referenced: [first.digest, second.digest].sort(), candidates: [unused], temporaries: [temporary] })
+    symlinkSync(join(left.input.dataRoot, "versions/one"), join(left.input.dataRoot, "versions/linked"))
+    expect(() => dependencyEnvironmentRetention(left.input.dataRoot)).toThrow("CT_DEPENDENCY_RETENTION_INVALID")
+  })
+
+  test("retention fails closed for bound-capable versions with missing binding artifacts", () => {
+    for (const dangling of [false, true]) {
+      const f = setup(), version = join(f.input.dataRoot, "versions", dangling ? "dangling" : "missing")
+      mkdirSync(join(version, "install"), { recursive: true }); writeFileSync(join(version, "install/dependency-environment.mjs"), "owner\n")
+      if (dangling) symlinkSync("../../dependency-environments/missing/node_modules", join(version, "node_modules"))
+      expect(() => dependencyEnvironmentRetention(f.input.dataRoot)).toThrow("CT_DEPENDENCY_RETENTION_INVALID")
+    }
   })
 })

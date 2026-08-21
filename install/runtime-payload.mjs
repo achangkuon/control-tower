@@ -90,7 +90,7 @@ export function readRuntimePayload(root, { strict = true } = {}) {
 
   if (strict) {
     const members = scanClosure(resolved)
-    const extra = members.filter((path) => !expected.has(path))
+    const extra = members.filter((path) => !expected.has(path) && !["package.json", "bun.lock"].includes(path))
     if (extra.length) fail("CT_RUNTIME_PAYLOAD_INVALID", `unexpected ${extra.join(",")}`)
   }
 

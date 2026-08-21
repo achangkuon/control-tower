@@ -7,7 +7,8 @@ import { fileURLToPath } from "node:url"
 
 import { clearActivePointer, readActivePointer, replaceActivePointer, rollbackActivePointer } from "./active-pointer.mjs"
 import { isRuntimeCheckout, readRuntimePayload, RUNTIME_PAYLOAD_FILES } from "./runtime-payload.mjs"
-import { storeVersion } from "./version-store.mjs"
+import { readVersionDependencyEnvironment, storeVersion } from "./version-store.mjs"
+import { dependencyEnvironmentRetention, materializeDependencyEnvironment, resolveDependencyEnvironment } from "./dependency-environment.mjs"
 
 const audit = (stateRoot, record) => {
   const directory = join(stateRoot, "audit"), path = join(directory, "lifecycle.ndjson")
@@ -78,6 +79,7 @@ export function validateActiveHostRuntime(dataRoot, version, runtimeRoot) {
   let active
   try { active = JSON.parse(readFileSync(pointerPath, "utf8")) } catch { throw new Error("CT_HOST_RUNTIME_ACTIVE_MISMATCH") }
   if (!active || active.version !== version || runtimeRoot !== join(dataRoot, "versions", version)) throw new Error("CT_HOST_RUNTIME_ACTIVE_MISMATCH")
+  readVersionDependencyEnvironment(dataRoot, version)
   const record = readHostRuntimeIdentity(dataRoot, version)
   const validate = (name) => {
     const expected = record[name], actual = secureExecutable(expected.path, name)
@@ -280,12 +282,13 @@ const installPathShim = (dataRoot, version, shimPath) => {
   return { path: shimPath, backup }
 }
 
-export function lifecycle({ action, version, files, dataRoot, configRoot, stateRoot, legacyConfigPath, failValidation = false, pointerOptions, expectedMembers, shimPath, herdrBin, opencodeBin, hostRuntimeOptions }) {
+export function lifecycle({ action, version, files, dataRoot, configRoot, stateRoot, legacyConfigPath, failValidation = false, pointerOptions, expectedMembers, shimPath, herdrBin, opencodeBin, hostRuntimeOptions, dependencyEnvironment, dependencyEnvironmentAdapters }) {
   const before = readActivePointer(dataRoot)
   if (action === "diagnose") {
     const installed = before ? join(dataRoot, "versions", before.version) : null
     const manifested = Boolean(installed && existsSync(join(installed, ".manifest")))
     const missing = manifested && expectedMembers ? expectedMembers.filter((member) => !existsSync(join(installed, member))) : []
+    if (manifested) readVersionDependencyEnvironment(dataRoot, before.version)
     return { operation: action, healthy: manifested && missing.length === 0, active: before?.version ?? null, missing }
   }
   if (action === "install" || action === "upgrade") {
@@ -295,34 +298,32 @@ export function lifecycle({ action, version, files, dataRoot, configRoot, stateR
       audit(stateRoot, { operation: action, version, outcome: "validation-failed", active: before?.version ?? null })
       throw new Error("CT_UPGRADE_VALIDATION_FAILED")
     }
-    const stored = storeVersion(dataRoot, version, files)
-    let hostRuntime
-    try { hostRuntime = storeHostRuntimeIdentity(stored.path, identity, hostRuntimeOptions) }
-    catch (error) {
-      if (stored.created && !existsSync(hostRuntimeRecord(stored.path))) rmSync(stored.path, { recursive: true, force: true })
-      throw error
+    const activate = (environment) => {
+      const options = environment ? { dependencyDigest: environment.digest } : {}, stored = storeVersion(dataRoot, version, files, options)
+      let hostRuntime
+      try { hostRuntime = storeHostRuntimeIdentity(stored.path, identity, hostRuntimeOptions) }
+      catch (error) { if (stored.created && !existsSync(hostRuntimeRecord(stored.path))) rmSync(stored.path, { recursive: true, force: true }); throw error }
+      let journal
+      try { journal = persistLegacyInstaller(stateRoot, legacy) }
+      catch (error) { if (stored.created) rmSync(join(dataRoot, "versions", version), { recursive: true, force: true }); else if (hostRuntime.created) rmSync(hostRuntime.path, { force: true }); throw error }
+      let pointer
+      try { pointer = replaceActivePointer(dataRoot, version, pointerOptions) }
+      catch (error) {
+        if (stored.created) rmSync(join(dataRoot, "versions", version), { recursive: true, force: true }); else if (hostRuntime.created) rmSync(hostRuntime.path, { force: true })
+        if (journal?.created) rmSync(journal.paths.directory, { recursive: true, force: true })
+        audit(stateRoot, { operation: action, version, outcome: "pointer-failed", active: before?.version ?? null, code: error.message }); throw error
+      }
+      const changed = before?.version !== pointer.version, shim = shimPath ? installPathShim(dataRoot, pointer.version, shimPath) : undefined
+      if (!changed && !stored.created) return { operation: action, active: pointer.version, changed, stored: stored.created, ...(environment ? { dependencyDigest: environment.digest } : {}), ...(shim ? { shim } : {}) }
+      audit(stateRoot, { operation: action, version, outcome: "active", previous: pointer.previous, changed })
+      return { operation: action, active: pointer.version, changed, stored: stored.created, ...(environment ? { dependencyDigest: environment.digest } : {}), ...(shim ? { shim } : {}) }
     }
-    let journal
-    try { journal = persistLegacyInstaller(stateRoot, legacy) }
-    catch (error) {
-      if (stored.created) rmSync(join(dataRoot, "versions", version), { recursive: true, force: true })
-      else if (hostRuntime.created) rmSync(hostRuntime.path, { force: true })
-      throw error
+    if (!dependencyEnvironment) {
+      if (Object.hasOwn(files ?? {}, "install/dependency-environment.mjs")) throw new Error("CT_DEPENDENCY_INPUT_INVALID")
+      return activate(null)
     }
-    let pointer
-    try { pointer = replaceActivePointer(dataRoot, version, pointerOptions) }
-    catch (error) {
-      if (stored.created) rmSync(join(dataRoot, "versions", version), { recursive: true, force: true })
-      else if (hostRuntime.created) rmSync(hostRuntime.path, { force: true })
-      if (journal?.created) rmSync(journal.paths.directory, { recursive: true, force: true })
-      audit(stateRoot, { operation: action, version, outcome: "pointer-failed", active: before?.version ?? null, code: error.message })
-      throw error
-    }
-    const changed = before?.version !== pointer.version
-    const shim = shimPath ? installPathShim(dataRoot, pointer.version, shimPath) : undefined
-    if (!changed && !stored.created) return { operation: action, active: pointer.version, changed, stored: stored.created, ...(shim ? { shim } : {}) }
-    audit(stateRoot, { operation: action, version, outcome: "active", previous: pointer.previous, changed })
-    return { operation: action, active: pointer.version, changed, stored: stored.created, ...(shim ? { shim } : {}) }
+    const input = { ...dependencyEnvironment, dataRoot }, existing = resolveDependencyEnvironment(input)
+    return existing ? activate(existing) : materializeDependencyEnvironment(input, dependencyEnvironmentAdapters).then(activate)
   }
   if (action === "rollback") {
     const current = readActivePointer(dataRoot)
@@ -334,17 +335,25 @@ export function lifecycle({ action, version, files, dataRoot, configRoot, stateR
         return { operation: action, active: null, changed, restored: restored.checkoutPath }
       }
     }
+    const binding = readVersionDependencyEnvironment(dataRoot, current.previous)
     const pointer = rollbackActivePointer(dataRoot, pointerOptions)
     audit(stateRoot, { operation: action, version: pointer.version, outcome: "active", previous: pointer.previous })
-    return { operation: action, active: pointer.version, changed: true }
+    return { operation: action, active: pointer.version, changed: true, ...(binding.legacy ? {} : { dependencyDigest: binding.dependencyDigest }) }
   }
   if (action === "uninstall") {
-    const changed = existsSync(join(dataRoot, "active.json"))
+    const retention = dependencyEnvironmentRetention(dataRoot), changed = existsSync(join(dataRoot, "active.json"))
     rmSync(join(dataRoot, "active.json"), { force: true })
     audit(stateRoot, { operation: action, outcome: "preserved", changed })
-    return { operation: action, active: null, changed, preserved: [configRoot, join(dataRoot, "versions"), stateRoot] }
+    return { operation: action, active: null, changed, preserved: [configRoot, join(dataRoot, "versions"), stateRoot], retention }
   }
   throw new Error("CT_LIFECYCLE_ACTION_INVALID")
+}
+
+const readDependencyEnvironmentInput = (source) => {
+  const read = (name) => { const path = join(source, name), info = lstatSync(path); if (!info.isFile() || info.isSymbolicLink()) throw new Error("CT_DEPENDENCY_INPUT_INVALID"); return readFileSync(path) }
+  const bunPath = realpathSync(process.execPath), bunInfo = lstatSync(bunPath)
+  if (!bunInfo.isFile() || bunInfo.isSymbolicLink()) throw new Error("CT_DEPENDENCY_INPUT_INVALID")
+  return { packageBytes: read("package.json"), lockBytes: read("bun.lock"), bun: { version: Bun.version, bytes: readFileSync(bunPath), path: bunPath } }
 }
 
 export function runCli([action = "diagnose", version, source, ...options], env = process.env) {
@@ -366,10 +375,11 @@ export function runCli([action = "diagnose", version, source, ...options], env =
     throw new Error("CT_LIFECYCLE_OPTION_INVALID")
   }
   const files = source ? readRuntimePayload(source, { strict: !isRuntimeCheckout(source) }) : undefined
-  return lifecycle({ ...roots, action, version, files, expectedMembers: RUNTIME_PAYLOAD_FILES, shimPath, herdrBin, opencodeBin, legacyConfigPath: join(env.XDG_CONFIG_HOME ?? join(env.HOME, ".config"), "opencode/opencode.json"), failValidation: env.CT_FAIL_VALIDATION === "1" })
+  const dependencyEnvironment = source ? readDependencyEnvironmentInput(source) : undefined
+  return lifecycle({ ...roots, action, version, files, dependencyEnvironment, expectedMembers: RUNTIME_PAYLOAD_FILES, shimPath, herdrBin, opencodeBin, legacyConfigPath: join(env.XDG_CONFIG_HOME ?? join(env.HOME, ".config"), "opencode/opencode.json"), failValidation: env.CT_FAIL_VALIDATION === "1" })
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  try { console.log(JSON.stringify(runCli(process.argv.slice(2)))) }
+  try { console.log(JSON.stringify(await runCli(process.argv.slice(2)))) }
   catch (error) { console.error(error.message); process.exitCode = 1 }
 }
