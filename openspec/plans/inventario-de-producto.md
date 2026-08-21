@@ -167,3 +167,17 @@ El cerebro ya está: `console/validate.mjs` valida el comando contra el vocabula
 **Por qué existe.** Este proyecto registró dos veces en una semana que su documentación afirmó cosas falsas sobre el código, y las dos se detectaron por auditoría manual y no por una alarma. Un documento hay que acordarse de abrirlo; una señal en la suite aparece sola. Es el mismo criterio falsificable que el resto del registro, pero ejecutable.
 
 **Estado de la suite tras esta entrega:** 858 pass · 13 todo · 5 fail. Los cinco fallos pertenecen al candidato sin commitear de `S8.10` en el worktree `implementation-slot` —`CT_RUNTIME_PAYLOAD_INVALID: unexpected directory contracts`, tarea `T8.10.1.3`— y no los introdujo ninguna entrega de esta pasada.
+
+## 7. Actualización tras la auditoría de P4 y la decisión 61
+
+**El punto 1 de la decisión 60 queda superado.** Ya no falta «el verbo que no existe»: Main no necesita escribir la fila de un agente ajeno. `core.mjs:4445` `send` y `core.mjs:4464` `receive` son el canal operador→agente, ya se instalan, y conservan el invariante de escritor único. Main manda la directiva; el agente se la aplica a sí mismo.
+
+**Lo que resta construir es más chico que lo declarado en §5:**
+
+| | Estado |
+|---|---|
+| ~~1 · el verbo faltante~~ | **superado** — el canal ya existe |
+| 2 · el ejecutor | traduce un comando validado en una directiva `send` hacia el agente nombrado. **Sigue sin existir** |
+| 3 · la superficie | los verbos tipeables en `bin/torre`. **Sigue sin existir** |
+
+**Alcance fijado por la decisión 61.** `CV_PAUSE` promete «le pedí que pare», no «garantizo que paró» — alcanza porque el agente ya se autolimita bajo gentle-ai. No se agregan verbos de cierre ni muerte forzada. `hosts/stop-proof.mjs` conserva su consumidor original, la recuperación de `S4.4`, y no pasa a ser insumo de `CV_PAUSE`.
