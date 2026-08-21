@@ -5,28 +5,12 @@ import { copyFileSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirS
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
 
+import { RUNTIME_PAYLOAD_FILES } from "../../install/runtime-payload.mjs"
+
 const repoRoot = resolve(import.meta.dir, "../..")
 const entrypoint = join(repoRoot, "bin/torre")
 const pointerModule = join(repoRoot, "install/active-pointer.mjs")
-const payloadMembers = [
-  "bin/torre",
-  "core.mjs",
-  "hosts/herdr.mjs",
-  "hosts/launch-worker-cli.mjs",
-  "hosts/launch-worker.mjs",
-  "hosts/opencode-launcher.mjs",
-  "hosts/opencode-server.mjs",
-  "hosts/opencode-view.mjs",
-  "hosts/production-provider.mjs",
-  "hosts/root-binding.mjs",
-  "hosts/root-identity.mjs",
-  "install/active-pointer.mjs",
-  "install/lifecycle.mjs",
-  "install/runtime-payload.mjs",
-  "install/version-store.mjs",
-  "jornada/lifecycle.mjs",
-  "main-store/launch-consumer.mjs",
-]
+const payloadMembers = RUNTIME_PAYLOAD_FILES
 const roots = []
 
 const isolated = () => {
