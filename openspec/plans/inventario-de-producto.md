@@ -335,3 +335,20 @@ Agregar `mcp.mjs` y el plugin a las raíces pone los **bytes** en el almacén ve
 - [ ] `bun test` no introduce fallos nuevos; el diff no toca el `Prohibido`
 
 **Módulos y Tareas:** pendientes de enumerar, después de resolver la decisión que escala.
+
+### `T8.10.1.3` — hecha el 2026-08-21
+
+Los prefijos de directorio admitidos por `scanClosure` **se derivan ahora de los miembros exactos de `RUNTIME_PAYLOAD_FILES`**, incluyendo todo segmento ancestro, con el root excluido porque `relative` lo devuelve como cadena vacía. La lista escrita a mano —`bin`, `hosts`, `install`, `jornada`, `main-store`— desapareció: **no puede desincronizarse una lista que no existe.**
+
+`test/install` pasó de **5 fallos a 3**.
+
+**Los 3 que quedan son `T8.10.1.2`, una tarea distinta:** el payload lleva `contracts/schema-registry.mjs` pero **no lleva los `schemas/*.json` que ese módulo lee**, así que el runtime instalado falla con `ENOENT` sobre `project-registry-v1.schema.json`. El contrato de `S8.10` ya la describe: exportar `schemaAssetPaths` desde `schemaFiles` y sumar el registro como raíz JS, sin agregar un segundo asset manual — `RUNTIME_PAYLOAD_ASSETS` permanece exactamente `["bin/torre"]`.
+
+### Dónde quedó todo el 2026-08-21
+
+| Rama | Contenido | Suite |
+|---|---|---|
+| `master@3c2acab` | Toda la documentación de la sesión: decisiones 57–63, inventario, P9 reescrito, P11 nuevo, `S4.6`, auditorías | **verde** |
+| `origin/feat/s8.10-runtime-payload-model@a448af2` | El candidato de `S8.10` **más** `T8.10.1.3` | 860 pass · 13 todo · **3 fail** |
+
+**El candidato no se integró a `master` a propósito.** Master está verde y se conserva verde; el candidato queda subido y seguro en su rama, listo para que `T8.10.1.2` lo cierre en la próxima sesión.
