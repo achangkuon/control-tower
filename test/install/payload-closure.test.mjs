@@ -42,14 +42,18 @@ describe("author-time runtime payload closure", () => {
         'import "./z.mjs"',
         'import value from "node:path"',
         'export { child } from "./nested/child.mjs"',
-        'const ignored = import("./dynamic.mjs")',
+        'const loaded = import("./dynamic.mjs")',
+        'const ignored = import(target)',
+        'const packageImport = import("fixture-package")',
       ].join("\n"),
       "z.mjs": 'import "./nested/leaf.mjs"\n',
+      "dynamic.mjs": "export const dynamic = true\n",
       "nested/child.mjs": 'throw new Error("analyzed modules must not execute")\nexport const child = true\n',
       "nested/leaf.mjs": "export const leaf = true\n",
     })
 
     expect(computePayloadClosure(root, { roots: ["entry.mjs"] })).toEqual([
+      "dynamic.mjs",
       "entry.mjs",
       "nested/child.mjs",
       "nested/leaf.mjs",
@@ -78,6 +82,12 @@ describe("author-time runtime payload closure", () => {
     const root = fixture({ "entry.mjs": 'import "./missing.mjs"\n' })
     expect(() => computePayloadClosure(root, { roots: ["entry.mjs"] }))
       .toThrow("CT_PAYLOAD_IMPORT_UNRESOLVED: entry.mjs -> ./missing.mjs")
+  })
+
+  test("fails explicitly for an unresolved literal relative dynamic import", () => {
+    const root = fixture({ "entry.mjs": 'import("./missing-dynamic.mjs")\n' })
+    expect(() => computePayloadClosure(root, { roots: ["entry.mjs"] }))
+      .toThrow("CT_PAYLOAD_IMPORT_UNRESOLVED: entry.mjs -> ./missing-dynamic.mjs")
   })
 
   test("computes the repository closure from the declared roots without executing modules", () => {

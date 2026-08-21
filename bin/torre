@@ -18,22 +18,20 @@
 set -euo pipefail
 
 ENTRYPOINT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
-if [[ "${1:-}" == "launch-worker" ]]; then
-    # This command has no legacy compatibility path: its provider is packaged
-    # beside this executable and validates the installed runtime identity.
-    exec bun "$ENTRYPOINT_DIR/../hosts/launch-worker-cli.mjs" "${@:2}"
-fi
+LAUNCH_WORKER=false
+[[ "${1:-}" == "launch-worker" ]] && LAUNCH_WORKER=true
 
 ACTIVE_CORE=""
 ACTIVE_LIFECYCLE=""
+ACTIVE_LAUNCH_WORKER=""
 ACTIVE_POINTER="$ENTRYPOINT_DIR/../install/active-pointer.mjs"
-if [[ ( -z "${CONTROL_TOWER_CORE:-}" || -z "${CONTROL_TOWER_LIFECYCLE:-}" ) && -f "$ACTIVE_POINTER" ]]; then
+if [[ ( "$LAUNCH_WORKER" == true || -z "${CONTROL_TOWER_CORE:-}" || -z "${CONTROL_TOWER_LIFECYCLE:-}" ) && -f "$ACTIVE_POINTER" ]]; then
     DATA_ROOT=$(bun -e 'const t=await import(process.argv[1]); process.stdout.write(t.resolveDataRoot(process.env))' \
       "$ACTIVE_POINTER")
     if ! active_runtime=$(bun -e '
       const t = await import(process.argv[1])
       const runtime = t.resolveActiveRuntime(process.argv[2])
-      if (runtime) process.stdout.write(`${runtime.core}\n${runtime.lifecycle}`)
+      if (runtime) process.stdout.write(`${runtime.core}\n${runtime.lifecycle}\n${runtime.launchWorker}`)
     ' "$ACTIVE_POINTER" "$DATA_ROOT" 2>&1); then
         printf '%s\n' "$active_runtime" >&2
         exit 1
@@ -41,7 +39,13 @@ if [[ ( -z "${CONTROL_TOWER_CORE:-}" || -z "${CONTROL_TOWER_LIFECYCLE:-}" ) && -
     if [[ -n "$active_runtime" ]]; then
         ACTIVE_CORE="${active_runtime%%$'\n'*}"
         ACTIVE_LIFECYCLE="${active_runtime#*$'\n'}"
+        ACTIVE_LAUNCH_WORKER="${ACTIVE_LIFECYCLE#*$'\n'}"
+        ACTIVE_LIFECYCLE="${ACTIVE_LIFECYCLE%%$'\n'*}"
     fi
+fi
+if [[ "$LAUNCH_WORKER" == true ]]; then
+    [[ -n "$ACTIVE_LAUNCH_WORKER" ]] || { echo "CT_ACTIVE_RUNTIME_REQUIRED" >&2; exit 1; }
+    exec bun "$ACTIVE_LAUNCH_WORKER" "${@:2}"
 fi
 CORE="${CONTROL_TOWER_CORE:-${ACTIVE_CORE:-$HOME/.config/opencode/control-tower/core.mjs}}"
 LIFECYCLE="${CONTROL_TOWER_LIFECYCLE:-${ACTIVE_LIFECYCLE:-$ENTRYPOINT_DIR/../install/lifecycle.mjs}}"

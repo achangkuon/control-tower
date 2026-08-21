@@ -52,7 +52,7 @@ export function computePayloadClosure(repoRoot, { roots = RUNTIME_PAYLOAD_ROOTS 
       fail("CT_PAYLOAD_PARSE_FAILED", `${next.path}: ${error.message}`)
     }
     for (const entry of imports) {
-      if (entry.kind !== "import-statement" || !entry.path.startsWith(".")) continue
+      if (!["import-statement", "dynamic-import"].includes(entry.kind) || !entry.path.startsWith(".")) continue
       const importedPath = toPosix(relative(resolvedRoot, resolve(dirname(absolute), entry.path)))
       if (!visited.has(importedPath)) pending.push({ path: importedPath, importedBy: next.path, specifier: entry.path })
     }

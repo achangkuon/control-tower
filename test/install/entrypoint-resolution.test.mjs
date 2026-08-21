@@ -3,7 +3,7 @@ import { createHash } from "node:crypto"
 import { spawnSync } from "node:child_process"
 import { copyFileSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { join, resolve } from "node:path"
+import { join, relative, resolve } from "node:path"
 
 import { RUNTIME_PAYLOAD_FILES } from "../../install/runtime-payload.mjs"
 
@@ -12,6 +12,15 @@ const entrypoint = join(repoRoot, "bin/torre")
 const pointerModule = join(repoRoot, "install/active-pointer.mjs")
 const payloadMembers = RUNTIME_PAYLOAD_FILES
 const roots = []
+const canonical = (value) => `${JSON.stringify(value)}\n`
+const dependencyPolicy = { args: ["install", "--cache-dir=<private-cache>", "--registry=http://127.0.0.1:1", "--frozen-lockfile", "--linker=hoisted", "--backend=copyfile", "--ignore-scripts", "--no-save"], timeoutMs: 30_000, maxBuffer: 1024 * 1024, env: { HOME: "<private-home>", XDG_CACHE_HOME: "<private-home>/.cache", TMPDIR: "<private-home>/tmp", BUN_INSTALL_CACHE_DIR: "<private-cache>", BUN_CONFIG_REGISTRY: "http://127.0.0.1:1", HTTP_PROXY: "http://127.0.0.1:1", HTTPS_PROXY: "http://127.0.0.1:1", ALL_PROXY: "http://127.0.0.1:1", http_proxy: "http://127.0.0.1:1", https_proxy: "http://127.0.0.1:1", all_proxy: "http://127.0.0.1:1", NO_PROXY: "", no_proxy: "" } }
+const installDependencyBinding = (dataRoot, versionRoot) => {
+  const digest = "a".repeat(64), target = join(dataRoot, "dependency-environments", digest), modules = join(target, "node_modules")
+  mkdirSync(modules, { recursive: true }); const tree = createHash("sha256").update(`d\0\0${lstatSync(modules).mode & 0o777}\0`).digest("hex")
+  const metadata = { schema: 1, lockDigest: digest, packageDigest: "b".repeat(64), bun: { version: "1.3.14", digest: "c".repeat(64) }, host: { os: process.platform, cpu: process.arch }, commandPolicy: dependencyPolicy, topology: [], treeDigest: tree, sources: [] }
+  metadata.integrity = createHash("sha256").update(canonical(metadata)).digest("hex"); writeFileSync(join(target, "metadata.json"), canonical(metadata), { mode: 0o400 })
+  writeFileSync(join(versionRoot, ".dependency-environment.json"), canonical({ schema: 1, digest }), { mode: 0o400 }); symlinkSync(relative(versionRoot, modules), join(versionRoot, "node_modules"))
+}
 
 const isolated = () => {
   const root = mkdtempSync(join(tmpdir(), "ct-entrypoint-"))
@@ -59,6 +68,7 @@ const installActiveVersion = (dataRoot, version = "active-v1", { omit = [] } = {
   }
   mkdirSync(versionRoot, { recursive: true })
   writeFileSync(join(versionRoot, ".manifest"), "fixture\n")
+    installDependencyBinding(dataRoot, versionRoot)
   mkdirSync(dataRoot, { recursive: true })
   writeFileSync(join(dataRoot, "active.json"), `${JSON.stringify({ version, previous: "previous-v1" })}\n`)
 }
@@ -155,6 +165,21 @@ describe("entrypoint runtime resolution", () => {
     expect(result.stderr).toContain("core.mjs")
     expect(result.stderr).toContain("CT_ACTIVE_RUNTIME_INCOMPLETE")
     expect(result.stderr).not.toContain("legacy-core")
+  })
+
+  test("corrupt active dependencies fail before core or lifecycle top-level code runs", () => {
+    const item = isolated(), version = "corrupt-v1", versionRoot = join(item.dataRoot, "versions", version)
+    installActiveVersion(item.dataRoot, version)
+    writeFileSync(join(versionRoot, "core.mjs"), 'console.log("CORE_TOP_LEVEL_MARKER")\n')
+    writeFileSync(join(versionRoot, "install/lifecycle.mjs"), 'console.log("LIFECYCLE_TOP_LEVEL_MARKER")\n')
+    writeFileSync(join(versionRoot, "node_modules/corrupt"), "corrupt")
+
+    for (const command of ["main-config", "diagnose"]) {
+      const result = run(entrypoint, [command], item.env)
+      expect(result.status).toBe(1)
+      expect(result.stderr).toContain("CT_DEPENDENCY_BINDING_INVALID")
+      expect(`${result.stdout}${result.stderr}`).not.toContain("TOP_LEVEL_MARKER")
+    }
   })
 
   test("a symlinked entrypoint keeps lifecycle resolution inside the active installation", () => {

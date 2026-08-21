@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from "bun:test"
 import { execFileSync, spawnSync } from "node:child_process"
-import { chmodSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -48,9 +48,17 @@ if (Bun.argv[2] === "serve") {
   const xdg = join(directory, "xdg"), installEnv = { ...process.env, HOME: directory, XDG_DATA_HOME: xdg, XDG_CONFIG_HOME: join(directory, "config"), XDG_STATE_HOME: join(directory, "state") }
   await runCli(["install", "launch-v1", runtimeSource(directory), "--herdr-bin", join(commands, "herdr"), "--opencode-bin", join(commands, "opencode")], installEnv)
   const installed = join(xdg, "control-tower/versions/launch-v1/bin/torre")
+  await runCli(["install", "launch-v2", runtimeSource(directory), "--herdr-bin", join(commands, "herdr"), "--opencode-bin", join(commands, "opencode")], installEnv)
   writeFileSync(effects, "")
   expect(spawnSync(installed, ["launch-worker", "--request-ref", "missing"], { cwd: main, env: installEnv, encoding: "utf8" }).stderr).toContain("CT_LAUNCH_BINDING_INVALID")
   expect(readFileSync(effects, "utf8")).toBe("herdr --version\n")
+  writeFileSync(effects, "")
+  const corrupt = join(xdg, "control-tower/versions/launch-v2/node_modules/corrupt")
+  writeFileSync(corrupt, "corrupt")
+  const rejected = spawnSync(installed, ["launch-worker", "--request-ref", "request-a"], { cwd: main, env: installEnv, encoding: "utf8" })
+  expect(rejected.stderr).toContain("CT_DEPENDENCY_BINDING_INVALID")
+  expect(readFileSync(effects, "utf8")).toBe("")
+  rmSync(corrupt)
   writeFileSync(join(commands, "bad-herdr"), "#!/bin/sh\nexit 99\n", { mode: 0o755 })
   const result = spawnSync(installed, ["launch-worker", "--request-ref", "request-a"], {
     cwd: main, env: { ...installEnv, CONTROL_TOWER_CORE: join(commands, "bad-herdr"), CONTROL_TOWER_LIFECYCLE: join(commands, "bad-herdr"), HERDR_ENV: "attacker", PATH: `${commands}:${process.env.PATH}` }, encoding: "utf8",
@@ -58,8 +66,13 @@ if (Bun.argv[2] === "serve") {
   expect(result.status, result.stderr).toBe(0)
   expect(JSON.parse(result.stdout)).toMatchObject({ assignment_ref: "assignment-a", brief: "Approved", brief_ref: "briefs/a.json", candidate_revision: candidate, fence_path: "/runtime/fence-a", host_epoch: 2, project_id: "project-a", worktree: worker, pane_id: "w1:p1", root_session_id: rootSession })
   expect(JSON.parse(result.stdout).manual_command).toMatch(new RegExp(`^opencode attach http://127\\.0\\.0\\.1:\\d+ --session ${rootSession}$`))
-  expect(readFileSync(effects, "utf8")).toMatch(new RegExp(`^herdr --version\\nherdr --version\\nherdr pane split --current --direction right --cwd ${worker} --no-focus\\nherdr pane run w1:p1 opencode attach http://127\\.0\\.0\\.1:\\d+ --session ${rootSession}\\n$`))
+  expect(readFileSync(effects, "utf8")).toMatch(new RegExp(`^herdr --version\\nherdr pane split --current --direction right --cwd ${worker} --no-focus\\nherdr pane run w1:p1 opencode attach http://127\\.0\\.0\\.1:\\d+ --session ${rootSession}\\n$`))
   expect(spawnSync(installed, ["launch-worker", "--request-ref", "request-a"], { cwd: main, env: { ...installEnv, HERDR_ENV: "attacker", PATH: `${commands}:${process.env.PATH}` }, encoding: "utf8" }).stderr).toContain("CT_LAUNCH_BINDING_CONSUMED")
+  const marker = join(directory, "inactive-provider-imported"), inactiveCli = join(xdg, "control-tower/versions/launch-v1/hosts/launch-worker-cli.mjs"), inactiveProvider = join(xdg, "control-tower/versions/launch-v1/hosts/production-provider.mjs")
+  chmodSync(inactiveProvider, 0o600)
+  writeFileSync(inactiveProvider, `${readFileSync(inactiveProvider, "utf8")}\nawait Bun.write(${JSON.stringify(marker)}, "loaded")\n`)
+  expect(spawnSync("bun", [inactiveCli, "--request-ref", "unused"], { cwd: main, env: installEnv, encoding: "utf8" }).stderr).toContain("CT_ACTIVE_RUNTIME_MISMATCH")
+  expect(existsSync(marker)).toBe(false)
   store.issueLaunchBinding({ actor: "MAIN", project_id: "project-a", request_ref: "request-stale", authorization_id: "auth-a", brief: "Approved", brief_ref: "briefs/a.json", assignment_ref: "assignment-a", candidate_revision: candidate, host_epoch: 2 })
   writeFileSync(join(storePath, "epoch-records/2.json"), JSON.stringify({ epoch: 2, project_id: "project-a" }), { mode: 0o600 })
   writeFileSync(join(storePath, "current-epoch.json"), JSON.stringify({ epoch: 2, project_id: "project-a" }), { mode: 0o600 })

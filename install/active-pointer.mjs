@@ -3,6 +3,7 @@ import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { RUNTIME_PAYLOAD_FILES } from "./runtime-payload.mjs"
+import { readVersionDependencyEnvironment } from "./version-store.mjs"
 
 export function resolveDataRoot(env = process.env) {
   return join(env.XDG_DATA_HOME ?? join(env.HOME, ".local/share"), "control-tower")
@@ -22,12 +23,15 @@ export function resolveActiveRuntime(dataRoot = resolveDataRoot()) {
   const root = join(dataRoot, "versions", pointer.version)
   const missing = RUNTIME_PAYLOAD_FILES.filter((member) => !existsSync(join(root, member)))
   if (missing.length) throw new Error(`CT_ACTIVE_RUNTIME_INCOMPLETE: missing ${missing.join(",")}`)
+  const dependencyEnvironment = readVersionDependencyEnvironment(dataRoot, pointer.version)
   return {
     version: pointer.version,
     previous: pointer.previous ?? null,
     root,
     core: join(root, "core.mjs"),
     lifecycle: join(root, "install/lifecycle.mjs"),
+    launchWorker: join(root, "hosts/launch-worker-cli.mjs"),
+    dependencyEnvironment,
   }
 }
 
