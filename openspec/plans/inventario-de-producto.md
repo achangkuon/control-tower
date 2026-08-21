@@ -248,3 +248,45 @@ La secuencia `lstat`/`fstat` de `M9.1.3` protegía de que sustituyan un archivo 
 - **`S8.11` se confirma como optimización de costo**, no de producto. No bloquea la release.
 - **`S8.5` y `S8.6` siguen bien diferidas**, con su razón registrada intacta.
 - **El retiro de `capabilities/registry.mjs` se ejecuta acá**, rediseñando el testigo de no-mutación de `test/plugin/tower-spike.test.mjs` en vez de debilitarlo.
+
+## 11. Estado y ruta de cierre de `S8.10` — planificación, sin implementar (2026-08-21)
+
+`S8.10` es la llave de todo lo que quedó trabado. Esta sección registra **dónde está y qué le falta**, para que se pueda retomar sin re-descubrirlo. **No se implementó nada.**
+
+### Dónde vive hoy
+
+| Pieza | Ubicación | Estado |
+|---|---|---|
+| Planificación | rama local `feat/s8.10-runtime-payload-model@0891cc7` — *«docs(plan): define S8.10 runtime payload tasks»* | commiteada, **sin remoto** |
+| Planificación (copia) | `openspec/plans/plan-8/STATUS.md` en el worktree `implementation-slot` | **sin commitear**, +206 líneas |
+| Candidato de comportamiento | árbol de trabajo de `implementation-slot` | **sin commitear**, 336 líneas sobre 14 archivos + 2 sin trackear |
+| Checkpoint de parqueo | Engram 9176 | antes del commit de comportamiento y de la verificación final |
+
+### Qué hace el candidato
+
+Agrega al payload derivado las familias que hoy quedan fuera: los nueve archivos de `contracts/**`, más `hosts/candidate-fence.mjs` y `hosts/epoch-enforcement.mjs`. Es decir, cierra el instalable sobre los schemas y contratos que el runtime instalado necesita leer.
+
+### Qué falta, exactamente
+
+**Una sola tarea: `T8.10.1.3`.** El rojo vigente es:
+
+```
+CT_RUNTIME_PAYLOAD_INVALID: unexpected directory contracts
+```
+
+`scanClosure` valida los directorios admitidos contra una **lista fija** —`bin`, `hosts`, `install`, `jornada`, `main-store`— que no incluye `contracts`. El candidato agrega miembros de `contracts/**` al payload sin actualizar esa validación, y el instalador los rechaza.
+
+**Forma del arreglo, ya declarada en el plan:** derivar los prefijos de directorio **exclusivamente desde los miembros exactos de `RUNTIME_PAYLOAD_FILES`**, excluyendo `.`, y rechazar cualquier otro. Así la lista deja de mantenerse a mano y no puede volver a desincronizarse del payload.
+
+**Criterio de cierre:** `bun test test/install` vuelve a 67/0 en árbol limpio, y `RUNTIME_PAYLOAD_ASSETS` permanece exactamente `["bin/torre"]`.
+
+### Qué NO entra en `S8.10`
+
+- **El retiro de `capabilities/registry.mjs`** pertenece al trabajo de la auditoría de P8, no a esta Sesión. Meterlo adentro le expande el alcance.
+- **La unificación de los dos instaladores** es trabajo nuevo sin dueño (§10) y tampoco pertenece acá.
+
+### Qué destraba al cerrar
+
+1. La **tarea 0.4** del plan de depuración — el recálculo del denominador, que necesita las cifras `38/52` y P8 `7/11` que hoy sólo existen en el WIP.
+2. La reconciliación de **`master-index.md`** y **`release-chain.md`** con los IDs nuevos de P9.
+3. El registro de la **auditoría de P8** en `plan-8/STATUS.md`, hoy escrito en §10 de este documento por el mismo bloqueo.
