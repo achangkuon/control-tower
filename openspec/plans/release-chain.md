@@ -234,3 +234,17 @@ Se registra explícitamente en lugar de esconderse:
   el [apéndice de migración](plan-vocabulary-migration-appendix.md).
 - **P6 — Campañas multiproyecto.** Sin Sesiones enumeradas. Fuera de la cadena de release.
 - **P8 — `S8.5` y `S8.6`.** 🟡 DIFERIDO por decisión del 2026-07-31. Se mantienen fuera.
+
+## Reconciliación del 2026-08-21 — cierre de la Fase 2 de depuración
+
+**`S8.10` cerró e integró en `master@7b58ad8`**, con la suite completa en 863 pass / 13 todo / 0 fail. Eso destrabó la puerta semántica de `S4.4`, que vuelve a 🟢, y volvió elegibles a `S4.6` y `S8.12`.
+
+**Los IDs de P9 cambiaron.** La [decisión 62](decision-register.md) recortó y reordenó ese Plan, y como el estándar define los IDs como posicionales, se renumeraron. Toda referencia a `S9.x` anterior a esta fecha —incluida la de §174 sobre la decisión 53— usa la numeración vieja. **La tabla de migración vive en [plan-9](plan-9/STATUS.md) y la historia no se reescribe.** En corto: el pool de asientos pasó a ser `S9.1`, el lifecycle seguro pasó a `S9.2` reducido a un solo resultado, la caché de Bun a `S9.3`, el launcher Pi a `S9.4` 🟡 DIFERIDO, y la vieja `S9.3` se eliminó.
+
+**Tres Sesiones nuevas entran en la cadena** por la [decisión 63](decision-register.md), todas nacidas de las auditorías exclusivas:
+
+- **`S11.1`** — ejecutor de comandos y superficie tipeable, en el Plan 11 nuevo. **No depende de nada** y encabeza la cola: el vocabulario, el validador y el canal `send`/`receive` ya existen y ya se instalan. Sin ella, `S7.1` no puede declarar conformidad sobre un contrato de operador que no se puede ejercer.
+- **`S4.6`** — retiro del adaptador de lanzamiento de `S4.2` y del fijado literal de Herdr 0.8.0. Hasta que cierre, **la única dependencia externa del producto que puede romperse sola sigue viva**.
+- **`S8.12`** — canal único de distribución. Hoy el canal de agentes no tiene instalador versionado, ni rollback, ni puntero activo.
+
+**La brecha 6 dejó de estar sin dueño.** La cubren `S8.12` y el orden de conexión del [inventario de producto](inventario-de-producto.md), que además clasifica los 34 módulos sin llamador en cuatro cajones y fija la regla: ninguna Sesión de cableado enchufa un módulo «porque está suelto» — enchufa un comando del vocabulario, y el módulo entra con él.
