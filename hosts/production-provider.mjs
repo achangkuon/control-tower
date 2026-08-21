@@ -176,11 +176,15 @@ export const createProductionProvider = ({ } = {}) => {
   const installed = installedRuntime()
   const context = deriveCanonicalMainContext(process.cwd())
   const mainStoreRoot = join(context.git_common_dir, "control-tower", "main-store")
-  const assertCurrentHost = ({ fence_path, ...identity }) => createEpochEnforcement({ candidateFence: createCandidateFenceStore({
-    rootPath: fence_path,
-    resolveTerminationProof() { fail("CT_FENCE_PORT_REQUIRED", "Read-only launch authority cannot resolve termination proof") },
-    authorizeMaintainerDecision() { fail("CT_FENCE_PORT_REQUIRED", "Read-only launch authority cannot authorize takeover") },
-  }) }).assertCurrent(identity)
+  // El binding trae más campos que la identidad de época — brief, brief_ref, worktree—, y
+  // `inspectIdentity` exige exactamente estos cuatro. Se seleccionan por nombre en vez de
+  // descartar `fence_path` con rest: cualquier campo nuevo del binding rompería el contrato exacto.
+  const assertCurrentHost = ({ fence_path, project_id, assignment_ref, candidate_revision, host_epoch }) =>
+    createEpochEnforcement({ candidateFence: createCandidateFenceStore({
+      rootPath: fence_path,
+      resolveTerminationProof() { fail("CT_FENCE_PORT_REQUIRED", "Read-only launch authority cannot resolve termination proof") },
+      authorizeMaintainerDecision() { fail("CT_FENCE_PORT_REQUIRED", "Read-only launch authority cannot authorize takeover") },
+    }) }).assertCurrent({ project_id, assignment_ref, candidate_revision, host_epoch })
   const consumer = createLaunchBindingConsumer({ root: mainStoreRoot, assertCurrentHost })
   const rootBinding = createRootBindingStore({ root: mainStoreRoot })
   let runtime
