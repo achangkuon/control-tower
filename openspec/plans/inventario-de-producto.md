@@ -352,3 +352,21 @@ Los prefijos de directorio admitidos por `scanClosure` **se derivan ahora de los
 | `origin/feat/s8.10-runtime-payload-model@a448af2` | El candidato de `S8.10` **más** `T8.10.1.3` | 860 pass · 13 todo · **3 fail** |
 
 **El candidato no se integró a `master` a propósito.** Master está verde y se conserva verde; el candidato queda subido y seguro en su rama, listo para que `T8.10.1.2` lo cierre en la próxima sesión.
+
+### `T8.10.1.2` — hecha el 2026-08-21, y qué queda
+
+`contracts/schema-registry.mjs` **exporta ahora `schemaAssetPaths`**, derivado de su propio mapa `schemaFiles`: es el propietario de la familia, así que es él quien la declara. El generador compone el payload **una sola vez** —assets manuales, familias propietarias, cierre JS— y esa composición alimenta tanto el chequeo de deriva como el render, de modo que no pueden discrepar. **Una familia viaja sólo si su propietario viaja.**
+
+`RUNTIME_PAYLOAD_ASSETS` permanece exactamente `["bin/torre"]`. El payload pasó de **28 a 53 miembros**, sumando los 25 schemas.
+
+**Cuatro listas paralelas más, eliminadas.** Cada una ya había fallado en silencio: `payloadMembers` en `entrypoint-resolution.test.mjs`, dos listados fijos de directorios de primer nivel en `lifecycle.test.mjs`, y la composición de dos partes que asertaba `payload-closure.test.mjs`. **Las cuatro derivan ahora del payload.** Es el mismo defecto que `T8.10.1.3`, repetido en los tests.
+
+**`test/install` pasó de 5 fallos a 1.** Suite completa: **862 pass · 13 todo · 1 fail**.
+
+#### El fallo que queda no es de estas dos tareas
+
+`installed torre launch-worker ignores legacy and PATH shims while consuming its deterministic Main binding` falla con `CT_LAUNCH_FINAL_ATTEMPT_FAILED: … Exact host identity is invalid`, donde el test espera un lanzamiento exitoso.
+
+**Verificado: ese mismo test pasa en `master`** (1 pass / 0 fail en un worktree limpio). Lo introduce el **candidato parqueado de `S8.10`**, cuyos cambios sobre `hosts/launch-worker.mjs`, `hosts/production-provider.mjs`, `hosts/candidate-fence.mjs` o `main-store/launch-consumer.mjs` hacen que `validateActiveHostRuntime` (`install/lifecycle.mjs:72-84`) rechace la identidad. Esa función compara `path`, `sha256`, `dev`, `ino`, `size`, `mtimeMs`, `ctimeMs`, `uid`, `mode` y `nlink` del ejecutable fijado.
+
+**Ninguna tarea enumerada cubre ese arreglo.** Es exactamente el motivo por el que el candidato quedó parqueado *«antes del commit de comportamiento y de la verificación final»*. Debuggearlo es el primer trabajo de la próxima sesión, y es acotado: un solo test, con la función y los diez campos que compara ya identificados.
