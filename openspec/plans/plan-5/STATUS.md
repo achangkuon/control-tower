@@ -904,3 +904,13 @@ Cada Tarea es una unidad de commit/direct-push revisable y revertible por sí so
 **Cómputo del Plan 5:** `11/12 S = 92%`. Cuentan `S5.1`, `S5.2`, `S5.3`, `S5.4`, `S5.6`, `S5.7`, `S5.8`, `S5.9`, `S5.10`, `S5.11` y `S5.12`; sólo `S5.5` permanece 🟢 LISTO. Ninguna Sesión aporta crédito hasta `COMPLETO`.
 
 Las responsabilidades legacy de Telegram Delivery y continuación que aún no tienen límite de un PR permanecen sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).
+
+## `S5.5` es el primer consumidor de la columna vertebral (2026-08-21)
+
+La [decisión 60](../decision-register.md), entregada en `master@8a75be0`, encontró que el camino de comando del operador está escrito hasta la mitad: `console/vocabulary.mjs` declara los trece comandos y `console/validate.mjs` es su cerebro completo —resuelve el agente destino, verifica estados legales, exige evidencia y confirmación con TTL para los verbos irreversibles, 16 tests en verde— y **nadie lo llama**.
+
+**Qué significa para `S5.5`.** El comando `CV_ANSWER` es exactamente lo que `S5.5` entrega: responder una decisión estacionada. Y `validateProposal` ya tiene su caso especial escrito — deriva el agente desde la escalación abierta y exige que esté `OPEN` y reclamada por la consola. **`S5.5` es el primer consumidor real de esa columna**, y `escalation/**` —274 líneas hoy sin llamador— entra al producto con ella.
+
+**Qué NO cambia.** `S5.5` sigue 🟢 LISTO y su contrato, `Área`, `Prohibido` y criterios de aceptación permanecen intactos. La decisión 60 **no la reabre ni la expande**: registra que su resultado tiene un consumidor declarado esperándolo, lo cual es evidencia a favor de su alcance actual, no una razón para tocarlo.
+
+**Orden preservado.** `S5.5` no arranca antes de la Fase 3 del plan de depuración, donde se reescribe el objetivo de P5 para sacarle la verificación que pertenece a gentle-ai. Arrancarla antes sería construir sobre un objetivo de Plan que ya sabemos mal escrito. La decisión 60 no altera ese orden.
