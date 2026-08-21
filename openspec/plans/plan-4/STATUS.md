@@ -523,3 +523,20 @@ Cuando `S4.5` reemplazó la arquitectura de `S4.2`, **no retiró la anterior**: 
 - **Trabajo nuevo sin dueño, que P4 le devuelve al plan:** retirar el camino de lanzamiento de `S4.2` y el fijado exacto de Herdr 0.8.0 del instalable. No pertenece a `S4.4` ni a `S4.5`, ambas cerradas. **Hoy es la única dependencia externa del producto que puede romperse sola.**
 
 Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% (4/5 S).
+
+### Corrección del hallazgo 1 — resuelto por la decisión 61 el 2026-08-21
+
+**El marco de esta auditoría era equivocado y el maintainer lo corrigió.** El informe concluyó que había que «replicar `assertMain` en `core.mjs`» para que Main pudiera gobernar un agente vivo, y de ahí derivó un conflicto de dos escritores sobre la misma fila. **Comandar no es escribir el estado del otro.**
+
+**El canal correcto ya existe, ya se instala y conserva el escritor único:** `core.mjs:4445` `send({ db, place }, { to, text })` acepta cualquier destinatario registrado y rechaza los desconocidos; `core.mjs:4464` `receive({ db, place })` sólo entrega lo dirigido a quien llama; `mcp.mjs` ya expone `tower_send` y `tower_receive`. **Main manda la directiva y el agente se la aplica a sí mismo.** El problema de los dos escritores era autoinfligido por el marco y desaparece.
+
+**Consecuencias sobre esta auditoría:**
+
+- **El eslabón cero deja de ser trabajo.** No hay que darle a `core.mjs` una fuente de autoridad nueva; el punto 1 de la [decisión 60](../decision-register.md) queda superado. Sólo restan el ejecutor y la superficie.
+- **`CV_PAUSE` promete «le pedí que pare», no «garantizo que paró»**, y alcanza porque el agente ya se autolimita bajo gentle-ai — se detiene y escala tras un número acotado de iteraciones sin avance. Garantizarlo desde la Torre sería reimplementar lo que el stack provee, contra la decisión 59.
+- **No se construye cierre ni muerte forzada.** `CV_STOP`/`CV_KILL` no están en el vocabulario y no se agregan; con Moshi el maintainer lo hace a mano.
+- **`hosts/stop-proof.mjs` conserva su consumidor original** —la recuperación de `S4.4` ante muerte probada— y **no** pasa a ser insumo de `CV_PAUSE`. Sigue en el cajón B.
+
+**Precisión sobre el hallazgo 2, también corregida.** El adaptador legado de `S4.2` está construido y devuelto por `production-provider.mjs:280` pero **nadie lo invoca**, ni dentro del archivo ni fuera. Es código dormido, no un fallo activo. Se retira porque es una trampa esperando, no porque esté cancelando lanzamientos.
+
+**Los hallazgos 2 y 3 son un solo trabajo.** `install/lifecycle.mjs:20` declara capacidades `["agent_start", "agent_get", "report_agent_session"]` que son exactamente las del adaptador de `S4.2`, mientras que lo que la vista usa —`pane split`, `pane run`, `pane close`— el instalador no lo verifica. Retirar el adaptador y soltar la comparación literal contra `"herdr 0.8.0\n"` tocan la misma declaración. **Es seguro:** `hosts/opencode-view.mjs` ya degrada ante ausencia de Herdr y devuelve el `opencode attach` manual.
