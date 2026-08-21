@@ -353,12 +353,13 @@ El validator scoped final no encontró bloqueantes. Su único warning —un `rel
 
 ### Corrección operativa de aislamiento hermético de tests · ✅ COMPLETA
 
-Esta corrección aprobada por el maintainer **no es una Sesión**, no fue solicitada por ningún nodo existente del Plan y no cambia estado, denominador ni porcentaje. El commit de comportamiento `dae9478` toca únicamente `test/hosts/production-provider.test.mjs` con **44 líneas authored**; la fuente y API de producción permanecen intactas.
+Esta corrección aprobada por el maintainer **no es una Sesión**, no fue solicitada por ningún nodo existente del Plan y no cambia estado, denominador ni porcentaje. El commit de comportamiento inicial `dae9478` aportó **44 líneas authored** y la corrección final `ab5e968` agregó **9**, para **53 líneas authored acumuladas**, siempre únicamente en `test/hosts/production-provider.test.mjs`; la fuente y API de producción permanecen intactas.
 
 - **RED enfocado sobre la base entregada limpia `e629ff0`:** `bun test test/hosts/production-provider.test.mjs` → 8 pass, 1 fail, 69 expect. El Main store canónico real hizo que el primer test devolviera un provider en vez de rechazar con `Main launch store is unavailable`.
-- **Comportamiento:** el primer test usa un repositorio Git temporal independiente y un child Bun acotado que importa el módulo productivo por URL absoluta; sanea las variables heredadas de autoridad Git, no hace `chdir` global y siempre limpia en `finally`. Sigue probando `createProductionProvider.length === 0` y el rechazo de autoridad de lanzamiento suministrada por el caller.
-- **GREEN enfocado:** 9 pass, 0 fail, 70 expect. **Suite final única:** 898 pass, 0 fail, 5309 expect, 68 files, sobre el ejecutable SHA-256 `690f291492318cd4c3a204b465a01b47baf5328812d3dbca19985dd2fa142c4f`.
-- **Asesoría:** `review-resilience` quedó tipada como no disponible porque el controller no tenía lineage del candidato actual mientras RDD estaba OFF; no se usó actor alternativo.
+- **Comportamiento e aislamiento conservados:** el primer test usa un repositorio Git temporal independiente y un child Bun acotado que importa el módulo productivo por URL absoluta; no hace `chdir` global y siempre limpia en `finally`. Sigue probando `createProductionProvider.length === 0` y el rechazo de autoridad de lanzamiento suministrada por el caller.
+- **Corrección final por verificación independiente:** Git declara 15 variables locales canónicas mediante `git rev-parse --local-env-vars`; faltaban `GIT_CONFIG`, `GIT_CONFIG_PARAMETERS`, `GIT_CONFIG_COUNT`, `GIT_IMPLICIT_WORK_TREE`, `GIT_GRAFT_FILE` y `GIT_NO_REPLACE_OBJECTS`. `ab5e968` sanea esas seis, conserva deliberadamente los extras peligrosos y agrega una aserción diferencial sobre cada línea no vacía del comando canónico, para que futuras incorporaciones de Git fallen ruidosamente. Las mecánicas de aislamiento existentes no cambian.
+- **GREEN enfocado final:** 9 pass, 0 fail, 72 expect. **Suite final única sobre el candidato corregido:** 898 pass, 0 fail, 5311 expect, 68 files, sobre el ejecutable SHA-256 `211f9e6735d657d95b7f84c416097a9e88a254ae545d22e363d7233dc15aa76f`.
+- **Asesoría:** `review-resilience` quedó tipada como no disponible porque el controller no tenía lineage del candidato actual mientras RDD estaba OFF; no se usó actor alternativo. La verificación independiente suministró el hallazgo corregido.
 
 ## Sesión 4.3 — Inspección, liveness y rehidratación segura
 
