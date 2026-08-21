@@ -1,4 +1,0 @@
-# Replace the reserved hostname only during a separately approved deployment.
-https://dashboard.example.invalid {
-  reverse_proxy 127.0.0.1:3000
-}
