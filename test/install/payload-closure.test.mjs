@@ -4,7 +4,7 @@ import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 
 import { RUNTIME_PAYLOAD_FILES } from "../../install/runtime-payload.mjs"
-import { RUNTIME_PAYLOAD_ASSETS, RUNTIME_PAYLOAD_ROOTS, computePayloadClosure, renderRuntimePayloadDeclaration, runtimePayloadDrift } from "../../scripts/payload-closure.mjs"
+import { RUNTIME_PAYLOAD_ASSETS, RUNTIME_PAYLOAD_ROOTS, composeRuntimePayload, computePayloadClosure, renderRuntimePayloadDeclaration, runtimePayloadDrift } from "../../scripts/payload-closure.mjs"
 
 const repoRoot = resolve(import.meta.dir, "../..")
 const fixtures = []
@@ -89,15 +89,16 @@ describe("author-time runtime payload closure", () => {
 
   test("keeps the committed payload equal to the computed closure in both directions", () => {
     const closure = computePayloadClosure(repoRoot)
-    expect(RUNTIME_PAYLOAD_FILES).toEqual([...RUNTIME_PAYLOAD_ASSETS, ...closure])
+    expect(RUNTIME_PAYLOAD_FILES).toEqual(composeRuntimePayload(closure))
+    expect(composeRuntimePayload(closure).slice(0, RUNTIME_PAYLOAD_ASSETS.length)).toEqual(RUNTIME_PAYLOAD_ASSETS)
     expect(runtimePayloadDrift(RUNTIME_PAYLOAD_FILES, closure)).toEqual({ extras: [], missing: [] })
   })
 
   test("reports extra and missing payload members separately", () => {
     const closure = computePayloadClosure(repoRoot)
-    const expected = [...RUNTIME_PAYLOAD_ASSETS, ...closure]
+    const expected = composeRuntimePayload(closure)
     expect(runtimePayloadDrift([...expected, "extra.mjs"], closure)).toEqual({ extras: ["extra.mjs"], missing: [] })
-    expect(runtimePayloadDrift(expected.slice(1), closure)).toEqual({ extras: [], missing: ["bin/torre"] })
+    expect(runtimePayloadDrift(expected.slice(1), closure)).toEqual({ extras: [], missing: [expected[0]] })
   })
 
   test("keeps the generated literal and exact regeneration command committed", () => {

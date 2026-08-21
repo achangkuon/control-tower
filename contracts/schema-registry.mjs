@@ -27,6 +27,16 @@ const ajv = new Ajv2020({ allErrors: true, strict: true, strictRequired: false, 
 for (const schema of Object.values(schemas)) ajv.addSchema(schema)
 
 export const schemaNames = Object.freeze(Object.keys(schemaFiles))
+
+// T8.10.1.2 — este módulo es el propietario de la familia de schemas, así que es él quien declara
+// qué archivos no-JS necesita para funcionar. El generador del payload le pregunta en vez de
+// mantener una segunda lista: un schema agregado acá viaja solo, y ninguno puede quedarse afuera
+// sin que el instalador lo note. El orden es canónico para que el literal generado sea estable.
+export const schemaAssetPaths = Object.freeze(
+  Object.values(schemaFiles)
+    .map((file) => `schemas/${file}`)
+    .sort((left, right) => left.localeCompare(right)),
+)
 export const validatorFor = (name) => {
   const schema = schemas[name]
   if (!schema) return null

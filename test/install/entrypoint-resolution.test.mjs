@@ -4,40 +4,14 @@ import { spawnSync } from "node:child_process"
 import { copyFileSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
+import { RUNTIME_PAYLOAD_FILES } from "../../install/runtime-payload.mjs"
 
 const repoRoot = resolve(import.meta.dir, "../..")
 const entrypoint = join(repoRoot, "bin/torre")
 const pointerModule = join(repoRoot, "install/active-pointer.mjs")
-const payloadMembers = [
-  "bin/torre",
-  "contracts/candidate-revision.mjs",
-  "contracts/canonicalize.mjs",
-  "contracts/completed-work-binding.mjs",
-  "contracts/errors.mjs",
-  "contracts/parked-checkpoint-binding.mjs",
-  "contracts/parked-decision.mjs",
-  "contracts/schema-registry.mjs",
-  "contracts/session-plan-snapshot.mjs",
-  "contracts/validate.mjs",
-  "core.mjs",
-  "hosts/candidate-fence.mjs",
-  "hosts/epoch-enforcement.mjs",
-  "hosts/herdr.mjs",
-  "hosts/launch-worker-cli.mjs",
-  "hosts/launch-worker.mjs",
-  "hosts/opencode-launcher.mjs",
-  "hosts/opencode-server.mjs",
-  "hosts/opencode-view.mjs",
-  "hosts/production-provider.mjs",
-  "hosts/root-binding.mjs",
-  "hosts/root-identity.mjs",
-  "install/active-pointer.mjs",
-  "install/lifecycle.mjs",
-  "install/runtime-payload.mjs",
-  "install/version-store.mjs",
-  "jornada/lifecycle.mjs",
-  "main-store/launch-consumer.mjs",
-]
+// T8.10.1.2 — el fixture deriva del payload real en vez de mantener una copia. Una lista paralela
+// acá volvería a fallar en silencio la próxima vez que el payload gane una familia.
+const payloadMembers = RUNTIME_PAYLOAD_FILES
 const roots = []
 
 const isolated = () => {

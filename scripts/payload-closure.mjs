@@ -2,6 +2,8 @@ import { lstatSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path"
 import { fileURLToPath } from "node:url"
 
+import { schemaAssetPaths } from "../contracts/schema-registry.mjs"
+
 export const RUNTIME_PAYLOAD_ASSETS = ["bin/torre"]
 export const RUNTIME_PAYLOAD_ROOTS = [
   "install/active-pointer.mjs",
@@ -61,8 +63,23 @@ export function computePayloadClosure(repoRoot, { roots = RUNTIME_PAYLOAD_ROOTS 
   return [...visited].sort((left, right) => left.localeCompare(right))
 }
 
+// T8.10.1.2 — una sola composición alimenta el chequeo de deriva y el render, para que no puedan
+// discrepar. Tres partes, en orden fijo: los assets manuales, las familias no-JS que declara su
+// propio propietario, y el cierre de imports. Una familia viaja sólo si su propietario viaja, así
+// que agregar un schema al registro lo mete en el payload y quitarlo lo saca, sin lista paralela.
+const OWNED_FAMILIES = [
+  { owner: "contracts/schema-registry.mjs", assets: schemaAssetPaths },
+]
+
+export function composeRuntimePayload(closure) {
+  const families = OWNED_FAMILIES
+    .filter(({ owner }) => closure.includes(owner))
+    .flatMap(({ assets }) => assets)
+  return [...RUNTIME_PAYLOAD_ASSETS, ...families, ...closure]
+}
+
 export function runtimePayloadDrift(declared, closure) {
-  const expected = [...RUNTIME_PAYLOAD_ASSETS, ...closure]
+  const expected = composeRuntimePayload(closure)
   return {
     extras: declared.filter((path) => !expected.includes(path)),
     missing: expected.filter((path) => !declared.includes(path)),
@@ -70,7 +87,7 @@ export function runtimePayloadDrift(declared, closure) {
 }
 
 export function renderRuntimePayloadDeclaration(closure) {
-  const files = [...RUNTIME_PAYLOAD_ASSETS, ...closure]
+  const files = composeRuntimePayload(closure)
   const entries = files.map((path) => `  ${JSON.stringify(path)},`).join("\n")
   return [
     generatedStart,

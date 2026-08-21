@@ -8,6 +8,13 @@ import { dirname, join, resolve } from "node:path"
 import { lifecycle, readHostRuntimeIdentity, runCli, validateActiveHostRuntime } from "../../install/lifecycle.mjs"
 import { RUNTIME_PAYLOAD_FILES } from "../../install/runtime-payload.mjs"
 
+// T8.10.1.2 — las entradas de primer nivel se derivan del payload real. Escribirlas a mano fue
+// justamente lo que hizo fallar a este test cuando el payload ganó `contracts/` y `schemas/`.
+const storedTopLevel = () => [
+  ...new Set([".manifest", "host-runtime.json", ...RUNTIME_PAYLOAD_FILES.map((path) => path.split("/")[0])]),
+].sort()
+
+
 const roots = [], repoRoot = resolve(import.meta.dir, "../..")
 const snapshotPath = (path) => {
   const entries = []
@@ -265,7 +272,7 @@ test("install accepts a checkout source and stores exactly the runtime payload",
   expect(runCli(["install", "checkout-v1", repoRoot, ...hostArgs(paths)], env)).toMatchObject({ active: "checkout-v1", stored: true })
   const storedRoot = join(env.XDG_DATA_HOME, "control-tower/versions/checkout-v1")
   expect(RUNTIME_PAYLOAD_FILES.map((path) => readFileSync(join(storedRoot, path)))).toEqual(RUNTIME_PAYLOAD_FILES.map((path) => readFileSync(join(repoRoot, path))))
-  expect(readdirSync(storedRoot).sort()).toEqual([".manifest", "bin", "core.mjs", "host-runtime.json", "hosts", "install", "jornada", "main-store"])
+  expect(readdirSync(storedRoot).sort()).toEqual(storedTopLevel())
 })
 
 test("install keeps strict payload validation for a staging source with an extra member", () => {
@@ -509,7 +516,7 @@ test("stored torre diagnoses and installs autonomously from an isolated unrelate
   expect({ status: installed.status, stderr: installed.stderr }).toEqual({ status: 0, stderr: "" })
   expect(JSON.parse(installed.stdout)).toMatchObject({ operation: "install", active: "10.0.0", changed: true, stored: true })
   expect(JSON.parse(readFileSync(join(publication, "active.json"), "utf8"))).toEqual({ version: "10.0.0", previous: null })
-  expect(readdirSync(join(publication, "versions/10.0.0")).sort()).toEqual([".manifest", "bin", "core.mjs", "host-runtime.json", "hosts", "install", "jornada", "main-store"])
+  expect(readdirSync(join(publication, "versions/10.0.0")).sort()).toEqual(storedTopLevel())
 
   const files = Object.fromEntries(RUNTIME_PAYLOAD_FILES.map((file) => [file, readFileSync(join(release, file))]))
   const expectedManifest = createHash("sha256").update(JSON.stringify(Object.entries(files).sort(([left], [right]) => left.localeCompare(right))
