@@ -201,3 +201,50 @@ La [decisión 62](decision-register.md) recortó y reordenó P9 **renumerando lo
 | `S9.3` reciclaje externo | **eliminada** |
 
 **Corrección que afecta a este inventario:** la mitad Pi **no muere con Moshi**. `hosts/pi-launcher.mjs` es un host de ejecución, no un transporte, y se difiere bajo el mismo criterio que `S1.17`–`S1.19`. Moshi reemplaza transporte remoto, no hosts.
+
+## 10. Auditoría exclusiva de P8 — resultado (2026-08-21)
+
+Medida sobre `master@cbb0691`. Punto de entrada: **qué es exactamente el producto instalable.** Se registra acá y **no en `plan-8/STATUS.md`** porque ese archivo tiene cambios sin commitear de `S8.10` y esta sesión no toca trabajo en implementación; se reconcilia cuando ese candidato aterrice.
+
+### Hallazgo 1 — dos instaladores, y el versionado no puede entregar la mitad que usan los agentes
+
+| | Qué instala | Estado |
+|---|---|---|
+| `install.sh` | Escribe con `jq` el bloque `.mcp["control-tower"]` en `opencode.json` y copia `plugin/tower-spike.js`. **Es la mitad que usan los agentes.** | sin versionar, tratado como *legacy* |
+| `torre install` → `install/lifecycle.mjs` | El payload versionado: la maquinaria de lanzamiento de hosts. | versionado, sellado, con rollback |
+
+**`install/lifecycle.mjs` nunca escribe el cableado MCP.** Lee `config?.mcp?.["control-tower"]?.command` (línea 194), verifica que apunte a un `/mcp.mjs`, lo respalda (línea 225) y en `rollback` lo restaura (línea 252, `outcome: "legacy-restored"` en la 333). **Reconoce la instalación de `install.sh` para migrarla, no para reemplazarla.**
+
+**Y el payload no puede incluir esa mitad, por contrato.** La decisión 54 fijó que `RUNTIME_PAYLOAD_FILES` se deriva del cierre de imports de **cuatro raíces**, declaradas en `scripts/payload-closure.mjs:7-10`: `install/active-pointer.mjs`, `install/lifecycle.mjs`, `core.mjs` y `hosts/launch-worker-cli.mjs`. **Ni `mcp.mjs` ni `plugin/tower-spike.js` son raíz.** Y el instalador exige igualdad exacta de conjunto: falta un miembro → `CT_RUNTIME_PAYLOAD_INCOMPLETE`; sobra uno → `CT_RUNTIME_PAYLOAD_INVALID`. Agregarlos a mano rompería el contrato que `S8.9` acaba de cerrar.
+
+> **La brecha 6, vista desde el instalador.** No es que 44 de 71 archivos «se olvidaron». Es que el producto tiene dos mitades con dos instaladores, una sola está versionada, y la otra sólo existe como el legado del que la primera migra.
+
+### Hallazgo 2 — el cableado contado desde la caja
+
+| | Archivos | Cómo llega a una máquina |
+|---|---|---|
+| Payload versionado | 27 | `torre install` — derivado, sellado, con rollback |
+| Canal de agentes | 10 | `install.sh` — sin versionar, tratado como legacy |
+| Sin llamador | 34 | **ninguno** — los cuatro cajones de §3 |
+
+Los diez del canal de agentes son `mcp.mjs`, `plugin/tower-spike.js`, `main-store/{store,authority}.mjs`, `host/loop.mjs`, `continuation/support.mjs` y `workspace/{checkpoint,reconciliation}.mjs`. **Incluyen `main-store/store.mjs`, donde vive el guard `assertMain`** que la auditoría de P4 identificó como el patrón de autoridad del proyecto.
+
+**Por qué el cableado pertenece a P8:** conectar un módulo huérfano sin decidir por qué canal viaja **no lo pone en ninguna máquina**. El cableado y el empaquetado son la misma decisión.
+
+### Hallazgo 3 — el instalable NO arrastra el sobrealcance de seguridad de `M9.1.3`
+
+Respuesta a la pregunta que dejó §8. **No lo arrastra, y la distinción importa:**
+
+- **`/proc/self/fd/3` (`production-provider.mjs:152`) es legítimo y se conserva.** Garantiza que los bytes verificados sean exactamente los ejecutados; esa sustitución la puede provocar cualquier proceso propio, sin necesidad de un atacante.
+- **La igualdad exacta de conjunto del payload es legítima y se conserva.**
+- **La comparación literal contra `"herdr 0.8.0\n"` (`lifecycle.mjs:56`) no garantiza nada** y ya quedó marcada para retiro por la auditoría de P4.
+
+La secuencia `lstat`/`fstat` de `M9.1.3` protegía de que sustituyan un archivo **dentro del propio worktree**, lo que exige que alguien ya esté adentro. Mismo vocabulario, riesgos incomparables.
+
+### Veredictos
+
+- **Trabajo nuevo sin Sesión dueña, y es el más grande del proyecto:** decidir por qué canal viaja cada mitad, y si siguen siendo dos. Hoy el canal de agentes no tiene instalador versionado, ni rollback, ni puntero activo: si `install.sh` queda viejo respecto del payload, **nadie lo detecta**. No lo cubren `S8.9`, `S8.10` ni `S8.11`.
+- **`S8.10` se confirma y es la llave.** Cierra el payload sobre schemas declarados, es la causa exacta de los 5 fallos vigentes, y terminarla destraba de una: la tarea 0.4 del denominador, la reconciliación del `master-index` y `release-chain` con los IDs nuevos de P9, y el registro de esta auditoría en `plan-8/STATUS.md`.
+- **`S8.11` se confirma como optimización de costo**, no de producto. No bloquea la release.
+- **`S8.5` y `S8.6` siguen bien diferidas**, con su razón registrada intacta.
+- **El retiro de `capabilities/registry.mjs` se ejecuta acá**, rediseñando el testigo de no-mutación de `test/plugin/tower-spike.test.mjs` en vez de debilitarlo.
