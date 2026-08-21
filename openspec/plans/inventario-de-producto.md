@@ -96,7 +96,7 @@ conectan solos cuando se conecta lo que los usa.
 | Módulo | Líneas | La pregunta |
 |---|---|---|
 | `capabilities/registry.mjs` | 175 | Ningún comando lo nombra y **no tiene consumidor de producción**. `S3.3` fijó que da visibilidad y compatibilidad de invocación, nunca autoridad. **Resuelto el 2026-08-21: se archiva** ([decisión 59](decision-register.md)) — pero no es gratis, ver la nota de abajo. |
-| `hosts/{rehydration,stop-proof}.mjs` | 89 | Los entregó `S4.3` y los consume la recuperación de `S4.4`. **Depende de la auditoría exclusiva de P4** — si la recuperación se simplifica, cambian o salen. |
+| `hosts/{rehydration,stop-proof}.mjs` | 89 | **RESUELTO el 2026-08-21 por la auditoría exclusiva de P4: pasan al cajón B.** `stop-proof` vuelve falsificable la diferencia entre «perdí la vista» y «el agente murió», la distinción exacta de la decisión 40. Se conectan con `S4.4`. |
 | `policy/delivery-policy.mjs` | 79 | Impone `documentation_close`, `horizon_ceiling` y forma de entrega: **es verificación de proceso**. Candidato directo de la Fase 3, donde la verificación vuelve a gentle-ai. |
 | `hosts/launcher.mjs` | 30 | `S8.9` ya lo declaró inalcanzable por contrato y lo dejó fuera del payload sin borrarlo. ¿Se archiva? |
 
