@@ -32,6 +32,16 @@ Change B conserva responsabilidades posteriores a `S2.5` sin Sesiones enumeradas
 
 **Próxima acción:** enumerar una nueva Sesión sólo cuando las responsabilidades posteriores de Change B demuestren un límite de un PR.
 
+### Insumo nuevo — inventario de producto (2026-08-21)
+
+El [inventario de producto](../inventario-de-producto.md), entregado en `778ec55` bajo la [decisión 58](../decision-register.md), le da a P2 el criterio que le faltaba para decidir cuáles de esas responsabilidades son producto:
+
+- `registry/{store,path}.mjs` (203 líneas) queda en el **cajón B**: reclamado por `F1` del PRD y precondición de todo comando del vocabulario que nombra un agente, porque un agente se identifica dentro de un proyecto registrado. **Es producto y le falta consumidor.**
+- `registry/legacy-import.mjs` (135 líneas), que entregó `S2.5`, queda en el **cajón D — necesita decisión del maintainer**: es una migración de una sola vez y la pregunta abierta es si ya está cumplida y se archiva.
+- `registry/index.mjs` (3 líneas) es un barril: **cajón C, andamio**. Se conecta solo cuando se conecta `registry/store.mjs`.
+
+El ítem *«Change B: adapter Hermes read-only»* del [apéndice de migración](../plan-vocabulary-migration-appendix.md) fue retirado el mismo día por la decisión 57. **Sobreviven cuatro responsabilidades sin ID** —storage y actualización atómica, bootstrap/enrollment/revisionado, UX de alias y resolución inequívoca, y validación de root/common-dir/remote—, que se cruzan contra el vocabulario antes de enumerar cualquier Sesión. Ninguna cambia el estado ni el denominador de P2, que sigue sin denominador derivable.
+
 ### Contrato de ejecución — S2.5
 
 | Campo | Valor |
