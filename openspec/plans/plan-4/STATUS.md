@@ -586,3 +586,11 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 **Módulos y Tareas:** pendientes de enumerar.
 
 **Nota de orden.** Esta Sesión toca `install/runtime-payload.mjs`, que es territorio de `S8.10`. **Se ejecuta después de que `S8.10` cierre**, para no competir por el mismo contrato.
+
+## `S4.4` destrabada (2026-08-21)
+
+`S8.10` cerró e integró en `master@7b58ad8`, así que **la puerta semántica que mantenía a `S4.4` en 🔴 ya no aplica.** `S4.4` vuelve a **🟢 LISTO** y entra en la cola de ejecución, en la posición `#2` detrás de `S11.1`.
+
+**Su alcance no cambió**, y la auditoría exclusiva de P4 lo confirmó: la maquinaria de linaje y épocas es coherente con la cadena de lanzamiento mapeada, y `hosts/epoch-enforcement.mjs` ya viaja en el payload. **Lo que sí conviene tener presente al retomarla** es lo que la verificación final de `S8.10` encontró: `assertCurrentHost` construía la identidad de época por exclusión y `inspectIdentity` la rechazaba. Ese contrato exacto de cuatro campos —`project_id`, `assignment_ref`, `candidate_revision`, `host_epoch`— es el mismo que `S4.4` va a ejercer al publicar una raíz sucesora.
+
+**Recordatorio de prioridad de la auditoría.** `S4.4` resuelve *qué pasa cuando un agente muere*, y todavía no se puede *conducir a un agente vivo*: ése es el problema anterior y lo entrega `S11.1`. Por eso la cola la pone segunda y no primera.
