@@ -391,3 +391,52 @@ El grafo es acíclico. `S9.2`, `S9.3` y `S9.4` no dependen entre sí. **Actualiz
 ## Forecast de revisión
 
 Carga prevista alta, controlada por nueve resultados directos ≤400 para `S9.1`. `S9.2` mantiene forecast 340–395. `S9.3` no tiene forecast honesto hasta que el maintainer seleccione transporte, Área y Recurso. RDD, JD, 4R y native review permanecen OFF; este forecast no crea receipts ni gates.
+
+## Auditoría exclusiva de P9 — resultado (2026-08-21)
+
+Medida sobre `master@da893b9`. Punto de entrada: **cuánta maquinaria hace falta de verdad para reciclar un worktree.** Alcance completo. Ninguna Sesión cambia de estado por este registro; P9 permanece en 0% (0/4 S).
+
+### Hallazgo 1 — la escala no cierra, y un tercio de los Módulos no es código
+
+`jornada.sh:257-286` recicla un worktree en **28 líneas de bash** que funcionan hoy: exige `--nueva-rama`, aborta con `git status --porcelain` si el árbol está sucio, crea rama fresca con `git switch -c <nueva> <trunk> --no-track`, y sólo borra la rama vieja después de que `git cherry` pruebe que nada quedó sin mergear.
+
+`S9.1` proyecta **~1.900 líneas** en nueve Módulos, sumando los *forecast* declarados en este mismo documento. Y **tres de los nueve no entregan código**:
+
+| Módulo | Qué entrega | Líneas |
+|---|---|---|
+| `M9.1.1` | apaga `--reciclar` | 117 |
+| `M9.1.2`–`M9.1.6` | librería de lifecycle seguro | 920–1.205 |
+| **`M9.1.7`** | **documento** — RFC V2 | **240** |
+| **`M9.1.8`** | **documento** — requirements V2 | **240** |
+| **`M9.1.9`** | **documento** — manifest y guarda de procedencia | **160** |
+
+**640 líneas de documentación sobre el reciclado, dentro de una Sesión que existe para rotar la rama de una carpeta.** Es el patrón de ritmo ya medido —se documenta más del doble de lo que se construye— pero adentro de una sola Sesión.
+
+### Hallazgo 2 — la maquinaria defiende de un atacante que no existe acá
+
+`M9.1.3` exige por archivo la secuencia exacta `pre-lstat → open O_RDONLY|O_NOFOLLOW → fstat inmediato → digest → post-fstat → post-lstat`, más dos observaciones canónicas independientes RFC8785/JCS, matrices de precedencia de siete códigos y once arreglos `argv` exactos para `git`.
+
+`O_NOFOLLOW` y la doble observación defienden de **ataques de enlace simbólico y carreras TOCTOU**: alguien que sustituye un archivo entre que se lo mira y se lo abre. Eso exige **un atacante con el mismo usuario en la misma máquina** — quien llegó ahí ya tiene las claves SSH, el token de GitHub y el historial. Es la misma clase que `capabilities/registry.mjs` bajo la [decisión 59](../decision-register.md): maquinaria correcta y bien probada **para un modelo de amenaza que no es el de este proyecto**.
+
+**El riesgo real es otro y es más chico:** una carrera entre el maintainer y Main. El bash es manual y una persona no compite consigo misma; la invocación programática sí puede reciclar un asiento ocupado, o dos Main pueden tocar el mismo. **Ése es el hueco que justifica trabajo.**
+
+### Hallazgo 3 — lo valioso está último y bloqueado
+
+`S9.4` —el pool de asientos— no necesita romper ningún contrato, y este documento ya lo había verificado: `core.mjs:4328` identifica por **path** y nunca por rama, `schemas/assignment-v1.schema.json` ya separa `path`, `branch` y `base_sha`, `jornada.sh --reciclar` ya rota la rama, y `Worktrees/support-agent` ya es un asiento de nombre fijo vivo.
+
+Pero `S9.4` depende de `S9.1`, cuyo **primer Módulo apaga `--reciclar`** —el mecanismo del que `S9.4` depende— y `S9.3` después lo vuelve a encender. **La pieza más barata y más útil del Plan es la que está más lejos.**
+
+### Propuesta — P9 dado vuelta
+
+1. **Asientos primero.** Lo que hoy es `S9.4` pasa a ser lo primero. Usa `jornada.sh --reciclar` tal como está. Cero contratos rotos, cero código nuevo de seguridad.
+2. **`S9.1` se reduce a un solo resultado:** «no reciclar un asiento ocupado» — ocupación y lock exclusivo. Se descartan seguridad de descriptores, doble observación canónica y matrices de precedencia.
+3. **`S9.3` desaparece.** Existe para reencender lo que `M9.1.1` apagaba; sin apagado no hay reencendido.
+4. **Los tres Módulos de documentos quedan a decisión del maintainer.** Recomendación: no. La [decisión 58](../decision-register.md) ya movió la autoridad de alcance a `console/vocabulary.mjs` y la 60 dejó el inventario como mapa; un RFC V2 agrega un tercer documento que gobierna lo mismo.
+5. **`S9.2` se parte**, como ya estaba visto: «Pi root fresco» se va con Moshi, la caché externa de Bun sobrevive y es lo que abarata tener varios asientos.
+
+**Qué se gana:** de 4 Sesiones y 9 Módulos con cero entregado, a **2 Sesiones con resultado visible**. La seguridad que se descarta no protege de nada que le pase a este proyecto; la que queda protege de lo único que sí puede pasar.
+
+### Decisiones abiertas que esta auditoría deja al maintainer
+
+- **¿Sobreviven las 640 líneas de documentos de `M9.1.7`–`M9.1.9`?** Recomendación: no.
+- **El tamaño del pool.** Sigue siendo la única decisión que P9 arrastra desde el 2026-08-20. Recomendación: **tres** — uno planificando, uno implementando, uno libre para una urgencia.
