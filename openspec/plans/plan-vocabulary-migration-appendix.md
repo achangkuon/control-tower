@@ -83,7 +83,9 @@ Invariantes de reconciliación:
 - Change B: bootstrap, enrollment y revisionado.
 - Change B: UX de alias y resolución inequívoca.
 - Change B: validación de root, common-dir y remote.
-- Change B: adapter Hermes read-only.
+- ~~Change B: adapter Hermes read-only.~~ **Retirado el 2026-08-21 por la [decisión 57](decision-register.md).** Hermes era la mitad de origen del puente que `S8.7` archivó cuando Moshi superseció el transporte remoto; sin puente no hay adapter que escribir. No se reemplaza por otra responsabilidad.
+
+Las cuatro responsabilidades que sobreviven **siguen sin Sesiones enumeradas** y son candidatas de la Fase 1 del plan de depuración, donde se cruzan contra el vocabulario de comandos de `console/vocabulary.mjs` antes de decidir si alguna es producto.
 
 ## Plan 3
 
