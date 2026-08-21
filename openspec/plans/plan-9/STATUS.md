@@ -42,8 +42,8 @@ Las decisiones 49–54 del [registro](../decision-register.md) y las referencias
 | Orden aprobado | `S9.1 → S9.2 → S9.3`. `S9.4` está 🟡 DIFERIDO y no participa del orden activo. |
 | Avance canónico | 0% (0/4 S). Ninguna Sesión está ✅ COMPLETO. El denominador se mantiene en 4 bajo la regla de la [decisión 57](../decision-register.md): `S9.4` es diferido-con-intención y por lo tanto se conserva. |
 | Entrega | Commit directo a `master`, sin PR. Cada resultado independientemente verificable y revertible, ≤400 líneas authored. |
-| Próxima acción | Enumerar `Área`, `Recurso` y Módulos de `S9.1`, y responder el tamaño del pool. |
-| Decisión abierta | **Una sola:** el tamaño del pool de `S9.1`. Recomendación registrada: tres. |
+| Próxima acción | Enumerar `Área`, `Recurso` y Módulos de `S9.1`. No queda ninguna decisión que responder. |
+| Decisión abierta | **Ninguna.** El tamaño del pool quedó resuelto el 2026-08-21: **tres asientos**. P9 es decision-clean. |
 | Autoridad histórica | Engram 8478 rev8, 8506, 8645, 8646, 8647 rev2, 8894, 8898, 8950, 8955, 8908; decisiones 49–54 y 62. Los artefactos SDD de la vieja `S9.1` viven en `openspec/changes/s9-1-safe-slot-lifecycle/` y describen un alcance **superado**: se conservan como evidencia, no como autoridad de implementación. |
 
 ---
@@ -77,9 +77,11 @@ Las decisiones 49–54 del [registro](../decision-register.md) y las referencias
 4. **Main asigna.** Main consulta asientos libres y liga cada uno a una asignación con su rama y su `base_sha`.
 5. **Formato de rama:** `<tipo>/s<sesión>-<slug>` — por ejemplo `feat/s1.3-idempotent-delivery`, `audit/s2.1-lock-huerfano`.
 
-### Decisión abierta
+### Decisiones
 
-- `escala` — **el tamaño del pool.** **Clase:** expansión de alcance; dinero y cuotas, porque cada asiento cuesta una instalación de dependencias hasta que `S9.3` la abarate. **Recomendación registrada:** tres — uno planificando, uno implementando, uno libre para una urgencia. **Falsificable:** un pool que no pueda atender el patrón de trabajo real del maintainer sin crear asientos nuevos.
+- `escala` — **el tamaño del pool. RESUELTA por el maintainer el 2026-08-21: tres asientos.** **Clase:** expansión de alcance; dinero y cuotas, porque cada asiento cuesta una instalación de dependencias hasta que `S9.3` la abarate. **Resolución:** tres — uno planificando, uno implementando, uno libre para una urgencia. Cubre el patrón de trabajo real sin abrir un costo indefinido, y con la caché de `S9.3` el tercero es casi gratis. **Falsificable:** un pool de tres que no pueda atender el patrón real de trabajo sin crear asientos nuevos. **Contamina:** `S9.1` y el dimensionamiento de `S9.3`.
+
+**P9 queda decision-clean.** No resta ninguna decisión abierta en todo el Plan.
 
 ---
 
