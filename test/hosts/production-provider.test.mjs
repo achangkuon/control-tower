@@ -10,6 +10,8 @@ const gitAuthorityVariables = new Set([
   "GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY",
   "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_CEILING_DIRECTORIES", "GIT_DISCOVERY_ACROSS_FILESYSTEM",
   "GIT_PREFIX", "GIT_NAMESPACE", "GIT_SHALLOW_FILE", "GIT_QUARANTINE_PATH", "GIT_REPLACE_REF_BASE",
+  "GIT_CONFIG", "GIT_CONFIG_PARAMETERS", "GIT_CONFIG_COUNT", "GIT_IMPLICIT_WORK_TREE", "GIT_GRAFT_FILE",
+  "GIT_NO_REPLACE_OBJECTS",
 ])
 const isolatedEnvironment = () => Object.fromEntries(Object.entries(process.env).filter(([name]) => !gitAuthorityVariables.has(name)))
 
@@ -21,6 +23,13 @@ test("production provider rejects an unpackaged module before accepting caller l
       cwd: repository, env: environment, encoding: "utf8", timeout: 5_000, maxBuffer: 65_536,
     })
     expect({ status: initialized.status, signal: initialized.signal, stdout: initialized.stdout, stderr: initialized.stderr }).toEqual({ status: 0, signal: null, stdout: "", stderr: "" })
+
+    const declaredLocalVariables = spawnSync("git", ["rev-parse", "--local-env-vars"], {
+      cwd: repository, env: environment, encoding: "utf8", timeout: 5_000, maxBuffer: 65_536,
+    })
+    expect({ status: declaredLocalVariables.status, signal: declaredLocalVariables.signal, stderr: declaredLocalVariables.stderr }).toEqual({ status: 0, signal: null, stderr: "" })
+    const uncoveredLocalVariables = declaredLocalVariables.stdout.split(/\r?\n/).filter(Boolean).filter((name) => !gitAuthorityVariables.has(name))
+    expect(uncoveredLocalVariables).toEqual([])
 
     const moduleUrl = new URL("../../hosts/production-provider.mjs", import.meta.url).href
     const source = `
