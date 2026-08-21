@@ -290,3 +290,48 @@ CT_RUNTIME_PAYLOAD_INVALID: unexpected directory contracts
 1. La **tarea 0.4** del plan de depuración — el recálculo del denominador, que necesita las cifras `38/52` y P8 `7/11` que hoy sólo existen en el WIP.
 2. La reconciliación de **`master-index.md`** y **`release-chain.md`** con los IDs nuevos de P9.
 3. El registro de la **auditoría de P8** en `plan-8/STATUS.md`, hoy escrito en §10 de este documento por el mismo bloqueo.
+
+## 12. `S8.12` — Canal único de distribución · contrato en custodia
+
+**Tercera de las tres Sesiones que nacen de la reconciliación ([decisión 63](decision-register.md)).** Pertenece a **P8**, cuyo propósito —que la Torre se instale como producto— la cubre exactamente. **Se registra acá y no en `plan-8/STATUS.md`** porque ese archivo tiene cambios sin commitear de `S8.10`; se muda cuando ese candidato aterrice, sin cambiar una coma.
+
+**Estado:** 📋 PLANIFICADO
+**Depende de:** `S8.10` cerrada — toca el mismo contrato de payload.
+
+**Área:** `scripts/payload-closure.mjs`, `install/runtime-payload.mjs`, `install/lifecycle.mjs`, `install.sh`, `test/install/**`.
+**Prohibido:** `core.mjs`, `mcp.mjs`, `plugin/tower-spike.js` — esta Sesión decide **cómo viajan**, no los modifica.
+**Recurso:** contrato `RUNTIME_PAYLOAD_FILES` y el puntero de runtime activo.
+**Ruta:** `design-tasks`.
+
+**Resultado:** una sola ruta de instalación versionada entrega la Torre completa. El canal de agentes deja de depender de un script sin versionado, sin respaldo y sin puntero activo.
+
+### El problema, medido
+
+`install.sh` escribe con `jq` el bloque `.mcp["control-tower"]` en `opencode.json` y copia `plugin/tower-spike.js`. `install/lifecycle.mjs` **nunca lo escribe**: lo lee (línea 194), lo respalda (225) y en rollback lo restaura (252, `outcome: "legacy-restored"` en la 333). Y el payload **no puede incluirlo por contrato**: `scripts/payload-closure.mjs:7-10` declara cuatro raíces y ni `mcp.mjs` ni el plugin son una de ellas, con igualdad exacta de conjunto exigida.
+
+**Hoy, si `install.sh` queda viejo respecto del payload versionado, nadie lo detecta.**
+
+### La corrección que esta Sesión tiene que resolver, y que un resumen apresurado pasa por alto
+
+Agregar `mcp.mjs` y el plugin a las raíces pone los **bytes** en el almacén versionado. **Pero eso no los instala.** Alguien todavía tiene que escribir el bloque MCP en `opencode.json` —un archivo que pertenece a OpenCode, no a la Torre— y copiar el plugin a `~/.config/opencode/plugins/`. **Son dos trabajos distintos:**
+
+1. **Membresía del payload** — qué bytes viajan en la caja versionada.
+2. **Acción de instalación** — quién los enchufa al llegar, con respaldo y rollback, sobre un archivo de configuración ajeno.
+
+`install/lifecycle.mjs` hoy hace deliberadamente sólo la primera y trata la segunda como legado. **Una Sesión que resuelva sólo la membresía deja el producto igual de partido.**
+
+### Decisiones que esta Sesión debe declarar antes de implementar
+
+- `escala` — **si el producto sigue teniendo dos mitades o pasa a una.** **Clase:** contrato visible del producto; expansión de alcance. Unificar significa que `torre install` toque `opencode.json`, que es de otro producto — con su respaldo y su rollback. No unificar significa aceptar dos instaladores y **declararlo**, con una verificación que detecte la desalineación. **Ninguna de las dos la puede tomar un agente.**
+- `derivable` — **qué pasa si `opencode.json` no existe o no es de la Torre.** **Criterio:** falla cerrado y no lo crea. La Torre no inventa configuración de otro producto.
+
+### Criterios de aceptación
+
+- [ ] Una instalación limpia por una sola ruta deja la Torre **completa**: payload versionado y canal de agentes
+- [ ] El rollback revierte las dos mitades juntas o ninguna
+- [ ] Una desalineación entre el canal de agentes y el payload versionado **se detecta y se reporta**
+- [ ] `opencode.json` ausente, ajeno o ilegible falla cerrado, con respaldo previo intacto
+- [ ] `RUNTIME_PAYLOAD_FILES` conserva igualdad exacta de conjunto
+- [ ] `bun test` no introduce fallos nuevos; el diff no toca el `Prohibido`
+
+**Módulos y Tareas:** pendientes de enumerar, después de resolver la decisión que escala.

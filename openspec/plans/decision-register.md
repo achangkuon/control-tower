@@ -293,3 +293,19 @@ Los puntos 2 y 3 pertenecen a la auditoría exclusiva de P8, dueña del instalab
 **Falsificable:** una Sesión de P9 que entregue seguridad de descriptores, doble observación canónica o documentos de gobernanza; o cualquier ruta que apague `jornada.sh --reciclar`.
 
 **Clase resuelta:** expansión de alcance; contrato visible del producto. **Contamina:** `master-index.md` y `release-chain.md`, ambos pendientes de reconciliar por el bloqueo de `S8.10`; los artefactos SDD de `openspec/changes/s9-1-safe-slot-lifecycle/`, que quedan como evidencia histórica y **no** como autoridad de implementación.
+
+## Decisión 63 — reconciliación de Planes: los tres trabajos huérfanos consiguen dueño (2026-08-21)
+
+63. **Los tres trabajos que las auditorías exclusivas devolvieron sin Sesión dueña quedan enumerados.** Pregunta original: dónde vive cada uno, ahora que las tres auditorías cerraron. **Método:** se aplicó el test de pertenencia por propósito —la regla que el maintainer aportó para la Fase 4— preguntando de cada trabajo qué Plan lo cubre por lo que *es*, no por lo que contiene.
+
+**1 · El ejecutor de comandos y su superficie → Plan 11, nuevo.** Ningún Plan existente lo cubre: P4 lanza y vigila pero no comanda; P5, tras la Fase 3, será parking y coordinación y sólo cubre `CV_ANSWER`; P8 empaqueta; P9 son asientos. **La decisión 58 nombró a `console/vocabulary.mjs` autoridad de alcance del producto y ningún Plan reclamaba lo que ese archivo declara** — el defecto exacto que las auditorías encontraron. Nace **P11 — Interfaz de operador**, con propósito declarado: *que el maintainer pueda darle una orden a la Torre y ver su respuesta, con las garantías que el vocabulario ya declara.* Su única Sesión, `S11.1`, entrega **ejecutor y superficie juntos**, porque la regla de consumidor real de la Fase 4 hace que un ejecutor sin superficie reproduzca la misma brecha que viene a cerrar.
+
+**2 · El retiro del adaptador de `S4.2` y del fijado de Herdr → `S4.6`, en P4.** El propósito de P4 —que se pueda abrir una sesión y saber de qué depende— cubre exactamente sacar una dependencia externa del camino. Es **un solo trabajo** porque `install/lifecycle.mjs:20` declara como capacidades de Herdr las tres del adaptador de `S4.2`, mientras que las que la vista usa no las verifica: retirar el adaptador y soltar la comparación literal contra `"herdr 0.8.0\n"` tocan la misma declaración. **Se ejecuta después de `S8.10`**, porque toca `install/runtime-payload.mjs`.
+
+**3 · El canal de distribución → `S8.12`, en P8.** Su contrato completo queda en custodia en el §12 del [inventario](inventario-de-producto.md) y se muda a `plan-8/STATUS.md` sin cambios cuando el candidato de `S8.10` aterrice y libere ese archivo. **Corrección importante que la Sesión debe respetar:** agregar `mcp.mjs` y el plugin a las raíces del cierre pone los **bytes** en el almacén versionado, pero **no los instala**. Escribir el bloque MCP en `opencode.json` —un archivo que pertenece a OpenCode— y copiar el plugin son **acciones de instalación**, no membresía del payload. Una Sesión que resuelva sólo la membresía deja el producto igual de partido. `S8.12` conserva **una decisión que escala y es del maintainer**: si el producto sigue teniendo dos mitades o pasa a una.
+
+**Efecto sobre el avance.** P11 suma `0/1 S`. P4 pasa a `4/6 S`. Ninguna Sesión existente cambia de estado. **El `master-index` no se reconcilia en esta pasada** por el mismo bloqueo de `S8.10` que traba la tarea 0.4.
+
+**Falsificable:** un trabajo identificado por las auditorías que siga sin Plan dueño; o una Sesión de cableado que no pueda nombrar el comando del vocabulario que la justifica.
+
+**Clase resuelta:** expansión de alcance; contrato visible del producto. **Contamina:** P4, P8, P11, el `master-index` y `release-chain`.
