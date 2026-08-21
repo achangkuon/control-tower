@@ -331,3 +331,28 @@ La deriva histórica de 11 commits observada el 2026-08-10 quedó cerrada en su 
 Cobertura de pruebas por módulo, rendimiento, y el grado de conformidad contra los Gates A–G de REQUIREMENTS. Esa evidencia es el output de `S7.1` y todavía no existe.
 
 Tampoco mide qué parte del loop autónomo está resuelta fuera del repositorio, en las skills que ya operan en producción. Esa comparación es una decisión de producto pendiente, no una medición de código.
+
+## Reconciliación de worktrees — 2026-08-21
+
+Tras integrar `S8.10` y cerrar la Fase 2 del plan de depuración en `master@526d7bd`, se actualizaron **los worktrees que se podían reconciliar sin riesgo**: árbol limpio y `HEAD` ancestro de `master`, es decir un fast-forward sin pérdida.
+
+| Worktree | Rama | Estado |
+|---|---|---|
+| `Main` | `master` | ✅ `526d7bd` — suite verificada: **863 pass / 13 todo / 0 fail** |
+| `implementation-slot` | `feat/plan-4/s4-4-host-recovery-final` | ✅ `526d7bd` |
+| `support-agent` | `support/read-only-20260813` | ✅ `526d7bd` |
+
+**Seis worktrees quedaron intactos a propósito**, porque tienen trabajo sin commitear de otras sesiones. Actualizarlos habría arrastrado o pisado cambios que no son de esta sesión, y varios de esos archivos sueltos son los mismos que esta sesión modificó:
+
+| Worktree | Rama | Sueltos |
+|---|---|---|
+| `s5-9` | `fix/s4.4-host-recovery-epoch` | 11 |
+| `s5-5` | `feat/plan-5/s5-5-parking-resume` | 9 |
+| `s5-13-main-policy-evidence` | `feat/plan-5/s5-13-main-policy-evidence` | 5 |
+| `s10-2-integration` | `feat/s8.11-shared-dependency-environment` | 2 · diverge |
+| `s8-11-fixture-rewrite` | `fix/s8.11-fixture-helper-rewrite` | 2 · diverge |
+| `s9-1-planning` | `chore/support-off-tower-bootstrap` | 1 |
+
+**Cada uno lo reconcilia su propia sesión**, después de commitear o descartar lo suyo. Dos de ellos —`s10-2-integration` y `s8-11-fixture-rewrite`— además **divergen** de `master`: su `HEAD` no es ancestro, así que necesitan rebase o merge explícito, no fast-forward.
+
+**Nota para quien retome `s5-9`**: esa rama es `fix/s4.4-host-recovery-epoch`, y `S4.4` **se destrabó** al integrar `S8.10`. Conviene revisar si su trabajo sigue vigente contra el contrato exacto de cuatro campos de `inspectIdentity` que la verificación final dejó documentado en [plan-8](plan-8/STATUS.md).
