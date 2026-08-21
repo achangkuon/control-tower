@@ -914,3 +914,13 @@ La [decisión 60](../decision-register.md), entregada en `master@8a75be0`, encon
 **Qué NO cambia.** `S5.5` sigue 🟢 LISTO y su contrato, `Área`, `Prohibido` y criterios de aceptación permanecen intactos. La decisión 60 **no la reabre ni la expande**: registra que su resultado tiene un consumidor declarado esperándolo, lo cual es evidencia a favor de su alcance actual, no una razón para tocarlo.
 
 **Orden preservado.** `S5.5` no arranca antes de la Fase 3 del plan de depuración, donde se reescribe el objetivo de P5 para sacarle la verificación que pertenece a gentle-ai. Arrancarla antes sería construir sobre un objetivo de Plan que ya sabemos mal escrito. La decisión 60 no altera ese orden.
+
+## Insumo de la reconciliación de Planes (2026-08-21)
+
+La [decisión 63](../decision-register.md) cerró la Fase 2 del plan de depuración dándole dueño a los tres trabajos que las auditorías habían dejado huérfanos. **Dos de ellos afectan a P5 sin cambiar el estado de ninguna de sus Sesiones.**
+
+**`S5.5` ya tiene su ejecutor con dueño.** El comando `CV_ANSWER` —que es literalmente lo que `S5.5` entrega— necesita un ejecutor que traduzca un comando validado en una directiva, y eso quedó enumerado como **`S11.1`** en el Plan 11 nuevo. `S5.5` **no** absorbe ese trabajo: entrega el parking y la retoma, y `S11.1` le da la superficie por donde el maintainer responde. Son dos Sesiones con dos resultados, no una.
+
+**El propósito de P5 sigue pendiente de reescribir.** Es la Fase 3 del plan de depuración, y su candidato ya está identificado: `policy/delivery-policy.mjs` impone `documentation_close`, `horizon_ceiling` y forma de entrega, es decir **verificación de proceso** — lo mismo que gentle-ai ya gobierna, contra la [decisión 59](../decision-register.md). Hasta que esa reescritura ocurra, `S5.5` no arranca: hacerlo sería construir sobre un objetivo de Plan que ya sabemos mal escrito.
+
+**Estado de P5 tras la reconciliación:** sin cambios. 92% (11/12 S), con `S5.5` 🟢 LISTO.
