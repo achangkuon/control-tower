@@ -90,8 +90,8 @@ falsificable.
 
 ### Tres correcciones al corte que traía el plan de vuelo
 
-El artefacto nombró dos candidatos. **Uno de los dos no sobrevive a la medición, el otro
-tampoco, y el caso más claro de todos no estaba nombrado.** Vale la pena registrarlo porque
+El artefacto nombró dos candidatos. **La medición los absuelve a los dos —se quedan— y el
+caso más claro de todos no estaba nombrado.** Vale la pena registrarlo porque
 es exactamente el defecto que esta fase corrige: clasificar por el nombre del archivo en vez
 de por lo que el código hace.
 
