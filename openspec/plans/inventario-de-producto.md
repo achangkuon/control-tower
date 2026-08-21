@@ -72,7 +72,7 @@ infraestructura y el D **requiere una decisión del maintainer** y no se deriva.
 | `delivery/{workflow,pull-request-adapter,git-adapter,reconciliation,ledger}.mjs` | 356 | `CV_MERGE_MAIN`, `CV_GRANT_DELIVERY`, `CV_HOLD_DELIVERY`, `CV_STOP_DELIVERY` |
 | `hosts/{inspect,health}.mjs` | 133 | `CV_INSPECT` |
 
-### B · Reclamado por una capacidad declarada — 11 archivos, 940 líneas
+### B · Reclamado por una capacidad declarada — 12 archivos, 1.075 líneas
 
 | Módulo | Líneas | Quién lo reclama |
 |---|---|---|
@@ -83,6 +83,7 @@ infraestructura y el D **requiere una decisión del maintainer** y no se deriva.
 | `jornada/execution-contract.mjs` | 122 | `S10.3` — contrato de ejecución versionado |
 | `continuation/{derivation,integrated-base}.mjs` | 106 | `S5.3`, `F4` — continuación entre agentes |
 | `policy/jornada.mjs` | 39 | `F3` — límites de jornada; precondición de `CV_GRANT_DELIVERY` |
+| `registry/legacy-import.mjs` | 135 | detector de colisiones del enrolamiento — ver la corrección al final de §3 |
 
 ### C · Andamio interno — 5 archivos, 108 líneas
 
@@ -90,15 +91,24 @@ infraestructura y el D **requiere una decisión del maintainer** y no se deriva.
 `registry/index.mjs` (6, barriles). No son superficie: existen para que A y B funcionen. Se
 conectan solos cuando se conecta lo que los usa.
 
-### D · Necesita tu decisión — 6 archivos, 508 líneas
+### D · Necesita tu decisión — 5 archivos, 373 líneas
 
 | Módulo | Líneas | La pregunta |
 |---|---|---|
-| `capabilities/registry.mjs` | 175 | Ningún comando lo nombra. `S3.3` fijó que da visibilidad y compatibilidad de invocación, **nunca autoridad**. ¿Es producto o andamio de composición? |
-| `registry/legacy-import.mjs` | 135 | Import de proyectos legacy que entregó `S2.5`. Es una migración de una sola vez. ¿Ya está cumplida y se archiva? |
+| `capabilities/registry.mjs` | 175 | Ningún comando lo nombra y **no tiene consumidor de producción**. `S3.3` fijó que da visibilidad y compatibilidad de invocación, nunca autoridad. **Resuelto el 2026-08-21: se archiva** ([decisión 59](decision-register.md)) — pero no es gratis, ver la nota de abajo. |
 | `hosts/{rehydration,stop-proof}.mjs` | 89 | Los entregó `S4.3` y los consume la recuperación de `S4.4`. **Depende de la auditoría exclusiva de P4** — si la recuperación se simplifica, cambian o salen. |
 | `policy/delivery-policy.mjs` | 79 | Impone `documentation_close`, `horizon_ceiling` y forma de entrega: **es verificación de proceso**. Candidato directo de la Fase 3, donde la verificación vuelve a gentle-ai. |
 | `hosts/launcher.mjs` | 30 | `S8.9` ya lo declaró inalcanzable por contrato y lo dejó fuera del payload sin borrarlo. ¿Se archiva? |
+
+**Costo real de archivar `capabilities/registry.mjs`.** No tiene consumidor de producción y `jornada/lifecycle.mjs` no contiene **una sola línea** de capability, así que ningún módulo distribuido pierde comportamiento propio. Pero dos tests de módulos que sí se distribuyen lo usan: `test/plugin/tower-spike.test.mjs` (13 referencias) lo construye en su `setup()` compartido **y usa el archivo del registro como uno de los dos testigos de no-mutación de `canonicalSnapshot`**, junto con la base de datos; y `test/jornada/lifecycle.test.mjs` (14 referencias) prueba que revocar una Jornada invalida pasivamente una capacidad — comportamiento que vive en el registry, no en el lifecycle. **Archivarlo exige cirugía en esos dos tests y debilita un testigo del plugin.** Es un cambio de código acotado, no un movimiento documental.
+
+### Corrección del 2026-08-21 — `registry/legacy-import.mjs` no pertenece al cajón D
+
+**Clasificado mal en la primera pasada, por nombre e historia en vez de por consumidor.** El archivo no importa proyectos legacy: es **el detector de colisiones del enrolamiento**. `enroll/index.mjs:126` llama a `preflightLegacyImport` con **un solo registro** —el proyecto que se está enrolando— y falla con `CT_ENROLLMENT_CONFLICT` si detecta ID duplicado, alias repetido, raíz canónica repetida, `git_common_dir` repetido o `main_store_path` repetido, antes de escribir en el registro. Nunca escribe: `authoritative_writes` vale `0` en todo el archivo.
+
+**Pasa al cajón B**, junto a `enroll/index.mjs` y `registry/{store,path}.mjs`: es huérfano por cadena, no por muerte —sólo se lo alcanza a través de `enroll/`, que tampoco tiene llamador—, y se conecta cuando se conecte el enrolamiento. **El nombre es engañoso y conviene renombrarlo** cuando esa Sesión se enumere.
+
+Con esta corrección el cajón B pasa a **12 archivos y 1.075 líneas**, y el cajón D a **5 archivos y 373 líneas**.
 
 ## 4. Qué mide y qué no mide este documento
 
