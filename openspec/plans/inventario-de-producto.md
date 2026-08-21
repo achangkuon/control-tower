@@ -187,3 +187,17 @@ El cerebro ya está: `console/validate.mjs` valida el comando contra el vocabula
 `workspace/` no aparece en los cajones de §3 porque **es alcanzable** por el canal del plugin —`plugin/tower-spike.js` → `main-store/store.mjs` → `workspace/{checkpoint,reconciliation}.mjs`—. La auditoría de P9 no cambia eso.
 
 Lo que sí registra es un patrón que se repite y conviene mirar en la auditoría de P8: **`M9.1.3` de `S9.1` propone seguridad de descriptores contra ataques de enlace simbólico y carreras TOCTOU**, que exigen un atacante con el mismo usuario en la misma máquina. Es la misma clase de sobrealcance que la [decisión 59](decision-register.md) resolvió para `capabilities/registry.mjs`: maquinaria correcta para un modelo de amenaza ajeno al proyecto. **Al auditar P8 conviene revisar si el instalable arrastra el mismo criterio**, porque el fijado de ejecutables por bytes vía `/proc/self/fd/3` sí es una garantía de seguridad legítima y no debe confundirse con este caso.
+
+## 9. Nota de renumeración de P9 (2026-08-21)
+
+La [decisión 62](decision-register.md) recortó y reordenó P9 **renumerando los IDs**, porque el estándar los define como posicionales. Toda referencia a `S9.x` anterior al 2026-08-21 usa la numeración vieja; la tabla de migración vive en [`plan-9/STATUS.md`](plan-9/STATUS.md) y la historia del registro de decisiones **no se reescribe**.
+
+| Antes | Ahora |
+|---|---|
+| `S9.4` pool de asientos | **`S9.1`** |
+| `S9.1` lifecycle seguro | **`S9.2`**, reducida a un solo resultado |
+| `S9.2` mitad caché de Bun | **`S9.3`** |
+| `S9.2` mitad launcher Pi | **`S9.4`**, 🟡 DIFERIDO |
+| `S9.3` reciclaje externo | **eliminada** |
+
+**Corrección que afecta a este inventario:** la mitad Pi **no muere con Moshi**. `hosts/pi-launcher.mjs` es un host de ejecución, no un transporte, y se difiere bajo el mismo criterio que `S1.17`–`S1.19`. Moshi reemplaza transporte remoto, no hosts.
