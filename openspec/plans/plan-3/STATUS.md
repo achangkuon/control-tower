@@ -455,3 +455,18 @@ El 2026-08-11 se enumeraron provisionalmente dos responsabilidades como `S3.5` y
 mientras se escalaba su ubicación. El maintainer resolvió abrir un Plan nuevo: esos contratos
 migraron a [`P10`, como `S10.1` y `S10.2`](../plan-10/STATUS.md). La ubicación provisional no
 reabre este Plan ni altera su historia de cierre: **P3 permanece ✅ COMPLETO · 100% (4/4 S)**.
+
+## Retiro del registro de capacidades — `S3.3` no cambia de estado (2026-08-21)
+
+**Resuelto por la [decisión 59](../decision-register.md):** `capabilities/registry.mjs` —los 175 líneas que entregó `S3.3`— **se archiva**. Ningún comando de `console/vocabulary.mjs`, la autoridad de alcance fijada por la [decisión 58](../decision-register.md), lo nombra, y no tiene consumidor de producción.
+
+**La razón, escrita con precisión para que no se cite mal.** El módulo no persiste sesiones —eso ya lo hacen Herdr y OpenCode— sino que arbitra **compatibilidad de invocación**: qué rol de agente puede invocar qué capacidad, con qué esquemas, dentro de qué Jornada y hasta cuándo. Sobra por una razón más simple: **hoy todos los agentes del maintainer son el mismo perfil de gentle-ai orchestrator**, así que no existe la heterogeneidad que el registro existe para arbitrar. Vuelve de su rama si algún día conviven agentes con capacidades distintas — el host Pi de `S1.18` es el caso previsto.
+
+**Costo registrado, porque no es un movimiento documental.** Dos tests de módulos que sí se distribuyen lo construyen:
+
+- `test/plugin/tower-spike.test.mjs` (13 referencias) lo arma en su `setup()` compartido **y usa el archivo del registro como uno de los dos testigos de no-mutación de `canonicalSnapshot`**, junto con la base de datos. Retirarlo debilita esa aserción del plugin.
+- `test/jornada/lifecycle.test.mjs` (14 referencias) prueba que revocar una Jornada invalida pasivamente una capacidad. Ese comportamiento vive en el registry: `jornada/lifecycle.mjs` **no contiene una sola línea** de capability, así que ningún módulo distribuido pierde comportamiento propio.
+
+**`S3.3` permanece ✅ COMPLETO y P3 sigue en 100% (4/4 S).** La Sesión entregó lo que su contrato pedía y fue verificada; el retiro es una decisión de alcance posterior, no una invalidación de su cierre. El límite duro que `S3.3` fijó —el registro otorga visibilidad y compatibilidad de invocación, **nunca autoridad**— se conserva como precedente: es la razón por la que ninguna Sesión posterior pudo derivar autoridad de una entrada del registro.
+
+El esquema `schemas/agent-capability-registry-v1.schema.json` y su entrada en `contracts/schema-registry.mjs` **no se retiran en esta pasada**: pertenecen al contrato de payload que `S8.10` está cerrando, y esta sesión no toca trabajo en implementación.
