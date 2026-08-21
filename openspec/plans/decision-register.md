@@ -237,3 +237,25 @@ Esta regla generaliza la decisión de alcance sobre P5 —donde la Torre estaba 
 **`registry/legacy-import.mjs` NO se archiva — corrección de la clasificación previa.** Se lo había puesto en el cajón D como «migración de una sola vez ya cumplida», clasificado **por nombre e historia en vez de por consumidor**. La medición lo desmiente: `enroll/index.mjs:126` llama a `preflightLegacyImport` con **un solo registro** —el proyecto que se está enrolando— y falla con `CT_ENROLLMENT_CONFLICT` ante ID, alias, raíz canónica, `git_common_dir` o `main_store_path` duplicados, antes de escribir. **Es el detector de colisiones del enrolamiento**, no un importador; `authoritative_writes` vale `0` en todo el archivo. Pasa al cajón B junto a `enroll/index.mjs`: es huérfano por cadena, no por muerte. **Conviene renombrarlo** cuando se enumere la Sesión de enrolamiento, porque el nombre actual induce exactamente el error que se cometió acá.
 
 **Clase resuelta:** contrato visible del producto; expansión de alcance. **Contamina:** P3 —dueño de `S3.3`, que entregó el registro de capacidades—, P2, P8, y las cuatro reglas del arreglo estructural de la Fase 4.
+
+## Decisión 60 — el cableado se resuelve con una columna vertebral, no módulo por módulo (2026-08-21)
+
+60. **La brecha de cableado no son 34 trabajos: es una pieza faltante de la que cuelga todo lo demás.** Pregunta original: cómo se conectan al producto los módulos construidos, probados y sin llamador que la auditoría del 2026-08-21 encontró. **Evidencia medida sobre `master@11fa50f`:** el camino de comando del operador está escrito hasta la mitad y nadie lo llama.
+
+**Lo que ya existe y funciona.** `console/vocabulary.mjs` declara los trece comandos. `console/validate.mjs` es su cerebro y está completo: `validateProposal({ verb, tower_id, params }, context)` resuelve el **agente destino**, verifica que su estado esté entre los legales del verbo, deriva el agente desde la escalación abierta para `CV_ANSWER`, exige Torre activa salvo para los dos comandos de lectura, aplica los casos especiales de `CV_RUN_TESTS` —exige worktree— y `CV_MERGE_MAIN` —el PR debe coincidir—, y para los comandos `R2` devuelve `CV_CONFIRMATION_REQUIRED` con la lista de evidencia y un TTL, rechazando si ya hay otra confirmación pendiente. Tiene 16 tests en verde con 168 aserciones. Las primitivas también existen en `core.mjs`: `setState`, `acquire`, `release`, `transfer`, `send`, `status`.
+
+**Lo que falta, en orden de dependencia.**
+
+1. **El verbo que no existe.** Una vía autorizada para actuar sobre **otro** agente. `core.mjs:4418` define `setState({ db, place }, …)`: el sujeto es `place`, la identidad derivada del directorio de trabajo, y no hay parámetro `agent`. Sin esto, un comando validado no tiene a qué llamar. **Es el eslabón cero y pertenece a la auditoría exclusiva de P4**, cuya pregunta de entrada ya declarada es exactamente ésta.
+2. **El ejecutor.** Traduce un `{ ok: true, command }` validado en llamadas a las primitivas. **No existe ni una línea.** Es la pieza genuinamente nueva.
+3. **La superficie.** Los comandos tipeables en `bin/torre`. Hoy expone ocho y **ninguno pertenece al vocabulario**.
+
+Los puntos 2 y 3 pertenecen a la auditoría exclusiva de P8, dueña del instalable y del cableado.
+
+**Consecuencia sobre el tamaño del problema.** Los 24 módulos de los cajones A y B del [inventario](inventario-de-producto.md) —2.013 líneas— se conectan **como consumidores de esa columna**, en el orden en que cada comando importe, y no uno por uno. El cajón C viene detrás solo. La brecha 6 deja de leerse como «el 44% del código sin dueño» y pasa a leerse como «falta una columna vertebral», que sí cabe en un Plan.
+
+**Falsificable:** cualquier Sesión de cableado que enchufe un módulo huérfano sin pasar por un comando del vocabulario; o cualquier declaración de que la brecha se cerró mientras un verbo del vocabulario siga sin ejecutor.
+
+**No se enumera todavía, y es deliberado.** Enumerar antes de las tres auditorías exclusivas repetiría el defecto que este registro viene corrigiendo: planificar sobre una intención en vez de sobre evidencia medida. La reconciliación de los Planes activos ocurre **después** de las auditorías, y esta decisión es su insumo.
+
+**Clase resuelta:** contrato visible del producto; API pública; expansión de alcance. **Contamina:** P4, P8, P5 —dueño de `S5.5`, que es el primer consumidor de `CV_ANSWER`—, P2 y P3.

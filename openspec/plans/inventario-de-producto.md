@@ -124,3 +124,32 @@ excelente —de hecho la mayoría lo son, y ése es exactamente el problema.
 
 **No reemplaza** al [master-index](master-index.md), que mide planificación, ni a
 [implementation-state](implementation-state.md), que narra el estado del código.
+
+## 5. Cómo se conectan — orden de conexión, no lista de tareas
+
+**La solución del cableado está en la [decisión 60](decision-register.md): falta una columna vertebral, y estos módulos cuelgan de ella.** No son 34 trabajos independientes. Ninguno se enchufa solo: cada uno entra al producto **porque un comando del vocabulario lo necesita**.
+
+**Prerrequisito único, en orden de dependencia:**
+
+1. **El verbo faltante** — una vía autorizada para actuar sobre otro agente. `core.mjs:4418`, `setState` toma `place` y no `agent`. Sin esto ningún comando validado tiene a qué llamar. Materia de la auditoría de **P4**.
+2. **El ejecutor** — traduce un comando validado en llamadas a primitivas. No existe. Materia de **P8**.
+3. **La superficie** — los verbos tipeables en `bin/torre`. Materia de **P8**.
+
+El cerebro ya está: `console/validate.mjs` valida el comando contra el vocabulario, resuelve el agente destino, verifica su estado y exige confirmación con evidencia para los dos comandos irreversibles. 16 tests en verde.
+
+**Orden de conexión, derivado de qué comando trae qué módulo:**
+
+| Entra… | …cuando exista | Líneas | Cajón |
+|---|---|---|---|
+| `registry/{store,path}.mjs` + `enroll/index.mjs` + `registry/legacy-import.mjs` | cualquier comando — todos nombran un agente dentro de un proyecto registrado | 479 | B |
+| `hosts/{inspect,health}.mjs` | `CV_INSPECT` | 133 | A |
+| `escalation/{request,routing,parking-composition}.mjs` | `CV_ANSWER` — primer consumidor: `S5.5` | 274 | A |
+| `policy/jornada.mjs` | `CV_GRANT_DELIVERY`, que debe respetar los límites de la Jornada | 39 | B |
+| `delivery/{workflow,pull-request-adapter,git-adapter,reconciliation,ledger}.mjs` | `CV_GRANT_DELIVERY`, `CV_HOLD_DELIVERY`, `CV_STOP_DELIVERY`, `CV_MERGE_MAIN` | 356 | A |
+| `console/{vocabulary,validate}.mjs` | el ejecutor mismo — es su entrada | 175 | A |
+| `support/**`, `supervision/state.mjs`, `jornada/execution-contract.mjs`, `continuation/**` | capacidades declaradas de P8, P10 y P5, no comandos de operador | 557 | B |
+| `contracts/**` y barriles | detrás de lo que los usa, sin trabajo propio | 108 | C |
+
+**Regla que se deriva de este orden.** Ninguna Sesión de cableado enchufa un módulo «porque está suelto». Enchufa **un comando**, y el módulo entra con él. Una Sesión que no pueda nombrar el comando que la justifica está reintroduciendo el defecto que este inventario existe para cerrar.
+
+**Los 373 líneas del cajón D quedan fuera de este orden** porque su destino no depende del ejecutor sino de decisiones ya asignadas: `capabilities/registry.mjs` se archiva dentro de la auditoría de P8, `hosts/{rehydration,stop-proof}.mjs` dependen de la de P4, `policy/delivery-policy.mjs` es candidato de la Fase 3 y `hosts/launcher.mjs` espera su archivado.
