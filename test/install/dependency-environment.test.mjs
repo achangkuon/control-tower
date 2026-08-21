@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { chmodSync, linkSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
+import { chmodSync, closeSync, fsyncSync, lstatSync, linkSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, readlinkSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { createHash } from "node:crypto"
@@ -7,6 +7,8 @@ import { createServer } from "node:net"
 import { dependencyEnvironmentRetention, materializeDependencyEnvironment } from "../../install/dependency-environment.mjs"
 
 const roots = [], temp = () => { const path = mkdtempSync(join(tmpdir(), "ct-deps-")); roots.push(path); return path }
+const mode = (path) => lstatSync(path).mode & 0o777
+const unlock = (path) => { const info = lstatSync(path); if (info.isSymbolicLink()) return; if (info.isDirectory()) { chmodSync(path, 0o700); for (const name of readdirSync(path)) unlock(join(path, name)) } else chmodSync(path, 0o600) }
 const json = (value) => Buffer.from(JSON.stringify(value)), sha = (value) => createHash("sha256").update(value).digest("hex")
 const lock = (packages = { a: ["a@1.0.0", "", {}] }) => json({ lockfileVersion: 1, workspaces: { "": { dependencies: { a: "1.0.0" } } }, packages })
 const source = (root, name = "a", version = "1.0.0") => { const path = join(root, `${name}@${version}`); mkdirSync(path, { recursive: true }); writeFileSync(join(path, "package.json"), JSON.stringify({ name, version })); writeFileSync(join(path, "index.js"), "export default 1\n"); return path }
@@ -23,7 +25,7 @@ const setup = (options = {}) => {
   const adapters = { discover: async () => entries, run, ...options.adapters }; if (options.defaultDiscover) delete adapters.discover
   return { input: { dataRoot, packageBytes, lockBytes, bun: { version: "1.3.14", bytes: Buffer.from("bun"), path: "/exact/bun" }, host: { os: "linux", cpu: "x64" } }, adapters, calls: () => calls, root, cache }
 }
-afterEach(() => roots.splice(0).forEach((root) => rmSync(root, { recursive: true, force: true })))
+afterEach(() => roots.splice(0).forEach((root) => { unlock(root); rmSync(root, { recursive: true, force: true }) }))
 const code = async (promise) => { try { await promise; return "NO_ERROR" } catch (error) { return error.code ?? error.message } }
 
 describe("dependency environment owner", () => {
@@ -31,6 +33,31 @@ describe("dependency environment owner", () => {
     const f = setup(), result = await materializeDependencyEnvironment(f.input, f.adapters)
     expect(result.created).toBe(true); expect(result.digest).toBe(sha(f.input.lockBytes)); expect(result.metadata.packageDigest).toBe(sha(f.input.packageBytes)); expect(result.metadata.bun).toEqual({ version: "1.3.14", digest: sha(Buffer.from("bun")) })
     expect(result.metadata.host).toEqual({ os: "linux", cpu: "x64" }); expect(result.metadata.topology).toEqual([{ name: "a", version: "1.0.0" }]); expect(readFileSync(join(result.path, "metadata.json"), "utf8")).toBe(`${JSON.stringify(result.metadata)}\n`)
+  })
+
+  test("publishes final owner-read-only modes and attests executable state", async () => {
+    const f = setup({ run: async ({ cwd }) => {
+      const pkg = join(cwd, "node_modules/a"), bin = join(pkg, ".bin"); mkdirSync(bin, { recursive: true })
+      writeFileSync(join(pkg, "package.json"), JSON.stringify({ name: "a", version: "1.0.0" })); writeFileSync(join(pkg, "index.js"), "plain\n"); writeFileSync(join(pkg, "cli.js"), "#!/bin/sh\n", { mode: 0o755 }); symlinkSync("../cli.js", join(bin, "a")); return { exitCode: 0 }
+    } })
+    const result = await materializeDependencyEnvironment(f.input, f.adapters), modules = join(result.path, "node_modules"), pkg = join(modules, "a")
+    for (const path of [result.path, modules, pkg, join(pkg, ".bin")]) expect(mode(path)).toBe(0o500)
+    for (const path of [join(result.path, "metadata.json"), join(pkg, "package.json"), join(pkg, "index.js")]) expect(mode(path)).toBe(0o400)
+    expect(mode(join(pkg, "cli.js"))).toBe(0o500); expect(lstatSync(join(pkg, ".bin/a")).isSymbolicLink()).toBe(true); expect(readlinkSync(join(pkg, ".bin/a"))).toBe("../cli.js")
+    chmodSync(join(pkg, "index.js"), 0o600)
+    expect(await code(materializeDependencyEnvironment(f.input, f.adapters))).toBe("CT_DEPENDENCY_ENV_IMMUTABLE")
+  })
+
+  test("fsyncs the parent after rename and cleans only its private failed temporary", async () => {
+    const events = [], f = setup({ adapters: {
+      rename: (from, to) => { renameSync(from, to); events.push("rename") },
+      syncParent: (path) => { const fd = openSync(path, "r"); fsyncSync(fd); closeSync(fd); events.push("sync-parent") },
+    } })
+    await materializeDependencyEnvironment(f.input, f.adapters); expect(events).toEqual(["rename", "sync-parent"])
+    const failed = setup({ adapters: { rename: () => { const error = new Error("rename failed"); error.code = "EIO"; throw error } } }), parent = join(failed.input.dataRoot, "dependency-environments"), sentinel = join(parent, "sentinel")
+    mkdirSync(sentinel, { recursive: true }); writeFileSync(join(sentinel, "keep"), "keep")
+    expect(await code(materializeDependencyEnvironment(failed.input, failed.adapters))).toBe("CT_DEPENDENCY_ENV_INVALID")
+    expect(readFileSync(join(sentinel, "keep"), "utf8")).toBe("keep"); expect(readdirSync(parent).filter((name) => name.startsWith(".tmp-"))).toEqual([])
   })
 
   test("allows an absent optional only when the lock excludes this host", async () => {
@@ -97,7 +124,7 @@ describe("dependency environment owner", () => {
 
   test("reuses valid environments, converges publishers, and rejects changed attestations", async () => {
     const f = setup(), [left, right] = await Promise.all([materializeDependencyEnvironment(f.input, f.adapters), materializeDependencyEnvironment(f.input, f.adapters)])
-    expect([left.created, right.created].sort()).toEqual([false, true]); expect(left.metadata.treeDigest).toBe(right.metadata.treeDigest)
+    expect([left.created, right.created].sort()).toEqual([false, true]); expect(left.metadata.treeDigest).toBe(right.metadata.treeDigest); expect(readdirSync(join(f.input.dataRoot, "dependency-environments")).some((name) => name.startsWith(".tmp-"))).toBe(false)
     const reused = await materializeDependencyEnvironment(f.input, { ...f.adapters, discover: async () => { throw new Error("copied twice") }, run: async () => { throw new Error("ran twice") } }); expect(reused.created).toBe(false); expect(f.calls()).toBe(2)
     chmodSync(join(reused.path, "metadata.json"), 0o600); const changed = { ...reused.metadata, sources: [{ ...reused.metadata.sources[0], digest: "0".repeat(64) }] }; writeFileSync(join(reused.path, "metadata.json"), `${JSON.stringify(changed)}\n`)
     expect(await code(materializeDependencyEnvironment(f.input, f.adapters))).toBe("CT_DEPENDENCY_ENV_IMMUTABLE")

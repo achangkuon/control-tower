@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto"
-import { accessSync, closeSync, constants, cpSync, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync, readdirSync, readlinkSync, realpathSync, renameSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs"
+import { accessSync, chmodSync, closeSync, constants, cpSync, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync, readdirSync, readlinkSync, realpathSync, renameSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs"
 import { basename, dirname, isAbsolute, join, relative } from "node:path"
 
 const C = "CT_DEPENDENCY_", hash = (bytes) => createHash("sha256").update(bytes).digest("hex"), canonical = (value) => `${JSON.stringify(value)}\n`
@@ -120,7 +120,20 @@ async function defaultDiscover({ bunPath, cacheRun, env }) {
   const root = lines[0]
   return cacheRoots(root, "CACHE_INVALID").map((path) => ({ path, relative: relative(root, path) }))
 }
-function syncTree(root) { const visit = (path) => { const info = lstatSync(path); if (info.isSymbolicLink()) return; if (info.isDirectory()) for (const name of readdirSync(path)) visit(join(path, name)); const fd = openSync(path, "r"); fsyncSync(fd); closeSync(fd) }; visit(root) }
+function hardenTree(root) {
+  const visit = (path) => { const info = lstatSync(path); if (info.isSymbolicLink()) return; if (info.isDirectory()) { for (const name of readdirSync(path)) visit(join(path, name)); chmodSync(path, 0o500) } else if (info.isFile()) chmodSync(path, info.mode & 0o111 ? 0o500 : 0o400); else fail("ENV_INVALID") }
+  visit(root)
+}
+function syncPath(path) { const fd = openSync(path, "r"); fsyncSync(fd); closeSync(fd) }
+function syncTree(root) { const visit = (path) => { const info = lstatSync(path); if (info.isSymbolicLink()) return; if (info.isDirectory()) for (const name of readdirSync(path)) visit(join(path, name)); syncPath(path) }; visit(root) }
+function removePrivateTemporary(path, parent, digest) {
+  if (!existsSync(path)) return
+  try {
+    if (dirname(path) !== parent || !new RegExp(`^\\.tmp-${digest}-[0-9a-f-]{36}$`).test(basename(path))) fail("ENV_INVALID")
+    const unlock = (entry) => { const info = lstatSync(entry); if (info.isSymbolicLink()) return; if (info.isDirectory()) { chmodSync(entry, 0o700); for (const name of readdirSync(entry)) unlock(join(entry, name)) } else if (info.isFile()) chmodSync(entry, 0o600); else fail("ENV_INVALID") }
+    const info = lstatSync(path); if (!info.isDirectory() || info.isSymbolicLink()) fail("ENV_INVALID"); unlock(path); rmSync(path, { recursive: true })
+  } catch (cause) { if (cause.code?.startsWith(C)) throw cause; fail("ENV_INVALID", cause) }
+}
 
 const bindingRecord = (digest) => ({ schema: 1, digest })
 function bindingTarget(dataRoot, digest) {
@@ -232,10 +245,12 @@ export async function materializeDependencyEnvironment(input, adapters = {}) {
     if (outcome?.exitCode !== 0) fail("MATERIALIZATION_FAILED")
     if (sourceSnapshot(sourcePaths).digest !== before.digest || sourceSnapshot(clonePaths).digest !== clone.digest) fail("SOURCE_CHANGED")
     if (!readFileSync(join(cwd, "package.json")).equals(packageBytes) || !readFileSync(join(cwd, "bun.lock")).equals(lockBytes)) fail("ENV_INVALID")
-    const verified = installedTopology(join(cwd, "node_modules"), expected, clone.inodes), metadata = { ...identity, commandPolicy: policy("<private-cache>", "<private-home>"), topology: verified.topology, treeDigest: verified.treeDigest, sources: selected.map((entry, index) => ({ name: expected[index].name, version: expected[index].version, path: entry.relativePath, digest: treeDigest(entry.path, "SOURCE_CHANGED") })) }
-    metadata.integrity = metadataIntegrity(metadata); rmSync(privateCache, { recursive: true, force: true }); renameSync(join(cwd, "node_modules"), join(operation, "node_modules")); rmSync(cwd, { recursive: true }); rmSync(home, { recursive: true }); writeFileSync(join(operation, "metadata.json"), canonical(metadata), { mode: 0o400 })
-    syncTree(join(operation, "node_modules")); for (const path of [join(operation, "metadata.json"), operation, parent]) { const fd = openSync(path, "r"); fsyncSync(fd); closeSync(fd) }
-    try { renameSync(operation, target) } catch (cause) { if (!["EEXIST", "ENOTEMPTY"].includes(cause.code)) throw cause; const winner = validateExisting(target, identity, expected); return { created: false, digest, path: target, metadata: winner } }
+    const verified = installedTopology(join(cwd, "node_modules"), expected, clone.inodes), sources = selected.map((entry, index) => ({ name: expected[index].name, version: expected[index].version, path: entry.relativePath, digest: treeDigest(entry.path, "SOURCE_CHANGED") }))
+    rmSync(privateCache, { recursive: true, force: true }); renameSync(join(cwd, "node_modules"), join(operation, "node_modules")); rmSync(cwd, { recursive: true }); rmSync(home, { recursive: true }); hardenTree(join(operation, "node_modules"))
+    const metadata = { ...identity, commandPolicy: policy("<private-cache>", "<private-home>"), topology: verified.topology, treeDigest: treeDigest(join(operation, "node_modules"), "ENV_INVALID"), sources }
+    metadata.integrity = metadataIntegrity(metadata); writeFileSync(join(operation, "metadata.json"), canonical(metadata), { mode: 0o400 }); chmodSync(operation, 0o500); syncTree(operation)
+    try { (adapters.rename ?? renameSync)(operation, target) } catch (cause) { if (!["EEXIST", "ENOTEMPTY"].includes(cause.code)) throw cause; const winner = validateExisting(target, identity, expected); return { created: false, digest, path: target, metadata: winner } }
+    const syncParent = adapters.syncParent ?? syncPath; syncParent(parent)
     return { created: true, digest, path: target, metadata }
-  } catch (cause) { if (cause.code?.startsWith(C)) throw cause; fail("ENV_INVALID", cause) } finally { if (existsSync(operation)) rmSync(operation, { recursive: true, force: true }) }
+  } catch (cause) { if (cause.code?.startsWith(C)) throw cause; fail("ENV_INVALID", cause) } finally { removePrivateTemporary(operation, parent, digest) }
 }
