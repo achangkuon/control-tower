@@ -461,3 +461,65 @@ graph LR
 ```
 
 No queda responsabilidad activa de hosts sin Sesión enumerada; 38/39 están resueltas en `S4.5` y la 40 deja `S4.4/M4.4.2` decision-clean. El estado 📋 de `S4.3`, `S4.4` y `S7.1` proviene sólo del grafo.
+
+## Insumo para la auditoría exclusiva de P4 — pregunta de entrada nueva (2026-08-21)
+
+La Fase 1 del plan de depuración, entregada en `master@5bbe87c` bajo la [decisión 58](../decision-register.md), cambió cuál es la pregunta más grande de este Plan.
+
+**La auditoría exclusiva de P4 iba a preguntar «cómo se abre una sesión y de qué depende».** Sigue valiendo, pero el [inventario de producto](../inventario-de-producto.md) encontró una pregunta anterior y más grande: **quién le puede dar una orden a quién.**
+
+**Evidencia.** `core.mjs:4418` define `setState({ db, place }, { state, task, note, prUrl })`. El sujeto es `place` —la identidad derivada del directorio de trabajo— y **no existe un parámetro `agent`**. Un agente sólo puede cambiar su propio estado. Las ocho primitivas que expone `mcp.mjs` son todas agent-facing: un agente se une, reporta, manda mensajes y toma locks. En cambio `CV_ASSIGN`, `CV_PAUSE` y `CV_RESUME` del vocabulario son el operador actuando **sobre otro** agente: la dirección de autoridad inversa, que hoy no existe en el producto.
+
+**Por qué le pertenece a P4.** Este Plan es dueño de la línea exclusiva y del lanzamiento de hosts, es decir de quién posee qué proceso y bajo qué autoridad. La dirección de autoridad es exactamente esa materia. Ninguna otra Sesión enumerada la reclama.
+
+**Consecuencia sobre el alcance de la auditoría.** Se suman dos preguntas al mandato, sin cambiar el estado de ninguna Sesión:
+
+1. Si Main puede actuar sobre el estado de un agente que no es él, y por qué ruta autenticada.
+2. Si esa capacidad pertenece a `S4.4` o exige una Sesión nueva de P4.
+
+**Insumo adicional del inventario.** `hosts/{rehydration,stop-proof}.mjs` (89 líneas) quedaron en el **cajón D — necesita decisión del maintainer**, precisamente porque su destino depende de esta auditoría: los entregó `S4.3` y los consume la recuperación de `S4.4`; si la recuperación se simplifica, cambian o salen. `hosts/{inspect,health}.mjs` (133 líneas) quedaron en el **cajón A**, reclamados por `CV_INSPECT`, y `hosts/launcher.mjs` (30) en el **cajón D** porque `S8.9` ya lo declaró inalcanzable por contrato.
+
+Ninguna Sesión de P4 cambia de estado por este registro. `S4.4` sigue 🔴 BLOQUEADO esperando la integración de `S8.10`, y P4 permanece en 80% (4/5 S).
+
+## Auditoría exclusiva de P4 — resultado (2026-08-21)
+
+Medida sobre `master@e1a157b`. Alcance completo, con la dirección de autoridad como punto de entrada.
+
+### Hallazgo 1 — la autoridad de operador ya existe, en el almacén equivocado
+
+**Hay dos almacenes con dos modelos de autoridad y nunca se unieron.** `main-store/store.mjs:152` hace `if (input?.actor !== "MAIN") fail("CT_AUTH_INVALID", "Only Main may mutate the store")`, y ese guard protege `issueLaunchBinding`, `registerAssignmentLocation`, `parkDecision`, `createAuthorization` y `bindCompletedWork`. **Main comanda esas operaciones hoy.** Pero el estado de un agente vive en `core.mjs`, cuya **única** escritura —`UPDATE agent SET`, línea 4425— entra por `setState({ db, place }, …)`, y `place` sale de `locate(cwd)`: el path del worktree de quien llama.
+
+**Main puede crear un agente, pero no puede conducirlo.** Y la consecuencia práctica es la mejor noticia de esta auditoría: **el verbo faltante de la [decisión 60](../decision-register.md) no se diseña desde cero.** Se le aplica a la tabla `agent` el patrón que `main-store` ya implementa y tiene probado. El precedente está en el repositorio.
+
+Dato adicional: **`main-store/store.mjs` no viaja en el instalable**; sólo lo hace `main-store/launch-consumer.mjs`. El almacén que tiene el modelo de autoridad no se instala.
+
+### Hallazgo 2 — quedaron dos caminos de lanzamiento vivos
+
+`hosts/production-provider.mjs:280` devuelve en un mismo objeto congelado `consumeBinding, assertCurrentHost, backend, herdr, opencode, rootBinding, view`. `backend` + `view` + `rootBinding` son la arquitectura de `S4.5` —Main dueño del backend y de la raíz, vista adjunta no autoritativa—; `herdr` es el adaptador de custodia de `S4.2`, y su `projectRoot` **todavía puede tumbar un lanzamiento** con `CT_LAUNCH_REJECTED` (línea 196).
+
+Cuando `S4.5` reemplazó la arquitectura de `S4.2`, **no retiró la anterior**: la decisión 37 declaró explícitamente que no reescribía esos bytes. Nadie decidió que convivan; quedaron. Es la misma clase de deuda que la brecha de cableado — nadie es dueño del conjunto.
+
+### Hallazgo 3 — dependencias externas clasificadas
+
+| Dependencia | Cómo se exige | Veredicto |
+|---|---|---|
+| Herdr 0.8.0 como runtime | `install/lifecycle.mjs:56` — comparación de string exacta contra `"herdr 0.8.0\n"` | **evitable** |
+| Herdr como custodia de lanzamiento | `production-provider.mjs:196` — emite `CT_LAUNCH_REJECTED` | **evitable** (camino de `S4.2`) |
+| Herdr como panel de vista | `opencode-view.mjs` — degradable con fallback manual | **se soporta** |
+| OpenCode fijado por bytes | `production-provider.mjs:152` | **se soporta** — es garantía de seguridad, no lock de versión |
+
+**El instalador se rompe con Herdr 0.8.1.** No es un mínimo ni un rango: es la salida literal de `herdr --version`, y `install/lifecycle.mjs` sí viaja en el instalable. El fijado de OpenCode **no** es lo mismo y no se toca: verifica que los bytes comprobados son los ejecutados, que es la misma razón por la que la Torre no corre en macOS.
+
+### La cadena, eslabón por eslabón
+
+`issueLaunchBinding` bajo `assertMain` → `launch-consumer.consumeBinding` → `createPinnedHostRuntime` (preflight por bytes vía `/proc/self/fd/3`) → backend loopback aislado por worktree que anuncia su dirección → `POST /api/session` sin parent, raíz probada **por construcción** → `root-binding.bind` con `O_EXCL`, una sola raíz primaria por asignación → vista degradable con `opencode attach` manual → **`core.register({ db, place })`, y acá se pierde la autoridad de Main**.
+
+**Los eslabones 1 a 7 son Main-owned, verificados y con fallo cerrado. La autoridad se corta exactamente en el 8.**
+
+### Veredictos
+
+- **`S4.4` se confirma pero baja de prioridad.** Su maquinaria de linaje y épocas es coherente con la cadena mapeada y `hosts/epoch-enforcement.mjs` ya está en el payload. Pero resuelve *qué pasa cuando un agente muere*, y todavía no se puede *conducir a un agente vivo*: ése es el problema anterior. Sigue 🔴 esperando `S8.10`; no conviene destrabarla antes que el eslabón cero.
+- **`hosts/{rehydration,stop-proof}.mjs` salen del cajón D y pasan al B** del [inventario](../inventario-de-producto.md). No dependen de que `S4.4` se simplifique: `stop-proof` es lo que vuelve falsificable la diferencia entre «perdí la vista» y «el agente murió», que es la distinción exacta que fija la decisión 40.
+- **Trabajo nuevo sin dueño, que P4 le devuelve al plan:** retirar el camino de lanzamiento de `S4.2` y el fijado exacto de Herdr 0.8.0 del instalable. No pertenece a `S4.4` ni a `S4.5`, ambas cerradas. **Hoy es la única dependencia externa del producto que puede romperse sola.**
+
+Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% (4/5 S).
