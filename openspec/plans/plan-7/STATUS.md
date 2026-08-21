@@ -47,3 +47,21 @@ Produce evidencia atribuible a `candidate_revision` para despacho exclusivo Main
 Los seis pilotos etiquetados históricamente como V1 son escenarios de aceptación, no niveles de planificación. Los que aún no demuestran un límite de un PR permanecen sin ID en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).
 
 “V1”, `installable-v1` y `autonomous-v2` sobreviven aquí sólo para identificar REQUIREMENTS, pilotos y manifests históricos. No nombran productos o releases actuales. Este Plan se llama “Conformidad de release” porque `S7.1` es la declaración terminal del único release.
+
+## Insumo de las tres auditorías exclusivas (2026-08-21)
+
+Las tres auditorías de la Fase 2 del plan de depuración cerraron, y **`S7.1` es la que más cambia con sus resultados**, porque mide conformidad contra las garantías prometidas: cada capacidad retirada achica este examen.
+
+**Qué salió del alcance que `S7.1` tendría que haber medido:**
+
+- **P6 campañas multiproyecto** — 🟡 diferido condicionado por la [decisión 57](../decision-register.md). Ya estaba fuera por la decisión 33, que fijó que un rojo sobre `F8` no bloquea la release.
+- **El dashboard de observación** — retirado. `F2` del PRD queda sin implementación, y es trabajo enumerado en el [inventario](../inventario-de-producto.md).
+- **La maquinaria de reciclado de P9** — recortada de ~1.900 líneas a dos Sesiones acotadas por la [decisión 62](../decision-register.md).
+
+**Qué se agregó al alcance que `S7.1` va a tener que medir, y ninguna Sesión enumerada cubre todavía:**
+
+1. **El ejecutor de comandos y su superficie** ([decisión 60](../decision-register.md), corregida por la 61). Los trece verbos de `console/vocabulary.mjs` están validados y ninguno tiene ejecutor. `S7.1` no puede declarar conformidad sobre un contrato de operador que no se puede ejercer.
+2. **El retiro del adaptador `S4.2` y del fijado literal de Herdr 0.8.0.** Hoy es la única dependencia externa del producto que puede romperse sola.
+3. **Por qué canal viaja cada mitad del producto.** La auditoría de P8 midió que el canal de agentes —`mcp.mjs`, el plugin, `main-store/store.mjs`— **no tiene instalador versionado** y que el payload derivado no puede incluirlo por contrato. Un piloto de conformidad sobre una release que instala media Torre mediría media Torre.
+
+**Ninguna Sesión de P7 cambia de estado.** `S7.1` sigue 📋 PLANIFICADO y sus dependencias declaradas —`S4.4`, `S5.3`, `S5.5` y `S10.2`— se conservan. Lo que cambia es que la reconciliación de Planes (tarea 2.4 del plan de depuración) tiene que decidir si esos tres puntos entran en sus prerrequisitos antes de que el examen tenga sentido.
