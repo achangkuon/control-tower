@@ -28,6 +28,14 @@
 
 Esta corrección **no fue solicitada por ningún nodo existente del Plan**, **no crea una nueva Sesión** y **no cambia el denominador ni los porcentajes** de P5. Es una corrección operativa completada, registrada aquí sin inventar Plan, Sesión, Módulo ni Tarea.
 
+## Retiro del dashboard de observación — no es una nueva Sesión
+
+**Entregado el 2026-08-21 en `dfa7edb`** bajo la [decisión 57](../decision-register.md): el `dashboard/` se retiró del árbol y sus bytes quedaron preservados en `origin/archive/dashboard-vpn`. Son 20 archivos y 1.683 líneas —`dashboard/` (14), `test/dashboard/` (5) y `openspec/specs/observation-dashboard/spec.md`— con cero llamadores fuera de sus tests, ausentes de `RUNTIME_PAYLOAD_FILES` y alimentadas sólo por `mock-fixtures.mjs`. Ninguna ruta fuera de esos tres prefijos entró en el diff.
+
+**Por qué figura en P5.** El dashboard era una de las superficies candidatas para mostrarle al maintainer una decisión estacionada, que es el resultado de `S5.5`. Al retirarse, esa opción queda cerrada: la superficie tiene que resolverse dentro del alcance de `S5.5` o mediante los comandos declarados en `console/vocabulary.mjs`. **`S5.5` no cambia de estado y sigue 🟢 LISTO.**
+
+Este retiro **no crea una nueva Sesión** y **no cambia el denominador ni los porcentajes** de P5: el dashboard nunca estuvo enumerado como Sesión en ningún Plan, que es precisamente el defecto que la auditoría del 2026-08-21 registró. La reconciliación del `master-index` bajo la regla de denominador de la decisión 57 queda pendiente y **no entra en esta pasada**, porque ese archivo tiene cambios sin commitear de `S8.10` y esta sesión no toca trabajo en implementación.
+
 **Evidencia mínima del candidato local `0b8e4ae`:**
 
 ```diff
