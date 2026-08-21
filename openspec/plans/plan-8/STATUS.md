@@ -29,6 +29,7 @@
 | S8.6 | Evidencia de release en máquina limpia | 🟡 DIFERIDO | Versioned lifecycle and release evidence | `S8.3`, `S8.4` | Diferida el 2026-07-31: se cubre con validación manual durante `S8.8` en vez de una Sesión formal |
 | S8.7 | Puente Hermes/Telegram | 📚 ARCHIVADO | Supersedido por Moshi/Main/OpenCode | — | Evidencia histórica preservada; no es prerequisito activo |
 | S8.9 | Payload derivado y guardia de deriva | ✅ COMPLETO | Versioned lifecycle | ninguna | Candidato rebasado `ebeb07450f9939fba09a69bddff68028657011ff`, tree `4d16d021aee910ea7ef81cab34ff26b1650b2944`, base/parent `e55a9d0214a817a02e6ae1c69455f0dd7d9a1796`; 8/8 criterios; focused 67/0, full 898/0 y harness runtime PASS |
+| S8.10 | Familias propietarias y validación exacta del payload de runtime | 🔵 EN CURSO | Payload instalable cerrado sobre schemas declarados | `S8.9` ✅ | Contrato de ejecución definido desde Engram 9171 y la resolución del maintainer; implementación y evidencia pendientes |
 | S8.8 | Adopción del instalable en el runtime en uso | ✅ COMPLETO | Versioned lifecycle | `S8.2` ✅ | Todos los Módulos verificados. `M8.8.7` en `e118f33`: la copia aislada cae al legado y un puntero presente roto falla cerrado. `M8.8.8` en `d56e8cb`: checkout Git genuino, staging estricto incluso con `.git` sintético y shim opt-in. `bun test test/install` 44/0; `bun test` 465/0 con Torre desarmada; cero accesos a runtime real en los fixtures. |
 
 Las Sesiones se derivan de los cinco requisitos de la [spec de Installable V1](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). `S8.2` construyó el lifecycle versionado; `S8.8` lo pone efectivamente en uso, que es la parte del requisito que quedaba abierta.
@@ -567,6 +568,80 @@ El orden es canónico y estable. `bin/torre` es el único asset no-JS explícito
 
 > **Esta Sesión no cablea nada.** El cableado del producto no instalado sigue sin enumerar. Orden preservado: primero cablear, después enviar; `S8.9` automatiza la mitad «enviar» sin expandir Área.
 
+### S8.10 — Familias propietarias y validación exacta del payload de runtime
+
+**Estado:** 🔵 EN CURSO · **Route:** `design-tasks` · **Depende de:** `S8.9` ✅ COMPLETO
+
+**Autoridad:** delta técnico de Engram 9171 y resolución expresa del maintainer: `bin/torre` sigue siendo el único asset manual; las familias no-JS se declaran por su propietario; la familia de schemas deriva exclusivamente de las declaraciones canónicas del registro; los directorios válidos derivan del payload esperado, sin una segunda allowlist; todo miembro faltante, extra, no declarado o symlink se rechaza estrictamente.
+
+**Puerta semántica de S4.4:** `S8.10` no edita ni cierra `S4.4`. `S4.4` no puede considerarse semánticamente habilitada mientras una copia instalada no pueda importar el registro y resolver cada `schemaName` declarado contra un schema incluido en el payload exacto. La única dependencia de ejecución respaldada dentro de P8 es `S8.9`; esta puerta cruzada se declara como contaminación semántica, no como una segunda dependencia inventada.
+
+| Campo | Valor |
+|---|---|
+| Resultado | El payload generado incorpora familias no-JS declaradas por su propietario y el validador acepta sólo el árbol exacto derivado de sus archivos esperados. |
+| Estado | 🔵 EN CURSO |
+| Route | `design-tasks` — la elaboración técnica compacta quedó resuelta en Engram 9171; no queda decisión abierta y el mismo ejecutor general continúa con Strict TDD, sin proposal/spec ni SDD. |
+| Depende de | `S8.9` ✅ COMPLETO |
+| Área | `contracts/schema-registry.mjs`; `scripts/payload-closure.mjs`; `install/runtime-payload.mjs`; `test/install/payload-closure.test.mjs`; `test/install/runtime-payload.test.mjs`; `test/install/entrypoint-resolution.test.mjs`; `test/install/launch-worker-cli.test.mjs`; `openspec/plans/plan-8/STATUS.md`; `openspec/plans/master-index.md` |
+| Input sólo lectura | `schemas/*.json`; en particular, `schemas/execution-contract-v1.schema.json` existe pero permanece no declarado, excluido y rechazado. |
+| Prohibido | Editar contenido de schemas; declarar `execution-contract-v1.schema.json`; crear un segundo propietario de la familia; tocar hosts o `main-store` de `S4.4`; cambiar `core.mjs`, package, lock, runtime instalado, DB, `ACTIVE`, Moshi o Notion; cualquier ruta fuera del Área. |
+| Recurso | Contrato compartido `RUNTIME_PAYLOAD_FILES` y registro canónico `schemaFiles`; sin DB, migraciones, estado de Tower ni token de entrega. |
+| Forecast | 150–260 líneas authored de implementación y pruebas; un commit de comportamiento ≤400 líneas authored, con pruebas y código juntos. Este contrato documental queda en un commit separado. |
+| Commit de comportamiento | Un único commit revisable; rollback: revertir juntos registro, derivador, literal generado y cuatro pruebas, sin tocar schemas ni package/lock. |
+| Commit documental previsto | `docs(plan): define S8.10 runtime payload tasks` |
+
+#### Decisiones de S8.10 — todas resueltas
+
+- `escala`, resuelta — preservar `RUNTIME_PAYLOAD_ASSETS === ["bin/torre"]` y declarar las demás familias no-JS desde su propietario, sin convertirlas en assets manuales. **Clase:** contrato visible del producto. **Autoridad:** resolución del maintainer y Engram 9171. **Criterio falsificable:** cualquier segundo path manual, o cualquier schema agregado directamente a `RUNTIME_PAYLOAD_ASSETS`, contradice la resolución. **Contamina:** `S8.10`, `S4.4`.
+- `escala`, resuelta — la familia de schemas deriva sólo de los valores canónicos de `schemaFiles`; `execution-contract-v1.schema.json`, al no estar declarado, sigue excluido y debe ser rechazado. **Clase:** contrato visible del producto. **Autoridad:** resolución del maintainer y propiedad existente de `contracts/schema-registry.mjs`. **Criterio falsificable:** si un schema no declarado entra al payload o uno declarado falta, hay una segunda fuente de verdad. **Contamina:** `S8.10`, `S4.4`.
+- `derivable` — exportar `schemaAssetPaths` como colección inmutable, locale-sorted y repo-relative POSIX, derivada directamente de los valores de `schemaFiles`. **Autoridad:** Engram 9171 y el registro canónico existente. **Criterio falsificable:** orden no local, separadores de plataforma, mutabilidad o una lista mantenida aparte invalidan la derivación.
+- `derivable` — agregar el registro como raíz JS y componer en un único punto assets manuales, familias de propietarios y cierre JS estático, con de-duplicación y orden locale. **Autoridad:** Engram 9171 y el mecanismo cerrado por `S8.9`. **Criterio falsificable:** si drift y render consumen colecciones distintas, si el literal generado no queda ordenado o si el scanner ejecuta imports/detecta imports dinámicos, el diseño está roto.
+- `escala`, resuelta — eliminar la allowlist manual de directorios y derivar todos los prefijos admitidos desde los miembros exactos de `RUNTIME_PAYLOAD_FILES`, excluyendo `.`; cualquier otro directorio se rechaza. **Clase:** contrato visible del producto. **Autoridad:** resolución del maintainer. **Criterio falsificable:** aceptar un directorio vacío, extra o permitido sólo por una lista secundaria contradice el cierre exacto. **Contamina:** `S8.10`, `S4.4`.
+- `derivable` — preservar las validaciones existentes de `lstat`, symlink, tipo no-file, faltantes, extras y bytes, y comprobar la copia instalada sin agregar dependencias. **Autoridad:** Engram 9171 y el contrato estricto de `S8.9`. **Criterio falsificable:** si la prueba instalada requiere editar package/lock, o no puede importar el registro y resolver cada `schemaName` con el Ajv ya disponible, la ejecución se detiene sin improvisar otra resolución.
+
+**No hay decisiones abiertas.** Las tres decisiones de contrato visible ya fueron resueltas por el maintainer; el ejecutor sólo puede aplicar sus criterios falsificables.
+
+#### Módulo M8.10.1 — Propiedad de schemas, cierre generado y validación derivada
+
+**Estado:** 🔵 EN CURSO · **Orden estricto:** `T8.10.1.1` → `T8.10.1.2` → `T8.10.1.3` → `T8.10.1.4`
+
+- [ ] `T8.10.1.1` — RED: extender exactamente las cuatro pruebas enfocadas del Área para demostrar la familia propietaria, la inclusión por cierre del registro, la deriva que permanece roja hasta regenerar y los rechazos de schema faltante, extra o no declarado, archivo/directorio extra o vacío, tipo no-file y symlink; preservar como excluido `execution-contract-v1.schema.json`.
+- [ ] `T8.10.1.2` — GREEN: exportar `schemaAssetPaths` desde `schemaFiles`, sumar el registro como raíz JS y hacer que una sola composición de assets manuales + familias propietarias + cierre JS alimente tanto drift como render; regenerar el literal ordenado sin cambiar `RUNTIME_PAYLOAD_ASSETS`.
+- [ ] `T8.10.1.3` — TRIANGULATE/REFACTOR: derivar prefijos de directorio exclusivamente desde `RUNTIME_PAYLOAD_FILES`, excluir `.`, conservar la validación exacta de `lstat`/symlink/tipo/bytes/faltantes/extras y triangular aceptación exacta de `contracts/**` y `schemas/**` contra directorios vacíos, extraños o declarados por una segunda fuente.
+- [ ] `T8.10.1.4` — VERIFY: ejecutar primero el generador, después las cuatro pruebas enfocadas exactas y finalmente la suite completa una sola vez; probar desde una copia instalada que el registro importa y que cada `schemaName` resuelve su archivo. Si Ajv no resuelve con las dependencias existentes, detenerse: package y lock están fuera de Área.
+
+**Comandos y orden obligatorio:**
+
+1. `BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 bun scripts/payload-closure.mjs --write`
+2. `BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 bun test test/install/payload-closure.test.mjs test/install/runtime-payload.test.mjs test/install/entrypoint-resolution.test.mjs test/install/launch-worker-cli.test.mjs`
+3. `BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 bun test`
+
+**Criterios de aceptación** — 13 binarios; todos deben pasar para cerrar:
+
+- [ ] `schemaAssetPaths` es inmutable, usa paths POSIX relativos al repo, queda locale-sorted y deriva directamente de todos y sólo los valores canónicos de `schemaFiles`.
+- [ ] `schemas/execution-contract-v1.schema.json` permanece sin declarar, fuera de `schemaAssetPaths` y del payload, y una copia que lo incluya es rechazada.
+- [ ] `RUNTIME_PAYLOAD_ASSETS` permanece exactamente igual a `["bin/torre"]`; no aparece un segundo asset manual ni un segundo propietario de schemas.
+- [ ] `contracts/schema-registry.mjs` es raíz JS y una sola composición de-duplica y locale-sorts assets manuales, familias propietarias y cierre JS estático para alimentar tanto drift como render.
+- [ ] `RUNTIME_PAYLOAD_FILES` queda como array literal generado, exacto y ordenado; el runtime instalado no escanea imports para arrancar.
+- [ ] Antes de regenerar, una divergencia de familia o cierre hace fallar la guardia; el generador obligatorio la reconcilia y una segunda corrida es convergente.
+- [ ] El validador deriva todos los prefijos de directorio desde los miembros exactos de `RUNTIME_PAYLOAD_FILES`, excluye `.` y no conserva una allowlist manual de directorios.
+- [ ] Se preservan los rechazos por miembro faltante o extra, bytes distintos, `lstat` inválido, symlink y tipo no-file; además se rechazan archivo, directorio extra y directorio vacío.
+- [ ] `contracts/**` y `schemas/**` se aceptan sólo cuando coinciden con los miembros exactos esperados; schema faltante, extra o no declarado falla cerrado con error estable.
+- [ ] Las cuatro pruebas enfocadas exactas cubren familia propietaria, cierre estático, deriva hasta generación, directorios derivados y todos los casos positivos y negativos enumerados.
+- [ ] Una copia instalada importa `contracts/schema-registry.mjs` y cada `schemaName` declarado resuelve un archivo presente y validable con el Ajv ya disponible.
+- [ ] No cambian package ni lock; si Ajv no resuelve en la copia instalada con las dependencias existentes, la Sesión se detiene y no agrega dependencias ni una resolución alternativa.
+- [ ] El generador corre antes de las pruebas enfocadas y de la suite completa; los tres comandos pasan en ese orden y el diff no toca rutas fuera del Área ni modifica contenido de schemas, hosts, `main-store`, runtime real, DB o `ACTIVE`.
+
+#### Grafo y puerta semántica de S8.10
+
+```mermaid
+graph LR
+  S89["S8.9 cierre JS · ✅"] --> S810["S8.10 familias propietarias · 🔵"]
+  S810 -. "puerta semántica" .-> S44["S4.4 consumidor de schemas"]
+```
+
+`S8.9` es la única arista de dependencia ejecutable de `S8.10`. La arista punteada no afirma estado ni modifica P4: registra que `S4.4` no puede apoyarse honestamente en schemas instalados hasta que los 13 criterios de `S8.10` estén cerrados.
+
 ### S8.5 — Detección de hosts e integración opt-in
 
 Detecta Bun, Git y las instalaciones disponibles de OpenCode, Pi y Claude, e informa versiones y capacidades. La integración es opt-in y se limita a los hosts presentes; un host opcional ausente es diagnóstico, nunca un fallo de instalación. Una configuración de host insegura cierra fail-closed.
@@ -653,7 +728,7 @@ graph LR
 
 `S8.2` entregó únicamente almacenamiento de versiones, puntero activo, install/diagnose/upgrade/rollback/uninstall, preservación de configuración e historial, y sus pruebas Strict TDD. No modificó `core.mjs`, `mcp.mjs`, `package.json`, `bun.lock`, DB ni estado de Tower.
 
-Con `S8.9` cerrada, P8 queda en `78% (7/9 S)`; `S8.5` y `S8.6` permanecen 🟡 DIFERIDO.
+Con `S8.10` 🔵 EN CURSO, P8 queda en `70% (7/10 S)`; sólo las siete Sesiones ✅ COMPLETO/📚 ARCHIVADO cuentan, `EN CURSO` aporta cero, y `S8.5` y `S8.6` permanecen 🟡 DIFERIDO.
 
 Cada Sesión es una unidad entregable dirigida a `master`. **Desde el 2026-08-01 (`46edd14`) eso es un commit directo + push, no un PR** — ver [Política de entrega](../../../AGENTS.md). El alcance de la Sesión no cambia: sigue siendo el que entraría en un PR. Las referencias a PRs de las Sesiones ya cerradas son historia y quedan como están.
 
