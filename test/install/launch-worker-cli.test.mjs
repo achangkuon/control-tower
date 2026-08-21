@@ -1,18 +1,26 @@
 import { afterEach, expect, test } from "bun:test"
 import { execFileSync, spawnSync } from "node:child_process"
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { chmodSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { bindMainAuthority, createMainStore } from "../../main-store/index.mjs"
 import { runCli } from "../../install/lifecycle.mjs"
+import { RUNTIME_PAYLOAD_FILES } from "../../install/runtime-payload.mjs"
 
 const root = join(fileURLToPath(new URL("../..", import.meta.url)))
+const runtimeSource = (directory) => {
+  const source = join(directory, "runtime-source")
+  for (const file of RUNTIME_PAYLOAD_FILES) { const target = join(source, file); mkdirSync(dirname(target), { recursive: true }); copyFileSync(join(root, file), target) }
+  writeFileSync(join(source, "package.json"), `${JSON.stringify({ name: "fixture", private: true })}\n`)
+  writeFileSync(join(source, "bun.lock"), `${JSON.stringify({ lockfileVersion: 1, packages: {} })}\n`)
+  return source
+}
 const directories = []
 afterEach(() => directories.splice(0).forEach((directory) => rmSync(directory, { recursive: true, force: true })))
 
-test("installed torre launch-worker ignores legacy and PATH shims while consuming its deterministic Main binding", () => {
+test("installed torre launch-worker ignores legacy and PATH shims while consuming its deterministic Main binding", async () => {
   const directory = mkdtempSync(join(tmpdir(), "ct-launch-cli-")), main = join(directory, "Main"), worker = join(directory, "Worker"), commands = join(directory, "commands")
   directories.push(directory)
   execFileSync("git", ["init", "-q", "-b", "master", main]); execFileSync("git", ["-C", main, "config", "user.email", "tower@example.invalid"]); execFileSync("git", ["-C", main, "config", "user.name", "Tower Test"]); execFileSync("git", ["-C", main, "commit", "-q", "--allow-empty", "-m", "fixture"]); execFileSync("git", ["-C", main, "worktree", "add", "-q", "-b", "worker", worker])
@@ -38,7 +46,7 @@ if (Bun.argv[2] === "serve") {
 } else console.log("gentle-orchestrator")
 `); writeFileSync(join(commands, "herdr"), "#!/bin/sh\nprintf 'herdr' >> " + effects + "; for arg in \"$@\"; do printf ' %s' \"$arg\" >> " + effects + "; done; printf '\\n' >> " + effects + "\nif [ \"$1\" = \"--version\" ]; then printf 'herdr 0.8.0\\n'; exit; fi\ncase \"$1 $2\" in 'pane split') printf '%s\\n' '{\"result\":{\"pane\":{\"pane_id\":\"w1:p1\"}}}' ;; *) printf '%s\\n' '{}' ;; esac\n"); chmodSync(join(commands, "opencode"), 0o700); chmodSync(join(commands, "herdr"), 0o700)
   const xdg = join(directory, "xdg"), installEnv = { ...process.env, HOME: directory, XDG_DATA_HOME: xdg, XDG_CONFIG_HOME: join(directory, "config"), XDG_STATE_HOME: join(directory, "state") }
-  runCli(["install", "launch-v1", root, "--herdr-bin", join(commands, "herdr"), "--opencode-bin", join(commands, "opencode")], installEnv)
+  await runCli(["install", "launch-v1", runtimeSource(directory), "--herdr-bin", join(commands, "herdr"), "--opencode-bin", join(commands, "opencode")], installEnv)
   const installed = join(xdg, "control-tower/versions/launch-v1/bin/torre")
   writeFileSync(effects, "")
   expect(spawnSync(installed, ["launch-worker", "--request-ref", "missing"], { cwd: main, env: installEnv, encoding: "utf8" }).stderr).toContain("CT_LAUNCH_BINDING_INVALID")
