@@ -1,12 +1,48 @@
 import { expect, test } from "bun:test"
+import { spawnSync } from "node:child_process"
+import { mkdtempSync, rmSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 
 import { assertParentlessSessionCreation, createProductionProvider, parseCreatedRoot, parseHostOutput, parseOpenCodeAgent, parseServerAnnouncement } from "../../hosts/production-provider.mjs"
 
+const gitAuthorityVariables = new Set([
+  "GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY",
+  "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_CEILING_DIRECTORIES", "GIT_DISCOVERY_ACROSS_FILESYSTEM",
+  "GIT_PREFIX", "GIT_NAMESPACE", "GIT_SHALLOW_FILE", "GIT_QUARANTINE_PATH", "GIT_REPLACE_REF_BASE",
+])
+const isolatedEnvironment = () => Object.fromEntries(Object.entries(process.env).filter(([name]) => !gitAuthorityVariables.has(name)))
+
 test("production provider rejects an unpackaged module before accepting caller launch authority", () => {
-  expect(() => createProductionProvider({
-    cwd: "/attacker", environment: { HERDR_ENV: "1", PATH: "/attacker" },
-    recordPath: "/attacker/record.json", herdrBin: "/attacker/herdr", opencodeBin: "/attacker/opencode",
-  })).toThrow("Main launch store is unavailable")
+  const repository = mkdtempSync(join(tmpdir(), "ct-production-provider-"))
+  try {
+    const environment = isolatedEnvironment()
+    const initialized = spawnSync("git", ["init", "--quiet", "--initial-branch=main"], {
+      cwd: repository, env: environment, encoding: "utf8", timeout: 5_000, maxBuffer: 65_536,
+    })
+    expect({ status: initialized.status, signal: initialized.signal, stdout: initialized.stdout, stderr: initialized.stderr }).toEqual({ status: 0, signal: null, stdout: "", stderr: "" })
+
+    const moduleUrl = new URL("../../hosts/production-provider.mjs", import.meta.url).href
+    const source = `
+      import { createProductionProvider } from ${JSON.stringify(moduleUrl)}
+      let message = null
+      try {
+        createProductionProvider({
+          cwd: "/attacker", environment: { HERDR_ENV: "1", PATH: "/attacker" },
+          recordPath: "/attacker/record.json", herdrBin: "/attacker/herdr", opencodeBin: "/attacker/opencode",
+        })
+      } catch (error) { message = error.message }
+      process.stdout.write(JSON.stringify({ length: createProductionProvider.length, message }))
+    `
+    const result = spawnSync(process.execPath, ["--eval", source], {
+      cwd: repository, env: environment, encoding: "utf8", timeout: 5_000, maxBuffer: 65_536,
+    })
+    expect({ status: result.status, signal: result.signal, stdout: result.stdout, stderr: result.stderr }).toEqual({
+      status: 0, signal: null, stdout: '{"length":0,"message":"Main launch store is unavailable"}', stderr: "",
+    })
+  } finally {
+    rmSync(repository, { recursive: true, force: true })
+  }
 })
 
 test("production provider exposes no caller supplied executable or environment configuration", () => {
