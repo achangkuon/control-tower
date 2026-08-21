@@ -7,11 +7,11 @@
 | Campo | Detalle |
 |---|---|
 | Lane | `installable-v1`, ahora sólo como afinidad de trabajo. Desde la [unificación del 2026-08-01](../release-chain.md) no es una identidad de producto: hay un roadmap único y P8 dejó de ser "el producto que sale primero y solo". |
-| Dependencias | `origin/master@3ec8536`; `S8.1`–`S8.4` y `S8.8` están verificadas y publicadas. |
+| Dependencias | Base entregada `master@44da5ff6bb584485bd7eea1b092cce02130dd591`; `S8.1`–`S8.4`, `S8.8` y `S8.9` están verificadas y publicadas. |
 | Bloqueo operativo | No hay bloqueo de registro vigente: la brecha 5 fue saneada. `S8.5` y `S8.6` siguen 🟡 DIFERIDO. |
 | Alcance aprobado | Release local-first con lifecycle versionado, inmutable, idempotente y reversible; sin activar autonomía. |
-| Próxima acción | ✅ **`M8.8.2` CERRADO el 2026-08-03, esta vez con la evidencia correcta.** Activo `012a2510a9758a9c764841b7f69c7760f0d88ab1`, `previous` `34f56a6` para rollback, y `bun ~/.local/share/control-tower/versions/012a251.../install/lifecycle.mjs diagnose` → `{"healthy":true,"missing":[]}` **ejecutando la copia instalada**, que es lo que la vez anterior no se hizo. `install/runtime-payload.mjs` está presente en la versión instalada. **`M8.8.6` ✅ COMPLETO en `a87c9e9`** y **`M8.8.3` ✅ COMPLETO el 2026-08-03**: el maintainer corre el producto. Activo `4f94001`, `~/.local/bin/torre` es un symlink al runtime instalado, respaldo en `torre.legacy-20260803`. El core pasó de 398 a 4.646 líneas — los 192 commits. **Próxima acción: `M8.8.7`** —regresión de distribución que introdujo `a87c9e9`— y después **`M8.8.8`**. Los dos 🔒 SELLABLES, enumerados con criterios binarios y cero decisiones abiertas. Con ésos cierra `S8.8`. Historia del fallo, abajo. ~~🔴 `M8.8.2` REABIERTO — el runtime instalado no carga.~~ `install/lifecycle.mjs:8` importa `./runtime-payload.mjs`, y ese archivo **no está en la versión instalada**: `bun <version>/install/lifecycle.mjs diagnose` devuelve `Cannot find module './runtime-payload.mjs'`. La causa es que `RUNTIME_PAYLOAD_FILES` declara cinco miembros y **no se incluye a sí mismo**, así que el validador confirma como completo un payload que no arranca. El `healthy:true` con el que se cerró salió del **checkout del repo**, no de la copia instalada. **Ejecutar `M8.8.3` sobre este runtime dejaba la Torre inoperable.** **El contrato quedó cerrado en `fed8fb0`** (rescatado del worktree `v1`): `RUNTIME_PAYLOAD_FILES` ahora incluye `install/runtime-payload.mjs` y son seis miembros. Suite 451/0 con la Torre desarmada. **Pero eso arregla el repositorio, no la instalación:** la versión activa `34f56a6` sigue sin el archivo y sigue sin cargar. Falta el paso 👤 ATENDIDO — republicar e instalar — y **verificar `diagnose` ejecutando la copia instalada, no la del repo**. Recién ahí `M8.8.2` cierra de verdad. Orden restante: reinstalar → verificar desde la copia instalada → `M8.8.6` → `M8.8.3`. **Procedimiento exacto de la reinstalación atendida**, para que la verificación no repita el error que causó todo esto: (1) republicar desde el `HEAD` de `master` que contenga `fed8fb0`; (2) `torre install`; (3) verificar corriendo **`bun ~/.local/share/control-tower/versions/<nuevo-sha>/install/lifecycle.mjs diagnose`** — la copia instalada, con ruta absoluta, **nunca** `bun install/lifecycle.mjs` desde el repo; (4) el criterio de cierre es `healthy:true` **y** que el comando cargue, que son dos cosas distintas: un módulo que no resuelve sus imports ni siquiera llega a imprimir. Rollback disponible con `previous` en `active.json`. Adopción previa: activo `34f56a61c1908c003dc382e661ae87335498fd99` con `previous` `b72e450` para rollback. **La ejecución de `M8.8.3` se partió el 2026-08-03.** El payload sin `core.mjs` desapareció y `diagnose` lo confirma con `missing:[]`, pero el mecanismo del corte no existe: `bin/torre` nunca lee `active.json` y `CORE` defaultea a la ruta legada incluso en la versión instalada (`bin/torre:20`), así que copiar el entrypoint no corta nada y un symlink rompe `LIFECYCLE`. **La mitad implementable se separó en `M8.8.6`**, con cero efectos fuera del repositorio; `M8.8.3` queda acotado al corte al PATH y sigue 👤 ATENDIDO. **`M8.8.6` ✅ COMPLETO en `a87c9e9`, el primer Módulo sellado que se despachó y cerró bajo la §11.** `S8.7` espera `S8.8` y `S5.1`; `S0.3` está ✅ COMPLETO. `S8.5` y `S8.6` quedan 🟡 DIFERIDO. |
-| Flujo | P8 corre bajo la [regla de ejecución V1](../v1-execution-rule.md): de `tasks.md` directo a implementación, sin exploration/proposal/design y sin PR de cierre separada. |
+| Próxima acción | `S8.11` 🔵 EN CURSO: ejecutar `M8.11.1` con Strict TDD después de este contrato pre-RED. `S8.10` permanece 🔴 BLOQUEADO y parqueado en Engram 9176; `S4.4` no se reanuda hasta integrar primero `S8.11` y después cerrar `S8.10`. |
+| Flujo | La regla V1 sigue para las Sesiones históricas. `S8.10` y `S8.11` usan explícitamente `design-tasks`: elaboración técnica compacta en Engram y luego el mismo ejecutor general, sin proposal/spec, sin SDD y sin PR. |
 | Brecha 6 — cierre de envío verificado (2026-08-20) | **`S8.9` ✅ COMPLETO por la decisión 54 y su enmienda de contrato visible (Engram 9132).** El contrato exacto es `RUNTIME_PAYLOAD_FILES === ['bin/torre', ...staticJsClosure(fourRoots)]`, en orden canónico estable. `bin/torre` es el único asset no-JS explícito; las cuatro raíces son `install/active-pointer.mjs`, `install/lifecycle.mjs`, `core.mjs` y `hosts/launch-worker-cli.mjs`. `hosts/launcher.mjs` queda fuera por inalcanzable, sin borrar su archivo ni su test. **El cableado del producto no instalado sigue sin enumerar y `S8.9` no lo cubre.** Detalle en [implementation-state](../implementation-state.md). |
 | Referencias | [tasks de V1](../../changes/v1-release/tasks.md); [change archivado](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/), [spec](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). |
 | Actualización de cierre | `S8.8` y `S5.1` están ✅ COMPLETO. `S8.7` queda 📚 ARCHIVADO: Telegram/Hermes/Remote Control, callbacks y TTL/replay fueron retirados del producto activo por la autoridad Moshi/Main/OpenCode. No se enumera `enroll/**` para ese puente. |
@@ -29,7 +29,8 @@
 | S8.6 | Evidencia de release en máquina limpia | 🟡 DIFERIDO | Versioned lifecycle and release evidence | `S8.3`, `S8.4` | Diferida el 2026-07-31: se cubre con validación manual durante `S8.8` en vez de una Sesión formal |
 | S8.7 | Puente Hermes/Telegram | 📚 ARCHIVADO | Supersedido por Moshi/Main/OpenCode | — | Evidencia histórica preservada; no es prerequisito activo |
 | S8.9 | Payload derivado y guardia de deriva | ✅ COMPLETO | Versioned lifecycle | ninguna | Candidato rebasado `ebeb07450f9939fba09a69bddff68028657011ff`, tree `4d16d021aee910ea7ef81cab34ff26b1650b2944`, base/parent `e55a9d0214a817a02e6ae1c69455f0dd7d9a1796`; 8/8 criterios; focused 67/0, full 898/0 y harness runtime PASS |
-| S8.10 | Familias propietarias y validación exacta del payload de runtime | 🔵 EN CURSO | Payload instalable cerrado sobre schemas declarados | `S8.9` ✅ | Contrato de ejecución definido desde Engram 9171 y la resolución del maintainer; implementación y evidencia pendientes |
+| S8.10 | Familias propietarias y validación exacta del payload de runtime | 🔴 BLOQUEADO | Payload instalable cerrado sobre schemas declarados | `S8.9` ✅, `S8.11` | Candidato preservado en `feat/s8.10-runtime-payload-model@0891cc7`; checkpoint de parqueo Engram 9176, antes del commit de comportamiento y de la verificación final; su puerta semántica mantiene bloqueada `S4.4` |
+| S8.11 | Entorno de dependencias compartido por digest de lock | 🔵 EN CURSO | Dependencias instaladas, inmutables y reutilizables por versiones compatibles | `S8.9` ✅ | Contrato pre-RED autorizado por el maintainer; route `design-tasks`; implementación no iniciada hasta committear este contrato |
 | S8.8 | Adopción del instalable en el runtime en uso | ✅ COMPLETO | Versioned lifecycle | `S8.2` ✅ | Todos los Módulos verificados. `M8.8.7` en `e118f33`: la copia aislada cae al legado y un puntero presente roto falla cerrado. `M8.8.8` en `d56e8cb`: checkout Git genuino, staging estricto incluso con `.git` sintético y shim opt-in. `bun test test/install` 44/0; `bun test` 465/0 con Torre desarmada; cero accesos a runtime real en los fixtures. |
 
 Las Sesiones se derivan de los cinco requisitos de la [spec de Installable V1](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). `S8.2` construyó el lifecycle versionado; `S8.8` lo pone efectivamente en uso, que es la parte del requisito que quedaba abierta.
@@ -570,18 +571,20 @@ El orden es canónico y estable. `bin/torre` es el único asset no-JS explícito
 
 ### S8.10 — Familias propietarias y validación exacta del payload de runtime
 
-**Estado:** 🔵 EN CURSO · **Route:** `design-tasks` · **Depende de:** `S8.9` ✅ COMPLETO
+**Estado:** 🔴 BLOQUEADO · **Route:** `design-tasks` · **Depende de:** `S8.9` ✅ COMPLETO, `S8.11`
+
+**Checkpoint de parqueo:** candidato preservado en `feat/s8.10-runtime-payload-model@0891cc7`; Engram 9176. Se detuvo antes del commit de comportamiento y de la verificación final. Sus Tareas, criterios sin marcar y autoridad de diseño Engram 9171 permanecen intactos. No se reanuda hasta que `S8.11` cierre.
 
 **Autoridad:** delta técnico de Engram 9171 y resolución expresa del maintainer: `bin/torre` sigue siendo el único asset manual; las familias no-JS se declaran por su propietario; la familia de schemas deriva exclusivamente de las declaraciones canónicas del registro; los directorios válidos derivan del payload esperado, sin una segunda allowlist; todo miembro faltante, extra, no declarado o symlink se rechaza estrictamente.
 
-**Puerta semántica de S4.4:** `S8.10` no edita ni cierra `S4.4`. `S4.4` no puede considerarse semánticamente habilitada mientras una copia instalada no pueda importar el registro y resolver cada `schemaName` declarado contra un schema incluido en el payload exacto. La única dependencia de ejecución respaldada dentro de P8 es `S8.9`; esta puerta cruzada se declara como contaminación semántica, no como una segunda dependencia inventada.
+**Puerta semántica de S4.4:** `S8.10` no edita ni cierra `S4.4`. `S4.4` no puede considerarse semánticamente habilitada mientras una copia instalada no pueda importar el registro y resolver cada `schemaName` declarado contra un schema incluido en el payload exacto. `S8.11` es ahora el prerrequisito explícito que cierra la resolución de dependencias de `S8.10`; la puerta hacia `S4.4` sigue siendo contaminación semántica, no una dependencia inventada sobre P4.
 
 | Campo | Valor |
 |---|---|
 | Resultado | El payload generado incorpora familias no-JS declaradas por su propietario y el validador acepta sólo el árbol exacto derivado de sus archivos esperados. |
-| Estado | 🔵 EN CURSO |
-| Route | `design-tasks` — la elaboración técnica compacta quedó resuelta en Engram 9171; no queda decisión abierta y el mismo ejecutor general continúa con Strict TDD, sin proposal/spec ni SDD. |
-| Depende de | `S8.9` ✅ COMPLETO |
+| Estado | 🔴 BLOQUEADO — parqueada antes del commit de comportamiento y la verificación final |
+| Route | `design-tasks` — la elaboración técnica compacta quedó resuelta en Engram 9171; no queda decisión abierta y el mismo ejecutor general reanudará Strict TDD, sin proposal/spec ni SDD, sólo después de `S8.11`. |
+| Depende de | `S8.9` ✅ COMPLETO, `S8.11` |
 | Área | `contracts/schema-registry.mjs`; `scripts/payload-closure.mjs`; `install/runtime-payload.mjs`; `test/install/payload-closure.test.mjs`; `test/install/runtime-payload.test.mjs`; `test/install/entrypoint-resolution.test.mjs`; `test/install/launch-worker-cli.test.mjs`; `openspec/plans/plan-8/STATUS.md`; `openspec/plans/master-index.md` |
 | Input sólo lectura | `schemas/*.json`; en particular, `schemas/execution-contract-v1.schema.json` existe pero permanece no declarado, excluido y rechazado. |
 | Prohibido | Editar contenido de schemas; declarar `execution-contract-v1.schema.json`; crear un segundo propietario de la familia; tocar hosts o `main-store` de `S4.4`; cambiar `core.mjs`, package, lock, runtime instalado, DB, `ACTIVE`, Moshi o Notion; cualquier ruta fuera del Área. |
@@ -632,15 +635,95 @@ El orden es canónico y estable. `bin/torre` es el único asset no-JS explícito
 - [ ] No cambian package ni lock; si Ajv no resuelve en la copia instalada con las dependencias existentes, la Sesión se detiene y no agrega dependencias ni una resolución alternativa.
 - [ ] El generador corre antes de las pruebas enfocadas y de la suite completa; los tres comandos pasan en ese orden y el diff no toca rutas fuera del Área ni modifica contenido de schemas, hosts, `main-store`, runtime real, DB o `ACTIVE`.
 
-#### Grafo y puerta semántica de S8.10
+#### Grafo y puerta semántica de S8.10/S8.11
 
 ```mermaid
 graph LR
-  S89["S8.9 cierre JS · ✅"] --> S810["S8.10 familias propietarias · 🔵"]
-  S810 -. "puerta semántica" .-> S44["S4.4 consumidor de schemas"]
+  S89["S8.9 cierre JS · ✅"] --> S811["S8.11 dependencias por digest · 🔵"]
+  S811 --> S810["S8.10 familias propietarias · 🔴"]
+  S89 --> S810
+  S810 -. "puerta semántica" .-> S44["S4.4 consumidor de schemas · 🔴"]
 ```
 
-`S8.9` es la única arista de dependencia ejecutable de `S8.10`. La arista punteada no afirma estado ni modifica P4: registra que `S4.4` no puede apoyarse honestamente en schemas instalados hasta que los 13 criterios de `S8.10` estén cerrados.
+`S8.11` depende sólo de `S8.9`; `S8.10` conserva `S8.9` y agrega `S8.11` como prerrequisito. La arista punteada registra contaminación semántica: hasta cerrar `S8.10`, `S4.4` no puede apoyarse honestamente en schemas instalados.
+
+### S8.11 — Entorno de dependencias compartido por digest de lock
+
+**Autoridad:** contrato de producto resuelto por el maintainer y elaboración técnica compacta Engram 9177 rev2. Prueba de factibilidad: Bun `1.3.14`; SHA-256 de los bytes exactos de `bun.lock` `28e5ea2301beee6666b39c406b00c9099277ccb395d0bb923383b3b62709ebf4`.
+
+| Campo | Valor |
+|---|---|
+| Estado | 🔵 EN CURSO — ejecución iniciada en planificación; RED empieza sólo después del commit de este contrato |
+| Depende de | `S8.9` ✅ COMPLETO |
+| Área | `install/dependency-environment.mjs`; `test/install/dependency-environment.test.mjs`; `install/version-store.mjs`; `test/install/version-store.test.mjs`; `install/lifecycle.mjs`; `test/install/lifecycle.test.mjs`; generado `install/runtime-payload.mjs`; `test/install/runtime-payload.test.mjs`; `test/install/payload-closure.test.mjs`; `openspec/plans/plan-8/STATUS.md`; `openspec/plans/master-index.md` |
+| Recurso | `dependency-environments/<sha256-lock>/node_modules`, una materialización por digest; cache compartida de Bun sólo como input read-only; publicación atómica y bindings retenidos |
+| Decisiones | Todas resueltas abajo; no hay decisión abierta |
+| Input sólo lectura | `package.json`, `bun.lock` y cache compartida de Bun; ningún otro input |
+| Route | `design-tasks` — diseño compacto aprobado en Engram 9177 rev2; ejecutor general con Strict TDD, sin proposal/spec ni SDD |
+| Forecast | 980–1080 líneas authored; hard cap 1110. Tres commits directos secuenciales, nunca PR ni chained PR; detener antes de un Módulo si su forecast supera 400 |
+| Commit documental | `docs(plan): define S8.11 dependency environment tasks`; debe existir antes de RED |
+
+**Prohibido:** editar `package.json`, `bun.lock`, código/contenido de `S8.10`, schemas o `S4.4`; tocar scripts, publisher, hosts, `main-store`, `core.mjs`, `bin/torre`, `install.sh`, runtime/DB/`ACTIVE` reales, `node_modules` del repo, resolución global o del worktree, red, configuración, Moshi o Notion. No hay dueño reciclado por worktree ni descarga/copia por versión.
+
+#### Decisiones de S8.11 — 8 resueltas, 0 abiertas
+
+- `escala`, resuelta — los bytes exactos de `bun.lock` se vinculan por SHA-256 a cada versión y un único entorno real se comparte entre versiones compatibles; no existe contrato por versión/worktree. **Clase:** contrato visible del producto. **Autoridad:** maintainer + Engram 9177 rev2. **Falsificador:** dos entornos para el mismo digest o resolución mutable. **Contamina:** `S8.11`, `S8.10`, `S4.4`.
+- `escala`, resuelta — rollback conserva y resuelve el binding anterior de código + digest, y retention no elimina entornos aún referenciados. **Clase:** operaciones irreversibles. **Autoridad:** maintainer + Engram 9177 rev2. **Falsificador:** rollback parcial o recolección de un digest retenido. **Contamina:** `S8.11`, `S8.10`, `S4.4`.
+- `derivable` — digest SHA-256 sobre bytes exactos de `bun.lock` y atestación Bun `1.3.14`. **Criterio:** cualquier normalización, otro algoritmo o versión no atestada falla.
+- `derivable` — `install/dependency-environment.mjs` es el único owner. **Criterio:** cualquier materializador/resolutor alternativo o dueño por worktree invalida el diseño.
+- `derivable` — entorno real `dependency-environments/<digest>/node_modules`; sólo el binding local inmutable `node_modules` puede ser symlink tras validar target. **Criterio:** root/target symlink, mutable `NODE_PATH` o sibling env se rechaza.
+- `derivable` — seleccionar entradas host-compatible por `package.json` name/version desde `Bun.JSONC.parse`; copiar sin hardlinks a cache privada, snapshot antes/después, install frozen con registry/proxies en loopback no escuchado y timeout 30s. **Criterio:** selección ambigua, cambio de fuente, inode compartido, red posible o timeout abierto falla cerrado; opcionales incompatibles ausentes no se inventan.
+- `derivable` — publicar con temp privado same-parent, fsync y rename; ante carrera validar al ganador. **Criterio:** ningún estado parcial es visible y dos creadores convergen al mismo metadata/tree digest.
+- `derivable` — retention escanea bindings retenidos y limpia sólo temporales propios. **Criterio:** todo digest referenciado permanece resoluble y ningún archivo ajeno se elimina.
+
+#### Módulo M8.11.1 — Owner y materializador · commit directo ≤380 authored
+
+- [ ] `T8.11.1.1` — RED: probar digest/atestación, selección exacta desde cache, red no disponible y rechazos sintéticos antes de runtime.
+- [ ] `T8.11.1.2` — GREEN: implementar el owner único, cache privada y materialización frozen con fence y timeout.
+- [ ] `T8.11.1.3` — TRIANGULATE: cubrir missing/corrupt/extra/wrong, root/target symlink, opcionales incompatibles y dos invocaciones concurrentes.
+- [ ] `T8.11.1.4` — REFACTOR: consolidar errores `CT_DEPENDENCY_*`, attestations y publicación atómica; focused verde y rollback eliminando sólo estos dos archivos.
+
+#### Módulo M8.11.2 — Binding, reutilización y cierre generado · commit directo ≤340 authored
+
+- [ ] `T8.11.2.1` — RED: dos versiones con igual digest exigen un solo entorno y bindings locales inmutables; checkout/global ocultos.
+- [ ] `T8.11.2.2` — GREEN: integrar binding validado en version-store y cerrar el payload generado con el nuevo owner.
+- [ ] `T8.11.2.3` — TRIANGULATE: Ajv y transitivas resuelven aisladas; binding wrong/missing/mutable o target symlink falla antes de runtime.
+- [ ] `T8.11.2.4` — REFACTOR: una sola ruta de resolución/reuse; focused verde y rollback conjunto de owner, version-store, literal y pruebas del Módulo.
+
+#### Módulo M8.11.3 — Activación, fallo, rollback y retention · commit directo ≤390 authored
+
+- [ ] `T8.11.3.1` — RED: activación fail-closed, rollback de código + digest previo y retention de bindings aún referenciados.
+- [ ] `T8.11.3.2` — GREEN: integrar lifecycle sin activar runtime/DB/`ACTIVE` reales.
+- [ ] `T8.11.3.3` — TRIANGULATE: ganador concurrente, entorno corrupto y binding anterior ausente no dejan activación parcial ni borran ajenos.
+- [ ] `T8.11.3.4` — REFACTOR: converger cleanup propio, metadata/tree digest y errores estables; ejecutar la verificación final en orden y dejar rollback reversible por commit.
+
+**Verificación final — orden obligatorio, una sola vez tras los focused de cada Módulo:**
+
+1. `BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 bun scripts/payload-closure.mjs --write`
+2. `BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 bun test test/install/dependency-environment.test.mjs test/install/version-store.test.mjs test/install/lifecycle.test.mjs test/install/runtime-payload.test.mjs test/install/payload-closure.test.mjs`
+3. `BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 bun test`
+4. `review-resilience` read-only, advisory; nunca gate.
+
+**Criterios de aceptación de S8.11 — 18 binarios; ninguno se marca antes de RED:**
+
+- [ ] Bun `1.3.14` y SHA-256 `28e5ea2301beee6666b39c406b00c9099277ccb395d0bb923383b3b62709ebf4` atestan los bytes exactos e intactos de `bun.lock`.
+- [ ] Ajv y sus transitivas resuelven desde el entorno aislado con checkout, `NODE_PATH`, global y cache compartida ocultos durante runtime.
+- [ ] Dos versiones con el mismo digest comparten exactamente un entorno real y cada una conserva un binding local inmutable validado.
+- [ ] Con red no disponible, la primera materialización usa sólo la cache read-only mediante copia privada sin hardlinks; la segunda reutiliza sin instalar ni copiar.
+- [ ] La cache fuente conserva bytes, árbol y metadatos antes/después; `package.json`, `bun.lock` y todos los inputs canónicos quedan idénticos.
+- [ ] La selección cubre exactamente registros host-compatible name/version; opcionales binarios incompatibles ausentes no son errores ni se materializan.
+- [ ] Registry y todos los proxies apuntan a loopback no escuchado, frozen install usa hoisted/copyfile/ignore-scripts/no-save y vence a 30s.
+- [ ] Missing, corrupt, wrong y extra package/metadata/tree fallan con `CT_DEPENDENCY_*` estable antes de ejecutar runtime.
+- [ ] Root de entorno, target `node_modules` o componentes symlink se rechazan; sólo se permite el binding local inmutable tras validar el target real.
+- [ ] No existe resolución mutable por `NODE_PATH`, entorno sibling, worktree/global owner ni descarga/copia por versión.
+- [ ] Publicación temp same-parent + fsync + rename no expone parciales; dos materializadores concurrentes validan/reutilizan un ganador idéntico.
+- [ ] Metadata y tree digest permiten rechazar corrupción, miembro extra y bytes equivocados antes de runtime.
+- [ ] Activación vincula versión de código y digest; fallo no cambia el activo ni deja binding parcial.
+- [ ] Rollback restaura juntos código + digest anteriores y comprueba que el entorno previo sigue resoluble.
+- [ ] Retention conserva todo digest referenciado por bindings retenidos y cleanup elimina sólo temporales propios.
+- [ ] El diff queda dentro del Área y respeta ≤380/≤340/≤390, total 980–1080 y hard cap 1110; se detiene antes de cualquier Módulo >400.
+- [ ] No se toca runtime/DB/`ACTIVE` real, repo `node_modules`, red, package/lock, `S8.10`, schemas, `S4.4` ni ninguna ruta prohibida.
+- [ ] El generador corre primero; las cinco pruebas enfocadas y la suite completa cache-disabled pasan exactamente una vez; `review-resilience` queda advisory.
 
 ### S8.5 — Detección de hosts e integración opt-in
 
@@ -728,7 +811,7 @@ graph LR
 
 `S8.2` entregó únicamente almacenamiento de versiones, puntero activo, install/diagnose/upgrade/rollback/uninstall, preservación de configuración e historial, y sus pruebas Strict TDD. No modificó `core.mjs`, `mcp.mjs`, `package.json`, `bun.lock`, DB ni estado de Tower.
 
-Con `S8.10` 🔵 EN CURSO, P8 queda en `70% (7/10 S)`; sólo las siete Sesiones ✅ COMPLETO/📚 ARCHIVADO cuentan, `EN CURSO` aporta cero, y `S8.5` y `S8.6` permanecen 🟡 DIFERIDO.
+Con `S8.11` 🔵 EN CURSO y `S8.10` 🔴 BLOQUEADO, P8 queda en `64% (7/11 S)`; sólo las siete Sesiones ✅ COMPLETO/📚 ARCHIVADO cuentan, `EN CURSO` y `BLOQUEADO` aportan cero, y `S8.5` y `S8.6` permanecen 🟡 DIFERIDO.
 
 Cada Sesión es una unidad entregable dirigida a `master`. **Desde el 2026-08-01 (`46edd14`) eso es un commit directo + push, no un PR** — ver [Política de entrega](../../../AGENTS.md). El alcance de la Sesión no cambia: sigue siendo el que entraría en un PR. Las referencias a PRs de las Sesiones ya cerradas son historia y quedan como están.
 
