@@ -29,7 +29,7 @@
 | S8.6 | Evidencia de release en máquina limpia | 🟡 DIFERIDO | Versioned lifecycle and release evidence | `S8.3`, `S8.4` | Diferida el 2026-07-31: se cubre con validación manual durante `S8.8` en vez de una Sesión formal |
 | S8.7 | Puente Hermes/Telegram | 📚 ARCHIVADO | Supersedido por Moshi/Main/OpenCode | — | Evidencia histórica preservada; no es prerequisito activo |
 | S8.9 | Payload derivado y guardia de deriva | ✅ COMPLETO | Versioned lifecycle | ninguna | Candidato rebasado `ebeb07450f9939fba09a69bddff68028657011ff`, tree `4d16d021aee910ea7ef81cab34ff26b1650b2944`, base/parent `e55a9d0214a817a02e6ae1c69455f0dd7d9a1796`; 8/8 criterios; focused 67/0, full 898/0 y harness runtime PASS |
-| S8.10 | Familias propietarias y validación exacta del payload de runtime | 🔴 BLOQUEADO | Payload instalable cerrado sobre schemas declarados | `S8.9` ✅, `S8.11` | Candidato preservado en `feat/s8.10-runtime-payload-model@0891cc7`; checkpoint de parqueo Engram 9176, antes del commit de comportamiento y de la verificación final; su puerta semántica mantiene bloqueada `S4.4` |
+| S8.10 | Familias propietarias y validación exacta del payload de runtime | ✅ COMPLETO | Payload instalable cerrado sobre schemas declarados | `S8.9` ✅, `S8.11` | Candidato preservado en `feat/s8.10-runtime-payload-model@0891cc7`; checkpoint de parqueo Engram 9176, antes del commit de comportamiento y de la verificación final; su puerta semántica mantiene bloqueada `S4.4` |
 | S8.11 | Entorno de dependencias compartido por digest de lock | 🔴 BLOQUEADO | Dependencias instaladas, inmutables y reutilizables por versiones compatibles | `S8.9` ✅ | WU1 `812703d` y WU2 `388109f` quedaron locales; generador `unchanged`. El primer focused final terminó 78/11 porque fixtures intentaron escribir/eliminar dentro del árbol owner-read-only; harness y full no se ejecutaron por la regla terminal sellada. |
 | S8.8 | Adopción del instalable en el runtime en uso | ✅ COMPLETO | Versioned lifecycle | `S8.2` ✅ | Todos los Módulos verificados. `M8.8.7` en `e118f33`: la copia aislada cae al legado y un puntero presente roto falla cerrado. `M8.8.8` en `d56e8cb`: checkout Git genuino, staging estricto incluso con `.git` sintético y shim opt-in. `bun test test/install` 44/0; `bun test` 465/0 con Torre desarmada; cero accesos a runtime real en los fixtures. |
 
@@ -858,3 +858,17 @@ Cada Sesión es una unidad entregable dirigida a `master`. **Desde el 2026-08-01
 **Orden de ejecución:** `S8.7` no integra la cola ejecutable. `S8.5` y `S8.6` siguen 🟡 DIFERIDO. Pi/Intercom podrá reutilizar más adelante el contrato host-neutral con Intercom sólo como transporte de wake/comunicación; wake nunca concede autoridad.
 
 Las actualizaciones sobre los archivos de planificación reclamados por `installable-v1-provenance` en [`product-version-map.yaml`](../product-version-map.yaml) deben serializarse.
+
+## `S8.10` cerrada — evidencia (2026-08-21)
+
+**Integrada en `master@7b58ad8`.** Suite completa **863 pass · 13 todo · 0 fail**; `bun test test/install` **67 pass / 0 fail**.
+
+**`T8.10.1.3`** — los prefijos de directorio de `scanClosure` se derivan de los miembros exactos de `RUNTIME_PAYLOAD_FILES` en vez de la lista fija `["bin","hosts","install","jornada","main-store"]`, que el payload ya había superado.
+
+**`T8.10.1.2`** — `contracts/schema-registry.mjs` exporta `schemaAssetPaths`, derivado de su propio `schemaFiles`: es el propietario de la familia, así que es él quien la declara. El generador compone **una sola vez** —assets manuales, familias propietarias, cierre JS— y esa composición alimenta tanto `runtimePayloadDrift` como `renderRuntimePayloadDeclaration`, de modo que no pueden discrepar. **Una familia viaja sólo si su propietario viaja.** El payload pasó de **28 a 53 miembros** y `RUNTIME_PAYLOAD_ASSETS` permanece exactamente `["bin/torre"]`.
+
+**Cinco listas paralelas eliminadas en total.** Además de la de `scanClosure`: `payloadMembers` en `entrypoint-resolution.test.mjs`, dos listados fijos de directorios de primer nivel en `lifecycle.test.mjs`, y la composición de dos partes que asertaba `payload-closure.test.mjs`. Todas habían fallado en silencio y todas derivan ahora del payload.
+
+**La verificación final encontró el defecto que tenía parqueado al candidato.** `assertCurrentHost` construía la identidad de época con `({ fence_path, ...identity })` — descartaba sólo `fence_path` y reenviaba todo lo demás que trae el binding, incluidos `brief`, `brief_ref` y `worktree`. `inspectIdentity` exige **exactamente** `project_id`, `assignment_ref`, `candidate_revision` y `host_epoch`, así que su chequeo de claves exactas rechazaba **todo binding real** con `CT_FENCE_INVALID: "Exact host identity is invalid"`, y `launch-worker` moría en un lanzamiento válido. Los cuatro campos se seleccionan ahora **por nombre**: el rest-spread codifica *«todo salvo lo que me acordé de excluir»*, y cualquier campo nuevo del binding habría vuelto a romper el contrato exacto.
+
+**Qué destrabó al cerrar:** la puerta semántica de `S4.4`, la reconciliación del `master-index` y de `release-chain`, y la mudanza de `S8.12` desde el §12 del [inventario](../inventario-de-producto.md) a este documento.
