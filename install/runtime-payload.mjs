@@ -6,7 +6,18 @@ import { isAbsolute, join, relative, resolve, sep } from "node:path"
 // Regenerate exactly with: BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 bun scripts/payload-closure.mjs --write
 export const RUNTIME_PAYLOAD_FILES = [
   "bin/torre",
+  "contracts/candidate-revision.mjs",
+  "contracts/canonicalize.mjs",
+  "contracts/completed-work-binding.mjs",
+  "contracts/errors.mjs",
+  "contracts/parked-checkpoint-binding.mjs",
+  "contracts/parked-decision.mjs",
+  "contracts/schema-registry.mjs",
+  "contracts/session-plan-snapshot.mjs",
+  "contracts/validate.mjs",
   "core.mjs",
+  "hosts/candidate-fence.mjs",
+  "hosts/epoch-enforcement.mjs",
   "hosts/herdr.mjs",
   "hosts/launch-worker-cli.mjs",
   "hosts/launch-worker.mjs",
@@ -26,6 +37,18 @@ export const RUNTIME_PAYLOAD_FILES = [
 // </generated:runtime-payload>
 
 const expected = new Set(RUNTIME_PAYLOAD_FILES)
+
+// T8.10.1.3 — los directorios admitidos se derivan de los miembros exactos del payload, nunca de
+// una lista paralela. Una lista escrita a mano se desincroniza en silencio la primera vez que el
+// payload gana una familia nueva, y el instalador rechaza su propio contenido. El root queda fuera
+// porque `relative` lo devuelve como cadena vacía.
+const allowedDirectories = new Set(
+  RUNTIME_PAYLOAD_FILES.flatMap((path) => {
+    const segments = path.split("/")
+    segments.pop()
+    return segments.map((_, index) => segments.slice(0, index + 1).join("/"))
+  }),
+)
 
 const fail = (code, detail) => {
   throw new Error(`${code}: ${detail}`)
@@ -68,7 +91,7 @@ const scanClosure = (root) => {
     if (stat.isSymbolicLink()) fail("CT_RUNTIME_PAYLOAD_INVALID", `symlink ${current}`)
     if (stat.isDirectory()) {
       const path = relative(root, current).split(sep).join("/")
-      if (path && !["bin", "hosts", "install", "jornada", "main-store"].includes(path)) fail("CT_RUNTIME_PAYLOAD_INVALID", `unexpected directory ${path}`)
+      if (path && !allowedDirectories.has(path)) fail("CT_RUNTIME_PAYLOAD_INVALID", `unexpected directory ${path}`)
       for (const entry of readdirSync(current)) visit(join(current, entry))
       return
     }

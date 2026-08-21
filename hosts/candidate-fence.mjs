@@ -338,6 +338,17 @@ export const createCandidateFenceStore = ({ rootPath, fs = nodeFs, lockTimeoutMs
       const current = scan().view
       return current === null ? null : cloneFrozen(current)
     },
+    assertExactCurrent(input = {}) {
+      if (!exactKeys(input, ["project_id", "assignment_ref", "candidate_revision", "host_epoch"])
+        || !Number.isSafeInteger(input.host_epoch) || input.host_epoch < 1) fail("CT_FENCE_INVALID", "Exact host identity is invalid")
+      const project = identifier(input.project_id, "Project"), assignment = reference(input.assignment_ref, "Assignment")
+      const revision = /^sha256:[a-f0-9]{64}$/.test(input.candidate_revision ?? "") ? input.candidate_revision : fail("CT_FENCE_INVALID", "Candidate revision is invalid")
+      const active = scan().view?.events.at(-1), candidate = active?.candidate
+      if (!active || active.host_epoch !== input.host_epoch || active.project_id !== project || candidate.assignment_ref !== assignment || candidate.candidate_revision !== revision) {
+        fail("CT_ASSIGNMENT_STALE", "Assignment does not match the current host epoch")
+      }
+      return true
+    },
     admit(input = {}) {
       const initialShape = exactKeys(input, ["candidate", "expectedRevision"])
       const nextShape = exactKeys(input, ["candidate", "predecessor", "terminationProofRef", "expectedRevision"])

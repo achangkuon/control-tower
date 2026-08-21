@@ -7,6 +7,8 @@ import { fileURLToPath } from "node:url"
 import { deriveCanonicalMainContext } from "../core.mjs"
 import { readHostRuntimeIdentity } from "../install/lifecycle.mjs"
 import { createLaunchBindingConsumer } from "../main-store/launch-consumer.mjs"
+import { createCandidateFenceStore } from "./candidate-fence.mjs"
+import { createEpochEnforcement } from "./epoch-enforcement.mjs"
 import { createHerdrAdapter } from "./herdr.mjs"
 import { createOpenCodeLauncher } from "./opencode-launcher.mjs"
 import { createRootBindingStore } from "./root-binding.mjs"
@@ -174,7 +176,12 @@ export const createProductionProvider = ({ } = {}) => {
   const installed = installedRuntime()
   const context = deriveCanonicalMainContext(process.cwd())
   const mainStoreRoot = join(context.git_common_dir, "control-tower", "main-store")
-  const consumer = createLaunchBindingConsumer({ root: mainStoreRoot })
+  const assertCurrentHost = ({ fence_path, ...identity }) => createEpochEnforcement({ candidateFence: createCandidateFenceStore({
+    rootPath: fence_path,
+    resolveTerminationProof() { fail("CT_FENCE_PORT_REQUIRED", "Read-only launch authority cannot resolve termination proof") },
+    authorizeMaintainerDecision() { fail("CT_FENCE_PORT_REQUIRED", "Read-only launch authority cannot authorize takeover") },
+  }) }).assertCurrent(identity)
+  const consumer = createLaunchBindingConsumer({ root: mainStoreRoot, assertCurrentHost })
   const rootBinding = createRootBindingStore({ root: mainStoreRoot })
   let runtime
   const command = (name, args) => runtime.run(name, args)
@@ -270,6 +277,6 @@ export const createProductionProvider = ({ } = {}) => {
   })
   return Object.freeze({
     preflight: () => { runtime = createPinnedHostRuntime(installed); return runtime.close },
-    consumeBinding: (requestRef) => consumer.consume(requestRef), backend, herdr, opencode, rootBinding, view,
+    consumeBinding: (requestRef) => consumer.consume(requestRef), assertCurrentHost, backend, herdr, opencode, rootBinding, view,
   })
 }

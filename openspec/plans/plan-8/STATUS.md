@@ -7,11 +7,11 @@
 | Campo | Detalle |
 |---|---|
 | Lane | `installable-v1`, ahora sólo como afinidad de trabajo. Desde la [unificación del 2026-08-01](../release-chain.md) no es una identidad de producto: hay un roadmap único y P8 dejó de ser "el producto que sale primero y solo". |
-| Dependencias | `origin/master@3ec8536`; `S8.1`–`S8.4` y `S8.8` están verificadas y publicadas. |
-| Bloqueo operativo | No hay bloqueo de registro vigente: la brecha 5 fue saneada. `S8.5` y `S8.6` siguen 🟡 DIFERIDO. |
+| Dependencias | Base entregada `master@44da5ff6bb584485bd7eea1b092cce02130dd591`; `S8.1`–`S8.4`, `S8.8` y `S8.9` están verificadas y publicadas. |
+| Bloqueo operativo | `S8.11` está 🔴 BLOQUEADO: el primer intento final del contrato nocturno falló y, por regla sellada, no admite corrección ni reintento. La brecha 5 de registro permanece saneada; `S8.5` y `S8.6` siguen 🟡 DIFERIDO. |
 | Alcance aprobado | Release local-first con lifecycle versionado, inmutable, idempotente y reversible; sin activar autonomía. |
-| Próxima acción | ✅ **`M8.8.2` CERRADO el 2026-08-03, esta vez con la evidencia correcta.** Activo `012a2510a9758a9c764841b7f69c7760f0d88ab1`, `previous` `34f56a6` para rollback, y `bun ~/.local/share/control-tower/versions/012a251.../install/lifecycle.mjs diagnose` → `{"healthy":true,"missing":[]}` **ejecutando la copia instalada**, que es lo que la vez anterior no se hizo. `install/runtime-payload.mjs` está presente en la versión instalada. **`M8.8.6` ✅ COMPLETO en `a87c9e9`** y **`M8.8.3` ✅ COMPLETO el 2026-08-03**: el maintainer corre el producto. Activo `4f94001`, `~/.local/bin/torre` es un symlink al runtime instalado, respaldo en `torre.legacy-20260803`. El core pasó de 398 a 4.646 líneas — los 192 commits. **Próxima acción: `M8.8.7`** —regresión de distribución que introdujo `a87c9e9`— y después **`M8.8.8`**. Los dos 🔒 SELLABLES, enumerados con criterios binarios y cero decisiones abiertas. Con ésos cierra `S8.8`. Historia del fallo, abajo. ~~🔴 `M8.8.2` REABIERTO — el runtime instalado no carga.~~ `install/lifecycle.mjs:8` importa `./runtime-payload.mjs`, y ese archivo **no está en la versión instalada**: `bun <version>/install/lifecycle.mjs diagnose` devuelve `Cannot find module './runtime-payload.mjs'`. La causa es que `RUNTIME_PAYLOAD_FILES` declara cinco miembros y **no se incluye a sí mismo**, así que el validador confirma como completo un payload que no arranca. El `healthy:true` con el que se cerró salió del **checkout del repo**, no de la copia instalada. **Ejecutar `M8.8.3` sobre este runtime dejaba la Torre inoperable.** **El contrato quedó cerrado en `fed8fb0`** (rescatado del worktree `v1`): `RUNTIME_PAYLOAD_FILES` ahora incluye `install/runtime-payload.mjs` y son seis miembros. Suite 451/0 con la Torre desarmada. **Pero eso arregla el repositorio, no la instalación:** la versión activa `34f56a6` sigue sin el archivo y sigue sin cargar. Falta el paso 👤 ATENDIDO — republicar e instalar — y **verificar `diagnose` ejecutando la copia instalada, no la del repo**. Recién ahí `M8.8.2` cierra de verdad. Orden restante: reinstalar → verificar desde la copia instalada → `M8.8.6` → `M8.8.3`. **Procedimiento exacto de la reinstalación atendida**, para que la verificación no repita el error que causó todo esto: (1) republicar desde el `HEAD` de `master` que contenga `fed8fb0`; (2) `torre install`; (3) verificar corriendo **`bun ~/.local/share/control-tower/versions/<nuevo-sha>/install/lifecycle.mjs diagnose`** — la copia instalada, con ruta absoluta, **nunca** `bun install/lifecycle.mjs` desde el repo; (4) el criterio de cierre es `healthy:true` **y** que el comando cargue, que son dos cosas distintas: un módulo que no resuelve sus imports ni siquiera llega a imprimir. Rollback disponible con `previous` en `active.json`. Adopción previa: activo `34f56a61c1908c003dc382e661ae87335498fd99` con `previous` `b72e450` para rollback. **La ejecución de `M8.8.3` se partió el 2026-08-03.** El payload sin `core.mjs` desapareció y `diagnose` lo confirma con `missing:[]`, pero el mecanismo del corte no existe: `bin/torre` nunca lee `active.json` y `CORE` defaultea a la ruta legada incluso en la versión instalada (`bin/torre:20`), así que copiar el entrypoint no corta nada y un symlink rompe `LIFECYCLE`. **La mitad implementable se separó en `M8.8.6`**, con cero efectos fuera del repositorio; `M8.8.3` queda acotado al corte al PATH y sigue 👤 ATENDIDO. **`M8.8.6` ✅ COMPLETO en `a87c9e9`, el primer Módulo sellado que se despachó y cerró bajo la §11.** `S8.7` espera `S8.8` y `S5.1`; `S0.3` está ✅ COMPLETO. `S8.5` y `S8.6` quedan 🟡 DIFERIDO. |
-| Flujo | P8 corre bajo la [regla de ejecución V1](../v1-execution-rule.md): de `tasks.md` directo a implementación, sin exploration/proposal/design y sin PR de cierre separada. |
+| Próxima acción | Reabrir de forma atendida un contrato acotado para reconciliar fixtures de `test/install/lifecycle.test.mjs` y `test/install/launch-worker-cli.test.mjs` con árboles owner-read-only; luego ejecutar una nueva verificación final autorizada. El ejecutable local queda congelado en `388109f`, sin push. `S8.10` permanece 🔴 BLOQUEADO y parqueado en Engram 9176; `S4.4` sigue detrás de su puerta semántica. |
+| Flujo | La regla V1 sigue para las Sesiones históricas. `S8.10` y `S8.11` usan explícitamente `design-tasks`: elaboración técnica compacta en Engram y luego el mismo ejecutor general, sin proposal/spec, sin SDD y sin PR. |
 | Brecha 6 — cierre de envío verificado (2026-08-20) | **`S8.9` ✅ COMPLETO por la decisión 54 y su enmienda de contrato visible (Engram 9132).** El contrato exacto es `RUNTIME_PAYLOAD_FILES === ['bin/torre', ...staticJsClosure(fourRoots)]`, en orden canónico estable. `bin/torre` es el único asset no-JS explícito; las cuatro raíces son `install/active-pointer.mjs`, `install/lifecycle.mjs`, `core.mjs` y `hosts/launch-worker-cli.mjs`. `hosts/launcher.mjs` queda fuera por inalcanzable, sin borrar su archivo ni su test. **El cableado del producto no instalado sigue sin enumerar y `S8.9` no lo cubre.** Detalle en [implementation-state](../implementation-state.md). |
 | Referencias | [tasks de V1](../../changes/v1-release/tasks.md); [change archivado](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/), [spec](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). |
 | Actualización de cierre | `S8.8` y `S5.1` están ✅ COMPLETO. `S8.7` queda 📚 ARCHIVADO: Telegram/Hermes/Remote Control, callbacks y TTL/replay fueron retirados del producto activo por la autoridad Moshi/Main/OpenCode. No se enumera `enroll/**` para ese puente. |
@@ -29,6 +29,8 @@
 | S8.6 | Evidencia de release en máquina limpia | 🟡 DIFERIDO | Versioned lifecycle and release evidence | `S8.3`, `S8.4` | Diferida el 2026-07-31: se cubre con validación manual durante `S8.8` en vez de una Sesión formal |
 | S8.7 | Puente Hermes/Telegram | 📚 ARCHIVADO | Supersedido por Moshi/Main/OpenCode | — | Evidencia histórica preservada; no es prerequisito activo |
 | S8.9 | Payload derivado y guardia de deriva | ✅ COMPLETO | Versioned lifecycle | ninguna | Candidato rebasado `ebeb07450f9939fba09a69bddff68028657011ff`, tree `4d16d021aee910ea7ef81cab34ff26b1650b2944`, base/parent `e55a9d0214a817a02e6ae1c69455f0dd7d9a1796`; 8/8 criterios; focused 67/0, full 898/0 y harness runtime PASS |
+| S8.10 | Familias propietarias y validación exacta del payload de runtime | 🔴 BLOQUEADO | Payload instalable cerrado sobre schemas declarados | `S8.9` ✅, `S8.11` | Candidato preservado en `feat/s8.10-runtime-payload-model@0891cc7`; checkpoint de parqueo Engram 9176, antes del commit de comportamiento y de la verificación final; su puerta semántica mantiene bloqueada `S4.4` |
+| S8.11 | Entorno de dependencias compartido por digest de lock | 🔴 BLOQUEADO | Dependencias instaladas, inmutables y reutilizables por versiones compatibles | `S8.9` ✅ | WU1 `812703d` y WU2 `388109f` quedaron locales; generador `unchanged`. El primer focused final terminó 78/11 porque fixtures intentaron escribir/eliminar dentro del árbol owner-read-only; harness y full no se ejecutaron por la regla terminal sellada. |
 | S8.8 | Adopción del instalable en el runtime en uso | ✅ COMPLETO | Versioned lifecycle | `S8.2` ✅ | Todos los Módulos verificados. `M8.8.7` en `e118f33`: la copia aislada cae al legado y un puntero presente roto falla cerrado. `M8.8.8` en `d56e8cb`: checkout Git genuino, staging estricto incluso con `.git` sintético y shim opt-in. `bun test test/install` 44/0; `bun test` 465/0 con Torre desarmada; cero accesos a runtime real en los fixtures. |
 
 Las Sesiones se derivan de los cinco requisitos de la [spec de Installable V1](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). `S8.2` construyó el lifecycle versionado; `S8.8` lo pone efectivamente en uso, que es la parte del requisito que quedaba abierta.
@@ -567,6 +569,200 @@ El orden es canónico y estable. `bin/torre` es el único asset no-JS explícito
 
 > **Esta Sesión no cablea nada.** El cableado del producto no instalado sigue sin enumerar. Orden preservado: primero cablear, después enviar; `S8.9` automatiza la mitad «enviar» sin expandir Área.
 
+### S8.10 — Familias propietarias y validación exacta del payload de runtime
+
+**Estado:** 🔴 BLOQUEADO · **Route:** `design-tasks` · **Depende de:** `S8.9` ✅ COMPLETO, `S8.11`
+
+**Checkpoint de parqueo:** candidato preservado en `feat/s8.10-runtime-payload-model@0891cc7`; Engram 9176. Se detuvo antes del commit de comportamiento y de la verificación final. Sus Tareas, criterios sin marcar y autoridad de diseño Engram 9171 permanecen intactos. No se reanuda hasta que `S8.11` cierre. Al reanudar debe reconciliar explícitamente los dos paths compartidos que `S8.11` modificó como baseline —`test/install/launch-worker-cli.test.mjs` y `test/install/entrypoint-resolution.test.mjs`— porque sus expectativas quedaron acopladas al contrato instalado; ninguna evidencia histórica de esos tests sustituye esa reconciliación posterior.
+
+**Autoridad:** delta técnico de Engram 9171 y resolución expresa del maintainer: `bin/torre` sigue siendo el único asset manual; las familias no-JS se declaran por su propietario; la familia de schemas deriva exclusivamente de las declaraciones canónicas del registro; los directorios válidos derivan del payload esperado, sin una segunda allowlist; todo miembro faltante, extra, no declarado o symlink se rechaza estrictamente.
+
+**Puerta semántica de S4.4:** `S8.10` no edita ni cierra `S4.4`. `S4.4` no puede considerarse semánticamente habilitada mientras una copia instalada no pueda importar el registro y resolver cada `schemaName` declarado contra un schema incluido en el payload exacto. `S8.11` es ahora el prerrequisito explícito que cierra la resolución de dependencias de `S8.10`; la puerta hacia `S4.4` sigue siendo contaminación semántica, no una dependencia inventada sobre P4.
+
+| Campo | Valor |
+|---|---|
+| Resultado | El payload generado incorpora familias no-JS declaradas por su propietario y el validador acepta sólo el árbol exacto derivado de sus archivos esperados. |
+| Estado | 🔴 BLOQUEADO — parqueada antes del commit de comportamiento y la verificación final |
+| Route | `design-tasks` — la elaboración técnica compacta quedó resuelta en Engram 9171; no queda decisión abierta y el mismo ejecutor general reanudará Strict TDD, sin proposal/spec ni SDD, sólo después de `S8.11`. |
+| Depende de | `S8.9` ✅ COMPLETO, `S8.11` |
+| Área | `contracts/schema-registry.mjs`; `scripts/payload-closure.mjs`; `install/runtime-payload.mjs`; `test/install/payload-closure.test.mjs`; `test/install/runtime-payload.test.mjs`; `test/install/entrypoint-resolution.test.mjs`; `test/install/launch-worker-cli.test.mjs`; `openspec/plans/plan-8/STATUS.md`; `openspec/plans/master-index.md` |
+| Input sólo lectura | `schemas/*.json`; en particular, `schemas/execution-contract-v1.schema.json` existe pero permanece no declarado, excluido y rechazado. |
+| Prohibido | Editar contenido de schemas; declarar `execution-contract-v1.schema.json`; crear un segundo propietario de la familia; tocar hosts o `main-store` de `S4.4`; cambiar `core.mjs`, package, lock, runtime instalado, DB, `ACTIVE`, Moshi o Notion; cualquier ruta fuera del Área. |
+| Recurso | Contrato compartido `RUNTIME_PAYLOAD_FILES` y registro canónico `schemaFiles`; sin DB, migraciones, estado de Tower ni token de entrega. |
+| Forecast | 150–260 líneas authored de implementación y pruebas; un commit de comportamiento ≤400 líneas authored, con pruebas y código juntos. Este contrato documental queda en un commit separado. |
+| Commit de comportamiento | Un único commit revisable; rollback: revertir juntos registro, derivador, literal generado y cuatro pruebas, sin tocar schemas ni package/lock. |
+| Commit documental previsto | `docs(plan): define S8.10 runtime payload tasks` |
+
+#### Decisiones de S8.10 — todas resueltas
+
+- `escala`, resuelta — preservar `RUNTIME_PAYLOAD_ASSETS === ["bin/torre"]` y declarar las demás familias no-JS desde su propietario, sin convertirlas en assets manuales. **Clase:** contrato visible del producto. **Autoridad:** resolución del maintainer y Engram 9171. **Criterio falsificable:** cualquier segundo path manual, o cualquier schema agregado directamente a `RUNTIME_PAYLOAD_ASSETS`, contradice la resolución. **Contamina:** `S8.10`, `S4.4`.
+- `escala`, resuelta — la familia de schemas deriva sólo de los valores canónicos de `schemaFiles`; `execution-contract-v1.schema.json`, al no estar declarado, sigue excluido y debe ser rechazado. **Clase:** contrato visible del producto. **Autoridad:** resolución del maintainer y propiedad existente de `contracts/schema-registry.mjs`. **Criterio falsificable:** si un schema no declarado entra al payload o uno declarado falta, hay una segunda fuente de verdad. **Contamina:** `S8.10`, `S4.4`.
+- `derivable` — exportar `schemaAssetPaths` como colección inmutable, locale-sorted y repo-relative POSIX, derivada directamente de los valores de `schemaFiles`. **Autoridad:** Engram 9171 y el registro canónico existente. **Criterio falsificable:** orden no local, separadores de plataforma, mutabilidad o una lista mantenida aparte invalidan la derivación.
+- `derivable` — agregar el registro como raíz JS y componer en un único punto assets manuales, familias de propietarios y cierre JS estático, con de-duplicación y orden locale. **Autoridad:** Engram 9171 y el mecanismo cerrado por `S8.9`. **Criterio falsificable:** si drift y render consumen colecciones distintas, si el literal generado no queda ordenado o si el scanner ejecuta imports/detecta imports dinámicos, el diseño está roto.
+- `escala`, resuelta — eliminar la allowlist manual de directorios y derivar todos los prefijos admitidos desde los miembros exactos de `RUNTIME_PAYLOAD_FILES`, excluyendo `.`; cualquier otro directorio se rechaza. **Clase:** contrato visible del producto. **Autoridad:** resolución del maintainer. **Criterio falsificable:** aceptar un directorio vacío, extra o permitido sólo por una lista secundaria contradice el cierre exacto. **Contamina:** `S8.10`, `S4.4`.
+- `derivable` — preservar las validaciones existentes de `lstat`, symlink, tipo no-file, faltantes, extras y bytes, y comprobar la copia instalada sin agregar dependencias. **Autoridad:** Engram 9171 y el contrato estricto de `S8.9`. **Criterio falsificable:** si la prueba instalada requiere editar package/lock, o no puede importar el registro y resolver cada `schemaName` con el Ajv ya disponible, la ejecución se detiene sin improvisar otra resolución.
+
+**No hay decisiones abiertas.** Las tres decisiones de contrato visible ya fueron resueltas por el maintainer; el ejecutor sólo puede aplicar sus criterios falsificables.
+
+#### Módulo M8.10.1 — Propiedad de schemas, cierre generado y validación derivada
+
+**Estado:** 🔵 EN CURSO · **Orden estricto:** `T8.10.1.1` → `T8.10.1.2` → `T8.10.1.3` → `T8.10.1.4`
+
+- [ ] `T8.10.1.1` — RED: extender exactamente las cuatro pruebas enfocadas del Área para demostrar la familia propietaria, la inclusión por cierre del registro, la deriva que permanece roja hasta regenerar y los rechazos de schema faltante, extra o no declarado, archivo/directorio extra o vacío, tipo no-file y symlink; preservar como excluido `execution-contract-v1.schema.json`.
+- [ ] `T8.10.1.2` — GREEN: exportar `schemaAssetPaths` desde `schemaFiles`, sumar el registro como raíz JS y hacer que una sola composición de assets manuales + familias propietarias + cierre JS alimente tanto drift como render; regenerar el literal ordenado sin cambiar `RUNTIME_PAYLOAD_ASSETS`.
+- [ ] `T8.10.1.3` — TRIANGULATE/REFACTOR: derivar prefijos de directorio exclusivamente desde `RUNTIME_PAYLOAD_FILES`, excluir `.`, conservar la validación exacta de `lstat`/symlink/tipo/bytes/faltantes/extras y triangular aceptación exacta de `contracts/**` y `schemas/**` contra directorios vacíos, extraños o declarados por una segunda fuente.
+- [ ] `T8.10.1.4` — VERIFY: ejecutar primero el generador, después las cuatro pruebas enfocadas exactas y finalmente la suite completa una sola vez; probar desde una copia instalada que el registro importa y que cada `schemaName` resuelve su archivo. Si Ajv no resuelve con las dependencias existentes, detenerse: package y lock están fuera de Área.
+
+**Comandos y orden obligatorio:**
+
+1. `BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 bun scripts/payload-closure.mjs --write`
+2. `BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 bun test test/install/payload-closure.test.mjs test/install/runtime-payload.test.mjs test/install/entrypoint-resolution.test.mjs test/install/launch-worker-cli.test.mjs`
+3. `BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 bun test`
+
+**Criterios de aceptación** — 13 binarios; todos deben pasar para cerrar:
+
+- [ ] `schemaAssetPaths` es inmutable, usa paths POSIX relativos al repo, queda locale-sorted y deriva directamente de todos y sólo los valores canónicos de `schemaFiles`.
+- [ ] `schemas/execution-contract-v1.schema.json` permanece sin declarar, fuera de `schemaAssetPaths` y del payload, y una copia que lo incluya es rechazada.
+- [ ] `RUNTIME_PAYLOAD_ASSETS` permanece exactamente igual a `["bin/torre"]`; no aparece un segundo asset manual ni un segundo propietario de schemas.
+- [ ] `contracts/schema-registry.mjs` es raíz JS y una sola composición de-duplica y locale-sorts assets manuales, familias propietarias y cierre JS estático para alimentar tanto drift como render.
+- [ ] `RUNTIME_PAYLOAD_FILES` queda como array literal generado, exacto y ordenado; el runtime instalado no escanea imports para arrancar.
+- [ ] Antes de regenerar, una divergencia de familia o cierre hace fallar la guardia; el generador obligatorio la reconcilia y una segunda corrida es convergente.
+- [ ] El validador deriva todos los prefijos de directorio desde los miembros exactos de `RUNTIME_PAYLOAD_FILES`, excluye `.` y no conserva una allowlist manual de directorios.
+- [ ] Se preservan los rechazos por miembro faltante o extra, bytes distintos, `lstat` inválido, symlink y tipo no-file; además se rechazan archivo, directorio extra y directorio vacío.
+- [ ] `contracts/**` y `schemas/**` se aceptan sólo cuando coinciden con los miembros exactos esperados; schema faltante, extra o no declarado falla cerrado con error estable.
+- [ ] Las cuatro pruebas enfocadas exactas cubren familia propietaria, cierre estático, deriva hasta generación, directorios derivados y todos los casos positivos y negativos enumerados.
+- [ ] Una copia instalada importa `contracts/schema-registry.mjs` y cada `schemaName` declarado resuelve un archivo presente y validable con el Ajv ya disponible.
+- [ ] No cambian package ni lock; si Ajv no resuelve en la copia instalada con las dependencias existentes, la Sesión se detiene y no agrega dependencias ni una resolución alternativa.
+- [ ] El generador corre antes de las pruebas enfocadas y de la suite completa; los tres comandos pasan en ese orden y el diff no toca rutas fuera del Área ni modifica contenido de schemas, hosts, `main-store`, runtime real, DB o `ACTIVE`.
+
+#### Grafo y puerta semántica de S8.10/S8.11
+
+```mermaid
+graph LR
+  S89["S8.9 cierre JS · ✅"] --> S811["S8.11 dependencias por digest · 🔴"]
+  S811 --> S810["S8.10 familias propietarias · 🔴"]
+  S89 --> S810
+  S810 -. "puerta semántica" .-> S44["S4.4 consumidor de schemas · 🔴"]
+```
+
+`S8.11` depende sólo de `S8.9`; `S8.10` conserva `S8.9` y agrega `S8.11` como prerrequisito. La arista punteada registra contaminación semántica: hasta cerrar `S8.10`, `S4.4` no puede apoyarse honestamente en schemas instalados.
+
+### S8.11 — Entorno de dependencias compartido por digest de lock
+
+**Autoridad:** contrato de producto resuelto por el maintainer y elaboración técnica compacta Engram 9177 rev2. Prueba de factibilidad: Bun `1.3.14`; SHA-256 de los bytes exactos de `bun.lock` `28e5ea2301beee6666b39c406b00c9099277ccb395d0bb923383b3b62709ebf4`. El maintainer aprobó **Option A** para reabrir la corrección: validación inmediata antes de importar, publicación owner-read-only, revalidación en cada entrypoint y detección de corrupción, sin prometer inmutabilidad específica del kernel. La carrera maliciosa de `chmod`/replace por un atacante con el mismo UID queda explícitamente fuera del threat model portable. **Clases:** seguridad y permisos; dependencias o evidencia contradictorias. **Contamina:** `S8.11`, `S8.10`, `S4.4` y el contrato de entrypoints instalados.
+
+Las dos enmiendas anteriores sobre `test/install/launch-worker-cli.test.mjs` y `test/install/entrypoint-resolution.test.mjs` quedan preservadas como evidencia del baseline. Ambos paths son compartidos con `S8.10` y todavía requieren reconciliación al reanudarla: sus expectativas deben alinearse con el payload exacto y el contrato de entrypoint corregidos; el verde histórico de `S8.11` no los cierra por adelantado.
+
+| Campo | Valor |
+|---|---|
+| Estado | 🔴 BLOQUEADO — corrección ejecutable local en `388109f`; primer focused final 78/11, sin harness ni full por regla terminal |
+| Depende de | `S8.9` ✅ COMPLETO |
+| Área | `install/dependency-environment.mjs`; `test/install/dependency-environment.test.mjs`; `install/version-store.mjs`; `test/install/version-store.test.mjs`; `install/lifecycle.mjs`; `test/install/lifecycle.test.mjs`; generado `install/runtime-payload.mjs`; `test/install/runtime-payload.test.mjs`; `test/install/payload-closure.test.mjs`; `test/install/launch-worker-cli.test.mjs`; `test/install/entrypoint-resolution.test.mjs`; `bin/torre`; `install/active-pointer.mjs`; `hosts/launch-worker-cli.mjs`; `scripts/payload-closure.mjs`; `openspec/plans/plan-8/STATUS.md`; `openspec/plans/master-index.md` |
+| Recurso | `dependency-environments/<sha256-lock>/node_modules`, una materialización por digest; cache compartida de Bun sólo como input read-only; publicación atómica y bindings retenidos |
+| Decisiones | Option A resuelta por el maintainer; límite portable y contaminación registrados abajo; no hay decisión abierta |
+| Input sólo lectura | `package.json`, `bun.lock` y cache compartida de Bun; ningún otro input |
+| Route | `design-tasks` — diseño compacto aprobado en Engram 9177 rev2; ejecutor general con Strict TDD, sin proposal/spec ni SDD |
+| Forecast | Baseline ya authored: 705 líneas. Corrección nueva: máximo 405 líneas staged authored. Hard cap total: 1110. Detenerse si el total staged nuevo supera 405; cada commit debe quedar por debajo de 400 líneas authored. |
+| Commit documental | `docs(plan): reopen S8.11 security correction`; debe existir antes de RED |
+
+**Prohibido:** editar `package.json`, `bun.lock`, código/contenido de `S8.10`, schemas o `S4.4`; tocar cualquier script, publisher, host o entrypoint fuera de los cuatro paths expresamente agregados al Área; tocar `main-store`, `core.mjs`, `install.sh`, runtime/DB/`ACTIVE` reales, `node_modules` del repo, resolución global o del worktree, red, configuración, Moshi o Notion. No hay dueño reciclado por worktree ni descarga/copia por versión.
+
+#### Decisiones de S8.11 — 9 resueltas, 0 abiertas
+
+- `escala`, resuelta — **Option A** exige validación inmediata pre-import, publicación owner-read-only, revalidación por entrypoint y detección de corrupción. La garantía es portable y acotada: no cubre una carrera maliciosa de `chmod`/replace por el mismo UID ni promete flags de inmutabilidad específicos del kernel. **Clases:** seguridad y permisos; dependencias o evidencia contradictorias. **Autoridad:** aprobación expresa del maintainer. **Falsificador:** importar sin revalidación inmediata, publicar con escritura de owner, aceptar corrupción o declarar protección contra same-UID fuera del límite. **Contamina:** `S8.11`, `S8.10`, `S4.4` y el contrato de entrypoints instalados.
+- `escala`, resuelta — los bytes exactos de `bun.lock` se vinculan por SHA-256 a cada versión y un único entorno real se comparte entre versiones compatibles; no existe contrato por versión/worktree. **Clase:** contrato visible del producto. **Autoridad:** maintainer + Engram 9177 rev2. **Falsificador:** dos entornos para el mismo digest o resolución mutable. **Contamina:** `S8.11`, `S8.10`, `S4.4`.
+- `escala`, resuelta — rollback conserva y resuelve el binding anterior de código + digest, y retention no elimina entornos aún referenciados. **Clase:** operaciones irreversibles. **Autoridad:** maintainer + Engram 9177 rev2. **Falsificador:** rollback parcial o recolección de un digest retenido. **Contamina:** `S8.11`, `S8.10`, `S4.4`.
+- `derivable` — digest SHA-256 sobre bytes exactos de `bun.lock` y atestación Bun `1.3.14`. **Criterio:** cualquier normalización, otro algoritmo o versión no atestada falla.
+- `derivable` — `install/dependency-environment.mjs` es el único owner. **Criterio:** cualquier materializador/resolutor alternativo o dueño por worktree invalida el diseño.
+- `derivable` — entorno real `dependency-environments/<digest>/node_modules`; sólo el binding local inmutable `node_modules` puede ser symlink tras validar target. **Criterio:** root/target symlink, mutable `NODE_PATH` o sibling env se rechaza.
+- `derivable` — seleccionar entradas host-compatible por `package.json` name/version desde `Bun.JSONC.parse`; copiar sin hardlinks a cache privada, snapshot antes/después, install frozen con registry/proxies en loopback no escuchado y timeout 30s. **Criterio:** selección ambigua, cambio de fuente, inode compartido, red posible o timeout abierto falla cerrado; opcionales incompatibles ausentes no se inventan.
+- `derivable` — publicar con temp privado same-parent, fsync y rename; ante carrera validar al ganador. **Criterio:** ningún estado parcial es visible y dos creadores convergen al mismo metadata/tree digest.
+- `derivable` — retention escanea bindings retenidos y limpia sólo temporales propios. **Criterio:** todo digest referenciado permanece resoluble y ningún archivo ajeno se elimina.
+
+#### Corrección autorizada antes de RED — unidades de commit reversibles
+
+`WU1` y `WU2` nombran exclusivamente agrupaciones de commit según `work-unit-commits`; **no son un quinto nivel del Plan** y no reemplazan Plan → Sesión → Módulo → Tarea.
+
+- **WU1 — validación antes de imports de runtime (reversible):** agregar primero el RED que demuestre que `bin/torre`, `install/active-pointer.mjs`, `hosts/launch-worker-cli.mjs` y el cierre de `scripts/payload-closure.mjs` no pueden ejecutar ni importar contra un binding no revalidado o corrupto. Aplicar la revalidación común, ejecutar launch desde el root activo y reconciliar payload/pruebas; rollback conjunto de esos cuatro paths, artefacto generado y pruebas asociadas. Forecast 170–220 authored; commit <400.
+- **WU2 — publicación owner-read-only (reversible):** agregar primero el RED que demuestre modos finales `0500`/`0400`, execute preservado, `.bin` confinado, digest posterior al hardening, fsync posterior al rename y cleanup exclusivo del temp perdedor. Implementar el mínimo sólo en el owner y su prueba, preservando rollback/retention y sin deshacer WU1. Forecast 140–180 authored; commit <400.
+
+**Guardia de tamaño:** el baseline conserva 705 líneas authored. WU1 + WU2 admiten como máximo 405 líneas staged authored nuevas, para un hard cap total de 1110. Detener la ejecución antes del commit si `git diff --cached --numstat` supera 405 líneas nuevas acumuladas; ningún commit puede alcanzar 400.
+
+**RED y criterios vigentes de la corrección — todos sin marcar antes de implementar:**
+
+- [x] La publicación final queda owner-read-only y se verifica después del rename; no se declara inmutabilidad del kernel.
+- [x] Cada entrypoint revalida inmediatamente antes de importar/ejecutar; una validación anterior en el flujo no satisface el criterio.
+- [x] Metadata y tree digest detectan bytes, miembros o modos corruptos antes de runtime.
+- [x] La garantía documentada excluye la carrera maliciosa same-UID de `chmod`/replace y no afirma cubrirla.
+- [x] WU1 y WU2 son reversibles por separado: 100 y 62 authored, total nuevo 162/405; ambos commits quedan <400 y el total S8.11 es 867/1110.
+- [ ] La verificación final no cerró: generador `unchanged`, focused final 78 pass/11 fail; harness y full quedaron `not_run` por la regla terminal del contrato.
+
+#### Módulo M8.11.1 — Owner y materializador · baseline histórico ≤380 authored
+
+- [x] `T8.11.1.1` — RED: probar digest/atestación, selección exacta desde cache, red no disponible y rechazos sintéticos antes de runtime.
+- [x] `T8.11.1.2` — GREEN: implementar el owner único, cache privada y materialización frozen con fence y timeout.
+- [x] `T8.11.1.3` — TRIANGULATE: cubrir missing/corrupt/extra/wrong, root/target symlink, opcionales incompatibles y dos invocaciones concurrentes.
+- [x] `T8.11.1.4` — REFACTOR: consolidar errores `CT_DEPENDENCY_*`, attestations y publicación atómica; focused verde y rollback eliminando sólo estos dos archivos.
+- [x] `T8.11.1.5` — CORRECCIÓN WU2, RED→GREEN→REFACTOR: publicación owner-read-only, digest sobre modos finales, durabilidad post-rename y cleanup del temp privado; commit `388109f`, targeted 12/0.
+
+#### Módulo M8.11.2 — Binding, reutilización y cierre generado · baseline histórico ≤340 authored
+
+- [x] `T8.11.2.1` — RED: dos versiones con igual digest exigen un solo entorno y bindings locales inmutables; checkout/global ocultos.
+- [x] `T8.11.2.2` — GREEN: integrar binding validado en version-store y cerrar el payload generado con el nuevo owner.
+- [x] `T8.11.2.3` — TRIANGULATE: Ajv y transitivas resuelven aisladas; binding wrong/missing/mutable o target symlink falla antes de runtime.
+- [x] `T8.11.2.4` — REFACTOR: una sola ruta de resolución/reuse; focused verde y rollback conjunto de owner, version-store, literal y pruebas del Módulo.
+- [x] `T8.11.2.5` — CORRECCIÓN WU1, RED→GREEN→REFACTOR: binding activo revalidado antes de paths package-bearing y cierre de imports dinámicos literales preservado; commit `812703d`, targeted 21/0.
+
+#### Módulo M8.11.3 — Activación, fallo, rollback y retention · baseline histórico ≤390 authored
+
+- [x] `T8.11.3.1` — RED: activación fail-closed, rollback de código + digest previo y retention de bindings aún referenciados.
+- [x] `T8.11.3.2` — GREEN: integrar lifecycle sin activar runtime/DB/`ACTIVE` reales.
+- [x] `T8.11.3.3` — TRIANGULATE: ganador concurrente, entorno corrupto y binding anterior ausente no dejan activación parcial ni borran ajenos.
+- [x] `T8.11.3.4` — REFACTOR: converger cleanup propio, metadata/tree digest y errores estables; ejecutar la verificación final en orden y dejar rollback reversible por commit.
+- [ ] `T8.11.3.5` — CORRECCIÓN INTEGRAL BLOQUEADA: el focused final no alcanzó cierre integral porque fixtures preexistentes intentaron escribir o limpiar el árbol ya owner-read-only.
+
+#### Módulo M8.11.4 — Cierre sellado de la corrección
+
+- [x] `T8.11.4.1` — preservar el checkpoint WU1 21/0 y commitear validación pre-import como `812703d`.
+- [x] `T8.11.4.2` — ejecutar RED 10/2, GREEN/REFACTOR 12/0 y commitear publicación read-only como `388109f`.
+- [ ] `T8.11.4.3` — verificación integral BLOQUEADA: focused 78/11; los fallos son `EACCES` en setup/cleanup de fixtures read-only, antes de completar rollback/launch integral.
+- [ ] `T8.11.4.4` — generador `unchanged`; focused ejecutado una vez y fallido; corrupt-binding harness y full `not_run` por regla terminal, sin retry.
+- [x] `T8.11.4.5` — evidencia pasiva reconciliada, candidato local congelado sin push y wake report nocturno preparado.
+
+**Intento final sellado — BLOQUEADO.** Contrato `control-tower-S8.11-20260820-night`, digest `b03985756cec3f10353a99b8320a86d64db0ef5ed5b578a9b49f1a1f9785beea`. Ejecutable local `388109f1e79f50ce05582d2b0a7b3ff8a9685f72`, tree `489d042d3cba3939dedfdfd64fd20d74c9c8a638`; generator `unchanged`; focused final 78 pass/11 fail/418 expectations/89 tests. Los fallos no habilitan inferir un defecto del runtime ni declarar PASS: `test/install/lifecycle.test.mjs` y `test/install/launch-worker-cli.test.mjs` intentan crear corrupción o limpiar dentro de directorios `0500`. El contrato prohíbe toda corrección posterior al primer fallo final; harness y full no se ejecutaron. Checkpoint de retoma: nueva autoridad atendida para adaptar exclusivamente esos fixtures al contrato read-only y emitir un nuevo candidato verificable.
+
+**Verificación final histórica del baseline — preservada, pero invalidada como cierre de la corrección:**
+
+1. `BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 bun scripts/payload-closure.mjs --write`
+2. `BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 bun test test/install/dependency-environment.test.mjs test/install/version-store.test.mjs test/install/lifecycle.test.mjs test/install/runtime-payload.test.mjs test/install/payload-closure.test.mjs`
+3. `BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 bun test`
+4. `review-resilience` read-only, advisory; nunca gate.
+
+**Criterios del baseline histórico — evidencia preservada; los criterios invalidados por la reapertura vuelven a quedar sin marcar:**
+
+- [x] Bun `1.3.14` y SHA-256 `28e5ea2301beee6666b39c406b00c9099277ccb395d0bb923383b3b62709ebf4` atestan los bytes exactos e intactos de `bun.lock`.
+- [ ] Ajv y sus transitivas resuelven desde el entorno aislado con checkout, `NODE_PATH`, global y cache compartida ocultos durante runtime. **Invalidado hasta revalidar inmediatamente antes del import.**
+- [x] Dos versiones con el mismo digest comparten exactamente un entorno real y cada una conserva un binding local inmutable validado.
+- [x] Con red no disponible, la primera materialización usa sólo la cache read-only mediante copia privada sin hardlinks; la segunda reutiliza sin instalar ni copiar.
+- [x] La cache fuente conserva bytes, árbol y metadatos antes/después; `package.json`, `bun.lock` y todos los inputs canónicos quedan idénticos.
+- [x] La selección cubre exactamente registros host-compatible name/version; opcionales binarios incompatibles ausentes no son errores ni se materializan.
+- [x] Registry y todos los proxies apuntan a loopback no escuchado, frozen install usa hoisted/copyfile/ignore-scripts/no-save y vence a 30s.
+- [ ] Missing, corrupt, wrong y extra package/metadata/tree fallan con `CT_DEPENDENCY_*` estable antes de ejecutar runtime. **Invalidado hasta repetir aceptación pre-runtime sobre los bytes corregidos.**
+- [ ] Root de entorno, target `node_modules` o componentes symlink se rechazan; sólo se permite el binding local inmutable tras validar el target real. **Invalidado hasta comprobar publicación owner-read-only y revalidación por entrypoint.**
+- [x] No existe resolución mutable por `NODE_PATH`, entorno sibling, worktree/global owner ni descarga/copia por versión.
+- [ ] Publicación temp same-parent + fsync + rename no expone parciales; dos materializadores concurrentes validan/reutilizan un ganador idéntico. **Invalidado hasta verificar publicación atómica owner-read-only después del rename.**
+- [ ] Metadata y tree digest permiten rechazar corrupción, miembro extra y bytes equivocados antes de runtime. **Invalidado hasta repetir detección de corrupción inmediatamente antes del import.**
+- [ ] Activación vincula versión de código y digest; fallo no cambia el activo ni deja binding parcial. **Invalidado hasta triangular la nueva revalidación pre-runtime.**
+- [x] Rollback restaura juntos código + digest anteriores y comprueba que el entorno previo sigue resoluble.
+- [x] Retention conserva todo digest referenciado por bindings retenidos y cleanup elimina sólo temporales propios.
+- [x] El diff queda dentro del Área y respeta ≤380/≤340/≤390; cerró en 705 authored, debajo del forecast y del hard cap 1110, sin ningún Módulo ni corrección >400.
+- [x] No se toca runtime/DB/`ACTIVE` real, repo `node_modules`, red, package/lock, `S8.10`, schemas, `S4.4` ni ninguna ruta prohibida.
+- [ ] El generador corre primero; las cinco pruebas enfocadas y la suite completa cache-disabled pasan exactamente una vez sobre los bytes finales; `review-resilience` queda advisory. **Invalidado: la verificación final debe repetirse sobre la corrección.**
+
+**Evidencia histórica del baseline rechazado.** La cadena culminó en `e56bc3420729a6dbb614772a3faac239f6d0d7d0`, tree `5542c681c24b7791aab39cdee998133a29b098eb`; el baseline integrado para esta reapertura es `9c7f18e` y fue **REJECTED** de forma independiente. Commits y authored preservados: `ca80321` 259, `f744880` 172, `e0a0e2f` 266, `5f30c2d` 16 y `e56bc34` 22; total 705. Históricamente el generador devolvió `unchanged`, focused 76/0 y full 923/0. Esos resultados describen la base desde la que se corrige; no son evidencia final, pre-runtime ni atómica/read-only de Option A.
+
+**Review e invariantes históricos.** `review-resilience` quedó tipado como no disponible — `review subagent dispatch has no current controller-owned candidate view lineage binding`— y no se sustituyó bajo RDD OFF. `package.json` SHA-256 `bc2f33bd55f6994ac06496a97b05bb58c51b599571a176979fc66cff001ade0d`; `bun.lock` SHA-256 `28e5ea2301beee6666b39c406b00c9099277ccb395d0bb923383b3b62709ebf4`; `tower.db` SHA-256 `fa3a4b0d2c3d4f37d326af7da7ebb2cd392ca3b46f4c3fbcb365bafc783685f6`; `ACTIVE` ausente. No hubo push ni mutación de runtime, DB, configuración, Moshi o Notion. **No hay estado de entrega final: S8.11 queda 🔴 BLOQUEADO tras el primer focused final del contrato sellado; la retoma requiere nueva autoridad atendida.**
+
 ### S8.5 — Detección de hosts e integración opt-in
 
 Detecta Bun, Git y las instalaciones disponibles de OpenCode, Pi y Claude, e informa versiones y capacidades. La integración es opt-in y se limita a los hosts presentes; un host opcional ausente es diagnóstico, nunca un fallo de instalación. Una configuración de host insegura cierra fail-closed.
@@ -653,7 +849,7 @@ graph LR
 
 `S8.2` entregó únicamente almacenamiento de versiones, puntero activo, install/diagnose/upgrade/rollback/uninstall, preservación de configuración e historial, y sus pruebas Strict TDD. No modificó `core.mjs`, `mcp.mjs`, `package.json`, `bun.lock`, DB ni estado de Tower.
 
-Con `S8.9` cerrada, P8 queda en `78% (7/9 S)`; `S8.5` y `S8.6` permanecen 🟡 DIFERIDO.
+Con `S8.11` 🔴 BLOQUEADO tras su primer focused final y `S8.10` 🔴 BLOQUEADO, P8 queda en `64% (7/11 S)`; sólo las siete Sesiones ✅ COMPLETO/📚 ARCHIVADO cuentan, `EN CURSO` y `BLOQUEADO` aportan cero, y `S8.5` y `S8.6` permanecen 🟡 DIFERIDO.
 
 Cada Sesión es una unidad entregable dirigida a `master`. **Desde el 2026-08-01 (`46edd14`) eso es un commit directo + push, no un PR** — ver [Política de entrega](../../../AGENTS.md). El alcance de la Sesión no cambia: sigue siendo el que entraría en un PR. Las referencias a PRs de las Sesiones ya cerradas son historia y quedan como están.
 

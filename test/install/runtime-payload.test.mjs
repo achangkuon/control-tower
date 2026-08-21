@@ -8,7 +8,18 @@ import { RUNTIME_PAYLOAD_FILES, readRuntimePayload, validateRuntimePayload } fro
 const roots = []
 const CANONICAL_RUNTIME_PAYLOAD = [
   "bin/torre",
+  "contracts/candidate-revision.mjs",
+  "contracts/canonicalize.mjs",
+  "contracts/completed-work-binding.mjs",
+  "contracts/errors.mjs",
+  "contracts/parked-checkpoint-binding.mjs",
+  "contracts/parked-decision.mjs",
+  "contracts/schema-registry.mjs",
+  "contracts/session-plan-snapshot.mjs",
+  "contracts/validate.mjs",
   "core.mjs",
+  "hosts/candidate-fence.mjs",
+  "hosts/epoch-enforcement.mjs",
   "hosts/herdr.mjs",
   "hosts/launch-worker-cli.mjs",
   "hosts/launch-worker.mjs",

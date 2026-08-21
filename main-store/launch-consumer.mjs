@@ -11,8 +11,9 @@ const validRef = (value) => typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9
 const bindingKeys = ["request_ref", "authorization_id", "brief", "brief_ref", "assignment_ref", "worktree", "candidate_revision", "host_epoch", "fence_path", "project_id", "jornada_id", "jornada_revision", "active_epoch"]
 const epochKeys = ["epoch", "project_id"]
 
-export const createLaunchBindingConsumer = ({ root, testEpochTransactionHook } = {}) => {
+export const createLaunchBindingConsumer = ({ root, testEpochTransactionHook, assertCurrentHost } = {}) => {
   if (!isAbsolute(root ?? "") || !existsSync(root)) fail("CT_LAUNCH_BINDING_INVALID", "Main launch store is unavailable")
+  if (typeof assertCurrentHost !== "function") fail("CT_FENCE_PORT_REQUIRED", "Current host-epoch authority is required")
   const rootStats = lstatSync(root)
   if (!rootStats.isDirectory() || rootStats.isSymbolicLink() || rootStats.uid !== process.getuid() || (rootStats.mode & 0o777) !== 0o700) fail("CT_LAUNCH_BINDING_INVALID", "Main launch store is unsafe")
   const directory = (name, create = false) => {
@@ -74,6 +75,7 @@ export const createLaunchBindingConsumer = ({ root, testEpochTransactionHook } =
       if (authorization.state !== "APPROVED" || authorization.project_id !== record.project_id || authorization.jornada_id !== record.jornada_id || authorization.jornada_revision !== record.jornada_revision || authorization.extensions?.["control-tower/candidate-revision"] !== record.candidate_revision || Date.parse(authorization.expires_at) <= Date.now()) fail("CT_LAUNCH_BINDING_STALE", "Launch binding authorization is stale")
       const jornada = resolveJornadaLifecycle(parse(join(directory("jornadas"), `${record.jornada_id}.json`)))
       if (jornada.state !== "ACTIVE" || jornada.jornada_revision !== record.jornada_revision) fail("CT_LAUNCH_BINDING_STALE", "Launch binding Jornada is stale")
+      assertCurrentHost({ project_id: record.project_id, assignment_ref: record.assignment_ref, candidate_revision: record.candidate_revision, host_epoch: record.host_epoch, fence_path: record.fence_path })
       let descriptor
       try {
         descriptor = openSync(consumptionPath, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW, 0o600)

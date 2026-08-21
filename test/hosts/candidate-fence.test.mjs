@@ -175,6 +175,18 @@ describe("single-host candidate fence", () => {
     expect(nodeFs.existsSync(join(context.root, ".candidate-fence"))).toBeFalse()
   })
 
+  test("asserts only the exact current journal candidate and epoch", () => {
+    const context = fixture(), first = candidate("host-a"), second = candidate("host-b")
+    admitInitial(context.store, first)
+    expect(context.store.assertExactCurrent({ project_id: first.project_id, assignment_ref: first.assignment_ref, candidate_revision: first.candidate_revision, host_epoch: 1 })).toBeTrue()
+    for (const identity of [
+      { project_id: first.project_id, assignment_ref: first.assignment_ref, candidate_revision: sha("f"), host_epoch: 1 },
+      { project_id: first.project_id, assignment_ref: first.assignment_ref, candidate_revision: first.candidate_revision, host_epoch: 2 },
+      { project_id: first.project_id, assignment_ref: second.assignment_ref, candidate_revision: second.candidate_revision, host_epoch: 1 },
+    ]) expect(capture(() => context.store.assertExactCurrent(identity)).code).toBe("CT_ASSIGNMENT_STALE")
+    expect(capture(() => context.store.assertExactCurrent({ project_id: first.project_id, assignment_ref: first.assignment_ref, candidate_revision: first.candidate_revision })).code).toBe("CT_FENCE_INVALID")
+  })
+
   test("requires a pre-existing trusted 0700 root with no symlink component and both constructor ports", () => {
     const container = nodeFs.mkdtempSync(join(tmpdir(), "ct-host-root-")); roots.push(container)
     const missing = join(container, "missing")

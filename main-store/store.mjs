@@ -85,7 +85,7 @@ const responsePair = (input) => {
   }
 }
 
-export const createMainStore = ({ root, authority, capability, beforeCommit, testEpochTransactionHook } = {}) => {
+export const createMainStore = ({ root, authority, capability, beforeCommit, testEpochTransactionHook, assertCurrentHost } = {}) => {
   if (!isAbsolute(root ?? "") || !authority || typeof authority.assert !== "function") fail("CT_STORE_INVALID", "A bound absolute store is required")
   const binding = authority.assert(capability, { store_path: root })
   mkdirSync(root, { recursive: true, mode: 0o700 })
@@ -235,6 +235,10 @@ export const createMainStore = ({ root, authority, capability, beforeCommit, tes
     catch (error) { fail("CT_JORNADA_INVALID", "Launch authorization Jornada is unavailable", error) }
     if (jornada.state !== "AC" + "TIVE" || jornada.jornada_revision !== authorization.jornada_revision) fail("CT_LAUNCH_BINDING_STALE", "Launch authorization Jornada is not active at its bound revision")
     return jornada
+  }
+  const assertLaunchHost = (record) => {
+    if (typeof assertCurrentHost !== "function") fail("CT_FENCE_PORT_REQUIRED", "Current host-epoch authority is required")
+    return assertCurrentHost({ project_id: record.project_id, assignment_ref: record.assignment_ref, candidate_revision: record.candidate_revision, host_epoch: record.host_epoch, fence_path: record.fence_path })
   }
 
   return Object.freeze({
@@ -510,9 +514,11 @@ export const createMainStore = ({ root, authority, capability, beforeCommit, tes
           jornada_revision: jornada.jornada_revision,
           active_epoch: binding.epoch,
         }
+        assertLaunchHost(bindingRecord)
         atomicWrite(path, bindingRecord, () => {
           if (existsSync(path)) fail("CT_LAUNCH_BINDING_IMMUTABLE", "Launch binding already exists")
           activeLaunchJornada(authorization)
+          assertLaunchHost(bindingRecord)
         })
         return frozen({ ...structuredClone(bindingRecord), record_path: path })
       })
@@ -542,6 +548,7 @@ export const createMainStore = ({ root, authority, capability, beforeCommit, tes
         const authorization = approvedAuthorizationFor(record.authorization_id, record.candidate_revision)
         if (authorization.jornada_id !== record.jornada_id || authorization.jornada_revision !== record.jornada_revision) fail("CT_LAUNCH_BINDING_STALE", "Launch binding authorization drifted")
         activeLaunchJornada(authorization)
+        assertLaunchHost(record)
         if (existsSync(consumption)) fail("CT_LAUNCH_BINDING_CONSUMED", "Launch binding was already consumed")
         atomicWrite(consumption, { request_ref: requestRef, binding_path: path }, () => {
           if (existsSync(consumption)) fail("CT_LAUNCH_BINDING_CONSUMED", "Launch binding was already consumed")

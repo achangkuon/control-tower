@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test"
 
-import { createLaunchWorkerRuntime } from "../../hosts/launch-worker.mjs"
+import { createLaunchWorkerRuntime as createRuntime } from "../../hosts/launch-worker.mjs"
 
+const assertCurrentHost = () => true
+const createLaunchWorkerRuntime = (options) => createRuntime({ assertCurrentHost, ...options })
 const binding = Object.freeze({
   assignment_ref: "assignments/a.json", brief: "Approved work only", brief_ref: "briefs/a.json",
   candidate_revision: `sha256:${"a".repeat(64)}`, fence_path: "/runtime/fence-a", host_epoch: 3, project_id: "project-a", worktree: "/work/a",
@@ -23,6 +25,18 @@ describe("packaged launch-worker runtime", () => {
       ["bind", { assignment_ref: "assignments/a.json", backend_pid: 42, backend_url: "http://127.0.0.1:4096", host_epoch: 3, project_id: "project-a", root_identity: { agent: "gentle-orchestrator", root_session_id: `ses_${"a".repeat(26)}` }, worktree: "/work/a" }],
       ["attach", { backend_url: "http://127.0.0.1:4096", root_session_id: `ses_${"a".repeat(26)}`, worktree: "/work/a" }],
     ])
+  })
+
+  test("rejects a consumed binding superseded before the immediate pre-effect check", async () => {
+    const calls = []
+    const runtime = createLaunchWorkerRuntime({
+      consumeBinding: async () => { calls.push("consume"); return binding },
+      assertCurrentHost: () => { calls.push("assert"); throw Object.assign(new Error("superseded"), { code: "CT_ASSIGNMENT_STALE" }) },
+      backend: { start: async () => { calls.push("backend") }, stop: async () => {} },
+      rootBinding: { bind: () => { calls.push("root") } }, view: { attach: async () => { calls.push("view") } },
+    })
+    await expect(runtime.launchWorker({ request_ref: "request-a" })).rejects.toMatchObject({ code: "CT_ASSIGNMENT_STALE" })
+    expect(calls).toEqual(["consume", "assert"])
   })
 
   test("rejects caller bindings and unavailable Main consumption before host effects", async () => {

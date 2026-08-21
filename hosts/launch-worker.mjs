@@ -2,8 +2,8 @@ const fail = (code, message) => { throw Object.assign(new Error(message), { code
 const exact = (value) => value && typeof value === "object" && !Array.isArray(value)
   && Object.keys(value).length === 1 && Object.hasOwn(value, "request_ref")
 
-export const createLaunchWorkerRuntime = ({ preflight = () => () => {}, consumeBinding, backend, rootBinding, view } = {}) => {
-  if (typeof consumeBinding !== "function" || typeof backend?.start !== "function" || typeof backend?.stop !== "function" || typeof rootBinding?.bind !== "function" || typeof view?.attach !== "function") {
+export const createLaunchWorkerRuntime = ({ preflight = () => () => {}, consumeBinding, assertCurrentHost, backend, rootBinding, view } = {}) => {
+  if (typeof consumeBinding !== "function" || typeof assertCurrentHost !== "function" || typeof backend?.start !== "function" || typeof backend?.stop !== "function" || typeof rootBinding?.bind !== "function" || typeof view?.attach !== "function") {
     throw new TypeError("Main-owned launch ports are required")
   }
   return Object.freeze({
@@ -15,6 +15,7 @@ export const createLaunchWorkerRuntime = ({ preflight = () => () => {}, consumeB
       let consumed = false, persisted
       try {
         const binding = await consumeBinding(input.request_ref); consumed = true
+        await assertCurrentHost(binding)
         const started = await backend.start({ assignment_ref: binding.assignment_ref, host_epoch: binding.host_epoch, project_id: binding.project_id, worktree: binding.worktree })
         try { persisted = rootBinding.bind(started) } catch (error) {
           try { await backend.stop(binding.worktree) } catch {}
@@ -23,6 +24,7 @@ export const createLaunchWorkerRuntime = ({ preflight = () => () => {}, consumeB
         const attached = await view.attach({ backend_url: persisted.backend_url, root_session_id: persisted.root_session_id, worktree: persisted.worktree })
         return Object.freeze({ ...binding, backend_pid: persisted.backend_pid, backend_url: persisted.backend_url, root_session_id: persisted.root_session_id, ...attached })
       } catch (error) {
+        if (error?.code === "CT_ASSIGNMENT_STALE") throw error
         const manual_command = error?.code === "CT_VIEW_UNAVAILABLE" && error.manual_command === `opencode attach ${persisted?.backend_url} --session ${persisted?.root_session_id}` ? error.manual_command : undefined
         if (consumed) throw Object.assign(new Error(`Launch binding was consumed; Main must issue a new binding (${error?.message ?? "host failure"})`), { code: "CT_LAUNCH_FINAL_ATTEMPT_FAILED", evidence: { request_ref: input.request_ref, replacement_binding_required: true, cause: error?.code ?? "CT_LAUNCH_FAILED", ...(manual_command ? { manual_command } : {}) } })
         throw error

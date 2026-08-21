@@ -31,7 +31,7 @@ const binding = Object.freeze({
 const setup = (options = {}) => {
   const root = mkdtempSync(join(tmpdir(), "ct-main-store-"))
   temporaryDirectories.push(root)
-  const { trustedBindingOverrides = {}, ...storeOptions } = options
+  const { trustedBindingOverrides = {}, assertCurrentHost = () => true, ...storeOptions } = options
   const trustedBinding = Object.freeze({ ...binding, ...trustedBindingOverrides, store_path: root })
   let providerCalls = 0
   const authority = bindMainAuthority({
@@ -39,7 +39,7 @@ const setup = (options = {}) => {
     rederiveBinding: () => ({ ...trustedBinding }),
   })
   const capability = authority.capability
-  const store = createMainStore({ root, authority, capability, ...storeOptions })
+  const store = createMainStore({ root, authority, capability, assertCurrentHost, ...storeOptions })
   return { authority, capability, root, store, providerCalls: () => providerCalls }
 }
 const code = (operation) => {
@@ -846,6 +846,22 @@ describe("atomic owner-only Main store", () => {
     expect(existsSync(join(root, "launch-consumptions", "request-launch-a.json"))).toBe(true)
   })
 
+  test("proves exact current host identity at launch issue and inside consumption", () => {
+    const calls = [], { root, store } = setup({ assertCurrentHost: (identity) => {
+      calls.push(identity)
+      if (calls.length === 3) throw Object.assign(new Error("advanced"), { code: "CT_ASSIGNMENT_STALE" })
+      return true
+    } })
+    activateJornada(store)
+    store.createAuthorization({ actor: "MAIN", ...authorizationRecord("auth-epoch") })
+    store.consumeAuthorization({ actor: "MAIN", authorization_id: "auth-epoch", candidate_revision: candidateRevision, decision: "APPROVED", expected_revision: 1 })
+    store.registerAssignmentLocation({ actor: "MAIN", project_id: "project-a", assignment_ref: "assignments/epoch.json", worktree: "/worktrees/epoch", fence_path: "/runtime/fence-epoch" })
+    store.issueLaunchBinding({ actor: "MAIN", project_id: "project-a", request_ref: "request-epoch", authorization_id: "auth-epoch", brief: "Approved", brief_ref: "briefs/epoch.json", assignment_ref: "assignments/epoch.json", candidate_revision: candidateRevision, host_epoch: 3 })
+    expect(code(() => store.consumeLaunchBinding("request-epoch"))).toBe("CT_ASSIGNMENT_STALE")
+    expect(calls).toEqual(Array(3).fill({ project_id: "project-a", assignment_ref: "assignments/epoch.json", candidate_revision: candidateRevision, host_epoch: 3, fence_path: "/runtime/fence-epoch" }))
+    expect(existsSync(join(root, "launch-consumptions", "request-epoch.json"))).toBe(false)
+  })
+
   test("derives immutable launch locations from Main-owned assignment records", () => {
     const { root, store } = setup()
     activateJornada(store)
@@ -917,7 +933,7 @@ describe("atomic owner-only Main store", () => {
       const wait = (name) => { while (!existsSync(barrier+"/"+name)) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,2); };
       try {
         writeFileSync(barrier+"/consumer-started", "1");
-        const binding = createLaunchBindingConsumer({ root, testEpochTransactionHook: (event) => { if (event === "contended") return writeFileSync(barrier+"/consumer-contended", "1"); writeFileSync(barrier+"/consumer-acquired", "1"); wait("consumer-go"); } }).consume(request);
+        const binding = createLaunchBindingConsumer({ root, assertCurrentHost:()=>true, testEpochTransactionHook: (event) => { if (event === "contended") return writeFileSync(barrier+"/consumer-contended", "1"); writeFileSync(barrier+"/consumer-acquired", "1"); wait("consumer-go"); } }).consume(request);
         writeFileSync(barrier+"/host-effect", JSON.stringify(binding)); console.log(JSON.stringify({ ok:true }));
       } catch (error) { console.log(JSON.stringify({ ok:false, code:error.code })); }
     `
