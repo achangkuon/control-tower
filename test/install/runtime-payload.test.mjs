@@ -19,6 +19,7 @@ const CANONICAL_RUNTIME_PAYLOAD = [
   "hosts/root-binding.mjs",
   "hosts/root-identity.mjs",
   "install/active-pointer.mjs",
+  "install/dependency-environment.mjs",
   "install/lifecycle.mjs",
   "install/runtime-payload.mjs",
   "install/version-store.mjs",

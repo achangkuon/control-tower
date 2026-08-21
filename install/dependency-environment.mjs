@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto"
-import { accessSync, closeSync, constants, cpSync, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync, readdirSync, readlinkSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs"
+import { accessSync, closeSync, constants, cpSync, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync, readdirSync, readlinkSync, realpathSync, renameSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs"
 import { basename, dirname, isAbsolute, join, relative } from "node:path"
 
 const C = "CT_DEPENDENCY_", hash = (bytes) => createHash("sha256").update(bytes).digest("hex"), canonical = (value) => `${JSON.stringify(value)}\n`
@@ -54,15 +54,22 @@ function sourceSnapshot(entries, error = "CACHE_INVALID") {
   return { digest: digest.digest("hex"), inodes }
 }
 function metadataIntegrity(metadata) { const body = { ...metadata }; delete body.integrity; return hash(canonical(body)) }
-function validateExisting(target, identity, expected) {
+function publishedEnvironment(target, error, lockDigest) {
   try {
-    safeDirectory(target, "ENV_IMMUTABLE"); const bytes = readFileSync(join(target, "metadata.json"), "utf8"), metadata = JSON.parse(bytes)
+    safeDirectory(target, error); if (realpathSync(target) !== target) fail(error)
+    const metadataPath = join(target, "metadata.json"), modules = join(target, "node_modules"), info = lstatSync(metadataPath), bytes = readFileSync(metadataPath, "utf8"), metadata = JSON.parse(bytes), hex = /^[a-f0-9]{64}$/
+    safeDirectory(modules, error); if (realpathSync(modules) !== modules || !info.isFile() || info.isSymbolicLink() || (info.mode & 0o777) !== 0o400) fail(error)
     const keys = ["bun", "commandPolicy", "host", "integrity", "lockDigest", "packageDigest", "schema", "sources", "topology", "treeDigest"]
-    const validSources = Array.isArray(metadata.sources) && metadata.sources.length === expected.length && metadata.sources.every((item, index) => same(Object.keys(item ?? {}).sort(), ["digest", "name", "path", "version"]) && same({ name: item.name, version: item.version }, expected[index]) && typeof item.path === "string" && !isAbsolute(item.path) && !item.path.split("/").includes("..") && /^[a-f0-9]{64}$/.test(item.digest))
-    if (bytes !== canonical(metadata) || !same(Object.keys(metadata).sort(), keys) || !same({ schema: metadata.schema, lockDigest: metadata.lockDigest, packageDigest: metadata.packageDigest, bun: metadata.bun, host: metadata.host }, identity) || !same(metadata.commandPolicy, policy("<private-cache>", "<private-home>")) || !same(metadata.topology, expected) || !validSources || metadata.integrity !== metadataIntegrity(metadata)) fail("ENV_IMMUTABLE")
-    if (metadata.treeDigest !== treeDigest(join(target, "node_modules"), "ENV_IMMUTABLE")) fail("ENV_IMMUTABLE")
+    const validTopology = Array.isArray(metadata.topology) && metadata.topology.every((item) => same(Object.keys(item ?? {}).sort(), ["name", "version"]) && typeof item.name === "string" && item.name.length > 0 && typeof item.version === "string" && item.version.length > 0) && same(metadata.topology, [...metadata.topology].sort(byPackage)) && new Set(metadata.topology.map((item) => `${item.name}@${item.version}`)).size === metadata.topology.length
+    const validSources = validTopology && Array.isArray(metadata.sources) && metadata.sources.length === metadata.topology.length && metadata.sources.every((item, index) => same(Object.keys(item ?? {}).sort(), ["digest", "name", "path", "version"]) && same({ name: item.name, version: item.version }, metadata.topology[index]) && typeof item.path === "string" && item.path.length > 0 && !isAbsolute(item.path) && !item.path.split(/[\\/]/).includes("..") && hex.test(item.digest))
+    if (bytes !== canonical(metadata) || !same(Object.keys(metadata ?? {}).sort(), keys) || metadata.schema !== 1 || (lockDigest && metadata.lockDigest !== lockDigest) || !hex.test(metadata.lockDigest ?? "") || !hex.test(metadata.packageDigest ?? "") || !same(Object.keys(metadata.bun ?? {}).sort(), ["digest", "version"]) || metadata.bun.version !== "1.3.14" || !hex.test(metadata.bun.digest ?? "") || typeof metadata.host?.os !== "string" || !metadata.host.os || typeof metadata.host?.cpu !== "string" || !metadata.host.cpu || !same(metadata.commandPolicy, policy("<private-cache>", "<private-home>")) || !validSources || !hex.test(metadata.treeDigest ?? "") || metadata.integrity !== metadataIntegrity(metadata) || metadata.treeDigest !== treeDigest(modules, error)) fail(error)
     return metadata
-  } catch (cause) { if (cause.code?.startsWith(C)) throw cause; fail("ENV_IMMUTABLE", cause) }
+  } catch (cause) { if (cause.code === `${C}${error}`) throw cause; fail(error, cause) }
+}
+function validateExisting(target, identity, expected) {
+  const metadata = publishedEnvironment(target, "ENV_IMMUTABLE", identity.lockDigest)
+  if (!same({ schema: metadata.schema, lockDigest: metadata.lockDigest, packageDigest: metadata.packageDigest, bun: metadata.bun, host: metadata.host }, identity) || !same(metadata.topology, expected)) fail("ENV_IMMUTABLE")
+  return metadata
 }
 function packageRoots(modules, error) {
   safeDirectory(modules, error); const roots = []
@@ -114,6 +121,34 @@ async function defaultDiscover({ bunPath, cacheRun, env }) {
   return cacheRoots(root, "CACHE_INVALID").map((path) => ({ path, relative: relative(root, path) }))
 }
 function syncTree(root) { const visit = (path) => { const info = lstatSync(path); if (info.isSymbolicLink()) return; if (info.isDirectory()) for (const name of readdirSync(path)) visit(join(path, name)); const fd = openSync(path, "r"); fsyncSync(fd); closeSync(fd) }; visit(root) }
+
+const bindingRecord = (digest) => ({ schema: 1, digest })
+function bindingTarget(dataRoot, digest) {
+  if (!isAbsolute(dataRoot ?? "") || !/^[a-f0-9]{64}$/.test(digest ?? "")) fail("BINDING_INVALID")
+  const root = join(dataRoot, "dependency-environments"), environment = join(root, digest), modules = join(environment, "node_modules")
+  try {
+    for (const path of [dataRoot, root]) { safeDirectory(path, "BINDING_INVALID"); if (realpathSync(path) !== path) fail("BINDING_INVALID") }
+    publishedEnvironment(environment, "BINDING_INVALID", digest)
+    return modules
+  } catch (cause) { if (cause.code === `${C}BINDING_INVALID`) throw cause; fail("BINDING_INVALID", cause) }
+}
+export function verifyDependencyEnvironmentBinding({ dataRoot, versionRoot, digest }) {
+  try {
+    safeDirectory(versionRoot, "BINDING_INVALID"); if (realpathSync(versionRoot) !== versionRoot) fail("BINDING_INVALID")
+    const target = bindingTarget(dataRoot, digest), metadataPath = join(versionRoot, ".dependency-environment.json"), link = join(versionRoot, "node_modules"), expected = relative(versionRoot, target)
+    const metadataInfo = lstatSync(metadataPath), bytes = readFileSync(metadataPath, "utf8"), metadata = JSON.parse(bytes), linkInfo = lstatSync(link), actual = readlinkSync(link)
+    if (!metadataInfo.isFile() || metadataInfo.isSymbolicLink() || (metadataInfo.mode & 0o777) !== 0o400 || bytes !== canonical(metadata) || !same(Object.keys(metadata), ["schema", "digest"]) || !same(metadata, bindingRecord(digest)) || !linkInfo.isSymbolicLink() || isAbsolute(actual) || actual !== expected || realpathSync(link) !== target) fail("BINDING_INVALID")
+    return { dependencyDigest: digest, target, linkTarget: expected }
+  } catch (cause) { if (cause.code === `${C}BINDING_INVALID`) throw cause; fail("BINDING_INVALID", cause) }
+}
+export function bindDependencyEnvironment({ dataRoot, versionRoot, digest }) {
+  try {
+    const target = bindingTarget(dataRoot, digest), expected = relative(versionRoot, target); safeDirectory(versionRoot, "BINDING_INVALID")
+    if (existsSync(join(versionRoot, ".dependency-environment.json")) || existsSync(join(versionRoot, "node_modules"))) fail("BINDING_INVALID")
+    writeFileSync(join(versionRoot, ".dependency-environment.json"), canonical(bindingRecord(digest)), { mode: 0o400 }); symlinkSync(expected, join(versionRoot, "node_modules"))
+    return verifyDependencyEnvironmentBinding({ dataRoot, versionRoot, digest })
+  } catch (cause) { if (cause.code === `${C}BINDING_INVALID`) throw cause; fail("BINDING_INVALID", cause) }
+}
 
 export async function materializeDependencyEnvironment(input, adapters = {}) {
   const { dataRoot, packageBytes, lockBytes, bun, host = { os: process.platform, cpu: process.arch } } = input ?? {}

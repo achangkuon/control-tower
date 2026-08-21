@@ -83,6 +83,7 @@ describe("author-time runtime payload closure", () => {
   test("computes the repository closure from the declared roots without executing modules", () => {
     const closure = computePayloadClosure(repoRoot)
     expect(closure).toContain("install/runtime-payload.mjs")
+    expect(closure).toContain("install/dependency-environment.mjs")
     expect(closure).toContain("hosts/launch-worker-cli.mjs")
     expect(closure).not.toContain("hosts/launcher.mjs")
   })

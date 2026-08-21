@@ -17,6 +17,7 @@ export const RUNTIME_PAYLOAD_FILES = [
   "hosts/root-binding.mjs",
   "hosts/root-identity.mjs",
   "install/active-pointer.mjs",
+  "install/dependency-environment.mjs",
   "install/lifecycle.mjs",
   "install/runtime-payload.mjs",
   "install/version-store.mjs",
