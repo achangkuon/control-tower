@@ -540,3 +540,49 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 **Precisión sobre el hallazgo 2, también corregida.** El adaptador legado de `S4.2` está construido y devuelto por `production-provider.mjs:280` pero **nadie lo invoca**, ni dentro del archivo ni fuera. Es código dormido, no un fallo activo. Se retira porque es una trampa esperando, no porque esté cancelando lanzamientos.
 
 **Los hallazgos 2 y 3 son un solo trabajo.** `install/lifecycle.mjs:20` declara capacidades `["agent_start", "agent_get", "report_agent_session"]` que son exactamente las del adaptador de `S4.2`, mientras que lo que la vista usa —`pane split`, `pane run`, `pane close`— el instalador no lo verifica. Retirar el adaptador y soltar la comparación literal contra `"herdr 0.8.0\n"` tocan la misma declaración. **Es seguro:** `hosts/opencode-view.mjs` ya degrada ante ausencia de Herdr y devuelve el `opencode attach` manual.
+
+## Sesión 4.6 — Retiro del camino de lanzamiento de `S4.2` y del fijado de Herdr
+
+**Estado:** 📋 PLANIFICADO — nace el 2026-08-21 de la [decisión 63](../decision-register.md), en la reconciliación de Planes.
+
+**Por qué pertenece a P4.** El propósito de este Plan es que se pueda abrir una sesión y saber de qué depende. Ese trabajo es exactamente sacar una dependencia externa del camino y retirar un adaptador superado. Ningún otro Plan lo cubre.
+
+**Depende de:** nada. `S4.2` y `S4.5` están cerradas y este retiro no las reabre.
+
+**Área:** `hosts/production-provider.mjs`, `hosts/herdr.mjs`, `install/lifecycle.mjs`, `install/runtime-payload.mjs`, `test/hosts/herdr.test.mjs`, `test/hosts/production-provider.test.mjs`, `test/install/lifecycle.test.mjs`.
+
+**Prohibido:** `core.mjs`, `main-store/**`, `console/**`, `hosts/{opencode-server,opencode-view,root-binding,root-identity}.mjs` — la arquitectura de `S4.5` no se toca.
+
+**Recurso:** contrato `RUNTIME_PAYLOAD_FILES`; sin DB ni migraciones.
+
+**Ruta:** `design-tasks`.
+
+**Resultado, y es uno solo:** Herdr deja de ser prerrequisito bloqueante de la instalación y deja de participar del camino crítico de lanzamiento. Sobrevive únicamente como launcher reemplazable del panel de vista, que ya degrada solo.
+
+### Evidencia que justifica la Sesión
+
+- **`install/lifecycle.mjs:56`** compara `result.stdout !== "herdr 0.8.0\n"` — **string literal, no rango**. Cualquier versión nueva de Herdr rompe la instalación, y ese archivo sí viaja en el payload.
+- **`install/lifecycle.mjs:20`** declara `HERDR_RUNTIME` con capacidades `["agent_start", "agent_get", "report_agent_session"]`, que son **exactamente las del adaptador de custodia de `S4.2`**. Y lo que la vista realmente usa —`pane split`, `pane run`, `pane close`— **el instalador no lo verifica en absoluto**.
+- **`hosts/production-provider.mjs:280`** devuelve `herdr` junto a `backend`, `view` y `rootBinding`. El adaptador legado **está construido y devuelto, pero nadie lo invoca** — ni dentro del archivo ni fuera. Es código dormido, no un fallo activo: se retira porque es una trampa, no porque esté rompiendo algo.
+- **`hosts/opencode-view.mjs`** ya degrada ante ausencia de Herdr: `try { pane = await openPane(...) } catch { pane = null }` y devuelve `CT_VIEW_UNAVAILABLE` con el comando `opencode attach` manual. **Por eso soltar el bloqueo del instalador es seguro.**
+
+**Los dos retiros son un solo trabajo** porque tocan la misma declaración de capacidades.
+
+### Decisiones
+
+- `derivable` — **qué reemplaza a la comparación de versión.** **Criterio:** nada bloqueante. Herdr pasa a dependencia opcional y degradable; su ausencia produce una vista no disponible con fallback manual, nunca una instalación fallida. **Autoridad:** decisión 39 y el criterio del maintainer del 2026-08-21 — depender lo menos posible, y si no se puede, soportar. **Falsificable:** una instalación que falle por la versión o la ausencia de Herdr.
+- `derivable` — **qué pasa con `hosts/herdr.mjs`.** **Criterio:** conserva sólo lo que usa la vista. Si al retirar la custodia de `S4.2` el archivo queda sin superficie propia, se retira y sus puertos se pliegan en `opencode-view.mjs`. Se decide midiendo, no por adelantado. **Falsificable:** dejar en el payload un archivo sin llamador.
+- `derivable` — **el fijado de OpenCode por bytes NO se toca.** **Criterio:** `production-provider.mjs:152` garantiza que los bytes verificados sean los ejecutados, vía un descriptor ya abierto. Es seguridad, no un lock de versión, y la auditoría de P8 lo confirmó legítimo. **Falsificable:** cualquier diff que debilite esa verificación.
+
+### Criterios de aceptación
+
+- [ ] Una instalación con Herdr ausente, o con una versión distinta de 0.8.0, **completa** y deja la vista degradada con su comando manual
+- [ ] El adaptador de custodia de `S4.2` no existe en el árbol, y ninguna ruta puede emitir `CT_LAUNCH_REJECTED` por custodia de Herdr
+- [ ] `HERDR_RUNTIME` deja de declarar capacidades que el producto no usa
+- [ ] El fijado por bytes de OpenCode permanece intacto y verificado por su test
+- [ ] `RUNTIME_PAYLOAD_FILES` queda consistente: ningún miembro sin llamador
+- [ ] `bun test` no introduce fallos nuevos; el diff no toca el `Prohibido`
+
+**Módulos y Tareas:** pendientes de enumerar.
+
+**Nota de orden.** Esta Sesión toca `install/runtime-payload.mjs`, que es territorio de `S8.10`. **Se ejecuta después de que `S8.10` cierre**, para no competir por el mismo contrato.
