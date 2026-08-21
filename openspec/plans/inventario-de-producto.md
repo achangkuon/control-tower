@@ -181,3 +181,9 @@ El cerebro ya está: `console/validate.mjs` valida el comando contra el vocabula
 | 3 · la superficie | los verbos tipeables en `bin/torre`. **Sigue sin existir** |
 
 **Alcance fijado por la decisión 61.** `CV_PAUSE` promete «le pedí que pare», no «garantizo que paró» — alcanza porque el agente ya se autolimita bajo gentle-ai. No se agregan verbos de cierre ni muerte forzada. `hosts/stop-proof.mjs` conserva su consumidor original, la recuperación de `S4.4`, y no pasa a ser insumo de `CV_PAUSE`.
+
+## 8. Nota de la auditoría de P9 (2026-08-21)
+
+`workspace/` no aparece en los cajones de §3 porque **es alcanzable** por el canal del plugin —`plugin/tower-spike.js` → `main-store/store.mjs` → `workspace/{checkpoint,reconciliation}.mjs`—. La auditoría de P9 no cambia eso.
+
+Lo que sí registra es un patrón que se repite y conviene mirar en la auditoría de P8: **`M9.1.3` de `S9.1` propone seguridad de descriptores contra ataques de enlace simbólico y carreras TOCTOU**, que exigen un atacante con el mismo usuario en la misma máquina. Es la misma clase de sobrealcance que la [decisión 59](decision-register.md) resolvió para `capabilities/registry.mjs`: maquinaria correcta para un modelo de amenaza ajeno al proyecto. **Al auditar P8 conviene revisar si el instalable arrastra el mismo criterio**, porque el fijado de ejecutables por bytes vía `/proc/self/fd/3` sí es una garantía de seguridad legítima y no debe confundirse con este caso.
