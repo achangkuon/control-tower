@@ -2,6 +2,12 @@
 
 **Estado:** 🔵 EN CURSO
 
+**Propósito:** que una decisión que sólo el maintainer puede tomar **no detenga el
+trabajo**, y que el trabajo se retome exactamente donde quedó — con la entrega tratada como
+acto coordinado: quién entrega, con qué autorización, sobre qué bytes y una sola vez.
+**P5 no decide si el trabajo está bien hecho.** Eso es de gentle-ai, y la línea está escrita
+en [la frontera Torre ↔ gentle-ai](../frontera-torre-gentle-ai.md).
+
 > **Enmienda de contrato del 2026-08-03 (`d232fdf`) — ninguna Sesión cambió de estado.**
 > Los gates se partieron en pisos de seguridad (no configurables) y política declarada
 > por proyecto. Para este Plan eso significa: la **forma de entrega** y la **autorización
@@ -21,6 +27,147 @@
 | Outputs | Entrega idempotente por política `direct-push`, checkpoints durables y loop planner N+1 / implementer N. Main conserva la autoridad; Moshi sólo muestra escalamiento. |
 | Roadmap | `S5.1`–`S5.4` y `S5.6`–`S5.12` están ✅ COMPLETO. `S5.3` quedó reconciliada sobre la base entregada `master@88d1de4` mediante los commits replayed `81a1e46` (planificación), `6d8b5f7` (comportamiento) y `163a9f9` (cierre/conflictos), con sus cuatro criterios y el gate de alcance en PASS. Sólo `S5.5` sigue 🟢 LISTO. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
+
+## Fase 3 del plan de depuración — la verificación vuelve a gentle-ai (2026-08-21)
+
+Ejecutada bajo la [decisión 64](../decision-register.md), que generaliza la
+[decisión 59](../decision-register.md) sobre este Plan. La compuerta de la fase es **una
+sola fuente de verdad sobre si algo está bien hecho**. Las tres tareas son documentales; la
+ejecución del recorte queda enumerada como `S5.13`.
+
+### 3.1 · Clasificación pieza por pieza — coordinación se queda, verificación se va
+
+**Resultado principal, y corrige la expectativa con la que entró la fase: ninguna Sesión de
+P5 es verificación.** El sobrealcance no son siete Sesiones ni un archivo entero: son
+**tres campos —`documentation_close`, `required_checks_digest`,
+`required_reviews_digest`—**, y **dos de los tres ni siquiera se aplican: están declarados
+como obligatorios y ninguna línea de producción los lee.** La medición está abajo y es
+falsificable.
+
+**Nivel Sesión — 12 de 12 son coordinación.**
+
+| Sesión | Lo que entregó | Veredicto |
+|---|---|---|
+| `S5.1` | Identidad inmutable del candidato, derivación del siguiente Módulo, frontera del subagente Support | **coordinación** — sobre qué bytes, y quién trabaja |
+| `S5.2` | `delivery/**`: ledger append-only, lock por candidato, reconciliación acotada, adapters | **coordinación** — con dos campos de verificación adentro, ver nivel campo |
+| `S5.3` | `continuation/**`: loop planner N+1 / implementer N desde base integrada | **coordinación** — cuándo y quién sigue |
+| `S5.4` | `escalation/{request,routing}.mjs`: a dónde va una decisión | **coordinación** |
+| `S5.5` 🟢 | `escalation/{parked,resume}.mjs`: estacionar y retomar | **coordinación — es *la* Sesión del Plan** |
+| `S5.6` | `contracts/session-plan-snapshot.mjs` | **coordinación** — el estado que se retoma |
+| `S5.7` | `contracts/parked-decision*.mjs` | **coordinación** |
+| `S5.8` | Binding de opción seleccionada en la autoridad canónica | **coordinación** |
+| `S5.9` | Binding autoritativo del checkpoint estacionado | **coordinación** |
+| `S5.10` | Binding inmutable del trabajo independiente completado | **coordinación** |
+| `S5.11` | Provenance del checkpoint | **coordinación** |
+| `S5.12` | Composición única de productores hacia parking bajo Main | **coordinación** |
+
+**Nivel campo — acá está el corte, y es todo el corte.**
+
+| Pieza | Qué impone | Veredicto |
+|---|---|---|
+**Se va — verificación. Tres campos, y ninguno más.**
+
+| Pieza | Qué impone | Por qué es verificación |
+|---|---|---|
+| `policy/delivery-policy.mjs` · `documentation_close.{module,session}` | Profundidad del cierre documental al terminar un Módulo o una Sesión | Es literalmente lo que ya hace `doc-guard.sh`. **Y está declarado, resuelto y jamás leído**: ninguna línea de producción fuera de `delivery-policy.mjs` lo consulta |
+| `schemas/candidate-revision-v1` · `required_checks_digest` | El candidato debe traer prueba de que los checks exigidos corrieron; `workflow.mjs:12` lo cruza contra la autorización | «¿Pasaron los tests?» es Strict TDD. La Torre no tiene por qué saberlo para entregar |
+| `schemas/candidate-revision-v1` · `required_reviews_digest` | El candidato debe traer prueba de que las revisiones exigidas corrieron | Es judgment day y las 4 R con otro nombre. **Obligatorio en el schema y ninguna línea de producción lo lee** |
+
+**Se queda — coordinación.**
+
+| Pieza | Qué hace | Por qué se queda |
+|---|---|---|
+| `policy/delivery-policy.mjs` · `merge.authorizing_party` | Quién emite la autorización de merge | Es *quién decide*, no *si está bien* |
+| `policy/delivery-policy.mjs` · `delivery.shape`, `delivery.target_branch` | Cómo y a dónde aterriza la entrega | Es la mecánica del efecto |
+| `policy/delivery-policy.mjs` · `assertFloorProtected` (5 pisos) | Invariantes de la Torre sobre sí misma | No juzga trabajo ajeno: se juzga a sí misma |
+| `policy/delivery-policy.mjs` · `planning.horizon_ceiling` | Hasta dónde alcanza una autorización heredada | **Ver la corrección 1, abajo** |
+| `schemas/candidate-revision-v1` · `policy_report_digest` | Liga el candidato al informe de alcance | **Ver la corrección 2, abajo** |
+| `schemas/candidate-revision-v1` · `verification_digest` | Identidad del candidato | Qué bytes son, no qué calidad tienen |
+| `delivery/workflow.mjs:33` · `verify(commit_sha, tree_sha)` | Que el commit entregado sea el candidato | Identidad, no calidad |
+| `delivery/{ledger,reconciliation,git-adapter,pull-request-adapter}.mjs` | Idempotencia, lock por candidato, reintentos acotados, efecto remoto | Si el efecto ya ocurrió — el núcleo de la Torre |
+| `continuation/integrated-base.mjs:20-28` | Ejecutá N, preparás sólo N+1 hasta TAREAS | Define qué recibe el agente siguiente |
+| `policy/jornada.mjs` | Autoridad, claim del worker, host capaz, autorización de lo irreversible | Quién, dónde, con qué permiso |
+
+### Tres correcciones al corte que traía el plan de vuelo
+
+El artefacto nombró dos candidatos. **Uno de los dos no sobrevive a la medición, el otro
+tampoco, y el caso más claro de todos no estaba nombrado.** Vale la pena registrarlo porque
+es exactamente el defecto que esta fase corrige: clasificar por el nombre del archivo en vez
+de por lo que el código hace.
+
+**Corrección 1 — `horizon_ceiling` NO es verificación; se queda.** El artefacto lo leyó como
+«cuántas Sesiones podés planificar por delante», que suena a disciplina de proceso. Pero la
+**decisión 2 del 2026-08-03**, en el registro, lo usa para otra cosa: *«un sucesor hereda si
+y sólo si todas las Sesiones dentro de `planning.horizon_ceiling` están selladas»*. El techo
+**acota hasta dónde llega una autorización aprobada**. Eso es alcance de autoridad, es
+coordinación pura, y gentle-ai no tiene equivalente. Sacarlo dejaría la herencia de
+autorizaciones sin límite — un agujero de seguridad, no una simplificación.
+
+**Corrección 2 — `policy_report_digest` NO es verificación; se queda.** El artefacto lo leyó
+como «informe de cumplimiento de política». El schema dice otra cosa: `policy-report-v2`
+tiene `decision: ALLOW | DENY` y `policy/jornada.mjs:31` falla con el mensaje literal
+*«Policy report denied the **scope**»*. Es el dictamen de **alcance** —¿esta propuesta entra
+en lo autorizado?—, no un veredicto sobre la calidad del trabajo.
+
+**Corrección 3 — falta `required_reviews_digest`, y es el caso más nítido.** El artefacto no
+lo nombró. Es la Torre exigiéndole al candidato prueba de que **las revisiones** corrieron —
+o sea las 4 R y judgment day, que son gentle-ai sin ambigüedad ninguna. Además está
+**obligatorio en el schema y ninguna línea de producción lo lee**, igual que
+`documentation_close`.
+
+**El patrón que dejan las tres correcciones.** Los dos campos que sí se van y no se estaban
+mirando comparten una propiedad: **son requisitos declarados que nadie aplica**. La Torre no
+estaba verificando de más — estaba *prometiendo* verificar y no haciéndolo. Eso es peor que
+duplicar, porque un candidato pasa igual y el contrato dice que fue revisado.
+
+**Prueba de la duplicación real, para el único campo que sí duplica.**
+`documentation_close` no es hipotético: `~/.claude/hooks/doc-guard.sh` bloquea el cierre de
+sesión cuando hubo entrega sin actualizar la documentación, cableado como hook `PostToolUse`
+y `Stop` y declarado en el [`CLAUDE.md`](../../../CLAUDE.md) de este repo. La Torre declara
+la misma regla con otro vocabulario (`full` / `engram-only`) y sin conocer al hook.
+
+**Sin categoría intermedia, como exige la compuerta.** Cada fila cae de un lado.
+
+**Precedente ya ejecutado, en este mismo Plan.** La corrección operativa registrada más
+abajo eliminó `--with-tests` del hook de pre-push con la razón textual *«la verificación
+vuelve a ser propiedad del agente bajo Gentle»*. La Fase 3 no abre una dirección nueva:
+termina la que ya se había empezado sin declararla.
+
+### 3.2 · Objetivo reescrito
+
+El propósito nuevo está declarado arriba de este archivo. Lo que cambia respecto del
+objetivo viejo —*«entrega idempotente, checkpoints durables y loop planner/implementer»*— es
+lo que **sale**: P5 deja de tener opinión sobre si el trabajo entregado está bien hecho.
+
+**Qué Sesiones quedan fuera del objetivo nuevo: ninguna.** Y esto **corrige** lo que
+anticipaba el plan de vuelo, que esperaba marcar las siete Sesiones de contratos como
+sobrealcance fuera de objetivo. La evidencia lo desmiente: el grafo de dependencias de este
+archivo muestra `S5.4 → S5.6 → S5.7 → S5.8 → S5.11 → S5.12 → S5.9 → S5.10 → S5.5`. Las
+siete son **el sustrato del que `S5.5` cuelga**, y `S5.5` *es* el objetivo nuevo. No se
+puede declarar fuera de objetivo aquello sobre lo que el objetivo se apoya.
+
+**Lo que sí fueron las siete: sobrealcance de *profundidad de proceso*, no de pertenencia.**
+Cada escalamiento se resolvió bien y cada resolución generó una Sesión más. La regla que lo
+detiene es la tarea **4.3** de la Fase 4 —tope de profundidad de planificación—, y estas
+siete son su caso de prueba: con esa regla se habría frenado en la segunda.
+
+**Efecto sobre el cómputo: ninguno por este concepto.** Las doce Sesiones siguen contando de
+ambos lados del cociente. La [regla de denominador de la decisión 57](../decision-register.md)
+retira una Sesión sólo si **dejó de ser objetivo**, y ninguna dejó de serlo.
+
+### 3.3 · La frontera queda escrita
+
+[`openspec/plans/frontera-torre-gentle-ai.md`](../frontera-torre-gentle-ai.md). Declara qué
+decide la Torre, qué decide gentle-ai, qué pasa cuando no coinciden, y el test de una
+pregunta con el que cualquier Sesión futura puede rechazar alcance.
+
+### Qué queda por ejecutar
+
+El recorte de los tres campos **no se ejecuta en esta fase**: queda enumerado como
+[`S5.13`](#sesión-513--retiro-de-la-verificación-de-proceso-de-la-entrega), abajo. `S5.5`
+**queda destrabada** —el objetivo de Plan sobre el que se apoya ya está escrito—, pero
+`S5.13` va primero: comparten prefijo en `test/escalation/**` y ninguna de las dos toca un
+archivo de producción de la otra.
 
 ## Corrección operativa completada — no es una nueva Sesión
 
@@ -901,9 +1048,73 @@ Cada Tarea es una unidad de commit/direct-push revisable y revertible por sí so
 
 **Desvío declarado sobre las unidades de commit.** El Módulo pide una unidad por Tarea. Se entregó en dos unidades funcionales más dos de corrección, porque `T5.10.1.1` y `T5.10.1.2` son RED puro y la entrega de este repo es push directo a `master` sin PR: commitear tests fallando dejaría `master` en rojo. Cada unidad es revertible por sí sola.
 
-**Cómputo del Plan 5:** `11/12 S = 92%`. Cuentan `S5.1`, `S5.2`, `S5.3`, `S5.4`, `S5.6`, `S5.7`, `S5.8`, `S5.9`, `S5.10`, `S5.11` y `S5.12`; sólo `S5.5` permanece 🟢 LISTO. Ninguna Sesión aporta crédito hasta `COMPLETO`.
+**Cómputo del Plan 5:** `11/13 S = 85%`. Cuentan `S5.1`, `S5.2`, `S5.3`, `S5.4`, `S5.6`, `S5.7`, `S5.8`, `S5.9`, `S5.10`, `S5.11` y `S5.12`; `S5.5` permanece 🟢 LISTO y `S5.13` nace 📋 PLANIFICADO en la Fase 3 del 2026-08-21. Ninguna Sesión aporta crédito hasta `COMPLETO`. **El porcentaje bajó de 92% a 85% sin que se perdiera trabajo: se enumeró un trabajo que existía y nadie contaba**, exactamente como pasó al cerrar la Fase 2.
 
 Las responsabilidades legacy de Telegram Delivery y continuación que aún no tienen límite de un PR permanecen sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).
+
+## Sesión 5.13 — Retiro de la verificación de proceso de la entrega
+
+**Estado:** 📋 PLANIFICADO — nace en la Fase 3 del plan de depuración bajo la [decisión 64](../decision-register.md).
+**Depende de:** nada del código. La clasificación de §3.1 es su contrato de entrada y ya está escrita.
+**Área:** `policy/delivery-policy.mjs`, `delivery/workflow.mjs`, `schemas/{delivery-policy-v1,candidate-revision-v1,authorization-v1}.schema.json`, `contracts/{schema-registry,validate}.mjs`, `AGENTS.md`, `test/policy/{delivery-policy,jornada}.test.mjs`, `test/delivery/**`, `test/contracts/{schema,s3-2-schemas}.test.mjs`, `test/fixtures/contracts/schema-cases-v1.json`, `test/main-store.test.mjs`, `test/escalation/request.test.mjs`, `test/install/launch-worker-cli.test.mjs`
+**Prohibido:** todo `escalation/*.mjs` de producción, `core.mjs`, `mcp.mjs`, `main-store/store.mjs`, `workspace/**`, `console/**`, `policy/jornada.mjs`, `continuation/**`. Sobre `test/escalation/request.test.mjs` y `test/main-store.test.mjs` toca **sólo** las fixturas que declaran `required_checks_digest`, sin cambiar un caso de comportamiento.
+**Orden respecto de `S5.5`:** **no corren en paralelo.** No comparten un solo archivo de producción, pero sí prefijo en `test/escalation/**`. `S5.13` va **primero**: es acotada, no depende de nada, y deja el objetivo de P5 limpio antes de que `S5.5` construya encima.
+**Recurso:** ninguno exclusivo. Sin token de entrega.
+**Ruta:** `design-tasks`.
+
+**Resultado único:** los tres campos clasificados como verificación en §3.1 dejan de existir
+en la Torre, y ninguno se reemplaza por otra cosa.
+
+1. `documentation_close.{module,session}` sale del bloque `delivery-policy` de `AGENTS.md`,
+   de `schemas/delivery-policy-v1.schema.json`, de `strict`, de `choose()` y de
+   `restrictiveDefaults` en `policy/delivery-policy.mjs`.
+2. `required_checks_digest` sale de `schemas/{candidate-revision-v1,authorization-v1}` y de
+   la comparación de `authorizationMatches` en `delivery/workflow.mjs:12`.
+3. `required_reviews_digest` sale de `schemas/candidate-revision-v1`. No hay código de
+   producción que tocar: sólo el schema y sus fixturas.
+
+Lo que se queda —`merge.authorizing_party`, `delivery.shape`, `delivery.target_branch`,
+`planning.horizon_ceiling`, los cinco pisos de `assertFloorProtected`, `policy_report_digest`,
+`verification_digest`, el ledger, el lock y la reconciliación— **no cambia de comportamiento
+ni una línea**.
+
+**Por qué es una sola Sesión y no tres.** Los tres campos viven en la misma familia de
+schemas y la misma validación cruzada: `authorizationMatches` compara candidato↔autorización
+campo por campo, así que sacar uno solo deja los dos schemas desalineados y la comparación a
+medio camino. Es un cambio chico y de una pieza — el forecast está por debajo del umbral de
+encadenado.
+
+**Efecto colateral que la Sesión debe declarar, no descubrir.**
+`policy/delivery-policy.mjs` está hoy en el **cajón D** del
+[inventario](../inventario-de-producto.md) —sin llamador de producción; `executeDelivery` sólo
+lo alcanza desde `test/delivery/`—. Al terminar `S5.13` **pasa al cajón B**: sobrevive
+recortado y se conecta como precondición de `CV_GRANT_DELIVERY` junto a `policy/jornada.mjs`.
+El cajón D queda en 4 archivos y 294 líneas.
+
+**Decisiones:**
+- `escala` — **quitar `documentation_close` del bloque `delivery-policy` de `AGENTS.md` y de
+  su schema.** **Clase:** contrato visible del producto; API pública. `AGENTS.md` es la
+  política de entrega que leen todos los agentes del maintainer y el bloque es su superficie
+  declarada. Es del maintainer, no se deriva. **Contamina:** `AGENTS.md`, `CLAUDE.md`, P2
+  —dueño del registro de contratos— y todo proyecto que declare el bloque.
+- `escala` — **quitar dos campos obligatorios del contrato de candidato.** **Clase:**
+  contrato visible del producto; migraciones. Un candidato ya persistido con esos campos deja
+  de validar contra `additionalProperties: false`. **Contamina:** `S5.1`, `S5.2`, `S7.1`.
+- `derivable` — qué se queda. **Criterio:** las dos tablas de nivel campo de §3.1, fila por
+  fila. Falsificable: cualquier campo que sobreviva o caiga sin figurar en esas tablas.
+
+**Criterios de aceptación, binarios:**
+1. `rg 'documentation_close|required_checks_digest|required_reviews_digest'` no devuelve una
+   sola ocurrencia fuera de historia archivada y de este `STATUS.md`.
+2. `rg 'horizon_ceiling|policy_report_digest|verification_digest'` devuelve **exactamente las
+   mismas ocurrencias que antes del cambio**. Es el criterio que impide que la Sesión se
+   pase de largo.
+3. La suite pasa sin perder cobertura de nada que se haya quedado: los tests de los cinco
+   pisos de seguridad, del ledger, del lock por candidato y de la reconciliación siguen
+   existiendo y en verde.
+4. `bin/torre` y el payload derivado no cambian de miembros.
+5. La [frontera Torre ↔ gentle-ai](../frontera-torre-gentle-ai.md) puede citarse contra el
+   diff sin encontrar una sola condición de bloqueo por calidad de trabajo.
 
 ## `S5.5` es el primer consumidor de la columna vertebral (2026-08-21)
 
@@ -913,7 +1124,7 @@ La [decisión 60](../decision-register.md), entregada en `master@8a75be0`, encon
 
 **Qué NO cambia.** `S5.5` sigue 🟢 LISTO y su contrato, `Área`, `Prohibido` y criterios de aceptación permanecen intactos. La decisión 60 **no la reabre ni la expande**: registra que su resultado tiene un consumidor declarado esperándolo, lo cual es evidencia a favor de su alcance actual, no una razón para tocarlo.
 
-**Orden preservado.** `S5.5` no arranca antes de la Fase 3 del plan de depuración, donde se reescribe el objetivo de P5 para sacarle la verificación que pertenece a gentle-ai. Arrancarla antes sería construir sobre un objetivo de Plan que ya sabemos mal escrito. La decisión 60 no altera ese orden.
+**Orden preservado.** ~~`S5.5` no arranca antes de la Fase 3~~ — **la Fase 3 cerró el 2026-08-21** ([decisión 64](../decision-register.md)). El objetivo de P5 está reescrito y `S5.5` **queda destrabada**. El único orden que persiste es local: `S5.13` va antes, porque comparten prefijo en `test/escalation/**`.
 
 ## Insumo de la reconciliación de Planes (2026-08-21)
 
@@ -921,6 +1132,6 @@ La [decisión 63](../decision-register.md) cerró la Fase 2 del plan de depuraci
 
 **`S5.5` ya tiene su ejecutor con dueño.** El comando `CV_ANSWER` —que es literalmente lo que `S5.5` entrega— necesita un ejecutor que traduzca un comando validado en una directiva, y eso quedó enumerado como **`S11.1`** en el Plan 11 nuevo. `S5.5` **no** absorbe ese trabajo: entrega el parking y la retoma, y `S11.1` le da la superficie por donde el maintainer responde. Son dos Sesiones con dos resultados, no una.
 
-**El propósito de P5 sigue pendiente de reescribir.** Es la Fase 3 del plan de depuración, y su candidato ya está identificado: `policy/delivery-policy.mjs` impone `documentation_close`, `horizon_ceiling` y forma de entrega, es decir **verificación de proceso** — lo mismo que gentle-ai ya gobierna, contra la [decisión 59](../decision-register.md). Hasta que esa reescritura ocurra, `S5.5` no arranca: hacerlo sería construir sobre un objetivo de Plan que ya sabemos mal escrito.
+**El propósito de P5 sigue pendiente de reescribir.** ~~Es la Fase 3 del plan de depuración~~ — **ejecutada el 2026-08-21**: el propósito está declarado arriba de este archivo, la clasificación pieza por pieza está en §3.1, la frontera está escrita, y el recorte quedó enumerado como `S5.13`. El candidato identificado era correcto pero **más chico de lo que se creía**: no es `policy/delivery-policy.mjs` entero, son tres campos — y dos de ellos el candidato original ni los nombraba. Ver la sección [Fase 3](#fase-3-del-plan-de-depuración--la-verificación-vuelve-a-gentle-ai-2026-08-21).
 
-**Estado de P5 tras la reconciliación:** sin cambios. 92% (11/12 S), con `S5.5` 🟢 LISTO.
+**Estado de P5 tras la reconciliación:** sin cambios. 92% (11/12 S), con `S5.5` 🟢 LISTO. **Superado por la Fase 3 del mismo día:** 85% (11/13 S), con `S5.5` 🟢 LISTO y destrabada, y `S5.13` 📋 PLANIFICADO.

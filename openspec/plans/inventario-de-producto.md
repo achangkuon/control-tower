@@ -97,7 +97,7 @@ conectan solos cuando se conecta lo que los usa.
 |---|---|---|
 | `capabilities/registry.mjs` | 175 | Ningún comando lo nombra y **no tiene consumidor de producción**. `S3.3` fijó que da visibilidad y compatibilidad de invocación, nunca autoridad. **Resuelto el 2026-08-21: se archiva** ([decisión 59](decision-register.md)) — pero no es gratis, ver la nota de abajo. |
 | `hosts/{rehydration,stop-proof}.mjs` | 89 | **RESUELTO el 2026-08-21 por la auditoría exclusiva de P4: pasan al cajón B.** `stop-proof` vuelve falsificable la diferencia entre «perdí la vista» y «el agente murió», la distinción exacta de la decisión 40. Se conectan con `S4.4`. |
-| `policy/delivery-policy.mjs` | 79 | Impone `documentation_close`, `horizon_ceiling` y forma de entrega: **es verificación de proceso**. Candidato directo de la Fase 3, donde la verificación vuelve a gentle-ai. |
+| `policy/delivery-policy.mjs` | 79 | ~~Impone `documentation_close`, `horizon_ceiling` y forma de entrega: es verificación de proceso.~~ **RESUELTO el 2026-08-21 por la Fase 3 ([decisión 64](decision-register.md)), y la clasificación de entrada era incorrecta: pasa al cajón B.** Sólo `documentation_close` es verificación y sale; `horizon_ceiling`, `merge.authorizing_party`, la forma de entrega y los cinco pisos de seguridad son coordinación y se quedan. Lo recorta `S5.13`, y después se conecta como precondición de `CV_GRANT_DELIVERY` junto a `policy/jornada.mjs`. |
 | `hosts/launcher.mjs` | 30 | `S8.9` ya lo declaró inalcanzable por contrato y lo dejó fuera del payload sin borrarlo. ¿Se archiva? |
 
 **Costo real de archivar `capabilities/registry.mjs`.** No tiene consumidor de producción y `jornada/lifecycle.mjs` no contiene **una sola línea** de capability, así que ningún módulo distribuido pierde comportamiento propio. Pero dos tests de módulos que sí se distribuyen lo usan: `test/plugin/tower-spike.test.mjs` (13 referencias) lo construye en su `setup()` compartido **y usa el archivo del registro como uno de los dos testigos de no-mutación de `canonicalSnapshot`**, junto con la base de datos; y `test/jornada/lifecycle.test.mjs` (14 referencias) prueba que revocar una Jornada invalida pasivamente una capacidad — comportamiento que vive en el registry, no en el lifecycle. **Archivarlo exige cirugía en esos dos tests y debilita un testigo del plugin.** Es un cambio de código acotado, no un movimiento documental.
@@ -152,7 +152,7 @@ El cerebro ya está: `console/validate.mjs` valida el comando contra el vocabula
 
 **Regla que se deriva de este orden.** Ninguna Sesión de cableado enchufa un módulo «porque está suelto». Enchufa **un comando**, y el módulo entra con él. Una Sesión que no pueda nombrar el comando que la justifica está reintroduciendo el defecto que este inventario existe para cerrar.
 
-**Los 373 líneas del cajón D quedan fuera de este orden** porque su destino no depende del ejecutor sino de decisiones ya asignadas: `capabilities/registry.mjs` se archiva dentro de la auditoría de P8, `hosts/{rehydration,stop-proof}.mjs` dependen de la de P4, `policy/delivery-policy.mjs` es candidato de la Fase 3 y `hosts/launcher.mjs` espera su archivado.
+**Los 373 líneas del cajón D quedan fuera de este orden** porque su destino no depende del ejecutor sino de decisiones ya asignadas: `capabilities/registry.mjs` se archiva dentro de la auditoría de P8, `hosts/{rehydration,stop-proof}.mjs` dependen de la de P4, `policy/delivery-policy.mjs` **ya salió del cajón D** por la Fase 3 y `hosts/launcher.mjs` espera su archivado.
 
 ## 6. El hueco queda visible en la suite
 
@@ -312,3 +312,33 @@ El contrato completo de `S8.12 — Canal único de distribución` vivía acá en
 **Verificado: ese mismo test pasa en `master`** (1 pass / 0 fail en un worktree limpio). Lo introduce el **candidato parqueado de `S8.10`**, cuyos cambios sobre `hosts/launch-worker.mjs`, `hosts/production-provider.mjs`, `hosts/candidate-fence.mjs` o `main-store/launch-consumer.mjs` hacen que `validateActiveHostRuntime` (`install/lifecycle.mjs:72-84`) rechace la identidad. Esa función compara `path`, `sha256`, `dev`, `ino`, `size`, `mtimeMs`, `ctimeMs`, `uid`, `mode` y `nlink` del ejecutable fijado.
 
 **Ninguna tarea enumerada cubre ese arreglo.** Es exactamente el motivo por el que el candidato quedó parqueado *«antes del commit de comportamiento y de la verificación final»*. Debuggearlo es el primer trabajo de la próxima sesión, y es acotado: un solo test, con la función y los diez campos que compara ya identificados.
+
+
+## 13. Fase 3 del plan de depuración — efecto sobre este inventario (2026-08-21)
+
+La [decisión 64](decision-register.md) devolvió la verificación a gentle-ai y **corrigió una
+clasificación de este documento**. Registrado acá porque el error es del mismo tipo que la
+corrección de `registry/legacy-import.mjs`: se clasificó por el nombre del archivo y por lo
+que *parecía* imponer, en vez de por lo que el código hace.
+
+**`policy/delivery-policy.mjs` sale del cajón D y entra al cajón B.** No es verificación de
+proceso: de sus cuatro dimensiones de política, **una sola** lo es —`documentation_close`,
+que además está declarada y jamás leída, duplicando el hook `doc-guard.sh`—. Las otras tres
+—quién autoriza el merge, cómo y a dónde aterriza la entrega, y hasta dónde alcanza una
+autorización heredada— son coordinación pura, y los cinco pisos de `assertFloorProtected`
+son invariantes de la Torre sobre sí misma.
+
+**Cajón D queda en 4 archivos y 294 líneas.** Cajón B pasa a 13 archivos y 1.154 líneas.
+
+**Dos campos del contrato de candidato también salen**, y no estaban en ningún cajón porque
+son schema, no módulo: `required_checks_digest` y `required_reviews_digest`. Ambos exigen
+prueba de que corrieron los checks y las revisiones — Strict TDD, las 4 R y judgment day,
+que son gentle-ai. **`required_reviews_digest` es obligatorio en el schema y ninguna línea
+de producción lo lee.**
+
+**Lo que este documento aprende de la corrección.** Dos de los tres campos retirados no
+duplicaban nada: **estaban prometidos y no aplicados**. Un módulo sin llamador y un campo
+obligatorio sin lector son la misma brecha vista desde dos alturas, y este inventario sólo
+medía la primera. Cualquier pasada futura debería contar también la segunda.
+
+El recorte lo ejecuta `S5.13`, enumerada en [`plan-5/STATUS.md`](plan-5/STATUS.md).

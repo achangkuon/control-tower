@@ -309,3 +309,27 @@ Los puntos 2 y 3 pertenecen a la auditoría exclusiva de P8, dueña del instalab
 **Falsificable:** un trabajo identificado por las auditorías que siga sin Plan dueño; o una Sesión de cableado que no pueda nombrar el comando del vocabulario que la justifica.
 
 **Clase resuelta:** expansión de alcance; contrato visible del producto. **Contamina:** P4, P8, P11, el `master-index` y `release-chain`.
+
+## Decisión 64 — la verificación vuelve a gentle-ai; P5 declara su propósito (2026-08-21)
+
+64. **La Torre coordina; no audita si un agente hizo bien su trabajo.** Pregunta original: qué parte de P5 es «verificación de la verificación», después de que la [decisión 59](#) generalizara que una capacidad que ya entrega una herramienta del stack no es alcance de la Torre. **Resolución:** P5 pasa a tener propósito declarado —*que una decisión que sólo el maintainer puede tomar no detenga el trabajo, y que el trabajo se retome exactamente donde quedó, con la entrega como acto coordinado*— y **pierde toda opinión sobre si el trabajo entregado está bien hecho**. La línea queda escrita en [la frontera Torre ↔ gentle-ai](frontera-torre-gentle-ai.md), citable por cualquier Sesión futura para rechazar alcance. Ejecuta la Fase 3 del plan de depuración.
+
+**El corte medido es mucho más chico de lo que se creía, y en tres puntos distinto.** La clasificación pieza por pieza vive en [`plan-5/STATUS.md` §3.1](plan-5/STATUS.md). **Ninguna de las doce Sesiones de P5 es verificación: las doce son coordinación.** Lo que se va son **tres campos**: `documentation_close.{module,session}` de la política de entrega, y `required_checks_digest` y `required_reviews_digest` del contrato de candidato.
+
+**Tres correcciones al candidato que traía el plan de vuelo, todas por medición.**
+
+1. **`planning.horizon_ceiling` NO es verificación y se queda.** La **decisión 2 del 2026-08-03** lo usa para acotar hasta dónde alcanza una autorización heredada —*«un sucesor hereda si y sólo si todas las Sesiones dentro de `planning.horizon_ceiling` están selladas»*—. Es alcance de autoridad, no disciplina de planificación. Sacarlo dejaría la herencia de autorizaciones sin límite.
+2. **`policy_report_digest` NO es verificación y se queda.** `policy-report-v2` declara `decision: ALLOW | DENY` y `policy/jornada.mjs:31` falla con *«Policy report denied the scope»*. Dictamina **alcance**, no calidad.
+3. **`required_reviews_digest` faltaba y es el caso más nítido.** Es la Torre exigiendo prueba de que corrieron las revisiones —las 4 R y judgment day, gentle-ai sin ambigüedad—.
+
+**Hallazgo que cambia la naturaleza del defecto.** Dos de los tres campos que salen —`documentation_close` y `required_reviews_digest`— están **declarados como obligatorios y ninguna línea de producción los lee**. La Torre no estaba verificando de más: estaba **prometiendo verificar y no haciéndolo**, que es peor que duplicar, porque el candidato pasa igual mientras el contrato afirma que fue revisado. El único que sí duplica de verdad es `documentation_close`, contra el hook `doc-guard.sh` que ya bloquea el cierre de sesión en este mismo repo.
+
+**Las siete Sesiones de contratos NO salen del objetivo, corrigiendo lo que el plan de vuelo anticipaba.** El grafo de dependencias de P5 muestra `S5.4 → S5.6 → S5.7 → S5.8 → S5.11 → S5.12 → S5.9 → S5.10 → S5.5`: son el sustrato del que `S5.5` cuelga, y `S5.5` *es* el objetivo nuevo. Fueron sobrealcance de **profundidad de proceso**, no de pertenencia, y su arreglo permanente es la tarea 4.3 de la Fase 4 —tope de profundidad de planificación—, no retirarlas. **Siguen contando de ambos lados del cociente** bajo la regla de denominador de la [decisión 57](#): ninguna dejó de ser objetivo.
+
+**Efecto sobre el avance.** Nace `S5.13` 📋 PLANIFICADO, dueña del recorte. P5 pasa de `11/12 S` (92%) a `11/13 S` (85%) y el avance global de `38/54` (70%) a `38/55` (69%). **No se perdió trabajo: se enumeró trabajo que existía y nadie contaba**, igual que al cerrar la Fase 2. `S5.5` **queda destrabada** —el objetivo de Plan sobre el que se apoya ya está escrito—, con `S5.13` antes en orden local por prefijo compartido en `test/escalation/**`.
+
+**`S5.13` conserva dos decisiones que escalan y son del maintainer:** quitar `documentation_close` del bloque `delivery-policy` de `AGENTS.md` y de su schema, y quitar dos campos obligatorios del contrato de candidato. Ambas son contrato visible del producto; la segunda además es migración, porque un candidato ya persistido deja de validar contra `additionalProperties: false`.
+
+**Falsificable:** cualquier Sesión que entregue una condición de bloqueo cuyo criterio sea la calidad, completitud o disciplina de proceso del trabajo de un agente; o cualquier campo que sobreviva o caiga sin figurar en las tablas de §3.1.
+
+**Clase resuelta:** contrato visible del producto; API pública; expansión de alcance. **Contamina:** P5, P2, `AGENTS.md`, el `master-index`, el [inventario de producto](inventario-de-producto.md) y `S7.1` —cuyo examen de conformidad se acorta en tres garantías—.
