@@ -351,6 +351,15 @@ El validator scoped final no encontró bloqueantes. Su único warning —un `rel
 
 **Piso de puerto loopback, `1bc14d6` (decisión 46, 2026-08-19).** Los predicados que prueban que un origen es el backend de esta máquina aceptaban puertos de 1 a 99999. 65535 es el último que existe, así que el control admitía direcciones en las que ningún backend puede estar escuchando. Alcanzaba a **cinco** copias —`root-binding`, `opencode-server`, `opencode-view`, `health` y `loopbackOrigin` en `production-provider`—, todas ahora acotadas numéricamente y cada una con un test de borde que antes no existía: 65535 se acepta, 65536 no. Autorizado como arreglo puntual fuera de toda Sesión porque no cae en el `Área` de ninguna viva; no altera el alcance ni el cómputo de P4.
 
+### Corrección operativa de aislamiento hermético de tests · ✅ COMPLETA
+
+Esta corrección aprobada por el maintainer **no es una Sesión**, no fue solicitada por ningún nodo existente del Plan y no cambia estado, denominador ni porcentaje. El commit de comportamiento `dae9478` toca únicamente `test/hosts/production-provider.test.mjs` con **44 líneas authored**; la fuente y API de producción permanecen intactas.
+
+- **RED enfocado sobre la base entregada limpia `e629ff0`:** `bun test test/hosts/production-provider.test.mjs` → 8 pass, 1 fail, 69 expect. El Main store canónico real hizo que el primer test devolviera un provider en vez de rechazar con `Main launch store is unavailable`.
+- **Comportamiento:** el primer test usa un repositorio Git temporal independiente y un child Bun acotado que importa el módulo productivo por URL absoluta; sanea las variables heredadas de autoridad Git, no hace `chdir` global y siempre limpia en `finally`. Sigue probando `createProductionProvider.length === 0` y el rechazo de autoridad de lanzamiento suministrada por el caller.
+- **GREEN enfocado:** 9 pass, 0 fail, 70 expect. **Suite final única:** 898 pass, 0 fail, 5309 expect, 68 files, sobre el ejecutable SHA-256 `690f291492318cd4c3a204b465a01b47baf5328812d3dbca19985dd2fa142c4f`.
+- **Asesoría:** `review-resilience` quedó tipada como no disponible porque el controller no tenía lineage del candidato actual mientras RDD estaba OFF; no se usó actor alternativo.
+
 ## Sesión 4.3 — Inspección, liveness y rehidratación segura
 
 **Estado:** ✅ COMPLETO — entregada en `555acbe` el 2026-08-19. Cuatro commits directos: `c14b65a` (M4.3.1, 335 líneas), `920639d` (M4.3.2, 282), `1a0e23a` (correcciones 4R, +194/−84) y `555acbe` (decisión 43, +27/−6). Suite 822 pass / 0 fail / 5.043 expectations, desde una base de 776.

@@ -1,14 +1,14 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-08-20 contra el candidato local `fix/radiografia-skip-tests@0b8e4aebbe26aef37fd712edfefd99465e72b156` (tree `f3d50d3eb4c4a79dc6451289fd17b838a47c611a`, parent y entrega de `S8.9` `11c2728b944eaa00798cdaaeef612fa4b1489218`). La corrección operativa del hook no es una Sesión y no altera denominadores ni porcentajes. La autoridad vigente es Moshi → Main → raíz primaria OpenCode con TUI adjunta no autoritativa; Herdr no pertenece al lifecycle crítico.
+> Última reconciliación: 2026-08-20 contra la base entregada `master@e629ff0046e204dc41fe70c840f882d8d0a0f728`, que incluye `S8.9` y la corrección operativa pre-push de la radiografía, y el candidato local `test/hermetic-production-provider@dae9478d45c0b49050d36a38fd4bd44aac3cd9d5` (tree `82f4e6f77c9be9563f6f40dd6c45ef22523ad50b`). La corrección hermética del test de production-provider está completa localmente; no es una Sesión y no altera denominadores ni porcentajes. La autoridad vigente es Moshi → Main → raíz primaria OpenCode con TUI adjunta no autoritativa; Herdr no pertenece al lifecycle crítico.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para **qué falta para salir** y en qué orden lo permite el grafo, ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md).
 
 ## 📍 Punto de retoma
 
-**`S8.9` fue entregada en `11c2728`** con el payload derivado verificado. Su pre-push obligatorio volvió a ejecutar la suite completa durante la radiografía y causó el incidente operativo; el candidato local `0b8e4ae` lo corrige eliminando sólo `--with-tests`, sin quitar la regeneración del informe ni trasladar la verificación fuera del agente.
+**`S8.9` y la corrección operativa pre-push de la radiografía están entregadas en la base `e629ff0`.** La corrección hermética del test de production-provider está completa localmente en el candidato `dae9478` y toca sólo `test/hosts/production-provider.test.mjs`; la fuente productiva permanece intacta.
 
-La corrección **no es una Sesión** y no altera el denominador ni los porcentajes: P8 permanece en 78% (7/9 S) y el avance de Sesiones activas en 74% (37/50). La reconciliación de `S5.3` es lo próximo.
+La corrección hermética **no es una Sesión** y no altera estado, denominador ni porcentajes: P4 permanece en 80% (4/5 S), P8 en 78% (7/9 S) y el avance de Sesiones activas en 74% (37/50). La reconciliación de `S5.3` sigue siendo lo próximo.
 
 El cableado del producto no instalado, el lock huérfano de `main-store/store.mjs:104-124`, la Sesión `enroll/**`, los umbrales de liveness de §14.3, el tamaño del pool de `S9.4` y macOS siguen fuera de esta corrección.
 
