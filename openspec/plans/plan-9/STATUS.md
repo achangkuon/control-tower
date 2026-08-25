@@ -164,6 +164,9 @@ graph TD
 
 ## Reconciliación de asientos — 2026-08-25
 
+**Cerrada en `master@4720f02`.** Cadena de entrega: `a303145` (AGENTS.md) → `49825aa` (este
+registro) → `37fd3e3` (master-index) → `4720f02` (cierre del bloqueo del master-index).
+
 Reconciliación completa de los nueve checkouts sobre `master@a303145`. Ningún asiento queda
 sucio. Ninguna rama previa se borró. Disposición aprobada por el maintainer: rescatar
 planificación, estacionar código.
