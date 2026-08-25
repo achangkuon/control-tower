@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { assertParentlessSessionCreation, createProductionProvider, parseCreatedRoot, parseHostOutput, parseOpenCodeAgent, parseServerAnnouncement } from "../../hosts/production-provider.mjs"
+import { admitOpenCodeBrief, assertParentlessSessionCreation, createProductionProvider, parseCreatedRoot, parseHostOutput, parseOpenCodeAgent, parseServerAnnouncement } from "../../hosts/production-provider.mjs"
 
 const gitAuthorityVariables = new Set([
   "GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY",
@@ -14,6 +14,28 @@ const gitAuthorityVariables = new Set([
   "GIT_NO_REPLACE_OBJECTS",
 ])
 const isolatedEnvironment = () => Object.fromEntries(Object.entries(process.env).filter(([name]) => !gitAuthorityVariables.has(name)))
+
+test("admits exact brief bytes through authenticated prompt_async and accepts only 204 empty", async () => {
+  const calls = [], secret = "s".repeat(32), root_session_id = `ses_${"a".repeat(26)}`
+  const receipt = await admitOpenCodeBrief({
+    fetch: async (...args) => { calls.push(args); return { status: 204, text: async () => "" } },
+    url: "http://127.0.0.1:4096", secret, root_session_id, brief_ref: "briefs/a.json", brief: "Approved work only",
+  })
+  expect(receipt).toEqual({ root_session_id, brief_ref: "briefs/a.json", brief: "Approved work only" })
+  expect(calls).toEqual([[`http://127.0.0.1:4096/session/${root_session_id}/prompt_async`, {
+    method: "POST", signal: expect.any(AbortSignal), headers: { authorization: `Basic ${Buffer.from(`opencode:${secret}`).toString("base64")}`, "content-type": "application/json" },
+    body: JSON.stringify({ parts: [{ type: "text", text: "Approved work only" }] }),
+  }]])
+})
+
+test("rejects 4xx, 5xx, non-204, nonempty and transport failures without waiting for model output", async () => {
+  const input = { url: "http://127.0.0.1:4096", secret: "s".repeat(32), root_session_id: `ses_${"a".repeat(26)}`, brief_ref: "briefs/a.json", brief: "Approved work only" }
+  for (const fetch of [
+    async () => ({ status: 400, text: async () => "" }), async () => ({ status: 500, text: async () => "" }),
+    async () => ({ status: 200, text: async () => "" }), async () => ({ status: 204, text: async () => "ambiguous" }),
+    async () => { throw new Error("network") }, async () => { throw Object.assign(new Error("timeout"), { name: "TimeoutError" }) },
+  ]) await expect(admitOpenCodeBrief({ ...input, fetch })).rejects.toMatchObject({ code: "CT_BACKEND_REJECTED" })
+})
 
 test("production provider rejects an unpackaged module before accepting caller launch authority", () => {
   const repository = mkdtempSync(join(tmpdir(), "ct-production-provider-"))

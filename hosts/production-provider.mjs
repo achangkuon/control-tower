@@ -172,6 +172,20 @@ const installedRuntime = () => {
   return { dataRoot, version: root.slice(versions.length + 1), root }
 }
 
+export const admitOpenCodeBrief = async ({ fetch: request, url, secret, root_session_id, brief_ref, brief } = {}) => {
+  let response, body
+  try {
+    response = await request(`${url}/session/${root_session_id}/prompt_async`, {
+      method: "POST", signal: AbortSignal.timeout(10_000),
+      headers: { authorization: `Basic ${Buffer.from(`opencode:${secret}`).toString("base64")}`, "content-type": "application/json" },
+      body: JSON.stringify({ parts: [{ type: "text", text: brief }] }),
+    })
+    body = await response.text()
+  } catch { fail("CT_BACKEND_REJECTED", "Backend brief admission failed") }
+  if (response.status !== 204 || body !== "") fail("CT_BACKEND_REJECTED", "Backend brief admission was ambiguous")
+  return Object.freeze({ root_session_id, brief_ref, brief })
+}
+
 export const createProductionProvider = ({ } = {}) => {
   const installed = installedRuntime()
   const context = deriveCanonicalMainContext(process.cwd())
@@ -266,6 +280,7 @@ export const createProductionProvider = ({ } = {}) => {
       // Locks 1 and 3: the readback is of the exact id just created, and it carries the agent.
       return parseCreatedRoot(created, await call(url, secret, "GET", `/api/session/${id}`), id)
     },
+    admitBrief: (input) => admitOpenCodeBrief({ fetch: globalThis.fetch, ...input }),
   })
   // Decision 39: Herdr survives only as a replaceable launcher for a view. `pane run` executes a
   // command in a pane without touching Herdr's agent custody, so the visible root never becomes a

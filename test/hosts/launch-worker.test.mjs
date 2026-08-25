@@ -21,10 +21,26 @@ describe("packaged launch-worker runtime", () => {
 
     await expect(runtime.launchWorker({ request_ref: "request-a" })).resolves.toEqual({ ...binding, backend_pid: 42, backend_url: "http://127.0.0.1:4096", root_session_id: `ses_${"a".repeat(26)}`, pane_id: "w1:p1", manual_command: `opencode attach http://127.0.0.1:4096 --session ses_${"a".repeat(26)}` })
     expect(calls).toEqual([
-      ["consume", "request-a"], ["start", { assignment_ref: "assignments/a.json", host_epoch: 3, project_id: "project-a", worktree: "/work/a" }],
+      ["consume", "request-a"], ["start", { assignment_ref: "assignments/a.json", brief: "Approved work only", brief_ref: "briefs/a.json", host_epoch: 3, project_id: "project-a", worktree: "/work/a" }],
       ["bind", { assignment_ref: "assignments/a.json", backend_pid: 42, backend_url: "http://127.0.0.1:4096", host_epoch: 3, project_id: "project-a", root_identity: { agent: "gentle-orchestrator", root_session_id: `ses_${"a".repeat(26)}` }, worktree: "/work/a" }],
       ["attach", { backend_url: "http://127.0.0.1:4096", root_session_id: `ses_${"a".repeat(26)}`, worktree: "/work/a" }],
     ])
+  })
+
+  test("does not bind or attach until backend brief admission settles", async () => {
+    const calls = []
+    let admit
+    const runtime = createLaunchWorkerRuntime({
+      consumeBinding: async () => binding,
+      backend: { start: (request) => new Promise((resolve) => { calls.push(["start", request]); admit = () => resolve({ worktree: binding.worktree }) }), stop: async () => {} },
+      rootBinding: { bind: (record) => { calls.push("bind"); return record } },
+      view: { attach: async () => { calls.push("attach"); return {} } },
+    })
+    const launching = runtime.launchWorker({ request_ref: "request-a" })
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(calls).toEqual([["start", { assignment_ref: binding.assignment_ref, brief: binding.brief, brief_ref: binding.brief_ref, host_epoch: binding.host_epoch, project_id: binding.project_id, worktree: binding.worktree }]])
+    admit(); await launching
+    expect(calls.slice(1)).toEqual(["bind", "attach"])
   })
 
   test("rejects a consumed binding superseded before the immediate pre-effect check", async () => {

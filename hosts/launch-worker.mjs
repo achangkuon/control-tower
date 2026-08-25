@@ -16,7 +16,7 @@ export const createLaunchWorkerRuntime = ({ preflight = () => () => {}, consumeB
       try {
         const binding = await consumeBinding(input.request_ref); consumed = true
         await assertCurrentHost(binding)
-        const started = await backend.start({ assignment_ref: binding.assignment_ref, host_epoch: binding.host_epoch, project_id: binding.project_id, worktree: binding.worktree })
+        const started = await backend.start({ assignment_ref: binding.assignment_ref, brief: binding.brief, brief_ref: binding.brief_ref, host_epoch: binding.host_epoch, project_id: binding.project_id, worktree: binding.worktree })
         try { persisted = rootBinding.bind(started) } catch (error) {
           try { await backend.stop(binding.worktree) } catch {}
           throw error

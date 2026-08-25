@@ -38,6 +38,7 @@ if (Bun.argv[2] === "serve") {
     if (path === "/doc") return Response.json({ paths: { "/api/session": { post: { requestBody: { content: { "application/json": { schema } } } } } } })
     if (path === "/api/session" && request.method === "POST") return Response.json({ data: { cost: 0, id, location: {}, projectID: "prj", time: {}, title: "", tokens: {} } })
     if (path === "/api/session/" + id) return Response.json({ data: { agent: "gentle-orchestrator", id } })
+    if (path === "/session/" + id + "/prompt_async" && request.method === "POST") return new Response(null, { status: 204 })
     return new Response("not found", { status: 404 })
   } })
   console.log("opencode server listening on http://127.0.0.1:" + server.port)

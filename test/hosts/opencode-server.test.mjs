@@ -4,8 +4,8 @@ import { createOpenCodeBackendHost } from "../../hosts/opencode-server.mjs"
 import { ROOT_AGENT } from "../../hosts/root-identity.mjs"
 
 const sessionId = (letter) => `ses_${letter.repeat(26)}`
-const request = Object.freeze({ assignment_ref: "assignment-a", host_epoch: 3, project_id: "project-a", worktree: "/work/a" })
-const other = Object.freeze({ assignment_ref: "assignment-b", host_epoch: 3, project_id: "project-a", worktree: "/work/b" })
+const request = Object.freeze({ assignment_ref: "assignment-a", brief: "Approved work only", brief_ref: "briefs/a.json", host_epoch: 3, project_id: "project-a", worktree: "/work/a" })
+const other = Object.freeze({ assignment_ref: "assignment-b", brief: "Other approved work", brief_ref: "briefs/b.json", host_epoch: 3, project_id: "project-a", worktree: "/work/b" })
 const code = async (operation) => { try { await operation() } catch (error) { return error.code }; return null }
 
 const ports = (overrides = {}) => {
@@ -19,6 +19,7 @@ const ports = (overrides = {}) => {
       return { pid: 4300 + seq, url: `http://127.0.0.1:${4096 + seq}`, stop: () => stopped.push(worktree) }
     },
     createRoot: ({ worktree }) => ({ agent: ROOT_AGENT, id: sessionId(worktree.endsWith("b") ? "b" : "a"), parentID: null }),
+    admitBrief: ({ root_session_id, brief_ref, brief }) => ({ root_session_id, brief_ref, brief }),
     ...overrides,
   }
 }
@@ -104,6 +105,41 @@ describe("Main-owned OpenCode backend host", () => {
     }
   })
 
+  test("publishes ownership only after exact brief admission", async () => {
+    let settle
+    const wiring = ports({ admitBrief: (input) => new Promise((resolve) => { settle = () => resolve({ root_session_id: input.root_session_id, brief_ref: input.brief_ref, brief: input.brief }) }) })
+    const host = createOpenCodeBackendHost(wiring), starting = host.start(request)
+    await Promise.resolve(); await Promise.resolve()
+    expect(host.owns(request.worktree)).toBe(false)
+    settle(); await starting
+    expect(host.owns(request.worktree)).toBe(true)
+  })
+
+  test("fails closed and cleans up on rejected or drifted admission receipts", async () => {
+    for (const admitBrief of [
+      () => ({ root_session_id: sessionId("b"), brief_ref: request.brief_ref, brief: request.brief }),
+      () => ({ root_session_id: sessionId("a"), brief_ref: "briefs/foreign.json", brief: request.brief }),
+      () => ({ root_session_id: sessionId("a"), brief_ref: request.brief_ref, brief: "drift" }),
+      () => ({ root_session_id: sessionId("a"), brief_ref: request.brief_ref, brief: request.brief, extra: true }),
+      () => null,
+      () => { throw Object.assign(new Error("4xx, 5xx, network or timeout"), { code: "CT_BACKEND_REJECTED" }) },
+    ]) {
+      const wiring = ports({ admitBrief }), host = createOpenCodeBackendHost(wiring)
+      expect(await code(() => host.start(request))).toBe("CT_BACKEND_REJECTED")
+      expect(wiring.stopped).toEqual([request.worktree])
+      expect(host.owns(request.worktree)).toBe(false)
+    }
+  })
+
+  test("does not let admission cleanup failure mask the rejection", async () => {
+    const wiring = ports({
+      admitBrief: () => { throw Object.assign(new Error("network"), { code: "CT_BACKEND_REJECTED" }) },
+      spawn: ({ worktree }) => ({ pid: 4301, url: "http://127.0.0.1:4097", stop: () => { wiring.stopped.push(worktree); throw new Error("cleanup") } }),
+    })
+    expect(await code(() => createOpenCodeBackendHost(wiring).start(request))).toBe("CT_BACKEND_REJECTED")
+    expect(wiring.stopped).toEqual([request.worktree])
+  })
+
   test("creates the root against its own backend, never a caller supplied endpoint", async () => {
     const seen = []
     const wiring = ports({ createRoot: (input) => { seen.push(input); return { agent: ROOT_AGENT, id: sessionId("a"), parentID: null } } })
@@ -152,7 +188,7 @@ describe("Main-owned OpenCode backend host", () => {
     const wiring = ports()
     const host = createOpenCodeBackendHost(wiring)
     const { host_epoch, ...missing } = request
-    for (const invalid of [null, undefined, "", [request], missing, { ...request, extra: true }, { ...request, worktree: "relative" }, { ...request, worktree: "" }, { ...request, assignment_ref: "../escape" }, { ...request, assignment_ref: "--help" }, { ...request, project_id: "" }, { ...request, host_epoch: 0 }, { ...request, host_epoch: -1 }]) {
+    for (const invalid of [null, undefined, "", [request], missing, { ...request, extra: true }, { ...request, brief: "" }, { ...request, brief: "bad\0brief" }, { ...request, brief_ref: "" }, { ...request, brief_ref: "bad\0ref" }, { ...request, worktree: "relative" }, { ...request, worktree: "" }, { ...request, assignment_ref: "../escape" }, { ...request, assignment_ref: "--help" }, { ...request, project_id: "" }, { ...request, host_epoch: 0 }, { ...request, host_epoch: -1 }]) {
       expect(await code(() => host.start(invalid))).toBe("CT_BACKEND_REJECTED")
     }
     expect(wiring.spawned).toEqual([])
@@ -160,7 +196,7 @@ describe("Main-owned OpenCode backend host", () => {
 
   test("requires every port and grants no default wiring", async () => {
     const full = ports()
-    for (const key of ["spawn", "randomSecret", "createRoot"]) {
+    for (const key of ["spawn", "randomSecret", "createRoot", "admitBrief"]) {
       const partial = { ...full }
       delete partial[key]
       expect(() => createOpenCodeBackendHost(partial)).toThrow(TypeError)
