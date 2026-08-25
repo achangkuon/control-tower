@@ -3,12 +3,60 @@ import { execFileSync, spawnSync } from "node:child_process"
 import { createHash } from "node:crypto"
 import { chmodSync, copyFileSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, readlinkSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { dirname, join, resolve } from "node:path"
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path"
 
 import { lifecycle, readHostRuntimeIdentity, runCli, validateActiveHostRuntime } from "../../install/lifecycle.mjs"
 import { RUNTIME_PAYLOAD_FILES } from "../../install/runtime-payload.mjs"
 
-const roots = [], repoRoot = resolve(import.meta.dir, "../..")
+const roots = [], dependencyEnvironmentRoots = new Set(), repoRoot = resolve(import.meta.dir, "../..")
+const setPrivateFixtureModes = (path, { directory, file }) => {
+  let stat
+  try { stat = lstatSync(path) } catch { return }
+  if (stat.isSymbolicLink()) return
+  if (stat.isDirectory()) {
+    chmodSync(path, 0o700)
+    readdirSync(path).forEach((child) => setPrivateFixtureModes(join(path, child), { directory, file }))
+    chmodSync(path, directory)
+  } else if (stat.isFile()) chmodSync(path, file)
+}
+const mutateOwnerReadOnlyFixture = (path, mutation) => {
+  setPrivateFixtureModes(path, { directory: 0o700, file: 0o600 })
+  try { return mutation() } finally { setPrivateFixtureModes(path, { directory: 0o500, file: 0o400 }) }
+}
+const registerDependencyEnvironmentRoot = (ownerRoot, path) => {
+  const owned = relative(ownerRoot, path)
+  if (!owned || owned.startsWith(`..${sep}`) || isAbsolute(owned)) throw new Error("fixture dependency root is not executor-owned")
+  dependencyEnvironmentRoots.add(path)
+  return path
+}
+const ownedDependencyTarget = (link, environmentRoot) => {
+  if (!dependencyEnvironmentRoots.has(environmentRoot)) throw new Error("fixture dependency root is not registered")
+  const linkInfo = lstatSync(link), linkTarget = readlinkSync(link)
+  if (!linkInfo.isSymbolicLink() || isAbsolute(linkTarget)) throw new Error("fixture node_modules is not the registered symlink")
+  const directTarget = resolve(dirname(link), linkTarget), target = realpathSync(link), root = realpathSync(environmentRoot), owned = relative(root, target), parts = owned.split(sep)
+  if (root !== environmentRoot || target !== directTarget || !owned || owned.startsWith(`..${sep}`) || isAbsolute(owned) || parts.length !== 2 || !/^[a-f0-9]{64}$/.test(parts[0]) || parts[1] !== "node_modules") throw new Error("fixture dependency target escaped its registered root")
+  const targetInfo = lstatSync(target)
+  if (!targetInfo.isDirectory() || targetInfo.isSymbolicLink()) throw new Error("fixture dependency target is not a real directory")
+  return target
+}
+const dependencyEntries = (target) => {
+  const entries = []
+  const visit = (path) => {
+    const stat = lstatSync(path)
+    if (stat.isSymbolicLink() || (!stat.isDirectory() && !stat.isFile())) throw new Error("fixture dependency target has an unexpected member")
+    entries.push({ path, stat })
+    if (stat.isDirectory()) readdirSync(path).forEach((child) => visit(join(path, child)))
+  }
+  visit(target)
+  return entries
+}
+const mutateOwnedDependencyTarget = (link, environmentRoot, mutation) => {
+  const target = ownedDependencyTarget(link, environmentRoot), entries = dependencyEntries(target)
+  for (const entry of entries) chmodSync(entry.path, entry.stat.isDirectory() ? 0o700 : entry.stat.mode & 0o111 ? 0o700 : 0o600)
+  try { return mutation(target) } finally {
+    for (const entry of dependencyEntries(target).reverse()) chmodSync(entry.path, entry.stat.isDirectory() ? 0o500 : entry.stat.mode & 0o111 ? 0o500 : 0o400)
+  }
+}
 const snapshotPath = (path) => {
   const entries = []
   const visit = (current) => {
@@ -40,6 +88,7 @@ const fixture = () => {
   paths.opencodeBin = opencodeBin
   mkdirSync(paths.configRoot, { recursive: true }); writeFileSync(join(paths.configRoot, "config.yaml"), "owner: user\n")
   mkdirSync(join(root, "repo/.git/control-tower"), { recursive: true }); writeFileSync(join(root, "repo/.git/control-tower/history"), "keep\n")
+  registerDependencyEnvironmentRoot(root, join(paths.dataRoot, "dependency-environments"))
   return { root, paths }
 }
 const dependencyInput = (root, version = "1.0.0") => {
@@ -60,7 +109,11 @@ const testEnv = (root, extra = {}) => ({
   ...extra,
 })
 afterEach(() => {
-  roots.splice(0).forEach((root) => rmSync(root, { recursive: true, force: true }))
+  roots.splice(0).forEach((root) => {
+    setPrivateFixtureModes(root, { directory: 0o700, file: 0o600 })
+    rmSync(root, { recursive: true, force: true })
+  })
+  dependencyEnvironmentRoots.clear()
 })
 
 describe("lifecycle operations", () => {
@@ -102,7 +155,7 @@ describe("lifecycle operations", () => {
     lifecycle({ ...paths, action: "install", version: "1.0.0", files: complete })
     expect(lifecycle({ ...paths, action: "diagnose", expectedMembers })).toMatchObject({ healthy: true, active: "1.0.0" })
 
-    rmSync(join(paths.dataRoot, "versions/1.0.0/core.mjs"), { force: true })
+    mutateOwnerReadOnlyFixture(join(paths.dataRoot, "versions/1.0.0"), () => rmSync(join(paths.dataRoot, "versions/1.0.0/core.mjs"), { force: true }))
     const degraded = lifecycle({ ...paths, action: "diagnose", expectedMembers })
     expect(degraded).toMatchObject({ healthy: false, active: "1.0.0" })
     expect(degraded.missing).toEqual(["core.mjs"])
@@ -120,8 +173,10 @@ describe("lifecycle operations", () => {
     await lifecycle({ ...paths, action: "upgrade", version: "1.1.0", files: { ...files, "runtime.mjs": "two" }, dependencyEnvironment: dependency.input, dependencyEnvironmentAdapters: { discover: async () => { throw new Error("cache reused") }, run: async () => { throw new Error("network reused") } } })
     expect(dependency.runs()).toBe(1)
     expect(JSON.parse(readFileSync(join(paths.dataRoot, "versions/1.1.0/.dependency-environment.json"), "utf8"))).toEqual({ schema: 1, digest: dependency.digest })
-    const extra = join(paths.dataRoot, `dependency-environments/${dependency.digest}/node_modules/extra`); writeFileSync(extra, "corrupt")
-    expect(() => lifecycle({ ...paths, action: "diagnose" })).toThrow("CT_DEPENDENCY_BINDING_INVALID"); rmSync(extra)
+    const environmentRoot = join(paths.dataRoot, "dependency-environments"), modulesLink = join(paths.dataRoot, "versions/1.1.0/node_modules")
+    mutateOwnedDependencyTarget(modulesLink, environmentRoot, (target) => writeFileSync(join(target, "extra"), "corrupt"))
+    expect(() => lifecycle({ ...paths, action: "diagnose" })).toThrow("CT_DEPENDENCY_BINDING_INVALID")
+    mutateOwnedDependencyTarget(modulesLink, environmentRoot, (target) => rmSync(join(target, "extra")))
     expect(() => lifecycle({ ...paths, action: "diagnose" })).not.toThrow()
     const failed = dependencyInput(root, "9.0.0"); await expect(lifecycle({ ...paths, action: "upgrade", version: "failed", files, dependencyEnvironment: failed.input, dependencyEnvironmentAdapters: { ...failed.adapters, run: async () => ({ exitCode: 1 }) } })).rejects.toThrow("CT_DEPENDENCY_MATERIALIZATION_FAILED")
     expect(JSON.parse(readFileSync(join(paths.dataRoot, "active.json"), "utf8")).version).toBe("1.1.0"); expect(existsSync(join(paths.dataRoot, "versions/failed"))).toBe(false)
@@ -136,7 +191,8 @@ describe("lifecycle operations", () => {
     await lifecycle({ ...paths, action: "upgrade", version: "2.0.0", files: files("two"), dependencyEnvironment: second.input, dependencyEnvironmentAdapters: second.adapters })
     expect(await lifecycle({ ...paths, action: "rollback" })).toMatchObject({ active: "1.0.0", dependencyDigest: first.digest })
     expect(readFileSync(join(paths.dataRoot, "versions/1.0.0/runtime.mjs"), "utf8")).toBe("one")
-    await lifecycle({ ...paths, action: "rollback" }); rmSync(join(paths.dataRoot, "versions/1.0.0/.dependency-environment.json"))
+    await lifecycle({ ...paths, action: "rollback" })
+    mutateOwnerReadOnlyFixture(join(paths.dataRoot, "versions/1.0.0"), () => rmSync(join(paths.dataRoot, "versions/1.0.0/.dependency-environment.json")))
     expect(() => lifecycle({ ...paths, action: "rollback" })).toThrow("CT_DEPENDENCY_BINDING_INVALID")
     expect(JSON.parse(readFileSync(join(paths.dataRoot, "active.json"), "utf8")).version).toBe("2.0.0")
   })
@@ -552,6 +608,7 @@ test("stored torre diagnoses and installs autonomously from an isolated unrelate
   entries.push([".dependency-environment", createHash("sha256").update(readFileSync(join(release, "bun.lock"))).digest("hex")])
   const expectedManifest = createHash("sha256").update(JSON.stringify(entries)).digest("hex")
   expect(readFileSync(join(publication, "versions/10.0.0/.manifest"), "utf8")).toBe(`${expectedManifest}\n`)
+  setPrivateFixtureModes(root, { directory: 0o700, file: 0o600 })
   rmSync(root, { recursive: true, force: true })
   roots.splice(roots.indexOf(root), 1)
   expect(existsSync(root)).toBe(false)

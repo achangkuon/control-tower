@@ -1,8 +1,8 @@
 import { afterEach, expect, test } from "bun:test"
 import { execFileSync, spawnSync } from "node:child_process"
-import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { chmodSync, copyFileSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, readlinkSync, realpathSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { dirname, join } from "node:path"
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { bindMainAuthority, createMainStore } from "../../main-store/index.mjs"
@@ -17,8 +17,62 @@ const runtimeSource = (directory) => {
   writeFileSync(join(source, "bun.lock"), `${JSON.stringify({ lockfileVersion: 1, packages: {} })}\n`)
   return source
 }
-const directories = []
-afterEach(() => directories.splice(0).forEach((directory) => rmSync(directory, { recursive: true, force: true })))
+const directories = [], dependencyEnvironmentRoots = new Set()
+const setPrivateFixtureModes = (path, { directory, file }) => {
+  let stat
+  try { stat = lstatSync(path) } catch { return }
+  if (stat.isSymbolicLink()) return
+  if (stat.isDirectory()) {
+    chmodSync(path, 0o700)
+    readdirSync(path).forEach((child) => setPrivateFixtureModes(join(path, child), { directory, file }))
+    chmodSync(path, directory)
+  } else if (stat.isFile()) chmodSync(path, file)
+}
+const mutateOwnerReadOnlyFixture = (path, mutation) => {
+  setPrivateFixtureModes(path, { directory: 0o700, file: 0o600 })
+  try { return mutation() } finally { setPrivateFixtureModes(path, { directory: 0o500, file: 0o400 }) }
+}
+const registerDependencyEnvironmentRoot = (ownerRoot, path) => {
+  const owned = relative(ownerRoot, path)
+  if (!owned || owned.startsWith(`..${sep}`) || isAbsolute(owned)) throw new Error("fixture dependency root is not executor-owned")
+  dependencyEnvironmentRoots.add(path)
+  return path
+}
+const ownedDependencyTarget = (link, environmentRoot) => {
+  if (!dependencyEnvironmentRoots.has(environmentRoot)) throw new Error("fixture dependency root is not registered")
+  const linkInfo = lstatSync(link), linkTarget = readlinkSync(link)
+  if (!linkInfo.isSymbolicLink() || isAbsolute(linkTarget)) throw new Error("fixture node_modules is not the registered symlink")
+  const directTarget = resolve(dirname(link), linkTarget), target = realpathSync(link), root = realpathSync(environmentRoot), owned = relative(root, target), parts = owned.split(sep)
+  if (root !== environmentRoot || target !== directTarget || !owned || owned.startsWith(`..${sep}`) || isAbsolute(owned) || parts.length !== 2 || !/^[a-f0-9]{64}$/.test(parts[0]) || parts[1] !== "node_modules") throw new Error("fixture dependency target escaped its registered root")
+  const targetInfo = lstatSync(target)
+  if (!targetInfo.isDirectory() || targetInfo.isSymbolicLink()) throw new Error("fixture dependency target is not a real directory")
+  return target
+}
+const dependencyEntries = (target) => {
+  const entries = []
+  const visit = (path) => {
+    const stat = lstatSync(path)
+    if (stat.isSymbolicLink() || (!stat.isDirectory() && !stat.isFile())) throw new Error("fixture dependency target has an unexpected member")
+    entries.push({ path, stat })
+    if (stat.isDirectory()) readdirSync(path).forEach((child) => visit(join(path, child)))
+  }
+  visit(target)
+  return entries
+}
+const mutateOwnedDependencyTarget = (link, environmentRoot, mutation) => {
+  const target = ownedDependencyTarget(link, environmentRoot), entries = dependencyEntries(target)
+  for (const entry of entries) chmodSync(entry.path, entry.stat.isDirectory() ? 0o700 : entry.stat.mode & 0o111 ? 0o700 : 0o600)
+  try { return mutation(target) } finally {
+    for (const entry of dependencyEntries(target).reverse()) chmodSync(entry.path, entry.stat.isDirectory() ? 0o500 : entry.stat.mode & 0o111 ? 0o500 : 0o400)
+  }
+}
+afterEach(() => {
+  directories.splice(0).forEach((directory) => {
+    setPrivateFixtureModes(directory, { directory: 0o700, file: 0o600 })
+    rmSync(directory, { recursive: true, force: true })
+  })
+  dependencyEnvironmentRoots.clear()
+})
 
 test("installed torre launch-worker ignores legacy and PATH shims while consuming its deterministic Main binding", async () => {
   const directory = mkdtempSync(join(tmpdir(), "ct-launch-cli-")), main = join(directory, "Main"), worker = join(directory, "Worker"), commands = join(directory, "commands")
@@ -45,7 +99,7 @@ if (Bun.argv[2] === "serve") {
   setTimeout(() => process.exit(0), 1_000)
 } else console.log("gentle-orchestrator")
 `); writeFileSync(join(commands, "herdr"), "#!/bin/sh\nprintf 'herdr' >> " + effects + "; for arg in \"$@\"; do printf ' %s' \"$arg\" >> " + effects + "; done; printf '\\n' >> " + effects + "\nif [ \"$1\" = \"--version\" ]; then printf 'herdr 0.8.0\\n'; exit; fi\ncase \"$1 $2\" in 'pane split') printf '%s\\n' '{\"result\":{\"pane\":{\"pane_id\":\"w1:p1\"}}}' ;; *) printf '%s\\n' '{}' ;; esac\n"); chmodSync(join(commands, "opencode"), 0o700); chmodSync(join(commands, "herdr"), 0o700)
-  const xdg = join(directory, "xdg"), installEnv = { ...process.env, HOME: directory, XDG_DATA_HOME: xdg, XDG_CONFIG_HOME: join(directory, "config"), XDG_STATE_HOME: join(directory, "state") }
+  const xdg = join(directory, "xdg"), dependencyEnvironmentRoot = registerDependencyEnvironmentRoot(directory, join(xdg, "control-tower/dependency-environments")), installEnv = { ...process.env, HOME: directory, XDG_DATA_HOME: xdg, XDG_CONFIG_HOME: join(directory, "config"), XDG_STATE_HOME: join(directory, "state") }
   await runCli(["install", "launch-v1", runtimeSource(directory), "--herdr-bin", join(commands, "herdr"), "--opencode-bin", join(commands, "opencode")], installEnv)
   const installed = join(xdg, "control-tower/versions/launch-v1/bin/torre")
   await runCli(["install", "launch-v2", runtimeSource(directory), "--herdr-bin", join(commands, "herdr"), "--opencode-bin", join(commands, "opencode")], installEnv)
@@ -53,12 +107,12 @@ if (Bun.argv[2] === "serve") {
   expect(spawnSync(installed, ["launch-worker", "--request-ref", "missing"], { cwd: main, env: installEnv, encoding: "utf8" }).stderr).toContain("CT_LAUNCH_BINDING_INVALID")
   expect(readFileSync(effects, "utf8")).toBe("herdr --version\n")
   writeFileSync(effects, "")
-  const corrupt = join(xdg, "control-tower/versions/launch-v2/node_modules/corrupt")
-  writeFileSync(corrupt, "corrupt")
+  const activeRuntime = join(xdg, "control-tower/versions/launch-v2"), modulesLink = join(activeRuntime, "node_modules")
+  mutateOwnedDependencyTarget(modulesLink, dependencyEnvironmentRoot, (target) => writeFileSync(join(target, "corrupt"), "corrupt"))
   const rejected = spawnSync(installed, ["launch-worker", "--request-ref", "request-a"], { cwd: main, env: installEnv, encoding: "utf8" })
   expect(rejected.stderr).toContain("CT_DEPENDENCY_BINDING_INVALID")
   expect(readFileSync(effects, "utf8")).toBe("")
-  rmSync(corrupt)
+  mutateOwnedDependencyTarget(modulesLink, dependencyEnvironmentRoot, (target) => rmSync(join(target, "corrupt")))
   writeFileSync(join(commands, "bad-herdr"), "#!/bin/sh\nexit 99\n", { mode: 0o755 })
   const result = spawnSync(installed, ["launch-worker", "--request-ref", "request-a"], {
     cwd: main, env: { ...installEnv, CONTROL_TOWER_CORE: join(commands, "bad-herdr"), CONTROL_TOWER_LIFECYCLE: join(commands, "bad-herdr"), HERDR_ENV: "attacker", PATH: `${commands}:${process.env.PATH}` }, encoding: "utf8",
@@ -68,9 +122,8 @@ if (Bun.argv[2] === "serve") {
   expect(JSON.parse(result.stdout).manual_command).toMatch(new RegExp(`^opencode attach http://127\\.0\\.0\\.1:\\d+ --session ${rootSession}$`))
   expect(readFileSync(effects, "utf8")).toMatch(new RegExp(`^herdr --version\\nherdr pane split --current --direction right --cwd ${worker} --no-focus\\nherdr pane run w1:p1 opencode attach http://127\\.0\\.0\\.1:\\d+ --session ${rootSession}\\n$`))
   expect(spawnSync(installed, ["launch-worker", "--request-ref", "request-a"], { cwd: main, env: { ...installEnv, HERDR_ENV: "attacker", PATH: `${commands}:${process.env.PATH}` }, encoding: "utf8" }).stderr).toContain("CT_LAUNCH_BINDING_CONSUMED")
-  const marker = join(directory, "inactive-provider-imported"), inactiveCli = join(xdg, "control-tower/versions/launch-v1/hosts/launch-worker-cli.mjs"), inactiveProvider = join(xdg, "control-tower/versions/launch-v1/hosts/production-provider.mjs")
-  chmodSync(inactiveProvider, 0o600)
-  writeFileSync(inactiveProvider, `${readFileSync(inactiveProvider, "utf8")}\nawait Bun.write(${JSON.stringify(marker)}, "loaded")\n`)
+  const marker = join(directory, "inactive-provider-imported"), inactiveRuntime = join(xdg, "control-tower/versions/launch-v1"), inactiveCli = join(inactiveRuntime, "hosts/launch-worker-cli.mjs"), inactiveProvider = join(inactiveRuntime, "hosts/production-provider.mjs")
+  mutateOwnerReadOnlyFixture(inactiveRuntime, () => writeFileSync(inactiveProvider, `${readFileSync(inactiveProvider, "utf8")}\nawait Bun.write(${JSON.stringify(marker)}, "loaded")\n`))
   expect(spawnSync("bun", [inactiveCli, "--request-ref", "unused"], { cwd: main, env: installEnv, encoding: "utf8" }).stderr).toContain("CT_ACTIVE_RUNTIME_MISMATCH")
   expect(existsSync(marker)).toBe(false)
   store.issueLaunchBinding({ actor: "MAIN", project_id: "project-a", request_ref: "request-stale", authorization_id: "auth-a", brief: "Approved", brief_ref: "briefs/a.json", assignment_ref: "assignment-a", candidate_revision: candidate, host_epoch: 2 })
