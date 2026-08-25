@@ -158,7 +158,7 @@ graph TD
 
 ## Qué queda pendiente de reconciliar fuera de este Plan
 
-- **`master-index.md`** conserva los IDs anteriores y no se toca en esta pasada: tiene cambios sin commitear de `S8.10` y esta sesión no toca trabajo en implementación. Es el mismo bloqueo que la tarea 0.4 del plan de depuración.
+- ~~**`master-index.md`** conserva los IDs anteriores y no se toca en esta pasada: tiene cambios sin commitear de `S8.10` y esta sesión no toca trabajo en implementación. Es el mismo bloqueo que la tarea 0.4 del plan de depuración.~~ **Resuelto el 2026-08-25 en `master@37fd3e3`**: el bloqueo era el árbol sucio de `S8.10`, y `S8.10` cerró e integró. El `master-index` quedó reconciliado contra `master@49825aa` con el punto de retoma reescrito.
 - **`release-chain.md`** referencia la vieja `S9.2`; se reconcilia junto con el `master-index`.
 - Los artefactos SDD en `openspec/changes/s9-1-safe-slot-lifecycle/` describen el alcance superado. **Se conservan como evidencia histórica**, con su autoridad Engram intacta, y **no son autoridad de implementación** de la nueva `S9.2`.
 
