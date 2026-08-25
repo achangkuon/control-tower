@@ -44,6 +44,35 @@ Si una Sesión no declara `Área` o `Recurso`, no se puede afirmar que aporta ca
 paralela segura hasta completar esos campos. Esa ausencia no impide investigar la
 decisión ni preparar el paquete anterior; solo impide autorizar ejecución paralela.
 
+## Bootstrap de coordinación con la Torre apagada
+
+Esta excepción existe **solo mientras la Torre de este repositorio está deliberadamente
+apagada durante su propia implementación** y `.git/control-tower/ACTIVE` está ausente.
+No cambia los floors de seguridad, la política de entrega, el límite de 400 líneas, los
+gates de decisión ni el significado de `ACTIVE`.
+
+En esa condición, `agente-soporte` prepara el brief y el objetivo. La ejecución comienza
+únicamente después de que el mantenedor aprueba las asignaciones exactas. Por defecto se
+reutilizan los asientos de worktree existentes con nombre permanente; no se proliferan
+worktrees nuevos. Support puede coordinar por Intercom a peers Pi visibles ya autorizados,
+pero sigue siendo estrictamente read-only: nunca escribe, recicla, limpia, commitea,
+entrega, reserva ni toca DB/runtime.
+
+Cada peer asignado debe reconciliar primero su worktree exacto:
+
+1. Si está sucio, congela y presenta al mantenedor la identidad y evidencia exactas. En
+   cada caso pide una única disposición explícita: **entregar, estacionar o abandonar**.
+   Nunca limpia, resetea, hace stash ni descarta automáticamente.
+2. Solo después de verificar que está limpio puede ejecutar de forma guardada
+   `jornada.sh --reciclar <path> --nueva-rama <branch>`. Conserva la rama anterior por
+   defecto; `--borrar-rama-vieja` requiere una autorización separada.
+3. Enruta entonces la Sesión aprobada por `session-kickoff`.
+
+La declaración ausente o ambigua, una asignación cambiada o la falta de disposición para
+un worktree sucio cierran la ruta. Cuando `ACTIVE` aparece, esta excepción desaparece y
+vuelven a regir el transporte normal de la Torre y las reglas read-only normales de
+Support.
+
 ## Preferencias de ejecución y presupuesto de cambio
 
 - **Toda ruta declarada se ejecuta automáticamente** en el happy path, sin pausas entre
