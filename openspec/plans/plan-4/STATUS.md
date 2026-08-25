@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
 | Outputs | Raíz primaria Main-owned con TUI adjunta no autoritativa, inspección/liveness por proceso/sesión y recuperación same-host WSL. |
-| Roadmap | `S4.1`, `S1.16`, `S4.2`, `S4.5` y `S4.3` están ✅ COMPLETO. `S4.3` cerró sobre `555acbe` (822 pass / 0 fail / 5.043 expectations) tras el set 4R completo; la decisión 43 amplió su Área al schema `recovery-proof-v1` y a las dos fixtures que asertan contra él. `S4.4` queda 🟢 LISTO y decision-clean tras la decisión 45, que alineó el contador de epoch a `host_epoch`. P4 alcanza 4/5 S (80%). |
+| Roadmap | `S4.1`, `S1.16`, `S4.2`, `S4.5` y `S4.3` están ✅ COMPLETO. `S4.7` queda 🟢 LISTO tras la decisión 67. `S4.4`, `S4.6`, `S4.8` y `S4.9` están 📋 PLANIFICADO. P4 alcanza 4/9 S (44%). |
 | Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), decisiones 37–42 / Engram 9040/9042/9043/9044/9079, [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). REQUIREMENTS §14 permanece byte-pinned como base histórica; esta spec enmienda el lifecycle futuro. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
@@ -398,9 +398,9 @@ Esta corrección aprobada por el maintainer **no es una Sesión**, no fue solici
 
 ## Sesión 4.4 — Recuperación lógica same-host con raíz sucesora
 
-**Estado:** 🟢 LISTO — decision-clean. `S4.3` cerró y la decisión 45 del 2026-08-19 resolvió el último punto abierto: `recovery_epoch` y `host_epoch` son el mismo contador, y el plan queda alineado a `host_epoch`.
+**Estado:** 📋 PLANIFICADO — decision-clean y dependency-blocked por `S4.7`.
 
-**Depende de:** `S4.3`.
+**Depende de:** `S4.3` ✅, `S4.7`. La dependencia nueva exige que recuperación reutilice el launch veraz y el helper autenticado, no el camino legacy.
 
 **Área:** `hosts/recovery.mjs`, `hosts/epoch-enforcement.mjs`, `test/hosts/recovery.test.mjs`, `test/hosts/epoch-enforcement.test.mjs`
 
@@ -454,13 +454,20 @@ Engram aporta contexto y nunca decide por sí solo; Notion no es autoridad runti
 graph LR
   S41["S4.1 fence · ✅"] --> S42["S4.2 Herdr inicial · ✅"]
   S116["S1.16 OpenCode wake · ✅"] --> S42
-  S42 --> S45["S4.5 raíz Main-owned · 🔵"]
-  S45 --> S43["S4.3 liveness/rehidratación · 📋"]
-  S43 --> S44["S4.4 recuperación WSL · 📋"]
+  S42 --> S45["S4.5 raíz Main-owned · ✅"]
+  S45 --> S43["S4.3 liveness · ✅"]
+  S43 --> S44["S4.4 recuperación · 📋"]
+  S45 --> S47["S4.7 launch veraz · 🟢"]
+  S47 --> S44
+  S47 --> S48["S4.8 matriz OpenCode · 📋"]
+  S46["S4.6 retiro legacy · 📋"] --> S49["S4.9 Herdr 0.8.2 · 📋"]
+  S47 --> S49
   S44 --> S71["S7.1 conformidad · 📋"]
+  S46 --> S71
+  S48 --> S71
 ```
 
-No queda responsabilidad activa de hosts sin Sesión enumerada; 38/39 están resueltas en `S4.5` y la 40 deja `S4.4/M4.4.2` decision-clean. El estado 📋 de `S4.3`, `S4.4` y `S7.1` proviene sólo del grafo.
+No queda responsabilidad activa de hosts sin Sesión enumerada. `S4.3` está ✅ COMPLETO; `S4.7` está 🟢 LISTO; `S4.4`, `S4.6`, `S4.8`, `S4.9` y `S7.1` están 📋 por el grafo, no por decisiones de producto abiertas.
 
 ## Insumo para la auditoría exclusiva de P4 — pregunta de entrada nueva (2026-08-21)
 
@@ -583,14 +590,132 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 - [ ] `RUNTIME_PAYLOAD_FILES` queda consistente: ningún miembro sin llamador
 - [ ] `bun test` no introduce fallos nuevos; el diff no toca el `Prohibido`
 
-**Módulos y Tareas:** pendientes de enumerar.
+**Versión:** Herdr permanece en `0.8.0` hasta cerrar esta Sesión. `S4.6` retira el pin duro y la custodia legacy, pero no adopta `0.8.2`; esa adopción guardada pertenece a `S4.9`.
 
-**Nota de orden.** Esta Sesión toca `install/runtime-payload.mjs`, que es territorio de `S8.10`. **Se ejecuta después de que `S8.10` cierre**, para no competir por el mismo contrato.
+**Forecast:** 260–380 líneas authored.
 
-## `S4.4` destrabada (2026-08-21)
+### Módulo M4.6.1 — Retiro del adaptador legacy · forecast 120–190
+- [ ] Tarea T4.6.1.1 — RED: probar que la custodia legacy todavía se construye o exporta
+- [ ] Tarea T4.6.1.2 — GREEN: retirar la custodia legacy del provider
+- [ ] Tarea T4.6.1.3 — REFACTOR: retirar `hosts/herdr.mjs` sólo si queda sin caller y reconciliar tests/payload
 
-`S8.10` cerró e integró en `master@7b58ad8`, así que **la puerta semántica que mantenía a `S4.4` en 🔴 ya no aplica.** `S4.4` vuelve a **🟢 LISTO** y entra en la cola de ejecución, en la posición `#2` detrás de `S11.1`.
+### Módulo M4.6.2 — Instalación opcional de Herdr · forecast 140–190
+- [ ] Tarea T4.6.2.1 — RED: probar que Herdr ausente o distinto de `0.8.0` bloquea hoy, mientras el pin OpenCode pasa
+- [ ] Tarea T4.6.2.2 — GREEN: retirar el chequeo bloqueante y capacidades sin uso
+- [ ] Tarea T4.6.2.3 — REFACTOR: matriz ausente/`0.8.0`/`0.8.2`, sin adoptar `0.8.2`
+
+**Orden:** `S8.10` ya cerró. `S4.6` queda detrás de `S5.13` y no corre junto con `S4.7` por solapamiento en provider/instalación.
+
+## Sesión 4.7 — Launch Main-owned veraz y vista autenticada
+
+**Estado:** 🟢 LISTO — la decisión 67 resolvió condicionalmente el timeout preexistente.
+
+**Depende de:** `S4.5` ✅. **Ruta:** `design-tasks`. **Autoridad:** decisiones 65–68 del maintainer, 2026-08-25.
+
+**Área:** `hosts/launch-worker.mjs`, `hosts/opencode-server.mjs`, `hosts/opencode-view.mjs`, `hosts/production-provider.mjs`, nuevos `hosts/opencode-credential-channel.mjs` y `hosts/opencode-attach-helper.mjs`, `install/runtime-payload.mjs`, `test/hosts/{launch-worker,opencode-server,opencode-view,production-provider,opencode-credential-channel,opencode-attach-helper}.test.mjs`, `test/install/{runtime-payload,entrypoint-resolution,launch-worker-cli}.test.mjs`.
+
+**Prohibido:** `bin/torre`, `console/**`, `core.mjs`, `main-store/**`, `mcp.mjs`, `plugin/**`, `.opencode/**`, `package.json`, `bun.lock`, `hosts/{root-binding,root-identity,recovery,rehydration,health,inspect,stop-proof,epoch-enforcement}.mjs`, schemas nuevos y runtime vivo DB/Tower.
+
+**Recurso:** namespace efímero owner-only por backend para credencial/ref/proof; proceso, puerto loopback, root y pane exactos del worktree. Sin DB, migraciones ni token de entrega.
+
+**Resultado:** la raíz Main-owned exacta admite los bytes exactos del brief antes de éxito; la vista automática/manual nunca recibe secretos por argv o texto y sólo declara `ATTACHED` con prueba autenticada positiva. Falla de vista preserva la raíz admitida y devuelve `DEGRADED` más helper seguro privado.
+
+**Decisiones:**
+- `escala` — decisiones 65–66 **RESUELTAS**: admisión exacta sin esperar token; canal efímero owner-only, cero exposición y attach con prueba positiva. **Clase:** contrato visible del producto; seguridad y permisos. **Contaminaban:** los tres Módulos, `S4.4`, `S7.1`.
+- `derivable` — degradación. **Criterio:** sin prueba se preserva la raíz y se devuelve sólo `DEGRADED` más helper seguro. Falsificable: root invalidado o `ATTACHED` ambiguo. **Autoridad:** decisión 66.
+- `escala` — decisión 67 **RESUELTA**: reproducir `test/install/launch-worker-cli.test.mjs:51`; corregir sólo si es el mismo launch path, o detenerse con evidencia para owner separado. **Clase:** expansión de alcance; dependencias o evidencia contradictorias.
+
+**Criterios de aceptación:**
+- [ ] `root_session_id` y bytes del brief exactos quedan admitidos; 4xx/5xx/timeout/envelope ambiguo o root/brief distinto fallan cerrado
+- [ ] Éxito no espera completion, output ni primer token del modelo
+- [ ] Ningún secreto aparece en argv, comando de proceso, log, JSON, mensaje, fallback, binding, copy/paste ni fuera del namespace owner-only
+- [ ] `ATTACHED` exige prueba autenticada ligada a backend/root/worktree/pane exactos
+- [ ] Falla de vista devuelve `DEGRADED` más helper seguro y preserva la raíz
+- [ ] El helper prueba conexión, rechaza ref stale/foreign/replay y revoca al detener
+- [ ] OpenCode/package/lock permanecen sin cambios; focused y suite completa pasan sobre baseline reconciliada
+
+**Forecast:** High, 660–970 líneas authored en tres commits directos secuenciales ≤400, verificables y revertibles; una sola Sesión, sin quinto nivel. Auth/security requiere 4R advisory tras implementar; RDD sigue OFF.
+
+### Módulo M4.7.1 — Admisión del brief · forecast 180–280
+- [ ] Tarea T4.7.1.1 — RED: falso éxito, drift, fallas y espera indebida de token
+- [ ] Tarea T4.7.1.2 — GREEN: transportar brief/ref exactos al owner y admitir asíncronamente
+- [ ] Tarea T4.7.1.3 — REFACTOR: falla tipada, cleanup, binding/epoch y cero espera de output
+
+### Módulo M4.7.2 — Canal owner-only y helper seguro · forecast 260–390
+- [ ] Tarea T4.7.2.1 — RED: leakage, cross-worktree, stale/replay, mode, symlink y lifecycle
+- [ ] Tarea T4.7.2.2 — GREEN: ref opaco por backend; secreto sólo dentro del canal/helper
+- [ ] Tarea T4.7.2.3 — REFACTOR: cleanup, revocación y helper privado sin autoridad `bin/torre`
+
+### Módulo M4.7.3 — Prueba positiva y degradación · forecast 220–300
+- [ ] Tarea T4.7.3.1 — RED: pane o auth fallidos nunca pueden declarar `ATTACHED`
+- [ ] Tarea T4.7.3.2 — GREEN: correlacionar prueba autenticada y producir `ATTACHED`/`DEGRADED`
+- [ ] Tarea T4.7.3.3 — REFACTOR: fallback instalado, raíz preservada y cero comando inseguro
+
+## Sesión 4.8 — Matriz real OpenCode 1.18.23 y alineación condicional
+
+**Estado:** 📋 PLANIFICADO. **Depende de:** `S4.7`. **Ruta:** `design-tasks`.
+
+**Área:** nuevos `scripts/host-compatibility/opencode.mjs`, `test/compat/opencode-runtime.test.mjs`, `test/plugin/tower-spike.test.mjs`, `package.json`, `bun.lock`.
+
+**Prohibido:** `hosts/**`, `plugin/tower-spike.js`, `.opencode/**`, `install/**`, `bin/torre`, schemas, contratos y runtime/DB vivos. **Recurso:** CLI `1.18.23` exacta; subprocess/puerto/HOME temporal aislados y lock/cache Bun.
+
+**Resultado:** probar CLI real `1.18.23` contra backend/root/brief/view y plugin+SDK `1.18.13`; sólo con matriz verde alinear juntos plugin y SDK a `1.18.23`.
+
+**Decisiones:** `escala` — decisión 68 **RESUELTA**: mantener versiones hasta evidencia real verde, alinear ambos paquetes atómicamente y dejar cero drift en rojo. **Clase:** dependencias o evidencia contradictorias; seguridad y permisos. `derivable` — verde exige todos los contratos usados, no `--version`. **Autoridad:** decisión 68.
+
+**Criterios de aceptación:**
+- [ ] Binario real con versión/digest, aislamiento y cleanup; serve/auth/announcement, `/doc` parentless, root create/read, brief async exacto y helper attach autenticado pasan
+- [ ] Plugin/SDK `1.18.13` prueban registro, child `parentID`, `prompt`/`promptAsync` y shapes event/status
+- [ ] Antes de verde ambos pins siguen `1.18.13`; después ambos quedan `1.18.23`, o sin cambio alguno en rojo
+- [ ] El pin por bytes y paths fuera de `Área` permanecen intactos
+
+**Forecast:** 280–460 líneas, dos commits.
+
+### Módulo M4.8.1 — Harness real · forecast 240–360
+- [ ] Tarea T4.8.1.1 — RED: cada contrato roto vuelve roja la matriz que los mocks no prueban
+- [ ] Tarea T4.8.1.2 — GREEN: matriz aislada completa sobre binario real
+- [ ] Tarea T4.8.1.3 — REFACTOR: timeout/output/proceso/puerto/evidencia acotados
+
+### Módulo M4.8.2 — Alineación atómica · forecast 40–100
+- [ ] Tarea T4.8.2.1 — RED: rechazar mismatch o update previo a evidencia
+- [ ] Tarea T4.8.2.2 — GREEN: actualizar ambos pins y lock sólo tras verde
+- [ ] Tarea T4.8.2.3 — REFACTOR: lock reproducible, cero drift y focused/full repetidos
+
+## Sesión 4.9 — Probe y adopción guardada de Herdr 0.8.2
+
+**Estado:** 📋 PLANIFICADO — bloqueada por dependencias. **Depende de:** `S4.6`, `S4.7`; no depende de `S4.8`. **Ruta:** `design-tasks`.
+
+**Área:** nuevos `scripts/host-compatibility/herdr.mjs`, `test/compat/herdr-runtime.test.mjs`.
+
+**Prohibido:** `hosts/**`, `install/**`, `package.json`, `bun.lock`, `bin/torre`, DB/Tower vivos durante el probe; una adaptación productiva exige otra Sesión. **Recurso:** HOME/config/panes aislados de `0.8.2` digest-pinned; durante adopción, path global Herdr exclusivo y rollback `0.8.0`.
+
+**Resultado:** tras `S4.6`, probar `0.8.2` aislado end-to-end como launcher view-only y adoptar el binario local sólo con verde y rollback probado.
+
+**Decisiones:** `escala` — decisión 68 **RESUELTA**: conservar `0.8.0` hasta `S4.6` y probe verde; rojo preserva `0.8.0`. **Clase:** dependencias o evidencia contradictorias; seguridad y permisos. `derivable` — verde exige pane JSON, helper autenticado y restore root-vs-child sin autoridad Herdr. **Autoridad:** decisiones 66 y 68.
+
+**Criterios de aceptación:**
+- [ ] `0.8.0` permanece hasta cerrar `S4.6` y obtener verde; `0.8.2` se prueba por versión/digest exactos en aislamiento
+- [ ] Pane split/run/auth proof/close producen IDs JSON y cwd exactos; root/child/restart no crea duplicado standalone
+- [ ] Toda falla conserva `0.8.0` e identidades; verde permite adopción local reversible sin cambio crítico de fuente
+
+**Forecast:** 220–360 líneas más una operación local reversible.
+
+### Módulo M4.9.1 — Matriz aislada · forecast 180–280
+- [ ] Tarea T4.9.1.1 — RED: JSON/pane/auth/readiness/restore/root-child/duplicate fallan visiblemente
+- [ ] Tarea T4.9.1.2 — GREEN: ejecutar `0.8.2` aislado con helper de `S4.7`
+- [ ] Tarea T4.9.1.3 — REFACTOR: cleanup, evidencia acotada y cero secreto
+
+### Módulo M4.9.2 — Adopción local reversible · forecast 40–80
+- [ ] Tarea T4.9.2.1 — RED: bloquear reemplazo antes de verde y exigir rollback
+- [ ] Tarea T4.9.2.2 — GREEN: adoptar tras verde y verificar path/version/integración
+- [ ] Tarea T4.9.2.3 — REFACTOR: rollback, readback y cleanup
+
+**Unknowns explícitos:** señal machine-readable de attach en OpenCode `1.18.23` (resolver en `M4.7.3` o bloqueo técnico); compatibilidad real plugin/SDK `1.18.13` (`S4.8`); JSON/readiness/restore root-child reales de Herdr `0.8.2` (`S4.9`). El runtime instalado legacy no prueba ninguna; los probes exigen aislamiento fresco.
+
+## Historia de `S4.4` — desbloqueo de `S8.10` (2026-08-21)
+
+`S8.10` cerró e integró en `master@7b58ad8`, así que su puerta semántica dejó de aplicar. **Estado vigente:** 📋 PLANIFICADO detrás de `S4.7`, que ahora aporta launch veraz y helper autenticado; este párrafo preserva el desbloqueo histórico, no el estado actual.
 
 **Su alcance no cambió**, y la auditoría exclusiva de P4 lo confirmó: la maquinaria de linaje y épocas es coherente con la cadena de lanzamiento mapeada, y `hosts/epoch-enforcement.mjs` ya viaja en el payload. **Lo que sí conviene tener presente al retomarla** es lo que la verificación final de `S8.10` encontró: `assertCurrentHost` construía la identidad de época por exclusión y `inspectIdentity` la rechazaba. Ese contrato exacto de cuatro campos —`project_id`, `assignment_ref`, `candidate_revision`, `host_epoch`— es el mismo que `S4.4` va a ejercer al publicar una raíz sucesora.
 
-**Recordatorio de prioridad de la auditoría.** `S4.4` resuelve *qué pasa cuando un agente muere*, y todavía no se puede *conducir a un agente vivo*: ése es el problema anterior y lo entrega `S11.1`. Por eso la cola la pone segunda y no primera.
+**Prioridad vigente.** `S4.7` entrega primero launch veraz y helper autenticado; `S11.1` puede correr en paralelo. `S4.4` queda tercero porque depende de `S4.7`.

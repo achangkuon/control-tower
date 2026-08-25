@@ -63,9 +63,16 @@ graph LR
   S115 --> S116["S1.16 OpenCode wake · ✅"]
   S116 --> S42["S4.2 Herdr inicial · ✅"]
   S41 --> S42
-  S42 --> S45["S4.5 raíz Main-owned · 🔵"]
-  S45 --> S43["S4.3 liveness · 📋"]
+  S42 --> S45["S4.5 raíz Main-owned · ✅"]
+  S45 --> S43["S4.3 liveness · ✅"]
   S43 --> S44["S4.4 recuperación WSL · 📋"]
+  S45 --> S47["S4.7 launch veraz · 🟢"]
+  S47 --> S44
+  S47 --> S48["S4.8 matriz OpenCode · 📋"]
+  S46["S4.6 retiro legacy · 📋"] --> S49["S4.9 Herdr 0.8.2 · 📋"]
+  S47 --> S49
+  S46 --> S71
+  S48 --> S71
   S41 --> S52["S5.2 entrega idempotente · 🔴"]
   S33 --> S52
    S52 --> S53["S5.3 planner/implementer · 📋"]
@@ -81,6 +88,8 @@ graph LR
    S53 --> S71["S7.1 conformidad · 📋"]
    S44 --> S71
    S55 --> S71
+   S812["S8.12 distribución versionada · 📋"] --> S71
+   S11_1["S11.1 superficie de operador · 🟢"] --> S71
 ```
 
 | Orden | ID | Resultado | Estado | Depende de |
@@ -100,12 +109,17 @@ graph LR
 | ✅ | `S1.15` | Conformidad lifecycle OpenCode | ✅ COMPLETO | `S1.14` ✅; `428b3ed` y documentación `e37a159` son ancestros de `origin/master@a3d9e51`; full 643/0/3818 en 41 archivos, 399 líneas authored |
 | ✅ | `S1.16` | Transporte reconciliado y composición wake | ✅ COMPLETO | `S1.15` ✅; implementación `da4e391`, parent `a3d9e51`; focused expandida 49/0/304, full 671/0/4020 en 43 archivos, 298 líneas authored; la entrega directa incluye este cierre documental |
 | ✅ | `S4.2` | Lanzamiento visible de raíz OpenCode | ✅ COMPLETO | Entregada en `61a5aa2`; Herdr 0.8 conserva valor histórico, no lifecycle futuro |
-| ▶ | `S4.5` | Raíz primaria Main-owned con vista adjunta | 🟢 LISTO | `S4.2` ✅; decision-clean: backend per-worktree y Herdr view-only temporal resueltos; tres Módulos ejecutables en secuencia |
-| — | `S4.3` | Inspección, liveness y rehidratación segura | 📋 PLANIFICADO | `S4.5`; evidencia backend/proceso/root-session, no pane/Herdr |
+| ✅ | `S4.5` | Raíz primaria Main-owned con vista adjunta | ✅ COMPLETO | `S4.2` ✅ |
+| ✅ | `S4.3` | Inspección, liveness y rehidratación segura | ✅ COMPLETO | `S4.5` ✅ |
 | — | `S1.17` | Gate y RED Pi/Intercom | 🟡 DIFERIDO | trabajo posterior host-neutral; no bloquea OpenCode |
 | — | `S1.18` | Adapter Pi/Intercom | 🟡 DIFERIDO | `S1.17` diferida |
 | — | `S1.19` | Regresión Pi/Intercom | 🟡 DIFERIDO | `S1.18` diferida |
-| — | `S4.4` | Recuperación lógica same-host con raíz sucesora | 📋 PLANIFICADO | `S4.3`; decision-clean por 40, con reconexión de vista o raíz/epoch sucesores; no hay failover multi-host |
+| 3 | `S4.4` | Recuperación lógica same-host con raíz sucesora | 📋 PLANIFICADO | `S4.3` ✅ y `S4.7`; reconexión o raíz/epoch sucesores |
+| 1 | `S4.7` | Launch Main-owned veraz y vista autenticada | 🟢 LISTO | `S4.5` ✅; timeout sólo si reproduce el mismo launch path |
+| 5 | `S4.6` | Retiro legacy y pin Herdr | 📋 PLANIFICADO | `S8.10` ✅; serial con `S4.7` por Área compartida |
+| 6 | `S4.8` | Matriz real OpenCode 1.18.23 | 📋 PLANIFICADO | `S4.7`; alinea plugin/SDK juntos sólo en verde |
+| 7 | `S4.9` | Probe/adopción guardada Herdr 0.8.2 | 📋 PLANIFICADO | `S4.6`, `S4.7`; **no gatea la primera release** |
+| 2 | `S11.1` | Ejecutor y superficie de operador | 🟢 LISTO | Nada; paralelo con `S4.7` por Área/Recurso disjuntos |
 | ✅ | `S5.4` | Ruteo de escalamiento fuera/en casa | ✅ COMPLETO | `S5.1` ✅; publicado en `origin/master` mediante `976b8d0`, `75549a7`, `f9f2869` y reconciliado en `d114677`; 9/9 Tareas, 15/15 criterios. **No** depende de `S8.7` |
 | — | `S5.2` | Entrega idempotente y post-check | 🔴 BLOQUEADO | `S4.1` ✅, `S3.3` ✅; recheck 8193 mantiene abiertos 1/3/5 y decisión 8195 estaciona el candidato NOT READY |
 | ✅ | `S5.6` | Contrato canónico de snapshot de Sesión | ✅ COMPLETO | `S5.4` ✅; publicado en `origin/master@75ddcf9`, 10/10 Tareas, 10/10 criterios, focused 75/0/348 y full 588/0/3452 |
@@ -121,7 +135,7 @@ graph LR
 | ✅ | `S10.3` | Contrato de ejecución versionado | ✅ COMPLETO | `S3.4` ✅; candidato exacto basado en `cdd0d09`, 17.297 bytes, 407 líneas, SHA-256 `2f4838aa244b30e280c5c558286b0e4d9fbb503a0ef1808ffc27501c1540fddc`; entrega directa aún no autorizada |
 | ✅ | `S10.1` | Preparación persistida de Jornada | ✅ COMPLETO | `S10.3` ✅; candidato técnico verificado, focused 8/0/144 y full 679/0/4164 en 44 archivos; owner pasivo Jornada-local y cero efectos |
 | ✅ | `S10.2` | Supervisión válida sin armado local | ✅ COMPLETO | `S10.1` ✅; comportamiento local `44f23adbb80bed974246aa3761573a388e5761bf`, tree `d5343fda0373c5152ad94bc248db5a5d0ccf8031`; focused 4/0/22, full 721/0/4361 en 52 archivos durante supervisión externa válida y `remote-control` 2/0/14 sin cambios |
-| 8 | `S7.1` | Conformidad de release OpenCode | 📋 PLANIFICADO | `S4.4`, `S5.3`, `S5.5`, `S10.2`; Pi y S8.7 no son prerequisitos |
+| 11 | `S7.1` | Conformidad de release OpenCode | 📋 PLANIFICADO | `S4.4`, `S4.6`, `S4.8`, `S5.3`, `S5.5`, `S8.12`, `S10.2`, `S11.1`; `S4.9`, Pi y `S8.7` no son prerequisitos |
 
 > **Contradicción reconciliada el 2026-08-11.** Hasta esta fecha el grafo Mermaid declaraba
 > `S44 --> S71` y esta tabla omitía `S4.4`, con la prosa sin mencionar su retiro. Las dos
@@ -132,7 +146,7 @@ graph LR
 > recuperación y failover entra en la cadena de release. La tabla se corrige para coincidir.
 > La decisión histórica fue explícita —construir las catorce Sesiones que ese corte enumeraba como restantes— y no una derivación; la reconciliación actual agrega los prerrequisitos omitidos sin reescribir aquella evidencia.
 
-**Treinta y siete Sesiones históricas · 26/37 cerradas o archivadas (70%).** `S8.7` queda archivada y no integra la ruta activa. `S5.9` ya cerró; `S4.5` aporta cero mientras está `LISTO`. P10 queda completo mediante `S3.4 → S10.3 → S10.1 → S10.2 → S7.1`. Esta métrica no reemplaza el `32/47` de Sesiones activas del [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
+**Métrica histórica al 2026-08-11: 26/37 Sesiones cerradas o archivadas (70%).** Se conserva como evidencia del corte de esa fecha; no mide la ruta vigente. El estado actual y su denominador auditable son `38/58` en el [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
 secuenciales entre `S5.4` y `S5.5`: snapshot/parser canónico, contratos de decisión/respuesta,
 binding terminal, productores de provenance, composición Main→parking, binding autoritativo de
 checkpoint y binding inmutable del trabajo completado bajo la autoridad exclusiva de Main. La
@@ -165,15 +179,13 @@ El comportamiento Hermes/Telegram restante es evidencia histórica archivada; no
 
 ## Capacidad paralela hoy
 
-La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas; no se declara como un número fijo.
+La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas. Tras reconciliar la línea base, el head seguro es 2: `S4.7` + `S11.1`. `S11.1` conserva `Depende de: nada`; la concurrencia es una disyunción de paths/recursos, no una dependencia semántica.
 
-`S1.16` y `S4.2` están ✅ COMPLETO; `S4.5` preserva la entrega histórica y reemplaza la propiedad crítica Herdr para trabajo futuro.
+Conflictos: `S4.7`↔`S4.6` (provider/install), `S4.7`↔`S8.12` (payload/tests install), `S4.7`↔`S5.13` (fixture launch-worker CLI), `S4.6`↔`S8.12` (install) y `S4.9` (path global Herdr exclusivo). `S9.1` carece aún de `Área`/`Recurso` y se excluye de capacidad segura.
 
-La capacidad inmediata es `S4.5`, que requiere `session-plan` antes de ejecutar. Las decisiones 38/39 habilitan `S4.5/M4.5.1`–`M4.5.3` en secuencia. `S4.3`, `S4.4`, `S5.3`, `S5.10`, `S5.5` y `S7.1` están 📋 PLANIFICADO; `S5.2` sigue 🔴 BLOQUEADO.
+**Estado de decisiones:** las decisiones 65–68 están resueltas; el launch, el canal de credencial, la prueba positiva, el timeout condicional y la intención de versiones quedan decision-clean. Sobreviven tres unknowns técnicos, no decisiones de producto: señal attach machine-readable, compatibilidad real plugin/SDK y matriz Herdr `0.8.2`. Ver el [registro](decision-register.md).
 
-**Estado de decisiones al 2026-08-18: 39/39 `escala` resueltas y cero abiertas en esta cadena.** La 38 eligió backend aislado por worktree, la 39 Herdr view-only temporal y la 40 recuperación lógica con raíz sucesora tras muerte probada. Quedan la segunda corrección autorizada de `S5.2` y el dueño de la brecha 6; son trabajo/residuo, no decisiones abiertas. El prerrequisito `enroll/**` pertenecía al puente Telegram/Hermes archivado con `S8.7`; no es responsabilidad activa. Fuera de esta cadena, la decisión independiente de `S9.2` **quedó resuelta el 2026-08-20** por la decisión 53, junto con las decisiones 49–52 que cerraron P9 entero y enumeraron `S9.4`. Nada de eso tiene dependencia declarada sobre esta ruta. Ver el [registro](decision-register.md).
-
-El siguiente inicio debe derivar capacidad desde el grafo y los campos vigentes, no desde esta fotografía. Ningún sucesor de `S5.9` o `S4.5` recibe crédito por el cierre de `S5.9`: `S5.10`, `S4.3`, `S4.4`, `S5.5` y `S7.1` conservan sus condiciones.
+El siguiente inicio es `#1 de 11 → S4.7`; `S11.1` puede correr en paralelo. Ningún sucesor recibe crédito por el cierre de su predecesor: `S4.4`, `S4.8`, `S4.9` y `S7.1` conservan sus condiciones.
 
 ## Enmienda `S0.3` — ✅ COMPLETA
 

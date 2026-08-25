@@ -2,7 +2,7 @@
 
 **Propósito:** que el maintainer pueda darle una orden a la Torre y ver su respuesta, con las garantías que el vocabulario de comandos ya declara.
 
-**Estado:** 📋 PLANIFICADO
+**Estado:** 🟢 LISTO
 **Avance:** 0% (0/1 S)
 
 > **Nace el 2026-08-21 de la [decisión 63](../decision-register.md)**, en la reconciliación de Planes que cerró la Fase 2 del plan de depuración.
@@ -35,15 +35,15 @@ Medido por la [decisión 60](../decision-register.md) y corregido por la [61](..
 
 ## Sesión 11.1 — Ejecutor de comandos y superficie tipeable
 
-**Estado:** 📋 PLANIFICADO
+**Estado:** 🟢 LISTO — puede correr en paralelo con `S4.7` después de reconciliar la línea base.
 
-**Depende de:** nada. El vocabulario, el validador y el canal `send`/`receive` ya existen y ya se instalan.
+**Depende de:** nada. El vocabulario, el validador y el canal `send`/`receive` ya existen y ya se instalan. La concurrencia con `S4.7` proviene de `Área` y `Recurso` disjuntos; no se inventa una dependencia semántica.
 
 **Área:** `console/executor.mjs`, `bin/torre`, `test/console-executor.test.mjs`, `test/console/**`.
 
 **Prohibido:** `core.mjs`, `console/vocabulary.mjs`, `console/validate.mjs`, `main-store/**`, `mcp.mjs`, `install/**`, `hosts/**`. El ejecutor **consume** el vocabulario y el validador; no los redefine ni los amplía.
 
-**Recurso:** ninguno — sin DB, sin migraciones, sin token de entrega.
+**Recurso:** ninguno — sin DB, sin migraciones, sin token de entrega. No comparte el namespace efímero, backend, root, puerto ni pane reclamados por `S4.7`.
 
 **Ruta:** `design-tasks`.
 
