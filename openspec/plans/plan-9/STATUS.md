@@ -161,3 +161,54 @@ graph TD
 - **`master-index.md`** conserva los IDs anteriores y no se toca en esta pasada: tiene cambios sin commitear de `S8.10` y esta sesión no toca trabajo en implementación. Es el mismo bloqueo que la tarea 0.4 del plan de depuración.
 - **`release-chain.md`** referencia la vieja `S9.2`; se reconcilia junto con el `master-index`.
 - Los artefactos SDD en `openspec/changes/s9-1-safe-slot-lifecycle/` describen el alcance superado. **Se conservan como evidencia histórica**, con su autoridad Engram intacta, y **no son autoridad de implementación** de la nueva `S9.2`.
+
+## Reconciliación de asientos — 2026-08-25
+
+Reconciliación completa de los nueve checkouts sobre `master@a303145`. Ningún asiento queda
+sucio. Ninguna rama previa se borró. Disposición aprobada por el maintainer: rescatar
+planificación, estacionar código.
+
+### Entregado
+
+- **`a303145`** — `AGENTS.md` incorpora la excepción *Bootstrap de coordinación con la Torre
+  apagada*, que venía preparada sin commitear en el asiento `s9-1-planning` sobre una base 39
+  commits atrás. Es la regla que exige disposición explícita del maintainer —entregar,
+  estacionar o abandonar— por cada worktree sucio antes de reciclarlo. No toca el bloque
+  `delivery-policy` y por lo tanto no colisiona con el Área de `S5.13`.
+
+### Estacionado — commiteado en su rama, nunca entregado
+
+| Asiento | Rama | Commit | Contenido |
+|---|---|---|---|
+| `s5-13-main-policy-evidence` | `feat/plan-5/s5-13-main-policy-evidence` | `fd56b80` | SDD completo de la `S5.13` **anterior** a la Fase 3 |
+| `s5-5` | `feat/plan-5/s5-5-parking-resume` | `acd8f7f` | `escalation/{parked,resume}.mjs` + 3 tests |
+| `s10-2-integration` | `feat/s8.11-shared-dependency-environment` | `3cb83fe` | 12 commits de `S8.11` + reescritura de fixtures |
+
+Las tres ramas existen **sólo en local**. No hay respaldo remoto.
+
+### Descartado — verificado superado antes de descartar
+
+- **`s5-9`**: los once archivos ya estaban en `master`. Diez byte-idénticos; el undécimo,
+  `hosts/production-provider.mjs:179`, era la versión previa a la selección explícita de campos.
+- **Cuatro documentos de plan** duplicados byte-a-byte entre `s5-5` y `s5-13`
+  (`decision-register`, `master-index`, `plan-5/STATUS`, `release-chain`): borrador anterior a
+  la Fase 3. `plan-5/STATUS.md` tenía 956 líneas contra 1137 entregadas.
+- **`s8-11-fixture-rewrite`**: segundo intento divergente del mismo arreglo de fixtures que
+  `s10-2-integration`, sobre los mismos 12 commits. Sobrevive el de `s10-2-integration`.
+
+Respaldo de todo lo descartado —parches y untracked— tomado antes de descartar.
+
+### El SDD estacionado de `S5.13` no es autoridad de implementación
+
+Describe *Trusted Main Policy Evidence and Main-Only Dispatch* bajo la decisión 57. La Fase 3
+redefinió `S5.13` como **retiro de la verificación de proceso de la entrega** bajo la decisión
+64. Mismo ID, Sesión distinta. Se conserva como evidencia histórica, igual que
+`openspec/changes/s9-1-safe-slot-lifecycle/`, y **no se entrega a `master`**.
+
+### Contradicción abierta — la suite no está verde
+
+`test/install/launch-worker-cli.test.mjs:51` falla por timeout a los 5000 ms esperando
+`CT_LAUNCH_BINDING_INVALID`, y recibe `""`. Reproducido de forma determinista en tres corridas.
+**Es preexistente**: falla igual en el árbol limpio de `ee03ec5`, sin ningún cambio aplicado.
+La suite completa da **862 pass / 13 todo / 1 fail**, contra los 863 / 13 / 0 registrados al
+cerrar la Fase 3. Sin dueño asignado.
