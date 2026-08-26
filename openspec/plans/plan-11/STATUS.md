@@ -2,8 +2,8 @@
 
 **Propósito:** que el maintainer pueda darle una orden a la Torre y ver su respuesta, con las garantías que el vocabulario de comandos ya declara.
 
-**Estado:** 🟢 LISTO
-**Avance:** 0% (0/1 S)
+**Estado:** ✅ COMPLETO
+**Avance:** 100% (1/1 S)
 
 > **Nace el 2026-08-21 de la [decisión 63](../decision-register.md)**, en la reconciliación de Planes que cerró la Fase 2 del plan de depuración.
 
@@ -20,34 +20,34 @@ Se aplicó el test de pertenencia por propósito. **Ningún Plan existente lo cu
 
 **La decisión 58 nombró a `console/vocabulary.mjs` autoridad de alcance del producto, y ningún Plan reclamaba lo que ese archivo declara.** Ése es exactamente el defecto que las auditorías encontraron: capacidades declaradas sin Plan dueño.
 
-## El hueco que este Plan cierra
+## El hueco técnico que S11.1 cerró
 
-Medido por la [decisión 60](../decision-register.md) y corregido por la [61](../decision-register.md):
+La brecha medida por la [decisión 60](../decision-register.md) y corregida por la [61](../decision-register.md) quedó cerrada así:
 
-- **`console/vocabulary.mjs`** declara trece comandos con clase de riesgo, estados legales, argumentos y evidencia exigida.
-- **`console/validate.mjs`** los valida por completo: resuelve el agente destino, verifica sus estados legales, deriva el agente desde la escalación abierta para `CV_ANSWER`, y exige evidencia con confirmación y TTL para los dos verbos irreversibles. **16 tests en verde, 168 aserciones.**
-- **`core.mjs:4445` `send`** y **`4464` `receive`** son el canal operador→agente, ya se instalan y conservan el invariante de escritor único.
-- **Nada traduce un comando validado en una directiva.** Cero de los trece verbos tiene ejecutor, y `bin/torre` expone ocho comandos de los cuales **ninguno pertenece al vocabulario**.
+- **`console/vocabulary.mjs`** conserva los trece comandos, sus riesgos, estados legales, argumentos y evidencia exigida.
+- **`console/validate.mjs`** valida el destino inmutable sólo para verbos dirigidos a agentes; `CV_STATUS` permanece como lectura local de toda la Torre.
+- **`console/executor.mjs`** traduce cada comando dirigido validado en una sola directiva por el canal existente, sin re-resolver el agente ni escribir su fila.
+- **`bin/torre`** expone exactamente el vocabulario, incluidos los dos verbos `R2` con la confirmación ya contratada por el validador.
 
-`test/console-executor.test.mjs` mantiene ese hueco visible en cada corrida de la suite: **2 pass · 13 todo · 0 fail**.
+`test/console-executor.test.mjs` queda como cobertura ejecutable con **cero pendientes**. La verificación integral terminó en **884 pass · 0 fail · 5.068 aserciones · 69 archivos**.
 
 ---
 
 ## Sesión 11.1 — Ejecutor de comandos y superficie tipeable
 
-**Estado:** 🟢 LISTO — puede correr en paralelo con `S4.7` después de reconciliar la línea base.
+**Estado:** ✅ COMPLETO
 
-**Depende de:** nada. El vocabulario, el validador y el canal `send`/`receive` ya existen y ya se instalan. La concurrencia con `S4.7` proviene de `Área` y `Recurso` disjuntos; no se inventa una dependencia semántica.
+**Depende de:** nada. El vocabulario, el validador y el canal `send`/`receive` ya existen y ya se instalan.
 
-**Área:** `console/executor.mjs`, `bin/torre`, `test/console-executor.test.mjs`, `test/console/**`.
+**Área:** `console/executor.mjs`, `console/validate.mjs`, `bin/torre`, `scripts/payload-closure.mjs`, `install/runtime-payload.mjs` generado, `test/console-executor.test.mjs`, `test/console/**`, `test/install/payload-closure.test.mjs`, `test/install/runtime-payload.test.mjs`.
 
-**Prohibido:** `core.mjs`, `console/vocabulary.mjs`, `console/validate.mjs`, `main-store/**`, `mcp.mjs`, `install/**`, `hosts/**`. El ejecutor **consume** el vocabulario y el validador; no los redefine ni los amplía.
+**Prohibido:** `core.mjs`, `console/vocabulary.mjs`, `main-store/**`, `mcp.mjs`, `hosts/**` y todo `install/**` salvo la excepción exacta `install/runtime-payload.mjs` generado. El ejecutor **consume** el vocabulario y el validador; no los redefine ni amplía el vocabulario.
 
 **Recurso:** ninguno — sin DB, sin migraciones, sin token de entrega. No comparte el namespace efímero, backend, root, puerto ni pane reclamados por `S4.7`.
 
 **Ruta:** `design-tasks`.
 
-**Resultado:** un comando validado se traduce en una **directiva `send`** hacia el agente nombrado, y los verbos quedan tipeables en `bin/torre`.
+**Resultado:** cada comando dirigido a un agente y validado emite una sola **directiva `send`** hacia el `target_agent` inmutable; `CV_STATUS` es la única lectura local de toda la Torre y no requiere destino ni llama `core.send`. Los trece verbos quedan tipeables en `bin/torre`.
 
 ### Por qué el ejecutor y la superficie son una sola Sesión
 
@@ -55,24 +55,37 @@ Por la regla de consumidor real que fija la Fase 4 del plan de depuración: **al
 
 ### Decisiones
 
-- `derivable` — **qué hace el ejecutor con un comando validado.** **Criterio:** emite una directiva por `core.send({ to, text })` hacia el agente que el validador ya resolvió, y nada más. No escribe la fila del agente, no toca locks, no abre una segunda ruta de autoridad. **Autoridad:** [decisión 61](../decision-register.md). **Falsificable:** cualquier ruta en la que el ejecutor mute estado ajeno.
-- `derivable` — **qué promete un comando.** **Criterio:** «le pedí que pare», no «garantizo que paró». **Autoridad:** decisión 61, que lo fundamenta en que el agente ya se autolimita bajo gentle-ai. **Falsificable:** un comando que reporte éxito afirmando una detención que no probó.
+- `escala` resuelta — **semántica de destino del ejecutor.** `CV_STATUS` es local a la Torre: no llama `core.send` ni requiere agente destino. Sólo los verbos dirigidos a agentes consumen el `target_agent` inmutable validado, sin que el ejecutor lo re-resuelva ni lo infiera. **Autoridad:** [decisión 69](../decision-register.md), Engram 9489/9490. **Clase:** contrato visible del producto. **Contaminaba:** `M11.1.1`.
+- `escala` resuelta — **expansión mínima del payload instalable.** Se autorizan exactamente `scripts/payload-closure.mjs`, `install/runtime-payload.mjs`, `test/install/payload-closure.test.mjs` y `test/install/runtime-payload.test.mjs`; las raíces agregadas son sólo ejecutor y validador, y el vocabulario llega transitivamente. **Autoridad:** [decisión 70](../decision-register.md), Engram 9497/9498. **Clase:** expansión de alcance; contrato visible del producto. **Contaminaba:** `M11.1.2`.
+- `derivable` — **qué promete un comando.** **Criterio:** «le pedí que pare», no «garantizo que paró». **Autoridad:** [decisión 61](../decision-register.md). **Falsificable:** un comando que reporte éxito afirmando una detención que no probó.
 - `derivable` — **qué verbos expone la superficie.** **Criterio:** exactamente los de `COMMAND_VOCABULARY`, ni uno más. **Autoridad:** [decisión 58](../decision-register.md). **Falsificable:** un verbo tipeable que no esté en el vocabulario, o uno del vocabulario sin superficie al cerrar.
-- `derivable` — **qué pasa con los dos verbos `R2`.** **Criterio:** `validateProposal` ya devuelve `CV_CONFIRMATION_REQUIRED` con la lista de evidencia y un TTL; la superficie los presenta y consume la confirmación por `validateConfirmation`. No se inventa un segundo camino de confirmación. **Falsificable:** un `CV_MERGE_MAIN` o `CV_DB_PUSH` ejecutado sin pasar por la confirmación del validador.
+- `derivable` — **qué pasa con los dos verbos `R2`.** **Criterio:** `validateProposal` devuelve `CV_CONFIRMATION_REQUIRED` con la lista de evidencia y un TTL; la superficie presenta y consume la confirmación por `validateConfirmation`. **Falsificable:** un `CV_MERGE_MAIN` o `CV_DB_PUSH` ejecutado sin pasar por la confirmación del validador.
 
-### Criterios de aceptación — todos deben pasar para cerrar
+### Criterios de aceptación — verificados en el candidato integral
 
-- [ ] Cada verbo de `COMMAND_VOCABULARY` tiene ejecutor y superficie tipeable, o queda declarado fuera de alcance con razón registrada
-- [ ] El ejecutor sólo emite directivas por `core.send`; el diff no contiene ninguna escritura sobre la fila de otro agente
-- [ ] Los dos verbos `R2` no se ejecutan sin la confirmación que `console/validate.mjs` exige, con su evidencia y su TTL
-- [ ] Un verbo desconocido, un agente inexistente o un estado ilegal fallan con el código que el validador ya define, sin ruta alternativa
-- [ ] `test/console-executor.test.mjs` queda en **cero pendientes** — cada verbo ejecutado sale de la lista y el archivo se borra al llegar a trece
-- [ ] `bun test` no introduce fallos nuevos sobre la línea base
-- [ ] El diff no toca ninguna ruta del `Prohibido`
+- [x] Cada verbo de `COMMAND_VOCABULARY` tiene ejecutor y superficie tipeable, o queda declarado fuera de alcance con razón registrada
+- [x] Los verbos dirigidos sólo emiten una directiva por `core.send`; `CV_STATUS` permanece local y el diff no escribe la fila de otro agente
+- [x] Los dos verbos `R2` no se ejecutan sin la confirmación que `console/validate.mjs` exige, con su evidencia y su TTL
+- [x] Un verbo desconocido, un agente inexistente o un estado ilegal fallan con el código que el validador ya define, sin ruta alternativa
+- [x] `test/console-executor.test.mjs` queda en cero pendientes y se conserva como cobertura ejecutable de regresión
+- [x] La suite completa verifica **884 pass / 0 fail / 5.068 aserciones / 69 archivos**
+- [x] El diff respeta `Área`, `Prohibido` y las excepciones exactas autorizadas por las decisiones 69–70
 
-**Módulos y Tareas:** pendientes de enumerar. Es trabajo de `planificador-granular`, no una decisión.
+### Módulo M11.1.1 — Ejecutor de directivas validadas · ✅ COMPLETO
 
-**Forecast:** sin medir. La auditoría de P8 no estimó el ejecutor y **no se inventa una cifra**; se mide al elaborar la Sesión.
+- **Tarea T11.1.1.1** — Traducir un comando de agente validado en exactamente una llamada a `core.send`. · ✅ COMPLETO
+- **Tarea T11.1.1.2** — Mantener `CV_STATUS` local y consumir `target_agent` confiable sólo para verbos dirigidos a agentes. · ✅ COMPLETO
+- **Tarea T11.1.1.3** — Cerrar las regresiones del vocabulario entre ejecutor y validador. · ✅ COMPLETO
+
+### Módulo M11.1.2 — Superficie tipeable y payload instalable · ✅ COMPLETO
+
+- **Tarea T11.1.2.1** — Exponer el vocabulario por `bin/torre`, incluidos los verbos `R2`. · ✅ COMPLETO
+- **Tarea T11.1.2.2** — Aplicar la expansión serializada mínima del payload instalado. · ✅ COMPLETO
+- **Tarea T11.1.2.3** — Cerrar las regresiones de CLI/payload y ejecutar la verificación completa. · ✅ COMPLETO
+
+**Evidencia de implementación:** commits `8d86bf6` y `2dbb714`; suite final **884 pass / 0 fail / 5.068 aserciones / 69 archivos**. Autoridades de implementación y alcance: decisiones 69–70 y Engram 9489/9490/9497/9498.
+
+**Cierre documental atómico:** esta reconciliación OpenSpec integra el candidato local posterior a `2dbb714`; la actualización no destructiva de Notion se ejecuta después de verificar la publicación directa de la misma cadena. El estado ✅ COMPLETO describe ese candidato conjunto y no afirma que el paso remoto ya haya ocurrido.
 
 ## Qué queda fuera de este Plan
 

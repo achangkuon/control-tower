@@ -89,7 +89,7 @@ graph LR
    S44 --> S71
    S55 --> S71
    S812["S8.12 distribución versionada · 📋"] --> S71
-   S11_1["S11.1 superficie de operador · 🟢"] --> S71
+   S11_1["S11.1 superficie de operador · ✅"] --> S71
 ```
 
 | Orden | ID | Resultado | Estado | Depende de |
@@ -114,12 +114,12 @@ graph LR
 | — | `S1.17` | Gate y RED Pi/Intercom | 🟡 DIFERIDO | trabajo posterior host-neutral; no bloquea OpenCode |
 | — | `S1.18` | Adapter Pi/Intercom | 🟡 DIFERIDO | `S1.17` diferida |
 | — | `S1.19` | Regresión Pi/Intercom | 🟡 DIFERIDO | `S1.18` diferida |
-| 3 | `S4.4` | Recuperación lógica same-host con raíz sucesora | 📋 PLANIFICADO | `S4.3` ✅ y `S4.7`; reconexión o raíz/epoch sucesores |
+| 2 | `S4.4` | Recuperación lógica same-host con raíz sucesora | 📋 PLANIFICADO | `S4.3` ✅ y `S4.7`; reconexión o raíz/epoch sucesores |
 | 1 | `S4.7` | Launch Main-owned veraz y vista autenticada | 🟢 LISTO | `S4.5` ✅; timeout sólo si reproduce el mismo launch path |
-| 5 | `S4.6` | Retiro legacy y pin Herdr | 📋 PLANIFICADO | `S8.10` ✅; serial con `S4.7` por Área compartida |
-| 6 | `S4.8` | Matriz real OpenCode 1.18.23 | 📋 PLANIFICADO | `S4.7`; alinea plugin/SDK juntos sólo en verde |
-| 7 | `S4.9` | Probe/adopción guardada Herdr 0.8.2 | 📋 PLANIFICADO | `S4.6`, `S4.7`; **no gatea la primera release** |
-| 2 | `S11.1` | Ejecutor y superficie de operador | 🟢 LISTO | Nada; paralelo con `S4.7` por Área/Recurso disjuntos |
+| 4 | `S4.6` | Retiro legacy y pin Herdr | 📋 PLANIFICADO | `S8.10` ✅; serial con `S4.7` por Área compartida |
+| 5 | `S4.8` | Matriz real OpenCode 1.18.23 | 📋 PLANIFICADO | `S4.7`; alinea plugin/SDK juntos sólo en verde |
+| 6 | `S4.9` | Probe/adopción guardada Herdr 0.8.2 | 📋 PLANIFICADO | `S4.6`, `S4.7`; **no gatea la primera release** |
+| ✅ | `S11.1` | Ejecutor y superficie de operador | ✅ COMPLETO | Código `8d86bf6` → `2dbb714`, reconciliación OpenSpec en el commit documental posterior de la misma publicación y suite 884/0/5.068; la actualización no destructiva de Notion es el paso post-push |
 | ✅ | `S5.4` | Ruteo de escalamiento fuera/en casa | ✅ COMPLETO | `S5.1` ✅; publicado en `origin/master` mediante `976b8d0`, `75549a7`, `f9f2869` y reconciliado en `d114677`; 9/9 Tareas, 15/15 criterios. **No** depende de `S8.7` |
 | — | `S5.2` | Entrega idempotente y post-check | 🔴 BLOQUEADO | `S4.1` ✅, `S3.3` ✅; recheck 8193 mantiene abiertos 1/3/5 y decisión 8195 estaciona el candidato NOT READY |
 | ✅ | `S5.6` | Contrato canónico de snapshot de Sesión | ✅ COMPLETO | `S5.4` ✅; publicado en `origin/master@75ddcf9`, 10/10 Tareas, 10/10 criterios, focused 75/0/348 y full 588/0/3452 |
@@ -135,7 +135,7 @@ graph LR
 | ✅ | `S10.3` | Contrato de ejecución versionado | ✅ COMPLETO | `S3.4` ✅; candidato exacto basado en `cdd0d09`, 17.297 bytes, 407 líneas, SHA-256 `2f4838aa244b30e280c5c558286b0e4d9fbb503a0ef1808ffc27501c1540fddc`; entrega directa aún no autorizada |
 | ✅ | `S10.1` | Preparación persistida de Jornada | ✅ COMPLETO | `S10.3` ✅; candidato técnico verificado, focused 8/0/144 y full 679/0/4164 en 44 archivos; owner pasivo Jornada-local y cero efectos |
 | ✅ | `S10.2` | Supervisión válida sin armado local | ✅ COMPLETO | `S10.1` ✅; comportamiento local `44f23adbb80bed974246aa3761573a388e5761bf`, tree `d5343fda0373c5152ad94bc248db5a5d0ccf8031`; focused 4/0/22, full 721/0/4361 en 52 archivos durante supervisión externa válida y `remote-control` 2/0/14 sin cambios |
-| 11 | `S7.1` | Conformidad de release OpenCode | 📋 PLANIFICADO | `S4.4`, `S4.6`, `S4.8`, `S5.3`, `S5.5`, `S8.12`, `S10.2`, `S11.1`; `S4.9`, Pi y `S8.7` no son prerequisitos |
+| 10 | `S7.1` | Conformidad de release OpenCode | 📋 PLANIFICADO | `S11.1` ✅ y `S10.2` ✅; todavía espera `S4.4`, `S4.6`, `S4.8`, `S5.3`, `S5.5` y `S8.12`. `S4.9`, Pi y `S8.7` no son prerequisitos |
 
 > **Contradicción reconciliada el 2026-08-11.** Hasta esta fecha el grafo Mermaid declaraba
 > `S44 --> S71` y esta tabla omitía `S4.4`, con la prosa sin mencionar su retiro. Las dos
@@ -146,7 +146,7 @@ graph LR
 > recuperación y failover entra en la cadena de release. La tabla se corrige para coincidir.
 > La decisión histórica fue explícita —construir las catorce Sesiones que ese corte enumeraba como restantes— y no una derivación; la reconciliación actual agrega los prerrequisitos omitidos sin reescribir aquella evidencia.
 
-**Métrica histórica al 2026-08-11: 26/37 Sesiones cerradas o archivadas (70%).** Se conserva como evidencia del corte de esa fecha; no mide la ruta vigente. El estado actual y su denominador auditable son `38/58` en el [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
+**Métrica histórica al 2026-08-11: 26/37 Sesiones cerradas o archivadas (70%).** Se conserva como evidencia del corte de esa fecha; no mide la ruta vigente. El estado actual y su denominador auditable son `38/57` en el [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
 secuenciales entre `S5.4` y `S5.5`: snapshot/parser canónico, contratos de decisión/respuesta,
 binding terminal, productores de provenance, composición Main→parking, binding autoritativo de
 checkpoint y binding inmutable del trabajo completado bajo la autoridad exclusiva de Main. La
@@ -179,13 +179,13 @@ El comportamiento Hermes/Telegram restante es evidencia histórica archivada; no
 
 ## Capacidad paralela hoy
 
-La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas. Tras reconciliar la línea base, el head seguro es 2: `S4.7` + `S11.1`. `S11.1` conserva `Depende de: nada`; la concurrencia es una disyunción de paths/recursos, no una dependencia semántica.
+La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas. La capacidad inmediata es 1: sólo `S4.7`. `S11.1` ya cerró y sale de la capacidad pendiente.
 
 Conflictos: `S4.7`↔`S4.6` (provider/install), `S4.7`↔`S8.12` (payload/tests install), `S4.7`↔`S5.13` (fixture launch-worker CLI), `S4.6`↔`S8.12` (install) y `S4.9` (path global Herdr exclusivo). `S9.1` carece aún de `Área`/`Recurso` y se excluye de capacidad segura.
 
-**Estado de decisiones:** las decisiones 65–68 están resueltas; el launch, el canal de credencial, la prueba positiva, el timeout condicional y la intención de versiones quedan decision-clean. Sobreviven tres unknowns técnicos, no decisiones de producto: señal attach machine-readable, compatibilidad real plugin/SDK y matriz Herdr `0.8.2`. Ver el [registro](decision-register.md).
+**Estado de decisiones:** las decisiones 65–70 están resueltas; el launch, el canal de credencial, la prueba positiva, el timeout condicional, la intención de versiones, el destino del ejecutor y el payload mínimo quedan decision-clean. Sobreviven tres unknowns técnicos, no decisiones de producto: señal attach machine-readable, compatibilidad real plugin/SDK y matriz Herdr `0.8.2`. Ver el [registro](decision-register.md).
 
-El siguiente inicio es `#1 de 11 → S4.7`; `S11.1` puede correr en paralelo. Ningún sucesor recibe crédito por el cierre de su predecesor: `S4.4`, `S4.8`, `S4.9` y `S7.1` conservan sus condiciones.
+El siguiente inicio es `#1 de 10 → S4.7`; no hay otra capacidad inmediata. La arista `S11.1 → S7.1` está satisfecha, pero `S7.1` conserva 📋 PLANIFICADO porque todavía espera los otros seis prerrequisitos nombrados en la tabla.
 
 ## Enmienda `S0.3` — ✅ COMPLETA
 
