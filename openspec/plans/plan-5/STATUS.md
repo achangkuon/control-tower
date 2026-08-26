@@ -1412,6 +1412,31 @@ La [decisión 60](../decision-register.md), entregada en `master@8a75be0`, encon
 
 **Orden preservado.** ~~`S5.5` no arranca antes de la Fase 3~~ — **la Fase 3 cerró el 2026-08-21** ([decisión 64](../decision-register.md)). El objetivo de P5 está reescrito y `S5.5` **queda destrabada**. El único orden que persiste es local: `S5.13` va antes, porque comparten prefijo en `test/escalation/**`.
 
+## Cierre de la reconciliación del tercer eje — publicado 2026-08-26
+
+Entregada en `origin/master@0aa4356`, sobre la base `f9f0bc2` que ya contenía los cierres de
+`S5.13`, `S4.7` y `S4.6`. **Es documentación: no cambia una línea de producción.**
+
+**Qué se publicó.** La [decisión 78](../decision-register.md); el tercer eje escrito en
+[la frontera](../frontera-torre-gentle-ai.md); `S5.15` nueva en este Plan; `S5.5` recortada;
+`S2.7` 📚 ARCHIVADA y `S2.8` nueva en P2; y la cola del `master-index` recalculada a once
+posiciones. El único cambio de código es el golden del grafo de P5 en
+`test/contracts/session-plan-snapshot.test.mjs`, que fija los nodos y aristas de este archivo.
+
+**Verificación:** `bun test` → **883 pass / 0 fail / 5.036 aserciones / 68 archivos**.
+
+**Base divergente reconciliada durante la preparación.** El candidato se había escrito sobre
+`f6bde11` y `origin` avanzó seis commits. **No se rebaseó a ciegas:** se descartó el candidato
+y se reescribió sobre `f9f0bc2`, porque tres cierres cambiaban premisas —`S5.13` cerrado dejaba
+sin destino la enmienda de `binding-delta`, que pasó a ser `S2.8`— y porque upstream ya había
+usado los números 76 y 77 del registro. Es el procedimiento que la [decisión 29](../decision-register.md)
+fija para una base divergente: preservar, no rebasar en silencio.
+
+**Deuda declarada, no resuelta acá.** `S5.5` sigue sin pasar el parser de la propia Torre
+(`Target dependencies must equal inbound graph edges`), como el resto de las Sesiones
+históricas de este Plan. **No se corrige a propósito:** `S5.15` retira ese parser, así que
+alinear los planes contra un lector que se va sería trabajo perdido.
+
 ## Insumo de la reconciliación de Planes (2026-08-21)
 
 La [decisión 63](../decision-register.md) cerró la Fase 2 del plan de depuración dándole dueño a los tres trabajos que las auditorías habían dejado huérfanos. **Dos de ellos afectan a P5 sin cambiar el estado de ninguna de sus Sesiones.**
