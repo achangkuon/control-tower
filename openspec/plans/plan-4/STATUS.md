@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
 | Outputs | Raíz primaria Main-owned con TUI adjunta no autoritativa, inspección/liveness por proceso/sesión y recuperación same-host WSL. |
-| Roadmap | `S4.1`, `S1.16`, `S4.2`, `S4.5` y `S4.3` están ✅ COMPLETO. `S4.7` está 🔵 EN CURSO, con `M4.7.3` implementado y pendiente de verificación integral. `S4.4`, `S4.6`, `S4.8` y `S4.9` están 📋 PLANIFICADO. P4 alcanza 4/9 S (44%). |
+| Roadmap | `S4.1`, `S1.16`, `S4.2`, `S4.5`, `S4.3` y `S4.7` están ✅ COMPLETO. `S4.4`, `S4.6` y `S4.8` están 🟢 LISTO; `S4.9` está 📋 PLANIFICADO. P4 alcanza 5/9 S (56%). |
 | Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), decisiones 37–42 / Engram 9040/9042/9043/9044/9079, [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). REQUIREMENTS §14 permanece byte-pinned como base histórica; esta spec enmienda el lifecycle futuro. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
@@ -398,9 +398,9 @@ Esta corrección aprobada por el maintainer **no es una Sesión**, no fue solici
 
 ## Sesión 4.4 — Recuperación lógica same-host con raíz sucesora
 
-**Estado:** 📋 PLANIFICADO — decision-clean y dependency-blocked por `S4.7`.
+**Estado:** 🟢 LISTO — decision-clean; `S4.7` cerró y satisfizo la dependencia pendiente.
 
-**Depende de:** `S4.3` ✅, `S4.7`. La dependencia nueva exige que recuperación reutilice el launch veraz y el helper autenticado, no el camino legacy.
+**Depende de:** `S4.3` ✅, `S4.7` ✅. Recuperación debe reutilizar el launch veraz y el helper autenticado, no el camino legacy.
 
 **Área:** `hosts/recovery.mjs`, `hosts/epoch-enforcement.mjs`, `test/hosts/recovery.test.mjs`, `test/hosts/epoch-enforcement.test.mjs`
 
@@ -456,18 +456,18 @@ graph LR
   S116["S1.16 OpenCode wake · ✅"] --> S42
   S42 --> S45["S4.5 raíz Main-owned · ✅"]
   S45 --> S43["S4.3 liveness · ✅"]
-  S43 --> S44["S4.4 recuperación · 📋"]
-  S45 --> S47["S4.7 launch veraz · 🔵"]
+  S43 --> S44["S4.4 recuperación · 🟢"]
+  S45 --> S47["S4.7 launch veraz · ✅"]
   S47 --> S44
-  S47 --> S48["S4.8 matriz OpenCode · 📋"]
-  S46["S4.6 retiro legacy · 📋"] --> S49["S4.9 Herdr 0.8.2 · 📋"]
+  S47 --> S48["S4.8 matriz OpenCode · 🟢"]
+  S46["S4.6 retiro legacy · 🟢"] --> S49["S4.9 Herdr 0.8.2 · 📋"]
   S47 --> S49
   S44 --> S71["S7.1 conformidad · 📋"]
   S46 --> S71
   S48 --> S71
 ```
 
-No queda responsabilidad activa de hosts sin Sesión enumerada. `S4.3` está ✅ COMPLETO; `S4.7` está 🔵 EN CURSO, con `M4.7.3` implementado y pendiente de verificación integral; `S4.4`, `S4.6`, `S4.8`, `S4.9` y `S7.1` están 📋 por el grafo, no por decisiones de producto abiertas.
+No queda responsabilidad activa de hosts sin Sesión enumerada. `S4.3` y `S4.7` están ✅ COMPLETO; `S4.4`, `S4.6` y `S4.8` están 🟢 LISTO; `S4.9` y `S7.1` permanecen 📋 por el grafo.
 
 ## Insumo para la auditoría exclusiva de P4 — pregunta de entrada nueva (2026-08-21)
 
@@ -550,7 +550,7 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 
 ## Sesión 4.6 — Retiro del camino de lanzamiento de `S4.2` y del fijado de Herdr
 
-**Estado:** 📋 PLANIFICADO — nace el 2026-08-21 de la [decisión 63](../decision-register.md), en la reconciliación de Planes.
+**Estado:** 🟢 LISTO — nació el 2026-08-21 de la [decisión 63](../decision-register.md); `S8.10` y `S5.13` ya cerraron.
 
 **Por qué pertenece a P4.** El propósito de este Plan es que se pueda abrir una sesión y saber de qué depende. Ese trabajo es exactamente sacar una dependencia externa del camino y retirar un adaptador superado. Ningún otro Plan lo cubre.
 
@@ -604,11 +604,11 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 - [ ] Tarea T4.6.2.2 — GREEN: retirar el chequeo bloqueante y capacidades sin uso
 - [ ] Tarea T4.6.2.3 — REFACTOR: matriz ausente/`0.8.0`/`0.8.2`, sin adoptar `0.8.2`
 
-**Orden:** `S8.10` ya cerró. `S4.6` queda detrás de `S5.13` y no corre junto con `S4.7` por solapamiento en provider/instalación.
+**Orden:** `S8.10`, `S5.13` y `S4.7` ya cerraron; `S4.6` queda disponible sin aquel solapamiento activo en provider/instalación.
 
 ## Sesión 4.7 — Launch Main-owned veraz y vista autenticada
 
-**Estado:** 🔵 EN CURSO — `M4.7.1` y `M4.7.2` están entregados; `M4.7.3` está completo a nivel de implementación y queda pendiente la verificación integral y la entrega.
+**Estado:** ✅ COMPLETO — los tres Módulos fueron entregados en `13e3ec7` (`M4.7.1`), `429f2ea` (`M4.7.2`) y `3b981ef` (`M4.7.3`). Candidato final publicado en `origin/master@3b981efdcf3f68c2dc295ae056f10c04914cfc56`, tree `2da94e239033d108f957bfe16f53fb70008f7d27`; focused S4.7 **64 pass / 0 fail / 464 expectations** y suite integral **891 pass / 0 fail / 5.095 expectations / 69 archivos**.
 
 **Depende de:** `S4.5` ✅. **Ruta:** `design-tasks`. **Autoridad:** decisiones 65–68 y 76–77 del maintainer; Engram 9506/9507 resuelve el gate de diseño de `M4.7.3` sin crear autoridad nueva.
 
@@ -620,7 +620,7 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 
 **Resultado vigente:** la raíz Main-owned exacta admite los bytes exactos del brief antes de éxito. La vista pública actual siempre agrega únicamente `view: { status: "DEGRADED", code: "CT_VIEW_UNVERIFIED", retryable: true }` a la identidad existente de backend/root. No expone `pane_id`, comando, ref del helper, ref de credencial, secreto ni copy/paste. El retry es declarativo; el helper existente permanece privado y es la única ruta de ejecución. `ATTACHED` queda reservado para una prueba futura, falsificable y producer-owned, ligada a backend/root/worktree/pane exactos que `S4.8`/`S4.9` descubran; pane creado, helper autenticado y liveness nunca se componen en esa prueba.
 
-**Evidencia instalada en este checkpoint:** OpenCode CLI `1.18.23`; plugin/SDK `1.18.13`; ninguna superficie instalada entrega prueba de attach. Se preserva la baseline focused reconciliada previa de **64 pass / 0 fail / 455 expectations en 9 archivos**. Para `M4.7.3`, RED observó **5 pass / 2 fail / 14 expectations**; GREEN, **7 / 0 / 22**; triangulación, **7 / 0 / 26**; focused de cuatro archivos, **28 / 0 / 173**; y focused de los nueve archivos, **64 / 0 / 464**. El diff técnico queda acotado a **3 paths, +26/−11 = 37 líneas authored**: `hosts/launch-worker.mjs` y sus dos tests. La salida pública queda congelada exactamente como `view: { status: "DEGRADED", code: "CT_VIEW_UNVERIFIED", retryable: true }`; preserva backend/root, no tiene branch `ATTACHED` y produjo cero leakage de pane, comando, helper ref, credential ref, secreto o copy/paste. Evidencia completa: Engram 9533.
+**Evidencia final:** OpenCode CLI `1.18.23`; plugin/SDK `1.18.13`; ninguna superficie instalada entrega prueba de attach. Para `M4.7.3`, RED observó **5 pass / 2 fail / 14 expectations**; GREEN, **7 / 0 / 22**; triangulación, **7 / 0 / 26**; focused de cuatro archivos, **28 / 0 / 173**; y focused S4.7, **64 pass / 0 fail / 464 expectations**. El candidato de `M4.7.3` quedó acotado a **5 paths / 104 líneas authored** y fue entregado en `3b981ef`; la suite integral final pasó **891 / 0 / 5.095 / 69**. La salida pública permanece congelada exactamente como `view: { status: "DEGRADED", code: "CT_VIEW_UNVERIFIED", retryable: true }`; preserva backend/root, no tiene branch `ATTACHED` y produjo cero leakage de pane, comando, helper ref, credential ref, secreto o copy/paste. Evidencia de implementación: Engram 9533.
 
 **Decisiones:**
 - `escala` — decisiones 65–66 **RESUELTAS**: admisión exacta sin esperar token; canal efímero owner-only y cero exposición. **Clase:** contrato visible del producto; seguridad y permisos. **Contaminaban:** los tres Módulos, `S4.4`, `S7.1`.
@@ -631,10 +631,10 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 - [x] `root_session_id` y bytes del brief exactos quedan admitidos; 4xx/5xx/timeout/envelope ambiguo o root/brief distinto fallan cerrado
 - [x] Éxito no espera completion, output ni primer token del modelo
 - [x] Ningún secreto aparece en argv, comando de proceso, log, JSON, mensaje, fallback, binding, copy/paste ni fuera del namespace owner-only
-- [ ] La vista pública actual permanece siempre `DEGRADED`; no existe branch `ATTACHED`, ack del caller ni composición pane/auth/liveness como prueba
-- [ ] La respuesta pública agrega sólo `view: { status: "DEGRADED", code: "CT_VIEW_UNVERIFIED", retryable: true }`, preserva backend/root y no publica el helper
+- [x] La vista pública actual permanece siempre `DEGRADED`; no existe branch `ATTACHED`, ack del caller ni composición pane/auth/liveness como prueba
+- [x] La respuesta pública agrega sólo `view: { status: "DEGRADED", code: "CT_VIEW_UNVERIFIED", retryable: true }`, preserva backend/root y no publica el helper
 - [x] El helper prueba conexión, rechaza ref stale/foreign/replay y revoca al detener
-- [ ] OpenCode/package/lock permanecen sin cambios; focused y suite completa pasan sobre baseline reconciliada
+- [x] OpenCode/package/lock permanecen sin cambios; focused y suite completa pasan sobre baseline reconciliada
 
 **Forecast:** High, 660–970 líneas authored en tres commits directos secuenciales ≤400, verificables y revertibles; una sola Sesión, sin quinto nivel. Auth/security requiere 4R advisory tras implementar; RDD sigue OFF.
 
@@ -648,9 +648,9 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 - [x] Tarea T4.7.2.2 — GREEN: ref opaco por backend; secreto sólo dentro del canal/helper
 - [x] Tarea T4.7.2.3 — REFACTOR: cleanup, revocación y helper privado sin autoridad `bin/torre`
 
-### Módulo M4.7.3 — Degradación veraz; `ATTACHED` reservado · forecast 220–300
+### Módulo M4.7.3 — Degradación veraz; `ATTACHED` reservado · ✅ COMPLETO en `3b981ef`
 
-**Checkpoint:** implementación enfocada cerrada bajo las decisiones 76–77 / Engram 9506/9507 y evidencia Engram 9533. Siguiente checkpoint: ejecutar `bun test` integral no mutante y congelar el candidato exacto; hasta entonces `S4.7` permanece 🔵 EN CURSO y sus criterios de aceptación no se cierran.
+**Cierre:** implementación enfocada cerrada bajo las decisiones 76–77 / Engram 9506/9507 y evidencia Engram 9533; el candidato de 5 paths / 104 líneas authored pasó focused **64/0/464** y suite integral **891/0/5.095/69**, y quedó entregado en `origin/master@3b981efdcf3f68c2dc295ae056f10c04914cfc56`.
 
 - [x] Tarea T4.7.3.1 — RED: pane o auth fallidos nunca pueden declarar `ATTACHED`
 - [x] Tarea T4.7.3.2 — GREEN: producir siempre la envolvente pública `DEGRADED` mínima; reservar `ATTACHED` hasta prueba real de `S4.8`/`S4.9`
@@ -660,7 +660,7 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 
 ## Sesión 4.8 — Matriz real OpenCode 1.18.23 y alineación condicional
 
-**Estado:** 📋 PLANIFICADO. **Depende de:** `S4.7`. **Ruta:** `design-tasks`.
+**Estado:** 🟢 LISTO. **Depende de:** `S4.7` ✅. **Ruta:** `design-tasks`.
 
 **Área:** nuevos `scripts/host-compatibility/opencode.mjs`, `test/compat/opencode-runtime.test.mjs`, `test/plugin/tower-spike.test.mjs`, `package.json`, `bun.lock`.
 
@@ -725,4 +725,4 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 
 **Su alcance no cambió**, y la auditoría exclusiva de P4 lo confirmó: la maquinaria de linaje y épocas es coherente con la cadena de lanzamiento mapeada, y `hosts/epoch-enforcement.mjs` ya viaja en el payload. **Lo que sí conviene tener presente al retomarla** es lo que la verificación final de `S8.10` encontró: `assertCurrentHost` construía la identidad de época por exclusión y `inspectIdentity` la rechazaba. Ese contrato exacto de cuatro campos —`project_id`, `assignment_ref`, `candidate_revision`, `host_epoch`— es el mismo que `S4.4` va a ejercer al publicar una raíz sucesora.
 
-**Prioridad vigente.** `S4.7` entrega primero launch veraz y helper autenticado; `S11.1` puede correr en paralelo. `S4.4` queda tercero porque depende de `S4.7`.
+**Prioridad vigente.** `S4.7` y `S11.1` ya cerraron. `S4.4` queda habilitada por el launch veraz y el helper autenticado entregados; su posición global vigente se deriva en `master-index.md`.
