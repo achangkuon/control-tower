@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test"
-import { readFileSync } from "node:fs"
+import Ajv2020 from "ajv/dist/2020.js"
+import { readdirSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
@@ -21,6 +22,45 @@ const errorCode = (operation) => {
   }
   return null
 }
+
+const schemasDirectory = join(dirname(fileURLToPath(import.meta.url)), "../../schemas")
+const executionContractSchema = JSON.parse(readFileSync(
+  join(schemasDirectory, "execution-contract-v1.schema.json"),
+  "utf8",
+))
+
+describe("schema ownership", () => {
+  test("keeps the complete schema inventory Tower-owned", () => {
+    const schemaFiles = readdirSync(schemasDirectory)
+      .filter((filename) => filename.endsWith(".schema.json"))
+      .sort()
+    const nonTowerSchemaIds = schemaFiles
+      .map((filename) => [filename, JSON.parse(readFileSync(join(schemasDirectory, filename), "utf8")).$id])
+      .filter(([, id]) => !id.startsWith("https://control-tower.local/"))
+
+    expect(schemaFiles).toHaveLength(26)
+    expect(nonTowerSchemaIds).toEqual([])
+  })
+
+  test("adopts the execution contract title and exact closed schema-version set", () => {
+    const validateSchemaVersion = new Ajv2020().compile(executionContractSchema.properties.schema_version)
+    const provenance = fixtures._executionContractV2Compatibility.provenance
+
+    expect(executionContractSchema.title).toBe("Control Tower Unattended Execution Contract")
+    expect(provenance).toEqual({
+      logical_asset: "unattended-implementation/assets/execution-contract.schema.json",
+      $id: "https://gentle-ai.local/schemas/unattended-execution-contract-v2.json",
+      schema_version: "gentle-ai.unattended-execution-contract/v2",
+      installed_asset_sha256: "c1b042d79e887c7f7fe9288d68f280b2e32ca28d6a6cb5543d49e7aa117e327d",
+    })
+    for (const version of [1, "gentle-ai.unattended-execution-contract/v1", provenance.schema_version]) {
+      expect(validateSchemaVersion(version)).toBe(true)
+    }
+    for (const version of ["1", 2, "gentle-ai.unattended-execution-contract/v3"]) {
+      expect(validateSchemaVersion(version)).toBe(false)
+    }
+  })
+})
 
 describe("V1 schema boundary", () => {
   test("registers the closed parked checkpoint binding fixture", () => {
@@ -140,7 +180,7 @@ describe("V1 schema boundary", () => {
     expect(errorCode(() => validate("parkedDecisionResponse", drifted))).toBe("CT_SCHEMA_INVALID")
   })
 
-  for (const [name, payload] of Object.entries(fixtures)) {
+  for (const [name, payload] of Object.entries(fixtures).filter(([name]) => !name.startsWith("_"))) {
     test(`${name} accepts its declared contract`, () => {
       const result = validate(name, payload)
       expect(result).toEqual(payload)

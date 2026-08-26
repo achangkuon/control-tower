@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://gentle-ai.local/schemas/unattended-execution-contract-v1.json",
-  "title": "Sealed Unattended Execution Contract",
+  "$id": "https://control-tower.local/schemas/execution-contract-v1.schema.json",
+  "title": "Control Tower Unattended Execution Contract",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -17,14 +17,17 @@
     "ownership",
     "artifact_policy",
     "tower",
-    "chain",
-    "validation",
     "candidate_recipe",
-    "retries",
     "terminal"
   ],
   "properties": {
-    "schema_version": { "const": "gentle-ai.unattended-execution-contract/v1" },
+    "schema_version": {
+      "oneOf": [
+        { "const": 1 },
+        { "const": "gentle-ai.unattended-execution-contract/v1" },
+        { "const": "gentle-ai.unattended-execution-contract/v2" }
+      ]
+    },
     "contract_id": { "$ref": "#/$defs/nonEmpty" },
     "sealed_at": { "$ref": "#/$defs/dateTime" },
     "expires_at": { "$ref": "#/$defs/dateTime" },
@@ -52,7 +55,7 @@
         "additionalProperties": false,
         "required": ["kind", "locator", "sha256"],
         "properties": {
-          "kind": { "enum": ["proposal", "spec", "design", "tasks", "status", "config", "instruction", "other"] },
+          "kind": { "$ref": "#/$defs/nonEmpty" },
           "locator": { "$ref": "#/$defs/nonEmpty" },
           "sha256": { "$ref": "#/$defs/sha256" }
         }
@@ -138,6 +141,7 @@
         "caches": { "$ref": "#/$defs/localArtifactDisposition" }
       }
     },
+    "runtime": { "type": "object" },
     "tower": {
       "type": "object",
       "additionalProperties": false,
@@ -149,71 +153,8 @@
         "active_marker_scope": { "const": ".git/control-tower/ACTIVE" }
       }
     },
-    "chain": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["strategy", "delivery_strategy", "budget_risk", "chained_recommended", "decision_needed", "position", "total", "base_target_map", "line_budget", "rollback_boundary"],
-      "properties": {
-        "strategy": { "enum": ["single-pr", "stacked-to-main", "feature-branch-chain", "size-exception"] },
-        "delivery_strategy": { "enum": ["ask-on-risk", "auto-chain", "single-pr", "exception-ok"] },
-        "budget_risk": { "enum": ["Low", "Medium", "High"] },
-        "chained_recommended": { "type": "boolean" },
-        "decision_needed": { "const": false },
-        "position": { "type": "integer", "minimum": 1 },
-        "total": { "type": "integer", "minimum": 1 },
-        "base_target_map": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["sesion_id", "branch", "base", "target"],
-            "properties": {
-              "sesion_id": { "$ref": "#/$defs/nonEmpty" },
-              "branch": { "$ref": "#/$defs/nonEmpty" },
-              "base": { "$ref": "#/$defs/nonEmpty" },
-              "target": { "$ref": "#/$defs/nonEmpty" }
-            }
-          }
-        },
-        "line_budget": { "type": "integer", "minimum": 1, "maximum": 400 },
-        "rollback_boundary": { "$ref": "#/$defs/nonEmpty" }
-      },
-      "allOf": [
-        {
-          "if": { "properties": { "budget_risk": { "const": "High" } }, "required": ["budget_risk"] },
-          "then": { "properties": { "chained_recommended": { "const": true } } }
-        },
-        {
-          "if": { "properties": { "strategy": { "enum": ["stacked-to-main", "feature-branch-chain"] } }, "required": ["strategy"] },
-          "then": { "properties": { "chained_recommended": { "const": true } } }
-        },
-        {
-          "if": { "properties": { "strategy": { "const": "size-exception" } }, "required": ["strategy"] },
-          "then": { "properties": { "delivery_strategy": { "const": "exception-ok" } } }
-        },
-        {
-          "if": { "properties": { "delivery_strategy": { "const": "auto-chain" } }, "required": ["delivery_strategy"] },
-          "then": { "properties": { "strategy": { "enum": ["stacked-to-main", "feature-branch-chain"] } } }
-        }
-      ]
-    },
-    "validation": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["live_tower_active", "method", "source_root_realpath", "source_common_dir_realpath", "clone_root_realpath", "clone_common_dir_realpath", "baseline_commands", "candidate_commands"],
-      "properties": {
-        "live_tower_active": { "const": true },
-        "method": { "const": "separate-regular-clone" },
-        "source_root_realpath": { "$ref": "#/$defs/absolutePath" },
-        "source_common_dir_realpath": { "$ref": "#/$defs/absolutePath" },
-        "clone_root_realpath": { "$ref": "#/$defs/absolutePath" },
-        "clone_common_dir_realpath": { "$ref": "#/$defs/absolutePath" },
-        "baseline_commands": { "$ref": "#/$defs/stringListNonEmpty" },
-        "candidate_commands": { "$ref": "#/$defs/stringListNonEmpty" }
-      }
-    },
+    "chain": { "type": "object" },
+    "validation": { "type": "object" },
     "candidate_recipe": {
       "type": "object",
       "additionalProperties": false,
@@ -239,19 +180,7 @@
         "commit_required": { "const": false }
       }
     },
-    "retries": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["same_input_transient_before_final_verification", "implementation_corrections_before_final_verification", "authorization_scope", "final_verification_attempts", "retries_after_final_verification_failure", "corrections_after_final_verification_failure"],
-      "properties": {
-        "same_input_transient_before_final_verification": { "const": 1 },
-        "implementation_corrections_before_final_verification": { "const": 2 },
-        "authorization_scope": { "const": 0 },
-        "final_verification_attempts": { "const": 1 },
-        "retries_after_final_verification_failure": { "const": 0 },
-        "corrections_after_final_verification_failure": { "const": 0 }
-      }
-    },
+    "retries": { "type": "object" },
     "terminal": {
       "type": "object",
       "additionalProperties": false,

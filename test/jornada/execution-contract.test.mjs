@@ -1,7 +1,15 @@
 import { describe, expect, test } from "bun:test"
 import { createHash } from "node:crypto"
+import { readFileSync } from "node:fs"
+import { dirname, join } from "node:path"
+import { fileURLToPath } from "node:url"
 import { createExecutionContractPreparer } from "../../jornada/execution-contract.mjs"
 
+const fixtures = JSON.parse(readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), "../fixtures/contracts/schema-cases-v1.json"),
+  "utf8",
+))
+const v2Compatibility = fixtures._executionContractV2Compatibility
 const NOW = Date.parse("2026-01-02T00:00:00.000Z")
 const HEX = "a".repeat(64), SHA = "a".repeat(40)
 const canonical = (value) => value === null || typeof value !== "object" ? JSON.stringify(value)
@@ -53,6 +61,112 @@ const setup = (options = {}) => {
 }
 
 describe("execution contract preparation", () => {
+  test("accepts the exact portable v2 Tower-safe bytes without reconstruction", async () => {
+    const { calls, prepare } = setup()
+
+    const result = await prepare({
+      contractJson: v2Compatibility.tower_safe_contract_json,
+      currentContext: context,
+      supervisionEvidence: {},
+    })
+
+    expect(result.contract_digest).toBe("22f481f251b20ecdcbaaf98820d006b18820fc6056d6966c2778e24453fb555d")
+    expect(calls.map(([kind]) => kind)).toEqual(["verify", "persist"])
+  })
+
+  test("continues to accept numeric 1 and the exact Gentle v1 string", async () => {
+    for (const schemaVersion of [1, "gentle-ai.unattended-execution-contract/v1"]) {
+      const compatible = contract({ schema_version: schemaVersion })
+      const { calls, prepare } = setup()
+
+      const result = await prepare({ contractJson: JSON.stringify(compatible), currentContext: context, supervisionEvidence: {} })
+
+      expect(result.contract_digest).toBe(compatible.contract_digest)
+      expect(calls.map(([kind]) => kind)).toEqual(["verify", "persist"])
+    }
+  })
+
+  test("accepts optional opaque runtime and existing harness objects without using their contents as authority", async () => {
+    const opaque = contract({
+      runtime: { mode: "standalone", phase: { command: ["custom", 2], budget: { nested: false } } },
+      chain: { nested: { command: "custom", phases: ["alpha", 2, false] } },
+      validation: { runner: { name: "custom-check", options: [null, { deep: true }] } },
+      retries: { policy: { limits: [0, 7], labels: { transient: "maybe" } } },
+    })
+    const { calls, prepare } = setup()
+
+    const result = await prepare({ contractJson: JSON.stringify(opaque), currentContext: context, supervisionEvidence: {} })
+
+    expect(result.contract_digest).toBe(opaque.contract_digest)
+    expect(calls.map(([kind]) => kind)).toEqual(["verify", "persist"])
+  })
+
+  test("accepts contracts that omit runtime, chain, validation, and retries", async () => {
+    const optionalFieldsOmitted = contract()
+    delete optionalFieldsOmitted.chain
+    delete optionalFieldsOmitted.validation
+    delete optionalFieldsOmitted.retries
+    optionalFieldsOmitted.contract_digest = digest(Object.fromEntries(Object.entries(optionalFieldsOmitted).filter(([key]) => key !== "contract_digest")))
+    const { calls, prepare } = setup()
+
+    const result = await prepare({ contractJson: JSON.stringify(optionalFieldsOmitted), currentContext: context, supervisionEvidence: {} })
+
+    expect(result.contract_digest).toBe(optionalFieldsOmitted.contract_digest)
+    expect(calls.map(([kind]) => kind)).toEqual(["verify", "persist"])
+  })
+
+  test("rejects present non-object runtime and harness values before effects", async () => {
+    for (const [key, value] of [
+      ["runtime", []], ["runtime", "standalone"], ["runtime", 3], ["runtime", null],
+      ["chain", []], ["validation", "custom"], ["retries", 3],
+    ]) {
+      const invalid = contract({ [key]: value })
+      const { calls, prepare } = setup()
+
+      expect(await code(() => prepare({ contractJson: JSON.stringify(invalid), currentContext: context, supervisionEvidence: {} }))).toBe("CT_EXECUTION_CONTRACT_SCHEMA")
+      expect(calls).toHaveLength(0)
+    }
+  })
+
+  test("rejects v2 standalone and every missing or unsafe Tower floor before effects", async () => {
+    const mutations = [
+      (value) => { value.tower.mode = "absent" },
+      (value) => { delete value.tower },
+      (value) => { value.tower.mode_locked = false },
+      (value) => { value.tower.git_delivery_token = "available" },
+      (value) => { value.permissions.prohibitions.commit = false },
+      (value) => { value.permissions.prohibitions.push = false },
+      (value) => { value.permissions.prohibitions.pr_create = false },
+      (value) => { value.candidate_recipe.commit_required = true },
+      (value) => { value.terminal.states = ["BLOCKED", "READY"] },
+      (value) => { value.terminal.ready_definition = "exact-committed-candidate" },
+      (value) => { value.terminal.occupied_ready_slot = "overwrite" },
+    ]
+    for (const mutate of mutations) {
+      const unsafe = JSON.parse(v2Compatibility.tower_safe_contract_json)
+      mutate(unsafe)
+      const { calls, prepare } = setup()
+
+      expect(await code(() => prepare({ contractJson: JSON.stringify(unsafe), currentContext: context, supervisionEvidence: {} }))).toBe("CT_EXECUTION_CONTRACT_SCHEMA")
+      expect(calls).toHaveLength(0)
+    }
+  })
+
+  test("accepts non-SDD artifact kinds and rejects an empty kind", async () => {
+    const customKind = contract({ artifacts: [{ kind: "runtime-log", locator: "artifacts/runtime.log", sha256: HEX }] })
+    const validSetup = setup()
+
+    const result = await validSetup.prepare({ contractJson: JSON.stringify(customKind), currentContext: context, supervisionEvidence: {} })
+
+    expect(result.contract_digest).toBe(customKind.contract_digest)
+    expect(validSetup.calls.map(([kind]) => kind)).toEqual(["verify", "persist"])
+
+    const emptyKind = contract({ artifacts: [{ kind: "", locator: "artifacts/runtime.log", sha256: HEX }] })
+    const invalidSetup = setup()
+    expect(await code(() => invalidSetup.prepare({ contractJson: JSON.stringify(emptyKind), currentContext: context, supervisionEvidence: {} }))).toBe("CT_EXECUTION_CONTRACT_SCHEMA")
+    expect(invalidSetup.calls).toHaveLength(0)
+  })
+
   test("rejects malformed, schema-invalid, post-run, drifted, expired, and divergent contracts before effects", async () => {
     const cases = [
       ["{", "CT_EXECUTION_CONTRACT_PARSE"],
