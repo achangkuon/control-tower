@@ -398,7 +398,10 @@ Esta corrección aprobada por el maintainer **no es una Sesión**, no fue solici
 
 ## Sesión 4.4 — Recuperación lógica same-host con raíz sucesora
 
-**Estado:** 🔵 EN CURSO — decision-clean y serializada detrás del cierre documental de `S4.6` por solapamiento de paths compartidos; `S4.7` cerró y satisfizo la dependencia funcional pendiente.
+**Estado:** 🔵 EN CURSO — **parqueada el 2026-08-26 con trabajo commiteado y sin publicar.** Decision-clean; `S4.7` cerró y satisfizo la dependencia funcional pendiente.
+
+> **Candidato parqueado, no perdido.** El trabajo vive en `feat/plan-4/s4-4-same-host-recovery@75c378d`, con dos commits: `a00193c` (`feat(recovery): persist terminal transition checkpoint`) y `75c378d` (`fix(recovery): fence released root binding replay`). El asiento `implementer-1` quedó en detached HEAD sobre `master`, así que **la rama conserva el trabajo y la carpeta no tiene nada suelto**.
+> **Al retomar:** `git fetch` y traer `master` a la rama antes de seguir. Su base es anterior a la reconciliación del tercer eje (`c9604b6`).
 
 **Depende de:** `S4.3` ✅, `S4.7` ✅. Recuperación debe reutilizar el launch veraz y el helper autenticado, no el camino legacy.
 
@@ -660,7 +663,9 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 
 ## Sesión 4.8 — Matriz real OpenCode 1.18.23 y alineación condicional
 
-**Estado:** 🟢 LISTO. **Depende de:** `S4.7` ✅. **Ruta:** `design-tasks`.
+**Estado:** 🟢 LISTO — **con un WIP parqueado del 2026-08-26.** **Depende de:** `S4.7` ✅. **Ruta:** `design-tasks`.
+
+> **WIP parqueado.** `feat/plan-4/s4-8-opencode-runtime-matrix@40060b7` (`chore(wip): park S4.8 runtime matrix`) conserva `scripts/host-compatibility/`, `test/compat/` y los cambios de `package.json`/`bun.lock`. **No es un candidato:** es trabajo en curso guardado antes de frenar. El asiento `implementer-3` quedó en detached HEAD sobre `master`, sin nada suelto.
 
 **Área:** nuevos `scripts/host-compatibility/opencode.mjs`, `test/compat/opencode-runtime.test.mjs`, `test/plugin/tower-spike.test.mjs`, `package.json`, `bun.lock`.
 

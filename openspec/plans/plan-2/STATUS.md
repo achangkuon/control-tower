@@ -77,7 +77,11 @@ una regla para aplicarla, la regla es del harness*.
 
 ## Sesión 2.6 — Adopción y recorte del contrato de ejecución sellado
 
-**Estado:** 🟢 LISTO — decision-clean.
+**Estado:** 🟢 LISTO — decision-clean, **con candidato verificado parqueado el 2026-08-26**.
+
+> **Candidato parqueado, verificado, sin publicar.** `feat/plan-2/s2-6-execution-contract-adoption@00b24a2` (`docs(plan): park S2.6 closure candidate`), sobre el comportamiento `4dab62b` que toca `schemas/execution-contract-v1.schema.json`, `test/contracts/schema.test.mjs`, `test/fixtures/contracts/schema-cases-v1.json` y `test/jornada/execution-contract.test.mjs`.
+> **Integración verificada contra `master` el 2026-08-26:** merge sin conflictos y suite completa en **892 pass / 0 fail / 5.096 aserciones / 68 archivos**. No se le hizo merge a la rama a propósito: meterle `master` cambia el árbol que ya se verificó, y esa es una decisión del maintainer.
+> El asiento `implementer-2` quedó en detached HEAD sobre `master`, sin nada suelto.
 
 **Depende de:** nada. **Ruta:** `design-tasks` — hay que elegir la representación de los
 bloques ajenos antes del primer Módulo. **Autoridad:** [decisión 71](../decision-register.md)
