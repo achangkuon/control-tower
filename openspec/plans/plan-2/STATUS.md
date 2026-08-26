@@ -146,7 +146,24 @@ sellada de los cinco pisos de `assertFloorProtected`—, `ownership`, `artifact_
 
 ## Sesión 2.7 — Alarma de deriva del vocabulario de planes
 
-**Estado:** 📋 PLANIFICADO — decision-clean desde la
+**Estado:** 📚 ARCHIVADO — **retirada el 2026-08-26 por la [decisión 78](../decision-register.md): se quedó sin sujeto.**
+
+> **Por qué se archiva y no se difiere.** Esta Sesión existía para poner la suite en rojo si
+> los siete estados o las ocho clases que copia `contracts/session-plan-snapshot.mjs` dejaban
+> de coincidir con la convención canónica. La decisión 78 retira ese lector entero —lo ejecuta
+> [`S5.15`](../plan-5/STATUS.md)—, porque leer el plan es del agente Support y no de la Torre.
+> **Sin copia no hay deriva que vigilar.** No es alcance pospuesto: dejó de ser objetivo, así
+> que sale del denominador bajo la regla de la [decisión 57](../decision-register.md).
+>
+> **Qué NO se pierde.** La alarma protegía una copia que ya no va a existir. La convención
+> canónica sigue gobernando los planes; quien la lee es `support/agent.mjs`, del lado del
+> agente, donde un cambio de convención es un cambio de skill y no un `CT_SCHEMA_INVALID`
+> silencioso en la Torre.
+>
+> El contrato original se conserva abajo como evidencia histórica, **no como autoridad de
+> implementación**.
+
+**Estado histórico:** 📋 PLANIFICADO — decision-clean desde la
 [decisión 74](../decision-register.md).
 
 **Depende de:** nada. **Ruta:** `design-tasks`. **Autoridad:** decisión 74.
@@ -197,6 +214,61 @@ decisión — la Sesión ya es decision-clean.
 
 ---
 
-**Denominador de P2:** sigue **sin porcentaje derivable**. `S2.6` y `S2.7` se enumeran, pero
-las cuatro responsabilidades de Change B siguen sin ID, así que el denominador no cierra.
+---
+
+## Sesión 2.8 — Los nombres de fase salen del contrato de binding
+
+**Estado:** 📋 PLANIFICADO — nace el 2026-08-26 del barrido de la [decisión 78](../decision-register.md), como quinto residuo del segundo eje.
+
+**Depende de:** — **Ruta:** `design-tasks`. **Autoridad:** decisión 78 y el test de contenido de [la frontera](../frontera-torre-gentle-ai.md).
+
+**Área:** `schemas/binding-delta-v1.schema.json`, `test/contracts/schema.test.mjs`, `test/fixtures/contracts/schema-cases-v1.json`
+
+**Prohibido:** `contracts/schema-registry.mjs` —el schema sigue registrado y sólo cambian sus bytes—, `contracts/validate.mjs`, `install/**`, `scripts/payload-closure.mjs`, `schemas/execution-contract-v1.schema.json` —es `Área` de `S2.6`—.
+
+**Recurso:** ninguno — sin DB, sin migraciones, sin token de entrega.
+
+**Orden:** **no corre en paralelo con `S2.6`**, que comparte `test/contracts/schema.test.mjs` y `test/fixtures/contracts/schema-cases-v1.json`. `S2.6` va primero: tiene candidato verificado pendiente de entrega.
+
+**El problema, medido.** `schemas/binding-delta-v1.schema.json:5` declara `inputs` con
+`["manifest", "proposal", "specs", "design", "tasks", "previous_delta"]` **obligatorios**. Son
+nombres de fase SDD dentro de un contrato de la Torre, registrado en
+`contracts/schema-registry.mjs` y distribuido en el payload. Es la misma invasión que `S2.6`
+corrige en el contrato sellado, en otro archivo, y el barrido del 2026-08-26 la encontró sin
+dueño.
+
+**Por qué es una Sesión y no una enmienda.** El destino natural era `S5.13`, que ya recortaba
+schemas y tocaba estas mismas fixturas — pero `S5.13` **cerró** el 2026-08-26 en `5a80bc8` y
+`30ad0d5`. `S2.6` tampoco puede absorberla: tiene candidato verificado pendiente de entrega y
+su `Área` no incluye este schema. Queda en P2, cuyo propósito —contratos y registro de
+producto— la cubre exactamente.
+
+**Resultado único:** `inputs` pasa a **opaco** —`{"type": "object"}` sin restricciones
+internas— por el mismo criterio que `S2.6` aplica a los tres bloques del harness: la Torre fija
+el digest de las entradas sin saber que una se llama `design`.
+
+**Decisiones:**
+
+- `derivable` — qué pasa con los seis campos. **Criterio:** el objeto entero pasa a opaco y sale de `required`; no se eliminan ni se renombran, para que un `binding-delta` sellado hoy siga validando. Falsificable: un delta existente que deje de validar contra el schema recortado. **Autoridad:** el precedente de `S2.6` y la decisión 78.
+- `derivable` — qué NO se toca. **Criterio:** `git`, `contracts` y el resto del schema conservan exactamente su forma; la membresía en el registro y en el payload no cambia. Falsificable: cualquier campo fuera de `inputs` con bytes distintos. **Autoridad:** el alcance declarado de esta Sesión.
+
+**Criterios de aceptación de S2.8** — todos deben pasar para cerrar:
+
+- [ ] `rg 'proposal|specs|design|tasks' schemas/binding-delta-v1.schema.json` devuelve cero
+- [ ] Un `binding-delta` sellado con los seis campos actuales **sigue validando** contra el schema recortado
+- [ ] Uno con un `inputs` de forma distinta **también** valida
+- [ ] `binding-delta-v1` sigue declarado en `contracts/schema-registry.mjs` y en el payload, sin cambio de membresía
+- [ ] Ningún campo fuera de `inputs` cambia un byte
+- [ ] `bun test` no introduce fallos nuevos; el diff no toca ninguna ruta del `Prohibido`
+
+**Módulos y Tareas:** pendientes de enumerar. Es trabajo de `planificador-granular`, no una
+decisión — la Sesión ya es decision-clean.
+
+**Forecast:** 60–120 líneas authored, casi todas de fixtura y prueba.
+
+---
+
+**Denominador de P2:** sigue **sin porcentaje derivable**. `S2.6` y `S2.8` se enumeran y
+`S2.7` quedó 📚 ARCHIVADO el 2026-08-26, pero las cuatro responsabilidades de Change B siguen
+sin ID, así que el denominador no cierra.
 Regla aplicada: [decisión 57](../decision-register.md).

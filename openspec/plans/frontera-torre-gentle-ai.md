@@ -3,7 +3,8 @@
 > **Regla de rechazo de alcance.** Toda Sesión de cualquier Plan puede citar este documento
 > para rechazar trabajo. Nace de la [decisión 59](decision-register.md) y de la Fase 3 del
 > plan de depuración del 2026-08-21; el **segundo eje** lo suma la
-> [decisión 71](decision-register.md) del 2026-08-25. Autoridad de alcance del producto:
+> [decisión 71](decision-register.md) del 2026-08-25, y el **tercer eje** la
+> [decisión 78](decision-register.md) del 2026-08-26. Autoridad de alcance del producto:
 > [`console/vocabulary.mjs`](../../console/vocabulary.mjs) ([decisión 58](decision-register.md)).
 > Definición de producto vigente:
 > [**La Torre Terminada**](https://claude.ai/code/artifact/323b83bd-f1cd-4cee-a5c7-945f8c7d6173).
@@ -84,6 +85,43 @@ Corolario que decidió el reparto del recibo de proceso ([decisión 72](decision
 **exigir** un recibo como condición de entrega reconstruye RDD adentro de la Torre y le quita
 su interruptor; **cargarlo** —opcional tenerlo, obligatorio declararlo— da la misma evidencia
 sin ninguna regla duplicada.
+
+## El tercer eje — la cerca no lee (2026-08-26)
+
+> Nace de la [decisión 78](decision-register.md). Los dos ejes anteriores reparten
+> **decisiones**. Éste reparte **lecturas**, y aparece porque «la Torre» venía nombrando dos
+> cosas distintas.
+
+**La cerca** es el código: `core.mjs`, `main-store/store.mjs`, `delivery/ledger.mjs`, los
+locks, los schemas, `console/validate.mjs`. No lee planes, no planifica y no juzga. Verifica,
+registra y falla cerrado.
+
+**Main no es la cerca.** Es un **rol con autoridad de despacho** que la cerca verifica —
+`policy/jornada.mjs:24` corta con `CT_ROLE_FORBIDDEN` y `main-store/store.mjs:152` con
+`CT_AUTH_INVALID`. La cerca **no sabe quién es Main**: comprueba que quien la invoca declare
+ese rol y tenga el binding. Main es un caballo más, el que tiene la llave de la tranquera. Si
+Main lee un plan, lo lee **como agente, con su harness** — nunca como cerca.
+
+**Los caballos** —AG1/AG2/AG3, Support, Policy— leen, planifican e implementan.
+
+| Lectura | Quién la hace |
+|---|---|
+| ¿Qué Sesiones hay, en qué estado, y qué depende de qué? | `support/agent.mjs` · `support/manifest.mjs` |
+| ¿Qué se puede trabajar ahora, y qué se choca con qué? | `agente-soporte` → `support-proposal-v1` |
+| ¿Esa propuesta es fresca, del mismo plan, del mismo ledger y del claim correcto? | **la cerca** — verifica cinco campos y **no abre el resto** |
+| ¿Esta propuesta entra en lo autorizado? | `policy-report` · `ALLOW`/`DENY` |
+| ¿Quién despacha? | Main, y sólo Main |
+
+**Cómo entran y cómo salen los caballos.** Support define el brief y cuántos entran en
+paralelo. Policy coordina que salgan de a uno. La cerca sostiene las dos puertas y el ledger
+que dice si el efecto ya ocurrió.
+
+**El reparto de la propuesta es el mismo que el del recibo de proceso** ([decisión 72](decision-register.md)):
+obligatorio declararlo, prohibido abrirlo. La cerca verifica `plan_enumeration_digest`,
+`ledger_digest`, `worker_claim`, `expires_at` y `caller_role` — y nada más.
+
+**Falsificable:** cualquier línea de producción de la Torre que abra bytes de un documento de
+plan, o cualquier ramificación sobre el contenido de `primary`, `alternatives` o `conflicts`.
 
 ### El defecto que delata una invasión
 

@@ -219,7 +219,16 @@ graph LR
   S41["S4.1 fence hosts · ✅"] --> S52["S5.2 entrega · ✅"]
   S33 --> S52
    S52 --> S53["S5.3 planner/implementer · ✅"]
+   S513["S5.13 recorte de verificación · ✅"] --> S514["S5.14 profundidad de planificación · 📋"]
+   S55 --> S515["S5.15 la Torre deja de enumerar el plan · 📋"]
+   S514 --> S515
+   S71["S7.1 conformidad de release · 📋"]
 ```
+
+> **`S7.1` figura como nodo suelto a propósito.** Varias decisiones de este Plan lo declaran
+> contaminado, y el invariante de snapshot exige que toda referencia de contaminación resuelva
+> como nodo del grafo. La **arista** hacia `S7.1` no se dibuja desde `S5.15` porque agregarla
+> alarga la cadena de release, y esa es una decisión del maintainer todavía abierta.
 
 ## Sesión 5.1 — Change F candidate contracts
 
@@ -576,7 +585,20 @@ No aplica un runtime externo: esta Sesión define ruteo y persistencia, pero del
 **Prohibido:** `continuation/**`, `core.mjs`, `mcp.mjs`, `delivery/**`, `contracts/**`, `schemas/**`, `main-store/store.mjs`
 **Recurso:** ledger append-only de decisiones estacionadas. Sin token de entrega.
 
-**Ruta:** `design-tasks` al destrabar. **Autoridad:** rebase del maintainer 2026-08-17; dependencias, `Área`, `Recurso` y `Decisiones` declarados del plan son la única base de parking/resume.
+**Ruta:** `design-tasks` al destrabar. **Autoridad:** rebase del maintainer 2026-08-17 y la [decisión 78](../decision-register.md) del 2026-08-26.
+
+> **Recorte del 2026-08-26 — la elegibilidad la propone Support, no la calcula la Torre ([decisión 78](../decision-register.md)).**
+> `S5.5` **deja de leer el plan**. La pregunta *«qué puede continuar»* la contesta el agente
+> Support con `support-proposal-v1`, que ya declara `primary`, `alternatives`, `conflicts` y
+> `state`. La Torre **verifica** esa propuesta —`plan_enumeration_digest`, `ledger_digest`,
+> `worker_claim`, `expires_at`, `caller_role`— y **nunca la abre para recalcularla**.
+> **Sale del alcance:** derivar elegibilidad desde `Depende de`, `Área`, `Recurso` y
+> `Decisiones`, y conocer las ocho clases de escalamiento — las ocho son del estándar de
+> planes, no de la Torre.
+> **Queda intacto:** el registro inmutable de la decisión estacionada, el checkpoint durable,
+> que sólo Main despache, que sólo una respuesta terminal validada retome el checkpoint exacto,
+> que un checkpoint rancio exija reconciliación y que `NO_SCOPE` detenga la corrida sin
+> inventar trabajo. La Sesión no cambia de estado: sigue 🟢 LISTO.
 
 `S5.6`–`S5.12` poseen los contratos, productores, composición y bindings canónicos que esta Sesión consume: snapshot de Sesión,
 registro/respuesta, binding de opción seleccionada, provenance producer-owned, transporte inmutable hasta parking, binding del checkpoint exacto y binding del
@@ -595,14 +617,17 @@ duplica la emisión ni el ruteo de `S5.4`. Comparte prefijo de `Área` con `S5.4
 por diseño **nunca corren en paralelo**: `S5.5` sólo abre con `S5.4` integrada.
 
 **Decisiones:**
-- `derivable` — qué puede continuar. **Criterio:** sólo la dependencia declarada, `Área`, `Recurso` y `Decisiones` del plan vigente; no hay análisis dinámico adicional. Falsificable: continuar una Sesión que contradiga esos campos.
+- `derivable` — qué puede continuar. **Criterio:** el `primary` de la propuesta vigente de Support, o uno de sus `alternatives`; la Torre no recalcula elegibilidad ni abre el plan. Falsificable: una continuación que la propuesta de Support no nombre. **Autoridad:** decisión 78 y `support-proposal-v1`.
+- `derivable` — qué hace la Torre con la propuesta. **Criterio:** verifica `plan_enumeration_digest`, `ledger_digest`, `worker_claim`, `expires_at` y `caller_role`, y nada más; una propuesta vencida, de otro plan, de otro ledger o de otro claim falla cerrado. Falsificable: cualquier ramificación sobre el contenido de `primary`, `alternatives` o `conflicts`. **Autoridad:** el test de contenido de [la frontera](../frontera-torre-gentle-ai.md).
 - `derivable` — qué se retoma. **Criterio:** el checkpoint durable exacto y el mismo worktree asignado; base divergente exige reconciliación. Falsificable: retomar otro checkpoint o worktree.
 - `escala` — disposición de trabajo contradicho. **Clase:** dependencias o evidencia contradictorias. **RESUELTA:** se preserva y escala; nunca se descarta o rescata automáticamente. **Contamina:** `S5.3`, `S7.1`.
 
-### Las ocho clases que siempre escalan
+### Las ocho clases que siempre escalan — son del estándar de planes, no de la Torre
 
-No son heurística: una decisión que cae en cualquiera de estas **nunca** se deriva sola,
-aunque exista autoridad aprobada y criterios falsificables.
+**Recortado el 2026-08-26.** Esta sección se conserva como contexto de lectura, **no como
+alcance de `S5.5`**. Quien clasifica una decisión en una de las ocho clases es el agente con
+su harness, siguiendo el estándar de planes. La Torre **recibe** una escalación ya
+clasificada, la estaciona y la rutea; no la reconoce ni la deriva.
 
 Contrato visible del producto · operaciones irreversibles · migraciones o pérdida de datos ·
 API pública · seguridad y permisos · dinero, precios o cuotas · expansión de alcance ·
@@ -615,17 +640,24 @@ dependencias o evidencia contradictorias.
 - [ ] Tarea 5.5.1.3 — GREEN: implementar `escalation/parked.mjs` sobre el ledger append-only, consumiendo el contrato `parked-decision-v1` entregado por `S5.7` y reutilizando la solicitud de `S5.4` sin abrir una segunda ruta de escritura.
 - [ ] Tarea 5.5.1.4 — REFACTOR: normalizar códigos de error estables y volver a correr `bun test test/escalation`.
 
-### Módulo 5.5.2 — Dependencias declaradas
+### Módulo 5.5.2 — Verificación de la propuesta de Support
 
-- [ ] Tarea 5.5.2.1 — RED: rechazar continuación que contradiga `Depende de`, `Área`, `Recurso` o `Decisiones` declarados.
-- [ ] Tarea 5.5.2.2 — GREEN: implementar la lectura de esos campos sin parser o maquinaria de contaminación adicional.
-- [ ] Tarea 5.5.2.3 — REFACTOR: verificar readback y no mutación fuera del checkpoint.
+**Reescrito el 2026-08-26 por la [decisión 78](../decision-register.md).** Antes leía
+`Depende de`, `Área`, `Recurso` y `Decisiones` del plan; ahora verifica la propuesta que
+Support ya produce y no abre el plan.
 
-### Módulo 5.5.3 — Selección de trabajo independiente
+- [ ] Tarea 5.5.2.1 — RED: rechazar una propuesta vencida, de otro `plan_enumeration_digest`, de otro `ledger_digest`, de otro `worker_claim` o cuyo `caller_role` no sea `MAIN`.
+- [ ] Tarea 5.5.2.2 — GREEN: implementar la verificación de esos cinco campos, sin parser de planes ni maquinaria de contaminación propia.
+- [ ] Tarea 5.5.2.3 — REFACTOR: verificar readback y no mutación fuera del checkpoint, y probar por testigo de bytes que ninguna rama lee dentro de `primary`, `alternatives` o `conflicts`.
 
-- [ ] Tarea 5.5.3.1 — RED: agregar `test/escalation/independent.test.mjs` para que una Sesión sólo sea elegible si es 🟢 LISTO y respeta `Depende de`, `Área`, `Recurso` y `Decisiones` declarados.
-- [ ] Tarea 5.5.3.2 — RED: agregar el caso de cero candidatos — la Torre se detiene y lo reporta; nunca inventa trabajo ni relaja un criterio para encontrar algo que hacer.
-- [ ] Tarea 5.5.3.3 — GREEN: implementar la selección como lectura, ejercida por Main. El worker no se autoasigna.
+### Módulo 5.5.3 — Continuación sobre trabajo propuesto
+
+**Reescrito el 2026-08-26 por la [decisión 78](../decision-register.md).** La elegibilidad la
+calcula Support; este Módulo la consume.
+
+- [ ] Tarea 5.5.3.1 — RED: agregar `test/escalation/independent.test.mjs` para que sólo continúe el `primary` de la propuesta vigente o uno de sus `alternatives`, y nada que la propuesta no nombre.
+- [ ] Tarea 5.5.3.2 — RED: agregar el caso `NO_SCOPE` — la Torre se detiene y lo reporta; nunca inventa trabajo, nunca vuelve a preguntar con un criterio relajado y nunca deriva un candidato propio.
+- [ ] Tarea 5.5.3.3 — GREEN: implementar la continuación como consumo de la propuesta, ejercida por Main. El worker no se autoasigna.
 
 ### Módulo 5.5.4 — Retoma desde el checkpoint
 
@@ -638,16 +670,17 @@ dependencias o evidencia contradictorias.
 
 - [ ] Una decisión no derivable produce un registro inmutable con pregunta exacta, evidencia, opciones con consecuencia, origen, checkpoint y clase
 - [ ] Un registro sin opciones, sin evidencia o sin checkpoint falla cerrado
-- [ ] Una decisión de cualquiera de las ocho clases se escala y no se deriva
-- [ ] La continuación usa sólo `Depende de`, `Área`, `Recurso` y `Decisiones` declarados; no crea contaminación dinámica
-- [ ] Sólo continúan Sesiones compatibles con esos campos y el checkpoint durable
-- [ ] Sin continuación compatible, Main estaciona y reporta sin inventar trabajo
-- [ ] La selección la ejerce Main; el worker no se autoasigna
+- [ ] La continuación sale del `primary` o de un `alternatives` de la propuesta vigente de Support; nada que la propuesta no nombre continúa
+- [ ] Una propuesta vencida, de otro plan, de otro ledger, de otro claim o de un `caller_role` distinto de `MAIN` falla cerrado
+- [ ] Ninguna línea de producción lee **adentro** de `primary`, `alternatives` o `conflicts`. Falsificable: cualquier comparación o ramificación sobre su contenido
+- [ ] Con `state: NO_SCOPE`, Main estaciona y reporta sin inventar trabajo ni derivar un candidato propio
+- [ ] La continuación la ejerce Main; el worker no se autoasigna
 - [ ] Sólo una respuesta terminal validada por Main permite retomar desde el checkpoint exacto
 - [ ] Un checkpoint rancio exige reconciliación y no retoma solo
 - [ ] Una respuesta no validada, vencida o de origen equivocado no levanta nada ni muta el registro
-- [ ] `S5.5` no crea, registra, valida ni consume contratos o autoridad, y no duplica el parser de `S5.6`, la respuesta de `S5.8`, ni la emisión o el ruteo de `S5.4`
-- [ ] Verificar elegibilidad es read-only, verificado por testigos de bytes en éxito y en rechazo
+- [ ] `S5.5` no crea, registra, valida ni consume contratos o autoridad, y no duplica la respuesta de `S5.8` ni la emisión o el ruteo de `S5.4`
+- [ ] `rg 'Depende de|Área|Recurso' escalation/` devuelve cero: la Torre no nombra un campo del formato de planes
+- [ ] Verificar la propuesta es read-only, comprobado por testigos de bytes en éxito y en rechazo
 - [ ] `bun test test/escalation` pasa completo y `bun test` no introduce fallos nuevos
 - [ ] El diff no toca `continuation/**`, `core.mjs`, `mcp.mjs`, `delivery/**`, `contracts/**`, `schemas/**` ni `main-store/store.mjs`
 
@@ -1295,6 +1328,77 @@ corrección 1 de la Fase 3 y esta Sesión no lo toca más que para dejar de dupl
 - [ ] `T5.14.2.1` **RED** — `validatePlanning` acepta un `prepare_through` que no es `"TAREAS"` si coincide con la política, y rechaza el que no coincide
 - [ ] `T5.14.2.2` **GREEN** — el literal `"TAREAS"` y el `2` clavado salen; el valor se compara contra la política resuelta
 - [ ] `T5.14.2.3` **REFACTOR** — `validatePlanning` no conoce ningún nombre de fase ni ningún número de horizonte
+
+---
+
+## Sesión 5.15 — La Torre deja de enumerar el plan
+
+**Estado:** 📋 PLANIFICADO — nace el 2026-08-26 de la [decisión 78](../decision-register.md).
+
+**Depende de:** `S5.5`, `S5.14`. La primera fija cómo se consume la propuesta de Support; la segunda toca `continuation/**` y `test/continuation/**` antes, así que **no corren en paralelo**.
+
+**Área:** `continuation/derivation.mjs`, `contracts/schema-registry.mjs`, `install/runtime-payload.mjs`, `test/continuation/derivation.test.mjs`, `test/contracts/session-plan-snapshot.test.mjs`, `test/install/**`
+
+**Prohibido:** `continuation/integrated-base.mjs` —es `Área` de `S5.14`—, `support/**` —es del caballo—, `escalation/**`, `delivery/**`, `policy/**`, `core.mjs`, `mcp.mjs`, `main-store/**`, `console/**`, `workspace/**`.
+
+**Recurso:** contrato `RUNTIME_PAYLOAD_FILES`. Sin DB, sin migraciones, sin token de entrega.
+
+**Ruta:** `design-tasks`. **Autoridad:** decisión 78, el test de contenido de [la frontera](../frontera-torre-gentle-ai.md) y la reapertura del camino D de la [decisión 74](../decision-register.md).
+
+**Resultado único:** ninguna línea de producción de la Torre abre un documento de plan. `deriveNextModule` y `contracts/session-plan-snapshot.mjs` se retiran; `compareWorkerClaim` sobrevive intacto.
+
+### El problema, medido
+
+Se barrió el árbol buscando qué parsea planes en producción. Son cuatro archivos, y **dos están del lado equivocado**.
+
+| Archivo | Qué hace | De quién es |
+|---|---|---|
+| `support/agent.mjs:15` | lee la tabla `\| S5.5 \| estado \|` de un plan | **agente Support** |
+| `support/manifest.mjs:68` | lee las filas `P<n>` del master-index | **agente Support** |
+| `continuation/derivation.mjs:5` | enumera los `### Módulo` del documento y devuelve el primero sin cerrar | **Torre — se retira** |
+| `contracts/session-plan-snapshot.mjs` | reimplementa los siete estados, las ocho clases y la gramática de encabezados | **Torre — se retira** |
+
+**La capacidad no se pierde: ya existe del otro lado.** `schemas/support-proposal-v1.schema.json` declara `primary` con su `module_id` y `task_ids`, más `alternatives`, `conflicts` y `state: EXECUTABLE | NO_SCOPE | CLAIM_MISMATCH | STALE`. `continuation/integrated-base.mjs:59` ya consume esa propuesta y falla con `CT_NO_EXECUTABLE_SCOPE` si no es `EXECUTABLE`, y `plugin/tower-spike.js:219` ya invoca al subagente `support-agent` que la produce.
+
+**Por qué el retiro es seguro.** `deriveNextModule` no tiene llamador de producción; `continueIntegratedBase` **no lo importa** —recibe `planning.implement_module_id` como entrada—. `contracts/session-plan-snapshot.mjs` tampoco tiene consumidor de producción, como midió la decisión 74.
+
+**`compareWorkerClaim` se queda, y es el único sobreviviente del archivo.** Compara lo que el worker declara haber reclamado contra la coordenada que Main registró, vía `main_store.readHandoffCoordinate`. No abre el plan: es la cerca comprobando que el caballo entró al box que le tocaba.
+
+**Reapertura del camino D de la decisión 74.** Esa decisión conservó el lector y descartó archivarlo *«porque la continuación se quedaría sin forma de saber cuál es la Sesión siguiente»*. Support es esa forma, y ya está cableada: la razón de descarte desaparece.
+
+**Efecto sobre `S2.7`.** Al retirarse el lector, la alarma de deriva del vocabulario se queda sin sujeto. `S2.7` pasa a 📚 ARCHIVADO en P2 por esta misma decisión.
+
+**Forecast:** 120–200 líneas authored, casi todas de retiro y reconciliación de payload/tests. Muy por debajo del techo de 400.
+
+**Decisiones:**
+
+- `derivable` — qué sobrevive de `continuation/derivation.mjs`. **Criterio:** sólo `compareWorkerClaim`, porque no lee el plan y ejerce la comprobación de claim que es de la Torre. Falsificable: cualquier función sobreviviente que abra bytes de un documento de plan. **Autoridad:** el test de contenido de la frontera.
+- `derivable` — qué pasa con `schemas/session-plan-snapshot-v1.schema.json` y su registro. **Criterio:** salen del registro de schemas y del payload junto al módulo; un schema sin productor ni consumidor no viaja. Falsificable: un miembro de `RUNTIME_PAYLOAD_FILES` sin llamador al cerrar. **Autoridad:** la regla de consumidor real de la Fase 4 del plan de depuración.
+- `derivable` — dónde quedan los bytes retirados. **Criterio:** se preservan en una rama de archivo, como ya se hizo con el dashboard en `origin/archive/dashboard-vpn`; no se borran sin respaldo. Falsificable: un retiro sin rama de preservación. **Autoridad:** el precedente ejecutado del retiro del dashboard.
+
+### Módulo M5.15.1 — Retiro del enumerador de plan
+**Paths:** `continuation/derivation.mjs`, `test/continuation/derivation.test.mjs`
+
+- [ ] `T5.15.1.1` **RED** — probar que `deriveNextModule` todavía existe y abre bytes de plan, y que `compareWorkerClaim` no los toca
+- [ ] `T5.15.1.2` **GREEN** — retirar `deriveNextModule` y sus pruebas; `compareWorkerClaim` queda sin cambios de comportamiento
+- [ ] `T5.15.1.3` **REFACTOR** — `rg 'matchAll|### Módulo' continuation/` devuelve cero
+
+### Módulo M5.15.2 — Retiro del lector de planes y del payload
+**Paths:** `contracts/schema-registry.mjs`, `install/runtime-payload.mjs`, `test/contracts/session-plan-snapshot.test.mjs`, `test/install/**`
+
+- [ ] `T5.15.2.1` **RED** — probar que `session-plan-snapshot` sigue declarado en el registro de schemas y viaja en el payload
+- [ ] `T5.15.2.2` **GREEN** — retirar módulo, schema, registro y membresía de payload, preservando los bytes en una rama de archivo
+- [ ] `T5.15.2.3` **REFACTOR** — `RUNTIME_PAYLOAD_FILES` conserva igualdad exacta de conjunto y ningún miembro queda sin llamador
+
+**Criterios de aceptación de S5.15** — todos deben pasar para cerrar:
+
+- [ ] `rg 'matchAll' continuation/ contracts/` no devuelve una sola lectura de documento de plan
+- [ ] `compareWorkerClaim` conserva exactamente su comportamiento y sus pruebas
+- [ ] `session-plan-snapshot` sale del registro de schemas, del payload y del árbol, con sus bytes preservados en una rama de archivo
+- [ ] `RUNTIME_PAYLOAD_FILES` mantiene igualdad exacta de conjunto y ningún miembro queda sin llamador
+- [ ] `support/agent.mjs` y `support/manifest.mjs` no cambian un byte — la lectura de planes queda entera del lado del agente
+- [ ] `continuation/integrated-base.mjs` no cambia un byte
+- [ ] `bun test` no introduce fallos nuevos; el diff no toca ninguna ruta del `Prohibido`
 
 ---
 
