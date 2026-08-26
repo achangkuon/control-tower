@@ -39,7 +39,7 @@ const submit = (verb, context = baseContext(), params = proposals[verb]) =>
   validateProposal({ verb, tower_id: "alpha", params }, context)
 
 const boundMerge = {
-  verb: "CV_MERGE_MAIN", tower_id: "alpha", tower_digest: "digest-alpha",
+  verb: "CV_MERGE_MAIN", tower_id: "alpha", tower_digest: "digest-alpha", target_agent: "pr",
   params: proposals.CV_MERGE_MAIN,
 }
 const pending = (overrides = {}) => ({
@@ -71,14 +71,12 @@ describe("proposal validation", () => {
   test("validates every verb and injects only the trusted tower digest", () => {
     for (const verb of VERBS) {
       const result = submit(verb)
-      if (COMMAND_VOCABULARY[verb].risk === "R2") {
-        expect(result.code).toBe("CV_CONFIRMATION_REQUIRED")
-        expect(result.confirmation.command.tower_digest).toBe("digest-alpha")
-      } else {
-        expect(result).toEqual({ ok: true, command: {
-          verb, tower_id: "alpha", tower_digest: "digest-alpha", params: proposals[verb],
-        } })
-      }
+      const command = result.command ?? result.confirmation.command
+      if (COMMAND_VOCABULARY[verb].risk === "R2") expect(result.code).toBe("CV_CONFIRMATION_REQUIRED")
+      expect(command).toEqual({
+        verb, tower_id: "alpha", tower_digest: "digest-alpha", params: proposals[verb],
+        ...(verb === "CV_STATUS" ? {} : { target_agent: verb === "CV_ANSWER" ? "blocked" : proposals[verb].agent }),
+      })
     }
   })
 
@@ -92,6 +90,7 @@ describe("proposal validation", () => {
       const command = result.command ?? result.confirmation.command
       params.agent = "mutated"; params.injected = true
       expect(command.params.agent).toBe(proposals[verb].agent)
+      expect(command.target_agent).toBe(proposals[verb].agent)
       expect(command.params).not.toHaveProperty("injected")
       expect(Object.isFrozen(command)).toBe(true)
       expect(Object.isFrozen(command.params)).toBe(true)
@@ -133,6 +132,8 @@ describe("proposal validation", () => {
     expect(validateProposal({ verb: "CV_STATUS", tower_id: "toString", params: {} }, baseContext())).toMatchObject({ code: "CV_UNKNOWN_TOWER" })
     const mismatch = baseContext(); mismatch.registry.alpha.tower_id = "beta"
     expect(submit("CV_STATUS", mismatch)).toMatchObject({ code: "CV_TOWER_MISMATCH" })
+    expect(submit("CV_STATUS").command).not.toHaveProperty("target_agent")
+    expect(submit("CV_ANSWER").command.target_agent).toBe("blocked")
     expect(submit("CV_INSPECT", baseContext(), { agent: "Any" })).toMatchObject({ code: "CV_UNKNOWN_AGENT" })
     expect(submit("CV_INSPECT", baseContext(), { agent: "toString" })).toMatchObject({ code: "CV_UNKNOWN_AGENT" })
   })
@@ -204,6 +205,9 @@ describe("pure confirmation validation", () => {
 
   test("rejects wrong, expired, cross-tower, replayed, and malformed confirmations", () => {
     expect(validateConfirmation({ tower_id: "alpha", token: "ok-7f3a" }, { ...contextWith(), now: 2_000 })).toMatchObject({ code: "CV_CONFIRMATION_REQUIRED" })
+    expect(validateConfirmation({ tower_id: "alpha", token: "OK-7F3A" }, {
+      ...contextWith(pending({ command: { ...boundMerge, target_agent: "ready" } })), now: 2_000,
+    })).toMatchObject({ code: "CV_MALFORMED" })
     expect(validateConfirmation({ tower_id: "alpha", token: "OK-7F3A" }, { ...contextWith(), now: 601_000 })).toMatchObject({ code: "CV_TOKEN_EXPIRED" })
     expect(validateConfirmation({ tower_id: "beta", token: "OK-7F3A" }, { ...contextWith(), now: 2_000 })).toMatchObject({ code: "CV_TOWER_MISMATCH" })
     expect(validateConfirmation({ tower_id: "alpha", token: "OK-7F3A" }, { ...baseContext(), now: 2_000 })).toMatchObject({ code: "CV_CONFIRMATION_REQUIRED" })

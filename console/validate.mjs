@@ -36,7 +36,7 @@ const validateParams = (params, spec) => {
   return null
 }
 
-const validatedCommand = (proposal, tower, spec) => deepFreeze({
+const validatedCommand = (proposal, tower, spec, targetAgent) => deepFreeze({
   verb: proposal.verb,
   tower_id: proposal.tower_id,
   tower_digest: tower.tower_digest,
@@ -45,15 +45,16 @@ const validatedCommand = (proposal, tower, spec) => deepFreeze({
       .filter((name) => Object.hasOwn(proposal.params, name))
       .map((name) => [name, proposal.params[name]]),
   ),
+  ...(targetAgent === undefined ? {} : { target_agent: targetAgent }),
 })
 
 const snapshotCommand = (command) => {
-  if (!record(command) || !exactKeys(command, ["verb", "tower_id", "tower_digest", "params"]) ||
+  if (!record(command) || !exactKeys(command, ["verb", "tower_id", "tower_digest", "params", "target_agent"]) ||
       !Object.hasOwn(COMMAND_VOCABULARY, command.verb) || typeof command.tower_id !== "string" ||
-      typeof command.tower_digest !== "string") return null
+      typeof command.tower_digest !== "string" || typeof command.target_agent !== "string") return null
   const spec = COMMAND_VOCABULARY[command.verb]
-  if (spec.risk !== "R2" || validateParams(command.params, spec)) return null
-  return validatedCommand(command, command, spec)
+  if (spec.risk !== "R2" || validateParams(command.params, spec) || command.target_agent !== command.params.agent) return null
+  return validatedCommand(command, command, spec, command.target_agent)
 }
 
 const snapshotPending = (pending) => {
@@ -98,7 +99,7 @@ export const validateProposal = (proposal, context) => {
   if (proposal.verb === "CV_RUN_TESTS" && targetAgent.has_worktree !== true) return refusal("CV_MALFORMED")
   if (proposal.verb === "CV_MERGE_MAIN" && targetAgent.pr_url !== proposal.params.pr_url) return refusal("CV_MALFORMED")
 
-  const command = validatedCommand(proposal, tower, spec)
+  const command = validatedCommand(proposal, tower, spec, agentName)
   if (spec.risk !== "R2") return deepFreeze({ ok: true, command })
   const pending = own(context?.pendingConfirmations, proposal.tower_id)
   if (pending) return refusal("CV_CONFIRMATION_PENDING", { pendingVerb: pending.command?.verb })
