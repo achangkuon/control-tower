@@ -14,16 +14,16 @@ describe("packaged launch-worker runtime", () => {
     const calls = []
     const runtime = createLaunchWorkerRuntime({
       consumeBinding: async (requestRef) => { calls.push(["consume", requestRef]); return binding },
-      backend: { start: async (request) => { calls.push(["start", request]); return { assignment_ref: binding.assignment_ref, backend_pid: 42, backend_url: "http://127.0.0.1:4096", host_epoch: binding.host_epoch, project_id: binding.project_id, root_identity: { agent: "gentle-orchestrator", root_session_id: `ses_${"a".repeat(26)}` }, worktree: binding.worktree } }, stop: async () => { calls.push(["stop"]) } },
+      backend: { start: async (request) => { calls.push(["start", request]); return { assignment_ref: binding.assignment_ref, backend_pid: 42, backend_url: "http://127.0.0.1:4096", credential_ref: "r".repeat(43), host_epoch: binding.host_epoch, project_id: binding.project_id, root_identity: { agent: "gentle-orchestrator", root_session_id: `ses_${"a".repeat(26)}` }, worktree: binding.worktree } }, stop: async () => { calls.push(["stop"]) } },
       rootBinding: { bind: (record) => { calls.push(["bind", record]); return { ...record, agent: "gentle-orchestrator", root_session_id: record.root_identity.root_session_id } } },
-      view: { attach: async (target) => { calls.push(["attach", target]); return { manual_command: `opencode attach ${target.backend_url} --session ${target.root_session_id}`, pane_id: "w1:p1" } } },
+      view: { attach: async (target) => { calls.push(["attach", target]); return { pane_id: "w1:p1" } } },
     })
 
-    await expect(runtime.launchWorker({ request_ref: "request-a" })).resolves.toEqual({ ...binding, backend_pid: 42, backend_url: "http://127.0.0.1:4096", root_session_id: `ses_${"a".repeat(26)}`, pane_id: "w1:p1", manual_command: `opencode attach http://127.0.0.1:4096 --session ses_${"a".repeat(26)}` })
+    await expect(runtime.launchWorker({ request_ref: "request-a" })).resolves.toEqual({ ...binding, backend_pid: 42, backend_url: "http://127.0.0.1:4096", root_session_id: `ses_${"a".repeat(26)}`, pane_id: "w1:p1" })
     expect(calls).toEqual([
       ["consume", "request-a"], ["start", { assignment_ref: "assignments/a.json", brief: "Approved work only", brief_ref: "briefs/a.json", host_epoch: 3, project_id: "project-a", worktree: "/work/a" }],
       ["bind", { assignment_ref: "assignments/a.json", backend_pid: 42, backend_url: "http://127.0.0.1:4096", host_epoch: 3, project_id: "project-a", root_identity: { agent: "gentle-orchestrator", root_session_id: `ses_${"a".repeat(26)}` }, worktree: "/work/a" }],
-      ["attach", { backend_url: "http://127.0.0.1:4096", root_session_id: `ses_${"a".repeat(26)}`, worktree: "/work/a" }],
+      ["attach", { backend_url: "http://127.0.0.1:4096", credential_ref: "r".repeat(43), root_session_id: `ses_${"a".repeat(26)}`, worktree: "/work/a" }],
     ])
   })
 
@@ -88,16 +88,16 @@ describe("packaged launch-worker runtime", () => {
     expect(calls).toEqual(["start", "bind", ["stop", "/work/a"]])
   })
 
-  test("keeps a bound backend alive and returns only the exact manual view fallback", async () => {
+  test("keeps credentials out of bound and returned launch records", async () => {
     const calls = [], root_session_id = `ses_${"a".repeat(26)}`, backend_url = "http://127.0.0.1:4096"
     const runtime = createLaunchWorkerRuntime({
       consumeBinding: async () => binding,
-      backend: { start: async () => ({ assignment_ref: binding.assignment_ref, backend_pid: 42, backend_url, host_epoch: binding.host_epoch, project_id: binding.project_id, root_identity: {}, worktree: binding.worktree }), stop: async () => { calls.push("stop") } },
+      backend: { start: async () => ({ assignment_ref: binding.assignment_ref, backend_pid: 42, backend_url, credential_ref: "r".repeat(43), host_epoch: binding.host_epoch, project_id: binding.project_id, root_identity: {}, worktree: binding.worktree }), stop: async () => { calls.push("stop") } },
       rootBinding: { bind: () => ({ backend_pid: 42, backend_url, root_session_id, worktree: binding.worktree }) },
-      view: { attach: async () => { throw Object.assign(new Error("attach manually"), { code: "CT_VIEW_UNAVAILABLE", manual_command: `opencode attach ${backend_url} --session ${root_session_id}`, secret: "do-not-copy" }) } },
+      view: { attach: async (input) => { expect(input.credential_ref).toBe("r".repeat(43)); throw Object.assign(new Error("view unavailable"), { code: "CT_VIEW_UNAVAILABLE", secret: "do-not-copy" }) } },
     })
 
-    await expect(runtime.launchWorker({ request_ref: "request-a" })).rejects.toMatchObject({ code: "CT_LAUNCH_FINAL_ATTEMPT_FAILED", evidence: { cause: "CT_VIEW_UNAVAILABLE", manual_command: `opencode attach ${backend_url} --session ${root_session_id}`, request_ref: "request-a", replacement_binding_required: true } })
+    await expect(runtime.launchWorker({ request_ref: "request-a" })).rejects.toMatchObject({ code: "CT_LAUNCH_FINAL_ATTEMPT_FAILED", evidence: { cause: "CT_VIEW_UNAVAILABLE", request_ref: "request-a", replacement_binding_required: true } })
     await expect(runtime.launchWorker({ request_ref: "request-b" })).rejects.not.toHaveProperty("evidence.secret")
     expect(calls).toEqual([])
   })

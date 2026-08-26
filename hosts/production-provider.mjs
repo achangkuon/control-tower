@@ -12,6 +12,8 @@ import { createEpochEnforcement } from "./epoch-enforcement.mjs"
 import { createHerdrAdapter } from "./herdr.mjs"
 import { createOpenCodeLauncher } from "./opencode-launcher.mjs"
 import { createRootBindingStore } from "./root-binding.mjs"
+import { OPENCODE_ATTACH_HELPER_PATH } from "./opencode-attach-helper.mjs"
+import { createOpenCodeCredentialChannel } from "./opencode-credential-channel.mjs"
 import { createOpenCodeBackendHost } from "./opencode-server.mjs"
 import { createOpenCodeView } from "./opencode-view.mjs"
 
@@ -264,7 +266,9 @@ export const createProductionProvider = ({ } = {}) => {
     child.once("error", (error) => done(reject, error))
     child.once("exit", () => done(reject, Object.assign(new Error("Backend exited before announcing"), { code: "CT_BACKEND_REJECTED" })))
   })
+  const credentialChannel = createOpenCodeCredentialChannel()
   const backend = createOpenCodeBackendHost({
+    credentialChannel,
     randomSecret: () => randomBytes(32).toString("base64url"),
     spawn: async ({ worktree, secret }) => {
       const { child, stop } = runtime.serve({ worktree, secret })
@@ -286,6 +290,7 @@ export const createProductionProvider = ({ } = {}) => {
   // command in a pane without touching Herdr's agent custody, so the visible root never becomes a
   // Herdr agent and the pane never becomes the root.
   const view = createOpenCodeView({
+    helperCommand: [process.execPath, OPENCODE_ATTACH_HELPER_PATH],
     openPane: ({ command: attach, cwd }) => {
       const pane = parse(command("herdr", ["pane", "split", "--current", "--direction", "right", "--cwd", cwd, "--no-focus"]))?.result?.pane?.pane_id
       if (!paneIdentifier(pane)) fail("CT_VIEW_UNAVAILABLE", "Herdr did not create a fresh view pane")

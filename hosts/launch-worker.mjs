@@ -17,16 +17,16 @@ export const createLaunchWorkerRuntime = ({ preflight = () => () => {}, consumeB
         const binding = await consumeBinding(input.request_ref); consumed = true
         await assertCurrentHost(binding)
         const started = await backend.start({ assignment_ref: binding.assignment_ref, brief: binding.brief, brief_ref: binding.brief_ref, host_epoch: binding.host_epoch, project_id: binding.project_id, worktree: binding.worktree })
-        try { persisted = rootBinding.bind(started) } catch (error) {
+        const { credential_ref, ...bindable } = started
+        try { persisted = rootBinding.bind(bindable) } catch (error) {
           try { await backend.stop(binding.worktree) } catch {}
           throw error
         }
-        const attached = await view.attach({ backend_url: persisted.backend_url, root_session_id: persisted.root_session_id, worktree: persisted.worktree })
+        const attached = await view.attach({ backend_url: persisted.backend_url, credential_ref, root_session_id: persisted.root_session_id, worktree: persisted.worktree })
         return Object.freeze({ ...binding, backend_pid: persisted.backend_pid, backend_url: persisted.backend_url, root_session_id: persisted.root_session_id, ...attached })
       } catch (error) {
         if (error?.code === "CT_ASSIGNMENT_STALE") throw error
-        const manual_command = error?.code === "CT_VIEW_UNAVAILABLE" && error.manual_command === `opencode attach ${persisted?.backend_url} --session ${persisted?.root_session_id}` ? error.manual_command : undefined
-        if (consumed) throw Object.assign(new Error(`Launch binding was consumed; Main must issue a new binding (${error?.message ?? "host failure"})`), { code: "CT_LAUNCH_FINAL_ATTEMPT_FAILED", evidence: { request_ref: input.request_ref, replacement_binding_required: true, cause: error?.code ?? "CT_LAUNCH_FAILED", ...(manual_command ? { manual_command } : {}) } })
+        if (consumed) throw Object.assign(new Error(`Launch binding was consumed; Main must issue a new binding (${error?.message ?? "host failure"})`), { code: "CT_LAUNCH_FINAL_ATTEMPT_FAILED", evidence: { request_ref: input.request_ref, replacement_binding_required: true, cause: error?.code ?? "CT_LAUNCH_FAILED" } })
         throw error
       } finally { await release?.() }
     },

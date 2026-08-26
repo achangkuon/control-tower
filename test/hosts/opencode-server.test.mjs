@@ -20,6 +20,7 @@ const ports = (overrides = {}) => {
     },
     createRoot: ({ worktree }) => ({ agent: ROOT_AGENT, id: sessionId(worktree.endsWith("b") ? "b" : "a"), parentID: null }),
     admitBrief: ({ root_session_id, brief_ref, brief }) => ({ root_session_id, brief_ref, brief }),
+    credentialChannel: { issue: () => `ref-${seq}-${"r".repeat(32)}`, revoke: () => true },
     ...overrides,
   }
 }
@@ -28,7 +29,7 @@ describe("Main-owned OpenCode backend host", () => {
   test("starts one isolated backend per worktree and returns a bindable record", async () => {
     const host = createOpenCodeBackendHost(ports())
     const started = await host.start(request)
-    expect(Object.keys(started).sort()).toEqual(["assignment_ref", "backend_pid", "backend_url", "host_epoch", "project_id", "root_identity", "worktree"])
+    expect(Object.keys(started).sort()).toEqual(["assignment_ref", "backend_pid", "backend_url", "credential_ref", "host_epoch", "project_id", "root_identity", "worktree"])
     expect(started.backend_url).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/)
     expect(started.backend_pid).toBeGreaterThan(0)
     expect(started.root_identity).toEqual({ agent: ROOT_AGENT, root_session_id: sessionId("a") })
@@ -171,17 +172,36 @@ describe("Main-owned OpenCode backend host", () => {
     expect(wiring.stopped).toEqual([])
   })
 
-  test("stops only a backend it owns and forgets it exactly once", async () => {
-    const wiring = ports()
+  test("stops only a backend it owns and revokes its credential exactly once", async () => {
+    const revoked = [], wiring = ports({ credentialChannel: { issue: () => "r".repeat(43), revoke: (...args) => { revoked.push(args); return true } } })
     const host = createOpenCodeBackendHost(wiring)
     await host.start(request)
     expect(host.stop(request.worktree)).toBe(true)
     expect(wiring.stopped).toEqual(["/work/a"])
+    expect(revoked).toEqual([["r".repeat(43), "/work/a"]])
     expect(host.owns(request.worktree)).toBe(false)
     for (const worktree of [request.worktree, "/work/unknown", "--help", "", null]) {
       expect(await code(() => host.stop(worktree))).toBe("CT_BACKEND_REJECTED")
     }
     expect(wiring.stopped).toEqual(["/work/a"])
+  })
+
+  test("retains ownership to retry a failed credential revocation", async () => {
+    const revoked = []
+    let attempts = 0
+    const wiring = ports({
+      credentialChannel: { issue: () => "r".repeat(43), revoke: (...args) => { revoked.push(args); if (++attempts === 1) throw new Error("revoke failed"); return true } },
+      spawn: ({ worktree }) => ({ pid: 4301, url: "http://127.0.0.1:4097", stop: () => { wiring.stopped.push(worktree); throw new Error("already stopped") } }),
+    })
+    const host = createOpenCodeBackendHost(wiring)
+    await host.start(request)
+    expect(() => host.stop(request.worktree)).toThrow("revoke failed")
+    expect(host.owns(request.worktree)).toBe(true)
+    expect(wiring.stopped).toEqual([request.worktree])
+    expect(() => host.stop(request.worktree)).toThrow("already stopped")
+    expect(host.owns(request.worktree)).toBe(false)
+    expect(revoked).toEqual([["r".repeat(43), "/work/a"], ["r".repeat(43), "/work/a"]])
+    expect(wiring.stopped).toEqual([request.worktree, request.worktree])
   })
 
   test("rejects an ambiguous start request before spawning anything", async () => {
@@ -194,9 +214,17 @@ describe("Main-owned OpenCode backend host", () => {
     expect(wiring.spawned).toEqual([])
   })
 
+  test("cleans up when credential isolation fails before publishing ownership", async () => {
+    const wiring = ports({ credentialChannel: { issue: () => { throw new Error("unsafe channel") }, revoke: () => true } })
+    const host = createOpenCodeBackendHost(wiring)
+    expect(await code(() => host.start(request))).toBe("CT_BACKEND_REJECTED")
+    expect(wiring.stopped).toEqual([request.worktree])
+    expect(host.owns(request.worktree)).toBe(false)
+  })
+
   test("requires every port and grants no default wiring", async () => {
     const full = ports()
-    for (const key of ["spawn", "randomSecret", "createRoot", "admitBrief"]) {
+    for (const key of ["spawn", "randomSecret", "createRoot", "admitBrief", "credentialChannel"]) {
       const partial = { ...full }
       delete partial[key]
       expect(() => createOpenCodeBackendHost(partial)).toThrow(TypeError)

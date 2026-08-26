@@ -48,6 +48,8 @@ const CANONICAL_RUNTIME_PAYLOAD = [
   "hosts/herdr.mjs",
   "hosts/launch-worker-cli.mjs",
   "hosts/launch-worker.mjs",
+  "hosts/opencode-attach-helper.mjs",
+  "hosts/opencode-credential-channel.mjs",
   "hosts/opencode-launcher.mjs",
   "hosts/opencode-server.mjs",
   "hosts/opencode-view.mjs",
