@@ -60,6 +60,18 @@ abajo. Para `S10.2`, la decisión 26 y la elaboración técnica fijaron el `Áre
 ### Módulo 10.3.1 — Copia estructural del contrato
 - [x] `T10.3.1.1` **RED:** origen confirmado en 17.297 bytes, 407 líneas y SHA-256 `2f4838aa244b30e280c5c558286b0e4d9fbb503a0ef1808ffc27501c1540fddc`; destino ausente y worktree limpio en `cdd0d09bcdd4d2104e54a7265d1dc3742ceea2e7`.
 - [x] `T10.3.1.2` **GREEN:** copia byte-idéntica creada únicamente en `schemas/execution-contract-v1.schema.json`, sin transformación.
+
+> **Nota histórica del 2026-08-25 — la identidad byte a byte deja de valer.**
+> La [decisión 71](../decision-register.md) resolvió que la Torre **adopta este contrato como
+> propio**: `S2.6` le cambia el `$id` de `gentle-ai.local` a `control-tower.local` y vuelve
+> opacos sus tres bloques del harness —`chain`, `validation` y `retries`—. A partir de esa
+> entrega, el SHA-256 `2f4838aa244b30e280c5c558286b0e4d9fbb503a0ef1808ffc27501c1540fddc` y el
+> criterio de copia exacta de la [decisión 23](../decision-register.md) **describen historia,
+> no estado**. `S10.3` conserva su cierre y su evidencia: lo que caduca es la afirmación de
+> identidad continua con el asset de la skill `unattended-implementation`, no el trabajo que
+> esta Sesión entregó. Los ocho bloques de coordinación —`repository`, `assignment`,
+> `permissions`, `ownership`, `artifact_policy`, `tower`, `candidate_recipe` y `terminal`—
+> sobreviven intactos.
 - [x] `T10.3.1.3` **REFACTOR:** `cmp` confirmó identidad; readback confirmó 17.297 bytes, 407 líneas, SHA-256 esperado y modo Git `100644`. JSON parseó y conservó Draft 2020-12, `$id`, `type: object`, `additionalProperties: false`, 17 propiedades requeridas y `$defs` estructuralmente presentes. Runtime harness: N/A, artefacto pasivo sin frontera ejecutable.
 
 ## Sesión 10.1 — Preparación persistida de Jornada

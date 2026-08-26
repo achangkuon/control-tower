@@ -36,7 +36,7 @@ Produce evidencia atribuible a `candidate_revision` para despacho exclusivo Main
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
 - [ ] Sólo Main posee/despacha backend y raíz primary por worktree; child y TUI no reemplazan identidad ni autoridad
-- [ ] Planner prepara N+1 hasta Tareas e implementer ejecuta N con apply/tests/verify
+- [ ] La Torre despacha el Módulo N y deja preparado el N+1 hasta la profundidad que declara la política del proyecto, **sin interpretar cómo se llama esa profundidad ni qué hace el agente adentro** — reescrito el 2026-08-25 por la [decisión 73](../decision-register.md); la redacción anterior medía el proceso del agente, no la Torre
 - [ ] El escalamiento visible a Moshi conserva la autoridad en Main; un wake no autoriza
 - [ ] La pérdida de vista reconecta el root vivo; la muerte probada crea raíz/epoch sucesores en el mismo worktree/checkpoint, con stop proof, lineage, brief durable ordenado y rechazo stale, sin resurrección ni relocalización multi-host
 - [ ] La entrega usa commit directo a `master`, verificación de árbol y push, sin PR y con commits <=400 líneas authored

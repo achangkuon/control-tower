@@ -2,8 +2,11 @@
 
 > **Regla de rechazo de alcance.** Toda Sesión de cualquier Plan puede citar este documento
 > para rechazar trabajo. Nace de la [decisión 59](decision-register.md) y de la Fase 3 del
-> plan de depuración del 2026-08-21. Autoridad de alcance del producto:
+> plan de depuración del 2026-08-21; el **segundo eje** lo suma la
+> [decisión 71](decision-register.md) del 2026-08-25. Autoridad de alcance del producto:
 > [`console/vocabulary.mjs`](../../console/vocabulary.mjs) ([decisión 58](decision-register.md)).
+> Definición de producto vigente:
+> [**La Torre Terminada**](https://claude.ai/code/artifact/323b83bd-f1cd-4cee-a5c7-945f8c7d6173).
 
 ## La línea, en una frase
 
@@ -45,6 +48,50 @@ ledger append-only, auto-asignación de un worker, y dispatch fuera de Main.
 | ¿Con qué profundidad se documenta al cerrar un Módulo o una Sesión? | `doc-guard.sh` |
 | ¿El agente se detuvo tras N iteraciones sin avance? | El perfil del agente ([decisión 61](decision-register.md)) |
 
+## El segundo eje — el flujo de trabajo (2026-08-25)
+
+> Nace de la [decisión 71](decision-register.md), sobre una auditoría de los doce Planes.
+> **La frontera tiene dos ejes, y hasta hoy sólo uno estaba escrito.**
+
+Las dos tablas de arriba responden *¿el trabajo está bien hecho?*. Ése es el primer eje, y
+la Fase 3 lo barrió — **pero sólo sobre P5**. El segundo eje nunca se había escrito, y es
+donde quedaron vivas las invasiones: no *quién juzga la calidad*, sino **quién define el
+método de trabajo**.
+
+| Pregunta | Quién la gobierna |
+|---|---|
+| ¿Cuál es el brief y el objetivo del día? | `agente-soporte` |
+| ¿Esta Sesión va por SDD completo, medio, o directo a implementar? | `session-kickoff` · `session-plan` |
+| ¿Hasta qué fase planifica el que va adelante? | El estándar de planes, vía política del proyecto |
+| ¿Cómo se cierran las decisiones pendientes antes de sellar? | `cierre-de-decisiones` |
+| ¿Este cambio es muy grande y hay que encadenar los PR? | `chained-pr` |
+| ¿Cómo se agrupan los commits? | `work-unit-commits` |
+| ¿Cuántas correcciones se permite antes de frenar? | El presupuesto del agente |
+| ¿Cómo se sella un contrato de ejecución desatendida? | `unattended-implementation` |
+
+**La Torre puede *transportar* cualquiera de estos valores. No puede *interpretarlos*.**
+Un contrato sellado viaja entero por la Torre; los bloques que no son suyos los lleva
+opacos, sin abrirlos y sin rechazar un contrato por lo que digan adentro.
+
+### El test de contenido
+
+> **¿La Torre necesita entender el CONTENIDO de la regla para aplicarla?**
+>
+> **Sí** → es del harness. La Torre exige el recibo y **no lo abre**.
+> **No** → la Torre lo puede hacer, porque no hay regla ajena que copiar.
+
+Corolario que decidió el reparto del recibo de proceso ([decisión 72](decision-register.md)):
+**exigir** un recibo como condición de entrega reconstruye RDD adentro de la Torre y le quita
+su interruptor; **cargarlo** —opcional tenerlo, obligatorio declararlo— da la misma evidencia
+sin ninguna regla duplicada.
+
+### El defecto que delata una invasión
+
+Una copia. Cuando la Torre reimplementa una regla ajena, el archivo suele confesarlo solo:
+`schemas/execution-contract-v1.schema.json` declara `$id: gentle-ai.local` mientras los otros
+veinticinco schemas del directorio declaran `control-tower.local`. **Antes de discutir qué
+hace un módulo, mirá de quién dice ser.**
+
 ## Qué pasa cuando no coinciden
 
 **No hay empate que resolver, porque no se pisan.** Un choque es un síntoma, no un caso
@@ -69,6 +116,10 @@ Una Sesión pertenece a la Torre sólo si responde **sí** a esta pregunta:
 
 Si en cambio responde *«evita que se entregue trabajo mal hecho»*, **no es de la Torre**,
 por bien intencionada que sea. Se cita este documento y se rechaza.
+
+**Y hay una segunda pregunta, del eje del flujo de trabajo:** si para aplicar la regla la
+Torre tiene que **entender su contenido**, tampoco es de la Torre — por más que el resultado
+suene a coordinación. Transportar un valor opaco es coordinación; interpretarlo es invasión.
 
 **Cuidado con el falso positivo.** «Suena a proceso» no alcanza: hay que leer qué hace el
 campo. El techo de planificación *parece* disciplina de proceso y en realidad acota el

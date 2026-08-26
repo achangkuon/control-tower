@@ -25,7 +25,7 @@ en [la frontera Torre ↔ gentle-ai](../frontera-torre-gentle-ai.md).
 |---|---|
 | Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1`, y la cadena contractual `S5.4 → S5.6 → S5.7 → S5.8 → S5.11 → S5.12 → S5.9 → S5.10 → S5.5`. |
 | Outputs | Entrega idempotente por política `direct-push`, checkpoints durables y loop planner N+1 / implementer N. Main conserva la autoridad; Moshi sólo muestra escalamiento. |
-| Roadmap | `S5.1`–`S5.4` y `S5.6`–`S5.12` están ✅ COMPLETO. `S5.3` quedó reconciliada sobre la base entregada `master@88d1de4` mediante los commits replayed `81a1e46` (planificación), `6d8b5f7` (comportamiento) y `163a9f9` (cierre/conflictos), con sus cuatro criterios y el gate de alcance en PASS. Sólo `S5.5` sigue 🟢 LISTO. |
+| Roadmap | `S5.1`–`S5.4` y `S5.6`–`S5.12` están ✅ COMPLETO. `S5.3` quedó reconciliada sobre la base entregada `master@88d1de4` mediante los commits replayed `81a1e46` (planificación), `6d8b5f7` (comportamiento) y `163a9f9` (cierre/conflictos), con sus cuatro criterios y el gate de alcance en PASS. Sólo `S5.5` sigue 🟢 LISTO. Quedan además `S5.13` 📋 —el recorte de verificación, ampliado el 2026-08-25 con el recibo opaco— y `S5.14` 📋, que saca la profundidad de planificación del código. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
 
 ## Fase 3 del plan de depuración — la verificación vuelve a gentle-ai (2026-08-21)
@@ -1048,7 +1048,7 @@ Cada Tarea es una unidad de commit/direct-push revisable y revertible por sí so
 
 **Desvío declarado sobre las unidades de commit.** El Módulo pide una unidad por Tarea. Se entregó en dos unidades funcionales más dos de corrección, porque `T5.10.1.1` y `T5.10.1.2` son RED puro y la entrega de este repo es push directo a `master` sin PR: commitear tests fallando dejaría `master` en rojo. Cada unidad es revertible por sí sola.
 
-**Cómputo del Plan 5:** `11/13 S = 85%`. Cuentan `S5.1`, `S5.2`, `S5.3`, `S5.4`, `S5.6`, `S5.7`, `S5.8`, `S5.9`, `S5.10`, `S5.11` y `S5.12`; `S5.5` permanece 🟢 LISTO y `S5.13` nace 📋 PLANIFICADO en la Fase 3 del 2026-08-21. Ninguna Sesión aporta crédito hasta `COMPLETO`. **El porcentaje bajó de 92% a 85% sin que se perdiera trabajo: se enumeró un trabajo que existía y nadie contaba**, exactamente como pasó al cerrar la Fase 2.
+**Cómputo del Plan 5:** `11/14 S = 79%`. Cuentan `S5.1`, `S5.2`, `S5.3`, `S5.4`, `S5.6`, `S5.7`, `S5.8`, `S5.9`, `S5.10`, `S5.11` y `S5.12`; `S5.5` permanece 🟢 LISTO, `S5.13` nace 📋 PLANIFICADO en la Fase 3 del 2026-08-21 y `S5.14` nace 📋 PLANIFICADO el 2026-08-25 con el segundo eje de la frontera ([decisión 71](../decision-register.md)). Ninguna Sesión aporta crédito hasta `COMPLETO`. **El porcentaje bajó de 92% a 85% y de 85% a 79% sin que se perdiera trabajo: se enumeró dos veces trabajo que existía y nadie contaba**, exactamente como pasó al cerrar la Fase 2.
 
 Las responsabilidades legacy de Telegram Delivery y continuación que aún no tienen límite de un PR permanecen sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).
 
@@ -1072,6 +1072,27 @@ en la Torre, y ninguno se reemplaza por otra cosa.
    la comparación de `authorizationMatches` en `delivery/workflow.mjs:12`.
 3. `required_reviews_digest` sale de `schemas/candidate-revision-v1`. No hay código de
    producción que tocar: sólo el schema y sus fixturas.
+
+**Enmienda del 2026-08-25 — entra el recibo opaco ([decisión 72](../decision-register.md)).**
+El alcance se amplía en un cuarto punto, y sólo en uno. La Sesión sigue siendo un cambio de
+una pieza sobre la misma familia de schemas y la misma validación cruzada.
+
+4. **Entra `process_receipt_digest`, y entra como carga, no como gate.** Nace **opcional** en
+   `schemas/candidate-revision-v1.schema.json`, y `schemas/delivery-record-v1.schema.json` lo
+   exige con valor digest **o el literal `absent`**. Opcional tenerlo, obligatorio declararlo:
+   no existe el camino silencioso. Se sella en el instante en que se congela la
+   `candidate_revision`, siguiendo el precedente de la [decisión 30](../decision-register.md),
+   así que la declaración retrospectiva es estructuralmente imposible en vez de prohibida por
+   convención. **La Torre nunca lo abre y nunca bloquea por su ausencia.**
+
+**Por qué la enmienda no parte la Sesión en dos.** `authorizationMatches` en
+`delivery/workflow.mjs:12` compara candidato↔autorización campo por campo. Sacar dos campos y
+agregar uno en dos PR distintos deja esa comparación desalineada en el medio, y obliga a tocar
+los mismos dos schemas y las mismas fixturas dos veces. Es el mismo argumento que ya sostenía
+que los tres campos originales fueran una sola Sesión.
+
+**Área ampliada por la enmienda:** se suma `schemas/delivery-record-v1.schema.json` y
+`delivery/ledger.mjs`. El resto del `Área` y todo el `Prohibido` quedan como estaban.
 
 Lo que se queda —`merge.authorizing_party`, `delivery.shape`, `delivery.target_branch`,
 `planning.horizon_ceiling`, los cinco pisos de `assertFloorProtected`, `policy_report_digest`,
@@ -1115,6 +1136,90 @@ El cajón D queda en 4 archivos y 294 líneas.
 4. `bin/torre` y el payload derivado no cambian de miembros.
 5. La [frontera Torre ↔ gentle-ai](../frontera-torre-gentle-ai.md) puede citarse contra el
    diff sin encontrar una sola condición de bloqueo por calidad de trabajo.
+6. `process_receipt_digest` es **opcional** en `candidate-revision-v1` y **obligatorio** en
+   `delivery-record-v1`, donde sólo admite un digest o el literal `absent`.
+7. Una entrega sin recibo **completa igual** y deja el registro en `absent`. Falsificable:
+   cualquier ruta que rechace una entrega por el contenido o la ausencia del recibo.
+8. Ninguna línea de producción **lee adentro** del recibo. Falsificable: cualquier `JSON.parse`,
+   comparación o ramificación sobre su contenido.
+9. Un recibo escrito después de congelada la `candidate_revision` es rechazado.
+
+## Sesión 5.14 — La profundidad de planificación deja de estar clavada
+
+**Estado:** 📋 PLANIFICADO — decision-clean, dependency-blocked por `S5.13`.
+**Nace el 2026-08-25 de la [decisión 71](../decision-register.md)**, en el barrido del segundo
+eje de la frontera.
+
+**Depende de:** `S5.13`. Comparten `schemas/delivery-policy-v1.schema.json` y
+`policy/delivery-policy.mjs`: **no corren en paralelo**, y `S5.13` va primero.
+
+**Área:** `schemas/delivery-policy-v1.schema.json`, `policy/delivery-policy.mjs`,
+`continuation/integrated-base.mjs`, `test/policy/delivery-policy.test.mjs`,
+`test/continuation/**`
+
+**Prohibido:** `contracts/**`, `delivery/**`, `escalation/**`, `core.mjs`, `main-store/**`,
+`console/**`, `workspace/**`.
+
+**Recurso:** ninguno — sin DB, sin migraciones, sin token de entrega.
+
+**Ruta:** `design-tasks`. **Autoridad:** decisión 71 y el test de contenido de
+[la frontera](../frontera-torre-gentle-ai.md).
+
+**El problema, medido.** `continuation/integrated-base.mjs:24` falla con `CT_HORIZON_EXCEEDED`
+si `planning.prepare_through !== "TAREAS"` o si `planning.horizon !== 2`. Son dos defectos
+distintos en una sola línea:
+
+1. **`"TAREAS"` es un nombre de fase del harness dentro del control de flujo de la Torre.**
+   Qué tan adelante planifica el que va primero lo gobierna el estándar de planes, no la
+   coordinación. La Torre puede **comparar** el valor; no puede **conocerlo**.
+2. **El `2` está clavado y contradice a la propia Torre.** `planning.horizon_ceiling` ya es
+   configurable por proyecto desde la enmienda de contrato del 2026-08-03 y hoy vale `2` por
+   política — pero el código lo exige literal, así que un proyecto que declare otro techo
+   choca contra una constante. Son dos fuentes de verdad **dentro de la misma Torre**.
+
+**Lo que NO cambia.** `horizon_ceiling` sigue siendo coordinación y se queda: acota **hasta
+dónde llega una autorización aprobada**, que es alcance de autoridad. Está absuelto por la
+corrección 1 de la Fase 3 y esta Sesión no lo toca más que para dejar de duplicarlo.
+
+**Decisiones:** ninguna abierta.
+
+- `derivable` — **dónde vive `prepare_through`.** **Criterio:** en el bloque `planning` de
+  `delivery-policy`, junto a `horizon_ceiling`, porque es la misma política de planificación
+  por proyecto. **Falsificable:** un segundo lugar del repositorio que declare profundidad de
+  planificación. **Autoridad:** la enmienda de contrato del 2026-08-03.
+- `derivable` — **qué valida la Torre sobre el valor.** **Criterio:** que sea una cadena no
+  vacía y que coincida con la política resuelta. **Nunca su significado.** **Falsificable:**
+  cualquier comparación contra un literal de fase en código de producción. **Autoridad:** el
+  test de contenido de la frontera.
+- `derivable` — **qué default lleva.** **Criterio:** `restrictiveDefaults` lo trata igual que
+  a `horizon_ceiling`: fail-closed si la política no lo declara. **Falsificable:** una
+  continuación que avance con la política incompleta. **Autoridad:** el default fail-closed de
+  la enmienda del 2026-08-03.
+
+**Criterios de aceptación, binarios:**
+
+- [ ] `rg 'TAREAS' continuation/ policy/` devuelve cero ocurrencias
+- [ ] El `2` de `horizon` sale del código y proviene de `planning.horizon_ceiling`
+- [ ] Un proyecto que declare otra profundidad continúa **sin tocar una línea de la Torre**
+- [ ] Una política sin `prepare_through` falla cerrado, con su código, y no asume un default permisivo
+- [ ] `horizon_ceiling`, `merge.authorizing_party`, `delivery.shape` y los cinco pisos de `assertFloorProtected` conservan **exactamente** el mismo comportamiento
+- [ ] `bun test` no introduce fallos nuevos; el diff no toca ninguna ruta del `Prohibido`
+
+### Módulo M5.14.1 — `prepare_through` como política
+**Paths:** `schemas/delivery-policy-v1.schema.json`, `policy/delivery-policy.mjs`, `test/policy/delivery-policy.test.mjs`
+
+- [ ] `T5.14.1.1` **RED** — una política sin `prepare_through` falla cerrado; con un valor arbitrario no vacío resuelve
+- [ ] `T5.14.1.2` **GREEN** — el campo vive en `planning`, junto a `horizon_ceiling`, con default restrictivo
+- [ ] `T5.14.1.3` **REFACTOR** — `choose()` y `restrictiveDefaults` lo tratan igual que a `horizon_ceiling`, sin rama propia
+
+### Módulo M5.14.2 — La continuación deja de interpretar
+**Paths:** `continuation/integrated-base.mjs`, `test/continuation/**`
+
+- [ ] `T5.14.2.1` **RED** — `validatePlanning` acepta un `prepare_through` que no es `"TAREAS"` si coincide con la política, y rechaza el que no coincide
+- [ ] `T5.14.2.2` **GREEN** — el literal `"TAREAS"` y el `2` clavado salen; el valor se compara contra la política resuelta
+- [ ] `T5.14.2.3` **REFACTOR** — `validatePlanning` no conoce ningún nombre de fase ni ningún número de horizonte
+
+---
 
 ## `S5.5` es el primer consumidor de la columna vertebral (2026-08-21)
 
