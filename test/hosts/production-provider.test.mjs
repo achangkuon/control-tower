@@ -4,7 +4,9 @@ import { mkdtempSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { admitOpenCodeBrief, assertParentlessSessionCreation, createProductionProvider, parseCreatedRoot, parseHostOutput, parseOpenCodeAgent, parseServerAnnouncement } from "../../hosts/production-provider.mjs"
+import * as productionProvider from "../../hosts/production-provider.mjs"
+
+const { admitOpenCodeBrief, assertParentlessSessionCreation, createProductionProvider, parseCreatedRoot, parseHostOutput, parseServerAnnouncement } = productionProvider
 
 const gitAuthorityVariables = new Set([
   "GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY",
@@ -80,31 +82,8 @@ test("production provider exposes no caller supplied executable or environment c
   expect(createProductionProvider.length).toBe(0)
 })
 
-test("accepts only canonical Herdr 0.8 OpenCode custody responses", () => {
-  const sessionId = `ses_${"a".repeat(26)}`
-  const response = { result: { type: "agent_started", agent: { name: "ctopencode-w1p1", agent: "opencode", agent_status: "working", cwd: "/work/a", pane_id: "w1:p1", terminal_id: "term_a1", agent_session: { source: "herdr:opencode", agent: "opencode", kind: "id", value: sessionId } } } }
-  expect(parseOpenCodeAgent(response, { type: "agent_started", name: "ctopencode-w1p1", pane_id: "w1:p1", worktree: "/work/a" })).toEqual({ name: "ctopencode-w1p1", pane_id: "w1:p1", terminal_id: "term_a1", session_id: sessionId, worktree: "/work/a" })
-  const expected = { type: "agent_started", name: "ctopencode-w1p1", pane_id: "w1:p1", worktree: "/work/a" }
-  for (const value of ["--help", "root-a", `ses_${"a".repeat(25)}`, `ses_${"a".repeat(27)}`, `ses_${"a".repeat(25)}-`]) {
-    const invalid = structuredClone(response)
-    invalid.result.agent.agent_session.value = value
-    expect(() => parseOpenCodeAgent(invalid, expected)).toThrow("Herdr did not report canonical OpenCode custody")
-  }
-  for (const mutate of [
-    (value) => { value.result.type = "agent_info" },
-    (value) => { value.result.agent.name = "foreign" },
-    (value) => { value.result.agent.agent = "pi" },
-    (value) => { value.result.agent.cwd = "/work/other" },
-    (value) => { value.result.agent.pane_id = "w1:p2" },
-    (value) => { value.result.agent.terminal_id = "--help" },
-    (value) => { value.result.agent.agent_session.source = "caller" },
-    (value) => { value.result.agent.agent_session.agent = "pi" },
-    (value) => { value.result.agent.agent_session.kind = "path" },
-    (value) => { value.result.agent.agent_session.extra = true },
-  ]) {
-    const invalid = structuredClone(response); mutate(invalid)
-    expect(() => parseOpenCodeAgent(invalid, expected)).toThrow("Herdr did not report canonical OpenCode custody")
-  }
+test("exports no legacy Herdr custody parser", () => {
+  expect("parseOpenCodeAgent" in productionProvider).toBe(false)
 })
 
 test("rejects duplicate raw JSON object keys before host response semantics", () => {

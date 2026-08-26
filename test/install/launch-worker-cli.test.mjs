@@ -50,7 +50,7 @@ if (Bun.argv[2] === "serve") {
   const installed = join(xdg, "control-tower/versions/launch-v1/bin/torre")
   writeFileSync(effects, "")
   expect(spawnSync(installed, ["launch-worker", "--request-ref", "missing"], { cwd: main, env: installEnv, encoding: "utf8" }).stderr).toContain("CT_LAUNCH_BINDING_INVALID")
-  expect(readFileSync(effects, "utf8")).toBe("herdr --version\n")
+  expect(readFileSync(effects, "utf8")).toBe("")
   writeFileSync(join(commands, "bad-herdr"), "#!/bin/sh\nexit 99\n", { mode: 0o755 })
   const result = spawnSync(installed, ["launch-worker", "--request-ref", "request-a"], {
     cwd: main, env: { ...installEnv, CONTROL_TOWER_CORE: join(commands, "bad-herdr"), CONTROL_TOWER_LIFECYCLE: join(commands, "bad-herdr"), HERDR_ENV: "attacker", PATH: `${commands}:${process.env.PATH}` }, encoding: "utf8",
@@ -61,12 +61,12 @@ if (Bun.argv[2] === "serve") {
   expect(Object.keys(publicResult.view).sort()).toEqual(["code", "retryable", "status"])
   expect(JSON.stringify(publicResult)).not.toMatch(/pane_id|helper|credential|secret|command|copy|paste|token/i)
   expect(JSON.stringify(JSON.parse(result.stdout))).not.toMatch(/manual_command|credential_ref|OPENCODE_SERVER_PASSWORD/)
-  expect(readFileSync(effects, "utf8")).toMatch(new RegExp(`^herdr --version\\nherdr --version\\nherdr pane split --current --direction right --cwd ${worker} --no-focus\\nherdr pane run w1:p1 \\S*bun \\S*opencode-attach-helper\\.mjs\\n$`))
+  expect(readFileSync(effects, "utf8")).toMatch(new RegExp(`^herdr pane split --current --direction right --cwd ${worker} --no-focus\\nherdr pane run w1:p1 \\S*bun \\S*opencode-attach-helper\\.mjs\\n$`))
   expect(spawnSync(installed, ["launch-worker", "--request-ref", "request-a"], { cwd: main, env: { ...installEnv, HERDR_ENV: "attacker", PATH: `${commands}:${process.env.PATH}` }, encoding: "utf8" }).stderr).toContain("CT_LAUNCH_BINDING_CONSUMED")
   store.issueLaunchBinding({ actor: "MAIN", project_id: "project-a", request_ref: "request-stale", authorization_id: "auth-a", brief: "Approved", brief_ref: "briefs/a.json", assignment_ref: "assignment-a", candidate_revision: candidate, host_epoch: 1 })
   writeFileSync(join(storePath, "epoch-records/2.json"), JSON.stringify({ epoch: 2, project_id: "project-a" }), { mode: 0o600 })
   writeFileSync(join(storePath, "current-epoch.json"), JSON.stringify({ epoch: 2, project_id: "project-a" }), { mode: 0o600 })
   const beforeStale = readFileSync(effects, "utf8")
   expect(spawnSync(installed, ["launch-worker", "--request-ref", "request-stale"], { cwd: main, env: installEnv, encoding: "utf8" }).stderr).toContain("CT_LAUNCH_BINDING_STALE")
-  expect(readFileSync(effects, "utf8")).toBe(`${beforeStale}herdr --version\n`)
+  expect(readFileSync(effects, "utf8")).toBe(beforeStale)
 })

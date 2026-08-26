@@ -5,6 +5,7 @@ import { chmodSync, copyFileSync, existsSync, lstatSync, mkdirSync, mkdtempSync,
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 
+import { createPinnedHostRuntime } from "../../hosts/production-provider.mjs"
 import { lifecycle, readHostRuntimeIdentity, runCli, validateActiveHostRuntime } from "../../install/lifecycle.mjs"
 import { RUNTIME_PAYLOAD_FILES } from "../../install/runtime-payload.mjs"
 
@@ -143,50 +144,25 @@ test("source payload rejection is atomic before creating temporary roots", () =>
   expect(existsSync(join(root, "xdg-state"))).toBe(false)
 })
 
-test("attended installs require explicit Herdr and OpenCode executable identities", () => {
+test("attended installs require an explicit OpenCode executable identity", () => {
   const { root } = fixture(), env = testEnv(root)
 
   expect(() => runCli(["install", "1.0.0", repoRoot], env)).toThrow("CT_HOST_RUNTIME_REQUIRED")
   expect(existsSync(join(env.XDG_DATA_HOME, "control-tower"))).toBe(false)
 })
 
-test("installer accepts pinned Herdr 0.8.0 without the unavailable root-observation command", () => {
-  const { root, paths } = fixture(), env = testEnv(root)
-  writeFileSync(paths.herdrBin, "#!/bin/sh\nif [ \"$1\" = \"--version\" ]; then printf 'herdr 0.8.0\\n'; else exit 64; fi\n", { mode: 0o700 })
-
-  expect(runCli(["install", "1.0.0", repoRoot, ...hostArgs(paths)], env)).toMatchObject({ active: "1.0.0" })
-})
-
-test("installer rejects Herdr without the required 0.8.0 compatibility version before storing a runtime", () => {
-  const { root, paths } = fixture(), env = testEnv(root)
-  writeFileSync(paths.herdrBin, "#!/bin/sh\nprintf 'herdr unknown\\n'\n", { mode: 0o700 })
-
-  expect(() => runCli(["install", "1.0.0", repoRoot, ...hostArgs(paths)], env)).toThrow("CT_HOST_RUNTIME_CONTRACT")
-  expect(existsSync(join(env.XDG_DATA_HOME, "control-tower"))).toBe(false)
-})
-
-test("installer rejects malformed, failed, timed-out, and incompatible Herdr versions", () => {
-  for (const script of [
-    "#!/bin/sh\nprintf 'bad\\n'\n",
-    "#!/bin/sh\nexit 2\n",
-    "#!/bin/sh\nsleep 2\n",
-    "#!/bin/sh\nprintf 'herdr 0.9.0\\n'\n",
-  ]) {
+test("installer treats absent, 0.8.0, and 0.8.2 Herdr as non-blocking without adopting a version", () => {
+  for (const version of [null, "0.8.0", "0.8.2"]) {
     const { root, paths } = fixture(), env = testEnv(root)
-    writeFileSync(paths.herdrBin, script, { mode: 0o700 })
-    expect(() => runCli(["install", "1.0.0", repoRoot, ...hostArgs(paths)], env)).toThrow("CT_HOST_RUNTIME_CONTRACT")
-    expect(existsSync(join(env.XDG_DATA_HOME, "control-tower"))).toBe(false)
-  }
-})
+    if (version) writeFileSync(paths.herdrBin, `#!/bin/sh\nif [ "$1" = "--version" ]; then printf 'herdr ${version}\\n'; fi\n`, { mode: 0o700 })
+    const args = ["install", "1.0.0", repoRoot, "--opencode-bin", paths.opencodeBin]
+    if (version) args.push("--herdr-bin", paths.herdrBin)
 
-test("installer rejects ambiguous or oversized Herdr version output", () => {
-  for (const output of [
-    "herdr 0.8.0\\nherdr 0.8.0",
-    "x".repeat(4_097),
-  ]) {
-    const { root, paths } = fixture(), env = testEnv(root)
-    writeFileSync(paths.herdrBin, `#!/bin/sh\nprintf '%s\\n' '${output}'\n`, { mode: 0o700 })
-    expect(() => runCli(["install", "1.0.0", repoRoot, ...hostArgs(paths)], env)).toThrow("CT_HOST_RUNTIME_CONTRACT")
+    expect(runCli(args, env)).toMatchObject({ active: "1.0.0" })
+    const stored = readHostRuntimeIdentity(env.XDG_DATA_HOME + "/control-tower", "1.0.0")
+    expect(stored.herdr?.path).toBe(version ? paths.herdrBin : undefined)
+    expect(stored.herdr_runtime).toBeUndefined()
+    expect(stored.herdr_contract).toBeUndefined()
   }
 })
 
@@ -211,30 +187,36 @@ test("attended CLI rejects unsafe or mismatched executable inputs before install
   const item = fixture(), env = testEnv(item.root)
   expect(runCli(["install", "1.0.0", repoRoot, ...hostArgs(item.paths)], env)).toMatchObject({ active: "1.0.0" })
   const record = join(env.XDG_DATA_HOME, "control-tower/versions/1.0.0/host-runtime.json"), stored = JSON.parse(readFileSync(record, "utf8"))
-  expect(stored).toMatchObject({ schema: "control-tower.host-runtime/v1", runtimeVersion: "1.0.0", herdr: { path: item.paths.herdrBin }, opencode: { path: item.paths.opencodeBin }, herdr_runtime: { schema: "control-tower.herdr-runtime/v1", version: "0.8.0" } })
+  expect(stored).toMatchObject({ schema: "control-tower.host-runtime/v1", runtimeVersion: "1.0.0", herdr: { path: item.paths.herdrBin }, opencode: { path: item.paths.opencodeBin } })
+  expect(stored.herdr_runtime).toBeUndefined()
   expect(stored.herdr_contract).toBeUndefined()
   expect(lstatSync(record).mode & 0o777).toBe(0o600)
   })
 
-  test("revalidates the active exact executable identity and compatibility before host effects", () => {
+  test("keeps mandatory OpenCode available after recorded optional Herdr disappears", () => {
     const { paths } = fixture()
     lifecycle({ ...paths, action: "install", version: "1.0.0", files: { "runtime.mjs": "one" } })
-    const runtime = join(paths.dataRoot, "versions/1.0.0")
-    expect(validateActiveHostRuntime(paths.dataRoot, "1.0.0", runtime)).toMatchObject({ herdr: paths.herdrBin, opencode: paths.opencodeBin })
-    writeFileSync(paths.herdrBin, "#!/bin/sh\nexit 1\n", { mode: 0o700 })
-    expect(() => validateActiveHostRuntime(paths.dataRoot, "1.0.0", runtime)).toThrow("CT_HOST_RUNTIME_CHANGED")
+    const version = "1.0.0", root = join(paths.dataRoot, "versions", version)
+    rmSync(paths.herdrBin)
+
+    expect(validateActiveHostRuntime(paths.dataRoot, version, root)).toEqual({ version, opencode: paths.opencodeBin, environment: { PATH: "" } })
+    const runtime = createPinnedHostRuntime({ dataRoot: paths.dataRoot, version, root })
+    const errorCode = (operation) => { try { operation() } catch (error) { return error.code } }
+    try {
+      expect(runtime.run("opencode", []).status).toBe(0)
+      expect(errorCode(() => runtime.run("herdr", []))).toBe("CT_VIEW_UNAVAILABLE")
+      writeFileSync(paths.herdrBin, "#!/bin/sh\nexit 0\n", { mode: 0o700 })
+      expect(errorCode(() => runtime.run("herdr", []))).toBe("CT_VIEW_UNAVAILABLE")
+    } finally { runtime.close() }
   })
 
-  test("rejects Herdr that replaces itself while the compatibility probe is running", () => {
-    const { paths } = fixture()
+  test("does not execute optional Herdr while installing or revalidating host identity", () => {
+    const { paths } = fixture(), marker = `${paths.herdrBin}.executed`
+    writeFileSync(paths.herdrBin, `#!/bin/sh\nprintf executed > ${marker}\n`, { mode: 0o700 })
+
     lifecycle({ ...paths, action: "install", version: "1.0.0", files: { "runtime.mjs": "one" } })
-    const runtime = join(paths.dataRoot, "versions/1.0.0"), marker = `${paths.herdrBin}.mutate`
-    writeFileSync(paths.herdrBin, "#!/bin/sh\nif [ -f " + marker + " ]; then printf '#!/bin/sh\\nexit 99\\n' > \"$0\"; fi\nif [ \"$1\" = \"--version\" ]; then printf 'herdr 0.8.0\\n'; fi\n", { mode: 0o700 })
-    // Reinstall records the initially valid bytes; only the compatibility subprocess mutates them.
-    lifecycle({ ...paths, action: "install", version: "1.0.1", files: { "runtime.mjs": "two" } })
-    writeFileSync(marker, "mutate\n")
-    expect(() => validateActiveHostRuntime(paths.dataRoot, "1.0.1", join(paths.dataRoot, "versions/1.0.1"))).toThrow("CT_HOST_RUNTIME_CHANGED")
-    expect(readFileSync(paths.herdrBin, "utf8")).toContain("exit 99")
+    validateActiveHostRuntime(paths.dataRoot, "1.0.0", join(paths.dataRoot, "versions/1.0.0"))
+    expect(existsSync(marker)).toBe(false)
   })
 
   test("rejects a runtime root that is not the version named by active.json", () => {

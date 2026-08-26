@@ -1,7 +1,6 @@
 #!/usr/bin/env bun
 import { appendFileSync, chmodSync, constants, copyFileSync, existsSync, fsyncSync, linkSync, lstatSync, mkdirSync, openSync, closeSync, readFileSync, readdirSync, realpathSync, rmSync, renameSync, symlinkSync, writeFileSync } from "node:fs"
 import { createHash, randomUUID } from "node:crypto"
-import { spawnSync } from "node:child_process"
 import { basename, dirname, isAbsolute, join, sep } from "node:path"
 import { fileURLToPath } from "node:url"
 
@@ -17,8 +16,6 @@ const audit = (stateRoot, record) => {
 }
 
 const hostRuntimeRecord = (versionRoot) => join(versionRoot, "host-runtime.json")
-const HERDR_RUNTIME = Object.freeze({ schema: "control-tower.herdr-runtime/v1", version: "0.8.0", capabilities: ["agent_start", "agent_get", "report_agent_session"] })
-const LEGACY_HERDR_CONTRACT = Object.freeze({ schema: "herdr.agent_root_observation", schema_version: 1, capabilities: ["pane_bound", "opencode_session_lineage"] })
 const secureExecutable = (path, name) => {
   if (!path) throw new Error("CT_HOST_RUNTIME_REQUIRED")
   if (typeof path !== "string" || !isAbsolute(path)) throw new Error("CT_HOST_RUNTIME_INVALID")
@@ -39,22 +36,13 @@ const secureExecutable = (path, name) => {
 
 const validateHostRuntimeRecord = (record, version) => {
   if (!record || record.schema !== "control-tower.host-runtime/v1" || record.runtimeVersion !== version) throw new Error("CT_HOST_RUNTIME_RECORD_INVALID")
-  for (const name of ["herdr", "opencode"]) {
+  for (const name of ["opencode", ...(record.herdr ? ["herdr"] : [])]) {
     const executable = record[name]
     if (!executable || basename(executable.path ?? "") !== name || typeof executable.sha256 !== "string" || !/^[0-9a-f]{64}$/.test(executable.sha256)
       || !["dev", "ino", "size", "mtimeMs", "ctimeMs", "uid", "mode", "nlink"].every((key) => typeof executable[key] === "number")) throw new Error("CT_HOST_RUNTIME_RECORD_INVALID")
   }
-  if (record.herdr.path === record.opencode.path) throw new Error("CT_HOST_RUNTIME_RECORD_INVALID")
-  const compatible = JSON.stringify(record.herdr_runtime) === JSON.stringify(HERDR_RUNTIME)
-    || JSON.stringify(record.herdr_contract) === JSON.stringify(LEGACY_HERDR_CONTRACT)
-  if (!compatible) throw new Error("CT_HOST_RUNTIME_RECORD_INVALID")
+  if (record.herdr?.path === record.opencode.path) throw new Error("CT_HOST_RUNTIME_RECORD_INVALID")
   return record
-}
-
-const verifyHerdrRuntime = (path) => {
-  const result = spawnSync(path, ["--version"], { encoding: "utf8", timeout: 1_000, maxBuffer: 4_096, env: Object.freeze({ PATH: "" }) })
-  if (result.error || result.status !== 0 || result.signal || result.stderr !== "" || result.stdout !== "herdr 0.8.0\n") throw new Error("CT_HOST_RUNTIME_CONTRACT")
-  return HERDR_RUNTIME
 }
 
 export function readHostRuntimeIdentity(dataRoot, version) {
@@ -86,16 +74,14 @@ export function validateActiveHostRuntime(dataRoot, version, runtimeRoot) {
     }
     return actual.path
   }
-  verifyHerdrRuntime(validate("herdr"))
-  // The probe is itself an executable boundary: do not carry its pre-probe
-  // identity across it, even when the compatibility output was canonical.
-  return Object.freeze({ version, herdr: validate("herdr"), opencode: validate("opencode"), environment: Object.freeze({ PATH: "" }) })
+  const opencode = validate("opencode")
+  return Object.freeze({ version, opencode, environment: Object.freeze({ PATH: "" }) })
 }
 
 const captureHostRuntimeIdentity = (version, { herdrBin, opencodeBin }) => {
-  const herdr = secureExecutable(herdrBin, "herdr"), opencode = secureExecutable(opencodeBin, "opencode")
-  if (herdr.path === opencode.path) throw new Error("CT_HOST_RUNTIME_INVALID")
-  return { schema: "control-tower.host-runtime/v1", runtimeVersion: version, herdr, opencode, herdr_runtime: verifyHerdrRuntime(herdr.path) }
+  const opencode = secureExecutable(opencodeBin, "opencode"), herdr = herdrBin ? secureExecutable(herdrBin, "herdr") : undefined
+  if (herdr?.path === opencode.path) throw new Error("CT_HOST_RUNTIME_INVALID")
+  return { schema: "control-tower.host-runtime/v1", runtimeVersion: version, ...(herdr ? { herdr } : {}), opencode }
 }
 
 const storeHostRuntimeIdentity = (versionRoot, record, { beforePublish } = {}) => {
