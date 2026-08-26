@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
 | Outputs | Raíz primaria Main-owned con TUI adjunta no autoritativa, inspección/liveness por proceso/sesión y recuperación same-host WSL. |
-| Roadmap | `S4.1`, `S1.16`, `S4.2`, `S4.5`, `S4.3` y `S4.7` están ✅ COMPLETO. `S4.4`, `S4.6` y `S4.8` están 🟢 LISTO; `S4.9` está 📋 PLANIFICADO. P4 alcanza 5/9 S (56%). |
+| Roadmap | `S4.1`, `S1.16`, `S4.2`, `S4.5`, `S4.3`, `S4.6` y `S4.7` están ✅ COMPLETO. `S4.4` está 🔵 EN CURSO y serializada detrás del cierre documental de `S4.6`; `S4.8` y `S4.9` están 🟢 LISTO, sin asiento asignado desde este documento. P4 alcanza 67% (6/9 S). |
 | Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), decisiones 37–42 / Engram 9040/9042/9043/9044/9079, [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). REQUIREMENTS §14 permanece byte-pinned como base histórica; esta spec enmienda el lifecycle futuro. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
@@ -398,7 +398,7 @@ Esta corrección aprobada por el maintainer **no es una Sesión**, no fue solici
 
 ## Sesión 4.4 — Recuperación lógica same-host con raíz sucesora
 
-**Estado:** 🟢 LISTO — decision-clean; `S4.7` cerró y satisfizo la dependencia pendiente.
+**Estado:** 🔵 EN CURSO — decision-clean y serializada detrás del cierre documental de `S4.6` por solapamiento de paths compartidos; `S4.7` cerró y satisfizo la dependencia funcional pendiente.
 
 **Depende de:** `S4.3` ✅, `S4.7` ✅. Recuperación debe reutilizar el launch veraz y el helper autenticado, no el camino legacy.
 
@@ -456,18 +456,18 @@ graph LR
   S116["S1.16 OpenCode wake · ✅"] --> S42
   S42 --> S45["S4.5 raíz Main-owned · ✅"]
   S45 --> S43["S4.3 liveness · ✅"]
-  S43 --> S44["S4.4 recuperación · 🟢"]
+  S43 --> S44["S4.4 recuperación · 🔵"]
   S45 --> S47["S4.7 launch veraz · ✅"]
   S47 --> S44
   S47 --> S48["S4.8 matriz OpenCode · 🟢"]
-  S46["S4.6 retiro legacy · 🟢"] --> S49["S4.9 Herdr 0.8.2 · 📋"]
+  S46["S4.6 retiro legacy · ✅"] --> S49["S4.9 Herdr 0.8.2 · 🟢"]
   S47 --> S49
   S44 --> S71["S7.1 conformidad · 📋"]
   S46 --> S71
   S48 --> S71
 ```
 
-No queda responsabilidad activa de hosts sin Sesión enumerada. `S4.3` y `S4.7` están ✅ COMPLETO; `S4.4`, `S4.6` y `S4.8` están 🟢 LISTO; `S4.9` y `S7.1` permanecen 📋 por el grafo.
+No queda responsabilidad activa de hosts sin Sesión enumerada. `S4.3`, `S4.6` y `S4.7` están ✅ COMPLETO; `S4.4` está 🔵 EN CURSO y serializada detrás del cierre documental de `S4.6`; `S4.8` y `S4.9` están 🟢 LISTO, sin asiento asignado; `S7.1` permanece 📋 por el grafo.
 
 ## Insumo para la auditoría exclusiva de P4 — pregunta de entrada nueva (2026-08-21)
 
@@ -550,7 +550,7 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 
 ## Sesión 4.6 — Retiro del camino de lanzamiento de `S4.2` y del fijado de Herdr
 
-**Estado:** 🟢 LISTO — nació el 2026-08-21 de la [decisión 63](../decision-register.md); `S8.10` y `S5.13` ya cerraron.
+**Estado:** ✅ COMPLETO — cierre técnico local en `3857a81ac96645e4c1b8dde91c7e5f864ba055e4` (tree `bc850845ddf3639b2349c39ec05ef21b67cfc6a6`; candidato SHA-256 `1ee28096b77469cf46f96212a1ab1588d5b1f2960c15c048c58367a1670a9197`). El diff congelado toca 9 paths y suma 353 líneas authored (+74/−279). Los 2/2 Módulos, 6/6 Tareas y todos los criterios están cerrados. Focused CLI: 1 pass / 0 fail / 15 expectations; aggregate enfocado tras la corrección de resiliencia: 52 / 0 / 283; suite integral: 883 / 0 / 5.036 / 68 archivos. El normalizador no cambió bytes, `git diff --check` pasó y la identidad del candidato fue idéntica pre/post. El review de resiliencia detectó un bloqueo real —la eliminación/reemplazo opcional de Herdr todavía bloqueaba backend/preflight—; la corrección Strict TDD difirió la apertura del descriptor hasta usar la vista opcional y retiró Herdr de la validación activa obligatoria. El recheck severo de origen lo cerró sin bloqueos restantes. Runtime Herdr/Tower vivo: N/A por prohibición explícita; el fixture aislado en subprocess aporta la evidencia runtime aplicable. RDD: disabled/unmanaged. Este commit y estos documentos son locales; no se afirma push, publicación ni entrega.
 
 **Por qué pertenece a P4.** El propósito de este Plan es que se pueda abrir una sesión y saber de qué depende. Ese trabajo es exactamente sacar una dependencia externa del camino y retirar un adaptador superado. Ningún otro Plan lo cubre.
 
@@ -571,40 +571,40 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 - **`install/lifecycle.mjs:56`** compara `result.stdout !== "herdr 0.8.0\n"` — **string literal, no rango**. Cualquier versión nueva de Herdr rompe la instalación, y ese archivo sí viaja en el payload.
 - **`install/lifecycle.mjs:20`** declara `HERDR_RUNTIME` con capacidades `["agent_start", "agent_get", "report_agent_session"]`, que son **exactamente las del adaptador de custodia de `S4.2`**. Y lo que la vista realmente usa —`pane split`, `pane run`, `pane close`— **el instalador no lo verifica en absoluto**.
 - **`hosts/production-provider.mjs:280`** devuelve `herdr` junto a `backend`, `view` y `rootBinding`. El adaptador legado **está construido y devuelto, pero nadie lo invoca** — ni dentro del archivo ni fuera. Es código dormido, no un fallo activo: se retira porque es una trampa, no porque esté rompiendo algo.
-- **`hosts/opencode-view.mjs`** ya degrada ante ausencia de Herdr: `try { pane = await openPane(...) } catch { pane = null }` y devuelve `CT_VIEW_UNAVAILABLE` con el comando `opencode attach` manual. **Por eso soltar el bloqueo del instalador es seguro.**
+- **`hosts/opencode-view.mjs`** ya degrada ante ausencia de Herdr: la falla interna de la vista opcional conserva disponible la ruta autenticada de attach, mientras el resultado público permanece sólo `DEGRADED` y no expone comando, helper, credencial, secreto ni instrucción manual. **Por eso soltar el bloqueo del instalador es seguro.** `S4.7` endureció después este contrato público; la explicación histórica previa de `S4.5` se conserva como historia de los bytes que entonces se entregaron.
 
 **Los dos retiros son un solo trabajo** porque tocan la misma declaración de capacidades.
 
 ### Decisiones
 
-- `derivable` — **qué reemplaza a la comparación de versión.** **Criterio:** nada bloqueante. Herdr pasa a dependencia opcional y degradable; su ausencia produce una vista no disponible con fallback manual, nunca una instalación fallida. **Autoridad:** decisión 39 y el criterio del maintainer del 2026-08-21 — depender lo menos posible, y si no se puede, soportar. **Falsificable:** una instalación que falle por la versión o la ausencia de Herdr.
+- `derivable` — **qué reemplaza a la comparación de versión.** **Criterio:** nada bloqueante. Herdr pasa a dependencia opcional y degradable; su ausencia produce una vista pública sólo `DEGRADED`, nunca una instalación fallida ni una respuesta con comando o instrucción manual. La ruta autenticada de attach permanece interna y disponible. **Autoridad:** decisión 39, endurecida después por `S4.7`, y el criterio del maintainer del 2026-08-21 — depender lo menos posible, y si no se puede, soportar. **Falsificable:** una instalación que falle por la versión o la ausencia de Herdr, o una salida pública que exponga comando, helper, credencial, secreto o instrucción manual.
 - `derivable` — **qué pasa con `hosts/herdr.mjs`.** **Criterio:** conserva sólo lo que usa la vista. Si al retirar la custodia de `S4.2` el archivo queda sin superficie propia, se retira y sus puertos se pliegan en `opencode-view.mjs`. Se decide midiendo, no por adelantado. **Falsificable:** dejar en el payload un archivo sin llamador.
 - `derivable` — **el fijado de OpenCode por bytes NO se toca.** **Criterio:** `production-provider.mjs:152` garantiza que los bytes verificados sean los ejecutados, vía un descriptor ya abierto. Es seguridad, no un lock de versión, y la auditoría de P8 lo confirmó legítimo. **Falsificable:** cualquier diff que debilite esa verificación.
 
 ### Criterios de aceptación
 
-- [ ] Una instalación con Herdr ausente, o con una versión distinta de 0.8.0, **completa** y deja la vista degradada con su comando manual
-- [ ] El adaptador de custodia de `S4.2` no existe en el árbol, y ninguna ruta puede emitir `CT_LAUNCH_REJECTED` por custodia de Herdr
-- [ ] `HERDR_RUNTIME` deja de declarar capacidades que el producto no usa
-- [ ] El fijado por bytes de OpenCode permanece intacto y verificado por su test
-- [ ] `RUNTIME_PAYLOAD_FILES` queda consistente: ningún miembro sin llamador
-- [ ] `bun test` no introduce fallos nuevos; el diff no toca el `Prohibido`
+- [x] Una instalación con Herdr ausente, o con una versión distinta de 0.8.0, **completa** y deja la vista pública sólo `DEGRADED`, sin comando, helper, credencial, secreto ni instrucción manual; la falla interna de la vista opcional conserva disponible la ruta autenticada de attach
+- [x] El adaptador de custodia de `S4.2` no existe en el árbol, y ninguna ruta puede emitir `CT_LAUNCH_REJECTED` por custodia de Herdr
+- [x] `HERDR_RUNTIME` deja de declarar capacidades que el producto no usa
+- [x] El fijado por bytes de OpenCode permanece intacto y verificado por su test
+- [x] `RUNTIME_PAYLOAD_FILES` queda consistente: ningún miembro sin llamador
+- [x] `bun test` no introduce fallos nuevos; el diff no toca el `Prohibido`
 
-**Versión:** Herdr permanece en `0.8.0` hasta cerrar esta Sesión. `S4.6` retira el pin duro y la custodia legacy, pero no adopta `0.8.2`; esa adopción guardada pertenece a `S4.9`.
+**Versión:** Herdr se mantuvo en `0.8.0` durante esta Sesión. `S4.6` retiró el pin duro y la custodia legacy, pero no adoptó `0.8.2`; esa adopción guardada pertenece a `S4.9`.
 
 **Forecast:** 260–380 líneas authored.
 
-### Módulo M4.6.1 — Retiro del adaptador legacy · forecast 120–190
-- [ ] Tarea T4.6.1.1 — RED: probar que la custodia legacy todavía se construye o exporta
-- [ ] Tarea T4.6.1.2 — GREEN: retirar la custodia legacy del provider
-- [ ] Tarea T4.6.1.3 — REFACTOR: retirar `hosts/herdr.mjs` sólo si queda sin caller y reconciliar tests/payload
+### Módulo M4.6.1 — Retiro del adaptador legacy · ✅ COMPLETO
+- [x] Tarea T4.6.1.1 — RED: probar que la custodia legacy todavía se construye o exporta
+- [x] Tarea T4.6.1.2 — GREEN: retirar la custodia legacy del provider
+- [x] Tarea T4.6.1.3 — REFACTOR: retirar `hosts/herdr.mjs` sólo si queda sin caller y reconciliar tests/payload
 
-### Módulo M4.6.2 — Instalación opcional de Herdr · forecast 140–190
-- [ ] Tarea T4.6.2.1 — RED: probar que Herdr ausente o distinto de `0.8.0` bloquea hoy, mientras el pin OpenCode pasa
-- [ ] Tarea T4.6.2.2 — GREEN: retirar el chequeo bloqueante y capacidades sin uso
-- [ ] Tarea T4.6.2.3 — REFACTOR: matriz ausente/`0.8.0`/`0.8.2`, sin adoptar `0.8.2`
+### Módulo M4.6.2 — Instalación opcional de Herdr · ✅ COMPLETO
+- [x] Tarea T4.6.2.1 — RED: probar que Herdr ausente o distinto de `0.8.0` bloquea hoy, mientras el pin OpenCode pasa
+- [x] Tarea T4.6.2.2 — GREEN: retirar el chequeo bloqueante y capacidades sin uso
+- [x] Tarea T4.6.2.3 — REFACTOR: matriz ausente/`0.8.0`/`0.8.2`, sin adoptar `0.8.2`
 
-**Orden:** `S8.10`, `S5.13` y `S4.7` ya cerraron; `S4.6` queda disponible sin aquel solapamiento activo en provider/instalación.
+**Orden:** `S8.10`, `S5.13` y `S4.7` ya habían cerrado; `S4.6` completó su implementación local sin aquel solapamiento activo en provider/instalación.
 
 ## Sesión 4.7 — Launch Main-owned veraz y vista autenticada
 
@@ -690,7 +690,7 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 
 ## Sesión 4.9 — Probe y adopción guardada de Herdr 0.8.2
 
-**Estado:** 📋 PLANIFICADO — bloqueada por dependencias. **Depende de:** `S4.6`, `S4.7`; no depende de `S4.8`. **Ruta:** `design-tasks`.
+**Estado:** 🟢 LISTO — `S4.6` y `S4.7` están ✅ COMPLETO; no tiene asiento asignado. **Depende de:** `S4.6`, `S4.7`; no depende de `S4.8`. **Ruta:** `design-tasks`.
 
 **Área:** nuevos `scripts/host-compatibility/herdr.mjs`, `test/compat/herdr-runtime.test.mjs`.
 
