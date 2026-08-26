@@ -27,7 +27,7 @@ fi
 ACTIVE_CORE=""
 ACTIVE_LIFECYCLE=""
 ACTIVE_POINTER="$ENTRYPOINT_DIR/../install/active-pointer.mjs"
-if [[ ( -z "${CONTROL_TOWER_CORE:-}" || -z "${CONTROL_TOWER_LIFECYCLE:-}" ) && -f "$ACTIVE_POINTER" ]]; then
+if [[ "${1:-}" != "--help" && ( -z "${CONTROL_TOWER_CORE:-}" || -z "${CONTROL_TOWER_LIFECYCLE:-}" ) && -f "$ACTIVE_POINTER" ]]; then
     DATA_ROOT=$(bun -e 'const t=await import(process.argv[1]); process.stdout.write(t.resolveDataRoot(process.env))' \
       "$ACTIVE_POINTER")
     if ! active_runtime=$(bun -e '
@@ -84,6 +84,75 @@ ROOT="$common/control-tower"
 ACTIVE="$ROOT/ACTIVE"
 DB="$ROOT/tower.db"
 PROJECT=$(basename "$(dirname "$(dirname "$common")")")
+VOCABULARY="$ENTRYPOINT_DIR/../console/vocabulary.mjs"
+VALIDATOR="$ENTRYPOINT_DIR/../console/validate.mjs"
+EXECUTOR="$ENTRYPOINT_DIR/../console/executor.mjs"
+CONSOLE_AVAILABLE=false
+if [[ -f "$VOCABULARY" && -f "$VALIDATOR" && -f "$EXECUTOR" ]]; then
+    CONSOLE_AVAILABLE=true
+fi
+
+console_help() {
+    bun -e '
+      const { COMMAND_VOCABULARY, VERBS } = await import(process.argv[1])
+      console.log("Console commands:")
+      for (const verb of VERBS) {
+        const spec = COMMAND_VOCABULARY[verb]
+        const flags = [...Object.keys(spec.required), ...Object.keys(spec.optional)]
+          .map((name) => ` --${name.replaceAll("_", "-")} <value>`).join("")
+        console.log(`  ${verb}${flags}`)
+      }
+    ' "$VOCABULARY"
+}
+
+run_console_command() {
+    bun -e '
+      import { randomUUID } from "node:crypto"
+      import { readFileSync } from "node:fs"
+      const [corePath, vocabularyPath, validatorPath, executorPath, cwd, common, defaultTower, verb, ...argv] = process.argv.slice(1)
+      const core = await import(corePath)
+      const { COMMAND_VOCABULARY } = await import(vocabularyPath)
+      const { CONFIRMATION_TTL_MS, validateConfirmation, validateProposal } = await import(validatorPath)
+      const { createConsoleExecutor } = await import(executorPath)
+      const spec = COMMAND_VOCABULARY[verb]
+      const params = {}, allowed = new Set([...Object.keys(spec.required), ...Object.keys(spec.optional)])
+      let towerId = defaultTower
+      for (let index = 0; index < argv.length; index += 2) {
+        const flag = argv[index], value = argv[index + 1]
+        if (!flag?.startsWith("--") || value === undefined) { params.__malformed = true; break }
+        const name = flag.slice(2).replaceAll("-", "_")
+        if (name === "tower") towerId = value
+        else if (allowed.has(name)) params[name] = value
+        else params[name] = value
+      }
+      const handle = core.open(cwd)
+      try {
+        const localStatus = core.status(handle)
+        const agents = Object.fromEntries(localStatus.agents.map(({ name, ...agent }) => [name, {
+          ...agent, has_worktree: typeof agent.branch === "string" && agent.branch.length > 0,
+        }]))
+        const context = {
+          registry: { [towerId]: { tower_id: towerId, tower_digest: common, active: localStatus.active, agents } },
+          escalations: localStatus.escalations ?? {}, pendingConfirmations: {},
+        }
+        const executor = createConsoleExecutor({ send: (directive) => core.send(handle, directive), readStatus: () => localStatus })
+        let validation = validateProposal({ verb, tower_id: towerId, params }, context)
+        if (validation.code === "CV_CONFIRMATION_REQUIRED") {
+          const issuedAt = Date.now(), token = randomUUID()
+          const pending = { tower_id: towerId, token, issued_at: issuedAt,
+            expires_at: issuedAt + CONFIRMATION_TTL_MS, command: validation.confirmation.command }
+          console.log(JSON.stringify({ ...validation, confirmation: { ...validation.confirmation,
+            token, issuedAt, expiresAt: pending.expires_at } }))
+          const supplied = readFileSync(0, "utf8").trim()
+          context.pendingConfirmations[towerId] = pending
+          validation = validateConfirmation({ tower_id: towerId, token: supplied }, { ...context, now: Date.now() })
+        }
+        const outcome = executor.execute(validation)
+        console.log(JSON.stringify(outcome))
+        if (outcome.ok !== true) process.exitCode = 2
+      } finally { handle.db?.close() }
+    ' "$CORE" "$VOCABULARY" "$VALIDATOR" "$EXECUTOR" "$PWD" "$common" "$PROJECT" "$@"
+}
 
 estado() { [[ -f "$ACTIVE" ]] && echo "ARMADA" || echo "desarmada"; }
 flag() {
@@ -122,6 +191,18 @@ tabla() {
       h.db.close()
     ' "$CORE" "$PWD" 2>/dev/null || echo "  (no se pudo leer el estado)"
 }
+
+if [[ "${1:-}" == "--help" ]]; then
+    echo "Legacy commands: install diagnose upgrade rollback uninstall main-config provision-main bootstrap-admin on off status log unlock reset"
+    if [[ "$CONSOLE_AVAILABLE" == true ]]; then console_help; fi
+    exit 0
+fi
+if [[ "$CONSOLE_AVAILABLE" == true ]] && \
+  bun -e 'const { VERBS } = await import(process.argv[1]); process.exit(VERBS.includes(process.argv[2]) ? 0 : 1)' \
+    "$VOCABULARY" "${1:-}"; then
+    run_console_command "$@"
+    exit $?
+fi
 
 case "${1:-}" in
     main-config)

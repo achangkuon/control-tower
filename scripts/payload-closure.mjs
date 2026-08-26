@@ -10,6 +10,8 @@ export const RUNTIME_PAYLOAD_ROOTS = [
   "install/lifecycle.mjs",
   "core.mjs",
   "hosts/launch-worker-cli.mjs",
+  "console/executor.mjs",
+  "console/validate.mjs",
 ]
 
 const scanner = new Bun.Transpiler({ loader: "js" })
