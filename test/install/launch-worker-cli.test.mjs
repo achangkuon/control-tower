@@ -56,7 +56,10 @@ if (Bun.argv[2] === "serve") {
     cwd: main, env: { ...installEnv, CONTROL_TOWER_CORE: join(commands, "bad-herdr"), CONTROL_TOWER_LIFECYCLE: join(commands, "bad-herdr"), HERDR_ENV: "attacker", PATH: `${commands}:${process.env.PATH}` }, encoding: "utf8",
   })
   expect(result.status, result.stderr).toBe(0)
-  expect(JSON.parse(result.stdout)).toMatchObject({ assignment_ref: "assignment-a", brief: "Approved", brief_ref: "briefs/a.json", candidate_revision: candidate, fence_path: fencePath, host_epoch: 1, project_id: "project-a", worktree: worker, pane_id: "w1:p1", root_session_id: rootSession })
+  const publicResult = JSON.parse(result.stdout)
+  expect(publicResult).toMatchObject({ assignment_ref: "assignment-a", brief: "Approved", brief_ref: "briefs/a.json", candidate_revision: candidate, fence_path: fencePath, host_epoch: 1, project_id: "project-a", worktree: worker, root_session_id: rootSession, view: { status: "DEGRADED", code: "CT_VIEW_UNVERIFIED", retryable: true } })
+  expect(Object.keys(publicResult.view).sort()).toEqual(["code", "retryable", "status"])
+  expect(JSON.stringify(publicResult)).not.toMatch(/pane_id|helper|credential|secret|command|copy|paste|token/i)
   expect(JSON.stringify(JSON.parse(result.stdout))).not.toMatch(/manual_command|credential_ref|OPENCODE_SERVER_PASSWORD/)
   expect(readFileSync(effects, "utf8")).toMatch(new RegExp(`^herdr --version\\nherdr --version\\nherdr pane split --current --direction right --cwd ${worker} --no-focus\\nherdr pane run w1:p1 \\S*bun \\S*opencode-attach-helper\\.mjs\\n$`))
   expect(spawnSync(installed, ["launch-worker", "--request-ref", "request-a"], { cwd: main, env: { ...installEnv, HERDR_ENV: "attacker", PATH: `${commands}:${process.env.PATH}` }, encoding: "utf8" }).stderr).toContain("CT_LAUNCH_BINDING_CONSUMED")

@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
 | Outputs | Raíz primaria Main-owned con TUI adjunta no autoritativa, inspección/liveness por proceso/sesión y recuperación same-host WSL. |
-| Roadmap | `S4.1`, `S1.16`, `S4.2`, `S4.5` y `S4.3` están ✅ COMPLETO. `S4.7` queda 🟢 LISTO tras la decisión 67. `S4.4`, `S4.6`, `S4.8` y `S4.9` están 📋 PLANIFICADO. P4 alcanza 4/9 S (44%). |
+| Roadmap | `S4.1`, `S1.16`, `S4.2`, `S4.5` y `S4.3` están ✅ COMPLETO. `S4.7` está 🔵 EN CURSO, con `M4.7.3` implementado y pendiente de verificación integral. `S4.4`, `S4.6`, `S4.8` y `S4.9` están 📋 PLANIFICADO. P4 alcanza 4/9 S (44%). |
 | Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), decisiones 37–42 / Engram 9040/9042/9043/9044/9079, [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). REQUIREMENTS §14 permanece byte-pinned como base histórica; esta spec enmienda el lifecycle futuro. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
@@ -457,7 +457,7 @@ graph LR
   S42 --> S45["S4.5 raíz Main-owned · ✅"]
   S45 --> S43["S4.3 liveness · ✅"]
   S43 --> S44["S4.4 recuperación · 📋"]
-  S45 --> S47["S4.7 launch veraz · 🟢"]
+  S45 --> S47["S4.7 launch veraz · 🔵"]
   S47 --> S44
   S47 --> S48["S4.8 matriz OpenCode · 📋"]
   S46["S4.6 retiro legacy · 📋"] --> S49["S4.9 Herdr 0.8.2 · 📋"]
@@ -467,7 +467,7 @@ graph LR
   S48 --> S71
 ```
 
-No queda responsabilidad activa de hosts sin Sesión enumerada. `S4.3` está ✅ COMPLETO; `S4.7` está 🟢 LISTO; `S4.4`, `S4.6`, `S4.8`, `S4.9` y `S7.1` están 📋 por el grafo, no por decisiones de producto abiertas.
+No queda responsabilidad activa de hosts sin Sesión enumerada. `S4.3` está ✅ COMPLETO; `S4.7` está 🔵 EN CURSO, con `M4.7.3` implementado y pendiente de verificación integral; `S4.4`, `S4.6`, `S4.8`, `S4.9` y `S7.1` están 📋 por el grafo, no por decisiones de producto abiertas.
 
 ## Insumo para la auditoría exclusiva de P4 — pregunta de entrada nueva (2026-08-21)
 
@@ -608,9 +608,9 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 
 ## Sesión 4.7 — Launch Main-owned veraz y vista autenticada
 
-**Estado:** 🟢 LISTO — la decisión 67 resolvió condicionalmente el timeout preexistente.
+**Estado:** 🔵 EN CURSO — `M4.7.1` y `M4.7.2` están entregados; `M4.7.3` está completo a nivel de implementación y queda pendiente la verificación integral y la entrega.
 
-**Depende de:** `S4.5` ✅. **Ruta:** `design-tasks`. **Autoridad:** decisiones 65–68 del maintainer, 2026-08-25.
+**Depende de:** `S4.5` ✅. **Ruta:** `design-tasks`. **Autoridad:** decisiones 65–68 y 76–77 del maintainer; Engram 9506/9507 resuelve el gate de diseño de `M4.7.3` sin crear autoridad nueva.
 
 **Área:** `hosts/launch-worker.mjs`, `hosts/opencode-server.mjs`, `hosts/opencode-view.mjs`, `hosts/production-provider.mjs`, nuevos `hosts/opencode-credential-channel.mjs` y `hosts/opencode-attach-helper.mjs`, `install/runtime-payload.mjs`, `test/hosts/{launch-worker,opencode-server,opencode-view,production-provider,opencode-credential-channel,opencode-attach-helper}.test.mjs`, `test/install/{runtime-payload,entrypoint-resolution,launch-worker-cli}.test.mjs`.
 
@@ -618,38 +618,45 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 
 **Recurso:** namespace efímero owner-only por backend para credencial/ref/proof; proceso, puerto loopback, root y pane exactos del worktree. Sin DB, migraciones ni token de entrega.
 
-**Resultado:** la raíz Main-owned exacta admite los bytes exactos del brief antes de éxito; la vista automática/manual nunca recibe secretos por argv o texto y sólo declara `ATTACHED` con prueba autenticada positiva. Falla de vista preserva la raíz admitida y devuelve `DEGRADED` más helper seguro privado.
+**Resultado vigente:** la raíz Main-owned exacta admite los bytes exactos del brief antes de éxito. La vista pública actual siempre agrega únicamente `view: { status: "DEGRADED", code: "CT_VIEW_UNVERIFIED", retryable: true }` a la identidad existente de backend/root. No expone `pane_id`, comando, ref del helper, ref de credencial, secreto ni copy/paste. El retry es declarativo; el helper existente permanece privado y es la única ruta de ejecución. `ATTACHED` queda reservado para una prueba futura, falsificable y producer-owned, ligada a backend/root/worktree/pane exactos que `S4.8`/`S4.9` descubran; pane creado, helper autenticado y liveness nunca se componen en esa prueba.
+
+**Evidencia instalada en este checkpoint:** OpenCode CLI `1.18.23`; plugin/SDK `1.18.13`; ninguna superficie instalada entrega prueba de attach. Se preserva la baseline focused reconciliada previa de **64 pass / 0 fail / 455 expectations en 9 archivos**. Para `M4.7.3`, RED observó **5 pass / 2 fail / 14 expectations**; GREEN, **7 / 0 / 22**; triangulación, **7 / 0 / 26**; focused de cuatro archivos, **28 / 0 / 173**; y focused de los nueve archivos, **64 / 0 / 464**. El diff técnico queda acotado a **3 paths, +26/−11 = 37 líneas authored**: `hosts/launch-worker.mjs` y sus dos tests. La salida pública queda congelada exactamente como `view: { status: "DEGRADED", code: "CT_VIEW_UNVERIFIED", retryable: true }`; preserva backend/root, no tiene branch `ATTACHED` y produjo cero leakage de pane, comando, helper ref, credential ref, secreto o copy/paste. Evidencia completa: Engram 9533.
 
 **Decisiones:**
-- `escala` — decisiones 65–66 **RESUELTAS**: admisión exacta sin esperar token; canal efímero owner-only, cero exposición y attach con prueba positiva. **Clase:** contrato visible del producto; seguridad y permisos. **Contaminaban:** los tres Módulos, `S4.4`, `S7.1`.
-- `derivable` — degradación. **Criterio:** sin prueba se preserva la raíz y se devuelve sólo `DEGRADED` más helper seguro. Falsificable: root invalidado o `ATTACHED` ambiguo. **Autoridad:** decisión 66.
+- `escala` — decisiones 65–66 **RESUELTAS**: admisión exacta sin esperar token; canal efímero owner-only y cero exposición. **Clase:** contrato visible del producto; seguridad y permisos. **Contaminaban:** los tres Módulos, `S4.4`, `S7.1`.
+- `escala` — decisiones 76–77 / Engram 9506/9507 **RESUELTAS antes de RED de `M4.7.3`**: la vista actual siempre es `DEGRADED`, la envolvente pública es mínima y no ejecutable, y no existe branch `ATTACHED` simulado ni ack controlado por el caller. **Clase:** contrato visible del producto; seguridad y permisos. **Contaminaba:** `M4.7.3`.
 - `escala` — decisión 67 **RESUELTA**: reproducir `test/install/launch-worker-cli.test.mjs:51`; corregir sólo si es el mismo launch path, o detenerse con evidencia para owner separado. **Clase:** expansión de alcance; dependencias o evidencia contradictorias.
 
 **Criterios de aceptación:**
-- [ ] `root_session_id` y bytes del brief exactos quedan admitidos; 4xx/5xx/timeout/envelope ambiguo o root/brief distinto fallan cerrado
-- [ ] Éxito no espera completion, output ni primer token del modelo
-- [ ] Ningún secreto aparece en argv, comando de proceso, log, JSON, mensaje, fallback, binding, copy/paste ni fuera del namespace owner-only
-- [ ] `ATTACHED` exige prueba autenticada ligada a backend/root/worktree/pane exactos
-- [ ] Falla de vista devuelve `DEGRADED` más helper seguro y preserva la raíz
-- [ ] El helper prueba conexión, rechaza ref stale/foreign/replay y revoca al detener
+- [x] `root_session_id` y bytes del brief exactos quedan admitidos; 4xx/5xx/timeout/envelope ambiguo o root/brief distinto fallan cerrado
+- [x] Éxito no espera completion, output ni primer token del modelo
+- [x] Ningún secreto aparece en argv, comando de proceso, log, JSON, mensaje, fallback, binding, copy/paste ni fuera del namespace owner-only
+- [ ] La vista pública actual permanece siempre `DEGRADED`; no existe branch `ATTACHED`, ack del caller ni composición pane/auth/liveness como prueba
+- [ ] La respuesta pública agrega sólo `view: { status: "DEGRADED", code: "CT_VIEW_UNVERIFIED", retryable: true }`, preserva backend/root y no publica el helper
+- [x] El helper prueba conexión, rechaza ref stale/foreign/replay y revoca al detener
 - [ ] OpenCode/package/lock permanecen sin cambios; focused y suite completa pasan sobre baseline reconciliada
 
 **Forecast:** High, 660–970 líneas authored en tres commits directos secuenciales ≤400, verificables y revertibles; una sola Sesión, sin quinto nivel. Auth/security requiere 4R advisory tras implementar; RDD sigue OFF.
 
-### Módulo M4.7.1 — Admisión del brief · forecast 180–280
-- [ ] Tarea T4.7.1.1 — RED: falso éxito, drift, fallas y espera indebida de token
-- [ ] Tarea T4.7.1.2 — GREEN: transportar brief/ref exactos al owner y admitir asíncronamente
-- [ ] Tarea T4.7.1.3 — REFACTOR: falla tipada, cleanup, binding/epoch y cero espera de output
+### Módulo M4.7.1 — Admisión del brief · ✅ COMPLETO en `13e3ec7`
+- [x] Tarea T4.7.1.1 — RED: falso éxito, drift, fallas y espera indebida de token
+- [x] Tarea T4.7.1.2 — GREEN: transportar brief/ref exactos al owner y admitir asíncronamente
+- [x] Tarea T4.7.1.3 — REFACTOR: falla tipada, cleanup, binding/epoch y cero espera de output
 
-### Módulo M4.7.2 — Canal owner-only y helper seguro · forecast 260–390
-- [ ] Tarea T4.7.2.1 — RED: leakage, cross-worktree, stale/replay, mode, symlink y lifecycle
-- [ ] Tarea T4.7.2.2 — GREEN: ref opaco por backend; secreto sólo dentro del canal/helper
-- [ ] Tarea T4.7.2.3 — REFACTOR: cleanup, revocación y helper privado sin autoridad `bin/torre`
+### Módulo M4.7.2 — Canal owner-only y helper seguro · ✅ COMPLETO en `429f2ea`
+- [x] Tarea T4.7.2.1 — RED: leakage, cross-worktree, stale/replay, mode, symlink y lifecycle
+- [x] Tarea T4.7.2.2 — GREEN: ref opaco por backend; secreto sólo dentro del canal/helper
+- [x] Tarea T4.7.2.3 — REFACTOR: cleanup, revocación y helper privado sin autoridad `bin/torre`
 
-### Módulo M4.7.3 — Prueba positiva y degradación · forecast 220–300
-- [ ] Tarea T4.7.3.1 — RED: pane o auth fallidos nunca pueden declarar `ATTACHED`
-- [ ] Tarea T4.7.3.2 — GREEN: correlacionar prueba autenticada y producir `ATTACHED`/`DEGRADED`
-- [ ] Tarea T4.7.3.3 — REFACTOR: fallback instalado, raíz preservada y cero comando inseguro
+### Módulo M4.7.3 — Degradación veraz; `ATTACHED` reservado · forecast 220–300
+
+**Checkpoint:** implementación enfocada cerrada bajo las decisiones 76–77 / Engram 9506/9507 y evidencia Engram 9533. Siguiente checkpoint: ejecutar `bun test` integral no mutante y congelar el candidato exacto; hasta entonces `S4.7` permanece 🔵 EN CURSO y sus criterios de aceptación no se cierran.
+
+- [x] Tarea T4.7.3.1 — RED: pane o auth fallidos nunca pueden declarar `ATTACHED`
+- [x] Tarea T4.7.3.2 — GREEN: producir siempre la envolvente pública `DEGRADED` mínima; reservar `ATTACHED` hasta prueba real de `S4.8`/`S4.9`
+- [x] Tarea T4.7.3.3 — REFACTOR: helper privado instalado como única ruta, raíz preservada y cero comando inseguro
+
+**4R advisory:** `review-risk` quedó tipado como **unavailable**, no PASS: el dispatch falló antes de ejecutar porque no existe un binding de lineage entre la candidate-view y el controller owner bajo RDD OFF. Por lo tanto el full 4R quedó unavailable; no se ejecutó lifecycle nativo ni ceremonia sustituta.
 
 ## Sesión 4.8 — Matriz real OpenCode 1.18.23 y alineación condicional
 
@@ -710,7 +717,7 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 - [ ] Tarea T4.9.2.2 — GREEN: adoptar tras verde y verificar path/version/integración
 - [ ] Tarea T4.9.2.3 — REFACTOR: rollback, readback y cleanup
 
-**Unknowns explícitos:** señal machine-readable de attach en OpenCode `1.18.23` (resolver en `M4.7.3` o bloqueo técnico); compatibilidad real plugin/SDK `1.18.13` (`S4.8`); JSON/readiness/restore root-child reales de Herdr `0.8.2` (`S4.9`). El runtime instalado legacy no prueba ninguna; los probes exigen aislamiento fresco.
+**Unknowns explícitos:** prueba machine-readable, falsificable y producer-owned de attach en OpenCode/Herdr (descubrir en `S4.8`/`S4.9`; `M4.7.3` permanece siempre `DEGRADED`); compatibilidad real plugin/SDK `1.18.13` (`S4.8`); JSON/readiness/restore root-child reales de Herdr `0.8.2` (`S4.9`). El runtime instalado legacy no prueba ninguna; los probes exigen aislamiento fresco.
 
 ## Historia de `S4.4` — desbloqueo de `S8.10` (2026-08-21)
 

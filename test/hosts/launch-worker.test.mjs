@@ -8,18 +8,24 @@ const binding = Object.freeze({
   assignment_ref: "assignments/a.json", brief: "Approved work only", brief_ref: "briefs/a.json",
   candidate_revision: `sha256:${"a".repeat(64)}`, fence_path: "/runtime/fence-a", host_epoch: 3, project_id: "project-a", worktree: "/work/a",
 })
+const degradedView = { status: "DEGRADED", code: "CT_VIEW_UNVERIFIED", retryable: true }
 
 describe("packaged launch-worker runtime", () => {
-  test("starts, binds, then attaches the Main-owned root without legacy custody", async () => {
+  test("starts and binds the Main-owned root while reporting only a degraded public view", async () => {
     const calls = []
     const runtime = createLaunchWorkerRuntime({
       consumeBinding: async (requestRef) => { calls.push(["consume", requestRef]); return binding },
       backend: { start: async (request) => { calls.push(["start", request]); return { assignment_ref: binding.assignment_ref, backend_pid: 42, backend_url: "http://127.0.0.1:4096", credential_ref: "r".repeat(43), host_epoch: binding.host_epoch, project_id: binding.project_id, root_identity: { agent: "gentle-orchestrator", root_session_id: `ses_${"a".repeat(26)}` }, worktree: binding.worktree } }, stop: async () => { calls.push(["stop"]) } },
       rootBinding: { bind: (record) => { calls.push(["bind", record]); return { ...record, agent: "gentle-orchestrator", root_session_id: record.root_identity.root_session_id } } },
-      view: { attach: async (target) => { calls.push(["attach", target]); return { pane_id: "w1:p1" } } },
+      view: { attach: async (target) => { calls.push(["attach", target]); return { status: "ATTACHED", pane_id: "w1:p1", helper_ref: "private" } } },
     })
 
-    await expect(runtime.launchWorker({ request_ref: "request-a" })).resolves.toEqual({ ...binding, backend_pid: 42, backend_url: "http://127.0.0.1:4096", root_session_id: `ses_${"a".repeat(26)}`, pane_id: "w1:p1" })
+    const result = await runtime.launchWorker({ request_ref: "request-a" })
+    expect(result).toEqual({ ...binding, backend_pid: 42, backend_url: "http://127.0.0.1:4096", root_session_id: `ses_${"a".repeat(26)}`, view: degradedView })
+    expect(Object.keys(result.view).sort()).toEqual(["code", "retryable", "status"])
+    expect(Object.isFrozen(result)).toBe(true)
+    expect(Object.isFrozen(result.view)).toBe(true)
+    expect(Object.getPrototypeOf(result.view)).toBe(Object.prototype)
     expect(calls).toEqual([
       ["consume", "request-a"], ["start", { assignment_ref: "assignments/a.json", brief: "Approved work only", brief_ref: "briefs/a.json", host_epoch: 3, project_id: "project-a", worktree: "/work/a" }],
       ["bind", { assignment_ref: "assignments/a.json", backend_pid: 42, backend_url: "http://127.0.0.1:4096", host_epoch: 3, project_id: "project-a", root_identity: { agent: "gentle-orchestrator", root_session_id: `ses_${"a".repeat(26)}` }, worktree: "/work/a" }],
@@ -61,7 +67,9 @@ describe("packaged launch-worker runtime", () => {
       consumeBinding: async () => { throw Object.assign(new Error("missing"), { code: "CT_LAUNCH_BINDING_INVALID" }) },
       backend: { start: async () => { effects += 1 }, stop: async () => {} }, rootBinding: { bind: () => true }, view: { attach: async () => true },
     })
-    await expect(runtime.launchWorker({ request_ref: "request-a", binding })).rejects.toMatchObject({ code: "CT_LAUNCH_REJECTED" })
+    for (const assertion of [{ binding }, { ack: true }, { proof_file: "/tmp/proof" }, { nonce: "caller" }, { view_status: "ATTACHED" }]) {
+      await expect(runtime.launchWorker({ request_ref: "request-a", ...assertion })).rejects.toMatchObject({ code: "CT_LAUNCH_REJECTED" })
+    }
     await expect(runtime.launchWorker({ request_ref: "request-a" })).rejects.toMatchObject({ code: "CT_LAUNCH_BINDING_INVALID" })
     expect(effects).toBe(0)
   })
@@ -88,17 +96,18 @@ describe("packaged launch-worker runtime", () => {
     expect(calls).toEqual(["start", "bind", ["stop", "/work/a"]])
   })
 
-  test("keeps credentials out of bound and returned launch records", async () => {
+  test("preserves the admitted root when the private view fails and leaks no execution data", async () => {
     const calls = [], root_session_id = `ses_${"a".repeat(26)}`, backend_url = "http://127.0.0.1:4096"
     const runtime = createLaunchWorkerRuntime({
       consumeBinding: async () => binding,
       backend: { start: async () => ({ assignment_ref: binding.assignment_ref, backend_pid: 42, backend_url, credential_ref: "r".repeat(43), host_epoch: binding.host_epoch, project_id: binding.project_id, root_identity: {}, worktree: binding.worktree }), stop: async () => { calls.push("stop") } },
       rootBinding: { bind: () => ({ backend_pid: 42, backend_url, root_session_id, worktree: binding.worktree }) },
-      view: { attach: async (input) => { expect(input.credential_ref).toBe("r".repeat(43)); throw Object.assign(new Error("view unavailable"), { code: "CT_VIEW_UNAVAILABLE", secret: "do-not-copy" }) } },
+      view: { attach: async (input) => { expect(input.credential_ref).toBe("r".repeat(43)); throw Object.assign(new Error("attach private-command --token private-token"), { code: "CT_VIEW_UNAVAILABLE", secret: "do-not-copy", pane_id: "w1:p1" }) } },
     })
 
-    await expect(runtime.launchWorker({ request_ref: "request-a" })).rejects.toMatchObject({ code: "CT_LAUNCH_FINAL_ATTEMPT_FAILED", evidence: { cause: "CT_VIEW_UNAVAILABLE", request_ref: "request-a", replacement_binding_required: true } })
-    await expect(runtime.launchWorker({ request_ref: "request-b" })).rejects.not.toHaveProperty("evidence.secret")
+    const result = await runtime.launchWorker({ request_ref: "request-a" })
+    expect(result).toEqual({ ...binding, backend_pid: 42, backend_url, root_session_id, view: degradedView })
+    expect(JSON.stringify(result)).not.toMatch(/pane_id|helper|credential|secret|command|copy|paste|token|w1:p1|r{43}|do-not-copy/i)
     expect(calls).toEqual([])
   })
 })
