@@ -16,25 +16,36 @@ const candidateInput = Object.freeze({
   target: { repository: "owner/repository", branch: "master" }, assignment_id: "assignment-a", host_epoch: 1,
   policy_revision: 1, jornada_id: "jornada-a", jornada_revision: 3, manifest_revision: 1, registry_revision: 7,
   capability_revision: 1, verification_digest: `sha256:${"e".repeat(64)}`,
-  policy_report_digest: `sha256:${"9".repeat(64)}`, required_checks_digest: `sha256:${"f".repeat(64)}`,
-  required_reviews_digest: `sha256:${"0".repeat(64)}`,
+  policy_report_digest: `sha256:${"9".repeat(64)}`,
 })
-const directPolicy = `# Policy\n\n\`\`\`yaml\nschema: delivery-policy\nschema_version: 1\nmerge:\n  authorizing_party: human\ndelivery:\n  shape: direct-push\n  target_branch: master\nplanning:\n  horizon_ceiling: 2\ndocumentation_close:\n  module: full\n  session: full\n\`\`\`\n`
+const directPolicy = `# Policy\n\n\`\`\`yaml\nschema: delivery-policy\nschema_version: 1\nmerge:\n  authorizing_party: human\ndelivery:\n  shape: direct-push\n  target_branch: master\nplanning:\n  horizon_ceiling: 2\n\`\`\`\n`
 const authorizationFor = (candidate = candidateInput, overrides = {}) => ({
   authorization_id: "auth-a", project_id: candidate.project_id, plan_id: candidate.plan_id, registry_revision: candidate.registry_revision,
   jornada_id: candidate.jornada_id, jornada_revision: candidate.jornada_revision,
-  policy_report_digest: candidate.policy_report_digest, required_checks_digest: candidate.required_checks_digest,
+  policy_report_digest: candidate.policy_report_digest,
   delivery: { shape: "direct-push", repository: candidate.target.repository, target_branch: candidate.target.branch,
     base_sha: candidate.base_sha, head_sha: candidate.head_sha }, ...overrides,
 })
 const errorCode = async (operation) => { try { await operation() } catch (error) { return error.code } return null }
 
 describe("append-only delivery ledger", () => {
+  test("requires a digest or literal absent receipt and copies it without normalization", async () => {
+    const root = mkdtempSync(join(tmpdir(), "ct-delivery-ledger-receipt-"))
+    const ledger = createDeliveryLedger({ root, clock: () => "2026-08-10T00:00:00.000Z" })
+    const base = { shape: "direct-push", authorization_ref: "auth-a", state: "DELIVERED", attempt: 1, reconciled: false }
+    expect(await errorCode(() => ledger.append({ ...base, candidate_revision: `sha256:${"b".repeat(64)}` }, 0))).toBe("CT_SCHEMA_INVALID")
+    expect(await errorCode(() => ledger.append({ ...base, candidate_revision: `sha256:${"c".repeat(64)}`, process_receipt_digest: "present" }, 0))).toBe("CT_SCHEMA_INVALID")
+    const candidate_revision = `sha256:${"d".repeat(64)}`, receipt = `sha256:${"8".repeat(64)}`
+    const record = await ledger.append({ ...base, candidate_revision, process_receipt_digest: receipt }, 0)
+    expect(record.process_receipt_digest).toBe(receipt)
+    expect((await ledger.history(candidate_revision)).at(-1).process_receipt_digest).toBe(receipt)
+  })
+
   test("uses candidate_revision as identity with filesystem CAS and terminal immutability", async () => {
     const root = mkdtempSync(join(tmpdir(), "ct-delivery-ledger-"))
     const ledger = createDeliveryLedger({ root, clock: () => "2026-08-10T00:00:00.000Z" })
     const candidate_revision = `sha256:${"a".repeat(64)}`
-    const base = { candidate_revision, shape: "direct-push", authorization_ref: "auth-a" }
+    const base = { candidate_revision, shape: "direct-push", authorization_ref: "auth-a", process_receipt_digest: "absent" }
 
     await ledger.append({ ...base, state: "ATTEMPT_FAILED", attempt: 1, classification: "provider_unavailable" }, 0)
     await ledger.append({ ...base, state: "UNRECONCILED", attempt: 1, classification: "unknown" }, 1)
@@ -74,10 +85,53 @@ describe("authorized delivery workflow", () => {
     expect(result.shape).toBe("direct-push")
     expect(events.map(([name]) => name)).toEqual(["commit", "verify", "authorization", "reconcile", "push"])
     expect(events[2][1]).toBe(result.candidate_revision)
-    expect((await ledger.history(result.candidate_revision)).at(-1).state).toBe("DELIVERED")
+    const history = await ledger.history(result.candidate_revision)
+    expect(history.at(-1).state).toBe("DELIVERED")
+    expect(history.every(({ process_receipt_digest }) => process_receipt_digest === "absent")).toBe(true)
     events.length = 0
     expect((await executeDelivery(request)).status).toBe("DELIVERED")
     expect(events.map(([name]) => name)).toEqual(["verify", "authorization"])
+  })
+
+  test("carries a supplied process receipt literally across every written record state", async () => {
+    const repository_root = mkdtempSync(join(tmpdir(), "ct-delivery-receipt-"))
+    writeFileSync(join(repository_root, "AGENTS.md"), directPolicy)
+    mkdirSync(join(repository_root, ".delivery"), { mode: 0o700 })
+    const ledger = createDeliveryLedger({ root: join(repository_root, ".delivery"), clock: () => "2026-08-10T00:00:00.000Z" })
+    const receipt = `sha256:${"7".repeat(64)}`, candidate = { ...candidateInput, process_receipt_digest: receipt }
+    let attempt = 0
+    const result = await executeDelivery({
+      candidate_input: candidate,
+      policy_request: { repository_root, project_id: "project-a", expected_digest: digest(readFileSync(join(repository_root, "AGENTS.md"))), revision: 1 },
+      authorization_store: { readAuthorization: () => authorizationFor(candidate), admitCandidateEffect: () => ({ admitted: true }) },
+      authorization_id: "auth-a", ledger,
+      commit: async () => ({ commit_sha: sha("d"), tree_sha: sha("c") }), verify: async () => true,
+      reconcile: async () => ({ status: "absent" }),
+      effects: { directPush: async () => ++attempt === 1 ? { delivered: false, statusCode: 503 } : { delivered: true }, pullRequest: async () => ({ delivered: true }) },
+    })
+
+    expect(result.status).toBe("DELIVERED")
+    const history = await ledger.history(result.candidate_revision)
+    expect(history.map(({ state }) => state)).toEqual(["ATTEMPT_FAILED", "DELIVERED"])
+    expect(history.every(({ process_receipt_digest }) => process_receipt_digest === receipt)).toBe(true)
+  })
+
+  test("ignores the retired required checks digest during authorization matching", async () => {
+    const repository_root = mkdtempSync(join(tmpdir(), "ct-delivery-retired-checks-"))
+    writeFileSync(join(repository_root, "AGENTS.md"), directPolicy)
+    mkdirSync(join(repository_root, ".delivery"), { mode: 0o700 })
+    const ledger = createDeliveryLedger({ root: join(repository_root, ".delivery") })
+    const result = await executeDelivery({
+      candidate_input: candidateInput,
+      policy_request: { repository_root, project_id: "project-a", expected_digest: digest(readFileSync(join(repository_root, "AGENTS.md"))), revision: 1 },
+      authorization_store: { readAuthorization: () => authorizationFor(candidateInput, { [["required", "checks", "digest"].join("_")]: `sha256:${"1".repeat(64)}` }), admitCandidateEffect: () => ({ admitted: true }) },
+      authorization_id: "auth-a", ledger,
+      commit: async () => ({ commit_sha: sha("d"), tree_sha: sha("c") }), verify: async () => true,
+      reconcile: async () => ({ status: "absent" }),
+      effects: { directPush: async () => ({ delivered: true }), pullRequest: async () => ({ delivered: true }) },
+    })
+
+    expect(result.status).toBe("DELIVERED")
   })
 
   test("a repository without a policy block fails closed to pull-request delivery", async () => {

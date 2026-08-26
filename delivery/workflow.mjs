@@ -9,7 +9,7 @@ const authorizationMatches = ({ candidate, authorization, authorizationId, shape
   && authorization.plan_id === candidate.plan_id && authorization.registry_revision === candidate.registry_revision
   && authorization.jornada_id === candidate.jornada_id && authorization.jornada_revision === candidate.jornada_revision
   && digest(candidate.policy_report_digest) && authorization.policy_report_digest === candidate.policy_report_digest
-  && authorization.required_checks_digest === candidate.required_checks_digest && authorization.delivery?.shape === shape
+  && authorization.delivery?.shape === shape
   && authorization.delivery.repository === candidate.target.repository && authorization.delivery.target_branch === candidate.target.branch
   && authorization.delivery.base_sha === candidate.base_sha && authorization.delivery.head_sha === candidate.head_sha
 
@@ -41,7 +41,8 @@ export const executeDelivery = async ({ candidate_input, policy_request, authori
     if (terminal?.state === "UNRECONCILED") return Object.freeze({ status: "UNRECONCILED", code: "CT_DELIVERY_UNRECONCILED", candidate_revision: identity, candidate_frozen: true, tower_blocked: false, attempts: terminal.attempt, shape, policy_resolved: policy.resolved })
     const record = async (event) => {
       const revision = (await ledger.history(identity)).length
-      return ledger.append({ ...event, shape, authorization_ref: authorization_id }, revision)
+      return ledger.append({ ...event, shape, authorization_ref: authorization_id,
+        process_receipt_digest: candidate.process_receipt_digest ?? "absent" }, revision)
     }
     const outcome = await deliverWithReconciliation({ candidate_revision: identity,
       reconcile: () => reconcile(Object.freeze({ candidate, shape, policy })),

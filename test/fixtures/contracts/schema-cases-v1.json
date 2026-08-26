@@ -320,7 +320,6 @@
     "jornada_id": "jornada-servitask-tasker-001",
     "jornada_revision": 1,
     "delivery": {"shape": "pull-request", "repository": "owner/repository", "number": 420, "target_branch": "main", "base_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
-    "required_checks_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "policy_report_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
     "created_at": "2026-07-27T15:00:00Z",
     "expires_at": "2026-07-27T15:30:00Z",
@@ -330,7 +329,7 @@
   "candidateRevision": {
     "schema": "candidate-revision",
     "schema_version": 1,
-    "candidate_revision": "sha256:f33a2229d04b3bcbebc9f55a6c867613c5b978d6519d7900cc1afd4fd3eb0578",
+    "candidate_revision": "sha256:bb04f8f919f989038a26914f7001a87c5dbc007d4d3e52cb2a5939fef5a6781b",
     "project_id": "project-a",
     "plan_id": "plan-a",
     "session_id": "S5.1",
@@ -349,9 +348,7 @@
     "manifest_revision": 1,
     "registry_revision": 7,
     "capability_revision": 1,
-    "verification_digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-    "required_checks_digest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-    "required_reviews_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+    "verification_digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
   },
   "deliveryRecord": {
     "schema": "delivery-record",
@@ -361,6 +358,7 @@
     "previous_revision": 0,
     "state": "DELIVERED",
     "shape": "direct-push",
+    "process_receipt_digest": "absent",
     "authorization_ref": "auth-a",
     "attempt": 1,
     "reconciled": false,

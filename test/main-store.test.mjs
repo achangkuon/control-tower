@@ -66,7 +66,6 @@ const authorizationRecord = (id) => ({
     base_sha: "a".repeat(40),
     head_sha: "b".repeat(40),
   },
-  required_checks_digest: `sha256:${"a".repeat(64)}`,
   policy_report_digest: `sha256:${"b".repeat(64)}`,
   created_at: "2099-01-01T00:00:00Z",
   expires_at: "2099-01-01T01:00:00.000Z",

@@ -162,9 +162,6 @@ delivery:
   target_branch: master
 planning:
   horizon_ceiling: 2
-documentation_close:
-  module: engram-only
-  session: full
 ```
 
 Qué significa cada campo:
@@ -175,8 +172,6 @@ Qué significa cada campo:
 | `delivery.shape` | `direct-push`, `pull-request` | Forma de la entrega remota. No altera el orden commit → verificar tree → congelar SHA. |
 | `delivery.target_branch` | nombre de rama | Destino de la entrega. |
 | `planning.horizon_ceiling` | entero ≥ 1 | Cuántas Sesiones se pueden planificar por delante. |
-| `documentation_close.module` | `engram-only`, `full` | Profundidad del cierre al terminar un Módulo. |
-| `documentation_close.session` | `engram-only`, `full` | Profundidad del cierre al terminar una Sesión. |
 
 **Esto NO puede tocar los floors de seguridad.** Ninguna combinación de valores
 habilita mutación remota antes de `DELIVERY_READY`, ni reescribe un candidato
@@ -186,9 +181,8 @@ rechaza nombrando el floor violado.
 
 **Fail-closed.** Un campo ausente, un valor desconocido o un bloque no parseable
 **no vale como default permisivo**: resuelve al valor más restrictivo
-(`merge.authorizing_party: human`, `horizon_ceiling: 2`,
-`documentation_close: full`) y el motivo queda nombrado. Un repo sin este bloque
-se comporta como antes de que existiera.
+(`merge.authorizing_party: human`, `horizon_ceiling: 2`) y el motivo queda nombrado.
+Un repo sin este bloque se comporta como antes de que existiera.
 
 ### Por qué
 

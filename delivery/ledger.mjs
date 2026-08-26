@@ -139,6 +139,7 @@ export const createDeliveryLedger = ({ root, clock = () => new Date().toISOStrin
       schema: "delivery-record", schema_version: 1, candidate_revision: input.candidate_revision,
       revision: records.length + 1, previous_revision: records.length, state: input.state,
       shape: input.shape, authorization_ref: input.authorization_ref, attempt: input.attempt,
+          process_receipt_digest: input.process_receipt_digest,
       ...(input.classification ? { classification: input.classification } : {}),
       ...(typeof input.reconciled === "boolean" ? { reconciled: input.reconciled } : {}), created_at: clock(),
     })

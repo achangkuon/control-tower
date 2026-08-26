@@ -181,6 +181,12 @@ describe("V1 schema boundary", () => {
     expect(validate("authorization", input).delivery.shape).toBe("direct-push")
   })
 
+  test("keeps the authorization fixture valid and closed", () => {
+    const input = structuredClone(fixtures.authorization)
+    expect(validate("authorization", input)).toEqual(input)
+    expect(errorCode(() => validate("authorization", { ...input, unexpected: true }))).toBe("CT_SCHEMA_INVALID")
+  })
+
   test("rejects support proposal role, project, and schema drift", () => {
     const proposal = {
       schema: "support-proposal",
@@ -301,7 +307,6 @@ describe("cross-field schema invariants", () => {
       commit_sha: "d".repeat(40), head_sha: "d".repeat(40), target: { repository: "owner/repository", branch: "master" },
       assignment_id: "assignment-a", host_epoch: 1, policy_revision: 1, jornada_id: "jornada-a", jornada_revision: 3,
       manifest_revision: 1, registry_revision: 7, capability_revision: 1, verification_digest: `sha256:${"e".repeat(64)}`,
-      required_checks_digest: `sha256:${"f".repeat(64)}`, required_reviews_digest: `sha256:${"0".repeat(64)}`,
     }
     const candidate = freezeCandidate(input)
     const changed = freezeCandidate({ ...input, verification_digest: `sha256:${"1".repeat(64)}` })
@@ -313,6 +318,29 @@ describe("cross-field schema invariants", () => {
     expect(successor.predecessor_revision).toBe(candidate.candidate_revision)
     expect(errorCode(() => successorCandidate(candidate, input))).toBe("CT_SCHEMA_INVALID")
 
+  })
+
+  test("accepts an optional digest-only process receipt", () => {
+    const { candidate_revision: _revision, ...identity } = fixtures.candidateRevision
+    expect(freezeCandidate(identity)).not.toHaveProperty("process_receipt_digest")
+
+    const processReceipt = `sha256:${"7".repeat(64)}`
+    expect(freezeCandidate({ ...identity, process_receipt_digest: processReceipt }).process_receipt_digest).toBe(processReceipt)
+    expect(errorCode(() => freezeCandidate({ ...identity, process_receipt_digest: "absent" }))).toBe("CT_SCHEMA_INVALID")
+  })
+
+  test("seals a supplied process receipt into frozen candidate identity", () => {
+    const { candidate_revision: _revision, ...identity } = fixtures.candidateRevision
+    const firstReceipt = `sha256:${"7".repeat(64)}`
+    const secondReceipt = `sha256:${"8".repeat(64)}`
+    const frozen = freezeCandidate({ ...identity, process_receipt_digest: firstReceipt })
+
+    expect(isCurrentCandidate(frozen, { ...identity, process_receipt_digest: firstReceipt })).toBe(true)
+    expect(isCurrentCandidate(frozen, { ...identity, process_receipt_digest: secondReceipt })).toBe(false)
+    expect(errorCode(() => freezeCandidate({ ...frozen, process_receipt_digest: secondReceipt }))).toBe("CT_SCHEMA_INVALID")
+
+    const withoutReceipt = freezeCandidate(identity)
+    expect(errorCode(() => freezeCandidate({ ...withoutReceipt, process_receipt_digest: firstReceipt }))).toBe("CT_SCHEMA_INVALID")
   })
 
   test("requires candidate revisions to match their frozen identity", () => {

@@ -77,7 +77,7 @@ opacos, sin abrirlos y sin rechazar un contrato por lo que digan adentro.
 
 > **¿La Torre necesita entender el CONTENIDO de la regla para aplicarla?**
 >
-> **Sí** → es del harness. La Torre exige el recibo y **no lo abre**.
+> **Sí** → es del harness. La Torre sólo puede cargar un recibo opaco y **no lo abre ni gatea por él**.
 > **No** → la Torre lo puede hacer, porque no hay regla ajena que copiar.
 
 Corolario que decidió el reparto del recibo de proceso ([decisión 72](decision-register.md)):

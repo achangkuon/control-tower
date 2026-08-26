@@ -10,7 +10,6 @@ const strict = Object.freeze({
   merge: Object.freeze({ authorizing_party: "human" }),
   delivery: Object.freeze({ shape: "pull-request", target_branch: "master" }),
   planning: Object.freeze({ horizon_ceiling: 1 }),
-  documentation_close: Object.freeze({ module: "full", session: "full" }),
 })
 const inside = (root, path) => relative(root, path) === "" || (!relative(root, path).startsWith("..") && !isAbsolute(relative(root, path)))
 const digest = (bytes) => `sha256:${createHash("sha256").update(bytes).digest("hex")}`
@@ -27,10 +26,6 @@ const choose = (global, project) => ({
   merge: { authorizing_party: global.merge.authorizing_party === "human" || project.merge.authorizing_party === "human" ? "human" : "automatic" },
   delivery: { shape: global.delivery.shape === "pull-request" || project.delivery.shape === "pull-request" ? "pull-request" : "direct-push", target_branch: global.delivery.target_branch },
   planning: { horizon_ceiling: Math.min(global.planning.horizon_ceiling, project.planning.horizon_ceiling) },
-  documentation_close: {
-    module: global.documentation_close.module === "full" || project.documentation_close.module === "full" ? "full" : "engram-only",
-    session: global.documentation_close.session === "full" || project.documentation_close.session === "full" ? "full" : "engram-only",
-  },
 })
 const canonicalPolicy = (policy) => {
   try { return validate("deliveryPolicy", policy) } catch { return null }

@@ -25,7 +25,7 @@ en [la frontera Torre ↔ gentle-ai](../frontera-torre-gentle-ai.md).
 |---|---|
 | Dependencias | Las dependencias legacy de Changes F/G se conservan. `S5.1` depende de `S3.2` ✅, `S3.3` ✅ y **`S3.4`** —esta última se sumó el 2026-08-04 al sellar `S5.1`: revalidar la Jornada antes de un efecto irreversible exige `readJornada`, que entrega `S3.4`—; `S5.2` de `S4.1` y `S3.3` ✅, `S5.3` de `S5.2`, `S5.4` de `S5.1`, y la cadena contractual `S5.4 → S5.6 → S5.7 → S5.8 → S5.11 → S5.12 → S5.9 → S5.10 → S5.5`. |
 | Outputs | Entrega idempotente por política `direct-push`, checkpoints durables y loop planner N+1 / implementer N. Main conserva la autoridad; Moshi sólo muestra escalamiento. |
-| Roadmap | `S5.1`–`S5.4` y `S5.6`–`S5.12` están ✅ COMPLETO. `S5.3` quedó reconciliada sobre la base entregada `master@88d1de4` mediante los commits replayed `81a1e46` (planificación), `6d8b5f7` (comportamiento) y `163a9f9` (cierre/conflictos), con sus cuatro criterios y el gate de alcance en PASS. Sólo `S5.5` sigue 🟢 LISTO. Quedan además `S5.13` 📋 —el recorte de verificación, ampliado el 2026-08-25 con el recibo opaco— y `S5.14` 📋, que saca la profundidad de planificación del código. |
+| Roadmap | `S5.1`–`S5.4` y `S5.6`–`S5.12` están ✅ COMPLETO. `S5.3` quedó reconciliada sobre la base entregada `master@88d1de4` mediante los commits replayed `81a1e46` (planificación), `6d8b5f7` (comportamiento) y `163a9f9` (cierre/conflictos), con sus cuatro criterios y el gate de alcance en PASS. Sólo `S5.5` sigue 🟢 LISTO. Quedan además `S5.13` 🔵 —nueve Tareas implementadas bajo Strict TDD focalizado; próximo checkpoint: checks dirigidos + una ejecución integral de `bun test` + snapshot exacto— y `S5.14` 📋, que saca la profundidad de planificación del código. |
 | Referencias | [`sdd-tower-telegram-delivery`](../../changes/sdd-tower-telegram-delivery/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [`autonomous-v2-role-routed-continuation`](../../changes/autonomous-v2-role-routed-continuation/). El proposal `sdd-tower-continuous-slice-loop` fue eliminado en `613a45d` por ser cáscara sin avance; su mecanismo quedó superseded por la continuación role-routed y su intención vive en este STATUS. |
 
 ## Fase 3 del plan de depuración — la verificación vuelve a gentle-ai (2026-08-21)
@@ -1048,13 +1048,13 @@ Cada Tarea es una unidad de commit/direct-push revisable y revertible por sí so
 
 **Desvío declarado sobre las unidades de commit.** El Módulo pide una unidad por Tarea. Se entregó en dos unidades funcionales más dos de corrección, porque `T5.10.1.1` y `T5.10.1.2` son RED puro y la entrega de este repo es push directo a `master` sin PR: commitear tests fallando dejaría `master` en rojo. Cada unidad es revertible por sí sola.
 
-**Cómputo del Plan 5:** `11/14 S = 79%`. Cuentan `S5.1`, `S5.2`, `S5.3`, `S5.4`, `S5.6`, `S5.7`, `S5.8`, `S5.9`, `S5.10`, `S5.11` y `S5.12`; `S5.5` permanece 🟢 LISTO, `S5.13` nace 📋 PLANIFICADO en la Fase 3 del 2026-08-21 y `S5.14` nace 📋 PLANIFICADO el 2026-08-25 con el segundo eje de la frontera ([decisión 71](../decision-register.md)). Ninguna Sesión aporta crédito hasta `COMPLETO`. **El porcentaje bajó de 92% a 85% y de 85% a 79% sin que se perdiera trabajo: se enumeró dos veces trabajo que existía y nadie contaba**, exactamente como pasó al cerrar la Fase 2.
+**Cómputo del Plan 5:** `11/14 S = 79%`. Cuentan `S5.1`, `S5.2`, `S5.3`, `S5.4`, `S5.6`, `S5.7`, `S5.8`, `S5.9`, `S5.10`, `S5.11` y `S5.12`; `S5.5` permanece 🟢 LISTO, `S5.13` permanece 🔵 EN CURSO y `S5.14` nace 📋 PLANIFICADO el 2026-08-25 con el segundo eje de la frontera ([decisión 71](../decision-register.md)). Ninguna Sesión aporta crédito hasta `COMPLETO`. **El porcentaje bajó de 92% a 85% y de 85% a 79% sin que se perdiera trabajo: se enumeró dos veces trabajo que existía y nadie contaba**, exactamente como pasó al cerrar la Fase 2.
 
 Las responsabilidades legacy de Telegram Delivery y continuación que aún no tienen límite de un PR permanecen sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).
 
 ## Sesión 5.13 — Retiro de la verificación de proceso de la entrega
 
-**Estado:** 📋 PLANIFICADO — nace en la Fase 3 del plan de depuración bajo la [decisión 64](../decision-register.md).
+**Estado:** 🔵 EN CURSO — las nueve Tareas de implementación están completas bajo Strict TDD focalizado; quedan pendientes los checks dirigidos, una ejecución integral de `bun test`, el snapshot exacto del candidato y la entrega. Nace en la Fase 3 del plan de depuración bajo la [decisión 64](../decision-register.md).
 **Depende de:** nada del código. La clasificación de §3.1 es su contrato de entrada y ya está escrita.
 **Área:** `policy/delivery-policy.mjs`, `delivery/workflow.mjs`, `schemas/{delivery-policy-v1,candidate-revision-v1,authorization-v1}.schema.json`, `contracts/{schema-registry,validate}.mjs`, `AGENTS.md`, `test/policy/{delivery-policy,jornada}.test.mjs`, `test/delivery/**`, `test/contracts/{schema,s3-2-schemas}.test.mjs`, `test/fixtures/contracts/schema-cases-v1.json`, `test/main-store.test.mjs`, `test/escalation/request.test.mjs`, `test/install/launch-worker-cli.test.mjs`
 **Prohibido:** todo `escalation/*.mjs` de producción, `core.mjs`, `mcp.mjs`, `main-store/store.mjs`, `workspace/**`, `console/**`, `policy/jornada.mjs`, `continuation/**`. Sobre `test/escalation/request.test.mjs` y `test/main-store.test.mjs` toca **sólo** las fixturas que declaran `required_checks_digest`, sin cambiar un caso de comportamiento.
@@ -1062,8 +1062,12 @@ Las responsabilidades legacy de Telegram Delivery y continuación que aún no ti
 **Recurso:** ninguno exclusivo. Sin token de entrega.
 **Ruta:** `design-tasks`.
 
+**Estado de implementación previo a la verificación integral:** los tres Módulos quedaron verdes bajo Strict TDD focalizado: `M5.13.1` **13/0**, `M5.13.2` **147/0** y `M5.13.3` **13/0**, más `test/delivery` **25/0**. Líneas authored de implementación por Módulo: **32**, **52** y **91**; total técnico: **175**. El diff completo trackeado suma **329 líneas authored**. `review-reliability` quedó `typed-unavailable` porque no existe binding de lineage para la vista del candidato con RDD apagado. Evidencia focalizada completa: Engram **observación 9521**. La suite integral no se ejecutó todavía; los nueve criterios de aceptación permanecen sin marcar hasta esa verificación.
+
 **Resultado único:** los tres campos clasificados como verificación en §3.1 dejan de existir
-en la Torre, y ninguno se reemplaza por otra cosa.
+en la Torre y no se reemplazan por otro gate. La única carga nueva permitida es el
+`process_receipt_digest` opaco de la decisión 72: la Torre nunca interpreta su contenido ni
+gatea la calidad del proceso por su presencia, ausencia o valor.
 
 1. `documentation_close.{module,session}` sale del bloque `delivery-policy` de `AGENTS.md`,
    de `schemas/delivery-policy-v1.schema.json`, de `strict`, de `choose()` y de
@@ -1102,31 +1106,100 @@ ni una línea**.
 **Por qué es una sola Sesión y no tres.** Los tres campos viven en la misma familia de
 schemas y la misma validación cruzada: `authorizationMatches` compara candidato↔autorización
 campo por campo, así que sacar uno solo deja los dos schemas desalineados y la comparación a
-medio camino. Es un cambio chico y de una pieza — el forecast está por debajo del umbral de
-encadenado.
+medio camino. La Sesión conserva un resultado coherente, pero sus forecasts suman ~550 líneas:
+se ejecuta en tres Módulos secuenciales, cada uno independientemente revertible y ≤400.
 
-**Efecto colateral que la Sesión debe declarar, no descubrir.**
-`policy/delivery-policy.mjs` está hoy en el **cajón D** del
-[inventario](../inventario-de-producto.md) —sin llamador de producción; `executeDelivery` sólo
-lo alcanza desde `test/delivery/`—. Al terminar `S5.13` **pasa al cajón B**: sobrevive
-recortado y se conecta como precondición de `CV_GRANT_DELIVERY` junto a `policy/jornada.mjs`.
-El cajón D queda en 4 archivos y 294 líneas.
+**Límite explícito de esta Sesión — ratificado el 2026-08-26.**
+`policy/delivery-policy.mjs` permanece sin llamador de producción en el **cajón D** del
+[inventario](../inventario-de-producto.md). Su conexión como precondición de
+`CV_GRANT_DELIVERY` se difiere a una **Sesión futura separada todavía sin enumerar**. Esta
+ratificación no autoriza un ID ni un alcance para ese trabajo: `S5.13` no cambia el call graph
+de producción, no toca `console/**` y no declara esa conexión completada.
+
+**Paquete de autoridad ratificado por el maintainer el 2026-08-26:**
+- **Pregunta exacta:** ¿la Torre retira `documentation_close`, `required_checks_digest` y
+  `required_reviews_digest` de su enforcement y limita cualquier recibo de proceso a carga
+  opaca sin interpretación ni gate?
+- **Evidencia:** [decisión 64](../decision-register.md), [decisión 72](../decision-register.md)
+  y el test de contenido de la [frontera Torre ↔ gentle-ai](../frontera-torre-gentle-ai.md).
+- **Opciones consideradas:** **A, ratificada:** retirar los tres controles y permitir sólo
+  `process_receipt_digest` opaco; preserva evidencia sin duplicar el proceso del harness.
+  **B, descartada:** conservar o reemplazar los controles por un gate; reconstruye
+  verificación de proceso dentro de la Torre. **C, descartada:** retirar también la carga
+  opaca; pierde la medición de ausencia ya autorizada por la decisión 72.
+- **Clase:** contrato visible del producto; API pública; migraciones. **Contaminaba:**
+  `AGENTS.md`, `CLAUDE.md`, P2, `S5.1`, `S5.2`, `S7.1` y todo proyecto que declare el bloque.
+- **Checkpoint:** implementación focalizada completa; siguen los checks dirigidos, una ejecución integral de `bun test` y el snapshot exacto del candidato, sin proposal/spec/tasks nuevos.
 
 **Decisiones:**
-- `escala` — **quitar `documentation_close` del bloque `delivery-policy` de `AGENTS.md` y de
-  su schema.** **Clase:** contrato visible del producto; API pública. `AGENTS.md` es la
-  política de entrega que leen todos los agentes del maintainer y el bloque es su superficie
-  declarada. Es del maintainer, no se deriva. **Contamina:** `AGENTS.md`, `CLAUDE.md`, P2
-  —dueño del registro de contratos— y todo proyecto que declare el bloque.
-- `escala` — **quitar dos campos obligatorios del contrato de candidato.** **Clase:**
-  contrato visible del producto; migraciones. Un candidato ya persistido con esos campos deja
-  de validar contra `additionalProperties: false`. **Contamina:** `S5.1`, `S5.2`, `S7.1`.
+- `escala` — **RESUELTA por el maintainer el 2026-08-26:** quitar `documentation_close` del
+  bloque `delivery-policy` de `AGENTS.md` y de su schema. No se reemplaza por otro gate.
+- `escala` — **RESUELTA por el maintainer el 2026-08-26:** quitar
+  `required_checks_digest` y `required_reviews_digest` de los contratos Tower-owned. No se
+  conserva una validación equivalente bajo otro nombre.
+- `escala` — **RESUELTA por el maintainer el 2026-08-26:** la Torre puede cargar
+  `process_receipt_digest` como valor opaco, pero nunca interpreta su contenido ni gatea la
+  calidad del proceso por su presencia, ausencia o valor.
 - `derivable` — qué se queda. **Criterio:** las dos tablas de nivel campo de §3.1, fila por
-  fila. Falsificable: cualquier campo que sobreviva o caiga sin figurar en esas tablas.
+  fila, más la enmienda opaca de la decisión 72. Falsificable: cualquier campo que sobreviva
+  o caiga sin esa autoridad, o cualquier ramificación sobre el contenido del recibo.
+
+**Descomposición ratificada de `S5.13` — orden obligatorio, Strict TDD y unidades
+independientemente revertibles de ≤400 líneas authored:**
+
+### Módulo M5.13.1 — Retiro de verificación de proceso en delivery-policy
+
+**Paths exactos:** `AGENTS.md`, `policy/delivery-policy.mjs`,
+`schemas/delivery-policy-v1.schema.json`, `test/policy/delivery-policy.test.mjs`,
+`test/policy/jornada.test.mjs`.
+**Comando:** `bun test test/policy/delivery-policy.test.mjs test/policy/jornada.test.mjs`.
+**Forecast:** ~110 líneas authored.
+
+- [x] Tarea T5.13.1.1 — RED: política sin `documentation_close`; bloque ausente o malformado
+  sigue fallando cerrado.
+- [x] Tarea T5.13.1.2 — GREEN: retirar `documentation_close` del bloque y la prosa de
+  `AGENTS.md`, del schema y de `strict`, `choose()` y `restrictiveDefaults`.
+- [x] Tarea T5.13.1.3 — CHECKS: preservar el autorizador de merge, forma y destino de
+  entrega, horizonte y los cinco floors.
+
+### Módulo M5.13.2 — Retiro contractual de digests y sellado opcional del recibo
+
+**Paths exactos:** `schemas/candidate-revision-v1.schema.json`,
+`schemas/authorization-v1.schema.json`, `contracts/schema-registry.mjs`,
+`contracts/validate.mjs`, `test/contracts/schema.test.mjs`,
+`test/contracts/s3-2-schemas.test.mjs`, `test/fixtures/contracts/schema-cases-v1.json`,
+`test/main-store.test.mjs`, `test/escalation/request.test.mjs`,
+`test/install/launch-worker-cli.test.mjs`.
+**Restricción de fixtures:** `test/main-store.test.mjs`, `test/escalation/request.test.mjs`
+y `test/install/launch-worker-cli.test.mjs` sólo pueden ajustar fixturas que declaran los
+digests retirados; no cambia ningún caso de comportamiento.
+**Comando:** `bun test test/contracts/schema.test.mjs test/contracts/s3-2-schemas.test.mjs test/main-store.test.mjs test/escalation/request.test.mjs test/install/launch-worker-cli.test.mjs`.
+**Forecast:** ~190 líneas authored.
+
+- [x] Tarea T5.13.2.1 — RED: comportamiento de schemas de candidato y autorización.
+- [x] Tarea T5.13.2.2 — GREEN: retirar los digests jubilados y sellar el recibo de proceso
+  opcional en la identidad congelada del candidato.
+- [x] Tarea T5.13.2.3 — CHECKS: actualizar sólo las fixturas autorizadas y verificar
+  identidad de freeze y rechazo de escritura posterior al freeze.
+
+### Módulo M5.13.3 — Transporte opaco del recibo al ledger
+
+**Paths exactos:** `delivery/workflow.mjs`, `delivery/ledger.mjs`,
+`schemas/delivery-record-v1.schema.json`, `test/delivery/**`.
+**Comando:** `bun test test/delivery`.
+**Forecast:** ~250 líneas authored.
+
+- [x] Tarea T5.13.3.1 — RED: registros de entrega con recibo ausente y suministrado.
+- [x] Tarea T5.13.3.2 — GREEN: registro requerido `digest|absent`, transporte literal del
+  valor y retiro de la rama de checks.
+- [x] Tarea T5.13.3.3 — CHECKS: probar que no hay parseo ni ramificación por contenido y
+  preservar ledger, lock y reconciliación.
+
+**Orden de ejecución:** `M5.13.1 → M5.13.2 → M5.13.3`, completado bajo Strict TDD focalizado. El próximo checkpoint exacto es **checks dirigidos + una ejecución integral de `bun test` + snapshot exacto**. La Sesión permanece 🔵 EN CURSO y sus criterios de aceptación siguen sin marcar hasta observar esa verificación.
 
 **Criterios de aceptación, binarios:**
-1. `rg 'documentation_close|required_checks_digest|required_reviews_digest'` no devuelve una
-   sola ocurrencia fuera de historia archivada y de este `STATUS.md`.
+1. Cero usos activos de los tres identificadores retirados en runtime, schemas, contratos y tests activos.
+   Se permiten menciones nominales sólo en documentación de autoridad o historia que explique qué se retiró.
 2. `rg 'horizon_ceiling|policy_report_digest|verification_digest'` devuelve **exactamente las
    mismas ocurrencias que antes del cambio**. Es el criterio que impide que la Sesión se
    pase de largo.

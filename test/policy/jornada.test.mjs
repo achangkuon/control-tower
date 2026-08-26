@@ -24,7 +24,6 @@ const authorization = () => ({
   jornada_id: "jornada-a",
   jornada_revision: 1,
   delivery: { shape: "direct-push", repository: "owner/repository", target_branch: "master", base_sha: "a".repeat(40), head_sha: "b".repeat(40) },
-  required_checks_digest: `sha256:${"a".repeat(64)}`,
   policy_report_digest: `sha256:${"b".repeat(64)}`,
   created_at: "2026-01-01T00:00:00.000Z",
   expires_at: "2099-01-01T00:00:00.000Z",
