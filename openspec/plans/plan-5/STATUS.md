@@ -1414,8 +1414,9 @@ La [decisión 60](../decision-register.md), entregada en `master@8a75be0`, encon
 
 ## Cierre de la reconciliación del tercer eje — publicado 2026-08-26
 
-Entregada en `origin/master@0aa4356`, sobre la base `f9f0bc2` que ya contenía los cierres de
-`S5.13`, `S4.7` y `S4.6`. **Es documentación: no cambia una línea de producción.**
+Entregada en `origin/master@0aa4356` y cerrada en `origin/master@cd34542`, sobre la base
+`f9f0bc2` que ya contenía los cierres de `S5.13`, `S4.7` y `S4.6`. **Es documentación: no
+cambia una línea de producción.**
 
 **Qué se publicó.** La [decisión 78](../decision-register.md); el tercer eje escrito en
 [la frontera](../frontera-torre-gentle-ai.md); `S5.15` nueva en este Plan; `S5.5` recortada;
