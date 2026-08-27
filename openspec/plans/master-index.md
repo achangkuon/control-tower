@@ -1,24 +1,24 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: cierre técnico local de `S2.6` sobre el candidato limpio `c91fddd5c74019de2ef7d691a43d403558c3a92e` (padre/base `99bab46036a1448ff7ebd9e6bbd1147964cda392`; tree `0040cd84b498d5953cd3c9eececbe65e46cf16d2`). Esta preparación no afirma push, publicación ni integración a `master` de `S2.6`.
+> Última reconciliación: **publicación de `S2.6`**. El candidato `c91fddd5c74019de2ef7d691a43d403558c3a92e` entró a `master` **byte-idéntico** —padre/base `99bab46036a1448ff7ebd9e6bbd1147964cda392`, tree `0040cd84b498d5953cd3c9eececbe65e46cf16d2`, verificado con `git merge-base --is-ancestor`—, y `f2d1a81` cerró su documentación. `origin/master` está en `f2d1a81`. Ya no queda ninguna publicación pendiente.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para el **inventario del producto** —los trece comandos, los módulos sin llamador y su orden de conexión— ver [inventario-de-producto](inventario-de-producto.md). Para **qué falta para salir** ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md). La línea entre lo que decide la Torre y lo que decide gentle-ai vive en [la frontera Torre ↔ gentle-ai](frontera-torre-gentle-ai.md), y **cualquier Sesión puede citarla para rechazar alcance** — desde el 2026-08-26 la frontera tiene **tres ejes**: la calidad del trabajo, el flujo de trabajo ([decisión 71](decision-register.md)) y **quién lee el plan** ([decisión 78](decision-register.md) — la cerca no lee). La **definición de producto vigente** —qué es y qué deliberadamente no va a ser la Torre terminada— es [**La Torre Terminada**](https://claude.ai/code/artifact/323b83bd-f1cd-4cee-a5c7-945f8c7d6173), y **ninguna Sesión puede desviarse de ella sin una decisión registrada**.
 
 ## 📍 Punto de retoma
 
-`S2.6` queda ✅ COMPLETO como cierre técnico local sobre `c91fddd5c74019de2ef7d691a43d403558c3a92e`, con 87 tests focalizados y 892 integrales sin fallos; publicación e integración a `master` siguen pendientes.
+`S2.6` queda ✅ COMPLETO **y publicada**: `c91fddd5c74019de2ef7d691a43d403558c3a92e` es ancestro de `origin/master`, con 87 tests focalizados y 892 integrales sin fallos. Ya no es candidato ni bloquea a nadie.
 `S4.6` ya está publicado: `f9f0bc24c9083f9c41a62f8788f77cf56e157dfd` es ancestro del `master` actual.
 `S4.4` y `S4.8` están 🔵 EN CURSO. Este índice no crea ni cambia asignaciones de asiento.
-Tras el cierre técnico local de `S2.6`, siguen `S5.14` y `S2.8`; la cola omite `S2.6` sólo como candidato de cierre local pendiente de publicación.
+Con `S2.6` publicada, **`S5.14` y `S2.8` quedan desbloqueadas por dependencia** y la cola omite `S2.6` por estar cerrada, no por estar pendiente.
 **Tercer eje preservado — la cerca no lee ([decisión 78](decision-register.md)).** Support lee el plan y entrega la propuesta; la Torre verifica lo recibido sin recalcular `primary`, `alternatives` ni `conflicts`. `S5.15` retira el lector, `S5.5` permanece recortada, `S2.7` está 📚 ARCHIVADA y `S2.8` conserva el residuo de `binding-delta-v1`.
 
 ## 🎯 Cola de ejecución
 
-`#1 S4.4` · `#2 S5.14` · `#3 S2.8` · `#4 S4.8` · `#5 S4.9` · `#6 S8.12` · `#7 S5.5` · `#8 S5.15` · `#9 S9.1` · `#10 S7.1` — recalculada para el cierre técnico local de `S2.6`, cuya publicación sigue pendiente. **Los IDs no se renumeran; las posiciones sí.** La posición es topológica; no vuelve ejecutable una dependencia pendiente.
+`#1 S4.4` · `#2 S5.14` · `#3 S2.8` · `#4 S4.8` · `#5 S4.9` · `#6 S8.12` · `#7 S5.5` · `#8 S5.15` · `#9 S9.1` · `#10 S7.1` — recalculada tras la publicación de `S2.6`. **Los IDs no se renumeran; las posiciones sí.** La posición es topológica; no vuelve ejecutable una dependencia pendiente.
 
 **Capacidad:** `S4.4` y `S4.8` están en curso. `S4.9` y `S5.5` están listas por grafo, pero este índice no asigna asientos ni declara disponibilidad nueva.
 
-**Orden y bloqueos preservados:** `S5.14` y `S2.8` siguen después del cierre técnico local de `S2.6`; `S5.15` va detrás de `S5.5` y `S5.14`. `S9.1` carece de enumeración suficiente. `S8.12` conserva una decisión abierta del maintainer. `S4.9` ya está lista porque `S4.6` y `S4.7` cerraron, pero sigue sin asiento. `S7.1` continúa detrás de `S4.4`, `S4.8`, `S5.5` y `S8.12`; `S4.9` no precede la primera release.
+**Orden y bloqueos preservados:** `S5.14` y `S2.8` ya no esperan a `S2.6` —publicada—, así que su posición es de orden, no de bloqueo; `S5.15` va detrás de `S5.5` y `S5.14`. `S9.1` carece de enumeración suficiente. `S8.12` conserva una decisión abierta del maintainer. `S4.9` ya está lista porque `S4.6` y `S4.7` cerraron, pero sigue sin asiento. `S7.1` continúa detrás de `S4.4`, `S4.8`, `S5.5` y `S8.12`; `S4.9` no precede la primera release.
 
 **Fuera de la cola:** `S8.11` 🔴; `S8.5`/`S8.6`, `S1.17`–`S1.19` y `S9.4` 🟡; P6 🟡. Sin enumerar: wiring productivo `policy/delivery-policy.mjs` → `CV_GRANT_DELIVERY` (diferido por autoridad, sin ID ni alcance), lock huérfano de `main-store/store.mjs`, `enroll/**`, umbrales §14.3, macOS, y los Módulos/Tareas de `S2.8` y `S9.1`.
 

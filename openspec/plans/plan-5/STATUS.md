@@ -1438,6 +1438,51 @@ fija para una base divergente: preservar, no rebasar en silencio.
 históricas de este Plan. **No se corrige a propósito:** `S5.15` retira ese parser, así que
 alinear los planes contra un lector que se va sería trabajo perdido.
 
+## Publicación completa — `origin/master@f2d1a81` (actualizado 2026-08-27)
+
+**Todo lo trabajado en la sesión del tercer eje está publicado**, y desde entonces `S2.6`
+también. Seis commits, cero pendientes: `0aa4356` (decisión 78, tercer eje, `S5.15`, `S5.5`
+recortada, `S2.7` archivada, `S2.8` nueva, cola recalculada), `cd34542` (nota de cierre),
+`c9604b6` (SHA final), `99bab46` (candidatos parqueados y estado de los asientos), `c91fddd`
+(el contrato de ejecución de `S2.6`) y `f2d1a81` (su cierre documental).
+
+**`S2.6` dejó de ser candidato: se publicó byte-idéntica.** El tree `0040cd84…` y el padre
+`99bab46…` que esta nota había sellado son exactamente los que quedaron en `master`. Quedan
+**dos** ramas parqueadas, no tres.
+
+**Qué tiene que hacer cada asiento al retomar, y no alcanza con `git pull`.** Ambas ramas ya
+absorbieron `master` hasta `99bab46` por merge explícito y después parquearon su WIP, así que
+**les faltan exactamente los dos commits de `S2.6`** (`c91fddd`, `f2d1a81`). Se traen con un
+merge de `origin/master`, no con rebase: rebasar reescribiría el WIP parqueado.
+
+| Rama | Tip real | Estado | Al retomar |
+|---|---|---|---|
+| ~~`feat/plan-2/s2-6-execution-contract-adoption`~~ | — | **PUBLICADA** en `c91fddd` | nada: cerrada e integrada |
+| `feat/plan-4/s4-4-same-host-recovery` | `cce951c` | 4 commits propios, WIP parqueado | detrás de `origin/master` por 2; `git merge origin/master` |
+| `feat/plan-4/s4-8-opencode-runtime-matrix` | `bfe56da` | 3 commits propios, WIP, **no** candidato | ídem |
+
+Los SHAs `75c378d` y `40060b7` que esta nota citaba el 2026-08-26 quedaron atrás: ambas ramas
+avanzaron con el merge de `master` y el commit de parqueo.
+
+**Advertencia de alcance para quien retome.** `contracts/session-plan-snapshot.mjs` **se
+retira** en `S5.15`: cualquier trabajo pendiente sobre ese archivo queda superado. Y `S5.5`
+perdió alcance —ya no deriva elegibilidad ni conoce las ocho clases—, así que su elaboración
+técnica anterior a esta fecha no es autoridad.
+
+**Notion no participa en este proyecto.** El maintainer lo declaró desactivado para
+`control-tower` el 2026-08-26. La skill `session-doc` no se corre acá y su ausencia **no es
+deuda**: el cierre documental de este repositorio es OpenSpec —`STATUS.md` del Plan más el
+[master-index](../master-index.md)— y nada más. Cualquier gate o checklist que reclame Notion
+sobre este repositorio está desactualizado.
+
+**Nota operativa sobre el gate de documentación, medida el 2026-08-26.** `doc-guard.sh`
+registra `docs=<epoch>` desde un hook `PostToolUse` cableado a **Write/Edit**, y compara ese
+sello contra `shipped=<epoch>` del `PrePush`. Consecuencia que costó tres intentos descubrir:
+**una edición hecha con `sed`, `python` o cualquier script de shell no mueve el sello** —el
+hook nunca se dispara— y el gate sigue cerrado aunque el archivo esté correctamente
+actualizado en disco. El cierre documental de una entrega se escribe con la herramienta de
+edición, no con un script.
+
 ## Insumo de la reconciliación de Planes (2026-08-21)
 
 La [decisión 63](../decision-register.md) cerró la Fase 2 del plan de depuración dándole dueño a los tres trabajos que las auditorías habían dejado huérfanos. **Dos de ellos afectan a P5 sin cambiar el estado de ninguna de sus Sesiones.**

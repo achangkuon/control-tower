@@ -77,7 +77,12 @@ una regla para aplicarla, la regla es del harness*.
 
 ## Sesión 2.6 — Adopción y recorte del contrato de ejecución sellado
 
-**Estado:** ✅ COMPLETO — cierre técnico local sobre el candidato limpio `c91fddd5c74019de2ef7d691a43d403558c3a92e`, pendiente de publicación. Este documento no afirma push, publicación ni integración a `master`.
+**Estado:** ✅ COMPLETO **y publicada** — `c91fddd5c74019de2ef7d691a43d403558c3a92e` es ancestro de `origin/master`; `f2d1a81` cerró su documentación. No queda nada pendiente de esta Sesión.
+
+> **Publicación byte-idéntica, verificada el 2026-08-27.** El candidato entró a `master` sin
+> rebase ni recomposición: el tree publicado es `0040cd84b498d5953cd3c9eececbe65e46cf16d2` y el
+> padre `99bab46036a1448ff7ebd9e6bbd1147964cda392`, exactamente los que este documento había
+> sellado antes del push. `git merge-base --is-ancestor c91fddd origin/master` da 0.
 
 > **Cierre técnico local sobre identidad limpia.** Commit funcional `c91fddd5c74019de2ef7d691a43d403558c3a92e` (`feat(contracts): adopt Tower execution contract`); padre/base `99bab46036a1448ff7ebd9e6bbd1147964cda392`; árbol funcional `0040cd84b498d5953cd3c9eececbe65e46cf16d2`; patch funcional SHA-256 `03235f8632653f868d93ea9643de0dee30d776528d0808505eab2ccff60414ba`.
 > **Alcance y verificación autorizados:** exactamente 4 paths, 179 adiciones + 87 eliminaciones = 266 líneas authored; focalizada 87 tests / 0 fallos / 417 aserciones; integral 892 tests / 0 fallos / 5.096 aserciones / 68 archivos. La advisory de reliability conserva el resultado tipado `unavailable` porque RDD está OFF; no se declara PASS.
@@ -236,7 +241,7 @@ decisión — la Sesión ya es decision-clean.
 
 **Recurso:** ninguno — sin DB, sin migraciones, sin token de entrega.
 
-**Orden:** **no corre en paralelo con `S2.6`**, que comparte `test/contracts/schema.test.mjs` y `test/fixtures/contracts/schema-cases-v1.json`. `S2.6` va primero: tiene candidato verificado pendiente de entrega.
+**Orden:** el conflicto de archivos con `S2.6` —`test/contracts/schema.test.mjs` y `test/fixtures/contracts/schema-cases-v1.json`— **está resuelto**: `S2.6` se publicó en `c91fddd` y esta Sesión parte de esos bytes ya integrados. `S2.8` es ejecutable sin esperar a nadie.
 
 **El problema, medido.** `schemas/binding-delta-v1.schema.json:5` declara `inputs` con
 `["manifest", "proposal", "specs", "design", "tasks", "previous_delta"]` **obligatorios**. Son
@@ -247,8 +252,8 @@ dueño.
 
 **Por qué es una Sesión y no una enmienda.** El destino natural era `S5.13`, que ya recortaba
 schemas y tocaba estas mismas fixturas — pero `S5.13` **cerró** el 2026-08-26 en `5a80bc8` y
-`30ad0d5`. `S2.6` tampoco puede absorberla: tiene candidato verificado pendiente de entrega y
-su `Área` no incluye este schema. Queda en P2, cuyo propósito —contratos y registro de
+`30ad0d5`. `S2.6` tampoco pudo absorberla: cerró y se publicó en `c91fddd`, y su `Área` no
+incluye este schema. Queda en P2, cuyo propósito —contratos y registro de
 producto— la cubre exactamente.
 
 **Resultado único:** `inputs` pasa a **opaco** —`{"type": "object"}` sin restricciones
