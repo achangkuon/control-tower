@@ -1,4 +1,5 @@
 export { createHostRuntimeIdentifier } from "./identifiers.mjs"
+export { createHostRuntimeOwnership } from "./ownership-registry.mjs"
 export {
   hostRuntimeSchemaNames,
   validateHostRuntimeBinding,
