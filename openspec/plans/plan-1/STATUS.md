@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Legacy P7 depende sólo de legacy P6; P8 depende de legacy P7 reconciliado e integrado. Change A no es dependencia de ninguno. |
 | Outputs | Recovery/rollback fail-closed; controller host-neutral y adapter OpenCode; adapter Pi; adapter Claude opt-in; runtime versionado; verificación CT-only. |
-| Roadmap | La base OpenCode `S1.11`–`S1.16` está ✅ COMPLETO. `S1.17`–`S1.19` preservan IDs como alcance Pi/Intercom posterior 🟡 DIFERIDO y no bloquean el cierre OpenCode. P1 conserva 84% (16/19 S). |
+| Roadmap | La base OpenCode `S1.11`–`S1.16` permanece ✅ COMPLETO. La autoridad Pi-first vigente para `S1.17`–`S1.19` está en la reconciliación del 2026-08-27 al final; P1 conserva 84% (16/19 S). |
 | Referencias | [`autonomous-continuation-control-tower`](../../changes/autonomous-continuation-control-tower/), [`p7-host-neutral-loop-opencode-adapter`](../../changes/p7-host-neutral-loop-opencode-adapter/), [`p8-slice-planning`](../../changes/p8-slice-planning/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). |
 
 Legacy P6 se integró mediante PRs #38–#45 y cerró en `e16d94b`. Su [`apply-progress.md`](../../changes/autonomous-continuation-control-tower/apply-progress.md) es evidencia histórica y permanece sin reescritura.
@@ -223,9 +223,9 @@ graph LR
 - Revisión estática final: `READY`, cero findings y cero severidad.
 - Rollback: revertir sólo `da4e391` para retirar composición/seams de `S1.16`; no hay schema ni migración que revertir y `S1.15` queda intacta.
 
-## Sesiones P8
+## Sesiones P8 — contrato histórico OpenCode-first/Pi-second
 
-Las tres Sesiones son alcance posterior 🟡 DIFERIDO. **Autoridad:** rebase del maintainer 2026-08-17. **Área:** `adapters/pi/**`, `test/host-adapters.test.mjs`. **Recurso:** runtime Pi/Intercom, separado de OpenCode. **Decisiones:** `derivable` — Intercom sólo transporta wake/comunicación y nunca autoriza; falsificador: un wake habilita despacho o entrega. **Criterio común:** ningún cambio de estas Sesiones bloquea, relocaliza o modifica la ruta OpenCode.
+Las tres Sesiones eran alcance posterior 🟡 DIFERIDO bajo la autoridad anterior. **Autoridad:** rebase del maintainer 2026-08-17. **Área:** `adapters/pi/**`, `test/host-adapters.test.mjs`. **Recurso:** runtime Pi/Intercom, separado de OpenCode. **Decisiones:** `derivable` — Intercom sólo transporta wake/comunicación y nunca autoriza; falsificador: un wake habilita despacho o entrega. **Criterio común:** ningún cambio de estas Sesiones bloquea, relocaliza o modifica la ruta OpenCode.
 
 | ID | Resultado | Estado | Ref |
 |---|---|---|---|
@@ -233,7 +233,7 @@ Las tres Sesiones son alcance posterior 🟡 DIFERIDO. **Autoridad:** rebase del
 | S1.18 | Adapter Pi/Intercom | 🟡 DIFERIDO | [`tasks.md`](../../changes/p8-slice-planning/tasks.md) |
 | S1.19 | Regresión Pi/Intercom | 🟡 DIFERIDO | [`tasks.md`](../../changes/p8-slice-planning/tasks.md) |
 
-## Rutas de ejecución — reconciliadas el 2026-08-11
+## Rutas de ejecución históricas — reconciliadas el 2026-08-11
 
 | ID | Estado | Ruta | Motivo |
 |---|---|---|---|
@@ -257,3 +257,34 @@ Por lo tanto `S1.11`, `S1.12`, `S1.13`, `S1.14` y `S1.15` **entran en la cadena 
 **Reconciliado el 2026-08-17:** `S1.11`–`S1.16` están ✅ COMPLETO. `S1.17`–`S1.19` quedan 🟡 DIFERIDO como trabajo Pi/Intercom posterior y no son dependencia de `S4.2`–`S4.4` ni `S7.1`.
 
 Legacy P9–P11 todavía no tienen límites de PR demostrables. Sus responsabilidades se preservan sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).
+
+## Reconciliación Pi-first de S1.17–S1.19 — 2026-08-27
+
+El contrato OpenCode-first/Pi-second anterior queda preservado arriba como historia. La decisión 80 promueve estos mismos IDs; no elimina ni reescribe la evidencia OpenCode ya completada.
+
+### Sesión 1.17 — Gate y RED del adapter Pi
+**Estado:** 📋 PLANIFICADO · **Depende de:** `S9.4` · **Área:** `adapters/pi/contract.mjs`, `test/adapters/pi/contract.test.mjs` · **Recurso:** broker por worktree y binding neutral.
+**Decisiones:** decisiones 82–84 y 86 resueltas: Grado 2, implementer con `bash`, roles de lectura sin `bash|write|edit`, supervisor Tower-owned. **Ruta:** `design-tasks` — contrato neutral y topología ya aprobados; se fija el seam del adapter.
+**Criterios de aceptación:** RED falsifica identidad autodeclarada, takeover, cross-worktree y recibo stale; capabilities respetan rol; no cambia Pi/Intercom ni toca fuera de `Área`.
+#### Módulo M1.17.1 — Gate falsificable Pi
+- [ ] Tarea T1.17.1.1 — RED: fijar fallos de identidad, epoch, scope, takeover y capability set.
+- [ ] Tarea T1.17.1.2 — GREEN: crear el seam mínimo contra `S9.4` y contrato neutral.
+- [ ] Tarea T1.17.1.3 — REFACTOR: eliminar conocimiento de wire format fuera del adapter.
+
+### Sesión 1.18 — Adapter Pi/Intercom
+**Estado:** 📋 PLANIFICADO · **Depende de:** `S1.17` · **Área:** `adapters/pi/runtime.mjs`, `test/adapters/pi/runtime.test.mjs` · **Recurso:** procesos Pi Tower-spawned y conexión del supervisor.
+**Decisiones:** decisiones 80, 83, 84 y 86 resueltas; Intercom transporta y nunca autoriza. **Ruta:** `design-tasks` — implementa el seam ya cercado sin abrir API de producto nueva.
+**Criterios de aceptación:** launch/observe/health/stop/attach implementan el puerto neutral; `/proc` cruza PID/cwd Tower-owned; nonce+endpointEpoch prueban attach; IDs son aleatorios; no adopta procesos ajenos ni toca fuera de `Área`.
+#### Módulo M1.18.1 — Implementación del adapter
+- [ ] Tarea T1.18.1.1 — RED: cubrir proceso ajeno, `/proc` divergente, nonce/epoch stale y broker equivocado.
+- [ ] Tarea T1.18.1.2 — GREEN: adaptar lifecycle Pi/Intercom al contrato neutral.
+- [ ] Tarea T1.18.1.3 — REFACTOR: encapsular protocolo externo y normalizar evidencia.
+
+### Sesión 1.19 — Regresión integral Pi-first
+**Estado:** 📋 PLANIFICADO · **Depende de:** `S1.18` · **Área:** `test/integration/pi-first/**`, `test/host-adapters.test.mjs` · **Recurso:** hasta cinco clientes Pi aislados y brokers efímeros de prueba.
+**Decisiones:** —; los límites no medidos son gates de validación, no decisiones derivables. **Ruta:** `direct` — triangulación integral de contratos ya definidos.
+**Criterios de aceptación:** cadena launch→attach→observe→stop pasa con 1 y 5 clientes; corrida desatendida prolongada pasa; crash del broker con tráfico demuestra reconexión y recuperación idempotente sin prometer mensajes en vuelo; >5 clientes queda fuera del claim inicial hasta medirse; no toca fuera de `Área`.
+#### Módulo M1.19.1 — Evidencia de regresión y capacidad
+- [ ] Tarea T1.19.1.1 — RED: capturar fallos de corrida larga, broker crash y quinto cliente.
+- [ ] Tarea T1.19.1.2 — GREEN: estabilizar harness y producir evidencia atribuible al candidato.
+- [ ] Tarea T1.19.1.3 — REFACTOR: aislar fixtures y documentar el claim máximo de cinco clientes.

@@ -2,7 +2,7 @@
 
 **Estado:** 📋 PLANIFICADO
 
-## Resumen
+## Resumen histórico OpenCode — parqueado por decisión 85
 
 | Campo | Detalle |
 |---|---|
@@ -12,7 +12,7 @@
 | Roadmap | Ejecutar `S7.1` después de integrar sus cuatro dependencias, en commit directo a `master`; Pi/Intercom queda diferido. |
 | Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), [REQUIREMENTS histórico](../../specs/sdd-tower-implementation-v1-requirements.md), decisiones 37–40 / Engram 9040/9042/9043/9044 y [Plan Manifest](../sdd-tower-implementation/manifest.yaml). |
 
-## Sesión 7.1 — Conformance pilot
+## Sesión 7.1 — Conformance pilot histórico OpenCode-only
 
 **Estado:** 📋 PLANIFICADO
 
@@ -65,3 +65,15 @@ Las tres auditorías de la Fase 2 del plan de depuración cerraron, y **`S7.1` e
 3. **Por qué canal viaja cada mitad del producto.** La auditoría de P8 midió que el canal de agentes —`mcp.mjs`, el plugin, `main-store/store.mjs`— **no tiene instalador versionado** y que el payload derivado no puede incluirlo por contrato. Un piloto de conformidad sobre una release que instala media Torre mediría media Torre.
 
 **Ninguna Sesión de P7 cambia de estado.** `S7.1` sigue 📋 PLANIFICADO y sus dependencias declaradas —`S4.4`, `S5.3`, `S5.5` y `S10.2`— se conservan. Lo que cambia es que la reconciliación de Planes (tarea 2.4 del plan de depuración) tiene que decidir si esos tres puntos entran en sus prerrequisitos antes de que el examen tenga sentido.
+
+## Reconciliación Pi-first — autoridad vigente 2026-08-27
+
+El contrato OpenCode-only anterior queda preservado arriba como **plan histórico parqueado** y se retomará si OpenCode se desparquea; no se usa como gate de la primera release Pi.
+
+**S7.1 vigente — piloto final único Pi-first.** **Estado:** 📋 PLANIFICADO · **Depende de:** `S1.19`, `S4.12`, `S8.13`, `S5.5`; dependencias no-host satisfechas: `S5.3` ✅, `S10.2` ✅ y `S11.1` ✅. **Área:** `openspec/plans/**`, `test/integration/pi-first/**`, `test/**` sólo para evidencia del piloto · **Recurso:** candidato inmutable y entorno Pi aislado, sin token de entrega.
+**Decisiones:** decisiones 32, 33 y 85 resueltas: un candidato final de `control-tower`, contrato neutral y rojos Gates A–G bloqueantes; OpenCode no integra este gate mientras esté parqueado. **Ruta:** `design-tasks` — fija harness/evidencia terminal sin reabrir producto.
+**Criterios de aceptación:** un único `candidate_revision` inmutable; toda evidencia se traza al contrato neutral y al candidato; pasan cadena Pi y recuperación mínima; pasan instalación/rollback/preflight completos; corrida larga, broker crash con tráfico y cinco clientes producen evidencia; no se afirma soporte >5; `S5.3` se trata como dependencia satisfecha; no toca fuera de `Área`.
+### Módulo M7.1.1 — Piloto terminal Pi-first
+- [ ] Tarea T7.1.1.1 — RED: congelar candidato y registrar todo rojo Gate A–G sin reinterpretarlo.
+- [ ] Tarea T7.1.1.2 — GREEN: ejecutar piloto en `control-tower` contra contrato neutral e instalación real.
+- [ ] Tarea T7.1.1.3 — REFACTOR: consolidar evidencia atribuible y declaración de alcance máximo de cinco clientes.

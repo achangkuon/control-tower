@@ -1,5 +1,7 @@
 # Cadena de release — producto único
 
+> **Autoridad vigente:** la reconciliación Pi-first del 2026-08-27 al final de este archivo. Todo lo anterior se preserva como traza histórica y no autoriza iniciar OpenCode mientras esté parqueado.
+
 > Decidido el 2026-08-01 por el maintainer. Este archivo define **qué tiene que estar
 > cerrado para declarar la primera versión del producto**, y en qué orden lo permite el
 > grafo de dependencias.
@@ -75,7 +77,7 @@ graph LR
   S48 --> S71
   S41 --> S52["S5.2 entrega idempotente · 🔴"]
   S33 --> S52
-   S52 --> S53["S5.3 planner/implementer · 📋"]
+   S52 --> S53["S5.3 planner/implementer · ✅"]
   S51 --> S54["S5.4 ruteo de escalamiento · ✅"]
   S54 --> S56["S5.6 snapshot de Sesión · ✅"]
   S56 --> S57["S5.7 decisión/respuesta · ✅"]
@@ -130,7 +132,7 @@ graph LR
 | ✅ | `S5.9` | Binding autoritativo del checkpoint estacionado | ✅ COMPLETO | Entregada el 2026-08-18 en `3c3040d`, `754c698` y `8d4b28a`; `full-sdd` completo hasta verify, 7/8 criterios con evidencia de runtime y el criterio 2 enmendado por la decisión 41 |
 | — | `S5.10` | Binding inmutable del trabajo independiente completado | 📋 PLANIFICADO | `S5.9`; ruta `design-tasks` |
 | — | `S5.5` | Parking y retoma del loop | 📋 PLANIFICADO | `S5.10`; planner N+1 / implementer N |
-| — | `S5.3` | Continuación planner/implementer | 📋 PLANIFICADO | `S5.2`; decisiones propias resueltas |
+| ✅ | `S5.3` | Continuación planner/implementer | ✅ COMPLETO | Base `master@88d1de4`; candidato verificado `163a9f9`; dependencia de `S7.1` satisfecha |
 | — | `S8.7` | Puente Hermes/Telegram | 📚 ARCHIVADO | supersedido por Moshi; no integra producto ni release OpenCode |
 | ✅ | `S10.3` | Contrato de ejecución versionado | ✅ COMPLETO | `S3.4` ✅; candidato exacto basado en `cdd0d09`, 17.297 bytes, 407 líneas, SHA-256 `2f4838aa244b30e280c5c558286b0e4d9fbb503a0ef1808ffc27501c1540fddc`; entrega directa aún no autorizada |
 | ✅ | `S10.1` | Preparación persistida de Jornada | ✅ COMPLETO | `S10.3` ✅; candidato técnico verificado, focused 8/0/144 y full 679/0/4164 en 44 archivos; owner pasivo Jornada-local y cero efectos |
@@ -260,3 +262,23 @@ Se registra explícitamente en lugar de esconderse:
 - **`S8.12`** — canal único de distribución. Hoy el canal de agentes no tiene instalador versionado, ni rollback, ni puntero activo.
 
 **La brecha 6 dejó de estar sin dueño.** La cubren `S8.12` y el orden de conexión del [inventario de producto](inventario-de-producto.md), que además clasifica los 34 módulos sin llamador en cuatro cajones y fija la regla: ninguna Sesión de cableado enchufa un módulo «porque está suelto» — enchufa un comando del vocabulario, y el módulo entra con él.
+
+## Reconciliación Pi-first — cadena vigente 2026-08-27
+
+La cadena OpenCode anterior, sus commits, pruebas y decisiones queda preservada como historia parqueada. No es autoridad activa mientras OpenCode permanezca 🟡 DIFERIDO.
+
+**Cadena Pi:** `S4.10 → S4.11 → S9.4 → S1.17 → S1.18 → S1.19`. `S4.12` depende de `S9.4 + S1.18`. `S8.12` es repo-only y puede iniciar en paralelo cuando `Área`/`Recurso` sean disjuntos. `S8.13` depende de `S8.12 + S1.19 + S4.12`. `S7.1` depende de `S1.19 + S4.12 + S8.13 + S5.5`; `S5.3`, `S10.2` y `S11.1` están satisfechas.
+
+```mermaid
+graph LR
+  S410[S4.10 neutral identity] --> S411[S4.11 neutral operations] --> S94[S9.4 Pi supervisor] --> S117[S1.17 Pi gate] --> S118[S1.18 Pi adapter] --> S119[S1.19 Pi regression]
+  S94 --> S412[S4.12 Pi recovery]
+  S118 --> S412
+  S812[S8.12 Tower bundle] --> S813[S8.13 lifecycle/preflight]
+  S119 --> S813
+  S412 --> S813
+  S55[S5.5 parking/resume] --> S71[S7.1 final Pi pilot]
+  S813 --> S71
+```
+
+**Validación, no decisión:** la corrida desatendida prolongada, crash del broker con tráfico y el límite de cinco clientes son gates de evidencia. El claim inicial termina en cinco; >5 no se promete hasta medirlo.

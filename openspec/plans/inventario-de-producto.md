@@ -342,3 +342,7 @@ obligatorio sin lector son la misma brecha vista desde dos alturas, y este inven
 medía la primera. Cualquier pasada futura debería contar también la segunda.
 
 El recorte lo ejecuta `S5.13`, enumerada en [`plan-5/STATUS.md`](plan-5/STATUS.md).
+
+## Autoridad vigente Pi-first — 2026-08-27
+
+El inventario y sus mediciones históricas se preservan íntegros. `S8.12` posee membresía del bundle Tower y `S8.13` install/activación/rollback/preflight; la frontera exacta está en la decisión 88 y en `plan-8/STATUS.md`.

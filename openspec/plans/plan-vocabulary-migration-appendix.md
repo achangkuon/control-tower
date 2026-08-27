@@ -130,3 +130,7 @@ Las cuatro responsabilidades que sobreviven **siguen sin Sesiones enumeradas** y
 - Autorización Telegram con SHA drift y replay negativo.
 - Recovery desde dirty worktree.
 - Campaña de dos repositorios con compensation.
+
+## Reconciliación Pi-first — 2026-08-27
+
+Las tablas de migración anteriores siguen siendo la traza exacta de IDs y contratos OpenCode. La promoción de `S9.4` y `S1.17`–`S1.19` no reescribe esa historia; sus overlays vigentes viven en los `STATUS.md` correspondientes.

@@ -849,7 +849,7 @@ graph LR
 
 `S8.2` entregó únicamente almacenamiento de versiones, puntero activo, install/diagnose/upgrade/rollback/uninstall, preservación de configuración e historial, y sus pruebas Strict TDD. No modificó `core.mjs`, `mcp.mjs`, `package.json`, `bun.lock`, DB ni estado de Tower.
 
-Con `S8.11` 🔴 BLOQUEADO tras su primer focused final y `S8.10` 🔴 BLOQUEADO, P8 queda en `64% (7/11 S)`; sólo las siete Sesiones ✅ COMPLETO/📚 ARCHIVADO cuentan, `EN CURSO` y `BLOQUEADO` aportan cero, y `S8.5` y `S8.6` permanecen 🟡 DIFERIDO.
+En el corte histórico previo a enumerar `S8.13`, con `S8.11` 🔴 BLOQUEADO tras su primer focused final y `S8.10` 🔴 BLOQUEADO, P8 quedaba en `64% (7/11 S)`; sólo las siete Sesiones ✅ COMPLETO/📚 ARCHIVADO cuentan, `EN CURSO` y `BLOQUEADO` aportan cero, y `S8.5` y `S8.6` permanecen 🟡 DIFERIDO.
 
 Cada Sesión es una unidad entregable dirigida a `master`. **Desde el 2026-08-01 (`46edd14`) eso es un commit directo + push, no un PR** — ver [Política de entrega](../../../AGENTS.md). El alcance de la Sesión no cambia: sigue siendo el que entraría en un PR. Las referencias a PRs de las Sesiones ya cerradas son historia y quedan como están.
 
@@ -934,3 +934,25 @@ Los prefijos de directorio admitidos por `scanClosure` **se derivan ahora de los
 | `origin/feat/s8.10-runtime-payload-model@a448af2` | El candidato de `S8.10` **más** `T8.10.1.3` | 860 pass · 13 todo · **3 fail** |
 
 **El candidato no se integró a `master` a propósito.** Master está verde y se conserva verde; el candidato queda subido y seguro en su rama, listo para que `T8.10.1.2` lo cierre en la próxima sesión.
+
+## Reconciliación Pi-first de instalación — 2026-08-27
+
+El checkpoint completo de `S8.11`, sus commits, conteos, fallos sellados y pasos de retoma permanecen arriba sin alteración. P8 pasa a **7/12 S**: se enumera `S8.13`; `S8.12` y `S8.13` juntas satisfacen la decisión 88.
+
+### Autoridad vigente de S8.12 — membresía del bundle Tower
+**Estado:** 🟢 LISTO · **Depende de:** `S8.10` ✅ · **Área:** `scripts/payload-closure.mjs`, `install/runtime-payload.mjs`, perfiles/skills Tower-specific y tests de membresía bajo `test/install/**` · **Recurso:** `RUNTIME_PAYLOAD_FILES`.
+**Decisiones:** decisión 88 resuelta: incluye runtime, contrato neutral, adapter Pi y perfiles/skills Tower —Support incluido—; excluye configuración Pi/Intercom y skills genéricas Gentle AI. **Ruta:** `design-tasks` — reconcilia el contrato histórico de canal único con ownership externo explícito.
+**Criterios de aceptación:** bundle contiene exactamente bytes Tower declarados; Support se materializa desde el bundle; faltante/extra/symlink falla cerrado; no instala ni activa; no toca fuera de `Área`.
+#### Módulo M8.12.1 — Membresía versionada
+- [ ] Tarea T8.12.1.1 — RED: cubrir perfil faltante, skill externa copiada, extra y symlink.
+- [ ] Tarea T8.12.1.2 — GREEN: declarar y derivar la membresía completa Tower-specific.
+- [ ] Tarea T8.12.1.3 — REFACTOR: una fuente de verdad y guardia de deriva exacta.
+
+### Sesión 8.13 — Install, activación, rollback y preflight externo
+**Estado:** 📋 PLANIFICADO · **Depende de:** `S8.12`, `S1.19`, `S4.12` · **Área:** `install/lifecycle.mjs`, `install.sh`, `bin/torre`, `test/install/**` · **Recurso:** puntero activo, backup/rollback y preflight de host externo.
+**Decisiones:** decisión 88 resuelta; la Torre valida compatibilidad pero no modifica Pi, pi-intercom ni Gentle AI. **Ruta:** `full-sdd` — operación reversible, activación y frontera de productos externos.
+**Criterios de aceptación:** instalación limpia activa bundle completo; preflight incompatible falla antes de mutar; rollback restaura runtime+perfiles juntos; no escribe configuración/skills externas; no toca fuera de `Área`.
+#### Módulo M8.13.1 — Lifecycle conductualmente completo
+- [ ] Tarea T8.13.1.1 — RED: cubrir preflight incompatible, activación parcial y rollback incompleto.
+- [ ] Tarea T8.13.1.2 — GREEN: instalar, activar y revertir bundle Tower atómicamente.
+- [ ] Tarea T8.13.1.3 — REFACTOR: separar preflight externo de mutación Tower-owned.

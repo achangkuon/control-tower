@@ -191,3 +191,7 @@ Ninguna es derivable. Las cuatro escalan.
 
 No recorta ninguna Sesión, no cambia estados ni dependencias, no toca PRD/RFC/REQUIREMENTS ni
 roadmap, y no inicia `S5.7`. Es entrada de decisión.
+
+## Autoridad vigente Pi-first — 2026-08-27
+
+Las comparaciones y baselines medidos anteriores se conservan como historia verificable; no se sustituyen por “ver Git history”. La decisión 80 cambia prioridad, no borra alcance entregado. Los deltas Pi-first actuales se enumeran en P1, P4, P7, P8 y P9.

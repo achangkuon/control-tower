@@ -39,7 +39,7 @@ Las decisiones 49–54 del [registro](../decision-register.md) y las referencias
 
 | Campo | Contrato |
 |---|---|
-| Orden aprobado | `S9.1 → S9.2 → S9.3`. `S9.4` está 🟡 DIFERIDO y no participa del orden activo. |
+| Orden histórico OpenCode-first | `S9.1 → S9.2 → S9.3`; `S9.4` estaba 🟡 DIFERIDO. La autoridad Pi-first vigente está en la reconciliación del 2026-08-27. |
 | Avance canónico | 0% (0/4 S). Ninguna Sesión está ✅ COMPLETO. El denominador se mantiene en 4 bajo la regla de la [decisión 57](../decision-register.md): `S9.4` es diferido-con-intención y por lo tanto se conserva. |
 | Entrega | Commit directo a `master`, sin PR. Cada resultado independientemente verificable y revertible, ≤400 líneas authored. |
 | Próxima acción | Enumerar `Área`, `Recurso` y Módulos de `S9.1`. No queda ninguna decisión que responder. |
@@ -131,9 +131,9 @@ Las decisiones 49–54 del [registro](../decision-register.md) y las referencias
 
 ---
 
-## Sesión 9.4 — Binding del launcher Pi y failure fence
+## Sesión 9.4 — Binding del launcher Pi y failure fence — contrato histórico
 
-**Estado:** 🟡 DIFERIDO
+**Estado histórico:** 🟡 DIFERIDO
 
 **Razón registrada.** Pi es un **segundo host** para la Torre, no un transporte. Su `Área` es `hosts/pi-launcher.mjs` y su `Recurso` es un namespace de proceso y raíz Pi. Queda diferido bajo el mismo criterio que `S1.17`–`S1.19` de P1: **la Torre opera con un provider a la vez, y OpenCode va primero.** Se reactiva cuando la ruta OpenCode esté cerrada.
 
@@ -215,3 +215,21 @@ redefinió `S5.13` como **retiro de la verificación de proceso de la entrega** 
 **Es preexistente**: falla igual en el árbol limpio de `ee03ec5`, sin ningún cambio aplicado.
 La suite completa da **862 pass / 13 todo / 1 fail**, contra los 863 / 13 / 0 registrados al
 cerrar la Fase 3. Sin dueño asignado.
+
+## Reconciliación Pi-first — 2026-08-27
+
+La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores permanecen como autoridad OpenCode preservada; no se eliminan ni se sustituyen por Git history. Para hacerlos ejecutables sin reinterpretación se cierran aquí sus campos faltantes, manteniendo resultados y orden históricos.
+
+### Contratos ejecutables preservados de S9.1–S9.3
+- **S9.1 — Pool de tres asientos.** **Estado:** 📋 PLANIFICADO · **Depende de:** — · **Área:** `workspace/slots.mjs`, `test/workspace/slots.test.mjs` · **Recurso:** tres worktrees/asientos persistentes · **Decisiones:** tamaño tres, resuelto por decisión 62 · **Ruta:** `design-tasks`, porque debe fijar layout/ownership sin reemplazar `jornada.sh --reciclar`. **Aceptación:** crea exactamente tres asientos; asignación Main es determinista; reciclador manual queda intacto; sólo toca `Área`. **Módulo M9.1.1:** `T9.1.1.1` RED pool incompleto/duplicado; `T9.1.1.2` GREEN crear/listar/asignar; `T9.1.1.3` REFACTOR aislar layout y readback.
+- **S9.2 — Interlock de asiento ocupado.** **Estado:** 📋 PLANIFICADO · **Depende de:** `S9.1` · **Área:** `workspace/slot-lock.mjs`, `test/workspace/slot-lock.test.mjs` · **Recurso:** lock exclusivo por asiento · **Decisiones:** frontera reducida, resuelta por decisión 62; la decisión histórica 53 permanece trazable por la tabla de migración · **Ruta:** `design-tasks`, por concurrencia y fallo parcial. **Aceptación:** Main no recicla ocupado; dos Main no mutan el mismo asiento; lock stale se resuelve fail-closed; `jornada.sh --reciclar` no cambia; sólo toca `Área`. **Módulo M9.2.1:** `T9.2.1.1` RED ocupado/concurrencia/stale; `T9.2.1.2` GREEN lock y readback; `T9.2.1.3` REFACTOR cleanup determinista.
+- **S9.3 — Caché externa congelada de Bun.** **Estado:** 📋 PLANIFICADO · **Depende de:** `S9.1` · **Área:** `workspace/dependency-cache.mjs`, `schemas/dependency-{fingerprint,install-receipt}-v1.schema.json`, `test/workspace/**`, `test/contracts/**` · **Recurso:** caché externa por fingerprint · **Decisiones:** `derivable`, contenido exacto por lock/runtime/arquitectura; autoridad contrato histórico, falsificador: dos inputs distintos comparten fingerprint · **Ruta:** `full-sdd`, porque crea schemas y lifecycle compartido. **Aceptación:** fingerprint exacto; publicación inmutable/atómica; instalación parcial falla cerrado; ningún binding Pi entra; sólo toca `Área`. **Módulo M9.3.1:** `T9.3.1.1` RED fingerprint/partial/corrupción; `T9.3.1.2` GREEN schemas+caché+receipt; `T9.3.1.3` REFACTOR atomicidad y cleanup.
+
+### Contrato vigente de S9.4 — Supervisor y binding del launcher Pi
+**Historia preservada:** el contrato anterior “Pi segundo host, después de OpenCode” queda etiquetado arriba como plan histórico parqueado. **Estado:** 📋 PLANIFICADO · **Depende de:** `S4.11` · **Área:** `workspace/pi-supervisor.mjs`, `workspace/pi-binding.mjs`, `test/workspace/pi-{supervisor,binding}.test.mjs` · **Recurso:** un broker por worktree, keepalive Tower-owned y IDs aleatorios.
+**Decisiones:** decisiones 82–84, 86–87 resueltas expresamente; mailbox volátil y recovery durable idempotente. **Ruta:** `full-sdd` — supervisor de procesos, frontera de seguridad y fallos parciales.
+**Criterios de aceptación:** Tower lanza/supervisa un broker por worktree; binding cruza PID/cwd con kernel y puerto neutral; keepalive evita shutdown ocioso; ID takeover y broker compartido fallan cerrado; no modifica Pi/pi-intercom ni toca fuera de `Área`.
+#### Módulo M9.4.1 — Supervisor Tower-owned
+- [ ] Tarea T9.4.1.1 — RED: cubrir broker compartido, path inválido, takeover, keepalive perdido y binding falso.
+- [ ] Tarea T9.4.1.2 — GREEN: lanzar broker/proceso y persistir binding neutral verificable.
+- [ ] Tarea T9.4.1.3 — REFACTOR: aislar lifecycle externo y recuperación desde estado durable.

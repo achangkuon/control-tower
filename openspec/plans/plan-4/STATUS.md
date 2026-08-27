@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
 | Outputs | Raíz primaria Main-owned con TUI adjunta no autoritativa, inspección/liveness por proceso/sesión y recuperación same-host WSL. |
-| Roadmap | `S4.1`, `S1.16`, `S4.2`, `S4.5`, `S4.3`, `S4.6` y `S4.7` están ✅ COMPLETO. `S4.4` está 🔵 EN CURSO y serializada detrás del cierre documental de `S4.6`; `S4.8` y `S4.9` están 🟢 LISTO, sin asiento asignado desde este documento. P4 alcanza 67% (6/9 S). |
+| Roadmap | La evidencia OpenCode entregada permanece ✅ COMPLETO. `S4.4`, `S4.8` y `S4.9` están 🟡 DIFERIDO con preservación absoluta; `S4.10` 🟢 y `S4.11`–`S4.12` 📋 forman la autoridad Pi-first. P4 alcanza 50% (6/12 S). |
 | Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), decisiones 37–42 / Engram 9040/9042/9043/9044/9079, [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). REQUIREMENTS §14 permanece byte-pinned como base histórica; esta spec enmienda el lifecycle futuro. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
@@ -398,7 +398,7 @@ Esta corrección aprobada por el maintainer **no es una Sesión**, no fue solici
 
 ## Sesión 4.4 — Recuperación lógica same-host con raíz sucesora
 
-**Estado:** 🔵 EN CURSO — **parqueada el 2026-08-26 con trabajo commiteado y sin publicar.** Decision-clean; `S4.7` cerró y satisfizo la dependencia funcional pendiente.
+**Estado:** 🟡 DIFERIDO — **parqueada el 2026-08-26 con trabajo commiteado y sin publicar.** Decision-clean; `S4.7` cerró y satisfizo la dependencia funcional pendiente.
 
 > **Candidato parqueado, no perdido.** El trabajo vive en `feat/plan-4/s4-4-same-host-recovery@75c378d`, con dos commits: `a00193c` (`feat(recovery): persist terminal transition checkpoint`) y `75c378d` (`fix(recovery): fence released root binding replay`). El asiento `implementer-1` quedó en detached HEAD sobre `master`, así que **la rama conserva el trabajo y la carpeta no tiene nada suelto**.
 > **Al retomar:** `git fetch` y traer `master` a la rama antes de seguir. Su base es anterior a la reconciliación del tercer eje (`c9604b6`).
@@ -663,7 +663,7 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 
 ## Sesión 4.8 — Matriz real OpenCode 1.18.23 y alineación condicional
 
-**Estado:** 🟢 LISTO — **con un WIP parqueado del 2026-08-26.** **Depende de:** `S4.7` ✅. **Ruta:** `design-tasks`.
+**Estado:** 🟡 DIFERIDO — **OpenCode parqueado; el WIP del 2026-08-26 se preserva íntegro.** **Depende de:** `S4.7` ✅. **Ruta al desparquear:** `design-tasks`.
 
 > **WIP parqueado.** `feat/plan-4/s4-8-opencode-runtime-matrix@40060b7` (`chore(wip): park S4.8 runtime matrix`) conserva `scripts/host-compatibility/`, `test/compat/` y los cambios de `package.json`/`bun.lock`. **No es un candidato:** es trabajo en curso guardado antes de frenar. El asiento `implementer-3` quedó en detached HEAD sobre `master`, sin nada suelto.
 
@@ -695,7 +695,7 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 
 ## Sesión 4.9 — Probe y adopción guardada de Herdr 0.8.2
 
-**Estado:** 🟢 LISTO — `S4.6` y `S4.7` están ✅ COMPLETO; no tiene asiento asignado. **Depende de:** `S4.6`, `S4.7`; no depende de `S4.8`. **Ruta:** `design-tasks`.
+**Estado:** 🟡 DIFERIDO — **OpenCode/Herdr parqueados; contrato y evidencia preservados.** `S4.6` y `S4.7` están ✅ COMPLETO; no tiene asiento asignado. **Depende de:** `S4.6`, `S4.7`; no depende de `S4.8`. **Ruta al desparquear:** `design-tasks`.
 
 **Área:** nuevos `scripts/host-compatibility/herdr.mjs`, `test/compat/herdr-runtime.test.mjs`.
 
@@ -730,4 +730,35 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 
 **Su alcance no cambió**, y la auditoría exclusiva de P4 lo confirmó: la maquinaria de linaje y épocas es coherente con la cadena de lanzamiento mapeada, y `hosts/epoch-enforcement.mjs` ya viaja en el payload. **Lo que sí conviene tener presente al retomarla** es lo que la verificación final de `S8.10` encontró: `assertCurrentHost` construía la identidad de época por exclusión y `inspectIdentity` la rechazaba. Ese contrato exacto de cuatro campos —`project_id`, `assignment_ref`, `candidate_revision`, `host_epoch`— es el mismo que `S4.4` va a ejercer al publicar una raíz sucesora.
 
-**Prioridad vigente.** `S4.7` y `S11.1` ya cerraron. `S4.4` queda habilitada por el launch veraz y el helper autenticado entregados; su posición global vigente se deriva en `master-index.md`.
+**Prioridad histórica OpenCode.** `S4.7` y `S11.1` cerraron y dejaron `S4.4` técnicamente habilitada; la decisión 80 la difiere mientras OpenCode esté parqueado. Su checkpoint no cambia.
+
+## Reconciliación Pi-first — 2026-08-27
+
+**Preservación absoluta de OpenCode.** Todo el código, las pruebas, decisiones, evidencia y checkpoint de `S4.4` anteriores siguen vigentes como historia resoluble. `S4.4` pasa a **🟡 DIFERIDO**: no se inicia mientras OpenCode esté parqueado. El checkpoint exacto permanece arriba, incluida la rama `feat/plan-4/s4-4-same-host-recovery@75c378d`, sus commits `a00193c`/`75c378d` y la instrucción de reconciliar la base antes de RED. `S4.8` y `S4.9` quedan igualmente 🟡 DIFERIDO, sin invalidar su contrato.
+
+### Sesión 4.10 — Identidad, binding y puerto runtime host-neutral
+**Estado:** 🟢 LISTO · **Depende de:** — · **Área:** `contracts/host-runtime/**`, `schemas/host-runtime-*.schema.json`, `test/contracts/host-runtime/**` · **Recurso:** namespace de identidad/binding y reserva de puerto loopback.
+**Decisiones:** `escala`, resuelta por decisión 84: el contrato es neutral y Pi/OpenCode son adapters; `escala`, resuelta por decisión 86: un broker por worktree, supervisor Tower-owned e IDs aleatorios. **Ruta:** `full-sdd` — primer contrato público neutral y frontera de seguridad; decisiones 80, 84 y 86.
+**Criterios de aceptación:** identidad, worktree, proceso, binding e incarnation se validan sin vocabulario Pi/OpenCode; el puerto pertenece al binding exacto; colisión, stale o campo extra fallan cerrado; no se toca fuera de `Área`.
+#### Módulo M4.10.1 — Contrato neutral de identidad y binding
+- [ ] Tarea T4.10.1.1 — RED: cubrir identidad ambigua, puerto ocupado, binding cruzado y replay stale.
+- [ ] Tarea T4.10.1.2 — GREEN: definir schemas, validación exacta y reserva/release del puerto ligado.
+- [ ] Tarea T4.10.1.3 — REFACTOR: separar contrato neutral de cualquier adapter y verificar frontera de `Área`.
+
+### Sesión 4.11 — Observe, health, stop y attach host-neutral
+**Estado:** 📋 PLANIFICADO · **Depende de:** `S4.10` · **Área:** `hosts/runtime-port.mjs`, `hosts/runtime-observe.mjs`, `test/hosts/runtime-{port,observe}.test.mjs` · **Recurso:** binding neutral vigente y prueba producer-owned.
+**Decisiones:** `derivable` — toda observación se liga al binding de `S4.10`; autoridad decisión 84, falsificador: una respuesta sin identidad/incarnation exactas. **Ruta:** `full-sdd` — define semántica observable y fail-closed que consumen adapters y recuperación.
+**Criterios de aceptación:** observe/health/stop/attach comparten identidad neutral; attach exige desafío fresco y prueba producer-owned; stop distingue desconexión de muerte; no importa Pi/OpenCode ni toca fuera de `Área`.
+#### Módulo M4.11.1 — Operaciones neutrales observables
+- [ ] Tarea T4.11.1.1 — RED: probar recibo stale, self-report sin prueba, desconexión y stop ambiguo.
+- [ ] Tarea T4.11.1.2 — GREEN: exponer puertos neutrales con prueba ligada al binding/incarnation.
+- [ ] Tarea T4.11.1.3 — REFACTOR: unificar errores y aislar toda semántica de adapter.
+
+### Sesión 4.12 — Recuperación mínima de Pi
+**Estado:** 📋 PLANIFICADO · **Depende de:** `S9.4`, `S1.18` · **Área:** `hosts/pi-recovery.mjs`, `test/hosts/pi-recovery.test.mjs` · **Recurso:** árbol de procesos Tower-owned, checkpoint durable y lineage Pi.
+**Decisiones:** `escala`, resuelta por 81 y 87: quiescencia, sucesor aleatorio con `--fork`, mailbox volátil y replay idempotente desde estado durable. **Ruta:** `design-tasks` — la política está cerrada; resta fijar el seam técnico mínimo.
+**Criterios de aceptación:** muerte probada termina todo el árbol y prueba quiescencia; sucesor usa ID nuevo, `--fork` y lineage; ningún mensaje volátil es autoridad; replay durable es idempotente; no recupera memoria OpenCode ni toca fuera de `Área`.
+#### Módulo M4.12.1 — Quiescencia y sucesor Pi
+- [ ] Tarea T4.12.1.1 — RED: cubrir descendiente vivo, ID reutilizado, lineage ausente y replay no idempotente.
+- [ ] Tarea T4.12.1.2 — GREEN: contener, probar quiescencia y arrancar sucesor desde checkpoint durable.
+- [ ] Tarea T4.12.1.3 — REFACTOR: mantener recuperación mínima y separar historia OpenCode parqueada.

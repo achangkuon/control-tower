@@ -356,3 +356,7 @@ Tras integrar `S8.10` y cerrar la Fase 2 del plan de depuración en `master@526d
 **Cada uno lo reconcilia su propia sesión**, después de commitear o descartar lo suyo. Dos de ellos —`s10-2-integration` y `s8-11-fixture-rewrite`— además **divergen** de `master`: su `HEAD` no es ancestro, así que necesitan rebase o merge explícito, no fast-forward.
 
 **Nota para quien retome `s5-9`**: esa rama es `fix/s4.4-host-recovery-epoch`, y `S4.4` **se destrabó** al integrar `S8.10`. Conviene revisar si su trabajo sigue vigente contra el contrato exacto de cuatro campos de `inspectIdentity` que la verificación final dejó documentado en [plan-8](plan-8/STATUS.md).
+
+## Autoridad vigente Pi-first — 2026-08-27
+
+Este inventario medido se preserva completo como baseline. La prioridad cambia a Pi por la decisión 80; ninguna evidencia OpenCode, hash, conteo o estado desplegado de este documento queda invalidado. Los contratos ejecutables vigentes viven en los `STATUS.md` y la cola en `master-index.md`.
