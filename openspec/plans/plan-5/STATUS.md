@@ -1438,6 +1438,22 @@ fija para una base divergente: preservar, no rebasar en silencio.
 históricas de este Plan. **No se corrige a propósito:** `S5.15` retira ese parser, así que
 alinear los planes contra un lector que se va sería trabajo perdido.
 
+## Estado de los cinco asientos — `origin/master@cea9439` (2026-08-27)
+
+**Los cinco worktrees están en `cea9439`, limpios y sin nada sin commitear.** `Main` sobre
+`master`, `support-agent` sobre `support/read-only-20260813`, y los tres `implementer-*` en
+HEAD desasociado sobre `origin/master`.
+
+**El HEAD desasociado de los implementers es deliberado, no un defecto que arreglar.** Git no
+deja tener `master` chequeado en más de un worktree, y la convención de nombres prohíbe que el
+dueño forme parte del identificador: no existe una rama `feat/implementer-1/...` legítima. El
+asiento crea su rama —`feat/plan-N/sN-M-...`— **cuando recibe la Sesión**, no antes. Un
+diagnóstico automático que reporte "detached HEAD" como problema está describiendo el estado
+correcto de un asiento en reposo.
+
+**Ninguna asignación de asiento se creó ni se cambió acá.** `S4.4` y `S4.8` conservan sus ramas
+parqueadas; el resto de la cola no tiene rama todavía.
+
 ## Publicación completa — `origin/master@f2d1a81` (actualizado 2026-08-27)
 
 **Todo lo trabajado en la sesión del tercer eje está publicado**, y desde entonces `S2.6`
