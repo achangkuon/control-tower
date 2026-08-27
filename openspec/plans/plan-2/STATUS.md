@@ -77,15 +77,14 @@ una regla para aplicarla, la regla es del harness*.
 
 ## Sesión 2.6 — Adopción y recorte del contrato de ejecución sellado
 
-**Estado:** 🟢 LISTO — decision-clean, **con candidato verificado parqueado el 2026-08-26**.
+**Estado:** ✅ COMPLETO — cierre técnico local sobre el candidato limpio `c91fddd5c74019de2ef7d691a43d403558c3a92e`, pendiente de publicación. Este documento no afirma push, publicación ni integración a `master`.
 
-> **Candidato parqueado, verificado, sin publicar.** `feat/plan-2/s2-6-execution-contract-adoption@00b24a2` (`docs(plan): park S2.6 closure candidate`), sobre el comportamiento `4dab62b` que toca `schemas/execution-contract-v1.schema.json`, `test/contracts/schema.test.mjs`, `test/fixtures/contracts/schema-cases-v1.json` y `test/jornada/execution-contract.test.mjs`.
-> **Integración verificada contra `master` el 2026-08-26:** merge sin conflictos y suite completa en **892 pass / 0 fail / 5.096 aserciones / 68 archivos**. No se le hizo merge a la rama a propósito: meterle `master` cambia el árbol que ya se verificó, y esa es una decisión del maintainer.
-> El asiento `implementer-2` quedó en detached HEAD sobre `master`, sin nada suelto.
+> **Cierre técnico local sobre identidad limpia.** Commit funcional `c91fddd5c74019de2ef7d691a43d403558c3a92e` (`feat(contracts): adopt Tower execution contract`); padre/base `99bab46036a1448ff7ebd9e6bbd1147964cda392`; árbol funcional `0040cd84b498d5953cd3c9eececbe65e46cf16d2`; patch funcional SHA-256 `03235f8632653f868d93ea9643de0dee30d776528d0808505eab2ccff60414ba`.
+> **Alcance y verificación autorizados:** exactamente 4 paths, 179 adiciones + 87 eliminaciones = 266 líneas authored; focalizada 87 tests / 0 fallos / 417 aserciones; integral 892 tests / 0 fallos / 5.096 aserciones / 68 archivos. La advisory de reliability conserva el resultado tipado `unavailable` porque RDD está OFF; no se declara PASS.
 
 **Depende de:** nada. **Ruta:** `design-tasks` — hay que elegir la representación de los
-bloques ajenos antes del primer Módulo. **Autoridad:** [decisión 71](../decision-register.md)
-y [decisión 59](../decision-register.md).
+bloques ajenos antes del primer Módulo. **Autoridad:** [decisión 71](../decision-register.md),
+[decisión 59](../decision-register.md) y [decisión 79](../decision-register.md).
 
 **Área:** `schemas/execution-contract-v1.schema.json`, `jornada/execution-contract.mjs`,
 `test/jornada/execution-contract.test.mjs`, `test/contracts/schema.test.mjs`,
@@ -118,33 +117,38 @@ sellada de los cinco pisos de `assertFloorProtected`—, `ownership`, `artifact_
 **Decisiones:**
 
 - `escala` — **RESUELTA por el maintainer el 2026-08-25 ([decisión 71](../decision-register.md)): la Torre adopta el contrato como propio y acepta la divergencia declarada.** **Clase:** contrato visible del producto; dependencias o evidencia contradictorias. **Consecuencia registrada:** el criterio de copia byte-idéntica de la decisión 23 y de `S10.3` deja de valer, y `plan-10/STATUS.md` lleva su nota histórica. **Contaminaba:** `S2.6`, `S10.3`, `S7.1`.
-- `derivable` — **qué pasa con los tres bloques del harness.** **Criterio:** se vuelven opacos —`{"type": "object"}` sin restricciones internas— y salen de `required`; **no se eliminan**. La Torre deja de tener opinión sobre su contenido sin rechazar un contrato que los traiga. **Falsificable:** un contrato sellado hoy por la skill, sin modificar un byte, que deje de validar. **Autoridad:** decisión 59 y la frontera.
-- `derivable` — **qué pasa con `artifacts.kind`.** **Criterio:** el enum `proposal|spec|design|tasks|...` se abre a cadena no vacía. La Torre fija el `sha256` de las entradas sin saber que una se llama `design`. **Falsificable:** cualquier nombre de fase SDD que sobreviva en el schema. **Autoridad:** el test de contenido de la frontera.
+- `escala` — **RESUELTA por el maintainer en la [decisión 79](../decision-register.md): compatibilidad versionada sin transferir autoridad al contrato.** La Torre conserva `schema_version: 1` numérico y acepta exactamente los literales `gentle-ai.unattended-execution-contract/v1` y `gentle-ai.unattended-execution-contract/v2`. v2 sólo valida con supervisión activa segura de la Torre, pisos estrictos de permisos/prohibiciones, candidato sin commit y sin autoridad de entrega, y terminal/coordinación seguros; standalone o inseguro se rechaza. **Clase:** contrato visible del producto; API pública; seguridad y permisos; dependencias o evidencia contradictorias. **Contaminaba:** `S2.6`, `S10.3`, `S7.1`.
+- `derivable` — **qué pasa con los bloques ajenos.** **Criterio:** `runtime`, `chain`, `validation` y `retries` son opcionales, opacos y no autoritativos; la Torre no ramifica sobre su contenido. **Falsificable:** un valor interno distinto que cambie autorización o validación. **Autoridad:** decisiones 59 y 79 y la frontera.
+- `derivable` — **qué pasa con `artifacts.kind`.** **Criterio:** el enum `proposal|spec|design|tasks|...` se abre a cadena no vacía. La Torre fija el `sha256` de las entradas sin saber que una se llama `design`. **Falsificable:** cualquier nombre SDD que sobreviva como restricción en el schema. **Autoridad:** el test de contenido de la frontera.
+
+**Evidencia contractual instalada.** El asset compatible exacto usa `$id` `https://gentle-ai.local/schemas/unattended-execution-contract-v2.json`, literal `gentle-ai.unattended-execution-contract/v2` y SHA-256 `c1b042d79e887c7f7fe9288d68f280b2e32ca28d6a6cb5543d49e7aa117e327d`. La fixture fija procedencia lógica portable, sin dependencia absoluta. `schemas/execution-contract-v1.schema.json` permanece fuera del registry y del payload.
 
 **Criterios de aceptación, binarios:**
 
-- [ ] `rg 'gentle-ai.local' schemas/` no devuelve una sola ocurrencia
-- [ ] Un contrato sellado hoy por la skill, sin modificar un byte, valida contra el schema adoptado
-- [ ] Un contrato con `retries`, `chain` o `validation` de valores distintos a los actuales **también** valida
-- [ ] `rg 'baseline_commands|line_budget|stacked-to-main|size-exception' schemas/execution-contract-v1.schema.json` devuelve cero
-- [ ] `jornada/execution-contract.mjs` no contiene ninguna comparación contra un literal de fase, comando o presupuesto
-- [ ] `execution-contract-v1.schema.json` sigue **sin declarar** en `contracts/schema-registry.mjs` y fuera del payload — el criterio de `S8.10` intacto
-- [ ] `bun test` no introduce fallos nuevos; el diff no toca ninguna ruta del `Prohibido`
+- [x] `rg 'gentle-ai.local' schemas/` no devuelve una sola ocurrencia
+- [x] Un contrato sellado hoy por la skill, sin modificar un byte, valida contra el schema adoptado
+- [x] Un contrato con `retries`, `chain` o `validation` de valores distintos a los actuales **también** valida
+- [x] `rg 'baseline_commands|line_budget|stacked-to-main|size-exception' schemas/execution-contract-v1.schema.json` devuelve cero
+- [x] `jornada/execution-contract.mjs` no contiene ninguna comparación contra un literal de fase, comando o presupuesto
+- [x] `execution-contract-v1.schema.json` sigue **sin declarar** en `contracts/schema-registry.mjs` y fuera del payload — el criterio de `S8.10` intacto
+- [x] `bun test` no introduce fallos nuevos; el diff no toca ninguna ruta del `Prohibido`
+
+**Avance de cierre:** `2/2 Módulos · 7/7 Tareas`.
 
 ### Módulo M2.6.1 — Adopción de propiedad
 **Paths:** `schemas/execution-contract-v1.schema.json`, `test/contracts/schema.test.mjs`
 
-- [ ] `T2.6.1.1` **RED** — test que falla mientras el `$id` no sea `control-tower.local`, enumerando los veintiséis schemas y exigiendo dominio único
-- [ ] `T2.6.1.2` **GREEN** — `$id` y `title` adoptados; `schema_version` propio de la Torre
-- [ ] `T2.6.1.3` **REFACTOR** — el testigo de dominio se deriva del directorio, no de una lista escrita a mano
+- [x] `T2.6.1.1` **RED** — test que falla mientras el `$id` no sea `control-tower.local`, enumerando los veintiséis schemas y exigiendo dominio único
+- [x] `T2.6.1.2` **GREEN** — `$id` y `title` adoptados; `schema_version` propio de la Torre
+- [x] `T2.6.1.3` **REFACTOR** — el testigo de dominio se deriva del directorio, no de una lista escrita a mano
 
 ### Módulo M2.6.2 — Recorte a opaco
 **Paths:** `schemas/execution-contract-v1.schema.json`, `jornada/execution-contract.mjs`, `test/jornada/execution-contract.test.mjs`, `test/fixtures/contracts/schema-cases-v1.json`
 
-- [ ] `T2.6.2.1` **RED** — un contrato sellado hoy por la skill, con `chain`/`validation`/`retries` intactos, debe seguir validando; y uno con `retries` distinto de 1/2/1/0/0, también
-- [ ] `T2.6.2.2` **RED** — `artifacts.kind` acepta un valor que no es fase SDD
-- [ ] `T2.6.2.3` **GREEN** — los tres bloques pasan a opacos y salen de `required`; `artifacts.kind` pasa a cadena no vacía
-- [ ] `T2.6.2.4` **REFACTOR** — ninguna rama de `parseContract` ramifica sobre el contenido de un bloque opaco
+- [x] `T2.6.2.1` **RED** — un contrato sellado hoy por la skill, con `chain`/`validation`/`retries` intactos, debe seguir validando; y uno con `retries` distinto de 1/2/1/0/0, también
+- [x] `T2.6.2.2` **RED** — `artifacts.kind` acepta un valor que no es fase SDD
+- [x] `T2.6.2.3` **GREEN** — los tres bloques pasan a opacos y salen de `required`; `artifacts.kind` pasa a cadena no vacía
+- [x] `T2.6.2.4` **REFACTOR** — ninguna rama de `parseContract` ramifica sobre el contenido de un bloque opaco
 
 ---
 
