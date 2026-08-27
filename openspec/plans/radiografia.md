@@ -1,7 +1,7 @@
 ---
-verified_against: 073b85a9c079e95e92f027ec09ce04c47124a769
-verified_at: 2026-08-20
-standfirst: Dónde está el producto hoy, qué se movió, y las cinco decisiones que dependen de vos. Las cifras se miden solas contra el código; el juicio de abajo se escribe a mano y lleva estampado contra qué commit se verificó.
+verified_against: 8acf93635c6c086cf8667afd0a8421188874f5cc
+verified_at: 2026-08-27
+standfirst: La Torre empieza por Pi, con el barrido de decisiones Pi-first cerrado y un contrato neutral como primera entrega. Las cifras se miden solas contra el código; este juicio explica qué cambia, qué se preserva y qué debe probarse antes de ampliar las promesas del producto.
 ---
 
 <!--
@@ -29,87 +29,95 @@ verificaste. Si no coincide con HEAD, el informe lo avisa solo.
 
 ## Qué es la Torre, sin jerga
 
-Vos dirigís varios agentes de IA trabajando en varios proyectos a la vez. Hoy eso se degrada: cada sesión pierde el contexto, dos agentes pisan el mismo archivo, y vos tenés que estar sentado frente a la terminal para que algo avance. La Torre reparte el trabajo, guarda el estado en disco en vez de en la conversación, impide que dos agentes escriban lo mismo, y cuando aparece una decisión que es tuya, frena y te la manda al celular. **La versión 1 se declara terminada cuando podés aprobar una decisión desde el teléfono.** Ese es el corte, y no es una feature más: es la definición de "listo".
+Vos dirigís varios agentes de IA trabajando en varios proyectos a la vez. La Torre existe para repartir ese trabajo, conservar el contexto fuera de una conversación y frenar cuando aparece una decisión que sólo vos podés tomar.
 
-## El veredicto en tres frases
+La prioridad cambió: la primera implementación se hará con Pi. No porque Pi pase a ser el producto, sino porque la Torre puede poseer la identidad del proceso que lanzó y exigir comprobantes producidos por ese proceso. Eso le permite distinguir una sesión propia de una sesión que sólo dice serlo.
 
-### 1 · sólido · Los cimientos están bien construidos y muy bien probados
-Lo técnico: La suite corre en verde y las líneas de test superan a las de producto. Las piezas de seguridad —autoridad, candados, contratos versionados, frenar ante la duda— están hechas con un rigor poco común: el sistema prefiere detenerse a adivinar.
+El primer paso no conecta todavía el host. Primero se construye una unión neutral: una identidad, una asignación y una puerta de runtime que no dependan de Pi. Así, si OpenCode vuelve más adelante, ambos podrán enchufarse al mismo contrato sin convertir a la Torre en dependiente de un proveedor.
 
-### 2 · crítico · El módulo que arma las decisiones para vos sigue sin que nadie lo llame
-Lo técnico: Todo `escalation/` —tres archivos, con sus tests en verde— tiene cero llamadores en el producto. Ningún comando de `bin/torre` lista decisiones pendientes, y el módulo no viaja en el instalable.
+## El veredicto actual
 
-### 3 · estructural · No hay medio producto sin empaquetar: hay dos productos que no se hablan
-Lo técnico: `core.mjs`, el corazón de lo instalado, no importa un solo archivo del repositorio — sólo módulos de Node y de Bun. Ninguno de los archivos que quedan afuera es usado por lo que sí se instala. Agregarlos a la lista instalaría código muerto. El contador de arriba mide exactamente eso.
+### 1 · sólido · Pi va primero porque la Torre puede probar a quién lanzó
+Lo técnico: El roadmap promueve Pi como primer host de implementación. La identidad no se acepta por autodeclaración: se liga a proceso, ubicación de trabajo e instancia, y las respuestas relevantes deben traer prueba producida por el runtime.
+En simple: La Torre no confía en una credencial escrita por el propio agente. Conserva la ficha del proceso que abrió y exige un recibo que sólo ese proceso puede producir. Esa base permite empezar por Pi sin entregar el control de la Torre a Pi.
+Evidencia: `openspec/plans/decision-register.md:408-442` · `openspec/plans/plan-4/STATUS.md:735-751` · `master@8acf93635c6c086cf8667afd0a8421188874f5cc`
+
+### 2 · estructural · La unión neutral va antes que el adaptador Pi
+Lo técnico: `S4.10` define identidad, binding y puerto runtime host-neutral. `S4.11` agrega observe, health, stop y attach sobre ese mismo contrato; recién después se conectan supervisor y adapter Pi.
+En simple: Primero se define el enchufe y después el aparato. Eso evita resolver rápido con un cable exclusivo de Pi que obligue a rehacer la Torre cuando se reactive OpenCode o aparezca otro host.
+Evidencia: `openspec/plans/plan-4/STATUS.md:739-759` · decisión 84 en `openspec/plans/decision-register.md:428`
+
+### 3 · resuelto · El instalador de la Torre ahora incluye conducta propia de la Torre
+Lo técnico: La decisión 88 divide la entrega entre `S8.12`, dueña del bundle versionado, y `S8.13`, dueña de instalación, activación, rollback y preflight. El bundle incluye runtime, contrato neutral, adapter Pi y perfiles/skills Tower-specific, incluido Support. La configuración de Pi y `pi-intercom`, y las skills genéricas de Gentle AI, quedan fuera.
+En simple: Instalar la Torre ya no significa copiar sólo su código: también instala cómo deben comportarse sus roles propios. Pero no invade productos ajenos. Gentle AI sigue actualizando sus capacidades generales, y la Torre sólo comprueba que Pi y su comunicación externa sean compatibles antes de tocar nada.
+Evidencia: `openspec/plans/decision-register.md:440-442` · `openspec/plans/plan-8/STATUS.md:938-954`
 
 ## Avance por Plan
 
-Un Plan agrupa Sesiones; una Sesión es una entrega verificable. El porcentaje cuenta Sesiones cerradas sobre Sesiones enumeradas — el trabajo en curso suma cero hasta que cierra. La tabla sale del índice maestro y se actualiza sola.
+Un Plan agrupa Sesiones; una Sesión es una entrega verificable. El porcentaje cuenta Sesiones cerradas sobre Sesiones enumeradas —el trabajo en curso suma cero hasta que cierra. La tabla sale del índice maestro y se actualiza sola.
 
 {{avance}}
 
 ## La cola de ejecución
 
-Una Sesión entra en esta cola sólo si toda su cadena de dependencias está satisfecha. Nada acá espera una decisión tuya. El detalle de qué entrega cada una vive en `openspec/plans/master-index.md`.
+Una Sesión entra en esta cola sólo si su cadena de dependencias está satisfecha. El detalle de cada entrega vive en `openspec/plans/master-index.md`; esta vista no inventa prioridades ni cifras.
 
 {{cola}}
 
-## Los cinco problemas de fondo
+## Lo que cambió para el producto
 
-### A · crítico · El escalamiento está escrito, probado y apagado
-Lo técnico: No falta transporte remoto. Con Moshi como control remoto de la máquina, el modo local es el correcto. Lo que falta es que algo llame al módulo y algo lo muestre: `escalation/{request,routing,parking-composition}.mjs` no tiene un solo llamador fuera de sus tests.
-En simple: La Torre sabe armar la pregunta perfecta —con evidencia, opciones y consecuencias— y sabe qué hacer con tu respuesta. Pero nadie le pide que la arme, y no hay ninguna pantalla donde aparezca. Sigue teniendo dueño: `S5.5`, que le da su primer consumidor.
-Evidencia: Cero llamadores fuera de `test/` · ausente de `RUNTIME_PAYLOAD_FILES` · `S5.5` 🟢 LISTO
+### A · resuelto · OpenCode está estacionado, no descartado
+Lo técnico: `S4.4`, `S4.8` y `S4.9` quedan diferidas. Se preservan código, pruebas, decisiones, evidencia, ramas y checkpoints; el trabajo en curso de `S4.8` también queda guardado como WIP, no como candidato.
+En simple: Cambiar la prioridad a Pi no tira a la basura lo construido para OpenCode ni declara que estaba mal. Se guarda completo para retomarlo desde el mismo punto si se decide volver. Estacionar significa no gastar hoy, no borrar ni invalidar.
+Evidencia: `openspec/plans/plan-4/STATUS.md:666-725` · `openspec/plans/plan-4/STATUS.md:733-740` · `openspec/plans/plan-7/STATUS.md:69-75`
 
-### B · estructural · Son dos productos en un repositorio, sin un solo cable entre ellos
-Lo técnico: El payload instalado es import-closed y funciona. Lo medido es otra cosa: ninguno de los archivos no instalados es importado por el payload. `core.mjs`, el 74% de lo que se instala, importa exclusivamente `node:*` y `bun:sqlite`. Quedan afuera `contracts/`, `registry/`, `escalation/`, `capabilities/`, `console/`, `workspace/`, `enroll/`, `policy/`, `continuation/`, `supervision/`, `delivery/` —recién entregado con `S5.2`—, el `dashboard/` y casi todo `main-store/`.
-En simple: Hay dos autos en el taller. Uno anda y es el que se entrega. El otro está impecablemente construido, pieza por pieza, y no tiene el motor conectado a nada. Abrir el camión no arregla nada: llegarían piezas sueltas. El trabajo real es enchufar esos módulos, y sigue sin estar enumerado ni asignado.
-Evidencia: Decisión 54 · `S8.9` 🟢 cubre el envío, no el cableado · cada Sesión que cierra agranda la brecha: `S5.2` bajó el share instalado
+### B · resuelto · El barrido Pi-first ya no espera decisiones del maintainer
+Lo técnico: Las decisiones 80–88 fijan orden Pi-first, recuperación mínima, roles y capacidades, contrato neutral, candidato final, broker por worktree, mailbox volátil e instalación conductualmente completa. El cierre es acotado a este barrido y no afirma cero decisiones abiertas en todo el roadmap.
+En simple: Para empezar esta ruta no falta otra elección tuya. Lo que sigue son entregas y pruebas ya enumeradas. Eso no significa que nunca vaya a aparecer otra decisión de producto; significa que no hay que fabricar una ahora para justificar la espera.
+Evidencia: `openspec/plans/decision-register.md:408-442`
 
-### C · nuevo · La documentación del plan afirmó cosas falsas sobre el código dos veces en una semana
-Lo técnico: `M9.1.1` figuraba `✅ COMPLETO` y su código no existe en `master`. Y la auditoría de deudas atribuyó un hallazgo de `S5.2` a un archivo que la propia Sesión tiene prohibido tocar.
-En simple: El tablero que usás para saber dónde estás se puede desincronizar del taller sin que nadie se dé cuenta, y las dos veces empujó hacia parecer más avanzado de lo que estaba. Se detectaron por auditoría manual, no por una alarma. Este informe existe para reducir eso: las cifras ya no las escribe nadie.
-Evidencia: Decisión 50 · corrección de la decisión 46 en `plan-5/STATUS.md:199`
+### C · estructural · Cada área de trabajo tiene su propio broker y el correo en vuelo puede perderse
+Lo técnico: La topología aprobada usa un broker por worktree, supervisor Tower-owned, rutas runtime cortas, IDs impredecibles y keepalive propiedad de la Torre. El mailbox actual permanece volátil; tras una caída, la recuperación repite operaciones idempotentes desde estado durable.
+En simple: Cada mesa de trabajo tiene su propia centralita, así una falla no cruza trabajos. Si esa centralita cae, un mensaje que estaba viajando puede perderse: la garantía no es conservar cada sobre, sino poder reconstruir la tarea desde el registro durable sin duplicar efectos.
+Evidencia: decisiones 86–87 en `openspec/plans/decision-register.md:432-434` · `openspec/plans/plan-9/STATUS.md:228-235`
 
-### D · deuda · `core.mjs`: 4.646 líneas que no son de nadie
-Lo técnico: Un solo archivo concentra el 40% del código de producto y el 74% de lo que se instala, y no importa nada del repositorio. Ningún Plan lo reclama. Al mismo tiempo, los módulos que nombran las capacidades centrales son los más chicos: `continuation/` tiene 35 líneas y `jornada/` tiene 144.
-En simple: Lo que corre todos los días es una pieza gigante y vieja; lo que se está construyendo con todo el rigor son piezas nuevas, chiquitas y desconectadas. El andamio está desplegado y el edificio no. Es la misma raíz que el problema B mirada desde el otro lado: mientras nadie parta esa pieza, no hay dónde enchufar lo nuevo.
-Evidencia: Sin dueño enumerado en ningún Plan
+### D · crítico · La capacidad inicial sigue limitada por lo que falta medir
+Lo técnico: Siguen sin medirse una corrida Pi larga y desatendida, una caída del broker con tráfico y concurrencia por encima de cinco clientes. Esos puntos son gates de validación, no decisiones. El claim inicial queda limitado a un máximo de cinco clientes hasta producir evidencia atribuible al candidato exacto.
+En simple: No hace falta que elijas un número más grande ni una promesa más ambiciosa. Primero hay que demostrar estabilidad durante tiempo real, recuperación durante una falla con trabajo en movimiento y carga mayor. Hasta entonces, vender más capacidad sería adivinar.
+Evidencia: `openspec/plans/plan-1/STATUS.md:283-290` · `openspec/plans/plan-7/STATUS.md:73-81`
 
-### E · ritmo · Se documenta más del doble de lo que se construye
-Lo técnico: El ratio de líneas de documentación sobre producto está en el instrumento de arriba, y el pie de página trae el reparto de commits de las últimas horas. El `dashboard/` sigue leyendo de `mock-fixtures.mjs`: nunca se le conectó una fuente real.
-En simple: El proceso es riguroso y eso es lo que hace que el sistema sea confiable — pensar en papel encontró un Módulo fantasma y corrigió un diagnóstico entero. Pero también es caro. No está mal en sí; está mal si no lo elegiste a conciencia. Es la palanca más grande que tenés para que lo que falta tarde meses o semanas.
-Evidencia: `dashboard/sources/` sólo mock
+### E · crítico · `S8.11` sigue bloqueada y su intento fallido no se puede maquillar
+Lo técnico: El checkpoint sellado conserva los commits locales `812703d` y `388109f`, el contrato `control-tower-S8.11-20260820-night` y su digest. La verificación integral quedó bloqueada por fallos de fixtures sobre árboles owner-read-only; no se ejecutaron harness ni suite completa y la regla terminal prohíbe reintentar ese mismo contrato.
+En simple: Hay trabajo guardado, pero no hay permiso para llamarlo terminado. El próximo intento necesita un contrato atendido nuevo y acotado que corrija el entorno de prueba; repetir el examen anterior o citar un verde de otra versión sería fabricar evidencia.
+Evidencia: `openspec/plans/plan-8/STATUS.md:724-734` · checkpoint ejecutable `388109f1e79f50ce05582d2b0a7b3ff8a9685f72`
 
-## Decisiones que dependen de vos
+## Próximas pruebas y trabajo enumerado
 
-Ordenadas por cuánto destraban. Ninguna la puede tomar un agente: las cinco caen en clases que siempre escalan —contrato visible del producto, alcance, seguridad o irreversibilidad.
+La lista siguiente reemplaza las antiguas “cinco decisiones”. No son preguntas para vos: son puertas medibles o Sesiones con alcance ya fijado.
 
-#### 1 · el problema A · define la versión 1 · Dónde se te muestra una decisión pendiente
-El contexto: es la que define cuándo la versión 1 está terminada. No hace falta construir transporte; falta que algo llame al módulo y algo lo muestre. `S5.5` resuelve la mitad. Queda decidir la superficie donde la ves.
-- A · **Arrancar `S5.5` y agregarle un `torre decisiones`.** Un comando que lista lo estacionado y te deja responder. Es lo mínimo que te hace ver la pregunta desde Moshi, y cabe en la Sesión que ya está lista. → recomendada
-- B · **Arrancar `S5.5` tal como está y decidir la superficie después.** Respeta el alcance sellado. La decisión queda en disco y visible sólo leyendo el archivo.
-- C · **Conectarlo al `dashboard/` que ya existe.** Hay un tablero autenticado que hoy lee datos falsos. Es más trabajo, y ese tablero es uno de los módulos que no se instalan ni están enchufados a nada.
+| Próximo paso | Qué debe demostrar | Qué no permite afirmar todavía |
+|---|---|---|
+| `S4.10` | Identidad, binding y puerto runtime neutrales, sin importar Pi ni OpenCode | Que el adapter Pi ya funciona |
+| `S4.11` y `S4.12` | Operaciones observables y composición neutral antes del host | Que la Torre ya supervisa una jornada real |
+| `S9.4` y `S1.17`–`S1.19` | Supervisor, adapter y regresión Pi con aislamiento y recibos verificables | Capacidad por encima de cinco clientes |
+| Gate Pi desatendido | Una corrida prolongada atribuible al candidato | Estabilidad de larga duración sin esa evidencia |
+| Gate de caída con tráfico | Recuperación idempotente tras caída real del broker | Entrega garantizada de mensajes en vuelo |
+| `S8.12` y `S8.13` | Bundle Tower completo, instalación reversible y preflight externo | Que la Torre deba instalar o modificar Gentle AI, Pi o `pi-intercom` |
 
-#### 2 · el problema B · sucesora de la decisión 54 · Quién enchufa al producto la mitad que hoy no está conectada
-El contexto: ya le diste dueño a la mitad "enviar" con `S8.9`. La medición dejó claro que esa mitad no arregla el fondo: los archivos no instalados no los usa nadie. La mitad "cablear" sigue sin enumerar, y es la brecha más grande del proyecto medida en líneas.
-- A · **Enumerar un Plan de cableado con inventario primero.** Antes de escribir código, clasificar cada archivo en tres cajones: va al producto y falta enchufar, es andamio interno, o se borra. Cuesta una sesión de análisis y evita construir puentes hacia código que no debería existir. → recomendada
-- B · **Que cada Sesión futura enchufe lo suyo al cerrar.** Cero coordinación. Pero es exactamente el mecanismo que produjo esta brecha: nadie es dueño del conjunto y nunca cierra.
-- C · **Esperar al examen final (`S7.1`) y que él mida el hueco.** Lo hace con datos duros, pero llegar al examen de salida con la mitad del repositorio desconectada lo convierte en un informe de daños.
+## Lo que pasa ahora mismo
 
-#### 3 · deuda con dueño perdido · El candado huérfano de `main-store/store.mjs`
-El contexto: si el proceso que toma ese candado muere de golpe, el archivo del candado queda para siempre y esa parte del almacén no se puede volver a escribir nunca. Se creyó que se arreglaba dentro de `S5.2` y se verificó que era falso: son dos candados distintos que se parecen, y ese archivo está prohibido dentro de `S5.2`.
-- A · **Un arreglo puntual autorizado fuera de Sesión.** Es un cambio chico y localizado, del mismo tamaño que el piso de puerto que ya aprobaste así, con test de borde propio. → recomendada
-- B · **Enumerar una Sesión de deuda.** Más ordenado y auditable, pero mete un defecto real de pérdida de escritura detrás de cinco Sesiones.
-- C · **Dejarlo abierto y documentado.** Cero trabajo hoy; el día que pase, esa parte del almacén queda inutilizable y hay que destrabarla a mano.
+### F · sólido · La próxima acción exacta es `S4.10`
+Lo técnico: `S4.10` está lista, no tiene dependencias y su Área está acotada al contrato host-runtime neutral, sus schemas y sus pruebas. Es la primera Sesión de implementación de la ruta Pi-first.
+En simple: El siguiente movimiento es construir la unión común, no encender Pi. Tiene un borde claro y evita mezclar de entrada identidad, supervisión, instalación y comportamiento del host.
+Evidencia: `openspec/plans/plan-4/STATUS.md:739-747` · `openspec/plans/master-index.md`
 
-#### 4 · última decisión abierta del Plan 9 · Cuántos asientos de trabajo tiene el pool
-El contexto: la capa de asientos quedó enumerada como `S9.4`. Falta un solo número. Cada asiento cuesta una instalación de dependencias, y por eso mismo aprobaste la caché compartida en la decisión 53. No bloquea a `S9.1`.
-- A · **Tres asientos.** Cubre el patrón que ya usás: uno planificando, uno implementando, uno libre para una urgencia. Costo acotado y predecible. → recomendada
-- B · **Cinco o más.** Deja lugar a campañas multiproyecto sin repensar el pool. Multiplica el costo de dependencias, que la caché amortigua pero no elimina.
-- C · **Empezar con dos y crecer si molesta.** El mínimo que prueba que el mecanismo funciona. Si el pool es fijo por contrato, agrandarlo después puede no ser gratis.
+### G · crítico · No debe empezar todavía el adapter Pi ni reactivarse OpenCode
+Lo técnico: Antes de cerrar `S4.10` no deben iniciarse `S4.11`, `S9.4`, `S1.17`–`S1.19`, `S4.12`, `S8.13` ni el piloto final. `S8.12` es repo-only y puede avanzar en paralelo únicamente si la verificación previa confirma `Área` y `Recurso` disjuntos. `S4.4`, `S4.8` y `S4.9` permanecen diferidas; `S8.11` conserva su bloqueo y checkpoint exacto.
+En simple: Si se empieza por el host o por la instalación activa antes de cerrar el contrato común, se vuelve a construir dependencia en el orden equivocado. El bundle de roles sí puede prepararse aparte si no toca los mismos archivos ni recursos. Y si se reabre trabajo estacionado o bloqueado para “aprovechar tiempo”, se mezclan dos rutas y se pierde la trazabilidad que este roadmap acaba de recuperar.
+Evidencia: `openspec/plans/plan-4/STATUS.md:735-759` · `openspec/plans/plan-8/STATUS.md:938-954` · `openspec/plans/master-index.md:17-21` · `openspec/plans/release-chain.md`
 
-#### 5 · no bloquea nada hoy · Si la Torre tiene que correr en Mac
-El contexto: `hosts/production-provider.mjs` rechaza toda plataforma que no sea Linux, y no se puede aflojar: para garantizar que los bytes que verificó son los que ejecuta usa un mecanismo del sistema que macOS no tiene y Node no puede sustituir. El resto del producto sí es portable.
-- A · **Dejarlo así: la Torre es Linux.** Cero trabajo, cero riesgo, y la garantía de seguridad se conserva intacta. → recomendada
-- B · **Enumerar una Sesión de soporte macOS.** Habría que diseñar una garantía equivalente y probar que es igual de fuerte. Es trabajo de seguridad, no de portabilidad.
+## Evidencia y límites de esta radiografía
+
+Este juicio fue reconciliado contra `master@8acf93635c6c086cf8667afd0a8421188874f5cc`. Las cifras de instrumentos, avance y cola son derivadas por el generador; no se escriben a mano acá.
+
+El generador previo al push informó una suite verde, pero declaró de forma explícita que pertenecía a otro commit. Por eso esta radiografía no la usa como prueba del commit actual. La evidencia pendiente debe producirse contra el candidato exacto que pretenda cerrar cada gate.
