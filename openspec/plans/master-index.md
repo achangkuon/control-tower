@@ -6,13 +6,23 @@
 
 ## 📍 Punto de retoma
 
+**🔴 EL ORDEN DE HOSTS SE INVIRTIÓ. Pi va primero ([decisión 80](decision-register.md), 2026-08-27).** Esta es la primera cosa que hay que leer: la cola de abajo **todavía está escrita para OpenCode** y se reescribe en la próxima sesión. Nada se borra — OpenCode y todo lo suyo quedan 🟡 DIFERIDO con su trabajo intacto y su estado ✅ COMPLETO donde lo tenían.
+
+**⛔ NO ARRANCAR `S4.4`.** Es el `#1` de la cola escrita abajo, es recuperación del host OpenCode, y una decisión abierta puede disolverle la mitad del alcance. Cualquier trabajo sobre ella hoy es trabajo perdido.
+
+**Cinco decisiones del maintainer siguen abiertas y bloquean la reescritura de los planes** (detalle en la [decisión 80](decision-register.md)): alcance de la [decisión 40](decision-register.md) — la Torre conserva recuperación, ¿y qué mitad; Grado 2 o Grado 1 de aislamiento antes de arrancar; si los asientos implementadores conservan `bash`; las 228 líneas de superficie de host sin equivalente enumerado en Pi —**faltan por los dos caminos**—; y qué pasa con el piloto de `S7.1` si el host cambia a mitad de plan, que **nunca se registró**.
+
+**Pregunta de validación pendiente para la próxima sesión, planteada por el maintainer:** verificar que la Torre **no quede dependiendo de Pi ni de Herdr** como quedó dependiendo de OpenCode. La [auditoría B](audits/opencode-coupling-audit-b.md) midió exactamente esa lección: la capa de continuación es agnóstica —1.651 líneas sobreviven a cualquier host— pero la de lanzamiento e identidad no tenía costura y quedó con el idioma de OpenCode grabado en un esquema persistido. La costura de host hay que diseñarla **antes** de escribir el adaptador de Pi, no después.
+
 `S2.6` queda ✅ COMPLETO **y publicada**: `c91fddd5c74019de2ef7d691a43d403558c3a92e` es ancestro de `origin/master`, con 87 tests focalizados y 892 integrales sin fallos. Ya no es candidato ni bloquea a nadie.
 `S4.6` ya está publicado: `f9f0bc24c9083f9c41a62f8788f77cf56e157dfd` es ancestro del `master` actual.
-`S4.4` y `S4.8` están 🔵 EN CURSO. Este índice no crea ni cambia asignaciones de asiento.
-Con `S2.6` publicada, **`S5.14` y `S2.8` quedan desbloqueadas por dependencia** y la cola omite `S2.6` por estar cerrada, no por estar pendiente.
+Con `S2.6` publicada, **`S5.14` y `S2.8` quedan desbloqueadas por dependencia** y la cola omite `S2.6` por estar cerrada, no por estar pendiente. Ninguna de las dos depende del host, así que **sobreviven al cambio de orden**.
+`S4.4` y `S4.8` estaban 🔵 EN CURSO y quedan **congeladas** hasta la reescritura. Este índice no crea ni cambia asignaciones de asiento.
 **Tercer eje preservado — la cerca no lee ([decisión 78](decision-register.md)).** Support lee el plan y entrega la propuesta; la Torre verifica lo recibido sin recalcular `primary`, `alternatives` ni `conflicts`. `S5.15` retira el lector, `S5.5` permanece recortada, `S2.7` está 📚 ARCHIVADA y `S2.8` conserva el residuo de `binding-delta-v1`.
 
 ## 🎯 Cola de ejecución
+
+> **⚠️ Esta cola está OBSOLETA desde la [decisión 80](decision-register.md).** Se escribió para el orden OpenCode-primero y se reescribe en la próxima sesión, después de cerrar las cinco decisiones abiertas. Se conserva tal cual —sin tocar— para que la reescritura parta de un original fiel. **`S4.4` y `S4.8` están congeladas; no se toman.** `S5.14`, `S2.8`, `S5.5`, `S5.15`, `S9.1` y `S8.12` no dependen del host y sobreviven.
 
 `#1 S4.4` · `#2 S5.14` · `#3 S2.8` · `#4 S4.8` · `#5 S4.9` · `#6 S8.12` · `#7 S5.5` · `#8 S5.15` · `#9 S9.1` · `#10 S7.1` — recalculada tras la publicación de `S2.6`. **Los IDs no se renumeran; las posiciones sí.** La posición es topológica; no vuelve ejecutable una dependencia pendiente.
 
