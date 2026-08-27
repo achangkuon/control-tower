@@ -38,7 +38,7 @@ describe("schema ownership", () => {
       .map((filename) => [filename, JSON.parse(readFileSync(join(schemasDirectory, filename), "utf8")).$id])
       .filter(([, id]) => !id.startsWith("https://control-tower.local/"))
 
-    expect(schemaFiles).toHaveLength(26)
+    expect(schemaFiles).toHaveLength(31)
     expect(nonTowerSchemaIds).toEqual([])
   })
 

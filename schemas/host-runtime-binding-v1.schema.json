@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://control-tower.local/schemas/host-runtime-binding-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "binding_id",
+    "runtime_id",
+    "worktree_id",
+    "process_id",
+    "incarnation_id",
+    "loopback_port"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "control-tower.host-runtime.binding/v1"
+    },
+    "binding_id": {
+      "type": "string",
+      "pattern": "^ct_binding_[0-9a-f]{32}$"
+    },
+    "runtime_id": {
+      "type": "string",
+      "pattern": "^ct_runtime_[0-9a-f]{32}$"
+    },
+    "worktree_id": {
+      "type": "string",
+      "pattern": "^ct_worktree_[0-9a-f]{32}$"
+    },
+    "process_id": {
+      "type": "string",
+      "pattern": "^ct_process_[0-9a-f]{32}$"
+    },
+    "incarnation_id": {
+      "type": "string",
+      "pattern": "^ct_incarnation_[0-9a-f]{32}$"
+    },
+    "loopback_port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
+    }
+  }
+}

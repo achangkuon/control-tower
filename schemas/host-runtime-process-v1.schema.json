@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://control-tower.local/schemas/host-runtime-process-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "process_id"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "control-tower.host-runtime.process/v1"
+    },
+    "process_id": {
+      "type": "string",
+      "pattern": "^ct_process_[0-9a-f]{32}$"
+    }
+  }
+}
