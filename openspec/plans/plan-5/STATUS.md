@@ -1438,11 +1438,13 @@ fija para una base divergente: preservar, no rebasar en silencio.
 históricas de este Plan. **No se corrige a propósito:** `S5.15` retira ese parser, así que
 alinear los planes contra un lector que se va sería trabajo perdido.
 
-## Estado de los cinco asientos — `origin/master@cea9439` (2026-08-27)
+## Estado de los cinco asientos (2026-08-27)
 
-**Los cinco worktrees están en `cea9439`, limpios y sin nada sin commitear.** `Main` sobre
-`master`, `support-agent` sobre `support/read-only-20260813`, y los tres `implementer-*` en
-HEAD desasociado sobre `origin/master`.
+**Los cinco worktrees quedaron sincronizados sobre el `master` que publica esta misma nota,
+limpios y sin nada sin commitear.** `Main` sobre `master`, `support-agent` sobre
+`support/read-only-20260813`, y los tres `implementer-*` en HEAD desasociado sobre
+`origin/master`. La reconciliación de la publicación de `S2.6` que precede a este estado es
+`cea9439`.
 
 **El HEAD desasociado de los implementers es deliberado, no un defecto que arreglar.** Git no
 deja tener `master` chequeado en más de un worktree, y la convención de nombres prohíbe que el
