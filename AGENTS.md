@@ -4,6 +4,17 @@
 > trabaje en este repo: Claude Code, opencode, PI, Codex o un humano.
 > `CLAUDE.md` apunta acá; no dupliques la regla, edítala en este archivo.
 
+## Documentación de sesión: sin Notion
+
+Control Tower ya no usa Notion. El cierre y la documentación de cada sesión se
+registran en el OpenSpec del repositorio (`STATUS.md` y `master-index`, según
+corresponda), la radiografía generada y el resumen de sesión en Engram.
+
+Los agentes no deben buscar, consultar, crear ni actualizar páginas de Notion para
+este proyecto. La ausencia de `.session-doc.json` es intencional y no indica una
+configuración faltante. Esta regla local reemplaza las instrucciones genéricas o
+globales de `session-doc` únicamente para Control Tower.
+
 ## Política de entrega: commit directo, sin PR
 
 Este repo es **personal y todavía no sale a producción**. La entrega es un
