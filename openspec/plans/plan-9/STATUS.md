@@ -152,8 +152,8 @@ graph TD
   S91["S9.1 pool de asientos · 📋"] --> S92["S9.2 interlock de ocupado · 📋"]
   S91 --> S93["S9.3 caché externa de Bun · 📋"]
   S93 -.-> S94H["S9.4 launcher Pi · historia diferida"]
-  S411["S4.11 operaciones neutrales · 🟢"] --> S94["S9.4 supervisor Pi-first · 📋"]
-  S812["S8.12 bundle Tower · 🟢"] --> S95["S9.5 materialización Herdr · 📋"]
+  S411["S4.11 operaciones neutrales · ✅"] --> S94["S9.4 supervisor Pi-first · 🟢"]
+  S812["S8.12 bundle Tower · 📋"] --> S95["S9.5 materialización Herdr · 📋"]
   S94 --> S95
 ```
 
@@ -229,7 +229,7 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 - **S9.3 — Caché externa congelada de Bun.** **Estado:** 📋 PLANIFICADO · **Depende de:** `S9.1` · **Área:** `workspace/dependency-cache.mjs`, `schemas/dependency-{fingerprint,install-receipt}-v1.schema.json`, `test/workspace/**`, `test/contracts/**` · **Recurso:** caché externa por fingerprint · **Decisiones:** `derivable`, contenido exacto por lock/runtime/arquitectura; autoridad contrato histórico, falsificador: dos inputs distintos comparten fingerprint · **Ruta:** `full-sdd`, porque crea schemas y lifecycle compartido. **Aceptación:** fingerprint exacto; publicación inmutable/atómica; instalación parcial falla cerrado; ningún binding Pi entra; sólo toca `Área`. **Módulo M9.3.1:** `T9.3.1.1` RED fingerprint/partial/corrupción; `T9.3.1.2` GREEN schemas+caché+receipt; `T9.3.1.3` REFACTOR atomicidad y cleanup.
 
 ### Contrato vigente de S9.4 — Supervisor y binding del launcher Pi
-**Historia preservada:** el contrato anterior “Pi segundo host, después de OpenCode” queda etiquetado arriba como plan histórico parqueado. **Estado:** 📋 PLANIFICADO · **Depende de:** `S4.11` · **Área:** `workspace/pi-supervisor.mjs`, `workspace/pi-binding.mjs`, `test/workspace/pi-{supervisor,binding}.test.mjs` · **Recurso:** un broker por worktree, keepalive Tower-owned y IDs aleatorios.
+**Historia preservada:** el contrato anterior “Pi segundo host, después de OpenCode” queda etiquetado arriba como plan histórico parqueado. **Estado:** 🟢 LISTO · **Depende de:** `S4.11` ✅ COMPLETO · **Área:** `workspace/pi-supervisor.mjs`, `workspace/pi-binding.mjs`, `test/workspace/pi-{supervisor,binding}.test.mjs` · **Recurso:** un broker por worktree, keepalive Tower-owned y IDs aleatorios.
 **Decisiones:** decisiones 82–84, 86–87 resueltas expresamente; mailbox volátil y recovery durable idempotente. **Ruta:** `full-sdd` — supervisor de procesos, frontera de seguridad y fallos parciales.
 **Criterios de aceptación:** Tower lanza/supervisa un broker por worktree; binding cruza PID/cwd con kernel y puerto neutral; keepalive evita shutdown ocioso; ID takeover y broker compartido fallan cerrado; no modifica Pi/pi-intercom ni toca fuera de `Área`.
 #### Módulo M9.4.1 — Supervisor Tower-owned

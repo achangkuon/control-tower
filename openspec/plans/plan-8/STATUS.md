@@ -937,12 +937,43 @@ Los prefijos de directorio admitidos por `scanClosure` **se derivan ahora de los
 
 ## Reconciliación Pi-first de instalación — 2026-08-27
 
-El checkpoint completo de `S8.11`, sus commits, conteos, fallos sellados y pasos de retoma permanecen arriba sin alteración. P8 pasa a **7/12 S**: se enumera `S8.13`; `S8.12` y `S8.13` juntas satisfacen la decisión 88.
+El checkpoint completo de `S8.11`, sus commits, conteos, fallos sellados y pasos de retoma permanecen arriba sin alteración. P8 pasa a **7/13 S**: `S8.13` ya estaba enumerada y ahora `S8.14` posee los tres perfiles permanentes Tower; `S8.12` y `S8.13` conservan la instalación conductualmente completa de la decisión 88.
+
+### Sesión 8.14 — Perfiles permanentes Tower, neutrales al host
+
+**Estado:** 🟢 LISTO
+
+**Depende de:** —
+
+**Área:** `profiles/tower/main.md`, `profiles/tower/support.md`, `profiles/tower/implementer.md`, `skills/torre-control-entregas/SKILL.md`, `skills/agente-soporte/SKILL.md`, `test/install/tower-role-assets.test.mjs`.
+
+**Recurso:** contrato repo-owned de los tres perfiles permanentes; sin broker, runtime, DB, migraciones ni token de entrega.
+
+**Decisiones:** decisión 95 resuelta por el maintainer (Engram 9690/9691). Main/coordinator y Support omiten `bash`, `write` y `edit`; Implementer conserva `bash` según la decisión 83. Planner es función temporal, no perfil permanente.
+
+**Ruta:** `design-tasks` — la autoridad y el resultado están cerrados; falta fijar el seam mínimo entre perfiles canónicos y las dos skills propietarias antes de implementar.
+
+**Criterios de aceptación** — todos deben pasar para cerrar:
+- [ ] Existen exactamente tres perfiles permanentes repo-owned y host-neutral: Main/coordinator, Support e Implementer; Planner no se instala como cuarto perfil.
+- [ ] Main y Support carecen de `bash`, `write` y `edit`; Implementer conserva `bash` y ninguna capability contradice la decisión 83.
+- [ ] Las cinco fuentes canónicas declaradas y `test/install/tower-role-assets.test.mjs` son la única autoridad del contrato; no se copian perfiles globales ni específicos de Pi/OpenCode.
+- [ ] La prueba enfocada falla ante perfil faltante/extra, nombre o capability incorrectos y referencia a una fuente no canónica.
+- [ ] El diff de implementación toca sólo `Área`.
+
+#### Módulo M8.14.1 — Contratos canónicos de perfil
+- [ ] Tarea T8.14.1.1 — RED: cubrir tres perfiles exactos, ausencia de Planner, neutralidad de host y matriz de capabilities de la decisión 83.
+- [ ] Tarea T8.14.1.2 — GREEN: crear `profiles/tower/{main,support,implementer}.md` con identidad y autoridad mínimas.
+- [ ] Tarea T8.14.1.3 — REFACTOR: eliminar duplicación entre perfiles y estabilizar nombres, referencias y rechazo de una cuarta identidad.
+
+#### Módulo M8.14.2 — Ownership de skills y guardia de instalación
+- [ ] Tarea T8.14.2.1 — RED: cubrir fuentes canónicas faltantes, extras o externas y drift entre perfiles, skills propietarias y assets instalables.
+- [ ] Tarea T8.14.2.2 — GREEN: ligar `torre-control-entregas` y `agente-soporte` a los tres perfiles y completar `tower-role-assets.test.mjs`.
+- [ ] Tarea T8.14.2.3 — REFACTOR: dejar una sola enumeración auditable, sin Planner permanente ni dependencia de assets globales.
 
 ### Autoridad vigente de S8.12 — membresía del bundle Tower
-**Estado:** 🟢 LISTO · **Depende de:** `S8.10` ✅ · **Área:** `scripts/payload-closure.mjs`, `install/runtime-payload.mjs`, perfiles/skills Tower-specific y tests de membresía bajo `test/install/**` · **Recurso:** `RUNTIME_PAYLOAD_FILES`.
-**Decisiones:** decisión 88 resuelta: incluye runtime, contrato neutral, adapter Pi y perfiles/skills Tower —Support incluido—; excluye configuración Pi/Intercom y skills genéricas Gentle AI. **Ruta:** `design-tasks` — reconcilia el contrato histórico de canal único con ownership externo explícito.
-**Criterios de aceptación:** bundle contiene exactamente bytes Tower declarados; Support se materializa desde el bundle; faltante/extra/symlink falla cerrado; no instala ni activa; no toca fuera de `Área`.
+**Estado:** 📋 PLANIFICADO · **Depende de:** `S8.10` ✅, `S1.18`, `S8.14` · **Área:** `scripts/payload-closure.mjs`, `install/runtime-payload.mjs`, perfiles/skills Tower-specific y tests de membresía bajo `test/install/**` · **Recurso:** `RUNTIME_PAYLOAD_FILES`.
+**Decisiones:** decisiones 88 y 95 resueltas: incluye runtime, contrato neutral, adapter Pi y exactamente los tres perfiles/skills Tower canónicos —Support incluido—; excluye Planner permanente, configuración Pi/Intercom y skills genéricas Gentle AI. **Ruta:** `design-tasks` — reconcilia el contrato histórico de canal único con ownership externo explícito.
+**Criterios de aceptación:** bundle contiene exactamente bytes Tower declarados; los tres perfiles de `S8.14` se materializan desde el bundle; faltante/extra/symlink falla cerrado; no instala ni activa; no toca fuera de `Área`.
 #### Módulo M8.12.1 — Membresía versionada
 - [ ] Tarea T8.12.1.1 — RED: cubrir perfil faltante, skill externa copiada, extra y symlink.
 - [ ] Tarea T8.12.1.2 — GREEN: declarar y derivar la membresía completa Tower-specific.

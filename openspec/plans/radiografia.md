@@ -1,7 +1,7 @@
 ---
-verified_against: 6ddf6bc77d236dffad5b8ec625379117a91ce0b3
+verified_against: 58e721abb783e9b1d24d26ba6b1d91ca9b24a268
 verified_at: 2026-08-28
-standfirst: Las operaciones host-neutral ya están entregadas y archivadas. S8.12 encabeza la cola y S9.4 queda promovida como siguiente dependencia del host Pi; S9.5 sigue planificada y todavía no materializa asientos. Las cifras se miden solas contra el código.
+standfirst: Las operaciones host-neutral ya están entregadas. S8.14 y S9.4 pueden empezar en paralelo; los tres perfiles permanentes Tower están aprobados y planificados, pero sus assets todavía no existen. Las cifras se miden solas contra el código.
 ---
 
 <!--
@@ -47,10 +47,10 @@ Lo técnico: `S4.10` cerró las cinco formas públicas de identidad y binding; `
 En simple: El enchufe común ya no sólo identifica a cada runtime: también permite mirarlo, comprobar su salud, pedirle que se detenga y adjuntarse sin confiar en lo que el propio caller afirma. Pi puede conectarse sobre una base ya entregada, no sobre una promesa.
 Evidencia: `openspec/specs/host-runtime/spec.md` · `openspec/changes/archive/2026-08-28-s4-11-host-neutral-operations/verify-report.md` · `master/origin/master@6ddf6bc77d236dffad5b8ec625379117a91ce0b3`
 
-### 3 · resuelto · El instalador de la Torre ahora incluye conducta propia de la Torre
-Lo técnico: La decisión 88 divide la entrega entre `S8.12`, dueña del bundle versionado, y `S8.13`, dueña de instalación, activación, rollback y preflight. El bundle incluye runtime, contrato neutral, adapter Pi y perfiles/skills Tower-specific, incluido Support. La configuración de Pi y `pi-intercom`, y las skills genéricas de Gentle AI, quedan fuera.
-En simple: Instalar la Torre ya no significa copiar sólo su código: también instala cómo deben comportarse sus roles propios. Pero no invade productos ajenos. Gentle AI sigue actualizando sus capacidades generales, y la Torre sólo comprueba que Pi y su comunicación externa sean compatibles antes de tocar nada.
-Evidencia: `openspec/plans/decision-register.md:440-442` · `openspec/plans/plan-8/STATUS.md:938-954`
+### 3 · nuevo · Los tres roles permanentes están decididos, no implementados
+Lo técnico: La decisión 95 y `S8.14` fijan exactamente Main/coordinator, Support e Implementer como perfiles permanentes repo-owned y host-neutral. Planner queda como función temporal. Main y Support omiten `bash`, `write` y `edit`; Implementer conserva `bash` por la decisión 83. Las fuentes futuras serán `profiles/tower/{main,support,implementer}.md`, las dos skills Tower propietarias y `test/install/tower-role-assets.test.mjs`; esos assets todavía no fueron creados.
+En simple: Ya está aprobado quiénes son los tres puestos estables y qué herramientas puede usar cada uno. Pero hoy existe el plano, no los archivos instalables: todavía no podés contar con que una instalación materialice esos roles.
+Evidencia: `openspec/plans/decision-register.md` · `openspec/plans/plan-8/STATUS.md` · Engram 9690/9691
 
 ## Avance por Plan
 
@@ -108,22 +108,22 @@ La lista siguiente reemplaza las antiguas “cinco decisiones”. No son pregunt
 | `S9.5` | Materialización idempotente de sólo los asientos exactos del brief, después de cerrar `S8.12 + S9.4` | Que Herdr ya abra, reutilice o valide esos asientos automáticamente |
 | Gate Pi desatendido | Una corrida prolongada atribuible al candidato | Estabilidad de larga duración sin esa evidencia |
 | Gate de caída con tráfico | Recuperación idempotente tras caída real del broker | Entrega garantizada de mensajes en vuelo |
-| `S8.12` y `S8.13` | Bundle Tower completo, instalación reversible y preflight externo | Que la Torre deba instalar o modificar Gentle AI, Pi o `pi-intercom` |
+| `S8.14`, `S8.12` y `S8.13` | Tres perfiles Tower exactos, bundle completo, instalación reversible y preflight externo | Que los perfiles ya existan o que la Torre deba modificar Gentle AI, Pi o `pi-intercom` |
 
 ## Lo que pasa ahora mismo
 
-### G · sólido · `S8.12` encabeza la cola y `S9.4` queda promovida
-Lo técnico: `S4.11` salió de la cola al cerrar ✅ COMPLETO. La cola canónica empieza `#1 S8.12`, `#2 S9.4`, `#3 S9.5`; `S8.12` conserva su estado 🟢 LISTO y `S9.5` sigue esperando tanto ese bundle Tower como el supervisor/binding Pi de `S9.4`.
-En simple: Las operaciones neutrales ya no compiten por prioridad: están entregadas. Ahora quedan primero la caja instalable de la Torre y después la conexión real con Pi; la vista automática sigue detrás de ambos cimientos.
-Evidencia: `openspec/plans/master-index.md` · `openspec/plans/plan-4/STATUS.md` · `openspec/plans/plan-9/STATUS.md`
+### G · sólido · `S8.14` y `S9.4` abren capacidad paralela real
+Lo técnico: La cola canónica empieza `#1 S8.14`, `#2 S9.4`, `#3 S1.17`, `#4 S1.18`, `#5 S8.12`. Las dos primeras están 🟢 LISTO y tienen `Área`/`Recurso` disjuntos: perfiles/skills Tower frente a supervisor/binding Pi. `S8.12` preserva `S8.10` y ahora espera también `S1.18 + S8.14`; `S9.5` conserva `S8.12 + S9.4`.
+En simple: Se pueden preparar al mismo tiempo los roles propios de la Torre y la conexión supervisada con Pi sin que ambos trabajos se pisen. La caja instalable viene después, cuando estén listos el adapter y esos perfiles.
+Evidencia: `openspec/plans/master-index.md` · `openspec/plans/plan-8/STATUS.md` · `openspec/plans/plan-9/STATUS.md`
 
 ### H · crítico · OpenCode sigue estacionado y el adapter Pi todavía espera
-Lo técnico: `S4.4`, `S4.8` y `S4.9` permanecen 🟡 DIFERIDO con preservación absoluta. `S9.4` ya tiene satisfecha su dependencia `S4.11`; `S9.5` sigue detrás de `S8.12 + S9.4`; `S1.17`–`S1.19` y `S4.12` conservan sus dependencias propias. La decisión 91 no reactiva OpenCode ni implementa el host Pi.
-En simple: El nuevo plano visual no cambia qué funciona hoy. OpenCode sigue guardado, y Pi todavía necesita su supervisor, su adaptación y sus pruebas antes de operar como host real.
+Lo técnico: `S4.4`, `S4.8` y `S4.9` permanecen 🟡 DIFERIDO con preservación absoluta. `S9.4` ya tiene satisfecha `S4.11`; `S1.18` depende de `S1.17`; `S4.12` depende de `S9.4 + S1.18`; `S8.13` conserva `S8.12 + S1.19 + S4.12`; y `S7.1` conserva `S1.19 + S4.12 + S8.13 + S5.5`. Las decisiones 91 y 95 no reactivan OpenCode ni implementan el host Pi o los perfiles Tower.
+En simple: Los nuevos planos no cambian qué funciona hoy. OpenCode sigue guardado, y Pi todavía necesita supervisor, adaptación y pruebas; los tres perfiles también deben construirse antes de entrar al instalador.
 Evidencia: `openspec/plans/master-index.md:9-25` · `openspec/plans/plan-4/STATUS.md:733-763` · `openspec/plans/plan-9/STATUS.md:228-291`
 
 ## Evidencia y límites de esta radiografía
 
-Este juicio fue reconciliado contra la entrega `master/origin/master@6ddf6bc77d236dffad5b8ec625379117a91ce0b3` el 2026-08-28. Las cifras de instrumentos, avance y cola son derivadas por el generador; no se escriben a mano acá.
+Este juicio fue reconciliado contra la base verificada `58e721abb783e9b1d24d26ba6b1d91ca9b24a268` el 2026-08-28. Las cifras de instrumentos, avance y cola son derivadas por el generador; no se escriben a mano acá. `S8.14` es planificación: sus perfiles, skills y test todavía no están implementados.
 
 La última suite integral registrada para `S4.11` informó `934 pass`, `0 fail` y `5.502 expectativas`; este cierre documental no la reejecutó. Ese verde prueba las operaciones host-neutral entregadas, pero no prueba todavía el adapter Pi, la corrida desatendida ni capacidad por encima del límite vigente.
