@@ -1,9 +1,9 @@
 change: s4-11-host-neutral-operations
 artifact_store: hybrid
 execution_mode: automatic
-current_artifact: apply-progress
-status: success
-next_recommended: verify
+current_artifact: archive-report
+status: archived
+next_recommended: session-doc
 apply_state: all_done
 completed_boundary: T4.11.1.3
 next_boundary: null
@@ -99,4 +99,7 @@ checkbox_count:
 partial_chain_deliverable: false
 delivery_or_push_performed: false
 blocked_reasons: []
-next_action: "Create the managed SDD verify report from settled immutable integral evidence without rerunning the full suite. No push."
+next_action: "Parent-owned final documentation checkpoint; no further SDD phase required."
+archive_date: "2026-08-28"
+archived_path: "openspec/changes/archive/2026-08-28-s4-11-host-neutral-operations/"
+archive_report: "openspec/changes/archive/2026-08-28-s4-11-host-neutral-operations/archive-report.md"
