@@ -32,6 +32,7 @@
 | S8.10 | Familias propietarias y validación exacta del payload de runtime | ✅ COMPLETO | Payload instalable cerrado sobre schemas declarados | `S8.9` ✅, `S8.11` | Candidato preservado en `feat/s8.10-runtime-payload-model@0891cc7`; checkpoint de parqueo Engram 9176, antes del commit de comportamiento y de la verificación final; su puerta semántica mantiene bloqueada `S4.4` |
 | S8.11 | Entorno de dependencias compartido por digest de lock | 🔴 BLOQUEADO | Dependencias instaladas, inmutables y reutilizables por versiones compatibles | `S8.9` ✅ | WU1 `812703d` y WU2 `388109f` quedaron locales; generador `unchanged`. El primer focused final terminó 78/11 porque fixtures intentaron escribir/eliminar dentro del árbol owner-read-only; harness y full no se ejecutaron por la regla terminal sellada. |
 | S8.8 | Adopción del instalable en el runtime en uso | ✅ COMPLETO | Versioned lifecycle | `S8.2` ✅ | Todos los Módulos verificados. `M8.8.7` en `e118f33`: la copia aislada cae al legado y un puntero presente roto falla cerrado. `M8.8.8` en `d56e8cb`: checkout Git genuino, staging estricto incluso con `.git` sintético y shim opt-in. `bun test test/install` 44/0; `bun test` 465/0 con Torre desarmada; cero accesos a runtime real en los fixtures. |
+| S8.14 | Perfiles permanentes Tower, neutrales al host | 🔵 EN CURSO | Tres perfiles repo-owned exactos y sus skills propietarias | — | Candidato local verificado `47a7389b76a4b87d09d439e478b5874a701257ca`, tree `b3051875e144293bab4c4e15a1e3f2a4a11c229c`; 10/10 criterios, focused 4/0/14, full 938/0/5516 en 74 archivos; entrega a `master` pendiente. |
 
 Las Sesiones se derivan de los cinco requisitos de la [spec de Installable V1](../../changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md). `S8.2` construyó el lifecycle versionado; `S8.8` lo pone efectivamente en uso, que es la parte del requisito que quedaba abierta.
 
@@ -935,13 +936,13 @@ Los prefijos de directorio admitidos por `scanClosure` **se derivan ahora de los
 
 **El candidato no se integró a `master` a propósito.** Master está verde y se conserva verde; el candidato queda subido y seguro en su rama, listo para que `T8.10.1.2` lo cierre en la próxima sesión.
 
-## Reconciliación Pi-first de instalación — 2026-08-27
+## Reconciliación Pi-first de instalación — 2026-08-28
 
-El checkpoint completo de `S8.11`, sus commits, conteos, fallos sellados y pasos de retoma permanecen arriba sin alteración. P8 pasa a **7/13 S**: `S8.13` ya estaba enumerada y ahora `S8.14` posee los tres perfiles permanentes Tower; `S8.12` y `S8.13` conservan la instalación conductualmente completa de la decisión 88.
+El checkpoint completo de `S8.11`, sus commits, conteos, fallos sellados y pasos de retoma permanecen arriba sin alteración. P8 permanece en **7/13 S**: `S8.14` está 🔵 EN CURSO como candidato local verificado, pero no suma hasta entregarse en `master`; `S8.12` y `S8.13` conservan la instalación conductualmente completa de la decisión 88.
 
 ### Sesión 8.14 — Perfiles permanentes Tower, neutrales al host
 
-**Estado:** 🟢 LISTO
+**Estado:** 🔵 EN CURSO — candidato local verificado, entrega pendiente de `master`
 
 **Depende de:** —
 
@@ -951,24 +952,28 @@ El checkpoint completo de `S8.11`, sus commits, conteos, fallos sellados y pasos
 
 **Decisiones:** decisión 95 resuelta por el maintainer (Engram 9690/9691). Main/coordinator y Support omiten `bash`, `write` y `edit`; Implementer conserva `bash` según la decisión 83. Planner es función temporal, no perfil permanente.
 
-**Ruta:** `design-tasks` — la autoridad y el resultado están cerrados; falta fijar el seam mínimo entre perfiles canónicos y las dos skills propietarias antes de implementar.
+**Ruta:** `design-tasks` completada; el candidato implementa el seam mínimo entre perfiles canónicos y las dos skills propietarias.
 
-**Criterios de aceptación** — todos deben pasar para cerrar:
-- [ ] Existen exactamente tres perfiles permanentes repo-owned y host-neutral: Main/coordinator, Support e Implementer; Planner no se instala como cuarto perfil.
-- [ ] Main y Support carecen de `bash`, `write` y `edit`; Implementer conserva `bash` y ninguna capability contradice la decisión 83.
-- [ ] Las cinco fuentes canónicas declaradas y `test/install/tower-role-assets.test.mjs` son la única autoridad del contrato; no se copian perfiles globales ni específicos de Pi/OpenCode.
-- [ ] La prueba enfocada falla ante perfil faltante/extra, nombre o capability incorrectos y referencia a una fuente no canónica.
-- [ ] El diff de implementación toca sólo `Área`.
+**Criterios de aceptación** — verificados en el candidato; la Sesión cierra sólo tras la entrega:
+- [x] Existen exactamente tres perfiles permanentes repo-owned y host-neutral: Main/coordinator, Support e Implementer; Planner no se instala como cuarto perfil.
+- [x] Main y Support carecen de `bash`, `write` y `edit`; Implementer conserva `bash` y ninguna capability contradice la decisión 83.
+- [x] Las cinco fuentes canónicas declaradas y `test/install/tower-role-assets.test.mjs` son la única autoridad del contrato; no se copian perfiles globales ni específicos de Pi/OpenCode.
+- [x] La prueba enfocada falla ante perfil faltante/extra, nombre o capability incorrectos y referencia a una fuente no canónica.
+- [x] El diff de implementación toca sólo `Área`.
 
 #### Módulo M8.14.1 — Contratos canónicos de perfil
-- [ ] Tarea T8.14.1.1 — RED: cubrir tres perfiles exactos, ausencia de Planner, neutralidad de host y matriz de capabilities de la decisión 83.
-- [ ] Tarea T8.14.1.2 — GREEN: crear `profiles/tower/{main,support,implementer}.md` con identidad y autoridad mínimas.
-- [ ] Tarea T8.14.1.3 — REFACTOR: eliminar duplicación entre perfiles y estabilizar nombres, referencias y rechazo de una cuarta identidad.
+- [x] Tarea T8.14.1.1 — RED: cubrir tres perfiles exactos, ausencia de Planner, neutralidad de host y matriz de capabilities de la decisión 83.
+- [x] Tarea T8.14.1.2 — GREEN: crear `profiles/tower/{main,support,implementer}.md` con identidad y autoridad mínimas.
+- [x] Tarea T8.14.1.3 — REFACTOR: eliminar duplicación entre perfiles y estabilizar nombres, referencias y rechazo de una cuarta identidad.
 
 #### Módulo M8.14.2 — Ownership de skills y guardia de instalación
-- [ ] Tarea T8.14.2.1 — RED: cubrir fuentes canónicas faltantes, extras o externas y drift entre perfiles, skills propietarias y assets instalables.
-- [ ] Tarea T8.14.2.2 — GREEN: ligar `torre-control-entregas` y `agente-soporte` a los tres perfiles y completar `tower-role-assets.test.mjs`.
-- [ ] Tarea T8.14.2.3 — REFACTOR: dejar una sola enumeración auditable, sin Planner permanente ni dependencia de assets globales.
+- [x] Tarea T8.14.2.1 — RED: cubrir fuentes canónicas faltantes, extras o externas y drift entre perfiles, skills propietarias y assets instalables.
+- [x] Tarea T8.14.2.2 — GREEN: ligar `torre-control-entregas` y `agente-soporte` a los tres perfiles y completar `tower-role-assets.test.mjs`.
+- [x] Tarea T8.14.2.3 — REFACTOR: dejar una sola enumeración auditable, sin Planner permanente ni dependencia de assets globales.
+
+**Evidencia del candidato inmutable:** commit `47a7389b76a4b87d09d439e478b5874a701257ca`; tree `b3051875e144293bab4c4e15a1e3f2a4a11c229c`; base `e42c943d8f44fbe50aeeef1e79ccf154fa472437`; SHA-256 del diff binario acotado `a95eb0037e65245d87a4abf8c5fc0fd31b657cf824980e8c95c23cc1c877b901`; 387 líneas authored. La verificación integral registró 10/10 criterios PASS (Engram 9726): `bun test test/install/tower-role-assets.test.mjs` → 4 pass, 0 fail, 14 expectativas; `bun test` → 938 pass, 0 fail, 5.516 expectativas en 74 archivos, 107,09 s; diff-check y reverse-check PASS; runtime N/A porque son assets declarativos sin frontera ejecutable. Los intentos de `review-risk` quedaron tipados como no disponibles; RDD permanece disabled/unmanaged. No hubo push ni entrega.
+
+**Rollback:** revertir juntos los seis archivos exactos del `Área` —los tres perfiles, las dos skills propietarias y `test/install/tower-role-assets.test.mjs`— sin tocar runtime, configuración, DB, `AGENTS.md` ni assets externos.
 
 ### Autoridad vigente de S8.12 — membresía del bundle Tower
 **Estado:** 📋 PLANIFICADO · **Depende de:** `S8.10` ✅, `S1.18`, `S8.14` · **Área:** `scripts/payload-closure.mjs`, `install/runtime-payload.mjs`, perfiles/skills Tower-specific y tests de membresía bajo `test/install/**` · **Recurso:** `RUNTIME_PAYLOAD_FILES`.

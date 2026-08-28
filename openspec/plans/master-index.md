@@ -1,24 +1,24 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: **serialización local de planificación de `S8.14`** el 2026-08-28 contra la base verificada `58e721abb783e9b1d24d26ba6b1d91ca9b24a268`. Sin implementación, commit, push ni publicación; `S4.11` permanece ✅ COMPLETO.
+> Última reconciliación: **candidato local verificado de `S8.14`** el 2026-08-28 contra `47a7389b76a4b87d09d439e478b5874a701257ca` (tree `b3051875e144293bab4c4e15a1e3f2a4a11c229c`). Sin push ni entrega a `master`; `S8.14` permanece 🔵 EN CURSO y `S4.11` permanece ✅ COMPLETO.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para el **inventario del producto** —los trece comandos, los módulos sin llamador y su orden de conexión— ver [inventario-de-producto](inventario-de-producto.md). Para **qué falta para salir** ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md). La línea entre lo que decide la Torre y lo que decide gentle-ai vive en [la frontera Torre ↔ gentle-ai](frontera-torre-gentle-ai.md), y **cualquier Sesión puede citarla para rechazar alcance** — desde el 2026-08-26 la frontera tiene **tres ejes**: la calidad del trabajo, el flujo de trabajo ([decisión 71](decision-register.md)) y **quién lee el plan** ([decisión 78](decision-register.md) — la cerca no lee). La **definición de producto vigente** —qué es y qué deliberadamente no va a ser la Torre terminada— es [**La Torre Terminada**](https://claude.ai/code/artifact/323b83bd-f1cd-4cee-a5c7-945f8c7d6173), y **ninguna Sesión puede desviarse de ella sin una decisión registrada**.
 
 ## 📍 Punto de retoma
 
-**`S8.14` quedó enumerada, no implementada, sobre la base verificada `58e721abb783e9b1d24d26ba6b1d91ca9b24a268`.** La decisión 95 fija exactamente tres perfiles permanentes host-neutral —Main/coordinator, Support e Implementer—; Planner no es permanente y las restricciones de capability conservan la decisión 83.
+**`S8.14` tiene un candidato local verificado en `47a7389b76a4b87d09d439e478b5874a701257ca`, pero no está entregada.** Sus 10 criterios y seis Tareas pasan; permanece 🔵 EN CURSO, fuera de la cola, hasta llegar a `master`. Por eso el avance se conserva en 43/65 y P8 en 7/13.
 
-**La cola retoma en `#1 S8.14` y `#2 S9.4`.** Ambas están 🟢 LISTO, sin dependencia entre sí y con `Área`/`Recurso` disjuntos; `S8.12` baja a 📋 PLANIFICADO porque preserva `S8.10` y ahora espera también `S1.18 + S8.14`.
+**La cola retoma en `#1 S9.4`.** El orden topológico posterior se preserva. `S8.12` continúa 📋 PLANIFICADO y todavía espera `S8.10 + S1.18 + S8.14`; el candidato local de `S8.14` no satisface esa dependencia.
 
-**`S4.11` permanece ✅ COMPLETO y OpenCode sigue parqueado con preservación absoluta.** `S4.4`, `S4.8` y `S4.9` permanecen 🟡 DIFERIDO; este cambio no toca [P4](plan-4/STATUS.md) ni publica el candidato documental.
+**`S4.11` permanece ✅ COMPLETO y OpenCode sigue parqueado con preservación absoluta.** `S4.4`, `S4.8` y `S4.9` permanecen 🟡 DIFERIDO. La acción inmediata es entregar el candidato congelado de `S8.14` sólo cuando el maintainer lo autorice; este cierre documental no hace push.
 
 ## 🎯 Cola de ejecución
 
-`#1 S8.14` · `#2 S9.4` · `#3 S1.17` · `#4 S1.18` · `#5 S8.12` · `#6 S9.5` · `#7 S1.19` · `#8 S4.12` · `#9 S8.13` · `#10 S5.14` · `#11 S2.8` · `#12 S5.5` · `#13 S5.15` · `#14 S9.1` · `#15 S9.2` · `#16 S9.3` · `#17 S7.1` — topológica, recalculada 2026-08-28. La cola no asigna dueño ni asiento.
+`#1 S9.4` · `#2 S1.17` · `#3 S1.18` · `#4 S8.12` · `#5 S9.5` · `#6 S1.19` · `#7 S4.12` · `#8 S8.13` · `#9 S5.14` · `#10 S2.8` · `#11 S5.5` · `#12 S5.15` · `#13 S9.1` · `#14 S9.2` · `#15 S9.3` · `#16 S7.1` — topológica, recalculada 2026-08-28. La cola no asigna dueño ni asiento.
 
-**Paralelismo:** capacidad inmediata **2**: `S8.14` reclama sólo perfiles/skills Tower y su test de assets; `S9.4` reclama supervisor/binding Pi y su broker por worktree. No comparten `Área`, `Recurso` ni dependencia. Después, `S1.18` habilita `S8.12`; `S9.5` conserva `S8.12 + S9.4`; `S4.12` espera `S9.4 + S1.18`; `S8.13` espera `S8.12 + S1.19 + S4.12`; `S7.1` espera `S1.19 + S4.12 + S8.13 + S5.5`.
+**Paralelismo:** capacidad inmediata disponible **1**: `S9.4` reclama supervisor/binding Pi y su broker por worktree. `S8.14` ya ocupa otra línea como 🔵 EN CURSO y no aparece como trabajo iniciable. Después, `S1.18` y la entrega de `S8.14` habilitan `S8.12`; `S9.5` conserva `S8.12 + S9.4`; `S4.12` espera `S9.4 + S1.18`; `S8.13` espera `S8.12 + S1.19 + S4.12`; `S7.1` espera `S1.19 + S4.12 + S8.13 + S5.5`.
 
-**Fuera de la cola:** `S4.4`, `S4.8`, `S4.9`, `S8.5`, `S8.6` y P6 🟡 DIFERIDO; `S8.11` 🔴 BLOQUEADO. `S4.10`, `S4.11` y `S5.3` se excluyen por ✅ COMPLETO. La cola contiene sólo Sesiones 🟢 LISTO o 📋 PLANIFICADO y preserva el orden del grafo.
+**Fuera de la cola:** `S8.14` 🔵 EN CURSO como candidato local verificado; `S4.4`, `S4.8`, `S4.9`, `S8.5`, `S8.6` y P6 🟡 DIFERIDO; `S8.11` 🔴 BLOQUEADO. `S4.10`, `S4.11` y `S5.3` se excluyen por ✅ COMPLETO. La cola contiene sólo Sesiones 🟢 LISTO o 📋 PLANIFICADO y preserva el orden del grafo.
 
 ## Granularidad
 

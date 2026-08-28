@@ -263,11 +263,11 @@ Se registra explícitamente en lugar de esconderse:
 
 **La brecha 6 dejó de estar sin dueño.** La cubren `S8.12` y el orden de conexión del [inventario de producto](inventario-de-producto.md), que además clasifica los 34 módulos sin llamador en cuatro cajones y fija la regla: ninguna Sesión de cableado enchufa un módulo «porque está suelto» — enchufa un comando del vocabulario, y el módulo entra con él.
 
-## Reconciliación Pi-first — cadena vigente 2026-08-27
+## Reconciliación Pi-first — cadena vigente 2026-08-28
 
 La cadena OpenCode anterior, sus commits, pruebas y decisiones queda preservada como historia parqueada. No es autoridad activa mientras OpenCode permanezca 🟡 DIFERIDO.
 
-**Cadena Pi:** `S4.10 → S4.11 → S9.4 → S1.17 → S1.18 → S1.19`; `S4.10` y `S4.11` ya están ✅ COMPLETO y `S9.4` queda 🟢 LISTO. `S4.12` depende de `S9.4 + S1.18`. `S8.14` no tiene dependencias y define los tres perfiles permanentes Tower. `S8.12` preserva `S8.10` y agrega `S1.18 + S8.14`; `S8.13` depende de `S8.12 + S1.19 + S4.12`. `S9.5` conserva `S8.12 + S9.4`. `S7.1` depende de `S1.19 + S4.12 + S8.13 + S5.5`; `S5.3`, `S10.2` y `S11.1` están satisfechas.
+**Cadena Pi:** `S4.10 → S4.11 → S9.4 → S1.17 → S1.18 → S1.19`; `S4.10` y `S4.11` ya están ✅ COMPLETO y `S9.4` queda 🟢 LISTO. `S4.12` depende de `S9.4 + S1.18`. `S8.14` no tiene dependencias y está 🔵 EN CURSO con candidato local verificado `47a7389b76a4b87d09d439e478b5874a701257ca`, pendiente de entrega a `master`. `S8.12` preserva `S8.10` y espera `S1.18 + S8.14`; esa dependencia todavía no está satisfecha. `S8.13` depende de `S8.12 + S1.19 + S4.12`. `S9.5` conserva `S8.12 + S9.4`. `S7.1` depende de `S1.19 + S4.12 + S8.13 + S5.5`; `S5.3`, `S10.2` y `S11.1` están satisfechas.
 
 ```mermaid
 graph LR
@@ -276,7 +276,7 @@ graph LR
   S118 --> S412
   S810[S8.10 payload model] --> S812[S8.12 Tower bundle]
   S118 --> S812
-  S814[S8.14 permanent Tower profiles] --> S812
+  S814[S8.14 permanent Tower profiles · EN CURSO local] --> S812
   S812 --> S95[S9.5 Herdr materialization]
   S94 --> S95
   S812 --> S813[S8.13 lifecycle/preflight]
@@ -289,3 +289,5 @@ graph LR
 ```
 
 **Validación, no decisión:** la corrida desatendida prolongada, crash del broker con tráfico y el límite de cinco clientes son gates de evidencia. El claim inicial termina en cinco; >5 no se promete hasta medirlo.
+
+**Capacidad y próxima acción:** la capacidad inmediata disponible es **1**, `#1 S9.4`; `S8.14` ya ocupa una línea como trabajo 🔵 EN CURSO y queda fuera de la cola. El próximo acto sobre P8 es entregar a `master` el candidato congelado de `S8.14` sólo con autorización del maintainer. Hasta entonces P8 permanece 7/13, `S8.12` sigue esperando `S8.14` y este documento no afirma capacidad instalada.
