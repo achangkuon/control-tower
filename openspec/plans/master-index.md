@@ -1,14 +1,14 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: **cierre local y archivo de `S4.10`** el 2026-08-28 contra `feat/plan-4/s4-10-host-neutral-runtime@0a70173c5901138e68e03d64f51522e0c2c2cc76`. Verificación PASS con evidencia `sha256:9724021bd0e4cbd913085e11b61fc15a8baf9e800e0ba98541f20d53a948cea7`, suite `914/0/5.291` y cero hallazgos. No hubo entrega remota autorizada.
+> Última reconciliación: **integración y entrega remota verificadas de `S4.10`** el 2026-08-28 contra `master/origin/master@6b8b7705d40a863b962873c1a34208007fa64644`. Verificación PASS con evidencia `sha256:9724021bd0e4cbd913085e11b61fc15a8baf9e800e0ba98541f20d53a948cea7`, suite `914/0/5.291` y cero hallazgos.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para el **inventario del producto** —los trece comandos, los módulos sin llamador y su orden de conexión— ver [inventario-de-producto](inventario-de-producto.md). Para **qué falta para salir** ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md). La línea entre lo que decide la Torre y lo que decide gentle-ai vive en [la frontera Torre ↔ gentle-ai](frontera-torre-gentle-ai.md), y **cualquier Sesión puede citarla para rechazar alcance** — desde el 2026-08-26 la frontera tiene **tres ejes**: la calidad del trabajo, el flujo de trabajo ([decisión 71](decision-register.md)) y **quién lee el plan** ([decisión 78](decision-register.md) — la cerca no lee). La **definición de producto vigente** —qué es y qué deliberadamente no va a ser la Torre terminada— es [**La Torre Terminada**](https://claude.ai/code/artifact/323b83bd-f1cd-4cee-a5c7-945f8c7d6173), y **ninguna Sesión puede desviarse de ella sin una decisión registrada**.
 
 ## 📍 Punto de retoma
 
-**`S4.10` cerró y quedó archivada localmente.** El contrato host-neutral v1 ya fija identidad, worktree, proceso, incarnation, binding y ownership exacto del puerto loopback; el cierre conserva los cuatro commits y el rollback inverso en [P4](plan-4/STATUS.md).
+**`S4.10` cerró, quedó archivada y fue entregada en `master/origin/master@6b8b7705d40a863b962873c1a34208007fa64644`.** El contrato host-neutral v1 ya fija identidad, worktree, proceso, incarnation, binding y ownership exacto del puerto loopback; el cierre conserva los cuatro commits y el rollback inverso en [P4](plan-4/STATUS.md).
 
-**La cola retoma en `#1 S8.12`; `#2 S4.11` quedó 🟢 LISTO al satisfacerse `S4.10`.** Son ramas topológicamente independientes bajo sus Áreas y Recursos declarados. No hubo entrega remota ni se abrió trabajo futuro durante este cierre.
+**La cola retoma en `#1 S8.12`; `#2 S4.11` quedó 🟢 LISTO al satisfacerse `S4.10`.** Son ramas topológicamente independientes bajo sus Áreas y Recursos declarados. La integración y el push de `S4.10` fueron verificados en `master/origin/master@6b8b7705d40a863b962873c1a34208007fa64644`; no se abrió trabajo futuro durante este cierre.
 
 **OpenCode sigue parqueado con preservación absoluta.** `S4.4`, `S4.8` y `S4.9` permanecen 🟡 DIFERIDO; el checkpoint durable de `S4.4` sigue en [P4](plan-4/STATUS.md), sin cambios.
 
