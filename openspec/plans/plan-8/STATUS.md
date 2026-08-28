@@ -47,6 +47,24 @@ Las Sesiones se derivan de los cinco requisitos de la [spec de Installable V1](.
 
 Orden acordado: cerrar `M8.8.6` —✅ hecho el 2026-08-03— y `M8.8.3` —con lo cual el maintainer pasa a correr el producto, que es la mejor prueba disponible— y recién entonces levantar `S8.6` de 🟡 DIFERIDO. El hueco de `core.mjs` en `install.sh` entra en su alcance.
 
+### Reconciliación del 2026-08-28 — el hueco tiene mecanismo exacto y un consumidor externo real
+
+**El hueco de `core.mjs` sigue abierto, y ahora se sabe por qué.** No es que `install.sh` se olvide de copiar un archivo: es que **rompe la ruta relativa que resuelve el puntero activo.**
+
+`bin/torre:29` calcula `ACTIVE_POINTER="$ENTRYPOINT_DIR/../install/active-pointer.mjs"`. `install.sh:79` copia `bin/torre` a `~/.local/bin/`, con lo cual `ENTRYPOINT_DIR` pasa a ser `~/.local/bin` y el puntero se busca en `~/.local/install/active-pointer.mjs`, que no existe. El bloque entero se saltea, `ACTIVE_CORE` queda vacío y `bin/torre:46` cae al último fallback —`$HOME/.config/opencode/control-tower/core.mjs`— que `install.sh` nunca crea.
+
+`torre install` no tiene el problema: deja el ejecutable dentro de `~/.local/share/control-tower/versions/<sha>/bin/`, donde `../install/active-pointer.mjs` **sí** resuelve. En la máquina del maintainer `torre` es un symlink a esa ruta versionada, y por eso funciona.
+
+> **Los dos instaladores divergen exactamente acá.** No es que uno esté incompleto: `install.sh` produce un `torre` que estructuralmente no puede encontrar su runtime. Es la [brecha 6](../inventario-de-producto.md) vista desde el arranque en vez de desde el empaquetado, y le pertenece a `S8.13`, que ya tiene `install.sh` y `bin/torre` dentro de su `Área`.
+
+**Y desde hoy `install.sh` tiene un consumidor externo real.** [`achangkuon/agent-workflows`](https://github.com/achangkuon/agent-workflows) —el repo de las skills de usuario, con remoto desde el 2026-08-28 (ver [`plan-0/STATUS.md`](../plan-0/STATUS.md))— instala un comando global `torre-control` cuyo camino `--with-tower` clona este repositorio y ejecuta `install.sh`. Consecuencias, sin adornos:
+
+- **La Torre no llega a una máquina limpia por ese camino.** Reproduce el defecto de arriba. Hasta que `S8.13` cierre, `torre-control` debe seguir ofreciendo la Torre como opt-in y nunca como parte de la instalación por defecto — que es como está hoy.
+- **El bloqueo de `S8.6` deja de depender de una lectura.** Ahora se falsifica con un comando: `torre-control --with-tower` en un host sin residuo. Esa es exactamente la prueba que `S8.6` existe para hacer, y ya hay quien la corra.
+- **Ownership pendiente para `S8.14`:** ese mismo repo distribuye hoy `torre-control-entregas` y `agente-soporte`, las dos skills que `M8.14.2` declara Tower-owned. Detalle y reparto propuesto en [`plan-0/STATUS.md`](../plan-0/STATUS.md).
+
+**Nada de esto cierra una Sesión ni mueve un porcentaje.** Es evidencia nueva para `S8.6` y `S8.13`, producida fuera de este repositorio.
+
 ## Alcance por Sesión
 
 ### S8.3 — Enrollment explícito y layout seguro
