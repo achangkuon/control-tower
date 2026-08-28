@@ -7,8 +7,8 @@
 | Campo | Detalle |
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
-| Outputs | Raíz primaria Main-owned con TUI adjunta no autoritativa, inspección/liveness por proceso/sesión y recuperación same-host WSL. |
-| Roadmap | La evidencia OpenCode entregada permanece ✅ COMPLETO. `S4.4`, `S4.8` y `S4.9` están 🟡 DIFERIDO con preservación absoluta; `S4.10` 🟢 y `S4.11`–`S4.12` 📋 forman la autoridad Pi-first. P4 alcanza 50% (6/12 S). |
+| Outputs | Raíz primaria Main-owned con TUI adjunta no autoritativa, inspección/liveness por proceso/sesión, recuperación same-host WSL y contrato host-neutral v1 de identidad, binding, incarnation y puerto loopback. |
+| Roadmap | La evidencia OpenCode entregada permanece ✅ COMPLETO. `S4.4`, `S4.8` y `S4.9` están 🟡 DIFERIDO con preservación absoluta; `S4.10` está ✅ COMPLETO, `S4.11` queda 🟢 LISTO y `S4.12` permanece 📋 PLANIFICADO. P4 alcanza 58% (7/12 S). |
 | Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), decisiones 37–42 / Engram 9040/9042/9043/9044/9079, [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). REQUIREMENTS §14 permanece byte-pinned como base histórica; esta spec enmienda el lifecycle futuro. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
@@ -737,16 +737,24 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 **Preservación absoluta de OpenCode.** Todo el código, las pruebas, decisiones, evidencia y checkpoint de `S4.4` anteriores siguen vigentes como historia resoluble. `S4.4` pasa a **🟡 DIFERIDO**: no se inicia mientras OpenCode esté parqueado. El checkpoint exacto permanece arriba, incluida la rama `feat/plan-4/s4-4-same-host-recovery@75c378d`, sus commits `a00193c`/`75c378d` y la instrucción de reconciliar la base antes de RED. `S4.8` y `S4.9` quedan igualmente 🟡 DIFERIDO, sin invalidar su contrato.
 
 ### Sesión 4.10 — Identidad, binding y puerto runtime host-neutral
-**Estado:** 🟢 LISTO · **Depende de:** — · **Área:** `contracts/host-runtime/**`, `schemas/host-runtime-*.schema.json`, `test/contracts/host-runtime/**` · **Recurso:** namespace de identidad/binding y reserva de puerto loopback.
-**Decisiones:** `escala`, resuelta por decisión 84: el contrato es neutral y Pi/OpenCode son adapters; `escala`, resuelta por decisión 86: un broker por worktree, supervisor Tower-owned e IDs aleatorios. **Ruta:** `full-sdd` — primer contrato público neutral y frontera de seguridad; decisiones 80, 84 y 86.
-**Criterios de aceptación:** identidad, worktree, proceso, binding e incarnation se validan sin vocabulario Pi/OpenCode; el puerto pertenece al binding exacto; colisión, stale o campo extra fallan cerrado; no se toca fuera de `Área`.
+**Estado:** ✅ COMPLETO — cierre local archivado el 2026-08-28; sin entrega remota autorizada · **Depende de:** — · **Área:** `contracts/host-runtime/**`, `schemas/host-runtime-*.schema.json`, `test/contracts/host-runtime/**`, `test/contracts/schema.test.mjs` · **Recurso:** namespace de identidad/binding y reserva de puerto loopback.
+**Decisiones:** `escala`, resuelta por decisión 84: el contrato es neutral y Pi/OpenCode son adapters; `escala`, resuelta por decisión 86: un broker por worktree, supervisor Tower-owned e IDs aleatorios; `escala`, resuelta por decisión 89: cinco formas públicas v1 separadas —identidad, worktree, proceso, incarnación y binding— con los campos ya fijados; `escala`, resuelta por decisión 90: expansión exclusiva de una línea en el inventario manual de schemas, de 26 a 31. **Ruta:** `full-sdd` — primer contrato público neutral y frontera de seguridad; decisiones 80, 84, 86, 89 y 90.
+
+**Cierre verificado:** commits `4ba00b3557cdfee6d99bddbb6424eec51a3fce27`, `0b4f8802b355e4036c1d3426e0613e6951916824`, `28163d2d332153c342e68f8ed72538c69e99301d` y `0a70173c5901138e68e03d64f51522e0c2c2cc76`; `verify-report.md` PASS con evidencia `sha256:9724021bd0e4cbd913085e11b61fc15a8baf9e800e0ba98541f20d53a948cea7`, 6/6 requisitos, 13/13 escenarios, suite `914 pass / 0 fail / 5.291 expectations` y cero hallazgos residuales. Artefactos archivados en [`2026-08-28-s4-10-host-neutral-runtime`](../../changes/archive/2026-08-28-s4-10-host-neutral-runtime/). Rollback en orden inverso: `0a70173` → `28163d2` → `0b4f880` → `4ba00b3`. Notion se omitió intencionalmente por autoridad de `AGENTS.md`; Control Tower documenta el cierre sólo en OpenSpec.
+
+**Criterios de aceptación** — todos pasaron para cerrar:
+- [x] Identidad, worktree, proceso, binding e incarnation se validan sin vocabulario Pi/OpenCode.
+- [x] El puerto pertenece al binding exacto.
+- [x] Colisión, stale o campo extra fallan cerrado.
+- [x] Ningún cambio de implementación salió de `Área`.
+
 #### Módulo M4.10.1 — Contrato neutral de identidad y binding
-- [ ] Tarea T4.10.1.1 — RED: cubrir identidad ambigua, puerto ocupado, binding cruzado y replay stale.
-- [ ] Tarea T4.10.1.2 — GREEN: definir schemas, validación exacta y reserva/release del puerto ligado.
-- [ ] Tarea T4.10.1.3 — REFACTOR: separar contrato neutral de cualquier adapter y verificar frontera de `Área`.
+- [x] Tarea T4.10.1.1 — RED: cubrir identidad ambigua, puerto ocupado, binding cruzado y replay stale.
+- [x] Tarea T4.10.1.2 — GREEN: definir schemas, validación exacta y reserva/release del puerto ligado.
+- [x] Tarea T4.10.1.3 — REFACTOR: separar contrato neutral de cualquier adapter, ajustar únicamente `expect(schemaFiles).toHaveLength(26)` a `expect(schemaFiles).toHaveLength(31)` en el gate manual y verificar frontera de `Área`.
 
 ### Sesión 4.11 — Observe, health, stop y attach host-neutral
-**Estado:** 📋 PLANIFICADO · **Depende de:** `S4.10` · **Área:** `hosts/runtime-port.mjs`, `hosts/runtime-observe.mjs`, `test/hosts/runtime-{port,observe}.test.mjs` · **Recurso:** binding neutral vigente y prueba producer-owned.
+**Estado:** 🟢 LISTO · **Depende de:** `S4.10` · **Área:** `hosts/runtime-port.mjs`, `hosts/runtime-observe.mjs`, `test/hosts/runtime-{port,observe}.test.mjs` · **Recurso:** binding neutral vigente y prueba producer-owned.
 **Decisiones:** `derivable` — toda observación se liga al binding de `S4.10`; autoridad decisión 84, falsificador: una respuesta sin identidad/incarnation exactas. **Ruta:** `full-sdd` — define semántica observable y fail-closed que consumen adapters y recuperación.
 **Criterios de aceptación:** observe/health/stop/attach comparten identidad neutral; attach exige desafío fresco y prueba producer-owned; stop distingue desconexión de muerte; no importa Pi/OpenCode ni toca fuera de `Área`.
 #### Módulo M4.11.1 — Operaciones neutrales observables
