@@ -1,0 +1,102 @@
+change: s4-11-host-neutral-operations
+artifact_store: hybrid
+execution_mode: automatic
+current_artifact: apply-progress
+status: success
+next_recommended: verify
+apply_state: all_done
+completed_boundary: T4.11.1.3
+next_boundary: null
+ready_for_parent_review: false
+ready_for_next_boundary: false
+artifacts:
+  proposal: openspec/changes/s4-11-host-neutral-operations/proposal.md
+  spec: openspec/changes/s4-11-host-neutral-operations/specs/host-runtime/spec.md
+  design: openspec/changes/s4-11-host-neutral-operations/design.md
+  tasks: openspec/changes/s4-11-host-neutral-operations/tasks.md
+  apply_progress: openspec/changes/s4-11-host-neutral-operations/apply-progress.md
+strict_tdd:
+  active: true
+  test_command: bun test
+  initial:
+    baseline: 13_pass_0_fail_140_expect
+    red: 0_pass_2_fail_missing_exports
+    focused_green: 18_pass_0_fail_187_expect
+    hosts_green: 163_pass_0_fail_1091_expect
+    full_green: 932_pass_0_fail_5478_expect
+  correction:
+    red: 12_pass_2_fail
+    expanded_red: 13_pass_1_fail
+    port_green: 14_pass_0_fail_130_expect
+    combined_green: 20_pass_0_fail_211_expect
+boundary:
+  number: 3
+  base_head: beaa597eac05cb466832452deac2b6ce7ad86e87
+  commit: f00c53ae477de1f8dd3b9c4dab8b2c159375f962
+  parent: beaa597eac05cb466832452deac2b6ce7ad86e87
+  tree: f66ba79c6a711042175f4e14f1b5556acfcab6e9
+  message: "feat(hosts): expose neutral runtime operations"
+  product_paths:
+    - hosts/runtime-observe.mjs
+    - hosts/runtime-port.mjs
+    - test/hosts/runtime-observe.test.mjs
+    - test/hosts/runtime-port.test.mjs
+  path_hashes:
+    hosts/runtime-port.mjs: 43088d0b2721f6711c468271966129ed95aa809ec71178d0d7683933944df4fb
+    hosts/runtime-observe.mjs: c0ca8fe25390d01aa62674a2ab4e2245e7256aa83a29428e746d0b791301c0fe
+    test/hosts/runtime-port.test.mjs: 96aa3d895a0781aa6a8189596a3dee8c564087402de8fb9bb84e1ea81d4b8d23
+    test/hosts/runtime-observe.test.mjs: 51de116067ab9bcea3855b368c262f5f3628db0f3d041fd3a6270d9634bf1492
+  additions: 140
+  deletions: 7
+  authored_lines: 147
+  implementation_candidate_complete: true
+  implementation_task_complete: true
+  reliability_recheck: pass_no_findings
+  parent_hold_3_pre_commit: pass
+  final_post_commit_3_parent_hold: pass_closed
+  integral_verification: pass
+  integral_findings:
+    critical: 0
+    warning: 0
+    suggestion: 0
+  integral_evidence: sha256:c3e8bef337ebfe853b0a66f6f67dcbc5c86453836f0916785c839911b4400638
+  integral_test:
+    command: bun test
+    runs: 1
+    pass: 934
+    fail: 0
+    expectations: 5502
+    files: 73
+    duration_seconds: 99.69
+  acceptance_scenarios: 15_pass
+  runtime_harness: in_process_composed_host_runtime_full_suite
+  external_runtime: not_applicable_dormant_host_neutral_module
+  diff_check: pass
+  no_timer_scan: pass
+  failed_evidence: sha256:05d9a353da2ac5abe577d7f99e3946f3bf3e1b5a67fb5818cfe403959d38ed22
+  settle_evidence: sha256:4dd951d107563731ca705bf99c2792b433c5d61bf54d4b55df9cd0ca0d9e0891
+  provenance_observation: 9696
+  deliverable: false
+  remotely_delivered: false
+rollback:
+  order:
+    - f00c53ae477de1f8dd3b9c4dab8b2c159375f962
+    - beaa597eac05cb466832452deac2b6ce7ad86e87
+    - 356c9eac76e862d2fde47720ee97af84b0ae23d6
+  full_boundary: "remove both runtime modules and both tests together; preserve S4.10"
+authority:
+  decision_92: preserved_valid
+  decision_93: preserved_valid
+  decision_94: producer_owned_timeout_core_timer_free
+checkbox_count:
+  total: 6
+  checked: 6
+  unchecked: 0
+  implementation_checked: 3
+  implementation_unchecked: 0
+  parent_checked: 3
+  parent_unchecked: 0
+partial_chain_deliverable: false
+delivery_or_push_performed: false
+blocked_reasons: []
+next_action: "Create the managed SDD verify report from settled immutable integral evidence without rerunning the full suite. No push."

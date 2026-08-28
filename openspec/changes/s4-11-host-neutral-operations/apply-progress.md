@@ -295,3 +295,145 @@ This checkpoint supersedes only the earlier uncommitted Boundary 2 metadata. All
 
 Apply-progress revision: immutable Commit 2 checkpoint; Boundary 3 authorized but unstarted.
 
+## Boundary 3 corrected candidate — PASS reconciliation
+
+Status: implementation and the single authorized correction are complete on the corrected HEAD-scoped candidate. Parent Hold 3 pre-commit: PASS, based on Main's accepted corrected candidate and fresh reliability PASS; this authorizes only staging and Commit 3 creation. Commit 3 does **not** exist. T4.11.1.3 and the final post-Commit-3 parent hold therefore remain unchecked; the next action is parent-owned staging and Commit 3 creation. The three-commit chain remains non-deliverable.
+
+### Corrected candidate identity
+
+- HEAD: `beaa597eac05cb466832452deac2b6ce7ad86e87`.
+- HEAD tree: `7741cf4b46a66a5a2765817eff093d0b4fed339f`.
+- Candidate scope: exactly `hosts/runtime-port.mjs`, `test/hosts/runtime-port.test.mjs`, `hosts/runtime-observe.mjs`, and `test/hosts/runtime-observe.test.mjs`.
+- HEAD-scoped authored change: 140 additions + 7 deletions = 147 authored lines, below the 400-line limit.
+- Candidate SHA-256 values:
+  - `hosts/runtime-port.mjs`: `43088d0b2721f6711c468271966129ed95aa809ec71178d0d7683933944df4fb`
+  - `test/hosts/runtime-port.test.mjs`: `96aa3d895a0781aa6a8189596a3dee8c564087402de8fb9bb84e1ea81d4b8d23`
+  - `hosts/runtime-observe.mjs`: `c0ca8fe25390d01aa62674a2ab4e2245e7256aa83a29428e746d0b791301c0fe`
+  - `test/hosts/runtime-observe.test.mjs`: `51de116067ab9bcea3855b368c262f5f3628db0f3d041fd3a6270d9634bf1492`
+
+### Strict TDD and verification evidence
+
+| Stage | Exact frozen result |
+|---|---|
+| Boundary 3 baseline | 13 pass / 0 fail / 140 expect calls |
+| Initial RED | 0 pass / 2 fail; missing exports |
+| Initial GREEN focused | 18 pass / 0 fail / 187 expect calls |
+| Initial hosts directory | 163 pass / 0 fail / 1091 expect calls |
+| Initial full suite | 932 pass / 0 fail / 5478 expect calls |
+| Correction RED | 12 pass / 2 fail |
+| Expanded correction RED | 13 pass / 1 fail |
+| Correction GREEN — port | 14 pass / 0 fail / 130 expect calls |
+| Correction GREEN — combined | 20 pass / 0 fail / 211 expect calls |
+| Fresh focused reliability recheck | PASS, no findings |
+| Parent Hold 3 pre-commit | PASS — Main accepted the corrected candidate; authorizes staging and Commit 3 only |
+| Diff and no-timer scans | PASS |
+
+The initial reliability review BLOCKED on cross-operation challenge reuse and missing response classification. Its pending-forever timer concern was explicitly adjudicated out of core scope. The correction remediated failed evidence `sha256:05d9a353da2ac5abe577d7f99e3946f3bf3e1b5a67fb5818cfe403959d38ed22` and settled complete at evidence `sha256:4dd951d107563731ca705bf99c2792b433c5d61bf54d4b55df9cd0ca0d9e0891`.
+
+No test, diff, or scan command was rerun during this documentation reconciliation; the exact evidence above was supplied as the corrected frozen candidate evidence.
+
+### Maintainer authority reconciliation
+
+- Decisions 92 and 93 remain preserved and valid.
+- Decision 94 records the approved responsibility boundary: timeout policy lives in each producer/adapter, while the neutral core adds no timer, sleep, wall-clock read, cancellation, deadline, or `Promise.race`.
+- Producer timeout or silence reaches the core only as rejection or `null`/`undefined`/missing response and maps to the exact non-proven operation outcome; attach never acknowledges unavailable producer evidence.
+- Foreign or malformed non-null proof remains mismatch.
+- A challenge object consumed or rejected in any composed operation cannot regain authority in another operation.
+- The delta spec and design were narrowed only to remove the earlier ambiguity; no product, adapter, or path scope was added.
+
+### Persisted task and lifecycle state
+
+- T4.11.1.1 and T4.11.1.2 remain checked with immutable Commits 1 and 2.
+- Parent Hold 3 pre-commit: PASS; this authorizes staging and Commit 3 creation only.
+- T4.11.1.3 remains visibly unchecked because Commit 3 does not exist.
+- The final post-Commit-3 parent hold remains visibly unchecked and deferred.
+- Exact remaining implementation task:
+  - [ ] Complete the strict-TDD stop/attach boundary, record its exact evidence and Engram apply checkpoint, and create no more than one direct commit. <!-- sdd-owner: implementation -->
+- Exact deferred parent lifecycle action:
+  - [ ] After direct commit 3 and before verification/delivery, hold on exactly all three direct-commit diffs, their individual <=400 authored-line proofs, Boundary 3 full-suite evidence, complete rollback order, and the final Engram checkpoint; direct delivery remains prohibited until full S4.11 verification passes. <!-- sdd-owner: parent -->
+
+### Workload, rollback, and next exact action
+
+- Boundary 3 is a 147-authored-line corrected construction candidate inside the planned sequential direct-commit delivery; it is not independently deliverable.
+- Rollback before Commit 3: restore the four candidate product/test paths to HEAD `beaa597eac05cb466832452deac2b6ce7ad86e87`. Commits 1 and 2 remain immutable, and that partial sequence remains non-deliverable.
+- Next action: parent lifecycle stages exactly the corrected four-path candidate, creates Commit 3, proves its immutable identity, then reconciles T4.11.1.3 and the final parent hold. No push or delivery is authorized before complete S4.11 verification.
+
+Apply-progress revision: Boundary 3 corrected PASS evidence and Decision 94 reconciled; awaiting parent-owned staging and Commit 3.
+
+## Immutable Commit 3 checkpoint
+
+This checkpoint supersedes only the earlier uncommitted Boundary 3 candidate metadata. All prior baseline, RED/GREEN/TRIANGULATE/REFACTOR, failed-review, correction, settle, reliability, provenance, and immutable Commit 1/2 evidence above remains cumulative and unchanged.
+
+### Immutable commit identity
+
+- Commit: `f00c53ae477de1f8dd3b9c4dab8b2c159375f962` — `feat(hosts): expose neutral runtime operations`.
+- Parent: `beaa597eac05cb466832452deac2b6ce7ad86e87` (immutable Commit 2).
+- Tree: `f66ba79c6a711042175f4e14f1b5556acfcab6e9`.
+- Immutable product boundary: exactly `hosts/runtime-observe.mjs`, `hosts/runtime-port.mjs`, `test/hosts/runtime-observe.test.mjs`, and `test/hosts/runtime-port.test.mjs`.
+- Numstat: `14` additions / `3` deletions; `30` additions / `2` deletions; `29` additions / `1` deletion; `67` additions / `1` deletion, respectively.
+- Authored additions + deletions: 140 + 7 = 147, below the 400-line limit.
+- Committed blob SHA-256 values:
+  - `hosts/runtime-port.mjs`: `43088d0b2721f6711c468271966129ed95aa809ec71178d0d7683933944df4fb`
+  - `hosts/runtime-observe.mjs`: `c0ca8fe25390d01aa62674a2ab4e2245e7256aa83a29428e746d0b791301c0fe`
+  - `test/hosts/runtime-port.test.mjs`: `96aa3d895a0781aa6a8189596a3dee8c564087402de8fb9bb84e1ea81d4b8d23`
+  - `test/hosts/runtime-observe.test.mjs`: `51de116067ab9bcea3855b368c262f5f3628db0f3d041fd3a6270d9634bf1492`
+
+### Frozen authority and verification evidence
+
+- Decisions 92, 93, and 94 remain preserved and valid with no contradiction.
+- Strict TDD and the complete Boundary 3 correction history remain recorded above; no failed or corrected evidence was removed.
+- Fresh focused reliability recheck: PASS, no findings.
+- Native SDD correction settled at evidence `sha256:4dd951d107563731ca705bf99c2792b433c5d61bf54d4b55df9cd0ca0d9e0891`, remediating `sha256:05d9a353da2ac5abe577d7f99e3946f3bf3e1b5a67fb5818cfe403959d38ed22`.
+- Final provenance gate: PASS, persisted immutably as Engram observation `9696`; that observation was read and left untouched.
+- No tests were rerun during immutable reconciliation. No code/test path was edited, and no stage, commit, reset, stash, clean, checkout, or push operation was performed.
+
+### Persisted task and delivery state
+
+- [x] T4.11.1.1 — immutable Commit 1 `356c9eac76e862d2fde47720ee97af84b0ae23d6` remains complete.
+- [x] T4.11.1.2 — immutable Commit 2 `beaa597eac05cb466832452deac2b6ce7ad86e87` remains complete.
+- [x] T4.11.1.3 — immutable Commit 3 `f00c53ae477de1f8dd3b9c4dab8b2c159375f962` is now checkpointed; the implementation-owned checkbox is visibly complete in `tasks.md`.
+- Parent Commit 1 and Commit 2 holds remain complete.
+- Exact deferred parent lifecycle action remains unchecked:
+  - [ ] After direct commit 3 and before verification/delivery, hold on exactly all three direct-commit diffs, their individual <=400 authored-line proofs, Boundary 3 full-suite evidence, complete rollback order, and the final Engram checkpoint; direct delivery remains prohibited until full S4.11 verification passes. <!-- sdd-owner: parent -->
+- The complete local three-commit sequence remains non-deliverable until integral SDD verification passes. No push or delivery occurred.
+
+### Rollback and next exact action
+
+- Full rollback order is Commit 3 → Commit 2 → Commit 1: `f00c53ae477de1f8dd3b9c4dab8b2c159375f962` → `beaa597eac05cb466832452deac2b6ce7ad86e87` → `356c9eac76e862d2fde47720ee97af84b0ae23d6`.
+- Reverting Commit 3 alone removes the exposed four-operation factory/integration behavior but leaves a non-deliverable partial sequence. Full rollback removes both runtime modules and both tests together while leaving S4.10 unchanged.
+- Next action: run SDD verify / integral requirements-runtime verification against immutable Commit 3. The final parent hold remains pending until that verification passes. No push is authorized.
+
+Apply-progress revision: immutable Commit 3 checkpoint; implementation tasks complete; route to SDD verify and parent-owned integral verification.
+
+## Integral verification PASS and final parent hold closure
+
+This checkpoint merges the immutable integral evidence into the cumulative apply history. It does not replace any baseline, RED/GREEN/TRIANGULATE/REFACTOR, correction, review, settle, provenance, or immutable Commit 1/2/3 evidence above.
+
+### Immutable candidate and integral result
+
+- HEAD / Commit 3: `f00c53ae477de1f8dd3b9c4dab8b2c159375f962`.
+- Tree: `f66ba79c6a711042175f4e14f1b5556acfcab6e9`.
+- Candidate bytes remained immutable: no code/test diff and no staging.
+- Integral verification: **PASS**, with 0 CRITICAL / 0 WARNING / 0 SUGGESTION and no blockers.
+- Native integral evidence settled complete at `sha256:c3e8bef337ebfe853b0a66f6f67dcbc5c86453836f0916785c839911b4400638`.
+- Final parent hold: **PASS and closed**. All six persisted task checkboxes are visibly complete.
+
+### Integral verification evidence
+
+- `bun test` ran exactly once for the integral candidate: **934 pass, 0 fail, 5502 expectations, 73 files, 99.69s**.
+- Static checks all PASS: diff/cached check; exact imports/exports; forbidden host vocabulary/imports; timer/sleep/wall-clock/cancellation/deadline/race scan; no code/test diff; `ACTIVE` absent.
+- Runtime harness: in-process composed host-runtime full-suite tests. External listener, database, and concrete adapter are N/A because this is a pure dormant host-neutral module and `ACTIVE` is absent.
+- Acceptance matrix: every proposal, spec, design, and task criterion PASS; all 15 Given/When/Then scenarios PASS.
+- Commit line budgets: Commit 1 = 268, Commit 2 = 191, Commit 3 = 147 authored lines. Every commit remains below 400 and the implementation is confined to the exact four-path Área.
+- Decisions 92, 93, and 94 remain preserved, valid, and consistent with the verified candidate.
+- Provenance observation `9696` remains unchanged.
+
+### Rollback, delivery, and routing
+
+- Full rollback order remains Commit 3 → Commit 2 → Commit 1: `f00c53ae477de1f8dd3b9c4dab8b2c159375f962` → `beaa597eac05cb466832452deac2b6ce7ad86e87` → `356c9eac76e862d2fde47720ee97af84b0ae23d6`.
+- Full rollback removes both runtime modules and both tests together while preserving S4.10.
+- The sequence has not been remotely delivered. No push occurred.
+- No tests or checks were rerun during this reconciliation; the immutable integral evidence above is consumed exactly as supplied.
+- Next action: managed SDD verify report creation against these immutable candidate bytes **without rerunning the full suite**.
+
+Apply-progress revision: integral verification PASS reconciled; final parent hold closed; 6/6 tasks complete; route to managed SDD verify report creation without rerunning the full suite.
