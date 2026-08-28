@@ -14,13 +14,42 @@ import tempfile
 from dataclasses import dataclass
 
 
-SKILLS = (
+# Shared conventions read by several skills. Installed like a skill directory
+# but carries no SKILL.md of its own, so it must stay first: a skill that lands
+# without its conventions is a skill with no source of truth.
+SHARED = ("_shared",)
+
+# Session workflow family — routing, planning, support, closure.
+SESSION_SKILLS = (
     "session-kickoff",
     "session-plan",
+    "session-context-loader",
     "planificador-granular",
     "agente-soporte",
     "session-doc",
 )
+
+# Delivery coordination — the skills that simulate the Control Tower. They work
+# with the `control-tower` MCP connected (Tower on) and fall back to manual
+# copy-paste handoff when it is absent (Tower off).
+TOWER_SKILLS = (
+    "torre-control-entregas",
+    "unattended-implementation",
+    "politica-de-entrega",
+    "coordinador_multi_agente",
+)
+
+# Analysis, planning and communication support.
+SUPPORT_SKILLS = (
+    "architecture-audit",
+    "project-kickoff",
+    "big-files-remediation-loop",
+    "cierre-de-decisiones",
+    "explicalo-simple",
+    "skill-composer",
+)
+
+SKILLS = SHARED + SESSION_SKILLS + TOWER_SKILLS + SUPPORT_SKILLS
 MANUAL_FILES = (
     Path(".claude/CLAUDE.md"),
     Path(".config/opencode/AGENTS.md"),
