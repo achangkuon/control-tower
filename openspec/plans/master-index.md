@@ -1,20 +1,20 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: **integración y entrega remota verificadas de `S4.10`** el 2026-08-28 contra `master/origin/master@6b8b7705d40a863b962873c1a34208007fa64644`. Verificación PASS con evidencia `sha256:9724021bd0e4cbd913085e11b61fc15a8baf9e800e0ba98541f20d53a948cea7`, suite `914/0/5.291` y cero hallazgos.
+> Última reconciliación: **planificación canónica de `S9.5` — materialización visual Herdr posterior al brief confirmado** el 2026-08-28 contra `master@dd9b48eefd12ce00361dbe9df214a6a5640b5823`. La autoridad durable es Engram 9652 y la decisión 91; no se implementó ni se abrió ningún asiento.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para el **inventario del producto** —los trece comandos, los módulos sin llamador y su orden de conexión— ver [inventario-de-producto](inventario-de-producto.md). Para **qué falta para salir** ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md). La línea entre lo que decide la Torre y lo que decide gentle-ai vive en [la frontera Torre ↔ gentle-ai](frontera-torre-gentle-ai.md), y **cualquier Sesión puede citarla para rechazar alcance** — desde el 2026-08-26 la frontera tiene **tres ejes**: la calidad del trabajo, el flujo de trabajo ([decisión 71](decision-register.md)) y **quién lee el plan** ([decisión 78](decision-register.md) — la cerca no lee). La **definición de producto vigente** —qué es y qué deliberadamente no va a ser la Torre terminada— es [**La Torre Terminada**](https://claude.ai/code/artifact/323b83bd-f1cd-4cee-a5c7-945f8c7d6173), y **ninguna Sesión puede desviarse de ella sin una decisión registrada**.
 
 ## 📍 Punto de retoma
 
 **`S4.10` cerró, quedó archivada y fue entregada en `master/origin/master@6b8b7705d40a863b962873c1a34208007fa64644`.** El contrato host-neutral v1 ya fija identidad, worktree, proceso, incarnation, binding y ownership exacto del puerto loopback; el cierre conserva los cuatro commits y el rollback inverso en [P4](plan-4/STATUS.md).
 
-**La cola retoma en `#1 S8.12`; `#2 S4.11` quedó 🟢 LISTO al satisfacerse `S4.10`.** Son ramas topológicamente independientes bajo sus Áreas y Recursos declarados. La integración y el push de `S4.10` fueron verificados en `master/origin/master@6b8b7705d40a863b962873c1a34208007fa64644`; no se abrió trabajo futuro durante este cierre.
+**La cola retoma en `#1 S8.12`; `#2 S4.11` está 🟢 LISTO y `#3 S9.4` prepara el host Pi que consume `#4 S9.5`.** `S9.5` materializará únicamente los asientos exactos de un brief ya confirmado; no planifica, asigna, recicla ni despacha. `S8.12` y `S4.11` siguen topológicamente independientes bajo sus Áreas y Recursos declarados.
 
 **OpenCode sigue parqueado con preservación absoluta.** `S4.4`, `S4.8` y `S4.9` permanecen 🟡 DIFERIDO; el checkpoint durable de `S4.4` sigue en [P4](plan-4/STATUS.md), sin cambios.
 
 ## 🎯 Cola de ejecución
 
-`#1 S8.12` · `#2 S4.11` · `#3 S9.4` · `#4 S1.17` · `#5 S1.18` · `#6 S1.19` · `#7 S4.12` · `#8 S8.13` · `#9 S5.14` · `#10 S2.8` · `#11 S5.5` · `#12 S5.15` · `#13 S9.1` · `#14 S9.2` · `#15 S9.3` · `#16 S7.1` — topológica, recalculada 2026-08-28. No asigna dueño ni asiento.
+`#1 S8.12` · `#2 S4.11` · `#3 S9.4` · `#4 S9.5` · `#5 S1.17` · `#6 S1.18` · `#7 S1.19` · `#8 S4.12` · `#9 S8.13` · `#10 S5.14` · `#11 S2.8` · `#12 S5.5` · `#13 S5.15` · `#14 S9.1` · `#15 S9.2` · `#16 S9.3` · `#17 S7.1` — topológica, recalculada 2026-08-28. `S9.5` espera `S8.12 + S9.4`; la cola no asigna dueño ni asiento.
 
 **Paralelismo:** `S8.12` y `S4.11` están 🟢 LISTO y pueden comenzar en paralelo sólo si `Área` y `Recurso` reales siguen disjuntos. La cadena principal restante es `S4.11 → S9.4 → S1.17 → S1.18 → S1.19`; `S4.12` espera `S9.4 + S1.18`; `S8.13` espera `S8.12 + S1.19 + S4.12`; `S7.1` espera además `S5.5` y conserva sus dependencias no-host satisfechas.
 
@@ -27,7 +27,7 @@ En este repositorio la entrega ocurre mediante uno o más commits directos secue
 
 ## 📊 Estado de un vistazo
 
-**Avance global**: 4/12 Planes cerrados (33%) · Sesiones cerradas en planes activos: 42/63 (67%). Cálculo auditable: P1 `16/19` + P4 `7/12` + P5 `12/15` + P7 `0/1` + P8 `7/12` + P9 `0/4` = `42/63`. P0, P3, P10 y P11 están cerrados. P2 y P6 conservan porcentaje `—`: P2 mantiene responsabilidades sin Sesión enumerada y P6 no tiene Sesiones enumeradas.
+**Avance global**: 4/12 Planes cerrados (33%) · Sesiones cerradas en planes activos: 42/64 (66%). Cálculo auditable: P1 `16/19` + P4 `7/12` + P5 `12/15` + P7 `0/1` + P8 `7/12` + P9 `0/5` = `42/64`. P0, P3, P10 y P11 están cerrados. P2 y P6 conservan porcentaje `—`: P2 mantiene responsabilidades sin Sesión enumerada y P6 no tiene Sesiones enumeradas.
 
 **El denominador de P5 subió de 14 a 15 sin que se perdiera trabajo**, al enumerar `S5.15` por la [decisión 78](decision-register.md). Es la misma causa de siempre —se enumeró trabajo que ya existía y que nadie contaba— y otra vez el porcentaje se movió en contra. En el mismo movimiento `S2.7` salió del alcance por quedarse sin sujeto, pero eso no toca el cociente: P2 nunca tuvo denominador derivable.
 
@@ -44,7 +44,7 @@ En este repositorio la entrega ocurre mediante uno o más commits directos secue
 | P6 | Campañas multiproyecto | 🟡 DIFERIDO | — (sin Sesiones enumeradas) | — | Maintainer | — | [STATUS](plan-6/STATUS.md) |
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | `S7.1` | [STATUS](plan-7/STATUS.md) |
 | P8 | Release instalable | 🔵 EN CURSO | 58% (7/12 S) | — | Maintainer | `S8.11`–`S8.13` | [STATUS](plan-8/STATUS.md) |
-| P9 | Asientos de trabajo y reciclado seguro | 🔵 EN CURSO | 0% (0/4 S) | — | Maintainer | `S9.1`–`S9.4` | [STATUS](plan-9/STATUS.md) |
+| P9 | Asientos de trabajo y reciclado seguro | 🔵 EN CURSO | 0% (0/5 S) | — | Maintainer | `S9.1`–`S9.5` | [STATUS](plan-9/STATUS.md) |
 | P10 | Ejecución y supervisión autónoma de Jornada | ✅ COMPLETO | 100% (3/3 S) | — | Maintainer | — | [STATUS](plan-10/STATUS.md) |
 | P11 | Interfaz de operador | ✅ COMPLETO | 100% (1/1 S) | — | Maintainer | — | [STATUS](plan-11/STATUS.md) |
 

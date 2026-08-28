@@ -1,9 +1,9 @@
 # Plan 9 — Asientos de trabajo y reciclado seguro
 
-**Propósito:** que existan asientos de trabajo estables que Main pueda asignar y reciclar sin pisar a un agente trabajando, y que tener varios no cueste una instalación de dependencias por cada uno.
+**Propósito:** que existan asientos de trabajo estables que Main pueda asignar, materializar visualmente y reciclar sin pisar a un agente trabajando, y que tener varios no cueste una instalación de dependencias por cada uno.
 
 **Estado:** 🔵 EN CURSO
-**Avance:** 0% (0/4 S)
+**Avance:** 0% (0/5 S)
 
 > **Reordenado y recortado el 2026-08-21 por la [decisión 62](../decision-register.md), tras la auditoría exclusiva de P9.**
 > Los IDs son posicionales según el [estándar de planes](/home/emili/.claude/skills/_shared/plan-naming-convention.md), así que
@@ -40,10 +40,10 @@ Las decisiones 49–54 del [registro](../decision-register.md) y las referencias
 | Campo | Contrato |
 |---|---|
 | Orden histórico OpenCode-first | `S9.1 → S9.2 → S9.3`; `S9.4` estaba 🟡 DIFERIDO. La autoridad Pi-first vigente está en la reconciliación del 2026-08-27. |
-| Avance canónico | 0% (0/4 S). Ninguna Sesión está ✅ COMPLETO. El denominador se mantiene en 4 bajo la regla de la [decisión 57](../decision-register.md): `S9.4` es diferido-con-intención y por lo tanto se conserva. |
+| Avance canónico | 0% (0/5 S). Ninguna Sesión está ✅ COMPLETO. `S9.5` entra al denominador como objetivo nuevo autorizado; `S9.4` conserva su historia diferida y su contrato Pi-first vigente. |
 | Entrega | Commit directo a `master`, sin PR. Cada resultado independientemente verificable y revertible, ≤400 líneas authored. |
-| Próxima acción | Enumerar `Área`, `Recurso` y Módulos de `S9.1`. No queda ninguna decisión que responder. |
-| Decisión abierta | **Ninguna.** El tamaño del pool quedó resuelto el 2026-08-21: **tres asientos**. P9 es decision-clean. |
+| Próxima acción | `S9.4` prepara supervisor/binding Pi; `S9.5` espera `S8.12 + S9.4` y no infla ninguna de las dos. |
+| Decisión abierta | **Ninguna.** El tamaño del pool y la materialización automática posterior al brief están resueltos por las decisiones 62 y 91. P9 es decision-clean. |
 | Autoridad histórica | Engram 8478 rev8, 8506, 8645, 8646, 8647 rev2, 8894, 8898, 8950, 8955, 8908; decisiones 49–54 y 62. Los artefactos SDD de la vieja `S9.1` viven en `openspec/changes/s9-1-safe-slot-lifecycle/` y describen un alcance **superado**: se conservan como evidencia, no como autoridad de implementación. |
 
 ---
@@ -151,10 +151,13 @@ Las decisiones 49–54 del [registro](../decision-register.md) y las referencias
 graph TD
   S91["S9.1 pool de asientos · 📋"] --> S92["S9.2 interlock de ocupado · 📋"]
   S91 --> S93["S9.3 caché externa de Bun · 📋"]
-  S93 -.-> S94["S9.4 launcher Pi · 🟡 DIFERIDO"]
+  S93 -.-> S94H["S9.4 launcher Pi · historia diferida"]
+  S411["S4.11 operaciones neutrales · 🟢"] --> S94["S9.4 supervisor Pi-first · 📋"]
+  S812["S8.12 bundle Tower · 🟢"] --> S95["S9.5 materialización Herdr · 📋"]
+  S94 --> S95
 ```
 
-`S9.2` y `S9.3` no dependen entre sí y pueden ejecutarse en cualquier orden una vez cerrada `S9.1`.
+`S9.2` y `S9.3` no dependen entre sí. `S9.5` no espera el pool: consume asientos exactos ya aprobados por el brief y no crea, asigna ni recicla worktrees.
 
 ## Qué queda pendiente de reconciliar fuera de este Plan
 
@@ -233,3 +236,56 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 - [ ] Tarea T9.4.1.1 — RED: cubrir broker compartido, path inválido, takeover, keepalive perdido y binding falso.
 - [ ] Tarea T9.4.1.2 — GREEN: lanzar broker/proceso y persistir binding neutral verificable.
 - [ ] Tarea T9.4.1.3 — REFACTOR: aislar lifecycle externo y recuperación desde estado durable.
+
+## Sesión 9.5 — Materialización visual Herdr posterior al brief confirmado
+
+**Estado:** 📋 PLANIFICADO
+
+**Depende de:** `S8.12`, `S9.4`.
+
+**Área:** `skills/torre-control-entregas/**`, `skills/torre-herdr-seat-materialization/**`, `workspace/herdr-seat-materializer.mjs`, `test/skills/herdr-seat-materialization.test.mjs`, `test/workspace/herdr-seat-materializer.test.mjs`.
+
+**Recurso:** sesión Herdr enfocada, panes y nombres de agente exactos del brief; binding Pi/Intercom de `S9.4`. Sin DB, migraciones, worktree lifecycle ni token de entrega.
+
+**Decisiones:**
+- `escala`, **resuelta por la decisión 91 / Engram 9652** — el brief explícitamente confirmado autoriza automáticamente sólo los asientos visibles exactos que enumera. **Clase:** seguridad y permisos; contrato visible del producto. **Contaminaba:** toda `S9.5` antes del primer RED.
+- `derivable` — reutilización segura. **Criterio:** nombre de agente, worktree exacto, readiness Pi y conectividad Intercom coinciden con el brief; cualquier mismatch falla cerrado y no se repara por inferencia. **Autoridad:** decisión 91. **Falsificador:** un pane o proceso preexistente se reutiliza con uno de los cuatro hechos distinto o no probado.
+- `derivable` — contrato Herdr. **Criterio:** la hija obtiene sintaxis y capacidades del runtime instalado mediante `herdr --skill`; no copia comandos ni toma el foco implícito de otro pane. **Autoridad:** decisión 91 y contrato dinámico Herdr. **Falsificador:** una actualización compatible exige editar sintaxis duplicada en la skill Tower.
+- `derivable` — fallback manual. **Criterio:** Herdr ausente o incompatible devuelve instrucciones acotadas para los asientos aún no materializados, conserva evidencia de los ya validados y nunca declara el conjunto listo. **Autoridad:** Engram 9652. **Falsificador:** éxito parcial presentado como total o creación adicional fuera del brief.
+
+**Ruta:** `design-tasks` — producto, autoridad y fallos están cerrados; falta fijar el seam técnico mínimo entre skill hija y materializador sin duplicar el CLI Herdr.
+
+**Autoridad:** decisión 91; Engram 9652 (`Automático tras brief`); decisión 88 para el source root Tower-owned que entrega `S8.12`; contrato vivo leído exclusivamente con `herdr --skill`.
+
+**Criterios de aceptación** — todos deben pasar para cerrar:
+- [ ] Sólo después de confirmar el brief, Main crea o reutiliza exactamente sus panes y sesiones nombrados; cero asiento no aprobado se abre o recibe prompt.
+- [ ] Cada asiento queda ligado a nombre de agente, cwd/worktree exacto, Pi listo e Intercom conectado antes del dispatch; cualquier mismatch falla cerrado.
+- [ ] Repetir el mismo input converge sin duplicar panes, procesos, nombres ni prompts, y produce el mismo reporte por asiento.
+- [ ] `torre-control-entregas` conserva autoridad y carga una sola hija Tower/Herdr; la hija no planifica ni despacha y el materializador no lee planes.
+- [ ] La integración usa el contrato dinámico `herdr --skill`, no sintaxis duplicada, foco implícito ni cierre de panes/sesiones ajenos.
+- [ ] Herdr ausente o incompatible produce fallback manual acotado y veraz, sin mutación parcial presentada como éxito.
+- [ ] El diff toca sólo `Área`; no modifica Pi, Pi-intercom, skills genéricas Gentle AI, `S8.12`, `S8.13`, worktrees ni runtime vivo.
+
+### Matriz skill-composer
+
+| Componente | Responsabilidad | Trigger | Entrada | Salida | Dependencias / autoridad |
+|---|---|---|---|---|---|
+| Madre `torre-control-entregas` | Custodiar brief confirmado, orden y dispatch | brief exacto confirmado | lista inmutable de asientos aprobados | invocación única de la hija o rechazo | Main; nunca controla Herdr directamente |
+| Hija `torre-herdr-seat-materialization` | Traducir esa lista a una operación Tower/Herdr | sólo la madre, después del gate | asientos exactos + contrato `herdr --skill` | reporte creado/reutilizado/pendiente | decisión 91; sin autoridad de planificación o dispatch |
+| `herdr-seat-materializer` | Crear/reusar y validar hechos de runtime de forma idempotente | llamada tipada de la hija | nombre, cwd, pane/session esperado y binding `S9.4` | evidencia por asiento + fallback acotado | Herdr instalado, Pi listo e Intercom conectado |
+
+**Topología:** madre → hija lazy-loaded → materializador. No hay ciclos, doble autoridad ni trigger público alternativo. Herdr aporta mecánica; la Torre no la reimplementa. La hija y el materializador son una ruta especializada, no un segundo dispatcher.
+
+### Módulo M9.5.1 — Routing madre/hija Tower/Herdr · commit directo ≤400 authored
+
+- [ ] Tarea T9.5.1.1 — RED: probar que brief no confirmado, asiento extra, trigger directo o contrato Herdr ausente no alcanzan el materializador.
+- [ ] Tarea T9.5.1.2 — GREEN: agregar la hija lazy-loaded y el único route gate desde `torre-control-entregas` con input exacto e inmutable.
+- [ ] Tarea T9.5.1.3 — REFACTOR: eliminar duplicación de reglas, probar autoridad única y dejar las skills genéricas fuera del grafo.
+
+### Módulo M9.5.2 — Materializador determinista y fallback · commit directo ≤400 authored
+
+- [ ] Tarea T9.5.2.1 — RED: cubrir create/reuse, mismatch de nombre/cwd/readiness/Intercom, repetición idempotente, incompatibilidad y parcialidad.
+- [ ] Tarea T9.5.2.2 — GREEN: materializar y validar exactamente cada asiento aprobado usando IDs/respuestas reales del contrato Herdr.
+- [ ] Tarea T9.5.2.3 — REFACTOR: estabilizar reporte/fallback, preservar foco y prohibir cierre o prompt sobre recursos ajenos.
+
+**Forecast:** dos commits directos, uno por Módulo; cada uno debe quedar independientemente verificable, revertible y ≤400 líneas authored. Si cualquiera supera 400 de forma inseparable, se divide en otra Sesión; nunca se amplía `S8.12` o `S8.13`.
