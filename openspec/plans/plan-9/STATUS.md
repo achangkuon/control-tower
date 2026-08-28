@@ -229,13 +229,90 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 - **S9.3 — Caché externa congelada de Bun.** **Estado:** 📋 PLANIFICADO · **Depende de:** `S9.1` · **Área:** `workspace/dependency-cache.mjs`, `schemas/dependency-{fingerprint,install-receipt}-v1.schema.json`, `test/workspace/**`, `test/contracts/**` · **Recurso:** caché externa por fingerprint · **Decisiones:** `derivable`, contenido exacto por lock/runtime/arquitectura; autoridad contrato histórico, falsificador: dos inputs distintos comparten fingerprint · **Ruta:** `full-sdd`, porque crea schemas y lifecycle compartido. **Aceptación:** fingerprint exacto; publicación inmutable/atómica; instalación parcial falla cerrado; ningún binding Pi entra; sólo toca `Área`. **Módulo M9.3.1:** `T9.3.1.1` RED fingerprint/partial/corrupción; `T9.3.1.2` GREEN schemas+caché+receipt; `T9.3.1.3` REFACTOR atomicidad y cleanup.
 
 ### Contrato vigente de S9.4 — Supervisor y binding del launcher Pi
-**Historia preservada:** el contrato anterior “Pi segundo host, después de OpenCode” queda etiquetado arriba como plan histórico parqueado. **Estado:** 🟢 LISTO · **Depende de:** `S4.11` ✅ COMPLETO · **Área:** `workspace/pi-supervisor.mjs`, `workspace/pi-binding.mjs`, `test/workspace/pi-{supervisor,binding}.test.mjs` · **Recurso:** un broker por worktree, keepalive Tower-owned y IDs aleatorios.
-**Decisiones:** decisiones 82–84, 86–87 resueltas expresamente; mailbox volátil y recovery durable idempotente. **Ruta:** `full-sdd` — supervisor de procesos, frontera de seguridad y fallos parciales.
-**Criterios de aceptación:** Tower lanza/supervisa un broker por worktree; binding cruza PID/cwd con kernel y puerto neutral; keepalive evita shutdown ocioso; ID takeover y broker compartido fallan cerrado; no modifica Pi/pi-intercom ni toca fuera de `Área`.
-#### Módulo M9.4.1 — Supervisor Tower-owned
-- [ ] Tarea T9.4.1.1 — RED: cubrir broker compartido, path inválido, takeover, keepalive perdido y binding falso.
-- [ ] Tarea T9.4.1.2 — GREEN: lanzar broker/proceso y persistir binding neutral verificable.
-- [ ] Tarea T9.4.1.3 — REFACTOR: aislar lifecycle externo y recuperación desde estado durable.
+
+**Historia preservada:** el contrato anterior “Pi segundo host, después de OpenCode” queda etiquetado arriba como plan histórico parqueado.
+
+**Estado:** 🟢 LISTO
+
+**Depende de:** `S4.11` ✅ COMPLETO.
+
+**Área:** `workspace/pi-supervisor.mjs`, `workspace/pi-binding.mjs`, `test/workspace/pi-supervisor.test.mjs`, `test/workspace/pi-binding.test.mjs`.
+
+**Recurso:** un broker/listener exacto por worktree sólo después de `broker.start`; keepalive Tower-owned; IDs aleatorios; ownership y capacidad de cierre exacta retenidos por `S4.10`. `runtimeRoute` es dato y no reclama recurso.
+
+**Decisiones:**
+
+- `escala`, resuelta — decisiones 82–84 y 86–87 fijan aislamiento, capacidades, contrato neutral, topología y mailbox.
+- `escala`, resuelta — decisión 96 fija `runtimeRoute` puro y `broker.start` como primera adquisición dentro del ownership de `S4.10`.
+- `derivable` — nombres de helpers privados, sólo si no cambian ninguna forma pública ni introducen efectos antes de `broker.start`. **Autoridad:** decisiones 84 y 96. **Falsificador:** el nombre o la extracción altera el shape público, adquiere un recurso o crea una capacidad de cleanup.
+
+**Ruta:** `direct` — la autoridad y la matriz de Tareas quedaron cerradas por Engram 9747/9748. El pipeline `full-sdd` ya corrió una vez; su diseño fallido y sus cinco intentos quedan como evidencia, no como ruta de continuación. La ejecución futura corresponde a un executor general fresco, sin segundo SDD ni SDD por Módulo.
+
+**Autoridad de ejecución:**
+
+- Engram 9746 — raíz causal verificada.
+- Engram 9747 — resolución del maintainer y cierre de la decisión escalada.
+- Engram 9748 — contrato final de `session-plan`, criterios y matriz de Tareas.
+- Decisión 96 — serialización canónica de la frontera route-as-data.
+
+**Secuencia de ownership:**
+
+| Momento | Contrato |
+|---|---|
+| Preparación | Construye y valida `runtimeRoute`; cero efectos y cero cleanup. |
+| Verificación | Comprueba el binding exacto antes y después de cada `await`. |
+| Primera adquisición | `broker.start` corre dentro de `S4.10 acquireAtReservation`. |
+| Ownership | `S4.10` retiene el `close` exacto devuelto por `broker.start`. |
+| Fallo posterior | Usa ese `close` exacto o deja cuarentena explícita. |
+
+**Criterios de aceptación — los ocho son binarios:**
+
+- [ ] El binding exacto se valida antes y después de cada `await`; ningún cambio de identidad, cwd, proceso, incarnation o binding atraviesa esa frontera.
+- [ ] `runtimeRoute` es dato puro: preparación y validación no crean socket, archivo, listener, lock, reserva ni capacidad de `close`/`release`.
+- [ ] Ruta inválida o stale, pérdida del binding actual o `dispose` antes de start dejan cero broker/listener y ejecutan cero cleanup.
+- [ ] `broker.start`, llamado dentro de `S4.10 acquireAtReservation`, es el primer efecto y devuelve el `close` exacto que `S4.10` retiene como owner.
+- [ ] Todo fallo posterior a start consume ese `close` exacto o deja la adquisición en cuarentena explícita; ninguna capa reconstruye o adivina cleanup.
+- [ ] Repetir el mismo input converge; conflicto o pérdida de actualidad fallan cerrado sin promover una ruta o binding rival.
+- [ ] El mailbox sigue volátil y no autoritativo: no se agrega mensajería durable, broker compartido, adopción de procesos ajenos, aislamiento de OS ni cambios a Pi/`pi-intercom`.
+- [ ] Strict TDD registra RED enfocado, suite combinada y suite completa verdes; el diff toca exactamente `Área` y cada Módulo queda en un commit independiente/revertible de ≤400 líneas authored.
+
+#### Módulo M9.4.1 — Verificador de binding exacto
+
+**Área del Módulo:** `workspace/pi-binding.mjs`, `test/workspace/pi-binding.test.mjs`.
+
+**Resultado verificable:** el binding no cambia inadvertidamente a través de fronteras async.
+
+**Pronóstico:** 160–230 líneas authored.
+
+**Entrega:** commit independiente; rollback limitado a esos dos archivos.
+
+- [ ] Tarea T9.4.1.1 — RED: fijar la matriz de binding exacto antes/después de `await`, stale, conflicto y pérdida de actualidad.
+- [ ] Tarea T9.4.1.2 — GREEN: implementar el verificador mínimo sin cambiar forma pública ni adquirir recursos.
+- [ ] Tarea T9.4.1.3 — TRIANGULATE/REFACTOR: cubrir alternos negativos y simplificar manteniendo el RED enfocado verde.
+
+#### Módulo M9.4.2 — Supervisor de ruta pura y adquisición broker-first
+
+**Depende de:** `M9.4.1`.
+
+**Área del Módulo:** `workspace/pi-supervisor.mjs`, `test/workspace/pi-supervisor.test.mjs`.
+
+**Resultado verificable:** la ruta permanece dato hasta que `S4.10` adquiere y retiene el broker/listener exacto.
+
+**Pronóstico:** 270–360 líneas authored.
+
+**Entrega:** commit independiente; rollback limitado a esos dos archivos.
+
+- [ ] Tarea T9.4.2.1 — RED: cubrir la matriz async/effect completa — invalid, stale, dispose pre-start, start, fallo post-start, cuarentena, convergencia, conflicto y pérdida de actualidad.
+- [ ] Tarea T9.4.2.2 — GREEN: producir `runtimeRoute` puro y hacer `broker.start` primero dentro de `S4.10 acquireAtReservation`, preservando ownership y `close` exactos de `S4.10`.
+- [ ] Tarea T9.4.2.3 — TRIANGULATE/REFACTOR: cerrar alternos, correr suites combinada y completa y verificar límites de `Área`, efectos y rollback.
+
+**Evidencia parqueada — no es base de implementación:**
+
+- La rama y sus cinco intentos conservan evidencia de la raíz causal y del diseño fallido.
+- No se puede iniciar ni hacer cherry-pick desde sus bytes sucios.
+- Support recalcula el brief sólo después de validar, commitear, entregar y releer esta planificación canónica.
+- El brief futuro asigna un executor fresco desde la base canónica.
+- La rama permanece inmutable como evidencia; nunca es continuación.
 
 ## Sesión 9.5 — Materialización visual Herdr posterior al brief confirmado
 
