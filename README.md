@@ -18,14 +18,26 @@ Zero hits means the skill is owned here.
 
 ## Quick Path
 
-New machine — one command:
+New machine:
 
 ```bash
-git clone <this-repo> && cd agent-workflows
-./tools/setup.sh                 # skills only, Tower off
-./tools/setup.sh --with-tower    # skills + Control Tower
-./tools/setup.sh --check         # diagnose, mutate nothing
+git clone git@github.com:achangkuon/agent-workflows.git
+cd agent-workflows && ./tools/setup.sh
 ```
+
+With no arguments it opens an interactive menu — install, update skills, update
+the Tower, or diagnose — with a live status header. Flags drive the same actions
+headlessly: `--install`, `--with-tower`, `--update`, `--check`, `--dry-run`.
+
+Installing also creates the global command `puesto`, so the menu opens from
+anywhere afterwards. It is a launcher, not a copy — it execs the current
+checkout, so `git pull` updates the tool with no reinstall step. `--link`
+recreates it; `SETUP_LAUNCHER` renames it and `SETUP_BIN_DIR` relocates it.
+
+The menu is plain Bash by design: no Go toolchain, no per-OS release pipeline,
+nothing to install before it can install anything. It repaints on the alternate
+screen buffer and caches its status block, because recomputing that block on
+every keypress is what makes a shell menu stutter.
 
 Already set up, editing skills:
 
