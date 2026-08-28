@@ -1,7 +1,7 @@
 ---
-verified_against: 8beb3d7f846a23504021d2061f75acd76ca6d09f
+verified_against: 6ddf6bc77d236dffad5b8ec625379117a91ce0b3
 verified_at: 2026-08-28
-standfirst: La primera entrega host-neutral ya cerró. S8.12 encabeza la cola, S4.11 sigue lista y S9.5 quedó planificada para mostrar sólo los asientos exactos de un brief confirmado; esa materialización todavía no existe. Las cifras se miden solas contra el código.
+standfirst: Las operaciones host-neutral ya están entregadas y archivadas. S8.12 encabeza la cola y S9.4 queda promovida como siguiente dependencia del host Pi; S9.5 sigue planificada y todavía no materializa asientos. Las cifras se miden solas contra el código.
 ---
 
 <!--
@@ -33,7 +33,7 @@ Vos dirigís varios agentes de IA trabajando en varios proyectos a la vez. La To
 
 La prioridad cambió: la primera implementación se hará con Pi. No porque Pi pase a ser el producto, sino porque la Torre puede poseer la identidad del proceso que lanzó y exigir comprobantes producidos por ese proceso. Eso le permite distinguir una sesión propia de una sesión que sólo dice serlo.
 
-La unión neutral ya está construida: identidad, worktree, proceso, incarnación y binding no dependen de Pi. El próximo paso agrega operaciones observables sobre esa base; recién después se conecta el host. Así, si OpenCode vuelve más adelante, ambos podrán enchufarse al mismo contrato sin convertir a la Torre en dependiente de un proveedor.
+La unión neutral ya está construida y entregada: identidad, worktree, proceso, incarnación, binding y las operaciones observe/health/stop/attach no dependen de Pi. El próximo paso conecta el host Pi mediante `S9.4`. Así, si OpenCode vuelve más adelante, ambos podrán enchufarse al mismo contrato sin convertir a la Torre en dependiente de un proveedor.
 
 ## El veredicto actual
 
@@ -42,10 +42,10 @@ Lo técnico: El roadmap promueve Pi como primer host de implementación. La iden
 En simple: La Torre no confía en una credencial escrita por el propio agente. Conserva la ficha del proceso que abrió y exige un recibo que sólo ese proceso puede producir. Esa base permite empezar por Pi sin entregar el control de la Torre a Pi.
 Evidencia: `openspec/plans/decision-register.md:408-442` · `openspec/plans/plan-4/STATUS.md:735-751` · `master@5e387b3f76e176c35fc199f899aafc9a057a3f08`
 
-### 2 · sólido · La unión neutral ya existe y publica cinco contratos v1
-Lo técnico: `S4.10` cerró con cinco formas públicas, cerradas e independientemente versionables: identidad, worktree, proceso, incarnación y binding. El binding liga los otros cuatro identificadores al puerto loopback exacto sin importar Pi ni OpenCode.
-En simple: El enchufe común ya está construido. Tiene cinco piezas con responsabilidades separadas y no acepta datos inventados o sobrantes; Pi se conectará después sin convertir ese enchufe en algo exclusivo de Pi.
-Evidencia: `openspec/specs/host-runtime/spec.md:7-31` · `openspec/plans/plan-4/STATUS.md:739-755` · `test/contracts/host-runtime/shapes.test.mjs`
+### 2 · sólido · La unión neutral ya incluye operaciones observables
+Lo técnico: `S4.10` cerró las cinco formas públicas de identidad y binding; `S4.11` agregó observe, health, stop y attach con challenge de un solo uso, proof producer-owned y binding/incarnation exactos. La spec canónica sincronizada tiene SHA-256 `3dfd0cdd5d5a0a4e6fb6bc17933a89c92ed204389d58e7600a06ba9bb4699373`.
+En simple: El enchufe común ya no sólo identifica a cada runtime: también permite mirarlo, comprobar su salud, pedirle que se detenga y adjuntarse sin confiar en lo que el propio caller afirma. Pi puede conectarse sobre una base ya entregada, no sobre una promesa.
+Evidencia: `openspec/specs/host-runtime/spec.md` · `openspec/changes/archive/2026-08-28-s4-11-host-neutral-operations/verify-report.md` · `master/origin/master@6ddf6bc77d236dffad5b8ec625379117a91ce0b3`
 
 ### 3 · resuelto · El instalador de la Torre ahora incluye conducta propia de la Torre
 Lo técnico: La decisión 88 divide la entrega entre `S8.12`, dueña del bundle versionado, y `S8.13`, dueña de instalación, activación, rollback y preflight. El bundle incluye runtime, contrato neutral, adapter Pi y perfiles/skills Tower-specific, incluido Support. La configuración de Pi y `pi-intercom`, y las skills genéricas de Gentle AI, quedan fuera.
@@ -103,7 +103,7 @@ La lista siguiente reemplaza las antiguas “cinco decisiones”. No son pregunt
 | Próximo paso | Qué debe demostrar | Qué no permite afirmar todavía |
 |---|---|---|
 | `S4.10` — ✅ COMPLETO | Cinco contratos v1 y ownership exacto del puerto, sin importar Pi ni OpenCode | Que el adapter Pi ya funciona |
-| `S4.11` y `S4.12` | Operaciones observables y composición neutral antes del host | Que la Torre ya supervisa una jornada real |
+| `S4.11` — ✅ COMPLETO; `S4.12` pendiente | Operaciones observables ya entregadas; recuperación mínima Pi después de sus dependencias | Que la Torre ya supervisa o recupera una jornada Pi real |
 | `S9.4` y `S1.17`–`S1.19` | Supervisor, adapter y regresión Pi con aislamiento y recibos verificables | Capacidad por encima de cinco clientes |
 | `S9.5` | Materialización idempotente de sólo los asientos exactos del brief, después de cerrar `S8.12 + S9.4` | Que Herdr ya abra, reutilice o valide esos asientos automáticamente |
 | Gate Pi desatendido | Una corrida prolongada atribuible al candidato | Estabilidad de larga duración sin esa evidencia |
@@ -112,18 +112,18 @@ La lista siguiente reemplaza las antiguas “cinco decisiones”. No son pregunt
 
 ## Lo que pasa ahora mismo
 
-### G · sólido · `S8.12` y `S4.11` encabezan la cola
-Lo técnico: La cola canónica empieza `#1 S8.12`, `#2 S4.11`, `#3 S9.4`, `#4 S9.5`. `S8.12` y `S4.11` están listas y son independientes bajo sus Áreas y Recursos declarados; `S9.5` espera tanto el bundle Tower de `S8.12` como el supervisor/binding Pi de `S9.4`.
-En simple: Hay dos trabajos que pueden arrancar sin pisarse: preparar la caja completa de la Torre y construir sus operaciones neutrales. La vista automática viene después; no saltea esos cimientos ni promete algo que todavía no funciona.
-Evidencia: `openspec/plans/master-index.md:9-19` · `openspec/plans/plan-8/STATUS.md:942-954` · `openspec/plans/plan-9/STATUS.md:238-291`
+### G · sólido · `S8.12` encabeza la cola y `S9.4` queda promovida
+Lo técnico: `S4.11` salió de la cola al cerrar ✅ COMPLETO. La cola canónica empieza `#1 S8.12`, `#2 S9.4`, `#3 S9.5`; `S8.12` conserva su estado 🟢 LISTO y `S9.5` sigue esperando tanto ese bundle Tower como el supervisor/binding Pi de `S9.4`.
+En simple: Las operaciones neutrales ya no compiten por prioridad: están entregadas. Ahora quedan primero la caja instalable de la Torre y después la conexión real con Pi; la vista automática sigue detrás de ambos cimientos.
+Evidencia: `openspec/plans/master-index.md` · `openspec/plans/plan-4/STATUS.md` · `openspec/plans/plan-9/STATUS.md`
 
 ### H · crítico · OpenCode sigue estacionado y el adapter Pi todavía espera
-Lo técnico: `S4.4`, `S4.8` y `S4.9` permanecen 🟡 DIFERIDO con preservación absoluta. `S9.4` sigue detrás de `S4.11`; `S9.5` sigue detrás de `S8.12 + S9.4`; `S1.17`–`S1.19` y `S4.12` conservan sus dependencias propias. La decisión 91 no reactiva OpenCode ni implementa el host Pi.
+Lo técnico: `S4.4`, `S4.8` y `S4.9` permanecen 🟡 DIFERIDO con preservación absoluta. `S9.4` ya tiene satisfecha su dependencia `S4.11`; `S9.5` sigue detrás de `S8.12 + S9.4`; `S1.17`–`S1.19` y `S4.12` conservan sus dependencias propias. La decisión 91 no reactiva OpenCode ni implementa el host Pi.
 En simple: El nuevo plano visual no cambia qué funciona hoy. OpenCode sigue guardado, y Pi todavía necesita su supervisor, su adaptación y sus pruebas antes de operar como host real.
 Evidencia: `openspec/plans/master-index.md:9-25` · `openspec/plans/plan-4/STATUS.md:733-763` · `openspec/plans/plan-9/STATUS.md:228-291`
 
 ## Evidencia y límites de esta radiografía
 
-Este juicio fue reconciliado contra el candidate de planificación `8beb3d7f846a23504021d2061f75acd76ca6d09f` el 2026-08-28. Las cifras de instrumentos, avance y cola son derivadas por el generador; no se escriben a mano acá.
+Este juicio fue reconciliado contra la entrega `master/origin/master@6ddf6bc77d236dffad5b8ec625379117a91ce0b3` el 2026-08-28. Las cifras de instrumentos, avance y cola son derivadas por el generador; no se escriben a mano acá.
 
-La última suite integral registrada para el cierre de `S4.10` informó `914 pass`, `0 fail` y `5.291 expectativas`. Esta actualización de juicio es sólo documental y no ejecutó una suite nueva; el push final de Main registrará la medición vigente. El verde anterior no prueba todavía `S4.11`, el adapter Pi, la corrida desatendida ni capacidad por encima del límite vigente.
+La última suite integral registrada para `S4.11` informó `934 pass`, `0 fail` y `5.502 expectativas`; este cierre documental no la reejecutó. Ese verde prueba las operaciones host-neutral entregadas, pero no prueba todavía el adapter Pi, la corrida desatendida ni capacidad por encima del límite vigente.

@@ -1,14 +1,14 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: **checkpoint documental final local de `S4.11`** el 2026-08-28 contra el candidato `f00c53ae477de1f8dd3b9c4dab8b2c159375f962` (tree `f66ba79c6a711042175f4e14f1b5556acfcab6e9`). Verificación PASS; entrega remota todavía pendiente.
+> Última reconciliación: **cierre documental local de `S4.11`** el 2026-08-28 contra la entrega `master/origin/master@6ddf6bc77d236dffad5b8ec625379117a91ce0b3`. Verificación PASS y archivo SDD reconciliado; sin nueva entrega remota en este cierre.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para el **inventario del producto** —los trece comandos, los módulos sin llamador y su orden de conexión— ver [inventario-de-producto](inventario-de-producto.md). Para **qué falta para salir** ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md). La línea entre lo que decide la Torre y lo que decide gentle-ai vive en [la frontera Torre ↔ gentle-ai](frontera-torre-gentle-ai.md), y **cualquier Sesión puede citarla para rechazar alcance** — desde el 2026-08-26 la frontera tiene **tres ejes**: la calidad del trabajo, el flujo de trabajo ([decisión 71](decision-register.md)) y **quién lee el plan** ([decisión 78](decision-register.md) — la cerca no lee). La **definición de producto vigente** —qué es y qué deliberadamente no va a ser la Torre terminada— es [**La Torre Terminada**](https://claude.ai/code/artifact/323b83bd-f1cd-4cee-a5c7-945f8c7d6173), y **ninguna Sesión puede desviarse de ella sin una decisión registrada**.
 
 ## 📍 Punto de retoma
 
-**`S4.11` está 🔵 EN CURSO con implementación local completa y verificación PASS sobre el candidato exacto `f00c53ae477de1f8dd3b9c4dab8b2c159375f962` (tree `f66ba79c6a711042175f4e14f1b5556acfcab6e9`).** Pasaron 934 tests, 15/15 escenarios y 6/6 tareas, sin hallazgos; el rollback completo es Commit 3 → 2 → 1 y está detallado en [P4](plan-4/STATUS.md).
+**`S4.11` cerró ✅ COMPLETO en `master/origin/master@6ddf6bc77d236dffad5b8ec625379117a91ce0b3`.** Su verify PASS conserva 934 tests, 15/15 escenarios y 6/6 tareas sin hallazgos; el cambio SDD quedó archivado en [`2026-08-28-s4-11-host-neutral-operations`](../changes/archive/2026-08-28-s4-11-host-neutral-operations/) y la spec canónica quedó sincronizada.
 
-**Main todavía debe entregar/pushear ese candidato inmutable; por eso `S4.11` no está COMPLETO y no suma porcentaje.** El archivo SDD y la radiografía quedan diferidos hasta después de la entrega. La cola ejecutable retoma en `#1 S8.12`; `#2 S9.4` prepara el host Pi que consume `#3 S9.5`.
+**La cola retoma en `#1 S8.12`; `#2 S9.4` queda promovida como siguiente dependencia host Pi y habilita después `#3 S9.5`.** `S8.12` conserva su estado 🟢 LISTO y su alcance actual; este cierre no enumera trabajo nuevo ni anticipa otra Sesión de P8.
 
 **OpenCode sigue parqueado con preservación absoluta.** `S4.4`, `S4.8` y `S4.9` permanecen 🟡 DIFERIDO; el checkpoint durable de `S4.4` sigue en [P4](plan-4/STATUS.md), sin cambios.
 
@@ -16,9 +16,9 @@
 
 `#1 S8.12` · `#2 S9.4` · `#3 S9.5` · `#4 S1.17` · `#5 S1.18` · `#6 S1.19` · `#7 S4.12` · `#8 S8.13` · `#9 S5.14` · `#10 S2.8` · `#11 S5.5` · `#12 S5.15` · `#13 S9.1` · `#14 S9.2` · `#15 S9.3` · `#16 S7.1` — topológica, recalculada 2026-08-28. `S9.5` espera `S8.12 + S9.4`; la cola no asigna dueño ni asiento.
 
-**Paralelismo:** `S8.12` permanece 🟢 LISTO. `S4.11` salió de la cola porque Main mantiene su entrega 🔵 EN CURSO; no habilita sus dependientes hasta quedar entregada y ✅ COMPLETO. La cadena principal restante es `S4.11 → S9.4 → S1.17 → S1.18 → S1.19`; `S4.12` espera `S9.4 + S1.18`; `S8.13` espera `S8.12 + S1.19 + S4.12`; `S7.1` espera además `S5.5` y conserva sus dependencias no-host satisfechas.
+**Paralelismo:** `S8.12` permanece 🟢 LISTO y `S9.4` queda promovida detrás de ella tras cerrar `S4.11`. La cadena principal restante es `S9.4 → S1.17 → S1.18 → S1.19`; `S4.12` espera `S9.4 + S1.18`; `S8.13` espera `S8.12 + S1.19 + S4.12`; `S7.1` espera además `S5.5` y conserva sus dependencias no-host satisfechas.
 
-**Fuera de la cola:** `S4.11` 🔵 EN CURSO; `S4.4`, `S4.8`, `S4.9`, `S8.5`, `S8.6` y P6 🟡 DIFERIDO; `S8.11` 🔴 BLOQUEADO. `S4.10` y `S5.3` se excluyen por ✅ COMPLETO. La cola contiene sólo Sesiones 🟢 LISTO o 📋 PLANIFICADO y preserva el orden del grafo.
+**Fuera de la cola:** `S4.4`, `S4.8`, `S4.9`, `S8.5`, `S8.6` y P6 🟡 DIFERIDO; `S8.11` 🔴 BLOQUEADO. `S4.10`, `S4.11` y `S5.3` se excluyen por ✅ COMPLETO. La cola contiene sólo Sesiones 🟢 LISTO o 📋 PLANIFICADO y preserva el orden del grafo.
 
 ## Granularidad
 
@@ -27,7 +27,7 @@ En este repositorio la entrega ocurre mediante uno o más commits directos secue
 
 ## 📊 Estado de un vistazo
 
-**Avance global**: 4/12 Planes cerrados (33%) · Sesiones cerradas en planes activos: 42/64 (66%). Cálculo auditable: P1 `16/19` + P4 `7/12` + P5 `12/15` + P7 `0/1` + P8 `7/12` + P9 `0/5` = `42/64`. P0, P3, P10 y P11 están cerrados. P2 y P6 conservan porcentaje `—`: P2 mantiene responsabilidades sin Sesión enumerada y P6 no tiene Sesiones enumeradas.
+**Avance global**: 4/12 Planes cerrados (33%) · Sesiones cerradas en planes activos: 43/64 (67%). Cálculo auditable: P1 `16/19` + P4 `8/12` + P5 `12/15` + P7 `0/1` + P8 `7/12` + P9 `0/5` = `43/64`. P0, P3, P10 y P11 están cerrados. P2 y P6 conservan porcentaje `—`: P2 mantiene responsabilidades sin Sesión enumerada y P6 no tiene Sesiones enumeradas.
 
 **El denominador de P5 subió de 14 a 15 sin que se perdiera trabajo**, al enumerar `S5.15` por la [decisión 78](decision-register.md). Es la misma causa de siempre —se enumeró trabajo que ya existía y que nadie contaba— y otra vez el porcentaje se movió en contra. En el mismo movimiento `S2.7` salió del alcance por quedarse sin sujeto, pero eso no toca el cociente: P2 nunca tuvo denominador derivable.
 
@@ -39,7 +39,7 @@ En este repositorio la entrega ocurre mediante uno o más commits directos secue
 | P1 | Sustrato mecánico | 🔵 EN CURSO | 84% (16/19 S) | — | Main | `S1.17`–`S1.19` | [STATUS](plan-1/STATUS.md) |
 | P2 | Contratos y registro de producto | 🔵 EN CURSO | — (Change B sin Sesiones enumeradas; cuatro responsabilidades ruteadas por el inventario) | — | Main | `S2.8` | [STATUS](plan-2/STATUS.md) |
 | P3 | Workspace y orquestación | ✅ COMPLETO | 100% (4/4 S) | — | Main | — | [STATUS](plan-3/STATUS.md) |
-| P4 | Hosts y línea exclusiva | 🔵 EN CURSO | 58% (7/12 S) | — | Main | `S4.11`, `S4.12` | [STATUS](plan-4/STATUS.md) |
+| P4 | Hosts y línea exclusiva | 🔵 EN CURSO | 67% (8/12 S) | — | Main | `S4.12` | [STATUS](plan-4/STATUS.md) |
 | P5 | Entrega y continuación | 🔵 EN CURSO | 80% (12/15 S) | — | Main | `S5.5`, `S5.14`, `S5.15` | [STATUS](plan-5/STATUS.md) |
 | P6 | Campañas multiproyecto | 🟡 DIFERIDO | — (sin Sesiones enumeradas) | — | Maintainer | — | [STATUS](plan-6/STATUS.md) |
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | `S7.1` | [STATUS](plan-7/STATUS.md) |
