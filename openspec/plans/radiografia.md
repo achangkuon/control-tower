@@ -1,7 +1,7 @@
 ---
-verified_against: 8acf93635c6c086cf8667afd0a8421188874f5cc
-verified_at: 2026-08-27
-standfirst: La Torre empieza por Pi, con el barrido de decisiones Pi-first cerrado y un contrato neutral como primera entrega. Las cifras se miden solas contra el código; este juicio explica qué cambia, qué se preserva y qué debe probarse antes de ampliar las promesas del producto.
+verified_against: 5e387b3f76e176c35fc199f899aafc9a057a3f08
+verified_at: 2026-08-28
+standfirst: La primera entrega host-neutral ya cerró: la Torre tiene cinco contratos públicos v1 y ownership de puerto que falla cerrado. OpenCode sigue estacionado; la próxima entrega habilitada es S4.11. Las cifras se miden solas contra el código.
 ---
 
 <!--
@@ -33,19 +33,19 @@ Vos dirigís varios agentes de IA trabajando en varios proyectos a la vez. La To
 
 La prioridad cambió: la primera implementación se hará con Pi. No porque Pi pase a ser el producto, sino porque la Torre puede poseer la identidad del proceso que lanzó y exigir comprobantes producidos por ese proceso. Eso le permite distinguir una sesión propia de una sesión que sólo dice serlo.
 
-El primer paso no conecta todavía el host. Primero se construye una unión neutral: una identidad, una asignación y una puerta de runtime que no dependan de Pi. Así, si OpenCode vuelve más adelante, ambos podrán enchufarse al mismo contrato sin convertir a la Torre en dependiente de un proveedor.
+La unión neutral ya está construida: identidad, worktree, proceso, incarnación y binding no dependen de Pi. El próximo paso agrega operaciones observables sobre esa base; recién después se conecta el host. Así, si OpenCode vuelve más adelante, ambos podrán enchufarse al mismo contrato sin convertir a la Torre en dependiente de un proveedor.
 
 ## El veredicto actual
 
 ### 1 · sólido · Pi va primero porque la Torre puede probar a quién lanzó
 Lo técnico: El roadmap promueve Pi como primer host de implementación. La identidad no se acepta por autodeclaración: se liga a proceso, ubicación de trabajo e instancia, y las respuestas relevantes deben traer prueba producida por el runtime.
 En simple: La Torre no confía en una credencial escrita por el propio agente. Conserva la ficha del proceso que abrió y exige un recibo que sólo ese proceso puede producir. Esa base permite empezar por Pi sin entregar el control de la Torre a Pi.
-Evidencia: `openspec/plans/decision-register.md:408-442` · `openspec/plans/plan-4/STATUS.md:735-751` · `master@8acf93635c6c086cf8667afd0a8421188874f5cc`
+Evidencia: `openspec/plans/decision-register.md:408-442` · `openspec/plans/plan-4/STATUS.md:735-751` · `master@5e387b3f76e176c35fc199f899aafc9a057a3f08`
 
-### 2 · estructural · La unión neutral va antes que el adaptador Pi
-Lo técnico: `S4.10` define identidad, binding y puerto runtime host-neutral. `S4.11` agrega observe, health, stop y attach sobre ese mismo contrato; recién después se conectan supervisor y adapter Pi.
-En simple: Primero se define el enchufe y después el aparato. Eso evita resolver rápido con un cable exclusivo de Pi que obligue a rehacer la Torre cuando se reactive OpenCode o aparezca otro host.
-Evidencia: `openspec/plans/plan-4/STATUS.md:739-759` · decisión 84 en `openspec/plans/decision-register.md:428`
+### 2 · sólido · La unión neutral ya existe y publica cinco contratos v1
+Lo técnico: `S4.10` cerró con cinco formas públicas, cerradas e independientemente versionables: identidad, worktree, proceso, incarnación y binding. El binding liga los otros cuatro identificadores al puerto loopback exacto sin importar Pi ni OpenCode.
+En simple: El enchufe común ya está construido. Tiene cinco piezas con responsabilidades separadas y no acepta datos inventados o sobrantes; Pi se conectará después sin convertir ese enchufe en algo exclusivo de Pi.
+Evidencia: `openspec/specs/host-runtime/spec.md:7-31` · `openspec/plans/plan-4/STATUS.md:739-755` · `test/contracts/host-runtime/shapes.test.mjs`
 
 ### 3 · resuelto · El instalador de la Torre ahora incluye conducta propia de la Torre
 Lo técnico: La decisión 88 divide la entrega entre `S8.12`, dueña del bundle versionado, y `S8.13`, dueña de instalación, activación, rollback y preflight. El bundle incluye runtime, contrato neutral, adapter Pi y perfiles/skills Tower-specific, incluido Support. La configuración de Pi y `pi-intercom`, y las skills genéricas de Gentle AI, quedan fuera.
@@ -71,10 +71,10 @@ Lo técnico: `S4.4`, `S4.8` y `S4.9` quedan diferidas. Se preservan código, pru
 En simple: Cambiar la prioridad a Pi no tira a la basura lo construido para OpenCode ni declara que estaba mal. Se guarda completo para retomarlo desde el mismo punto si se decide volver. Estacionar significa no gastar hoy, no borrar ni invalidar.
 Evidencia: `openspec/plans/plan-4/STATUS.md:666-725` · `openspec/plans/plan-4/STATUS.md:733-740` · `openspec/plans/plan-7/STATUS.md:69-75`
 
-### B · resuelto · El barrido Pi-first ya no espera decisiones del maintainer
-Lo técnico: Las decisiones 80–88 fijan orden Pi-first, recuperación mínima, roles y capacidades, contrato neutral, candidato final, broker por worktree, mailbox volátil e instalación conductualmente completa. El cierre es acotado a este barrido y no afirma cero decisiones abiertas en todo el roadmap.
-En simple: Para empezar esta ruta no falta otra elección tuya. Lo que sigue son entregas y pruebas ya enumeradas. Eso no significa que nunca vaya a aparecer otra decisión de producto; significa que no hay que fabricar una ahora para justificar la espera.
-Evidencia: `openspec/plans/decision-register.md:408-442`
+### B · resuelto · Los dos defectos de ownership de `S4.10` quedaron cerrados
+Lo técnico: Ya no existe `activate`: `reserve` sólo publica ownership después de adquirir el listener final. Además, cualquier puerto con cleanup incierto queda cercado y una reserva posterior falla antes de intentar adquirirlo. Las regresiones diferenciales y la suite integral pasan sobre el candidato cerrado.
+En simple: La Torre ya no puede declarar “este puerto es mío” sin haberlo tomado de verdad. Y si no puede confirmar que lo limpió, no se lo presta a otro proceso: prefiere frenar antes que entregar dos veces la misma llave.
+Evidencia: `test/contracts/host-runtime/loopback.test.mjs:34-56` · `openspec/changes/archive/2026-08-28-s4-10-host-neutral-runtime/verify-report.md:247-291` · suite `914 pass / 0 fail / 5.291 expectativas`
 
 ### C · estructural · Cada área de trabajo tiene su propio broker y el correo en vuelo puede perderse
 Lo técnico: La topología aprobada usa un broker por worktree, supervisor Tower-owned, rutas runtime cortas, IDs impredecibles y keepalive propiedad de la Torre. El mailbox actual permanece volátil; tras una caída, la recuperación repite operaciones idempotentes desde estado durable.
@@ -97,7 +97,7 @@ La lista siguiente reemplaza las antiguas “cinco decisiones”. No son pregunt
 
 | Próximo paso | Qué debe demostrar | Qué no permite afirmar todavía |
 |---|---|---|
-| `S4.10` | Identidad, binding y puerto runtime neutrales, sin importar Pi ni OpenCode | Que el adapter Pi ya funciona |
+| `S4.10` — ✅ COMPLETO | Cinco contratos v1 y ownership exacto del puerto, sin importar Pi ni OpenCode | Que el adapter Pi ya funciona |
 | `S4.11` y `S4.12` | Operaciones observables y composición neutral antes del host | Que la Torre ya supervisa una jornada real |
 | `S9.4` y `S1.17`–`S1.19` | Supervisor, adapter y regresión Pi con aislamiento y recibos verificables | Capacidad por encima de cinco clientes |
 | Gate Pi desatendido | Una corrida prolongada atribuible al candidato | Estabilidad de larga duración sin esa evidencia |
@@ -106,18 +106,18 @@ La lista siguiente reemplaza las antiguas “cinco decisiones”. No son pregunt
 
 ## Lo que pasa ahora mismo
 
-### F · sólido · La próxima acción exacta es `S4.10`
-Lo técnico: `S4.10` está lista, no tiene dependencias y su Área está acotada al contrato host-runtime neutral, sus schemas y sus pruebas. Es la primera Sesión de implementación de la ruta Pi-first.
-En simple: El siguiente movimiento es construir la unión común, no encender Pi. Tiene un borde claro y evita mezclar de entrada identidad, supervisión, instalación y comportamiento del host.
-Evidencia: `openspec/plans/plan-4/STATUS.md:739-747` · `openspec/plans/master-index.md`
+### F · sólido · `S4.11` quedó desbloqueada y lista
+Lo técnico: `S4.10` está ✅ COMPLETO y satisfizo la única dependencia de `S4.11`, que ahora figura 🟢 LISTO. Su Área agrega observe, health, stop y attach host-neutral sobre el binding ya verificado; todavía no implementa el adapter Pi.
+En simple: La base común ya pasó su examen. El siguiente trabajo de esta cadena puede empezar: hacer que la Torre observe, compruebe salud, detenga y se reconecte sin depender todavía de un host particular.
+Evidencia: `openspec/plans/plan-4/STATUS.md:739-763` · `openspec/plans/master-index.md:9-19`
 
-### G · crítico · No debe empezar todavía el adapter Pi ni reactivarse OpenCode
-Lo técnico: Antes de cerrar `S4.10` no deben iniciarse `S4.11`, `S9.4`, `S1.17`–`S1.19`, `S4.12`, `S8.13` ni el piloto final. `S8.12` es repo-only y puede avanzar en paralelo únicamente si la verificación previa confirma `Área` y `Recurso` disjuntos. `S4.4`, `S4.8` y `S4.9` permanecen diferidas; `S8.11` conserva su bloqueo y checkpoint exacto.
-En simple: Si se empieza por el host o por la instalación activa antes de cerrar el contrato común, se vuelve a construir dependencia en el orden equivocado. El bundle de roles sí puede prepararse aparte si no toca los mismos archivos ni recursos. Y si se reabre trabajo estacionado o bloqueado para “aprovechar tiempo”, se mezclan dos rutas y se pierde la trazabilidad que este roadmap acaba de recuperar.
-Evidencia: `openspec/plans/plan-4/STATUS.md:735-759` · `openspec/plans/plan-8/STATUS.md:938-954` · `openspec/plans/master-index.md:17-21` · `openspec/plans/release-chain.md`
+### G · crítico · OpenCode sigue estacionado y el adapter Pi todavía espera
+Lo técnico: `S4.4`, `S4.8` y `S4.9` permanecen 🟡 DIFERIDO con preservación absoluta. `S9.4` y `S1.17`–`S1.19` siguen detrás de `S4.11`; `S4.12` conserva sus dependencias propias. `S8.12` sólo aparece según la cola canónica y no cambia el estado de OpenCode ni autoriza trabajo host específico.
+En simple: Cerrar el contrato común no reactiva OpenCode ni salta directamente a Pi. Primero hay que construir las operaciones neutrales de `S4.11`; lo estacionado se conserva intacto y no se presenta como trabajo activo.
+Evidencia: `openspec/plans/master-index.md:9-25` · `openspec/plans/plan-4/STATUS.md:733-763` · `openspec/plans/release-chain.md:270-274`
 
 ## Evidencia y límites de esta radiografía
 
-Este juicio fue reconciliado contra `master@8acf93635c6c086cf8667afd0a8421188874f5cc`. Las cifras de instrumentos, avance y cola son derivadas por el generador; no se escriben a mano acá.
+Este juicio fue reconciliado contra `master@5e387b3f76e176c35fc199f899aafc9a057a3f08` el 2026-08-28. Las cifras de instrumentos, avance y cola son derivadas por el generador; no se escriben a mano acá.
 
-El generador previo al push informó una suite verde, pero declaró de forma explícita que pertenecía a otro commit. Por eso esta radiografía no la usa como prueba del commit actual. La evidencia pendiente debe producirse contra el candidato exacto que pretenda cerrar cada gate.
+La suite integral del candidato informó `914 pass`, `0 fail` y `5.291 expectativas`. Ese verde prueba el estado actual del repositorio y el cierre de `S4.10`; no prueba todavía las operaciones de `S4.11`, el adapter Pi, la corrida desatendida ni capacidad por encima del límite vigente.
