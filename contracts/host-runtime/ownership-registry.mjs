@@ -29,7 +29,8 @@ export const createHostRuntimeOwnership = ({ resolveContexts, acquireAtReservati
     if (priorBinding && !equal(priorBinding, record)) fail("CT_HOST_RUNTIME_BINDING_CROSSED", "Binding history does not match", "crossed")
     if (priorBinding || incarnationHistory.has(record.incarnation_id)) fail("CT_HOST_RUNTIME_STALE", "Binding or incarnation is retired", "stale")
     if (activeByOwner.has(ownerKey(record))) fail("CT_HOST_RUNTIME_BINDING_ACTIVE", "Owner already has an active binding", "active")
-    if (activeByPort.has(record.loopback_port) || pendingByPort.has(record.loopback_port)) fail("CT_HOST_RUNTIME_PORT_RESERVED", "Port already has an active or pending binding", "active")
+    const cleanupOccupiesPort = [...cleanupPending].some((held) => held.loopback_port === record.loopback_port)
+    if (activeByPort.has(record.loopback_port) || pendingByPort.has(record.loopback_port) || cleanupOccupiesPort) fail("CT_HOST_RUNTIME_PORT_RESERVED", "Port already has an active, pending, or cleanup-pending binding", "active")
     return { exactContext, record }
   }
 
@@ -39,11 +40,6 @@ export const createHostRuntimeOwnership = ({ resolveContexts, acquireAtReservati
     incarnationHistory.add(record.incarnation_id)
     activeByOwner.set(ownerKey(record), held)
     activeByPort.set(record.loopback_port, held)
-  }
-
-  const activate = (binding) => {
-    const { record } = preflight(binding)
-    publish(record, undefined)
   }
 
   const reserveOperation = async (binding) => {
@@ -117,5 +113,5 @@ export const createHostRuntimeOwnership = ({ resolveContexts, acquireAtReservati
     return disposal
   }
 
-  return Object.freeze({ activate, dispose, release, reserve })
+  return Object.freeze({ dispose, release, reserve })
 }

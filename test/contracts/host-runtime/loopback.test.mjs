@@ -27,6 +27,29 @@ const serviceFor = (tuples, acquireAtReservation) => {
 }
 
 describe("final loopback listener acquisition", () => {
+  test("exposes no acquisition-free ownership path", () => {
+    const exact = context()
+    const service = serviceFor([exact], async () => async () => {})
+    expect(Object.keys(service).sort()).toEqual(["dispose", "release", "reserve"])
+    expect(service.activate).toBeUndefined()
+  })
+
+  test("keeps a cleanup-pending port unavailable to later reservations", async () => {
+    const first = context("b", 43111), uncertain = context("c", 43112), replacement = context("d", 43112)
+    first[0] = uncertain[0]; first[1] = uncertain[1]; first[2] = uncertain[2]
+    Object.assign(first[4], { runtime_id: uncertain[4].runtime_id, worktree_id: uncertain[4].worktree_id, process_id: uncertain[4].process_id })
+    const firstGate = deferred(), secondGate = deferred()
+    const service = serviceFor([first, uncertain, replacement], async (_, port) => {
+      if (port === first[4].loopback_port) { await firstGate.promise; return async () => {} }
+      await secondGate.promise
+      return async () => { throw new Error("uncertain") }
+    })
+    const one = service.reserve(first[4]), two = service.reserve(uncertain[4])
+    firstGate.resolve(); await one
+    secondGate.resolve(); await rejectsCode(two, "CT_HOST_RUNTIME_CLEANUP_FAILED")
+    await rejectsCode(service.reserve(replacement[4]), "CT_HOST_RUNTIME_PORT_RESERVED")
+  })
+
   test("serializes pending ownership and passes the exact context once without a handoff", async () => {
     const exact = context(), gate = deferred(), calls = [], events = []
     const service = serviceFor([exact], async (received, port) => {
@@ -43,7 +66,7 @@ describe("final loopback listener acquisition", () => {
     expect(events).toEqual(["held"])
     await service.release(exact[4])
     expect(events).toEqual(["held", "closed"])
-    expect(Object.keys(service).sort()).toEqual(["activate", "dispose", "release", "reserve"])
+    expect(Object.keys(service).sort()).toEqual(["dispose", "release", "reserve"])
   })
 
   test("holds the real final listener until exact release and returns bounded metadata", async () => {
