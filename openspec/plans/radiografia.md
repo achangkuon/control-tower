@@ -1,7 +1,7 @@
 ---
-verified_against: 5e387b3f76e176c35fc199f899aafc9a057a3f08
+verified_against: 8beb3d7f846a23504021d2061f75acd76ca6d09f
 verified_at: 2026-08-28
-standfirst: La primera entrega host-neutral ya cerró: la Torre tiene cinco contratos públicos v1 y ownership de puerto que falla cerrado. OpenCode sigue estacionado; la próxima entrega habilitada es S4.11. Las cifras se miden solas contra el código.
+standfirst: La primera entrega host-neutral ya cerró. S8.12 encabeza la cola, S4.11 sigue lista y S9.5 quedó planificada para mostrar sólo los asientos exactos de un brief confirmado; esa materialización todavía no existe. Las cifras se miden solas contra el código.
 ---
 
 <!--
@@ -91,6 +91,11 @@ Lo técnico: El checkpoint sellado conserva los commits locales `812703d` y `388
 En simple: Hay trabajo guardado, pero no hay permiso para llamarlo terminado. El próximo intento necesita un contrato atendido nuevo y acotado que corrija el entorno de prueba; repetir el examen anterior o citar un verde de otra versión sería fabricar evidencia.
 Evidencia: `openspec/plans/plan-8/STATUS.md:724-734` · checkpoint ejecutable `388109f1e79f50ce05582d2b0a7b3ff8a9685f72`
 
+### F · nuevo · La vista automática de los asientos está autorizada, pero todavía no existe
+Lo técnico: La decisión 91 enumera `S9.5` en P9 con ruta `design-tasks` y dependencias `S8.12 + S9.4`. Después de confirmar un brief, Main podrá materializar únicamente sus panes Herdr y sesiones Pi exactos, validando nombre, worktree, readiness e Intercom antes del despacho. La topología planificada separa madre Tower, hija Tower/Herdr y materializador idempotente; no se implementó ninguna de las tres piezas.
+En simple: Ya está decidido cómo evitar abrir escritorios de más: la aprobación del brief alcanza para mostrar exactamente los puestos nombrados y ninguno adicional. Pero hoy eso es un plano, no una capacidad disponible. La Torre todavía no abre ni reutiliza esos puestos automáticamente.
+Evidencia: `openspec/plans/decision-register.md:449-451` · `openspec/plans/plan-9/STATUS.md:238-291` · candidate `8beb3d7f846a23504021d2061f75acd76ca6d09f`
+
 ## Próximas pruebas y trabajo enumerado
 
 La lista siguiente reemplaza las antiguas “cinco decisiones”. No son preguntas para vos: son puertas medibles o Sesiones con alcance ya fijado.
@@ -100,24 +105,25 @@ La lista siguiente reemplaza las antiguas “cinco decisiones”. No son pregunt
 | `S4.10` — ✅ COMPLETO | Cinco contratos v1 y ownership exacto del puerto, sin importar Pi ni OpenCode | Que el adapter Pi ya funciona |
 | `S4.11` y `S4.12` | Operaciones observables y composición neutral antes del host | Que la Torre ya supervisa una jornada real |
 | `S9.4` y `S1.17`–`S1.19` | Supervisor, adapter y regresión Pi con aislamiento y recibos verificables | Capacidad por encima de cinco clientes |
+| `S9.5` | Materialización idempotente de sólo los asientos exactos del brief, después de cerrar `S8.12 + S9.4` | Que Herdr ya abra, reutilice o valide esos asientos automáticamente |
 | Gate Pi desatendido | Una corrida prolongada atribuible al candidato | Estabilidad de larga duración sin esa evidencia |
 | Gate de caída con tráfico | Recuperación idempotente tras caída real del broker | Entrega garantizada de mensajes en vuelo |
 | `S8.12` y `S8.13` | Bundle Tower completo, instalación reversible y preflight externo | Que la Torre deba instalar o modificar Gentle AI, Pi o `pi-intercom` |
 
 ## Lo que pasa ahora mismo
 
-### F · sólido · `S4.11` quedó desbloqueada y lista
-Lo técnico: `S4.10` está ✅ COMPLETO y satisfizo la única dependencia de `S4.11`, que ahora figura 🟢 LISTO. Su Área agrega observe, health, stop y attach host-neutral sobre el binding ya verificado; todavía no implementa el adapter Pi.
-En simple: La base común ya pasó su examen. El siguiente trabajo de esta cadena puede empezar: hacer que la Torre observe, compruebe salud, detenga y se reconecte sin depender todavía de un host particular.
-Evidencia: `openspec/plans/plan-4/STATUS.md:739-763` · `openspec/plans/master-index.md:9-19`
+### G · sólido · `S8.12` y `S4.11` encabezan la cola
+Lo técnico: La cola canónica empieza `#1 S8.12`, `#2 S4.11`, `#3 S9.4`, `#4 S9.5`. `S8.12` y `S4.11` están listas y son independientes bajo sus Áreas y Recursos declarados; `S9.5` espera tanto el bundle Tower de `S8.12` como el supervisor/binding Pi de `S9.4`.
+En simple: Hay dos trabajos que pueden arrancar sin pisarse: preparar la caja completa de la Torre y construir sus operaciones neutrales. La vista automática viene después; no saltea esos cimientos ni promete algo que todavía no funciona.
+Evidencia: `openspec/plans/master-index.md:9-19` · `openspec/plans/plan-8/STATUS.md:942-954` · `openspec/plans/plan-9/STATUS.md:238-291`
 
-### G · crítico · OpenCode sigue estacionado y el adapter Pi todavía espera
-Lo técnico: `S4.4`, `S4.8` y `S4.9` permanecen 🟡 DIFERIDO con preservación absoluta. `S9.4` y `S1.17`–`S1.19` siguen detrás de `S4.11`; `S4.12` conserva sus dependencias propias. `S8.12` sólo aparece según la cola canónica y no cambia el estado de OpenCode ni autoriza trabajo host específico.
-En simple: Cerrar el contrato común no reactiva OpenCode ni salta directamente a Pi. Primero hay que construir las operaciones neutrales de `S4.11`; lo estacionado se conserva intacto y no se presenta como trabajo activo.
-Evidencia: `openspec/plans/master-index.md:9-25` · `openspec/plans/plan-4/STATUS.md:733-763` · `openspec/plans/release-chain.md:270-274`
+### H · crítico · OpenCode sigue estacionado y el adapter Pi todavía espera
+Lo técnico: `S4.4`, `S4.8` y `S4.9` permanecen 🟡 DIFERIDO con preservación absoluta. `S9.4` sigue detrás de `S4.11`; `S9.5` sigue detrás de `S8.12 + S9.4`; `S1.17`–`S1.19` y `S4.12` conservan sus dependencias propias. La decisión 91 no reactiva OpenCode ni implementa el host Pi.
+En simple: El nuevo plano visual no cambia qué funciona hoy. OpenCode sigue guardado, y Pi todavía necesita su supervisor, su adaptación y sus pruebas antes de operar como host real.
+Evidencia: `openspec/plans/master-index.md:9-25` · `openspec/plans/plan-4/STATUS.md:733-763` · `openspec/plans/plan-9/STATUS.md:228-291`
 
 ## Evidencia y límites de esta radiografía
 
-Este juicio fue reconciliado contra `master@5e387b3f76e176c35fc199f899aafc9a057a3f08` el 2026-08-28. Las cifras de instrumentos, avance y cola son derivadas por el generador; no se escriben a mano acá.
+Este juicio fue reconciliado contra el candidate de planificación `8beb3d7f846a23504021d2061f75acd76ca6d09f` el 2026-08-28. Las cifras de instrumentos, avance y cola son derivadas por el generador; no se escriben a mano acá.
 
-La suite integral del candidato informó `914 pass`, `0 fail` y `5.291 expectativas`. Ese verde prueba el estado actual del repositorio y el cierre de `S4.10`; no prueba todavía las operaciones de `S4.11`, el adapter Pi, la corrida desatendida ni capacidad por encima del límite vigente.
+La última suite integral registrada para el cierre de `S4.10` informó `914 pass`, `0 fail` y `5.291 expectativas`. Esta actualización de juicio es sólo documental y no ejecutó una suite nueva; el push final de Main registrará la medición vigente. El verde anterior no prueba todavía `S4.11`, el adapter Pi, la corrida desatendida ni capacidad por encima del límite vigente.
