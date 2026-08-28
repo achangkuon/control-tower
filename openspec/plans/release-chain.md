@@ -181,13 +181,11 @@ El comportamiento Hermes/Telegram restante es evidencia histórica archivada; no
 
 ## Capacidad paralela hoy
 
-La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas. La capacidad inmediata es 1: sólo `S4.7`. `S11.1` ya cerró y sale de la capacidad pendiente.
+La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas. La capacidad inmediata es **1**: el inicio canónico es `#1 S9.4`. Este documento no afirma un candidato, gate ni rama separados para esa Sesión.
 
-Conflictos: `S4.7`↔`S4.6` (provider/install), `S4.7`↔`S8.12` (payload/tests install), `S4.7`↔`S5.13` (fixture launch-worker CLI), `S4.6`↔`S8.12` (install) y `S4.9` (path global Herdr exclusivo). `S9.1` carece aún de `Área`/`Recurso` y se excluye de capacidad segura.
+`S8.14` ya está ✅ COMPLETO en `master/origin/master@54b5cda733025b0bd50c2a21dc67d1d4192ac66d` y sale de la capacidad pendiente. `S8.12` conserva la expresión completa `S8.10 + S1.18 + S8.14`: `S8.10` y `S8.14` están satisfechas y todavía espera `S1.18`.
 
-**Estado de decisiones:** las decisiones 65–70 están resueltas; el launch, el canal de credencial, la prueba positiva, el timeout condicional, la intención de versiones, el destino del ejecutor y el payload mínimo quedan decision-clean. Sobreviven tres unknowns técnicos, no decisiones de producto: señal attach machine-readable, compatibilidad real plugin/SDK y matriz Herdr `0.8.2`. Ver el [registro](decision-register.md).
-
-El siguiente inicio es `#1 de 10 → S4.7`; no hay otra capacidad inmediata. La arista `S11.1 → S7.1` está satisfecha, pero `S7.1` conserva 📋 PLANIFICADO porque todavía espera los otros seis prerrequisitos nombrados en la tabla.
+OpenCode permanece parqueado con preservación absoluta. La entrega de `S8.14` no altera ese estado, no implementa el host Pi y no habilita por sí sola otra línea inmediata.
 
 ## Enmienda `S0.3` — ✅ COMPLETA
 
@@ -267,7 +265,7 @@ Se registra explícitamente en lugar de esconderse:
 
 La cadena OpenCode anterior, sus commits, pruebas y decisiones queda preservada como historia parqueada. No es autoridad activa mientras OpenCode permanezca 🟡 DIFERIDO.
 
-**Cadena Pi:** `S4.10 → S4.11 → S9.4 → S1.17 → S1.18 → S1.19`; `S4.10` y `S4.11` ya están ✅ COMPLETO y `S9.4` queda 🟢 LISTO. `S4.12` depende de `S9.4 + S1.18`. `S8.14` no tiene dependencias y está 🔵 EN CURSO con candidato local verificado `47a7389b76a4b87d09d439e478b5874a701257ca`, pendiente de entrega a `master`. `S8.12` preserva `S8.10` y espera `S1.18 + S8.14`; esa dependencia todavía no está satisfecha. `S8.13` depende de `S8.12 + S1.19 + S4.12`. `S9.5` conserva `S8.12 + S9.4`. `S7.1` depende de `S1.19 + S4.12 + S8.13 + S5.5`; `S5.3`, `S10.2` y `S11.1` están satisfechas.
+**Cadena Pi:** `S4.10 → S4.11 → S9.4 → S1.17 → S1.18 → S1.19`; `S4.10` y `S4.11` ya están ✅ COMPLETO y `S9.4` queda como inicio canónico #1. `S4.12` depende de `S9.4 + S1.18`. `S8.14` no tiene dependencias y está ✅ COMPLETO, entregada en `master/origin/master@54b5cda733025b0bd50c2a21dc67d1d4192ac66d`. `S8.12` preserva la dependencia completa `S8.10 + S1.18 + S8.14`: `S8.10` y `S8.14` están satisfechas y todavía espera `S1.18`. `S8.13` depende de `S8.12 + S1.19 + S4.12`. `S9.5` conserva `S8.12 + S9.4`. `S7.1` depende de `S1.19 + S4.12 + S8.13 + S5.5`; `S5.3`, `S10.2` y `S11.1` están satisfechas.
 
 ```mermaid
 graph LR
@@ -276,7 +274,7 @@ graph LR
   S118 --> S412
   S810[S8.10 payload model] --> S812[S8.12 Tower bundle]
   S118 --> S812
-  S814[S8.14 permanent Tower profiles · EN CURSO local] --> S812
+  S814[S8.14 permanent Tower profiles · COMPLETO] --> S812
   S812 --> S95[S9.5 Herdr materialization]
   S94 --> S95
   S812 --> S813[S8.13 lifecycle/preflight]
@@ -290,4 +288,4 @@ graph LR
 
 **Validación, no decisión:** la corrida desatendida prolongada, crash del broker con tráfico y el límite de cinco clientes son gates de evidencia. El claim inicial termina en cinco; >5 no se promete hasta medirlo.
 
-**Capacidad y próxima acción:** la capacidad inmediata disponible es **1**, `#1 S9.4`; `S8.14` ya ocupa una línea como trabajo 🔵 EN CURSO y queda fuera de la cola. El próximo acto sobre P8 es entregar a `master` el candidato congelado de `S8.14` sólo con autorización del maintainer. Hasta entonces P8 permanece 7/13, `S8.12` sigue esperando `S8.14` y este documento no afirma capacidad instalada.
+**Capacidad y próxima acción:** la capacidad inmediata disponible es **1**, `#1 S9.4`; este documento no afirma un candidato, gate ni rama separados para esa Sesión. `S8.14` ya está entregada y satisface su arista hacia `S8.12`; P8 avanza a 8/13. `S8.12` todavía espera `S1.18`, además de conservar la expresión completa `S8.10 + S1.18 + S8.14`. Esta reconciliación no afirma capacidad instalada adicional.

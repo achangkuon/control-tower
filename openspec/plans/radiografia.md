@@ -1,7 +1,7 @@
 ---
-verified_against: 47a7389b76a4b87d09d439e478b5874a701257ca
+verified_against: 54b5cda733025b0bd50c2a21dc67d1d4192ac66d
 verified_at: 2026-08-28
-standfirst: Las operaciones host-neutral ya están entregadas. S8.14 tiene un candidato local verificado y S9.4 es el próximo inicio; los tres perfiles permanentes Tower existen en el candidato, pero todavía no están entregados en master. Las cifras se miden solas contra el código.
+standfirst: Las operaciones host-neutral y los tres perfiles permanentes Tower ya están entregados. S9.4 sigue siendo el próximo inicio; S8.12 conserva S8.10 + S1.18 + S8.14 y todavía espera S1.18. Las cifras se miden solas contra el código.
 ---
 
 <!--
@@ -47,10 +47,10 @@ Lo técnico: `S4.10` cerró las cinco formas públicas de identidad y binding; `
 En simple: El enchufe común ya no sólo identifica a cada runtime: también permite mirarlo, comprobar su salud, pedirle que se detenga y adjuntarse sin confiar en lo que el propio caller afirma. Pi puede conectarse sobre una base ya entregada, no sobre una promesa.
 Evidencia: `openspec/specs/host-runtime/spec.md` · `openspec/changes/archive/2026-08-28-s4-11-host-neutral-operations/verify-report.md` · `master/origin/master@6ddf6bc77d236dffad5b8ec625379117a91ce0b3`
 
-### 3 · nuevo · Los tres roles permanentes tienen candidato verificado, no entrega
-Lo técnico: La decisión 95 y `S8.14` fijan exactamente Main/coordinator, Support e Implementer como perfiles permanentes repo-owned y host-neutral. Planner queda como función temporal. El candidato local `47a7389b76a4b87d09d439e478b5874a701257ca` crea `profiles/tower/{main,support,implementer}.md`, liga las dos skills Tower propietarias y agrega `test/install/tower-role-assets.test.mjs`; sus 10 criterios pasan, pero el commit todavía no llegó a `master`.
-En simple: Los tres puestos ya tienen archivos probados, pero siguen en el taller local. Hasta entregarlos no forman parte del producto disponible ni destraban el instalador.
-Evidencia: `openspec/plans/plan-8/STATUS.md` · candidato local `47a7389b76a4b87d09d439e478b5874a701257ca` · Engram 9726
+### 3 · sólido · Los tres roles permanentes ya son producto entregado
+Lo técnico: La decisión 95 y `S8.14` fijan exactamente Main/coordinator, Support e Implementer como perfiles permanentes repo-owned y host-neutral. Planner queda como función temporal. `profiles/tower/{main,support,implementer}.md`, las dos skills Tower propietarias y `test/install/tower-role-assets.test.mjs` están integrados en `master/origin/master@54b5cda733025b0bd50c2a21dc67d1d4192ac66d`; sus 10 criterios permanecen verificados.
+En simple: Los tres puestos ya salieron del taller y forman parte del producto entregado. El instalador todavía espera el adapter `S1.18`, no estos perfiles.
+Evidencia: `openspec/plans/plan-8/STATUS.md` · `master/origin/master@54b5cda733025b0bd50c2a21dc67d1d4192ac66d` · Engram 9726
 
 ## Avance por Plan
 
@@ -108,22 +108,22 @@ La lista siguiente reemplaza las antiguas “cinco decisiones”. No son pregunt
 | `S9.5` | Materialización idempotente de sólo los asientos exactos del brief, después de cerrar `S8.12 + S9.4` | Que Herdr ya abra, reutilice o valide esos asientos automáticamente |
 | Gate Pi desatendido | Una corrida prolongada atribuible al candidato | Estabilidad de larga duración sin esa evidencia |
 | Gate de caída con tráfico | Recuperación idempotente tras caída real del broker | Entrega garantizada de mensajes en vuelo |
-| `S8.14`, `S8.12` y `S8.13` | Entregar los tres perfiles Tower ya verificados, luego cerrar bundle completo, instalación reversible y preflight externo | Que los perfiles formen parte de `master` o que la Torre deba modificar Gentle AI, Pi o `pi-intercom` |
+| `S8.14` — ✅ COMPLETO; `S8.12` y `S8.13` pendientes | Perfiles Tower ya entregados; luego cerrar bundle completo, instalación reversible y preflight externo | Que el bundle o la instalación estén cerrados, o que la Torre deba modificar Gentle AI, Pi o `pi-intercom` |
 
 ## Lo que pasa ahora mismo
 
-### G · sólido · `S8.14` ocupa una línea local y `S9.4` es el próximo inicio
-Lo técnico: `S8.14` está 🔵 EN CURSO con candidato local verificado y por eso queda fuera de la cola. La cola canónica empieza `#1 S9.4`, seguida por `S1.17`, `S1.18` y `S8.12`; la capacidad inmediata disponible es 1. `S8.12` preserva `S8.10` y todavía espera `S1.18 + S8.14`; un candidato no entregado no satisface esa dependencia.
-En simple: Los perfiles ya están probados en una mesa de trabajo y la otra mesa puede empezar la conexión con Pi. Pero el instalador debe seguir esperando hasta que esos perfiles lleguen a `master` y cierre el adapter.
-Evidencia: `openspec/plans/master-index.md` · `openspec/plans/plan-8/STATUS.md` · candidato `47a7389b76a4b87d09d439e478b5874a701257ca`
+### G · sólido · `S8.14` ya cerró y `S9.4` sigue siendo el próximo inicio
+Lo técnico: `S8.14` está ✅ COMPLETO en `master/origin/master@54b5cda733025b0bd50c2a21dc67d1d4192ac66d` y queda fuera de la cola por estar cerrada. La cola canónica empieza `#1 S9.4`, seguida por `S1.17`, `S1.18` y `S8.12`; la capacidad inmediata disponible es 1. `S8.12` conserva la expresión completa `S8.10 + S1.18 + S8.14`: `S8.10` y `S8.14` están satisfechas y todavía espera `S1.18`.
+En simple: Los perfiles ya forman parte del producto. La próxima mesa sigue siendo la conexión con Pi, y el instalador espera sólo el tramo pendiente del adapter dentro de esa cadena.
+Evidencia: `openspec/plans/master-index.md` · `openspec/plans/plan-8/STATUS.md` · `master/origin/master@54b5cda733025b0bd50c2a21dc67d1d4192ac66d`
 
 ### H · crítico · OpenCode sigue estacionado y el adapter Pi todavía espera
-Lo técnico: `S4.4`, `S4.8` y `S4.9` permanecen 🟡 DIFERIDO con preservación absoluta. `S9.4` ya tiene satisfecha `S4.11`; `S1.18` depende de `S1.17`; `S4.12` depende de `S9.4 + S1.18`; `S8.13` conserva `S8.12 + S1.19 + S4.12`; y `S7.1` conserva `S1.19 + S4.12 + S8.13 + S5.5`. El candidato de `S8.14` no reactiva OpenCode, no implementa el host Pi y no satisface dependencias hasta entregarse.
-En simple: El candidato de perfiles no cambia todavía qué está entregado. OpenCode sigue guardado, Pi aún necesita supervisor, adaptación y pruebas, y los tres perfiles deben llegar a `master` antes de entrar al instalador.
+Lo técnico: `S4.4`, `S4.8` y `S4.9` permanecen 🟡 DIFERIDO con preservación absoluta. `S9.4` ya tiene satisfecha `S4.11`; `S1.18` depende de `S1.17`; `S4.12` depende de `S9.4 + S1.18`; `S8.13` conserva `S8.12 + S1.19 + S4.12`; y `S7.1` conserva `S1.19 + S4.12 + S8.13 + S5.5`. La entrega de `S8.14` satisface su dependencia de `S8.12`, pero no reactiva OpenCode ni implementa el host Pi.
+En simple: Los perfiles ya están entregados, pero eso no cambia la prioridad de hosts. OpenCode sigue guardado y Pi aún necesita supervisor, adaptación y pruebas antes de completar el instalador.
 Evidencia: `openspec/plans/master-index.md:9-25` · `openspec/plans/plan-4/STATUS.md:733-763` · `openspec/plans/plan-9/STATUS.md:228-291`
 
 ## Evidencia y límites de esta radiografía
 
-Este juicio fue reconciliado contra el candidato local verificado `47a7389b76a4b87d09d439e478b5874a701257ca` el 2026-08-28. `verified_against` se actualiza porque su contrato sella el commit cuyos bytes sustentan este juicio; no afirma entrega, que sigue pendiente de `master`. Las cifras de instrumentos, avance y cola son derivadas por el generador y no se escriben a mano acá. `S8.14` permanece 🔵 EN CURSO: perfiles, skills y test están implementados y verificados localmente, no entregados.
+Este juicio fue reconciliado contra `master/origin/master@54b5cda733025b0bd50c2a21dc67d1d4192ac66d` el 2026-08-28. `verified_against` identifica los bytes entregados que sustentan este juicio. Las cifras de instrumentos, avance y cola son derivadas por el generador y no se escriben a mano acá. `S8.14` está ✅ COMPLETO: perfiles, skills y test están implementados, verificados e integrados en la autoridad aterrizada.
 
 La última suite integral registrada para `S4.11` informó `934 pass`, `0 fail` y `5.502 expectativas`; este cierre documental no la reejecutó. Ese verde prueba las operaciones host-neutral entregadas, pero no prueba todavía el adapter Pi, la corrida desatendida ni capacidad por encima del límite vigente.
