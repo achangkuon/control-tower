@@ -29,7 +29,7 @@ With no arguments it opens an interactive menu — install, update skills, updat
 the Tower, or diagnose — with a live status header. Flags drive the same actions
 headlessly: `--install`, `--with-tower`, `--update`, `--check`, `--dry-run`.
 
-Installing also creates the global command `puesto`, so the menu opens from
+Installing also creates the global command `torre-control`, so the menu opens from
 anywhere afterwards. It is a launcher, not a copy — it execs the current
 checkout, so `git pull` updates the tool with no reinstall step. `--link`
 recreates it; `SETUP_LAUNCHER` renames it and `SETUP_BIN_DIR` relocates it.

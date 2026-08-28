@@ -5,7 +5,7 @@
 #   ./tools/setup.sh --install       skills only (Tower off)
 #   ./tools/setup.sh --with-tower    skills + Control Tower
 #   ./tools/setup.sh --update        update whatever is already installed
-#   ./tools/setup.sh --link          (re)create the global `puesto` command
+#   ./tools/setup.sh --link          (re)create the global `torre-control` command
 #   ./tools/setup.sh --check         diagnose only, mutate nothing
 #   ./tools/setup.sh --dry-run       print what would change, write nothing
 #
@@ -27,7 +27,7 @@
 # The menu is plain Bash on purpose. It needs no runtime beyond the shell that
 # is already running it, so it works on a machine that has nothing else yet.
 #
-# After the first install the global command `puesto` runs this menu from
+# After the first install the global command `torre-control` runs this menu from
 # anywhere. It is a launcher, not a copy: it execs the current checkout, so a
 # `git pull` updates the tool with no reinstall.
 #
@@ -41,7 +41,7 @@ TOWER_REMOTE="${TOWER_REMOTE:-https://github.com/achangkuon/control-tower.git}"
 TOWER_DIR="${TOWER_DIR:-$HOME/projects/control-tower/Main}"
 HOME_DIR="${SETUP_HOME:-$HOME}"
 BIN_DIR="${SETUP_BIN_DIR:-$HOME_DIR/.local/bin}"
-LAUNCHER="${SETUP_LAUNCHER:-puesto}"
+LAUNCHER="${SETUP_LAUNCHER:-torre-control}"
 
 readonly BLOCK_START="<!-- SESSION-SKILL-ARCHITECTURE:MANUAL -->"
 readonly BLOCK_END="<!-- /SESSION-SKILL-ARCHITECTURE:MANUAL -->"
