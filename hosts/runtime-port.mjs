@@ -45,13 +45,24 @@ const validChallenge = (challenge, request) => exactKeys(challenge, CHALLENGE_KE
   && REF.test(challenge.challenge_ref)
   && same(challenge, request, ["operation", "producer_ref", ...CONTEXT_KEYS])
 
-const validProof = (proof, challenge) => {
+const captureProof = (proof, challenge) => {
   const fields = PROOF_FIELDS[challenge.operation]
-  if (!exactKeys(proof, [...CHALLENGE_KEYS, ...fields]) || !same(proof, challenge, CHALLENGE_KEYS)) return false
-  if (challenge.operation === "OBSERVE") return proof.evidence === "OBSERVED"
-  if (challenge.operation === "HEALTH") return proof.state === "HEALTHY" || proof.state === "DEAD"
-  if (challenge.operation === "STOP") return typeof proof.request_acknowledged === "boolean" && ["STOPPED", "DEAD", "UNKNOWN"].includes(proof.state)
-  return proof.attached === true
+  if (!exactKeys(proof, [...CHALLENGE_KEYS, ...fields]) || !same(proof, challenge, CHALLENGE_KEYS)) return null
+  if (challenge.operation === "OBSERVE") {
+    const evidence = proof.evidence
+    return evidence === "OBSERVED" ? evidence : null
+  }
+  if (challenge.operation === "HEALTH") {
+    const state = proof.state
+    return state === "HEALTHY" || state === "DEAD" ? state : null
+  }
+  if (challenge.operation === "STOP") {
+    const request_acknowledged = proof.request_acknowledged, state = proof.state
+    return typeof request_acknowledged === "boolean" && ["STOPPED", "DEAD", "UNKNOWN"].includes(state)
+      ? Object.freeze({ request_acknowledged, state }) : null
+  }
+  const attached = proof.attached
+  return attached === true ? attached : null
 }
 
 export const createHostRuntimeProofPort = (dependencies = {}) => {
@@ -99,11 +110,10 @@ export const createHostRuntimeProofPort = (dependencies = {}) => {
       } catch {
         fail("CT_HOST_RUNTIME_PRODUCER_UNAVAILABLE", "Runtime proof producer is unavailable", "producer", "unavailable")
       }
-      if (!validProof(proof, challenge)) {
-        fail("CT_HOST_RUNTIME_PROOF_MISMATCH", "Runtime proof does not match", "proof", "mismatch")
-      }
+      const outcome = captureProof(proof, challenge)
+      if (outcome === null) fail("CT_HOST_RUNTIME_PROOF_MISMATCH", "Runtime proof does not match", "proof", "mismatch")
       assertCurrent(binding, resolveContexts, initial)
-      return Object.freeze({ operation, binding_id: initial.binding_id, incarnation_id: initial.incarnation_id, status: "MATCHED" })
+      return Object.freeze({ operation, binding_id: initial.binding_id, incarnation_id: initial.incarnation_id, status: "MATCHED", outcome })
     } finally {
       inFlightChallenges.delete(challenge)
       consumedChallenges.add(challenge)

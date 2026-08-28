@@ -67,7 +67,7 @@ describe("host-neutral runtime proof port", () => {
     expect(Object.isFrozen(f.requests[0])).toBe(true)
     expect(f.calls[0]).toEqual({ challenge: f.issued[0] })
     expect(Object.isFrozen(f.calls[0])).toBe(true)
-    expect(result).toEqual({ operation: "HEALTH", binding_id: f.tuple[4].binding_id, incarnation_id: f.tuple[4].incarnation_id, status: "MATCHED" })
+    expect(result).toEqual({ operation: "HEALTH", binding_id: f.tuple[4].binding_id, incarnation_id: f.tuple[4].incarnation_id, status: "MATCHED", outcome: "HEALTHY" })
     expect(Object.isFrozen(result)).toBe(true)
     expect(JSON.stringify(result)).not.toMatch(/producer|challenge|proof|function|43101/i)
   })
@@ -116,6 +116,31 @@ describe("host-neutral runtime proof port", () => {
     gate.resolve(proofFor(f.issued[0]))
     await expect(first).resolves.toMatchObject({ status: "MATCHED" })
     expect(await codeOf(f.port.execute({ binding: f.tuple[4] }))).toBe("CT_HOST_RUNTIME_CHALLENGE_REUSED")
+  })
+
+  test("keeps same-context concurrent outcomes with their originating operation", async () => {
+    const tuple = context(), firstIssue = deferred(), secondIssue = deferred()
+    const healthy = challengeFor(tuple, "healthy"), dead = challengeFor(tuple, "dead")
+    let issued = 0
+    const producer = Object.freeze({
+      producer_ref: "producer-1",
+      issueChallenge: () => (++issued === 1 ? firstIssue.promise : secondIssue.promise),
+      call: async ({ challenge }) => ({ ...challenge, state: challenge === healthy ? "HEALTHY" : "DEAD" }),
+    })
+    const port = createHostRuntimeProofPort({ operation: "HEALTH", producer, resolveContexts: () => [tuple] })
+    const first = port.execute({ binding: tuple[4] }), second = port.execute({ binding: tuple[4] })
+    secondIssue.resolve(dead); firstIssue.resolve(healthy)
+    expect((await second).outcome).toBe("DEAD")
+    expect((await first).outcome).toBe("HEALTHY")
+  })
+
+  test("captures validated health state once instead of rereading proof", async () => {
+    let reads = 0
+    const f = fixture({ call: ({ challenge }) => Object.freeze(Object.defineProperty({ ...challenge }, "state", {
+      enumerable: true, get: () => (++reads === 1 ? "HEALTHY" : "DEAD"),
+    })) })
+    expect((await f.port.execute({ binding: f.tuple[4] })).outcome).toBe("HEALTHY")
+    expect(reads).toBe(1)
   })
 
   test("terminally consumes valid, error, and mismatched proof and permits only a fresh retry", async () => {
