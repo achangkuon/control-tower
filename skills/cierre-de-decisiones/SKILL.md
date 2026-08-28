@@ -54,4 +54,4 @@ Return: decisions presented and resolved; per-Session state delta separating dec
 
 - `references/decision-extraction.md` — where decisions live, the `escala`/`derivable` vocabulary, and the closed set of always-escalate classes.
 - `assets/resolution-entry.md` — required shape of a resolved decision entry.
-- `/home/emili/.claude/skills/_shared/plan-naming-convention.md` — §11 decision contract and the seven-state vocabulary.
+- `~/.claude/skills/_shared/plan-naming-convention.md` — §11 decision contract and the seven-state vocabulary.
