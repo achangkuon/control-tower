@@ -1,24 +1,24 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: **planificación canónica de `S9.5` — materialización visual Herdr posterior al brief confirmado** el 2026-08-28 contra `master@dd9b48eefd12ce00361dbe9df214a6a5640b5823`. La autoridad durable es Engram 9652 y la decisión 91; no se implementó ni se abrió ningún asiento.
+> Última reconciliación: **checkpoint documental final local de `S4.11`** el 2026-08-28 contra el candidato `f00c53ae477de1f8dd3b9c4dab8b2c159375f962` (tree `f66ba79c6a711042175f4e14f1b5556acfcab6e9`). Verificación PASS; entrega remota todavía pendiente.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para el **inventario del producto** —los trece comandos, los módulos sin llamador y su orden de conexión— ver [inventario-de-producto](inventario-de-producto.md). Para **qué falta para salir** ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md). La línea entre lo que decide la Torre y lo que decide gentle-ai vive en [la frontera Torre ↔ gentle-ai](frontera-torre-gentle-ai.md), y **cualquier Sesión puede citarla para rechazar alcance** — desde el 2026-08-26 la frontera tiene **tres ejes**: la calidad del trabajo, el flujo de trabajo ([decisión 71](decision-register.md)) y **quién lee el plan** ([decisión 78](decision-register.md) — la cerca no lee). La **definición de producto vigente** —qué es y qué deliberadamente no va a ser la Torre terminada— es [**La Torre Terminada**](https://claude.ai/code/artifact/323b83bd-f1cd-4cee-a5c7-945f8c7d6173), y **ninguna Sesión puede desviarse de ella sin una decisión registrada**.
 
 ## 📍 Punto de retoma
 
-**`S4.10` cerró, quedó archivada y fue entregada en `master/origin/master@6b8b7705d40a863b962873c1a34208007fa64644`.** El contrato host-neutral v1 ya fija identidad, worktree, proceso, incarnation, binding y ownership exacto del puerto loopback; el cierre conserva los cuatro commits y el rollback inverso en [P4](plan-4/STATUS.md).
+**`S4.11` está 🔵 EN CURSO con implementación local completa y verificación PASS sobre el candidato exacto `f00c53ae477de1f8dd3b9c4dab8b2c159375f962` (tree `f66ba79c6a711042175f4e14f1b5556acfcab6e9`).** Pasaron 934 tests, 15/15 escenarios y 6/6 tareas, sin hallazgos; el rollback completo es Commit 3 → 2 → 1 y está detallado en [P4](plan-4/STATUS.md).
 
-**La cola retoma en `#1 S8.12`; `#2 S4.11` está 🟢 LISTO y `#3 S9.4` prepara el host Pi que consume `#4 S9.5`.** `S9.5` materializará únicamente los asientos exactos de un brief ya confirmado; no planifica, asigna, recicla ni despacha. `S8.12` y `S4.11` siguen topológicamente independientes bajo sus Áreas y Recursos declarados.
+**Main todavía debe entregar/pushear ese candidato inmutable; por eso `S4.11` no está COMPLETO y no suma porcentaje.** El archivo SDD y la radiografía quedan diferidos hasta después de la entrega. La cola ejecutable retoma en `#1 S8.12`; `#2 S9.4` prepara el host Pi que consume `#3 S9.5`.
 
 **OpenCode sigue parqueado con preservación absoluta.** `S4.4`, `S4.8` y `S4.9` permanecen 🟡 DIFERIDO; el checkpoint durable de `S4.4` sigue en [P4](plan-4/STATUS.md), sin cambios.
 
 ## 🎯 Cola de ejecución
 
-`#1 S8.12` · `#2 S4.11` · `#3 S9.4` · `#4 S9.5` · `#5 S1.17` · `#6 S1.18` · `#7 S1.19` · `#8 S4.12` · `#9 S8.13` · `#10 S5.14` · `#11 S2.8` · `#12 S5.5` · `#13 S5.15` · `#14 S9.1` · `#15 S9.2` · `#16 S9.3` · `#17 S7.1` — topológica, recalculada 2026-08-28. `S9.5` espera `S8.12 + S9.4`; la cola no asigna dueño ni asiento.
+`#1 S8.12` · `#2 S9.4` · `#3 S9.5` · `#4 S1.17` · `#5 S1.18` · `#6 S1.19` · `#7 S4.12` · `#8 S8.13` · `#9 S5.14` · `#10 S2.8` · `#11 S5.5` · `#12 S5.15` · `#13 S9.1` · `#14 S9.2` · `#15 S9.3` · `#16 S7.1` — topológica, recalculada 2026-08-28. `S9.5` espera `S8.12 + S9.4`; la cola no asigna dueño ni asiento.
 
-**Paralelismo:** `S8.12` y `S4.11` están 🟢 LISTO y pueden comenzar en paralelo sólo si `Área` y `Recurso` reales siguen disjuntos. La cadena principal restante es `S4.11 → S9.4 → S1.17 → S1.18 → S1.19`; `S4.12` espera `S9.4 + S1.18`; `S8.13` espera `S8.12 + S1.19 + S4.12`; `S7.1` espera además `S5.5` y conserva sus dependencias no-host satisfechas.
+**Paralelismo:** `S8.12` permanece 🟢 LISTO. `S4.11` salió de la cola porque Main mantiene su entrega 🔵 EN CURSO; no habilita sus dependientes hasta quedar entregada y ✅ COMPLETO. La cadena principal restante es `S4.11 → S9.4 → S1.17 → S1.18 → S1.19`; `S4.12` espera `S9.4 + S1.18`; `S8.13` espera `S8.12 + S1.19 + S4.12`; `S7.1` espera además `S5.5` y conserva sus dependencias no-host satisfechas.
 
-**Fuera de la cola:** `S4.4`, `S4.8`, `S4.9`, `S8.5`, `S8.6` y P6 🟡 DIFERIDO; `S8.11` 🔴 BLOQUEADO. `S4.10` y `S5.3` se excluyen por ✅ COMPLETO. La cola contiene sólo Sesiones 🟢 LISTO o 📋 PLANIFICADO y preserva el orden del grafo.
+**Fuera de la cola:** `S4.11` 🔵 EN CURSO; `S4.4`, `S4.8`, `S4.9`, `S8.5`, `S8.6` y P6 🟡 DIFERIDO; `S8.11` 🔴 BLOQUEADO. `S4.10` y `S5.3` se excluyen por ✅ COMPLETO. La cola contiene sólo Sesiones 🟢 LISTO o 📋 PLANIFICADO y preserva el orden del grafo.
 
 ## Granularidad
 

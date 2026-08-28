@@ -7,9 +7,9 @@
 | Campo | Detalle |
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
-| Outputs | Raíz primaria Main-owned con TUI adjunta no autoritativa, inspección/liveness por proceso/sesión, recuperación same-host WSL y contrato host-neutral v1 de identidad, binding, incarnation y puerto loopback. |
-| Roadmap | La evidencia OpenCode entregada permanece ✅ COMPLETO. `S4.4`, `S4.8` y `S4.9` están 🟡 DIFERIDO con preservación absoluta; `S4.10` está ✅ COMPLETO, `S4.11` queda 🟢 LISTO y `S4.12` permanece 📋 PLANIFICADO. P4 alcanza 58% (7/12 S). |
-| Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), decisiones 37–42 / Engram 9040/9042/9043/9044/9079, [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). REQUIREMENTS §14 permanece byte-pinned como base histórica; esta spec enmienda el lifecycle futuro. |
+| Outputs | Raíz primaria Main-owned con TUI adjunta no autoritativa, inspección/liveness por proceso/sesión, recuperación same-host WSL y contrato host-neutral v1 de identidad, binding, incarnation, puerto loopback y operaciones observe/health/stop/attach. |
+| Roadmap | La evidencia OpenCode entregada permanece ✅ COMPLETO. `S4.4`, `S4.8` y `S4.9` están 🟡 DIFERIDO con preservación absoluta; `S4.10` está ✅ COMPLETO, `S4.11` está 🔵 EN CURSO con verificación local PASS y entrega remota pendiente, y `S4.12` permanece 📋 PLANIFICADO. P4 conserva 58% (7/12 S): `S4.11` no suma crédito antes de la entrega. |
+| Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), decisiones 37–42 y 92–94, Engram 9040/9042/9043/9044/9079 y 9668/9669/9696/9697, [`s4-11-host-neutral-operations`](../../changes/s4-11-host-neutral-operations/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). REQUIREMENTS §14 permanece byte-pinned como base histórica; esta spec enmienda el lifecycle futuro. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
 
@@ -754,13 +754,25 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 - [x] Tarea T4.10.1.3 — REFACTOR: separar contrato neutral de cualquier adapter, ajustar únicamente `expect(schemaFiles).toHaveLength(26)` a `expect(schemaFiles).toHaveLength(31)` en el gate manual y verificar frontera de `Área`.
 
 ### Sesión 4.11 — Observe, health, stop y attach host-neutral
-**Estado:** 🟢 LISTO · **Depende de:** `S4.10` · **Área:** `hosts/runtime-port.mjs`, `hosts/runtime-observe.mjs`, `test/hosts/runtime-{port,observe}.test.mjs` · **Recurso:** binding neutral vigente y prueba producer-owned.
-**Decisiones:** `derivable` — toda observación se liga al binding de `S4.10`; autoridad decisión 84, falsificador: una respuesta sin identidad/incarnation exactas. **Ruta:** `full-sdd` — define semántica observable y fail-closed que consumen adapters y recuperación.
-**Criterios de aceptación:** observe/health/stop/attach comparten identidad neutral; attach exige desafío fresco y prueba producer-owned; stop distingue desconexión de muerte; no importa Pi/OpenCode ni toca fuera de `Área`.
+**Estado:** 🔵 EN CURSO — implementación local completa y verificación PASS; entrega directa a `master`/push todavía pendiente · **Depende de:** `S4.10` · **Área:** `hosts/runtime-port.mjs`, `hosts/runtime-observe.mjs`, `test/hosts/runtime-port.test.mjs`, `test/hosts/runtime-observe.test.mjs` · **Recurso:** binding neutral vigente y prueba producer-owned.
+**Decisiones:** `escala`, resuelta por decisión 92: política conservadora de challenge de un solo uso y proof producer-owned ligados a operación, binding e incarnation exactos; `observe` no promueve incertidumbre, `health` distingue healthy/unknown/dead probados, `stop` no convierte disconnect en muerte y `attach` exige proof fresca y devuelve acknowledgment ligado. `escala`, resuelta por decisión 93: toda llamada al productor consume el challenge, retry exige uno nuevo y error de `stop` produce solicitud no reconocida más runtime disconnected/unknown. `escala`, resuelta por decisión 94: timeout y silencio pertenecen al productor/adapter; el core neutral no usa reloj, timers ni carreras y conserva resultados no probados. La decisión 84 mantiene estas operaciones en el contrato neutral. **Ruta:** `full-sdd`.
+
+**Checkpoint local verificado:** candidato inmutable `f00c53ae477de1f8dd3b9c4dab8b2c159375f962`, tree `f66ba79c6a711042175f4e14f1b5556acfcab6e9`. El [verify report](../../changes/s4-11-host-neutral-operations/verify-report.md) (`sha256:835094e90ed689118d7d1b21a3460bbdbbf1733cd9feee6aef2014b960f0fafe`, Engram 9697; procedencia 9696) es PASS: 934 pass, 0 fail, 5.502 expectations, 73 files, 99,69 s; 15/15 escenarios, 6/6 tareas y 0/0/0 hallazgos. Native status: verify `all_done`, archive `ready`, sin blocked reasons.
+
+**Por qué no cierra:** no hubo push ni entrega remota y los artefactos SDD no fueron archivados. Main debe entregar el candidato exacto; recién después corresponde archivar y regenerar la radiografía según `AGENTS.md`. P4 conserva 58% (7/12 S).
+
+**Rollback completo:** Commit 3 → 2 → 1: `f00c53ae477de1f8dd3b9c4dab8b2c159375f962` (147 líneas) → `beaa597eac05cb466832452deac2b6ce7ad86e87` (191) → `356c9eac76e862d2fde47720ee97af84b0ae23d6` (268). Revertir los tres elimina juntos los dos módulos runtime y sus dos tests, preservando `S4.10`; una reversión parcial deja una secuencia no entregable.
+
+**Criterios de aceptación** — verificados localmente; no equivalen a entrega:
+- [x] Observe, health, stop y attach comparten identidad neutral exacta.
+- [x] Attach exige challenge fresco y proof producer-owned ligada a operación, binding e incarnation.
+- [x] Stop separa acknowledgment de estado probado y nunca convierte desconexión en muerte.
+- [x] El core no importa vocabulario Pi/OpenCode, no implementa política de timeout y el diff queda dentro del Área exacta.
+
 #### Módulo M4.11.1 — Operaciones neutrales observables
-- [ ] Tarea T4.11.1.1 — RED: probar recibo stale, self-report sin prueba, desconexión y stop ambiguo.
-- [ ] Tarea T4.11.1.2 — GREEN: exponer puertos neutrales con prueba ligada al binding/incarnation.
-- [ ] Tarea T4.11.1.3 — REFACTOR: unificar errores y aislar toda semántica de adapter.
+- [x] Tarea T4.11.1.1 — RED: probar recibo stale, self-report sin prueba, desconexión y stop ambiguo.
+- [x] Tarea T4.11.1.2 — GREEN: exponer puertos neutrales con prueba ligada al binding/incarnation.
+- [x] Tarea T4.11.1.3 — REFACTOR: unificar errores y aislar toda semántica de adapter.
 
 ### Sesión 4.12 — Recuperación mínima de Pi
 **Estado:** 📋 PLANIFICADO · **Depende de:** `S9.4`, `S1.18` · **Área:** `hosts/pi-recovery.mjs`, `test/hosts/pi-recovery.test.mjs` · **Recurso:** árbol de procesos Tower-owned, checkpoint durable y lineage Pi.
