@@ -95,6 +95,31 @@ def manual_paths(home: Path) -> tuple[Path, ...]:
     return tuple(home / path for path in MANUAL_FILES)
 
 
+# A machine rarely has all four runtimes. The declarations above stay complete —
+# they are the contract — while the two helpers below narrow them to what this
+# machine actually has, so a missing runtime is skipped instead of failing the
+# whole install. `~/.agents/skills` is the shared standard and is always written.
+RUNTIME_MARKERS = {
+    ".claude/skills": ".claude",
+    ".config/opencode/skills": ".config/opencode",
+    ".codex/skills": ".codex",
+}
+
+
+def installed_skill_roots(home: Path) -> tuple[Path, ...]:
+    roots = []
+    for root in runtime_skill_roots(home):
+        relative = root.relative_to(home).as_posix()
+        marker = RUNTIME_MARKERS.get(relative)
+        if marker is None or (home / marker).is_dir():
+            roots.append(root)
+    return tuple(roots)
+
+
+def installed_manual_paths(home: Path) -> tuple[Path, ...]:
+    return tuple(path for path in manual_paths(home) if path.parent.is_dir())
+
+
 def source_files(root: Path):
     for skill in SKILLS:
         source_root = root / "skills" / skill
@@ -211,7 +236,7 @@ def desired_manual_content(path: Path, replacement: bytes) -> bytes:
 
 def preflight(home: Path, root: Path) -> None:
     replacement = render_manual_block(root)
-    for runtime_root in runtime_skill_roots(home):
+    for runtime_root in installed_skill_roots(home):
         _validate_directory_path(runtime_root, "runtime skill")
         for skill, relative, _ in source_files(root):
             skill_root = runtime_root / skill
@@ -219,7 +244,7 @@ def preflight(home: Path, root: Path) -> None:
             _validate_file_destination(
                 runtime_root, skill_root / relative, "runtime skill file"
             )
-    for path in manual_paths(home):
+    for path in installed_manual_paths(home):
         _validate_directory_path(path.parent, "runtime instruction")
         if not _lexists(path.parent):
             raise InstallError(f"missing runtime instruction directory: {path.parent}")
@@ -234,12 +259,12 @@ def build_plan(home: Path, root: Path | None = None) -> list[Change]:
     preflight(home, root)
     replacement = render_manual_block(root)
     changes: list[Change] = []
-    for runtime_root in runtime_skill_roots(home):
+    for runtime_root in installed_skill_roots(home):
         for skill, relative, source in source_files(root):
             destination = runtime_root / skill / relative
             if not destination.is_file() or destination.read_bytes() != source.read_bytes():
                 changes.append(Change(destination, "skill"))
-    for path in manual_paths(home):
+    for path in installed_manual_paths(home):
         desired = desired_manual_content(path, replacement)
         if path.read_bytes() != desired:
             changes.append(Change(path, "manual"))
@@ -282,12 +307,12 @@ def apply(home: Path, root: Path | None = None) -> list[Change]:
     changes = build_plan(home, root)
     replacement = render_manual_block(root)
     change_paths = {change.path for change in changes}
-    for runtime_root in runtime_skill_roots(home):
+    for runtime_root in installed_skill_roots(home):
         for skill, relative, source in source_files(root):
             destination = runtime_root / skill / relative
             if destination in change_paths:
                 _atomic_copy(source, destination, runtime_root)
-    for path in manual_paths(home):
+    for path in installed_manual_paths(home):
         if path in change_paths:
             _atomic_write(path, desired_manual_content(path, replacement), path.parent)
     return changes

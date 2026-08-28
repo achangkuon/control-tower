@@ -18,8 +18,18 @@ Zero hits means the skill is owned here.
 
 ## Quick Path
 
+New machine — one command:
+
 ```bash
-cd /home/emili/projects/agent-workflows
+git clone <this-repo> && cd agent-workflows
+./tools/setup.sh                 # skills only, Tower off
+./tools/setup.sh --with-tower    # skills + Control Tower
+./tools/setup.sh --check         # diagnose, mutate nothing
+```
+
+Already set up, editing skills:
+
+```bash
 python3 tools/install.py
 python3 tools/install.py --check
 python3 -m unittest discover -s tests -v
@@ -27,6 +37,37 @@ python3 -m unittest discover -s tests -v
 
 Restart Claude, OpenCode, Codex, and Pi sessions after installation so each
 runtime reloads its skills and manual routing block.
+
+### What `setup.sh` owns, and what it refuses to own
+
+It installs exactly two things: the skills in this repository, and the Control
+Tower from its own repository (opt-in, `--with-tower`). Each half keeps its own
+installer — `tools/install.py` here, `install.sh` there — and `setup.sh` only
+composes them in the safe order, least specific first.
+
+**Gentle AI is checked, never installed.** It is a separate product with its own
+binary, installer and update authority; installing it from here would fork its
+release channel and defeat `gentle-ai sync`. A missing Gentle AI is a warning
+with a pointer to its own instructions, not a failure.
+
+**The Tower is opt-in on purpose.** These skills describe how work is done and
+must keep working with the Tower absent — `torre-control-entregas` detects the
+missing MCP itself and falls back to manual copy-paste handoff. Coupling the two
+would make an optional product a prerequisite for a mandatory one.
+
+`setup.sh` seeds the `SESSION-SKILL-ARCHITECTURE:MANUAL` block for the agents
+this machine actually has, because `install.py` replaces that block but refuses
+to invent it — it will not guess where in someone's instruction file the routing
+belongs. Existing files are backed up and appended to, never rewritten.
+
+### Absent runtimes are skipped
+
+A machine rarely has all four agents. `MANUAL_FILES` and `runtime_skill_roots`
+stay complete as the contract; `installed_manual_paths` and
+`installed_skill_roots` narrow them to what is present. A runtime whose marker
+directory is absent is skipped and never created. A runtime that IS present but
+is missing its instruction file still fails closed — that is a broken install,
+not an absent one.
 
 ## Radiografía
 

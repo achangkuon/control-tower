@@ -177,20 +177,34 @@ class InstallerTests(unittest.TestCase):
         self.assertFalse((self.home / ".agents/skills/session-kickoff").exists())
         self.assertEqual(wrong_type.read_bytes(), b"protected")
 
-    def test_missing_instruction_file_or_directory_fails_without_runtime_mutation(self):
-        for missing_kind in ("file", "directory"):
-            with self.subTest(missing_kind=missing_kind):
-                with tempfile.TemporaryDirectory() as raw:
-                    home = Path(raw)
-                    self._seed_runtime(home)
-                    instruction = home / ".codex/AGENTS.md"
-                    if missing_kind == "file":
-                        instruction.unlink()
-                    else:
-                        shutil.rmtree(instruction.parent)
-                    with self.assertRaises(INSTALLER.InstallError):
-                        INSTALLER.apply(home, ROOT)
-                    self.assertFalse((home / ".agents").exists())
+    def test_missing_instruction_file_fails_without_runtime_mutation(self):
+        """An installed runtime missing its instruction file still fails closed."""
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw)
+            self._seed_runtime(home)
+            (home / ".codex/AGENTS.md").unlink()
+            with self.assertRaises(INSTALLER.InstallError):
+                INSTALLER.apply(home, ROOT)
+            self.assertFalse((home / ".agents").exists())
+
+    def test_absent_runtime_is_skipped_instead_of_failing(self):
+        """A runtime this machine does not have is skipped, not fatal.
+
+        A fresh machine rarely has all four runtimes. Skipping keeps the install
+        usable there; the remaining runtimes must still be written in full, and
+        the absent one must not be created as a side effect.
+        """
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw)
+            self._seed_runtime(home)
+            shutil.rmtree(home / ".codex")
+
+            INSTALLER.apply(home, ROOT)
+
+            self.assertFalse((home / ".codex").exists())
+            for root in (home / ".agents/skills", home / ".claude/skills"):
+                self.assertTrue((root / "torre-control-entregas/SKILL.md").is_file())
+            self.assertEqual(INSTALLER.build_plan(home, ROOT), [])
 
     def test_full_sdd_wording_has_one_managed_apply_and_verify_pass(self):
         content = (ROOT / "skills/session-kickoff/SKILL.md").read_text(encoding="utf-8")
