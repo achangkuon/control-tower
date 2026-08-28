@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { createHostRuntimeProofPort } from "../../hosts/runtime-port.mjs"
+import { createHostRuntimeOperations, createHostRuntimeProofPort } from "../../hosts/runtime-port.mjs"
 
 const id = (kind, digit) => `ct_${kind}_${digit.repeat(32)}`
 const context = ({ digit = "1", port = 43101 } = {}) => {
@@ -176,4 +176,70 @@ describe("host-neutral runtime proof port", () => {
       expect(issueCount).toBe(1)
     }
   })
+  test("composes exact service and preserves stop and attach authority", async () => {
+    const tuple = context(), issued = [], calls = []
+    const producer = Object.freeze({ producer_ref: "producer-1", issueChallenge(request) { const challenge = Object.freeze({ ...request, challenge_ref: `${request.operation}-${issued.length}` }); issued.push(challenge); return challenge }, call: async ({ challenge }) => { calls.push(challenge); return Object.freeze({ ...challenge, ...(challenge.operation === "STOP" ? { request_acknowledged: true, state: "UNKNOWN" } : { attached: true }) }) } })
+    const service = createHostRuntimeOperations({ resolveContexts: () => [tuple], producer })
+    expect(Object.keys(service)).toEqual(["observe", "health", "stop", "attach"]); expect(Object.isFrozen(service)).toBe(true)
+    expect(await codeOf(service.stop({ binding: tuple[4], proof: {} }))).toBe("CT_HOST_RUNTIME_OPERATION_INVALID")
+    expect(await service.stop({ binding: tuple[4] })).toEqual({ operation: "STOP", binding_id: tuple[4].binding_id, incarnation_id: tuple[3].incarnation_id, request: "ACKNOWLEDGED", state: "DISCONNECTED_UNKNOWN" })
+    const attached = await service.attach({ binding: tuple[4] }); expect(attached).toEqual({ operation: "ATTACH", binding_id: tuple[4].binding_id, incarnation_id: tuple[3].incarnation_id, acknowledged: true }); expect(Object.keys(attached)).toEqual(["operation", "binding_id", "incarnation_id", "acknowledged"]); expect(Object.isFrozen(attached)).toBe(true)
+  })
+
+  test("stop error consumes its challenge and attach mismatches never acknowledge", async () => {
+    const tuple = context(), failed = Object.freeze({ ...challengeFor(tuple, "failed"), operation: "STOP" }), fresh = Object.freeze({ ...failed, challenge_ref: "fresh" }); let issues = 0, calls = 0
+    const producer = Object.freeze({ producer_ref: "producer-1", issueChallenge: async () => [failed, failed, fresh][issues++], call: async ({ challenge }) => { calls += 1; if (calls === 1) throw new Error("silent"); return Object.freeze({ ...challenge, request_acknowledged: false, state: "STOPPED" }) } })
+    const stop = createHostRuntimeOperations({ resolveContexts: () => [tuple], producer }).stop
+    expect(await stop({ binding: tuple[4] })).toEqual({ operation: "STOP", binding_id: tuple[4].binding_id, incarnation_id: tuple[3].incarnation_id, request: "NOT_ACKNOWLEDGED", state: "DISCONNECTED_UNKNOWN" }); expect(await codeOf(stop({ binding: tuple[4] }))).toBe("CT_HOST_RUNTIME_CHALLENGE_REUSED"); expect((await stop({ binding: tuple[4] })).state).toBe("PROVEN_STOPPED")
+    for (const override of [{ producer_ref: "foreign" }, { operation: "HEALTH" }, { binding_id: id("binding", "2") }, { incarnation_id: id("incarnation", "2") }, { challenge_ref: "foreign" }, { leaked: true }]) {
+      const challenge = Object.freeze({ ...challengeFor(tuple, "attach"), operation: "ATTACH" }), foreign = Object.freeze({ producer_ref: "producer-1", issueChallenge: async () => challenge, call: async () => Object.freeze({ ...challenge, attached: true, ...override }) }), attach = createHostRuntimeOperations({ resolveContexts: () => [tuple], producer: foreign }).attach
+      expect(await codeOf(attach({ binding: tuple[4] }))).toBe("CT_HOST_RUNTIME_PROOF_MISMATCH"); expect(await codeOf(attach({ binding: tuple[4] }))).toBe("CT_HOST_RUNTIME_CHALLENGE_REUSED")
+    }
+  })
+  test("preserves one-use concurrency and context drift through the service", async () => {
+    const tuple = context(), challenge = Object.freeze({ ...challengeFor(tuple, "shared-stop"), operation: "STOP" }), gate = deferred(); let calls = 0, current = tuple
+    const producer = Object.freeze({ producer_ref: "producer-1", issueChallenge: async () => challenge, call: async () => { calls += 1; return gate.promise } }), stop = createHostRuntimeOperations({ resolveContexts: () => [current], producer }).stop
+    const first = stop({ binding: tuple[4] }); await Promise.resolve(); await Promise.resolve(); const second = stop({ binding: tuple[4] })
+    expect(await codeOf(second)).toBe("CT_HOST_RUNTIME_CHALLENGE_REUSED"); expect(calls).toBe(1)
+    current = context({ digit: "2", port: 43102 }); gate.resolve(Object.freeze({ ...challenge, request_acknowledged: true, state: "STOPPED" }))
+    expect(await codeOf(first)).toBe("CT_HOST_RUNTIME_BINDING_CROSSED")
+  })
+
+  test("consumes the same challenge across every operation in a composed service", async () => {
+    for (const firstOperation of ["health", "observe"]) {
+      const tuple = context(), challenge = challengeFor(tuple, `shared-${firstOperation}`)
+      const producer = Object.freeze({
+        producer_ref: "producer-1",
+        issueChallenge: async () => challenge,
+        call: async ({ challenge: issued }) => proofFor(issued),
+      })
+      const service = createHostRuntimeOperations({ resolveContexts: () => [tuple], producer })
+      const first = await service[firstOperation]({ binding: tuple[4] }).catch((error) => error)
+      expect(firstOperation === "health" ? first.state : first.code).toBe(firstOperation === "health" ? "PROVEN_HEALTHY" : "CT_HOST_RUNTIME_CHALLENGE_INVALID")
+      for (const nextOperation of ["observe", "health", "stop", "attach"].filter((name) => name !== firstOperation)) {
+        expect(await codeOf(service[nextOperation]({ binding: tuple[4] }))).toBe("CT_HOST_RUNTIME_CHALLENGE_REUSED")
+      }
+    }
+  })
+
+  test("maps missing producer responses to unavailable without acknowledging attach", async () => {
+    const expected = {
+      observe: { evidence: null, uncertainty: "EVIDENCE_UNAVAILABLE" },
+      health: { state: "DISCONNECTED_UNKNOWN" },
+      stop: { request: "NOT_ACKNOWLEDGED", state: "DISCONNECTED_UNKNOWN" },
+    }
+    for (const missingAt of ["challenge", "proof"]) {
+      for (const response of [null, undefined]) {
+        for (const operation of ["observe", "health", "stop", "attach"]) {
+          const tuple = context(), challenge = Object.freeze({ ...challengeFor(tuple, `${operation}-${missingAt}-${response}`), operation: operation.toUpperCase() })
+          const producer = Object.freeze({ producer_ref: "producer-1", issueChallenge: async () => missingAt === "challenge" ? response : challenge, call: async () => response })
+          const service = createHostRuntimeOperations({ resolveContexts: () => [tuple], producer })
+          const result = await service[operation]({ binding: tuple[4] }).catch((error) => error)
+          if (operation === "attach") expect(result.code).toBe("CT_HOST_RUNTIME_PRODUCER_UNAVAILABLE")
+          else expect(result).toMatchObject(expected[operation])
+        }
+      }
+    }
+  })
+
 })

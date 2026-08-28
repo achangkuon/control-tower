@@ -1,3 +1,4 @@
+import { createRuntimeAttach, createRuntimeHealth, createRuntimeObserve, createRuntimeStop } from "./runtime-observe.mjs"
 import { failContract } from "../contracts/errors.mjs"
 import { resolveExactContext } from "../contracts/host-runtime/binding-context.mjs"
 
@@ -74,8 +75,8 @@ export const createHostRuntimeProofPort = (dependencies = {}) => {
     throw new TypeError("producer must provide bounded proof authority")
   }
 
-  const inFlightChallenges = new WeakSet()
-  const consumedChallenges = new WeakSet()
+  const inFlightChallenges = dependencies.inFlightChallenges ?? new WeakSet()
+  const consumedChallenges = dependencies.consumedChallenges ?? new WeakSet()
 
   const execute = async (input) => {
     if (!exactKeys(input, ["binding"])) {
@@ -89,6 +90,9 @@ export const createHostRuntimeProofPort = (dependencies = {}) => {
     try {
       challenge = await producer.issueChallenge(request)
     } catch {
+      fail("CT_HOST_RUNTIME_PRODUCER_UNAVAILABLE", "Runtime proof producer is unavailable", "producer", "unavailable")
+    }
+    if (challenge === null || challenge === undefined) {
       fail("CT_HOST_RUNTIME_PRODUCER_UNAVAILABLE", "Runtime proof producer is unavailable", "producer", "unavailable")
     }
     assertCurrent(binding, resolveContexts, initial)
@@ -110,6 +114,9 @@ export const createHostRuntimeProofPort = (dependencies = {}) => {
       } catch {
         fail("CT_HOST_RUNTIME_PRODUCER_UNAVAILABLE", "Runtime proof producer is unavailable", "producer", "unavailable")
       }
+      if (proof === null || proof === undefined) {
+        fail("CT_HOST_RUNTIME_PRODUCER_UNAVAILABLE", "Runtime proof producer is unavailable", "producer", "unavailable")
+      }
       const outcome = captureProof(proof, challenge)
       if (outcome === null) fail("CT_HOST_RUNTIME_PROOF_MISMATCH", "Runtime proof does not match", "proof", "mismatch")
       assertCurrent(binding, resolveContexts, initial)
@@ -121,4 +128,25 @@ export const createHostRuntimeProofPort = (dependencies = {}) => {
   }
 
   return Object.freeze({ execute })
+}
+
+
+export const createHostRuntimeOperations = (dependencies = {}) => {
+  const { resolveContexts, producer } = dependencies
+  const mappers = { OBSERVE: createRuntimeObserve, HEALTH: createRuntimeHealth, STOP: createRuntimeStop, ATTACH: createRuntimeAttach }
+  const inFlightChallenges = new WeakSet(), consumedChallenges = new WeakSet()
+  const methods = {}
+  for (const [name, operation] of [["observe", "OBSERVE"], ["health", "HEALTH"], ["stop", "STOP"], ["attach", "ATTACH"]]) {
+    const port = createHostRuntimeProofPort({ operation, resolveContexts, producer, inFlightChallenges, consumedChallenges })
+    methods[name] = async (input) => {
+      try {
+        return mappers[operation](await port.execute(input))
+      } catch (error) {
+        if (error?.code !== "CT_HOST_RUNTIME_PRODUCER_UNAVAILABLE" || operation === "ATTACH") throw error
+        const tuple = snapshot(resolveExactContext(input.binding, resolveContexts))
+        return mappers[operation](Object.freeze({ operation, binding_id: tuple.binding_id, incarnation_id: tuple.incarnation_id, status: "UNAVAILABLE", outcome: null }))
+      }
+    }
+  }
+  return Object.freeze(methods)
 }

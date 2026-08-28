@@ -24,10 +24,21 @@ const mapOutcome = (operation, input) => {
       ? { evidence: "MATCHING_PRODUCER_PROOF", uncertainty: null }
       : { evidence: null, uncertainty: "EVIDENCE_UNAVAILABLE" })
   }
-  if (input.status === "MATCHED" && !["HEALTHY", "DEAD"].includes(input.outcome)) invalid("matching health outcome is invalid")
-  return freezeResult(input, { state: input.status === "UNAVAILABLE"
-    ? "DISCONNECTED_UNKNOWN" : input.outcome === "HEALTHY" ? "PROVEN_HEALTHY" : "PROVEN_DEAD" })
+  if (operation === "HEALTH") {
+    if (input.status === "MATCHED" && !["HEALTHY", "DEAD"].includes(input.outcome)) invalid("matching health outcome is invalid")
+    return freezeResult(input, { state: input.status === "UNAVAILABLE" ? "DISCONNECTED_UNKNOWN" : input.outcome === "HEALTHY" ? "PROVEN_HEALTHY" : "PROVEN_DEAD" })
+  }
+  if (operation === "STOP") {
+    if (input.status === "UNAVAILABLE") return freezeResult(input, { request: "NOT_ACKNOWLEDGED", state: "DISCONNECTED_UNKNOWN" })
+    const outcome = input.outcome
+    if (!plain(outcome) || Object.keys(outcome).length !== 2 || typeof outcome.request_acknowledged !== "boolean" || !["STOPPED", "DEAD", "UNKNOWN"].includes(outcome.state)) invalid("matching stop outcome is invalid")
+    return freezeResult(input, { request: outcome.request_acknowledged ? "ACKNOWLEDGED" : "NOT_ACKNOWLEDGED", state: outcome.state === "STOPPED" ? "PROVEN_STOPPED" : outcome.state === "DEAD" ? "PROVEN_DEAD" : "DISCONNECTED_UNKNOWN" })
+  }
+  if (input.status !== "MATCHED" || input.outcome !== true) invalid("matching attach outcome is required")
+  return freezeResult(input, { acknowledged: true })
 }
 
 export const createRuntimeObserve = (input) => mapOutcome("OBSERVE", input)
 export const createRuntimeHealth = (input) => mapOutcome("HEALTH", input)
+export const createRuntimeStop = (input) => mapOutcome("STOP", input)
+export const createRuntimeAttach = (input) => mapOutcome("ATTACH", input)

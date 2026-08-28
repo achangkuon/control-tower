@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { createRuntimeHealth, createRuntimeObserve } from "../../hosts/runtime-observe.mjs"
+import { createRuntimeAttach, createRuntimeHealth, createRuntimeObserve, createRuntimeStop } from "../../hosts/runtime-observe.mjs"
 
 const id = (kind, digit) => `ct_${kind}_${digit.repeat(32)}`
 const context = ({ digit = "1", port = 43101 } = {}) => {
@@ -67,7 +67,35 @@ const exactFrozen = (value, expected) => {
       operation: "OBSERVE", binding_id: f.tuple[4].binding_id,
       incarnation_id: f.tuple[4].incarnation_id, evidence: "MATCHING_PRODUCER_PROOF", uncertainty: null,
     })
+
   })
+    test("keeps stop acknowledgment separate from proven runtime state", () => {
+      const tuple = context()
+      for (const [outcome, request, state] of [
+        [{ request_acknowledged: true, state: "UNKNOWN" }, "ACKNOWLEDGED", "DISCONNECTED_UNKNOWN"],
+        [{ request_acknowledged: false, state: "STOPPED" }, "NOT_ACKNOWLEDGED", "PROVEN_STOPPED"],
+        [{ request_acknowledged: true, state: "DEAD" }, "ACKNOWLEDGED", "PROVEN_DEAD"],
+      ]) {
+        exactFrozen(createRuntimeStop({ operation: "STOP", binding_id: tuple[4].binding_id, incarnation_id: tuple[3].incarnation_id, status: "MATCHED", outcome }), {
+          operation: "STOP", binding_id: tuple[4].binding_id, incarnation_id: tuple[3].incarnation_id, request, state,
+        })
+      }
+      exactFrozen(createRuntimeStop({ operation: "STOP", binding_id: tuple[4].binding_id, incarnation_id: tuple[3].incarnation_id, status: "UNAVAILABLE", outcome: null }), {
+        operation: "STOP", binding_id: tuple[4].binding_id, incarnation_id: tuple[3].incarnation_id,
+        request: "NOT_ACKNOWLEDGED", state: "DISCONNECTED_UNKNOWN",
+      })
+    })
+
+    test("returns only the exact frozen attach acknowledgment", () => {
+      const tuple = context()
+      exactFrozen(createRuntimeAttach({ operation: "ATTACH", binding_id: tuple[4].binding_id, incarnation_id: tuple[3].incarnation_id, status: "MATCHED", outcome: true }), {
+        operation: "ATTACH", binding_id: tuple[4].binding_id, incarnation_id: tuple[3].incarnation_id, acknowledged: true,
+      })
+      for (const input of [
+        { operation: "ATTACH", binding_id: tuple[4].binding_id, incarnation_id: tuple[3].incarnation_id, status: "UNAVAILABLE", outcome: null },
+        { operation: "ATTACH", binding_id: tuple[4].binding_id, incarnation_id: tuple[3].incarnation_id, status: "MATCHED", outcome: false },
+      ]) expect(() => createRuntimeAttach(input)).toThrow("matching attach outcome is required")
+    })
 
   test("maps only matching producer health proof to the three exact states", async () => {
     expect(() => createRuntimeHealth({ producer: {}, resolveContexts: () => [] })).toThrow(TypeError)
