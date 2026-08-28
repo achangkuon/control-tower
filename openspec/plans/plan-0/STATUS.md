@@ -42,10 +42,26 @@ las escribe nadie: salen medidas de `master-index.md` y del repositorio.
 emitir —árbol sucio, juicio contra otro commit, suite de otro commit— se ejercitaron todas
 durante la sesión y las tres se apagaron al corregir su causa.
 
-**Residuo abierto, con dueño ninguno:** `~/projects/agent-workflows` **no tiene remoto**, así
-que el motor compartido existe sólo en esta máquina. El hook lo detecta y omite la
-generación sin bloquear el push, de modo que no rompe nada; pero hasta que ese repo tenga
-remoto, ningún otro host puede generar un informe. No se enumera en esta pasada.
+**Residuo cerrado el 2026-08-28.** `~/projects/agent-workflows` ya tiene remoto:
+[`achangkuon/agent-workflows`](https://github.com/achangkuon/agent-workflows), privado, rama
+`master`. El motor compartido de radiografía deja de existir sólo en esta máquina y cualquier
+host con acceso al repo puede generar un informe. Cierra la limitación registrada en la
+[decisión 56](../decision-register.md).
+
+**No mueve ningún porcentaje, y conviene decirlo.** El trabajo ocurrió íntegramente en
+`agent-workflows`, no en este repositorio: no cierra ninguna Sesión enumerada de ningún Plan.
+Lo que cierra es este residuo, que nunca tuvo ID. El repo además incorporó `tools/setup.sh`
+—instalador propio de las skills de usuario, con la Torre como opt-in— y `tools/install.py`
+pasó a omitir los runtimes ausentes en vez de fallar, que era lo que volvía inusable la
+instalación en una máquina limpia.
+
+> **Nota de ownership para `S8.14`.** `agent-workflows` distribuye hoy dieciséis skills
+> propias, entre ellas `torre-control-entregas` y `agente-soporte` — exactamente las dos que
+> `M8.14.2` declara Tower-owned. Son dos dueños y dos instaladores sobre los mismos bytes:
+> justo la deriva que esa Sesión existe para impedir. Se resuelve antes de implementarla, no
+> después. El reparto que se deriva de [la frontera](../frontera-torre-gentle-ai.md) es que la
+> Torre conserve esas dos —describen sus roles permanentes— y `agent-workflows` las suelte;
+> las otras catorce son método de trabajo y deben seguir funcionando con la Torre ausente.
 
 **Lo que el informe no puede hacer, dicho explícitamente.** No deriva juicio. La
 prosa vive en `openspec/plans/radiografia.md` y lleva `verified_against`; si entran
