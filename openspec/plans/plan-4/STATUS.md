@@ -8,8 +8,8 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
 | Outputs | Raíz primaria Main-owned con TUI adjunta no autoritativa, inspección/liveness por proceso/sesión, recuperación same-host WSL y contrato host-neutral v1 de identidad, binding, incarnation, puerto loopback y operaciones observe/health/stop/attach. |
-| Roadmap | La evidencia OpenCode entregada permanece ✅ COMPLETO. `S4.4`, `S4.8` y `S4.9` están 🟡 DIFERIDO con preservación absoluta; `S4.10`, `S4.11` y `S4.13` están ✅ COMPLETO; `S4.12` permanece 📋 PLANIFICADO. P4 alcanza 69% (9/13 S). |
-| Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), decisiones 37–42, 92–94 y 97, Engram 9040/9042/9043/9044/9079, 9668/9669/9696/9697/9703/9704 y 9754/9755/9756, [`S4.11 archivada`](../../changes/archive/2026-08-28-s4-11-host-neutral-operations/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). REQUIREMENTS §14 permanece byte-pinned como base histórica; esta spec enmienda el lifecycle futuro. |
+| Roadmap | La evidencia OpenCode entregada permanece ✅ COMPLETO. `S4.4`, `S4.8` y `S4.9` están 🟡 DIFERIDO con preservación absoluta; `S4.10`, `S4.11` y `S4.13` están ✅ COMPLETO; `S4.14` está 🟢 LISTO y `S4.12` permanece 📋 PLANIFICADO. P4 alcanza 64% (9/14 S). |
+| Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), decisiones 37–42, 92–94, 97–98, Engram 9040/9042/9043/9044/9079, 9668/9669/9696/9697/9703/9704, 9754/9755/9756 y 9773/9774, [`S4.11 archivada`](../../changes/archive/2026-08-28-s4-11-host-neutral-operations/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). REQUIREMENTS §14 permanece byte-pinned como base histórica; esta spec enmienda el lifecycle futuro. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
 
@@ -468,9 +468,9 @@ graph LR
   S44 --> S71["S7.1 conformidad · 📋"]
   S46 --> S71
   S48 --> S71
-  S410["S4.10 ownership neutral · ✅"] --> S413["S4.13 validación pre-publicación · ✅"]
-  S411["S4.11 operaciones neutrales · ✅"] --> S94["S9.4 supervisor Pi · 🟢"]
-  S413 --> S94
+  S410["S4.10 ownership neutral · ✅"] --> S413["S4.13 validación pre-publicación · ✅"] --> S414["S4.14 actualidad final neutral · 🟢"]
+  S411["S4.11 operaciones neutrales · ✅"] --> S94["S9.4 supervisor Pi · 📋 HOLD"]
+  S414 --> S94
   S94 --> S412["S4.12 recuperación Pi · 📋"]
 ```
 
@@ -855,3 +855,34 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 - [x] Tarea T4.13.1.1 — RED: fijar orden acquire/validate/publish, ausencia compatible, no exposición de close, fallo y cuarentena.
 - [x] Tarea T4.13.1.2 — GREEN: agregar el puerto opcional mínimo y retener el close exacto dentro del registro.
 - [x] Tarea T4.13.1.3 — TRIANGULATE/REFACTOR: cubrir alternos negativos, sincronizar la spec y simplificar sin host policy ni paths extra.
+
+### Sesión 4.14 — Guardia neutral final de actualidad antes de publicar ownership
+
+**Estado:** 🟢 LISTO · **Depende de:** `S4.13` ✅ COMPLETO.
+
+**Área:** `contracts/host-runtime/ownership-registry.mjs`, `test/contracts/host-runtime/ownership.test.mjs`, `openspec/specs/host-runtime/spec.md`.
+
+**Recurso:** registro neutral y adquisición unpublished exacta; sin runtime vivo, push, DB, worktree ni token de entrega.
+
+**Decisiones:** `escala`, resuelta por decisión 98 / Emilio Engram 9773 — un guard opcional, caller-neutral y sincrónico confirma al ocupante exacto inmediatamente antes de publish. **Clase:** contrato visible del producto; API pública; seguridad y permisos; expansión de alcance; dependencias o evidencia contradictorias. **Contamina:** `M4.14.1`, `S9.4` y downstream hasta la entrega. Planificación corregida: Engram 9774.
+
+**Ruta:** `direct` — el contrato y los fallos están aprobados; no requiere SDD ni diseño adicional.
+
+**Criterios de aceptación — exactamente ocho, todos binarios:**
+- [ ] Tras acquire, `validateUnpublished` async y el safety recheck local, el guard corre inmediatamente antes de publish y en el mismo stack.
+- [ ] El guard recibe metadata neutral exacta y congelada de worktree, proceso e incarnation; no recibe `close` ni vocabulario de host.
+- [ ] Sólo el booleano primitivo `true` permite publicar inmediatamente la adquisición exacta.
+- [ ] `false`, throw, todo no booleano y todo thenable fallan sin `await` ni asimilación y terminan en exact-close o cuarentena.
+- [ ] Guard ausente conserva compatibilidad; no existe ruta alternativa que omita el recheck local vigente.
+- [ ] Un proceso reemplazado en el mismo worktree no puede publicar ownership del ocupante anterior.
+- [ ] `F1` permanece en `S9.4`: retorna el cierre exacto al registro antes de `validateUnpublished`; Proxy/accessors hostiles y producer no confiable quedan fuera.
+- [ ] El diff toca exactamente los tres paths de `Área`, registra RED/GREEN/alternos y permanece entre 120–220 líneas authored, con límite duro ≤400.
+
+#### Módulo M4.14.1 — Guardia sincrónica final-currentness
+
+**Entrega:** un commit directo de 120–220 líneas authored, hard ≤400, verificable y revertible. **Rollback:** revertir juntos los cambios de los tres paths de `Área` elimina el guard y conserva intacta `S4.13`.
+
+- [ ] Tarea T4.14.1.1 — RED: demostrar replaced-process same-seat, `false`, throw, no booleano y thenable sin publicación.
+- [ ] Tarea T4.14.1.2 — GREEN: invocar `validateCurrentBeforePublish` opcional sobre metadata neutral exacta y congelada, sólo tras el recheck local.
+- [ ] Tarea T4.14.1.3 — TRIANGULATE: cubrir guard ausente, `true` primitivo, no-await/no-assimilation y exact-close/cuarentena.
+- [ ] Tarea T4.14.1.4 — REFACTOR: sincronizar la spec y simplificar sin exposición de cierre, vocabulario de host ni paths extra.

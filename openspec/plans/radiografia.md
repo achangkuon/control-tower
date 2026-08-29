@@ -1,7 +1,7 @@
 ---
-verified_against: af607a93cb7f303e48bfc0e4ad761cadc3d1025e
+verified_against: 3f80cebcb23ee190795e9914f127f886835e9dd3
 verified_at: 2026-08-28
-standfirst: S4.13 ya entregó y probó el safety gate neutral entre adquisición y publicación. S9.4 sigue sin estar entregada: su candidato permanece congelado hasta que Support emita un brief fresco contra la nueva base. Las cifras se miden solas contra el código.
+standfirst: S4.13 está entregada, pero no garantiza la actualidad final same-stack del ocupante exacto. S4.14 está aprobada y no entregada; S9.4 conserva estado parcial en HOLD. Las cifras se derivan fuera de este juicio.
 ---
 
 <!--
@@ -33,7 +33,7 @@ Vos dirigís varios agentes de IA trabajando en varios proyectos a la vez. La To
 
 La prioridad cambió: la primera implementación se hará con Pi. No porque Pi pase a ser el producto, sino porque la Torre puede poseer la identidad del proceso que lanzó y exigir comprobantes producidos por ese proceso. Eso le permite distinguir una sesión propia de una sesión que sólo dice serlo.
 
-La unión neutral ya está construida y entregada: identidad, worktree, proceso, incarnación, binding y las operaciones observe/health/stop/attach no dependen de Pi. `S4.13` agregó y probó la validación opcional sobre ownership ya adquirido pero todavía no publicado. El host Pi sigue sin estar entregado: Support debe recalcular el brief de `S9.4` contra la nueva base antes de ejecutar.
+La unión neutral ya identifica worktree, proceso, incarnation y binding, y expone operaciones sin depender de Pi. `S4.13` valida ownership adquirido pero todavía no publicado; aun así, un proceso reemplazado en el mismo asiento puede volverse stale antes del publish final. `S4.14` está aprobada para cerrar esa ventana en el mismo stack. El host Pi sigue sin estar entregado y `S9.4` queda en HOLD.
 
 ## El veredicto actual
 
@@ -104,8 +104,8 @@ La lista siguiente reemplaza las antiguas “cinco decisiones”. No son pregunt
 |---|---|---|
 | `S4.10` — ✅ COMPLETO | Cinco contratos v1 y ownership exacto del puerto, sin importar Pi ni OpenCode | Que el adapter Pi ya funciona |
 | `S4.11` — ✅ COMPLETO; `S4.12` pendiente | Operaciones observables ya entregadas; recuperación mínima Pi después de sus dependencias | Que la Torre ya supervisa o recupera una jornada Pi real |
-| `S4.13` — ✅ COMPLETO | Validación neutral opcional entregada en orden acquire→validate unpublished→publish, con close exacto privado o cuarentena | Que el supervisor o adapter Pi ya estén entregados |
-| `S9.4` y `S1.17`–`S1.19` | Después de un brief fresco contra `af607a9`: supervisor, adapter y regresión Pi con aislamiento y recibos verificables | Que el candidato congelado sea capacidad o que exista soporte por encima de cinco clientes |
+| `S4.13` — ✅ COMPLETO; `S4.14` — 🟢 LISTO | Agregar la comprobación sincrónica final del ocupante exacto antes de publish | Que esa garantía o el supervisor Pi ya estén entregados |
+| `S9.4` y `S1.17`–`S1.19` | Después de `S4.14` y un brief fresco: supervisor, adapter y regresión Pi | Que el estado parcial sea capacidad o pueda retomarse |
 | `S9.5` | Materialización idempotente de sólo los asientos exactos del brief, después de cerrar `S8.12 + S9.4` | Que Herdr ya abra, reutilice o valide esos asientos automáticamente |
 | Gate Pi desatendido | Una corrida prolongada atribuible al candidato | Estabilidad de larga duración sin esa evidencia |
 | Gate de caída con tráfico | Recuperación idempotente tras caída real del broker | Entrega garantizada de mensajes en vuelo |
@@ -113,27 +113,16 @@ La lista siguiente reemplaza las antiguas “cinco decisiones”. No son pregunt
 
 ## Lo que pasa ahora mismo
 
-### G · sólido · `S4.13` entregó y probó el safety gate neutral
-Lo técnico: La decisión 97 ya existe en código como puerto caller-neutral opcional: `acquire → validate unpublished → publish`. El registro conserva privadamente el `close` exacto; rechazo o throw ejecutan exact-close y una incertidumbre deja cuarentena. Los cuatro paths de Área sumaron 234 líneas authored; la corrección de la carrera de publicación cerró con 26/26 focused, 30/30 host-runtime y 946/946 full.
-En simple: La Torre ya revisa una adquisición mientras todavía tiene la llave y antes de mostrarla como disponible. Si la revisión falla, cierra exactamente esa adquisición o la aparta; no la publica a medias. Esto entrega el seguro neutral, NO el supervisor Pi.
-Evidencia: `master/origin/master@af607a93cb7f303e48bfc0e4ad761cadc3d1025e` · `openspec/plans/plan-4/STATUS.md` · Engram 9764/9766/9767
+### G · crítico · `S4.13` todavía deja una ventana final de actualidad
+Lo técnico: `S4.13` valida ownership unpublished, pero no garantiza en el último instante same-stack que proceso e incarnation sigan siendo el ocupante actual del worktree estable. La decisión 98 aprueba `S4.14`: guard sincrónico opcional sobre metadata neutral congelada, inmediatamente antes de publish; sólo `true` primitivo publica.
+En simple: La Torre ya revisa la llave antes de mostrarla, pero todavía le falta comprobar, justo al entregarla, que sigue en manos de la misma persona. `S4.14` es el plano aprobado para ese último control; aún no existe en runtime.
+Evidencia: `openspec/plans/decision-register.md` · `openspec/plans/plan-4/STATUS.md` · Emilio Engram 9773/9774
 
-**Cómo se verifica sin prometer implementación:**
-
-- El registro adquiere primero y publica al final.
-- El hook es opcional y nunca recibe el cierre.
-- Un rechazo cierra exactamente o deja cuarentena visible.
-- La ausencia del hook conserva compatibilidad.
-- Ningún paso incorpora política específica de Pi u OpenCode.
-- La entrega de `S4.13` prueba este gate neutral; no prueba runtime Pi ni despliegue.
-
-### H · crítico · `S9.4` sigue sin entregarse y su candidato congelado no es capacidad
-Lo técnico: `S9.4` está 🟢 LISTO porque `S4.11` y `S4.13` están ✅ COMPLETO, pero el candidato `304d534` (tree `8049d32`) permanece inmutable: no se corrige, rebasa, retoma ni usa como base. Support debe recalcular un brief fresco contra `master/origin/master@af607a9` antes de asignar ejecución. OpenCode permanece parqueado y las dependencias downstream siguen transitando por `S9.4`.
-En simple: El seguro previo ya está puesto, pero el supervisor Pi todavía no. Hay una maqueta técnica guardada, no una función lista. El próximo paso es volver a medir el trabajo sobre la base válida; reutilizar la maqueta automáticamente saltaría esa reconciliación.
-Evidencia: `openspec/plans/plan-9/STATUS.md` · `openspec/plans/master-index.md` · candidato congelado `304d534`/tree `8049d32`
+### H · crítico · `S9.4` conserva trabajo parcial en HOLD, no capacidad
+Lo técnico: `S9.4` está 📋 PLANIFICADO / HOLD hasta entregar `S4.14` y emitir un brief fresco. Implementer-1 conserva M1 `a7d724dc`, M2 como dos archivos no trackeados en Engram 9772 y una corrección sin consumir; implementer-2/3 quedan como evidencia inmutable.
+En simple: Hay trabajo guardado, pero NO una función disponible ni permiso para continuarlo. Primero se entrega el último seguro neutral y después Support vuelve a asignar desde una base fresca.
+Evidencia: `openspec/plans/plan-9/STATUS.md` · `openspec/plans/master-index.md` · Engram 9772–9774
 
 ## Evidencia y límites de esta radiografía
 
-Este juicio fue reconciliado contra la base limpia `master/origin/master@af607a93cb7f303e48bfc0e4ad761cadc3d1025e` el 2026-08-28. `verified_against` identifica los bytes usados para este juicio. Las cifras de instrumentos, avance y cola son derivadas por el generador y no se escriben a mano acá. `S4.13` está entregada y probada; el candidato congelado de `S9.4` es evidencia inmutable y no demuestra implementación, runtime, despliegue ni capacidad.
-
-La última suite integral registrada para `S4.11` informó `934 pass`, `0 fail` y `5.502 expectativas`; este cierre documental no la reejecutó. Ese verde prueba las operaciones host-neutral entregadas, pero no prueba todavía el adapter Pi, la corrida desatendida ni capacidad por encima del límite vigente.
+Este juicio fue reconciliado contra la base limpia `master/origin/master@3f80cebcb23ee190795e9914f127f886835e9dd3` el 2026-08-28. `verified_against` identifica los bytes usados. Instrumentos, avance y cola se derivan fuera de este archivo. `S4.13` está entregada; `S4.14` sólo está aprobada y `S9.4` conserva estado parcial en HOLD. Ninguno demuestra implementación de la guardia final, runtime Pi, despliegue ni capacidad.
