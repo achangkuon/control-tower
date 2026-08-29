@@ -66,6 +66,15 @@ agent_instruction() {
     esac
 }
 
+# macOS still ships bash 3.2, which rejects a fractional `read -t`. One second
+# is imperceptible for a real arrow key — its two bytes are already buffered —
+# and costs a pause only on a bare Escape, which nothing here uses.
+if (( BASH_VERSINFO[0] >= 4 )); then
+    ESC_TIMEOUT="0.01"
+else
+    ESC_TIMEOUT="1"
+fi
+
 if [[ -t 1 ]]; then
     C_RESET=$'\033[0m'; C_DIM=$'\033[2m'; C_BOLD=$'\033[1m'
     C_OK=$'\033[32m';   C_WARN=$'\033[33m'; C_BAD=$'\033[31m'; C_SEL=$'\033[36m'
@@ -467,7 +476,7 @@ menu() {
         case "$key" in
             $'\e')
                 rest=""
-                read -rsn2 -t 0.01 rest
+                read -rsn2 -t "$ESC_TIMEOUT" rest
                 case "$rest" in
                     '[A') selected=$(( selected > 0 ? selected - 1 : last )) ;;
                     '[B') selected=$(( selected < last ? selected + 1 : 0 )) ;;

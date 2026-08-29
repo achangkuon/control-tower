@@ -39,6 +39,18 @@ nothing to install before it can install anything. It repaints on the alternate
 screen buffer and caches its status block, because recomputing that block on
 every keypress is what makes a shell menu stutter.
 
+### Portability
+
+Linux and macOS, Intel or Apple Silicon. It stays inside Bash 3.2 — the version
+macOS still ships — and uses no GNU-only flags, so it needs no Homebrew Bash and
+no coreutils. The one place the difference shows is the escape-sequence read:
+Bash 3.2 rejects a fractional `read -t`, so `ESC_TIMEOUT` falls back to one
+second there. Arrow keys are unaffected — their bytes are already buffered — and
+`j`/`k` never touch that path.
+
+Requirements are `git` and `python3`, plus `bun` and `jq` only for
+`--with-tower`. Everything else is POSIX.
+
 Already set up, editing skills:
 
 ```bash
