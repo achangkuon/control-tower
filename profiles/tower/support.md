@@ -2,7 +2,7 @@
 name: "support"
 role: "support"
 permanent: true
-skill: "skills/agente-soporte/SKILL.md"
+skill: "skills/torre-control-soporte/SKILL.md"
 capabilities: {"required":[],"omitted":["bash","edit","write"]}
 ---
 ## Identity

@@ -1,7 +1,7 @@
 ---
 verified_against: 3f80cebcb23ee190795e9914f127f886835e9dd3
 verified_at: 2026-08-28
-standfirst: S4.13 está entregada, pero no garantiza la actualidad final same-stack del ocupante exacto. S4.14 está aprobada y no entregada; S9.4 conserva estado parcial en HOLD. Las cifras se derivan fuera de este juicio.
+standfirst: S4.13 está entregada, pero no garantiza la actualidad final same-stack del ocupante exacto. S4.14 está aprobada y no entregada; S9.4 está PLANIFICADO y conserva estado parcial no asignable hasta que pasen los gates. Las cifras se derivan fuera de este juicio.
 ---
 
 <!--
@@ -33,7 +33,7 @@ Vos dirigís varios agentes de IA trabajando en varios proyectos a la vez. La To
 
 La prioridad cambió: la primera implementación se hará con Pi. No porque Pi pase a ser el producto, sino porque la Torre puede poseer la identidad del proceso que lanzó y exigir comprobantes producidos por ese proceso. Eso le permite distinguir una sesión propia de una sesión que sólo dice serlo.
 
-La unión neutral ya identifica worktree, proceso, incarnation y binding, y expone operaciones sin depender de Pi. `S4.13` valida ownership adquirido pero todavía no publicado; aun así, un proceso reemplazado en el mismo asiento puede volverse stale antes del publish final. `S4.14` está aprobada para cerrar esa ventana en el mismo stack. El host Pi sigue sin estar entregado y `S9.4` queda en HOLD.
+La unión neutral ya identifica worktree, proceso, incarnation y binding, y expone operaciones sin depender de Pi. `S4.13` valida ownership adquirido pero todavía no publicado; aun así, un proceso reemplazado en el mismo asiento puede volverse stale antes del publish final. `S4.14` está aprobada para cerrar esa ventana en el mismo stack. El host Pi sigue sin estar entregado y `S9.4` queda 📋 PLANIFICADO, no asignable hasta entregar `S4.14` y recibir un brief fresco de Support.
 
 ## El veredicto actual
 
@@ -47,10 +47,10 @@ Lo técnico: `S4.10` cerró las cinco formas públicas de identidad y binding; `
 En simple: El enchufe común ya no sólo identifica a cada runtime: también permite mirarlo, comprobar su salud, pedirle que se detenga y adjuntarse sin confiar en lo que el propio caller afirma. Pi puede conectarse sobre una base ya entregada, no sobre una promesa.
 Evidencia: `openspec/specs/host-runtime/spec.md` · `openspec/changes/archive/2026-08-28-s4-11-host-neutral-operations/verify-report.md` · `master/origin/master@6ddf6bc77d236dffad5b8ec625379117a91ce0b3`
 
-### 3 · sólido · Los tres roles permanentes ya son producto entregado
-Lo técnico: La decisión 95 y `S8.14` fijan exactamente Main/coordinator, Support e Implementer como perfiles permanentes repo-owned y host-neutral. Planner queda como función temporal. `profiles/tower/{main,support,implementer}.md`, las dos skills Tower propietarias y `test/install/tower-role-assets.test.mjs` están integrados en `master/origin/master@54b5cda733025b0bd50c2a21dc67d1d4192ac66d`; sus 10 criterios permanecen verificados.
-En simple: Los tres puestos ya salieron del taller y forman parte del producto entregado. El instalador todavía espera el adapter `S1.18`, no estos perfiles.
-Evidencia: `openspec/plans/plan-8/STATUS.md` · `master/origin/master@54b5cda733025b0bd50c2a21dc67d1d4192ac66d` · Engram 9726
+### 3 · sólido · Los tres roles están entregados; su ownership futuro está resuelto sólo en fuente
+Lo técnico: La decisión 95 y `S8.14` entregaron Main/coordinator, Support e Implementer como perfiles permanentes repo-owned y host-neutral. Esta entrega de fuente establece la decisión 100: Control Tower posee perfiles/skills Tower-specific y el router padre, `agent-workflows` conserva las skills genéricas, y cada sesión queda ligada a su worktree. Las guardias pasan 4/0 y 17/0. Las copias globales continúan stale y el payload Tower aún no empaqueta esos assets.
+En simple: Los tres puestos existen y la mudanza entre talleres queda definida en las fuentes. Las instalaciones globales no cambian hasta publicar ambos repositorios y ejecutar normalmente el instalador; `S8.12`/`S8.13` siguen pendientes.
+Evidencia: `openspec/plans/decision-register.md` · `openspec/plans/plan-8/STATUS.md` · base entregada `master/origin/master@54b5cda733025b0bd50c2a21dc67d1d4192ac66d`; migración de ownership probada en fuente
 
 ## Avance por Plan
 
@@ -92,9 +92,9 @@ En simple: Hay trabajo guardado, pero no hay permiso para llamarlo terminado. El
 Evidencia: `openspec/plans/plan-8/STATUS.md:724-734` · checkpoint ejecutable `388109f1e79f50ce05582d2b0a7b3ff8a9685f72`
 
 ### F · nuevo · La vista automática de los asientos está autorizada, pero todavía no existe
-Lo técnico: La decisión 91 enumera `S9.5` en P9 con ruta `design-tasks` y dependencias `S8.12 + S9.4`. Después de confirmar un brief, Main podrá materializar únicamente sus panes Herdr y sesiones Pi exactos, validando nombre, worktree, readiness e Intercom antes del despacho. La topología planificada separa madre Tower, hija Tower/Herdr y materializador idempotente; no se implementó ninguna de las tres piezas.
-En simple: Ya está decidido cómo evitar abrir escritorios de más: la aprobación del brief alcanza para mostrar exactamente los puestos nombrados y ninguno adicional. Pero hoy eso es un plano, no una capacidad disponible. La Torre todavía no abre ni reutiliza esos puestos automáticamente.
-Evidencia: `openspec/plans/decision-register.md:449-451` · `openspec/plans/plan-9/STATUS.md:238-291` · candidate `8beb3d7f846a23504021d2061f75acd76ca6d09f`
+Lo técnico: Las decisiones 91 y 101 fijan que el brief lleva path/rama exactos y que `cwd` más `foreground_cwd` deben coincidir con el worktree propio de Main, Support o worker antes del prompt/dispatch; un pane Herdr sólo da visibilidad. `S9.5`, dependiente de `S8.12 + S9.4`, automatizará esa regla ya vigente; todavía no existe.
+En simple: Ver escritorios separados no evita que dos agentes trabajen sobre la misma mesa. Hoy Main debe comprobar manualmente la mesa real de cada puesto; más adelante `S9.5` hará esa comprobación automática. Eso todavía no está desplegado.
+Evidencia: `openspec/plans/decision-register.md:449-451,528-530` · `openspec/plans/plan-9/STATUS.md:367-386` · candidate `8beb3d7f846a23504021d2061f75acd76ca6d09f`
 
 ## Próximas pruebas y trabajo enumerado
 
@@ -109,7 +109,7 @@ La lista siguiente reemplaza las antiguas “cinco decisiones”. No son pregunt
 | `S9.5` | Materialización idempotente de sólo los asientos exactos del brief, después de cerrar `S8.12 + S9.4` | Que Herdr ya abra, reutilice o valide esos asientos automáticamente |
 | Gate Pi desatendido | Una corrida prolongada atribuible al candidato | Estabilidad de larga duración sin esa evidencia |
 | Gate de caída con tráfico | Recuperación idempotente tras caída real del broker | Entrega garantizada de mensajes en vuelo |
-| `S8.14` — ✅ COMPLETO; `S8.12` y `S8.13` pendientes | Perfiles Tower ya entregados; luego cerrar bundle completo, instalación reversible y preflight externo | Que el bundle o la instalación estén cerrados, o que la Torre deba modificar Gentle AI, Pi o `pi-intercom` |
+| `S8.14` — ✅ COMPLETO; `S8.12` y `S8.13` pendientes | Roles entregados y ownership resuelto en fuente; consumir el set local en el bundle y cerrar instalación/rollback atómicos | Que esta entrega de fuente ya esté desplegada, que las copias globales stale se hayan retirado o que el payload Tower ya incluya los roles |
 
 ## Lo que pasa ahora mismo
 
@@ -118,11 +118,11 @@ Lo técnico: `S4.13` valida ownership unpublished, pero no garantiza en el últi
 En simple: La Torre ya revisa la llave antes de mostrarla, pero todavía le falta comprobar, justo al entregarla, que sigue en manos de la misma persona. `S4.14` es el plano aprobado para ese último control; aún no existe en runtime.
 Evidencia: `openspec/plans/decision-register.md` · `openspec/plans/plan-4/STATUS.md` · Emilio Engram 9773/9774
 
-### H · crítico · `S9.4` conserva trabajo parcial en HOLD, no capacidad
-Lo técnico: `S9.4` está 📋 PLANIFICADO / HOLD hasta entregar `S4.14` y emitir un brief fresco. Implementer-1 conserva M1 `a7d724dc`, M2 como dos archivos no trackeados en Engram 9772 y una corrección sin consumir; implementer-2/3 quedan como evidencia inmutable.
+### H · crítico · `S9.4` conserva trabajo parcial no asignable, no capacidad
+Lo técnico: `S9.4` está 📋 PLANIFICADO y no es asignable hasta entregar `S4.14` y emitir un brief fresco de Support. Implementer-1 conserva M1 `a7d724dc`, M2 como dos archivos no trackeados en Engram 9772 y una corrección sin consumir; implementer-2/3 quedan como evidencia inmutable.
 En simple: Hay trabajo guardado, pero NO una función disponible ni permiso para continuarlo. Primero se entrega el último seguro neutral y después Support vuelve a asignar desde una base fresca.
 Evidencia: `openspec/plans/plan-9/STATUS.md` · `openspec/plans/master-index.md` · Engram 9772–9774
 
 ## Evidencia y límites de esta radiografía
 
-Este juicio fue reconciliado contra la base limpia `master/origin/master@3f80cebcb23ee190795e9914f127f886835e9dd3` el 2026-08-28. `verified_against` identifica los bytes usados. Instrumentos, avance y cola se derivan fuera de este archivo. `S4.13` está entregada; `S4.14` sólo está aprobada y `S9.4` conserva estado parcial en HOLD. Ninguno demuestra implementación de la guardia final, runtime Pi, despliegue ni capacidad.
+Este juicio conserva `verified_against` sobre la base limpia `master/origin/master@3f80cebcb23ee190795e9914f127f886835e9dd3` del 2026-08-28: la medición de la radiografía permanece contra esa base registrada hasta regenerarla después de la entrega. La migración de ownership incorporada aquí está probada en fuente, pero no acredita despliegue global. Instrumentos, avance y cola se derivan fuera de este archivo. `S4.13` está entregada; `S4.14` sólo está aprobada y `S9.4` está 📋 PLANIFICADO, con estado parcial no asignable hasta entregar `S4.14` y recibir un brief fresco de Support. Ninguno demuestra implementación de la guardia final, runtime Pi, packaging Tower, lifecycle atómico, materialización Herdr ni capacidad.

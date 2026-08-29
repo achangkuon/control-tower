@@ -2,7 +2,7 @@
 name: "main"
 role: "coordinator"
 permanent: true
-skill: "skills/torre-control-entregas/SKILL.md"
+skill: "skills/torre-control/SKILL.md"
 capabilities: {"required":[],"omitted":["bash","edit","write"]}
 ---
 ## Identity

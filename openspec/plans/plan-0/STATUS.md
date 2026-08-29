@@ -55,35 +55,20 @@ Lo que cierra es este residuo, que nunca tuvo ID. El repo además incorporó `to
 pasó a omitir los runtimes ausentes en vez de fallar, que era lo que volvía inusable la
 instalación en una máquina limpia.
 
-> **Colisión de nombres abierta tras `S8.14`, verificada el 2026-08-28.** `S8.14` entregó en
-> `47a7389` dos archivos nuevos, `skills/torre-control-entregas/SKILL.md` y
-> `skills/agente-soporte/SKILL.md`, ambos `version: "1.0"`, 46 y 47 líneas, sin `assets/` ni
-> `references/`. Son **contratos de rol**, ligados a los tres perfiles permanentes.
+> **Colisión de nombres resuelta en fuente por la decisión 100; entrega pendiente.** Control
+> Tower es la fuente canónica de los perfiles y skills específicos de la Torre;
+> `agent-workflows` conserva las skills genéricas reutilizables. `torre-control` puede actualizar
+> ambos checkouts, pero cada repositorio instala únicamente sus propios assets.
 >
-> [`achangkuon/agent-workflows`](https://github.com/achangkuon/agent-workflows) distribuye
-> skills con **esos mismos dos nombres**, pero son otro artefacto: `torre-control-entregas`
-> v2.3 (75 líneas) y `agente-soporte` v2.1 (57 líneas), las dos con `assets/` y `references/`.
+> **Establecido por esta entrega de fuente:** la frontera entre ownership Tower-specific y
+> genérico, el contrato padre/router, la regla de sesión ligada al worktree y la migración probada
+> del instalador de `agent-workflows` para retirar copias globales obsoletas (17/0). La guardia
+> local de roles pasa 4/0.
 >
-> **No es una copia divergida: son dos artefactos distintos con el mismo nombre de archivo y
-> dos instaladores.** El que corra último gana, en silencio.
->
-> **El modo de falla es concreto.** La v2.3 de `agent-workflows` contiene
-> `references/manual-handoff-protocol.md`, que es el transporte con el que
-> `torre-control-entregas` opera **con la Torre apagada**. La v1.0 de este repositorio no lo
-> tiene. Si el bundle de `S8.12` instala la v1.0 sobre la v2.3, un puesto sin MCP
-> `control-tower` pierde su único transporte y la skill deja de degradar limpiamente — que es
-> la propiedad que [la frontera](../frontera-torre-gentle-ai.md) y el propio
-> `references/tower-transport.md` prometen.
->
-> **Corrección de una recomendación previa.** Antes de ver lo entregado se propuso que
-> `agent-workflows` soltara esas dos y la Torre las conservara. Con la evidencia a la vista eso
-> **pierde capacidad real**: la v1.0 no reemplaza a la v2.3, no la contiene. La salida que no
-> pierde nada es que los contratos de rol de este repositorio **no compartan nombre** con las
-> skills operativas —`profiles/tower/*` ya usa un espacio propio y podría alojarlos— y que
-> `S8.12` declare explícitamente cuál de los dos artefactos viaja en el bundle.
->
-> **Dueño: `S8.12`**, que fija la membresía del bundle y todavía está 📋 PLANIFICADO. Decisión
-> del maintainer, no derivable: es contrato visible del producto.
+> **Pendiente de despliegue:** las copias globales instaladas siguen stale hasta ejecutar
+> normalmente el instalador después de publicar ambos repositorios. Esto no cierra una Sesión ni
+> mueve porcentajes. `S8.12` aún debe consumir y empaquetar las fuentes Tower-owned locales;
+> `S8.13` aún debe instalarlas y revertirlas atómicamente. Ninguna recrea ownership ni el router.
 
 **Lo que el informe no puede hacer, dicho explícitamente.** No deriva juicio. La
 prosa vive en `openspec/plans/radiografia.md` y lleva `verified_against`; si entran

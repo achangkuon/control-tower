@@ -469,7 +469,7 @@ graph LR
   S46 --> S71
   S48 --> S71
   S410["S4.10 ownership neutral · ✅"] --> S413["S4.13 validación pre-publicación · ✅"] --> S414["S4.14 actualidad final neutral · 🟢"]
-  S411["S4.11 operaciones neutrales · ✅"] --> S94["S9.4 supervisor Pi · 📋 HOLD"]
+  S411["S4.11 operaciones neutrales · ✅"] --> S94["S9.4 supervisor Pi · 📋 PLANIFICADO · no asignable hasta S4.14 + brief Support"]
   S414 --> S94
   S94 --> S412["S4.12 recuperación Pi · 📋"]
 ```

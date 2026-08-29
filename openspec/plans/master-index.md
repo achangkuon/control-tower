@@ -8,7 +8,7 @@
 
 **`S4.13` permanece ✅ COMPLETO; `#1 S4.14` es el próximo contrato aprobado y no entregado.** Agrega la comprobación neutral same-stack del ocupante exacto inmediatamente antes de publicar ownership. **El retiro de `S4.9` no movió la cola**: era una Sesión fuera de cola y su archivo sólo corrige el denominador de P4.
 
-**`#2 S9.4` vuelve a 📋 PLANIFICADO / HOLD.** Implementer-1 conserva M1 `a7d724dc`, M2 en dos archivos no trackeados (Engram 9772) y la corrección sin consumir; la evidencia de implementer-2/3 queda inmutable.
+**`#2 S9.4` vuelve a 📋 PLANIFICADO.** No es asignable hasta entregar `S4.14` y recibir un brief fresco de Support. Implementer-1 conserva M1 `a7d724dc`, M2 en dos archivos no trackeados (Engram 9772) y la corrección sin consumir; la evidencia de implementer-2/3 queda inmutable.
 
 **`S4.9` está 📚 ARCHIVADO desde el 2026-08-29** ([decisión 99](decision-register.md)). Herdr `0.8.2` quedó adoptado en el host del maintainer fuera del plan; la Sesión se salteó, no se ejecutó, y se retira por evidencia realizada. **No es prerequisito de nada** y la Torre no consume el canal de estado de agentes de Herdr.
 

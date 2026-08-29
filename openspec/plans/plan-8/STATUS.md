@@ -61,7 +61,7 @@ Orden acordado: cerrar `M8.8.6` —✅ hecho el 2026-08-03— y `M8.8.3` —con 
 
 - **La Torre no llega a una máquina limpia por ese camino.** Reproduce el defecto de arriba. Hasta que `S8.13` cierre, `torre-control` debe seguir ofreciendo la Torre como opt-in y nunca como parte de la instalación por defecto — que es como está hoy.
 - **El bloqueo de `S8.6` deja de depender de una lectura.** Ahora se falsifica con un comando: `torre-control --with-tower` en un host sin residuo. Esa es exactamente la prueba que `S8.6` existe para hacer, y ya hay quien la corra.
-- **Ownership pendiente para `S8.14`:** ese mismo repo distribuye hoy `torre-control-entregas` y `agente-soporte`, las dos skills que `M8.14.2` declara Tower-owned. Detalle y reparto propuesto en [`plan-0/STATUS.md`](../plan-0/STATUS.md).
+- **Ownership resuelto; despliegue pendiente:** la decisión 100 fija Control Tower como fuente canónica de los assets Tower-specific y `agent-workflows` como fuente de las skills genéricas. El candidato local y el retiro probado de copias globales stale están listos en fuente, no entregados; ver [`plan-0/STATUS.md`](../plan-0/STATUS.md).
 
 **Nada de esto cierra una Sesión ni mueve un porcentaje.** Es evidencia nueva para `S8.6` y `S8.13`, producida fuera de este repositorio.
 
@@ -894,7 +894,7 @@ Las actualizaciones sobre los archivos de planificación reclamados por `install
 
 ## Sesión 8.12 — Canal único de distribución
 
-**Tercera de las tres Sesiones que nacen de la reconciliación ([decisión 63](decision-register.md)).** Pertenece a **P8**, cuyo propósito —que la Torre se instale como producto— la cubre exactamente. **Mudada desde el §12 del [inventario](../inventario-de-producto.md) el 2026-08-21**, al cerrar `S8.10` y liberar este archivo. El contrato no cambió.
+**Tercera de las tres Sesiones que nacen de la reconciliación ([decisión 63](decision-register.md)).** Pertenece a **P8**, cuyo propósito —que la Torre se instale como producto— la cubre exactamente. **Mudada desde el §12 del [inventario](../inventario-de-producto.md) el 2026-08-21**, al cerrar `S8.10` y liberar este archivo. Este bloque conserva el contrato histórico; la **Autoridad vigente de S8.12** al final del documento lo supersede con las decisiones 88, 95 y 100 y separa packaging (`S8.12`) de lifecycle (`S8.13`).
 
 **Estado:** 📋 PLANIFICADO
 **Depende de:** `S8.10` ✅ COMPLETO — toca el mismo contrato de payload. **Elegible desde el 2026-08-21.**
@@ -921,10 +921,10 @@ Agregar `mcp.mjs` y el plugin a las raíces pone los **bytes** en el almacén ve
 
 `install/lifecycle.mjs` hoy hace deliberadamente sólo la primera y trata la segunda como legado. **Una Sesión que resuelva sólo la membresía deja el producto igual de partido.**
 
-### Decisiones que esta Sesión debe declarar antes de implementar
+### Frontera reconciliada antes de implementar
 
-- `escala` — **si el producto sigue teniendo dos mitades o pasa a una.** **Clase:** contrato visible del producto; expansión de alcance. Unificar significa que `torre install` toque `opencode.json`, que es de otro producto — con su respaldo y su rollback. No unificar significa aceptar dos instaladores y **declararlo**, con una verificación que detecte la desalineación. **Ninguna de las dos la puede tomar un agente.**
-- `derivable` — **qué pasa si `opencode.json` no existe o no es de la Torre.** **Criterio:** falla cerrado y no lo crea. La Torre no inventa configuración de otro producto.
+- `escala`, **resuelta por las decisiones 88 y 100** — cada repositorio instala sólo los assets que posee. `S8.12` consume las fuentes Tower-owned locales y define su membresía versionada; no recrea el router padre ni copia skills genéricas de `agent-workflows`.
+- `derivable` — **qué pasa si el host externo no satisface el preflight.** **Criterio:** `S8.13` falla cerrado antes de mutar. La Torre valida productos externos; no inventa ni reescribe su configuración.
 
 ### Criterios de aceptación
 
@@ -993,10 +993,12 @@ El checkpoint completo de `S8.11`, sus commits, conteos, fallos sellados y pasos
 
 **Rollback:** revertir juntos los seis archivos exactos del `Área` —los tres perfiles, las dos skills propietarias y `test/install/tower-role-assets.test.mjs`— sin tocar runtime, configuración, DB, `AGENTS.md` ni assets externos.
 
+**Migración de ownership posterior a `S8.14`, establecida por esta entrega de fuente.** La decisión 100 conserva el resultado histórico de `S8.14` y fija la autoridad futura en el set local Tower-owned, con contrato padre/router y sesiones ligadas a su worktree. La guardia focalizada pasa 4/0 y el retiro probado en `agent-workflows` pasa 17/0. Las copias globales instaladas siguen stale hasta ejecutar normalmente el instalador después de publicar ambos repositorios. Esto no reabre ni vuelve a cerrar `S8.14`.
+
 ### Autoridad vigente de S8.12 — membresía del bundle Tower
 **Estado:** 📋 PLANIFICADO · **Depende de:** `S8.10` ✅, `S1.18`, `S8.14` · **Área:** `scripts/payload-closure.mjs`, `install/runtime-payload.mjs`, perfiles/skills Tower-specific y tests de membresía bajo `test/install/**` · **Recurso:** `RUNTIME_PAYLOAD_FILES`.
-**Decisiones:** decisiones 88 y 95 resueltas: incluye runtime, contrato neutral, adapter Pi y exactamente los tres perfiles/skills Tower canónicos —Support incluido—; excluye Planner permanente, configuración Pi/Intercom y skills genéricas Gentle AI. **Ruta:** `design-tasks` — reconcilia el contrato histórico de canal único con ownership externo explícito.
-**Criterios de aceptación:** bundle contiene exactamente bytes Tower declarados; los tres perfiles de `S8.14` se materializan desde el bundle; faltante/extra/symlink falla cerrado; no instala ni activa; no toca fuera de `Área`.
+**Decisiones:** decisiones 88, 95 y 100 resueltas: incluye runtime, contrato neutral, adapter Pi y el set local de perfiles/skills Tower canónicos —contrato padre/router y Support incluidos—; excluye Planner permanente, configuración Pi/Intercom y skills genéricas Gentle AI. **Ruta:** `design-tasks` — consume ownership ya resuelto; no redefine skills ni recrea el router padre.
+**Criterios de aceptación:** bundle contiene exactamente los bytes Tower-owned locales; los tres perfiles y sus skills se materializan desde el bundle; faltante/extra/symlink falla cerrado; no instala ni activa; no toca fuera de `Área`.
 #### Módulo M8.12.1 — Membresía versionada
 - [ ] Tarea T8.12.1.1 — RED: cubrir perfil faltante, skill externa copiada, extra y symlink.
 - [ ] Tarea T8.12.1.2 — GREEN: declarar y derivar la membresía completa Tower-specific.
@@ -1004,8 +1006,8 @@ El checkpoint completo de `S8.11`, sus commits, conteos, fallos sellados y pasos
 
 ### Sesión 8.13 — Install, activación, rollback y preflight externo
 **Estado:** 📋 PLANIFICADO · **Depende de:** `S8.12`, `S1.19`, `S4.12` · **Área:** `install/lifecycle.mjs`, `install.sh`, `bin/torre`, `test/install/**` · **Recurso:** puntero activo, backup/rollback y preflight de host externo.
-**Decisiones:** decisión 88 resuelta; la Torre valida compatibilidad pero no modifica Pi, pi-intercom ni Gentle AI. **Ruta:** `full-sdd` — operación reversible, activación y frontera de productos externos.
-**Criterios de aceptación:** instalación limpia activa bundle completo; preflight incompatible falla antes de mutar; rollback restaura runtime+perfiles juntos; no escribe configuración/skills externas; no toca fuera de `Área`.
+**Decisiones:** decisiones 88 y 100 resueltas; la Torre instala sólo el bundle Tower-owned ya definido, valida compatibilidad y no modifica Pi, pi-intercom ni skills genéricas Gentle AI. **Ruta:** `full-sdd` — operación reversible, activación y frontera de productos externos; no rediseña ownership ni el router.
+**Criterios de aceptación:** instalación limpia activa bundle completo; preflight incompatible falla antes de mutar; rollback restaura runtime+perfiles+skills Tower juntos; no escribe configuración/skills externas; no toca fuera de `Área`.
 #### Módulo M8.13.1 — Lifecycle conductualmente completo
 - [ ] Tarea T8.13.1.1 — RED: cubrir preflight incompatible, activación parcial y rollback incompleto.
 - [ ] Tarea T8.13.1.2 — GREEN: instalar, activar y revertir bundle Tower atómicamente.

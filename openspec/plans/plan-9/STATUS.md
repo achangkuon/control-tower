@@ -42,7 +42,7 @@ Las decisiones 49–54 del [registro](../decision-register.md) y las referencias
 | Orden histórico OpenCode-first | `S9.1 → S9.2 → S9.3`; `S9.4` estaba 🟡 DIFERIDO. La autoridad Pi-first vigente está en la reconciliación del 2026-08-27. |
 | Avance canónico | 0% (0/5 S). Ninguna Sesión está ✅ COMPLETO. `S9.5` entra al denominador como objetivo nuevo autorizado; `S9.4` conserva su historia diferida y su contrato Pi-first vigente. |
 | Entrega | Commit directo a `master`, sin PR. Cada resultado independientemente verificable y revertible, ≤400 líneas authored. |
-| Próxima acción | `S9.4` vuelve a 📋 PLANIFICADO / HOLD hasta entregar `S4.14` y recibir un brief fresco de Support. Su estado parcial queda preservado sin resume ni corrección. `S9.5` conserva `S8.12 + S9.4`. |
+| Próxima acción | `S9.4` vuelve a 📋 PLANIFICADO y no es asignable hasta entregar `S4.14` y recibir un brief fresco de Support. Su estado parcial queda preservado sin resume ni corrección. `S9.5` conserva `S8.12 + S9.4`. |
 | Decisión abierta | **Ninguna.** La decisión 98 aprobó `S4.14`; el gate actual es su entrega más un brief fresco, no otra decisión. |
 | Autoridad histórica | Engram 8478 rev8, 8506, 8645, 8646, 8647 rev2, 8894, 8898, 8950, 8955, 8908; decisiones 49–54 y 62. Los artefactos SDD de la vieja `S9.1` viven en `openspec/changes/s9-1-safe-slot-lifecycle/` y describen un alcance **superado**: se conservan como evidencia, no como autoridad de implementación. |
 
@@ -152,7 +152,7 @@ graph TD
   S91["S9.1 pool de asientos · 📋"] --> S92["S9.2 interlock de ocupado · 📋"]
   S91 --> S93["S9.3 caché externa de Bun · 📋"]
   S93 -.-> S94H["S9.4 launcher Pi · historia diferida"]
-  S411["S4.11 operaciones neutrales · ✅"] --> S94["S9.4 supervisor Pi-first · 📋 HOLD"]
+  S411["S4.11 operaciones neutrales · ✅"] --> S94["S9.4 supervisor Pi-first · 📋 PLANIFICADO · no asignable hasta S4.14 + brief Support"]
   S413["S4.13 validación ownership · ✅"] --> S414["S4.14 actualidad final · 🟢"] --> S94
   S812["S8.12 bundle Tower · 📋"] --> S95["S9.5 materialización Herdr · 📋"]
   S94 --> S95
@@ -233,7 +233,7 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 
 **Historia preservada:** el contrato anterior “Pi segundo host, después de OpenCode” queda etiquetado arriba como plan histórico parqueado.
 
-**Estado:** 📋 PLANIFICADO / HOLD — `S4.11` y `S4.13` están entregadas, pero `S4.14` todavía no. No se reanuda ni corrige ningún estado parcial hasta entregar `S4.14` y recibir un brief fresco de Support contra la nueva base canónica.
+**Estado:** 📋 PLANIFICADO — `S4.11` y `S4.13` están entregadas, pero `S4.14` todavía no. La Sesión no es asignable y no se reanuda ni corrige ningún estado parcial hasta entregar `S4.14` y recibir un brief fresco de Support contra la nueva base canónica.
 
 **Depende de:** `S4.11` ✅ COMPLETO, `S4.13` ✅ COMPLETO y `S4.14` no entregada.
 
@@ -276,7 +276,7 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 |---|---|---|
 | Autoridad de producto | Resuelta | Decisiones 97–98 / Emilio Engram 9755 y 9773 |
 | Guardia final neutral | No entregada | `S4.14`, decisión 98 / Engram 9773–9774 |
-| Estado implementer-1 | Parcial, HOLD | M1 en `a7d724dc`; M2 son exactamente dos archivos no trackeados, checkpoint Engram 9772; corrección no consumida |
+| Estado implementer-1 | Parcial, no asignable | M1 en `a7d724dc`; M2 son exactamente dos archivos no trackeados, checkpoint Engram 9772; corrección no consumida hasta entregar `S4.14` y recibir un brief fresco de Support |
 | Estado implementer-2/3 | Evidencia inmutable | Se preserva sin resume, corrección, rebase ni promoción a capacidad |
 | Brief Support | No vigente | Emitir uno fresco sólo después de entregar `S4.14` |
 | Executor | No asignable | Sólo después de `S4.14` + brief fresco |
@@ -341,7 +341,7 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 
 - El candidato exacto `304d534` (tree `8049d32`) y sus cinco intentos conservan evidencia de la raíz causal y del diseño fallido.
 - Queda inmutable: cero corrección, rebase, cherry-pick, resume o mutación sobre esos bytes.
-- Su existencia no satisface ningún criterio de `S9.4` y no autoriza runtime, Tower, DB, worktree ni peer actions; `S9.4` está 📋 PLANIFICADO / HOLD.
+- Su existencia no satisface ningún criterio de `S9.4` y no autoriza runtime, Tower, DB, worktree ni peer actions; `S9.4` está 📋 PLANIFICADO y no es asignable hasta entregar `S4.14` y recibir un brief fresco de Support.
 - Implementer-1 conserva M1 en `a7d724dc` y M2 como exactamente dos archivos no trackeados registrados en Engram 9772; su corrección sigue sin consumirse.
 - La evidencia de implementer-2 e implementer-3 permanece inmutable y no se promueve a capacidad.
 - Sólo después de entregar `S4.14` un brief fresco puede asignar un executor nuevo; ninguna evidencia previa es continuación.
@@ -364,13 +364,15 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 
 **Ruta:** `design-tasks` — producto, autoridad y fallos están cerrados; falta fijar el seam técnico mínimo entre skill hija y materializador sin duplicar el CLI Herdr.
 
-**Autoridad:** decisión 91; Engram 9652 (`Automático tras brief`); decisión 88 para el source root Tower-owned que entrega `S8.12`; contrato vivo leído exclusivamente con `herdr --skill`.
+**Autoridad:** decisiones 91 y 101; Engram 9652 (`Automático tras brief`); decisiones 88 y 100 para el source root Tower-owned que entrega `S8.12`; contrato vivo leído exclusivamente con `herdr --skill`.
+
+**Frontera de implementación:** `S9.5` sigue sin implementar. Debe automatizar y materializar la topología ya definida —madre Tower → hija Tower/Herdr → materializador— y el binding de asiento ya vigente; no vuelve a diseñar ownership, routing, roles ni membresía del bundle.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
-- [ ] Sólo después de confirmar el brief, Main crea o reutiliza exactamente sus panes y sesiones nombrados; cero asiento no aprobado se abre o recibe prompt.
-- [ ] Cada asiento queda ligado a nombre de agente, cwd/worktree exacto, Pi listo e Intercom conectado antes del dispatch; cualquier mismatch falla cerrado.
+- [ ] Sólo después de confirmar un brief con path y rama exactos, Main crea o reutiliza exactamente sus panes y sesiones nombrados; cero asiento no aprobado se abre o recibe prompt.
+- [ ] `MAIN`, `SUPPORT` y cada worker prueban `cwd` y `foreground_cwd` iguales a su worktree aprobado antes del prompt/dispatch; Support/worker desde Main, cambio de cwd o worktree ausente fallan cerrados sin `cd`, reciclado ni reuse cruzado.
 - [ ] Repetir el mismo input converge sin duplicar panes, procesos, nombres ni prompts, y produce el mismo reporte por asiento.
-- [ ] `torre-control-entregas` conserva autoridad y carga una sola hija Tower/Herdr; la hija no planifica ni despacha y el materializador no lee planes.
+- [ ] El contrato padre/router Tower-owned conserva autoridad; `torre-control-entregas` carga una sola hija Tower/Herdr, la hija no planifica ni despacha y el materializador no lee planes.
 - [ ] La integración usa el contrato dinámico `herdr --skill`, no sintaxis duplicada, foco implícito ni cierre de panes/sesiones ajenos.
 - [ ] Herdr ausente o incompatible produce fallback manual acotado y veraz, sin mutación parcial presentada como éxito.
 - [ ] El diff toca sólo `Área`; no modifica Pi, Pi-intercom, skills genéricas Gentle AI, `S8.12`, `S8.13`, worktrees ni runtime vivo.
@@ -381,7 +383,7 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 |---|---|---|---|---|---|
 | Madre `torre-control-entregas` | Custodiar brief confirmado, orden y dispatch | brief exacto confirmado | lista inmutable de asientos aprobados | invocación única de la hija o rechazo | Main; nunca controla Herdr directamente |
 | Hija `torre-herdr-seat-materialization` | Traducir esa lista a una operación Tower/Herdr | sólo la madre, después del gate | asientos exactos + contrato `herdr --skill` | reporte creado/reutilizado/pendiente | decisión 91; sin autoridad de planificación o dispatch |
-| `herdr-seat-materializer` | Crear/reusar y validar hechos de runtime de forma idempotente | llamada tipada de la hija | nombre, cwd, pane/session esperado y binding `S9.4` | evidencia por asiento + fallback acotado | Herdr instalado, Pi listo e Intercom conectado |
+| `herdr-seat-materializer` | Crear/reusar y validar hechos de runtime de forma idempotente | llamada tipada de la hija | nombre, path/rama, `cwd`, `foreground_cwd`, pane/session y binding `S9.4` | evidencia por asiento + fallback acotado | decisiones 91/101; Herdr, Pi e Intercom |
 
 **Topología:** madre → hija lazy-loaded → materializador. No hay ciclos, doble autoridad ni trigger público alternativo. Herdr aporta mecánica; la Torre no la reimplementa. La hija y el materializador son una ruta especializada, no un segundo dispatcher.
 

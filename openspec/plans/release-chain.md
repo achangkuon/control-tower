@@ -181,7 +181,7 @@ El comportamiento Hermes/Telegram restante es evidencia histórica archivada; no
 
 ## Capacidad paralela hoy
 
-La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas. `S4.13` está ✅ COMPLETO; `#1 S4.14` está 🟢 LISTO y no entregada; `#2 S9.4` está 📋 HOLD. La capacidad asignable es **0** hasta entregar `S4.14` y recibir un brief fresco. Todo estado parcial es evidencia, no capacidad.
+La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas. `S4.13` está ✅ COMPLETO; `#1 S4.14` está 🟢 LISTO y no entregada; `#2 S9.4` está 📋 PLANIFICADO y no es asignable hasta entregar `S4.14` y recibir un brief fresco de Support. La capacidad asignable es **0** hasta que pasen ambos gates. Todo estado parcial es evidencia, no capacidad.
 
 `S8.14` ya está ✅ COMPLETO en `master/origin/master@54b5cda733025b0bd50c2a21dc67d1d4192ac66d` y sale de la capacidad pendiente. `S8.12` conserva la expresión completa `S8.10 + S1.18 + S8.14`: `S8.10` y `S8.14` están satisfechas y todavía espera `S1.18`.
 
@@ -257,7 +257,7 @@ Se registra explícitamente en lugar de esconderse:
 
 - **`S11.1`** — ejecutor de comandos y superficie tipeable, en el Plan 11 nuevo. **No depende de nada** y encabeza la cola: el vocabulario, el validador y el canal `send`/`receive` ya existen y ya se instalan. Sin ella, `S7.1` no puede declarar conformidad sobre un contrato de operador que no se puede ejercer.
 - **`S4.6`** — retiro del adaptador de lanzamiento de `S4.2` y del fijado literal de Herdr 0.8.0. Hasta que cierre, **la única dependencia externa del producto que puede romperse sola sigue viva**.
-- **`S8.12`** — canal único de distribución. Hoy el canal de agentes no tiene instalador versionado, ni rollback, ni puntero activo.
+- **`S8.12`** — canal único de distribución. El ownership ya está resuelto en fuente por la decisión 100, pero el canal de agentes todavía no tiene packaging Tower versionado; instalación, rollback y activación atómica siguen en `S8.13`.
 
 **La brecha 6 dejó de estar sin dueño.** La cubren `S8.12` y el orden de conexión del [inventario de producto](inventario-de-producto.md), que además clasifica los 34 módulos sin llamador en cuatro cajones y fija la regla: ninguna Sesión de cableado enchufa un módulo «porque está suelto» — enchufa un comando del vocabulario, y el módulo entra con él.
 
@@ -265,7 +265,7 @@ Se registra explícitamente en lugar de esconderse:
 
 La cadena OpenCode anterior, sus commits, pruebas y decisiones queda preservada como historia parqueada. No es autoridad activa mientras OpenCode permanezca 🟡 DIFERIDO.
 
-**Cadena Pi:** `S4.10✅ → S4.13✅ → S4.14🟢 → S9.4📋 → S1.17 → S1.18 → S1.19`, reteniendo `S4.11✅ → S9.4📋`. `S4.14` está aprobada y no entregada; `S9.4` permanece HOLD hasta su entrega y un brief fresco de Support. `S4.12` y `S9.5` siguen transitivamente downstream de `S4.14` mediante `S9.4`: no se agregan aristas directas `S4.14 → S4.12` ni `S4.14 → S9.5`. El grafo permanece acíclico.
+**Cadena Pi:** `S4.10✅ → S4.13✅ → S4.14🟢 → S9.4📋 → S1.17 → S1.18 → S1.19`, reteniendo `S4.11✅ → S9.4📋`. `S4.14` está aprobada y no entregada; `S9.4` permanece 📋 PLANIFICADO y no es asignable hasta entregar `S4.14` y recibir un brief fresco de Support. `S4.12` y `S9.5` siguen transitivamente downstream de `S4.14` mediante `S9.4`: no se agregan aristas directas `S4.14 → S4.12` ni `S4.14 → S9.5`. El grafo permanece acíclico.
 
 **Aristas activas verificables:**
 
@@ -288,7 +288,7 @@ La cadena OpenCode anterior, sus commits, pruebas y decisiones queda preservada 
 
 ```mermaid
 graph LR
-  S410[S4.10 neutral identity · ✅] --> S413[S4.13 unpublished validation · ✅] --> S414[S4.14 final currentness · 🟢] --> S94[S9.4 Pi supervisor · 📋 HOLD] --> S117[S1.17 Pi gate] --> S118[S1.18 Pi adapter] --> S119[S1.19 Pi regression]
+  S410[S4.10 neutral identity · ✅] --> S413[S4.13 unpublished validation · ✅] --> S414[S4.14 final currentness · 🟢] --> S94[S9.4 Pi supervisor · 📋 PLANIFICADO · no asignable hasta S4.14 + brief Support] --> S117[S1.17 Pi gate] --> S118[S1.18 Pi adapter] --> S119[S1.19 Pi regression]
   S411[S4.11 neutral operations · ✅] --> S94
   S94 --> S412[S4.12 Pi recovery]
   S118 --> S412
@@ -306,6 +306,8 @@ graph LR
   S813 --> S71
 ```
 
+**Frontera de ownership vigente:** esta entrega de fuente establece la separación Tower-specific/genérica, el router padre, la regla de sesión ligada al worktree y la migración probada que retira assets Tower obsoletos de `agent-workflows`. Cada repositorio instala sólo sus assets. `S8.12` aún debe empaquetar el set Tower-owned; `S8.13`, entregar su lifecycle atómico; y `S9.5`, automatizar el binding del brief al worktree exacto. Las copias globales siguen stale hasta ejecutar normalmente el instalador después de publicar ambos repositorios; esta reconciliación no acredita despliegue ni materialización automática.
+
 **Validación, no decisión:** la corrida desatendida prolongada, crash del broker con tráfico y el límite de cinco clientes son gates de evidencia. El claim inicial termina en cinco; >5 no se promete hasta medirlo.
 
-**Capacidad y próxima acción:** `#1 S4.14` está 🟢 LISTO; `#2 S9.4` está 📋 HOLD. La capacidad asignable es **0** hasta entregar `S4.14` y recibir un brief fresco de Support. Ningún estado parcial autoriza resume o corrección. Se conservan las dependencias transitivas hacia `S4.12`, `S9.5`, `S8.13` y `S7.1`.
+**Capacidad y próxima acción:** `#1 S4.14` está 🟢 LISTO; `#2 S9.4` está 📋 PLANIFICADO y no es asignable hasta entregar `S4.14` y recibir un brief fresco de Support. La capacidad asignable es **0** hasta que pasen ambos gates. Ningún estado parcial autoriza resume o corrección. Se conservan las dependencias transitivas hacia `S4.12`, `S9.5`, `S8.13` y `S7.1`.

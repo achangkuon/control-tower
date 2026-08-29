@@ -16,7 +16,7 @@ const ASSET_CONTRACTS = {
       name: "main",
       role: "coordinator",
       permanent: true,
-      skill: "skills/torre-control-entregas/SKILL.md",
+      skill: "skills/torre-control/SKILL.md",
       capabilities: { required: [], omitted: ["bash", "edit", "write"] },
     },
     body: ["## Identity", "Coordinates confirmed Tower work and serves as the sole dispatcher.", "", "## Authority", "Dispatches approved assignments to Tower roles.", "", "## Boundaries", "Does not execute implementation work assigned to other roles."].join("\n"),
@@ -27,7 +27,7 @@ const ASSET_CONTRACTS = {
       name: "support",
       role: "support",
       permanent: true,
-      skill: "skills/agente-soporte/SKILL.md",
+      skill: "skills/torre-control-soporte/SKILL.md",
       capabilities: { required: [], omitted: ["bash", "edit", "write"] },
     },
     body: ["## Identity", "Provides read-only planning and capacity support to Main.", "", "## Authority", "Advises Main without dispatching or executing assignments.", "", "## Boundaries", "Does not write files, run commands, or dispatch work."].join("\n"),
@@ -43,36 +43,48 @@ const ASSET_CONTRACTS = {
     },
     body: ["## Identity", "Executes approved scope and returns implementation evidence.", "", "## Authority", "May use approved execution capabilities within the assigned scope.", "", "## Boundaries", "Has no dispatch authority and does not expand approved scope."].join("\n"),
   },
+  "skills/torre-control/SKILL.md": {
+    kind: "skill",
+    frontmatter: {
+      name: "torre-control",
+      description: "Trigger: Control Tower operator route, Tower start, Main dispatch, Herdr coordination. Route approved work through Main and Support.",
+      license: "Apache-2.0",
+      metadata: { author: "gentleman-programming", version: "1.0" },
+    },
+    references: ["../../profiles/tower/main.md", "../torre-control-soporte/SKILL.md", "../torre-control-entregas/SKILL.md"],
+    markers: [/Herdr tabs provide visibility, never Git isolation/, /`cwd` and `foreground_cwd`/, /Main worktree/, /permanent Support worktree/, /named implementer worktree/, /Starting Support or a worker from Main or another seat is forbidden/, /Main-path mismatch fails closed/, /worktree path and branch/, /S9\.5 automates this established rule/],
+    fixtureText: "Herdr tabs provide visibility, never Git isolation. Verify `cwd` and `foreground_cwd`, Main worktree, permanent Support worktree, named implementer worktree, and worktree path and branch. Starting Support or a worker from Main or another seat is forbidden. Main-path mismatch fails closed; S9.5 automates this established rule. ",
+  },
   "skills/torre-control-entregas/SKILL.md": {
     kind: "skill",
     frontmatter: {
       name: "torre-control-entregas",
-      description: "Trigger: confirmed Tower delivery coordination, serialization, or closure. Enforce Main-only dispatch and evidence gates.",
+      description: "Trigger: approved Tower delivery ordering, serialization, evidence, or closure. Enforce Main-only coordination and project delivery policy.",
       license: "Apache-2.0",
-      metadata: { author: "gentleman-programming", version: "1.0" },
+      metadata: { author: "gentleman-programming", version: "1.1" },
     },
-    reference: "../../profiles/tower/main.md",
-    markers: [/Main is the sole dispatch and delivery authority/, /confirmed brief/, /exact evidence/, /serialize/i, /fail closed/i, /closure evidence/],
-    fixtureText: "Main is the sole dispatch and delivery authority. Require a confirmed brief and exact evidence; serialize delivery, fail closed, and return closure evidence. ",
+    references: ["../../AGENTS.md", "../../profiles/tower/main.md", "../torre-control/SKILL.md"],
+    markers: [/Main is the sole dispatch and delivery coordinator/, /confirmed assignment/, /exact evidence/, /Serialize/, /fail closed/i, /closure evidence/],
+    fixtureText: "Main is the sole dispatch and delivery coordinator. Require a confirmed assignment and exact evidence; Serialize delivery, fail closed, and return closure evidence. ",
   },
-  "skills/agente-soporte/SKILL.md": {
+  "skills/torre-control-soporte/SKILL.md": {
     kind: "skill",
     frontmatter: {
-      name: "agente-soporte",
-      description: "Trigger: Tower source verification, capacity, conflicts, or brief preparation. Provide read-only evidence to Main.",
+      name: "torre-control-soporte",
+      description: "Trigger: Tower source verification, capacity, conflicts, or brief preparation. Provide host-neutral read-only evidence to Main.",
       license: "Apache-2.0",
       metadata: { author: "gentleman-programming", version: "1.0" },
     },
-    reference: "../../profiles/tower/support.md",
-    markers: [/read-only/, /capacity/, /conflicts/, /exact brief/, /never dispatch/, /never (?:write|reserve|commit|deliver|mutate)/i],
-    fixtureText: "Remain read-only while checking capacity and conflicts. Return an exact brief to Main; never dispatch and never write, reserve, commit, deliver, or mutate. ",
+    references: ["../../profiles/tower/support.md"],
+    markers: [/read-only/, /capacity/, /conflicts/, /exact brief/, /never dispatch/i, /Never (?:write|reserve|commit|deliver|mutate)/i],
+    fixtureText: "Remain read-only while checking capacity and conflicts. Return an exact brief to Main; never dispatch and Never write, reserve, commit, deliver, or mutate. ",
   },
 }
 const ASSET_PATHS = Object.keys(ASSET_CONTRACTS).sort()
 const PROFILE_PATHS = ASSET_PATHS.filter((path) => ASSET_CONTRACTS[path].kind === "profile")
 const SKILL_PATHS = ASSET_PATHS.filter((path) => ASSET_CONTRACTS[path].kind === "skill")
-const VENDOR_LEAKAGE = /(?:\bPi\b|OpenCode|Claude|Intercom|Herdr|@[^\s/]+\/|\.opencode|\.claude|(?:^|[\s`'"(])(?:~\/|\/(?!\/))|\b(?:home|global) path\b)/im
-const GENERIC_COPY = /(?:Gentle AI|session-kickoff|planificador-granular|\b(?:full-)?SDD\b|Strict TDD|Engram|branch-pr|chained-pr|work-unit)/i
+const VENDOR_LEAKAGE = /(?:\bPi\b|OpenCode|Claude|Intercom|@[^\s/]+\/|\.opencode|\.claude|(?:^|[\s`'"(])(?:~\/|\/(?!\/))|\b(?:home|global) path\b)/im
+const GENERIC_COPY = /(?:Gentle AI|planificador-granular|\b(?:full-)?SDD\b|Strict TDD|branch-pr|chained-pr|work-unit)/i
 
 const fail = (code, detail = "") => {
   throw new Error(`${code}${detail ? `: ${detail}` : ""}`)
@@ -144,7 +156,7 @@ const validateAssets = async (root) => {
     }
 
     assertPlainMapping(frontmatter.metadata)
-    const rawStyle = `name: ${expected.frontmatter.name}\ndescription: ${JSON.stringify(expected.frontmatter.description)}\nlicense: Apache-2.0\nmetadata:\n  author: gentleman-programming\n  version: "1.0"`
+    const rawStyle = `name: ${expected.frontmatter.name}\ndescription: ${JSON.stringify(expected.frontmatter.description)}\nlicense: Apache-2.0\nmetadata:\n  author: gentleman-programming\n  version: ${JSON.stringify(expected.frontmatter.metadata.version)}`
     if (match[1] !== rawStyle
       || JSON.stringify(Object.keys(frontmatter)) !== JSON.stringify(SKILL_FRONTMATTER_KEYS)
       || JSON.stringify(frontmatter) !== JSON.stringify(expected.frontmatter)) {
@@ -153,8 +165,8 @@ const validateAssets = async (root) => {
     const headings = [...match[2].matchAll(/^## (.+)$/gm)].map((heading) => heading[1])
     if (JSON.stringify(headings) !== JSON.stringify(SKILL_SECTIONS)) fail("CT_TOWER_ROLE_ASSET_PROFILE_DRIFT", path)
     const references = [...match[2].matchAll(/^- `([^`]+)`$/gm)].map((reference) => reference[1])
-    if (JSON.stringify(references) !== JSON.stringify([expected.reference])
-      || resolve(dirname(join(root, path)), expected.reference) !== join(root, expected.reference.replace("../../", ""))) {
+    if (JSON.stringify(references) !== JSON.stringify(expected.references)
+      || expected.references.some((reference) => !resolve(dirname(join(root, path)), reference).startsWith(root))) {
       fail("CT_TOWER_ROLE_ASSET_REFERENCE_DRIFT", path)
     }
     const tokens = match[2].trim().split(/\s+/).length
@@ -165,7 +177,7 @@ const validateAssets = async (root) => {
 }
 
 const renderProfile = ({ frontmatter, body }) => `---\n${Object.entries(frontmatter).map(([key, value]) => `${key}: ${JSON.stringify(value)}`).join("\n")}\n---\n${body}\n`
-const renderSkill = (contract) => `---\nname: ${contract.frontmatter.name}\ndescription: ${JSON.stringify(contract.frontmatter.description)}\nlicense: Apache-2.0\nmetadata:\n  author: gentleman-programming\n  version: "1.0"\n---\n${SKILL_SECTIONS.map((section) => `## ${section}\n\n${section === "References" ? `- \`${contract.reference}\`` : contract.fixtureText.repeat(3)}`).join("\n\n")}\n`
+const renderSkill = (contract) => `---\nname: ${contract.frontmatter.name}\ndescription: ${JSON.stringify(contract.frontmatter.description)}\nlicense: Apache-2.0\nmetadata:\n  author: gentleman-programming\n  version: ${JSON.stringify(contract.frontmatter.metadata.version)}\n---\n${SKILL_SECTIONS.map((section) => `## ${section}\n\n${section === "References" ? contract.references.map((reference) => `- \`${reference}\``).join("\n") : contract.fixtureText.repeat(2)}`).join("\n\n")}\n`
 const fixture = () => {
   const root = mkdtempSync(join(tmpdir(), "ct-tower-role-assets-"))
   roots.push(root)
@@ -185,7 +197,7 @@ const mutate = (root, path, mutation) => {
 afterEach(() => roots.splice(0).forEach((root) => rmSync(root, { recursive: true, force: true })))
 
 describe("Tower role asset author-time contracts", () => {
-  test("keeps exactly the five canonical host-neutral assets", async () => {
+  test("keeps exactly the six canonical Tower role assets", async () => {
     await validateAssets(repoRoot)
   })
 
@@ -229,7 +241,7 @@ describe("Tower role asset author-time contracts", () => {
   test("rejects noncanonical references, copied generic content, vendor leakage, and symlinks", async () => {
     for (const reference of ["../outside.md", "https://example.com/main.md"]) {
       const referenceRoot = fixture()
-      mutate(referenceRoot, SKILL_PATHS[0], (contract) => { contract.reference = reference })
+      mutate(referenceRoot, SKILL_PATHS[0], (contract) => { contract.references = [reference] })
       await expect(validateAssets(referenceRoot)).rejects.toThrow("CT_TOWER_ROLE_ASSET_REFERENCE_DRIFT")
     }
 
