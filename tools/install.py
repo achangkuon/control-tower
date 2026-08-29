@@ -29,11 +29,9 @@ SESSION_SKILLS = (
     "session-doc",
 )
 
-# Delivery coordination — the skills that simulate the Control Tower. They work
-# with the `control-tower` MCP connected (Tower on) and fall back to manual
-# copy-paste handoff when it is absent (Tower off).
-TOWER_SKILLS = (
-    "torre-control-entregas",
+# Generic delivery policy and shared-resource coordination. Product-specific
+# Control Tower operator skills are owned and installed by that project.
+DELIVERY_SKILLS = (
     "unattended-implementation",
     "politica-de-entrega",
     "coordinador_multi_agente",
@@ -49,7 +47,12 @@ SUPPORT_SKILLS = (
     "skill-composer",
 )
 
-SKILLS = SHARED + SESSION_SKILLS + TOWER_SKILLS + SUPPORT_SKILLS
+SKILLS = SHARED + SESSION_SKILLS + DELIVERY_SKILLS + SUPPORT_SKILLS
+
+# Explicit ownership migration. Normal installs retire only these known derived
+# copies; unlisted directories remain untouched.
+RETIRED_SKILLS = ("torre-control-entregas",)
+
 MANUAL_FILES = (
     Path(".claude/CLAUDE.md"),
     Path(".config/opencode/AGENTS.md"),
@@ -187,6 +190,19 @@ def _validate_file_destination(
         raise InstallError(f"expected regular file for {label}: {destination}")
 
 
+def _validate_retired_skill_destination(runtime_root: Path, destination: Path) -> None:
+    runtime_root = _absolute(runtime_root)
+    destination = _absolute(destination)
+    _validate_directory_path(runtime_root, "runtime skill root")
+    if destination.parent != runtime_root or destination.name not in RETIRED_SKILLS:
+        raise InstallError(f"invalid retired skill destination: {destination}")
+    if not _lexists(destination) or destination.is_symlink():
+        return
+    _assert_inside(runtime_root, destination, "runtime skill")
+    if not destination.is_dir():
+        raise InstallError(f"expected directory for retired runtime skill: {destination}")
+
+
 def render_manual_block(root: Path) -> bytes:
     template_path = root / "templates/session-routing.md"
     try:
@@ -238,6 +254,8 @@ def preflight(home: Path, root: Path) -> None:
     replacement = render_manual_block(root)
     for runtime_root in installed_skill_roots(home):
         _validate_directory_path(runtime_root, "runtime skill")
+        for retired_skill in RETIRED_SKILLS:
+            _validate_retired_skill_destination(runtime_root, runtime_root / retired_skill)
         for skill, relative, _ in source_files(root):
             skill_root = runtime_root / skill
             _validate_directory_path(skill_root, "runtime skill directory")
@@ -260,6 +278,10 @@ def build_plan(home: Path, root: Path | None = None) -> list[Change]:
     replacement = render_manual_block(root)
     changes: list[Change] = []
     for runtime_root in installed_skill_roots(home):
+        for retired_skill in RETIRED_SKILLS:
+            destination = runtime_root / retired_skill
+            if _lexists(destination):
+                changes.append(Change(destination, "retired-skill"))
         for skill, relative, source in source_files(root):
             destination = runtime_root / skill / relative
             if not destination.is_file() or destination.read_bytes() != source.read_bytes():
@@ -285,6 +307,16 @@ def _atomic_copy(source: Path, destination: Path, runtime_root: Path) -> None:
         temporary.unlink(missing_ok=True)
 
 
+def _remove_retired_skill(runtime_root: Path, destination: Path) -> None:
+    _validate_retired_skill_destination(runtime_root, destination)
+    if not _lexists(destination):
+        return
+    if destination.is_symlink():
+        destination.unlink()
+    else:
+        shutil.rmtree(destination)
+
+
 def _atomic_write(path: Path, content: bytes, instruction_root: Path) -> None:
     _validate_file_destination(
         instruction_root, path, "runtime instruction file", require_existing=True
@@ -308,6 +340,10 @@ def apply(home: Path, root: Path | None = None) -> list[Change]:
     replacement = render_manual_block(root)
     change_paths = {change.path for change in changes}
     for runtime_root in installed_skill_roots(home):
+        for retired_skill in RETIRED_SKILLS:
+            destination = runtime_root / retired_skill
+            if destination in change_paths:
+                _remove_retired_skill(runtime_root, destination)
         for skill, relative, source in source_files(root):
             destination = runtime_root / skill / relative
             if destination in change_paths:

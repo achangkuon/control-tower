@@ -60,8 +60,7 @@ committed on its branch as evidence.
 
 ## Parking
 
-1. Compose the decision block exactly as
-   `../../torre-control-entregas/assets/human-decision-relay.md` defines it.
+1. Compose the exact self-contained decision block required by the active project's instructions.
 2. Append it to `~/.local/state/unattended/<date>/<agent>.md`.
 3. Append `WORKING parked: <one line>` to the agent's `.state` file. Never a waiting state.
 4. Continue with the next task in sealed scope that does not depend on the answer.

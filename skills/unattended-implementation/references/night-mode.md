@@ -33,9 +33,8 @@ It follows the same contract as `agente-soporte` (`../agente-soporte/references/
 
 - Never call `tower_register`, `tower_set_state`, or `tower_acquire`. Reading
   `tower_status` and sending with `tower_send` is the whole Tower surface.
-- Never relay a question. The relay belongs to the Tower
-  (`../torre-control-entregas/assets/human-decision-relay.md`); this skill only sets
-  the policy an agent applies when the relay has no reader.
+- Never relay a question. The active project's Tower authority owns attended relay;
+  this skill only sets the policy an agent applies when no reader is available.
 - Never plan (that is `agente-soporte`), never implement (that is `sdd-apply`),
   never deliver (that is the Tower and the maintainer, awake).
 - Never write inside a repository worktree. Night artifacts live under
@@ -106,7 +105,7 @@ the relay's only destination is the maintainer's Main chat on the machine, so
 
 One mechanism, both modes. An agent that meets a question never stalls on it:
 
-1. Compose the decision block exactly as `human-decision-relay.md` defines it.
+1. Compose the exact self-contained decision block required by the active project's instructions.
 2. Append it to the night log at
    `~/.local/state/control-tower/night/<date>-<agent>.md`.
 3. `tower_set_state(state: "WORKING", note: "parked: <one line>")` — the question is

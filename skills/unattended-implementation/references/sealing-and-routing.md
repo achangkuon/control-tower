@@ -9,7 +9,7 @@
 | Chain semantics | `chained-pr` | Planning-only; resolve strategy and exact base/target map. Never create branches or PRs. |
 | Commit boundary | `work-unit-commits` | Freeze-only; describe a future commit boundary without committing. |
 | Implementation | `sdd-apply` | Consume the exact Sesión/task and base/target mapping. Never select another Sesión or redefine the chain. |
-| Runtime state | `torre-control-entregas` | Supervision-only; stop at `READY` or `BLOCKED`; no delivery token. |
+| Runtime state | Active project's registered Tower authority | Supervision-only; stop at `READY` or `BLOCKED`; no delivery token. |
 
 Load only the authorities needed for the current route. A child must return facts to the coordinator rather than invoke the coordinator, preventing cycles.
 

@@ -203,8 +203,83 @@ class InstallerTests(unittest.TestCase):
 
             self.assertFalse((home / ".codex").exists())
             for root in (home / ".agents/skills", home / ".claude/skills"):
-                self.assertTrue((root / "torre-control-entregas/SKILL.md").is_file())
+                self.assertTrue((root / "unattended-implementation/SKILL.md").is_file())
+                self.assertFalse((root / "torre-control-entregas").exists())
+            self.assertNotIn("torre-control-entregas", INSTALLER.SKILLS)
             self.assertEqual(INSTALLER.build_plan(home, ROOT), [])
+
+    def test_project_owned_tower_delivery_skill_is_not_distributed(self):
+        self.assertNotIn("torre-control-entregas", INSTALLER.SKILLS)
+        self.assertEqual(INSTALLER.RETIRED_SKILLS, ("torre-control-entregas",))
+
+    def test_install_removes_only_the_explicit_retired_skill_from_all_runtime_roots(self):
+        retired_paths = []
+        unrelated_paths = []
+        for runtime_root in INSTALLER.runtime_skill_roots(self.home):
+            retired = runtime_root / "torre-control-entregas"
+            retired.mkdir(parents=True)
+            (retired / "SKILL.md").write_bytes(b"stale")
+            (retired / "references").mkdir()
+            (retired / "references/legacy.md").write_bytes(b"stale")
+            retired_paths.append(retired)
+
+            unrelated = runtime_root / "user-owned-skill/notes.md"
+            unrelated.parent.mkdir()
+            unrelated.write_bytes(b"preserve")
+            unrelated_paths.append(unrelated)
+
+        cleanup = [
+            change
+            for change in INSTALLER.build_plan(self.home, ROOT)
+            if change.kind == "retired-skill"
+        ]
+        self.assertEqual({change.path for change in cleanup}, set(retired_paths))
+
+        INSTALLER.apply(self.home, ROOT)
+
+        self.assertTrue(all(not path.exists() for path in retired_paths))
+        self.assertTrue(all(path.read_bytes() == b"preserve" for path in unrelated_paths))
+        self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
+
+    def test_retired_skill_cleanup_unlinks_external_symlink_without_following_it(self):
+        external = self.home / "external-retired-skill"
+        external.mkdir()
+        sentinel = external / "sentinel.txt"
+        sentinel.write_bytes(b"protected")
+        retired = self.home / ".agents/skills/torre-control-entregas"
+        retired.parent.mkdir(parents=True)
+        retired.symlink_to(external, target_is_directory=True)
+
+        INSTALLER.apply(self.home, ROOT)
+
+        self.assertFalse(retired.exists())
+        self.assertFalse(retired.is_symlink())
+        self.assertEqual(sentinel.read_bytes(), b"protected")
+
+    def test_retired_skill_cleanup_does_not_follow_nested_external_symlink(self):
+        external = self.home / "external-nested-directory"
+        external.mkdir()
+        sentinel = external / "sentinel.txt"
+        sentinel.write_bytes(b"protected")
+        retired = self.home / ".agents/skills/torre-control-entregas"
+        retired.mkdir(parents=True)
+        (retired / "external").symlink_to(external, target_is_directory=True)
+
+        INSTALLER.apply(self.home, ROOT)
+
+        self.assertFalse(retired.exists())
+        self.assertEqual(sentinel.read_bytes(), b"protected")
+
+    def test_retired_skill_cleanup_rejects_regular_file_before_mutation(self):
+        retired = self.home / ".agents/skills/torre-control-entregas"
+        retired.parent.mkdir(parents=True)
+        retired.write_bytes(b"user-file")
+
+        with self.assertRaises(INSTALLER.InstallError):
+            INSTALLER.apply(self.home, ROOT)
+
+        self.assertEqual(retired.read_bytes(), b"user-file")
+        self.assertFalse((self.home / ".agents/skills/session-kickoff").exists())
 
     def test_full_sdd_wording_has_one_managed_apply_and_verify_pass(self):
         content = (ROOT / "skills/session-kickoff/SKILL.md").read_text(encoding="utf-8")

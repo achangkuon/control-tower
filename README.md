@@ -1,9 +1,12 @@
 # Agent Workflows
 
-Version-controlled source of truth for the user-owned skill family: session
-workflow routing, planning, support, closure, and the Control Tower delivery
-skills. Gentle AI owns SDD phase skills and orchestrator surfaces; this package
-does not replace, edit, invoke, or regenerate those managed assets.
+Version-controlled source of truth for the generic user-owned skill family:
+session workflow routing, planning, support, closure, delivery policy, and shared
+resource coordination. Product-specific Control Tower skills live in the Control
+Tower repository. The retired local `torre-control-entregas` source remains inert
+until the bounded cleanup commits remove it; it is neither installed nor authoritative.
+Gentle AI owns SDD phase skills and orchestrator surfaces; this package does not
+replace, edit, invoke, or regenerate those managed assets.
 
 These skills do **not** ship with Gentle AI. The `author: gentleman-programming`
 frontmatter on several of them is a `skill-creator` template default, not
@@ -74,10 +77,10 @@ binary, installer and update authority; installing it from here would fork its
 release channel and defeat `gentle-ai sync`. A missing Gentle AI is a warning
 with a pointer to its own instructions, not a failure.
 
-**The Tower is opt-in on purpose.** These skills describe how work is done and
-must keep working with the Tower absent — `torre-control-entregas` detects the
-missing MCP itself and falls back to manual copy-paste handoff. Coupling the two
-would make an optional product a prerequisite for a mandatory one.
+**The Tower is opt-in on purpose.** These generic skills describe how work is done
+and must keep working with the Tower absent. A project that uses the Tower supplies
+its own operator skills and authority routes; this package does not install or
+simulate them.
 
 `setup.sh` seeds the `SESSION-SKILL-ARCHITECTURE:MANUAL` block for the agents
 this machine actually has, because `install.py` replaces that block but refuses
@@ -122,7 +125,7 @@ children and are loaded only when their responsibility applies.
 | --- | --- |
 | Shared conventions | `_shared/plan-naming-convention.md` |
 | Session workflow | `session-kickoff`, `session-plan`, `session-context-loader`, `planificador-granular`, `agente-soporte`, `session-doc` |
-| Control Tower delivery | `torre-control-entregas`, `unattended-implementation`, `politica-de-entrega`, `coordinador_multi_agente` |
+| Delivery policy and shared resources | `unattended-implementation`, `politica-de-entrega`, `coordinador_multi_agente` |
 | Analysis and support | `architecture-audit`, `project-kickoff`, `big-files-remediation-loop`, `cierre-de-decisiones`, `explicalo-simple`, `skill-composer` |
 
 ### `_shared` is deliberately partial
@@ -134,12 +137,12 @@ deletes, so it overlays the owned convention and leaves the Gentle AI files for
 `gentle-ai sync` to manage. Do not add the managed files here — a frozen copy
 would silently defeat their upstream updates.
 
-### Tower on, Tower off
+### Project-owned Tower coordination
 
-`torre-control-entregas` has two transports. With the `control-tower` MCP
-connected it coordinates through real tools; without it, the same skill falls
-back to manual copy-paste handoff. Installing these skills does not turn the
-Tower on. Not configuring the MCP is the whole "off".
+Installing this package never installs a Control Tower operator or delivery
+coordinator. Generic skills may consume a Tower authority registered by the active
+project, but remain usable without one. Tower ON/OFF routing and operator topology
+belong to that project's canonical repository.
 
 ## Installation
 
@@ -173,7 +176,7 @@ discovery surfaces; this repository is the canonical source.
 ## Layout
 
 ```text
-skills/                         canonical user-owned skills
+skills/                         canonical generic user-owned skills
 templates/session-routing.md    manual routing block template
 tools/install.py                install, check, and dry-run implementation
 tests/test_install.py           focused standard-library tests

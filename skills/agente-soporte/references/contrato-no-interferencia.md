@@ -57,13 +57,13 @@ Do not defeat the canary by writing "just a temporary file".
 
 ## Relationship to the Tower
 
-One direction only. This agent consumes the Tower's delivery vocabulary —
-`state-machine.md` for states, `compact-briefs.md` for the budget — so a brief it
-writes is one the Tower can act on unchanged.
+One direction only. This agent produces an exact, self-contained brief so a
+project-provided delivery authority can act on it unchanged.
 
-The Tower knows nothing about this agent and needs nothing from it. Everything from
-ordering and tokens through merge proof and global closure belongs to
-`torre-control-entregas`. When a question crosses that line, hand it over.
+The delivery authority knows nothing about this agent and needs nothing from it.
+Ordering, tokens, delivery proof, and global closure stay outside Support. When a
+question crosses that line, hand it to the authority registered by the active
+project; never assume this repository owns or installs one.
 
 ## Answering anything else
 

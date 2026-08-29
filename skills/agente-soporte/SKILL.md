@@ -30,7 +30,7 @@ session start/continue intent or approved-scope decomposition; those belong to
 | User asks for decomposition or a new Sesión | Route to `planificador-granular`; do not plan it here. |
 | A Sesión lacks `Área` or `Recurso` | Report it missing and exclude it from parallel-safe capacity. |
 | Sources disagree | Report the discrepancy as the finding. |
-| Delivery, ordering, tokens, or closure arise | Hand off to `torre-control-entregas`. |
+| Delivery, ordering, tokens, or closure arise | Hand off to the active project's delivery authority; do not assume or install one here. |
 
 ## Execution Steps
 
