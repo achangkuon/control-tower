@@ -20,8 +20,12 @@ const listen = (port = 0) => new Promise((resolve, reject) => {
 const rejectsCode = async (promise, code) => expect(promise).rejects.toMatchObject({ name: "ContractError", code })
 const services = []
 afterEach(async () => { await Promise.allSettled(services.splice(0).map((service) => service.dispose())) })
-const serviceFor = (tuples, acquireAtReservation) => {
-  const service = createHostRuntimeOwnership({ resolveContexts: (binding) => tuples.filter((tuple) => tuple[4] === binding), ...(acquireAtReservation ? { acquireAtReservation } : {}) })
+const serviceFor = (tuples, acquireAtReservation, validateUnpublished) => {
+  const service = createHostRuntimeOwnership({
+    resolveContexts: (binding) => tuples.filter((tuple) => tuple[4] === binding),
+    ...(acquireAtReservation ? { acquireAtReservation } : {}),
+    ...(validateUnpublished ? { validateUnpublished } : {}),
+  })
   services.push(service)
   return service
 }
@@ -48,6 +52,36 @@ describe("final loopback listener acquisition", () => {
     firstGate.resolve(); await one
     secondGate.resolve(); await rejectsCode(two, "CT_HOST_RUNTIME_CLEANUP_FAILED")
     await rejectsCode(service.reserve(replacement[4]), "CT_HOST_RUNTIME_PORT_RESERVED")
+  })
+
+  test("quarantines the exact close when async validation rejection cannot confirm cleanup", async () => {
+    const exact = context("e", 43113), replacement = context("f", 43113)
+    let closeCapability, closes = 0
+    const service = serviceFor(
+      [exact, replacement],
+      async () => closeCapability = async () => { if (++closes === 1) throw new Error("uncertain close") },
+      async () => { throw new Error("rejected validation") },
+    )
+
+    await rejectsCode(service.reserve(exact[4]), "CT_HOST_RUNTIME_CLEANUP_FAILED")
+    expect(closes).toBe(1)
+    await rejectsCode(Promise.resolve().then(() => service.release(exact[4])), "CT_HOST_RUNTIME_NOT_OWNER")
+    await rejectsCode(service.reserve(replacement[4]), "CT_HOST_RUNTIME_PORT_RESERVED")
+    await service.dispose()
+    expect(closes).toBe(2)
+    expect(closeCapability).toBeInstanceOf(Function)
+  })
+
+  test("releases a real unpublished listener after validation rejects", async () => {
+    const probe = await listen(), port = probe.address().port
+    await closeServer(probe)
+    const exact = context("0", port)
+    const service = serviceFor([exact], undefined, async () => { throw new Error("rejected") })
+
+    await rejectsCode(service.reserve(exact[4]), "CT_HOST_RUNTIME_ACQUISITION_FAILED")
+    await rejectsCode(Promise.resolve().then(() => service.release(exact[4])), "CT_HOST_RUNTIME_NOT_OWNER")
+    const reusable = await listen(port)
+    await closeServer(reusable)
   })
 
   test("serializes pending ownership and passes the exact context once without a handoff", async () => {

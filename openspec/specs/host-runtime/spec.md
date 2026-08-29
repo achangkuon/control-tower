@@ -96,6 +96,47 @@ The system MUST reject a reservation when the requested port is not a valid loop
 - WHEN the binding requests reservation
 - THEN the system MUST reject the request closed and MUST NOT adopt, replace, or claim the listener
 
+### Requirement: Neutral unpublished validation before ownership publication
+
+The ownership registry MAY accept one optional caller-neutral `validateUnpublished` capability. When supplied, it MUST be a function. The registry MUST invoke it only after acquiring the exact loopback reservation and its exact private close capability, while the reservation remains unpublished, and before publishing ownership. When the capability is absent, reservation behavior, acknowledgment shape, service shape, release behavior, and publication semantics MUST remain unchanged.
+
+The validator MUST receive only one immutable neutral metadata view containing exactly `binding_id`, `runtime_id`, `worktree_id`, `process_id`, `incarnation_id`, and `loopback_port`. It MUST NOT receive close, release, publish, registry maps, mutable ownership, adapter state, or host-specific policy. The registry MUST retain sole ownership of the exact close capability and sole authority to publish the acquired reservation.
+
+Successful synchronous or asynchronous validation MUST permit exactly one publication of the exact acquired reservation. A validator throw or rejection MUST prevent publication and make the registry invoke that same exact close capability. If close succeeds, reservation MUST fail closed as an acquisition failure. If close throws, rejects, or cannot be confirmed, reservation MUST fail as cleanup failure and the registry MUST quarantine the exact close with its neutral metadata, block port reuse, and retain it for disposal retry. The registry MUST NOT substitute best-effort cleanup, reconstruct a close capability, or leave uncertain ownership untracked.
+
+#### Scenario: Optional validation accepts unpublished ownership
+
+- GIVEN a current exact binding, an acquired loopback reservation, and a validator
+- WHEN validation completes successfully
+- THEN the validator MUST have observed only frozen neutral metadata while the reservation was unpublished
+- AND the registry MUST publish the exact reservation once after validation
+
+#### Scenario: No validator preserves compatibility
+
+- GIVEN a current exact binding and no unpublished validator
+- WHEN the registry acquires the reservation
+- THEN it MUST publish and acknowledge the reservation with the existing public service and acknowledgment shapes
+
+#### Scenario: Validation failure closes without publication
+
+- GIVEN the registry acquired a reservation and retained its exact close capability
+- WHEN the validator throws or rejects
+- THEN the registry MUST NOT publish ownership
+- AND it MUST invoke that exact close capability and report the reservation failure without exposing private validation detail
+
+#### Scenario: Uncertain validation cleanup is quarantined
+
+- GIVEN validation failed and the exact close throws, rejects, or remains uncertain
+- WHEN another binding requests the same loopback port or the registry disposes
+- THEN the port MUST remain unavailable while quarantined
+- AND disposal MUST retry the same exact close capability before clearing quarantine
+
+#### Scenario: Validation cannot gain ownership authority
+
+- GIVEN a validator attempts to inspect or retain its input
+- WHEN it examines the immutable view
+- THEN no close, release, publish, registry map, mutable ownership, host, adapter, broker, Pi, OpenCode, or Intercom authority MUST be present
+
 ### Requirement: Exact release and safe port reuse
 
 The system MUST release a port only when the release request validates the exact current binding and incarnation that own its reservation. A release MUST remove authority for that released binding; it MUST NOT validate old binding state if the numeric port is later reserved again.

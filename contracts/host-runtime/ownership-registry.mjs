@@ -15,9 +15,10 @@ const acknowledgement = ({ binding_id, incarnation_id, loopback_port }) => Objec
 const ownerKey = (record) => `${record.runtime_id}\u0000${record.worktree_id}\u0000${record.process_id}`
 const equal = (left, right) => Object.keys(right).every((key) => left[key] === right[key])
 
-export const createHostRuntimeOwnership = ({ resolveContexts, acquireAtReservation = acquireNodeLoopbackAtReservation } = {}) => {
+export const createHostRuntimeOwnership = ({ resolveContexts, acquireAtReservation = acquireNodeLoopbackAtReservation, validateUnpublished } = {}) => {
   if (typeof resolveContexts !== "function") throw new TypeError("resolveContexts must be a function")
   if (typeof acquireAtReservation !== "function") throw new TypeError("acquireAtReservation must be a function")
+  if (validateUnpublished !== undefined && typeof validateUnpublished !== "function") throw new TypeError("validateUnpublished must be a function")
   const activeByOwner = new Map(), activeByPort = new Map(), pendingByPort = new Map()
   const bindingHistory = new Map(), incarnationHistory = new Set(), cleanupPending = new Set()
   const pendingOperations = new Set(), releaseInFlight = new Map()
@@ -42,6 +43,16 @@ export const createHostRuntimeOwnership = ({ resolveContexts, acquireAtReservati
     activeByPort.set(record.loopback_port, held)
   }
 
+  const publicationIsSafe = (record) => lifecycle === "accepting"
+    && pendingByPort.get(record.loopback_port) === record
+    && !activeByOwner.has(ownerKey(record))
+    && !activeByPort.has(record.loopback_port)
+
+  const rejectUnsafePublication = async (record, close) => {
+    try { await close() } catch { cleanupPending.add(Object.freeze({ ...record, close })) }
+    fail("CT_HOST_RUNTIME_CLEANUP_FAILED", "Acquired listener could not be published safely", "cleanup")
+  }
+
   const reserveOperation = async (binding) => {
     const { exactContext, record } = preflight(binding)
     pendingByPort.set(record.loopback_port, record)
@@ -49,10 +60,21 @@ export const createHostRuntimeOwnership = ({ resolveContexts, acquireAtReservati
     try {
       close = await acquireAtReservation(exactContext, record.loopback_port)
       if (typeof close !== "function") throw new TypeError("acquisition did not return a close capability")
-      if (lifecycle !== "accepting" || pendingByPort.get(record.loopback_port) !== record || activeByOwner.has(ownerKey(record)) || activeByPort.has(record.loopback_port)) {
-        try { await close() } catch { cleanupPending.add(Object.freeze({ ...record, close })) }
-        fail("CT_HOST_RUNTIME_CLEANUP_FAILED", "Acquired listener could not be published safely", "cleanup")
+      if (!publicationIsSafe(record)) await rejectUnsafePublication(record, close)
+      if (validateUnpublished) {
+        try {
+          await validateUnpublished(record)
+        } catch {
+          try {
+            await close()
+          } catch {
+            cleanupPending.add(Object.freeze({ ...record, close }))
+            fail("CT_HOST_RUNTIME_CLEANUP_FAILED", "Unpublished listener close could not be confirmed", "cleanup")
+          }
+          fail("CT_HOST_RUNTIME_ACQUISITION_FAILED", "Unpublished listener validation failed", "acquisition")
+        }
       }
+      if (!publicationIsSafe(record)) await rejectUnsafePublication(record, close)
       publish(record, close)
       return acknowledgement(record)
     } catch (error) {
