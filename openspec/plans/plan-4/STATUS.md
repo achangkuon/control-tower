@@ -789,7 +789,7 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 
 **Estado:** 🟢 LISTO · **Depende de:** `S4.10` ✅ COMPLETO.
 
-**Área:** `contracts/host-runtime/ownership-registry.mjs`, `test/contracts/host-runtime/ownership-registry.test.mjs`, `test/contracts/host-runtime/loopback.test.mjs`, `openspec/specs/host-runtime/spec.md`.
+**Área:** `contracts/host-runtime/ownership-registry.mjs`, `test/contracts/host-runtime/ownership.test.mjs`, `test/contracts/host-runtime/loopback.test.mjs`, `openspec/specs/host-runtime/spec.md`.
 
 **Recurso:** registro neutral, reserva unpublished y capacidad privada de `close` exacta. Sin broker Pi, runtime vivo, DB, worktree ni token de entrega.
 
