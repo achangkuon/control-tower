@@ -170,6 +170,7 @@ seed_blocks() {
             continue
         fi
 
+
         mkdir -p "$(dirname "$file")"
         if [[ -f "$file" ]]; then
             cp "$file" "$file.bak.$(date +%Y%m%d-%H%M%S)"
@@ -179,7 +180,7 @@ seed_blocks() {
         printf '\n%s\n%s\n' "$BLOCK_START" "$BLOCK_END" >> "$file"
         ok "$agent — bloque agregado en $file"
     done < <(present_agents)
-    return 0
+    return "$pending"
 }
 
 pull_repo() {
@@ -345,9 +346,27 @@ run_update() {
 }
 run_diagnose() {
     preflight
-    seed_blocks check
-    install_skills check
+    if seed_blocks check; then
+        install_skills check
+    else
+        step "Skills"
+        warn "todavía sin instalar — no hay nada que comparar"
+        echo "      Elegí «Instalar skills» o corré: torre-control --install"
+    fi
     install_tower check
+    return 0
+}
+
+run_dry_run() {
+    preflight || return 1
+    if seed_blocks check; then
+        install_skills dry-run
+    else
+        step "Skills"
+        warn "todavía sin instalar — no se puede previsualizar hasta sembrar el bloque"
+        echo "      Corré sin --dry-run para instalar."
+    fi
+    install_tower dry-run
     return 0
 }
 
@@ -494,7 +513,7 @@ case "$1" in
     --with-tower)  run_install_tower ;;
     --update)      run_update ;;
     --check)       run_diagnose ;;
-    --dry-run)     preflight && seed_blocks check && install_skills dry-run && install_tower dry-run ;;
+    --dry-run)     run_dry_run ;;
     -h|--help)     sed -n '2,34p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' ;;
     *)             echo "flag desconocido: $1 — ver --help" >&2; exit 2 ;;
 esac
