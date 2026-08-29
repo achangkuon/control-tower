@@ -993,7 +993,7 @@ El checkpoint completo de `S8.11`, sus commits, conteos, fallos sellados y pasos
 
 **Rollback:** revertir juntos los seis archivos exactos del `Área` —los tres perfiles, las dos skills propietarias y `test/install/tower-role-assets.test.mjs`— sin tocar runtime, configuración, DB, `AGENTS.md` ni assets externos.
 
-**Migración de ownership posterior a `S8.14`, establecida por esta entrega de fuente.** La decisión 100 conserva el resultado histórico de `S8.14` y fija la autoridad futura en el set local Tower-owned, con contrato padre/router y sesiones ligadas a su worktree. La guardia focalizada pasa 4/0 y el retiro probado en `agent-workflows` pasa 17/0. Las copias globales instaladas siguen stale hasta ejecutar normalmente el instalador después de publicar ambos repositorios. Esto no reabre ni vuelve a cerrar `S8.14`.
+**Migración de ownership posterior a `S8.14`, entregada en fuente y aplicada parcialmente.** La decisión 100 conserva el resultado histórico de `S8.14` y fija la autoridad futura en el set local Tower-owned, con contrato padre/router y sesiones ligadas a su worktree. Control Tower `6237275b1a45b8380ce094edcb9dda23155ff006` y `agent-workflows` hasta `1a542da` están publicados; la corrida normal retiró las cuatro copias globales stale. El runtime Tower instalado quedó no verificado/no disponible por el incidente de la decisión 102. Esto no reabre ni vuelve a cerrar `S8.14`.
 
 ### Autoridad vigente de S8.12 — membresía del bundle Tower
 **Estado:** 📋 PLANIFICADO · **Depende de:** `S8.10` ✅, `S1.18`, `S8.14` · **Área:** `scripts/payload-closure.mjs`, `install/runtime-payload.mjs`, perfiles/skills Tower-specific y tests de membresía bajo `test/install/**` · **Recurso:** `RUNTIME_PAYLOAD_FILES`.
@@ -1006,9 +1006,19 @@ El checkpoint completo de `S8.11`, sus commits, conteos, fallos sellados y pasos
 
 ### Sesión 8.13 — Install, activación, rollback y preflight externo
 **Estado:** 📋 PLANIFICADO · **Depende de:** `S8.12`, `S1.19`, `S4.12` · **Área:** `install/lifecycle.mjs`, `install.sh`, `bin/torre`, `test/install/**` · **Recurso:** puntero activo, backup/rollback y preflight de host externo.
-**Decisiones:** decisiones 88 y 100 resueltas; la Torre instala sólo el bundle Tower-owned ya definido, valida compatibilidad y no modifica Pi, pi-intercom ni skills genéricas Gentle AI. **Ruta:** `full-sdd` — operación reversible, activación y frontera de productos externos; no rediseña ownership ni el router.
-**Criterios de aceptación:** instalación limpia activa bundle completo; preflight incompatible falla antes de mutar; rollback restaura runtime+perfiles+skills Tower juntos; no escribe configuración/skills externas; no toca fuera de `Área`.
+**Decisiones:** decisiones 88, 100 y 102 resueltas; la Torre instala sólo el bundle Tower-owned ya definido, valida compatibilidad y no modifica Pi, pi-intercom ni skills genéricas Gentle AI. La decisión 102 rechaza `upgrade --shim` como recuperación parcial: el runtime instalado queda no verificado/no disponible hasta cerrar esta Sesión. **Ruta:** `full-sdd` — operación reversible, activación y frontera de productos externos; no rediseña ownership ni el router.
+
+**Reproducción obligatoria del incidente:** tras publicar Control Tower en `6237275b1a45b8380ce094edcb9dda23155ff006` y `agent-workflows` hasta `1a542da`, `torre-control --update` actualizó skills, retiró las cuatro copias globales stale y copió el plugin; luego `install.sh:79` falló con `Permission denied` porque `cp` siguió `~/.local/bin/torre` hacia la versión owner-read-only `4f940019…`. El engine/shim activo quedó viejo y la coherencia MCP/engine/plugin no fue verificada. `torre-control --check` dio éxito sólo por existencia, ejecutabilidad y key: no prueba revisión activa ni coherencia.
+
+**Criterios de aceptación** — todos deben pasar para cerrar:
+- [ ] `torre-control --update` selecciona el lifecycle atómico versionado; no ejecuta el camino legado divergente.
+- [ ] El shim symlink se reemplaza atómicamente; ningún `cp` sigue su target owner-read-only.
+- [ ] El diagnóstico prueba revisión activa y coherencia exacta entre plugin, MCP y runtime/engine; una mezcla falla cerrado.
+- [ ] Ningún chequeo de sólo existencia/ejecutabilidad/key puede devolver un falso positivo saludable.
+- [ ] Instalación limpia activa el bundle completo y un preflight incompatible falla antes de mutar.
+- [ ] Rollback restaura runtime, perfiles y skills Tower juntos; no escribe configuración/skills externas ni toca fuera de `Área`.
+
 #### Módulo M8.13.1 — Lifecycle conductualmente completo
-- [ ] Tarea T8.13.1.1 — RED: cubrir preflight incompatible, activación parcial y rollback incompleto.
-- [ ] Tarea T8.13.1.2 — GREEN: instalar, activar y revertir bundle Tower atómicamente.
-- [ ] Tarea T8.13.1.3 — REFACTOR: separar preflight externo de mutación Tower-owned.
+- [ ] Tarea T8.13.1.1 — RED: reproducir el symlink owner-read-only, el falso positivo existence-only, preflight incompatible, activación parcial y rollback incompleto.
+- [ ] Tarea T8.13.1.2 — GREEN: enrutar update al lifecycle versionado, reemplazar el shim e instalar, activar, diagnosticar y revertir el bundle Tower atómicamente.
+- [ ] Tarea T8.13.1.3 — REFACTOR: separar preflight/diagnóstico externo de mutación Tower-owned sin conservar el camino legado divergente.

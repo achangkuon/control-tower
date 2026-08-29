@@ -1,7 +1,7 @@
 ---
-verified_against: 3f80cebcb23ee190795e9914f127f886835e9dd3
-verified_at: 2026-08-28
-standfirst: S4.13 está entregada, pero no garantiza la actualidad final same-stack del ocupante exacto. S4.14 está aprobada y no entregada; S9.4 está PLANIFICADO y conserva estado parcial no asignable hasta que pasen los gates. Las cifras se derivan fuera de este juicio.
+verified_against: 6237275b1a45b8380ce094edcb9dda23155ff006
+verified_at: 2026-08-29
+standfirst: La migración de fuente y el retiro de cuatro skills globales stale están entregados, pero el update Tower falló a mitad de camino. El runtime instalado queda no verificado/no disponible hasta S8.13; la cola y las cifras no cambian.
 ---
 
 <!--
@@ -47,10 +47,10 @@ Lo técnico: `S4.10` cerró las cinco formas públicas de identidad y binding; `
 En simple: El enchufe común ya no sólo identifica a cada runtime: también permite mirarlo, comprobar su salud, pedirle que se detenga y adjuntarse sin confiar en lo que el propio caller afirma. Pi puede conectarse sobre una base ya entregada, no sobre una promesa.
 Evidencia: `openspec/specs/host-runtime/spec.md` · `openspec/changes/archive/2026-08-28-s4-11-host-neutral-operations/verify-report.md` · `master/origin/master@6ddf6bc77d236dffad5b8ec625379117a91ce0b3`
 
-### 3 · sólido · Los tres roles están entregados; su ownership futuro está resuelto sólo en fuente
-Lo técnico: La decisión 95 y `S8.14` entregaron Main/coordinator, Support e Implementer como perfiles permanentes repo-owned y host-neutral. Esta entrega de fuente establece la decisión 100: Control Tower posee perfiles/skills Tower-specific y el router padre, `agent-workflows` conserva las skills genéricas, y cada sesión queda ligada a su worktree. Las guardias pasan 4/0 y 17/0. Las copias globales continúan stale y el payload Tower aún no empaqueta esos assets.
-En simple: Los tres puestos existen y la mudanza entre talleres queda definida en las fuentes. Las instalaciones globales no cambian hasta publicar ambos repositorios y ejecutar normalmente el instalador; `S8.12`/`S8.13` siguen pendientes.
-Evidencia: `openspec/plans/decision-register.md` · `openspec/plans/plan-8/STATUS.md` · base entregada `master/origin/master@54b5cda733025b0bd50c2a21dc67d1d4192ac66d`; migración de ownership probada en fuente
+### 3 · crítico · La fuente migró y las skills stale salieron, pero la Torre instalada no quedó verificada
+Lo técnico: Control Tower `6237275b1a45b8380ce094edcb9dda23155ff006` y `agent-workflows` hasta `1a542da` están publicados. `torre-control --update` actualizó skills y retiró las cuatro copias globales stale, pero `install.sh:79` siguió el shim symlink hacia la versión owner-read-only y falló después de copiar el plugin. Engine/shim siguen viejos; MCP/engine/plugin no tienen prueba de coherencia. `--check` sólo validó existencia, ejecutabilidad y key.
+En simple: La mudanza de documentos terminó, pero la máquina quedó con piezas de generaciones distintas y sin examen que pruebe que encajan. No vamos a “acomodarla” a medias: hasta `S8.13` la Torre instalada se considera no disponible.
+Evidencia: `openspec/plans/decision-register.md` decisión 102 · `openspec/plans/plan-8/STATUS.md` S8.13 · fuente Control Tower `6237275b1a45b8380ce094edcb9dda23155ff006`
 
 ## Avance por Plan
 
@@ -109,7 +109,7 @@ La lista siguiente reemplaza las antiguas “cinco decisiones”. No son pregunt
 | `S9.5` | Materialización idempotente de sólo los asientos exactos del brief, después de cerrar `S8.12 + S9.4` | Que Herdr ya abra, reutilice o valide esos asientos automáticamente |
 | Gate Pi desatendido | Una corrida prolongada atribuible al candidato | Estabilidad de larga duración sin esa evidencia |
 | Gate de caída con tráfico | Recuperación idempotente tras caída real del broker | Entrega garantizada de mensajes en vuelo |
-| `S8.14` — ✅ COMPLETO; `S8.12` y `S8.13` pendientes | Roles entregados y ownership resuelto en fuente; consumir el set local en el bundle y cerrar instalación/rollback atómicos | Que esta entrega de fuente ya esté desplegada, que las copias globales stale se hayan retirado o que el payload Tower ya incluya los roles |
+| `S8.14` — ✅ COMPLETO; `S8.12` y `S8.13` pendientes | Fuente entregada y cuatro copias globales stale retiradas; empaquetar el set local y cerrar update/instalación/diagnóstico/rollback atómicos | Que el runtime Tower instalado esté actualizado, coherente, verificado o disponible |
 
 ## Lo que pasa ahora mismo
 
@@ -125,4 +125,4 @@ Evidencia: `openspec/plans/plan-9/STATUS.md` · `openspec/plans/master-index.md`
 
 ## Evidencia y límites de esta radiografía
 
-Este juicio conserva `verified_against` sobre la base limpia `master/origin/master@3f80cebcb23ee190795e9914f127f886835e9dd3` del 2026-08-28: la medición de la radiografía permanece contra esa base registrada hasta regenerarla después de la entrega. La migración de ownership incorporada aquí está probada en fuente, pero no acredita despliegue global. Instrumentos, avance y cola se derivan fuera de este archivo. `S4.13` está entregada; `S4.14` sólo está aprobada y `S9.4` está 📋 PLANIFICADO, con estado parcial no asignable hasta entregar `S4.14` y recibir un brief fresco de Support. Ninguno demuestra implementación de la guardia final, runtime Pi, packaging Tower, lifecycle atómico, materialización Herdr ni capacidad.
+Este juicio está verificado contra la fuente entregada de Control Tower `6237275b1a45b8380ce094edcb9dda23155ff006`, nunca contra el commit documental que lo registra. La publicación de fuente y el retiro de cuatro copias globales stale están comprobados; el runtime Tower instalado no: el update parcial dejó plugin nuevo con engine/shim viejos y coherencia MCP sin verificar. Instrumentos, avance y cola conservan sus cifras derivadas. La decisión 102 exige esperar `S8.12 → S8.13`; no autoriza `upgrade --shim`. Tampoco se acreditan runtime Pi, packaging Tower, lifecycle atómico, materialización Herdr ni capacidad.
