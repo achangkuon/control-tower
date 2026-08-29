@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
 | Outputs | Raíz primaria Main-owned con TUI adjunta no autoritativa, inspección/liveness por proceso/sesión, recuperación same-host WSL y contrato host-neutral v1 de identidad, binding, incarnation, puerto loopback y operaciones observe/health/stop/attach. |
-| Roadmap | La evidencia OpenCode entregada permanece ✅ COMPLETO. `S4.4`, `S4.8` y `S4.9` están 🟡 DIFERIDO con preservación absoluta; `S4.10`, `S4.11` y `S4.13` están ✅ COMPLETO; `S4.14` está 🟢 LISTO y `S4.12` permanece 📋 PLANIFICADO. P4 alcanza 64% (9/14 S). |
+| Roadmap | La evidencia OpenCode entregada permanece ✅ COMPLETO. `S4.4` y `S4.8` están 🟡 DIFERIDO con preservación absoluta; `S4.9` está 📚 ARCHIVADO por la [decisión 99](../decision-register.md) y sale del denominador; `S4.10`, `S4.11` y `S4.13` están ✅ COMPLETO; `S4.14` está 🟢 LISTO y `S4.12` permanece 📋 PLANIFICADO. P4 alcanza 69% (9/13 S). |
 | Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), decisiones 37–42, 92–94, 97–98, Engram 9040/9042/9043/9044/9079, 9668/9669/9696/9697/9703/9704, 9754/9755/9756 y 9773/9774, [`S4.11 archivada`](../../changes/archive/2026-08-28-s4-11-host-neutral-operations/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). REQUIREMENTS §14 permanece byte-pinned como base histórica; esta spec enmienda el lifecycle futuro. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
@@ -463,7 +463,7 @@ graph LR
   S45 --> S47["S4.7 launch veraz · ✅"]
   S47 --> S44
   S47 --> S48["S4.8 matriz OpenCode · 🟢"]
-  S46["S4.6 retiro legacy · ✅"] --> S49["S4.9 Herdr 0.8.2 · 🟢"]
+  S46["S4.6 retiro legacy · ✅"] --> S49["S4.9 Herdr 0.8.2 · 📚"]
   S47 --> S49
   S44 --> S71["S7.1 conformidad · 📋"]
   S46 --> S71
@@ -474,7 +474,7 @@ graph LR
   S94 --> S412["S4.12 recuperación Pi · 📋"]
 ```
 
-No queda responsabilidad activa de hosts sin Sesión enumerada. `S4.3`, `S4.6` y `S4.7` están ✅ COMPLETO; `S4.4` está 🔵 EN CURSO y serializada detrás del cierre documental de `S4.6`; `S4.8` y `S4.9` están 🟢 LISTO, sin asiento asignado; `S7.1` permanece 📋 por el grafo.
+No queda responsabilidad activa de hosts sin Sesión enumerada. `S4.3`, `S4.6` y `S4.7` están ✅ COMPLETO; `S4.4` está 🔵 EN CURSO y serializada detrás del cierre documental de `S4.6`; `S4.8` está 🟢 LISTO, sin asiento asignado; `S4.9` está 📚 ARCHIVADO por la [decisión 99](../decision-register.md); `S7.1` permanece 📋 por el grafo.
 
 ## Insumo para la auditoría exclusiva de P4 — pregunta de entrada nueva (2026-08-21)
 
@@ -699,7 +699,9 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 
 ## Sesión 4.9 — Probe y adopción guardada de Herdr 0.8.2
 
-**Estado:** 🟡 DIFERIDO — **OpenCode/Herdr parqueados; contrato y evidencia preservados.** `S4.6` y `S4.7` están ✅ COMPLETO; no tiene asiento asignado. **Depende de:** `S4.6`, `S4.7`; no depende de `S4.8`. **Ruta al desparquear:** `design-tasks`.
+**Estado:** 📚 ARCHIVADO — **retirada el 2026-08-29 por la [decisión 99](../decision-register.md): se quedó sin sujeto.** La adopción de `0.8.2` ocurrió fuera del plan, en el host del maintainer, mediante `brew upgrade herdr` directo. **La Sesión no se ejecutó: se salteó.** Ninguno de sus tres criterios se ejercitó — no hubo probe aislado con HOME/config/panes descartables, no hubo verde previo a la adopción, y el cleanup de Homebrew destruyó la línea base `0.8.0` que su contrato exigía conservar como rollback. Sale del denominador de P4 por la [regla de denominador](../master-index.md) de la [decisión 57](../decision-register.md): dejó de ser objetivo. **Contrato, criterios, Módulos y Tareas se conservan abajo como evidencia histórica; no se implementan ni bloquean nada.** **Dependía de:** `S4.6`, `S4.7`.
+
+**Evidencia de la adopción realizada (2026-08-29).** `herdr 0.8.2` desde `/home/linuxbrew/.linuxbrew/Cellar/herdr/0.8.2/bin/herdr`; servidor y cliente vivos verificados por `/proc/<pid>/exe` sin marca `(deleted)` tras reinicio; `herdr config check` → `ok`; integraciones `pi v8`, `claude v8`, `codex v8`, `opencode v10`, `hermes v5`, cero `outdated`. La adopción no tocó `hosts/**`, `install/**`, `package.json`, `bun.lock` ni `bin/torre`: el pin duro ya no existía desde `S4.6`, y la Torre no consume el canal de estado de agentes de Herdr. Engram 9783.
 
 **Área:** nuevos `scripts/host-compatibility/herdr.mjs`, `test/compat/herdr-runtime.test.mjs`.
 
@@ -738,7 +740,7 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 
 ## Reconciliación Pi-first — 2026-08-27
 
-**Preservación absoluta de OpenCode.** Todo el código, las pruebas, decisiones, evidencia y checkpoint de `S4.4` anteriores siguen vigentes como historia resoluble. `S4.4` pasa a **🟡 DIFERIDO**: no se inicia mientras OpenCode esté parqueado. El checkpoint exacto permanece arriba, incluida la rama `feat/plan-4/s4-4-same-host-recovery@75c378d`, sus commits `a00193c`/`75c378d` y la instrucción de reconciliar la base antes de RED. `S4.8` y `S4.9` quedan igualmente 🟡 DIFERIDO, sin invalidar su contrato.
+**Preservación absoluta de OpenCode.** Todo el código, las pruebas, decisiones, evidencia y checkpoint de `S4.4` anteriores siguen vigentes como historia resoluble. `S4.4` pasa a **🟡 DIFERIDO**: no se inicia mientras OpenCode esté parqueado. El checkpoint exacto permanece arriba, incluida la rama `feat/plan-4/s4-4-same-host-recovery@75c378d`, sus commits `a00193c`/`75c378d` y la instrucción de reconciliar la base antes de RED. `S4.8` y `S4.9` quedan igualmente 🟡 DIFERIDO, sin invalidar su contrato. **Corte histórico del 2026-08-27; para `S4.9` está SUPERSEDIDO por la [decisión 99](../decision-register.md), que la pasó a 📚 ARCHIVADO el 2026-08-29. `S4.8` sí conserva 🟡 DIFERIDO.**
 
 ### Sesión 4.10 — Identidad, binding y puerto runtime host-neutral
 **Estado:** ✅ COMPLETO — cierre archivado, integrado y entregado el 2026-08-28 en `master/origin/master@6b8b7705d40a863b962873c1a34208007fa64644` · **Depende de:** — · **Área:** `contracts/host-runtime/**`, `schemas/host-runtime-*.schema.json`, `test/contracts/host-runtime/**`, `test/contracts/schema.test.mjs` · **Recurso:** namespace de identidad/binding y reserva de puerto loopback.

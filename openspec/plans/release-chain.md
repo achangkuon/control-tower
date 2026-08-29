@@ -71,7 +71,7 @@ graph LR
   S45 --> S47["S4.7 launch veraz · 🟢"]
   S47 --> S44
   S47 --> S48["S4.8 matriz OpenCode · 📋"]
-  S46["S4.6 retiro legacy · 📋"] --> S49["S4.9 Herdr 0.8.2 · 📋"]
+  S46["S4.6 retiro legacy · 📋"] --> S49["S4.9 Herdr 0.8.2 · 📚"]
   S47 --> S49
   S46 --> S71
   S48 --> S71
@@ -120,7 +120,7 @@ graph LR
 | 1 | `S4.7` | Launch Main-owned veraz y vista autenticada | 🟢 LISTO | `S4.5` ✅; timeout sólo si reproduce el mismo launch path |
 | 4 | `S4.6` | Retiro legacy y pin Herdr | 📋 PLANIFICADO | `S8.10` ✅; serial con `S4.7` por Área compartida |
 | 5 | `S4.8` | Matriz real OpenCode 1.18.23 | 📋 PLANIFICADO | `S4.7`; alinea plugin/SDK juntos sólo en verde |
-| 6 | `S4.9` | Probe/adopción guardada Herdr 0.8.2 | 📋 PLANIFICADO | `S4.6`, `S4.7`; **no gatea la primera release** |
+| 6 | `S4.9` | Probe/adopción guardada Herdr 0.8.2 | 📚 ARCHIVADO | retirada 2026-08-29 por la [decisión 99](decision-register.md); `0.8.2` adoptado fuera del plan y la Sesión se quedó sin sujeto; **nunca gateó la release** |
 | ✅ | `S11.1` | Ejecutor y superficie de operador | ✅ COMPLETO | Código `8d86bf6` → `2dbb714`, reconciliación OpenSpec en el commit documental posterior de la misma publicación y suite 884/0/5.068; la actualización no destructiva de Notion es el paso post-push |
 | ✅ | `S5.4` | Ruteo de escalamiento fuera/en casa | ✅ COMPLETO | `S5.1` ✅; publicado en `origin/master` mediante `976b8d0`, `75549a7`, `f9f2869` y reconciliado en `d114677`; 9/9 Tareas, 15/15 criterios. **No** depende de `S8.7` |
 | — | `S5.2` | Entrega idempotente y post-check | 🔴 BLOQUEADO | `S4.1` ✅, `S3.3` ✅; recheck 8193 mantiene abiertos 1/3/5 y decisión 8195 estaciona el candidato NOT READY |
