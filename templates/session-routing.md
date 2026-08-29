@@ -10,6 +10,6 @@
 - `planificador-granular` owns approved-scope decomposition and route classification; `session-plan` investigates one named Sesión; `agente-soporte` handles read-only capacity, conflicts, and assignments; `session-doc` performs final closure.
 - Direct/design-tasks executor input is the approved Session contract, existing Módulos/Tareas, binary acceptance criteria, project instructions, applicable project skills, Strict TDD when active, and work-unit commit boundaries.
 - Run each Módulo as `apply -> tests -> focused review -> Engram checkpoint`; run one integral requirements/runtime verification, then `session-doc`. Never run SDD per Módulo.
-- Stop before SDD when an unresolved decision belongs to an always-escalate class.
+- Always-escalate decisions never become derivable. Block the Session only when authority or evidence is missing or contradictory, or contamination reaches acceptance criteria, the first Módulo, or another Sesión. When contamination reaches only a later Módulo, park that Módulo and continue approved earlier work.
 - Claude, OpenCode, and Codex use their runtime copies. Pi has no native SkillsDir; load the exact canonical paths manually.
 <!-- /SESSION-SKILL-ARCHITECTURE:MANUAL -->

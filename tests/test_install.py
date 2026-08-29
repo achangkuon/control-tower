@@ -75,6 +75,29 @@ class InstallerTests(unittest.TestCase):
             self.assertEqual(modes[path], stat.S_IMODE(path.stat().st_mode))
             self.assertEqual(original_modes[path], stat.S_IMODE(path.stat().st_mode))
             self.assertIn(ROOT.as_posix().encode(), content)
+            self.assertEqual(content.count(INSTALLER.START_MARKER), 1)
+            self.assertEqual(content.count(INSTALLER.GATEKEEPER_START_MARKER), 1)
+            self.assertIsNotNone(INSTALLER.GATEKEEPER_BLOCK_RE.search(content))
+
+    def test_installed_session_routing_uses_contamination_aware_blocking(self):
+        INSTALLER.apply(self.home, ROOT)
+        expected = (
+            b"Always-escalate decisions never become derivable. Block the Session only when "
+            b"authority or evidence is missing or contradictory, or contamination reaches "
+            b"acceptance criteria, the first M\xc3\xb3dulo, or another Sesi\xc3\xb3n. When "
+            b"contamination reaches only a later M\xc3\xb3dulo, park that M\xc3\xb3dulo and "
+            b"continue approved earlier work."
+        )
+        blanket_stop = b"Stop before SDD when an unresolved decision belongs to an always-escalate class."
+        paths = INSTALLER.manual_paths(self.home)
+        self.assertEqual(len(paths), 4)
+        for path in paths:
+            content = path.read_bytes()
+            match = INSTALLER.BLOCK_RE.search(content)
+            self.assertIsNotNone(match, path)
+            assert match is not None
+            self.assertIn(expected, match.group(), path)
+            self.assertNotIn(blanket_stop, match.group(), path)
 
     def test_all_runtime_skill_paths_match_canonical_source(self):
         INSTALLER.apply(self.home, ROOT)
@@ -89,7 +112,9 @@ class InstallerTests(unittest.TestCase):
         skill_path = self.home / ".agents/skills/session-kickoff/SKILL.md"
         skill_path.write_bytes(skill_path.read_bytes() + b"\nDRIFT\n")
         manual_path = self.home / ".pi/agent/APPEND_SYSTEM.md"
-        manual_path.write_bytes(manual_path.read_bytes().replace(ROOT.as_posix().encode(), b"/wrong"))
+        drifted = manual_path.read_bytes().replace(ROOT.as_posix().encode(), b"/wrong")
+        drifted = drifted.replace(b"Proportional Automatic SDD Gatekeeper", b"Drifted Gatekeeper")
+        manual_path.write_bytes(drifted)
         result = subprocess.run(
             [sys.executable, str(SCRIPT), "--check", "--home", str(self.home)],
             capture_output=True,
@@ -137,6 +162,25 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(external.read_bytes(), b"protected")
 
 
+    def test_all_owned_blocks_stay_outside_gentle_ai_and_section_ranges(self):
+        INSTALLER.apply(self.home, ROOT)
+        for path in INSTALLER.manual_paths(self.home):
+            content = path.read_bytes()
+            ranges = INSTALLER._managed_ranges(content, path)
+            for pattern in (INSTALLER.BLOCK_RE, INSTALLER.GATEKEEPER_BLOCK_RE):
+                match = pattern.search(content)
+                self.assertIsNotNone(match)
+                assert match is not None
+                self.assertTrue(all(not (start < match.end() and match.start() < end) for start, end in ranges))
+
+    def test_install_preserves_unrelated_manual_block(self):
+        unrelated = b"<!-- OWNER-NOTES:MANUAL -->\nkeep me\n<!-- /OWNER-NOTES:MANUAL -->\n"
+        for path in INSTALLER.manual_paths(self.home):
+            path.write_bytes(path.read_bytes() + unrelated)
+        INSTALLER.apply(self.home, ROOT)
+        for path in INSTALLER.manual_paths(self.home):
+            self.assertIn(unrelated, path.read_bytes())
+
     def test_rejects_custom_block_nested_in_managed_block(self):
         path = self.home / ".claude/CLAUDE.md"
         old = path.read_bytes()
@@ -151,6 +195,71 @@ class InstallerTests(unittest.TestCase):
             INSTALLER.apply(self.home, ROOT)
         self.assertEqual(path.read_bytes(), nested)
         self.assertFalse((self.home / ".agents").exists())
+
+    def test_rejects_duplicate_gatekeeper_block_before_mutation(self):
+        path = self.home / ".pi/agent/APPEND_SYSTEM.md"
+        gatekeeper = (ROOT / "templates/sdd-auto-gatekeeper-policy.md").read_bytes()
+        path.write_bytes(path.read_bytes() + gatekeeper + gatekeeper)
+        before = {item: item.read_bytes() for item in INSTALLER.manual_paths(self.home)}
+
+        with self.assertRaises(INSTALLER.InstallError):
+            INSTALLER.apply(self.home, ROOT)
+        self.assertEqual(before, {item: item.read_bytes() for item in INSTALLER.manual_paths(self.home)})
+        self.assertFalse((self.home / ".agents").exists())
+
+    def test_rejects_gatekeeper_block_nested_in_section_block_before_mutation(self):
+        path = self.home / ".codex/AGENTS.md"
+        gatekeeper = (ROOT / "templates/sdd-auto-gatekeeper-policy.md").read_bytes()
+        path.write_bytes(
+            path.read_bytes()
+            + b"<!-- section:model-capable -->\n"
+            + gatekeeper
+            + b"<!-- /section:model-capable -->\n"
+        )
+        before = {item: item.read_bytes() for item in INSTALLER.manual_paths(self.home)}
+
+        with self.assertRaises(INSTALLER.InstallError):
+            INSTALLER.apply(self.home, ROOT)
+        self.assertEqual(before, {item: item.read_bytes() for item in INSTALLER.manual_paths(self.home)})
+        self.assertFalse((self.home / ".agents").exists())
+
+    def test_rejects_nested_owned_blocks_before_mutation(self):
+        path = self.home / ".claude/CLAUDE.md"
+        session = path.read_bytes()
+        gatekeeper = (ROOT / "templates/sdd-auto-gatekeeper-policy.md").read_bytes()
+        malformed_inputs = (
+            (
+                "session-routing",
+                session.replace(
+                    b"- old runtime path\n",
+                    b"- old runtime path\n" + gatekeeper,
+                ),
+            ),
+            (
+                "gatekeeper",
+                INSTALLER.GATEKEEPER_START_MARKER
+                + b"\n"
+                + session
+                + INSTALLER.GATEKEEPER_END_MARKER
+                + b"\n",
+            ),
+        )
+
+        for outer, malformed in malformed_inputs:
+            with self.subTest(outer=outer):
+                self._seed_runtime()
+                path.write_bytes(malformed)
+                before = {
+                    item: item.read_bytes() for item in INSTALLER.manual_paths(self.home)
+                }
+
+                with self.assertRaises(INSTALLER.InstallError):
+                    INSTALLER.apply(self.home, ROOT)
+                self.assertEqual(
+                    before,
+                    {item: item.read_bytes() for item in INSTALLER.manual_paths(self.home)},
+                )
+                self.assertFalse((self.home / ".agents").exists())
 
     def test_wrong_type_destination_is_rejected_before_any_mutation(self):
         wrong_type = self.home / ".agents/skills/session-plan/SKILL.md"

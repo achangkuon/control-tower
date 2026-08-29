@@ -151,13 +151,23 @@ belong to that project's canonical repository.
 - `~/.config/opencode/skills`
 - `~/.codex/skills`
 
-It also installs the custom `SESSION-SKILL-ARCHITECTURE:MANUAL` block in the
-Claude, OpenCode, Codex, and Pi instruction files. The block points back to
-this repository's canonical `skills/session-kickoff/SKILL.md`.
+It also owns two manual prompt-policy blocks in the Claude, OpenCode, Codex,
+and Pi instruction files: `SESSION-SKILL-ARCHITECTURE:MANUAL` points to the
+canonical router, while `SDD-AUTO-GATEKEEPER-POLICY:MANUAL` makes Automatic
+SDD semantic checking proportional without changing mechanical gates or final
+verify. These are prompt instructions, not executable Gentle AI enforcement.
 
-The installer preserves every byte outside that custom block, refuses files
-with missing or duplicate custom markers, and never invokes Gentle AI. Before
-writing, it preflights every destination. Runtime skill roots may be created;
+Gentle AI `sync` or `install` may rewrite instruction surfaces; survival is not
+guaranteed. Before either operation, back up the manual blocks. Afterwards,
+inspect the actual diff, restore only when the canonical blocks were lost, run
+`python3 tools/install.py --check`, and restart affected runtimes. OpenCode also
+requires a controlled runtime smoke verification before claiming the policy is
+effective; file presence alone is insufficient evidence of prompt loading.
+
+The installer preserves every byte outside its two declared blocks, requires
+the existing routing marker, safely appends the gatekeeper policy outside
+managed ranges when absent, rejects duplicate/nested owned markers, and never
+invokes Gentle AI. Before writing, it preflights every destination. Runtime skill roots may be created;
 instruction files and their parent directories must already exist as regular
 paths. Missing, wrong-type, symlinked, escaping, or managed-block-nested paths
 raise `InstallError` and leave all destinations untouched.
@@ -176,6 +186,7 @@ discovery surfaces; this repository is the canonical source.
 ```text
 skills/                         canonical generic user-owned skills
 templates/session-routing.md    manual routing block template
+templates/sdd-auto-gatekeeper-policy.md  Automatic SDD prompt-policy block
 tools/install.py                install, check, and dry-run implementation
 tests/test_install.py           focused standard-library tests
 ```

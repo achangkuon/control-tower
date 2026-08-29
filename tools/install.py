@@ -61,13 +61,31 @@ MANUAL_FILES = (
 )
 START_MARKER = b"<!-- SESSION-SKILL-ARCHITECTURE:MANUAL -->"
 END_MARKER = b"<!-- /SESSION-SKILL-ARCHITECTURE:MANUAL -->"
-BLOCK_RE = re.compile(
-    rb"^<!-- SESSION-SKILL-ARCHITECTURE:MANUAL -->\r?\n"
-    rb".*?^<!-- /SESSION-SKILL-ARCHITECTURE:MANUAL -->(?:\r?\n|$)",
-    re.DOTALL | re.MULTILINE,
+GATEKEEPER_START_MARKER = b"<!-- SDD-AUTO-GATEKEEPER-POLICY:MANUAL -->"
+GATEKEEPER_END_MARKER = b"<!-- /SDD-AUTO-GATEKEEPER-POLICY:MANUAL -->"
+
+
+def _block_re(name: bytes) -> re.Pattern[bytes]:
+    return re.compile(
+        rb"^<!-- " + name + rb" -->\r?\n.*?^<!-- /" + name + rb" -->(?:\r?\n|$)",
+        re.DOTALL | re.MULTILINE,
+    )
+
+
+BLOCK_RE = _block_re(b"SESSION-SKILL-ARCHITECTURE:MANUAL")
+GATEKEEPER_BLOCK_RE = _block_re(b"SDD-AUTO-GATEKEEPER-POLICY:MANUAL")
+MANUAL_BLOCKS = (
+    ("session-routing.md", START_MARKER, END_MARKER, BLOCK_RE, True),
+    (
+        "sdd-auto-gatekeeper-policy.md",
+        GATEKEEPER_START_MARKER,
+        GATEKEEPER_END_MARKER,
+        GATEKEEPER_BLOCK_RE,
+        False,
+    ),
 )
 MANAGED_MARKER_RE = re.compile(
-    rb"<!--\s*(/?)gentle-ai:([A-Za-z0-9_.-]+)\s*-->"
+    rb"<!--\s*(/?)((?:gentle-ai|section):[A-Za-z0-9_.-]+)\s*-->"
 )
 
 
@@ -203,16 +221,24 @@ def _validate_retired_skill_destination(runtime_root: Path, destination: Path) -
         raise InstallError(f"expected directory for retired runtime skill: {destination}")
 
 
+def render_manual_blocks(root: Path) -> dict[bytes, bytes]:
+    rendered_blocks = {}
+    for template_name, start, _, _, _ in MANUAL_BLOCKS:
+        template_path = root / "templates" / template_name
+        try:
+            template = template_path.read_text(encoding="utf-8")
+        except OSError as exc:
+            raise InstallError(f"cannot read manual block template: {template_path}") from exc
+        rendered = template.replace("{{REPO_ROOT}}", root.as_posix())
+        if "{{REPO_ROOT}}" in rendered:
+            raise InstallError(f"manual block template has unresolved placeholder: {template_path}")
+        rendered_blocks[start] = rendered.encode("utf-8")
+    return rendered_blocks
+
+
 def render_manual_block(root: Path) -> bytes:
-    template_path = root / "templates/session-routing.md"
-    try:
-        template = template_path.read_text(encoding="utf-8")
-    except OSError as exc:
-        raise InstallError(f"cannot read manual block template: {template_path}") from exc
-    rendered = template.replace("{{REPO_ROOT}}", root.as_posix())
-    if "{{REPO_ROOT}}" in rendered:
-        raise InstallError("manual block template contains an unresolved placeholder")
-    return rendered.encode("utf-8")
+    """Compatibility accessor for the required session-routing block."""
+    return render_manual_blocks(root)[START_MARKER]
 
 
 def _managed_ranges(content: bytes, path: Path) -> list[tuple[int, int]]:
@@ -223,35 +249,102 @@ def _managed_ranges(content: bytes, path: Path) -> list[tuple[int, int]]:
         name = marker.group(2)
         if closing:
             if not stack or stack[-1][0] != name:
-                raise InstallError(f"malformed Gentle AI marker nesting in {path}")
+                raise InstallError(f"malformed managed marker nesting in {path}")
             _, start = stack.pop()
             ranges.append((start, marker.end()))
         else:
             stack.append((name, marker.start()))
     if stack:
-        raise InstallError(f"unclosed Gentle AI marker in {path}")
+        raise InstallError(f"unclosed managed marker in {path}")
     return ranges
 
 
-def replace_manual_block(content: bytes, replacement: bytes, path: Path) -> bytes:
-    if content.count(START_MARKER) != 1 or content.count(END_MARKER) != 1:
-        raise InstallError(f"expected exactly one custom manual block in {path}")
-    matches = list(BLOCK_RE.finditer(content))
+def _replace_owned_block(
+    content: bytes,
+    replacement: bytes,
+    path: Path,
+    start: bytes,
+    end: bytes,
+    pattern: re.Pattern[bytes],
+    required: bool,
+) -> bytes:
+    start_count, end_count = content.count(start), content.count(end)
+    if start_count == 0 and end_count == 0 and not required:
+        separator = b"" if not content or content.endswith(b"\n\n") else (
+            b"\n" if content.endswith(b"\n") else b"\n\n"
+        )
+        return content + separator + replacement
+    if start_count != 1 or end_count != 1:
+        raise InstallError(f"expected exactly one owned manual block in {path}: {start.decode()}")
+    matches = list(pattern.finditer(content))
     if len(matches) != 1:
-        raise InstallError(f"custom manual block is not line-delimited in {path}")
+        raise InstallError(f"owned manual block is not line-delimited in {path}: {start.decode()}")
     match = matches[0]
     for managed_start, managed_end in _managed_ranges(content, path):
         if managed_start < match.end() and match.start() < managed_end:
-            raise InstallError(f"custom manual block is nested in a Gentle AI block: {path}")
+            raise InstallError(f"owned manual block is nested in a managed block: {path}")
     return content[: match.start()] + replacement + content[match.end() :]
 
 
-def desired_manual_content(path: Path, replacement: bytes) -> bytes:
-    return replace_manual_block(path.read_bytes(), replacement, path)
+def replace_manual_block(content: bytes, replacement: bytes, path: Path) -> bytes:
+    """Compatibility wrapper for the required session-routing block."""
+    return _replace_owned_block(
+        content, replacement, path, START_MARKER, END_MARKER, BLOCK_RE, True
+    )
+
+
+def _owned_block_matches(
+    content: bytes, path: Path
+) -> dict[bytes, re.Match[bytes] | None]:
+    matches_by_start: dict[bytes, re.Match[bytes] | None] = {}
+    managed_ranges = _managed_ranges(content, path)
+    present: list[tuple[bytes, re.Match[bytes]]] = []
+    for _, start, end, pattern, required in MANUAL_BLOCKS:
+        start_count, end_count = content.count(start), content.count(end)
+        if start_count == 0 and end_count == 0 and not required:
+            matches_by_start[start] = None
+            continue
+        if start_count != 1 or end_count != 1:
+            raise InstallError(f"expected exactly one owned manual block in {path}: {start.decode()}")
+        matches = list(pattern.finditer(content))
+        if len(matches) != 1:
+            raise InstallError(f"owned manual block is not line-delimited in {path}: {start.decode()}")
+        match = matches[0]
+        if any(begin < match.end() and match.start() < finish for begin, finish in managed_ranges):
+            raise InstallError(f"owned manual block is nested in a managed block: {path}")
+        matches_by_start[start] = match
+        present.append((start, match))
+
+    for index, (start, match) in enumerate(present):
+        for other_start, other in present[index + 1 :]:
+            if match.start() < other.end() and other.start() < match.end():
+                raise InstallError(
+                    f"owned manual blocks overlap in {path}: "
+                    f"{start.decode()} and {other_start.decode()}"
+                )
+    return matches_by_start
+
+
+def desired_manual_content(path: Path, replacements: dict[bytes, bytes]) -> bytes:
+    content = path.read_bytes()
+    matches = _owned_block_matches(content, path)
+    present = sorted(
+        ((match.start(), match.end(), start) for start, match in matches.items() if match),
+        reverse=True,
+    )
+    for begin, end, start in present:
+        content = content[:begin] + replacements[start] + content[end:]
+    for _, start, _, _, required in MANUAL_BLOCKS:
+        if matches[start] is None and not required:
+            separator = b"" if not content or content.endswith(b"\n\n") else (
+                b"\n" if content.endswith(b"\n") else b"\n\n"
+            )
+            content += separator + replacements[start]
+    return content
 
 
 def preflight(home: Path, root: Path) -> None:
-    replacement = render_manual_block(root)
+    replacements = render_manual_blocks(root)
     for runtime_root in installed_skill_roots(home):
         _validate_directory_path(runtime_root, "runtime skill")
         for retired_skill in RETIRED_SKILLS:
@@ -269,13 +362,13 @@ def preflight(home: Path, root: Path) -> None:
         _validate_file_destination(
             path.parent, path, "runtime instruction file", require_existing=True
         )
-        desired_manual_content(path, replacement)
+        desired_manual_content(path, replacements)
 
 
 def build_plan(home: Path, root: Path | None = None) -> list[Change]:
     root = root or repo_root()
     preflight(home, root)
-    replacement = render_manual_block(root)
+    replacements = render_manual_blocks(root)
     changes: list[Change] = []
     for runtime_root in installed_skill_roots(home):
         for retired_skill in RETIRED_SKILLS:
@@ -287,7 +380,7 @@ def build_plan(home: Path, root: Path | None = None) -> list[Change]:
             if not destination.is_file() or destination.read_bytes() != source.read_bytes():
                 changes.append(Change(destination, "skill"))
     for path in installed_manual_paths(home):
-        desired = desired_manual_content(path, replacement)
+        desired = desired_manual_content(path, replacements)
         if path.read_bytes() != desired:
             changes.append(Change(path, "manual"))
     return changes
@@ -337,7 +430,7 @@ def _atomic_write(path: Path, content: bytes, instruction_root: Path) -> None:
 def apply(home: Path, root: Path | None = None) -> list[Change]:
     root = root or repo_root()
     changes = build_plan(home, root)
-    replacement = render_manual_block(root)
+    replacements = render_manual_blocks(root)
     change_paths = {change.path for change in changes}
     for runtime_root in installed_skill_roots(home):
         for retired_skill in RETIRED_SKILLS:
@@ -350,7 +443,7 @@ def apply(home: Path, root: Path | None = None) -> list[Change]:
                 _atomic_copy(source, destination, runtime_root)
     for path in installed_manual_paths(home):
         if path in change_paths:
-            _atomic_write(path, desired_manual_content(path, replacement), path.parent)
+            _atomic_write(path, desired_manual_content(path, replacements), path.parent)
     return changes
 
 

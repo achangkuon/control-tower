@@ -15,8 +15,9 @@ technical state, blocker, owner, remaining work, or next action must be reconcil
 ## Hard Rules
 
 - `session-kickoff` owns source discovery and execution order; consume its verified route and Session state.
-- Update technical openspec status and the project's Notion snapshot non-destructively when state changed.
-- Notion is a living snapshot, never a dated changelog. Do not append `Registro` entries.
+- Treat plan `STATUS.md` and master-index navigation/current state as mutable snapshots; preserve immutable history in its project-defined history store (for example git/PRs or maintenance records), never in current navigation.
+- Project repository rules override generic destinations and fields. Update Notion only when project rules enable it; never force or infer Notion when disabled.
+- When enabled, Notion is a living snapshot, never a dated changelog. Do not append `Registro` entries.
 - Preserve child content and keep deletion disabled for routine edits. Stop on unverified or contradictory sources.
 - Resolve the Notion target only from the repository's `.session-doc.json`; never guess it.
 - Load `cognitive-doc-design` before writing Notion prose.
@@ -26,17 +27,17 @@ technical state, blocker, owner, remaining work, or next action must be reconcil
 | Condition | Action |
 |---|---|
 | Verification failed | Do not close; return the failed criteria. |
-| No tracked state changed | Skip Notion and report why. |
+| Project rules disable Notion, or no tracked state changed | Skip Notion and report the governing rule/reason. |
 | Roadmap and detailed section disagree | Stop and report the contradiction. |
 | New tracked item exists | Add its roadmap row and detailed section together. |
 | Routine edit would delete content | Stop; do not force deletion. |
 
 ## Execution Steps
 
-1. Read the parent/router result, repository instructions, `.session-doc.json`, and verified technical status.
-2. Reconcile the technical source and update the plan `STATUS.md`/master index as required by the project.
-3. If a tracked state changed, load `cognitive-doc-design`, fetch Notion, and update its roadmap row plus all required detailed fields.
-4. Compare both destinations against the verified source and report changed, skipped, and preserved content.
+1. Read the parent/router result, repository instructions, verified technical status, and `.session-doc.json` only when project rules enable Notion.
+2. Reconcile current navigation/state in plan `STATUS.md`/master-index as required by the project; do not append immutable history there.
+3. If project rules enable Notion and tracked state changed, load `cognitive-doc-design`, fetch Notion, and update its roadmap row plus required detail.
+4. Compare enabled destinations against the verified source and report changed, skipped, and preserved content, including the immutable-history boundary.
 
 ## Output Contract
 
