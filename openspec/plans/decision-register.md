@@ -468,3 +468,37 @@ Los objetos `runtime`, `chain`, `validation` y `retries` son opcionales, opacos 
 ## Decisión 96 — la ruta es dato puro y `broker.start` hace la primera adquisición
 
 96. **`runtimeRoute` sólo prepara y valida datos; `broker.start`, dentro de `S4.10 acquireAtReservation`, hace la primera adquisición con efectos.** Preparar o validar la ruta no crea socket, archivo, listener, lock ni reserva, y no produce capacidad de `close` o `release`. `broker.start` recibe la ruta validada, adquiere el broker/listener exacto y devuelve la capacidad de cierre exacta que `S4.10` retiene como owner. **Descartadas:** preparación transaccional, porque adquiriría recursos antes de que `S4.10` asuma ownership; y preparación implícita best-effort, porque ocultaría efectos y cleanup detrás de una ruta que debe ser dato. **Falsificable:** cualquier efecto o capacidad de cleanup existe antes de `broker.start`; `broker.start` ocurre fuera de `acquireAtReservation`; otra capa retiene o reconstruye el `close`; o un fallo pre-start intenta limpiar una adquisición inexistente. **Clase resuelta:** contrato visible del producto; API pública; seguridad y permisos; expansión de alcance; dependencias o evidencia contradictorias. **Contaminaba:** `S9.4`, `M9.4.2` y downstream; queda resuelto por esta decisión. **Evidencia:** Engram 9746, 9747 y 9748; rama/5 intentos parqueados de `S9.4`, sólo como evidencia y nunca como continuación.
+
+## Decisión 97 — validación neutral entre adquisición y publicación
+
+97. **El ownership neutral admite un puerto opcional y caller-neutral de validación posterior a la adquisición y anterior a la publicación.** El registro conserva privadamente la capacidad de `close` exacta devuelta por la adquisición. El orden obligatorio es `acquire → validate unpublished → publish`: la adquisición todavía no publicada se entrega al hook opcional sin exponer, transferir ni permitir reconstruir su cierre. Si el hook no existe, el comportamiento actual permanece compatible y la publicación continúa.
+
+Si la validación falla, el registro usa privadamente el `close` exacto o deja la adquisición en cuarentena explícita; nunca aplica cleanup best-effort ni omite acción. La validación no puede ejecutarse antes de adquirir ni después de publicar, no es obligatoria, no contiene política específica de host y no convierte al caller en owner.
+
+**Orden aprobado:**
+
+1. El registro adquiere el recurso exacto y recibe su `close` exacto.
+2. El registro mantiene la adquisición unpublished y fuera del alcance del caller.
+3. Si existe hook, le presenta únicamente la vista neutral validable.
+4. Un resultado válido permite publicar la reserva exacta una sola vez.
+5. Un fallo consume el `close` exacto; si ese cierre no queda probado, registra cuarentena explícita.
+6. Sin hook, el paso 3 se omite y el contrato actual conserva compatibilidad.
+
+**Frontera de ownership:**
+
+- El caller solicita; no se convierte en owner.
+- El hook valida; no recibe autoridad de cierre o publicación.
+- El registro retiene `close`, decide publicación y registra cuarentena.
+- La capa neutral no conoce Pi, OpenCode, broker, Intercom ni política de host.
+
+**Descartadas:** exponer, transferir o reconstruir `close`; validar antes de adquirir o después de publicar; hacer obligatorio el hook; incorporar política Pi/OpenCode/host-specific; y cleanup best-effort o ninguna acción ante fallo.
+
+**Falsificable:** una adquisición se publica antes de validar; el hook observa o retiene `close`; su ausencia rompe compatibilidad; un fallo deja ownership ambiguo fuera de cuarentena; o la capa neutral decide política del host.
+
+**Clase resuelta:** contrato visible del producto; API pública; seguridad y permisos; expansión de alcance; dependencias o evidencia contradictorias.
+
+**Contamina:** `S4.13`, `M4.13.1`, `S9.4` y todo downstream de `S9.4`.
+
+**Autoridad:** Emilio, Engram 9755; planificación corregida Engram 9756 revisión 2.
+
+**Evidencia:** Engram 9754/9755/9756; candidato congelado `304d534` (tree `8049d32`) sólo como evidencia inmutable; registro, tests y spec canónica vigentes en `master@0e1723974a4b87ea63288890f0cd868905a0fe5b`.

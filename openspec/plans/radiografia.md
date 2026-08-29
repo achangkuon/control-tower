@@ -1,7 +1,7 @@
 ---
-verified_against: 54b5cda733025b0bd50c2a21dc67d1d4192ac66d
+verified_against: 0e1723974a4b87ea63288890f0cd868905a0fe5b
 verified_at: 2026-08-28
-standfirst: Las operaciones host-neutral y los tres perfiles permanentes Tower ya están entregados. S9.4 sigue siendo el próximo inicio; S8.12 conserva S8.10 + S1.18 + S8.14 y todavía espera S1.18. Las cifras se miden solas contra el código.
+standfirst: S4.13 está aprobada pero todavía no entregada: valida ownership neutral después de adquirir y antes de publicar. S9.4 espera ese safety gate y un brief fresco de Support; su candidato congelado es evidencia, no capacidad. Las cifras se miden solas contra el código.
 ---
 
 <!--
@@ -33,7 +33,7 @@ Vos dirigís varios agentes de IA trabajando en varios proyectos a la vez. La To
 
 La prioridad cambió: la primera implementación se hará con Pi. No porque Pi pase a ser el producto, sino porque la Torre puede poseer la identidad del proceso que lanzó y exigir comprobantes producidos por ese proceso. Eso le permite distinguir una sesión propia de una sesión que sólo dice serlo.
 
-La unión neutral ya está construida y entregada: identidad, worktree, proceso, incarnación, binding y las operaciones observe/health/stop/attach no dependen de Pi. El próximo paso conecta el host Pi mediante `S9.4`. Así, si OpenCode vuelve más adelante, ambos podrán enchufarse al mismo contrato sin convertir a la Torre en dependiente de un proveedor.
+La unión neutral ya está construida y entregada: identidad, worktree, proceso, incarnación, binding y las operaciones observe/health/stop/attach no dependen de Pi. Antes de conectar el host Pi, `S4.13` debe agregar una validación opcional sobre ownership ya adquirido pero todavía no publicado. Esa protección está aprobada, no implementada. Sólo después de entregarla Support recalcula el brief de `S9.4`.
 
 ## El veredicto actual
 
@@ -104,7 +104,8 @@ La lista siguiente reemplaza las antiguas “cinco decisiones”. No son pregunt
 |---|---|---|
 | `S4.10` — ✅ COMPLETO | Cinco contratos v1 y ownership exacto del puerto, sin importar Pi ni OpenCode | Que el adapter Pi ya funciona |
 | `S4.11` — ✅ COMPLETO; `S4.12` pendiente | Operaciones observables ya entregadas; recuperación mínima Pi después de sus dependencias | Que la Torre ya supervisa o recupera una jornada Pi real |
-| `S9.4` y `S1.17`–`S1.19` | Supervisor, adapter y regresión Pi con aislamiento y recibos verificables | Capacidad por encima de cinco clientes |
+| `S4.13` | Validación neutral opcional en orden acquire→validate unpublished→publish, con close exacto privado o cuarentena | Que esa protección ya esté implementada o entregada |
+| `S9.4` y `S1.17`–`S1.19` | Después de `S4.13` y un brief fresco: supervisor, adapter y regresión Pi con aislamiento y recibos verificables | Que el candidato congelado sea capacidad o que exista soporte por encima de cinco clientes |
 | `S9.5` | Materialización idempotente de sólo los asientos exactos del brief, después de cerrar `S8.12 + S9.4` | Que Herdr ya abra, reutilice o valide esos asientos automáticamente |
 | Gate Pi desatendido | Una corrida prolongada atribuible al candidato | Estabilidad de larga duración sin esa evidencia |
 | Gate de caída con tráfico | Recuperación idempotente tras caída real del broker | Entrega garantizada de mensajes en vuelo |
@@ -112,18 +113,27 @@ La lista siguiente reemplaza las antiguas “cinco decisiones”. No son pregunt
 
 ## Lo que pasa ahora mismo
 
-### G · sólido · `S8.14` ya cerró y `S9.4` sigue siendo el próximo inicio
-Lo técnico: `S8.14` está ✅ COMPLETO en `master/origin/master@54b5cda733025b0bd50c2a21dc67d1d4192ac66d` y queda fuera de la cola por estar cerrada. La cola canónica empieza `#1 S9.4`, seguida por `S1.17`, `S1.18` y `S8.12`; la capacidad inmediata disponible es 1. `S8.12` conserva la expresión completa `S8.10 + S1.18 + S8.14`: `S8.10` y `S8.14` están satisfechas y todavía espera `S1.18`.
-En simple: Los perfiles ya forman parte del producto. La próxima mesa sigue siendo la conexión con Pi, y el instalador espera sólo el tramo pendiente del adapter dentro de esa cadena.
-Evidencia: `openspec/plans/master-index.md` · `openspec/plans/plan-8/STATUS.md` · `master/origin/master@54b5cda733025b0bd50c2a21dc67d1d4192ac66d`
+### G · crítico · `S4.13` es el safety gate aprobado y todavía no está entregado
+Lo técnico: La decisión 97 autoriza un puerto opcional caller-neutral en ownership: `acquire → validate unpublished → publish`. El registro conserva privadamente el `close` exacto; un fallo exige exact-close o cuarentena. `S4.13` está 🟢 LISTO con cuatro paths futuros, siete criterios binarios y un único Módulo, pero esta serialización no crea implementación.
+En simple: Antes de mostrar una adquisición como disponible, la Torre podrá revisarla mientras todavía está bajo su control. La regla ya está aprobada, pero hoy sigue siendo un plano: no hay que confundir permiso para construir con capacidad funcionando.
+Evidencia: `openspec/plans/decision-register.md` · `openspec/plans/plan-4/STATUS.md` · Engram 9754/9755/9756
 
-### H · crítico · OpenCode sigue estacionado y el adapter Pi todavía espera
-Lo técnico: `S4.4`, `S4.8` y `S4.9` permanecen 🟡 DIFERIDO con preservación absoluta. `S9.4` ya tiene satisfecha `S4.11`; `S1.18` depende de `S1.17`; `S4.12` depende de `S9.4 + S1.18`; `S8.13` conserva `S8.12 + S1.19 + S4.12`; y `S7.1` conserva `S1.19 + S4.12 + S8.13 + S5.5`. La entrega de `S8.14` satisface su dependencia de `S8.12`, pero no reactiva OpenCode ni implementa el host Pi.
-En simple: Los perfiles ya están entregados, pero eso no cambia la prioridad de hosts. OpenCode sigue guardado y Pi aún necesita supervisor, adaptación y pruebas antes de completar el instalador.
-Evidencia: `openspec/plans/master-index.md:9-25` · `openspec/plans/plan-4/STATUS.md:733-763` · `openspec/plans/plan-9/STATUS.md:228-291`
+**Cómo se verifica sin prometer implementación:**
+
+- El registro adquiere primero y publica al final.
+- El hook es opcional y nunca recibe el cierre.
+- Un rechazo cierra exactamente o deja cuarentena visible.
+- La ausencia del hook conserva compatibilidad.
+- Ningún paso incorpora política específica de Pi u OpenCode.
+- Sólo la entrega de `S4.13` cambia este juicio de plano a capacidad.
+
+### H · crítico · `S9.4` espera y su candidato congelado no es capacidad
+Lo técnico: `S9.4` vuelve a 📋 PLANIFICADO y depende de `S4.11` ✅ más `S4.13` no entregada. El candidato `304d534` (tree `8049d32`) permanece inmutable: no se corrige, rebasa, retoma ni usa como base. Sólo después de entregar `S4.13` Support puede recalcular un brief fresco. OpenCode permanece parqueado y las dependencias downstream siguen transitando por `S9.4`.
+En simple: Hay una maqueta técnica guardada, no una función lista. Tocar esa maqueta para “aprovecharla” saltaría la nueva protección. Primero se entrega el seguro neutral; después Support vuelve a calcular el trabajo desde la base válida.
+Evidencia: `openspec/plans/plan-9/STATUS.md` · `openspec/plans/master-index.md` · candidato congelado `304d534`/tree `8049d32`
 
 ## Evidencia y límites de esta radiografía
 
-Este juicio fue reconciliado contra `master/origin/master@54b5cda733025b0bd50c2a21dc67d1d4192ac66d` el 2026-08-28. `verified_against` identifica los bytes entregados que sustentan este juicio. Las cifras de instrumentos, avance y cola son derivadas por el generador y no se escriben a mano acá. `S8.14` está ✅ COMPLETO: perfiles, skills y test están implementados, verificados e integrados en la autoridad aterrizada.
+Este juicio fue reconciliado contra la base limpia `master/origin/master@0e1723974a4b87ea63288890f0cd868905a0fe5b` el 2026-08-28. `verified_against` identifica los bytes usados para este juicio. Las cifras de instrumentos, avance y cola son derivadas por el generador y no se escriben a mano acá. `S4.13` está aprobada y no entregada; el candidato congelado de `S9.4` es evidencia inmutable y no demuestra implementación, runtime ni capacidad.
 
 La última suite integral registrada para `S4.11` informó `934 pass`, `0 fail` y `5.502 expectativas`; este cierre documental no la reejecutó. Ese verde prueba las operaciones host-neutral entregadas, pero no prueba todavía el adapter Pi, la corrida desatendida ni capacidad por encima del límite vigente.
