@@ -211,6 +211,7 @@ class InstallerTests(unittest.TestCase):
     def test_project_owned_tower_delivery_skill_is_not_distributed(self):
         self.assertNotIn("torre-control-entregas", INSTALLER.SKILLS)
         self.assertEqual(INSTALLER.RETIRED_SKILLS, ("torre-control-entregas",))
+        self.assertFalse((ROOT / "skills/torre-control-entregas").exists())
 
     def test_install_removes_only_the_explicit_retired_skill_from_all_runtime_roots(self):
         retired_paths = []

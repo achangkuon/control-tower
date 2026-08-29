@@ -3,10 +3,8 @@
 Version-controlled source of truth for the generic user-owned skill family:
 session workflow routing, planning, support, closure, delivery policy, and shared
 resource coordination. Product-specific Control Tower skills live in the Control
-Tower repository. The retired local `torre-control-entregas` source remains inert
-until the bounded cleanup commits remove it; it is neither installed nor authoritative.
-Gentle AI owns SDD phase skills and orchestrator surfaces; this package does not
-replace, edit, invoke, or regenerate those managed assets.
+Tower repository. Gentle AI owns SDD phase skills and orchestrator surfaces; this
+package does not replace, edit, invoke, or regenerate those managed assets.
 
 These skills do **not** ship with Gentle AI. The `author: gentleman-programming`
 frontmatter on several of them is a `skill-creator` template default, not
