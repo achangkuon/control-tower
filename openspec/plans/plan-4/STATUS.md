@@ -8,7 +8,7 @@
 |---|---|
 | Dependencias | Las dependencias legacy de Change E se conservan. Para Autonomous V2, `S4.1` dependió de `S3.1`, `S3.2` y `S5.1`; su predecesora inmediata fue `S5.1`. |
 | Outputs | Raíz primaria Main-owned con TUI adjunta no autoritativa, inspección/liveness por proceso/sesión, recuperación same-host WSL y contrato host-neutral v1 de identidad, binding, incarnation, puerto loopback y operaciones observe/health/stop/attach. |
-| Roadmap | La evidencia OpenCode entregada permanece ✅ COMPLETO. `S4.4`, `S4.8` y `S4.9` están 🟡 DIFERIDO con preservación absoluta; `S4.10` y `S4.11` están ✅ COMPLETO; `S4.12` permanece 📋 PLANIFICADO y `S4.13` queda 🟢 LISTO como safety gate de `S9.4`. P4 alcanza 62% (8/13 S). |
+| Roadmap | La evidencia OpenCode entregada permanece ✅ COMPLETO. `S4.4`, `S4.8` y `S4.9` están 🟡 DIFERIDO con preservación absoluta; `S4.10`, `S4.11` y `S4.13` están ✅ COMPLETO; `S4.12` permanece 📋 PLANIFICADO. P4 alcanza 69% (9/13 S). |
 | Referencias | [Main-Owned Visible Root spec](../../specs/main-owned-visible-root/spec.md), decisiones 37–42, 92–94 y 97, Engram 9040/9042/9043/9044/9079, 9668/9669/9696/9697/9703/9704 y 9754/9755/9756, [`S4.11 archivada`](../../changes/archive/2026-08-28-s4-11-host-neutral-operations/), [`autonomous-v2-checkpointed-delivery`](../../changes/autonomous-v2-checkpointed-delivery/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). REQUIREMENTS §14 permanece byte-pinned como base histórica; esta spec enmienda el lifecycle futuro. |
 
 ## Sesión 4.1 — Change E single-host candidate fence
@@ -468,8 +468,8 @@ graph LR
   S44 --> S71["S7.1 conformidad · 📋"]
   S46 --> S71
   S48 --> S71
-  S410["S4.10 ownership neutral · ✅"] --> S413["S4.13 validación pre-publicación · 🟢"]
-  S411["S4.11 operaciones neutrales · ✅"] --> S94["S9.4 supervisor Pi · 📋"]
+  S410["S4.10 ownership neutral · ✅"] --> S413["S4.13 validación pre-publicación · ✅"]
+  S411["S4.11 operaciones neutrales · ✅"] --> S94["S9.4 supervisor Pi · 🟢"]
   S413 --> S94
   S94 --> S412["S4.12 recuperación Pi · 📋"]
 ```
@@ -787,7 +787,7 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 
 ### Sesión 4.13 — Validación neutral pre-publicación de ownership
 
-**Estado:** 🟢 LISTO · **Depende de:** `S4.10` ✅ COMPLETO.
+**Estado:** ✅ COMPLETO — entregada por fast-forward directo en `master/origin/master@af607a93cb7f303e48bfc0e4ad761cadc3d1025e` (tree `2fb68dfcd871538b76082633d869b8c812c89abc`, parent `826ba837dd68f5d407329310d92eef91a7c406d8`) · **Depende de:** `S4.10` ✅ COMPLETO.
 
 **Área:** `contracts/host-runtime/ownership-registry.mjs`, `test/contracts/host-runtime/ownership.test.mjs`, `test/contracts/host-runtime/loopback.test.mjs`, `openspec/specs/host-runtime/spec.md`.
 
@@ -795,9 +795,13 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 
 **Decisiones:** `escala`, resuelta por decisión 97 / Emilio Engram 9755 — puerto opcional caller-neutral posterior a adquisición y anterior a publicación; el registro retiene privadamente el `close` exacto y ante fallo hace exact-close o cuarentena. **Clase:** contrato visible del producto; API pública; seguridad y permisos; expansión de alcance; dependencias o evidencia contradictorias. **Contamina:** `M4.13.1`, `S9.4` y downstream. La planificación técnica corregida es Engram 9756 revisión 2; evidencia causal Engram 9754.
 
-**Ruta:** `design-tasks` — el comportamiento está aprobado y el seam neutral debe elaborarse sin crear proposal/spec SDD ni reabrir las formas públicas.
+**Ruta ejecutada:** `design-tasks` — el seam neutral se elaboró sin crear proposal/spec SDD ni reabrir las formas públicas.
 
-**Resultado aprobado:** extender la adquisición neutral con validación opcional sobre ownership aún no publicado, conservar compatibilidad cuando no hay hook y garantizar que sólo el registro puede cerrar o cuarentenar la adquisición exacta.
+**Resultado entregado:** la adquisición neutral valida opcionalmente ownership aún no publicado, conserva compatibilidad cuando no hay hook y garantiza que sólo el registro puede cerrar o cuarentenar la adquisición exacta.
+
+**Evidencia de cierre:** diff limitado a los cuatro paths exactos de `Área`, **234 líneas authored**, SHA-256 `02224c6d001ec427b82330ad9d3a2c3ed464b45d6cadf6187c9e3b29e576464b`. Strict TDD: RED inicial 18 pass / 4 fail; GREEN inicial 22 pass; triangulación 24 pass. La revisión `review-reliability` en contexto fresco encontró 1 BLOCKER y 1 WARNING por carrera de publicación; la única corrección acotada reprodujo RED 24 pass / 2 fail y cerró con 26/26 focused, 30/30 host-runtime y 946/946 full (74 archivos, 5.551 expectations, 106,45 s). El recheck severo originante quedó CLEAN, sin hallazgos. Los bytes del commit son idénticos a los verificados. El adapter nativo de lens no estuvo disponible porque RDD estaba OFF; no existe receipt y no se fabrica uno.
+
+**Rollback:** revertir el commit `af607a93cb7f303e48bfc0e4ad761cadc3d1025e` y los cuatro paths juntos; una reversión parcial rompe la unidad entregada. **Engram:** session-plan 9764; apply/correction 9766 revisión 2; candidato final 9767; assignment 9762. No hubo DB, runtime ni Notion.
 
 **Contrato de orden:**
 
@@ -836,18 +840,18 @@ Ninguna Sesión de P4 cambia de estado por esta auditoría. P4 permanece en 80% 
 | Política menciona host | Fuera de alcance y diff inválido |
 
 **Criterios de aceptación** — los siete son binarios:
-- [ ] El orden observable es `acquire → validate unpublished → publish`; nunca se valida antes de adquirir ni después de publicar.
-- [ ] El hook es opcional y caller-neutral; ausente conserva exactamente la conducta compatible vigente.
-- [ ] El registro retiene privadamente el `close` exacto; caller, hook y capas posteriores no lo reciben, transfieren ni reconstruyen.
-- [ ] Una validación exitosa publica una sola vez la reserva exacta, sin ownership rival ni efecto host-specific.
-- [ ] Error, rechazo o throw de validación ejecuta el `close` exacto o registra cuarentena explícita; nunca cleanup best-effort ni inacción.
-- [ ] Tests RED/GREEN y alternos cubren hook ausente, éxito, fallo con exact-close, fallo de close con cuarentena y prohibiciones de orden/exposición.
-- [ ] El diff toca exactamente los cuatro paths de `Área`, sincroniza la spec canónica y suma 170–280 líneas authored, siempre ≤400.
+- [x] El orden observable es `acquire → validate unpublished → publish`; nunca se valida antes de adquirir ni después de publicar.
+- [x] El hook es opcional y caller-neutral; ausente conserva exactamente la conducta compatible vigente.
+- [x] El registro retiene privadamente el `close` exacto; caller, hook y capas posteriores no lo reciben, transfieren ni reconstruyen.
+- [x] Una validación exitosa publica una sola vez la reserva exacta, sin ownership rival ni efecto host-specific.
+- [x] Error, rechazo o throw de validación ejecuta el `close` exacto o registra cuarentena explícita; nunca cleanup best-effort ni inacción.
+- [x] Tests RED/GREEN y alternos cubren hook ausente, éxito, fallo con exact-close, fallo de close con cuarentena y prohibiciones de orden/exposición.
+- [x] El diff toca exactamente los cuatro paths de `Área`, sincroniza la spec canónica y suma 234 líneas authored, siempre ≤400.
 
 #### Módulo M4.13.1 — Puerto neutral de validación unpublished
 
-**Entrega:** un commit independiente de 170–280 líneas authored (límite absoluto ≤400), verificable y revertible. **Rollback:** revertir juntos los cambios de los cuatro paths de `Área` retira el hook y sus pruebas/spec sin alterar `S4.10`, `S4.11` ni el candidato congelado de `S9.4`.
+**Entrega:** un commit independiente de 234 líneas authored, verificable y revertible. **Rollback:** revertir juntos los cambios de los cuatro paths de `Área` retira el hook y sus pruebas/spec sin alterar `S4.10`, `S4.11` ni el candidato congelado de `S9.4`.
 
-- [ ] Tarea T4.13.1.1 — RED: fijar orden acquire/validate/publish, ausencia compatible, no exposición de close, fallo y cuarentena.
-- [ ] Tarea T4.13.1.2 — GREEN: agregar el puerto opcional mínimo y retener el close exacto dentro del registro.
-- [ ] Tarea T4.13.1.3 — TRIANGULATE/REFACTOR: cubrir alternos negativos, sincronizar la spec y simplificar sin host policy ni paths extra.
+- [x] Tarea T4.13.1.1 — RED: fijar orden acquire/validate/publish, ausencia compatible, no exposición de close, fallo y cuarentena.
+- [x] Tarea T4.13.1.2 — GREEN: agregar el puerto opcional mínimo y retener el close exacto dentro del registro.
+- [x] Tarea T4.13.1.3 — TRIANGULATE/REFACTOR: cubrir alternos negativos, sincronizar la spec y simplificar sin host policy ni paths extra.

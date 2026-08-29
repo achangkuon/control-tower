@@ -148,7 +148,7 @@ graph LR
 > recuperación y failover entra en la cadena de release. La tabla se corrige para coincidir.
 > La decisión histórica fue explícita —construir las catorce Sesiones que ese corte enumeraba como restantes— y no una derivación; la reconciliación actual agrega los prerrequisitos omitidos sin reescribir aquella evidencia.
 
-**Métrica histórica al 2026-08-11: 26/37 Sesiones cerradas o archivadas (70%).** Se conserva como evidencia del corte de esa fecha; no mide la ruta vigente. El estado actual y su denominador auditable son `44/66` en el [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
+**Métrica histórica al 2026-08-11: 26/37 Sesiones cerradas o archivadas (70%).** Se conserva como evidencia del corte de esa fecha; no mide la ruta vigente. El estado actual y su denominador auditable son `45/66` en el [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
 secuenciales entre `S5.4` y `S5.5`: snapshot/parser canónico, contratos de decisión/respuesta,
 binding terminal, productores de provenance, composición Main→parking, binding autoritativo de
 checkpoint y binding inmutable del trabajo completado bajo la autoridad exclusiva de Main. La
@@ -181,7 +181,7 @@ El comportamiento Hermes/Telegram restante es evidencia histórica archivada; no
 
 ## Capacidad paralela hoy
 
-La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas. La capacidad inmediata es **1**: el inicio canónico es `#1 S4.13`. `S9.4` espera su entrega y un brief fresco de Support; su candidato congelado `304d534`/tree `8049d32` es evidencia inmutable, no capacidad.
+La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas. `S4.13` está ✅ COMPLETO y entregada; `#1 S9.4` está 🟢 LISTO, pero la capacidad ejecutable es **0** hasta el brief fresco de Support. Después del recálculo habrá una sola capacidad prevista. Su candidato congelado `304d534`/tree `8049d32` es evidencia inmutable, no capacidad.
 
 `S8.14` ya está ✅ COMPLETO en `master/origin/master@54b5cda733025b0bd50c2a21dc67d1d4192ac66d` y sale de la capacidad pendiente. `S8.12` conserva la expresión completa `S8.10 + S1.18 + S8.14`: `S8.10` y `S8.14` están satisfechas y todavía espera `S1.18`.
 
@@ -265,18 +265,18 @@ Se registra explícitamente en lugar de esconderse:
 
 La cadena OpenCode anterior, sus commits, pruebas y decisiones queda preservada como historia parqueada. No es autoridad activa mientras OpenCode permanezca 🟡 DIFERIDO.
 
-**Cadena Pi:** `S4.10 → S4.13 → S9.4 → S1.17 → S1.18 → S1.19`, reteniendo además `S4.11 → S9.4`. `S4.10` y `S4.11` ya están ✅ COMPLETO; `S4.13` queda como inicio canónico #1 y safety gate de `S9.4`. `S9.4` está 📋 PLANIFICADO: su candidato `304d534` (tree `8049d32`) permanece congelado, sin corrección, rebase ni resume hasta entregar `S4.13` y obtener un brief fresco de Support. `S4.12` depende transitivamente de `S4.13` mediante `S9.4` y conserva su dependencia directa `S9.4 + S1.18`; no se agrega una arista redundante `S4.13 → S4.12`. `S9.5` conserva `S8.12 + S9.4` y tampoco recibe una arista redundante desde `S4.13`. `S8.12`, `S8.13` y `S7.1` conservan sus dependencias vigentes.
+**Cadena Pi:** `S4.10 → S4.13 → S9.4 → S1.17 → S1.18 → S1.19`, reteniendo además `S4.11 → S9.4`. `S4.10`, `S4.11` y `S4.13` están ✅ COMPLETO; `S4.13` fue entregada en `master/origin/master@af607a93cb7f303e48bfc0e4ad761cadc3d1025e`. `S9.4` queda 🟢 LISTO como próximo nodo, pero su candidato `304d534` (tree `8049d32`) permanece congelado: la entrega no autoriza corrección, rebase ni resume automático. Support debe reconciliar un brief fresco contra `af607a9` antes de ejecutar. `S4.12` depende transitivamente de `S4.13` mediante `S9.4` y conserva su dependencia directa `S9.4 + S1.18`; no se agrega una arista redundante `S4.13 → S4.12`. `S9.5` conserva `S8.12 + S9.4` y tampoco recibe una arista redundante desde `S4.13`. `S8.12`, `S8.13` y `S7.1` conservan sus dependencias vigentes.
 
 **Aristas activas verificables:**
 
 | Desde | Hacia | Razón |
 |---|---|---|
-| `S4.10` ✅ | `S4.13` 🟢 | Extiende ownership neutral ya entregado sin reabrirlo |
-| `S4.11` ✅ | `S9.4` 📋 | El supervisor consume operaciones neutrales ya entregadas |
-| `S4.13` 🟢 | `S9.4` 📋 | Safety gate pre-publicación todavía no entregado |
-| `S9.4` 📋 | `S1.17` 📋 | El gate Pi necesita supervisor/binding vigente |
-| `S9.4` 📋 | `S4.12` 📋 | Recuperación consume el supervisor ya entregado |
-| `S9.4` 📋 | `S9.5` 📋 | Materialización consume binding Pi/Intercom vigente |
+| `S4.10` ✅ | `S4.13` ✅ | Extiende ownership neutral ya entregado sin reabrirlo |
+| `S4.11` ✅ | `S9.4` 🟢 | El supervisor consume operaciones neutrales ya entregadas |
+| `S4.13` ✅ | `S9.4` 🟢 | Safety gate pre-publicación entregado; falta brief fresco |
+| `S9.4` 🟢 | `S1.17` 📋 | El gate Pi necesita supervisor/binding vigente |
+| `S9.4` 🟢 | `S4.12` 📋 | Recuperación consume el supervisor ya entregado |
+| `S9.4` 🟢 | `S9.5` 📋 | Materialización consume binding Pi/Intercom vigente |
 
 **Redundancia evitada:**
 
@@ -307,4 +307,4 @@ graph LR
 
 **Validación, no decisión:** la corrida desatendida prolongada, crash del broker con tráfico y el límite de cinco clientes son gates de evidencia. El claim inicial termina en cinco; >5 no se promete hasta medirlo.
 
-**Capacidad y próxima acción:** la capacidad inmediata disponible es **1**, `#1 S4.13`, sobre el registro neutral y la reserva unpublished. Esta planificación no afirma implementación ni entrega. `S9.4` espera esa entrega y un brief fresco de Support; el candidato congelado no cuenta como capacidad. Después se conserva el orden anterior y las dependencias transitivas hacia `S4.12`, `S9.5`, `S8.13` y `S7.1`.
+**Capacidad y próxima acción:** `S4.13` está ✅ COMPLETO y sale de la cola. `#1 S9.4` está 🟢 LISTO, pero no hay capacidad ejecutable hasta que Support emita un brief fresco reconciliado contra `master/origin/master@af607a9`; después la capacidad prevista es **1**. El candidato congelado no cuenta como capacidad ni autoriza rebase/corrección automática. Se conservan las dependencias transitivas hacia `S4.12`, `S9.5`, `S8.13` y `S7.1`.

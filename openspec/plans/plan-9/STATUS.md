@@ -42,8 +42,8 @@ Las decisiones 49–54 del [registro](../decision-register.md) y las referencias
 | Orden histórico OpenCode-first | `S9.1 → S9.2 → S9.3`; `S9.4` estaba 🟡 DIFERIDO. La autoridad Pi-first vigente está en la reconciliación del 2026-08-27. |
 | Avance canónico | 0% (0/5 S). Ninguna Sesión está ✅ COMPLETO. `S9.5` entra al denominador como objetivo nuevo autorizado; `S9.4` conserva su historia diferida y su contrato Pi-first vigente. |
 | Entrega | Commit directo a `master`, sin PR. Cada resultado independientemente verificable y revertible, ≤400 líneas authored. |
-| Próxima acción | `S9.4` espera la entrega de `S4.13` y un brief fresco de Support; su candidato `304d534`/tree `8049d32` permanece congelado. `S9.5` conserva `S8.12 + S9.4`. |
-| Decisión abierta | **Ninguna.** La validación neutral pre-publicación está resuelta por la decisión 97; el bloqueo actual es de entrega y recálculo, no una decisión abierta. |
+| Próxima acción | `S9.4` está 🟢 LISTO porque `S4.11` y `S4.13` están entregadas; Support debe emitir un brief fresco y reconciliar la base antes de ejecutar. Su candidato `304d534`/tree `8049d32` permanece congelado. `S9.5` conserva `S8.12 + S9.4`. |
+| Decisión abierta | **Ninguna.** La validación neutral pre-publicación está entregada; el único gate actual es el recálculo del brief, no una decisión abierta. |
 | Autoridad histórica | Engram 8478 rev8, 8506, 8645, 8646, 8647 rev2, 8894, 8898, 8950, 8955, 8908; decisiones 49–54 y 62. Los artefactos SDD de la vieja `S9.1` viven en `openspec/changes/s9-1-safe-slot-lifecycle/` y describen un alcance **superado**: se conservan como evidencia, no como autoridad de implementación. |
 
 ---
@@ -152,8 +152,8 @@ graph TD
   S91["S9.1 pool de asientos · 📋"] --> S92["S9.2 interlock de ocupado · 📋"]
   S91 --> S93["S9.3 caché externa de Bun · 📋"]
   S93 -.-> S94H["S9.4 launcher Pi · historia diferida"]
-  S411["S4.11 operaciones neutrales · ✅"] --> S94["S9.4 supervisor Pi-first · 📋"]
-  S413["S4.13 validación ownership · 🟢"] --> S94
+  S411["S4.11 operaciones neutrales · ✅"] --> S94["S9.4 supervisor Pi-first · 🟢"]
+  S413["S4.13 validación ownership · ✅"] --> S94
   S812["S8.12 bundle Tower · 📋"] --> S95["S9.5 materialización Herdr · 📋"]
   S94 --> S95
 ```
@@ -233,9 +233,9 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 
 **Historia preservada:** el contrato anterior “Pi segundo host, después de OpenCode” queda etiquetado arriba como plan histórico parqueado.
 
-**Estado:** 📋 PLANIFICADO — safety gate activo. El candidato `304d534` (tree `8049d32`) está congelado e inmutable: no se corrige, rebasa, retoma ni usa como capacidad. La ejecución permanece detenida hasta entregar `S4.13` y recibir un brief fresco recalculado por Support.
+**Estado:** 🟢 LISTO — `S4.13` ya fue entregada, pero el candidato `304d534` (tree `8049d32`) sigue congelado e inmutable: no se corrige, rebasa, retoma ni usa como capacidad. Este estado habilita el recálculo de Support, no ejecución automática; la operación permanece congelada hasta recibir un brief fresco y reconciliarlo contra la nueva base canónica.
 
-**Depende de:** `S4.11` ✅ COMPLETO y `S4.13` 🟢 LISTO pero todavía no entregada.
+**Depende de:** `S4.11` ✅ COMPLETO y `S4.13` ✅ COMPLETO, entregada en `master/origin/master@af607a93cb7f303e48bfc0e4ad761cadc3d1025e`.
 
 **Área:** `workspace/pi-supervisor.mjs`, `workspace/pi-binding.mjs`, `test/workspace/pi-supervisor.test.mjs`, `test/workspace/pi-binding.test.mjs`.
 
@@ -245,10 +245,10 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 
 - `escala`, resuelta — decisiones 82–84 y 86–87 fijan aislamiento, capacidades, contrato neutral, topología y mailbox.
 - `escala`, resuelta — decisión 96 fija `runtimeRoute` puro y `broker.start` como primera adquisición dentro del ownership neutral.
-- `escala`, resuelta — decisión 97 / Engram 9755 fija el puerto opcional caller-neutral `acquire → validate unpublished → publish`, con `close` exacto privado y exact-close o cuarentena ante fallo. **Clase:** contrato visible del producto; API pública; seguridad y permisos; expansión de alcance; dependencias o evidencia contradictorias. **Contamina:** `S9.4` y downstream hasta entregar `S4.13`.
+- `escala`, resuelta — decisión 97 / Engram 9755 fija el puerto opcional caller-neutral `acquire → validate unpublished → publish`, con `close` exacto privado y exact-close o cuarentena ante fallo. **Clase:** contrato visible del producto; API pública; seguridad y permisos; expansión de alcance; dependencias o evidencia contradictorias. **Contaminaba:** `S9.4` y downstream hasta la entrega de `S4.13`; ahora resta el brief fresco.
 - `derivable` — nombres de helpers privados, sólo si no cambian ninguna forma pública ni introducen efectos antes de `broker.start`. **Autoridad:** decisiones 84, 96 y 97. **Falsificador:** el nombre o la extracción altera el shape público, adquiere un recurso o crea una capacidad de cleanup.
 
-**Ruta:** `direct` después del gate — se preserva el contrato route-as-data de Engram 9747/9748. El pipeline `full-sdd` ya corrió una vez; su diseño fallido y sus cinco intentos quedan como evidencia, no como ruta de continuación. Tras entrega de `S4.13`, sólo un brief fresco de Support puede asignar un executor general nuevo, sin segundo SDD, SDD por Módulo ni continuidad desde el candidato congelado.
+**Ruta:** `direct` después del gate — se preserva el contrato route-as-data de Engram 9747/9748. El pipeline `full-sdd` ya corrió una vez; su diseño fallido y sus cinco intentos quedan como evidencia, no como ruta de continuación. La entrega de `S4.13` no autoriza rebase, corrección ni continuidad automática: sólo un brief fresco de Support, reconciliado contra `master/origin/master@af607a93cb7f303e48bfc0e4ad761cadc3d1025e`, puede asignar un executor general nuevo, sin segundo SDD ni SDD por Módulo.
 
 **Autoridad de ejecución:**
 
@@ -274,9 +274,9 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 | Gate | Estado actual | Evidencia necesaria para avanzar |
 |---|---|---|
 | Autoridad de producto | Resuelta | Decisión 97 / Emilio Engram 9755 |
-| Planificación neutral | 🟢 LISTO | `S4.13` en P4, Engram 9756 revisión 2 |
-| Implementación neutral | No existe | Entrega canónica de `S4.13` con sus siete criterios cerrados |
-| Base de `S9.4` | Congelada | Releer `master/origin/master` después de la entrega |
+| Planificación neutral | ✅ COMPLETO | `S4.13`, Engram 9756 revisión 2 |
+| Implementación neutral | ✅ COMPLETO | `S4.13` entregada con sus siete criterios cerrados en `af607a9` |
+| Base de `S9.4` | Reconciliación pendiente | Releer `master/origin/master@af607a9` sin tocar el candidato congelado |
 | Brief Support | No vigente | Brief fresco recalculado contra esa nueva base |
 | Executor | No asignable | Sólo después de satisfacer todos los gates anteriores |
 
@@ -292,7 +292,7 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 
 **Condición de retoma:**
 
-1. `S4.13` llega a ✅ COMPLETO y está entregada en la base canónica.
+1. `S4.13` está ✅ COMPLETO y entregada en la base canónica `af607a9`.
 2. Support relee esa base y recalcula dependencias, `Área`, `Recurso` y riesgos.
 3. Support emite un brief nuevo; no enmienda el congelado.
 4. Un executor fresco comienza desde la base canónica, no desde los cinco intentos.
@@ -343,8 +343,8 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 
 - El candidato exacto `304d534` (tree `8049d32`) y sus cinco intentos conservan evidencia de la raíz causal y del diseño fallido.
 - Queda inmutable: cero corrección, rebase, cherry-pick, resume o mutación sobre esos bytes.
-- Su existencia no satisface ningún criterio de `S9.4`, no cambia el estado 📋 PLANIFICADO y no autoriza runtime, Tower, DB, worktree ni peer actions.
-- Primero se entrega `S4.13`; después Support relee la base canónica y recalcula un brief fresco.
+- Su existencia no satisface ningún criterio de `S9.4` y no autoriza runtime, Tower, DB, worktree ni peer actions; `S9.4` está 🟢 LISTO sólo para recibir el brief fresco.
+- `S4.13` ya fue entregada; ahora Support relee la base canónica y recalcula un brief fresco.
 - Sólo ese brief futuro puede asignar un executor nuevo desde la base canónica; la evidencia congelada nunca es continuación.
 
 ## Sesión 9.5 — Materialización visual Herdr posterior al brief confirmado
