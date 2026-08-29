@@ -66,6 +66,11 @@ describe("exact host-runtime context", () => {
         new TypeError("validateUnpublished must be a function"),
       )
     }
+    for (const validateCurrentBeforePublish of [null, false, {}, "validate"]) {
+      expect(() => createHostRuntimeOwnership({ resolveContexts, validateCurrentBeforePublish })).toThrow(
+        new TypeError("validateCurrentBeforePublish must be a function"),
+      )
+    }
   })
 
   test("validates every public component against its commit-1 schema", async () => {
@@ -147,6 +152,95 @@ describe("unpublished ownership validation", () => {
     expect(closes).toBe(1)
   })
 
+  test("runs the final currentness guard synchronously after validation and the local recheck", async () => {
+    const exact = context(), events = [], views = []
+    const ownership = createHostRuntimeOwnership({
+      resolveContexts: () => [exact],
+      acquireAtReservation: async () => { events.push("acquire"); return async () => events.push("close") },
+      validateUnpublished: async () => { events.push("validate"); await Promise.resolve() },
+      validateCurrentBeforePublish: (view) => {
+        events.push("current")
+        views.push(view)
+        expect(Object.isFrozen(view)).toBe(true)
+        expectCode(() => ownership.release(exact[4]), "CT_HOST_RUNTIME_NOT_OWNER")
+        return true
+      },
+    })
+
+    await ownership.reserve(exact[4])
+    events.push("acknowledged")
+    expect(events).toEqual(["acquire", "validate", "current", "acknowledged"])
+    expect(views).toEqual([{
+      binding_id: exact[4].binding_id,
+      runtime_id: exact[0].runtime_id,
+      worktree_id: exact[1].worktree_id,
+      process_id: exact[2].process_id,
+      incarnation_id: exact[3].incarnation_id,
+      loopback_port: exact[4].loopback_port,
+    }])
+    expect(Object.keys(views[0]).sort()).toEqual(["binding_id", "incarnation_id", "loopback_port", "process_id", "runtime_id", "worktree_id"])
+    expect(JSON.stringify(views[0])).not.toMatch(/close|release|publish|host|adapter|broker|pi|opencode|intercom/i)
+    await ownership.release(exact[4])
+  })
+
+  test("fails closed without awaiting or assimilating non-true guard results", async () => {
+    const exact = context(); let closes = 0, assimilations = 0
+    const thenable = { then() { assimilations += 1 } }
+    const validators = [
+      ...[false, undefined, 1, "true", Promise.resolve(true), thenable].map((result) => () => result),
+      () => { throw new Error("private guard detail") },
+    ]
+    for (const validateCurrentBeforePublish of validators) {
+      const ownership = createHostRuntimeOwnership({
+        resolveContexts: () => [exact],
+        acquireAtReservation: async () => async () => { closes += 1 },
+        validateCurrentBeforePublish,
+      })
+      await rejectsCode(ownership.reserve(exact[4]), "CT_HOST_RUNTIME_ACQUISITION_FAILED")
+      await rejectsCode(Promise.resolve().then(() => ownership.release(exact[4])), "CT_HOST_RUNTIME_NOT_OWNER")
+    }
+    expect(closes).toBe(7)
+    expect(assimilations).toBe(0)
+  })
+
+  test("rejects a replaced process in the same worktree and permits only the new occupant", async () => {
+    const prior = context(), current = context({ digit: "2", port: prior[4].loopback_port })
+    current[0] = prior[0]
+    current[1] = prior[1]
+    Object.assign(current[4], { runtime_id: prior[4].runtime_id, worktree_id: prior[4].worktree_id })
+    let occupant = prior, closes = 0
+    const ownership = createHostRuntimeOwnership({
+      resolveContexts: (binding) => [[prior, current].find((tuple) => tuple[4] === binding)],
+      acquireAtReservation: async () => async () => { closes += 1 },
+      validateUnpublished: async (view) => { if (view.process_id === prior[2].process_id) occupant = current },
+      validateCurrentBeforePublish: (view) => view.worktree_id === occupant[1].worktree_id
+        && view.process_id === occupant[2].process_id
+        && view.incarnation_id === occupant[3].incarnation_id,
+    })
+
+    await rejectsCode(ownership.reserve(prior[4]), "CT_HOST_RUNTIME_ACQUISITION_FAILED")
+    expect(closes).toBe(1)
+    await expect(ownership.reserve(current[4])).resolves.toMatchObject({ incarnation_id: current[3].incarnation_id })
+    await ownership.release(current[4])
+  })
+
+  test("quarantines the exact acquisition when final-currentness cleanup cannot be confirmed", async () => {
+    const exact = context(); let closeAttempts = 0
+    const ownership = createHostRuntimeOwnership({
+      resolveContexts: () => [exact],
+      acquireAtReservation: async () => async () => {
+        closeAttempts += 1
+        if (closeAttempts === 1) throw new Error("private close detail")
+      },
+      validateCurrentBeforePublish: () => false,
+    })
+
+    await rejectsCode(ownership.reserve(exact[4]), "CT_HOST_RUNTIME_CLEANUP_FAILED")
+    await rejectsCode(ownership.reserve(exact[4]), "CT_HOST_RUNTIME_PORT_RESERVED")
+    await ownership.dispose()
+    expect(closeAttempts).toBe(2)
+  })
+
   test("closes the exact unpublished acquisition after synchronous validation failure", async () => {
     const exact = context(); let exactClose, closes = 0
     const ownership = createHostRuntimeOwnership({
@@ -190,6 +284,7 @@ describe("unpublished ownership validation", () => {
       resolveContexts: (binding) => [tuples.get(binding)],
       acquireAtReservation: async (_, port) => async () => closes.set(port, (closes.get(port) ?? 0) + 1),
       validateUnpublished: async (record) => { validating.push(record.loopback_port); await gates.get(record.loopback_port).promise },
+      validateCurrentBeforePublish: (record) => { validating.push(`current:${record.loopback_port}`); return true },
     })
 
     const winner = ownership.reserve(first[4]), loser = ownership.reserve(second[4])
@@ -197,8 +292,10 @@ describe("unpublished ownership validation", () => {
     expect(validating.sort()).toEqual([43101, 43102])
     gates.get(43101).resolve()
     expect(await winner).toMatchObject({ loopback_port: 43101 })
+    expect(validating).toContain("current:43101")
     gates.get(43102).resolve()
     await rejectsCode(loser, "CT_HOST_RUNTIME_CLEANUP_FAILED")
+    expect(validating).not.toContain("current:43102")
     expect(closes.get(43102)).toBe(1)
     await rejectsCode(Promise.resolve().then(() => ownership.release(second[4])), "CT_HOST_RUNTIME_NOT_OWNER")
     await ownership.release(first[4])

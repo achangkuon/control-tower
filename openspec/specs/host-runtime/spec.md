@@ -137,6 +137,27 @@ Successful synchronous or asynchronous validation MUST permit exactly one public
 - WHEN it examines the immutable view
 - THEN no close, release, publish, registry map, mutable ownership, host, adapter, broker, Pi, OpenCode, or Intercom authority MUST be present
 
+### Requirement: Synchronous final-currentness guard before publication
+
+The ownership registry MAY accept one optional caller-neutral `validateCurrentBeforePublish` capability. When supplied, it MUST be a function and MUST run synchronously after `validateUnpublished` has completed and after the registry repeats its local publication-safety check, immediately before publication in the same stack. When absent, existing reservation and publication behavior MUST remain unchanged.
+
+The guard MUST receive the same immutable metadata containing exactly `binding_id`, `runtime_id`, `worktree_id`, `process_id`, `incarnation_id`, and `loopback_port`, without close or host vocabulary. Only the primitive boolean `true` permits publication. A throw, `false`, any non-boolean, Promise, or thenable MUST fail closed without awaiting, assimilating, or continuing from that result.
+
+A failed guard MUST prevent publication and invoke the exact private close capability under the existing acquisition-failure and cleanup-quarantine rules. A process replaced in the same worktree seat MUST NOT publish; only metadata matching the current process and incarnation may pass.
+
+#### Scenario: Current exact ownership publishes
+
+- GIVEN asynchronous unpublished validation completed and the local safety recheck still passes
+- WHEN the synchronous final-currentness guard returns primitive `true`
+- THEN the registry MUST publish the exact reservation immediately in the same stack
+
+#### Scenario: Stale or non-synchronous currentness fails closed
+
+- GIVEN the process was replaced in the same worktree seat or the guard does not return primitive `true`
+- WHEN final currentness is checked
+- THEN the registry MUST NOT publish or acknowledge the reservation
+- AND it MUST close or quarantine that exact acquisition without awaiting or assimilating the guard result
+
 ### Requirement: Exact release and safe port reuse
 
 The system MUST release a port only when the release request validates the exact current binding and incarnation that own its reservation. A release MUST remove authority for that released binding; it MUST NOT validate old binding state if the numeric port is later reserved again.
