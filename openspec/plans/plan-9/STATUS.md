@@ -133,6 +133,12 @@ estable entre invocaciones sin necesidad de estado. Verificado en el repositorio
 ocupado — eso es `S9.2`, y esta Sesión lo deja preparado pero no lo implementa: dos Main
 concurrentes todavía pueden leer el mismo asiento como libre.
 
+**Readback post-push.** El código quedó publicado en `origin/master@56753b4` y su cierre documental
+en `d7be093e7edf0fa50d87665911bf369db04eb80c`; `HEAD` local y `origin/master` coinciden en ese SHA.
+`bun test` 992 pass / 0 fail sobre el árbol entregado. `torre asiento pool`, `provisionar` y
+`asignar` fueron ejecutados contra este repositorio antes de entregar: con `implementer-1` e
+`implementer-3` sucios, `asignar` eligió `implementer-2` y repitió esa elección.
+
 **Recurso:** el registro de asientos y el binding de asignación. Sin transporte propio.
 
 **Ruta:** `design-tasks`.
