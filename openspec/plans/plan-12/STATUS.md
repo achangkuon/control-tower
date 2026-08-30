@@ -151,9 +151,17 @@ producto; el cambio de Telegram queda archivado; el archivo histórico conserva 
 - `derivable` — el archivo histórico no se toca. **Criterio:** la convención §6 define ARCHIVADO
   como «cerrado, conservado para trazabilidad». **Falsificable:** una purga borra historia
   archivada. **Autoridad:** `_shared/plan-naming-convention.md` §6.
-- `derivable` — `ROADMAP.md` se **reescribe**, no se borra. **Criterio:**
-  `test/migration.test.mjs:47-59` lo exige como ruta trackeada. **Falsificable:** el test deja de
-  exigirlo. **Autoridad:** la suite vigente.
+- `derivable` — `ROADMAP.md` se **reescribe**, no se borra. **Criterio:** es el ancla documental
+  que se lee por ruta absoluta, así que conserva su ruta y cambia su contenido. **Falsificable:**
+  algo depende de su texto actual. **Autoridad:** decisión 3 del maintainer.
+
+  **Corrección de una premisa falsa que este plan traía escrita.** Decía que
+  `test/migration.test.mjs:47-59` exigía `ROADMAP.md` y `core.mjs.bak.20260721-161315` como rutas
+  trackeadas, y que borrarlos rompería la suite. **Es falso, y se midió:** `expectedTrackedPaths`
+  pertenece a un test que restaura *snapshots congelados* de `f583df7` y `71ab571` dentro de una
+  raíz aislada; la lista describe lo que había en esos commits históricos, no lo que hay en el
+  árbol vivo. Con `core.mjs.bak.20260721-161315` borrado la suite da **1026 pass / 0 fail**. El
+  desorden nunca fue carga estructural: se puede limpiar sin tocar un solo test.
 - `escala` — ¿la definición de producto vigente, *La Torre Terminada*
   (artifact `323b83bd-f1cd-4cee-a5c7-945f8c7d6173`), menciona VPS, Hermes o Telegram? **Clase:**
   contrato visible del producto. **Contamina:** `M12.2.4` solamente. **No verificado**: es un
@@ -163,7 +171,7 @@ producto; el cambio de Telegram queda archivado; el archivo histórico conserva 
 - [ ] `rg -ci 'vps|hermes|telegram'` sobre `Área` devuelve cero menciones como alcance vigente
 - [ ] `openspec/changes/archive/**` no cambió ni un byte
 - [ ] `sdd-tower-telegram-delivery` está bajo `openspec/changes/archive/`
-- [ ] `core.mjs.bak.20260721-161315` ya no está trackeado y `expectedTrackedPaths` ya no lo exige
+- [x] `core.mjs.bak.20260721-161315` ya no está trackeado — suite verde sin tocar ningún test
 - [ ] `ROADMAP.md` existe y ya no se declara «no versionado»
 - [ ] La suite completa sigue en verde
 - [ ] El diff no toca ninguna ruta fuera de `Área`
