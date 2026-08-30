@@ -396,6 +396,12 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 fresco de Support (Engram 9891). Suite completa 1006 pass / 0 fail; combinada `workspace` +
 `contracts` 210/210. `git diff --check` limpio; el diff toca exactamente los dos paths de abajo.
 
+**Readback post-push.** El código quedó publicado en `9f29f20` y su cierre documental en
+`4fd5b2e3b56755b48fea7a98eeca57635e364b63`; `HEAD` local y `origin/master` coinciden en ese SHA
+con árbol limpio. `workspace/pi-binding.mjs` **no entra al payload de runtime** todavía y eso es
+correcto: nadie lo importa hasta que `M9.4.2` lo cablee en `pi-supervisor.mjs`, y
+`payload-closure.mjs` reportó `unchanged`.
+
 **Hallazgo del brief, corregido al implementar.** El brief planteó que `M9.4.1` podía necesitar
 comparar el contexto antes contra el después. **Era falso y se verificó:** `matches()` en
 `contracts/host-runtime/binding-context.mjs` ya compara los seis identificadores contra el binding
