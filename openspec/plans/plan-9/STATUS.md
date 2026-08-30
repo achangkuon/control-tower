@@ -55,6 +55,33 @@ implementación verificable que `S9.5` debe **invocar, no reescribir**.
 contra este repositorio identifica los tres asientos permanentes, `support-agent`, `Main` y dos
 temporales reclamables (`diagnostic-launch-timeout`, `implementer-temp-s4-14`).
 
+## Traspaso a Pi — estado de asientos al 2026-08-30
+
+Los asientos quedaron preparados para que el trabajo siga desde Pi sobre la base entregada
+`origin/master@b305079`. **Sólo se reciclaron los dos asientos limpios**; los dos que conservan
+evidencia congelada de `S9.4` no se tocaron, y el reciclador además aborta solo ante un árbol sucio.
+
+| Asiento | Rama | Estado | Disposición |
+|---|---|---|---|
+| `implementer-2` | `feat/s9.4-kernel-currentness` | limpio, `0/0` contra `origin/master` | **Asiento de trabajo.** Reciclado desde `origin/master` con `jornada.sh --reciclar`. |
+| `support-agent` | `support/read-only-20260830` | limpio, `0/0` | Al día. Antes estaba 13 commits atrasado, lo que habría producido un brief equivocado. |
+| `implementer-1` | `feat/s9.4-validated-pure-route-supervisor` | sucio (2), `32/1` | **NO TOCAR.** Evidencia congelada: M1 en `a7d724dc` y M2 como dos archivos sin trackear. |
+| `implementer-3` | `feat/s9.4-pi-supervisor-binding` | sucio (3), `39/2` | **NO TOCAR.** Evidencia congelada del SDD fallido, incluido `openspec/changes/s9-4-pi-supervisor-binding/`. |
+
+**Trabajo siguiente, ya acotado:** cerrar la mitad de kernel del criterio 1 de `S9.4` — un puerto
+`observeProcess` que compare PID, cwd y start-token antes y después de la observación async, como
+enuncia la autoridad Engram 9748. Es lo único entre `S9.4` y ✅ COMPLETO. El `Área` de la Sesión no
+cambia: `workspace/pi-supervisor.mjs`, `workspace/pi-binding.mjs` y sus dos tests.
+
+**Ramas viejas conservadas.** No se pasó `--borrar-rama-vieja`: `docs/proportional-plan-migration-v2`
+y `support/read-only-20260813` siguen existiendo. Borrarlas es una decisión aparte.
+
+**Worktrees temporales sin reclamar.** `diagnostic-launch-timeout` e `implementer-temp-s4-14` siguen
+siendo reclamables y **no se borraron**: el descarte es irreversible y no fue autorizado. Cuando el
+maintainer lo apruebe, `torre asiento limpiar --confirmar` los retira. `Worktrees/plan-1` existe en
+disco pero **no es un worktree registrado en git**, así que el inventario no lo ve; necesita
+disposición propia.
+
 ## Tabla de migración de IDs
 
 Las decisiones 49–54 del [registro](../decision-register.md) y las referencias en [release-chain](../release-chain.md) y el

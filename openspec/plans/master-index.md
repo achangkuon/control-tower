@@ -14,7 +14,7 @@
 
 **Un defecto propio se encontró y corrigió antes de entregar:** la primera versión de `pi-supervisor.mjs` escribió dos bytes `NUL` literales como separador de un `join`, lo que hacía que **git clasificara el archivo como binario** y dejara su diff ilegible para siempre. Se reemplazó por comparación de claves elemento a elemento. Queda anotado porque es la clase de error que ninguna suite detecta.
 
-**Capacidad viva: 1 asiento** (`implementer-2`, limpio). `implementer-1` e `implementer-3` conservan evidencia congelada de los cinco intentos previos de `S9.4` y **no fueron consumidos, rebasados ni corregidos** en ningún momento.
+**Capacidad viva: 1 asiento.** `implementer-2` quedó reciclado en `feat/s9.4-kernel-currentness`, limpio y `0/0` contra `origin/master`, listo para retomar desde Pi; `support-agent` pasó a `support/read-only-20260830` y ya no está atrasado. La tabla completa de traspaso está en [P9](plan-9/STATUS.md). `implementer-1` e `implementer-3` conservan evidencia congelada de los cinco intentos previos de `S9.4` y **no fueron consumidos, rebasados ni corregidos** en ningún momento.
 
 **`S9.1` cerró antes en la misma jornada** —P9 a 20% (1/5 S), global a 47/66 (71%)— y la topología de asientos dejó de ser prosa en `6c79223`. Pi sigue siendo el primer host; Pi 0.84.4 está instalado pero `S9.4` no lo necesita vivo. Las responsabilidades legacy siguen reconciliadas: P9 legacy en `P8/S8.5` 🟡 DIFERIDO; P10 con traza en `S8.2`/`S8.8` y remanente `S8.12 → S8.13`; P11 repartida entre `S1.19`, `S7.1` y `S8.13`. La próxima unidad documental proporcional sigue siendo P4, sin writer asignado.
 
