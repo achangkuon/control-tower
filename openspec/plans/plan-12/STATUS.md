@@ -131,7 +131,7 @@ porque es la red que hace seguras las tres mudanzas de `core.mjs`; sin ella cada
 
 ## Sesión 12.2 — La Torre corre local: la documentación deja de vender la VPS
 
-**Estado:** 🟢 LISTO · **Ruta:** `direct` · est: 4h
+**Estado:** 🔵 EN CURSO · **Ruta:** `direct` · est: 4h
 
 **Depende de:** —
 **Área:** `ROADMAP.md`, `openspec/prd/**`, `openspec/rfc/**`,
@@ -162,6 +162,11 @@ producto; el cambio de Telegram queda archivado; el archivo histórico conserva 
   raíz aislada; la lista describe lo que había en esos commits históricos, no lo que hay en el
   árbol vivo. Con `core.mjs.bak.20260721-161315` borrado la suite da **1026 pass / 0 fail**. El
   desorden nunca fue carga estructural: se puede limpiar sin tocar un solo test.
+- `escala` — **cómo avanza la revisión de un artefacto fijado por digest.** El `Área` de esta
+  Sesión incluía `openspec/prd/**`, `openspec/rfc/**` y el archivo de requisitos como si fueran
+  documentos editables, y no lo son. **Es un defecto de este plan, detectado al ejecutarlo.**
+  **Clase:** contrato visible del producto; dependencias o evidencia contradictorias.
+  **Contamina:** `M12.2.2` únicamente — `M12.2.1` ya entregó y `M12.2.3` toca archivos libres.
 - `escala` — ¿la definición de producto vigente, *La Torre Terminada*
   (artifact `323b83bd-f1cd-4cee-a5c7-945f8c7d6173`), menciona VPS, Hermes o Telegram? **Clase:**
   contrato visible del producto. **Contamina:** `M12.2.4` solamente. **No verificado**: es un
@@ -176,7 +181,7 @@ producto; el cambio de Telegram queda archivado; el archivo histórico conserva 
 - [ ] La suite completa sigue en verde
 - [ ] El diff no toca ninguna ruta fuera de `Área`
 
-### Módulo M12.2.1 — `ROADMAP.md` + `test/migration.test.mjs` + retiro del respaldo · ~180 líneas
+### Módulo M12.2.1 — ✅ ENTREGADO · `ROADMAP.md` reescrito y respaldo retirado (`ff25eb9`, `7841f52`)
 
 **Precisión medida, para que la Tarea no tenga que redescubrirla:** `expectedTrackedPaths`
 (`test/migration.test.mjs:48-59`) es una lista fija de 12 rutas, y la aserción en la línea 2268-2269
@@ -188,7 +193,23 @@ es doble — `toHaveLength(12)` y `toEqual(expectedTrackedPaths)` — más `cont
 - [ ] Tarea T12.2.1.2 — GREEN: sacarlo de `expectedTrackedPaths`, bajar el conteo a 11, borrar el archivo, reescribir el ROADMAP sin VPS.
 - [ ] Tarea T12.2.1.3 — REFACTOR: el ROADMAP ya no se declara «no versionado»; suite verde.
 
-### Módulo M12.2.2 — PRD, RFC y requisitos · ~200 líneas
+### Módulo M12.2.2 — 🔴 PRD, RFC y requisitos: contenido listo, entrega bloqueada
+
+El trabajo está **hecho y verificado**: cero enunciados de alcance retirado en los tres documentos.
+Incluye los **ocho enunciados de alcance remoto del PRD que no contenían ninguna de las tres
+palabras clave** —entre ellos la sección `F2` entera— y el rol completo del agente remoto en el
+RFC, cuya duda de fondo (¿quién es dueño del registro de proyectos si ese rol desaparece?) se
+resolvió **contra el código y no por decisión**: lo implementa `registry/store.mjs` dentro de este
+repositorio, así que el RFC describía un diseño que la implementación ya había superado. Estacionado
+en la rama local `parked/s12.2-docs-congelados` (`2b0506c`).
+
+**Por qué no se entrega: los tres archivos están congelados por firma criptográfica.**
+`openspec/plans/autonomous-v2/revisions/1/manifest.yaml:17-43` fija `content_digest` en modo
+`raw-bytes` para el PRD, el RFC y los requisitos, con su `source_commit` y `artifact_revision: 1`;
+`test/provenance/provenance.test.mjs:80-88` verifica que los bytes vivos sigan coincidiendo.
+**Cualquier cambio de un byte rompe la procedencia**, incluso agregar un aviso de alcance. Medido:
+1025 pass / 1 fail. Entregarlo exige avanzar la revisión del artefacto, que es trabajo fuera del
+`Área` de esta Sesión.
 - [ ] Tarea T12.2.2.1 — RED: enumerar las 41 menciones vivas en los tres documentos.
 - [ ] Tarea T12.2.2.2 — GREEN: reescribir el alcance como producto local.
 - [ ] Tarea T12.2.2.3 — REFACTOR: `rg -ci` devuelve cero como alcance vigente.
