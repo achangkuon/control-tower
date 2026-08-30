@@ -5,7 +5,7 @@
 ## Verdad ejecutable actual
 
 - `S2.1`–`S2.6` y `S2.8` están cerradas; `S2.7` está archivada. P2 no conserva una Sesión enumerada pendiente.
-- `S2.8` está integrada sólo en el `master` local mediante `480afb92bf99d38ee166070d09ec6485bc5de2c4`; `origin/master` permanece en `c2fb6399ee1332821663735d02833f78b9371402` hasta autorización humana de push.
+- `S2.8` fue entregada a `origin/master` mediante el código `480afb92bf99d38ee166070d09ec6485bc5de2c4` y el cierre documental `6bd1477ddc6c242ac5ff9aa8459f48daedffe40f`.
 - **Cola global:** P2 no aporta una Sesión enumerada. Ver [master-index](../master-index.md).
 - **Denominador:** `—`. Cuatro responsabilidades de Change B siguen sin Sesión enumerada; por la [decisión 57](../decision-register.md), el porcentaje no es derivable.
 
@@ -19,7 +19,7 @@
 | S2.4 | ✅ COMPLETO | Registry storage y resolución XDG path-neutral | [tasks](../../changes/archive/2026-07-31-sdd-tower-project-registry/tasks.md) · PRs #82, #84, #86, #88 · 14/14 storage, 57/57 combined |
 | S2.5 | ✅ COMPLETO | Preflight de colisiones para enrollment legado | [tasks](../../changes/archive/2026-07-31-sdd-tower-legacy-import-preflight/tasks.md) · [apply](../../changes/archive/2026-07-31-sdd-tower-legacy-import-preflight/apply-progress.md) · [verify](../../changes/archive/2026-07-31-sdd-tower-legacy-import-preflight/verify-report.md) · PRs #94, #96, #114, #116 · 5/5 requisitos, 9/9 escenarios, 12/12 tareas |
 | S2.6 | ✅ COMPLETO | La Torre adoptó el contrato de ejecución y volvió opacos los bloques ajenos sin cambiar registry/payload | [decisiones 71 y 79](../decision-register.md) · commit `c91fddd5c74019de2ef7d691a43d403558c3a92e` · cierre `f2d1a81` · 87 tests focalizados, 892 integrales |
-| S2.8 | ✅ COMPLETO | `inputs` opaco sin nombres de fase; contrato restante y membresía preservados | [decisión 103](../decision-register.md) · código local `480afb92bf99d38ee166070d09ec6485bc5de2c4` · 45 líneas authored · AC1–AC5 PASS · AC6 excepción autorizada, no PASS |
+| S2.8 | ✅ COMPLETO | `inputs` opaco sin nombres de fase; contrato restante y membresía preservados | [decisión 103](../decision-register.md) · código entregado `480afb92bf99d38ee166070d09ec6485bc5de2c4` · 45 líneas authored · AC1–AC5 PASS · AC6 excepción autorizada, no PASS |
 
 ## Sesión archivada
 
@@ -35,7 +35,7 @@ El [apéndice de migración](../plan-vocabulary-migration-appendix.md) preserva,
 
 | Campo | Contrato vigente |
 |---|---|
-| Estado | ✅ COMPLETO — integrado en `master` local; push remoto todavía requiere autorización humana |
+| Estado | ✅ COMPLETO — código `480afb92bf99d38ee166070d09ec6485bc5de2c4` y cierre documental `6bd1477ddc6c242ac5ff9aa8459f48daedffe40f` entregados a `origin/master` |
 | Depende de | — |
 | Área | `schemas/binding-delta-v1.schema.json`; `test/contracts/schema.test.mjs`; `test/fixtures/contracts/schema-cases-v1.json` |
 | Prohibido | `contracts/schema-registry.mjs`; `contracts/validate.mjs`; `install/**`; `scripts/payload-closure.mjs`; `schemas/execution-contract-v1.schema.json` |
@@ -77,4 +77,4 @@ El [apéndice de migración](../plan-vocabulary-migration-appendix.md) preserva,
 - [x] `T2.8.2.2` **GREEN** — actualizar fixtures y pruebas para que ambas formas validen sin tocar archivos prohibidos
 - [x] `T2.8.2.3` **REFACTOR** — triangular correcciones de revisión, membresía inmutable, suite focalizada e integral y límite exacto de `Área`
 
-**Medición:** 45 líneas authored en implementación, pruebas y fixture; una unidad local verificable y revertible, todavía sin push remoto.
+**Medición:** 45 líneas authored en implementación, pruebas y fixture; una unidad verificable y revertible entregada a `origin/master` mediante `480afb92bf99d38ee166070d09ec6485bc5de2c4`.

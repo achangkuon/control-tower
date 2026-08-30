@@ -1,12 +1,12 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: cierre factual de `S2.8` integrado en el `master` local como `480afb92bf99d38ee166070d09ec6485bc5de2c4`, parent `c2fb6399ee1332821663735d02833f78b9371402`. `origin/master` permanece en el parent hasta autorización humana de push.
+> Última reconciliación post-push: `S2.8` fue entregada a `origin/master` mediante el código `480afb92bf99d38ee166070d09ec6485bc5de2c4` y el cierre documental `6bd1477ddc6c242ac5ff9aa8459f48daedffe40f`. Esta formulación registra artefactos entregados y no depende del SHA del commit de reconciliación.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para el **inventario del producto** —los trece comandos, los módulos sin llamador y su orden de conexión— ver [inventario-de-producto](inventario-de-producto.md). Para **qué falta para salir** ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md). La línea entre lo que decide la Torre y lo que decide gentle-ai vive en [la frontera Torre ↔ gentle-ai](frontera-torre-gentle-ai.md), y **cualquier Sesión puede citarla para rechazar alcance** — desde el 2026-08-26 la frontera tiene **tres ejes**: la calidad del trabajo, el flujo de trabajo ([decisión 71](decision-register.md)) y **quién lee el plan** ([decisión 78](decision-register.md) — la cerca no lee). La **definición de producto vigente** —qué es y qué deliberadamente no va a ser la Torre terminada— es [**La Torre Terminada**](https://claude.ai/code/artifact/323b83bd-f1cd-4cee-a5c7-945f8c7d6173), y **ninguna Sesión puede desviarse de ella sin una decisión registrada**.
 
 ## 📍 Punto de retoma
 
-**`S2.8` cerró ✅ COMPLETO en el `master` local mediante `480afb92bf99d38ee166070d09ec6485bc5de2c4`.** AC1–AC5 pasan; AC6 cierra por la excepción humana acotada de la [decisión 103](decision-register.md), no como PASS. El remoto sigue en `c2fb6399ee1332821663735d02833f78b9371402` hasta aprobación humana.
+**`S2.8` cerró ✅ COMPLETO y fue entregada a `origin/master` mediante `480afb92bf99d38ee166070d09ec6485bc5de2c4` + `6bd1477ddc6c242ac5ff9aa8459f48daedffe40f`.** AC1–AC5 pasan; AC6 cierra por la excepción humana acotada de la [decisión 103](decision-register.md), no como PASS.
 
 **`#1 S9.4` permanece 📋 PLANIFICADO y sin worker asignado.** No hay resume ni corrección hasta que Support emita un brief fresco sobre la base entregada; M1 `a7d724dc`, M2 no trackeado y la corrección sin consumir permanecen sólo como evidencia inmutable.
 
