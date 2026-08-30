@@ -10,6 +10,7 @@ export const RUNTIME_PAYLOAD_ROOTS = [
   "install/lifecycle.mjs",
   "core.mjs",
   "hosts/launch-worker-cli.mjs",
+  "hosts/seat-cli.mjs",
   "console/executor.mjs",
   "console/validate.mjs",
 ]

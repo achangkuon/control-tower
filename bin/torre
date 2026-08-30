@@ -10,6 +10,7 @@
 #   torre status    quien esta registrado, en que estado y quien tiene los locks
 #   torre log      sigue el registro en vivo (ctrl-c para salir)
 #   torre unlock   libera un lock cuya sesion murio (pide confirmacion)
+#   torre asiento  asientos de trabajo: list | abrir <asiento> | limpiar [--confirmar]
 #   torre reset    borra el estado de la torre en este repo
 #
 # El interruptor es un archivo y no depende de que el MCP funcione. `torre off`
@@ -18,6 +19,11 @@
 set -euo pipefail
 
 ENTRYPOINT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+if [[ "${1:-}" == "asiento" ]]; then
+    # Seat topology belongs to the Tower, but this door is deliberately open while the Tower is
+    # off: it never reads ACTIVE, and it shares hosts/herdr-topology.mjs with the launch path.
+    exec bun "$ENTRYPOINT_DIR/../hosts/seat-cli.mjs" "${@:2}"
+fi
 if [[ "${1:-}" == "launch-worker" ]]; then
     # This command has no legacy compatibility path: its provider is packaged
     # beside this executable and validates the installed runtime identity.

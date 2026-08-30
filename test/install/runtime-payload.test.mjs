@@ -58,12 +58,14 @@ const CANONICAL_RUNTIME_PAYLOAD = [
   "hosts/production-provider.mjs",
   "hosts/root-binding.mjs",
   "hosts/root-identity.mjs",
+  "hosts/seat-cli.mjs",
   "install/active-pointer.mjs",
   "install/lifecycle.mjs",
   "install/runtime-payload.mjs",
   "install/version-store.mjs",
   "jornada/lifecycle.mjs",
   "main-store/launch-consumer.mjs",
+  "workspace/seat-inventory.mjs",
 ]
 const fixture = () => {
   const root = mkdtempSync(join(tmpdir(), "ct-runtime-payload-"))

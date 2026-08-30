@@ -27,12 +27,13 @@ describe("author-time runtime payload closure", () => {
     expect(RUNTIME_PAYLOAD_ASSETS).toEqual(["bin/torre"])
   })
 
-  test("declares exactly the six approved runtime roots", () => {
+  test("declares exactly the seven approved runtime roots", () => {
     expect(RUNTIME_PAYLOAD_ROOTS).toEqual([
       "install/active-pointer.mjs",
       "install/lifecycle.mjs",
       "core.mjs",
       "hosts/launch-worker-cli.mjs",
+      "hosts/seat-cli.mjs",
       "console/executor.mjs",
       "console/validate.mjs",
     ])
