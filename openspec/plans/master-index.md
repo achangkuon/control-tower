@@ -1,12 +1,12 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: cierre factual de `S4.14` contra el candidato de código local verificado `master@daf7e0e7af4122417ce2bec8a48a11c65a40f23c`. El commit aún no fue pusheado; no se afirma capacidad runtime ni asignación.
+> Última reconciliación: cierre factual de `S4.14` entregado en `master@e399baab908b6db1fe8bab705f261b1ff106ee9f`, que contiene el código verificado `daf7e0e7af4122417ce2bec8a48a11c65a40f23c`. La entrega no afirma capacidad runtime ni asignación.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para el **inventario del producto** —los trece comandos, los módulos sin llamador y su orden de conexión— ver [inventario-de-producto](inventario-de-producto.md). Para **qué falta para salir** ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md). La línea entre lo que decide la Torre y lo que decide gentle-ai vive en [la frontera Torre ↔ gentle-ai](frontera-torre-gentle-ai.md), y **cualquier Sesión puede citarla para rechazar alcance** — desde el 2026-08-26 la frontera tiene **tres ejes**: la calidad del trabajo, el flujo de trabajo ([decisión 71](decision-register.md)) y **quién lee el plan** ([decisión 78](decision-register.md) — la cerca no lee). La **definición de producto vigente** —qué es y qué deliberadamente no va a ser la Torre terminada— es [**La Torre Terminada**](https://claude.ai/code/artifact/323b83bd-f1cd-4cee-a5c7-945f8c7d6173), y **ninguna Sesión puede desviarse de ella sin una decisión registrada**.
 
 ## 📍 Punto de retoma
 
-**`S4.14` cerró ✅ COMPLETO contra `daf7e0e7af4122417ce2bec8a48a11c65a40f23c`.** La guardia neutral same-stack del ocupante exacto ya corre inmediatamente antes de publicar ownership; el candidato local está verificado y aún no fue pusheado.
+**`S4.14` cerró ✅ COMPLETO y fue entregada en `master@e399baab908b6db1fe8bab705f261b1ff106ee9f`.** La guardia neutral same-stack del ocupante exacto, verificada en `daf7e0e7af4122417ce2bec8a48a11c65a40f23c`, ya corre inmediatamente antes de publicar ownership; no hay worker asignado por este cierre.
 
 **`#1 S9.4` permanece 📋 PLANIFICADO y sin worker asignado.** El gate de `S4.14` salió, pero no hay resume ni corrección hasta que Support emita un brief fresco sobre la base entregada; M1 `a7d724dc`, M2 no trackeado y la corrección sin consumir permanecen sólo como evidencia inmutable.
 
