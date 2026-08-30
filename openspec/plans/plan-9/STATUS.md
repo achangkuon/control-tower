@@ -68,10 +68,12 @@ evidencia congelada de `S9.4` no se tocaron, y el reciclador además aborta solo
 | `implementer-1` | `feat/s9.4-validated-pure-route-supervisor` | sucio (2), `32/1` | **NO TOCAR.** Evidencia congelada: M1 en `a7d724dc` y M2 como dos archivos sin trackear. |
 | `implementer-3` | `feat/s9.4-pi-supervisor-binding` | sucio (3), `39/2` | **NO TOCAR.** Evidencia congelada del SDD fallido, incluido `openspec/changes/s9-4-pi-supervisor-binding/`. |
 
-**Readback post-push.** El traspaso quedó publicado en `origin/master@d044fc4`; `HEAD` local y
-`origin/master` coinciden y ambos asientos limpios fueron nivelados a ese mismo SHA después de
-publicar, de modo que Pi arranca sin deuda. Verificado con `torre asiento pool`: `implementer-2`
-figura como el único asiento libre.
+**Readback post-push.** La tabla de traspaso quedó publicada en `origin/master@d044fc4`, con `HEAD`
+local igual a `origin/master`. **Los dos asientos limpios se nivelan contra la punta publicada de
+`master` como último paso de la jornada**, después de que toda la documentación esté entregada, para
+que Pi arranque sin deuda en vez de quedar un commit detrás de los documentos que describen su
+propio traspaso. Verificado con `torre asiento pool`: `implementer-2` figura como el único asiento
+libre.
 
 **Trabajo siguiente, ya acotado:** cerrar la mitad de kernel del criterio 1 de `S9.4` — un puerto
 `observeProcess` que compare PID, cwd y start-token antes y después de la observación async, como
