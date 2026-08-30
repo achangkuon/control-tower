@@ -3,17 +3,18 @@
 **Propósito:** que existan asientos de trabajo estables que Main pueda asignar, materializar visualmente y reciclar sin pisar a un agente trabajando, y que tener varios no cueste una instalación de dependencias por cada uno.
 
 **Estado:** 🔵 EN CURSO
-**Avance:** 0% (0/5 S)
+**Avance:** 20% (1/5 S)
 
 > **Reordenado y recortado el 2026-08-21 por la [decisión 62](../decision-register.md), tras la auditoría exclusiva de P9.**
 > Los IDs son posicionales según el [estándar de planes](/home/emili/.claude/skills/_shared/plan-naming-convention.md), así que
 > cambiar el orden cambia el número. La tabla de migración de abajo conserva la trazabilidad de toda referencia histórica.
 
-## Entrega de sustrato del 2026-08-30 — ninguna Sesión cerró
+## Entrega de sustrato del 2026-08-30 — previa al cierre de S9.1
 
-**El avance de P9 sigue siendo 0% (0/5 S).** Esta entrega no cierra `S9.1` ni `S9.5`, no las
-vuelve asignables y no altera la cola. Se registra porque cambia el sustrato sobre el que ambas
-se van a implementar, y porque retira una causa de deriva que era real y estaba medida.
+**Esta entrega no cerró ninguna Sesión: el avance quedó en 0% (0/5 S) y así se registró.** `S9.1`
+cerró después, ese mismo día y en commits separados, apoyándose en este sustrato; su cierre está
+documentado en su propia Sesión más abajo. Esta sección se conserva sin reescritura porque mide
+un corte anterior y porque retira una causa de deriva que era real y estaba medida.
 
 **Causa medida.** `hosts/production-provider.mjs:257` creaba el pane del worker con
 `herdr pane split --current`, que parte el pane enfocado; el código **no tenía concepto de
@@ -43,13 +44,12 @@ de asignación por Main —eso es `S9.1`—; no hay lock exclusivo ni interlock 
 posterior al brief —`S9.5`—. `torre asiento` es operado a mano por Main, exactamente como
 `jornada.sh --reciclar`.
 
-**Efecto sobre las Sesiones abiertas.** `S9.1` conserva su contrato íntegro, pero su `Área`
-`PENDIENTE DE ENUMERAR` ahora tiene un vecino entregado que debe respetar en vez de reimplementar:
-`workspace/seat-inventory.mjs` ya nombra el pool y `hosts/herdr-topology.mjs` ya es dueño de la
-topología. `S9.5` conserva sus siete criterios de aceptación; dos de ellos —pane dentro de la
-pestaña aprobada y prueba de `cwd`/`foreground_cwd` antes del prompt— ya tienen implementación
-verificable que `S9.5` debe **invocar, no reescribir**. Ninguna de las dos queda cerrada ni
-parcialmente acreditada.
+**Efecto sobre las Sesiones abiertas, medido en ese corte.** `S9.1` conservaba su contrato íntegro
+con un vecino entregado que debía respetar en vez de reimplementar —`workspace/seat-inventory.mjs`
+ya nombraba el pool y `hosts/herdr-topology.mjs` ya era dueño de la topología—; **así ocurrió, y
+`S9.1` cerró reutilizando ambos.** `S9.5` conserva sus siete criterios de aceptación; dos de ellos
+—pane dentro de la pestaña aprobada y prueba de `cwd`/`foreground_cwd` antes del prompt— ya tienen
+implementación verificable que `S9.5` debe **invocar, no reescribir**.
 
 **Evidencia:** `bun test` 978 pass / 0 fail sobre `6c79223`; `torre asiento list` ejecutado
 contra este repositorio identifica los tres asientos permanentes, `support-agent`, `Main` y dos
@@ -86,7 +86,7 @@ Las decisiones 49–54 del [registro](../decision-register.md) y las referencias
 | Campo | Contrato |
 |---|---|
 | Orden histórico OpenCode-first | `S9.1 → S9.2 → S9.3`; `S9.4` estaba 🟡 DIFERIDO. La autoridad Pi-first vigente está en la reconciliación del 2026-08-27. |
-| Avance canónico | 0% (0/5 S). Ninguna Sesión está ✅ COMPLETO. `S9.5` entra al denominador como objetivo nuevo autorizado; `S9.4` conserva su historia diferida y su contrato Pi-first vigente. |
+| Avance canónico | 20% (1/5 S). `S9.1` cerró el 2026-08-30. `S9.5` entra al denominador como objetivo nuevo autorizado; `S9.4` conserva su historia diferida y su contrato Pi-first vigente. |
 | Entrega | Commit directo a `master`, sin PR. Cada resultado independientemente verificable y revertible, ≤400 líneas authored. |
 | Próxima acción | `S9.4` vuelve a 📋 PLANIFICADO y no es asignable hasta recibir un brief fresco de Support sobre la base entregada de `S4.14` que recalcule dependencias, `Área`, `Recurso` y riesgos y, antes de asignar, confirme capacidad viva y valide el worktree exacto. Su estado parcial queda preservado sin resume ni corrección. `S9.5` conserva `S8.12 + S9.4`. |
 | Decisión abierta | **Ninguna.** `S4.14` está ✅ COMPLETO; el único gate actual es un brief fresco de Support con esas comprobaciones, no otra decisión. |
@@ -96,11 +96,42 @@ Las decisiones 49–54 del [registro](../decision-register.md) y las referencias
 
 ## Sesión 9.1 — Pool de asientos permanentes y asignación por Main
 
-**Estado:** 📋 PLANIFICADO — primera de la cola de P9.
+**Estado:** ✅ COMPLETO — entregada el 2026-08-30 en `origin/master@56753b4`.
 
-**Depende de:** nada dentro de P9. No rompe ningún contrato existente.
+**Depende de:** nada dentro de P9. No rompió ningún contrato existente.
 
-**Área:** `PENDIENTE DE ENUMERAR`, acotada por el contrato de abajo. Enumerarla es trabajo, no decisión.
+**Área — enumerada al implementar, como el contrato autorizaba:** `workspace/slots.mjs`,
+`test/workspace/slots.test.mjs`, más la superficie de invocación en `hosts/seat-cli.mjs`,
+`test/hosts/seat-cli.test.mjs`, `bin/torre`, el payload de runtime y `skills/torre-control/SKILL.md`.
+El contrato preservado enumeraba sólo los dos primeros; se amplió deliberadamente porque un pool
+que ningún comando puede consultar es código dormido, y este Plan ya nombró eso *una trampa* al
+retirar el adaptador legado de `S4.2`. La ampliación no agrega alcance de producto: expone lo
+mismo que el módulo ya decide.
+
+### Cómo se cumplió cada punto del contrato
+
+| Contrato | Implementación | Prueba |
+|---|---|---|
+| 1. Pool fijo de asientos permanentes, ni creados ni destruidos por Sesión | `POOL_SIZE` deriva de `PERMANENT_SEATS`; `ensure()` provisiona sólo lo faltante y es idempotente | *provisions only the missing seats and is idempotent on a complete pool* |
+| 2. El rol pertenece a la asignación, no al agente | `assign()` valida `role` y `lane` contra los enums de `assignment-v1`; el asiento no los guarda | *does not specialize a seat: the same seat serves either role* |
+| 3. Asientos intercambiables | Cualquier asiento libre atiende cualquier rol; el orden del pool es la única preferencia | idem |
+| 4. Main asigna consultando libres y ligando rama y `base_sha` | `list()` deriva ocupación del worktree; `assign()` devuelve el binding con `path`, `branch` y `base_sha` | *assigns the first free seat deterministically, and repeats that choice* |
+| 5. Formato de rama `<tipo>/s<sesión>-<slug>` | `SEAT_BRANCH_PATTERN`, validado antes de elegir asiento | *rejects a malformed branch, role, lane or base sha before choosing a seat* |
+| Tamaño tres (decisión del maintainer, 2026-08-21) | `PERMANENT_SEATS.length`; un pool lleno falla cerrado en vez de crear un cuarto | *fails closed when every seat is occupied instead of creating a fourth* |
+| El reciclador manual queda intacto | `assign()` no ejecuta `switch`, `checkout` ni `branch`; sólo lee | *leaves the manual recycler untouched* |
+
+**La ocupación se deriva, no se persiste.** Un asiento está libre sólo cuando nada se perdería al
+rotarlo: sin cambios sin commitear, sin commits sin mergear y con rama. El trabajo sin commitear
+manda sobre lo no mergeado porque es lo único que git no puede recuperar solo. Por eso esta Sesión
+no introduce autoridad Main, ni SQLite, ni API pública, tal como exigía su aceptación.
+
+**Determinismo por construcción.** El orden del pool es fijo, así que «el primer asiento libre» es
+estable entre invocaciones sin necesidad de estado. Verificado en el repositorio real: con
+`implementer-1` e `implementer-3` sucios, `asignar` eligió `implementer-2` y repitió esa elección.
+
+**Lo que sigue sin entregar, y es deliberado.** No hay lock exclusivo ni interlock de asiento
+ocupado — eso es `S9.2`, y esta Sesión lo deja preparado pero no lo implementa: dos Main
+concurrentes todavía pueden leer el mismo asiento como libre.
 
 **Recurso:** el registro de asientos y el binding de asignación. Sin transporte propio.
 

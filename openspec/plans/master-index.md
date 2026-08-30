@@ -6,21 +6,21 @@
 
 ## 📍 Punto de retoma
 
-**La topología de asientos dejó de ser prosa y pasó a ser código, entregada en `origin/master@6c79223d66a693c20b530048e21056f8a6193be8` y confirmada por readback remoto.** Tres commits directos: `cb3ed7e` (topología con enforcement, 215 líneas), `4f3a022` (`torre asiento`, 342) y `6c79223` (reducción del skill, 79). `bun test` 978 pass / 0 fail. Detalle completo en [P9](plan-9/STATUS.md).
+**`S9.1` — pool de asientos permanentes y asignación por Main — está ✅ COMPLETO.** Es la primera Sesión de P9 que cierra, y lleva a P9 a **20% (1/5 S)** y al avance global a **47/66 Sesiones (71%)**. La ocupación de un asiento se **deriva** del worktree en vez de persistirse, así que la Sesión cumplió su aceptación sin introducir autoridad Main, SQLite ni API pública, y `jornada.sh --reciclar` queda intacto. Detalle y trazabilidad punto por punto en [P9](plan-9/STATUS.md).
 
-**Ninguna Sesión cerró y ningún porcentaje se movió.** P9 sigue en **0% (0/5 S)** y el avance global sigue en 4/12 Planes y 46/66 Sesiones. Fue una entrega de sustrato: retira una causa de deriva medida —`hosts/production-provider.mjs:257` partía el pane enfocado y el código no tenía concepto de pestaña, así que la topología obligatoria vivía sólo en `skills/torre-control/SKILL.md` y un orquestador compactado la perdía— sin implementar el registro de asientos (`S9.1`), el interlock (`S9.2`) ni la materialización automática (`S9.5`).
+**El pool es de tres y falla cerrado.** `torre asiento pool` muestra ocupación, `provisionar` crea idempotentemente sólo lo que falte, y `asignar` liga la primera silla libre de forma determinista, validando `role`, `lane`, `base_sha` y el formato de rama `<tipo>/s<sesión>-<slug>` antes de elegir. Con las tres ocupadas **no crea una cuarta**: rechaza. Los tres comandos responden con Herdr caído, porque el pool es un hecho de git.
 
-**Regla nueva del producto, ya enforced:** el pool permanente es `implementer-1`, `implementer-2`, `implementer-3` más `support-agent`; cualquier otro worktree nace temporal y se descarta cuando su trabajo aterriza. El descarte nunca es automático — `torre asiento limpiar` previsualiza y `--confirmar` sólo retira asientos probadamente limpios, mergeados y desocupados, fallando cerrado si no puede leer la ocupación.
+**Antes, ese mismo día, la topología de asientos había dejado de ser prosa** en `origin/master@6c79223`: `hosts/herdr-topology.mjs` resuelve la pestaña `AGENTES` y verifica pestaña y ambos `cwd` por readback. Esa entrega no cerró ninguna Sesión y así quedó registrada. La regla de temporales sigue vigente y enforced: fuera de `implementer-1/2/3` y `support-agent`, todo worktree nace temporal; el descarte nunca es automático.
 
-**Pi sigue siendo el primer host.** OpenCode y Claude permanecen como objetivos futuros/diferidos y no bloquean la primera release Pi. Las responsabilidades legacy siguen reconciliadas como antes: P9 legacy se mapea a `P8/S8.5` 🟡 DIFERIDO; P10 conserva traza en `S8.2`/`S8.8` y remanente `S8.12 → S8.13`; P11 distribuye verificación entre `S1.19`, `S7.1` y `S8.13`. La próxima unidad documental proporcional sigue siendo P4, sin writer asignado y a la espera de un brief fresco read-only de Support.
+**Lo que sigue en la cola es `#1 S9.4`, y no es asignable todavía.** Necesita un brief fresco y read-only de Support sobre la base entregada de `S4.14` que recalcule dependencias, `Área`, `Recurso` y riesgos, y confirme capacidad viva antes de asignar. No hay decisión pendiente — `S4.14` está ✅ COMPLETO — sino un paso de preparación que nadie ejecutó. **Ese brief es el próximo trabajo del producto.**
 
-**La cola de producto conserva `#1 S9.4` y todo su orden actual.** Esta entrega no completó, asignó, reordenó ni volvió ejecutable ninguna Sesión.
+**Pi sigue siendo el primer host.** OpenCode y Claude permanecen diferidos y no bloquean la primera release Pi. Las responsabilidades legacy siguen reconciliadas: P9 legacy se mapea a `P8/S8.5` 🟡 DIFERIDO; P10 conserva traza en `S8.2`/`S8.8` y remanente `S8.12 → S8.13`; P11 distribuye verificación entre `S1.19`, `S7.1` y `S8.13`. La próxima unidad documental proporcional sigue siendo P4, sin writer asignado.
 
 **Capacidad asignable inmediata: 0.** Ningún worker está asignado y ningún brief está vivo.
 
 ## 🎯 Cola de ejecución
 
-`#1 S9.4` · `#2 S1.17` · `#3 S1.18` · `#4 S8.12` · `#5 S9.5` · `#6 S1.19` · `#7 S4.12` · `#8 S8.13` · `#9 S5.14` · `#10 S5.5` · `#11 S5.15` · `#12 S9.1` · `#13 S9.2` · `#14 S9.3` · `#15 S7.1` — topológica, recalculada 2026-08-29. La cola no asigna dueño ni asiento.
+`#1 S9.4` · `#2 S1.17` · `#3 S1.18` · `#4 S8.12` · `#5 S9.5` · `#6 S1.19` · `#7 S4.12` · `#8 S8.13` · `#9 S5.14` · `#10 S5.5` · `#11 S5.15` · `#12 S9.2` · `#13 S9.3` · `#14 S7.1` — topológica, recalculada 2026-08-30 tras cerrar `S9.1`. La cola no asigna dueño ni asiento.
 
 **Paralelismo:** capacidad asignable inmediata **0** hasta recibir los briefs frescos requeridos; no hay worker asignado y ningún estado parcial cuenta como capacidad. Se preserva el orden previo: `S1.18` habilita `S8.12`; `S9.5` conserva `S8.12 + S9.4`; `S4.12` espera `S9.4 + S1.18`; `S8.13` espera `S8.12 + S1.19 + S4.12`; `S7.1` espera `S1.19 + S4.12 + S8.13 + S5.5`.
 
@@ -33,7 +33,7 @@ En este repositorio la entrega ocurre mediante uno o más commits directos secue
 
 ## 📊 Estado de un vistazo
 
-**Avance global**: 4/12 Planes cerrados (33%) · Sesiones cerradas en planes activos con denominador derivable: 46/66 (70%). Cálculo auditable: P1 `16/19` + P4 `10/13` + P5 `12/15` + P7 `0/1` + P8 `8/13` + P9 `0/5` = `46/66`. P0, P3, P10 y P11 están cerrados. P2 y P6 conservan porcentaje `—`: cerrar `S2.8` no incorpora P2 al cálculo porque cuatro responsabilidades siguen sin Sesión enumerada; P6 no tiene Sesiones enumeradas.
+**Avance global**: 4/12 Planes cerrados (33%) · Sesiones cerradas en planes activos con denominador derivable: 47/66 (71%). Cálculo auditable: P1 `16/19` + P4 `10/13` + P5 `12/15` + P7 `0/1` + P8 `8/13` + P9 `1/5` = `47/66`. P0, P3, P10 y P11 están cerrados. P2 y P6 conservan porcentaje `—`: cerrar `S2.8` no incorpora P2 al cálculo porque cuatro responsabilidades siguen sin Sesión enumerada; P6 no tiene Sesiones enumeradas.
 
 **El denominador de P5 subió de 14 a 15 sin que se perdiera trabajo**, al enumerar `S5.15` por la [decisión 78](decision-register.md). Es la misma causa de siempre —se enumeró trabajo que ya existía y que nadie contaba— y otra vez el porcentaje se movió en contra. En el mismo movimiento `S2.7` salió del alcance por quedarse sin sujeto, pero eso no toca el cociente: P2 nunca tuvo denominador derivable.
 
@@ -50,7 +50,7 @@ En este repositorio la entrega ocurre mediante uno o más commits directos secue
 | P6 | Campañas multiproyecto | 🟡 DIFERIDO | — (sin Sesiones enumeradas) | — | Maintainer | — | [STATUS](plan-6/STATUS.md) |
 | P7 | Conformidad de release | 📋 PLANIFICADO | 0% (0/1 S) | — | Maintainer | `S7.1` | [STATUS](plan-7/STATUS.md) |
 | P8 | Release instalable | 🔵 EN CURSO | 62% (8/13 S) | — | Maintainer | `S8.11`–`S8.13` | [STATUS](plan-8/STATUS.md) |
-| P9 | Asientos de trabajo y reciclado seguro | 🔵 EN CURSO | 0% (0/5 S) | — | Maintainer | `S9.1`–`S9.5` | [STATUS](plan-9/STATUS.md) |
+| P9 | Asientos de trabajo y reciclado seguro | 🔵 EN CURSO | 20% (1/5 S) | — | Maintainer | `S9.2`–`S9.5` | [STATUS](plan-9/STATUS.md) |
 | P10 | Ejecución y supervisión autónoma de Jornada | ✅ COMPLETO | 100% (3/3 S) | — | Maintainer | — | [STATUS](plan-10/STATUS.md) |
 | P11 | Interfaz de operador | ✅ COMPLETO | 100% (1/1 S) | — | Maintainer | — | [STATUS](plan-11/STATUS.md) |
 
