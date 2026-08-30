@@ -361,8 +361,8 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 | Guardia final neutral | Entregada | `S4.14` ✅ COMPLETO, decisión 98 / Engram 9773–9774 |
 | Estado implementer-1 | Parcial, no asignable | M1 en `a7d724dc`; M2 son exactamente dos archivos no trackeados, checkpoint Engram 9772; corrección no consumida hasta recibir un brief fresco de Support |
 | Estado implementer-2/3 | Evidencia inmutable | Se preserva sin resume, corrección, rebase ni promoción a capacidad |
-| Brief Support | No vigente | Emitir uno fresco contra la base entregada de `S4.14` que recalcule dependencias, `Área`, `Recurso` y riesgos, confirme capacidad viva y valide el worktree exacto |
-| Executor | No asignable | Sólo después de que ese brief confirme capacidad viva y valide el worktree exacto |
+| Brief Support | **Emitido** — Engram 9891, contra `fb80de2` | Dependencias, `Área`, `Recurso` y riesgos recalculados; capacidad viva **1 asiento** (`implementer-2`); `implementer-1` e `implementer-3` excluidos por evidencia congelada. Independencia reducida: lo produjo la misma sesión Claude actuando como Main, registrado explícitamente |
+| Executor | **Asignado y en curso** | `M9.4.1` ✅ COMPLETO en `9f29f20`; `M9.4.2` pendiente. Ninguna evidencia congelada fue consumida, rebasada ni corregida |
 
 **Qué permanece congelado:**
 
@@ -390,19 +390,37 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 - [ ] El mailbox sigue volátil y no autoritativo: no se agrega mensajería durable, broker compartido, adopción de procesos ajenos, aislamiento de OS ni cambios a Pi/`pi-intercom`.
 - [ ] Strict TDD registra RED enfocado, suite combinada y suite completa verdes; el diff toca exactamente `Área` y cada Módulo queda en un commit independiente/revertible de ≤400 líneas authored.
 
-#### Módulo M9.4.1 — Verificador de binding exacto
+#### Módulo M9.4.1 — Verificador de binding exacto · ✅ COMPLETO
+
+**Entregado** el 2026-08-30 en `origin/master@9f29f20`, sobre la base canónica `fb80de2` y el brief
+fresco de Support (Engram 9891). Suite completa 1006 pass / 0 fail; combinada `workspace` +
+`contracts` 210/210. `git diff --check` limpio; el diff toca exactamente los dos paths de abajo.
+
+**Hallazgo del brief, corregido al implementar.** El brief planteó que `M9.4.1` podía necesitar
+comparar el contexto antes contra el después. **Era falso y se verificó:** `matches()` en
+`contracts/host-runtime/binding-context.mjs` ya compara los seis identificadores contra el binding
+congelado, y `schema_version` es `const`, así que un contexto que resuelve después del `await` es
+el mismo que resolvió antes. Lo que el Módulo sí aporta es la disciplina que `resolveExactContext`
+no puede imponer sola: binding congelado en construcción y segunda comprobación garantizada
+**también cuando la frontera lanza**, que es justo donde un binding perdido más importa.
+
+**Decisión de diseño registrada.** Un binding perdido gana sobre el fallo propio de la frontera —el
+llamador ya no puede confiar en el contexto que ese fallo describe— y el fallo de la frontera queda
+registrado como diagnóstico `{ component: "boundary", category: "failed" }`, de modo que ninguno de
+los dos eventos se pierde. La construcción valida sólo el schema: crear un verificador no observa
+nada y las comprobaciones de la frontera siguen siendo las primeras lecturas.
 
 **Área del Módulo:** `workspace/pi-binding.mjs`, `test/workspace/pi-binding.test.mjs`.
 
 **Resultado verificable:** el binding no cambia inadvertidamente a través de fronteras async.
 
-**Pronóstico:** 160–230 líneas authored.
+**Pronóstico:** 160–230 líneas authored. **Real: 224** (48 fuente + 176 test), dentro del pronóstico.
 
 **Entrega:** commit independiente; rollback limitado a esos dos archivos.
 
-- [ ] Tarea T9.4.1.1 — RED: fijar la matriz de binding exacto antes/después de `await`, stale, conflicto y pérdida de actualidad.
-- [ ] Tarea T9.4.1.2 — GREEN: implementar el verificador mínimo sin cambiar forma pública ni adquirir recursos.
-- [ ] Tarea T9.4.1.3 — TRIANGULATE/REFACTOR: cubrir alternos negativos y simplificar manteniendo el RED enfocado verde.
+- [x] Tarea T9.4.1.1 — RED: fijar la matriz de binding exacto antes/después de `await`, stale, conflicto y pérdida de actualidad.
+- [x] Tarea T9.4.1.2 — GREEN: implementar el verificador mínimo sin cambiar forma pública ni adquirir recursos.
+- [x] Tarea T9.4.1.3 — TRIANGULATE/REFACTOR: cubrir alternos negativos y simplificar manteniendo el RED enfocado verde.
 
 #### Módulo M9.4.2 — Supervisor de ruta pura y adquisición broker-first
 
