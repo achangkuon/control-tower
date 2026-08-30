@@ -1,18 +1,20 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación post-push: `S2.8` fue entregada a `origin/master` mediante el código `480afb92bf99d38ee166070d09ec6485bc5de2c4` y el cierre documental `6bd1477ddc6c242ac5ff9aa8459f48daedffe40f`. Esta formulación registra artefactos entregados y no depende del SHA del commit de reconciliación.
+> Candidato de cierre de la migración proporcional: P6 queda identificado por `2b03af7d0818b46ce592142b1a7925282d63b796` y P1 por `88890e32edffe24cdf2262eedd7eb5deef25f267`. La publicación remota de este cierre y su readback se confirman sólo después del push que contenga esta reconciliación; hasta entonces estos SHAs identifican contenido inmutable, no una entrega remota confirmada.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para el **inventario del producto** —los trece comandos, los módulos sin llamador y su orden de conexión— ver [inventario-de-producto](inventario-de-producto.md). Para **qué falta para salir** ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md). La línea entre lo que decide la Torre y lo que decide gentle-ai vive en [la frontera Torre ↔ gentle-ai](frontera-torre-gentle-ai.md), y **cualquier Sesión puede citarla para rechazar alcance** — desde el 2026-08-26 la frontera tiene **tres ejes**: la calidad del trabajo, el flujo de trabajo ([decisión 71](decision-register.md)) y **quién lee el plan** ([decisión 78](decision-register.md) — la cerca no lee). La **definición de producto vigente** —qué es y qué deliberadamente no va a ser la Torre terminada— es [**La Torre Terminada**](https://claude.ai/code/artifact/323b83bd-f1cd-4cee-a5c7-945f8c7d6173), y **ninguna Sesión puede desviarse de ella sin una decisión registrada**.
 
 ## 📍 Punto de retoma
 
-**`S2.8` cerró ✅ COMPLETO y fue entregada a `origin/master` mediante `480afb92bf99d38ee166070d09ec6485bc5de2c4` + `6bd1477ddc6c242ac5ff9aa8459f48daedffe40f`.** AC1–AC5 pasan; AC6 cierra por la excepción humana acotada de la [decisión 103](decision-register.md), no como PASS.
+**Este candidato de cierre reúne la migración proporcional de P6 en `2b03af7d0818b46ce592142b1a7925282d63b796` y la de P1 en `88890e32edffe24cdf2262eedd7eb5deef25f267`.** P1 permanece en **84% (16/19 S)**, ahora mecánicamente auditable, con `S1.17`–`S1.19` 📋 PLANIFICADO; P6 permanece 🟡 DIFERIDO con porcentaje `—` porque no tiene Sesiones enumeradas.
 
-**`#1 S9.4` permanece 📋 PLANIFICADO y sin worker asignado.** No hay resume ni corrección hasta que Support emita un brief fresco sobre la base entregada; M1 `a7d724dc`, M2 no trackeado y la corrección sin consumir permanecen sólo como evidencia inmutable.
+**Las responsabilidades legacy quedaron reconciliadas sin cambiar el producto:** P9 se mapea a `P8/S8.5` 🟡 DIFERIDO; P10 conserva traza en `S8.2`/`S8.8` y remanente enumerado `S8.12 → S8.13`, con configuración de productos externos y Gentle AI fuera de Tower; P11 distribuye verificación entre `S1.19`, `S7.1` y `S8.13`, mientras el gate ómnibus y la ceremonia de proceso anteriores quedan retirados de la propiedad de Tower.
 
-**P2 conserva cuatro responsabilidades de Change B sin Sesión enumerada.** El cierre de `S2.8` no inventa IDs ni denominador; `S4.12`, `S9.5`, `S8.13` y `S7.1` conservan sus gates posteriores.
+**Pi sigue siendo el primer host.** OpenCode y Claude permanecen como objetivos futuros/diferidos y no bloquean la primera release Pi. La próxima unidad documental proporcional es P4: requiere un brief fresco y read-only de Support; no tiene writer asignado.
 
-**Capacidad asignable inmediata: 0.** Este cierre documental no asigna worker ni sustituye el brief fresco requerido para `S9.4`.
+**La cola de producto conserva `#1 S9.4` y todo su orden actual.** Esta migración documental no completó, asignó, reordenó ni volvió ejecutable ninguna Sesión de producto.
+
+**Capacidad asignable inmediata: 0.** Este cierre no sustituye ningún brief; después de la entrega todos los agentes quedarán idle.
 
 ## 🎯 Cola de ejecución
 
