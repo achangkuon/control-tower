@@ -450,6 +450,14 @@ lo que habría dejado su diff ilegible para siempre. Se reemplazó por una compa
 elemento a elemento, sin separador. Verificado: `file` reporta `JavaScript source, UTF-8 text` y el
 conteo de NUL es cero.
 
+**Readback post-push.** El código quedó publicado en `origin/master@696f500` y su cierre documental
+en `6443945d75107ee3466fd4f0a8230d85530ad08e`; `HEAD` local y `origin/master` coinciden en ese SHA
+con árbol limpio. Suite completa sobre los bytes entregados: **1026 pass / 0 fail**.
+`workspace/pi-supervisor.mjs` **no entra al payload de runtime** y es correcto: nadie lo importa
+todavía, y `payload-closure.mjs` reportó `unchanged`. **Cómo detectar el defecto de NUL en el
+futuro:** `file <ruta>` reporta `data` en vez de `JavaScript source`, y `git diff --numstat` devuelve
+guiones en vez de conteos. Ninguna suite lo detecta.
+
 **Depende de:** `M9.4.1` ✅ COMPLETO.
 
 **Área del Módulo:** `workspace/pi-supervisor.mjs`, `test/workspace/pi-supervisor.test.mjs`.
