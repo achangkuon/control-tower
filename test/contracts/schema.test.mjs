@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import Ajv2020 from "ajv/dist/2020.js"
+import { createHash } from "node:crypto"
 import { readdirSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -7,6 +8,7 @@ import { fileURLToPath } from "node:url"
 import { validate } from "../../contracts/validate.mjs"
 import { schemaNames } from "../../contracts/schema-registry.mjs"
 import { sessionPlanSnapshotDigest } from "../../contracts/session-plan-snapshot.mjs"
+import { RUNTIME_PAYLOAD_FILES } from "../../install/runtime-payload.mjs"
 import { freezeCandidate, isCurrentCandidate, successorCandidate } from "../../contracts/candidate-revision.mjs"
 
 const fixtures = JSON.parse(readFileSync(
@@ -24,6 +26,8 @@ const errorCode = (operation) => {
 }
 
 const schemasDirectory = join(dirname(fileURLToPath(import.meta.url)), "../../schemas")
+const bindingDeltaSchemaSource = readFileSync(join(schemasDirectory, "binding-delta-v1.schema.json"), "utf8")
+const bindingDeltaSchema = JSON.parse(bindingDeltaSchemaSource)
 const executionContractSchema = JSON.parse(readFileSync(
   join(schemasDirectory, "execution-contract-v1.schema.json"),
   "utf8",
@@ -40,6 +44,16 @@ describe("schema ownership", () => {
 
     expect(schemaFiles).toHaveLength(31)
     expect(nonTowerSchemaIds).toEqual([])
+  })
+
+  test("keeps binding delta inputs opaque and every other schema field unchanged", () => {
+    const outsideInputs = structuredClone(bindingDeltaSchema)
+    delete outsideInputs.$defs.inputs
+
+    expect(bindingDeltaSchema.$defs.inputs).toEqual({ type: "object" })
+    expect(bindingDeltaSchemaSource).not.toMatch(/\b(?:proposal|specs|design|tasks)\b/)
+    expect(createHash("sha256").update(JSON.stringify(outsideInputs)).digest("hex"))
+      .toBe(fixtures._bindingDeltaV1Compatibility.outside_inputs_sha256)
   })
 
   test("adopts the execution contract title and exact closed schema-version set", () => {
@@ -178,6 +192,24 @@ describe("V1 schema boundary", () => {
     const drifted = structuredClone(fixtures.parkedDecisionResponse); drifted.authorization_revision += 1
     expect(errorCode(() => validate("parkedDecision", duplicate))).toBe("CT_SCHEMA_INVALID")
     expect(errorCode(() => validate("parkedDecisionResponse", drifted))).toBe("CT_SCHEMA_INVALID")
+  })
+
+  test("treats binding delta inputs as opaque while preserving the current form", () => {
+    const current = structuredClone(fixtures.bindingDelta)
+    const alternative = {
+      ...structuredClone(current),
+      inputs: fixtures._bindingDeltaV1Compatibility.alternative_inputs,
+    }
+
+    expect(validate("bindingDelta", current)).toEqual(current)
+    expect(validate("bindingDelta", alternative)).toEqual(alternative)
+  })
+
+  test("preserves binding delta registry and payload membership", () => {
+    const compatibility = fixtures._bindingDeltaV1Compatibility
+
+    expect(schemaNames).toContain(compatibility.registry_name)
+    expect(RUNTIME_PAYLOAD_FILES).toContain(compatibility.payload_member)
   })
 
   for (const [name, payload] of Object.entries(fixtures).filter(([name]) => !name.startsWith("_"))) {

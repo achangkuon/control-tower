@@ -242,6 +242,17 @@
       "rationale": "No externally observable drift"
     }
   },
+  "_bindingDeltaV1Compatibility": {
+    "alternative_inputs": {
+      "previous_delta": null,
+      "runtime": {"mode": "sealed", "command": ["custom", 7, false]},
+      "evidence": ["evidence/runtime.json"],
+      "retry_budget": 2
+    },
+    "registry_name": "bindingDelta",
+    "payload_member": "schemas/binding-delta-v1.schema.json",
+    "outside_inputs_sha256": "afeadcf954634a4c9cb5c634ecb1772286bc3e6049368840a9b0b7dee752b11f"
+  },
   "policyReport": {
     "schema": "policy-report",
     "schema_version": 1,
