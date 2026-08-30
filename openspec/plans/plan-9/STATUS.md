@@ -316,7 +316,7 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 
 **Historia preservada:** el contrato anterior “Pi segundo host, después de OpenCode” queda etiquetado arriba como plan histórico parqueado.
 
-**Estado:** 📋 PLANIFICADO — `S4.11`, `S4.13` y `S4.14` están entregadas. La Sesión no es asignable y no se reanuda ni corrige ningún estado parcial hasta recibir un brief fresco de Support contra la nueva base canónica que recalcule dependencias, `Área`, `Recurso` y riesgos y, antes de asignar, confirme capacidad viva y valide el worktree exacto.
+**Estado:** 🔵 EN CURSO — **ambos Módulos entregados, un criterio abierto.** El gate de brief fresco quedó satisfecho (Engram 9891, contra `fb80de2`); `M9.4.1` cerró en `origin/master@9f29f20` y `M9.4.2` en `696f500`. Siete de los ocho criterios pasan. **La Sesión NO se declara ✅ COMPLETO** porque el criterio 1 conserva abierta su mitad de observación del kernel: falta el puerto `observeProcess` que compare PID, cwd y start-token antes y después de la observación async, tal como lo enuncia la autoridad Engram 9748. Cerrar esa mitad es trabajo, no decisión, y no invalida lo entregado.
 
 **Depende de:** `S4.11` ✅ COMPLETO, `S4.13` ✅ COMPLETO y `S4.14` ✅ COMPLETO.
 
@@ -379,16 +379,23 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 4. Sólo después de que ese brief confirme capacidad viva y valide el worktree exacto, un executor fresco comienza desde la base canónica; no consume la corrección disponible ni retoma estados parciales.
 5. Los criterios y Módulos siguientes se conservan como contrato, sujetos al brief fresco.
 
-**Criterios de aceptación — los ocho son binarios:**
+**Criterios de aceptación — los ocho son binarios. Siete pasan; uno queda abierto.**
 
-- [ ] El binding exacto se valida antes y después de cada `await`; ningún cambio de identidad, cwd, proceso, incarnation o binding atraviesa esa frontera.
-- [ ] `runtimeRoute` es dato puro: preparación y validación no crean socket, archivo, listener, lock, reserva ni capacidad de `close`/`release`.
-- [ ] Ruta inválida o stale, pérdida del binding actual o `dispose` antes de start dejan cero broker/listener y ejecutan cero cleanup.
-- [ ] `broker.start`, llamado dentro de `S4.10 acquireAtReservation`, es el primer efecto y devuelve el `close` exacto que `S4.10` retiene como owner.
-- [ ] Todo fallo posterior a start consume ese `close` exacto o deja la adquisición en cuarentena explícita; ninguna capa reconstruye o adivina cleanup.
-- [ ] Repetir el mismo input converge; conflicto o pérdida de actualidad fallan cerrado sin promover una ruta o binding rival.
-- [ ] El mailbox sigue volátil y no autoritativo: no se agrega mensajería durable, broker compartido, adopción de procesos ajenos, aislamiento de OS ni cambios a Pi/`pi-intercom`.
-- [ ] Strict TDD registra RED enfocado, suite combinada y suite completa verdes; el diff toca exactamente `Área` y cada Módulo queda en un commit independiente/revertible de ≤400 líneas authored.
+- [ ] **ABIERTO — la mitad de observación del kernel no está implementada.** El binding exacto sí se
+  valida antes y después de cada `await` contra el contexto de `S4.10`, y el keepalive Tower-owned se
+  registra dentro de esa frontera verificada. **Pero la [autoridad Engram 9748](#) enuncia este
+  criterio como «S4.10 context, Tower keepalive, **and kernel PID/cwd/start-token** agree before and
+  after async observation», y el puerto `observeProcess` que observaría PID, cwd y start-token del
+  kernel no existe en lo entregado.** No se declara cumplido. Consecuencia real: un proceso del SO
+  reemplazado bajo el mismo worktree se detecta por `process_id`/`worktree_id` del registro neutral,
+  no por evidencia del kernel.
+- [x] `runtimeRoute` es dato puro: preparación y validación no crean socket, archivo, listener, lock, reserva ni capacidad de `close`/`release`.
+- [x] Ruta inválida o stale, pérdida del binding actual o `dispose` antes de start dejan cero broker/listener y ejecutan cero cleanup.
+- [x] `broker.start`, llamado dentro de `S4.10 acquireAtReservation`, es el primer efecto y devuelve el `close` exacto que `S4.10` retiene como owner.
+- [x] Todo fallo posterior a start consume ese `close` exacto o deja la adquisición en cuarentena explícita; ninguna capa reconstruye o adivina cleanup.
+- [x] Repetir el mismo input converge; conflicto o pérdida de actualidad fallan cerrado sin promover una ruta o binding rival.
+- [x] El mailbox sigue volátil y no autoritativo: no se agrega mensajería durable, broker compartido, adopción de procesos ajenos, aislamiento de OS ni cambios a Pi/`pi-intercom`.
+- [x] Strict TDD registra RED enfocado, suite combinada y suite completa verdes; el diff toca exactamente `Área` y cada Módulo queda en un commit independiente/revertible de ≤400 líneas authored.
 
 #### Módulo M9.4.1 — Verificador de binding exacto · ✅ COMPLETO
 
@@ -428,9 +435,22 @@ nada y las comprobaciones de la frontera siguen siendo las primeras lecturas.
 - [x] Tarea T9.4.1.2 — GREEN: implementar el verificador mínimo sin cambiar forma pública ni adquirir recursos.
 - [x] Tarea T9.4.1.3 — TRIANGULATE/REFACTOR: cubrir alternos negativos y simplificar manteniendo el RED enfocado verde.
 
-#### Módulo M9.4.2 — Supervisor de ruta pura y adquisición broker-first
+#### Módulo M9.4.2 — Supervisor de ruta pura y adquisición broker-first · ✅ COMPLETO
 
-**Depende de:** `M9.4.1`.
+**Entregado** el 2026-08-30. Combinada `pi-binding` + `pi-supervisor` 34/34; suite completa verde;
+`payload-closure` `unchanged` (nadie lo importa todavía); `git diff --check` limpio.
+
+**Pronóstico excedido y registrado:** 371 líneas authored contra un pronóstico de 270–360. Queda
+**dentro del límite duro de ≤400** del criterio 8, pero se anota en vez de esconderse: la matriz de
+la autoridad 9748 pedía once escenarios y la triangulación sumó cuatro alternos más.
+
+**Defecto propio encontrado y corregido antes de entregar.** La primera versión del módulo escribió
+dos bytes `NUL` literales como separador de un `join`. Git clasificaba el archivo como **binario**,
+lo que habría dejado su diff ilegible para siempre. Se reemplazó por una comparación de claves
+elemento a elemento, sin separador. Verificado: `file` reporta `JavaScript source, UTF-8 text` y el
+conteo de NUL es cero.
+
+**Depende de:** `M9.4.1` ✅ COMPLETO.
 
 **Área del Módulo:** `workspace/pi-supervisor.mjs`, `test/workspace/pi-supervisor.test.mjs`.
 
@@ -440,9 +460,9 @@ nada y las comprobaciones de la frontera siguen siendo las primeras lecturas.
 
 **Entrega:** commit independiente; rollback limitado a esos dos archivos.
 
-- [ ] Tarea T9.4.2.1 — RED: cubrir la matriz async/effect completa — invalid, stale, dispose pre-start, start, fallo post-start, cuarentena, convergencia, conflicto y pérdida de actualidad.
-- [ ] Tarea T9.4.2.2 — GREEN: producir `runtimeRoute` puro y hacer `broker.start` primero dentro de `S4.10 acquireAtReservation`, preservando ownership y `close` exactos de `S4.10`.
-- [ ] Tarea T9.4.2.3 — TRIANGULATE/REFACTOR: cerrar alternos, correr suites combinada y completa y verificar límites de `Área`, efectos y rollback.
+- [x] Tarea T9.4.2.1 — RED: cubrir la matriz async/effect completa — invalid, stale, dispose pre-start, start, fallo post-start, cuarentena, convergencia, conflicto y pérdida de actualidad.
+- [x] Tarea T9.4.2.2 — GREEN: producir `runtimeRoute` puro y hacer `broker.start` primero dentro de `S4.10 acquireAtReservation`, preservando ownership y `close` exactos de `S4.10`.
+- [x] Tarea T9.4.2.3 — TRIANGULATE/REFACTOR: cerrar alternos, correr suites combinada y completa y verificar límites de `Área`, efectos y rollback.
 
 **Evidencia congelada — no es implementación ni capacidad:**
 
