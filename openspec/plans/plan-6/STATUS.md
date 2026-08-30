@@ -2,7 +2,15 @@
 
 **Propósito:** que un cambio que necesita varios repositorios a la vez se pueda coordinar desde una sola Jornada, sin que ningún proyecto pierda su autoridad local.
 
-**Estado:** 🟡 DIFERIDO — condicionado, desde el 2026-08-21.
+**Estado:** 🟡 DIFERIDO — condicionado desde el 2026-08-21.
+**Avance:** `—` — no hay Sesiones enumeradas y el denominador permanece abierto.
+
+## Verdad ejecutable actual
+
+- P6 no aporta capacidad ni posición a la cola global: no existe una Sesión que se pueda asignar.
+- Su estado es 🟡 DIFERIDO, no 🔴 BLOQUEADO: podría planificarse, pero el maintainer decidió esperar evidencia de uso real.
+- La reactivación exige una necesidad multiproyecto observada al operar la Torre después de `S7.1`; un diseño hipotético no alcanza.
+- Si esa evidencia no aparece, P6 se archiva. Hasta entonces no se inventa un porcentaje, una descomposición ni IDs de Sesión.
 
 ## Condición de reactivación
 
@@ -10,17 +18,18 @@
 
 **Quién lo evalúa:** el maintainer, después de `S7.1`.
 
-**Por qué diferido y no eliminado.** El PRD ya excluye esta capacidad de la primera versión —es `F8`— y la decisión 33 fijó que un rojo sobre `F8` **no bloquea la release**. Pero eliminar el Plan borraría la intención, y todavía no existe la evidencia que diría si es innecesaria. Diferir con condición explícita conserva la intención sin inflar el mapa ni las cadenas de dependencia.
+**Por qué diferido y no eliminado.** El PRD ya excluye esta capacidad de la primera versión —es `F8`— y la decisión 33 fijó que un rojo sobre `F8` **no bloquea la release**. Eliminar el Plan borraría la intención antes de obtener la evidencia que permita decidir si es innecesaria.
 
-**Efecto sobre el avance:** ninguno. P6 nunca tuvo Sesiones enumeradas, así que no aporta numerador ni denominador. Bajo la regla de denominador de la [decisión 57](../decision-register.md), un diferido-con-intención se conserva; P6 califica.
-
-## Resumen
+## Resumen auditable
 
 | Campo | Detalle |
 |---|---|
 | Dependencias | Change H depende de B, D, F y G. |
-| Outputs | Campaign manifest, coordinación del Main líder, autoridad local, PRs ordenados y validación de compensaciones. |
-| Roadmap | Congelado hasta que se cumpla la condición de reactivación de arriba. |
-| Referencias | [Plan Manifest](../sdd-tower-implementation/manifest.yaml). El proposal `sdd-tower-multi-repo-campaigns` fue eliminado en `613a45d` por ser cáscara sin avance; su intención vive en este STATUS. |
+| Outputs previstos | Campaign manifest, coordinación del Main líder, autoridad local, PRs ordenados y validación de compensaciones. |
+| Roadmap | Congelado hasta que se cumpla la condición de reactivación. |
+| Denominador | `—`. P6 nunca tuvo Sesiones enumeradas y no aporta numerador ni denominador bajo la [decisión 57](../decision-register.md). |
+| Referencias | [Plan Manifest](../sdd-tower-implementation/manifest.yaml). El proposal `sdd-tower-multi-repo-campaigns` fue eliminado en `613a45d` por ser una cáscara sin avance; su intención vive en este STATUS. |
 
-No hay Sesiones con límite de un PR demostrado. Las responsabilidades de campañas permanecen sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).
+## Responsabilidades todavía sin ID
+
+No hay Sesiones con límite de un PR demostrado. Las responsabilidades de campañas permanecen sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md); conservarlas ahí no abre el denominador ni cambia el estado del Plan.
