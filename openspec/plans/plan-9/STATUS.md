@@ -9,6 +9,52 @@
 > Los IDs son posicionales según el [estándar de planes](/home/emili/.claude/skills/_shared/plan-naming-convention.md), así que
 > cambiar el orden cambia el número. La tabla de migración de abajo conserva la trazabilidad de toda referencia histórica.
 
+## Entrega de sustrato del 2026-08-30 — ninguna Sesión cerró
+
+**El avance de P9 sigue siendo 0% (0/5 S).** Esta entrega no cierra `S9.1` ni `S9.5`, no las
+vuelve asignables y no altera la cola. Se registra porque cambia el sustrato sobre el que ambas
+se van a implementar, y porque retira una causa de deriva que era real y estaba medida.
+
+**Causa medida.** `hosts/production-provider.mjs:257` creaba el pane del worker con
+`herdr pane split --current`, que parte el pane enfocado; el código **no tenía concepto de
+pestaña**. La topología obligatoria `MAIN → SUPPORT → AGENTES` existía sólo como prosa en
+`skills/torre-control/SKILL.md`, así que un orquestador compactado la perdía y los workers
+nacían en la pestaña equivocada. El commit `078f160` del 2026-08-30 endureció esa prosa y no
+agregó enforcement.
+
+**Entregado** en `origin/master@6c79223`, tres commits directos verificables y revertibles:
+
+| Commit | Resultado | Líneas |
+|---|---|---:|
+| `cb3ed7e` | `hosts/herdr-topology.mjs` resuelve la pestaña `AGENTES`, la crea sosteniendo el primer asiento, parte de lado desde su último pane y **verifica pestaña, `cwd` y `foreground_cwd` por readback**, cerrando lo que abrió ante cualquier mismatch. No lee `ACTIVE`. | 215 |
+| `4f3a022` | `workspace/seat-inventory.mjs` clasifica cada worktree en `main`/`support`/`permanent`/`temporary` y decide si el descarte *podría* ser seguro; `hosts/seat-cli.mjs` lo expone como `torre asiento list \| abrir \| limpiar`. | 342 |
+| `6c79223` | El skill deja de repetir la topología y enruta a la cerradura: su primera regla dura es *nunca invoques `herdr` para sentar un worker, siempre `torre asiento`*. | 79 |
+
+**Regla de asientos temporales, ahora en código.** El pool permanente es `implementer-1`,
+`implementer-2`, `implementer-3` más `support-agent`; **cualquier otro worktree nace temporal y
+debe descartarse cuando su trabajo aterriza**. El descarte nunca es automático: `limpiar`
+previsualiza, y `--confirmar` sólo retira asientos probadamente en rama, limpios, desocupados y
+totalmente mergeados; una ocupación de panes ilegible **falla cerrado** en vez de borrar un
+asiento cuyo agente no se pudo ver.
+
+**Qué NO entregó, y hay que decirlo con precisión.** No existe registro de asientos ni binding
+de asignación por Main —eso es `S9.1`—; no hay lock exclusivo ni interlock de asiento ocupado
+—eso es `S9.2`—; no hay caché de dependencias —`S9.3`—; y no hay materialización automática
+posterior al brief —`S9.5`—. `torre asiento` es operado a mano por Main, exactamente como
+`jornada.sh --reciclar`.
+
+**Efecto sobre las Sesiones abiertas.** `S9.1` conserva su contrato íntegro, pero su `Área`
+`PENDIENTE DE ENUMERAR` ahora tiene un vecino entregado que debe respetar en vez de reimplementar:
+`workspace/seat-inventory.mjs` ya nombra el pool y `hosts/herdr-topology.mjs` ya es dueño de la
+topología. `S9.5` conserva sus siete criterios de aceptación; dos de ellos —pane dentro de la
+pestaña aprobada y prueba de `cwd`/`foreground_cwd` antes del prompt— ya tienen implementación
+verificable que `S9.5` debe **invocar, no reescribir**. Ninguna de las dos queda cerrada ni
+parcialmente acreditada.
+
+**Evidencia:** `bun test` 978 pass / 0 fail sobre `6c79223`; `torre asiento list` ejecutado
+contra este repositorio identifica los tres asientos permanentes, `support-agent`, `Main` y dos
+temporales reclamables (`diagnostic-launch-timeout`, `implementer-temp-s4-14`).
+
 ## Tabla de migración de IDs
 
 Las decisiones 49–54 del [registro](../decision-register.md) y las referencias en [release-chain](../release-chain.md) y el

@@ -1,20 +1,22 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación post-push: la migración proporcional parcial de P6 (`2b03af7d0818b46ce592142b1a7925282d63b796`) y P1 (`88890e32edffe24cdf2262eedd7eb5deef25f267`) fue publicada dentro de `origin/master@92dfeba070f33ddd678461e57eca4375e7dd8283` y verificada mediante readback remoto.
+> Última reconciliación post-push: la topología de asientos con enforcement y `torre asiento` fueron publicadas en `origin/master@6c79223d66a693c20b530048e21056f8a6193be8` y verificadas mediante readback remoto. La migración proporcional previa de P6 (`2b03af7d0818b46ce592142b1a7925282d63b796`) y P1 (`88890e32edffe24cdf2262eedd7eb5deef25f267`) permanece publicada dentro de `92dfeba070f33ddd678461e57eca4375e7dd8283`.
 > Este archivo mide **planificación**. Para el estado del **código** — qué existe, qué corre y qué está desplegado — ver [implementation-state](implementation-state.md). Para el **inventario del producto** —los trece comandos, los módulos sin llamador y su orden de conexión— ver [inventario-de-producto](inventario-de-producto.md). Para **qué falta para salir** ver [release-chain](release-chain.md). Las decisiones durables viven en el [registro de decisiones](decision-register.md). La línea entre lo que decide la Torre y lo que decide gentle-ai vive en [la frontera Torre ↔ gentle-ai](frontera-torre-gentle-ai.md), y **cualquier Sesión puede citarla para rechazar alcance** — desde el 2026-08-26 la frontera tiene **tres ejes**: la calidad del trabajo, el flujo de trabajo ([decisión 71](decision-register.md)) y **quién lee el plan** ([decisión 78](decision-register.md) — la cerca no lee). La **definición de producto vigente** —qué es y qué deliberadamente no va a ser la Torre terminada— es [**La Torre Terminada**](https://claude.ai/code/artifact/323b83bd-f1cd-4cee-a5c7-945f8c7d6173), y **ninguna Sesión puede desviarse de ella sin una decisión registrada**.
 
 ## 📍 Punto de retoma
 
-**La migración proporcional parcial de P6 (`2b03af7d0818b46ce592142b1a7925282d63b796`) y P1 (`88890e32edffe24cdf2262eedd7eb5deef25f267`) fue entregada dentro de `origin/master@92dfeba070f33ddd678461e57eca4375e7dd8283` y confirmada por readback remoto.** P1 permanece en **84% (16/19 S)**, ahora mecánicamente auditable, con `S1.17`–`S1.19` 📋 PLANIFICADO; P6 permanece 🟡 DIFERIDO con porcentaje `—` porque no tiene Sesiones enumeradas.
+**La topología de asientos dejó de ser prosa y pasó a ser código, entregada en `origin/master@6c79223d66a693c20b530048e21056f8a6193be8` y confirmada por readback remoto.** Tres commits directos: `cb3ed7e` (topología con enforcement, 215 líneas), `4f3a022` (`torre asiento`, 342) y `6c79223` (reducción del skill, 79). `bun test` 978 pass / 0 fail. Detalle completo en [P9](plan-9/STATUS.md).
 
-**Las responsabilidades legacy quedaron reconciliadas sin cambiar el producto:** P9 se mapea a `P8/S8.5` 🟡 DIFERIDO; P10 conserva traza en `S8.2`/`S8.8` y remanente enumerado `S8.12 → S8.13`, con configuración de productos externos y Gentle AI fuera de Tower; P11 distribuye verificación entre `S1.19`, `S7.1` y `S8.13`, mientras el gate ómnibus y la ceremonia de proceso anteriores quedan retirados de la propiedad de Tower.
+**Ninguna Sesión cerró y ningún porcentaje se movió.** P9 sigue en **0% (0/5 S)** y el avance global sigue en 4/12 Planes y 46/66 Sesiones. Fue una entrega de sustrato: retira una causa de deriva medida —`hosts/production-provider.mjs:257` partía el pane enfocado y el código no tenía concepto de pestaña, así que la topología obligatoria vivía sólo en `skills/torre-control/SKILL.md` y un orquestador compactado la perdía— sin implementar el registro de asientos (`S9.1`), el interlock (`S9.2`) ni la materialización automática (`S9.5`).
 
-**Pi sigue siendo el primer host.** OpenCode y Claude permanecen como objetivos futuros/diferidos y no bloquean la primera release Pi. La próxima unidad documental proporcional es P4: requiere un brief fresco y read-only de Support; no tiene writer asignado.
+**Regla nueva del producto, ya enforced:** el pool permanente es `implementer-1`, `implementer-2`, `implementer-3` más `support-agent`; cualquier otro worktree nace temporal y se descarta cuando su trabajo aterriza. El descarte nunca es automático — `torre asiento limpiar` previsualiza y `--confirmar` sólo retira asientos probadamente limpios, mergeados y desocupados, fallando cerrado si no puede leer la ocupación.
 
-**La cola de producto conserva `#1 S9.4` y todo su orden actual.** Esta migración documental no completó, asignó, reordenó ni volvió ejecutable ninguna Sesión de producto.
+**Pi sigue siendo el primer host.** OpenCode y Claude permanecen como objetivos futuros/diferidos y no bloquean la primera release Pi. Las responsabilidades legacy siguen reconciliadas como antes: P9 legacy se mapea a `P8/S8.5` 🟡 DIFERIDO; P10 conserva traza en `S8.2`/`S8.8` y remanente `S8.12 → S8.13`; P11 distribuye verificación entre `S1.19`, `S7.1` y `S8.13`. La próxima unidad documental proporcional sigue siendo P4, sin writer asignado y a la espera de un brief fresco read-only de Support.
 
-**Capacidad asignable inmediata: 0.** Este cierre no sustituye ningún brief; después de la entrega todos los agentes quedarán idle.
+**La cola de producto conserva `#1 S9.4` y todo su orden actual.** Esta entrega no completó, asignó, reordenó ni volvió ejecutable ninguna Sesión.
+
+**Capacidad asignable inmediata: 0.** Ningún worker está asignado y ningún brief está vivo.
 
 ## 🎯 Cola de ejecución
 
