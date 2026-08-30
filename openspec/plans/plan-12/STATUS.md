@@ -1,6 +1,6 @@
 # Plan 12 — Orden estructural del repositorio
 
-**Estado:** 📋 PLANIFICADO · **Avance:** 0% (0/7 S)
+**Estado:** 🔵 EN CURSO · **Avance:** 0% (0/8 S)
 
 **Autoridad:** las cuatro decisiones del maintainer del 2026-08-30, opción A en las cuatro,
 sobre la auditoría de solo lectura de `master@7e718d6` publicada como
@@ -76,13 +76,27 @@ un pedazo de P12.
 
 ---
 
-## Sesión 12.1 — Verificación automática en cada rama
+## Sesión 12.1 — Verificación automática antes de entregar
 
-**Estado:** 🟢 LISTO · **Ruta:** `direct` · est: 2h
+**Estado:** 📋 PLANIFICADO · **Ruta:** `direct` · est: 2h
 
-**Depende de:** —
-**Área:** `.github/workflows/**`, `package.json`
+**Depende de:** `S12.8`
+**Área:** `.githooks/**`, `package.json`
 **Recurso:** —
+
+**Dos correcciones del maintainer durante la ejecución, 2026-08-30.**
+
+1. **El gate es local, no GitHub Actions.** Este repositorio es privado, así que sus runs
+   facturan minutos, y ese presupuesto está asignado a otro proyecto. El workflow llegó a
+   implementarse y probarse; se retiró con sus dos runs borrados. **Clase de la decisión:**
+   dinero, precios o cuotas.
+2. **La Sesión pasa a depender de `S12.8`.** Su implementación descubrió que correr la suite
+   desde un hook de git **corrompe el repositorio real** (ver `S12.8`). Un gate que puede romper
+   lo que cuida es peor que no tener gate, así que primero se cierra el aislamiento.
+
+El trabajo ya hecho queda estacionado en la rama local `parked/s12.1-gate`: `.githooks/pre-push`
+con el gate compuesto delante del informe, y `package.json` con `scripts.test` y `scripts.hooks`.
+Se retoma sobre `S12.8` cerrada, no se rehace.
 
 **Resultado:** ningún commit llega a `master` sin que la suite haya corrido sola. Va primera
 porque es la red que hace seguras las tres mudanzas de `core.mjs`; sin ella cada paso es a ciegas.
@@ -391,6 +405,65 @@ conjunto es casi trivial.
 Se enumera aunque esté diferida por la regla del denominador (convención §8.7): trabajo pendiente
 sin ID de Sesión invalida el porcentaje del Plan. 🟡 DIFERIDO es «elegimos no hacerlo todavía»,
 no «no se puede».
+
+---
+
+## Sesión 12.8 — La suite deja de poder escribir en el repositorio real
+
+**Estado:** 🟢 LISTO · **Ruta:** `direct` · est: 6h
+
+**Depende de:** —
+**Área:** `test/**`
+**Prohibido:** `core.mjs`, `.githooks/**`, `openspec/**`, `bin/torre`
+**Recurso:** `test/**` en exclusiva
+
+**Resultado:** correr la suite con variables de entorno de git puestas no puede escribir nada en
+el repositorio real. Hoy sí puede, y ya pasó.
+**Autoridad:** incidente del 2026-08-30 durante `M12.1.2`, y la decisión del maintainer de cerrar
+el aislamiento antes de instalar el gate.
+
+**El incidente, medido.** Git exporta `GIT_DIR` y compañía a sus hooks, y git obedece esa variable
+antes que el directorio donde está parado. 15 archivos de test invocan git en ~18 lugares, cada
+uno con su propio ayudante local, y ninguno limpia el entorno heredado. Corrida desde el hook, la
+suite dio **758 pass / 268 fail** contra 1026 / 0 a mano — y además **escribió**: commits `fixture`
+sobre la rama viva, tres worktrees fantasma de `/tmp` registrados en el repo real, y
+`core.bare=true` en la config compartida, que rompe `git status` en los ocho worktrees. Todo
+reparado a mano el mismo día; la causa sigue abierta.
+
+**Por qué importa más allá del gate:** el defecto ya existía sin que hubiera ningún gate. Cualquier
+herramienta que git invoque y corra la suite pisa la misma mina.
+
+**Decisiones:**
+
+- `derivable` — el saneamiento vive en un ayudante compartido, no repetido en 15 archivos.
+  **Criterio:** ya existe `test/helpers/` como casa de los ayudantes de prueba.
+  **Falsificable:** queda un `git()` local que no lo use. **Autoridad:** el árbol de `test/`.
+- `derivable` — la prueba del aislamiento usa un repositorio señuelo, no una aserción de código.
+  **Criterio:** el defecto es de comportamiento observable; sólo un señuelo intacto lo demuestra.
+  **Falsificable:** la prueba pasa sin ejercitar una llamada real a git. **Autoridad:** el incidente.
+
+**Criterios de aceptación** — todos deben pasar para cerrar:
+- [ ] Un ayudante `git()` compartido en `test/helpers/` limpia `GIT_DIR`, `GIT_WORK_TREE`,
+      `GIT_INDEX_FILE`, `GIT_PREFIX`, `GIT_COMMON_DIR`, `GIT_OBJECT_DIRECTORY`,
+      `GIT_ALTERNATE_OBJECT_DIRECTORIES` y `GIT_QUARANTINE_PATH`, y los 15 archivos lo usan
+- [ ] Una prueba corre la suite con un `GIT_DIR` señuelo y verifica que el señuelo quedó intacto:
+      sin commits nuevos, sin worktrees registrados y sin cambios de config
+- [ ] La suite da idéntico resultado con esas variables puestas y sin ellas: 1026 pass / 0 fail
+- [ ] `git config --local core.bare` sigue en `false` y `git worktree list` muestra ocho entradas
+- [ ] El diff no toca ninguna ruta fuera de `Área`
+
+### Módulo M12.8.1 — ayudante compartido en `test/helpers/`
+- [ ] Tarea T12.8.1.1 — RED · [ ] T12.8.1.2 — GREEN · [ ] T12.8.1.3 — REFACTOR
+
+### Módulo M12.8.2 — los 15 archivos consumen el ayudante
+- [ ] Tarea T12.8.2.1 — RED · [ ] T12.8.2.2 — GREEN · [ ] T12.8.2.3 — REFACTOR
+
+### Módulo M12.8.3 — la prueba del señuelo
+- [ ] Tarea T12.8.3.1 — RED · [ ] T12.8.3.2 — GREEN · [ ] T12.8.3.3 — REFACTOR
+
+**Nota operativa:** la Torre queda **apagada** mientras se implementa sobre ella (decisión del
+maintainer, 2026-08-30). Dos tests de `test/migration.test.mjs` exigen que
+`.git/control-tower/ACTIVE` no exista; con la Torre encendida fallan por motivos ajenos al código.
 
 ---
 
