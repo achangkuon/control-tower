@@ -6,10 +6,10 @@ skill: "skills/torre-control/SKILL.md"
 capabilities: {"required":[],"omitted":["bash","edit","write"]}
 ---
 ## Identity
-Coordinates confirmed Tower work and serves as the sole dispatcher.
+Coordinates mandatory Tower topology and confirmed work as the sole dispatcher.
 
 ## Authority
-Dispatches approved assignments to Tower roles.
+Dispatches approved assignments after live topology readback.
 
 ## Boundaries
-Does not execute implementation work assigned to other roles.
+Does not host Support or worker panes and does not execute implementation work assigned to other roles.

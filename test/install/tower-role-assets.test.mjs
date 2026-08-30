@@ -19,7 +19,7 @@ const ASSET_CONTRACTS = {
       skill: "skills/torre-control/SKILL.md",
       capabilities: { required: [], omitted: ["bash", "edit", "write"] },
     },
-    body: ["## Identity", "Coordinates confirmed Tower work and serves as the sole dispatcher.", "", "## Authority", "Dispatches approved assignments to Tower roles.", "", "## Boundaries", "Does not execute implementation work assigned to other roles."].join("\n"),
+    body: ["## Identity", "Coordinates mandatory Tower topology and confirmed work as the sole dispatcher.", "", "## Authority", "Dispatches approved assignments after live topology readback.", "", "## Boundaries", "Does not host Support or worker panes and does not execute implementation work assigned to other roles."].join("\n"),
   },
   "profiles/tower/support.md": {
     kind: "profile",
@@ -52,8 +52,23 @@ const ASSET_CONTRACTS = {
       metadata: { author: "gentleman-programming", version: "1.0" },
     },
     references: ["../../profiles/tower/main.md", "../torre-control-soporte/SKILL.md", "../torre-control-entregas/SKILL.md"],
-    markers: [/Herdr tabs provide visibility, never Git isolation/, /`cwd` and `foreground_cwd`/, /Main worktree/, /permanent Support worktree/, /named implementer worktree/, /Starting Support or a worker from Main or another seat is forbidden/, /Main-path mismatch fails closed/, /worktree path and branch/, /S9\.5 automates this established rule/],
-    fixtureText: "Herdr tabs provide visibility, never Git isolation. Verify `cwd` and `foreground_cwd`, Main worktree, permanent Support worktree, named implementer worktree, and worktree path and branch. Starting Support or a worker from Main or another seat is forbidden. Main-path mismatch fails closed; S9.5 automates this established rule. ",
+    markers: [
+      /Herdr tabs provide visibility, never Git isolation/, /`cwd` and `foreground_cwd`/, /Main worktree/, /permanent Support worktree/, /named implementer worktree/,
+      /Starting Support or a worker from Main or another seat is forbidden/, /Main-path mismatch fails closed/, /worktree path and branch/, /S9\.5 automates this established rule/,
+      /Mandatory topology: `MAIN → SUPPORT → AGENTES`/, /MAIN hosts only Main, SUPPORT only read-only Support, workers only AGENTES/, /AGENTES stays empty until assignments are approved/,
+      /correct brief cannot override intrinsic bindings/, /even when the brief matches/, /Load installed Herdr control before topology actions/,
+      /control\/live state is unavailable, stop/, /message transport is no fallback and grants no topology or authority/, /exact target tab label\/ID/,
+      /shared resources/, /existing pane ID or explicit authorization to create exactly one pane in that tab/, /Before the first prompt, live readback must match tab label\/ID, pane ID/,
+      /After authorized create\/move, bind its returned pane ID by readback/, /Every changed\/new fact needs renewed approval/,
+      /dirty seat without disposition/, /changed foreground cwd/, /wrong tab\/pane\/cwd/, /unapproved occupant/, /auto-open into MAIN/,
+      /Never silently `cd`, recycle, reuse, move, close, or reconcile/, /Tower OFF or ON/, /Do not activate Tower/,
+      /Tower is ON and authority matches/, /Read live Tower state and dispatch only approved assignments/,
+      /Main alone dispatches; Support advises; workers never self-assign/, /verified worker's unchanged assignment through `session-kickoff`/,
+      /Tower is OFF \(`ACTIVE` absent\)/, /use only named existing seats/, /keep implementation outside Main/, /registered worktrees live/,
+      /evidence\/capacity\/conflicts\/brief/, /seat\/tab\/pane bindings with branch\/both cwd values/, /pending approval/,
+      /Engram is continuity evidence, never authority/,
+    ],
+    fixtureText: "Herdr tabs provide visibility, never Git isolation. Mandatory topology: `MAIN → SUPPORT → AGENTES`; MAIN hosts only Main, SUPPORT only read-only Support, workers only AGENTES; AGENTES stays empty until assignments are approved. Bind the Main worktree, permanent Support worktree, and named implementer worktree. Starting Support or a worker from Main or another seat is forbidden; a correct brief cannot override intrinsic bindings. Main-path mismatch fails closed even when the brief matches. Load installed Herdr control before topology actions; if control/live state is unavailable, stop; message transport is no fallback and grants no topology or authority. Require exact target tab label/ID, worktree path and branch, shared resources, plus an existing pane ID or explicit authorization to create exactly one pane in that tab. Before the first prompt, live readback must match tab label/ID, pane ID, `cwd` and `foreground_cwd`. After authorized create/move, bind its returned pane ID by readback. Every changed/new fact needs renewed approval. Fail on dirty seat without disposition, changed foreground cwd, wrong tab/pane/cwd, unapproved occupant, or auto-open into MAIN. Never silently `cd`, recycle, reuse, move, close, or reconcile. Main alone dispatches; Support advises; workers never self-assign. Route a verified worker's unchanged assignment through `session-kickoff`. Enforce Tower OFF or ON; Do not activate Tower. Tower is OFF (`ACTIVE` absent): use only named existing seats. Tower is ON and authority matches: Read live Tower state and dispatch only approved assignments. Keep implementation outside Main; read registered worktrees live; load Support for evidence/capacity/conflicts/brief. Return seat/tab/pane bindings with branch/both cwd values and pending approval. Engram is continuity evidence, never authority. S9.5 automates this established rule. ",
   },
   "skills/torre-control-entregas/SKILL.md": {
     kind: "skill",
@@ -177,7 +192,12 @@ const validateAssets = async (root) => {
 }
 
 const renderProfile = ({ frontmatter, body }) => `---\n${Object.entries(frontmatter).map(([key, value]) => `${key}: ${JSON.stringify(value)}`).join("\n")}\n---\n${body}\n`
-const renderSkill = (contract) => `---\nname: ${contract.frontmatter.name}\ndescription: ${JSON.stringify(contract.frontmatter.description)}\nlicense: Apache-2.0\nmetadata:\n  author: gentleman-programming\n  version: ${JSON.stringify(contract.frontmatter.metadata.version)}\n---\n${SKILL_SECTIONS.map((section) => `## ${section}\n\n${section === "References" ? contract.references.map((reference) => `- \`${reference}\``).join("\n") : contract.fixtureText.repeat(2)}`).join("\n\n")}\n`
+const renderSkill = (contract) => {
+  let fixtureBody = contract.fixtureText
+  const filler = " Preserve this explicit role contract with observable evidence and fail-closed behavior."
+  while (fixtureBody.trim().split(/\s+/).length < 180) fixtureBody += filler
+  return `---\nname: ${contract.frontmatter.name}\ndescription: ${JSON.stringify(contract.frontmatter.description)}\nlicense: Apache-2.0\nmetadata:\n  author: gentleman-programming\n  version: ${JSON.stringify(contract.frontmatter.metadata.version)}\n---\n${SKILL_SECTIONS.map((section) => `## ${section}\n\n${section === "References" ? contract.references.map((reference) => `- \`${reference}\``).join("\n") : section === "Activation Contract" ? fixtureBody.trim() : "Apply the declared contract."}`).join("\n\n")}\n`
+}
 const fixture = () => {
   const root = mkdtempSync(join(tmpdir(), "ct-tower-role-assets-"))
   roots.push(root)
