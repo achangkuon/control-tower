@@ -114,4 +114,40 @@ describe("torre asiento", () => {
     expect(unknown.gitCalls).toEqual([])
     expect(unknown.herdrCalls).toEqual([])
   })
+
+  // The pool is a git fact, so these two never need Herdr and must not be blocked when it is down.
+  test("reports pool occupancy without Herdr, and provisions only what is missing", async () => {
+    const down = ports({ herdrDown: true })
+    expect(await runSeatCli(["pool"], down)).toEqual({
+      operation: "pool",
+      seats: [
+        { name: "implementer-1", path: "/p/Worktrees/implementer-1", branch: "feat/a", free: true, blocked_by: null },
+        { name: "implementer-2", path: "/p/Worktrees/implementer-2", branch: "feat/b", free: true, blocked_by: null },
+        { name: "implementer-3", path: "/p/Worktrees/implementer-3", branch: "feat/c", free: true, blocked_by: null },
+      ],
+    })
+    expect(down.herdrCalls).toEqual([])
+
+    expect(await runSeatCli(["provisionar"], ports({ herdrDown: true }))).toEqual({ operation: "provisionar", created: [], present: ["implementer-1", "implementer-2", "implementer-3"] })
+  })
+
+  test("binds an assignment to a deterministic free seat and echoes no seat state it did not verify", async () => {
+    const bound = await runSeatCli(
+      ["asignar", "--role", "implementation", "--lane", "apply", "--branch", "feat/s9.1-seat-pool", "--base-sha", "a".repeat(40)],
+      ports({ herdrDown: true }),
+    )
+    expect(bound).toEqual({
+      operation: "asignar", seat: "implementer-1", path: "/p/Worktrees/implementer-1",
+      role: "implementation", lane: "apply", branch: "feat/s9.1-seat-pool", base_sha: "a".repeat(40),
+    })
+  })
+
+  test("refuses an assignment with a malformed flag pair or a missing value", async () => {
+    for (const args of [
+      ["asignar", "--role", "implementation", "--lane", "apply", "--branch", "nope", "--base-sha", "a".repeat(40)],
+      ["asignar", "--role", "review", "--lane", "apply", "--branch", "feat/s9.1-x", "--base-sha", "a".repeat(40)],
+      ["asignar", "--role", "implementation", "--lane", "apply", "--branch", "feat/s9.1-x"],
+      ["asignar", "--role"],
+    ]) expect(await errorCode(() => runSeatCli(args, ports({ herdrDown: true })))).toBe("CT_SEAT_REJECTED")
+  })
 })

@@ -66,6 +66,7 @@ const CANONICAL_RUNTIME_PAYLOAD = [
   "jornada/lifecycle.mjs",
   "main-store/launch-consumer.mjs",
   "workspace/seat-inventory.mjs",
+  "workspace/slots.mjs",
 ]
 const fixture = () => {
   const root = mkdtempSync(join(tmpdir(), "ct-runtime-payload-"))

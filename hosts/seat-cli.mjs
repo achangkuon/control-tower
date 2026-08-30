@@ -2,18 +2,37 @@ import { spawnSync } from "node:child_process"
 
 import { createHerdrTopology } from "./herdr-topology.mjs"
 import { createSeatInventory } from "../workspace/seat-inventory.mjs"
+import { createSlotPool } from "../workspace/slots.mjs"
 
 // `torre asiento` is the Tower-off door to Tower-owned seat rules. It never reads `ACTIVE`, so it
 // works while the Tower is deliberately down during its own implementation, and it shares
 // `hosts/herdr-topology.mjs` with `hosts/production-provider.mjs` so turning the Tower on changes
 // who calls the rule, never the rule.
 const fail = (code, message) => { throw Object.assign(new Error(message), { code }) }
-const USAGE = "Usage: torre asiento [list | abrir <asiento> | limpiar [--confirmar]]"
+const USAGE = "Usage: torre asiento [list | pool | provisionar | abrir <asiento> | asignar <flags> | limpiar [--confirmar]]"
+const COMMANDS = ["list", "pool", "provisionar", "abrir", "asignar", "limpiar"]
+const flags = (rest) => {
+  const parsed = {}
+  for (let index = 0; index < rest.length; index += 2) {
+    if (!rest[index]?.startsWith("--") || rest[index + 1] === undefined) fail("CT_SEAT_REJECTED", USAGE)
+    parsed[rest[index].slice(2).replaceAll("-", "_")] = rest[index + 1]
+  }
+  return parsed
+}
 
 export const runSeatCli = async (args, { git, herdr, mainPath } = {}) => {
   if ([git, herdr].some((port) => typeof port !== "function") || typeof mainPath !== "string") throw new TypeError("Seat CLI ports are required")
   const [command = "list", ...rest] = args
-  if (!["list", "abrir", "limpiar"].includes(command)) fail("CT_SEAT_REJECTED", USAGE)
+  if (!COMMANDS.includes(command)) fail("CT_SEAT_REJECTED", USAGE)
+
+  // The pool is a git fact. These three never consult Herdr, so a dead control socket cannot
+  // stop Main from seeing free seats or binding one.
+  if (["pool", "provisionar", "asignar"].includes(command)) {
+    const pool = createSlotPool({ git })
+    if (command === "pool") return Object.freeze({ operation: "pool", seats: pool.list(mainPath) })
+    if (command === "provisionar") return Object.freeze({ operation: "provisionar", ...pool.ensure(mainPath) })
+    return Object.freeze({ operation: "asignar", ...pool.assign(mainPath, flags(rest)) })
+  }
 
   const topology = createHerdrTopology({ run: herdr })
   let agents = null, unavailable = null

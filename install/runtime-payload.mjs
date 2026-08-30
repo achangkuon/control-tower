@@ -64,6 +64,7 @@ export const RUNTIME_PAYLOAD_FILES = [
   "jornada/lifecycle.mjs",
   "main-store/launch-consumer.mjs",
   "workspace/seat-inventory.mjs",
+  "workspace/slots.mjs",
 ]
 // </generated:runtime-payload>
 

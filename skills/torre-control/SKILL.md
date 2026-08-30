@@ -17,16 +17,18 @@ Activate for Tower start/resume, briefs/dispatch/delivery or Herdr topology. Mai
   (`hosts/herdr-topology.mjs`), works with Tower OFF or ON, and fails closed where prose is forgotten.
   A hand-written `herdr pane split` is drift.
   - `list` — every seat with kind, branch, occupancy and disposal blocker.
+  - `pool`, `provisionar`, `asignar` — occupancy, idempotent provisioning, and a deterministic
+    binding of the first free seat. All three answer with Herdr down.
   - `abrir <asiento>` — opens the pane inside `AGENTES` split `right`, verifies tab and both cwd values
     by readback, closes what it opened on mismatch, and refuses Main, Support and occupied seats.
   - `limpiar` — previews disposal; `--confirmar` removes only seats proven clean, merged and free.
 - Herdr tabs are visibility, never Git isolation. `MAIN → SUPPORT → AGENTES`: MAIN hosts only Main,
-  SUPPORT only read-only Support, workers only AGENTES, empty until assignments are approved.
+  SUPPORT only read-only Support, workers only AGENTES, empty until approved.
 - Permanent pool: `implementer-1`, `implementer-2`, `implementer-3`, plus `support-agent`. **Any other
-  worktree is temporary and must be disposed once its work lands** — never promoted, never outliving it.
+  worktree is temporary and must be disposed once its work lands** — never promoted.
 - A correct brief never overrides intrinsic bindings. If Herdr control is unavailable, stop: message
   transport is no fallback and grants no authority.
-- The brief names the exact seat, branch, assignment, scope, dependencies and shared resources.
+- The brief names the exact seat, branch, scope and shared resources.
 - Never silently `cd`, recycle, reuse, move, close or reconcile a pane or seat. Disposal is never
   automatic; `--confirmar` is maintainer-authorized.
 - Main alone dispatches; Support advises; workers never self-assign. Engram is evidence, never authority.
@@ -37,22 +39,22 @@ Activate for Tower start/resume, briefs/dispatch/delivery or Herdr topology. Mai
 
 | Condition | Action |
 |---|---|
-| Tower is OFF (`ACTIVE` absent) | Prepare the brief with Support, await approval, use only named seats. |
-| Tower is ON and authority matches | Read live Tower state; dispatch only approved assignments. |
-| Control unavailable or any binding differs | Stop; never prompt or silently repair topology. |
+| Tower is OFF (`ACTIVE` absent) | Prepare the brief with Support; use only named seats. |
+| Tower is ON and authority matches | Dispatch only approved assignments. |
+| Control unavailable or any binding differs | Stop; never prompt or repair topology. |
 | Delivery or closure applies | Load `torre-control-entregas`; keep implementation outside Main. |
 
 ## Execution Steps
 
-1. Run `torre asiento list`; read `ACTIVE` and Main authority.
-2. Match every brief field and branch against that listing; load `torre-control-soporte` for evidence, capacity and conflicts.
-3. On exact maintainer approval, seat each worker with `torre asiento abrir <asiento>` and record the returned tab and pane IDs.
+1. Run `torre asiento list` and `pool`; read `ACTIVE` and Main authority.
+2. Match every brief field against that listing; load `torre-control-soporte` for evidence and conflicts.
+3. On maintainer approval, bind with `asignar`, seat with `abrir`, and record the returned pane IDs.
 4. Route verified workers through `session-kickoff`; load `torre-control-entregas` for delivery and closure.
-5. On closure, report the `torre asiento limpiar` preview; disposal needs authorized `--confirmar`.
+5. On closure, report the `limpiar` preview; disposal needs authorized `--confirmar`.
 
 ## Output Contract
 
-Return Tower mode, the `torre asiento list` table, tab/pane bindings, Support evidence, dispatched assignments, discrepancies, pending approval, and every fail-closed stop.
+Return Tower mode, the seat table, tab/pane bindings, Support evidence, dispatched assignments, discrepancies, pending approval, and every fail-closed stop.
 
 ## References
 

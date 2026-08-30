@@ -10,7 +10,7 @@
 #   torre status    quien esta registrado, en que estado y quien tiene los locks
 #   torre log      sigue el registro en vivo (ctrl-c para salir)
 #   torre unlock   libera un lock cuya sesion murio (pide confirmacion)
-#   torre asiento  asientos de trabajo: list | abrir <asiento> | limpiar [--confirmar]
+#   torre asiento  asientos: list | pool | provisionar | abrir | asignar | limpiar
 #   torre reset    borra el estado de la torre en este repo
 #
 # El interruptor es un archivo y no depende de que el MCP funcione. `torre off`
