@@ -44,7 +44,7 @@ if (Bun.argv[2] === "serve") {
   console.log("opencode server listening on http://127.0.0.1:" + server.port)
   setTimeout(() => process.exit(0), 1_000)
 } else console.log("gentle-orchestrator")
-`); writeFileSync(join(commands, "herdr"), "#!/bin/sh\nprintf 'herdr' >> " + effects + "; for arg in \"$@\"; do printf ' %s' \"$arg\" >> " + effects + "; done; printf '\\n' >> " + effects + "\nif [ \"$1\" = \"--version\" ]; then printf 'herdr 0.8.0\\n'; exit; fi\ncase \"$1 $2\" in 'pane split') printf '%s\\n' '{\"result\":{\"pane\":{\"pane_id\":\"w1:p1\"}}}' ;; *) printf '%s\\n' '{}' ;; esac\n"); chmodSync(join(commands, "opencode"), 0o700); chmodSync(join(commands, "herdr"), 0o700)
+`); writeFileSync(join(commands, "herdr"), "#!/bin/sh\nprintf 'herdr' >> " + effects + "; for arg in \"$@\"; do printf ' %s' \"$arg\" >> " + effects + "; done; printf '\\n' >> " + effects + "\nif [ \"$1\" = \"--version\" ]; then printf 'herdr 0.8.0\\n'; exit; fi\ncase \"$1 $2\" in 'tab list') printf '%s\\n' '{\"result\":{\"tabs\":[{\"tab_id\":\"w1:t3\",\"label\":\"AGENTES\"}]}}' ;; 'pane list') printf '%s\\n' '{\"result\":{\"panes\":[{\"pane_id\":\"w1:p1\",\"tab_id\":\"w1:t3\",\"cwd\":\"" + worker + "\",\"foreground_cwd\":\"" + worker + "\"},{\"pane_id\":\"w1:p9\",\"tab_id\":\"w1:t3\",\"cwd\":\"" + main + "\",\"foreground_cwd\":\"" + main + "\"}]}}' ;; 'pane split') printf '%s\\n' '{\"result\":{\"pane\":{\"pane_id\":\"w1:p1\"}}}' ;; *) printf '%s\\n' '{}' ;; esac\n"); chmodSync(join(commands, "opencode"), 0o700); chmodSync(join(commands, "herdr"), 0o700)
   const xdg = join(directory, "xdg"), installEnv = { ...process.env, HOME: directory, XDG_DATA_HOME: xdg, XDG_CONFIG_HOME: join(directory, "config"), XDG_STATE_HOME: join(directory, "state") }
   runCli(["install", "launch-v1", root, "--herdr-bin", join(commands, "herdr"), "--opencode-bin", join(commands, "opencode")], installEnv)
   const installed = join(xdg, "control-tower/versions/launch-v1/bin/torre")
@@ -61,7 +61,8 @@ if (Bun.argv[2] === "serve") {
   expect(Object.keys(publicResult.view).sort()).toEqual(["code", "retryable", "status"])
   expect(JSON.stringify(publicResult)).not.toMatch(/pane_id|helper|credential|secret|command|copy|paste|token/i)
   expect(JSON.stringify(JSON.parse(result.stdout))).not.toMatch(/manual_command|credential_ref|OPENCODE_SERVER_PASSWORD/)
-  expect(readFileSync(effects, "utf8")).toMatch(new RegExp(`^herdr pane split --current --direction right --cwd ${worker} --no-focus\\nherdr pane run w1:p1 \\S*bun \\S*opencode-attach-helper\\.mjs\\n$`))
+  // The seat pane is born inside the AGENTES tab and read back there; `--current` must never appear.
+  expect(readFileSync(effects, "utf8")).toMatch(new RegExp(`^herdr tab list\\nherdr pane list\\nherdr pane split w1:p9 --direction right --cwd ${worker} --no-focus\\nherdr pane list\\nherdr pane run w1:p1 \\S*bun \\S*opencode-attach-helper\\.mjs\\n$`))
   expect(spawnSync(installed, ["launch-worker", "--request-ref", "request-a"], { cwd: main, env: { ...installEnv, HERDR_ENV: "attacker", PATH: `${commands}:${process.env.PATH}` }, encoding: "utf8" }).stderr).toContain("CT_LAUNCH_BINDING_CONSUMED")
   store.issueLaunchBinding({ actor: "MAIN", project_id: "project-a", request_ref: "request-stale", authorization_id: "auth-a", brief: "Approved", brief_ref: "briefs/a.json", assignment_ref: "assignment-a", candidate_revision: candidate, host_epoch: 1 })
   writeFileSync(join(storePath, "epoch-records/2.json"), JSON.stringify({ epoch: 2, project_id: "project-a" }), { mode: 0o600 })

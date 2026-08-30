@@ -14,6 +14,7 @@ import { OPENCODE_ATTACH_HELPER_PATH } from "./opencode-attach-helper.mjs"
 import { createOpenCodeCredentialChannel } from "./opencode-credential-channel.mjs"
 import { createOpenCodeBackendHost } from "./opencode-server.mjs"
 import { createOpenCodeView } from "./opencode-view.mjs"
+import { AGENTS_TAB_LABEL, createHerdrTopology } from "./herdr-topology.mjs"
 
 const fail = (code, message) => { throw Object.assign(new Error(message), { code }) }
 const duplicates = (input) => {
@@ -251,13 +252,19 @@ export const createProductionProvider = ({ } = {}) => {
   // Decision 39: Herdr survives only as a replaceable launcher for a view. `pane run` executes a
   // command in a pane without touching Herdr's agent custody, so the visible root never becomes a
   // Herdr agent and the pane never becomes the root.
+  // The seat topology is owned by `hosts/herdr-topology.mjs`, shared with the Tower-off seat CLI:
+  // a worker pane is born inside AGENTES and read back there, never split out of whatever pane
+  // happens to be focused.
+  const topology = createHerdrTopology({ run: (args) => parse(command("herdr", args)) })
   const view = createOpenCodeView({
     helperCommand: [process.execPath, OPENCODE_ATTACH_HELPER_PATH],
-    openPane: ({ command: attach, cwd }) => {
-      const pane = parse(command("herdr", ["pane", "split", "--current", "--direction", "right", "--cwd", cwd, "--no-focus"]))?.result?.pane?.pane_id
-      if (!paneIdentifier(pane)) fail("CT_VIEW_UNAVAILABLE", "Herdr did not create a fresh view pane")
-      parse(command("herdr", ["pane", "run", pane, ...attach]))
-      return { pane_id: pane }
+    openPane: async ({ command: attach, cwd }) => {
+      let opened
+      try { opened = await topology.openSeatPane({ cwd }) }
+      catch (error) { fail("CT_VIEW_UNAVAILABLE", `Herdr did not open a seat pane in ${AGENTS_TAB_LABEL}: ${error.message}`) }
+      if (!paneIdentifier(opened.pane_id)) fail("CT_VIEW_UNAVAILABLE", "Herdr did not create a fresh view pane")
+      parse(command("herdr", ["pane", "run", opened.pane_id, ...attach]))
+      return { pane_id: opened.pane_id }
     },
     closePane: (paneId) => { parse(command("herdr", ["pane", "close", paneId])); return true },
   })

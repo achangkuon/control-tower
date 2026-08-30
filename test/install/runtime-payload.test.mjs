@@ -48,6 +48,7 @@ const CANONICAL_RUNTIME_PAYLOAD = [
   "core.mjs",
   "hosts/candidate-fence.mjs",
   "hosts/epoch-enforcement.mjs",
+  "hosts/herdr-topology.mjs",
   "hosts/launch-worker-cli.mjs",
   "hosts/launch-worker.mjs",
   "hosts/opencode-attach-helper.mjs",
