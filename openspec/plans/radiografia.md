@@ -1,7 +1,7 @@
 ---
-verified_against: daf7e0e7af4122417ce2bec8a48a11c65a40f23c
+verified_against: 480afb92bf99d38ee166070d09ec6485bc5de2c4
 verified_at: 2026-08-29
-standfirst: S4.14 cerró la ventana final de actualidad antes de publicar ownership sobre un candidato local verificado. El runtime Tower instalado sigue no verificado/no disponible; S9.4 y S2.8 requieren briefs frescos y no tienen worker asignado.
+standfirst: S2.8 volvió opaco el bloque inputs del binding delta sin cambiar el resto del contrato. Cerró localmente con AC1–AC5 en PASS y una excepción humana acotada para AC6; el push remoto sigue sin autorización.
 ---
 
 <!--
@@ -119,10 +119,15 @@ En simple: La Torre vuelve a comprobar la llave en el instante de entregarla. Si
 Evidencia: `contracts/host-runtime/ownership-registry.mjs` · `test/contracts/host-runtime/ownership.test.mjs` · `openspec/specs/host-runtime/spec.md` · candidato `daf7e0e7af4122417ce2bec8a48a11c65a40f23c`
 
 ### H · crítico · `S9.4` conserva trabajo parcial no asignable, no capacidad
-Lo técnico: `S9.4` está 📋 PLANIFICADO, sin worker asignado y no es asignable hasta emitir un brief fresco de Support sobre la base entregada. Implementer-1 conserva M1 `a7d724dc`, M2 como dos archivos no trackeados en Engram 9772 y una corrección sin consumir; implementer-2/3 quedan como evidencia inmutable. `S2.8` también requiere un brief NUEVO y fresco después de la entrega.
+Lo técnico: `S9.4` está 📋 PLANIFICADO, sin worker asignado y no es asignable hasta emitir un brief fresco de Support sobre la base entregada. Implementer-1 conserva M1 `a7d724dc`, M2 como dos archivos no trackeados en Engram 9772 y una corrección sin consumir; implementer-2/3 quedan como evidencia inmutable. `S2.8` ya cerró y no aporta capacidad ni asignación a `S9.4`.
 En simple: El último seguro neutral ya está cerrado, pero eso NO convierte el trabajo guardado en una función disponible ni autoriza continuarlo. Support debe emitir asignaciones nuevas; hasta entonces la capacidad asignable sigue en cero.
 Evidencia: `openspec/plans/plan-9/STATUS.md` · `openspec/plans/master-index.md` · Engram 9772–9774
 
+### I · resuelto · `S2.8` eliminó los nombres de fase sin fabricar un verde integral
+Lo técnico: El código local `480afb92bf99d38ee166070d09ec6485bc5de2c4`, parent `c2fb6399ee1332821663735d02833f78b9371402`, toca sólo los tres paths de `Área` y suma 45 líneas authored. AC1–AC5 pasan; safety quedó 72/72, `M2.8.1` pasó de RED 72/1 a 74/74 y `M2.8.2` de RED 74/1 a 75/75. La única integral fue 952/953 por `test/hosts/candidate-fence.test.mjs:432`, fuera de `Área`; el diagnóstico aislado autorizado pasó 17/17 y el caso exacto no reprodujo. AC6 cierra por la decisión 103, no como PASS.
+En simple: El cambio hace exactamente una cosa: la Torre deja de entender nombres internos del proceso de trabajo y conserva el resto del contrato. El examen total tuvo una falla ajena que no volvió a aparecer al aislarla; Emilio autorizó cerrar sólo este candidato sin convertir ese 952/953 en un aprobado general.
+Evidencia: `schemas/binding-delta-v1.schema.json` · `test/contracts/schema.test.mjs` · `test/fixtures/contracts/schema-cases-v1.json` · [decisión 103](decision-register.md) · candidato `480afb92bf99d38ee166070d09ec6485bc5de2c4`
+
 ## Evidencia y límites de esta radiografía
 
-Este juicio está verificado contra el candidato de código local `daf7e0e7af4122417ce2bec8a48a11c65a40f23c`, nunca contra el futuro commit documental que lo registra. `S4.14` tiene evidencia enfocada, host-runtime e integral sobre esos bytes; el lens asesor quedó no disponible por falta de lineage del candidato mientras RDD estaba deliberadamente OFF, y no se fabrica PASS. El runtime Tower instalado sigue sin prueba: el update parcial dejó plugin nuevo con engine/shim viejos y coherencia MCP sin verificar. La decisión 102 exige esperar `S8.12 → S8.13`; no autoriza `upgrade --shim`. Tampoco se acreditan runtime Pi, packaging Tower, lifecycle atómico, materialización Herdr, asignación ni capacidad.
+Este juicio está verificado contra el candidato de código local `480afb92bf99d38ee166070d09ec6485bc5de2c4`, nunca contra el futuro commit documental que lo registra. `S2.8` tiene evidencia safety y focalizada verde; la corrida integral permanece 952/953 y AC6 es una excepción humana acotada, no PASS. La lente reliability quedó no disponible por `no current controller-owned candidate view lineage binding`; no existe PASS ni receipt. El runtime Tower instalado sigue sin prueba: el update parcial dejó plugin nuevo con engine/shim viejos y coherencia MCP sin verificar. La decisión 102 exige esperar `S8.12 → S8.13`; no autoriza `upgrade --shim`. Tampoco se acreditan runtime Pi, packaging Tower, lifecycle atómico, materialización Herdr, asignación ni capacidad.

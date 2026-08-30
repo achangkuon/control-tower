@@ -148,7 +148,7 @@ graph LR
 > recuperación y failover entra en la cadena de release. La tabla se corrige para coincidir.
 > La decisión histórica fue explícita —construir las catorce Sesiones que ese corte enumeraba como restantes— y no una derivación; la reconciliación actual agrega los prerrequisitos omitidos sin reescribir aquella evidencia.
 
-**Métrica histórica al 2026-08-11: 26/37 Sesiones cerradas o archivadas (70%).** Se conserva como evidencia del corte de esa fecha; no mide la ruta vigente. El estado actual y su denominador auditable son `45/66` en el [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
+**Métrica histórica al 2026-08-11: 26/37 Sesiones cerradas o archivadas (70%).** Se conserva como evidencia del corte de esa fecha; no mide la ruta vigente. El estado actual y su denominador auditable son `46/66` en el [master-index](master-index.md). `S5.6`–`S5.12` agregan siete unidades revisables y
 secuenciales entre `S5.4` y `S5.5`: snapshot/parser canónico, contratos de decisión/respuesta,
 binding terminal, productores de provenance, composición Main→parking, binding autoritativo de
 checkpoint y binding inmutable del trabajo completado bajo la autoridad exclusiva de Main. La
