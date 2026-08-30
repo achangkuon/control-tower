@@ -6,25 +6,23 @@
 
 ## 📍 Punto de retoma
 
-**`S9.4` tiene sus dos Módulos entregados y NO está cerrada: siete de sus ocho criterios pasan y uno queda abierto.** `M9.4.1` (verificador de binding exacto) cerró en `origin/master@9f29f20` y `M9.4.2` (supervisor de ruta pura con adquisición broker-first) en `696f500`. Suite completa **1026 pass / 0 fail**.
+**P12 «Orden estructural del repositorio» queda enumerado: 7 Sesiones, dos de ellas 🟢 LISTO y ejecutables hoy.** Nace de la auditoría de solo lectura del 2026-08-30 contra `master@7e718d6` y de las cuatro decisiones del maintainer —opción A en las cuatro—: prender verificación automática **antes** de mover código, partir `core.mjs` conservándolo como barril re-exportador, reescribir la definición de producto sin VPS/Hermes/Telegram, y diferir la mudanza a `src/`. La decisión estacionada del presupuesto de 400 líneas contra movimientos puros quedó resuelta en el mismo acto —opción A, excepción acotada verificable por identidad de bytes, a redactar dentro de `S12.3`— y contamina **cinco Módulos de veintiséis, ninguna Sesión**.
 
-**El criterio abierto es el 1, y sólo su mitad de kernel.** El binding sí se valida antes y después de cada `await` contra el contexto de `S4.10`, y el keepalive Tower-owned se registra dentro de esa frontera verificada. Falta el puerto `observeProcess` que compare **PID, cwd y start-token del kernel** antes y después de la observación async, como enuncia la autoridad Engram 9748. Es trabajo pendiente, no una decisión, y no invalida nada de lo entregado. **Hasta cerrarlo, `S9.4` sigue 🔵 EN CURSO y P9 permanece en 20% (1/5 S).**
+**La ventana para partir `core.mjs` está abierta ahora y no va a durar.** Ninguna de las seis ramas vivas lo toca, verificado con `git diff --name-only master...<rama>` sobre las seis del `worktree list`. En cuanto una lo haga, la mudanza deja de ser mecánica y pasa a ser conflicto de merge. Excepción a vigilar: `feat/plan-2/s2-8-opaque-binding-inputs` sí toca `continuation/integrated-base.mjs`, y debe integrarse o abandonarse antes de abrir `S12.5`.
 
-**Lo que sí quedó probado en esta entrega:** la ruta es dato puro —preparar y validar no crea socket, archivo, listener, lock, reserva ni capacidad de cierre, y un `runtimeRoute` que ofrezca `release` se rechaza en construcción—; `broker.start` es el primer efecto y corre dentro de `S4.10 acquireAtReservation`, que retiene su `close` exacto; todo fallo posterior a start consume ese `close` o deja cuarentena explícita que bloquea reemplazo; y la convergencia es por worktree, con conflicto en vez de takeover.
+**`S9.4` sigue 🔵 EN CURSO sobre el criterio 1, y sólo su mitad de kernel.** Sus dos Módulos están entregados —`M9.4.1` en `9f29f20`, `M9.4.2` en `696f500`— y la suite está en **1026 pass / 0 fail**. Falta el puerto `observeProcess` que compare PID, cwd y start-token del kernel antes y después de la observación async, como enuncia la autoridad Engram 9748. Es trabajo pendiente, no una decisión. P9 permanece en 20% (1/5 S).
 
-**Un defecto propio se encontró y corrigió antes de entregar:** la primera versión de `pi-supervisor.mjs` escribió dos bytes `NUL` literales como separador de un `join`, lo que hacía que **git clasificara el archivo como binario** y dejara su diff ilegible para siempre. Se reemplazó por comparación de claves elemento a elemento. Queda anotado porque es la clase de error que ninguna suite detecta.
-
-**Capacidad viva: 1 asiento.** `implementer-2` quedó reciclado en `feat/s9.4-kernel-currentness`, limpio y `0/0` contra `origin/master`, listo para retomar desde Pi; `support-agent` pasó a `support/read-only-20260830` y ya no está atrasado. La tabla completa de traspaso está en [P9](plan-9/STATUS.md). `implementer-1` e `implementer-3` conservan evidencia congelada de los cinco intentos previos de `S9.4` y **no fueron consumidos, rebasados ni corregidos** en ningún momento.
-
-**`S9.1` cerró antes en la misma jornada** —P9 a 20% (1/5 S), global a 47/66 (71%)— y la topología de asientos dejó de ser prosa en `6c79223`. Pi sigue siendo el primer host; Pi 0.84.4 está instalado pero `S9.4` no lo necesita vivo. Las responsabilidades legacy siguen reconciliadas: P9 legacy en `P8/S8.5` 🟡 DIFERIDO; P10 con traza en `S8.2`/`S8.8` y remanente `S8.12 → S8.13`; P11 repartida entre `S1.19`, `S7.1` y `S8.13`. La próxima unidad documental proporcional sigue siendo P4, sin writer asignado.
+**Corrección de capacidad: hay 0 asientos libres, no 1.** El pool es fijo en tres (`workspace/slots.mjs:9`, `POOL_SIZE = PERMANENT_SEATS.length`) y `torre asiento pool` reporta los tres `blocked_by: uncommitted-changes`. La reconciliación anterior afirmaba que `implementer-2` había quedado limpio en `feat/s9.4-kernel-currentness`; hoy está en `feat/s5.14-configurable-planning-depth` con cambios sin commitear. P12 se enumeró desde un asiento **temporal fuera del pool**, `plan-12`, con el mismo estatus disposable que `diagnostic-launch-timeout` e `implementer-temp-s4-14`.
 
 ## 🎯 Cola de ejecución
 
-`#1 S9.4` · `#2 S1.17` · `#3 S1.18` · `#4 S8.12` · `#5 S9.5` · `#6 S1.19` · `#7 S4.12` · `#8 S8.13` · `#9 S5.14` · `#10 S5.5` · `#11 S5.15` · `#12 S9.2` · `#13 S9.3` · `#14 S7.1` — topológica, recalculada 2026-08-30 tras cerrar `S9.1`. La cola no asigna dueño ni asiento.
+`#1 S9.4` · `#2 S12.1` · `#3 S12.2` · `#4 S12.3` · `#5 S12.4` · `#6 S12.5` · `#7 S12.6` · `#8 S1.17` · `#9 S1.18` · `#10 S8.12` · `#11 S9.5` · `#12 S1.19` · `#13 S4.12` · `#14 S8.13` · `#15 S5.14` · `#16 S5.5` · `#17 S5.15` · `#18 S9.2` · `#19 S9.3` · `#20 S7.1` — topológica, recalculada 2026-08-30 al enumerar P12. La cola no asigna dueño ni asiento.
 
-**Paralelismo:** capacidad asignable inmediata **0** hasta recibir los briefs frescos requeridos; no hay worker asignado y ningún estado parcial cuenta como capacidad. Se preserva el orden previo: `S1.18` habilita `S8.12`; `S9.5` conserva `S8.12 + S9.4`; `S4.12` espera `S9.4 + S1.18`; `S8.13` espera `S8.12 + S1.19 + S4.12`; `S7.1` espera `S1.19 + S4.12 + S8.13 + S5.5`.
+**Por qué P12 entra en la cabecera.** El maintainer declaró el 2026-08-30 que sin orden ni estructura no se puede seguir implementando, y que la documentación ambigua y descontinuada agrava el problema. `S9.4` conserva el `#1` porque está EN CURSO con siete de sus ocho criterios pasando: interrumpirla tiraría trabajo hecho.
 
-**Fuera de la cola:** `S4.4`, `S4.8`, `S8.5`, `S8.6` y P6 🟡 DIFERIDO; `S8.11` 🔴 BLOQUEADO. `S2.8`, `S4.10`, `S4.11`, `S4.13`, `S4.14`, `S5.3` y `S8.14` se excluyen por ✅ COMPLETO; `S4.9` y `S8.7` por 📚 ARCHIVADO. La cola contiene sólo Sesiones 🟢 LISTO o 📋 PLANIFICADO y preserva el orden del grafo.
+**Paralelismo:** dentro de P12 la capacidad es **2 el primer día y 1 después**. `S12.1` y `S12.2` son independientes en grafo, `Área` y `Recurso`. Desde `S12.3` la cadena se serializa porque las tres Sesiones reclaman **`core.mjs` en exclusiva**; el asiento libre en esa etapa debe tomar `S1.17`, no un pedazo de P12. Capacidad asignable inmediata **0** hasta liberar un asiento del pool: los tres permanentes tienen cambios sin commitear. Se preserva el orden previo: `S1.18` habilita `S8.12`; `S9.5` conserva `S8.12 + S9.4`; `S4.12` espera `S9.4 + S1.18`; `S8.13` espera `S8.12 + S1.19 + S4.12`; `S7.1` espera `S1.19 + S4.12 + S8.13 + S5.5`.
+
+**Fuera de la cola:** `S4.4`, `S4.8`, `S8.5`, `S8.6`, `S12.7` y P6 🟡 DIFERIDO; `S8.11` 🔴 BLOQUEADO. `S2.8`, `S4.10`, `S4.11`, `S4.13`, `S4.14`, `S5.3` y `S8.14` se excluyen por ✅ COMPLETO; `S4.9` y `S8.7` por 📚 ARCHIVADO. La cola contiene sólo Sesiones 🟢 LISTO o 📋 PLANIFICADO y preserva el orden del grafo.
 
 ## Granularidad
 
@@ -33,7 +31,9 @@ En este repositorio la entrega ocurre mediante uno o más commits directos secue
 
 ## 📊 Estado de un vistazo
 
-**Avance global**: 4/12 Planes cerrados (33%) · Sesiones cerradas en planes activos con denominador derivable: 47/66 (71%). Cálculo auditable: P1 `16/19` + P4 `10/13` + P5 `12/15` + P7 `0/1` + P8 `8/13` + P9 `1/5` = `47/66`. P0, P3, P10 y P11 están cerrados. P2 y P6 conservan porcentaje `—`: cerrar `S2.8` no incorpora P2 al cálculo porque cuatro responsabilidades siguen sin Sesión enumerada; P6 no tiene Sesiones enumeradas.
+**Avance global**: 4/13 Planes cerrados (31%) · Sesiones cerradas en planes activos con denominador derivable: 47/73 (64%). Cálculo auditable: P1 `16/19` + P4 `10/13` + P5 `12/15` + P7 `0/1` + P8 `8/13` + P9 `1/5` + P12 `0/7` = `47/73`. P0, P3, P10 y P11 están cerrados. P2 y P6 conservan porcentaje `—`: cerrar `S2.8` no incorpora P2 al cálculo porque cuatro responsabilidades siguen sin Sesión enumerada; P6 no tiene Sesiones enumeradas.
+
+**P12 agrega 7 Sesiones al denominador global y ninguna cerrada**, así que el porcentaje global baja de 71% a 64% sin que se haya perdido ni un trabajo entregado. Es el mismo movimiento de siempre: se enumeró trabajo que ya existía —el desorden del repositorio— y que nadie contaba. Un porcentaje que sube al enumerar sería la señal de que el denominador está mintiendo.
 
 **El denominador de P5 subió de 14 a 15 sin que se perdiera trabajo**, al enumerar `S5.15` por la [decisión 78](decision-register.md). Es la misma causa de siempre —se enumeró trabajo que ya existía y que nadie contaba— y otra vez el porcentaje se movió en contra. En el mismo movimiento `S2.7` salió del alcance por quedarse sin sujeto, pero eso no toca el cociente: P2 nunca tuvo denominador derivable.
 
@@ -53,6 +53,7 @@ En este repositorio la entrega ocurre mediante uno o más commits directos secue
 | P9 | Asientos de trabajo y reciclado seguro | 🔵 EN CURSO | 20% (1/5 S) | — | Maintainer | `S9.2`–`S9.5` | [STATUS](plan-9/STATUS.md) |
 | P10 | Ejecución y supervisión autónoma de Jornada | ✅ COMPLETO | 100% (3/3 S) | — | Maintainer | — | [STATUS](plan-10/STATUS.md) |
 | P11 | Interfaz de operador | ✅ COMPLETO | 100% (1/1 S) | — | Maintainer | — | [STATUS](plan-11/STATUS.md) |
+| P12 | Orden estructural del repositorio | 📋 PLANIFICADO | 0% (0/7 S) | 36h | Maintainer | `S12.1`–`S12.6` | [STATUS](plan-12/STATUS.md) |
 
 > **Cómo leer `Qué falta`.** Enumera sólo IDs de Sesiones pendientes; el estado y el detalle pertenecen al `STATUS.md` de cada Plan. **🟡 DIFERIDO no es trabajo pendiente** y no aparece en esa columna. El `%` conserva las Sesiones diferidas en el denominador porque siguen siendo objetivo; sólo lo archivado-fuera-de-alcance sale.
 

@@ -181,3 +181,269 @@ Parado hasta resolver la decisión que escala arriba. El resto de la Sesión ava
 - [ ] Tarea T12.2.4.1 — RED: leer el artifact y registrar si nombra VPS, Hermes o Telegram.
 - [ ] Tarea T12.2.4.2 — GREEN: mover el cambio a `changes/archive/` y reconciliar la definición.
 - [ ] Tarea T12.2.4.3 — REFACTOR: la cola activa de `openspec/changes/` no contiene alcance retirado.
+
+---
+
+## Sesión 12.3 — El SQL de las migraciones sale de `core.mjs`
+
+**Estado:** 📋 PLANIFICADO · **Ruta:** `direct` · est: 6h
+
+**Depende de:** `S12.1`
+**Área:** `core.mjs`, `db/**`, `test/db/**`
+**Recurso:** **`core.mjs` en exclusiva** — ninguna otra Sesión puede tocarlo mientras corre
+
+**Resultado:** las cinco migraciones y sus manifiestos viven en `db/migrations/` y
+`db/manifests.mjs`; `core.mjs` los re-exporta; ningún import cambia; las firmas SHA-256 dan
+idénticas. Es el corte más barato de verificar del Plan.
+**Autoridad:** decisión 2 del maintainer, 2026-08-30.
+
+**Decisiones:**
+
+- `derivable` — destino `db/` en la raíz, no `src/adapters/db/`. **Criterio:** la decisión 4
+  difiere la mudanza a `src/`; `db/` sigue la convención plana que ya usan `registry/`,
+  `main-store/` y `contracts/`. **Falsificable:** se revierte la decisión 4. **Autoridad:**
+  decisión 4 del maintainer.
+- `escala` — **el presupuesto de 400 líneas contra movimientos puros.** Ver la decisión
+  estacionada al final de este Plan. **Clase:** dependencias o evidencia contradictorias.
+  **Contamina:** `M12.3.4`, `M12.3.5`, `M12.4.2` y los Módulos de `S12.5` que muevan más de 200
+  líneas.
+
+**Criterios de aceptación** — todos deben pasar para cerrar:
+- [ ] `MIGRATION_001..005_CHECKSUM` dan exactamente los mismos SHA-256 que en `7e718d6`
+- [ ] Ninguno de los 22 archivos que importan de `core.mjs` cambió
+- [ ] La suite completa pasa: 1026 o más, 0 fallos
+- [ ] `core.mjs` bajó de 4.646 a ≤3.900 líneas
+- [ ] El diff no toca ninguna ruta fuera de `Área`
+
+Cada Módulo lleva sus tres Tareas en el mismo orden: **RED** congela la firma SHA-256 actual como
+aserción, **GREEN** mueve el bloque, **REFACTOR** prueba que la firma no se movió y que la suite
+sigue verde. El forecast authored es 2× las líneas movidas, porque una extracción borra y agrega.
+
+### Módulo M12.3.1 — `db/migrations/001.mjs` · 26 movidas · forecast ~55
+- [ ] Tarea T12.3.1.1 — RED · [ ] T12.3.1.2 — GREEN · [ ] T12.3.1.3 — REFACTOR
+
+### Módulo M12.3.2 — `db/migrations/002.mjs` y `003.mjs` · 115 movidas · forecast ~235
+- [ ] Tarea T12.3.2.1 — RED · [ ] T12.3.2.2 — GREEN · [ ] T12.3.2.3 — REFACTOR
+
+### Módulo M12.3.3 — `db/manifests.mjs` · 79 movidas · forecast ~165
+- [ ] Tarea T12.3.3.1 — RED · [ ] T12.3.3.2 — GREEN · [ ] T12.3.3.3 — REFACTOR
+
+### Módulo M12.3.4 🔴 — `db/migrations/004.mjs` · 216 movidas · forecast ~435
+- [ ] Tarea T12.3.4.1 — RED · [ ] T12.3.4.2 — GREEN · [ ] T12.3.4.3 — REFACTOR
+
+### Módulo M12.3.5 🔴 — `db/migrations/005.mjs` · 232 movidas · forecast ~465
+- [ ] Tarea T12.3.5.1 — RED · [ ] T12.3.5.2 — GREEN · [ ] T12.3.5.3 — REFACTOR
+
+### Módulo M12.3.6 — `core.mjs` como barril y verificación de importadores · forecast ~40
+- [ ] Tarea T12.3.6.1 — RED: aserción de que los 22 importadores resuelven igual.
+- [ ] Tarea T12.3.6.2 — GREEN: dejar las re-exportaciones.
+- [ ] Tarea T12.3.6.3 — REFACTOR: confirmar el conteo de líneas y la suite.
+
+---
+
+## Sesión 12.4 — Los validadores de persistencia salen de `core.mjs`
+
+**Estado:** 📋 PLANIFICADO · **Ruta:** `direct` · est: 8h
+
+**Depende de:** `S12.3`
+**Área:** `core.mjs`, `db/validators/**`, `test/db/**`
+**Recurso:** **`core.mjs` en exclusiva**
+
+**Resultado:** las mil líneas que verifican que lo guardado en SQLite sea coherente con la versión
+del esquema viven en `db/validators/`. Son funciones puras con mucha prueba encima: se mueven
+enteras, sin partirlas.
+**Autoridad:** decisión 2 del maintainer, 2026-08-30.
+
+**Decisiones:**
+
+- `escala` — heredada de `S12.3`: el presupuesto de 400 contra movimientos puros. Acá el choque es
+  el peor del Plan: `validateSchema4Persistence` (`core.mjs:1484-2142`) son **659 líneas en una
+  sola función**, ~1.320 authored para moverla. **Contamina:** `M12.4.2`.
+
+**Criterios de aceptación** — todos deben pasar para cerrar:
+- [ ] La suite completa pasa: 1026 o más, 0 fallos
+- [ ] Ninguno de los archivos que importan de `core.mjs` cambió
+- [ ] `core.mjs` bajó a ≤2.900 líneas
+- [ ] Ninguna función de validación cambió su cuerpo: cada diff es un movimiento byte a byte
+- [ ] El diff no toca ninguna ruta fuera de `Área`
+
+### Módulo M12.4.1 — `validateSchema3Persistence` · 145 movidas · forecast ~295
+- [ ] Tarea T12.4.1.1 — RED · [ ] T12.4.1.2 — GREEN · [ ] T12.4.1.3 — REFACTOR
+
+### Módulo M12.4.2 🔴 — `validateSchema4Persistence` · 659 movidas · forecast ~1.320
+- [ ] Tarea T12.4.2.1 — RED · [ ] T12.4.2.2 — GREEN · [ ] T12.4.2.3 — REFACTOR
+
+### Módulo M12.4.3 — helpers de compensación y rollback · 63 movidas · forecast ~130
+- [ ] Tarea T12.4.3.1 — RED · [ ] T12.4.3.2 — GREEN · [ ] T12.4.3.3 — REFACTOR
+
+### Módulo M12.4.4 — envelopes de bootstrap v4 y v5 · 133 movidas · forecast ~270
+- [ ] Tarea T12.4.4.1 — RED · [ ] T12.4.4.2 — GREEN · [ ] T12.4.4.3 — REFACTOR
+
+### Módulo M12.4.5 — barril y verificación de importadores · forecast ~40
+- [ ] Tarea T12.4.5.1 — RED · [ ] T12.4.5.2 — GREEN · [ ] T12.4.5.3 — REFACTOR
+
+---
+
+## Sesión 12.5 — El protocolo de continuación sale de `core.mjs`
+
+**Estado:** 📋 PLANIFICADO · **Ruta:** `design-tasks` · est: 12h
+
+**Depende de:** `S12.4`
+**Área:** `core.mjs`, `continuation/**`, `test/continuation/**`
+**Recurso:** **`core.mjs` en exclusiva**; además `continuation/integrated-base.mjs`
+
+**Resultado:** las 24 funciones `continuation*` —2.035 líneas— viven bajo `continuation/`, que hoy
+tiene tres archivos chicos esperándolas. `core.mjs` queda en ≤450 líneas.
+**Autoridad:** decisión 2 del maintainer, 2026-08-30.
+
+**Por qué `design-tasks` y no `direct`:** el resultado está fijo —comportamiento idéntico,
+`core.mjs` en ~400 líneas— pero **el corte de las 24 funciones necesita elaboración técnica
+acotada**: por etapa del traspaso o por tabla de la base. Los Módulos y Tareas los escribe
+`session-plan` en su elaboración; este Plan fija el contrato y los criterios y **no debe duplicar
+esa descomposición**.
+
+**Choque de rama viva, a resolver antes de arrancar:** `continuation/integrated-base.mjs` lo está
+tocando `feat/plan-2/s2-8-opaque-binding-inputs`, en el asiento `diagnostic-launch-timeout`. Esa
+rama tiene que estar integrada o abandonada antes de abrir `S12.5`, o los dos trabajos colisionan
+en el merge, después de que ambas implementaciones existan.
+
+**Decisiones:**
+
+- `derivable` — el criterio de corte de las 24 funciones. **Criterio:** lo resuelve la elaboración
+  técnica de `session-plan` leyendo las funciones, dentro de la autoridad ya aprobada.
+  **Falsificable:** el corte elegido obliga a cambiar el cuerpo de alguna función. **Autoridad:**
+  decisión 2 del maintainer, más la ruta `design-tasks` de esta Sesión.
+- `escala` — heredada: el presupuesto de 400 contra movimientos puros. **Contamina:** cada Módulo
+  que mueva más de 200 líneas.
+
+**Criterios de aceptación** — todos deben pasar para cerrar:
+- [ ] Las 24 funciones `continuation*` viven bajo `continuation/`
+- [ ] `core.mjs` quedó en ≤450 líneas y contiene sólo el vocabulario y las primitivas de la Torre
+- [ ] La suite completa pasa: 1026 o más, 0 fallos
+- [ ] Ninguno de los archivos que importan de `core.mjs` cambió
+- [ ] Ninguna función cambió su cuerpo: cada movimiento es byte a byte
+- [ ] El diff no toca ninguna ruta fuera de `Área`
+
+**Módulos:** los define `session-plan`. Forecast: ~10 unidades de commit.
+
+---
+
+## Sesión 12.6 — La raíz se ordena y el README describe el producto real
+
+**Estado:** 📋 PLANIFICADO · **Ruta:** `direct` · est: 4h
+
+**Depende de:** `S12.5`
+**Área:** `host/**`, `hosts/**`, `README.md`, y los archivos que importen `host/loop.mjs`
+**Recurso:** —
+
+**Resultado:** el directorio `host/` —una carpeta con un solo archivo, a una letra de `hosts/`—
+deja de existir, y el README describe las carpetas que hay, no las cinco de julio. Va **después**
+del split a propósito: escribirlo antes obligaría a reescribirlo dos veces.
+**Autoridad:** decisión 4 del maintainer, opción B combinada, 2026-08-30.
+
+**Decisiones:**
+
+- `derivable` — se mueve `host/loop.mjs` a `hosts/`, no al revés. **Criterio:** `hosts/` tiene 14
+  archivos y `host/` uno; se mueve el chico. **Falsificable:** algún contrato publicado nombra la
+  ruta `host/`. **Autoridad:** el árbol del repositorio.
+
+**Criterios de aceptación** — todos deben pasar para cerrar:
+- [ ] El directorio `host/` no existe
+- [ ] Cada carpeta que el README nombra existe, y cada carpeta de primer nivel aparece en el README
+- [ ] La suite completa pasa: 1026 o más, 0 fallos
+- [ ] El diff no toca ninguna ruta fuera de `Área`
+
+### Módulo M12.6.1 — fusionar `host/` en `hosts/` y corregir importadores · forecast ~90
+- [ ] Tarea T12.6.1.1 — RED · [ ] T12.6.1.2 — GREEN · [ ] T12.6.1.3 — REFACTOR
+
+### Módulo M12.6.2 — `README.md` reescrito con la estructura post-split · forecast ~140
+- [ ] Tarea T12.6.2.1 — RED: enumerar las carpetas que el README omite.
+- [ ] Tarea T12.6.2.2 — GREEN: reescribir la tabla de piezas contra el árbol real.
+- [ ] Tarea T12.6.2.3 — REFACTOR: contrastar cada ruta nombrada contra el árbol.
+
+### Módulo M12.6.3 — verificación cruzada README ↔ árbol · forecast ~20
+- [ ] Tarea T12.6.3.1 — RED · [ ] T12.6.3.2 — GREEN · [ ] T12.6.3.3 — REFACTOR
+
+---
+
+## Sesión 12.7 — La mudanza a `src/`
+
+**Estado:** 🟡 DIFERIDO · **Ruta:** `design-tasks` · est: 8h
+
+**Depende de:** `S12.6`
+**Área:** `src/**` y todo el árbol de primer nivel
+**Recurso:** el repositorio entero
+**Diferida por:** decisión 4 del maintainer, opción A, 2026-08-30
+
+**Resultado cuando se retome:** las 26 carpetas planas pasan a `src/domain/`, `src/app/`,
+`src/adapters/` y `src/contracts/`, con la regla que lo sostiene escrita y verificable:
+**`domain/` y `app/` no importan de `adapters/`, nunca**. Hoy `core.mjs` rompe esa regla adentro
+de sí mismo —el SQL de la base y las decisiones de coordinación conviven en el mismo archivo— y
+eso es exactamente por qué llegó a 4.646 líneas.
+
+**Por qué está diferida:** es el cambio que más ordena a la vista y el que menos valor entrega por
+sí solo, y toca cientos de imports de una vez. Una revisión de cientos de archivos movidos no se
+puede leer. Cuando llegue su turno, los pedazos ya van a estar en carpetas correctas y mover el
+conjunto es casi trivial.
+
+**Decisiones:** las define `session-plan` al desparquear. **Módulos:** ídem.
+
+Se enumera aunque esté diferida por la regla del denominador (convención §8.7): trabajo pendiente
+sin ID de Sesión invalida el porcentaje del Plan. 🟡 DIFERIDO es «elegimos no hacerlo todavía»,
+no «no se puede».
+
+---
+
+## Decisión estacionada — el presupuesto de 400 líneas contra los movimientos puros
+
+**Clase:** dependencias o evidencia contradictorias. **Origen:** `S12.3` / `M12.3.4`.
+**Contamina:** `M12.3.4`, `M12.3.5`, `M12.4.2` y los Módulos de `S12.5` que muevan más de 200
+líneas — **cinco de veintiséis**. Ninguna Sesión queda 🔴 BLOQUEADO por esto.
+
+**La pregunta exacta:** ¿un commit cuyo diff es exclusivamente un movimiento de bytes idénticos
+—borrar de `core.mjs`, agregar sin cambios en el archivo nuevo— cuenta contra el presupuesto de
+400 líneas authored?
+
+**La evidencia:**
+
+- `AGENTS.md:108-113` — «máximo **400 líneas authored** —adiciones más eliminaciones— por unidad
+  de commit… **No hay excepciones de tamaño silenciosas**… este repo no usa PRs ni PRs encadenados.»
+- `core.mjs:1484-2142` — `validateSchema4Persistence`: 659 líneas en una sola función. Moverla
+  cuesta ~1.318 authored, tres veces el presupuesto, **sin cambiar una coma de comportamiento**.
+- `core.mjs:231-447` y `448-680` — `MIGRATION_004` (216 líneas) y `MIGRATION_005` (232): ~435 y
+  ~465 authored.
+
+**Las opciones:**
+
+| | Opción | Consecuencia |
+|---|---|---|
+| **A** | Excepción acotada y escrita para movimientos puros, verificada por identidad de bytes | El Plan corre completo y la garantía de revisión se **refuerza**: un diff byte-idéntico es más verificable que 400 líneas nuevas, porque una máquina lo puede probar y una persona no. Costo: una política que hoy presume no tener excepciones pasa a tener una, y hay que redactarla para que nadie la estire. |
+| **B** | Partir la función de 659 líneas antes de moverla | Cero excepciones, todo entra en presupuesto. Pero deja de ser una mudanza: partir una función es refactor real, con riesgo de comportamiento, justo sobre el validador que protege la coherencia de la base. Cambia un problema de contabilidad por un riesgo técnico. |
+| **C** | Dejar los bloques grandes donde están | Cero riesgo, cero excepción. `core.mjs` termina en ~1.500 líneas en vez de ~400: mejor que 4.646, pero la decisión 2 queda cumplida a medias. |
+
+**Resolución del maintainer, 2026-08-30: opción A.** La excepción se redacta en `AGENTS.md` como
+parte de `S12.3`, acotada a diffs donde los bytes movidos son idénticos y verificable
+automáticamente. **Falsificable:** un commit invoca la excepción y sus bytes movidos no son
+idénticos a los borrados.
+
+**Checkpoint:** el Plan está escrito completo. `S12.1`, `S12.2`, `M12.3.1`, `M12.3.2` y `M12.3.3`
+se ejecutan sin depender de esta redacción.
+
+---
+
+## Alcance declarado NO enumerado
+
+Tres responsabilidades quedan fuera de P12 a propósito. Se escriben para que no reaparezcan en un
+mes como trabajo que nadie recordaba que se debía.
+
+| Qué queda fuera | Por qué |
+|---|---|
+| Los **13 cambios abiertos restantes** en `openspec/changes/`, además del de Telegram | Sólo se midió su última fecha de commit, no su vigencia. Decidir cuáles siguen vivos es revisión de contenido, no de orden, y merece su propia Sesión. |
+| El trabajo de **schema-v6** que el mantenimiento del 2026-08-05 dejó pendiente de enumerar | Toca `core.mjs` y por eso choca con el `Recurso` exclusivo de `S12.3`–`S12.5`, pero es alcance de producto, no de orden. Debe enumerarse **después** de que P12 cierre, sobre el `core.mjs` ya partido. Ver `openspec/maintenance/2026-08-05-s5-1-core-scope-investigation.md`, punto 5 de la decisión del maintainer. |
+| Los **archivos de prueba grandes**: `test/migration.test.mjs` (2.366), `test/identity.test.mjs` (1.893), `test/main-store.test.mjs` (1.326) | La auditoría los midió pero no los reportó como hallazgo. Si se atacan, es un Plan aparte. |
+
+## Artefactos de la convención
+
+Ninguno omitido: grafo, capacidad derivada, `%` con su fracción y tres Tareas por Módulo están
+todos presentes. Las únicas descomposiciones ausentes son las de `S12.5` y `S12.7`, que por ruta
+`design-tasks` las escribe `session-plan` y este Plan no debe duplicar (convención §7).
