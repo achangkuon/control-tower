@@ -1,19 +1,53 @@
 # Plan 1 — Sustrato mecánico
 
 **Estado:** 🔵 EN CURSO
+**Avance:** **84% (16/19 S)** — cuentan sólo las Sesiones ✅ COMPLETO o 📚 ARCHIVADO del registro canónico siguiente.
+**Granularidad:** `Plan → Sesión → Módulo → Tarea`; no existe un quinto nivel.
+
+## Autoridad vigente y cómputo canónico
+
+Pi es el primer host de implementación. La cadena activa empieza en [`S9.4`](../plan-9/STATUS.md) y continúa por `S1.17 → S1.18 → S1.19`; desde `S1.18` también se habilita `S8.12`, y `S1.19` junto con `S8.12` convergen en `S8.13` antes de `S7.1`. La base OpenCode `S1.11`–`S1.16` permanece cerrada y preservada, pero su continuación futura está diferida. Claude permanece como objetivo opt-in posterior en `P8/S8.5`. Ni OpenCode ni Claude bloquean la primera release Pi.
+
+Este es el único registro de **estados vigentes** que define el numerador y el denominador de P1. Las tablas posteriores que describen estados anteriores son historia y no vuelven a enumerar Sesiones.
+
+<!-- P1-SESSION-LEDGER:START -->
+| ID | Sesión | Estado vigente | Dependencia vigente o cierre |
+|---|---|---|---|
+| S1.1 | Baseline y recovery legacy P6 | ✅ COMPLETO | PR #38 |
+| S1.2 | Migration 005 pinning | ✅ COMPLETO | PR #39 |
+| S1.3 | Fresh schema 4→5 migration | ✅ COMPLETO | PR #40 |
+| S1.4 | Proof plane | ✅ COMPLETO | PR #41 |
+| S1.5 | ON-mode dispositions | ✅ COMPLETO | PR #42 |
+| S1.6 | Rollback plane | ✅ COMPLETO | PR #43 |
+| S1.7 | Redelivery closure | ✅ COMPLETO | PR #44 |
+| S1.8 | Closure claim-present correction | ✅ COMPLETO | PR #45 |
+| S1.9 | Roadmap/catalog y enmiendas legacy P7/P8 | ✅ COMPLETO | `b96e4d9` |
+| S1.10 | Plan Manifest revision 2 y ArtifactRefs | ✅ COMPLETO | `a1c75b3` |
+| S1.11 | Reconciliación independiente legacy P7 | ✅ COMPLETO | `S1.9`, `S1.10` |
+| S1.12 | Reconciliación independiente P8 | ✅ COMPLETO | `S1.11` |
+| S1.13 | Root lifecycle e invalidación sincrónica | ✅ COMPLETO | `S1.12` |
+| S1.14 | Polling y wake safety | ✅ COMPLETO | `S1.13` |
+| S1.15 | Conformidad lifecycle OpenCode | ✅ COMPLETO | `S1.14` |
+| S1.16 | Transporte reconciliado y composición wake | ✅ COMPLETO | `S1.15` |
+| S1.17 | Gate y RED del adapter Pi | 📋 PLANIFICADO | `S9.4` |
+| S1.18 | Adapter Pi/Intercom | 📋 PLANIFICADO | `S1.17` |
+| S1.19 | Regresión integral Pi-first | 📋 PLANIFICADO | `S1.18` |
+<!-- P1-SESSION-LEDGER:END -->
+
+La cuenta es mecánica: 16 filas cerradas de 19 filas enumeradas. No hay crédito parcial ni trabajo pendiente de P1 fuera de este denominador.
 
 ## Resumen
 
 | Campo | Detalle |
 |---|---|
-| Dependencias | Legacy P7 depende sólo de legacy P6; P8 depende de legacy P7 reconciliado e integrado. Change A no es dependencia de ninguno. |
-| Outputs | Recovery/rollback fail-closed; controller host-neutral y adapter OpenCode; adapter Pi; adapter Claude opt-in; runtime versionado; verificación CT-only. |
-| Roadmap | La base OpenCode `S1.11`–`S1.16` permanece ✅ COMPLETO. La autoridad Pi-first vigente para `S1.17`–`S1.19` está en la reconciliación del 2026-08-27 al final; P1 conserva 84% (16/19 S). |
-| Referencias | [`autonomous-continuation-control-tower`](../../changes/autonomous-continuation-control-tower/), [`p7-host-neutral-loop-opencode-adapter`](../../changes/p7-host-neutral-loop-opencode-adapter/), [`p8-slice-planning`](../../changes/p8-slice-planning/), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). |
+| Dependencias | La cadena legacy P7/P8 permanece como historia cerrada. La autoridad activa Pi-first empieza en `S9.4`; Change A no es dependencia de legacy P7/P8. |
+| Outputs | Recovery/rollback fail-closed; controller host-neutral y base OpenCode cerrada; gate, adapter y regresión Pi pendientes en `S1.17`–`S1.19`. Las responsabilidades legacy P9–P11 están reconciliadas más abajo con sus dueños actuales. |
+| Roadmap | Ejecutar primero Pi. OpenCode y Claude siguen como objetivos futuros/diferidos y no son gates de la primera release Pi. |
+| Referencias | [`autonomous-continuation-control-tower`](../../changes/autonomous-continuation-control-tower/), [`p7-host-neutral-loop-opencode-adapter`](../../changes/p7-host-neutral-loop-opencode-adapter/), [`p8-slice-planning`](../../changes/p8-slice-planning/), [cadena de release](../release-chain.md), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). |
 
-Legacy P6 se integró mediante PRs #38–#45 y cerró en `e16d94b`. Su [`apply-progress.md`](../../changes/autonomous-continuation-control-tower/apply-progress.md) es evidencia histórica y permanece sin reescritura.
+Legacy P6 se integró mediante PRs #38–#45 y cerró en `e16d94b`. Su [`apply-progress.md`](../../changes/autonomous-continuation-control-tower/apply-progress.md) es evidencia histórica y permanece sin reescritura. `S1.1`–`S1.8` son cierres anteriores al contrato moderno de cinco campos: no se fabrican retroactivamente `Área`, `Recurso`, `Decisiones`, Módulos o Tareas que esa fuente no declaró. `S1.9`–`S1.12` preservan su definición canónica en [`p7-p8-integrated-reconciliation/tasks.md`](../../changes/p7-p8-integrated-reconciliation/tasks.md); `S1.13`–`S1.19` conservan sus contratos detallados en este documento y en sus `tasks.md` enlazados.
 
-## Sesiones cerradas
+## Evidencia histórica de S1.1–S1.10
 
 | ID | Resultado | Estado | Evidencia |
 |---|---|---|---|
@@ -28,7 +62,7 @@ Legacy P6 se integró mediante PRs #38–#45 y cerró en `e16d94b`. Su [`apply-p
 | S1.9 | Roadmap/catalog y enmiendas legacy P7/P8 | ✅ COMPLETO | `b96e4d9` |
 | S1.10 | Plan Manifest revision 2 y ArtifactRefs | ✅ COMPLETO | `a1c75b3` |
 
-## Sesión 1.11 — Reconciliación independiente legacy P7
+## Sesión S1.11 — Reconciliación independiente legacy P7
 
 **Estado:** ✅ COMPLETO — las tres Tareas quedaron cerradas en `a1dce22`: existe el registro P7, los chequeos binarios están documentados y el gate acotado fue aprobado por el maintainer. El cierre está publicado en `origin/master@3db3c121d48a07d7696afe6a88de044f30ea4695`; `a1dce22` es ancestro de ese tip remoto.
 
@@ -43,7 +77,7 @@ Legacy P6 se integró mediante PRs #38–#45 y cerró en `e16d94b`. Su [`apply-p
 
 La definición canónica de esta Sesión, incluidos `M1.11.1` y `T1.11.1.1`–`T1.11.1.3`, vive en [`p7-p8-integrated-reconciliation/tasks.md`](../../changes/p7-p8-integrated-reconciliation/tasks.md#sesión-111--p7-reconciliation-record). Este `STATUS` no redefine sus Tareas.
 
-## Sesión 1.12 — Reconciliación independiente P8
+## Sesión S1.12 — Reconciliación independiente P8
 
 **Estado:** ✅ COMPLETO — integrada en `master@6bb7019c66cf60e9ac874f05a176f946f9bd4589` (tree `1d34341f394cbeced9495e8384252dd975f9cab4`) mediante `5823ed6`. Los cuatro blobs coinciden con el candidato congelado y pasaron los checks de recibo, `ArtifactRef` y hashes. El cierre está publicado: `6bb7019` es ancestro de `origin/master@a3d9e510bc47d3ebec65d2a874945431128f7c90`.
 
@@ -58,17 +92,25 @@ La definición canónica de esta Sesión, incluidos `M1.11.1` y `T1.11.1.1`–`T
 
 La definición canónica de esta Sesión, incluidos `M1.12.1` y `T1.12.1.1`–`T1.12.1.7`, vive en [`p7-p8-integrated-reconciliation/tasks.md`](../../changes/p7-p8-integrated-reconciliation/tasks.md#sesión-112--p8-reconciliation-and-preservation). Este `STATUS` no redefine sus Tareas.
 
-## Grafo de dependencias P7
+## Grafo de dependencias de P1
 
 ```mermaid
 graph LR
-  S112["S1.12 reconciliación P8 · ✅"] --> S113["S1.13 lifecycle · ✅"]
+  S19["S1.9 roadmap · ✅"] --> S111["S1.11 reconciliación P7 · ✅"]
+  S110["S1.10 manifest · ✅"] --> S111
+  S111 --> S112["S1.12 reconciliación P8 · ✅"]
+  S112 --> S113["S1.13 lifecycle · ✅"]
   S113 --> S114["S1.14 polling · ✅"]
   S114 --> S115["S1.15 conformidad · ✅"]
   S115 --> S116["S1.16 transporte · ✅"]
+  S94["S9.4 supervisor Pi · 📋"] --> S117["S1.17 gate Pi · 📋"]
+  S117 --> S118["S1.18 adapter Pi · 📋"]
+  S118 --> S119["S1.19 regresión Pi · 📋"]
 ```
 
-## Sesiones legacy P7
+`S1.1`–`S1.8` no reciben aristas inventadas: sus cierres legacy permanecen probados por PR #38–#45 y el `apply-progress.md` histórico.
+
+## Resumen contractual de S1.13–S1.16
 
 | ID | Resultado | Estado | Depende de | Ref |
 |---|---|---|---|---|
@@ -77,7 +119,7 @@ graph LR
 | S1.15 | Conformidad lifecycle OpenCode | ✅ COMPLETO | `S1.14` ✅ | [`tasks.md`](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md) |
 | S1.16 | Transporte reconciliado y composición wake | ✅ COMPLETO | `S1.15` ✅ | [`tasks.md`](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md) |
 
-## Sesión 1.13 — Root lifecycle e invalidación sincrónica
+## Sesión S1.13 — Root lifecycle e invalidación sincrónica
 
 **Estado:** ✅ COMPLETO — integrada y verificada en `master@794611f925f4fd2cb0de0b69cfdf2798d011543d`. La implementación está en `2bbeddb`; `794611f` corrige la compatibilidad del fixture del grafo de Plan 5 sobre la misma historia integrada. El cierre está publicado: `794611f` es ancestro de `origin/master@a3d9e510bc47d3ebec65d2a874945431128f7c90`.
 
@@ -88,7 +130,7 @@ graph LR
 
 **Decisiones:** —. La frontera bounded ya había sido aprobada en `S1.11`; `S1.13` no abrió ni resolvió contrato público, autoridad, persistencia o composición de adapter.
 
-### Módulo 1.13.1 — Controller lifecycle
+### Módulo M1.13.1 — Controller lifecycle
 
 `T1.13.1.1`–`T1.13.1.5` están completas en el [`tasks.md` canónico](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md#sesión-113--root-lifecycle-and-synchronous-invalidation), que preserva el orden RED → GREEN → TRIANGULATE → REFACTOR → verificación. Este `STATUS` registra el cierre sin redefinir las Tareas ni acreditar trabajo de `S1.14`.
 
@@ -101,7 +143,7 @@ graph LR
 - Runtime harness: `N/A` — fake clock, scheduler one-shot FIFO y deferred ports forman la frontera determinista local al proceso.
 - Rollback: remover sólo los bloques de `S1.13` en `host/loop.mjs` y `test/polling.test.mjs`.
 
-## Sesión 1.14 — Polling y wake safety
+## Sesión S1.14 — Polling y wake safety
 
 **Estado:** ✅ COMPLETO — integrada y verificada en `master@9886af9ee289d78a35b404b06351f930ecb43309`, cuyo padre es `fee4f5b`. El commit integra exactamente `host/loop.mjs`, `test/polling.test.mjs` y el [`tasks.md` canónico](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md#sesión-114--polling-and-wake-safety). El cierre está publicado: `9886af9` es ancestro de `origin/master@a3d9e510bc47d3ebec65d2a874945431128f7c90`.
 
@@ -112,7 +154,7 @@ graph LR
 
 **Decisiones:** —. La política de polling, serialización de wake, reintentos y preservación no consumidora ya estaba fijada por las Tareas aprobadas; el cierre no expandió `Área` ni autoridad.
 
-### Módulo 1.14.1 — Polling y comportamiento de wake
+### Módulo M1.14.1 — Polling y comportamiento de wake
 
 `T1.14.1.1`–`T1.14.1.5` están completas en el [`tasks.md` canónico](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md#sesión-114--polling-and-wake-safety), que preserva RED → GREEN → TRIANGULATE → REFACTOR → verificación. El cambio registra 392 líneas authored de implementación y pruebas, dentro del presupuesto de 320–400; `S1.13` permanece revertible de forma independiente.
 
@@ -137,7 +179,7 @@ graph LR
 - Rollback: remover sólo los bloques de polling/wake de `S1.14`, conservando el lifecycle inerte de `S1.13`.
 - Review lens: `UNAVAILABLE` tipado — el dispatch directo de `review-reliability` exigía lineage de candidato controlada por el controller mientras el lifecycle nativo de review estaba suspendido; no se creó lineage ni se fabricó veredicto.
 
-## Sesión 1.15 — Conformidad lifecycle OpenCode
+## Sesión S1.15 — Conformidad lifecycle OpenCode
 
 **Resultado:** el adapter OpenCode clasifica el lifecycle alrededor del controller mediante una harness de conformidad CT-R5 reutilizable, sin asumir transporte confiable ni composición production `promptAsync` de `S1.16`.
 
@@ -150,7 +192,7 @@ graph LR
 
 **Decisiones:** —. Si la implementación exige ampliar `Área`, consumir runtime compartido, abrir persistencia/autoridad o adelantar transporte confiable o composición production `promptAsync` de `S1.16`, se detiene antes del RED y la expansión se escala como alcance nuevo; no se deriva dentro de `S1.15`.
 
-### Módulo 1.15.1 — Adapter OpenCode y harness compartida
+### Módulo M1.15.1 — Adapter OpenCode y harness compartida
 
 `M1.15.1` y `T1.15.1.1`–`T1.15.1.5` están completas en el [`tasks.md` canónico](../../changes/p7-host-neutral-loop-opencode-adapter/tasks.md#sesión-115--opencode-lifecycle-conformance), que conserva RED → GREEN → TRIANGULATE → REFACTOR → verificación. Este `STATUS` registra el cierre sin redefinir Tareas ni acreditar trabajo downstream.
 
@@ -180,7 +222,7 @@ graph LR
 
 **Prueba de no interferencia con `S5.11`/`S5.12`:** no existe arista de dependencia entre esas Sesiones y `S1.15`; los tres paths de `Área` no intersectan `workspace/**`, `schemas/**`, `contracts/**`, `test/workspace/**`, `test/contracts/**`, `test/fixtures/contracts/**`, `escalation/**`, `main-store/store.mjs`, `test/escalation/**` ni `test/main-store.test.mjs`. `S1.15` declara `Recurso: —` y no reclama productores de provenance, registro de contratos/fixtures, composición Main, ingress o transacción de parking. Por grafo, `Área` y `Recurso`, su ejecución puede ser paralela sin compartir runtime.
 
-## Sesión 1.16 — Transporte reconciliado y composición wake
+## Sesión S1.16 — Transporte reconciliado y composición wake
 
 **Resultado:** el consumer OpenCode recibe una capability opaca constructor-bound, compara root y `binding_epoch` exactos, hace `peek` no consumidor y mapea cada wake al `promptAsync` genérico del root probado sin interpolar autoridad o contenido de dominio. La composición productiva del provider/injection de Change E sigue fuera de esta Sesión.
 
@@ -196,7 +238,7 @@ graph LR
 
 **Decisiones:** —. La condición de expansión no se disparó: el cierre no toca `core.mjs`, `mcp.mjs`, SQLite ni crea una segunda API de continuación. El provider/injection productivo de Change E permanece en `S4.2/M4.2.3` y no se acredita aquí.
 
-### Módulo 1.16.1 — Transporte consumidor confiable y composición wake
+### Módulo M1.16.1 — Transporte consumidor confiable y composición wake
 
 `T1.16.1.1`–`T1.16.1.5` quedaron completas contra el contrato preexistente. Este `STATUS` registra la evidencia de cierre sin ampliar la frontera de provider o producción.
 
@@ -223,15 +265,9 @@ graph LR
 - Revisión estática final: `READY`, cero findings y cero severidad.
 - Rollback: revertir sólo `da4e391` para retirar composición/seams de `S1.16`; no hay schema ni migración que revertir y `S1.15` queda intacta.
 
-## Sesiones P8 — contrato histórico OpenCode-first/Pi-second
+## Contrato histórico OpenCode-first/Pi-second de S1.17–S1.19
 
-Las tres Sesiones eran alcance posterior 🟡 DIFERIDO bajo la autoridad anterior. **Autoridad:** rebase del maintainer 2026-08-17. **Área:** `adapters/pi/**`, `test/host-adapters.test.mjs`. **Recurso:** runtime Pi/Intercom, separado de OpenCode. **Decisiones:** `derivable` — Intercom sólo transporta wake/comunicación y nunca autoriza; falsificador: un wake habilita despacho o entrega. **Criterio común:** ningún cambio de estas Sesiones bloquea, relocaliza o modifica la ruta OpenCode.
-
-| ID | Resultado | Estado | Ref |
-|---|---|---|---|
-| S1.17 | Gate y RED Pi/Intercom | 🟡 DIFERIDO | [`tasks.md`](../../changes/p8-slice-planning/tasks.md) |
-| S1.18 | Adapter Pi/Intercom | 🟡 DIFERIDO | [`tasks.md`](../../changes/p8-slice-planning/tasks.md) |
-| S1.19 | Regresión Pi/Intercom | 🟡 DIFERIDO | [`tasks.md`](../../changes/p8-slice-planning/tasks.md) |
+Bajo la autoridad anterior, estas mismas tres Sesiones estaban 🟡 DIFERIDO como alcance Pi posterior. Esta sección conserva historia; **no agrega filas al denominador ni reemplaza los estados vigentes del registro canónico**. **Autoridad histórica:** rebase del maintainer 2026-08-17. **Área histórica:** `adapters/pi/**`, `test/host-adapters.test.mjs`. **Recurso histórico:** runtime Pi/Intercom, separado de OpenCode. **Decisión histórica:** `derivable` — Intercom sólo transporta wake/comunicación y nunca autoriza; falsificador: un wake habilita despacho o entrega. **Criterio común histórico:** ningún cambio bloqueaba, relocalizaba o modificaba la ruta OpenCode. Las Tareas originales permanecen en [`tasks.md`](../../changes/p8-slice-planning/tasks.md).
 
 ## Rutas de ejecución históricas — reconciliadas el 2026-08-11
 
@@ -244,7 +280,7 @@ Las tres Sesiones eran alcance posterior 🟡 DIFERIDO bajo la autoridad anterio
 
 **Condición de parada de `S1.16`, no disparada:** la implementación cerró sin tocar `core.mjs` ni `mcp.mjs`, sin SQLite, API pública nueva o autoridad fabricada. La composición productiva del provider/injection sigue perteneciendo a `S4.2/M4.2.3`; el cierre consumidor no acredita readiness de producción.
 
-### 🔴 La cadena de release está incompleta
+### Cadena histórica de release — reconciliada
 
 [`release-chain.md`](../release-chain.md) incorpora `S1.16`–`S1.19` y deja `S1.11`–`S1.15` fuera «hasta que una dependencia explícita los incorpore». **Esa dependencia explícita existe y está escrita:**
 
@@ -256,35 +292,55 @@ Por lo tanto `S1.11`, `S1.12`, `S1.13`, `S1.14` y `S1.15` **entran en la cadena 
 
 **Reconciliado el 2026-08-17:** `S1.11`–`S1.16` están ✅ COMPLETO. `S1.17`–`S1.19` quedan 🟡 DIFERIDO como trabajo Pi/Intercom posterior y no son dependencia de `S4.2`–`S4.4` ni `S7.1`.
 
-Legacy P9–P11 todavía no tienen límites de PR demostrables. Sus responsabilidades se preservan sin IDs en el [apéndice de migración](../plan-vocabulary-migration-appendix.md).
+## Reconciliación de responsabilidades legacy P9–P11
+
+Esta reconciliación registra la autoridad específica del maintainer para P1. No crea una decisión global, no agrega Sesiones y no cambia estados, contratos, colas ni denominadores en los Planes de destino. Los nombres legacy P9–P11 identifican mecanismos históricos del [apéndice de migración](../plan-vocabulary-migration-appendix.md); no son los Planes posicionales actuales P9–P11.
+
+| Responsabilidad legacy | Reconciliación vigente | Estado del remanente |
+|---|---|---|
+| **Legacy P9 — adapter Claude opt-in** | Se mapea a [`P8/S8.5`](../plan-8/STATUS.md), “Detección de hosts e integración opt-in”. No crea una Sesión en P1. | `S8.5` permanece 🟡 DIFERIDO. Claude se aborda sólo después de implementar la Torre para Pi y no bloquea la primera release Pi. |
+| **Legacy P10 — runtime versionado y cutover verificado** | La traza histórica de lifecycle está en `P8/S8.2` y `P8/S8.8`; el lifecycle Tower-owned restante está enumerado en `P8/S8.12 → P8/S8.13`. | No se declara P10 totalmente ejecutado. Configurar o cortar OpenCode, Pi, Claude o assets Gentle AI quedó supersedido y fuera del alcance de Tower. Judgment Day y las obligaciones de proceso tampoco pertenecen a Tower. |
+| **Legacy P11 — verificación y handoff CT-only** | Los dueños actuales de verificación son `P1/S1.19` para estabilidad Pi, [`P7/S7.1`](../plan-7/STATUS.md) para el piloto terminal Pi-first sobre candidato inmutable y `P8/S8.13` para instalación, activación, rollback y preflight. | El gate ómnibus de 64 IDs y tres hosts se retira como contrato de primera release. La auditoría residual legacy no fue ejecutada ni se acredita. La validación futura de OpenCode y Claude queda diferida por host; Judgment Day, Servi-Task-U y la ceremonia de calidad de proceso permanecen fuera de Tower. |
+
+No queda ninguna responsabilidad de legacy P9–P11 pendiente y oculta en P1: sus remanentes de producto están trazados a `S1.17`–`S1.19`, `S7.1`, `S8.5`, `S8.12` y `S8.13`; lo supersedido o externo se nombra como tal y no consume el porcentaje de P1. Esta reconciliación no pretende inventariar ni reclasificar todo P8: `S8.6` continúa 🟡 DIFERIDO y `S8.11` continúa 🔴 BLOQUEADO bajo sus contratos propios en [`P8`](../plan-8/STATUS.md), sin cambio de estado, cola ni denominador. OpenCode y Claude no están retirados: son objetivos futuros/diferidos y no bloquean la primera release Pi.
 
 ## Reconciliación Pi-first de S1.17–S1.19 — 2026-08-27
 
 El contrato OpenCode-first/Pi-second anterior queda preservado arriba como historia. La decisión 80 promueve estos mismos IDs; no elimina ni reescribe la evidencia OpenCode ya completada.
 
-### Sesión 1.17 — Gate y RED del adapter Pi
+## Sesión S1.17 — Gate y RED del adapter Pi
 **Estado:** 📋 PLANIFICADO · **Depende de:** `S9.4` · **Área:** `adapters/pi/contract.mjs`, `test/adapters/pi/contract.test.mjs` · **Recurso:** broker por worktree y binding neutral.
 **Decisiones:** decisiones 82–84 y 86 resueltas: Grado 2, implementer con `bash`, roles de lectura sin `bash|write|edit`, supervisor Tower-owned. **Ruta:** `design-tasks` — contrato neutral y topología ya aprobados; se fija el seam del adapter.
-**Criterios de aceptación:** RED falsifica identidad autodeclarada, takeover, cross-worktree y recibo stale; capabilities respetan rol; no cambia Pi/Intercom ni toca fuera de `Área`.
-#### Módulo M1.17.1 — Gate falsificable Pi
+**Criterios de aceptación** — todos deben pasar:
+- [ ] RED falsifica identidad autodeclarada, takeover, cross-worktree y recibo stale.
+- [ ] Las capabilities respetan el rol aprobado e Intercom nunca concede autoridad.
+- [ ] El cambio no modifica Pi/Intercom ni toca fuera de `Área`.
+### Módulo M1.17.1 — Gate falsificable Pi
 - [ ] Tarea T1.17.1.1 — RED: fijar fallos de identidad, epoch, scope, takeover y capability set.
 - [ ] Tarea T1.17.1.2 — GREEN: crear el seam mínimo contra `S9.4` y contrato neutral.
 - [ ] Tarea T1.17.1.3 — REFACTOR: eliminar conocimiento de wire format fuera del adapter.
 
-### Sesión 1.18 — Adapter Pi/Intercom
+## Sesión S1.18 — Adapter Pi/Intercom
 **Estado:** 📋 PLANIFICADO · **Depende de:** `S1.17` · **Área:** `adapters/pi/runtime.mjs`, `test/adapters/pi/runtime.test.mjs` · **Recurso:** procesos Pi Tower-spawned y conexión del supervisor.
 **Decisiones:** decisiones 80, 83, 84 y 86 resueltas; Intercom transporta y nunca autoriza. **Ruta:** `design-tasks` — implementa el seam ya cercado sin abrir API de producto nueva.
-**Criterios de aceptación:** launch/observe/health/stop/attach implementan el puerto neutral; `/proc` cruza PID/cwd Tower-owned; nonce+endpointEpoch prueban attach; IDs son aleatorios; no adopta procesos ajenos ni toca fuera de `Área`.
-#### Módulo M1.18.1 — Implementación del adapter
+**Criterios de aceptación** — todos deben pasar:
+- [ ] `launch/observe/health/stop/attach` implementan el puerto neutral.
+- [ ] `/proc` cruza PID/cwd Tower-owned y nonce+endpointEpoch prueban attach.
+- [ ] Los IDs son aleatorios; no adopta procesos ajenos ni toca fuera de `Área`.
+### Módulo M1.18.1 — Implementación del adapter
 - [ ] Tarea T1.18.1.1 — RED: cubrir proceso ajeno, `/proc` divergente, nonce/epoch stale y broker equivocado.
 - [ ] Tarea T1.18.1.2 — GREEN: adaptar lifecycle Pi/Intercom al contrato neutral.
 - [ ] Tarea T1.18.1.3 — REFACTOR: encapsular protocolo externo y normalizar evidencia.
 
-### Sesión 1.19 — Regresión integral Pi-first
+## Sesión S1.19 — Regresión integral Pi-first
 **Estado:** 📋 PLANIFICADO · **Depende de:** `S1.18` · **Área:** `test/integration/pi-first/**`, `test/host-adapters.test.mjs` · **Recurso:** hasta cinco clientes Pi aislados y brokers efímeros de prueba.
 **Decisiones:** —; los límites no medidos son gates de validación, no decisiones derivables. **Ruta:** `direct` — triangulación integral de contratos ya definidos.
-**Criterios de aceptación:** cadena launch→attach→observe→stop pasa con 1 y 5 clientes; corrida desatendida prolongada pasa; crash del broker con tráfico demuestra reconexión y recuperación idempotente sin prometer mensajes en vuelo; >5 clientes queda fuera del claim inicial hasta medirse; no toca fuera de `Área`.
-#### Módulo M1.19.1 — Evidencia de regresión y capacidad
+**Criterios de aceptación** — todos deben pasar:
+- [ ] La cadena launch→attach→observe→stop pasa con 1 y 5 clientes.
+- [ ] La corrida desatendida prolongada pasa.
+- [ ] El crash del broker con tráfico demuestra reconexión y recuperación idempotente sin prometer mensajes en vuelo.
+- [ ] Más de 5 clientes queda fuera del claim inicial hasta medirse y el cambio no toca fuera de `Área`.
+### Módulo M1.19.1 — Evidencia de regresión y capacidad
 - [ ] Tarea T1.19.1.1 — RED: capturar fallos de corrida larga, broker crash y quinto cliente.
 - [ ] Tarea T1.19.1.2 — GREEN: estabilizar harness y producir evidencia atribuible al candidato.
 - [ ] Tarea T1.19.1.3 — REFACTOR: aislar fixtures y documentar el claim máximo de cinco clientes.
