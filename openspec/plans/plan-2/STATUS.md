@@ -5,8 +5,8 @@
 ## Verdad ejecutable actual
 
 - `S2.1`–`S2.6` están cerradas; `S2.8` es el único contrato de ejecución vigente de P2.
-- **Capacidad ejecutable inmediata: 0.** `S2.8` no es asignable hasta entregar `S4.14` y recibir un brief fresco de Support.
-- **Cola global:** `#11 S2.8`; la posición no asigna dueño ni asiento. Ver [master-index](../master-index.md).
+- **Capacidad ejecutable inmediata: 0.** `S4.14` está entregada por la transacción de cierre pendiente; `S2.8` no es asignable hasta recibir un brief nuevo y fresco de Support sobre esa base.
+- **Cola global:** `#10 S2.8`; la posición no asigna dueño ni asiento. Ver [master-index](../master-index.md).
 - **Denominador:** `—`. Cuatro responsabilidades de Change B siguen sin Sesión enumerada; por la [decisión 57](../decision-register.md), el porcentaje no es derivable.
 
 ## Sesiones cerradas
@@ -41,7 +41,7 @@ El [apéndice de migración](../plan-vocabulary-migration-appendix.md) preserva,
 | Recurso | — (sin DB, migraciones ni token de entrega) |
 | Ruta | `design-tasks` — el resultado y la frontera están fijados, pero queda una investigación técnica acotada: precisar las aserciones existentes que demuestran invariancia byte a byte fuera de `inputs` y membresía intacta sin tocar rutas prohibidas |
 | Autoridad | [decisión 78](../decision-register.md), [frontera Torre ↔ gentle-ai](../frontera-torre-gentle-ai.md) y precedente entregado de `S2.6` |
-| Orden/cola | `#11 S2.8`; sólo después de entregar `S4.14` + brief fresco de Support |
+| Orden/cola | `#10 S2.8`; sólo después de un brief nuevo y fresco de Support sobre la base entregada de `S4.14` |
 
 **Resultado único:** `inputs` pasa a opaco como `{"type":"object"}`. La Torre conserva y sella el objeto sin interpretar nombres de fase; `git`, `contracts` y todo campo fuera de `inputs` permanecen byte-idénticos. `binding-delta-v1` conserva membresía en registry y payload.
 

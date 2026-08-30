@@ -42,8 +42,8 @@ Las decisiones 49–54 del [registro](../decision-register.md) y las referencias
 | Orden histórico OpenCode-first | `S9.1 → S9.2 → S9.3`; `S9.4` estaba 🟡 DIFERIDO. La autoridad Pi-first vigente está en la reconciliación del 2026-08-27. |
 | Avance canónico | 0% (0/5 S). Ninguna Sesión está ✅ COMPLETO. `S9.5` entra al denominador como objetivo nuevo autorizado; `S9.4` conserva su historia diferida y su contrato Pi-first vigente. |
 | Entrega | Commit directo a `master`, sin PR. Cada resultado independientemente verificable y revertible, ≤400 líneas authored. |
-| Próxima acción | `S9.4` vuelve a 📋 PLANIFICADO y no es asignable hasta entregar `S4.14` y recibir un brief fresco de Support. Su estado parcial queda preservado sin resume ni corrección. `S9.5` conserva `S8.12 + S9.4`. |
-| Decisión abierta | **Ninguna.** La decisión 98 aprobó `S4.14`; el gate actual es su entrega más un brief fresco, no otra decisión. |
+| Próxima acción | `S9.4` vuelve a 📋 PLANIFICADO y no es asignable hasta recibir un brief fresco de Support sobre la base entregada de `S4.14` que recalcule dependencias, `Área`, `Recurso` y riesgos y, antes de asignar, confirme capacidad viva y valide el worktree exacto. Su estado parcial queda preservado sin resume ni corrección. `S9.5` conserva `S8.12 + S9.4`. |
+| Decisión abierta | **Ninguna.** `S4.14` está ✅ COMPLETO; el único gate actual es un brief fresco de Support con esas comprobaciones, no otra decisión. |
 | Autoridad histórica | Engram 8478 rev8, 8506, 8645, 8646, 8647 rev2, 8894, 8898, 8950, 8955, 8908; decisiones 49–54 y 62. Los artefactos SDD de la vieja `S9.1` viven en `openspec/changes/s9-1-safe-slot-lifecycle/` y describen un alcance **superado**: se conservan como evidencia, no como autoridad de implementación. |
 
 ---
@@ -152,8 +152,8 @@ graph TD
   S91["S9.1 pool de asientos · 📋"] --> S92["S9.2 interlock de ocupado · 📋"]
   S91 --> S93["S9.3 caché externa de Bun · 📋"]
   S93 -.-> S94H["S9.4 launcher Pi · historia diferida"]
-  S411["S4.11 operaciones neutrales · ✅"] --> S94["S9.4 supervisor Pi-first · 📋 PLANIFICADO · no asignable hasta S4.14 + brief Support"]
-  S413["S4.13 validación ownership · ✅"] --> S414["S4.14 actualidad final · 🟢"] --> S94
+  S411["S4.11 operaciones neutrales · ✅"] --> S94["S9.4 supervisor Pi-first · 📋 PLANIFICADO · no asignable hasta brief Support fresco"]
+  S413["S4.13 validación ownership · ✅"] --> S414["S4.14 actualidad final · ✅"] --> S94
   S812["S8.12 bundle Tower · 📋"] --> S95["S9.5 materialización Herdr · 📋"]
   S94 --> S95
 ```
@@ -233,9 +233,9 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 
 **Historia preservada:** el contrato anterior “Pi segundo host, después de OpenCode” queda etiquetado arriba como plan histórico parqueado.
 
-**Estado:** 📋 PLANIFICADO — `S4.11` y `S4.13` están entregadas, pero `S4.14` todavía no. La Sesión no es asignable y no se reanuda ni corrige ningún estado parcial hasta entregar `S4.14` y recibir un brief fresco de Support contra la nueva base canónica.
+**Estado:** 📋 PLANIFICADO — `S4.11`, `S4.13` y `S4.14` están entregadas. La Sesión no es asignable y no se reanuda ni corrige ningún estado parcial hasta recibir un brief fresco de Support contra la nueva base canónica que recalcule dependencias, `Área`, `Recurso` y riesgos y, antes de asignar, confirme capacidad viva y valide el worktree exacto.
 
-**Depende de:** `S4.11` ✅ COMPLETO, `S4.13` ✅ COMPLETO y `S4.14` no entregada.
+**Depende de:** `S4.11` ✅ COMPLETO, `S4.13` ✅ COMPLETO y `S4.14` ✅ COMPLETO.
 
 **Área:** `workspace/pi-supervisor.mjs`, `workspace/pi-binding.mjs`, `test/workspace/pi-supervisor.test.mjs`, `test/workspace/pi-binding.test.mjs`.
 
@@ -246,10 +246,10 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 - `escala`, resuelta — decisiones 82–84 y 86–87 fijan aislamiento, capacidades, contrato neutral, topología y mailbox.
 - `escala`, resuelta — decisión 96 fija `runtimeRoute` puro y `broker.start` como primera adquisición dentro del ownership neutral.
 - `escala`, resuelta — decisión 97 / Engram 9755 fija el puerto opcional caller-neutral `acquire → validate unpublished → publish`, con `close` exacto privado y exact-close o cuarentena ante fallo.
-- `escala`, resuelta — decisión 98 / Emilio Engram 9773 aprueba el guard sincrónico final-currentness de `S4.14`; hasta su entrega contamina `S9.4` y downstream. **Clase:** contrato visible del producto; API pública; seguridad y permisos; expansión de alcance; dependencias o evidencia contradictorias.
+- `escala`, resuelta — decisión 98 / Emilio Engram 9773 aprobó el guard sincrónico final-currentness de `S4.14`; su entrega levantó esa contaminación de `S9.4` y downstream. **Clase:** contrato visible del producto; API pública; seguridad y permisos; expansión de alcance; dependencias o evidencia contradictorias.
 - `derivable` — nombres de helpers privados, sólo si no cambian ninguna forma pública ni introducen efectos antes de `broker.start`. **Autoridad:** decisiones 84, 96–98. **Falsificador:** el nombre o la extracción altera el shape público, adquiere un recurso o crea una capacidad de cleanup.
 
-**Ruta:** `direct` después del gate — se preserva el contrato route-as-data de Engram 9747/9748. El pipeline `full-sdd` ya corrió una vez; su diseño fallido y sus intentos quedan como evidencia, no como ruta de continuación. Sólo después de entregar `S4.14` un brief fresco de Support puede asignar un executor general nuevo, sin segundo SDD ni SDD por Módulo.
+**Ruta:** `direct` después del gate — se preserva el contrato route-as-data de Engram 9747/9748. El pipeline `full-sdd` ya corrió una vez; su diseño fallido y sus intentos quedan como evidencia, no como ruta de continuación. Sólo un brief fresco de Support sobre la base entregada de `S4.14`, con dependencias, `Área`, `Recurso` y riesgos recalculados, puede asignar un executor general nuevo después de confirmar capacidad viva y validar el worktree exacto, sin segundo SDD ni SDD por Módulo.
 
 **Autoridad de ejecución:**
 
@@ -275,25 +275,25 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 | Gate | Estado actual | Evidencia necesaria para avanzar |
 |---|---|---|
 | Autoridad de producto | Resuelta | Decisiones 97–98 / Emilio Engram 9755 y 9773 |
-| Guardia final neutral | No entregada | `S4.14`, decisión 98 / Engram 9773–9774 |
-| Estado implementer-1 | Parcial, no asignable | M1 en `a7d724dc`; M2 son exactamente dos archivos no trackeados, checkpoint Engram 9772; corrección no consumida hasta entregar `S4.14` y recibir un brief fresco de Support |
+| Guardia final neutral | Entregada | `S4.14` ✅ COMPLETO, decisión 98 / Engram 9773–9774 |
+| Estado implementer-1 | Parcial, no asignable | M1 en `a7d724dc`; M2 son exactamente dos archivos no trackeados, checkpoint Engram 9772; corrección no consumida hasta recibir un brief fresco de Support |
 | Estado implementer-2/3 | Evidencia inmutable | Se preserva sin resume, corrección, rebase ni promoción a capacidad |
-| Brief Support | No vigente | Emitir uno fresco sólo después de entregar `S4.14` |
-| Executor | No asignable | Sólo después de `S4.14` + brief fresco |
+| Brief Support | No vigente | Emitir uno fresco contra la base entregada de `S4.14` que recalcule dependencias, `Área`, `Recurso` y riesgos, confirme capacidad viva y valide el worktree exacto |
+| Executor | No asignable | Sólo después de que ese brief confirme capacidad viva y valide el worktree exacto |
 
 **Qué permanece congelado:**
 
 - Candidato histórico: `304d534`, tree `8049d32`; evidencia inmutable del bloqueo verificado.
 - Implementer-1: M1 `a7d724dc`; M2 exactamente dos archivos no trackeados, checkpoint Engram 9772; corrección disponible no consumida.
 - Implementer-2 e implementer-3: evidencia inmutable, sin promoción a capacidad.
-- Hasta `S4.14` + brief fresco: cero resume, corrección, rebase, cherry-pick o mutación; valor como capacidad: ninguno.
+- Hasta el brief fresco: cero resume, corrección, rebase, cherry-pick o mutación; valor como capacidad: ninguno.
 
 **Condición de retoma:**
 
-1. `S4.14` queda entregada sobre la base canónica futura.
-2. Support relee esa base y recalcula dependencias, `Área`, `Recurso` y riesgos.
-3. Support emite un brief nuevo; no enmienda evidencia previa.
-4. Un executor fresco comienza desde la base canónica; no consume la corrección disponible ni retoma estados parciales.
+1. `S4.14` está entregada sobre la nueva base canónica.
+2. Support relee esa base, recalcula dependencias, `Área`, `Recurso` y riesgos, confirma capacidad viva y valida el worktree exacto.
+3. Support emite un brief nuevo con esas comprobaciones; no enmienda evidencia previa.
+4. Sólo después de que ese brief confirme capacidad viva y valide el worktree exacto, un executor fresco comienza desde la base canónica; no consume la corrección disponible ni retoma estados parciales.
 5. Los criterios y Módulos siguientes se conservan como contrato, sujetos al brief fresco.
 
 **Criterios de aceptación — los ocho son binarios:**
@@ -341,10 +341,10 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 
 - El candidato exacto `304d534` (tree `8049d32`) y sus cinco intentos conservan evidencia de la raíz causal y del diseño fallido.
 - Queda inmutable: cero corrección, rebase, cherry-pick, resume o mutación sobre esos bytes.
-- Su existencia no satisface ningún criterio de `S9.4` y no autoriza runtime, Tower, DB, worktree ni peer actions; `S9.4` está 📋 PLANIFICADO y no es asignable hasta entregar `S4.14` y recibir un brief fresco de Support.
+- Su existencia no satisface ningún criterio de `S9.4` y no autoriza runtime, Tower, DB, worktree ni peer actions; `S9.4` está 📋 PLANIFICADO y no es asignable hasta recibir un brief fresco de Support sobre la base entregada de `S4.14` que recalcule dependencias, `Área`, `Recurso` y riesgos y, antes de asignar, confirme capacidad viva y valide el worktree exacto.
 - Implementer-1 conserva M1 en `a7d724dc` y M2 como exactamente dos archivos no trackeados registrados en Engram 9772; su corrección sigue sin consumirse.
 - La evidencia de implementer-2 e implementer-3 permanece inmutable y no se promueve a capacidad.
-- Sólo después de entregar `S4.14` un brief fresco puede asignar un executor nuevo; ninguna evidencia previa es continuación.
+- Sólo un brief fresco sobre la base entregada de `S4.14`, con esas comprobaciones, puede asignar un executor nuevo después de confirmar capacidad viva y validar el worktree exacto; ninguna evidencia previa es continuación.
 
 ## Sesión 9.5 — Materialización visual Herdr posterior al brief confirmado
 

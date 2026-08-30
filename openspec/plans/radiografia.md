@@ -1,7 +1,7 @@
 ---
-verified_against: 6237275b1a45b8380ce094edcb9dda23155ff006
+verified_against: daf7e0e7af4122417ce2bec8a48a11c65a40f23c
 verified_at: 2026-08-29
-standfirst: La migración de fuente y el retiro de cuatro skills globales stale están entregados, pero el update Tower falló a mitad de camino. El runtime instalado queda no verificado/no disponible hasta S8.13; la cola y las cifras no cambian.
+standfirst: S4.14 cerró la ventana final de actualidad antes de publicar ownership sobre un candidato local verificado. El runtime Tower instalado sigue no verificado/no disponible; S9.4 y S2.8 requieren briefs frescos y no tienen worker asignado.
 ---
 
 <!--
@@ -33,7 +33,7 @@ Vos dirigís varios agentes de IA trabajando en varios proyectos a la vez. La To
 
 La prioridad cambió: la primera implementación se hará con Pi. No porque Pi pase a ser el producto, sino porque la Torre puede poseer la identidad del proceso que lanzó y exigir comprobantes producidos por ese proceso. Eso le permite distinguir una sesión propia de una sesión que sólo dice serlo.
 
-La unión neutral ya identifica worktree, proceso, incarnation y binding, y expone operaciones sin depender de Pi. `S4.13` valida ownership adquirido pero todavía no publicado; aun así, un proceso reemplazado en el mismo asiento puede volverse stale antes del publish final. `S4.14` está aprobada para cerrar esa ventana en el mismo stack. El host Pi sigue sin estar entregado y `S9.4` queda 📋 PLANIFICADO, no asignable hasta entregar `S4.14` y recibir un brief fresco de Support.
+La unión neutral ya identifica worktree, proceso, incarnation y binding, y expone operaciones sin depender de Pi. `S4.14` cerró la ventana que quedaba después de `S4.13`: confirma en el mismo stack al ocupante exacto inmediatamente antes del publish final. El host Pi sigue sin estar entregado y `S9.4` queda 📋 PLANIFICADO, no asignable hasta recibir un brief fresco de Support sobre la base entregada.
 
 ## El veredicto actual
 
@@ -104,8 +104,8 @@ La lista siguiente reemplaza las antiguas “cinco decisiones”. No son pregunt
 |---|---|---|
 | `S4.10` — ✅ COMPLETO | Cinco contratos v1 y ownership exacto del puerto, sin importar Pi ni OpenCode | Que el adapter Pi ya funciona |
 | `S4.11` — ✅ COMPLETO; `S4.12` pendiente | Operaciones observables ya entregadas; recuperación mínima Pi después de sus dependencias | Que la Torre ya supervisa o recupera una jornada Pi real |
-| `S4.13` — ✅ COMPLETO; `S4.14` — 🟢 LISTO | Agregar la comprobación sincrónica final del ocupante exacto antes de publish | Que esa garantía o el supervisor Pi ya estén entregados |
-| `S9.4` y `S1.17`–`S1.19` | Después de `S4.14` y un brief fresco: supervisor, adapter y regresión Pi | Que el estado parcial sea capacidad o pueda retomarse |
+| `S4.13` y `S4.14` — ✅ COMPLETO | Validación unpublished y comprobación sincrónica final del ocupante exacto antes de publish | Que el supervisor Pi ya esté entregado |
+| `S9.4` y `S1.17`–`S1.19` | Después de un brief fresco: supervisor, adapter y regresión Pi | Que el estado parcial sea capacidad o pueda retomarse |
 | `S9.5` | Materialización idempotente de sólo los asientos exactos del brief, después de cerrar `S8.12 + S9.4` | Que Herdr ya abra, reutilice o valide esos asientos automáticamente |
 | Gate Pi desatendido | Una corrida prolongada atribuible al candidato | Estabilidad de larga duración sin esa evidencia |
 | Gate de caída con tráfico | Recuperación idempotente tras caída real del broker | Entrega garantizada de mensajes en vuelo |
@@ -113,16 +113,16 @@ La lista siguiente reemplaza las antiguas “cinco decisiones”. No son pregunt
 
 ## Lo que pasa ahora mismo
 
-### G · crítico · `S4.13` todavía deja una ventana final de actualidad
-Lo técnico: `S4.13` valida ownership unpublished, pero no garantiza en el último instante same-stack que proceso e incarnation sigan siendo el ocupante actual del worktree estable. La decisión 98 aprueba `S4.14`: guard sincrónico opcional sobre metadata neutral congelada, inmediatamente antes de publish; sólo `true` primitivo publica.
-En simple: La Torre ya revisa la llave antes de mostrarla, pero todavía le falta comprobar, justo al entregarla, que sigue en manos de la misma persona. `S4.14` es el plano aprobado para ese último control; aún no existe en runtime.
-Evidencia: `openspec/plans/decision-register.md` · `openspec/plans/plan-4/STATUS.md` · Emilio Engram 9773/9774
+### G · resuelto · `S4.14` cierra la ventana final de actualidad
+Lo técnico: El candidato `daf7e0e7af4122417ce2bec8a48a11c65a40f23c`, cherry-picked de `dc8e1d9ba752249398fde5760369684ef211c642`, ejecuta el guard neutral sincrónico sobre metadata congelada inmediatamente antes de publish; sólo `true` primitivo publica. El diff exacto suma 146 líneas authored en implementación, test y spec. Focused 18/18 (202 expectations), host-runtime 34/34 (321) y suite completa 950/950 (5.642 expectations, 74 archivos, 103,13 s) pasaron sobre árbol limpio.
+En simple: La Torre vuelve a comprobar la llave en el instante de entregarla. Si el proceso cambió, respondió algo ambiguo o falló, no publica ownership viejo. El código está verificado localmente y todavía falta el push directo.
+Evidencia: `contracts/host-runtime/ownership-registry.mjs` · `test/contracts/host-runtime/ownership.test.mjs` · `openspec/specs/host-runtime/spec.md` · candidato `daf7e0e7af4122417ce2bec8a48a11c65a40f23c`
 
 ### H · crítico · `S9.4` conserva trabajo parcial no asignable, no capacidad
-Lo técnico: `S9.4` está 📋 PLANIFICADO y no es asignable hasta entregar `S4.14` y emitir un brief fresco de Support. Implementer-1 conserva M1 `a7d724dc`, M2 como dos archivos no trackeados en Engram 9772 y una corrección sin consumir; implementer-2/3 quedan como evidencia inmutable.
-En simple: Hay trabajo guardado, pero NO una función disponible ni permiso para continuarlo. Primero se entrega el último seguro neutral y después Support vuelve a asignar desde una base fresca.
+Lo técnico: `S9.4` está 📋 PLANIFICADO, sin worker asignado y no es asignable hasta emitir un brief fresco de Support sobre la base entregada. Implementer-1 conserva M1 `a7d724dc`, M2 como dos archivos no trackeados en Engram 9772 y una corrección sin consumir; implementer-2/3 quedan como evidencia inmutable. `S2.8` también requiere un brief NUEVO y fresco después de la entrega.
+En simple: El último seguro neutral ya está cerrado, pero eso NO convierte el trabajo guardado en una función disponible ni autoriza continuarlo. Support debe emitir asignaciones nuevas; hasta entonces la capacidad asignable sigue en cero.
 Evidencia: `openspec/plans/plan-9/STATUS.md` · `openspec/plans/master-index.md` · Engram 9772–9774
 
 ## Evidencia y límites de esta radiografía
 
-Este juicio está verificado contra la fuente entregada de Control Tower `6237275b1a45b8380ce094edcb9dda23155ff006`, nunca contra el commit documental que lo registra. La publicación de fuente y el retiro de cuatro copias globales stale están comprobados; el runtime Tower instalado no: el update parcial dejó plugin nuevo con engine/shim viejos y coherencia MCP sin verificar. Instrumentos, avance y cola conservan sus cifras derivadas. La decisión 102 exige esperar `S8.12 → S8.13`; no autoriza `upgrade --shim`. Tampoco se acreditan runtime Pi, packaging Tower, lifecycle atómico, materialización Herdr ni capacidad.
+Este juicio está verificado contra el candidato de código local `daf7e0e7af4122417ce2bec8a48a11c65a40f23c`, nunca contra el futuro commit documental que lo registra. `S4.14` tiene evidencia enfocada, host-runtime e integral sobre esos bytes; el lens asesor quedó no disponible por falta de lineage del candidato mientras RDD estaba deliberadamente OFF, y no se fabrica PASS. El runtime Tower instalado sigue sin prueba: el update parcial dejó plugin nuevo con engine/shim viejos y coherencia MCP sin verificar. La decisión 102 exige esperar `S8.12 → S8.13`; no autoriza `upgrade --shim`. Tampoco se acreditan runtime Pi, packaging Tower, lifecycle atómico, materialización Herdr, asignación ni capacidad.

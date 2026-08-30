@@ -181,7 +181,7 @@ El comportamiento Hermes/Telegram restante es evidencia histórica archivada; no
 
 ## Capacidad paralela hoy
 
-La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas. `S4.13` está ✅ COMPLETO; `#1 S4.14` está 🟢 LISTO y no entregada; `#2 S9.4` está 📋 PLANIFICADO y no es asignable hasta entregar `S4.14` y recibir un brief fresco de Support. La capacidad asignable es **0** hasta que pasen ambos gates. Todo estado parcial es evidencia, no capacidad.
+La capacidad se deriva del grafo, `Área`, `Recurso` y decisiones abiertas. `S4.14` está ✅ COMPLETO contra el candidato local verificado `daf7e0e7af4122417ce2bec8a48a11c65a40f23c`; `#1 S9.4` permanece 📋 PLANIFICADO, sin worker asignado y no asignable hasta recibir un brief fresco de Support sobre la base entregada. La capacidad asignable es **0** hasta ese gate. Todo estado parcial es evidencia, no capacidad.
 
 `S8.14` ya está ✅ COMPLETO en `master/origin/master@54b5cda733025b0bd50c2a21dc67d1d4192ac66d` y sale de la capacidad pendiente. `S8.12` conserva la expresión completa `S8.10 + S1.18 + S8.14`: `S8.10` y `S8.14` están satisfechas y todavía espera `S1.18`.
 
@@ -265,7 +265,7 @@ Se registra explícitamente en lugar de esconderse:
 
 La cadena OpenCode anterior, sus commits, pruebas y decisiones queda preservada como historia parqueada. No es autoridad activa mientras OpenCode permanezca 🟡 DIFERIDO.
 
-**Cadena Pi:** `S4.10✅ → S4.13✅ → S4.14🟢 → S9.4📋 → S1.17 → S1.18 → S1.19`, reteniendo `S4.11✅ → S9.4📋`. `S4.14` está aprobada y no entregada; `S9.4` permanece 📋 PLANIFICADO y no es asignable hasta entregar `S4.14` y recibir un brief fresco de Support. `S4.12` y `S9.5` siguen transitivamente downstream de `S4.14` mediante `S9.4`: no se agregan aristas directas `S4.14 → S4.12` ni `S4.14 → S9.5`. El grafo permanece acíclico.
+**Cadena Pi:** `S4.10✅ → S4.13✅ → S4.14✅ → S9.4📋 → S1.17 → S1.18 → S1.19`, reteniendo `S4.11✅ → S9.4📋`. `S4.14` está completa en el candidato local verificado; `S9.4` permanece 📋 PLANIFICADO y no es asignable hasta recibir un brief fresco de Support sobre la base entregada. `S4.12` y `S9.5` siguen transitivamente downstream de `S4.14` mediante `S9.4`: no se agregan aristas directas `S4.14 → S4.12` ni `S4.14 → S9.5`. El grafo permanece acíclico.
 
 **Aristas activas verificables:**
 
@@ -273,8 +273,8 @@ La cadena OpenCode anterior, sus commits, pruebas y decisiones queda preservada 
 |---|---|---|
 | `S4.10` ✅ | `S4.13` ✅ | Extiende ownership neutral ya entregado sin reabrirlo |
 | `S4.11` ✅ | `S9.4` 📋 | El supervisor consume operaciones neutrales ya entregadas |
-| `S4.13` ✅ | `S4.14` 🟢 | Extiende el gate entregado con actualidad final same-stack |
-| `S4.14` 🟢 | `S9.4` 📋 | La publicación del broker espera la guardia final neutral |
+| `S4.13` ✅ | `S4.14` ✅ | Extiende el gate entregado con actualidad final same-stack |
+| `S4.14` ✅ | `S9.4` 📋 | La guardia final neutral está satisfecha; resta el brief fresco de Support |
 | `S9.4` 📋 | `S1.17` 📋 | El gate Pi necesita supervisor/binding vigente |
 | `S9.4` 📋 | `S4.12` 📋 | Recuperación consume el supervisor ya entregado |
 | `S9.4` 📋 | `S9.5` 📋 | Materialización consume binding Pi/Intercom vigente |
@@ -288,7 +288,7 @@ La cadena OpenCode anterior, sus commits, pruebas y decisiones queda preservada 
 
 ```mermaid
 graph LR
-  S410[S4.10 neutral identity · ✅] --> S413[S4.13 unpublished validation · ✅] --> S414[S4.14 final currentness · 🟢] --> S94[S9.4 Pi supervisor · 📋 PLANIFICADO · no asignable hasta S4.14 + brief Support] --> S117[S1.17 Pi gate] --> S118[S1.18 Pi adapter] --> S119[S1.19 Pi regression]
+  S410[S4.10 neutral identity · ✅] --> S413[S4.13 unpublished validation · ✅] --> S414[S4.14 final currentness · ✅] --> S94[S9.4 Pi supervisor · 📋 PLANIFICADO · no asignable hasta brief Support fresco] --> S117[S1.17 Pi gate] --> S118[S1.18 Pi adapter] --> S119[S1.19 Pi regression]
   S411[S4.11 neutral operations · ✅] --> S94
   S94 --> S412[S4.12 Pi recovery]
   S118 --> S412
@@ -310,4 +310,4 @@ graph LR
 
 **Validación, no decisión:** la corrida desatendida prolongada, crash del broker con tráfico y el límite de cinco clientes son gates de evidencia. El claim inicial termina en cinco; >5 no se promete hasta medirlo.
 
-**Capacidad y próxima acción:** `#1 S4.14` está 🟢 LISTO; `#2 S9.4` está 📋 PLANIFICADO y no es asignable hasta entregar `S4.14` y recibir un brief fresco de Support. La capacidad asignable es **0** hasta que pasen ambos gates. Ningún estado parcial autoriza resume o corrección. Se conservan las dependencias transitivas hacia `S4.12`, `S9.5`, `S8.13` y `S7.1`.
+**Capacidad y próxima acción:** `S4.14` está ✅ COMPLETO; `#1 S9.4` está 📋 PLANIFICADO, sin worker asignado y no es asignable hasta recibir un brief fresco de Support sobre la base entregada. La capacidad asignable es **0** hasta ese gate. Ningún estado parcial autoriza resume o corrección. Se conservan las dependencias transitivas hacia `S4.12`, `S9.5`, `S8.13` y `S7.1`.
