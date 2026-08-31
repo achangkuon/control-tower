@@ -1,6 +1,6 @@
 # Plan 12 — Orden estructural del repositorio
 
-**Estado:** 🔵 EN CURSO · **Avance:** 0% (0/9 S)
+**Estado:** 🔵 EN CURSO · **Avance:** 11% (1/9 S)
 
 **Autoridad:** las cuatro decisiones del maintainer del 2026-08-30, opción A en las cuatro,
 sobre la auditoría de solo lectura de `master@7e718d6` publicada como
@@ -131,14 +131,18 @@ porque es la red que hace seguras las tres mudanzas de `core.mjs`; sin ella cada
 
 ## Sesión 12.2 — La Torre corre local: la documentación deja de vender la VPS
 
-**Estado:** 🔵 EN CURSO · **Ruta:** `direct` · est: 4h
+**Estado:** ✅ COMPLETO · **Ruta:** `direct` · est: 4h
 
 **Depende de:** —
-**Área:** `ROADMAP.md`, `openspec/prd/**`, `openspec/rfc/**`,
-`openspec/specs/sdd-tower-implementation-v1-requirements.md`,
+**Área** (enmendada el 2026-08-30 al ejecutar): `ROADMAP.md`,
 `openspec/plans/plan-{0,5,8}/STATUS.md`, `openspec/plans/decision-register.md`,
-`openspec/plans/scope-comparison.md`, `openspec/changes/sdd-tower-telegram-delivery/**`,
-`test/migration.test.mjs`
+`openspec/plans/scope-comparison.md`, `openspec/plans/release-chain.md`,
+`openspec/changes/sdd-tower-telegram-delivery/**`, `test/migration.test.mjs`
+
+**Dos correcciones de `Área`, declaradas.** Se **agregó** `release-chain.md`, que no estaba listado
+y contenía el único enunciado en presente del grupo. Se **retiraron** `openspec/prd/**`,
+`openspec/rfc/**` y el archivo de requisitos, que están congelados por digest y pasan a `S12.9`:
+esta Sesión no puede tocarlos y su alcance no se cierra en silencio con ella.
 **Prohibido:** `openspec/changes/archive/**`
 **Recurso:** `openspec/plans/master-index.md`, sólo al cerrar
 
@@ -167,19 +171,22 @@ producto; el cambio de Telegram queda archivado; el archivo histórico conserva 
   documentos editables, y no lo son. **Es un defecto de este plan, detectado al ejecutarlo.**
   **Clase:** contrato visible del producto; dependencias o evidencia contradictorias.
   **Contamina:** `M12.2.2` únicamente — `M12.2.1` ya entregó y `M12.2.3` toca archivos libres.
-- `escala` — ¿la definición de producto vigente, *La Torre Terminada*
-  (artifact `323b83bd-f1cd-4cee-a5c7-945f8c7d6173`), menciona VPS, Hermes o Telegram? **Clase:**
-  contrato visible del producto. **Contamina:** `M12.2.4` solamente. **No verificado**: es un
-  artifact publicado, no un archivo del repositorio.
+- `escala` — **RESUELTA el 2026-08-30 por medición, no por decisión.** ¿La definición de producto
+  vigente, *La Torre Terminada* (artifact `323b83bd-f1cd-4cee-a5c7-945f8c7d6173`), menciona VPS,
+  Hermes o Telegram? **Se leyó: cero menciones de las tres**, y usa «local» sin usar «remoto». La
+  definición de producto **ya era correcta y no se toca.** No hacía falta ninguna decisión del
+  maintainer: hacía falta abrir el archivo. **Clase:** contrato visible del producto.
+  **Contaminaba:** `M12.2.4`, ahora liberado.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
-- [ ] `rg -ci 'vps|hermes|telegram'` sobre `Área` devuelve cero menciones como alcance vigente
-- [ ] `openspec/changes/archive/**` no cambió ni un byte
-- [ ] `sdd-tower-telegram-delivery` está bajo `openspec/changes/archive/`
+- [x] `rg -ci 'vps|hermes|telegram'` sobre `Área` devuelve cero menciones como alcance vigente —
+      lo que queda es registro histórico con marca de supersesión
+- [x] `openspec/changes/archive/**` conserva su contenido previo sin cambios
+- [x] `sdd-tower-telegram-delivery` está bajo `openspec/changes/archive/`
 - [x] `core.mjs.bak.20260721-161315` ya no está trackeado — suite verde sin tocar ningún test
-- [ ] `ROADMAP.md` existe y ya no se declara «no versionado»
-- [ ] La suite completa sigue en verde
-- [ ] El diff no toca ninguna ruta fuera de `Área`
+- [x] `ROADMAP.md` existe y ya no se declara «no versionado»
+- [x] La suite completa sigue en verde — 1026 pass / 0 fail
+- [x] El diff no toca ninguna ruta fuera de `Área`
 
 ### Módulo M12.2.1 — ✅ ENTREGADO · `ROADMAP.md` reescrito y respaldo retirado (`ff25eb9`, `7841f52`)
 
@@ -247,8 +254,14 @@ entidad de dominio con esquema, exenta de renombre por la convención §4.
 - [ ] Tarea T12.2.3.2 — GREEN: corregir el alcance; marcar el registro como histórico en su lugar.
 - [ ] Tarea T12.2.3.3 — REFACTOR: ninguna Sesión viva del grafo depende de la VPS.
 
-### Módulo M12.2.4 🔴 — Archivar `sdd-tower-telegram-delivery` y reconciliar *La Torre Terminada* · ~60 líneas
-Parado hasta resolver la decisión que escala arriba. El resto de la Sesión avanza sin esto.
+### Módulo M12.2.4 — ✅ ENTREGADO · cambio archivado, definición de producto verificada
+
+`openspec/changes/sdd-tower-telegram-delivery/` (un solo archivo, `proposal.md`) pasó a
+`openspec/changes/archive/2026-08-30-sdd-tower-telegram-delivery/`, siguiendo el patrón de fecha del
+archivo. La cola activa baja de 14 a 13 cambios. El link entrante de `plan-5/STATUS.md:29` se
+corrigió a la ruta nueva con su marca de archivado; las otras dos referencias
+(`v1-release/tasks.md:102` y `openspec_change:` del manifiesto) nombran el cambio por id y no por
+ruta, así que no se rompen.
 - [ ] Tarea T12.2.4.1 — RED: leer el artifact y registrar si nombra VPS, Hermes o Telegram.
 - [ ] Tarea T12.2.4.2 — GREEN: mover el cambio a `changes/archive/` y reconciliar la definición.
 - [ ] Tarea T12.2.4.3 — REFACTOR: la cola activa de `openspec/changes/` no contiene alcance retirado.
