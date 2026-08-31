@@ -1,0 +1,23 @@
+{
+  "name": "@control-tower/pi-session-router",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "keywords": ["pi-package"],
+  "pi": { "extensions": ["./tower-session-router.ts"] },
+  "controlTowerCompatibility": {
+    "contract": "pi-input-extension-capabilities/v1",
+    "testedBaseline": { "piVersion": "0.84.4" },
+    "requiredCapabilities": [
+      "extension.default-export.factory-arity-1",
+      "events.input.registration.pi-on-input",
+      "events.input.shape.text-images-source-streamingBehavior",
+      "events.input.result.continue-transform-handled",
+      "ui.local-notification",
+      "transforms.reviewed-inventory-and-order"
+    ],
+    "reviewedTransforms": [
+      { "order": 1, "id": "tower-session-router", "entrypoint": "./tower-session-router.ts" }
+    ]
+  }
+}
