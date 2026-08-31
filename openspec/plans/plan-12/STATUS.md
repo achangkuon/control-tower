@@ -270,9 +270,9 @@ ruta, así que no se rompen.
 
 ## Sesión 12.3 — El SQL de las migraciones sale de `core.mjs`
 
-**Estado:** 📋 PLANIFICADO · **Ruta:** `direct` · est: 6h
+**Estado:** 🔴 BLOQUEADO · **Ruta:** `direct` · est: 6h
 
-**Depende de:** `S12.1`
+**Depende de:** `T8.10.1.3` de `S8.10`, más el desacople de dos arneses de prueba (ver abajo)
 **Área:** `core.mjs`, `db/**`, `test/db/**`
 **Recurso:** **`core.mjs` en exclusiva** — ninguna otra Sesión puede tocarlo mientras corre
 
@@ -281,16 +281,55 @@ ruta, así que no se rompen.
 idénticas. Es el corte más barato de verificar del Plan.
 **Autoridad:** decisión 2 del maintainer, 2026-08-30.
 
+**🔴 BLOQUEADA el 2026-08-30 al intentarla. `core.mjs` no se puede partir todavía, y la causa
+explica por qué llegó a 4.646 líneas.**
+
+Se ejecutó `M12.3.1` completo: la migración 001 salió a `db/migrations/001.mjs`, 26 líneas movidas,
+y **las cinco firmas SHA-256 quedaron idénticas** — la mudanza en sí era correcta. La suite pasó de
+1026/0 a **1022 pass / 4 fail**, y los cuatro fallos son la misma causa: **tres consumidores tratan
+a `core.mjs` como un archivo único y autocontenido**, así que un `import` relativo a un archivo
+hermano los rompe.
+
+| Consumidor | Qué asume | Evidencia |
+|---|---|---|
+| El payload del instalador | una allowlist de archivos exactos y un `scanClosure` que rechaza directorios no declarados | `install/runtime-payload.mjs:7,71`; `test/install/payload-closure.test.mjs:95` |
+| El arnés de mutación de identidad | copia **sólo** `core.mjs` a un temporal y lo muta | `test/identity.test.mjs` — `Cannot find module './db/migrations/001.mjs'` |
+| El CLI de launch-worker instalado | instala `core.mjs` solo en `versions/<v>/` | `test/install/launch-worker-cli.test.mjs:52` |
+
+**Esto reencuadra el hallazgo original de la auditoría.** `core.mjs` no creció a 4.646 líneas
+porque nadie se ocupó: creció porque **la maquinaria de entrega premia el archivo único**. Mientras
+el payload valide por lista exacta y dos arneses copien un solo archivo, cada línea nueva tiene
+menos costo adentro de `core.mjs` que afuera. Partirlo sin cambiar eso primero es empujar contra el
+incentivo, no contra el descuido.
+
+**Prerrequisitos, dos de ellos fuera de P12:**
+
+1. **`T8.10.1.3` de `S8.10` (P8, 🔵 EN CURSO)** — ya enumerada, y es exactamente esto: «derivar
+   prefijos de directorio exclusivamente desde `RUNTIME_PAYLOAD_FILES`, excluir `.`, y no conservar
+   una allowlist manual de directorios» (`plan-8/STATUS.md:632,649`). **No hay que enumerar nada
+   nuevo para esta mitad.**
+2. **Los dos arneses deben copiar el árbol de dependencias, no un archivo.** `test/identity.test.mjs`
+   está entre los 15 archivos del `Área` exclusiva de `S12.8`, así que **colisiona con Pi** y no se
+   puede tocar en paralelo.
+3. **`install/runtime-payload.mjs` debe listar los archivos nuevos** — fuera del `Área` declarada de
+   esta Sesión.
+
+**No se enumeró una Sesión nueva para esto**: el prerrequisito 1 ya tiene dueño, y los 2 y 3 son
+alcance que el maintainer debe rutear —a `S12.8` ampliada, a `S8.10`, o a una Sesión propia—. Es
+decisión suya, no derivable.
+
 **Decisiones:**
 
 - `derivable` — destino `db/` en la raíz, no `src/adapters/db/`. **Criterio:** la decisión 4
   difiere la mudanza a `src/`; `db/` sigue la convención plana que ya usan `registry/`,
   `main-store/` y `contracts/`. **Falsificable:** se revierte la decisión 4. **Autoridad:**
   decisión 4 del maintainer.
-- `escala` — **el presupuesto de 400 líneas contra movimientos puros.** Ver la decisión
-  estacionada al final de este Plan. **Clase:** dependencias o evidencia contradictorias.
-  **Contamina:** `M12.3.4`, `M12.3.5`, `M12.4.2` y los Módulos de `S12.5` que muevan más de 200
-  líneas.
+- `escala` — **RETIRADA el 2026-08-30: la excepción de las 400 líneas no hace falta.** El
+  maintainer la había aprobado (opción A de la decisión estacionada), pero al ejecutar apareció una
+  solución que no debilita la política: **partir cada movimiento grande en dos commits** —primero
+  agregar el archivo nuevo, después quitar el literal de `core.mjs` y re-exportar—. Cada mitad mueve
+  la mitad de los bytes y entra en el presupuesto sola, y el estado intermedio es verificable: las
+  dos copias coexisten y la firma sigue coincidiendo. **La política queda intacta y sin excepciones.**
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
 - [ ] `MIGRATION_001..005_CHECKSUM` dan exactamente los mismos SHA-256 que en `7e718d6`

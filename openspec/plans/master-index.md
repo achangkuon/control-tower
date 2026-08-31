@@ -6,23 +6,25 @@
 
 ## 📍 Punto de retoma
 
-**`S12.2` cerró: ningún documento de alcance vigente vende ya la superficie remota.** `ROADMAP.md` se reescribió de 235 a 135 líneas conservando textual el diseño del avance automático a la siguiente Sesión; el respaldo `core.mjs.bak.20260721-161315` salió del árbol; `sdd-tower-telegram-delivery` quedó archivado y la cola activa de cambios bajó de 14 a 13. Suite 1026 pass / 0 fail en cada entrega.
+**`S12.3` se intentó y quedó 🔴 BLOQUEADA, y la causa reencuadra el hallazgo original de la auditoría.** La mudanza en sí era correcta: la migración 001 salió a `db/migrations/001.mjs`, 26 líneas movidas, **las cinco firmas SHA-256 idénticas**. Pero la suite cayó de 1026/0 a **1022 pass / 4 fail**, y los cuatro fallos comparten causa: **tres consumidores tratan a `core.mjs` como archivo único y autocontenido** — el payload del instalador valida por allowlist exacta (`install/runtime-payload.mjs:7,71`), el arnés de mutación de identidad copia sólo ese archivo a un temporal (`test/identity.test.mjs`), y el CLI de launch-worker instalado lo instala solo (`test/install/launch-worker-cli.test.mjs:52`). Todo revertido; `core.mjs` intacto en 4.646 líneas y árbol limpio.
 
-**El hallazgo dio vuelta la Sesión, y para mejor: casi nada era alcance a purgar.** De las ~40 menciones que la auditoría contó en los planes, prácticamente ninguna era alcance vigente — son el registro de *por qué* se retiró. `plan-8` ya estaba correcto con `S8.7` 📚 ARCHIVADO dos veces; `plan-5` ya lo declaraba no-dependencia; `scope-comparison` es un borrador con medición fechada al 2026-08-10 que no se corrige porque fue exacta. Se marcó supersesión sin reescribir un solo registro. **Purgarlas habría destruido la trazabilidad de la misma decisión que P12 implementa.** El único enunciado en presente estaba en `release-chain.md:196`, que ni figuraba en el `Área` original.
+**`core.mjs` no creció por descuido: creció porque la maquinaria de entrega premia el archivo único.** Mientras el payload valide por lista exacta y dos arneses copien un solo archivo, cada línea nueva cuesta menos adentro de `core.mjs` que afuera. Partirlo antes de cambiar eso es empujar contra el incentivo, no contra el desorden. Con `S12.3` salen de la cola `S12.4`, `S12.5` y `S12.6`.
 
-**Dos decisiones que escalaban se resolvieron midiendo, no decidiendo.** *La Torre Terminada* no menciona VPS, Hermes ni Telegram: **la definición de producto ya era correcta** y no se tocó. Y el respaldo viejo no estaba protegido por ningún test — esa premisa del plan era falsa y quedó corregida con su medición al lado.
+**La mitad del desbloqueo ya tiene dueño y está en curso:** `T8.10.1.3` de `S8.10` es exactamente «derivar prefijos de directorio desde `RUNTIME_PAYLOAD_FILES` y no conservar una allowlist manual» (`plan-8/STATUS.md:632,649`). La otra mitad —los dos arneses copiando el árbol de dependencias— **necesita ruteo del maintainer**, porque `test/identity.test.mjs` está en el `Área` exclusiva de `S12.8` y colisiona con Pi.
 
-**Lo que sigue y lo que frena.** `S12.9` heredó el PRD, el RFC y los requisitos, **congelados por digest en 34 pins repartidos en 10 archivos** —19 sólo en `sdd-tower-implementation/manifest.yaml`, ocho en directorios de cambios activos y dos en `plan-3/STATUS.md`, un Plan ✅ COMPLETO—. Eso es un orden de magnitud sobre el costo enunciado cuando el maintainer eligió avanzar la revisión, así que **la decisión queda marcada para revisión, no absorbida**. `S12.1` espera a `S12.8` (Pi) por decisión de seguridad; su gate está probado y estacionado en `parked/s12.1-gate`.
+**Una excepción de política se evitó.** El maintainer había aprobado excepcionar el techo de 400 líneas para movimientos puros; al ejecutar apareció una salida mejor: partir cada movimiento grande en dos commits —agregar el archivo, después quitar el literal y re-exportar—. Cada mitad entra en el presupuesto y el estado intermedio es verificable. **La política queda sin excepciones.**
 
-**La Torre está APAGADA** por regla del maintainer mientras se implemente sobre ella. Capacidad: 0 asientos del pool, los tres con cambios sin commitear; P12 corre desde el temporal `plan-12`.
+**`S12.2` cerró antes en la misma jornada** — P12 a 11% (1/9 S), global a 48/75. `ROADMAP.md` de 235 a 135 líneas con el diseño del avance automático textual, respaldo viejo fuera, cambio de Telegram archivado y cola activa de cambios de 14 a 13. Se verificó además que *La Torre Terminada* no menciona VPS, Hermes ni Telegram: la definición de producto ya era correcta.
+
+**La Torre está APAGADA** mientras se implemente sobre ella. Capacidad: 0 asientos del pool; P12 corre desde el temporal `plan-12`.
 
 ## 🎯 Cola de ejecución
 
-`#1 S9.4` · `#2 S12.8` · `#3 S12.9` · `#4 S12.1` · `#5 S12.3` · `#6 S12.4` · `#7 S12.5` · `#8 S12.6` · `#9 S1.17` · `#10 S1.18` · `#11 S8.12` · `#12 S9.5` · `#13 S1.19` · `#14 S4.12` · `#15 S8.13` · `#16 S5.14` · `#17 S5.5` · `#18 S5.15` · `#19 S9.2` · `#20 S9.3` · `#21 S7.1` — topológica, recalculada 2026-08-30 al cerrar `S12.2`. La cola no asigna dueño ni asiento.
+`#1 S9.4` · `#2 S12.8` · `#3 S12.9` · `#4 S12.1` · `#5 S1.17` · `#6 S1.18` · `#7 S8.12` · `#8 S9.5` · `#9 S1.19` · `#10 S4.12` · `#11 S8.13` · `#12 S5.14` · `#13 S5.5` · `#14 S5.15` · `#15 S9.2` · `#16 S9.3` · `#17 S7.1` — topológica, recalculada 2026-08-30 al bloquear `S12.3`. La cola no asigna dueño ni asiento.
 
 **Paralelismo:** `S12.8` (`test/**`) y `S12.2` (documentación) son disjuntas en grafo, `Área` y `Recurso`: corren juntas hoy. `S12.1` espera a `S12.8`; desde `S12.3` la cadena de P12 se serializa sobre **`core.mjs` en exclusiva**. Se preserva el orden previo: `S1.18` habilita `S8.12`; `S9.5` conserva `S8.12 + S9.4`; `S4.12` espera `S9.4 + S1.18`; `S8.13` espera `S8.12 + S1.19 + S4.12`; `S7.1` espera `S1.19 + S4.12 + S8.13 + S5.5`.
 
-**Fuera de la cola:** `S4.4`, `S4.8`, `S8.5`, `S8.6`, `S12.7` y P6 🟡 DIFERIDO; `S8.11` 🔴 BLOQUEADO. `S2.8`, `S4.10`, `S4.11`, `S4.13`, `S4.14`, `S5.3`, `S8.14` y `S12.2` se excluyen por ✅ COMPLETO; `S4.9` y `S8.7` por 📚 ARCHIVADO.
+**Fuera de la cola:** `S4.4`, `S4.8`, `S8.5`, `S8.6`, `S12.7` y P6 🟡 DIFERIDO; `S8.11` y `S12.3` 🔴 BLOQUEADO, y con `S12.3` salen `S12.4`, `S12.5` y `S12.6`, que dependen de ella. `S2.8`, `S4.10`, `S4.11`, `S4.13`, `S4.14`, `S5.3`, `S8.14` y `S12.2` se excluyen por ✅ COMPLETO; `S4.9` y `S8.7` por 📚 ARCHIVADO.
 
 ## Granularidad
 
@@ -53,7 +55,7 @@ En este repositorio la entrega ocurre mediante uno o más commits directos secue
 | P9 | Asientos de trabajo y reciclado seguro | 🔵 EN CURSO | 20% (1/5 S) | — | Maintainer | `S9.2`–`S9.5` | [STATUS](plan-9/STATUS.md) |
 | P10 | Ejecución y supervisión autónoma de Jornada | ✅ COMPLETO | 100% (3/3 S) | — | Maintainer | — | [STATUS](plan-10/STATUS.md) |
 | P11 | Interfaz de operador | ✅ COMPLETO | 100% (1/1 S) | — | Maintainer | — | [STATUS](plan-11/STATUS.md) |
-| P12 | Orden estructural del repositorio | 🔵 EN CURSO | 11% (1/9 S) | 50h | Maintainer | `S12.8`, `S12.9`, `S12.1`, `S12.3`–`S12.6` | [STATUS](plan-12/STATUS.md) |
+| P12 | Orden estructural del repositorio | 🔵 EN CURSO | 11% (1/9 S) | 50h | Maintainer | `S12.8`, `S12.9`, `S12.1`; `S12.3`–`S12.6` 🔴 | [STATUS](plan-12/STATUS.md) |
 
 > **Cómo leer `Qué falta`.** Enumera sólo IDs de Sesiones pendientes; el estado y el detalle pertenecen al `STATUS.md` de cada Plan. **🟡 DIFERIDO no es trabajo pendiente** y no aparece en esa columna. El `%` conserva las Sesiones diferidas en el denominador porque siguen siendo objetivo; sólo lo archivado-fuera-de-alcance sale.
 
