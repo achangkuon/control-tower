@@ -1,6 +1,6 @@
 # Plan 12 — Orden estructural del repositorio
 
-**Estado:** 🔵 EN CURSO · **Avance:** 0% (0/8 S)
+**Estado:** 🔵 EN CURSO · **Avance:** 0% (0/9 S)
 
 **Autoridad:** las cuatro decisiones del maintainer del 2026-08-30, opción A en las cuatro,
 sobre la auditoría de solo lectura de `master@7e718d6` publicada como
@@ -493,6 +493,77 @@ herramienta que git invoque y corra la suite pisa la misma mina.
 **Nota operativa:** la Torre queda **apagada** mientras se implementa sobre ella (decisión del
 maintainer, 2026-08-30). Dos tests de `test/migration.test.mjs` exigen que
 `.git/control-tower/ACTIVE` no exista; con la Torre encendida fallan por motivos ajenos al código.
+
+---
+
+## Sesión 12.9 — Avanzar la revisión del artefacto a 2
+
+**Estado:** 🟢 LISTO · **Ruta:** `full-sdd` · est: 8h
+
+**Depende de:** —
+**Área:** `openspec/plans/autonomous-v2/revisions/**`, `openspec/plans/product-version-map.yaml`,
+`openspec/prd/**`, `openspec/rfc/**`,
+`openspec/specs/sdd-tower-implementation-v1-requirements.md`,
+`test/provenance/provenance.test.mjs`
+**Prohibido:** los 15 archivos de `test/**` que invocan git, y `test/helpers/**` — son el `Área`
+exclusiva de `S12.8`
+**Recurso:** el puntero canónico de publicación en exclusiva
+
+**Resultado:** el PRD, el RFC y los requisitos quedan corregidos sin alcance retirado, y la
+procedencia queda intacta: la revisión 1 conserva sus digests como registro histórico y el puntero
+canónico avanza a una revisión 2 que describe los bytes nuevos.
+**Autoridad:** decisión del maintainer del 2026-08-30, opción A, sobre el hallazgo de `M12.2.2`.
+
+**Por qué `full-sdd` y no `direct`.** Es la única Sesión de P12 que lo merece, y no por su tamaño:
+
+- **No hay precedente.** `revisions/2/` no existe en ningún carril; la revisión 1 es la única que
+  hubo alguna vez, en `autonomous-v2` y en `installable-v1`.
+- **Es un contrato compartido con mecánica declarada y sin ejercitar.**
+  `product-version-map.yaml` declara `atomic_pointer.strategy: validate-temp-fsync-rename`,
+  `pointer_revision`, `previous_pointer_revision` y una política de rollback
+  (`restore_pointer_revision`, `retain_failed_revision`, `delete_historical_artifacts: false`).
+  Avanzar el puntero es ejercitar esa mecánica por primera vez.
+- **Toca propiedad declarada.** `ownership.claims` nombra `product-version-map.yaml`,
+  `master-index.md`, `manifest.yaml` y ambos manifiestos de revisión 1 como propiedad de
+  `installable-v1-provenance` en el checkpoint `v1-provenance-published`. La revisión 2 necesita su
+  entrada, y `test/provenance/provenance.test.mjs` valida conflictos de propiedad.
+- **El repositorio ya lo dijo.** La nota de cabecera de `product-version-map.yaml` declara que
+  tocar `provenance.test.mjs` «es alcance nuevo y necesita su propia Sesión». Esta es esa Sesión.
+
+**El contenido ya está escrito y verificado**, en la rama local `parked/s12.2-docs-congelados`
+(`2b0506c`): cero enunciados de alcance retirado en los tres documentos. Esta Sesión no lo reescribe,
+lo publica con procedencia correcta.
+
+**Decisiones:**
+
+- `derivable` — la revisión 1 no se modifica. **Criterio:** la nota de `product-version-map.yaml`
+  dice que las revisiones históricas y sus `artifact_id` no se eliminan, y
+  `delete_historical_artifacts: false` lo repite en campo. **Falsificable:** un digest de la
+  revisión 1 cambia. **Autoridad:** `product-version-map.yaml`.
+- `derivable` — el test resuelve el manifiesto por el puntero canónico (`manifest_ref`), no por una
+  ruta literal ni escaneando directorios. **Criterio:** la indirección ya existe en el mapa y es
+  para esto; una ruta literal obliga a editar el test en cada revisión. **Falsificable:** el test
+  sigue nombrando `revisions/1/` después de avanzar el puntero. **Autoridad:** el diseño del mapa.
+- `escala` — **qué valor lleva `source_commit` en una revisión autoral.** En la revisión 1 es
+  `0745f99`, el commit que introdujo esos bytes. Una revisión escrita ahora no puede nombrar el
+  commit que la publica, porque su SHA no existe hasta después de publicarla. **Clase:** contrato
+  visible del producto. **Contamina:** el primer Módulo, así que se resuelve en la fase de diseño
+  de SDD antes de escribir el manifiesto.
+
+**Criterios de aceptación** — todos deben pasar para cerrar:
+- [ ] Los tres documentos no contienen ningún enunciado de alcance retirado, con las ocho variantes
+      que no usan palabra clave incluidas
+- [ ] `revisions/1/manifest.yaml` no cambió ni un byte
+- [ ] `revisions/2/manifest.yaml` existe, declara `artifact_revision: 2`, `supersedes` la r1, y sus
+      tres `content_digest` coinciden con los bytes vivos
+- [ ] El puntero canónico avanzó de forma atómica: `active_revision: 2`, `manifest_ref` a la r2,
+      `map_revision` incrementado y `previous_pointer_revision` conservado
+- [ ] `test/provenance/provenance.test.mjs` resuelve el manifiesto por el puntero, y la suite pasa
+      1026 o más con 0 fallos
+- [ ] El diff no toca ninguna ruta fuera de `Área`, y ninguno de los 15 archivos de `S12.8`
+
+**Módulos:** los escribe la fase `tasks` de SDD. Este Plan fija el contrato y no duplica esa
+descomposición.
 
 ---
 
