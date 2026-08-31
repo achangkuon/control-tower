@@ -3,7 +3,7 @@
 **Propósito:** que existan asientos de trabajo estables que Main pueda asignar, materializar visualmente y reciclar sin pisar a un agente trabajando, y que tener varios no cueste una instalación de dependencias por cada uno.
 
 **Estado:** 🔵 EN CURSO
-**Avance:** 33% (2/6 S)
+**Avance:** 50% (3/6 S)
 
 > **Reordenado y recortado el 2026-08-21 por la [decisión 62](../decision-register.md), tras la auditoría exclusiva de P9.**
 > Los IDs son posicionales según el [estándar de planes](/home/emili/.claude/skills/_shared/plan-naming-convention.md), así que
@@ -120,9 +120,9 @@ Las decisiones 49–54 del [registro](../decision-register.md) y las referencias
 | Campo | Contrato |
 |---|---|
 | Orden histórico OpenCode-first | `S9.1 → S9.2 → S9.3`; `S9.4` estaba 🟡 DIFERIDO. La autoridad Pi-first vigente está en la reconciliación del 2026-08-27. |
-| Avance canónico | 33% (2/6 S). `S9.1` y `S9.6` están ✅ COMPLETO; `S9.4` conserva un criterio abierto y su historia diferida preservada. |
-| Entrega | Commit directo a `master`, sin PR. Cada resultado independientemente verificable y revertible, ≤400 líneas authored. |
-| Próxima acción | No se autoriza una nueva Sesión desde este cierre. Para completar `MAIN → SUPPORT → AGENTES`, el orden pendiente codificado empieza `S9.4 → S1.17 → S1.18 → S9.5 → S8.12`; desde `S1.18` también sigue `S1.19`, `S4.12` espera `S9.4 + S1.18`, y `S8.13` espera `S8.12 + S1.19 + S4.12`. |
+| Avance canónico | 50% (3/6 S). `S9.1`, `S9.4` y `S9.6` están ✅ COMPLETO; la historia diferida de `S9.4` permanece preservada. |
+| Entrega | Commit directo a `master`, sin PR. Cada resultado independientemente verificable y revertible, ≤400 líneas authored. El cierre de `S9.4` quedó en `2b6dd52`, 153 líneas authored (132 adiciones + 21 eliminaciones), con rollback limitado a los cuatro paths de su `Área`. |
+| Próxima acción | No se autoriza una nueva Sesión desde este cierre. Para completar `MAIN → SUPPORT → AGENTES`, la próxima dependencia es `S1.17`, todavía no despachada; luego siguen `S1.18 → S9.5 → S8.12`, desde `S1.18` también `S1.19`, `S4.12` conserva sus dependencias declaradas `S9.4 + S1.18` con `S9.4` ya satisfecha, y `S8.13` espera `S8.12 + S1.19 + S4.12`. |
 | Decisión abierta | **Ninguna.** El contrato visible Pi-first fue resuelto por el maintainer en Engram 9921; capacidad y asignación siguen siendo gates operativos, no decisiones de producto. |
 | Autoridad histórica | Engram 8478 rev8, 8506, 8645, 8646, 8647 rev2, 8894, 8898, 8950, 8955, 8908; decisiones 49–54 y 62. Los artefactos SDD de la vieja `S9.1` viven en `openspec/changes/s9-1-safe-slot-lifecycle/` y describen un alcance **superado**: se conservan como evidencia, no como autoridad de implementación. |
 
@@ -269,7 +269,7 @@ graph TD
   S91["S9.1 pool de asientos · 📋"] --> S92["S9.2 interlock de ocupado · 📋"]
   S91 --> S93["S9.3 caché externa de Bun · 📋"]
   S93 -.-> S94H["S9.4 launcher Pi · historia diferida"]
-  S411["S4.11 operaciones neutrales · ✅"] --> S94["S9.4 supervisor Pi-first · 🔵 EN CURSO · un criterio abierto"]
+  S411["S4.11 operaciones neutrales · ✅"] --> S94["S9.4 supervisor Pi-first · ✅ COMPLETO"]
   S413["S4.13 validación ownership · ✅"] --> S414["S4.14 actualidad final · ✅"] --> S94
   S118["S1.18 adapter Pi · 📋"] --> S95["S9.5 materialización Main/Support/Agentes · 📋"]
   S96["S9.6 interceptor Pi-first · ✅"] --> S95
@@ -350,7 +350,9 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 
 **Historia preservada:** el contrato anterior “Pi segundo host, después de OpenCode” queda etiquetado arriba como plan histórico parqueado.
 
-**Estado:** 🔵 EN CURSO — **ambos Módulos entregados, un criterio abierto.** El gate de brief fresco quedó satisfecho (Engram 9891, contra `fb80de2`); `M9.4.1` cerró en `origin/master@9f29f20` y `M9.4.2` en `696f500`. Siete de los ocho criterios pasan. **La Sesión NO se declara ✅ COMPLETO** porque el criterio 1 conserva abierta su mitad de observación del kernel: falta el puerto `observeProcess` que compare PID, cwd y start-token antes y después de la observación async, tal como lo enuncia la autoridad Engram 9748. Cerrar esa mitad es trabajo, no decisión, y no invalida lo entregado.
+**Estado:** ✅ COMPLETO — los dos Módulos y los ocho criterios están cerrados. El gate de brief fresco quedó satisfecho (Engram 9891, contra `fb80de2`); `M9.4.1` cerró en `origin/master@9f29f20`, `M9.4.2` en `696f500` y la mitad restante de observación del kernel del criterio 1 en `2b6dd52`. Ese último commit completa `observeProcess`: comprueba PID, cwd y start-token antes y después de la observación async sin ampliar el contrato aprobado.
+
+**Cierre verificable del criterio 1:** `2b6dd52` suma 153 líneas authored (132 adiciones + 21 eliminaciones) y toca exactamente los cuatro paths de `Área`. Strict TDD observó primero 12 pass / 5 fail sobre el comportamiento original y 16 pass / 1 fail después de corregir el token; el focused final pasó 38/38, 0 fallos, 186 assertions en 2 archivos y 301 ms. La suite integral del candidato exacto pasó 1080/1080, 0 fallos, 6069 assertions, 83 archivos y 147,70 s; HEAD y los hashes del candidato permanecieron inalterados. La revisión de reliability quedó limpia. El rollback es el commit independiente `2b6dd52`, limitado a `workspace/pi-supervisor.mjs`, `workspace/pi-binding.mjs`, `test/workspace/pi-supervisor.test.mjs` y `test/workspace/pi-binding.test.mjs`. Device/inode queda como follow-up explícito fuera del criterio aprobado, no como trabajo oculto de esta Sesión.
 
 **Depende de:** `S4.11` ✅ COMPLETO, `S4.13` ✅ COMPLETO y `S4.14` ✅ COMPLETO.
 
@@ -366,7 +368,7 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 - `escala`, resuelta — decisión 98 / Emilio Engram 9773 aprobó el guard sincrónico final-currentness de `S4.14`; su entrega levantó esa contaminación de `S9.4` y downstream. **Clase:** contrato visible del producto; API pública; seguridad y permisos; expansión de alcance; dependencias o evidencia contradictorias.
 - `derivable` — nombres de helpers privados, sólo si no cambian ninguna forma pública ni introducen efectos antes de `broker.start`. **Autoridad:** decisiones 84, 96–98. **Falsificador:** el nombre o la extracción altera el shape público, adquiere un recurso o crea una capacidad de cleanup.
 
-**Ruta:** `direct` después del gate — se preserva el contrato route-as-data de Engram 9747/9748. El pipeline `full-sdd` ya corrió una vez; su diseño fallido y sus intentos quedan como evidencia, no como ruta de continuación. Sólo un brief fresco de Support sobre la base entregada de `S4.14`, con dependencias, `Área`, `Recurso` y riesgos recalculados, puede asignar un executor general nuevo después de confirmar capacidad viva y validar el worktree exacto, sin segundo SDD ni SDD por Módulo.
+**Ruta:** `direct` después del gate — se preservó el contrato route-as-data de Engram 9747/9748. El pipeline `full-sdd` corrió una vez; su diseño fallido y sus intentos quedan como evidencia, no como ruta de continuación. El brief fresco de Support sobre la base entregada de `S4.14` confirmó capacidad viva, validó el worktree exacto y habilitó al executor general que cerró la Sesión, sin segundo SDD ni SDD por Módulo.
 
 **Autoridad de ejecución:**
 
@@ -387,7 +389,7 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 | Ownership | `S4.10` retiene el `close` exacto devuelto por `broker.start`. |
 | Fallo posterior | Usa ese `close` exacto o deja cuarentena explícita. |
 
-**Safety gate previo a ejecución:**
+**Safety gate previo a ejecución — satisfecho:**
 
 | Gate | Estado actual | Evidencia necesaria para avanzar |
 |---|---|---|
@@ -396,16 +398,16 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 | Estado implementer-1 | Parcial, no asignable | M1 en `a7d724dc`; M2 son exactamente dos archivos no trackeados, checkpoint Engram 9772; corrección no consumida hasta recibir un brief fresco de Support |
 | Estado implementer-2/3 | Evidencia inmutable | Se preserva sin resume, corrección, rebase ni promoción a capacidad |
 | Brief Support | **Emitido** — Engram 9891, contra `fb80de2` | Dependencias, `Área`, `Recurso` y riesgos recalculados; capacidad viva **1 asiento** (`implementer-2`); `implementer-1` e `implementer-3` excluidos por evidencia congelada. Independencia reducida: lo produjo la misma sesión Claude actuando como Main, registrado explícitamente |
-| Executor | **Asignado y en curso** | `M9.4.1` ✅ COMPLETO en `9f29f20`; `M9.4.2` pendiente. Ninguna evidencia congelada fue consumida, rebasada ni corregida |
+| Executor | **Cerrado** | `M9.4.1` ✅ COMPLETO en `9f29f20`; `M9.4.2` ✅ COMPLETO en `696f500`; criterio 1 ✅ COMPLETO en `2b6dd52`. Ninguna evidencia congelada fue consumida, rebasada ni corregida |
 
 **Qué permanece congelado:**
 
 - Candidato histórico: `304d534`, tree `8049d32`; evidencia inmutable del bloqueo verificado.
 - Implementer-1: M1 `a7d724dc`; M2 exactamente dos archivos no trackeados, checkpoint Engram 9772; corrección disponible no consumida.
 - Implementer-2 e implementer-3: evidencia inmutable, sin promoción a capacidad.
-- Hasta el brief fresco: cero resume, corrección, rebase, cherry-pick o mutación; valor como capacidad: ninguno.
+- Antes del brief fresco ya satisfecho regía: cero resume, corrección, rebase, cherry-pick o mutación; valor como capacidad: ninguno.
 
-**Condición de retoma:**
+**Condición de retoma satisfecha — registro del gate:**
 
 1. `S4.14` está entregada sobre la nueva base canónica.
 2. Support relee esa base, recalcula dependencias, `Área`, `Recurso` y riesgos, confirma capacidad viva y valida el worktree exacto.
@@ -413,16 +415,9 @@ La tabla de migración y los contratos completos de `S9.1`–`S9.3` anteriores p
 4. Sólo después de que ese brief confirme capacidad viva y valide el worktree exacto, un executor fresco comienza desde la base canónica; no consume la corrección disponible ni retoma estados parciales.
 5. Los criterios y Módulos siguientes se conservan como contrato, sujetos al brief fresco.
 
-**Criterios de aceptación — los ocho son binarios. Siete pasan; uno queda abierto.**
+**Criterios de aceptación — los ocho son binarios y están cerrados.**
 
-- [ ] **ABIERTO — la mitad de observación del kernel no está implementada.** El binding exacto sí se
-  valida antes y después de cada `await` contra el contexto de `S4.10`, y el keepalive Tower-owned se
-  registra dentro de esa frontera verificada. **Pero la [autoridad Engram 9748](#) enuncia este
-  criterio como «S4.10 context, Tower keepalive, **and kernel PID/cwd/start-token** agree before and
-  after async observation», y el puerto `observeProcess` que observaría PID, cwd y start-token del
-  kernel no existe en lo entregado.** No se declara cumplido. Consecuencia real: un proceso del SO
-  reemplazado bajo el mismo worktree se detecta por `process_id`/`worktree_id` del registro neutral,
-  no por evidencia del kernel.
+- [x] El binding exacto se valida antes y después de cada `await` contra el contexto de `S4.10`, el keepalive Tower-owned se registra dentro de esa frontera verificada y `observeProcess` comprueba que PID, cwd y start-token del kernel coinciden antes y después de la observación async. Entregado en `2b6dd52` conforme a la autoridad Engram 9748.
 - [x] `runtimeRoute` es dato puro: preparación y validación no crean socket, archivo, listener, lock, reserva ni capacidad de `close`/`release`.
 - [x] Ruta inválida o stale, pérdida del binding actual o `dispose` antes de start dejan cero broker/listener y ejecutan cero cleanup.
 - [x] `broker.start`, llamado dentro de `S4.10 acquireAtReservation`, es el primer efecto y devuelve el `close` exacto que `S4.10` retiene como owner.
