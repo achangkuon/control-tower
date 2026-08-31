@@ -214,7 +214,35 @@ en la rama local `parked/s12.2-docs-congelados` (`2b0506c`).
 - [ ] Tarea T12.2.2.2 — GREEN: reescribir el alcance como producto local.
 - [ ] Tarea T12.2.2.3 — REFACTOR: `rg -ci` devuelve cero como alcance vigente.
 
-### Módulo M12.2.3 — STATUS de P0/P5/P8, `decision-register`, `scope-comparison` · ~150 líneas
+### Módulo M12.2.3 — ✅ ENTREGADO · supersesión marcada, registro conservado
+
+**El hallazgo dio vuelta el Módulo, y para mejor: casi nada de esto era alcance a purgar.** De las
+~40 menciones que la auditoría contó en estos archivos, **prácticamente ninguna era alcance
+vigente**: son el registro de *por qué se retiró*. Purgarlas habría destruido la trazabilidad de la
+misma decisión que este Plan implementa.
+
+- `plan-8/STATUS.md` — **ya estaba correcto.** `S8.7` figura 📚 ARCHIVADO dos veces (líneas 17 y 30)
+  con su razón; las 14 menciones son el cuerpo de esa Sesión archivada. Sin cambios.
+- `plan-5/STATUS.md` — ya declara el puente archivado y no-dependencia (líneas 519, 572, 825). Sin
+  cambios.
+- `decision-register.md` — las decisiones 14, 15 y 16 son **registro histórico** y la 57 es la que
+  retiró el transporte remoto. Se agregó marca de supersesión a las tres, sin reescribir ninguna.
+- `scope-comparison.md` — se autodeclara «BORRADOR PARA DECISIÓN» con **medición base del
+  2026-08-10**. Se marcó supersesión parcial; la medición **no** se corrige, porque fue exacta ese
+  día y corregirla la falsificaría.
+- `plan-0/STATUS.md` — P0 está ✅ COMPLETO y sus Tareas `[x]` son registro de trabajo hecho. Se
+  agregó una nota de alcance que conserva el principio que la enmienda defendía —presentar no es
+  autorizar— y explica que su sujeto salió del producto.
+
+**Enmienda de `Área`, declarada:** se agregó `openspec/plans/release-chain.md`, que no estaba
+listado y contenía **el único enunciado en presente** de todo el grupo: «la autorización de merge
+por Telegram *es* parte del alcance» (línea 196). Es la misma responsabilidad, no alcance nuevo.
+
+**Fuera de `Área`, derivado a `S12.9`:** `openspec/plans/sdd-tower-implementation/manifest.yaml`
+declara el slice `product-f-telegram-delivery` como trabajo a implementar, y **no se puede tocar
+acá** por tres razones: sus `acceptance_refs` fijan el digest de los requisitos; el slice es
+dependencia de `product-g-continuous-loop`, así que borrarlo rompe el grafo; y `slice_id` es
+entidad de dominio con esquema, exenta de renombre por la convención §4.
 - [ ] Tarea T12.2.3.1 — RED: separar qué menciones son alcance y cuáles registro histórico.
 - [ ] Tarea T12.2.3.2 — GREEN: corregir el alcance; marcar el registro como histórico en su lugar.
 - [ ] Tarea T12.2.3.3 — REFACTOR: ninguna Sesión viva del grafo depende de la VPS.
@@ -561,6 +589,22 @@ lo publica con procedencia correcta.
 - [ ] `test/provenance/provenance.test.mjs` resuelve el manifiesto por el puntero, y la suite pasa
       1026 o más con 0 fallos
 - [ ] El diff no toca ninguna ruta fuera de `Área`, y ninguno de los 15 archivos de `S12.8`
+
+**Alcance real medido el 2026-08-30, mayor que el enunciado al abrir esta Sesión.** El digest de
+los tres documentos no está fijado en un lugar: hay **34 pins en 10 archivos**. El más cargado es
+`openspec/plans/sdd-tower-implementation/manifest.yaml` con **19**, seguido por
+`autonomous-v2/revisions/1/manifest.yaml` con 3. Los otros ocho viven en directorios de cambios
+**activos** —`p7-p8-integrated-reconciliation`, `p7-host-neutral-loop-opencode-adapter`,
+`p8-slice-planning`, `s9-1-safe-slot-lifecycle`— y uno en `plan-3/STATUS.md`, que es un Plan
+✅ COMPLETO cuyo registro no debería cambiar. Esta Sesión también hereda el slice
+`product-f-telegram-delivery` del manifiesto, cuyo `slice_id` no se renombra (convención §4) y
+cuya eliminación rompería la dependencia de `product-g-continuous-loop`.
+
+**Esto vuelve a abrir la decisión que la originó.** El maintainer eligió la opción A —avanzar la
+revisión— sobre un costo enunciado de «tres digests en un manifiesto». El costo real es 34 pins en
+10 archivos, dos de ellos registros que no deberían mutar. La opción C —respetar el sellado y poner
+el aviso de alcance en un archivo vecino sin sellar— gana fuerza justamente por esta medición: 34
+pins son el sistema declarando que esos documentos son línea base inmutable.
 
 **Módulos:** los escribe la fase `tasks` de SDD. Este Plan fija el contrato y no duplica esa
 descomposición.

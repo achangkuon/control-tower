@@ -142,6 +142,8 @@ La [unificación del 2026-08-01](../release-chain.md) puso la aprobación remota
 
 El principio de §16.1 no se toca — **Hermes presenta; Main crea, valida y consume.** Lo que se amenda es la confusión entre *transportar una decisión* y *tener autoridad*.
 
+> **Nota de alcance, 2026-08-30.** El sujeto de esta enmienda —el puente remoto— salió del producto: la Torre corre en la máquina donde se trabaja. **El principio que la enmienda defendía sobrevive intacto y es más importante que su sujeto:** presentar una decisión no es tener autoridad sobre ella. Valía cuando la superficie era remota y vale ahora que es la terminal. Las Tareas marcadas `[x]` arriba son registro de trabajo hecho y no se reescriben.
+
 ### Módulo 0.3.1 — Enmienda del requisito
 
 - [x] Tarea 0.3.1.1 — Reescribir el requisito *Optional bounded Hermes bridge* para distinguir explícitamente presentación y transporte de callback acotado, que quedan permitidos, de creación y consumo de autoridad, que siguen siendo exclusivos de Main.

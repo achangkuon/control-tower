@@ -193,7 +193,7 @@ Había una contradicción entre dos documentos que describían la primera versi�
 
 | Fuente | Qué dice |
 |---|---|
-| `openspec/specs/sdd-tower-implementation-v1-requirements.md` §16–§17 | La autorización de merge por Telegram es parte del alcance. Define canal, sobre, callback, fallback textual y revalidación. |
+| `openspec/specs/sdd-tower-implementation-v1-requirements.md` §16–§17 | **Alcance retirado el 2026-08-30.** Define canal, sobre, callback, fallback textual y revalidación para una autorización por superficie remota que ya no forma parte del producto. Se cita como fuente histórica, no como requisito vigente. |
 | `changes/archive/2026-07-31-installable-v1-autonomous-v2-split/specs/installable-control-tower-v1/spec.md:73-87` | El puente **MUST NOT** exponer Git delivery ni merge. El escenario *Remote authority is rejected* obliga a **rechazar** una solicitud de merge que venga de Hermes. |
 
 Se resolvió sin interpretación. En una frontera de autoridad, la ambigüedad es el incidente.
