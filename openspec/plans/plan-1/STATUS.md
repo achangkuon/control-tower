@@ -6,7 +6,7 @@
 
 ## Autoridad vigente y cómputo canónico
 
-Pi es el primer host de implementación. La cadena activa empieza en [`S9.4`](../plan-9/STATUS.md) y continúa por `S1.17 → S1.18 → S1.19`; desde `S1.18` también se habilita `S8.12`, y `S1.19` junto con `S8.12` convergen en `S8.13` antes de `S7.1`. La base OpenCode `S1.11`–`S1.16` permanece cerrada y preservada, pero su continuación futura está diferida. Claude permanece como objetivo opt-in posterior en `P8/S8.5`. Ni OpenCode ni Claude bloquean la primera release Pi.
+Pi es el primer host de implementación. La cadena activa empieza en [`S9.4`](../plan-9/STATUS.md) y continúa por `S1.17 → S1.18 → S1.19`; `S1.18` converge con el interceptor [`S9.6`](../plan-9/STATUS.md) en `S9.5`, y la cadena de materialización y entrega sigue `S9.5 → S8.12 → S8.13` antes de `S7.1`. `S8.13` conserva además sus gates directos `S1.19` y `S4.12`. La base OpenCode `S1.11`–`S1.16` permanece cerrada y preservada, pero su continuación futura está diferida. Claude permanece como objetivo opt-in posterior en `P8/S8.5`. Ni OpenCode ni Claude bloquean la primera release Pi.
 
 Este es el único registro de **estados vigentes** que define el numerador y el denominador de P1. Las tablas posteriores que describen estados anteriores son historia y no vuelven a enumerar Sesiones.
 
@@ -103,9 +103,11 @@ graph LR
   S113 --> S114["S1.14 polling · ✅"]
   S114 --> S115["S1.15 conformidad · ✅"]
   S115 --> S116["S1.16 transporte · ✅"]
-  S94["S9.4 supervisor Pi · 📋"] --> S117["S1.17 gate Pi · 📋"]
+  S94["S9.4 supervisor Pi · 🔵 EN CURSO"] --> S117["S1.17 gate Pi · 📋"]
   S117 --> S118["S1.18 adapter Pi · 📋"]
   S118 --> S119["S1.19 regresión Pi · 📋"]
+  S118 --> S95["S9.5 materialización · 📋"]
+  S96["S9.6 interceptor Pi-first · 🟢"] --> S95
 ```
 
 `S1.1`–`S1.8` no reciben aristas inventadas: sus cierres legacy permanecen probados por PR #38–#45 y el `apply-progress.md` histórico.
@@ -302,7 +304,7 @@ Esta reconciliación registra la autoridad específica del maintainer para P1. N
 | **Legacy P10 — runtime versionado y cutover verificado** | La traza histórica de lifecycle está en `P8/S8.2` y `P8/S8.8`; el lifecycle Tower-owned restante está enumerado en `P8/S8.12 → P8/S8.13`. | No se declara P10 totalmente ejecutado. Configurar o cortar OpenCode, Pi, Claude o assets Gentle AI quedó supersedido y fuera del alcance de Tower. Judgment Day y las obligaciones de proceso tampoco pertenecen a Tower. |
 | **Legacy P11 — verificación y handoff CT-only** | Los dueños actuales de verificación son `P1/S1.19` para estabilidad Pi, [`P7/S7.1`](../plan-7/STATUS.md) para el piloto terminal Pi-first sobre candidato inmutable y `P8/S8.13` para instalación, activación, rollback y preflight. | El gate ómnibus de 64 IDs y tres hosts se retira como contrato de primera release. La auditoría residual legacy no fue ejecutada ni se acredita. La validación futura de OpenCode y Claude queda diferida por host; Judgment Day, Servi-Task-U y la ceremonia de calidad de proceso permanecen fuera de Tower. |
 
-No queda ninguna responsabilidad de legacy P9–P11 pendiente y oculta en P1: sus remanentes de producto están trazados a `S1.17`–`S1.19`, `S7.1`, `S8.5`, `S8.12` y `S8.13`; lo supersedido o externo se nombra como tal y no consume el porcentaje de P1. Esta reconciliación no pretende inventariar ni reclasificar todo P8: `S8.6` continúa 🟡 DIFERIDO y `S8.11` continúa 🔴 BLOQUEADO bajo sus contratos propios en [`P8`](../plan-8/STATUS.md), sin cambio de estado, cola ni denominador. OpenCode y Claude no están retirados: son objetivos futuros/diferidos y no bloquean la primera release Pi.
+No queda ninguna responsabilidad de legacy P9–P11 pendiente y oculta en P1: sus remanentes de producto están trazados a `S1.17`–`S1.19`, `S7.1`, `S8.5`, `S9.5`, `S9.6`, `S8.12` y `S8.13`; lo supersedido o externo se nombra como tal y no consume el porcentaje de P1. Esta reconciliación no pretende inventariar ni reclasificar todo P8: `S8.6` continúa 🟡 DIFERIDO y `S8.11` continúa 🔴 BLOQUEADO bajo sus contratos propios en [`P8`](../plan-8/STATUS.md), sin cambio de estado, cola ni denominador. OpenCode y Claude no están retirados: son objetivos futuros/diferidos y no bloquean la primera release Pi.
 
 ## Reconciliación Pi-first de S1.17–S1.19 — 2026-08-27
 

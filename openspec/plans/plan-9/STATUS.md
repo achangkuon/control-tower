@@ -3,7 +3,7 @@
 **Propósito:** que existan asientos de trabajo estables que Main pueda asignar, materializar visualmente y reciclar sin pisar a un agente trabajando, y que tener varios no cueste una instalación de dependencias por cada uno.
 
 **Estado:** 🔵 EN CURSO
-**Avance:** 20% (1/5 S)
+**Avance:** 17% (1/6 S)
 
 > **Reordenado y recortado el 2026-08-21 por la [decisión 62](../decision-register.md), tras la auditoría exclusiva de P9.**
 > Los IDs son posicionales según el [estándar de planes](/home/emili/.claude/skills/_shared/plan-naming-convention.md), así que
@@ -120,10 +120,10 @@ Las decisiones 49–54 del [registro](../decision-register.md) y las referencias
 | Campo | Contrato |
 |---|---|
 | Orden histórico OpenCode-first | `S9.1 → S9.2 → S9.3`; `S9.4` estaba 🟡 DIFERIDO. La autoridad Pi-first vigente está en la reconciliación del 2026-08-27. |
-| Avance canónico | 20% (1/5 S). `S9.1` cerró el 2026-08-30. `S9.5` entra al denominador como objetivo nuevo autorizado; `S9.4` conserva su historia diferida y su contrato Pi-first vigente. |
+| Avance canónico | 17% (1/6 S). `S9.1` cerró el 2026-08-30. `S9.6` entra al denominador como objetivo Pi-first autorizado por Engram 9921; `S9.4` conserva su historia diferida y su contrato Pi-first vigente. |
 | Entrega | Commit directo a `master`, sin PR. Cada resultado independientemente verificable y revertible, ≤400 líneas authored. |
-| Próxima acción | `S9.4` vuelve a 📋 PLANIFICADO y no es asignable hasta recibir un brief fresco de Support sobre la base entregada de `S4.14` que recalcule dependencias, `Área`, `Recurso` y riesgos y, antes de asignar, confirme capacidad viva y valide el worktree exacto. Su estado parcial queda preservado sin resume ni corrección. `S9.5` conserva `S8.12 + S9.4`. |
-| Decisión abierta | **Ninguna.** `S4.14` está ✅ COMPLETO; el único gate actual es un brief fresco de Support con esas comprobaciones, no otra decisión. |
+| Próxima acción | `S9.6` es la próxima prioridad declarada por el maintainer; su planificación queda lista pero la capacidad permanente 0/3 no autoriza asignación. `S9.4` conserva por separado su criterio abierto y `S9.5` espera directamente `S1.18 + S9.6`. |
+| Decisión abierta | **Ninguna.** El contrato visible Pi-first fue resuelto por el maintainer en Engram 9921; capacidad y asignación siguen siendo gates operativos, no decisiones de producto. |
 | Autoridad histórica | Engram 8478 rev8, 8506, 8645, 8646, 8647 rev2, 8894, 8898, 8950, 8955, 8908; decisiones 49–54 y 62. Los artefactos SDD de la vieja `S9.1` viven en `openspec/changes/s9-1-safe-slot-lifecycle/` y describen un alcance **superado**: se conservan como evidencia, no como autoridad de implementación. |
 
 ---
@@ -269,13 +269,13 @@ graph TD
   S91["S9.1 pool de asientos · 📋"] --> S92["S9.2 interlock de ocupado · 📋"]
   S91 --> S93["S9.3 caché externa de Bun · 📋"]
   S93 -.-> S94H["S9.4 launcher Pi · historia diferida"]
-  S411["S4.11 operaciones neutrales · ✅"] --> S94["S9.4 supervisor Pi-first · 📋 PLANIFICADO · no asignable hasta brief Support fresco"]
+  S411["S4.11 operaciones neutrales · ✅"] --> S94["S9.4 supervisor Pi-first · 🔵 EN CURSO · un criterio abierto"]
   S413["S4.13 validación ownership · ✅"] --> S414["S4.14 actualidad final · ✅"] --> S94
-  S812["S8.12 bundle Tower · 📋"] --> S95["S9.5 materialización Herdr · 📋"]
-  S94 --> S95
+  S118["S1.18 adapter Pi · 📋"] --> S95["S9.5 materialización Main/Support/Agentes · 📋"]
+  S96["S9.6 interceptor Pi-first · 🟢"] --> S95
 ```
 
-`S9.2` y `S9.3` no dependen entre sí. `S9.5` no espera el pool: consume asientos exactos ya aprobados por el brief y no crea, asigna ni recicla worktrees.
+`S9.2` y `S9.3` no dependen entre sí. `S9.6` es independiente del pool y del supervisor: intercepta intención antes del turno de modelo. `S9.5` espera directamente `S1.18` y `S9.6`; consume asientos exactos ya aprobados por el brief y no crea, asigna ni recicla worktrees.
 
 ## Qué queda pendiente de reconciliar fuera de este Plan
 
@@ -510,30 +510,31 @@ guiones en vez de conteos. Ninguna suite lo detecta.
 
 - El candidato exacto `304d534` (tree `8049d32`) y sus cinco intentos conservan evidencia de la raíz causal y del diseño fallido.
 - Queda inmutable: cero corrección, rebase, cherry-pick, resume o mutación sobre esos bytes.
-- Su existencia no satisface ningún criterio de `S9.4` y no autoriza runtime, Tower, DB, worktree ni peer actions; `S9.4` está 📋 PLANIFICADO y no es asignable hasta recibir un brief fresco de Support sobre la base entregada de `S4.14` que recalcule dependencias, `Área`, `Recurso` y riesgos y, antes de asignar, confirme capacidad viva y valide el worktree exacto.
+- En ese checkpoint, su existencia no satisfacía ningún criterio de `S9.4` ni autorizaba runtime, Tower, DB, worktree o peer actions; el brief fresco posterior satisfizo ese gate según la autoridad vigente de `S9.4`, sin convertir estos bytes congelados en continuación.
 - Implementer-1 conserva M1 en `a7d724dc` y M2 como exactamente dos archivos no trackeados registrados en Engram 9772; su corrección sigue sin consumirse.
 - La evidencia de implementer-2 e implementer-3 permanece inmutable y no se promueve a capacidad.
-- Sólo un brief fresco sobre la base entregada de `S4.14`, con esas comprobaciones, puede asignar un executor nuevo después de confirmar capacidad viva y validar el worktree exacto; ninguna evidencia previa es continuación.
+- La exigencia histórica de brief fresco queda preservada como evidencia del gate ya satisfecho; capacidad viva, asignación y worktree exacto siguen requiriendo validación operativa nueva.
 
-## Sesión 9.5 — Materialización visual Herdr posterior al brief confirmado
+## Sesión 9.5 — Materialización determinista de Main, Support y Agentes
 
 **Estado:** 📋 PLANIFICADO
 
-**Depende de:** `S8.12`, `S9.4`.
+**Depende de:** `S1.18`, `S9.6`.
 
 **Área:** `skills/torre-control-entregas/**`, `skills/torre-herdr-seat-materialization/**`, `workspace/herdr-seat-materializer.mjs`, `test/skills/herdr-seat-materialization.test.mjs`, `test/workspace/herdr-seat-materializer.test.mjs`.
 
-**Recurso:** sesión Herdr enfocada, panes y nombres de agente exactos del brief; binding Pi/Intercom de `S9.4`. Sin DB, migraciones, worktree lifecycle ni token de entrega.
+**Recurso:** sesión Herdr enfocada, panes y nombres de agente exactos del brief; adapter Pi/Intercom de `S1.18` y route validado por `S9.6`. Sin DB, migraciones, worktree lifecycle ni token de entrega.
 
 **Decisiones:**
-- `escala`, **resuelta por la decisión 91 / Engram 9652** — el brief explícitamente confirmado autoriza automáticamente sólo los asientos visibles exactos que enumera. **Clase:** seguridad y permisos; contrato visible del producto. **Contaminaba:** toda `S9.5` antes del primer RED.
+- `escala`, **resuelta por la decisión 91 / Engram 9652** — el brief explícitamente confirmado autoriza automáticamente sólo los asientos visibles exactos que enumera. **Clase:** seguridad y permisos; contrato visible del producto. **Contaminaba:** toda `S9.5` antes del primer RED. **Contamina:** `S8.12 → S8.13`.
+- `escala`, **resuelta por Engram 9921** — toda intención válida de Sesión llega por el route inmutable `torre-control`; no existe degradación a `session-kickoff`. **Clase:** contrato visible del producto. **Contamina:** `S9.5 → S8.12 → S8.13`.
 - `derivable` — reutilización segura. **Criterio:** nombre de agente, worktree exacto, readiness Pi y conectividad Intercom coinciden con el brief; cualquier mismatch falla cerrado y no se repara por inferencia. **Autoridad:** decisión 91. **Falsificador:** un pane o proceso preexistente se reutiliza con uno de los cuatro hechos distinto o no probado.
 - `derivable` — contrato Herdr. **Criterio:** la hija obtiene sintaxis y capacidades del runtime instalado mediante `herdr --skill`; no copia comandos ni toma el foco implícito de otro pane. **Autoridad:** decisión 91 y contrato dinámico Herdr. **Falsificador:** una actualización compatible exige editar sintaxis duplicada en la skill Tower.
 - `derivable` — fallback manual. **Criterio:** Herdr ausente o incompatible devuelve instrucciones acotadas para los asientos aún no materializados, conserva evidencia de los ya validados y nunca declara el conjunto listo. **Autoridad:** Engram 9652. **Falsificador:** éxito parcial presentado como total o creación adicional fuera del brief.
 
 **Ruta:** `design-tasks` — producto, autoridad y fallos están cerrados; falta fijar el seam técnico mínimo entre skill hija y materializador sin duplicar el CLI Herdr.
 
-**Autoridad:** decisiones 91 y 101; Engram 9652 (`Automático tras brief`); decisiones 88 y 100 para el source root Tower-owned que entrega `S8.12`; contrato vivo leído exclusivamente con `herdr --skill`.
+**Autoridad:** decisiones 91 y 101; Engram 9652 (`Automático tras brief`); Engram 9921 (`decision/pi-first-input-interceptor-contract`); decisiones 88 y 100 para el source root Tower-owned que después empaqueta `S8.12`; contrato vivo leído exclusivamente con `herdr --skill`.
 
 **Frontera de implementación:** `S9.5` sigue sin implementar. Debe automatizar y materializar la topología ya definida —madre Tower → hija Tower/Herdr → materializador— y el binding de asiento ya vigente; no vuelve a diseñar ownership, routing, roles ni membresía del bundle.
 
@@ -552,7 +553,7 @@ guiones en vez de conteos. Ninguna suite lo detecta.
 |---|---|---|---|---|---|
 | Madre `torre-control-entregas` | Custodiar brief confirmado, orden y dispatch | brief exacto confirmado | lista inmutable de asientos aprobados | invocación única de la hija o rechazo | Main; nunca controla Herdr directamente |
 | Hija `torre-herdr-seat-materialization` | Traducir esa lista a una operación Tower/Herdr | sólo la madre, después del gate | asientos exactos + contrato `herdr --skill` | reporte creado/reutilizado/pendiente | decisión 91; sin autoridad de planificación o dispatch |
-| `herdr-seat-materializer` | Crear/reusar y validar hechos de runtime de forma idempotente | llamada tipada de la hija | nombre, path/rama, `cwd`, `foreground_cwd`, pane/session y binding `S9.4` | evidencia por asiento + fallback acotado | decisiones 91/101; Herdr, Pi e Intercom |
+| `herdr-seat-materializer` | Crear/reusar y validar hechos de runtime de forma idempotente | llamada tipada de la hija | nombre, path/rama, `cwd`, `foreground_cwd`, pane/session, adapter `S1.18` y route `S9.6` | evidencia por asiento + fallback acotado | decisiones 91/101, Engram 9921; Herdr, Pi e Intercom |
 
 **Topología:** madre → hija lazy-loaded → materializador. No hay ciclos, doble autoridad ni trigger público alternativo. Herdr aporta mecánica; la Torre no la reimplementa. La hija y el materializador son una ruta especializada, no un segundo dispatcher.
 
@@ -568,4 +569,51 @@ guiones en vez de conteos. Ninguna suite lo detecta.
 - [ ] Tarea T9.5.2.2 — GREEN: materializar y validar exactamente cada asiento aprobado usando IDs/respuestas reales del contrato Herdr.
 - [ ] Tarea T9.5.2.3 — REFACTOR: estabilizar reporte/fallback, preservar foco y prohibir cierre o prompt sobre recursos ajenos.
 
-**Forecast:** dos commits directos, uno por Módulo; cada uno debe quedar independientemente verificable, revertible y ≤400 líneas authored. Si cualquiera supera 400 de forma inseparable, se divide en otra Sesión; nunca se amplía `S8.12` o `S8.13`.
+**Forecast:** dos commits directos secuenciales, uno por Módulo; cada uno debe quedar independientemente verificable, revertible y ≤400 líneas authored. No son PRs ni un nivel adicional. Si cualquiera supera 400 de forma inseparable, se divide en otra Sesión; nunca se amplía `S8.12` o `S8.13`.
+
+---
+
+## Sesión 9.6 — Interceptor de intención Pi-first
+
+**Resultado:** la fuente Tower-owned de una extensión global Pi instalable intercepta únicamente `empezamos la sesión`, `continuemos con la implementación`, `start session`, `resume implementation` y la invocación explícita `/skill:session-kickoff ...`. Una intención válida produce el bloque expandido exacto de Pi `<skill name="torre-control" location="…">…</skill>`, construido desde un único snapshot capturado de bytes de skill ya validados más el contexto normalizado de la Sesión; nunca degrada a un literal `/skill:torre-control`. La clasificación de enrolamiento precede cualquier captura: un repositorio ordinariamente no enrolado, sin evidencia candidata, devuelve `continue` byte por byte para toda entrada, incluso si coincide con una frase o invocación Tower; evidencia candidata insegura, corrupta o ambigua ante una entrada Tower-shaped devuelve un error local estable `CT_PI_TOWER_*` con `handled` y cero turno de modelo. Sólo después de una coincidencia enrolada única se validan la entrada, versión Pi, skill/provenance, package manifest, snapshot/orden revisados y drift post-captura; el fallo de cualquiera de esas validaciones devuelve `CT_PI_TOWER_*` con `handled` y cero turno de modelo. Una entrada no Tower siempre continúa byte por byte. Su packaging pertenece a `S8.12` y su instalación/rollback a `S8.13`.
+
+**Estado:** 🟢 LISTO — el contrato de producto está autorizado; capacidad permanente 0/3 significa **sin asignación**, no una dependencia del grafo.
+
+**Depende de:** —.
+
+**Área:** `extensions/pi/tower-session-router.ts`, `extensions/pi/package.json`, `test/extensions/pi/tower-session-router.test.mjs`.
+
+**Recurso:** cadena global de transforms `pi.on("input")`; snapshot exacto del conjunto de extensiones y su orden revisado; identidad de runtime Pi 0.84.4; un único snapshot capturado de bytes validados, provenance y digest de la skill `torre-control`. Sin DB, migraciones, worktree lifecycle, Herdr ni token de entrega.
+
+**Decisiones:**
+
+- `escala`, **resuelta por el maintainer en Engram 9921** — gramática cerrada de cuatro frases, rewrite explícito de `/skill:session-kickoff ...`, route obligatorio al bloque expandido exacto de `torre-control` y rechazo fail-closed sin turno de modelo. **Clase:** contrato visible del producto. **Contamina:** `S9.6 → S9.5 → S8.12 → S8.13`.
+- `derivable` — forma interna del parser y códigos locales. **Criterio:** aceptación exclusiva de las cuatro frases autorizadas y de la invocación explícita sólo tras una coincidencia enrolada única; toda entrada en un repositorio ordinariamente no enrolado, sin evidencia candidata, y todo input no Tower pasan byte por byte con `continue`. En un repositorio enrolado único, todo Tower-shaped inválido devuelve un `CT_PI_TOWER_*` estable con `handled`; cualquier quinta forma aceptada o cualquier fallo que llegue al modelo falsifica la derivación. **Autoridad:** Engram 9921.
+- `derivable` — comprobación de runtime, enrolamiento y provenance. **Criterio:** la ausencia ordinaria de evidencia candidata de enrolamiento devuelve `continue` sin cambios, incluso para texto parecido a intención Tower; evidencia candidata insegura, corrupta o ambigua combinada con una entrada Tower-shaped devuelve `CT_PI_TOWER_*` con `handled`. Tras probar una coincidencia enrolada única, un fallo de versión Pi, bytes/provenance/digest de `torre-control`, manifest de paquete o drift posterior a la captura devuelve `CT_PI_TOWER_*` con `handled`, antes de cualquier turno de modelo. **Autoridad:** Engram 9921. **Falsificador:** un repositorio ordinariamente no enrolado se captura, o el bloque se construye desde bytes no capturados por el snapshot validado único.
+- `derivable` — determinismo del conjunto de transforms. **Criterio:** después de una coincidencia enrolada única, `extensions/pi/package.json` prueba Pi 0.84.4, provenance/digest de skill y el snapshot y orden revisados de transforms; manifest faltante o inválido, prioridad implícita, extensión desconocida, transformación rival o drift post-captura fallan cerrados con `CT_PI_TOWER_*`, `handled` y cero turno de modelo. **Autoridad:** Engram 9921. **Falsificador:** el resultado depende de un orden no declarado o de más de un snapshot de bytes.
+
+**Ruta:** `design-tasks` — resultado, gramática y fallos están cerrados; una elaboración técnica acotada debe fijar el seam de extensión, manifest y preflight contra Pi 0.84.4 sin rediseñar el contrato visible. **Autoridad de ruta:** Engram 9921 y `planificador-granular` §Decision Gates.
+
+**Criterios de aceptación** — todos deben pasar para cerrar:
+
+- [ ] Tras una coincidencia enrolada única, cada una de las cuatro frases autorizadas produce el bloque expandido exacto de Pi `<skill name="torre-control" location="…">…</skill>` desde un snapshot validado más contexto de Sesión normalizado; ninguna otra frase se acepta y nunca se emite un literal `/skill:torre-control`.
+- [ ] Tras una coincidencia enrolada única, `/skill:session-kickoff ...` se reescribe al mismo bloque expandido con el contexto normalizado; no existe route válido al kickoff genérico.
+- [ ] Antes del route se prueba una coincidencia canónica única de enrolamiento Tower; sólo después se validan Pi 0.84.4, bytes/provenance/digest exactos de la skill inmutable, package manifest y snapshot/orden revisados de transforms, y cualquier fallo o drift post-captura termina en `CT_PI_TOWER_*`, `handled` y cero turno de modelo.
+- [ ] Evidencia de enrolamiento insegura, corrupta o ambigua ante input Tower-shaped, e input Tower-shaped inválido en un repositorio enrolado único, fallan cerrados con error local estable `CT_PI_TOWER_*`, `handled` y cero turno de modelo; no hay degradación genérica ni prioridad asumida.
+- [ ] Un repositorio ordinariamente no enrolado, sin evidencia candidata, devuelve `continue` byte por byte para cualquier input —incluidas frases o invocaciones parecidas a intención Tower—; input no Tower hace lo mismo en todos los repositorios, sin transformación ni falsa captura.
+- [ ] Repetir el mismo input bajo el mismo snapshot capturado de skill, manifest y transforms converge al mismo resultado y evidencia ese único snapshot validado.
+- [ ] El diff toca sólo `Área`; no modifica Pi core, skills genéricas, `torre-control`, runtime global, worktrees ni evidencia estacionada.
+
+### Módulo M9.6.1 — Gramática cerrada y route inmutable · forecast 190–250 authored
+
+- [ ] Tarea T9.6.1.1 — RED: cubrir literalmente `empezamos la sesión`, `continuemos con la implementación`, `start session`, `resume implementation`, una quinta forma, Tower-shaped inválido tras enrolamiento único, input no Tower, cada frase en repo ordinariamente no enrolado sin evidencia candidata y rewrite explícito de `/skill:session-kickoff ...`.
+- [ ] Tarea T9.6.1.2 — GREEN: implementar el parser cerrado y, sólo tras una coincidencia enrolada única, construir el bloque expandido exacto `<skill name="torre-control" location="…">…</skill>` desde un único snapshot capturado de bytes validados más contexto de Sesión normalizado, sin emitir `/skill:torre-control`.
+- [ ] Tarea T9.6.1.3 — REFACTOR: estabilizar `continue` byte por byte para repositorio ordinariamente no enrolado sin evidencia candidata y para todo input no Tower, y errores locales `CT_PI_TOWER_*` con `handled` y cero turno de modelo para Tower-shaped inválido tras enrolamiento único, sin ampliar la gramática ni introducir fallback.
+
+### Módulo M9.6.2 — Preflight de enrolamiento, runtime, provenance y transforms · forecast 240–310 authored
+
+- [ ] Tarea T9.6.2.1 — RED: cubrir repo ordinariamente no enrolado sin evidencia candidata y sin cambios, evidencia candidata insegura/corrupta/ambigua con input Tower-shaped, y, tras match enrolado único, Pi distinto de 0.84.4, skill faltante o con provenance/digest divergente, package manifest inválido, snapshot mutado y conflicto u orden no revisado en la cadena de transforms.
+- [ ] Tarea T9.6.2.2 — GREEN: clasificar primero el enrolamiento; tras una coincidencia enrolada única, hacer que `extensions/pi/package.json` pruebe Pi 0.84.4, provenance/digest de `torre-control` y orden revisado de transforms, y validar todos los gates antes de capturar el único snapshot usado por el route.
+- [ ] Tarea T9.6.2.3 — REFACTOR: congelar snapshot/evidencia, probar convergencia y devolver `CT_PI_TOWER_*` + `handled` ante evidencia de enrolamiento insegura/corrupta/ambigua para input Tower-shaped o ante cualquier gate, conflicto o drift posterior al match enrolado único, sin depender de prioridad implícita ni ejecutar un turno de modelo.
+
+**Forecast:** 430–560 líneas authored totales en dos commits directos secuenciales, uno por Módulo; cada commit queda independientemente verificable, revertible y con máximo duro de 400 líneas authored (adiciones + eliminaciones, pruebas junto al comportamiento). No son PRs ni crean un quinto nivel. Si un Módulo no cabe en su commit, se divide la Sesión antes de implementar.

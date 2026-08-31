@@ -995,18 +995,58 @@ El checkpoint completo de `S8.11`, sus commits, conteos, fallos sellados y pasos
 
 **Migración de ownership posterior a `S8.14`, entregada en fuente y aplicada parcialmente.** La decisión 100 conserva el resultado histórico de `S8.14` y fija la autoridad futura en el set local Tower-owned, con contrato padre/router y sesiones ligadas a su worktree. Control Tower `6237275b1a45b8380ce094edcb9dda23155ff006` y `agent-workflows` hasta `1a542da` están publicados; la corrida normal retiró las cuatro copias globales stale. El runtime Tower instalado quedó no verificado/no disponible por el incidente de la decisión 102. Esto no reabre ni vuelve a cerrar `S8.14`.
 
-### Autoridad vigente de S8.12 — membresía del bundle Tower
-**Estado:** 📋 PLANIFICADO · **Depende de:** `S8.10` ✅, `S1.18`, `S8.14` · **Área:** `scripts/payload-closure.mjs`, `install/runtime-payload.mjs`, perfiles/skills Tower-specific y tests de membresía bajo `test/install/**` · **Recurso:** `RUNTIME_PAYLOAD_FILES`.
-**Decisiones:** decisiones 88, 95 y 100 resueltas: incluye runtime, contrato neutral, adapter Pi y el set local de perfiles/skills Tower canónicos —contrato padre/router y Support incluidos—; excluye Planner permanente, configuración Pi/Intercom y skills genéricas Gentle AI. **Ruta:** `design-tasks` — consume ownership ya resuelto; no redefine skills ni recrea el router padre.
-**Criterios de aceptación:** bundle contiene exactamente los bytes Tower-owned locales; los tres perfiles y sus skills se materializan desde el bundle; faltante/extra/symlink falla cerrado; no instala ni activa; no toca fuera de `Área`.
-#### Módulo M8.12.1 — Membresía versionada
-- [ ] Tarea T8.12.1.1 — RED: cubrir perfil faltante, skill externa copiada, extra y symlink.
-- [ ] Tarea T8.12.1.2 — GREEN: declarar y derivar la membresía completa Tower-specific.
-- [ ] Tarea T8.12.1.3 — REFACTOR: una fuente de verdad y guardia de deriva exacta.
+### Autoridad vigente de S8.12 — packaging del bundle Tower
 
-### Sesión 8.13 — Install, activación, rollback y preflight externo
-**Estado:** 📋 PLANIFICADO · **Depende de:** `S8.12`, `S1.19`, `S4.12` · **Área:** `install/lifecycle.mjs`, `install.sh`, `bin/torre`, `test/install/**` · **Recurso:** puntero activo, backup/rollback y preflight de host externo.
-**Decisiones:** decisiones 88, 100 y 102 resueltas; la Torre instala sólo el bundle Tower-owned ya definido, valida compatibilidad y no modifica Pi, pi-intercom ni skills genéricas Gentle AI. La decisión 102 rechaza `upgrade --shim` como recuperación parcial: el runtime instalado queda no verificado/no disponible hasta cerrar esta Sesión. **Ruta:** `full-sdd` — operación reversible, activación y frontera de productos externos; no rediseña ownership ni el router.
+**Estado:** 📋 PLANIFICADO
+
+**Depende de:** `S8.10` ✅ COMPLETO, `S8.14` ✅ COMPLETO, `S9.5`.
+
+**Área:** `scripts/payload-closure.mjs`, `install/runtime-payload.mjs`, `test/install/payload-closure.test.mjs`, `test/install/runtime-payload.test.mjs`, `test/install/tower-role-assets.test.mjs`.
+
+**Recurso:** contrato `RUNTIME_PAYLOAD_FILES`; bytes fuente Tower-owned de `profiles/tower/**`, `skills/torre-control/**`, `skills/torre-control-entregas/**`, `skills/torre-control-soporte/**`, `adapters/pi/**` y `extensions/pi/**`, consumidos sin modificarlos.
+
+**Decisiones:**
+
+- `escala`, **resuelta por las decisiones 88, 95 y 100** — el bundle incluye runtime, contrato neutral, adapter Pi y el set local de perfiles/skills Tower canónicos; excluye Planner permanente, configuración Pi/Intercom y skills genéricas Gentle AI. **Clase:** contrato visible del producto; seguridad y permisos. **Contamina:** `S8.12 → S8.13`.
+- `escala`, **resuelta por Engram 9921** — el interceptor Pi-first y la skill inmutable `torre-control` viajan como bytes Tower-owned coherentes; el bundle no agrega rutas alternativas a `session-kickoff`. **Clase:** contrato visible del producto. **Contamina:** `S8.12 → S8.13`.
+- `derivable` — orden y derivación internos de la membresía. **Criterio:** una sola composición produce declaración y guardia; faltante, extra, symlink o bytes divergentes falla cerrado. **Autoridad:** decisiones 88, 95, 100 y Engram 9921. **Falsificador:** dos enumeraciones aceptan conjuntos distintos.
+
+**Ruta:** `design-tasks` — consume ownership y comportamiento ya resueltos para fijar el seam mínimo de packaging; no redefine skills, interceptor ni router. **Autoridad de ruta:** decisiones 88, 95, 100 y Engram 9921.
+
+**Criterios de aceptación** — todos deben pasar para cerrar:
+
+- [ ] El bundle contiene exactamente los bytes Tower-owned locales, incluidos interceptor Pi-first, `torre-control`, perfiles y skills propietarias; no copia configuración Pi/Intercom ni skills genéricas Gentle AI.
+- [ ] Los tres perfiles y sus skills se materializan desde el bundle sin modificar sus fuentes canónicas.
+- [ ] Faltante, extra, symlink, provenance divergente o incoherencia interceptor/`torre-control` falla cerrado.
+- [ ] Declaración, derivación y guardia observan un único conjunto exacto y determinista.
+- [ ] La Sesión sólo empaqueta: no instala, activa, reescribe configuración global ni ejecuta rollback.
+- [ ] El diff toca sólo `Área`.
+
+#### Módulo M8.12.1 — Membresía versionada · commit directo ≤400 authored
+
+- [ ] Tarea T8.12.1.1 — RED: cubrir perfil/interceptor/skill faltante, skill externa copiada, extra, symlink y provenance divergente.
+- [ ] Tarea T8.12.1.2 — GREEN: declarar y derivar la membresía completa Tower-specific desde una sola composición.
+- [ ] Tarea T8.12.1.3 — REFACTOR: eliminar listas paralelas y probar guardia exacta sin instalar ni activar.
+
+**Forecast:** un commit directo verificable y revertible de máximo 400 líneas authored. Si la membresía y su guardia no caben juntas, se divide `S8.12` antes de implementar; no se crean PRs ni un quinto nivel.
+
+### Sesión 8.13 — Instalación global, activación y rollback
+
+**Estado:** 📋 PLANIFICADO
+
+**Depende de:** `S8.12`, `S1.19`, `S4.12`.
+
+**Área:** `install/lifecycle.mjs`, `install.sh`, `bin/torre`, `test/install/**`.
+
+**Recurso:** puntero activo; ubicación global de la extensión Pi; backups y rollback del bundle Tower; preflight de host externo. Sin mutación de Pi core, pi-intercom, skills genéricas Gentle AI ni worktrees.
+
+**Decisiones:**
+
+- `escala`, **resuelta por las decisiones 88, 100 y 102** — la Torre instala sólo el bundle Tower-owned, valida compatibilidad y rechaza `upgrade --shim` como recuperación parcial. **Clase:** operaciones irreversibles; seguridad y permisos; contrato visible del producto. **Contamina:** `S8.13` y `S7.1`.
+- `escala`, **resuelta por Engram 9921** — la instalación global habilita el interceptor sólo si enrolamiento, Pi 0.84.4, bytes/provenance de `torre-control` y conjunto de transforms pasan preflight; rollback retira o restaura interceptor y skill como una unidad coherente. **Clase:** contrato visible del producto; operaciones irreversibles; seguridad y permisos. **Contamina:** `S8.13` y `S7.1`.
+- `derivable` — orden interno de preflight, activación y diagnóstico. **Criterio:** toda validación ocurre antes de la primera mutación y cualquier fallo deja el estado previo byte-idéntico; una activación parcial o un diagnóstico existence-only falsifica la derivación. **Autoridad:** decisiones 88, 100, 102 y Engram 9921.
+
+**Ruta:** `full-sdd` — activación global, rollback y frontera con productos externos requieren diseño integrado dentro del resultado ya autorizado; no puede rediseñar ownership, gramática, router ni packaging. **Autoridad de ruta:** decisiones 88, 100, 102 y Engram 9921.
 
 **Reproducción obligatoria del incidente:** tras publicar Control Tower en `6237275b1a45b8380ce094edcb9dda23155ff006` y `agent-workflows` hasta `1a542da`, `torre-control --update` actualizó skills, retiró las cuatro copias globales stale y copió el plugin; luego `install.sh:79` falló con `Permission denied` porque `cp` siguió `~/.local/bin/torre` hacia la versión owner-read-only `4f940019…`. El engine/shim activo quedó viejo y la coherencia MCP/engine/plugin no fue verificada. `torre-control --check` dio éxito sólo por existencia, ejecutabilidad y key: no prueba revisión activa ni coherencia.
 
@@ -1016,7 +1056,11 @@ El checkpoint completo de `S8.11`, sus commits, conteos, fallos sellados y pasos
 - [ ] El diagnóstico prueba revisión activa y coherencia exacta entre plugin, MCP y runtime/engine; una mezcla falla cerrado.
 - [ ] Ningún chequeo de sólo existencia/ejecutabilidad/key puede devolver un falso positivo saludable.
 - [ ] Instalación limpia activa el bundle completo y un preflight incompatible falla antes de mutar.
-- [ ] Rollback restaura runtime, perfiles y skills Tower juntos; no escribe configuración/skills externas ni toca fuera de `Área`.
+- [ ] Rollback restaura runtime, interceptor, perfiles y skills Tower juntos; no escribe configuración/skills externas ni toca fuera de `Área`.
+- [ ] La extensión global valida Pi 0.84.4, enrolamiento, bytes/provenance de `torre-control` y conjunto de transforms antes de quedar activa; un mismatch deja cero activación parcial.
+- [ ] El diff toca sólo `Área`; no modifica Pi core, pi-intercom, skills genéricas, worktrees ni evidencia estacionada.
+
+**Forecast de commits directos:** el SDD deberá conservar unidades secuenciales verificables y revertibles de ≤400 líneas authored: (1) preflight/diagnóstico sin mutación, (2) activación atómica de runtime + extensión + skills, (3) rollback integral y reproducción del incidente. Son fronteras de commit, no PRs ni niveles del Plan; si el diseño no puede sostenerlas dentro del límite, debe dividir la Sesión antes de aplicar.
 
 #### Módulo M8.13.1 — Lifecycle conductualmente completo
 - [ ] Tarea T8.13.1.1 — RED: reproducir el symlink owner-read-only, el falso positivo existence-only, preflight incompatible, activación parcial y rollback incompleto.
