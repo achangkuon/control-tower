@@ -1,7 +1,7 @@
 ---
-verified_against: 480afb92bf99d38ee166070d09ec6485bc5de2c4
-verified_at: 2026-08-29
-standfirst: S2.8 volvió opaco el bloque inputs del binding delta sin cambiar el resto del contrato. Cerró localmente con AC1–AC5 en PASS y una excepción humana acotada para AC6; el push remoto sigue sin autorización.
+verified_against: 826ba071777293d7197843293484c364e0524723
+verified_at: 2026-08-31
+standfirst: S9.6 cerró la fuente Pi-first y su contrato con verificación completa. El ruteo global todavía no está activo: S8.12 debe empaquetarlo y S8.13 materializarlo, probarlo, activarlo y poder revertirlo.
 ---
 
 <!--
@@ -33,7 +33,7 @@ Vos dirigís varios agentes de IA trabajando en varios proyectos a la vez. La To
 
 La prioridad cambió: la primera implementación se hará con Pi. No porque Pi pase a ser el producto, sino porque la Torre puede poseer la identidad del proceso que lanzó y exigir comprobantes producidos por ese proceso. Eso le permite distinguir una sesión propia de una sesión que sólo dice serlo.
 
-La unión neutral ya identifica worktree, proceso, incarnation y binding, y expone operaciones sin depender de Pi. `S4.14` cerró la ventana que quedaba después de `S4.13`: confirma en el mismo stack al ocupante exacto inmediatamente antes del publish final. El host Pi sigue sin estar entregado y `S9.4` queda 📋 PLANIFICADO, no asignable hasta recibir un brief fresco de Support sobre la base entregada.
+La unión neutral ya identifica worktree, proceso, incarnation y binding, y expone operaciones sin depender de Pi. `S4.14` cerró la ventana que quedaba después de `S4.13`: confirma en el mismo stack al ocupante exacto inmediatamente antes del publish final. `S9.6` ya cerró la fuente que intercepta intención de Sesión y la enruta a la Torre; `S9.4` sigue 🔵 EN CURSO con un criterio de observación del kernel abierto. Ninguna de esas piezas equivale todavía a una instalación global activa.
 
 ## El veredicto actual
 
@@ -47,10 +47,10 @@ Lo técnico: `S4.10` cerró las cinco formas públicas de identidad y binding; `
 En simple: El enchufe común ya no sólo identifica a cada runtime: también permite mirarlo, comprobar su salud, pedirle que se detenga y adjuntarse sin confiar en lo que el propio caller afirma. Pi puede conectarse sobre una base ya entregada, no sobre una promesa.
 Evidencia: `openspec/specs/host-runtime/spec.md` · `openspec/changes/archive/2026-08-28-s4-11-host-neutral-operations/verify-report.md` · `master/origin/master@6ddf6bc77d236dffad5b8ec625379117a91ce0b3`
 
-### 3 · crítico · La fuente migró y las skills stale salieron, pero la Torre instalada no quedó verificada
-Lo técnico: Control Tower `6237275b1a45b8380ce094edcb9dda23155ff006` y `agent-workflows` hasta `1a542da` están publicados. `torre-control --update` actualizó skills y retiró las cuatro copias globales stale, pero `install.sh:79` siguió el shim symlink hacia la versión owner-read-only y falló después de copiar el plugin. Engine/shim siguen viejos; MCP/engine/plugin no tienen prueba de coherencia. `--check` sólo validó existencia, ejecutabilidad y key.
-En simple: La mudanza de documentos terminó, pero la máquina quedó con piezas de generaciones distintas y sin examen que pruebe que encajan. No vamos a “acomodarla” a medias: hasta `S8.13` la Torre instalada se considera no disponible.
-Evidencia: `openspec/plans/decision-register.md` decisión 102 · `openspec/plans/plan-8/STATUS.md` S8.13 · fuente Control Tower `6237275b1a45b8380ce094edcb9dda23155ff006`
+### 3 · crítico · La fuente Pi-first está completa, pero la Torre instalada todavía no la usa
+Lo técnico: `S9.6` cerró en `826ba07` la extensión fuente, el manifest y el preflight fail-closed con verificación integral. Ese commit no instala ni activa la extensión global: `S8.12` debe incorporar sus bytes al payload y `S8.13` debe materializar, probar, activar y poder revertir `control-tower-activation.json`. El incidente de actualización parcial sigue siendo la evidencia que obliga a una activación atómica, no una autorización para reparar piezas a mano.
+En simple: El desvío automático hacia la Torre ya está construido y probado en el repositorio, pero todavía no está enchufado en la instalación que usan las personas. Empaquetar y activar son pasos separados justamente para no volver a dejar la máquina con piezas de generaciones distintas.
+Evidencia: `openspec/plans/plan-9/STATUS.md` S9.6 · `openspec/plans/plan-8/STATUS.md` S8.12–S8.13 · `826ba071777293d7197843293484c364e0524723`
 
 ## Avance por Plan
 
@@ -74,7 +74,7 @@ Evidencia: `openspec/plans/plan-4/STATUS.md:666-725` · `openspec/plans/plan-4/S
 ### B · resuelto · Los dos defectos de ownership de `S4.10` quedaron cerrados
 Lo técnico: Ya no existe `activate`: `reserve` sólo publica ownership después de adquirir el listener final. Además, cualquier puerto con cleanup incierto queda cercado y una reserva posterior falla antes de intentar adquirirlo. Las regresiones diferenciales y la suite integral pasan sobre el candidato cerrado.
 En simple: La Torre ya no puede declarar “este puerto es mío” sin haberlo tomado de verdad. Y si no puede confirmar que lo limpió, no se lo presta a otro proceso: prefiere frenar antes que entregar dos veces la misma llave.
-Evidencia: `test/contracts/host-runtime/loopback.test.mjs:34-56` · `openspec/changes/archive/2026-08-28-s4-10-host-neutral-runtime/verify-report.md:247-291` · suite `914 pass / 0 fail / 5.291 expectativas`
+Evidencia: `test/contracts/host-runtime/loopback.test.mjs:34-56` · `openspec/changes/archive/2026-08-28-s4-10-host-neutral-runtime/verify-report.md:247-291` · suite `914 pass / sin fallos / 5.291 expectativas`
 
 ### C · estructural · Cada área de trabajo tiene su propio broker y el correo en vuelo puede perderse
 Lo técnico: La topología aprobada usa un broker por worktree, supervisor Tower-owned, rutas runtime cortas, IDs impredecibles y keepalive propiedad de la Torre. El mailbox actual permanece volátil; tras una caída, la recuperación repite operaciones idempotentes desde estado durable.
@@ -92,9 +92,9 @@ En simple: Hay trabajo guardado, pero no hay permiso para llamarlo terminado. El
 Evidencia: `openspec/plans/plan-8/STATUS.md:724-734` · checkpoint ejecutable `388109f1e79f50ce05582d2b0a7b3ff8a9685f72`
 
 ### F · nuevo · La vista automática de los asientos está autorizada, pero todavía no existe
-Lo técnico: Las decisiones 91 y 101 fijan que el brief lleva path/rama exactos y que `cwd` más `foreground_cwd` deben coincidir con el worktree propio de Main, Support o worker antes del prompt/dispatch; un pane Herdr sólo da visibilidad. `S9.5`, dependiente de `S8.12 + S9.4`, automatizará esa regla ya vigente; todavía no existe.
-En simple: Ver escritorios separados no evita que dos agentes trabajen sobre la misma mesa. Hoy Main debe comprobar manualmente la mesa real de cada puesto; más adelante `S9.5` hará esa comprobación automática. Eso todavía no está desplegado.
-Evidencia: `openspec/plans/decision-register.md:449-451,528-530` · `openspec/plans/plan-9/STATUS.md:367-386` · candidate `8beb3d7f846a23504021d2061f75acd76ca6d09f`
+Lo técnico: Las decisiones 91 y 101 fijan que el brief lleva path/rama exactos y que `cwd` más `foreground_cwd` deben coincidir con el worktree propio de Main, Support o worker antes del prompt/dispatch; un pane Herdr sólo da visibilidad. Con `S9.6` cerrado, `S9.5` espera `S1.18`; después `S8.12` empaqueta esa fuente y `S8.13` la activa junto con sus otros gates. La materialización automática todavía no existe.
+En simple: Ver escritorios separados no evita que dos agentes trabajen sobre la misma mesa. La ruta de entrada ya está construida, pero Main aún debe comprobar y abrir cada puesto con la disciplina manual vigente hasta que termine la cadena de materialización, paquete y activación.
+Evidencia: `openspec/plans/decision-register.md` decisiones 91 y 101 · `openspec/plans/plan-9/STATUS.md` S9.5–S9.6 · `826ba071777293d7197843293484c364e0524723`
 
 ## Próximas pruebas y trabajo enumerado
 
@@ -106,10 +106,10 @@ La lista siguiente reemplaza las antiguas “cinco decisiones”. No son pregunt
 | `S4.11` — ✅ COMPLETO; `S4.12` pendiente | Operaciones observables ya entregadas; recuperación mínima Pi después de sus dependencias | Que la Torre ya supervisa o recupera una jornada Pi real |
 | `S4.13` y `S4.14` — ✅ COMPLETO | Validación unpublished y comprobación sincrónica final del ocupante exacto antes de publish | Que el supervisor Pi ya esté entregado |
 | `S9.4` y `S1.17`–`S1.19` | Después de un brief fresco: supervisor, adapter y regresión Pi | Que el estado parcial sea capacidad o pueda retomarse |
-| `S9.5` | Materialización idempotente de sólo los asientos exactos del brief, después de cerrar `S8.12 + S9.4` | Que Herdr ya abra, reutilice o valide esos asientos automáticamente |
+| `S9.5` | Materialización idempotente de sólo los asientos exactos del brief, después de `S1.18`; `S9.6` ya cerró | Que Herdr ya abra, reutilice o valide esos asientos automáticamente |
 | Gate Pi desatendido | Una corrida prolongada atribuible al candidato | Estabilidad de larga duración sin esa evidencia |
 | Gate de caída con tráfico | Recuperación idempotente tras caída real del broker | Entrega garantizada de mensajes en vuelo |
-| `S8.14` — ✅ COMPLETO; `S8.12` y `S8.13` pendientes | Fuente entregada y cuatro copias globales stale retiradas; empaquetar el set local y cerrar update/instalación/diagnóstico/rollback atómicos | Que el runtime Tower instalado esté actualizado, coherente, verificado o disponible |
+| `S8.14` y `S9.6` — ✅ COMPLETO; `S8.12` y `S8.13` pendientes | Perfiles y fuente Pi-first entregados; empaquetar el set local y cerrar materialización, probe, activación y rollback atómicos | Que el runtime Tower instalado enrute automáticamente, esté coherente, verificado o disponible |
 
 ## Lo que pasa ahora mismo
 
@@ -118,10 +118,10 @@ Lo técnico: El candidato `daf7e0e7af4122417ce2bec8a48a11c65a40f23c`, cherry-pic
 En simple: La Torre vuelve a comprobar la llave en el instante de entregarla. Si el proceso cambió, respondió algo ambiguo o falló, no publica ownership viejo. El código está verificado localmente y todavía falta el push directo.
 Evidencia: `contracts/host-runtime/ownership-registry.mjs` · `test/contracts/host-runtime/ownership.test.mjs` · `openspec/specs/host-runtime/spec.md` · candidato `daf7e0e7af4122417ce2bec8a48a11c65a40f23c`
 
-### H · crítico · `S9.4` conserva trabajo parcial no asignable, no capacidad
-Lo técnico: `S9.4` está 📋 PLANIFICADO, sin worker asignado y no es asignable hasta emitir un brief fresco de Support sobre la base entregada. Implementer-1 conserva M1 `a7d724dc`, M2 como dos archivos no trackeados en Engram 9772 y una corrección sin consumir; implementer-2/3 quedan como evidencia inmutable. `S2.8` ya cerró y no aporta capacidad ni asignación a `S9.4`.
-En simple: El último seguro neutral ya está cerrado, pero eso NO convierte el trabajo guardado en una función disponible ni autoriza continuarlo. Support debe emitir asignaciones nuevas; hasta entonces la capacidad asignable sigue en cero.
-Evidencia: `openspec/plans/plan-9/STATUS.md` · `openspec/plans/master-index.md` · Engram 9772–9774
+### H · crítico · `S9.4` conserva un criterio abierto y no se puede declarar completo
+Lo técnico: `S9.4` está 🔵 EN CURSO: sus dos Módulos fueron entregados, pero falta el puerto `observeProcess` que compare PID, cwd y start-token antes y después de la observación async. Siete de ocho criterios pasan; el criterio abierto no impide reconocer lo entregado ni permite cerrar la Sesión.
+En simple: El supervisor Pi ya tiene sus dos piezas principales, pero le falta comprobar contra el sistema operativo que el proceso observado sigue siendo exactamente el mismo. No se pierde el trabajo hecho, pero tampoco se transforma un 7/8 en “terminado”.
+Evidencia: `openspec/plans/plan-9/STATUS.md` S9.4 · autoridad Engram 9748
 
 ### I · resuelto · `S2.8` eliminó los nombres de fase sin fabricar un verde integral
 Lo técnico: El código local `480afb92bf99d38ee166070d09ec6485bc5de2c4`, parent `c2fb6399ee1332821663735d02833f78b9371402`, toca sólo los tres paths de `Área` y suma 45 líneas authored. AC1–AC5 pasan; safety quedó 72/72, `M2.8.1` pasó de RED 72/1 a 74/74 y `M2.8.2` de RED 74/1 a 75/75. La única integral fue 952/953 por `test/hosts/candidate-fence.test.mjs:432`, fuera de `Área`; el diagnóstico aislado autorizado pasó 17/17 y el caso exacto no reprodujo. AC6 cierra por la decisión 103, no como PASS.
@@ -130,4 +130,4 @@ Evidencia: `schemas/binding-delta-v1.schema.json` · `test/contracts/schema.test
 
 ## Evidencia y límites de esta radiografía
 
-Este juicio está verificado contra el candidato de código local `480afb92bf99d38ee166070d09ec6485bc5de2c4`, nunca contra el futuro commit documental que lo registra. `S2.8` tiene evidencia safety y focalizada verde; la corrida integral permanece 952/953 y AC6 es una excepción humana acotada, no PASS. La lente reliability quedó no disponible por `no current controller-owned candidate view lineage binding`; no existe PASS ni receipt. El runtime Tower instalado sigue sin prueba: el update parcial dejó plugin nuevo con engine/shim viejos y coherencia MCP sin verificar. La decisión 102 exige esperar `S8.12 → S8.13`; no autoriza `upgrade --shim`. Tampoco se acreditan runtime Pi, packaging Tower, lifecycle atómico, materialización Herdr, asignación ni capacidad.
+Este juicio está verificado contra el HEAD exacto `826ba071777293d7197843293484c364e0524723`. La verificación integral y los probes reales de carga Pi 0.84.4 acreditan la fuente y el contrato de `S9.6`, no el runtime global instalado. El update parcial previo sigue obligando a esperar `S8.12 → S8.13`: todavía no se acreditan packaging Tower, materialización de `control-tower-activation.json`, lifecycle atómico, activación, rollback, materialización Herdr, asignación ni capacidad.
