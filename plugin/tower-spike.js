@@ -6,7 +6,7 @@ import { tool } from "@opencode-ai/plugin"
 import { persistSupportResult } from "../continuation/support.mjs"
 import { bindMainAuthority } from "../main-store/authority.mjs"
 import { createMainStore } from "../main-store/store.mjs"
-import { createPollingLoop } from "../host/loop.mjs"
+import { createPollingLoop } from "../hosts/loop.mjs"
 
 const SUPPORT_TOOLS = Object.freeze(Object.fromEntries([
   "read", "glob", "grep", "list", "task", "bash", "edit", "write", "todowrite", "question",

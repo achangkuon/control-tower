@@ -453,9 +453,15 @@ en el merge, después de que ambas implementaciones existan.
 
 ## Sesión 12.6 — La raíz se ordena y el README describe el producto real
 
-**Estado:** 📋 PLANIFICADO · **Ruta:** `direct` · est: 4h
+**Estado:** 🔵 EN CURSO · **Ruta:** `direct` · est: 4h
 
-**Depende de:** `S12.5`
+**Depende de:** `S12.5`, **sólo para `M12.6.2` y `M12.6.3`**
+
+**Enmienda declarada el 2026-08-30.** La Sesión se abrió con una dependencia única a `S12.5`, y al
+bloquearse `S12.3` quedó claro que era **demasiado gruesa**: `M12.6.1` —fusionar `host/` en
+`hosts/`— no tiene nada que ver con el split de `core.mjs`. Sólo el README depende de la estructura
+post-split. Se separó la dependencia por Módulo en vez de partir la Sesión, porque el resultado
+sigue siendo uno y cabe en un PR.
 **Área:** `host/**`, `hosts/**`, `README.md`, y los archivos que importen `host/loop.mjs`
 **Recurso:** —
 
@@ -471,13 +477,22 @@ del split a propósito: escribirlo antes obligaría a reescribirlo dos veces.
   ruta `host/`. **Autoridad:** el árbol del repositorio.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
-- [ ] El directorio `host/` no existe
+- [x] El directorio `host/` no existe
 - [ ] Cada carpeta que el README nombra existe, y cada carpeta de primer nivel aparece en el README
 - [ ] La suite completa pasa: 1026 o más, 0 fallos
 - [ ] El diff no toca ninguna ruta fuera de `Área`
 
-### Módulo M12.6.1 — fusionar `host/` en `hosts/` y corregir importadores · forecast ~90
-- [ ] Tarea T12.6.1.1 — RED · [ ] T12.6.1.2 — GREEN · [ ] T12.6.1.3 — REFACTOR
+### Módulo M12.6.1 — ✅ ENTREGADO · `host/` fusionado en `hosts/`
+
+La trampa de `S12.3` se verificó **antes** de mover: ni `host/loop.mjs` ni `plugin/tower-spike.js`
+figuran en `RUNTIME_PAYLOAD_FILES`, así que la fusión no toca el payload. Tres referencias
+repuntadas, y `test/polling.test.mjs` **no** está entre los 15 archivos de `S12.8`, así que no
+colisiona con Pi. Carpetas de primer nivel: **26 → 25**. La trampa de las dos carpetas a una letra
+de distancia dejó de existir.
+
+- [x] Tarea T12.6.1.1 — RED: mover sin corregir imports rompe `test/polling.test.mjs` (0 pass / 1 fail).
+- [x] Tarea T12.6.1.2 — GREEN: las tres referencias apuntan a `hosts/loop.mjs`.
+- [x] Tarea T12.6.1.3 — REFACTOR: el directorio `host/` no existe y la suite queda 1026 pass / 0 fail.
 
 ### Módulo M12.6.2 — `README.md` reescrito con la estructura post-split · forecast ~140
 - [ ] Tarea T12.6.2.1 — RED: enumerar las carpetas que el README omite.
