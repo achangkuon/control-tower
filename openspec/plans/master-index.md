@@ -10,11 +10,11 @@
 
 **Esto todavía no activa el ruteo global para usuarios.** `S8.12` debe empaquetar los bytes y `S8.13` debe materializar, probar, activar y poder revertir `control-tower-activation.json`.
 
-**Próximo checkpoint, sin autorizar ni despachar una nueva Sesión:** la próxima dependencia del objetivo es `S1.18`, que todavía no fue autorizada ni despachada; luego siguen `S9.5 → S8.12`, desde `S1.18` también `S1.19`, `S4.12` conserva `S9.4 + S1.18` con `S9.4` ya satisfecha, y `S8.13` espera `S8.12 + S1.19 + S4.12`. La cola global preserva por delante `S12.9` y `S12.1`; este cierre no altera esa prioridad ni asigna dueño o asiento.
+**Prioridad vigente del maintainer:** cerrar el flujo determinista completo antes de retomar P12. El próximo checkpoint es `S1.18`; su primer candidato no publicado fue descartado por una falla de identidad detectada en revisión y no acredita avance. Después siguen `S9.5 → S8.12`, desde `S1.18` también `S1.19`, `S4.12` conserva `S9.4 + S1.18` con `S9.4` ya satisfecha, y `S8.13` espera `S8.12 + S1.19 + S4.12`. No hay Sesión despachada ni worktree ejecutor activo al cerrar.
 
 ## 🎯 Cola de ejecución
 
-`#1 S12.9` · `#2 S12.1` · `#3 S1.18` · `#4 S9.5` · `#5 S8.12` · `#6 S1.19` · `#7 S4.12` · `#8 S8.13` · `#9 S5.14` · `#10 S5.5` · `#11 S5.15` · `#12 S9.2` · `#13 S9.3` · `#14 S7.1` — topológica, recalculada al cerrar `S1.17`. `S9.4` y `S1.17` quedan fuera por ✅ COMPLETO; la cola no asigna dueño ni asiento.
+`#1 S1.18` · `#2 S9.5` · `#3 S8.12` · `#4 S1.19` · `#5 S4.12` · `#6 S8.13` · `#7 S12.9` · `#8 S12.1` · `#9 S5.14` · `#10 S5.5` · `#11 S5.15` · `#12 S9.2` · `#13 S9.3` · `#14 S7.1` — topológica y priorizada por decisión del maintainer al cerrar esta jornada. `S9.4` y `S1.17` quedan fuera por ✅ COMPLETO; la cola no asigna dueño ni asiento.
 
 **Paralelismo:** `S12.1` ya es elegible porque `S12.8` cerró; desde `S12.3` la cadena de P12 se serializa sobre **`core.mjs` en exclusiva**. Grafo vigente para `MAIN → SUPPORT → AGENTES`: `S9.4` ✅ y `S1.17` ✅ satisfechas → `S1.18 → S9.5 → S8.12`; desde `S1.18` también sigue `S1.19`, `S4.12` espera `S9.4 + S1.18` y ahora sólo tiene abierta `S1.18`, y `S8.13` espera `S8.12 + S1.19 + S4.12`. `S9.4` llega a `S9.5` sólo de forma transitiva, no como dependencia directa. `S7.1` espera `S1.19 + S4.12 + S8.13 + S5.5`.
 
