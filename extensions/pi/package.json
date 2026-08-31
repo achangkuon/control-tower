@@ -8,6 +8,12 @@
   "controlTowerCompatibility": {
     "contract": "pi-input-extension-capabilities/v1",
     "testedBaseline": { "piVersion": "0.84.4" },
+    "activationEvidence": {
+      "schema": "control-tower-pi-activation/v1",
+      "path": "./control-tower-activation.json",
+        "exactBinding": ["repo.root.realpath+device+inode", "repo.gitCommonDir.realpath+device+inode"],
+      "immutableSnapshot": ["manifest", "skill"]
+    },
     "requiredCapabilities": [
       "extension.default-export.factory-arity-1",
       "events.input.registration.pi-on-input",
