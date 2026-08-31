@@ -8,6 +8,7 @@ import { join } from "node:path"
 
 import * as tower from "../core.mjs"
 import { createMcpHandler } from "../mcp.mjs"
+import { git as runGit } from "./helpers/git.mjs"
 
 // P6-C proof plane: recordTerminationReceipt (server-only observation,
 // pairing, freshness, PID-reuse rejection) and the quiescence_v1/
@@ -18,7 +19,7 @@ import { createMcpHandler } from "../mcp.mjs"
 
 const temporaryDirectories = []
 const git = (repository, args) =>
-  execFileSync("git", args, { cwd: repository, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim()
+  runGit(repository, args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim()
 const canonical = (value) => {
   if (value === null || typeof value !== "object") return JSON.stringify(value)
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`

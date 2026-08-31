@@ -1,18 +1,18 @@
 import { afterEach, describe, expect, test } from "bun:test"
 import { Database } from "bun:sqlite"
-import { execFileSync } from "node:child_process"
 import { createHash, createHmac, randomBytes, randomUUID } from "node:crypto"
 import { chmodSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
 import { fileURLToPath, pathToFileURL } from "node:url"
 
+import { git as runGit } from "./helpers/git.mjs"
 import * as tower from "../core.mjs"
 import { createMcpHandler } from "../mcp.mjs"
 
 const packageRoot = dirname(dirname(fileURLToPath(import.meta.url)))
 const temporaryDirectories = []
-const git = (cwd, args) => execFileSync("git", args, { cwd, encoding: "utf8" }).trim()
+const git = (cwd, args) => runGit(cwd, args, { encoding: "utf8" }).trim()
 const canonical = (value) => value === null || typeof value !== "object"
   ? JSON.stringify(value)
   : Array.isArray(value) ? `[${value.map(canonical).join(",")}]`

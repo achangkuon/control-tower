@@ -1,14 +1,15 @@
 import { afterEach, expect, test } from "bun:test"
-import { execFileSync, spawnSync } from "node:child_process"
+import { spawnSync } from "node:child_process"
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { delimiter, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { bindMainAuthority, createMainStore } from "../../main-store/index.mjs"
 import { candidateRevision } from "../../contracts/candidate-revision.mjs"
 import { createCandidateFenceStore } from "../../hosts/candidate-fence.mjs"
 import { runCli } from "../../install/lifecycle.mjs"
+import { git } from "../helpers/git.mjs"
 
 const root = join(fileURLToPath(new URL("../..", import.meta.url)))
 const directories = []
@@ -17,8 +18,8 @@ afterEach(() => directories.splice(0).forEach((directory) => rmSync(directory, {
 test("installed torre launch-worker ignores legacy and PATH shims while consuming its deterministic Main binding", () => {
   const directory = mkdtempSync(join(tmpdir(), "ct-launch-cli-")), main = join(directory, "Main"), worker = join(directory, "Worker"), commands = join(directory, "commands")
   directories.push(directory)
-  execFileSync("git", ["init", "-q", "-b", "master", main]); execFileSync("git", ["-C", main, "config", "user.email", "tower@example.invalid"]); execFileSync("git", ["-C", main, "config", "user.name", "Tower Test"]); execFileSync("git", ["-C", main, "commit", "-q", "--allow-empty", "-m", "fixture"]); execFileSync("git", ["-C", main, "worktree", "add", "-q", "-b", "worker", worker])
-  const common = execFileSync("git", ["-C", main, "rev-parse", "--path-format=absolute", "--git-common-dir"], { encoding: "utf8" }).trim(), storePath = join(common, "control-tower", "main-store"), fencePath = join(directory, "host-fence")
+  git(directory, ["init", "-q", "-b", "master", main]); git(main, ["config", "user.email", "tower@example.invalid"]); git(main, ["config", "user.name", "Tower Test"]); git(main, ["commit", "-q", "--allow-empty", "-m", "fixture"]); git(main, ["worktree", "add", "-q", "-b", "worker", worker])
+  const common = git(main, ["rev-parse", "--path-format=absolute", "--git-common-dir"], { encoding: "utf8" }).trim(), storePath = join(common, "control-tower", "main-store"), fencePath = join(directory, "host-fence")
   mkdirSync(fencePath, { mode: 0o700 })
   const candidateIdentity = { project_id: "project-a", host_id: "host-a", base_sha: "a".repeat(40), runtime_binding_ref: "bindings/runtime-a.json", role_binding_ref: "bindings/role-a.json", assignment_ref: "assignment-a", work_ref: "work/a.json" }
   const candidate = candidateRevision(candidateIdentity), fenceStore = createCandidateFenceStore({ rootPath: fencePath, resolveTerminationProof() {}, authorizeMaintainerDecision() {} })
@@ -52,8 +53,9 @@ if (Bun.argv[2] === "serve") {
   expect(spawnSync(installed, ["launch-worker", "--request-ref", "missing"], { cwd: main, env: installEnv, encoding: "utf8" }).stderr).toContain("CT_LAUNCH_BINDING_INVALID")
   expect(readFileSync(effects, "utf8")).toBe("")
   writeFileSync(join(commands, "bad-herdr"), "#!/bin/sh\nexit 99\n", { mode: 0o755 })
+  const isolatedPath = [process.env.CT_GIT_PROXY_DIR, commands, ...(process.env.PATH ?? "").split(delimiter).filter((entry) => entry !== process.env.CT_GIT_PROXY_DIR)].join(delimiter)
   const result = spawnSync(installed, ["launch-worker", "--request-ref", "request-a"], {
-    cwd: main, env: { ...installEnv, CONTROL_TOWER_CORE: join(commands, "bad-herdr"), CONTROL_TOWER_LIFECYCLE: join(commands, "bad-herdr"), HERDR_ENV: "attacker", PATH: `${commands}:${process.env.PATH}` }, encoding: "utf8",
+    cwd: main, env: { ...installEnv, CONTROL_TOWER_CORE: join(commands, "bad-herdr"), CONTROL_TOWER_LIFECYCLE: join(commands, "bad-herdr"), HERDR_ENV: "attacker", PATH: isolatedPath }, encoding: "utf8",
   })
   expect(result.status, result.stderr).toBe(0)
   const publicResult = JSON.parse(result.stdout)
@@ -63,7 +65,7 @@ if (Bun.argv[2] === "serve") {
   expect(JSON.stringify(JSON.parse(result.stdout))).not.toMatch(/manual_command|credential_ref|OPENCODE_SERVER_PASSWORD/)
   // The seat pane is born inside the AGENTES tab and read back there; `--current` must never appear.
   expect(readFileSync(effects, "utf8")).toMatch(new RegExp(`^herdr tab list\\nherdr pane list\\nherdr pane split w1:p9 --direction right --cwd ${worker} --no-focus\\nherdr pane list\\nherdr pane run w1:p1 \\S*bun \\S*opencode-attach-helper\\.mjs\\n$`))
-  expect(spawnSync(installed, ["launch-worker", "--request-ref", "request-a"], { cwd: main, env: { ...installEnv, HERDR_ENV: "attacker", PATH: `${commands}:${process.env.PATH}` }, encoding: "utf8" }).stderr).toContain("CT_LAUNCH_BINDING_CONSUMED")
+  expect(spawnSync(installed, ["launch-worker", "--request-ref", "request-a"], { cwd: main, env: { ...installEnv, HERDR_ENV: "attacker", PATH: isolatedPath }, encoding: "utf8" }).stderr).toContain("CT_LAUNCH_BINDING_CONSUMED")
   store.issueLaunchBinding({ actor: "MAIN", project_id: "project-a", request_ref: "request-stale", authorization_id: "auth-a", brief: "Approved", brief_ref: "briefs/a.json", assignment_ref: "assignment-a", candidate_revision: candidate, host_epoch: 1 })
   writeFileSync(join(storePath, "epoch-records/2.json"), JSON.stringify({ epoch: 2, project_id: "project-a" }), { mode: 0o600 })
   writeFileSync(join(storePath, "current-epoch.json"), JSON.stringify({ epoch: 2, project_id: "project-a" }), { mode: 0o600 })

@@ -9,9 +9,10 @@ import {
 } from "node:fs"
 import { join, relative, resolve } from "node:path"
 
+import { git as runGit } from "./git.mjs"
+
 const git = (repository, args, options = {}) =>
-  execFileSync("git", args, {
-    cwd: repository,
+  runGit(repository, args, {
     encoding: options.encoding,
     input: options.input,
     stdio: [options.input === undefined ? "ignore" : "pipe", "pipe", "pipe"],

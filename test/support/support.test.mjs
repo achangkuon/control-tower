@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test"
 import { Database } from "bun:sqlite"
-import { execFileSync } from "node:child_process"
 import { createHash } from "node:crypto"
 import { lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
@@ -9,11 +8,12 @@ import { dirname, join } from "node:path"
 import { createSupportBrief } from "../../support/agent.mjs"
 import { resolveSupportManifest } from "../../support/manifest.mjs"
 import { captureSupportSnapshot } from "../../support/snapshot.mjs"
+import { git as runGit } from "../helpers/git.mjs"
 
 const roots = []
 afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { force: true, recursive: true }) })
 const temporaryRoot = () => { const root = mkdtempSync(join(tmpdir(), "ct-support-")); roots.push(root); return root }
-const git = (cwd, args) => execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim()
+const git = (cwd, args) => runGit(cwd, args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim()
 const errorCode = (operation) => { try { operation() } catch (error) { return error.code } return null }
 const witness = (path) => {
   try {

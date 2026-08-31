@@ -1,17 +1,15 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { execFileSync } from "node:child_process"
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
+
+import { git as runGit } from "../helpers/git.mjs"
 
 const roots = []
 afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { force: true, recursive: true }) })
 
 const git = (cwd, args) => {
-  const output = execFileSync("git", args, {
-  cwd,
-  stdio: ["ignore", "pipe", "pipe"],
-  })
+  const output = runGit(cwd, args, { stdio: ["ignore", "pipe", "pipe"] })
   return args[0] === "cat-file" || args.includes("-z") ? output : output.toString("utf8").trim()
 }
 

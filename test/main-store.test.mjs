@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { execFileSync } from "node:child_process"
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { basename, dirname, join, resolve } from "node:path"
@@ -12,6 +11,7 @@ import { createCompletedWorkBinding } from "../contracts/completed-work-binding.
 import { freezeCandidate } from "../contracts/candidate-revision.mjs"
 import { captureCheckpoint } from "../workspace/checkpoint.mjs"
 import { reconcileCheckpoint } from "../workspace/reconciliation.mjs"
+import { git as runGit } from "./helpers/git.mjs"
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 const temporaryDirectories = []
@@ -92,7 +92,7 @@ const parkedResponse = (authorization_id, overrides = {}) => {
 }
 const responseRequest = (authorization_id, overrides = {}) => ({ actor: "MAIN", authorization_id, candidate_revision: candidateRevision, decision: "APPROVED", expected_revision: 1, ...parkedResponse(authorization_id), ...overrides })
 const git = (cwd, args) => {
-  const output = execFileSync("git", args, { cwd, stdio: ["ignore", "pipe", "pipe"] })
+  const output = runGit(cwd, args, { stdio: ["ignore", "pipe", "pipe"] })
   return args[0] === "cat-file" || args.includes("-z") ? output : output.toString("utf8").trim()
 }
 const provenance = (suffix = "a", project_id = "project-a") => {

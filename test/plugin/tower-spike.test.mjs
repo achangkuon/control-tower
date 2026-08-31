@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url"
 import { createAgentCapabilityRegistry } from "../../capabilities/registry.mjs"
 import * as tower from "../../core.mjs"
 import { bindMainAuthority } from "../../main-store/authority.mjs"
+import { git as runGit } from "../helpers/git.mjs"
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), "../..")
 const directories = []
@@ -34,7 +35,7 @@ const defaultClient = (calls, output = proposal()) => ({
   },
 })
 
-const git = (cwd, args) => execFileSync("git", args, { cwd, encoding: "utf8" }).trim()
+const git = (cwd, args) => runGit(cwd, args, { encoding: "utf8" }).trim()
 const capabilityDocument = () => ({
   schema: "agent-capability-registry", schema_version: 1, project_id: "project-a", main_identity: "main-session-a", registry_revision: 1,
   capabilities: [{

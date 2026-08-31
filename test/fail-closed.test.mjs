@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url"
 import { tmpdir } from "node:os"
 
 import * as tower from "../core.mjs"
+import { git as runGit } from "./helpers/git.mjs"
 
 const packageRoot = dirname(dirname(fileURLToPath(import.meta.url)))
 const mcpPath = join(packageRoot, "mcp.mjs")
@@ -22,7 +23,7 @@ const pausedSendPath = join(packageRoot, "test", "fixtures", "paused-send.mjs")
 const temporaryDirectories = []
 
 const git = (cwd, args) =>
-  execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim()
+  runGit(cwd, args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim()
 
 const createRepository = () => {
   const root = mkdtempSync(join(tmpdir(), "control-tower-test-"))

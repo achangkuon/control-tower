@@ -26,6 +26,7 @@ import {
   snapshotRuntimeBoundary,
   verifyTrackedEntry,
 } from "./helpers/restore-fixture.mjs"
+import { git as runGit } from "./helpers/git.mjs"
 
 const packageRoot = dirname(dirname(fileURLToPath(import.meta.url)))
 const torrePath = join(packageRoot, "bin", "torre")
@@ -40,8 +41,7 @@ const evidencePath = join(
 )
 const temporaryDirectories = []
 const git = (repository, args) =>
-  execFileSync("git", args, {
-    cwd: repository,
+  runGit(repository, args, {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   }).trim()

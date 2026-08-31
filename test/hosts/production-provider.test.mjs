@@ -5,6 +5,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import * as productionProvider from "../../hosts/production-provider.mjs"
+import { git } from "../helpers/git.mjs"
 
 const { admitOpenCodeBrief, assertParentlessSessionCreation, createProductionProvider, parseCreatedRoot, parseHostOutput, parseServerAnnouncement } = productionProvider
 
@@ -43,13 +44,13 @@ test("production provider rejects an unpackaged module before accepting caller l
   const repository = mkdtempSync(join(tmpdir(), "ct-production-provider-"))
   try {
     const environment = isolatedEnvironment()
-    const initialized = spawnSync("git", ["init", "--quiet", "--initial-branch=main"], {
-      cwd: repository, env: environment, encoding: "utf8", timeout: 5_000, maxBuffer: 65_536,
+    const initialized = git(repository, ["init", "--quiet", "--initial-branch=main"], {
+      result: true, env: environment, encoding: "utf8", timeout: 5_000, maxBuffer: 65_536,
     })
     expect({ status: initialized.status, signal: initialized.signal, stdout: initialized.stdout, stderr: initialized.stderr }).toEqual({ status: 0, signal: null, stdout: "", stderr: "" })
 
-    const declaredLocalVariables = spawnSync("git", ["rev-parse", "--local-env-vars"], {
-      cwd: repository, env: environment, encoding: "utf8", timeout: 5_000, maxBuffer: 65_536,
+    const declaredLocalVariables = git(repository, ["rev-parse", "--local-env-vars"], {
+      result: true, env: environment, encoding: "utf8", timeout: 5_000, maxBuffer: 65_536,
     })
     expect({ status: declaredLocalVariables.status, signal: declaredLocalVariables.signal, stderr: declaredLocalVariables.stderr }).toEqual({ status: 0, signal: null, stderr: "" })
     const uncoveredLocalVariables = declaredLocalVariables.stdout.split(/\r?\n/).filter(Boolean).filter((name) => !gitAuthorityVariables.has(name))

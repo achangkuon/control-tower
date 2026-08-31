@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { execFileSync } from "node:child_process"
 import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
@@ -7,12 +6,12 @@ import * as nodeFs from "node:fs"
 
 import { enrollProject, validateEnrollmentLayout } from "../../enroll/index.mjs"
 import { createProjectRegistryStore } from "../../registry/store.mjs"
+import { git as runGit } from "../helpers/git.mjs"
 
 const roots = []
 afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { force: true, recursive: true }) })
 const temporaryRoot = () => { const root = mkdtempSync(join(tmpdir(), "ct-enroll-")); roots.push(root); return root }
-const git = (cwd, args) => execFileSync("git", args, {
-  cwd,
+const git = (cwd, args) => runGit(cwd, args, {
   encoding: "utf8",
   stdio: ["ignore", "pipe", "pipe"],
 }).trim()

@@ -4,7 +4,6 @@
 // claim; no synthetic CLAIMED/STARTED row is ever inserted directly.
 import { afterEach, describe, expect, test } from "bun:test"
 import { Database } from "bun:sqlite"
-import { execFileSync } from "node:child_process"
 import { createHash, randomBytes, randomUUID } from "node:crypto"
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
@@ -12,9 +11,10 @@ import { join } from "node:path"
 
 import * as tower from "../core.mjs"
 import { createMcpHandler } from "../mcp.mjs"
+import { git as runGit } from "./helpers/git.mjs"
 
 const temporaryDirectories = []
-const git = (cwd, args) => execFileSync("git", args, { cwd, encoding: "utf8" }).trim()
+const git = (cwd, args) => runGit(cwd, args, { encoding: "utf8" }).trim()
 const canonical = (value) => value === null || typeof value !== "object"
   ? JSON.stringify(value)
   : Array.isArray(value) ? `[${value.map(canonical).join(",")}]`

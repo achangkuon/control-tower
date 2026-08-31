@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { execFileSync, spawnSync } from "node:child_process"
+import { spawnSync } from "node:child_process"
 import * as nodeFs from "node:fs"
 import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 
 import * as registry from "../../registry/index.mjs"
+import { git } from "../helpers/git.mjs"
 
 const roots = []
 afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { force: true, recursive: true }) })
@@ -173,7 +174,7 @@ describe("project registry atomic revisions", () => {
   test("exports only the narrow surface and never touches the runtime database", () => {
     expect(Object.keys(registry).sort()).toEqual(["createProjectRegistryStore", "resolveProjectRegistryPath"])
     const repository = resolve(import.meta.dir, "../..")
-    const gitCommonDirectory = execFileSync("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"], { cwd: repository, encoding: "utf8" }).trim()
+    const gitCommonDirectory = git(repository, ["rev-parse", "--path-format=absolute", "--git-common-dir"], { encoding: "utf8" }).trim()
     const runtime = join(gitCommonDirectory, "control-tower/tower.db")
     expect(nodeFs.existsSync(runtime)).toBe(true)
     const before = statSync(runtime, { bigint: true })

@@ -6,9 +6,10 @@ import { join } from "node:path"
 
 import { digestArtifact } from "../../contracts/canonicalize.mjs"
 import { verifyArtifactRef } from "../../contracts/artifact-ref.mjs"
+import { git as runGit } from "../helpers/git.mjs"
 
 const roots = []
-const git = (root, ...args) => execFileSync("git", ["-C", root, ...args], { encoding: "utf8" }).trim()
+const git = (root, ...args) => runGit(root, args, { encoding: "utf8" }).trim()
 const repo = () => {
   const root = mkdtempSync(join(tmpdir(), "ct-artifact-ref-")); roots.push(root)
   git(root, "init", "-q"); git(root, "config", "user.email", "test@example.com"); git(root, "config", "user.name", "Test")
@@ -17,7 +18,7 @@ const repo = () => {
 const commit = (root) => { git(root, "add", "."); git(root, "commit", "-qm", "fixture"); return git(root, "rev-parse", "HEAD") }
 const refFor = (root, path, mediaType = "text/plain") => {
   const sourceCommit = git(root, "rev-parse", "HEAD")
-  const bytes = execFileSync("git", ["-C", root, "show", `${sourceCommit}:${path}`])
+  const bytes = runGit(root, ["show", `${sourceCommit}:${path}`])
   return { schema: "artifact-ref", schema_version: 1, artifact_id: "fixture", artifact_revision: 1,
     repository_id: "control-tower", repo_relative_path: path, media_type: mediaType,
     digest_mode: "raw-bytes", source_commit: sourceCommit, content_digest: digestArtifact(bytes, "raw-bytes") }
