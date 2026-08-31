@@ -1,7 +1,7 @@
 # Plan 1 — Sustrato mecánico
 
 **Estado:** 🔵 EN CURSO
-**Avance:** **84% (16/19 S)** — cuentan sólo las Sesiones ✅ COMPLETO o 📚 ARCHIVADO del registro canónico siguiente.
+**Avance:** **89% (17/19 S)** — cuentan sólo las Sesiones ✅ COMPLETO o 📚 ARCHIVADO del registro canónico siguiente.
 **Granularidad:** `Plan → Sesión → Módulo → Tarea`; no existe un quinto nivel.
 
 ## Autoridad vigente y cómputo canónico
@@ -29,19 +29,19 @@ Este es el único registro de **estados vigentes** que define el numerador y el 
 | S1.14 | Polling y wake safety | ✅ COMPLETO | `S1.13` |
 | S1.15 | Conformidad lifecycle OpenCode | ✅ COMPLETO | `S1.14` |
 | S1.16 | Transporte reconciliado y composición wake | ✅ COMPLETO | `S1.15` |
-| S1.17 | Gate y RED del adapter Pi | 📋 PLANIFICADO | `S9.4` |
+| S1.17 | Gate y RED del adapter Pi | ✅ COMPLETO | `4248da9` |
 | S1.18 | Adapter Pi/Intercom | 📋 PLANIFICADO | `S1.17` |
 | S1.19 | Regresión integral Pi-first | 📋 PLANIFICADO | `S1.18` |
 <!-- P1-SESSION-LEDGER:END -->
 
-La cuenta es mecánica: 16 filas cerradas de 19 filas enumeradas. No hay crédito parcial ni trabajo pendiente de P1 fuera de este denominador.
+La cuenta es mecánica: 17 filas cerradas de 19 filas enumeradas. No hay crédito parcial ni trabajo pendiente de P1 fuera de este denominador.
 
 ## Resumen
 
 | Campo | Detalle |
 |---|---|
 | Dependencias | La cadena legacy P7/P8 permanece como historia cerrada. La autoridad activa Pi-first empieza en `S9.4`; Change A no es dependencia de legacy P7/P8. |
-| Outputs | Recovery/rollback fail-closed; controller host-neutral y base OpenCode cerrada; gate, adapter y regresión Pi pendientes en `S1.17`–`S1.19`. Las responsabilidades legacy P9–P11 están reconciliadas más abajo con sus dueños actuales. |
+| Outputs | Recovery/rollback fail-closed; controller host-neutral y base OpenCode cerrada; gate privado Pi cerrado en `S1.17`; adapter runtime y regresión Pi pendientes en `S1.18`–`S1.19`. Las responsabilidades legacy P9–P11 están reconciliadas más abajo con sus dueños actuales. |
 | Roadmap | Ejecutar primero Pi. OpenCode y Claude siguen como objetivos futuros/diferidos y no son gates de la primera release Pi. |
 | Referencias | [`autonomous-continuation-control-tower`](../../changes/autonomous-continuation-control-tower/), [`p7-host-neutral-loop-opencode-adapter`](../../changes/p7-host-neutral-loop-opencode-adapter/), [`p8-slice-planning`](../../changes/p8-slice-planning/), [cadena de release](../release-chain.md), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). |
 
@@ -103,7 +103,7 @@ graph LR
   S113 --> S114["S1.14 polling · ✅"]
   S114 --> S115["S1.15 conformidad · ✅"]
   S115 --> S116["S1.16 transporte · ✅"]
-  S94["S9.4 supervisor Pi · 🔵 EN CURSO"] --> S117["S1.17 gate Pi · 📋"]
+  S94["S9.4 supervisor Pi · ✅"] --> S117["S1.17 gate Pi · ✅"]
   S117 --> S118["S1.18 adapter Pi · 📋"]
   S118 --> S119["S1.19 regresión Pi · 📋"]
   S118 --> S95["S9.5 materialización · 📋"]
@@ -311,16 +311,34 @@ No queda ninguna responsabilidad de legacy P9–P11 pendiente y oculta en P1: su
 El contrato OpenCode-first/Pi-second anterior queda preservado arriba como historia. La decisión 80 promueve estos mismos IDs; no elimina ni reescribe la evidencia OpenCode ya completada.
 
 ## Sesión S1.17 — Gate y RED del adapter Pi
-**Estado:** 📋 PLANIFICADO · **Depende de:** `S9.4` · **Área:** `adapters/pi/contract.mjs`, `test/adapters/pi/contract.test.mjs` · **Recurso:** broker por worktree y binding neutral.
-**Decisiones:** decisiones 82–84 y 86 resueltas: Grado 2, implementer con `bash`, roles de lectura sin `bash|write|edit`, supervisor Tower-owned. **Ruta:** `design-tasks` — contrato neutral y topología ya aprobados; se fija el seam del adapter.
-**Criterios de aceptación** — todos deben pasar:
-- [ ] RED falsifica identidad autodeclarada, takeover, cross-worktree y recibo stale.
-- [ ] Las capabilities respetan el rol aprobado e Intercom nunca concede autoridad.
-- [ ] El cambio no modifica Pi/Intercom ni toca fuera de `Área`.
+**Estado:** ✅ COMPLETO — implementada y verificada en el commit exacto `4248da9d5c0be812b529b9bfa3d733f2fffba3b0`. El cambio suma 316 adiciones authored en exactamente los dos paths de `Área`, sin eliminaciones ni otros archivos.
+
+**Depende de:** `S9.4` ✅ COMPLETO
+
+**Área:** `adapters/pi/contract.mjs`, `test/adapters/pi/contract.test.mjs`
+
+**Recurso:** broker por worktree y binding neutral.
+
+**Decisiones:** decisiones 82–84 y 86 resueltas: el gate distingue la autoridad Tower-owned (`scope_id`, `endpoint_epoch`, rol y capabilities) de `incarnation_id`, que sólo identifica la encarnación neutral. El implementer conserva `bash`; los roles de lectura no reciben `bash|write|edit`; Intercom no concede autoridad. **Ruta:** `design-tasks` — contrato neutral y topología ya aprobados; se fijó el seam privado del adapter sin abrir runtime ni wire público.
+
+**Criterios de aceptación** — todos pasaron:
+- [x] RED falsifica identidad autodeclarada, takeover, cross-worktree y recibo stale.
+- [x] Las capabilities respetan el rol aprobado e Intercom nunca concede autoridad.
+- [x] El cambio no modifica Pi/Intercom ni toca fuera de `Área`.
+
 ### Módulo M1.17.1 — Gate falsificable Pi
-- [ ] Tarea T1.17.1.1 — RED: fijar fallos de identidad, epoch, scope, takeover y capability set.
-- [ ] Tarea T1.17.1.2 — GREEN: crear el seam mínimo contra `S9.4` y contrato neutral.
-- [ ] Tarea T1.17.1.3 — REFACTOR: eliminar conocimiento de wire format fuera del adapter.
+- [x] Tarea T1.17.1.1 — RED: fijar fallos de identidad, epoch, scope, takeover y capability set.
+- [x] Tarea T1.17.1.2 — GREEN: crear el seam mínimo contra `S9.4` y contrato neutral.
+- [x] Tarea T1.17.1.3 — REFACTOR: eliminar conocimiento de wire format fuera del adapter.
+
+**Evidencia exacta de cierre:**
+
+- Strict TDD RED corregido: 2 pass, 8 fail; el focused final pasó 10 pass, 0 fail y 72 assertions en 162 ms.
+- Suite integral sobre el candidato exacto: 1090 pass, 0 fail y 6141 assertions en 84 archivos durante 94,88 s; HEAD y hashes permanecieron estables.
+- El takeover concurrente falla antes de invocar un segundo verifier; una verificación fallida limpia la reserva.
+- Frontera: gate privado de fuente únicamente; sin runtime, wire, Pi, Intercom ni schema público.
+- Presupuesto: 316 líneas authored, todas adiciones, dentro del máximo de 400.
+- Rollback: revertir sólo `4248da9`; no hay schema, migración ni estado persistido que revertir.
 
 ## Sesión S1.18 — Adapter Pi/Intercom
 **Estado:** 📋 PLANIFICADO · **Depende de:** `S1.17` · **Área:** `adapters/pi/runtime.mjs`, `test/adapters/pi/runtime.test.mjs` · **Recurso:** procesos Pi Tower-spawned y conexión del supervisor.

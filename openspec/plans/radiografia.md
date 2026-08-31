@@ -1,7 +1,7 @@
 ---
-verified_against: 2b6dd527b8cb046bf6f1936328475352d1ac716d
+verified_against: 4248da9d5c0be812b529b9bfa3d733f2fffba3b0
 verified_at: 2026-08-31
-standfirst: S9.6 cerró la fuente Pi-first y S9.4 cerró la actualidad del proceso contra el kernel. El ruteo global todavía no está activo: faltan adapter, materialización, packaging, activación y rollback.
+standfirst: S9.6 cerró la fuente Pi-first, S9.4 la actualidad del proceso y S1.17 el gate privado de autoridad. El ruteo global todavía no está activo: faltan adapter runtime, materialización, packaging, activación y rollback.
 ---
 
 <!--
@@ -33,7 +33,7 @@ Vos dirigís varios agentes de IA trabajando en varios proyectos a la vez. La To
 
 La prioridad cambió: la primera implementación se hará con Pi. No porque Pi pase a ser el producto, sino porque la Torre puede poseer la identidad del proceso que lanzó y exigir comprobantes producidos por ese proceso. Eso le permite distinguir una sesión propia de una sesión que sólo dice serlo.
 
-La unión neutral ya identifica worktree, proceso, incarnation y binding, y expone operaciones sin depender de Pi. `S4.14` cerró la ventana que quedaba después de `S4.13`: confirma en el mismo stack al ocupante exacto inmediatamente antes del publish final. `S9.6` ya cerró la fuente que intercepta intención de Sesión y la enruta a la Torre; `S9.4` cerró la comprobación de PID, cwd y start-token contra el kernel antes y después de la observación async. Ninguna de esas piezas equivale todavía a una instalación global activa.
+La unión neutral ya identifica worktree, proceso, incarnation y binding, y expone operaciones sin depender de Pi. `S4.14` cerró la ventana que quedaba después de `S4.13`: confirma en el mismo stack al ocupante exacto inmediatamente antes del publish final. `S9.6` ya cerró la fuente que intercepta intención de Sesión y la enruta a la Torre; `S9.4` cerró la comprobación de PID, cwd y start-token contra el kernel antes y después de la observación async. `S1.17` agregó el gate privado que separa identidad neutral de scope, epoch, rol y capabilities Tower-owned. Ninguna de esas piezas equivale todavía al adapter runtime, su materializador o una instalación global activa.
 
 ## El veredicto actual
 
@@ -105,7 +105,7 @@ La lista siguiente reemplaza las antiguas “cinco decisiones”. No son pregunt
 | `S4.10` — ✅ COMPLETO | Cinco contratos v1 y ownership exacto del puerto, sin importar Pi ni OpenCode | Que el adapter Pi ya funciona |
 | `S4.11` — ✅ COMPLETO; `S4.12` pendiente | Operaciones observables ya entregadas; recuperación mínima Pi después de sus dependencias | Que la Torre ya supervisa o recupera una jornada Pi real |
 | `S4.13` y `S4.14` — ✅ COMPLETO | Validación unpublished y comprobación sincrónica final del ocupante exacto antes de publish | Que el adapter Pi o el runtime global instalado ya funcionen |
-| `S9.4` — ✅ COMPLETO; `S1.17`–`S1.19` pendientes | Supervisor y actualidad del proceso ya entregados; adapter y regresión Pi siguen enumerados | Que Pi ya esté conectado, materializado o habilitado globalmente |
+| `S9.4` y `S1.17` — ✅ COMPLETO; `S1.18`–`S1.19` pendientes | Supervisor, actualidad del proceso y gate privado de autoridad ya entregados; adapter runtime y regresión Pi siguen enumerados | Que Pi ya esté conectado, materializado o habilitado globalmente |
 | `S9.5` | Materialización idempotente de sólo los asientos exactos del brief, después de `S1.18`; `S9.6` ya cerró | Que Herdr ya abra, reutilice o valide esos asientos automáticamente |
 | Gate Pi desatendido | Una corrida prolongada atribuible al candidato | Estabilidad de larga duración sin esa evidencia |
 | Gate de caída con tráfico | Recuperación idempotente tras caída real del broker | Entrega garantizada de mensajes en vuelo |
@@ -118,10 +118,10 @@ Lo técnico: El candidato `daf7e0e7af4122417ce2bec8a48a11c65a40f23c`, cherry-pic
 En simple: La Torre vuelve a comprobar la llave en el instante de entregarla. Si el proceso cambió, respondió algo ambiguo o falló, no publica ownership viejo. El código está verificado localmente y todavía falta el push directo.
 Evidencia: `contracts/host-runtime/ownership-registry.mjs` · `test/contracts/host-runtime/ownership.test.mjs` · `openspec/specs/host-runtime/spec.md` · candidato `daf7e0e7af4122417ce2bec8a48a11c65a40f23c`
 
-### H · resuelto · `S9.4` ya prueba que observa el mismo proceso del kernel
-Lo técnico: `S9.4` está ✅ COMPLETO en `2b6dd52`: el puerto `observeProcess` compara PID, cwd y start-token antes y después de la observación async y falla cerrado si el proceso cambia. Device/inode queda como follow-up explícito fuera del criterio aprobado, no como deuda escondida de la Sesión.
-En simple: El supervisor ya no se conforma con que el registro interno diga “es el mismo agente”. También vuelve a mirar al sistema operativo y frena si el proceso fue reemplazado mientras observaba. La próxima dependencia del flujo es `S1.17`; todavía no fue despachada.
-Evidencia: `openspec/plans/plan-9/STATUS.md` S9.4 · autoridad Engram 9748 · `2b6dd527b8cb046bf6f1936328475352d1ac716d`
+### H · resuelto · El supervisor y el gate privado ya separan proceso, identidad y autoridad
+Lo técnico: `S9.4` compara PID, cwd y start-token antes y después de la observación async. `S1.17` separa `incarnation_id` neutral de `scope_id`, `endpoint_epoch`, rol y capabilities Tower-owned; bloquea takeover concurrente antes de un segundo verifier y libera la reserva cuando verificar falla. Es un seam privado: no implementa runtime, wire, Pi, Intercom ni schema público.
+En simple: La Torre ya puede distinguir tres cosas que no deben mezclarse: qué proceso está vivo, qué encarnación es y qué permisos le otorgó la propia Torre. Si alguien intenta ocupar el mismo lugar o no prueba su identidad, frena sin dejar el asiento trabado. El próximo paso es `S1.18`, pero todavía no fue autorizado ni despachado.
+Evidencia: `openspec/plans/plan-9/STATUS.md` S9.4 · `openspec/plans/plan-1/STATUS.md` S1.17 · `2b6dd527b8cb046bf6f1936328475352d1ac716d` · `4248da9d5c0be812b529b9bfa3d733f2fffba3b0`
 
 ### I · resuelto · `S2.8` eliminó los nombres de fase sin fabricar un verde integral
 Lo técnico: El código local `480afb92bf99d38ee166070d09ec6485bc5de2c4`, parent `c2fb6399ee1332821663735d02833f78b9371402`, toca sólo los tres paths de `Área` y suma 45 líneas authored. AC1–AC5 pasan; safety quedó 72/72, `M2.8.1` pasó de RED 72/1 a 74/74 y `M2.8.2` de RED 74/1 a 75/75. La única integral fue 952/953 por `test/hosts/candidate-fence.test.mjs:432`, fuera de `Área`; el diagnóstico aislado autorizado pasó 17/17 y el caso exacto no reprodujo. AC6 cierra por la decisión 103, no como PASS.
@@ -130,4 +130,4 @@ Evidencia: `schemas/binding-delta-v1.schema.json` · `test/contracts/schema.test
 
 ## Evidencia y límites de esta radiografía
 
-Este juicio está verificado contra el HEAD exacto `2b6dd527b8cb046bf6f1936328475352d1ac716d`. `S9.6` acredita la fuente Pi-first y `S9.4` la actualidad de kernel del supervisor; ninguno acredita el runtime global instalado. La cadena sigue inactiva hasta completar `S1.17 → S1.18 → S9.5 → S8.12`, más `S1.19` y `S4.12`, y finalmente `S8.13`: todavía no se acreditan adapter Pi, packaging Tower, materialización de `control-tower-activation.json`, lifecycle atómico, activación, rollback, materialización Herdr, asignación ni capacidad.
+Este juicio está verificado contra el HEAD exacto `4248da9d5c0be812b529b9bfa3d733f2fffba3b0`. `S9.6` acredita la fuente Pi-first, `S9.4` la actualidad de kernel del supervisor y `S1.17` el gate privado de autoridad; ninguno acredita el adapter runtime ni el runtime global instalado. La cadena sigue inactiva hasta completar `S1.18 → S9.5 → S8.12`, más `S1.19` y `S4.12`, y finalmente `S8.13`: todavía no se acreditan adapter runtime Pi, packaging Tower, materialización de `control-tower-activation.json`, lifecycle atómico, activación, rollback, materialización Herdr, asignación ni capacidad.
