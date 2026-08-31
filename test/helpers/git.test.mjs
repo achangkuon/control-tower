@@ -1,7 +1,8 @@
 import { afterEach, expect, test } from "bun:test"
+import { spawnSync } from "node:child_process"
 import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { delimiter, join } from "node:path"
 
 import { git } from "./git.mjs"
 
@@ -69,6 +70,18 @@ test("avoids proxy recursion with a caller-provided minimal environment", () => 
     encoding: "utf8",
     timeout: 1_000,
   })
+
+  expect({ status: result.status, signal: result.signal }).toEqual({ status: 0, signal: null })
+  expect(result.stdout).toMatch(/^git version /)
+})
+
+test("proxy avoids recursion when its routing variable is absent", () => {
+  const env = { ...process.env }
+  delete env.CT_GIT_PROXY_DIR
+  expect(env.PATH?.split(delimiter)[0]).toBe(join(import.meta.dir, "bin"))
+  expect(env.CT_GIT_PROXY_DIR).toBeUndefined()
+
+  const result = spawnSync("git", ["--version"], { env, encoding: "utf8", timeout: 250 })
 
   expect({ status: result.status, signal: result.signal }).toEqual({ status: 0, signal: null })
   expect(result.stdout).toMatch(/^git version /)

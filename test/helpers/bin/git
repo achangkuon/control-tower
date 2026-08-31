@@ -1,8 +1,16 @@
 #!/bin/sh
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR
 unset GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_QUARANTINE_PATH
-case "$PATH" in
-  "$CT_GIT_PROXY_DIR":*) PATH=${PATH#*:} ;;
-esac
+
+proxy_dir=$(CDPATH= cd -P "$(dirname "$0")" 2>/dev/null && pwd -P) || exit 126
+while :; do
+  first_path=${PATH%%:*}
+  first_dir=$(CDPATH= cd -P "${first_path:-.}" 2>/dev/null && pwd -P) || first_dir=
+  [ "$first_dir" = "$proxy_dir" ] || break
+  case "$PATH" in
+    *:*) PATH=${PATH#*:} ;;
+    *) PATH= ;;
+  esac
+done
 export PATH
 exec git "$@"
