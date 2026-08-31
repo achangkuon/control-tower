@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import { readFileSync } from "node:fs"
 
-import { createPollingLoop } from "../host/loop.mjs"
+import { createPollingLoop } from "../hosts/loop.mjs"
 
 const POLICY = Object.freeze({
   pollIntervalMs: 2_000,
@@ -228,7 +228,7 @@ describe("host-neutral polling lifecycle", () => {
   })
 
   test("controller source has no host, persistence, receive, or claim dependency", () => {
-    const source = readFileSync(new URL("../host/loop.mjs", import.meta.url), "utf8")
+    const source = readFileSync(new URL("../hosts/loop.mjs", import.meta.url), "utf8")
     expect(source).not.toMatch(/(?:opencode|sqlite|core\.mjs|mcp\.mjs)/i)
     expect(source).not.toMatch(/\.(?:receive|claim)\s*\(/)
   })

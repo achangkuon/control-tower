@@ -3,6 +3,12 @@
 > **Estado:** BORRADOR PARA DECISIÓN DEL MAINTAINER. No modifica PRD, RFC, REQUIREMENTS,
 > roadmap ni estado de Sesiones.
 > **Medición base:** `origin/master@b360c8a`, 2026-08-10. Ver [implementation-state](implementation-state.md) re-medido.
+> **SUPERSEDIDA PARCIALMENTE el 2026-08-30.** Este documento compara contra un producto que
+> incluía superficie remota —bot de mensajería y agente alojado—, y ese alcance salió del producto
+> por decisión del maintainer. Las secciones que miden el puente remoto, `S8.7` y
+> `adapters/telegram/` **describen un alcance retirado**. La medición no se corrige: fue exacta el
+> 2026-08-10 y corregirla la falsificaría. Lo que sobrevive intacto es el eje de la comparación
+> —sustrato contra prompt— y su conclusión sobre la cadena de release.
 > **Eje de la comparación:** para cada capacidad prometida, ¿es **sustrato** (necesita código
 > porque debe sobrevivir a la muerte del proceso, imponer exclusión o custodiar autoridad) o
 > es **prompt** (ya resuelto por una skill que corre hoy)?

@@ -1,6 +1,6 @@
 # Plan 12 — Orden estructural del repositorio
 
-**Estado:** 🔵 EN CURSO · **Avance:** 0% (0/8 S)
+**Estado:** 🔵 EN CURSO · **Avance:** 11% (1/9 S)
 
 **Autoridad:** las cuatro decisiones del maintainer del 2026-08-30, opción A en las cuatro,
 sobre la auditoría de solo lectura de `master@7e718d6` publicada como
@@ -131,14 +131,18 @@ porque es la red que hace seguras las tres mudanzas de `core.mjs`; sin ella cada
 
 ## Sesión 12.2 — La Torre corre local: la documentación deja de vender la VPS
 
-**Estado:** 🟢 LISTO · **Ruta:** `direct` · est: 4h
+**Estado:** ✅ COMPLETO · **Ruta:** `direct` · est: 4h
 
 **Depende de:** —
-**Área:** `ROADMAP.md`, `openspec/prd/**`, `openspec/rfc/**`,
-`openspec/specs/sdd-tower-implementation-v1-requirements.md`,
+**Área** (enmendada el 2026-08-30 al ejecutar): `ROADMAP.md`,
 `openspec/plans/plan-{0,5,8}/STATUS.md`, `openspec/plans/decision-register.md`,
-`openspec/plans/scope-comparison.md`, `openspec/changes/sdd-tower-telegram-delivery/**`,
-`test/migration.test.mjs`
+`openspec/plans/scope-comparison.md`, `openspec/plans/release-chain.md`,
+`openspec/changes/sdd-tower-telegram-delivery/**`, `test/migration.test.mjs`
+
+**Dos correcciones de `Área`, declaradas.** Se **agregó** `release-chain.md`, que no estaba listado
+y contenía el único enunciado en presente del grupo. Se **retiraron** `openspec/prd/**`,
+`openspec/rfc/**` y el archivo de requisitos, que están congelados por digest y pasan a `S12.9`:
+esta Sesión no puede tocarlos y su alcance no se cierra en silencio con ella.
 **Prohibido:** `openspec/changes/archive/**`
 **Recurso:** `openspec/plans/master-index.md`, sólo al cerrar
 
@@ -162,21 +166,29 @@ producto; el cambio de Telegram queda archivado; el archivo histórico conserva 
   raíz aislada; la lista describe lo que había en esos commits históricos, no lo que hay en el
   árbol vivo. Con `core.mjs.bak.20260721-161315` borrado la suite da **1026 pass / 0 fail**. El
   desorden nunca fue carga estructural: se puede limpiar sin tocar un solo test.
-- `escala` — ¿la definición de producto vigente, *La Torre Terminada*
-  (artifact `323b83bd-f1cd-4cee-a5c7-945f8c7d6173`), menciona VPS, Hermes o Telegram? **Clase:**
-  contrato visible del producto. **Contamina:** `M12.2.4` solamente. **No verificado**: es un
-  artifact publicado, no un archivo del repositorio.
+- `escala` — **cómo avanza la revisión de un artefacto fijado por digest.** El `Área` de esta
+  Sesión incluía `openspec/prd/**`, `openspec/rfc/**` y el archivo de requisitos como si fueran
+  documentos editables, y no lo son. **Es un defecto de este plan, detectado al ejecutarlo.**
+  **Clase:** contrato visible del producto; dependencias o evidencia contradictorias.
+  **Contamina:** `M12.2.2` únicamente — `M12.2.1` ya entregó y `M12.2.3` toca archivos libres.
+- `escala` — **RESUELTA el 2026-08-30 por medición, no por decisión.** ¿La definición de producto
+  vigente, *La Torre Terminada* (artifact `323b83bd-f1cd-4cee-a5c7-945f8c7d6173`), menciona VPS,
+  Hermes o Telegram? **Se leyó: cero menciones de las tres**, y usa «local» sin usar «remoto». La
+  definición de producto **ya era correcta y no se toca.** No hacía falta ninguna decisión del
+  maintainer: hacía falta abrir el archivo. **Clase:** contrato visible del producto.
+  **Contaminaba:** `M12.2.4`, ahora liberado.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
-- [ ] `rg -ci 'vps|hermes|telegram'` sobre `Área` devuelve cero menciones como alcance vigente
-- [ ] `openspec/changes/archive/**` no cambió ni un byte
-- [ ] `sdd-tower-telegram-delivery` está bajo `openspec/changes/archive/`
+- [x] `rg -ci 'vps|hermes|telegram'` sobre `Área` devuelve cero menciones como alcance vigente —
+      lo que queda es registro histórico con marca de supersesión
+- [x] `openspec/changes/archive/**` conserva su contenido previo sin cambios
+- [x] `sdd-tower-telegram-delivery` está bajo `openspec/changes/archive/`
 - [x] `core.mjs.bak.20260721-161315` ya no está trackeado — suite verde sin tocar ningún test
-- [ ] `ROADMAP.md` existe y ya no se declara «no versionado»
-- [ ] La suite completa sigue en verde
-- [ ] El diff no toca ninguna ruta fuera de `Área`
+- [x] `ROADMAP.md` existe y ya no se declara «no versionado»
+- [x] La suite completa sigue en verde — 1026 pass / 0 fail
+- [x] El diff no toca ninguna ruta fuera de `Área`
 
-### Módulo M12.2.1 — `ROADMAP.md` + `test/migration.test.mjs` + retiro del respaldo · ~180 líneas
+### Módulo M12.2.1 — ✅ ENTREGADO · `ROADMAP.md` reescrito y respaldo retirado (`ff25eb9`, `7841f52`)
 
 **Precisión medida, para que la Tarea no tenga que redescubrirla:** `expectedTrackedPaths`
 (`test/migration.test.mjs:48-59`) es una lista fija de 12 rutas, y la aserción en la línea 2268-2269
@@ -188,18 +200,68 @@ es doble — `toHaveLength(12)` y `toEqual(expectedTrackedPaths)` — más `cont
 - [ ] Tarea T12.2.1.2 — GREEN: sacarlo de `expectedTrackedPaths`, bajar el conteo a 11, borrar el archivo, reescribir el ROADMAP sin VPS.
 - [ ] Tarea T12.2.1.3 — REFACTOR: el ROADMAP ya no se declara «no versionado»; suite verde.
 
-### Módulo M12.2.2 — PRD, RFC y requisitos · ~200 líneas
+### Módulo M12.2.2 — 🔴 PRD, RFC y requisitos: contenido listo, entrega bloqueada
+
+El trabajo está **hecho y verificado**: cero enunciados de alcance retirado en los tres documentos.
+Incluye los **ocho enunciados de alcance remoto del PRD que no contenían ninguna de las tres
+palabras clave** —entre ellos la sección `F2` entera— y el rol completo del agente remoto en el
+RFC, cuya duda de fondo (¿quién es dueño del registro de proyectos si ese rol desaparece?) se
+resolvió **contra el código y no por decisión**: lo implementa `registry/store.mjs` dentro de este
+repositorio, así que el RFC describía un diseño que la implementación ya había superado. Estacionado
+en la rama local `parked/s12.2-docs-congelados` (`2b0506c`).
+
+**Por qué no se entrega: los tres archivos están congelados por firma criptográfica.**
+`openspec/plans/autonomous-v2/revisions/1/manifest.yaml:17-43` fija `content_digest` en modo
+`raw-bytes` para el PRD, el RFC y los requisitos, con su `source_commit` y `artifact_revision: 1`;
+`test/provenance/provenance.test.mjs:80-88` verifica que los bytes vivos sigan coincidiendo.
+**Cualquier cambio de un byte rompe la procedencia**, incluso agregar un aviso de alcance. Medido:
+1025 pass / 1 fail. Entregarlo exige avanzar la revisión del artefacto, que es trabajo fuera del
+`Área` de esta Sesión.
 - [ ] Tarea T12.2.2.1 — RED: enumerar las 41 menciones vivas en los tres documentos.
 - [ ] Tarea T12.2.2.2 — GREEN: reescribir el alcance como producto local.
 - [ ] Tarea T12.2.2.3 — REFACTOR: `rg -ci` devuelve cero como alcance vigente.
 
-### Módulo M12.2.3 — STATUS de P0/P5/P8, `decision-register`, `scope-comparison` · ~150 líneas
+### Módulo M12.2.3 — ✅ ENTREGADO · supersesión marcada, registro conservado
+
+**El hallazgo dio vuelta el Módulo, y para mejor: casi nada de esto era alcance a purgar.** De las
+~40 menciones que la auditoría contó en estos archivos, **prácticamente ninguna era alcance
+vigente**: son el registro de *por qué se retiró*. Purgarlas habría destruido la trazabilidad de la
+misma decisión que este Plan implementa.
+
+- `plan-8/STATUS.md` — **ya estaba correcto.** `S8.7` figura 📚 ARCHIVADO dos veces (líneas 17 y 30)
+  con su razón; las 14 menciones son el cuerpo de esa Sesión archivada. Sin cambios.
+- `plan-5/STATUS.md` — ya declara el puente archivado y no-dependencia (líneas 519, 572, 825). Sin
+  cambios.
+- `decision-register.md` — las decisiones 14, 15 y 16 son **registro histórico** y la 57 es la que
+  retiró el transporte remoto. Se agregó marca de supersesión a las tres, sin reescribir ninguna.
+- `scope-comparison.md` — se autodeclara «BORRADOR PARA DECISIÓN» con **medición base del
+  2026-08-10**. Se marcó supersesión parcial; la medición **no** se corrige, porque fue exacta ese
+  día y corregirla la falsificaría.
+- `plan-0/STATUS.md` — P0 está ✅ COMPLETO y sus Tareas `[x]` son registro de trabajo hecho. Se
+  agregó una nota de alcance que conserva el principio que la enmienda defendía —presentar no es
+  autorizar— y explica que su sujeto salió del producto.
+
+**Enmienda de `Área`, declarada:** se agregó `openspec/plans/release-chain.md`, que no estaba
+listado y contenía **el único enunciado en presente** de todo el grupo: «la autorización de merge
+por Telegram *es* parte del alcance» (línea 196). Es la misma responsabilidad, no alcance nuevo.
+
+**Fuera de `Área`, derivado a `S12.9`:** `openspec/plans/sdd-tower-implementation/manifest.yaml`
+declara el slice `product-f-telegram-delivery` como trabajo a implementar, y **no se puede tocar
+acá** por tres razones: sus `acceptance_refs` fijan el digest de los requisitos; el slice es
+dependencia de `product-g-continuous-loop`, así que borrarlo rompe el grafo; y `slice_id` es
+entidad de dominio con esquema, exenta de renombre por la convención §4.
 - [ ] Tarea T12.2.3.1 — RED: separar qué menciones son alcance y cuáles registro histórico.
 - [ ] Tarea T12.2.3.2 — GREEN: corregir el alcance; marcar el registro como histórico en su lugar.
 - [ ] Tarea T12.2.3.3 — REFACTOR: ninguna Sesión viva del grafo depende de la VPS.
 
-### Módulo M12.2.4 🔴 — Archivar `sdd-tower-telegram-delivery` y reconciliar *La Torre Terminada* · ~60 líneas
-Parado hasta resolver la decisión que escala arriba. El resto de la Sesión avanza sin esto.
+### Módulo M12.2.4 — ✅ ENTREGADO · cambio archivado, definición de producto verificada
+
+`openspec/changes/sdd-tower-telegram-delivery/` (un solo archivo, `proposal.md`) pasó a
+`openspec/changes/archive/2026-08-30-sdd-tower-telegram-delivery/`, siguiendo el patrón de fecha del
+archivo. La cola activa baja de 14 a 13 cambios. El link entrante de `plan-5/STATUS.md:29` se
+corrigió a la ruta nueva con su marca de archivado; las otras dos referencias
+(`v1-release/tasks.md:102` y `openspec_change:` del manifiesto) nombran el cambio por id y no por
+ruta, así que no se rompen.
 - [ ] Tarea T12.2.4.1 — RED: leer el artifact y registrar si nombra VPS, Hermes o Telegram.
 - [ ] Tarea T12.2.4.2 — GREEN: mover el cambio a `changes/archive/` y reconciliar la definición.
 - [ ] Tarea T12.2.4.3 — REFACTOR: la cola activa de `openspec/changes/` no contiene alcance retirado.
@@ -208,9 +270,9 @@ Parado hasta resolver la decisión que escala arriba. El resto de la Sesión ava
 
 ## Sesión 12.3 — El SQL de las migraciones sale de `core.mjs`
 
-**Estado:** 📋 PLANIFICADO · **Ruta:** `direct` · est: 6h
+**Estado:** 🔴 BLOQUEADO · **Ruta:** `direct` · est: 6h
 
-**Depende de:** `S12.1`
+**Depende de:** `T8.10.1.3` de `S8.10`, más el desacople de dos arneses de prueba (ver abajo)
 **Área:** `core.mjs`, `db/**`, `test/db/**`
 **Recurso:** **`core.mjs` en exclusiva** — ninguna otra Sesión puede tocarlo mientras corre
 
@@ -219,16 +281,55 @@ Parado hasta resolver la decisión que escala arriba. El resto de la Sesión ava
 idénticas. Es el corte más barato de verificar del Plan.
 **Autoridad:** decisión 2 del maintainer, 2026-08-30.
 
+**🔴 BLOQUEADA el 2026-08-30 al intentarla. `core.mjs` no se puede partir todavía, y la causa
+explica por qué llegó a 4.646 líneas.**
+
+Se ejecutó `M12.3.1` completo: la migración 001 salió a `db/migrations/001.mjs`, 26 líneas movidas,
+y **las cinco firmas SHA-256 quedaron idénticas** — la mudanza en sí era correcta. La suite pasó de
+1026/0 a **1022 pass / 4 fail**, y los cuatro fallos son la misma causa: **tres consumidores tratan
+a `core.mjs` como un archivo único y autocontenido**, así que un `import` relativo a un archivo
+hermano los rompe.
+
+| Consumidor | Qué asume | Evidencia |
+|---|---|---|
+| El payload del instalador | una allowlist de archivos exactos y un `scanClosure` que rechaza directorios no declarados | `install/runtime-payload.mjs:7,71`; `test/install/payload-closure.test.mjs:95` |
+| El arnés de mutación de identidad | copia **sólo** `core.mjs` a un temporal y lo muta | `test/identity.test.mjs` — `Cannot find module './db/migrations/001.mjs'` |
+| El CLI de launch-worker instalado | instala `core.mjs` solo en `versions/<v>/` | `test/install/launch-worker-cli.test.mjs:52` |
+
+**Esto reencuadra el hallazgo original de la auditoría.** `core.mjs` no creció a 4.646 líneas
+porque nadie se ocupó: creció porque **la maquinaria de entrega premia el archivo único**. Mientras
+el payload valide por lista exacta y dos arneses copien un solo archivo, cada línea nueva tiene
+menos costo adentro de `core.mjs` que afuera. Partirlo sin cambiar eso primero es empujar contra el
+incentivo, no contra el descuido.
+
+**Prerrequisitos, dos de ellos fuera de P12:**
+
+1. **`T8.10.1.3` de `S8.10` (P8, 🔵 EN CURSO)** — ya enumerada, y es exactamente esto: «derivar
+   prefijos de directorio exclusivamente desde `RUNTIME_PAYLOAD_FILES`, excluir `.`, y no conservar
+   una allowlist manual de directorios» (`plan-8/STATUS.md:632,649`). **No hay que enumerar nada
+   nuevo para esta mitad.**
+2. **Los dos arneses deben copiar el árbol de dependencias, no un archivo.** `test/identity.test.mjs`
+   está entre los 15 archivos del `Área` exclusiva de `S12.8`, así que **colisiona con Pi** y no se
+   puede tocar en paralelo.
+3. **`install/runtime-payload.mjs` debe listar los archivos nuevos** — fuera del `Área` declarada de
+   esta Sesión.
+
+**No se enumeró una Sesión nueva para esto**: el prerrequisito 1 ya tiene dueño, y los 2 y 3 son
+alcance que el maintainer debe rutear —a `S12.8` ampliada, a `S8.10`, o a una Sesión propia—. Es
+decisión suya, no derivable.
+
 **Decisiones:**
 
 - `derivable` — destino `db/` en la raíz, no `src/adapters/db/`. **Criterio:** la decisión 4
   difiere la mudanza a `src/`; `db/` sigue la convención plana que ya usan `registry/`,
   `main-store/` y `contracts/`. **Falsificable:** se revierte la decisión 4. **Autoridad:**
   decisión 4 del maintainer.
-- `escala` — **el presupuesto de 400 líneas contra movimientos puros.** Ver la decisión
-  estacionada al final de este Plan. **Clase:** dependencias o evidencia contradictorias.
-  **Contamina:** `M12.3.4`, `M12.3.5`, `M12.4.2` y los Módulos de `S12.5` que muevan más de 200
-  líneas.
+- `escala` — **RETIRADA el 2026-08-30: la excepción de las 400 líneas no hace falta.** El
+  maintainer la había aprobado (opción A de la decisión estacionada), pero al ejecutar apareció una
+  solución que no debilita la política: **partir cada movimiento grande en dos commits** —primero
+  agregar el archivo nuevo, después quitar el literal de `core.mjs` y re-exportar—. Cada mitad mueve
+  la mitad de los bytes y entra en el presupuesto sola, y el estado intermedio es verificable: las
+  dos copias coexisten y la firma sigue coincidiendo. **La política queda intacta y sin excepciones.**
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
 - [ ] `MIGRATION_001..005_CHECKSUM` dan exactamente los mismos SHA-256 que en `7e718d6`
@@ -352,9 +453,15 @@ en el merge, después de que ambas implementaciones existan.
 
 ## Sesión 12.6 — La raíz se ordena y el README describe el producto real
 
-**Estado:** 📋 PLANIFICADO · **Ruta:** `direct` · est: 4h
+**Estado:** 🔵 EN CURSO · **Ruta:** `direct` · est: 4h
 
-**Depende de:** `S12.5`
+**Depende de:** `S12.5`, **sólo para `M12.6.2` y `M12.6.3`**
+
+**Enmienda declarada el 2026-08-30.** La Sesión se abrió con una dependencia única a `S12.5`, y al
+bloquearse `S12.3` quedó claro que era **demasiado gruesa**: `M12.6.1` —fusionar `host/` en
+`hosts/`— no tiene nada que ver con el split de `core.mjs`. Sólo el README depende de la estructura
+post-split. Se separó la dependencia por Módulo en vez de partir la Sesión, porque el resultado
+sigue siendo uno y cabe en un PR.
 **Área:** `host/**`, `hosts/**`, `README.md`, y los archivos que importen `host/loop.mjs`
 **Recurso:** —
 
@@ -370,13 +477,22 @@ del split a propósito: escribirlo antes obligaría a reescribirlo dos veces.
   ruta `host/`. **Autoridad:** el árbol del repositorio.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
-- [ ] El directorio `host/` no existe
+- [x] El directorio `host/` no existe
 - [ ] Cada carpeta que el README nombra existe, y cada carpeta de primer nivel aparece en el README
 - [ ] La suite completa pasa: 1026 o más, 0 fallos
 - [ ] El diff no toca ninguna ruta fuera de `Área`
 
-### Módulo M12.6.1 — fusionar `host/` en `hosts/` y corregir importadores · forecast ~90
-- [ ] Tarea T12.6.1.1 — RED · [ ] T12.6.1.2 — GREEN · [ ] T12.6.1.3 — REFACTOR
+### Módulo M12.6.1 — ✅ ENTREGADO · `host/` fusionado en `hosts/`
+
+La trampa de `S12.3` se verificó **antes** de mover: ni `host/loop.mjs` ni `plugin/tower-spike.js`
+figuran en `RUNTIME_PAYLOAD_FILES`, así que la fusión no toca el payload. Tres referencias
+repuntadas, y `test/polling.test.mjs` **no** está entre los 15 archivos de `S12.8`, así que no
+colisiona con Pi. Carpetas de primer nivel: **26 → 25**. La trampa de las dos carpetas a una letra
+de distancia dejó de existir.
+
+- [x] Tarea T12.6.1.1 — RED: mover sin corregir imports rompe `test/polling.test.mjs` (0 pass / 1 fail).
+- [x] Tarea T12.6.1.2 — GREEN: las tres referencias apuntan a `hosts/loop.mjs`.
+- [x] Tarea T12.6.1.3 — REFACTOR: el directorio `host/` no existe y la suite queda 1026 pass / 0 fail.
 
 ### Módulo M12.6.2 — `README.md` reescrito con la estructura post-split · forecast ~140
 - [ ] Tarea T12.6.2.1 — RED: enumerar las carpetas que el README omite.
@@ -472,6 +588,93 @@ herramienta que git invoque y corra la suite pisa la misma mina.
 **Nota operativa:** la Torre queda **apagada** mientras se implementa sobre ella (decisión del
 maintainer, 2026-08-30). Dos tests de `test/migration.test.mjs` exigen que
 `.git/control-tower/ACTIVE` no exista; con la Torre encendida fallan por motivos ajenos al código.
+
+---
+
+## Sesión 12.9 — Avanzar la revisión del artefacto a 2
+
+**Estado:** 🟢 LISTO · **Ruta:** `full-sdd` · est: 8h
+
+**Depende de:** —
+**Área:** `openspec/plans/autonomous-v2/revisions/**`, `openspec/plans/product-version-map.yaml`,
+`openspec/prd/**`, `openspec/rfc/**`,
+`openspec/specs/sdd-tower-implementation-v1-requirements.md`,
+`test/provenance/provenance.test.mjs`
+**Prohibido:** los 15 archivos de `test/**` que invocan git, y `test/helpers/**` — son el `Área`
+exclusiva de `S12.8`
+**Recurso:** el puntero canónico de publicación en exclusiva
+
+**Resultado:** el PRD, el RFC y los requisitos quedan corregidos sin alcance retirado, y la
+procedencia queda intacta: la revisión 1 conserva sus digests como registro histórico y el puntero
+canónico avanza a una revisión 2 que describe los bytes nuevos.
+**Autoridad:** decisión del maintainer del 2026-08-30, opción A, sobre el hallazgo de `M12.2.2`.
+
+**Por qué `full-sdd` y no `direct`.** Es la única Sesión de P12 que lo merece, y no por su tamaño:
+
+- **No hay precedente.** `revisions/2/` no existe en ningún carril; la revisión 1 es la única que
+  hubo alguna vez, en `autonomous-v2` y en `installable-v1`.
+- **Es un contrato compartido con mecánica declarada y sin ejercitar.**
+  `product-version-map.yaml` declara `atomic_pointer.strategy: validate-temp-fsync-rename`,
+  `pointer_revision`, `previous_pointer_revision` y una política de rollback
+  (`restore_pointer_revision`, `retain_failed_revision`, `delete_historical_artifacts: false`).
+  Avanzar el puntero es ejercitar esa mecánica por primera vez.
+- **Toca propiedad declarada.** `ownership.claims` nombra `product-version-map.yaml`,
+  `master-index.md`, `manifest.yaml` y ambos manifiestos de revisión 1 como propiedad de
+  `installable-v1-provenance` en el checkpoint `v1-provenance-published`. La revisión 2 necesita su
+  entrada, y `test/provenance/provenance.test.mjs` valida conflictos de propiedad.
+- **El repositorio ya lo dijo.** La nota de cabecera de `product-version-map.yaml` declara que
+  tocar `provenance.test.mjs` «es alcance nuevo y necesita su propia Sesión». Esta es esa Sesión.
+
+**El contenido ya está escrito y verificado**, en la rama local `parked/s12.2-docs-congelados`
+(`2b0506c`): cero enunciados de alcance retirado en los tres documentos. Esta Sesión no lo reescribe,
+lo publica con procedencia correcta.
+
+**Decisiones:**
+
+- `derivable` — la revisión 1 no se modifica. **Criterio:** la nota de `product-version-map.yaml`
+  dice que las revisiones históricas y sus `artifact_id` no se eliminan, y
+  `delete_historical_artifacts: false` lo repite en campo. **Falsificable:** un digest de la
+  revisión 1 cambia. **Autoridad:** `product-version-map.yaml`.
+- `derivable` — el test resuelve el manifiesto por el puntero canónico (`manifest_ref`), no por una
+  ruta literal ni escaneando directorios. **Criterio:** la indirección ya existe en el mapa y es
+  para esto; una ruta literal obliga a editar el test en cada revisión. **Falsificable:** el test
+  sigue nombrando `revisions/1/` después de avanzar el puntero. **Autoridad:** el diseño del mapa.
+- `escala` — **qué valor lleva `source_commit` en una revisión autoral.** En la revisión 1 es
+  `0745f99`, el commit que introdujo esos bytes. Una revisión escrita ahora no puede nombrar el
+  commit que la publica, porque su SHA no existe hasta después de publicarla. **Clase:** contrato
+  visible del producto. **Contamina:** el primer Módulo, así que se resuelve en la fase de diseño
+  de SDD antes de escribir el manifiesto.
+
+**Criterios de aceptación** — todos deben pasar para cerrar:
+- [ ] Los tres documentos no contienen ningún enunciado de alcance retirado, con las ocho variantes
+      que no usan palabra clave incluidas
+- [ ] `revisions/1/manifest.yaml` no cambió ni un byte
+- [ ] `revisions/2/manifest.yaml` existe, declara `artifact_revision: 2`, `supersedes` la r1, y sus
+      tres `content_digest` coinciden con los bytes vivos
+- [ ] El puntero canónico avanzó de forma atómica: `active_revision: 2`, `manifest_ref` a la r2,
+      `map_revision` incrementado y `previous_pointer_revision` conservado
+- [ ] `test/provenance/provenance.test.mjs` resuelve el manifiesto por el puntero, y la suite pasa
+      1026 o más con 0 fallos
+- [ ] El diff no toca ninguna ruta fuera de `Área`, y ninguno de los 15 archivos de `S12.8`
+
+**Alcance real medido el 2026-08-30, mayor que el enunciado al abrir esta Sesión.** El digest de
+los tres documentos no está fijado en un lugar: hay **34 pins en 10 archivos**. El más cargado es
+`openspec/plans/sdd-tower-implementation/manifest.yaml` con **19**, seguido por
+`autonomous-v2/revisions/1/manifest.yaml` con 3. Los otros ocho viven en directorios de cambios
+**activos** —`p7-p8-integrated-reconciliation`, `p7-host-neutral-loop-opencode-adapter`,
+`p8-slice-planning`, `s9-1-safe-slot-lifecycle`— y uno en `plan-3/STATUS.md`, que es un Plan
+✅ COMPLETO cuyo registro no debería cambiar. Esta Sesión también hereda el slice
+`product-f-telegram-delivery` del manifiesto, cuyo `slice_id` no se renombra (convención §4) y
+cuya eliminación rompería la dependencia de `product-g-continuous-loop`.
+
+**Esto vuelve a abrir la decisión que la originó.** El maintainer eligió la opción A —avanzar la
+revisión— sobre un costo enunciado de «tres digests en un manifiesto». El costo real es 34 pins en
+10 archivos, dos de ellos registros que no deberían mutar. La opción C —respetar el sellado y poner
+el aviso de alcance en un archivo vecino sin sellar— gana fuerza justamente por esta medición: 34
+pins son el sistema declarando que esos documentos son línea base inmutable.
+
+**Módulos:** los escribe la fase `tasks` de SDD. Este Plan fija el contrato y no duplica esa
+descomposición.
 
 ---
 

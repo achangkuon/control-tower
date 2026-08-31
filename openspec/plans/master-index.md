@@ -6,25 +6,25 @@
 
 ## 📍 Punto de retoma
 
-**`S12.1` descubrió un defecto que la supera y quedó estacionada detrás de una Sesión nueva, `S12.8`.** Correr la suite desde un hook de git **escribe en el repositorio real**: git exporta `GIT_DIR` a sus hooks, los 15 archivos de test que invocan git no limpian el entorno heredado, y la corrida dejó commits `fixture` sobre la rama viva, tres worktrees fantasma de `/tmp` registrados, y `core.bare=true` en la config compartida —que rompe `git status` en los ocho worktrees—. Medido: 758 pass / 268 fail bajo el hook contra 1026 / 0 a mano. **Todo reparado el mismo día**; `origin/master`, `master` local y las seis ramas de los otros asientos quedaron intactas y verificadas una por una. La causa se cierra en `S12.8`, que es lo primero de la cola.
+**`S12.2` cerró y `M12.6.1` entregó; `S12.3` se intentó y quedó 🔴 BLOQUEADA por una causa estructural que reencuadra la auditoría.** `core.mjs` **no se puede partir todavía**: tres consumidores lo tratan como archivo único y autocontenido —el payload valida por allowlist exacta (`install/runtime-payload.mjs:7,71`), el arnés de identidad copia sólo ese archivo (`test/identity.test.mjs`), y el CLI de launch-worker instalado lo instala solo (`test/install/launch-worker-cli.test.mjs:52`)—. La mudanza en sí era correcta: la migración 001 salió con las cinco firmas SHA-256 idénticas, pero la suite cayó a 1022/4. Todo revertido, `core.mjs` intacto en 4.646. **La maquinaria de entrega premia el archivo único, y por eso creció.** Con `S12.3` salieron de la cola `S12.4`, `S12.5` y `S12.6`.
 
-**El gate de entrega existe y está probado, pero no se instala todavía.** Vive en la rama local `parked/s12.1-gate`: hook `pre-push` que corre la suite y rechaza el push cuando está roja, compuesto **delante** del hook de radiografía que ya existía y que nunca bloquea. Es local y no GitHub Actions por decisión del maintainer: el repositorio es privado y sus minutos están presupuestados para otro proyecto. Se retoma sobre `S12.8` cerrada.
+**La mitad del desbloqueo ya tiene dueño:** `T8.10.1.3` de `S8.10` es exactamente derivar prefijos de directorio desde `RUNTIME_PAYLOAD_FILES` (`plan-8/STATUS.md:632,649`). **La otra mitad espera decisión del maintainer**: desacoplar los dos arneses toca `test/identity.test.mjs`, que está en el `Área` exclusiva de `S12.8`. La forma recomendada es una Sesión nueva que dependa de `S12.8`, no ampliar la Sesión en vuelo de Pi.
 
-**La Torre queda APAGADA mientras se implemente sobre ella** (decisión del maintainer, 2026-08-30, ejecutada: `ACTIVE` retirado, estado y mensajes preservados). Dos tests de `test/migration.test.mjs` lo exigen, y alguien la había encendido a las 18:26 en medio de la jornada.
+**Pi está trabajando `S12.8`** en el asiento temporal `s12-8-pi`, rama `fix/s12.8-aislamiento-suite-pi`. Nació del incidente de esta jornada: correr la suite desde un hook de git **escribe en el repositorio real** —dejó commits `fixture` en la rama viva, tres worktrees fantasma y `core.bare=true` en la config compartida—. Todo reparado el mismo día y verificado: `origin/master`, `master` local y las seis ramas de los otros asientos quedaron intactas.
 
-**Sigue `S12.2` en paralelo:** sacar VPS, Hermes y Telegram de la documentación de alcance vigente. Es documentación pura, no depende de nada, no bloquea nada y no necesita la red del gate.
+**Entregado hoy, ocho commits de `cb227f8` a `08a99af`, cada uno con la suite verificada antes de pushear:** P12 enumerado; `ROADMAP.md` de 235 a 135 líneas conservando textual el diseño del avance automático; respaldo `core.mjs.bak` retirado; cambio de Telegram archivado (cola activa 14 → 13); supersesión marcada en los planes sin reescribir un registro; `host/` fusionado en `hosts/` (carpetas de primer nivel 26 → 25). P12 en 11% (1/9 S), global 48/75.
 
-**`S9.4` sigue 🔵 EN CURSO sobre el criterio 1**: falta el puerto `observeProcess` que compare PID, cwd y start-token del kernel antes y después de la observación async. P9 permanece en 20% (1/5 S).
+**Dos decisiones abiertas del maintainer:** el ruteo de los arneses, y si `S12.9` mantiene la opción A —avanzar la revisión, cuyo costo real resultó ser **34 pins de digest en 10 archivos**, no tres— o pasa a la C, respetar el sellado. Dos ramas estacionadas conservan trabajo terminado: `parked/s12.1-gate` y `parked/s12.2-docs-congelados`.
 
-**Capacidad: 0 asientos del pool.** Los tres permanentes siguen `blocked_by: uncommitted-changes`. `S12.8` está asignada a Pi y necesita asiento; P12 corre desde el temporal `plan-12`, disposable.
+**La Torre está APAGADA** mientras se implemente sobre ella. Capacidad: 0 asientos del pool.
 
 ## 🎯 Cola de ejecución
 
-`#1 S9.4` · `#2 S12.8` · `#3 S12.2` · `#4 S12.1` · `#5 S12.3` · `#6 S12.4` · `#7 S12.5` · `#8 S12.6` · `#9 S1.17` · `#10 S1.18` · `#11 S8.12` · `#12 S9.5` · `#13 S1.19` · `#14 S4.12` · `#15 S8.13` · `#16 S5.14` · `#17 S5.5` · `#18 S5.15` · `#19 S9.2` · `#20 S9.3` · `#21 S7.1` — topológica, recalculada 2026-08-30 al enumerar `S12.8`. La cola no asigna dueño ni asiento.
+`#1 S9.4` · `#2 S12.8` · `#3 S12.9` · `#4 S12.1` · `#5 S1.17` · `#6 S1.18` · `#7 S8.12` · `#8 S9.5` · `#9 S1.19` · `#10 S4.12` · `#11 S8.13` · `#12 S5.14` · `#13 S5.5` · `#14 S5.15` · `#15 S9.2` · `#16 S9.3` · `#17 S7.1` — topológica, recalculada 2026-08-30 al bloquear `S12.3`. La cola no asigna dueño ni asiento.
 
 **Paralelismo:** `S12.8` (`test/**`) y `S12.2` (documentación) son disjuntas en grafo, `Área` y `Recurso`: corren juntas hoy. `S12.1` espera a `S12.8`; desde `S12.3` la cadena de P12 se serializa sobre **`core.mjs` en exclusiva**. Se preserva el orden previo: `S1.18` habilita `S8.12`; `S9.5` conserva `S8.12 + S9.4`; `S4.12` espera `S9.4 + S1.18`; `S8.13` espera `S8.12 + S1.19 + S4.12`; `S7.1` espera `S1.19 + S4.12 + S8.13 + S5.5`.
 
-**Fuera de la cola:** `S4.4`, `S4.8`, `S8.5`, `S8.6`, `S12.7` y P6 🟡 DIFERIDO; `S8.11` 🔴 BLOQUEADO. `S2.8`, `S4.10`, `S4.11`, `S4.13`, `S4.14`, `S5.3` y `S8.14` se excluyen por ✅ COMPLETO; `S4.9` y `S8.7` por 📚 ARCHIVADO.
+**Fuera de la cola:** `S4.4`, `S4.8`, `S8.5`, `S8.6`, `S12.7` y P6 🟡 DIFERIDO; `S8.11` y `S12.3` 🔴 BLOQUEADO, y con `S12.3` salen `S12.4`, `S12.5` y `S12.6`, que dependen de ella. `S2.8`, `S4.10`, `S4.11`, `S4.13`, `S4.14`, `S5.3`, `S8.14` y `S12.2` se excluyen por ✅ COMPLETO; `S4.9` y `S8.7` por 📚 ARCHIVADO.
 
 ## Granularidad
 
@@ -33,7 +33,7 @@ En este repositorio la entrega ocurre mediante uno o más commits directos secue
 
 ## 📊 Estado de un vistazo
 
-**Avance global**: 4/13 Planes cerrados (31%) · Sesiones cerradas en planes activos con denominador derivable: 47/74 (64%). Cálculo auditable: P1 `16/19` + P4 `10/13` + P5 `12/15` + P7 `0/1` + P8 `8/13` + P9 `1/5` + P12 `0/8` = `47/74`. P0, P3, P10 y P11 están cerrados. P2 y P6 conservan porcentaje `—`: cerrar `S2.8` no incorpora P2 al cálculo porque cuatro responsabilidades siguen sin Sesión enumerada; P6 no tiene Sesiones enumeradas.
+**Avance global**: 4/13 Planes cerrados (31%) · Sesiones cerradas en planes activos con denominador derivable: 48/75 (64%). Cálculo auditable: P1 `16/19` + P4 `10/13` + P5 `12/15` + P7 `0/1` + P8 `8/13` + P9 `1/5` + P12 `1/9` = `48/75`. P0, P3, P10 y P11 están cerrados. P2 y P6 conservan porcentaje `—`: cerrar `S2.8` no incorpora P2 al cálculo porque cuatro responsabilidades siguen sin Sesión enumerada; P6 no tiene Sesiones enumeradas.
 
 **P12 agrega 7 Sesiones al denominador global y ninguna cerrada**, así que el porcentaje global baja de 71% a 64% sin que se haya perdido ni un trabajo entregado. Es el mismo movimiento de siempre: se enumeró trabajo que ya existía —el desorden del repositorio— y que nadie contaba. Un porcentaje que sube al enumerar sería la señal de que el denominador está mintiendo.
 
@@ -55,7 +55,7 @@ En este repositorio la entrega ocurre mediante uno o más commits directos secue
 | P9 | Asientos de trabajo y reciclado seguro | 🔵 EN CURSO | 20% (1/5 S) | — | Maintainer | `S9.2`–`S9.5` | [STATUS](plan-9/STATUS.md) |
 | P10 | Ejecución y supervisión autónoma de Jornada | ✅ COMPLETO | 100% (3/3 S) | — | Maintainer | — | [STATUS](plan-10/STATUS.md) |
 | P11 | Interfaz de operador | ✅ COMPLETO | 100% (1/1 S) | — | Maintainer | — | [STATUS](plan-11/STATUS.md) |
-| P12 | Orden estructural del repositorio | 🔵 EN CURSO | 0% (0/8 S) | 42h | Maintainer | `S12.8`, `S12.2`, `S12.1`, `S12.3`–`S12.6` | [STATUS](plan-12/STATUS.md) |
+| P12 | Orden estructural del repositorio | 🔵 EN CURSO | 11% (1/9 S) | 50h | Maintainer | `S12.8`, `S12.9`, `S12.1`; `S12.3`–`S12.6` 🔴 | [STATUS](plan-12/STATUS.md) |
 
 > **Cómo leer `Qué falta`.** Enumera sólo IDs de Sesiones pendientes; el estado y el detalle pertenecen al `STATUS.md` de cada Plan. **🟡 DIFERIDO no es trabajo pendiente** y no aparece en esa columna. El `%` conserva las Sesiones diferidas en el denominador porque siguen siendo objetivo; sólo lo archivado-fuera-de-alcance sale.
 
