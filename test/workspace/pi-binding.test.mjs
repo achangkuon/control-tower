@@ -6,6 +6,8 @@ const hex = (seed) => seed.repeat(32).slice(0, 32)
 const RUNTIME = `ct_runtime_${hex("a")}`, WORKTREE = `ct_worktree_${hex("b")}`
 const PROCESS = `ct_process_${hex("c")}`, INCARNATION = `ct_incarnation_${hex("d")}`
 const BINDING = `ct_binding_${hex("e")}`
+const PID = 4242, CWD = "/repo/a", START_TOKEN = "991827"
+const PROCESS_VIEW = Object.freeze({ pid: PID, cwd: CWD, start_token: START_TOKEN })
 const version = (name) => `control-tower.host-runtime.${name}/v1`
 const binding = Object.freeze({
   schema_version: version("binding"), binding_id: BINDING, runtime_id: RUNTIME,
@@ -33,7 +35,7 @@ const verifier = (...views) => {
     seen.push(views.length > 1 ? views.shift() : views[0])
     return seen.at(-1)
   }
-  return { seen, verify: createPiBindingVerifier({ binding, resolveContexts }) }
+  return { seen, verify: createPiBindingVerifier({ binding, resolveContexts, observeProcess: async () => PROCESS_VIEW, expectedCwd: CWD }) }
 }
 const current = [context()]
 
@@ -41,6 +43,7 @@ describe("exact Pi binding verifier", () => {
   test("refuses a missing resolver, a malformed binding and a non-function boundary", async () => {
     expect(() => createPiBindingVerifier()).toThrow(TypeError)
     expect(() => createPiBindingVerifier({ binding, resolveContexts: "nope" })).toThrow(TypeError)
+    expect(() => createPiBindingVerifier({ binding, resolveContexts: () => current, expectedCwd: CWD })).toThrow(TypeError)
     for (const invalid of [
       undefined, {}, { ...binding, binding_id: "b1" }, { ...binding, loopback_port: 0 },
       { ...binding, schema_version: "control-tower.host-runtime.binding/v2" }, { ...binding, extra: true },
@@ -56,14 +59,60 @@ describe("exact Pi binding verifier", () => {
     expect(seen).toEqual([])
   })
 
-  test("resolves the exact context on both sides of the boundary and returns its value", async () => {
-    const { seen, verify } = verifier(current)
-    const order = []
-    const value = await verify.verifyBoundary(async () => { order.push("boundary"); return "done" })
+  test("resolves exact binding and stable kernel PID/cwd/start-token on both sides", async () => {
+    const seenProcess = []
+    const processViews = [PROCESS_VIEW, { ...PROCESS_VIEW }]
+    const seen = []
+    const verify = createPiBindingVerifier({
+      binding, expectedCwd: CWD,
+      resolveContexts: () => { seen.push(current); return current },
+      observeProcess: async () => { const view = processViews.shift(); seenProcess.push(view); return view },
+    })
+    const value = await verify.verifyBoundary(async () => "done")
 
     expect(value).toBe("done")
     expect(seen).toHaveLength(2)
-    expect(order).toEqual(["boundary"])
+    expect(seenProcess).toEqual([PROCESS_VIEW, PROCESS_VIEW])
+  })
+
+  test("fails closed on PID replacement, cwd drift, or start-token reuse/drift", async () => {
+    for (const after of [
+      { ...PROCESS_VIEW, pid: PID + 1 },
+      { ...PROCESS_VIEW, cwd: "/repo/replaced" },
+      { ...PROCESS_VIEW, start_token: "991828" },
+      { ...PROCESS_VIEW, pid: PID + 1, start_token: START_TOKEN },
+    ]) {
+      const observations = [PROCESS_VIEW, after]
+      const verify = createPiBindingVerifier({
+        binding, expectedCwd: CWD, resolveContexts: () => current,
+        observeProcess: async () => observations.shift(),
+      })
+      expect(await errorCode(() => verify.verifyBoundary(async () => "done"))).toBe("CT_PI_PROCESS_NOT_CURRENT")
+    }
+  })
+
+  test("fails closed on UNKNOWN, ABSENT, malformed, or thrown kernel observations", async () => {
+    for (const observed of [
+      "UNKNOWN", "ABSENT", null, {}, { pid: 0, cwd: CWD, start_token: START_TOKEN },
+      { ...PROCESS_VIEW, cwd: "relative" },
+      ...["", "   ", "abc", "+991827", "-991827", "991.827", " 991827", "991827 ", "991\u0000827",
+        991827, null, undefined, true, {}, []].map((start_token) => ({ ...PROCESS_VIEW, start_token })),
+      { ...PROCESS_VIEW, extra: true },
+    ]) {
+      const verify = createPiBindingVerifier({ binding, expectedCwd: CWD, resolveContexts: () => current, observeProcess: async () => observed })
+      expect(await errorCode(() => verify.verifyBoundary(async () => "done"))).toBe("CT_PI_PROCESS_NOT_CURRENT")
+    }
+    const verify = createPiBindingVerifier({ binding, expectedCwd: CWD, resolveContexts: () => current, observeProcess: async () => { throw new Error("proc unreadable") } })
+    expect(await errorCode(() => verify.verifyBoundary(async () => "done"))).toBe("CT_PI_PROCESS_NOT_CURRENT")
+  })
+
+  test("kernel drift wins even when the async boundary rejects", async () => {
+    const observations = [PROCESS_VIEW, { ...PROCESS_VIEW, start_token: "reused" }]
+    const verify = createPiBindingVerifier({
+      binding, expectedCwd: CWD, resolveContexts: () => current,
+      observeProcess: async () => observations.shift(),
+    })
+    expect(await errorCode(() => verify.verifyBoundary(async () => { throw new Error("boundary refused") }))).toBe("CT_PI_PROCESS_NOT_CURRENT")
   })
 
   test("short-circuits before the boundary runs when the binding is already lost", async () => {
@@ -105,7 +154,10 @@ describe("exact Pi binding verifier", () => {
   test("verifies the binding it was given, not one the caller mutates afterwards", async () => {
     const mutable = { ...binding }
     const resolved = []
-    const verify = createPiBindingVerifier({ binding: mutable, resolveContexts: (asked) => { resolved.push(asked); return current } })
+    const verify = createPiBindingVerifier({
+      binding: mutable, expectedCwd: CWD, observeProcess: async () => PROCESS_VIEW,
+      resolveContexts: (asked) => { resolved.push(asked); return current },
+    })
     mutable.loopback_port = 43102
     mutable.process_id = `ct_process_${hex("9")}`
 
@@ -142,7 +194,9 @@ describe("exact Pi binding verifier", () => {
 
   test("treats a resolver that answers with nothing usable as a missing context, never as success", async () => {
     for (const empty of [null, undefined, [], "candidates"]) {
-      const verify = createPiBindingVerifier({ binding, resolveContexts: () => empty })
+      const verify = createPiBindingVerifier({
+        binding, expectedCwd: CWD, observeProcess: async () => PROCESS_VIEW, resolveContexts: () => empty,
+      })
       expect(await errorCode(() => verify.verifyBoundary(async () => "done"))).toBe("CT_HOST_RUNTIME_CONTEXT_MISSING")
     }
   })
@@ -150,7 +204,7 @@ describe("exact Pi binding verifier", () => {
   test("keeps a non-contract failure from the after-check intact instead of dressing it as one", async () => {
     let calls = 0
     const verify = createPiBindingVerifier({
-      binding,
+      binding, expectedCwd: CWD, observeProcess: async () => PROCESS_VIEW,
       resolveContexts: () => { calls += 1; if (calls === 2) throw new RangeError("resolver exploded"); return current },
     })
     await expect(verify.verifyBoundary(async () => "done")).rejects.toThrow(RangeError)

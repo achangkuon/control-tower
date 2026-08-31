@@ -33,11 +33,11 @@ const routeData = (value) => value !== null && typeof value === "object" && !Arr
   && !thenable(value) && Object.values(value).every((member) => typeof member !== "function")
 
 export const createPiSupervisor = ({
-  resolveContexts, runtimeRoute, broker, keepalive, inspectWorktree, selectLoopbackPort, randomBytes,
+  resolveContexts, observeProcess, runtimeRoute, broker, keepalive, inspectWorktree, selectLoopbackPort, randomBytes,
   createOwnership = createHostRuntimeOwnership,
 } = {}) => {
   for (const [name, port] of [
-    ["resolveContexts", resolveContexts], ["inspectWorktree", inspectWorktree],
+    ["resolveContexts", resolveContexts], ["observeProcess", observeProcess], ["inspectWorktree", inspectWorktree],
     ["selectLoopbackPort", selectLoopbackPort], ["randomBytes", randomBytes],
     ["runtimeRoute.prepare", runtimeRoute?.prepare], ["broker.start", broker?.start],
     ["keepalive.register", keepalive?.register], ["keepalive.unregister", keepalive?.unregister],
@@ -98,9 +98,9 @@ export const createPiSupervisor = ({
     const loopback_port = await selectLoopbackPort()
     const binding = mintBinding(loopback_port)
     const route = prepareRoute(binding, input)
-    const verify = createPiBindingVerifier({ binding, resolveContexts })
+    const verify = createPiBindingVerifier({ binding, resolveContexts, observeProcess, expectedCwd: input.worktree })
     const ownership = createOwnership({ resolveContexts, acquireAtReservation: acquire(binding, route, input, verify) })
-    await ownership.reserve(binding)
+    await verify.verifyBoundary(() => ownership.reserve(binding))
     return Object.freeze({ desired_ref: input.desired_ref, worktree: input.worktree, binding_id: binding.binding_id, loopback_port })
   }
 

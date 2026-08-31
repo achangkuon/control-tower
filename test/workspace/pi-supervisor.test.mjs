@@ -23,6 +23,7 @@ const world = (overrides = {}) => {
     randomBytes: () => Uint8Array.from({ length: 16 }, () => (byte = (byte + 7) % 251)),
     selectLoopbackPort: async () => ++port,
     inspectWorktree: async (path) => ({ canonical_path: path, symlink: false }),
+    observeProcess: async () => ({ pid: 4242, cwd: WORKTREE, start_token: "991827" }),
     // Drift is armed by broker.start, so the binding is lost only after the first effect — the one
     // window where the supervisor holds a live broker and must consume its exact close.
     resolveContexts: (binding) => [contextFor(state.drifted ? { ...binding, ...state.driftAfterStart } : binding)],
@@ -85,6 +86,26 @@ describe("Tower-owned Pi supervisor", () => {
       const { calls, supervisor } = world({ inspectWorktree: inspect })
       expect(await errorCode(() => supervisor.reconcile({ desired_ref: DESIRED, worktree: WORKTREE }))).toBe("CT_PI_SUPERVISOR_REJECTED")
       expect(started(calls)).toEqual([])
+    }
+  })
+
+  test("rejects missing or untrustworthy kernel evidence before broker, keepalive, or publication", async () => {
+    for (const observeProcess of [
+      undefined,
+      async () => "UNKNOWN",
+      async () => "ABSENT",
+      async () => ({ pid: 4242, cwd: "/caller/asserted", start_token: "991827" }),
+      async () => ({ pid: 4242, cwd: WORKTREE, start_token: "" }),
+      async () => { throw new Error("proc unreadable") },
+    ]) {
+      if (observeProcess === undefined) {
+        expect(() => world({ observeProcess })).toThrow(TypeError)
+        continue
+      }
+      const { calls, supervisor } = world({ observeProcess })
+      expect(await errorCode(() => supervisor.reconcile({ desired_ref: DESIRED, worktree: WORKTREE }))).toBe("CT_PI_PROCESS_NOT_CURRENT")
+      expect(started(calls)).toEqual([])
+      expect(calls).not.toContain("keepalive.register")
     }
   })
 
@@ -200,8 +221,10 @@ describe("Tower-owned Pi supervisor", () => {
   })
 
   test("keeps one broker per worktree, not one in total", async () => {
-    const { calls, supervisor } = world()
+    let kernelCwd = WORKTREE
+    const { calls, supervisor } = world({ observeProcess: async () => ({ pid: 4242, cwd: kernelCwd, start_token: "991827" }) })
     const first = await supervisor.reconcile({ desired_ref: DESIRED, worktree: WORKTREE })
+    kernelCwd = "/repo/b"
     const second = await supervisor.reconcile({ desired_ref: "desired-b", worktree: "/repo/b" })
 
     expect(started(calls)).toHaveLength(2)
@@ -233,7 +256,7 @@ describe("Tower-owned Pi supervisor", () => {
   })
 
   test("requires every port it will call, refusing construction rather than failing mid-acquisition", () => {
-    for (const missing of ["randomBytes", "selectLoopbackPort", "inspectWorktree", "resolveContexts", "runtimeRoute", "broker", "keepalive"]) {
+    for (const missing of ["randomBytes", "selectLoopbackPort", "inspectWorktree", "observeProcess", "resolveContexts", "runtimeRoute", "broker", "keepalive"]) {
       expect(() => world({ [missing]: undefined })).toThrow(TypeError)
     }
   })
