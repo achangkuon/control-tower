@@ -1,6 +1,6 @@
 # Plan 12 — Orden estructural del repositorio
 
-**Estado:** 🔵 EN CURSO · **Avance:** 11% (1/9 S)
+**Estado:** 🔵 EN CURSO · **Avance:** 22% (2/9 S)
 
 **Autoridad:** las cuatro decisiones del maintainer del 2026-08-30, opción A en las cuatro,
 sobre la auditoría de solo lectura de `master@7e718d6` publicada como
@@ -534,28 +534,41 @@ no «no se puede».
 
 ## Sesión 12.8 — La suite deja de poder escribir en el repositorio real
 
-**Estado:** 🟢 LISTO · **Ruta:** `direct` · est: 6h
+**Estado:** ✅ COMPLETO · **Ruta:** `direct` · est: 6h
 
 **Depende de:** —
 **Área:** `test/**`
 **Prohibido:** `core.mjs`, `.githooks/**`, `openspec/**`, `bin/torre`
 **Recurso:** `test/**` en exclusiva
 
-**Resultado:** correr la suite con variables de entorno de git puestas no puede escribir nada en
-el repositorio real. Hoy sí puede, y ya pasó.
+**Resultado:** la suite sanea el entorno Git heredado antes de ejecutar comandos y una regresión de
+aislamiento demuestra que el repositorio real conserva configuración, referencias y worktrees. El
+candidato verificado es `44685c74f28027ee86dc541c12f2122423010b79`.
 **Autoridad:** incidente del 2026-08-30 durante `M12.1.2`, y la decisión del maintainer de cerrar
 el aislamiento antes de instalar el gate.
 
 **El incidente, medido.** Git exporta `GIT_DIR` y compañía a sus hooks, y git obedece esa variable
-antes que el directorio donde está parado. 15 archivos de test invocan git en ~18 lugares, cada
-uno con su propio ayudante local, y ninguno limpia el entorno heredado. Corrida desde el hook, la
-suite dio **758 pass / 268 fail** contra 1026 / 0 a mano — y además **escribió**: commits `fixture`
-sobre la rama viva, tres worktrees fantasma de `/tmp` registrados en el repo real, y
-`core.bare=true` en la config compartida, que rompe `git status` en los ocho worktrees. Todo
-reparado a mano el mismo día; la causa sigue abierta.
+antes que el directorio donde está parado. 15 archivos de test invocaban git en ~18 lugares con
+ayudantes locales que no limpiaban el entorno heredado. Corrida desde el hook, la suite dio
+**758 pass / 268 fail** y además escribió commits `fixture`, registró tres worktrees fantasma de
+`/tmp` y dejó `core.bare=true` en la configuración compartida. La corrección quedó separada en cuatro
+commits: `8767ec3` (ayudante), `cd4214c` (migración de consumidores), `21a0718` (regresión de
+aislamiento) y `44685c74` (corrección de recursión del proxy); `a932dc3` reconcilió `origin/master`.
+
+**Evidencia de cierre sobre `44685c74`:**
+
+- Aislamiento focalizado: **1 pass / 0 fail / 5 expectations**.
+- Ayudante después de la corrección: **4 pass / 0 fail**.
+- Orden contaminado ayudante → lifecycle: **33 pass / 0 fail en 917 ms**.
+- Suite final completa: **1031 pass / 0 fail / 5915 expect calls / 82 archivos en 81,21 s**, exit 0.
+- Snapshot Git antes/después idéntico: las **9 identidades completas de worktree** y su conteo no
+  cambiaron; las refs no cambiaron; `core.bare=false` no cambió; el candidato quedó limpio.
+- El diff de implementación permanece limitado a `test/**`; las unidades de commit no-merge
+  existentes tienen ≤400 líneas authored.
 
 **Por qué importa más allá del gate:** el defecto ya existía sin que hubiera ningún gate. Cualquier
-herramienta que git invoque y corra la suite pisa la misma mina.
+herramienta que git invoque y corra la suite pisaba la misma mina; el aislamiento ahora protege ese
+límite de forma observable.
 
 **Decisiones:**
 
@@ -567,23 +580,24 @@ herramienta que git invoque y corra la suite pisa la misma mina.
   **Falsificable:** la prueba pasa sin ejercitar una llamada real a git. **Autoridad:** el incidente.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
-- [ ] Un ayudante `git()` compartido en `test/helpers/` limpia `GIT_DIR`, `GIT_WORK_TREE`,
+- [x] Un ayudante `git()` compartido en `test/helpers/` limpia `GIT_DIR`, `GIT_WORK_TREE`,
       `GIT_INDEX_FILE`, `GIT_PREFIX`, `GIT_COMMON_DIR`, `GIT_OBJECT_DIRECTORY`,
       `GIT_ALTERNATE_OBJECT_DIRECTORIES` y `GIT_QUARANTINE_PATH`, y los 15 archivos lo usan
-- [ ] Una prueba corre la suite con un `GIT_DIR` señuelo y verifica que el señuelo quedó intacto:
-      sin commits nuevos, sin worktrees registrados y sin cambios de config
-- [ ] La suite da idéntico resultado con esas variables puestas y sin ellas: 1026 pass / 0 fail
-- [ ] `git config --local core.bare` sigue en `false` y `git worktree list` muestra ocho entradas
-- [ ] El diff no toca ninguna ruta fuera de `Área`
+- [x] Una prueba ejecuta Git con un `GIT_DIR` señuelo y verifica que el señuelo y el repositorio real
+      quedan intactos: sin commits nuevos, worktrees registrados ni cambios de configuración
+- [x] La suite final completa pasa: 1031 pass / 0 fail / 5915 expect calls / 82 archivos, exit 0
+- [x] El snapshot antes/después conserva exactamente el conteo y las identidades de los 9 worktrees,
+      las refs y `core.bare=false`
+- [x] El diff de implementación no toca ninguna ruta fuera de `Área`
 
-### Módulo M12.8.1 — ayudante compartido en `test/helpers/`
-- [ ] Tarea T12.8.1.1 — RED · [ ] T12.8.1.2 — GREEN · [ ] T12.8.1.3 — REFACTOR
+### Módulo M12.8.1 — ✅ COMPLETO · ayudante compartido en `test/helpers/`
+- [x] Tarea T12.8.1.1 — RED · [x] Tarea T12.8.1.2 — GREEN · [x] Tarea T12.8.1.3 — REFACTOR
 
-### Módulo M12.8.2 — los 15 archivos consumen el ayudante
-- [ ] Tarea T12.8.2.1 — RED · [ ] T12.8.2.2 — GREEN · [ ] T12.8.2.3 — REFACTOR
+### Módulo M12.8.2 — ✅ COMPLETO · los 15 archivos consumen el ayudante
+- [x] Tarea T12.8.2.1 — RED · [x] Tarea T12.8.2.2 — GREEN · [x] Tarea T12.8.2.3 — REFACTOR
 
-### Módulo M12.8.3 — la prueba del señuelo
-- [ ] Tarea T12.8.3.1 — RED · [ ] T12.8.3.2 — GREEN · [ ] T12.8.3.3 — REFACTOR
+### Módulo M12.8.3 — ✅ COMPLETO · la prueba del señuelo
+- [x] Tarea T12.8.3.1 — RED · [x] Tarea T12.8.3.2 — GREEN · [x] Tarea T12.8.3.3 — REFACTOR
 
 **Nota operativa:** la Torre queda **apagada** mientras se implementa sobre ella (decisión del
 maintainer, 2026-08-30). Dos tests de `test/migration.test.mjs` exigen que
