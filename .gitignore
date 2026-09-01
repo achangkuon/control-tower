@@ -3,3 +3,7 @@ __pycache__/
 .pytest_cache/
 # Local Pi runtime state
 .atl/
+
+# Binario compilado de tools/plan
+tools/plan/plan
+tools/plan/plan-darwin-*

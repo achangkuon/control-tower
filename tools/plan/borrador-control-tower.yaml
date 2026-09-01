@@ -1,0 +1,156 @@
+# Partición de control-tower — Fase 2 de MIGRACION-ZONAS.md
+#
+# Segunda pasada. La primera puso en zonas cosas que en realidad toca cualquier
+# feature: `bin/torre`, `console/`, `skills/`, `README.md`. Al moverlas a
+# cimientos, seis de las once Sesiones que cruzaban dejaron de cruzar.
+#
+# La regla que lo decide es la misma de siempre: si lo toca cualquiera sin
+# importar dónde viva, es un cimiento, no una zona.
+#
+# Verificar con:  ./plan check -f borrador-control-tower.yaml
+
+schema: plan
+schema_version: 1
+producto: control-tower
+raiz: /home/emili/projects/control-tower/Main
+
+zonas:
+  - id: hosts
+    nombre: Hosts
+    rutas:
+      - hosts/
+      - adapters/
+      - extensions/
+      - test/hosts/
+      - test/adapters/
+      - test/extensions/
+      - test/host-adapters.test.mjs
+
+  - id: entrega
+    nombre: Entrega
+    rutas:
+      - delivery/
+      - continuation/
+      - test/delivery/
+      - test/continuation/
+
+  - id: instalacion
+    nombre: Instalación
+    rutas:
+      - install/
+      - test/install/
+
+  - id: contratos
+    nombre: Contratos
+    rutas:
+      - contracts/
+      - schemas/
+      - registry/
+      - test/contracts/
+      - test/registry/
+
+  - id: asientos
+    nombre: Asientos
+    rutas:
+      - supervision/
+      - profiles/
+      - escalation/
+      - support/
+      - workspace/
+      - test/escalation/
+      - test/supervision/
+      - test/support/
+      - test/workspace/
+
+  - id: jornada
+    nombre: Jornada
+    rutas:
+      - jornada/
+      - jornada.sh
+      - test/jornada/
+
+  - id: enrolamiento
+    nombre: Enrolamiento
+    rutas:
+      - enroll/
+      - main-store/
+      - test/enroll/
+      - test/main-store.test.mjs
+
+  - id: capacidades
+    nombre: Capacidades
+    rutas:
+      - capabilities/
+      - plugin/
+      - policy/
+      - test/capabilities/
+      - test/plugin/
+      - test/policy/
+
+  # Los documentos de intención: PRD, RFC, REQUIREMENTS y el registro de planes.
+  # Es trabajo real —S12.9 vive acá— y no es lo mismo que el archivo histórico.
+  - id: autoridad
+    nombre: Autoridad
+    rutas:
+      - openspec/plans/
+      - openspec/prd/
+      - openspec/rfc/
+      - openspec/specs/
+      - openspec/maintenance/
+      - openspec/config.yaml
+      - docs/
+
+  # Los artefactos SDD ya archivados. Nadie trabaja acá: es historia, y necesita
+  # dueño sólo para que la partición sea exhaustiva.
+  - id: archivo
+    nombre: Archivo
+    rutas:
+      - openspec/changes/
+
+cimientos:
+  rutas:
+    # El sustrato
+    - core.mjs
+    - mcp.mjs
+    - package.json
+    - bun.lock
+    - scripts/
+    - .githooks/
+    - .gitignore
+    - .doc-guard.json
+    - .opencode/
+    - radiografia.json
+    - validate-compact-message.py
+
+    # Superficies compartidas: las toca cualquier feature, sin importar su zona.
+    # Ubicarlas en una zona fue el error de la primera pasada.
+    - bin/            # toda feature que agrega un comando toca el entrypoint
+    - install.sh
+    - console/        # el vocabulario del CLI crece con cada feature
+    - test/console/
+    - test/console-executor.test.mjs
+    - test/console-validator.test.mjs
+    - skills/         # toda feature actualiza la skill que la expone a los agentes
+    - CLAUDE.md       # terreno de agentes
+    - AGENTS.md
+    - README.md
+    - ROADMAP.md
+
+    # Infraestructura de tests
+    - test/helpers/
+    - test/fixtures/
+    - test/provenance/
+
+    # Tests de comportamiento del núcleo. Viven sueltos en la raíz de test/ en
+    # vez de en el subdirectorio de un módulo, así que no son de ninguna zona.
+    # Son exactamente el desorden que P12 «Orden estructural del repositorio»
+    # existe para arreglar: la partición lo encontró sola.
+    - test/fail-closed.test.mjs
+    - test/git-isolation.test.mjs
+    - test/identity.test.mjs
+    - test/lifecycle.test.mjs
+    - test/migration.test.mjs
+    - test/polling.test.mjs
+    - test/recovery.test.mjs
+
+sesiones: []

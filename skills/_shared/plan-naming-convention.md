@@ -1,470 +1,440 @@
 # Plan Naming Convention (shared across all agents and projects)
 
-**Status**: canonical. Approved 2026-07-29.
+**Status**: canonical. Zone model approved 2026-09-01, replacing the multi-plan model of 2026-07-29.
 
-This file is the SINGLE source of truth for how a plan is decomposed and how a
-`master-index.md` is written. Where any skill, project file, or agent config
-contradicts it, THIS file wins — fix the other file, do not fork the rule.
+This file is the SINGLE source of truth for how work is decomposed, how it is distributed
+across parallel agents, and how a roadmap is written. Where any skill, project file, or
+agent config contradicts it, THIS file wins — fix the other file, do not fork the rule.
 
 Applies to Claude, opencode, codex, and pi, in every project.
 
-Why it exists: four conflicting hierarchies were live at once (`architecture-audit`,
-`project-kickoff`, ServiTask `methodology.md`, ServiTask `master-index.md`). Agents
-were not inventing vocabulary — they were reading different rules. One rule now.
+**What changed and why**: the previous model cut work by *delivery size* (what fits in one
+PR) and bolted on a hand-written `Área` afterwards to keep agents from colliding. Nothing
+validated that field, the roadmap grew one row per Plan while a single global queue jumped
+between plans unreadably, and a single fact — "did S2.3 close?" — was transcribed by hand
+into six documents (ten, in `control-tower`). Work is now cut by *place*, state is computed
+rather than written, and the roadmap is generated.
 
 ---
 
 ## 1. Hierarchy — exactly four levels
 
 ```
-Plan 2 — Flujo de tarea
- └── Sesión 2.3 — Aceptación exclusiva de cotización     est: 4h
-      └── Módulo 2.3.1 — quotes/accept.ts                est: 40min
-           └── Tarea 2.3.1.T1
+la casa · un solo plan, sin fecha de cierre        ← the product: the frame, not a level
+ └── Zona · Cotizaciones                            ← one agent lives here
+      └── Sesión S23 · instalar el horno            est: 4h   ← one PR
+           └── Módulo · quotes/accept.ts            est: 40min
+                └── Tarea T3
 ```
 
 Never add a fifth level. Never rename a level.
 
-The number IS the identifier: depth determines the level, so no prefix is needed
-inside its own document. When referencing from another file, prefix the letter:
-`S2.3`, `M2.3.1`, `T2.3.1.4`.
-
 | Level | Defined by | Time |
 |-------|-----------|------|
-| **Plan** | One topic with its own identity | estimate |
-| **Sesión** | **What fits in ONE pull request** | estimate |
+| **Zona** | **The files it owns.** Exclusive to one agent while claimed | — |
+| **Sesión** | One independently reviewable result, inside one Zona | estimate |
 | **Módulo** | Concrete files that change together | estimate |
 | **Tarea** | One atomic action — minimum 3 per Módulo | — |
 
-## 2. Time is an estimate, never a limit
+**The product is not a level.** It is the frame around the tree. A constant carries no
+information, and a level that never varies is a column of noise in every table.
 
-Time appears only as an informational attribute: `est: 4h`.
+## 2. One plan per product
 
-It NEVER defines or constrains a level. A Sesión estimated at 4h that takes 9h is
-still the same Sesión — the estimate was wrong, the plan did not change. Do not
-split, rename, or reclassify a node because it exceeded its estimate.
+A product has exactly **one plan**, with no closing date. New scope becomes new Sesiones
+inside an existing Zona, or a new Zona. It never becomes a second plan.
 
-This replaces the old "Sesión = 1–3h, ejecutable de una sentada" definition. That
-temporal definition was the root cause of vocabulary drift: when work did not fit
-in one sitting, agents had no legal name for it and invented `work unit` / `slice`.
+This is what removes the worst failure of the previous model: with several plans, the reader
+sees `40%` on Plan 1 and cannot tell *which* Sesiones are still open, so old work is
+discovered by accident while working on Plan 5. With one plan there is no Plan 1 and no
+Plan 5 — there is one product, partly built.
 
-## 3. Overflow rule
+## 3. Zona — the unit of parallelism
 
-> If a Sesión does not fit in one PR, NO new level is created. Either split it into
-> two Sesiones (2.3 and 2.4), or ship its Módulos as chained PRs under the same Sesión.
+> A Zona is a **set of files with a single owner**. Not a theme, not a layer, not a milestone.
 
-## 4. Banned nouns at plan level
+Four properties, all enforced by the tool, none by discipline:
 
-Never use these to name a level in a plan, master-index, STATUS.md, or proposal:
+1. **Defined by paths.** A Zona owns concrete files. If you cannot list its paths, it is not
+   a Zona — it is a theme, and themes do not partition anything.
+2. **Disjoint.** No file belongs to two Zonas. This is what makes collision impossible rather
+   than merely discouraged.
+3. **Exhaustive.** Every file in the project belongs to exactly one Zona, or to `Cimientos`
+   (§4). A file with no owner is a file nobody can honestly work on.
+4. **Stable.** Zonas change when the product changes, not when work is scheduled.
+
+### How to cut them
+
+Cut by **business domain** — Cotizaciones, Pagos, Identidad — using the project's own domain
+families as the starting catalogue, then instantiate against the real tree. A cut that does
+not survive contact with the file system is not a cut.
+
+Cut by things that **do not wait for each other**. The test that decides it:
+
+| Cut | With three agents |
+|---|---|
+| By process step — mix → bricks → wall → sand → paint | The bricklayer waits for the mixer. Two agents watch the third. A chain is not made faster by more hands. |
+| By room — kitchen, bedroom, living room | Nobody waits. Three real advances at once, and they cannot collide because they are not in the same room. |
+
+Cutting by technical layer (DB / services / screens) fails this test: almost every feature
+touches all three, so the three agents serialize.
+
+### Work that crosses Zonas
+
+It becomes **its own Zona**, and declares which Zonas it depends on. An elevator added to a
+half-built house is its own zone that waits for the floors it connects. Never let one Sesión
+claim two Zonas — that reintroduces the collision the partition exists to prevent.
+
+### One agent per Zona
+
+A Zona is exclusive while claimed. If a Zona becomes a bottleneck, that is the signal to
+**split the Zona**, never to relax the rule.
+
+## 4. Cimientos — shared paths, reserved per file
+
+`Cimientos` are the paths every Zona depends on and none of them owns: dependency manifests,
+CI config, shared libraries and types, the migration lane, the agent terrain files.
+
+**The test is one question**: *if I change this, can I break another agent's work even though
+they never touched this file?* If yes, it is a cimiento.
+
+| Is a cimiento | Is not |
+|---|---|
+| `package.json`, lockfiles, dependency config | Screens, components, a Zona's own services |
+| Shared libraries and shared types | Documentation — that is not code |
+| Migration lane and its ordering | A Zona's own migrations, if the lane allows it |
+| CI config, shared test config | Per-Zona test fixtures |
+| Agent terrain files (`CLAUDE.md`, `AGENTS.md`) | Plans and specs |
+
+**Cimientos are NOT a Zona.** They are a declared list of paths with **per-file reservation**:
+
+- Any agent may change the cimientos its own work requires.
+- Before starting, it **reserves the specific files**. The tool records the reservation.
+- If another agent holds one of those files, the tool blocks and the orchestrator decides
+  who goes first.
+
+Making cimientos a Zona would idle every other agent behind a one-line change to a
+dependency manifest. Per-file reservation freezes only the file actually in dispute, which
+is almost never. And because the tool checks it, the orchestrator never reads diffs to find
+collisions — it appears only when two reservations meet.
+
+## 5. Time is an estimate, never a limit
+
+Time appears only as an informational attribute: `est: 4h`. It NEVER defines or constrains a
+level. A Sesión estimated at 4h that takes 9h is the same Sesión — the estimate was wrong,
+the plan did not change.
+
+## 6. Overflow rule
+
+> If a Sesión does not fit in one PR, no new level is created. Split it into two Sesiones
+> inside the same Zona, or ship its Módulos as chained PRs under the same Sesión.
+
+PR size is an **overflow rule**, not the cutting criterion. The criterion is place (§3).
+
+## 7. Banned nouns at plan level
+
+Never use these to name a level, in a plan, roadmap, `STATUS`, or proposal:
 
 ```
 work unit · WU · slice · paquete · bloque · fase · phase · stage
-epic · hito · milestone · wave · ola · tramo · fragmento · track
+epic · hito · milestone · wave · ola · tramo · fragmento · track · plan
 ```
 
-Two terms survive, scoped:
+`plan` joins the list as a *level* name: there is one plan and it is the product (§2).
 
-- `slice` — only inside the `chained-pr` skill, describing PR mechanics.
-- `work unit` — only inside the `work-unit-commits` skill, describing commit grouping.
-
-Neither may appear as a plan-level noun. They do not climb into the hierarchy.
+Two terms survive, scoped: `slice` only inside the `chained-pr` skill, `work unit` only
+inside `work-unit-commits` — both describing PR and commit mechanics, never climbing into
+the hierarchy.
 
 ### Domain-entity exemption (read before any rename)
 
-This ban governs **plan vocabulary only** — how work is decomposed and described.
+This ban governs **plan vocabulary only**. If a banned word is a **domain entity of the
+product itself** — it has a schema, a field, an identifier, a file path, a table, or an API
+contract — it is EXEMPT and MUST NOT be renamed. Renaming it breaks code, not prose.
 
-If a banned word is a **domain entity of the product itself** — it has a schema, a field,
-an identifier, a file path, a table, or an API contract — it is EXEMPT and MUST NOT be
-renamed. Renaming it breaks code, not prose.
+Real example: in `control-tower`, `slice` is a domain entity (`slices:`, `slice_id`, and
+file paths built from it). Those stay exactly as they are. What must change there is only
+the *planning* use.
 
-Real example: in `control-tower`, `slice` is a domain entity, not plan vocabulary:
+Test before renaming: **does this word name a thing the software manipulates, or a chunk of
+our work?** Only the second is in scope. When unsure, leave it and report it.
 
-```yaml
-slices:
-  - slice_id: notifications
-# and file paths: openspec/plans/<plan_id>/binding-deltas/<slice_id>-r<revision>.yaml
-```
+## 8. Identifiers — flat, permanent, mute
 
-Those stay exactly as they are. What must change there is only the *planning* use — a
-Sesión of work must not be called "a slice" in a plan or master-index.
+A Sesión's identifier is flat and sequential across the whole product: `S23`, `M23.2`,
+`T23.2.4`.
 
-Test before renaming anything: **does this word name a thing the software manipulates, or
-does it name a chunk of our work?** Only the second is in scope. When unsure, leave it and
-report it — a wrong rename costs more than a surviving inconsistency.
+- **It carries no meaning.** Not the Zona, not the owner, not the position. Anything encoded
+  into an identifier becomes a lie the moment that attribute changes.
+- **It is never renumbered.** Every renumbering silently breaks references already written
+  in memories, PR titles, comments, and other Sesiones' dependencies — a cost paid in
+  silence, months later.
+- **It is not a reading order.** Humans read the roadmap by Zona and position (§10). The
+  identifier is a name, not a place in a queue.
 
-## 5. Collapsed axes
-
-- **A "Track" is a Plan.** Cross-cutting work does not get its own noun. Tag it.
-- **The owner is NOT part of the ID.** Identifiers like `E4`, `D1`, `U-S1` fused
-  Sesión + person into one token, making the node unlocatable in the tree. Owner
-  is a column in the table. The ID stays purely positional.
-
-## 6. Status vocabulary — closed set of seven
-
-Do not add, translate, combine, or invent states.
+## 9. Status — closed set of seven, computed not written
 
 | State | Meaning |
 |-------|---------|
-| 📋 `PLANIFICADO` | Exists, not started, dependencies unresolved |
+| 📋 `PLANIFICADO` | Exists, dependencies unresolved |
 | 🟢 `LISTO` | Dependencies met, can start today |
-| 🔵 `EN CURSO` | Someone is working on it right now |
+| 🔵 `EN CURSO` | Claimed by an agent right now |
 | 🔴 `BLOQUEADO` | Cannot advance — needs an external unblock |
 | 🟡 `DIFERIDO` | Could advance, deliberately postponed |
 | ✅ `COMPLETO` | Merged and verified |
 | 📚 `ARCHIVADO` | Closed, kept for traceability |
 
-Key distinction: `BLOQUEADO` is *cannot*, `DIFERIDO` is *chose not to*. Keeping
-these separate is the whole point — legacy vocabularies mixed them into `WAITING`,
-`DEFERRED`, and `REVIEW-ONLY`, hiding what was actually stuck.
+Do not add, translate, combine, or invent states.
 
-Migration map from legacy values:
+> **Status is derived, never authored.** It is computed from `Depende de`, the open decisions
+> (§12), and git — a merged PR is what makes a Sesión `COMPLETO`. An agent that writes a
+> status is writing a value the next computation will overwrite.
 
-```
-EN EJECUCIÓN, 🟡 EN CURSO                      → EN CURSO
-PLANNING, FUTURE, PLANNED, NOT IMPLEMENTED     → PLANIFICADO
-READY                                          → LISTO
-WAITING, BLOCKED, REVIEW-ONLY, CANDIDATO BLOQ. → BLOQUEADO
-DEFERRED                                       → DIFERIDO
-Completo, DONE, COMPLETE                       → COMPLETO
-HISTÓRICO                                      → ARCHIVADO
-```
+`BLOQUEADO` is *cannot*; `DIFERIDO` is *chose not to*. Keeping them apart is the whole point.
 
-## 7. master-index.md format
+## 10. The roadmap is generated
 
-Fixed sections, in this order. No sections added, none reordered.
+The roadmap is a **view**, rendered from the plan data. No agent writes it, and no agent
+reconciles it. It carries, in this order:
 
-```markdown
-# Índice Maestro — <Proyecto>
+1. **📍 Punto de retoma** — 3 to 6 lines: what closed last, what comes next, what decision is
+   pending. Rewritten in full, never appended. Dated history belongs in git and PRs.
+2. **Sesiones abiertas, agrupadas por Zona** — one short ordered list per Zona. Position
+   first, identifier small, so no open Sesión can hide behind a percentage.
+3. **Avance** — see §11.
+4. **Capacidad** — how many Zonas have ready work (§13).
 
-> Fuente técnica de verdad. Los planes, STATUS.md y artefactos enlazados
-> tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: <fecha> contra <rama> <sha>
+One column per Zona, `#1 #2 #3` inside it. **Within a Zona the order is the order**, because
+dependencies are mostly local. The disorder of a single global queue came from mixing Zonas
+that have nothing to do with each other.
 
-## 📍 Punto de retoma
-<3 to 6 lines. What closed last, what comes next, what decision is pending.
-Rewritten in full when each Sesión closes. Accumulates NO history.>
+## 11. Progress percentage
 
-## Granularidad
-Plan → Sesión (1 PR) → Módulo (archivos) → Tarea (mín. 3).
-El tiempo es estimación, no límite. Ver <path to this file>.
+Derived, never authored. Recompute from Sesión states.
 
-## 📊 Estado de un vistazo
+1. `% = Sesiones COMPLETO / Sesiones enumeradas`. Nothing else counts — not Módulos, not
+   Tareas, not hours, not how far along it feels.
+2. **Always show the fraction**: `29% (2/7 S)`. An unauditable number is trusted exactly once.
+3. A Sesión counts only at `COMPLETO` or `ARCHIVADO`. `EN CURSO` contributes zero.
+4. **No enumeration → no percentage.** Write `—` plus the reason. That is a planning gap to
+   close, not a number to invent.
+5. Never weight by `est:` unless every Sesión carries an estimate.
+6. **Report per Zona and in total.** A single blended number hides which Zona is stuck.
+7. Pending work outside the enumeration invalidates the percentage.
 
-**Avance global**: <N>/<T> Planes cerrados (<X>%) · Sesiones cerradas en planes
-activos: <n>/<t> (<y>%)
-
-| ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |
-|----|------|--------|---|------|-------|-----------|-----|
-| P2 | Flujo de tarea | 🔵 EN CURSO | 50% (2/4 S) | 12h | Emilio | S2.3, S2.4 | [plan-2.md](...) |
-
-## 🗂️ Planes archivados
-<ID, name, link only. No detail.>
-```
-
-Three rules that keep it from degrading:
-
-1. **§Punto de retoma goes first and is REWRITTEN, not appended.** It is the first
-   thing the human reads and the first thing an agent reads. It must never become a
-   changelog. Dated history belongs in git, PRs, and `openspec/maintenance/`.
-2. **One row per Plan.** Sesión-level detail lives in that plan's `STATUS.md`, never
-   in the index. The index must not grow as work progresses.
-3. **`Qué falta` is written with IDs, not prose.** `S2.3, S2.4` — not "assign a single
-   owner and open Work Unit 3 in RED 3.1".
-
-## 8. Progress percentage
-
-The `%` column answers one question: how much of this Plan is left. It is **derived**,
-never authored — recompute it from the Sesión states, never hand-adjust it.
-
-1. **The denominator is the Plan's enumerated Sesiones.** `% = Sesiones COMPLETO /
-   Sesiones defined`. Nothing else counts: not Módulos, not Tareas, not hours, not
-   how far along it feels.
-2. **Always show the fraction next to the number**: `29% (2/7 S)`. A percentage
-   without its denominator cannot be audited, and an unauditable number gets trusted
-   exactly once.
-3. **A Sesión counts only at `COMPLETO` or `ARCHIVADO`.** `EN CURSO` contributes zero.
-   No partial credit — partial credit is how progress reporting turns into fiction.
-4. **No enumeration → no percentage.** Write `—` plus the reason (`S24.2 sin definir`).
-   An open denominator has no percentage. That is a planning gap to close, not a
-   number to invent.
-5. **Never weight by `est:`** unless *every* Sesión in the Plan carries an estimate.
-   Mixed estimates produce a worse number than plain counting.
-6. **Global progress is two figures, never one**, on one line above the table:
-   closed Plans / total Plans, and closed Sesiones / enumerated Sesiones across
-   active Plans. A single blended number hides which of the two is moving.
-7. **Pending work outside the enumeration invalidates the percentage.** A Plan at
-   `5/5 S` that is still `EN CURSO` is not at 100% — it has work with no Sesión ID.
-   Open the missing Sesión or close the Plan.
-
-## 9. Sesión execution contract
-
-Five fields make a Sesión executable by an agent without interpretation. Without them
-a plan can be read but not scheduled, and capacity has to be assembled by hand.
+## 12. Sesión execution contract
 
 | Field | Requirement |
 |-------|-------------|
-| `Estado` | One of the seven. |
+| `Zona` | The Zona it belongs to. Exactly one. |
+| `Estado` | **Computed** (§9). Never written. |
 | `Depende de` | Sesión IDs that must reach `COMPLETO` first, or `—`. IDs, never prose. |
-| `Área` | The paths this Sesión may touch — globs, or the project's area taxonomy. Exclusive for its duration. |
-| `Recurso` | Shared non-file resources it claims: DB mode, migration lane, delivery token. `—` if none. |
-| `Decisiones` | The decision points this Sesión is expected to hit, each marked derivable or escalating. `—` if none. See §11. |
+| `Área` | **Derived from the Zona.** Never hand-written. |
+| `Cimientos` | The shared files this Sesión will reserve, or `—`. |
+| `Recurso` | Shared non-file resources it claims: DB mode, delivery token. `—` if none. |
+| `Decisiones` | The decision points it is expected to hit, each derivable or escalating (§14). |
+
+`Área` was the previous model's only collision guard and its weakest link: hand-written
+globs nobody validated. It is now a projection of the Zona's paths, and the tool validates
+the partition instead.
 
 ### Binary acceptance criteria
 
-Every Sesión carries a checklist of observable outcomes. Each item is true or false by
-inspection — never "mostly", "with warnings", or "pending follow-up".
+Every Sesión carries a checklist of observable outcomes, each true or false by inspection —
+never "mostly", "with warnings", or "pending follow-up".
 
 ```markdown
 **Criterios de aceptación** — todos deben pasar para cerrar:
 - [ ] Two enrolled projects keep identity and Tower state isolated
 - [ ] An unsafe existing layout fails closed and mutates nothing
-- [ ] The diff touches no path outside `Área`
+- [ ] The diff touches no path outside the Zona, except reserved Cimientos
 ```
 
-Write them at planning time, not at closing time. Criteria authored after the work is
-done describe the work; criteria authored before it constrain the work. Only the second
-kind can fail.
+Write them at planning time. Criteria authored after the work *describe* the work; criteria
+authored before it *constrain* it. Only the second kind can fail.
 
-### No-debt closure rule
+### No-debt closure
 
 > A Sesión reaches `COMPLETO` only when every acceptance box is checked.
 
-There is no partial close. `PASS WITH WARNINGS` is not a closing state: a warning is
-either irrelevant — delete it — or it is unfinished work, and then the Sesión is not
-`COMPLETO`.
+There is no partial close. `PASS WITH WARNINGS` is not a closing state: a warning is either
+irrelevant — delete it — or unfinished work, and then the Sesión is not `COMPLETO`.
 
-Scope discovered mid-Sesión that does not fit becomes a **new Sesión with its own ID**.
-It never rides along, and it never closes silently with its parent. A Sesión that closes
-carrying undone scope reappears weeks later as an unplanned Sesión, and by then nobody
-remembers it was owed.
+Scope discovered mid-Sesión that does not fit becomes a **new Sesión with its own ID**. It
+never rides along and never closes silently with its parent.
 
-## 10. Parallel capacity — derived, never declared
+## 13. Capacity — derived from the partition
 
-How many agents a body of work admits is a function of the dependency graph. It is not a
-field: declaring it makes it stale the moment a Sesión closes.
-
-Two Sesiones may run concurrently only when all three hold:
+Two Sesiones may run concurrently when all three hold:
 
 1. **Graph independence** — neither is in the other's `Depende de`, transitively.
-2. **Disjoint `Área`** — no overlapping path.
-3. **Disjoint `Recurso`** — not the same DB mode, migration lane, or token.
+2. **Different Zona** — guaranteed disjoint by §3, so this is a lookup, not an analysis.
+3. **Disjoint `Recurso`** and no conflicting Cimientos reservation.
 
-Capacity is the largest set of `🟢 LISTO` Sesiones satisfying all three, computed
-**across Plans, not inside one**. Fixing a number of agents per Plan wastes capacity: a
-Plan with three independent ready Sesiones deserves three agents; a Plan that is one
-chain deserves one.
+**Available seats = the number of Zonas with ready work.** Not a fixed number.
 
-### Agents are assigned to Sesiones
+The human sets a **ceiling** — how many agents they want to supervise. The seats actually
+opened are `min(Zonas con trabajo listo, techo)`. The ceiling is a human decision that
+changes when the human wants; the first number is computed and changes daily. When ready
+work exceeds the ceiling, the orchestrator proposes raising it. It never raises it alone,
+and it never batches work to fill seats — that is cutting work to fit the furniture.
 
-Never to Plans, apps, folders, or layers. Cutting by app leaves a cross-app result with
-no owner, and a Sesión has exactly one owner end to end. An app or layer may orient who
-gets assigned first — it is an affinity, not an execution boundary.
+**Agents are assigned to Zonas, and take Sesiones from their Zona's queue.** Assigning an
+agent to a theme, an app, or a layer leaves cross-cutting results with no owner.
 
-Worktrees remove the *editing* collision, not the *merge* collision. Two agents in
-separate worktrees editing the same file do not corrupt each other; they still conflict
-at merge, after both implementations exist. Disjoint `Área` is what prevents that.
+Worktrees remove the *editing* collision, not the *merge* collision. The partition is what
+prevents that.
 
-### Every Plan renders its graph
+## 14. Deferrable planning — declare the decisions, not only the work
 
-A table sorted by ID reads as a queue and lies about a graph: consecutive integers
-suggest an order the structure does not have. Render the dependencies alongside it.
-
-````markdown
-```mermaid
-graph LR
-  S83["S8.3 enrollment · 🟢"] --> S84["S8.4 authority · 📋"]
-  S84 --> S86["S8.6 evidence · 📋"]
-  S85["S8.5 hosts · 🟢"] --> S86
-```
-````
-
-No linearization of a DAG is honest. Renumbering to "fix" the reading order only moves
-the lie. The graph is the artifact; the ID is only a name.
-
-### The execution queue — derived, written down, global
-
-The graph is the truth, but a human cannot read a DAG as "what comes next", and an ID
-that jumps `S1.8 → S2.3 → S1.2` reads as chaos even when the graph is correct. Every plan
-set therefore carries a **Cola de ejecución**: one topological order over all `🟢 LISTO`
-and `📋 PLANIFICADO` Sesiones, **across Plans**, recomputed whenever a Sesión closes.
-
-````markdown
-## 🎯 Cola de ejecución
-`#1 S1.2` · `#2 S1.8` · `#3 S2.3` · `#4 S2.4` — recalculada 2026-08-17
-````
-
-1. It lives in `master-index.md` immediately after `📍 Punto de retoma`, and it is
-   **rewritten**, never appended.
-2. The position (`#3`) is the order. The ID (`S2.3`) is the name. They are allowed to
-   disagree — the queue is what the human reads, the ID is what references point at.
-3. **Number in topological order when a Plan is first authored**, so ID and queue agree in
-   the common case. Never renumber afterwards: a stable ID outranks a pretty sequence.
-4. An agent starting work states its position out loud — `#3 de 7 → S2.3, porque S1.2 y
-   S1.8 cerraron`. Jumping between Plans is normal and expected; jumping **without naming
-   the reason** is what loses the reader.
-5. One Sesión `🔵 EN CURSO` per agent. Parallelism comes from §10 capacity across agents,
-   never from one agent holding several Sesiones open at once.
-
-## 11. Deferrable planning — declare the decisions, not only the work
-
-A plan that enumerates work but not **decisions** stops at the first uncertainty. The
-agent has nowhere to record what it could not resolve, no way to say which other work
-that blocks, and no basis to pick something else. So it stops, and everything waits on
-one answer that may not arrive for hours.
-
-Deferrability is a property of the **plan**, not of whatever runtime executes it.
-Everything below is declared at authoring time and is readable by any agent, alone or
-orchestrated. An orchestrator can later automate and enforce it — it does not create it,
-and none of this waits on one existing.
+A plan that enumerates work but not **decisions** stops at the first uncertainty. Everything
+below is declared at authoring time and readable by any agent, alone or orchestrated.
 
 ### The `Decisiones` field
-
-Each decision point the Sesión is expected to hit, resolved one of two ways:
 
 ```markdown
 **Decisiones:**
 - `derivable` — index name for the new lookup. Criterio: matches the existing
-  `idx_<table>_<column>` convention already used in `Área`. Autoridad: naming
-  convention approved in P0.
+  `idx_<table>_<column>` convention already used in this Zona. Autoridad: naming
+  convention approved in the RFC.
 - `escala` — whether expired entries are deleted or tombstoned. Clase: migración o
-  pérdida de datos. Contamina: `S5.2` (its acceptance criteria assume the answer).
+  pérdida de datos. Contamina: `S52` (its acceptance criteria assume the answer).
 ```
 
-A decision is `derivable` only when **both** hold: an approved authority already covers
-it, and the criterion that resolves it is **falsifiable** — you can state what would make
-the answer wrong. "Use good judgement" is not a criterion. Anything else escalates.
-
-Declaring a decision does not predict every one that will appear. It captures the ones
-visible at authoring time, which is most of them, and it establishes that unlisted
-decisions escalate by default rather than getting improvised.
+A decision is `derivable` only when **both** hold: an approved authority already covers it,
+and the criterion that resolves it is **falsifiable** — you can state what would make the
+answer wrong. "Use good judgement" is not a criterion. Anything else escalates.
 
 ### The eight classes that always escalate
 
-Closed set, like the seven statuses. A decision touching any of these is **never**
-derived, even when an approved authority and a falsifiable criterion both exist.
+Closed set, like the seven statuses. Never derived, even with authority and criterion:
 
-Visible product contract · irreversible operations · migrations or data loss · public
-API · security and permissions · money, pricing or quotas · scope expansion ·
-contradictory dependencies or evidence.
+Visible product contract · irreversible operations · migrations or data loss · public API ·
+security and permissions · money, pricing or quotas · scope expansion · contradictory
+dependencies or evidence.
 
-What they share: the cost of being wrong is not paid by the agent, and it is not paid at
-the time of the mistake. Everything else is recoverable by editing code.
+What they share: the cost of being wrong is not paid by the agent, and not at the time of
+the mistake. Everything else is recoverable by editing code.
 
 ### Escalating is not blocking
 
-An escalating decision makes the **decision** pending. It does NOT make the Sesión
-`BLOQUEADO`. They are different objects with different lifetimes, and collapsing them is
-what turns a freshly authored plan into a wall of red that nobody can start.
-
 | Where the open decision lands | Sesión state |
 |---|---|
-| Contaminates the acceptance criteria, or the first Módulo | 🔴 `BLOQUEADO` — nothing honest can start |
-| Contaminates a later Módulo only | 🟢 `LISTO` — mark that Módulo 🔴, park the decision, work up to it |
-| Semantic contamination declared by another Sesión's `Contamina:` | 🔴 `BLOQUEADO`, citing that decision |
-| No contamination | 🟢 `LISTO` — the decision rides in `Decisiones`, nothing else changes |
+| Contaminates the acceptance criteria, or the first Módulo | 🔴 `BLOQUEADO` |
+| Contaminates a later Módulo only | 🟢 `LISTO` — mark that Módulo 🔴, park the decision |
+| Named by another Sesión's `Contamina:` | 🔴 `BLOQUEADO`, citing that decision |
+| No contamination | 🟢 `LISTO` — the decision rides in `Decisiones` |
 
-Almost every real Sesión touches one of the eight classes somewhere. So a planning pass
-that returns most Sesiones `BLOQUEADO` has applied `BLOQUEADO` at Sesión level when the
-contamination was at Módulo level. Recompute before reporting: a plan where nothing can
-start is a planning defect, not a finding.
+Almost every real Sesión touches one of the eight classes somewhere. A planning pass that
+returns most Sesiones `BLOQUEADO` has applied Sesión state to Módulo-level contamination.
+Recompute before reporting: a plan where nothing can start is a planning defect, not a finding.
 
-The same rule governs routes. A Sesión is `blocked` only under the first or third row;
-an open decision that contaminates nothing the Sesión starts with routes normally.
+### Contamination
 
-### Contamination — derived by default, declared when invisible
+Three of the four sources are already declared and need no new field: graph dependency,
+shared Zona, shared `Recurso` or Cimientos reservation. The fourth is **semantic** and must
+be written down: a Sesión whose acceptance criteria assume a particular answer while sharing
+nothing else. Declare it with `Contamina:` and Sesión IDs.
 
-An open decision contaminates every Sesión that cannot be honestly worked while it stays
-open. Three of the four sources are already declared and need no new field:
-
-1. **Graph dependency** on the blocked Sesión, transitively.
-2. **Shared `Área`.**
-3. **Shared `Recurso`.**
-
-The fourth is **semantic** and is the only one that must be written down: a Sesión whose
-acceptance criteria assume a particular answer, while sharing neither path nor resource
-nor edge. Nothing in the graph reveals it. Declare it on the escalating decision with
-`Contamina:` and Sesión IDs.
-
-> **Ambiguous resolves to contaminated.** Over-including costs idle capacity for a few
-> hours. Under-including ships work built on an assumption nobody approved, and it
-> surfaces at merge, after both implementations exist.
+> **Ambiguous resolves to contaminated.** Over-including costs idle capacity for hours.
+> Under-including ships work built on an unapproved assumption, and it surfaces at merge.
 
 ### The parked decision record
 
-A decision that escalates is written down before the agent moves on. It carries:
+A decision that escalates carries: the **exact question**, answerable without re-reading the
+codebase; the **evidence** that produced it; the **options enumerated, each with its
+consequence**; the **origin** Sesión and Módulo; the **checkpoint**; and the **class**.
 
-- the **exact question**, answerable without re-reading the codebase;
-- the **evidence** that produced it — files, lines, the contradiction;
-- the **options enumerated, each with its consequence**;
-- the **origin** Sesión and Módulo;
-- the **checkpoint** — where work stopped, precisely enough to resume;
-- the **class**, when it is one of the eight.
-
-Missing any of these, it is not parkable. A decision without enumerated options is not a
-decision, it is a question: escalating "what do we do here?" costs a full round trip and
-comes back "it depends."
+Missing any of these it is not parkable. A decision without enumerated options is a question,
+and escalating "what do we do here?" costs a round trip and returns "it depends."
 
 ### Continuing on something else
 
-A Sesión is eligible only when all four hold — the three tests of §10, plus contamination:
+Eligible only when graph-independent, in a different Zona, with disjoint `Recurso` and
+Cimientos, and outside the contamination scope.
 
-1. Graph-independent from the blocked Sesión.
-2. Disjoint `Área`.
-3. Disjoint `Recurso`.
-4. Not in the contamination scope of the open decision.
-
-> **Zero eligible Sesiones means stop and report.** Never relax a criterion to find
-> something to do. An agent that loosens its own constraints to stay busy is the failure
-> this whole section exists to prevent.
+> **Zero eligible Sesiones means stop and report.** Never relax a criterion to stay busy.
 
 ### Resuming
 
 The answer lifts the block **only over the scope recorded when the decision was parked**,
-never a scope recomputed at resume time — the plan may have moved meanwhile, and a
-recomputed scope silently unblocks work the maintainer never cleared.
+never a scope recomputed at resume time. Resume from the recorded checkpoint; if the base
+moved, reconcile first.
 
-Resume from the recorded checkpoint. If the base moved while the decision sat open,
-reconcile first: a stale checkpoint does not resume on its own.
+## 15. Execution routes
 
-## 12. Proportional output — do not pay for machinery you do not use
+Every Sesión carries a route: `direct`, `design-tasks`, `full-sdd`, or `blocked`.
 
-The full apparatus — Mermaid graph, computed capacity, `%` with its denominator, three
-Tareas per Módulo — is sized for a Plan several agents will work in parallel. Applied to a
-three-Sesión linear plan it produces ceremony nobody reads, and a plan nobody reads stops
-being consulted, which is worse than a plan that says less.
+| Route | Selected when |
+|---|---|
+| `direct` | The contract has a binary-verifiable outcome and every remaining choice is derivable |
+| `design-tasks` | The product outcome is fixed, but bounded technical discovery is required |
+| `full-sdd` | Outcome and boundaries exist, but behavior, lifecycle, or a shared contract still needs design |
+| `blocked` | Authority is absent or stale, evidence contradicts, or an open decision reaches the criteria or first Módulo |
 
-| Plan shape | Required | May be omitted |
+**Choose the lightest route that is honest.** Risk, file count, changed lines, or the number
+of technical seams **never** select a heavier route on their own. What escalates is concrete
+ambiguity about behavior or contract.
+
+### Who decides, and when
+
+The route is decided at two moments, and the previous model never said which one won:
+
+1. **At planning**, the route is **proposed** — that is when the full scope and the
+   dependency graph are visible.
+2. **At implementation**, it is **re-verified** — the base may have moved since.
+
+**The implementation-time decision wins, and it must record why it changed.** A Sesión
+planned `direct` that repeatedly runs `full-sdd` means the plan is being written badly, and
+that signal is worth more than the individual correction.
+
+## 16. Proportional output
+
+The full apparatus is sized for a product several agents build in parallel. Applied to a
+three-Sesión single-Zona product it produces ceremony nobody reads.
+
+| Shape | Required | May be omitted |
 |---|---|---|
-| ≤ 3 Sesiones, one owner, linear chain | Sesión rows with the five fields, binary acceptance criteria, the queue | Mermaid graph, computed capacity, `%` (write `3 S, cadena lineal`) |
-| 4+ Sesiones, or any parallelism, or more than one owner | Everything in this document | — |
+| One Zona, ≤ 3 Sesiones, linear | Sesión fields, binary criteria, the queue | Per-Zona capacity, `%` (write `3 S, cadena lineal`) |
+| Two or more Zonas, or any parallelism | Everything in this document | — |
 
-Omission is a **declared choice** written on the plan (`Grafo omitido: cadena lineal`),
-never a silent skip. The five Sesión fields, the acceptance criteria, and `Decisiones` are
-never omitted at any size — those are exactly what make a Sesión executable by an agent.
+Omission is a **declared choice** written on the plan, never a silent skip. The Sesión
+fields, the acceptance criteria, and `Decisiones` are never omitted at any size.
 
-## 13. Agent compliance checklist
+## 17. What the tool checks, and what a human must judge
 
-Before writing or updating any plan, master-index, or STATUS.md:
+The tool owns everything derivable. An agent that recomputes these by hand is doing work
+that will be overwritten, and doing it less reliably.
 
-- [ ] Every level is one of: Plan, Sesión, Módulo, Tarea — no other noun
-- [ ] Every node has a positional ID; no owner initials inside it
+| Computed — never written | Judged — needs a human or an agent |
+|---|---|
+| Every Sesión's `Estado` | Cutting the product into Zonas |
+| `%` and its fraction | Whether a decision is derivable or escalates, and its class |
+| The queue inside each Zona | The binary acceptance criteria |
+| Available seats | Semantic contamination between Sesiones |
+| `Área`, from the Zona | |
+| Partition validity: disjoint, exhaustive, paths real | |
+| Cimientos reservations and conflicts | |
+| The rendered roadmap and `STATUS` | |
+
+## 18. Agent compliance checklist
+
+Only what the tool cannot check. Everything else is enforced, not remembered.
+
+- [ ] Every level is Zona, Sesión, Módulo or Tarea — no other noun, and no second plan
+- [ ] Every Zona is defined by real paths, not by a theme
+- [ ] Work crossing Zonas became its own Zona, not a Sesión claiming two
 - [ ] Time appears only as `est:`, never as a constraint
-- [ ] Every status is one of the seven; no legacy or invented value
+- [ ] No agent wrote a status, a `%`, a queue position, or an `Área`
 - [ ] A Sesión that outgrew one PR was split into Sesiones, not renamed
-- [ ] master-index has all fixed sections, `Punto de retoma` first and rewritten
-- [ ] `Qué falta` uses IDs
-- [ ] `%` is recomputed from Sesión states and shown with its fraction, or `—` + reason
-- [ ] Every Sesión carries `Estado`, `Depende de`, `Área`, `Recurso` and `Decisiones`
-- [ ] Every Sesión carries binary acceptance criteria, authored before the work starts
+- [ ] Every Sesión carries `Zona`, `Depende de`, `Cimientos`, `Recurso` and `Decisiones`
+- [ ] Every Sesión carries binary acceptance criteria, authored before the work started
 - [ ] No Sesión is `COMPLETO` with an unchecked box; overflow scope got its own ID
-- [ ] The Plan renders its dependency graph, not only a table sorted by ID
-- [ ] The plan set carries a recomputed `Cola de ejecución` with positions across Plans
-- [ ] Every start announces `#N de T → ID` and why the earlier positions are gone
-- [ ] Parallel capacity is computed from the graph, never written as a field
-- [ ] A Sesión is `BLOQUEADO` only when the open decision reaches its acceptance criteria
-      or its first Módulo — never merely because a decision escalates
-- [ ] Artifacts omitted on a small plan are declared on the plan, not silently skipped
 - [ ] Every `derivable` decision names an approved authority **and** a falsifiable criterion
 - [ ] No decision in the eight always-escalate classes is marked `derivable`
-- [ ] Every escalating decision declares `Contamina:` when the contamination is semantic and invisible in graph, `Área` and `Recurso`
-- [ ] A parked decision carries exact question, evidence, options with consequence, origin, checkpoint and class
+- [ ] Every escalating decision declares `Contamina:` when the contamination is semantic
+- [ ] A parked decision carries question, evidence, options with consequence, origin,
+      checkpoint and class
+- [ ] A Sesión is `BLOQUEADO` only per §14 — never merely because a decision escalates
+- [ ] A route change at implementation time recorded why it changed
+- [ ] Artifacts omitted on a small product are declared on the plan, not silently skipped
