@@ -78,7 +78,7 @@ infraestructura y el D **requiere una decisión del maintainer** y no se deriva.
 |---|---|---|
 | `registry/{store,path}.mjs` | 203 | `F1` del PRD; precondición de todo comando que nombra un agente |
 | `support/{agent,manifest,snapshot}.mjs` | 203 | `S8.4` — briefs read-only de Support |
-| `enroll/index.mjs` | 141 | decisión 25 — origen del binding confiable |
+| `enroll/index.mjs` | 141 | Operación existente sin caller de producto; `S2.9` posee `torre enroll --repo`, sin convertir `torre on` en enrollment |
 | `supervision/state.mjs` | 126 | `S10.2` — supervisión sin armado local |
 | `jornada/execution-contract.mjs` | 122 | `S10.3` — contrato de ejecución versionado |
 | `continuation/{derivation,integrated-base}.mjs` | 106 | `S5.3`, `F4` — continuación entre agentes |
@@ -141,7 +141,7 @@ El cerebro ya está: `console/validate.mjs` valida el comando contra el vocabula
 
 | Entra… | …cuando exista | Líneas | Cajón |
 |---|---|---|---|
-| `registry/{store,path}.mjs` + `enroll/index.mjs` + `registry/legacy-import.mjs` | cualquier comando — todos nombran un agente dentro de un proyecto registrado | 479 | B |
+| `registry/{store,path}.mjs` + `enroll/index.mjs` + `registry/legacy-import.mjs` | `S2.9` conecta primero la operación canónica `torre enroll --repo`; después todo comando puede exigir un proyecto registrado | 479 | B |
 | `hosts/{inspect,health}.mjs` | `CV_INSPECT` | 133 | A |
 | `escalation/{request,routing,parking-composition}.mjs` | `CV_ANSWER` — primer consumidor: `S5.5` | 274 | A |
 | `policy/jornada.mjs` | `CV_GRANT_DELIVERY`, que debe respetar los límites de la Jornada | 39 | B |
@@ -343,6 +343,8 @@ medía la primera. Cualquier pasada futura debería contar también la segunda.
 
 El recorte lo ejecuta `S5.13`, enumerada en [`plan-5/STATUS.md`](plan-5/STATUS.md).
 
-## Autoridad vigente Pi-first — 2026-08-27
+## Autoridad vigente Pi-first — 2026-09-01
 
-El inventario y sus mediciones históricas se preservan íntegros. `S8.12` posee membresía del bundle Tower y `S8.13` install/activación/rollback/preflight; la frontera exacta está en la decisión 88 y en `plan-8/STATUS.md`.
+El inventario y sus mediciones históricas se preservan íntegros; no se modifican las cifras de la radiografía. La decisión 104 cierra ownership sin afirmar implementación: `S2.9` conecta el caller público de `enrollProject`; `S1.20` posee el probe read-only `ON|OFF|INDETERMINATE`; `S9.7` corrige los cuatro triggers registrados y el route padre; `S9.5` posee sólo topología/materialización Herdr; `S9.8` posee dispatch fire-and-forget y terminalidad en las skills. `S8.12` empaqueta esos bytes después de `S9.8` y `S8.13` conserva install/activación/rollback/preflight.
+
+La integración del menú central está enumerada como `S2.10` 🔴 BLOQUEADO: el screenshot prueba la UX aprobada, pero este checkout no prueba el renderer ni su owner. No se inventa ruta ni se atribuye implementación hasta resolver ese checkpoint.

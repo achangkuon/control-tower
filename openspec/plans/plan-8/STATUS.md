@@ -999,7 +999,7 @@ El checkpoint completo de `S8.11`, sus commits, conteos, fallos sellados y pasos
 
 **Estado:** 📋 PLANIFICADO
 
-**Depende de:** `S8.10` ✅ COMPLETO, `S8.14` ✅ COMPLETO, `S9.5`.
+**Depende de:** `S8.10` ✅ COMPLETO, `S8.14` ✅ COMPLETO, `S9.8` (`S9.5` y `S1.18` quedan incluidos transitivamente).
 
 **Área:** `scripts/payload-closure.mjs`, `install/runtime-payload.mjs`, `test/install/payload-closure.test.mjs`, `test/install/runtime-payload.test.mjs`, `test/install/tower-role-assets.test.mjs`.
 
@@ -1008,14 +1008,14 @@ El checkpoint completo de `S8.11`, sus commits, conteos, fallos sellados y pasos
 **Decisiones:**
 
 - `escala`, **resuelta por las decisiones 88, 95 y 100** — el bundle incluye runtime, contrato neutral, adapter Pi y el set local de perfiles/skills Tower canónicos; excluye Planner permanente, configuración Pi/Intercom y skills genéricas Gentle AI. **Clase:** contrato visible del producto; seguridad y permisos. **Contamina:** `S8.12 → S8.13`.
-- `escala`, **resuelta por Engram 9921** — el interceptor Pi-first y la skill inmutable `torre-control` viajan como bytes Tower-owned coherentes; el bundle no agrega rutas alternativas a `session-kickoff`. **Clase:** contrato visible del producto. **Contamina:** `S8.12 → S8.13`.
+- `escala`, **resuelta por la decisión 104 / Engram 10008** — el route padre `torre-control`, los cuatro triggers registrados y la política fire-and-forget de `S9.8` viajan como bytes Tower-owned coherentes; el bundle no conserva rutas públicas alternativas ni acredita trabajo sin terminal. **Clase:** contrato visible del producto. **Contamina:** `S8.12 → S8.13`.
 - `derivable` — orden y derivación internos de la membresía. **Criterio:** una sola composición produce declaración y guardia; faltante, extra, symlink o bytes divergentes falla cerrado. **Autoridad:** decisiones 88, 95, 100 y Engram 9921. **Falsificador:** dos enumeraciones aceptan conjuntos distintos.
 
 **Ruta:** `design-tasks` — consume ownership y comportamiento ya resueltos para fijar el seam mínimo de packaging; no redefine skills, interceptor ni router. **Autoridad de ruta:** decisiones 88, 95, 100 y Engram 9921.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
 
-- [ ] El bundle contiene exactamente los bytes Tower-owned locales, incluidos interceptor Pi-first, `torre-control`, perfiles y skills propietarias; no copia configuración Pi/Intercom ni skills genéricas Gentle AI.
+- [ ] El bundle contiene exactamente los bytes Tower-owned locales, incluidos route padre Pi-first, `torre-control`, perfiles y skills propietarias con dispatch fire-and-forget; no copia configuración Pi/Intercom ni skills genéricas Gentle AI.
 - [ ] Los tres perfiles y sus skills se materializan desde el bundle sin modificar sus fuentes canónicas.
 - [ ] Faltante, extra, symlink, provenance divergente o incoherencia interceptor/`torre-control` falla cerrado.
 - [ ] Declaración, derivación y guardia observan un único conjunto exacto y determinista.

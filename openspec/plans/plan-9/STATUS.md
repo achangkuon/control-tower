@@ -3,7 +3,7 @@
 **Propósito:** que existan asientos de trabajo estables que Main pueda asignar, materializar visualmente y reciclar sin pisar a un agente trabajando, y que tener varios no cueste una instalación de dependencias por cada uno.
 
 **Estado:** 🔵 EN CURSO
-**Avance:** 50% (3/6 S)
+**Avance:** 38% (3/8 S)
 
 > **Reordenado y recortado el 2026-08-21 por la [decisión 62](../decision-register.md), tras la auditoría exclusiva de P9.**
 > Los IDs son posicionales según el [estándar de planes](/home/emili/.claude/skills/_shared/plan-naming-convention.md), así que
@@ -120,9 +120,9 @@ Las decisiones 49–54 del [registro](../decision-register.md) y las referencias
 | Campo | Contrato |
 |---|---|
 | Orden histórico OpenCode-first | `S9.1 → S9.2 → S9.3`; `S9.4` estaba 🟡 DIFERIDO. La autoridad Pi-first vigente está en la reconciliación del 2026-08-27. |
-| Avance canónico | 50% (3/6 S). `S9.1`, `S9.4` y `S9.6` están ✅ COMPLETO; la historia diferida de `S9.4` permanece preservada. |
+| Avance canónico | 38% (3/8 S). `S9.1`, `S9.4` y `S9.6` están ✅ COMPLETO; `S9.7` y `S9.8` enumeran el nuevo contrato sin reabrir historia cerrada. |
 | Entrega | Commit directo a `master`, sin PR. Cada resultado independientemente verificable y revertible, ≤400 líneas authored. El cierre de `S9.4` quedó en `2b6dd52`, 153 líneas authored (132 adiciones + 21 eliminaciones), con rollback limitado a los cuatro paths de su `Área`. |
-| Próxima acción | No se autoriza una nueva Sesión desde este cierre. Para completar `MAIN → SUPPORT → AGENTES`, la próxima dependencia es `S1.17`, todavía no despachada; luego siguen `S1.18 → S9.5 → S8.12`, desde `S1.18` también `S1.19`, `S4.12` conserva sus dependencias declaradas `S9.4 + S1.18` con `S9.4` ya satisfecha, y `S8.13` espera `S8.12 + S1.19 + S4.12`. |
+| Próxima acción | Completar el flujo fresco bajo la decisión 104: `S1.18`; en paralelo `S1.20` y `S2.9`; después `S9.7 → S9.5 → S9.8 → S8.12`. Desde `S1.18` siguen también `S1.19` y `S4.12`; `S8.13` espera `S8.12 + S1.19 + S4.12`. `S2.10` queda bloqueada fuera de esta cadena hasta ubicar el owner real del menú. |
 | Decisión abierta | **Ninguna.** El contrato visible Pi-first fue resuelto por el maintainer en Engram 9921; capacidad y asignación siguen siendo gates operativos, no decisiones de producto. |
 | Autoridad histórica | Engram 8478 rev8, 8506, 8645, 8646, 8647 rev2, 8894, 8898, 8950, 8955, 8908; decisiones 49–54 y 62. Los artefactos SDD de la vieja `S9.1` viven en `openspec/changes/s9-1-safe-slot-lifecycle/` y describen un alcance **superado**: se conservan como evidencia, no como autoridad de implementación. |
 
@@ -271,11 +271,15 @@ graph TD
   S93 -.-> S94H["S9.4 launcher Pi · historia diferida"]
   S411["S4.11 operaciones neutrales · ✅"] --> S94["S9.4 supervisor Pi-first · ✅ COMPLETO"]
   S413["S4.13 validación ownership · ✅"] --> S414["S4.14 actualidad final · ✅"] --> S94
-  S118["S1.18 adapter Pi · 📋"] --> S95["S9.5 materialización Main/Support/Agentes · 📋"]
-  S96["S9.6 interceptor Pi-first · ✅"] --> S95
+  S118["S1.18 adapter Pi · 📋"] --> S95["S9.5 materialización visual · 📋"]
+  S120["S1.20 probe modo · 🟢"] --> S97["S9.7 route registrado · 📋"]
+  S29["S2.9 enrollment CLI · 🟢"] --> S97
+  S96["S9.6 fuente histórica · ✅"] --> S97
+  S97 --> S95
+  S95 --> S98["S9.8 dispatch asíncrono · 📋"]
 ```
 
-`S9.2` y `S9.3` no dependen entre sí. `S9.6` es independiente del pool y del supervisor: intercepta intención antes del turno de modelo. `S9.5` espera directamente `S1.18` y `S9.6`; consume asientos exactos ya aprobados por el brief y no crea, asigna ni recicla worktrees.
+`S9.2` y `S9.3` no dependen entre sí. `S9.6` permanece como fuente histórica cerrada; `S9.7` posee la corrección pública y espera `S1.20 + S2.9 + S9.6`. `S9.5` espera `S1.18 + S9.7`, materializa sólo la topología aprobada y no despacha; `S9.8` agrega después la política fire-and-forget. Ninguna de estas Sesiones crea, asigna ni recicla worktrees.
 
 ## Qué queda pendiente de reconciliar fuera de este Plan
 
@@ -510,9 +514,11 @@ guiones en vez de conteos. Ninguna suite lo detecta.
 - La evidencia de implementer-2 e implementer-3 permanece inmutable y no se promueve a capacidad.
 - La exigencia histórica de brief fresco queda preservada como evidencia del gate ya satisfecho; capacidad viva, asignación y worktree exacto siguen requiriendo validación operativa nueva.
 
-## Sesión 9.5 — Materialización determinista de Main, Support y Agentes
+## Contrato histórico de S9.5 — Materialización determinista de Main, Support y Agentes
 
-**Estado:** 📋 PLANIFICADO
+> Preservado como historia del corte anterior a la decisión 104. La autoridad vigente y acotada de `S9.5` aparece después de este bloque; sus dependencias, Área, criterios y forecast reemplazan este contrato sin reabrir Sesiones cerradas.
+
+**Estado histórico:** 📋 PLANIFICADO
 
 **Depende de:** `S1.18`, `S9.6`.
 
@@ -564,7 +570,111 @@ guiones en vez de conteos. Ninguna suite lo detecta.
 - [ ] Tarea T9.5.2.2 — GREEN: materializar y validar exactamente cada asiento aprobado usando IDs/respuestas reales del contrato Herdr.
 - [ ] Tarea T9.5.2.3 — REFACTOR: estabilizar reporte/fallback, preservar foco y prohibir cierre o prompt sobre recursos ajenos.
 
-**Forecast:** dos commits directos secuenciales, uno por Módulo; cada uno debe quedar independientemente verificable, revertible y ≤400 líneas authored. No son PRs ni un nivel adicional. Si cualquiera supera 400 de forma inseparable, se divide en otra Sesión; nunca se amplía `S8.12` o `S8.13`.
+**Forecast histórico:** dos commits directos secuenciales. Queda supersedido por la división `S9.5` materialización visual → `S9.8` dispatch asíncrono; no autoriza una Sesión mayor de 400 authored.
+
+---
+
+## Sesión 9.5 — Topología y materialización visual determinista
+
+**Estado:** 📋 PLANIFICADO
+
+**Depende de:** `S1.18`, `S9.7`
+
+**Área:** `hosts/herdr-topology.mjs`, `test/hosts/herdr-topology.test.mjs`, `workspace/herdr-seat-materializer.mjs`, `test/workspace/herdr-seat-materializer.test.mjs`
+
+**Recurso:** sesión Herdr enfocada, tabs/panes exactos y worktrees aprobados; sin autoridad de dispatch, DB, lifecycle de worktrees ni token de entrega.
+
+**Decisiones:**
+- `escala`, resuelta — Herdr posee la topología visual/procesal y su observación determinista: labels exactos `MAIN`, `SUPPORT`, `AGENTES`, panes, `cwd` y `foreground_cwd` por readback. **Clase:** contrato visible del producto; seguridad y permisos. **Autoridad:** decisión 104 y Engram 10008. **Falsificador:** la skill duplica sintaxis/topología o un pane recibe prompt sin readback coincidente.
+- `derivable` — reutilización segura. **Criterio:** label, pane, worktree, cwd y foreground_cwd coinciden con el brief; mismatch falla cerrado sin `cd`, reciclado ni adopción.
+
+**Ruta:** `direct` — el owner Herdr y la topología exacta ya están aprobados; esta Sesión sólo materializa y lee de vuelta.
+
+**Autoridad:** decisión 104, decisión 101 y Engram 10008.
+
+**Criterios de aceptación** — todos deben pasar:
+- [ ] Herdr materializa exactamente tabs `MAIN`, `SUPPORT` y `AGENTES`; ningún alias o label aproximado pasa.
+- [ ] MAIN y SUPPORT ocupan sus panes/worktrees exactos y AGENTES contiene sólo workers enumerados por el brief.
+- [ ] Antes de cualquier prompt, cada pane prueba por readback `cwd` y `foreground_cwd` iguales al worktree aprobado; mismatch falla cerrado sin reparar por inferencia.
+- [ ] Repetir el mismo input converge sin duplicar tabs, panes o procesos; un recurso ajeno nunca se cierra ni reutiliza.
+- [ ] El diff toca sólo `Área` y no despacha trabajo, modifica skills, Pi/Intercom, worktrees ni runtime vivo.
+
+### Módulo M9.5.1 — Materialización y readback Herdr · forecast 260–390 authored
+- [ ] Tarea T9.5.1.1 — RED: cubrir labels exactos, pane extra/faltante, worktree/cwd/foreground_cwd divergentes, repetición y recurso ajeno.
+- [ ] Tarea T9.5.1.2 — GREEN: componer el materializador sobre `hosts/herdr-topology.mjs` y devolver evidencia por pane sin despachar.
+- [ ] Tarea T9.5.1.3 — REFACTOR: eliminar topología duplicada, estabilizar readback/fallback y probar convergencia.
+
+**Forecast de Sesión:** 260–390 líneas authored; un resultado revisable y revertible de ≤400.
+
+---
+
+## Sesión 9.7 — Route padre registrado y triggers públicos exactos
+
+**Estado:** 📋 PLANIFICADO
+
+**Depende de:** `S1.20`, `S2.9`, `S9.6` ✅
+
+**Área:** `extensions/pi/tower-session-router.ts`, `extensions/pi/package.json`, `test/extensions/pi/tower-session-router.test.mjs`, `skills/torre-control/SKILL.md`
+
+**Recurso:** cadena global `pi.on("input")`, probe tipado de modo y resolución canónica de proyecto enrolado; sin Herdr, DB mutable ni procesos.
+
+**Decisiones:**
+- `escala`, resuelta — un único parent route `torre-control` detecta ON/OFF/INDETERMINATE y acepta exactamente, para proyectos registrados, “empezamos la jornada”, “prepará el espacio de trabajo”, “continuemos con la implementación” y “quiero continuar con la implementación”, con Sesión/topic opcional. **Clase:** contrato visible del producto; API pública. **Autoridad:** decisión 104 y Engram 10008. **Falsificador:** el usuario debe declarar el modo, se acepta una quinta frase o se conserva el route público genérico anterior.
+- `derivable` — INDETERMINATE falla cerrado con diagnóstico local y cero turno de modelo; OFF y ON seleccionan su ejecución después del mismo route, sin transferir autoridad. **Criterio:** el probe `S1.20` es la única clasificación de modo.
+
+**Ruta:** `direct` — gramática y selección de route están cerradas; no requiere rediseñar el interceptor completado.
+
+**Autoridad:** decisión 104, Engram 10008 y fuente cerrada de `S9.6` como antecedente, no como contrato visible vigente.
+
+**Criterios de aceptación** — todos deben pasar:
+- [ ] En un proyecto registrado, cada una de las cuatro frases exactas, con o sin Sesión/topic, alcanza el mismo parent route `torre-control`; ninguna otra frase se acepta.
+- [ ] El route consulta el probe compartido y selecciona ON u OFF sin pedir al usuario que declare el modo; INDETERMINATE falla cerrado y no llega al modelo.
+- [ ] Un proyecto no registrado continúa sin captura y explica enrollment sólo cuando el usuario invoca explícitamente la superficie Tower correspondiente.
+- [ ] OFF usa peers vivos aprobados y skills sin fabricar garantías Tower; ON exige binding/persistencia/ack/retry Tower-owned.
+- [ ] El contrato viejo de `S9.6` queda como historia cerrada y no se reabre ni recibe crédito nuevo.
+- [ ] El diff toca sólo `Área`.
+
+### Módulo M9.7.1 — Gramática registrada y selección de modo · forecast 260–390 authored
+- [ ] Tarea T9.7.1.1 — RED: cubrir las cuatro frases exactas, Sesión/topic opcional, quinta forma, repo no registrado y ON/OFF/INDETERMINATE sin declaración del usuario.
+- [ ] Tarea T9.7.1.2 — GREEN: enrutar el snapshot validado al único parent `torre-control` y consumir el probe tipado.
+- [ ] Tarea T9.7.1.3 — REFACTOR: retirar aliases públicos supersedidos, preservar provenance/orden de transforms y estabilizar errores fail-closed.
+
+**Forecast de Sesión:** 260–390 líneas authored; un resultado revisable y revertible de ≤400.
+
+---
+
+## Sesión 9.8 — Dispatch fire-and-forget y cierre asíncrono
+
+**Estado:** 📋 PLANIFICADO
+
+**Depende de:** `S9.5`, `S1.18`
+
+**Área:** `skills/torre-control/SKILL.md`, `skills/torre-control-entregas/SKILL.md`, `test/extensions/pi/tower-session-router.test.mjs`
+
+**Recurso:** `dispatch_id`, canal Intercom ya ligado por `S1.18` y mailbox de Main; sin ownership de Herdr, lifecycle de procesos o entrega Git.
+
+**Decisiones:**
+- `escala`, resuelta — dispatch es fire-and-forget: Main bloquea sólo ante una decisión verdadera; `send` lleva progreso/completion y `ask` queda reservado a decisión humana. **Clase:** contrato visible del producto; seguridad y permisos. **Autoridad:** decisión 104 y Engram 10008.
+- `derivable` — Main acredita avance sólo al recibir un terminal válido ligado al `dispatch_id`. **Criterio:** `COMPLETED` exige evidence refs, changed paths y tests; `BLOCKED`/`FAILED` exigen razón y recoverability. **Falsificador:** estado parcial, pane visible o candidato local suma progreso.
+
+**Ruta:** `direct` — política operacional y formas terminales ya están aprobadas; esta Sesión las vuelve ejecutables en las skills/routing.
+
+**Autoridad:** decisión 104 y Engram 10008.
+
+**Criterios de aceptación** — todos deben pasar:
+- [ ] Main despacha Support/worker, registra `dispatch_id` y vuelve inmediatamente a coordinar después del acknowledgment de envío.
+- [ ] Progreso y cierre llegan por `send`; `ask` sólo aparece con una pregunta de decisión exacta y deja el assignment `BLOCKED` recuperable.
+- [ ] Cada assignment acepta exactamente un terminal `COMPLETED`, `BLOCKED` o `FAILED` con los campos de evidencia/recoverability aprobados; duplicado, stale o sin `dispatch_id` falla cerrado.
+- [ ] Un candidato local, un pane activo o trabajo parcial sin terminal no acredita progreso ni habilita downstream.
+- [ ] OFF no atribuye persistencia/retry Tower-owned; ON no despacha sin binding, acknowledgment y retry.
+- [ ] El diff toca sólo `Área`.
+
+### Módulo M9.8.1 — Política de dispatch y contrato terminal · forecast 180–300 authored
+- [ ] Tarea T9.8.1.1 — RED: cubrir espera ordinaria prohibida, uso indebido de `ask`, terminal faltante/duplicado/stale y crédito falso por candidato parcial.
+- [ ] Tarea T9.8.1.2 — GREEN: registrar `dispatch_id`, retornar tras acknowledgment y consumir `send` terminal con evidencia/recoverability exactas.
+- [ ] Tarea T9.8.1.3 — REFACTOR: separar coordinación de seguimiento, estabilizar rechazo fail-closed y probar divergencia ON/OFF sin cambiar autoridad.
+
+**Forecast de Sesión:** 180–300 líneas authored; un resultado revisable y revertible de ≤400.
 
 ---
 

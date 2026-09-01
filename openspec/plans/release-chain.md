@@ -310,4 +310,32 @@ graph LR
 
 **Validación, no decisión:** la corrida desatendida prolongada, crash del broker con tráfico y el límite de cinco clientes son gates de evidencia. El claim inicial termina en cinco; >5 no se promete hasta medirlo.
 
-**Capacidad y próxima acción:** `S4.14` está ✅ COMPLETO; `#1 S9.4` está 📋 PLANIFICADO, sin worker asignado y no es asignable hasta recibir un brief fresco de Support sobre la base entregada. La capacidad asignable es **0** hasta ese gate. Ningún estado parcial autoriza resume o corrección. Se conservan las dependencias transitivas hacia `S4.12`, `S9.5`, `S8.13` y `S7.1`.
+**Capacidad y próxima acción de ese corte:** `S4.14` estaba ✅ COMPLETO y `S9.4` todavía figuraba 📋. La reconciliación siguiente reemplaza ese punto de retoma; esta prosa se conserva como historia del 2026-08-28.
+
+## Reconciliación del workflow aprobado — 2026-09-01
+
+La decisión 104 no reabre P11 ni acredita el candidato no entregado de `S1.18`. Enumera los owners faltantes y divide el flujo fresco en resultados revisables de ≤400 authored:
+
+```mermaid
+graph LR
+  S117["S1.17 gate Pi · ✅"] --> S118["S1.18 adapter + terminalidad · 📋"]
+  S118 --> S119["S1.19 regresión · 📋"]
+  S118 --> S412["S4.12 recovery · 📋"]
+  S120["S1.20 probe modo · 🟢"] --> S97["S9.7 route registrado · 📋"]
+  S29["S2.9 enrollment CLI · 🟢"] --> S97
+  S96["S9.6 fuente anterior · ✅"] --> S97
+  S118 --> S95["S9.5 topología/materialización · 📋"]
+  S97 --> S95
+  S95 --> S98["S9.8 dispatch asíncrono · 📋"]
+  S98 --> S812["S8.12 bundle Tower · 📋"]
+  S810["S8.10 payload · ✅"] --> S812
+  S814["S8.14 perfiles · ✅"] --> S812
+  S812 --> S813["S8.13 lifecycle · 📋"]
+  S119 --> S813
+  S412 --> S813
+  S813 --> S71["S7.1 piloto final · 📋"]
+```
+
+**Orden de release vigente:** `S1.18`; en paralelo pueden avanzar `S1.20` y `S2.9`; después `S9.7 → S9.5 → S9.8 → S8.12`. Desde `S1.18` siguen además `S1.19` y `S4.12`; `S8.13` exige las tres ramas y `S7.1` conserva sus gates restantes. `S2.10` no entra en esta cadena: la UX híbrida sigue obligatoria, pero el owner del menú central está 🔴 BLOQUEADO por evidencia ausente y no se inventa.
+
+**Semántica de cierre:** Main no espera trabajo ordinario. Cada assignment usa `dispatch_id` y sólo un terminal `COMPLETED|BLOCKED|FAILED` con evidencia/recoverability habilita progreso o downstream. El candidato local no entregado de `S1.18`, sin notificación terminal, conserva cero crédito.

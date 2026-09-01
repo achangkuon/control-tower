@@ -1,12 +1,12 @@
 # Plan 1 — Sustrato mecánico
 
 **Estado:** 🔵 EN CURSO
-**Avance:** **89% (17/19 S)** — cuentan sólo las Sesiones ✅ COMPLETO o 📚 ARCHIVADO del registro canónico siguiente.
+**Avance:** **85% (17/20 S)** — cuentan sólo las Sesiones ✅ COMPLETO o 📚 ARCHIVADO del registro canónico siguiente.
 **Granularidad:** `Plan → Sesión → Módulo → Tarea`; no existe un quinto nivel.
 
 ## Autoridad vigente y cómputo canónico
 
-Pi es el primer host de implementación. La cadena activa empieza en [`S9.4`](../plan-9/STATUS.md) y continúa por `S1.17 → S1.18 → S1.19`; `S1.18` converge con el interceptor [`S9.6`](../plan-9/STATUS.md) en `S9.5`, y la cadena de materialización y entrega sigue `S9.5 → S8.12 → S8.13` antes de `S7.1`. `S8.13` conserva además sus gates directos `S1.19` y `S4.12`. La base OpenCode `S1.11`–`S1.16` permanece cerrada y preservada, pero su continuación futura está diferida. Claude permanece como objetivo opt-in posterior en `P8/S8.5`. Ni OpenCode ni Claude bloquean la primera release Pi.
+Pi es el primer host de implementación. La cadena vigente preserva `S9.4`, `S1.17` y `S9.6` cerradas; continúa por `S1.18`, mientras `S1.20 + S2.9 → S9.7` corrigen modo y route público. Esas ramas convergen en `S9.5 → S9.8 → S8.12`; desde `S1.18` siguen además `S1.19` y `S4.12`, y `S8.13` exige las tres ramas antes de `S7.1`. La base OpenCode `S1.11`–`S1.16` permanece cerrada y preservada, pero su continuación futura está diferida. Claude permanece como objetivo opt-in posterior en `P8/S8.5`. Ni OpenCode ni Claude bloquean la primera release Pi.
 
 Este es el único registro de **estados vigentes** que define el numerador y el denominador de P1. Las tablas posteriores que describen estados anteriores son historia y no vuelven a enumerar Sesiones.
 
@@ -30,11 +30,12 @@ Este es el único registro de **estados vigentes** que define el numerador y el 
 | S1.15 | Conformidad lifecycle OpenCode | ✅ COMPLETO | `S1.14` |
 | S1.16 | Transporte reconciliado y composición wake | ✅ COMPLETO | `S1.15` |
 | S1.17 | Gate y RED del adapter Pi | ✅ COMPLETO | `4248da9` |
-| S1.18 | Adapter Pi/Intercom | 📋 PLANIFICADO | `S1.17` |
+| S1.18 | Adapter Pi/Intercom y reporte terminal asíncrono | 📋 PLANIFICADO | `S1.17` |
 | S1.19 | Regresión integral Pi-first | 📋 PLANIFICADO | `S1.18` |
+| S1.20 | Probe tipado y read-only del modo Tower | 🟢 LISTO | — |
 <!-- P1-SESSION-LEDGER:END -->
 
-La cuenta es mecánica: 17 filas cerradas de 19 filas enumeradas. No hay crédito parcial ni trabajo pendiente de P1 fuera de este denominador.
+La cuenta es mecánica: 17 filas cerradas de 20 filas enumeradas. No hay crédito parcial: el candidato no entregado de `S1.18` conserva cero crédito porque no produjo notificación terminal a Main.
 
 ## Resumen
 
@@ -107,7 +108,9 @@ graph LR
   S117 --> S118["S1.18 adapter Pi · 📋"]
   S118 --> S119["S1.19 regresión Pi · 📋"]
   S118 --> S95["S9.5 materialización · 📋"]
-  S96["S9.6 interceptor Pi-first · 🟢"] --> S95
+  S120["S1.20 probe de modo · 🟢"] --> S97["S9.7 route registrado · 📋"]
+  S96["S9.6 interceptor Pi-first · 🟢"] --> S97
+  S97 --> S95
 ```
 
 `S1.1`–`S1.8` no reciben aristas inventadas: sus cierres legacy permanecen probados por PR #38–#45 y el `apply-progress.md` histórico.
@@ -340,27 +343,79 @@ El contrato OpenCode-first/Pi-second anterior queda preservado arriba como histo
 - Presupuesto: 316 líneas authored, todas adiciones, dentro del máximo de 400.
 - Rollback: revertir sólo `4248da9`; no hay schema, migración ni estado persistido que revertir.
 
-## Sesión S1.18 — Adapter Pi/Intercom
-**Estado:** 📋 PLANIFICADO · **Depende de:** `S1.17` · **Área:** `adapters/pi/runtime.mjs`, `test/adapters/pi/runtime.test.mjs` · **Recurso:** procesos Pi Tower-spawned y conexión del supervisor.
-**Decisiones:** decisiones 80, 83, 84 y 86 resueltas; Intercom transporta y nunca autoriza. **Ruta:** `design-tasks` — implementa el seam ya cercado sin abrir API de producto nueva.
+## Sesión S1.18 — Adapter Pi/Intercom y reporte terminal asíncrono
+**Estado:** 📋 PLANIFICADO
+
+**Depende de:** `S1.17`
+
+**Área:** `adapters/pi/runtime.mjs`, `test/adapters/pi/runtime.test.mjs`
+
+**Recurso:** procesos Pi Tower-spawned, conexión Intercom del supervisor y namespace de `dispatch_id`.
+
+**Decisiones:**
+- `escala`, resuelta — Pi Intercom es transporte normal Main↔Support↔worker y nunca concede autoridad; ON usa binding, persistencia, acknowledgment y retry Tower-owned, mientras OFF conserva peers vivos aprobados y skills. **Clase:** contrato visible del producto; seguridad y permisos. **Autoridad:** decisión 104 y Engram 10008. **Falsificador:** un mensaje Intercom crea autoridad o un envío ON carece de binding/ack/retry.
+- `derivable` — forma interna del reporte. **Criterio:** toda asignación liga un `dispatch_id` único y termina exactamente una vez en `COMPLETED`, `BLOCKED` o `FAILED`, con evidencia/recoverability conforme al estado. **Autoridad:** decisión 104. **Falsificador:** ausencia, duplicidad o terminal sin referencia causal.
+
+**Ruta:** `design-tasks` — el lifecycle neutral ya está cercado; falta elaborar el seam de transporte y terminalidad sin rediseñar autoridad.
+
+**Autoridad:** Engram 10008, decisiones 80, 83, 84, 86 y 104.
+
 **Criterios de aceptación** — todos deben pasar:
-- [ ] `launch/observe/health/stop/attach` implementan el puerto neutral.
-- [ ] `/proc` cruza PID/cwd Tower-owned y nonce+endpointEpoch prueban attach.
-- [ ] Los IDs son aleatorios; no adopta procesos ajenos ni toca fuera de `Área`.
-### Módulo M1.18.1 — Implementación del adapter
-- [ ] Tarea T1.18.1.1 — RED: cubrir proceso ajeno, `/proc` divergente, nonce/epoch stale y broker equivocado.
-- [ ] Tarea T1.18.1.2 — GREEN: adaptar lifecycle Pi/Intercom al contrato neutral.
-- [ ] Tarea T1.18.1.3 — REFACTOR: encapsular protocolo externo y normalizar evidencia.
+- [ ] `launch/observe/health/stop/attach` implementan el puerto neutral y `/proc` cruza PID/cwd Tower-owned; nonce y `endpointEpoch` prueban attach.
+- [ ] Cada assignment emitido por Main lleva un `dispatch_id` estable; el adapter devuelve control después del acknowledgment de envío y nunca espera el trabajo ordinario de Support o worker.
+- [ ] `send` transporta progreso y cierre; `ask` sólo se usa cuando existe una decisión humana verdadera y produce `BLOCKED` recuperable, nunca como polling de avance.
+- [ ] Cada `dispatch_id` produce exactamente un terminal `COMPLETED`, `BLOCKED` o `FAILED`: `COMPLETED` incluye referencias de evidencia, paths cambiados y tests; `BLOCKED`/`FAILED` incluyen razón y recoverability.
+- [ ] ON conserva binding, persistencia, acknowledgment y retry Tower-owned; OFF no fabrica esa garantía y usa sólo peers vivos aprobados por el maintainer.
+- [ ] Los IDs son aleatorios, no adopta procesos ajenos, no modifica Pi/Intercom y el diff no toca fuera de `Área`.
+
+### Módulo M1.18.1 — Lifecycle, dispatch y terminalidad del adapter · forecast 280–390 authored
+- [ ] Tarea T1.18.1.1 — RED: cubrir proceso ajeno, `/proc` divergente, nonce/epoch stale, broker equivocado, `dispatch_id` ausente/duplicado, espera bloqueante y terminal inválido o repetido.
+- [ ] Tarea T1.18.1.2 — GREEN: adaptar lifecycle Pi/Intercom al contrato neutral, reconocer el envío sin esperar trabajo y transportar reportes terminales ligados al assignment.
+- [ ] Tarea T1.18.1.3 — REFACTOR: encapsular protocolo externo, normalizar evidencia/recoverability y probar separación entre `send` y `ask`.
+
+**Forecast de Sesión:** 280–390 líneas authored; un resultado revisable y revertible de ≤400. El candidato no entregado de otro worktree no es base, no se toca y acredita cero.
 
 ## Sesión S1.19 — Regresión integral Pi-first
 **Estado:** 📋 PLANIFICADO · **Depende de:** `S1.18` · **Área:** `test/integration/pi-first/**`, `test/host-adapters.test.mjs` · **Recurso:** hasta cinco clientes Pi aislados y brokers efímeros de prueba.
-**Decisiones:** —; los límites no medidos son gates de validación, no decisiones derivables. **Ruta:** `direct` — triangulación integral de contratos ya definidos.
+**Decisiones:** —; los límites no medidos son gates de validación, no decisiones derivables. **Ruta:** `direct` — triangulación integral de contratos ya definidos. **Autoridad:** decisión 104, Engram 10008 y contrato de capacidad Pi-first aprobado.
 **Criterios de aceptación** — todos deben pasar:
 - [ ] La cadena launch→attach→observe→stop pasa con 1 y 5 clientes.
 - [ ] La corrida desatendida prolongada pasa.
 - [ ] El crash del broker con tráfico demuestra reconexión y recuperación idempotente sin prometer mensajes en vuelo.
 - [ ] Más de 5 clientes queda fuera del claim inicial hasta medirse y el cambio no toca fuera de `Área`.
 ### Módulo M1.19.1 — Evidencia de regresión y capacidad
-- [ ] Tarea T1.19.1.1 — RED: capturar fallos de corrida larga, broker crash y quinto cliente.
-- [ ] Tarea T1.19.1.2 — GREEN: estabilizar harness y producir evidencia atribuible al candidato.
-- [ ] Tarea T1.19.1.3 — REFACTOR: aislar fixtures y documentar el claim máximo de cinco clientes.
+- [ ] Tarea T1.19.1.1 — RED: capturar fallos de corrida larga, broker crash, quinto cliente y reporte terminal perdido/duplicado.
+- [ ] Tarea T1.19.1.2 — GREEN: estabilizar harness y producir evidencia atribuible al candidato y a cada `dispatch_id`.
+- [ ] Tarea T1.19.1.3 — REFACTOR: aislar fixtures, probar recuperación idempotente y documentar el claim máximo de cinco clientes.
+
+**Forecast de Sesión:** 240–360 líneas authored; un resultado revisable y revertible de ≤400.
+
+## Sesión S1.20 — Probe tipado y read-only del modo Tower
+**Estado:** 🟢 LISTO
+
+**Depende de:** —
+
+**Área:** `core.mjs`, `test/lifecycle.test.mjs`
+
+**Recurso:** lectura del marcador `ACTIVE` y estado persistido; sin apertura creativa de DB, migración, lock ni lifecycle de procesos.
+
+**Decisiones:**
+- `derivable` — el resultado cerrado es `ON | OFF | INDETERMINATE`. **Autoridad:** decisión 104 y Engram 10008. **Criterio:** ON requiere evidencia coherente de activación, OFF ausencia/coherencia negativa probada e inseguridad, ambigüedad o I/O produce INDETERMINATE; salud de host/proceso no participa. **Falsificador:** una falla se degrada a OFF o un host caído cambia el modo.
+
+**Ruta:** `direct` — contrato tipado, read-only y sin decisión de diseño abierta.
+
+**Autoridad:** decisión 104 y Engram 10008.
+
+**Criterios de aceptación** — todos deben pasar:
+- [ ] Un único probe compartido devuelve sólo `ON`, `OFF` o `INDETERMINATE` para el repositorio consultado y no exige que el usuario declare el modo.
+- [ ] El probe no crea ni modifica `ACTIVE`, DB, WAL/SHM, configuración, locks, procesos o worktrees y no ejecuta migraciones.
+- [ ] Evidencia ambigua, ilegible o contradictoria devuelve `INDETERMINATE`; nunca se adivina `OFF`.
+- [ ] Salud de host/proceso se reporta por su seam existente y no altera el resultado del modo.
+- [ ] El diff toca sólo `Área`.
+
+### Módulo M1.20.1 — Clasificación read-only del modo · forecast 180–280 authored
+- [ ] Tarea T1.20.1.1 — RED: cubrir ON, OFF, marcador/estado contradictorio, I/O ilegible y prueba de cero mutación.
+- [ ] Tarea T1.20.1.2 — GREEN: exponer el probe mínimo compartido sin abrir rutas creativas ni consultar salud.
+- [ ] Tarea T1.20.1.3 — REFACTOR: congelar el tipo cerrado, normalizar INDETERMINATE y repetir testigos de bytes/metadatos.
+
+**Forecast de Sesión:** 180–280 líneas authored; un resultado revisable y revertible de ≤400.

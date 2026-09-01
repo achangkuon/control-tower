@@ -4,10 +4,10 @@
 
 ## Verdad ejecutable actual
 
-- `S2.1`–`S2.6` y `S2.8` están cerradas; `S2.7` está archivada. P2 no conserva una Sesión enumerada pendiente.
+- `S2.1`–`S2.6` y `S2.8` están cerradas; `S2.7` está archivada. `S2.9` enumera el caller CLI de enrollment y `S2.10` conserva bloqueada la integración del menú central hasta ubicar su renderer/owner real.
 - `S2.8` fue entregada a `origin/master` mediante el código `480afb92bf99d38ee166070d09ec6485bc5de2c4` y el cierre documental `6bd1477ddc6c242ac5ff9aa8459f48daedffe40f`.
-- **Cola global:** P2 no aporta una Sesión enumerada. Ver [master-index](../master-index.md).
-- **Denominador:** `—`. Cuatro responsabilidades de Change B siguen sin Sesión enumerada; por la [decisión 57](../decision-register.md), el porcentaje no es derivable.
+- **Cola global:** `S2.9` entra en la cola; `S2.10` queda fuera por 🔴 BLOQUEADO. Ver [master-index](../master-index.md).
+- **Denominador:** `—`. Aunque `S2.9` y `S2.10` enumeran las superficies públicas de enrollment, storage/revisión, alias/resolución y validación de root/common-dir/remote siguen sin Sesión; por la [decisión 57](../decision-register.md), el porcentaje no es derivable.
 
 ## Sesiones cerradas
 
@@ -29,7 +29,74 @@
 
 ## Responsabilidades de Change B todavía sin ID
 
-El [apéndice de migración](../plan-vocabulary-migration-appendix.md) preserva, sin inventar denominador: storage y actualización atómica; bootstrap, enrollment y revisionado; UX de alias y resolución inequívoca; validación de root, common-dir y remote. El [inventario de producto](../inventario-de-producto.md) las cruza contra `console/vocabulary.mjs`; esta reconciliación no cambia alcance, estado ni dependencias.
+El [apéndice de migración](../plan-vocabulary-migration-appendix.md) preserva, sin inventar denominador: storage y actualización atómica; bootstrap, enrollment y revisionado; UX de alias y resolución inequívoca; validación de root, common-dir y remote. `S2.9` enumera sólo el caller público de enrollment y `S2.10` sólo su integración de menú; las otras responsabilidades siguen sin enumerar, por lo que P2 conserva porcentaje `—`. El [inventario de producto](../inventario-de-producto.md) las cruza contra `console/vocabulary.mjs`.
+
+## Sesión 2.9 — Enrollment público canónico por CLI
+
+**Estado:** 🟢 LISTO
+
+**Depende de:** —
+
+**Área:** `bin/torre`, `enroll/index.mjs`, `test/console/cli.test.mjs`, `test/enroll/enroll.test.mjs`
+
+**Recurso:** registro central de proyectos y lock/escritura atómica ya propiedad de `enrollProject`; sin activación Tower ni lifecycle de hosts.
+
+**Decisiones:**
+- `escala`, resuelta — la operación pública canónica es `torre enroll --repo <ruta>` y llama al `enrollProject` existente; `torre on --repo` queda estrictamente activation-only y rechaza un proyecto no registrado explicando primero `torre enroll`. **Clase:** API pública; contrato visible del producto; seguridad y permisos. **Autoridad:** decisión 104 y Engram 10008. **Contamina:** `S9.7`.
+- `derivable` — traducción de argumentos hacia el request existente. **Criterio:** la CLI no duplica validación, identidad, preflight ni persistencia de `enrollProject`; cualquier segunda implementación falsifica la derivación.
+
+**Ruta:** `direct` — caller público acotado sobre una operación existente y criterios binarios cerrados.
+
+**Autoridad:** decisión 104, Engram 10008 y contrato entregado de `S8.3`.
+
+**Criterios de aceptación** — todos deben pasar:
+- [ ] `torre enroll --repo <ruta>` invoca el `enrollProject` existente y devuelve identidad/revisión del proyecto registrado sin duplicar su lógica.
+- [ ] Repetir enrollment idéntico converge según el contrato existente; conflicto o layout inseguro falla cerrado antes de escribir.
+- [ ] `torre on --repo <ruta>` activa sólo proyectos ya registrados; uno no registrado no crea registro ni `ACTIVE` y explica el comando `torre enroll`.
+- [ ] `torre enroll` no activa la Torre, no inicia procesos y no muta worktrees.
+- [ ] El diff toca sólo `Área`.
+
+### Módulo M2.9.1 — Caller CLI y separación enroll/on · forecast 220–340 authored
+- [ ] Tarea T2.9.1.1 — RED: cubrir enrollment exitoso/idempotente, conflicto/layout inseguro y `torre on` no registrado sin mutación.
+- [ ] Tarea T2.9.1.2 — GREEN: cablear el subcomando a `enrollProject` y cercar `on` como activation-only.
+- [ ] Tarea T2.9.1.3 — REFACTOR: eliminar validación duplicada, estabilizar errores/ayuda y repetir testigos de registro/`ACTIVE`.
+
+**Forecast de Sesión:** 220–340 líneas authored; un resultado revisable y revertible de ≤400.
+
+## Sesión 2.10 — Enrollment desde el menú central
+
+**Estado:** 🔴 BLOQUEADO
+
+**Depende de:** `S2.9`
+
+**Área:** `OWNER SIN RESOLVER — renderer/handler del menú central no localizado en este checkout`; pruebas del mismo owner, también sin localizar.
+
+**Recurso:** menú central y registro de proyectos; serial con `S2.9` por la operación canónica de enrollment.
+
+**Decisiones:**
+- `escala` — pregunta exacta: ¿qué repositorio y path poseen el renderer/handler del menú central que debe ofrecer enrollment y cómo invoca la CLI canónica sin duplicar lógica? **Clase:** dependencias o evidencia contradictorias; expansión de alcance. **Evidencia:** el screenshot aprobado existe, pero el renderer no fue localizado en este checkout. **Opciones:** ubicar el owner real y agregar allí una entrada que llame `torre enroll` (mantiene UX híbrida); declarar que el menú vive fuera del producto y registrar su repositorio (cambia ownership, no el contrato); no hacer nada (deja incompleta la UX pública aprobada). **Checkpoint:** antes de RED y antes de nombrar cualquier path. **Contamina:** criterios y primer Módulo de `S2.10`; no contamina `S2.9` ni el route CLI de `S9.7`.
+
+**Ruta:** `blocked` — falta evidencia del owner real; no se inventa archivo ni responsable.
+
+**Autoridad:** decisión 104 y Engram 10008.
+
+**Criterios de aceptación** — todos deben pasar para cerrar:
+- [ ] El owner y los paths reales del menú quedan probados antes de editar.
+- [ ] El menú ofrece enrollment y delega a la operación canónica `torre enroll --repo <ruta>` sin reimplementar validación o persistencia.
+- [ ] Éxito, conflicto y layout inseguro se presentan con resultado coherente con la CLI; enrollment no activa la Torre.
+- [ ] El diff toca sólo el `Área` real aprobado después de resolver el checkpoint.
+
+**Módulo M2.10.1 — Integración de menú · 🔴 BLOQUEADO.** Las Tareas RED→GREEN→REFACTOR se enumerarán sólo cuando el owner/path real esté probado; hacerlo antes inventaría alcance.
+
+**Forecast de Sesión:** 160–260 líneas authored una vez resuelto el owner; un resultado revisable y revertible de ≤400.
+
+## Grafo de dependencias nuevas de P2
+
+```mermaid
+graph LR
+  S29["S2.9 CLI enrollment · 🟢"] --> S210["S2.10 menú central · 🔴"]
+  S29 --> S97["S9.7 route registrado · 📋"]
+```
 
 ## Sesión 2.8 — Los nombres de fase salen del contrato de binding
 
