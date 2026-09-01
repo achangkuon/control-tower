@@ -1,16 +1,16 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-09-01 sobre `master/origin@1ea625b`, incorporando el gate correctivo `S9.9` autorizado en Engram 10034/10035.
+> Última reconciliación: 2026-09-01 sobre `master/origin@1ea625b`, registrando `S9.9` 🔴 BLOQUEADO y su candidato parcial estacionado por decisión 107.
 > Para estado de código ver [implementation-state](implementation-state.md); para ownership de producto ver [inventario](inventario-de-producto.md); para orden de salida ver [release-chain](release-chain.md); para autoridad ver [decision-register](decision-register.md).
 
 ## 📍 Punto de retoma
 
-**Objetivo activo:** corregir el binding de workspace Herdr antes de abrir otro worker: una apertura desde Main ligada a `w5C` creó `AGENTES` y un pane en el workspace ajeno `w5E`. `S1.18`, `S1.17`, `S9.4`, `S9.6` y P11 permanecen cerrados.
+**Estado actual:** `#1 S9.9` está 🔴 BLOQUEADO. Su candidato parcial quedó estacionado únicamente en la rama local permanente `fix/s9.9-herdr-workspace-binding` de `implementer-1`, commit `8a5b0fa91c480938428f9f42dc9b4b40f27e90a4` y tree `2a1e4a07963c4f601618954695bb3336c59f05f1`; no fue pusheado, mergeado ni entregado y acredita cero avance.
 
-**Próximo:** `#1 S9.9` exige y propaga el workspace explícito, valida por readback y falla cerrado sin fallback. Sólo después `#2 S1.20` conserva su contrato de probe tipado/read-only; queda prohibido despachar workers hasta entregar la corrección.
+**Por qué y decisión:** el verificador fresco encontró `test/install/launch-worker-cli.test.mjs` stale y el `pane split` de producción todavía sin scope de workspace. El maintainer eligió «No hacer nada» ante ampliar `Área` y luego «Guardar y cerrar»: no hay corrección, workaround ni Herdr raw. `torre asiento abrir` y todo dispatch de worker quedan suspendidos.
 
-**Estado preservado:** `S2.9` y el resto mantienen su orden relativo. `S1.19` sigue destinado a la evidencia de runtime Pi real; `S2.10` continúa 🔴 BLOQUEADO hasta ubicar el renderer/owner real del menú central, sin inventar path ni workaround.
+**Checkpoint exacto:** para retomar hace falta nueva autoridad que agregue el fixture de instalación al `Área`; después se acotan `pane split` y su expectativa al workspace explícito y se repiten focused + suite completa. `#2 S1.20` conserva su estado preparado en `implementer-2`, sin dispatch. La cola no cambia; `S2.10` sigue 🔴 BLOQUEADO sin inventar owner ni path.
 
 ## 🎯 Cola de ejecución
 

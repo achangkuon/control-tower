@@ -122,8 +122,8 @@ Las decisiones 49–54 del [registro](../decision-register.md) y las referencias
 | Orden histórico OpenCode-first | `S9.1 → S9.2 → S9.3`; `S9.4` estaba 🟡 DIFERIDO. La autoridad Pi-first vigente está en la reconciliación del 2026-08-27. |
 | Avance canónico | 33% (3/9 S). `S9.1`, `S9.4` y `S9.6` están ✅ COMPLETO; `S9.9` enumera la corrección urgente sin reabrir historia cerrada. |
 | Entrega | Commit directo a `master`, sin PR. Cada resultado independientemente verificable y revertible, ≤400 líneas authored. El cierre de `S9.4` quedó en `2b6dd52`, 153 líneas authored (132 adiciones + 21 eliminaciones), con rollback limitado a los cuatro paths de su `Área`. |
-| Próxima acción | Entregar `S9.9` antes de cualquier apertura de worker o dispatch de `S1.20`; después se conserva la semántica y el orden previo de `S1.20 → S9.7 → S9.5 → S9.8`. `S2.9` permanece paralelo y `S2.10` bloqueado hasta ubicar el owner real del menú. |
-| Decisión abierta | **Ninguna.** El maintainer resolvió el binding Herdr explícito en Engram 10034/10035; capacidad y asignación siguen siendo gates operativos, no decisiones de producto. |
+| Próxima acción | `S9.9` está 🔴 BLOQUEADO. Para retomarla, ampliar primero `Área` a `test/install/launch-worker-cli.test.mjs`, acotar el `pane split` de producción y su expectativa al workspace explícito, y recién entonces repetir focused + suite completa. Hasta esa nueva autoridad, `torre asiento abrir` y todo dispatch de worker permanecen suspendidos. `S1.20` conserva su estado preparado en `implementer-2`, sin dispatch; `S2.9` permanece paralelo y `S2.10` bloqueado hasta ubicar el owner real del menú. |
+| Decisión abierta | **Ninguna esperando respuesta.** El maintainer eligió «No hacer nada» ante la ampliación de `Área` y después «Guardar y cerrar»: el bloqueo queda publicado por la decisión 107, sin workaround ni Herdr raw. |
 | Autoridad histórica | Engram 8478 rev8, 8506, 8645, 8646, 8647 rev2, 8894, 8898, 8950, 8955, 8908; decisiones 49–54 y 62. Los artefactos SDD de la vieja `S9.1` viven en `openspec/changes/s9-1-safe-slot-lifecycle/` y describen un alcance **superado**: se conservan como evidencia, no como autoridad de implementación. |
 
 ---
@@ -272,7 +272,7 @@ graph TD
   S411["S4.11 operaciones neutrales · ✅"] --> S94["S9.4 supervisor Pi-first · ✅ COMPLETO"]
   S413["S4.13 validación ownership · ✅"] --> S414["S4.14 actualidad final · ✅"] --> S94
   S118["S1.18 adapter Pi · 📋"] --> S95["S9.5 materialización visual · 📋"]
-  S99["S9.9 binding workspace Herdr · 🟢"] --> S120["S1.20 probe modo · 🟢"]
+  S99["S9.9 binding workspace Herdr · 🔴 BLOQUEADO"] --> S120["S1.20 probe modo · 🟢"]
   S120 --> S97["S9.7 route registrado · 📋"]
   S29["S2.9 enrollment CLI · 🟢"] --> S97
   S96["S9.6 fuente histórica · ✅"] --> S97
@@ -702,11 +702,13 @@ supervisores obsoletos es reutilizable. `S9.4` sigue ✅ COMPLETO y P9 permanece
 
 ## Sesión 9.9 — Binding explícito de workspace Herdr
 
-**Estado:** 🟢 LISTO
+**Estado:** 🔴 BLOQUEADO
 
 **Depende de:** —.
 
-**Gate operativo:** debe entregarse antes de `S1.20` y de toda apertura de worker permanente.
+**Gate operativo suspendido:** `torre asiento abrir` y toda apertura o dispatch de worker permanecen prohibidos. `S1.20` conserva su estado preparado en `implementer-2`, pero no se despacha.
+
+**Bloqueo y punto exacto de retoma:** el verificador fresco confirmó que el fixture de instalación `test/install/launch-worker-cli.test.mjs` quedó stale y que el `pane split` de producción todavía no está acotado al workspace. El maintainer eligió «No hacer nada» ante la ampliación de `Área` y después autorizó «Guardar y cerrar». Para reanudar, hace falta nueva autoridad para agregar ese fixture al `Área`, acotar `pane split` y su expectativa al workspace explícito y repetir las validaciones; no se admite workaround ni Herdr raw.
 
 **Problema:** desde Main, `HERDR_WORKSPACE_ID=w5C torre asiento abrir implementer-2` creó `AGENTES` y el pane en el workspace ajeno `w5E`; Main cerró sólo ese pane incorrecto antes de Pi/Intercom. La raíz está en `hosts/herdr-topology.mjs`, que lista/crea tabs sin workspace explícito, y `hosts/seat-cli.mjs`, que no propaga el binding. Los tests actuales modelan un solo workspace.
 
@@ -728,12 +730,23 @@ supervisores obsoletos es reutilizable. `S9.4` sigue ✅ COMPLETO y P9 permanece
 - [ ] Los tests enfocados de los dos archivos pasan; después pasa la suite completa.
 - [ ] El diff toca exactamente `Área`; tests y validación no mutan panes, tabs, procesos, runtime ni DB reales.
 
-### Módulo M9.9.1 — Propagación, scope y readback del workspace · forecast 120–220 authored
-- [ ] Tarea T9.9.1.1 — RED: reproducir los dos workspaces, binding ausente/inválido, respuesta en workspace ajeno y cleanup exacto; afirmar cero mutación real.
+### Módulo M9.9.1 — Propagación, scope y readback del workspace · 🔴 BLOQUEADO
+- [x] Tarea T9.9.1.1 — RED: reproducir los dos workspaces, binding ausente/inválido, respuesta en workspace ajeno y cleanup exacto; afirmar cero mutación real. **Observado:** 19 pass / 5 fail.
 - [ ] Tarea T9.9.1.2 — GREEN: exigir y propagar el binding, agregarlo a cada comando de discovery/creación y validar workspace por readback antes de aceptar tab o pane.
 - [ ] Tarea T9.9.1.3 — REFACTOR: aislar fixtures de dos workspaces, eliminar selección sólo por label y correr tests enfocados más suite completa sin fallback.
 
-**Entrega prevista:** un commit directo, independientemente verificable y revertible, de 120–220 líneas authored y ≤400. **Gate:** cero dispatch de worker hasta entregarlo.
+**Candidato parcial estacionado — cero crédito de entrega o avance.** Existe únicamente en la rama local permanente `fix/s9.9-herdr-workspace-binding` de `implementer-1`, commit `8a5b0fa91c480938428f9f42dc9b4b40f27e90a4`, tree `2a1e4a07963c4f601618954695bb3336c59f05f1`, sobre base `2b3eb21d30f10e20452c4658fe9cb2b1845018a4`, con árbol limpio. No fue pusheado, mergeado ni entregado. Toca los cuatro paths aprobados y suma 153 líneas authored (+110/-43).
+
+| Path estacionado | SHA-256 |
+|---|---|
+| `hosts/herdr-topology.mjs` | `dd81a0314558f8bd327390c5e1ef0ca2a79ef8576ab8257ee0fe293ecd028a17` |
+| `hosts/seat-cli.mjs` | `db1d63ddd4db07c5c798601b15bd12957d971afd439fffc8b121160519c3d678` |
+| `test/hosts/herdr-topology.test.mjs` | `3846fe1704baf0e91926ab81a452e020fbdf2a4c56faa3b2cdba35832bc70cd2` |
+| `test/hosts/seat-cli.test.mjs` | `ff1c75bc5c866693cb5075bf12768bbc6f142b6322a03cbb9f0ef65d3cc00a92` |
+
+**Evidencia congelada:** RED 19 pass / 5 fail; focused del candidato 25 pass / 0 fail / 82 assertions; sintaxis y diff PASS; suite completa 1107 pass / 1 fail. El único fallo expone el fixture de instalación stale, y el readback fresco además prueba que producción conserva `pane split` sin scope de workspace. Por eso GREEN y REFACTOR permanecen abiertos y el candidato no es entregable.
+
+**Runtime y autoridad:** no hubo mutación Herdr real atribuible al candidato. El pane inicial equivocado de `w5E` se cerró antes de iniciar el worker. La excepción bootstrap expiró sin entrega. Retoma exacta: nueva autoridad de `Área` → corregir fixture + `pane split` y expectativa → repetir focused y suite completa → verificar los mismos cuatro paths y el nuevo path autorizado. Hasta entonces, cero dispatch.
 
 ---
 
