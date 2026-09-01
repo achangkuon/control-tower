@@ -3,7 +3,7 @@
 **Propósito:** que existan asientos de trabajo estables que Main pueda asignar, materializar visualmente y reciclar sin pisar a un agente trabajando, y que tener varios no cueste una instalación de dependencias por cada uno.
 
 **Estado:** 🔵 EN CURSO
-**Avance:** 38% (3/8 S)
+**Avance:** 33% (3/9 S)
 
 > **Reordenado y recortado el 2026-08-21 por la [decisión 62](../decision-register.md), tras la auditoría exclusiva de P9.**
 > Los IDs son posicionales según el [estándar de planes](/home/emili/.claude/skills/_shared/plan-naming-convention.md), así que
@@ -120,10 +120,10 @@ Las decisiones 49–54 del [registro](../decision-register.md) y las referencias
 | Campo | Contrato |
 |---|---|
 | Orden histórico OpenCode-first | `S9.1 → S9.2 → S9.3`; `S9.4` estaba 🟡 DIFERIDO. La autoridad Pi-first vigente está en la reconciliación del 2026-08-27. |
-| Avance canónico | 38% (3/8 S). `S9.1`, `S9.4` y `S9.6` están ✅ COMPLETO; `S9.7` y `S9.8` enumeran el nuevo contrato sin reabrir historia cerrada. |
+| Avance canónico | 33% (3/9 S). `S9.1`, `S9.4` y `S9.6` están ✅ COMPLETO; `S9.9` enumera la corrección urgente sin reabrir historia cerrada. |
 | Entrega | Commit directo a `master`, sin PR. Cada resultado independientemente verificable y revertible, ≤400 líneas authored. El cierre de `S9.4` quedó en `2b6dd52`, 153 líneas authored (132 adiciones + 21 eliminaciones), con rollback limitado a los cuatro paths de su `Área`. |
-| Próxima acción | Completar el flujo fresco bajo la decisión 104: `S1.18`; en paralelo `S1.20` y `S2.9`; después `S9.7 → S9.5 → S9.8 → S8.12`. Desde `S1.18` siguen también `S1.19` y `S4.12`; `S8.13` espera `S8.12 + S1.19 + S4.12`. `S2.10` queda bloqueada fuera de esta cadena hasta ubicar el owner real del menú. |
-| Decisión abierta | **Ninguna.** El contrato visible Pi-first fue resuelto por el maintainer en Engram 9921; capacidad y asignación siguen siendo gates operativos, no decisiones de producto. |
+| Próxima acción | Entregar `S9.9` antes de cualquier apertura de worker o dispatch de `S1.20`; después se conserva la semántica y el orden previo de `S1.20 → S9.7 → S9.5 → S9.8`. `S2.9` permanece paralelo y `S2.10` bloqueado hasta ubicar el owner real del menú. |
+| Decisión abierta | **Ninguna.** El maintainer resolvió el binding Herdr explícito en Engram 10034/10035; capacidad y asignación siguen siendo gates operativos, no decisiones de producto. |
 | Autoridad histórica | Engram 8478 rev8, 8506, 8645, 8646, 8647 rev2, 8894, 8898, 8950, 8955, 8908; decisiones 49–54 y 62. Los artefactos SDD de la vieja `S9.1` viven en `openspec/changes/s9-1-safe-slot-lifecycle/` y describen un alcance **superado**: se conservan como evidencia, no como autoridad de implementación. |
 
 ---
@@ -272,14 +272,15 @@ graph TD
   S411["S4.11 operaciones neutrales · ✅"] --> S94["S9.4 supervisor Pi-first · ✅ COMPLETO"]
   S413["S4.13 validación ownership · ✅"] --> S414["S4.14 actualidad final · ✅"] --> S94
   S118["S1.18 adapter Pi · 📋"] --> S95["S9.5 materialización visual · 📋"]
-  S120["S1.20 probe modo · 🟢"] --> S97["S9.7 route registrado · 📋"]
+  S99["S9.9 binding workspace Herdr · 🟢"] --> S120["S1.20 probe modo · 🟢"]
+  S120 --> S97["S9.7 route registrado · 📋"]
   S29["S2.9 enrollment CLI · 🟢"] --> S97
   S96["S9.6 fuente histórica · ✅"] --> S97
   S97 --> S95
   S95 --> S98["S9.8 dispatch asíncrono · 📋"]
 ```
 
-`S9.2` y `S9.3` no dependen entre sí. `S9.6` permanece como fuente histórica cerrada; `S9.7` posee la corrección pública y espera `S1.20 + S2.9 + S9.6`. `S9.5` espera `S1.18 + S9.7`, materializa sólo la topología aprobada y no despacha; `S9.8` agrega después la política fire-and-forget. Ninguna de estas Sesiones crea, asigna ni recicla worktrees.
+`S9.2` y `S9.3` no dependen entre sí. `S9.9` es el gate correctivo previo a toda apertura de worker y al dispatch operativo de `S1.20`; no cambia la semántica de `S1.20`. `S9.6` permanece como fuente histórica cerrada; `S9.7` posee la corrección pública y espera `S1.20 + S2.9 + S9.6`. `S9.5` espera `S1.18 + S9.7`, materializa sólo la topología aprobada y no despacha; `S9.8` agrega después la política fire-and-forget. Ninguna de estas Sesiones crea, asigna ni recicla worktrees.
 
 ## Qué queda pendiente de reconciliar fuera de este Plan
 
@@ -696,6 +697,43 @@ supervisores obsoletos es reutilizable. `S9.4` sigue ✅ COMPLETO y P9 permanece
 - [ ] Tarea T9.8.1.3 — REFACTOR: separar coordinación de seguimiento, estabilizar rechazo fail-closed y probar divergencia ON/OFF sin cambiar autoridad.
 
 **Forecast de Sesión:** 180–300 líneas authored; un resultado revisable y revertible de ≤400.
+
+---
+
+## Sesión 9.9 — Binding explícito de workspace Herdr
+
+**Estado:** 🟢 LISTO
+
+**Depende de:** —.
+
+**Gate operativo:** debe entregarse antes de `S1.20` y de toda apertura de worker permanente.
+
+**Problema:** desde Main, `HERDR_WORKSPACE_ID=w5C torre asiento abrir implementer-2` creó `AGENTES` y el pane en el workspace ajeno `w5E`; Main cerró sólo ese pane incorrecto antes de Pi/Intercom. La raíz está en `hosts/herdr-topology.mjs`, que lista/crea tabs sin workspace explícito, y `hosts/seat-cli.mjs`, que no propaga el binding. Los tests actuales modelan un solo workspace.
+
+**Área:** `hosts/herdr-topology.mjs`, `hosts/seat-cli.mjs`, `test/hosts/herdr-topology.test.mjs`, `test/hosts/seat-cli.test.mjs`.
+
+**Recurso:** binding explícito de workspace Herdr y fixtures aislados de comandos para dos workspaces; los tests no mutan panes, tabs ni procesos reales.
+
+**Decisiones:**
+- `escala`, resuelta — el `HERDR_WORKSPACE_ID` existente, o su equivalente inyectado explícitamente en la frontera de código, es obligatorio y se propaga `runSeatCli → topology`; discovery y creación se acotan a ese workspace, y el readback de todo tab/pane devuelto debe coincidir. Binding ausente, inválido o divergente falla cerrado y limpia sólo recursos abiertos por esa llamada. No existe fallback al workspace enfocado, default ni Herdr raw, ni selección cross-workspace por label. **Clase:** seguridad y permisos; dependencias o evidencia contradictorias. **Autoridad:** maintainer, Engram 10034/10035. **Contamina:** dispatch operativo de `S1.20`, toda apertura de worker permanente y la seguridad futura de `S9.5`.
+
+**Ruta:** `direct` — la frontera, los fallos y el cleanup exacto están autorizados y son verificables sin decisión técnica pendiente.
+
+**Criterios de aceptación** — todos deben pasar:
+- [ ] Regresión de dos workspaces: `w5C` (Control Tower) carece de `AGENTES` y `w5E` ajeno tiene o crea uno; abrir afecta sólo `w5C`.
+- [ ] Binding ausente o inválido falla cerrado con cero mutación; ningún foco/default/Herdr raw actúa como fallback.
+- [ ] Un tab/pane devuelto para otro workspace se rechaza y se limpian exactamente los recursos abiertos por esa llamada, nunca recursos preexistentes o ajenos.
+- [ ] `AGENTES` existente o creado correctamente se resuelve sólo dentro del workspace ligado y el pane queda validado allí.
+- [ ] Los fixtures de comandos prueban el argumento explícito de workspace y no permiten selección cross-workspace sólo por label.
+- [ ] Los tests enfocados de los dos archivos pasan; después pasa la suite completa.
+- [ ] El diff toca exactamente `Área`; tests y validación no mutan panes, tabs, procesos, runtime ni DB reales.
+
+### Módulo M9.9.1 — Propagación, scope y readback del workspace · forecast 120–220 authored
+- [ ] Tarea T9.9.1.1 — RED: reproducir los dos workspaces, binding ausente/inválido, respuesta en workspace ajeno y cleanup exacto; afirmar cero mutación real.
+- [ ] Tarea T9.9.1.2 — GREEN: exigir y propagar el binding, agregarlo a cada comando de discovery/creación y validar workspace por readback antes de aceptar tab o pane.
+- [ ] Tarea T9.9.1.3 — REFACTOR: aislar fixtures de dos workspaces, eliminar selección sólo por label y correr tests enfocados más suite completa sin fallback.
+
+**Entrega prevista:** un commit directo, independientemente verificable y revertible, de 120–220 líneas authored y ≤400. **Gate:** cero dispatch de worker hasta entregarlo.
 
 ---
 
