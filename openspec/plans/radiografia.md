@@ -1,7 +1,7 @@
 ---
-verified_against: ac01af3b6264e0f44f125af80206b7c601b4d59e
+verified_against: cceb3e65e12b0dd55709a488e10271a2b87fdbc7
 verified_at: 2026-09-01
-standfirst: S1.18 ya entregó el adapter Pi con lifecycle, dispatch reconocido y terminalidad retryable. La prueba usó seams inyectados: todavía faltan la regresión con runtime real, materialización, packaging, activación y rollback.
+standfirst: S1.18 ya entregó el adapter Pi, pero S9.9 quedó bloqueada al comprobar que la apertura de asientos no ata todas sus operaciones al workspace Herdr autorizado. El candidato parcial está estacionado sin crédito; la apertura de workers y S1.20 permanecen suspendidas.
 ---
 
 <!--
@@ -91,10 +91,10 @@ Lo técnico: El checkpoint sellado conserva los commits locales `812703d` y `388
 En simple: Hay trabajo guardado, pero no hay permiso para llamarlo terminado. El próximo intento necesita un contrato atendido nuevo y acotado que corrija el entorno de prueba; repetir el examen anterior o citar un verde de otra versión sería fabricar evidencia.
 Evidencia: `openspec/plans/plan-8/STATUS.md:724-734` · checkpoint ejecutable `388109f1e79f50ce05582d2b0a7b3ff8a9685f72`
 
-### F · nuevo · La vista automática de los asientos está autorizada, pero todavía no existe
-Lo técnico: Las decisiones 91 y 101 fijan que el brief lleva path/rama exactos y que `cwd` más `foreground_cwd` deben coincidir con el worktree propio de Main, Support o worker antes del prompt/dispatch; un pane Herdr sólo da visibilidad. Con `S9.6` y `S1.18` cerrados, `S9.5` ya puede abordar la materialización; después `S8.12` empaqueta esa fuente y `S8.13` la activa junto con sus otros gates. La materialización automática todavía no existe.
-En simple: Ver escritorios separados no evita que dos agentes trabajen sobre la misma mesa. La ruta de entrada ya está construida, pero Main aún debe comprobar y abrir cada puesto con la disciplina manual vigente hasta que termine la cadena de materialización, paquete y activación.
-Evidencia: `openspec/plans/decision-register.md` decisiones 91 y 101 · `openspec/plans/plan-9/STATUS.md` S9.5–S9.6 · `826ba071777293d7197843293484c364e0524723`
+### F · bloqueado · La apertura automática puede cruzar el workspace equivocado
+Lo técnico: `S9.9` demostró que discovery y creación no estaban ligados en todas sus operaciones a `HERDR_WORKSPACE_ID`: el intento real abrió `AGENTES` en otro proyecto y el gate cerró ese pane antes de iniciar Pi. El candidato parcial corrige discovery, readback y cleanup, pero conserva un `pane split` sin scope y la suite integral termina 1107/1. La decisión 107 rechazó ampliar el Área; `torre asiento abrir` queda suspendido.
+En simple: La Torre encontró el escritorio correcto pero intentó instalarlo en otro edificio. Frenó antes de arrancar al trabajador. La reparación está guardada, no entregada: hasta resolver el último comando sin dirección explícita no se abre ningún asiento ni continúa S1.20.
+Evidencia: `openspec/plans/decision-register.md` decisiones 106–107 · `openspec/plans/plan-9/STATUS.md` S9.9 · candidato local `8a5b0fa91c480938428f9f42dc9b4b40f27e90a4`
 
 ## Próximas pruebas y trabajo enumerado
 
@@ -130,4 +130,4 @@ Evidencia: `schemas/binding-delta-v1.schema.json` · `test/contracts/schema.test
 
 ## Evidencia y límites de esta radiografía
 
-Este juicio está verificado contra la entrega de código exacta `2cd64c4a32e178c88632348696353c2dd8654c56`. `S9.6` acredita la fuente Pi-first, `S9.4` la actualidad de kernel del supervisor, `S1.17` el gate privado de autoridad y `S1.18` el adapter runtime sobre seams inyectados. El review-reliability nativo quedó tipado `UNAVAILABLE`, sin veredicto fabricado. La cadena global sigue inactiva hasta completar `S1.20 + S2.9 → S9.7 → S9.5 → S9.8 → S8.12`, más `S1.19` y `S4.12`, y finalmente `S8.13`: todavía no se acreditan runtime Pi/Intercom real, jornada desatendida, packaging Tower, materialización de `control-tower-activation.json`, lifecycle atómico, activación, rollback, materialización Herdr, asignación ni capacidad.
+Este juicio conserva como última entrega de código de producto `2cd64c4a32e178c88632348696353c2dd8654c56`. `S9.6` acredita la fuente Pi-first, `S9.4` la actualidad de kernel del supervisor, `S1.17` el gate privado de autoridad y `S1.18` el adapter runtime sobre seams inyectados. `S9.9` está bloqueada con un candidato local no entregado; el focused pasa 25/25, pero la suite integral 1107/1108 y el `pane split` sin workspace impiden cualquier crédito. La cadena global queda detenida en `S9.9`; después siguen `S1.20 + S2.9 → S9.7 → S9.5 → S9.8 → S8.12`, más `S1.19` y `S4.12`, y finalmente `S8.13`. Todavía no se acreditan runtime Pi/Intercom real, jornada desatendida, packaging Tower, materialización de `control-tower-activation.json`, lifecycle atómico, activación, rollback, materialización Herdr, asignación ni capacidad.
