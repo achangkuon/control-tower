@@ -1,12 +1,12 @@
 # Plan 1 — Sustrato mecánico
 
 **Estado:** 🔵 EN CURSO
-**Avance:** **85% (17/20 S)** — cuentan sólo las Sesiones ✅ COMPLETO o 📚 ARCHIVADO del registro canónico siguiente.
+**Avance:** **90% (18/20 S)** — cuentan sólo las Sesiones ✅ COMPLETO o 📚 ARCHIVADO del registro canónico siguiente.
 **Granularidad:** `Plan → Sesión → Módulo → Tarea`; no existe un quinto nivel.
 
 ## Autoridad vigente y cómputo canónico
 
-Pi es el primer host de implementación. La cadena vigente preserva `S9.4`, `S1.17` y `S9.6` cerradas; continúa por `S1.18`, mientras `S1.20 + S2.9 → S9.7` corrigen modo y route público. Esas ramas convergen en `S9.5 → S9.8 → S8.12`; desde `S1.18` siguen además `S1.19` y `S4.12`, y `S8.13` exige las tres ramas antes de `S7.1`. La base OpenCode `S1.11`–`S1.16` permanece cerrada y preservada, pero su continuación futura está diferida. Claude permanece como objetivo opt-in posterior en `P8/S8.5`. Ni OpenCode ni Claude bloquean la primera release Pi.
+Pi es el primer host de implementación. La cadena vigente preserva `S9.4`, `S1.17`, `S1.18` y `S9.6` cerradas; el próximo paso priorizado es `S1.20`, que junto con `S2.9 → S9.7` corrige modo y route público. Esas ramas convergen en `S9.5 → S9.8 → S8.12`; desde `S1.18` siguen además `S1.19` y `S4.12`, y `S8.13` exige las tres ramas antes de `S7.1`. La base OpenCode `S1.11`–`S1.16` permanece cerrada y preservada, pero su continuación futura está diferida. Claude permanece como objetivo opt-in posterior en `P8/S8.5`. Ni OpenCode ni Claude bloquean la primera release Pi.
 
 Este es el único registro de **estados vigentes** que define el numerador y el denominador de P1. Las tablas posteriores que describen estados anteriores son historia y no vuelven a enumerar Sesiones.
 
@@ -30,19 +30,19 @@ Este es el único registro de **estados vigentes** que define el numerador y el 
 | S1.15 | Conformidad lifecycle OpenCode | ✅ COMPLETO | `S1.14` |
 | S1.16 | Transporte reconciliado y composición wake | ✅ COMPLETO | `S1.15` |
 | S1.17 | Gate y RED del adapter Pi | ✅ COMPLETO | `4248da9` |
-| S1.18 | Adapter Pi/Intercom y reporte terminal asíncrono | 📋 PLANIFICADO | `S1.17` |
+| S1.18 | Adapter Pi/Intercom y reporte terminal asíncrono | ✅ COMPLETO | `3ebb83373cf9507274a87e5206f315dce34a6a4f` + `2cd64c4a32e178c88632348696353c2dd8654c56` |
 | S1.19 | Regresión integral Pi-first | 📋 PLANIFICADO | `S1.18` |
 | S1.20 | Probe tipado y read-only del modo Tower | 🟢 LISTO | — |
 <!-- P1-SESSION-LEDGER:END -->
 
-La cuenta es mecánica: 17 filas cerradas de 20 filas enumeradas. No hay crédito parcial: el candidato no entregado de `S1.18` conserva cero crédito porque no produjo notificación terminal a Main.
+La cuenta es mecánica: 18 filas cerradas de 20 filas enumeradas. No hay crédito parcial: `S1.18` cuenta una vez, sólo después de que sus dos Módulos, seis Tareas y verificación final quedaron entregados; los candidatos fallidos anteriores conservaron cero crédito.
 
 ## Resumen
 
 | Campo | Detalle |
 |---|---|
 | Dependencias | La cadena legacy P7/P8 permanece como historia cerrada. La autoridad activa Pi-first empieza en `S9.4`; Change A no es dependencia de legacy P7/P8. |
-| Outputs | Recovery/rollback fail-closed; controller host-neutral y base OpenCode cerrada; gate privado Pi cerrado en `S1.17`; adapter runtime y regresión Pi pendientes en `S1.18`–`S1.19`. Las responsabilidades legacy P9–P11 están reconciliadas más abajo con sus dueños actuales. |
+| Outputs | Recovery/rollback fail-closed; controller host-neutral y base OpenCode cerrada; gate privado Pi y adapter runtime cerrados en `S1.17`–`S1.18`; regresión Pi real pendiente en `S1.19`. Las responsabilidades legacy P9–P11 están reconciliadas más abajo con sus dueños actuales. |
 | Roadmap | Ejecutar primero Pi. OpenCode y Claude siguen como objetivos futuros/diferidos y no son gates de la primera release Pi. |
 | Referencias | [`autonomous-continuation-control-tower`](../../changes/autonomous-continuation-control-tower/), [`p7-host-neutral-loop-opencode-adapter`](../../changes/p7-host-neutral-loop-opencode-adapter/), [`p8-slice-planning`](../../changes/p8-slice-planning/), [cadena de release](../release-chain.md), [Plan Manifest](../sdd-tower-implementation/manifest.yaml). |
 
@@ -105,7 +105,7 @@ graph LR
   S114 --> S115["S1.15 conformidad · ✅"]
   S115 --> S116["S1.16 transporte · ✅"]
   S94["S9.4 supervisor Pi · ✅"] --> S117["S1.17 gate Pi · ✅"]
-  S117 --> S118["S1.18 adapter Pi · 📋"]
+  S117 --> S118["S1.18 adapter Pi · ✅"]
   S118 --> S119["S1.19 regresión Pi · 📋"]
   S118 --> S95["S9.5 materialización · 📋"]
   S120["S1.20 probe de modo · 🟢"] --> S97["S9.7 route registrado · 📋"]
@@ -344,7 +344,7 @@ El contrato OpenCode-first/Pi-second anterior queda preservado arriba como histo
 - Rollback: revertir sólo `4248da9`; no hay schema, migración ni estado persistido que revertir.
 
 ## Sesión S1.18 — Adapter Pi/Intercom y reporte terminal asíncrono
-**Estado:** 📋 PLANIFICADO
+**Estado:** ✅ COMPLETO — entregada en dos commits directos secuenciales, ambos ancestros de `master` y `origin/master` exactos en `2cd64c4a32e178c88632348696353c2dd8654c56`: `M1.18.1` en `3ebb83373cf9507274a87e5206f315dce34a6a4f` y `M1.18.2` en `2cd64c4a32e178c88632348696353c2dd8654c56`. La verificación integral final pasó sobre ese candidato exacto; decisión de cierre: Engram 10028.
 
 **Depende de:** `S1.17`
 
@@ -361,32 +361,40 @@ El contrato OpenCode-first/Pi-second anterior queda preservado arriba como histo
 
 **Autoridad:** Engram 10008 y 10020; decisiones 80, 83, 84, 86, 104 y 105; fallo de verificación Engram 10019.
 
-**Criterios de aceptación** — todos deben pasar:
-- [ ] `launch/observe/health/stop/attach` implementan el puerto neutral y `/proc` cruza PID/cwd Tower-owned; nonce y `endpointEpoch` prueban attach.
-- [ ] Cada assignment emitido por Main lleva un `dispatch_id` estable; el adapter devuelve control después del acknowledgment de envío y nunca espera el trabajo ordinario de Support o worker.
-- [ ] `send` transporta progreso y cierre; `ask` sólo se usa cuando existe una decisión humana verdadera y produce `BLOCKED` recuperable, nunca como polling de avance.
-- [ ] Cada `dispatch_id` produce exactamente un terminal `COMPLETED`, `BLOCKED` o `FAILED`: `COMPLETED` incluye referencias de evidencia, paths cambiados y tests; `BLOCKED`/`FAILED` incluyen razón y recoverability.
-- [ ] ON conserva binding, persistencia, acknowledgment y retry Tower-owned; OFF no fabrica esa garantía y usa sólo peers vivos aprobados por el maintainer.
-- [ ] Los IDs son aleatorios, no adopta procesos ajenos, no modifica Pi/Intercom y el diff no toca fuera de `Área`.
+**Criterios de aceptación** — todos pasaron:
+- [x] `launch/observe/health/stop/attach` implementan el puerto neutral y el seam inyectado cruza PID/cwd Tower-owned; nonce y `endpointEpoch` prueban attach.
+- [x] Cada assignment emitido por Main lleva un `dispatch_id` estable; el adapter devuelve control después del acknowledgment de envío y nunca espera el trabajo ordinario de Support o worker.
+- [x] `send` transporta progreso y cierre; `ask` sólo se usa cuando existe una decisión humana verdadera y produce `BLOCKED` recuperable, nunca como polling de avance.
+- [x] Cada `dispatch_id` produce exactamente un terminal `COMPLETED`, `BLOCKED` o `FAILED`: `COMPLETED` incluye referencias de evidencia, paths cambiados y tests; `BLOCKED`/`FAILED` incluyen razón y recoverability.
+- [x] ON conserva binding, persistencia, acknowledgment y retry Tower-owned; OFF no fabrica esa garantía y usa sólo peers vivos aprobados por el maintainer.
+- [x] Los IDs son aleatorios, no adopta procesos ajenos, no modifica Pi/Intercom y el diff no toca fuera de `Área`.
 
-### Módulo M1.18.1 — Lifecycle y dispatch reconocido · forecast 300–350 authored
-- [ ] Tarea T1.18.1.1 — RED: falsificar lifecycle, proceso ajeno, `/proc` divergente, attach con nonce/epoch stale, broker equivocado, stop sin ownership válido, desaparición exitosa tras stop tratada como fallo, `dispatch_id` ausente/duplicado, acknowledgment bloqueante y diferencias ON/OFF.
-- [ ] Tarea T1.18.1.2 — GREEN: implementar `launch/observe/health/stop/attach`, validar ownership antes de detener, conservar como éxito la desaparición probada después del stop y despachar con `dispatch_id` estable más acknowledgment no bloqueante en ON/OFF.
-- [ ] Tarea T1.18.1.3 — REFACTOR: encapsular lifecycle y protocolo externo, aislar proceso extranjero y dejar verificadas las fronteras de attach, dispatch y acknowledgment sin adelantar terminalidad retryable.
+### Módulo M1.18.1 — Lifecycle y dispatch reconocido · ✅ COMPLETO
+- [x] Tarea T1.18.1.1 — RED: falsificar lifecycle, proceso ajeno, `/proc` divergente, attach con nonce/epoch stale, broker equivocado, stop sin ownership válido, desaparición exitosa tras stop tratada como fallo, `dispatch_id` ausente/duplicado, acknowledgment bloqueante y diferencias ON/OFF.
+- [x] Tarea T1.18.1.2 — GREEN: implementar `launch/observe/health/stop/attach`, validar ownership antes de detener, conservar como éxito la desaparición probada después del stop y despachar con `dispatch_id` estable más acknowledgment no bloqueante en ON/OFF.
+- [x] Tarea T1.18.1.3 — REFACTOR: encapsular lifecycle y protocolo externo, aislar proceso extranjero y dejar verificadas las fronteras de attach, dispatch y acknowledgment sin adelantar terminalidad retryable.
 
-**Commit directo 1:** `M1.18.1`, independientemente verificable y revertible, con forecast de 300–350 líneas authored.
+**Commit directo 1:** `3ebb83373cf9507274a87e5206f315dce34a6a4f` — 270 líneas authored reales (270 adiciones, 0 eliminaciones) en los dos paths de `Área`. Focused final: PASS, 8 pass, 0 fail, 39 assertions.
 
-### Módulo M1.18.2 — Entrega terminal retryable y decisiones inmutables · forecast 120–170 authored
+### Módulo M1.18.2 — Entrega terminal retryable y decisiones inmutables · ✅ COMPLETO
 
-**Depende de:** `M1.18.1`
+**Depende de:** `M1.18.1` ✅ COMPLETO
 
-- [ ] Tarea T1.18.2.1 — RED: cubrir dos entregas terminales concurrentes, fallo del primer envío, retry posterior, duplicado después de una entrega exitosa y mutación de la solicitud de decisión mientras una operación espera.
-- [ ] Tarea T1.18.2.2 — GREEN: reservar la entrega terminal concurrente, marcarla terminal sólo después de entregarla con éxito, liberar la reserva ante fallo para permitir retry y deep-copy/freeze de la solicitud de decisión antes de cualquier `await`.
-- [ ] Tarea T1.18.2.3 — REFACTOR: concentrar reserva, liberación y commit terminal para probar exactamente un terminal entregado con éxito, y encapsular el snapshot inmutable de decisión sin mezclar `send` con `ask`.
+- [x] Tarea T1.18.2.1 — RED: cubrir dos entregas terminales concurrentes, fallo del primer envío, retry posterior, duplicado después de una entrega exitosa y mutación de la solicitud de decisión mientras una operación espera.
+- [x] Tarea T1.18.2.2 — GREEN: reservar la entrega terminal concurrente, marcarla terminal sólo después de entregarla con éxito, liberar la reserva ante fallo para permitir retry y deep-copy/freeze de la solicitud de decisión antes de cualquier `await`.
+- [x] Tarea T1.18.2.3 — REFACTOR: concentrar reserva, liberación y commit terminal para probar exactamente un terminal entregado con éxito, y encapsular el snapshot inmutable de decisión sin mezclar `send` con `ask`.
 
-**Commit directo 2:** `M1.18.2`, después del commit 1 e independientemente verificable y revertible, con forecast de 120–170 líneas authored.
+**Commit directo 2:** `2cd64c4a32e178c88632348696353c2dd8654c56` — 191 líneas authored reales (186 adiciones, 5 eliminaciones) en los dos paths de `Área`. Focused final acumulado: PASS, 14 pass, 0 fail, 64 assertions.
 
-**Forecast de Sesión:** 440–500 líneas authored en dos commits directos secuenciales, cada uno ≤400 e independientemente verificable/revertible. Es secuenciación local de commits directos del proyecto, sin PR; no son PRs encadenados. Los dos candidatos fallidos y no entregados permanecen intactos, sin commit y con cero progreso; no son base de la implementación fresca.
+**Evidencia exacta de cierre:**
+
+- Suite integral final: PASS, 1104 pass, 0 fail, 6205 assertions en 85 archivos, sobre `2cd64c4a32e178c88632348696353c2dd8654c56`.
+- Presupuesto: 461 líneas authored en dos commits directos independientes; 270 y 191, ambos ≤400.
+- Runtime real: `N/A` — la verificación usa seams inyectados de procesos e Intercom, deterministas y locales al proceso. No ejercitó procesos Pi reales, broker Intercom real ni una jornada desatendida; esos límites siguen en `S1.19`.
+- Review-reliability nativo: `UNAVAILABLE` tipado; no se fabricó un veredicto alternativo.
+- Correcciones preservadas: ownership se valida antes de `stop`; la desaparición probada después de detener sigue siendo éxito; una entrega terminal fallida libera la reserva para retry; sólo el primer terminal entregado con éxito queda comprometido; la solicitud de decisión se copia y congela antes de cualquier `await`.
+- Los dos candidatos fallidos y no entregados permanecen sin crédito y no fueron base de estos commits frescos.
+- Rollback: revertir `2cd64c4` retira `M1.18.2`; revertir después `3ebb833` retira `M1.18.1`, sin schema, migración ni estado persistido que revertir.
 
 ## Sesión S1.19 — Regresión integral Pi-first
 **Estado:** 📋 PLANIFICADO · **Depende de:** `S1.18` · **Área:** `test/integration/pi-first/**`, `test/host-adapters.test.mjs` · **Recurso:** hasta cinco clientes Pi aislados y brokers efímeros de prueba.

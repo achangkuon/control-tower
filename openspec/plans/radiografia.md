@@ -1,7 +1,7 @@
 ---
-verified_against: 4248da9d5c0be812b529b9bfa3d733f2fffba3b0
-verified_at: 2026-08-31
-standfirst: S9.6 cerró la fuente Pi-first, S9.4 la actualidad del proceso y S1.17 el gate privado de autoridad. El ruteo global todavía no está activo: faltan adapter runtime, materialización, packaging, activación y rollback.
+verified_against: 2cd64c4a32e178c88632348696353c2dd8654c56
+verified_at: 2026-09-01
+standfirst: S1.18 ya entregó el adapter Pi con lifecycle, dispatch reconocido y terminalidad retryable. La prueba usó seams inyectados: todavía faltan la regresión con runtime real, materialización, packaging, activación y rollback.
 ---
 
 <!--
@@ -33,7 +33,7 @@ Vos dirigís varios agentes de IA trabajando en varios proyectos a la vez. La To
 
 La prioridad cambió: la primera implementación se hará con Pi. No porque Pi pase a ser el producto, sino porque la Torre puede poseer la identidad del proceso que lanzó y exigir comprobantes producidos por ese proceso. Eso le permite distinguir una sesión propia de una sesión que sólo dice serlo.
 
-La unión neutral ya identifica worktree, proceso, incarnation y binding, y expone operaciones sin depender de Pi. `S4.14` cerró la ventana que quedaba después de `S4.13`: confirma en el mismo stack al ocupante exacto inmediatamente antes del publish final. `S9.6` ya cerró la fuente que intercepta intención de Sesión y la enruta a la Torre; `S9.4` cerró la comprobación de PID, cwd y start-token contra el kernel antes y después de la observación async. `S1.17` agregó el gate privado que separa identidad neutral de scope, epoch, rol y capabilities Tower-owned. Ninguna de esas piezas equivale todavía al adapter runtime, su materializador o una instalación global activa.
+La unión neutral ya identifica worktree, proceso, incarnation y binding, y expone operaciones sin depender de Pi. `S4.14` cerró la ventana que quedaba después de `S4.13`: confirma en el mismo stack al ocupante exacto inmediatamente antes del publish final. `S9.6` cerró la fuente que intercepta intención de Sesión y la enruta a la Torre; `S9.4` cerró la comprobación de PID, cwd y start-token contra el kernel antes y después de la observación async. `S1.17` agregó el gate privado que separa identidad neutral de scope, epoch, rol y capabilities Tower-owned. `S1.18` ya sumó el adapter runtime: lifecycle guardado, dispatch reconocido, progreso, terminalidad retryable y decisiones inmutables. Todavía no equivale a su materializador, a una instalación global activa ni a evidencia con procesos Pi e Intercom reales.
 
 ## El veredicto actual
 
@@ -47,10 +47,10 @@ Lo técnico: `S4.10` cerró las cinco formas públicas de identidad y binding; `
 En simple: El enchufe común ya no sólo identifica a cada runtime: también permite mirarlo, comprobar su salud, pedirle que se detenga y adjuntarse sin confiar en lo que el propio caller afirma. Pi puede conectarse sobre una base ya entregada, no sobre una promesa.
 Evidencia: `openspec/specs/host-runtime/spec.md` · `openspec/changes/archive/2026-08-28-s4-11-host-neutral-operations/verify-report.md` · `master/origin/master@6ddf6bc77d236dffad5b8ec625379117a91ce0b3`
 
-### 3 · crítico · La fuente Pi-first está completa, pero la Torre instalada todavía no la usa
-Lo técnico: `S9.6` cerró en `826ba07` la extensión fuente, el manifest y el preflight fail-closed con verificación integral. Ese commit no instala ni activa la extensión global: `S8.12` debe incorporar sus bytes al payload y `S8.13` debe materializar, probar, activar y poder revertir `control-tower-activation.json`. El incidente de actualización parcial sigue siendo la evidencia que obliga a una activación atómica, no una autorización para reparar piezas a mano.
-En simple: El desvío automático hacia la Torre ya está construido y probado en el repositorio, pero todavía no está enchufado en la instalación que usan las personas. Empaquetar y activar son pasos separados justamente para no volver a dejar la máquina con piezas de generaciones distintas.
-Evidencia: `openspec/plans/plan-9/STATUS.md` S9.6 · `openspec/plans/plan-8/STATUS.md` S8.12–S8.13 · `826ba071777293d7197843293484c364e0524723`
+### 3 · crítico · El adapter Pi ya está entregado, pero la Torre instalada todavía no lo usa
+Lo técnico: `S1.18` cerró en `3ebb83373cf9507274a87e5206f315dce34a6a4f` y `2cd64c4a32e178c88632348696353c2dd8654c56` el lifecycle con ownership validado, dispatch reconocido, progreso, terminalidad retryable y snapshot inmutable de decisiones. La verificación fue determinista sobre seams inyectados; no ejecutó procesos Pi ni broker Intercom reales. `S8.12` todavía debe incorporar los bytes al payload y `S8.13` debe materializar, probar, activar y poder revertir `control-tower-activation.json`.
+En simple: El enchufe entre la Torre y Pi ya existe y sabe evitar dobles cierres o perder para siempre un cierre que falló al enviarse. Aún no está conectado a la instalación real, y su examen usó dobles controlados: falta demostrarlo con Pi e Intercom funcionando de verdad antes de prometer operación desatendida.
+Evidencia: `openspec/plans/plan-1/STATUS.md` S1.18 · `openspec/plans/plan-8/STATUS.md` S8.12–S8.13 · `2cd64c4a32e178c88632348696353c2dd8654c56`
 
 ## Avance por Plan
 
@@ -92,7 +92,7 @@ En simple: Hay trabajo guardado, pero no hay permiso para llamarlo terminado. El
 Evidencia: `openspec/plans/plan-8/STATUS.md:724-734` · checkpoint ejecutable `388109f1e79f50ce05582d2b0a7b3ff8a9685f72`
 
 ### F · nuevo · La vista automática de los asientos está autorizada, pero todavía no existe
-Lo técnico: Las decisiones 91 y 101 fijan que el brief lleva path/rama exactos y que `cwd` más `foreground_cwd` deben coincidir con el worktree propio de Main, Support o worker antes del prompt/dispatch; un pane Herdr sólo da visibilidad. Con `S9.6` cerrado, `S9.5` espera `S1.18`; después `S8.12` empaqueta esa fuente y `S8.13` la activa junto con sus otros gates. La materialización automática todavía no existe.
+Lo técnico: Las decisiones 91 y 101 fijan que el brief lleva path/rama exactos y que `cwd` más `foreground_cwd` deben coincidir con el worktree propio de Main, Support o worker antes del prompt/dispatch; un pane Herdr sólo da visibilidad. Con `S9.6` y `S1.18` cerrados, `S9.5` ya puede abordar la materialización; después `S8.12` empaqueta esa fuente y `S8.13` la activa junto con sus otros gates. La materialización automática todavía no existe.
 En simple: Ver escritorios separados no evita que dos agentes trabajen sobre la misma mesa. La ruta de entrada ya está construida, pero Main aún debe comprobar y abrir cada puesto con la disciplina manual vigente hasta que termine la cadena de materialización, paquete y activación.
 Evidencia: `openspec/plans/decision-register.md` decisiones 91 y 101 · `openspec/plans/plan-9/STATUS.md` S9.5–S9.6 · `826ba071777293d7197843293484c364e0524723`
 
@@ -105,8 +105,8 @@ La lista siguiente reemplaza las antiguas “cinco decisiones”. No son pregunt
 | `S4.10` — ✅ COMPLETO | Cinco contratos v1 y ownership exacto del puerto, sin importar Pi ni OpenCode | Que el adapter Pi ya funciona |
 | `S4.11` — ✅ COMPLETO; `S4.12` pendiente | Operaciones observables ya entregadas; recuperación mínima Pi después de sus dependencias | Que la Torre ya supervisa o recupera una jornada Pi real |
 | `S4.13` y `S4.14` — ✅ COMPLETO | Validación unpublished y comprobación sincrónica final del ocupante exacto antes de publish | Que el adapter Pi o el runtime global instalado ya funcionen |
-| `S9.4` y `S1.17` — ✅ COMPLETO; `S1.18`–`S1.19` pendientes | Supervisor, actualidad del proceso y gate privado de autoridad ya entregados; adapter runtime y regresión Pi siguen enumerados | Que Pi ya esté conectado, materializado o habilitado globalmente |
-| `S9.5` | Materialización idempotente de sólo los asientos exactos del brief, después de `S1.18`; `S9.6` ya cerró | Que Herdr ya abra, reutilice o valide esos asientos automáticamente |
+| `S9.4`, `S1.17` y `S1.18` — ✅ COMPLETO; `S1.19` pendiente | Supervisor, actualidad del proceso, gate privado y adapter runtime ya entregados; falta la regresión con Pi/Intercom reales | Que Pi ya esté materializado, habilitado globalmente o probado en una jornada real |
+| `S9.5` | Materialización idempotente de sólo los asientos exactos del brief; `S1.18` y `S9.6` ya cerraron sus dependencias | Que Herdr ya abra, reutilice o valide esos asientos automáticamente |
 | Gate Pi desatendido | Una corrida prolongada atribuible al candidato | Estabilidad de larga duración sin esa evidencia |
 | Gate de caída con tráfico | Recuperación idempotente tras caída real del broker | Entrega garantizada de mensajes en vuelo |
 | `S8.14` y `S9.6` — ✅ COMPLETO; `S8.12` y `S8.13` pendientes | Perfiles y fuente Pi-first entregados; empaquetar el set local y cerrar materialización, probe, activación y rollback atómicos | Que el runtime Tower instalado enrute automáticamente, esté coherente, verificado o disponible |
@@ -118,10 +118,10 @@ Lo técnico: El candidato `daf7e0e7af4122417ce2bec8a48a11c65a40f23c`, cherry-pic
 En simple: La Torre vuelve a comprobar la llave en el instante de entregarla. Si el proceso cambió, respondió algo ambiguo o falló, no publica ownership viejo. El código está verificado localmente y todavía falta el push directo.
 Evidencia: `contracts/host-runtime/ownership-registry.mjs` · `test/contracts/host-runtime/ownership.test.mjs` · `openspec/specs/host-runtime/spec.md` · candidato `daf7e0e7af4122417ce2bec8a48a11c65a40f23c`
 
-### H · resuelto · El supervisor y el gate privado ya separan proceso, identidad y autoridad
-Lo técnico: `S9.4` compara PID, cwd y start-token antes y después de la observación async. `S1.17` separa `incarnation_id` neutral de `scope_id`, `endpoint_epoch`, rol y capabilities Tower-owned; bloquea takeover concurrente antes de un segundo verifier y libera la reserva cuando verificar falla. Es un seam privado: no implementa runtime, wire, Pi, Intercom ni schema público.
-En simple: La Torre ya puede distinguir tres cosas que no deben mezclarse: qué proceso está vivo, qué encarnación es y qué permisos le otorgó la propia Torre. Si alguien intenta ocupar el mismo lugar o no prueba su identidad, frena sin dejar el asiento trabado. El próximo paso es `S1.18`, pero todavía no fue autorizado ni despachado.
-Evidencia: `openspec/plans/plan-9/STATUS.md` S9.4 · `openspec/plans/plan-1/STATUS.md` S1.17 · `2b6dd527b8cb046bf6f1936328475352d1ac716d` · `4248da9d5c0be812b529b9bfa3d733f2fffba3b0`
+### H · resuelto · El adapter conserva autoridad y cierre aun cuando el transporte falla
+Lo técnico: `S9.4` y `S1.17` separan actualidad del proceso, identidad y capabilities Tower-owned. `S1.18` valida ownership antes de detener, acepta como éxito la desaparición probada tras `stop`, liga un `dispatch_id` estable y sólo compromete un terminal después de entrega reconocida; un fallo libera la reserva para retry y la solicitud de decisión se copia y congela antes de esperar.
+En simple: La Torre comprueba la llave antes de apagar un proceso y no confunde “ya desapareció correctamente” con un error. Si falla el envío del resultado final, puede reintentarlo; si dos cierres compiten, sólo uno puede quedar confirmado. Además, una pregunta al mantenedor no puede cambiar mientras espera respuesta.
+Evidencia: `openspec/plans/plan-9/STATUS.md` S9.4 · `openspec/plans/plan-1/STATUS.md` S1.17–S1.18 · `3ebb83373cf9507274a87e5206f315dce34a6a4f` · `2cd64c4a32e178c88632348696353c2dd8654c56`
 
 ### I · resuelto · `S2.8` eliminó los nombres de fase sin fabricar un verde integral
 Lo técnico: El código local `480afb92bf99d38ee166070d09ec6485bc5de2c4`, parent `c2fb6399ee1332821663735d02833f78b9371402`, toca sólo los tres paths de `Área` y suma 45 líneas authored. AC1–AC5 pasan; safety quedó 72/72, `M2.8.1` pasó de RED 72/1 a 74/74 y `M2.8.2` de RED 74/1 a 75/75. La única integral fue 952/953 por `test/hosts/candidate-fence.test.mjs:432`, fuera de `Área`; el diagnóstico aislado autorizado pasó 17/17 y el caso exacto no reprodujo. AC6 cierra por la decisión 103, no como PASS.
@@ -130,4 +130,4 @@ Evidencia: `schemas/binding-delta-v1.schema.json` · `test/contracts/schema.test
 
 ## Evidencia y límites de esta radiografía
 
-Este juicio está verificado contra el HEAD exacto `4248da9d5c0be812b529b9bfa3d733f2fffba3b0`. `S9.6` acredita la fuente Pi-first, `S9.4` la actualidad de kernel del supervisor y `S1.17` el gate privado de autoridad; ninguno acredita el adapter runtime ni el runtime global instalado. La cadena sigue inactiva hasta completar `S1.18 → S9.5 → S8.12`, más `S1.19` y `S4.12`, y finalmente `S8.13`: todavía no se acreditan adapter runtime Pi, packaging Tower, materialización de `control-tower-activation.json`, lifecycle atómico, activación, rollback, materialización Herdr, asignación ni capacidad.
+Este juicio está verificado contra la entrega de código exacta `2cd64c4a32e178c88632348696353c2dd8654c56`. `S9.6` acredita la fuente Pi-first, `S9.4` la actualidad de kernel del supervisor, `S1.17` el gate privado de autoridad y `S1.18` el adapter runtime sobre seams inyectados. El review-reliability nativo quedó tipado `UNAVAILABLE`, sin veredicto fabricado. La cadena global sigue inactiva hasta completar `S1.20 + S2.9 → S9.7 → S9.5 → S9.8 → S8.12`, más `S1.19` y `S4.12`, y finalmente `S8.13`: todavía no se acreditan runtime Pi/Intercom real, jornada desatendida, packaging Tower, materialización de `control-tower-activation.json`, lifecycle atómico, activación, rollback, materialización Herdr, asignación ni capacidad.
