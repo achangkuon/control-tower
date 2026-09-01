@@ -1,16 +1,16 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-09-01 sobre `master/origin@086e516`, incorporando la autoridad aprobada en Engram 10008 y la decisión 104. No se implementó, entregó ni acreditó trabajo.
+> Última reconciliación: 2026-09-01 sobre `master/origin@99466ec`, incorporando la remediación aprobada en Engram 10020, el fallo de verificación Engram 10019 y la decisión 105. No se implementó, entregó ni acreditó trabajo.
 > Para estado de código ver [implementation-state](implementation-state.md); para ownership de producto ver [inventario](inventario-de-producto.md); para orden de salida ver [release-chain](release-chain.md); para autoridad ver [decision-register](decision-register.md).
 
 ## 📍 Punto de retoma
 
 **Objetivo activo:** completar el flujo determinista de Sesión fresca `MAIN → SUPPORT → AGENTES` antes de retomar P12. `S1.17`, `S9.4` y `S9.6` permanecen ✅ COMPLETO; P11 permanece cerrado y no se reabre.
 
-**Próximo:** `#1 S1.18` implementa adapter y terminalidad asíncrona. En paralelo quedan listos `#2 S1.20` (probe `ON|OFF|INDETERMINATE`) y `#3 S2.9` (`torre enroll --repo`); después sigue `S9.7 → S9.5 → S9.8 → S8.12`, mientras `S1.19` y `S4.12` avanzan desde `S1.18`. `S8.13` converge esas tres ramas.
+**Próximo:** `#1 S1.18` se implementa de cero en dos commits directos secuenciales: `M1.18.1` lifecycle + dispatch reconocido y, después, `M1.18.2` entrega terminal retryable + decisiones inmutables. Cada commit es independientemente verificable/revertible y ≤400 líneas authored; es secuenciación local sin PR, no PRs encadenados. En paralelo quedan listos `#2 S1.20` y `#3 S2.9`; el orden y la cola posterior no cambian.
 
-**Cero crédito parcial:** el candidato no entregado de `S1.18` en otro worktree no produjo terminal `COMPLETED|BLOCKED|FAILED`, no se toca y acredita cero. `S2.10` queda 🔴 BLOQUEADO fuera de la cola hasta ubicar el renderer/owner real del menú central; no se inventa path.
+**Cero crédito parcial:** los dos candidatos fallidos, no entregados y sin commit en `diagnostic-launch-timeout` y `s9-6-pi` permanecen intactos y acreditan cero progreso. La verificación Engram 10019 no cerró `S1.18`; `S2.10` queda 🔴 BLOQUEADO fuera de la cola hasta ubicar el renderer/owner real del menú central, sin inventar path.
 
 ## 🎯 Cola de ejecución
 

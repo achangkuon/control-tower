@@ -355,10 +355,11 @@ El contrato OpenCode-first/Pi-second anterior queda preservado arriba como histo
 **Decisiones:**
 - `escala`, resuelta — Pi Intercom es transporte normal Main↔Support↔worker y nunca concede autoridad; ON usa binding, persistencia, acknowledgment y retry Tower-owned, mientras OFF conserva peers vivos aprobados y skills. **Clase:** contrato visible del producto; seguridad y permisos. **Autoridad:** decisión 104 y Engram 10008. **Falsificador:** un mensaje Intercom crea autoridad o un envío ON carece de binding/ack/retry.
 - `derivable` — forma interna del reporte. **Criterio:** toda asignación liga un `dispatch_id` único y termina exactamente una vez en `COMPLETED`, `BLOCKED` o `FAILED`, con evidencia/recoverability conforme al estado. **Autoridad:** decisión 104. **Falsificador:** ausencia, duplicidad o terminal sin referencia causal.
+- `escala`, resuelta — la remediación conserva una sola Sesión pero se entrega en dos commits directos secuenciales: primero lifecycle y dispatch reconocido; después entrega terminal retryable y decisiones inmutables. **Clase:** dependencias o evidencia contradictorias; seguridad y permisos. **Autoridad:** decisión 105, Engram 10020 y fallo de verificación Engram 10019. **Falsificador:** detener antes de validar ownership, considerar fallo la desaparición exitosa tras stop, perder el único terminal por un fallo de entrega, entregar más de un terminal exitoso o mutar una solicitud de decisión durante un `await`.
 
-**Ruta:** `design-tasks` — el lifecycle neutral ya está cercado; falta elaborar el seam de transporte y terminalidad sin rediseñar autoridad.
+**Ruta:** `direct` — la verificación ya aisló dos correcciones acotadas y la decisión 105 fija su orden, semántica y fronteras sin rediseñar autoridad ni contrato público.
 
-**Autoridad:** Engram 10008, decisiones 80, 83, 84, 86 y 104.
+**Autoridad:** Engram 10008 y 10020; decisiones 80, 83, 84, 86, 104 y 105; fallo de verificación Engram 10019.
 
 **Criterios de aceptación** — todos deben pasar:
 - [ ] `launch/observe/health/stop/attach` implementan el puerto neutral y `/proc` cruza PID/cwd Tower-owned; nonce y `endpointEpoch` prueban attach.
@@ -368,12 +369,24 @@ El contrato OpenCode-first/Pi-second anterior queda preservado arriba como histo
 - [ ] ON conserva binding, persistencia, acknowledgment y retry Tower-owned; OFF no fabrica esa garantía y usa sólo peers vivos aprobados por el maintainer.
 - [ ] Los IDs son aleatorios, no adopta procesos ajenos, no modifica Pi/Intercom y el diff no toca fuera de `Área`.
 
-### Módulo M1.18.1 — Lifecycle, dispatch y terminalidad del adapter · forecast 280–390 authored
-- [ ] Tarea T1.18.1.1 — RED: cubrir proceso ajeno, `/proc` divergente, nonce/epoch stale, broker equivocado, `dispatch_id` ausente/duplicado, espera bloqueante y terminal inválido o repetido.
-- [ ] Tarea T1.18.1.2 — GREEN: adaptar lifecycle Pi/Intercom al contrato neutral, reconocer el envío sin esperar trabajo y transportar reportes terminales ligados al assignment.
-- [ ] Tarea T1.18.1.3 — REFACTOR: encapsular protocolo externo, normalizar evidencia/recoverability y probar separación entre `send` y `ask`.
+### Módulo M1.18.1 — Lifecycle y dispatch reconocido · forecast 300–350 authored
+- [ ] Tarea T1.18.1.1 — RED: falsificar lifecycle, proceso ajeno, `/proc` divergente, attach con nonce/epoch stale, broker equivocado, stop sin ownership válido, desaparición exitosa tras stop tratada como fallo, `dispatch_id` ausente/duplicado, acknowledgment bloqueante y diferencias ON/OFF.
+- [ ] Tarea T1.18.1.2 — GREEN: implementar `launch/observe/health/stop/attach`, validar ownership antes de detener, conservar como éxito la desaparición probada después del stop y despachar con `dispatch_id` estable más acknowledgment no bloqueante en ON/OFF.
+- [ ] Tarea T1.18.1.3 — REFACTOR: encapsular lifecycle y protocolo externo, aislar proceso extranjero y dejar verificadas las fronteras de attach, dispatch y acknowledgment sin adelantar terminalidad retryable.
 
-**Forecast de Sesión:** 280–390 líneas authored; un resultado revisable y revertible de ≤400. El candidato no entregado de otro worktree no es base, no se toca y acredita cero.
+**Commit directo 1:** `M1.18.1`, independientemente verificable y revertible, con forecast de 300–350 líneas authored.
+
+### Módulo M1.18.2 — Entrega terminal retryable y decisiones inmutables · forecast 120–170 authored
+
+**Depende de:** `M1.18.1`
+
+- [ ] Tarea T1.18.2.1 — RED: cubrir dos entregas terminales concurrentes, fallo del primer envío, retry posterior, duplicado después de una entrega exitosa y mutación de la solicitud de decisión mientras una operación espera.
+- [ ] Tarea T1.18.2.2 — GREEN: reservar la entrega terminal concurrente, marcarla terminal sólo después de entregarla con éxito, liberar la reserva ante fallo para permitir retry y deep-copy/freeze de la solicitud de decisión antes de cualquier `await`.
+- [ ] Tarea T1.18.2.3 — REFACTOR: concentrar reserva, liberación y commit terminal para probar exactamente un terminal entregado con éxito, y encapsular el snapshot inmutable de decisión sin mezclar `send` con `ask`.
+
+**Commit directo 2:** `M1.18.2`, después del commit 1 e independientemente verificable y revertible, con forecast de 120–170 líneas authored.
+
+**Forecast de Sesión:** 440–500 líneas authored en dos commits directos secuenciales, cada uno ≤400 e independientemente verificable/revertible. Es secuenciación local de commits directos del proyecto, sin PR; no son PRs encadenados. Los dos candidatos fallidos y no entregados permanecen intactos, sin commit y con cero progreso; no son base de la implementación fresca.
 
 ## Sesión S1.19 — Regresión integral Pi-first
 **Estado:** 📋 PLANIFICADO · **Depende de:** `S1.18` · **Área:** `test/integration/pi-first/**`, `test/host-adapters.test.mjs` · **Recurso:** hasta cinco clientes Pi aislados y brokers efímeros de prueba.
