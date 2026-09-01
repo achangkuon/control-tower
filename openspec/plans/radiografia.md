@@ -1,5 +1,5 @@
 ---
-verified_against: 2cd64c4a32e178c88632348696353c2dd8654c56
+verified_against: 400cfd6130542d777dfcb3eb62d8f91d2a9404fc
 verified_at: 2026-09-01
 standfirst: S1.18 ya entregó el adapter Pi con lifecycle, dispatch reconocido y terminalidad retryable. La prueba usó seams inyectados: todavía faltan la regresión con runtime real, materialización, packaging, activación y rollback.
 ---
