@@ -1315,6 +1315,20 @@ corrección 1 de la Fase 3 y esta Sesión no lo toca más que para dejar de dupl
 - [ ] `horizon_ceiling`, `merge.authorizing_party`, `delivery.shape` y los cinco pisos de `assertFloorProtected` conservan **exactamente** el mismo comportamiento
 - [ ] `bun test` no introduce fallos nuevos; el diff no toca ninguna ruta del `Prohibido`
 
+**Candidato contradictorio descartado el 2026-09-01 — cero crédito de entrega o avance.**
+`implementer-2` abandonó `feat/s5.14-configurable-planning-depth@3ffc8a844fea2811e73ae30cbf6e3419ad79b906`.
+Su patch commiteado fue `06a27b9ea05960e55b2afedb740cc85dc798d46aeb66f61dcca150346e78c8b5`;
+el draft sucio de `AGENTS.md`, descartado, fue
+`1f81e5c78a4b3ce9fc16117fb11c765bf639c5fefd692dee17d80efb70afda72`.
+Eran 8 líneas sucias y 94 authored totales. La auditoría semántica fresca confirmó que la idea
+opaca, no vacía y fail-closed de `prepare_through` sigue siendo válida, pero la continuación vieja
+aceptaba valores autoconsistentes controlados por el caller sin ligarlos a la política resuelta.
+**Checkpoint fresco:** resolver primero el `Área` y la fuente de configuración; después ligar la
+política resuelta antes de cualquier callback. No hay bytes reutilizables ni cherry-pick válido.
+La rama obsoleta fue eliminada; el asiento quedó limpio y preparado, sin progreso de `S1.20`, en
+`feat/s1.20-tower-mode-probe@38cb3daaec230b38642b3849ec0bc1525603d27b`.
+`S5.14` sigue 🟢 LISTO y el porcentaje de P5 no cambia.
+
 ### Módulo M5.14.1 — `prepare_through` como política
 **Paths:** `schemas/delivery-policy-v1.schema.json`, `policy/delivery-policy.mjs`, `test/policy/delivery-policy.test.mjs`
 

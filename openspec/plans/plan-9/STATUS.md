@@ -510,9 +510,30 @@ guiones en vez de conteos. Ninguna suite lo detecta.
 - El candidato exacto `304d534` (tree `8049d32`) y sus cinco intentos conservan evidencia de la raíz causal y del diseño fallido.
 - Queda inmutable: cero corrección, rebase, cherry-pick, resume o mutación sobre esos bytes.
 - En ese checkpoint, su existencia no satisfacía ningún criterio de `S9.4` ni autorizaba runtime, Tower, DB, worktree o peer actions; el brief fresco posterior satisfizo ese gate según la autoridad vigente de `S9.4`, sin convertir estos bytes congelados en continuación.
-- Implementer-1 conserva M1 en `a7d724dc` y M2 como exactamente dos archivos no trackeados registrados en Engram 9772; su corrección sigue sin consumirse.
-- La evidencia de implementer-2 e implementer-3 permanece inmutable y no se promueve a capacidad.
 - La exigencia histórica de brief fresco queda preservada como evidencia del gate ya satisfecho; capacidad viva, asignación y worktree exacto siguen requiriendo validación operativa nueva.
+
+**Candidatos superados descartados el 2026-09-01 — cero crédito de entrega o avance.** La decisión
+Engram 10031 autorizó abandonar los dos intentos después de una auditoría semántica fresca: no había
+bytes reanudables ni correspondía crear commits de estacionamiento. `implementer-1` dejó la rama
+`feat/s9.4-validated-pure-route-supervisor@a7d724dc72e566d061565f69bc1526d34b73dff0`;
+su patch único fue `4d6a311391de1ade3939291c76bcfe23278b30fc2405fe05280aee4ebda1a53d`,
+los archivos sucios runtime/test tenían hashes `012d6aee86644649d93e759469bc44720dfaed2a616a8a1f6bfbf17a4c913406` y
+`64e9b14c7eafd3e92b304819ab89016b845d9da7c93fdca13108d2ad5c5998de`; se descartaron 296 líneas
+sucias de 470 authored totales preservadas antes del borrado. `implementer-3` dejó
+`feat/s9.4-pi-supervisor-binding@8a12144b3c421ff7467e691dc6ff342147235680`; su patch
+commiteado fue `3fc3f7f1df38f36f5d66b5cc289cea578230affd54bd10b8819b31f3f97016c0`, el
+patch tracked sucio `fef73566b07bfa4b8c725fbf78e581a268139b8fdd04200029470990824e9277`, y
+se descartaron 913 líneas sucias de 1.429 authored de rama más árbol sucio. Los hashes completos de
+cada blob y de los cuatro candidatos temporales quedaron preservados en
+[`2026-09-01-permanent-seat-reconciliation.md`](../../maintenance/2026-09-01-permanent-seat-reconciliation.md).
+Ambas ramas obsoletas fueron eliminadas y los asientos quedaron limpios en
+`idle/implementer-1@38cb3daaec230b38642b3849ec0bc1525603d27b` e
+`idle/implementer-3@38cb3daaec230b38642b3849ec0bc1525603d27b`.
+
+**Único aprendizaje reutilizable para la revisión futura de `S4.12`:** después de una adquisición
+esperada que devuelve un recurso con cleanup, hay que retener el recurso exacto antes de cercar;
+la ruta stale o inválida lo consume, o deja en cuarentena la incertidumbre. Ningún byte de los
+supervisores obsoletos es reutilizable. `S9.4` sigue ✅ COMPLETO y P9 permanece en 38% (3/8 S).
 
 ## Contrato histórico de S9.5 — Materialización determinista de Main, Support y Agentes
 
