@@ -368,8 +368,10 @@ prohibido pesarse por él, la capacidad y la cola no lo usan — y **una estimac
 agente es peor que ninguna**. El número que sí decide algo es el pronóstico de líneas del paso 8,
 que define si la Sesión se parte.
 
-**Alcance de la corrección:** §5 completa, la §11, el checklist §18, y el bloque
-«Plan Naming Standard» de `~/.claude/CLAUDE.md`, que también lo nombra.
+**Alcance de la corrección:** §5 completa, la §11, el checklist §18, el bloque
+«Plan Naming Standard» de `~/.claude/CLAUDE.md`, **y el código**: `est` es un campo real del
+esquema en `tools/plan/plan.go:56` (`Sesion.Est`) y `:67` (`Modulo.Est`). Sacarlo del canon sin
+sacarlo del Go deja el campo aceptándose en silencio.
 
 ---
 
@@ -520,6 +522,11 @@ lo que antes cubría el método propio.
 
 Está gobernado por dependencias reales, no por el número de tramo.
 
+> **El reparto concreto entre agentes vive en
+> [EJECUCION-EN-PARALELO.md](EJECUCION-EN-PARALELO.md)**: las tres fases que fijó el maintainer,
+> la puerta serial, los tres carriles con su partición exacta de rutas, los Cimientos de esta
+> obra y el protocolo con la Torre apagada.
+
 ### Paso 0 — Antes de tocar nada *(no negociable)*
 
 1. **Corregir `doc-guard.sh`** para que reconozca `openspec/plan.yaml` con salida honesta. → C7
@@ -547,8 +554,12 @@ Está gobernado por dependencias reales, no por el número de tramo.
 
 ### Paso 3 — El esquema
 
-7. Campo `autoridad` en la Sesión + validación en `radar check`.
-8. El esquema de decisión crece a 6 campos: evidencia, opciones, checkpoint.
+7. Campo `autoridad` **a nivel Sesión** + validación en `radar check`. Ojo: ya existen
+   `RutaSesion.Autoridad` (`plan.go:83`, validado en `check.go:218`) y `Decision.Autoridad`
+   (`plan.go:108`, validado en `check.go:245`). Lo que falta es la autoridad **del alcance**.
+8. El esquema de decisión crece. Hoy `Decision` ya tiene siete campos (`tipo`, `pregunta`,
+   `criterio`, `autoridad`, `clase`, `alcanza`, `contamina`); faltan **`evidencia`**,
+   **`opciones`** y **`checkpoint`**.
 9. El ledger de intentos entra como **cuarta entrada** del cálculo de estado.
 
 ### Paso 4 — Las skills, por tramo
