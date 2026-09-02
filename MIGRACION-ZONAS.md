@@ -4,35 +4,37 @@
 > y qué falta. El razonamiento completo, con dibujos, está en el documento de decisión:
 > https://claude.ai/code/artifact/e92d2b38-10ad-480d-b7b2-ba9cc68283ec
 >
-> Última actualización: 2026-09-01 · Estado: Fases 1 y 2 hechas, esperando revisión
+> Última actualización: 2026-09-01 · Estado: Fases 2b y 3 implementadas y verificadas; propagación global/manual pendiente
 
 ---
 
 ## 📍 Punto de retoma
 
-**Qué cerró:** el canon reescrito (Fase 1) y la herramienta `plan` construida y probada
-(Fase 2). La partición de `control-tower` está verificada contra sus 441 archivos: 10 zonas
-más Cimientos, cero huérfanos, cero solapes. Las 24 Sesiones abiertas están asignadas.
+**Qué cerró:** la implementación de Fase 2b y Fase 3 en `agent-workflows` quedó completa y fue
+verificada de forma independiente. La evidencia observada fue: `gofmt` sin diferencias; `go test .`
+y `go test ./...` aprobados; `go vet` limpio; `go run . check -f borrador-control-tower.yaml` válido
+(10 Zonas, 0 Sesiones); 23 pruebas del instalador aprobadas; y `git diff --check` limpio.
 
-**Nada fue commiteado y `control-tower` no fue tocado.** Los cambios viven sin commitear en
-`agent-workflows`: el canon modificado más cuatro archivos nuevos.
+**Contrato documental aprobado:** el único dato editable es `openspec/plan.yaml` y la vista generada
+es `openspec/ROADMAP.md`. No se mantienen un `STATUS.md` ni un `master-index.md` separados.
 
-**Qué sigue, y necesita tu revisión antes de tocar nada:**
+**Fuera de este cierre:** `control-tower` y `Servi-Task-U` permanecen intactos. No se propagaron los
+bloques globales/manuales y este documento no afirma que las skills estén instaladas o sincronizadas.
+También siguen pendientes para una integración futura con MAIN/Torre la adquisición, liberación y
+recuperación stale de Cimientos en vivo, y el freeze runtime de `S7.1`.
 
-1. **Los cuatro cortes** `S100`–`S109` en [ASIGNACION-24-SESIONES.md](ASIGNACION-24-SESIONES.md).
-   Son propuestas sobre estado vivo de control-tower; ninguna está aplicada.
-2. **Si `S7.1` es zona nueva o corre sola** — es el único cruce real de los 24.
-3. **Las tres correcciones al canon** de la Fase 2b, que salieron de probarlo contra la
-   realidad. Hasta que entren, el canon dice una cosa y la prueba dice otra.
+**Qué sigue:** retomar primero los pendientes de Fase 1: actualizar los bloques globales/manuales,
+propagarlos a los cuatro agentes y verificar que sobrevivan. Sólo después continúa Fase 4 según el
+orden existente. No se migró todavía ningún producto real ni se completó trabajo de Fase 4 o posterior.
 
-**Por qué frenamos acá:** el diseño está cerrado y probado, pero lo que sigue modifica el
-plan vivo de control-tower, con una Sesión bloqueada que tiene trabajo a medio hacer
-guardado. Eso se revisa despierto.
+**Decisiones ya cerradas — no volver a preguntar:** el umbral de Cimiento es más de una Zona;
+no admite escrituras concurrentes; `install/runtime-payload.mjs` es el primer carve-out;
+`S5.14`, `S5.15`, `S9.3` y `S9.5` se reemplazan por `S100`–`S108`; y `S7.1` corre en Entrega
+contra un candidato inmutable, sin arreglar defectos dentro de la verificación.
 
-**Lo que aprendimos y no hay que volver a descubrir:** dibujar la partición a mano falla de
-forma predecible. Tres veces en un día ubiqué algo por su nombre en vez de por quién lo toca
-—`workspace/`, `bin/torre`, `console/` y `skills/`—. La herramienta encontró las tres. La
-regla es una sola: **si lo toca cualquiera sin importar dónde viva, es un cimiento.**
+**Lo que aprendimos y no hay que volver a descubrir:** la regla verificable es: **si más de
+una Zona necesita modificar la misma ruta exacta, es un Cimiento**, sin importar bajo qué
+directorio viva.
 
 ---
 
@@ -76,10 +78,10 @@ No se relitigan. Si alguna hay que reabrir, se anota acá con la razón.
 | 5 | Las zonas se cortan por dominio de negocio, ajustado por proyecto |
 | 6 | Las zonas no se solapan: es una partición, y es exhaustiva |
 | 7 | `Área` deja de escribirse: se deriva de la zona |
-| 8 | Un obrero por zona. Cuello de botella = señal de partir la zona |
-| 9 | Trabajo que cruza zonas = zona nueva, que declara de qué zonas depende |
-| 10 | Cimientos = lista de rutas declarada una vez, con **reserva por archivo** |
-| 11 | La herramienta verifica las colisiones de cimientos; Main sólo desempata |
+| 8 | Un obrero por Zona; `zona: cimientos` permite concurrencia sólo con reservas exactas disjuntas |
+| 9 | Cruces: Cimientos → partir por Zona → Zona nueva sólo si partir destruye el resultado → revisar la partición si se repite |
+| 10 | Cimiento = archivo exacto que más de una Zona necesita modificar; `cimientos.rutas` puede clasificar archivos, directorios o patrones, pero cada reserva nombra un archivo exacto |
+| 11 | `plan` valida y pronostica compatibilidad; la Torre posterior adquiere/libera en runtime y MAIN coordina el orden y la entrega |
 | 12 | Main sigue coordinando y Support sigue sin tocar código |
 | 13 | El identificador es plano, permanente y mudo (`S23`). Nunca se renumera |
 | 14 | La hoja de ruta se lee por zona y posición, no por identificador |
@@ -90,9 +92,9 @@ No se relitigan. Si alguna hay que reabrir, se anota acá con la razón.
 | 19 | La herramienta se construye para durar (binario único), y después se integra a la Torre |
 | 20 | SDD se queda tal cual; la ruta se **propone** al planificar y se **re-verifica** al implementar |
 
-**Defecto encontrado que hay que arreglar:** hoy la ruta (`direct` / `design-tasks` /
-`full-sdd`) se decide dos veces —`planificador-granular` la asigna y `session-kickoff` la
-vuelve a elegir— y ningún lado dice cuál gana.
+**Defecto resuelto en Fase 3:** `ruta.propuesta` conserva la decisión de planificación y
+`ruta.revalidacion` registra la decisión de implementación sobre el HEAD exacto. La revalidación
+gana y debe explicar cualquier cambio.
 
 ---
 
@@ -134,12 +136,12 @@ Dos repos: **`agent-workflows`** (canon y skills) y **`control-tower`** (banco d
 - [x] Construir la herramienta → [tools/plan](tools/plan/README.md), Go, binario único
   - [x] Esquema del dato — sin campo `estado`; se declara evidencia, no estado
   - [x] Cálculo de estados desde dependencias + decisiones + evidencia de entrega
-  - [x] Cálculo de las colas por zona y de los asientos
-  - [x] Validación de la partición y de las reservas de cimientos
-  - [x] 25 tests, `gofmt` y `go vet` limpios
+  - [x] Cálculo de las colas por zona y pronóstico de asientos compatible con Cimientos
+  - [x] Validación de la partición y de las declaraciones exactas de reserva de Cimientos
+  - [x] Revalidar después de Fase 2b: `gofmt` limpio; pruebas Go aprobadas; `go vet` limpio
   - [x] Cross-compila a macOS (arm64 e Intel) para el socio
-  - [ ] Detección de entrega leyendo git directamente (hoy se declara el commit)
-  - [ ] Render del master-index y del `STATUS`
+  - [x] Detección de entrega leyendo Git: el commit declarado debe resolver y ser ancestro del HEAD integrado
+  - [x] Render determinista desde el dato editable `openspec/plan.yaml` hacia la única vista generada `openspec/ROADMAP.md`; no hay STATUS/master-index paralelos
 - [x] **Verificar la partición contra los archivos reales con la herramienta, no a ojo**
       → 441 archivos, 11 zonas + Cimientos, cero huérfanos, cero solapes
 - [x] Asignar las 24 Sesiones abiertas a su zona, leyendo sus `STATUS` — nunca por el plan
@@ -148,25 +150,34 @@ Dos repos: **`agent-workflows`** (canon y skills) y **`control-tower`** (banco d
   - [x] Segunda pasada de la partición: `bin/`, `console/`, `skills/`, `README.md` pasan a
         Cimientos. Eso solo resolvió 6 de los 11 cruces.
   - [x] Partición reverificada: 10 zonas, 441 archivos, cero huérfanos, cero solapes
-  - [ ] Aprobar los cuatro cortes propuestos (`S100`–`S109`)
-  - [ ] Decidir si `S7.1` es zona nueva o corre sola
+  - [x] Aprobar y corregir los cuatro reemplazos (`S100`–`S108`); ninguna propuesta aplicada fue renumerada
+  - [x] Asignar `S7.1` a Entrega con candidato inmutable y reejecución completa ante defectos
 
 ### Fase 2b — Correcciones al canon que salieron de la prueba
 
-- [ ] `zona: cimientos` es válida: es el único lugar donde la exclusividad es por archivo
-- [ ] Reemplazar la regla de §3 «lo que cruza se vuelve su propia zona» por la de cuatro
-      pasos: reubicar superficie compartida → partir → zona nueva → revisar el corte
-- [ ] Escribir la regla «si lo toca cualquiera sin importar dónde viva, es cimiento» —
-      la violé tres veces en un día dibujando a mano
+- [x] Definir Cimiento por umbral: un archivo exacto modificado por más de una Zona
+- [x] Distinguir clasificación (`cimientos.rutas`: archivo/directorio/patrón) de reserva (`sesiones[].cimientos`: archivo exacto)
+- [x] `zona: cimientos` válida para resultados compuestos sólo por Cimientos; compatibilidad estática por archivo
+- [x] Prohibir escrituras concurrentes en el contrato y dejar su enforcement runtime a Torre/MAIN
+- [x] Reemplazar la regla literal de cruces por el orden: Cimientos → partir → Zona nueva → revisar corte
+- [x] Implementar carve-out exacto sin ocultar solapes genuinos entre Zonas
+- [x] Declarar `install/runtime-payload.mjs` como primer Cimiento bajo una ruta amplia
+- [x] Agregar linaje formal `reemplaza` con referencias, dirección de archivo, aciclicidad y rewire obligatorio de dependencias activas
+- [x] Corregir los reemplazos `S100`–`S108` desde autoridad viva de `control-tower`
+- [x] Resolver `S7.1` en Entrega, con evidencia ligada al commit SHA y/o tree SHA del candidato inmutable y sin ownership de Autoridad
+- [x] Validación separada completada: `gofmt` limpio; pruebas Go aprobadas; `go vet` limpio; partición real válida con 10 Zonas y 0 Sesiones; `git diff --check` limpio
 
 ### Fase 3 — El ciclo de trabajo diario
 
-- [ ] `planificador-granular` — corta por zona, escribe dato, **propone** la ruta
-- [ ] `architecture-audit` — paso nuevo: familias de dominio → partición de zonas validada
-- [ ] `session-kickoff` — **re-verifica** la ruta y registra por qué cambió
-- [ ] `session-doc` — deja de escribir `STATUS.md` y master-index; dispara el render
+- [x] `planificador-granular` — corta alcance dentro de Zona validada, produce Módulos/Tareas y **propone** la ruta; envía delta a Support
+- [x] `architecture-audit` — familias de dominio → superficies reales de modificación → Zonas/Cimientos; exige `plan check`
+- [x] `session-kickoff` — **revalida** una vez la ruta contra HEAD/autoridad/evidencia y registra razón si cambia
+- [x] `session-doc` — reúne evidencia de cierre; Support verifica integración Git y dispara el render
+- [x] `agente-soporte` — dependencia mínima adelantada: único autor acotado de `openspec/plan.yaml` y regenerador de ROADMAP
+- [x] `tools/plan` schema v2 — jerarquía completa, rutas separadas, entrega Git y render determinista
+- [x] Normalización y verificación independientes completadas: checks Go limpios, partición real válida, 23 pruebas del instalador aprobadas y diff limpio
 
-> Después de esta fase ya se trabaja con el modelo nuevo.
+> Fase 3 quedó verificada. La migración de un producto real sigue pendiente y no forma parte de este cierre.
 
 ### Fase 4 — El arranque
 
@@ -176,9 +187,12 @@ Dos repos: **`agent-workflows`** (canon y skills) y **`control-tower`** (banco d
 
 ### Fase 5 — La Torre
 
-- [ ] `agente-soporte` — único autor del archivo del plan (hoy dice «Read-only. Never edit…»)
+- [x] `agente-soporte` — **límite mínimo adelantado a Fase 3 por dependencia dura**: único autor acotado del dato y renderer; sigue read-only para código
+- [ ] Consumo amplio de plan-data por Support, templates y brief diario (permanece en Fase 5)
 - [ ] `unattended-implementation` — Cimientos nunca corre desatendida
 - [ ] `session-plan` — consume el dato en vez de leer markdown
+- [ ] Runtime de reservas — MAIN/Torre registra owner, adquiere y libera cada archivo exacto, evita arranques simultáneos stale y recupera claims interrumpidos; `plan` no es este lock controller
+- [ ] Freeze terminal — MAIN/Torre congela `S7.1` sobre un commit SHA y/o tree SHA, liga toda evidencia a ese identificador e invalida toda evidencia anterior si una Sesión correctiva produce otro candidato
 
 ### Fase 6 — Asientos configurables
 
