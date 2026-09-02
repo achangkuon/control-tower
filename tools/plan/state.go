@@ -29,7 +29,12 @@ const (
 // EN CURSO is deliberately absent: it is a runtime claim held by an agent, not
 // a property of the plan. Asking the plan who is working right now is asking the
 // wrong document.
-func (p *Plan) Estados() map[string]string {
+func (p *Plan) Estados(root string) map[string]string {
+	head, _ := gitHEAD(root)
+	return p.EstadosAt(root, head)
+}
+
+func (p *Plan) EstadosAt(root, head string) map[string]string {
 	estados := make(map[string]string, len(p.Sesiones))
 	index := p.SesionPorID()
 
@@ -39,7 +44,13 @@ func (p *Plan) Estados() map[string]string {
 		case s.Archivada:
 			estados[s.ID] = Archivado
 		case s.Entrega != nil:
-			estados[s.ID] = Completo
+			if integrada, _ := entregaIntegrada(root, s.Entrega.Commit, head); integrada {
+				estados[s.ID] = Completo
+			} else {
+				// Invalid or non-integrated evidence is an explicit stop, never
+				// runnable work that falls through to LISTO/PLANIFICADO.
+				estados[s.ID] = Bloqueado
+			}
 		case s.Diferida:
 			estados[s.ID] = Diferido
 		}
@@ -87,7 +98,7 @@ func (p *Plan) Estados() map[string]string {
 				listo = false
 				break
 			}
-			if !(d.Entrega != nil || d.Archivada) {
+			if !(estados[d.ID] == Completo || d.Archivada) {
 				listo = false
 				break
 			}
@@ -123,8 +134,13 @@ func bloqueaAqui(s *Sesion) bool {
 // ColaPorZona returns, for each Zona, its startable and planned Sesiones in
 // dependency order. One queue per Zona, never one global queue: a single queue
 // mixing Zonas is what made the roadmap unreadable.
-func (p *Plan) ColaPorZona() map[string][]string {
-	estados := p.Estados()
+func (p *Plan) ColaPorZona(root string) map[string][]string {
+	head, _ := gitHEAD(root)
+	return p.ColaPorZonaAt(root, head)
+}
+
+func (p *Plan) ColaPorZonaAt(root, head string) map[string][]string {
+	estados := p.EstadosAt(root, head)
 	index := p.SesionPorID()
 
 	porZona := map[string][]*Sesion{}
@@ -202,8 +218,13 @@ func (a Avance) String() string {
 	return fmt.Sprintf("%d%% (%d/%d S)", a.Cerradas*100/a.Total, a.Cerradas, a.Total)
 }
 
-func (p *Plan) Avance() (map[string]Avance, Avance) {
-	estados := p.Estados()
+func (p *Plan) Avance(root string) (map[string]Avance, Avance) {
+	head, _ := gitHEAD(root)
+	return p.AvanceAt(root, head)
+}
+
+func (p *Plan) AvanceAt(root, head string) (map[string]Avance, Avance) {
+	estados := p.EstadosAt(root, head)
 	porZona := map[string]Avance{}
 	var total Avance
 
@@ -221,21 +242,55 @@ func (p *Plan) Avance() (map[string]Avance, Avance) {
 	return porZona, total
 }
 
-// Asientos reports how many Zonas have ready work. Convention §13: the seats
-// actually opened are min(this, the human's ceiling). The ceiling is never
-// raised by an agent, and work is never batched to fill seats.
-func (p *Plan) Asientos() []string {
-	estados := p.Estados()
-	conTrabajo := map[string]bool{}
-	for i := range p.Sesiones {
-		if estados[p.Sesiones[i].ID] == Listo {
-			conTrabajo[p.Sesiones[i].Zona] = true
+// Asientos forecasts a deterministic compatible set of Zonas with ready work.
+// It is static scheduling: the Tower must still acquire and release live claims.
+// The first LISTO Sesión in each Zona queue is its candidate; Zona ids break ties.
+func (p *Plan) Asientos(root string) []string {
+	head, _ := gitHEAD(root)
+	return p.AsientosAt(root, head)
+}
+
+func (p *Plan) AsientosAt(root, head string) []string {
+	estados := p.EstadosAt(root, head)
+	index := p.SesionPorID()
+	colas := p.ColaPorZonaAt(root, head)
+
+	zonas := make([]string, 0, len(colas))
+	for zona := range colas {
+		zonas = append(zonas, zona)
+	}
+	sort.Strings(zonas)
+
+	reservados := map[string]bool{}
+	recursos := map[string]bool{}
+	var out []string
+	for _, zona := range zonas {
+		var candidata *Sesion
+		for _, id := range colas[zona] {
+			if estados[id] == Listo {
+				candidata = index[id]
+				break
+			}
+		}
+		if candidata == nil || reservaEnConflicto(candidata.Cimientos, reservados) || reservaEnConflicto(candidata.Recurso, recursos) {
+			continue
+		}
+		out = append(out, zona)
+		for _, archivo := range candidata.Cimientos {
+			reservados[archivo] = true
+		}
+		for _, recurso := range candidata.Recurso {
+			recursos[recurso] = true
 		}
 	}
-	var out []string
-	for z := range conTrabajo {
-		out = append(out, z)
-	}
-	sort.Strings(out)
 	return out
+}
+
+func reservaEnConflicto(archivos []string, reservados map[string]bool) bool {
+	for _, archivo := range archivos {
+		if reservados[archivo] {
+			return true
+		}
+	}
+	return false
 }

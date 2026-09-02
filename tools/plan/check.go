@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -13,19 +14,26 @@ import (
 // acceptance criterion is really binary. Those need a human. Pretending to check
 // them would make the pass meaningless.
 func (p *Plan) Check(root string) []Hallazgo {
+	head, err := gitHEAD(root)
+	if err != nil {
+		return []Hallazgo{{"error", "git", fmt.Sprintf("no se pudo fijar HEAD: %v", err)}}
+	}
+	return p.CheckAt(root, head)
+}
+
+// CheckAt validates all Git-dependent evidence against one immutable HEAD.
+func (p *Plan) CheckAt(root, head string) []Hallazgo {
 	var h []Hallazgo
-
 	h = append(h, p.checkZonas()...)
-	h = append(h, p.checkSesiones()...)
 	h = append(h, p.checkGrafo()...)
-	h = append(h, p.checkCimientos()...)
-
-	if part, err := p.VerificarParticion(root); err != nil {
+	h = append(h, p.checkLinaje()...)
+	h = append(h, p.checkCimientos(root)...)
+	h = append(h, p.checkSesionesAt(root, head)...)
+	if part, err := p.VerificarParticionAt(root, head); err != nil {
 		h = append(h, Hallazgo{"error", "partición", err.Error()})
 	} else {
 		h = append(h, part...)
 	}
-
 	return h
 }
 
@@ -68,44 +76,162 @@ func (p *Plan) checkZonas() []Hallazgo {
 	return h
 }
 
-func (p *Plan) checkSesiones() []Hallazgo {
+func (p *Plan) checkSesiones(root string) []Hallazgo {
+	head, _ := gitHEAD(root)
+	return p.checkSesionesAt(root, head)
+}
+
+func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 	var h []Hallazgo
 	zonas := p.ZonaPorID()
-	vistas := map[string]bool{}
+	sesionesVistas := map[string]bool{}
+	modulosVistos := map[string]bool{}
+	tareasVistas := map[string]bool{}
 
-	for _, s := range p.Sesiones {
+	for i := range p.Sesiones {
+		s := &p.Sesiones[i]
 		if s.ID == "" {
 			h = append(h, Hallazgo{"error", "sesión", "hay una Sesión sin `id`"})
 			continue
 		}
-		if vistas[s.ID] {
+		if sesionesVistas[s.ID] {
 			h = append(h, Hallazgo{"error", "sesión", fmt.Sprintf("la Sesión %q está declarada dos veces", s.ID)})
 		}
-		vistas[s.ID] = true
+		sesionesVistas[s.ID] = true
 
 		if s.Zona == "" {
 			h = append(h, Hallazgo{"error", "sesión", fmt.Sprintf("%s no declara zona", s.ID)})
+		} else if s.Zona == "cimientos" {
+			if len(s.Cimientos) == 0 {
+				h = append(h, Hallazgo{"error", "sesión", fmt.Sprintf("%s vive en zona: cimientos pero no declara ningún archivo para reservar", s.ID)})
+			}
 		} else if _, ok := zonas[s.Zona]; !ok {
-			h = append(h, Hallazgo{"error", "sesión",
-				fmt.Sprintf("%s vive en la zona %q, que no existe", s.ID, s.Zona)})
+			h = append(h, Hallazgo{"error", "sesión", fmt.Sprintf("%s vive en la zona %q, que no existe", s.ID, s.Zona)})
 		}
 
-		// Criteria authored after the work describe it; criteria authored
-		// before it constrain it. Only the second kind can fail. §12.
-		if len(s.Criterios) == 0 && s.Entrega == nil && !s.Archivada {
-			h = append(h, Hallazgo{"error", "criterios binarios",
-				fmt.Sprintf("%s no tiene criterios de aceptación", s.ID)})
+		abierta := s.Entrega == nil && !s.Archivada
+		if strings.TrimSpace(s.Resultado) == "" {
+			h = append(h, Hallazgo{"error", "resultado", fmt.Sprintf("%s debe declarar un resultado no vacío", s.ID)})
+		}
+		if abierta && len(s.Criterios) == 0 {
+			h = append(h, Hallazgo{"error", "criterios binarios", fmt.Sprintf("%s no tiene criterios de aceptación", s.ID)})
+		}
+		if abierta && len(s.Modulos) == 0 {
+			h = append(h, Hallazgo{"error", "jerarquía", fmt.Sprintf("%s no tiene Módulos enumerados", s.ID)})
 		}
 
-		if s.Ruta != "" && !contiene(RutasValidas, s.Ruta) {
-			h = append(h, Hallazgo{"error", "ruta",
-				fmt.Sprintf("%s declara la ruta %q, que no es una de: %s",
-					s.ID, s.Ruta, strings.Join(RutasValidas, ", "))})
+		if abierta {
+			h = append(h, checkRuta(s, root, head)...)
 		}
-
-		h = append(h, checkDecisiones(&s)...)
+		if abierta || len(s.Modulos) > 0 {
+			h = append(h, p.checkModulos(root, s, modulosVistos, tareasVistas)...)
+		}
+		h = append(h, checkDecisiones(s)...)
+		if s.Entrega != nil {
+			if s.Entrega.PR != nil && *s.Entrega.PR <= 0 {
+				h = append(h, Hallazgo{"error", "entrega", fmt.Sprintf("%s declara un PR que no es positivo", s.ID)})
+			}
+			if ok, detalle := entregaIntegrada(root, s.Entrega.Commit, head); !ok {
+				h = append(h, Hallazgo{"error", "entrega integrada", fmt.Sprintf("%s: %s", s.ID, detalle)})
+			}
+		}
 	}
+	return h
+}
 
+var (
+	sesionID = regexp.MustCompile(`^S[1-9][0-9]*$`)
+	moduloID = regexp.MustCompile(`^M[1-9][0-9]*\.[1-9][0-9]*$`)
+	tareaID  = regexp.MustCompile(`^T[1-9][0-9]*\.[1-9][0-9]*\.[1-9][0-9]*$`)
+)
+
+func (p *Plan) checkModulos(root string, s *Sesion, modulosVistos, tareasVistas map[string]bool) []Hallazgo {
+	var h []Hallazgo
+	if !sesionID.MatchString(s.ID) && !s.Archivada {
+		h = append(h, Hallazgo{"error", "identificadores", fmt.Sprintf("%s no es un ID plano de Sesión válido", s.ID)})
+	}
+	prefijoModulo := "M" + strings.TrimPrefix(s.ID, "S") + "."
+	for _, m := range s.Modulos {
+		if !moduloID.MatchString(m.ID) || !strings.HasPrefix(m.ID, prefijoModulo) {
+			h = append(h, Hallazgo{"error", "identificadores", fmt.Sprintf("el Módulo %q no pertenece de forma consistente a %s", m.ID, s.ID)})
+		}
+		if modulosVistos[m.ID] {
+			h = append(h, Hallazgo{"error", "identificadores", fmt.Sprintf("el Módulo %q está repetido", m.ID)})
+		}
+		modulosVistos[m.ID] = true
+		if strings.TrimSpace(m.Resultado) == "" {
+			h = append(h, Hallazgo{"error", "resultado", fmt.Sprintf("%s debe declarar un resultado no vacío", m.ID)})
+		}
+		if len(m.Rutas) == 0 {
+			h = append(h, Hallazgo{"error", "jerarquía", fmt.Sprintf("%s no declara archivos concretos", m.ID)})
+		}
+		if len(m.Tareas) == 0 {
+			h = append(h, Hallazgo{"error", "jerarquía", fmt.Sprintf("%s no tiene Tareas enumeradas", m.ID)})
+		}
+		for _, ruta := range m.Rutas {
+			normalizada, err := exactRepoFile(root, ruta)
+			if err != nil {
+				h = append(h, Hallazgo{"error", "ruta de Módulo", fmt.Sprintf("%s: %v", m.ID, err)})
+				continue
+			}
+			autorizada := false
+			if contiene(s.Cimientos, normalizada) {
+				for _, regla := range p.Cimientos.Rutas {
+					if matchRule(regla, normalizada) {
+						autorizada = true
+						break
+					}
+				}
+			} else if s.Zona != "cimientos" {
+				for _, owner := range p.owners(normalizada) {
+					if owner.Kind == "zona" && owner.ID == s.Zona {
+						autorizada = true
+					}
+				}
+			}
+			if !autorizada {
+				h = append(h, Hallazgo{"error", "autoridad de Módulo", fmt.Sprintf("%s no autoriza %q desde la Zona %q ni como Cimiento exacto reservado", s.ID, normalizada, s.Zona)})
+			}
+		}
+		prefijoTarea := "T" + strings.TrimPrefix(m.ID, "M") + "."
+		for _, t := range m.Tareas {
+			if !tareaID.MatchString(t.ID) || !strings.HasPrefix(t.ID, prefijoTarea) {
+				h = append(h, Hallazgo{"error", "identificadores", fmt.Sprintf("la Tarea %q no pertenece de forma consistente a %s", t.ID, m.ID)})
+			}
+			if tareasVistas[t.ID] {
+				h = append(h, Hallazgo{"error", "identificadores", fmt.Sprintf("la Tarea %q está repetida", t.ID)})
+			}
+			tareasVistas[t.ID] = true
+			if strings.TrimSpace(t.Resultado) == "" {
+				h = append(h, Hallazgo{"error", "resultado", fmt.Sprintf("%s debe declarar un resultado no vacío", t.ID)})
+			}
+			if strings.TrimSpace(t.Accion) == "" || len(t.Criterios) == 0 {
+				h = append(h, Hallazgo{"error", "jerarquía", fmt.Sprintf("%s necesita acción y criterios binarios", t.ID)})
+			}
+		}
+	}
+	return h
+}
+
+func checkRuta(s *Sesion, root, head string) []Hallazgo {
+	var h []Hallazgo
+	if !contiene(RutasValidas, s.Ruta.Propuesta) || strings.TrimSpace(s.Ruta.Autoridad) == "" {
+		h = append(h, Hallazgo{"error", "ruta propuesta", fmt.Sprintf("%s debe declarar ruta.propuesta (%s) y autoridad", s.ID, strings.Join(RutasValidas, ", "))})
+	}
+	if r := s.Ruta.Revalidacion; r != nil {
+		if !contiene(RutasValidas, r.Resultado) || strings.TrimSpace(r.Evidencia) == "" || strings.TrimSpace(r.Base) == "" {
+			h = append(h, Hallazgo{"error", "ruta revalidada", fmt.Sprintf("%s debe declarar resultado, base exacta y evidencia", s.ID)})
+		}
+		if r.Resultado != s.Ruta.Propuesta && strings.TrimSpace(r.Razon) == "" {
+			h = append(h, Hallazgo{"error", "ruta revalidada", fmt.Sprintf("%s cambió de %q a %q sin registrar razón", s.ID, s.Ruta.Propuesta, r.Resultado)})
+		}
+		base, err := gitOID(root, r.Base)
+		if err != nil {
+			h = append(h, Hallazgo{"error", "ruta revalidada", fmt.Sprintf("%s no declara una base Git inmutable completa: %v", s.ID, err)})
+		} else if base != head {
+			h = append(h, Hallazgo{"error", "ruta revalidada", fmt.Sprintf("%s fue revalidada sobre %s pero el HEAD fijado es %s", s.ID, base, head)})
+		}
+	}
 	return h
 }
 
@@ -151,12 +277,31 @@ func checkDecisiones(s *Sesion) []Hallazgo {
 func (p *Plan) checkGrafo() []Hallazgo {
 	var h []Hallazgo
 	index := p.SesionPorID()
+	sucesoras := map[string][]string{}
+	for _, s := range p.Sesiones {
+		if s.Archivada {
+			continue
+		}
+		for _, original := range s.Reemplaza {
+			sucesoras[original] = append(sucesoras[original], s.ID)
+		}
+	}
+	for original := range sucesoras {
+		sort.Strings(sucesoras[original])
+	}
 
 	for _, s := range p.Sesiones {
 		for _, dep := range s.DependeDe {
-			if _, ok := index[dep]; !ok {
+			d, ok := index[dep]
+			if !ok {
 				h = append(h, Hallazgo{"error", "dependencias",
 					fmt.Sprintf("%s depende de %q, que no existe", s.ID, dep)})
+				continue
+			}
+			if !s.Archivada && d.Archivada && len(sucesoras[dep]) > 0 {
+				h = append(h, Hallazgo{"error", "dependencias reemplazadas",
+					fmt.Sprintf("%s depende de %s, que fue archivada y reemplazada por %s; reescribí la dependencia hacia las sucesoras aplicables",
+						s.ID, dep, strings.Join(sucesoras[dep], ", "))})
 			}
 		}
 		for _, d := range s.Decisiones {
@@ -211,23 +356,95 @@ func (p *Plan) checkGrafo() []Hallazgo {
 	return h
 }
 
+// checkLinaje validates replacement history. Replacements keep stable IDs honest:
+// an active Sesión may supersede one or more archived Sesiones, and several active
+// Sesiones may independently point to the same archived original.
+func (p *Plan) checkLinaje() []Hallazgo {
+	var h []Hallazgo
+	index := p.SesionPorID()
+
+	for i := range p.Sesiones {
+		s := &p.Sesiones[i]
+		for _, originalID := range s.Reemplaza {
+			original, ok := index[originalID]
+			switch {
+			case originalID == s.ID:
+				h = append(h, Hallazgo{"error", "linaje",
+					fmt.Sprintf("%s no puede reemplazarse a sí misma", s.ID)})
+			case !ok:
+				h = append(h, Hallazgo{"error", "linaje",
+					fmt.Sprintf("%s reemplaza a %q, que no existe", s.ID, originalID)})
+			default:
+				if s.Archivada {
+					h = append(h, Hallazgo{"error", "linaje",
+						fmt.Sprintf("%s declara reemplazos pero está archivada", s.ID)})
+				}
+				if !original.Archivada {
+					h = append(h, Hallazgo{"error", "linaje",
+						fmt.Sprintf("%s reemplaza a %s, que no está archivada", s.ID, originalID)})
+				}
+			}
+		}
+	}
+
+	estado := map[string]int{}
+	var visit func(string, []string)
+	visit = func(id string, camino []string) {
+		switch estado[id] {
+		case 2:
+			return
+		case 1:
+			h = append(h, Hallazgo{"error", "linaje circular",
+				fmt.Sprintf("ciclo: %s", strings.Join(append(camino, id), " → "))})
+			return
+		}
+		estado[id] = 1
+		if s, ok := index[id]; ok {
+			refs := append([]string(nil), s.Reemplaza...)
+			sort.Strings(refs)
+			for _, ref := range refs {
+				if _, existe := index[ref]; existe {
+					visit(ref, append(camino, id))
+				}
+			}
+		}
+		estado[id] = 2
+	}
+
+	ids := make([]string, 0, len(index))
+	for id := range index {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	for _, id := range ids {
+		visit(id, nil)
+	}
+
+	return h
+}
+
 // checkCimientos verifies that reserved files are actually declared cimientos.
 // Reserving a file that is not shared is noise; reserving a shared file that was
 // never declared means the partition does not know it is shared.
-func (p *Plan) checkCimientos() []Hallazgo {
+func (p *Plan) checkCimientos(root string) []Hallazgo {
 	var h []Hallazgo
 	for _, s := range p.Sesiones {
 		for _, f := range s.Cimientos {
+			normalizada, err := exactRepoFile(root, f)
+			if err != nil {
+				h = append(h, Hallazgo{"error", "reserva de cimientos", fmt.Sprintf("%s: %v", s.ID, err)})
+				continue
+			}
 			declarado := false
 			for _, r := range p.Cimientos.Rutas {
-				if matchRule(r, f) {
+				if matchRule(r, normalizada) {
 					declarado = true
 					break
 				}
 			}
 			if !declarado {
 				h = append(h, Hallazgo{"error", "reserva de cimientos",
-					fmt.Sprintf("%s reserva %q, que no está declarado como cimiento", s.ID, f)})
+					fmt.Sprintf("%s reserva %q, que no está declarado como cimiento", s.ID, normalizada)})
 			}
 		}
 	}

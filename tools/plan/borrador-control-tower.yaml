@@ -10,7 +10,7 @@
 # Verificar con:  ./plan check -f borrador-control-tower.yaml
 
 schema: plan
-schema_version: 1
+schema_version: 2
 producto: control-tower
 raiz: /home/emili/projects/control-tower/Main
 
@@ -126,6 +126,9 @@ cimientos:
     # Ubicarlas en una zona fue el error de la primera pasada.
     - bin/            # toda feature que agrega un comando toca el entrypoint
     - install.sh
+    # Primer carve-out concreto: vive bajo la ruta amplia install/, pero más de
+    # una Zona necesita modificarlo. Se reserva por archivo y nadie lo posee.
+    - install/runtime-payload.mjs
     - console/        # el vocabulario del CLI crece con cada feature
     - test/console/
     - test/console-executor.test.mjs

@@ -6,17 +6,18 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 )
 
 const uso = `plan — herramienta determinista de planificación
 
-  plan check   [-f plan.yaml] [-C raíz]   valida el plan y la partición
-  plan status  [-f plan.yaml] [-C raíz]   estado calculado, colas y asientos
-  plan zonas   [-f plan.yaml] [-C raíz]   cobertura de cada zona sobre el árbol
+  plan check   [-f openspec/plan.yaml] [-C raíz] valida el dato, git y la partición
+  plan status  [-f openspec/plan.yaml] [-C raíz] estado, colas y asientos calculados
+  plan zonas   [-f openspec/plan.yaml] [-C raíz] cobertura sobre archivos rastreados
+  plan render  [-f openspec/plan.yaml] [-o openspec/ROADMAP.md] [-C raíz]
 
-La raíz por defecto es el directorio del archivo de plan.
-El estado nunca se escribe: se calcula de las dependencias, las decisiones
-abiertas y la evidencia de entrega. Ver plan-naming-convention.md §17.
+openspec/plan.yaml es la única fuente editable. openspec/ROADMAP.md es una vista
+atómica y determinista: nunca se edita a mano. El checker no adquiere locks vivos.
 `
 
 func main() {
@@ -27,8 +28,9 @@ func main() {
 
 	comando := os.Args[1]
 	fs := flag.NewFlagSet(comando, flag.ExitOnError)
-	archivo := fs.String("f", "plan.yaml", "archivo de plan")
-	raiz := fs.String("C", "", "raíz del repositorio (por defecto: el directorio del plan)")
+	archivo := fs.String("f", "openspec/plan.yaml", "archivo de plan")
+	salida := fs.String("o", "openspec/ROADMAP.md", "salida generada (sólo render)")
+	raiz := fs.String("C", "", "raíz del repositorio")
 	_ = fs.Parse(os.Args[2:])
 
 	if comando == "help" || comando == "-h" || comando == "--help" {
@@ -41,22 +43,27 @@ func main() {
 		fmt.Fprintln(os.Stderr, "✗", err)
 		os.Exit(1)
 	}
-
-	root := *raiz
-	if root == "" {
-		root = p.Raiz
-	}
-	if root == "" {
-		root = filepath.Dir(*archivo)
+	root, err := resolverRaiz(*raiz, p.Raiz, *archivo)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "✗", err)
+		os.Exit(1)
 	}
 
 	switch comando {
 	case "check":
 		os.Exit(cmdCheck(p, root))
 	case "status":
-		cmdStatus(p)
+		if err := cmdStatus(p, root); err != nil {
+			fmt.Fprintln(os.Stderr, "✗", err)
+			os.Exit(1)
+		}
 	case "zonas":
 		if err := cmdZonas(p, root); err != nil {
+			fmt.Fprintln(os.Stderr, "✗", err)
+			os.Exit(1)
+		}
+	case "render":
+		if err := cmdRender(p, root, *salida); err != nil {
 			fmt.Fprintln(os.Stderr, "✗", err)
 			os.Exit(1)
 		}
@@ -66,9 +73,23 @@ func main() {
 	}
 }
 
+func resolverRaiz(explicita, declarada, archivo string) (string, error) {
+	base := explicita
+	if base == "" {
+		base = declarada
+	}
+	if base == "" {
+		base = filepath.Dir(archivo)
+	}
+	root, err := gitOutput(base, "rev-parse", "--show-toplevel")
+	if err != nil {
+		return "", fmt.Errorf("no se pudo derivar la raíz Git desde %s: %w", base, err)
+	}
+	return canonicalRoot(root)
+}
+
 func cmdCheck(p *Plan, root string) int {
 	hallazgos := p.Check(root)
-
 	var errores, avisos int
 	for _, h := range hallazgos {
 		if h.Severidad == "error" {
@@ -77,9 +98,6 @@ func cmdCheck(p *Plan, root string) int {
 			avisos++
 		}
 	}
-
-	// Errors first, then warnings: a reader who stops after three lines should
-	// have read the three that matter.
 	for _, sev := range []string{"error", "aviso"} {
 		for _, h := range hallazgos {
 			if h.Severidad != sev {
@@ -92,11 +110,9 @@ func cmdCheck(p *Plan, root string) int {
 			fmt.Printf("%s  [%s] %s\n", marca, h.Regla, h.Detalle)
 		}
 	}
-
 	fmt.Println()
 	if errores == 0 && avisos == 0 {
-		fmt.Printf("✓ %s: %d zonas, %d Sesiones, partición válida\n",
-			p.Producto, len(p.Zonas), len(p.Sesiones))
+		fmt.Printf("✓ %s: %d zonas, %d Sesiones, partición y evidencia válidas\n", p.Producto, len(p.Zonas), len(p.Sesiones))
 		return 0
 	}
 	fmt.Printf("%s: %d error(es), %d aviso(s)\n", p.Producto, errores, avisos)
@@ -106,20 +122,38 @@ func cmdCheck(p *Plan, root string) int {
 	return 0
 }
 
-func cmdStatus(p *Plan) {
-	estados := p.Estados()
-	colas := p.ColaPorZona()
-	porZona, total := p.Avance()
-	asientos := p.Asientos()
-
+func cmdStatus(p *Plan, root string) error {
+	head, err := gitHEAD(root)
+	if err != nil {
+		return fmt.Errorf("no se pudo fijar HEAD para calcular status: %w", err)
+	}
+	var errores []string
+	for _, h := range p.CheckAt(root, head) {
+		if h.Severidad == "error" {
+			errores = append(errores, fmt.Sprintf("[%s] %s", h.Regla, h.Detalle))
+		}
+	}
+	if len(errores) > 0 {
+		return fmt.Errorf("status no disponible: la validación falló con %d error(es): %s", len(errores), strings.Join(errores, "; "))
+	}
+	estados := p.EstadosAt(root, head)
+	colas := p.ColaPorZonaAt(root, head)
+	porZona, total := p.AvanceAt(root, head)
+	asientos := p.AsientosAt(root, head)
 	fmt.Printf("%s — %s\n\n", p.Producto, total)
 
-	zonas := make([]string, 0, len(p.Zonas))
+	zonaSet := make(map[string]bool, len(p.Zonas)+1)
 	for _, z := range p.Zonas {
-		zonas = append(zonas, z.ID)
+		zonaSet[z.ID] = true
+	}
+	for zona := range colas {
+		zonaSet[zona] = true
+	}
+	zonas := make([]string, 0, len(zonaSet))
+	for zona := range zonaSet {
+		zonas = append(zonas, zona)
 	}
 	sort.Strings(zonas)
-
 	nombres := p.ZonaPorID()
 	for _, zid := range zonas {
 		cola := colas[zid]
@@ -133,19 +167,16 @@ func cmdStatus(p *Plan) {
 		fmt.Printf("%s  %s\n", nombre, porZona[zid])
 		for i, id := range cola {
 			s := p.SesionPorID()[id]
-			fmt.Printf("  #%d  %-28s %s  %s\n", i+1, truncar(s.Resultado, 28), id, estados[id])
+			fmt.Printf("  #%d  %-28s %s  %s  ruta:%s\n", i+1, truncar(s.Resultado, 28), id, estados[id], s.RutaEfectiva())
 		}
 		fmt.Println()
 	}
-
-	// The count of Zonas with ready work. The seats actually opened are the
-	// lesser of this and the human's ceiling, and the ceiling is never raised
-	// by an agent. Convention §13.
 	if len(asientos) == 0 {
-		fmt.Println("Asientos: 0 zonas con trabajo listo")
+		fmt.Println("Asientos: 0 zonas compatibles con trabajo listo (pronóstico, no locks)")
 	} else {
-		fmt.Printf("Asientos: %d zona(s) con trabajo listo — %v\n", len(asientos), asientos)
+		fmt.Printf("Asientos: %d zona(s) compatibles — %v (pronóstico, no locks)\n", len(asientos), asientos)
 	}
+	return nil
 }
 
 func cmdZonas(p *Plan, root string) error {
@@ -153,13 +184,11 @@ func cmdZonas(p *Plan, root string) error {
 	if err != nil {
 		return err
 	}
-
 	ids := make([]string, 0, len(cobertura))
 	for id := range cobertura {
 		ids = append(ids, id)
 	}
 	sort.Slice(ids, func(i, j int) bool { return cobertura[ids[i]] > cobertura[ids[j]] })
-
 	fmt.Printf("%s — %d archivos rastreados\n\n", p.Producto, totalArchivos)
 	for _, id := range ids {
 		n := cobertura[id]

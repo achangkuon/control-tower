@@ -8,7 +8,7 @@
 
 ## El resultado
 
-| Cómo cae | Primera pasada | **Segunda pasada** |
+| Cómo cae | Primera pasada | **Segunda pasada, antes de decidir** |
 |---|---:|---:|
 | Una sola zona, limpio | 7 | **17** |
 | Sólo cimientos | 4 | **—** ¹ |
@@ -17,8 +17,9 @@
 
 ¹ Las cuatro de sólo cimientos ahora tienen domicilio: `zona: cimientos` (ver más abajo).
 
-**De once cruces quedaron cinco**, y cuatro de esos cinco se resuelven partiendo la Sesión.
-El quinto es un cruce real.
+La segunda pasada dejó cinco cruces por resolver. La autoridad aprobada ya los cerró: cuatro
+originales se reemplazan por resultados de una sola Zona (`S100`–`S108`) y `S7.1` pertenece a
+Entrega como verificación terminal exclusiva. **No queda un cruce pendiente de decisión.**
 
 Lo que cambió entre pasadas no fueron las Sesiones: fue **la partición**. Yo había puesto en
 zonas cosas que en realidad toca cualquier feature.
@@ -37,8 +38,9 @@ zonas cosas que en realidad toca cualquier feature.
 | `openspec/{prd,rfc,specs,plans}`, `docs/` | Documentación | zona **Autoridad** | Los documentos de intención sí son trabajo real |
 
 Es el mismo error que cometí con `workspace/` y por la misma razón: **agrupé por nombre en
-vez de por quién lo toca.** Tres veces en un día. Es un argumento fuerte para que la regla
-—«si lo toca cualquiera, es cimiento»— esté escrita y la verifique la herramienta.
+vez de por quién necesita modificarlo.** Tres veces en un día. Es un argumento fuerte para
+escribir la regla precisa —«si más de una Zona modifica el mismo archivo, es Cimiento»— y
+hacer verificables sus declaraciones en vez de confiar en el dibujo manual.
 
 **Partición verificada**: `plan check` sobre los 441 archivos rastreados — 10 zonas más
 Cimientos, cero huérfanos, cero solapes.
@@ -86,9 +88,10 @@ trabajo **es** el sustrato compartido necesita domicilio.
 > reserven el mismo archivo.
 
 Consecuencia forzada de una decisión ya tomada, no una decisión nueva. Y ya tiene su caso:
-**`S12.3`, `S12.4` y `S12.5` declaran las tres `core.mjs` «en exclusiva»**. Hoy eso es una
-nota en prosa que nadie verifica; con reserva por archivo la herramienta las serializa sola
-sobre `core.mjs` y las deja correr en paralelo en todo lo demás.
+**`S12.3`, `S12.4` y `S12.5` declaran las tres `core.mjs` «en exclusiva»**. `plan` valida esas
+rutas exactas y su pronóstico estático no las ofrece juntas. No adquiere locks ni conoce claims
+en vivo: la Torre posterior debe serializarlas sobre `core.mjs`, con MAIN coordinando owner,
+orden, liberación y recuperación ante interrupciones.
 
 ## Las 2 que no se pueden asignar
 
@@ -104,88 +107,93 @@ para saberlo.
 
 ---
 
-## Las 4 que hay que partir
+## Las 4 originales que se reemplazan
 
-Decidiste partirlas. Acá está la propuesta, con un patrón que vale la pena ver.
+El maintainer aprobó la división después de contrastarla con la autoridad viva de
+`control-tower`. Las cuatro originales pasan a 📚 ARCHIVADO **sólo cuando** todas sus sucesoras
+`reemplaza` estén registradas y cada dependencia activa afectada haya sido reescrita hacia las
+sucesoras aplicables. El conjunto nuevo es contiguo (`S100`–`S108`) porque estas propuestas
+nunca se aplicaron. **No se renumeró ningún ID existente o aplicado.**
 
-### `S5.14` política de entrega
+### `S5.14` — tres resultados ordenados
 
-| Nueva | Resultado | Zona | Depende de |
-|---|---|---|---|
-| `S100` | el esquema de política de entrega | Contratos | — |
-| `S101` | el módulo que la aplica | Capacidades | `S100` |
-| `S102` | integrarla en la base de continuación | Entrega | `S101` |
+| Nueva | Resultado | Zona | Depende de | Cimientos | Reemplaza |
+|---|---|---|---|---|---|
+| `S100` | contrato de schema de `delivery-policy`, incluido `planning.prepare_through` fail-closed | Contratos | `S5.13` | — | `[S5.14]` |
+| `S101` | resolución de política: `prepare_through` opaco y `horizon_ceiling` salen de la política resuelta | Capacidades | `S100` | — | `[S5.14]` |
+| `S102` | continuación ligada a la política resuelta **antes** de validaciones o callbacks; sin literales de fase u horizonte | Entrega | `S101` | — | `[S5.14]` |
 
-### `S5.15` derivación de continuación
+`S5.13` se conserva donde es causal: precede el contrato que comparte
+`schemas/delivery-policy-v1.schema.json` y la política. La cadena mantiene la autoridad de
+`S5.14`: contrato → resolución → binding previo a cualquier validación/callback.
 
-| Nueva | Resultado | Zona | Depende de |
-|---|---|---|---|
-| `S103` | registrar el esquema de snapshot | Contratos | — |
-| `S104` | la derivación | Entrega | `S103` |
-| `S105` | llevarla al payload de runtime | Instalación | `S104` |
+### `S5.15` — dos resultados significativos
 
-### `S9.3` caché de dependencias
+| Nueva | Resultado | Zona | Depende de | Cimientos | Reemplaza |
+|---|---|---|---|---|---|
+| `S103` | retirar el enumerador `deriveNextModule` y sus pruebas, preservando intacto `compareWorkerClaim` | Entrega | `S5.5`, `S102` | — | `[S5.15]` |
+| `S104` | retirar módulo, schema, registro y validador de `session-plan-snapshot`; regenerar el payload sin miembros huérfanos | Contratos | `S103` | `install/runtime-payload.mjs` | `[S5.15]` |
 
-| Nueva | Resultado | Zona | Depende de |
-|---|---|---|---|
-| `S106` | los dos esquemas: fingerprint y receipt | Contratos | — |
-| `S107` | el caché de dependencias | Asientos | `S106` |
+La redacción anterior «registrar el esquema» estaba al revés: la autoridad exige **retirarlo**.
+`install/runtime-payload.mjs` es el primer Cimiento exacto que recorta una ruta amplia de Zona;
+`S104` lo reserva en exclusividad aunque el resto de su resultado viva en Contratos.
 
-### `S9.5` materializador de asientos Herdr
+### `S9.3` — Contratos, después Asientos
 
-| Nueva | Resultado | Zona | Depende de |
-|---|---|---|---|
-| `S108` | la topología Herdr | Hosts | — |
-| `S109` | el materializador de asientos | Asientos | `S108` |
+| Nueva | Resultado | Zona | Depende de | Cimientos | Reemplaza |
+|---|---|---|---|---|---|
+| `S105` | schemas cerrados de fingerprint y receipt de instalación | Contratos | — | — | `[S9.3]` |
+| `S106` | caché externa congelada de Bun con publicación atómica del receipt y `bun ci` obligatorio | Asientos | `S9.1`, `S105` | — | `[S9.3]` |
 
-### El patrón
+El resultado de caché conserva las dos causas: existe para el pool entregado por `S9.1` y no
+puede preceder a sus schemas.
 
-Las cuatro se parten igual: **primero el contrato, después lo que lo usa.** No es
-casualidad. Cruzaban porque cada una hacía dos cosas —*definir* un contrato y *usarlo*— y
-esas dos cosas viven en lugares distintos por diseño.
+### `S9.5` — Hosts, después Asientos
 
-Partirlas no es sólo para que entren en una zona: **hace que el contrato sea una entrega
-revisable por sí sola**, que es lo que el canon §6 y `work-unit-commits` ya querían.
+| Nueva | Resultado | Zona | Depende de | Cimientos | Reemplaza |
+|---|---|---|---|---|---|
+| `S107` | topología Herdr exacta y readback determinista de labels, panes y cwd | Hosts | `S1.18`, `S9.7` | — | `[S9.5]` |
+| `S108` | materialización idempotente de los asientos aprobados, sin autoridad de dispatch | Asientos | `S1.18`, `S9.7`, `S107` | — | `[S9.5]` |
 
-### Sobre los identificadores
+Los gates originales `S1.18` y `S9.7` permanecen explícitos donde protegen la materialización;
+la división no los borra por accidente.
 
-Las nuevas arrancan en `S100` para que se vea de un vistazo cuáles nacieron después de la
-migración. Cada una declara `reemplaza: S5.14` — el linaje es un campo, no parte del
-identificador, por la misma razón por la que el dueño tampoco lo es.
+## `S7.1` — verificación terminal en Entrega
 
-Las cuatro originales pasan a 📚 ARCHIVADO. **No se renumera nada** de lo existente.
+`S7.1` pertenece a la Zona **Entrega**. No crea una Zona nueva y no es una Sesión de
+Cimientos. Su trabajo es leer y verificar todas las Zonas contra **un único candidato de
+release inmutable**, identificado por commit SHA y/o tree SHA según el contrato vivo. Toda
+su evidencia terminal debe repetir ese mismo identificador. Leer una Zona no transfiere
+ownership sobre sus archivos.
 
-## La que cruza de verdad
-
-`S7.1` conformidad de release declara `openspec/plans/**`, `test/**` entero, `hosts/**`,
-`escalation/**` y `continuation/**`. Es una pasada sobre todo el repo y no hay corte que la
-achique sin romper lo que hace.
-
-**Es una zona nueva**, o corre sola con todo lo demás parado. Es exactamente el caso del
-ascensor.
+La ejecución es exclusiva respecto de ese candidato y el freeze es responsabilidad runtime de
+MAIN/Torre, no una garantía del Go tool actual. Si encuentra un defecto, `S7.1` no lo corrige:
+MAIN crea una Sesión nueva en la Zona responsable. Esa corrección invalida **toda** evidencia
+previa de `S7.1`, aunque alguna comprobación aislada todavía parezca vigente. Sólo una ejecución
+completa contra el nuevo commit SHA y/o tree SHA puede cerrarla. Support registra la evidencia
+documental; el ejecutor no adquiere propiedad sobre archivos de Autoridad.
 
 ---
 
-## Lo que esto le corrige al canon
+## Regla aprobada para todo cruce
 
-El canon §3 dice: *«Work that crosses Zonas becomes its own Zona»*. Aplicado literal a las
-once de la primera pasada daría once zonas nuevas, que es absurdo. La regla estaba escrita
-pensando en un cruce **permanente** —el ascensor— y no en una Sesión suelta.
+Se aplica al trabajo que **modifica** superficies de varias Zonas, siempre en este orden. La
+verificación terminal de sólo lectura puede inspeccionarlas todas y pertenecer a la Zona de su
+resultado:
 
-Regla propuesta, **en este orden**:
+1. **Reclasificar como Cimientos** todo archivo que deba modificar más de una Zona.
+2. **Partir la Sesión por Zona** cuando cada resultado siga siendo significativo.
+3. **Crear una Zona nueva** sólo cuando partir destruya el resultado.
+4. **Revisar la partición** si los cruces se repiten: el corte está mal, no las Sesiones.
 
-1. **Reubicar la superficie compartida.** Si cruza por un archivo que toca todo el mundo,
-   ese archivo es un cimiento y la Sesión nunca cruzaba. *Resolvió 6 de 11.*
-2. **Partir la Sesión**, una por zona. Casi siempre sale «contrato primero, uso después», y
-   da entregas más chicas. *Resolvió 4 de 11.*
-3. **Zona nueva**, sólo cuando el resultado no significa nada partido. *Resolvió 1 de 11.*
-4. **Si el patrón se repite en muchas Sesiones, las zonas están mal cortadas** — no las
-   Sesiones. Once de veinticuatro fue la señal que disparó el paso 1.
+## Decisiones cerradas en esta corrección
 
-## Pendiente
+- [x] Partición de segunda pasada aprobada.
+- [x] Reemplazos corregidos y aprobados: `S100`–`S108`.
+- [x] `zona: cimientos` documentada como domicilio sin ownership permanente.
+- [x] Regla ordenada de cuatro pasos incorporada al canon.
+- [x] `install/runtime-payload.mjs` declarado primer Cimiento exacto bajo una ruta amplia.
+- [x] `S7.1` asignada a Entrega con candidato inmutable y protocolo de reejecución completa.
 
-- [ ] Aprobar la partición de segunda pasada
-- [ ] Aprobar los cuatro cortes (`S100`–`S109`)
-- [ ] Escribir en el canon que `zona: cimientos` es válida
-- [ ] Escribir en el canon la regla de cuatro pasos para el cruce
-- [ ] Decidir si `S7.1` es zona nueva o corre sola
+`control-tower` sigue sin modificaciones en este batch; estas asignaciones son el insumo de su
+migración posterior.

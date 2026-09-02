@@ -1,0 +1,51 @@
+schema: plan
+schema_version: 2
+producto: ejemplo
+zonas:
+  - id: cocina
+    nombre: Cocina
+    rutas: [cocina/]
+  - id: patio
+    nombre: Patio
+    rutas: [patio/]
+cimientos:
+  rutas: [package.json]
+sesiones:
+  - id: S1
+    zona: cocina
+    resultado: instalar horno
+    criterios: [el horno enciende]
+    ruta:
+      propuesta: direct
+      autoridad: RFC cocina §1
+    modulos:
+      - id: M1.1
+        resultado: conectar horno
+        rutas: [cocina/horno.go]
+        tareas:
+          - id: T1.1.1
+            accion: probar encendido
+            resultado: encendido probado
+            criterios: [la prueba falla sin conexión]
+  - id: S2
+    zona: patio
+    resultado: definir riego
+    depende_de: [S1]
+    criterios: [el riego tiene contrato]
+    ruta:
+      propuesta: design-tasks
+      autoridad: PRD patio §2
+    decisiones:
+      - tipo: escala
+        pregunta: ¿riego manual o automático?
+        clase: contrato-visible
+        alcanza: criterios
+    modulos:
+      - id: M2.1
+        resultado: contrato de riego
+        rutas: [patio/riego.go]
+        tareas:
+          - id: T2.1.1
+            accion: especificar el contrato
+            resultado: contrato especificado
+            criterios: [la alternativa aprobada está representada]

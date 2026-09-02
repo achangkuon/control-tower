@@ -48,32 +48,67 @@ func matchRule(pattern, file string) bool {
 }
 
 // owners returns every owner claiming a file. More than one is a partition error.
+// An exact Cimiento may carve one file out of one broad Zona route. It does not
+// hide a real overlap between Zonas, nor an explicit exact-path contradiction.
 func (p *Plan) owners(file string) []Owner {
-	var out []Owner
+	var zonas []Owner
 	for i := range p.Zonas {
 		for _, r := range p.Zonas[i].Rutas {
 			if matchRule(r, file) {
-				out = append(out, Owner{Kind: "zona", ID: p.Zonas[i].ID, Rule: r})
+				zonas = append(zonas, Owner{Kind: "zona", ID: p.Zonas[i].ID, Rule: r})
 				break
 			}
 		}
 	}
+
+	var cimiento *Owner
 	for _, r := range p.Cimientos.Rutas {
-		if matchRule(r, file) {
-			out = append(out, Owner{Kind: "cimientos", ID: "cimientos", Rule: r})
-			break
+		if !matchRule(r, file) {
+			continue
+		}
+		o := Owner{Kind: "cimientos", ID: "cimientos", Rule: r}
+		cimiento = &o
+		if r == file {
+			break // an exact declaration wins over any broader Cimiento rule
 		}
 	}
-	return out
+	if cimiento == nil {
+		return zonas
+	}
+	if len(zonas) == 0 {
+		return []Owner{*cimiento}
+	}
+	if len(zonas) == 1 && cimiento.Rule == file && esRutaAmplia(zonas[0].Rule) {
+		return []Owner{*cimiento}
+	}
+	if len(zonas) > 1 {
+		return zonas
+	}
+	return append(zonas, *cimiento)
 }
 
-// trackedFiles lists what git tracks under root.
+func esRutaAmplia(rule string) bool {
+	return strings.HasSuffix(rule, "/") || strings.HasSuffix(rule, "/**") || strings.ContainsAny(rule, "*?[")
+}
+
+// trackedFiles lists the files in one immutable HEAD tree under root.
 //
-// git ls-files rather than a filesystem walk: it already honours .gitignore, so
-// node_modules and build output never reach the partition. An untracked file is
-// not part of the product yet, so it needs no owner.
+// git ls-tree rather than a filesystem walk or mutable index snapshot keeps a
+// complete check/render transaction on one object identity. Untracked files are
+// not part of the product yet, so they need no owner.
 func trackedFiles(root string) ([]string, error) {
-	cmd := exec.Command("git", "-C", root, "ls-files")
+	head, err := gitHEAD(root)
+	if err != nil {
+		return nil, err
+	}
+	return trackedFilesAt(root, head)
+}
+
+func trackedFilesAt(root, head string) ([]string, error) {
+	if _, err := gitOID(root, head); err != nil {
+		return nil, fmt.Errorf("HEAD de partición inválido: %w", err)
+	}
+	cmd := exec.Command("git", "-C", root, "ls-tree", "-r", "--name-only", "--full-tree", head)
 	out, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("no se pudo listar los archivos de %s con git: %w", root, err)
@@ -92,7 +127,15 @@ func trackedFiles(root string) ([]string, error) {
 // It answers the two questions that decide whether parallel work is safe:
 // does any file have two owners, and does any file have none.
 func (p *Plan) VerificarParticion(root string) ([]Hallazgo, error) {
-	files, err := trackedFiles(root)
+	head, err := gitHEAD(root)
+	if err != nil {
+		return nil, err
+	}
+	return p.VerificarParticionAt(root, head)
+}
+
+func (p *Plan) VerificarParticionAt(root, head string) ([]Hallazgo, error) {
+	files, err := trackedFilesAt(root, head)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +229,15 @@ func (p *Plan) VerificarParticion(root string) ([]Hallazgo, error) {
 // lopsided partition visible: a Zona holding 80% of the tree is a bottleneck
 // waiting to happen, and the fix is to split it.
 func (p *Plan) Cobertura(root string) (map[string]int, int, error) {
-	files, err := trackedFiles(root)
+	head, err := gitHEAD(root)
+	if err != nil {
+		return nil, 0, err
+	}
+	return p.CoberturaAt(root, head)
+}
+
+func (p *Plan) CoberturaAt(root, head string) (map[string]int, int, error) {
+	files, err := trackedFilesAt(root, head)
 	if err != nil {
 		return nil, 0, err
 	}

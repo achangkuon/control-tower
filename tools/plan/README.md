@@ -1,43 +1,40 @@
-# `plan` — herramienta determinista de planificación
+# `plan` — dato único, estado y hoja de ruta derivados
 
-Calcula todo lo que hoy los agentes escriben a mano. El contrato completo está en
-[`skills/_shared/plan-naming-convention.md`](../../skills/_shared/plan-naming-convention.md);
-la §17 es la que reparte qué calcula esta herramienta y qué sigue necesitando criterio humano.
+`openspec/plan.yaml` es la **única fuente editable** de planificación de un producto.
+`openspec/ROADMAP.md` es la **única vista humana generada**: contiene el estado actual y
+el próximo trabajo. No existen un `STATUS.md` ni un `master-index.md` paralelos.
 
+```sh
+plan check                         # usa openspec/plan.yaml y el repo actual
+plan status                        # estado, colas por Zona y asientos compatibles
+plan zonas                         # cobertura de la partición sobre git ls-files
+plan render                        # escribe openspec/ROADMAP.md atómicamente
+plan render -f otro.yaml -o salida.md -C /repo
 ```
-plan check   -f plan.yaml    valida el plan y la partición contra el árbol real
-plan status  -f plan.yaml    estado calculado, colas por zona y asientos
-plan zonas   -f plan.yaml    cobertura de cada zona sobre los archivos rastreados
-```
 
-## Por qué existe
+El contrato canónico está en
+[`skills/_shared/plan-naming-convention.md`](../../skills/_shared/plan-naming-convention.md).
 
-Un mismo hecho —«¿cerró S23?»— vivía escrito a mano en seis documentos, diez en
-`control-tower`. Ninguno se calculaba desde otro, así que mantenerlos al día era un ritual
-manual, y los rituales se saltean. El estado ahora se deriva de las dependencias, las
-decisiones abiertas y la evidencia de entrega. **Nadie lo escribe.**
-
-## Compilar
+## Compilar y verificar
 
 ```sh
 go build -o plan .
 go test ./...
 
-# El socio está en Mac:
 GOOS=darwin GOARCH=arm64 go build -o plan-darwin-arm64 .
+GOOS=darwin GOARCH=amd64 go build -o plan-darwin-amd64 .
 ```
 
-Binario único, sin dependencias en la máquina destino.
+## Esquema v2
 
-## El archivo de plan
-
-Uno por producto. Es lo único que se escribe a mano.
+La v2 reemplaza `ruta: direct` de v1 porque ese valor mezclaba dos decisiones distintas.
+No se migra automáticamente: hacerlo inventaría si el valor era propuesta o revalidación.
 
 ```yaml
 schema: plan
-schema_version: 1
+schema_version: 2
 producto: la-casa
-raiz: /ruta/al/repo
+raiz: /ruta/al/repo                 # opcional; si falta se deriva con git
 
 zonas:
   - id: cocina
@@ -45,56 +42,122 @@ zonas:
     rutas: [cocina/, test/cocina/]
 
 cimientos:
-  rutas: [package.json, core.mjs]
+  rutas: [package.json, shared/]
 
 sesiones:
   - id: S23
     zona: cocina
     resultado: instalar el horno
     depende_de: [S18]
-    cimientos: [package.json]      # archivos compartidos que reserva
-    criterios: ["el horno enciende"]
-    ruta: direct
-    decisiones:
-      - tipo: escala
-        pregunta: "¿gas o eléctrico?"
-        clase: dinero-precios-cuotas
-        alcanza: criterios          # criterios | primer-modulo | <id de Módulo>
-        contamina: [S31]
+    cimientos: [package.json]       # reservas exactas, no globs
+    recurso: [delivery-token]
+    reemplaza: []
+    criterios:
+      - el horno enciende
+    ruta:
+      propuesta: direct
+      autoridad: RFC cocina §4
+      revalidacion:                 # opcional hasta session-kickoff
+        resultado: design-tasks
+        base: 0123456789abcdef0123456789abcdef01234567
+        evidencia: readiness/S23
+        razon: la base agregó un contrato compartido
+    modulos:
+      - id: M23.1
+        resultado: conectar el horno
+        rutas: [cocina/horno.go, cocina/horno_test.go]
+        tareas:
+          - id: T23.1.1
+            accion: observar el fallo sin conexión
+            resultado: fallo de conexión observado
+            criterios: [la prueba falla por ausencia de conexión]
+          - id: T23.1.2
+            accion: implementar la conexión
+            resultado: conexión implementada
+            criterios: [la prueba de encendido pasa]
+          - id: T23.1.3
+            accion: refactorizar sin cambiar conducta
+            resultado: implementación aclarada
+            criterios: [las pruebas siguen pasando]
 ```
 
-**No hay campo `estado`.** Un estado escrito es un valor que el siguiente cálculo pisa. Lo
-que sí se declara es *evidencia*: `entrega:` con el commit que lo cerró, `diferida:` cuando
-un humano eligió postergarlo —«eligió no» no se puede calcular—, y `archivada:`.
+Los IDs son planos y permanentes: `S23 → M23.1 → T23.1.1`. Toda Sesión abierta tiene
+Módulos; todo Módulo tiene Tareas, archivos concretos y cada Tarea tiene acción más
+criterios binarios. El parser rechaza campos desconocidos, documentos YAML posteriores,
+la v1 y cualquier intento de escribir `estado` o `Área`.
 
-Tres formas de ruta, y no más, porque una partición escrita con todo el lenguaje de globs es
-una partición cuyo significado nadie puede predecir:
+## Rutas: propuesta y revalidación
 
-| Forma | Significa |
-|---|---|
-| `hosts/` | todo lo que cuelga del directorio |
-| `hosts/**` | lo mismo, explícito |
-| `core.mjs` | ruta exacta, o un patrón de un solo segmento |
+- `planificador-granular` escribe `ruta.propuesta` y su autoridad.
+- `session-kickoff` revalida una vez. Registra la ruta resultante, el `HEAD` exacto actual y
+  una referencia de evidencia/autoridad. Si cambia la propuesta, `razon` es obligatoria.
+- La revalidación gana para implementar. No existe un segundo dispatcher.
+- `plan check` falla si el `HEAD` actual ya no coincide con la base revalidada.
 
-## Qué verifica `check`
+El conjunto cerrado sigue siendo: `direct`, `design-tasks`, `full-sdd`, `blocked`.
 
-- Toda zona se define por **rutas**, no por un tema. Una zona sin rutas es un tema, y los temas no particionan nada.
-- **Zonas disjuntas**: ningún archivo con dos dueños. Es lo que hace la colisión imposible en vez de desaconsejada.
-- **Partición exhaustiva**: ningún archivo rastreado sin dueño. Usa `git ls-files`, así que lo ignorado no cuenta.
-- Rutas que no le corresponden a ningún archivo (aviso): así es como una partición se pudre.
-- Dependencias que no existen, y **ciclos** — un ciclo no es un plan lento, es un plan donde nada puede empezar nunca.
-- Toda Sesión abierta tiene criterios de aceptación binarios.
-- Una decisión `derivable` declara **autoridad y criterio falsificable**, y no pertenece a ninguna de las ocho clases que siempre escalan.
-- Una decisión que `escala` dice hasta dónde llega; sin eso no se puede saber si bloquea.
-- Toda reserva de cimiento apunta a un cimiento declarado.
+## Entrega derivada desde Git
 
-## Qué NO verifica
+`entrega` es evidencia, no estado:
 
-A propósito. Fingir que las verifica haría que la pasada no signifique nada:
+```yaml
+entrega:
+  commit: a1b2c3d4...
+  pr: 42                           # opcional; evidencia, no fuente de verdad
+```
 
-- Si el corte en zonas es un **buen** corte.
-- Si una decisión es **honestamente** derivable.
-- Si un criterio de aceptación es de verdad binario.
-- Si la contaminación semántica declarada está completa.
+`plan check` exige el OID hexadecimal completo e inmutable del formato de objetos del repositorio
+(40 caracteres para SHA-1, 64 para SHA-256): rechaza `HEAD`, ramas, expresiones como `HEAD~1`,
+hashes abreviados y argumentos con aspecto de opción. El OID debe identificar exactamente un
+commit local y ser ancestro del `HEAD` integrado fijado al comenzar la operación. Sólo entonces el
+estado derivado es `COMPLETO`. Evidencia inexistente, simbólica, lateral o no integrada falla; una
+Sesión que la declare queda bloqueada y nunca cae como `LISTO`/`PLANIFICADO`.
+Si `pr` aparece debe ser positivo; su ausencia representa políticas de push directo sin
+inventar un PR. No hay red ni dependencia de GitHub.
 
-Eso necesita un humano, o un agente con criterio.
+## Render determinista
+
+`plan render` fija un HEAD completo, valida y genera toda la vista contra ese snapshot; vuelve a
+comprobar HEAD justo antes de publicar y rehúsa el rename si cambió. La vista empieza con el Punto
+de retoma y reporta cierres determinísticamente sin inventar cuál fue el último. Todo scalar del
+plan se normaliza a una línea y se neutraliza como dato Markdown: saltos, headings, pipes,
+backticks y HTML no pueden inyectar estructura.
+
+La salida se resuelve siempre contra la raíz del repositorio del plan. El default sigue siendo
+`openspec/ROADMAP.md`; un `-o` de prueba puede elegir otro destino sólo dentro de esa raíz. Escapes,
+componentes symlink, destinos existentes no regulares y archivos regulares que no llevan el aviso
+generado por `plan` fallan; así `-o` no puede sobrescribir un archivo arbitrario. La escritura sincroniza el temporal,
+hace rename atómico y sincroniza el directorio padre; cada error se propaga. Repetirla sobre los
+mismos bytes y evidencia converge byte por byte.
+
+Los defaults canónicos son:
+
+- entrada: `openspec/plan.yaml`
+- salida: `openspec/ROADMAP.md`
+
+`-f`, `-o` y `-C` existen para pruebas y migraciones. Este repositorio no incluye esos dos
+artefactos como ejemplo; cada producto los crea al adoptar el modelo.
+
+## Qué valida `plan check`
+
+- Partición exhaustiva y disjunta contra los archivos reales de `git ls-files`.
+- Zonas definidas por rutas y reservas exactas de Cimientos declarados.
+- Dependencias, ciclos, decisiones, contaminación y linaje `reemplaza`.
+- Jerarquía completa Zona → Sesión → Módulo → Tarea, IDs únicos/coherentes y resultados no vacíos.
+- Rutas de Módulo exactas, normalizadas, relativas al repo, sin symlinks y autorizadas por la Zona
+  de la Sesión o por una reserva exacta de Cimiento; los nuevos archivos se clasifican por la misma
+  partición determinista.
+- Criterios binarios declarados para Sesiones y Tareas abiertas.
+- Propuesta/revalidación de ruta y base Git exacta.
+- Evidencia de entrega local e integrada; PR opcional positivo.
+
+## Frontera honesta
+
+`plan status` ejecuta primero la validación aplicable y falla cerrado: nunca muestra evidencia de
+entrega inválida o no verificable como trabajo ejecutable. El pronóstico evita simultaneidad cuando
+las primeras Sesiones listas comparten un Cimiento exacto o la misma identidad exacta de `Recurso`.
+
+`plan` valida datos y partición, deriva estado desde Git, pronostica asientos compatibles y
+renderiza. **No** adquiere reservas vivas, autentica la identidad del owner/invocante, recupera locks stale
+ni congela el candidato runtime de S7.1. MAIN/Tower deberá hacer eso en una fase posterior.
+Un pronóstico compatible no es un lock.

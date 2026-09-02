@@ -34,7 +34,13 @@ Never add a fifth level. Never rename a level.
 | **Zona** | **The files it owns.** Exclusive to one agent while claimed | — |
 | **Sesión** | One independently reviewable result, inside one Zona | estimate |
 | **Módulo** | Concrete files that change together | estimate |
-| **Tarea** | One atomic action — minimum 3 per Módulo | — |
+| **Tarea** | One atomic action with a declared observable result — minimum 3 per Módulo | — |
+
+Every Sesión, Módulo and Tarea declares a nonblank `resultado`; every Tarea also declares its atomic `accion`. A Módulo route is one
+normalized exact repository-relative file: never an absolute path, directory, pattern, glob,
+`..`, empty component or symlink escape. It must belong to the Sesión's Zona or equal one of
+that Sesión's exact Cimiento reservations. New files are valid when the declared partition
+deterministically assigns their normalized path.
 
 **The product is not a level.** It is the frame around the tree. A constant carries no
 information, and a level that never varies is a column of noise in every table.
@@ -43,6 +49,10 @@ information, and a level that never varies is a column of noise in every table.
 
 A product has exactly **one plan**, with no closing date. New scope becomes new Sesiones
 inside an existing Zona, or a new Zona. It never becomes a second plan.
+
+The only editable planning source is `openspec/plan.yaml`. The only generated human view is
+`openspec/ROADMAP.md`, which includes current status and next work. A separate generated
+`STATUS.md` or `master-index.md` is forbidden because it would duplicate the same data.
 
 This is what removes the worst failure of the previous model: with several plans, the reader
 sees `40%` on Plan 1 and cannot tell *which* Sesiones are still open, so old work is
@@ -81,9 +91,20 @@ touches all three, so the three agents serialize.
 
 ### Work that crosses Zonas
 
-It becomes **its own Zona**, and declares which Zonas it depends on. An elevator added to a
-half-built house is its own zone that waits for the floors it connects. Never let one Sesión
-claim two Zonas — that reintroduces the collision the partition exists to prevent.
+Resolve a crossing in this order:
+
+1. **Reclassify the shared surface as Cimientos.** Any file that more than one Zona needs to
+   modify is shared terrain, regardless of which broad directory contains it.
+2. **Split the Sesión by Zona** when each resulting outcome remains independently meaningful.
+3. **Create a new Zona only when splitting destroys the result.** The new Zona declares the
+   Zonas it depends on.
+4. **If crossings recur, the partition is wrong.** Revisit the Zona cut instead of multiplying
+   exceptions or cross-Zona Sesiones.
+
+This rule governs work that **modifies** surfaces in multiple Zonas. Read-only terminal
+verification may inspect every Zona while remaining in the Zona that owns its outcome; reading
+files does not transfer ownership. A Sesión still belongs to exactly one Zona. It may additionally
+reserve declared Cimientos, but it never claims two Zonas.
 
 ### One agent per Zona
 
@@ -92,11 +113,18 @@ A Zona is exclusive while claimed. If a Zona becomes a bottleneck, that is the s
 
 ## 4. Cimientos — shared paths, reserved per file
 
-`Cimientos` are the paths every Zona depends on and none of them owns: dependency manifests,
-CI config, shared libraries and types, the migration lane, the agent terrain files.
+`cimientos.rutas` classifies shared terrain that no Zona owns permanently: dependency
+manifests, CI config, shared libraries and types, the migration lane, the agent terrain files.
+Classification rules may name exact files, directories, or supported path patterns. By contrast,
+`sesiones[].cimientos` is a reservation list and MUST contain exact file paths only.
 
-**The test is one question**: *if I change this, can I break another agent's work even though
-they never touched this file?* If yes, it is a cimiento.
+**The deterministic threshold:** any exact file that needs modification by more than **one Zona**
+is a Cimiento. The threshold is not «more than two agents», and physical location inside a broad
+Zona route does not override it. A declared exact-file Cimiento may carve that file out of one
+broad Zona route; it never masks a genuine overlap between two or more Zonas.
+
+A second useful test is: *if I change this, can I break another agent's work even though they
+never touched this file?* If yes, it is also a cimiento.
 
 | Is a cimiento | Is not |
 |---|---|
@@ -106,17 +134,24 @@ they never touched this file?* If yes, it is a cimiento.
 | CI config, shared test config | Per-Zona test fixtures |
 | Agent terrain files (`CLAUDE.md`, `AGENTS.md`) | Plans and specs |
 
-**Cimientos are NOT a Zona.** They are a declared list of paths with **per-file reservation**:
+**Cimientos are not permanently owned by a Zona.** They are a declared list of paths with
+**exclusive per-file reservation**:
 
-- Any agent may change the cimientos its own work requires.
-- Before starting, it **reserves the specific files**. The tool records the reservation.
-- If another agent holds one of those files, the tool blocks and the orchestrator decides
-  who goes first.
+- Any agent may declare the Cimientos its own Sesión requires.
+- The plan records each reservation as an exact file path.
+- Only one agent may edit a reserved file at a time. Cimientos do **not** authorize concurrent writes.
+- `plan check` validates declarations and `plan status` forecasts a compatible deterministic set;
+  neither command acquires a live lock or knows whether another agent already holds the file.
+- The later Tower runtime, coordinated by MAIN, authoritatively acquires and releases reservations,
+  records owner identity, prevents stale simultaneous starts, and recovers stale or interrupted claims.
 
-Making cimientos a Zona would idle every other agent behind a one-line change to a
-dependency manifest. Per-file reservation freezes only the file actually in dispute, which
-is almost never. And because the tool checks it, the orchestrator never reads diffs to find
-collisions — it appears only when two reservations meet.
+`zona: cimientos` is valid when a Sesión's primary result consists only of Cimientos. This is
+an execution domicile, not permanent ownership: exclusivity remains per exact file, so two
+such Sesiones may run together only when their reservations are disjoint.
+
+Treating all Cimientos as one coarse lock would idle every other agent behind a one-line
+manifest change. Per-file reservation constrains only the exact file in dispute once the Tower
+acquires it, while MAIN keeps delivery ordered.
 
 ## 5. Time is an estimate, never a limit
 
@@ -169,6 +204,12 @@ A Sesión's identifier is flat and sequential across the whole product: `S23`, `
 - **It is never renumbered.** Every renumbering silently breaks references already written
   in memories, PR titles, comments, and other Sesiones' dependencies — a cost paid in
   silence, months later.
+- **Replacement is explicit lineage, never renumbering.** A new Sesión may declare
+  `reemplaza: [S14, S15]`; every referenced original must exist and be `ARCHIVADO`, the new
+  Sesión must remain active, self-reference and cycles are invalid, and several new Sesiones
+  may point to the same archived original. Before an original is archived, every successor and
+  every affected dependency edge must be registered: an active Sesión may not depend on an
+  archived original that has successors, and must name the applicable replacement Sesión(s).
 - **It is not a reading order.** Humans read the roadmap by Zona and position (§10). The
   identifier is a name, not a place in a queue.
 
@@ -186,23 +227,39 @@ A Sesión's identifier is flat and sequential across the whole product: `S23`, `
 
 Do not add, translate, combine, or invent states.
 
-> **Status is derived, never authored.** It is computed from `Depende de`, the open decisions
-> (§12), and git — a merged PR is what makes a Sesión `COMPLETO`. An agent that writes a
-> status is writing a value the next computation will overwrite.
+> **Status is derived, never authored.** It is computed from `Depende de`, open decisions
+> (§12), and local Git evidence. `entrega.commit` must be the repository object's immutable,
+> unabbreviated hexadecimal OID (never `HEAD`, a branch, an expression or a short hash), identify
+> that exact commit, and be an ancestor of the transaction's immutable integrated `HEAD` snapshot
+> before a Sesión becomes `COMPLETO`. PR metadata is optional evidence for repositories with direct-push delivery;
+> when present it must be positive and never replaces commit ancestry. An agent that writes
+> a status is writing a value the next computation will overwrite.
 
 `BLOQUEADO` is *cannot*; `DIFERIDO` is *chose not to*. Keeping them apart is the whole point.
 
 ## 10. The roadmap is generated
 
-The roadmap is a **view**, rendered from the plan data. No agent writes it, and no agent
-reconciles it. It carries, in this order:
+`openspec/ROADMAP.md` is a **view**, rendered only from `openspec/plan.yaml`. No agent writes
+or reconciles it by hand. It starts with a clear generated/do-not-edit notice and then carries:
 
-1. **📍 Punto de retoma** — 3 to 6 lines: what closed last, what comes next, what decision is
-   pending. Rewritten in full, never appended. Dated history belongs in git and PRs.
-2. **Sesiones abiertas, agrupadas por Zona** — one short ordered list per Zona. Position
-   first, identifier small, so no open Sesión can hide behind a percentage.
-3. **Avance** — see §11.
-4. **Capacidad** — how many Zonas have ready work (§13).
+1. **📍 Punto de retoma first** — which Sesiones are recorded closed, what comes next, and what
+   decision is pending. Declaration order does not prove which closure was latest; without an
+   explicit trustworthy ordering source the view MUST NOT claim a “last” close. It is derived
+   and rewritten in full, never appended. Dated history belongs in Git and PRs.
+2. **Current status and next executable work**, followed by open Sesiones grouped by Zona and
+   their deterministic queues. Position comes first so work cannot hide behind a percentage.
+3. **Avance** — completed Sesiones / enumerated Sesiones, total and per Zona (§11).
+4. **Blockers and route evidence** — planning proposal plus implementation revalidation.
+5. **Módulo/Tarea detail** needed to execute and review the enumerated work.
+6. **Capacidad** — the static compatible forecast (§13), explicitly not a live lock.
+
+No timestamp, hostname or incidental environment value may enter the view. Every plan-controlled
+scalar is normalized to one line and escaped as Markdown data, never interpreted as headings,
+tables, code or HTML. Rendering fixes one exact HEAD for validation and generation, refuses
+publication if HEAD changes, resolves the output inside the plan repository (canonical default
+`openspec/ROADMAP.md`), rejects symlink/non-regular destinations, and durably writes by synced
+temporary file, atomic rename and parent-directory sync. Repeated runs over the same plan and
+Git evidence converge byte for byte.
 
 One column per Zona, `#1 #2 #3` inside it. **Within a Zona the order is the order**, because
 dependencies are mostly local. The disorder of a single global queue came from mixing Zonas
@@ -230,7 +287,8 @@ Derived, never authored. Recompute from Sesión states.
 | `Estado` | **Computed** (§9). Never written. |
 | `Depende de` | Sesión IDs that must reach `COMPLETO` first, or `—`. IDs, never prose. |
 | `Área` | **Derived from the Zona.** Never hand-written. |
-| `Cimientos` | The shared files this Sesión will reserve, or `—`. |
+| `Cimientos` | The exact shared files this Sesión will reserve, or `—`. |
+| `Reemplaza` | Archived Sesión IDs superseded by this result, as a list; `—` if none. |
 | `Recurso` | Shared non-file resources it claims: DB mode, delivery token. `—` if none. |
 | `Decisiones` | The decision points it is expected to hit, each derivable or escalating (§14). |
 
@@ -268,10 +326,14 @@ never rides along and never closes silently with its parent.
 Two Sesiones may run concurrently when all three hold:
 
 1. **Graph independence** — neither is in the other's `Depende de`, transitively.
-2. **Different Zona** — guaranteed disjoint by §3, so this is a lookup, not an analysis.
+2. **Different Zona** — guaranteed disjoint by §3, except that two `zona: cimientos`
+   Sesiones may coexist when their exact reservations are disjoint.
 3. **Disjoint `Recurso`** and no conflicting Cimientos reservation.
 
-**Available seats = the number of Zonas with ready work.** Not a fixed number.
+**Available seats = a deterministic compatible forecast of Zonas with ready work.** The first
+ready Sesión in each Zona queue is considered in stable Zona order; a candidate whose exact
+Cimientos or exact exclusive `Recurso` identities intersect an earlier candidate is not offered
+concurrently. This is not a live claim.
 
 The human sets a **ceiling** — how many agents they want to supervise. The seats actually
 opened are `min(Zonas con trabajo listo, techo)`. The ceiling is a human decision that
@@ -378,15 +440,16 @@ ambiguity about behavior or contract.
 
 ### Who decides, and when
 
-The route is decided at two moments, and the previous model never said which one won:
+The route is recorded at two moments in one structure; a single ambiguous route value is invalid:
 
-1. **At planning**, the route is **proposed** — that is when the full scope and the
-   dependency graph are visible.
-2. **At implementation**, it is **re-verified** — the base may have moved since.
+1. **At planning**, `ruta.propuesta` records the proposed route plus its exact authority.
+2. **At implementation**, `ruta.revalidacion` may be added once. It records the resulting route,
+   the exact current Git `HEAD`, and an evidence/authority reference. It is absent before kickoff.
 
-**The implementation-time decision wins, and it must record why it changed.** A Sesión
-planned `direct` that repeatedly runs `full-sdd` means the plan is being written badly, and
-that signal is worth more than the individual correction.
+Both values use the same closed route set. **The implementation-time revalidation wins.** When it
+differs from the proposal, it also records a mandatory reason. `session-kickoff` performs this
+revalidation once and sends the exact delta to Support; it does not create a second dispatcher.
+A changed Git base invalidates the old revalidation instead of silently reusing it.
 
 ## 16. Proportional output
 
@@ -414,8 +477,11 @@ that will be overwritten, and doing it less reliably.
 | Available seats | Semantic contamination between Sesiones |
 | `Área`, from the Zona | |
 | Partition validity: disjoint, exhaustive, paths real | |
-| Cimientos reservations and conflicts | |
-| The rendered roadmap and `STATUS` | |
+| Declared Cimientos reservations and static scheduling conflicts | |
+| Replacement lineage: resolved references, archive direction, dependency rewiring and acyclicity | |
+| Delivery evidence: full immutable commit OID resolution and ancestry from one integrated `HEAD` snapshot | |
+| Route/base record structure and whether a changed route states its reason | Whether the proposed or revalidated route is the honest one |
+| The rendered `openspec/ROADMAP.md` view | |
 
 ## 18. Agent compliance checklist
 
@@ -423,11 +489,11 @@ Only what the tool cannot check. Everything else is enforced, not remembered.
 
 - [ ] Every level is Zona, Sesión, Módulo or Tarea — no other noun, and no second plan
 - [ ] Every Zona is defined by real paths, not by a theme
-- [ ] Work crossing Zonas became its own Zona, not a Sesión claiming two
+- [ ] Crossings followed the order: Cimientos → split by Zona → new Zona; recurring crossings reopened the partition
 - [ ] Time appears only as `est:`, never as a constraint
 - [ ] No agent wrote a status, a `%`, a queue position, or an `Área`
 - [ ] A Sesión that outgrew one PR was split into Sesiones, not renamed
-- [ ] Every Sesión carries `Zona`, `Depende de`, `Cimientos`, `Recurso` and `Decisiones`
+- [ ] Every Sesión carries `Zona`, `Depende de`, `Cimientos`, `Reemplaza`, `Recurso` and `Decisiones`
 - [ ] Every Sesión carries binary acceptance criteria, authored before the work started
 - [ ] No Sesión is `COMPLETO` with an unchecked box; overflow scope got its own ID
 - [ ] Every `derivable` decision names an approved authority **and** a falsifiable criterion
@@ -436,5 +502,7 @@ Only what the tool cannot check. Everything else is enforced, not remembered.
 - [ ] A parked decision carries question, evidence, options with consequence, origin,
       checkpoint and class
 - [ ] A Sesión is `BLOQUEADO` only per §14 — never merely because a decision escalates
+- [ ] Planning proposed a route with authority; kickoff revalidated it against exact current Git evidence
 - [ ] A route change at implementation time recorded why it changed
+- [ ] Nobody hand-edited `openspec/ROADMAP.md` or created parallel generated status/index files
 - [ ] Artifacts omitted on a small product are declared on the plan, not silently skipped

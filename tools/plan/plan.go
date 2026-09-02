@@ -1,13 +1,13 @@
 // Package main implements `plan`, the deterministic planning tool.
 //
-// The plan is data. Everything derivable — a Sesión's state, the queue inside a
-// Zona, the percentage, available seats, a Sesión's Área — is computed here and
-// never written by hand. See skills/_shared/plan-naming-convention.md §17 for the
-// split between what this tool owns and what a human must still judge.
+// openspec/plan.yaml is the only mutable planning source. Everything derivable —
+// state, queues, progress, available seats, Área and openspec/ROADMAP.md — is
+// computed here and never written by hand.
 package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -33,16 +33,14 @@ type Zona struct {
 	DependeDe []string `yaml:"depende_de"`
 }
 
-// Cimientos are the shared paths every Zona depends on and none of them owns.
-// They are not a Zona: they are reserved per file.
+// Cimientos classifies shared terrain that no Zona owns. Its rules may be
+// directories or patterns; each Sesion reservation must still name exact files.
 type Cimientos struct {
 	Rutas []string `yaml:"rutas"`
 }
 
 // Sesion is one independently reviewable result, inside exactly one Zona.
-//
-// There is deliberately no Estado field. State is derived (see state.go); a
-// written state is a value the next computation overwrites.
+// There is deliberately no Estado or Área field: both are derived.
 type Sesion struct {
 	ID         string     `yaml:"id"`
 	Zona       string     `yaml:"zona"`
@@ -52,54 +50,67 @@ type Sesion struct {
 	Recurso    []string   `yaml:"recurso"`
 	Criterios  []string   `yaml:"criterios"`
 	Decisiones []Decision `yaml:"decisiones"`
-	Ruta       string     `yaml:"ruta"`
+	Reemplaza  []string   `yaml:"reemplaza"`
+	Modulos    []Modulo   `yaml:"modulos"`
+	Ruta       RutaSesion `yaml:"ruta"`
 	Est        string     `yaml:"est"`
-
-	// Entrega is evidence of closure, not a state: the merge that shipped it.
-	// The state COMPLETO is derived from this, never asserted directly.
-	Entrega *Entrega `yaml:"entrega"`
-
-	// Diferida records an explicit human choice to postpone. It is the one
-	// state input a human owns, because "chose not to" cannot be computed.
-	Diferida bool `yaml:"diferida"`
-
-	// Archivada closes a Sesión for traceability without claiming delivery.
-	Archivada bool `yaml:"archivada"`
+	Entrega    *Entrega   `yaml:"entrega"`
+	Diferida   bool       `yaml:"diferida"`
+	Archivada  bool       `yaml:"archivada"`
 }
 
-// Entrega is the merge evidence that makes a Sesión COMPLETO.
+// Modulo groups concrete files that change together inside a Sesion.
+type Modulo struct {
+	ID        string   `yaml:"id"`
+	Resultado string   `yaml:"resultado"`
+	Rutas     []string `yaml:"rutas"`
+	Est       string   `yaml:"est"`
+	Tareas    []Tarea  `yaml:"tareas"`
+}
+
+// Tarea is one atomic action with observable, binary criteria.
+type Tarea struct {
+	ID        string   `yaml:"id"`
+	Accion    string   `yaml:"accion"`
+	Resultado string   `yaml:"resultado"`
+	Criterios []string `yaml:"criterios"`
+}
+
+// RutaSesion distinguishes the planning proposal from the implementation-time
+// revalidation. The latter may be absent until session-kickoff runs.
+type RutaSesion struct {
+	Propuesta    string        `yaml:"propuesta"`
+	Autoridad    string        `yaml:"autoridad"`
+	Revalidacion *Revalidacion `yaml:"revalidacion"`
+}
+
+// Revalidacion is the one implementation-time route decision. Base is the exact
+// currently checked out HEAD; Evidencia identifies the authority/readiness proof.
+type Revalidacion struct {
+	Resultado string `yaml:"resultado"`
+	Base      string `yaml:"base"`
+	Evidencia string `yaml:"evidencia"`
+	Razon     string `yaml:"razon"`
+}
+
+// Entrega is evidence, never asserted state. PR is optional because direct-push
+// repositories still have integrated commits.
 type Entrega struct {
 	Commit string `yaml:"commit"`
-	PR     int    `yaml:"pr"`
+	PR     *int   `yaml:"pr"`
 }
 
 // Decision is a decision point the Sesión is expected to hit.
 type Decision struct {
-	// Tipo is "derivable" or "escala".
-	Tipo string `yaml:"tipo"`
-
-	Pregunta string `yaml:"pregunta"`
-
-	// Criterio and Autoridad are required when Tipo is "derivable": an approved
-	// authority plus a falsifiable criterion. Convention §14.
-	Criterio  string `yaml:"criterio"`
-	Autoridad string `yaml:"autoridad"`
-
-	// Clase is required when Tipo is "escala" and the decision falls in one of
-	// the eight always-escalate classes.
-	Clase string `yaml:"clase"`
-
-	// Alcanza says where the decision first lands: "criterios", "primer-modulo",
-	// or a later Módulo id. It decides whether the Sesión is BLOQUEADO.
-	Alcanza string `yaml:"alcanza"`
-
-	// Contamina lists Sesión IDs whose acceptance criteria assume an answer,
-	// when that contamination is invisible in the graph, Zona and Recurso.
+	Tipo      string   `yaml:"tipo"`
+	Pregunta  string   `yaml:"pregunta"`
+	Criterio  string   `yaml:"criterio"`
+	Autoridad string   `yaml:"autoridad"`
+	Clase     string   `yaml:"clase"`
+	Alcanza   string   `yaml:"alcanza"`
 	Contamina []string `yaml:"contamina"`
 }
 
-// ClasesQueEscalan is the closed set from convention §14. A decision touching
-// any of these is never derivable, even with authority and criterion.
 var ClasesQueEscalan = []string{
 	"contrato-visible",
 	"operacion-irreversible",
@@ -111,10 +122,9 @@ var ClasesQueEscalan = []string{
 	"dependencias-o-evidencia-contradictorias",
 }
 
-// RutasValidas is the closed set of execution routes from convention §15.
 var RutasValidas = []string{"direct", "design-tasks", "full-sdd", "blocked"}
 
-// Load reads and parses a plan file. It does not validate it; see Check.
+// Load strictly reads one schema v2 plan document.
 func Load(path string) (*Plan, error) {
 	raw, err := os.ReadFile(path)
 	if err != nil {
@@ -122,25 +132,27 @@ func Load(path string) (*Plan, error) {
 	}
 
 	var p Plan
-	// KnownFields catches a misspelled key instead of silently ignoring it —
-	// a typo in a plan is a wrong plan, not a plan with a missing field.
 	dec := yaml.NewDecoder(strings.NewReader(string(raw)))
 	dec.KnownFields(true)
 	if err := dec.Decode(&p); err != nil {
 		return nil, fmt.Errorf("%s no es un plan válido: %w", path, err)
 	}
-
+	var trailing any
+	if err := dec.Decode(&trailing); err != io.EOF {
+		if err == nil {
+			return nil, fmt.Errorf("%s no es un plan válido: contiene otro documento YAML", path)
+		}
+		return nil, fmt.Errorf("%s no es un plan válido después del primer documento: %w", path, err)
+	}
 	if p.Schema != "plan" {
 		return nil, fmt.Errorf("%s: se esperaba `schema: plan`, se encontró %q", path, p.Schema)
 	}
-	if p.SchemaVersion != 1 {
-		return nil, fmt.Errorf("%s: schema_version %d no soportada (esta herramienta lee 1)", path, p.SchemaVersion)
+	if p.SchemaVersion != 2 {
+		return nil, fmt.Errorf("%s: schema_version %d no soportada (esta herramienta lee 2; v1 tenía una ruta ambigua y requiere migración)", path, p.SchemaVersion)
 	}
-
 	return &p, nil
 }
 
-// ZonaPorID indexes zones by id.
 func (p *Plan) ZonaPorID() map[string]*Zona {
 	out := make(map[string]*Zona, len(p.Zonas))
 	for i := range p.Zonas {
@@ -149,7 +161,6 @@ func (p *Plan) ZonaPorID() map[string]*Zona {
 	return out
 }
 
-// SesionPorID indexes Sesiones by id.
 func (p *Plan) SesionPorID() map[string]*Sesion {
 	out := make(map[string]*Sesion, len(p.Sesiones))
 	for i := range p.Sesiones {
@@ -158,11 +169,19 @@ func (p *Plan) SesionPorID() map[string]*Sesion {
 	return out
 }
 
-// Area returns a Sesión's Área: the paths of its Zona. Convention §12 —
-// Área is derived, never hand-written.
+// Area derives a Sesión's writable Zona paths.
 func (p *Plan) Area(s *Sesion) []string {
 	if z, ok := p.ZonaPorID()[s.Zona]; ok {
 		return z.Rutas
 	}
 	return nil
+}
+
+// RutaEfectiva returns the implementation revalidation when present; otherwise
+// it returns the planning proposal.
+func (s *Sesion) RutaEfectiva() string {
+	if s.Ruta.Revalidacion != nil {
+		return s.Ruta.Revalidacion.Resultado
+	}
+	return s.Ruta.Propuesta
 }
