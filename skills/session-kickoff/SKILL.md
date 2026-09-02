@@ -1,55 +1,68 @@
 ---
 name: session-kickoff
-description: "Trigger: start session, continue session, session kickoff, resume session. Route one approved Sesión through the proportional execution path."
+description: "Trigger: start session, continue session, resume session. Selecciona una Sesión existente y revalida una vez su ruta antes de implementar."
 license: Apache-2.0
 metadata:
   author: emili
-  version: "2.1"
+  version: "3.0"
 ---
 
 ## Activation Contract
 
-Activate for generic intent to start or continue a work session: “start”, “kickoff”,
-“continue”, “resume”, or equivalent. This parent owns mode detection and routing only.
+Activa para iniciar o continuar trabajo. Lee `../_shared/plan-naming-convention.md`,
+`openspec/plan.yaml` y la vista generada. Selecciona una Sesión ya enumerada; no descompone alcance.
 
 ## Hard Rules
 
-- Detect the project and existing session state from Engram before choosing new or continuation mode.
-- Do not invent a Plan, Sesión, Módulo, Tarea, status, or acceptance criterion. Load `planificador-granular` for approved-scope decomposition.
-- Select exactly one route for one already-enumerated Sesión. Never run SDD independently for each Módulo.
-- `direct` and `design-tasks` use a fresh general implementation executor, not an `sdd-*` phase.
-- `full-sdd` is the only route that invokes the managed SDD pipeline, once for the whole Sesión.
-- Run one readiness check before routing: current base, fresh authority, current evidence, executable Session contract, binary criteria, and decision contamination location must agree.
-- After readiness passes, do not semantically re-audit the Session unless base, evidence, criteria, scope, or authority changes.
-- An always-escalate decision blocks the Session only when it contaminates acceptance criteria/first Módulo or another Sesión names it in `Contamina:`. If it reaches only a later Módulo, park that Módulo and continue honestly up to it. Documents cannot substitute maintainer authority.
-- Preserve the canonical four-level hierarchy and seven statuses from `_shared/plan-naming-convention.md`.
+- `openspec/plan.yaml` es la única fuente editable; `openspec/ROADMAP.md` es una vista. No
+  inventes Sesiones, Módulos, Tareas, estados ni criterios.
+- Seleccioná una Sesión existente y revalidá su `ruta.propuesta` **una vez** contra autoridad,
+  evidencia y base actuales. La revalidación gana para implementar.
+- El delta `ruta.revalidacion` registra: `resultado` del conjunto cerrado, `base` igual al `HEAD`
+  Git exacto actual, referencia `evidencia` y `razon` obligatoria cuando cambia la propuesta.
+- Enviá ese delta exacto a Support, único autor del plan. No edites el YAML ni el ROADMAP.
+- No crees un segundo dispatcher. Conservá `direct`, `design-tasks`, `full-sdd`, `blocked`.
+- `direct` y `design-tasks` usan un ejecutor general fresco. `full-sdd` corre el pipeline una sola
+  vez para toda la Sesión. Nunca SDD por Módulo.
+- Leé el pronóstico estático de compatibilidad. `plan status`/`ROADMAP` **no adquieren locks**.
+  Cuando MAIN/Tower runtime exista, exigí adquisición viva antes de editar Cimientos exactos o
+  recursos exclusivos. Si no existe, reportá la ausencia; jamás finjas owner, lock o recuperación.
+- Una decisión que escala bloquea sólo si alcanza criterios/primer Módulo o contaminación externa.
+  Si alcanza un Módulo posterior, estacioná ese Módulo y avanzá sólo hasta el checkpoint honesto.
 
 ## Decision Gates
 
-| Route | Action |
+| Condición revalidada | Ruta resultante |
 |---|---|
-| No approved scope | Stop and route to `project-kickoff` or `architecture-audit`. |
-| `direct` | Fresh general implementation executor using the approved Session contract. No `sdd-*` phase. |
-| `design-tasks` | Load `session-plan` in compact technical-elaboration mode, then use the same fresh executor. No proposal/spec. |
-| `full-sdd` | Run `sdd-propose` → `sdd-spec` → `sdd-design` → `sdd-tasks` → `sdd-apply` → `sdd-verify` once for the Session. |
-| `blocked` | Stop and ask one maintainer decision. |
+| Contrato binario y decisiones derivables | `direct`. |
+| Resultado fijo; falta descubrimiento técnico acotado para Tareas existentes | `design-tasks`. |
+| Comportamiento/lifecycle/contrato compartido requiere diseño dentro de autoridad | `full-sdd`. |
+| Autoridad stale/ausente, evidencia contradictoria o decisión contamina criterios/primer Módulo | `blocked`. |
 
 ## Execution Steps
 
-1. Detect the project and load the current plan/status from Engram.
-2. For a new session, pass approved scope to `planificador-granular`; for continuation, select the recorded Sesión.
-3. Perform the readiness check once and record the checked base/evidence/criteria/scope/authority identity plus contamination location. If any changes later, rerun readiness; otherwise reuse it without semantic re-audit.
-4. Load only the selected route. For `design-tasks`, `session-plan` refines the named Session's existing Tareas and persists one compact Engram delta.
-5. For `direct` or `design-tasks`, hand the fresh executor the approved Session contract, existing Módulos/Tareas, binary acceptance criteria, project instructions, applicable project skills, Strict TDD when active, and independently revertible ≤400-authored-line work-unit commit boundaries.
-6. Run every Módulo as `apply → tests → focused review → Engram checkpoint`; the executor does not create a second hierarchy or per-Module SDD.
-7. For `full-sdd`, run the managed pipeline once for the whole Session; its `sdd-apply` and `sdd-verify` stages produce and verify the result. Do not invoke a second executor or apply pass.
-8. Run one integral requirements/runtime verification, then load `session-doc` for final closure. Do not advance with a failed criterion.
+1. Ejecutá/consumí `plan check` y `plan status`; seleccioná una Sesión existente LISTO y anunciá
+   `Zona #posición → ID`, explicando por qué las posiciones previas cerraron o no aplican.
+2. Capturá el `HEAD` exacto del repositorio y revalidá alcance, autoridad, evidencia, criterios y
+   contaminación una vez. No reaudites semánticamente si nada cambia.
+3. Construí un delta acotado para `ruta.revalidacion`. Si cambia, incluí razón concreta. Pedí a
+   Support aplicarlo y regenerar ROADMAP; no empieces sobre una base que ya cambió.
+4. Confirmá Zona, Cimientos exactos, recursos, dependencias y pronóstico. Si Tower runtime existe,
+   obtené por MAIN su adquisición viva antes de editar superficies reservadas/exclusivas.
+5. Ejecutá la ruta resultante:
+   - `direct`: ejecutor fresco con contrato, Módulos/Tareas, criterios, skills y TDD aplicable.
+   - `design-tasks`: `session-plan` hace una elaboración técnica acotada y luego el mismo ejecutor.
+   - `full-sdd`: propuesta → spec → design → tasks → apply → verify una vez para la Sesión.
+   - `blocked`: frená y pedí una decisión.
+6. Cada Módulo sigue `apply → tests → focused review → Engram checkpoint`. Al final corré una
+   verificación integral y entregá evidencia a `session-doc`.
 
 ## Output Contract
 
-Return mode, selected Sesión, route with its reason and authority reference, executor
-handoff or SDD result, current module checkpoint, blockers, next action, and
-`skill_resolution: paths-injected`.
+Devuelve Sesión/Zona/posición, propuesta, ruta revalidada, base Git exacta, evidencia, razón del
+cambio o `sin cambio`, delta enviado a Support, compatibilidad estática, estado de adquisición viva
+(`adquirida`, `no disponible` o `requerida`), ruta ejecutada, checkpoint, bloqueos y próxima acción.
+Termina con `skill_resolution: paths-injected`.
 
 ## References
 
@@ -57,3 +70,4 @@ handoff or SDD result, current module checkpoint, blockers, next action, and
 - `../planificador-granular/SKILL.md`
 - `../session-plan/SKILL.md`
 - `../session-doc/SKILL.md`
+- `../agente-soporte/SKILL.md`

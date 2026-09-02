@@ -391,11 +391,20 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(retired.read_bytes(), b"user-file")
         self.assertFalse((self.home / ".agents/skills/session-kickoff").exists())
 
-    def test_full_sdd_wording_has_one_managed_apply_and_verify_pass(self):
+    def test_session_route_is_revalidated_once_before_execution(self):
         content = (ROOT / "skills/session-kickoff/SKILL.md").read_text(encoding="utf-8")
-        self.assertIn("its `sdd-apply` and `sdd-verify` stages produce and verify the result", content)
-        self.assertIn("Do not invoke a second executor or apply pass", content)
-        self.assertNotIn("then apply its resulting work", content)
+        hard_rules = content.split("## Hard Rules", 1)[1].split("## Decision Gates", 1)[0]
+        rules = [rule for rule in hard_rules.split("- ") if rule.strip()]
+        plan_rule = next(rule for rule in rules if "`openspec/plan.yaml`" in rule)
+        route_rule = next(rule for rule in rules if "`ruta.propuesta`" in rule)
+        delta_rule = next(rule for rule in rules if "`ruta.revalidacion`" in rule)
+
+        for term in ("única fuente editable", "`openspec/plan.yaml`"):
+            self.assertIn(term, plan_rule)
+        for term in ("revalid", "**una vez**", "autoridad", "evidencia", "base", "gana", "implementar"):
+            self.assertIn(term, route_rule)
+        for term in ("`base`", "`HEAD`", "`evidencia`", "`razon`", "obligatoria", "cambia"):
+            self.assertIn(term, delta_rule)
 
 
 if __name__ == "__main__":

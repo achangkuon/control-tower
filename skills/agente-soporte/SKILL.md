@@ -1,57 +1,76 @@
 ---
 name: agente-soporte
-description: "Trigger: support, daily brief, capacity, conflicts, assignments, repo/plan/Tower questions. Read-only planning support beside the Tower."
+description: "Trigger: support, daily brief, capacity, conflicts, assignments, repo/plan/Tower questions. Soporte de sólo lectura y único autor acotado del dato de planificación."
 license: Apache-2.0
 metadata:
   author: gentleman-programming
-  version: "2.1"
+  version: "3.0"
 ---
 
 ## Activation Contract
 
-Activate for a support request about safe capacity, conflict mapping, assignment
-briefs, daily context, repository/plan state, or Tower state. Do not own generic
-session start/continue intent or approved-scope decomposition; those belong to
-`session-kickoff` and `planificador-granular`.
+Activa para capacidad, conflictos, asignaciones, estado repo/plan/Tower o para aplicar un delta de
+planificación ya confirmado. No inicia Sesiones ni descompone alcance.
 
 ## Hard Rules
 
-- Read-only. Never edit, stage, commit, push, open/update a PR, merge, mutate a DB, or change a worktree.
-- Never register, acquire, release, or transfer Tower locks. Use `tower_status` for state and `tower_send` only for an approved brief to the orchestrator.
-- The orchestrator is the only `tower_send` recipient. Never message a worker directly.
-- Verify repository, plan, Git, and Tower sources; report discrepancies instead of averaging them.
-- Never guess `Área`, `Recurso`, branch, base, DB mode, dependencies, or capacity.
+- **Sólo lectura para código y para todo archivo salvo esta frontera única:** Support puede aplicar
+  actualizaciones confirmadas y acotadas a `openspec/plan.yaml` y regenerar
+  `openspec/ROADMAP.md` exclusivamente mediante `plan render`.
+- Support es el único autor de `openspec/plan.yaml` por política obligatoria de este workflow, no
+  por una garantía de permisos del sistema operativo. `plan` valida el dato y el render, pero no
+  puede autenticar a la persona/agente que lo invoca. Esa excepción no concede autoridad para
+  diseñar producto, ampliar alcance, editar código, tocar otro documento ni mutar el plan sin un
+  delta confirmado por su autoridad (`planificador-granular`, `session-kickoff` o `session-doc`).
+- Nunca edites ROADMAP a mano. Si la vista está mal, corregí el dato confirmado o reportá un
+  defecto del renderer.
+- Aplicá sólo deltas con Sesión/campo objetivo, valor anterior esperado y valor nuevo. Si el valor
+  anterior no coincide, frená: el delta quedó stale.
+- Después de cada actualización ejecutá `plan check` y, sólo si no hay errores, `plan render`.
+  Releé ambos artefactos. Un fallo no se oculta ni se convierte en estado manual.
+- No registres, adquieras, liberes ni transfieras locks Tower. `plan status` pronostica
+  compatibilidad; no prueba owner ni adquisición viva.
+- Nunca stagees, commitees, pushees, abras/actualices PRs, merges, DBs ni dependencias salvo
+  autorización separada de la autoridad de entrega. La excepción de plan-data no incluye Git.
+- Verificá repo, plan, Git y Tower; reportá discrepancias sin promediarlas ni adivinarlas.
 
 ## Decision Gates
 
-| Condition | Action |
+| Condición | Acción |
 |---|---|
-| User asks for daily context or blockers | Produce the daily brief with cited sources and arithmetic. |
-| User asks for decomposition or a new Sesión | Route to `planificador-granular`; do not plan it here. |
-| A Sesión lacks `Área` or `Recurso` | Report it missing and exclude it from parallel-safe capacity. |
-| Sources disagree | Report the discrepancy as the finding. |
-| Delivery, ordering, tokens, or closure arise | Hand off to the active project's delivery authority; do not assume or install one here. |
+| Pedido de contexto/capacidad/conflictos | Leer fuentes y producir brief verificable. |
+| Pedido de nueva descomposición | Derivar a `planificador-granular`. |
+| Delta confirmado y bounded para plan.yaml | Comparar precondición, aplicar, checkear y renderizar. |
+| Delta sin autoridad, ambiguo o stale | No escribir; pedir una sola aclaración a la autoridad. |
+| `plan check` falla | No renderizar una vista supuestamente válida; devolver hallazgos exactos. |
+| Render falla/no está disponible | No editar ROADMAP manualmente; cierre queda bloqueado. |
+| Sesión requiere Cimientos/recurso exclusivo | Reportar forecast y exigir MAIN/Tower runtime cuando exista. |
 
 ## Execution Steps
 
-1. Gather repository instructions, canonical index/status, reservations, plan/spec, Git, and forge authority.
-2. Define executable Sesiones, conflict edges, dependencies, DB ownership, and requested/recommended/maximum-safe counts. For a daily brief, derive today's named Plan/Sesión/Módulo objective with an auditable baseline → projected target.
-3. Verify worktree, branch, scope, resources, and queue position for each proposed assignment.
-4. Present sources, rationale, blockers, and confidence; obtain explicit approval before drafting delivery.
-5. Draft one bounded brief per agent and send the approved set only to the orchestrator, then stop.
+1. Leé instrucciones, `openspec/plan.yaml`, ROADMAP generada, Git y Tower aplicables.
+2. Para soporte de capacidad, derivá Sesiones ejecutables, conflictos, dependencias y asientos;
+   distinguí siempre pronóstico estático de claims vivos.
+3. Para escritura, verificá autoridad, alcance, campo y valor anterior de cada operación del delta.
+4. Aplicá únicamente esas operaciones a `openspec/plan.yaml`; no reformatees ni reconcilies campos
+   no incluidos.
+5. Ejecutá `plan check -f openspec/plan.yaml -C <repo>`. Sin errores, ejecutá
+   `plan render -f openspec/plan.yaml -o openspec/ROADMAP.md -C <repo>` y releé la vista.
+6. Reportá bytes/campos cambiados, comandos y resultados. Ante fallo, conservá evidencia y no
+   improvises una segunda fuente.
+7. Para asignaciones, enviá briefs aprobados sólo al orquestador Tower; nunca a workers directos.
 
 ## Output Contract
 
-Return sources, Sesiones, conflict edges, the three counts, `worktree | branch |
-scope | db_mode | dependencies` per assignment, queue rationale, blockers, and
-confidence. Every daily brief also returns the objective projection: baseline, named
-closure targets, projected target, percentage-point delta, execution Módulos,
-unlocks, required conditions, and confidence, explicitly distinguished from actual
-progress. End with `skill_resolution: paths-injected`.
+Devuelve fuentes; Sesiones/conflictos/asientos y su carácter estático; para mutaciones, autoridad,
+delta exacto, precondición, campos de `plan.yaml` cambiados, resultados de check/render y ROADMAP
+regenerada; discrepancias, bloqueos y confirmación de que no se escribió código ni otra vista.
+Termina con `skill_resolution: paths-injected` y aclara que la autoría exclusiva es política del
+workflow, no una barrera de permisos autenticada por `plan`.
 
 ## References
 
+- `../_shared/plan-naming-convention.md`
 - `references/contrato-no-interferencia.md`
 - `references/unidad-ejecutable.md`
 - `assets/brief-diario.md`
-- `../_shared/plan-naming-convention.md`

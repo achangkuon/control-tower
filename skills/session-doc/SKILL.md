@@ -1,52 +1,71 @@
 ---
 name: session-doc
-description: "Trigger: final session closure, close session, document session. Reconcile technical openspec status and the project's Notion snapshot non-destructively."
+description: "Trigger: final session closure, close session, document session. Reúne evidencia de cierre y la entrega a Support sin editar la verdad de planificación."
 license: Apache-2.0
 metadata:
   author: gentleman-programming
-  version: "2.0"
+  version: "3.0"
 ---
 
 ## Activation Contract
 
-Load only as the final closure step after integral `verify`, when a session's
-technical state, blocker, owner, remaining work, or next action must be reconciled.
+Carga sólo después de la verificación integral de una Sesión. Consume el resultado de
+`session-kickoff` y reúne evidencia exacta; Support es el único autor del plan.
 
 ## Hard Rules
 
-- `session-kickoff` owns source discovery and execution order; consume its verified route and Session state.
-- Treat plan `STATUS.md` and master-index navigation/current state as mutable snapshots; preserve immutable history in its project-defined history store (for example git/PRs or maintenance records), never in current navigation.
-- Project repository rules override generic destinations and fields. Update Notion only when project rules enable it; never force or infer Notion when disabled.
-- When enabled, Notion is a living snapshot, never a dated changelog. Do not append `Registro` entries.
-- Preserve child content and keep deletion disabled for routine edits. Stop on unverified or contradictory sources.
-- Resolve the Notion target only from the repository's `.session-doc.json`; never guess it.
-- Load `cognitive-doc-design` before writing Notion prose.
+- `openspec/plan.yaml` es la única verdad editable de planificación.
+  `openspec/ROADMAP.md` es la única vista generada de estado y próximo trabajo.
+- No edites manualmente `STATUS.md`, `master-index.md`, `ROADMAP.md` ni el plan. No crees
+  proyecciones paralelas con los mismos datos.
+- Cierre = criterios binarios verificados + `entrega.commit` integrado localmente. El commit debe
+  resolver en el repositorio del plan y ser ancestro del `HEAD` integrado checked out.
+- `entrega.pr` es opcional para soportar push directo. Si existe es evidencia positiva, no fuente
+  de estado, y debe ser un número mayor que cero.
+- Enviá a Support un delta acotado de evidencia. Support actualiza `plan.yaml`, ejecuta
+  `plan check` y luego `plan render` para regenerar ROADMAP atómicamente.
+- Si el commit no está integrado, `plan check`/render no están disponibles o fallan, el cierre
+  falla honestamente. No marques COMPLETO, no ajustes porcentajes y no escribas una excepción.
+- Notion y Engram son proyecciones separadas. Sólo se reconcilian cuando las reglas del proyecto
+  las habilitan y nunca reemplazan ni contradicen el plan/Git.
+- Para Notion, resolvé destino sólo desde `.session-doc.json`, conservá contenido y mantené
+  borrado deshabilitado. Cargá `cognitive-doc-design` antes de escribir prosa.
 
 ## Decision Gates
 
-| Condition | Action |
+| Condición | Acción |
 |---|---|
-| Verification failed | Do not close; return the failed criteria. |
-| Project rules disable Notion, or no tracked state changed | Skip Notion and report the governing rule/reason. |
-| Roadmap and detailed section disagree | Stop and report the contradiction. |
-| New tracked item exists | Add its roadmap row and detailed section together. |
-| Routine edit would delete content | Stop; do not force deletion. |
+| Verificación integral o criterio falla | No cerrar; devolver criterio exacto. |
+| Commit no resuelve o no es ancestro del HEAD integrado | No cerrar; devolver evidencia Git. |
+| Support/check/render no disponible o falla | No cerrar; conservar delta pendiente. |
+| Evidencia válida y herramientas disponibles | Support aplica entrega, checkea y renderiza. |
+| Proyecto deshabilita Notion/Engram | Omitir esa proyección y citar la regla. |
+| Fuentes se contradicen | Frenar; no promediar ni escoger silenciosamente. |
 
 ## Execution Steps
 
-1. Read the parent/router result, repository instructions, verified technical status, and `.session-doc.json` only when project rules enable Notion.
-2. Reconcile current navigation/state in plan `STATUS.md`/master-index as required by the project; do not append immutable history there.
-3. If project rules enable Notion and tracked state changed, load `cognitive-doc-design`, fetch Notion, and update its roadmap row plus required detail.
-4. Compare enabled destinations against the verified source and report changed, skipped, and preserved content, including the immutable-history boundary.
+1. Reuní resultado verificado, lista de criterios, commit exacto, repositorio/base integrada y PR
+   sólo si existe.
+2. Verificá que el commit resuelva localmente y sea ancestro del `HEAD` integrado actual.
+3. Prepará un delta limitado a `sesiones[ID].entrega.commit` y `pr` opcional. Enviáselo a Support.
+4. Exigí evidencia observada de `plan check -f openspec/plan.yaml -C <repo>` y
+   `plan render -f openspec/plan.yaml -o openspec/ROADMAP.md -C <repo>`.
+5. Releé ROADMAP para confirmar aviso generado, Punto de retoma, estado y próximo trabajo. Nunca
+   la corrijas a mano; un defecto vuelve al dato o al renderer.
+6. Reconciliá Notion/Engram por separado sólo si están habilitados. No copies allí una afirmación
+   de COMPLETO antes de que Git/check/render la sostengan.
 
 ## Output Contract
 
-Return the parent/router used, verified sources, openspec files written, Notion page
-id touched or skipped, roadmap/detail changes, contradictions, and confirmation that
-no content was deleted. End with `skill_resolution: paths-injected`.
+Devuelve Sesión, criterios verificados, commit, HEAD integrado, PR presente/ausente, delta para
+Support, resultados observados de check/render, ROADMAP regenerado o causa exacta de no cierre,
+Notion/Engram actualizados u omitidos y confirmación de que no se editó ninguna vista manualmente.
+Termina con `skill_resolution: paths-injected`.
 
 ## References
 
+- `../_shared/plan-naming-convention.md`
+- `../agente-soporte/SKILL.md`
 - `references/links.md`
 - `assets/session-doc.schema.json`
 - `assets/project-notion-map.json`

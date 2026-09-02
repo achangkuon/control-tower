@@ -1,71 +1,71 @@
 ---
 name: planificador-granular
-description: "Trigger: planificar, desglosar, enumerar Sesiones. Decompose approved scope into Plan → Sesión → Módulo → Tarea and classify each Sesión route."
+description: "Trigger: planificar, desglosar, enumerar Sesiones. Corta alcance aprobado dentro de Zonas validadas y propone la ruta de cada Sesión."
 license: Apache-2.0
 metadata:
   author: gentleman-programming
-  version: "2.2"
+  version: "3.0"
 ---
 
 ## Activation Contract
 
-Activate when approved scope must become an executable plan: after a PRD/RFC/
-REQUIREMENTS, spec, or verified audit, or when an existing plan has unenumerated
-responsibilities. `_shared/plan-naming-convention.md` is canonical; read it first.
-
-This is the only skill that decomposes approved scope into Plan → Sesión → Módulo →
-Tarea. It does not investigate or elaborate one named Sesión; that is `session-plan`.
+Activa cuando alcance aprobado debe incorporarse al plan único del producto. Lee primero
+`../_shared/plan-naming-convention.md` y el `openspec/plan.yaml` vigente. Esta skill descompone;
+Support es el único autor del dato.
 
 ## Hard Rules
 
-- Plan only from an approved authority. Record its exact path, section, decision, or scenario.
-- Preserve exactly four levels and the seven closed statuses. Estimates never define a boundary.
-- Each Sesión is what fits in one PR and declares `Estado`, `Depende de`, `Área`, `Recurso`, `Decisiones`, and binary acceptance criteria.
-- Classify every Sesión as `direct`, `design-tasks`, `full-sdd`, or `blocked` with a concise reason and authority reference.
-- `direct` uses a fresh general implementation executor and no `sdd-*` phase. This skill is sole author of its Módulos/Tareas.
-- `design-tasks` uses `session-plan` to amend existing Tareas through one compact Engram delta, then the same executor. This skill remains sole author of the hierarchy; `session-plan` creates no proposal/spec or parallel decomposition.
-- `full-sdd` invokes the managed `proposal → spec → design → tasks → apply → verify` pipeline once per Sesión. SDD design/tasks are sole authors of Módulos/Tareas; the Plan/STATUS links that decomposition and MUST NOT duplicate it.
-- Route by authority freshness, decision class/contamination, coupling, and whether criteria are verifiable without inventing product meaning. Risk or the number of technical seams alone never selects `full-sdd`.
-- Escalating is not blocking (convention §11). `BLOQUEADO`/`blocked` only when the open decision reaches the acceptance criteria or the first Módulo, or another Sesión's `Contamina:` names it; a later-Módulo decision leaves the Sesión `🟢 LISTO` with that Módulo 🔴. Missing authority or contradictory evidence always blocks; an open decision alone does not.
-- Most Sesiones `BLOQUEADO` means the pass applied Sesión state to Módulo-level contamination. Recompute before reporting.
-- Emit a `Cola de ejecución`: topological positions across Plans, recomputed each pass, never renumbering IDs.
-- Size output per convention §12 and declare every omitted artifact.
-- Never create per-Module SDD. Modules use `apply → tests → focused review → Engram checkpoint`.
+- Existe un solo plan por producto. Cortá alcance dentro de una Zona ya validada; si la
+  partición debe cambiar, producí primero esa propuesta y exigí `plan check` contra archivos reales.
+- Jerarquía exacta: Zona → Sesión → Módulo → Tarea. El producto es marco, no quinto nivel.
+- Cada Sesión pertenece a una sola Zona. Puede reservar Cimientos por rutas de archivo exactas.
+  Nunca escribas `Área`, estado, porcentaje ni posición: son derivados.
+- Cada Sesión abierta incluye dependencias, Cimientos, recursos, decisiones, linaje, criterios
+  binarios, uno o más Módulos y una o más Tareas por Módulo. Los IDs siguen
+  `S23 → M23.1 → T23.1.1`, son únicos, planos y permanentes.
+- Cada Módulo declara archivos concretos. Cada Tarea declara una acción atómica y criterios
+  binarios observables. Para implementación directa preferí RED → GREEN → REFACTOR y mantené
+  pruebas/documentación con el comportamiento.
+- **Proponé** la ruta en `ruta.propuesta` con autoridad exacta. No escribas una revalidación ni
+  presentes la propuesta como decisión final de implementación.
+- Las rutas válidas siguen siendo `direct`, `design-tasks`, `full-sdd`, `blocked`. Elegí la más
+  liviana que sea honesta; tamaño, riesgo o cantidad de archivos no eligen SDD por sí solos.
+- No edites `openspec/plan.yaml` ni `openspec/ROADMAP.md`. Enviá un delta exacto y acotado a
+  `agente-soporte`, único autor del dato. ROADMAP siempre se regenera con la herramienta.
+- Nunca crees SDD por Módulo. `full-sdd` corre una vez para la Sesión completa.
 
 ## Decision Gates
 
-| Condition | Route |
+| Condición | Resultado |
 |---|---|
-| Current approved Session contract has a binary-verifiable outcome and every remaining choice is derivable | `direct` — this skill authors Módulos/Tareas; fresh general executor. |
-| Product outcome is fixed, but bounded technical discovery is required to make existing Tareas executable | `design-tasks` — this skill authors Módulos/Tareas; `session-plan` may amend those Tareas once. |
-| Approved Session outcome/boundaries exist, but behavior, lifecycle, or a shared contract still needs design within authority | `full-sdd` — SDD design/tasks solely author Módulos/Tareas; Plan/STATUS links them. |
-| Authority is absent/stale, evidence contradicts, no honest binary Session criteria exist, or an open decision contaminates criteria/first Módulo | `blocked` — stop and ask one maintainer decision; SDD must not invent its own exam. |
-| An open decision contaminates only a later Módulo | Route normally; mark that Módulo 🔴 and park the decision. |
+| Alcance aprobado cabe como resultado independiente dentro de una Zona | Enumerar Sesión, Módulos y Tareas. |
+| El resultado cruza Zonas | Cimientos → partir por Zona → Zona nueva sólo si partir destruye el resultado → revisar corte si se repite. |
+| Contrato binario y decisiones derivables | Proponer `direct`. |
+| Resultado fijo con descubrimiento técnico acotado | Proponer `design-tasks`. |
+| Comportamiento/lifecycle/contrato compartido aún requiere diseño dentro de autoridad | Proponer `full-sdd`. |
+| Falta autoridad, hay evidencia contradictoria o una decisión alcanza criterios/primer Módulo | Proponer `blocked` y pedir una decisión. |
 
 ## Execution Steps
 
-1. Anchor every responsibility to the approved authority and inspect what already shipped.
-2. Cut candidates by independently reviewable one-PR result; split overflow into Sesiones, never a new level.
-3. Enumerate `Área` from the real tree and declare shared `Recurso` claims.
-4. Write binary acceptance criteria, including the no-path-outside-`Área` boundary.
-5. List `Decisiones`; mark `derivable` only with approved authority plus a falsifiable criterion, otherwise `escala` with class and `Contamina:`. Locate each escalating decision at the Módulo it first reaches.
-6. Assign route, concise reason, and authority reference to every Sesión, applying the contamination test above. Stop before SDD or implementation for `blocked`.
-7. For `direct`/`design-tasks`, split Módulos by files and create at least three Tareas per Módulo in RED → GREEN → REFACTOR order. For `full-sdd`, record only the Session contract and links reserved for SDD decomposition. Render the dependency graph unless convention §12 exempts it.
-8. Forecast independently revertible work-unit commits at ≤400 authored additions+deletions, keeping tests/docs with behavior; split the Sesión or plan chained PRs without adding a hierarchy level when needed.
-9. Order every `🟢 LISTO` and `📋 PLANIFICADO` Sesión topologically across Plans into the `Cola de ejecución`, numbering new Plans so IDs match their queue positions.
-10. Close the denominator, report unenumerated responsibilities, and recompute `%` from Sesión states.
+1. Confirmá autoridad aprobada, `openspec/plan.yaml` vigente y Zona validada.
+2. Cortá una Sesión por resultado independientemente revisable dentro de esa Zona; el tamaño de
+   PR es regla de desborde, no criterio territorial.
+3. Asigná IDs nuevos sin renumerar historia; declarà dependencias, reemplazos, Cimientos y recursos.
+4. Escribí criterios binarios y decisiones con autoridad, contaminación y alcance.
+5. Enumerá Módulos por archivos concretos y Tareas atómicas con sus criterios.
+6. Proponé ruta y autoridad; no la revalides.
+7. Entregá a Support un delta YAML exacto: ubicación, operación, valor esperado anterior y valor
+   nuevo. Support aplica, ejecuta `plan check` y `plan render`.
+8. Reportá cualquier error del checker sin editar la vista generada ni inventar un estado.
 
 ## Output Contract
 
-Return the authority; the `Cola de ejecución` with positions across Plans; one row
-per Sesión with `ID · Resultado · Estado · Route · Reason · Authority · Depende de ·
-Área · Recurso`; decisions with the Módulo each one reaches; binary criteria;
-unenumerated scope; `%` with its fraction; which Sesiones are `🟢 LISTO` or blocked;
-Mermaid graph and computed capacity, or the declared reason each was omitted. End
-with `skill_resolution: paths-injected`.
+Devuelve autoridad, Zona, Sesión y jerarquía completa propuesta; dependencias, Cimientos,
+recursos, decisiones, criterios; `ruta.propuesta` con razón/autoridad; delta exacto para Support;
+responsabilidades no enumeradas y bloqueos. Termina con `skill_resolution: paths-injected`.
 
 ## References
 
 - `../_shared/plan-naming-convention.md`
-- `../session-plan/SKILL.md`
+- `../session-kickoff/SKILL.md`
 - `../agente-soporte/SKILL.md`

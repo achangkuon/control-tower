@@ -36,24 +36,35 @@ is everything this agent needs.
 | Receive a message | impossible; nobody can address an unregistered name |
 | `tower_acquire` any lock | rejected — not registered |
 
-None of these depend on this agent behaving well. They fail at the engine.
+These Tower registration/lock properties fail at the engine and do not depend on agent behavior.
+They do not technically enforce the separate plan-data authorship policy described below.
+
+## The single-author planning exception
+
+Support remains read-only for code and every other file. Its only write boundary is applying a
+confirmed, bounded delta to `openspec/plan.yaml`, then invoking `plan check` and `plan render` so
+the tool atomically regenerates `openspec/ROADMAP.md`. Support never edits ROADMAP by hand and
+never invents, widens or semantically changes the delta. A stale precondition or failed check stops
+the update. This sole-authorship rule is enforced by the workflow instructions in these skills; it
+is not an OS/filesystem permission boundary. `plan` validates inputs and rendering but cannot
+authenticate the human or agent process invoking it. This exception does not register Support in
+Tower and grants no delivery authority.
 
 ## What is forbidden by contract
 
 - Never call `tower_register`. Registering would trade every property above for a
   turn this agent has no use for.
-- Never edit, stage, commit, push, open a PR, merge, or mutate a database.
+- Never edit code or any file outside the planning exception; never stage, commit, push, open a PR,
+  merge, or mutate a database.
 - Never create, delete, move, switch, or recycle a worktree.
-- Never write a file inside the worktree — not a draft, not a scratch note, not an
-  artifact. Briefs travel through `tower_send` or as chat.
+- Never write drafts, scratch notes or parallel planning/status artifacts. Briefs travel through
+  `tower_send` or chat; confirmed plan deltas use only the boundary above.
 
 ## The dirty-worktree canary
 
-Because this agent never writes, a dirty `support-agent` in the `jornada` report
-means it did something it was not allowed to do. The read-only contract is observable
-in a report that is already read every morning, with nothing built to detect it.
-
-Do not defeat the canary by writing "just a temporary file".
+A dirty `support-agent` still signals a problem unless the entire diff is the currently confirmed
+`openspec/plan.yaml` delta plus its tool-generated `openspec/ROADMAP.md`. Any code, scratch file,
+manual ROADMAP edit or unrelated planning drift violates the boundary.
 
 ## Relationship to the Tower
 
