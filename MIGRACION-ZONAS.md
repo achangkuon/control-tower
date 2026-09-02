@@ -4,7 +4,10 @@
 > y qué falta. El razonamiento completo, con dibujos, está en el documento de decisión:
 > https://claude.ai/code/artifact/e92d2b38-10ad-480d-b7b2-ba9cc68283ec
 >
-> Última actualización: 2026-09-02 · Estado: Fases 2b y 3 verificadas; investigación pendiente antes de una implementación única
+> Última actualización: 2026-09-02 · Estado: Fases 2b y 3 verificadas; **gate de investigación
+> cerrado** — los siete tramos quedaron integrados en
+> [FLUJO-END-TO-END.md](FLUJO-END-TO-END.md), que reconcilia el flujo completo contra las
+> decisiones de acá y deja 8 decisiones marcadas para reabrir.
 
 ---
 
@@ -23,11 +26,22 @@ bloques globales/manuales y este documento no afirma que las skills estén insta
 También siguen pendientes para una integración futura con MAIN/Torre la adquisición, liberación y
 recuperación stale de Cimientos en vivo, y el freeze runtime de `S7.1`.
 
-**Gate de investigación — frenar acá:** antes de actualizar o propagar bloques globales/manuales,
-hay que incorporar la investigación en curso a esta misma fuente de verdad y reconciliar sus hallazgos
-contra las decisiones ya cerradas. No se abre un segundo plan ni una implementación paralela: primero
-se integra la investigación, luego se ajusta una sola vez el alcance aprobado y recién entonces se
-continúa con **una única implementación**.
+**Gate de investigación — CERRADO el 2026-09-02.** La investigación en curso eran los siete
+tramos del flujo end-to-end. Quedaron definidos, aprobados e integrados en
+[FLUJO-END-TO-END.md](FLUJO-END-TO-END.md), que es ahora la fuente de verdad del flujo completo
+y del cruce contra este plan. No se abrió un segundo plan ni una implementación paralela.
+
+**Lo que el gate produjo:** 8 piezas ya construidas que los tramos confirman · 12 huecos que caen
+en las Fases 4, 5 y 6 · **8 correcciones pendientes y cero decisiones abiertas**.
+
+**Regla de precedencia:** la definición de los tramos gana sobre las decisiones de acá. Cuando un
+tramo contradice este plan, no es un choque a dirimir — es una corrección pendiente, y este plan
+describe un estado anterior. Las tres bloqueantes: `est:` sale del canon; las tres rutas son una
+sola pipeline SDD con `verify`/`archive` comunes; `session-plan` se disuelve en vez de adaptarse.
+La única decisión que quedaba abierta —si `blocked` seguía siendo una ruta— la resolvió el
+maintainer el 2026-09-02: **sale del conjunto, quedan tres rutas**.
+El alcance aprobado se ajusta **una sola vez** con eso, y recién entonces continúa **una única
+implementación**.
 
 **Qué sigue después de la investigación:** retomar los pendientes de Fase 1 —actualizar los bloques
 globales/manuales, propagarlos a los cuatro agentes y verificar que sobrevivan— sólo si la investigación
