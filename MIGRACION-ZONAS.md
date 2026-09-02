@@ -4,7 +4,7 @@
 > y qué falta. El razonamiento completo, con dibujos, está en el documento de decisión:
 > https://claude.ai/code/artifact/e92d2b38-10ad-480d-b7b2-ba9cc68283ec
 >
-> Última actualización: 2026-09-01 · Estado: Fases 2b y 3 implementadas y verificadas; propagación global/manual pendiente
+> Última actualización: 2026-09-02 · Estado: Fases 2b y 3 verificadas; investigación pendiente antes de una implementación única
 
 ---
 
@@ -23,9 +23,16 @@ bloques globales/manuales y este documento no afirma que las skills estén insta
 También siguen pendientes para una integración futura con MAIN/Torre la adquisición, liberación y
 recuperación stale de Cimientos en vivo, y el freeze runtime de `S7.1`.
 
-**Qué sigue:** retomar primero los pendientes de Fase 1: actualizar los bloques globales/manuales,
-propagarlos a los cuatro agentes y verificar que sobrevivan. Sólo después continúa Fase 4 según el
-orden existente. No se migró todavía ningún producto real ni se completó trabajo de Fase 4 o posterior.
+**Gate de investigación — frenar acá:** antes de actualizar o propagar bloques globales/manuales,
+hay que incorporar la investigación en curso a esta misma fuente de verdad y reconciliar sus hallazgos
+contra las decisiones ya cerradas. No se abre un segundo plan ni una implementación paralela: primero
+se integra la investigación, luego se ajusta una sola vez el alcance aprobado y recién entonces se
+continúa con **una única implementación**.
+
+**Qué sigue después de la investigación:** retomar los pendientes de Fase 1 —actualizar los bloques
+globales/manuales, propagarlos a los cuatro agentes y verificar que sobrevivan— sólo si la investigación
+no cambia ese contrato, o después de reconciliarlo si lo cambia. Recién entonces continúa Fase 4 según
+el orden existente. No se migró ningún producto real ni se completó trabajo de Fase 4 o posterior.
 
 **Decisiones ya cerradas — no volver a preguntar:** el umbral de Cimiento es más de una Zona;
 no admite escrituras concurrentes; `install/runtime-payload.mjs` es el primer carve-out;
