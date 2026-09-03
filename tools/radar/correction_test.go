@@ -24,6 +24,38 @@ func TestGitEvidenceRequiresFullImmutableOID(t *testing.T) {
 	}
 }
 
+func TestRevalidacionAceptaBaseAncestroYRechazaBaseLateral(t *testing.T) {
+	root, base := repoGit(t)
+	if err := os.WriteFile(filepath.Join(root, "tracked.txt"), []byte("after\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	for _, args := range [][]string{{"add", "tracked.txt"}, {"commit", "-qm", "after"}} {
+		if out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput(); err != nil {
+			t.Fatal(err, string(out))
+		}
+	}
+	head, _ := gitHEAD(root)
+	s := &Sesion{ID: "S1", Ruta: RutaSesion{Propuesta: "direct", Autoridad: "RFC", Revalidacion: &Revalidacion{Resultado: "full-sdd", Base: base, Evidencia: "readiness", Razon: "cambió"}}}
+	if got := hallazgosDe(checkRuta(s, root, head), "ruta revalidada"); len(got) != 0 {
+		t.Fatalf("una base completa ancestro de HEAD debe persistir: %#v", got)
+	}
+	if out, err := exec.Command("git", "-C", root, "checkout", "-q", base).CombinedOutput(); err != nil {
+		t.Fatal(err, string(out))
+	}
+	if err := os.WriteFile(filepath.Join(root, "tracked.txt"), []byte("lateral\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	for _, args := range [][]string{{"add", "tracked.txt"}, {"commit", "-qm", "lateral"}} {
+		if out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput(); err != nil {
+			t.Fatal(err, string(out))
+		}
+	}
+	s.Ruta.Revalidacion.Base, _ = gitHEAD(root)
+	if got := hallazgosDe(checkRuta(s, root, head), "ruta revalidada"); len(got) == 0 {
+		t.Fatal("una base no ancestro de HEAD debe rechazarse")
+	}
+}
+
 func TestGitEvidenceSupportsRepositoryObjectFormat(t *testing.T) {
 	root := t.TempDir()
 	if out, err := exec.Command("git", "-C", root, "init", "-q", "--object-format=sha256").CombinedOutput(); err != nil {

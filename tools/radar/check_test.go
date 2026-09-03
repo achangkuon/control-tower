@@ -271,7 +271,7 @@ func TestLoadAceptaReemplazaComoListaYMantieneParserEstricto(t *testing.T) {
 		t.Run(c.nombre, func(t *testing.T) {
 			dir := t.TempDir()
 			archivo := filepath.Join(dir, "plan.yaml")
-			raw := "schema: plan\nschema_version: 2\nproducto: prueba\nsesiones:\n  - id: S1\n    " + c.campo + "\n"
+			raw := "schema: plan\nschema_version: 3\nproducto: prueba\nsesiones:\n  - id: S1\n    " + c.campo + "\n"
 			if err := os.WriteFile(archivo, []byte(raw), 0o600); err != nil {
 				t.Fatal(err)
 			}

@@ -102,24 +102,34 @@ type Entrega struct {
 	PR     *int   `yaml:"pr"`
 }
 
-// Decision is a decision point the Sesión is expected to hit.
+// Decision is an open decision point or its immutable closed record.
 type Decision struct {
-	Tipo       string   `yaml:"tipo"`
-	Pregunta   string   `yaml:"pregunta"`
-	Criterio   string   `yaml:"criterio"`
-	Autoridad  string   `yaml:"autoridad"`
-	Evidencia  string   `yaml:"evidencia"`
-	Checkpoint string   `yaml:"checkpoint"`
-	Opciones   []Opcion `yaml:"opciones"`
-	Clase      string   `yaml:"clase"`
-	Alcanza    string   `yaml:"alcanza"`
-	Contamina  []string `yaml:"contamina"`
+	Tipo         string       `yaml:"tipo"`
+	Pregunta     string       `yaml:"pregunta"`
+	Criterio     string       `yaml:"criterio"`
+	Autoridad    string       `yaml:"autoridad"`
+	Evidencia    string       `yaml:"evidencia"`
+	Checkpoint   string       `yaml:"checkpoint"`
+	Opciones     []Opcion     `yaml:"opciones"`
+	Clase        string       `yaml:"clase"`
+	Alcanza      string       `yaml:"alcanza"`
+	Contamina    []string     `yaml:"contamina"`
+	Resolucion   string       `yaml:"resolucion"`
+	Descartadas  []Descartada `yaml:"descartadas"`
+	Falsificador string       `yaml:"falsificador"`
+	Contaminaba  []string     `yaml:"contaminaba"`
 }
 
-// Opcion makes each decision alternative and its product consequence explicit.
+// Opcion makes each open decision alternative and its product consequence explicit.
 type Opcion struct {
 	Opcion       string `yaml:"opcion"`
 	Consecuencia string `yaml:"consecuencia"`
+}
+
+// Descartada preserves an alternative rejected by a closed decision.
+type Descartada struct {
+	Opcion string `yaml:"opcion"`
+	Razon  string `yaml:"razon"`
 }
 
 var ClasesQueEscalan = []string{
@@ -135,7 +145,7 @@ var ClasesQueEscalan = []string{
 
 var RutasValidas = []string{"direct", "design-tasks", "full-sdd"}
 
-// Load strictly reads one schema v2 plan document.
+// Load strictly reads one schema v3 plan document.
 func Load(path string) (*Plan, error) {
 	raw, err := os.ReadFile(path)
 	if err != nil {
@@ -158,8 +168,8 @@ func Load(path string) (*Plan, error) {
 	if p.Schema != "plan" {
 		return nil, fmt.Errorf("%s: se esperaba `schema: plan`, se encontró %q", path, p.Schema)
 	}
-	if p.SchemaVersion != 2 {
-		return nil, fmt.Errorf("%s: schema_version %d no soportada (esta herramienta lee 2; v1 tenía una ruta ambigua y requiere migración)", path, p.SchemaVersion)
+	if p.SchemaVersion != 3 {
+		return nil, fmt.Errorf("%s: schema_version %d no soportada; migrá explícitamente el plan a v3", path, p.SchemaVersion)
 	}
 	return &p, nil
 }

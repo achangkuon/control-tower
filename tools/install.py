@@ -450,10 +450,6 @@ def apply(home: Path, root: Path | None = None) -> list[Change]:
     replacements = render_manual_blocks(root)
     change_paths = {change.path for change in changes}
     for runtime_root in installed_skill_roots(home):
-        for retired_skill in RETIRED_SKILLS:
-            destination = runtime_root / retired_skill
-            if destination in change_paths:
-                _remove_retired_skill(runtime_root, destination)
         for skill, relative, source in source_files(root):
             destination = runtime_root / skill / relative
             if destination in change_paths:
@@ -461,6 +457,11 @@ def apply(home: Path, root: Path | None = None) -> list[Change]:
     for path in installed_manual_paths(home):
         if path in change_paths:
             _atomic_write(path, desired_manual_content(path, replacements), path.parent)
+    for runtime_root in installed_skill_roots(home):
+        for retired_skill in RETIRED_SKILLS:
+            destination = runtime_root / retired_skill
+            if destination in change_paths:
+                _remove_retired_skill(runtime_root, destination)
     return changes
 
 

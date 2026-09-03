@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -352,6 +353,18 @@ class InstallerTests(unittest.TestCase):
         self.assertNotIn("torre-control-entregas", INSTALLER.SKILLS)
         self.assertIn("torre-control-entregas", INSTALLER.RETIRED_SKILLS)
         self.assertFalse((ROOT / "skills/torre-control-entregas").exists())
+
+    def test_later_apply_failure_preserves_retired_skill_bytes(self):
+        retired = INSTALLER.runtime_skill_roots(self.home)[0] / INSTALLER.RETIRED_SKILLS[0]
+        retired.mkdir(parents=True)
+        payload = b"\x00retired\n"
+        (retired / "SKILL.md").write_bytes(payload)
+
+        with mock.patch.object(INSTALLER, "_atomic_copy", side_effect=OSError("later failure")):
+            with self.assertRaises(OSError):
+                INSTALLER.apply(self.home, ROOT)
+
+        self.assertEqual((retired / "SKILL.md").read_bytes(), payload)
 
     def test_install_removes_only_explicit_retired_skills_from_all_runtime_roots(self):
         retired_paths = []

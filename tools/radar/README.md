@@ -25,14 +25,14 @@ GOOS=darwin GOARCH=arm64 go build -o radar-darwin-arm64 .
 GOOS=darwin GOARCH=amd64 go build -o radar-darwin-amd64 .
 ```
 
-## Esquema v2
+## Esquema v3
 
-La v2 reemplaza `ruta: direct` de v1 porque ese valor mezclaba dos decisiones distintas.
-No se migra automáticamente: hacerlo inventaría si el valor era propuesta o revalidación.
+La v3 distingue decisiones abiertas de registros cerrados (`tipo: resuelta`). No hay
+compatibilidad dual: los planes v2 deben migrarse explícitamente a v3.
 
 ```yaml
 schema: plan
-schema_version: 2
+schema_version: 3
 producto: la-casa
 raiz: /ruta/al/repo                 # opcional; si falta se deriva con git
 
@@ -95,9 +95,9 @@ sesiones:
             criterios: [las pruebas siguen pasando]
 ```
 
-Los IDs son planos y permanentes: `S23 → M23.1 → T23.1.1`. Las rutas efectivas `direct`
-y `design-tasks` exigen Módulos; `full-sdd` los prohíbe porque su profundidad vive en los
-artefactos SDD. Todo Módulo declarado tiene Tareas, archivos concretos y cada Tarea tiene
+Los IDs son planos y permanentes: `S23 → M23.1 → T23.1.1`. La ruta propuesta `direct`
+o `design-tasks` exige Módulos; `full-sdd` los prohíbe porque su profundidad vive en los
+artefactos SDD. Una revalidación posterior no reescribe esa profundidad. Todo Módulo declarado tiene Tareas, archivos concretos y cada Tarea tiene
 acción más criterios binarios. El parser rechaza campos desconocidos, documentos YAML
 posteriores, la v1 y cualquier intento de escribir `estado`, `Área` o `est` en una Sesión
 o un Módulo.
@@ -108,7 +108,8 @@ o un Módulo.
 - `session-kickoff` revalida una vez. Registra la ruta resultante, el `HEAD` exacto actual y
   una referencia de evidencia/autoridad. Si cambia la propuesta, `razon` es obligatoria.
 - La revalidación gana para implementar. No existe un segundo dispatcher.
-- `radar check` falla si el `HEAD` actual ya no coincide con la base revalidada.
+- `radar check` acepta la base revalidada mientras sea un ancestro inmutable completo del
+  `HEAD` actual; rechaza commits laterales.
 
 El conjunto cerrado es: `direct`, `design-tasks`, `full-sdd`.
 

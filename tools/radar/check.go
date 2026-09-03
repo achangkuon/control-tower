@@ -241,22 +241,22 @@ func checkRuta(s *Sesion, root, head string) []Hallazgo {
 		base, err := gitOID(root, r.Base)
 		if err != nil {
 			h = append(h, Hallazgo{"error", "ruta revalidada", fmt.Sprintf("%s no declara una base Git inmutable completa: %v", s.ID, err)})
-		} else if base != head {
-			h = append(h, Hallazgo{"error", "ruta revalidada", fmt.Sprintf("%s fue revalidada sobre %s pero el HEAD fijado es %s", s.ID, base, head)})
+		} else if _, err := gitOutput(root, "merge-base", "--is-ancestor", base, head); err != nil {
+			h = append(h, Hallazgo{"error", "ruta revalidada", fmt.Sprintf("%s fue revalidada sobre %s, que no es ancestro del HEAD fijado %s", s.ID, base, head)})
 		}
 	}
 	return h
 }
 
 func checkProfundidad(s *Sesion) []Hallazgo {
-	switch s.RutaEfectiva() {
+	switch s.Ruta.Propuesta {
 	case "direct", "design-tasks":
 		if len(s.Modulos) == 0 {
-			return []Hallazgo{{"error", "profundidad por ruta", fmt.Sprintf("%s usa la ruta efectiva %s y debe enumerar al menos un Módulo", s.ID, s.RutaEfectiva())}}
+			return []Hallazgo{{"error", "profundidad por ruta", fmt.Sprintf("%s usa la ruta propuesta %s y debe enumerar al menos un Módulo", s.ID, s.Ruta.Propuesta)}}
 		}
 	case "full-sdd":
 		if len(s.Modulos) > 0 {
-			return []Hallazgo{{"error", "profundidad por ruta", fmt.Sprintf("%s usa la ruta efectiva full-sdd y no puede declarar Módulos", s.ID)}}
+			return []Hallazgo{{"error", "profundidad por ruta", fmt.Sprintf("%s usa la ruta propuesta full-sdd y no puede declarar Módulos", s.ID)}}
 		}
 	}
 	return nil
@@ -265,6 +265,16 @@ func checkProfundidad(s *Sesion) []Hallazgo {
 func checkDecisiones(s *Sesion) []Hallazgo {
 	var h []Hallazgo
 	for _, d := range s.Decisiones {
+		if d.Tipo == "resuelta" {
+			valida := strings.TrimSpace(d.Resolucion) != "" && strings.TrimSpace(d.Autoridad) != "" && strings.TrimSpace(d.Falsificador) != ""
+			for _, descartada := range d.Descartadas {
+				valida = valida && strings.TrimSpace(descartada.Opcion) != "" && strings.TrimSpace(descartada.Razon) != ""
+			}
+			if !valida {
+				h = append(h, Hallazgo{"error", "decisión resuelta", fmt.Sprintf("%s debe preservar resolución, autoridad, falsificador y descartadas completas", s.ID)})
+			}
+			continue
+		}
 		contratoValido := strings.TrimSpace(d.Evidencia) != "" && strings.TrimSpace(d.Checkpoint) != "" && len(d.Opciones) > 0
 		for _, opcion := range d.Opciones {
 			if strings.TrimSpace(opcion.Opcion) == "" || strings.TrimSpace(opcion.Consecuencia) == "" {
