@@ -48,12 +48,25 @@ sesiones:
   - id: S23
     zona: cocina
     resultado: instalar el horno
+    autoridad: PRD cocina §2          # alcance aprobado de la Sesión
     depende_de: [S18]
     cimientos: [package.json]       # reservas exactas, no globs
     recurso: [delivery-token]
     reemplaza: []
     criterios:
       - el horno enciende
+    decisiones:
+      - tipo: escala
+        pregunta: ¿qué protocolo expone el horno?
+        evidencia: RFC cocina §4
+        checkpoint: antes-del-primer-modulo
+        opciones:
+          - opcion: protocolo actual
+            consecuencia: conserva compatibilidad
+          - opcion: protocolo nuevo
+            consecuencia: requiere migración
+        clase: api-publica
+        alcanza: primer-modulo
     ruta:
       propuesta: direct
       autoridad: RFC cocina §4
@@ -81,10 +94,12 @@ sesiones:
             criterios: [las pruebas siguen pasando]
 ```
 
-Los IDs son planos y permanentes: `S23 → M23.1 → T23.1.1`. Toda Sesión abierta tiene
-Módulos; todo Módulo tiene Tareas, archivos concretos y cada Tarea tiene acción más
-criterios binarios. El parser rechaza campos desconocidos, documentos YAML posteriores,
-la v1 y cualquier intento de escribir `estado` o `Área`.
+Los IDs son planos y permanentes: `S23 → M23.1 → T23.1.1`. Las rutas efectivas `direct`
+y `design-tasks` exigen Módulos; `full-sdd` los prohíbe porque su profundidad vive en los
+artefactos SDD. Todo Módulo declarado tiene Tareas, archivos concretos y cada Tarea tiene
+acción más criterios binarios. El parser rechaza campos desconocidos, documentos YAML
+posteriores, la v1 y cualquier intento de escribir `estado`, `Área` o `est` en una Sesión
+o un Módulo.
 
 ## Rutas: propuesta y revalidación
 
@@ -94,7 +109,7 @@ la v1 y cualquier intento de escribir `estado` o `Área`.
 - La revalidación gana para implementar. No existe un segundo dispatcher.
 - `radar check` falla si el `HEAD` actual ya no coincide con la base revalidada.
 
-El conjunto cerrado sigue siendo: `direct`, `design-tasks`, `full-sdd`, `blocked`.
+El conjunto cerrado es: `direct`, `design-tasks`, `full-sdd`.
 
 ## Entrega derivada desde Git
 
@@ -143,7 +158,8 @@ artefactos como ejemplo; cada producto los crea al adoptar el modelo.
 - Partición exhaustiva y disjunta contra los archivos reales de `git ls-files`.
 - Zonas definidas por rutas y reservas exactas de Cimientos declarados.
 - Dependencias, ciclos, decisiones, contaminación y linaje `reemplaza`.
-- Jerarquía completa Zona → Sesión → Módulo → Tarea, IDs únicos/coherentes y resultados no vacíos.
+- Autoridad de alcance de cada Sesión y evidencia, checkpoint y opciones estructuradas de cada decisión.
+- Profundidad compatible con la ruta efectiva, IDs únicos/coherentes y resultados no vacíos.
 - Rutas de Módulo exactas, normalizadas, relativas al repo, sin symlinks y autorizadas por la Zona
   de la Sesión o por una reserva exacta de Cimiento; los nuevos archivos se clasifican por la misma
   partición determinista.

@@ -45,6 +45,7 @@ type Sesion struct {
 	ID         string     `yaml:"id"`
 	Zona       string     `yaml:"zona"`
 	Resultado  string     `yaml:"resultado"`
+	Autoridad  string     `yaml:"autoridad"`
 	DependeDe  []string   `yaml:"depende_de"`
 	Cimientos  []string   `yaml:"cimientos"`
 	Recurso    []string   `yaml:"recurso"`
@@ -53,7 +54,6 @@ type Sesion struct {
 	Reemplaza  []string   `yaml:"reemplaza"`
 	Modulos    []Modulo   `yaml:"modulos"`
 	Ruta       RutaSesion `yaml:"ruta"`
-	Est        string     `yaml:"est"`
 	Entrega    *Entrega   `yaml:"entrega"`
 	Diferida   bool       `yaml:"diferida"`
 	Archivada  bool       `yaml:"archivada"`
@@ -64,7 +64,6 @@ type Modulo struct {
 	ID        string   `yaml:"id"`
 	Resultado string   `yaml:"resultado"`
 	Rutas     []string `yaml:"rutas"`
-	Est       string   `yaml:"est"`
 	Tareas    []Tarea  `yaml:"tareas"`
 }
 
@@ -102,13 +101,22 @@ type Entrega struct {
 
 // Decision is a decision point the Sesión is expected to hit.
 type Decision struct {
-	Tipo      string   `yaml:"tipo"`
-	Pregunta  string   `yaml:"pregunta"`
-	Criterio  string   `yaml:"criterio"`
-	Autoridad string   `yaml:"autoridad"`
-	Clase     string   `yaml:"clase"`
-	Alcanza   string   `yaml:"alcanza"`
-	Contamina []string `yaml:"contamina"`
+	Tipo       string   `yaml:"tipo"`
+	Pregunta   string   `yaml:"pregunta"`
+	Criterio   string   `yaml:"criterio"`
+	Autoridad  string   `yaml:"autoridad"`
+	Evidencia  string   `yaml:"evidencia"`
+	Checkpoint string   `yaml:"checkpoint"`
+	Opciones   []Opcion `yaml:"opciones"`
+	Clase      string   `yaml:"clase"`
+	Alcanza    string   `yaml:"alcanza"`
+	Contamina  []string `yaml:"contamina"`
+}
+
+// Opcion makes each decision alternative and its product consequence explicit.
+type Opcion struct {
+	Opcion       string `yaml:"opcion"`
+	Consecuencia string `yaml:"consecuencia"`
 }
 
 var ClasesQueEscalan = []string{
@@ -122,7 +130,7 @@ var ClasesQueEscalan = []string{
 	"dependencias-o-evidencia-contradictorias",
 }
 
-var RutasValidas = []string{"direct", "design-tasks", "full-sdd", "blocked"}
+var RutasValidas = []string{"direct", "design-tasks", "full-sdd"}
 
 // Load strictly reads one schema v2 plan document.
 func Load(path string) (*Plan, error) {

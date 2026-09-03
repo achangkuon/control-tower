@@ -113,15 +113,15 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 		if strings.TrimSpace(s.Resultado) == "" {
 			h = append(h, Hallazgo{"error", "resultado", fmt.Sprintf("%s debe declarar un resultado no vacío", s.ID)})
 		}
+		if strings.TrimSpace(s.Autoridad) == "" {
+			h = append(h, Hallazgo{"error", "autoridad de Sesión", fmt.Sprintf("%s debe declarar la autoridad que delimita su alcance", s.ID)})
+		}
 		if abierta && len(s.Criterios) == 0 {
 			h = append(h, Hallazgo{"error", "criterios binarios", fmt.Sprintf("%s no tiene criterios de aceptación", s.ID)})
 		}
-		if abierta && len(s.Modulos) == 0 {
-			h = append(h, Hallazgo{"error", "jerarquía", fmt.Sprintf("%s no tiene Módulos enumerados", s.ID)})
-		}
-
 		if abierta {
 			h = append(h, checkRuta(s, root, head)...)
+			h = append(h, checkProfundidad(s)...)
 		}
 		if abierta || len(s.Modulos) > 0 {
 			h = append(h, p.checkModulos(root, s, modulosVistos, tareasVistas)...)
@@ -235,9 +235,32 @@ func checkRuta(s *Sesion, root, head string) []Hallazgo {
 	return h
 }
 
+func checkProfundidad(s *Sesion) []Hallazgo {
+	switch s.RutaEfectiva() {
+	case "direct", "design-tasks":
+		if len(s.Modulos) == 0 {
+			return []Hallazgo{{"error", "profundidad por ruta", fmt.Sprintf("%s usa la ruta efectiva %s y debe enumerar al menos un Módulo", s.ID, s.RutaEfectiva())}}
+		}
+	case "full-sdd":
+		if len(s.Modulos) > 0 {
+			return []Hallazgo{{"error", "profundidad por ruta", fmt.Sprintf("%s usa la ruta efectiva full-sdd y no puede declarar Módulos", s.ID)}}
+		}
+	}
+	return nil
+}
+
 func checkDecisiones(s *Sesion) []Hallazgo {
 	var h []Hallazgo
 	for _, d := range s.Decisiones {
+		contratoValido := strings.TrimSpace(d.Evidencia) != "" && strings.TrimSpace(d.Checkpoint) != "" && len(d.Opciones) > 0
+		for _, opcion := range d.Opciones {
+			if strings.TrimSpace(opcion.Opcion) == "" || strings.TrimSpace(opcion.Consecuencia) == "" {
+				contratoValido = false
+			}
+		}
+		if !contratoValido {
+			h = append(h, Hallazgo{"error", "contrato de decisión", fmt.Sprintf("%s debe declarar evidencia, checkpoint y opciones no vacías con su consecuencia: %q", s.ID, d.Pregunta)})
+		}
 		switch d.Tipo {
 		case "derivable":
 			// Both halves are required: an approved authority AND a criterion
