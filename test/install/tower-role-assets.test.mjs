@@ -77,13 +77,20 @@ const ASSET_CONTRACTS = {
     kind: "skill",
     frontmatter: {
       name: "torre-control-entregas",
-      description: "Trigger: approved Tower delivery ordering, serialization, evidence, or closure. Enforce Main-only coordination and project delivery policy.",
+      description: "Trigger: Tower delivery token, ordered handoff, integration, or closure. Main assigns one bound token and enforces repository policy.",
       license: "Apache-2.0",
-      metadata: { author: "gentleman-programming", version: "1.1" },
+      metadata: { author: "gentleman-programming", version: "2.0" },
     },
     references: ["../../AGENTS.md", "../../profiles/tower/main.md", "../torre-control/SKILL.md"],
-    markers: [/Main is the sole dispatch and delivery coordinator/, /confirmed assignment/, /exact evidence/, /Serialize/, /fail closed/i, /closure evidence/],
-    fixtureText: "Main is the sole dispatch and delivery coordinator. Require a confirmed assignment and exact evidence; Serialize delivery, fail closed, and return closure evidence. ",
+    markers: [
+      /Main is the sole delivery-token issuer, queue coordinator, and target-branch mover/,
+      /Keep exactly one active token/,
+      /Bind it to assignment, worker, worktree, source branch, candidate commit and tree, target branch, and policy revision/,
+      /Unknown, missing, or contradictory policy fails closed/,
+      /Another candidate owns the token.*Wait; never grant, steal, or duplicate it/,
+      /Release the token only after the observed result matches its frozen binding/,
+    ],
+    fixtureText: "Main is the sole delivery-token issuer, queue coordinator, and target-branch mover. Keep exactly one active token. Bind it to assignment, worker, worktree, source branch, candidate commit and tree, target branch, and policy revision. Unknown, missing, or contradictory policy fails closed. When Another candidate owns the token, Wait; never grant, steal, or duplicate it. Release the token only after the observed result matches its frozen binding. ",
   },
   "skills/torre-control-soporte/SKILL.md": {
     kind: "skill",
@@ -188,7 +195,7 @@ const validateAssets = async (root) => {
       fail("CT_TOWER_ROLE_ASSET_REFERENCE_DRIFT", path)
     }
     const tokens = match[2].trim().split(/\s+/).length
-    if (tokens < 180 || tokens > 450 || !expected.markers.every((marker) => marker.test(match[2]))) {
+    if (tokens < 180 || tokens > 500 || !expected.markers.every((marker) => marker.test(match[2]))) {
       fail("CT_TOWER_ROLE_ASSET_PROFILE_DRIFT", path)
     }
   }
@@ -259,6 +266,10 @@ describe("Tower role asset author-time contracts", () => {
     const source = await readAsset(sectionRoot, skillPath)
     writeFileSync(join(sectionRoot, skillPath), source.replace("## Activation Contract", "## Temporary").replace("## Hard Rules", "## Activation Contract").replace("## Temporary", "## Hard Rules"))
     await expect(validateAssets(sectionRoot)).rejects.toThrow("CT_TOWER_ROLE_ASSET_PROFILE_DRIFT")
+
+    const overBudgetRoot = fixture()
+    mutate(overBudgetRoot, SKILL_PATHS[0], (contract) => { contract.fixtureText += " role".repeat(501) })
+    await expect(validateAssets(overBudgetRoot)).rejects.toThrow("CT_TOWER_ROLE_ASSET_PROFILE_DRIFT")
   })
 
   test("rejects noncanonical references, copied generic content, vendor leakage, and symlinks", async () => {
