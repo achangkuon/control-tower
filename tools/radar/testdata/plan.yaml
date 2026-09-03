@@ -14,6 +14,7 @@ sesiones:
   - id: S1
     zona: cocina
     resultado: instalar horno
+    autoridad: RFC cocina §1
     criterios: [el horno enciende]
     ruta:
       propuesta: direct
@@ -30,6 +31,7 @@ sesiones:
   - id: S2
     zona: patio
     resultado: definir riego
+    autoridad: PRD patio §2
     depende_de: [S1]
     criterios: [el riego tiene contrato]
     ruta:
@@ -40,6 +42,13 @@ sesiones:
         pregunta: ¿riego manual o automático?
         clase: contrato-visible
         alcanza: criterios
+        evidencia: PRD patio §2
+        checkpoint: antes-de-criterios
+        opciones:
+          - opcion: riego manual
+            consecuencia: requiere operación humana
+          - opcion: riego automático
+            consecuencia: requiere automatización
     modulos:
       - id: M2.1
         resultado: contrato de riego

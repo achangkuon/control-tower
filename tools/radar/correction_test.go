@@ -29,7 +29,7 @@ func TestGitEvidenceSupportsRepositoryObjectFormat(t *testing.T) {
 	if out, err := exec.Command("git", "-C", root, "init", "-q", "--object-format=sha256").CombinedOutput(); err != nil {
 		t.Skipf("Git sin soporte SHA-256: %v: %s", err, out)
 	}
-	for _, args := range [][]string{{"config", "user.email", "plan@example.test"}, {"config", "user.name", "Plan Test"}} {
+	for _, args := range [][]string{{"config", "user.email", "radar@example.test"}, {"config", "user.name", "Radar Test"}} {
 		if out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput(); err != nil {
 			t.Fatal(err, string(out))
 		}

@@ -1,4 +1,4 @@
-<!-- GENERADO por `plan render` desde openspec/plan.yaml. NO EDITAR A MANO. -->
+<!-- GENERADO por `radar render` desde openspec/plan.yaml. NO EDITAR A MANO. -->
 # Hoja de ruta — ejemplo
 
 ## 📍 Punto de retoma

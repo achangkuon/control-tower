@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-const avisoGenerado = "<!-- GENERADO por `plan render` desde openspec/plan.yaml. NO EDITAR A MANO. -->"
+const avisoGenerado = "<!-- GENERADO por `radar render` desde openspec/plan.yaml. NO EDITAR A MANO. -->"
 
 var headBeforePublish = gitHEAD
 
@@ -113,7 +113,7 @@ func RenderAt(p *Plan, root, head string) []byte {
 	for _, s := range p.Sesiones {
 		if estados[s.ID] == Bloqueado {
 			bloqueos++
-			fmt.Fprintf(&b, "- **%s:** %s\n", markdownText(s.ID), markdownText(resumenBloqueo(&s)))
+			fmt.Fprintf(&b, "- **%s:** %s\n", markdownText(s.ID), markdownText(resumenBloqueo(&s, p.ledgerDecisionRequired[s.ID])))
 		}
 	}
 	if bloqueos == 0 {
@@ -251,7 +251,7 @@ func primeraDecisionPendiente(p *Plan) string {
 	return "ninguna"
 }
 
-func resumenBloqueo(s *Sesion) string {
+func resumenBloqueo(s *Sesion, ledgerDecisionRequired bool) string {
 	if s.Entrega != nil {
 		return "evidencia de entrega inválida o no integrada"
 	}
@@ -259,6 +259,9 @@ func resumenBloqueo(s *Sesion) string {
 		if d.Tipo == "escala" && (d.Alcanza == "criterios" || d.Alcanza == "primer-modulo") {
 			return d.Pregunta
 		}
+	}
+	if ledgerDecisionRequired {
+		return "ledger SDD requiere una decisión"
 	}
 	return "contaminación semántica declarada por otra Sesión"
 }
@@ -292,7 +295,7 @@ func atomicWriteChecked(path string, data []byte, mode os.FileMode, beforePublis
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
-	tmp, err := os.CreateTemp(dir, ".plan-render-*")
+	tmp, err := os.CreateTemp(dir, ".radar-render-*")
 	if err != nil {
 		return err
 	}

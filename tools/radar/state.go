@@ -62,7 +62,7 @@ func (p *Plan) EstadosAt(root, head string) map[string]string {
 		if _, ya := estados[s.ID]; ya {
 			continue
 		}
-		if bloqueaAqui(s) {
+		if bloqueaAqui(s) || p.ledgerDecisionRequired[s.ID] {
 			estados[s.ID] = Bloqueado
 		}
 	}

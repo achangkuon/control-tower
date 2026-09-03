@@ -13,6 +13,7 @@ func sesionEjecutable(id, zona string) Sesion {
 		ID:        id,
 		Zona:      zona,
 		Resultado: "resultado observable",
+		Autoridad: "PRD §1",
 		Criterios: []string{"el resultado existe"},
 		Ruta:      RutaSesion{Propuesta: "direct", Autoridad: "RFC §1"},
 		Modulos: []Modulo{{
@@ -33,14 +34,15 @@ func TestJerarquiaExigeModulosYTareas(t *testing.T) {
 	casos := []struct {
 		nombre string
 		sesion Sesion
+		regla  string
 	}{
-		{"sin Módulos", Sesion{ID: "S1", Zona: "z", Criterios: []string{"x"}, Ruta: RutaSesion{Propuesta: "direct", Autoridad: "RFC"}}},
-		{"sin Tareas", Sesion{ID: "S1", Zona: "z", Criterios: []string{"x"}, Ruta: RutaSesion{Propuesta: "direct", Autoridad: "RFC"}, Modulos: []Modulo{{ID: "M1.1", Rutas: []string{"tracked.txt"}}}}},
+		{"sin Módulos", Sesion{ID: "S1", Zona: "z", Criterios: []string{"x"}, Ruta: RutaSesion{Propuesta: "direct", Autoridad: "RFC"}}, "profundidad por ruta"},
+		{"sin Tareas", Sesion{ID: "S1", Zona: "z", Criterios: []string{"x"}, Ruta: RutaSesion{Propuesta: "direct", Autoridad: "RFC"}, Modulos: []Modulo{{ID: "M1.1", Rutas: []string{"tracked.txt"}}}}, "jerarquía"},
 	}
 	for _, c := range casos {
 		t.Run(c.nombre, func(t *testing.T) {
 			p := &Plan{Zonas: []Zona{{ID: "z", Rutas: []string{"tracked.txt"}}}, Sesiones: []Sesion{c.sesion}}
-			if len(hallazgosDe(p.checkSesiones(""), "jerarquía")) == 0 {
+			if len(hallazgosDe(p.checkSesiones(""), c.regla)) == 0 {
 				t.Fatal("la jerarquía incompleta debería fallar")
 			}
 		})

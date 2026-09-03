@@ -9,12 +9,12 @@ import (
 	"strings"
 )
 
-const uso = `plan — herramienta determinista de planificación
+const uso = `radar — herramienta determinista de planificación
 
-  plan check   [-f openspec/plan.yaml] [-C raíz] valida el dato, git y la partición
-  plan status  [-f openspec/plan.yaml] [-C raíz] estado, colas y asientos calculados
-  plan zonas   [-f openspec/plan.yaml] [-C raíz] cobertura sobre archivos rastreados
-  plan render  [-f openspec/plan.yaml] [-o openspec/ROADMAP.md] [-C raíz]
+  radar check   [-f openspec/plan.yaml] [-C raíz] valida el dato, git y la partición
+  radar status  [-f openspec/plan.yaml] [-C raíz] estado, colas y asientos calculados
+  radar zonas   [-f openspec/plan.yaml] [-C raíz] cobertura sobre archivos rastreados
+  radar render  [-f openspec/plan.yaml] [-o openspec/ROADMAP.md] [-C raíz]
 
 openspec/plan.yaml es la única fuente editable. openspec/ROADMAP.md es una vista
 atómica y determinista: nunca se edita a mano. El checker no adquiere locks vivos.
