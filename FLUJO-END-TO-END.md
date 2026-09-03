@@ -161,6 +161,12 @@ Dos momentos, dos capas, dos lugares:
 | Mira | el plano | el código real |
 | Dónde está | afuera del worktree | **adentro** del worktree |
 
+**Frontera del asiento:** MAIN carga `torre-control` y entra por `torre asiento`; esa puerta
+posee la topología y delega en Herdr tanto con la Torre encendida como apagada. Ni MAIN ni el
+kickoff crean el asiento con un `herdr pane split` escrito a mano. La skill de runtime `herdr`
+se carga solo cuando hay que inspeccionar o controlar Herdr explícitamente; no reemplaza
+`torre asiento` ni se convierte en una skill nueva del método.
+
 **El kickoff es un chequeo de llegada, no un selector.** Support no puede ver el worktree del
 obrero — es un hecho físico, no una decisión de diseño. Cuatro pasos: confirmar el terreno
 (HEAD, rama, árbol limpio) → revalidar la ruta abriendo el código del Área (**el único paso con
