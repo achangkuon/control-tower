@@ -9,30 +9,28 @@
 > escritores de [EJECUCION-EN-PARALELO.md](EJECUCION-EN-PARALELO.md) describe la construcción
 > inicial y queda como historia útil; la corrección actual usa **un solo escritor secuencial**.
 >
-> Última reconciliación: 2026-09-03 · corrección de código verificada en
-> `agent-workflows` `feat/modelo-de-zonas@4d3010c`; la rama sigue sin push. Las ocho correcciones
-> C1–C8 están decididas y la corrección de Fase A está integrada; **ninguna decisión del maintainer
-> la bloquea**. El cierre pendiente es un defecto del harness RDD, documentado abajo.
+> Última reconciliación: Fase A cerrada y entregada. `master` y `origin/master`
+> coinciden en `b3da46174b75dc97e52afa72900f6263655aa378`; `agent-workflows` conserva su historia
+> completa mediante el merge de subtree `dbb7626904a09323e19dd7a60f747d29c8c62f5d`, cuyo tip
+> importado es `588f0282d28baf79ffbd3cb7c1b29d7d5557436e`. La próxima acción es Fase B.
 
 ---
 
 ## 📍 Punto de retoma
 
-**Cerrado localmente:** la corrección de Fase A está integrada en
-`feat/modelo-de-zonas@4d3010c` y conserva una unidad revertible en
-`fix/fase-a-rdd-correction@f7ea11a`: 184 líneas de diff sobre diez archivos. Radar focal y completo,
-`go vet`, los 26 tests del instalador y `git diff --check` pasaron. El contrato ya exige schema v3,
-admite decisiones cerradas, conserva la profundidad de la ruta propuesta, acepta bases Git
-ancestrales y evita retirar skills antes de que terminen las escrituras que pueden fallar. El gate
-de recursos vivos permanece deliberadamente en MAIN/Tower y Fase C; `radar` solo pronostica.
+**Fase A cerrada:** las correcciones críticas quedaron resueltas en `39ff465`, revisadas en el
+linaje `review-4ec24941df920cc5` —cero hallazgos bloqueantes, autoridad reconocida y quemada— y
+mergeadas en `977cced`. La unificación documental también fue aprobada en
+`review-a06c008f2e0eaa21`, luego reconocida y quemada. El merge de subtree `dbb7626904a09323e19dd7a60f747d29c8c62f5d`
+importó el tip `588f0282d28baf79ffbd3cb7c1b29d7d5557436e` con historia completa.
 
-**Runtime sincronizado en disco:** `python3 tools/install.py` propagó las once skills `chanks-*` y
-los contratos relacionados a `~/.agents`, Claude, OpenCode y Codex; retiró las cuatro copias
-obsoletas previstas y `python3 tools/install.py --check` devolvió `OK`. Los bytes fuera de los dos
-bloques manuales propiedad del instalador quedaron preservados. Los runtimes abiertos deben
-reiniciarse; OpenCode todavía necesita un smoke vivo antes de afirmar que cargó la política.
+**Entrega y runtime verificados:** `master` y `origin/master` están sincronizados en
+`b3da46174b75dc97e52afa72900f6263655aa378`. Las copias activas de runtime se reconciliaron desde
+el subtree interno; `python3 tools/install.py --check` devolvió `OK` y los bloques manuales se
+preservaron. Pasaron 30/30 tests del instalador, `go vet`, `go test` y la radiografía posterior a la
+entrega con 1167 PASS / 0 FAIL sobre `b3da461`.
 
-**Revisión nativa — causa raíz identificada 2026-09-03:** el bloqueo no era un defecto de runtime.
+**Incidente RDD histórico — causa raíz identificada 2026-09-03:** el bloqueo no era un defecto de runtime.
 El linaje `review-4b55f432bbdf7f40` se congeló con selector `base-diff` (`base_ref` `a01986ee`), y la
 STATUS canónica sin selector siempre proyecta `current-changes`. Como la identidad del target se
 deriva del selector, el proveedor responde `applicability: unrelated` y ofrece un START nuevo.
@@ -40,17 +38,14 @@ Verificado desde tres worktrees, incluido un candidate view con el árbol congel
 `--lineage` no lo corrige: con y sin el flag el target computado es idéntico. Claude Code, OpenCode
 y Pi reproducen lo mismo, así que no es el skew de versión de Pi. Con `--base-ref` + `--committed-only`
 el proveedor **sí** reconoce el linaje: `applicability: current_target` con el `target_identity`
-congelado `sha256:cf2f5302…`. El linaje sigue en `correction_required` y no se declara aprobado.
+congelado `sha256:cf2f5302…`. En ese momento el linaje seguía en `correction_required` y no se declaró aprobado.
 Reportado en Gentleman-Programming/gentle-ai#3551.
 
-**Entregado parcialmente (2026-09-03):** `feat/modelo-de-zonas` fue pusheada a `origin`
-(`f7bd95e..565ba21`, 26 commits); la rama quedó en sync. `feat/fase-a-radar`, `feat/fase-a-skills` y
-`docs/fase-a-canon` ya estaban integradas en esa rama. **`fix/fase-a-rdd-correction@f7ea11a` NO se
-mergeó a propósito**: su árbol `ad2a11d` es el candidato corregido que el linaje RDD espera, y
-rebasearla (está 5 commits atrás) o borrar el worktree `implementer-1` destruiría ese candidato.
-Control Tower y Herdr siguen sin pushear. El binario instalado `herdr --skill` todavía expone el
-contrato viejo. El residuo legacy sin trackear `tools/plan/plan` sigue presente y no se borra ni se
-ignora sin decisión del maintainer.
+**Historia de la entrega parcial (superada, 2026-09-03):** `feat/modelo-de-zonas` se había
+pusheado a `origin` (`f7bd95e..565ba21`, 26 commits), mientras
+`fix/fase-a-rdd-correction@f7ea11a` se conservaba sin mergear para no destruir el candidato RDD
+`ad2a11d`. Ese estado intermedio terminó con el cierre de los hallazgos en `39ff465`, el merge
+`977cced` y la posterior unificación en `master`. No describe el estado activo.
 
 **Rescate ejecutado y linaje cerrado (2026-09-03):** el runbook funcionó. Con
 `--base-ref` + `--committed-only` + `--untracked-scope exclude` el proveedor devolvió la continuación
@@ -58,7 +53,7 @@ target-bound completa (`review.capture-validation`, con `--repository-context` y
 ejecutada verbatim. El linaje quedó en **`escalated`** con cierre
 `gentle-ai.review-last-event-closure/v1`.
 
-**Veredicto del validador dirigido: la corrección NO satisface su alcance congelado.**
+**Veredicto histórico del validador dirigido, superado por `39ff465`: la primera corrección no satisfacía su alcance congelado.**
 `original_criteria.passed: false` — 3 de 6 hallazgos `CRITICAL` resueltos.
 `correction_regression.passed: true` — la corrección no introdujo defectos nuevos.
 
@@ -71,12 +66,10 @@ ejecutada verbatim. El linaje quedó en **`escalated`** con cierre
 | `R4-db-lock-regression` | ✅ cerrado en `39ff465` |
 | `R4-retired-skill-data-loss` | ✅ cerrado en `39ff465` |
 
-Los tres abiertos comparten causa: `correction_paths` no contiene ningún `skills/*.md`. La corrección
-tocó `tools/radar/*`, `tools/install.py` y `tests/test_install.py`, pero no los playbooks que deben
-exigir adquisición viva y semáforo para el `Recurso` declarado de una Sesión — hoy solo se exige para
-Cimientos. Y `tools/install.py` sigue borrando `RETIRED_SKILLS` de forma incondicional en un install
-exitoso: solo se endureció la ruta de fallo, así que una skill customizada que comparta nombre con una
-retirada se pierde igual.
+**Diagnóstico histórico, ya resuelto:** los tres abiertos compartían causa: `correction_paths` no
+contenía `skills/*.md`; faltaba exigir adquisición viva para el `Recurso` declarado de una Sesión y
+el instalador retiraba skills de forma irreversible. `39ff465` corrigió ambos contratos y cerró los
+tres hallazgos.
 
 **Los tres `CRITICAL` cerrados y mergeados (2026-09-03):** `39ff465` cierra los tres en un lote de
 82 líneas, bajo el cap de 400 de la política nueva. El retiro de skills ahora **archiva** en
@@ -95,8 +88,9 @@ trabajo posterior y que nunca reabren esta revisión. Los de más sustancia: fal
 para el `Recurso` exclusivo (`session-kickoff/SKILL.md:36-37`) y una carrera TOCTOU en el archivado
 (`tools/install.py:442-445`).
 
-**Siguiente acción exacta:** pushear (sin autorizar todavía), reiniciar los runtimes y ejecutar el
-smoke vivo de OpenCode. Solo entonces cerrar Fase A y comenzar Fase B.
+**Siguiente acción exacta — Fase B:** migrar los datos de planificación legacy de Control Tower a
+`openspec/plan.yaml`, generar `openspec/ROADMAP.md` y retirar las vistas de plan legacy duplicadas
+únicamente mediante esa migración. Este documento no inicia esa tarea.
 
 ---
 
@@ -104,54 +98,41 @@ smoke vivo de OpenCode. Solo entonces cerrar Fase A y comenzar Fase B.
 
 | Eje | Pregunta | Estado actual |
 |---|---|---|
-| **Fuente local** | ¿El cambio existe en un commit o worktree local? | Sí: la corrección de Fase A está integrada y verificada en `4d3010c`. |
-| **Remoto** | ¿La rama o commit fue pusheado? | Sí para `feat/modelo-de-zonas` (2026-09-03, 26 commits). No para `fix/fase-a-rdd-correction`, Control Tower ni Herdr. |
-| **Runtime instalado** | ¿Lo ejecutan hoy los agentes/binarios instalados? | Parcial: `chanks-*` está sincronizado en disco, pero los runtimes abiertos deben reiniciarse y OpenCode requiere smoke vivo; `herdr --skill` sigue viejo. |
+| **Fuente integrada** | ¿El cambio forma parte del checkout canónico? | Sí: Fase A está integrada en `master@b3da46174b75dc97e52afa72900f6263655aa378`. |
+| **Remoto** | ¿El commit canónico está entregado? | Sí: `origin/master` coincide con `master`. |
+| **Runtime instalado** | ¿Las copias activas reflejan el subtree? | Sí: fueron reconciliadas, `tools/install.py --check` devuelve `OK` y los bloques manuales están preservados. |
 
-Un cambio puede estar implementado y verificado **localmente** sin estar pusheado ni instalado.
-Este documento no usa “cerrado localmente” como sinónimo de “entregado”.
+Fase A cumple los tres ejes: integración, entrega y runtime reconciliado.
 
 ## 📊 Estado de un vistazo
 
 Los únicos significados usados abajo son: `✅ implementado y verificado`, `🔵 parcial`,
 `🟡 pendiente` y `📚 fuera de alcance`.
 
-| Grupo | ID | Estado | Fuente local | Remoto | Runtime instalado / qué falta |
+| Grupo | ID | Estado | Evidencia integrada | Remoto | Runtime instalado / qué falta |
 |---|---|---|---|---|---|
-| Implementación | Fase A | 🔵 parcial | Corrección integrada en `4d3010c`; validación dirigida cerró 3/6 hallazgos | Sí (`feat/modelo-de-zonas`) | Resolver los tres `CRITICAL` abiertos, mergear `fix/fase-a-rdd-correction` y completar el smoke de OpenCode |
-| Implementación | Fase B | 🟡 pendiente | Control Tower aún no tiene `openspec/plan.yaml` ni ROADMAP; conserva `master-index`/`STATUS` legacy | No | Migrar el plan real después de cerrar Fase A |
-| Implementación | Fase C | 📚 fuera de alcance | Sin implementación en esta obra | No | Gate de recursos vivos, medidor, conexión del Horizonte, freeze terminal y `S9.9` |
-| Flujo | Tramo 1 · Autoridad | ✅ implementado y verificado | Corregido en `4d3010c` | No | Reiniciar runtimes |
-| Flujo | Tramo 2 · Planificación | ✅ implementado y verificado | Corregido en `4d3010c`; no existe madre de planificación | No | Reiniciar runtimes |
-| Flujo | Tramo 3 · Enrutado | ✅ implementado y verificado | Profundidad propuesta y base ancestral verificadas | No | Reiniciar runtimes |
-| Flujo | Tramo 4 · Ejecución | ✅ implementado y verificado | Pipeline y retiro sin pérdida verificados | No | Reiniciar runtimes |
-| Flujo | Tramo 5 · Revisión | 🔵 parcial | Linaje nuevo con 3/4 lentes; cierre bloqueado por skew ABANDON | No | Reparar gentle-pi y reiniciar el candidato sin replay |
-| Flujo | Tramo 6 · Entrega | 🔵 parcial | Skill de entrega local en Control Tower `3f0a7be` | No | No está entregada remotamente |
-| Flujo | Tramo 7 · Cierre | 🔵 parcial | Gate documental local `4654ed8`; runtime sincronizado en disco | No | Cerrar RDD, smoke de OpenCode y aplicar sobre un plan real |
-| Corrección | C1 · retirar `est:` | ✅ implementado y verificado | Integrada y probada en `4d3010c` | No | — |
-| Corrección | C2 · pipeline SDD común | ✅ implementado y verificado | Integrada y probada en `4d3010c` | No | — |
-| Corrección | C3 · disolver `session-plan` | ✅ implementado y verificado | Retiro lossless probado y copias runtime retiradas | No | — |
-| Corrección | C4 · sin madre de planificación | ✅ implementado y verificado | Contrato corregido y propagado en disco | No | — |
-| Corrección | C5 · `plan` → `radar` | 🔵 parcial | `tools/radar` es la fuente vigente; queda residuo legacy sin trackear | No | No borrar/ignorar `tools/plan/plan` sin decisión |
-| Corrección | C6 · `blocked` no es ruta | ✅ implementado y verificado | Integrada y probada en `4d3010c` | No | — |
-| Corrección | C7 · nuevo gate documental | ✅ implementado y verificado | Control Tower `4654ed8`, local | No | No confundir verificación local con entrega |
-| Corrección | C8 · asientos para planificar | ✅ implementado y verificado | Contrato integrado y propagado en disco | No | Conexión del Horizonte a MAIN queda en Fase C |
-| Contrato | Schema v3 | ✅ implementado y verificado | v3 exigido; v2 rechazado explícitamente | No | — |
-| Instalación | Propagación `chanks-*` | 🔵 parcial | Cuatro roots sincronizados; `--check` en `OK` | No aplica | Reiniciar runtimes y ejecutar smoke vivo de OpenCode |
-| Compatibilidad | Residuo `tools/plan/plan` | 🔵 parcial | Existe sin trackear en el checkout principal | No aplica | Preservar hasta decisión del maintainer |
-| Revisión | Linaje AW viejo | ✅ cerrado | `review-4b55f432bbdf7f40` rescatado y cerrado en `escalated` (2026-09-03); validación dirigida 3/6, sin regresión | No aplica | Decidir los tres `CRITICAL` abiertos: `R1-db-resource-lock-removal`, `R4-db-lock-regression`, `R4-retired-skill-data-loss` |
-| Revisión | Linaje AW nuevo | 🔵 parcial | `review-0c7fcacfefeb1c3f`, 3/4 lentes y sin BLOCKER/CRITICAL capturados | No aplica | Reparar incompatibilidad ABANDON v2 y reiniciar sobre los mismos bytes |
-| Integración | Herdr | 🔵 parcial | Fuente limpia `d8a22841`; runtime Pi actualizado | No | Binario instalado `herdr --skill` sigue viejo |
-| Integración | Control Tower | 🔵 parcial | `master@72cebbe`, 4 commits locales; `1110/1110` registrado | No | No presentado como entregado ni instalado remoto |
+| Implementación | Fase A | ✅ implementado y verificado | Correcciones críticas en `39ff465`; merge `977cced`; subtree importado con historia completa | Sí, en `master@b3da46174b75dc97e52afa72900f6263655aa378` | Cerrada |
+| Implementación | Fase B | 🟡 pendiente | Todavía no se creó `openspec/plan.yaml` ni se generó `openspec/ROADMAP.md` | No iniciada | Migrar los datos legacy y retirar vistas duplicadas solo mediante esa migración |
+| Implementación | Fase C | 📚 fuera de alcance | Sin implementación en esta obra | No aplica | Gate de recursos vivos, medidor, conexión del Horizonte, freeze terminal y `S9.9` |
+| Flujo | Tramos 1–7 | ✅ implementado y verificado | Canon, planificación, enrutado, ejecución, revisión, entrega y cierre reconciliados | Sí | — |
+| Corrección | C1–C8 | ✅ implementado y verificado | Contratos y correcciones integrados; los tres `CRITICAL` finales cerraron en `39ff465` | Sí | — |
+| Contrato | Schema v3 | ✅ implementado y verificado | v3 exigido; v2 rechazado explícitamente | Sí | — |
+| Instalación | Copias runtime | ✅ implementado y verificado | Copias activas reconciliadas; `tools/install.py --check` en `OK`; bloques manuales preservados | No aplica | — |
+| Revisión | Incidente RDD histórico | 📚 fuera de alcance | `review-4b55f432bbdf7f40` cerró en `escalated`; sus tres abiertos se resolvieron después en `39ff465` | No aplica | Evidencia histórica; no es un bloqueo activo |
+| Revisión | Corrección final de Fase A | ✅ implementado y verificado | `review-4ec24941df920cc5`, cero hallazgos bloqueantes, reconocido y quemado | No aplica | — |
+| Revisión | Unificación documental | ✅ implementado y verificado | `review-a06c008f2e0eaa21`, aprobado, reconocido y quemado | No aplica | — |
+| Integración | Control Tower | ✅ implementado y verificado | Subtree `dbb7626904a09323e19dd7a60f747d29c8c62f5d`; radiografía 1167 PASS / 0 FAIL | Sí | Continuar con Fase B |
 
 ### Política de revisión vigente
 
 La expectativa histórica “RDD encendida → 4R siempre” quedó **superada por la política del runtime**.
-El proveedor/RAR nativo selecciona los lentes según el riesgo: los candidatos de riesgo medio
-seleccionaron un solo `review-reliability`, mientras la corrección de 184 líneas y frontera de
-procesos seleccionó 4R. Pi corre gentle-pi **2.3.0** y puede iniciar y capturar revisiones, pero su
-binding ABANDON v2 no coincide con gentle-ai 2.5.0. Hasta reparar ese skew, el linaje nuevo no puede
-abandonarse ni completarse sin violar el contrato de no replay.
+El proveedor/RAR nativo selecciona los lentes según el riesgo. El incidente de compatibilidad y el
+rescate del linaje viejo quedan documentados arriba como historia; no bloquean Fase A. Las revisiones
+que sí cierran esta entrega son `review-4ec24941df920cc5` y `review-a06c008f2e0eaa21`, ambas aprobadas,
+reconocidas y quemadas. Según la decisión 80 de `openspec/plans/decision-register.md`, Pi es el primer
+host de implementación; la decisión 85 difiere la conformidad de OpenCode hasta que ese host se
+desestacione. La mención “Pi después de OpenCode” de `openspec/plans/plan-9/STATUS.md` es política
+histórica aparcada. Por eso ninguna prueba en vivo de OpenCode es gate de Fase A ni próxima acción.
 
 ### Política de tamaño de lote de revisión (desde 2026-09-03)
 
@@ -211,7 +192,7 @@ No se relitigan. Las correcciones C1–C8 también están decididas y no requier
 **C1–C8 decididas:** retirar `est:`; compartir pipeline SDD; disolver `session-plan`; no crear
 madre de planificación; renombrar `plan` a `radar`; retirar `blocked` de las rutas; liberar el
 gate documental con `openspec/plan.yaml`; y contar asientos de planificación. Cero decisiones del
-maintainer bloquean la corrección actual.
+maintainer bloquean el cierre ya registrado de Fase A.
 
 ---
 
@@ -227,10 +208,9 @@ con el modelo nuevo.
 - [x] Producir la primera implementación local de C1–C8 en el candidato integrado de Fase A.
 - [x] Resolver los hallazgos aplicables y refutar el gate vivo fuera de alcance, dentro del
       presupuesto aprobado: 184/190 líneas.
-- [ ] Completar la revisión RDD ordinaria nueva; el candidato y tres lentes están congelados, pero el
-      cierre espera la reparación del binding ABANDON v2.
-- [x] Propagar `chanks-*` a los cuatro runtimes, preservando los bloques manuales.
-- [ ] Reiniciar runtimes y ejecutar el smoke vivo de OpenCode antes de afirmar carga efectiva.
+- [x] Cerrar la revisión de las correcciones críticas en `review-4ec24941df920cc5`, sin hallazgos bloqueantes.
+- [x] Propagar `chanks-*` a los runtimes activos, preservando los bloques manuales.
+- [x] Reconciliar las copias activas desde el subtree y verificar `tools/install.py --check` en `OK`.
 
 La construcción inicial se repartió entre tres escritores como registra
 [EJECUCION-EN-PARALELO.md](EJECUCION-EN-PARALELO.md). Ese reparto ya no es una instrucción de
@@ -251,7 +231,7 @@ tests focales y amplios sin sustituir esa validación del modelo.
 - [x] Integrar localmente planificación, kickoff, cierre y soporte con el modelo de Zonas.
 - [x] Renombrar la herramienta fuente a `radar`.
 - [x] Llevar el schema a v3 y rechazar v2 explícitamente; v2 no es el contrato final.
-- [ ] Completar la nueva revisión ordinaria después de reparar el harness RDD.
+- [x] Completar la revisión aplicable y reconocer/quemar su autoridad.
 
 ### Fase 4 — Autoridad, planificación y puente SDD
 
@@ -260,7 +240,7 @@ tests focales y amplios sin sustituir esa validación del modelo.
 - [x] Mantener los ocho pasos de planificación en una sola skill: **no crear una madre de planificación**.
 - [x] Disolver `session-plan`, `coordinador_multi_agente` y `big-files-remediation-loop` en la fuente integrada.
 - [x] Verificar que el retiro sea lossless y propagar los contratos corregidos en disco.
-- [ ] Reiniciar los runtimes y completar el smoke vivo de OpenCode.
+- [x] Reconciliar las copias activas de runtime desde el subtree y preservar los bloques manuales.
 
 No instalar `coordinador_multi_agente`: fue disuelto. No adaptar `session-plan`: fue disuelto.
 
@@ -268,36 +248,39 @@ No instalar `coordinador_multi_agente`: fue disuelto. No adaptar `session-plan`:
 
 - [x] Implementar y verificar localmente el nuevo gate documental de Control Tower.
 - [x] Implementar localmente la skill de entrega y el contrato de asset de rol.
-- [ ] Completar el consumo de plan-data por Support, templates y brief diario.
+- [ ] Completar en Fase B el consumo del plan migrado por Support, templates y brief diario.
 - [x] Fijar la frontera: `radar` pronostica recursos compatibles; MAIN/Tower adquiere locks vivos.
 - [ ] Construir en Fase C el gate de recursos vivos, el medidor runtime, la recuperación stale y el
       freeze terminal.
 
-La revisión no se implementa con “4R siempre”. RAR/provider eligió 4R para este candidato de riesgo
-alto; el cierre espera reparar el binding ABANDON y reiniciar la revisión sin repetir la captura
-ambigua.
+La revisión no se implementa con “4R siempre”. RAR/provider eligió los lentes según el riesgo; la
+corrección final quedó aprobada en `review-4ec24941df920cc5` y la unificación documental en
+`review-a06c008f2e0eaa21`. Ambas autoridades fueron reconocidas y quemadas.
 
 ### Fase 6 — Asientos y Horizonte
 
 - [x] Incorporar al contrato que los asientos sirven tanto para implementar como para planificar.
 - [ ] Conectar en Fase C el hueco de planificación calculado por `radar status` con el dispatch de MAIN.
-- [ ] Mantener el techo humano de asientos y hacer que la Torre proponga ampliarlo cuando corresponda.
+- [ ] Mantener en Fase C el techo humano de asientos y hacer que la Torre proponga ampliarlo cuando corresponda.
 
 ### Fase 7 — Aplicar a productos
 
-- [ ] **Fase B:** crear `openspec/plan.yaml` y ROADMAP en Control Tower; retirar sus documentos legacy.
+- [ ] **Fase B:** migrar los datos de planificación legacy de Control Tower a
+      `openspec/plan.yaml`, generar `openspec/ROADMAP.md` y retirar las vistas de plan legacy
+      duplicadas únicamente mediante esa migración.
 - [ ] Migrar `Servi-Task-U` solo después de validar Control Tower.
 - [ ] Revisar las skills locales de ServiTask que lean el canon anterior.
 
 ---
 
-## Qué no se toca en la corrección actual
+## Qué no se toca en esta reconciliación documental
 
 - [FLUJO-END-TO-END.md](FLUJO-END-TO-END.md), que sigue siendo la autoridad del flujo.
-- Fase B: la migración del plan real de Control Tower.
+- Fase B: esta edición solo deja registrada su próxima acción; no crea `openspec/plan.yaml`, no genera
+  `openspec/ROADMAP.md` y no retira vistas legacy.
 - Fase C: gate de recursos vivos, medidor, conexión del Horizonte a MAIN, freeze terminal y `S9.9`.
 - `Servi-Task-U`.
-- El residuo sin trackear `tools/plan/plan`, hasta que el maintainer decida borrarlo o ignorarlo.
+- El subtree integrado no contiene `tools/plan/plan`; cualquier residuo no trackeado que permanezca en el checkout archivado queda fuera de la autoridad y del alcance de esta migración.
 - Los siete estados y las ocho clases que siempre escalan.
 - PRD, RFC y REQUIREMENTS, que responden preguntas distintas.
 - `decision-register.md` de Control Tower: registra decisiones, no estado calculado.
