@@ -4,6 +4,6 @@ __pycache__/
 # Local Pi runtime state
 .atl/
 
-# Binario compilado de tools/plan
+# Binario compilado de tools/radar
 tools/radar/radar
 tools/radar/radar-darwin-*
