@@ -460,5 +460,51 @@ class InstallerTests(unittest.TestCase):
             self.assertIn(term, execution)
 
 
+    def test_successful_install_preserves_customized_retired_skill_bytes(self):
+        runtime_root = INSTALLER.runtime_skill_roots(self.home)[0]
+        retired = runtime_root / INSTALLER.RETIRED_SKILLS[0]
+        (retired / "references").mkdir(parents=True)
+        skill_payload = b"# locally customized retired skill\n"
+        nested_payload = b"local reference\n"
+        (retired / "SKILL.md").write_bytes(skill_payload)
+        (retired / "references/local.md").write_bytes(nested_payload)
+
+        INSTALLER.apply(self.home, ROOT)
+
+        self.assertFalse(retired.exists())
+        archived = INSTALLER.retired_skill_archive_root(runtime_root)
+        preserved = sorted(archived.rglob("SKILL.md"))
+        self.assertEqual(len(preserved), 1)
+        self.assertEqual(preserved[0].read_bytes(), skill_payload)
+        self.assertEqual(
+            (preserved[0].parent / "references/local.md").read_bytes(), nested_payload
+        )
+
+    def test_retired_skill_archive_is_not_reported_as_drift(self):
+        runtime_root = INSTALLER.runtime_skill_roots(self.home)[0]
+        retired = runtime_root / INSTALLER.RETIRED_SKILLS[0]
+        retired.mkdir(parents=True)
+        (retired / "SKILL.md").write_bytes(b"stale\n")
+
+        INSTALLER.apply(self.home, ROOT)
+
+        self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
+
+    def test_kickoff_requires_live_acquisition_for_exclusive_resource(self):
+        content = (ROOT / "skills/session-kickoff/SKILL.md").read_text(encoding="utf-8")
+        execution = content.split("## Execution Steps", 1)[1].split("## Output Contract", 1)[0]
+
+        self.assertIn("Recurso", execution)
+        self.assertIn("liberá", execution)
+
+    def test_implementation_assignment_requires_resource_meter_and_release(self):
+        content = (
+            ROOT / "skills/agente-soporte/assets/assignment-implementation.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("Recurso", content)
+        self.assertIn("release", content)
+
+
 if __name__ == "__main__":
     unittest.main()

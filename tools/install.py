@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import os
 from pathlib import Path
 import re
@@ -69,6 +70,11 @@ RETIRED_SKILLS = (
     "big-files-remediation-loop",
     "torre-control-entregas",
 )
+
+# Retiring a runtime copy must never destroy bytes the user owns: a locally
+# customized skill sharing a retired name is archived beside the runtime root
+# instead of deleted, so an install is always reversible by hand.
+RETIRED_SKILL_ARCHIVE = ".retired-skills"
 
 MANUAL_FILES = (
     Path(".claude/CLAUDE.md"),
@@ -417,14 +423,26 @@ def _atomic_copy(source: Path, destination: Path, runtime_root: Path) -> None:
         temporary.unlink(missing_ok=True)
 
 
-def _remove_retired_skill(runtime_root: Path, destination: Path) -> None:
+def retired_skill_archive_root(runtime_root: Path) -> Path:
+    return _absolute(runtime_root) / RETIRED_SKILL_ARCHIVE
+
+
+def _archive_retired_skill(runtime_root: Path, destination: Path) -> None:
     _validate_retired_skill_destination(runtime_root, destination)
     if not _lexists(destination):
         return
     if destination.is_symlink():
         destination.unlink()
-    else:
-        shutil.rmtree(destination)
+        return
+    archive_root = retired_skill_archive_root(runtime_root)
+    archive_root.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    target = archive_root / f"{destination.name}-{stamp}"
+    collision = 1
+    while _lexists(target):
+        target = archive_root / f"{destination.name}-{stamp}-{collision}"
+        collision += 1
+    os.replace(destination, target)
 
 
 def _atomic_write(path: Path, content: bytes, instruction_root: Path) -> None:
@@ -461,7 +479,7 @@ def apply(home: Path, root: Path | None = None) -> list[Change]:
         for retired_skill in RETIRED_SKILLS:
             destination = runtime_root / retired_skill
             if destination in change_paths:
-                _remove_retired_skill(runtime_root, destination)
+                _archive_retired_skill(runtime_root, destination)
     return changes
 
 

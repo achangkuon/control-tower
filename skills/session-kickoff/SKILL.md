@@ -33,11 +33,12 @@ Activa dentro del worktree cuando el ejecutor recibe un brief aprobado con asien
 1. **Verificar terreno:** confirmá repositorio, `HEAD`, rama esperada y árbol limpio contra el brief y el asiento.
 2. **Revalidar ruta:** abrí el código real del Área, cargá `../planificador-granular/references/juicio-de-ruta.md` y contrastá la propuesta una vez.
 3. **Enviar delta:** construí `ruta.revalidacion` con resultado, base Git, evidencia y razón si cambia; enviá el delta a Support.
-4. **Pedir medidor:** si la Sesión reserva Cimientos, pedí a MAIN/Tower adquisición viva antes de editar; si no, declarà que no aplica.
+4. **Pedir medidor:** si la Sesión reserva Cimientos **o declara un `Recurso` exclusivo** —modo de base de datos, token de entrega—, pedí a MAIN/Tower adquisición viva antes de editar; si no aplica, declaralo.
+5. **Liberar:** liberá cada adquisición al terminar la Sesión, también cuando falle o se bloquee, y reportá la evidencia de liberación.
 
 ## Output Contract
 
-Devuelve brief recibido, asiento/rama/runtime, `HEAD`, limpieza, ruta propuesta y revalidada, evidencia, delta enviado y estado del medidor.
+Devuelve brief recibido, asiento/rama/runtime, `HEAD`, limpieza, ruta propuesta y revalidada, evidencia, delta enviado, y estado del medidor con la evidencia de adquisición y liberación de Cimientos y `Recurso`.
 
 ## References
 
