@@ -1,71 +1,51 @@
 ---
 name: planificador-granular
-description: "Trigger: planificar, desglosar, enumerar Sesiones. Corta alcance aprobado dentro de Zonas validadas y propone la ruta de cada Sesión."
+description: "Trigger: planificar, desglosar, enumerar Sesiones. Ejecuta ocho pasos fijos y propone una de tres rutas para alcance aprobado."
 license: Apache-2.0
 metadata:
   author: gentleman-programming
-  version: "3.0"
+  version: "4.0"
 ---
 
 ## Activation Contract
 
-Activa cuando alcance aprobado debe incorporarse al plan único del producto. Lee primero
-`../_shared/plan-naming-convention.md` y el `openspec/plan.yaml` vigente. Esta skill descompone;
-Support es el único autor del dato.
+Activa para incorporar alcance aprobado al plan único. Descompone y propone; Support es el único autor del dato.
 
 ## Hard Rules
 
-- Existe un solo plan por producto. Cortá alcance dentro de una Zona ya validada; si la
-  partición debe cambiar, producí primero esa propuesta y exigí `plan check` contra archivos reales.
-- Jerarquía exacta: Zona → Sesión → Módulo → Tarea. El producto es marco, no quinto nivel.
-- Cada Sesión pertenece a una sola Zona. Puede reservar Cimientos por rutas de archivo exactas.
-  Nunca escribas `Área`, estado, porcentaje ni posición: son derivados.
-- Cada Sesión abierta incluye dependencias, Cimientos, recursos, decisiones, linaje, criterios
-  binarios, uno o más Módulos y una o más Tareas por Módulo. Los IDs siguen
-  `S23 → M23.1 → T23.1.1`, son únicos, planos y permanentes.
-- Cada Módulo declara archivos concretos. Cada Tarea declara una acción atómica y criterios
-  binarios observables. Para implementación directa preferí RED → GREEN → REFACTOR y mantené
-  pruebas/documentación con el comportamiento.
-- **Proponé** la ruta en `ruta.propuesta` con autoridad exacta. No escribas una revalidación ni
-  presentes la propuesta como decisión final de implementación.
-- Las rutas válidas siguen siendo `direct`, `design-tasks`, `full-sdd`, `blocked`. Elegí la más
-  liviana que sea honesta; tamaño, riesgo o cantidad de archivos no eligen SDD por sí solos.
-- No edites `openspec/plan.yaml` ni `openspec/ROADMAP.md`. Enviá un delta exacto y acotado a
-  `agente-soporte`, único autor del dato. ROADMAP siempre se regenera con la herramienta.
-- Nunca crees SDD por Módulo. `full-sdd` corre una vez para la Sesión completa.
+- Ejecutá los ocho pasos en orden, sin omitir ni agregar otro nivel.
+- Jerarquía exacta: Zona → Sesión → Módulo → Tarea; una Sesión pertenece a una Zona.
+- Cargá cada referencia sólo al llegar al paso que la necesita.
+- Las únicas rutas son `direct`, `design-tasks` y `full-sdd`.
+- En `full-sdd`, dejá Módulos y Tareas vacíos: el diseño los define.
+- No escribas plan ni vista; enviá un delta con precondición a Support.
 
 ## Decision Gates
 
-| Condición | Resultado |
+| Profundidad honesta del corte | Ruta |
 |---|---|
-| Alcance aprobado cabe como resultado independiente dentro de una Zona | Enumerar Sesión, Módulos y Tareas. |
-| El resultado cruza Zonas | Cimientos → partir por Zona → Zona nueva sólo si partir destruye el resultado → revisar corte si se repite. |
-| Contrato binario y decisiones derivables | Proponer `direct`. |
-| Resultado fijo con descubrimiento técnico acotado | Proponer `design-tasks`. |
-| Comportamiento/lifecycle/contrato compartido aún requiere diseño dentro de autoridad | Proponer `full-sdd`. |
-| Falta autoridad, hay evidencia contradictoria o una decisión alcanza criterios/primer Módulo | Proponer `blocked` y pedir una decisión. |
+| Contrato y ejecución determinados | `direct` |
+| Resultado fijo; falta diseño técnico acotado | `design-tasks` |
+| Comportamiento o contrato compartido requiere diseño | `full-sdd` |
+| Falta autoridad o evidencia coherente | No propongas ruta; devolvé la decisión necesaria. |
 
 ## Execution Steps
 
-1. Confirmá autoridad aprobada, `openspec/plan.yaml` vigente y Zona validada.
-2. Cortá una Sesión por resultado independientemente revisable dentro de esa Zona; el tamaño de
-   PR es regla de desborde, no criterio territorial.
-3. Asigná IDs nuevos sin renumerar historia; declarà dependencias, reemplazos, Cimientos y recursos.
-4. Escribí criterios binarios y decisiones con autoridad, contaminación y alcance.
-5. Enumerá Módulos por archivos concretos y Tareas atómicas con sus criterios.
-6. Proponé ruta y autoridad; no la revalides.
-7. Entregá a Support un delta YAML exacto: ubicación, operación, valor esperado anterior y valor
-   nuevo. Support aplica, ejecuta `plan check` y `plan render`.
-8. Reportá cualquier error del checker sin editar la vista generada ni inventar un estado.
+1. **Ubicar territorio:** cargá `../chanks-1-heredado/references/ubicacion-y-cruces.md` y ubicá el alcance en una Zona.
+2. **Resolver cruces:** declarà Cimientos, dependencias o necesidad de recorte.
+3. **Cortar la Sesión:** definí un resultado independientemente revisable.
+4. **Escribir contrato binario:** fijá criterios observables y falsificadores.
+5. **Descomponer:** para `direct` o `design-tasks`, enumerá Módulos por archivos y Tareas atómicas; para `full-sdd`, dejalos vacíos.
+6. **Declarar decisiones:** registrá autoridad, evidencia, opciones, clase, checkpoint y contaminación.
+7. **Juzgar ruta:** cargá `references/juicio-de-ruta.md` y proponé una de las tres rutas.
+8. **Pronosticar tamaño:** estimá adiciones+eliminaciones authored; si no cabe en un PR, dividí en Sesiones o declarà cadena.
 
 ## Output Contract
 
-Devuelve autoridad, Zona, Sesión y jerarquía completa propuesta; dependencias, Cimientos,
-recursos, decisiones, criterios; `ruta.propuesta` con razón/autoridad; delta exacto para Support;
-responsabilidades no enumeradas y bloqueos. Termina con `skill_resolution: paths-injected`.
+Devuelve los ocho resultados, ruta propuesta y autoridad, pronóstico authored, delta exacto para Support, responsabilidades no enumeradas y decisiones pendientes.
 
 ## References
 
-- `../_shared/plan-naming-convention.md`
-- `../session-kickoff/SKILL.md`
+- `../chanks-1-heredado/references/ubicacion-y-cruces.md`
+- `references/juicio-de-ruta.md`
 - `../agente-soporte/SKILL.md`
