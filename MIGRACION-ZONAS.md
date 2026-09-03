@@ -67,9 +67,9 @@ ejecutada verbatim. El linaje quedó en **`escalated`** con cierre
 | `R3-resolved-decision-schema` | ✅ resuelto (schema `resuelta` + test que carga, chequea y renderiza) |
 | `R3-route-revalidation-depth-deadlock` | ✅ resuelto (`checkProfundidad` usa `Ruta.Propuesta`) |
 | `R3-schema-v2-breaking-change` | ✅ resuelto (schema v3 + mensaje de migración explícito) |
-| `R1-db-resource-lock-removal` | ❌ abierto |
-| `R4-db-lock-regression` | ❌ abierto |
-| `R4-retired-skill-data-loss` | ❌ abierto |
+| `R1-db-resource-lock-removal` | ✅ cerrado en `39ff465` |
+| `R4-db-lock-regression` | ✅ cerrado en `39ff465` |
+| `R4-retired-skill-data-loss` | ✅ cerrado en `39ff465` |
 
 Los tres abiertos comparten causa: `correction_paths` no contiene ningún `skills/*.md`. La corrección
 tocó `tools/radar/*`, `tools/install.py` y `tests/test_install.py`, pero no los playbooks que deben
@@ -78,11 +78,25 @@ Cimientos. Y `tools/install.py` sigue borrando `RETIRED_SKILLS` de forma incondi
 exitoso: solo se endureció la ruta de fallo, así que una skill customizada que comparta nombre con una
 retirada se pierde igual.
 
-**Siguiente acción exacta:** decidir sobre los tres `CRITICAL` abiertos antes de mergear
-`fix/fase-a-rdd-correction`. El validador es informativo, no bloquea la entrega, pero dos de los tres
-son riesgos de pérdida de datos (semáforo de base de datos y borrado de skills customizadas). Recién
-después: mergear, reiniciar los runtimes, ejecutar el smoke vivo de OpenCode, cerrar Fase A y comenzar
-Fase B.
+**Los tres `CRITICAL` cerrados y mergeados (2026-09-03):** `39ff465` cierra los tres en un lote de
+82 líneas, bajo el cap de 400 de la política nueva. El retiro de skills ahora **archiva** en
+`<runtime_root>/.retired-skills/<skill>-<UTC>` en vez de destruir, así que un install exitoso es
+reversible a mano. `session-kickoff` y `assignment-implementation` exigen adquisición viva para
+Cimientos **y** para un `Recurso` exclusivo —modo de base de datos, token de entrega— con liberación
+garantizada incluso ante fallo o bloqueo, usando el vocabulario que ya define el canon de nombres.
+
+Revisado bajo la política nueva como linaje `review-4ec24941df920cc5`: consentimiento otorgado por el
+mantenedor, cuatro lentes, **cero hallazgos bloqueantes**, autoridad reconocida y quemada
+(`gentle-ai.review-acknowledged/v1`, `authority: burned`). Mergeado en `977cced`. Suite completa en
+verde: 30/30 tests del instalador, `go vet` y `go test` de `tools/radar`.
+
+Quedan **12 hallazgos informativos** (WARNING/SUGGESTION) que el proveedor marcó explícitamente como
+trabajo posterior y que nunca reabren esta revisión. Los de más sustancia: falta de timeout de lease
+para el `Recurso` exclusivo (`session-kickoff/SKILL.md:36-37`) y una carrera TOCTOU en el archivado
+(`tools/install.py:442-445`).
+
+**Siguiente acción exacta:** pushear (sin autorizar todavía), reiniciar los runtimes y ejecutar el
+smoke vivo de OpenCode. Solo entonces cerrar Fase A y comenzar Fase B.
 
 ---
 
