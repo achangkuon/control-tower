@@ -22,19 +22,19 @@ rather than written, and the roadmap is generated.
 ```
 la casa · un solo plan, sin fecha de cierre        ← the product: the frame, not a level
  └── Zona · Cotizaciones                            ← one agent lives here
-      └── Sesión S23 · instalar el horno            est: 4h   ← one PR
-           └── Módulo · quotes/accept.ts            est: 40min
+      └── Sesión S23 · instalar el horno            ← one independently reviewable result
+           └── Módulo · quotes/accept.ts
                 └── Tarea T3
 ```
 
 Never add a fifth level. Never rename a level.
 
-| Level | Defined by | Time |
-|-------|-----------|------|
-| **Zona** | **The files it owns.** Exclusive to one agent while claimed | — |
-| **Sesión** | One independently reviewable result, inside one Zona | estimate |
-| **Módulo** | Concrete files that change together | estimate |
-| **Tarea** | One atomic action with a declared observable result — minimum 3 per Módulo | — |
+| Level | Defined by |
+|-------|------------|
+| **Zona** | **The files it owns.** Exclusive to one agent while claimed |
+| **Sesión** | One independently reviewable result, inside one Zona |
+| **Módulo** | Concrete files that change together |
+| **Tarea** | One atomic action with a declared observable result — minimum 3 per Módulo |
 
 Every Sesión, Módulo and Tarea declares a nonblank `resultado`; every Tarea also declares its atomic `accion`. A Módulo route is one
 normalized exact repository-relative file: never an absolute path, directory, pattern, glob,
@@ -79,14 +79,14 @@ Cut by **business domain** — Cotizaciones, Pagos, Identidad — using the proj
 families as the starting catalogue, then instantiate against the real tree. A cut that does
 not survive contact with the file system is not a cut.
 
-Cut by things that **do not wait for each other**. The test that decides it:
+Cut by things that **do not wait for each other**. Use this deciding comparison:
 
 | Cut | With three agents |
 |---|---|
 | By process step — mix → bricks → wall → sand → paint | The bricklayer waits for the mixer. Two agents watch the third. A chain is not made faster by more hands. |
 | By room — kitchen, bedroom, living room | Nobody waits. Three real advances at once, and they cannot collide because they are not in the same room. |
 
-Cutting by technical layer (DB / services / screens) fails this test: almost every feature
+Cutting by technical layer (DB / services / screens) fails this comparison: almost every feature
 touches all three, so the three agents serialize.
 
 ### Work that crosses Zonas
@@ -153,11 +153,17 @@ Treating all Cimientos as one coarse lock would idle every other agent behind a 
 manifest change. Per-file reservation constrains only the exact file in dispute once the Tower
 acquires it, while MAIN keeps delivery ordered.
 
-## 5. Time is an estimate, never a limit
+## 5. Work vocabulary — three terms that do not overlap
 
-Time appears only as an informational attribute: `est: 4h`. It NEVER defines or constrains a
-level. A Sesión estimated at 4h that takes 9h is the same Sesión — the estimate was wrong,
-the plan did not change.
+| Term | Meaning |
+|------|---------|
+| **Jornada** | One workday. Support prepares its brief once per Jornada. |
+| **Conversación** | One human-agent interaction: open the terminal, work together, close it. |
+| **Sesión** | The plan's work unit. It closes with a delivered commit. |
+
+Do not use capitalization to distinguish these concepts and do not substitute `Turno`. The
+vocabulary must remain searchable and unambiguous in speech, skills, documentation, and agent
+instructions.
 
 ## 6. Overflow rule
 
@@ -275,9 +281,8 @@ Derived, never authored. Recompute from Sesión states.
 3. A Sesión counts only at `COMPLETO` or `ARCHIVADO`. `EN CURSO` contributes zero.
 4. **No enumeration → no percentage.** Write `—` plus the reason. That is a planning gap to
    close, not a number to invent.
-5. Never weight by `est:` unless every Sesión carries an estimate.
-6. **Report per Zona and in total.** A single blended number hides which Zona is stuck.
-7. Pending work outside the enumeration invalidates the percentage.
+5. **Report per Zona and in total.** A single blended number hides which Zona is stuck.
+6. Pending work outside the enumeration invalidates the percentage.
 
 ## 12. Sesión execution contract
 
@@ -330,16 +335,22 @@ Two Sesiones may run concurrently when all three hold:
    Sesiones may coexist when their exact reservations are disjoint.
 3. **Disjoint `Recurso`** and no conflicting Cimientos reservation.
 
-**Available seats = a deterministic compatible forecast of Zonas with ready work.** The first
-ready Sesión in each Zona queue is considered in stable Zona order; a candidate whose exact
-Cimientos or exact exclusive `Recurso` identities intersect an earlier candidate is not offered
-concurrently. This is not a live claim.
+**Available implementation seats = a deterministic compatible forecast of Zonas with ready
+work.** The first ready Sesión in each Zona queue is considered in stable Zona order; a candidate
+whose exact Cimientos or exact exclusive `Recurso` identities intersect an earlier candidate is
+not offered concurrently. This is not a live claim.
 
-The human sets a **ceiling** — how many agents they want to supervise. The seats actually
-opened are `min(Zonas con trabajo listo, techo)`. The ceiling is a human decision that
-changes when the human wants; the first number is computed and changes daily. When ready
-work exceeds the ceiling, the orchestrator proposes raising it. It never raises it alone,
-and it never batches work to fill seats — that is cutting work to fit the furniture.
+Capacity also includes **planning seats**: a Zona may need planning work even when it has no ready
+implementation Sesión. This correction recognizes both seat purposes only. The combined
+calculation, live acquisition runtime, and planning-horizon behavior are defined elsewhere and
+remain outside this canon change.
+
+The human sets a **ceiling** — how many agents they want to supervise across implementation and
+planning work. For implementation, the current forecast opens `min(Zonas con trabajo listo,
+techo)`. The ceiling is a human decision that changes when the human wants; computed capacity
+changes with the plan. When eligible work exceeds the ceiling, the orchestrator proposes raising
+it. It never raises it alone, and it never batches work to fill seats — that is cutting work to
+fit the furniture.
 
 **Agents are assigned to Zonas, and take Sesiones from their Zona's queue.** Assigning an
 agent to a theme, an app, or a layer leaves cross-cutting results with no owner.
@@ -423,16 +434,39 @@ The answer lifts the block **only over the scope recorded when the decision was 
 never a scope recomputed at resume time. Resume from the recorded checkpoint; if the base
 moved, reconcile first.
 
-## 15. Execution routes
+## 15. Planning flow and execution routes
 
-Every Sesión carries a route: `direct`, `design-tasks`, `full-sdd`, or `blocked`.
+### Planning is one fixed flow
 
-| Route | Selected when |
-|---|---|
-| `direct` | The contract has a binary-verifiable outcome and every remaining choice is derivable |
-| `design-tasks` | The product outcome is fixed, but bounded technical discovery is required |
-| `full-sdd` | Outcome and boundaries exist, but behavior, lifecycle, or a shared contract still needs design |
-| `blocked` | Authority is absent or stale, evidence contradicts, or an open decision reaches the criteria or first Módulo |
+Planning always runs the same eight steps, in order: locate territory → resolve crossings → cut
+the Sesión → write its binary contract → decompose Módulos and Tareas → declare decisions → judge
+the route → forecast size. Nothing selects or skips a branch, so planning has **no parent skill**.
+Shared detail may live in references loaded on demand; that does not create a skill hierarchy.
+For `full-sdd`, planning deliberately leaves Módulos empty because design defines them.
+
+### Three entry gates into one SDD pipeline
+
+Every Sesión carries exactly one route: `direct`, `design-tasks`, or `full-sdd`.
+
+| Route | Selected when | SDD entry gate |
+|---|---|---|
+| `direct` | The contract has a binary-verifiable outcome and every remaining choice is derivable | `apply` |
+| `design-tasks` | The product outcome is fixed, but bounded technical discovery is required | `design` |
+| `full-sdd` | Outcome and boundaries exist, but behavior, lifecycle, or a shared contract still needs design | `proposal` |
+
+These are not separate execution methods. They enter the same pipeline at different gates:
+
+```text
+proposal → spec → design → tasks → apply → verify → review → delivery → archive
+```
+
+Start at the selected gate and continue forward. `verify` and `archive` are common and mandatory
+for all three routes; `archive` runs only after delivery. Never run a separate SDD pipeline per
+Módulo.
+
+`blocked` is never a route. When authority is absent or stale, evidence contradicts, attempts are
+exhausted, or an open decision reaches the acceptance criteria or first Módulo, §9 and §14 compute
+`BLOQUEADO`. A blocked Sesión has no executable gate until the recorded cause is resolved.
 
 **Choose the lightest route that is honest.** Risk, file count, changed lines, or the number
 of technical seams **never** select a heavier route on their own. What escalates is concrete
@@ -446,9 +480,9 @@ The route is recorded at two moments in one structure; a single ambiguous route 
 2. **At implementation**, `ruta.revalidacion` may be added once. It records the resulting route,
    the exact current Git `HEAD`, and an evidence/authority reference. It is absent before kickoff.
 
-Both values use the same closed route set. **The implementation-time revalidation wins.** When it
-differs from the proposal, it also records a mandatory reason. `session-kickoff` performs this
-revalidation once and sends the exact delta to Support; it does not create a second dispatcher.
+Both values use the same closed three-route set. **The implementation-time revalidation wins.**
+When it differs from the proposal, it also records a mandatory reason. `session-kickoff` performs
+this revalidation once and sends the exact delta to Support; it does not create a second dispatcher.
 A changed Git base invalidates the old revalidation instead of silently reusing it.
 
 ## 16. Proportional output
@@ -490,7 +524,8 @@ Only what the tool cannot check. Everything else is enforced, not remembered.
 - [ ] Every level is Zona, Sesión, Módulo or Tarea — no other noun, and no second plan
 - [ ] Every Zona is defined by real paths, not by a theme
 - [ ] Crossings followed the order: Cimientos → split by Zona → new Zona; recurring crossings reopened the partition
-- [ ] Time appears only as `est:`, never as a constraint
+- [ ] No plan field estimates time or uses time to define a level
+- [ ] Jornada, Conversación and Sesión are used with the distinct meanings in §5
 - [ ] No agent wrote a status, a `%`, a queue position, or an `Área`
 - [ ] A Sesión that outgrew one PR was split into Sesiones, not renamed
 - [ ] Every Sesión carries `Zona`, `Depende de`, `Cimientos`, `Reemplaza`, `Recurso` and `Decisiones`
@@ -502,7 +537,9 @@ Only what the tool cannot check. Everything else is enforced, not remembered.
 - [ ] A parked decision carries question, evidence, options with consequence, origin,
       checkpoint and class
 - [ ] A Sesión is `BLOQUEADO` only per §14 — never merely because a decision escalates
-- [ ] Planning proposed a route with authority; kickoff revalidated it against exact current Git evidence
+- [ ] Planning ran its fixed ordered flow without a parent skill
+- [ ] Planning proposed one of the three routes with authority; kickoff revalidated it against exact current Git evidence
+- [ ] Every route entered the shared SDD pipeline at its declared gate and completed `verify` and post-delivery `archive`
 - [ ] A route change at implementation time recorded why it changed
 - [ ] Nobody hand-edited `openspec/ROADMAP.md` or created parallel generated status/index files
 - [ ] Artifacts omitted on a small product are declared on the plan, not silently skipped
