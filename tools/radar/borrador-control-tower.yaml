@@ -7,7 +7,7 @@
 # La regla que lo decide es la misma de siempre: si lo toca cualquiera sin
 # importar dónde viva, es un cimiento, no una zona.
 #
-# Verificar con:  ./plan check -f borrador-control-tower.yaml
+# Verificar con:  ./radar check -f borrador-control-tower.yaml
 
 schema: plan
 schema_version: 2

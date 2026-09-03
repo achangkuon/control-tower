@@ -11,7 +11,7 @@
 **El plano cierra: se puede particionar el repo en once zonas, sin solape y sin archivos
 huérfanos.** El modelo sobrevive al contacto con la realidad.
 
-**Verificado con la herramienta, no a ojo** — `plan check -f borrador-control-tower.yaml`
+**Verificado con la herramienta, no a ojo** — `radar check -f borrador-control-tower.yaml`
 sobre los **441 archivos rastreados**: cero huérfanos, cero solapes. El borrador ejecutable
 vive en [`tools/plan/borrador-control-tower.yaml`](tools/plan/borrador-control-tower.yaml).
 

@@ -1,15 +1,15 @@
-# `plan` — dato único, estado y hoja de ruta derivados
+# `radar` — dato único, estado y hoja de ruta derivados
 
 `openspec/plan.yaml` es la **única fuente editable** de planificación de un producto.
 `openspec/ROADMAP.md` es la **única vista humana generada**: contiene el estado actual y
 el próximo trabajo. No existen un `STATUS.md` ni un `master-index.md` paralelos.
 
 ```sh
-plan check                         # usa openspec/plan.yaml y el repo actual
-plan status                        # estado, colas por Zona y asientos compatibles
-plan zonas                         # cobertura de la partición sobre git ls-files
-plan render                        # escribe openspec/ROADMAP.md atómicamente
-plan render -f otro.yaml -o salida.md -C /repo
+radar check                         # usa openspec/plan.yaml y el repo actual
+radar status                        # estado, colas por Zona y asientos compatibles
+radar zonas                         # cobertura de la partición sobre git ls-files
+radar render                        # escribe openspec/ROADMAP.md atómicamente
+radar render -f otro.yaml -o salida.md -C /repo
 ```
 
 El contrato canónico está en
@@ -18,11 +18,11 @@ El contrato canónico está en
 ## Compilar y verificar
 
 ```sh
-go build -o plan .
+go build -o radar .
 go test ./...
 
-GOOS=darwin GOARCH=arm64 go build -o plan-darwin-arm64 .
-GOOS=darwin GOARCH=amd64 go build -o plan-darwin-amd64 .
+GOOS=darwin GOARCH=arm64 go build -o radar-darwin-arm64 .
+GOOS=darwin GOARCH=amd64 go build -o radar-darwin-amd64 .
 ```
 
 ## Esquema v2
@@ -92,7 +92,7 @@ la v1 y cualquier intento de escribir `estado` o `Área`.
 - `session-kickoff` revalida una vez. Registra la ruta resultante, el `HEAD` exacto actual y
   una referencia de evidencia/autoridad. Si cambia la propuesta, `razon` es obligatoria.
 - La revalidación gana para implementar. No existe un segundo dispatcher.
-- `plan check` falla si el `HEAD` actual ya no coincide con la base revalidada.
+- `radar check` falla si el `HEAD` actual ya no coincide con la base revalidada.
 
 El conjunto cerrado sigue siendo: `direct`, `design-tasks`, `full-sdd`, `blocked`.
 
@@ -106,7 +106,7 @@ entrega:
   pr: 42                           # opcional; evidencia, no fuente de verdad
 ```
 
-`plan check` exige el OID hexadecimal completo e inmutable del formato de objetos del repositorio
+`radar check` exige el OID hexadecimal completo e inmutable del formato de objetos del repositorio
 (40 caracteres para SHA-1, 64 para SHA-256): rechaza `HEAD`, ramas, expresiones como `HEAD~1`,
 hashes abreviados y argumentos con aspecto de opción. El OID debe identificar exactamente un
 commit local y ser ancestro del `HEAD` integrado fijado al comenzar la operación. Sólo entonces el
@@ -117,7 +117,7 @@ inventar un PR. No hay red ni dependencia de GitHub.
 
 ## Render determinista
 
-`plan render` fija un HEAD completo, valida y genera toda la vista contra ese snapshot; vuelve a
+`radar render` fija un HEAD completo, valida y genera toda la vista contra ese snapshot; vuelve a
 comprobar HEAD justo antes de publicar y rehúsa el rename si cambió. La vista empieza con el Punto
 de retoma y reporta cierres determinísticamente sin inventar cuál fue el último. Todo scalar del
 plan se normaliza a una línea y se neutraliza como dato Markdown: saltos, headings, pipes,
@@ -126,7 +126,7 @@ backticks y HTML no pueden inyectar estructura.
 La salida se resuelve siempre contra la raíz del repositorio del plan. El default sigue siendo
 `openspec/ROADMAP.md`; un `-o` de prueba puede elegir otro destino sólo dentro de esa raíz. Escapes,
 componentes symlink, destinos existentes no regulares y archivos regulares que no llevan el aviso
-generado por `plan` fallan; así `-o` no puede sobrescribir un archivo arbitrario. La escritura sincroniza el temporal,
+generado por `radar` fallan; así `-o` no puede sobrescribir un archivo arbitrario. La escritura sincroniza el temporal,
 hace rename atómico y sincroniza el directorio padre; cada error se propaga. Repetirla sobre los
 mismos bytes y evidencia converge byte por byte.
 
@@ -138,7 +138,7 @@ Los defaults canónicos son:
 `-f`, `-o` y `-C` existen para pruebas y migraciones. Este repositorio no incluye esos dos
 artefactos como ejemplo; cada producto los crea al adoptar el modelo.
 
-## Qué valida `plan check`
+## Qué valida `radar check`
 
 - Partición exhaustiva y disjunta contra los archivos reales de `git ls-files`.
 - Zonas definidas por rutas y reservas exactas de Cimientos declarados.
@@ -153,11 +153,11 @@ artefactos como ejemplo; cada producto los crea al adoptar el modelo.
 
 ## Frontera honesta
 
-`plan status` ejecuta primero la validación aplicable y falla cerrado: nunca muestra evidencia de
+`radar status` ejecuta primero la validación aplicable y falla cerrado: nunca muestra evidencia de
 entrega inválida o no verificable como trabajo ejecutable. El pronóstico evita simultaneidad cuando
 las primeras Sesiones listas comparten un Cimiento exacto o la misma identidad exacta de `Recurso`.
 
-`plan` valida datos y partición, deriva estado desde Git, pronostica asientos compatibles y
+`radar` valida datos y partición, deriva estado desde Git, pronostica asientos compatibles y
 renderiza. **No** adquiere reservas vivas, autentica la identidad del owner/invocante, recupera locks stale
 ni congela el candidato runtime de S7.1. MAIN/Tower deberá hacer eso en una fase posterior.
 Un pronóstico compatible no es un lock.

@@ -5,5 +5,5 @@ __pycache__/
 .atl/
 
 # Binario compilado de tools/plan
-tools/plan/plan
-tools/plan/plan-darwin-*
+tools/radar/radar
+tools/radar/radar-darwin-*

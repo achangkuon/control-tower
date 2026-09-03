@@ -1,4 +1,4 @@
-module github.com/achangkuon/agent-workflows/tools/plan
+module github.com/achangkuon/agent-workflows/tools/radar
 
 go 1.26
 

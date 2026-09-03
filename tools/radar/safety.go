@@ -115,7 +115,7 @@ func resolveOutput(root, output string) (string, error) {
 			return "", fmt.Errorf("no se pudo cerrar el destino durante la verificación: %w", closeErr)
 		}
 		if n != len(prefix) || !bytes.Equal(prefix, []byte(avisoGenerado)) {
-			return "", fmt.Errorf("se rechaza sobrescribir %s: no es una vista generada por plan", candidate)
+			return "", fmt.Errorf("se rechaza sobrescribir %s: no es una vista generada por radar", candidate)
 		}
 	}
 	return candidate, nil

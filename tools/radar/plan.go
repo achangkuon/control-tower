@@ -1,4 +1,4 @@
-// Package main implements `plan`, the deterministic planning tool.
+// Package main implements `radar`, the deterministic planning tool.
 //
 // openspec/plan.yaml is the only mutable planning source. Everything derivable —
 // state, queues, progress, available seats, Área and openspec/ROADMAP.md — is

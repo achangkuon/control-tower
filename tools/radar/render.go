@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-const avisoGenerado = "<!-- GENERADO por `plan render` desde openspec/plan.yaml. NO EDITAR A MANO. -->"
+const avisoGenerado = "<!-- GENERADO por `radar render` desde openspec/plan.yaml. NO EDITAR A MANO. -->"
 
 var headBeforePublish = gitHEAD
 
@@ -292,7 +292,7 @@ func atomicWriteChecked(path string, data []byte, mode os.FileMode, beforePublis
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
-	tmp, err := os.CreateTemp(dir, ".plan-render-*")
+	tmp, err := os.CreateTemp(dir, ".radar-render-*")
 	if err != nil {
 		return err
 	}

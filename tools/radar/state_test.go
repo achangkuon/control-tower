@@ -11,7 +11,7 @@ import (
 func repoGit(t *testing.T) (string, string) {
 	t.Helper()
 	root := t.TempDir()
-	for _, args := range [][]string{{"init", "-q"}, {"config", "user.email", "plan@example.test"}, {"config", "user.name", "Plan Test"}} {
+	for _, args := range [][]string{{"init", "-q"}, {"config", "user.email", "radar@example.test"}, {"config", "user.name", "Radar Test"}} {
 		if out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput(); err != nil {
 			t.Fatalf("git %v: %v: %s", args, err, out)
 		}
