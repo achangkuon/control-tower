@@ -32,24 +32,31 @@ obsoletas previstas y `python3 tools/install.py --check` devolvió `OK`. Los byt
 bloques manuales propiedad del instalador quedaron preservados. Los runtimes abiertos deben
 reiniciarse; OpenCode todavía necesita un smoke vivo antes de afirmar que cargó la política.
 
-**Revisión nativa incompleta por defecto del harness:** el candidato exacto
-`sha256:c24ef32de8a8332dea1b489e17e173cb3e5517f433e2aa83618f138ccbb72df3` abrió el linaje nuevo
-`review-0c7fcacfefeb1c3f`. Riesgo, resiliencia y confiabilidad quedaron capturados; solo aparecieron
-dos `WARNING`, sin `BLOCKER` ni `CRITICAL`. La captura de legibilidad fue ambigua y no se puede
-repetir. El maintainer autorizó abandonar y reiniciar, pero gentle-pi 2.3.0 agrega
-`evidence_records_present` a la autorización ABANDON v2 y gentle-ai 2.5.0 exige la misma forma sin
-ese campo. El linaje permanece `reviewing`; no se declara aprobado.
+**Revisión nativa — causa raíz identificada 2026-09-03:** el bloqueo no era un defecto de runtime.
+El linaje `review-4b55f432bbdf7f40` se congeló con selector `base-diff` (`base_ref` `a01986ee`), y la
+STATUS canónica sin selector siempre proyecta `current-changes`. Como la identidad del target se
+deriva del selector, el proveedor responde `applicability: unrelated` y ofrece un START nuevo.
+Verificado desde tres worktrees, incluido un candidate view con el árbol congelado byte a byte.
+`--lineage` no lo corrige: con y sin el flag el target computado es idéntico. Claude Code, OpenCode
+y Pi reproducen lo mismo, así que no es el skew de versión de Pi. Con `--base-ref` + `--committed-only`
+el proveedor **sí** reconoce el linaje: `applicability: current_target` con el `target_identity`
+congelado `sha256:cf2f5302…`. El linaje sigue en `correction_required` y no se declara aprobado.
+Reportado en Gentleman-Programming/gentle-ai#3551.
 
-**No entregado:** ninguna rama de Agent Workflows, Control Tower o Herdr fue pusheada. El binario
-instalado `herdr --skill` todavía expone el contrato viejo hasta un futuro build/install. Los
-commits locales de Control Tower tampoco son runtime remoto. El residuo legacy sin trackear
-`tools/plan/plan` sigue presente y no se borra ni se ignora sin decisión del maintainer.
+**Entregado parcialmente (2026-09-03):** `feat/modelo-de-zonas` fue pusheada a `origin`
+(`f7bd95e..565ba21`, 26 commits); la rama quedó en sync. `feat/fase-a-radar`, `feat/fase-a-skills` y
+`docs/fase-a-canon` ya estaban integradas en esa rama. **`fix/fase-a-rdd-correction@f7ea11a` NO se
+mergeó a propósito**: su árbol `ad2a11d` es el candidato corregido que el linaje RDD espera, y
+rebasearla (está 5 commits atrás) o borrar el worktree `implementer-1` destruiría ese candidato.
+Control Tower y Herdr siguen sin pushear. El binario instalado `herdr --skill` todavía expone el
+contrato viejo. El residuo legacy sin trackear `tools/plan/plan` sigue presente y no se borra ni se
+ignora sin decisión del maintainer.
 
-**Siguiente acción exacta:** corregir o actualizar gentle-pi para que su autorización ABANDON v2
-coincida byte a byte con gentle-ai 2.5.0; abandonar `review-0c7fcacfefeb1c3f` con
-`reason=operator_disposition` y abrir una revisión ordinaria nueva sobre el candidato sin cambios.
-Después reiniciar los runtimes y ejecutar el smoke vivo de OpenCode. Solo entonces cerrar Fase A y
-comenzar Fase B. El linaje viejo `review-4b55f432bbdf7f40` sigue fuera de alcance y no se reutiliza.
+**Siguiente acción exacta:** rescatar `review-4b55f432bbdf7f40` con el runbook registrado en la
+política global de RDD — leer `.state.initial_atomic_start.selector` del store y re-dirigir la STATUS
+con ese selector — y continuar únicamente por el `next_transition` que devuelva. Recién con el linaje
+cerrado, mergear `fix/fase-a-rdd-correction`, reiniciar los runtimes y ejecutar el smoke vivo de
+OpenCode. Solo entonces cerrar Fase A y comenzar Fase B.
 
 ---
 
@@ -58,7 +65,7 @@ comenzar Fase B. El linaje viejo `review-4b55f432bbdf7f40` sigue fuera de alcanc
 | Eje | Pregunta | Estado actual |
 |---|---|---|
 | **Fuente local** | ¿El cambio existe en un commit o worktree local? | Sí: la corrección de Fase A está integrada y verificada en `4d3010c`. |
-| **Remoto** | ¿La rama o commit fue pusheado? | No para Agent Workflows, Control Tower ni Herdr. |
+| **Remoto** | ¿La rama o commit fue pusheado? | Sí para `feat/modelo-de-zonas` (2026-09-03, 26 commits). No para `fix/fase-a-rdd-correction`, Control Tower ni Herdr. |
 | **Runtime instalado** | ¿Lo ejecutan hoy los agentes/binarios instalados? | Parcial: `chanks-*` está sincronizado en disco, pero los runtimes abiertos deben reiniciarse y OpenCode requiere smoke vivo; `herdr --skill` sigue viejo. |
 
 Un cambio puede estar implementado y verificado **localmente** sin estar pusheado ni instalado.
@@ -92,7 +99,7 @@ Los únicos significados usados abajo son: `✅ implementado y verificado`, `�
 | Contrato | Schema v3 | ✅ implementado y verificado | v3 exigido; v2 rechazado explícitamente | No | — |
 | Instalación | Propagación `chanks-*` | 🔵 parcial | Cuatro roots sincronizados; `--check` en `OK` | No aplica | Reiniciar runtimes y ejecutar smoke vivo de OpenCode |
 | Compatibilidad | Residuo `tools/plan/plan` | 🔵 parcial | Existe sin trackear en el checkout principal | No aplica | Preservar hasta decisión del maintainer |
-| Revisión | Linaje AW viejo | 📚 fuera de alcance | `review-4b55f432bbdf7f40` no está disponible ni es reutilizable en el estado nativo actual | No aplica | No reutilizar sin evidencia explícita de recuperación nativa |
+| Revisión | Linaje AW viejo | 🔵 parcial | `review-4b55f432bbdf7f40` en `correction_required`; direccionable con `--base-ref` + `--committed-only` (`applicability: current_target`, 2026-09-03) | No aplica | Rescatar con el runbook y continuar solo por el `next_transition` devuelto |
 | Revisión | Linaje AW nuevo | 🔵 parcial | `review-0c7fcacfefeb1c3f`, 3/4 lentes y sin BLOCKER/CRITICAL capturados | No aplica | Reparar incompatibilidad ABANDON v2 y reiniciar sobre los mismos bytes |
 | Integración | Herdr | 🔵 parcial | Fuente limpia `d8a22841`; runtime Pi actualizado | No | Binario instalado `herdr --skill` sigue viejo |
 | Integración | Control Tower | 🔵 parcial | `master@72cebbe`, 4 commits locales; `1110/1110` registrado | No | No presentado como entregado ni instalado remoto |
@@ -105,6 +112,15 @@ seleccionaron un solo `review-reliability`, mientras la corrección de 184 líne
 procesos seleccionó 4R. Pi corre gentle-pi **2.3.0** y puede iniciar y capturar revisiones, pero su
 binding ABANDON v2 no coincide con gentle-ai 2.5.0. Hasta reparar ese skew, el linaje nuevo no puede
 abandonarse ni completarse sin violar el contrato de no replay.
+
+### Política de tamaño de lote de revisión (desde 2026-09-03)
+
+Un lote de revisión no supera **400 líneas**. Más allá de eso se parte en unidades revisables
+(`work-unit-commits`; `chained-pr` donde el repo entregue por PR). Se revisa **antes** de commitear,
+con `--projection staged`. **`--base-ref` y `--committed-only` quedan deshabilitados** para revisiones
+nuevas hasta que gentle-ai#3551 esté cerrado y verificado; su único uso admitido es el runbook de
+rescate. La regla vive en el bloque manual `review-lifecycle-policy` de los cuatro archivos de agente.
+Fase A abrió su revisión con 10 067 líneas en un solo lote: ese fue el disparador.
 
 ---
 
