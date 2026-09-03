@@ -21,10 +21,10 @@ registra en P0 porque este Plan es dueño de la autoridad documental.
 
 | Campo | Detalle |
 |---|---|
-| Entregado | `radiografia.json`, `openspec/plans/radiografia.md`, `.githooks/pre-push`, sección nueva en [`AGENTS.md`](../../../AGENTS.md). **El motor es compartido** y vive en `~/projects/agent-workflows/radiografia/` desde la decisión 56 |
+| Entregado | `radiografia.json`, `openspec/plans/radiografia.md`, `.githooks/pre-push`, sección nueva en [`AGENTS.md`](../../../AGENTS.md). **El motor es compartido**: la decisión 56 lo llevó al repositorio entonces independiente y el merge `dbb7626904a09323e19dd7a60f747d29c8c62f5d` fijó su ubicación canónica actual en `agent-workflows/radiografia/` |
 | Commits | `0e31922` → `56cd35b` (motor local), `ce2001f` (formatos de otros proyectos), `5361eda` (mudanza al motor compartido), `073b85a` y `39483cc` (cierre documental) — commits directos a `master`, sin PR |
 | Publicado | [Artifact `bb0891f6`](https://claude.ai/code/artifact/bb0891f6-06d2-489a-a010-8c65b5d78f60), republicado desde el HTML generado. Sólo Claude Code puede publicarlo; el resto de los agentes genera y deja el archivo en disco |
-| Tests | 57 en `agent-workflows/test/`, mudados de este repo con el motor. La suite de acá baja a **888 pass / 0 fail** por la mudanza, no por pérdida de cobertura |
+| Tests | 57 en el subtree interno `agent-workflows/test/`, mudados originalmente de este repo con el motor. La suite de acá bajó entonces a **888 pass / 0 fail** por la mudanza, no por pérdida de cobertura |
 | Disparo | `.githooks/pre-push` — corre para cualquier agente porque es git, no asistente. Nunca bloquea un push. Si el motor no está en la máquina, lo omite y avisa |
 | Artefactos | `radiografia.html` y `.radiografia-cache.json` son build artifacts **gitignoreados** |
 
@@ -42,14 +42,17 @@ las escribe nadie: salen medidas de `master-index.md` y del repositorio.
 emitir —árbol sucio, juicio contra otro commit, suite de otro commit— se ejercitaron todas
 durante la sesión y las tres se apagaron al corregir su causa.
 
-**Residuo cerrado el 2026-08-28.** `~/projects/agent-workflows` ya tiene remoto:
-[`achangkuon/agent-workflows`](https://github.com/achangkuon/agent-workflows), privado, rama
-`master`. El motor compartido de radiografía deja de existir sólo en esta máquina y cualquier
-host con acceso al repo puede generar un informe. Cierra la limitación registrada en la
+**Residuo cerrado el 2026-08-28.** El checkout histórico
+`~/projects/agent-workflows` obtuvo el remoto privado
+[`achangkuon/agent-workflows`](https://github.com/achangkuon/agent-workflows), rama `master`.
+Hoy ese checkout queda como archivo read-only: la autoridad activa está en el subtree
+`agent-workflows/` de Control Tower desde el merge
+`dbb7626904a09323e19dd7a60f747d29c8c62f5d`. Cierra la limitación registrada en la
 [decisión 56](../decision-register.md).
 
-**No mueve ningún porcentaje, y conviene decirlo.** El trabajo ocurrió íntegramente en
-`agent-workflows`, no en este repositorio: no cierra ninguna Sesión enumerada de ningún Plan.
+**No movió ningún porcentaje, y conviene decirlo.** Ese trabajo histórico ocurrió
+íntegramente en el entonces repositorio independiente `agent-workflows`, no en Control Tower:
+no cerró ninguna Sesión enumerada de ningún Plan.
 Lo que cierra es este residuo, que nunca tuvo ID. El repo además incorporó `tools/setup.sh`
 —instalador propio de las skills de usuario, con la Torre como opt-in— y `tools/install.py`
 pasó a omitir los runtimes ausentes en vez de fallar, que era lo que volvía inusable la
@@ -57,12 +60,13 @@ instalación en una máquina limpia.
 
 > **Colisión de nombres resuelta en fuente por la decisión 100; entrega pendiente.** Control
 > Tower es la fuente canónica de los perfiles y skills específicos de la Torre;
-> `agent-workflows` conserva las skills genéricas reutilizables. `torre-control` puede actualizar
-> ambos checkouts, pero cada repositorio instala únicamente sus propios assets.
+> el subtree interno `agent-workflows/` conserva las skills genéricas reutilizables. La
+> separación de ownership sigue siendo por fuente: Control Tower instala sus assets Tower-specific
+> y el instalador del subtree, únicamente sus propios assets genéricos.
 >
 > **Establecido por esta entrega de fuente:** la frontera entre ownership Tower-specific y
 > genérico, el contrato padre/router, la regla de sesión ligada al worktree y la migración probada
-> del instalador de `agent-workflows` para retirar copias globales obsoletas (17/0). La guardia
+> del instalador de `agent-workflows/` para retirar copias globales obsoletas (17/0). La guardia
 > local de roles pasa 4/0.
 >
 > **Pendiente de despliegue:** las copias globales instaladas siguen stale hasta ejecutar

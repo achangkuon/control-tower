@@ -95,7 +95,8 @@ Support.
 Las fuentes canónicas específicas de este producto son `skills/torre-control/SKILL.md`
 (ruta operativa madre), `skills/torre-control-soporte/SKILL.md` (Support read-only) y
 `skills/torre-control-entregas/SKILL.md` (entrega serializada). Las skills genéricas,
-incluida `session-kickoff`, se cargan desde `agent-workflows`; no se copian acá.
+incluida `session-kickoff`, se cargan desde el subtree interno `agent-workflows/`; no se
+copian a `skills/`.
 
 ## Preferencias de ejecución y presupuesto de cambio
 
@@ -121,14 +122,14 @@ El estado del producto se publica como un informe HTML autocontenido pensado par
 que el mantenedor —que no programa— entienda dónde está el proyecto sin leer
 `openspec/`. Se genera; no se escribe a mano.
 
-**El motor es compartido y vive fuera de este repo**, en
-`~/projects/agent-workflows/radiografia/`, para que los cinco proyectos usen el
-mismo. Este repo sólo aporta su configuración y su juicio.
+**El motor compartido vive en este repositorio**, en
+`agent-workflows/radiografia/`, para que los cinco proyectos usen el mismo. Control
+Tower aporta además su configuración y su juicio.
 
 ```sh
-bun ~/projects/agent-workflows/radiografia/run.mjs              # mide y regenera
-bun ~/projects/agent-workflows/radiografia/run.mjs --with-tests # además corre la suite
-bun ~/projects/agent-workflows/radiografia/run.mjs --check      # sale 1 si quedó viejo
+bun agent-workflows/radiografia/run.mjs              # mide y regenera
+bun agent-workflows/radiografia/run.mjs --with-tests # además corre la suite
+bun agent-workflows/radiografia/run.mjs --check      # sale 1 si quedó viejo
 ```
 
 No usa ninguna capacidad de asistente. Claude Code, opencode, PI, Codex, un cron o

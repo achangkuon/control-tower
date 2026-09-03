@@ -57,11 +57,11 @@ Orden acordado: cerrar `M8.8.6` —✅ hecho el 2026-08-03— y `M8.8.3` —con 
 
 > **Los dos instaladores divergen exactamente acá.** No es que uno esté incompleto: `install.sh` produce un `torre` que estructuralmente no puede encontrar su runtime. Es la [brecha 6](../inventario-de-producto.md) vista desde el arranque en vez de desde el empaquetado, y le pertenece a `S8.13`, que ya tiene `install.sh` y `bin/torre` dentro de su `Área`.
 
-**Y desde hoy `install.sh` tiene un consumidor externo real.** [`achangkuon/agent-workflows`](https://github.com/achangkuon/agent-workflows) —el repo de las skills de usuario, con remoto desde el 2026-08-28 (ver [`plan-0/STATUS.md`](../plan-0/STATUS.md))— instala un comando global `torre-control` cuyo camino `--with-tower` clona este repositorio y ejecuta `install.sh`. Consecuencias, sin adornos:
+**Y desde entonces `install.sh` tuvo un consumidor externo real.** El hoy archivado repositorio [`achangkuon/agent-workflows`](https://github.com/achangkuon/agent-workflows) —remoto de las skills de usuario desde el 2026-08-28 (ver [`plan-0/STATUS.md`](../plan-0/STATUS.md))— instalaba un comando global `torre-control` cuyo camino `--with-tower` clonaba este repositorio y ejecutaba `install.sh`. La fuente activa de ese consumidor vive ahora en el subtree interno `agent-workflows/`. Consecuencias de aquella evidencia, sin adornos:
 
 - **La Torre no llega a una máquina limpia por ese camino.** Reproduce el defecto de arriba. Hasta que `S8.13` cierre, `torre-control` debe seguir ofreciendo la Torre como opt-in y nunca como parte de la instalación por defecto — que es como está hoy.
 - **El bloqueo de `S8.6` deja de depender de una lectura.** Ahora se falsifica con un comando: `torre-control --with-tower` en un host sin residuo. Esa es exactamente la prueba que `S8.6` existe para hacer, y ya hay quien la corra.
-- **Ownership resuelto; despliegue pendiente:** la decisión 100 fija Control Tower como fuente canónica de los assets Tower-specific y `agent-workflows` como fuente de las skills genéricas. El candidato local y el retiro probado de copias globales stale están listos en fuente, no entregados; ver [`plan-0/STATUS.md`](../plan-0/STATUS.md).
+- **Ownership resuelto; despliegue pendiente:** la decisión 100 fija Control Tower como fuente canónica de los assets Tower-specific y el subtree interno `agent-workflows/` como fuente de las skills genéricas. El candidato local y el retiro probado de copias globales stale están listos en fuente, no entregados; ver [`plan-0/STATUS.md`](../plan-0/STATUS.md).
 
 **Nada de esto cierra una Sesión ni mueve un porcentaje.** Es evidencia nueva para `S8.6` y `S8.13`, producida fuera de este repositorio.
 
@@ -923,7 +923,7 @@ Agregar `mcp.mjs` y el plugin a las raíces pone los **bytes** en el almacén ve
 
 ### Frontera reconciliada antes de implementar
 
-- `escala`, **resuelta por las decisiones 88 y 100** — cada repositorio instala sólo los assets que posee. `S8.12` consume las fuentes Tower-owned locales y define su membresía versionada; no recrea el router padre ni copia skills genéricas de `agent-workflows`.
+- `escala`, **resuelta por las decisiones 88 y 100** — cada fuente instala sólo los assets que posee. `S8.12` consume las fuentes Tower-owned locales y define su membresía versionada; no recrea el router padre ni copia skills genéricas del subtree `agent-workflows/`.
 - `derivable` — **qué pasa si el host externo no satisface el preflight.** **Criterio:** `S8.13` falla cerrado antes de mutar. La Torre valida productos externos; no inventa ni reescribe su configuración.
 
 ### Criterios de aceptación
@@ -993,7 +993,7 @@ El checkpoint completo de `S8.11`, sus commits, conteos, fallos sellados y pasos
 
 **Rollback:** revertir juntos los seis archivos exactos del `Área` —los tres perfiles, las dos skills propietarias y `test/install/tower-role-assets.test.mjs`— sin tocar runtime, configuración, DB, `AGENTS.md` ni assets externos.
 
-**Migración de ownership posterior a `S8.14`, entregada en fuente y aplicada parcialmente.** La decisión 100 conserva el resultado histórico de `S8.14` y fija la autoridad futura en el set local Tower-owned, con contrato padre/router y sesiones ligadas a su worktree. Control Tower `6237275b1a45b8380ce094edcb9dda23155ff006` y `agent-workflows` hasta `1a542da` están publicados; la corrida normal retiró las cuatro copias globales stale. El runtime Tower instalado quedó no verificado/no disponible por el incidente de la decisión 102. Esto no reabre ni vuelve a cerrar `S8.14`.
+**Migración de ownership posterior a `S8.14`, entregada en fuente y aplicada parcialmente.** La decisión 100 conserva el resultado histórico de `S8.14` y fija la autoridad futura en el set local Tower-owned, con contrato padre/router y sesiones ligadas a su worktree. Como evidencia histórica, Control Tower `6237275b1a45b8380ce094edcb9dda23155ff006` y el entonces repositorio independiente `agent-workflows` hasta `1a542da` fueron publicados; la corrida normal retiró las cuatro copias globales stale. La autoridad activa de esa fuente genérica está ahora en el subtree interno incorporado por `dbb7626904a09323e19dd7a60f747d29c8c62f5d`. El runtime Tower instalado quedó no verificado/no disponible por el incidente de la decisión 102. Esto no reabre ni vuelve a cerrar `S8.14`.
 
 ### Autoridad vigente de S8.12 — packaging del bundle Tower
 
@@ -1048,7 +1048,7 @@ El checkpoint completo de `S8.11`, sus commits, conteos, fallos sellados y pasos
 
 **Ruta:** `full-sdd` — probe del runtime instalado, activación global, rollback y frontera con productos externos requieren diseño integrado dentro del resultado ya autorizado; no puede rediseñar ownership, gramática, router, gate fuente ni packaging. **Autoridad de ruta:** decisiones 88, 100, 102 y Engram 9921, 9956 rev2 y 9963.
 
-**Reproducción obligatoria del incidente:** tras publicar Control Tower en `6237275b1a45b8380ce094edcb9dda23155ff006` y `agent-workflows` hasta `1a542da`, `torre-control --update` actualizó skills, retiró las cuatro copias globales stale y copió el plugin; luego `install.sh:79` falló con `Permission denied` porque `cp` siguió `~/.local/bin/torre` hacia la versión owner-read-only `4f940019…`. El engine/shim activo quedó viejo y la coherencia MCP/engine/plugin no fue verificada. `torre-control --check` dio éxito sólo por existencia, ejecutabilidad y key: no prueba revisión activa ni coherencia.
+**Reproducción obligatoria del incidente:** tras publicar Control Tower en `6237275b1a45b8380ce094edcb9dda23155ff006` y el entonces repositorio independiente `agent-workflows` hasta `1a542da`, `torre-control --update` actualizó skills, retiró las cuatro copias globales stale y copió el plugin; luego `install.sh:79` falló con `Permission denied` porque `cp` siguió `~/.local/bin/torre` hacia la versión owner-read-only `4f940019…`. El engine/shim activo quedó viejo y la coherencia MCP/engine/plugin no fue verificada. `torre-control --check` dio éxito sólo por existencia, ejecutabilidad y key: no prueba revisión activa ni coherencia.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
 - [ ] `torre-control --update` selecciona el lifecycle atómico versionado; no ejecuta el camino legado divergente.
