@@ -1,0 +1,45 @@
+---
+name: chanks-1-autoridad
+description: "Trigger: autoridad, idea, feature, descubrimiento, heredado, proyecto nuevo. Enruta el trabajo de autoridad a una variante nominal."
+license: Apache-2.0
+metadata:
+  author: gentleman-programming
+  version: "1.0"
+---
+
+## Activation Contract
+
+Activa cuando hay que convertir una intención en alcance aprobado, Zonas y autoridad verificable antes de planificar.
+
+## Hard Rules
+
+- Enrutá; no fusiones variantes ni produzcas sus artefactos.
+- Conservá decisiones humanas, evidencia y límites de alcance.
+- Enviá todo cambio del dato de planificación como delta confirmado a Support; no escribas el plan.
+- No avances a planificación sin aprobación humana del alcance.
+
+## Decision Gates
+
+| Entrada | Skill nominal |
+|---|---|
+| Idea todavía amorfa | `chanks-1-brain-dump` |
+| Alcance nuevo sobre producto vivo | `chanks-1-feature` |
+| Diagnóstico de producto vivo | `chanks-1-descubrimiento` |
+| Partición de producto heredado | `chanks-1-heredado` |
+| Proyecto nuevo desde cero | `chanks-1-project-kickoff` |
+
+## Execution Steps
+
+1. Identificá cuál entrada nominal describe el pedido sin reinterpretarlo.
+2. Cargá sólo la skill correspondiente.
+3. Conservá su resultado y presentá el alcance para aprobación humana.
+4. Con aprobación, entregá el alcance a `planificador-granular` o el delta aplicable a Support.
+
+## Output Contract
+
+Devuelve variante elegida, autoridad consultada, alcance aprobado o pendiente, artefactos producidos por la variante, decisiones abiertas y próxima acción.
+
+## References
+
+- `../planificador-granular/SKILL.md`
+- `../agente-soporte/SKILL.md`

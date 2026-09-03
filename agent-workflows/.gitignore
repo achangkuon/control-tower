@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+# Local Pi runtime state
+.atl/
+
+# Binario compilado de tools/radar
+tools/radar/radar
+tools/radar/radar-darwin-*
