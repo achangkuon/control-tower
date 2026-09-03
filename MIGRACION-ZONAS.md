@@ -52,11 +52,37 @@ Control Tower y Herdr siguen sin pushear. El binario instalado `herdr --skill` t
 contrato viejo. El residuo legacy sin trackear `tools/plan/plan` sigue presente y no se borra ni se
 ignora sin decisión del maintainer.
 
-**Siguiente acción exacta:** rescatar `review-4b55f432bbdf7f40` con el runbook registrado en la
-política global de RDD — leer `.state.initial_atomic_start.selector` del store y re-dirigir la STATUS
-con ese selector — y continuar únicamente por el `next_transition` que devuelva. Recién con el linaje
-cerrado, mergear `fix/fase-a-rdd-correction`, reiniciar los runtimes y ejecutar el smoke vivo de
-OpenCode. Solo entonces cerrar Fase A y comenzar Fase B.
+**Rescate ejecutado y linaje cerrado (2026-09-03):** el runbook funcionó. Con
+`--base-ref` + `--committed-only` + `--untracked-scope exclude` el proveedor devolvió la continuación
+target-bound completa (`review.capture-validation`, con `--repository-context` y `--request-hash`),
+ejecutada verbatim. El linaje quedó en **`escalated`** con cierre
+`gentle-ai.review-last-event-closure/v1`.
+
+**Veredicto del validador dirigido: la corrección NO satisface su alcance congelado.**
+`original_criteria.passed: false` — 3 de 6 hallazgos `CRITICAL` resueltos.
+`correction_regression.passed: true` — la corrección no introdujo defectos nuevos.
+
+| Hallazgo | Estado |
+|---|---|
+| `R3-resolved-decision-schema` | ✅ resuelto (schema `resuelta` + test que carga, chequea y renderiza) |
+| `R3-route-revalidation-depth-deadlock` | ✅ resuelto (`checkProfundidad` usa `Ruta.Propuesta`) |
+| `R3-schema-v2-breaking-change` | ✅ resuelto (schema v3 + mensaje de migración explícito) |
+| `R1-db-resource-lock-removal` | ❌ abierto |
+| `R4-db-lock-regression` | ❌ abierto |
+| `R4-retired-skill-data-loss` | ❌ abierto |
+
+Los tres abiertos comparten causa: `correction_paths` no contiene ningún `skills/*.md`. La corrección
+tocó `tools/radar/*`, `tools/install.py` y `tests/test_install.py`, pero no los playbooks que deben
+exigir adquisición viva y semáforo para el `Recurso` declarado de una Sesión — hoy solo se exige para
+Cimientos. Y `tools/install.py` sigue borrando `RETIRED_SKILLS` de forma incondicional en un install
+exitoso: solo se endureció la ruta de fallo, así que una skill customizada que comparta nombre con una
+retirada se pierde igual.
+
+**Siguiente acción exacta:** decidir sobre los tres `CRITICAL` abiertos antes de mergear
+`fix/fase-a-rdd-correction`. El validador es informativo, no bloquea la entrega, pero dos de los tres
+son riesgos de pérdida de datos (semáforo de base de datos y borrado de skills customizadas). Recién
+después: mergear, reiniciar los runtimes, ejecutar el smoke vivo de OpenCode, cerrar Fase A y comenzar
+Fase B.
 
 ---
 
@@ -78,7 +104,7 @@ Los únicos significados usados abajo son: `✅ implementado y verificado`, `�
 
 | Grupo | ID | Estado | Fuente local | Remoto | Runtime instalado / qué falta |
 |---|---|---|---|---|---|
-| Implementación | Fase A | 🔵 parcial | Corrección integrada y verificada en `4d3010c` | No | Reparar el cierre RDD y completar el smoke de OpenCode |
+| Implementación | Fase A | 🔵 parcial | Corrección integrada en `4d3010c`; validación dirigida cerró 3/6 hallazgos | Sí (`feat/modelo-de-zonas`) | Resolver los tres `CRITICAL` abiertos, mergear `fix/fase-a-rdd-correction` y completar el smoke de OpenCode |
 | Implementación | Fase B | 🟡 pendiente | Control Tower aún no tiene `openspec/plan.yaml` ni ROADMAP; conserva `master-index`/`STATUS` legacy | No | Migrar el plan real después de cerrar Fase A |
 | Implementación | Fase C | 📚 fuera de alcance | Sin implementación en esta obra | No | Gate de recursos vivos, medidor, conexión del Horizonte, freeze terminal y `S9.9` |
 | Flujo | Tramo 1 · Autoridad | ✅ implementado y verificado | Corregido en `4d3010c` | No | Reiniciar runtimes |
@@ -99,7 +125,7 @@ Los únicos significados usados abajo son: `✅ implementado y verificado`, `�
 | Contrato | Schema v3 | ✅ implementado y verificado | v3 exigido; v2 rechazado explícitamente | No | — |
 | Instalación | Propagación `chanks-*` | 🔵 parcial | Cuatro roots sincronizados; `--check` en `OK` | No aplica | Reiniciar runtimes y ejecutar smoke vivo de OpenCode |
 | Compatibilidad | Residuo `tools/plan/plan` | 🔵 parcial | Existe sin trackear en el checkout principal | No aplica | Preservar hasta decisión del maintainer |
-| Revisión | Linaje AW viejo | 🔵 parcial | `review-4b55f432bbdf7f40` en `correction_required`; direccionable con `--base-ref` + `--committed-only` (`applicability: current_target`, 2026-09-03) | No aplica | Rescatar con el runbook y continuar solo por el `next_transition` devuelto |
+| Revisión | Linaje AW viejo | ✅ cerrado | `review-4b55f432bbdf7f40` rescatado y cerrado en `escalated` (2026-09-03); validación dirigida 3/6, sin regresión | No aplica | Decidir los tres `CRITICAL` abiertos: `R1-db-resource-lock-removal`, `R4-db-lock-regression`, `R4-retired-skill-data-loss` |
 | Revisión | Linaje AW nuevo | 🔵 parcial | `review-0c7fcacfefeb1c3f`, 3/4 lentes y sin BLOCKER/CRITICAL capturados | No aplica | Reparar incompatibilidad ABANDON v2 y reiniciar sobre los mismos bytes |
 | Integración | Herdr | 🔵 parcial | Fuente limpia `d8a22841`; runtime Pi actualizado | No | Binario instalado `herdr --skill` sigue viejo |
 | Integración | Control Tower | 🔵 parcial | `master@72cebbe`, 4 commits locales; `1110/1110` registrado | No | No presentado como entregado ni instalado remoto |
