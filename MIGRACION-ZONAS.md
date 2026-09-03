@@ -1,88 +1,126 @@
 # Migración al modelo de zonas
 
-> **Constancia de trabajo.** Este archivo es la fuente de verdad de QUÉ estamos haciendo
-> y qué falta. El razonamiento completo, con dibujos, está en el documento de decisión:
+> **Constancia de trabajo.** Este archivo es la fuente de verdad de QUÉ estamos haciendo,
+> qué está implementado localmente y qué falta. El razonamiento completo, con dibujos, está en
+> el documento de decisión:
 > https://claude.ai/code/artifact/e92d2b38-10ad-480d-b7b2-ba9cc68283ec
 >
-> Última actualización: 2026-09-02 · Estado: Fases 2b y 3 verificadas; **gate de investigación
-> cerrado** — los siete tramos quedaron integrados en
-> [FLUJO-END-TO-END.md](FLUJO-END-TO-END.md), que reconcilia el flujo completo contra las
-> decisiones de acá y deja 8 decisiones marcadas para reabrir.
+> La autoridad del flujo es [FLUJO-END-TO-END.md](FLUJO-END-TO-END.md). El reparto de tres
+> escritores de [EJECUCION-EN-PARALELO.md](EJECUCION-EN-PARALELO.md) describe la construcción
+> inicial y queda como historia útil; la corrección actual usa **un solo escritor secuencial**.
+>
+> Última reconciliación: 2026-09-03 · `agent-workflows` `feat/modelo-de-zonas@6245fad`, 22
+> commits por delante del remoto, sin push. Las ocho correcciones C1–C8 están decididas;
+> **cero decisiones del maintainer bloquean la corrección actual de Fase A**.
 
 ---
 
 ## 📍 Punto de retoma
 
-**Qué cerró:** la implementación de Fase 2b y Fase 3 en `agent-workflows` quedó completa y fue
-verificada de forma independiente. La evidencia observada fue: `gofmt` sin diferencias; `go test .`
-y `go test ./...` aprobados; `go vet` limpio; `go run . check -f borrador-control-tower.yaml` válido
-(10 Zonas, 0 Sesiones); 23 pruebas del instalador aprobadas; y `git diff --check` limpio.
+**Cerrado localmente:** el candidato integrado de Fase A está en `752f532`. Control Tower tiene
+cuatro commits locales en `master@72cebbe` —`4654ed8` gate documental, `3f0a7be` skill de entrega,
+`11ad740` contrato de asset de rol v2/500 tokens y `72cebbe` tab MAIN determinista— con suite
+registrada `1110/1110` y prueba viva Torre-OFF `1 → MAIN` sin crear panes. Herdr tiene el arreglo
+fuente limpio en `fix/herdr-skill-contract@d8a22841`, y la copia runtime de Pi ya fue actualizada.
+Las revisiones nativas de Control Tower (`review-81a34ccc70a174c1`) y Herdr
+(`review-925c9e68544811fe`) fueron aprobadas y reconocidas. La enmienda de seis líneas de
+[FLUJO-END-TO-END.md](FLUJO-END-TO-END.md) también cerró con riesgo bajo.
 
-**Contrato documental aprobado:** el único dato editable es `openspec/plan.yaml` y la vista generada
-es `openspec/ROADMAP.md`. No se mantienen un `STATUS.md` ni un `master-index.md` separados.
+**Checkpoint sucio actual:** continuar únicamente en
+`/home/emili/projects/agent-workflows-worktrees/implementer-1`, rama
+`fix/fase-a-rdd-correction@752f532`. Solo están modificados `tools/radar/contract_test.go` y
+`tools/radar/correction_test.go` (65 adiciones, 10 eliminaciones), más `.codegraph/` sin trackear.
+Los tests todavía no se ejecutaron. El alcance son seis hallazgos CRITICAL previos: gate de DB
+para recursos vivos; compatibilidad de decisiones resueltas; deadlock entre profundidad de ruta
+y revalidación; schema v3 con rechazo explícito de v2; y retiro de skills sin pérdida. Riesgo y
+resiliencia duplicaron una misma causa raíz del gate de recursos.
 
-**Fuera de este cierre:** `control-tower` y `Servi-Task-U` permanecen intactos. No se propagaron los
-bloques globales/manuales y este documento no afirma que las skills estén instaladas o sincronizadas.
-También siguen pendientes para una integración futura con MAIN/Torre la adquisición, liberación y
-recuperación stale de Cimientos en vivo, y el freeze runtime de `S7.1`.
+**No entregado ni instalado:** ninguna rama de Agent Workflows, Control Tower o Herdr fue
+pusheada. Las skills nuevas `chanks-*` no están instaladas en ninguno de los cuatro roots
+(`~/.agents`, Claude, OpenCode y Codex); esto es propagación pendiente, no ausencia afirmada en
+la fuente. El binario instalado `herdr --skill` todavía expone el contrato viejo hasta un futuro
+build/install. Los commits locales de Control Tower tampoco son runtime remoto. El residuo legacy
+sin trackear `tools/plan/plan` sigue presente y no se borra ni se ignora sin decisión del
+maintainer.
 
-**Gate de investigación — CERRADO el 2026-09-02.** La investigación en curso eran los siete
-tramos del flujo end-to-end. Quedaron definidos, aprobados e integrados en
-[FLUJO-END-TO-END.md](FLUJO-END-TO-END.md), que es ahora la fuente de verdad del flujo completo
-y del cruce contra este plan. No se abrió un segundo plan ni una implementación paralela.
+**Siguiente acción exacta:** entrar al worktree `agent-workflows-worktrees/implementer-1`, confirmar
+la rama `fix/fase-a-rdd-correction` y ejecutar primero el test Go focalizado del paquete
+`tools/radar` (`cd tools/radar && go test .`) para capturar RED. Después implementar la corrección
+mínima sin superar el presupuesto aprobado ayer de **190 líneas de diff total** —no ampliarlo en
+silencio a 400—, normalizar, ejecutar los checks Go/Python focalizados y amplios, congelar los
+bytes y abrir desde Pi un **candidato RDD ordinario nuevo**. El linaje viejo de Agent Workflows
+`review-4b55f432bbdf7f40` no está disponible ni es reutilizable en el estado nativo actual; no
+reutilizarlo sin evidencia explícita de recuperación nativa.
 
-**Lo que el gate produjo:** 8 piezas ya construidas que los tramos confirman · 12 huecos que caen
-en las Fases 4, 5 y 6 · **8 correcciones pendientes y cero decisiones abiertas**.
+---
 
-**Regla de precedencia:** la definición de los tramos gana sobre las decisiones de acá. Cuando un
-tramo contradice este plan, no es un choque a dirimir — es una corrección pendiente, y este plan
-describe un estado anterior. Las tres bloqueantes: `est:` sale del canon; las tres rutas son una
-sola pipeline SDD con `verify`/`archive` comunes; `session-plan` se disuelve en vez de adaptarse.
-La única decisión que quedaba abierta —si `blocked` seguía siendo una ruta— la resolvió el
-maintainer el 2026-09-02: **sale del conjunto, quedan tres rutas**.
-El alcance aprobado se ajusta **una sola vez** con eso, y recién entonces continúa **una única
-implementación**.
+## Cómo leer el estado: tres ejes distintos
 
-**Qué sigue después de la investigación:** retomar los pendientes de Fase 1 —actualizar los bloques
-globales/manuales, propagarlos a los cuatro agentes y verificar que sobrevivan— sólo si la investigación
-no cambia ese contrato, o después de reconciliarlo si lo cambia. Recién entonces continúa Fase 4 según
-el orden existente. No se migró ningún producto real ni se completó trabajo de Fase 4 o posterior.
+| Eje | Pregunta | Estado actual |
+|---|---|---|
+| **Fuente local** | ¿El cambio existe en un commit o worktree local? | Sí, con el detalle de la matriz; la corrección de Fase A aún está sucia y sin tests. |
+| **Remoto** | ¿La rama o commit fue pusheado? | No para Agent Workflows, Control Tower ni Herdr. |
+| **Runtime instalado** | ¿Lo ejecutan hoy los agentes/binarios instalados? | Parcial: Pi recibió la copia runtime de Herdr; `herdr --skill` sigue viejo y `chanks-*` no fue propagado. |
 
-**Decisiones ya cerradas — no volver a preguntar:** el umbral de Cimiento es más de una Zona;
-no admite escrituras concurrentes; `install/runtime-payload.mjs` es el primer carve-out;
-`S5.14`, `S5.15`, `S9.3` y `S9.5` se reemplazan por `S100`–`S108`; y `S7.1` corre en Entrega
-contra un candidato inmutable, sin arreglar defectos dentro de la verificación.
+Un cambio puede estar implementado y verificado **localmente** sin estar pusheado ni instalado.
+Este documento no usa “cerrado localmente” como sinónimo de “entregado”.
 
-**Lo que aprendimos y no hay que volver a descubrir:** la regla verificable es: **si más de
-una Zona necesita modificar la misma ruta exacta, es un Cimiento**, sin importar bajo qué
-directorio viva.
+## 📊 Estado de un vistazo
+
+Los únicos significados usados abajo son: `✅ implementado y verificado`, `🔵 parcial`,
+`🟡 pendiente` y `📚 fuera de alcance`.
+
+| Grupo | ID | Estado | Fuente local | Remoto | Runtime instalado / qué falta |
+|---|---|---|---|---|---|
+| Implementación | Fase A | 🔵 parcial | Candidato integrado `752f532`; corrección sucia en `fix/fase-a-rdd-correction` | No | Corregir 6 CRITICAL, probar, revisar en linaje nuevo y propagar `chanks-*` |
+| Implementación | Fase B | 🟡 pendiente | Control Tower aún no tiene `openspec/plan.yaml` ni ROADMAP; conserva `master-index`/`STATUS` legacy | No | Migrar el plan real después de cerrar Fase A |
+| Implementación | Fase C | 📚 fuera de alcance | Sin implementación en esta obra | No | Medidor, conexión del Horizonte al dispatch, freeze terminal y `S9.9` |
+| Flujo | Tramo 1 · Autoridad | 🔵 parcial | Construido en el candidato local | No | Corrección Fase A y propagación |
+| Flujo | Tramo 2 · Planificación | 🔵 parcial | Construido en el candidato local; no se crea una madre de planificación | No | Corrección Fase A y propagación |
+| Flujo | Tramo 3 · Enrutado | 🔵 parcial | Construido en el candidato local | No | Resolver profundidad/revalidación; propagar |
+| Flujo | Tramo 4 · Ejecución | 🔵 parcial | Pipeline y retiro de skills en candidato local | No | Garantizar retiro sin pérdida; propagar |
+| Flujo | Tramo 5 · Revisión | 🔵 parcial | RDD nativo funcionó desde Pi en CT y Herdr | No | Nueva revisión ordinaria para el candidato corregido de Agent Workflows |
+| Flujo | Tramo 6 · Entrega | 🔵 parcial | Skill de entrega local en Control Tower `3f0a7be` | No | No está entregada ni instalada remotamente |
+| Flujo | Tramo 7 · Cierre | 🔵 parcial | Gate documental local `4654ed8`; enmienda de FLUJO cerrada | No | Propagar, cerrar sobre un plan real y completar la entrega |
+| Corrección | C1 · retirar `est:` | 🔵 parcial | Integrada en candidato Fase A | No | Pasar corrección y nueva revisión |
+| Corrección | C2 · pipeline SDD común | 🔵 parcial | Integrada en candidato Fase A | No | Pasar corrección y nueva revisión |
+| Corrección | C3 · disolver `session-plan` | 🔵 parcial | Integrada en candidato Fase A | No | Verificar retiro sin pérdida; no volver a adaptarla |
+| Corrección | C4 · sin madre de planificación | 🔵 parcial | Integrada en candidato Fase A | No | Propagar contrato corregido |
+| Corrección | C5 · `plan` → `radar` | 🔵 parcial | `tools/radar` es la fuente vigente; queda residuo legacy sin trackear | No | No borrar/ignorar `tools/plan/plan` sin decisión |
+| Corrección | C6 · `blocked` no es ruta | 🔵 parcial | Integrada en candidato Fase A | No | Pasar corrección y nueva revisión |
+| Corrección | C7 · nuevo gate documental | ✅ implementado y verificado | Control Tower `4654ed8`, local | No | No confundir verificación local con entrega |
+| Corrección | C8 · asientos para planificar | 🔵 parcial | Contrato del método integrado | No | Conexión del Horizonte a MAIN queda en Fase C |
+| Contrato | Schema v3 | 🔵 parcial | Target aprobado; la fuente aún acepta v2 en `tools/radar/plan.go:138-162` | No | Rechazar v2 explícitamente y verificar v3 |
+| Instalación | Propagación `chanks-*` | 🟡 pendiente | No se afirma ausencia en fuente | No | Ausentes en los cuatro roots instalados |
+| Compatibilidad | Residuo `tools/plan/plan` | 🔵 parcial | Existe sin trackear en el checkout principal | No aplica | Preservar hasta decisión del maintainer |
+| Revisión | Linaje AW viejo | 📚 fuera de alcance | `review-4b55f432bbdf7f40` no está disponible ni es reutilizable en el estado nativo actual | No aplica | No reutilizar sin evidencia explícita de recuperación nativa; crear linaje nuevo |
+| Integración | Herdr | 🔵 parcial | Fuente limpia `d8a22841`; runtime Pi actualizado | No | Binario instalado `herdr --skill` sigue viejo |
+| Integración | Control Tower | 🔵 parcial | `master@72cebbe`, 4 commits locales; `1110/1110` registrado | No | No presentado como entregado ni instalado remoto |
+
+### Política de revisión vigente
+
+La expectativa histórica “RDD encendida → 4R siempre” quedó **superada por la política del runtime**.
+El proveedor/RAR nativo selecciona los lentes según el riesgo; hoy los candidatos de riesgo medio
+seleccionaron un solo lente `review-reliability`. Pi corre gentle-pi **2.3.0** y hoy inició,
+completó y reconoció revisiones nativas; no hay una restricción vigente que impida iniciar RDD
+desde Pi.
 
 ---
 
 ## Qué estamos haciendo
 
-Cambiar cómo se planifica el trabajo, para que varios agentes puedan trabajar en paralelo
-sin que el humano tenga que sostener tres contextos a la vez.
+Cambiar cómo se planifica el trabajo para que varios agentes puedan trabajar en paralelo sin que
+el humano sostenga varios contextos a la vez.
 
 **Tres raíces del problema:**
 
-1. **Documentación** — un mismo hecho («¿cerró S2.3?») vive escrito a mano en seis lugares
-   o más. En `control-tower` son diez. Nada los calcula desde uno.
-2. **Organización** — el trabajo se corta por tamaño de entrega (un PR) y el territorio se
-   agrega después, a mano, como parche. `Área` es el único freno de colisión y nadie lo valida.
-3. **Flujo** — no existe un camino definido de «idea» a «plan aprobado». Para un proyecto
-   vivo la única salida es SDD completo, que es la maquinaria más pesada que hay.
+1. **Documentación** — un mismo hecho vive escrito a mano en varios lugares y nada lo calcula.
+2. **Organización** — el territorio se agregaba después del corte y `Área` no impedía colisiones.
+3. **Flujo** — faltaba un camino único de idea a plan aprobado con la ruta mínima honesta.
 
-**El modelo nuevo, en ocho líneas:**
-
-- **Un solo plan por producto**, sin fecha de cierre. Se agregan Sesiones para abajo, nunca planes al costado.
-- **Cuatro niveles**: Zona → Sesión → Módulo → Tarea. El producto es el marco, no un nivel.
-- **Zona** = una parte del producto con dueño exclusivo. Un obrero por zona.
-- **Cimientos** = las rutas compartidas. No son una zona: se reservan por archivo.
-- **El estado no se escribe**: se calcula de las dependencias, las decisiones abiertas y git.
-- **Un archivo escrito**, el resto se genera. Support es su único autor.
-- **Una sola vía de planificación** que detecta el contexto y dispara la variante.
-- **SDD queda intacto**, con su escalera: la ruta más liviana que sea honesta.
+**Modelo objetivo:** un plan por producto; Zona → Sesión → Módulo → Tarea; Zonas exclusivas;
+Cimientos reservados por archivo exacto; estado calculado; `openspec/plan.yaml` como dato editable
+y ROADMAP como vista generada; Support como autor; SDD compartido por las tres puertas de entrada.
 
 ---
 
