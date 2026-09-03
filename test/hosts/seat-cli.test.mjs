@@ -32,8 +32,11 @@ const ports = ({ panes = [], herdrDown = false } = {}) => {
     herdrCalls.push(args.join(" "))
     if (herdrDown) throw new Error("socket closed")
     if (args[0] === "tab") return args[1] === "list"
-      ? { result: { tabs: [{ tab_id: "w1:t3", label: "AGENTES" }] } }
+      ? { result: { tabs: [{ tab_id: "w1:t1", label: "MAIN" }, { tab_id: "w1:t3", label: "AGENTES" }] } }
       : { result: { tab: { tab_id: "w1:t3", label: "AGENTES" } } }
+    if (args[0] === "pane" && args[1] === "current") {
+      return { result: { pane: { pane_id: "w1:p1", tab_id: "w1:t1", cwd: MAIN, foreground_cwd: MAIN } } }
+    }
     if (args[1] === "list") return { result: { panes: [
       ...panes, { pane_id: "w1:p9", tab_id: "w1:t3", cwd: "/p/Worktrees/implementer-1", foreground_cwd: "/p/Worktrees/implementer-1" },
       ...(opened ? [{ pane_id: "w1:p4", tab_id: "w1:t3", cwd: opened, foreground_cwd: opened }] : []),
@@ -69,7 +72,7 @@ describe("torre asiento", () => {
     expect(await runSeatCli(["abrir", "temp-clean"], { herdrCalls, ...rest })).toEqual({
       operation: "abrir", seat: "temp-clean", temporary: true, tab_id: "w1:t3", pane_id: "w1:p4",
     })
-    expect(herdrCalls.some((call) => call.includes("--current"))).toBe(false)
+    expect(herdrCalls.filter((call) => call.includes("--current"))).toEqual(["pane current --current", "pane current --current"])
   })
 
   test("refuses Main, Support, an unknown seat, an occupied seat and a blind topology", async () => {

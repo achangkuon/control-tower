@@ -34,7 +34,7 @@ export const runSeatCli = async (args, { git, herdr, mainPath } = {}) => {
     return Object.freeze({ operation: "asignar", ...pool.assign(mainPath, flags(rest)) })
   }
 
-  const topology = createHerdrTopology({ run: herdr })
+  const topology = createHerdrTopology({ run: herdr, mainPath })
   let agents = null, unavailable = null
   try { agents = await topology.readAgentsTab() } catch (error) { unavailable = error.code ?? "CT_TOPOLOGY_UNAVAILABLE" }
   const occupied = agents?.panes.map(({ cwd }) => cwd) ?? []

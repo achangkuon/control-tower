@@ -255,7 +255,7 @@ export const createProductionProvider = ({ } = {}) => {
   // The seat topology is owned by `hosts/herdr-topology.mjs`, shared with the Tower-off seat CLI:
   // a worker pane is born inside AGENTES and read back there, never split out of whatever pane
   // happens to be focused.
-  const topology = createHerdrTopology({ run: (args) => parse(command("herdr", args)) })
+  const topology = createHerdrTopology({ run: (args) => parse(command("herdr", args)), mainPath: context.main_worktree })
   const view = createOpenCodeView({
     helperCommand: [process.execPath, OPENCODE_ATTACH_HELPER_PATH],
     openPane: async ({ command: attach, cwd }) => {
