@@ -49,6 +49,7 @@ sesiones:
     zona: cocina
     resultado: instalar el horno
     autoridad: PRD cocina §2          # alcance aprobado de la Sesión
+    cambio: instalar-horno            # opcional; ledger SDD de gentle-ai
     depende_de: [S18]
     cimientos: [package.json]       # reservas exactas, no globs
     recurso: [delivery-token]
@@ -110,6 +111,14 @@ o un Módulo.
 - `radar check` falla si el `HEAD` actual ya no coincide con la base revalidada.
 
 El conjunto cerrado es: `direct`, `design-tasks`, `full-sdd`.
+
+## Ledger SDD opcional
+
+`cambio` enlaza una Sesión con el ledger de intentos de Gentle AI. Cuando está declarado,
+`radar` ejecuta únicamente `gentle-ai sdd-attempt status --cwd <raíz> --change <cambio>`.
+`decision_required: true` bloquea la Sesión abierta. Si el comando falla o devuelve JSON
+inválido/corrupto, `check`, `status` y `render` fallan cerrados. Ausente o vacío significa
+que todavía no existe ledger y conserva el estado derivado anterior.
 
 ## Entrega derivada desde Git
 

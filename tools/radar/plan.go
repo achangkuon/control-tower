@@ -23,6 +23,8 @@ type Plan struct {
 	Zonas         []Zona    `yaml:"zonas"`
 	Cimientos     Cimientos `yaml:"cimientos"`
 	Sesiones      []Sesion  `yaml:"sesiones"`
+
+	ledgerDecisionRequired map[string]bool
 }
 
 // Zona is a set of files with a single owner. Defined by paths, never by theme.
@@ -46,6 +48,7 @@ type Sesion struct {
 	Zona       string     `yaml:"zona"`
 	Resultado  string     `yaml:"resultado"`
 	Autoridad  string     `yaml:"autoridad"`
+	Cambio     string     `yaml:"cambio"`
 	DependeDe  []string   `yaml:"depende_de"`
 	Cimientos  []string   `yaml:"cimientos"`
 	Recurso    []string   `yaml:"recurso"`

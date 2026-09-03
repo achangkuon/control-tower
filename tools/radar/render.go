@@ -113,7 +113,7 @@ func RenderAt(p *Plan, root, head string) []byte {
 	for _, s := range p.Sesiones {
 		if estados[s.ID] == Bloqueado {
 			bloqueos++
-			fmt.Fprintf(&b, "- **%s:** %s\n", markdownText(s.ID), markdownText(resumenBloqueo(&s)))
+			fmt.Fprintf(&b, "- **%s:** %s\n", markdownText(s.ID), markdownText(resumenBloqueo(&s, p.ledgerDecisionRequired[s.ID])))
 		}
 	}
 	if bloqueos == 0 {
@@ -251,7 +251,7 @@ func primeraDecisionPendiente(p *Plan) string {
 	return "ninguna"
 }
 
-func resumenBloqueo(s *Sesion) string {
+func resumenBloqueo(s *Sesion, ledgerDecisionRequired bool) string {
 	if s.Entrega != nil {
 		return "evidencia de entrega inválida o no integrada"
 	}
@@ -259,6 +259,9 @@ func resumenBloqueo(s *Sesion) string {
 		if d.Tipo == "escala" && (d.Alcanza == "criterios" || d.Alcanza == "primer-modulo") {
 			return d.Pregunta
 		}
+	}
+	if ledgerDecisionRequired {
+		return "ledger SDD requiere una decisión"
 	}
 	return "contaminación semántica declarada por otra Sesión"
 }

@@ -24,6 +24,19 @@ func (p *Plan) Check(root string) []Hallazgo {
 // CheckAt validates all Git-dependent evidence against one immutable HEAD.
 func (p *Plan) CheckAt(root, head string) []Hallazgo {
 	var h []Hallazgo
+	p.ledgerDecisionRequired = make(map[string]bool)
+	for i := range p.Sesiones {
+		s := &p.Sesiones[i]
+		if strings.TrimSpace(s.Cambio) == "" {
+			continue
+		}
+		decisionRequired, err := readAttemptStatus(root, s.Cambio)
+		if err != nil {
+			h = append(h, Hallazgo{"error", "ledger SDD", fmt.Sprintf("%s declara cambio %q pero su ledger no está disponible: %v", s.ID, s.Cambio, err)})
+			continue
+		}
+		p.ledgerDecisionRequired[s.ID] = decisionRequired
+	}
 	h = append(h, p.checkZonas()...)
 	h = append(h, p.checkGrafo()...)
 	h = append(h, p.checkLinaje()...)
