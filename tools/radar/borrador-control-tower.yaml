@@ -10,7 +10,7 @@
 # Verificar con:  ./radar check -f borrador-control-tower.yaml
 
 schema: plan
-schema_version: 2
+schema_version: 3
 producto: control-tower
 raiz: /home/emili/projects/control-tower/Main
 
