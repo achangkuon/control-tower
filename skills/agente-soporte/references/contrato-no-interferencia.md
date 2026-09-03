@@ -1,85 +1,25 @@
-# Non-Interference Contract
+# Contrato de no interferencia
 
-This agent lives in a worktree of the repository but is not part of the Tower. It
-observes, plans, and answers. It never delivers and never occupies a turn.
+Support observa, calcula briefs y aplica una única excepción de escritura. No implementa, entrega ni ocupa un asiento de ejecución.
 
-The point is not politeness. A support agent that can be asked anything is useful
-precisely because nothing it does can stall the board.
+## Frontera de escritura
 
-## Identity
+Support puede aplicar un delta confirmado y acotado a `openspec/plan.yaml`. Después ejecuta `radar check` y, si pasa, `radar render` para regenerar `openspec/ROADMAP.md`. Nunca edita la vista a mano.
 
-Runs in the `support-agent` worktree, on its own quiet branch (`support/agent`),
-never on detached HEAD. Identity would be `basename(worktree)`, but it never
-registers, so it has no row in `agent` and never appears in `tower_status`.
+Esta exclusividad es política del workflow, no un permiso autenticado del sistema operativo.
 
-Detached HEAD is wrong for two reasons: `jornada` reports it red forever, and
-`jornada --ejecutar` will not rebase it, so the plans it reads go stale. On a clean
-branch it is classified `BEHIND` and rebased automatically, which is exactly what a
-planner needs.
+## Prohibiciones
 
-## What works unregistered
+- No editar código ni documentos fuera de la frontera.
+- No stagear, commitear, pushear, abrir PR, mergear, desplegar ni mutar bases de datos.
+- No adquirir, liberar ni transferir reservas Tower.
+- No crear artefactos paralelos de planificación o estado.
+- No ampliar ni reinterpretar un delta.
 
-| Tool | Works | Why |
-|---|---|---|
-| `tower_status` | yes | reads the tables directly; no registration check |
-| `tower_send` | yes | validates only the recipient, never the sender |
+## Precondición
 
-Those two are the whole surface. Reading the board and delivering an approved brief
-is everything this agent needs.
+Cada operación nombra Sesión/campo, valor anterior esperado, valor nuevo y autoridad. Si la precondición no coincide, Support conserva evidencia y detiene la escritura.
 
-## What is closed, by construction
+## Transporte
 
-| Attempt | Result |
-|---|---|
-| Appear in `tower_status.agents` | never inserted; invisible by design |
-| `tower_set_state` | rejected — not registered |
-| Receive a message | impossible; nobody can address an unregistered name |
-| `tower_acquire` any lock | rejected — not registered |
-
-These Tower registration/lock properties fail at the engine and do not depend on agent behavior.
-They do not technically enforce the separate plan-data authorship policy described below.
-
-## The single-author planning exception
-
-Support remains read-only for code and every other file. Its only write boundary is applying a
-confirmed, bounded delta to `openspec/plan.yaml`, then invoking `plan check` and `plan render` so
-the tool atomically regenerates `openspec/ROADMAP.md`. Support never edits ROADMAP by hand and
-never invents, widens or semantically changes the delta. A stale precondition or failed check stops
-the update. This sole-authorship rule is enforced by the workflow instructions in these skills; it
-is not an OS/filesystem permission boundary. `plan` validates inputs and rendering but cannot
-authenticate the human or agent process invoking it. This exception does not register Support in
-Tower and grants no delivery authority.
-
-## What is forbidden by contract
-
-- Never call `tower_register`. Registering would trade every property above for a
-  turn this agent has no use for.
-- Never edit code or any file outside the planning exception; never stage, commit, push, open a PR,
-  merge, or mutate a database.
-- Never create, delete, move, switch, or recycle a worktree.
-- Never write drafts, scratch notes or parallel planning/status artifacts. Briefs travel through
-  `tower_send` or chat; confirmed plan deltas use only the boundary above.
-
-## The dirty-worktree canary
-
-A dirty `support-agent` still signals a problem unless the entire diff is the currently confirmed
-`openspec/plan.yaml` delta plus its tool-generated `openspec/ROADMAP.md`. Any code, scratch file,
-manual ROADMAP edit or unrelated planning drift violates the boundary.
-
-## Relationship to the Tower
-
-One direction only. This agent produces an exact, self-contained brief so a
-project-provided delivery authority can act on it unchanged.
-
-The delivery authority knows nothing about this agent and needs nothing from it.
-Ordering, tokens, delivery proof, and global closure stay outside Support. When a
-question crosses that line, hand it to the authority registered by the active
-project; never assume this repository owns or installs one.
-
-## Answering anything else
-
-Outside the planning pass, this agent is a general support session: read the repo,
-explain a decision, check what a plan says, look at the board, compare an assumption
-against `origin/main`. All of it read-only, none of it visible to the Tower.
-
-That is the intended use, not an edge case. A question costs the board nothing.
+El brief aprobado incluye asiento, rama, runtime, alcance y dependencias. Con Torre encendida viaja por su transporte; apagada, MAIN lo entrega al peer aprobado. Support no inventa persistencia, acuse ni retry.

@@ -1,136 +1,54 @@
-# Daily brief — template and derivation rules
+# Brief de Jornada
 
-The daily brief answers one question: **what do I do today, and what is stopping the
-rest.** It is a derived view over the plans, never a written summary.
+El brief deriva qué puede implementarse o planificarse hoy. No asigna, despacha, reserva ni muta estado.
 
-## The distinction that makes it useful
+## Fuentes
 
-| | Summary | Derivation |
-|---|---|---|
-| What it is | the agent's reading | arithmetic over declared fields |
-| How it is verified | by re-reading everything | by opening one cited `file:line` |
-| When it is wrong | nobody notices | the numbers stop adding up |
-
-A summary asks for trust. A derivation hands over a receipt. Every line carries its
-source so the maintainer can spot-check one item instead of auditing the whole plan set.
-
-**Never soften a number to make the day look better.** The brief exists to surface what
-is stuck; a brief that flatters is worse than no brief.
-
-## Sources, in order
-
-1. Canonical index (`master-index.md`) — plans, states, `%`, what is missing
-2. Each active plan's `STATUS.md` — Sesión `Estado`, `Depende de`, `Área`, `Recurso`
-3. Active reservations board, if the project has one
-4. Current work distribution / cycle assignment, if the project has one
-5. Git and forge authority — base commit, open PRs, CI health
-
-Read prose notes in the index too. **The most decision-relevant fact of the day is often
-a loose line that no plan owns** — an exhausted CI quota, a frozen dependency, an expired
-credential. Cross it against the ready Sesiones; that intersection is the brief's value.
+1. `openspec/plan.yaml` y `openspec/ROADMAP.md` generada.
+2. `radar check`, `radar status` y `radar zonas`.
+3. Reservas vivas y runtime disponibles, si existen.
+4. Git, forge y política de entrega.
 
 ## Template
 
 ```markdown
-# BRIEF — <project> · <weekday> <YYYY-MM-DD>
+# BRIEF — <proyecto> · <fecha>
 
-**Base:** `<remote/branch>` `<sha>` · **Reservas activas:** <n | ninguna> → `<file:line>`
+**Base:** `<rama>@<sha>` · **Fuente:** `<ruta/comando>`
 
-## 🚨 <Blocking condition of the day, only if one exists>
+## Capacidad
 
-> "<verbatim quote>" → `<file:line>`
+| Tipo | Disponibles | Evidencia |
+|---|---:|---|
+| Implementar | N | <IDs y fuente> |
+| Planificar | N | <Zonas/huecos y fuente> |
 
-<One sentence on what it means for today.>
+## Asignaciones propuestas
 
-## 🟢 Capacidad
+| Sesión/objetivo | Asiento | Rama | Runtime | Alcance | Dependencias |
+|---|---|---|---|---|---|
+| <ID> | <seat> | <branch> | <runtime> | <paths/resultado> | <IDs/evidencia> |
 
-| | Cuántos | Cuáles |
-|---|---|---|
-| **Por grafo** (dependencias + área + recurso) | N | `<IDs>` |
-| **Entregables hoy** | N | `<IDs, or why zero>` |
-| **Lanzables hoy** | N | `<IDs>` |
+## Conflictos y Cimientos
 
-## 🎯 Objetivo del día
+<cruces exactos, reservas requeridas y dueño de cada desbloqueo>
 
-**Recomendación (proyección, no avance real):** avanzar `<Planes>` cerrando
-`<Sesiones>`; ejecutar `<Módulos>` no suma crédito porcentual hasta que cierre su Sesión.
+## Decisiones humanas
 
-| Alcance auditable | Línea base | Cierres objetivo | Objetivo proyectado | Δ pp |
-|---|---|---|---|---|
-| Plan `<ID>` | `<cerradas/enumeradas S> (<%>)` | `<S IDs>` | `<cerradas/enumeradas S> (<%>)` | `<+N pp>` |
-| Sesiones de planes activos | `<cerradas/enumeradas S> (<%>)` | `<S IDs>` | `<cerradas/enumeradas S> (<%>)` | `<+N pp>` |
-| Planes cerrados | `<cerrados/total P> (<%>)` | `<P IDs, si cierran todas sus S>` | `<cerrados/total P> (<%>)` | `<+N pp>` |
+<pregunta, consecuencia de opciones y costo de no decidir>
 
-- **Desbloquea:** `<Sesiones/Planes habilitados por estos cierres, o ninguno>`
-- **Condiciones:** `<criterios, dependencias y autoridad requeridos para cerrar>`
-- **Confianza:** `<alta | media | baja>` — `<evidencia o incertidumbre>`
+## Cómo verificar
 
-## ⚠️ <N> decisiones tuyas están frenando <M> de <P> Sesiones pendientes
-
-| Decisión | Dónde | Desbloquea |
-|---|---|---|
-| <decision> | `<file:line>` | **N Sesiones** de <Plan> |
-
-## 🔴 Frenado por otros
-
-| Qué | Por qué |
-|---|---|
-| `<ID>` | <external blocker> |
-
-## ✅ Qué haría hoy, en orden
-
-1. <action, cheapest unblock first>
-2. <action>
-
-## Cómo verificar este brief en 30 segundos
-
-- Sesiones enumeradas: `<a+b+c…> = <total>` ✓ contra `<file:line>`
-- Cerradas: `<a+b+c…> = <total>` ✓
-- Pendientes: `<total − closed>` · bloqueadas por vos: `<n>` · sin dueño: `<n>`
-
-Si algún número no cierra, el brief está mal.
+- `radar check -f openspec/plan.yaml -C <repo>`
+- `radar status -f openspec/plan.yaml -C <repo>`
+- <comandos Git/runtime observados>
 ```
 
-## Derivation rules
+## Reglas de derivación
 
-1. **Capacity is three numbers, not one.** By graph, deliverable today, launchable today.
-   They differ whenever an external condition — dead CI, a frozen environment, a held
-   token — blocks delivery without blocking work. Collapsing them hides the day's real
-   constraint.
-2. **Separate blockers by owner.** "Waiting on the maintainer" and "waiting on someone
-   else" drive opposite actions. Sessions blocked by a maintainer decision are the only
-   ones they can unblock before lunch.
-3. **Price every pending decision in Sesiones.** Not "this is blocked" but "this blocks
-   10 Sesiones". A decision with a number attached gets made; one without it waits.
-4. **Unassigned Sesiones count as blocked.** A Sesión with no owner is not ready work, it
-   is a pending assignment. Report it beside the decisions.
-5. **Order the recommendation by unblock cost.** Cheapest decision that frees the most
-   Sesiones goes first.
-6. **Close with the arithmetic.** Show the sums so they can be re-added. If the totals do
-   not match the index, say so and stop — a disagreement between sources is the finding,
-   not something to average away.
-7. **Never invent a state.** Only the seven canonical states appear. An undeclared
-   `Área` or `Recurso` is reported as missing, not guessed.
-8. **Project from an audited baseline.** Copy the current fractions from reconciled
-   sources, name the Sesiones proposed for closure, then recompute each target and its
-   delta in percentage points. Show current → projected with both fraction and percent.
-9. **Credit only closed Sesiones.** A Plan moves only when an enumerated Sesión reaches
-   `COMPLETO` or `ARCHIVADO`; `EN CURSO`, Módulos, Tareas, hours, and effort contribute
-   zero. List Módulos only as today's execution work. A Plan closes only when all its
-   enumerated Sesiones close.
-10. **Keep global measures separate.** Report closed Plans / total Plans and closed
-    Sesiones / enumerated Sesiones across active Plans as distinct projections. Never
-    blend them into one product-global percentage.
-11. **Use scenarios, never invented certainty.** If pending work is not fully enumerated,
-    the denominator is open, or sources disagree, show `—` with the reason. A conditional
-    target is allowed only as an explicit scenario with named assumptions and required
-    conditions; do not present it as the target state.
-12. **Price the unlock separately.** Name the Sesiones or Plans made eligible by each
-    proposed closure, without adding that downstream work to today's projected credit.
-13. **Keep forecast distinct from fact.** The objective is a recommendation, not a
-    promise, assignment, dispatch, reservation, state mutation, or actual progress.
-
-## What the brief never does
-
-It does not assign, dispatch, reserve, or change any state. It is read-only, like every
-output of this skill. The maintainer decides; the brief only makes the decision cheap.
+- Contá por separado trabajo implementable y huecos planificables.
+- Un asiento puede planificar; no inventes dispatch, persistencia o acuse para hacerlo.
+- No fabriques unidades para alcanzar una cantidad pedida.
+- Separá dependencia, decisión humana, conflicto y falta de runtime.
+- Cada fila debe incluir los cinco campos: asiento, rama, runtime, alcance y dependencias.
+- Si fuentes o sumas contradicen, reportá la contradicción y no promedies.

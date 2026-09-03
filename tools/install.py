@@ -19,39 +19,56 @@ from dataclasses import dataclass
 # without its conventions is a skill with no source of truth.
 SHARED = ("_shared",)
 
+# Chanks planning family — terrain, discovery, requirements, and plan↔SDD bridge.
+CHANKS_SKILLS = (
+    "chanks-1-autoridad",
+    "chanks-1-brain-dump",
+    "chanks-1-descubrimiento",
+    "chanks-1-feature",
+    "chanks-1-heredado",
+    "chanks-1-prd",
+    "chanks-1-project-kickoff",
+    "chanks-1-requirements",
+    "chanks-1-rfc",
+    "chanks-1-terreno",
+    "chanks-4-puente",
+)
+
 # Session workflow family — routing, planning, support, closure.
 SESSION_SKILLS = (
     "session-kickoff",
-    "session-plan",
     "session-context-loader",
     "planificador-granular",
     "agente-soporte",
     "session-doc",
 )
 
-# Generic delivery policy and shared-resource coordination. Product-specific
-# Control Tower operator skills are owned and installed by that project.
+# Generic delivery policy. Product-specific Control Tower operator skills are
+# owned and installed by that project.
 DELIVERY_SKILLS = (
     "unattended-implementation",
     "politica-de-entrega",
-    "coordinador_multi_agente",
 )
 
-# Analysis, planning and communication support.
+# Decision and communication support.
 SUPPORT_SKILLS = (
-    "architecture-audit",
-    "project-kickoff",
-    "big-files-remediation-loop",
     "cierre-de-decisiones",
     "explicalo-simple",
     "skill-composer",
 )
 
-SKILLS = SHARED + SESSION_SKILLS + DELIVERY_SKILLS + SUPPORT_SKILLS
+SKILLS = SHARED + CHANKS_SKILLS + SESSION_SKILLS + DELIVERY_SKILLS + SUPPORT_SKILLS
 
 # Explicit ownership migration. Normal installs retire only these known derived
 # copies; unlisted directories remain untouched.
-RETIRED_SKILLS = ("torre-control-entregas",)
+RETIRED_SKILLS = (
+    "session-plan",
+    "coordinador_multi_agente",
+    "architecture-audit",
+    "project-kickoff",
+    "big-files-remediation-loop",
+    "torre-control-entregas",
+)
 
 MANUAL_FILES = (
     Path(".claude/CLAUDE.md"),

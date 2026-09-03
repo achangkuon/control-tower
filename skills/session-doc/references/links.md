@@ -1,6 +1,7 @@
-# Related skills & tools
+# Skills y herramientas relacionadas
 
-- `cognitive-doc-design` — formatting strategy for the Notion status page (lead with answer, tables, signposting).
-- `big-files-remediation-loop` — may call this skill as its final step.
-- Notion MCP `notion-fetch` — read the page before editing.
-- Notion MCP `notion-update-page` — use `update_content` / `insert_content`; NEVER `replace_content`.
+- `cognitive-doc-design` — estructura la narrativa de cierre para lectura rápida.
+- `chanks-4-puente` — aporta evidencia de `verify`, entrega y `archive`.
+- `agente-soporte` — aplica el delta de evidencia y ejecuta `radar check`/`radar render`.
+- Notion MCP `notion-fetch` — lee la página antes de editar.
+- Notion MCP `notion-update-page` — actualiza o inserta contenido; nunca reemplaza toda la página.

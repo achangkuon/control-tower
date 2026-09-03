@@ -107,24 +107,24 @@ Servi-Task-U and Finanzas-Personales.
 
 ## Routes
 
-| Route | Meaning |
+| Route | Unified pipeline entry |
 | --- | --- |
-| `direct` | Fresh general implementation executor; no SDD phase. |
-| `design-tasks` | Compact `session-plan` elaboration, then the same executor; no proposal/spec. |
-| `full-sdd` | Managed `sdd-propose` -> `sdd-spec` -> `sdd-design` -> `sdd-tasks` -> `sdd-apply` -> `sdd-verify`, once per Sesión. |
-| `blocked` | Stop and ask one maintainer decision. |
+| `direct` | Enter at `apply`. |
+| `design-tasks` | Enter at `design`. |
+| `full-sdd` | Enter at `proposal`. |
 
-`session-kickoff` is the parent router. The other session skills remain focused
-children and are loaded only when their responsibility applies.
+All routes continue through one shared pipeline. `verify` and post-delivery `archive`
+are common and mandatory. `blocked` is a calculated state, not a route.
 
 ## Skill families
 
 | Family | Skills |
 | --- | --- |
 | Shared conventions | `_shared/plan-naming-convention.md` |
-| Session workflow | `session-kickoff`, `session-plan`, `session-context-loader`, `planificador-granular`, `agente-soporte`, `session-doc` |
-| Delivery policy and shared resources | `unattended-implementation`, `politica-de-entrega`, `coordinador_multi_agente` |
-| Analysis and support | `architecture-audit`, `project-kickoff`, `big-files-remediation-loop`, `cierre-de-decisiones`, `explicalo-simple`, `skill-composer` |
+| Chanks planning and bridge | `chanks-1-autoridad`, `chanks-1-brain-dump`, `chanks-1-descubrimiento`, `chanks-1-feature`, `chanks-1-heredado`, `chanks-1-prd`, `chanks-1-project-kickoff`, `chanks-1-requirements`, `chanks-1-rfc`, `chanks-1-terreno`, `chanks-4-puente` |
+| Session workflow | `session-kickoff`, `session-context-loader`, `planificador-granular`, `agente-soporte`, `session-doc` |
+| Delivery policy | `unattended-implementation`, `politica-de-entrega` |
+| Decision and communication support | `cierre-de-decisiones`, `explicalo-simple`, `skill-composer` |
 
 ### `_shared` is deliberately partial
 
