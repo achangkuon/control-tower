@@ -1,48 +1,49 @@
 ---
 name: torre-control-entregas
-description: "Trigger: approved Tower delivery ordering, serialization, evidence, or closure. Enforce Main-only coordination and project delivery policy."
+description: "Trigger: Tower delivery token, ordered handoff, integration, or closure. Main assigns one bound token and enforces repository policy."
 license: Apache-2.0
 metadata:
   author: gentleman-programming
-  version: "1.1"
+  version: "2.0"
 ---
 
 ## Activation Contract
 
-Activate only when Main receives an explicitly approved assignment for Tower delivery ordering, evidence tracking, shared delivery-resource coordination, or closure. Planning, first assignment selection, and implementation remain outside this child.
+Activate when Main receives an immutable candidate from an approved worker assignment and must serialize delivery, integration, evidence, or closure. Planning, work selection, and implementation remain outside this skill.
 
 ## Hard Rules
 
-- Main is the sole dispatch and delivery coordinator; workers never self-assign.
-- Require the confirmed assignment and exact evidence. Never infer approval, readiness, ownership, completion, or a changed brief.
-- Coordinate only: never implement, launch workers, mutate worktrees, or perform another role's delivery action.
-- Serialize the Git delivery boundary so only one approved candidate advances at a time. Keep database and Git resource coordination independent.
-- Read live repository, Git, remote, and Tower state instead of memory or Engram; report contradictions and fail closed.
-- Apply the repository delivery policy in `AGENTS.md`: direct commit and push to `master`, no pull request, no Notion, and no receipt-driven review gate.
-- Require exact closure evidence and reconcile project documentation before reporting the session closed.
+- Main is the sole delivery-token issuer, queue coordinator, and target-branch mover; workers never self-assign or acquire the token directly.
+- Keep exactly one active token. Bind it to assignment, worker, worktree, source branch, candidate commit and tree, target branch, and policy revision; never transfer, reuse, or broaden it.
+- The worker prepares the candidate and evidence. With an approved brief, Main moves the branch; a worker may perform only an explicitly assigned policy action while holding its bound token.
+- Read the repository delivery policy before interpreting readiness or expecting a pull request. Unknown, missing, or contradictory policy fails closed.
+- For this repository, enforce `AGENTS.md`: direct commit and push to `master`, no pull request, no Notion, and no receipt-driven delivery gate.
+- Re-read Git, remote, Tower, and documentation state after delivery. Release the token only after the observed result matches its frozen binding.
+- Preserve independent Git and database evidence. One successful boundary never proves the other.
 
 ## Decision Gates
 
 | Condition | Action |
 |---|---|
-| Assignment is approved, unchanged, and complete | Admit it to the ordered queue under its named owner. |
-| Scope, owner, worktree, dependency, resource, or proof is unclear | Hold it and request corrected evidence through Main. |
-| Another candidate owns the delivery boundary | Keep the candidate waiting; never grant a second green light. |
-| Database proof is pending | Preserve the Git result and keep the database requirement open. |
-| Completion proof matches the assignment and policy | Accept it for ordered closure. |
+| Candidate, assignment, policy, and evidence match | Queue the candidate under its assigned worker. |
+| No token is active and the candidate is queue head | Issue one immutable token for that candidate. |
+| Another candidate owns the token | Wait; never grant, steal, or duplicate it. |
+| Candidate or policy changes after issue | Revoke the token and require a newly approved binding. |
+| Delivery observation matches the binding | Record evidence, release the token, and advance the queue. |
+| Any proof is missing or contradictory | Keep the token closed or held; report the exact discrepancy to Main. |
 
 ## Execution Steps
 
-1. Verify the approved assignment identity, owner, boundaries, dependencies, resources, and required proof.
-2. Read current Tower and delivery state; report the delta and queue head.
-3. Dispatch no work. Track only state and evidence returned for the unchanged assignment.
-4. Advance one eligible candidate through the direct-delivery boundary; keep every other candidate waiting.
-5. Reconcile Git, database, and documentation evidence independently against the original assignment.
-6. Return closure evidence only when every required proof is present and consistent.
+1. Read `AGENTS.md` and resolve the delivery shape, target branch, and authorizing party before evaluating the candidate.
+2. Verify the approved assignment, worker, dependencies, resources, commit, tree, worktree, branch, and required proof.
+3. Select the queue head and issue one token containing the complete immutable binding; report every waiting worker.
+4. Coordinate the bound handoff: the worker returns its candidate evidence and Main performs the authorized target-branch movement and push.
+5. Re-read local Git, remote Git, database evidence when applicable, and `openspec/plan.yaml`; reject stale or partial proof.
+6. Record the result, release the token, advance the queue, and return closure only when every required proof is consistent.
 
 ## Output Contract
 
-Return queue head, delivery-boundary owner, `worktree | branch | state | scope | blocker` per assignment, state delta, evidence received, evidence missing, database proof, documentation proof, and each fail-closed discrepancy.
+Return policy resolution, queue order, token state and complete binding, `worker | worktree | branch | candidate | state | blocker` per assignment, target-branch movement, remote observation, database proof, documentation proof, release evidence, and every fail-closed discrepancy.
 
 ## References
 
