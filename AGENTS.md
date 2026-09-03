@@ -7,8 +7,8 @@
 ## Documentación de sesión: sin Notion
 
 Control Tower ya no usa Notion. El cierre y la documentación de cada sesión se
-registran en el OpenSpec del repositorio (`STATUS.md` y `master-index`, según
-corresponda), la radiografía generada y el resumen de sesión en Engram.
+registran en `openspec/plan.yaml`, la radiografía generada y el resumen de sesión
+en Engram.
 
 Los agentes no deben buscar, consultar, crear ni actualizar páginas de Notion para
 este proyecto. La ausencia de `.session-doc.json` es intencional y no indica una
@@ -153,9 +153,9 @@ git config core.hooksPath .githooks
 | `.radiografia-cache.json` | el generador | Último resultado de la suite y en qué commit se midió. Gitignoreado |
 
 Las **cifras no se escriben nunca a mano**: avance por Plan, cola, líneas, share
-instalado y resultado de la suite salen medidos de `openspec/plans/master-index.md`
-y del repositorio. Esa es la razón de existir del generador — dos veces en una
-semana la documentación afirmó sobre el código cosas que eran falsas.
+instalado y resultado de la suite salen medidos de `openspec/plan.yaml` y del
+repositorio. Esa es la razón de existir del generador — dos veces en una semana
+la documentación afirmó sobre el código cosas que eran falsas.
 
 Al cambiar el juicio, actualizá `verified_against` en el front matter al commit
 contra el que lo verificaste. Si entran commits que cambian el producto después de
@@ -220,9 +220,10 @@ Lo único que el PR sí aportaba era la unidad de revert. A cambio:
 - **Un commit = una unidad revertible.** Si una tarea no se puede revertir con un
   solo `git revert`, va en commits separados.
 - **El Documentation Close Gate sigue activo.** `.doc-guard.json` declara
-  `policy: "solo"`, y por eso `git push` cuenta como entrega. Pushear sin
-  actualizar `STATUS.md` + `master-index` bloquea el cierre de sesión igual que
-  antes lo hacía un PR.
+  `policy: "solo"`, y por eso `git push` cuenta como entrega. Si la entrega cierra
+  trabajo planificado, debe quedar declarada en `openspec/plan.yaml`; si no cierra
+  nada, el agente declara «nada que registrar». Sin una de esas dos evidencias, el
+  cierre de sesión queda bloqueado igual que antes lo hacía un PR.
 
 ### Alcance real de la aplicación — leelo antes de asumir
 
@@ -236,9 +237,10 @@ La regla escrita aplica a todos los agentes. **El bloqueo duro no.**
 | Otros / humano | sí | no |
 
 El gate es un hook del harness de Claude Code y ningún otro agente lo ejecuta. Si
-trabajás desde opencode o PI, **la disciplina de documentar es tuya**: actualizá
-`openspec/plans/master-index.md` y el `STATUS.md` del plan en el mismo push, sin
-que nadie te frene si no lo hacés.
+trabajás desde opencode o PI, **la disciplina de documentar es tuya**: declarás el
+cierre de trabajo planificado en `openspec/plan.yaml` en el mismo push, o indicás
+«nada que registrar» cuando la entrega no cierra nada, sin que nadie te frene si
+no lo hacés.
 
 ### Worktrees
 
