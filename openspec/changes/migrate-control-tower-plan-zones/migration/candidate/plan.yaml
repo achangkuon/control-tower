@@ -1215,3 +1215,106 @@ sesiones:
             accion: Unificar vencimiento por reloj y transición sin mutar capabilities.
             resultado: Ambos caminos fallan cerrado por la misma semántica.
             criterios: [Suites focalizadas pasan y la invalidación permanece pasiva.]
+  - id: S4.1
+    zona: hosts
+    resultado: Change E single-host candidate fence
+    autoridad: REQUIREMENTS §14.4, Change E, and maintainer reseal of 2026-08-09
+    depende_de: [S3.1, S3.2, S5.1]
+    recurso: [línea exclusiva y journal owner-only propio por host]
+    criterios:
+      - Un host sin prueba canónica positiva del anterior no se admite; silencio, ausencia o ambigüedad nunca cuentan como proof.
+      - "El caller operacional pasa sólo terminationProofRef o maintainerDecisionRef; proof envelopes, autoridades y actor: MAINTAINER son rechazados."
+      - Los puertos de proof y decisión se fijan en el constructor y son controlados por composition root/Main; inputs caller-fabricados no pueden sustituirlos.
+      - Project, predecessor, base, runtime, role y assignment coinciden exactamente entre journal, candidate y resultado del puerto, o falla cerrado.
+      - El fence no crea, valida, consume ni delega autoridad.
+      - El host epoch es monótono, nunca se reutiliza, no depende del reloj y dos activaciones distintas jamás comparten epoch.
+      - El estado se deriva de eventos inmutables encadenados por digest; no existe un ledger mutable autoritativo ni migración SQLite.
+      - Gap, duplicate epoch, bytes alterados, digest previo inválido o vista retrocedida fallan cerrado; una vista a prefijo nunca habilita epoch reuse.
+      - La publicación final es no-replace/O_EXCL equivalente y un evento publicado nunca se borra como rollback.
+      - La toma forzada sólo ocurre con decisión humana autorizada por puerto; avanza epoch y expone TAKEOVER_FORCED.
+      - El trabajo desalojado queda FROZEN en el mismo evento y ninguna ruta lo adopta o descarta automáticamente.
+      - Una base que arrastra trabajo congelado sin resolver se rechaza.
+      - El path del trusted root no contiene componentes symlink; root y directorios descendientes verifican owner/mode; event y lock se abren con O_NOFOLLOW, se validan por fstat y exigen nlink === 1.
+      - El lock owner-only serializa dos procesos reales; hay un único winner y ningún lock/residuo/descriptores abiertos al terminar.
+      - Todo rechazo pre-publicación deja cero mutación durable y conserva bytes existentes.
+      - Todo fallo ambiguo post-create devuelve CT_FENCE_DURABILITY_UNKNOWN, no borra el epoch y obliga readback sin retry automático.
+      - Los tests de persistencia ejecutan success, rechazo, concurrencia, cleanup y cada failpoint declarado.
+      - bun test test/hosts pasó 16/16 y bun test pasó 553/553 (553 pass / 0 fail; 3196 expectations, 35 files) sobre la base integrada.
+      - "La corrección final se conservó sin amend durante el rebase autorizado: 03ecb5d (predecesor) y 1f5fea7 (candidato de implementación verificado). El diff toca sólo Área y ninguna ruta de Prohibido."
+    decisiones:
+      - tipo: derivable
+        pregunta: ¿Hacia dónde falla el fence ante la duda?
+        criterio: Si no se puede probar que el host anterior se detuvo, no hay host activo nuevo; cualquier camino ambiguo que publique un evento de admisión falsifica la decisión.
+        autoridad: alcance fail-closed aprobado de S4.1
+        evidencia: Contrato técnico falsificable de S4.1 en el STATUS inmutable.
+        checkpoint: antes de admitir un candidato
+        opciones:
+          - opcion: Fallar cerrado.
+            consecuencia: La duda nunca publica un nuevo host activo.
+      - tipo: derivable
+        pregunta: ¿Qué constituye prueba de detención?
+        criterio: Resultado positivo del puerto constructor-owned, con ref y bindings exactos; un caller que fabrica un objeto schema-valid y logra admisión sin resolución del puerto falsifica la decisión.
+        autoridad: requisito de línea exclusiva de Change E y re-sellado del maintainer del 2026-08-09
+        evidencia: Contrato técnico falsificable de S4.1 en el STATUS inmutable.
+        checkpoint: antes de admitir un candidato
+        opciones:
+          - opcion: Exigir resolución por el puerto constructor-owned.
+            consecuencia: Ausencia de señal o envelope del caller no cuenta como prueba.
+      - tipo: derivable
+        pregunta: ¿Cómo avanza el host epoch?
+        criterio: Máximo derivado del journal inmutable más uno, comparable sin reloj y publicado no-replace; compartir epoch o habilitar reuse con una vista retrocedida falsifica la decisión.
+        autoridad: Outputs de Plan 4 y re-sellado del maintainer del 2026-08-09
+        evidencia: Contrato de journal append-only y epoch anti-reuse de S4.1.
+        checkpoint: antes de publicar el evento
+        opciones:
+          - opcion: Derivar el siguiente epoch del journal inmutable.
+            consecuencia: Dos activaciones no comparten epoch y una vista retrocedida no habilita reuse.
+      - tipo: resuelta
+        pregunta: ¿Puede un operador forzar la toma sin prueba de detención?
+        resolucion: Sí, pero sólo cuando el puerto confiable autoriza la decisión humana exacta; un string actor nunca basta. El evento avanza epoch, marca TAKEOVER_FORCED y congela el trabajo previo.
+        autoridad: resolución del maintainer de 2026-08-04 endurecida el 2026-08-09
+        falsificador: Una toma forzada sin autorización exacta del puerto o sin avance de epoch, TAKEOVER_FORCED y FROZEN.
+        descartadas: []
+        contaminaba: [S5.2, S7.1]
+      - tipo: resuelta
+        pregunta: ¿Qué pasa con el trabajo en vuelo del host desalojado?
+        resolucion: Se congela y se escala; no se descarta ni se adopta.
+        autoridad: resolución del maintainer de 2026-08-04
+        falsificador: Takeover publicado sin FROZEN exacto o base contaminada aceptada.
+        descartadas: []
+        contaminaba: [S5.3]
+      - tipo: resuelta
+        pregunta: ¿Puede el caller seguir entregando proof o actor y puede un ledger reescribible conservar autoridad?
+        resolucion: No. El caller entrega sólo refs, los puertos son constructor-bound y el journal es inmutable y anti-reuse.
+        autoridad: resolución del maintainer de 2026-08-09
+        falsificador: Una operación acepta proof o actor fabricado por el caller, o un ledger reescribible habilita reuse de epoch.
+        descartadas: []
+        contaminaba: [S4.1, S5.2, S7.1]
+    ruta:
+      propuesta: design-tasks
+      autoridad: REQUIREMENTS §14.4, Change E, and maintainer reseal of 2026-08-09
+    entrega:
+      commit: 1f5fea76549bbc3123e28916874643a8d0f8cddd
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-4/STATUS.md
+      origen_blob: eec8b401c2f55b05cec419c101ecb462b4e4afe3
+      origen_encabezado: "## Sesión 4.1 — Change E single-host candidate fence"
+      territorio_pendiente: false
+    modulos:
+      - id: M4.1.1
+        resultado: Fence
+        rutas: [hosts/candidate-fence.mjs, test/hosts/candidate-fence.test.mjs]
+        tareas:
+          - id: T4.1.1.1
+            accion: "RED: demostrar que fallan los ataques de procedencia y autoridad fabricadas, rollback de vista a prefijo, gap/duplicate/tampering, ancestros symlink, event/lock symlink o hardlink, owner/mode inseguros, writers multiproceso, timeout y fallos de persistencia antes/después de publish. Los tests quedaron rojos contra 25b8617 por la razón esperada."
+            resultado: "RED: demostrar que fallan los ataques de procedencia y autoridad fabricadas, rollback de vista a prefijo, gap/duplicate/tampering, ancestros symlink, event/lock symlink o hardlink, owner/mode inseguros, writers multiproceso, timeout y fallos de persistencia antes/después de publish. Los tests quedaron rojos contra 25b8617 por la razón esperada."
+            criterios: ["RED: demostrar que fallan los ataques de procedencia y autoridad fabricadas, rollback de vista a prefijo, gap/duplicate/tampering, ancestros symlink, event/lock symlink o hardlink, owner/mode inseguros, writers multiproceso, timeout y fallos de persistencia antes/después de publish. Los tests quedaron rojos contra 25b8617 por la razón esperada."]
+          - id: T4.1.1.2
+            accion: "GREEN: reemplazar inputs proof/actor por refs más puertos constructor-owned; verificar bindings exactos; sustituir el ledger mutable por eventos per-epoch encadenados por digest y publicados no-replace; preservar takeover humano, freeze y base rejection en el mismo evento."
+            resultado: "GREEN: reemplazar inputs proof/actor por refs más puertos constructor-owned; verificar bindings exactos; sustituir el ledger mutable por eventos per-epoch encadenados por digest y publicados no-replace; preservar takeover humano, freeze y base rejection en el mismo evento."
+            criterios: ["GREEN: reemplazar inputs proof/actor por refs más puertos constructor-owned; verificar bindings exactos; sustituir el ledger mutable por eventos per-epoch encadenados por digest y publicados no-replace; preservar takeover humano, freeze y base rejection en el mismo evento."]
+          - id: T4.1.1.3
+            accion: "REFACTOR: preservar errores tipados, garantizar cero mutación durable antes de publish, prohibir rollback que borre un epoch publicado y exigir readback tras DURABILITY_UNKNOWN; ejecutar evidencia de todas las ramas y cleanup. bun test test/hosts y luego bun test pasaron una vez post-GREEN."
+            resultado: "REFACTOR: preservar errores tipados, garantizar cero mutación durable antes de publish, prohibir rollback que borre un epoch publicado y exigir readback tras DURABILITY_UNKNOWN; ejecutar evidencia de todas las ramas y cleanup. bun test test/hosts y luego bun test pasaron una vez post-GREEN."
+            criterios: ["REFACTOR: preservar errores tipados, garantizar cero mutación durable antes de publish, prohibir rollback que borre un epoch publicado y exigir readback tras DURABILITY_UNKNOWN; ejecutar evidencia de todas las ramas y cleanup. bun test test/hosts y luego bun test pasaron una vez post-GREEN."]
