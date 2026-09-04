@@ -888,3 +888,330 @@ sesiones:
             accion: "REFACTOR: evidencia por bytes y modo."
             resultado: La evidencia distingue alteraciones de bytes y modo.
             criterios: [Los digests raw-bytes y rfc8785-jcs verifican la identidad exacta.]
+  - id: S3.2
+    resultado: Change D Global/project Policy/Jornada
+    autoridad: role-routed-continuation tasks, REQUIREMENTS §15.3/§22, AGENTS.md delivery policy, and maintainer resolutions
+    depende_de: [S3.1]
+    recurso: [Main filesystem CAS in main-store/store.mjs; no SQLite migration, db-writer, or delivery token]
+    criterios:
+      - Un campo de política ausente resuelve al valor más restrictivo y el motivo queda nombrado con CT_POLICY_UNRESOLVED.
+      - Un bloque no parseable, con valor desconocido, o no ligado, falla cerrado sin default permisivo.
+      - Una fuente de política por symlink, que escapa de la raíz, o de raíz ajena, se rechaza sin leerla.
+      - Una política de proyecto más permisiva que la global resuelve al valor global.
+      - Un repositorio sin bloque delivery-policy se comporta exactamente igual que antes de que el bloque existiera.
+      - Ningún valor de política ni excepción alcanza un floor; los cinco casos se rechazan nombrando el floor violado.
+      - Un registro de autoridad persistido sin identidad de actor falla cerrado, y esa identidad sobrevive al commit.
+      - Una autorización consumida pasado su expires_at se rechaza.
+      - Los seis schemas validan contra sus fixtures y están registrados en contracts/schema-registry.mjs.
+      - Los bytes de los contratos V1 aceptados no cambian y test/provenance/provenance.test.mjs sigue verde.
+      - Policy resuelve elegibilidad y nunca ruteo; ninguna ruta de policy/ crea ni modifica un assignment.
+      - bun test test/contracts test/main-store.test.mjs test/policy pasa completo.
+      - bun test no introduce fallos nuevos sobre la línea base de S3.1, con la Torre desarmada.
+      - El diff de implementación no toca ninguna ruta del Prohibido.
+    decisiones:
+      - tipo: derivable
+        pregunta: ¿Qué valor toma un campo de política ausente?
+        criterio: El valor más restrictivo; un repositorio sin bloque delivery-policy se comporta exactamente igual que antes de que el bloque existiera.
+        autoridad: corte política/seguridad de d232fdf y bloque delivery-policy de AGENTS.md
+        evidencia: Contrato inmutable de S3.2.
+        checkpoint: antes de M3.2.2
+        opciones:
+          - opcion: Resolver al valor más restrictivo.
+            consecuencia: Un campo ausente nunca habilita algo que el bloque explícito no habilita.
+      - tipo: derivable
+        pregunta: ¿Dónde vive la política declarada de un proyecto?
+        criterio: En el bloque delivery-policy del AGENTS.md del proyecto, como fuente única legible por máquina.
+        autoridad: AGENTS.md
+        evidencia: Contrato inmutable de S3.2.
+        checkpoint: antes de M3.2.3
+        opciones:
+          - opcion: Leer una única fuente en AGENTS.md.
+            consecuencia: No existen dos fuentes del árbol que respondan la misma pregunta de política.
+      - tipo: derivable
+        pregunta: ¿Qué gana cuando la política global y la del proyecto difieren?
+        criterio: El valor más restrictivo de los dos; la herencia acota y nunca amplía.
+        autoridad: floors de seguridad de d232fdf
+        evidencia: Contrato inmutable de S3.2.
+        checkpoint: antes de M3.2.2
+        opciones:
+          - opcion: Aplicar intersección restrictiva.
+            consecuencia: Una política local más permisiva no vence el floor global.
+      - tipo: resuelta
+        pregunta: ¿Puede una excepción acotada relajar un floor de seguridad?
+        resolucion: No; ninguno de los cinco floors puede relajarse por configuración ni excepción.
+        autoridad: decisión del maintainer del 2026-08-04 registrada en master-index
+        falsificador: Cualquier ruta en la que una excepción registrada habilite una operación que el floor prohíbe.
+        descartadas:
+          - opcion: Permitir excepciones sobre los floors.
+            razon: Rompería inmutabilidad, autoridad única de Main, no autoasignación, no mutación temprana o ledger append-only.
+        contaminaba: [S5.1, S5.2, S7.1]
+      - tipo: resuelta
+        pregunta: ¿Qué queda registrado en la auditoría de una excepción?
+        resolucion: Un evento de autoridad §15.3 con identidad, objetivo, regla cerrada, alcance verificable, otorgante, autorización, vigencia, resultado y cadena de digests por entrega; la justificación se conserva sólo como digest y puntero externo.
+        autoridad: REQUIREMENTS §15.3 y §22 y decisión del maintainer del 2026-08-04
+        falsificador: Un registro que no permita reconstruir quién otorgó la excepción y contra qué revisión de política.
+        descartadas:
+          - opcion: Persistir justificación como texto libre.
+            razon: Puede filtrar secretos y vuelve irreconciliable el borrado de §22 con el ledger append-only.
+          - opcion: Encadenar hashes por proyecto.
+            razon: Serializaría la punta contra CAS; la cadena aprobada es por entrega.
+        contaminaba: [S7.1]
+      - tipo: derivable
+        pregunta: ¿Qué reglas pueden figurar en excepted_rule?
+        criterio: Exactamente effective_limits, delivery.shape, delivery.target_branch, planning.horizon_ceiling, documentation_close.*, allowed_operations y allowed_hosts; ningún floor.
+        autoridad: resolución de floors de S3.2
+        evidencia: Contrato inmutable de S3.2.
+        checkpoint: antes de M3.2.3
+        opciones:
+          - opcion: Enumerar sólo la superficie configurable.
+            consecuencia: Ningún valor del enum puede nombrar un floor.
+    entrega:
+      commit: 22c43ae8bf53135de47d08edc6f908852ca3e37c
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-3/STATUS.md
+      origen_blob: 5f5f34e8775bfb6dbdd0cb550126a57985dc3d3d
+      origen_encabezado: "## Sesión 3.2 — Change D Global/project Policy/Jornada"
+      territorio_pendiente: false
+    modulos:
+      - id: M3.2.1
+        resultado: Authority/contracts
+        rutas: [contracts/schema-registry.mjs, main-store/store.mjs, schemas/assignment-v2.schema.json, schemas/policy-report-v2.schema.json, schemas/reconciled-checkpoint-v1.schema.json, schemas/recovery-proof-v1.schema.json, schemas/support-proposal-v1.schema.json, test/contracts/s3-2-schemas.test.mjs, test/contracts/schema.test.mjs, test/main-store.test.mjs]
+        tareas:
+          - id: T3.2.1.1
+            accion: Extender contratos con drift de rol, proyecto y schema, y probar que un registro de autoridad sin actor falla cerrado.
+            resultado: Los límites de autoridad y actor quedan falsificados antes de implementar.
+            criterios: [Drift y ausencia de actor fallan cerrado.]
+          - id: T3.2.1.2
+            accion: Implementar cinco schemas, registrarlos, ejercer CAS sólo por Main, códigos CT_* deterministas y persistencia del actor.
+            resultado: Los contratos y la autoridad persistida pasan los casos GREEN.
+            criterios: [Los cinco schemas y la identidad de actor validan.]
+          - id: T3.2.1.3
+            accion: Preservar bytes V1 y dejar auditoría por digest con campos §15.3 completos.
+            resultado: Los contratos aceptados no derivan y la auditoría queda completa.
+            criterios: [Los bytes V1 permanecen idénticos y las pruebas focalizadas pasan.]
+      - id: M3.2.2
+        resultado: Policy/Jornada
+        rutas: [main-store/store.mjs, policy/jornada.mjs, test/main-store.test.mjs, test/policy/jornada.test.mjs]
+        tareas:
+          - id: T3.2.2.1
+            accion: Agregar RED para Jornada inactiva y vencida, autorización expirada, techo resuelto, denegación, expansión, excepción y acciones irreversibles.
+            resultado: Los límites temporales y de elegibilidad fallan antes de implementar.
+            criterios: [Los casos RED cubren expiración, límites y acciones irreversibles.]
+          - id: T3.2.2.2
+            accion: Implementar policy/jornada.mjs sobre main-store/store.mjs con elegibilidad únicamente.
+            resultado: Policy decide si algo puede ocurrir sin asignar ni despachar.
+            criterios: [La implementación no crea ruteo ni assignments.]
+          - id: T3.2.2.3
+            accion: Preservar Policy Reports V1 legibles junto a policy-report-v2.
+            resultado: La compatibilidad de reportes se mantiene.
+            criterios: [Las pruebas focalizadas de policy pasan.]
+      - id: M3.2.3
+        resultado: Delivery-policy resolution
+        rutas: [policy/delivery-policy.mjs, schemas/delivery-policy-v1.schema.json, test/policy/delivery-policy.test.mjs]
+        tareas:
+          - id: T3.2.3.1
+            accion: Probar fuentes ausentes, no parseables, desconocidas, no ligadas, symlink, escape y raíz ajena con resolución restrictiva y CT_POLICY_UNRESOLVED.
+            resultado: Toda política no resuelta falla cerrada con motivo nombrado.
+            criterios: [Cada variante alcanza el valor más restrictivo.]
+          - id: T3.2.3.2
+            accion: Probar que ninguna política ni excepción alcanza los cinco floors y nombrar el floor rechazado.
+            resultado: Los floors permanecen fuera de configuración y excepciones.
+            criterios: [Los cinco casos de floor fallan cerrado.]
+          - id: T3.2.3.3
+            accion: Implementar delivery-policy-v1 y lectura por digest desde la raíz canónica con binding de revisión.
+            resultado: La política se resuelve desde una fuente canónica ligada.
+            criterios: [Schema, digest y binding validan sin candidate_revision adelantada.]
+          - id: T3.2.3.4
+            accion: Preservar que un repositorio sin el bloque se comporte exactamente como antes.
+            resultado: La compatibilidad por ausencia permanece inalterada.
+            criterios: [Las pruebas focalizadas de delivery-policy pasan.]
+  - id: S3.3
+    resultado: Agent Capability Registry
+    autoridad: S3.3 STATUS contract and maintainer decisions of 2026-08-04
+    depende_de: [S3.2]
+    criterios:
+      - Una capability se resuelve por rol y proyecto sin cruzar entradas entre proyectos.
+      - Una entrada vencida no resuelve y el rechazo es explícito.
+      - Binding de Jornada ausente, revisión distinta o reloj pasado expires_at falla cerrado.
+      - CAS R1 a R2 invalida todos los bindings de R1.
+      - registry_entry_revision inicia en 1 y sólo sube cuando cambia el contenido canonicalizado.
+      - Un agente no puede registrarse a sí mismo.
+      - Drift entre schema declarado e invocado falla cerrado.
+      - Escritura sin capability de Main asertada falla cerrado.
+      - Symlink, modos inseguros, dueño ajeno, lock ocupado y revisión stale se rechazan igual que en registry/store.mjs.
+      - El registry no crea, valida ni consume autoridad ni habilita Support a Worker.
+      - agent-capability-registry-v1 está registrado y tiene fixture.
+      - bun test test/capabilities test/contracts test/registry pasa completo.
+      - bun test no introduce fallos nuevos sobre S3.2 con Torre desarmada.
+      - El diff no toca Prohibido.
+    decisiones:
+      - tipo: derivable
+        pregunta: ¿Cuál es la forma de una entrada?
+        criterio: El schema enumera identidad de proyecto/Main, revisiones, caller/rol, capability, schemas, origen y ventana de disponibilidad.
+        autoridad: schemas/agent-capability-registry-v1.schema.json
+        evidencia: Contrato inmutable S3.3.
+        checkpoint: antes de M3.3.1
+        opciones: [{opcion: Usar exactamente el schema, consecuencia: Código y contrato exigen los mismos campos.}]
+      - tipo: derivable
+        pregunta: ¿Qué hace una entrada vencida?
+        criterio: No resuelve y el rechazo es explícito.
+        autoridad: criterios de S3.3
+        evidencia: Contrato inmutable S3.3.
+        checkpoint: antes de resolver
+        opciones: [{opcion: Rechazar explícitamente, consecuencia: El caller no confunde expiración con ausencia.}]
+      - tipo: derivable
+        pregunta: ¿Puede el registry otorgar autoridad?
+        criterio: No; sólo visibilidad y compatibilidad, con autoridad exclusiva de Main.
+        autoridad: límite duro de S3.3
+        evidencia: Contrato inmutable S3.3.
+        checkpoint: antes de resolver
+        opciones: [{opcion: Mantener autoridad exclusiva de Main, consecuencia: Ninguna entrada habilita operaciones por sí sola.}]
+      - tipo: derivable
+        pregunta: ¿Qué pasa con bindings previos ante CAS R1 a R2?
+        criterio: Todos los bindings R1 dejan de resolver.
+        autoridad: alcance aprobado de S3.3
+        evidencia: Contrato inmutable S3.3.
+        checkpoint: antes de update
+        opciones: [{opcion: Invalidar por registry_revision, consecuencia: Ningún binding R1 sobrevive.}]
+      - tipo: resuelta
+        pregunta: ¿Cuánto dura por defecto una entrada?
+        resolucion: Expira con su Jornada, materializando expires_at al emitirla; la revocación anticipada queda pasiva hasta S3.4.
+        autoridad: decisión del maintainer del 2026-08-04
+        falsificador: Una entrada resuelve después de expires_at o sin binding de Jornada.
+        descartadas: []
+        contaminaba: [S5.1, S5.4]
+      - tipo: resuelta
+        pregunta: ¿De dónde sale la escritura atómica del registry?
+        resolucion: Implementación propia dentro de capabilities/registry.mjs con paridad observable respecto de registry/store.mjs.
+        autoridad: decisión del maintainer del 2026-08-04
+        falsificador: Un caso de seguridad que una implementación rechaza y la otra acepta.
+        descartadas:
+          - opcion: Parametrizar registry/store.mjs.
+            razon: Tocaría un componente en producción con pruebas propias.
+        contaminaba: [S3.3]
+      - tipo: derivable
+        pregunta: ¿De dónde sale la autoridad de Main para escribir?
+        criterio: bindMainAuthority(...).assert(capability, expected) es la única puerta.
+        autoridad: main-store/authority.mjs
+        evidencia: Contrato inmutable S3.3.
+        checkpoint: antes de escribir
+        opciones: [{opcion: Reusar assertMain existente, consecuencia: No aparece autoridad sombra.}]
+    entrega: {commit: 4621d3f333c4d523b66a7595a33e8abcd7642700}
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-3/STATUS.md
+      origen_blob: 5f5f34e8775bfb6dbdd0cb550126a57985dc3d3d
+      origen_encabezado: "## Sesión 3.3 — Agent Capability Registry"
+      territorio_pendiente: false
+    modulos:
+      - id: M3.3.1
+        resultado: Registry
+        rutas: [capabilities/registry.mjs, schemas/agent-capability-registry-v1.schema.json, contracts/schema-registry.mjs, contracts/validate.mjs, test/capabilities/registry.test.mjs, test/contracts/schema.test.mjs, test/fixtures/contracts/schema-cases-v1.json]
+        tareas:
+          - id: T3.3.1.1
+            accion: Probar rol/proyecto, expiración/schema, R1 a R2, auto-registro y paridad de escritura atómica.
+            resultado: Los límites del registry fallan antes de implementar.
+            criterios: [Todos los casos RED aprobados quedan cubiertos.]
+          - id: T3.3.1.2
+            accion: Implementar schema, registro, invariantes y capabilities/registry.mjs con CAS propio y autoridad Main asertada.
+            resultado: El registry versionado y acotado por proyecto pasa GREEN.
+            criterios: [Resolución, CAS y validación pasan.]
+          - id: T3.3.1.3
+            accion: Eliminar autoridad sombra y visibilidad todos-contra-todos, documentando la paridad atómica.
+            resultado: El límite de visibilidad sin autoridad queda preservado.
+            criterios: [Suites focalizadas pasan sin tocar Prohibido.]
+  - id: S3.4
+    resultado: Persistencia y ciclo de vida de Jornada
+    autoridad: existing jornada-v1 schema, S3.3 revision contract, and maintainer passive-invalidation decision
+    depende_de: [S3.2, S3.3]
+    criterios:
+      - Una Jornada persiste validando jornada-v1 y falla cerrado si no lo satisface.
+      - Una escritura por un actor que no es Main falla cerrada.
+      - Una escritura sobre un proyecto ajeno falla cerrada.
+      - REJECTED, EXPIRED, REVOKED y COMPLETED son irreversibles.
+      - Toda transición incrementa jornada_revision.
+      - Una lectura pasada expires_at reporta vencida sin transición previa.
+      - Una capability ligada a una Jornada terminada deja de resolver.
+      - No queda una lista manual de campos junto al schema.
+      - bun test test/jornada test/main-store.test.mjs test/capabilities pasa completo.
+      - bun test no introduce fallos nuevos sobre S3.3 con Torre desarmada.
+      - El diff no toca Prohibido.
+    decisiones:
+      - tipo: derivable
+        pregunta: ¿Dónde viven los registros de Jornada?
+        criterio: En main-store/store.mjs mediante validación de schema, CAS expected_revision y assertMain.
+        autoridad: main-store/store.mjs
+        evidencia: Contrato inmutable S3.4.
+        checkpoint: antes de M3.4.1
+        opciones: [{opcion: Reusar el store Main, consecuencia: No existe un segundo store de autoridad.}]
+      - tipo: derivable
+        pregunta: ¿Qué transiciones son legales?
+        criterio: El enum jornada-v1 y sus cuatro estados terminales irreversibles.
+        autoridad: jornada-v1 y precedente de autorizaciones
+        evidencia: Contrato inmutable S3.4.
+        checkpoint: antes de M3.4.2
+        opciones: [{opcion: Aplicar la máquina cerrada, consecuencia: Ningún terminal vuelve a estado activo.}]
+      - tipo: derivable
+        pregunta: ¿Qué ocurre con jornada_revision en una transición?
+        criterio: Sube en toda transición sin excepción.
+        autoridad: decisión de disponibilidad de S3.3
+        evidencia: Contrato inmutable S3.4.
+        checkpoint: antes de persistir transición
+        opciones: [{opcion: Incrementar siempre, consecuencia: Bindings anteriores fallan por drift.}]
+      - tipo: derivable
+        pregunta: ¿Qué ocurre con una Jornada vencida por reloj sin transición?
+        criterio: La lectura la reporta vencida sin mutar ni depender de un barrido.
+        autoridad: floor fail-closed del proyecto
+        evidencia: Contrato inmutable S3.4.
+        checkpoint: al leer
+        opciones: [{opcion: Derivar expiración en lectura, consecuencia: ACTIVE nunca sobrevive al expires_at.}]
+      - tipo: resuelta
+        pregunta: ¿Terminar una Jornada revoca activamente capabilities y autorizaciones?
+        resolucion: No; incrementa jornada_revision y la invalidación ocurre pasivamente al revalidar, sin garbage collector.
+        autoridad: decisión del maintainer del 2026-08-04
+        falsificador: Cualquier ruta que mute una capability o autorización al terminar una Jornada.
+        descartadas:
+          - opcion: Revocación activa en cascada.
+            razon: Expande alcance y no es necesaria para fallar cerrado por drift.
+        contaminaba: [S5.1]
+    entrega: {commit: b6dda84888e654466851bbd771920cf1c971b05a}
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-3/STATUS.md
+      origen_blob: 5f5f34e8775bfb6dbdd0cb550126a57985dc3d3d
+      origen_encabezado: "## Sesión 3.4 — Persistencia y ciclo de vida de Jornada"
+      territorio_pendiente: false
+    modulos:
+      - id: M3.4.1
+        resultado: Jornada store
+        rutas: [main-store/store.mjs, test/main-store.test.mjs]
+        tareas:
+          - id: T3.4.1.1
+            accion: Probar persistencia válida/inválida, actor Main, proyecto y CAS stale.
+            resultado: Los límites del store fallan antes de implementar.
+            criterios: [Validación, autoridad, proyecto y CAS quedan cubiertos.]
+          - id: T3.4.1.2
+            accion: Agregar createJornada, readJornada y transitionJornada reusando commit, assertMain y schema.
+            resultado: Jornada persiste sin una segunda ruta de escritura.
+            criterios: [Las operaciones pasan GREEN bajo autoridad Main.]
+          - id: T3.4.1.3
+            accion: Confirmar que no existe lista manual de campos junto al schema.
+            resultado: Store y schema no pueden derivar silenciosamente.
+            criterios: [La suite main-store pasa.]
+      - id: M3.4.2
+        resultado: Ciclo de vida
+        rutas: [jornada/lifecycle.mjs, test/jornada/lifecycle.test.mjs]
+        tareas:
+          - id: T3.4.2.1
+            accion: Probar transiciones, terminalidad, revisión, expiración por reloj e invalidación pasiva.
+            resultado: El ciclo de vida queda falsificado antes de implementar.
+            criterios: [Todos los límites de lifecycle quedan cubiertos.]
+          - id: T3.4.2.2
+            accion: Implementar la máquina y el incremento de revisión sobre el store.
+            resultado: Las transiciones legales pasan GREEN.
+            criterios: [Terminalidad y revisión se preservan.]
+          - id: T3.4.2.3
+            accion: Unificar vencimiento por reloj y transición sin mutar capabilities.
+            resultado: Ambos caminos fallan cerrado por la misma semántica.
+            criterios: [Suites focalizadas pasan y la invalidación permanece pasiva.]
