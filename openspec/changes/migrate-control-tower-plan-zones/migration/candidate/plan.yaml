@@ -2823,3 +2823,174 @@ sesiones:
             accion: "RED/GREEN: inyectar trustedBindingProvider en la plugin, verificar Main antes de obtener store/capability y validar support-proposal-v1."
             resultado: "RED/GREEN: la plugin es el único composition root de autoridad y persiste sólo respuestas validadas."
             criterios: ["Provider o binding inválido falla antes de spawn/persistencia y Support nunca recibe autoridad."]
+  - id: S5.2
+    resultado: Change F delivery adapters/reconciliation
+    depende_de: [S4.1, S3.3]
+    autoridad: Decisión 8195, decisiones 47 y 48, y contrato vigente de la Sesión S5.2
+    criterios:
+      - La forma de entrega sale del bloque delivery-policy del proyecto, y un repositorio sin bloque resuelve al valor más restrictivo
+      - Remoto, refspec y head son explícitos; la rama de tracking nunca decide el destino
+      - Un destino que no coincide con el declarado se bloquea antes de emitir nada
+      - Composición de comandos, prefijo de entorno y --head ausente se rechazan
+      - Dos intentos sobre el mismo candidato se consideran la misma entrega; la identidad es la candidate_revision congelada, nunca un ID por intento
+      - Se reintenta como máximo tres veces, y cada reintento va precedido de reconciliación contra el remoto real
+      - Si la reconciliación determina que el efecto sí ocurrió, se marca entregada y no se reintenta, sin importar el contador
+      - Un efecto que ocurrió con la respuesta perdida no produce un segundo efecto al reintentar
+      - Cuota, caída, checks incompletos y ambigüedad se clasifican en quota_exhausted, provider_unavailable, checks_pending y unknown bloqueado
+      - Una entrega irreconciliable entra en UNRECONCILED, congela el candidato y no emite ninguna mutación remota adicional, tampoco un revert
+      - La Torre continúa con trabajo independiente después de una entrega UNRECONCILED; no se detiene entera
+      - El registro de entrega es append-only y vive en delivery/**; ninguna ruta escribe en ct_delivery ni requiere migración de SQLite
+      - La autorización se consume por el store de S5.1, importado sin modificar; S5.2 no abre una segunda ruta de escritura ni crea autoridad
+      - delivery-record-v1 está registrado en contracts/schema-registry.mjs y tiene su caso en el fixture de contratos
+      - bun test test/delivery test/contracts pasa completo y bun test no introduce fallos nuevos sobre la línea base que deje S4.1
+      - Los 16 paths del candidato pertenecen al Área aprobada por las decisiones 47 y 48; el diff no toca ninguna ruta del Prohibido, en particular core.mjs
+    decisiones:
+      - tipo: resuelta
+        pregunta: ¿Se autoriza una segunda corrección del candidato estacionado por la decisión 8195?
+        resolucion: Se corrigen los hallazgos 1, 3 y 5 sobre la rama que conserva el candidato íntegro, y nada más.
+        autoridad: maintainer, 2026-08-19, decisión 47
+        evidencia: La rama preservó el artefacto aunque Worktrees/s5-1 ya no existe; el recheck dejó abiertos los hallazgos 1, 3 y 5.
+        checkpoint: antes de la corrección de S5.2
+        opciones:
+          - opcion: Autorizar sólo la corrección de los hallazgos 1, 3 y 5.
+            consecuencia: S5.2 puede cerrar sin ampliar su producto ni tocar paths prohibidos.
+        falsificador: Un diff fuera del Área o un cuarto cambio que no corresponda a los hallazgos 1, 3 o 5.
+        clase: operaciones-irreversibles
+        descartadas:
+          - opcion: Mantener el candidato estacionado sin segunda corrección.
+            razon: Dejaría S5.2 sin ruta y los tres hallazgos sin dueño.
+        contaminaba: [S5.2, S5.3]
+      - tipo: resuelta
+        pregunta: ¿Qué forma de entrega usa cada proyecto?
+        resolucion: La forma sale del bloque delivery-policy de AGENTS.md, con shape direct-push o pull-request; si falta, falla cerrado al valor más restrictivo.
+        autoridad: AGENTS.md y corte d232fdf
+        evidencia: El contrato visible de entrega del proyecto reside en delivery-policy.
+        checkpoint: antes de T5.2.1.1
+        opciones:
+          - opcion: Resolver desde delivery-policy y usar el default más restrictivo.
+            consecuencia: Ningún repositorio sin declaración toma el camino más permisivo.
+        falsificador: Un repositorio sin bloque termina entregando por el camino más permisivo.
+        clase: seguridad-y-permisos
+        descartadas:
+          - opcion: Inferir la forma desde la rama o el remoto.
+            razon: Sustituiría el contrato explícito por estado ambiental.
+        contaminaba: [S5.2]
+      - tipo: resuelta
+        pregunta: ¿Se amplía el Área a schemas/candidate-revision-v1.schema.json?
+        resolucion: Se amplía el Área a ese path y ningún otro para incorporar únicamente policy_report_digest.
+        autoridad: maintainer, 2026-08-19, decisión 48; decisión 8186
+        evidencia: La decisión 8186 exige embeber policy_report_digest en la identidad congelada y el candidato modifica exactamente ese schema.
+        checkpoint: antes de la corrección de S5.2
+        opciones:
+          - opcion: Añadir exactamente schemas/candidate-revision-v1.schema.json al Área.
+            consecuencia: La declaración coincide con la consecuencia obligada de la decisión 8186.
+        falsificador: Un diff fuera del Área ampliada o un cambio a candidate-revision-v1 que no sea policy_report_digest.
+        clase: expansion-de-alcance
+        descartadas:
+          - opcion: Mantener el Área anterior.
+            razon: Contradiría el artefacto autorizado por la decisión 8186.
+        contaminaba: [S5.2]
+      - tipo: resuelta
+        pregunta: ¿Qué hace la reconciliación ante un resultado desconocido?
+        resolucion: Consulta el estado remoto real antes de reintentar y nunca asume que el efecto no ocurrió.
+        autoridad: alcance declarado de S5.2
+        evidencia: Un timeout no distingue entre que el efecto no llegó y que llegó pero su respuesta se perdió.
+        checkpoint: antes de T5.2.1.3
+        opciones:
+          - opcion: Consultar el remoto real antes de reintentar.
+            consecuencia: Un efecto ya ocurrido no se duplica.
+        falsificador: El efecto ocurrió, la respuesta se perdió y el reintento produce un segundo efecto.
+        clase: operaciones-irreversibles
+        descartadas:
+          - opcion: Asumir que el efecto no ocurrió.
+            razon: Puede duplicar una entrega irreversible.
+        contaminaba: [S5.2]
+      - tipo: resuelta
+        pregunta: ¿Qué identifica una entrega para efectos de idempotencia?
+        resolucion: La candidate_revision congelada, no un identificador generado al intentar.
+        autoridad: S5.1
+        evidencia: S5.1 define la identidad congelada del candidato.
+        checkpoint: antes de T5.2.1.4
+        opciones:
+          - opcion: Usar candidate_revision.
+            consecuencia: Todos los intentos del mismo candidato son la misma entrega.
+        falsificador: Dos intentos sobre el mismo candidato se consideran entregas distintas.
+        clase: operaciones-irreversibles
+        descartadas:
+          - opcion: Generar un ID por intento.
+            razon: Rompería la idempotencia entre reintentos.
+        contaminaba: [S5.2]
+      - tipo: resuelta
+        pregunta: ¿Cuántas veces se reintenta antes de parar?
+        resolucion: Tres intentos como máximo, con reconciliación obligatoria antes de cada reintento; si el efecto ocurrió, se marca entregada y no se reintenta.
+        autoridad: maintainer, 2026-08-04
+        evidencia: El tope acota cuánto insiste; la reconciliación y candidate_revision evitan duplicación.
+        checkpoint: antes de T5.2.1.3
+        opciones:
+          - opcion: Tres intentos con reconciliación previa.
+            consecuencia: La insistencia queda acotada sin duplicar efectos.
+        falsificador: Un cuarto intento o cualquier reintento emitido sin reconciliar antes.
+        clase: operaciones-irreversibles
+        descartadas:
+          - opcion: Reintentos sin tope o sin reconciliación.
+            razon: Permitiría insistencia ilimitada o duplicación remota.
+        contaminaba: [S5.3, S7.1]
+      - tipo: resuelta
+        pregunta: ¿Qué se hace ante una entrega parcial que no se puede reconciliar?
+        resolucion: Se frena esa entrega, no la Torre; pasa a CT_DELIVERY_UNRECONCILED, congela el candidato, registra el estado y no emite otra mutación remota, ni siquiera revert.
+        autoridad: maintainer, 2026-08-04; floor sin mutación remota prematura
+        evidencia: Si no se sabe qué ocurrió, revertir a ciegas sería una segunda mutación sobre estado desconocido.
+        checkpoint: antes de T5.2.1.3
+        opciones:
+          - opcion: Estacionar la entrega irreconciliable y continuar trabajo independiente.
+            consecuencia: El candidato queda congelado y la Torre no se detiene entera.
+        falsificador: Se emite un efecto remoto después de CT_DELIVERY_UNRECONCILED o se detiene toda la Torre.
+        clase: operaciones-irreversibles
+        descartadas:
+          - opcion: Revertir a ciegas o detener toda la Torre.
+            razon: Agregaría una mutación sobre estado desconocido o bloquearía trabajo independiente.
+        contaminaba: [S5.3, S5.5]
+      - tipo: resuelta
+        pregunta: ¿Dónde vive el registro de entrega Git y el estado terminal UNRECONCILED?
+        resolucion: En un registro propio append-only bajo delivery/**; ct_delivery no se toca y no hay migración.
+        autoridad: maintainer, 2026-08-04; el registro de que una migración no vence
+        evidencia: ct_delivery modela handoffs de Worker y su CHECK sólo admite PENDING, CLAIMED y CLOSED; S5.2 registra candidate_revision, shape, intentos y authorization_ref.
+        checkpoint: antes de T5.2.1.4
+        opciones:
+          - opcion: Usar un ledger append-only propio en delivery/**.
+            consecuencia: Conviven dos ledgers que modelan géneros distintos sin migración irreversible.
+        falsificador: S5.2 toca core.mjs, agrega una migración SQLite o escribe en ct_delivery.
+        clase: migraciones-o-perdida-de-datos
+        descartadas:
+          - opcion: Reutilizar ct_delivery.
+            razon: Exigiría migrar una tabla de producción que modela handoffs, no entregas Git.
+        contaminaba: [S5.2]
+    entrega:
+      commit: 2145fd796c6bfdb9d426ceba037c7e3345b5e861
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-5/STATUS.md
+      origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d
+      origen_encabezado: "## Sesión 5.2 — Change F delivery adapters/reconciliation"
+      territorio_pendiente: false
+    modulos:
+      - id: M5.2.1
+        resultado: Adapters y reconciliación
+        rutas: [contracts/schema-registry.mjs, contracts/validate.mjs, delivery/git-adapter.mjs, delivery/ledger.mjs, delivery/pull-request-adapter.mjs, delivery/reconciliation.mjs, delivery/workflow.mjs, schemas/candidate-revision-v1.schema.json, schemas/delivery-record-v1.schema.json, test/contracts/schema.test.mjs, test/delivery/correction-security.test.mjs, test/delivery/git-adapter.test.mjs, test/delivery/pull-request-adapter.test.mjs, test/delivery/reconciliation.test.mjs, test/delivery/workflow.test.mjs, test/fixtures/contracts/schema-cases-v1.json]
+        tareas:
+          - id: T5.2.1.1
+            accion: "RED: remoto, refspec y head explícitos; ignorar la rama de tracking, reconciliar antes del primer push y bloquear cualquier destino que no coincida con el declarado."
+            resultado: "RED: destino de entrega explícito y reconciliado antes de cualquier push."
+            criterios: ["Remoto, refspec y head son explícitos; tracking no decide el destino y un mismatch se bloquea antes de emitir nada."]
+          - id: T5.2.1.2
+            accion: "RED: repositorio, head y base explícitos por argv, con entorno separado; rechazar composición de comandos, prefijo de entorno y --head ausente."
+            resultado: "RED: el límite de proceso acepta sólo argv y entorno separados y completos."
+            criterios: ["Composición, prefijo de entorno y --head ausente se rechazan."]
+          - id: T5.2.1.3
+            accion: "RED: clasificar cuota o facturación como quota_exhausted; caída, 5xx o timeout sondeado como provider_unavailable; checks incompletos como checks_pending; ambiguo como unknown bloqueado; el tercer intento fallido para y escala; UNRECONCILED no emite otra mutación."
+            resultado: "RED: clasificación, tope de reintentos y terminal irreconciliable quedan fijados."
+            criterios: ["Tres intentos máximos con reconciliación previa; unknown irreconciliable entra en UNRECONCILED sin más efectos remotos."]
+          - id: T5.2.1.4
+            accion: "GREEN/REFACTOR: commit, verificar commit y árbol, freeze, push directo a master; registrar en ledger append-only de delivery/** y ligar la autorización de S5.1 sin modificarla; registrar delivery-record-v1 y su fixture."
+            resultado: "GREEN/REFACTOR: la entrega idempotente queda ligada a evidencia inmutable y autorización existente."
+            criterios: ["El flujo verifica commit/árbol, congela candidate_revision, entrega y registra delivery-record-v1 sin segunda ruta de autoridad."]
