@@ -5,7 +5,7 @@ producto: control-tower
 zonas:
   - id: hosts
     nombre: Hosts
-    rutas: [hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs]
+    rutas: [hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs, scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs]
   - id: entrega
     nombre: Entrega
     rutas: [delivery/, continuation/, test/delivery/, test/continuation/]
@@ -2049,3 +2049,80 @@ sesiones:
             accion: "REFACTOR: helper privado instalado como única ruta, raíz preservada y cero comando inseguro"
             resultado: "REFACTOR: helper privado instalado como única ruta, raíz preservada y cero comando inseguro"
             criterios: ["REFACTOR: helper privado instalado como única ruta, raíz preservada y cero comando inseguro"]
+
+  - id: S4.8
+    zona: hosts
+    resultado: Probar la CLI real OpenCode 1.18.23 contra backend, raíz, brief, vista y plugin/SDK 1.18.13; sólo con la matriz completa verde alinear juntos plugin y SDK a 1.18.23
+    autoridad: decisión 68 y contrato WIP preservado de S4.8
+    depende_de: [S4.7]
+    recurso: [CLI 1.18.23 exacta, subprocess/puerto/HOME temporal aislados, lock/cache Bun]
+    diferida: true
+    cimientos: [package.json, bun.lock]
+    criterios:
+      - Binario real con versión y digest, aislamiento y cleanup; serve/auth/announcement, /doc parentless, root create/read, brief async exacto y helper attach autenticado pasan.
+      - Plugin y SDK 1.18.13 prueban registro, child parentID, prompt, promptAsync y shapes event/status.
+      - Antes de verde ambos pins siguen 1.18.13; después ambos quedan 1.18.23, o sin cambio alguno en rojo.
+      - El pin por bytes y los paths fuera del Área permanecen intactos.
+    decisiones:
+      - tipo: resuelta
+        pregunta: ¿Cuándo se retiran el pin Herdr y el drift entre OpenCode CLI, plugin y SDK?
+        resolucion: Herdr 0.8.0 se conserva hasta S4.6, que retira pin y custodia sin adoptar 0.8.2; OpenCode CLI 1.18.23 y plugin/SDK 1.18.13 se conservan hasta la matriz real de S4.8 y sólo se alinean juntos si toda la matriz pasa.
+        autoridad: decisión 68 del maintainer del 2026-08-25
+        clase: dependencias-o-evidencia-contradictorias; seguridad-y-permisos
+        falsificador: Se adopta Herdr 0.8.2 antes de la prueba guardada, se alinean paquetes por número o mocks, o una matriz fallida deja drift.
+        descartadas:
+          - opcion: Alinear por número de versión o evidencia simulada.
+            razon: No prueba compatibilidad del runtime real ni conserva rollback seguro.
+        contaminaba: [S4.6, S4.8, S4.9]
+      - tipo: derivable
+        pregunta: ¿Qué evidencia vuelve verde la matriz real de S4.8?
+        criterio: Todos los contratos reales usados por S4.8 pasan juntos; --version, mocks o un subconjunto no vuelven verde la matriz.
+        evidencia: El contrato WIP preservado enumera los contratos reales de binario, aislamiento, backend, raíz, brief, vista, plugin y SDK que deben pasar juntos.
+        checkpoint: antes de alinear los pins
+        opciones:
+          - opcion: Exigir todos los contratos reales usados por S4.8.
+            consecuencia: La alineación ocurre sólo con evidencia completa del runtime real.
+        autoridad: decisión 68 y contrato WIP preservado de S4.8
+        falsificador: La matriz se declara verde usando sólo --version, mocks o un subconjunto de los contratos enumerados.
+    ruta:
+      propuesta: design-tasks
+      autoridad: contrato WIP preservado de S4.8
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-4/STATUS.md
+      origen_blob: eec8b401c2f55b05cec419c101ecb462b4e4afe3
+      origen_encabezado: "## Sesión 4.8 — Matriz real OpenCode 1.18.23 y alineación condicional"
+      territorio_pendiente: false
+    modulos:
+      - id: M4.8.1
+        resultado: Harness real
+        rutas: [scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs, test/plugin/tower-spike.test.mjs]
+        tareas:
+          - id: T4.8.1.1
+            accion: "RED: cada contrato roto vuelve roja la matriz que los mocks no prueban"
+            resultado: "RED: cada contrato roto vuelve roja la matriz que los mocks no prueban"
+            criterios: ["RED: cada contrato roto vuelve roja la matriz que los mocks no prueban"]
+          - id: T4.8.1.2
+            accion: "GREEN: matriz aislada completa sobre binario real"
+            resultado: "GREEN: matriz aislada completa sobre binario real"
+            criterios: ["GREEN: matriz aislada completa sobre binario real"]
+          - id: T4.8.1.3
+            accion: "REFACTOR: timeout/output/proceso/puerto/evidencia acotados"
+            resultado: "REFACTOR: timeout/output/proceso/puerto/evidencia acotados"
+            criterios: ["REFACTOR: timeout/output/proceso/puerto/evidencia acotados"]
+      - id: M4.8.2
+        resultado: Alineación atómica
+        rutas: [package.json, bun.lock]
+        tareas:
+          - id: T4.8.2.1
+            accion: "RED: rechazar mismatch o update previo a evidencia"
+            resultado: "RED: rechazar mismatch o update previo a evidencia"
+            criterios: ["RED: rechazar mismatch o update previo a evidencia"]
+          - id: T4.8.2.2
+            accion: "GREEN: actualizar ambos pins y lock sólo tras verde"
+            resultado: "GREEN: actualizar ambos pins y lock sólo tras verde"
+            criterios: ["GREEN: actualizar ambos pins y lock sólo tras verde"]
+          - id: T4.8.2.3
+            accion: "REFACTOR: lock reproducible, cero drift y focused/full repetidos"
+            resultado: "REFACTOR: lock reproducible, cero drift y focused/full repetidos"
+            criterios: ["REFACTOR: lock reproducible, cero drift y focused/full repetidos"]
