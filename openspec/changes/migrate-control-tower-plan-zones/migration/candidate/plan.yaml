@@ -3719,3 +3719,187 @@ sesiones:
             accion: "REFACTOR: ejecutar el main-store contra el contrato registrado y verificar ausencia de shadow store, segundo writer, authority o ruta de caller assertion."
             resultado: "REFACTOR: el authorization store conserva owner y writer únicos."
             criterios: [No existe store sombra, segundo writer, authority paralela ni caller assertion.]
+  - id: S5.11
+    resultado: La captura y la reconciliación producen artefactos inmutables con identidad y digest propios, más los bindings cruzados necesarios para que Main pueda probar que ambos nombran el mismo checkpoint sin aceptar afirmaciones del caller.
+    autoridad: Decisión de composición Main-owned del maintainer, faltantes probados por el falsificador, reconciled-checkpoint-v1 vigente y size:exception autorizada hasta 960 líneas authored.
+    depende_de: [S5.8]
+    recurso: [productores canónicos de checkpoint-provenance, registro canónico de contratos y fixture]
+    criterios:
+      - captureCheckpoint produce un artefacto inmutable checkpoint-capture-v1 con identidad/digest y proyecto, assignment, generation, repositorio y base/result exactos
+      - Existe un productor runtime canónico de reconciliación; schema y fixture por sí solos no cuentan
+      - La reconciliación producida tiene identidad/digest propios, estado VALID y liga la captura exacta y todos sus cross-bindings
+      - Drift de identidad, digest, proyecto, assignment, generation, repositorio, base o result falla cerrado
+      - Ningún caller o consumidor puede afirmar, completar o sintetizar provenance faltante
+      - Los productores no mutan Main store, no estacionan decisiones y no abren store, writer ni ingress alternativo
+      - Schemas, registro, invariantes y fixtures pasan por el camino canónico único
+      - El diff de implementación no toca ningún path fuera del Área
+      - La captura conserva seguridad Git, igualdad exacta de bytes/modos, orden determinista y fallos CT_CHECKPOINT_UNSAFE, sin defaults para el contexto del productor
+      - El resultado de 620 líneas authored no supera el techo 960 de la size:exception autorizada y conserva evidencia separada por Módulo y rollback coherente
+      - El fix de compatibilidad padre y los artefactos de planificación quedan fuera de los once paths, del conteo authored y del rollback de S5.11
+      - Los once hashes, modos y numstats coinciden con el manifest congelado 3d2467e5792d17d12080ee3ef26a875f415dab5a9327ca402f572435886fff1c
+    decisiones:
+      - tipo: resuelta
+        resolucion: Cada productor crea y posee su artefacto canónico; Main sólo los compone y transporta. Se prohíben identidad sintetizada por consumidores, assertion del caller, store sombra y segundo writer.
+        autoridad: Decisión de composición Main-owned del maintainer.
+        falsificador: Un consumidor sintetiza identidad, un caller afirma provenance, o aparece un store sombra o segundo writer.
+        descartadas:
+          - opcion: Identidad sintetizada por consumidores o assertion del caller.
+            razon: No prueba provenance producer-owned.
+          - opcion: Store sombra o segundo writer.
+            razon: Rompe la autoridad única de Main.
+        contaminaba: [S5.11, S5.12, S5.9, S5.10, S5.5]
+      - tipo: derivable
+        pregunta: ¿Qué vuelve estable a la captura?
+        criterio: El productor emite identidad/digest canónicos ligados a proyecto, assignment, generation, repositorio y base/result; cambiar cualquiera invalida el artefacto.
+        autoridad: Decisión del maintainer y faltantes probados por el falsificador.
+        evidencia: La captura canónica debe ligar todos los campos de contexto del productor.
+        checkpoint: antes de M5.11.1
+        opciones:
+          - opcion: Ligar identidad y digest a proyecto, assignment, generation, repositorio y base/result.
+            consecuencia: Cualquier drift invalida el artefacto.
+        falsificador: Dos checkpoints distintos conservan identidad válida.
+        descartadas: []
+        contaminaba: [S5.11]
+      - tipo: derivable
+        pregunta: ¿Qué vuelve utilizable a la reconciliación?
+        criterio: Un productor real emite identidad/digest propios y estado VALID, ligado a la identidad/digest exactos de captura; schema o fixture sin productor no satisfacen el criterio.
+        autoridad: Decisión del maintainer y reconciled-checkpoint-v1 vigente.
+        evidencia: La reconciliación canónica necesita un productor runtime y cross-bindings exactos.
+        checkpoint: antes de M5.11.2
+        opciones:
+          - opcion: Producir reconciliación runtime con identidad, digest, estado VALID y vínculo exacto a captura.
+            consecuencia: Parking puede verificar provenance sin assertions del caller.
+        falsificador: Parking recibe una reconciliación construida sólo desde datos del caller.
+        descartadas: []
+        contaminaba: [S5.11, S5.12, S5.9]
+    entrega:
+      commit: b4d7fcdec65046b9958dab488ee3cfc5b038ccd0
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-5/STATUS.md
+      origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d
+      origen_encabezado: "## Sesión 5.11 — Productores canónicos de provenance del checkpoint"
+      territorio_pendiente: false
+    modulos:
+      - id: M5.11.1
+        resultado: Identidad canónica de captura
+        rutas: [workspace/checkpoint.mjs, schemas/checkpoint-capture-v1.schema.json, contracts/schema-registry.mjs, contracts/validate.mjs, test/workspace/checkpoint.test.mjs, test/contracts/schema.test.mjs, test/contracts/s3-2-schemas.test.mjs, test/fixtures/contracts/schema-cases-v1.json]
+        tareas:
+          - id: T5.11.1.1
+            accion: "RED: demostrar que la captura vigente carece de identidad estable, project_id, assignment_id y generation, y que un consumidor puede inventarlos sin rechazo."
+            resultado: "RED: demostrar que la captura vigente carece de identidad estable, project_id, assignment_id y generation, y que un consumidor puede inventarlos sin rechazo."
+            criterios: [La captura vigente carece de identidad estable y rechaza campos producer-owned inventados por un consumidor.]
+          - id: T5.11.1.2
+            accion: "GREEN: implementar checkpoint-capture-v1 y hacer que captureCheckpoint produzca identidad/digest y bindings cruzados canónicos sin mutar Main store."
+            resultado: "GREEN: implementar checkpoint-capture-v1 y hacer que captureCheckpoint produzca identidad/digest y bindings cruzados canónicos sin mutar Main store."
+            criterios: [captureCheckpoint produce identidad/digest y bindings cruzados canónicos sin mutar Main store.]
+          - id: T5.11.1.3
+            accion: "REFACTOR: registrar schema e invariantes, eliminar listas/digests duplicados y probar determinismo y drift por cada binding."
+            resultado: "REFACTOR: registrar schema e invariantes, eliminar listas/digests duplicados y probar determinismo y drift por cada binding."
+            criterios: [Schema e invariantes canónicos prueban determinismo y drift por cada binding sin duplicación.]
+      - id: M5.11.2
+        resultado: Productor canónico de reconciliación
+        rutas: [workspace/reconciliation.mjs, schemas/reconciled-checkpoint-v1.schema.json, contracts/schema-registry.mjs, contracts/validate.mjs, test/workspace/reconciliation.test.mjs, test/contracts/schema.test.mjs, test/contracts/s3-2-schemas.test.mjs, test/fixtures/contracts/schema-cases-v1.json]
+        tareas:
+          - id: T5.11.2.1
+            accion: "RED: probar que reconciled-checkpoint-v1 hoy puede aparecer como fixture válido sin productor, digest propio ni vínculo a la captura exacta."
+            resultado: "RED: probar que reconciled-checkpoint-v1 hoy puede aparecer como fixture válido sin productor, digest propio ni vínculo a la captura exacta."
+            criterios: [Un fixture sin productor, digest propio o vínculo a captura no satisface reconciled-checkpoint-v1.]
+          - id: T5.11.2.2
+            accion: "GREEN: implementar workspace/reconciliation.mjs para producir identidad/digest, estado VALID y cross-bindings desde la captura canónica y evidencia reconciliada."
+            resultado: "GREEN: implementar workspace/reconciliation.mjs para producir identidad/digest, estado VALID y cross-bindings desde la captura canónica y evidencia reconciliada."
+            criterios: [El productor runtime emite identidad/digest, estado VALID y cross-bindings desde captura y evidencia reconciliada.]
+          - id: T5.11.2.3
+            accion: "REFACTOR: unificar canonicalización, cerrar mismatch de proyecto/assignment/generation/repositorio/base/result y verificar que ningún consumidor sintetiza el artefacto."
+            resultado: "REFACTOR: unificar canonicalización, cerrar mismatch de proyecto/assignment/generation/repositorio/base/result y verificar que ningún consumidor sintetiza el artefacto."
+            criterios: [La canonicalización única rechaza cada mismatch y ningún consumidor sintetiza el artefacto.]
+  - id: S5.12
+    resultado: Main invoca los productores canónicos mediante capabilities ligadas en constructor, conserva sus artefactos inmutables sin cambios y los entrega juntos a una sola transacción de parking.
+    autoridad: Contrato de la Sesión, decisión durable Main-owned compartida con S5.11 y decisiones de capabilities constructor-bound.
+    depende_de: [S5.11]
+    recurso: [composición de Main, transacción única de parking, ingress exclusivo de parking del Main store]
+    criterios:
+      - Main es el único composition root y recibe capture/reconciliation/parking como capabilities ligadas en constructor
+      - Main invoca los productores canónicos; el caller no suministra ni afirma provenance
+      - Los artefactos de captura y reconciliación llegan al parking con identidad, digest y bindings canónicos sin cambios
+      - Una sola transacción de parking persiste la decisión y ambos artefactos o no persiste ninguno
+      - Sólo existe el ingress aprobado en main-store/store.mjs; no hay fallback, alternate ingress, store sombra ni segundo writer
+      - Replay exacto es idempotente y mismatch/replay divergente falla cerrado sin efecto parcial
+      - S5.12 no crea contratos alternativos ni sintetiza identidad, digest, estado VALID o cross-bindings
+      - El diff de implementación no toca ningún path fuera del Área
+    decisiones:
+      - tipo: resuelta
+        resolucion: Main crea la composición, invoca capabilities constructor-bound y transporta los dos artefactos sin cambios a una transacción. Es la misma decisión durable declarada en S5.11, no una segunda autoridad.
+        autoridad: Decisión Main-owned del maintainer compartida con S5.11.
+        falsificador: Un caller aporta provenance, un consumidor sintetiza identidad, o un writer alternativo persiste cualquiera de los artefactos.
+        descartadas:
+          - opcion: Composición o provenance aportada por el caller.
+            razon: Rompe la propiedad producer-owned.
+          - opcion: Store sombra, alternate ingress o segundo writer.
+            razon: Rompe la autoridad y atomicidad únicas de Main.
+        contaminaba: [S5.11, S5.12, S5.9, S5.10, S5.5]
+      - tipo: derivable
+        pregunta: ¿Qué significa transportar sin cambios?
+        criterio: Parking recibe las mismas identidades, digests y bindings producidos; cualquier clon enriquecido, normalización semántica o síntesis del consumer falla por igualdad canónica.
+        autoridad: Decisión Main-owned.
+        evidencia: Los productores son dueños de los artefactos canónicos y Main sólo los compone y transporta.
+        checkpoint: antes de M5.12.1
+        opciones:
+          - opcion: Transportar las identidades, digests y bindings exactos sin clon ni enriquecimiento.
+            consecuencia: Parking conserva igualdad canónica con la salida producer-owned.
+        falsificador: Main puede alterar un campo y aun estacionar.
+        descartadas: []
+        contaminaba: [S5.12, S5.9]
+      - tipo: derivable
+        pregunta: ¿Cuántos ingresos y writers existen?
+        criterio: Uno, el ingress aprobado de main-store/store.mjs, bajo una sola transacción de parking.
+        autoridad: Floor de autoridad única de Main y decisión Main-owned.
+        evidencia: Main store es el único owner de persistencia y parking debe ser atómico.
+        checkpoint: antes de M5.12.2
+        opciones:
+          - opcion: Un único ingress y writer dentro de la transacción canónica de parking.
+            consecuencia: Decisión, captura y reconciliación se persisten juntas o no se persiste ninguna.
+        falsificador: Un método alternativo, efecto parcial, store sombra o segundo writer persiste cualquiera de los dos artefactos.
+        descartadas: []
+        contaminaba: [S5.12, S5.9]
+    entrega:
+      commit: e7b1437f8c98c5856236e06e4c1fb5c40e9dc8ef
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-5/STATUS.md
+      origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d
+      origen_encabezado: "## Sesión 5.12 — Composición única de productores hacia parking bajo Main"
+      territorio_pendiente: false
+    modulos:
+      - id: M5.12.1
+        resultado: Composition root constructor-bound
+        rutas: [escalation/parking-composition.mjs, test/escalation/parking-composition.test.mjs]
+        tareas:
+          - id: T5.12.1.1
+            accion: "RED: rechazar producers ausentes/no ligados, artefactos aportados por el caller y toda ruta que invoque parking sin captura y reconciliación canónicas."
+            resultado: "RED: rechazar producers ausentes/no ligados, artefactos aportados por el caller y toda ruta que invoque parking sin captura y reconciliación canónicas."
+            criterios: [Producers ausentes o no ligados, artefactos del caller y parking sin captura/reconciliación canónicas son rechazados.]
+          - id: T5.12.1.2
+            accion: "GREEN: implementar el seam acotado bajo escalation/ para que Main invoque ambas capabilities ligadas en constructor y transporte sus resultados exactos."
+            resultado: "GREEN: implementar el seam acotado bajo escalation/ para que Main invoque ambas capabilities ligadas en constructor y transporte sus resultados exactos."
+            criterios: [Main invoca ambas capabilities ligadas en constructor y transporta resultados exactos.]
+          - id: T5.12.1.3
+            accion: "REFACTOR: probar orden determinista, una sola invocación por productor y ausencia de alternate ingress, fallback o síntesis del consumer."
+            resultado: "REFACTOR: probar orden determinista, una sola invocación por productor y ausencia de alternate ingress, fallback o síntesis del consumer."
+            criterios: [Orden determinista, una invocación por productor y ausencia de rutas alternativas quedan probados.]
+      - id: M5.12.2
+        resultado: Ingress y transacción única de parking
+        rutas: [main-store/store.mjs, test/main-store.test.mjs]
+        tareas:
+          - id: T5.12.2.1
+            accion: "RED: probar atomicidad: mismatch o fallo de cualquier artefacto deja decisión, captura y reconciliación sin persistencia parcial."
+            resultado: "RED: probar atomicidad: mismatch o fallo de cualquier artefacto deja decisión, captura y reconciliación sin persistencia parcial."
+            criterios: [Mismatch o fallo deja decisión, captura y reconciliación sin persistencia parcial.]
+          - id: T5.12.2.2
+            accion: "GREEN: extender sólo el ingress aprobado de main-store/store.mjs para recibir ambos artefactos sin cambios dentro de la transacción única de parking."
+            resultado: "GREEN: extender sólo el ingress aprobado de main-store/store.mjs para recibir ambos artefactos sin cambios dentro de la transacción única de parking."
+            criterios: [El ingress aprobado recibe ambos artefactos sin cambios dentro de una sola transacción.]
+          - id: T5.12.2.3
+            accion: "REFACTOR: cerrar replay exacto, replay divergente, readback y testigos de bytes contra shadow store, segundo writer o mutación posterior."
+            resultado: "REFACTOR: cerrar replay exacto, replay divergente, readback y testigos de bytes contra shadow store, segundo writer o mutación posterior."
+            criterios: [Replay, readback y testigos de bytes excluyen divergencia, shadow store, segundo writer y mutación posterior.]
