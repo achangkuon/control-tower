@@ -582,3 +582,115 @@ sesiones:
             accion: Isolate fixtures, prove idempotent recovery, and document the maximum claim of five clients.
             resultado: Recovery remains isolated and the measured capacity claim stays bounded to five clients.
             criterios: [Fixtures are isolated, recovery is idempotent, and no claim above five clients is made.]
+  - id: S1.20
+    zona: cimientos
+    cimientos: [core.mjs, test/lifecycle.test.mjs]
+    resultado: Probe tipado y read-only del modo Tower
+    autoridad: decision 104 and Engram observation 10008
+    depende_de: []
+    recurso: [lectura del marcador ACTIVE y estado persistido]
+    criterios:
+      - Un único probe compartido devuelve sólo ON, OFF o INDETERMINATE para el repositorio consultado y no exige que el usuario declare el modo.
+      - El probe no crea ni modifica ACTIVE, DB, WAL/SHM, configuración, locks, procesos o worktrees y no ejecuta migraciones.
+      - Evidencia ambigua, ilegible o contradictoria devuelve INDETERMINATE; nunca se adivina OFF.
+      - Salud de host/proceso se reporta por su seam existente y no altera el resultado del modo.
+      - El diff toca sólo Área.
+    decisiones:
+      - tipo: derivable
+        pregunta: How does the read-only Tower-mode probe classify repository mode?
+        criterio: ON requires coherent activation; OFF requires proven coherent absence or negative state; ambiguity, contradiction, or I/O yields INDETERMINATE; host/process health does not alter mode.
+        autoridad: decision 104 and Engram observation 10008
+        evidencia: The immutable ACTIVE and persisted-state contract in S1.20 STATUS and Engram observation 10008; host/process health is separate.
+        checkpoint: before S1.20 RED
+        opciones:
+          - opcion: Return only ON, OFF, or INDETERMINATE under the approved criterion.
+            consecuencia: Ambiguity, contradiction, or I/O returns INDETERMINATE, never guessed OFF, and host/process health remains separate.
+    ruta:
+      propuesta: direct
+      autoridad: decision 104 and Engram observation 10008
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-1/STATUS.md
+      origen_blob: 955820c97257921571cb3d2ac0122929586a2fae
+      origen_encabezado: "## Sesión S1.20 — Probe tipado y read-only del modo Tower"
+      territorio_pendiente: false
+    modulos:
+      - id: M1.20.1
+        resultado: Clasificación read-only del modo
+        rutas: [core.mjs, test/lifecycle.test.mjs]
+        tareas:
+          - id: T1.20.1.1
+            accion: "RED: cubrir ON, OFF, marcador/estado contradictorio, I/O ilegible y prueba de cero mutación."
+            resultado: "RED: cubrir ON, OFF, marcador/estado contradictorio, I/O ilegible y prueba de cero mutación."
+            criterios: ["RED: cubrir ON, OFF, marcador/estado contradictorio, I/O ilegible y prueba de cero mutación."]
+          - id: T1.20.1.2
+            accion: "GREEN: exponer el probe mínimo compartido sin abrir rutas creativas ni consultar salud."
+            resultado: "GREEN: exponer el probe mínimo compartido sin abrir rutas creativas ni consultar salud."
+            criterios: ["GREEN: exponer el probe mínimo compartido sin abrir rutas creativas ni consultar salud."]
+          - id: T1.20.1.3
+            accion: "REFACTOR: congelar el tipo cerrado, normalizar INDETERMINATE y repetir testigos de bytes/metadatos."
+            resultado: "REFACTOR: congelar el tipo cerrado, normalizar INDETERMINATE y repetir testigos de bytes/metadatos."
+            criterios: ["REFACTOR: congelar el tipo cerrado, normalizar INDETERMINATE y repetir testigos de bytes/metadatos."]
+  - id: S2.9
+    zona: enrolamiento
+    cimientos: [bin/torre, test/console/cli.test.mjs]
+    resultado: Enrollment público canónico por CLI
+    autoridad: decision 104, Engram observation 10008, and delivered S8.3 contract
+    depende_de: []
+    recurso: [registro central de proyectos y lock/escritura atómica ya propiedad de enrollProject, sin activación Tower ni lifecycle de hosts]
+    criterios:
+      - torre enroll --repo <ruta> invoca el enrollProject existente y devuelve identidad/revisión del proyecto registrado sin duplicar su lógica.
+      - Repetir enrollment idéntico converge según el contrato existente; conflicto o layout inseguro falla cerrado antes de escribir.
+      - torre on --repo <ruta> activa sólo proyectos ya registrados; uno no registrado no crea registro ni ACTIVE y explica el comando torre enroll.
+      - torre enroll no activa la Torre, no inicia procesos y no muta worktrees.
+      - El diff toca sólo Área.
+    decisiones:
+      - tipo: resuelta
+        pregunta: What is the canonical public enrollment operation and its boundary with Tower activation?
+        resolucion: Public canonical operation is torre enroll --repo <path> calling existing enrollProject; torre on --repo remains activation-only and rejects unregistered projects with enrollment guidance.
+        autoridad: decision 104, Engram observation 10008, and delivered S8.3 contract
+        clase: api-publica; contrato-visible-del-producto; seguridad-y-permisos
+        falsificador: The CLI duplicates or bypasses enrollment authority, torre on registers or creates ACTIVE for an unregistered project, or enrollment activates Tower, starts processes, or mutates worktrees.
+        descartadas:
+          - opcion: Implicit enrollment through torre on.
+            razon: Activation must fail closed for an unregistered project and guide the user to explicit enrollment.
+          - opcion: Duplicate enrollment implementation in the CLI.
+            razon: Delivered S8.3 enrollProject already owns identity, validation, preflight, and persistence.
+          - opcion: Absence of an explicit public enrollment command.
+            razon: The approved visible product contract explicitly requires torre enroll --repo <path>.
+        contaminaba: [S9.7]
+      - tipo: derivable
+        pregunta: How are CLI arguments translated to the existing request?
+        criterio: The CLI does not duplicate validation, identity, preflight, or persistence of enrollProject; any second implementation falsifies the derivation.
+        autoridad: immutable S2.9 STATUS line 46 and delivered enrollProject S8.3 contract
+        evidencia: Delivered enrollProject contract, S8.3 evidence, and immutable S2.9 criteria.
+        checkpoint: before T2.9.1.2
+        opciones:
+          - opcion: Parse --repo and call the existing enrollProject request unchanged.
+            consecuencia: One existing authority continues to own identity, validation, preflight, and persistence.
+    ruta:
+      propuesta: direct
+      autoridad: decision 104, Engram observation 10008, and delivered S8.3 contract
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-2/STATUS.md
+      origen_blob: 9c6dbfd096d3fde475dd966da578cfcd577f0908
+      origen_encabezado: "## Sesión 2.9 — Enrollment público canónico por CLI"
+      territorio_pendiente: false
+    modulos:
+      - id: M2.9.1
+        resultado: Caller CLI y separación enroll/on
+        rutas: [bin/torre, enroll/index.mjs, test/console/cli.test.mjs, test/enroll/enroll.test.mjs]
+        tareas:
+          - id: T2.9.1.1
+            accion: "RED: cubrir enrollment exitoso/idempotente, conflicto/layout inseguro y torre on no registrado sin mutación."
+            resultado: "RED: cubrir enrollment exitoso/idempotente, conflicto/layout inseguro y torre on no registrado sin mutación."
+            criterios: ["RED: cubrir enrollment exitoso/idempotente, conflicto/layout inseguro y torre on no registrado sin mutación."]
+          - id: T2.9.1.2
+            accion: "GREEN: cablear el subcomando a enrollProject y cercar on como activation-only."
+            resultado: "GREEN: cablear el subcomando a enrollProject y cercar on como activation-only."
+            criterios: ["GREEN: cablear el subcomando a enrollProject y cercar on como activation-only."]
+          - id: T2.9.1.3
+            accion: "REFACTOR: eliminar validación duplicada, estabilizar errores/ayuda y repetir testigos de registro/ACTIVE."
+            resultado: "REFACTOR: eliminar validación duplicada, estabilizar errores/ayuda y repetir testigos de registro/ACTIVE."
+            criterios: ["REFACTOR: eliminar validación duplicada, estabilizar errores/ayuda y repetir testigos de registro/ACTIVE."]
