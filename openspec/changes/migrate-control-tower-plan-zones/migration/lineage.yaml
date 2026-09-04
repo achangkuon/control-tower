@@ -1,0 +1,115 @@
+schema_version: 1
+source:
+  commit: 43130ad40af06f3ed05671000719217bee74f0a5
+  assignment:
+    path: agent-workflows/ASIGNACION-24-SESIONES.md
+    blob: a7c4ced3b196a6ea92a7bd8f181b98b87fc70ae3
+    classification: approved-replacement-authority
+    precedence: 2
+  stale_assignment:
+    path: agent-workflows/PLANO-CONTROL-TOWER.md
+    blob: 9223dde647d31865ba43868c2cdf7bd309a8fec0
+    classification: superseded
+    superseded_item: "Decidir cómo se reasignan las Sesiones a zonas (ver MIGRACION-ZONAS.md)"
+    superseded_by: agent-workflows/ASIGNACION-24-SESIONES.md
+
+identity_policy:
+  normalization: rejected
+  rule: "Preserve all 72 imported Session IDs byte-for-byte; successors S100-S108 are new IDs and never renumber originals."
+
+archived_originals:
+  - id: S5.14
+    source_mapping: migration/sessions/plan-5.yaml
+    disposition: archived-after-lineage-closure
+    successors: [S100, S101, S102]
+  - id: S5.15
+    source_mapping: migration/sessions/plan-5.yaml
+    disposition: archived-after-lineage-closure
+    successors: [S103, S104]
+  - id: S9.3
+    source_mapping: migration/sessions/plan-9.yaml
+    disposition: archived-after-lineage-closure
+    successors: [S105, S106]
+  - id: S9.5
+    source_mapping: migration/sessions/plan-9.yaml
+    disposition: archived-after-lineage-closure
+    successors: [S107, S108]
+
+successors:
+  - id: S100
+    resultado: "Contrato de schema de delivery-policy, incluido planning.prepare_through fail-closed"
+    zona: contratos
+    dependencies: [S5.13]
+    cimientos: []
+    reemplaza: [S5.14]
+  - id: S101
+    resultado: "Resolución de política: prepare_through opaco y horizon_ceiling salen de la política resuelta"
+    zona: capacidades
+    dependencies: [S100]
+    cimientos: []
+    reemplaza: [S5.14]
+  - id: S102
+    resultado: "Continuación ligada a la política resuelta antes de validaciones o callbacks, sin literales de fase u horizonte"
+    zona: entrega
+    dependencies: [S101]
+    cimientos: []
+    reemplaza: [S5.14]
+  - id: S103
+    resultado: "Retirar deriveNextModule y sus pruebas, preservando intacto compareWorkerClaim"
+    zona: entrega
+    dependencies: [S5.5, S102]
+    cimientos: []
+    reemplaza: [S5.15]
+  - id: S104
+    resultado: "Retirar módulo, schema, registro y validador de session-plan-snapshot; regenerar el payload sin miembros huérfanos"
+    zona: contratos
+    dependencies: [S103]
+    cimientos: [install/runtime-payload.mjs]
+    reemplaza: [S5.15]
+  - id: S105
+    resultado: "Schemas cerrados de fingerprint y receipt de instalación"
+    zona: contratos
+    dependencies: []
+    cimientos: []
+    reemplaza: [S9.3]
+  - id: S106
+    resultado: "Caché externa congelada de Bun con publicación atómica del receipt y bun ci obligatorio"
+    zona: asientos
+    dependencies: [S9.1, S105]
+    cimientos: []
+    reemplaza: [S9.3]
+  - id: S107
+    resultado: "Topología Herdr exacta y readback determinista de labels, panes y cwd"
+    zona: hosts
+    dependencies: [S1.18, S9.7]
+    cimientos: []
+    reemplaza: [S9.5]
+  - id: S108
+    resultado: "Materialización idempotente de los asientos aprobados, sin autoridad de dispatch"
+    zona: asientos
+    dependencies: [S1.18, S9.7, S107]
+    cimientos: []
+    reemplaza: [S9.5]
+
+dependency_rewrites:
+  - session: S5.15
+    lifecycle: archived-original
+    old_dependencies: [S5.5, S5.14]
+    new_dependencies: [S5.5, S102]
+    rationale: "Historical source edge is preserved as evidence; successor S103 carries the active dependency on S102."
+  - session: S9.4
+    lifecycle: archived-historical-contract
+    old_dependencies: [S9.3]
+    new_dependencies: [S106]
+    rationale: "Historical deferred launcher contract is not active; any reactivation must follow the completed cache successor."
+  - session: S9.8
+    lifecycle: active
+    old_dependencies: [S9.5, S1.18]
+    new_dependencies: [S108, S1.18]
+    rationale: "Dispatch follows approved seat materialization; S108 transitively includes topology S107 and preserves the existing S1.18 gate."
+
+closure_contract:
+  imported_mapping_rows: 72
+  required_successors: [S100, S101, S102, S103, S104, S105, S106, S107, S108]
+  archived_original_ids: [S5.14, S5.15, S9.3, S9.5]
+  active_dependency_rule: "No active Session dependency may point only to an archived original; it must name the applicable successor."
