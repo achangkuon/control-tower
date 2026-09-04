@@ -2126,3 +2126,86 @@ sesiones:
             accion: "REFACTOR: lock reproducible, cero drift y focused/full repetidos"
             resultado: "REFACTOR: lock reproducible, cero drift y focused/full repetidos"
             criterios: ["REFACTOR: lock reproducible, cero drift y focused/full repetidos"]
+
+  - id: S4.9
+    resultado: Tras S4.6, probar 0.8.2 aislado end-to-end como launcher view-only y adoptar el binario local sólo con verde y rollback probado
+    autoridad: decisión 99 del maintainer, que supersede decisiones 66 y 68 para esta Sesión
+    depende_de: [S4.6, S4.7]
+    recurso: [HOME/config/panes aislados de 0.8.2 digest-pinned, path global Herdr exclusivo, rollback 0.8.0]
+    archivada: true
+    criterios:
+      - 0.8.0 permanece hasta cerrar S4.6 y obtener verde; 0.8.2 se prueba por versión/digest exactos en aislamiento.
+      - Pane split/run/auth proof/close producen IDs JSON y cwd exactos; root/child/restart no crea duplicado standalone.
+      - Toda falla conserva 0.8.0 e identidades; verde permite adopción local reversible sin cambio crítico de fuente.
+    decisiones:
+      - tipo: resuelta
+        pregunta: ¿Cuándo retirar el pin Herdr y adoptar 0.8.2?
+        resolucion: Conservar 0.8.0 hasta cerrar S4.6 y obtener un probe verde; rojo preserva 0.8.0.
+        autoridad: decisiones 66 y 68 del maintainer
+        clase: dependencias-o-evidencia-contradictorias; seguridad-y-permisos
+        falsificador: Herdr 0.8.2 se adopta antes del probe verde o una falla no preserva 0.8.0 e identidades.
+        descartadas:
+          - opcion: Adoptar por número de versión o mocks.
+            razon: No prueba compatibilidad real ni conserva rollback.
+        contaminaba: [S4.6, S4.8, S4.9]
+      - tipo: derivable
+        pregunta: ¿Qué evidencia vuelve verde el probe aislado?
+        criterio: Pane JSON, helper autenticado y restore root-vs-child pasan sobre 0.8.2 real sin conceder autoridad a Herdr.
+        evidencia: El contrato histórico de S4.9 enumera JSON, pane, auth, readiness, restore, root-child, duplicados y cleanup en aislamiento fresco.
+        checkpoint: antes de la adopción local
+        opciones:
+          - opcion: Exigir la matriz aislada completa sobre 0.8.2 real.
+            consecuencia: La adopción sólo ocurre con evidencia end-to-end y rollback probado.
+        autoridad: decisiones 66 y 68 y contrato histórico de S4.9
+        falsificador: El probe se declara verde con versión, mocks o un subconjunto de la matriz.
+      - tipo: resuelta
+        pregunta: ¿Cómo se representa S4.9 después de que la adopción ocurrió fuera del plan y destruyó la línea base de rollback?
+        resolucion: Retirarla por evidencia realizada; S4.9 queda ARCHIVADO, no COMPLETO, porque se salteó y ninguno de sus criterios se ejercitó.
+        autoridad: Emilio, decisión 99 del 2026-08-29; Engram 9783 y 9784
+        clase: dependencias-o-evidencia-contradictorias
+        falsificador: Aparece una ruta de producto que lea estado de agente de Herdr, una versión vuelve a poder romper instalación o lanzamiento, o S4.9 se cita como prerequisito de una Sesión o release.
+        descartadas:
+          - opcion: Conservar S4.9 para un probe retroactivo.
+            razon: Probaría en aislamiento algo ya adoptado y no podría falsificar la adopción vigente.
+          - opcion: Marcar S4.9 COMPLETO.
+            razon: Ninguno de sus tres criterios se ejercitó y acreditarla fabricaría evidencia.
+        contaminaba: [S4.9]
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-4/STATUS.md
+      origen_blob: eec8b401c2f55b05cec419c101ecb462b4e4afe3
+      origen_encabezado: "## Sesión 4.9 — Probe y adopción guardada de Herdr 0.8.2"
+      territorio_pendiente: false
+    modulos:
+      - id: M4.9.1
+        resultado: Matriz aislada
+        rutas: [scripts/host-compatibility/herdr.mjs, test/compat/herdr-runtime.test.mjs]
+        tareas:
+          - id: T4.9.1.1
+            accion: "RED: JSON/pane/auth/readiness/restore/root-child/duplicate fallan visiblemente"
+            resultado: "RED: JSON/pane/auth/readiness/restore/root-child/duplicate fallan visiblemente"
+            criterios: ["RED: JSON/pane/auth/readiness/restore/root-child/duplicate fallan visiblemente"]
+          - id: T4.9.1.2
+            accion: "GREEN: ejecutar 0.8.2 aislado con helper de S4.7"
+            resultado: "GREEN: ejecutar 0.8.2 aislado con helper de S4.7"
+            criterios: ["GREEN: ejecutar 0.8.2 aislado con helper de S4.7"]
+          - id: T4.9.1.3
+            accion: "REFACTOR: cleanup, evidencia acotada y cero secreto"
+            resultado: "REFACTOR: cleanup, evidencia acotada y cero secreto"
+            criterios: ["REFACTOR: cleanup, evidencia acotada y cero secreto"]
+      - id: M4.9.2
+        resultado: Adopción local reversible
+        rutas: [scripts/host-compatibility/herdr.mjs, test/compat/herdr-runtime.test.mjs]
+        tareas:
+          - id: T4.9.2.1
+            accion: "RED: bloquear reemplazo antes de verde y exigir rollback"
+            resultado: "RED: bloquear reemplazo antes de verde y exigir rollback"
+            criterios: ["RED: bloquear reemplazo antes de verde y exigir rollback"]
+          - id: T4.9.2.2
+            accion: "GREEN: adoptar tras verde y verificar path/version/integración"
+            resultado: "GREEN: adoptar tras verde y verificar path/version/integración"
+            criterios: ["GREEN: adoptar tras verde y verificar path/version/integración"]
+          - id: T4.9.2.3
+            accion: "REFACTOR: rollback, readback y cleanup"
+            resultado: "REFACTOR: rollback, readback y cleanup"
+            criterios: ["REFACTOR: rollback, readback y cleanup"]
