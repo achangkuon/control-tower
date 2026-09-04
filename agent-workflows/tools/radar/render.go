@@ -89,6 +89,9 @@ func RenderAt(p *Plan, root, head string) []byte {
 
 	fmt.Fprintln(&b, "## Avance")
 	fmt.Fprintf(&b, "- **Total:** %s\n", total)
+	if n := territoriosPendientes(p); n > 0 {
+		fmt.Fprintf(&b, "- %d Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.\n", n)
+	}
 	for _, zid := range zonasOrdenadas(p, colas) {
 		fmt.Fprintf(&b, "- **%s:** %s\n", markdownText(nombreZona(p, zid)), porZona[zid])
 	}
@@ -123,6 +126,9 @@ func RenderAt(p *Plan, root, head string) []byte {
 
 	fmt.Fprintln(&b, "## Rutas")
 	for _, s := range p.Sesiones {
+		if esTerritorioPendiente(&s) {
+			continue
+		}
 		fmt.Fprintf(&b, "- **%s:** propuesta %s (%s)", markdownText(s.ID), markdownText(s.Ruta.Propuesta), markdownText(s.Ruta.Autoridad))
 		if r := s.Ruta.Revalidacion; r != nil {
 			fmt.Fprintf(&b, "; revalidada %s sobre %s con evidencia %s", markdownText(r.Resultado), markdownText(r.Base), markdownText(r.Evidencia))
@@ -140,9 +146,15 @@ func RenderAt(p *Plan, root, head string) []byte {
 	for _, s := range p.Sesiones {
 		fmt.Fprintf(&b, "### %s — %s\n", markdownText(s.ID), markdownText(s.Resultado))
 		fmt.Fprintf(&b, "- Estado derivado: %s\n", estados[s.ID])
-		fmt.Fprintf(&b, "- Zona/Área: %s · %s\n", markdownText(s.Zona), markdownList(p.Area(&s)))
+		if esTerritorioPendiente(&s) {
+			fmt.Fprintln(&b, "- Importación legacy con territorio pendiente probado; sin asignación de Zona ni capacidad.")
+		} else {
+			fmt.Fprintf(&b, "- Zona/Área: %s · %s\n", markdownText(s.Zona), markdownList(p.Area(&s)))
+		}
 		fmt.Fprintf(&b, "- Depende de: %s\n", markdownList(s.DependeDe))
-		fmt.Fprintf(&b, "- Cimientos: %s\n", markdownList(s.Cimientos))
+		if !esTerritorioPendiente(&s) {
+			fmt.Fprintf(&b, "- Cimientos: %s\n", markdownList(s.Cimientos))
+		}
 		fmt.Fprintf(&b, "- Recursos: %s\n", markdownList(s.Recurso))
 		fmt.Fprintln(&b, "- Criterios de aceptación:")
 		for _, criterio := range s.Criterios {
@@ -150,7 +162,11 @@ func RenderAt(p *Plan, root, head string) []byte {
 		}
 		for _, m := range s.Modulos {
 			fmt.Fprintf(&b, "\n#### %s — %s\n", markdownText(m.ID), markdownText(m.Resultado))
-			fmt.Fprintf(&b, "Rutas: %s\n\n", markdownList(m.Rutas))
+			if !esTerritorioPendiente(&s) {
+				fmt.Fprintf(&b, "Rutas: %s\n\n", markdownList(m.Rutas))
+			} else {
+				fmt.Fprintln(&b)
+			}
 			for _, t := range m.Tareas {
 				fmt.Fprintf(&b, "- **%s:** %s → %s\n", markdownText(t.ID), markdownText(t.Accion), markdownText(t.Resultado))
 				for _, criterio := range t.Criterios {
@@ -169,6 +185,20 @@ func RenderAt(p *Plan, root, head string) []byte {
 	}
 	fmt.Fprintln(&b, "Este valor es un pronóstico estático. No adquiere locks, no autentica al proceso invocante y no recupera claims stale.")
 	return b.Bytes()
+}
+
+func esTerritorioPendiente(s *Sesion) bool {
+	return s.ImportacionLegacy != nil && s.ImportacionLegacy.TerritorioPendiente
+}
+
+func territoriosPendientes(p *Plan) int {
+	n := 0
+	for i := range p.Sesiones {
+		if esTerritorioPendiente(&p.Sesiones[i]) {
+			n++
+		}
+	}
+	return n
 }
 
 func markdownText(value string) string {

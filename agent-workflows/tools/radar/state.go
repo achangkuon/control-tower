@@ -146,6 +146,9 @@ func (p *Plan) ColaPorZonaAt(root, head string) map[string][]string {
 	porZona := map[string][]*Sesion{}
 	for i := range p.Sesiones {
 		s := &p.Sesiones[i]
+		if s.ImportacionLegacy != nil && s.ImportacionLegacy.TerritorioPendiente {
+			continue
+		}
 		st := estados[s.ID]
 		if st == Completo || st == Archivado || st == Diferido {
 			continue
@@ -230,9 +233,12 @@ func (p *Plan) AvanceAt(root, head string) (map[string]Avance, Avance) {
 
 	for i := range p.Sesiones {
 		s := &p.Sesiones[i]
+		total.Total++
+		if s.ImportacionLegacy != nil && s.ImportacionLegacy.TerritorioPendiente {
+			continue
+		}
 		a := porZona[s.Zona]
 		a.Total++
-		total.Total++
 		if st := estados[s.ID]; st == Completo || st == Archivado {
 			a.Cerradas++
 			total.Cerradas++

@@ -100,6 +100,7 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 	sesionesVistas := map[string]bool{}
 	modulosVistos := map[string]bool{}
 	tareasVistas := map[string]bool{}
+	provenienciasVistas := map[string]bool{}
 
 	for i := range p.Sesiones {
 		s := &p.Sesiones[i]
@@ -112,7 +113,19 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 		}
 		sesionesVistas[s.ID] = true
 
-		if s.Zona == "" {
+		importada := s.ImportacionLegacy != nil
+		pendiente := importada && s.ImportacionLegacy.TerritorioPendiente
+		if importada {
+			h = append(h, checkImportacionLegacy(root, head, s, provenienciasVistas)...)
+		}
+		if pendiente {
+			if s.Zona != "" || len(s.Cimientos) != 0 || s.Ruta != (RutaSesion{}) || s.Entrega != nil || s.Archivada || s.Diferida {
+				h = append(h, Hallazgo{"error", "territorio pendiente", fmt.Sprintf("%s declara territorio, ruta o estado terminal", s.ID)})
+			}
+			if !bloqueaAqui(s) {
+				h = append(h, Hallazgo{"error", "territorio pendiente", fmt.Sprintf("%s no tiene una decisión escala que alcance criterios o primer-modulo", s.ID)})
+			}
+		} else if s.Zona == "" {
 			h = append(h, Hallazgo{"error", "sesión", fmt.Sprintf("%s no declara zona", s.ID)})
 		} else if s.Zona == "cimientos" {
 			if len(s.Cimientos) == 0 {
@@ -132,12 +145,12 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 		if abierta && len(s.Criterios) == 0 {
 			h = append(h, Hallazgo{"error", "criterios binarios", fmt.Sprintf("%s no tiene criterios de aceptación", s.ID)})
 		}
-		if abierta {
+		if abierta && !pendiente {
 			h = append(h, checkRuta(s, root, head)...)
 			h = append(h, checkProfundidad(s)...)
 		}
 		if abierta || len(s.Modulos) > 0 {
-			h = append(h, p.checkModulos(root, s, modulosVistos, tareasVistas)...)
+			h = append(h, p.checkModulos(root, s, modulosVistos, tareasVistas, importada, pendiente)...)
 		}
 		h = append(h, checkDecisiones(s)...)
 		if s.Entrega != nil {
@@ -153,19 +166,31 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 }
 
 var (
-	sesionID = regexp.MustCompile(`^S[1-9][0-9]*$`)
-	moduloID = regexp.MustCompile(`^M[1-9][0-9]*\.[1-9][0-9]*$`)
-	tareaID  = regexp.MustCompile(`^T[1-9][0-9]*\.[1-9][0-9]*\.[1-9][0-9]*$`)
+	sesionID       = regexp.MustCompile(`^S[1-9][0-9]*$`)
+	moduloID       = regexp.MustCompile(`^M[1-9][0-9]*\.[1-9][0-9]*$`)
+	tareaID        = regexp.MustCompile(`^T[1-9][0-9]*\.[1-9][0-9]*\.[1-9][0-9]*$`)
+	legacySesionID = regexp.MustCompile(`^S[1-9][0-9]*(\.[1-9][0-9]*)*$`)
+	legacyModuloID = regexp.MustCompile(`^M[1-9][0-9]*(\.[1-9][0-9]*)+$`)
+	legacyTareaID  = regexp.MustCompile(`^T[1-9][0-9]*(\.[1-9][0-9]*){2,}$`)
+	legacyHeading  = regexp.MustCompile(`^#{1,6} Sesión S?([1-9][0-9]*(?:\.[1-9][0-9]*)*)(?:\s|—|-|$)`)
 )
 
-func (p *Plan) checkModulos(root string, s *Sesion, modulosVistos, tareasVistas map[string]bool) []Hallazgo {
+func (p *Plan) checkModulos(root string, s *Sesion, modulosVistos, tareasVistas map[string]bool, importada, pendiente bool) []Hallazgo {
 	var h []Hallazgo
-	if !sesionID.MatchString(s.ID) && !s.Archivada {
+	sesionValida := sesionID.MatchString(s.ID)
+	if importada {
+		sesionValida = legacySesionID.MatchString(s.ID)
+	}
+	if !sesionValida && !s.Archivada {
 		h = append(h, Hallazgo{"error", "identificadores", fmt.Sprintf("%s no es un ID plano de Sesión válido", s.ID)})
 	}
 	prefijoModulo := "M" + strings.TrimPrefix(s.ID, "S") + "."
 	for _, m := range s.Modulos {
-		if !moduloID.MatchString(m.ID) || !strings.HasPrefix(m.ID, prefijoModulo) {
+		moduloValido := moduloID.MatchString(m.ID)
+		if importada {
+			moduloValido = legacyModuloID.MatchString(m.ID)
+		}
+		if !moduloValido || !strings.HasPrefix(m.ID, prefijoModulo) {
 			h = append(h, Hallazgo{"error", "identificadores", fmt.Sprintf("el Módulo %q no pertenece de forma consistente a %s", m.ID, s.ID)})
 		}
 		if modulosVistos[m.ID] {
@@ -175,8 +200,11 @@ func (p *Plan) checkModulos(root string, s *Sesion, modulosVistos, tareasVistas 
 		if strings.TrimSpace(m.Resultado) == "" {
 			h = append(h, Hallazgo{"error", "resultado", fmt.Sprintf("%s debe declarar un resultado no vacío", m.ID)})
 		}
-		if len(m.Rutas) == 0 {
+		if len(m.Rutas) == 0 && !pendiente {
 			h = append(h, Hallazgo{"error", "jerarquía", fmt.Sprintf("%s no declara archivos concretos", m.ID)})
+		}
+		if pendiente && len(m.Rutas) != 0 {
+			h = append(h, Hallazgo{"error", "territorio pendiente", fmt.Sprintf("%s declara rutas", m.ID)})
 		}
 		if len(m.Tareas) == 0 {
 			h = append(h, Hallazgo{"error", "jerarquía", fmt.Sprintf("%s no tiene Tareas enumeradas", m.ID)})
@@ -208,7 +236,11 @@ func (p *Plan) checkModulos(root string, s *Sesion, modulosVistos, tareasVistas 
 		}
 		prefijoTarea := "T" + strings.TrimPrefix(m.ID, "M") + "."
 		for _, t := range m.Tareas {
-			if !tareaID.MatchString(t.ID) || !strings.HasPrefix(t.ID, prefijoTarea) {
+			tareaValida := tareaID.MatchString(t.ID)
+			if importada {
+				tareaValida = legacyTareaID.MatchString(t.ID)
+			}
+			if !tareaValida || !strings.HasPrefix(t.ID, prefijoTarea) {
 				h = append(h, Hallazgo{"error", "identificadores", fmt.Sprintf("la Tarea %q no pertenece de forma consistente a %s", t.ID, m.ID)})
 			}
 			if tareasVistas[t.ID] {
@@ -223,6 +255,51 @@ func (p *Plan) checkModulos(root string, s *Sesion, modulosVistos, tareasVistas 
 			}
 		}
 	}
+	return h
+}
+
+func checkImportacionLegacy(root, head string, s *Sesion, vistas map[string]bool) []Hallazgo {
+	var h []Hallazgo
+	p := s.ImportacionLegacy
+	if strings.TrimSpace(p.OrigenCommit) == "" || strings.TrimSpace(p.OrigenRuta) == "" || strings.TrimSpace(p.OrigenBlob) == "" || strings.TrimSpace(p.OrigenEncabezado) == "" {
+		return []Hallazgo{{"error", "importación legacy", fmt.Sprintf("%s no declara proveniencia completa", s.ID)}}
+	}
+	commit, err := gitOID(root, p.OrigenCommit)
+	if err != nil {
+		return []Hallazgo{{"error", "importación legacy", fmt.Sprintf("%s commit inválido: %v", s.ID, err)}}
+	}
+	if commit == head {
+		h = append(h, Hallazgo{"error", "importación legacy", fmt.Sprintf("%s usa HEAD actual como origen", s.ID)})
+	} else if _, err := gitOutput(root, "merge-base", "--is-ancestor", commit, head); err != nil {
+		h = append(h, Hallazgo{"error", "importación legacy", fmt.Sprintf("%s origen no es ancestro estricto", s.ID)})
+	}
+	ruta, err := exactRepoFile(root, p.OrigenRuta)
+	if err != nil {
+		return append(h, Hallazgo{"error", "importación legacy", fmt.Sprintf("%s ruta inválida: %v", s.ID, err)})
+	}
+	entry, err := gitOutput(root, "ls-tree", commit, "--", ruta)
+	parts := strings.Fields(entry)
+	if err != nil || len(parts) != 4 || parts[1] != "blob" || parts[2] != p.OrigenBlob {
+		h = append(h, Hallazgo{"error", "importación legacy", fmt.Sprintf("%s no prueba el blob exacto", s.ID)})
+	} else if raw, err := gitOutput(root, "cat-file", "blob", p.OrigenBlob); err != nil {
+		h = append(h, Hallazgo{"error", "importación legacy", fmt.Sprintf("%s blob ilegible", s.ID)})
+	} else {
+		count := 0
+		for _, line := range strings.Split(raw, "\n") {
+			if line == p.OrigenEncabezado {
+				count++
+			}
+		}
+		match := legacyHeading.FindStringSubmatch(p.OrigenEncabezado)
+		if count != 1 || len(match) != 2 || "S"+match[1] != s.ID {
+			h = append(h, Hallazgo{"error", "importación legacy", fmt.Sprintf("%s encabezado no identifica una fila única", s.ID)})
+		}
+	}
+	key := commit + "\x00" + ruta + "\x00" + p.OrigenEncabezado
+	if vistas[key] {
+		h = append(h, Hallazgo{"error", "importación legacy", fmt.Sprintf("%s repite la fila de origen", s.ID)})
+	}
+	vistas[key] = true
 	return h
 }
 

@@ -44,22 +44,32 @@ type Cimientos struct {
 // Sesion is one independently reviewable result, inside exactly one Zona.
 // There is deliberately no Estado or Área field: both are derived.
 type Sesion struct {
-	ID         string     `yaml:"id"`
-	Zona       string     `yaml:"zona"`
-	Resultado  string     `yaml:"resultado"`
-	Autoridad  string     `yaml:"autoridad"`
-	Cambio     string     `yaml:"cambio"`
-	DependeDe  []string   `yaml:"depende_de"`
-	Cimientos  []string   `yaml:"cimientos"`
-	Recurso    []string   `yaml:"recurso"`
-	Criterios  []string   `yaml:"criterios"`
-	Decisiones []Decision `yaml:"decisiones"`
-	Reemplaza  []string   `yaml:"reemplaza"`
-	Modulos    []Modulo   `yaml:"modulos"`
-	Ruta       RutaSesion `yaml:"ruta"`
-	Entrega    *Entrega   `yaml:"entrega"`
-	Diferida   bool       `yaml:"diferida"`
-	Archivada  bool       `yaml:"archivada"`
+	ID                string             `yaml:"id"`
+	Zona              string             `yaml:"zona"`
+	Resultado         string             `yaml:"resultado"`
+	Autoridad         string             `yaml:"autoridad"`
+	Cambio            string             `yaml:"cambio"`
+	DependeDe         []string           `yaml:"depende_de"`
+	Cimientos         []string           `yaml:"cimientos"`
+	Recurso           []string           `yaml:"recurso"`
+	Criterios         []string           `yaml:"criterios"`
+	Decisiones        []Decision         `yaml:"decisiones"`
+	Reemplaza         []string           `yaml:"reemplaza"`
+	Modulos           []Modulo           `yaml:"modulos"`
+	Ruta              RutaSesion         `yaml:"ruta"`
+	Entrega           *Entrega           `yaml:"entrega"`
+	Diferida          bool               `yaml:"diferida"`
+	Archivada         bool               `yaml:"archivada"`
+	ImportacionLegacy *ImportacionLegacy `yaml:"importacion_legacy"`
+}
+
+// ImportacionLegacy proves that a Session was imported from one immutable legacy row.
+type ImportacionLegacy struct {
+	OrigenCommit        string `yaml:"origen_commit"`
+	OrigenRuta          string `yaml:"origen_ruta"`
+	OrigenBlob          string `yaml:"origen_blob"`
+	OrigenEncabezado    string `yaml:"origen_encabezado"`
+	TerritorioPendiente bool   `yaml:"territorio_pendiente"`
 }
 
 // Modulo groups concrete files that change together inside a Sesion.
