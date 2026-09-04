@@ -1724,3 +1724,102 @@ sesiones:
             accion: "REFACTOR: preservar readback/cleanup sin crear autoridad ni raíz"
             resultado: "REFACTOR: preservar readback/cleanup sin crear autoridad ni raíz"
             criterios: ["REFACTOR: preservar readback/cleanup sin crear autoridad ni raíz"]
+
+  - id: S4.4
+    zona: hosts
+    resultado: Recuperación lógica same-host con raíz sucesora
+    autoridad: decisiones 37-40, decisión 45, Engram 9040/9044 y REQUIREMENTS §14.4
+    depende_de: [S4.3, S4.7]
+    recurso: [binding Main-owned de backend/proceso/raíz, host_epoch, lineage del predecesor y checkpoint durable; sin DB, migraciones ni token de entrega]
+    criterios:
+      - Si backend y raíz siguen vivos, perder Herdr/TUI sólo vuelve a adjuntar la vista al mismo root y conserva host_epoch
+      - Recovery por muerte exige stop proof canónico, mismo host/worktree/checkpoint y lineage del predecesor terminal; cualquier drift falla CT_RECOVERY_UNSAFE sin iniciar nada
+      - Main incrementa host_epoch, crea backend aislado y raíz primaria nuevos mediante el owner de S4.5, persiste un root_session_id distinto y abre automáticamente la nueva TUI adjunta
+      - El brief respeta el orden de autoridad declarado; Engram no sustituye Git/OpenSpec/checkpoint y Notion no participa
+      - Todo claim, mensaje o efecto del epoch previo devuelve CT_ASSIGNMENT_STALE; el root anterior nunca se reutiliza ni resucita
+      - No se reconstruye memoria de proceso/subagentes, no se relocaliza multi-host y el diff queda dentro del Área
+    decisiones:
+      - tipo: resuelta
+        pregunta: ¿recovery_epoch y host_epoch son contadores distintos o el mismo contador?
+        resolucion: recovery_epoch y host_epoch son el mismo contador; el plan se alinea a host_epoch, sin crear un segundo registro, ampliar el Área ni dar alcance nuevo a S4.4.
+        autoridad: decisión 45 del maintainer, 2026-08-19
+        clase: dependencias-o-evidencia-contradictorias; contrato-visible-del-producto
+        falsificador: Aparece un recovery_epoch con dueño y persistencia propios, o algún criterio de S4.4 deja de satisfacerse al nombrar host_epoch.
+        descartadas:
+          - opcion: Mantener dos contadores separados.
+            razon: Obliga a persistir el segundo en el binding Main-owned fuera del Área de S4.4 y requiere una ampliación no autorizada.
+        contaminaba: [S4.4, S7.1]
+      - tipo: derivable
+        pregunta: ¿Qué identidad territorial y prueba permiten recuperación?
+        criterio: Sólo el mismo host WSL, worktree y checkpoint con stop proof positivo permiten recuperación; iniciar desde otro host o worktree falsifica la derivación.
+        autoridad: REQUIREMENTS §14.4
+        evidencia: REQUIREMENTS §14.4 exige prueba de salida, inspección de worktree/Git/efectos y preservación de dirty state antes de incrementar host_epoch.
+        checkpoint: antes de M4.4.1
+        opciones:
+          - opcion: Exigir mismo host WSL, worktree, checkpoint y stop proof positivo.
+            consecuencia: Toda contradicción o identidad distinta falla cerrada antes de iniciar sucesores.
+      - tipo: derivable
+        pregunta: ¿Cómo se tratan efectos emitidos por un epoch anterior?
+        criterio: Todo efecto de un epoch distinto devuelve CT_ASSIGNMENT_STALE; si un efecto viejo persiste, la derivación queda falsificada.
+        autoridad: CT-V1-08 y S4.1
+        evidencia: El fence inmutable de S4.1 y REQUIREMENTS §14.4 paso 9 prohíben reutilizar autoridad del epoch anterior.
+        checkpoint: antes de M4.4.1
+        opciones:
+          - opcion: Rechazar todo claim, mensaje o efecto del epoch previo.
+            consecuencia: El sucesor no hereda autoridad ni efectos activos del predecesor.
+      - tipo: resuelta
+        pregunta: ¿Se reconecta una raíz viva o se crea una raíz sucesora tras muerte probada?
+        resolucion: La pérdida sólo de vista reconecta opencode attach a la misma raíz viva sin cambiar host_epoch; la muerte probada de backend y raíz marca el predecesor terminal o stale, incrementa host_epoch y crea backend, raíz y TUI sucesores nuevos en el mismo worktree y checkpoint. El mismo root_session_id no se resucita; no se recuperan subagentes ni memoria in-flight y el contexto se reconstruye desde autoridad durable.
+        autoridad: decisión 40 del maintainer, 2026-08-18, Engram 9044, alineada por decisión 45
+        clase: contrato-visible-del-producto; seguridad-y-permisos; dependencias-o-evidencia-contradictorias
+        falsificador: La pérdida sólo de vista cambia host_epoch o raíz; una muerte no probada crea sucesores; se reutiliza root_session_id; se recupera memoria in-flight; o el sucesor cambia de host, worktree o checkpoint.
+        descartadas:
+          - opcion: Resucitar la misma raíz y root_session_id.
+            razon: Rompe la lineage y permite reutilizar identidad del predecesor.
+          - opcion: Recuperar subagentes o memoria in-flight.
+            razon: Esa memoria es volátil y no forma parte de la autoridad durable.
+          - opcion: Relocalizar la recuperación a otro host o worktree.
+            razon: S4.4 está limitada a recuperación lógica same-host sobre el mismo worktree y checkpoint.
+        contaminaba: [M4.4.2, S4.4, S7.1]
+    ruta:
+      propuesta: design-tasks
+      autoridad: decisiones 37-40, decisión 45, Engram 9040/9044 y REQUIREMENTS §14.4
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-4/STATUS.md
+      origen_blob: eec8b401c2f55b05cec419c101ecb462b4e4afe3
+      origen_encabezado: "## Sesión 4.4 — Recuperación lógica same-host con raíz sucesora"
+      territorio_pendiente: false
+    modulos:
+      - id: M4.4.1
+        resultado: Fencing de epoch y lineage terminal
+        rutas: [hosts/epoch-enforcement.mjs, test/hosts/epoch-enforcement.test.mjs]
+        tareas:
+          - id: T4.4.1.1
+            accion: "RED: rechazar dos roots activos, predecesor no terminal, lineage roto y todo efecto de epoch previo"
+            resultado: "RED: rechazar dos roots activos, predecesor no terminal, lineage roto y todo efecto de epoch previo"
+            criterios: ["RED: rechazar dos roots activos, predecesor no terminal, lineage roto y todo efecto de epoch previo"]
+          - id: T4.4.1.2
+            accion: "GREEN: fencear epoch y registrar la relación predecessor→successor bajo binding Main-owned"
+            resultado: "GREEN: fencear epoch y registrar la relación predecessor→successor bajo binding Main-owned"
+            criterios: ["GREEN: fencear epoch y registrar la relación predecessor→successor bajo binding Main-owned"]
+          - id: T4.4.1.3
+            accion: "REFACTOR: separar validación de lineage/epoch de creación de backend, raíz o vista"
+            resultado: "REFACTOR: separar validación de lineage/epoch de creación de backend, raíz o vista"
+            criterios: ["REFACTOR: separar validación de lineage/epoch de creación de backend, raíz o vista"]
+      - id: M4.4.2
+        resultado: Reconexión de vista o recuperación con raíz sucesora
+        rutas: [hosts/recovery.mjs, test/hosts/recovery.test.mjs]
+        tareas:
+          - id: T4.4.2.1
+            accion: "RED: distinguir vista perdida con raíz viva de muerte probada; cubrir stop proof ausente, drift, brief incompleto, ID reutilizado y efecto stale"
+            resultado: "RED: distinguir vista perdida con raíz viva de muerte probada; cubrir stop proof ausente, drift, brief incompleto, ID reutilizado y efecto stale"
+            criterios: ["RED: distinguir vista perdida con raíz viva de muerte probada; cubrir stop proof ausente, drift, brief incompleto, ID reutilizado y efecto stale"]
+          - id: T4.4.2.2
+            accion: "GREEN: reconectar la misma raíz viva o, tras muerte, componer el brief ordenado y solicitar al owner de S4.5 backend/raíz/TUI sucesores nuevos"
+            resultado: "GREEN: reconectar la misma raíz viva o, tras muerte, componer el brief ordenado y solicitar al owner de S4.5 backend/raíz/TUI sucesores nuevos"
+            criterios: ["GREEN: reconectar la misma raíz viva o, tras muerte, componer el brief ordenado y solicitar al owner de S4.5 backend/raíz/TUI sucesores nuevos"]
+          - id: T4.4.2.3
+            accion: "REFACTOR: mantener recovery como coordinador lógico sin memoria de subagentes, ownership duplicado ni ruta de resurrección"
+            resultado: "REFACTOR: mantener recovery como coordinador lógico sin memoria de subagentes, ownership duplicado ni ruta de resurrección"
+            criterios: ["REFACTOR: mantener recovery como coordinador lógico sin memoria de subagentes, ownership duplicado ni ruta de resurrección"]
