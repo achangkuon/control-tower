@@ -3,8 +3,8 @@ legacy_plan: 2
 source_commit: 43130ad40af06f3ed05671000719217bee74f0a5
 source_path: openspec/plans/plan-2/STATUS.md
 source_blob: 9c6dbfd096d3fde475dd966da578cfcd577f0908
-complete: false
-session_count: 2
+complete: true
+session_count: 3
 sessions:
   - legacy_session_id: S2.9
     source_line: 34
@@ -65,7 +65,33 @@ sessions:
       archive_only: [forecast and unresolved-owner prose]
     compatibility_reason: "Proven imported dotted hierarchy with approved territory-pending compatibility; no Zone, path, route, Cimiento, owner, queue, seat, or capacity is authored."
     blocking_escalation_reach: [criterios, primer-modulo]
-continuation:
-  next_legacy_session_id: S2.8
-  next_source_line: 101
-  reason: "C03.1 stops at the last complete Session row below the 400-authored-line review cap."
+  - legacy_session_id: S2.8
+    source_line: 101
+    source_heading: "## Sesión 2.8 — Los nombres de fase salen del contrato de binding"
+    provenance_classification: target
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-2/STATUS.md
+      origen_blob: 9c6dbfd096d3fde475dd966da578cfcd577f0908
+      origen_encabezado: "## Sesión 2.8 — Los nombres de fase salen del contrato de binding"
+      territorio_pendiente: false
+    stable_ids:
+      modules: [M2.8.1, M2.8.2]
+      tasks: [T2.8.1.1, T2.8.1.2, T2.8.1.3, T2.8.2.1, T2.8.2.2, T2.8.2.3]
+    source_contract:
+      scope: "schemas/binding-delta-v1.schema.json; test/contracts/schema.test.mjs; test/fixtures/contracts/schema-cases-v1.json"
+      dependencies: []
+      authority: "decision 78, Torre ↔ gentle-ai boundary, and delivered S2.6 precedent"
+      decisions: "Two derivable decisions make inputs opaque while preserving all non-input bytes; every unlisted product/API/security/scope choice escalates."
+      criteria: "Six checked criteria cover opaque inputs, old and alternate forms, unchanged registry/payload membership, byte preservation, and the authorized integral-suite exception."
+      route: design-tasks
+      delivery: "480afb92bf99d38ee166070d09ec6485bc5de2c4; documentary close 6bd1477ddc6c242ac5ff9aa8459f48daedffe40f"
+      outstanding_work: none
+    field_mapping:
+      target: [scope, dependencies, authority, decisions, criteria, route, stable_ids]
+      derived_comparison: [status, area, progress, queue, ownership, capacity]
+      approved_replacement_authority: []
+      superseded: []
+      archive_only: [historical execution, status, metrics, and rollback narrative]
+    compatibility_reason: "Proven imported dotted hierarchy; territory is known and no pending-territory exception is used."
+continuation: null

@@ -1,0 +1,125 @@
+schema_version: 1
+legacy_plan: 3
+source_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+source_path: openspec/plans/plan-3/STATUS.md
+source_blob: 5f5f34e8775bfb6dbdd0cb550126a57985dc3d3d
+complete: true
+session_count: 4
+sessions:
+  - legacy_session_id: S3.1
+    source_line: 27
+    source_heading: "## Sesión 3.1 — Change C Workspace checkpoint"
+    provenance_classification: target
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-3/STATUS.md
+      origen_blob: 5f5f34e8775bfb6dbdd0cb550126a57985dc3d3d
+      origen_encabezado: "## Sesión 3.1 — Change C Workspace checkpoint"
+      territorio_pendiente: false
+    stable_ids:
+      modules: [M3.1.1]
+      tasks: [T3.1.1.1, T3.1.1.2, T3.1.1.3, T3.1.1.4]
+    source_contract:
+      scope: "workspace/checkpoint.mjs and test/workspace/checkpoint.test.mjs"
+      dependencies: [S2.4]
+      authority: "STATUS contract, autonomous-v2 checkpoint design, and existing Git/canonicalization contracts"
+      decisions: "All choices are derivable: canonical Git/root selection, full commit/tree identities, mutation-free staging checks, and byte/mode digests."
+      criteria: "Seven checked criteria cover immutable checkpoint identity, hostile roots, staging drift, byte/mode evidence, no remote effects, tests, and exact territory."
+      route: direct
+      delivery: "d8924a6"
+      outstanding_work: "none"
+    field_mapping:
+      target: [scope, dependencies, authority, decisions, criteria, route, stable_ids]
+      derived_comparison: [status, area, progress, queue, ownership, capacity]
+      approved_replacement_authority: []
+      superseded: []
+      archive_only: [historical execution, status, metrics, and rollback narrative]
+    compatibility_reason: "Proven imported dotted hierarchy; territory is known and no pending-territory exception is used."
+  - legacy_session_id: S3.2
+    source_line: 95
+    source_heading: "## Sesión 3.2 — Change D Global/project Policy/Jornada"
+    provenance_classification: target
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-3/STATUS.md
+      origen_blob: 5f5f34e8775bfb6dbdd0cb550126a57985dc3d3d
+      origen_encabezado: "## Sesión 3.2 — Change D Global/project Policy/Jornada"
+      territorio_pendiente: false
+    stable_ids:
+      modules: [M3.2.1, M3.2.2, M3.2.3]
+      tasks: [T3.2.1.1, T3.2.1.2, T3.2.1.3, T3.2.2.1, T3.2.2.2, T3.2.2.3, T3.2.3.1, T3.2.3.2, T3.2.3.3, T3.2.3.4]
+    source_contract:
+      scope: "policy, policy schemas/contracts, main-store/store.mjs, and their tests"
+      dependencies: [S3.1]
+      authority: "role-routed-continuation tasks, REQUIREMENTS §15.3/§22, AGENTS.md delivery policy, and maintainer resolutions"
+      decisions: "Security escalations on immutable floors and exception audit were resolved; restrictive inheritance and configurable-rule enumeration are derivable."
+      criteria: "Fourteen checked criteria cover fail-closed policy, immutable floors, actor identity, expiry, schemas, purity, tests, and exact territory."
+      route: design-tasks
+      delivery: "22c43ae"
+      outstanding_work: "none"
+    field_mapping:
+      target: [scope, dependencies, authority, decisions, criteria, route, stable_ids]
+      derived_comparison: [status, area, progress, queue, ownership, capacity]
+      approved_replacement_authority: []
+      superseded: []
+      archive_only: [historical execution, status, metrics, and rollback narrative]
+    compatibility_reason: "Proven imported dotted hierarchy; territory is known and no pending-territory exception is used."
+  - legacy_session_id: S3.3
+    source_line: 219
+    source_heading: "## Sesión 3.3 — Agent Capability Registry"
+    provenance_classification: target
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-3/STATUS.md
+      origen_blob: 5f5f34e8775bfb6dbdd0cb550126a57985dc3d3d
+      origen_encabezado: "## Sesión 3.3 — Agent Capability Registry"
+      territorio_pendiente: false
+    stable_ids:
+      modules: [M3.3.1]
+      tasks: [T3.3.1.1, T3.3.1.2, T3.3.1.3]
+    source_contract:
+      scope: "capabilities registry, its schema/contracts, and focused tests"
+      dependencies: [S3.2]
+      authority: "S3.3 STATUS contract and maintainer decisions of 2026-08-04"
+      decisions: "Availability expires with Jornada; atomic storage remains local to capabilities; registry grants visibility, never authority."
+      criteria: "Fourteen checked criteria cover project/role isolation, expiry and revision invalidation, anti-self-registration, schema drift, Main authority, atomic-write parity, tests, and exact territory."
+      route: design-tasks
+      delivery: "4621d3f333c4d523b66a7595a33e8abcd7642700"
+      outstanding_work: "none"
+    field_mapping:
+      target: [scope, dependencies, authority, decisions, criteria, route, stable_ids]
+      derived_comparison: [status, area, progress, queue, ownership, capacity]
+      approved_replacement_authority: []
+      superseded: []
+      archive_only: [historical execution, status, metrics, and rollback narrative]
+    compatibility_reason: "Proven imported dotted hierarchy; territory is known and no pending-territory exception is used."
+  - legacy_session_id: S3.4
+    source_line: 327
+    source_heading: "## Sesión 3.4 — Persistencia y ciclo de vida de Jornada"
+    provenance_classification: target
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-3/STATUS.md
+      origen_blob: 5f5f34e8775bfb6dbdd0cb550126a57985dc3d3d
+      origen_encabezado: "## Sesión 3.4 — Persistencia y ciclo de vida de Jornada"
+      territorio_pendiente: false
+    stable_ids:
+      modules: [M3.4.1, M3.4.2]
+      tasks: [T3.4.1.1, T3.4.1.2, T3.4.1.3, T3.4.2.1, T3.4.2.2, T3.4.2.3]
+    source_contract:
+      scope: "main-store/store.mjs, jornada/lifecycle.mjs, and their tests"
+      dependencies: [S3.2, S3.3]
+      authority: "existing jornada-v1 schema, S3.3 revision contract, and maintainer passive-invalidation decision"
+      decisions: "Jornada persistence and transitions are derivable; active revocation was resolved against, preserving passive revision-drift invalidation."
+      criteria: "Eleven checked criteria cover schema persistence, Main/project guards, terminality, revision changes, clock expiry, passive capability invalidation, tests, and exact territory."
+      route: direct
+      delivery: "b6dda84888e654466851bbd771920cf1c971b05a"
+      outstanding_work: "none"
+    field_mapping:
+      target: [scope, dependencies, authority, decisions, criteria, route, stable_ids]
+      derived_comparison: [status, area, progress, queue, ownership, capacity]
+      approved_replacement_authority: []
+      superseded: []
+      archive_only: [historical execution, status, metrics, and rollback narrative]
+    compatibility_reason: "Proven imported dotted hierarchy; territory is known and no pending-territory exception is used."
+continuation: null
