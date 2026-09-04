@@ -533,3 +533,52 @@ sesiones:
             accion: Concentrate terminal reservation, release, and commit behavior and encapsulate immutable decision snapshots without mixing send and ask.
             resultado: The second direct commit is independently verifiable and revertible.
             criterios: [Focused and full verification pass over only the two Area paths and the second commit remains at or below 400 authored lines.]
+
+  - id: S1.19
+    resultado: Regresión integral Pi-first
+    autoridad: decision 104, Engram observation 10008, approved Pi-first capacity contract, and Emilio's C05.2M territory-pending resolution
+    depende_de: [S1.18]
+    recurso: [up to five isolated Pi clients and ephemeral test brokers]
+    criterios:
+      - The launch-to-attach-to-observe-to-stop chain passes with one and five clients.
+      - The prolonged unattended run passes.
+      - Broker crash under traffic proves reconnection and idempotent recovery without promising in-flight messages.
+      - More than five clients remains outside the initial claim until measured and the change stays within the planned scope.
+    decisiones:
+      - tipo: escala
+        pregunta: Which exact test files will own the Pi-first integration regression?
+        evidencia: The immutable S1.19 Area names test/integration/pi-first/** and test/host-adapters.test.mjs, but the candidate base contains no tracked exact file beneath the integration glob; Radar rejects patterns and directories, and the committed partition rejects unused rules.
+        checkpoint: before S1.19 RED and the first Module
+        opciones:
+          - opcion: Prove the exact Pi-first integration test paths before implementation.
+            consecuencia: S1.19 remains blocked without target territory until exact paths are proven.
+          - opcion: Expand Radar to accept pattern territory.
+            consecuencia: This would expand Radar beyond the approved compatibility contract and is rejected.
+          - opcion: Invent or omit an exact integration file.
+            consecuencia: This would fabricate or discard planned territory evidence and is rejected.
+          - opcion: Remove or archive S1.19.
+            consecuencia: This would discard an approved target Session and is rejected.
+        clase: dependencias-o-evidencia-contradictorias
+        alcanza: primer-modulo
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-1/STATUS.md
+      origen_blob: 955820c97257921571cb3d2ac0122929586a2fae
+      origen_encabezado: "## Sesión S1.19 — Regresión integral Pi-first"
+      territorio_pendiente: true
+    modulos:
+      - id: M1.19.1
+        resultado: Evidencia de regresión y capacidad
+        tareas:
+          - id: T1.19.1.1
+            accion: Capture RED failures for the prolonged run, broker crash, fifth client, and lost or duplicated terminal report.
+            resultado: The unmeasured Pi-first integration boundaries fail before implementation.
+            criterios: [The prolonged-run, broker-crash, fifth-client, and terminal-report RED cases are captured.]
+          - id: T1.19.1.2
+            accion: Stabilize the harness and produce evidence attributable to the candidate and each dispatch_id.
+            resultado: The Pi-first integration harness produces attributable evidence for every approved boundary.
+            criterios: [The harness passes with evidence bound to the candidate and each dispatch_id.]
+          - id: T1.19.1.3
+            accion: Isolate fixtures, prove idempotent recovery, and document the maximum claim of five clients.
+            resultado: Recovery remains isolated and the measured capacity claim stays bounded to five clients.
+            criterios: [Fixtures are isolated, recovery is idempotent, and no claim above five clients is made.]
