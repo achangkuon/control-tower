@@ -3105,3 +3105,149 @@ sesiones:
             accion: "REFACTOR/triangulate: cubrir base divergente y límites alternos sin ampliar el Área; preservar el sucesor byte por byte, marcarlo UNRECONCILED y escalar sin rebase, descarte o despacho automático."
             resultado: "REFACTOR/triangulate: la divergencia queda preservada y bloqueada sin alterar primitives preexistentes."
             criterios: ["Los casos negativos permanecen en despacho cero y ningún primitive preexistente es modificado."]
+  - id: S5.4
+    zona: asientos
+    resultado: Ruteo de escalamiento fuera/en casa
+    depende_de: [S5.1]
+    autoridad: Decisiones de la Sesión S5.4 y contrato autenticado de ruteo del maintainer
+    criterios:
+      - Un punto de decisión que requiere autoridad del maintainer emite una solicitud con objetivo exacto; una sin objetivo exacto falla cerrado
+      - El modo de ruteo persiste entre procesos y conmutar es idempotente
+      - "Sólo las dos vías autenticadas del maintainer conmutan el modo: CLI local autenticada y callback remoto autenticado"
+      - Main y cualquier agente fallan cerrado al intentar conmutar el modo, y el rechazo nombra al actor
+      - Estado de modo ausente, corrupto o ambiguo resuelve a local y no emite hacia ningún transporte remoto
+      - Identidad ausente, inválida o ambigua resuelve a local por el mismo camino que el estado corrupto, sin una ruta separada que pueda divergir
+      - "La vía remota está definida pero inhabilitada hasta S8.7: conmutar a remoto por callback falla cerrado por autenticación ausente"
+      - "S5.4 opera entera en modo local sin S8.7: ninguna de sus rutas requiere el transporte para funcionar"
+      - "S5.4 no inventa transporte ni autenticación: no existe en su diff ninguna implementación de canal ni de verificación de identidad remota"
+      - Un fallo del transporte remoto deja la solicitud pendiente y recuperable, nunca consumida ni descartada
+      - La solicitud emitida se persiste en el authorization store de S5.1, sin abrir una segunda ruta de escritura
+      - Consultar el modo es read-only, verificado por testigos de bytes en éxito y en rechazo
+      - "S5.4 no crea, valida ni consume autoridad: esa ruta sigue siendo exclusiva de S5.1"
+      - bun test test/escalation pasa completo y bun test no introduce fallos nuevos sobre la línea base que deje S5.1
+      - El diff no toca ninguna ruta del Prohibido ni ninguna fuera del Área
+    decisiones:
+      - tipo: derivable
+        pregunta: ¿A qué resuelve el modo ante estado ausente, ilegible o ambiguo?
+        criterio: local
+        autoridad: Alcance declarado de S5.4
+        evidencia: No escalar es un inconveniente; escalar por un canal que no debía estar abierto es una fuga, y los dos costos no son comparables.
+        checkpoint: antes de M5.4.2
+        opciones:
+          - opcion: Resolver a local.
+            consecuencia: Ningún transporte remoto se abre ante estado dudoso.
+        falsificador: Un fixture con estado corrupto emite hacia un transporte remoto.
+        descartadas:
+          - opcion: Resolver a remoto.
+            razon: Abriría un canal no autorizado ante evidencia ilegible o ambigua.
+        contaminaba: [S5.4]
+      - tipo: derivable
+        pregunta: ¿Qué vuelve emitible a una solicitud?
+        criterio: Objetivo exacto, origen y expiración; sin objetivo exacto falla cerrado.
+        autoridad: Criterios de aceptación de S5.4
+        evidencia: Una solicitud sin objetivo exacto se responde depende y cuesta un viaje completo.
+        checkpoint: antes de T5.4.1.1
+        opciones:
+          - opcion: Exigir objetivo exacto, origen y expiración.
+            consecuencia: La solicitud contiene el contexto mínimo para una decisión.
+        falsificador: Una solicitud sin objetivo exacto resulta emitida.
+        descartadas: []
+        contaminaba: [S5.4]
+      - tipo: derivable
+        pregunta: ¿Dónde se persiste la solicitud emitida?
+        criterio: En el authorization store de S5.1, sin abrir una segunda ruta de escritura.
+        autoridad: T5.4.1.2
+        evidencia: Dos rutas de escritura al mismo estado son la causa raíz reparada por 6d37642 en este Plan.
+        checkpoint: antes de T5.4.1.2
+        opciones:
+          - opcion: Reutilizar el authorization store de S5.1.
+            consecuencia: Se conserva una sola ruta de escritura al estado autoritativo.
+        falsificador: Cualquier escritura de solicitudes fuera del authorization store de S5.1.
+        descartadas:
+          - opcion: Crear un segundo store en escalation.
+            razon: Duplicaría la ruta de escritura del mismo estado.
+        contaminaba: [S5.4]
+      - tipo: derivable
+        pregunta: ¿Qué pasa con la solicitud si el transporte remoto falla?
+        criterio: Queda pendiente y recuperable localmente; el fallo nunca la consume ni la descarta.
+        autoridad: Criterios de aceptación de S5.4
+        evidencia: El caso de M5.4.3 fija la degradación sin pérdida de la solicitud.
+        checkpoint: antes de M5.4.3
+        opciones:
+          - opcion: Mantenerla pendiente y recuperable.
+            consecuencia: Un fallo externo no destruye trabajo ni autoridad pendiente.
+        falsificador: Un fallo de transporte consume o descarta la solicitud.
+        descartadas: []
+        contaminaba: [S5.4]
+      - tipo: resuelta
+        pregunta: ¿Quién puede conmutar el modo de ruteo?
+        resolucion: Sólo el maintainer por CLI local autenticada o callback remoto autenticado; Main y los agentes nunca pueden conmutarlo automáticamente.
+        autoridad: Decisión del maintainer del 2026-08-04
+        evidencia: El conmutador decide si las preguntas salen de la máquina; un agente que pudiera activar remoto abriría su propio canal. Ante identidad ausente, inválida o ambigua resuelve a local.
+        checkpoint: antes de M5.4.2
+        opciones:
+          - opcion: Permitir sólo las dos vías autenticadas del maintainer.
+            consecuencia: El canal remoto no puede ser abierto por el sistema que solicita autoridad.
+        falsificador: Main, un agente o una identidad no verificada cambia el modo, o una identidad dudosa emite hacia transporte remoto.
+        clase: seguridad-y-permisos
+        descartadas:
+          - opcion: Permitir conmutación automática por Main o agentes.
+            razon: Les permitiría abrir su propio canal de escalamiento.
+        contaminaba: [S8.7, S5.5]
+    entrega:
+      commit: 75549a781cd6ac19afc3e09e7466f7772f678fb7
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-5/STATUS.md
+      origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d
+      origen_encabezado: "## Sesión 5.4 — Ruteo de escalamiento fuera/en casa"
+      territorio_pendiente: false
+    modulos:
+      - id: M5.4.1
+        resultado: Emisión de solicitud de decisión
+        rutas: [escalation/request.mjs, test/escalation/request.test.mjs]
+        tareas:
+          - id: T5.4.1.1
+            accion: "RED: agregar pruebas para que un punto de decisión produzca una solicitud con objetivo exacto, origen y expiración, y una solicitud sin objetivo exacto falle cerrado."
+            resultado: "RED: el contrato emitible y el fallo cerrado quedan fijados antes de implementar."
+            criterios: ["La solicitud exige objetivo exacto, origen y expiración."]
+          - id: T5.4.1.2
+            accion: "GREEN: implementar la emisión reutilizando el authorization store de S5.1, sin abrir una segunda ruta de escritura."
+            resultado: "GREEN: la solicitud emitida usa el único store autoritativo."
+            criterios: ["No existe escritura de solicitudes fuera del authorization store de S5.1."]
+          - id: T5.4.1.3
+            accion: "REFACTOR: normalizar códigos de error estables y volver a correr bun test test/escalation."
+            resultado: "REFACTOR: los errores son estables y el comportamiento permanece probado."
+            criterios: ["bun test test/escalation pasa completo."]
+      - id: M5.4.2
+        resultado: Modo de ruteo
+        rutas: [escalation/routing.mjs, test/escalation/routing.test.mjs]
+        tareas:
+          - id: T5.4.2.1
+            accion: "RED: probar conmutación local/remoto, idempotencia, persistencia entre procesos y frontera de autoridad para las dos vías autenticadas del maintainer, rechazando Main y agentes con actor nombrado."
+            resultado: "RED: persistencia, idempotencia y autoridad exclusiva quedan fijadas."
+            criterios: ["Sólo CLI local autenticada y callback remoto autenticado conmutan el modo."]
+          - id: T5.4.2.2
+            accion: "RED: probar que estado o identidad ausente, corrupta, inválida o ambigua resuelve a local y no emite remotamente por una ruta divergente."
+            resultado: "RED: todos los estados e identidades dudosos comparten el mismo fallo cerrado."
+            criterios: ["Estado e identidad dudosos resuelven a local sin transporte remoto."]
+          - id: T5.4.2.3
+            accion: "GREEN: implementar resolución de modo y despacho, con callback remoto definido pero inhabilitado sin autenticación de S8.7 y operación local completa por CLI autenticada."
+            resultado: "GREEN: el modo se resuelve y despacha sin inventar transporte ni autenticación."
+            criterios: ["S5.4 opera completa en local y remoto falla cerrado mientras falta S8.7."]
+      - id: M5.4.3
+        resultado: Degradación y no mutación
+        rutas: [escalation/routing.mjs, test/escalation/routing.test.mjs]
+        tareas:
+          - id: T5.4.3.1
+            accion: "RED: agregar el caso de transporte remoto ausente o caído estando en modo remoto."
+            resultado: "RED: la degradación del transporte queda fijada antes del comportamiento."
+            criterios: ["El fallo remoto no consume ni descarta la solicitud."]
+          - id: T5.4.3.2
+            accion: "GREEN: confirmar que la solicitud queda pendiente y recuperable localmente y que el fallo nunca la consume ni la descarta."
+            resultado: "GREEN: la recuperación local preserva la solicitud pendiente."
+            criterios: ["La solicitud permanece recuperable después del fallo remoto."]
+          - id: T5.4.3.3
+            accion: "Verificar con testigos de bytes que consultar el modo no muta registro, DB, WAL, SHM ni estado de Torre."
+            resultado: "La consulta queda probada read-only en éxito y rechazo."
+            criterios: ["Los testigos de bytes permanecen idénticos."]
