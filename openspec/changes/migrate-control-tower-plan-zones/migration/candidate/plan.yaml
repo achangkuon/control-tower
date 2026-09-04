@@ -2419,3 +2419,71 @@ sesiones:
             accion: "REFACTOR: unificar errores y aislar toda semántica de adapter."
             resultado: "REFACTOR: unificar errores y aislar toda semántica de adapter."
             criterios: ["REFACTOR: unificar errores y aislar toda semántica de adapter."]
+
+  - id: S4.12
+    zona: hosts
+    resultado: Recuperación mínima de Pi
+    autoridad: decisiones 81 y 87 del maintainer del 2026-08-27
+    depende_de: [S9.4, S1.18]
+    recurso: [árbol de procesos Tower-owned, checkpoint durable, lineage Pi]
+    criterios:
+      - Muerte probada termina todo el árbol y prueba quiescencia.
+      - El sucesor usa un ID nuevo e impredecible, --fork y lineage explícito.
+      - Ningún mensaje volátil es autoridad.
+      - El replay desde estado durable es idempotente.
+      - La recuperación no reconstruye memoria OpenCode ni toca fuera del Área exacta.
+    decisiones:
+      - tipo: resuelta
+        pregunta: ¿Qué recuperación mínima conserva Pi después de la muerte probada de la raíz?
+        resolucion: La Torre contiene y termina el árbol completo de procesos, prueba quiescencia y arranca un sucesor con ID nuevo e impredecible, --fork y lineage explícito. La continuidad proviene de OpenSpec, Engram y el checkpoint durables; no reconstruye briefs ordenados, epochs ni estado en memoria de OpenCode.
+        autoridad: decisión 81 del maintainer del 2026-08-27
+        clase: contrato-visible-del-producto; operaciones-irreversibles; seguridad-y-permisos; dependencias-o-evidencia-contradictorias
+        falsificador: La Torre crea el sucesor sin prueba de muerte y quiescencia, deja vivo un descendiente, reutiliza el ID previo, omite --fork o lineage, o trata memoria de proceso como continuidad durable.
+        descartadas:
+          - opcion: Portar completa la decisión 40.
+            razon: Trasladaría al adapter Pi el acoplamiento y la reconstrucción propios de OpenCode.
+          - opcion: Reinicio sólo manual.
+            razon: Dejaría a la Torre sin recuperación del host que ahora va primero.
+          - opcion: Dejarlo indefinido.
+            razon: Permitiría reutilizar un ID terminal o bifurcar sobre un worktree aún activo.
+        contaminaba: [S4.4, S7.1]
+      - tipo: resuelta
+        pregunta: ¿Cómo se recuperan los mensajes en vuelo tras una caída del broker Pi?
+        resolucion: Se conserva el mailbox actual, volátil y en memoria. Los mensajes en vuelo perdidos se recuperan repitiendo comandos idempotentes desde el estado durable de Torre, OpenSpec, Engram y checkpoint; no se construye mensajería durable ahora.
+        autoridad: decisión 87 del maintainer del 2026-08-27
+        clase: contrato-visible-del-producto; operaciones-irreversibles; migraciones-o-perdida-de-datos; dependencias-o-evidencia-contradictorias
+        falsificador: Una recuperación depende de un mensaje en memoria, un comando repetido produce un efecto no idempotente, se toma socket_delivered como prueba de aplicación o se declara el mailbox durable.
+        descartadas:
+          - opcion: Persistir el mailbox.
+            razon: Duplicaría el estado durable y agregaría replay, orden y recuperación que la forma mínima no necesita.
+          - opcion: Tratar socket_delivered como recepción.
+            razon: No es prueba producer-owned.
+          - opcion: Dejar la semántica de pérdida indefinida.
+            razon: Permitiría asumir continuidad de mensajes que el broker no garantiza.
+        contaminaba: [S4.4, S7.1]
+    ruta:
+      propuesta: design-tasks
+      autoridad: contrato S4.12 y decisiones 81 y 87
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-4/STATUS.md
+      origen_blob: eec8b401c2f55b05cec419c101ecb462b4e4afe3
+      origen_encabezado: "### Sesión 4.12 — Recuperación mínima de Pi"
+      territorio_pendiente: false
+    modulos:
+      - id: M4.12.1
+        resultado: Quiescencia y sucesor Pi
+        rutas: [hosts/pi-recovery.mjs, test/hosts/pi-recovery.test.mjs]
+        tareas:
+          - id: T4.12.1.1
+            accion: "RED: cubrir descendiente vivo, ID reutilizado, lineage ausente y replay no idempotente."
+            resultado: "RED: cubrir descendiente vivo, ID reutilizado, lineage ausente y replay no idempotente."
+            criterios: ["RED: cubrir descendiente vivo, ID reutilizado, lineage ausente y replay no idempotente."]
+          - id: T4.12.1.2
+            accion: "GREEN: contener, probar quiescencia y arrancar sucesor desde checkpoint durable."
+            resultado: "GREEN: contener, probar quiescencia y arrancar sucesor desde checkpoint durable."
+            criterios: ["GREEN: contener, probar quiescencia y arrancar sucesor desde checkpoint durable."]
+          - id: T4.12.1.3
+            accion: "REFACTOR: mantener recuperación mínima y separar historia OpenCode parqueada."
+            resultado: "REFACTOR: mantener recuperación mínima y separar historia OpenCode parqueada."
+            criterios: ["REFACTOR: mantener recuperación mínima y separar historia OpenCode parqueada."]
