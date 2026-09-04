@@ -3483,3 +3483,113 @@ sesiones:
             accion: "REFACTOR: verificar con testigos de bytes que parsear y validar no muta plan, DB, WAL, SHM ni estado de Torre."
             resultado: "REFACTOR: parser y validación permanecen read-only en éxito y rechazo."
             criterios: [Plan, DB, WAL, SHM y estado de Torre permanecen byte-idénticos.]
+  - id: S5.7
+    resultado: Contratos canónicos de decisión estacionada y respuesta
+    autoridad: responsabilidades aprobadas 1, 3 y 4 del maintainer y corrección de ruta Engram 10302
+    depende_de: [S5.6]
+    recurso: [registro canónico de contratos, fixture compartido]
+    criterios:
+      - parked-decision-v1 exige todos los campos de §11 y scope congelado ligado al snapshot de S5.6
+      - Opciones sin ID, duplicadas o sin consecuencia se rechazan
+      - parked-decision-response-v1 liga decisión, una opción enumerada, snapshot y autorización exactos
+      - Cambiar decisión, opción, snapshot o autorización invalida el binding
+      - Texto, etiqueta u orden de propiedades nunca sustituye la identidad canónica
+      - El contrato de respuesta no crea, valida ni consume autoridad
+      - Ambos schemas pasan únicamente por contracts/schema-registry.mjs y contracts/validate.mjs
+      - Ambos tienen invariantes y casos válidos/inválidos en el fixture compartido
+      - bun test test/contracts pasa completo y bun test no introduce fallos nuevos
+      - El diff no toca ninguna ruta fuera del Área ni ninguna del Prohibido
+    decisiones:
+      - tipo: derivable
+        pregunta: ¿Cuál es la forma mínima de una decisión estacionada?
+        criterio: Pregunta exacta, evidencia, opciones con consecuencia, origen, checkpoint, clase y scope congelado ligado al session_plan_snapshot_digest; faltar uno rechaza todo.
+        autoridad: §11 del estándar y responsabilidad aprobada 1
+        evidencia: El contrato aprobado exige todos los campos de §11 y scope congelado ligado al snapshot de S5.6.
+        checkpoint: antes de M5.7.1
+        opciones:
+          - opcion: Exigir el registro completo ligado al session_plan_snapshot_digest.
+            consecuencia: Faltar un campo rechaza el registro completo.
+        falsificador: El fixture inválido correspondiente es aceptado.
+        descartadas: []
+        contaminaba: [S5.7]
+      - tipo: derivable
+        pregunta: ¿Qué identifica de forma estable una opción?
+        criterio: option_id estable y único dentro de parked_decision_id; texto libre nunca identifica la selección.
+        autoridad: responsabilidad aprobada 3
+        evidencia: El contrato aprobado rechaza opciones sin ID, duplicadas o seleccionadas sólo por etiqueta.
+        checkpoint: antes de M5.7.2
+        opciones:
+          - opcion: Usar option_id estable y único dentro de parked_decision_id.
+            consecuencia: Etiqueta, posición y narrativa no pueden sustituir la identidad.
+        falsificador: Dos opciones con el mismo ID o una respuesta ligada sólo por etiqueta son aceptadas.
+        descartadas: []
+        contaminaba: [S5.7]
+      - tipo: derivable
+        pregunta: ¿Qué prueba el contrato de respuesta?
+        criterio: Liga criptográficamente un parked_decision_id, exactamente un option_id enumerado, el digest del snapshot y la autorización de S5.1; el schema no otorga autoridad por sí mismo.
+        autoridad: responsabilidades aprobadas 1 y 3
+        evidencia: El contrato aprobado exige binding exacto y prohíbe crear, validar o consumir autoridad.
+        checkpoint: antes de M5.7.2
+        opciones:
+          - opcion: Ligar decisión, opción enumerada, snapshot y autorización exactos sin otorgar autoridad.
+            consecuencia: Cualquier cambio de identidad invalida el binding y la autoridad sigue externa al schema.
+        falsificador: Cambiar cualquiera de esos valores no invalida el binding.
+        descartadas: []
+        contaminaba: [S5.7]
+    entrega:
+      commit: c822f43ac570ac4f3d80bfe8f3eca50ca032acd9
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-5/STATUS.md
+      origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d
+      origen_encabezado: "## Sesión 5.7 — Contratos canónicos de decisión estacionada y respuesta"
+      territorio_pendiente: false
+    modulos:
+      - id: M5.7.1
+        resultado: Contrato de decisión estacionada
+        rutas: [contracts/parked-decision.mjs, schemas/parked-decision-v1.schema.json, contracts/schema-registry.mjs, contracts/validate.mjs, test/contracts/parked-decision.test.mjs, test/contracts/schema.test.mjs, test/fixtures/contracts/schema-cases-v1.json]
+        tareas:
+          - id: T5.7.1.1
+            accion: "RED: cubrir todos los campos de §11, opciones únicas y scope congelado ligado al snapshot de S5.6."
+            resultado: "RED: los campos, opciones y scope quedan fijados antes de implementar."
+            criterios: [Todos los campos, opciones únicas y scope congelado quedan cubiertos.]
+          - id: T5.7.1.2
+            accion: "GREEN: implementar parked-decision-v1 y su construcción canónica sin persistencia."
+            resultado: "GREEN: el contrato de decisión estacionada queda implementado sin persistencia."
+            criterios: [parked-decision-v1 se construye canónicamente sin persistencia.]
+          - id: T5.7.1.3
+            accion: "REFACTOR: unificar IDs, timestamps y digests con los $defs canónicos existentes."
+            resultado: "REFACTOR: IDs, timestamps y digests reutilizan los $defs canónicos."
+            criterios: [No hay definiciones paralelas de IDs, timestamps o digests.]
+      - id: M5.7.2
+        resultado: Contrato de respuesta seleccionada
+        rutas: [contracts/parked-decision.mjs, schemas/parked-decision-response-v1.schema.json, contracts/schema-registry.mjs, contracts/validate.mjs, test/contracts/parked-decision.test.mjs, test/contracts/schema.test.mjs, test/fixtures/contracts/schema-cases-v1.json]
+        tareas:
+          - id: T5.7.2.1
+            accion: "RED: una respuesta debe nombrar decisión, opción enumerada, snapshot y autorización exactos; cada mismatch falla cerrado."
+            resultado: "RED: cada identidad y mismatch quedan fijados antes de implementar."
+            criterios: [Cada mismatch de decisión, opción, snapshot o autorización falla cerrado.]
+          - id: T5.7.2.2
+            accion: "GREEN: implementar parked-decision-response-v1 con binding canónico y sin capacidad de autoafirmar validación."
+            resultado: "GREEN: la respuesta liga identidades exactas sin autoafirmar validación."
+            criterios: [El binding canónico no crea ni afirma autoridad.]
+          - id: T5.7.2.3
+            accion: "REFACTOR: probar que etiquetas, orden de objeto o texto narrativo no sustituyen option_id ni alteran el digest canónico."
+            resultado: "REFACTOR: sólo option_id identifica selección y el orden no altera el digest."
+            criterios: [Etiqueta, narrativa y orden no sustituyen option_id ni alteran identidad.]
+      - id: M5.7.3
+        resultado: Registro e invariantes cruzadas
+        rutas: [contracts/parked-decision.mjs, schemas/parked-decision-v1.schema.json, schemas/parked-decision-response-v1.schema.json, contracts/schema-registry.mjs, contracts/validate.mjs, test/contracts/parked-decision.test.mjs, test/contracts/schema.test.mjs, test/fixtures/contracts/schema-cases-v1.json]
+        tareas:
+          - id: T5.7.3.1
+            accion: "RED: ambos schemas desconocidos fallan hasta entrar por el registro, invariantes y fixture compartidos."
+            resultado: "RED: registro, invariantes y fixture quedan exigidos antes del wiring."
+            criterios: [Ambos schemas son inválidos mientras falte registro, invariante o fixture.]
+          - id: T5.7.3.2
+            accion: "GREEN: registrar ambos schemas y validar unicidad de opciones y consistencia de bindings."
+            resultado: "GREEN: ambos schemas usan el registro y validan opciones y bindings."
+            criterios: [Registro e invariantes validan unicidad y consistencia cruzada.]
+          - id: T5.7.3.3
+            accion: "REFACTOR: cerrar casos válidos/inválidos y correr bun test test/contracts sobre el registro real."
+            resultado: "REFACTOR: fixtures y suite enfocada cubren el registro real."
+            criterios: [Casos válidos e inválidos pasan por el registro real.]
