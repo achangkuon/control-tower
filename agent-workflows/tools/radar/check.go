@@ -177,6 +177,15 @@ var (
 
 func (p *Plan) checkModulos(root string, s *Sesion, modulosVistos, tareasVistas map[string]bool, importada, pendiente bool) []Hallazgo {
 	var h []Hallazgo
+	permiteTareasPendientes := false
+	if pendiente {
+		for _, d := range s.Decisiones {
+			if d.Tipo == "escala" && d.Alcanza == "primer-modulo" {
+				permiteTareasPendientes = true
+				break
+			}
+		}
+	}
 	sesionValida := sesionID.MatchString(s.ID)
 	if importada {
 		sesionValida = legacySesionID.MatchString(s.ID)
@@ -206,7 +215,7 @@ func (p *Plan) checkModulos(root string, s *Sesion, modulosVistos, tareasVistas 
 		if pendiente && len(m.Rutas) != 0 {
 			h = append(h, Hallazgo{"error", "territorio pendiente", fmt.Sprintf("%s declara rutas", m.ID)})
 		}
-		if len(m.Tareas) == 0 {
+		if len(m.Tareas) == 0 && !permiteTareasPendientes {
 			h = append(h, Hallazgo{"error", "jerarquía", fmt.Sprintf("%s no tiene Tareas enumeradas", m.ID)})
 		}
 		for _, ruta := range m.Rutas {

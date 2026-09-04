@@ -56,6 +56,15 @@ func importedSession(prov ImportacionLegacy, pending bool) Sesion {
 
 func legacyErrors(p *Plan, root, head string) []Hallazgo { return p.checkSesionesAt(root, head) }
 
+func hasLegacyError(h []Hallazgo, rule, detail string) bool {
+	for _, finding := range h {
+		if finding.Severidad == "error" && finding.Regla == rule && finding.Detalle == detail {
+			return true
+		}
+	}
+	return false
+}
+
 func TestLegacyImportAcceptsProvenDottedHierarchy(t *testing.T) {
 	root, head, prov := legacyFixture(t)
 	s := importedSession(prov, false)
@@ -118,6 +127,42 @@ func TestPendingTerritoryRequiresBlockingEscalation(t *testing.T) {
 			s.Decisiones[0].Alcanza = reach
 			if len(legacyErrors(&Plan{Sesiones: []Sesion{s}}, root, head)) == 0 {
 				t.Fatal("nonblocking pending accepted")
+			}
+		})
+	}
+}
+
+func TestPendingTerritoryAllowsSourceDeferredZeroTasks(t *testing.T) {
+	root, head, prov := legacyFixture(t)
+	pending := importedSession(prov, true)
+	pending.Decisiones[0].Alcanza = "primer-modulo"
+	pending.Modulos[0].Tareas = nil
+	if h := legacyErrors(&Plan{Sesiones: []Sesion{pending}}, root, head); len(h) != 0 {
+		t.Fatalf("source-deferred pending module rejected: %#v", h)
+	}
+
+	cases := map[string]func(*Sesion){
+		"ordinary": func(s *Sesion) { s.ImportacionLegacy = nil },
+		"resolved import": func(s *Sesion) {
+			s.ImportacionLegacy.TerritorioPendiente = false
+			s.Zona = "z"
+			s.Ruta = RutaSesion{Propuesta: "direct", Autoridad: "approved"}
+			s.Modulos[0].Rutas = []string{"tracked.txt"}
+		},
+		"pending before criteria": func(s *Sesion) { s.Decisiones[0].Alcanza = "criterios" },
+	}
+	for name, mutate := range cases {
+		t.Run(name, func(t *testing.T) {
+			s := pending
+			s.Decisiones = append([]Decision(nil), pending.Decisiones...)
+			s.Modulos = append([]Modulo(nil), pending.Modulos...)
+			provenance := *pending.ImportacionLegacy
+			s.ImportacionLegacy = &provenance
+			mutate(&s)
+			p := &Plan{Zonas: []Zona{{ID: "z", Rutas: []string{"tracked.txt"}}}, Sesiones: []Sesion{s}}
+			h := legacyErrors(p, root, head)
+			if !hasLegacyError(h, "jerarquía", "M2.10.1 no tiene Tareas enumeradas") {
+				t.Fatalf("missing zero-task hierarchy error: %#v", h)
 			}
 		})
 	}
