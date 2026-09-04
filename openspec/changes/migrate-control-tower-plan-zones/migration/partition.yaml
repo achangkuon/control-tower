@@ -1,0 +1,223 @@
+schema: control-tower-migration-partition
+schema_version: 1
+candidate_base:
+  commit: 1155433c76e3098837335cbe5478dcfd39a71578
+  tracked_inventory:
+    command: >-
+      WORKTREE_TRACKED_FILES=$(mktemp) && git ls-files -z | tr '\0' '\n' | sort > "$WORKTREE_TRACKED_FILES"
+    file_count: 544
+    sha256: 6828a2eb67fb2bfa4a0bc7d0bed12c18ec58a623e4b272571384a0b95fe01e87
+    retained_temp_file: false
+
+policy:
+  match_forms: [directory-prefix, exact-file]
+  broad_cimientos_allowed: false
+  required_results:
+    orphaned_files: 0
+    overlaps: 0
+    unused_rules: 0
+  metodo_contract: >-
+    The metodo Zone owns every tracked file below agent-workflows/. No Cimiento
+    carve-out is required for the declared candidate base.
+
+zonas:
+  - id: hosts
+    nombre: Hosts
+    rutas:
+      - hosts/
+      - adapters/
+      - extensions/
+      - test/hosts/
+      - test/adapters/
+      - test/extensions/
+      - test/host-adapters.test.mjs
+  - id: entrega
+    nombre: Entrega
+    rutas:
+      - delivery/
+      - continuation/
+      - test/delivery/
+      - test/continuation/
+  - id: instalacion
+    nombre: Instalación
+    rutas:
+      - install/
+      - test/install/
+  - id: contratos
+    nombre: Contratos
+    rutas:
+      - contracts/
+      - schemas/
+      - registry/
+      - test/contracts/
+      - test/registry/
+  - id: asientos
+    nombre: Asientos
+    rutas:
+      - supervision/
+      - profiles/
+      - escalation/
+      - support/
+      - workspace/
+      - test/escalation/
+      - test/supervision/
+      - test/support/
+      - test/workspace/
+  - id: jornada
+    nombre: Jornada
+    rutas:
+      - jornada/
+      - jornada.sh
+      - test/jornada/
+  - id: enrolamiento
+    nombre: Enrolamiento
+    rutas:
+      - enroll/
+      - main-store/
+      - test/enroll/
+      - test/main-store.test.mjs
+  - id: capacidades
+    nombre: Capacidades
+    rutas:
+      - capabilities/
+      - plugin/
+      - policy/
+      - test/capabilities/
+      - test/plugin/
+      - test/policy/
+  - id: autoridad
+    nombre: Autoridad
+    rutas:
+      - openspec/plans/
+      - openspec/prd/
+      - openspec/rfc/
+      - openspec/specs/
+      - openspec/maintenance/
+      - openspec/config.yaml
+      - docs/
+  - id: archivo
+    nombre: Archivo
+    rutas:
+      - openspec/changes/
+  - id: metodo
+    nombre: Método
+    rutas:
+      - agent-workflows/
+
+cimientos:
+  rutas:
+    - .doc-guard.json
+    - .githooks/pre-push
+    - .gitignore
+    - .opencode/agent/support-agent.md
+    - .opencode/plugins/tower-spike.js
+    - AGENTS.md
+    - CLAUDE.md
+    - README.md
+    - ROADMAP.md
+    - bin/torre
+    - bun.lock
+    - console/executor.mjs
+    - console/validate.mjs
+    - console/vocabulary.mjs
+    - core.mjs
+    - install.sh
+    - mcp.mjs
+    - package.json
+    - radiografia.json
+    - scripts/payload-closure.mjs
+    - scripts/publish-runtime.mjs
+    - skills/torre-control-entregas/SKILL.md
+    - skills/torre-control-soporte/SKILL.md
+    - skills/torre-control/SKILL.md
+    - test/console-executor.test.mjs
+    - test/console-validator.test.mjs
+    - test/console/cli.test.mjs
+    - test/console/fake-core.mjs
+    - test/fail-closed.test.mjs
+    - test/fixtures/contracts/canonicalization-v1.json
+    - test/fixtures/contracts/schema-cases-v1.json
+    - test/fixtures/paused-send.mjs
+    - test/git-isolation.test.mjs
+    - test/helpers/bin/git
+    - test/helpers/git.mjs
+    - test/helpers/git.test.mjs
+    - test/helpers/host-adapter-conformance.mjs
+    - test/helpers/restore-fixture.mjs
+    - test/identity.test.mjs
+    - test/lifecycle.test.mjs
+    - test/migration.test.mjs
+    - test/polling.test.mjs
+    - test/provenance/provenance.test.mjs
+    - test/recovery.test.mjs
+    - validate-compact-message.py
+  justificaciones:
+    - categoria: repository-governance
+      razon: Repository policy, documentation, hooks, and lockfiles are shared by every Zone.
+      rutas:
+        - .doc-guard.json
+        - .githooks/pre-push
+        - .gitignore
+        - AGENTS.md
+        - CLAUDE.md
+        - README.md
+        - ROADMAP.md
+        - bun.lock
+        - package.json
+    - categoria: agent-and-operator-entrypoints
+      razon: Agent instructions, operator entrypoints, console vocabulary, and release scripts expose cross-Zone behavior.
+      rutas:
+        - .opencode/agent/support-agent.md
+        - .opencode/plugins/tower-spike.js
+        - bin/torre
+        - console/executor.mjs
+        - console/validate.mjs
+        - console/vocabulary.mjs
+        - install.sh
+        - scripts/payload-closure.mjs
+        - scripts/publish-runtime.mjs
+        - skills/torre-control-entregas/SKILL.md
+        - skills/torre-control-soporte/SKILL.md
+        - skills/torre-control/SKILL.md
+    - categoria: shared-runtime-substrate
+      razon: Core transport, MCP entrypoint, radiography configuration, and compact-message validation serve multiple Zones.
+      rutas:
+        - core.mjs
+        - mcp.mjs
+        - radiografia.json
+        - validate-compact-message.py
+    - categoria: cross-zone-test-infrastructure
+      razon: Root console tests, behavioral tests, fixtures, helpers, and provenance checks exercise shared contracts rather than one Zone.
+      rutas:
+        - test/console-executor.test.mjs
+        - test/console-validator.test.mjs
+        - test/console/cli.test.mjs
+        - test/console/fake-core.mjs
+        - test/fail-closed.test.mjs
+        - test/fixtures/contracts/canonicalization-v1.json
+        - test/fixtures/contracts/schema-cases-v1.json
+        - test/fixtures/paused-send.mjs
+        - test/git-isolation.test.mjs
+        - test/helpers/bin/git
+        - test/helpers/git.mjs
+        - test/helpers/git.test.mjs
+        - test/helpers/host-adapter-conformance.mjs
+        - test/helpers/restore-fixture.mjs
+        - test/identity.test.mjs
+        - test/lifecycle.test.mjs
+        - test/migration.test.mjs
+        - test/polling.test.mjs
+        - test/provenance/provenance.test.mjs
+        - test/recovery.test.mjs
+
+validation:
+  expected:
+    tracked_files: 544
+    metodo_files: 87
+    cimiento_files: 45
+    orphaned_files: 0
+    overlaps: 0
+    unused_zone_rules: 0
+    unused_cimiento_rules: 0
+    broad_cimiento_rules: 0
+    unjustified_cimiento_rules: 0
