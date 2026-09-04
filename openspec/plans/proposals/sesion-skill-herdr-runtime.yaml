@@ -1,0 +1,140 @@
+# Proposed Sesión — Tower-owned Herdr runtime skill
+#
+# Authored 2026-09-04 in schema v3 (Zonas), NOT in the legacy multi-Plan format, because the
+# plan this joins is the one Fase B is rebuilding. It is deliberately a standalone fragment:
+# `openspec/changes/migrate-control-tower-plan-zones/migration/candidate/plan.yaml` is being
+# written right now and holds 11 of the product's Sesiones so far. Editing that file from here
+# would collide with the migration mid-flight.
+#
+# Integration: append the `sesiones` entry below to the candidate plan once Fase B closes, and
+# add the `cimientos_a_declarar` path to `cimientos.rutas` in the same edit.
+#
+# Identifier: intentionally absent. §8 of the canon makes identifiers flat, sequential across
+# the product, and never renumbered, and Fase B has not yet assigned the flat sequence — every
+# Sesión in the candidate still carries its imported dotted id. Assigning a number here would
+# either collide or be renumbered later, and renumbering is the one thing §8 forbids. The id is
+# assigned once, at integration, by whoever owns the sequence.
+#
+# Evidence this Sesión rests on:
+#   openspec/plans/audits/herdr-skill-ownership-audit.md
+#   openspec/plans/audits/evidence/herdr-skill-contract-d8a22841.patch
+
+schema: plan-session-proposal
+schema_version: 1
+producto: control-tower
+target_schema: {schema: plan, schema_version: 3}
+
+cimientos_a_declarar:
+  - skills/herdr/SKILL.md
+
+sesiones:
+  - id: null   # assigned at integration; see header
+    zona: instalacion
+    resultado: Tower-owned Herdr runtime skill
+    autoridad: openspec/plans/audits/herdr-skill-ownership-audit.md
+    depende_de: []
+    cimientos:
+      - skills/herdr/SKILL.md
+    criterios:
+      - "`skills/herdr/SKILL.md` exists and reproduces the activation paragraph of
+        `openspec/plans/audits/evidence/herdr-skill-contract-d8a22841.patch` verbatim: Herdr
+        activates only on an explicit Herdr request, and Tower dispatch, ON/OFF decisions,
+        topology selection and seat lifecycle route through `torre-control` → `torre asiento`."
+      - "The skill carries the four frontmatter keys `SKILL_FRONTMATTER_KEYS` requires (name,
+        description, license, metadata) and all six sections `SKILL_SECTIONS` requires
+        (Activation Contract, Hard Rules, Decision Gates, Execution Steps, Output Contract,
+        References)."
+      - "`test/install/tower-role-assets.test.mjs` declares the skill in `ASSET_CONTRACTS` with
+        markers pinning both Tower-ownership sentences and both human-approval sentences from
+        the preserved patch, and the full suite passes."
+      - "The skill states no Herdr CLI mechanics that `herdr --skill` already emits. Falsifier:
+        any command flag, timeout value or error code documented in both files is a duplicate
+        and fails this criterion."
+      - "`radar check` reports 0 orphaned files, 0 overlaps and 0 unused rules with
+        `skills/herdr/SKILL.md` declared in `cimientos.rutas`."
+      - "`skills/torre-control/SKILL.md` gains a reference to the new skill and its existing
+        markers still pass unchanged."
+    decisiones:
+      - tipo: escalada
+        pregunta: >-
+          Whether `test/install/tower-role-assets.test.mjs` must be declared a Cimiento.
+        clase: contradictory dependencies or evidence
+        evidencia: >-
+          The partition places the three Tower skills in `cimientos.rutas` — owned by no Zona —
+          while their declaring manifest sits inside the `instalacion` Zona route `test/install/`.
+          §4's deterministic threshold makes any exact file modified by more than one Zona a
+          Cimiento, and this manifest is modified by every Sesión that adds or changes a skill,
+          from whatever Zona that Sesión lives in. The partition nonetheless declares
+          `overlaps: 0`.
+        contamina: []
+        por_que_no_contamina: >-
+          This Sesión reserves only `skills/herdr/SKILL.md` and edits the manifest as ordinary
+          `instalacion` work, so it can be delivered either way. The answer changes the partition,
+          not this result. Status stays 🟢 LISTO per §14.
+      - tipo: derivable
+        pregunta: >-
+          Whether this skill takes a `chanks-<tramo>-<nombre>` name.
+        resolucion: >-
+          No. It is a machinery skill and lives beside `torre-control`.
+        autoridad: agent-workflows/FLUJO-END-TO-END.md:164-168
+        falsificador: >-
+          The approved flow states the Herdr runtime skill «no reemplaza `torre asiento` ni se
+          convierte en una skill nueva del método». A `chanks-` name would make it a method
+          skill and contradict that sentence directly.
+    ruta:
+      propuesta: direct
+      autoridad: >-
+        Two known files with a declared contract and no unresolved design question: the skill
+        text is fixed by the preserved patch, and the manifest shape is fixed by the three
+        entries already in `ASSET_CONTRACTS`.
+    modulos:
+      - id: null   # M<sesión>.1
+        resultado: The skill, declared and gated
+        rutas:
+          - skills/herdr/SKILL.md
+          - test/install/tower-role-assets.test.mjs
+          - skills/torre-control/SKILL.md
+        tareas:
+          - id: null   # T<sesión>.1.1
+            accion: >-
+              Add the `skills/herdr/SKILL.md` entry to `ASSET_CONTRACTS` with its frontmatter,
+              references and markers, and watch the suite fail because the file does not exist.
+            resultado: A red test that names the missing skill.
+            criterios:
+              - "`bun test test/install/tower-role-assets.test.mjs` fails, and the failure names
+                `skills/herdr/SKILL.md`."
+          - id: null   # T<sesión>.1.2
+            accion: >-
+              Write `skills/herdr/SKILL.md` with the six required sections, carrying the
+              activation paragraph and both human-approval rules from the preserved patch, and
+              deferring every seat action to `torre asiento`.
+            resultado: The skill exists and the manifest gate passes.
+            criterios:
+              - "`bun test test/install/tower-role-assets.test.mjs` passes."
+              - "Every marker declared in T1 matches, with no marker weakened to make it pass."
+          - id: null   # T<sesión>.1.3
+            accion: >-
+              Cross-reference the new skill from `skills/torre-control/SKILL.md` and declare
+              `skills/herdr/SKILL.md` in `cimientos.rutas`.
+            resultado: The skill is reachable from the parent route and owned by the partition.
+            criterios:
+              - "`torre-control`'s existing markers still pass unchanged."
+              - "`radar check` reports 0 orphaned files, 0 overlaps, 0 unused rules."
+              - "The full suite passes."
+
+notas_de_integracion:
+  - >-
+    Fase B owns the flat identifier sequence. Assign `id` for the Sesión, its Módulo and its
+    three Tareas at integration, then never renumber them (§8).
+  - >-
+    `depende_de` is empty on purpose. The neighbouring Sesiones own different surfaces: S9.5
+    owns Herdr topology and materialisation, S9.8 owns fire-and-forget dispatch and skill
+    terminality, S8.12 packages the resulting bytes. None of them produces or consumes this
+    skill file, so nothing gates this work.
+  - >-
+    S9.9 suspends `torre asiento abrir` and all Tower→Herdr dispatch. This Sesión writes prose
+    and a test manifest and dispatches nothing, so that suspension does not reach it.
+  - >-
+    The ten Rust commits of 2026-08-14 are deliberately out of scope. Audit E §4 records that
+    the Tower retired their counterpart in `3857a81` and replaced it in `cb3ed7e` with a module
+    that drives Herdr as shipped. This Sesión consumes Herdr unmodified.
