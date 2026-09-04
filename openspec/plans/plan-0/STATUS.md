@@ -50,6 +50,25 @@ Hoy ese checkout queda como archivo read-only: la autoridad activa está en el s
 `dbb7626904a09323e19dd7a60f747d29c8c62f5d`. Cierra la limitación registrada en la
 [decisión 56](../decision-register.md).
 
+**Checkout local retirado el 2026-09-04.** `~/projects/agent-workflows` y sus cuatro worktrees
+se borraron del disco tras validar que no llevaban nada propio: los 86 paths trackeados están en
+el subtree, 85 byte a byte y el único distinto es la revisión más nueva de Control Tower; los seis
+tips de rama son alcanzables y `588f0282` es ancestro de `master` sobre 58 commits importados; lo
+único fuera de Git era el binario compilado de la herramienta hoy llamada `radar`, cuya fuente vive
+en `agent-workflows/tools/radar/`. La evidencia queda en
+[Audit F](../audits/agent-workflows-migration-validation.md). El remoto privado
+`achangkuon/agent-workflows` sigue siendo el archivo read-only; lo retirado es la copia local.
+
+Ese borrado exigía primero `642feeb`: la búsqueda del motor de radiografía listaba el checkout
+retirado antes que su propio fallback, y ese fallback resolvía un nivel de más. El hook venía
+encontrando el motor **sólo** por la copia previa a la migración, y un motor ausente se omite con
+`exit 0` para no bloquear un push — así que el informe habría dejado de regenerarse en silencio.
+Ahora se busca primero dentro del repositorio. Verificado en el push de `642feeb`, ya sin la copia
+local: el informe se regeneró.
+
+Los worktrees cuya rama es anterior al merge de subtree todavía no llevan el motor y omiten el
+informe hasta que integren `master`; se resuelve solo al ponerse al día.
+
 **No movió ningún porcentaje, y conviene decirlo.** Ese trabajo histórico ocurrió
 íntegramente en el entonces repositorio independiente `agent-workflows`, no en Control Tower:
 no cerró ninguna Sesión enumerada de ningún Plan.
