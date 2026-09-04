@@ -149,7 +149,11 @@ func RenderAt(p *Plan, root, head string) []byte {
 		if esTerritorioPendiente(&s) {
 			fmt.Fprintln(&b, "- Importación legacy con territorio pendiente probado; sin asignación de Zona ni capacidad.")
 		} else if esTerritorioHistorico(&s) {
-			fmt.Fprintf(&b, "- Territorio histórico: evidencia no autorizante; propietarios actuales: %s.\n", markdownList(p.propietariosHistoricos(&s)))
+			owners := p.propietariosHistoricos(&s)
+			if len(owners) == 0 {
+				owners = []string{"sin dueño actual"}
+			}
+			fmt.Fprintf(&b, "- Territorio histórico: evidencia no autorizante; propietarios actuales: %s.\n", markdownList(owners))
 		} else {
 			fmt.Fprintf(&b, "- Zona/Área: %s · %s\n", markdownText(s.Zona), markdownList(p.Area(&s)))
 		}

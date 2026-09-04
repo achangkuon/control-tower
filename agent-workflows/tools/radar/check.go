@@ -131,17 +131,30 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 				h = append(h, Hallazgo{"error", "territorio histórico", fmt.Sprintf("%s declara Cimientos o ruta de ejecución", s.ID)})
 			}
 			zonasHistoricas := map[string]bool{}
+			todasSinDueño := s.Archivada
+			tracked, err := trackedFilesAt(root, head)
+			if err != nil {
+				todasSinDueño = false
+			}
+			rutasTracked := map[string]bool{}
+			for _, ruta := range tracked {
+				rutasTracked[ruta] = true
+			}
 			for _, m := range s.Modulos {
 				for _, ruta := range m.Rutas {
-					for _, owner := range p.owners(ruta) {
+					owners := p.owners(ruta)
+					if len(owners) != 0 || rutasTracked[ruta] {
+						todasSinDueño = false
+					}
+					for _, owner := range owners {
 						if owner.Kind == "zona" {
 							zonasHistoricas[owner.ID] = true
 						}
 					}
 				}
 			}
-			if len(zonasHistoricas) < 2 {
-				h = append(h, Hallazgo{"error", "territorio histórico", fmt.Sprintf("%s no prueba rutas históricas en múltiples Zonas actuales", s.ID)})
+			if len(zonasHistoricas) < 2 && !todasSinDueño {
+				h = append(h, Hallazgo{"error", "territorio histórico", fmt.Sprintf("%s no prueba rutas históricas en múltiples Zonas actuales ni un archivo archivado ausente y sin dueño", s.ID)})
 			}
 		} else if s.Zona == "" {
 			h = append(h, Hallazgo{"error", "sesión", fmt.Sprintf("%s no declara zona", s.ID)})

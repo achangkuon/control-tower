@@ -282,6 +282,75 @@ func TestHistoricalTerritoryAcceptsOnlyProvenTerminalImports(t *testing.T) {
 	}
 }
 
+func TestOwnerlessArchivedHistoryPreservesOnlyAbsentSafePaths(t *testing.T) {
+	root, head, prov := legacyFixture(t)
+	s := historicalSession(prov, head)
+	s.Entrega = nil
+	s.Archivada = true
+	s.Modulos[0].Rutas = []string{"scripts/retired/tool.mjs", "test/retired/tool.test.mjs"}
+	p := &Plan{Producto: "x", Zonas: []Zona{{ID: "work", Rutas: []string{"tracked.txt"}}}, Sesiones: []Sesion{s}}
+
+	if h := legacyErrors(p, root, head); len(h) != 0 {
+		t.Fatalf("ownerless archived history rejected: %#v", h)
+	}
+	zones, total := p.AvanceAt(root, head)
+	if len(p.ColaPorZonaAt(root, head)) != 0 || len(p.Area(&s)) != 0 || len(p.AsientosAt(root, head)) != 0 || len(zones) != 0 || total != (Avance{Cerradas: 1, Total: 1}) {
+		t.Fatalf("ownerless history authorized execution: zones=%v total=%v", zones, total)
+	}
+	out := string(RenderAt(p, root, head))
+	for _, want := range []string{"Territorio histórico", "evidencia no autorizante", "scripts/retired/tool.mjs", "sin dueño actual"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("render missing %q", want)
+		}
+	}
+}
+
+func TestOwnerlessArchivedHistoryFailsClosed(t *testing.T) {
+	root, head, prov := legacyFixture(t)
+	base := historicalSession(prov, head)
+	base.Entrega = nil
+	base.Archivada = true
+	base.Modulos[0].Rutas = []string{"scripts/retired/tool.mjs", "test/retired/tool.test.mjs"}
+	cases := map[string]func(*Sesion, *Plan){
+		"complete but not archived": func(s *Sesion, _ *Plan) { s.Archivada = false; s.Entrega = &Entrega{Commit: head} },
+		"open":                      func(s *Sesion, _ *Plan) { s.Archivada = false },
+		"deferred":                  func(s *Sesion, _ *Plan) { s.Archivada = false; s.Diferida = true },
+		"unproven":                  func(s *Sesion, _ *Plan) { s.ImportacionLegacy.OrigenBlob = "" },
+		"tracked ownerless file": func(s *Sesion, p *Plan) {
+			p.Zonas[0].Rutas = []string{"other.txt"}
+			s.Modulos[0].Rutas = []string{"tracked.txt"}
+		},
+		"currently owned path": func(s *Sesion, p *Plan) {
+			p.Zonas[0].Rutas = []string{"tracked.txt", "scripts/retired/tool.mjs"}
+		},
+		"mixed owned and ownerless": func(s *Sesion, p *Plan) {
+			p.Zonas[0].Rutas = []string{"tracked.txt", "scripts/retired/tool.mjs"}
+			s.Modulos[0].Rutas = []string{"scripts/retired/tool.mjs", "test/retired/tool.test.mjs"}
+		},
+		"unsafe traversal":  func(s *Sesion, _ *Plan) { s.Modulos[0].Rutas = []string{"../tool.mjs"} },
+		"absolute":          func(s *Sesion, _ *Plan) { s.Modulos[0].Rutas = []string{"/tool.mjs"} },
+		"glob":              func(s *Sesion, _ *Plan) { s.Modulos[0].Rutas = []string{"scripts/*.mjs"} },
+		"directory":         func(s *Sesion, _ *Plan) { s.Modulos[0].Rutas = []string{"scripts/"} },
+		"authored Zone":     func(s *Sesion, _ *Plan) { s.Zona = "work" },
+		"authored route":    func(s *Sesion, _ *Plan) { s.Ruta = RutaSesion{Propuesta: "direct", Autoridad: "future"} },
+		"authored Cimiento": func(s *Sesion, _ *Plan) { s.Cimientos = []string{"package.json"} },
+	}
+	for name, mutate := range cases {
+		t.Run(name, func(t *testing.T) {
+			s := base
+			provenance := *base.ImportacionLegacy
+			s.ImportacionLegacy = &provenance
+			s.Modulos = append([]Modulo(nil), base.Modulos...)
+			s.Modulos[0].Rutas = append([]string(nil), base.Modulos[0].Rutas...)
+			p := &Plan{Zonas: []Zona{{ID: "work", Rutas: []string{"tracked.txt"}}}, Sesiones: []Sesion{s}}
+			mutate(&p.Sesiones[0], p)
+			if len(legacyErrors(p, root, head)) == 0 {
+				t.Fatal("invalid ownerless archived history accepted")
+			}
+		})
+	}
+}
+
 func TestHistoricalTerritoryIsEvidenceNotAuthorization(t *testing.T) {
 	root, head, prov := legacyFixture(t)
 	s := historicalSession(prov, head)
