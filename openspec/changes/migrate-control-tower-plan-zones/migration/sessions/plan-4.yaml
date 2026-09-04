@@ -3,8 +3,8 @@ legacy_plan: 4
 source_commit: 43130ad40af06f3ed05671000719217bee74f0a5
 source_path: openspec/plans/plan-4/STATUS.md
 source_blob: eec8b401c2f55b05cec419c101ecb462b4e4afe3
-complete: false
-session_count: 7
+complete: true
+session_count: 14
 sessions:
   - legacy_session_id: S4.1
     source_line: 14
@@ -209,7 +209,126 @@ sessions:
       superseded: []
       archive_only: [historical execution, status, metrics, and rollback narrative]
     compatibility_reason: "Proven imported dotted hierarchy; territory is known and no pending-territory exception is used."
-continuation:
-  next_legacy_session_id: S4.8
-  next_source_line: 668
-  reason: "C03.2 stops at the last complete Session row below the 400-authored-line review cap."
+  - legacy_session_id: S4.8
+    source_line: 668
+    source_heading: "## Sesión 4.8 — Matriz real OpenCode 1.18.23 y alineación condicional"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-4/STATUS.md, origen_blob: eec8b401c2f55b05cec419c101ecb462b4e4afe3, origen_encabezado: "## Sesión 4.8 — Matriz real OpenCode 1.18.23 y alineación condicional", territorio_pendiente: false}
+    stable_ids:
+      modules: [M4.8.1, M4.8.2]
+      tasks: [T4.8.1.1, T4.8.1.2, T4.8.1.3, T4.8.2.1, T4.8.2.2, T4.8.2.3]
+    source_contract:
+      scope: "OpenCode 1.18.23 real-runtime harness, plugin/SDK compatibility, package pins, and Bun lock"
+      dependencies: [S4.7]
+      authority: "decision 68 and the preserved S4.8 WIP contract"
+      decisions: "Keep both pins unchanged until the complete real-runtime matrix is green, then align atomically."
+      criteria: "Open criteria preserve exact binary identity, isolated runtime contracts, plugin/SDK behavior, atomic pins, byte pinning, and territory."
+      route: design-tasks
+      delivery: "unresolved; preserved WIP is not a candidate"
+      outstanding_work: "Both modules and all six tasks remain deferred while OpenCode is parked."
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work], derived_comparison: [status, area, progress, queue, ownership, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical WIP and parking narrative]}
+    compatibility_reason: "Proven imported dotted hierarchy; known territory; no pending-territory exception."
+  - legacy_session_id: S4.9
+    source_line: 700
+    source_heading: "## Sesión 4.9 — Probe y adopción guardada de Herdr 0.8.2"
+    provenance_classification: archive-only
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-4/STATUS.md, origen_blob: eec8b401c2f55b05cec419c101ecb462b4e4afe3, origen_encabezado: "## Sesión 4.9 — Probe y adopción guardada de Herdr 0.8.2", territorio_pendiente: false}
+    stable_ids:
+      modules: [M4.9.1, M4.9.2]
+      tasks: [T4.9.1.1, T4.9.1.2, T4.9.1.3, T4.9.2.1, T4.9.2.2, T4.9.2.3]
+    source_contract:
+      scope: "isolated Herdr 0.8.2 probe and reversible local adoption"
+      dependencies: [S4.6, S4.7]
+      authority: "decision 99 superseding decisions 66 and 68 for this Session"
+      decisions: "Decision 99 retired the Session after out-of-plan adoption destroyed its rollback baseline."
+      criteria: "The three preserved criteria were never exercised and remain historical evidence only."
+      route: design-tasks
+      delivery: "documentation-only retirement chain beginning at 89426eb"
+      outstanding_work: "none; skipped and removed from the legacy denominator"
+    field_mapping: {target: [dependencies, authority, decisions, stable_ids], derived_comparison: [status, area, progress, queue, ownership, capacity], approved_replacement_authority: [decision 99], superseded: [earlier deferred state and executable adoption contract], archive_only: [scope, criteria, route, delivery narrative, modules, tasks, adoption evidence]}
+    compatibility_reason: "Proven imported dotted hierarchy retained for historical identity; retired contract is archive-only."
+  - legacy_session_id: S4.10
+    source_line: 745
+    source_heading: "### Sesión 4.10 — Identidad, binding y puerto runtime host-neutral"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-4/STATUS.md, origen_blob: eec8b401c2f55b05cec419c101ecb462b4e4afe3, origen_encabezado: "### Sesión 4.10 — Identidad, binding y puerto runtime host-neutral", territorio_pendiente: false}
+    stable_ids: {modules: [M4.10.1], tasks: [T4.10.1.1, T4.10.1.2, T4.10.1.3]}
+    source_contract:
+      scope: "neutral host-runtime identity, binding, port contracts, schemas, and tests"
+      dependencies: []
+      authority: "decisions 80, 84, 86, 89, and 90"
+      decisions: "Neutral public forms, one Tower-owned broker per worktree, random IDs, binding-owned ports, and bounded schema expansion."
+      criteria: "Four checked criteria cover neutral validation, exact port binding, fail-closed invalidity, and territory."
+      route: full-sdd
+      delivery: "6b8b7705d40a863b962873c1a34208007fa64644 with four recorded implementation commits"
+      outstanding_work: "none"
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, delivery], derived_comparison: [status, area, progress, queue, ownership, capacity], approved_replacement_authority: [], superseded: [], archive_only: [verification metrics, rollback sequence, closure narrative]}
+    compatibility_reason: "Proven imported dotted hierarchy; known territory; no pending-territory exception."
+  - legacy_session_id: S4.11
+    source_line: 762
+    source_heading: "### Sesión 4.11 — Observe, health, stop y attach host-neutral"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-4/STATUS.md, origen_blob: eec8b401c2f55b05cec419c101ecb462b4e4afe3, origen_encabezado: "### Sesión 4.11 — Observe, health, stop y attach host-neutral", territorio_pendiente: false}
+    stable_ids: {modules: [M4.11.1], tasks: [T4.11.1.1, T4.11.1.2, T4.11.1.3]}
+    source_contract:
+      scope: "neutral observe, health, stop, attach, producer-owned proof, and tests"
+      dependencies: [S4.10]
+      authority: "decisions 84, 92, 93, and 94"
+      decisions: "One-use challenges, exact operation/binding/incarnation proof, conservative uncertainty, and producer-owned timeout policy."
+      criteria: "Four checked criteria cover identity, fresh attach proof, acknowledged stop semantics, adapter isolation, and territory."
+      route: full-sdd
+      delivery: "6ddf6bc77d236dffad5b8ec625379117a91ce0b3; candidate f00c53ae477de1f8dd3b9c4dab8b2c159375f962"
+      outstanding_work: "none"
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, delivery], derived_comparison: [status, area, progress, queue, ownership, capacity], approved_replacement_authority: [], superseded: [], archive_only: [verification metrics, rollback sequence, closure narrative]}
+    compatibility_reason: "Proven imported dotted hierarchy; known territory; no pending-territory exception."
+  - legacy_session_id: S4.12
+    source_line: 781
+    source_heading: "### Sesión 4.12 — Recuperación mínima de Pi"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-4/STATUS.md, origen_blob: eec8b401c2f55b05cec419c101ecb462b4e4afe3, origen_encabezado: "### Sesión 4.12 — Recuperación mínima de Pi", territorio_pendiente: false}
+    stable_ids: {modules: [M4.12.1], tasks: [T4.12.1.1, T4.12.1.2, T4.12.1.3]}
+    source_contract:
+      scope: "Pi process-tree quiescence, successor launch, durable checkpoint lineage, and replay tests"
+      dependencies: [S9.4, S1.18]
+      authority: "decisions 81 and 87"
+      decisions: "Quiescence, random successor ID with --fork, volatile mailbox treatment, and idempotent durable replay."
+      criteria: "Open criteria require proven tree death, successor lineage, non-authoritative volatile messages, idempotent replay, and no OpenCode recovery."
+      route: design-tasks
+      delivery: "unresolved"
+      outstanding_work: "All three tasks and Session criteria remain open."
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work], derived_comparison: [status, area, progress, queue, ownership, capacity], approved_replacement_authority: [], superseded: [], archive_only: [legacy status and scheduling narrative]}
+    compatibility_reason: "Proven imported dotted hierarchy; known territory; no pending-territory exception."
+  - legacy_session_id: S4.13
+    source_line: 790
+    source_heading: "### Sesión 4.13 — Validación neutral pre-publicación de ownership"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-4/STATUS.md, origen_blob: eec8b401c2f55b05cec419c101ecb462b4e4afe3, origen_encabezado: "### Sesión 4.13 — Validación neutral pre-publicación de ownership", territorio_pendiente: false}
+    stable_ids: {modules: [M4.13.1], tasks: [T4.13.1.1, T4.13.1.2, T4.13.1.3]}
+    source_contract:
+      scope: "neutral unpublished ownership validation, cleanup/quarantine, tests, and host-runtime spec"
+      dependencies: [S4.10]
+      authority: "decision 97 and corrected planning evidence Engram 9754-9756"
+      decisions: "Optional caller-neutral validation after acquisition and before publication, with private exact-close or quarantine on failure."
+      criteria: "Seven checked criteria cover ordering, compatibility, private close, exact publication, failure cleanup, tests, and territory."
+      route: design-tasks
+      delivery: "af607a93cb7f303e48bfc0e4ad761cadc3d1025e"
+      outstanding_work: "none"
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, delivery], derived_comparison: [status, area, progress, queue, ownership, capacity], approved_replacement_authority: [], superseded: [], archive_only: [review, test metrics, rollback, closure narrative]}
+    compatibility_reason: "Proven imported dotted hierarchy; known territory; no pending-territory exception."
+  - legacy_session_id: S4.14
+    source_line: 861
+    source_heading: "### Sesión 4.14 — Guardia neutral final de actualidad antes de publicar ownership"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-4/STATUS.md, origen_blob: eec8b401c2f55b05cec419c101ecb462b4e4afe3, origen_encabezado: "### Sesión 4.14 — Guardia neutral final de actualidad antes de publicar ownership", territorio_pendiente: false}
+    stable_ids: {modules: [M4.14.1], tasks: [T4.14.1.1, T4.14.1.2, T4.14.1.3, T4.14.1.4]}
+    source_contract:
+      scope: "neutral final-currentness ownership guard, registry tests, and host-runtime spec"
+      dependencies: [S4.13]
+      authority: "decision 98 and corrected planning evidence Engram 9773-9774"
+      decisions: "Optional synchronous caller-neutral guard over frozen exact occupant metadata immediately before publication."
+      criteria: "Eight checked criteria cover ordering, metadata, strict admission, fail-closed alternatives, compatibility, replaced-process rejection, F1 boundary, tests, and territory."
+      route: direct
+      delivery: "local candidate daf7e0e7af4122417ce2bec8a48a11c65a40f23c from dc8e1d9ba752249398fde5760369684ef211c642"
+      outstanding_work: "direct push authorization remained pending at the source snapshot"
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, delivery, outstanding_work], derived_comparison: [status, area, progress, queue, ownership, capacity], approved_replacement_authority: [], superseded: [], archive_only: [review availability, test metrics, rollback, closure narrative]}
+    compatibility_reason: "Proven imported dotted hierarchy; known territory; no pending-territory exception."
