@@ -2618,3 +2618,208 @@ sesiones:
             accion: "REFACTOR: sincronizar la spec y simplificar sin exposición de cierre, vocabulario de host ni paths extra."
             resultado: "REFACTOR: sincronizar la spec y simplificar sin exposición de cierre, vocabulario de host ni paths extra."
             criterios: ["REFACTOR: sincronizar la spec y simplificar sin exposición de cierre, vocabulario de host ni paths extra."]
+
+  - id: S5.1
+    resultado: Un candidato congelado liga identidad y autorización inmutables, deriva el siguiente Módulo sólo desde evidencia del ledger y mantiene a Support aislado bajo autoridad exclusiva de Main.
+    autoridad: REQUIREMENTS Change F; contrato S5.1 y resoluciones del maintainer del 2026-08-03 al 2026-08-05; cierre técnico verificado del 2026-08-08
+    depende_de: [S3.2, S3.3, S3.4]
+    recurso: [Main, authorization store con CAS de filesystem]
+    criterios:
+      - Dos contenidos distintos nunca resuelven a la misma candidate_revision.
+      - Un candidato cuya identidad cambió no se consume bajo la autorización previa.
+      - Una operación repetida sobre el mismo candidato no produce un segundo efecto remoto.
+      - El authorization store valida contra authorization-v1 y no contra una lista de campos escrita a mano.
+      - Una autorización consumida más de una hora después de emitida se rechaza.
+      - Todo efecto irreversible exige Jornada ACTIVE y jornada_revision actual, y falla cerrado ante Jornada terminal, revisión desactualizada o Jornada ausente.
+      - Una autorización emitida bajo una jornada_revision anterior no se consume después de una transición de Jornada.
+      - Terminar una Jornada no revoca activamente capabilities ni autorizaciones.
+      - Ninguna ruta crea garbage collector ni poda capabilities discontinuadas.
+      - Una capability equivalente se reemplaza por agent_role más capability, sin acuñar un ID nuevo.
+      - La derivación no avanza con memoria narrativa; sin cumplimiento en el ledger no hay avance.
+      - Un claim del Worker en desacuerdo produce CT_CLAIM_MISMATCH, sin assignment y nombrando ambos valores.
+      - Un claim coincidente registra evidencia y no otorga privilegios.
+      - Support no figura en board ni locks y ninguna transferencia de lock puede nombrarlo.
+      - Un host sin subagente aislado rechaza la continuación con CT_HOST_CAPABILITY_MISSING, sin sustituto en línea.
+      - plugin/tower-spike.js es el único composition root que prueba autoridad de Main y recibe trustedBindingProvider por inyección antes de spawn o persistencia.
+      - Un context.sessionID distinto del Main ligado se rechaza y el rechazo nombra la sesión.
+      - Binding ausente, inválido o de otra sesión falla cerrado antes de spawn o persistencia.
+      - Store o capability simulados fuera de la verificación se rechazan; ambos se obtienen sólo tras verificar el binding.
+      - Support no recibe main_store, capability ni autoridad y su respuesta se valida contra support-proposal-v1 antes de persistirse.
+      - Correr Support no muta board, locks, Worker ni registry, tanto en éxito como en rechazo.
+      - La autoridad no se deriva del capability registry.
+      - core.mjs queda opaco al plan; las coordenadas sólo se resuelven en registros propiedad de Main.
+      - candidate-revision-v1 está registrado y tiene fixture de contrato.
+      - Los tests enfocados de continuation, main-store y contracts pasan completos.
+      - La suite completa no introduce fallos sobre la línea base de S3.4.
+      - El diff histórico no toca ninguna ruta prohibida por S5.1.
+    decisiones:
+      - tipo: resuelta
+        pregunta: ¿Cuál es la forma autoritativa del registro de autorización?
+        resolucion: authorization-v1 es la única forma canónica y el store valida contra ese schema, nunca contra una lista duplicada.
+        autoridad: schema authorization-v1 y reconciliación 6d37642
+        evidencia: El contrato roto divergía en seis puntos hasta la reconciliación 6d37642.
+        checkpoint: antes de M5.1.1
+        opciones:
+          - opcion: Validar el store contra authorization-v1.
+            consecuencia: Schema y persistencia comparten una sola autoridad.
+        falsificador: Cualquier enum o campo duplicado entre main-store/store.mjs y el schema.
+        clase: dependencias-o-evidencia-contradictorias
+        descartadas:
+          - opcion: Mantener una lista manual en el store.
+            razon: Fue la causa raíz del drift de seis campos.
+        contaminaba: [S5.1]
+      - tipo: resuelta
+        pregunta: ¿Qué vuelve inválido a un candidato congelado?
+        resolucion: Cualquier cambio en los bytes que produjeron su identidad invalida el candidato.
+        autoridad: floors de seguridad de d232fdf
+        evidencia: La inmutabilidad del candidato congelado exige identidad ligada al contenido.
+        checkpoint: antes de M5.1.1
+        opciones:
+          - opcion: Ligar candidate_revision a todos los bytes de identidad.
+            consecuencia: Todo cambio de contenido invalida la autorización previa.
+        falsificador: Dos contenidos distintos resuelven a la misma candidate_revision.
+        clase: seguridad-y-permisos
+        descartadas:
+          - opcion: Identidad mutable o parcial.
+            razon: Permitiría consumir contenido distinto bajo autorización previa.
+        contaminaba: [S5.1]
+      - tipo: resuelta
+        pregunta: ¿Cómo se comporta una operación repetida sobre el mismo candidato?
+        resolucion: Es idempotente por identidad de candidato y no produce un segundo efecto remoto.
+        autoridad: alcance declarado de S5.1
+        evidencia: El contrato de candidate_revision separa identidad y efecto remoto.
+        checkpoint: antes de M5.1.1
+        opciones:
+          - opcion: Idempotencia por candidate_revision.
+            consecuencia: Repetir una operación idéntica conserva un único efecto.
+        falsificador: Dos invocaciones idénticas generan dos efectos remotos.
+        clase: operaciones-irreversibles
+        descartadas:
+          - opcion: Repetición sin deduplicación.
+            razon: Duplicaría efectos irreversibles.
+        contaminaba: [S5.1]
+      - tipo: resuelta
+        pregunta: ¿Cuánto vive una autorización antes de expirar?
+        resolucion: Una hora; la expiración temporal complementa la invalidación por contenido.
+        autoridad: maintainer, 2026-08-03
+        evidencia: Cubre aprobación móvil y ejecución en minutos sin dejar aprobación armada toda la noche.
+        checkpoint: antes de M5.1.1
+        opciones:
+          - opcion: Expiración a una hora.
+            consecuencia: La ventana operativa queda acotada y verificable.
+        falsificador: Una autorización se consume más de una hora después de emitirse.
+        clase: seguridad-y-permisos
+        descartadas:
+          - opcion: Autorización sin expiración acotada.
+            razon: Dejaría aprobaciones vivas durante periodos no supervisados.
+        contaminaba: [S5.2, S5.5]
+      - tipo: resuelta
+        pregunta: ¿Un sucesor hereda la autorización de su predecesor?
+        resolucion: Hereda sólo hasta planning.horizon_ceiling y sólo si todas las Sesiones alcanzadas están selladas sin decisiones escala abiertas; el horizonte colapsa antes de la primera abierta.
+        autoridad: maintainer, 2026-08-03
+        evidencia: Horizonte y sello son garantías distintas; alcance sin sello autoriza contenido definido después.
+        checkpoint: antes de M5.1.2
+        opciones:
+          - opcion: Herencia acotada por horizonte y sello completo.
+            consecuencia: Sólo contenido ya determinado queda autorizado.
+        falsificador: Un sucesor con decisión escala abierta ejecuta bajo autorización heredada.
+        clase: seguridad-y-permisos
+        descartadas:
+          - opcion: Herencia por horizonte sin sello.
+            razon: Autorizaría contenido todavía no determinado.
+        contaminaba: [S5.3, S8.7]
+      - tipo: resuelta
+        pregunta: ¿Terminar una Jornada revoca activamente capabilities y autorizaciones vivas?
+        resolucion: No; incrementa jornada_revision y la invalidación ocurre pasivamente al revalidar antes de cada efecto irreversible, sin cascada ni garbage collector.
+        autoridad: maintainer, 2026-08-04
+        evidencia: Jornada persiste en S3.4 y S5.1 consume su revisión sin poseer lifecycle.
+        checkpoint: antes de M5.1.2
+        opciones:
+          - opcion: Invalidación pasiva por drift de jornada_revision.
+            consecuencia: Cada uso falla cerrado sin una segunda ruta de transición.
+        falsificador: Terminar Jornada muta capability o autorización, o un efecto irreversible omite revalidación.
+        clase: expansion-de-alcance; seguridad-y-permisos
+        descartadas:
+          - opcion: Revocación activa en cascada.
+            razon: Crearía una segunda ruta de mutación y trabajo fuera de alcance.
+        contaminaba: [S5.1]
+      - tipo: resuelta
+        pregunta: ¿Quién prueba la autoridad canónica de Main?
+        resolucion: plugin/tower-spike.js es el único composition root; recibe trustedBindingProvider, verifica main_session_id mediante main-store/authority.mjs y sólo entonces obtiene store y capability.
+        autoridad: maintainer, 2026-08-04 y 2026-08-05; main-store/authority.mjs
+        evidencia: El candidato rechazado 9e7bb43 leyó core.mjs mientras el test ocultó el acoplamiento con un mock.
+        checkpoint: antes de M5.1.3
+        opciones:
+          - opcion: Inyectar trustedBindingProvider en la plugin y verificar antes de obtener autoridad.
+            consecuencia: Main conserva una única prueba canónica y Support permanece aislado.
+        falsificador: Falta de provider llega a spawn o persistencia; se lee binding desde core.mjs; se acepta otra sesión; Support recibe autoridad; o registry concede autoridad.
+        clase: seguridad-y-permisos
+        descartadas:
+          - opcion: Crear un adaptador Main separado.
+            razon: Crearía una segunda noción de autoridad Main.
+          - opcion: Derivar autoridad del capability registry.
+            razon: El registry concede visibilidad y compatibilidad, no autoridad.
+          - opcion: Leer el binding desde core.mjs.
+            razon: Rompe la inyección y vuelve opaco el fallo real en tests.
+        contaminaba: [S5.1]
+    entrega:
+      commit: c7c247227f6bc888f9ff7ed48094a7aa92f9cc4c
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-5/STATUS.md
+      origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d
+      origen_encabezado: "## Sesión 5.1 — Change F candidate contracts"
+      territorio_pendiente: false
+    modulos:
+      - id: M5.1.1
+        resultado: Candidate revision y authorization store ligados a identidad congelada
+        rutas: [contracts/candidate-revision.mjs, contracts/schema-registry.mjs, contracts/validate.mjs, schemas/candidate-revision-v1.schema.json, main-store/store.mjs, test/contracts/schema.test.mjs, test/fixtures/contracts/schema-cases-v1.json, test/main-store.test.mjs]
+        tareas:
+          - id: T5.1.1.1
+            accion: "RED: verificar commit y árbol final, freeze de identidad y host_epoch, separación del ledger, invalidación, sucesor e idempotencia."
+            resultado: "RED: contratos de identidad, invalidación e idempotencia fijados antes de implementar."
+            criterios: ["Dos contenidos distintos no comparten candidate_revision y repetir un candidato no duplica efectos."]
+          - id: T5.1.1.2
+            accion: "GREEN: implementar candidate-revision-v1, su contrato, registro, invariantes y fixture, respetando la frontera del ledger."
+            resultado: "GREEN: candidate_revision queda validado y registrado por una sola ruta contractual."
+            criterios: ["Schema, registro, validación y fixture representan el contrato congelado."]
+          - id: T5.1.1.3
+            accion: "REFACTOR: unificar digests de identidad y evidencia y ejecutar tests de contracts y main-store."
+            resultado: "REFACTOR: identidad y evidencia no pueden divergir por caminos duplicados."
+            criterios: ["Los tests enfocados pasan tras unificar el digest."]
+      - id: M5.1.2
+        resultado: Derivación del siguiente Módulo y claim del Worker desde evidencia Main-owned
+        rutas: [continuation/derivation.mjs, main-store/store.mjs, test/continuation/derivation.test.mjs, test/main-store.test.mjs]
+        tareas:
+          - id: T5.1.2.1
+            accion: "RED: exigir plan sin cambios desde el cierre anterior y cumplimiento leído de ct_delivery/ct_claim en sólo lectura."
+            resultado: "RED: la derivación queda ligada al digest y al ledger, no a narrativa."
+            criterios: ["Sin digest vigente y cumplimiento del ledger no hay avance."]
+          - id: T5.1.2.2
+            accion: "RED: demostrar que memoria narrativa sin cumplimiento no avanza la derivación."
+            resultado: "RED: la memoria narrativa queda excluida como prueba de cierre."
+            criterios: ["Narrativa sin ledger conserva el cursor anterior."]
+          - id: T5.1.2.3
+            accion: "RED: probar claim coincidente sin privilegio y mismatch CT_CLAIM_MISMATCH sin assignment."
+            resultado: "RED: evidencia de claim y autoridad de assignment permanecen separadas."
+            criterios: ["Mismatch nombra ambos valores; match no concede privilegios."]
+          - id: T5.1.2.4
+            accion: "GREEN: traducir handoff_id a coordenada sólo en registros Main-owned y revalidar Jornada antes de efectos irreversibles."
+            resultado: "GREEN: la continuación deriva desde Main sin abrir core.mjs al plan."
+            criterios: ["Toda operación irreversible revalida Jornada ACTIVE y jornada_revision actual."]
+      - id: M5.1.3
+        resultado: Frontera aislada de Support y wiring canónico de Main
+        rutas: [.opencode/agent/support-agent.md, .opencode/plugins/tower-spike.js, bun.lock, continuation/support.mjs, main-store/store.mjs, package.json, plugin/tower-spike.js, test/continuation/support.test.mjs, test/main-store.test.mjs, test/plugin/tower-spike.test.mjs]
+        tareas:
+          - id: T5.1.3.1
+            accion: "RED: probar aislamiento de Support respecto de board, locks, Worker, registry, main_store, capability y autoridad."
+            resultado: "RED: testigos de bytes prueban no mutación en éxito y rechazo."
+            criterios: ["Support no ocupa territorio de ejecución ni recibe autoridad."]
+          - id: T5.1.3.2
+            accion: "RED: rechazar CT_HOST_CAPABILITY_MISSING cuando no existe subagente aislado, sin fallback en línea."
+            resultado: "RED: la ausencia de delegación no ejecuta Support dentro de Main."
+            criterios: ["No existe sustituto en línea para Support."]
+          - id: T5.1.3.3
+            accion: "RED/GREEN: inyectar trustedBindingProvider en la plugin, verificar Main antes de obtener store/capability y validar support-proposal-v1."
+            resultado: "RED/GREEN: la plugin es el único composition root de autoridad y persiste sólo respuestas validadas."
+            criterios: ["Provider o binding inválido falla antes de spawn/persistencia y Support nunca recibe autoridad."]
