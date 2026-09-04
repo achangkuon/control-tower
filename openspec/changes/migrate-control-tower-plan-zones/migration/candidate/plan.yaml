@@ -3593,3 +3593,129 @@ sesiones:
             accion: "REFACTOR: cerrar casos válidos/inválidos y correr bun test test/contracts sobre el registro real."
             resultado: "REFACTOR: fixtures y suite enfocada cubren el registro real."
             criterios: [Casos válidos e inválidos pasan por el registro real.]
+  - id: S5.8
+    resultado: Binding de opción seleccionada en la autoridad canónica
+    autoridad: responsabilidades aprobadas 3 y 4, decisión Option B del maintainer, y corrección de ruta Engram 10304
+    depende_de: [S5.7]
+    recurso: [authorization store de Main bajo assertMain y su mismo lock y transacción]
+    criterios:
+      - Sólo Main, por el authorization store canónico de S5.1, registra una respuesta seleccionada
+      - El registro parked-decision-response-v1 y la transición terminal de la autorización se persisten atómicamente bajo el mismo assertMain, lock y transacción
+      - La respuesta liga criptográficamente authorization_id, parked_decision_id, exactamente un option_id enumerado, snapshot/digest de Sesión y revisión
+      - La opción debe existir en la decisión estacionada validada; texto o assertions del caller no cuentan
+      - Autorización no PENDING, expirada, consumida o de origen distinto falla cerrado sin mutación
+      - Cada mismatch de binding falla cerrado y nombra el valor rechazado
+      - Replay exacto es idempotente y replay divergente produce cero efectos adicionales
+      - No existe segundo store, archivo sombra, segundo writer, método de autoridad ni persistencia fuera de main-store/store.mjs
+      - No existe semántica terminal sólo en extensions ni assertion del caller que sustituya el registro versionado
+      - S5.8 consume el schema de S5.7 sin modificar contracts, schemas, test/contracts ni fixtures
+      - MERGE y START_JORNADA existentes conservan compatibilidad sin migración
+      - S5.8 no implementa ledger, contaminación, selección independiente ni retoma de S5.5
+      - bun test test/main-store.test.mjs pasa completo contra el contrato registrado de S5.7 y bun test no introduce fallos nuevos
+      - El diff no toca ninguna ruta fuera del Área ni ninguna del Prohibido
+    decisiones:
+      - tipo: resuelta
+        resolucion: El registro explícito parked-decision-response-v1 se persiste atómicamente dentro del mismo main-store, lock y transacción que llevan la autorización a estado terminal, ligando authorization_id, parked_decision_id, exactamente un option_id enumerado, snapshot/digest de Sesión y revisión.
+        autoridad: decisión Option B del maintainer; responsabilidades aprobadas 3 y 4
+        falsificador: Observar sólo uno de los dos efectos persistidos, aceptar un option_id no enumerado, permitir replay divergente o escribir fuera de la transacción bajo assertMain.
+        descartadas:
+          - opcion: Assertion del caller
+            razon: No prueba selección ni autoridad canónica.
+          - opcion: Semántica sólo en extensions
+            razon: Dejaría la transición terminal fuera del store autoritativo.
+          - opcion: Archivo o store sombra
+            razon: Crearía un segundo writer y permitiría efectos parciales.
+        contaminaba: [S5.8, S5.5, S7.1]
+      - tipo: derivable
+        pregunta: ¿Dónde termina una respuesta seleccionada?
+        criterio: El registro explícito y la transición terminal ocurren dentro del authorization store de S5.1, bajo el mismo assertMain, lock y transacción; no existe método, archivo o store alternativo.
+        autoridad: Option B y floor de autoridad única de Main
+        evidencia: El authorization store canónico de S5.1 posee la transición y la persistencia terminal.
+        checkpoint: antes de M5.8.1
+        opciones:
+          - opcion: Persistir ambos efectos dentro de la misma transacción de Main.
+            consecuencia: La respuesta y la autorización terminal son atómicas y tienen un único owner.
+        falsificador: Persistencia terminal fuera de main-store/store.mjs o visibilidad de un solo efecto.
+        descartadas: []
+        contaminaba: [S5.8]
+      - tipo: derivable
+        pregunta: ¿Qué acepta el store como selección?
+        criterio: Un parked-decision-response-v1 validado cuyo binding coincide con autorización PENDING, parked_decision_id, snapshot y option_id enumerado; ningún booleano o assertion del caller.
+        autoridad: responsabilidad aprobada 3
+        evidencia: La responsabilidad aprobada exige binding exacto contra la decisión estacionada validada.
+        checkpoint: antes de M5.8.2
+        opciones:
+          - opcion: Aceptar sólo el registro versionado con todos los bindings coincidentes.
+            consecuencia: Cada mismatch falla cerrado antes de cualquier mutación.
+        falsificador: Aceptar mismatch individual de cualquier binding.
+        descartadas: []
+        contaminaba: [S5.8]
+      - tipo: derivable
+        pregunta: ¿Cómo responde un replay?
+        criterio: Replay byte-idéntico es idempotente; opción, digest, origen o revisión distintos fallan cerrado sin segunda transición.
+        autoridad: idempotencia existente de S5.1 y responsabilidad aprobada 3
+        evidencia: La transición terminal canónica ya exige una única mutación durable por autorización.
+        checkpoint: antes de M5.8.2
+        opciones:
+          - opcion: Converger sólo para replay byte-idéntico y rechazar cualquier divergencia.
+            consecuencia: Nunca existen dos efectos terminales para el mismo binding.
+        falsificador: Dos efectos terminales para el mismo binding.
+        descartadas: []
+        contaminaba: [S5.8]
+    entrega:
+      commit: 6bb7019c66cf60e9ac874f05a176f946f9bd4589
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-5/STATUS.md
+      origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d
+      origen_encabezado: "## Sesión 5.8 — Binding de opción seleccionada en la autoridad canónica"
+      territorio_pendiente: false
+    modulos:
+      - id: M5.8.1
+        resultado: Terminal response bajo Main
+        rutas: [main-store/store.mjs, test/main-store.test.mjs]
+        tareas:
+          - id: T5.8.1.1
+            accion: "RED: caller sin autoridad, authorization no PENDING, expirada o de origen distinto no registra respuesta ni muta bytes."
+            resultado: "RED: autoridad, estado y origen inválidos quedan rechazados sin mutación."
+            criterios: [Ninguna entrada no autorizada o no PENDING registra respuesta ni altera bytes.]
+          - id: T5.8.1.2
+            accion: "GREEN: extender el store canónico para validar y persistir la respuesta seleccionada bajo assertMain."
+            resultado: "GREEN: Main persiste la respuesta y transición terminal en una operación atómica."
+            criterios: [La respuesta seleccionada se valida y persiste bajo assertMain.]
+          - id: T5.8.1.3
+            accion: "REFACTOR: mantener una sola transición terminal y una sola validación contra schemas canónicos."
+            resultado: "REFACTOR: permanece un único owner, writer y camino terminal."
+            criterios: [No existe transición, validación o writer paralelo.]
+      - id: M5.8.2
+        resultado: Binding criptográfico e idempotencia
+        rutas: [main-store/store.mjs, test/main-store.test.mjs]
+        tareas:
+          - id: T5.8.2.1
+            accion: "RED: mismatch de decisión, opción, snapshot, autorización o revisión falla cerrado nombrando el binding rechazado."
+            resultado: "RED: cada binding divergente queda cubierto antes de implementación."
+            criterios: [Cada mismatch falla cerrado y nombra el valor rechazado.]
+          - id: T5.8.2.2
+            accion: "RED: replay exacto es idempotente; replay con otra opción o bytes produce cero efectos adicionales."
+            resultado: "RED: convergencia exacta y rechazo divergente quedan fijados."
+            criterios: [Replay exacto converge y replay divergente no produce efectos adicionales.]
+          - id: T5.8.2.3
+            accion: "GREEN/REFACTOR: ligar la respuesta terminal al digest canónico y al registro de autorización sin aceptar assertions del caller, y eliminar todo binding duplicado."
+            resultado: "GREEN/REFACTOR: el binding canónico es único y no acepta autoafirmación del caller."
+            criterios: [La respuesta queda ligada al digest y autorización canónicos sin bindings duplicados.]
+      - id: M5.8.3
+        resultado: Compatibilidad y owner único del authorization store
+        rutas: [main-store/store.mjs, test/main-store.test.mjs]
+        tareas:
+          - id: T5.8.3.1
+            accion: "RED: autorizaciones MERGE/START_JORNADA existentes conservan validación y transiciones sin respuesta estacionada."
+            resultado: "RED: la compatibilidad previa queda protegida."
+            criterios: [MERGE y START_JORNADA preservan su contrato sin migración.]
+          - id: T5.8.3.2
+            accion: "GREEN: consumir parked-decision-response-v1 desde S5.7 sin modificar schema, registro, invariantes ni fixtures, y sin migrar registros previos."
+            resultado: "GREEN: el store consume el contrato registrado sin alterar su autoridad ni formato."
+            criterios: [El schema de S5.7 se consume sin cambios ni migración.]
+          - id: T5.8.3.3
+            accion: "REFACTOR: ejecutar el main-store contra el contrato registrado y verificar ausencia de shadow store, segundo writer, authority o ruta de caller assertion."
+            resultado: "REFACTOR: el authorization store conserva owner y writer únicos."
+            criterios: [No existe store sombra, segundo writer, authority paralela ni caller assertion.]
