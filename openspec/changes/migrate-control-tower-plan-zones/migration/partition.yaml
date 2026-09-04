@@ -12,6 +12,10 @@ candidate_base:
 policy:
   match_forms: [directory-prefix, exact-file]
   broad_cimientos_allowed: false
+  future_exact_routes: >-
+    An otherwise unused exact Zone route is explained only by an open Session whose
+    Module declares that identical safe file path in the same Zone. Patterns,
+    directories, Cimientos, terminal Sessions, and mismatched Zones remain unused.
   required_results:
     orphaned_files: 0
     overlaps: 0
@@ -33,6 +37,8 @@ zonas:
       - test/extensions/
       - test/plugin/
       - test/host-adapters.test.mjs
+      - scripts/host-compatibility/opencode.mjs
+      - test/compat/opencode-runtime.test.mjs
   - id: entrega
     nombre: Entrega
     rutas:

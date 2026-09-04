@@ -145,6 +145,29 @@ func (p *Plan) VerificarParticionAt(root, head string) ([]Hallazgo, error) {
 	huerfanos := []string{}
 	solapes := map[string][]Owner{}
 	usadas := map[string]bool{}
+	for _, s := range p.Sesiones {
+		if s.Entrega != nil || s.Archivada || s.Zona == "" || s.Zona == "cimientos" {
+			continue
+		}
+		for _, m := range s.Modulos {
+			for _, ruta := range m.Rutas {
+				normalizada, err := exactRepoFile(root, ruta)
+				if err != nil {
+					continue
+				}
+				for _, z := range p.Zonas {
+					if z.ID != s.Zona {
+						continue
+					}
+					for _, regla := range z.Rutas {
+						if !esRutaAmplia(regla) && regla == normalizada {
+							usadas["zona:"+z.ID+":"+regla] = true
+						}
+					}
+				}
+			}
+		}
+	}
 
 	for _, f := range files {
 		own := p.owners(f)
