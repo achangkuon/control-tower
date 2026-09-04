@@ -1500,3 +1500,145 @@ sesiones:
             accion: "REFACTOR: registros nuevos declaran compatibilidad 0.8, los v1 legados siguen fail-closed y no existe segunda ruta de wiring."
             resultado: "REFACTOR: registros nuevos declaran compatibilidad 0.8, los v1 legados siguen fail-closed y no existe segunda ruta de wiring."
             criterios: ["REFACTOR: registros nuevos declaran compatibilidad 0.8, los v1 legados siguen fail-closed y no existe segunda ruta de wiring."]
+  - id: S4.5
+    resultado: Raíz primaria Main-owned con vista adjunta
+    autoridad: decisiones 37-39; Engram 9040, 9042 y 9043; decisión local de paternidad por construcción; decisión 42 / Engram 9079
+    depende_de: [S4.2]
+    recurso: [namespace owner-only de backend, proceso, puerto loopback, secreto y binding de raíz por worktree asignado, vista TUI local]
+    criterios:
+      - Main persiste exactamente una raíz primaria gentle-orchestrator por assignment/worktree, ligada a backend, proceso, sesión y epoch exactos.
+      - Cada worktree asignado usa un backend Main-owned aislado con proceso, puerto loopback, secreto, root binding y evidencia propios; ninguna identidad se comparte entre worktrees.
+      - Hijos nativos allowlisted conservan delegación pero ningún child ID reemplaza el root binding.
+      - Main abre automáticamente, después de crear backend/raíz, un pane Herdr que ejecuta opencode attach sobre el root ID exacto.
+      - Steering TUI no autoriza despacho, entrega, seguridad, identidad ni transición Main; el pane no es la raíz e Intercom no es transporte.
+      - Cerrar/fallar Herdr o la TUI no detiene, reemplaza ni invalida backend, raíz o epoch.
+      - El operador siempre puede adjuntar manualmente opencode attach al root exacto cuando falla el launcher visible.
+      - Herdr no integra el launch de backend/root ni health, stop, rehidratación o recovery críticos; el launcher directo Main-owned queda diferido como reemplazo compatible.
+      - Binding ausente/ambiguo/ajeno falla cerrado y el diff no toca paths fuera del Área, ampliada exclusivamente por la decisión 42 a los dos fixtures de payload/runtime instalado.
+    decisiones:
+      - tipo: resuelta
+        pregunta: ¿Quién posee el backend y la raíz y qué autoridad tiene la TUI adjunta?
+        resolucion: Main posee un backend OpenCode y una raíz primaria gentle-orchestrator durable por worktree; la TUI adjunta permite steering local pero no autoriza ni condiciona lifecycle.
+        autoridad: decisión 37 / Engram 9040
+        clase: contrato-visible-del-producto; seguridad-y-permisos; expansion-de-alcance; dependencias-o-evidencia-contradictorias
+        falsificador: Una TUI autoriza una transición Main, o cerrar o romper la vista detiene, reemplaza o invalida la raíz.
+        descartadas:
+          - opcion: Mantener la custodia crítica de ejecución en Herdr.
+            razon: La vista debe ser degradable y reemplazable sin afectar backend, raíz ni epoch.
+        contaminaba: [S4.5, S4.3, S4.4, S7.1]
+      - tipo: derivable
+        pregunta: ¿Qué identidad puede ocupar el binding de raíz primaria?
+        criterio: Sólo gentle-orchestrator sin paternidad, probado por la creación Main-owned y el readback exacto del agente, ocupa el binding; un child ID nunca lo reemplaza.
+        autoridad: decisión 37 y decisión local de paternidad por construcción
+        evidencia: STATUS inmutable líneas 273-298; OpenCode no reporta parentID en una raíz creada y Main conserva la causalidad de esa creación.
+        checkpoint: antes de M4.5.1 y M4.5.2
+        opciones:
+          - opcion: Acuñar identidad sólo para la sesión recién creada por Main y verificar el agente por readback.
+            consecuencia: La ausencia de parentID no se acepta como prueba desde ningún origen ajeno.
+      - tipo: derivable
+        pregunta: ¿Cómo se conserva la independencia de la vista?
+        criterio: Attach usa el root ID persistido; input TUI es steering y cierre o fallo no altera backend, root ni epoch.
+        autoridad: decisión 37 / Engram 9040
+        evidencia: Contrato inmutable S4.5 líneas 244-260.
+        checkpoint: antes de M4.5.3
+        opciones:
+          - opcion: Derivar el attach del binding persistido y tratar la vista como degradable.
+            consecuencia: La vista no obtiene autoridad ni controla lifecycle.
+      - tipo: resuelta
+        pregunta: ¿El backend es por worktree o compartido entre worktrees?
+        resolucion: Cada worktree asignado tiene un backend Main-owned aislado con proceso, puerto loopback, secreto, root binding y evidencia propios.
+        autoridad: decisión 38 / Engram 9042
+        clase: contrato-visible-del-producto; seguridad-y-permisos
+        falsificador: Dos worktrees comparten cualquiera de esas identidades o un fallo de uno afecta al otro.
+        descartadas:
+          - opcion: Backend compartido entre worktrees.
+            razon: Aumenta la complejidad de fencing y el blast radius cross-worktree.
+        contaminaba: [M4.5.2, S4.5, S4.3, S4.4, S7.1]
+      - tipo: resuelta
+        pregunta: ¿La vista usa launcher directo Main-owned o Herdr temporal view-only?
+        resolucion: Main crea primero backend y raíz; Herdr abre después un pane opencode attach sobre el root exacto, sin autoridad ni efecto de lifecycle, con attach manual obligatorio.
+        autoridad: decisión 39 / Engram 9043
+        clase: contrato-visible-del-producto; seguridad-y-permisos; dependencias-o-evidencia-contradictorias
+        falsificador: El pane es raíz o transporte, Intercom integra el camino, una entrada autoriza Main, close o fallo altera backend, root o epoch, o falta fallback manual.
+        descartadas:
+          - opcion: Launcher directo Main-owned inmediato.
+            razon: Se difiere como reemplazo compatible para evitar agregar ahora lifecycle específico de terminal.
+        contaminaba: [M4.5.3, S4.5, S7.1]
+      - tipo: resuelta
+        pregunta: ¿Cómo se prueba la paternidad de la raíz cuando OpenCode no reporta parentID?
+        resolucion: Main prueba por construcción que la identidad corresponde sólo a la sesión recién creada; reasserta el schema vivo parentless y verifica el agente por readback exacto.
+        autoridad: decisión A local del maintainer registrada en S4.5 líneas 290-298
+        clase: seguridad-y-permisos; dependencias-o-evidencia-contradictorias
+        falsificador: Una sesión consultada o un objeto fabricado se acepta como raíz, el schema permite padre, o el agente no coincide en readback.
+        descartadas:
+          - opcion: Aceptar ausencia de parentID como prueba desde cualquier respuesta.
+            razon: Permitiría inferir paternidad desde un origen no causal.
+          - opcion: Probar paternidad positivamente mediante API.
+            razon: OpenCode 1.18.18 no ofrece ese mecanismo y enumerar sesiones conserva carrera e inferencia por ausencia.
+        contaminaba: [M4.5.2, M4.5.3, S4.5]
+      - tipo: resuelta
+        pregunta: ¿Se amplía el Área para los fixtures obligatorios del payload instalado?
+        resolucion: El Área se amplía retroactiva y exclusivamente a test/install/entrypoint-resolution.test.mjs y test/install/launch-worker-cli.test.mjs.
+        autoridad: decisión 42 / Engram 9079
+        clase: expansion-de-alcance; dependencias-o-evidencia-contradictorias
+        falsificador: Se toca otro path por esta excepción o se omite uno de los dos fixtures obligatorios.
+        descartadas:
+          - opcion: Mantener el Área anterior y cerrar con paths externos.
+            razon: Contradiría el criterio binario de territorio.
+        contaminaba: [S4.5, S4.3, S4.4, S7.1]
+    entrega: {commit: 8fac8b302f4e2da293e67dcf181ee70a95fb8aaa}
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-4/STATUS.md
+      origen_blob: eec8b401c2f55b05cec419c101ecb462b4e4afe3
+      origen_encabezado: "## Sesión 4.5 — Raíz primaria Main-owned con vista adjunta"
+      territorio_pendiente: false
+    modulos:
+      - id: M4.5.1
+        resultado: Binding durable de raíz primaria
+        rutas: [hosts/root-binding.mjs, hosts/root-identity.mjs, test/hosts/root-binding.test.mjs, test/hosts/root-identity.test.mjs]
+        tareas:
+          - id: T4.5.1.1
+            accion: "RED: rechazar binding ambiguo/ajeno, rol no primary y child ID como raíz."
+            resultado: "RED: rechazar binding ambiguo/ajeno, rol no primary y child ID como raíz."
+            criterios: ["RED: rechazar binding ambiguo/ajeno, rol no primary y child ID como raíz."]
+          - id: T4.5.1.2
+            accion: "GREEN: persistir/readback exacto de assignment, worktree, backend, proceso, root session, agente y epoch."
+            resultado: "GREEN: persistir/readback exacto de assignment, worktree, backend, proceso, root session, agente y epoch."
+            criterios: ["GREEN: persistir/readback exacto de assignment, worktree, backend, proceso, root session, agente y epoch."]
+          - id: T4.5.1.3
+            accion: "REFACTOR: aislar validación primary/child y cleanup owner-only sin autoridad caller."
+            resultado: "REFACTOR: aislar validación primary/child y cleanup owner-only sin autoridad caller."
+            criterios: ["REFACTOR: aislar validación primary/child y cleanup owner-only sin autoridad caller."]
+      - id: M4.5.2
+        resultado: Backend OpenCode Main-owned por worktree
+        rutas: [hosts/opencode-server.mjs, hosts/production-provider.mjs, main-store/launch-consumer.mjs, test/hosts/opencode-server.test.mjs, test/hosts/production-provider.test.mjs]
+        tareas:
+          - id: T4.5.2.1
+            accion: "RED: rechazar proceso, puerto, secreto o root binding compartidos/ajenos y probar que la muerte de una vista no mata el backend."
+            resultado: "RED: rechazar proceso, puerto, secreto o root binding compartidos/ajenos y probar que la muerte de una vista no mata el backend."
+            criterios: ["RED: rechazar proceso, puerto, secreto o root binding compartidos/ajenos y probar que la muerte de una vista no mata el backend."]
+          - id: T4.5.2.2
+            accion: "GREEN: lanzar desde Main un backend por worktree con loopback, secreto, evidencia y raíz primary exactos."
+            resultado: "GREEN: lanzar desde Main un backend por worktree con loopback, secreto, evidencia y raíz primary exactos."
+            criterios: ["GREEN: lanzar desde Main un backend por worktree con loopback, secreto, evidencia y raíz primary exactos."]
+          - id: T4.5.2.3
+            accion: "REFACTOR: aislar lifecycle/cleanup por worktree y separar backend/root de cualquier launcher visible."
+            resultado: "REFACTOR: aislar lifecycle/cleanup por worktree y separar backend/root de cualquier launcher visible."
+            criterios: ["REFACTOR: aislar lifecycle/cleanup por worktree y separar backend/root de cualquier launcher visible."]
+      - id: M4.5.3
+        resultado: Herdr temporal como vista TUI no autoritativa
+        rutas: [hosts/opencode-view.mjs, hosts/herdr.mjs, install/lifecycle.mjs, install/runtime-payload.mjs, test/hosts/opencode-view.test.mjs, test/hosts/herdr.test.mjs, test/install/lifecycle.test.mjs, test/install/runtime-payload.test.mjs]
+        tareas:
+          - id: T4.5.3.1
+            accion: "RED: rechazar pane/root ajeno, autoridad desde view o Intercom, lifecycle acoplado y ausencia de fallback manual."
+            resultado: "RED: rechazar pane/root ajeno, autoridad desde view o Intercom, lifecycle acoplado y ausencia de fallback manual."
+            criterios: ["RED: rechazar pane/root ajeno, autoridad desde view o Intercom, lifecycle acoplado y ausencia de fallback manual."]
+          - id: T4.5.3.2
+            accion: "GREEN: tras backend/root Main-owned, abrir Herdr con opencode attach al root exacto y exponer el comando manual equivalente."
+            resultado: "GREEN: tras backend/root Main-owned, abrir Herdr con opencode attach al root exacto y exponer el comando manual equivalente."
+            criterios: ["GREEN: tras backend/root Main-owned, abrir Herdr con opencode attach al root exacto y exponer el comando manual equivalente."]
+          - id: T4.5.3.3
+            accion: "REFACTOR: aislar el adapter Herdr reemplazable fuera de launch/health/stop/rehidratación/recovery críticos."
+            resultado: "REFACTOR: aislar el adapter Herdr reemplazable fuera de launch/health/stop/rehidratación/recovery críticos."
+            criterios: ["REFACTOR: aislar el adapter Herdr reemplazable fuera de launch/health/stop/rehidratación/recovery críticos."]
