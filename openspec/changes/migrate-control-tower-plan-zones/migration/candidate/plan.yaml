@@ -450,3 +450,86 @@ sesiones:
             accion: Remove wire-format knowledge outside the adapter without changing the authority boundary.
             resultado: The adapter remains private and host-neutral boundaries remain intact.
             criterios: [No runtime, public wire, Pi, or Intercom surface changes and focused and complete verification pass.]
+  - id: S1.18
+    zona: hosts
+    resultado: Adapter Pi/Intercom y reporte terminal asíncrono
+    autoridad: decisions 80, 83, 84, 86, 104, and 105; Engram observations 10008, 10019, 10020, and 10028
+    depende_de: [S1.17]
+    recurso: ["procesos Pi Tower-spawned, conexión Intercom del supervisor y namespace de dispatch_id"]
+    criterios:
+      - launch/observe/health/stop/attach implement the neutral port and the injected seam crosses Tower-owned PID/cwd; nonce and endpointEpoch prove attach.
+      - Every assignment emitted by Main carries a stable dispatch_id; the adapter returns after send acknowledgment and never awaits ordinary Support or worker work.
+      - send transports progress and closure; ask is used only for a true human decision and produces recoverable BLOCKED, never progress polling.
+      - Every dispatch_id produces exactly one terminal COMPLETED, BLOCKED, or FAILED; COMPLETED includes evidence references, changed paths, and tests, while BLOCKED/FAILED include reason and recoverability.
+      - ON preserves Tower-owned binding, persistence, acknowledgment, and retry; OFF does not fabricate that guarantee and uses only maintainer-approved live peers.
+      - IDs are random, foreign processes are never adopted, Pi and Intercom are unchanged, and the diff stays within the declared Area.
+    decisiones:
+      - tipo: resuelta
+        resolucion: Pi Intercom is the normal Main-to-Support-to-worker transport and never grants authority; Tower ON uses Tower-owned binding, persistence, acknowledgment, and retry, while Tower OFF uses only maintainer-approved live peers and preserves Main and human authority.
+        autoridad: decision 104 and Engram observation 10008
+        falsificador: An Intercom message creates authority or an ON send lacks binding, acknowledgment, or retry.
+        descartadas:
+          - opcion: Intercom grants authority
+            razon: Intercom is transport only and cannot grant assignment, role, permissions, or human authority.
+        contaminaba: [S1.18]
+      - tipo: derivable
+        pregunta: What internal terminal report shape follows from the approved dispatch contract?
+        criterio: Every assignment binds one unique dispatch_id and terminates exactly once as COMPLETED, BLOCKED, or FAILED with a causal reference and state-appropriate evidence or recoverability.
+        autoridad: decision 104 and immutable S1.18 STATUS lines 346-397
+        evidencia: The approved dispatch_id and single-terminal contract in immutable S1.18 STATUS lines 346-397.
+        checkpoint: before dispatch and terminal reporting
+        opciones:
+          - opcion: Emit one causally referenced terminal report for the unique dispatch_id.
+            consecuencia: COMPLETED carries evidence references, changed paths, and tests; BLOCKED or FAILED carries reason and recoverability, and no second successful terminal is delivered.
+      - tipo: resuelta
+        resolucion: Preserve one Session and deliver remediation as two sequential direct commits, first lifecycle plus acknowledged dispatch and then retryable terminal delivery plus immutable decision snapshot.
+        autoridad: decision 105, Engram observations 10019 and 10020, and immutable S1.18 STATUS lines 346-397
+        falsificador: Ownership is validated after stop; successful disappearance after stop is treated as failure; the only terminal is lost after delivery failure; more than one terminal is delivered successfully; or a decision request mutates across an await.
+        descartadas:
+          - opcion: Repair the original one-397-line candidate as one commit.
+            razon: The candidate was already 397 of 400 authored lines and the verified lifecycle, terminal retry, and immutable-snapshot defects could not be corrected honestly without code-golf.
+        contaminaba: [S1.18]
+    ruta:
+      propuesta: direct
+      autoridad: decision 105, Engram observation 10020, and immutable S1.18 STATUS lines 346-397
+    entrega:
+      commit: 2cd64c4a32e178c88632348696353c2dd8654c56
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-1/STATUS.md
+      origen_blob: 955820c97257921571cb3d2ac0122929586a2fae
+      origen_encabezado: "## Sesión S1.18 — Adapter Pi/Intercom y reporte terminal asíncrono"
+      territorio_pendiente: false
+    modulos:
+      - id: M1.18.1
+        resultado: Lifecycle y dispatch reconocido
+        rutas: [adapters/pi/runtime.mjs, test/adapters/pi/runtime.test.mjs]
+        tareas:
+          - id: T1.18.1.1
+            accion: Falsify lifecycle, foreign process, divergent /proc, stale nonce or epoch attach, wrong broker, invalid stop ownership, successful disappearance treated as failure, missing or duplicate dispatch_id, blocking acknowledgment, and ON/OFF differences.
+            resultado: Lifecycle and acknowledged-dispatch failures are captured before implementation.
+            criterios: [The exact lifecycle, ownership, attach, dispatch identity, acknowledgment, and ON/OFF RED cases fail before implementation.]
+          - id: T1.18.1.2
+            accion: Implement launch/observe/health/stop/attach, validate ownership before stop, preserve successful disappearance after stop, and dispatch with a stable dispatch_id plus non-blocking acknowledgment in ON and OFF.
+            resultado: Guarded lifecycle and acknowledged dispatch satisfy the approved neutral adapter contract.
+            criterios: [Ownership is checked before stop, successful disappearance remains success, and every dispatch is acknowledged without awaiting ordinary work.]
+          - id: T1.18.1.3
+            accion: Encapsulate lifecycle and the external protocol, isolate foreign processes, and verify attach, dispatch, and acknowledgment boundaries without implementing retryable terminality early.
+            resultado: The first direct commit is independently verifiable and revertible.
+            criterios: [Focused verification passes over only the two Area paths and the first commit remains at or below 400 authored lines.]
+      - id: M1.18.2
+        resultado: Entrega terminal retryable y decisiones inmutables
+        rutas: [adapters/pi/runtime.mjs, test/adapters/pi/runtime.test.mjs]
+        tareas:
+          - id: T1.18.2.1
+            accion: Cover concurrent terminal deliveries, first-send failure, later retry, duplicate after successful delivery, and mutation of a decision request while an operation awaits.
+            resultado: Retryability, exactly-one successful terminal delivery, and immutable decision evidence are captured before implementation.
+            criterios: [The exact concurrency, failure, retry, duplicate, and mutation RED cases fail before implementation.]
+          - id: T1.18.2.2
+            accion: Reserve concurrent terminal delivery, commit terminal state only after successful delivery, release the reservation after failure for retry, and deep-copy and freeze the decision request before any await.
+            resultado: One terminal is delivered successfully per dispatch_id and decision evidence remains immutable.
+            criterios: [Failed delivery remains retryable, only the first successful terminal commits, and caller mutation cannot cross the await boundary.]
+          - id: T1.18.2.3
+            accion: Concentrate terminal reservation, release, and commit behavior and encapsulate immutable decision snapshots without mixing send and ask.
+            resultado: The second direct commit is independently verifiable and revertible.
+            criterios: [Focused and full verification pass over only the two Area paths and the second commit remains at or below 400 authored lines.]
