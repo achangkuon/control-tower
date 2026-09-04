@@ -1,0 +1,71 @@
+schema_version: 1
+legacy_plan: 2
+source_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+source_path: openspec/plans/plan-2/STATUS.md
+source_blob: 9c6dbfd096d3fde475dd966da578cfcd577f0908
+complete: false
+session_count: 2
+sessions:
+  - legacy_session_id: S2.9
+    source_line: 34
+    source_heading: "## Sesión 2.9 — Enrollment público canónico por CLI"
+    provenance_classification: target
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-2/STATUS.md
+      origen_blob: 9c6dbfd096d3fde475dd966da578cfcd577f0908
+      origen_encabezado: "## Sesión 2.9 — Enrollment público canónico por CLI"
+      territorio_pendiente: false
+    stable_ids:
+      modules: [M2.9.1]
+      tasks: [T2.9.1.1, T2.9.1.2, T2.9.1.3]
+    source_contract:
+      scope: "bin/torre, enroll/index.mjs, test/console/cli.test.mjs, and test/enroll/enroll.test.mjs"
+      dependencies: []
+      authority: "decision 104, Engram 10008, and delivered S8.3 contract"
+      decisions: "Resolved escalation fixes torre enroll as the public API; argument translation is derivable without duplicating enrollProject."
+      criteria: "Five unchecked criteria cover canonical enrollment, convergence/failure, activation separation, no runtime mutation, and exact area."
+      route: direct
+      delivery: unresolved
+      outstanding_work: "All M2.9.1 tasks and Session criteria remain open."
+    field_mapping:
+      target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work]
+      derived_comparison: [status, area, progress, queue]
+      approved_replacement_authority: [public enrollment resolution]
+      superseded: []
+      archive_only: [forecast and legacy Plan summary narrative]
+    compatibility_reason: "Proven imported dotted hierarchy; territory is known and no pending-territory exception is used."
+  - legacy_session_id: S2.10
+    source_line: 66
+    source_heading: "## Sesión 2.10 — Enrollment desde el menú central"
+    provenance_classification: target
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-2/STATUS.md
+      origen_blob: 9c6dbfd096d3fde475dd966da578cfcd577f0908
+      origen_encabezado: "## Sesión 2.10 — Enrollment desde el menú central"
+      territorio_pendiente: true
+    stable_ids:
+      modules: [M2.10.1]
+      tasks: []
+    source_contract:
+      scope: "Territory intentionally absent until the real central-menu renderer/handler repository and paths are proven."
+      dependencies: [S2.9]
+      authority: "decision 104 and Engram 10008"
+      decisions: "Unresolved escala asks which repository/path owns the renderer and how it delegates to torre enroll; evidence is the approved screenshot without a located renderer; options are locate the owner, declare an external owner, or do nothing; class is contradictory evidence plus scope expansion; checkpoint is before RED; reaches criteria and first Module."
+      criteria: "Four unchecked criteria require proven owner/paths, delegation without duplicated logic, coherent outcomes without activation, and exact approved territory."
+      route: absent
+      delivery: unresolved
+      outstanding_work: "Blocked before RED; tasks are deliberately not enumerated until territory is proven."
+    field_mapping:
+      target: [dependencies, authority, decisions, criteria, stable_ids, outstanding_work]
+      derived_comparison: [status, area, progress, queue, ownership, capacity]
+      approved_replacement_authority: [menu integration product decision]
+      superseded: [legacy blocked route label]
+      archive_only: [forecast and unresolved-owner prose]
+    compatibility_reason: "Proven imported dotted hierarchy with approved territory-pending compatibility; no Zone, path, route, Cimiento, owner, queue, seat, or capacity is authored."
+    blocking_escalation_reach: [criterios, primer-modulo]
+continuation:
+  next_legacy_session_id: S2.8
+  next_source_line: 101
+  reason: "C03.1 stops at the last complete Session row below the 400-authored-line review cap."

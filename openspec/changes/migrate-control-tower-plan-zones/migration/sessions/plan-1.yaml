@@ -1,0 +1,299 @@
+schema_version: 1
+legacy_plan: 1
+source_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+source_path: openspec/plans/plan-1/STATUS.md
+source_blob: 955820c97257921571cb3d2ac0122929586a2fae
+complete: true
+session_count: 10
+sessions:
+  - legacy_session_id: S1.11
+    source_line: 66
+    source_heading: "## Sesión S1.11 — Reconciliación independiente legacy P7"
+    provenance_classification: target
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-1/STATUS.md
+      origen_blob: 955820c97257921571cb3d2ac0122929586a2fae
+      origen_encabezado: "## Sesión S1.11 — Reconciliación independiente legacy P7"
+      territorio_pendiente: false
+    stable_ids:
+      modules: [M1.11.1]
+      tasks: [T1.11.1.1, T1.11.1.2, T1.11.1.3]
+    source_contract:
+      scope: "openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md and bounded-gate amendments"
+      dependencies: [S1.9, S1.10]
+      authority: openspec/changes/p7-p8-integrated-reconciliation/tasks.md
+      decisions: "Gate approval was an escala resolved by the maintainer; it contaminated S1.13-S1.16."
+      criteria: "Canonical criteria and tasks remain in the referenced approved tasks contract."
+      route: direct
+      delivery: "a1dce22, published with ancestor proof at 3db3c121d48a07d7696afe6a88de044f30ea4695"
+      outstanding_work: none
+    field_mapping:
+      target: [scope, dependencies, authority, decisions, criteria, route, stable_ids]
+      derived_comparison: [status, area, progress, queue]
+      approved_replacement_authority: []
+      superseded: []
+      archive_only: [historical execution prose]
+    compatibility_reason: "Proven imported dotted hierarchy; territory is known and no pending-territory exception is used."
+  - legacy_session_id: S1.12
+    source_line: 81
+    source_heading: "## Sesión S1.12 — Reconciliación independiente P8"
+    provenance_classification: target
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-1/STATUS.md
+      origen_blob: 955820c97257921571cb3d2ac0122929586a2fae
+      origen_encabezado: "## Sesión S1.12 — Reconciliación independiente P8"
+      territorio_pendiente: false
+    stable_ids:
+      modules: [M1.12.1]
+      tasks: [T1.12.1.1, T1.12.1.2, T1.12.1.3, T1.12.1.4, T1.12.1.5, T1.12.1.6, T1.12.1.7]
+    source_contract:
+      scope: "P8 reconciliation record, P8 STATUS, and persistence receipt"
+      dependencies: [S1.11]
+      authority: openspec/changes/p7-p8-integrated-reconciliation/tasks.md
+      decisions: "P8 gate approval was an escala resolved by candidate receipt, ArtifactRef, and hash checks."
+      criteria: "Canonical criteria and tasks remain in the referenced approved tasks contract."
+      route: direct
+      delivery: "5823ed6 integrated at 6bb7019c66cf60e9ac874f05a176f946f9bd4589"
+      outstanding_work: none
+    field_mapping:
+      target: [scope, dependencies, authority, decisions, criteria, route, stable_ids]
+      derived_comparison: [status, area, progress, queue]
+      approved_replacement_authority: []
+      superseded: [historical claim that S1.17 remained blocked]
+      archive_only: [historical execution prose]
+    compatibility_reason: "Proven imported dotted hierarchy; territory is known and no pending-territory exception is used."
+  - legacy_session_id: S1.13
+    source_line: 127
+    source_heading: "## Sesión S1.13 — Root lifecycle e invalidación sincrónica"
+    provenance_classification: target
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-1/STATUS.md
+      origen_blob: 955820c97257921571cb3d2ac0122929586a2fae
+      origen_encabezado: "## Sesión S1.13 — Root lifecycle e invalidación sincrónica"
+      territorio_pendiente: false
+    stable_ids:
+      modules: [M1.13.1]
+      tasks: [T1.13.1.1, T1.13.1.2, T1.13.1.3, T1.13.1.4, T1.13.1.5]
+    source_contract:
+      scope: "host/loop.mjs and test/polling.test.mjs"
+      dependencies: [S1.12]
+      authority: openspec/changes/p7-host-neutral-loop-opencode-adapter/tasks.md
+      decisions: "No open decision; the bounded frontier was approved in S1.11."
+      criteria: "Canonical task contract preserves RED through verification; exact closure evidence is source evidence."
+      route: direct
+      delivery: "2bbeddb implementation integrated and verified at 794611f925f4fd2cb0de0b69cfdf2798d011543d"
+      outstanding_work: none
+    field_mapping:
+      target: [scope, dependencies, authority, decisions, criteria, route, stable_ids]
+      derived_comparison: [status, area, progress, queue]
+      approved_replacement_authority: []
+      superseded: []
+      archive_only: [test counts, authored-line receipt, rollback narrative]
+    compatibility_reason: "Proven imported dotted hierarchy; territory is known and no pending-territory exception is used."
+  - legacy_session_id: S1.14
+    source_line: 151
+    source_heading: "## Sesión S1.14 — Polling y wake safety"
+    provenance_classification: target
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-1/STATUS.md
+      origen_blob: 955820c97257921571cb3d2ac0122929586a2fae
+      origen_encabezado: "## Sesión S1.14 — Polling y wake safety"
+      territorio_pendiente: false
+    stable_ids:
+      modules: [M1.14.1]
+      tasks: [T1.14.1.1, T1.14.1.2, T1.14.1.3, T1.14.1.4, T1.14.1.5]
+    source_contract:
+      scope: "host/loop.mjs and test/polling.test.mjs"
+      dependencies: [S1.13]
+      authority: openspec/changes/p7-host-neutral-loop-opencode-adapter/tasks.md
+      decisions: "No open decision; polling, wake serialization, retries, and preservation were already approved."
+      criteria: "Eight checked binary criteria cover throttle, fresh peek, one wake, retries, settle, tests, runtime boundary, and rollback."
+      route: direct
+      delivery: "Integrated and verified at 9886af9ee289d78a35b404b06351f930ecb43309"
+      outstanding_work: none
+    field_mapping:
+      target: [scope, dependencies, authority, decisions, criteria, route, stable_ids]
+      derived_comparison: [status, area, progress, queue]
+      approved_replacement_authority: []
+      superseded: []
+      archive_only: [test counts, authored-line receipt, unavailable review tooling, rollback narrative]
+    compatibility_reason: "Proven imported dotted hierarchy; territory is known and no pending-territory exception is used."
+  - legacy_session_id: S1.15
+    source_line: 187
+    source_heading: "## Sesión S1.15 — Conformidad lifecycle OpenCode"
+    provenance_classification: target
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-1/STATUS.md
+      origen_blob: 955820c97257921571cb3d2ac0122929586a2fae
+      origen_encabezado: "## Sesión S1.15 — Conformidad lifecycle OpenCode"
+      territorio_pendiente: false
+    stable_ids:
+      modules: [M1.15.1]
+      tasks: [T1.15.1.1, T1.15.1.2, T1.15.1.3, T1.15.1.4, T1.15.1.5]
+    source_contract:
+      scope: "plugin/tower-spike.js, test/helpers/host-adapter-conformance.mjs, and test/host-adapters.test.mjs"
+      dependencies: [S1.14]
+      authority: openspec/changes/p7-host-neutral-loop-opencode-adapter/tasks.md
+      decisions: "No open decision; any area, runtime, persistence, authority, or S1.16 transport expansion had to stop."
+      criteria: "Six checked criteria preserve CT-R5 conformance, root classification, variants, exclusions, checks, and rollback."
+      route: direct
+      delivery: "Integrated and verified at 428b3ed012c9217c72342041a28c5622d945fe1e"
+      outstanding_work: none
+    field_mapping:
+      target: [scope, dependencies, authority, decisions, criteria, route, stable_ids]
+      derived_comparison: [status, area, progress, queue]
+      approved_replacement_authority: []
+      superseded: []
+      archive_only: [test counts, hashes, unavailable review tooling, non-interference narrative]
+    compatibility_reason: "Proven imported dotted hierarchy; territory is known and no pending-territory exception is used."
+  - legacy_session_id: S1.16
+    source_line: 230
+    source_heading: "## Sesión S1.16 — Transporte reconciliado y composición wake"
+    provenance_classification: target
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-1/STATUS.md
+      origen_blob: 955820c97257921571cb3d2ac0122929586a2fae
+      origen_encabezado: "## Sesión S1.16 — Transporte reconciliado y composición wake"
+      territorio_pendiente: false
+    stable_ids:
+      modules: [M1.16.1]
+      tasks: [T1.16.1.1, T1.16.1.2, T1.16.1.3, T1.16.1.4, T1.16.1.5]
+    source_contract:
+      scope: "host/loop.mjs, plugin/tower-spike.js, test/host-adapters.test.mjs, and test/polling.test.mjs"
+      dependencies: [S1.15]
+      authority: "P7 reconciliation, design, and tasks contracts"
+      decisions: "No open decision; no core, MCP, SQLite, second API, or productive provider expansion occurred."
+      criteria: "Eight checked criteria cover opaque capability, exact root/epoch, promptAsync, non-lossy retries, API exclusions, checks, and rollback."
+      route: design-tasks
+      delivery: da4e3914830f87d028113dfe451fdbe101b7847a
+      outstanding_work: none
+    field_mapping:
+      target: [scope, dependencies, authority, decisions, criteria, route, stable_ids]
+      derived_comparison: [status, area, progress, queue]
+      approved_replacement_authority: []
+      superseded: []
+      archive_only: [test counts, authored-line receipt, static review, rollback narrative]
+    compatibility_reason: "Proven imported dotted hierarchy; territory is known and no pending-territory exception is used."
+  - legacy_session_id: S1.17
+    source_line: 316
+    source_heading: "## Sesión S1.17 — Gate y RED del adapter Pi"
+    provenance_classification: target
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-1/STATUS.md
+      origen_blob: 955820c97257921571cb3d2ac0122929586a2fae
+      origen_encabezado: "## Sesión S1.17 — Gate y RED del adapter Pi"
+      territorio_pendiente: false
+    stable_ids:
+      modules: [M1.17.1]
+      tasks: [T1.17.1.1, T1.17.1.2, T1.17.1.3]
+    source_contract:
+      scope: "adapters/pi/contract.mjs and test/adapters/pi/contract.test.mjs"
+      dependencies: [S9.4]
+      authority: "decisions 82-84 and 86"
+      decisions: "Resolved escalations distinguish Tower-owned authority from neutral incarnation identity."
+      criteria: "Three checked criteria cover identity/takeover failures, role capabilities, and exact area."
+      route: design-tasks
+      delivery: 4248da9d5c0be812b529b9bfa3d733f2fffba3b0
+      outstanding_work: none
+    field_mapping:
+      target: [scope, dependencies, authority, decisions, criteria, route, stable_ids]
+      derived_comparison: [status, area, progress, queue]
+      approved_replacement_authority: [Pi-first promotion]
+      superseded: [OpenCode-first deferred route table]
+      archive_only: [test counts, authored-line receipt, rollback narrative]
+    compatibility_reason: "Proven imported dotted hierarchy; territory is known and no pending-territory exception is used."
+  - legacy_session_id: S1.18
+    source_line: 346
+    source_heading: "## Sesión S1.18 — Adapter Pi/Intercom y reporte terminal asíncrono"
+    provenance_classification: target
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-1/STATUS.md
+      origen_blob: 955820c97257921571cb3d2ac0122929586a2fae
+      origen_encabezado: "## Sesión S1.18 — Adapter Pi/Intercom y reporte terminal asíncrono"
+      territorio_pendiente: false
+    stable_ids:
+      modules: [M1.18.1, M1.18.2]
+      tasks: [T1.18.1.1, T1.18.1.2, T1.18.1.3, T1.18.2.1, T1.18.2.2, T1.18.2.3]
+    source_contract:
+      scope: "adapters/pi/runtime.mjs and test/adapters/pi/runtime.test.mjs"
+      dependencies: [S1.17]
+      authority: "decisions 80, 83, 84, 86, 104, and 105; Engram 10008 and 10020"
+      decisions: "Resolved escalations fix Intercom as transport without authority and two sequential direct delivery commits; internal terminal shape is derivable."
+      criteria: "Six checked criteria cover neutral lifecycle, dispatch acknowledgment, send/ask split, exact terminality, ON/OFF guarantees, and identity/area."
+      route: direct
+      delivery: "3ebb83373cf9507274a87e5206f315dce34a6a4f then 2cd64c4a32e178c88632348696353c2dd8654c56"
+      outstanding_work: none
+    field_mapping:
+      target: [scope, dependencies, authority, decisions, criteria, route, stable_ids]
+      derived_comparison: [status, area, progress, queue]
+      approved_replacement_authority: [Pi-first promotion and remediation order]
+      superseded: [OpenCode-first deferred contract]
+      archive_only: [failed candidates, test counts, review unavailability, rollback narrative]
+    compatibility_reason: "Proven imported dotted hierarchy; territory is known and no pending-territory exception is used."
+  - legacy_session_id: S1.19
+    source_line: 399
+    source_heading: "## Sesión S1.19 — Regresión integral Pi-first"
+    provenance_classification: target
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-1/STATUS.md
+      origen_blob: 955820c97257921571cb3d2ac0122929586a2fae
+      origen_encabezado: "## Sesión S1.19 — Regresión integral Pi-first"
+      territorio_pendiente: false
+    stable_ids:
+      modules: [M1.19.1]
+      tasks: [T1.19.1.1, T1.19.1.2, T1.19.1.3]
+    source_contract:
+      scope: "test/integration/pi-first/** and test/host-adapters.test.mjs"
+      dependencies: [S1.18]
+      authority: "decision 104, Engram 10008, and approved Pi-first capacity contract"
+      decisions: "No open decision; unmeasured limits are validation gates."
+      criteria: "Four unchecked criteria require 1/5-client lifecycle, prolonged run, broker-crash recovery, and a five-client claim with exact area."
+      route: direct
+      delivery: unresolved
+      outstanding_work: "All M1.19.1 tasks and Session criteria remain open."
+    field_mapping:
+      target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work]
+      derived_comparison: [status, area, progress, queue]
+      approved_replacement_authority: [Pi-first promotion]
+      superseded: [OpenCode-first deferred contract]
+      archive_only: [forecast narrative]
+    compatibility_reason: "Proven imported dotted hierarchy; territory is known and no pending-territory exception is used."
+  - legacy_session_id: S1.20
+    source_line: 414
+    source_heading: "## Sesión S1.20 — Probe tipado y read-only del modo Tower"
+    provenance_classification: target
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-1/STATUS.md
+      origen_blob: 955820c97257921571cb3d2ac0122929586a2fae
+      origen_encabezado: "## Sesión S1.20 — Probe tipado y read-only del modo Tower"
+      territorio_pendiente: false
+    stable_ids:
+      modules: [M1.20.1]
+      tasks: [T1.20.1.1, T1.20.1.2, T1.20.1.3]
+    source_contract:
+      scope: "core.mjs and test/lifecycle.test.mjs"
+      dependencies: []
+      authority: "decision 104 and Engram 10008"
+      decisions: "Derivable closed result ON, OFF, or INDETERMINATE; ambiguity and I/O must not become OFF."
+      criteria: "Five unchecked criteria cover the closed result, read-only behavior, ambiguity, host-health separation, and exact area."
+      route: direct
+      delivery: unresolved
+      outstanding_work: "All M1.20.1 tasks and Session criteria remain open."
+    field_mapping:
+      target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work]
+      derived_comparison: [status, area, progress, queue]
+      approved_replacement_authority: [Pi-first priority]
+      superseded: []
+      archive_only: [forecast narrative]
+    compatibility_reason: "Proven imported dotted hierarchy; territory is known and no pending-territory exception is used."
+continuation: null
