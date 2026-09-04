@@ -126,7 +126,7 @@ func RenderAt(p *Plan, root, head string) []byte {
 
 	fmt.Fprintln(&b, "## Rutas")
 	for _, s := range p.Sesiones {
-		if esTerritorioPendiente(&s) {
+		if esTerritorioPendiente(&s) || esTerritorioHistorico(&s) {
 			continue
 		}
 		fmt.Fprintf(&b, "- **%s:** propuesta %s (%s)", markdownText(s.ID), markdownText(s.Ruta.Propuesta), markdownText(s.Ruta.Autoridad))
@@ -148,6 +148,8 @@ func RenderAt(p *Plan, root, head string) []byte {
 		fmt.Fprintf(&b, "- Estado derivado: %s\n", estados[s.ID])
 		if esTerritorioPendiente(&s) {
 			fmt.Fprintln(&b, "- Importación legacy con territorio pendiente probado; sin asignación de Zona ni capacidad.")
+		} else if esTerritorioHistorico(&s) {
+			fmt.Fprintf(&b, "- Territorio histórico: evidencia no autorizante; propietarios actuales: %s.\n", markdownList(p.propietariosHistoricos(&s)))
 		} else {
 			fmt.Fprintf(&b, "- Zona/Área: %s · %s\n", markdownText(s.Zona), markdownList(p.Area(&s)))
 		}
@@ -162,7 +164,9 @@ func RenderAt(p *Plan, root, head string) []byte {
 		}
 		for _, m := range s.Modulos {
 			fmt.Fprintf(&b, "\n#### %s — %s\n", markdownText(m.ID), markdownText(m.Resultado))
-			if !esTerritorioPendiente(&s) {
+			if esTerritorioHistorico(&s) {
+				fmt.Fprintf(&b, "Rutas históricas (evidencia): %s\n\n", markdownList(m.Rutas))
+			} else if !esTerritorioPendiente(&s) {
 				fmt.Fprintf(&b, "Rutas: %s\n\n", markdownList(m.Rutas))
 			} else {
 				fmt.Fprintln(&b)
@@ -189,6 +193,27 @@ func RenderAt(p *Plan, root, head string) []byte {
 
 func esTerritorioPendiente(s *Sesion) bool {
 	return s.ImportacionLegacy != nil && s.ImportacionLegacy.TerritorioPendiente
+}
+
+func (p *Plan) propietariosHistoricos(s *Sesion) []string {
+	set := map[string]bool{}
+	for _, m := range s.Modulos {
+		for _, ruta := range m.Rutas {
+			for _, owner := range p.owners(ruta) {
+				if owner.Kind == "zona" {
+					set[nombreZona(p, owner.ID)] = true
+				} else {
+					set[owner.ID] = true
+				}
+			}
+		}
+	}
+	out := make([]string, 0, len(set))
+	for owner := range set {
+		out = append(out, owner)
+	}
+	sort.Strings(out)
+	return out
 }
 
 func territoriosPendientes(p *Plan) int {

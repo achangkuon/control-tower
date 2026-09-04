@@ -226,3 +226,88 @@ func TestResolvedLegacyTerritoryKeepsIdentityAndUsesOrdinaryRules(t *testing.T) 
 		t.Fatal("resolved import did not use ordinary rules")
 	}
 }
+
+func historicalSession(prov ImportacionLegacy, head string) Sesion {
+	s := importedSession(prov, false)
+	s.Zona = ""
+	s.Ruta = RutaSesion{}
+	s.Cimientos = nil
+	s.Entrega = &Entrega{Commit: head}
+	s.Modulos[0].Rutas = []string{"tracked.txt", "legacy/STATUS.md"}
+	return s
+}
+
+func TestHistoricalTerritoryAcceptsOnlyProvenTerminalImports(t *testing.T) {
+	root, head, prov := legacyFixture(t)
+	s := historicalSession(prov, head)
+	p := &Plan{Zonas: []Zona{{ID: "work", Rutas: []string{"tracked.txt"}}, {ID: "history", Rutas: []string{"legacy/"}}}, Sesiones: []Sesion{s}}
+	if h := legacyErrors(p, root, head); len(h) != 0 {
+		t.Fatalf("proven terminal historical territory rejected: %#v", h)
+	}
+	if got := p.EstadosAt(root, head)[s.ID]; got != Completo {
+		t.Fatalf("historical status = %s", got)
+	}
+
+	archived := historicalSession(prov, head)
+	archived.Entrega = nil
+	archived.Archivada = true
+	if h := legacyErrors(&Plan{Zonas: p.Zonas, Sesiones: []Sesion{archived}}, root, head); len(h) != 0 {
+		t.Fatalf("proven archived historical territory rejected: %#v", h)
+	}
+	if got := (&Plan{Sesiones: []Sesion{archived}}).EstadosAt(root, head)[archived.ID]; got != Archivado {
+		t.Fatalf("archived historical status = %s", got)
+	}
+
+	cases := map[string]func(*Sesion){
+		"ordinary":          func(s *Sesion) { s.ImportacionLegacy = nil },
+		"open import":       func(s *Sesion) { s.Entrega = nil },
+		"unproven import":   func(s *Sesion) { s.ImportacionLegacy.OrigenBlob = "" },
+		"pending import":    func(s *Sesion) { s.ImportacionLegacy.TerritorioPendiente = true },
+		"single Zone paths": func(s *Sesion) { s.Modulos[0].Rutas = []string{"tracked.txt"} },
+		"no paths":          func(s *Sesion) { s.Modulos[0].Rutas = nil },
+		"declared Zone":     func(s *Sesion) { s.Zona = "work" },
+		"declared Cimiento": func(s *Sesion) { s.Cimientos = []string{"tracked.txt"} },
+		"declared route":    func(s *Sesion) { s.Ruta.Propuesta = "direct" },
+	}
+	for name, mutate := range cases {
+		t.Run(name, func(t *testing.T) {
+			row := historicalSession(prov, head)
+			provenance := *row.ImportacionLegacy
+			row.ImportacionLegacy = &provenance
+			mutate(&row)
+			if len(legacyErrors(&Plan{Zonas: p.Zonas, Sesiones: []Sesion{row}}, root, head)) == 0 {
+				t.Fatal("invalid no-Zone historical row accepted")
+			}
+		})
+	}
+}
+
+func TestHistoricalTerritoryIsEvidenceNotAuthorization(t *testing.T) {
+	root, head, prov := legacyFixture(t)
+	s := historicalSession(prov, head)
+	p := &Plan{Producto: "x", Zonas: []Zona{{ID: "work", Nombre: "Work", Rutas: []string{"tracked.txt"}}, {ID: "history", Nombre: "History", Rutas: []string{"legacy/"}}}, Sesiones: []Sesion{s}}
+
+	zones, total := p.AvanceAt(root, head)
+	if len(p.ColaPorZonaAt(root, head)) != 0 || len(p.Area(&s)) != 0 || len(p.AsientosAt(root, head)) != 0 || len(zones) != 0 || total != (Avance{Cerradas: 1, Total: 1}) {
+		t.Fatalf("historical territory authorized execution: zones=%v total=%v", zones, total)
+	}
+	out := string(RenderAt(p, root, head))
+	for _, want := range []string{"Territorio histórico", "evidencia no autorizante", "History", "Work"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("render missing %q", want)
+		}
+	}
+	if strings.Contains(out, "Zona/Área:  ·") || strings.Contains(out, "propuesta direct") {
+		t.Fatal("historical evidence rendered as execution territory")
+	}
+
+	s.Modulos[0].Rutas[0] = "../outside"
+	findings := legacyErrors(p, root, head)
+	unsafeRejected := false
+	for _, finding := range findings {
+		unsafeRejected = unsafeRejected || finding.Regla == "ruta de Módulo"
+	}
+	if !unsafeRejected {
+		t.Fatalf("unsafe historical path accepted: %#v", findings)
+	}
+}

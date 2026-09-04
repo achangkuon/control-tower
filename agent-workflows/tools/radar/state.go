@@ -234,14 +234,17 @@ func (p *Plan) AvanceAt(root, head string) (map[string]Avance, Avance) {
 	for i := range p.Sesiones {
 		s := &p.Sesiones[i]
 		total.Total++
-		if s.ImportacionLegacy != nil && s.ImportacionLegacy.TerritorioPendiente {
+		cerrada := estados[s.ID] == Completo || estados[s.ID] == Archivado
+		if cerrada {
+			total.Cerradas++
+		}
+		if esTerritorioPendiente(s) || esTerritorioHistorico(s) {
 			continue
 		}
 		a := porZona[s.Zona]
 		a.Total++
-		if st := estados[s.ID]; st == Completo || st == Archivado {
+		if cerrada {
 			a.Cerradas++
-			total.Cerradas++
 		}
 		porZona[s.Zona] = a
 	}
@@ -290,6 +293,10 @@ func (p *Plan) AsientosAt(root, head string) []string {
 		}
 	}
 	return out
+}
+
+func esTerritorioHistorico(s *Sesion) bool {
+	return s.ImportacionLegacy != nil && !s.ImportacionLegacy.TerritorioPendiente && s.Zona == "" && (s.Entrega != nil || s.Archivada)
 }
 
 func reservaEnConflicto(archivos []string, reservados map[string]bool) bool {

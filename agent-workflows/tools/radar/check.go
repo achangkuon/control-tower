@@ -115,6 +115,7 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 
 		importada := s.ImportacionLegacy != nil
 		pendiente := importada && s.ImportacionLegacy.TerritorioPendiente
+		historica := esTerritorioHistorico(s)
 		if importada {
 			h = append(h, checkImportacionLegacy(root, head, s, provenienciasVistas)...)
 		}
@@ -124,6 +125,23 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 			}
 			if !bloqueaAqui(s) {
 				h = append(h, Hallazgo{"error", "territorio pendiente", fmt.Sprintf("%s no tiene una decisión escala que alcance criterios o primer-modulo", s.ID)})
+			}
+		} else if historica {
+			if len(s.Cimientos) != 0 || s.Ruta != (RutaSesion{}) {
+				h = append(h, Hallazgo{"error", "territorio histórico", fmt.Sprintf("%s declara Cimientos o ruta de ejecución", s.ID)})
+			}
+			zonasHistoricas := map[string]bool{}
+			for _, m := range s.Modulos {
+				for _, ruta := range m.Rutas {
+					for _, owner := range p.owners(ruta) {
+						if owner.Kind == "zona" {
+							zonasHistoricas[owner.ID] = true
+						}
+					}
+				}
+			}
+			if len(zonasHistoricas) < 2 {
+				h = append(h, Hallazgo{"error", "territorio histórico", fmt.Sprintf("%s no prueba rutas históricas en múltiples Zonas actuales", s.ID)})
 			}
 		} else if s.Zona == "" {
 			h = append(h, Hallazgo{"error", "sesión", fmt.Sprintf("%s no declara zona", s.ID)})
@@ -150,7 +168,7 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 			h = append(h, checkProfundidad(s)...)
 		}
 		if abierta || len(s.Modulos) > 0 {
-			h = append(h, p.checkModulos(root, s, modulosVistos, tareasVistas, importada, pendiente)...)
+			h = append(h, p.checkModulos(root, s, modulosVistos, tareasVistas, importada, pendiente, historica)...)
 		}
 		h = append(h, checkDecisiones(s)...)
 		if s.Entrega != nil {
@@ -175,7 +193,7 @@ var (
 	legacyHeading  = regexp.MustCompile(`^#{1,6} Sesión S?([1-9][0-9]*(?:\.[1-9][0-9]*)*)(?:\s|—|-|$)`)
 )
 
-func (p *Plan) checkModulos(root string, s *Sesion, modulosVistos, tareasVistas map[string]bool, importada, pendiente bool) []Hallazgo {
+func (p *Plan) checkModulos(root string, s *Sesion, modulosVistos, tareasVistas map[string]bool, importada, pendiente, historica bool) []Hallazgo {
 	var h []Hallazgo
 	permiteTareasPendientes := false
 	if pendiente {
@@ -239,7 +257,7 @@ func (p *Plan) checkModulos(root string, s *Sesion, modulosVistos, tareasVistas 
 					}
 				}
 			}
-			if !autorizada {
+			if !autorizada && !historica {
 				h = append(h, Hallazgo{"error", "autoridad de Módulo", fmt.Sprintf("%s no autoriza %q desde la Zona %q ni como Cimiento exacto reservado", s.ID, normalizada, s.Zona)})
 			}
 		}
