@@ -27,9 +27,11 @@ zonas:
       - hosts/
       - adapters/
       - extensions/
+      - plugin/
       - test/hosts/
       - test/adapters/
       - test/extensions/
+      - test/plugin/
       - test/host-adapters.test.mjs
   - id: entrega
     nombre: Entrega
@@ -80,10 +82,8 @@ zonas:
     nombre: Capacidades
     rutas:
       - capabilities/
-      - plugin/
       - policy/
       - test/capabilities/
-      - test/plugin/
       - test/policy/
   - id: autoridad
     nombre: Autoridad
