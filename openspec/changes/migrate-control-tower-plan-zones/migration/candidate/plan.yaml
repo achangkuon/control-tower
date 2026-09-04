@@ -5,7 +5,7 @@ producto: control-tower
 zonas:
   - id: hosts
     nombre: Hosts
-    rutas: [hosts/, adapters/, extensions/, test/hosts/, test/adapters/, test/extensions/, test/host-adapters.test.mjs]
+    rutas: [hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs]
   - id: entrega
     nombre: Entrega
     rutas: [delivery/, continuation/, test/delivery/, test/continuation/]
@@ -26,7 +26,7 @@ zonas:
     rutas: [enroll/, main-store/, test/enroll/, test/main-store.test.mjs]
   - id: capacidades
     nombre: Capacidades
-    rutas: [capabilities/, plugin/, policy/, test/capabilities/, test/plugin/, test/policy/]
+    rutas: [capabilities/, policy/, test/capabilities/, test/policy/]
   - id: autoridad
     nombre: Autoridad
     rutas: [openspec/plans/, openspec/prd/, openspec/rfc/, openspec/specs/, openspec/maintenance/, openspec/config.yaml, docs/]
@@ -294,3 +294,107 @@ sesiones:
             accion: "Run focused polling tests and syntax validation and record evidence and rollback."
             resultado: "The delivered polling bytes pass focused and complete verification with bounded rollback."
             criterios: ["Focused tests and syntax validation pass; runtime harness is correctly recorded as N/A."]
+
+  - id: S1.15
+    zona: hosts
+    cimientos: [test/helpers/host-adapter-conformance.mjs]
+    resultado: Conformidad lifecycle OpenCode
+    autoridad: openspec/changes/p7-host-neutral-loop-opencode-adapter/tasks.md
+    depende_de: [S1.14]
+    criterios:
+      - The parameterized harness and OpenCode cases cover CT-R5-S1@OpenCode through CT-R5-S5@OpenCode, including child no-ops, matching-root deletion, plugin disposal, malformed metadata, and conflicting identities.
+      - plugin/tower-spike.js exposes a testable factory that classifies only reconciled proven root/child events, binds once, forwards exact bound-root settle/deletion, and invalidates synchronously on matching root deletion or plugin disposal.
+      - Event-order and incomplete-metadata variants prove unknown events are never roots, child cache cleanup cannot stop polling, and the generic helper exposes no OpenCode field names.
+      - hosts/loop.mjs remains host-neutral and the adapter adds no SQLite, core.mjs, mcp.mjs, consuming receive, or delivery claim path.
+      - Focused tests, CT-R5 conformance, syntax validation, authored-line evidence, runtime-harness disposition, and exact rollback evidence pass over the delivered bytes.
+      - The implementation touches only the declared area and rollback removes only S1.15 adapter, fixture, and conformance changes.
+    decisiones: []
+    ruta:
+      propuesta: direct
+      autoridad: openspec/changes/p7-host-neutral-loop-opencode-adapter/tasks.md
+    entrega:
+      commit: 428b3ed012c9217c72342041a28c5622d945fe1e
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-1/STATUS.md
+      origen_blob: 955820c97257921571cb3d2ac0122929586a2fae
+      origen_encabezado: "## Sesión S1.15 — Conformidad lifecycle OpenCode"
+      territorio_pendiente: false
+    modulos:
+      - id: M1.15.1
+        resultado: OpenCode adapter and shared harness
+        rutas: [plugin/tower-spike.js, test/helpers/host-adapter-conformance.mjs, test/host-adapters.test.mjs]
+        tareas:
+          - id: T1.15.1.1
+            accion: Create failing parameterized conformance cases with stable IDs CT-R5-S1@OpenCode through CT-R5-S5@OpenCode covering lifecycle no-ops, root deletion, disposal, malformed metadata, and conflicting identities.
+            resultado: The OpenCode lifecycle boundary is captured before implementation.
+            criterios: [The RED cases cover all five named CT-R5 OpenCode scenarios.]
+          - id: T1.15.1.2
+            accion: Refactor plugin/tower-spike.js into a testable lifecycle adapter factory with proven root/child classification, one-time binding, exact forwarding, and synchronous invalidation.
+            resultado: The adapter lifecycle contract passes without transport or persistence expansion.
+            criterios: [The GREEN lifecycle cases pass for the exact bound-root contract.]
+          - id: T1.15.1.3
+            accion: Add OpenCode event-order and incomplete-metadata variants and prove fail-closed unknown events, safe child cleanup, and host-neutral helper observations.
+            resultado: Classification remains deterministic and host-neutral across variants.
+            criterios: [The TRIANGULATE variants pass without exposing OpenCode field names through the generic helper.]
+          - id: T1.15.1.4
+            accion: Reduce adapter and harness duplication while keeping hosts/loop.mjs host-neutral and excluding SQLite, core.mjs, mcp.mjs, consuming receive, and delivery claim paths.
+            resultado: Refactoring preserves the bounded adapter contract.
+            criterios: [Focused behavior remains green and forbidden imports and paths remain absent.]
+          - id: T1.15.1.5
+            accion: Run the focused adapter and polling suites plus syntax checks and record exact results, authored-line receipt, CT-R5 runtime-harness disposition, and rollback boundary.
+            resultado: The delivered S1.15 bytes have complete verification and bounded rollback evidence.
+            criterios: [Focused suites and syntax checks pass and the CT-R5-S1 through CT-R5-S5 boundary is recorded.]
+
+  - id: S1.16
+    zona: hosts
+    cimientos: [test/polling.test.mjs]
+    resultado: Transporte reconciliado y composición wake
+    autoridad: openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md, design.md, and tasks.md
+    depende_de: [S1.15]
+    criterios:
+      - The injected capability preserves non-consuming peek and fails closed when trusted root or binding_epoch is absent or drifts.
+      - Every wake calls client.session.promptAsync exactly once for the proven root with the fixed generic envelope.
+      - The prompt interpolates no descriptor, token, evidence, sender, or domain content and fabricates no provider authority.
+      - A rejected wake preserves pending delivery and follows retry policy without consuming, claiming, or acknowledging work.
+      - The legacy automatic route remains bounded, non-consuming, and non-lossy and does not degrade to manual queue handling.
+      - No second public continuation API or import of core.mjs, mcp.mjs, or SQLite exists.
+      - Focused, expanded, runtime, syntax, diff, and complete-suite verification passes over the final bytes.
+      - The diff touches only the declared area and rollback reverts only S1.16 composition and seams.
+    decisiones: []
+    ruta:
+      propuesta: design-tasks
+      autoridad: openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md, design.md, and tasks.md
+    entrega:
+      commit: da4e3914830f87d028113dfe451fdbe101b7847a
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-1/STATUS.md
+      origen_blob: 955820c97257921571cb3d2ac0122929586a2fae
+      origen_encabezado: "## Sesión S1.16 — Transporte reconciliado y composición wake"
+      territorio_pendiente: false
+    modulos:
+      - id: M1.16.1
+        resultado: Trusted consumer transport and wake composition
+        rutas: [hosts/loop.mjs, plugin/tower-spike.js, test/host-adapters.test.mjs, test/polling.test.mjs]
+        tareas:
+          - id: T1.16.1.1
+            accion: Add failing cases for injected non-consuming capability, trusted root and binding_epoch drift, exact promptAsync mapping, wake rejection, automatic-wake preservation, and prohibited interpolation.
+            resultado: The trusted consumer transport boundary is captured before implementation.
+            criterios: [The RED cases cover capability proof, exact wake mapping, preservation, and fail-closed behavior.]
+          - id: T1.16.1.2
+            accion: Wire only approved consumer dependencies so peek remains trusted and non-consuming, wake maps once to promptAsync, pending work is preserved, and missing or drifting proof fails closed.
+            resultado: The bounded consumer transport contract passes without provider authority expansion.
+            criterios: [The GREEN transport and wake cases pass.]
+          - id: T1.16.1.3
+            accion: Add isolated capability and compatibility coverage proving stable errors, no second API or forbidden imports, no provider-authority manufacture, and preservation after rejected wakes.
+            resultado: Transport remains deterministic, bounded, and non-lossy across variants.
+            criterios: [The TRIANGULATE cases pass without degrading to manual queue handling.]
+          - id: T1.16.1.4
+            accion: Consolidate composition boundaries and fixtures without expanding authority or persistence and keep unrelated migration and runtime configuration untouched.
+            resultado: Refactoring preserves transient-only polling and the approved seam.
+            criterios: [Focused behavior remains green and the declared exclusions remain intact.]
+          - id: T1.16.1.5
+            accion: Run focused, isolated, expanded, complete, syntax, and diff checks and record authored-line, runtime-harness, and exact rollback evidence.
+            resultado: The delivered S1.16 bytes have complete verification and bounded rollback evidence.
+            criterios: [All prescribed checks pass and rollback is limited to S1.16 composition and seam changes.]
