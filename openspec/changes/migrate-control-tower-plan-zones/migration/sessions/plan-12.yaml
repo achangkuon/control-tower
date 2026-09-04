@@ -63,7 +63,7 @@ sessions:
   - legacy_session_id: S12.7
     source_line: 507
     source_heading: "## Sesión 12.7 — La mudanza a `src/`"
-    provenance_classification: archive-only-deferred
+    provenance_classification: target
     importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-12/STATUS.md, origen_blob: a0878736a59b300912a597c4a305358788d461c2, origen_encabezado: "## Sesión 12.7 — La mudanza a `src/`", territorio_pendiente: false}
     stable_ids: {modules: [], tasks: []}
     source_contract: {scope: "move flat directories into src/domain, src/app, and related architecture when resumed", dependencies: [S12.6], authority: "owning Session contract and deferral rationale", decisions: "Decisions, Modules, and Tasks are intentionally delegated to session-plan on resumption.", criteria: "Deferred contract retains the intended outcome and dependency without claiming implementation readiness.", route: design-tasks, delivery: "deferred; no current Modules or Tasks", outstanding_work: "deferred; no current Modules or Tasks"}
