@@ -694,3 +694,197 @@ sesiones:
             accion: "REFACTOR: eliminar validación duplicada, estabilizar errores/ayuda y repetir testigos de registro/ACTIVE."
             resultado: "REFACTOR: eliminar validación duplicada, estabilizar errores/ayuda y repetir testigos de registro/ACTIVE."
             criterios: ["REFACTOR: eliminar validación duplicada, estabilizar errores/ayuda y repetir testigos de registro/ACTIVE."]
+  - id: S2.10
+    resultado: Enrollment desde el menú central
+    autoridad: decision 104 and Engram 10008
+    depende_de: [S2.9]
+    recurso: [menú central y registro de proyectos; serial con S2.9 por la operación canónica de enrollment]
+    criterios:
+      - El owner y los paths reales del menú quedan probados antes de editar.
+      - El menú ofrece enrollment y delega a la operación canónica torre enroll --repo <ruta> sin reimplementar validación o persistencia.
+      - Éxito, conflicto y layout inseguro se presentan con resultado coherente con la CLI; enrollment no activa la Torre.
+      - El diff toca sólo el Área real aprobado después de resolver el checkpoint.
+    decisiones:
+      - tipo: escala
+        pregunta: ¿Qué repositorio y path poseen el renderer/handler del menú central que debe ofrecer enrollment y cómo invoca la CLI canónica sin duplicar lógica?
+        evidencia: El screenshot aprobado existe, pero el renderer no fue localizado en este checkout.
+        checkpoint: antes de RED y antes de nombrar cualquier path
+        opciones:
+          - opcion: Ubicar el owner real y agregar allí una entrada que llame torre enroll.
+            consecuencia: Mantiene la UX híbrida aprobada.
+          - opcion: Declarar que el menú vive fuera del producto y registrar su repositorio.
+            consecuencia: Cambia ownership, no el contrato.
+          - opcion: No hacer nada.
+            consecuencia: Deja incompleta la UX pública aprobada.
+        clase: dependencias-o-evidencia-contradictorias
+        alcanza: primer-modulo
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-2/STATUS.md
+      origen_blob: 9c6dbfd096d3fde475dd966da578cfcd577f0908
+      origen_encabezado: "## Sesión 2.10 — Enrollment desde el menú central"
+      territorio_pendiente: true
+    modulos:
+      - id: M2.10.1
+        resultado: Integración de menú
+        tareas: []
+
+  - id: S2.8
+    zona: contratos
+    cimientos: [test/fixtures/contracts/schema-cases-v1.json]
+    resultado: Los nombres de fase salen del contrato de binding
+    autoridad: decisión 78, frontera Torre ↔ gentle-ai y precedente entregado de S2.6
+    depende_de: []
+    criterios:
+      - "AC1: rg 'proposal|specs|design|tasks' schemas/binding-delta-v1.schema.json devuelve cero."
+      - "AC2: Un binding-delta sellado con los seis campos actuales sigue validando contra el schema recortado."
+      - "AC3: Un binding-delta con inputs de forma distinta también valida."
+      - "AC4: binding-delta-v1 sigue declarado en contracts/schema-registry.mjs y en el payload, sin cambio de membresía."
+      - "AC5: Ningún campo fuera de inputs cambia un byte."
+      - "AC6: Excepción humana autorizada; la corrida integral fue 952/953 por una falla preexistente fuera de Área, y el diagnóstico aislado pasó 17/17."
+    decisiones:
+      - tipo: derivable
+        pregunta: ¿Cómo se vuelven opacos los seis campos actuales de inputs?
+        criterio: El objeto entero acepta cualquier forma y deja de exigir miembros internos.
+        autoridad: decisión 78 y precedente S2.6
+        evidencia: Contrato vigente de S2.8 en el STATUS inmutable.
+        checkpoint: antes de M2.8.1
+        opciones:
+          - opcion: Volver opacos los seis campos actuales sin eliminarlos ni renombrarlos.
+            consecuencia: Una forma alternativa de inputs valida y la forma actual permanece válida.
+      - tipo: derivable
+        pregunta: ¿Qué se preserva fuera de inputs?
+        criterio: Sólo cambian la definición de inputs, sus fixtures y pruebas dentro de Área.
+        autoridad: alcance aprobado de S2.8 y decisión 78
+        evidencia: Contrato vigente de S2.8 en el STATUS inmutable.
+        checkpoint: antes de M2.8.2
+        opciones:
+          - opcion: Preservar todo lo ajeno a inputs.
+            consecuencia: Ningún otro campo ni la membresía en registry/payload cambia.
+    ruta:
+      propuesta: design-tasks
+      autoridad: decisión 78, frontera Torre ↔ gentle-ai y precedente entregado de S2.6
+    entrega:
+      commit: 480afb92bf99d38ee166070d09ec6485bc5de2c4
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-2/STATUS.md
+      origen_blob: 9c6dbfd096d3fde475dd966da578cfcd577f0908
+      origen_encabezado: "## Sesión 2.8 — Los nombres de fase salen del contrato de binding"
+      territorio_pendiente: false
+    modulos:
+      - id: M2.8.1
+        resultado: Opacidad del contrato
+        rutas: [schemas/binding-delta-v1.schema.json, test/contracts/schema.test.mjs]
+        tareas:
+          - id: T2.8.1.1
+            accion: "RED: demostrar que una forma de inputs ajena a SDD falla hoy y que el delta sellado actual debe seguir aceptado."
+            resultado: La incompatibilidad y la compatibilidad vigente quedan demostradas antes del cambio.
+            criterios: [Una forma ajena falla y el delta sellado actual permanece aceptado.]
+          - id: T2.8.1.2
+            accion: "GREEN: reemplazar la definición interna de inputs por un objeto opaco sin restricciones internas."
+            resultado: Inputs acepta cualquier forma de objeto sin interpretar nombres de fase.
+            criterios: [La forma actual y una forma alternativa validan.]
+          - id: T2.8.1.3
+            accion: "REFACTOR: probar cero nombres de fase y comparar que ningún campo del schema fuera de inputs cambió."
+            resultado: El contrato queda acotado a inputs y preserva los demás bytes.
+            criterios: [No quedan nombres de fase y ningún campo externo cambia.]
+      - id: M2.8.2
+        resultado: Compatibilidad y membresía
+        rutas: [test/fixtures/contracts/schema-cases-v1.json, test/contracts/schema.test.mjs]
+        tareas:
+          - id: T2.8.2.1
+            accion: "RED: fijar casos para el delta actual, un inputs alternativo y la membresía vigente en registry/payload."
+            resultado: Los casos de compatibilidad y membresía quedan fijados.
+            criterios: [Los tres límites están cubiertos antes del cambio.]
+          - id: T2.8.2.2
+            accion: "GREEN: actualizar fixtures y pruebas para que ambas formas validen sin tocar archivos prohibidos."
+            resultado: Ambas formas validan y la membresía permanece intacta.
+            criterios: [Fixtures y pruebas pasan dentro del Área exacta.]
+          - id: T2.8.2.3
+            accion: "REFACTOR: triangular correcciones de revisión, membresía inmutable, suite focalizada e integral y límite exacto de Área."
+            resultado: La entrega queda verificada sin expansión de alcance.
+            criterios: [Membresía, suites y territorio exacto quedan probados.]
+
+  - id: S3.1
+    zona: asientos
+    resultado: Change C Workspace checkpoint
+    autoridad: STATUS contract, autonomous-v2 checkpoint design, and existing Git/canonicalization contracts
+    depende_de: [S2.4]
+    criterios:
+      - Un fixture Git válido produce una captura inmutable con raíz canónica y OIDs completos de commit y árbol para base y result.
+      - git -C inyectado, un relativo que escapa y una raíz absoluta distinta fallan cerrados sin efectos mutantes.
+      - Un índice vacío, staging drift y cualquier intento de commit -a fallan cerrados.
+      - La evidencia raw-bytes y la estructura rfc8785-jcs producen digests SHA-256 verificables y sensibles a alteraciones.
+      - La captura no invoca red, push, fetch, PR ni escribe fuera del fixture Git.
+      - bun test test/workspace/checkpoint.test.mjs y bun test pasan.
+      - El diff toca sólo workspace/checkpoint.mjs y test/workspace/checkpoint.test.mjs.
+    decisiones:
+      - tipo: derivable
+        pregunta: ¿Cómo se seleccionan Git y la raíz canónica?
+        criterio: Toda invocación usa execFileSync con argv de sólo lectura y la raíz de rev-parse debe ser absoluta, normalizada y exacta.
+        autoridad: validateEnrollmentLayout/defaultGit y matriz Git del diseño C
+        evidencia: Contrato inmutable de S3.1 líneas 52-57.
+        checkpoint: antes de T3.1.1.1
+        opciones:
+          - opcion: Rechazar -C, relativos que escapan y absolutos distintos.
+            consecuencia: Ningún input hostil llega a Git ni produce una captura.
+      - tipo: derivable
+        pregunta: ¿Qué referencias forman base y result?
+        criterio: Cada referencia contiene OID completo de commit y su árbol resuelto explícitamente.
+        autoridad: matriz Commit/Git de autonomous-v2-checkpointed-delivery
+        evidencia: Contrato inmutable de S3.1 líneas 58-63.
+        checkpoint: antes de T3.1.1.2
+        opciones:
+          - opcion: Registrar commit y tree OID completos.
+            consecuencia: Nunca se acepta una rama, OID abreviado o árbol implícito.
+      - tipo: derivable
+        pregunta: ¿Cuándo se rechaza el estado local?
+        criterio: Staging vacío o distinto del árbol esperado se rechaza y no se emite argv mutante.
+        autoridad: T3.1.1.2 aprobada y recorder de test/enroll/enroll.test.mjs
+        evidencia: Contrato inmutable de S3.1 líneas 64-68.
+        checkpoint: antes de capturar
+        opciones:
+          - opcion: Fallar cerrado ante índice vacío o drift.
+            consecuencia: Sólo se capturan archivos y árboles explícitos.
+      - tipo: derivable
+        pregunta: ¿Cómo se prueba la evidencia de bytes y modo?
+        criterio: Bytes usan raw-bytes y estructura usa rfc8785-jcs; cualquier cambio de bytes o modo cambia el digest o falla validación.
+        autoridad: canonicalize y digestArtifact en contracts/canonicalize.mjs
+        evidencia: Contrato inmutable de S3.1 líneas 69-74.
+        checkpoint: antes de T3.1.1.4
+        opciones:
+          - opcion: Digerir bytes y estructura con sus codificaciones canónicas.
+            consecuencia: Cambios de bytes o modo no conservan un digest válido.
+    ruta:
+      propuesta: direct
+      autoridad: STATUS contract and autonomous-v2 checkpoint design
+    entrega:
+      commit: d8924a6179108651184976b3e147425ebd9b18fd
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-3/STATUS.md
+      origen_blob: 5f5f34e8775bfb6dbdd0cb550126a57985dc3d3d
+      origen_encabezado: "## Sesión 3.1 — Change C Workspace checkpoint"
+      territorio_pendiente: false
+    modulos:
+      - id: M3.1.1
+        resultado: Checkpoint
+        rutas: [workspace/checkpoint.mjs, test/workspace/checkpoint.test.mjs]
+        tareas:
+          - id: T3.1.1.1
+            accion: "RED: selección Git por argv fijo y raíz canónica; rechazar git -C inyectado, relativo que escapa y raíz absoluta que no coincide."
+            resultado: Los inputs hostiles fallan antes de implementar la captura.
+            criterios: [Git y raíz canónica quedan cubiertos con casos falsificables.]
+          - id: T3.1.1.2
+            accion: "RED: archivos y árbol explícitos; prohibir commit -a; rechazar drift en staging e índice vacío."
+            resultado: El estado local inseguro queda cubierto antes de la implementación.
+            criterios: [Índice vacío, drift y argv mutante fallan cerrados.]
+          - id: T3.1.1.3
+            accion: "GREEN: implementar la captura."
+            resultado: La captura canónica produce identidad inmutable sin efectos remotos.
+            criterios: [La captura válida pasa con commit y tree OIDs completos.]
+          - id: T3.1.1.4
+            accion: "REFACTOR: evidencia por bytes y modo."
+            resultado: La evidencia distingue alteraciones de bytes y modo.
+            criterios: [Los digests raw-bytes y rfc8785-jcs verifican la identidad exacta.]
