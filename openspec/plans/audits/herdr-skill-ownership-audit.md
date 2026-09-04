@@ -101,6 +101,10 @@ The same commit tightens two operational sentences of herdr's own prose:
 > blocked UI and ask the user before answering it. Never authorize via `agent send-keys`
 > autonomously.
 
+**Complete patch:** the full commit, including the 33-line Rust regression test, is preserved at
+[`evidence/herdr-skill-contract-d8a22841.patch`](evidence/herdr-skill-contract-d8a22841.patch) so the
+Sesión that places this skill can read the original contract rather than a paraphrase of it.
+
 **Live location on this host:** `~/.pi/agent/skills/herdr/SKILL.md` carries all three edits and is the
 only copy that does. No equivalent exists under `~/.claude`, `~/.config/opencode`, or `~/.codex`.
 
@@ -167,7 +171,7 @@ here as an unowned surface, not resolved here.
 |---|---|---|
 | `skills/torre-control/SKILL.md` | Tower-owned, committed, carries the doctrine | none — already safe |
 | The six-line cross-reference and its two prose tightenings | Live only in `~/.pi/…` and one unpushed commit | **preserved verbatim in §3** |
-| The Rust regression test | Protects herdr's build, not the Tower's | recorded in §2; not preserved as code |
+| The Rust regression test | Protects herdr's build, not the Tower's | **preserved complete** in `evidence/herdr-skill-contract-d8a22841.patch` |
 | Ten commits of 2026-08-14 | Support a Tower path retired in `3857a81` | recorded in §4; not preserved |
 | `~/projects/herdr-s4-2`, `~/projects/herdr-worktrees` | 6.9 GB, of which 4.6 GB is Rust build cache | disposable once this document is committed |
 | A Tower-owned herdr runtime skill | No owning Plan or Sesión | **needs maintainer authority — see §5** |
