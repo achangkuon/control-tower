@@ -1,0 +1,143 @@
+schema_version: 1
+legacy_plan: 5
+source_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+source_path: openspec/plans/plan-5/STATUS.md
+source_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d
+complete: true
+session_count: 15
+sessions:
+  - legacy_session_id: S5.1
+    source_line: 233
+    source_heading: "## Sesión 5.1 — Change F candidate contracts"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-5/STATUS.md, origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d, origen_encabezado: "## Sesión 5.1 — Change F candidate contracts", territorio_pendiente: false}
+    stable_ids: {modules: [M5.1.1, M5.1.2, M5.1.3], tasks: [T5.1.1.1, T5.1.1.2, T5.1.1.3, T5.1.2.1, T5.1.2.2, T5.1.2.3, T5.1.2.4, T5.1.3.1, T5.1.3.2, T5.1.3.3]}
+    source_contract: {scope: "candidate revision/schema, canonical Main store, continuation claim, Support boundary, plugin wiring, payload, and tests", dependencies: [S3.2, S3.3, S3.4], authority: "REQUIREMENTS Change F and owning S5.1 decisions", decisions: "Candidate identity, immutable evidence, Main-only dispatch, and Support isolation were resolved before implementation.", criteria: "Twenty-seven checked criteria cover candidate identity, claim derivation, Support isolation, integration, tests, and territory.", route: full-sdd, delivery: "c7c247227f6bc888f9ff7ed48094a7aa92f9cc4c", outstanding_work: "none; release-origin decision is outside this Session"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, delivery], derived_comparison: [status, area, progress, queue, ownership, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical execution, metrics, release, and rollback narrative]}
+    compatibility_reason: "Proven imported dotted hierarchy; known territory; no pending-territory exception."
+  - legacy_session_id: S5.2
+    source_line: 380
+    source_heading: "## Sesión 5.2 — Change F delivery adapters/reconciliation"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-5/STATUS.md, origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d, origen_encabezado: "## Sesión 5.2 — Change F delivery adapters/reconciliation", territorio_pendiente: false}
+    stable_ids: {modules: [M5.2.1], tasks: [T5.2.1.1, T5.2.1.2, T5.2.1.3, T5.2.1.4]}
+    source_contract: {scope: "delivery adapters, record/candidate schemas, contract validation, reconciliation, and tests", dependencies: [S4.1, S3.3], authority: "decision 8195, decisions 47-48, and the owning Session contract", decisions: "Explicit remote/ref/head, adapter process boundaries, result classification, and authorized correction scope were resolved.", criteria: "Fifteen checked criteria cover delivery sequence, immutable evidence, fail-closed adapters, reconciliation, tests, and territory.", route: direct, delivery: "2145fd796c6bfdb9d426ceba037c7e3345b5e861 candidate over d43c09a616bf57483ea55b9a92fc28dd03577f34", outstanding_work: "none"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, delivery], derived_comparison: [status, area, progress, queue, ownership, capacity], approved_replacement_authority: [decisions 47 and 48], superseded: [prior blocked correction state], archive_only: [historical review, metrics, and rollback narrative]}
+    compatibility_reason: "Proven imported dotted hierarchy; known territory; no pending-territory exception."
+  - legacy_session_id: S5.3
+    source_line: 464
+    source_heading: "## Sesión 5.3 — Continuación planner/implementer"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-5/STATUS.md, origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d, origen_encabezado: "## Sesión 5.3 — Continuación planner/implementer", territorio_pendiente: false}
+    stable_ids: {modules: [M5.3.1], tasks: [T5.3.1.1, T5.3.1.2, T5.3.1.3]}
+    source_contract: {scope: "continuation integrated-base behavior and focused tests", dependencies: [S5.2], authority: "maintainer decision in Engram 9133, 2026-08-17 rebase, and horizon policy", decisions: "Planner prepares N+1, implementer executes N, and Main dispatches only after fresh reconcile, Support, and Policy evidence.", criteria: "Four checked criteria cover bounded continuation, fresh integrated evidence, fail-closed dispatch, and territory.", route: design-tasks, delivery: "88d1de47323cf03a5eb7d8324cf3592584aee660 plus reconciled local candidate 163a9f9cf1971d6a3548f9ad83f4553f03a1d768", outstanding_work: "none"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, delivery], derived_comparison: [status, area, progress, queue, ownership, capacity], approved_replacement_authority: [], superseded: [duplicated historical task bodies], archive_only: [historical execution, metrics, and no-push narrative]}
+    compatibility_reason: "Proven imported dotted hierarchy; known territory; no pending-territory exception."
+  - legacy_session_id: S5.4
+    source_line: 506
+    source_heading: "## Sesión 5.4 — Ruteo de escalamiento fuera/en casa"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-5/STATUS.md, origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d, origen_encabezado: "## Sesión 5.4 — Ruteo de escalamiento fuera/en casa", territorio_pendiente: false}
+    stable_ids: {modules: [M5.4.1, M5.4.2, M5.4.3], tasks: [T5.4.1.1, T5.4.1.2, T5.4.1.3, T5.4.2.1, T5.4.2.2, T5.4.2.3, T5.4.3.1, T5.4.3.2, T5.4.3.3]}
+    source_contract: {scope: "escalation request, routing mode, degraded transport, and tests", dependencies: [S5.1], authority: "owning Session decisions and authenticated maintainer routing contract", decisions: "Only authenticated maintainer channels select local/remote mode; missing identity or transport fails closed without consuming requests.", criteria: "Checked criteria cover exact decision requests, authenticated mode, persistence, degraded recovery, non-mutation, tests, and territory.", route: design-tasks, delivery: "976b8d02bfda2d3ec9993e92a7b2f919ebc2d302 and 75549a781cd6ac19afc3e09e7466f7772f678fb7", outstanding_work: "none"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, delivery], derived_comparison: [status, area, progress, queue, ownership, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical publication, metrics, and rollback narrative]}
+    compatibility_reason: "Proven imported dotted hierarchy; known territory; no pending-territory exception."
+  - legacy_session_id: S5.5
+    source_line: 580
+    source_heading: "## Sesión 5.5 — Parking y retoma del loop"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-5/STATUS.md, origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d, origen_encabezado: "## Sesión 5.5 — Parking y retoma del loop", territorio_pendiente: false}
+    stable_ids: {modules: [M5.5.1, M5.5.2, M5.5.3, M5.5.4], tasks: [T5.5.1.1, T5.5.1.2, T5.5.1.3, T5.5.1.4, T5.5.2.1, T5.5.2.2, T5.5.2.3, T5.5.3.1, T5.5.3.2, T5.5.3.3, T5.5.4.1, T5.5.4.2, T5.5.4.3, T5.5.4.4]}
+    source_contract: {scope: "escalation parking/resume and focused tests", dependencies: [S5.10, S5.9, S5.12, S5.11, S5.8], authority: "maintainer rebase 2026-08-17 and decision 78", decisions: "Consume Support proposals without parsing plans; park complete immutable decisions and resume only exact reconciled checkpoints.", criteria: "Open criteria require complete parking records, proposal freshness, named independent work, exact checkpoint resume, fail-closed stale evidence, and territory.", route: design-tasks, delivery: unresolved, outstanding_work: "All four Modules and fourteen Tasks remain open."}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work], derived_comparison: [status, area, progress, queue, ownership, capacity], approved_replacement_authority: [decision 78], superseded: [earlier local eligibility and dynamic contamination machinery], archive_only: [historical dependency and planning narrative]}
+    compatibility_reason: "Proven imported dotted hierarchy; known territory; no pending-territory exception."
+  - legacy_session_id: S5.6
+    source_line: 691
+    source_heading: "## Sesión 5.6 — Contrato canónico de snapshot de Sesión"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-5/STATUS.md, origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d, origen_encabezado: "## Sesión 5.6 — Contrato canónico de snapshot de Sesión", territorio_pendiente: false}
+    stable_ids: {modules: [M5.6.1, M5.6.2, M5.6.3], tasks: [T5.6.1.1, T5.6.1.2, T5.6.1.3, T5.6.2.1, T5.6.2.2, T5.6.2.3, T5.6.2.4, T5.6.3.1, T5.6.3.2, T5.6.3.3]}
+    source_contract: {scope: "Session snapshot contract/schema, parser, registry, fixtures, and tests", dependencies: [S5.4], authority: "owning Session contract and canonical snapshot decisions", decisions: "Exact bytes/digest, closed references, one parser, canonical ordering, and read-only operation were fixed.", criteria: "Checked criteria cover immutable snapshot identity, complete Session graph/contract parsing, strict invalidity, deterministic output, non-mutation, tests, and territory.", route: design-tasks, delivery: "75ddcf9", outstanding_work: "none; later S5.15 retirement is separate approved work"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, delivery], derived_comparison: [status, area, progress, queue, ownership, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical workload, publication, and rollback narrative]}
+    compatibility_reason: "Proven imported dotted hierarchy; known territory; no pending-territory exception."
+  - legacy_session_id: S5.7
+    source_line: 752
+    source_heading: "## Sesión 5.7 — Contratos canónicos de decisión estacionada y respuesta"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-5/STATUS.md, origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d, origen_encabezado: "## Sesión 5.7 — Contratos canónicos de decisión estacionada y respuesta", territorio_pendiente: false}
+    stable_ids: {modules: [M5.7.1, M5.7.2, M5.7.3], tasks: [T5.7.1.1, T5.7.1.2, T5.7.1.3, T5.7.2.1, T5.7.2.2, T5.7.2.3, T5.7.3.1, T5.7.3.2, T5.7.3.3]}
+    source_contract: {scope: "parked-decision and response contracts/schemas, registry, fixtures, and tests", dependencies: [S5.6], authority: "owning Session contract and canonical parked-decision decisions", decisions: "Frozen scope, unique options, exact response bindings, canonical digests, and cross-schema invariants were fixed.", criteria: "Ten checked criteria cover complete parked decisions, selected responses, immutable bindings, strict validation, canonicalization, tests, and territory.", route: design-tasks, delivery: "c822f43ac570ac4f3d80bfe8f3eca50ca032acd9", outstanding_work: "none"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, delivery], derived_comparison: [status, area, progress, queue, ownership, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical publication, workload, and rollback narrative]}
+    compatibility_reason: "Proven imported dotted hierarchy; known territory; no pending-territory exception."
+  - legacy_session_id: S5.8
+    source_line: 811
+    source_heading: "## Sesión 5.8 — Binding de opción seleccionada en la autoridad canónica"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-5/STATUS.md, origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d, origen_encabezado: "## Sesión 5.8 — Binding de opción seleccionada en la autoridad canónica", territorio_pendiente: false}
+    stable_ids: {modules: [M5.8.1, M5.8.2, M5.8.3], tasks: [T5.8.1.1, T5.8.1.2, T5.8.1.3, T5.8.2.1, T5.8.2.2, T5.8.2.3, T5.8.3.1, T5.8.3.2, T5.8.3.3]}
+    source_contract: {scope: "canonical Main authorization store and tests", dependencies: [S5.7], authority: "owning Session decisions and Main-only authorization authority", decisions: "Main validates and persists one terminal selected response with exact cryptographic binding, idempotence, and backward compatibility.", criteria: "Eight checked criteria cover authority, terminal transition, exact bindings, replay behavior, canonical storage, compatibility, tests, and territory.", route: design-tasks, delivery: "6bb7019c66cf60e9ac874f05a176f946f9bd4589", outstanding_work: "none; source snapshot recorded local integration not remote publication"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, delivery], derived_comparison: [status, area, progress, queue, ownership, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical local-delivery, metrics, and publication narrative]}
+    compatibility_reason: "Proven imported dotted hierarchy; known territory; no pending-territory exception."
+  - legacy_session_id: S5.11
+    source_line: 873
+    source_heading: "## Sesión 5.11 — Productores canónicos de provenance del checkpoint"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-5/STATUS.md, origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d, origen_encabezado: "## Sesión 5.11 — Productores canónicos de provenance del checkpoint", territorio_pendiente: false}
+    stable_ids: {modules: [M5.11.1, M5.11.2], tasks: [T5.11.1.1, T5.11.1.2, T5.11.1.3, T5.11.2.1, T5.11.2.2, T5.11.2.3]}
+    source_contract: {scope: "checkpoint capture/reconciliation producers, schemas, contracts, fixtures, and tests", dependencies: [S5.8], authority: "owning Session decisions and authorized size exception", decisions: "Producer-owned immutable identities/digests and exact cross-bindings prevent caller-synthesized checkpoint provenance.", criteria: "Twelve checked criteria cover capture and reconciliation identities, bindings, determinism, mismatch rejection, producer ownership, tests, and territory.", route: design-tasks, delivery: "b4d7fcdec65046b9958dab488ee3cfc5b038ccd0", outstanding_work: "none"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, delivery], derived_comparison: [status, area, progress, queue, ownership, capacity], approved_replacement_authority: [size exception up to 960 authored lines], superseded: [], archive_only: [historical patch equivalence, metrics, manifest, and rollback narrative]}
+    compatibility_reason: "Proven imported dotted hierarchy; known territory; no pending-territory exception."
+  - legacy_session_id: S5.12
+    source_line: 922
+    source_heading: "## Sesión 5.12 — Composición única de productores hacia parking bajo Main"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-5/STATUS.md, origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d, origen_encabezado: "## Sesión 5.12 — Composición única de productores hacia parking bajo Main", territorio_pendiente: false}
+    stable_ids: {modules: [M5.12.1, M5.12.2], tasks: [T5.12.1.1, T5.12.1.2, T5.12.1.3, T5.12.2.1, T5.12.2.2, T5.12.2.3]}
+    source_contract: {scope: "parking composition, canonical Main-store ingress, and tests", dependencies: [S5.11], authority: "owning Session contract and constructor-bound capability decisions", decisions: "Main invokes both canonical producers once and persists their unchanged artifacts through one atomic parking transaction.", criteria: "Checked criteria cover capability binding, exact transport, single ingress/writer, atomicity, replay behavior, readback, tests, and territory.", route: design-tasks, delivery: "e7b1437f8c98c5856236e06e4c1fb5c40e9dc8ef", outstanding_work: "none"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, delivery], derived_comparison: [status, area, progress, queue, ownership, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical publication chain, metrics, and rollback narrative]}
+    compatibility_reason: "Proven imported dotted hierarchy; known territory; no pending-territory exception."
+  - legacy_session_id: S5.9
+    source_line: 969
+    source_heading: "## Sesión 5.9 — Binding autoritativo del checkpoint estacionado"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-5/STATUS.md, origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d, origen_encabezado: "## Sesión 5.9 — Binding autoritativo del checkpoint estacionado", territorio_pendiente: false}
+    stable_ids: {modules: [M5.9.1], tasks: [T5.9.1.1, T5.9.1.2, T5.9.1.3, T5.9.1.4]}
+    source_contract: {scope: "Main store, checkpoint-binding contracts/schemas, fixtures, and tests", dependencies: [S5.12, S5.11, S5.8], authority: "owning Session decisions including maintainer decision 41", decisions: "One authoritative binding joins parked checkpoint, canonical capture, and valid reconciliation; decision 41 accepts loss of the first design falsifier.", criteria: "Seven criteria pass with runtime evidence; the eighth is explicitly amended as accepted documented loss under decision 41.", route: full-sdd, delivery: "3c3040d, 754c698, and 8d4b28a", outstanding_work: "none"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, delivery], derived_comparison: [status, area, progress, queue, ownership, capacity], approved_replacement_authority: [decision 41], superseded: [original eighth criterion preservation clause], archive_only: [lost-design history, minor findings, metrics, and rollback narrative]}
+    compatibility_reason: "Proven imported dotted hierarchy; known territory; no pending-territory exception."
+  - legacy_session_id: S5.10
+    source_line: 1037
+    source_heading: "## Sesión 5.10 — Binding inmutable del trabajo independiente completado"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-5/STATUS.md, origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d, origen_encabezado: "## Sesión 5.10 — Binding inmutable del trabajo independiente completado", territorio_pendiente: false}
+    stable_ids: {modules: [M5.10.1], tasks: [T5.10.1.1, T5.10.1.2, T5.10.1.3, T5.10.1.4]}
+    source_contract: {scope: "Main store, completed-work provenance contracts/schemas, fixtures, and tests", dependencies: [S5.9], authority: "maintainer decisions 30, 44, and 46", decisions: "One immutable standalone record binds frozen work to an existing parked decision and exactly one approved option or explicit assumption.", criteria: "Checked criteria cover source resolution, immutable identity, exact bindings, scope, replay, atomicity, readback, construction evidence, tests, and territory.", route: design-tasks, delivery: "44444cf, 98419e1, 5d1a268, and 468b733", outstanding_work: "none; two residuals accepted by decision 46"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, delivery], derived_comparison: [status, area, progress, queue, ownership, capacity], approved_replacement_authority: [decisions 30, 44, and 46], superseded: [caller-asserted standalone source resolution], archive_only: [residual findings, review corrections, metrics, and rollback narrative]}
+    compatibility_reason: "Proven imported dotted hierarchy; known territory; no pending-territory exception."
+  - legacy_session_id: S5.13
+    source_line: 1088
+    source_heading: "## Sesión 5.13 — Retiro de la verificación de proceso de la entrega"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-5/STATUS.md, origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d, origen_encabezado: "## Sesión 5.13 — Retiro de la verificación de proceso de la entrega", territorio_pendiente: false}
+    stable_ids: {modules: [M5.13.1, M5.13.2, M5.13.3], tasks: [T5.13.1.1, T5.13.1.2, T5.13.1.3, T5.13.2.1, T5.13.2.2, T5.13.2.3, T5.13.3.1, T5.13.3.2, T5.13.3.3]}
+    source_contract: {scope: "delivery-policy, candidate/authorization/delivery schemas, contract validation, opaque receipt transport, fixtures, and tests", dependencies: [], authority: "maintainer decisions 64 and 72 and the Tower-to-gentle-ai boundary", decisions: "Remove three process-verification gates; carry only an optional opaque receipt sealed at candidate freeze and never interpreted by Tower.", criteria: "Nine checked criteria cover complete removal, preserved safety fields, suite integrity, payload stability, opaque receipt schema/transport, no content branching, freeze timing, and territory.", route: design-tasks, delivery: "5a80bc89033ce0220e8d9962c0579b2ad8bcfbe4", outstanding_work: "none; future delivery-policy connection remains unenumerated and outside scope"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, delivery], derived_comparison: [status, area, progress, queue, ownership, capacity], approved_replacement_authority: [decisions 64 and 72], superseded: [documentation_close, required_checks_digest, required_reviews_digest enforcement], archive_only: [historical implementation, review, metrics, close, and Notion-drift narrative]}
+    compatibility_reason: "Proven imported dotted hierarchy; known territory; no pending-territory exception."
+  - legacy_session_id: S5.14
+    source_line: 1257
+    source_heading: "## Sesión 5.14 — La profundidad de planificación deja de estar clavada"
+    provenance_classification: approved-replacement-authority
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-5/STATUS.md, origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d, origen_encabezado: "## Sesión 5.14 — La profundidad de planificación deja de estar clavada", territorio_pendiente: false}
+    stable_ids: {modules: [M5.14.1, M5.14.2], tasks: [T5.14.1.1, T5.14.1.2, T5.14.1.3, T5.14.2.1, T5.14.2.2, T5.14.2.3]}
+    source_contract: {scope: "delivery-policy planning fields, continuation validation, and tests", dependencies: [S5.13], authority: "decision 71 and the Tower-to-gentle-ai boundary", decisions: "Policy owns opaque nonblank prepare_through and horizon ceiling; continuation compares resolved policy without interpreting phase names or hard-coding horizon.", criteria: "Six open criteria require removal of TAREAS and hard-coded 2, configurable depth, fail-closed incomplete policy, preserved safety behavior, passing tests, and territory.", route: design-tasks, delivery: "none; abandoned contradictory candidate grants zero delivery credit", outstanding_work: "Superseded by approved successors S100-S102; exact replacement edges are deferred to lineage.yaml."}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work], derived_comparison: [status, area, progress, queue, ownership, capacity], approved_replacement_authority: [ASIGNACION-24-SESIONES.md S100-S102], superseded: [abandoned candidate 06a27b9ea05960e55b2afedb740cc85dc798d46aeb66f61dcca150346e78c8b5], archive_only: [candidate failure, worktree, queue, and scheduling narrative]}
+    compatibility_reason: "Proven imported dotted hierarchy retained for replacement history; known territory; lineage is encoded separately."
+  - legacy_session_id: S5.15
+    source_line: 1348
+    source_heading: "## Sesión 5.15 — La Torre deja de enumerar el plan"
+    provenance_classification: approved-replacement-authority
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-5/STATUS.md, origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d, origen_encabezado: "## Sesión 5.15 — La Torre deja de enumerar el plan", territorio_pendiente: false}
+    stable_ids: {modules: [M5.15.1, M5.15.2], tasks: [T5.15.1.1, T5.15.1.2, T5.15.1.3, T5.15.2.1, T5.15.2.2, T5.15.2.3]}
+    source_contract: {scope: "continuation plan enumerator, session-plan snapshot contract/schema/registry, runtime payload, and tests", dependencies: [S5.5, S5.14], authority: "decision 78 and the Tower-to-gentle-ai boundary", decisions: "Tower stops opening plan documents; compareWorkerClaim remains, while enumeration/snapshot code and orphan payload membership retire with preserved history.", criteria: "Six open criteria require zero Tower plan reads, unchanged claim comparison and Support readers, complete snapshot/payload retirement, passing tests, and territory.", route: design-tasks, delivery: unresolved, outstanding_work: "Superseded by approved successors S103-S104; exact replacement and dependency rewrites are deferred to lineage.yaml."}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work], derived_comparison: [status, area, progress, queue, ownership, capacity], approved_replacement_authority: [ASIGNACION-24-SESIONES.md S103-S104], superseded: [original S5.14 dependency will be rewritten to S102], archive_only: [historical product inventory, archive-branch, queue, and reconciliation narrative]}
+    compatibility_reason: "Proven imported dotted hierarchy retained for replacement history; known territory; lineage is encoded separately."
