@@ -87,7 +87,6 @@ cimientos:
 
 sesiones:
   - id: S1.11
-    zona: archivo
     resultado: Reconciliación independiente legacy P7
     autoridad: openspec/changes/p7-p8-integrated-reconciliation/tasks.md
     depende_de: [S1.9, S1.10]
@@ -102,9 +101,6 @@ sesiones:
         falsificador: P7 consumes that capability and fails closed on absence or drift.
         descartadas: []
         contaminaba: [S1.13, S1.14, S1.15, S1.16]
-    ruta:
-      propuesta: direct
-      autoridad: openspec/changes/p7-p8-integrated-reconciliation/tasks.md
     entrega:
       commit: a1dce220dae594006bda0722d0bdb640cf4b9be7
     importacion_legacy:
@@ -132,7 +128,6 @@ sesiones:
             criterios: [Approve the P7 gate only after the record and binary checks are complete.]
 
   - id: S1.12
-    zona: archivo
     resultado: Reconciliación independiente P8
     autoridad: openspec/changes/p7-p8-integrated-reconciliation/tasks.md
     depende_de: [S1.11]
@@ -150,9 +145,6 @@ sesiones:
         autoridad: openspec/changes/p7-p8-integrated-reconciliation/tasks.md
         falsificador: "P8 remains blocked without both approved records; invalid digest, identity, epoch, branch, or worktree evidence is non-approvable."
         descartadas: []
-    ruta:
-      propuesta: direct
-      autoridad: openspec/changes/p7-p8-integrated-reconciliation/tasks.md
     entrega:
       commit: 5823ed6902256c31a2fea296f90aa94b97e60375
     importacion_legacy:
@@ -199,8 +191,6 @@ sesiones:
             criterios: [Confirm the design threat matrix remains N/A; no runtime RED tests are required for this documentation-only change.]
 
   - id: S1.13
-    zona: hosts
-    cimientos: [test/polling.test.mjs]
     resultado: "Root lifecycle e invalidación sincrónica"
     autoridad: openspec/changes/p7-host-neutral-loop-opencode-adapter/tasks.md
     depende_de: [S1.12]
@@ -209,9 +199,6 @@ sesiones:
       - The controller remains host-neutral and excludes adapter composition, SQLite, core.mjs, mcp.mjs, consuming receive, and delivery claim behavior.
       - Focused polling tests and syntax validation pass over the delivered bytes.
     decisiones: []
-    ruta:
-      propuesta: direct
-      autoridad: openspec/changes/p7-host-neutral-loop-opencode-adapter/tasks.md
     entrega:
       commit: 794611f925f4fd2cb0de0b69cfdf2798d011543d
     importacion_legacy:
@@ -247,8 +234,6 @@ sesiones:
             criterios: ["Run bun test test/polling.test.mjs and node --check hosts/loop.mjs; record exact results, an authored-line receipt from git diff --numstat, runtime harness result N/A, and the bounded S1.13 rollback boundary."]
 
   - id: S1.14
-    zona: hosts
-    cimientos: [test/polling.test.mjs]
     resultado: "Polling y wake safety"
     autoridad: openspec/changes/p7-host-neutral-loop-opencode-adapter/tasks.md
     depende_de: [S1.13]
@@ -258,9 +243,6 @@ sesiones:
       - Successful wake pauses in AWAITING_SETTLE and invalid clock or scheduler input pauses before storage access.
       - Focused polling tests, syntax validation, and the complete suite pass over the delivered bytes.
     decisiones: []
-    ruta:
-      propuesta: direct
-      autoridad: openspec/changes/p7-host-neutral-loop-opencode-adapter/tasks.md
     entrega:
       commit: 9886af9ee289d78a35b404b06351f930ecb43309
     importacion_legacy:
@@ -296,8 +278,6 @@ sesiones:
             criterios: ["Focused tests and syntax validation pass; runtime harness is correctly recorded as N/A."]
 
   - id: S1.15
-    zona: hosts
-    cimientos: [test/helpers/host-adapter-conformance.mjs]
     resultado: Conformidad lifecycle OpenCode
     autoridad: openspec/changes/p7-host-neutral-loop-opencode-adapter/tasks.md
     depende_de: [S1.14]
@@ -309,9 +289,6 @@ sesiones:
       - Focused tests, CT-R5 conformance, syntax validation, authored-line evidence, runtime-harness disposition, and exact rollback evidence pass over the delivered bytes.
       - The implementation touches only the declared area and rollback removes only S1.15 adapter, fixture, and conformance changes.
     decisiones: []
-    ruta:
-      propuesta: direct
-      autoridad: openspec/changes/p7-host-neutral-loop-opencode-adapter/tasks.md
     entrega:
       commit: 428b3ed012c9217c72342041a28c5622d945fe1e
     importacion_legacy:
@@ -347,8 +324,6 @@ sesiones:
             criterios: [Focused suites and syntax checks pass and the CT-R5-S1 through CT-R5-S5 boundary is recorded.]
 
   - id: S1.16
-    zona: hosts
-    cimientos: [test/polling.test.mjs]
     resultado: Transporte reconciliado y composición wake
     autoridad: openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md, design.md, and tasks.md
     depende_de: [S1.15]
@@ -362,9 +337,6 @@ sesiones:
       - Focused, expanded, runtime, syntax, diff, and complete-suite verification passes over the final bytes.
       - The diff touches only the declared area and rollback reverts only S1.16 composition and seams.
     decisiones: []
-    ruta:
-      propuesta: design-tasks
-      autoridad: openspec/changes/p7-host-neutral-loop-opencode-adapter/reconciliation.md, design.md, and tasks.md
     entrega:
       commit: da4e3914830f87d028113dfe451fdbe101b7847a
     importacion_legacy:
@@ -399,7 +371,6 @@ sesiones:
             resultado: The delivered S1.16 bytes have complete verification and bounded rollback evidence.
             criterios: [All prescribed checks pass and rollback is limited to S1.16 composition and seam changes.]
   - id: S1.17
-    zona: hosts
     resultado: Gate y RED del adapter Pi
     autoridad: Emilio's explicit S1.17 structured Pi authority resolution grounded in immutable decisions 82-84 and 86
     depende_de: [S9.4]
@@ -422,9 +393,6 @@ sesiones:
           - opcion: OpenCode before Pi
             razon: The approved Pi-first promotion superseded the old OpenCode-first deferred route.
         contaminaba: [S1.17]
-    ruta:
-      propuesta: design-tasks
-      autoridad: Emilio's explicit S1.17 structured Pi authority resolution grounded in immutable decisions 82-84 and 86
     entrega:
       commit: 4248da9d5c0be812b529b9bfa3d733f2fffba3b0
     importacion_legacy:
@@ -451,7 +419,6 @@ sesiones:
             resultado: The adapter remains private and host-neutral boundaries remain intact.
             criterios: [No runtime, public wire, Pi, or Intercom surface changes and focused and complete verification pass.]
   - id: S1.18
-    zona: hosts
     resultado: Adapter Pi/Intercom y reporte terminal asíncrono
     autoridad: decisions 80, 83, 84, 86, 104, and 105; Engram observations 10008, 10019, 10020, and 10028
     depende_de: [S1.17]
@@ -489,9 +456,6 @@ sesiones:
           - opcion: Repair the original one-397-line candidate as one commit.
             razon: The candidate was already 397 of 400 authored lines and the verified lifecycle, terminal retry, and immutable-snapshot defects could not be corrected honestly without code-golf.
         contaminaba: [S1.18]
-    ruta:
-      propuesta: direct
-      autoridad: decision 105, Engram observation 10020, and immutable S1.18 STATUS lines 346-397
     entrega:
       commit: 2cd64c4a32e178c88632348696353c2dd8654c56
     importacion_legacy:
@@ -730,8 +694,6 @@ sesiones:
         tareas: []
 
   - id: S2.8
-    zona: contratos
-    cimientos: [test/fixtures/contracts/schema-cases-v1.json]
     resultado: Los nombres de fase salen del contrato de binding
     autoridad: decisión 78, frontera Torre ↔ gentle-ai y precedente entregado de S2.6
     depende_de: []
@@ -761,9 +723,6 @@ sesiones:
         opciones:
           - opcion: Preservar todo lo ajeno a inputs.
             consecuencia: Ningún otro campo ni la membresía en registry/payload cambia.
-    ruta:
-      propuesta: design-tasks
-      autoridad: decisión 78, frontera Torre ↔ gentle-ai y precedente entregado de S2.6
     entrega:
       commit: 480afb92bf99d38ee166070d09ec6485bc5de2c4
     importacion_legacy:
@@ -807,7 +766,6 @@ sesiones:
             criterios: [Membresía, suites y territorio exacto quedan probados.]
 
   - id: S3.1
-    zona: asientos
     resultado: Change C Workspace checkpoint
     autoridad: STATUS contract, autonomous-v2 checkpoint design, and existing Git/canonicalization contracts
     depende_de: [S2.4]
@@ -856,9 +814,6 @@ sesiones:
         opciones:
           - opcion: Digerir bytes y estructura con sus codificaciones canónicas.
             consecuencia: Cambios de bytes o modo no conservan un digest válido.
-    ruta:
-      propuesta: direct
-      autoridad: STATUS contract and autonomous-v2 checkpoint design
     entrega:
       commit: d8924a6179108651184976b3e147425ebd9b18fd
     importacion_legacy:
@@ -1216,7 +1171,6 @@ sesiones:
             resultado: Ambos caminos fallan cerrado por la misma semántica.
             criterios: [Suites focalizadas pasan y la invalidación permanece pasiva.]
   - id: S4.1
-    zona: hosts
     resultado: Change E single-host candidate fence
     autoridad: REQUIREMENTS §14.4, Change E, and maintainer reseal of 2026-08-09
     depende_de: [S3.1, S3.2, S5.1]
@@ -1290,9 +1244,6 @@ sesiones:
         falsificador: Una operación acepta proof o actor fabricado por el caller, o un ledger reescribible habilita reuse de epoch.
         descartadas: []
         contaminaba: [S4.1, S5.2, S7.1]
-    ruta:
-      propuesta: design-tasks
-      autoridad: REQUIREMENTS §14.4, Change E, and maintainer reseal of 2026-08-09
     entrega:
       commit: 1f5fea76549bbc3123e28916874643a8d0f8cddd
     importacion_legacy:
@@ -2211,7 +2162,6 @@ sesiones:
             criterios: ["REFACTOR: rollback, readback y cleanup"]
 
   - id: S4.10
-    zona: contratos
     resultado: Identidad, binding y puerto runtime host-neutral
     autoridad: decisiones 80, 84, 86, 89 y 90 del maintainer
     depende_de: []
@@ -2292,9 +2242,6 @@ sesiones:
           - opcion: No actuar.
             razon: Dejaría roja la suite pese a los cinco schemas aprobados.
         contaminaba: [S4.10, S7.1]
-    ruta:
-      propuesta: full-sdd
-      autoridad: contrato S4.10 y decisiones 80, 84, 86, 89 y 90
     entrega:
       commit: 6b8b7705d40a863b962873c1a34208007fa64644
     importacion_legacy:
@@ -2322,7 +2269,6 @@ sesiones:
             criterios: ["REFACTOR: separar contrato neutral de cualquier adapter, ajustar únicamente expect(schemaFiles).toHaveLength(26) a expect(schemaFiles).toHaveLength(31) en el gate manual y verificar frontera de Área."]
 
   - id: S4.11
-    zona: hosts
     resultado: Observe, health, stop y attach host-neutral
     autoridad: decisiones 84, 92, 93 y 94 del maintainer
     depende_de: [S4.10]
@@ -2391,9 +2337,6 @@ sesiones:
           - opcion: Permitir consumo por operación aislada.
             razon: Reabriría autoridad cross-operation.
         contaminaba: [S4.11, S4.12]
-    ruta:
-      propuesta: full-sdd
-      autoridad: contrato S4.11 y decisiones 84, 92, 93 y 94
     entrega:
       commit: 6ddf6bc77d236dffad5b8ec625379117a91ce0b3
     importacion_legacy:
@@ -2995,7 +2938,6 @@ sesiones:
             resultado: "GREEN/REFACTOR: la entrega idempotente queda ligada a evidencia inmutable y autorización existente."
             criterios: ["El flujo verifica commit/árbol, congela candidate_revision, entrega y registra delivery-record-v1 sin segunda ruta de autoridad."]
   - id: S5.3
-    zona: entrega
     resultado: Continuación planner/implementer desde base integrada fresca
     depende_de: [S5.2]
     autoridad: Engram observation 9133, maintainer rebase 2026-08-17, decisions 28 and 29, and planning.horizon_ceiling 2
@@ -3106,7 +3048,6 @@ sesiones:
             resultado: "REFACTOR/triangulate: la divergencia queda preservada y bloqueada sin alterar primitives preexistentes."
             criterios: ["Los casos negativos permanecen en despacho cero y ningún primitive preexistente es modificado."]
   - id: S5.4
-    zona: asientos
     resultado: Ruteo de escalamiento fuera/en casa
     depende_de: [S5.1]
     autoridad: Decisiones de la Sesión S5.4 y contrato autenticado de ruteo del maintainer
