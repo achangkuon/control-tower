@@ -42,7 +42,7 @@ sources:
   - {path: "openspec/specs/sdd-tower-implementation-v1-requirements.md", mode: "100644", blob_oid: "d8c9e73ecdfdb8fa2ed868fef7b27dbc980c6e72", classification: "legacy-contract-authority", precedence: 5, note: "referenced legacy contract; owning STATUS or later scoped decision controls conflicts"}
   - {path: "openspec/specs/main-owned-visible-root/spec.md", mode: "100644", blob_oid: "3f0357a0d27dfa8ca0386d3f2c1670e0978d05b6", classification: "legacy-contract-authority", precedence: 5, note: "referenced legacy contract; owning STATUS or later scoped decision controls conflicts"}
 session_discovery:
-  command: "git grep -nE '^#{1,6}[[:space:]]+Sesión[[:space:]]+S?[1-9][0-9]*(\.[1-9][0-9]*)*([[:space:]]|—|-|$)' $SOURCE_COMMIT -- openspec/plans"
+  command: 'git grep -nE ''^#{1,6}[[:space:]]+Sesión[[:space:]]+S?[1-9][0-9]*(\.[1-9][0-9]*)*([[:space:]]|—|-|$)'' $SOURCE_COMMIT -- openspec/plans'
   scope: actual Markdown Session headings in Plans 0-12 STATUS blobs only
   exclusions: [tables, prose, Mermaid nodes, queues, percentages]
   row_count: 72
