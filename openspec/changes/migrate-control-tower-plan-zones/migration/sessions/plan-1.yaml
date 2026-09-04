@@ -247,26 +247,27 @@ sessions:
       origen_ruta: openspec/plans/plan-1/STATUS.md
       origen_blob: 955820c97257921571cb3d2ac0122929586a2fae
       origen_encabezado: "## Sesión S1.19 — Regresión integral Pi-first"
-      territorio_pendiente: false
+      territorio_pendiente: true
     stable_ids:
       modules: [M1.19.1]
       tasks: [T1.19.1.1, T1.19.1.2, T1.19.1.3]
     source_contract:
-      scope: "test/integration/pi-first/** and test/host-adapters.test.mjs"
+      scope: "Planned Area remains test/integration/pi-first/** and test/host-adapters.test.mjs; exact integration files are not yet proven and no target territory is authored."
       dependencies: [S1.18]
-      authority: "decision 104, Engram 10008, and approved Pi-first capacity contract"
-      decisions: "No open decision; unmeasured limits are validation gates."
+      authority: "decision 104, Engram 10008, approved Pi-first capacity contract, and Emilio's C05.2M territory-pending resolution"
+      decisions: "Unresolved escala asks which exact test files will own the Pi-first integration regression. Evidence: the immutable Area contains test/integration/pi-first/** but no tracked exact file exists beneath that glob; Radar rejects patterns/directories and partition rejects unused rules. Selected: prove exact paths before implementation and keep S1.19 blocked. Rejected: expand Radar, invent or omit an exact future file, or remove/archive S1.19. Class dependencias-o-evidencia-contradictorias; checkpoint before S1.19 RED / first Module; reaches primer-modulo; contaminates S1.19 and C05.2-C09 without inventing candidate Session IDs."
       criteria: "Four unchecked criteria require 1/5-client lifecycle, prolonged run, broker-crash recovery, and a five-client claim with exact area."
-      route: direct
+      route: absent
       delivery: unresolved
-      outstanding_work: "All M1.19.1 tasks and Session criteria remain open."
+      outstanding_work: "Blocked before RED until exact Pi-first integration test paths are proven; all M1.19.1 tasks and Session criteria remain open."
     field_mapping:
-      target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work]
-      derived_comparison: [status, area, progress, queue]
-      approved_replacement_authority: [Pi-first promotion]
-      superseded: [OpenCode-first deferred contract]
-      archive_only: [forecast narrative]
-    compatibility_reason: "Proven imported dotted hierarchy; territory is known and no pending-territory exception is used."
+      target: [dependencies, authority, decisions, criteria, stable_ids, outstanding_work]
+      derived_comparison: [status, area, progress, queue, ownership, seat, capacity]
+      approved_replacement_authority: [Pi-first promotion, territory-pending resolution]
+      superseded: [OpenCode-first deferred contract, resolved-territory mapping claim]
+      archive_only: [planned glob territory, forecast narrative]
+    compatibility_reason: "Proven imported dotted hierarchy with approved territory-pending compatibility; planned scope is preserved as evidence, while no Zone, path, route, Cimiento, owner, queue, seat, or capacity is authored."
+    blocking_escalation_reach: [primer-modulo]
   - legacy_session_id: S1.20
     source_line: 414
     source_heading: "## Sesión S1.20 — Probe tipado y read-only del modo Tower"
