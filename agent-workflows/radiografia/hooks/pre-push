@@ -15,8 +15,9 @@ command -v bun >/dev/null 2>&1 || exit 0
 # has no report until agent-workflows is present on this machine.
 for candidate in \
   "${RADIOGRAFIA_HOME:-}" \
-  "$HOME/projects/agent-workflows/radiografia" \
-  "$(dirname "$root")/agent-workflows/radiografia"
+  "$root/agent-workflows/radiografia" \
+  "$(dirname "$root")/agent-workflows/radiografia" \
+  "$HOME/projects/agent-workflows/radiografia"
 do
   [ -n "$candidate" ] && [ -f "$candidate/run.mjs" ] && engine="$candidate" && break
 done

@@ -27,9 +27,9 @@ sucio o una suite registrada en otro commit.
 ## Uso
 
 ```sh
-bun ~/projects/agent-workflows/radiografia/run.mjs              # mide y regenera
-bun ~/projects/agent-workflows/radiografia/run.mjs --with-tests # además corre la suite
-bun ~/projects/agent-workflows/radiografia/run.mjs --check      # sale 1 si quedó viejo
+bun "$(git rev-parse --show-toplevel)"/agent-workflows/radiografia/run.mjs              # mide y regenera
+bun "$(git rev-parse --show-toplevel)"/agent-workflows/radiografia/run.mjs --with-tests # además corre la suite
+bun "$(git rev-parse --show-toplevel)"/agent-workflows/radiografia/run.mjs --check      # sale 1 si quedó viejo
 ```
 
 Se dispara solo en `git push` vía `.githooks/pre-push`. **Nunca bloquea un push**: un
