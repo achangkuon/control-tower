@@ -50,6 +50,27 @@ Hoy ese checkout queda como archivo read-only: la autoridad activa está en el s
 `dbb7626904a09323e19dd7a60f747d29c8c62f5d`. Cierra la limitación registrada en la
 [decisión 56](../decision-register.md).
 
+**Dos skills de método agregadas el 2026-09-04, sin Sesión enumerada.** `skill-orchestrator`
+y `analisis-por-tramos` entraron a `agent-workflows/skills/` en `8b11314` y se registraron en
+`SUPPORT_SKILLS`. La primera cubre un hueco confirmado: `skill-composer` sólo trata madres y no
+menciona orquestación, aunque el canon ya distingue ambas
+([FLUJO-END-TO-END.md](../../agent-workflows/FLUJO-END-TO-END.md)); su procedimiento se destiló de
+`torre-control`, que ya funciona. La segunda captura el método que produjo ese mismo documento:
+desambiguar, cortar el flujo en preguntas, cerrar cada tramo con el humano y cruzar contra lo
+construido y lo ya decidido. Es conversacional por contrato y se niega a correr desatendida.
+Instalador 30/30 y `--check` sin drift sobre las cuatro raíces de runtime.
+
+**Alcance del instalador, verificado en la misma corrida:** `runtime_skill_roots` cubre
+`~/.agents/skills`, `~/.claude/skills`, `~/.config/opencode/skills` y `~/.codex/skills`. Pi no es
+destino —no tiene SkillsDir nativo— pero los bytes quedan en `~/.agents/skills/<skill>/SKILL.md`,
+que es la ruta canónica exacta que Pi carga a mano. Los enlaces que hoy tiene
+`~/.pi/agent/skills/` hacia `.agents/skills` son manuales y de julio; el instalador no los crea ni
+los mantiene.
+
+Este trabajo queda registrado como no planificado: ninguna Sesión enumerada posee la superficie de
+skills del método, igual que la skill de runtime de Herdr descrita en
+[Audit E](../audits/herdr-skill-ownership-audit.md).
+
 **Checkout local retirado el 2026-09-04.** `~/projects/agent-workflows` y sus cuatro worktrees
 se borraron del disco tras validar que no llevaban nada propio: los 86 paths trackeados están en
 el subtree, 85 byte a byte y el único distinto es la revisión más nueva de Control Tower; los seis
