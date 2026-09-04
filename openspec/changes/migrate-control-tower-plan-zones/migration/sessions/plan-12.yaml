@@ -1,0 +1,89 @@
+schema_version: 1
+legacy_plan: 12
+source_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+source_path: openspec/plans/plan-12/STATUS.md
+source_blob: a0878736a59b300912a597c4a305358788d461c2
+complete: true
+session_count: 9
+sessions:
+  - legacy_session_id: S12.1
+    source_line: 79
+    source_heading: "## Sesión 12.1 — Verificación automática antes de entregar"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-12/STATUS.md, origen_blob: a0878736a59b300912a597c4a305358788d461c2, origen_encabezado: "## Sesión 12.1 — Verificación automática antes de entregar", territorio_pendiente: false}
+    stable_ids: {modules: [M12.1.1, M12.1.2], tasks: [T12.1.1.1, T12.1.1.2, T12.1.1.3, T12.1.2.1, T12.1.2.2, T12.1.2.3]}
+    source_contract: {scope: "automatic test verification before every direct delivery to master", dependencies: [S12.8], authority: "maintainer decision 1 of 2026-08-30 and AGENTS.md direct-delivery policy", decisions: "Bun version behavior and direct-push delivery are derived from repository authority; PR flow is out of contract.", criteria: "Open criteria require identical bun test commands, pre-delivery automation, push workflow reporting, and area-only changes.", route: direct, delivery: "unresolved; M12.1.1-M12.1.2 remain open", outstanding_work: "unresolved; M12.1.1-M12.1.2 remain open"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work], derived_comparison: [status, area, progress, queue, ownership, seat, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical execution, decisions, metrics, and narrative not representable as target fields]}
+    compatibility_reason: "Proven imported dotted hierarchy; known or historically recorded territory; no pending-territory scheduling claim."
+  - legacy_session_id: S12.2
+    source_line: 132
+    source_heading: "## Sesión 12.2 — La Torre corre local: la documentación deja de vender la VPS"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-12/STATUS.md, origen_blob: a0878736a59b300912a597c4a305358788d461c2, origen_encabezado: "## Sesión 12.2 — La Torre corre local: la documentación deja de vender la VPS", territorio_pendiente: false}
+    stable_ids: {modules: [M12.2.1, M12.2.2, M12.2.3, M12.2.4], tasks: [T12.2.1.1, T12.2.1.2, T12.2.1.3, T12.2.2.1, T12.2.2.2, T12.2.2.3, T12.2.3.1, T12.2.3.2, T12.2.3.3, T12.2.4.1, T12.2.4.2, T12.2.4.3]}
+    source_contract: {scope: "active documentation describes the local Tower and removes VPS, Hermes, and Telegram as current scope", dependencies: [], authority: "maintainer decision 3 of 2026-08-30", decisions: "Historical evidence remains historical; active absolute-path skill content changes without renaming its canonical route.", criteria: "Checked criteria prove zero active-scope mentions, exact authorized paths, migration-test fixture correction, and territory.", route: direct, delivery: "ff25eb9 and 7841f52; immutable full OIDs require later Git-evidence resolution", outstanding_work: "ff25eb9 and 7841f52; immutable full OIDs require later Git-evidence resolution"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, delivery], derived_comparison: [status, area, progress, queue, ownership, seat, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical execution, decisions, metrics, and narrative not representable as target fields]}
+    compatibility_reason: "Proven imported dotted hierarchy; known or historically recorded territory; no pending-territory scheduling claim."
+  - legacy_session_id: S12.3
+    source_line: 271
+    source_heading: "## Sesión 12.3 — El SQL de las migraciones sale de `core.mjs`"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-12/STATUS.md, origen_blob: a0878736a59b300912a597c4a305358788d461c2, origen_encabezado: "## Sesión 12.3 — El SQL de las migraciones sale de `core.mjs`", territorio_pendiente: false}
+    stable_ids: {modules: [M12.3.1, M12.3.2, M12.3.3, M12.3.4, M12.3.5, M12.3.6], tasks: [T12.3.1.1, T12.3.1.2, T12.3.1.3, T12.3.2.1, T12.3.2.2, T12.3.2.3, T12.3.3.1, T12.3.3.2, T12.3.3.3, T12.3.4.1, T12.3.4.2, T12.3.4.3, T12.3.5.1, T12.3.5.2, T12.3.5.3, T12.3.6.1, T12.3.6.2, T12.3.6.3]}
+    source_contract: {scope: "move five migrations and manifests from core.mjs into db/migrations without behavior change", dependencies: [S8.10], authority: "maintainer decision 2 of 2026-08-30", decisions: "Two test harnesses must copy the dependency tree; movement is split into reviewable commits without weakening policy.", criteria: "Open criteria cover exact SQL/manifest extraction, behavior preservation, harness correction, tests, and area-only changes.", route: direct, delivery: "unresolved; blocked and M12.3.1-M12.3.6 remain open", outstanding_work: "unresolved; blocked and M12.3.1-M12.3.6 remain open"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work], derived_comparison: [status, area, progress, queue, ownership, seat, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical execution, decisions, metrics, and narrative not representable as target fields]}
+    compatibility_reason: "Proven imported dotted hierarchy; known or historically recorded territory; no pending-territory scheduling claim."
+  - legacy_session_id: S12.4
+    source_line: 367
+    source_heading: "## Sesión 12.4 — Los validadores de persistencia salen de `core.mjs`"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-12/STATUS.md, origen_blob: a0878736a59b300912a597c4a305358788d461c2, origen_encabezado: "## Sesión 12.4 — Los validadores de persistencia salen de `core.mjs`", territorio_pendiente: false}
+    stable_ids: {modules: [M12.4.1, M12.4.2, M12.4.3, M12.4.4, M12.4.5], tasks: [T12.4.1.1, T12.4.1.2, T12.4.1.3, T12.4.2.1, T12.4.2.2, T12.4.2.3, T12.4.3.1, T12.4.3.2, T12.4.3.3, T12.4.4.1, T12.4.4.2, T12.4.4.3, T12.4.5.1, T12.4.5.2, T12.4.5.3]}
+    source_contract: {scope: "move SQLite persistence validators from core.mjs into owned modules without behavior change", dependencies: [S12.3], authority: "maintainer decision 2 of 2026-08-30", decisions: "Extraction follows the completed migration split and preserves validator contracts.", criteria: "Open criteria cover validator extraction, unchanged persistence behavior, focused/full tests, and area-only changes.", route: direct, delivery: "unresolved; M12.4.1-M12.4.5 remain open", outstanding_work: "unresolved; M12.4.1-M12.4.5 remain open"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work], derived_comparison: [status, area, progress, queue, ownership, seat, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical execution, decisions, metrics, and narrative not representable as target fields]}
+    compatibility_reason: "Proven imported dotted hierarchy; known or historically recorded territory; no pending-territory scheduling claim."
+  - legacy_session_id: S12.5
+    source_line: 410
+    source_heading: "## Sesión 12.5 — El protocolo de continuación sale de `core.mjs`"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-12/STATUS.md, origen_blob: a0878736a59b300912a597c4a305358788d461c2, origen_encabezado: "## Sesión 12.5 — El protocolo de continuación sale de `core.mjs`", territorio_pendiente: false}
+    stable_ids: {modules: [], tasks: []}
+    source_contract: {scope: "move all continuation functions from core.mjs under continuation with identical behavior", dependencies: [S12.4], authority: "maintainer decision 2 of 2026-08-30", decisions: "Technical decomposition is deferred to session-plan because the fixed result needs bounded design.", criteria: "Open criteria require complete continuation extraction, unchanged behavior, tests, and area-only changes.", route: design-tasks, delivery: "unresolved; Modules and Tasks intentionally deferred to session-plan", outstanding_work: "unresolved; Modules and Tasks intentionally deferred to session-plan"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work], derived_comparison: [status, area, progress, queue, ownership, seat, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical execution, decisions, metrics, and narrative not representable as target fields]}
+    compatibility_reason: "Proven imported dotted hierarchy; known or historically recorded territory; no pending-territory scheduling claim."
+  - legacy_session_id: S12.6
+    source_line: 454
+    source_heading: "## Sesión 12.6 — La raíz se ordena y el README describe el producto real"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-12/STATUS.md, origen_blob: a0878736a59b300912a597c4a305358788d461c2, origen_encabezado: "## Sesión 12.6 — La raíz se ordena y el README describe el producto real", territorio_pendiente: false}
+    stable_ids: {modules: [M12.6.1, M12.6.2, M12.6.3], tasks: [T12.6.1.1, T12.6.1.2, T12.6.1.3, T12.6.2.1, T12.6.2.2, T12.6.2.3, T12.6.3.1, T12.6.3.2, T12.6.3.3]}
+    source_contract: {scope: "merge host into hosts and make README describe the post-split product tree", dependencies: [S12.5], authority: "maintainer decision 4 option B combined, 2026-08-30", decisions: "Only later README/tree Modules depend on S12.5; host-to-hosts cleanup was independently deliverable.", criteria: "Open criteria cover exact root cleanup, path reconciliation, README truth, tests, and area-only changes; M12.6.1 is delivered.", route: direct, delivery: "partial: M12.6.1 delivered; M12.6.2-M12.6.3 open", outstanding_work: "partial: M12.6.1 delivered; M12.6.2-M12.6.3 open"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work], derived_comparison: [status, area, progress, queue, ownership, seat, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical execution, decisions, metrics, and narrative not representable as target fields]}
+    compatibility_reason: "Proven imported dotted hierarchy; known or historically recorded territory; no pending-territory scheduling claim."
+  - legacy_session_id: S12.7
+    source_line: 507
+    source_heading: "## Sesión 12.7 — La mudanza a `src/`"
+    provenance_classification: archive-only-deferred
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-12/STATUS.md, origen_blob: a0878736a59b300912a597c4a305358788d461c2, origen_encabezado: "## Sesión 12.7 — La mudanza a `src/`", territorio_pendiente: false}
+    stable_ids: {modules: [], tasks: []}
+    source_contract: {scope: "move flat directories into src/domain, src/app, and related architecture when resumed", dependencies: [S12.6], authority: "owning Session contract and deferral rationale", decisions: "Decisions, Modules, and Tasks are intentionally delegated to session-plan on resumption.", criteria: "Deferred contract retains the intended outcome and dependency without claiming implementation readiness.", route: design-tasks, delivery: "deferred; no current Modules or Tasks", outstanding_work: "deferred; no current Modules or Tasks"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work], derived_comparison: [status, area, progress, queue, ownership, seat, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical execution, decisions, metrics, and narrative not representable as target fields]}
+    compatibility_reason: "Proven imported dotted hierarchy; known or historically recorded territory; no pending-territory scheduling claim."
+  - legacy_session_id: S12.8
+    source_line: 535
+    source_heading: "## Sesión 12.8 — La suite deja de poder escribir en el repositorio real"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-12/STATUS.md, origen_blob: a0878736a59b300912a597c4a305358788d461c2, origen_encabezado: "## Sesión 12.8 — La suite deja de poder escribir en el repositorio real", territorio_pendiente: false}
+    stable_ids: {modules: [M12.8.1, M12.8.2, M12.8.3], tasks: [T12.8.1.1, T12.8.1.2, T12.8.1.3, T12.8.2.1, T12.8.2.2, T12.8.2.3, T12.8.3.1, T12.8.3.2, T12.8.3.3]}
+    source_contract: {scope: "prevent the test suite from mutating the real repository or inherited Git environment", dependencies: [], authority: "2026-08-30 incident evidence and maintainer closure decision", decisions: "All Git consumers use the isolated helper; a regression must exercise a real Git call and fail before the fix.", criteria: "Checked criteria cover Git-environment sanitization, isolated roots, no repository mutation, regression proof, tests, and territory.", route: direct, delivery: "8767ec3, cd4214c, and 21a0718; immutable full OIDs require later Git-evidence resolution", outstanding_work: "8767ec3, cd4214c, and 21a0718; immutable full OIDs require later Git-evidence resolution"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, delivery], derived_comparison: [status, area, progress, queue, ownership, seat, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical execution, decisions, metrics, and narrative not representable as target fields]}
+    compatibility_reason: "Proven imported dotted hierarchy; known or historically recorded territory; no pending-territory scheduling claim."
+  - legacy_session_id: S12.9
+    source_line: 608
+    source_heading: "## Sesión 12.9 — Avanzar la revisión del artefacto a 2"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-12/STATUS.md, origen_blob: a0878736a59b300912a597c4a305358788d461c2, origen_encabezado: "## Sesión 12.9 — Avanzar la revisión del artefacto a 2", territorio_pendiente: false}
+    stable_ids: {modules: [], tasks: []}
+    source_contract: {scope: "advance review artifact revision to 2 with corrected PRD, RFC, requirements, and indirect provenance fixtures", dependencies: [], authority: "maintainer decision option A of 2026-08-30 and product-version-map authority", decisions: "The authorial source_commit value remains an escalating visible-contract decision; no withdrawn scope may reappear.", criteria: "Open criteria cover zero withdrawn-scope variants, revision-2 map indirection, provenance fixtures, tests, and area-only changes.", route: full-sdd, delivery: "unresolved; design defines Modules and Tasks", outstanding_work: "unresolved; design defines Modules and Tasks"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work], derived_comparison: [status, area, progress, queue, ownership, seat, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical execution, decisions, metrics, and narrative not representable as target fields]}
+    compatibility_reason: "Proven imported dotted hierarchy; known or historically recorded territory; no pending-territory scheduling claim."

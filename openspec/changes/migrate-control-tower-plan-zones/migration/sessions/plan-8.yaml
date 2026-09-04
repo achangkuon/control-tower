@@ -1,0 +1,35 @@
+schema_version: 1
+legacy_plan: 8
+source_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+source_path: openspec/plans/plan-8/STATUS.md
+source_blob: 8c1855e9f05837cd7a39c818e34c93233c0340b7
+complete: true
+session_count: 3
+sessions:
+  - legacy_session_id: S8.12
+    source_line: 895
+    source_heading: "## Sesión 8.12 — Canal único de distribución"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-8/STATUS.md, origen_blob: 8c1855e9f05837cd7a39c818e34c93233c0340b7, origen_encabezado: "## Sesión 8.12 — Canal único de distribución", territorio_pendiente: false}
+    stable_ids: {modules: [], tasks: []}
+    source_contract: {scope: "one versioned installation route packages the complete Tower payload and agent channel", dependencies: [S8.10, S8.14, S9.8], authority: "decisions 57-63, 88, 95, and 100 plus Engram 9921", decisions: "Bundle membership and ownership are approved; packaging must not redefine skills, interceptor, or router.", criteria: "Open criteria require a clean one-route installation of the complete versioned Tower bundle and rollback-capable active pointer.", route: design-tasks, delivery: "unresolved; Modules and Tasks are pending enumeration after the escalating decision", outstanding_work: "Modules and Tasks: pending enumeration"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work], derived_comparison: [status, area, progress, queue, ownership, seat, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical execution, decisions, metrics, and narrative not representable as target fields]}
+    compatibility_reason: "Proven imported dotted hierarchy; known or historically recorded territory; no pending-territory scheduling claim."
+  - legacy_session_id: S8.14
+    source_line: 961
+    source_heading: "### Sesión 8.14 — Perfiles permanentes Tower, neutrales al host"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-8/STATUS.md, origen_blob: 8c1855e9f05837cd7a39c818e34c93233c0340b7, origen_encabezado: "### Sesión 8.14 — Perfiles permanentes Tower, neutrales al host", territorio_pendiente: false}
+    stable_ids: {modules: [M8.14.1, M8.14.2], tasks: [T8.14.1.1, T8.14.1.2, T8.14.1.3, T8.14.2.1, T8.14.2.2, T8.14.2.3]}
+    source_contract: {scope: "permanent host-neutral Main, Support, and Implementer Tower profiles plus owning skill bindings", dependencies: [], authority: "maintainer decision 95 and Engram 9690/9691", decisions: "Main and Support omit mutation tools; Implementer retains bash; Planner is temporary, not permanent.", criteria: "Checked criteria prove five canonical sources, no global/runtime-specific profile copies, exact skill bindings, tests, and territory.", route: design-tasks, delivery: "54b5cda733025b0bd50c2a21dc67d1d4192ac66d", outstanding_work: "54b5cda733025b0bd50c2a21dc67d1d4192ac66d"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, delivery], derived_comparison: [status, area, progress, queue, ownership, seat, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical execution, decisions, metrics, and narrative not representable as target fields]}
+    compatibility_reason: "Proven imported dotted hierarchy; known or historically recorded territory; no pending-territory scheduling claim."
+  - legacy_session_id: S8.13
+    source_line: 1033
+    source_heading: "### Sesión 8.13 — Instalación global, activación y rollback"
+    provenance_classification: target
+    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-8/STATUS.md, origen_blob: 8c1855e9f05837cd7a39c818e34c93233c0340b7, origen_encabezado: "### Sesión 8.13 — Instalación global, activación y rollback", territorio_pendiente: false}
+    stable_ids: {modules: [M8.13.1], tasks: [T8.13.1.1, T8.13.1.2, T8.13.1.3]}
+    source_contract: {scope: "global installation, activation, diagnosis, and atomic rollback of the versioned Tower bundle", dependencies: [S8.12, S1.19, S4.12], authority: "owning Session contract and approved versioned lifecycle authorities", decisions: "Installation consumes the approved bundle and lifecycle rather than redefining their contracts.", criteria: "Open criteria require update routing, installed-runtime probe, closed fingerprint validation, activation, diagnosis, and atomic rollback.", route: design-tasks, delivery: "unresolved; M8.13.1 and three Tasks remain open", outstanding_work: "unresolved; M8.13.1 and three Tasks remain open"}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work], derived_comparison: [status, area, progress, queue, ownership, seat, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical execution, decisions, metrics, and narrative not representable as target fields]}
+    compatibility_reason: "Proven imported dotted hierarchy; known or historically recorded territory; no pending-territory scheduling claim."
