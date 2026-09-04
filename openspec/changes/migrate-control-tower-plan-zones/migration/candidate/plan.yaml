@@ -2487,3 +2487,66 @@ sesiones:
             accion: "REFACTOR: mantener recuperación mínima y separar historia OpenCode parqueada."
             resultado: "REFACTOR: mantener recuperación mínima y separar historia OpenCode parqueada."
             criterios: ["REFACTOR: mantener recuperación mínima y separar historia OpenCode parqueada."]
+
+  - id: S4.13
+    resultado: La adquisición neutral valida opcionalmente ownership aún no publicado, conserva compatibilidad cuando no hay hook y garantiza que sólo el registro puede cerrar o cuarentenar la adquisición exacta.
+    autoridad: decisión 97 / Emilio Engram 9755; planificación técnica corregida Engram 9756 revisión 2; evidencia causal Engram 9754
+    depende_de: [S4.10]
+    recurso: [registro neutral, reserva unpublished, capacidad privada de close exacta]
+    criterios:
+      - El orden observable es acquire → validate unpublished → publish; nunca se valida antes de adquirir ni después de publicar.
+      - El hook es opcional y caller-neutral; ausente conserva exactamente la conducta compatible vigente.
+      - El registro retiene privadamente el close exacto; caller, hook y capas posteriores no lo reciben, transfieren ni reconstruyen.
+      - Una validación exitosa publica una sola vez la reserva exacta, sin ownership rival ni efecto host-specific.
+      - Error, rechazo o throw de validación ejecuta el close exacto o registra cuarentena explícita; nunca cleanup best-effort ni inacción.
+      - Tests RED/GREEN y alternos cubren hook ausente, éxito, fallo con exact-close, fallo de close con cuarentena y prohibiciones de orden/exposición.
+      - El diff toca exactamente los cuatro paths de Área, sincroniza la spec canónica y suma 234 líneas authored, siempre ≤400.
+    decisiones:
+      - tipo: resuelta
+        pregunta: ¿Cómo valida el ownership neutral una adquisición antes de publicarla sin transferir autoridad de cleanup al caller?
+        resolucion: El ownership neutral admite un puerto opcional y caller-neutral de validación posterior a la adquisición y anterior a la publicación. El registro conserva privadamente la capacidad de close exacta devuelta por la adquisición. El orden obligatorio es acquire → validate unpublished → publish; la adquisición todavía no publicada se entrega al hook opcional sin exponer, transferir ni permitir reconstruir su cierre. Si el hook no existe, el comportamiento actual permanece compatible y la publicación continúa. Si la validación falla, el registro usa privadamente el close exacto o deja la adquisición en cuarentena explícita; nunca aplica cleanup best-effort ni omite acción. La validación no puede ejecutarse antes de adquirir ni después de publicar, no es obligatoria, no contiene política específica de host y no convierte al caller en owner.
+        autoridad: Emilio, Engram 9755; planificación corregida Engram 9756 revisión 2
+        evidencia: Engram 9754/9755/9756; candidato congelado 304d534 (tree 8049d32) sólo como evidencia inmutable; registro, tests y spec canónica vigentes en master@0e1723974a4b87ea63288890f0cd868905a0fe5b
+        checkpoint: antes de M4.13.1
+        opciones:
+          - opcion: Validar después de adquirir y antes de publicar, reteniendo close privadamente en el registro.
+            consecuencia: El hook observa sólo una vista neutral; éxito publica una vez y fallo ejecuta exact-close o cuarentena.
+        falsificador: Una adquisición se publica antes de validar; el hook observa o retiene close; su ausencia rompe compatibilidad; un fallo deja ownership ambiguo fuera de cuarentena; o la capa neutral decide política del host.
+        clase: contrato-visible-del-producto; api-publica; seguridad-y-permisos; expansion-de-alcance; dependencias-o-evidencia-contradictorias
+        descartadas:
+          - opcion: Exponer, transferir o reconstruir close.
+            razon: Transferiría ownership y cleanup fuera del registro neutral.
+          - opcion: Validar antes de adquirir o después de publicar.
+            razon: Rompería el orden aprobado y permitiría validación sin recurso exacto o publicación parcial.
+          - opcion: Hacer obligatorio el hook.
+            razon: Rompería la compatibilidad cuando el hook está ausente.
+          - opcion: Incorporar política Pi, OpenCode o host-specific.
+            razon: Violaría la frontera caller-neutral.
+          - opcion: Aplicar cleanup best-effort o ninguna acción ante fallo.
+            razon: Dejaría ownership ambiguo sin exact-close probado ni cuarentena explícita.
+        contaminaba: [S4.13, M4.13.1, S9.4]
+    entrega:
+      commit: af607a93cb7f303e48bfc0e4ad761cadc3d1025e
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-4/STATUS.md
+      origen_blob: eec8b401c2f55b05cec419c101ecb462b4e4afe3
+      origen_encabezado: "### Sesión 4.13 — Validación neutral pre-publicación de ownership"
+      territorio_pendiente: false
+    modulos:
+      - id: M4.13.1
+        resultado: Puerto neutral de validación unpublished
+        rutas: [contracts/host-runtime/ownership-registry.mjs, test/contracts/host-runtime/ownership.test.mjs, test/contracts/host-runtime/loopback.test.mjs, openspec/specs/host-runtime/spec.md]
+        tareas:
+          - id: T4.13.1.1
+            accion: "RED: fijar orden acquire/validate/publish, ausencia compatible, no exposición de close, fallo y cuarentena."
+            resultado: "RED: fijar orden acquire/validate/publish, ausencia compatible, no exposición de close, fallo y cuarentena."
+            criterios: ["RED: fijar orden acquire/validate/publish, ausencia compatible, no exposición de close, fallo y cuarentena."]
+          - id: T4.13.1.2
+            accion: "GREEN: agregar el puerto opcional mínimo y retener el close exacto dentro del registro."
+            resultado: "GREEN: agregar el puerto opcional mínimo y retener el close exacto dentro del registro."
+            criterios: ["GREEN: agregar el puerto opcional mínimo y retener el close exacto dentro del registro."]
+          - id: T4.13.1.3
+            accion: "TRIANGULATE/REFACTOR: cubrir alternos negativos, sincronizar la spec y simplificar sin host policy ni paths extra."
+            resultado: "TRIANGULATE/REFACTOR: cubrir alternos negativos, sincronizar la spec y simplificar sin host policy ni paths extra."
+            criterios: ["TRIANGULATE/REFACTOR: cubrir alternos negativos, sincronizar la spec y simplificar sin host policy ni paths extra."]
