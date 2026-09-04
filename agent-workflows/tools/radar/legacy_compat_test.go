@@ -263,7 +263,6 @@ func TestHistoricalTerritoryAcceptsOnlyProvenTerminalImports(t *testing.T) {
 		"open import":       func(s *Sesion) { s.Entrega = nil },
 		"unproven import":   func(s *Sesion) { s.ImportacionLegacy.OrigenBlob = "" },
 		"pending import":    func(s *Sesion) { s.ImportacionLegacy.TerritorioPendiente = true },
-		"single Zone paths": func(s *Sesion) { s.Modulos[0].Rutas = []string{"tracked.txt"} },
 		"no paths":          func(s *Sesion) { s.Modulos[0].Rutas = nil },
 		"declared Zone":     func(s *Sesion) { s.Zona = "work" },
 		"declared Cimiento": func(s *Sesion) { s.Cimientos = []string{"tracked.txt"} },
@@ -280,6 +279,46 @@ func TestHistoricalTerritoryAcceptsOnlyProvenTerminalImports(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTerminalHistoryAcceptsAnyCurrentOwnerCombination(t *testing.T) {
+	root, head, prov := legacyFixture(t)
+	cimientos := Cimientos{Rutas: []string{"foundation.txt"}}
+	cases := map[string]struct {
+		paths []string
+	}{
+		"single Zone":       {[]string{"tracked.txt"}},
+		"Zone and Cimiento": {[]string{"tracked.txt", "foundation.txt"}},
+		"multiple Zones":    {[]string{"tracked.txt", "legacy/STATUS.md"}},
+		"Cimiento only":     {[]string{"foundation.txt"}},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			s := historicalSession(prov, head)
+			s.Modulos[0].Rutas = tc.paths
+			p := &Plan{Producto: "x", Zonas: []Zona{{ID: "work", Nombre: "Work", Rutas: []string{"tracked.txt"}}, {ID: "history", Nombre: "History", Rutas: []string{"legacy/"}}}, Cimientos: cimientos, Sesiones: []Sesion{s}}
+			if h := legacyErrors(p, root, head); len(h) != 0 {
+				t.Fatalf("proven terminal history rejected: %#v", h)
+			}
+			zones, total := p.AvanceAt(root, head)
+			if len(zones) != 0 || total != (Avance{Cerradas: 1, Total: 1}) || len(p.ColaPorZonaAt(root, head)) != 0 || len(p.AsientosAt(root, head)) != 0 || len(p.Area(&s)) != 0 {
+				t.Fatalf("terminal history contributed execution authority: zones=%v total=%v", zones, total)
+			}
+			out := string(RenderAt(p, root, head))
+			if !strings.Contains(out, "Territorio histórico") || !strings.Contains(out, "evidencia no autorizante") || strings.Contains(out, "propuesta direct") {
+				t.Fatalf("terminal history rendering leaked execution territory: %s", out)
+			}
+		})
+	}
+
+	t.Run("delivered mixed owned and ownerless fails closed", func(t *testing.T) {
+		s := historicalSession(prov, head)
+		s.Modulos[0].Rutas = []string{"tracked.txt", "scripts/retired/tool.mjs"}
+		p := &Plan{Zonas: []Zona{{ID: "work", Rutas: []string{"tracked.txt"}}}, Sesiones: []Sesion{s}}
+		if len(legacyErrors(p, root, head)) == 0 {
+			t.Fatal("delivered history used an absent ownerless path without archive authority")
+		}
+	})
 }
 
 func TestOwnerlessArchivedHistoryPreservesOnlyAbsentSafePaths(t *testing.T) {
@@ -319,13 +358,6 @@ func TestOwnerlessArchivedHistoryFailsClosed(t *testing.T) {
 		"tracked ownerless file": func(s *Sesion, p *Plan) {
 			p.Zonas[0].Rutas = []string{"other.txt"}
 			s.Modulos[0].Rutas = []string{"tracked.txt"}
-		},
-		"currently owned path": func(s *Sesion, p *Plan) {
-			p.Zonas[0].Rutas = []string{"tracked.txt", "scripts/retired/tool.mjs"}
-		},
-		"mixed owned and ownerless": func(s *Sesion, p *Plan) {
-			p.Zonas[0].Rutas = []string{"tracked.txt", "scripts/retired/tool.mjs"}
-			s.Modulos[0].Rutas = []string{"scripts/retired/tool.mjs", "test/retired/tool.test.mjs"}
 		},
 		"unsafe traversal":  func(s *Sesion, _ *Plan) { s.Modulos[0].Rutas = []string{"../tool.mjs"} },
 		"absolute":          func(s *Sesion, _ *Plan) { s.Modulos[0].Rutas = []string{"/tool.mjs"} },

@@ -130,8 +130,11 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 			if len(s.Cimientos) != 0 || s.Ruta != (RutaSesion{}) {
 				h = append(h, Hallazgo{"error", "territorio histórico", fmt.Sprintf("%s declara Cimientos o ruta de ejecución", s.ID)})
 			}
-			zonasHistoricas := map[string]bool{}
+			propietariosActuales := map[string]bool{}
 			todasSinDueño := s.Archivada
+			tieneRutaSinDueño := false
+			tieneRutaTrackedSinDueño := false
+			rutas := 0
 			tracked, err := trackedFilesAt(root, head)
 			if err != nil {
 				todasSinDueño = false
@@ -142,19 +145,22 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 			}
 			for _, m := range s.Modulos {
 				for _, ruta := range m.Rutas {
+					rutas++
 					owners := p.owners(ruta)
 					if len(owners) != 0 || rutasTracked[ruta] {
 						todasSinDueño = false
 					}
+					if len(owners) == 0 {
+						tieneRutaSinDueño = true
+						tieneRutaTrackedSinDueño = tieneRutaTrackedSinDueño || rutasTracked[ruta]
+					}
 					for _, owner := range owners {
-						if owner.Kind == "zona" {
-							zonasHistoricas[owner.ID] = true
-						}
+						propietariosActuales[owner.Kind+":"+owner.ID] = true
 					}
 				}
 			}
-			if len(zonasHistoricas) < 2 && !todasSinDueño {
-				h = append(h, Hallazgo{"error", "territorio histórico", fmt.Sprintf("%s no prueba rutas históricas en múltiples Zonas actuales ni un archivo archivado ausente y sin dueño", s.ID)})
+			if rutas == 0 || tieneRutaTrackedSinDueño || (len(propietariosActuales) == 0 && !todasSinDueño) || (tieneRutaSinDueño && !s.Archivada) {
+				h = append(h, Hallazgo{"error", "territorio histórico", fmt.Sprintf("%s no prueba rutas históricas con dueño actual ni rutas ausentes archivadas sin dueño", s.ID)})
 			}
 		} else if s.Zona == "" {
 			h = append(h, Hallazgo{"error", "sesión", fmt.Sprintf("%s no declara zona", s.ID)})
