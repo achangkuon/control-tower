@@ -4901,3 +4901,62 @@ sesiones:
             accion: "REFACTOR: retirar aliases públicos supersedidos, preservar provenance/orden de transforms y estabilizar errores fail-closed."
             resultado: "REFACTOR: aliases públicos supersedidos se retiran, provenance/orden de transforms se preservan y errores fail-closed se estabilizan."
             criterios: ["REFACTOR: aliases públicos supersedidos se retiran, provenance/orden de transforms se preservan y errores fail-closed se estabilizan."]
+
+
+  - id: S9.8
+    zona: hosts
+    cimientos: [skills/torre-control/SKILL.md, skills/torre-control-entregas/SKILL.md]
+    resultado: Dispatch fire-and-forget y cierre asíncrono
+    autoridad: decisión 104 y Engram 10008.
+    depende_de: [S108, S1.18]
+    recurso: [dispatch_id, canal Intercom ya ligado por S1.18 y mailbox de Main; sin ownership de Herdr, lifecycle de procesos o entrega Git]
+    criterios:
+      - Main despacha Support/worker, registra dispatch_id y vuelve inmediatamente a coordinar después del acknowledgment de envío.
+      - Progreso y cierre llegan por send; ask sólo aparece con una pregunta de decisión exacta y deja el assignment BLOCKED recuperable.
+      - Cada assignment acepta exactamente un terminal COMPLETED, BLOCKED o FAILED con los campos de evidencia/recoverability aprobados; duplicado, stale o sin dispatch_id falla cerrado.
+      - Un candidato local, un pane activo o trabajo parcial sin terminal no acredita progreso ni habilita downstream.
+      - OFF no atribuye persistencia/retry Tower-owned; ON no despacha sin binding, acknowledgment y retry.
+      - El diff toca sólo Área.
+    decisiones:
+      - tipo: resuelta
+        pregunta: ¿Cuál es la política de dispatch y cierre asíncrono?
+        resolucion: Dispatch es fire-and-forget; Main bloquea sólo ante una decisión verdadera; send lleva progreso/completion y ask queda reservado a decisión humana.
+        autoridad: decisión 104 y Engram 10008.
+        clase: contrato-visible-del-producto; seguridad-y-permisos
+        falsificador: Un dispatch espera ordinariamente, ask se usa fuera de una decisión humana, send no lleva progreso/completion, o Main acredita trabajo sin terminal válido.
+        descartadas: []
+      - tipo: derivable
+        pregunta: ¿Cuándo acredita Main avance del assignment?
+        criterio: COMPLETED exige evidence refs, changed paths y tests; BLOCKED/FAILED exigen razón y recoverability; estado parcial, pane visible o candidato local no acredita progreso.
+        autoridad: decisión 104 y Engram 10008.
+        evidencia: Contrato inmutable de S9.8.
+        checkpoint: antes de acreditar progreso o habilitar downstream.
+        opciones:
+          - opcion: Acreditar sólo un terminal válido ligado al dispatch_id.
+            consecuencia: Progreso parcial, pane visible o candidato local no habilitan downstream.
+    ruta:
+      propuesta: direct
+      autoridad: decisión 104 y Engram 10008; política operacional y formas terminales aprobadas en el contrato inmutable de S9.8.
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-9/STATUS.md
+      origen_blob: 18b77f222bdcf1bea0d2d144b170f102d5d6cc8a
+      origen_encabezado: "## Sesión 9.8 — Dispatch fire-and-forget y cierre asíncrono"
+      territorio_pendiente: false
+    modulos:
+      - id: M9.8.1
+        resultado: Política de dispatch y contrato terminal
+        rutas: [skills/torre-control/SKILL.md, skills/torre-control-entregas/SKILL.md, test/extensions/pi/tower-session-router.test.mjs]
+        tareas:
+          - id: T9.8.1.1
+            accion: "RED: cubrir espera ordinaria prohibida, uso indebido de ask, terminal faltante/duplicado/stale y crédito falso por candidato parcial."
+            resultado: "RED: espera ordinaria prohibida, uso indebido de ask, terminal faltante/duplicado/stale y crédito falso por candidato parcial quedan cubiertos."
+            criterios: ["RED: espera ordinaria prohibida, uso indebido de ask, terminal faltante/duplicado/stale y crédito falso por candidato parcial quedan cubiertos."]
+          - id: T9.8.1.2
+            accion: "GREEN: registrar dispatch_id, retornar tras acknowledgment y consumir send terminal con evidencia/recoverability exactas."
+            resultado: "GREEN: dispatch_id se registra, el control retorna tras acknowledgment y send terminal conserva evidencia/recoverability exactas."
+            criterios: ["GREEN: dispatch_id se registra, el control retorna tras acknowledgment y send terminal conserva evidencia/recoverability exactas."]
+          - id: T9.8.1.3
+            accion: "REFACTOR: separar coordinación de seguimiento, estabilizar rechazo fail-closed y probar divergencia ON/OFF sin cambiar autoridad."
+            resultado: "REFACTOR: coordinación y seguimiento se separan, el rechazo fail-closed se estabiliza y la divergencia ON/OFF queda probada sin cambiar autoridad."
+            criterios: ["REFACTOR: coordinación y seguimiento se separan, el rechazo fail-closed se estabiliza y la divergencia ON/OFF queda probada sin cambiar autoridad."]
