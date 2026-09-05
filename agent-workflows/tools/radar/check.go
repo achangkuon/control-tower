@@ -246,8 +246,11 @@ func (p *Plan) checkModulos(root string, s *Sesion, modulosVistos, tareasVistas 
 		if strings.TrimSpace(m.Resultado) == "" {
 			h = append(h, Hallazgo{"error", "resultado", fmt.Sprintf("%s debe declarar un resultado no vacío", m.ID)})
 		}
-		if len(m.Rutas) == 0 && !pendiente {
+		if len(m.Rutas) == 0 && !pendiente && !m.ReadOnly {
 			h = append(h, Hallazgo{"error", "jerarquía", fmt.Sprintf("%s no declara archivos concretos", m.ID)})
+		}
+		if m.ReadOnly && len(m.Rutas) != 0 {
+			h = append(h, Hallazgo{"error", "jerarquía", fmt.Sprintf("%s es read-only y no puede declarar archivos modificados", m.ID)})
 		}
 		if pendiente && len(m.Rutas) != 0 {
 			h = append(h, Hallazgo{"error", "territorio pendiente", fmt.Sprintf("%s declara rutas", m.ID)})

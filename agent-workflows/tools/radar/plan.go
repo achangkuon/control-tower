@@ -76,6 +76,7 @@ type ImportacionLegacy struct {
 type Modulo struct {
 	ID        string   `yaml:"id"`
 	Resultado string   `yaml:"resultado"`
+	ReadOnly  bool     `yaml:"read_only"`
 	Rutas     []string `yaml:"rutas"`
 	Tareas    []Tarea  `yaml:"tareas"`
 }
