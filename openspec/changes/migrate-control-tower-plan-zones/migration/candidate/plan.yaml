@@ -4792,3 +4792,54 @@ sesiones:
             accion: "TRIANGULATE/REFACTOR: cerrar alternos, correr suites combinada y completa y verificar límites de Área, efectos y rollback."
             resultado: "TRIANGULATE/REFACTOR: cerrar alternos, correr suites combinada y completa y verificar límites de Área, efectos y rollback."
             criterios: ["TRIANGULATE/REFACTOR: alternos, suites, límites de Área, efectos y rollback quedan cerrados."]
+  - id: S9.5
+    resultado: Topología y materialización visual determinista
+    autoridad: decisión 104, decisión 101 y Engram 10008; se conserva sólo como evidencia archivada tras el lineage aprobado y no confiere autoridad de ejecución actual.
+    depende_de: [S1.18, S9.7]
+    recurso: ["sesión Herdr enfocada, tabs/panes exactos y worktrees aprobados; sin autoridad de dispatch, DB, lifecycle de worktrees ni token de entrega"]
+    archivada: true
+    criterios:
+      - Herdr materializa exactamente tabs `MAIN`, `SUPPORT` y `AGENTES`; ningún alias o label aproximado pasa.
+      - MAIN y SUPPORT ocupan sus panes/worktrees exactos y AGENTES contiene sólo workers enumerados por el brief.
+      - Antes de cualquier prompt, cada pane prueba por readback `cwd` y `foreground_cwd` iguales al worktree aprobado; mismatch falla cerrado sin reparar por inferencia.
+      - Repetir el mismo input converge sin duplicar tabs, panes o procesos; un recurso ajeno nunca se cierra ni reutiliza.
+      - El diff toca sólo `Área` y no despacha trabajo, modifica skills, Pi/Intercom, worktrees ni runtime vivo.
+    decisiones:
+      - tipo: resuelta
+        pregunta: ¿Quién posee la topología visual/procesal Herdr y su observación determinista?
+        resolucion: "Herdr posee la topología visual/procesal y su observación determinista: labels exactos `MAIN`, `SUPPORT`, `AGENTES`, panes, `cwd` y `foreground_cwd` por readback."
+        autoridad: decisión 104 y Engram 10008.
+        clase: contrato-visible-del-producto; seguridad-y-permisos
+        falsificador: La skill duplica sintaxis/topología o un pane recibe prompt sin readback coincidente.
+      - tipo: derivable
+        pregunta: ¿Cuándo es segura la reutilización?
+        criterio: Label, pane, worktree, cwd y foreground_cwd coinciden con el brief; mismatch falla cerrado sin `cd`, reciclado ni adopción.
+        autoridad: decisión 104, decisión 101 y Engram 10008.
+        evidencia: Contrato inmutable de S9.5.
+        checkpoint: antes de materializar o reutilizar un pane histórico
+        opciones:
+          - opcion: Reutilizar sólo cuando label, pane, worktree, cwd y foreground_cwd coinciden con el brief.
+            consecuencia: El mismatch falla cerrado sin `cd`, reciclado ni adopción.
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-9/STATUS.md
+      origen_blob: 18b77f222bdcf1bea0d2d144b170f102d5d6cc8a
+      origen_encabezado: "## Sesión 9.5 — Topología y materialización visual determinista"
+      territorio_pendiente: false
+    modulos:
+      - id: M9.5.1
+        resultado: Materialización y readback Herdr
+        rutas: [hosts/herdr-topology.mjs, test/hosts/herdr-topology.test.mjs, workspace/herdr-seat-materializer.mjs, test/workspace/herdr-seat-materializer.test.mjs]
+        tareas:
+          - id: T9.5.1.1
+            accion: "RED: cubrir labels exactos, pane extra/faltante, worktree/cwd/foreground_cwd divergentes, repetición y recurso ajeno."
+            resultado: "RED: cubrir labels exactos, pane extra/faltante, worktree/cwd/foreground_cwd divergentes, repetición y recurso ajeno."
+            criterios: ["RED: labels exactos, pane extra/faltante, worktree/cwd/foreground_cwd divergentes, repetición y recurso ajeno quedan cubiertos."]
+          - id: T9.5.1.2
+            accion: "GREEN: componer el materializador sobre hosts/herdr-topology.mjs y devolver evidencia por pane sin despachar."
+            resultado: "GREEN: componer el materializador sobre hosts/herdr-topology.mjs y devolver evidencia por pane sin despachar."
+            criterios: ["GREEN: el materializador devuelve evidencia por pane sin despachar."]
+          - id: T9.5.1.3
+            accion: "REFACTOR: eliminar topología duplicada, estabilizar readback/fallback y probar convergencia."
+            resultado: "REFACTOR: eliminar topología duplicada, estabilizar readback/fallback y probar convergencia."
+            criterios: ["REFACTOR: topología duplicada eliminada, readback/fallback estabilizado y convergencia probada."]
