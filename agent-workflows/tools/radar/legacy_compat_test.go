@@ -430,6 +430,54 @@ func TestOwnerlessArchivedHistoryFailsClosed(t *testing.T) {
 	}
 }
 
+func TestArchivedImportWithoutStableModulesPreservesHistoricalPaths(t *testing.T) {
+	root, head, prov := legacyFixture(t)
+	archived := importedSession(prov, false)
+	archived.Entrega = nil
+	archived.Archivada = true
+	archived.Zona = ""
+	archived.Ruta = RutaSesion{}
+	archived.Cimientos = nil
+	archived.Modulos = nil
+	archived.RutasHistoricas = []string{"tracked.txt", "legacy/STATUS.md"}
+	p := &Plan{Zonas: []Zona{{ID: "work", Rutas: []string{"tracked.txt"}}, {ID: "history", Rutas: []string{"legacy/"}}}, Sesiones: []Sesion{archived}}
+
+	if h := legacyErrors(p, root, head); len(h) != 0 {
+		t.Fatalf("archived zero-Module historical carrier rejected: %#v", h)
+	}
+	zones, total := p.AvanceAt(root, head)
+	if len(p.ColaPorZonaAt(root, head)) != 0 || len(p.Area(&archived)) != 0 || len(p.AsientosAt(root, head)) != 0 || len(zones) != 0 || total != (Avance{Cerradas: 1, Total: 1}) {
+		t.Fatalf("historical carrier authorized execution: zones=%v total=%v", zones, total)
+	}
+	out := string(RenderAt(p, root, head))
+	for _, want := range []string{"Rutas históricas (evidencia)", "tracked.txt", "legacy/STATUS.md"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("render missing %q", want)
+		}
+	}
+
+	cases := map[string]func(*Sesion){
+		"open import":      func(s *Sesion) { s.Archivada = false },
+		"live Zone":        func(s *Sesion) { s.Zona = "work" },
+		"ordinary archive": func(s *Sesion) { s.ImportacionLegacy = nil },
+		"stable Module":    func(s *Sesion) { s.Modulos = historicalSession(prov, head).Modulos },
+		"untracked path":   func(s *Sesion) { s.RutasHistoricas = []string{"retired.txt"} },
+		"glob":             func(s *Sesion) { s.RutasHistoricas = []string{"legacy/*"} },
+	}
+	for name, mutate := range cases {
+		t.Run(name, func(t *testing.T) {
+			row := archived
+			provenance := *archived.ImportacionLegacy
+			row.ImportacionLegacy = &provenance
+			row.RutasHistoricas = append([]string(nil), archived.RutasHistoricas...)
+			mutate(&row)
+			if len(legacyErrors(&Plan{Zonas: p.Zonas, Sesiones: []Sesion{row}}, root, head)) == 0 {
+				t.Fatal("invalid Session-level historical carrier accepted")
+			}
+		})
+	}
+}
+
 func TestHistoricalTerritoryIsEvidenceNotAuthorization(t *testing.T) {
 	root, head, prov := legacyFixture(t)
 	s := historicalSession(prov, head)

@@ -56,6 +56,7 @@ type Sesion struct {
 	Decisiones        []Decision         `yaml:"decisiones"`
 	Reemplaza         []string           `yaml:"reemplaza"`
 	Modulos           []Modulo           `yaml:"modulos"`
+	RutasHistoricas   []string           `yaml:"rutas_historicas"`
 	Ruta              RutaSesion         `yaml:"ruta"`
 	Entrega           *Entrega           `yaml:"entrega"`
 	Diferida          bool               `yaml:"diferida"`

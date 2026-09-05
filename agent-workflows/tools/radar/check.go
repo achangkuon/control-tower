@@ -119,6 +119,9 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 		if importada {
 			h = append(h, checkImportacionLegacy(root, head, s, provenienciasVistas)...)
 		}
+		if len(s.RutasHistoricas) > 0 && (!importada || !s.Archivada || s.Entrega != nil || pendiente || len(s.Modulos) != 0 || s.Zona != "" || len(s.Cimientos) != 0 || s.Ruta != (RutaSesion{})) {
+			h = append(h, Hallazgo{"error", "rutas históricas", fmt.Sprintf("%s sólo puede preservar rutas históricas sin Módulos como importación archivada", s.ID)})
+		}
 		if pendiente {
 			if s.Zona != "" || len(s.Cimientos) != 0 || s.Ruta != (RutaSesion{}) || s.Entrega != nil || s.Archivada || s.Diferida {
 				h = append(h, Hallazgo{"error", "territorio pendiente", fmt.Sprintf("%s declara territorio, ruta o estado terminal", s.ID)})
@@ -159,7 +162,16 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 					}
 				}
 			}
-			if rutas == 0 || tieneRutaTrackedSinDueño || (len(propietariosActuales) == 0 && !todasSinDueño) || (tieneRutaSinDueño && !s.Archivada) {
+			carrierHistorico := len(s.RutasHistoricas) > 0 && len(s.Modulos) == 0
+			for _, ruta := range s.RutasHistoricas {
+				normalizada, pathErr := exactRepoFile(root, ruta)
+				if pathErr != nil {
+					h = append(h, Hallazgo{"error", "rutas históricas", fmt.Sprintf("%s: %v", s.ID, pathErr)})
+				} else if !rutasTracked[normalizada] {
+					h = append(h, Hallazgo{"error", "rutas históricas", fmt.Sprintf("%s sólo puede preservar archivos históricos tracked", s.ID)})
+				}
+			}
+			if !carrierHistorico && (rutas == 0 || tieneRutaTrackedSinDueño || (len(propietariosActuales) == 0 && !todasSinDueño) || (tieneRutaSinDueño && !s.Archivada)) {
 				h = append(h, Hallazgo{"error", "territorio histórico", fmt.Sprintf("%s no prueba rutas históricas con dueño actual ni rutas ausentes archivadas sin dueño", s.ID)})
 			}
 		} else if s.Zona == "" {

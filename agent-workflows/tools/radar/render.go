@@ -166,6 +166,9 @@ func RenderAt(p *Plan, root, head string) []byte {
 		for _, criterio := range s.Criterios {
 			fmt.Fprintf(&b, "  - [ ] %s\n", markdownText(criterio))
 		}
+		if len(s.RutasHistoricas) > 0 {
+			fmt.Fprintf(&b, "Rutas históricas (evidencia): %s\n\n", markdownList(s.RutasHistoricas))
+		}
 		for _, m := range s.Modulos {
 			fmt.Fprintf(&b, "\n#### %s — %s\n", markdownText(m.ID), markdownText(m.Resultado))
 			if esTerritorioHistorico(&s) {
