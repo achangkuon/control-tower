@@ -4311,3 +4311,83 @@ sesiones:
             accion: "REFACTOR: RUNTIME_PAYLOAD_FILES conserva igualdad exacta de conjunto y ningún miembro queda sin llamador."
             resultado: "REFACTOR: RUNTIME_PAYLOAD_FILES conserva igualdad exacta de conjunto y ningún miembro queda sin llamador."
             criterios: [RUNTIME_PAYLOAD_FILES conserva igualdad exacta y todos sus miembros tienen llamador.]
+  - id: S7.1
+    zona: entrega
+    resultado: Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral, preservando OpenCode como conformidad diferida.
+    autoridad: Decisiones 32, 33 y 85 del maintainer; reconciliación Pi-first vigente en openspec/plans/plan-7/STATUS.md líneas 69-79; asignación Entrega aprobada en agent-workflows/ASIGNACION-24-SESIONES.md líneas 161-174.
+    depende_de: [S1.19, S4.12, S8.13, S5.5]
+    recurso: [candidato inmutable, entorno Pi aislado]
+    criterios:
+      - Un único candidate_revision inmutable identifica la corrida completa.
+      - Toda evidencia se traza al contrato host-neutral y a ese candidato.
+      - La cadena Pi y la recuperación mínima pasan.
+      - La instalación, el rollback y el preflight completos pasan.
+      - La corrida larga, el crash del broker bajo tráfico y cinco clientes producen evidencia.
+      - No se afirma soporte por encima de cinco clientes.
+      - S5.3 se trata como dependencia satisfecha y no se modifica ningún path fuera del Área declarada.
+    decisiones:
+      - tipo: resuelta
+        pregunta: ¿Sobre qué repositorio se corre el piloto cuando un gate no está cubierto?
+        resolucion: El piloto se corre sobre control-tower mismo contra un único candidato final.
+        autoridad: Decisión 32 del maintainer del 2026-08-14.
+        clase: dependencias-o-evidencia-contradictorias
+        falsificador: Se emite una declaración de conformidad sin evidencia de piloto sobre control-tower.
+        descartadas:
+          - opcion: Declarar conformidad sin cubrir el gate.
+            razon: Afirmaría algo que no se midió.
+          - opcion: Agregar otro piloto.
+            razon: Expandiría el alcance de la Sesión.
+        contaminaba: [declaracion-de-release]
+      - tipo: resuelta
+        pregunta: ¿Qué resultado rojo del piloto bloquea la release?
+        resolucion: Bloquea sólo un rojo vivo sobre un requisito de Gates A-G; los rojos de capacidades deliberadamente diferidas no bloquean.
+        autoridad: Decisión 33 del maintainer del 2026-08-14.
+        clase: contrato-visible-del-producto
+        falsificador: Se emite una declaración con un rojo vivo sobre Gates A-G o se bloquea por un rojo de alcance diferido.
+        descartadas:
+          - opcion: Todo rojo bloquea.
+            razon: F7 failover y F8 campañas multiproyecto fueron retirados deliberadamente del alcance.
+          - opcion: Ningún rojo bloquea.
+            razon: Convertiría el gate en documentación sin fuerza.
+        contaminaba: [declaracion-de-primera-version]
+      - tipo: resuelta
+        pregunta: ¿Qué host y candidato gobiernan la conformidad terminal de S7.1?
+        resolucion: S7.1 corre una sola vez contra el candidato final Pi-first inmutable de control-tower y el contrato host-neutral; OpenCode queda diferido mientras esté parqueado.
+        autoridad: Decisión 85 del maintainer del 2026-08-27.
+        clase: contrato-visible-del-producto; dependencias-o-evidencia-contradictorias
+        falsificador: La release usa más de un candidato, evidencia mutable o de otro host, omite el contrato neutral, ignora un rojo de Gates A-G o exige conformidad OpenCode mientras siga diferido.
+        descartadas:
+          - opcion: Gate dual-host.
+            razon: Haría depender la primera release de un host deliberadamente parqueado.
+          - opcion: Reutilizar evidencia de un host para otro.
+            razon: La prueba no sería atribuible al runtime liberado.
+          - opcion: Conservar S7.1 sólo para OpenCode.
+            razon: Mediría un candidato distinto del Pi-first que se pretende declarar.
+        contaminaba: [S7.1, declaracion-de-release]
+    ruta:
+      propuesta: design-tasks
+      autoridad: Decisiones 32, 33 y 85; reconciliación Pi-first vigente y asignación Entrega aprobada.
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-7/STATUS.md
+      origen_blob: eda94ff0fac451969667d2fec31726532e869333
+      origen_encabezado: "## Sesión 7.1 — Conformance pilot histórico OpenCode-only"
+      territorio_pendiente: false
+    modulos:
+      - id: M7.1.1
+        resultado: Piloto terminal Pi-first
+        read_only: true
+        rutas: []
+        tareas:
+          - id: T7.1.1.1
+            accion: "RED: congelar candidato y registrar todo rojo Gate A-G sin reinterpretarlo."
+            resultado: "RED: congelar candidato y registrar todo rojo Gate A-G sin reinterpretarlo."
+            criterios: [Todo rojo Gate A-G queda registrado contra el único candidato inmutable sin reinterpretación.]
+          - id: T7.1.1.2
+            accion: "GREEN: ejecutar piloto en control-tower contra contrato neutral e instalación real."
+            resultado: "GREEN: ejecutar piloto en control-tower contra contrato neutral e instalación real."
+            criterios: [El piloto Pi-first corre contra el contrato host-neutral y la instalación real.]
+          - id: T7.1.1.3
+            accion: "REFACTOR: consolidar evidencia atribuible y declaración de alcance máximo de cinco clientes."
+            resultado: "REFACTOR: consolidar evidencia atribuible y declaración de alcance máximo de cinco clientes."
+            criterios: [La evidencia queda atribuida al candidato y no declara soporte por encima de cinco clientes.]
