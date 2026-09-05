@@ -4843,3 +4843,61 @@ sesiones:
             accion: "REFACTOR: eliminar topología duplicada, estabilizar readback/fallback y probar convergencia."
             resultado: "REFACTOR: eliminar topología duplicada, estabilizar readback/fallback y probar convergencia."
             criterios: ["REFACTOR: topología duplicada eliminada, readback/fallback estabilizado y convergencia probada."]
+
+  - id: S9.7
+    zona: hosts
+    cimientos: [skills/torre-control/SKILL.md]
+    resultado: Route padre registrado y triggers públicos exactos
+    autoridad: decisión 104, Engram 10008 y fuente cerrada de S9.6 como antecedente, no como contrato visible vigente.
+    depende_de: [S1.20, S2.9, S9.6]
+    recurso: [cadena global pi.on("input"), probe tipado de modo y resolución canónica de proyecto enrolado; sin Herdr, DB mutable ni procesos]
+    criterios:
+      - En un proyecto registrado, cada una de las cuatro frases exactas, con o sin Sesión/topic, alcanza el mismo parent route torre-control; ninguna otra frase se acepta.
+      - El route consulta el probe compartido y selecciona ON u OFF sin pedir al usuario que declare el modo; INDETERMINATE falla cerrado y no llega al modelo.
+      - Un proyecto no registrado continúa sin captura y explica enrollment sólo cuando el usuario invoca explícitamente la superficie Tower correspondiente.
+      - OFF usa peers vivos aprobados y skills sin fabricar garantías Tower; ON exige binding/persistencia/ack/retry Tower-owned.
+      - El contrato viejo de S9.6 queda como historia cerrada y no se reabre ni recibe crédito nuevo.
+      - El diff toca sólo Área.
+    decisiones:
+      - tipo: resuelta
+        pregunta: ¿Cuál es el route padre y qué triggers públicos acepta?
+        resolucion: Un único parent route torre-control detecta ON/OFF/INDETERMINATE y acepta exactamente, para proyectos registrados, “empezamos la jornada”, “prepará el espacio de trabajo”, “continuemos con la implementación” y “quiero continuar con la implementación”, con Sesión/topic opcional.
+        autoridad: decisión 104 y Engram 10008.
+        clase: contrato-visible-del-producto; api-publica
+        falsificador: El usuario debe declarar el modo, se acepta una quinta frase o se conserva el route público genérico anterior.
+        descartadas: []
+      - tipo: derivable
+        pregunta: ¿Cómo clasifica el route el modo y selecciona su ejecución?
+        criterio: INDETERMINATE falla cerrado con diagnóstico local y cero turno de modelo; OFF y ON seleccionan su ejecución después del mismo route, sin transferir autoridad.
+        autoridad: decisión 104 y Engram 10008.
+        evidencia: El probe S1.20 es la única clasificación de modo según el contrato inmutable de S9.7.
+        checkpoint: antes de M9.7.1
+        opciones:
+          - opcion: Consultar exclusivamente el probe compartido S1.20 y fallar cerrado ante INDETERMINATE.
+            consecuencia: OFF y ON seleccionan su ejecución tras el mismo route sin pedir al usuario que declare modo ni transferir autoridad.
+    ruta:
+      propuesta: direct
+      autoridad: decisión 104, Engram 10008 y contrato inmutable de S9.7
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-9/STATUS.md
+      origen_blob: 18b77f222bdcf1bea0d2d144b170f102d5d6cc8a
+      origen_encabezado: "## Sesión 9.7 — Route padre registrado y triggers públicos exactos"
+      territorio_pendiente: false
+    modulos:
+      - id: M9.7.1
+        resultado: Gramática registrada y selección de modo
+        rutas: [extensions/pi/tower-session-router.ts, extensions/pi/package.json, test/extensions/pi/tower-session-router.test.mjs, skills/torre-control/SKILL.md]
+        tareas:
+          - id: T9.7.1.1
+            accion: "RED: cubrir las cuatro frases exactas, Sesión/topic opcional, quinta forma, repo no registrado y ON/OFF/INDETERMINATE sin declaración del usuario."
+            resultado: "RED: las cuatro frases exactas, Sesión/topic opcional, quinta forma, repo no registrado y ON/OFF/INDETERMINATE sin declaración del usuario quedan cubiertos."
+            criterios: ["RED: las cuatro frases exactas, Sesión/topic opcional, quinta forma, repo no registrado y ON/OFF/INDETERMINATE sin declaración del usuario quedan cubiertos."]
+          - id: T9.7.1.2
+            accion: "GREEN: enrutar el snapshot validado al único parent torre-control y consumir el probe tipado."
+            resultado: "GREEN: el snapshot validado alcanza el único parent torre-control y consume el probe tipado."
+            criterios: ["GREEN: el snapshot validado alcanza el único parent torre-control y consume el probe tipado."]
+          - id: T9.7.1.3
+            accion: "REFACTOR: retirar aliases públicos supersedidos, preservar provenance/orden de transforms y estabilizar errores fail-closed."
+            resultado: "REFACTOR: aliases públicos supersedidos se retiran, provenance/orden de transforms se preservan y errores fail-closed se estabilizan."
+            criterios: ["REFACTOR: aliases públicos supersedidos se retiran, provenance/orden de transforms se preservan y errores fail-closed se estabilizan."]
