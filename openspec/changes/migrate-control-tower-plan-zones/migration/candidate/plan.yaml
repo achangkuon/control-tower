@@ -4549,3 +4549,60 @@ sesiones:
             accion: "REFACTOR: dejar una sola enumeración auditable, sin Planner permanente ni dependencia de assets globales."
             resultado: "REFACTOR: dejar una sola enumeración auditable, sin Planner permanente ni dependencia de assets globales."
             criterios: [Existe una sola enumeración auditable sin Planner permanente ni assets globales.]
+  - id: S8.13
+    zona: instalacion
+    resultado: Instalación global, activación y rollback
+    autoridad: Contrato propietario de la Sesión y autoridades aprobadas del lifecycle versionado; decisiones 88, 100 y 102; Engram 9921, 9956 rev2 y 9963.
+    depende_de: [S8.12, S1.19, S4.12]
+    recurso: [puntero activo, ubicación global de la extensión Pi, backups y rollback del bundle Tower, preflight de host externo]
+    criterios:
+      - torre-control --update selecciona el lifecycle atómico versionado; no ejecuta el camino legado divergente.
+      - El shim symlink se reemplaza atómicamente; ningún cp sigue su target owner-read-only.
+      - El diagnóstico prueba revisión activa y coherencia exacta entre plugin, MCP y runtime/engine; una mezcla falla cerrado.
+      - Ningún chequeo de sólo existencia/ejecutabilidad/key puede devolver un falso positivo saludable.
+      - Instalación limpia activa el bundle completo y una capacidad ausente, rota o ambigua, un fallo de carga o cualquier preflight incompatible falla con error local tipado antes de mutar, sin route genérico.
+      - Rollback restaura runtime, interceptor, perfiles y skills Tower juntos; no escribe configuración/skills externas ni toca fuera de Área.
+      - La extensión global se carga realmente y el fingerprint cerrado prueba factory de un argumento, pi.on("input"), campos y source requeridos de InputEvent, continue|transform|handled, notificación local, enrolamiento, bytes/provenance de torre-control e inventario/orden revisados de transforms antes de quedar activa; un mismatch deja cero activación parcial y ninguna versión acepta o rechaza por sí sola.
+      - El diff toca sólo Área; no modifica Pi core, pi-intercom, skills genéricas, worktrees ni evidencia estacionada.
+    decisiones:
+      - tipo: resuelta
+        pregunta: ¿Qué instala Tower y qué recuperación parcial se admite?
+        resolucion: Tower instala sólo el bundle Tower-owned, valida compatibilidad y rechaza upgrade --shim como recuperación parcial.
+        autoridad: Decisiones 88, 100 y 102.
+        clase: operaciones-irreversibles; seguridad-y-permisos; contrato-visible-del-producto
+        falsificador: La instalación incluye bytes ajenos al bundle Tower-owned o acepta upgrade --shim como recuperación parcial.
+        descartadas:
+          - opcion: Recuperar parcialmente con upgrade --shim.
+            razon: Mantendría una instalación incoherente.
+        contaminaba: [S8.13, S7.1]
+      - tipo: resuelta
+        pregunta: ¿Qué preflight permite activar la instalación global?
+        resolucion: La instalación habilita el interceptor sólo si enrolamiento, carga real de extensión, fingerprint cerrado Pi, bytes/provenance de torre-control e inventario/orden de transforms pasan; fallo o ambigüedad bloquea antes de mutar y rollback restaura la unidad coherente.
+        autoridad: Engram 9921 y 9963.
+        clase: contrato-visible-del-producto; operaciones-irreversibles; seguridad-y-permisos
+        falsificador: Una capacidad ausente, rota o ambigua, un fallo de carga o una decisión basada sólo en versión activa total o parcialmente la instalación.
+        descartadas:
+          - opcion: Aceptar compatibilidad sólo por versión o existencia.
+            razon: No prueba conducta ni coherencia del runtime instalado.
+          - opcion: Activar parcialmente y reparar después.
+            razon: Viola atomicidad y deja un estado global incoherente.
+        contaminaba: [S8.13, S7.1]
+      - tipo: derivable
+        pregunta: ¿Cómo se ordenan internamente probe, preflight, activación y diagnóstico?
+        evidencia: El contrato vigente exige validar conducta antes de la primera mutación y preservar el estado previo ante fallo.
+        checkpoint: S8.13 RED.
+        opciones:
+          - opcion: Ejecutar toda carga y validación conductual antes de la primera mutación.
+            consecuencia: Cualquier fallo deja el estado previo byte-idéntico; activación parcial, diagnóstico existence-only o decisión sólo por versión falsifican la derivación.
+        criterio: Toda carga y validación conductual ocurre antes de la primera mutación y cualquier fallo deja el estado previo byte-idéntico.
+        autoridad: Decisiones 88, 100 y 102; Engram 9921, 9956 rev2 y 9963.
+    ruta:
+      propuesta: full-sdd
+      autoridad: Decisiones 88, 100 y 102; Engram 9921, 9956 rev2 y 9963.
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-8/STATUS.md
+      origen_blob: 8c1855e9f05837cd7a39c818e34c93233c0340b7
+      origen_encabezado: "### Sesión 8.13 — Instalación global, activación y rollback"
+      territorio_pendiente: false
+    modulos: []
