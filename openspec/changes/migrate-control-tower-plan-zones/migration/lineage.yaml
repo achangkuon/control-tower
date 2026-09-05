@@ -113,3 +113,84 @@ closure_contract:
   required_successors: [S100, S101, S102, S103, S104, S105, S106, S107, S108]
   archived_original_ids: [S5.14, S5.15, S9.3, S9.5]
   active_dependency_rule: "No active Session dependency may point only to an archived original; it must name the applicable successor."
+  serialization:
+    authority:
+      kind: maintainer-decision
+      engram_observation: 10328
+      topic_key: sdd/migrate-control-tower-plan-zones/decisions/lineage-order
+    rule: "Serialize all imported Sessions first in exact source-inventory order, then all successors in exact lineage successor order; do not interleave, defer, or renumber originals."
+    imported_ids:
+      - S1.11
+      - S1.12
+      - S1.13
+      - S1.14
+      - S1.15
+      - S1.16
+      - S1.17
+      - S1.18
+      - S1.19
+      - S1.20
+      - S2.9
+      - S2.10
+      - S2.8
+      - S3.1
+      - S3.2
+      - S3.3
+      - S3.4
+      - S4.1
+      - S4.2
+      - S4.5
+      - S4.3
+      - S4.4
+      - S4.6
+      - S4.7
+      - S4.8
+      - S4.9
+      - S4.10
+      - S4.11
+      - S4.12
+      - S4.13
+      - S4.14
+      - S5.1
+      - S5.2
+      - S5.3
+      - S5.4
+      - S5.5
+      - S5.6
+      - S5.7
+      - S5.8
+      - S5.11
+      - S5.12
+      - S5.9
+      - S5.10
+      - S5.13
+      - S5.14
+      - S5.15
+      - S7.1
+      - S8.12
+      - S8.14
+      - S8.13
+      - S9.1
+      - S9.2
+      - S9.3
+      - S9.4
+      - S9.5
+      - S9.7
+      - S9.8
+      - S9.9
+      - S9.6
+      - S10.3
+      - S10.1
+      - S10.2
+      - S11.1
+      - S12.1
+      - S12.2
+      - S12.3
+      - S12.4
+      - S12.5
+      - S12.6
+      - S12.7
+      - S12.8
+      - S12.9
+    successor_ids: [S100, S101, S102, S103, S104, S105, S106, S107, S108]
+    final_session_total: 81
