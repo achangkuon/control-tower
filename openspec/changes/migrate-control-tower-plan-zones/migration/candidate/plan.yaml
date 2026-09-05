@@ -4472,3 +4472,80 @@ sesiones:
             accion: "REFACTOR: eliminar listas paralelas y probar guardia exacta sin instalar ni activar."
             resultado: "REFACTOR: eliminar listas paralelas y probar guardia exacta sin instalar ni activar."
             criterios: [No quedan listas paralelas y la guardia exacta se prueba sin instalar ni activar.]
+  - id: S8.14
+    resultado: Perfiles permanentes Tower, neutrales al host
+    autoridad: Decisión 95 del maintainer; Engram 9690/9691; decisión 10321 para la omisión histórica exacta.
+    depende_de: []
+    recurso: [contrato repo-owned de los tres perfiles permanentes]
+    criterios:
+      - "Existen exactamente tres perfiles permanentes repo-owned y host-neutral: Main/coordinator, Support e Implementer; Planner no se instala como cuarto perfil."
+      - Main y Support carecen de bash, write y edit; Implementer conserva bash y ninguna capability contradice la decisión 83.
+      - Las cinco fuentes canónicas declaradas y test/install/tower-role-assets.test.mjs son la única autoridad del contrato; no se copian perfiles globales ni específicos de Pi/OpenCode.
+      - La prueba enfocada falla ante perfil faltante/extra, nombre o capability incorrectos y referencia a una fuente no canónica.
+      - El diff de implementación toca sólo Área.
+    decisiones:
+      - tipo: resuelta
+        pregunta: ¿Qué perfiles Tower son permanentes y qué capacidades conservan?
+        resolucion: Main/coordinator y Support omiten bash, write y edit; Implementer conserva bash según la decisión 83; Planner es función temporal y no un perfil permanente.
+        autoridad: Decisión 95 del maintainer; Engram 9690/9691.
+        clase: seguridad-y-permisos; contrato-visible-del-producto
+        falsificador: Existe un cuarto perfil Planner permanente, Main o Support obtiene capacidad de mutación, o Implementer pierde bash.
+        descartadas:
+          - opcion: Instalar Planner como cuarto perfil permanente.
+            razon: Planner es una función temporal, no una identidad Tower permanente.
+          - opcion: Dar herramientas de mutación a Main o Support.
+            razon: Contradice la separación de autoridad aprobada.
+        contaminaba: [S8.14, S8.12, S8.13]
+      - tipo: resuelta
+        pregunta: ¿Cómo se representa en el candidato la ruta histórica ausente skills/agente-soporte/SKILL.md de la Sesión terminal S8.14?
+        resolucion: Se omite sólo la ruta exacta skills/agente-soporte/SKILL.md de las rutas del Módulo candidato; permanece en mapping y fuente como trazabilidad histórica y no se sustituye ni se marca archivada.
+        autoridad: Decisión 10321 del maintainer; mapping S8.14 y fuente inmutable openspec/plans/plan-8/STATUS.md.
+        clase: dependencias-o-evidencia-contradictorias
+        falsificador: La ruta omitida aparece como territorio actual, se sustituye por otra ruta, se marca archivada, se pierde su trazabilidad mapping/fuente, o concede ownership o autoridad actual.
+        descartadas:
+          - opcion: Conservar skills/agente-soporte/SKILL.md como ruta candidata actual.
+            razon: Es historia terminal ausente y no concede ownership ni autoridad actual.
+          - opcion: Sustituirla por otra ruta o marcarla archivada.
+            razon: Inventaría equivalencia o estado no autorizado por la decisión 10321.
+        contaminaba: [S8.14]
+    entrega:
+      commit: 54b5cda733025b0bd50c2a21dc67d1d4192ac66d
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-8/STATUS.md
+      origen_blob: 8c1855e9f05837cd7a39c818e34c93233c0340b7
+      origen_encabezado: "### Sesión 8.14 — Perfiles permanentes Tower, neutrales al host"
+      territorio_pendiente: false
+    modulos:
+      - id: M8.14.1
+        resultado: Contratos canónicos de perfil
+        rutas: [profiles/tower/main.md, profiles/tower/support.md, profiles/tower/implementer.md]
+        tareas:
+          - id: T8.14.1.1
+            accion: "RED: cubrir tres perfiles exactos, ausencia de Planner, neutralidad de host y matriz de capabilities de la decisión 83."
+            resultado: "RED: cubrir tres perfiles exactos, ausencia de Planner, neutralidad de host y matriz de capabilities de la decisión 83."
+            criterios: [Tres perfiles exactos, ausencia de Planner, neutralidad de host y matriz de capabilities quedan cubiertos.]
+          - id: T8.14.1.2
+            accion: "GREEN: crear profiles/tower/{main,support,implementer}.md con identidad y autoridad mínimas."
+            resultado: "GREEN: crear profiles/tower/{main,support,implementer}.md con identidad y autoridad mínimas."
+            criterios: [Los tres perfiles canónicos existen con identidad y autoridad mínimas.]
+          - id: T8.14.1.3
+            accion: "REFACTOR: eliminar duplicación entre perfiles y estabilizar nombres, referencias y rechazo de una cuarta identidad."
+            resultado: "REFACTOR: eliminar duplicación entre perfiles y estabilizar nombres, referencias y rechazo de una cuarta identidad."
+            criterios: [No hay duplicación evitable y una cuarta identidad se rechaza.]
+      - id: M8.14.2
+        resultado: Ownership de skills y guardia de instalación
+        rutas: [skills/torre-control-entregas/SKILL.md, test/install/tower-role-assets.test.mjs]
+        tareas:
+          - id: T8.14.2.1
+            accion: "RED: cubrir fuentes canónicas faltantes, extras o externas y drift entre perfiles, skills propietarias y assets instalables."
+            resultado: "RED: cubrir fuentes canónicas faltantes, extras o externas y drift entre perfiles, skills propietarias y assets instalables."
+            criterios: [Fuentes faltantes, extras o externas y drift entre perfiles, skills y assets fallan cerrado.]
+          - id: T8.14.2.2
+            accion: "GREEN: ligar torre-control-entregas y agente-soporte a los tres perfiles y completar tower-role-assets.test.mjs."
+            resultado: "GREEN: ligar torre-control-entregas y agente-soporte a los tres perfiles y completar tower-role-assets.test.mjs."
+            criterios: [Las skills históricas quedan ligadas a los tres perfiles y cubiertas por la guardia.]
+          - id: T8.14.2.3
+            accion: "REFACTOR: dejar una sola enumeración auditable, sin Planner permanente ni dependencia de assets globales."
+            resultado: "REFACTOR: dejar una sola enumeración auditable, sin Planner permanente ni dependencia de assets globales."
+            criterios: [Existe una sola enumeración auditable sin Planner permanente ni assets globales.]
