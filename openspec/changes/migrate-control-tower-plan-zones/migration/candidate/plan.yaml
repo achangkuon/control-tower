@@ -4046,3 +4046,99 @@ sesiones:
             accion: "REFACTOR: cerrar inmutabilidad, replay exacto, replay divergente, atomicidad y readback de la provenance completa."
             resultado: "REFACTOR: cerrar inmutabilidad, replay exacto, replay divergente, atomicidad y readback de la provenance completa."
             criterios: [Inmutabilidad, replay, atomicidad y readback quedan cerrados sobre la provenance completa.]
+  - id: S5.13
+    resultado: Retirar de la Torre la verificación de proceso de la entrega y transportar sólo un recibo opaco, sin interpretación ni gate.
+    autoridad: Decisiones 64 y 72 del maintainer; frontera Torre-gentle-ai; entrega exacta 5a80bc89033ce0220e8d9962c0579b2ad8bcfbe4.
+    depende_de: []
+    recurso: []
+    criterios:
+      - Cero usos activos de documentation_close, required_checks_digest y required_reviews_digest en runtime, schemas, contratos y tests activos; sólo pueden quedar menciones históricas o de autoridad.
+      - Las ocurrencias de horizon_ceiling, policy_report_digest y verification_digest son exactamente las mismas que antes del cambio.
+      - La suite conserva en verde los cinco pisos de seguridad, el ledger, el lock por candidato y la reconciliación.
+      - bin/torre y el payload derivado no cambian de miembros.
+      - La frontera Torre-gentle-ai no contiene ninguna condición de bloqueo por calidad de trabajo.
+      - process_receipt_digest es opcional en candidate-revision-v1 y obligatorio en delivery-record-v1 como digest o literal absent.
+      - Una entrega sin recibo completa igual y registra absent.
+      - Ninguna línea de producción parsea, compara ni ramifica sobre el contenido del recibo.
+      - Un recibo escrito después de congelada candidate_revision es rechazado.
+    decisiones:
+      - tipo: resuelta
+        pregunta: ¿La Torre retira los tres controles de proceso y limita cualquier recibo de proceso a carga opaca sin interpretación ni gate?
+        resolucion: Se retiran documentation_close, required_checks_digest y required_reviews_digest sin reemplazo; process_receipt_digest queda como carga opaca opcional en candidate-revision-v1 y declaración obligatoria digest o absent en delivery-record-v1, sellada al congelar el candidato y nunca interpretada por la Torre.
+        autoridad: Decisiones 64 y 72 del maintainer y frontera Torre-gentle-ai.
+        clase: contrato-visible-del-producto; api-publica; migraciones
+        falsificador: Sobrevive o reaparece cualquiera de los tres controles, se crea un gate equivalente, se omite la declaración digest o absent, o la Torre interpreta o ramifica sobre el recibo.
+        descartadas:
+          - opcion: Conservar o reemplazar los controles por otro gate.
+            razon: Reconstruye verificación de proceso dentro de la Torre.
+          - opcion: Retirar también la carga opaca.
+            razon: Pierde la medición de ausencia autorizada por la decisión 72.
+        contaminaba: [S5.13, S5.1, S5.2, S7.1]
+      - tipo: derivable
+        pregunta: ¿Qué campos y pisos de seguridad permanecen sin cambios?
+        evidencia: Clasificación S5.13 de nivel campo, enmienda opaca de la decisión 72 y frontera Torre-gentle-ai.
+        checkpoint: Antes de retirar o conservar cada campo y antes de transportar process_receipt_digest.
+        opciones:
+          - opcion: Conservar exactamente merge.authorizing_party, delivery.shape, delivery.target_branch, planning.horizon_ceiling, los cinco pisos, policy_report_digest, verification_digest, ledger, lock y reconciliación.
+            consecuencia: La migración retira sólo los tres controles autorizados y transporta el recibo opaco sin alterar los pisos preservados.
+          - opcion: Retirar o modificar cualquier otro campo o piso.
+            consecuencia: La implementación excede la autoridad S5.13 y debe detenerse.
+        criterio: Las tablas de nivel campo de la clasificación S5.13 y la enmienda opaca de la decisión 72 coinciden fila por fila; cualquier campo que sobreviva o caiga sin esa autoridad, o cualquier ramificación por contenido, falsifica la derivación.
+        autoridad: Decisiones 64 y 72 del maintainer y contrato S5.13.
+    entrega:
+      commit: 5a80bc89033ce0220e8d9962c0579b2ad8bcfbe4
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-5/STATUS.md
+      origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d
+      origen_encabezado: "## Sesión 5.13 — Retiro de la verificación de proceso de la entrega"
+      territorio_pendiente: false
+    modulos:
+      - id: M5.13.1
+        resultado: Retiro de verificación de proceso en delivery-policy
+        rutas: [AGENTS.md, policy/delivery-policy.mjs, schemas/delivery-policy-v1.schema.json, test/policy/delivery-policy.test.mjs, test/policy/jornada.test.mjs]
+        tareas:
+          - id: T5.13.1.1
+            accion: "RED: política sin documentation_close; bloque ausente o malformado sigue fallando cerrado."
+            resultado: "RED: política sin documentation_close; bloque ausente o malformado sigue fallando cerrado."
+            criterios: [La política rechaza un bloque ausente o malformado sin exigir documentation_close.]
+          - id: T5.13.1.2
+            accion: "GREEN: retirar documentation_close del bloque y la prosa de AGENTS.md, del schema y de strict, choose() y restrictiveDefaults."
+            resultado: "GREEN: retirar documentation_close del bloque y la prosa de AGENTS.md, del schema y de strict, choose() y restrictiveDefaults."
+            criterios: [documentation_close queda retirado de todas las superficies autorizadas sin reemplazo.]
+          - id: T5.13.1.3
+            accion: "CHECKS: preservar el autorizador de merge, forma y destino de entrega, horizonte y los cinco floors."
+            resultado: "CHECKS: preservar el autorizador de merge, forma y destino de entrega, horizonte y los cinco floors."
+            criterios: [El autorizador de merge, la forma y destino de entrega, el horizonte y los cinco floors permanecen intactos.]
+      - id: M5.13.2
+        resultado: Retiro contractual de digests y sellado opcional del recibo
+        rutas: [schemas/candidate-revision-v1.schema.json, schemas/authorization-v1.schema.json, contracts/schema-registry.mjs, contracts/validate.mjs, test/contracts/schema.test.mjs, test/contracts/s3-2-schemas.test.mjs, test/fixtures/contracts/schema-cases-v1.json, test/main-store.test.mjs, test/escalation/request.test.mjs, test/install/launch-worker-cli.test.mjs]
+        tareas:
+          - id: T5.13.2.1
+            accion: "RED: fijar el comportamiento de schemas de candidato y autorización sin los digests jubilados."
+            resultado: "RED: fijar el comportamiento de schemas de candidato y autorización sin los digests jubilados."
+            criterios: [Los schemas rechazan los digests jubilados y cubren el recibo opcional.]
+          - id: T5.13.2.2
+            accion: "GREEN: retirar los digests jubilados y sellar el recibo de proceso opcional en la identidad congelada del candidato."
+            resultado: "GREEN: retirar los digests jubilados y sellar el recibo de proceso opcional en la identidad congelada del candidato."
+            criterios: [El recibo opcional queda ligado a la identidad congelada y los digests retirados desaparecen.]
+          - id: T5.13.2.3
+            accion: "CHECKS: actualizar sólo las fixturas autorizadas y verificar identidad de freeze y rechazo de escritura posterior al freeze."
+            resultado: "CHECKS: actualizar sólo las fixturas autorizadas y verificar identidad de freeze y rechazo de escritura posterior al freeze."
+            criterios: [Sólo cambian las fixturas autorizadas y toda escritura posterior al freeze es rechazada.]
+      - id: M5.13.3
+        resultado: Transporte opaco del recibo al ledger
+        rutas: [delivery/workflow.mjs, delivery/ledger.mjs, schemas/delivery-record-v1.schema.json, test/delivery/correction-security.test.mjs, test/delivery/workflow.test.mjs]
+        tareas:
+          - id: T5.13.3.1
+            accion: "RED: cubrir registros de entrega con recibo ausente y suministrado."
+            resultado: "RED: cubrir registros de entrega con recibo ausente y suministrado."
+            criterios: [Los casos con recibo ausente y suministrado quedan cubiertos.]
+          - id: T5.13.3.2
+            accion: "GREEN: exigir digest o absent, transportar literalmente el valor y retirar la rama de checks."
+            resultado: "GREEN: exigir digest o absent, transportar literalmente el valor y retirar la rama de checks."
+            criterios: [El ledger recibe literalmente digest o absent sin gate de checks.]
+          - id: T5.13.3.3
+            accion: "CHECKS: probar que no hay parseo ni ramificación por contenido y preservar ledger, lock y reconciliación."
+            resultado: "CHECKS: probar que no hay parseo ni ramificación por contenido y preservar ledger, lock y reconciliación."
+            criterios: [No existe parseo ni ramificación por contenido y ledger, lock y reconciliación permanecen intactos.]
