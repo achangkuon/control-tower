@@ -4657,3 +4657,41 @@ sesiones:
             accion: "REFACTOR: consolidar el binding y verificar que la asignación no modifica el reciclador manual."
             resultado: "REFACTOR: consolidar el binding y verificar que la asignación no modifica el reciclador manual."
             criterios: [El binding conserva path, rama y base_sha y no cambia rama, base ni reciclador manual.]
+  - id: S9.2
+    resultado: Main no puede reciclar un asiento ocupado; la ocupación es legible y el reciclado toma un lock exclusivo que falla cerrado si el asiento está tomado o si otro Main lo está mutando.
+    autoridad: Decisión 62 para la frontera de comportamiento y decisión 10325 del maintainer para conservar S9.2 bloqueada por territorio pendiente.
+    depende_de: [S9.1]
+    recurso: [lock exclusivo de mutación de asiento, estado de ocupación]
+    criterios: []
+    decisiones:
+      - tipo: resuelta
+        pregunta: ¿Qué frontera de comportamiento conserva S9.2 tras recortar la antigua S9.1?
+        resolucion: Se conserva sólo el riesgo real de una carrera entre el maintainer y Main; S9.2 impide que Main recicle un asiento ocupado, sin la seguridad de descriptores, doble observación canónica, matrices de precedencia, arreglos argv exactos, documentación adicional ni apagado del reciclador manual descartados por la decisión 62.
+        autoridad: Decisión 62 del maintainer del 2026-08-21.
+        clase: expansion-de-alcance; contrato-visible-del-producto
+        falsificador: S9.2 entrega seguridad de descriptores, doble observación canónica o documentos de gobernanza, o apaga jornada.sh --reciclar.
+        descartadas:
+          - opcion: Conservar la antigua S9.1 completa.
+            razon: Era sobreingeniería para reemplazar un reciclador manual que ya funciona con sus salvaguardas.
+          - opcion: Apagar el reciclador manual mediante un interlock one-way.
+            razon: La decisión 50 ya había reabierto ese Módulo por apagar una herramienta en uso.
+      - tipo: escala
+        pregunta: Which exact concrete repository-relative paths comprise the S9.2 Area, and which single Zone owns each path without crossing into Cimientos or another Zone?
+        evidencia: The immutable source says Área PENDIENTE DE ENUMERAR, and the committed mapping has no stable Module/Task IDs or exact paths; decision 62 fixes only the occupied-seat interlock behavioral boundary and does not establish territory.
+        checkpoint: Before deriving acceptance criteria, Modules, Tasks, or scheduling.
+        opciones:
+          - opcion: Enumerate the exact paths from read-only code and partition evidence, then obtain later explicit maintainer approval.
+            consecuencia: S9.2 remains blocked until that approval; afterward ordinary territory and decomposition may be derived without crossing a Zone boundary.
+          - opcion: Keep S9.2 blocked with no execution authority.
+            consecuencia: No criteria, Module, Task, schedule, ownership, seat, or capacity may be derived or assigned.
+          - opcion: Retire S9.2 scope.
+            consecuencia: The occupied-seat interlock is lost and recycle or concurrent Main mutation remains without this planned fail-closed protection.
+        clase: dependencias-o-evidencia-contradictorias
+        alcanza: criterios
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-9/STATUS.md
+      origen_blob: 18b77f222bdcf1bea0d2d144b170f102d5d6cc8a
+      origen_encabezado: "## Sesión 9.2 — Interlock de asiento ocupado"
+      territorio_pendiente: true
+    modulos: []
