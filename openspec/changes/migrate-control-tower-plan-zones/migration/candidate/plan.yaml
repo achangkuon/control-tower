@@ -5114,3 +5114,45 @@ sesiones:
             accion: 'REFACTOR: congelar snapshot/fingerprint/evidencia, probar convergencia y devolver CT_PI_TOWER_* handled ante evidencia insegura/corrupta/ambigua, capacidad ausente/rota/ambigua, fallo de carga, conflicto o drift posterior, sin depender de versión, prioridad implícita ni ejecutar un turno de modelo.'
             resultado: 'REFACTOR: snapshot/fingerprint/evidencia convergen y los fallos devuelven CT_PI_TOWER_* handled sin versión, prioridad implícita ni turno de modelo.'
             criterios: ['REFACTOR: snapshot/fingerprint/evidencia convergen y los fallos devuelven CT_PI_TOWER_* handled sin versión, prioridad implícita ni turno de modelo.']
+
+  - id: S10.3
+    resultado: Contrato de ejecución versionado
+    autoridad: 'Decisión explícita del maintainer; contrato propietario de S10.3 y evidencia SHA-256 registrada en el STATUS inmutable.'
+    depende_de: [S3.4]
+    criterios:
+      - 'El destino es byte-idéntico al origen y coincide en bytes, líneas y SHA-256'
+      - 'No se normaliza, genera ni modifica ningún otro archivo de runtime, schema o test'
+      - 'Ningún runtime lee `~/.claude/`; la fuente se consulta sólo durante la copia estructural'
+      - 'La excepción de tamaño se atribuye exclusivamente a este artefacto indivisible'
+    decisiones:
+      - tipo: resuelta
+        resolucion: 'Copia byte a byte desde `/home/emili/.agents/skills/unattended-implementation/assets/execution-contract.schema.json`; destino exacto de 17.297 bytes, 407 líneas y SHA-256 `2f4838aa244b30e280c5c558286b0e4d9fbb503a0ef1808ffc27501c1540fddc`. La excepción autoriza sólo este contrato activo indivisible, no otras líneas ni overflow de `S10.1`. Nota histórica del 2026-08-25: la decisión 71 resolvió que la Torre adopta este contrato como propio: `S2.6` cambia el `$id` de `gentle-ai.local` a `control-tower.local` y vuelve opacos `chain`, `validation` y `retries`. A partir de esa entrega, el SHA-256 y el criterio de copia exacta describen historia, no estado; S10.3 conserva su cierre y evidencia, y sobreviven intactos `repository`, `assignment`, `permissions`, `ownership`, `artifact_policy`, `tower`, `candidate_recipe` y `terminal`.'
+        autoridad: Decisión explícita del maintainer y STATUS inmutable S10.3.
+        clase: expansion-de-alcance; contrato-visible-del-producto
+        falsificador: 'El destino difiere del origen en bytes, líneas o SHA-256; se normaliza, genera o modifica otro archivo de runtime, schema o test; un runtime lee `~/.claude/`; o la excepción se atribuye fuera de este artefacto indivisible.'
+        descartadas: []
+        contaminaba: [S10.3, S10.1, S10.2, S7.1]
+    entrega: {commit: a95149be491cb24ee940206805d57c24dd0ee776}
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-10/STATUS.md
+      origen_blob: ee5b58be8721a0296a49c42aae1f89ff2ce98767
+      origen_encabezado: "## Sesión 10.3 — Contrato de ejecución versionado"
+      territorio_pendiente: false
+    modulos:
+      - id: M10.3.1
+        resultado: Copia estructural del contrato
+        rutas: [schemas/execution-contract-v1.schema.json]
+        tareas:
+          - id: T10.3.1.1
+            accion: 'RED: origen confirmado en 17.297 bytes, 407 líneas y SHA-256 `2f4838aa244b30e280c5c558286b0e4d9fbb503a0ef1808ffc27501c1540fddc`; destino ausente y worktree limpio en `cdd0d09bcdd4d2104e54a7265d1dc3742ceea2e7`.'
+            resultado: 'RED: origen confirmado en 17.297 bytes, 407 líneas y SHA-256 `2f4838aa244b30e280c5c558286b0e4d9fbb503a0ef1808ffc27501c1540fddc`; destino ausente y worktree limpio en `cdd0d09bcdd4d2104e54a7265d1dc3742ceea2e7`.'
+            criterios: ['RED: origen confirmado en 17.297 bytes, 407 líneas y SHA-256 `2f4838aa244b30e280c5c558286b0e4d9fbb503a0ef1808ffc27501c1540fddc`; destino ausente y worktree limpio en `cdd0d09bcdd4d2104e54a7265d1dc3742ceea2e7`.']
+          - id: T10.3.1.2
+            accion: 'GREEN: copia byte-idéntica creada únicamente en `schemas/execution-contract-v1.schema.json`, sin transformación.'
+            resultado: 'GREEN: copia byte-idéntica creada únicamente en `schemas/execution-contract-v1.schema.json`, sin transformación.'
+            criterios: ['GREEN: copia byte-idéntica creada únicamente en `schemas/execution-contract-v1.schema.json`, sin transformación.']
+          - id: T10.3.1.3
+            accion: 'REFACTOR: `cmp` confirmó identidad; readback confirmó 17.297 bytes, 407 líneas, SHA-256 esperado y modo Git `100644`. JSON parseó y conservó Draft 2020-12, `$id`, `type: object`, `additionalProperties: false`, 17 propiedades requeridas y `$defs` estructuralmente presentes. Runtime harness: N/A, artefacto pasivo sin frontera ejecutable.'
+            resultado: 'REFACTOR: `cmp` confirmó identidad; readback confirmó 17.297 bytes, 407 líneas, SHA-256 esperado y modo Git `100644`. JSON parseó y conservó Draft 2020-12, `$id`, `type: object`, `additionalProperties: false`, 17 propiedades requeridas y `$defs` estructuralmente presentes. Runtime harness: N/A, artefacto pasivo sin frontera ejecutable.'
+            criterios: ['REFACTOR: `cmp` confirmó identidad; readback confirmó 17.297 bytes, 407 líneas, SHA-256 esperado y modo Git `100644`. JSON parseó y conservó Draft 2020-12, `$id`, `type: object`, `additionalProperties: false`, 17 propiedades requeridas y `$defs` estructuralmente presentes. Runtime harness: N/A, artefacto pasivo sin frontera ejecutable.']
