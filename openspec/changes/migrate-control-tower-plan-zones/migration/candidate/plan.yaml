@@ -3967,3 +3967,82 @@ sesiones:
             accion: "REFACTOR: cerrar idempotencia de replay exacto, rechazo de replay divergente y atomicidad/readback sobre los bytes persistidos."
             resultado: "REFACTOR: cerrar idempotencia de replay exacto, rechazo de replay divergente y atomicidad/readback sobre los bytes persistidos."
             criterios: [Replay, atomicidad y readback quedan cerrados sobre los bytes persistidos.]
+
+  - id: S5.10
+    resultado: Persistir bajo autoridad exclusiva de Main una prueba inmutable que liga trabajo independiente completado a la decisión estacionada exacta y a la opción o supuesto explícito bajo el que se ejecutó.
+    autoridad: Decisiones 30, 44 y 46 del maintainer; entregas exactas 44444cf50d6708fabc62b28294089648c7cc4fe5, 98419e14031d963efa3137b3e1d81f505229b872, 5d1a268a92115c5c7bc80173317fc29eeaf2f0d0 y 468b733b6cc2875c55172e45dcd02753244d0ed4.
+    depende_de: [S5.9]
+    recurso: [Main store, writer lock y transacción canónicos]
+    criterios:
+      - Existe un único binding autoritativo e inmutable en Main store entre evidencia exacta de trabajo completado, decisión estacionada exacta y opción enumerada o supuesto explícito bajo el que corrió.
+      - La forma pública/versionada, la representación de opción/supuesto y el momento de sellado fueron decididos explícitamente durante SDD antes de tasks/apply; la ubicación Main store no se usa para inferirlos.
+      - El binding nombra una identidad inmutable del trabajo/candidato y no puede construirse sólo después de completado mediante assertion del caller o narrativa.
+      - Mismatch de trabajo, decisión/digest, opción/supuesto, snapshot o revisión falla cerrado sin mutación parcial.
+      - Replay byte-idéntico es idempotente y replay divergente produce cero efectos adicionales.
+      - Persistencia, inmutabilidad y readback ocurren bajo el writer, lock y transacción canónicos de Main; no existe store ni writer paralelo.
+      - S5.5 consume la prueba sin inferirla localmente y S7.1 puede atribuir la evidencia al candidato y supuesto exactos; esto está verificado por construcción porque ambos consumidores son posteriores.
+      - El diff de implementación no toca ningún path fuera del Área.
+    decisiones:
+      - tipo: resuelta
+        pregunta: ¿El registro standalone puede sellarse a partir de artefactos que el caller trae, o el store debe resolverlos contra su propio estado persistido?
+        resolucion: bindCompletedWork resuelve las fuentes que nombra; la decisión debe existir en las parkings de este store con digest persistido coincidente y una opción debe trazar a una autorización aprobada por este store para la revisión exacta del candidato. ASSUMPTION resuelve sólo la parking.
+        autoridad: Decisión 44 del maintainer del 2026-08-19.
+        clase: contrato-visible-del-producto; seguridad-y-permisos
+        falsificador: Un binding se sella con una decisión que este store nunca estacionó, o con una autorización inexistente, no aprobada o ligada a otro candidato.
+        descartadas:
+          - opcion: Aceptar artefactos y digests computados offline por el caller.
+            razon: Convertiría una assertion del caller en registro autoritativo.
+        contaminaba: [S5.10, S5.5, S7.1]
+      - tipo: resuelta
+        pregunta: ¿Cuál es la forma pública exacta y versionada del binding, cómo representa opción frente a supuesto y cuándo queda sellado el trabajo?
+        resolucion: Registro standalone, inmutable y versionado dentro del Main store, bajo el mismo assertMain, lock y transacción canónicos; liga exactamente uno de option_id enumerado o digest de supuesto explícito y se sella al congelar candidate_revision.
+        autoridad: Decisión 30 del maintainer del 2026-08-14, siguiendo el precedente de S5.8 y la Option B de la decisión 18.
+        clase: contrato-visible-del-producto; api-publica; seguridad-y-permisos
+        falsificador: El registro acepta ambos géneros o ninguno, es mutable, o puede escribirse después de congelada candidate_revision.
+        descartadas:
+          - opcion: Campo polimórfico.
+            razon: Admite estados donde no se sabe qué género gobierna.
+          - opcion: Dos registros separados.
+            razon: Exigen dos writers y dos readbacks consistentes.
+        contaminaba: [S5.5, S7.1]
+      - tipo: resuelta
+        pregunta: ¿Los dos residuales de S5.10 impiden el cierre?
+        resolucion: Se aceptan explícitamente sin bloquear; el acoplamiento al reloj de expiración de approvedAuthorizationFor y la falta de verificación de estado aún no respondido para ASSUMPTION permanecen documentados, sin afirmar que estén corregidos.
+        autoridad: Decisión 46 del maintainer del 2026-08-19.
+        clase: seguridad-y-permisos; dependencias-o-evidencia-contradictorias
+        falsificador: Los residuales se presentan como corregidos, se omiten, o se usan para afirmar que ASSUMPTION verifica que la decisión sigue sin respuesta.
+        descartadas:
+          - opcion: Crear una segunda noción de autorización válida sin reloj.
+            razon: Duplicaría la autoridad del helper aprobado.
+          - opcion: Escanear y acoplar los stores para verificar ASSUMPTION ahora.
+            razon: Agregaría un índice y acoplamiento fuera del alcance aceptado.
+        contaminaba: [S5.10]
+    entrega:
+      commit: 468b733b6cc2875c55172e45dcd02753244d0ed4
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-5/STATUS.md
+      origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d
+      origen_encabezado: "## Sesión 5.10 — Binding inmutable del trabajo independiente completado"
+      territorio_pendiente: false
+    modulos:
+      - id: M5.10.1
+        resultado: Provenance del trabajo completado bajo decisión
+        rutas: [contracts/completed-work-binding.mjs, contracts/schema-registry.mjs, contracts/validate.mjs, schemas/completed-work-binding-v1.schema.json, main-store/store.mjs, test/contracts/completed-work-binding.test.mjs, test/fixtures/contracts/schema-cases-v1.json, test/main-store.test.mjs]
+        tareas:
+          - id: T5.10.1.1
+            accion: "RED: demostrar que una evidencia de trabajo completado puede existir hoy sin identidad inmutable de la decisión estacionada ni de la opción/supuesto bajo el que corrió."
+            resultado: "RED: demostrar que una evidencia de trabajo completado puede existir hoy sin identidad inmutable de la decisión estacionada ni de la opción/supuesto bajo el que corrió."
+            criterios: [Una evidencia de trabajo completado sin identidad inmutable de decisión ni opción o supuesto queda demostrada y rechazada.]
+          - id: T5.10.1.2
+            accion: "RED: fijar rechazo binario para mismatch de candidato/evidencia de trabajo, decisión/digest, opción enumerada o supuesto explícito, snapshot y revisión; una declaración posterior del caller no cuenta."
+            resultado: "RED: fijar rechazo binario para mismatch de candidato/evidencia de trabajo, decisión/digest, opción enumerada o supuesto explícito, snapshot y revisión; una declaración posterior del caller no cuenta."
+            criterios: [Cada mismatch y declaración posterior del caller falla cerrado sin mutación parcial.]
+          - id: T5.10.1.3
+            accion: "GREEN: implementar el contrato aprobado y persistir el binding por el writer canónico del Main store, serializado después de S5.9 y sin abrir un segundo store."
+            resultado: "GREEN: implementar el contrato aprobado y persistir el binding por el writer canónico del Main store, serializado después de S5.9 y sin abrir un segundo store."
+            criterios: [El binding aprobado se persiste por el writer canónico después de S5.9 sin segundo store.]
+          - id: T5.10.1.4
+            accion: "REFACTOR: cerrar inmutabilidad, replay exacto, replay divergente, atomicidad y readback de la provenance completa."
+            resultado: "REFACTOR: cerrar inmutabilidad, replay exacto, replay divergente, atomicidad y readback de la provenance completa."
+            criterios: [Inmutabilidad, replay, atomicidad y readback quedan cerrados sobre la provenance completa.]
