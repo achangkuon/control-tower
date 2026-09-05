@@ -4226,3 +4226,88 @@ sesiones:
             accion: "REFACTOR: validatePlanning no conoce ningún nombre de fase ni ningún número de horizonte."
             resultado: "REFACTOR: validatePlanning no conoce ningún nombre de fase ni ningún número de horizonte."
             criterios: [validatePlanning no conoce nombres de fase ni números de horizonte.]
+
+  - id: S5.15
+    resultado: Ninguna línea de producción de la Torre abre un documento de plan; deriveNextModule y session-plan-snapshot se retiran, mientras compareWorkerClaim sobrevive intacto.
+    autoridad: Contrato histórico de la decisión 78, el test de contenido de la frontera Torre-gentle-ai y la reapertura del camino D de la decisión 74; se conserva sólo como evidencia archivada y no confiere autoridad de ejecución actual.
+    depende_de: [S5.5, S102]
+    recurso: [RUNTIME_PAYLOAD_FILES]
+    archivada: true
+    criterios:
+      - "rg 'matchAll' continuation/ contracts/ no devuelve una sola lectura de documento de plan."
+      - compareWorkerClaim conserva exactamente su comportamiento y sus pruebas.
+      - session-plan-snapshot sale del registro de schemas, del payload y del árbol, con sus bytes preservados en una rama de archivo.
+      - RUNTIME_PAYLOAD_FILES mantiene igualdad exacta de conjunto y ningún miembro queda sin llamador.
+      - support/agent.mjs y support/manifest.mjs no cambian un byte; la lectura de planes queda entera del lado del agente.
+      - continuation/integrated-base.mjs no cambia un byte.
+      - bun test no introduce fallos nuevos; el diff no toca ninguna ruta del Prohibido histórico.
+    decisiones:
+      - tipo: derivable
+        pregunta: ¿Qué sobrevive de continuation/derivation.mjs?
+        criterio: Sólo compareWorkerClaim sobrevive porque no lee el plan y ejerce la comprobación de claim que pertenece a la Torre; cualquier función sobreviviente que abra bytes de un documento de plan falsifica la derivación.
+        evidencia: Test de contenido de la frontera Torre-gentle-ai preservado en el contrato histórico S5.15.
+        checkpoint: antes del primer Módulo histórico
+        opciones:
+          - opcion: Conservar sólo compareWorkerClaim.
+            consecuencia: La Torre conserva la comprobación de claim sin enumerar el plan.
+        autoridad: Test de contenido de la frontera Torre-gentle-ai.
+        falsificador: Sobrevive una función que abre bytes de un documento de plan.
+      - tipo: derivable
+        pregunta: ¿Qué pasa con schemas/session-plan-snapshot-v1.schema.json y su registro?
+        criterio: Salen del registro de schemas y del payload junto al módulo; un miembro de RUNTIME_PAYLOAD_FILES sin llamador al cerrar falsifica la derivación.
+        evidencia: Regla de consumidor real de la Fase 4 preservada en el contrato histórico S5.15.
+        checkpoint: antes del segundo Módulo histórico
+        opciones:
+          - opcion: Retirar schema, registro y membresía del payload junto al módulo.
+            consecuencia: Ningún contrato huérfano viaja en el runtime.
+        autoridad: Regla de consumidor real de la Fase 4 del plan de depuración.
+        falsificador: Queda un miembro de RUNTIME_PAYLOAD_FILES sin llamador al cerrar.
+      - tipo: derivable
+        pregunta: ¿Dónde quedan los bytes retirados?
+        criterio: Se preservan en una rama de archivo como el dashboard en origin/archive/dashboard-vpn; un retiro sin rama de preservación falsifica la derivación.
+        evidencia: Precedente ejecutado del retiro del dashboard preservado en el contrato histórico S5.15.
+        checkpoint: antes del segundo Módulo histórico
+        opciones:
+          - opcion: Preservar los bytes retirados en una rama de archivo.
+            consecuencia: El retiro no destruye la evidencia histórica.
+        autoridad: Precedente ejecutado del retiro del dashboard.
+        falsificador: Los bytes se retiran sin rama de preservación.
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-5/STATUS.md
+      origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d
+      origen_encabezado: "## Sesión 5.15 — La Torre deja de enumerar el plan"
+      territorio_pendiente: false
+    modulos:
+      - id: M5.15.1
+        resultado: Retiro del enumerador de plan
+        rutas: [continuation/derivation.mjs, test/continuation/derivation.test.mjs]
+        tareas:
+          - id: T5.15.1.1
+            accion: "RED: probar que deriveNextModule todavía existe y abre bytes de plan, y que compareWorkerClaim no los toca."
+            resultado: "RED: probar que deriveNextModule todavía existe y abre bytes de plan, y que compareWorkerClaim no los toca."
+            criterios: [deriveNextModule queda probado como lector de bytes de plan y compareWorkerClaim queda probado como independiente de esos bytes.]
+          - id: T5.15.1.2
+            accion: "GREEN: retirar deriveNextModule y sus pruebas; compareWorkerClaim queda sin cambios de comportamiento."
+            resultado: "GREEN: retirar deriveNextModule y sus pruebas; compareWorkerClaim queda sin cambios de comportamiento."
+            criterios: [deriveNextModule y sus pruebas quedan retirados mientras compareWorkerClaim conserva su comportamiento.]
+          - id: T5.15.1.3
+            accion: "REFACTOR: rg 'matchAll|### Módulo' continuation/ devuelve cero."
+            resultado: "REFACTOR: rg 'matchAll|### Módulo' continuation/ devuelve cero."
+            criterios: [continuation no conserva enumeración de planes por matchAll ni encabezados de Módulo.]
+      - id: M5.15.2
+        resultado: Retiro del lector de planes y del payload
+        rutas: [contracts/schema-registry.mjs, install/runtime-payload.mjs, test/contracts/session-plan-snapshot.test.mjs, test/install/entrypoint-resolution.test.mjs, test/install/lifecycle.test.mjs, test/install/payload-closure.test.mjs, test/install/runtime-payload.test.mjs]
+        tareas:
+          - id: T5.15.2.1
+            accion: "RED: probar que session-plan-snapshot sigue declarado en el registro de schemas y viaja en el payload."
+            resultado: "RED: probar que session-plan-snapshot sigue declarado en el registro de schemas y viaja en el payload."
+            criterios: [La declaración de session-plan-snapshot en el registro y el payload queda demostrada.]
+          - id: T5.15.2.2
+            accion: "GREEN: retirar módulo, schema, registro y membresía de payload, preservando los bytes en una rama de archivo."
+            resultado: "GREEN: retirar módulo, schema, registro y membresía de payload, preservando los bytes en una rama de archivo."
+            criterios: [Módulo, schema, registro y membresía quedan retirados con sus bytes preservados.]
+          - id: T5.15.2.3
+            accion: "REFACTOR: RUNTIME_PAYLOAD_FILES conserva igualdad exacta de conjunto y ningún miembro queda sin llamador."
+            resultado: "REFACTOR: RUNTIME_PAYLOAD_FILES conserva igualdad exacta de conjunto y ningún miembro queda sin llamador."
+            criterios: [RUNTIME_PAYLOAD_FILES conserva igualdad exacta y todos sus miembros tienen llamador.]
