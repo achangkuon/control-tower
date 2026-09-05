@@ -9,6 +9,10 @@ import (
 )
 
 func legacyFixture(t *testing.T) (string, string, ImportacionLegacy) {
+	return legacyFixtureFor(t, "2.10")
+}
+
+func legacyFixtureFor(t *testing.T, id string) (string, string, ImportacionLegacy) {
 	t.Helper()
 	root := t.TempDir()
 	git := func(args ...string) string {
@@ -25,7 +29,8 @@ func legacyFixture(t *testing.T) (string, string, ImportacionLegacy) {
 	if err := os.MkdirAll(filepath.Join(root, "legacy"), 0o700); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "legacy", "STATUS.md"), []byte("# Plan\n## Sesión 2.10 — Legacy\n"), 0o600); err != nil {
+	heading := "## Sesión " + id + " — Legacy"
+	if err := os.WriteFile(filepath.Join(root, "legacy", "STATUS.md"), []byte("# Plan\n"+heading+"\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	git("add", ".")
@@ -38,7 +43,7 @@ func legacyFixture(t *testing.T) (string, string, ImportacionLegacy) {
 	git("add", ".")
 	git("commit", "-qm", "head")
 	head := git("rev-parse", "HEAD")
-	return root, head, ImportacionLegacy{OrigenCommit: commit, OrigenRuta: "legacy/STATUS.md", OrigenBlob: blob, OrigenEncabezado: "## Sesión 2.10 — Legacy"}
+	return root, head, ImportacionLegacy{OrigenCommit: commit, OrigenRuta: "legacy/STATUS.md", OrigenBlob: blob, OrigenEncabezado: heading}
 }
 
 func importedSession(prov ImportacionLegacy, pending bool) Sesion {
@@ -127,6 +132,48 @@ func TestPendingTerritoryRequiresBlockingEscalation(t *testing.T) {
 			s.Decisiones[0].Alcanza = reach
 			if len(legacyErrors(&Plan{Sesiones: []Sesion{s}}, root, head)) == 0 {
 				t.Fatal("nonblocking pending accepted")
+			}
+		})
+	}
+}
+
+func TestPendingTerritoryAllowsMissingCriteriaOnlyForLegacyEscalation(t *testing.T) {
+	root, head, prov := legacyFixtureFor(t, "9.2")
+	valid := importedSession(prov, true)
+	valid.ID = "S9.2"
+	valid.Modulos[0].ID = "M9.2.1"
+	valid.Modulos[0].Tareas[0].ID = "T9.2.1.1"
+	valid.Criterios = nil
+
+	cases := []struct {
+		name   string
+		mutate func(*Sesion)
+		valid  bool
+	}{
+		{name: "S9.2-shaped pending legacy escalation", valid: true},
+		{name: "missing legacy import", mutate: func(s *Sesion) { s.ImportacionLegacy = nil }},
+		{name: "pending false", mutate: func(s *Sesion) { s.ImportacionLegacy.TerritorioPendiente = false }},
+		{name: "no escalation", mutate: func(s *Sesion) { s.Decisiones = nil }},
+		{name: "resolved escalation", mutate: func(s *Sesion) { s.Decisiones[0].Tipo = "resuelta" }},
+		{name: "escalation does not reach criteria", mutate: func(s *Sesion) { s.Decisiones[0].Alcanza = "primer-modulo" }},
+		{name: "ordinary open Session", mutate: func(s *Sesion) {
+			s.ImportacionLegacy = nil
+			s.ID = "S9"
+		}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := valid
+			s.Decisiones = append([]Decision(nil), valid.Decisiones...)
+			provenance := *valid.ImportacionLegacy
+			s.ImportacionLegacy = &provenance
+			if tc.mutate != nil {
+				tc.mutate(&s)
+			}
+			h := legacyErrors(&Plan{Sesiones: []Sesion{s}}, root, head)
+			gotCriteriaError := len(hallazgosDe(h, "criterios binarios")) != 0
+			if gotCriteriaError == tc.valid {
+				t.Fatalf("criteria exception mismatch: valid=%v findings=%#v", tc.valid, h)
 			}
 		})
 	}

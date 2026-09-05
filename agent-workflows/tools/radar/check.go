@@ -179,7 +179,7 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 		if strings.TrimSpace(s.Autoridad) == "" {
 			h = append(h, Hallazgo{"error", "autoridad de Sesión", fmt.Sprintf("%s debe declarar la autoridad que delimita su alcance", s.ID)})
 		}
-		if abierta && len(s.Criterios) == 0 {
+		if abierta && len(s.Criterios) == 0 && !permiteCriteriosPendientes(s) {
 			h = append(h, Hallazgo{"error", "criterios binarios", fmt.Sprintf("%s no tiene criterios de aceptación", s.ID)})
 		}
 		if abierta && !pendiente {
@@ -305,6 +305,18 @@ func (p *Plan) checkModulos(root string, s *Sesion, modulosVistos, tareasVistas 
 		}
 	}
 	return h
+}
+
+func permiteCriteriosPendientes(s *Sesion) bool {
+	if s.ImportacionLegacy == nil || !s.ImportacionLegacy.TerritorioPendiente {
+		return false
+	}
+	for _, d := range s.Decisiones {
+		if d.Tipo == "escala" && d.Alcanza == "criterios" {
+			return true
+		}
+	}
+	return false
 }
 
 func checkImportacionLegacy(root, head string, s *Sesion, vistas map[string]bool) []Hallazgo {
