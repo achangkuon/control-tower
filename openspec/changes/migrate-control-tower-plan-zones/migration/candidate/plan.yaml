@@ -4142,3 +4142,87 @@ sesiones:
             accion: "CHECKS: probar que no hay parseo ni ramificación por contenido y preservar ledger, lock y reconciliación."
             resultado: "CHECKS: probar que no hay parseo ni ramificación por contenido y preservar ledger, lock y reconciliación."
             criterios: [No existe parseo ni ramificación por contenido y ledger, lock y reconciliación permanecen intactos.]
+
+  - id: S5.14
+    resultado: La profundidad de planificación deja de estar clavada y pasa a provenir de la política resuelta sin que la Torre interprete nombres de fase ni números de horizonte.
+    autoridad: Contrato histórico de la decisión 71 y la frontera Torre-gentle-ai; se conserva sólo como evidencia archivada y no confiere autoridad de ejecución actual.
+    depende_de: [S5.13]
+    recurso: []
+    archivada: true
+    criterios:
+      - "rg 'TAREAS' continuation/ policy/ devuelve cero ocurrencias."
+      - El 2 de horizon sale del código y proviene de planning.horizon_ceiling.
+      - Un proyecto que declare otra profundidad continúa sin tocar una línea de la Torre.
+      - Una política sin prepare_through falla cerrado, con su código, y no asume un default permisivo.
+      - horizon_ceiling, merge.authorizing_party, delivery.shape y los cinco pisos de assertFloorProtected conservan exactamente el mismo comportamiento.
+      - bun test no introduce fallos nuevos; el diff no toca ninguna ruta prohibida por el contrato histórico.
+    decisiones:
+      - tipo: derivable
+        pregunta: ¿Dónde vive prepare_through?
+        criterio: Vive en el bloque planning de delivery-policy junto a horizon_ceiling; un segundo lugar del repositorio que declare profundidad de planificación falsifica la derivación.
+        evidencia: Enmienda de contrato del 2026-08-03 preservada en el contrato histórico S5.14.
+        checkpoint: antes del primer Módulo histórico
+        opciones:
+          - opcion: Declararlo en planning junto a horizon_ceiling.
+            consecuencia: La profundidad queda gobernada por una sola política de planificación por proyecto.
+        autoridad: Enmienda de contrato del 2026-08-03.
+        falsificador: Existe un segundo lugar del repositorio que declara profundidad de planificación.
+      - tipo: derivable
+        pregunta: ¿Qué valida la Torre sobre prepare_through?
+        criterio: Es una cadena no vacía y coincide con la política resuelta; cualquier comparación contra un literal de fase en producción falsifica la derivación.
+        evidencia: Test de contenido de la frontera Torre-gentle-ai preservado en el contrato histórico S5.14.
+        checkpoint: antes del primer Módulo histórico
+        opciones:
+          - opcion: Comparar el valor con la política resuelta sin interpretar su significado.
+            consecuencia: La Torre valida autoridad sin conocer nombres de fase.
+        autoridad: Test de contenido de la frontera Torre-gentle-ai.
+        falsificador: Código de producción compara prepare_through contra un literal de fase.
+      - tipo: derivable
+        pregunta: ¿Qué default lleva prepare_through?
+        criterio: restrictiveDefaults lo trata igual que horizon_ceiling y falla cerrado si la política no lo declara; una continuación que avance con política incompleta falsifica la derivación.
+        evidencia: Default fail-closed de la enmienda del 2026-08-03 preservado en el contrato histórico S5.14.
+        checkpoint: antes del primer Módulo histórico
+        opciones:
+          - opcion: Exigir prepare_through en restrictiveDefaults sin default permisivo.
+            consecuencia: Una política incompleta no habilita continuación.
+        autoridad: Default fail-closed de la enmienda del 2026-08-03.
+        falsificador: Una continuación avanza con la política incompleta.
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-5/STATUS.md
+      origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d
+      origen_encabezado: "## Sesión 5.14 — La profundidad de planificación deja de estar clavada"
+      territorio_pendiente: false
+    modulos:
+      - id: M5.14.1
+        resultado: prepare_through como política
+        rutas: [schemas/delivery-policy-v1.schema.json, policy/delivery-policy.mjs, test/policy/delivery-policy.test.mjs]
+        tareas:
+          - id: T5.14.1.1
+            accion: "RED: una política sin prepare_through falla cerrado; con un valor arbitrario no vacío resuelve."
+            resultado: "RED: una política sin prepare_through falla cerrado; con un valor arbitrario no vacío resuelve."
+            criterios: [Una política sin prepare_through falla cerrado y una política con valor no vacío resuelve.]
+          - id: T5.14.1.2
+            accion: "GREEN: el campo vive en planning, junto a horizon_ceiling, con default restrictivo."
+            resultado: "GREEN: el campo vive en planning, junto a horizon_ceiling, con default restrictivo."
+            criterios: [prepare_through vive en planning junto a horizon_ceiling y conserva default restrictivo.]
+          - id: T5.14.1.3
+            accion: "REFACTOR: choose() y restrictiveDefaults lo tratan igual que a horizon_ceiling, sin rama propia."
+            resultado: "REFACTOR: choose() y restrictiveDefaults lo tratan igual que a horizon_ceiling, sin rama propia."
+            criterios: [choose() y restrictiveDefaults tratan prepare_through igual que horizon_ceiling sin rama propia.]
+      - id: M5.14.2
+        resultado: La continuación deja de interpretar
+        rutas: [continuation/integrated-base.mjs, test/continuation/derivation.test.mjs, test/continuation/integrated-base.test.mjs, test/continuation/support.test.mjs]
+        tareas:
+          - id: T5.14.2.1
+            accion: "RED: validatePlanning acepta un prepare_through distinto de TAREAS si coincide con la política y rechaza el que no coincide."
+            resultado: "RED: validatePlanning acepta un prepare_through distinto de TAREAS si coincide con la política y rechaza el que no coincide."
+            criterios: [validatePlanning acepta coincidencia con política y rechaza divergencia sin exigir TAREAS.]
+          - id: T5.14.2.2
+            accion: "GREEN: el literal TAREAS y el 2 clavado salen; el valor se compara contra la política resuelta."
+            resultado: "GREEN: el literal TAREAS y el 2 clavado salen; el valor se compara contra la política resuelta."
+            criterios: [La continuación compara prepare_through y horizon con la política resuelta sin literales clavados.]
+          - id: T5.14.2.3
+            accion: "REFACTOR: validatePlanning no conoce ningún nombre de fase ni ningún número de horizonte."
+            resultado: "REFACTOR: validatePlanning no conoce ningún nombre de fase ni ningún número de horizonte."
+            criterios: [validatePlanning no conoce nombres de fase ni números de horizonte.]
