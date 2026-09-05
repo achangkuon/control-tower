@@ -4729,3 +4729,66 @@ sesiones:
       territorio_pendiente: false
     rutas_historicas: [test/workspace/checkpoint.test.mjs, test/workspace/pi-binding.test.mjs, test/workspace/pi-supervisor.test.mjs, test/workspace/reconciliation.test.mjs, test/workspace/seat-inventory.test.mjs, test/workspace/slots.test.mjs, test/contracts/s3-2-schemas.test.mjs, test/contracts/schema.test.mjs]
     modulos: []
+  - id: S9.4
+    resultado: Binding del launcher Pi y failure fence — contrato histórico
+    autoridad: Contrato histórico de S9.4 y regla de retención de la decisión 57; se conserva sólo como evidencia archivada y no confiere autoridad de ejecución actual.
+    depende_de: [S106]
+    recurso: [namespace de proceso y raíz Pi]
+    archivada: true
+    criterios:
+      - El binding exacto se valida antes y después de cada await contra el contexto de S4.10, el keepalive Tower-owned se registra dentro de esa frontera verificada y observeProcess comprueba que PID, cwd y start-token del kernel coinciden antes y después de la observación async.
+      - runtimeRoute es dato puro; preparación y validación no crean socket, archivo, listener, lock, reserva ni capacidad de close/release.
+      - Ruta inválida o stale, pérdida del binding actual o dispose antes de start dejan cero broker/listener y ejecutan cero cleanup.
+      - broker.start, llamado dentro de S4.10 acquireAtReservation, es el primer efecto y devuelve el close exacto que S4.10 retiene como owner.
+      - Todo fallo posterior a start consume ese close exacto o deja la adquisición en cuarentena explícita; ninguna capa reconstruye o adivina cleanup.
+      - Repetir el mismo input converge; conflicto o pérdida de actualidad fallan cerrado sin promover una ruta o binding rival.
+      - El mailbox sigue volátil y no autoritativo; no se agrega mensajería durable, broker compartido, adopción de procesos ajenos, aislamiento de OS ni cambios a Pi/pi-intercom.
+      - Strict TDD registra RED enfocado, suite combinada y suite completa verdes; el diff toca exactamente Área y cada Módulo queda en un commit independiente/revertible de ≤400 líneas authored.
+    decisiones:
+      - tipo: resuelta
+        pregunta: ¿Qué conserva S9.4 como contrato histórico de Pi?
+        resolucion: Pi se conserva como host de ejecución y no como transporte; Moshi reemplaza sólo el transporte remoto. La reactivación histórica dependía de S9.3 y del cierre de la ruta OpenCode; el lineage aprobado reescribe esa dependencia hacia S106 sin reactivar el contrato.
+        autoridad: Contrato histórico de S9.4 en el STATUS inmutable de plan-9 y regla de retención de la decisión 57.
+        falsificador: Se elimina Pi, se lo trata como transporte, o este registro archivado obtiene autoridad de ejecución, ruta, Zona o scheduling actual.
+        descartadas:
+          - opcion: Eliminar Pi o reemplazarlo por Moshi.
+            razon: Moshi reemplaza el transporte remoto, no un host de ejecución; el contrato histórico conserva Pi.
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-9/STATUS.md
+      origen_blob: 18b77f222bdcf1bea0d2d144b170f102d5d6cc8a
+      origen_encabezado: "## Sesión 9.4 — Binding del launcher Pi y failure fence — contrato histórico"
+      territorio_pendiente: false
+    modulos:
+      - id: M9.4.1
+        resultado: Verificador de binding exacto
+        rutas: [workspace/pi-binding.mjs, test/workspace/pi-binding.test.mjs]
+        tareas:
+          - id: T9.4.1.1
+            accion: "RED: fijar la matriz de binding exacto antes/después de await, stale, conflicto y pérdida de actualidad."
+            resultado: "RED: fijar la matriz de binding exacto antes/después de await, stale, conflicto y pérdida de actualidad."
+            criterios: ["RED: binding exacto antes/después de await, stale, conflicto y pérdida de actualidad quedan cubiertos."]
+          - id: T9.4.1.2
+            accion: "GREEN: implementar el verificador mínimo sin cambiar forma pública ni adquirir recursos."
+            resultado: "GREEN: implementar el verificador mínimo sin cambiar forma pública ni adquirir recursos."
+            criterios: ["GREEN: el verificador conserva la forma pública y no adquiere recursos."]
+          - id: T9.4.1.3
+            accion: "TRIANGULATE/REFACTOR: cubrir alternos negativos y simplificar manteniendo el RED enfocado verde."
+            resultado: "TRIANGULATE/REFACTOR: cubrir alternos negativos y simplificar manteniendo el RED enfocado verde."
+            criterios: ["TRIANGULATE/REFACTOR: alternos negativos quedan cubiertos sin perder el RED enfocado verde."]
+      - id: M9.4.2
+        resultado: Supervisor de ruta pura y adquisición broker-first
+        rutas: [workspace/pi-supervisor.mjs, test/workspace/pi-supervisor.test.mjs]
+        tareas:
+          - id: T9.4.2.1
+            accion: "RED: cubrir la matriz async/effect completa — invalid, stale, dispose pre-start, start, fallo post-start, cuarentena, convergencia, conflicto y pérdida de actualidad."
+            resultado: "RED: cubrir la matriz async/effect completa — invalid, stale, dispose pre-start, start, fallo post-start, cuarentena, convergencia, conflicto y pérdida de actualidad."
+            criterios: ["RED: la matriz async/effect completa queda cubierta."]
+          - id: T9.4.2.2
+            accion: "GREEN: producir runtimeRoute puro y hacer broker.start primero dentro de S4.10 acquireAtReservation, preservando ownership y close exactos de S4.10."
+            resultado: "GREEN: producir runtimeRoute puro y hacer broker.start primero dentro de S4.10 acquireAtReservation, preservando ownership y close exactos de S4.10."
+            criterios: ["GREEN: runtimeRoute permanece puro y S4.10 retiene ownership y close exactos."]
+          - id: T9.4.2.3
+            accion: "TRIANGULATE/REFACTOR: cerrar alternos, correr suites combinada y completa y verificar límites de Área, efectos y rollback."
+            resultado: "TRIANGULATE/REFACTOR: cerrar alternos, correr suites combinada y completa y verificar límites de Área, efectos y rollback."
+            criterios: ["TRIANGULATE/REFACTOR: alternos, suites, límites de Área, efectos y rollback quedan cerrados."]
