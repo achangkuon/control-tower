@@ -3903,3 +3903,67 @@ sesiones:
             accion: "REFACTOR: cerrar replay exacto, replay divergente, readback y testigos de bytes contra shadow store, segundo writer o mutación posterior."
             resultado: "REFACTOR: cerrar replay exacto, replay divergente, readback y testigos de bytes contra shadow store, segundo writer o mutación posterior."
             criterios: [Replay, readback y testigos de bytes excluyen divergencia, shadow store, segundo writer y mutación posterior.]
+  - id: S5.9
+    resultado: Persistir bajo autoridad exclusiva de Main una prueba inmutable que liga el valor exacto de parked.checkpoint a la captura canónica y a la evidencia de reconciliación que identifican el mismo punto de retoma.
+    autoridad: Contrato de la Sesión; decisiones del maintainer del 2026-08-12 y decisión 41 del 2026-08-18; entrega exacta en 3c3040d855dc87c6ba38eac75b8671adf86d24cf, 754c69888fb9e322c53299af4988e307e72c5e06 y 8d4b28a35ea95de655abdd88cb548144a9d5c811.
+    depende_de: [S5.12]
+    recurso: [Main store, writer lock y transacción canónicos]
+    criterios:
+      - Existe un único binding autoritativo persistido en Main store entre el valor exacto de parked.checkpoint, la captura canónica y la evidencia reconciled-checkpoint-v1 correspondiente.
+      - "ENMENDADO por la decisión 41 (maintainer, 2026-08-18). Al retomar después de integrar S5.11 y S5.12, el SDD prueba antes de tasks/apply que el flujo real suministra evidencia canónica producer-owned de captura y reconciliación VALID — esa mitad PASA en test/main-store.test.mjs:257-272. La cláusula de preservación del falsificador fallido se cierra como pérdida aceptada y documentada: el design.md de SHA-256 a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1 ya no existe y Engram 8604 fue upserteado al diseño reconciliado. Se perdió el veredicto negativo del primer intento de diseño; sobrevive el hallazgo de fase spec en Engram 8602 y la brecha original documentada en las decisiones 20 y 21, que motivó enumerar S5.11 y S5.12. La causa raíz —un topic_key mutable— quedó registrada como regla del repositorio."
+      - Mismatch de valor, digest, repositorio, base/result, assignment/generation o evidencia de reconciliación falla cerrado sin mutación parcial.
+      - Caller assertion, texto equivalente y una inferencia local de S5.5 no sustituyen evidencia canónica.
+      - Replay byte-idéntico es idempotente y replay divergente produce cero efectos adicionales.
+      - Sellado al estacionar, persistencia, inmutabilidad y readback autoritativo dedicado por identidad de decisión estacionada ocurren bajo el writer, lock y transacción canónicos de Main; no existe store ni writer paralelo.
+      - Los productores workspace/checkpoint.mjs y reconciled-checkpoint-v1 se consumen sin una segunda ruta de captura o reconciliación.
+      - El diff de implementación no toca ningún path fuera del Área; nueve paths, todos dentro del Área.
+    decisiones:
+      - tipo: resuelta
+        resolucion: Registro standalone, inmutable y versionado parked-checkpoint-binding-v1 en Main store, sellado al estacionar la decisión sólo después de disponer de captura canónica y reconciliación canónica VALID; readback autoritativo dedicado, Main store como writer único, replay exacto idempotente y replay divergente cerrado.
+        autoridad: Decisión del maintainer del 2026-08-12.
+        falsificador: El flujo de parking no puede suministrar evidencia canónica producer-owned de captura y reconciliación sin assertion del caller.
+        descartadas:
+          - opcion: Assertions del caller, inferencia o parsing local de S5.5 o reconstrucción narrativa.
+            razon: No prueban provenance producer-owned.
+          - opcion: Reemplazo mutable, semántica sólo en extensions, shadow store o segundo writer.
+            razon: Rompen inmutabilidad y autoridad única de Main.
+        contaminaba: [S5.5]
+      - tipo: resuelta
+        resolucion: La cláusula de preservación del criterio 2 se cierra como pérdida aceptada y documentada; no se intenta recuperar el artefacto.
+        autoridad: Decisión 41 del maintainer del 2026-08-18.
+        falsificador: Aparece una copia íntegra del design.md con SHA-256 a349747ceb0580ef700155499125c89a025232e85ec64677d65d8e8d0bff29b1, o el criterio 2 vuelve a exigir preservación sin un mecanismo inmutable que la sostenga.
+        descartadas:
+          - opcion: Reescribir el criterio quitando la cláusula.
+            razon: Eliminaría del estándar el requisito de preservar evidencia negativa.
+          - opcion: Recuperar el artefacto desde backups antes de cerrar.
+            razon: Mantendría colgando una Sesión ya entregada a cambio de evidencia histórica de valor decreciente.
+        contaminaba: [S5.9]
+    entrega:
+      commit: 8d4b28a35ea95de655abdd88cb548144a9d5c811
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-5/STATUS.md
+      origen_blob: 91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d
+      origen_encabezado: "## Sesión 5.9 — Binding autoritativo del checkpoint estacionado"
+      territorio_pendiente: false
+    modulos:
+      - id: M5.9.1
+        resultado: Evidencia canónica y persistencia bajo Main
+        rutas: [contracts/parked-checkpoint-binding.mjs, contracts/schema-registry.mjs, contracts/validate.mjs, main-store/store.mjs, schemas/parked-checkpoint-binding-v1.schema.json, test/contracts/parked-checkpoint-binding.test.mjs, test/contracts/schema.test.mjs, test/fixtures/contracts/schema-cases-v1.json, test/main-store.test.mjs]
+        tareas:
+          - id: T5.9.1.1
+            accion: "RED: demostrar que el checkpoint textual de parked-decision-v1, captureCheckpoint y reconciled-checkpoint-v1 hoy pueden variar independientemente sin que ningún contrato rechace el desacople."
+            resultado: "RED: demostrar que el checkpoint textual de parked-decision-v1, captureCheckpoint y reconciled-checkpoint-v1 hoy pueden variar independientemente sin que ningún contrato rechace el desacople."
+            criterios: [El desacople independiente del checkpoint textual entre los tres artefactos queda demostrado.]
+          - id: T5.9.1.2
+            accion: "RED: fijar rechazo binario para mismatch de valor exacto, digest, repositorio, base/result, assignment/generation o evidencia de reconciliación; caller assertion y lectura inferida por S5.5 no cuentan."
+            resultado: "RED: fijar rechazo binario para mismatch de valor exacto, digest, repositorio, base/result, assignment/generation o evidencia de reconciliación; caller assertion y lectura inferida por S5.5 no cuentan."
+            criterios: [Cada mismatch y sustitución no canónica falla cerrado sin mutación parcial.]
+          - id: T5.9.1.3
+            accion: "GREEN: implementar el contrato aprobado y persistir el binding por el writer canónico del Main store, sin modificar los productores existentes ni abrir un segundo store."
+            resultado: "GREEN: implementar el contrato aprobado y persistir el binding por el writer canónico del Main store, sin modificar los productores existentes ni abrir un segundo store."
+            criterios: [El binding aprobado queda persistido por el único writer canónico sin modificar productores.]
+          - id: T5.9.1.4
+            accion: "REFACTOR: cerrar idempotencia de replay exacto, rechazo de replay divergente y atomicidad/readback sobre los bytes persistidos."
+            resultado: "REFACTOR: cerrar idempotencia de replay exacto, rechazo de replay divergente y atomicidad/readback sobre los bytes persistidos."
+            criterios: [Replay, atomicidad y readback quedan cerrados sobre los bytes persistidos.]
