@@ -4127,3 +4127,85 @@ sesiones:
             accion: "REFACTOR: consolidar evidencia atribuible y declaración de alcance máximo de cinco clientes."
             resultado: "REFACTOR: consolidar evidencia atribuible y declaración de alcance máximo de cinco clientes."
             criterios: [La evidencia queda atribuida al candidato y no declara soporte por encima de cinco clientes.]
+
+  - id: S8.12
+    zona: instalacion
+    resultado: "Packaging del bundle Tower: una membresía versionada contiene exactamente los bytes Tower-owned locales y no instala, activa, reescribe configuración global ni ejecuta rollback."
+    autoridad: "Decisiones 88, 95, 100 y 104; Engram 9921 y 10008; contrato vigente enumerado de S8.12 aprobado por decisión 10315 del maintainer y citado en openspec/plans/plan-8/STATUS.md líneas 998-1031."
+    depende_de: [S8.10, S8.14, S9.8]
+    cimientos: [scripts/payload-closure.mjs]
+    recurso:
+      - contrato RUNTIME_PAYLOAD_FILES
+      - bytes fuente Tower-owned de profiles/tower/** consumidos sin modificarlos
+      - bytes fuente Tower-owned de skills/torre-control/** consumidos sin modificarlos
+      - bytes fuente Tower-owned de skills/torre-control-entregas/** consumidos sin modificarlos
+      - bytes fuente Tower-owned de skills/torre-control-soporte/** consumidos sin modificarlos
+      - bytes fuente Tower-owned de adapters/pi/** consumidos sin modificarlos
+      - bytes fuente Tower-owned de extensions/pi/** consumidos sin modificarlos
+    criterios:
+      - El bundle contiene exactamente los bytes Tower-owned locales, incluidos route padre Pi-first, torre-control, perfiles y skills propietarias con dispatch fire-and-forget; no copia configuración Pi/Intercom ni skills genéricas Gentle AI.
+      - Los tres perfiles y sus skills se materializan desde el bundle sin modificar sus fuentes canónicas.
+      - Faltante, extra, symlink, provenance divergente o incoherencia interceptor/torre-control falla cerrado.
+      - Declaración, derivación y guardia observan un único conjunto exacto y determinista.
+      - "La Sesión sólo empaqueta: no instala, activa, reescribe configuración global ni ejecuta rollback."
+      - El diff toca sólo Área.
+    decisiones:
+      - tipo: resuelta
+        pregunta: ¿Qué incluye y excluye el bundle Tower?
+        resolucion: El bundle incluye runtime, contrato neutral, adapter Pi y el set local de perfiles/skills Tower canónicos; excluye Planner permanente, configuración Pi/Intercom y skills genéricas Gentle AI.
+        autoridad: Decisiones 88, 95 y 100.
+        clase: contrato-visible-del-producto; seguridad-y-permisos
+        falsificador: El bundle omite un byte Tower-owned enumerado o incluye Planner permanente, configuración Pi/Intercom o una skill genérica Gentle AI.
+        descartadas:
+          - opcion: Incluir Planner permanente, configuración Pi/Intercom o skills genéricas Gentle AI.
+            razon: Esos bytes no pertenecen al set local Tower-owned autorizado.
+          - opcion: Omitir runtime, contrato neutral, adapter Pi o perfiles y skills Tower canónicos.
+            razon: El bundle dejaría de representar la membresía aprobada.
+        contaminaba: [S8.12, S8.13]
+      - tipo: resuelta
+        pregunta: ¿Qué contrato de routing y dispatch viaja como bytes Tower-owned?
+        resolucion: El route padre torre-control, los cuatro triggers registrados y la política fire-and-forget de S9.8 viajan como bytes Tower-owned coherentes; el bundle no conserva rutas públicas alternativas ni acredita trabajo sin terminal.
+        autoridad: Decisión 104 y Engram 10008.
+        clase: contrato-visible-del-producto
+        falsificador: El bundle conserva una ruta pública alternativa, omite un trigger registrado o acredita trabajo sin terminal.
+        descartadas:
+          - opcion: Conservar rutas públicas alternativas.
+            razon: Rompería la autoridad única de torre-control.
+          - opcion: Acreditar trabajo sin terminal.
+            razon: Contradiría la política fire-and-forget aprobada para S9.8.
+        contaminaba: [S8.12, S8.13]
+      - tipo: derivable
+        pregunta: ¿Cómo se ordena y deriva internamente la membresía?
+        evidencia: El contrato vigente enumerado de S8.12 en openspec/plans/plan-8/STATUS.md líneas 998-1031 exige una sola composición para declaración y guardia.
+        checkpoint: S8.12 RED.
+        opciones:
+          - opcion: Derivar declaración y guardia desde una sola composición.
+            consecuencia: Faltante, extra, symlink o bytes divergentes falla cerrado; dos enumeraciones distintas falsifican la derivación.
+        criterio: Una sola composición produce declaración y guardia; faltante, extra, symlink o bytes divergentes falla cerrado.
+        autoridad: Decisiones 88, 95 y 100; Engram 9921.
+    ruta:
+      propuesta: design-tasks
+      autoridad: Decisiones 88, 95 y 100; Engram 9921.
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-8/STATUS.md
+      origen_blob: 8c1855e9f05837cd7a39c818e34c93233c0340b7
+      origen_encabezado: "## Sesión 8.12 — Canal único de distribución"
+      territorio_pendiente: false
+    modulos:
+      - id: M8.12.1
+        resultado: Membresía versionada
+        rutas: [scripts/payload-closure.mjs, install/runtime-payload.mjs, test/install/payload-closure.test.mjs, test/install/runtime-payload.test.mjs, test/install/tower-role-assets.test.mjs]
+        tareas:
+          - id: T8.12.1.1
+            accion: "RED: cubrir perfil/interceptor/skill faltante, skill externa copiada, extra, symlink y provenance divergente."
+            resultado: "RED: cubrir perfil/interceptor/skill faltante, skill externa copiada, extra, symlink y provenance divergente."
+            criterios: [Perfil, interceptor o skill faltante, skill externa copiada, extra, symlink y provenance divergente fallan cerrado.]
+          - id: T8.12.1.2
+            accion: "GREEN: declarar y derivar la membresía completa Tower-specific desde una sola composición."
+            resultado: "GREEN: declarar y derivar la membresía completa Tower-specific desde una sola composición."
+            criterios: [La membresía completa Tower-specific se declara y deriva desde una sola composición.]
+          - id: T8.12.1.3
+            accion: "REFACTOR: eliminar listas paralelas y probar guardia exacta sin instalar ni activar."
+            resultado: "REFACTOR: eliminar listas paralelas y probar guardia exacta sin instalar ni activar."
+            criterios: [No quedan listas paralelas y la guardia exacta se prueba sin instalar ni activar.]
