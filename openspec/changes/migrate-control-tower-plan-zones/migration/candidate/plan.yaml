@@ -4695,3 +4695,37 @@ sesiones:
       origen_encabezado: "## Sesión 9.2 — Interlock de asiento ocupado"
       territorio_pendiente: true
     modulos: []
+  - id: S9.3
+    resultado: Caché externa congelada de Bun
+    autoridad: Decisión 53 del maintainer del 2026-08-20 y contrato inmutable propietario de S9.3; lineage C04L archiva el original y asigna su reemplazo posterior a S105 y S106.
+    depende_de: [S9.1]
+    recurso: [roots externas exactas de caché y estado, lock por input-digest]
+    criterios:
+      - bun ci corre siempre; caché, receipt o árbol previo nunca autorizan omitirlo.
+      - El fingerprint liga inputs, versión de Bun, CPU/OS, roots, argv y environment exactos.
+      - La publicación del receipt ocurre atómicamente después de una instalación exitosa.
+      - Una instalación parcial falla cerrado en vez de aceptarse.
+      - El diff toca sólo el Área histórica y no introduce autoridad Main, SQLite ni API pública.
+      - "Trazabilidad de territorio histórico: se preservan sólo los ocho archivos actualmente tracked que expanden exactamente test/workspace/** y los tests de schemas citados; workspace/dependency-cache.mjs, schemas/dependency-fingerprint-v1.schema.json y schemas/dependency-install-receipt-v1.schema.json están ausentes y quedan excluidos sin sustitutos."
+    decisiones:
+      - tipo: resuelta
+        pregunta: ¿La instalación usa siempre bun ci con caché externa congelada o reutiliza un árbol materializado entre asientos?
+        resolucion: Se adopta fast-frozen-only; cada asiento ejecuta bun ci desde cero con caché de descargas Bun externa y acotada al proyecto, materialized_node_modules_reuse disabled y authorizes_install_skip false.
+        autoridad: Decisión 53 del maintainer del 2026-08-20.
+        clase: contrato-visible-del-producto; dependencias-o-evidencia-contradictorias
+        falsificador: La caché, un receipt o un árbol previo permite omitir bun ci; se reutiliza node_modules materializado entre asientos; o una inconsistencia no falla cerrado.
+        descartadas:
+          - opcion: Reutilizar un árbol materializado entre asientos.
+            razon: Abre un contrato nuevo de identidad, ownership y seguridad y exige otra ronda de decisiones.
+          - opcion: No hacer nada.
+            razon: Mantiene sin representación histórica el contrato aprobado y rompe la reconciliación del original archivado con S105 y S106.
+        contaminaba: [S9.3, S105, S106]
+    archivada: true
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-9/STATUS.md
+      origen_blob: 18b77f222bdcf1bea0d2d144b170f102d5d6cc8a
+      origen_encabezado: "## Sesión 9.3 — Caché externa congelada de Bun"
+      territorio_pendiente: false
+    rutas_historicas: [test/workspace/checkpoint.test.mjs, test/workspace/pi-binding.test.mjs, test/workspace/pi-supervisor.test.mjs, test/workspace/reconciliation.test.mjs, test/workspace/seat-inventory.test.mjs, test/workspace/slots.test.mjs, test/contracts/s3-2-schemas.test.mjs, test/contracts/schema.test.mjs]
+    modulos: []
