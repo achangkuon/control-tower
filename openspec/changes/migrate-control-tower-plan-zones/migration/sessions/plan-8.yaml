@@ -11,10 +11,129 @@ sessions:
     source_heading: "## Sesión 8.12 — Canal único de distribución"
     provenance_classification: target
     importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-8/STATUS.md, origen_blob: 8c1855e9f05837cd7a39c818e34c93233c0340b7, origen_encabezado: "## Sesión 8.12 — Canal único de distribución", territorio_pendiente: false}
-    stable_ids: {modules: [], tasks: []}
-    source_contract: {scope: "one versioned installation route packages the complete Tower payload and agent channel", dependencies: [S8.10, S8.14, S9.8], authority: "decisions 57-63, 88, 95, and 100 plus Engram 9921", decisions: "Bundle membership and ownership are approved; packaging must not redefine skills, interceptor, or router.", criteria: "Open criteria require a clean one-route installation of the complete versioned Tower bundle and rollback-capable active pointer.", route: design-tasks, delivery: "unresolved; Modules and Tasks are pending enumeration after the escalating decision", outstanding_work: "Modules and Tasks: pending enumeration"}
-    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work], derived_comparison: [status, area, progress, queue, ownership, seat, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical execution, decisions, metrics, and narrative not representable as target fields]}
-    compatibility_reason: "Proven imported dotted hierarchy; known or historically recorded territory; no pending-territory scheduling claim."
+    current_contract_provenance:
+      source_path: openspec/plans/plan-8/STATUS.md
+      source_head: 0dd64c5
+      source_lines: "998-1031"
+      assignment_path: agent-workflows/ASIGNACION-24-SESIONES.md
+      authority_refs: [decision 88, decision 95, decision 100, decision 104, Engram 9921, Engram 10008, maintainer decision 10315]
+      current_contract_text: |
+        ### Autoridad vigente de S8.12 — packaging del bundle Tower
+
+        **Estado:** 📋 PLANIFICADO
+
+        **Depende de:** `S8.10` ✅ COMPLETO, `S8.14` ✅ COMPLETO, `S9.8` (`S9.5` y `S1.18` quedan incluidos transitivamente).
+
+        **Área:** `scripts/payload-closure.mjs`, `install/runtime-payload.mjs`, `test/install/payload-closure.test.mjs`, `test/install/runtime-payload.test.mjs`, `test/install/tower-role-assets.test.mjs`.
+
+        **Recurso:** contrato `RUNTIME_PAYLOAD_FILES`; bytes fuente Tower-owned de `profiles/tower/**`, `skills/torre-control/**`, `skills/torre-control-entregas/**`, `skills/torre-control-soporte/**`, `adapters/pi/**` y `extensions/pi/**`, consumidos sin modificarlos.
+
+        **Decisiones:**
+
+        - `escala`, **resuelta por las decisiones 88, 95 y 100** — el bundle incluye runtime, contrato neutral, adapter Pi y el set local de perfiles/skills Tower canónicos; excluye Planner permanente, configuración Pi/Intercom y skills genéricas Gentle AI. **Clase:** contrato visible del producto; seguridad y permisos. **Contamina:** `S8.12 → S8.13`.
+        - `escala`, **resuelta por la decisión 104 / Engram 10008** — el route padre `torre-control`, los cuatro triggers registrados y la política fire-and-forget de `S9.8` viajan como bytes Tower-owned coherentes; el bundle no conserva rutas públicas alternativas ni acredita trabajo sin terminal. **Clase:** contrato visible del producto. **Contamina:** `S8.12 → S8.13`.
+        - `derivable` — orden y derivación internos de la membresía. **Criterio:** una sola composición produce declaración y guardia; faltante, extra, symlink o bytes divergentes falla cerrado. **Autoridad:** decisiones 88, 95, 100 y Engram 9921. **Falsificador:** dos enumeraciones aceptan conjuntos distintos.
+
+        **Ruta:** `design-tasks` — consume ownership y comportamiento ya resueltos para fijar el seam mínimo de packaging; no redefine skills, interceptor ni router. **Autoridad de ruta:** decisiones 88, 95, 100 y Engram 9921.
+
+        **Criterios de aceptación** — todos deben pasar para cerrar:
+
+        - [ ] El bundle contiene exactamente los bytes Tower-owned locales, incluidos route padre Pi-first, `torre-control`, perfiles y skills propietarias con dispatch fire-and-forget; no copia configuración Pi/Intercom ni skills genéricas Gentle AI.
+        - [ ] Los tres perfiles y sus skills se materializan desde el bundle sin modificar sus fuentes canónicas.
+        - [ ] Faltante, extra, symlink, provenance divergente o incoherencia interceptor/`torre-control` falla cerrado.
+        - [ ] Declaración, derivación y guardia observan un único conjunto exacto y determinista.
+        - [ ] La Sesión sólo empaqueta: no instala, activa, reescribe configuración global ni ejecuta rollback.
+        - [ ] El diff toca sólo `Área`.
+
+        #### Módulo M8.12.1 — Membresía versionada · commit directo ≤400 authored
+
+        - [ ] Tarea T8.12.1.1 — RED: cubrir perfil/interceptor/skill faltante, skill externa copiada, extra, symlink y provenance divergente.
+        - [ ] Tarea T8.12.1.2 — GREEN: declarar y derivar la membresía completa Tower-specific desde una sola composición.
+        - [ ] Tarea T8.12.1.3 — REFACTOR: eliminar listas paralelas y probar guardia exacta sin instalar ni activar.
+
+        **Forecast:** un commit directo verificable y revertible de máximo 400 líneas authored. Si la membresía y su guardia no caben juntas, se divide `S8.12` antes de implementar; no se crean PRs ni un quinto nivel.
+    stable_ids:
+      modules: [M8.12.1]
+      tasks: [T8.12.1.1, T8.12.1.2, T8.12.1.3]
+    source_contract:
+      scope: "Packaging del bundle Tower: una membresía versionada contiene exactamente los bytes Tower-owned locales y no instala, activa, reescribe configuración global ni ejecuta rollback."
+      status: PLANIFICADO
+      dependencies:
+        - {session: S8.10, status: COMPLETO}
+        - {session: S8.14, status: COMPLETO}
+        - {session: S9.8, status: unresolved, transitive_dependencies: [S9.5, S1.18]}
+      zona: instalacion
+      area:
+        - scripts/payload-closure.mjs
+        - install/runtime-payload.mjs
+        - test/install/payload-closure.test.mjs
+        - test/install/runtime-payload.test.mjs
+        - test/install/tower-role-assets.test.mjs
+      module_paths:
+        M8.12.1:
+          - scripts/payload-closure.mjs
+          - install/runtime-payload.mjs
+          - test/install/payload-closure.test.mjs
+          - test/install/runtime-payload.test.mjs
+          - test/install/tower-role-assets.test.mjs
+      cimientos: [scripts/payload-closure.mjs]
+      resource:
+        contract: RUNTIME_PAYLOAD_FILES
+        consumed_without_modification:
+          - profiles/tower/**
+          - skills/torre-control/**
+          - skills/torre-control-entregas/**
+          - skills/torre-control-soporte/**
+          - adapters/pi/**
+          - extensions/pi/**
+      authority: "Decisions 88, 95, 100, and 104; Engram observations 9921 and 10008; current enumerated S8.12 contract approved by maintainer decision 10315."
+      decisions:
+        - type: resolved-escalation
+          authorities: [decision 88, decision 95, decision 100]
+          resolution: "El bundle incluye runtime, contrato neutral, adapter Pi y el set local de perfiles/skills Tower canónicos; excluye Planner permanente, configuración Pi/Intercom y skills genéricas Gentle AI."
+          classes: [contrato-visible-del-producto, seguridad-y-permisos]
+          contaminates: [S8.12, S8.13]
+        - type: resolved-escalation
+          authorities: [decision 104, Engram 10008]
+          resolution: "El route padre torre-control, los cuatro triggers registrados y la política fire-and-forget de S9.8 viajan como bytes Tower-owned coherentes; el bundle no conserva rutas públicas alternativas ni acredita trabajo sin terminal."
+          classes: [contrato-visible-del-producto]
+          contaminates: [S8.12, S8.13]
+        - type: derivable
+          question: "Orden y derivación internos de la membresía."
+          criterion: "Una sola composición produce declaración y guardia; faltante, extra, symlink o bytes divergentes falla cerrado."
+          authorities: [decision 88, decision 95, decision 100, Engram 9921]
+          falsifier: "Dos enumeraciones aceptan conjuntos distintos."
+      route:
+        proposed: design-tasks
+        authority: "Decisions 88, 95, 100, and Engram 9921."
+        boundary: "Consume ownership y comportamiento ya resueltos para fijar el seam mínimo de packaging; no redefine skills, interceptor ni router."
+      criteria:
+        - "El bundle contiene exactamente los bytes Tower-owned locales, incluidos route padre Pi-first, torre-control, perfiles y skills propietarias con dispatch fire-and-forget; no copia configuración Pi/Intercom ni skills genéricas Gentle AI."
+        - "Los tres perfiles y sus skills se materializan desde el bundle sin modificar sus fuentes canónicas."
+        - "Faltante, extra, symlink, provenance divergente o incoherencia interceptor/torre-control falla cerrado."
+        - "Declaración, derivación y guardia observan un único conjunto exacto y determinista."
+        - "La Sesión sólo empaqueta: no instala, activa, reescribe configuración global ni ejecuta rollback."
+        - "El diff toca sólo Área."
+      modules:
+        - id: M8.12.1
+          result: "Membresía versionada."
+          delivery_boundary: "commit directo <=400 authored"
+          tasks:
+            - {id: T8.12.1.1, status: open, action: "RED: cubrir perfil/interceptor/skill faltante, skill externa copiada, extra, symlink y provenance divergente."}
+            - {id: T8.12.1.2, status: open, action: "GREEN: declarar y derivar la membresía completa Tower-specific desde una sola composición."}
+            - {id: T8.12.1.3, status: open, action: "REFACTOR: eliminar listas paralelas y probar guardia exacta sin instalar ni activar."}
+      delivery:
+        status: unresolved
+        forecast: "Un commit directo verificable y revertible de máximo 400 líneas authored."
+        overflow: "Si la membresía y su guardia no caben juntas, se divide S8.12 antes de implementar; no se crean PRs ni un quinto nivel."
+      outstanding_work: "M8.12.1 y T8.12.1.1-T8.12.1.3 están abiertos; el siguiente checkpoint es S8.12 RED."
+    field_mapping:
+      target: [scope, dependencies, zona, area, module_paths, cimientos, resource, authority, decisions, criteria, route, stable_ids, modules, delivery, outstanding_work]
+      derived_comparison: [status, dependency_statuses, progress, queue, ownership, seat, capacity]
+      approved_replacement_authority: [maintainer decision 10315]
+      superseded: ["La fila anterior omitía decision 104 y conservaba Modules/Tasks como pending enumeration."]
+      archive_only: [historical execution, metrics, and narrative not representable as target fields]
+    compatibility_reason: "Proven imported dotted hierarchy; current enumerated territory and M8.12.1/T8.12.1.1-T8.12.1.3 contract; no pending-territory scheduling claim."
   - legacy_session_id: S8.14
     source_line: 961
     source_heading: "### Sesión 8.14 — Perfiles permanentes Tower, neutrales al host"
