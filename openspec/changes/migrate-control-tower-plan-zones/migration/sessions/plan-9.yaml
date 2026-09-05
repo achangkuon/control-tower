@@ -21,9 +21,36 @@ sessions:
     provenance_classification: target
     importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-9/STATUS.md, origen_blob: 18b77f222bdcf1bea0d2d144b170f102d5d6cc8a, origen_encabezado: "## Sesión 9.2 — Interlock de asiento ocupado", territorio_pendiente: true}
     stable_ids: {modules: [], tasks: []}
-    source_contract: {scope: "occupied-seat interlock that fails closed during recycle or concurrent Main mutation", dependencies: [S9.1], authority: "maintainer supplemental migration resolution plus legacy decision 62", decisions: "Legacy text says no decision is open, but immutable evidence does not prove file territory; migration records an unresolved escalating contradictory-evidence decision reaching criterios before scheduling.", criteria: "Open criteria require readable occupancy, exclusive mutation lock, fail-closed occupied/concurrent recycle, tests, and proven territory.", route: design-tasks, delivery: "unresolved; territory pending and all Tasks open", outstanding_work: "unresolved; territory pending and all Tasks open"}
-    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work], derived_comparison: [status, area, progress, queue, ownership, seat, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical execution, decisions, metrics, and narrative not representable as target fields]}
-    compatibility_reason: "Proven imported dotted hierarchy; territory pending under immutable provenance and blocking contradictory-evidence escalation."
+    source_contract:
+      scope: "occupied-seat interlock that fails closed during recycle or concurrent Main mutation"
+      dependencies: [S9.1]
+      authority: "maintainer decision 10325, approved as replacement authority for the incomplete legacy territory record; legacy decision 62 fixes only the behavioral boundary"
+      decisions:
+        - type: unresolved-escalation
+          pregunta: "Which exact concrete repository-relative paths comprise the S9.2 Area, and which single Zone owns each path without crossing into Cimientos or another Zone?"
+          evidencia: "The immutable source says Área: PENDIENTE DE ENUMERAR, and the committed mapping has no stable Module/Task IDs or exact paths; decision 62 fixes only the occupied-seat interlock behavioral boundary and does not establish territory."
+          checkpoint: "Before deriving acceptance criteria, Modules, Tasks, or scheduling."
+          options:
+            - option: "Enumerate the exact paths from read-only code and partition evidence, then obtain later explicit maintainer approval."
+              consequence: "S9.2 remains blocked until that approval; afterward ordinary territory and decomposition may be derived without crossing a Zone boundary."
+            - option: "Keep S9.2 blocked with no execution authority."
+              consequence: "No criteria, Module, Task, schedule, ownership, seat, or capacity may be derived or assigned."
+            - option: "Retire S9.2 scope."
+              consequence: "The occupied-seat interlock is lost and recycle/concurrent Main mutation remains without this planned fail-closed protection."
+          clase: dependencias-o-evidencia-contradictorias
+          alcanza: criterios
+          contaminates: [S9.2-criteria, S9.2-execution]
+      criteria: "Not derivable while the territory escalation is open; no first Module exists. Decision 62 remains behavioral-boundary evidence only."
+      route: design-tasks
+      delivery: none
+      outstanding_work: "blocked before criteria and execution pending exact-path/ownership evidence and later explicit approval; no stable Module or Task exists"
+    field_mapping:
+      target: [scope, dependencies, authority, decisions, stable_ids, outstanding_work]
+      derived_comparison: [status, area, progress, queue, ownership, seat, capacity]
+      approved_replacement_authority: [decision 10325]
+      superseded: [legacy statement that no decision was open]
+      archive_only: [historical design-tasks route proposal, decision 62 behavioral-boundary evidence, historical execution, metrics, migrated history, and narrative not representable as target fields]
+    compatibility_reason: "Proven imported dotted hierarchy; territory pending under immutable provenance and maintainer-approved unresolved escalation reaching criterios; no executable territory, route, scheduling, or delivery claim."
   - legacy_session_id: S9.3
     source_line: 225
     source_heading: "## Sesión 9.3 — Caché externa congelada de Bun"
