@@ -4209,3 +4209,67 @@ sesiones:
             accion: "REFACTOR: eliminar listas paralelas y probar guardia exacta sin instalar ni activar."
             resultado: "REFACTOR: eliminar listas paralelas y probar guardia exacta sin instalar ni activar."
             criterios: [No quedan listas paralelas y la guardia exacta se prueba sin instalar ni activar.]
+
+  - id: S8.13
+    zona: instalacion
+    resultado: Instalación global, activación, diagnóstico y rollback atómico del bundle Tower versionado.
+    autoridad: Decisiones 88, 100 y 102; Engram 9921, 9956 rev2 y 9963; contrato vigente en openspec/plans/plan-8/STATUS.md líneas 1033-1068.
+    depende_de: [S8.12, S1.19, S4.12]
+    cimientos: [install.sh, bin/torre]
+    recurso:
+      - puntero activo
+      - ubicación global de la extensión Pi
+      - backups y rollback del bundle Tower
+      - preflight de host externo
+      - sin mutación de Pi core, pi-intercom, skills genéricas Gentle AI ni worktrees
+    criterios:
+      - torre-control --update selecciona el lifecycle atómico versionado; no ejecuta el camino legado divergente.
+      - El shim symlink se reemplaza atómicamente; ningún cp sigue su target owner-read-only.
+      - El diagnóstico prueba revisión activa y coherencia exacta entre plugin, MCP y runtime/engine; una mezcla falla cerrado.
+      - Ningún chequeo de sólo existencia, ejecutabilidad o key puede devolver un falso positivo saludable.
+      - Instalación limpia activa el bundle completo y una capacidad ausente, rota o ambigua, un fallo de carga o cualquier preflight incompatible falla con error local tipado antes de mutar, sin route genérico.
+      - Rollback restaura runtime, interceptor, perfiles y skills Tower juntos; no escribe configuración o skills externas ni toca fuera del Área.
+      - La extensión global se carga realmente y el fingerprint cerrado prueba factory de un argumento, pi.on("input"), campos y source requeridos de InputEvent, continue, transform o handled, notificación local, enrolamiento, bytes y provenance de torre-control e inventario y orden revisados de transforms antes de quedar activa; un mismatch deja cero activación parcial y ninguna versión acepta o rechaza por sí sola.
+      - El diff toca sólo el Área; no modifica Pi core, pi-intercom, skills genéricas, worktrees ni evidencia estacionada.
+    decisiones:
+      - tipo: resuelta
+        pregunta: ¿Qué instala la Torre y qué recuperación parcial rechaza?
+        resolucion: La Torre instala sólo el bundle Tower-owned, valida compatibilidad y rechaza upgrade --shim como recuperación parcial.
+        autoridad: Decisiones 88, 100 y 102.
+        clase: operaciones-irreversibles; seguridad-y-permisos; contrato-visible-del-producto
+        falsificador: La instalación incorpora bytes ajenos al bundle Tower-owned, omite la validación de compatibilidad o acepta upgrade --shim como recuperación parcial.
+        descartadas:
+          - opcion: Recuperar parcialmente con upgrade --shim.
+            razon: Dejaría componentes activos en revisiones incoherentes.
+        contaminaba: [S8.13, S7.1]
+      - tipo: resuelta
+        pregunta: ¿Qué debe probar el preflight antes de habilitar la extensión global y qué restaura rollback?
+        resolucion: La instalación global habilita el interceptor sólo si el enrolamiento, la carga real de la extensión, el fingerprint cerrado de capacidades Pi, bytes y provenance de torre-control e inventario y orden revisados de transforms pasan preflight; Pi 0.84.4 es baseline probado y la versión por sí sola no decide compatibilidad. Una capacidad ausente, rota o ambigua o un fallo de carga bloquea antes de mutar con error local tipado; rollback retira o restaura interceptor y skill como una unidad coherente. S8.13 posee el probe del runtime instalado, activación y rollback; S9.6 posee el contrato fuente y gate inyectable.
+        autoridad: Engram 9921 y 9963.
+        clase: contrato-visible-del-producto; operaciones-irreversibles; seguridad-y-permisos
+        falsificador: La activación ocurre sin cualquiera de los checks conductuales, se decide sólo por versión, usa route genérico, muta parcialmente o rollback separa interceptor y skill.
+        descartadas:
+          - opcion: Aceptar o rechazar compatibilidad sólo por versión.
+            razon: La versión no prueba carga ni capacidades conductuales.
+          - opcion: Activar parcialmente o usar route genérico ante fallo.
+            razon: Rompería el contrato fail-closed y la coherencia del bundle.
+        contaminaba: [S8.13, S7.1]
+      - tipo: derivable
+        pregunta: ¿Cómo se ordenan internamente probe, preflight, activación y diagnóstico?
+        evidencia: El contrato vigente de S8.13 exige validación conductual completa antes de la primera mutación y estado previo byte-idéntico ante cualquier fallo.
+        checkpoint: S8.13 RED.
+        opciones:
+          - opcion: Ejecutar carga y validación conductual antes de la primera mutación.
+            consecuencia: Cualquier fallo conserva el estado previo byte-idéntico; activación parcial, diagnóstico existence-only o decisión sólo por versión falsifican la derivación.
+        criterio: Toda carga y validación conductual ocurre antes de la primera mutación y cualquier fallo deja el estado previo byte-idéntico.
+        autoridad: Decisiones 88, 100 y 102; Engram 9921, 9956 rev2 y 9963.
+    ruta:
+      propuesta: full-sdd
+      autoridad: Decisiones 88, 100 y 102; Engram 9921, 9956 rev2 y 9963.
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-8/STATUS.md
+      origen_blob: 8c1855e9f05837cd7a39c818e34c93233c0340b7
+      origen_encabezado: "### Sesión 8.13 — Instalación global, activación y rollback"
+      territorio_pendiente: false
+    modulos: []
