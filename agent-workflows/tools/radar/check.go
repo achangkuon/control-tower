@@ -115,9 +115,13 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 
 		importada := s.ImportacionLegacy != nil
 		pendiente := importada && s.ImportacionLegacy.TerritorioPendiente
+		decomposicionDiferida := importada && s.ImportacionLegacy.DescomposicionDiferida
 		historica := esTerritorioHistorico(s)
 		if importada {
 			h = append(h, checkImportacionLegacy(root, head, s, provenienciasVistas)...)
+		}
+		if decomposicionDiferida {
+			h = append(h, checkDescomposicionDiferida(s)...)
 		}
 		if len(s.RutasHistoricas) > 0 && (!importada || !s.Archivada || s.Entrega != nil || pendiente || len(s.Modulos) != 0 || s.Zona != "" || len(s.Cimientos) != 0 || s.Ruta != (RutaSesion{})) {
 			h = append(h, Hallazgo{"error", "rutas históricas", fmt.Sprintf("%s sólo puede preservar rutas históricas sin Módulos como importación archivada", s.ID)})
@@ -129,6 +133,9 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 			if !bloqueaAqui(s) {
 				h = append(h, Hallazgo{"error", "territorio pendiente", fmt.Sprintf("%s no tiene una decisión escala que alcance criterios o primer-modulo", s.ID)})
 			}
+		} else if decomposicionDiferida {
+			// A frozen design-tasks source can defer decomposition, but it never
+			// supplies territory or makes the Session executable.
 		} else if historica {
 			if len(s.Cimientos) != 0 || s.Ruta != (RutaSesion{}) {
 				h = append(h, Hallazgo{"error", "territorio histórico", fmt.Sprintf("%s declara Cimientos o ruta de ejecución", s.ID)})
@@ -215,14 +222,85 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 }
 
 var (
-	sesionID       = regexp.MustCompile(`^S[1-9][0-9]*$`)
-	moduloID       = regexp.MustCompile(`^M[1-9][0-9]*\.[1-9][0-9]*$`)
-	tareaID        = regexp.MustCompile(`^T[1-9][0-9]*\.[1-9][0-9]*\.[1-9][0-9]*$`)
-	legacySesionID = regexp.MustCompile(`^S[1-9][0-9]*(\.[1-9][0-9]*)*$`)
-	legacyModuloID = regexp.MustCompile(`^M[1-9][0-9]*(\.[1-9][0-9]*)+$`)
-	legacyTareaID  = regexp.MustCompile(`^T[1-9][0-9]*(\.[1-9][0-9]*){2,}$`)
-	legacyHeading  = regexp.MustCompile(`^#{1,6} Sesión S?([1-9][0-9]*(?:\.[1-9][0-9]*)*)(?:\s|—|-|$)`)
+	sesionID                    = regexp.MustCompile(`^S[1-9][0-9]*$`)
+	moduloID                    = regexp.MustCompile(`^M[1-9][0-9]*\.[1-9][0-9]*$`)
+	tareaID                     = regexp.MustCompile(`^T[1-9][0-9]*\.[1-9][0-9]*\.[1-9][0-9]*$`)
+	legacySesionID              = regexp.MustCompile(`^S[1-9][0-9]*(\.[1-9][0-9]*)*$`)
+	legacyModuloID              = regexp.MustCompile(`^M[1-9][0-9]*(\.[1-9][0-9]*)+$`)
+	legacyTareaID               = regexp.MustCompile(`^T[1-9][0-9]*(\.[1-9][0-9]*){2,}$`)
+	legacyHeading               = regexp.MustCompile(`^#{1,6} Sesión S?([1-9][0-9]*(?:\.[1-9][0-9]*)*)(?:\s|—|-|$)`)
+	legacyDeferredDecomposition = "**Decisiones:** las define `session-plan` al desparquear. **Módulos:** ídem."
 )
+
+var legacyDeferredDecompositions = [][]string{
+	{legacyDeferredDecomposition},
+	{
+		"Los Módulos y Tareas los escribe\n`session-plan` en su elaboración; este Plan fija el contrato y los criterios y **no debe duplicar\nesa descomposición**.",
+		"**Módulos:** los define `session-plan`.",
+	},
+}
+
+func hasExactDeferredDecomposition(section string) bool {
+	complete := -1
+	for i, signature := range legacyDeferredDecompositions {
+		matches := true
+		for _, marker := range signature {
+			count := strings.Count(section, marker)
+			if count > 1 {
+				return false
+			}
+			matches = matches && count == 1
+		}
+		if matches {
+			if complete >= 0 {
+				return false
+			}
+			complete = i
+		}
+	}
+	if complete < 0 {
+		return false
+	}
+	for i, signature := range legacyDeferredDecompositions {
+		if i == complete {
+			continue
+		}
+		for _, marker := range signature {
+			if strings.Contains(section, marker) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func checkDescomposicionDiferida(s *Sesion) []Hallazgo {
+	if s.Entrega != nil || s.Archivada || s.Ruta.Propuesta != "design-tasks" {
+		return []Hallazgo{{"error", "descomposición diferida", fmt.Sprintf("%s sólo permite la compatibilidad diferida importada de design-tasks", s.ID)}}
+	}
+	if len(s.Modulos) != 0 {
+		if s.Ruta.Revalidacion == nil {
+			return []Hallazgo{{"error", "descomposición diferida", fmt.Sprintf("%s debe revalidar la ruta contra HEAD después de escribir Módulos y Tareas", s.ID)}}
+		}
+		return nil
+	}
+	if s.Ruta.Revalidacion != nil {
+		return []Hallazgo{{"error", "descomposición diferida", fmt.Sprintf("%s no puede revalidar ni ejecutar sin Módulos y Tareas", s.ID)}}
+	}
+	for _, d := range s.Decisiones {
+		if d.Tipo != "escala" || d.Alcanza != "primer-modulo" || strings.TrimSpace(d.Pregunta) == "" || strings.TrimSpace(d.Evidencia) == "" || strings.TrimSpace(d.Checkpoint) == "" || !contiene(ClasesQueEscalan, d.Clase) || len(d.Opciones) == 0 {
+			continue
+		}
+		completa := true
+		for _, o := range d.Opciones {
+			completa = completa && strings.TrimSpace(o.Opcion) != "" && strings.TrimSpace(o.Consecuencia) != ""
+		}
+		if completa {
+			return nil
+		}
+	}
+	return []Hallazgo{{"error", "descomposición diferida", fmt.Sprintf("%s debe conservar una decisión escala completa que alcance primer-modulo", s.ID)}}
+}
 
 func (p *Plan) checkModulos(root string, s *Sesion, modulosVistos, tareasVistas map[string]bool, importada, pendiente, historica bool) []Hallazgo {
 	var h []Hallazgo
@@ -331,6 +409,22 @@ func permiteCriteriosPendientes(s *Sesion) bool {
 	return false
 }
 
+func legacySessionSection(raw, heading string) string {
+	lines := strings.Split(raw, "\n")
+	for i, line := range lines {
+		if line != heading {
+			continue
+		}
+		for j := i + 1; j < len(lines); j++ {
+			if legacyHeading.MatchString(lines[j]) {
+				return strings.Join(lines[i:j], "\n")
+			}
+		}
+		return strings.Join(lines[i:], "\n")
+	}
+	return ""
+}
+
 func checkImportacionLegacy(root, head string, s *Sesion, vistas map[string]bool) []Hallazgo {
 	var h []Hallazgo
 	p := s.ImportacionLegacy
@@ -367,6 +461,9 @@ func checkImportacionLegacy(root, head string, s *Sesion, vistas map[string]bool
 		if count != 1 || len(match) != 2 || "S"+match[1] != s.ID {
 			h = append(h, Hallazgo{"error", "importación legacy", fmt.Sprintf("%s encabezado no identifica una fila única", s.ID)})
 		}
+		if p.DescomposicionDiferida && !hasExactDeferredDecomposition(legacySessionSection(raw, p.OrigenEncabezado)) {
+			h = append(h, Hallazgo{"error", "importación legacy", fmt.Sprintf("%s no prueba el aplazamiento de Módulos y Tareas a session-plan", s.ID)})
+		}
 	}
 	key := commit + "\x00" + ruta + "\x00" + p.OrigenEncabezado
 	if vistas[key] {
@@ -401,7 +498,7 @@ func checkRuta(s *Sesion, root, head string) []Hallazgo {
 func checkProfundidad(s *Sesion) []Hallazgo {
 	switch s.Ruta.Propuesta {
 	case "direct", "design-tasks":
-		if len(s.Modulos) == 0 {
+		if len(s.Modulos) == 0 && !(s.ImportacionLegacy != nil && s.ImportacionLegacy.DescomposicionDiferida && s.Ruta.Propuesta == "design-tasks") {
 			return []Hallazgo{{"error", "profundidad por ruta", fmt.Sprintf("%s usa la ruta propuesta %s y debe enumerar al menos un Módulo", s.ID, s.Ruta.Propuesta)}}
 		}
 	case "full-sdd":

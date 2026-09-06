@@ -12,7 +12,7 @@ func legacyFixture(t *testing.T) (string, string, ImportacionLegacy) {
 	return legacyFixtureFor(t, "2.10")
 }
 
-func legacyFixtureFor(t *testing.T, id string) (string, string, ImportacionLegacy) {
+func legacyFixtureFor(t *testing.T, id string, sourceLines ...string) (string, string, ImportacionLegacy) {
 	t.Helper()
 	root := t.TempDir()
 	git := func(args ...string) string {
@@ -30,7 +30,8 @@ func legacyFixtureFor(t *testing.T, id string) (string, string, ImportacionLegac
 		t.Fatal(err)
 	}
 	heading := "## Sesión " + id + " — Legacy"
-	if err := os.WriteFile(filepath.Join(root, "legacy", "STATUS.md"), []byte("# Plan\n"+heading+"\n"), 0o600); err != nil {
+	source := "# Plan\n" + heading + "\n" + strings.Join(sourceLines, "\n")
+	if err := os.WriteFile(filepath.Join(root, "legacy", "STATUS.md"), []byte(source), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	git("add", ".")
@@ -210,6 +211,97 @@ func TestPendingTerritoryAllowsSourceDeferredZeroTasks(t *testing.T) {
 			h := legacyErrors(p, root, head)
 			if !hasLegacyError(h, "jerarquía", "M2.10.1 no tiene Tareas enumeradas") {
 				t.Fatalf("missing zero-task hierarchy error: %#v", h)
+			}
+		})
+	}
+}
+
+func TestDeferredImportedDesignTasksAllowsZeroModulesOnlyWithFrozenDeferral(t *testing.T) {
+	const deferredSource = "**Decisiones:** las define `session-plan` al desparquear. **Módulos:** ídem."
+	const deferredS125Source = "Los Módulos y Tareas los escribe\n`session-plan` en su elaboración; este Plan fija el contrato y los criterios y **no debe duplicar\nesa descomposición**.\n\n**Módulos:** los define `session-plan`."
+	root, head, prov := legacyFixtureFor(t, "12.7", deferredSource)
+	valid := func(prov ImportacionLegacy, id string) Sesion {
+		prov.DescomposicionDiferida = true
+		return Sesion{
+			ID: id, Resultado: "legacy", Autoridad: "approved", Criterios: []string{"binary"}, Diferida: true,
+			ImportacionLegacy: &prov, Ruta: RutaSesion{Propuesta: "design-tasks", Autoridad: "approved"},
+			Decisiones: []Decision{{Tipo: "escala", Pregunta: "How should this resume?", Evidencia: "frozen source", Checkpoint: "before first Module", Opciones: []Opcion{{Opcion: "write decomposition", Consecuencia: "kickoff can revalidate"}}, Clase: "dependencias-o-evidencia-contradictorias", Alcanza: "primer-modulo"}},
+		}
+	}
+	t.Run("S12.5 exact frozen proof", func(t *testing.T) {
+		root, head, prov := legacyFixtureFor(t, "12.5", deferredS125Source)
+		s := valid(prov, "S12.5")
+		s.Diferida = false
+		if h := legacyErrors(&Plan{Sesiones: []Sesion{s}}, root, head); len(h) != 0 {
+			t.Fatalf("S12.5 exact frozen proof rejected: %#v", h)
+		}
+	})
+	t.Run("S12.5 cannot borrow S12.7 deferment", func(t *testing.T) {
+		root, head, prov := legacyFixtureFor(t, "12.5", "## Sesión 12.7 — Legacy", deferredSource)
+		s := valid(prov, "S12.5")
+		s.Diferida = false
+		if h := legacyErrors(&Plan{Sesiones: []Sesion{s}}, root, head); len(h) == 0 {
+			t.Fatal("S12.5 borrowed S12.7's deferment")
+		}
+	})
+	t.Run("duplicate deferment inside target section is rejected", func(t *testing.T) {
+		root, head, prov := legacyFixtureFor(t, "12.5", deferredSource, deferredSource)
+		if h := legacyErrors(&Plan{Sesiones: []Sesion{valid(prov, "S12.5")}}, root, head); len(h) == 0 {
+			t.Fatal("duplicate target deferment accepted")
+		}
+	})
+	for name, source := range map[string]string{
+		"duplicate S12.5 proof":                deferredS125Source + "\n" + deferredS125Source,
+		"generic session-plan mention":         "`session-plan` decides the Module structure.",
+		"partial S12.5 proof":                  "Los Módulos y Tareas los escribe\n`session-plan` en su elaboración; este Plan fija el contrato y los criterios y **no debe duplicar\nesa descomposición**.",
+		"complete S12.7 plus one S12.5 marker": deferredSource + "\n" + strings.Split(deferredS125Source, "\n\n")[0],
+		"mixed proof signatures":               deferredSource + "\n" + deferredS125Source,
+	} {
+		t.Run(name, func(t *testing.T) {
+			root, head, prov := legacyFixtureFor(t, "12.5", source)
+			if h := legacyErrors(&Plan{Sesiones: []Sesion{valid(prov, "S12.5")}}, root, head); len(h) == 0 {
+				t.Fatalf("%s accepted", name)
+			}
+		})
+	}
+	cases := []struct {
+		name   string
+		mutate func(*Sesion)
+		valid  bool
+	}{
+		{name: "S12.5-like PLANIFICADO source shape", mutate: func(s *Sesion) { s.Diferida = false }, valid: true},
+		{name: "S12.7-like DIFERIDO", valid: true},
+		{name: "missing deferral", mutate: func(s *Sesion) { s.ImportacionLegacy.DescomposicionDiferida = false }},
+		{name: "forged provenance", mutate: func(s *Sesion) { s.ImportacionLegacy.OrigenBlob = "" }},
+		{name: "ordinary authored Session", mutate: func(s *Sesion) { s.ImportacionLegacy = nil }},
+		{name: "direct route", mutate: func(s *Sesion) { s.Ruta.Propuesta = "direct" }},
+		{name: "full-sdd route", mutate: func(s *Sesion) { s.Ruta.Propuesta = "full-sdd" }},
+		{name: "absent decision", mutate: func(s *Sesion) { s.Decisiones = nil }},
+		{name: "incomplete evidence", mutate: func(s *Sesion) { s.Decisiones[0].Evidencia = "" }},
+		{name: "incomplete checkpoint", mutate: func(s *Sesion) { s.Decisiones[0].Checkpoint = "" }},
+		{name: "incomplete options", mutate: func(s *Sesion) { s.Decisiones[0].Opciones = nil }},
+		{name: "incomplete class", mutate: func(s *Sesion) { s.Decisiones[0].Clase = "" }},
+		{name: "resolved decision", mutate: func(s *Sesion) { s.Decisiones[0].Tipo = "resuelta" }},
+		{name: "execution revalidation", mutate: func(s *Sesion) {
+			s.Ruta.Revalidacion = &Revalidacion{Resultado: "design-tasks", Base: head, Evidencia: "attempt"}
+		}},
+		{name: "terminal history", mutate: func(s *Sesion) { s.Archivada = true }},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := valid(prov, "S12.7")
+			if tc.mutate != nil {
+				tc.mutate(&s)
+			}
+			h := legacyErrors(&Plan{Sesiones: []Sesion{s}}, root, head)
+			if (len(h) == 0) != tc.valid {
+				t.Fatalf("valid=%v findings=%#v", tc.valid, h)
+			}
+			if tc.valid && tc.name == "S12.5-like PLANIFICADO source shape" && (&Plan{Sesiones: []Sesion{s}}).EstadosAt(root, head)[s.ID] != Bloqueado {
+				t.Fatal("a first-Module decision must block the resumable design")
+			}
+			if tc.valid && tc.name == "S12.7-like DIFERIDO" && (&Plan{Sesiones: []Sesion{s}}).EstadosAt(root, head)[s.ID] != Diferido {
+				t.Fatal("deferred compatibility lost its existing DIFERIDO state")
 			}
 		})
 	}

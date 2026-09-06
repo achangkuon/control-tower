@@ -66,11 +66,12 @@ type Sesion struct {
 
 // ImportacionLegacy proves that a Session was imported from one immutable legacy row.
 type ImportacionLegacy struct {
-	OrigenCommit        string `yaml:"origen_commit"`
-	OrigenRuta          string `yaml:"origen_ruta"`
-	OrigenBlob          string `yaml:"origen_blob"`
-	OrigenEncabezado    string `yaml:"origen_encabezado"`
-	TerritorioPendiente bool   `yaml:"territorio_pendiente"`
+	OrigenCommit           string `yaml:"origen_commit"`
+	OrigenRuta             string `yaml:"origen_ruta"`
+	OrigenBlob             string `yaml:"origen_blob"`
+	OrigenEncabezado       string `yaml:"origen_encabezado"`
+	TerritorioPendiente    bool   `yaml:"territorio_pendiente"`
+	DescomposicionDiferida bool   `yaml:"descomposicion_diferida"`
 }
 
 // Modulo groups concrete files that change together inside a Sesion.
