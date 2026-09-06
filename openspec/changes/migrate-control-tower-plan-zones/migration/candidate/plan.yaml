@@ -5698,3 +5698,246 @@ sesiones:
             accion: 'REFACTOR: la cola activa de openspec/changes/ no contiene alcance retirado.'
             resultado: La cola activa no contiene el alcance remoto retirado.
             criterios: [La cola activa no contiene alcance retirado.]
+
+  - id: S12.3
+    resultado: Las cinco migraciones y sus manifiestos viven en db/migrations/ y db/manifests.mjs; core.mjs los re-exporta, ningún import cambia y las firmas SHA-256 permanecen idénticas.
+    autoridad: Decisión 2 del maintainer, 2026-08-30; aprobación humana 10433 permite sólo el estacionamiento migratorio provisional de S12.3.
+    depende_de: [S8.10]
+    recurso: []
+    criterios:
+      - MIGRATION_001..005_CHECKSUM dan exactamente los mismos SHA-256 que en 7e718d6.
+      - Ninguno de los 22 archivos que importan de core.mjs cambia.
+      - La suite completa pasa con 1026 o más pruebas y 0 fallos.
+      - core.mjs baja de 4646 a 3900 líneas o menos.
+      - El diff no toca ninguna ruta fuera del Área histórica core.mjs, db/** y test/db/**.
+      - 'Registro histórico no autorizante: M12.3.1 movió 26 líneas a db/migrations/001.mjs, preservó las cinco firmas SHA-256 y dejó 1022 pass / 4 fail; no es entrega ni cierre.'
+      - 'Consumidores históricos: install/runtime-payload.mjs:7,71 y test/install/payload-closure.test.mjs:95 exigen allowlist exacta y scanClosure; test/identity.test.mjs copia sólo core.mjs; test/install/launch-worker-cli.test.mjs:52 instala sólo core.mjs.'
+      - 'Razonamiento histórico no autorizante: la entrega premia core.mjs como archivo único; partirlo sin cambiar la allowlist y los dos arneses empuja contra ese incentivo, no contra el descuido.'
+      - 'Pregunta histórica no resuelta de routing: los prerrequisitos 2 y 3 deben ser ruteados por el maintainer a S12.8 ampliada, S8.10 o una Sesión propia; la fuente no declara clase ni alcance modernos y no se inventan.'
+      - 'Recurso histórico no autorizante: core.mjs en exclusiva; no autoriza reserva ni ejecución.'
+      - 'Decisión histórica retirada: el límite de 400 no requiere excepción al dividir cada movimiento en agregar y luego retirar/re-exportar; las copias coexisten y la firma sigue coincidiendo; no autoriza los prerrequisitos externos.'
+      - 'Forecast histórico: M12.3.2 115 movidas/~235; M12.3.3 79/~165; M12.3.4 216/~435; M12.3.5 232/~465; M12.3.6 ~40.'
+    decisiones:
+      - tipo: derivable
+        pregunta: ¿El destino de las migraciones es db/ en la raíz o src/adapters/db/?
+        criterio: La decisión 4 difiere la mudanza a src/ y db/ sigue la convención plana de registry/, main-store/ y contracts/.
+        evidencia: Decisión 4 del maintainer y contrato inmutable S12.3.
+        checkpoint: Antes de extraer migraciones.
+        opciones:
+          - opcion: Usar db/ en la raíz.
+            consecuencia: El destino sigue la convención plana vigente; revertir la decisión 4 falsifica esta derivación.
+        autoridad: Decisión 4 del maintainer.
+      - tipo: escala
+        pregunta: ¿Debe S12.3 permanecer en el estacionamiento migratorio provisional autorizado, sin territorio ni ejecución?
+        evidencia: La aprobación 10433 autoriza sólo estacionar la representación; no resuelve el routing histórico ni concede territorio, ruta, Cimientos, reservas, ownership o capacidad.
+        checkpoint: Antes de cualquier territorio o ejecución.
+        opciones:
+          - opcion: Mantener el estacionamiento provisional.
+            consecuencia: S12.3 permanece sin Zona, ruta, Cimientos, reservas, ownership, cola, asiento, capacidad o ejecución.
+        clase: contrato-visible
+        alcanza: criterios
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-12/STATUS.md
+      origen_blob: a0878736a59b300912a597c4a305358788d461c2
+      origen_encabezado: "## Sesión 12.3 — El SQL de las migraciones sale de `core.mjs`"
+      territorio_pendiente: true
+    modulos:
+      - id: M12.3.1
+        resultado: Intento fuente fallido de extraer db/migrations/001.mjs, preservado sólo como evidencia; no entrega ni cierre.
+        tareas:
+          - id: T12.3.1.1
+            accion: 'RED: congelar la firma SHA-256 de migration 001.'
+            resultado: La firma previa queda fijada.
+            criterios: [La firma SHA-256 previa queda registrada.]
+          - id: T12.3.1.2
+            accion: 'GREEN: mover el bloque a db/migrations/001.mjs y re-exportarlo.'
+            resultado: El movimiento conserva la firma sin declarar entrega.
+            criterios: [La firma permanece idéntica y el intento no se presenta como cierre.]
+          - id: T12.3.1.3
+            accion: 'REFACTOR: comprobar firma y suite.'
+            resultado: El fallo de consumidores de archivo único queda conservado como evidencia.
+            criterios: [Los cuatro fallos históricos quedan atribuidos a los consumidores declarados.]
+      - id: M12.3.2
+        resultado: Extraer db/migrations/002.mjs y 003.mjs sin cambiar comportamiento.
+        tareas:
+          - id: T12.3.2.1
+            accion: 'RED: congelar las firmas SHA-256 de migrations 002 y 003.'
+            resultado: Las firmas previas quedan fijadas.
+            criterios: [Las firmas previas quedan registradas.]
+          - id: T12.3.2.2
+            accion: 'GREEN: mover los bloques y re-exportarlos.'
+            resultado: Los bloques viven fuera de core.mjs sin alterar sus firmas.
+            criterios: [Las firmas permanecen idénticas.]
+          - id: T12.3.2.3
+            accion: 'REFACTOR: comprobar firmas y suite.'
+            resultado: La extracción queda verificada sin ampliar territorio.
+            criterios: [Las firmas y la suite pasan.]
+      - id: M12.3.3
+        resultado: Extraer db/manifests.mjs sin cambiar comportamiento.
+        tareas:
+          - id: T12.3.3.1
+            accion: 'RED: congelar las firmas SHA-256 de manifiestos.'
+            resultado: Las firmas previas quedan fijadas.
+            criterios: [Las firmas previas quedan registradas.]
+          - id: T12.3.3.2
+            accion: 'GREEN: mover los manifiestos y re-exportarlos.'
+            resultado: Los manifiestos viven fuera de core.mjs sin alterar sus firmas.
+            criterios: [Las firmas permanecen idénticas.]
+          - id: T12.3.3.3
+            accion: 'REFACTOR: comprobar firmas y suite.'
+            resultado: La extracción queda verificada sin ampliar territorio.
+            criterios: [Las firmas y la suite pasan.]
+      - id: M12.3.4
+        resultado: Extraer db/migrations/004.mjs conservando la firma fuente.
+        tareas:
+          - id: T12.3.4.1
+            accion: 'RED: congelar la firma SHA-256 de migration 004.'
+            resultado: La firma previa queda fijada.
+            criterios: [La firma previa queda registrada.]
+          - id: T12.3.4.2
+            accion: 'GREEN: mover el bloque y re-exportarlo.'
+            resultado: Migration 004 vive fuera de core.mjs sin alterar su firma.
+            criterios: [La firma permanece idéntica.]
+          - id: T12.3.4.3
+            accion: 'REFACTOR: comprobar firma y suite.'
+            resultado: La extracción queda verificada sin ampliar territorio.
+            criterios: [La firma y la suite pasan.]
+      - id: M12.3.5
+        resultado: Extraer db/migrations/005.mjs conservando la firma fuente.
+        tareas:
+          - id: T12.3.5.1
+            accion: 'RED: congelar la firma SHA-256 de migration 005.'
+            resultado: La firma previa queda fijada.
+            criterios: [La firma previa queda registrada.]
+          - id: T12.3.5.2
+            accion: 'GREEN: mover el bloque y re-exportarlo.'
+            resultado: Migration 005 vive fuera de core.mjs sin alterar su firma.
+            criterios: [La firma permanece idéntica.]
+          - id: T12.3.5.3
+            accion: 'REFACTOR: comprobar firma y suite.'
+            resultado: La extracción queda verificada sin ampliar territorio.
+            criterios: [La firma y la suite pasan.]
+      - id: M12.3.6
+        resultado: Dejar core.mjs como barril y verificar los 22 importadores.
+        tareas:
+          - id: T12.3.6.1
+            accion: 'RED: afirmar que los 22 importadores resuelven igual.'
+            resultado: La resolución previa queda fijada.
+            criterios: [Los 22 importadores quedan cubiertos por la aserción.]
+          - id: T12.3.6.2
+            accion: 'GREEN: dejar las re-exportaciones.'
+            resultado: core.mjs expone las re-exportaciones necesarias.
+            criterios: [Los importadores mantienen su resolución.]
+          - id: T12.3.6.3
+            accion: 'REFACTOR: confirmar conteo de líneas y suite.'
+            resultado: El barril y el límite de líneas quedan verificados.
+            criterios: [El conteo y la suite pasan.]
+
+  - id: S12.4
+    resultado: Las funciones que verifican coherencia entre SQLite y la versión del esquema viven en db/validators/ sin cambiar su cuerpo ni el comportamiento de persistencia.
+    autoridad: Decisión 2 del maintainer, 2026-08-30; aprobación humana 10433 limita esta representación a formalización migratoria provisional de S12.4.
+    depende_de: [S12.3]
+    criterios:
+      - La suite completa pasa con 1026 o más pruebas y 0 fallos.
+      - Ningún archivo que importa de core.mjs cambia.
+      - core.mjs baja a 2900 líneas o menos.
+      - Ninguna función de validación cambia su cuerpo; cada diff es un movimiento byte a byte.
+      - El diff no toca ninguna ruta fuera del Área histórica core.mjs, db/validators/** y test/db/**.
+      - 'Registro histórico no autorizante: el Estado PLANIFICADO de la fuente describe sólo su pasado; no es Estado authored ni autoriza ejecución.'
+      - 'Recurso histórico no autorizante: core.mjs en exclusiva; no autoriza reserva, Zona, ruta, Cimiento, owner, cola, asiento, capacidad ni ejecución.'
+      - 'Decisión histórica pendiente: validateSchema4Persistence tenía un forecast de ~1320 authored y contaminaba sólo M12.4.2; su clase y alcance no fueron declarados por la fuente y no se inventan.'
+    decisiones:
+      - tipo: escala
+        pregunta: ¿Puede formalizarse toda S12.4 con territorio, ruta, Cimientos y reservas ejecutables sin resolver ni reemplazar el hold histórico de M12.4.2?
+        evidencia: La fuente inmutable S12.4:367-409 conserva el hold de validateSchema4Persistence sólo en M12.4.2; la aprobación 10433 acepta bloquear provisionalmente toda S12.4 para migración, pero no formaliza territorio, ownership, rutas, capacidad ni el hold original.
+        checkpoint: Antes de formalizar territorio o ejecutar el primer Módulo.
+        opciones:
+          - opcion: Probar territorio y formalizar el contrato ordinario con autoridad posterior explícita.
+            consecuencia: La formalización posterior debe conservar el hold original de M12.4.2 hasta resolverlo.
+          - opcion: Mantener territorio pendiente.
+            consecuencia: Toda S12.4 sigue bloqueada sin Zona, ruta, Cimientos, reservas, ownership, cola, asiento ni capacidad; M12.4.2 permanece separado y no resuelto.
+        clase: contrato-visible
+        alcanza: criterios
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-12/STATUS.md
+      origen_blob: a0878736a59b300912a597c4a305358788d461c2
+      origen_encabezado: "## Sesión 12.4 — Los validadores de persistencia salen de `core.mjs`"
+      territorio_pendiente: true
+    modulos:
+      - id: M12.4.1
+        resultado: Extraer validateSchema3Persistence conservando su cuerpo y contrato.
+        tareas:
+          - id: T12.4.1.1
+            accion: 'RED: congelar el comportamiento de validateSchema3Persistence.'
+            resultado: El comportamiento previo queda fijado.
+            criterios: [La regresión previa queda demostrada.]
+          - id: T12.4.1.2
+            accion: 'GREEN: mover validateSchema3Persistence a db/validators/.'
+            resultado: La función se extrae sin alterar su cuerpo.
+            criterios: [La función conserva su contrato de persistencia.]
+          - id: T12.4.1.3
+            accion: 'REFACTOR: ejecutar las pruebas enfocadas y completas.'
+            resultado: La extracción queda verificada.
+            criterios: [Las pruebas pasan.]
+      - id: M12.4.2
+        resultado: Extraer validateSchema4Persistence conservando su cuerpo y el hold histórico pendiente.
+        tareas:
+          - id: T12.4.2.1
+            accion: 'RED: congelar el comportamiento de validateSchema4Persistence.'
+            resultado: El comportamiento previo queda fijado.
+            criterios: [La regresión previa queda demostrada.]
+          - id: T12.4.2.2
+            accion: 'GREEN: mover validateSchema4Persistence a db/validators/.'
+            resultado: La función se mueve sólo cuando su hold histórico esté resuelto.
+            criterios: [El movimiento conserva su contrato de persistencia.]
+          - id: T12.4.2.3
+            accion: 'REFACTOR: ejecutar las pruebas enfocadas y completas.'
+            resultado: La extracción queda verificada sin declarar resuelto el hold.
+            criterios: [Las pruebas pasan después de la resolución autorizada.]
+      - id: M12.4.3
+        resultado: Extraer helpers de compensación y rollback sin cambiar comportamiento.
+        tareas:
+          - id: T12.4.3.1
+            accion: 'RED: congelar el comportamiento de helpers de compensación y rollback.'
+            resultado: El comportamiento previo queda fijado.
+            criterios: [La regresión previa queda demostrada.]
+          - id: T12.4.3.2
+            accion: 'GREEN: mover los helpers a db/validators/.'
+            resultado: Los helpers se extraen sin alterar su cuerpo.
+            criterios: [Los helpers conservan su contrato de persistencia.]
+          - id: T12.4.3.3
+            accion: 'REFACTOR: ejecutar las pruebas enfocadas y completas.'
+            resultado: La extracción queda verificada.
+            criterios: [Las pruebas pasan.]
+      - id: M12.4.4
+        resultado: Extraer envelopes de bootstrap v4 y v5 sin cambiar comportamiento.
+        tareas:
+          - id: T12.4.4.1
+            accion: 'RED: congelar el comportamiento de envelopes v4 y v5.'
+            resultado: El comportamiento previo queda fijado.
+            criterios: [La regresión previa queda demostrada.]
+          - id: T12.4.4.2
+            accion: 'GREEN: mover los envelopes a db/validators/.'
+            resultado: Los envelopes se extraen sin alterar su cuerpo.
+            criterios: [Los envelopes conservan su contrato de persistencia.]
+          - id: T12.4.4.3
+            accion: 'REFACTOR: ejecutar las pruebas enfocadas y completas.'
+            resultado: La extracción queda verificada.
+            criterios: [Las pruebas pasan.]
+      - id: M12.4.5
+        resultado: Dejar el barril de validadores y verificar importadores.
+        tareas:
+          - id: T12.4.5.1
+            accion: 'RED: congelar la resolución de importadores de core.mjs.'
+            resultado: La resolución previa queda fijada.
+            criterios: [Los importadores quedan cubiertos por la aserción.]
+          - id: T12.4.5.2
+            accion: 'GREEN: dejar el barril y las re-exportaciones necesarias.'
+            resultado: core.mjs conserva las exportaciones requeridas.
+            criterios: [Los importadores mantienen su resolución.]
+          - id: T12.4.5.3
+            accion: 'REFACTOR: confirmar conteo de líneas y suite.'
+            resultado: El barril y el límite de líneas quedan verificados.
+            criterios: [El conteo y la suite pasan.]
