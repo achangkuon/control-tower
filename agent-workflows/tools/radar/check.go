@@ -230,53 +230,60 @@ var (
 	legacyTareaID               = regexp.MustCompile(`^T[1-9][0-9]*(\.[1-9][0-9]*){2,}$`)
 	legacyHeading               = regexp.MustCompile(`^#{1,6} Sesión S?([1-9][0-9]*(?:\.[1-9][0-9]*)*)(?:\s|—|-|$)`)
 	legacyDeferredDecomposition = "**Decisiones:** las define `session-plan` al desparquear. **Módulos:** ídem."
+	legacyFullSDDDecomposition  = "**Módulos:** los escribe la fase `tasks` de SDD. Este Plan fija el contrato y no duplica esa\ndescomposición."
 )
 
-var legacyDeferredDecompositions = [][]string{
-	{legacyDeferredDecomposition},
-	{
-		"Los Módulos y Tareas los escribe\n`session-plan` en su elaboración; este Plan fija el contrato y los criterios y **no debe duplicar\nesa descomposición**.",
-		"**Módulos:** los define `session-plan`.",
-	},
+type deferredDecompositionSignature struct {
+	route   string
+	markers []string
 }
 
-func hasExactDeferredDecomposition(section string) bool {
+var legacyDeferredDecompositions = []deferredDecompositionSignature{
+	{route: "design-tasks", markers: []string{legacyDeferredDecomposition}},
+	{route: "design-tasks", markers: []string{
+		"Los Módulos y Tareas los escribe\n`session-plan` en su elaboración; este Plan fija el contrato y los criterios y **no debe duplicar\nesa descomposición**.",
+		"**Módulos:** los define `session-plan`.",
+	}},
+	{route: "full-sdd", markers: []string{legacyFullSDDDecomposition}},
+}
+
+func deferredDecompositionRoute(section string) (string, bool) {
 	complete := -1
 	for i, signature := range legacyDeferredDecompositions {
 		matches := true
-		for _, marker := range signature {
+		for _, marker := range signature.markers {
 			count := strings.Count(section, marker)
 			if count > 1 {
-				return false
+				return "", false
 			}
 			matches = matches && count == 1
 		}
 		if matches {
 			if complete >= 0 {
-				return false
+				return "", false
 			}
 			complete = i
 		}
 	}
 	if complete < 0 {
-		return false
+		return "", false
 	}
 	for i, signature := range legacyDeferredDecompositions {
 		if i == complete {
 			continue
 		}
-		for _, marker := range signature {
+		for _, marker := range signature.markers {
 			if strings.Contains(section, marker) {
-				return false
+				return "", false
 			}
 		}
 	}
-	return true
+	return legacyDeferredDecompositions[complete].route, true
 }
 
 func checkDescomposicionDiferida(s *Sesion) []Hallazgo {
-	if s.Entrega != nil || s.Archivada || s.Ruta.Propuesta != "design-tasks" {
-		return []Hallazgo{{"error", "descomposición diferida", fmt.Sprintf("%s sólo permite la compatibilidad diferida importada de design-tasks", s.ID)}}
+	if s.Entrega != nil || s.Archivada || (s.Ruta.Propuesta != "design-tasks" && s.Ruta.Propuesta != "full-sdd") {
+		return []Hallazgo{{"error", "descomposición diferida", fmt.Sprintf("%s sólo permite la compatibilidad diferida importada de design-tasks o full-sdd", s.ID)}}
 	}
 	if len(s.Modulos) != 0 {
 		if s.Ruta.Revalidacion == nil {
@@ -461,8 +468,13 @@ func checkImportacionLegacy(root, head string, s *Sesion, vistas map[string]bool
 		if count != 1 || len(match) != 2 || "S"+match[1] != s.ID {
 			h = append(h, Hallazgo{"error", "importación legacy", fmt.Sprintf("%s encabezado no identifica una fila única", s.ID)})
 		}
-		if p.DescomposicionDiferida && !hasExactDeferredDecomposition(legacySessionSection(raw, p.OrigenEncabezado)) {
-			h = append(h, Hallazgo{"error", "importación legacy", fmt.Sprintf("%s no prueba el aplazamiento de Módulos y Tareas a session-plan", s.ID)})
+		if p.DescomposicionDiferida {
+			route, ok := deferredDecompositionRoute(legacySessionSection(raw, p.OrigenEncabezado))
+			if !ok {
+				h = append(h, Hallazgo{"error", "importación legacy", fmt.Sprintf("%s no prueba el aplazamiento de Módulos y Tareas", s.ID)})
+			} else if route != s.Ruta.Propuesta {
+				h = append(h, Hallazgo{"error", "importación legacy", fmt.Sprintf("%s usa %s pero su firma congelada exige %s", s.ID, s.Ruta.Propuesta, route)})
+			}
 		}
 	}
 	key := commit + "\x00" + ruta + "\x00" + p.OrigenEncabezado

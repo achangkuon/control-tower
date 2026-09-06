@@ -219,6 +219,7 @@ func TestPendingTerritoryAllowsSourceDeferredZeroTasks(t *testing.T) {
 func TestDeferredImportedDesignTasksAllowsZeroModulesOnlyWithFrozenDeferral(t *testing.T) {
 	const deferredSource = "**Decisiones:** las define `session-plan` al desparquear. **Módulos:** ídem."
 	const deferredS125Source = "Los Módulos y Tareas los escribe\n`session-plan` en su elaboración; este Plan fija el contrato y los criterios y **no debe duplicar\nesa descomposición**.\n\n**Módulos:** los define `session-plan`."
+	const deferredS129Source = "**Módulos:** los escribe la fase `tasks` de SDD. Este Plan fija el contrato y no duplica esa\ndescomposición."
 	root, head, prov := legacyFixtureFor(t, "12.7", deferredSource)
 	valid := func(prov ImportacionLegacy, id string) Sesion {
 		prov.DescomposicionDiferida = true
@@ -228,12 +229,43 @@ func TestDeferredImportedDesignTasksAllowsZeroModulesOnlyWithFrozenDeferral(t *t
 			Decisiones: []Decision{{Tipo: "escala", Pregunta: "How should this resume?", Evidencia: "frozen source", Checkpoint: "before first Module", Opciones: []Opcion{{Opcion: "write decomposition", Consecuencia: "kickoff can revalidate"}}, Clase: "dependencias-o-evidencia-contradictorias", Alcanza: "primer-modulo"}},
 		}
 	}
+	validS129 := func(prov ImportacionLegacy) Sesion {
+		prov.DescomposicionDiferida = true
+		return Sesion{
+			ID: "S12.9", Resultado: "legacy", Autoridad: "approved", Criterios: []string{"binary"},
+			ImportacionLegacy: &prov, Ruta: RutaSesion{Propuesta: "full-sdd", Autoridad: "approved"},
+			Decisiones: []Decision{{Tipo: "escala", Pregunta: "How should this resume?", Evidencia: "frozen source", Checkpoint: "before first Module", Opciones: []Opcion{{Opcion: "design the contract", Consecuencia: "SDD can plan"}}, Clase: "contrato-visible", Alcanza: "primer-modulo"}},
+		}
+	}
 	t.Run("S12.5 exact frozen proof", func(t *testing.T) {
 		root, head, prov := legacyFixtureFor(t, "12.5", deferredS125Source)
 		s := valid(prov, "S12.5")
 		s.Diferida = false
 		if h := legacyErrors(&Plan{Sesiones: []Sesion{s}}, root, head); len(h) != 0 {
 			t.Fatalf("S12.5 exact frozen proof rejected: %#v", h)
+		}
+	})
+	t.Run("S12.9 exact full-sdd frozen proof", func(t *testing.T) {
+		root, head, prov := legacyFixtureFor(t, "12.9", deferredS129Source)
+		if h := legacyErrors(&Plan{Sesiones: []Sesion{validS129(prov)}}, root, head); len(h) != 0 {
+			t.Fatalf("S12.9 exact frozen proof rejected: %#v", h)
+		}
+	})
+	t.Run("S12.9 cannot use design-tasks deferment", func(t *testing.T) {
+		root, head, prov := legacyFixtureFor(t, "12.9", deferredS129Source)
+		s := validS129(prov)
+		s.Ruta.Propuesta = "design-tasks"
+		if h := legacyErrors(&Plan{Sesiones: []Sesion{s}}, root, head); len(h) == 0 {
+			t.Fatal("S12.9 accepted the design-tasks route")
+		}
+	})
+	t.Run("S12.5 cannot use full-sdd deferment", func(t *testing.T) {
+		root, head, prov := legacyFixtureFor(t, "12.5", deferredS125Source)
+		s := valid(prov, "S12.5")
+		s.Diferida = false
+		s.Ruta.Propuesta = "full-sdd"
+		if h := legacyErrors(&Plan{Sesiones: []Sesion{s}}, root, head); len(h) == 0 {
+			t.Fatal("S12.5 accepted the full-sdd route")
 		}
 	})
 	t.Run("S12.5 cannot borrow S12.7 deferment", func(t *testing.T) {
@@ -286,6 +318,7 @@ func TestDeferredImportedDesignTasksAllowsZeroModulesOnlyWithFrozenDeferral(t *t
 			s.Ruta.Revalidacion = &Revalidacion{Resultado: "design-tasks", Base: head, Evidencia: "attempt"}
 		}},
 		{name: "terminal history", mutate: func(s *Sesion) { s.Archivada = true }},
+		{name: "delivery", mutate: func(s *Sesion) { s.Entrega = &Entrega{} }},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
