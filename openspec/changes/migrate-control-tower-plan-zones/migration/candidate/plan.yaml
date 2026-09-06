@@ -6182,3 +6182,71 @@ sesiones:
             accion: 'REFACTOR histórico: fijar la regresión de aislamiento.'
             resultado: La regresión queda como prueba repetible.
             criterios: [La prueba focalizada histórica registra 1 pass, 0 fail y 5 expectations.]
+
+  - id: S12.9
+    resultado: 'El PRD, el RFC y los requisitos quedan corregidos sin alcance retirado, y la procedencia queda intacta: la revisión 1 conserva sus digests como registro histórico y el puntero canónico avanza a una revisión 2 que describe los bytes nuevos.'
+    autoridad: Decisión del maintainer del 2026-08-30, opción A, sobre el hallazgo de M12.2.2.
+    depende_de: []
+    criterios:
+      - Los tres documentos no contienen ningún enunciado de alcance retirado, con las ocho variantes que no usan palabra clave incluidas.
+      - revisions/1/manifest.yaml no cambió ni un byte.
+      - 'revisions/2/manifest.yaml existe, declara artifact_revision: 2, supersedes la r1, y sus tres content_digest coinciden con los bytes vivos.'
+      - 'El puntero canónico avanzó de forma atómica: active_revision: 2, manifest_ref a la r2, map_revision incrementado y previous_pointer_revision conservado.'
+      - test/provenance/provenance.test.mjs resuelve el manifiesto por el puntero, y la suite pasa 1026 o más con 0 fallos.
+      - El diff no toca ninguna ruta fuera del Área histórica y ninguno de los 15 archivos de S12.8.
+      - 'Área histórica no autorizante: openspec/plans/autonomous-v2/revisions/**, openspec/plans/product-version-map.yaml, openspec/prd/**, openspec/rfc/**, openspec/specs/sdd-tower-implementation-v1-requirements.md y test/provenance/provenance.test.mjs.'
+      - 'Prohibición histórica no autorizante: los 15 archivos de test/** que invocan git y test/helpers/** son el Área exclusiva de S12.8.'
+      - 'Recurso histórico no autorizante: el puntero canónico de publicación en exclusiva.'
+      - 'Evidencia histórica no autorizante: el contenido está escrito y verificado en parked/s12.2-docs-congelados, resuelto como 2b0506ca3de04c29e7fab485b42c328cd3567c44; no es entrega ni autoridad de publicación.'
+    decisiones:
+      - tipo: derivable
+        pregunta: ¿La revisión 1 se modifica?
+        criterio: 'La nota de product-version-map.yaml dice que las revisiones históricas y sus artifact_id no se eliminan, y delete_historical_artifacts: false lo repite en campo; un digest de la revisión 1 cambia si la derivación es falsa.'
+        autoridad: product-version-map.yaml
+        evidencia: Fuente inmutable S12.9 líneas 648-651.
+        checkpoint: Antes de diseñar o escribir la revisión 2.
+        opciones:
+          - opcion: Conservar la revisión 1 y sus artifact_id sin modificación.
+            consecuencia: La revisión 1 permanece como registro histórico; cualquier cambio de digest la falsifica.
+      - tipo: derivable
+        pregunta: ¿Cómo resuelve el test el manifiesto de la revisión activa?
+        criterio: La indirección manifest_ref ya existe en el mapa para este fin; una ruta literal obliga a editar el test en cada revisión y el test sigue nombrando revisions/1/ después de avanzar el puntero si la derivación es falsa.
+        autoridad: El diseño del mapa.
+        evidencia: Fuente inmutable S12.9 líneas 652-655.
+        checkpoint: Antes de diseñar o escribir la prueba de procedencia.
+        opciones:
+          - opcion: Resolver el manifiesto por el puntero canónico manifest_ref.
+            consecuencia: El test no depende de una ruta literal ni escanea directorios al avanzar la revisión.
+      - tipo: escala
+        pregunta: ¿Qué valor lleva source_commit en una revisión autoral?
+        evidencia: En la revisión 1 source_commit es 0745f99, el commit que introdujo esos bytes; una revisión escrita ahora no puede nombrar el commit que la publica porque su SHA no existe hasta después de publicarla.
+        checkpoint: Durante el diseño de SDD y antes de escribir el manifiesto del primer Módulo.
+        opciones:
+          - opcion: Resolver y aprobar el valor de source_commit antes de escribir el manifiesto.
+            consecuencia: El diseño fija un valor autoral sin tratar como disponible el SHA del commit que publica la revisión.
+          - opcion: Usar como source_commit el SHA del commit que publica la revisión.
+            consecuencia: No puede escribirse en el manifiesto de la revisión porque ese SHA no existe hasta después de publicarla.
+        clase: contrato-visible
+        alcanza: primer-modulo
+      - tipo: escala
+        pregunta: Después de medir 34 pins en 10 archivos, ¿se continúa con la opción A de avanzar a revisión 2 o se respeta la línea base sellada y se coloca el aviso de alcance en un archivo vecino sin sellar?
+        evidencia: El maintainer eligió la opción A sobre un costo declarado de tres digests en un manifiesto; la medición posterior encontró 34 pins en 10 archivos, 19 en openspec/plans/sdd-tower-implementation/manifest.yaml, 3 en autonomous-v2/revisions/1/manifest.yaml, ocho en directorios de cambios activos y uno en plan-3/STATUS.md, dos de ellos registros que no deberían mutar.
+        checkpoint: Antes del primer Módulo de S12.9 y antes de publicar cualquier revisión o aviso.
+        opciones:
+          - opcion: Continuar la opción A y avanzar el puntero a revisión 2.
+            consecuencia: El alcance deja de ser el costo de tres digests y debe afrontar 34 pins en 10 archivos, incluidos registros que no deberían mutar.
+          - opcion: Respetar la línea base sellada y poner el aviso de alcance en un archivo vecino sin sellar.
+            consecuencia: La medición de 34 pins se trata como evidencia de que los documentos son una línea base inmutable.
+        clase: dependencias-o-evidencia-contradictorias
+        alcanza: primer-modulo
+    ruta:
+      propuesta: full-sdd
+      autoridad: Contrato inmutable S12.9; no hay precedente para revisions/2, el puntero atómico y ownership son contratos compartidos sin ejercitar, y provenance.test.mjs requiere su propia Sesión.
+    importacion_legacy:
+      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
+      origen_ruta: openspec/plans/plan-12/STATUS.md
+      origen_blob: a0878736a59b300912a597c4a305358788d461c2
+      origen_encabezado: "## Sesión 12.9 — Avanzar la revisión del artefacto a 2"
+      territorio_pendiente: false
+      descomposicion_diferida: true
+    modulos: []
