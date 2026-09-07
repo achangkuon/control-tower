@@ -277,3 +277,14 @@ Estado medido del candidato: **73 Sesiones completas, 7 referencias futuras, 4 h
 | Ruta de `S100` | `direct` — sin decisiones abiertas |
 | Ruta de `S101` | `full-sdd` — la solución no es derivable de lo escrito |
 | Presupuesto de revisión | Código 400 líneas; documentación y datos por unidad completa, sin tope |
+
+### Evidencia de cierre — 2026-09-06
+
+| Referencia | OID |
+|---|---|
+| Rama de trabajo, respaldada y **no integrada** | `origin/feat/s0.4-plan-zones-migration@8081c4b779ad8761184637a4e8a12e7d1bfce02b` |
+| `master` — estado de la migración | `a3da3f60dc07cadaa0a789d921e0e1baf2f6b690` |
+| `master` — este registro y `master-index` | `67fc0ff808081e3c7cd784036ae9f0b1967a1942` |
+
+`master` recibió únicamente documentación. Ningún commit de la migración está integrado: el corpus
+legacy sigue siendo la autoridad vigente hasta la activación atómica de C09.
