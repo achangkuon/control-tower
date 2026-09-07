@@ -1,7 +1,10 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"os/exec"
 	"regexp"
 	"sort"
 	"strings"
@@ -40,6 +43,7 @@ func (p *Plan) CheckAt(root, head string) []Hallazgo {
 	h = append(h, p.checkZonas()...)
 	h = append(h, p.checkGrafo()...)
 	h = append(h, p.checkLinaje()...)
+	h = append(h, p.checkReferencias(root)...)
 	h = append(h, p.checkCimientos(root)...)
 	h = append(h, p.checkSesionesAt(root, head)...)
 	if part, err := p.VerificarParticionAt(root, head); err != nil {
@@ -763,4 +767,165 @@ func contiene(xs []string, x string) bool {
 		}
 	}
 	return false
+}
+
+// checkReferencias enforces the generic reference contract: shape, locator, identity, edges, leaf, and cycle rules; no migration-specific knowledge.
+func (p *Plan) checkReferencias(root string) []Hallazgo {
+	if p.References == nil {
+		return nil
+	}
+	var h []Hallazgo
+	kinds := map[string]string{}
+	deps := map[string][]string{}
+	reps := map[string][]string{}
+	sesionesPorID := p.SesionPorID()
+	for _, s := range p.Sesiones {
+		if s.ID != "" {
+			kinds[s.ID] = "sesion"
+		}
+	}
+	add := func(id, kind, ctx string) {
+		if id == "" {
+			h = append(h, Hallazgo{"error", "referencia", ctx + " no declara `id`"})
+		} else if _, dup := kinds[id]; dup {
+			h = append(h, Hallazgo{"error", "identidad de referencia", fmt.Sprintf("%s repite el identificador %q", ctx, id)})
+		} else {
+			kinds[id] = kind
+		}
+	}
+	for i := range p.References.FutureSuccessors {
+		f := &p.References.FutureSuccessors[i]
+		ctx := fmt.Sprintf("future_successors[%d]", i)
+		if f.ID != "" {
+			ctx = f.ID
+		}
+		add(f.ID, "future", ctx)
+		deps[f.ID], reps[f.ID] = f.Dependencies, f.Replaces
+		if strings.TrimSpace(f.Reason) == "" || strings.TrimSpace(f.Result) == "" || strings.TrimSpace(f.Zone) == "" {
+			h = append(h, Hallazgo{"error", "referencia futura", ctx + " debe declarar reason, result y zone"})
+		}
+		h = append(h, validateFragmentLocator(root, f.AssignmentSource, ctx+" assignment_source")...)
+		for _, dep := range f.Dependencies {
+			if kind := kinds[dep]; kind == "" || kind == "satisfied" {
+				h = append(h, Hallazgo{"error", "dependencias de referencia", fmt.Sprintf("%s depende de %q, que no existe como Sesión o sucesora futura", f.ID, dep)})
+			}
+		}
+		for _, original := range f.Replaces {
+			orig, ok := sesionesPorID[original]
+			if !ok || kinds[original] != "sesion" {
+				h = append(h, Hallazgo{"error", "linaje de referencia", fmt.Sprintf("%s reemplaza a %q, que no es una Sesión existente", f.ID, original)})
+			} else if !orig.Archivada {
+				h = append(h, Hallazgo{"error", "linaje de referencia", fmt.Sprintf("%s reemplaza a %s, que no está archivada", f.ID, original)})
+			}
+		}
+	}
+	for i := range p.References.SatisfiedHistory {
+		s := &p.References.SatisfiedHistory[i]
+		ctx := fmt.Sprintf("satisfied_history[%d]", i)
+		if s.ID != "" {
+			ctx = s.ID
+		}
+		add(s.ID, "satisfied", ctx)
+		if strings.TrimSpace(s.Reason) == "" {
+			h = append(h, Hallazgo{"error", "referencia histórica", ctx + " debe declarar reason"})
+		}
+		h = append(h, validateFragmentLocator(root, s.TerminalSource, ctx+" terminal_source")...)
+	}
+	for _, s := range p.Sesiones {
+		for _, dep := range s.DependeDe {
+			if kinds[dep] == "satisfied" {
+				h = append(h, Hallazgo{"error", "hoja histórica", fmt.Sprintf("%s no puede depender de la referencia histórica %q", s.ID, dep)})
+			}
+		}
+		for _, original := range s.Reemplaza {
+			if kind, ok := kinds[original]; ok && kind != "sesion" {
+				h = append(h, Hallazgo{"error", "linaje de referencia", fmt.Sprintf("%s no puede reemplazar la referencia %q", s.ID, original)})
+			}
+		}
+		deps[s.ID], reps[s.ID] = s.DependeDe, s.Reemplaza
+	}
+	h = append(h, referenceCycleErrors(kinds, deps, "dependencias de referencia circulares")...)
+	h = append(h, referenceCycleErrors(kinds, reps, "linaje de referencia circular")...)
+	return h
+}
+
+// referenceCycleErrors detects cycles; satisfied-history is never followed as a target.
+func referenceCycleErrors(kinds map[string]string, edges map[string][]string, regla string) []Hallazgo {
+	var h []Hallazgo
+	estado := map[string]int{}
+	var ciclos []string
+	var visit func(id string, camino []string)
+	visit = func(id string, camino []string) {
+		switch estado[id] {
+		case 2:
+			return
+		case 1:
+			ciclos = append(ciclos, strings.Join(append(camino, id), " → "))
+			return
+		}
+		estado[id] = 1
+		vecinos := append([]string(nil), edges[id]...)
+		sort.Strings(vecinos)
+		for _, dep := range vecinos {
+			if kinds[dep] != "" && kinds[dep] != "satisfied" {
+				visit(dep, append(camino, id))
+			}
+		}
+		estado[id] = 2
+	}
+	ids := make([]string, 0, len(kinds))
+	for id := range kinds {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	for _, id := range ids {
+		visit(id, nil)
+	}
+	for _, c := range ciclos {
+		h = append(h, Hallazgo{"error", regla, "ciclo: " + c})
+	}
+	return h
+}
+
+// validateFragmentLocator proves only immutable-locator structure, never fragment meaning.
+func validateFragmentLocator(root string, loc FragmentLocator, etiqueta string) []Hallazgo {
+	commit, err := gitOID(root, loc.Commit)
+	if err != nil {
+		return []Hallazgo{{"error", "locator de referencia", fmt.Sprintf("%s: commit inválido: %v", etiqueta, err)}}
+	}
+	ruta, err := exactRepoFile(root, loc.Path)
+	if err != nil {
+		return []Hallazgo{{"error", "locator de referencia", fmt.Sprintf("%s: ruta inválida: %v", etiqueta, err)}}
+	}
+	entry, err := gitOutput(root, "ls-tree", commit, "--", ruta)
+	parts := strings.Fields(entry)
+	if err != nil || len(parts) != 4 || parts[1] != "blob" || (parts[0] != "100644" && parts[0] != "100755") || parts[2] != loc.Blob {
+		return []Hallazgo{{"error", "locator de referencia", fmt.Sprintf("%s: no prueba un blob regular exacto", etiqueta)}}
+	}
+	raw, err := exec.Command("git", "-C", root, "cat-file", "blob", loc.Blob).Output()
+	if err != nil {
+		return []Hallazgo{{"error", "locator de referencia", fmt.Sprintf("%s: blob ilegible: %v", etiqueta, err)}}
+	}
+	if loc.LineStart < 1 || loc.LineEnd < loc.LineStart || loc.ByteStart < 0 || loc.ByteEnd <= loc.ByteStart || loc.ByteEnd > len(raw) {
+		return []Hallazgo{{"error", "locator de referencia", fmt.Sprintf("%s: los límites de línea o byte no son válidos", etiqueta)}}
+	}
+	starts := []int{0}
+	for i, b := range raw {
+		if b == '\n' {
+			starts = append(starts, i+1)
+		}
+	}
+	lineEndByte := len(raw)
+	if loc.LineEnd < len(starts) {
+		lineEndByte = starts[loc.LineEnd]
+	}
+	var h []Hallazgo
+	if loc.LineEnd > len(starts) || starts[loc.LineStart-1] != loc.ByteStart || lineEndByte != loc.ByteEnd {
+		h = append(h, Hallazgo{"error", "locator de referencia", fmt.Sprintf("%s: el intervalo de línea no coincide con el de bytes", etiqueta)})
+	}
+	sum := sha256.Sum256(raw[loc.ByteStart:loc.ByteEnd])
+	if !strings.EqualFold(loc.FragmentSHA256, hex.EncodeToString(sum[:])) {
+		h = append(h, Hallazgo{"error", "locator de referencia", fmt.Sprintf("%s: el sha256 no coincide con los bytes exactos", etiqueta)})
+	}
+	return h
 }

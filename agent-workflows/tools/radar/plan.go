@@ -16,13 +16,14 @@ import (
 
 // Plan is the single written artifact for one product.
 type Plan struct {
-	Schema        string    `yaml:"schema"`
-	SchemaVersion int       `yaml:"schema_version"`
-	Producto      string    `yaml:"producto"`
-	Raiz          string    `yaml:"raiz"`
-	Zonas         []Zona    `yaml:"zonas"`
-	Cimientos     Cimientos `yaml:"cimientos"`
-	Sesiones      []Sesion  `yaml:"sesiones"`
+	Schema        string      `yaml:"schema"`
+	SchemaVersion int         `yaml:"schema_version"`
+	Producto      string      `yaml:"producto"`
+	Raiz          string      `yaml:"raiz"`
+	Zonas         []Zona      `yaml:"zonas"`
+	Cimientos     Cimientos   `yaml:"cimientos"`
+	Sesiones      []Sesion    `yaml:"sesiones"`
+	References    *References `yaml:"references"`
 
 	ledgerDecisionRequired map[string]bool
 }
@@ -72,6 +73,43 @@ type ImportacionLegacy struct {
 	OrigenEncabezado       string `yaml:"origen_encabezado"`
 	TerritorioPendiente    bool   `yaml:"territorio_pendiente"`
 	DescomposicionDiferida bool   `yaml:"descomposicion_diferida"`
+}
+
+// References is closed, non-executable context outside sesiones: neither kind grants status, ownership, queue, seat, capacity, or completion.
+type References struct {
+	FutureSuccessors []FutureSuccessor  `yaml:"future_successors"`
+	SatisfiedHistory []SatisfiedHistory `yaml:"satisfied_history"`
+}
+
+// FutureSuccessor registers one approved successor's lineage before it is planned and approved as a full Sesion.
+type FutureSuccessor struct {
+	ID               string          `yaml:"id"`
+	Reason           string          `yaml:"reason"`
+	Result           string          `yaml:"result"`
+	Zone             string          `yaml:"zone"`
+	Dependencies     []string        `yaml:"dependencies"`
+	Foundations      []string        `yaml:"foundations"`
+	Replaces         []string        `yaml:"replaces"`
+	AssignmentSource FragmentLocator `yaml:"assignment_source"`
+}
+
+// SatisfiedHistory registers one dependency edge already proven by legacy evidence; it never replaces a Sesion or becomes a dependency target.
+type SatisfiedHistory struct {
+	ID             string          `yaml:"id"`
+	Reason         string          `yaml:"reason"`
+	TerminalSource FragmentLocator `yaml:"terminal_source"`
+}
+
+// FragmentLocator fixes one immutable byte-exact fragment: commit, safe path, regular blob, line/byte bounds, and SHA-256.
+type FragmentLocator struct {
+	Commit         string `yaml:"commit"`
+	Path           string `yaml:"path"`
+	Blob           string `yaml:"blob"`
+	LineStart      int    `yaml:"line_start"`
+	LineEnd        int    `yaml:"line_end"`
+	ByteStart      int    `yaml:"byte_start"`
+	ByteEnd        int    `yaml:"byte_end"`
+	FragmentSHA256 string `yaml:"fragment_sha256"`
 }
 
 // Modulo groups concrete files that change together inside a Sesion.
