@@ -12,7 +12,9 @@
 > Última reconciliación: Fase A cerrada y entregada. `master` y `origin/master`
 > coinciden en `b3da46174b75dc97e52afa72900f6263655aa378`; `agent-workflows` conserva su historia
 > completa mediante el merge de subtree `dbb7626904a09323e19dd7a60f747d29c8c62f5d`, cuyo tip
-> importado es `588f0282d28baf79ffbd3cb7c1b29d7d5557436e`. La próxima acción es Fase B.
+> importado es `588f0282d28baf79ffbd3cb7c1b29d7d5557436e`. Fase B está **en curso** en la rama
+> `feat/s0.4-plan-zones-migration`, respaldada en `origin` en `8081c4b779ad8761184637a4e8a12e7d1bfce02b`.
+> Nada de Fase B está integrado en `master` todavía.
 
 ---
 
@@ -88,9 +90,11 @@ trabajo posterior y que nunca reabren esta revisión. Los de más sustancia: fal
 para el `Recurso` exclusivo (`session-kickoff/SKILL.md:36-37`) y una carrera TOCTOU en el archivado
 (`tools/install.py:442-445`).
 
-**Siguiente acción exacta — Fase B:** migrar los datos de planificación legacy de Control Tower a
-`openspec/plan.yaml`, generar `openspec/ROADMAP.md` y retirar las vistas de plan legacy duplicadas
-únicamente mediante esa migración. Este documento no inicia esa tarea.
+**Siguiente acción exacta — Fase B:** planificar `S101` por la ruta `full-sdd`. Es el único paso
+que bloquea la compuerta G1: el candidato tiene 73 Sesiones completas y el contrato exige 74. `S101`
+debe resolver dos contradicciones detectadas el 2026-09-06: el campo `horizon_ceiling` cuenta Sesiones
+en `policy/jornada.mjs` y Módulos en `continuation/integrated-base.mjs:23`, y el default restrictivo
+es `2` según `AGENTS.md:209` pero `1` según `policy/delivery-policy.mjs:12`.
 
 ---
 
@@ -112,7 +116,7 @@ Los únicos significados usados abajo son: `✅ implementado y verificado`, `�
 | Grupo | ID | Estado | Evidencia integrada | Remoto | Runtime instalado / qué falta |
 |---|---|---|---|---|---|
 | Implementación | Fase A | ✅ implementado y verificado | Correcciones críticas en `39ff465`; merge `977cced`; subtree importado con historia completa | Sí, en `master@b3da46174b75dc97e52afa72900f6263655aa378` | Cerrada |
-| Implementación | Fase B | 🟡 pendiente | Todavía no se creó `openspec/plan.yaml` ni se generó `openspec/ROADMAP.md` | No iniciada | Migrar los datos legacy y retirar vistas duplicadas solo mediante esa migración |
+| Implementación | Fase B | 🔵 en curso | 109 commits en `feat/s0.4-plan-zones-migration`: 72 Sesiones históricas importadas, contrato y proyecciones de referencias en Radar, verificador de partición, 11 referencias autenticadas y `S100` planificada. Candidato en 73/7/4; `openspec/plan.yaml` y `openspec/ROADMAP.md` siguen sin existir | Respaldada, no integrada: `origin/feat/s0.4-plan-zones-migration@8081c4b779ad8761184637a4e8a12e7d1bfce02b` | Planificar `S101` (`full-sdd`), correr G1, y recién después archivo, prueba aislada, reproducción y activación |
 | Implementación | Fase C | 📚 fuera de alcance | Sin implementación en esta obra | No aplica | Gate de recursos vivos, medidor, conexión del Horizonte, freeze terminal y `S9.9` |
 | Flujo | Tramos 1–7 | ✅ implementado y verificado | Canon, planificación, enrutado, ejecución, revisión, entrega y cierre reconciliados | Sí | — |
 | Corrección | C1–C8 | ✅ implementado y verificado | Contratos y correcciones integrados; los tres `CRITICAL` finales cerraron en `39ff465` | Sí | — |
