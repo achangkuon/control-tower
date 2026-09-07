@@ -26,7 +26,7 @@ Plan → Sesión → Módulo → Tarea. **Sesión = alcance coherente de revisi�
 
 ## 📊 Estado de un vistazo
 
-**Avance global:** Planes cerrados: `3/13` · Sesiones cerradas: `65/93 (70%)`. Ambos usan todas las filas de Plan enumeradas; P2 y P6 conservan `—` porque no tienen Sesiones enumeradas.
+**Avance global:** 3/13 Planes cerrados · Sesiones cerradas: 65/93 (70%). Ambos usan todas las filas de Plan enumeradas; P2 y P6 conservan `—` porque no tienen Sesiones enumeradas.
 
 | ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |
 |----|------|--------|---|------|-------|-----------|-----|
