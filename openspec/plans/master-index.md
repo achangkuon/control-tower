@@ -30,7 +30,7 @@ Plan → Sesión → Módulo → Tarea. **Sesión = alcance coherente de revisi�
 
 | ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |
 |----|------|--------|---|------|-------|-----------|-----|
-| P0 | Documentación canónica | ✅ COMPLETO | 100% (3/3 S) | — | Maintainer | — | [STATUS](plan-0/STATUS.md) |
+| P0 | Documentación canónica | 🔵 EN CURSO | 75% (3/4 S) | — | Maintainer | `S0.4` (migración del plan al modelo de Zonas; falta `S101`, G1 y activación) | [STATUS](plan-0/STATUS.md) |
 | P1 | Sustrato mecánico | 🔵 EN CURSO | 90% (18/20 S) | — | Main | `S1.19`, `S1.20` | [STATUS](plan-1/STATUS.md) |
 | P2 | Contratos y registro de producto | 🔵 EN CURSO | — (responsabilidades todavía sin Sesión enumerada) | — | Main | `S2.9`, `S2.10` | [STATUS](plan-2/STATUS.md) |
 | P3 | Workspace y orquestación | ✅ COMPLETO | 100% (4/4 S) | — | Main | — | [STATUS](plan-3/STATUS.md) |

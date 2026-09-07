@@ -222,3 +222,58 @@ El principio de §16.1 no se toca — **Hermes presenta; Main crea, valida y con
 ### Alcance sin ID surgido en esta Sesión
 
 `T0.3.2.1` quedó registrado como **nota en el YAML, no como campo machine-readable**. Convertirlo en un campo con su test exige tocar `test/provenance/provenance.test.mjs:116-117`, que está **fuera del `Área`** y fija ambos `release_lane`. No se le abre Sesión propia: es una línea de test que puede viajar con cualquier Sesión futura que ya toque `test/provenance/**`, y hasta entonces la autoridad de la unificación vive en [release-chain](../release-chain.md), que sí es canónica.
+
+## Sesión 0.4 — Migración del plan al modelo de Zonas
+
+**Estado:** 🔵 EN CURSO
+**Depende de:** Fase A cerrada en `master@b3da46174b75dc97e52afa72900f6263655aa378`
+**Área:** `openspec/changes/migrate-control-tower-plan-zones/**`, `agent-workflows/tools/radar/**`, `agent-workflows/MIGRACION-ZONAS.md`, `openspec/plans/plan-0/STATUS.md`, `openspec/plans/master-index.md`
+**Recurso:** — (sin DB, sin migraciones, sin token de entrega)
+
+El trabajo vive en `feat/s0.4-plan-zones-migration`, respaldada en `origin` en
+`8081c4b779ad8761184637a4e8a12e7d1bfce02b` con 109 commits. **Nada está integrado en `master`:**
+la rama es respaldo, no entrega. `openspec/plan.yaml` y `openspec/ROADMAP.md` siguen sin existir,
+y el corpus legacy sigue siendo la autoridad vigente.
+
+El objetivo de activación se acotó el 2026-09-06: en vez de materializar nueve Sesiones sucesoras
+completas, el contrato es **85 registros = 74 Sesiones completas + 7 referencias futuras +
+4 referencias históricas satisfechas**. Las referencias nunca conceden ejecutabilidad, asiento,
+capacidad ni crédito de avance.
+
+### Avance verificado
+
+| Grupo | Commit | Resultado |
+|---|---|---|
+| Importación histórica | — | 72 de 72 Sesiones originales, con procedencia inmutable |
+| R1 contrato | `8501458` | Tipos y validación genérica de referencias en Radar |
+| R2 proyecciones | `699a0ea` | Listado separado en `status` y `render`, sin filtrarse a lo operativo |
+| P1 prueba final | `3bfe304` | Verificador de partición; excepción de tamaño aceptada por el maintainer |
+| D1 datos | `cb4a961` | 11 referencias con localizador autenticado contra objetos Git reales |
+| Corrección de R1 | `f8a7ca4` | Cierre de aristas `depende_de` sin conceder ejecutabilidad |
+| S100 planificada | `14ac794` | Sesión completa, ruta `direct`, seis criterios binarios |
+| Artefactos SDD | `8081c4b` | 6.370 líneas de propuesta, spec, diseño, tareas y evidencia incorporadas al repo |
+
+Estado medido del candidato: **73 Sesiones completas, 7 referencias futuras, 4 históricas.**
+`verify-activation-partition.mjs` falla `full-session-order` y `radar check` reporta el único error
+`S102 depende de "S101"`. **Ambos resultados son correctos:** falta `S101`.
+
+### Qué falta
+
+1. **`S101` por ruta `full-sdd`** — único bloqueo de la compuerta G1. Debe resolver dos
+   contradicciones detectadas el 2026-09-06:
+   - `horizon_ceiling` cuenta Sesiones en `policy/jornada.mjs:33-35` y Módulos en
+     `continuation/integrated-base.mjs:23`.
+   - El default restrictivo es `2` según `AGENTS.md:209` y `1` según `policy/delivery-policy.mjs:12`.
+2. **G1** — compuerta final sobre la partición completa, sin mutación.
+3. **C06 a C09** — inventario de archivo, prueba en árbol aislado, reproducción exacta y activación
+   atómica, seguidas de la entrega autorizada.
+
+### Decisiones de producto cerradas el 2026-09-06
+
+| Decisión | Resolución |
+|---|---|
+| Valores de `planning.prepare_through` | Valor único `TAREAS`; el Módulo siguiente siempre se prepara hasta sus Tareas |
+| Unidad de `horizon_ceiling` | Cuenta Sesiones; la ventana de Módulos recibe un campo propio |
+| Ruta de `S100` | `direct` — sin decisiones abiertas |
+| Ruta de `S101` | `full-sdd` — la solución no es derivable de lo escrito |
+| Presupuesto de revisión | Código 400 líneas; documentación y datos por unidad completa, sin tope |
