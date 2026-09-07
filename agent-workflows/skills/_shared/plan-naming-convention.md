@@ -517,7 +517,50 @@ that will be overwritten, and doing it less reliably.
 | Route/base record structure and whether a changed route states its reason | Whether the proposed or revalidated route is the honest one |
 | The rendered `openspec/ROADMAP.md` view | |
 
-## 18. Agent compliance checklist
+## 18. Adopting the model in an existing repository
+
+A repository that already carries planning documents does not convert them. It **writes a
+live plan and freezes the rest**. The expensive, reusable work is partitioning the real tree
+into Zonas, and historical planning prose contributes nothing to that partition.
+
+### The four steps
+
+1. **Partition first, from the file system.** Derive Zonas from `git ls-files`, then validate
+   with `radar zonas` and `radar check`: disjoint, exhaustive, zero orphans, zero overlaps.
+   Do this before reading a single legacy document.
+2. **Author only live work.** `plan.yaml` receives the Sesiones that are open, blocked or
+   deferred, written as ordinary rows against current code. Closed work never becomes a row.
+3. **Freeze the history byte-for-byte.** Move the legacy corpus unchanged under
+   `openspec/archive/legacy-planning/` and generate one index mapping each retired identifier
+   to its delivery commit. Git already proves that history; re-authoring it proves nothing
+   further and cannot be kept in sync.
+4. **Drop satisfied dependencies.** A `depende_de` pointing at closed work is already
+   satisfied: delete the reference. Never preserve a row only to receive one.
+
+### What adoption must not do
+
+| Never | Why |
+|---|---|
+| Import closed Sesiones as plan rows | They declare no Zona, enter no queue, hold no seat, and consume review budget forever |
+| Extend the tool to accept the legacy shape | The schema is the contract. Data the schema rejects belongs in the archive, not in a compatibility branch |
+| Hand-edit the generated roadmap while adopting | §10 has no adoption exception |
+
+The partition rule that is most expensive to learn twice: **if more than one Zona modifies
+the same file, that file is Cimientos**, regardless of which directory contains it. Grouping
+by directory name fails predictably on entrypoints, CLI vocabulary and skill definitions.
+
+### Control Tower is the exception, not the template
+
+Control Tower was migrated before this section existed, under a full-fidelity policy: all 72
+enumerated legacy Sesiones imported with cryptographic provenance, plus a provenance-gated
+compatibility contract added to the tool. That work is completed on its own terms rather than
+reworked, because its remaining modules are proof and activation, which cost the same under
+either policy.
+
+Do not read Control Tower's plan as a worked example of adoption. Its shape is historical.
+Every other repository, starting with Servi-Task-U, adopts the model by the four steps above.
+
+## 19. Agent compliance checklist
 
 Only what the tool cannot check. Everything else is enforced, not remembered.
 
@@ -543,3 +586,5 @@ Only what the tool cannot check. Everything else is enforced, not remembered.
 - [ ] A route change at implementation time recorded why it changed
 - [ ] Nobody hand-edited `openspec/ROADMAP.md` or created parallel generated status/index files
 - [ ] Artifacts omitted on a small product are declared on the plan, not silently skipped
+- [ ] An existing repository adopted the model by §18 — partition first, live work only,
+      history frozen unchanged, tool left unextended
