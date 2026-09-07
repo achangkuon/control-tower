@@ -6251,6 +6251,60 @@ sesiones:
       descomposicion_diferida: true
     modulos: []
 
+  - id: S100
+    zona: contratos
+    resultado: "Contrato de schema de delivery-policy, incluido planning.prepare_through fail-closed"
+    autoridad: "Maintainer decision, this session, 2026-09-06, resolving the two open questions recorded below; zona, dependencies, cimientos and reemplaza copied byte-for-byte from migration/lineage.yaml (source: agent-workflows/ASIGNACION-24-SESIONES.md). Scope is bounded to the schema contract owned by zona contratos: the runtime resolution of the resolved value belongs to successor S101 (zona capacidades) and the continuation binding belongs to successor S102 (zona entrega), per migration/lineage.yaml successors[]."
+    depende_de: [S5.13]
+    cimientos: []
+    reemplaza: [S5.14]
+    criterios:
+      - "schemas/delivery-policy-v1.schema.json's `planning` object declares an optional `prepare_through` property constrained to the single literal value `TAREAS` via `const`, and `prepare_through` is not added to `planning`'s `required` array."
+      - "A `delivery-policy` fixture whose `planning` block omits `prepare_through` still validates successfully against the schema after this change, exactly as it did before it."
+      - "A `delivery-policy` fixture whose `planning.prepare_through` equals `TAREAS` validates successfully against the schema."
+      - "A `delivery-policy` fixture whose `planning.prepare_through` is any value other than `TAREAS` fails schema validation."
+      - "`bun test test/contracts/s3-2-schemas.test.mjs` passes, and the full repository `bun test` passes with zero failures, after the change."
+      - "The diff touches only Area: schemas/delivery-policy-v1.schema.json and test/contracts/s3-2-schemas.test.mjs."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "What is the single allowed value for planning.prepare_through in the delivery-policy schema?"
+        resolucion: "planning.prepare_through has exactly one allowed value: the literal TAREAS. The next Module is always prepared down to its Tareas. This changes no runtime behavior: it moves a literal that already lives in code into a declared, versioned schema contract."
+        autoridad: "Maintainer decision, this session, 2026-09-06."
+        clase: contrato-visible
+        falsificador: "The schema accepts a value other than TAREAS for planning.prepare_through, or declares more than one allowed value."
+        descartadas:
+          - opcion: "Allow multiple prepare_through values, for example TAREAS and MODULOS."
+            razon: "Rejected by the maintainer this session; only TAREAS is a valid planning depth today, and the schema must not open a domain the codebase does not implement."
+      - tipo: resuelta
+        pregunta: "Does a delivery-policy document that omits planning.prepare_through get rejected by the schema?"
+        resolucion: "No. Per AGENTS.md:207-210, an absent field, unknown value, or unparseable block never behaves like a permissive default: it resolves to the most restrictive value and the reason stays named. Because TAREAS is the schema's only allowed value, a document that omits prepare_through resolves to TAREAS with the reason named, and no existing repository breaks. Naming schema-level absence-tolerance is S100's own scope, inside zona contratos; the runtime step that actually resolves the value and names the reason belongs to successor S101 (zona capacidades), per migration/lineage.yaml."
+        autoridad: "Maintainer decision, this session, 2026-09-06, applying AGENTS.md:207-210."
+        clase: contrato-visible
+        falsificador: "planning's required array in the schema includes prepare_through, or a document omitting prepare_through fails schema validation."
+        descartadas:
+          - opcion: "Add prepare_through to planning's required array so every policy document must declare it explicitly."
+            razon: "Rejected: this would reject every policy authored before this schema revision, contradicting the maintainer's no-existing-repository-breaks requirement and the AGENTS.md fail-closed contract, which resolves absence rather than rejecting it."
+    ruta:
+      propuesta: direct
+      autoridad: "Maintainer decision, this session, 2026-09-06: the schema-level contract is fully specified, has no remaining open product decision, and needs no design phase."
+    modulos:
+      - id: M100.1
+        resultado: "The delivery-policy schema declares the closed prepare_through contract."
+        rutas: [schemas/delivery-policy-v1.schema.json, test/contracts/s3-2-schemas.test.mjs]
+        tareas:
+          - id: T100.1.1
+            accion: "RED: add fixtures to test/contracts/s3-2-schemas.test.mjs proving planning.prepare_through: TAREAS is rejected by the current schema as an unknown property, while an omitted prepare_through and a wrong value already behave as expected today."
+            resultado: "RED: the TAREAS fixture fails against the unmodified schema; the omitted and wrong-value fixtures already pass or fail as expected."
+            criterios: ["The prepare_through: TAREAS fixture fails schema validation before the schema change, because planning has additionalProperties: false and does not yet declare prepare_through."]
+          - id: T100.1.2
+            accion: "GREEN: add prepare_through as an optional const: TAREAS property to planning in schemas/delivery-policy-v1.schema.json, without adding it to required."
+            resultado: "GREEN: all three fixtures pass: omitted, TAREAS, and a wrong value correctly rejected."
+            criterios: ["test/contracts/s3-2-schemas.test.mjs passes with the three fixtures included, and bun test at the repository root passes with zero failures."]
+          - id: T100.1.3
+            accion: "REFACTOR: confirm no other schema-registry fixture regressed and the diff stays inside Area."
+            resultado: "REFACTOR: the schema change is confirmed isolated, with no unrelated fixture touched."
+            criterios: ["git diff --cached --numstat reports changes only in schemas/delivery-policy-v1.schema.json and test/contracts/s3-2-schemas.test.mjs."]
+
 references:
   future_successors:
     - id: S102
