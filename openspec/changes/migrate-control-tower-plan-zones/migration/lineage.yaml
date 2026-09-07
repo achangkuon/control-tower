@@ -110,9 +110,18 @@ dependency_rewrites:
 
 closure_contract:
   imported_mapping_rows: 72
+  full_session_total: 74
+  future_reference_total: 7
+  satisfied_history_reference_total: 4
+  activation_record_total: 85
   required_successors: [S100, S101, S102, S103, S104, S105, S106, S107, S108]
   archived_original_ids: [S5.14, S5.15, S9.3, S9.5]
   active_dependency_rule: "No active Session dependency may point only to an archived original; it must name the applicable successor."
+  planning_gate:
+    selected_ids: [S100, S101]
+    horizon_ceiling: 2
+    contracts_required: true
+    approval_required: true
   serialization:
     authority:
       kind: maintainer-decision
