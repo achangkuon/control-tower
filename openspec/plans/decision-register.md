@@ -580,3 +580,25 @@ Si la validación falla, el registro usa privadamente el `close` exacto o deja l
 **Origen y checkpoint:** `S9.9/M9.9.1`, después de completar RED y antes de acreditar GREEN o REFACTOR. El candidato queda únicamente en la rama local permanente `fix/s9.9-herdr-workspace-binding` de `implementer-1`, commit `8a5b0fa91c480938428f9f42dc9b4b40f27e90a4`, tree `2a1e4a07963c4f601618954695bb3336c59f05f1`, base `2b3eb21d30f10e20452c4658fe9cb2b1845018a4`, limpio, no pusheado ni mergeado. Sus cuatro SHA-256 están fijados en `plan-9/STATUS.md`. `S1.20` conserva su estado preparado en `implementer-2`, sin dispatch. La excepción bootstrap expiró sin entrega.
 
 **Autoridad posterior de cierre:** después de elegir «No hacer nada», el maintainer autorizó «Guardar y cerrar»: publicar este bloqueo, preservar el candidato local y sellar el checkpoint sin afirmar completion. Retomar exige nueva autoridad para ampliar `Área`; luego corregir fixture, `pane split` y expectativa, y repetir las validaciones. **Clases:** expansión de alcance; dependencias o evidencia contradictorias; seguridad y permisos. **Contamina:** `S9.9`, `S1.20`, toda apertura de worker y `S9.5`. **Autoridad:** maintainer, Engram 10041 y autorización explícita «Guardar y cerrar».
+
+## Decisión 108 — bootstrap acotado de S9.9 y prerrequisito separado de materialización (2026-09-01)
+
+108. **Pregunta 1:** ¿Autorizás que primero reabramos y corrijamos la infraestructura de asignación que bloquea S101?
+
+**Opciones:** `fix-infrastructure` — **Corregir infraestructura (Recomendado)**: reabrir `S9.9`, expandir Área al fixture exacto de instalación y agregar la materialización de base exacta como prerrequisito separado antes de `S101`. `no-action` — **No hacer nada**: no mutar infraestructura; la Phase B queda pausada antes de `S101`.
+
+**Seleccionada:** `fix-infrastructure` — **Corregir infraestructura (Recomendado)**.
+
+**Pregunta 2:** ¿Autorizás este bootstrap excepcional y acotado de S9.9 en implementer-3, sin abrir Herdr?
+
+**Opciones:** `authorize` — **Autorizar bootstrap (Recomendado)**: reciclar `implementer-3` limpio desde el master actual, preservar refs previas, ejecutar un único subagente Pi aislado sin Herdr, probar sólo `S9.9` y no entregar antes de presentar el candidato. `no-action` — **No hacer nada**: no mutar worktree/subagente; `S9.9` y Phase B quedan pausadas.
+
+**Seleccionada:** `authorize` — **Autorizar bootstrap (Recomendado)**.
+
+**Alcance y checkpoint:** la autoridad humana precedió la implementación, pero el packet exacto se persistió recién en Engram 10510 después del RED inicial, 20 pass / 13 fail: ese RED no es evidencia de cumplimiento. El RED correctivo posterior, 17 pass / 4 fail, sí es válido. La decisión reemplaza la 107 **sólo** para `S9.9` reabierta, el quinto path exacto `test/install/launch-worker-cli.test.mjs` y este bootstrap sin Herdr; preserva la autoridad de la 107 fuera de ese límite.
+
+**Resultado autorizado y observado:** `S9.9` cerró con `e9bcba7a8e9b7cc5ac7de67a11a867b17c8978f5`, tree `1a7a030ed4992db4e9c82b04faebd735e2ca59b3`, exactamente `hosts/herdr-topology.mjs`, `hosts/seat-cli.mjs`, `test/hosts/herdr-topology.test.mjs`, `test/hosts/seat-cli.test.mjs` y `test/install/launch-worker-cli.test.mjs`, y 243 authored (181 adiciones + 62 eliminaciones). Focused final 36 pass / 0 fail / 139 assertions; suite completa 1175 pass / 0 fail / 6390 assertions / 88 archivos; diff/sintaxis PASS y verificación funcional independiente PASS. Tower OFF; runtime/DB intactos; entrega directa a `master`, sin PR, aún pendiente con código y documentos en el mismo push atómico. `review-reliability` nativo está unavailable por faltar controller candidate-view lineage y no cuenta como aprobación.
+
+**Límite abierto:** `S9.10` materializa después un asiento permanente limpio desde el `base_sha` no-master exacto aprobado y bloquea `S101` hasta que un humano resuelva la sintaxis pública CLI/API de `asignar`. No se muta `asignar`, no se cambia el reciclado trunk de `jornada.sh`, y el commit futuro será separado, ≤400 y revertible. **Exclusión explícita:** esta decisión no autoriza sintaxis pública CLI/API de `asignar`.
+
+**Clases:** seguridad y permisos; expansión de alcance; dependencias o evidencia contradictorias. **Contamina:** `S9.9`, apertura/dispatch de workers Tower y `S101`.
