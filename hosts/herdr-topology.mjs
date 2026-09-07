@@ -12,12 +12,15 @@ export const PERMANENT_SEATS = Object.freeze(["implementer-1", "implementer-2", 
 
 const fail = (code, message) => { throw Object.assign(new Error(message), { code }) }
 const identifier = (value) => typeof value === "string" && value.length > 0 && !value.includes("\0")
+const workspaceIdentifier = (value) => identifier(value) && value.trim() === value
 const seatPath = (value) => identifier(value) && isAbsolute(value)
 const projected = ({ pane_id, cwd, foreground_cwd }) => ({ pane_id, cwd, foreground_cwd })
 const byPaneId = (left, right) => (left.pane_id < right.pane_id ? -1 : left.pane_id > right.pane_id ? 1 : 0)
+const absentFrom = (resources, key, id) => resources.every((resource) => resource?.[key] !== id)
 
-export const createHerdrTopology = ({ run, mainPath } = {}) => {
+export const createHerdrTopology = ({ run, mainPath, workspaceId = process.env.HERDR_WORKSPACE_ID } = {}) => {
   if (typeof run !== "function") throw new TypeError("A Herdr control port is required")
+  if (!workspaceIdentifier(workspaceId)) fail("CT_TOPOLOGY_REJECTED", "An explicit Herdr workspace binding is required")
   if (!seatPath(mainPath)) fail("CT_TOPOLOGY_REJECTED", "Canonical Main needs an absolute worktree path")
   const call = async (args) => {
     let answer
@@ -29,12 +32,13 @@ export const createHerdrTopology = ({ run, mainPath } = {}) => {
   const listing = async (args, key) => {
     const values = (await call(args))[key]
     if (!Array.isArray(values)) fail("CT_TOPOLOGY_UNAVAILABLE", `Herdr control returned no ${key}`)
+    if (values.some((value) => value?.workspace_id !== workspaceId)) fail("CT_TOPOLOGY_REJECTED", `Herdr returned ${key} outside workspace ${workspaceId}`)
     return values
   }
   const ensureMainTab = async () => {
-    let tabs = await listing(["tab", "list"], "tabs")
-    const current = (await call(["pane", "current", "--current"])).pane
-    if (!identifier(current?.pane_id) || !identifier(current?.tab_id)) {
+    let tabs = await listing(["tab", "list", "--workspace", workspaceId], "tabs")
+    const current = (await call(["pane", "current", "--current", "--workspace", workspaceId])).pane
+    if (!identifier(current?.pane_id) || !identifier(current?.tab_id) || current.workspace_id !== workspaceId) {
       fail("CT_TOPOLOGY_REJECTED", "The invoking Herdr pane or tab identity is missing")
     }
     if (current.cwd !== mainPath || current.foreground_cwd !== mainPath) {
@@ -50,8 +54,8 @@ export const createHerdrTopology = ({ run, mainPath } = {}) => {
     if (currentTab.label !== "1" || mainTabs.length !== 0) {
       fail("CT_TOPOLOGY_REJECTED", `The invoking tab cannot be claimed as \`${MAIN_TAB_LABEL}\``)
     }
-    await call(["tab", "rename", current.tab_id, MAIN_TAB_LABEL])
-    tabs = await listing(["tab", "list"], "tabs")
+    await call(["tab", "rename", current.tab_id, MAIN_TAB_LABEL, "--workspace", workspaceId])
+    tabs = await listing(["tab", "list", "--workspace", workspaceId], "tabs")
     const renamed = tabs.filter((tab) => tab?.tab_id === current.tab_id && tab?.label === MAIN_TAB_LABEL)
     if (renamed.length !== 1 || tabs.filter((tab) => tab?.label === MAIN_TAB_LABEL).length !== 1) {
       fail("CT_TOPOLOGY_REJECTED", `The \`${MAIN_TAB_LABEL}\` tab rename did not read back`)
@@ -63,7 +67,8 @@ export const createHerdrTopology = ({ run, mainPath } = {}) => {
     if (matches.length > 1) fail("CT_TOPOLOGY_REJECTED", `More than one \`${AGENTS_TAB_LABEL}\` tab is open; topology is ambiguous`)
     return matches.length === 1 && identifier(matches[0].tab_id) ? matches[0].tab_id : null
   }
-  const panesOf = async (tabId) => (await listing(["pane", "list"], "panes")).filter((pane) => pane?.tab_id === tabId).sort(byPaneId)
+  const workspacePanes = async () => listing(["pane", "list", "--workspace", workspaceId], "panes")
+  const panesOf = async (tabId) => (await workspacePanes()).filter((pane) => pane?.tab_id === tabId).sort(byPaneId)
 
   return Object.freeze({
     async readAgentsTab() {
@@ -72,29 +77,46 @@ export const createHerdrTopology = ({ run, mainPath } = {}) => {
     },
     async openSeatPane({ cwd } = {}) {
       if (!seatPath(cwd)) fail("CT_TOPOLOGY_REJECTED", "A seat pane needs an absolute worktree path")
-      let tabId = agentsTabId(await ensureMainTab()), record
-      if (tabId === null) {
-        // A fresh tab is born holding this seat, so the first worker does not leave an idle shell
-        // column beside the three approved seats.
-        const created = (await call(["tab", "create", "--label", AGENTS_TAB_LABEL, "--cwd", cwd, "--no-focus"])).tab
-        if (!identifier(created?.tab_id)) fail("CT_TOPOLOGY_UNAVAILABLE", `Herdr did not create the \`${AGENTS_TAB_LABEL}\` tab`)
-        tabId = created.tab_id
-        const own = await panesOf(tabId)
-        if (own.length !== 1) fail("CT_TOPOLOGY_REJECTED", `A fresh \`${AGENTS_TAB_LABEL}\` tab must hold exactly one pane`)
-        record = own[0]
-      } else {
-        const anchor = (await panesOf(tabId)).at(-1)
-        if (!anchor || !identifier(anchor.pane_id)) fail("CT_TOPOLOGY_REJECTED", `The \`${AGENTS_TAB_LABEL}\` tab has no pane to split`)
-        const split = (await call(["pane", "split", anchor.pane_id, "--direction", SEAT_SPLIT_DIRECTION, "--cwd", cwd, "--no-focus"])).pane
-        if (!identifier(split?.pane_id)) fail("CT_TOPOLOGY_UNAVAILABLE", "Herdr did not create a fresh seat pane")
-        record = (await panesOf(tabId)).find((pane) => pane.pane_id === split.pane_id)
-          ?? { pane_id: split.pane_id, tab_id: null, cwd: null, foreground_cwd: null }
+      const tabs = await ensureMainTab()
+      let tabId = agentsTabId(tabs), createdTabId = null, createdPaneId = null, record
+      try {
+        if (tabId === null) {
+          // A fresh tab is born holding this seat, so the first worker does not leave an idle shell
+          // column beside the three approved seats.
+          const created = (await call(["tab", "create", "--workspace", workspaceId, "--label", AGENTS_TAB_LABEL, "--cwd", cwd, "--no-focus"])).tab
+          if (!identifier(created?.tab_id)) fail("CT_TOPOLOGY_UNAVAILABLE", `Herdr did not create the \`${AGENTS_TAB_LABEL}\` tab`)
+          if (created.workspace_id !== workspaceId || !absentFrom(tabs, "tab_id", created.tab_id)) {
+            fail("CT_TOPOLOGY_REJECTED", `Herdr did not prove a fresh \`${AGENTS_TAB_LABEL}\` tab in workspace ${workspaceId}`)
+          }
+          createdTabId = created.tab_id
+          tabId = created.tab_id
+          const own = await panesOf(tabId)
+          if (own.length !== 1) fail("CT_TOPOLOGY_REJECTED", `A fresh \`${AGENTS_TAB_LABEL}\` tab must hold exactly one pane`)
+          record = own[0]
+        } else {
+          const before = await workspacePanes()
+          const anchor = before.filter((pane) => pane?.tab_id === tabId).sort(byPaneId).at(-1)
+          if (!anchor || !identifier(anchor.pane_id)) fail("CT_TOPOLOGY_REJECTED", `The \`${AGENTS_TAB_LABEL}\` tab has no pane to split`)
+          const split = (await call(["pane", "split", anchor.pane_id, "--workspace", workspaceId, "--direction", SEAT_SPLIT_DIRECTION, "--cwd", cwd, "--no-focus"])).pane
+          if (!identifier(split?.pane_id)) fail("CT_TOPOLOGY_UNAVAILABLE", "Herdr did not create a fresh seat pane")
+          if (split.workspace_id !== workspaceId || !absentFrom(before, "pane_id", split.pane_id)) {
+            fail("CT_TOPOLOGY_REJECTED", `Herdr did not prove a fresh seat pane in workspace ${workspaceId}`)
+          }
+          createdPaneId = split.pane_id
+          record = (await panesOf(tabId)).find((pane) => pane.pane_id === split.pane_id)
+            ?? { pane_id: split.pane_id, tab_id: null, workspace_id: null, cwd: null, foreground_cwd: null }
+        }
+        if (record.workspace_id !== workspaceId || record.tab_id !== tabId || record.cwd !== cwd || record.foreground_cwd !== cwd) {
+          fail("CT_TOPOLOGY_REJECTED", `Seat pane ${record.pane_id} did not read back inside \`${AGENTS_TAB_LABEL}\` at ${cwd}`)
+        }
+        return Object.freeze({ tab_id: tabId, pane_id: record.pane_id })
+      } catch (error) {
+        try {
+          if (createdTabId) await call(["tab", "close", createdTabId, "--workspace", workspaceId])
+          else if (createdPaneId) await call(["pane", "close", createdPaneId, "--workspace", workspaceId])
+        } catch {}
+        throw error
       }
-      if (record.tab_id !== tabId || record.cwd !== cwd || record.foreground_cwd !== cwd) {
-        try { await call(["pane", "close", record.pane_id]) } catch {}
-        fail("CT_TOPOLOGY_REJECTED", `Seat pane ${record.pane_id} did not read back inside \`${AGENTS_TAB_LABEL}\` at ${cwd}`)
-      }
-      return Object.freeze({ tab_id: tabId, pane_id: record.pane_id })
     },
   })
 }

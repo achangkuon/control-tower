@@ -20,7 +20,7 @@ const flags = (rest) => {
   return parsed
 }
 
-export const runSeatCli = async (args, { git, herdr, mainPath } = {}) => {
+export const runSeatCli = async (args, { git, herdr, mainPath, workspaceId = process.env.HERDR_WORKSPACE_ID } = {}) => {
   if ([git, herdr].some((port) => typeof port !== "function") || typeof mainPath !== "string") throw new TypeError("Seat CLI ports are required")
   const [command = "list", ...rest] = args
   if (!COMMANDS.includes(command)) fail("CT_SEAT_REJECTED", USAGE)
@@ -34,7 +34,7 @@ export const runSeatCli = async (args, { git, herdr, mainPath } = {}) => {
     return Object.freeze({ operation: "asignar", ...pool.assign(mainPath, flags(rest)) })
   }
 
-  const topology = createHerdrTopology({ run: herdr, mainPath })
+  const topology = createHerdrTopology({ run: herdr, mainPath, workspaceId })
   let agents = null, unavailable = null
   try { agents = await topology.readAgentsTab() } catch (error) { unavailable = error.code ?? "CT_TOPOLOGY_UNAVAILABLE" }
   const occupied = agents?.panes.map(({ cwd }) => cwd) ?? []

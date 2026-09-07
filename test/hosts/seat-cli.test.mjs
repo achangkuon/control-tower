@@ -32,20 +32,20 @@ const ports = ({ panes = [], herdrDown = false } = {}) => {
     herdrCalls.push(args.join(" "))
     if (herdrDown) throw new Error("socket closed")
     if (args[0] === "tab") return args[1] === "list"
-      ? { result: { tabs: [{ tab_id: "w1:t1", label: "MAIN" }, { tab_id: "w1:t3", label: "AGENTES" }] } }
-      : { result: { tab: { tab_id: "w1:t3", label: "AGENTES" } } }
+      ? { result: { tabs: [{ tab_id: "w1:t1", label: "MAIN", workspace_id: "w1" }, { tab_id: "w1:t3", label: "AGENTES", workspace_id: "w1" }] } }
+      : { result: { tab: { tab_id: "w1:t3", label: "AGENTES", workspace_id: "w1" } } }
     if (args[0] === "pane" && args[1] === "current") {
-      return { result: { pane: { pane_id: "w1:p1", tab_id: "w1:t1", cwd: MAIN, foreground_cwd: MAIN } } }
+      return { result: { pane: { pane_id: "w1:p1", tab_id: "w1:t1", cwd: MAIN, foreground_cwd: MAIN, workspace_id: "w1" } } }
     }
     if (args[1] === "list") return { result: { panes: [
-      ...panes, { pane_id: "w1:p9", tab_id: "w1:t3", cwd: "/p/Worktrees/implementer-1", foreground_cwd: "/p/Worktrees/implementer-1" },
-      ...(opened ? [{ pane_id: "w1:p4", tab_id: "w1:t3", cwd: opened, foreground_cwd: opened }] : []),
+      ...panes, { pane_id: "w1:p9", tab_id: "w1:t3", workspace_id: "w1", cwd: "/p/Worktrees/implementer-1", foreground_cwd: "/p/Worktrees/implementer-1" },
+      ...(opened ? [{ pane_id: "w1:p4", tab_id: "w1:t3", workspace_id: "w1", cwd: opened, foreground_cwd: opened }] : []),
     ] } }
     // The pane exists only after the split; `--cwd` carries the seat the caller asked for.
-    if (args[1] === "split") { opened = args[args.indexOf("--cwd") + 1]; return { result: { pane: { pane_id: "w1:p4" } } } }
+    if (args[1] === "split") { opened = args[args.indexOf("--cwd") + 1]; return { result: { pane: { pane_id: "w1:p4", workspace_id: "w1" } } } }
     return { result: {} }
   }
-  return { gitCalls, herdrCalls, git, herdr, mainPath: MAIN }
+  return { gitCalls, herdrCalls, git, herdr, mainPath: MAIN, workspaceId: "w1" }
 }
 
 describe("torre asiento", () => {
@@ -67,15 +67,24 @@ describe("torre asiento", () => {
     expect(listed.tab).toBeNull()
   })
 
-  test("opens a seat pane inside AGENTES and flags a temporary one as temporary", async () => {
+  test("opens a seat pane inside the explicitly bound AGENTES workspace", async () => {
     const { herdrCalls, ...rest } = ports()
     expect(await runSeatCli(["abrir", "temp-clean"], { herdrCalls, ...rest })).toEqual({
       operation: "abrir", seat: "temp-clean", temporary: true, tab_id: "w1:t3", pane_id: "w1:p4",
     })
-    expect(herdrCalls.filter((call) => call.includes("--current"))).toEqual(["pane current --current", "pane current --current"])
+    expect(herdrCalls.filter((call) => call.includes("--current"))).toEqual(["pane current --current --workspace w1", "pane current --current --workspace w1"])
+      expect(herdrCalls.filter((call) => /\b(list|split)\b/.test(call)).every((call) => call.includes("--workspace w1"))).toBe(true)
   })
 
-  test("refuses Main, Support, an unknown seat, an occupied seat and a blind topology", async () => {
+  test("rejects a missing workspace binding before Herdr or unrelated mutation", async () => {
+      const unbound = ports()
+      unbound.workspaceId = ""
+      expect(await errorCode(() => runSeatCli(["abrir", "temp-clean"], unbound))).toBe("CT_TOPOLOGY_REJECTED")
+      expect(unbound.herdrCalls).toEqual([])
+      expect(unbound.gitCalls.some((call) => call.startsWith("worktree remove"))).toBe(false)
+    })
+
+    test("refuses Main, Support, an unknown seat, an occupied seat and a blind topology", async () => {
     for (const args of [["abrir", "Main"], ["abrir", "support-agent"], ["abrir", "nope"], ["abrir"]]) {
       expect(await errorCode(() => runSeatCli(args, ports()))).toBe("CT_SEAT_REJECTED")
     }
@@ -105,7 +114,7 @@ describe("torre asiento", () => {
   })
 
   test("keeps a temporary seat that currently holds a pane", async () => {
-    const busy = ports({ panes: [{ pane_id: "w1:p2", tab_id: "w1:t3", cwd: "/p/Worktrees/temp-clean", foreground_cwd: "/p/Worktrees/temp-clean" }] })
+    const busy = ports({ panes: [{ pane_id: "w1:p2", tab_id: "w1:t3", workspace_id: "w1", cwd: "/p/Worktrees/temp-clean", foreground_cwd: "/p/Worktrees/temp-clean" }] })
     const result = await runSeatCli(["limpiar", "--confirmar"], busy)
     expect(result.removed).toEqual([])
     expect(result.refused).toContainEqual({ name: "temp-clean", path: "/p/Worktrees/temp-clean", blocked_by: "occupied-pane" })
