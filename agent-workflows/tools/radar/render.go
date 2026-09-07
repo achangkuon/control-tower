@@ -195,7 +195,44 @@ func RenderAt(p *Plan, root, head string) []byte {
 		fmt.Fprintf(&b, "%d Zona(s) compatibles con trabajo LISTO: %s.\n", len(asientos), markdownList(asientos))
 	}
 	fmt.Fprintln(&b, "Este valor es un pronóstico estático. No adquiere locks, no autentica al proceso invocante y no recupera claims stale.")
+	if rows := referenceRows(p); len(rows) > 0 {
+		fmt.Fprintln(&b, "\n## Non-executable references")
+		for _, r := range rows {
+			fmt.Fprintf(&b, "- **%s** · %s · %s · %s\n", markdownText(r.ID), r.Kind, r.Locator, markdownText(r.Reason))
+		}
+	}
 	return b.Bytes()
+}
+
+// referenceRow is one listed, non-executable reference: no status, ownership,
+// queue, seat, capacity, or completion credit attaches to it.
+type referenceRow struct {
+	ID      string
+	Kind    string
+	Locator string
+	Reason  string
+}
+
+// referenceRows builds the closed "Non-executable references" listing, grouped
+// by kind and then by declaration order — the two YAML arrays already preserve
+// that order, so no further sorting happens here. EstadosAt, ColaPorZonaAt,
+// AvanceAt, AsientosAt, Area, and Cobertura never call this function.
+func referenceRows(p *Plan) []referenceRow {
+	if p.References == nil {
+		return nil
+	}
+	rows := make([]referenceRow, 0, len(p.References.FutureSuccessors)+len(p.References.SatisfiedHistory))
+	for _, f := range p.References.FutureSuccessors {
+		rows = append(rows, referenceRow{f.ID, "future_successor", locatorProvenance(f.AssignmentSource), f.Reason})
+	}
+	for _, s := range p.References.SatisfiedHistory {
+		rows = append(rows, referenceRow{s.ID, "satisfied_history", locatorProvenance(s.TerminalSource), s.Reason})
+	}
+	return rows
+}
+
+func locatorProvenance(loc FragmentLocator) string {
+	return fmt.Sprintf("%s@%s:L%d-L%d", loc.Path, loc.Commit, loc.LineStart, loc.LineEnd)
 }
 
 func esTerritorioPendiente(s *Sesion) bool {

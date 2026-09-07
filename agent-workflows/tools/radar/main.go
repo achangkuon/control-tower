@@ -176,6 +176,12 @@ func cmdStatus(p *Plan, root string) error {
 	} else {
 		fmt.Printf("Asientos: %d zona(s) compatibles — %v (pronóstico, no locks)\n", len(asientos), asientos)
 	}
+	if rows := referenceRows(p); len(rows) > 0 {
+		fmt.Println("\nNon-executable references (no status/queue/seat/capacity):")
+		for _, r := range rows {
+			fmt.Printf("  %-18s %-8s %-24s %s\n", r.ID, r.Kind, r.Locator, r.Reason)
+		}
+	}
 	return nil
 }
 
