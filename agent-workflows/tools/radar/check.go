@@ -586,6 +586,7 @@ func checkDecisiones(s *Sesion) []Hallazgo {
 func (p *Plan) checkGrafo() []Hallazgo {
 	var h []Hallazgo
 	index := p.SesionPorID()
+	referencias := p.referenceKinds()
 	sucesoras := map[string][]string{}
 	for _, s := range p.Sesiones {
 		if s.Archivada {
@@ -603,6 +604,17 @@ func (p *Plan) checkGrafo() []Hallazgo {
 		for _, dep := range s.DependeDe {
 			d, ok := index[dep]
 			if !ok {
+				if referencias[dep] != "" {
+					// A future or satisfied-history reference is structurally
+					// present (design.md:577, design.md:587: "closes only that
+					// missing structural edge" / "may register structural
+					// lineage closure"). It is not a Sesión, so it grants no
+					// readiness — EstadosAt resolves depende_de only against
+					// p.SesionPorID() and this dependency never becomes met by
+					// this edge alone. See checkReferencias for reference-owned
+					// graph rules (identity, locator, leaf, cycle).
+					continue
+				}
 				h = append(h, Hallazgo{"error", "dependencias",
 					fmt.Sprintf("%s depende de %q, que no existe", s.ID, dep)})
 				continue
@@ -663,6 +675,28 @@ func (p *Plan) checkGrafo() []Hallazgo {
 	}
 
 	return h
+}
+
+// referenceKinds maps every reference identity (future_successors and
+// satisfied_history) to its kind, so checkGrafo can recognize a dependency
+// target that is structurally present without being a Sesión. It does not
+// validate shape or duplicates — checkReferencias owns that.
+func (p *Plan) referenceKinds() map[string]string {
+	kinds := map[string]string{}
+	if p.References == nil {
+		return kinds
+	}
+	for _, f := range p.References.FutureSuccessors {
+		if f.ID != "" {
+			kinds[f.ID] = "future"
+		}
+	}
+	for _, s := range p.References.SatisfiedHistory {
+		if s.ID != "" {
+			kinds[s.ID] = "satisfied"
+		}
+	}
+	return kinds
 }
 
 // checkLinaje validates replacement history. Replacements keep stable IDs honest:
@@ -832,11 +866,14 @@ func (p *Plan) checkReferencias(root string) []Hallazgo {
 		h = append(h, validateFragmentLocator(root, s.TerminalSource, ctx+" terminal_source")...)
 	}
 	for _, s := range p.Sesiones {
-		for _, dep := range s.DependeDe {
-			if kinds[dep] == "satisfied" {
-				h = append(h, Hallazgo{"error", "hoja histórica", fmt.Sprintf("%s no puede depender de la referencia histórica %q", s.ID, dep)})
-			}
-		}
+		// A Sesión's depende_de closes structurally on a satisfied-history
+		// identity — that closure is the reference's whole purpose
+		// (design.md:577) — so it is never rejected here. A satisfied-history
+		// reference is already a graph leaf: its closed shape (`SatisfiedHistory`
+		// carries no `dependencies` field; KnownFields(true) rejects one) means
+		// it can declare no outgoing edge of its own, and referenceCycleErrors
+		// below never follows a "satisfied" kind further. The only remaining
+		// historical-leaf restriction is replacement direction, checked next.
 		for _, original := range s.Reemplaza {
 			if kind, ok := kinds[original]; ok && kind != "sesion" {
 				h = append(h, Hallazgo{"error", "linaje de referencia", fmt.Sprintf("%s no puede reemplazar la referencia %q", s.ID, original)})

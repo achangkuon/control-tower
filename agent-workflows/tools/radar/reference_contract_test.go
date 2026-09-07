@@ -136,7 +136,14 @@ func TestReferenceGraphSafety(t *testing.T) {
 	badEdges := &Plan{References: &References{FutureSuccessors: []FutureSuccessor{{ID: "S102", Reason: "r", Result: "r", Zone: "z", AssignmentSource: loc, Dependencies: []string{"S999"}, Replaces: []string{"S999"}}}}}
 	notArchived := &Plan{References: &References{FutureSuccessors: []FutureSuccessor{replacing("S5")}}, Sesiones: []Sesion{sesion("S5", false, nil, nil)}}
 	archived := &Plan{References: &References{FutureSuccessors: []FutureSuccessor{replacing("S5")}}, Sesiones: []Sesion{sesion("S5", true, nil, nil)}}
-	leafViolation := &Plan{References: &References{FutureSuccessors: []FutureSuccessor{fut("S102", []string{"S1.9"})}, SatisfiedHistory: []SatisfiedHistory{hist}}, Sesiones: []Sesion{sesion("S3", false, []string{"S1.9"}, []string{"S1.9"})}}
+	// Corrected historical-leaf rule (bounded R1 correction): a Sesión's
+	// depende_de closes structurally on a satisfied-history reference — that is
+	// the reference's whole purpose (design.md:577) — so it must not fail here.
+	// Replacing one, and a future successor depending on one, remain rejected:
+	// only depende_de closure changed.
+	dependsOnHist := &Plan{References: &References{SatisfiedHistory: []SatisfiedHistory{hist}}, Sesiones: []Sesion{sesion("S3", false, []string{"S1.9"}, nil)}}
+	replacesHist := &Plan{References: &References{SatisfiedHistory: []SatisfiedHistory{hist}}, Sesiones: []Sesion{sesion("S3", false, nil, []string{"S1.9"})}}
+	futureIntoHist := &Plan{References: &References{FutureSuccessors: []FutureSuccessor{fut("S102", []string{"S1.9"})}, SatisfiedHistory: []SatisfiedHistory{hist}}}
 	cyclePlan := &Plan{References: &References{FutureSuccessors: []FutureSuccessor{fut("S102", []string{"S103"}), fut("S103", []string{"S102"})}}}
 	unaffected := &Plan{Sesiones: []Sesion{sesion("S1", true, nil, nil)}}
 	cases := []struct {
@@ -149,7 +156,9 @@ func TestReferenceGraphSafety(t *testing.T) {
 		{"dependency/replaces on a nonexistent identity", badEdges, true},
 		{"replaces a non-archived Sesión", notArchived, true},
 		{"replaces an archived Sesión", archived, false},
-		{"Sesión and future successor both edge into satisfied history", leafViolation, true},
+		{"Sesión depends on satisfied history: structural edge closes", dependsOnHist, false},
+		{"Sesión replaces satisfied history: still rejected", replacesHist, true},
+		{"future successor depends on satisfied history: still rejected", futureIntoHist, true},
 		{"dependency cycle across future successors", cyclePlan, true},
 		{"plan without references is unaffected", unaffected, false},
 	}
@@ -159,5 +168,57 @@ func TestReferenceGraphSafety(t *testing.T) {
 				t.Fatalf("expected fail=%v, got %v", c.fail, got)
 			}
 		})
+	}
+}
+
+// TestDependeDeReferenceClosesStructuralEdge is the RED regression for the R1
+// correction: checkGrafo resolved dependency targets only against Sesiones and
+// was blind to References, so depending on a structurally present future or
+// satisfied-history reference produced a false "que no existe" alongside
+// checkReferencias' now-removed historical-leaf rejection — two contradictory
+// errors from one edge. Neither check.go:607 nor check.go:836-838 may fire for
+// these targets anymore.
+func TestDependeDeReferenceClosesStructuralEdge(t *testing.T) {
+	root, commit, blob, raw := referenceFixture(t)
+	loc := validLocator(commit, blob, raw, 1, 1)
+	future := FutureSuccessor{ID: "S102", Reason: "r", Result: "r", Zone: "z", AssignmentSource: loc}
+	hist := SatisfiedHistory{ID: "S1.9", Reason: "r", TerminalSource: loc}
+	cases := map[string]string{
+		"future successor target":  "S102",
+		"satisfied history target": "S1.9",
+	}
+	for name, dep := range cases {
+		t.Run(name, func(t *testing.T) {
+			plan := &Plan{
+				References: &References{FutureSuccessors: []FutureSuccessor{future}, SatisfiedHistory: []SatisfiedHistory{hist}},
+				Sesiones:   []Sesion{sesion("S3", false, []string{dep}, nil)},
+			}
+			for _, f := range plan.checkGrafo() {
+				if f.Regla == "dependencias" {
+					t.Fatalf("checkGrafo must not report %q for a structurally present reference target %q: %s", f.Regla, dep, f.Detalle)
+				}
+			}
+			for _, f := range plan.checkReferencias(root) {
+				if f.Regla == "hoja histórica" {
+					t.Fatalf("checkReferencias must not report a historical-leaf rejection for a Sesión depending on %q: %s", dep, f.Detalle)
+				}
+			}
+		})
+	}
+}
+
+// TestSessionDependingOnSatisfiedHistoryNeverBecomesReady is the RED
+// regression for the "no readiness, ever" half of the corrected rule
+// (design.md:587): closing the structural edge to a reference must never make
+// a Sesión LISTO. EstadosAt resolves depende_de only against p.SesionPorID(),
+// so a reference target — never a Sesión — must keep the dependency unmet.
+func TestSessionDependingOnSatisfiedHistoryNeverBecomesReady(t *testing.T) {
+	plan := &Plan{
+		References: &References{SatisfiedHistory: []SatisfiedHistory{{ID: "S1.9", Reason: "r", TerminalSource: FragmentLocator{}}}},
+		Sesiones:   []Sesion{sesion("S3", false, []string{"S1.9"}, nil)},
+	}
+	estados := plan.EstadosAt("", "")
+	if got := estados["S3"]; got != Planificado {
+		t.Fatalf("closing a reference edge must grant no readiness; expected %s, got %s", Planificado, got)
 	}
 }
