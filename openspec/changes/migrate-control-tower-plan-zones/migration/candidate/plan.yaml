@@ -6305,6 +6305,76 @@ sesiones:
             resultado: "REFACTOR: the schema change is confirmed isolated, with no unrelated fixture touched."
             criterios: ["git diff --cached --numstat reports changes only in schemas/delivery-policy-v1.schema.json and test/contracts/s3-2-schemas.test.mjs."]
 
+  - id: S101
+    zona: capacidades
+    resultado: "Resolución de política: prepare_through opaco y horizon_ceiling salen de la política resuelta"
+    autoridad: "Identity, result, zona, dependency, cimientos, and replacement lineage are copied from migration/lineage.yaml successors[S101], whose approved assignment source is immutable commit 43130ad40af06f3ed05671000719217bee74f0a5 at agent-workflows/ASIGNACION-24-SESIONES.md; predecessor S5.14 and its replacement edge remain recorded in migration/lineage.yaml archived_originals and migration/sessions/plan-5.yaml. Product boundaries and route depth are approved by openspec/changes/s101-policy-resolution/proposal.md rev2, specs/policy-resolution/spec.md rev2, and correction 10540. Kickoff route provenance is Engram 10536."
+    depende_de: [S100]
+    cimientos: []
+    recurso: []
+    reemplaza: [S5.14]
+    criterios:
+      - "After migration activation, S101's full-sdd execution proves that valid declared policy resolves prepare_through as the opaque value TAREAS and horizon_ceiling as 2 counted in Sessions."
+      - "After migration activation, absent, malformed, invalid, or contradictory policy produces restrictive planning values with resolved false, the named result CT_POLICY_UNRESOLVED, and a non-empty stable reason."
+      - "S100 remains the sole owner of the optional prepare_through schema declaration, S101 remains the owner of policy and Jornada resolution, and S102 remains the owner of continuation consumption and literal removal."
+      - "No S101-owned consumer recreates or interprets the TAREAS literal, and no Module count is accepted as the horizon_ceiling unit."
+      - "Main remains the sole assignment and dispatch authority; S101 grants no assignment, dispatch, continuation, delivery, Tower, Herdr, database, or merge authority."
+      - "Future S101 runtime design, Modules, Tasks, interfaces, implementation, and tests are approved only through a new post-activation execution of this Session's full-sdd route."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "Which successor owns schema declaration, policy and Jornada resolution, and continuation consumption?"
+        resolucion: "S100 owns schema declaration, S101 owns policy and Jornada resolution, and future S102 owns continuation consumption and literal removal."
+        autoridad: "Immutable successor lineage in migration/lineage.yaml, assignment commit 43130ad40af06f3ed05671000719217bee74f0a5, and approved proposal/specification rev2."
+        clase: expansion-de-alcance
+        falsificador: "S101 changes schema or continuation ownership, or S102 is materialized in the current two-Session horizon."
+        descartadas:
+          - opcion: "Materialize schema, resolution, and continuation as one S101 contract."
+            razon: "Rejected because it erases the approved S100/S101/S102 ownership and lineage boundaries."
+      - tipo: resuelta
+        pregunta: "Which planning values and unit are fixed before future runtime design?"
+        resolucion: "prepare_through is the opaque value TAREAS; horizon_ceiling is 2 and counts Sessions, never Modules."
+        autoridad: "Approved proposal/specification rev2, Engram 10536, and the canonical delivery-policy authority referenced there."
+        clase: contrato-visible
+        falsificador: "The future outcome interprets or recreates TAREAS downstream, uses a ceiling other than 2, or counts Modules."
+        descartadas:
+          - opcion: "Let future runtime design choose another planning depth, ceiling, or counting unit."
+            razon: "Rejected because those product values and Session-count semantics are already approved."
+      - tipo: resuelta
+        pregunta: "What product outcome is required when policy is absent, malformed, invalid, or contradictory?"
+        resolucion: "Resolution remains restrictive with resolved false, named result CT_POLICY_UNRESOLVED, restrictive planning values, and a non-empty stable reason."
+        autoridad: "Approved proposal/specification rev2 and canonical fail-closed delivery-policy authority."
+        clase: contrato-visible
+        falsificador: "Any listed policy failure becomes permissive, reports resolved true, omits CT_POLICY_UNRESOLVED, or has no stable named reason."
+        descartadas:
+          - opcion: "Permit a missing or invalid policy to inherit a permissive result."
+            razon: "Rejected because it violates the approved fail-closed boundary."
+      - tipo: resuelta
+        pregunta: "Does S101 change assignment or dispatch authority?"
+        resolucion: "No. Main remains the sole assignment and dispatch authority; S101 only owns future policy and Jornada resolution."
+        autoridad: "Approved proposal/specification rev2, Engram 10536, and the existing Main authority boundary."
+        clase: seguridad-y-permisos
+        falsificador: "A non-Main actor gains assignment or dispatch authority from S101."
+        descartadas:
+          - opcion: "Allow policy or Jornada resolution to assign or dispatch work."
+            razon: "Rejected because resolution is not an authority grant."
+      - tipo: resuelta
+        pregunta: "At what depth is S101 complete in the migration candidate?"
+        resolucion: "S101 uses full-sdd with exactly modulos: []; runtime decomposition is created only by post-activation full-sdd execution."
+        autoridad: "agent-workflows/tools/radar/check.go:514-524, approved proposal/specification rev2, and route-depth correction Engram 10540."
+        clase: migracion-o-perdida-de-datos
+        falsificador: "The candidate uses another route, contains any Module or Task, or treats empty modulos as an incomplete contract."
+        descartadas:
+          - opcion: "Embed future runtime Modules and Tasks in the migration candidate."
+            razon: "Rejected because Radar forbids Modules for full-sdd and migration activation must precede runtime decomposition."
+    ruta:
+      propuesta: full-sdd
+      autoridad: "Approved S101 proposal/specification rev2 and Radar's canonical route-depth contract require full-sdd before the shared policy/Jornada behavior is designed."
+      revalidacion:
+        resultado: full-sdd
+        base: e93ee87e0705bd8e2d0d64b98956e986a633972d
+        evidencia: "Engram migration/s101/kickoff observation 10536 records the clean implementer-1 base, migration-only boundary, S100/S101/S102 ownership, and full-sdd revalidation."
+    modulos: []
+
 references:
   future_successors:
     - id: S102

@@ -4670,3 +4670,22 @@ Resolution taken: S100's Módulo and criteria are bounded to the schema-level co
 ### Structured status consumed
 
 - Native runtime attempt token `sha256:c521b30077069fee8baa82fc5e87d7b7a883d0ea1165ac556df78285ad8742d4` (work unit `D2A S100 full Session contract append`, budget `--max-attempts 3 --max-changed-lines 480`) was already acquired by the parent orchestrator before this apply ran; this apply performed no `sdd-attempt acquire`/`settle`/`reset` call — the parent settles this attempt from the evidence recorded above. The measured 54-line total is well inside the 480-line runtime budget and the 400-line per-append design cap.
+
+## M0.4.5A D2B + G1 — completed read-only closure evidence
+
+### D2 cumulative completion
+
+- D2A remains complete: commit `14ac794ca0fed933d9d31e85b8fccfa25eeb4978` appended S100 as a 54-authored-line full Session; `migration/lineage.yaml` did not require a change.
+- D2B is complete: S101 was appended as one 70-addition full-Session change. The independently verified candidate SHA-256 is `a3249af3d9b8652bfd59943a72c82a5767db21f997025cb244c1b414f5790c58`; the exact partition is 74 full Sessions / 7 future-successor references / 4 satisfied-history references = 85 records. S101 retains `ruta: full-sdd` and `modulos: []`; its runtime is intentionally not implemented. Helper verification passed (Engram observation 10543).
+
+### G1 corrected full PASS
+
+- P1 test: 14 pass, 0 fail, 19 assertions. The live P1 verifier returned `ok: true` with 74/7/4/85.
+- Radar: `check` exited 0 with 0 errors and 0 warnings; `status` exited 0 and reported `67% (50/74 S)`; `zonas` exited 0 with 561 tracked files.
+- Two renders were byte-identical, each SHA-256 `7ca55fe619dc5a9a8e60d0d43e0da113a1f8bf067ec93b009e7df3d5e63708ff`.
+- Candidate bytes, HEAD, and Git state remained unchanged. Canonical `openspec/plan.yaml` and `openspec/ROADMAP.md` remain absent.
+- The first G1 attempt passed P1 and Radar `check`/`status`/`zonas`, but Radar safety rejected its external render path. It changed no candidate or repository bytes; Engram 10544 records this as a harness-configuration failure, not a candidate failure. The sole corrected full retry rendered to ephemeral in-worktree files, removed them, and passed.
+
+### Boundary and next cursor
+
+No activation, delivery, commit, stage, push, runtime mutation, canonical-path creation, Tower/DB/Herdr action, or migration activation occurred in this bookkeeping update. D2 and G1 are complete; M0.4.6 is unblocked. Next cursor: **C06 / T0.4.6.1 — Map archive fidelity**.
