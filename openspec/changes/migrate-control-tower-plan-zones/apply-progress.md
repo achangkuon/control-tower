@@ -4689,3 +4689,120 @@ Resolution taken: S100's Módulo and criteria are bounded to the schema-level co
 ### Boundary and next cursor
 
 No activation, delivery, commit, stage, push, runtime mutation, canonical-path creation, Tower/DB/Herdr action, or migration activation occurred in this bookkeeping update. D2 and G1 are complete; M0.4.6 is unblocked. Next cursor: **C06 / T0.4.6.1 — Map archive fidelity**.
+
+## M0.4.6 / C06 — dormant archive and assembly inputs staged for parent settlement
+
+### Completed implementation tasks
+
+- [x] T0.4.6.1 — created `migration/archive-inventory.yaml` with the complete frozen `openspec/plans/` corpus: 31 byte-faithful archive bindings, each with the immutable source mode/blob, one safe destination below `openspec/archive/legacy-planning/`, and exactly one canonical target mapping or archive-only reason.
+- [x] T0.4.6.2 — created `migration/candidate-inputs.yaml` with canonical-plan promotion identity, generated-ROADMAP/equivalence-manifest deferred-C07 bindings, the 31-path archive expansion, and exact current guidance/doc-guard inputs.
+- [x] T0.4.6.3 — revalidated diff integrity, dormant Radar candidate, every archive source object, canonical absence, and the staged C06 boundary.
+
+The matching implementation-owned task rows are visibly checked in `tasks.md`; parent-owned rows are unchanged.
+
+### Files changed and staging boundary
+
+- `openspec/changes/migrate-control-tower-plan-zones/migration/archive-inventory.yaml` (new)
+- `openspec/changes/migrate-control-tower-plan-zones/migration/candidate-inputs.yaml` (new)
+- `openspec/changes/migrate-control-tower-plan-zones/tasks.md`
+- `openspec/changes/migrate-control-tower-plan-zones/apply-progress.md`
+
+`migration/candidate/plan.yaml` and `migration/partition.yaml` were not amended: no recorded structural omission was proven. No final archive byte, canonical `openspec/plan.yaml`, canonical `openspec/ROADMAP.md`, runtime/test/proof source, commit, or push was created.
+
+### TDD Cycle Evidence
+
+| Task | Layer | RED | GREEN | TRIANGULATE | REFACTOR |
+|---|---|---|---|---|---|
+| T0.4.6.1 | Proportional structural Git-object contract | Expected failing required-file assertion: both C06 inputs were absent | 31/31 archive entries parse and match `git cat-file` plus `git ls-tree` mode/blob/path | All 31 source-tree paths, unique safe destinations, and one mapping/reason per row | N/A — declarative data only |
+| T0.4.6.2 | Proportional structural assembly contract | Same missing-input RED | Candidate promotion blob `5d85cebfff9623f0468713f5c562e121cb5257a5`, 31 archive bindings, 74/7/4/85, and cutover inputs parse/agree | Deferred C07-generated/self-referential blobs are explicitly bound, not invented | N/A — declarative data only |
+| T0.4.6.3 | Proportional structural/Radar contract | Root-level task-form Radar invocation failed before Radar because this repository has no root `go.mod` | Equivalent module-root Radar `check` and `status` passed with `-C ../../..`; source and canonical-absence checks passed | Candidate remains exactly 74/7/4/85 and every archive source rechecked | N/A — no production source |
+
+No test/proof source was changed; `bun test` was intentionally not run under the C06 proportional structural contract. Runtime harness: N/A — this unit has no runtime boundary.
+
+### Verification evidence
+
+| Check | Result |
+|---|---|
+| `git diff --check` | PASS |
+| Radar `check` against dormant candidate | PASS: 11 Zones, 74 Sessions, partition and evidence valid |
+| Radar `status` against dormant candidate | PASS: `67% (50/74 S)`; non-executable references listed separately |
+| Immutable archive sources | PASS: 31/31 `git cat-file -e` and `git ls-tree` mode/blob/path checks |
+| Candidate partition | PASS: 74 full Sessions / 7 future-successor references / 4 satisfied-history references = 85 records |
+| Canonical paths | PASS: both absent |
+
+The task's root `go run ./agent-workflows/tools/radar ...` form cannot locate a root `go.mod`; the equivalent module-root form (`cd agent-workflows/tools/radar && go run . ... -C ../../..`) ran the same Radar commands successfully. This is a harness-path deviation, not a Radar error.
+
+### Workload / rollback
+
+C06 is one local, independently revertible direct-commit candidate. Rollback boundary: revert/discard only the four C06 surfaces above. The resolved sequential direct-commit path applies; no C06 commit or push is authorized.
+
+### Remaining work
+
+The next exact unchecked implementation row is:
+
+`- [ ] **T0.4.7.1 — Materialize isolated proof tree:** create/reuse only $PROOF_ROOT under the user home directory ... <!-- sdd-owner: implementation -->`
+
+Deferred parent lifecycle actions remain byte-for-byte unchanged: bounded review/settlement and the later explicit C09 delivery authorization.
+
+### Structured status consumed
+
+- Native OpenSpec status supplied by parent: authoritative, fresh `nextRecommended: apply`, `blockedReasons: []`, 32/49 tasks complete, clean worktree, branch `feat/s0.4-plan-zones-migration`, HEAD `2c247242bdf1474de6ce392c37268a314909ddb5`.
+- Artifact store: hybrid; OpenSpec authoritative. Engram read/write timed out at `http://127.0.0.1:7437`, so its mirror remains pending and is not claimed as persisted.
+- Action context: Tower OFF; only the six parent-allowed C06 surfaces were considered. Actual edits stayed within four allowed C06/bookkeeping paths.
+- C06 input identity: source commit `43130ad40af06f3ed05671000719217bee74f0a5`; candidate SHA-256 remains `a3249af3d9b8652bfd59943a72c82a5767db21f997025cb244c1b414f5790c58`; candidate Git blob `5d85cebfff9623f0468713f5c562e121cb5257a5`.
+
+### Final staged accounting
+
+- `git diff --cached --check`: PASS.
+- Staged paths: `apply-progress.md`, `migration/archive-inventory.yaml`, `migration/candidate-inputs.yaml`, and `tasks.md` only.
+- Final staged `--numstat`: `69/0` (`apply-progress.md`), `39/0` (`archive-inventory.yaml`), `27/0` (`candidate-inputs.yaml`), and `3/3` (`tasks.md`); authored total: **141**, below 400.
+- Archive inventory count: 31. Candidate inputs: 4 top-level activation entries, expanding to 34 activation paths (canonical plan, generated ROADMAP, 31 archived files, and the C07 evidence manifest); 2 exact cutover inputs.
+- Immutable identities: source tree `cae4cd6ad3ee1b879b04dbd4872be1f0e5880e23`; HEAD tree `948d0e707a4f1958ab244745a2f3824fdc817d12`; candidate SHA-256 and candidate blob remain recorded above.
+
+## M0.4.6 / C06 — maintainer-authorized failed-gate correction — 2026-09-08
+
+### Failed-gate RED and proven diagnosis
+
+- RED is the independent failed C06 gate supplied by the maintainer; no artificial failure was written. A read-only deterministic reproduction against the staged C06 bytes reported `missingArchiveTreatments: 31`, `missingTopTreatments: 4`, and two non-root-resolvable input paths: `migration/archive-inventory.yaml` and `migration/candidate-inputs.yaml`.
+- Root cause 1: the failed gate's 33 ownerless final paths were the 31 aggregated archive destinations plus the generated ROADMAP and equivalence manifest; the aggregate archive entry did not assign a treatment to any individual archive row. The legacy plan entry had a duplicated promotion source but no named treatment.
+- Root cause 2: the 14 legacy active views (the master index plus `plan-0` through `plan-12` STATUS views) were classified but not explicitly marked for retirement at C09; canonical plan/ROADMAP promotion treatments were implicit rather than named.
+- Root cause 3: two `archive_evidence_inputs` used migration-relative paths, which do not resolve from the repository root. The previous self-reference also could not carry a stable blob; it remains explicitly deferred to C07's equivalence manifest rather than being fabricated.
+
+### Exact correction
+
+- `migration/archive-inventory.yaml`: each of the 31 source/destination rows now has exactly one `activation_treatment`; 14 active legacy views use `retire-active-view-and-archive-byte-faithfully`, while the 17 non-active narratives/catalogs use `archive-byte-faithfully`. Existing archive-only reasons and canonical targets are unchanged.
+- `migration/candidate-inputs.yaml`: all four activation entry classes have explicit `activation_owner` and `activation_treatment`; plan promotion is `promote-dormant-candidate-exact-byte`, ROADMAP is deterministic C07 rendering, all 31 archive destinations are owned by `archive-inventory.entries`, and the equivalence manifest has a C07 producer treatment. Both active cutover inputs have explicit C09 owners/treatments.
+- `archive_evidence_inputs` now use repository-root paths and exact mode/blob identities for source inventory, lineage, partition, all 13 mapping files, and the corrected archive inventory. C06's self blob and deferred generated blobs remain C07-bound, not invented.
+
+### TDD Cycle Evidence
+
+| Task | Layer | RED | GREEN | TRIANGULATE | REFACTOR |
+|---|---|---|---|---|---|
+| T0.4.6.1 | Structural Git/YAML contract | Independent failed C06 gate; reproduced 31 missing archive treatments | 31/31 source mode/blob/path checks and one treatment per destination pass | 14 active retirements and 17 archive-only treatments; destinations unique/safe | N/A — declarative correction |
+| T0.4.6.2 | Structural activation assembly contract | Independent failed C06 gate; reproduced four missing top-level treatments and two bad root paths | 4/4 activation classes have owner+treatment; 17 root-resolvable archive-evidence inputs pass | Exact canonical promotion, C07 producer, archive expansion, and two C09 cutover inputs pass | N/A — declarative correction |
+| T0.4.6.3 | P1/Radar integration contract | Failed gate remained the required RED evidence | P1, check, status, zonas, and two equal renders pass | Partition and candidate hash rechecked independently of C06 data | N/A — no production source |
+
+### Verification evidence
+
+| Command/check | Result |
+|---|---|
+| Deterministic C06 root/source/blob/mode/owner validator | PASS: 31 archive entries, 14 explicit active retirements, 4 top-level activation treatments, 34 expanded activation paths, 17 root-resolvable archive-evidence inputs, zero failures. |
+| `bun test openspec/changes/migrate-control-tower-plan-zones/migration/proof/verify-activation-partition.test.mjs` | PASS: 14 pass, 0 fail, 19 assertions. |
+| `bun openspec/changes/migrate-control-tower-plan-zones/migration/proof/verify-activation-partition.mjs` | PASS: exact 74 full / 7 future / 4 satisfied-history = 85 records. |
+| `go run . check -f ../../../openspec/changes/migrate-control-tower-plan-zones/migration/candidate/plan.yaml -C ../../..` from `agent-workflows/tools/radar` | PASS: 11 Zones, 74 Sessions, valid partition/evidence. |
+| Equivalent Radar `status` / `zonas` commands | PASS: `67% (50/74 S)`; 567 tracked files; references remain separately non-executable. |
+| Two absolute internal-root `radar render` commands | PASS: byte equal; SHA-256 `7ca55fe619dc5a9a8e60d0d43e0da113a1f8bf067ec93b009e7df3d5e63708ff`; ephemeral output directory deleted. The first relative-output invocation was safety-rejected before rendering and changed no bytes; the absolute internal-root retry passed. |
+| `git diff --cached --check` | PASS after final staging. |
+
+### Immutable identities, boundary, and stop checkpoint
+
+- Dormant candidate SHA-256 remains exactly `a3249af3d9b8652bfd59943a72c82a5767db21f997025cb244c1b414f5790c58`; `migration/candidate/plan.yaml` and `migration/partition.yaml` were not edited.
+- Partition remains exactly 74 full / 7 future / 4 satisfied-history = 85. Route vocabulary remains unchanged.
+- Completed implementation checkboxes: `T0.4.6.1`, `T0.4.6.2`, and `T0.4.6.3` are restored to `[x]` only after the checks above passed. Parent-owned rows are unchanged.
+- C06 only: stop before C07. No proof checkout, canonical path, archive bytes, Tower/Herdr/DB/runtime change, commit, push, PR, or route-authority correction was started.
+- Rollback boundary: revert/discard only C06's four staged surfaces. Parent retains native attempt token `sha256:ab4ce7e87f0b1017a43cf1efc93d3ef0dcce27ae7bc5d7d360306ff3c39803f6` and must settle this correction from this evidence; this executor did not acquire, settle, reset, commit, or push.
+
+### Structured status consumed
+
+- Native OpenSpec status: `applyState: ready`, `nextRecommended: apply`, no blocked reasons; authoritative workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`, action context `repo-local` with that workspace as the allowed edit root.
+- Action-context warning: the parent supplied a narrower C06 allowlist; only `archive-inventory.yaml`, `candidate-inputs.yaml`, `tasks.md`, and `apply-progress.md` were edited. High workload risk is resolved by the maintainer-authorized bounded C06 correction; staged authored total is exactly 203, below 400.
