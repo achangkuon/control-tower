@@ -51,7 +51,7 @@ One final activation commit changes the planning contract as a single boundary:
 2. the exact proven Radar output becomes `openspec/ROADMAP.md` with its generated/do-not-edit notice;
 3. the active documentation-close contract and repository guidance switch to the new planning source;
 4. legacy generated views move to the historical read-only archive;
-5. the immutable equivalence record identifies the source snapshot and the activated candidate tree.
+5. C09 computes and commit-message-attests the sole `final_package_identity` after activation bytes and receipts are fixed.
 
 The parent of this commit has no canonical plan or generated ROADMAP and still uses the legacy views. The activation commit has the complete new contract. There is no supported mixed state.
 
@@ -177,7 +177,7 @@ Equivalence is a binary activation gate, not a visual comparison. The migration 
 | Evidence | Requirement |
 |---|---|
 | Source identity | Full immutable commit OID for the legacy source snapshot and the exact inventory of authoritative source files. |
-| Candidate identity | Git tree OID for the complete activation candidate, including the exact plan bytes, generated ROADMAP bytes, archive moves, equivalence record, and guidance/close-gate cutover. |
+| C07 technical proof subject | `radar_execution_subject` is a private synthetic commit/tree locator with a logical precursor, materialization recipe, and exact path/mode/blob inputs. It is non-product, non-activating, and not a package or candidate identity; versioned C07 receipts are excluded from it. C08 reproduces that recipe/content/evidence and declares readiness without a package OID. C09 alone computes and commit-message-attests the sole `final_package_identity`. |
 | Content identity | Blob OIDs or cryptographic hashes for the canonical plan candidate, generated ROADMAP candidate, and every archived source. |
 | Session ledger | One row per each of the 72 imported historical Sessions plus `S100` and `S101`, showing stable ID, source, target, preserved fields, transformations, compatibility provenance where used, territory state, and archive-only data. No omissions or duplicates. |
 | Compatibility proof | Tests and evidence show that only immutably proven imported rows preserve legacy Session/Module/Task IDs; pending territory requires a blocking escalating decision, contributes no queue/seat/ownership/capacity, fabricates no territory contract, resolves without changing the legacy ID, and is rejected for newly authored Sessions. The compatibility change is a separate commit/review work unit of at most 400 authored changed lines that precedes all migration data. |
@@ -191,11 +191,11 @@ Equivalence is a binary activation gate, not a visual comparison. The migration 
 
 The candidate tree may be assembled and materialized in an isolated proof location using noncanonical preparation artifacts. The active migration worktree and all reachable pre-activation commits still keep `openspec/plan.yaml` and `openspec/ROADMAP.md` absent.
 
-Immediately before activation, the final staged tree must reproduce the proven candidate tree OID exactly. Any changed byte, tracked-file change, regenerated output, archive change, or guidance change invalidates the proof and requires a new candidate identity and complete equivalence run.
+C07 records reproducible technical evidence only. C08 must reproduce its exact recipe, content, and evidence without computing a package OID. Any changed byte, tracked-file change, regenerated output, archive change, or guidance change invalidates that evidence. C09 computes `final_package_identity` only after those bytes and receipts are fixed.
 
 ## Atomic activation boundary
 
-The activation boundary is one direct commit whose tree is identical to the proven candidate tree.
+The activation boundary is one direct commit whose tree is the C09-attested sole `final_package_identity`.
 
 The first implementation prerequisite is the reusable Radar compatibility contract, implemented and tested in its own commit/review work unit of at most 400 authored changed lines. No migration inventory rows, mapping data, candidate plan data, or other migration data may be prepared until that contract passes its tests. This prerequisite may change only the Radar surfaces needed by the approved compatibility and does not expose canonical plan paths.
 
@@ -205,7 +205,7 @@ Activation is allowed only when all of these are true:
 
 - the reusable compatibility contract was implemented and tested before migration data, with no unrelated Radar expansion;
 - every compatibility-marked row is tied to immutable migration provenance and every territory-pending row satisfies the blocking-decision gate and scheduling exclusions;
-- the source and candidate immutable identities are recorded;
+- C07 technical subject evidence and C08 reproduction readiness are recorded without a package identity;
 - all 72 imported historical Sessions are accounted for exactly once as full Session contracts;
 - only separately planned and approved `S100` and `S101` are materialized as successor Sessions;
 - exactly seven future-successor references and four satisfied-history references pass their non-executable and provenance gates;
@@ -214,7 +214,7 @@ Activation is allowed only when all of these are true:
 - all Radar and deterministic-render checks pass against the same candidate tree;
 - close-gate and repository-guidance behavior are coherent with the new source;
 - archived legacy material is complete and readable;
-- the final staged tree OID equals the proven candidate tree OID.
+- C09 alone computes and attests the final staged tree as `final_package_identity`.
 
 No partial activation commit may be pushed. A plan without its proven generated view, a generated view without its plan, or either one while legacy views still claim active authority is a failed boundary.
 
@@ -227,7 +227,7 @@ No partial activation commit may be pushed. A plan without its proven generated 
 5. Revalidate all tracked-file ownership, adding the `metodo` Zone for `agent-workflows/`; territory-pending rows claim no ownership and do not weaken partition proof.
 6. Generate the noncanonical ROADMAP candidate from the candidate plan, with territory-pending rows absent from queues, seats, ownership, and capacity.
 7. Assemble the complete activation candidate as an immutable Git tree and run the full equivalence gate against that exact tree.
-8. Confirm the final staged tree reproduces the proven tree OID without byte changes.
+8. Preserve C07 as technical non-product evidence and C08 without a package OID; C09 alone computes and commit-message-attests `final_package_identity` after final activation bytes and receipts are fixed.
 9. Create the single activation commit, perform structural readback, and only then deliver it directly to `master` and push. No PR is created.
 10. After delivery, verify canonical readback, Radar determinism, compatibility behavior, legacy archive readability, direct-push close behavior, and remote commit ancestry.
 
@@ -305,7 +305,7 @@ The change is successful only when all criteria are true:
 - [ ] Non-representable narrative and retired legacy views are readable in the historical archive with source paths and content identities.
 - [ ] Radar schema, checker, status, render, lineage, and verifier/activation proof pass against one immutable candidate tree, including all negative non-executable reference assertions.
 - [ ] Repeated rendering produces byte-identical `openspec/ROADMAP.md` content with a do-not-edit notice.
-- [ ] The activated commit tree equals the proven candidate tree OID.
+- [ ] C09 alone computes and commit-message-attests `final_package_identity` after final activation bytes and receipts are fixed.
 - [ ] Active repository guidance, direct-push policy, and documentation-close behavior agree with the new canonical source after activation.
 - [ ] A rollback restores the complete legacy-active state without leaving a half-activated plan contract.
 - [ ] No implementation from later Tower phases or other products is included.

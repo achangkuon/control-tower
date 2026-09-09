@@ -4806,3 +4806,144 @@ Deferred parent lifecycle actions remain byte-for-byte unchanged: bounded review
 
 - Native OpenSpec status: `applyState: ready`, `nextRecommended: apply`, no blocked reasons; authoritative workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`, action context `repo-local` with that workspace as the allowed edit root.
 - Action-context warning: the parent supplied a narrower C06 allowlist; only `archive-inventory.yaml`, `candidate-inputs.yaml`, `tasks.md`, and `apply-progress.md` were edited. High workload risk is resolved by the maintainer-authorized bounded C06 correction; staged authored total is exactly 203, below 400.
+
+## M0.4.7 / C07 — blocked before proof-tree materialization
+
+### Blocking contradiction
+
+C07 stops before creating `$PROOF_ROOT`, materializing canonical bytes, or writing any C07 proof/manifest file. `tasks.md:140` requires the versioned `migration/equivalence-manifest.yaml` to bind `$CANDIDATE_TREE`, while `candidate-inputs.yaml:10` makes that same manifest an activation-tree path. A tree cannot contain a blob whose content binds that tree's own OID without changing the tree OID. `design.md:355` explicitly resolves this by requiring a **commit-message attestation** to bind the candidate tree and evidence OIDs *without requiring a tree to contain its own OID*. The task's requirement is therefore incompatible with the design's self-reference boundary.
+
+The declared precursor is preserved, not rewritten: `candidate-inputs.yaml` declares `assembly_head: 2c247242bdf1474de6ce392c37268a314909ddb5`, an ancestor of the C06 input commit `2c931e4a73b0c84e11d3991dfe4816cc8a1ef63e`. At the declared precursor, `migration/candidate-inputs.yaml` does not exist; it exists only at the C06 commit. No unapproved parent substitution or inferred assembly rule was made.
+
+### Safety and read-only evidence
+
+| Command/check | Result |
+|---|---|
+| `git rev-parse --show-toplevel` / `git rev-parse HEAD` | PASS: exact authorized worktree; HEAD `2c931e4a73b0c84e11d3991dfe4816cc8a1ef63e`. |
+| `git status --porcelain=v1` before this progress append | PASS: clean. |
+| Canonical/archive absence checks | PASS: `openspec/plan.yaml`, `openspec/ROADMAP.md`, and `openspec/archive/legacy-planning/` absent. |
+| Candidate identity | PASS: SHA-256 `a3249af3d9b8652bfd59943a72c82a5767db21f997025cb244c1b414f5790c58`; blob `5d85cebfff9623f0468713f5c562e121cb5257a5`. |
+| `$PROOF_ROOT` existence check | PASS: `/home/emili/.cache/control-tower/migrate-control-tower-plan-zones-c07-proof` is absent; it was not created. |
+| Ownership marker validation | PASS: every existing marker is terminal and either `implementation` or `parent`. |
+| `git diff --name-status 2c247242bdf1474de6ce392c37268a314909ddb5 2c931e4a73b0c84e11d3991dfe4816cc8a1ef63e` | C06 adds `archive-inventory.yaml` and `candidate-inputs.yaml` plus bookkeeping; `assembly_head` is an ancestor. |
+
+### TDD Cycle Evidence
+
+| Tasks | Layer | RED | GREEN | TRIANGULATE | REFACTOR |
+|---|---|---|---|---|---|
+| T0.4.7.1–T0.4.7.3 | Proportional declarative/proof contract | N/A — the task/design identity contradiction blocks authoring a truthful proof artifact; no fabricated RED was written | Not started | Not started | Not started |
+
+No Radar, render, documentation-close, or `bun test` command was run because the required candidate/manifest identity cannot be constructed truthfully. No checkbox was changed: T0.4.7.1–T0.4.7.3 remain unchecked. No C07 proof/evidence path was staged; only this required blocked-progress append is staged as bookkeeping. No process remains, and no Tower/DB/runtime, canonical-path, route-authority, C08/C09, commit, push, or PR action occurred.
+
+### Required resolution and rollback boundary
+
+A maintainer/design correction must choose one non-self-referential binding: either (1) keep the manifest inside the activation tree but bind its tree OID only in the C09 commit-message attestation as `design.md:355` specifies, or (2) move the tree-binding manifest outside the activation tree while naming its immutable storage and C08/C09 treatment. It must also state how the declared `assembly_head` consumes C06 inputs committed later without substituting the parent. Resume checkpoint: before T0.4.7.1 materialization. Rollback boundary: revert/discard this C07 blocked-progress append only.
+
+## M0.4.7 / C07 — continuation after authority 10569, blocked by Radar proof subject
+
+Maintainer decision 10569 resolves the self-reference: the in-tree manifest omits its own blob and final candidate tree OID; C09's commit-message attestation is the sole final tree/evidence binding. C07 now keeps precursor `2c247242bdf1474de6ce392c37268a314909ddb5` and exact-reads/copies C06 inputs from `2c931e4a73b0c84e11d3991dfe4816cc8a1ef63e`. The minimal task, proposal, and specification corrections record this rule; sealed C06 inputs remain unchanged.
+
+The isolated proof root was reused without cleanup. Its index copies all 31 archive bytes, removes exactly the 14 `retire-active-view-and-archive-byte-faithfully` sources, and leaves the 17 archive-only sources. `AGENTS.md` and `.doc-guard.json` remain the exact manifest-declared precursor blobs `6b26e61a27fef7f29d6e8c1440c26efeeecca44e` and `8585e779b600f22aaf89f3b9be1b19f58523dbd4`; no extra cutover byte can be derived or was invented.
+
+### Rebound evidence and blocker
+
+- P1 exact partition PASS: 74 full Sessions / 7 future references / 4 satisfied-history references = 85.
+- Radar `check`, `status`, `zonas`, and deterministic render commands exit 0; the plan is loaded from `$PROOF_ROOT/openspec/plan.yaml` and ROADMAP bytes match.
+- CodeGraph/readback proves Radar's Git-dependent checks call `gitHEAD(root)` and `git ls-tree ... HEAD`; the rebound `zonas` reports 567 precursor-HEAD files while staged candidate tree `614d03b7214474112ac6d61b448540dce9c21d26` contains 591 files. Thus these CLI results do **not** validate the fixed staged candidate tree.
+- Radar exposes `CheckAt(root, head)`/`RenderAt(root, head)`, but its immutable-Git helper rejects a tree OID as a commit. No CLI accepts a candidate tree OID. Creating a synthetic commit or ref solely to substitute HEAD is prohibited by this C07 contract.
+
+### TDD Cycle Evidence
+
+| Tasks | Layer | RED | GREEN | TRIANGULATE | REFACTOR |
+|---|---|---|---|---|---|
+| T0.4.7.1–T0.4.7.3 | Proportional proof/structural | N/A — CodeGraph plus fixed-tree/HEAD count divergence is the real failing proof condition | Not reached | Not reached | Not reached |
+
+No C07 checkbox is marked complete. T0.4.7.1–T0.4.7.3 remain unchecked because the required same-fixed-tree Radar proof cannot be truthfully produced without a contract-authorized tree-addressable Radar path. No commit, push, C08/C09, Tower/DB/runtime mutation, or active canonical/archive path was created. Resume checkpoint: authorize a non-committing candidate-tree Radar interface or explicitly authorize the exact synthetic immutable Git evidence mechanism; do not infer either. Rollback boundary: discard/revert only C07 correction/evidence bytes and the isolated proof checkout.
+
+## M0.4.7 / C07 — review-correction rerun blocked at fixed-tree Radar gate
+
+- Native selected status was `ready` for this exact change; token remains parent-retained.
+- Replaced the descriptive compatibility label with immutable C01 commit `a39a63c29dbda123d26c4f61e789db06a4a04eb5`, which changes only the authorized manifest proof identity.
+- Created the authorized detached synthetic subject only in a separate private Git directory/object store under `$PROOF_ROOT`, with Control Tower objects supplied read-only through alternates and no private refs.
+- With explicit `GIT_DIR` and `GIT_WORK_TREE`, Radar `check` against that synthetic subject exits 1: exhaustive partition reports 33 ownerless activation-candidate paths. The corrected radar record preserves this actual failed result without self-binding its commit or tree.
+- Because the first required Radar gate failed, `status`, `zonas`, renders, and doc-close reruns were not performed; T0.4.7.1–T0.4.7.3 remain unchecked.
+
+| TDD evidence | RED | GREEN | TRIANGULATE | REFACTOR |
+|---|---|---|---|---|
+| C07 proportional proof contract | Actual fixed-tree Radar check exits 1 | Blocked | N/A | N/A |
+
+Rollback boundary: discard/revert only C07 proof correction bytes and the private proof namespace; no commit or push occurred.
+
+## M0.4.7 / C07 — historical/superseded private-subject observation
+
+This retained observation was invalidated as a current C07 boundary by Engram 10584; it is historical only and does not close C07 or make C08 next. Authorities 10569/10572/10578/10580/10582 supersede the failed revision `sha256:8e060787a0d36948e9946f9632287a4903b991fa2071a66a96146bdc40697e83`: C07 now records only external reproducible `radar_execution_subject` evidence; C08 has no package OID; C09 alone owns `final_package_identity`. The technical subject is private commit `5adc7edbcd0a72a98d42ed55d56d17462cfcb41c`, tree `f79d5ce8de1b2c6534c03e33c316075b43ceab6a`, logical parent `2c247242bdf1474de6ce392c37268a314909ddb5`, and 588 path/mode/blob inputs SHA-256 `aebc7a35649b6f8574a78078386345902eb2db9fca301537fe14c08d3d8f9e29`. It is non-product, non-activating, and not a package/candidate/final identity; versioned manifest/results are excluded.
+
+### Historical task observations, not active completion
+
+- Historical observation for T0.4.7.1: private materialization used explicit `GIT_DIR`, `GIT_WORK_TREE`, and `GIT_INDEX_FILE`; detached HEAD, zero refs, exact C06 read plus authorized ownership overlay.
+- Historical observation for T0.4.7.2: Radar `check`/`status`/`zonas` and two renders exited 0 with zero warnings/orphans; renders and canonical ROADMAP shared SHA-256 `7ca55fe619dc5a9a8e60d0d43e0da113a1f8bf067ec93b009e7df3d5e63708ff`.
+- Historical observation for T0.4.7.3: P1 observed `74/7/4=85`; 31 archive copies, 14 retirements, 17 retained archive-only sources, path/mode/blob identities, and both bounded no-push doc-close cases passed. The authoritative `tasks.md` rows are unchecked.
+
+| TDD cycle | Evidence | Result |
+|---|---|---|
+| RED | Failed fixed-subject revision `8e060787…97e83`: 33 ownerless paths | Superseded by 10578 ownership correction. |
+| GREEN | Private subject Radar/P1/render/doc-close rerun | PASS; check stdout SHA-256 `27e455c425cf9fac2f61539d8e31cc5f6380c41e7f8797d3d031de3990580f75`. |
+| TRIANGULATE | Exact path/mode/blob digest, archive 31/14/17, and two doc-close state sources | PASS. |
+| REFACTOR | Minimal C07–C09 authority wording; no production/runtime change | PASS. |
+
+Private attestation SHA-256 `714532abbba3751b5c8960f31bd1b7bb09d15e7759da841dd61cd4c5f52002c1` matches this subject. Fresh final common-Git refs/object inventories matched before/after (`1752e27ab1fa678320bf4f9fc56f1ef933610abd96517ae0ac58757ef44a15b8` / `9bfc0d214ad85a59b2fe18582f469a1a75a594d3c8859ddf0c2a41e092d42d04`); no common ref/object, commit, push, C08, C09, canonical active path, archive, or runtime mutation occurred. The earlier private attestation is superseded and not evidence.
+
+### Boundary and remaining work
+
+That former C07 boundary was invalidated by Engram 10584 and is retained only as an interrupted antecedent. Rollback of the historical bytes is unchanged: unstage/revert only the allowed C07 paths and discard the private proof root; do not touch active canonical paths. Active implementation remains T0.4.7.1–T0.4.7.3, unchecked in `tasks.md`; C08 is not next until unit 2 completes the S9.9/S9.10 delta and fresh C07 reproof.
+
+Parent-owned lifecycle actions remain unchanged. Status consumed: repo-local OpenSpec, apply ready, active work unit `C07-single-package-proof-and-ownership`, parent-retained token; action context has no warnings.
+
+## C07-unit1-contract-ownership-interrupted-checkpoint — interrupted antecedent
+
+### Immutable chronology
+
+1. The private subject `5adc7edbcd0a72a98d42ed55d56d17462cfcb41c` / `f79d5ce8de1b2c6534c03e33c316075b43ceab6a` recorded historical 74/7/4 command passes after remediation of the old ownerless-path failure `sha256:8e060787a0d36948e9946f9632287a4903b991fa2071a66a96146bdc40697e83`.
+2. The associated SDD attempt was settled interrupted; Engram 10584 then established that this historical C07 observation is contaminated by post-snapshot S9.9/S9.10 truth and cannot be presented as final C07 evidence.
+3. RDD review `review-3d4f81a9c5812eac` closed escalated with inconclusive severe findings; it is non-authorizing and approves nothing.
+4. Engram 10592 authorizes exactly two direct units: this unit 1 preserves the single-package/C09-only identity contract and 10578 ownership while recording the interruption; unit 2 alone may apply S9.9/S9.10 and reprove C07.
+
+### Unit-1 boundary
+
+- T0.4.7.1–T0.4.7.3 are restored to unchecked implementation work. Their old command records remain historical/interrupted only: not activation readiness, C07 closure, C08 readiness, or package identity.
+- Unit 2 is prohibited until unit 1 is separately sealed. It must repeat those tasks on a new master-based technical subject after the S9.9/S9.10 delta; no proof root or antecedent subject was mutated here.
+- No review, settlement, commit, push, C08/C09, S9.9/S9.10, or C07 regeneration occurred. Rollback boundary: unstage/revert only these eleven staged paths; the private antecedent remains untouched.
+
+### Files changed
+
+`proposal.md`, `specs/control-tower-plan-migration/spec.md`, `design.md`, `tasks.md`, `apply-progress.md`, `migration/candidate/plan.yaml`, `migration/partition.yaml`, `migration/candidate-inputs.yaml`, `migration/equivalence-manifest.yaml`, `migration/proof/c07-radar-results.yaml`, and `migration/proof/c07-doc-close-results.yaml`.
+
+### Unit-1 verification evidence
+
+| Check | Result |
+|---|---|
+| Strict Bun YAML parse of all six changed YAML artifacts | PASS. |
+| Independent ownership assertion over the staged candidate/partition | PASS: all 33 formerly ownerless activation paths are covered — `openspec/plan.yaml` and `openspec/ROADMAP.md` by `autoridad`, plus 31 archive destinations by `archivo`. |
+| C07 semantic assertion | PASS: all three C07 artifacts are `interrupted-antecedent`, prohibit current C07/C08/activation/package use, and contain no `final_package_identity`. |
+| Structural boundary | PASS: canonical plan/ROADMAP and active archive root are absent; `git diff --cached --check` is clean; only the authorized 11 paths are staged; authored total is within 400. |
+
+The ownerless-path remediation is distinct new evidence over this unit-1 staged candidate, not reuse of the historical private subject: it proves the precise defect in failed revision `sha256:8e060787a0d36948e9946f9632287a4903b991fa2071a66a96146bdc40697e83` is corrected while preserving the overall C07 interruption. Remaining contamination is S9.9/S9.10 truth absent from this unit; therefore no C07 final pass, C08 readiness, or activation inference exists.
+
+### TDD Cycle Evidence
+
+| Cycle | Evidence | Result |
+|---|---|---|
+| RED | N/A — this unit changes declarative contract/evidence state only; no production behavior or C07 regeneration is authorized. | No fabricated behavioral test. |
+| GREEN | Strict YAML, ownership, identity-separation, and staged-boundary assertions. | PASS. |
+| TRIANGULATE | Rechecked all 31 archive targets plus both canonical targets against both candidate and partition. | PASS: 33/33 exact routes. |
+| REFACTOR | Kept the existing 11-path package and changed C07 semantics only. | PASS; no runtime/test/proof-root mutation. |
+
+Status consumed: `gentle-ai.sdd-status@2`, selected change `migrate-control-tower-plan-zones`, OpenSpec `applyState: ready`, repo-local action context with the sole worktree root allowed, and no blocked reasons. The earlier unselected status was superseded by the positional invocation. Process cleanup: no background process or private proof-root mutation was performed.
+
+## C07 unit-1 authority and historical-language correction
+
+- Added required authority 10580 while preserving 10569, 10572, 10578, and 10582.
+- Replaced only stale pre-C09 “proven tree/candidate tree OID” clauses with the C07 technical-evidence, C08-no-package-OID, and C09-only `final_package_identity` contract.
+- Reclassified the retained C07 success section as historical/superseded, removed its active `[x]` task presentation, and named Engram 10584 as the invalidating authority; `tasks.md` remains authoritatively unchecked.
+- Quick structural verification passed: six YAML parses, provenance/historical-C07/C09-language greps, canonical/archive absence, `git diff --cached --check`, exact 11 staged paths, zero unstaged changes, and authored total `<=400`.
+- No Radar/doc-close proof rerun, review, settlement, commit, push, or unit-2 work occurred. Independent verification remains parent-owned; rollback remains the exact eleven-path staged boundary.

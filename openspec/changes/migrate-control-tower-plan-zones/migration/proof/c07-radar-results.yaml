@@ -1,0 +1,25 @@
+schema: c07-radar-proof
+schema_version: 2
+evidence_status: {state: interrupted-antecedent, authority: [10584, 10592], usable_for: historical-command-observation-only, prohibits: [activation-readiness, c07-closure, c08-readiness, package-identity], unit_2_requirement: repeat-after-s9.9-s9.10-on-new-master-based-technical-subject}
+proof_root: /home/emili/.cache/control-tower/migrate-control-tower-plan-zones-c07-proof
+radar_execution_subject:
+  commit: 5adc7edbcd0a72a98d42ed55d56d17462cfcb41c
+  tree: f79d5ce8de1b2c6534c03e33c316075b43ceab6a
+  logical_parent: 2c247242bdf1474de6ce392c37268a314909ddb5
+  semantics: technical-non-product-non-activating-not-package-or-candidate-identity
+  recipe_sha256: 5c1575215aa70b630db41305bee2905f886bb8551e6eaaa1fc642e2dbcb510c2
+  path_mode_blob_inputs: {count: 588, sha256: aebc7a35649b6f8574a78078386345902eb2db9fca301537fe14c08d3d8f9e29}
+  receipt_exclusions: [migration/equivalence-manifest.yaml, migration/proof/c07-radar-results.yaml, migration/proof/c07-doc-close-results.yaml]
+  private_git: {head: detached, refs: 0, explicit_environment: [GIT_DIR, GIT_WORK_TREE, GIT_INDEX_FILE]}
+content:
+  plan: {mode: "100644", blob: 3661585e7e912d95e5f704c92a3a4b3349c97ec9, sha256: f1642bd4c477f779d64c521cf54425df5b0bfa9aeb2d19dad886689b8f8a4481}
+  roadmap: {mode: "100644", blob: 2eda531b8c4b4b8deb716d45603318a5cbc4d088, sha256: 7ca55fe619dc5a9a8e60d0d43e0da113a1f8bf067ec93b009e7df3d5e63708ff}
+  partition: {mode: "100644", blob: 56074cf4faa3b1bd7a115ab729f0cc81f9656d28, sha256: 36f53988981f37667f2b1d2de59ad5923a604e3eff29373ee6072cfc6d75d041, tracked_files: 588}
+  archives: {copies: 31, retirements: 14, retained_archive_only: 17, identity_sha256: a45fec33a42336051ebe38c3fe7a7caf612666cafcd3b8a4ee0434f0de3ef942}
+historical_command_observations:
+  check: {exit: 0, stdout_sha256: 27e455c425cf9fac2f61539d8e31cc5f6380c41e7f8797d3d031de3990580f75}
+  status: {exit: 0, stdout_sha256: 8c6f45aa68c5082f35fe72275e9faa4ab5b90aa28463da0e2c990da8a2c863bc}
+  zonas: {exit: 0, stdout_sha256: fe516642bb73422ba3de6d3a830e6e7d202f8692bfaaa56d3840501aa82fe3c3, warnings: 0, orphans: 0}
+  render: {first_exit: 0, second_exit: 0, first_equals_second: true, first_equals_roadmap: true, generated_notice: true, roadmap_sha256: 7ca55fe619dc5a9a8e60d0d43e0da113a1f8bf067ec93b009e7df3d5e63708ff}
+  p1: {exit: 0, partition: "74/7/4=85", stdout_sha256: ae9242a74bc479a147569a4bd3b3027cb476b8a55c4d42ab8a8212b47ea1a567}
+common_git_nonmutation: {before_after_equal: true, refs_sha256: 1752e27ab1fa678320bf4f9fc56f1ef933610abd96517ae0ac58757ef44a15b8, objects_sha256: 9bfc0d214ad85a59b2fe18582f469a1a75a594d3c8859ddf0c2a41e092d42d04}

@@ -95,6 +95,8 @@ zonas:
     nombre: Autoridad
     rutas:
       - openspec/plans/
+      - openspec/plan.yaml
+      - openspec/ROADMAP.md
       - openspec/prd/
       - openspec/rfc/
       - openspec/specs/
@@ -105,6 +107,7 @@ zonas:
     nombre: Archivo
     rutas:
       - openspec/changes/
+      - openspec/archive/legacy-planning/
   - id: metodo
     nombre: Método
     rutas:
@@ -218,8 +221,9 @@ cimientos:
 
 validation:
   expected:
-    tracked_files: 544
-    metodo_files: 87
+    tracked_files: 588
+    per_zone_files: {archivo: 228, metodo: 91, contratos: 67, hosts: 53, cimientos: 45, autoridad: 32, asientos: 27, entrega: 16, instalacion: 11, enrolamiento: 7, capacidades: 6, jornada: 5}
+    metodo_files: 91
     cimiento_files: 45
     orphaned_files: 0
     overlaps: 0

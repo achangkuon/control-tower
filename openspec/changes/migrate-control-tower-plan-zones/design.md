@@ -319,40 +319,27 @@ Partition proof runs against the tracked files of one immutable candidate tree, 
 
 ## Candidate proof and activation
 
-The candidate tree, not a branch or mutable worktree, remains the proof subject:
+C07 uses a private `radar_execution_subject`, not a branch, mutable worktree, candidate, or package identity:
 
 ```text
-immutable legacy source commit
+immutable source + exact C06 read
         |
         v
-proven Radar compatibility prerequisite
+private synthetic commit/tree with logical precursor
         |
         v
-noncanonical inventory + mapping + candidate plan
+C07 recipe/path-mode-blob evidence + Radar/render/doc-close hashes
         |
         v
-independent home-directory proof checkout
-  assemble precursor tree
-  render exact ROADMAP blob
-  assemble complete candidate tree
-  run check/status/zonas/render twice
+C08 reproduces exact recipe/content/evidence; readiness only, no package OID
         |
         v
-record candidate tree and content OIDs
-        |
-        v
-reproduce with private Git index
-        |
-        v
-single atomic activation commit/ref update
-        |
-        v
-structural readback and direct push
+C09 fixes activation bytes and receipts, computes final_package_identity once
 ```
 
-The isolated proof checkout has its own `.codegraph/` index if CodeGraph is used and is never created under `/tmp`. The complete candidate runs `radar check`, `radar status`, `radar zonas`, and two byte-identical `radar render` executions against one fixed Git tree. The generated ROADMAP blob in that tree must equal both renders.
+The subject is a non-product, non-activating technical locator; versioned manifest/results are external preparation receipts and excluded from it. Every private Git operation uses explicit private `GIT_DIR`, `GIT_WORK_TREE`, and index, with a detached HEAD and zero refs. The fixed subject runs `radar check`, `radar status`, `radar zonas`, and two byte-identical renders; the ROADMAP blob equals both renders.
 
-The activation commit introduces the exact proven `openspec/plan.yaml` and `openspec/ROADMAP.md`, archives retired legacy views, and switches active guidance/doc-close behavior together. A commit-message attestation binds source commit, candidate tree, plan/ROADMAP/archive/evidence OIDs, Radar results, partition counts, and doc-guard proof without requiring a tree to contain its own OID.
+The activation commit introduces the exact proven `openspec/plan.yaml` and `openspec/ROADMAP.md`, archives retired legacy views, and switches active guidance/doc-close behavior together. Only C09 computes and commit-message-attests `final_package_identity` with source, plan/ROADMAP/archive/evidence OIDs, Radar results, partition counts, and doc-guard proof.
 
 Any changed byte invalidates the proof. There is no supported mixed state.
 
@@ -632,7 +619,7 @@ Rejected: mandatory historical delivery OIDs; raw-Markdown semantic equality or 
 
 This amendment occupies `design.md:534-641`: 108 content lines and 109 authored additions including its separator, within the 120-line allowance. With the approved 172-line specification revision and at least 55 lines reserved for tasks/progress, planning totals 336/400 and leaves 64 lines; if measured accounting disagrees, later bookkeeping must split without compressing this contract.
 
-Risks are off-by-one fragment bounds, an unaudited display-to-canonical mapping, operational leakage, or premature S100/S101 materialization. Dual line/byte bounds plus hashes, independent mapping proof, negative projection tests, and the explicit planning gate fail closed. All previous archive, deterministic zero-warning proof, candidate identity, atomic activation, and rollback obligations remain intact.
+Risks are off-by-one fragment bounds, an unaudited display-to-canonical mapping, operational leakage, or premature S100/S101 materialization. Dual line/byte bounds plus hashes, independent mapping proof, negative projection tests, and the explicit planning gate fail closed. All previous archive, deterministic zero-warning proof, C07 technical-evidence, C09-only `final_package_identity`, atomic activation, and rollback obligations remain intact.
 
 ## Key Learnings
 

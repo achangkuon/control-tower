@@ -196,26 +196,26 @@ At activation, effective documentation-close behavior and active repository guid
 
 ### Requirement: Immutable equivalence evidence
 
-Before activation, the migration MUST record a versioned immutable evidence manifest for one source snapshot and one complete candidate tree. The manifest MUST include source commit OID; candidate tree OID; content identities for candidate plan, candidate ROADMAP, and archived sources; complete Session and replacement ledgers; compatibility proof for provenance, identifier preservation and validation, territory-pending blocking, scheduling exclusion, resolution, and rejection; partition proof; derived-state comparison; Radar command results; render determinism proof; and close-gate proof. Each legacy-to-target difference MUST be approved, evidence-based, or activation-blocking.
+Before activation, C07 MUST record versioned reproducible evidence for one source snapshot and a private `radar_execution_subject`: logical precursor/parent, materialization recipe, exact path/mode/blob inputs, command hashes, and receipt exclusions. That subject is non-product, non-activating, and never a package or candidate identity; its versioned manifest/results are excluded from the subject. C08 MUST reproduce its exact recipe, content, and evidence and declare readiness with no package OID. C09 alone MUST compute `final_package_identity` after activation bytes and receipts are fixed, then bind it and the evidence OIDs in its commit message. Each legacy-to-target difference MUST be approved, evidence-based, or activation-blocking.
 
 #### Scenario: Candidate proof is complete
 
 - GIVEN an activation candidate is proposed
 - WHEN the equivalence gate evaluates its manifest
-- THEN every required evidence category is present and bound to the same candidate tree OID
+- THEN every required C07 technical-evidence category is present, C08 has reproduced it without a package OID, and C09's commit-message attestation binds `final_package_identity` to those immutable evidence OIDs
 - AND all Sessions are accounted for exactly once
 - AND every difference has an approved transformation or immutable-evidence explanation
 - AND a missing, mutable, contradictory, or mismatched record fails the gate
 
 ### Requirement: Atomic activation and no mixed state
 
-Activation MUST be exactly one direct commit whose tree OID equals the proven candidate tree OID. That commit MUST introduce `openspec/plan.yaml` and the proven `openspec/ROADMAP.md`, activate guidance and close-gate behavior, and retire legacy active views into the historical archive together. Activation MUST occur only after all equivalence, partition, Radar, archive, and cutover gates pass. The system MUST NOT support a state with only one canonical target path, active legacy views competing with the target, or unproven canonical bytes.
+Activation MUST be exactly one direct commit whose tree OID is the sole C09-computed `final_package_identity`. That commit MUST introduce `openspec/plan.yaml` and the proven `openspec/ROADMAP.md`, activate guidance and close-gate behavior, and retire legacy active views into the historical archive together. Activation MUST occur only after all equivalence, partition, Radar, archive, and cutover gates pass. The system MUST NOT support a state with only one canonical target path, active legacy views competing with the target, or unproven canonical bytes.
 
 #### Scenario: Activation tree matches the proof
 
-- GIVEN all activation gates have passed for a proven candidate tree
-- WHEN the final staged tree is examined immediately before activation
-- THEN its tree OID exactly equals the proven candidate tree OID
+- GIVEN C07 evidence and C08 reproduction have passed without a package OID
+- WHEN C09 fixes the final staged bytes immediately before activation
+- THEN it computes that tree OID as the sole `final_package_identity`
 - AND the activation commit contains both canonical target paths and the complete cutover
 - AND any byte difference invalidates the proof and blocks activation
 

@@ -1,0 +1,18 @@
+schema: c07-doc-close-proof
+schema_version: 2
+evidence_status: {state: interrupted-antecedent, authority: [10584, 10592], usable_for: historical-passing-command-observation-only, prohibits: [current-gate-evidence, activation-readiness, c07-closure, c08-readiness, package-identity], unit_2_requirement: repeat-after-s9.9-s9.10-on-new-master-based-technical-subject}
+proof_root: /home/emili/.cache/control-tower/migrate-control-tower-plan-zones-c07-proof
+policy: solo
+push_performed: false
+bounded_noninteractive_timeout_seconds: 8
+historical_plan_data_observation:
+  ship_check_exit: 0
+  doc_check_exit: 0
+  docs_source: plan
+  state_sha256: a78d5cfb47a859e68c6fac48e972639cbc1021ef7a5aec09ad2169e4cbd29520
+historical_nothing_to_record_observation:
+  ship_check_exit: 0
+  stop_gate_exit: 0
+  exact_declaration: nada que registrar
+  docs_source: declaration
+  state_sha256: a6198b326b42da20412de9e7c49a80b6df3b6aacd628585ebef4d9f28dce42de

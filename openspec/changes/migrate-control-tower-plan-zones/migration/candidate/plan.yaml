@@ -29,10 +29,10 @@ zonas:
     rutas: [capabilities/, policy/, test/capabilities/, test/policy/]
   - id: autoridad
     nombre: Autoridad
-    rutas: [openspec/plans/, openspec/prd/, openspec/rfc/, openspec/specs/, openspec/maintenance/, openspec/config.yaml, docs/]
+    rutas: [openspec/plans/, openspec/plan.yaml, openspec/ROADMAP.md, openspec/prd/, openspec/rfc/, openspec/specs/, openspec/maintenance/, openspec/config.yaml, docs/]
   - id: archivo
     nombre: Archivo
-    rutas: [openspec/changes/]
+    rutas: [openspec/changes/, openspec/archive/legacy-planning/]
   - id: metodo
     nombre: Método
     rutas: [agent-workflows/]
