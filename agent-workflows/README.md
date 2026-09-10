@@ -124,7 +124,7 @@ are common and mandatory. `blocked` is a calculated state, not a route.
 | Chanks planning and bridge | `chanks-1-autoridad`, `chanks-1-brain-dump`, `chanks-1-descubrimiento`, `chanks-1-feature`, `chanks-1-heredado`, `chanks-1-prd`, `chanks-1-project-kickoff`, `chanks-1-requirements`, `chanks-1-rfc`, `chanks-1-terreno`, `chanks-4-puente` |
 | Session workflow | `session-kickoff`, `session-context-loader`, `planificador-granular`, `chanks-0-agente-soporte`, `session-doc` |
 | Delivery policy | `unattended-implementation`, `politica-de-entrega` |
-| Decision and communication support | `cierre-de-decisiones`, `explicalo-simple`, `skill-composer` |
+| Decision and communication support | `cierre-de-decisiones`, `chanks-0-explicalo-simple`, `skill-composer` |
 
 ### `_shared` is deliberately partial
 

@@ -55,7 +55,7 @@ DELIVERY_SKILLS = (
 SUPPORT_SKILLS = (
     "analisis-por-tramos",
     "cierre-de-decisiones",
-    "explicalo-simple",
+    "chanks-0-explicalo-simple",
     "skill-composer",
     "skill-orchestrator",
 )
@@ -65,6 +65,7 @@ SKILLS = SHARED + CHANKS_SKILLS + SESSION_SKILLS + DELIVERY_SKILLS + SUPPORT_SKI
 # Explicit ownership migration. Normal installs retire only these known derived
 # copies; unlisted directories remain untouched.
 RETIRED_SKILLS = (
+    "explicalo-simple",
     "agente-soporte",
     "session-plan",
     "coordinador_multi_agente",

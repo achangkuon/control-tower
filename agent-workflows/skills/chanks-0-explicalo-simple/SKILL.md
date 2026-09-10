@@ -1,5 +1,5 @@
 ---
-name: explicalo-simple
+name: chanks-0-explicalo-simple
 description: "Trigger: explicámelo más fácil, en términos más sencillos, no entiendo, explicame simple, no soy programador, explicalo en criollo. Explain product state, findings, and decisions in product language with every technical term translated."
 license: Apache-2.0
 metadata:
