@@ -56,10 +56,13 @@ PLAN_BLOB="$(private_git hash-object -w "$ROOT/$MIG/candidate/plan.yaml")"
 private_git update-index --add --cacheinfo "100644,$PLAN_BLOB,openspec/plan.yaml"
 
 # 3. Materialize the index into the work root so Radar can render the ROADMAP from it.
+# The private subject MUST be parented on the delivery HEAD. Radar requires every imported
+# Session's origin commit to be a strict ancestor of HEAD; a parentless subject makes all
+# legacy imports unreachable and the render fails closed.
 BOOT_TREE="$(private_git write-tree)"
 BOOT_COMMIT="$(private_run env GIT_AUTHOR_NAME='C08 reproduction' GIT_AUTHOR_EMAIL='c08@local.invalid' \
   GIT_COMMITTER_NAME='C08 reproduction' GIT_COMMITTER_EMAIL='c08@local.invalid' \
-  git commit-tree "$BOOT_TREE" -m 'c08 private reproduction subject')"
+  git commit-tree "$BOOT_TREE" -p "$HEAD_COMMIT" -m 'c08 private reproduction subject')"
 private_git update-ref --no-deref HEAD "$BOOT_COMMIT"
 private_git checkout-index -a -f
 
