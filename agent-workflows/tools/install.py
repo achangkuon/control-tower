@@ -53,9 +53,11 @@ DELIVERY_SKILLS = (
 
 # Decision and communication support.
 SUPPORT_SKILLS = (
+    "analisis-por-tramos",
     "cierre-de-decisiones",
     "explicalo-simple",
     "skill-composer",
+    "skill-orchestrator",
 )
 
 SKILLS = SHARED + CHANKS_SKILLS + SESSION_SKILLS + DELIVERY_SKILLS + SUPPORT_SKILLS
