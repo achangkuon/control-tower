@@ -43,4 +43,4 @@ Devuelve alcance, fuentes, trazas, matriz real/mock, hallazgos por severidad, su
 ## References
 
 - `../chanks-1-heredado/references/ubicacion-y-cruces.md`
-- `../agente-soporte/SKILL.md`
+- `../chanks-0-agente-soporte/SKILL.md`

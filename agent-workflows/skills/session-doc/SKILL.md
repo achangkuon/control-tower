@@ -51,7 +51,7 @@ Devuelve criterios, commit/HEAD/PR, evidencia de archive, delta, resultados de `
 ## References
 
 - `../chanks-4-puente/SKILL.md`
-- `../agente-soporte/SKILL.md`
+- `../chanks-0-agente-soporte/SKILL.md`
 - `references/links.md`
 - `assets/session-doc.schema.json`
 - `assets/project-notion-map.json`

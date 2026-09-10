@@ -15,7 +15,7 @@ Also activate when the maintainer announces leaving while agents keep working. T
 
 ## Hard Rules
 
-- Load child skills only for the active route: `agente-soporte` for normalized facts/transport, `chained-pr` for planning-only chain semantics, `work-unit-commits` for freeze-only boundaries, and `sdd-apply` for exact implementation. In Tower mode, use only the active project's registered Tower authority; this repository neither supplies nor installs one.
+- Load child skills only for the active route: `chanks-0-agente-soporte` for normalized facts/transport, `chained-pr` for planning-only chain semantics, `work-unit-commits` for freeze-only boundaries, and `sdd-apply` for exact implementation. In Tower mode, use only the active project's registered Tower authority; this repository neither supplies nor installs one.
 - Validate against `assets/execution-contract.schema.json` and every semantic gate in `references/sealing-and-routing.md`. Reject omissions, placeholders, contradictions, implicit continuation, or unresolved decisions as `NOT_READY` before dispatch.
 - Treat the sealed contract and its artifact digests as immutable input. Runtime may perform only listed effects on the exact repository, worktree, branch, base SHA, and Sesión/task IDs.
 - Never acquire or transfer `git-delivery`; never authorize amend, rebase, tag, merge, release, deploy, DB mutation, global closure, or an unlisted Sesión in any mode. In `tower` mode commit, push, and PR are equally forbidden — delivery belongs to the token holder. In `standalone` they are bounded by `delivery_ceiling`, which never exceeds a draft PR.
@@ -44,7 +44,7 @@ Also activate when the maintainer announces leaving while agents keep working. T
 
 ## Execution Steps
 
-1. Load `agente-soporte`; collect normalized facts without asking Support to seal.
+1. Load `chanks-0-agente-soporte`; collect normalized facts without asking Support to seal.
 2. Load `chained-pr` in planning-only mode when chain semantics apply, then `work-unit-commits` in freeze-only mode. Resolve every field before sealing.
 3. Validate schema and semantic gates; compute the canonical contract digest. Return `NOT_READY` on any failure.
 4. Resolve `runtime_mode` from a real `tower_status` read and record it in the contract with its evidence.
@@ -64,7 +64,7 @@ Return `status: NOT_READY|READY|BLOCKED`, `runtime_mode: tower|standalone` with 
 - `references/night-mode.md`
 - `references/runtime-standalone.md`
 - `../_shared/plan-naming-convention.md`
-- `../agente-soporte/SKILL.md`
+- `../chanks-0-agente-soporte/SKILL.md`
 - `../chained-pr/SKILL.md`
 - `../work-unit-commits/SKILL.md`
 - `../sdd-apply/SKILL.md`

@@ -43,5 +43,5 @@ Devuelve brief recibido, asiento/rama/runtime, `HEAD`, limpieza, ruta propuesta 
 ## References
 
 - `../planificador-granular/references/juicio-de-ruta.md`
-- `../agente-soporte/SKILL.md`
+- `../chanks-0-agente-soporte/SKILL.md`
 - `../chanks-4-puente/SKILL.md`

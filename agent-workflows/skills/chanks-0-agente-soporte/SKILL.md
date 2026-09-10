@@ -1,5 +1,5 @@
 ---
-name: agente-soporte
+name: chanks-0-agente-soporte
 description: "Trigger: support, brief, capacidad, conflictos, asignaciones, radar. Produce briefs y aplica deltas confirmados al dato de planificación."
 license: Apache-2.0
 metadata:

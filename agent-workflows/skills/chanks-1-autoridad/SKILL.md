@@ -42,4 +42,4 @@ Devuelve variante elegida, autoridad consultada, alcance aprobado o pendiente, a
 ## References
 
 - `../planificador-granular/SKILL.md`
-- `../agente-soporte/SKILL.md`
+- `../chanks-0-agente-soporte/SKILL.md`

@@ -44,4 +44,4 @@ Devuelve mapa plan↔SDD, preflight mostrado y confirmado/cambiado, puerta de en
 ## References
 
 - `../session-kickoff/SKILL.md`
-- `../agente-soporte/SKILL.md`
+- `../chanks-0-agente-soporte/SKILL.md`

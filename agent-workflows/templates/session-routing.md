@@ -21,7 +21,7 @@
   contamination and exhausted attempts; execution resumes only from the recorded checkpoint.
 - Each Módulo is one independently revertible commit with its tests. With Strict TDD, each
   Tarea follows RED → GREEN → REFACTOR.
-- `agente-soporte` remains read-only: it prepares the Jornada brief, capacity forecast,
+- `chanks-0-agente-soporte` remains read-only: it prepares the Jornada brief, capacity forecast,
   conflicts, assignments and plan updates.
 - Always-escalate decisions never become derivable. Block the Sesión only when authority or
   evidence is missing or contradictory, or contamination reaches acceptance criteria, the first

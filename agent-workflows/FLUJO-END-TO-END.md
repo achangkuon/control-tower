@@ -25,7 +25,7 @@ discusiones circulares. Son tres, no dos.
 
 **Decisión del maintainer (2026-09-02): la caja 3 es parte de la maquinaria.** No se mudan a
 `agent-workflows`. Esto resuelve la fricción histórica de «hay dos Supports y se peleaban»
-(`agente-soporte` de la caja 2 contra `torre-control-soporte` de la caja 3): no es duplicación
+(`chanks-0-agente-soporte` de la caja 2 contra `torre-control-soporte` de la caja 3): no es duplicación
 a borrar, son **capas distintas** — el de la caja 2 razona sobre el plano, el de la caja 3
 despacha sobre la maquinaria.
 
@@ -309,7 +309,7 @@ Esto es qué de los siete tramos ya está cubierto, qué cae en las fases vacía
 | Un solo dato editable (`openspec/plan.yaml`) y una vista generada (`ROADMAP.md`) | Fase 2b + 3 | 6, 7 |
 | Detección de entrega leyendo Git: el commit declarado debe resolver y ser ancestro | `tools/plan` | 7 |
 | Partición de control-tower validada: 10 Zonas + Cimientos, 441 archivos, cero huérfanos | `PLANO-CONTROL-TOWER.md` | 1 |
-| `agente-soporte` v3.0 y `session-doc` v3.0 escritas para este modelo | Fase 3 | 7 |
+| `chanks-0-agente-soporte` v3.0 y `session-doc` v3.0 escritas para este modelo | Fase 3 | 7 |
 | **El Horizonte** — loop planner N+1 / implementer N | control-tower `S5.3` ✅ COMPLETO, `continuation/` | Horizonte |
 
 **El Horizonte no hay que inventarlo, hay que conectarlo.** El producto ya lo implementa; el
@@ -576,7 +576,7 @@ Está gobernado por dependencias reales, no por el número de tramo.
 12. **Tramo 3** — achicar `session-kickoff` a cuatro pasos; el brief suma el runtime del asiento.
 13. **Tramo 4** — nace `chanks-4-puente`; se disuelven las tres.
 14. **Tramos 5, 6, 7** — casi nada de código: una regla de configuración (RDD → 4R), la
-    adaptación de `torre-control-entregas`, y `session-doc`/`agente-soporte` que ya están.
+    adaptación de `torre-control-entregas`, y `session-doc`/`chanks-0-agente-soporte` que ya están.
 
 ### Paso 5 — Conectar la maquinaria
 

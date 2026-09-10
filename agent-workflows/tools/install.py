@@ -40,7 +40,7 @@ SESSION_SKILLS = (
     "session-kickoff",
     "session-context-loader",
     "planificador-granular",
-    "agente-soporte",
+    "chanks-0-agente-soporte",
     "session-doc",
 )
 
@@ -65,6 +65,7 @@ SKILLS = SHARED + CHANKS_SKILLS + SESSION_SKILLS + DELIVERY_SKILLS + SUPPORT_SKI
 # Explicit ownership migration. Normal installs retire only these known derived
 # copies; unlisted directories remain untouched.
 RETIRED_SKILLS = (
+    "agente-soporte",
     "session-plan",
     "coordinador_multi_agente",
     "architecture-audit",

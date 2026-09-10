@@ -47,5 +47,5 @@ Devuelve alcance auditado, decisiones presentadas/resueltas, delta enviado, resu
 
 - `references/decision-extraction.md`
 - `assets/resolution-entry.md`
-- `../agente-soporte/SKILL.md`
+- `../chanks-0-agente-soporte/SKILL.md`
 - `../politica-de-entrega/SKILL.md`

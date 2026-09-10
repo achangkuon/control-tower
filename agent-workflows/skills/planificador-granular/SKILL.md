@@ -48,4 +48,4 @@ Devuelve los ocho resultados, ruta propuesta y autoridad, pronóstico authored, 
 
 - `../chanks-1-heredado/references/ubicacion-y-cruces.md`
 - `references/juicio-de-ruta.md`
-- `../agente-soporte/SKILL.md`
+- `../chanks-0-agente-soporte/SKILL.md`

@@ -499,7 +499,7 @@ class InstallerTests(unittest.TestCase):
 
     def test_implementation_assignment_requires_resource_meter_and_release(self):
         content = (
-            ROOT / "skills/agente-soporte/assets/assignment-implementation.md"
+            ROOT / "skills/chanks-0-agente-soporte/assets/assignment-implementation.md"
         ).read_text(encoding="utf-8")
 
         self.assertIn("Recurso", content)

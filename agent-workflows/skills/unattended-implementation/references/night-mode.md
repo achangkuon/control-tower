@@ -29,13 +29,13 @@ This skill is that policy. It never reimplements the mechanism.
 Night mode is a **document producer, not a process**. It runs before the maintainer
 leaves, emits two artifacts, and ends its turn. Nothing of it is live overnight.
 
-It follows the same contract as `agente-soporte` (`../agente-soporte/references/contrato-no-interferencia.md`):
+It follows the same contract as `chanks-0-agente-soporte` (`../chanks-0-agente-soporte/references/contrato-no-interferencia.md`):
 
 - Never call `tower_register`, `tower_set_state`, or `tower_acquire`. Reading
   `tower_status` and sending with `tower_send` is the whole Tower surface.
 - Never relay a question. The active project's Tower authority owns attended relay;
   this skill only sets the policy an agent applies when no reader is available.
-- Never plan (that is `agente-soporte`), never implement (that is `sdd-apply`),
+- Never plan (that is `chanks-0-agente-soporte`), never implement (that is `sdd-apply`),
   never deliver (that is the Tower and the maintainer, awake).
 - Never write inside a repository worktree. Night artifacts live under
   `~/.local/state/control-tower/night/`.

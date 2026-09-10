@@ -210,7 +210,7 @@ An unsolicited Intercom message, generic prompt or host lifecycle event cannot s
 
 ```text
 sdd-tower-implementation
-├── agente-soporte                  # initial decomposition only
+├── chanks-0-agente-soporte                  # initial decomposition only
 ├── policy agent                    # macro DAG and routing
 ├── sdd planning phases             # future slices through tasks
 ├── slice reconciliation            # binding delta + prepared SDD + merged base

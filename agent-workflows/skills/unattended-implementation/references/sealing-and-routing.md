@@ -4,7 +4,7 @@
 
 | Concern | Sole authority | Unattended mode |
 |---|---|---|
-| Fact discovery and brief transport | `agente-soporte` | Normalize facts; transport only an already approved sealed contract. Never seal. |
+| Fact discovery and brief transport | `chanks-0-agente-soporte` | Normalize facts; transport only an already approved sealed contract. Never seal. |
 | Readiness and sealing | `unattended-implementation` | Reject or seal one immutable Sesión contract. |
 | Chain semantics | `chained-pr` | Planning-only; resolve strategy and exact base/target map. Never create branches or PRs. |
 | Commit boundary | `work-unit-commits` | Freeze-only; describe a future commit boundary without committing. |

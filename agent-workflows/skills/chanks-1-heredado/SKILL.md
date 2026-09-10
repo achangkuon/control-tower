@@ -44,4 +44,4 @@ Devuelve inventario, matriz superficie→Zonas, Zonas/Cimientos candidatos, cobe
 ## References
 
 - `references/ubicacion-y-cruces.md`
-- `../agente-soporte/SKILL.md`
+- `../chanks-0-agente-soporte/SKILL.md`
