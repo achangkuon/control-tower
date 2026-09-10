@@ -1,5 +1,5 @@
 ---
-name: politica-de-entrega
+name: chanks-6-politica-de-entrega
 description: "Trigger: política de entrega, delivery policy, onboarding de repo. Detecta evidencia en repos existentes o declara PR para proyectos nuevos."
 license: Apache-2.0
 metadata:

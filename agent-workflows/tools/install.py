@@ -48,7 +48,7 @@ SESSION_SKILLS = (
 # owned and installed by that project.
 DELIVERY_SKILLS = (
     "chanks-4-unattended-implementation",
-    "politica-de-entrega",
+    "chanks-6-politica-de-entrega",
 )
 
 # Decision and communication support.
@@ -65,6 +65,7 @@ SKILLS = SHARED + CHANKS_SKILLS + SESSION_SKILLS + DELIVERY_SKILLS + SUPPORT_SKI
 # Explicit ownership migration. Normal installs retire only these known derived
 # copies; unlisted directories remain untouched.
 RETIRED_SKILLS = (
+    "politica-de-entrega",
     "unattended-implementation",
     "session-kickoff",
     "planificador-granular",

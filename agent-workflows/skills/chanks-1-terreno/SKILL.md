@@ -25,7 +25,7 @@ Activa como primera hija del arranque de un proyecto nuevo, antes del PRD.
 |---|---|
 | Proyecto realmente nuevo | Crear terreno y default `pull-request`. |
 | El humano pide push directo | Registrar elección y justificación antes de cambiar el default. |
-| Ya existe historia de entrega | Derivar a `politica-de-entrega`; no tratarlo como proyecto nuevo. |
+| Ya existe historia de entrega | Derivar a `chanks-6-politica-de-entrega`; no tratarlo como proyecto nuevo. |
 
 ## Execution Steps
 
@@ -41,4 +41,4 @@ Devuelve rutas creadas, identidad Git, bloque de política, desviación justific
 
 ## References
 
-- `../politica-de-entrega/SKILL.md`
+- `../chanks-6-politica-de-entrega/SKILL.md`
