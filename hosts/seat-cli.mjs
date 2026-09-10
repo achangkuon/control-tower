@@ -9,8 +9,20 @@ import { createSlotPool } from "../workspace/slots.mjs"
 // `hosts/herdr-topology.mjs` with `hosts/production-provider.mjs` so turning the Tower on changes
 // who calls the rule, never the rule.
 const fail = (code, message) => { throw Object.assign(new Error(message), { code }) }
-const USAGE = "Usage: torre asiento [list | pool | provisionar | abrir <asiento> | asignar <flags> | limpiar [--confirmar]]"
-const COMMANDS = ["list", "pool", "provisionar", "abrir", "asignar", "limpiar"]
+const USAGE = "Usage: torre asiento [list | pool | provisionar | abrir <asiento> | asignar <flags> | materializar <flags> | limpiar [--confirmar]]"
+const COMMANDS = ["list", "pool", "provisionar", "abrir", "asignar", "materializar", "limpiar"]
+const materializeFlags = (rest) => {
+  const parsed = {}, expected = new Set(["seat", "role", "lane", "branch", "base-sha"])
+  let confirmed = 0
+  for (let index = 0; index < rest.length; index += 1) {
+    const token = rest[index]
+    if (token === "--confirmar") { confirmed += 1; continue }
+    if (!token.startsWith("--") || !expected.has(token.slice(2)) || parsed[token.slice(2).replaceAll("-", "_")] !== undefined || rest[index + 1] === undefined || rest[index + 1].startsWith("--")) fail("CT_SEAT_REJECTED", USAGE)
+    parsed[token.slice(2).replaceAll("-", "_")] = rest[++index]
+  }
+  if (confirmed !== 1 || Object.keys(parsed).length !== expected.size) fail("CT_SEAT_REJECTED", USAGE)
+  return { ...parsed, confirmed: true }
+}
 const flags = (rest) => {
   const parsed = {}
   for (let index = 0; index < rest.length; index += 2) {
@@ -27,11 +39,12 @@ export const runSeatCli = async (args, { git, herdr, mainPath, workspaceId = pro
 
   // The pool is a git fact. These three never consult Herdr, so a dead control socket cannot
   // stop Main from seeing free seats or binding one.
-  if (["pool", "provisionar", "asignar"].includes(command)) {
+  if (["pool", "provisionar", "asignar", "materializar"].includes(command)) {
     const pool = createSlotPool({ git })
     if (command === "pool") return Object.freeze({ operation: "pool", seats: pool.list(mainPath) })
     if (command === "provisionar") return Object.freeze({ operation: "provisionar", ...pool.ensure(mainPath) })
-    return Object.freeze({ operation: "asignar", ...pool.assign(mainPath, flags(rest)) })
+    if (command === "asignar") return Object.freeze({ operation: "asignar", ...pool.assign(mainPath, flags(rest)) })
+    return pool.materialize(mainPath, materializeFlags(rest))
   }
 
   const topology = createHerdrTopology({ run: herdr, mainPath, workspaceId })

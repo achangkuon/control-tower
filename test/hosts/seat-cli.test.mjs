@@ -25,6 +25,7 @@ const ports = ({ panes = [], herdrDown = false } = {}) => {
     }
     if (args[2] === "status") return args[1].endsWith("temp-dirty") ? " M a.txt\n" : ""
     if (args[2] === "cherry") return ""
+    if (args[0] === "for-each-ref" && args.at(-1) === "refs/heads/feat/c") return "a".repeat(40)
     return ""
   }
   let opened = null
@@ -161,5 +162,44 @@ describe("torre asiento", () => {
       ["asignar", "--role", "implementation", "--lane", "apply", "--branch", "feat/s9.1-x"],
       ["asignar", "--role"],
     ]) expect(await errorCode(() => runSeatCli(args, ports({ herdrDown: true })))).toBe("CT_SEAT_REJECTED")
+  })
+
+  test("requires the complete confirmed materialization binding before Git or Herdr", async () => {
+    const valid = ["materializar", "--seat", "implementer-3", "--role", "implementation", "--lane", "apply", "--branch", "feat/s9.10-seat-materialization", "--base-sha", "b".repeat(40), "--confirmar"]
+    for (const args of [valid.slice(0, -1), [...valid, "--confirmar"], [...valid, "--unknown", "value"], [...valid, "--confirmar=value"], [...valid, "extra"]]) {
+      const value = ports({ herdrDown: true })
+      expect(await errorCode(() => runSeatCli(args, value))).toBe("CT_SEAT_REJECTED")
+      expect(value.gitCalls).toEqual([])
+      expect(value.herdrCalls).toEqual([])
+    }
+  })
+
+  test("materializes only through the confirmed full binding without Herdr", async () => {
+    const value = ports({ herdrDown: true }), target = "b".repeat(40)
+    const original = value.git; let switched = false
+    value.git = (args) => {
+      if (args[2] === "switch") { switched = true; return "" }
+      if (args[2] === "rev-parse") return target
+      if (args[0] === "for-each-ref" && args.at(-1) === "refs/heads/feat/s9.10-seat-materialization") return switched ? target : ""
+      if (args[0] === "worktree" && args[1] === "list" && switched) return layout.map(({ path, branch }) => `worktree ${path}\nHEAD ${path.endsWith("implementer-3") ? target : "a".repeat(40)}\nbranch refs/heads/${path.endsWith("implementer-3") ? "feat/s9.10-seat-materialization" : branch}\n`).join("\n")
+      return original(args)
+    }
+    const result = await runSeatCli(["materializar", "--seat", "implementer-3", "--role", "implementation", "--lane", "apply", "--branch", "feat/s9.10-seat-materialization", "--base-sha", target, "--confirmar"], value)
+    expect(result).toMatchObject({ operation: "materializar", binding: { seat: "implementer-3", role: "implementation", lane: "apply", branch: "feat/s9.10-seat-materialization", base_sha: target } })
+    expect(value.herdrCalls).toEqual([])
+  })
+
+  test("keeps post-mutation diagnostics safe and actionable at the CLI boundary", async () => {
+    const value = ports({ herdrDown: true }), target = "b".repeat(40), original = value.git
+    value.git = (args) => {
+      if (args[2] === "switch") throw new Error("arbitrary git output")
+      if (args[2] === "rev-parse") return target
+      return original(args)
+    }
+    try { await runSeatCli(["materializar", "--seat", "implementer-3", "--role", "implementation", "--lane", "apply", "--branch", "feat/s9.10-cli-failure", "--base-sha", target, "--confirmar"], value) } catch (error) {
+      expect(error.code).toBe("CT_SEAT_MUTATION_FAILED")
+      expect(error.message).toBe("Seat implementer-3; displaced feat/c; requested feat/s9.10-cli-failure; rollback not-required")
+    }
+    expect(value.herdrCalls).toEqual([])
   })
 })
