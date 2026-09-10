@@ -3,7 +3,7 @@ schema_version: 1
 evidence_status: {state: pass, usable_for: [c08-closure, c09-input], prohibits: [activation, delivery, final-package-identity]}
 readiness: ready
 package_identity: not-computed-c09-alone-owns-final-package-identity
-delivery_checkout_head: 37637ebd0b0e87e8597e8f4338e8ad7773e99a93
+delivery_checkout_head: 9151d75a3becebdedefe46dfdf79ca79ac08cb8a
 reproduced_against_manifest:
   plan: {mode: "100644", blob: b794dd1a425b75808ffb9c5c03881979fc23f58f, target: openspec/plan.yaml, agrees: true}
   roadmap: {mode: "100644", blob: 1b18357985ec68afaa1a7dbfc30a6a64fe2a0e1a, target: openspec/ROADMAP.md, generation: radar-deterministic-render, agrees: true}
@@ -13,9 +13,9 @@ activation_projection:
   paths: 602
   changed_files: 33
   added_lines: 14022
-  deleted_lines: 134
-  name_status_sha256: dbcae2e40a9fdbc0da84c2968e1bc4c1d46ab708adbca0c05adf25472bdc1854
-  numstat_sha256: 8f454ef31dcc35db1089e8b646480172ff5f7ba371ee2dc8522de96f9a51b485
+  deleted_lines: 147
+  name_status_sha256: dae718169d56490f8d5b22b3c0220f7bbbe88fd41438b0e36bbdcfb95961fd7c
+  numstat_sha256: 544cf87caead2b2f341195dd2a4e493d1bf833347e5d03f41399e3dfeb5a07fd
 isolation:
   private_git: {object_writes: private-c08-only}
   common_git: {refs_before_after_equal: true, objects_before_after_equal: true}
@@ -47,4 +47,9 @@ open_findings_for_c09:
     verified: >-
       The archived plan-5 blob 855f2238 contains the jornada delivery-policy record that master
       added after the fork, so the 14 commits of master content survive into the archive.
+measurement_note: >-
+  Re-measured on HEAD 9151d75 after that commit modified openspec/plans/plan-0/STATUS.md, one of
+  the 14 retired legacy views. The earlier measurement on 37637eb reported deleted_lines 134; the
+  activation projection must be measured on the exact HEAD C09 will commit onto, or the numstat
+  will not match and C09 must stop.
 forbidden: [package-oid, commit-to-master, push-to-master, canonical-path-materialization, c09-activation]
