@@ -377,7 +377,7 @@
   },
   "_executionContractV2Compatibility": {
     "provenance": {
-      "logical_asset": "unattended-implementation/assets/execution-contract.schema.json",
+      "logical_asset": "chanks-4-unattended-implementation/assets/execution-contract.schema.json",
       "$id": "https://gentle-ai.local/schemas/unattended-execution-contract-v2.json",
       "schema_version": "gentle-ai.unattended-execution-contract/v2",
       "installed_asset_sha256": "c1b042d79e887c7f7fe9288d68f280b2e32ca28d6a6cb5543d49e7aa117e327d"

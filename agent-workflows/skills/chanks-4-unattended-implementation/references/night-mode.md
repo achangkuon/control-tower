@@ -22,7 +22,7 @@ This skill is that policy. It never reimplements the mechanism.
 | Layer | Owns |
 |---|---|
 | Continuation substrate | Advancing, suspending, resuming, cadence, wake |
-| `unattended-implementation` | How far, what budget, what to do with a question, when to stop |
+| `chanks-4-unattended-implementation` | How far, what budget, what to do with a question, when to stop |
 
 ## Non-interference
 

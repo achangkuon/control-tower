@@ -1,5 +1,5 @@
 ---
-name: unattended-implementation
+name: chanks-4-unattended-implementation
 description: "Trigger: unattended implementation, sealed execution, overnight apply, modo nocturno, me voy a dormir, me voy al gym, dejá los agentes trabajando. Seal approved work into a zero-decision contract for Tower or standalone runtime."
 license: Apache-2.0
 metadata:

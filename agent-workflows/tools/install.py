@@ -47,7 +47,7 @@ SESSION_SKILLS = (
 # Generic delivery policy. Product-specific Control Tower operator skills are
 # owned and installed by that project.
 DELIVERY_SKILLS = (
-    "unattended-implementation",
+    "chanks-4-unattended-implementation",
     "politica-de-entrega",
 )
 
@@ -65,6 +65,7 @@ SKILLS = SHARED + CHANKS_SKILLS + SESSION_SKILLS + DELIVERY_SKILLS + SUPPORT_SKI
 # Explicit ownership migration. Normal installs retire only these known derived
 # copies; unlisted directories remain untouched.
 RETIRED_SKILLS = (
+    "unattended-implementation",
     "session-kickoff",
     "planificador-granular",
     "cierre-de-decisiones",

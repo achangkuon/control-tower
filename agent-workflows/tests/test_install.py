@@ -337,7 +337,7 @@ class InstallerTests(unittest.TestCase):
 
             self.assertFalse((home / ".codex").exists())
             for root in (home / ".agents/skills", home / ".claude/skills"):
-                self.assertTrue((root / "unattended-implementation/SKILL.md").is_file())
+                self.assertTrue((root / "chanks-4-unattended-implementation/SKILL.md").is_file())
                 self.assertFalse((root / "torre-control-entregas").exists())
             self.assertNotIn("torre-control-entregas", INSTALLER.SKILLS)
             self.assertEqual(INSTALLER.build_plan(home, ROOT), [])
