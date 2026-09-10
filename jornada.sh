@@ -17,6 +17,13 @@
 # El tronco (main/master) se autodetecta desde origin/HEAD. Forzalo con
 # la variable de entorno JORNADA_TRUNK=<rama> si hiciera falta.
 #
+# La politica de entrega NO se asume: se lee del bloque `schema: delivery-policy`
+# de AGENTS.md. Si dice direct-push, el script no propone PRs ni ofrece mergearlos.
+#
+# Un worktree con archivos tocados en los ultimos JORNADA_VENTANA_OCUPADO_MIN
+# minutos (default 30) se reporta OCUPADO: hay un agente escribiendo. No se
+# manda a cerrar ni cuenta como pendiente.
+#
 # Lo unico que corre siempre: git fetch (inofensivo). Saltealo con --sin-fetch.
 #
 # Ejemplos:
@@ -69,6 +76,43 @@ to_unix() {
             fi ;;
         *) echo "$p" ;;
     esac
+}
+
+# ---- Politica de entrega del repo (se lee, no se asume) ----
+# El bloque `schema: delivery-policy` de AGENTS.md manda. Si no existe, se
+# asume el flujo generico rama -> PR, que es el default seguro fuera de aca.
+DELIVERY_SHAPE="pull-request"; POLICY_TARGET=""; POLICY_SOURCE=""
+read_delivery_policy() {
+    local src="$1/AGENTS.md" block shape target
+    [ -f "$src" ] || return 0
+    block="$(awk '/^schema:[[:space:]]*delivery-policy[[:space:]]*$/{f=1} f&&/^```/{exit} f{print}' "$src")"
+    [ -n "$block" ] || return 0
+    shape="$(printf '%s\n' "$block" | awk '/^delivery:/{d=1;next} d&&/^[^[:space:]]/{d=0} d&&/^[[:space:]]+shape:/{print $2;exit}')"
+    target="$(printf '%s\n' "$block" | awk '/^delivery:/{d=1;next} d&&/^[^[:space:]]/{d=0} d&&/^[[:space:]]+target_branch:/{print $2;exit}')"
+    case "$shape" in
+        direct-push|pull-request) DELIVERY_SHAPE="$shape"; POLICY_SOURCE="AGENTS.md" ;;
+    esac
+    [ -n "$target" ] && POLICY_TARGET="$target"
+}
+
+# ---- Worktree ocupado: hay un agente escribiendo AHORA ----
+# Un arbol sucio con archivos tocados hace minutos no es desprolijidad, es
+# trabajo en curso. Se informa, no se manda a cerrar. Ventana configurable.
+ocupado_ahora() {
+    local path="$1" newest=0 f mt ahora
+    local window=$(( ${JORNADA_VENTANA_OCUPADO_MIN:-30} * 60 ))
+    while IFS= read -r line; do
+        [ -n "$line" ] || continue
+        f="${line:3}"
+        case "$f" in *" -> "*) f="${f##* -> }" ;; esac
+        f="${f%\"}"; f="${f#\"}"
+        [ -e "$path/$f" ] || continue
+        mt="$(stat -c %Y "$path/$f" 2>/dev/null)" || continue
+        [ "$mt" -gt "$newest" ] && newest="$mt"
+    done <<< "$(git -C "$path" status --porcelain 2>/dev/null)"
+    [ "$newest" -eq 0 ] && return 1
+    ahora="$(date +%s)"
+    [ $(( ahora - newest )) -lt "$window" ]
 }
 
 # ---- Helpers de git ----
@@ -172,7 +216,8 @@ compute_estados() {
             elif [ "$behind" -gt 0 ]; then sit="MAIN_BEHIND"
             else sit="MAIN_OK"; fi
         elif [ "$branch" = "(detached)" ]; then sit="DETACHED"
-        elif [ -n "$dirty" ]; then sit="DIRTY"
+        elif [ -n "$dirty" ]; then
+            if ocupado_ahora "$path"; then sit="OCUPADO"; else sit="DIRTY"; fi
         elif [ "$ahead" -gt 0 ]; then
             if all_merged "$path" "$branch"; then sit="MERGED"
             else
@@ -183,7 +228,7 @@ compute_estados() {
         elif [ "$behind" -gt 0 ]; then sit="BEHIND"
         else sit="UPTODATE"; fi
 
-        ESTADOS+=("$name|$path|$branch|$agente|$sit|$dirtyN|$behind|$unpushed|$hasup")
+        ESTADOS+=("$name|$path|$branch|$agente|$sit|$dirtyN|$behind|$unpushed|$hasup|$ahead")
     done
 }
 
@@ -206,8 +251,22 @@ for i in "${!BRANCHES[@]}"; do
 done
 [ -z "$mainPath" ] && mainPath="${PATHS[0]}"
 
+read_delivery_policy "$mainPath"
+[ -n "$POLICY_TARGET" ] && [ "$POLICY_TARGET" != "$TRUNK" ] && \
+    echo "${C_YELLOW}Aviso: la politica declara target_branch=$POLICY_TARGET y el tronco detectado es $TRUNK.${C_RESET}"
+if [ "$DELIVERY_SHAPE" = "direct-push" ]; then
+    echo "${C_GRAY}Entrega segun ${POLICY_SOURCE:-default}: commit directo a ${POLICY_TARGET:-$TRUNK} + push (este repo no usa PRs).${C_RESET}"
+else
+    echo "${C_GRAY}Entrega segun ${POLICY_SOURCE:-default}: rama -> pull request hacia ${POLICY_TARGET:-$TRUNK}.${C_RESET}"
+fi
+
 # ---- ACCION PUNTUAL: MERGEAR PR (requiere autorizacion explicita) ----
 if [ -n "$MERGEAR_PR" ]; then
+    if [ "$DELIVERY_SHAPE" = "direct-push" ]; then
+        echo "${C_RED}ABORTADO: ${POLICY_SOURCE:-la politica} declara entrega direct-push; este repo no usa PRs.${C_RESET}"
+        echo "${C_GRAY}  Entrega con: git -C \"$MERGEAR_PR\" push  (commit directo a ${POLICY_TARGET:-$TRUNK}).${C_RESET}"
+        exit 1
+    fi
     echo; echo "${C_MAGENTA}========== MERGEAR PR VERIFICADO ==========${C_RESET}"
     command -v gh >/dev/null 2>&1 || { echo "${C_RED}ABORTADO: GitHub CLI (gh) no esta disponible.${C_RESET}"; exit 1; }
     MERGEAR_PR="$(to_unix "$MERGEAR_PR")"
@@ -289,7 +348,7 @@ compute_estados
 if [ "$EJECUTAR" -eq 1 ]; then
     echo; echo "${C_MAGENTA}========== EJECUTANDO LO SEGURO ==========${C_RESET}"
     for est in "${ESTADOS[@]}"; do
-        IFS='|' read -r name path branch agente sit dirtyN behind unpushed hasup <<< "$est"
+        IFS='|' read -r name path branch agente sit dirtyN behind unpushed hasup ahead <<< "$est"
         if [ "$sit" = "MAIN_BEHIND" ]; then
             echo "${C_CYAN}  $TRUNK: pull --ff-only ...${C_RESET}"
             if git -C "$path" pull --ff-only --quiet; then echo "${C_GREEN}    OK: $TRUNK al dia.${C_RESET}"
@@ -312,14 +371,20 @@ fi
 # ============================================================
 echo; echo "${C_CYAN}=============== PARTE 1: DIAGNOSTICO ===============${C_RESET}"
 for est in "${ESTADOS[@]}"; do
-    IFS='|' read -r name path branch agente sit dirtyN behind unpushed hasup <<< "$est"
+    IFS='|' read -r name path branch agente sit dirtyN behind unpushed hasup ahead <<< "$est"
     case "$sit" in
         MAIN_OK)     resumen="OK (al dia)"; color="$C_GREEN" ;;
         MAIN_BEHIND) resumen="$behind atras del remoto"; color="$C_YELLOW" ;;
         MAIN_DIRTY)  resumen="TIENE CAMBIOS (no se debe tocar)"; color="$C_RED" ;;
         DIRTY)       resumen="$dirtyN cambio(s) sin commitear"; color="$C_YELLOW" ;;
         UNPUSHED)    resumen="$unpushed commit(s) sin pushear"; color="$C_YELLOW" ;;
-        PENDING_PR)  resumen="pusheado, falta mergear el PR"; color="$C_YELLOW" ;;
+        PENDING_PR)  if [ "$DELIVERY_SHAPE" = "direct-push" ]; then
+                         resumen="limpio, pusheado; $ahead commit(s) fuera de $TRUNK"
+                     else
+                         resumen="pusheado, falta mergear el PR"
+                     fi
+                     color="$C_YELLOW" ;;
+        OCUPADO)     resumen="OCUPADO: agente trabajando ($dirtyN archivo/s). No tocar."; color="$C_CYAN" ;;
         MERGED)      resumen="rama ya mergeada (squash) -> reciclar"; color="$C_YELLOW" ;;
         BEHIND)      resumen="limpio, $behind atras de $TRUNK"; color="$C_YELLOW" ;;
         UPTODATE)    resumen="al dia, sin pendientes"; color="$C_GREEN" ;;
@@ -336,7 +401,7 @@ done
 echo; echo "${C_CYAN}=============== PARTE 2: PLAN DE ACCION ===============${C_RESET}"
 paso=0
 for est in "${ESTADOS[@]}"; do
-    IFS='|' read -r n path branch ag sit dirtyN behind unpushed hasup <<< "$est"
+    IFS='|' read -r n path branch ag sit dirtyN behind unpushed hasup ahead <<< "$est"
     case "$sit" in
         UPTODATE)
             paso=$((paso+1))
@@ -356,20 +421,34 @@ for est in "${ESTADOS[@]}"; do
             echo; echo "${C_YELLOW}  $paso) $n - laburo a medias ($dirtyN archivo/s). Cerralo o pausalo:${C_RESET}"
             echo "${C_GREEN}       cd \"$path\"${C_RESET}"
             echo "${C_GREEN}       git add -A && git commit -m \"tipo($ag): descripcion\"${C_RESET}"
-            if [ "$hasup" -eq 1 ]; then echo "${C_GREEN}       git push && gh pr create --base $TRUNK${C_RESET}"
-            else echo "${C_GREEN}       git push -u origin $branch && gh pr create --base $TRUNK${C_RESET}"; fi
-            echo "${C_GRAY}       (pausar sin cerrar: git -C \"$path\" stash push -u)${C_RESET}" ;;
+            if [ "$DELIVERY_SHAPE" = "direct-push" ]; then
+                if [ "$hasup" -eq 1 ]; then echo "${C_GREEN}       git push${C_RESET}"
+                else echo "${C_GREEN}       git push -u origin $branch${C_RESET}"; fi
+            else
+                if [ "$hasup" -eq 1 ]; then echo "${C_GREEN}       git push && gh pr create --base $TRUNK${C_RESET}"
+                else echo "${C_GREEN}       git push -u origin $branch && gh pr create --base $TRUNK${C_RESET}"; fi
+            fi
+            echo "${C_GRAY}       (pausar sin cerrar: commit WIP en la rama. El stash es COMPARTIDO${C_RESET}"
+            echo "${C_GRAY}        entre todos los worktrees; si igual lo usas: stash push -u -m \"$ag-$(date +%Y%m%d)\")${C_RESET}" ;;
         UNPUSHED)
             paso=$((paso+1))
             echo; echo "${C_YELLOW}  $paso) $n - $unpushed commit(s) sin pushear. Subilos:${C_RESET}"
             if [ "$hasup" -eq 1 ]; then echo "${C_GREEN}       git -C \"$path\" push${C_RESET}"
             else echo "${C_GREEN}       git -C \"$path\" push -u origin \"$branch\"${C_RESET}"; fi
-            echo "${C_GRAY}       (si no hay PR: gh pr create --base $TRUNK)${C_RESET}" ;;
+            if [ "$DELIVERY_SHAPE" != "direct-push" ]; then
+                echo "${C_GRAY}       (si no hay PR: gh pr create --base $TRUNK)${C_RESET}"
+            fi ;;
         PENDING_PR)
             paso=$((paso+1))
-            echo; echo "${C_YELLOW}  $paso) $n - pusheado, esperando merge. Revisa el PR en GitHub.${C_RESET}"
-            echo "${C_GREEN}       ./jornada.sh --mergear-pr \"$path\"${C_RESET}"
-            echo "${C_GRAY}       (verifica PR unico, CI/merge limpio y draft antes de mergear)${C_RESET}" ;;
+            if [ "$DELIVERY_SHAPE" = "direct-push" ]; then
+                echo; echo "${C_YELLOW}  $paso) $n - limpio y publicado, pero $ahead commit(s) todavia fuera de $TRUNK:${C_RESET}"
+                echo "${C_GRAY}       Este repo entrega con commit directo a ${POLICY_TARGET:-$TRUNK}. No hay PR que mergear.${C_RESET}"
+                echo "${C_GRAY}       Si ese trabajo ya cerro, entregalo segun AGENTS.md; si no, dejalo donde esta.${C_RESET}"
+            else
+                echo; echo "${C_YELLOW}  $paso) $n - pusheado, esperando merge. Revisa el PR en GitHub.${C_RESET}"
+                echo "${C_GREEN}       ./jornada.sh --mergear-pr \"$path\"${C_RESET}"
+                echo "${C_GRAY}       (verifica PR unico, CI/merge limpio y draft antes de mergear)${C_RESET}"
+            fi ;;
         MERGED)
             paso=$((paso+1))
             echo; echo "${C_YELLOW}  $paso) $n - rama ya mergeada (squash). Reciclala a una tarea nueva:${C_RESET}"
@@ -379,14 +458,46 @@ for est in "${ESTADOS[@]}"; do
             echo; echo "${C_YELLOW}  $paso) $n - limpio pero $behind atras de $TRUNK:${C_RESET}"
             echo "${C_YELLOW}       git -C \"$path\" rebase $RTRUNK   (o --ejecutar lo hace solo)${C_RESET}"
             echo "${C_YELLOW}       o tarea nueva: ./jornada.sh --reciclar \"$path\" --nueva-rama feat/$ag/<tarea>${C_RESET}" ;;
+        OCUPADO)
+            echo; echo "${C_CYAN}  -) $n - OCUPADO: hay trabajo en curso ($dirtyN archivo/s tocados recien).${C_RESET}"
+            echo "${C_GRAY}       No se toca y no cuenta como pendiente. Se evalua cuando el agente termine.${C_RESET}" ;;
         DETACHED)
             paso=$((paso+1))
             echo; echo "${C_RED}  $paso) $n - HEAD detached. Pasate a una rama:${C_RESET}"
+            echo "${C_GRAY}       Ojo: si el worktree tiene archivos staged o sin trackear, 'switch' los arrastra.${C_RESET}"
+            echo "${C_GRAY}       Revisa 'git -C \"$path\" status' antes de moverlo.${C_RESET}"
             echo "${C_GREEN}       git -C \"$path\" switch -c feat/$ag/<tarea> $RTRUNK --no-track${C_RESET}" ;;
     esac
 done
 if [ "$paso" -eq 0 ]; then
     echo; echo "${C_GREEN}  Nada que hacer. Todo en orden. A trabajar.${C_RESET}"
+fi
+
+# ============================================================
+#  PARTE 3 - VEREDICTO DE LIMPIEZA
+#  Un worktree ocupado no se declara sucio: se declara ocupado.
+# ============================================================
+echo; echo "${C_CYAN}=============== PARTE 3: VEREDICTO ===============${C_RESET}"
+limpios=0; evaluables=0; ocupados=""; sucios=""
+for est in "${ESTADOS[@]}"; do
+    IFS='|' read -r n path branch ag sit dirtyN behind unpushed hasup ahead <<< "$est"
+    case "$sit" in
+        OCUPADO)
+            ocupados="$ocupados $n" ;;
+        MAIN_OK|MAIN_BEHIND|UPTODATE|BEHIND|MERGED|PENDING_PR)
+            evaluables=$((evaluables+1)); limpios=$((limpios+1)) ;;
+        *)
+            evaluables=$((evaluables+1)); sucios="$sucios $n" ;;
+    esac
+done
+if [ "$evaluables" -gt 0 ] && [ "$limpios" -eq "$evaluables" ]; then
+    echo "${C_GREEN}  Worktrees limpios: $limpios de $evaluables evaluables. Sin trabajo sin guardar.${C_RESET}"
+else
+    echo "${C_YELLOW}  Worktrees limpios: $limpios de $evaluables evaluables.${C_RESET}"
+    [ -n "$sucios" ] && echo "${C_YELLOW}  Con pendientes:$sucios${C_RESET}"
+fi
+if [ -n "$ocupados" ]; then
+    echo "${C_CYAN}  Ocupados (agente trabajando, excluidos del veredicto):$ocupados${C_RESET}"
 fi
 
 echo; echo "${C_CYAN}=====================================================${C_RESET}"
