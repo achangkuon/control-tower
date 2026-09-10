@@ -5089,3 +5089,46 @@ C07 is closed on reproducible evidence. `T0.4.7.1–T0.4.7.3` remain `[x]`. This
 | GREEN | Receipts rebound to tree/path-digest/recipe; re-run after the edit reproduced the subject byte-identically. | PASS. |
 | TRIANGULATE | Seven bound stdout digests stable across two independent runs; three receipts mutually consistent under strict YAML parse; 30/30 focused tests. | PASS. |
 | REFACTOR | Separated binding from non-binding identities by construction and preserved the superseded revision instead of deleting it. | PASS; no script, candidate, or partition byte changed. |
+
+## C08 — harness built and running; blocked on branch divergence from master
+
+### What was built
+
+`migration/proof/reproduce-c08.sh` plus `reproduce-c08.test.mjs` (7 pass, 0 fail). The harness reproduces the C07 manifest-listed recipe, content and evidence in the delivery checkout using a private Git index and a private `GIT_DIR` alternated onto the common object store. It starts from the delivery checkout's own HEAD, promotes the proven candidate plan, renders the ROADMAP with Radar, copies the 31 archive destinations and retires the 14 active legacy views, verifies plan/roadmap blobs and archive counts against the frozen manifest, and records the activation projection. It computes **no package OID** and refuses a manifest that binds a subject commit OID.
+
+### Defect found and fixed in the harness
+
+A parentless synthetic subject made Radar reject **119 imported Sessions** with `origen no es ancestro estricto`. Radar requires every imported Session's origin commit to be a strict ancestor of HEAD. Parenting the private subject on the delivery HEAD reduced this to 4 errors. This is a real constraint on C09, not a harness quirk: the activation commit's ancestry decides whether the imported plan validates at all.
+
+### Blocker — the branch has diverged from master
+
+The 4 remaining Radar errors are S9.9, S9.10 and S101, all resolving to logical parent `e6b7e673f671e6bba30f9a600bf0333a1cd90af2`. That commit is **not an ancestor of this branch**.
+
+| Fact | Value |
+|---|---|
+| Merge base | `43130ad4…` — the migration `source_commit` |
+| This branch ahead of merge base | 123 commits |
+| `origin/master` ahead of merge base | 14 commits |
+| C07 logical parent `e6b7e673…` | on master, but 3 commits behind its tip `fbcb546e…` |
+| Archive sources changed on master since the fork | **5 of 31** |
+
+The five are `openspec/plans/master-index.md`, `plan-0/STATUS.md`, `plan-5/STATUS.md`, `plan-9/STATUS.md`, and `decision-register.md` — precisely the files C09 archives and retires. C07 proved green only because r14 parents its subject on `e6b7e673`, a master commit, producing a hybrid: this branch's tree with master's ancestry. No commit on this branch has that ancestry.
+
+**Consequence for C09.** As proven, C09 would archive the `43130ad4` bytes of those five files and discard 14 commits of real master work — including the jornada delivery-policy fix, the S9.9 closure and S9.10 gate, and master's own record of S0.4. The candidate plan was derived from the stale versions, so plan content may also lag what master already knows.
+
+### Correction to this session's earlier plan-documentation commit
+
+Commit `03254d1` enumerated `S0.4` in `plan-0/STATUS.md` and moved `master-index` P0 to 🔵 EN CURSO 3/4. **Master already carried both**, at `plan-0/STATUS.md:226` and in its own P0 row, which is more precise — it lists `S0.4`, `S101`. That work was redundant because it was derived from this branch's frozen copies without checking master. It will conflict on integration and should be dropped in favour of master's version. The C07 evidence in that commit stands; the index correction does not.
+
+### Boundary
+
+`T0.4.8.1` is not complete: the harness runs but cannot reach a clean reproduction while the ancestry is wrong. `T0.4.8.2`/`T0.4.8.3` were not started. No package OID, canonical path, archive byte, commit to master, or push to master occurred. Resume checkpoint: settle how this branch integrates master before any C09 attempt. Rollback boundary: the C08 harness files plus this append.
+
+### TDD cycle evidence
+
+| Cycle | Evidence | Result |
+|---|---|---|
+| RED | Parentless subject → 119 Radar ancestry rejections; after the parent fix → 4, all resolving to a logical parent absent from this branch. | Real blocker surfaced. |
+| GREEN | Harness ABI and fail-closed preconditions: 7 pass, 0 fail, 19 assertions. | PASS. |
+| TRIANGULATE | Merge-base arithmetic (123 vs 14 commits) and set intersection of `archive-inventory` sources against master's changed paths → 5 of 31. | Blocker quantified. |
+| REFACTOR | Parented the private subject on the delivery HEAD and documented why. | PASS; no candidate or receipt byte changed. |
