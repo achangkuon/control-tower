@@ -38,7 +38,7 @@ CHANKS_SKILLS = (
 # Session workflow family — routing, planning, support, closure.
 SESSION_SKILLS = (
     "session-kickoff",
-    "session-context-loader",
+    "chanks-0-session-context-loader",
     "planificador-granular",
     "chanks-0-agente-soporte",
     "session-doc",
@@ -65,6 +65,7 @@ SKILLS = SHARED + CHANKS_SKILLS + SESSION_SKILLS + DELIVERY_SKILLS + SUPPORT_SKI
 # Explicit ownership migration. Normal installs retire only these known derived
 # copies; unlisted directories remain untouched.
 RETIRED_SKILLS = (
+    "session-context-loader",
     "explicalo-simple",
     "agente-soporte",
     "session-plan",

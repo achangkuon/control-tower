@@ -1,5 +1,5 @@
 ---
-name: session-context-loader
+name: chanks-0-session-context-loader
 description: "Trigger: session context loader, new session context, Engram startup brief. Resume contexto persistido sin elegir trabajo ni mutar fuentes."
 license: Apache-2.0
 metadata:
