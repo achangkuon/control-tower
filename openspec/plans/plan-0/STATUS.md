@@ -364,6 +364,27 @@ se resolvieron **a favor de master**, que estaba más avanzado y era más precis
 de `S0.4` escrita ese mismo día en la rama resultó redundante —master ya la tenía— y se descartó;
 lo que sobrevive es la evidencia de C07 y este bloqueo, que master no tenía.
 
+### C09 — intentado y revertido el 2026-09-09
+
+La activación se ejecutó y fue **byte-perfecta**: `openspec/plan.yaml` `b794dd1a…`,
+`ROADMAP.md` generado `1b183579…`, 31 copias de archivo, 14 retiros, 33 archivos
++14.022/−147, árbol de 602 rutas, `final_package_identity=f459dfd4…` igual al tree del propio
+commit. Radar validó 11 Zonas y 75 Sesiones, el ROADMAP se regeneró byte a byte y las 31
+copias resultaron legibles.
+
+**Pero el readback de `T0.4.8.3` falló** y por contrato la entrega se detuvo: `bun test` pasó de
+1212/0 a 1198/1. Al retirar las vistas legacy quedaron cinco consumidores apuntando a archivos
+que ya no existen. Por decisión del maintainer se revirtió la activación (`116ee27`) para migrar
+primero a esos consumidores, de modo que **ningún commit deje el repositorio roto**. La evidencia
+del hallazgo se conservó; sólo se deshizo la activación. Suite de vuelta en **1212 · 0**.
+
+**El caso grande no es un cambio de ruta.** El motor de radiografía parsea del `master-index.md`
+las filas `| P<n> |` y la línea `Avance global`. El ROADMAP nuevo es por Zona: tiene **cero** de
+ambas. Re-apuntarlo cambiaría un archivo faltante por un fallo de parseo, y apuntarlo al archivo
+congelaría para siempre la medición de avance — justo lo contrario de para lo que ese motor
+existe. Necesita leer `openspec/plan.yaml` directamente, y eso es trabajo que **ninguna Sesión
+posee**.
+
 ### Punto de retoma
 
 **Próximo paso concreto — C08 (`T0.4.8.1`).** Reproducir con índice Git privado únicamente la
