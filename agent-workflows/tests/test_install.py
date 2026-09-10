@@ -1,4 +1,5 @@
 import importlib.util
+import json
 from pathlib import Path
 import shutil
 import stat
@@ -504,6 +505,41 @@ class InstallerTests(unittest.TestCase):
 
         self.assertIn("Recurso", content)
         self.assertIn("release", content)
+
+    def test_hyphenated_retired_skill_is_actually_retired(self):
+        # Listed only under the underscore spelling, it matched no directory on disk.
+        retired = INSTALLER.runtime_skill_roots(self.home)[0] / "coordinador-multi-agente"
+        retired.mkdir(parents=True)
+        (retired / "SKILL.md").write_bytes(b"stale\n")
+        self.assertNotEqual(INSTALLER.build_plan(self.home, ROOT), [])
+        INSTALLER.apply(self.home, ROOT)
+        self.assertFalse(retired.exists())
+        self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
+
+
+class SessionDocSchemaTest(unittest.TestCase):
+    """The oneOf contract gates session closure, so its matrix is pinned here."""
+
+    SCHEMA = ROOT / "skills/chanks-7-session-doc/assets/session-doc.schema.json"
+    HEX, DASHED = "387e23cc934581f99b44eb519210c801", "387e23cc-9345-81f9-9b44-eb519210c801"
+    SCRIPT = ("const A=require('ajv'),f=require('fs');const v=new A({strict:false}).compile("
+              "JSON.parse(f.readFileSync(process.argv[1],'utf8')));console.log("
+              "JSON.parse(process.argv[2]).map(d=>!!v(d)).join(','))")
+
+    def test_closure_gate_matrix(self):
+        cases = [({"notion_page_id": self.HEX}, True),
+                 ({"notion_page_id": self.DASHED}, True),  # the shape Notion's UI shows
+                 ({"notion": {"enabled": False}}, True),
+                 ({"notion_page_id": self.HEX, "notion": {"enabled": False}}, False),
+                 ({"notion": {"enabled": True}}, False),
+                 ({"notion_page_id": "not-a-page-id"}, False),
+                 ({}, False)]
+        run = subprocess.run(
+            ["bun", "-e", self.SCRIPT, str(self.SCHEMA), json.dumps([c[0] for c in cases])],
+            capture_output=True, text=True, cwd=ROOT.parent)
+        self.assertEqual(run.returncode, 0, run.stderr)
+        self.assertEqual(run.stdout.strip().split(","),
+                         [str(c[1]).lower() for c in cases], cases)
 
 
 if __name__ == "__main__":

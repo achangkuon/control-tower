@@ -17,8 +17,8 @@
     },
     "notion_page_id": {
       "type": "string",
-      "pattern": "^[0-9a-fA-F]{32}$",
-      "description": "Notion page id (32 hex chars, no dashes) of the project's status page. Required unless Notion is explicitly disabled."
+      "pattern": "^(?:[0-9a-fA-F]{32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$",
+      "description": "Notion page id of the project's status page, in either shape Notion hands out: 32 hex chars, or the dashed UUID the web UI shows. Required unless Notion is explicitly disabled."
     },
     "notion_url": {
       "type": "string",

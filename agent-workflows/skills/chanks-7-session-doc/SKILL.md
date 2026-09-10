@@ -20,6 +20,7 @@ Activa después de verificación, revisión y entrega. Reúne evidencia; Support
 - No escribas plan ni ROADMAP; enviá un delta a Support.
 - Notion y Engram son proyecciones opcionales y nunca reemplazan plan, Git o `radar`.
 - Si `.session-doc.json` existe, validá el archivo completo contra `assets/session-doc.schema.json` antes de evaluar Notion; una configuración inválida o mixta bloquea el cierre.
+- Ese bloqueo alcanza sólo al registro documental: la entrega ya hecha no se revierte. Devolvé la restricción exacta que falló y las dos formas válidas —`notion_page_id` sin `notion`, o `notion.enabled: false` sin `notion_page_id` ni `notion_url`— para que la corrección sea de un paso.
 - Notion conserva el comportamiento vigente por defecto; sólo un archivo válido con `notion.enabled: false` exacto deshabilita esa proyección para el proyecto.
 - Con ese opt-out válido, no resuelvas mapas, no autentiques, no leas ni actualices Notion; registrá la proyección como omitida por política.
 - Sin ese opt-out, resolvé el destino de Notion desde `.session-doc.json`, preservá contenido y nunca borres.

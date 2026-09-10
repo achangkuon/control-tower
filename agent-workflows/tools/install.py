@@ -68,6 +68,9 @@ RETIRED_SKILLS = (
     "agente-soporte",
     "session-plan",
     "coordinador_multi_agente",
+    # The runtime copies were installed hyphenated, so the underscore entry above
+    # matched no directory and the retired skill survived every install.
+    "coordinador-multi-agente",
     "architecture-audit",
     "project-kickoff",
     "big-files-remediation-loop",

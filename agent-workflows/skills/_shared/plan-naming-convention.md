@@ -533,7 +533,10 @@ into Zonas, and historical planning prose contributes nothing to that partition.
 3. **Freeze the history byte-for-byte.** Move the legacy corpus unchanged under
    `openspec/archive/legacy-planning/` and generate one index mapping each retired identifier
    to its delivery commit. Git already proves that history; re-authoring it proves nothing
-   further and cannot be kept in sync.
+   further and cannot be kept in sync. Moving is one atomic commit: what makes it a move and
+   not a copy is that the live tree keeps no file declaring progress — no `STATUS.md`, no
+   `master-index.md`, no release chain. Narrative declaring none may stay in place, marked
+   non-authoritative; `AGENTS.md` records which files went and which stayed.
 4. **Drop satisfied dependencies.** A `depende_de` pointing at closed work is already
    satisfied: delete the reference. Never preserve a row only to receive one.
 
