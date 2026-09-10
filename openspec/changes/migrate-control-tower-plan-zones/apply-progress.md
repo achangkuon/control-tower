@@ -5209,3 +5209,87 @@ the C08 receipt and roadmap files.
 | GREEN | Post-merge C08 exits 0 READY; plan, roadmap, 31 copies and 14 retirements all agree with the manifest. | PASS. |
 | TRIANGULATE | Full suite 1212 pass / 0 fail; ROADMAP blob unchanged by the merge; common-Git refs and objects identical before and after. | PASS. |
 | REFACTOR | Resolved both conflicts by content rather than by side, keeping master's history and this branch's current state. | PASS; no candidate byte changed. |
+
+## Archive re-cut to current master — C07 and C08 re-proved
+
+### Decision
+
+The maintainer chose, from a presented three-way decision, to **archive what master has today
+rather than the fork snapshot**. Four inventory entries still resolved to the global
+`source_commit` `43130ad4` and had fallen 14 commits behind.
+
+| Path | Was | Now |
+|---|---|---|
+| `openspec/plans/plan-0/STATUS.md` | `a93ba17f…` | `d9ff1cb6…` |
+| `openspec/plans/plan-5/STATUS.md` | `91fbffbb…` | `855f2238…` |
+| `openspec/plans/master-index.md` | `a1d9588f…` | `5b96aaa6…` |
+| `openspec/plans/decision-register.md` | `c786eb35…` | `bc844dbd…` |
+| `openspec/plans/plan-9/STATUS.md` | already correct | `c404406554b5…` at `e6b7e673` |
+
+The mechanism was already proven: `plan-9` carried a per-entry `source_commit` overriding the
+global one. The other four now use the same pattern, pinned to `fbcb546e`, each with its
+`source_sha256`.
+
+### The identity cascade behaved exactly as designed
+
+Changing the inventory changed its blob, which made `candidate-inputs.yaml`'s frozen
+`archive_evidence_inputs` check fail with `candidate input drift`. That is the chain doing its
+job. The link was updated (`1439bed2…` → `01f98525…`) and the three C07 receipts regenerated.
+
+Also replaced `archives.identity_sha256` — another value with no known recipe, the same defect
+corrected earlier today — with `archive_plan_tsv_sha256`
+(`b7b1ea6a…`) plus its declared formula: sha256 over one line per entry as
+`<source_commit>\t<source_path>\t<destination>\t<activation_treatment>`, inventory order,
+LF-terminated. Both proof scripts already build exactly that plan, so it is reproducible.
+
+### New C07 identities
+
+| Field | Value |
+|---|---|
+| Subject tree | `923f1fb8c8e2b230a435e0b9de75641068752aef` |
+| `path_mode_blob_inputs` | 589, `9a2bfd5bed1baad1…` |
+| `candidate_inputs` | blob `7fb620fb…`, sha256 `790b2749…` |
+| Recipe | `64ca75e2…` unchanged |
+
+**Product content did not move.** Plan blob `b794dd1a…` and generated ROADMAP `1b183579…`
+(sha256 `29078dd9…`) are byte-identical to before the re-cut, as are all seven command stdout
+digests and the `75/7/4=86` partition. Only the subject identity changed, which is exactly what
+a change inside the subject should do.
+
+Re-running C07 **after** rewriting the receipts reproduced the subject byte-identically, so
+`receipt_exclusions` still holds.
+
+### C08 re-proved and the point of the whole exercise verified
+
+`reproduce-c08.sh` exits 0 `READY` against the re-cut inventory: plan, ROADMAP, 31 copies and 14
+retirements all agree with the manifest, no package OID, common store untouched.
+
+The decisive check: the archived `plan-5` blob `855f2238…` **contains the jornada
+delivery-policy record that master added after the fork**. The 14 commits of master content now
+survive into `openspec/archive/legacy-planning/` instead of being silently dropped.
+
+Activation projection: 33 files, **+14 022 / −134**, activation tree of **602** paths (up from
+600 because HEAD gained `c08-readiness.yaml` and `HOJA-DE-RUTA.md`).
+
+Suites: `bun test` **1212 pass · 0 fail**; `go test ./agent-workflows/tools/radar` **ok**.
+
+### Remaining open finding
+
+`partition.yaml` `validation.expected` still declares `tracked_files: 588` against 602 observed.
+Unchanged reasoning: Radar never reads that block, and `partition.yaml` sits inside the C07
+subject, so correcting it would restart this same cascade. It stays a C09 decision.
+
+### Boundary
+
+C07 and C08 both re-proved on the re-cut inventory. `T0.4.8.1` remains complete; 39 closed, 6
+open. No package OID, canonical path, archive byte on disk, commit to master or push to master.
+Next: `T0.4.8.2` — C09 activation. Rollback boundary: the re-cut commit and this append.
+
+### TDD cycle evidence
+
+| Cycle | Evidence | Result |
+|---|---|---|
+| RED | C07 refused the edited inventory with `candidate input drift` on `archive-inventory.yaml`. | Chain detected the change correctly. |
+| GREEN | Updated `candidate-inputs.yaml`, regenerated receipts; C07 PASS, C08 READY. | PASS. |
+| TRIANGULATE | Subject byte-identical on re-run after editing receipts; plan/ROADMAP/partition/7 stdout digests unchanged; archived plan-5 blob verified to contain master's post-fork content; 1212 bun tests plus the Go radar suite. | PASS. |
+| REFACTOR | Replaced the recipe-less `identity_sha256` with a digest whose formula is declared and reproducible by both scripts. | PASS. |

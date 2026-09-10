@@ -12,7 +12,7 @@
 | C01–C05, M0.4.5A, S101, G1 | ✅ cerrados |
 | C06 | ✅ cerrado 2026-09-08 |
 | C07 | ✅ cerrado 2026-09-09 sobre identidades reproducibles |
-| **C08** | ✅ **READY** — `T0.4.8.1` reproduce contra el manifest |
+| **C08** | ✅ **READY** — reproduce contra el manifest re-cortado a master |
 | **C09** | 📋 **siguiente** — activación atómica, **paso único irreversible** |
 | M0.4.9 | 📋 verificación post-entrega |
 
@@ -53,19 +53,17 @@ que absorber**. La migración persigue un blanco móvil.
 
 ## Lo que falta, en orden
 
-### 1. Re-sincronizar el candidato con master (previo a C09)
+### 1. ~~Re-sincronizar el archivo con master~~ ✅ resuelto el 2026-09-09
 
-Master registró hechos de planificación después de `e6b7e673` que el candidato no tiene — entre
-ellos el arreglo de política de entrega de `jornada` registrado como alcance no planificado en
-`plan-5`. Decidir y ejecutar una de dos:
+Decisión tomada: **archivar lo que master tiene hoy**, no la foto del fork. Cuatro entradas del
+inventario se re-apuntaron a `fbcb546e` con el mismo patrón que ya usaba `plan-9` (`source_commit`
+propio por entrada). C07 y C08 se re-probaron y pasan.
 
-- **Incorporar esos hechos al candidato** y re-probar C07 y C08. Cambia la identidad del
-  candidato, así que exige re-prueba completa.
-- **Declarar el corte explícito**: el plan migrado nace reflejando master hasta `e6b7e673`, y lo
-  posterior se registra en el plan nuevo después de activar. Más barato, pero hay que escribirlo
-  para que nadie lo lea como pérdida de información.
+Verificado: el blob de `plan-5` que se archiva **contiene** el registro del arreglo de `jornada`
+que master agregó después del fork. Los 14 commits de master sobreviven al archivo.
 
-**Esta decisión es de Emilio.** No es plomería: define qué queda escrito en el corpus definitivo.
+Identidades nuevas de C07: sujeto `923f1fb8…`, 589 entradas, digest `9a2bfd5b…`. El plan
+`b794dd1a…` y el ROADMAP `1b183579…` **no cambiaron**.
 
 ### 2. C09 — activación atómica (`T0.4.8.2`)
 

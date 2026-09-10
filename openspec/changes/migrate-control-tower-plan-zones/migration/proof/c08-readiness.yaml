@@ -3,19 +3,19 @@ schema_version: 1
 evidence_status: {state: pass, usable_for: [c08-closure, c09-input], prohibits: [activation, delivery, final-package-identity]}
 readiness: ready
 package_identity: not-computed-c09-alone-owns-final-package-identity
-delivery_checkout_head: 7f9f8bfd573224344ec9ceb7dbc1f2fe21997489
+delivery_checkout_head: 37637ebd0b0e87e8597e8f4338e8ad7773e99a93
 reproduced_against_manifest:
   plan: {mode: "100644", blob: b794dd1a425b75808ffb9c5c03881979fc23f58f, target: openspec/plan.yaml, agrees: true}
   roadmap: {mode: "100644", blob: 1b18357985ec68afaa1a7dbfc30a6a64fe2a0e1a, target: openspec/ROADMAP.md, generation: radar-deterministic-render, agrees: true}
   archives: {copies: 31, retirements: 14, agrees: true}
   recipe_sha256: 64ca75e29c88d1370a74cf42bc68d4389bc41690dfb3cc247685903e497d1eb3
 activation_projection:
-  paths: 600
+  paths: 602
   changed_files: 33
-  added_lines: 13977
-  deleted_lines: 250
-  name_status_sha256: c6c743883e211e0e99225061f6d5f72b614a5a0cf99f17c35849387ae0d39423
-  numstat_sha256: 23274c77808921fa80d6d59d48ddcef57180d37bf296ec6db0b232267924027c
+  added_lines: 14022
+  deleted_lines: 134
+  name_status_sha256: dbcae2e40a9fdbc0da84c2968e1bc4c1d46ab708adbca0c05adf25472bdc1854
+  numstat_sha256: 8f454ef31dcc35db1089e8b646480172ff5f7ba371ee2dc8522de96f9a51b485
 isolation:
   private_git: {object_writes: private-c08-only}
   common_git: {refs_before_after_equal: true, objects_before_after_equal: true}
@@ -31,19 +31,20 @@ ancestry:
 open_findings_for_c09:
   partition_expected_block:
     declared_tracked_files: 588
-    observed_activation_paths: 600
+    observed_activation_paths: 602
     agrees: false
     binding: false
     reason: >-
       partition.yaml validation.expected is declarative; Radar never reads tracked_files or
       validation.expected (verified with rg over agent-workflows/tools/radar). It cannot be
       corrected without changing the C07 subject, because partition.yaml is inside that subject.
-  candidate_lags_master:
-    candidate_reflects_master_through: e6b7e673f671e6bba30f9a600bf0333a1cd90af2
-    master_tip: fbcb546efd07dc654c611405b3a34f898df7c800
-    commits_not_reflected: 3
-    reason: >-
-      The candidate incorporated the Plan 9 supplement up to e6b7e673 only. Master has since
-      recorded further planning facts, including the jornada delivery-policy fix as unplanned
-      scope in plan-5. Those facts exist in the legacy corpus but not in the candidate plan.
+  archive_recut_to_master:
+    resolved: true
+    decision: maintainer chose to archive master's current bytes, not the fork snapshot
+    recut_entries: 4
+    recut_to: fbcb546efd07dc654c611405b3a34f898df7c800
+    already_correct: {path: openspec/plans/plan-9/STATUS.md, source_commit: e6b7e673f671e6bba30f9a600bf0333a1cd90af2}
+    verified: >-
+      The archived plan-5 blob 855f2238 contains the jornada delivery-policy record that master
+      added after the fork, so the 14 commits of master content survive into the archive.
 forbidden: [package-oid, commit-to-master, push-to-master, canonical-path-materialization, c09-activation]
