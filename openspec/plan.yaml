@@ -44,6 +44,7 @@ cimientos:
     - .gitignore
     - .opencode/agent/support-agent.md
     - .opencode/plugins/tower-spike.js
+    - .pi/settings.json
     - AGENTS.md
     - CLAUDE.md
     - README.md
