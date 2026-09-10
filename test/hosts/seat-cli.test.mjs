@@ -145,12 +145,12 @@ describe("torre asiento", () => {
 
   test("binds an assignment to a deterministic free seat and echoes no seat state it did not verify", async () => {
     const bound = await runSeatCli(
-      ["asignar", "--role", "implementation", "--lane", "apply", "--branch", "feat/s9.1-seat-pool", "--base-sha", "a".repeat(40)],
+      ["asignar", "--role", "implementation", "--lane", "apply", "--branch", "feat/s100-delivery-policy-schema", "--base-sha", "a".repeat(40)],
       ports({ herdrDown: true }),
     )
     expect(bound).toEqual({
       operation: "asignar", seat: "implementer-1", path: "/p/Worktrees/implementer-1",
-      role: "implementation", lane: "apply", branch: "feat/s9.1-seat-pool", base_sha: "a".repeat(40),
+      role: "implementation", lane: "apply", branch: "feat/s100-delivery-policy-schema", base_sha: "a".repeat(40),
     })
   })
 

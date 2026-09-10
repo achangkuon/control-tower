@@ -7,8 +7,8 @@ import { PERMANENT_SEATS } from "./seat-inventory.mjs"
 // so this module introduces no Main authority, no SQLite and no public API. Rotating a branch
 // stays with `jornada.sh --reciclar`; assignment here only chooses a seat and names the binding.
 export const POOL_SIZE = PERMANENT_SEATS.length
-// `<tipo>/s<sesión>-<slug>`, per contract point 5 — e.g. `feat/s1.3-idempotent-delivery`.
-export const SEAT_BRANCH_PATTERN = /^[a-z]+\/s\d+\.\d+-[a-z0-9]+(?:-[a-z0-9]+)*$/
+// `<type>/s<session>-<slug>`, per contract point 5 — e.g. `feat/s100-delivery-policy-schema`.
+export const SEAT_BRANCH_PATTERN = /^[a-z]+\/s[1-9]\d*-[a-z0-9]+(?:-[a-z0-9]+)*$/
 const ROLES = ["planning", "implementation"], LANES = ["planning", "apply"]
 
 const fail = (code, message) => { throw Object.assign(new Error(message), { code }) }

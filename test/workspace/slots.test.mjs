@@ -6,7 +6,7 @@ import { POOL_SIZE, createSlotPool } from "../../workspace/slots.mjs"
 const MAIN = "/p/Main"
 const seatPath = (name) => `/p/Worktrees/${name}`
 const base = "a".repeat(40)
-const assignment = { role: "implementation", lane: "apply", branch: "feat/s9.1-seat-pool", base_sha: base }
+const assignment = { role: "implementation", lane: "apply", branch: "feat/s100-delivery-policy-schema", base_sha: base }
 const errorCode = (operation) => {
   try { operation() } catch (error) { return error.code }
   return null
@@ -79,7 +79,7 @@ describe("permanent seat pool", () => {
     const binding = first.pool.assign(MAIN, assignment)
     expect(binding).toEqual({
       seat: "implementer-2", path: seatPath("implementer-2"),
-      role: "implementation", lane: "apply", branch: "feat/s9.1-seat-pool", base_sha: base,
+      role: "implementation", lane: "apply", branch: "feat/s100-delivery-policy-schema", base_sha: base,
     })
     expect(world({ dirty: [seatPath("implementer-1")] }).pool.assign(MAIN, assignment)).toEqual(binding)
   })
@@ -99,13 +99,20 @@ describe("permanent seat pool", () => {
     }
   })
 
-  test("rejects a malformed branch, role, lane or base sha before choosing a seat", () => {
+  test("rejects noncanonical new branch IDs, role, lane or base sha before choosing a seat", () => {
     const { calls, pool } = world()
     for (const invalid of [
-      { branch: "seat-pool" }, { branch: "feat/seat-pool" }, { branch: "feat/s9.1_seat_pool" }, { branch: "" },
+      { branch: "seat-pool" }, { branch: "feat/seat-pool" }, { branch: "feat/s9.1-seat-pool" },
+      { branch: "feat/s0-seat-pool" }, { branch: "feat/s01-seat-pool" }, { branch: "feat/s9.1_seat_pool" }, { branch: "" },
       { role: "review" }, { lane: "deliver" }, { base_sha: "short" }, { base_sha: undefined },
     ]) expect(errorCode(() => pool.assign(MAIN, { ...assignment, ...invalid }))).toBe("CT_SEAT_REJECTED")
     expect(calls.some((call) => call.startsWith("worktree add"))).toBe(false)
+  })
+
+  test("lists historical dotted branches without treating history as a new assignment", () => {
+    const { pool } = world()
+    expect(pool.list(MAIN).map(({ branch }) => branch)).toContain("feat/s0.0-implementer-1")
+    expect(pool.assign(MAIN, assignment)).toMatchObject({ branch: "feat/s100-delivery-policy-schema" })
   })
 
   test("fails closed when every seat is occupied instead of creating a fourth", () => {
