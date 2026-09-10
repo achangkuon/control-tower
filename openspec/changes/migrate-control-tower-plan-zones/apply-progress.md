@@ -4967,3 +4967,66 @@ Authority 10640 corrects only the two candidate-caused findings from the r12 rev
 | TRIANGULATE | Production partition verifier observed 75 full + 7 future + 4 history = 86; two renders matched; private/common Git separation held. | PASS. |
 | REFACTOR | Only S9.9 route, discovery recipe/consumer, dependent identities, and fresh C07 evidence changed. | PASS; no S9.10 or runtime expansion. |
 T0.4.7.1–T0.4.7.3 are complete. This evidence authorizes only C07 closure and later C08 reproduction; it does not activate canonical paths, create package identity, authorize C08/C09 execution, commit, or push. Rollback remains the bounded C07 unit-2 paths plus disposable private r14 proof root; r12 is not part of rollback.
+
+## C07 unit-2 receipt reproduction audit — blocked on stale subject identity
+
+### Interruption checkpoint sealed
+
+The interrupted unit-2 working tree (19 paths, including the two new proof artifacts) was committed unsquashed as `ab2352fee74a3ad0d1a0fbf9d0f0e34ae1c25e7b` on `feat/s0.4-plan-zones-migration` and pushed. No stash was used; no other worktree was touched. `master` is unchanged and holds none of this migration by design.
+
+### The previously recorded blocker is not the current blocker
+
+The `tasks.md` / `candidate-inputs.yaml` self-binding contradiction recorded earlier in this file is already resolved and must not be reopened. Live artifacts confirm it:
+
+- `tasks.md` carries no `$CANDIDATE_TREE` binding requirement; its only remaining manifest mention is the M0.4.7 allowed-edit-surface clause.
+- `equivalence-manifest.yaml` records `self_reference: {manifest_blob: omitted, reason: c09-alone-computes-the-sole-final-binding}` and `authority.final_tree_binding: c09-commit-message-attestation-only`.
+- The manifest and both `proof/c07-*-results.yaml` files are named in `radar_execution_subject.receipt_exclusions`, so no tree is asked to contain its own OID.
+
+Authority 10569 settled this; `design.md` was never weakened. The stale citations point at the historical blocked entry above, not at any live requirement.
+
+### Independent reproduction of the r14 proof
+
+`migration/proof/rebuild-c07-r14.sh` was re-executed from this checkout against a fresh disposable proof root with the authenticated `doc-guard.sh` hook. It exited 0 with `r14 C07 proof PASS`. Focused suites also pass: `bun test .../migration/proof/` → 30 pass, 0 fail, 73 assertions across 3 files.
+
+| Reproduced value | Recorded in receipts | Reproduced now | Match |
+|---|---|---|---|
+| Candidate plan blob | `b794dd1a…` | `b794dd1a…` | YES |
+| Generated ROADMAP blob | `1b183579…` | `1b183579…` | YES |
+| Generated ROADMAP SHA-256 | `29078dd9…` | `29078dd9…` | YES |
+| `candidate-inputs.yaml` blob | `d92778e9…` | `d92778e9…` | YES |
+| Exact partition | `75/7/4=86` | `75/7/4=86` | YES |
+| Session discovery | 72 + 2 − 1 = 73 unique | 72 + 2 − 1 = 73 unique | YES |
+| S9.10 / S101 derived state | both `BLOQUEADO` | both `BLOQUEADO` | YES |
+| `radar_execution_subject.commit` | `15206e85…` | `2c0dbdd7…` | **NO** |
+| `radar_execution_subject.tree` | `9b4a7db5…` | `b50de802…` | **NO** |
+| `path_mode_blob_inputs.count` | 588 | 589 | **NO** |
+| `path_mode_blob_inputs.sha256` | `a7225c6b…` | `7b4ca256…` | **NO** |
+| Proof-script SHA-256 | `c8b63619…` | `64ca75e2…` | **NO** |
+
+### Cause
+
+Every product-content identity reproduces exactly; only the technical subject identity diverges. The recorded `recipe_sha256` / `proof_script_sha256` `c8b63619…` is the digest of an earlier revision of `rebuild-c07-r14.sh`, not of the revision now committed (`64ca75e2…`). The committed script adds its own path to the private-index overlay, so the subject gains exactly one path.
+
+The count is arithmetically derivable and confirms 589 is correct for the committed script:
+`572` (assembly-head tree) `− 3` receipt exclusions `+ 1` proof script `+ 1` `openspec/plan.yaml` `+ 31` archive destinations `− 14` active retirements `+ 1` generated `openspec/ROADMAP.md` `= 589`.
+
+The unit-2 run was therefore interrupted between executing the proof and revising the script: the receipts were written from the pre-revision run and never regenerated.
+
+### Why this blocks rather than closes
+
+`T0.4.8.1` requires C08 to reproduce the C07 manifest-listed recipe/content/evidence and to stop on any nonmatching mode/blob or unnamed path. Against the committed script, the manifest's subject identity cannot reproduce, so C08 would stop. C07 cannot be presented as closed while its own receipt disagrees with its own committed proof recipe.
+
+### Boundary
+
+No receipt byte was corrected. Regenerating `equivalence-manifest.yaml`, `proof/c07-radar-results.yaml`, and `proof/c07-doc-close-results.yaml` from the reproduced r14 attestation is a bounded, self-consistent correction — those three paths are receipt-exclusions, so rewriting them cannot change the subject they describe — but it is a distinct authored correction and was not taken without authorization.
+
+No C08, C09, activation, canonical path, archive byte, guidance cutover, route-authority change, or `master` mutation occurred. The verification proof root is disposable and derived. Resume checkpoint: regenerate the three C07 receipt files from a fresh r14 attestation, then re-close C07. Rollback boundary: this progress append only.
+
+### TDD cycle evidence
+
+| Cycle | Evidence | Result |
+|---|---|---|
+| RED | Re-running the committed `rebuild-c07-r14.sh` produces subject `2c0dbdd7…` / `b50de802…` with 589 inputs against the recorded `15206e85…` / `9b4a7db5…` / 588. | Reproducible receipt divergence. |
+| GREEN | Not reached — receipt correction is unauthorized in this unit. | Blocked. |
+| TRIANGULATE | Independent arithmetic derivation of 589 from the assembly-head tree and the script's own overlay/removal sets; proof-script digest mismatch `c8b63619…` vs `64ca75e2…`. | Cause confirmed. |
+| REFACTOR | N/A — no source or receipt byte changed. | No mutation. |
