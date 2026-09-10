@@ -13,7 +13,8 @@ urgente: se retoma en una Sesión propia, con contexto fresco.
 servidor remoto, ni bot de mensajería, ni agente alojado fuera: ese alcance se
 retiró el 2026-08-30 por decisión del maintainer, y lo que lo reemplazó vive
 fuera de este repositorio. La autoridad es la decisión 3 de
-[P12](openspec/plans/plan-12/STATUS.md).
+[P12](openspec/archive/legacy-planning/plan-12/STATUS.md), archivada byte a byte
+al migrar el plan al modelo de Zonas.
 
 Esto se escribe acá porque **este archivo es el ancla que se lee por ruta
 absoluta** cuando alguien retoma el proyecto sin contexto. Cualquier plan, spec

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -61,7 +61,16 @@ graph TD
 ## Sesión 5.7 — Future
 `
 const bytes = Buffer.from(source)
-const plan5Url = new URL("../../openspec/plans/plan-5/STATUS.md", import.meta.url)
+// The parser is exercised against a real Sesión plan, not a hand-made stub. That
+// document is moving: the migration to Zonas archives it byte for byte and
+// retires the live view. Both locations hold the same bytes, so the fixture
+// prefers the archive and falls back while the activation is still in flight.
+// Once no checkout carries the legacy view, drop the fallback.
+const plan5Url = [
+  new URL("../../openspec/archive/legacy-planning/plan-5/STATUS.md", import.meta.url),
+  new URL("../../openspec/plans/plan-5/STATUS.md", import.meta.url),
+].find((candidate) => existsSync(candidate))
+if (!plan5Url) throw new Error("no hay copia de plan-5/STATUS.md: ni archivada ni activa")
 const plan5Bytes = readFileSync(plan5Url)
 const loadParser = () => import("../../contracts/session-plan-snapshot.mjs")
 const captured = async (operation) => {

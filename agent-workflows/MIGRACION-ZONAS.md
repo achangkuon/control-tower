@@ -135,7 +135,8 @@ rescate del linaje viejo quedan documentados arriba como historia; no bloquean F
 que sí cierran esta entrega son `review-4ec24941df920cc5` y `review-a06c008f2e0eaa21`, ambas aprobadas,
 reconocidas y quemadas. Según la decisión 80 de `openspec/plans/decision-register.md`, Pi es el primer
 host de implementación; la decisión 85 difiere la conformidad de OpenCode hasta que ese host se
-desestacione. La mención “Pi después de OpenCode” de `openspec/plans/plan-9/STATUS.md` es política
+desestacione. La mención “Pi después de OpenCode” de
+`openspec/archive/legacy-planning/plan-9/STATUS.md` es política
 histórica aparcada. Por eso ninguna prueba en vivo de OpenCode es gate de Fase A ni próxima acción.
 
 ### Política de tamaño de lote de revisión (desde 2026-09-03)
