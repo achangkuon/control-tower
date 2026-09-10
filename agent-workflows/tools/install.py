@@ -32,35 +32,26 @@ CHANKS_SKILLS = (
     "chanks-1-requirements",
     "chanks-1-rfc",
     "chanks-1-terreno",
-    "chanks-4-puente",
-)
-
-# Session workflow family — routing, planning, support, closure.
-SESSION_SKILLS = (
-    "chanks-3-session-kickoff",
-    "chanks-0-session-context-loader",
-    "chanks-2-planificador-granular",
     "chanks-0-agente-soporte",
+    "chanks-0-explicalo-simple",
+    "chanks-0-session-context-loader",
+    "chanks-0-skill-composer",
+    "chanks-1-cierre-de-decisiones",
+    "chanks-2-planificador-granular",
+    "chanks-3-session-kickoff",
+    "chanks-4-puente",
+    "chanks-4-unattended-implementation",
+    "chanks-6-politica-de-entrega",
     "chanks-7-session-doc",
 )
 
-# Generic delivery policy. Product-specific Control Tower operator skills are
-# owned and installed by that project.
-DELIVERY_SKILLS = (
-    "chanks-4-unattended-implementation",
-    "chanks-6-politica-de-entrega",
-)
-
-# Decision and communication support.
+# Non-Chanks support skills.
 SUPPORT_SKILLS = (
     "analisis-por-tramos",
-    "chanks-1-cierre-de-decisiones",
-    "chanks-0-explicalo-simple",
-    "chanks-0-skill-composer",
     "skill-orchestrator",
 )
 
-SKILLS = SHARED + CHANKS_SKILLS + SESSION_SKILLS + DELIVERY_SKILLS + SUPPORT_SKILLS
+SKILLS = SHARED + CHANKS_SKILLS + SUPPORT_SKILLS
 
 # Explicit ownership migration. Normal installs retire only these known derived
 # copies; unlisted directories remain untouched.

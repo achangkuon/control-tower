@@ -560,7 +560,29 @@ either policy.
 Do not read Control Tower's plan as a worked example of adoption. Its shape is historical.
 Every other repository, starting with Servi-Task-U, adopts the model by the four steps above.
 
-## 19. Agent compliance checklist
+## 19. Chanks skill naming inventory
+
+Every method skill uses `chanks-<tramo>-<name>` as its single canonical name. The tramo is
+its functional position in the workflow, not a date, priority, plan level or execution order.
+The name is identical in its directory, `SKILL.md` frontmatter, cross-skill references,
+installation inventories and `/skill:` commands. Previous names may exist only in the
+installer's explicit reversible retirement archive; they are not aliases.
+
+| Tramo | Function | Canonical skills |
+|---|---|---|
+| `0` | Cross-cutting support | `chanks-0-agente-soporte`, `chanks-0-explicalo-simple`, `chanks-0-session-context-loader`, `chanks-0-skill-composer` |
+| `1` | Authority | `chanks-1-autoridad`, `chanks-1-brain-dump`, `chanks-1-cierre-de-decisiones`, `chanks-1-descubrimiento`, `chanks-1-feature`, `chanks-1-heredado`, `chanks-1-prd`, `chanks-1-project-kickoff`, `chanks-1-requirements`, `chanks-1-rfc`, `chanks-1-terreno` |
+| `2` | Planning | `chanks-2-planificador-granular` |
+| `3` | Routing | `chanks-3-session-kickoff` |
+| `4` | Execution | `chanks-4-puente`, `chanks-4-unattended-implementation` |
+| `5` | Review | Reserved; no method skill currently owns this tramo. |
+| `6` | Delivery | `chanks-6-politica-de-entrega` |
+| `7` | Closure | `chanks-7-session-doc` |
+
+`chanks-0-` is explicitly cross-cutting: those skills may participate in several tramos
+without creating another tramo or acquiring authority from the caller they support.
+
+## 20. Agent compliance checklist
 
 Only what the tool cannot check. Everything else is enforced, not remembered.
 
