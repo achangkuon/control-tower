@@ -9,7 +9,7 @@ metadata:
 
 ## Activation Contract
 
-Usá esta skill para diseñar o auditar una skill que **manda trabajo a otro proceso**: despachar agentes, tomar asientos, comandar un runtime vivo o coordinar actores que trabajan solos. No la uses para una skill madre que carga hijas y las ejecuta en su propio turno: eso es `skill-composer`.
+Usá esta skill para diseñar o auditar una skill que **manda trabajo a otro proceso**: despachar agentes, tomar asientos, comandar un runtime vivo o coordinar actores que trabajan solos. No la uses para una skill madre que carga hijas y las ejecuta en su propio turno: eso es `chanks-0-skill-composer`.
 
 La frontera es una sola pregunta: **¿el trabajo ocurre en tu turno, o en otro?** Una madre es un maletín —abrís, sacás la herramienta, la usás ahí mismo—. Una orquestadora es un handy: llamás a alguien en otro cuarto, con sus herramientas, trabajando solo. No ves lo que pasa, no podés deshacerlo, y si la radio se corta no sabés si la orden llegó.
 
@@ -28,7 +28,7 @@ La frontera es una sola pregunta: **¿el trabajo ocurre en tu turno, o en otro?*
 
 | Diagnóstico | Acción |
 | --- | --- |
-| El trabajo corre en tu turno, mismo proceso | No es orquestadora: usá `skill-composer` |
+| El trabajo corre en tu turno, mismo proceso | No es orquestadora: usá `chanks-0-skill-composer` |
 | El trabajo corre en otro proceso, turno o máquina | Orquestadora: aplicá las ocho reglas duras |
 | No hay forma de leer el estado del runtime | Detenerse: sin sonda no hay orquestación honesta, sólo esperanza |
 | No hay forma de verificar el efecto remoto | Detenerse: definí el readback antes de escribir la skill |
@@ -53,6 +53,6 @@ Devolvé: el runtime comandado, el conjunto cerrado de modos con su regla, la so
 
 ## References
 
-- `../skill-composer/SKILL.md` — la topología hermana: madres, hijas y ruteo en el mismo turno.
+- `../chanks-0-skill-composer/SKILL.md` — la topología hermana: madres, hijas y ruteo en el mismo turno.
 - `../skill-creator/SKILL.md` y `../skill-improver/SKILL.md` — creación y auditoría del archivo.
 - `references/ejemplar.md` — `torre-control` leído regla por regla como orquestadora de referencia.

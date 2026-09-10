@@ -1,5 +1,5 @@
 ---
-name: skill-composer
+name: chanks-0-skill-composer
 description: "Trigger: skill madre, parent skill, unificar skills, lazy loading, router de skills. Diseña familias de skills sin crear monolitos ni duplicar reglas."
 license: Apache-2.0
 metadata:
