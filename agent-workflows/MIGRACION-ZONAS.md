@@ -9,12 +9,11 @@
 > escritores de [EJECUCION-EN-PARALELO.md](EJECUCION-EN-PARALELO.md) describe la construcción
 > inicial y queda como historia útil; la corrección actual usa **un solo escritor secuencial**.
 >
-> Última reconciliación: Fase A cerrada y entregada. `master` y `origin/master`
-> coinciden en `b3da46174b75dc97e52afa72900f6263655aa378`; `agent-workflows` conserva su historia
-> completa mediante el merge de subtree `dbb7626904a09323e19dd7a60f747d29c8c62f5d`, cuyo tip
-> importado es `588f0282d28baf79ffbd3cb7c1b29d7d5557436e`. Fase B está **en curso** en la rama
-> `feat/s0.4-plan-zones-migration`, respaldada en `origin` en `8081c4b779ad8761184637a4e8a12e7d1bfce02b`.
-> Nada de Fase B está integrado en `master` todavía.
+> Última reconciliación: el resto del inventario nominal de Fase A quedó cerrado y entregado
+> en `ed4dab8`. Las diez skills restantes usan `chanks-<tramo>-<nombre>`, el canon enumera
+> la familia completa, las copias runtime retiraron los nombres anteriores mediante
+> `.retired-skills`, y `python3 agent-workflows/tools/install.py --check` devuelve `OK` con
+> los bloques manuales preservados.
 
 ---
 
@@ -26,11 +25,13 @@ mergeadas en `977cced`. La unificación documental también fue aprobada en
 `review-a06c008f2e0eaa21`, luego reconocida y quemada. El merge de subtree `dbb7626904a09323e19dd7a60f747d29c8c62f5d`
 importó el tip `588f0282d28baf79ffbd3cb7c1b29d7d5557436e` con historia completa.
 
-**Entrega y runtime verificados:** `master` y `origin/master` están sincronizados en
-`b3da46174b75dc97e52afa72900f6263655aa378`. Las copias activas de runtime se reconciliaron desde
-el subtree interno; `python3 tools/install.py --check` devolvió `OK` y los bloques manuales se
-preservaron. Pasaron 30/30 tests del instalador, `go vet`, `go test` y la radiografía posterior a la
-entrega con 1167 PASS / 0 FAIL sobre `b3da461`.
+**Entrega y runtime verificados:** el inventario nominal faltante se entregó a `origin/master`
+en `ed4dab8`. Cada renombre conserva historia mediante `git mv` y queda en un commit de menos de
+400 líneas; `session-doc` se reconcilió primero con la copia instalada v4.1 para preservar la
+validación de `.session-doc.json`. Los cuatro runtimes activaron los nombres nuevos y archivaron
+reversiblemente los diez anteriores. Pasaron 30/30 tests del instalador y
+`python3 agent-workflows/tools/install.py --check`; un verificador independiente confirmó nombres,
+rutas, copias byte-idénticas y los tres bloques manuales requeridos.
 
 **Incidente RDD histórico — causa raíz identificada 2026-09-03:** el bloqueo no era un defecto de runtime.
 El linaje `review-4b55f432bbdf7f40` se congeló con selector `base-diff` (`base_ref` `a01986ee`), y la
@@ -102,8 +103,8 @@ es `2` según `AGENTS.md:209` pero `1` según `policy/delivery-policy.mjs:12`.
 
 | Eje | Pregunta | Estado actual |
 |---|---|---|
-| **Fuente integrada** | ¿El cambio forma parte del checkout canónico? | Sí: Fase A está integrada en `master@b3da46174b75dc97e52afa72900f6263655aa378`. |
-| **Remoto** | ¿El commit canónico está entregado? | Sí: `origin/master` coincide con `master`. |
+| **Fuente integrada** | ¿El cambio forma parte del checkout canónico? | Sí: el cierre nominal de Fase A está integrado desde `master@ed4dab8`. |
+| **Remoto** | ¿El commit canónico está entregado? | Sí: `ed4dab8` está en `origin/master`. |
 | **Runtime instalado** | ¿Las copias activas reflejan el subtree? | Sí: fueron reconciliadas, `tools/install.py --check` devuelve `OK` y los bloques manuales están preservados. |
 
 Fase A cumple los tres ejes: integración, entrega y runtime reconciliado.
@@ -115,7 +116,7 @@ Los únicos significados usados abajo son: `✅ implementado y verificado`, `�
 
 | Grupo | ID | Estado | Evidencia integrada | Remoto | Runtime instalado / qué falta |
 |---|---|---|---|---|---|
-| Implementación | Fase A | ✅ implementado y verificado | Correcciones críticas en `39ff465`; merge `977cced`; subtree importado con historia completa | Sí, en `master@b3da46174b75dc97e52afa72900f6263655aa378` | Cerrada |
+| Implementación | Fase A | ✅ implementado y verificado | Correcciones críticas en `39ff465`; inventario nominal completo y v4.1 preservada en `ed4dab8` | Sí, en `master` | Cerrada |
 | Implementación | Fase B | 🔵 en curso | 109 commits en `feat/s0.4-plan-zones-migration`: 72 Sesiones históricas importadas, contrato y proyecciones de referencias en Radar, verificador de partición, 11 referencias autenticadas y `S100` planificada. Candidato en 73/7/4; `openspec/plan.yaml` y `openspec/ROADMAP.md` siguen sin existir | Respaldada, no integrada: `origin/feat/s0.4-plan-zones-migration@8081c4b779ad8761184637a4e8a12e7d1bfce02b` | Planificar `S101` (`full-sdd`), correr G1, y recién después archivo, prueba aislada, reproducción y activación |
 | Implementación | Fase C | 📚 fuera de alcance | Sin implementación en esta obra | No aplica | Gate de recursos vivos, medidor, conexión del Horizonte, freeze terminal y `S9.9` |
 | Flujo | Tramos 1–7 | ✅ implementado y verificado | Canon, planificación, enrutado, ejecución, revisión, entrega y cierre reconciliados | Sí | — |
