@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "chanks-7-session-doc repository policy (.chanks-7-session-doc.json)",
+  "title": "chanks-7-session-doc repository policy (.session-doc.json)",
   "description": "Committed at the repository root. Resolves the optional Notion projection and the OpenSpec directory for documentary closure.",
   "type": "object",
   "properties": {
