@@ -97,7 +97,9 @@ The total change is necessarily larger than 400 lines, but no planned direct com
 
 ### Módulo M0.4.5A — Reference contract, projections, and candidate closure (R1, R2, P1, D1, D2, G1)
 
-**Depends on:** M0.4.5 (T0.4.5.1–T0.4.5.1g); supersedes T0.4.5.2 above under the amended 85-record contract.
+**Count-contract history:** every 72-import/74-full/85-record clause in M0.4.5A and M0.4.6 records the completed Unit 1 baseline only; it is non-normative for current C07. Unit 2 supersedes it with 73 imports, 75 full Sessions, and 86 records.
+
+**Depends on:** M0.4.5 (T0.4.5.1–T0.4.5.1g); supersedes T0.4.5.2 above under the historical Unit 1 reference contract.
 
 **Allowed edit surfaces:** per group only — R1: `agent-workflows/tools/radar/plan.go`, `agent-workflows/tools/radar/check.go`, new `agent-workflows/tools/radar/reference_contract_test.go`; R2: `agent-workflows/tools/radar/main.go`, `agent-workflows/tools/radar/render.go`, new `agent-workflows/tools/radar/reference_projection_test.go`; P1: new `migration/proof/verify-activation-partition.mjs` and `migration/proof/verify-activation-partition.test.mjs`; D1/D2: `migration/lineage.yaml`, `migration/candidate/plan.yaml`. No group may touch another group's paths.
 
@@ -135,9 +137,9 @@ The total change is necessarily larger than 400 lines, but no planned direct com
 
 **Completion check:** C07 may close only after unit 2 repeats its technical evidence on a new master-based subject after the S9.9/S9.10 delta. The prior 74/7/4 command observation is an interrupted antecedent contaminated by Engram 10584; it cannot establish C07 closure, activation/C08 readiness, or package identity. C09 alone computes `final_package_identity`.
 
-- [ ] **T0.4.7.1 — Repeat materialization in unit 2:** the prior 74/7/4 command observation is superseded and contaminated by Engram 10584. Unit 2 must create a new master-based technical `radar_execution_subject` after the S9.9/S9.10 delta; unit 1 preserves the old subject only as interrupted historical evidence, never as C07 closure, activation/C08 readiness, or package identity. <!-- sdd-owner: implementation -->
-- [ ] **T0.4.7.2 — Repeat Radar/render evidence in unit 2:** the prior 74/7/4 command observation is superseded and contaminated by Engram 10584. Unit 2 must rerun `check`, `status`, `zonas`, and deterministic renders on its new master-based technical subject after S9.9/S9.10; unit 1 preserves no current C07 pass or readiness claim. <!-- sdd-owner: implementation -->
-- [ ] **T0.4.7.3 — Repeat equivalence/doc-close evidence in unit 2:** the old 74/7/4 command observation remains historical/interrupted only because Engram 10584 contaminates it. After S9.9/S9.10, unit 2 must bind new technical evidence on a new master-based subject; neither unit may compute package identity, and C09 remains the sole final binding. <!-- sdd-owner: implementation -->
+- [x] **T0.4.7.1 — Repeat materialization in unit 2:** the prior 74/7/4 command observation is superseded and contaminated by Engram 10584. Unit 2 must create a new master-based technical `radar_execution_subject` after the S9.9/S9.10 delta; unit 1 preserves the old subject only as interrupted historical evidence, never as C07 closure, activation/C08 readiness, or package identity. <!-- sdd-owner: implementation -->
+- [x] **T0.4.7.2 — Repeat Radar/render evidence in unit 2:** the prior 74/7/4 command observation is superseded and contaminated by Engram 10584. Unit 2 must rerun `check`, `status`, `zonas`, and deterministic renders on its new master-based technical subject after S9.9/S9.10; unit 1 preserves no current C07 pass or readiness claim. <!-- sdd-owner: implementation -->
+- [x] **T0.4.7.3 — Repeat equivalence/doc-close evidence in unit 2:** the old 74/7/4 command observation remains historical/interrupted only because Engram 10584 contaminates it. After S9.9/S9.10, unit 2 must bind new technical evidence on a new master-based subject; neither unit may compute package identity, and C09 remains the sole final binding. <!-- sdd-owner: implementation -->
 
 ### Módulo M0.4.8 — Reproduce and atomically activate the proven contract (C08/C09: C08 proof reproduction 80–180 authored lines; C09 activation 0–220 authored lines)
 

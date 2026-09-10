@@ -79,6 +79,7 @@ cimientos:
     - test/helpers/restore-fixture.mjs
     - test/identity.test.mjs
     - test/lifecycle.test.mjs
+    - test/install/launch-worker-cli.test.mjs
     - test/migration.test.mjs
     - test/polling.test.mjs
     - test/provenance/provenance.test.mjs
@@ -4964,63 +4965,77 @@ sesiones:
 
   - id: S9.9
     zona: hosts
+    cimientos: [test/install/launch-worker-cli.test.mjs]
     resultado: Binding explícito de workspace Herdr
-    autoridad: maintainer, Engram 10034/10035.
+    autoridad: master e6b7e673f671e6bba30f9a600bf0333a1cd90af2 Plan 9; delivery e9bcba7a8e9b7cc5ac7de67a11a867b17c8978f5.
     depende_de: []
-    recurso: [binding explícito de workspace Herdr y fixtures aislados de comandos para dos workspaces; los tests no mutan panes, tabs ni procesos reales]
-    criterios:
-      - "Regresión de dos workspaces: `w5C` (Control Tower) carece de `AGENTES` y `w5E` ajeno tiene o crea uno; abrir afecta sólo `w5C`."
-      - "Binding ausente o inválido falla cerrado con cero mutación; ningún foco/default/Herdr raw actúa como fallback."
-      - "Un tab/pane devuelto para otro workspace se rechaza y se limpian exactamente los recursos abiertos por esa llamada, nunca recursos preexistentes o ajenos."
-      - "`AGENTES` existente o creado correctamente se resuelve sólo dentro del workspace ligado y el pane queda validado allí."
-      - "Los fixtures de comandos prueban el argumento explícito de workspace y no permiten selección cross-workspace sólo por label."
-      - "Los tests enfocados de los dos archivos pasan; después pasa la suite completa."
-      - "El diff toca exactamente `Área`; tests y validación no mutan panes, tabs, procesos, runtime ni DB reales."
+    recurso: [binding explícito de workspace Herdr y fixtures aislados; cero mutación real]
+    criterios: ["hosts/herdr-topology.mjs, hosts/seat-cli.mjs, test/hosts/herdr-topology.test.mjs, test/hosts/seat-cli.test.mjs y test/install/launch-worker-cli.test.mjs; sin fallback.", "Focused 36/0/139; full 1175/0/6390/88; 243 authored."]
     decisiones:
       - tipo: resuelta
-        pregunta: ¿Cómo se acota el workspace Herdr?
-        resolucion: El `HERDR_WORKSPACE_ID` existente, o su equivalente inyectado explícitamente en la frontera de código, es obligatorio y se propaga `runSeatCli → topology`; discovery y creación se acotan a ese workspace, y el readback de todo tab/pane devuelto debe coincidir. Binding ausente, inválido o divergente falla cerrado y limpia sólo recursos abiertos por esa llamada. No existe fallback al workspace enfocado, default ni Herdr raw, ni selección cross-workspace por label.
-        autoridad: maintainer, Engram 10034/10035.
-        clase: seguridad-y-permisos; dependencias-o-evidencia-contradictorias
-        falsificador: Un binding ausente, inválido o divergente no falla cerrado; se actúa sobre el workspace enfocado/default/Herdr raw; o se selecciona cross-workspace sólo por label.
+        resolucion: HERDR_WORKSPACE_ID se propaga runSeatCli → topology; discovery, creación y readback quedan ligados al workspace exacto.
+        autoridad: decisión 108 y Plan 9 actual
+        clase: seguridad-y-permisos
+        falsificador: Un fallback enfocado/default/raw o una selección cross-workspace por label.
         descartadas: []
-      - tipo: escala
-        pregunta: ¿Se autoriza ampliar el Área de S9.9 para agregar el fixture stale, acotar `pane split` y su expectativa al workspace explícito?
-        evidencia: El source inmutable registra que el fixture `test/install/launch-worker-cli.test.mjs` está stale, que `pane split` sigue sin scope de workspace y que el maintainer eligió «No hacer nada» ante ampliar el Área.
-        checkpoint: antes de reanudar S9.9 o abrir/despachar un worker
-        opciones:
-          - opcion: Autorizar exactamente el fixture, `pane split` y su expectativa al workspace explícito, y repetir las validaciones.
-            consecuencia: S9.9 puede reanudar sólo esa remediación autorizada.
-          - opcion: No hacer nada.
-            consecuencia: S9.9 permanece bloqueada; toda apertura o dispatch de worker sigue prohibido.
-        clase: expansion-de-alcance
-        alcanza: primer-modulo
     ruta:
       propuesta: direct
-      autoridad: la frontera, los fallos y el cleanup exacto están autorizados y son verificables sin decisión técnica pendiente.
-    importacion_legacy:
-      origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
-      origen_ruta: openspec/plans/plan-9/STATUS.md
-      origen_blob: 18b77f222bdcf1bea0d2d144b170f102d5d6cc8a
-      origen_encabezado: "## Sesión 9.9 — Binding explícito de workspace Herdr"
-      territorio_pendiente: false
+      autoridad: master e6b7e673f671e6bba30f9a600bf0333a1cd90af2 Plan 9 y autorización acotada del maintainer para la corrección C07.
+    entrega: {commit: e9bcba7a8e9b7cc5ac7de67a11a867b17c8978f5}
+    importacion_legacy: {origen_commit: e6b7e673f671e6bba30f9a600bf0333a1cd90af2, origen_ruta: openspec/plans/plan-9/STATUS.md, origen_blob: c404406554b55c3345aabb68670fd6b161bf7771, origen_encabezado: "## Sesión 9.9 — Binding explícito de workspace Herdr", territorio_pendiente: false}
     modulos:
       - id: M9.9.1
-        resultado: Propagación, scope y readback del workspace
+        resultado: Propagación, scope y readback del workspace entregados
         rutas: [hosts/herdr-topology.mjs, hosts/seat-cli.mjs, test/hosts/herdr-topology.test.mjs, test/hosts/seat-cli.test.mjs]
         tareas:
-          - id: T9.9.1.1
-            accion: "RED: reproducir los dos workspaces, binding ausente/inválido, respuesta en workspace ajeno y cleanup exacto; afirmar cero mutación real."
-            resultado: "RED: reproducir los dos workspaces, binding ausente/inválido, respuesta en workspace ajeno y cleanup exacto; afirmar cero mutación real."
-            criterios: ["RED: reproducir los dos workspaces, binding ausente/inválido, respuesta en workspace ajeno y cleanup exacto; afirmar cero mutación real."]
-          - id: T9.9.1.2
-            accion: "GREEN: exigir y propagar el binding, agregarlo a cada comando de discovery/creación y validar workspace por readback antes de aceptar tab o pane."
-            resultado: "GREEN: exigir y propagar el binding, agregarlo a cada comando de discovery/creación y validar workspace por readback antes de aceptar tab o pane."
-            criterios: ["GREEN: exigir y propagar el binding, agregarlo a cada comando de discovery/creación y validar workspace por readback antes de aceptar tab o pane."]
-          - id: T9.9.1.3
-            accion: "REFACTOR: aislar fixtures de dos workspaces, eliminar selección sólo por label y correr tests enfocados más suite completa sin fallback."
-            resultado: "REFACTOR: aislar fixtures de dos workspaces, eliminar selección sólo por label y correr tests enfocados más suite completa sin fallback."
-            criterios: ["REFACTOR: aislar fixtures de dos workspaces, eliminar selección sólo por label y correr tests enfocados más suite completa sin fallback."]
+          - {id: T9.9.1.1, accion: "RED correctivo registrado", resultado: "17/4 antecedente", criterios: ["Cierre entregado."]}
+          - {id: T9.9.1.2, accion: "GREEN propagación y readback", resultado: "entregado", criterios: ["Cierre entregado."]}
+          - {id: T9.9.1.3, accion: "REFACTOR fixtures y negativos", resultado: "entregado", criterios: ["Cierre entregado."]}
+
+  - id: S9.10
+    resultado: Materialización canónica desde base_sha aprobado
+    autoridad: Engram 10522 (full-binding), 10525/10527 (historical attempt), 10531 (verify FAIL), 10532 (no-action).
+    depende_de: [S9.9]
+    recurso: [asiento permanente limpio, base_sha no-master exacto, binding público completo]
+    criterios: ["materializar recibe asiento, rol, carril, rama, base_sha y confirmación; asignar permanece read-only.", "Los 12 intentos son evidencia histórica no entregada; cuatro CRITICAL y corrección agotada bloquean S9.10 y S101.", "No entrega, archive, activation, readiness, package identity ni bytes de implementer-3."]
+    decisiones:
+      - tipo: resuelta
+        resolucion: materializar es una operación separada full-binding; asignar no muta.
+        autoridad: Engram 10522
+        clase: contrato-visible-del-producto; api-publica; seguridad-y-permisos
+        falsificador: materializar omite rol/carril/base/confirmación o asignar muta.
+        descartadas: []
+      - tipo: escala
+        pregunta: ¿Se autoriza una nueva corrección tras cuatro CRITICAL y presupuesto agotado?
+        evidencia: Verify final Engram 10531; maintainer chose no-action in 10532.
+        checkpoint: blocked-human-decision after verify rev2
+        opciones: [{opcion: no-action, consecuencia: "Preservar el candidato de implementer-3; no nueva RED, corrección, review, commit ni archive."}]
+        clase: seguridad-y-permisos
+        alcanza: primer-modulo
+        contamina: [S101]
+    importacion_legacy: {origen_commit: e6b7e673f671e6bba30f9a600bf0333a1cd90af2, origen_ruta: openspec/plans/plan-9/STATUS.md, origen_blob: c404406554b55c3345aabb68670fd6b161bf7771, origen_encabezado: "## Sesión 9.10 — Materialización canónica desde `base_sha` aprobado", territorio_pendiente: true}
+    modulos:
+      - id: M9.10.1
+        resultado: Sintaxis y validator full-binding; intento histórico no entregado
+        tareas:
+          - {id: T9.10.1.1, accion: "histórico RED público", resultado: "no delivery credit", criterios: ["Evidencia histórica."]}
+          - {id: T9.10.1.2, accion: "histórico parser/validator", resultado: "no delivery credit", criterios: ["Evidencia histórica."]}
+          - {id: T9.10.1.3, accion: "histórica triangulación", resultado: "no delivery credit", criterios: ["Evidencia histórica."]}
+          - {id: T9.10.1.4, accion: "histórico refactor", resultado: "no delivery credit", criterios: ["Evidencia histórica."]}
+      - id: M9.10.2
+        resultado: Snapshot y rollback; intento histórico no entregado
+        tareas:
+          - {id: T9.10.2.1, accion: "histórico RED matriz", resultado: "no delivery credit", criterios: ["Evidencia histórica."]}
+          - {id: T9.10.2.2, accion: "histórico GREEN snapshots", resultado: "no delivery credit", criterios: ["Evidencia histórica."]}
+          - {id: T9.10.2.3, accion: "histórica triangulación", resultado: "no delivery credit", criterios: ["Evidencia histórica."]}
+          - {id: T9.10.2.4, accion: "histórico refactor", resultado: "no delivery credit", criterios: ["Evidencia histórica."]}
+      - id: M9.10.3
+        resultado: Harness real Git; intento histórico no entregado
+        tareas:
+          - {id: T9.10.3.1, accion: "histórico RED harness", resultado: "no delivery credit", criterios: ["Evidencia histórica."]}
+          - {id: T9.10.3.2, accion: "histórico GREEN restore", resultado: "no delivery credit", criterios: ["Evidencia histórica."]}
+          - {id: T9.10.3.3, accion: "histórica triangulación", resultado: "no delivery credit", criterios: ["Evidencia histórica."]}
+          - {id: T9.10.3.4, accion: "histórico refactor final", resultado: "no delivery credit", criterios: ["Evidencia histórica."]}
 
   - id: S9.6
     resultado: Interceptor de intención Pi-first
@@ -6308,8 +6323,8 @@ sesiones:
   - id: S101
     zona: capacidades
     resultado: "Resolución de política: prepare_through opaco y horizon_ceiling salen de la política resuelta"
-    autoridad: "Identity, result, zona, dependency, cimientos, and replacement lineage are copied from migration/lineage.yaml successors[S101], whose approved assignment source is immutable commit 43130ad40af06f3ed05671000719217bee74f0a5 at agent-workflows/ASIGNACION-24-SESIONES.md; predecessor S5.14 and its replacement edge remain recorded in migration/lineage.yaml archived_originals and migration/sessions/plan-5.yaml. Product boundaries and route depth are approved by openspec/changes/s101-policy-resolution/proposal.md rev2, specs/policy-resolution/spec.md rev2, and correction 10540. Kickoff route provenance is Engram 10536."
-    depende_de: [S100]
+    autoridad: "Identity, result, zona, dependency, cimientos, and replacement lineage are copied from migration/lineage.yaml successors[S101], whose approved assignment source is immutable commit 43130ad40af06f3ed05671000719217bee74f0a5 at agent-workflows/ASIGNACION-24-SESIONES.md; predecessor S5.14 and its replacement edge remain recorded in migration/lineage.yaml archived_originals and migration/sessions/plan-5.yaml. Product boundaries and route depth are approved by openspec/changes/s101-policy-resolution/proposal.md rev2, specs/policy-resolution/spec.md rev2, and correction 10540. Kickoff route provenance is Engram 10536. Engram 10525/10532 later authority adds S9.10 as a separate prerequisite; it supersedes assignment edge [S100] only by adding S9.10 and preserves S100."
+    depende_de: [S100, S9.10]
     cimientos: []
     recurso: []
     reemplaza: [S5.14]
@@ -6371,8 +6386,8 @@ sesiones:
       autoridad: "Approved S101 proposal/specification rev2 and Radar's canonical route-depth contract require full-sdd before the shared policy/Jornada behavior is designed."
       revalidacion:
         resultado: full-sdd
-        base: e93ee87e0705bd8e2d0d64b98956e986a633972d
-        evidencia: "Engram migration/s101/kickoff observation 10536 records the clean implementer-1 base, migration-only boundary, S100/S101/S102 ownership, and full-sdd revalidation."
+        base: e6b7e673f671e6bba30f9a600bf0333a1cd90af2
+        evidencia: "C07 revalidates the same migration-only boundary over current logical master; S101 remains blocked by S9.10."
     modulos: []
 
 references:

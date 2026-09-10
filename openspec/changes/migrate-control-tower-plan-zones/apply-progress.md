@@ -4947,3 +4947,23 @@ Status consumed: `gentle-ai.sdd-status@2`, selected change `migrate-control-towe
 - Reclassified the retained C07 success section as historical/superseded, removed its active `[x]` task presentation, and named Engram 10584 as the invalidating authority; `tasks.md` remains authoritatively unchecked.
 - Quick structural verification passed: six YAML parses, provenance/historical-C07/C09-language greps, canonical/archive absence, `git diff --cached --check`, exact 11 staged paths, zero unstaged changes, and authored total `<=400`.
 - No Radar/doc-close proof rerun, review, settlement, commit, push, or unit-2 work occurred. Independent verification remains parent-owned; rollback remains the exact eleven-path staged boundary.
+
+## C07 unit 2 — bounded correction and fresh proof
+Authority 10640 corrects only the two candidate-caused findings from the r12 review: S9.9 now carries its imported `direct` route, and Session discovery is executable as the immutable 72-row base plus the Plan 9 supplement that replaces S9.9 and adds S9.10. S9.10 remains territory-pending and blocked; it gained no route, Zona, Cimientos, paths, readiness, or delivery credit. The later methodology decision retains all three established routes and defers end-to-end validation until after migration; this unit introduces no entry gate.
+
+### Fresh technical evidence
+- Base discovery returned 72 rows; the e6b7 Plan 9 supplement returned exactly S9.9 and S9.10; replace-one/add-one produced 73 unique rows byte-for-byte equal to `source-inventory.yaml`.
+- Private proof r14 produced technical subject `15206e85b60ea4faae9f5c53095314673462d1b3`, tree `9b4a7db5e0f8068626c3922bacca4329e1a50828`, and 588 path/mode/blob inputs SHA-256 `a7225c6ba09a3ea0d577435bf804180b314e82a9a0639ed2f1fccbaad53b6bf6`.
+- Radar `check`, `status`, and `zonas` passed with zero warnings/orphans; two renders matched canonical generated ROADMAP SHA-256 `29078dd9d4a8917f1405e4851b5dd2048cbde92264fa894e02f76b1b68d9910c`.
+- P1 passed the exact active partition `75/7/4=86`; S9.10 and S101 remained derived `BLOQUEADO`.
+- Both no-push documentation-close paths passed. Common Git refs and object inventories were byte-identical before/after; all object writes remained in the private r14 Git directory.
+- Private attestation SHA-256: `6424a8edf5e883b88353d06d775c8bb5a49b124fe2ab75f421faa860825432c0`. The failed r13 quoting attempt is preserved separately and has no candidate authority; historical r12 remains unchanged.
+
+### TDD cycle evidence
+| Cycle | Evidence | Result |
+|---|---|---|
+| RED | r12 review identified missing S9.9 route and non-reproducible 73-row discovery assertion. | Bounded by authority 10640. |
+| GREEN | Focused partition suite 14/14; executable discovery 72 + 2 − 1 = 73 exact rows; private r14 Radar/P1/doc-close proof. | PASS. |
+| TRIANGULATE | Production partition verifier observed 75 full + 7 future + 4 history = 86; two renders matched; private/common Git separation held. | PASS. |
+| REFACTOR | Only S9.9 route, discovery recipe/consumer, dependent identities, and fresh C07 evidence changed. | PASS; no S9.10 or runtime expansion. |
+T0.4.7.1–T0.4.7.3 are complete. This evidence authorizes only C07 closure and later C08 reproduction; it does not activate canonical paths, create package identity, authorize C08/C09 execution, commit, or push. Rollback remains the bounded C07 unit-2 paths plus disposable private r14 proof root; r12 is not part of rollback.

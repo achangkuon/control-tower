@@ -1,10 +1,12 @@
 schema: control-tower-migration-candidate-inputs
 schema_version: 1
 source_commit: 43130ad40af06f3ed05671000719217bee74f0a5
-assembly_head: 2c247242bdf1474de6ce392c37268a314909ddb5
+proof_logical_parent: e6b7e673f671e6bba30f9a600bf0333a1cd90af2
+plan9_current_authority: {blob: c404406554b55c3345aabb68670fd6b161bf7771, sha256: 4082b1ed8627e2deb52482257f0c6f4968f4589118031e1187c4f326af4afa8f}
+assembly_head: 39bc8c27c0478321156761c35437123cecdde3ed
 canonical_paths_forbidden_before_activation: [openspec/plan.yaml, openspec/ROADMAP.md]
 activation_paths:
-  - {target: "openspec/plan.yaml", expected_mode: "100644", expected_blob: "3661585e7e912d95e5f704c92a3a4b3349c97ec9", expected_sha256: "f1642bd4c477f779d64c521cf54425df5b0bfa9aeb2d19dad886689b8f8a4481", source: "openspec/changes/migrate-control-tower-plan-zones/migration/candidate/plan.yaml", promotion: exact-byte, activation_owner: "canonical-plan-promotion", activation_treatment: "promote-dormant-candidate-exact-byte"}
+  - {target: "openspec/plan.yaml", expected_mode: "100644", expected_blob: "b794dd1a425b75808ffb9c5c03881979fc23f58f", expected_sha256: "e559f13409570c66827c452c8c305450ba23a402ea157e9fa1b927ee1107e614", source: "openspec/changes/migrate-control-tower-plan-zones/migration/candidate/plan.yaml", promotion: exact-byte, activation_owner: "canonical-plan-promotion", activation_treatment: "promote-dormant-candidate-exact-byte"}
   - {target: "openspec/ROADMAP.md", expected_mode: "100644", expected_blob: "deferred-to-c07-equivalence-manifest", source: "openspec/changes/migrate-control-tower-plan-zones/migration/candidate/plan.yaml", generation: "Radar deterministic render", promotion: generated-only, activation_owner: "c07-radar-render", activation_treatment: "generate-deterministic-canonical-roadmap-at-c07"}
   - {target_root: "openspec/archive/legacy-planning/", expanded_path_count: 31, expected_mode_source: "openspec/changes/migrate-control-tower-plan-zones/migration/archive-inventory.yaml", expected_blob_source: "openspec/changes/migrate-control-tower-plan-zones/migration/archive-inventory.yaml", source: "43130ad40af06f3ed05671000719217bee74f0a5", activation_owner: "archive-inventory.entries", activation_treatment: "copy-each-explicit-inventory-destination-byte-faithfully"}
   - {target: "openspec/changes/migrate-control-tower-plan-zones/migration/equivalence-manifest.yaml", expected_mode: "100644", expected_blob: "deferred-to-c07-proof", producer: "C07 immutable proof output", activation_owner: "c07-equivalence-proof", activation_treatment: "create-and-bind-immutable-equivalence-manifest-at-c07"}
@@ -12,14 +14,14 @@ canonical_promotion_source:
   path: openspec/changes/migrate-control-tower-plan-zones/migration/candidate/plan.yaml
   target: openspec/plan.yaml
   mode: "100644"
-  blob: 3661585e7e912d95e5f704c92a3a4b3349c97ec9
-  sha256: f1642bd4c477f779d64c521cf54425df5b0bfa9aeb2d19dad886689b8f8a4481
+  blob: b794dd1a425b75808ffb9c5c03881979fc23f58f
+  sha256: e559f13409570c66827c452c8c305450ba23a402ea157e9fa1b927ee1107e614
   activation_owner: canonical-plan-promotion
   activation_treatment: promote-dormant-candidate-exact-byte
 archive_evidence_inputs:
-  - {source: "openspec/changes/migrate-control-tower-plan-zones/migration/source-inventory.yaml", mode: "100644", blob: "e2ae5dfb6c0ceb5bb38e9f99de5f31d3a7de2089", activation_owner: "archive-evidence-assembly", activation_treatment: "preserve-as-archive-evidence"}
-  - {source: "openspec/changes/migrate-control-tower-plan-zones/migration/lineage.yaml", mode: "100644", blob: "cb7de30863167e2d49edb48104cc0891b615c015", activation_owner: "archive-evidence-assembly", activation_treatment: "preserve-as-archive-evidence"}
-  - {source: "openspec/changes/migrate-control-tower-plan-zones/migration/partition.yaml", mode: "100644", blob: "56074cf4faa3b1bd7a115ab729f0cc81f9656d28", sha256: "36f53988981f37667f2b1d2de59ad5923a604e3eff29373ee6072cfc6d75d041", activation_owner: "archive-evidence-assembly", activation_treatment: "preserve-as-archive-evidence"}
+  - {source: "openspec/changes/migrate-control-tower-plan-zones/migration/source-inventory.yaml", mode: "100644", blob: "55afc8fe2846bf029b8cb1bcecb059bf93b88c92", activation_owner: "archive-evidence-assembly", activation_treatment: "preserve-as-archive-evidence"}
+  - {source: "openspec/changes/migrate-control-tower-plan-zones/migration/lineage.yaml", mode: "100644", blob: "bddb27d72e595e2bafa5a72cd275b0a50a6b736a", activation_owner: "archive-evidence-assembly", activation_treatment: "preserve-as-archive-evidence"}
+  - {source: "openspec/changes/migrate-control-tower-plan-zones/migration/partition.yaml", mode: "100644", blob: "a0cd26d4e34422fd5ea4ae510a66c3f39096dc07", sha256: "3b58bef8d999ec143593be0cf06b868b3c26e00e52ef5648a8f12092aef945c2", activation_owner: "archive-evidence-assembly", activation_treatment: "preserve-as-archive-evidence"}
   - {source: "openspec/changes/migrate-control-tower-plan-zones/migration/sessions/plan-0.yaml", mode: "100644", blob: "a1b0dbd815232f4d054f72251b85d545f0577633", activation_owner: "archive-evidence-assembly", activation_treatment: "preserve-as-archive-evidence"}
   - {source: "openspec/changes/migrate-control-tower-plan-zones/migration/sessions/plan-1.yaml", mode: "100644", blob: "0a6510ce9d1db94869ed94abc464c08fcfa33dc1", activation_owner: "archive-evidence-assembly", activation_treatment: "preserve-as-archive-evidence"}
   - {source: "openspec/changes/migrate-control-tower-plan-zones/migration/sessions/plan-2.yaml", mode: "100644", blob: "3c61c6d6e7bfb2e61ed034769c6cd701c5439feb", activation_owner: "archive-evidence-assembly", activation_treatment: "preserve-as-archive-evidence"}
@@ -29,14 +31,14 @@ archive_evidence_inputs:
   - {source: "openspec/changes/migrate-control-tower-plan-zones/migration/sessions/plan-6.yaml", mode: "100644", blob: "702982453943f141d73bb8799c82ade19d30c3ba", activation_owner: "archive-evidence-assembly", activation_treatment: "preserve-as-archive-evidence"}
   - {source: "openspec/changes/migrate-control-tower-plan-zones/migration/sessions/plan-7.yaml", mode: "100644", blob: "89b9bb88868b7dd7a397ab9a030952acded320fe", activation_owner: "archive-evidence-assembly", activation_treatment: "preserve-as-archive-evidence"}
   - {source: "openspec/changes/migrate-control-tower-plan-zones/migration/sessions/plan-8.yaml", mode: "100644", blob: "1d63f156cb4a2db9c021a0a70f23c1a10e849195", activation_owner: "archive-evidence-assembly", activation_treatment: "preserve-as-archive-evidence"}
-  - {source: "openspec/changes/migrate-control-tower-plan-zones/migration/sessions/plan-9.yaml", mode: "100644", blob: "2eebf5dcb607581f9b3a56ab4a4f98f801d2a8c5", activation_owner: "archive-evidence-assembly", activation_treatment: "preserve-as-archive-evidence"}
+  - {source: "openspec/changes/migrate-control-tower-plan-zones/migration/sessions/plan-9.yaml", mode: "100644", blob: "ebdc04f36134c98a2674a78dc24ab545eb62369d", activation_owner: "archive-evidence-assembly", activation_treatment: "preserve-as-archive-evidence"}
   - {source: "openspec/changes/migrate-control-tower-plan-zones/migration/sessions/plan-10.yaml", mode: "100644", blob: "b5c3cb310080cea3d7879d1d7117c613251a6119", activation_owner: "archive-evidence-assembly", activation_treatment: "preserve-as-archive-evidence"}
   - {source: "openspec/changes/migrate-control-tower-plan-zones/migration/sessions/plan-11.yaml", mode: "100644", blob: "67d1bb90fc17e6adce4c62ac5ecf715b6fa04451", activation_owner: "archive-evidence-assembly", activation_treatment: "preserve-as-archive-evidence"}
   - {source: "openspec/changes/migrate-control-tower-plan-zones/migration/sessions/plan-12.yaml", mode: "100644", blob: "d1b6e19d35c56cd4001020f2830d841cd66ba754", activation_owner: "archive-evidence-assembly", activation_treatment: "preserve-as-archive-evidence"}
-  - {source: "openspec/changes/migrate-control-tower-plan-zones/migration/archive-inventory.yaml", mode: "100644", blob: "9e41d8aa15301c42f09b0d5a2f0dc31f4dc031b3", activation_owner: "archive-evidence-assembly", activation_treatment: "preserve-as-archive-evidence"}
+  - {source: "openspec/changes/migrate-control-tower-plan-zones/migration/archive-inventory.yaml", mode: "100644", blob: "1439bed21e25007ca7dc866ff73f673ae21bad99", activation_owner: "archive-evidence-assembly", activation_treatment: "preserve-as-archive-evidence"}
 guidance_doc_guard_cutover_inputs:
   - {path: "AGENTS.md", mode: "100644", blob: "6b26e61a27fef7f29d6e8c1440c26efeeecca44e", source_commit: "2c247242bdf1474de6ce392c37268a314909ddb5", requirement: "activation guidance must name openspec/plan.yaml and preserve direct-push policy", activation_owner: "c09-guidance-cutover", activation_treatment: "update-active-guidance-in-place-at-c09"}
   - {path: ".doc-guard.json", mode: "100644", blob: "8585e779b600f22aaf89f3b9be1b19f58523dbd4", source_commit: "2c247242bdf1474de6ce392c37268a314909ddb5", requirement: "retain policy solo and prove plan-data plus nada que registrar paths", activation_owner: "c09-doc-guard-cutover", activation_treatment: "update-active-doc-guard-in-place-at-c09"}
 evidence_manifest_location: openspec/changes/migrate-control-tower-plan-zones/migration/equivalence-manifest.yaml
 deferred_blob_rule: C07 MUST bind the generated ROADMAP, C06 self-inputs, and equivalence manifest blobs before C08 reproduction; C06 MUST NOT invent those bytes.
-candidate_partition_contract: {full_sessions: 74, future_successors: 7, satisfied_history: 4, activation_records: 85, candidate_state: noncanonical}
+candidate_partition_contract: {full_sessions: 75, future_successors: 7, satisfied_history: 4, activation_records: 86, candidate_state: noncanonical}

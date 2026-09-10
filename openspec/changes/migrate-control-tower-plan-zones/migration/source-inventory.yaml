@@ -9,6 +9,8 @@ precedence:
   - "5: owning legacy STATUS Session contract and referenced contract authority when not superseded"
   - "6: indexes, manifests, release prose, percentages, historical execution records, and narrative are comparison/archive input only"
 conflict_policy: equal-precedence contradictions block activation
+later_authority:
+  - {commit: "e6b7e673f671e6bba30f9a600bf0333a1cd90af2", path: "openspec/plans/plan-9/STATUS.md", mode: "100644", blob_oid: "c404406554b55c3345aabb68670fd6b161bf7771", sha256: "4082b1ed8627e2deb52482257f0c6f4968f4589118031e1187c4f326af4afa8f", applies_to: [S9.9, S9.10], precedence: 3, note: "S9.9 delivery is current; S9.10 source chronology is replaced by scoped Engram 10522/10525/10527/10531/10532."}
 sources:
   - {path: "agent-workflows/ASIGNACION-24-SESIONES.md", mode: "100644", blob_oid: "a7c4ced3b196a6ea92a7bd8f181b98b87fc70ae3", classification: "approved-replacement-authority", precedence: 2, note: "later approved authority for the 24 open assignments, S100-S108 lineage, and S7.1"}
   - {path: "agent-workflows/PLANO-CONTROL-TOWER.md", mode: "100644", blob_oid: "9223dde647d31865ba43868c2cdf7bd309a8fec0", classification: "superseded-planning-input", precedence: 6, note: "comparison/archive input; unchecked reassignment item is stale and does not reopen scope"}
@@ -42,10 +44,24 @@ sources:
   - {path: "openspec/specs/sdd-tower-implementation-v1-requirements.md", mode: "100644", blob_oid: "d8c9e73ecdfdb8fa2ed868fef7b27dbc980c6e72", classification: "legacy-contract-authority", precedence: 5, note: "referenced legacy contract; owning STATUS or later scoped decision controls conflicts"}
   - {path: "openspec/specs/main-owned-visible-root/spec.md", mode: "100644", blob_oid: "3f0357a0d27dfa8ca0386d3f2c1670e0978d05b6", classification: "legacy-contract-authority", precedence: 5, note: "referenced legacy contract; owning STATUS or later scoped decision controls conflicts"}
 session_discovery:
-  command: 'git grep -nE ''^#{1,6}[[:space:]]+Sesión[[:space:]]+S?[1-9][0-9]*(\.[1-9][0-9]*)*([[:space:]]|—|-|$)'' $SOURCE_COMMIT -- openspec/plans'
-  scope: actual Markdown Session headings in Plans 0-12 STATUS blobs only
-  exclusions: [tables, prose, Mermaid nodes, queues, percentages]
-  row_count: 72
+  base:
+    commit: 43130ad40af06f3ed05671000719217bee74f0a5
+    command: 'git grep -nE ''^#{1,6}[[:space:]]+Sesión[[:space:]]+S?[1-9][0-9]*(\.[1-9][0-9]*)*([[:space:]]|—|-|$)'' 43130ad40af06f3ed05671000719217bee74f0a5 -- openspec/plans | sort -V'
+    scope: actual Markdown Session headings in Plans 0-12 STATUS blobs only
+    exclusions: [tables, prose, Mermaid nodes, queues, percentages]
+    row_count: 72
+  plan_9_supplement:
+    commit: e6b7e673f671e6bba30f9a600bf0333a1cd90af2
+    path: openspec/plans/plan-9/STATUS.md
+    command: 'git grep -nE ''^#{1,6}[[:space:]]+Sesión[[:space:]]+S?9\.(9|10)([[:space:]]|—|-|$)'' e6b7e673f671e6bba30f9a600bf0333a1cd90af2 -- openspec/plans/plan-9/STATUS.md'
+    row_count: 2
+    replace_session_ids: [S9.9]
+    add_session_ids: [S9.10]
+  merge:
+    rule: replace S9.9 in place with the supplement row, then insert S9.10 immediately after it; preserve all other base rows and require unique session IDs
+    unique_session_id_count: 73
+    proof_consumer: fresh-C07-private-proof/session-discovery-check
+  row_count: 73
 sessions:
   - {session_id: S1.11, source_path: "openspec/plans/plan-1/STATUS.md", source_blob: "955820c97257921571cb3d2ac0122929586a2fae", source_line: 66, source_heading: "## Sesión S1.11 — Reconciliación independiente legacy P7"}
   - {session_id: S1.12, source_path: "openspec/plans/plan-1/STATUS.md", source_blob: "955820c97257921571cb3d2ac0122929586a2fae", source_line: 81, source_heading: "## Sesión S1.12 — Reconciliación independiente P8"}
@@ -104,7 +120,8 @@ sessions:
   - {session_id: S9.5, source_path: "openspec/plans/plan-9/STATUS.md", source_blob: "18b77f222bdcf1bea0d2d144b170f102d5d6cc8a", source_line: 599, source_heading: "## Sesión 9.5 — Topología y materialización visual determinista"}
   - {session_id: S9.7, source_path: "openspec/plans/plan-9/STATUS.md", source_blob: "18b77f222bdcf1bea0d2d144b170f102d5d6cc8a", source_line: 633, source_heading: "## Sesión 9.7 — Route padre registrado y triggers públicos exactos"}
   - {session_id: S9.8, source_path: "openspec/plans/plan-9/STATUS.md", source_blob: "18b77f222bdcf1bea0d2d144b170f102d5d6cc8a", source_line: 668, source_heading: "## Sesión 9.8 — Dispatch fire-and-forget y cierre asíncrono"}
-  - {session_id: S9.9, source_path: "openspec/plans/plan-9/STATUS.md", source_blob: "18b77f222bdcf1bea0d2d144b170f102d5d6cc8a", source_line: 703, source_heading: "## Sesión 9.9 — Binding explícito de workspace Herdr"}
+  - {session_id: S9.9, source_commit: "e6b7e673f671e6bba30f9a600bf0333a1cd90af2", source_path: "openspec/plans/plan-9/STATUS.md", source_blob: "c404406554b55c3345aabb68670fd6b161bf7771", source_line: 704, source_heading: "## Sesión 9.9 — Binding explícito de workspace Herdr"}
+  - {session_id: S9.10, source_commit: "e6b7e673f671e6bba30f9a600bf0333a1cd90af2", source_path: "openspec/plans/plan-9/STATUS.md", source_blob: "c404406554b55c3345aabb68670fd6b161bf7771", source_line: 734, source_heading: "## Sesión 9.10 — Materialización canónica desde `base_sha` aprobado"}
   - {session_id: S9.6, source_path: "openspec/plans/plan-9/STATUS.md", source_blob: "18b77f222bdcf1bea0d2d144b170f102d5d6cc8a", source_line: 753, source_heading: "## Sesión 9.6 — Interceptor de intención Pi-first"}
   - {session_id: S10.3, source_path: "openspec/plans/plan-10/STATUS.md", source_blob: "ee5b58be8721a0296a49c42aae1f89ff2ce98767", source_line: 39, source_heading: "## Sesión 10.3 — Contrato de ejecución versionado"}
   - {session_id: S10.1, source_path: "openspec/plans/plan-10/STATUS.md", source_blob: "ee5b58be8721a0296a49c42aae1f89ff2ce98767", source_line: 77, source_heading: "## Sesión 10.1 — Preparación persistida de Jornada"}

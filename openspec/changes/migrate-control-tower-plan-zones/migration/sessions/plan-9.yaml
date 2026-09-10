@@ -3,8 +3,9 @@ legacy_plan: 9
 source_commit: 43130ad40af06f3ed05671000719217bee74f0a5
 source_path: openspec/plans/plan-9/STATUS.md
 source_blob: 18b77f222bdcf1bea0d2d144b170f102d5d6cc8a
+current_authority: {commit: e6b7e673f671e6bba30f9a600bf0333a1cd90af2, blob: c404406554b55c3345aabb68670fd6b161bf7771, sha256: 4082b1ed8627e2deb52482257f0c6f4968f4589118031e1187c4f326af4afa8f, applies_to: [S9.9, S9.10]}
 complete: true
-session_count: 9
+session_count: 10
 sessions:
   - legacy_session_id: S9.1
     source_line: 131
@@ -97,14 +98,22 @@ sessions:
     field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work], derived_comparison: [status, area, progress, queue, ownership, seat, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical execution, decisions, metrics, and narrative not representable as target fields]}
     compatibility_reason: "Proven imported dotted hierarchy; known or historically recorded territory; no pending-territory scheduling claim."
   - legacy_session_id: S9.9
-    source_line: 703
+    source_line: 704
     source_heading: "## Sesión 9.9 — Binding explícito de workspace Herdr"
-    provenance_classification: target
-    importacion_legacy: {origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5, origen_ruta: openspec/plans/plan-9/STATUS.md, origen_blob: 18b77f222bdcf1bea0d2d144b170f102d5d6cc8a, origen_encabezado: "## Sesión 9.9 — Binding explícito de workspace Herdr", territorio_pendiente: false}
+    provenance_classification: target-current-delivered
+    importacion_legacy: {origen_commit: e6b7e673f671e6bba30f9a600bf0333a1cd90af2, origen_ruta: openspec/plans/plan-9/STATUS.md, origen_blob: c404406554b55c3345aabb68670fd6b161bf7771, origen_encabezado: "## Sesión 9.9 — Binding explícito de workspace Herdr", territorio_pendiente: false}
     stable_ids: {modules: [M9.9.1], tasks: [T9.9.1.1, T9.9.1.2, T9.9.1.3]}
-    source_contract: {scope: "explicit Herdr workspace binding with fail-closed cleanup", dependencies: [], authority: "owning Session contract and approved Herdr boundary", decisions: "Opening and worker dispatch remain suspended until the workspace binding gate is satisfied.", criteria: "Open criteria require exact workspace identity, safe cleanup, no implicit dispatch authority, tests, and territory.", route: direct, delivery: "unresolved; blocked and M9.9.1 remains open", outstanding_work: "unresolved; blocked and M9.9.1 remains open"}
-    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work], derived_comparison: [status, area, progress, queue, ownership, seat, capacity], approved_replacement_authority: [], superseded: [], archive_only: [historical execution, decisions, metrics, and narrative not representable as target fields]}
-    compatibility_reason: "Proven imported dotted hierarchy; known or historically recorded territory; no pending-territory scheduling claim."
+    source_contract: {scope: "explicit workspace binding, fail-closed cleanup, and no cross-workspace selection", dependencies: [], authority: "master e6b7 Plan 9 current source", decisions: "decision 108 is resolved; no focused/default/raw fallback", criteria: "five exact paths; focused 36/0/139 and full 1175/0/6390/88", route: direct, delivery: "e9bcba7a8e9b7cc5ac7de67a11a867b17c8978f5; tree 1a7a030ed4992db4e9c82b04faebd735e2ca59b3; parent 197fc0b5414c8e95bdfa30b0958bfcf739e1e0ce", outstanding_work: none}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, delivery], derived_comparison: [status, area, progress, queue, ownership, seat, capacity], approved_replacement_authority: [], superseded: [old-blocked-snapshot], archive_only: [historical execution and narrative]}
+    compatibility_reason: "Later immutable master source supersedes the frozen Plan 9 snapshot."
+  - legacy_session_id: S9.10
+    source_line: 734
+    source_heading: "## Sesión 9.10 — Materialización canónica desde `base_sha` aprobado"
+    provenance_classification: target-current-blocked
+    source_contract: {scope: "separate full-binding materializar from exact approved non-master base_sha; asignar remains read-only", dependencies: [S9.9], authority: "master source chronology plus Engram 10522/10525/10527/10531/10532", decisions: "full-binding is resolved; 12 task attempts are undelivered historical evidence; final verify has four CRITICAL; correction is exhausted; maintainer selected no-action", criteria: "no delivery, archive, activation, readiness, package identity, or S101 unblocking", route: design-tasks, delivery: none, outstanding_work: "blocked-human-decision; no new RED/correction/review/commit/archive"}
+    stable_ids: {modules: [M9.10.1, M9.10.2, M9.10.3], tasks: [T9.10.1.1, T9.10.1.2, T9.10.1.3, T9.10.1.4, T9.10.2.1, T9.10.2.2, T9.10.2.3, T9.10.2.4, T9.10.3.1, T9.10.3.2, T9.10.3.3, T9.10.3.4]}
+    field_mapping: {target: [scope, dependencies, authority, decisions, criteria, route, stable_ids, outstanding_work], derived_comparison: [status, area, progress, queue, ownership, seat, capacity], approved_replacement_authority: [Engram 10522, Engram 10532], superseded: [source-before-RED-block], archive_only: [implementer-3 candidate bytes and historical task attempts]}
+    compatibility_reason: "Later scoped authorities replace only S9.10's antecedent source text; no candidate bytes are imported."
   - legacy_session_id: S9.6
     source_line: 753
     source_heading: "## Sesión 9.6 — Interceptor de intención Pi-first"

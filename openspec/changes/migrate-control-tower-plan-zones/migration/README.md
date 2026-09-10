@@ -29,3 +29,7 @@ Later scoped maintainer decisions apply next. Immutable Git objects control repo
 ## Verification boundary
 
 C02 changes only this README and `source-inventory.yaml`. Rollback is removal or revert of C02 alone; no legacy source is edited. The complete candidate is staged only after source-object, duplicate/omission, canonical-path absence, diff-integrity, and authored-line checks pass.
+
+## Current Plan 9 supplement
+
+The frozen 72-row corpus remains preserved. A scoped later authority adds current S9.9/S9.10 truth from `master@e6b7e673f671e6bba30f9a600bf0333a1cd90af2`, yielding 73 imports; its Plan 9 blob is `c404406554b55c3345aabb68670fd6b161bf7771` (`4082b1ed8627e2deb52482257f0c6f4968f4589118031e1187c4f326af4afa8f`).

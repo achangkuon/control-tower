@@ -45,7 +45,8 @@ successors:
   - id: S101
     resultado: "Resolución de política: prepare_through opaco y horizon_ceiling salen de la política resuelta"
     zona: capacidades
-    dependencies: [S100]
+    dependencies: [S100, S9.10]
+    later_authority: "Engram 10525/10532 adds S9.10; it supersedes assignment [S100] only by adding the prerequisite and preserves S100."
     cimientos: []
     reemplaza: [S5.14]
   - id: S102
@@ -109,11 +110,11 @@ dependency_rewrites:
     rationale: "Dispatch follows approved seat materialization; S108 transitively includes topology S107 and preserves the existing S1.18 gate."
 
 closure_contract:
-  imported_mapping_rows: 72
-  full_session_total: 74
+  imported_mapping_rows: 73
+  full_session_total: 75
   future_reference_total: 7
   satisfied_history_reference_total: 4
-  activation_record_total: 85
+  activation_record_total: 86
   required_successors: [S100, S101, S102, S103, S104, S105, S106, S107, S108]
   archived_original_ids: [S5.14, S5.15, S9.3, S9.5]
   active_dependency_rule: "No active Session dependency may point only to an archived original; it must name the applicable successor."
@@ -187,6 +188,7 @@ closure_contract:
       - S9.7
       - S9.8
       - S9.9
+      - S9.10
       - S9.6
       - S10.3
       - S10.1
@@ -202,4 +204,4 @@ closure_contract:
       - S12.8
       - S12.9
     successor_ids: [S100, S101, S102, S103, S104, S105, S106, S107, S108]
-    final_session_total: 81
+    final_session_total: 82

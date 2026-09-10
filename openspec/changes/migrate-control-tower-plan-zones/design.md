@@ -518,9 +518,9 @@ It preserves its unresolved authorial `source_commit` and revision-2-versus-neig
 decisions, grants no live planning authority, and requires Modules/Tasks plus
 current-HEAD revalidation before ordinary execution.
 
-## Bounded reference architecture amendment
+## Bounded reference architecture amendment — Unit 1 historical baseline
 
-This amendment supersedes only the earlier 81-full-Session assumption. The immutable 72-Session prefix and all prior compatibility, dormancy, proof, activation, and rollback decisions remain unchanged. The final partition is 74 full Sessions, seven future references, and four historical references: 85 records.
+This amendment superseded only the earlier 81-full-Session assumption. Its 72-import/74-full/85-record counts are retained as non-normative Unit 1 history and are superseded by the Unit 2 reconciliation below; all prior compatibility, dormancy, proof, activation, and rollback decisions remain unchanged.
 
 ### Closed reference contract
 
@@ -626,3 +626,9 @@ Risks are off-by-one fragment bounds, an unaudited display-to-canonical mapping,
 - Immutable source evidence can authenticate heterogeneous history without inventing one delivery representation.
 - Raw authority and canonical migration data require an explicit, reviewed transformation boundary.
 - Generic structural validation and migration-specific exactness belong to different verifiers.
+
+## Unit-2 Plan 9 reconciliation
+
+This section is the active count contract: 73 imported Sessions plus `S100` and `S101` yield 75 full Sessions, seven future references, four historical references, and 86 records. It supersedes every 72/74/85 count in the Unit 1 baseline above.
+
+Use `master@e6b7e673f671e6bba30f9a600bf0333a1cd90af2` only as C07's private logical parent. Overlay the migration artifacts, serialize S9.9 then S9.10 then S9.6, and preserve S9.10's four-path attempt only as non-imported historical evidence. No C07/C08 package identity is created.

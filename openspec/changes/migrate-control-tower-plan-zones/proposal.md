@@ -4,8 +4,8 @@
 
 Migrate Control Tower from the duplicated legacy planning corpus to one Radar v3 plan using the approved **full-fidelity history with a bounded planning horizon** policy.
 
-The activation contract contains exactly 85 records:
-- 74 full Session records: 72 full-fidelity imported historical Sessions plus the separately planned and approved successors `S100` and `S101`;
+The current activation contract contains exactly 86 records:
+- 75 full Session records: 73 full-fidelity imported historical Sessions plus the separately planned and approved successors `S100` and `S101`;
 - seven typed future-successor references for `S102`–`S108`; and
 - four typed immutable satisfied-history references for omitted dependencies `S1.9`, `S1.10`, `S2.4`, and `S8.10`.
 
@@ -343,3 +343,9 @@ C05.2-S12.9-full-sdd-deferment-compat extends this exact-signature contract: S12
 remain `design-tasks`; S12.9's immutable signature permits only `full-sdd`. It remains
 non-executable with zero Modules/Tasks and a complete unresolved escalation at
 `primer-modulo`, preserving its authorial `source_commit` and revision-2-versus-neighbor-file decisions.
+
+## Current Plan 9 authority (unit 2)
+
+This Unit 2 authority supersedes every earlier 72-import/74-full/85-record clause in this proposal. Those earlier counts remain only as the non-normative Unit 1 historical baseline.
+
+The imported ledger is 73 rows: S9.9 is delivered from `master@e6b7e673f671e6bba30f9a600bf0333a1cd90af2` (blob `c404406554b55c3345aabb68670fd6b161bf7771`; delivery `e9bcba7a8e9b7cc5ac7de67a11a867b17c8978f5`), and S9.10 follows as a blocked no-action record. Its full-binding decision is resolved, but its 12 attempts are historical undelivered evidence; four CRITICAL findings and exhausted correction keep S101 blocked. The active partition is 75/7/4=86; C07 remains technical only and C09 alone names `final_package_identity`.

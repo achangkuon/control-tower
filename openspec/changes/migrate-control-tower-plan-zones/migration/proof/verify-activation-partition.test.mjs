@@ -25,7 +25,7 @@ const locate = (raw, path, blob, lineStart, lineEnd) => {
 const consumerHeading = (id) => `## Consumidor de ${id}`
 
 // One shared, size-parameterized fixture builder reused at three scales: a small
-// horizon/mapping fixture, a small satisfied-history fixture, and the real 74/7/4 scale.
+// horizon/mapping fixture, a small satisfied-history fixture, and the active 75/7/4 scale.
 // `importedIds` are dummy full Sessions; the first `satisfiedHistoryIds.length` of them
 // each prove one immutable `Depende de` edge to their historical reference.
 const buildFixture = ({ importedCount, successorIds, satisfiedHistoryIds }) => {
@@ -156,27 +156,27 @@ describe("satisfied-history fragment and imported-consumer proof", () => {
   })
 })
 
-describe("exact 74/7/4 activation partition", () => {
+describe("exact 75/7/4 activation partition", () => {
   const SUCCESSOR_IDS = ["S100", "S101", "S102", "S103", "S104", "S105", "S106", "S107", "S108"]
-  const finalFixture = () => buildFixture({ importedCount: 72, successorIds: SUCCESSOR_IDS, satisfiedHistoryIds: DEFAULT_SATISFIED_HISTORY_IDS })
+  const finalFixture = () => buildFixture({ importedCount: 73, successorIds: SUCCESSOR_IDS, satisfiedHistoryIds: DEFAULT_SATISFIED_HISTORY_IDS })
 
-  test("accepts the exact 74/7/4 partition as 85 activation records", () => {
+  test("accepts the exact 75/7/4 partition as 86 activation records", () => {
     const result = verifyActivationPartition(finalFixture())
     expect(result).toMatchObject({
       ok: true,
-      observed: { fullSessionCount: 74, futureReferenceCount: 7, satisfiedHistoryCount: 4, activationRecordCount: 85 },
+      observed: { fullSessionCount: 75, futureReferenceCount: 7, satisfiedHistoryCount: 4, activationRecordCount: 86 },
       failures: [],
     })
   })
 
-  test("reports 72/0/0 against a candidate that has no references yet", () => {
+  test("reports 73/0/0 against a candidate that has no references yet", () => {
     const values = withCandidate(finalFixture(), (c) => {
       c.sesiones = c.sesiones.filter((s) => !["S100", "S101"].includes(s.id))
       delete c.references
     })
     const result = verifyActivationPartition(values)
     expect(result.ok).toBe(false)
-    expect(result.observed).toMatchObject({ fullSessionCount: 72, futureReferenceCount: 0, satisfiedHistoryCount: 0 })
+    expect(result.observed).toMatchObject({ fullSessionCount: 73, futureReferenceCount: 0, satisfiedHistoryCount: 0 })
   })
 
   test("rejects a missing full Session, an invented future reference, and a duplicated identity", () => {

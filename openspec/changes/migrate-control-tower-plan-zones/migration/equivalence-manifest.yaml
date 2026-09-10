@@ -1,28 +1,30 @@
 schema: control-tower-c07-equivalence
-schema_version: 2
-evidence_status: {state: interrupted-antecedent, authority: [10584, 10592], usable_for: historical-record-only, prohibits: [activation-readiness, c07-closure, c08-readiness, package-identity], unit_2_requirement: repeat-after-s9.9-s9.10-on-new-master-based-technical-subject}
-authority: {engram_observations: [10569, 10572, 10578, 10580, 10582], final_tree_binding: c09-commit-message-attestation-only}
+schema_version: 3
+evidence_status: {state: pass, authority: [10584, 10592, 10640], usable_for: [c07-closure, c08-reproduction-input], prohibits: [activation, delivery, final-package-identity, c09-binding]}
+authority: {engram_observations: [10569, 10572, 10578, 10580, 10582, 10584, 10592, 10640], final_tree_binding: c09-commit-message-attestation-only}
 assembly:
-  precursor: 2c247242bdf1474de6ce392c37268a314909ddb5
-  precursor_tree: 948d0e707a4f1958ab244745a2f3824fdc817d12
-  c06_input_commit: 2c931e4a73b0c84e11d3991dfe4816cc8a1ef63e
-  c06_input_rule: exact-immutable-read-then-authorized-10578-overlay
-  c06_original_blobs: {archive_inventory: 9e41d8aa15301c42f09b0d5a2f0dc31f4dc031b3, candidate_inputs: 4415f91007c9e2a09175b6581e9daa83b2b21725}
-source: {commit: 43130ad40af06f3ed05671000719217bee74f0a5, tree: cae4cd6ad3ee1b879b04dbd4872be1f0e5880e23}
+  head: 39bc8c27c0478321156761c35437123cecdde3ed
+  head_tree: 1aea397654f2b18372f1b395ccb8a1f4acd8dbc2
+  logical_parent: e6b7e673f671e6bba30f9a600bf0333a1cd90af2
+  input_rule: exact-immutable-read-then-authorized-unit2-overlay
+source:
+  base: {commit: 43130ad40af06f3ed05671000719217bee74f0a5, discovered_sessions: 72}
+  plan_9_supplement: {commit: e6b7e673f671e6bba30f9a600bf0333a1cd90af2, replace: [S9.9], add: [S9.10], rows: 2}
+  merged_discovery: {unique_sessions: 73, proof_sha256: 34f8b49d12468c9c089b5ce1212f469f23ea5b54f61eee07d86faae6da09103d}
 content:
-  plan: {mode: "100644", blob: 3661585e7e912d95e5f704c92a3a4b3349c97ec9, sha256: f1642bd4c477f779d64c521cf54425df5b0bfa9aeb2d19dad886689b8f8a4481}
-  roadmap: {mode: "100644", blob: 2eda531b8c4b4b8deb716d45603318a5cbc4d088, sha256: 7ca55fe619dc5a9a8e60d0d43e0da113a1f8bf067ec93b009e7df3d5e63708ff}
-  partition: {mode: "100644", blob: 56074cf4faa3b1bd7a115ab729f0cc81f9656d28, sha256: 36f53988981f37667f2b1d2de59ad5923a604e3eff29373ee6072cfc6d75d041}
-  candidate_inputs: {mode: "100644", blob: 7ebed6ed9f622fe98660d9ab6ad388fe7fa2c023, sha256: 88856ed13681cbc444bb9a08f6ae4981c4aa788084b635238e95c9c4cd1ba11b}
-  ledgers: {source_inventory: e2ae5dfb6c0ceb5bb38e9f99de5f31d3a7de2089, lineage: cb7de30863167e2d49edb48104cc0891b615c015}
+  plan: {mode: "100644", blob: b794dd1a425b75808ffb9c5c03881979fc23f58f, sha256: e559f13409570c66827c452c8c305450ba23a402ea157e9fa1b927ee1107e614}
+  roadmap: {mode: "100644", blob: 1b18357985ec68afaa1a7dbfc30a6a64fe2a0e1a, sha256: 29078dd9d4a8917f1405e4851b5dd2048cbde92264fa894e02f76b1b68d9910c}
+  partition: {mode: "100644", blob: a0cd26d4e34422fd5ea4ae510a66c3f39096dc07, sha256: 3b58bef8d999ec143593be0cf06b868b3c26e00e52ef5648a8f12092aef945c2, contract: "75/7/4=86"}
+  candidate_inputs: {mode: "100644", blob: d92778e9f9834c9b68ac2aa10114a54e3203f018, sha256: ab2bc84bd55d6a2babce60ab1c17cfb8336009c8d58d33b1d3c87a2edb9ac0c5}
+  ledgers: {source_inventory: 55afc8fe2846bf029b8cb1bcecb059bf93b88c92, lineage: bddb27d72e595e2bafa5a72cd275b0a50a6b736a}
   archives: {entries: 31, retirements: 14, retained_archive_only: 17, identity_sha256: a45fec33a42336051ebe38c3fe7a7caf612666cafcd3b8a4ee0434f0de3ef942}
 radar_execution_subject:
-  result_blob: 201ab032b141f8a2bfb66090946eb2e28e671740
-  commit: 5adc7edbcd0a72a98d42ed55d56d17462cfcb41c
-  tree: f79d5ce8de1b2c6534c03e33c316075b43ceab6a
+  commit: 15206e85b60ea4faae9f5c53095314673462d1b3
+  tree: 9b4a7db5e0f8068626c3922bacca4329e1a50828
   semantics: technical-non-product-non-activating-not-package-or-candidate-identity
-  recipe_sha256: 5c1575215aa70b630db41305bee2905f886bb8551e6eaaa1fc642e2dbcb510c2
-  path_mode_blob_inputs: {count: 588, sha256: aebc7a35649b6f8574a78078386345902eb2db9fca301537fe14c08d3d8f9e29}
+  recipe_sha256: c8b636192c7aadfe0268150518d65bf3aef4bab63ca660bb439e9b03562477fb
+  path_mode_blob_inputs: {count: 588, sha256: a7225c6ba09a3ea0d577435bf804180b314e82a9a0639ed2f1fccbaad53b6bf6}
   receipt_exclusions: [migration/equivalence-manifest.yaml, migration/proof/c07-radar-results.yaml, migration/proof/c07-doc-close-results.yaml]
-historical_interrupted_observation: {radar_results: 201ab032b141f8a2bfb66090946eb2e28e671740, doc_close_results: 00642043cbe9f5cd39b6f6fd3d75aa21a516d28b, private_attestation_sha256: 714532abbba3751b5c8960f31bd1b7bb09d15e7759da841dd61cd4c5f52002c1, partition: "74/7/4=85", compatibility_commit: a39a63c29dbda123d26c4f61e789db06a4a04eb5}
+private_attestation: {sha256: 6424a8edf5e883b88353d06d775c8bb5a49b124fe2ab75f421faa860825432c0, proof_root: unit2-authoritative-reproof-r14}
+historical_evidence: {r12: preserved-and-superseded-by-bounded-correction-10640, r13: failed-proof-script-quoting-before-candidate-materialization}
 self_reference: {manifest_blob: omitted, reason: c09-alone-computes-the-sole-final-binding}

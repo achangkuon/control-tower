@@ -292,9 +292,9 @@ variants MUST fail. It grants only unready planning, preserving the authorial
 
 ## Historical compatibility additions
 
-### Requirement: Bounded full-fidelity activation partition
+### Historical baseline: Unit 1 bounded full-fidelity activation partition
 
-The activation candidate MUST contain exactly 85 records: 74 full Session records comprising the immutable 72-Session imported prefix plus separately planned and approved `S100` and `S101`; seven future-successor references `S102`–`S108`; and four immutable satisfied-history references `S1.9`, `S1.10`, `S2.4`, and `S8.10`. It MUST NOT represent this contract as 81 fully materialized Sessions.
+The 72-import/74-full/85-record partition below is retained only as non-normative Unit 1 history. The active Current Plan 9 delta supersedes it.
 
 `S100` and `S101` selection MUST use only the exact order of `lineage.required_successors` and horizon ceiling two. Selection MUST NOT supply route, criteria, decisions, Tasks, readiness, or execution authority. Their complete Session contracts remain a required later planning-and-approval gate; this reference-contract unit MUST NOT invent them.
 
@@ -355,3 +355,7 @@ The proof verifier MUST accept the immutable 72-Session prefix only with the exa
 ### Requirement: Existing dormant and deferred safeguards remain unchanged
 
 The current candidate MUST remain dormant and noncanonical until the existing atomic activation gate passes. This addition MUST NOT resolve S12.9's source-commit or revision-2-versus-neighbor-file decisions, weaken full-fidelity preservation, alter rollback obligations, or expand any existing non-goal.
+
+### Requirement: Current Plan 9 delta
+
+This requirement supersedes every 72-import/74-full/85-record clause in the Unit 1 historical baseline above. The candidate MUST serialize current delivered S9.9 then blocked S9.10 before S9.6, yielding 73 imports, 75 full Sessions, 7 future references, 4 satisfied-history references, and 86 records. S9.10 MUST retain full-binding/no-action chronology without delivery, archive, activation, readiness, or package identity; S101 remains blocked.

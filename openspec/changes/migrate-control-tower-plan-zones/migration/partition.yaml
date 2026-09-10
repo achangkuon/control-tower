@@ -1,12 +1,12 @@
 schema: control-tower-migration-partition
 schema_version: 1
 candidate_base:
-  commit: 1155433c76e3098837335cbe5478dcfd39a71578
+  commit: e6b7e673f671e6bba30f9a600bf0333a1cd90af2
   tracked_inventory:
     command: >-
       WORKTREE_TRACKED_FILES=$(mktemp) && git ls-files -z | tr '\0' '\n' | sort > "$WORKTREE_TRACKED_FILES"
-    file_count: 544
-    sha256: 6828a2eb67fb2bfa4a0bc7d0bed12c18ec58a623e4b272571384a0b95fe01e87
+    file_count: 532
+    sha256: a517c6bdfc8cbec8c9071c9ff528359f6eb045aa3f24c95f0834bbdee0ff1ef5
     retained_temp_file: false
 
 policy:
@@ -214,6 +214,7 @@ cimientos:
         - test/helpers/restore-fixture.mjs
         - test/identity.test.mjs
         - test/lifecycle.test.mjs
+        - test/install/launch-worker-cli.test.mjs
         - test/migration.test.mjs
         - test/polling.test.mjs
         - test/provenance/provenance.test.mjs
