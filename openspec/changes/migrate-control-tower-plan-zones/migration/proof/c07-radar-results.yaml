@@ -1,7 +1,7 @@
 schema: c07-radar-proof
 schema_version: 3
 evidence_status: {state: pass, authority: [10584, 10592, 10640], usable_for: [c07-closure, c08-reproduction-input], prohibits: [activation, delivery, final-package-identity]}
-proof_root: /home/emili/.cache/control-tower/migrate-control-tower-plan-zones-c07-proof/unit2-authoritative-reproof-r14
+proof_root: disposable-per-run-directory-not-binding
 inputs:
   assembly_head: 39bc8c27c0478321156761c35437123cecdde3ed
   logical_parent: e6b7e673f671e6bba30f9a600bf0333a1cd90af2
@@ -13,13 +13,13 @@ session_discovery:
   plan_9_supplement: {commit: e6b7e673f671e6bba30f9a600bf0333a1cd90af2, rows: 2, replace: [S9.9], add: [S9.10]}
   result: {merged_rows: 73, unique_session_ids: 73, inventory_exact: true, stdout_sha256: 34f8b49d12468c9c089b5ce1212f469f23ea5b54f61eee07d86faae6da09103d}
 radar_execution_subject:
-  commit: 15206e85b60ea4faae9f5c53095314673462d1b3
-  tree: 9b4a7db5e0f8068626c3922bacca4329e1a50828
+  tree: b50de802c21c0d0e778d1dd8423636cff851d9fb
   semantics: technical-non-product-non-activating-not-package-or-candidate-identity
-  recipe_sha256: c8b636192c7aadfe0268150518d65bf3aef4bab63ca660bb439e9b03562477fb
-  path_mode_blob_inputs: {count: 588, sha256: a7225c6ba09a3ea0d577435bf804180b314e82a9a0639ed2f1fccbaad53b6bf6}
+  recipe_sha256: 64ca75e29c88d1370a74cf42bc68d4389bc41690dfb3cc247685903e497d1eb3
+  path_mode_blob_inputs: {count: 589, sha256: 7b4ca2561f6296a6b331378c32e05ae321721c05036e84b94f0d6c2b9c3c2732}
   receipt_exclusions: [migration/equivalence-manifest.yaml, migration/proof/c07-radar-results.yaml, migration/proof/c07-doc-close-results.yaml]
   private_git: {head: detached, refs: 0, object_writes: private-r14-only}
+  binding_rule: the subject tree, the path/mode/blob digest, and recipe_sha256 are the only binding subject identities; the commit OID is omitted because git commit-tree embeds timestamps the recipe does not fix.
 content:
   plan: {mode: "100644", blob: b794dd1a425b75808ffb9c5c03881979fc23f58f, sha256: e559f13409570c66827c452c8c305450ba23a402ea157e9fa1b927ee1107e614}
   roadmap: {mode: "100644", blob: 1b18357985ec68afaa1a7dbfc30a6a64fe2a0e1a, sha256: 29078dd9d4a8917f1405e4851b5dd2048cbde92264fa894e02f76b1b68d9910c}
@@ -29,10 +29,17 @@ command_observations:
   candidate_inputs_check: {exit: 0, stdout_sha256: d7f2bb034959ef84cb33fb89ad2e766e3d841b0ce870a5f8f4627e6a6095e79e}
   check: {exit: 0, stdout_sha256: 1226ea05d068d6c99ef6f561f5e5937f4484e4433ca108f98dde80f464f02ab5}
   status: {exit: 0, stdout_sha256: d32ba745b157fbb00349c4d4f47470bfc17f950d726cfa4fa84690979f468a37}
-  zonas: {exit: 0, stdout_sha256: 889a160e7c0c6dc5aa5a9ed9092706ec8c85d4ed7d75fcd90a3e67d520c77bc1, warnings: 0, orphans: 0}
+  zonas: {exit: 0, stdout_sha256: c249d7bcd568a54090fc181b3fcb9e501a8ce808f08f97e77919824946d8a1a6, warnings: 0, orphans: 0, tracked_files: 589}
   render: {first_exit: 0, second_exit: 0, first_equals_second: true, first_equals_roadmap: true, generated_notice: true, roadmap_sha256: 29078dd9d4a8917f1405e4851b5dd2048cbde92264fa894e02f76b1b68d9910c}
   p1: {exit: 0, partition: "75/7/4=86", stdout_sha256: 3f8a228716ff80e43ff199e64c2b3681bc3b292de35c25ce6cd63937f775388d}
   semantic: {s9_10: BLOQUEADO, s101: BLOQUEADO, stdout_sha256: 9c0098058dce340efad381e1520fa5958fbc60d076ad4d461c251afe1b5220d0}
-common_git_nonmutation: {before_after_equal: true, refs_sha256: 01d406feeab0c3f25b7be51be4597142e0c50f49fe95952508fa19c7fc0b7c03, objects_sha256: 5a7d1566c4d8592078513d11b9c61512d7e21683ab6d1fd8cac8ad8a2255f531}
-private_attestation_sha256: 6424a8edf5e883b88353d06d775c8bb5a49b124fe2ab75f421faa860825432c0
+common_git_nonmutation: {before_after_equal: true, comparison: per-run-before-after-only, absolute_digests_binding: false, reason: "ref and object inventories of the live repository advance with every later commit"}
+private_attestation_sha256: not-binding-embeds-ephemeral-proof-root-and-timestamped-commit-oid
+superseded_receipt_revision:
+  subject_commit: 15206e85b60ea4faae9f5c53095314673462d1b3
+  tree: 9b4a7db5e0f8068626c3922bacca4329e1a50828
+  recipe_sha256: c8b636192c7aadfe0268150518d65bf3aef4bab63ca660bb439e9b03562477fb
+  path_mode_blob_inputs: {count: 588, sha256: a7225c6ba09a3ea0d577435bf804180b314e82a9a0639ed2f1fccbaad53b6bf6}
+  zonas_stdout_sha256: 889a160e7c0c6dc5aa5a9ed9092706ec8c85d4ed7d75fcd90a3e67d520c77bc1
+  cause: recorded from an earlier revision of rebuild-c07-r14.sh; the committed recipe adds its own path to the private-index overlay, so the subject and the zonas tracked-file count each gain exactly one
 historical_evidence: {r12: preserved-and-superseded-by-bounded-correction-10640, r13: failed-proof-script-quoting-before-candidate-materialization}

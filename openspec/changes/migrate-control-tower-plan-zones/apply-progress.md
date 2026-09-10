@@ -5030,3 +5030,62 @@ No C08, C09, activation, canonical path, archive byte, guidance cutover, route-a
 | GREEN | Not reached — receipt correction is unauthorized in this unit. | Blocked. |
 | TRIANGULATE | Independent arithmetic derivation of 589 from the assembly-head tree and the script's own overlay/removal sets; proof-script digest mismatch `c8b63619…` vs `64ca75e2…`. | Cause confirmed. |
 | REFACTOR | N/A — no source or receipt byte changed. | No mutation. |
+
+## C07 closed — receipts rebound to reproducible identities
+
+Maintainer authorized the bounded receipt correction. C07 is closed. C08 and C09 were not started.
+
+### Correction applied
+
+Only the three `receipt_exclusions` paths were edited: `migration/equivalence-manifest.yaml`, `migration/proof/c07-radar-results.yaml`, and `migration/proof/c07-doc-close-results.yaml`. Authored total is 56 lines (+41/−15). No proof script, candidate, partition, inventory, task, spec, or design byte changed. `rebuild-c07-r14.sh` was deliberately left untouched: editing it would change its digest and therefore the very subject it attests.
+
+### Root defect and the rule that replaces it
+
+The receipts bound values that cannot reproduce. Three separate classes were found, not one:
+
+1. **Stale recipe.** Recorded `recipe_sha256` `c8b63619…` is an earlier revision of the proof script; the committed script is `64ca75e2…` and adds its own path to the private-index overlay, so the subject gains exactly one path (588 → 589, `zonas` tracked files 588 → 589).
+2. **Timestamped envelopes.** `git commit-tree` embeds author/committer dates that the recipe does not fix, so the subject **commit OID differs on every run while the tree is stable**. The attestation file digest is likewise unreproducible because it embeds the ephemeral proof-root path and that commit OID.
+3. **Live-repository and clock-derived digests.** The `common_git` ref/object inventory digests advance with every later commit, and the doc-guard `state_sha256` covers a file whose `shipped=`/`docs=` markers are UNIX epochs.
+
+The receipts now state a binding rule instead: **the subject tree, the path/mode/blob digest, and `recipe_sha256` are the only binding subject identities.** Everything in classes 2 and 3 is recorded under `non_reproducible_by_construction` with its reason and `binding: false`. The superseded values are preserved under `superseded_receipt_revision` rather than deleted.
+
+### Verification evidence
+
+| Command/check | Result |
+|---|---|
+| `rebuild-c07-r14.sh` fresh run (closing attestation) | PASS, exit 0. Subject tree `b50de802…`, 589 inputs, digest `7b4ca256…`. |
+| `rebuild-c07-r14.sh` re-run **after** editing the three receipts | PASS, exit 0. Subject tree, count, and digest **byte-identical** — proves `receipt_exclusions` holds and the receipt now describes a subject that reproduces. |
+| Cross-run stability of every bound digest | STABLE ×7: candidate-inputs `d7f2bb03…`, discovery `34f8b49d…`, check `1226ea05…`, status `d32ba745…`, zonas `c249d7bc…`, P1 `3f8a2287…`, semantic `9c009805…`. |
+| Generated ROADMAP SHA-256, both runs | `29078dd9…`, identical. |
+| Exact partition (P1) | PASS: 75 full / 7 future / 4 satisfied-history = 86. |
+| Session discovery | PASS: 72 base + 2 supplement − 1 replaced = 73 unique, inventory exact. |
+| Derived states | PASS: S9.10 `BLOQUEADO` by decision, S101 `BLOQUEADO` by dependency. |
+| Strict Bun YAML parse of all three receipts | PASS; all three agree on tree `b50de802…`, recipe `64ca75e2…`, commit OID omitted. |
+| `bun test .../migration/proof/` | PASS: 30 pass, 0 fail, 73 assertions, 3 files. |
+| Both no-push documentation-close paths | PASS: `docs_source=plan` and `docs_source=declaration`, no block. |
+| Common-Git non-mutation | PASS: refs and object inventories byte-identical before/after; all object writes confined to the private r14 Git directory. |
+
+### Deferred finding — not a C07 blocker
+
+`migration/partition.yaml` `validation.expected` declares `tracked_files: 588` with `archivo: 228`, `cimientos: 45`, `instalacion: 11`, while the reproduced subject observes 589 with `archivo: 229`, `cimientos: 46`, `instalacion: 10`. The `+1` in `archivo` is the proof script itself; the `cimientos`/`instalacion` swap is **not** explained by it and was not investigated further.
+
+This is deferred, not silently accepted, for two verified reasons. First, `rg` over `agent-workflows/tools/radar` confirms Radar never reads `tracked_files` or `validation.expected` — the block is declarative and no tool validates it, and `radar check`/`zonas` pass with zero warnings and zero orphans. Second, `partition.yaml` **is inside the subject**, so editing it would change the subject tree and re-invalidate the receipt just repaired.
+
+C08 materializes the real activation tree, which excludes the proof script; that is the correct place to compare these counts against something meaningful. Carry this into C08 as an explicit check.
+
+### Recommendation for the next cycle
+
+`rebuild-c07-r14.sh` adds its own path to the subject it attests, so any future edit to the script silently invalidates every receipt — this is exactly the defect just repaired, and it will recur. Excluding the script from its own overlay, or fixing `GIT_AUTHOR_DATE`/`GIT_COMMITTER_DATE` so the commit OID becomes reproducible, would remove the trap. Both change the subject identity and therefore require their own authorized re-proof; neither was taken here.
+
+### Boundary
+
+C07 is closed on reproducible evidence. `T0.4.7.1–T0.4.7.3` remain `[x]`. This authorizes C08 reproduction only; it does not activate canonical paths, create package identity, or authorize C08/C09 execution. `openspec/plan.yaml`, `openspec/ROADMAP.md`, and `openspec/archive/legacy-planning/` remain absent from the active worktree. No `master` mutation occurred; this branch stays unintegrated by design until C09. Rollback boundary: revert the three receipt files plus this append.
+
+### TDD cycle evidence
+
+| Cycle | Evidence | Result |
+|---|---|---|
+| RED | Committed recipe produced subject `b50de802…`/589 against recorded `9b4a7db5…`/588; recipe digest `64ca75e2…` vs recorded `c8b63619…`. | Reproducible divergence. |
+| GREEN | Receipts rebound to tree/path-digest/recipe; re-run after the edit reproduced the subject byte-identically. | PASS. |
+| TRIANGULATE | Seven bound stdout digests stable across two independent runs; three receipts mutually consistent under strict YAML parse; 30/30 focused tests. | PASS. |
+| REFACTOR | Separated binding from non-binding identities by construction and preserved the superseded revision instead of deleting it. | PASS; no script, candidate, or partition byte changed. |

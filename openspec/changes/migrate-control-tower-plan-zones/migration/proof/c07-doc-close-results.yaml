@@ -1,7 +1,7 @@
 schema: c07-doc-close-proof
 schema_version: 3
 evidence_status: {state: pass, authority: [10584, 10592, 10640], usable_for: [c07-closure, c08-reproduction-input], prohibits: [delivery-claim, activation, final-package-identity]}
-proof_root: /home/emili/.cache/control-tower/migrate-control-tower-plan-zones-c07-proof/unit2-authoritative-reproof-r14
+proof_root: disposable-per-run-directory-not-binding
 policy: solo
 push_performed: false
 bounded_noninteractive_timeout_seconds: 8
@@ -10,16 +10,23 @@ plan_data_observation:
   doc_check_exit: 0
   stop_gate_exit: 0
   docs_source: plan
-  state_sha256: 4efb68ac1a693d3623ec3f06cf328f7bfb4f581ac7114257627d1461cf6e2709
+  state_keys: [shipped, docs, docs_source]
+  state_sha256: not-binding-the-doc-guard-state-records-unix-epoch-shipped-and-docs-markers
 nothing_to_record_observation:
   ship_check_exit: 0
   stop_gate_exit: 0
   exact_declaration: nada que registrar
   docs_source: declaration
-  state_sha256: b155c25ca00278b02e6aa47b3b8735455774197476c76c27721e19075a062cd6
+  state_keys: [shipped, docs, docs_source]
+  state_sha256: not-binding-the-doc-guard-state-records-unix-epoch-shipped-and-docs-markers
 proof_binding:
+  radar_execution_tree: b50de802c21c0d0e778d1dd8423636cff851d9fb
+  proof_script_sha256: 64ca75e29c88d1370a74cf42bc68d4389bc41690dfb3cc247685903e497d1eb3
+  binding_rule: the subject tree and proof_script_sha256 are binding; the subject commit OID and the attestation file digest are not, because both embed per-run timestamps or paths.
+superseded_receipt_revision:
   radar_execution_subject: 15206e85b60ea4faae9f5c53095314673462d1b3
   radar_execution_tree: 9b4a7db5e0f8068626c3922bacca4329e1a50828
   private_attestation_sha256: 6424a8edf5e883b88353d06d775c8bb5a49b124fe2ab75f421faa860825432c0
   proof_script_sha256: c8b636192c7aadfe0268150518d65bf3aef4bab63ca660bb439e9b03562477fb
+  cause: recorded from an earlier revision of rebuild-c07-r14.sh before it added its own path to the private-index overlay
 historical_evidence: {r12: preserved-and-superseded-by-bounded-correction-10640, r13: failed-proof-script-quoting-before-candidate-materialization}

@@ -19,12 +19,24 @@ content:
   ledgers: {source_inventory: 55afc8fe2846bf029b8cb1bcecb059bf93b88c92, lineage: bddb27d72e595e2bafa5a72cd275b0a50a6b736a}
   archives: {entries: 31, retirements: 14, retained_archive_only: 17, identity_sha256: a45fec33a42336051ebe38c3fe7a7caf612666cafcd3b8a4ee0434f0de3ef942}
 radar_execution_subject:
-  commit: 15206e85b60ea4faae9f5c53095314673462d1b3
-  tree: 9b4a7db5e0f8068626c3922bacca4329e1a50828
+  tree: b50de802c21c0d0e778d1dd8423636cff851d9fb
   semantics: technical-non-product-non-activating-not-package-or-candidate-identity
+  recipe_sha256: 64ca75e29c88d1370a74cf42bc68d4389bc41690dfb3cc247685903e497d1eb3
+  path_mode_blob_inputs: {count: 589, sha256: 7b4ca2561f6296a6b331378c32e05ae321721c05036e84b94f0d6c2b9c3c2732}
+  receipt_exclusions: [migration/equivalence-manifest.yaml, migration/proof/c07-radar-results.yaml, migration/proof/c07-doc-close-results.yaml]
+  binding_rule: the subject tree, the path/mode/blob digest, and recipe_sha256 are the only binding subject identities; C08 reproduces those and must not compare a commit OID.
+non_reproducible_by_construction:
+  subject_commit_oid: {reason: "git commit-tree embeds author/committer timestamps; the recipe fixes no dates, so the OID differs per run while the tree is stable", binding: false}
+  private_attestation_file_sha256: {reason: "the attestation embeds the ephemeral proof_root path and the timestamped subject commit OID", binding: false}
+  proof_root_path: {reason: "disposable per-run directory", binding: false}
+  common_git_ref_and_object_digests: {reason: "inventories of the live repository, which advances with every later commit; only before_after_equal is binding", binding: false}
+  doc_guard_state_sha256: {reason: "the doc-guard state file records UNIX epoch shipped/docs markers; only docs_source and the exit codes are binding", binding: false}
+superseded_receipt_revision:
+  subject_commit: 15206e85b60ea4faae9f5c53095314673462d1b3
+  tree: 9b4a7db5e0f8068626c3922bacca4329e1a50828
   recipe_sha256: c8b636192c7aadfe0268150518d65bf3aef4bab63ca660bb439e9b03562477fb
   path_mode_blob_inputs: {count: 588, sha256: a7225c6ba09a3ea0d577435bf804180b314e82a9a0639ed2f1fccbaad53b6bf6}
-  receipt_exclusions: [migration/equivalence-manifest.yaml, migration/proof/c07-radar-results.yaml, migration/proof/c07-doc-close-results.yaml]
-private_attestation: {sha256: 6424a8edf5e883b88353d06d775c8bb5a49b124fe2ab75f421faa860825432c0, proof_root: unit2-authoritative-reproof-r14}
+  cause: recorded from an earlier revision of rebuild-c07-r14.sh; the committed recipe adds its own path to the private-index overlay, so the subject gains exactly one path
+  derivation: 572 assembly-head tree - 3 receipt exclusions + 1 proof script + 1 openspec/plan.yaml + 31 archive destinations - 14 active retirements + 1 generated ROADMAP = 589
 historical_evidence: {r12: preserved-and-superseded-by-bounded-correction-10640, r13: failed-proof-script-quoting-before-candidate-materialization}
 self_reference: {manifest_blob: omitted, reason: c09-alone-computes-the-sole-final-binding}
