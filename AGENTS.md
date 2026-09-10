@@ -4,6 +4,36 @@
 > trabaje en este repo: Claude Code, opencode, PI, Codex o un humano.
 > `CLAUDE.md` apunta acá; no dupliques la regla, edítala en este archivo.
 
+## La autoridad de planificación — desde el 2026-09-10
+
+**El único origen editable del plan es `openspec/plan.yaml`.** `openspec/ROADMAP.md`
+es su vista generada: la produce `radar render` y **no se edita a mano** nunca. Si los
+dos discrepan, el que está mal es el ROADMAP y se regenera.
+
+**Quedan prohibidos los índices de estado paralelos.** Ningún agente crea ni actualiza
+un `STATUS.md`, un `master-index.md`, ni ningún archivo que registre avance fuera de
+`plan.yaml`. El estado no se escribe: se **calcula** desde la evidencia de entrega en
+Git, y `radar status` es el único que lo calcula. Un archivo que lo declare a mano es
+una segunda fuente de verdad, y ya nos costó tener el mismo avance con dos números
+distintos y ambos defendibles.
+
+Un consumidor que necesite las cifras las pide con `radar status --json`
+(`radar.snapshot/v1`); no re-parsea el ROADMAP ni reimplementa el cálculo.
+
+Qué pasó con el corpus anterior:
+
+| Dónde | Qué es ahora |
+|---|---|
+| `openspec/archive/legacy-planning/` | Las 31 copias byte a byte del corpus viejo. **Histórico, sólo lectura.** Se cita, no se edita. |
+| `openspec/plans/master-index.md` y los 13 `plan-N/STATUS.md` | **Retirados.** Ya no existen en el árbol; su copia vive en el archivo. |
+| El resto de `openspec/plans/` | Narrativa histórica que sobrevivió en su lugar. No es autoridad. |
+| `openspec/plans/radiografia.md` | **Excepción: sigue vivo.** Es el juicio escrito que la radiografía lee en cada corrida. Se edita a mano, a propósito. |
+
+Si tu rama sale de un commit anterior a `d5a15d3` y toca alguna de las 14 vistas
+retiradas, el rebase te va a plantear un conflicto *modify/delete*. **Resolvelo
+borrando el archivo, nunca conservándolo:** quedártelo resucita la vista legacy y
+deshace la migración en silencio, sin que ningún test lo detecte.
+
 ## Documentación de sesión: sin Notion
 
 Control Tower ya no usa Notion. El cierre y la documentación de cada sesión se
