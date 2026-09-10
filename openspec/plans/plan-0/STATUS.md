@@ -278,7 +278,7 @@ cosas cambiaron:
 | S101 | ✅ | Ruta `full-sdd`, cerrada en su propio cambio SDD |
 | C06 | ✅ | Cerrado el 2026-09-08 vía corrección de compuerta autorizada |
 | C07 | ✅ | Cerrado el 2026-09-09 sobre identidades reproducibles |
-| C08 | 🔴 | **Bloqueado** — ver más abajo |
+| C08 | ✅ | Cerrado el 2026-09-09 tras traer `master` a la rama; reproducción READY |
 | C09 | 📋 | Activación atómica — **paso único irreversible** |
 | M0.4.9 | 📋 | Verificación post-entrega y registro de cierre |
 
@@ -308,7 +308,20 @@ el digest de la atestación, los inventarios del repo vivo y el estado del doc-g
 vinculan sólo el **árbol** del sujeto, el digest de path/mode/blob y el `recipe_sha256`. Es la
 diferencia entre *el plano* y *la hora en que se imprimió el plano*.
 
-### 🔴 C08 bloqueado — la rama divergió de `master`
+### C08 — cerrado el 2026-09-09, tras resolver la divergencia con `master`
+
+`reproduce-c08.sh` sale 0 con `READY`. Reproduce contra el manifest de C07 el plan `b794dd1a…`,
+el ROADMAP generado `1b183579…`, las 31 copias y los 14 retiros, **sin calcular OID de paquete**.
+El blob del ROADMAP **no cambió con el merge**: traer 14 commits de master no movió el plan
+renderizado, lo que confirma que el candidato es estable. Proyección de activación: 33 archivos,
++13.977 / −250, árbol de 600 rutas. Suite completa tras el merge: **1212 pass · 0 fail**.
+
+**Dos hallazgos van a C09:** el bloque `validation.expected` de `partition.yaml` declara 588
+archivos contra 600 observados —Radar nunca lo lee y no se corrige sin cambiar el sujeto de
+C07—, y el candidato refleja master sólo hasta `e6b7e673` cuando el tip es `fbcb546e`, tres
+commits más adelante.
+
+#### La divergencia que hubo que resolver
 
 El arnés `migration/proof/reproduce-c08.sh` corre y encontró el bloqueo antes de que C09 pudiera
 romper nada. Radar exige que el commit de origen de cada Sesión importada sea **ancestro
