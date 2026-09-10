@@ -14,7 +14,7 @@
 - Hosts #1 → S4.12 — Recuperación mínima de Pi
 
 ## Avance
-- **Total:** 68% (51/75 S)
+- **Total:** 67% (51/76 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -22,7 +22,7 @@
 - **Autoridad:** — (sin Sesiones enumeradas)
 - **Capacidades:** 0% (0/1 S)
 - **cimientos:** 0% (0/3 S)
-- **Contratos:** 0% (0/1 S)
+- **Contratos:** 0% (0/2 S)
 - **Enrolamiento:** 0% (0/1 S)
 - **Entrega:** 0% (0/1 S)
 - **Hosts:** 16% (1/6 S)
@@ -55,6 +55,7 @@
 
 ### Contratos (contratos)
 1. **S100** · 🟢 LISTO · Contrato de schema de delivery-policy, incluido planning.prepare&#95;through fail-closed
+2. **S109** · 🟢 LISTO · Ventanilla única de plan: la Torre responde una asignación completa y Main deja de derivarla
 
 ### Enrolamiento (enrolamiento)
 1. **S2.9** · 🟢 LISTO · Enrollment público canónico por CLI
@@ -110,6 +111,7 @@
 - **S12.9:** propuesta full-sdd (Contrato inmutable S12.9; no hay precedente para revisions/2, el puntero atómico y ownership son contratos compartidos sin ejercitar, y provenance.test.mjs requiere su propia Sesión.); pendiente de revalidación en kickoff.
 - **S100:** propuesta direct (Maintainer decision, this session, 2026-09-06: the schema-level contract is fully specified, has no remaining open product decision, and needs no design phase.); pendiente de revalidación en kickoff.
 - **S101:** propuesta full-sdd (Approved S101 proposal/specification rev2 and Radar's canonical route-depth contract require full-sdd before the shared policy/Jornada behavior is designed.); revalidada full-sdd sobre e6b7e673f671e6bba30f9a600bf0333a1cd90af2 con evidencia C07 revalidates the same migration-only boundary over current logical master; S101 remains blocked by S9.10..
+- **S109:** propuesta full-sdd (La propuesta está aprobada pero el diseño no: qué contiene exactamente la asignación única, cómo se declara el proveedor por proyecto y cómo se empaqueta Radar son decisiones de diseño abiertas. Radar prohíbe Módulos en full-sdd (agent-workflows/tools/radar/check.go:514-524), así que la descomposición nace de la ejecución posterior de esta ruta.); pendiente de revalidación en kickoff.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -2696,6 +2698,20 @@ Rutas: schemas/delivery-policy-v1.schema.json, test/contracts/s3-2-schemas.test.
   - [ ] No S101-owned consumer recreates or interprets the TAREAS literal, and no Module count is accepted as the horizon&#95;ceiling unit.
   - [ ] Main remains the sole assignment and dispatch authority; S101 grants no assignment, dispatch, continuation, delivery, Tower, Herdr, database, or merge authority.
   - [ ] Future S101 runtime design, Modules, Tasks, interfaces, implementation, and tests are approved only through a new post-activation execution of this Session's full-sdd route.
+
+### S109 — Ventanilla única de plan: la Torre responde una asignación completa y Main deja de derivarla
+- Estado derivado: 🟢 LISTO
+- Zona/Área: contratos · contracts/, schemas/, registry/, test/contracts/, test/registry/
+- Depende de: —
+- Cimientos: mcp.mjs
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] mcp.mjs responde la asignación completa —Sesión, agente, asiento, contrato de ejecución y política de entrega— en una sola operación, sin que el consumidor lea openspec/plan.yaml ni el ROADMAP.
+  - [ ] La Torre valida que el snapshot declare schema radar.snapshot/v1 y falla cerrado con un resultado nombrado ante cualquier otro valor, ausencia o JSON inválido; nunca dibuja cifras que el productor no firmó.
+  - [ ] El registro de proyectos declara por proyecto cómo obtener su snapshot, junto a manifest&#95;path y roadmap&#95;path, y un proyecto sin declaración se reporta como no disponible en vez de asumir un default.
+  - [ ] Ninguna regla de cálculo de Radar —estado de Sesión, cola por Zona, avance, asientos— queda reimplementada en JavaScript: existe una sola implementación y el consumidor sólo la consume.
+  - [ ] Main conserva la autoridad de asignación y despacho: NON&#95;MAIN&#95;DISPATCH y WORKER&#95;SELF&#95;ASSIGNMENT siguen siendo pisos irrelajables y esta Sesión no otorga autoridad nueva a nadie.
+  - [ ] Los Módulos, Tareas, interfaces e implementación de S109 se aprueban únicamente en una ejecución posterior de su ruta full-sdd.
 
 ## Capacidad
 5 Zona(s) compatibles con trabajo LISTO: asientos, cimientos, contratos, enrolamiento, hosts.

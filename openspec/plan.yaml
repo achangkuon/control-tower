@@ -6391,6 +6391,62 @@ sesiones:
         evidencia: "C07 revalidates the same migration-only boundary over current logical master; S101 remains blocked by S9.10."
     modulos: []
 
+  - id: S109
+    zona: contratos
+    resultado: "Ventanilla única de plan: la Torre responde una asignación completa y Main deja de derivarla"
+    autoridad: "Idea aprobada por el maintainer el 2026-09-10 sobre el documento de diseño «Torre coordina, Main juzga» (artifact 728134a6-47ab-4088-b688-74af1c92bf2a), medido sobre master en bae57ba. La evidencia que la sostiene: responder «qué sigue y quién lo toma» cuesta 512.563 bytes leyendo openspec/plan.yaml entero contra 3.293 bytes pidiéndole avance, colas y asientos a Radar. El contrato radar.snapshot/v1 y su consumidor de referencia ya existen desde b50c0b3 y 969f189."
+    depende_de: []
+    cimientos: [mcp.mjs]
+    recurso: []
+    criterios:
+      - "mcp.mjs responde la asignación completa —Sesión, agente, asiento, contrato de ejecución y política de entrega— en una sola operación, sin que el consumidor lea openspec/plan.yaml ni el ROADMAP."
+      - "La Torre valida que el snapshot declare schema radar.snapshot/v1 y falla cerrado con un resultado nombrado ante cualquier otro valor, ausencia o JSON inválido; nunca dibuja cifras que el productor no firmó."
+      - "El registro de proyectos declara por proyecto cómo obtener su snapshot, junto a manifest_path y roadmap_path, y un proyecto sin declaración se reporta como no disponible en vez de asumir un default."
+      - "Ninguna regla de cálculo de Radar —estado de Sesión, cola por Zona, avance, asientos— queda reimplementada en JavaScript: existe una sola implementación y el consumidor sólo la consume."
+      - "Main conserva la autoridad de asignación y despacho: NON_MAIN_DISPATCH y WORKER_SELF_ASSIGNMENT siguen siendo pisos irrelajables y esta Sesión no otorga autoridad nueva a nadie."
+      - "Los Módulos, Tareas, interfaces e implementación de S109 se aprueban únicamente en una ejecución posterior de su ruta full-sdd."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Se unifican los dos idiomas —Radar en Go y los módulos en JavaScript— o se unifica otra cosa?"
+        resolucion: "Se unifica el contrato, no los idiomas. La Torre no necesita ser Radar: necesita recibir radar.snapshot/v1 y validar el schema, sin saber quién lo produjo."
+        autoridad: "Maintainer, 2026-09-10, sobre el documento de diseño; el patrón ya está probado en agent-workflows/radiografia/measure.mjs desde 969f189."
+        clase: contrato-visible
+        falsificador: "Alguna regla de cálculo de Radar aparece reimplementada en JavaScript, o el consumidor acepta un snapshot cuyo schema no reconoce."
+        descartadas:
+          - opcion: "Portar EstadosAt, ColaPorZonaAt, AvanceAt y AsientosAt a JavaScript."
+            razon: "Rechazada: son 309 líneas de reglas no triviales y dejaría dos implementaciones del mismo reglamento, que es la falla que la migración a Zonas acaba de eliminar."
+      - tipo: resuelta
+        pregunta: "¿Dónde corre el cálculo del plan cuando la Torre lo necesita?"
+        resolucion: "Radar viaja con la Torre y se invoca contra cada proyecto. Radar es el radar de la Torre, no una dependencia que cada proyecto deba traer."
+        autoridad: "Maintainer, 2026-09-10. El registro ya guarda roadmap_path y manifest_path por proyecto en schemas/project-registry-v1.schema.json."
+        clase: expansion-de-alcance
+        falsificador: "La Torre exige que el proyecto gestionado provea Radar por su cuenta, o el cálculo se resuelve con un caché en disco pese a que el estado depende de HEAD."
+        descartadas:
+          - opcion: "Generar un snapshot en disco y leerlo cuando haga falta."
+            razon: "Rechazada: el estado depende de HEAD por merge-base --is-ancestor en agent-workflows/tools/radar/git.go:80, así que el caché queda viejo en cada commit y no sólo al editar el plan."
+      - tipo: resuelta
+        pregunta: "¿Main sigue corriendo los tests?"
+        resolucion: "No los corre: los lee. La Torre ejecuta y guarda la salida completa; a Main le entrega el veredicto y sólo el extracto de lo que falló."
+        autoridad: "Maintainer, 2026-09-10, sobre el documento de diseño."
+        clase: contrato-visible
+        falsificador: "Main vuelve a recibir la salida completa de una suite, o la Torre emite un veredicto sobre si un criterio se cumplió."
+        descartadas:
+          - opcion: "Que la Torre además juzgue si el resultado es aceptable."
+            razon: "Rechazada: distinguir una regresión de un fallo ambiental conocido es juicio sobre evidencia y no tiene respuesta única."
+      - tipo: resuelta
+        pregunta: "¿Esta Sesión elimina el agente Main?"
+        resolucion: "No. Main sigue existiendo y conserva el juicio, la resolución de ambigüedad y la presentación de decisiones al humano; lo que cambia es que deja de derivar lo que ya está calculado."
+        autoridad: "Maintainer, 2026-09-10: «no estamos eliminando main, estamos protegiendo su ventana de contexto»."
+        clase: seguridad-y-permisos
+        falsificador: "Un actor que no es Main obtiene autoridad de asignación o despacho a partir de esta Sesión."
+        descartadas:
+          - opcion: "Que la Torre asuma también el despacho y Main desaparezca."
+            razon: "Rechazada por el maintainer: el objetivo es la ventana de contexto, no reemplazar al agente."
+    ruta:
+      propuesta: full-sdd
+      autoridad: "La propuesta está aprobada pero el diseño no: qué contiene exactamente la asignación única, cómo se declara el proveedor por proyecto y cómo se empaqueta Radar son decisiones de diseño abiertas. Radar prohíbe Módulos en full-sdd (agent-workflows/tools/radar/check.go:514-524), así que la descomposición nace de la ejecución posterior de esta ruta."
+    modulos: []
+
 references:
   future_successors:
     - id: S102
