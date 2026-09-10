@@ -310,3 +310,36 @@ nunca con `node --test`: los imports `bun:` hacen fallar a Node con
 
 **C09 no se empieza sin cabeza fresca.** Reemplaza todo el corpus de planificación heredado
 en un solo movimiento y es el **único paso irreversible** de esta migración.
+
+#### 🔴 C08 bloqueado — la rama divergió de `master` (2026-09-09)
+
+El arnés de C08 corre y encontró el bloqueo antes de que C09 pudiera romper nada. Radar
+exige que el commit de origen de cada Sesión importada sea **ancestro estricto** del HEAD.
+Los 4 errores que quedan —S9.9, S9.10 y S101— resuelven al padre lógico `e6b7e673`, que
+**no es ancestro de esta rama**.
+
+| Dato | Valor |
+|---|---|
+| Merge base | `43130ad4` — el `source_commit` de la migración |
+| Esta rama por delante | 123 commits |
+| `origin/master` por delante | 14 commits |
+| Padre lógico `e6b7e673` | está en master, 3 commits atrás de su tip `fbcb546e` |
+| Fuentes de archivo que master cambió | **5 de 31** |
+
+Las cinco son `master-index.md`, `plan-0/STATUS.md`, `plan-5/STATUS.md`, `plan-9/STATUS.md`
+y `decision-register.md` — justo los archivos que C09 archiva y retira. C07 dio verde
+porque su prueba parentea el sujeto en `e6b7e673`, un commit de master: es el árbol de esta
+rama con la ascendencia de master, una combinación que ningún commit de esta rama tiene.
+
+**Si C09 se activara tal como está probado, archivaría los bytes viejos de esos cinco
+archivos y descartaría 14 commits de master**, incluidos el cierre de S9.9, el gate de
+S9.10 y el arreglo de política de entrega de `jornada`.
+
+**Corrección a este mismo documento.** La Sesión 0.4 que se enumeró más arriba el 2026-09-09
+**ya existía en master** (`plan-0/STATUS.md:226`), con su fila P0 en `master-index` listando
+`S0.4` y `S101`. Aquella enumeración se derivó de las copias congeladas de esta rama sin
+mirar master: es redundante, conflictúa en la integración y debe resolverse a favor de la
+versión de master. La evidencia de C07 sigue siendo válida; la corrección del índice no.
+
+**Decisión pendiente antes de cualquier intento de C09:** cómo integra esta rama el trabajo
+de master. No se elige sola y no es plomería — define qué corpus se archiva.
