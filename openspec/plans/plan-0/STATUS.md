@@ -316,10 +316,23 @@ El blob del ROADMAP **no cambió con el merge**: traer 14 commits de master no m
 renderizado, lo que confirma que el candidato es estable. Proyección de activación: 33 archivos,
 +13.977 / −250, árbol de 600 rutas. Suite completa tras el merge: **1212 pass · 0 fail**.
 
-**Dos hallazgos van a C09:** el bloque `validation.expected` de `partition.yaml` declara 588
-archivos contra 600 observados —Radar nunca lo lee y no se corrige sin cambiar el sujeto de
-C07—, y el candidato refleja master sólo hasta `e6b7e673` cuando el tip es `fbcb546e`, tres
-commits más adelante.
+**Re-corte del archivo, 2026-09-09.** Cuatro entradas del inventario todavía archivaban la foto
+del fork (`43130ad4`) y habían quedado 14 commits atrás. Por decisión del maintainer se
+re-apuntaron al tip de master `fbcb546e` —`plan-0/STATUS.md`, `plan-5/STATUS.md`,
+`master-index.md` y `decision-register.md`— con el mismo patrón que ya usaba `plan-9`:
+`source_commit` propio por entrada. **Verificado:** el blob de `plan-5` que se archiva contiene
+el registro del arreglo de `jornada` que master agregó después del fork, así que los 14 commits
+sobreviven al archivo en vez de perderse.
+
+C07 y C08 se re-probaron sobre el inventario nuevo y pasan. Identidades nuevas de C07: sujeto
+`923f1fb8…`, 589 entradas, digest `9a2bfd5b…`. **El plan `b794dd1a…` y el ROADMAP `1b183579…` no
+cambiaron**: sólo se movió la identidad del sujeto, que es lo que corresponde. Proyección de
+activación: 33 archivos, +14.022 / −134, árbol de 602 rutas. Suites: `bun test` 1212 pass · 0
+fail; `go test` de Radar ok.
+
+**Queda un hallazgo para C09:** el bloque `validation.expected` de `partition.yaml` declara 588
+archivos contra 602 observados. Radar nunca lo lee, y corregirlo reiniciaría toda la cascada de
+identidades porque ese archivo está dentro del sujeto de C07.
 
 #### La divergencia que hubo que resolver
 

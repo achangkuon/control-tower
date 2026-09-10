@@ -45,8 +45,8 @@ que absorber**. La migración persigue un blanco móvil.
 1. **No registrar avance de planificación en el corpus legacy** salvo que sea imprescindible.
 2. Si es imprescindible, **anotarlo también** en `migration/candidate/plan.yaml` en la misma
    Jornada, o dejarlo asentado en `apply-progress.md` como delta pendiente.
-3. **Antes de C09, re-sincronizar** el candidato con el tip de `master`. Hoy el candidato refleja
-   master sólo hasta `e6b7e673`; el tip es `fbcb546e`, **3 commits más adelante**.
+3. **El archivo ya se re-cortó** al tip de `master` (`fbcb546e`) el 2026-09-09. Si master vuelve
+   a avanzar antes de C09, hay que repetir ese re-corte y re-probar C07 y C08.
 4. Después de C09 la regla se vuelve permanente y la impone el canon: el único origen editable es
    `openspec/plan.yaml` y `ROADMAP.md` es su vista generada. Se prohíben índices de estado
    paralelos.
@@ -80,7 +80,7 @@ Inmediatamente antes de commitear: `git diff --cached --name-status`, `--numstat
 `final_package_identity=$(git write-tree)`, que se vincula en el mensaje del commit. **C09 es el
 único que calcula esa identidad.** Ante cualquier discrepancia: parar, no commitear.
 
-Proyección medida por C08: **33 archivos, +13.977 / −250, árbol de activación de 600 rutas**.
+Proyección medida por C08: **33 archivos, +14.022 / −134, árbol de activación de 602 rutas**.
 
 ### 3. `T0.4.8.3` — readback local antes de cualquier push
 
@@ -127,8 +127,9 @@ idénticos antes y después, y no tocan el índice ni el árbol de trabajo.
 - **Identidades no reproducibles.** El OID del commit del sujeto, el digest de la atestación, los
   inventarios de refs/objects y el `state_sha256` del doc-guard llevan timestamp o ruta efímera.
   **Sólo vinculan** el árbol del sujeto, el digest path/mode/blob y el `recipe_sha256`.
-- **`partition.yaml` `validation.expected`** declara 588 archivos contra 600 observados. Radar
-  nunca lee ese bloque. No se corrige sin cambiar el sujeto de C07.
+- **`partition.yaml` `validation.expected`** declara 588 archivos contra 602 observados. Radar
+  nunca lee ese bloque. No se corrige sin cambiar el sujeto de C07, lo que reinicia toda la
+  cascada de identidades. Queda como decisión de C09.
 - **El stash está compartido** entre seis worktrees. Nunca `git stash` pelado; usar un commit WIP.
 - **Entrega directa a `master`, sin PR** (`AGENTS.md`, `delivery.shape: direct-push`).
 - **Lotes de revisión ≤400 líneas.** El diff completo son 18.856; hay que partirlo antes de
