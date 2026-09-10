@@ -1,5 +1,5 @@
 ---
-name: cierre-de-decisiones
+name: chanks-1-cierre-de-decisiones
 description: "Trigger: decisiones abiertas, cerrar decisiones, decision sweep. Presenta resoluciones humanas y envía un delta acotado a Support."
 license: Apache-2.0
 metadata:

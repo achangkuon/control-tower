@@ -490,7 +490,7 @@ nunca más.** Es el ítem más urgente de todo este documento.
 
 Las cinco piezas que nombran `STATUS.md` o `master-index` y hay que corregir, en orden:
 `doc-guard.sh` → `AGENTS.md` → `project-kickoff` (deja de crear `master-index.md`) →
-`politica-de-entrega` (cambia su orden de detección) → `cierre-de-decisiones` (pasa a mandar
+`politica-de-entrega` (cambia su orden de detección) → `chanks-1-cierre-de-decisiones` (pasa a mandar
 delta a Support).
 
 ---

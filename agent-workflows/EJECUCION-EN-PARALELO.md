@@ -131,7 +131,7 @@ control-tower/skills/torre-control-entregas/
    `chanks-1-heredado` · y las cuatro hijas del arranque: `chanks-1-terreno`, `chanks-1-prd`,
    `chanks-1-rfc`, `chanks-1-requirements`.
    Más tres adaptaciones: `project-kickoff` pasa a mini-madre que **no escribe documentos**;
-   `architecture-audit` se recorta a `chanks-1-descubrimiento`; `cierre-de-decisiones` pasa a
+   `architecture-audit` se recorta a `chanks-1-descubrimiento`; `chanks-1-cierre-de-decisiones` pasa a
    mandar delta a Support. El bloque de política de entrega **nace en `chanks-1-terreno`**,
    con PR como default.
 2. **Tramo 2 — dos referencias compartidas:** `references/ubicacion-y-cruces.md` (compartida con
