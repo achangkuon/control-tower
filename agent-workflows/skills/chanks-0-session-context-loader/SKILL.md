@@ -42,5 +42,5 @@ Devuelve suficiencia, pregunta faltante, contexto actual, decisiones con IDs, ri
 
 ## References
 
-- `../session-kickoff/SKILL.md`
+- `../chanks-3-session-kickoff/SKILL.md`
 - `../chanks-4-puente/SKILL.md`

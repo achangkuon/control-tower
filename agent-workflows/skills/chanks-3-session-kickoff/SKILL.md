@@ -1,5 +1,5 @@
 ---
-name: session-kickoff
+name: chanks-3-session-kickoff
 description: "Trigger: start session, continue session, resume session. Recibe brief y asiento, verifica llegada y revalida la ruta sin elegir trabajo."
 license: Apache-2.0
 metadata:

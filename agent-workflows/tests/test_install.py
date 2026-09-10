@@ -133,7 +133,7 @@ class InstallerTests(unittest.TestCase):
 
     def test_check_mode_detects_skill_and_manual_drift(self):
         INSTALLER.apply(self.home, ROOT)
-        skill_path = self.home / ".agents/skills/session-kickoff/SKILL.md"
+        skill_path = self.home / ".agents/skills/chanks-3-session-kickoff/SKILL.md"
         skill_path.chmod(0o644)
         skill_path.write_bytes(skill_path.read_bytes() + b"\nDRIFT\n")
         manual_path = self.home / ".pi/agent/APPEND_SYSTEM.md"
@@ -147,7 +147,7 @@ class InstallerTests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(result.returncode, 1)
-        self.assertIn("session-kickoff/SKILL.md", result.stdout)
+        self.assertIn("chanks-3-session-kickoff/SKILL.md", result.stdout)
         self.assertIn("APPEND_SYSTEM.md", result.stdout)
 
     def test_dry_run_does_not_write(self):
@@ -159,7 +159,7 @@ class InstallerTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0)
         self.assertIn("WOULD_UPDATE", result.stdout)
-        self.assertFalse((self.home / ".agents/skills/session-kickoff/SKILL.md").exists())
+        self.assertFalse((self.home / ".agents/skills/chanks-3-session-kickoff/SKILL.md").exists())
 
     def test_rejects_symlinked_runtime_parent_without_touching_external_sentinel(self):
         external = Path(self.tempdir.name) / "external"
@@ -173,12 +173,12 @@ class InstallerTests(unittest.TestCase):
         with self.assertRaises(INSTALLER.InstallError):
             INSTALLER.apply(self.home, ROOT)
         self.assertEqual(sentinel.read_bytes(), b"protected")
-        self.assertFalse((external / "session-kickoff").exists())
+        self.assertFalse((external / "chanks-3-session-kickoff").exists())
 
     def test_rejects_symlinked_destination_without_touching_external_sentinel(self):
         external = Path(self.tempdir.name) / "external-file"
         external.write_bytes(b"protected")
-        destination = self.home / ".agents/skills/session-kickoff/SKILL.md"
+        destination = self.home / ".agents/skills/chanks-3-session-kickoff/SKILL.md"
         destination.parent.mkdir(parents=True)
         destination.symlink_to(external)
 
@@ -296,7 +296,7 @@ class InstallerTests(unittest.TestCase):
         with self.assertRaises(INSTALLER.InstallError):
             INSTALLER.apply(self.home, ROOT)
         self.assertEqual(before, {path: path.read_bytes() for path in INSTALLER.manual_paths(self.home)})
-        self.assertFalse((self.home / ".agents/skills/session-kickoff").exists())
+        self.assertFalse((self.home / ".agents/skills/chanks-3-session-kickoff").exists())
         self.assertEqual(sentinel.read_bytes(), b"protected")
 
     def test_wrong_type_skill_directory_is_rejected_before_any_mutation(self):
@@ -308,7 +308,7 @@ class InstallerTests(unittest.TestCase):
         with self.assertRaises(INSTALLER.InstallError):
             INSTALLER.apply(self.home, ROOT)
         self.assertEqual(before, {path: path.read_bytes() for path in INSTALLER.manual_paths(self.home)})
-        self.assertFalse((self.home / ".agents/skills/session-kickoff").exists())
+        self.assertFalse((self.home / ".agents/skills/chanks-3-session-kickoff").exists())
         self.assertEqual(wrong_type.read_bytes(), b"protected")
 
     def test_missing_instruction_file_fails_without_runtime_mutation(self):
@@ -446,10 +446,10 @@ class InstallerTests(unittest.TestCase):
                     INSTALLER.apply(home, ROOT)
 
                 self.assertEqual(retired.read_bytes(), b"user-file")
-                self.assertFalse((home / ".agents/skills/session-kickoff").exists())
+                self.assertFalse((home / ".agents/skills/chanks-3-session-kickoff").exists())
 
     def test_session_route_is_revalidated_once_before_execution(self):
-        content = (ROOT / "skills/session-kickoff/SKILL.md").read_text(encoding="utf-8")
+        content = (ROOT / "skills/chanks-3-session-kickoff/SKILL.md").read_text(encoding="utf-8")
         hard_rules = content.split("## Hard Rules", 1)[1].split("## Decision Gates", 1)[0]
         execution = content.split("## Execution Steps", 1)[1].split("## Output Contract", 1)[0]
 
@@ -491,7 +491,7 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
 
     def test_kickoff_requires_live_acquisition_for_exclusive_resource(self):
-        content = (ROOT / "skills/session-kickoff/SKILL.md").read_text(encoding="utf-8")
+        content = (ROOT / "skills/chanks-3-session-kickoff/SKILL.md").read_text(encoding="utf-8")
         execution = content.split("## Execution Steps", 1)[1].split("## Output Contract", 1)[0]
 
         self.assertIn("Recurso", execution)

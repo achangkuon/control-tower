@@ -113,7 +113,7 @@ Cada peer asignado debe reconciliar primero su worktree exacto:
 2. Solo después de verificar que está limpio puede ejecutar de forma guardada
    `jornada.sh --reciclar <path> --nueva-rama <branch>`. Conserva la rama anterior por
    defecto; `--borrar-rama-vieja` requiere una autorización separada.
-3. Enruta entonces la Sesión aprobada por `session-kickoff`.
+3. Enruta entonces la Sesión aprobada por `chanks-3-session-kickoff`.
 
 La declaración ausente o ambigua, una asignación cambiada o la falta de disposición para
 un worktree sucio cierran la ruta. Cuando `ACTIVE` aparece, esta excepción desaparece y
@@ -125,7 +125,7 @@ Support.
 Las fuentes canónicas específicas de este producto son `skills/torre-control/SKILL.md`
 (ruta operativa madre), `skills/torre-control-soporte/SKILL.md` (Support read-only) y
 `skills/torre-control-entregas/SKILL.md` (entrega serializada). Las skills genéricas,
-incluida `session-kickoff`, se cargan desde el subtree interno `agent-workflows/`; no se
+incluida `chanks-3-session-kickoff`, se cargan desde el subtree interno `agent-workflows/`; no se
 copian a `skills/`.
 
 ## Preferencias de ejecución y presupuesto de cambio

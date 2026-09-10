@@ -16,7 +16,7 @@ gestor de espacios de terminal donde cada agente corre en su propio panel, en su
 | Autoridad ≠ evidencia | *«Main despacha; Support aconseja; los obreros nunca se autoasignan. Engram es evidencia, nunca autoridad»* |
 | Disposición nunca automática | `limpiar` previsualiza; borrar exige `--confirmar` autorizado por el maintainer |
 | No copiar el procedimiento de las hijas | Carga `torre-control-soporte` para evidencia y `torre-control-entregas` para entrega; no repite sus reglas |
-| No implementa | Rutea obreros verificados a `session-kickoff`; el código lo escribe el obrero, en su asiento |
+| No implementa | Rutea obreros verificados a `chanks-3-session-kickoff`; el código lo escribe el obrero, en su asiento |
 
 ## Dos detalles que no son obvios
 

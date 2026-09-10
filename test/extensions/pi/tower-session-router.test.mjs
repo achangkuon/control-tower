@@ -147,22 +147,22 @@ describe("Pi Tower session router", () => {
     expect(notifications).toEqual([]);
   });
 
-  test("rewrites explicit session-kickoff without routing through a literal skill command", async () => {
+  test("rewrites explicit chanks-3-session-kickoff without routing through a literal skill command", async () => {
     const { route, ctx } = harness();
-    const input = "/skill:session-kickoff   S9.6  interceptor";
+    const input = "/skill:chanks-3-session-kickoff   S9.6  interceptor";
     const result = await route(event(input, { source: "rpc" }), ctx);
 
     expect(result).toEqual({
       action: "transform",
       text: expanded({
-        intent: "session-kickoff",
+        intent: "chanks-3-session-kickoff",
         explicitSessionOrTopic: "S9.6 interceptor",
         originalIntent: input,
       }),
     });
     const routeBlock = result.text.split("<tower-session-context>")[0];
     expect(routeBlock).not.toContain("/skill:torre-control");
-    expect(routeBlock).not.toContain("/skill:session-kickoff");
+    expect(routeBlock).not.toContain("/skill:chanks-3-session-kickoff");
   });
 
   test.each([

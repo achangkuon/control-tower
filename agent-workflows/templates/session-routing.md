@@ -1,8 +1,8 @@
 <!-- SESSION-SKILL-ARCHITECTURE:MANUAL -->
 ## Durable Session Skill Routing
 
-- Primary authority for starting or continuing one approved Sesión is `session-kickoff` at
-  `{{REPO_ROOT}}/skills/session-kickoff/SKILL.md`.
+- Primary authority for starting or continuing one approved Sesión is `chanks-3-session-kickoff` at
+  `{{REPO_ROOT}}/skills/chanks-3-session-kickoff/SKILL.md`.
 - Planning is one fixed eight-step flow. `chanks-2-planificador-granular` executes it directly; it is
   not a parent router and has no child-skill hierarchy.
 - Kickoff receives the assigned Sesión, verifies HEAD, branch and clean tree, then revalidates

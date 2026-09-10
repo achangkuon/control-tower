@@ -137,12 +137,12 @@ control-tower/skills/torre-control-entregas/
 2. **Tramo 2 — dos referencias compartidas:** `references/ubicacion-y-cruces.md` (compartida con
    `chanks-1-heredado`) y `references/juicio-de-ruta.md` (hoy esa prosa está duplicada en tres
    skills).
-3. **Tramo 3 — `session-kickoff` se achica a cuatro pasos.** Sale «elegir la primera 🟢 LISTO»:
+3. **Tramo 3 — `chanks-3-session-kickoff` se achica a cuatro pasos.** Sale «elegir la primera 🟢 LISTO»:
    con brief, el kickoff **recibe**, no elige. El brief de Support suma el **runtime del asiento**.
 4. **Tramo 4 — nace `chanks-4-puente`** (traductor plan↔SDD, arma el delta y se lo manda a
    Support; **no escribe el plan**). **Se disuelven tres:** `session-plan`,
    `coordinador_multi_agente`, `big-files-remediation-loop`.
-   ⚠️ `session-kickoff:54` invoca a `session-plan` para la ruta `design-tasks`: si se disuelve
+   ⚠️ `chanks-3-session-kickoff:54` invoca a `session-plan` para la ruta `design-tasks`: si se disuelve
    sin tocar el kickoff, esa ruta apunta al vacío. **Van en el mismo commit.**
 5. **Tramo 6 — `torre-control-entregas`** (caja 3, vive en `control-tower`) reparte el token de
    entrega entre obreros. `politica-de-entrega` cambia su orden de detección.
@@ -150,7 +150,7 @@ control-tower/skills/torre-control-entregas/
 **NO toca:** `plan-naming-convention.md`, `tools/`, ni ningún otro archivo de `control-tower`.
 
 **Criterio binario:** ninguna skill nombra `est:`, `blocked` como ruta, `STATUS.md` ni
-`master-index.md`; `session-kickoff` no invoca `session-plan`; y las tres disueltas ya no existen.
+`master-index.md`; `chanks-3-session-kickoff` no invoca `session-plan`; y las tres disueltas ya no existen.
 
 ---
 

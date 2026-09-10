@@ -72,7 +72,7 @@ sesiones:
     ruta:
       propuesta: direct
       autoridad: RFC cocina §4
-      revalidacion:                 # opcional hasta session-kickoff
+      revalidacion:                 # opcional hasta chanks-3-session-kickoff
         resultado: design-tasks
         base: 0123456789abcdef0123456789abcdef01234567
         evidencia: readiness/S23
@@ -106,7 +106,7 @@ o un Módulo.
 ## Rutas: propuesta y revalidación
 
 - `chanks-2-planificador-granular` escribe `ruta.propuesta` y su autoridad.
-- `session-kickoff` revalida una vez. Registra la ruta resultante, el `HEAD` exacto actual y
+- `chanks-3-session-kickoff` revalida una vez. Registra la ruta resultante, el `HEAD` exacto actual y
   una referencia de evidencia/autoridad. Si cambia la propuesta, `razon` es obligatoria.
 - La revalidación gana para implementar. No existe un segundo dispatcher.
 - `radar check` acepta la base revalidada mientras sea un ancestro inmutable completo del

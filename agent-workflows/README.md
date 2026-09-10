@@ -122,7 +122,7 @@ are common and mandatory. `blocked` is a calculated state, not a route.
 | --- | --- |
 | Shared conventions | `_shared/plan-naming-convention.md` |
 | Chanks planning and bridge | `chanks-1-autoridad`, `chanks-1-brain-dump`, `chanks-1-descubrimiento`, `chanks-1-feature`, `chanks-1-heredado`, `chanks-1-prd`, `chanks-1-project-kickoff`, `chanks-1-requirements`, `chanks-1-rfc`, `chanks-1-terreno`, `chanks-4-puente` |
-| Session workflow | `session-kickoff`, `chanks-0-session-context-loader`, `chanks-2-planificador-granular`, `chanks-0-agente-soporte`, `session-doc` |
+| Session workflow | `chanks-3-session-kickoff`, `chanks-0-session-context-loader`, `chanks-2-planificador-granular`, `chanks-0-agente-soporte`, `session-doc` |
 | Delivery policy | `unattended-implementation`, `politica-de-entrega` |
 | Decision and communication support | `chanks-1-cierre-de-decisiones`, `chanks-0-explicalo-simple`, `chanks-0-skill-composer` |
 

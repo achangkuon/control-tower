@@ -76,7 +76,7 @@ tres hallazgos.
 **Los tres `CRITICAL` cerrados y mergeados (2026-09-03):** `39ff465` cierra los tres en un lote de
 82 líneas, bajo el cap de 400 de la política nueva. El retiro de skills ahora **archiva** en
 `<runtime_root>/.retired-skills/<skill>-<UTC>` en vez de destruir, así que un install exitoso es
-reversible a mano. `session-kickoff` y `assignment-implementation` exigen adquisición viva para
+reversible a mano. `chanks-3-session-kickoff` y `assignment-implementation` exigen adquisición viva para
 Cimientos **y** para un `Recurso` exclusivo —modo de base de datos, token de entrega— con liberación
 garantizada incluso ante fallo o bloqueo, usando el vocabulario que ya define el canon de nombres.
 
@@ -87,7 +87,7 @@ verde: 30/30 tests del instalador, `go vet` y `go test` de `tools/radar`.
 
 Quedan **12 hallazgos informativos** (WARNING/SUGGESTION) que el proveedor marcó explícitamente como
 trabajo posterior y que nunca reabren esta revisión. Los de más sustancia: falta de timeout de lease
-para el `Recurso` exclusivo (`session-kickoff/SKILL.md:36-37`) y una carrera TOCTOU en el archivado
+para el `Recurso` exclusivo (`chanks-3-session-kickoff/SKILL.md:36-37`) y una carrera TOCTOU en el archivado
 (`tools/install.py:442-445`).
 
 **Siguiente acción exacta — Fase B:** planificar `S101` por la ruta `full-sdd`. Es el único paso

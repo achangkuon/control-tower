@@ -130,7 +130,7 @@ type Tarea struct {
 }
 
 // RutaSesion distinguishes the planning proposal from the implementation-time
-// revalidation. The latter may be absent until session-kickoff runs.
+// revalidation. The latter may be absent until chanks-3-session-kickoff runs.
 type RutaSesion struct {
 	Propuesta    string        `yaml:"propuesta"`
 	Autoridad    string        `yaml:"autoridad"`

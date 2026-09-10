@@ -150,8 +150,8 @@ const EXACT = new RegExp(
   `^(${PHRASES.join("|")})(?:[.!…])?(?:\\s*(?::|—)\\s*(.+))?$`,
   "iu",
 );
-const KICKOFF = /^\/skill:session-kickoff(?:\s+(.+))?$/u;
-const TOWER_SHAPED = /empezamos la sesi[oó]n|continuemos con la implementaci[oó]n|start session|resume implementation|\/skill:session-kickoff/iu;
+const KICKOFF = /^\/skill:chanks-3-session-kickoff(?:\s+(.+))?$/u;
+const TOWER_SHAPED = /empezamos la sesi[oó]n|continuemos con la implementaci[oó]n|start session|resume implementation|\/skill:chanks-3-session-kickoff/iu;
 
 function normalize(value: string): string {
   return value.normalize("NFKC").trim().replace(/\s+/gu, " ");
@@ -205,7 +205,7 @@ export function createTowerSessionRouter(input: TowerEnrollmentResult) {
       if (!approved.sourceIsCurrent()) return reject(ctx, TOWER_INPUT_ERRORS.ENROLLMENT);
     } catch { return reject(ctx, TOWER_INPUT_ERRORS.INVALID); }
 
-    const intent = match ? match[1].toLocaleLowerCase("und") : "session-kickoff";
+    const intent = match ? match[1].toLocaleLowerCase("und") : "chanks-3-session-kickoff";
     const explicitSessionOrTopic = normalize((match?.[2] ?? kickoff?.[1]) || "") || null;
     const sessionContext = { intent, explicitSessionOrTopic, originalIntent: event.text };
     const text = [

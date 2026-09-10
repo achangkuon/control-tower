@@ -49,7 +49,7 @@ Activate for Tower start/resume, briefs/dispatch/delivery or Herdr topology. Mai
 1. Run `torre asiento list` and `pool`; read `ACTIVE` and Main authority.
 2. Match every brief field against that listing; load `torre-control-soporte` for evidence and conflicts.
 3. On maintainer approval, bind with `asignar`, seat with `abrir`, and record the returned pane IDs.
-4. Route verified workers through `session-kickoff`; load `torre-control-entregas` for delivery and closure.
+4. Route verified workers through `chanks-3-session-kickoff`; load `torre-control-entregas` for delivery and closure.
 5. On closure, report the `limpiar` preview; disposal needs authorized `--confirmar`.
 
 ## Output Contract

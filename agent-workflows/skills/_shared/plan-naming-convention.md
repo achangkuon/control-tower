@@ -481,7 +481,7 @@ The route is recorded at two moments in one structure; a single ambiguous route 
    the exact current Git `HEAD`, and an evidence/authority reference. It is absent before kickoff.
 
 Both values use the same closed three-route set. **The implementation-time revalidation wins.**
-When it differs from the proposal, it also records a mandatory reason. `session-kickoff` performs
+When it differs from the proposal, it also records a mandatory reason. `chanks-3-session-kickoff` performs
 this revalidation once and sends the exact delta to Support; it does not create a second dispatcher.
 A changed Git base invalidates the old revalidation instead of silently reusing it.
 

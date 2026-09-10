@@ -383,7 +383,7 @@ sacarlo del Go deja el campo aceptándose en silencio.
 
 #### 🔴 C2 — las tres rutas están escritas como pipelines distintas, y el tramo 3 dice que son una sola
 
-**Choca con:** `skills/session-kickoff/SKILL.md:25` — *«`direct` y `design-tasks` usan un
+**Choca con:** `skills/chanks-3-session-kickoff/SKILL.md:25` — *«`direct` y `design-tasks` usan un
 ejecutor general fresco. `full-sdd` corre el pipeline una sola vez»* — y las líneas 52–55, que
 las ejecutan por separado. El canon §15 define las cuatro rutas pero **no dice** que compartan
 `verify` y `archive`.
@@ -396,7 +396,7 @@ comunes y obligatorios para las tres**.
 revisión en la ruta más usada, y es lo que hace que el tramo 5 sea barato: si todas las rutas
 terminan en `verify`, la revisión 4R aplica a todas sin escribir nada nuevo.
 
-**Alcance de la corrección:** canon §15, `session-kickoff` (pasos 5 y siguientes), y la
+**Alcance de la corrección:** canon §15, `chanks-3-session-kickoff` (pasos 5 y siguientes), y la
 construcción de `chanks-4-puente`, que es quien traduce ruta → fase de entrada.
 
 ---
@@ -404,14 +404,14 @@ construcción de `chanks-4-puente`, que es quien traduce ruta → fase de entrad
 #### 🔴 C3 — `session-plan` existe en v2.1 y la Fase 5 planea adaptarla; el tramo 4 la disuelve
 
 **Choca con:** `skills/session-plan/SKILL.md` (v2.1, viva y cableada en
-`session-kickoff:54`) y con la tarea pendiente de Fase 5 en `MIGRACION-ZONAS.md`:
+`chanks-3-session-kickoff:54`) y con la tarea pendiente de Fase 5 en `MIGRACION-ZONAS.md`:
 *«`session-plan` — consume el dato en vez de leer markdown»*.
 
 **Decisión del tramo 4:** `session-plan` **se disuelve**, junto con
 `coordinador_multi_agente` y `big-files-remediation-loop`. Duplican y no dejan hueco.
 
 **Por qué importa:** es trabajo planificado que hay que **borrar del plan**, no reprogramar.
-Y `session-kickoff:54` la invoca — si se disuelve sin tocar el kickoff, la ruta `design-tasks`
+Y `chanks-3-session-kickoff:54` la invoca — si se disuelve sin tocar el kickoff, la ruta `design-tasks`
 queda apuntando al vacío.
 
 ---
@@ -470,7 +470,7 @@ a la pipeline SDD** — `direct`→`apply`, `design-tasks`→`design`, `full-sdd
 calculado, con sus cuatro entradas.
 
 **Alcance de la corrección:** `tools/plan/plan.go:125` (sacar el valor de `RutasValidas`),
-canon §15 (la tabla de rutas y el conjunto cerrado), `session-kickoff:24` (que hoy dice
+canon §15 (la tabla de rutas y el conjunto cerrado), `chanks-3-session-kickoff:24` (que hoy dice
 «Conservá `direct`, `design-tasks`, `full-sdd`, `blocked`»), y `radar check`, que debe
 **rechazar** `ruta: blocked` en vez de aceptarlo. Encaja con C2, que ya reescribe las mismas
 piezas: **se hacen juntas.**
@@ -546,7 +546,7 @@ Está gobernado por dependencias reales, no por el número de tramo.
 3. Aplicar las **ocho correcciones** (C1–C8): ninguna necesita criterio, todas están
    decididas. **C1, C2 y C3 son bloqueantes** del resto, porque tocan el canon y las skills
    que ya se escribieron. **C2 y C6 se hacen juntas**: reescriben las mismas piezas —
-   canon §15, `session-kickoff` y el conjunto de rutas de la herramienta.
+   canon §15, `chanks-3-session-kickoff` y el conjunto de rutas de la herramienta.
 4. Aplicar el resultado sobre `plan-naming-convention.md` y sobre los bloques
    «Plan Naming Standard» y «Durable Session Skill Routing» de `~/.claude/CLAUDE.md` —
    la Fase 1 pendiente, ahora reconciliada.
@@ -573,7 +573,7 @@ Está gobernado por dependencias reales, no por el número de tramo.
 10. **Tramo 1** — 7 skills nuevas, 5 por extracción. Es el bloque más grande y reemplaza
     entera la Fase 4. Incluye que el bloque de política de entrega nazca en `chanks-1-terreno`.
 11. **Tramo 2** — dos adaptaciones + las dos referencias compartidas.
-12. **Tramo 3** — achicar `session-kickoff` a cuatro pasos; el brief suma el runtime del asiento.
+12. **Tramo 3** — achicar `chanks-3-session-kickoff` a cuatro pasos; el brief suma el runtime del asiento.
 13. **Tramo 4** — nace `chanks-4-puente`; se disuelven las tres.
 14. **Tramos 5, 6, 7** — casi nada de código: una regla de configuración (RDD → 4R), la
     adaptación de `torre-control-entregas`, y `session-doc`/`chanks-0-agente-soporte` que ya están.
