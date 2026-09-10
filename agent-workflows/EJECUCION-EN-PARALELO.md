@@ -194,19 +194,9 @@ es cómo viajan las órdenes.** Apagada: sin persistencia, sin acuse y sin retry
 
 ### Aviso sobre el runtime de Pi
 
-El `CLAUDE.md` global registra, con fecha 2026-09-01, que **gentle-pi 2.2.0 pinea gentle-ai
-v2.4.0, decodifica solo `start/v3` y rechaza por diseño los sobres de un proveedor 2.5.0** —
-y que hasta que Pi corra gentle-pi 2.3.0 **no se inician revisiones RDD desde Pi**.
-El `gentle-ai` instalado hoy es **2.5.0**, y `gentle-pi` no está en el `PATH`, así que esa
-versión no se pudo verificar en esta pasada.
-
-**Consecuencia, y es la enmienda del tramo 3 al pie de la letra:** un asiento que no puede
-iniciar la revisión no puede cerrar una Sesión. Entonces:
-
-- **Pi coordinando: sin problema.** MAIN no implementa ni revisa.
-- **Pi como uno de los tres carriles: verificar primero.** Si sigue en 2.2.0, ese carril no
-  cierra, y Support debería excluirlo al armar el brief en vez de descubrirlo con el obrero ya
-  sentado.
+**Baseline verificado:** Pi 0.85.1, gentle-pi 2.5.0 y Gentle AI package-local 2.7.0; RDD está
+disponible. La capacidad efectiva del asiento se verifica en su runtime al armar cada brief;
+no se infiere desde el bloqueo histórico.
 
 ---
 

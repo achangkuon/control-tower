@@ -27,6 +27,7 @@
   evidence is missing or contradictory, or contamination reaches acceptance criteria, the first
   Módulo, or another Sesión. Later-Módulo contamination parks that Módulo while approved earlier
   work continues.
-- Claude, OpenCode, and Codex use their runtime copies. Pi has no native SkillsDir; load exact
-  canonical paths manually.
+- Claude, OpenCode, and Codex use their runtime copies. Pi discovers `~/.agents/skills`
+  natively. After project trust, `.pi/settings.json` exposes Control Tower's three exact local
+  skills; manually loading exact canonical paths is fallback only.
 <!-- /SESSION-SKILL-ARCHITECTURE:MANUAL -->
