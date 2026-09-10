@@ -227,18 +227,12 @@ El principio de §16.1 no se toca — **Hermes presenta; Main crea, valida y con
 
 **Estado:** 🔵 EN CURSO
 **Depende de:** Fase A cerrada en `master@b3da46174b75dc97e52afa72900f6263655aa378`
-**Área:** `openspec/changes/migrate-control-tower-plan-zones/**`, `agent-workflows/tools/radar/**`, `agent-workflows/MIGRACION-ZONAS.md`, `openspec/plans/plan-0/STATUS.md`, `openspec/plans/master-index.md`
+**Área:** `openspec/changes/migrate-control-tower-plan-zones/**`, `agent-workflows/tools/radar/**`, `agent-workflows/MIGRACION-ZONAS.md`, `openspec/plans/plan-0/STATUS.md`, `openspec/plans/master-index.md`, y en la activación `openspec/plan.yaml`, `openspec/ROADMAP.md`, `openspec/archive/legacy-planning/**`
 **Recurso:** — (sin DB, sin migraciones, sin token de entrega)
 
-El trabajo vive en `feat/s0.4-plan-zones-migration`, respaldada en `origin` en
-`8081c4b779ad8761184637a4e8a12e7d1bfce02b` con 109 commits. **Nada está integrado en `master`:**
-la rama es respaldo, no entrega. `openspec/plan.yaml` y `openspec/ROADMAP.md` siguen sin existir,
-y el corpus legacy sigue siendo la autoridad vigente.
-
-El objetivo de activación se acotó el 2026-09-06: en vez de materializar nueve Sesiones sucesoras
-completas, el contrato es **85 registros = 74 Sesiones completas + 7 referencias futuras +
-4 referencias históricas satisfechas**. Las referencias nunca conceden ejecutabilidad, asiento,
-capacidad ni crédito de avance.
+El trabajo vive en `feat/s0.4-plan-zones-migration`. **Nada está integrado en `master`:** la rama
+es respaldo, no entrega. `openspec/plan.yaml` y `openspec/ROADMAP.md` siguen sin existir, y el
+corpus legacy sigue siendo la autoridad vigente hasta la activación atómica de C09.
 
 ### Avance verificado
 
@@ -253,21 +247,6 @@ capacidad ni crédito de avance.
 | S100 planificada | `14ac794` | Sesión completa, ruta `direct`, seis criterios binarios |
 | Artefactos SDD | `8081c4b` | 6.370 líneas de propuesta, spec, diseño, tareas y evidencia incorporadas al repo |
 
-Estado medido del candidato: **73 Sesiones completas, 7 referencias futuras, 4 históricas.**
-`verify-activation-partition.mjs` falla `full-session-order` y `radar check` reporta el único error
-`S102 depende de "S101"`. **Ambos resultados son correctos:** falta `S101`.
-
-### Qué falta
-
-1. **`S101` por ruta `full-sdd`** — único bloqueo de la compuerta G1. Debe resolver dos
-   contradicciones detectadas el 2026-09-06:
-   - `horizon_ceiling` cuenta Sesiones en `policy/jornada.mjs:33-35` y Módulos en
-     `continuation/integrated-base.mjs:23`.
-   - El default restrictivo es `2` según `AGENTS.md:209` y `1` según `policy/delivery-policy.mjs:12`.
-2. **G1** — compuerta final sobre la partición completa, sin mutación.
-3. **C06 a C09** — inventario de archivo, prueba en árbol aislado, reproducción exacta y activación
-   atómica, seguidas de la entrega autorizada.
-
 ### Decisiones de producto cerradas el 2026-09-06
 
 | Decisión | Resolución |
@@ -278,13 +257,149 @@ Estado medido del candidato: **73 Sesiones completas, 7 referencias futuras, 4 h
 | Ruta de `S101` | `full-sdd` — la solución no es derivable de lo escrito |
 | Presupuesto de revisión | Código 400 líneas; documentación y datos por unidad completa, sin tope |
 
-### Evidencia de cierre — 2026-09-06
+### Actualización al 2026-09-09 — supersede el registro del 2026-09-06
 
-| Referencia | OID |
+El registro anterior de esta Sesión quedó en el 2026-09-06 y **ya no describe el estado**. Tres
+cosas cambiaron:
+
+- **El contrato de partición creció.** Ya no es `85 registros = 74 completas + 7 futuras + 4
+  históricas`. Tras el delta S9.9/S9.10 es **`86 = 75 completas + 7 futuras + 4 históricas`**,
+  y el descubrimiento ejecutable es `72 base + 2 suplemento − 1 reemplazada = 73` Sesiones únicas.
+- **`S101` y `G1` están cerradas.** `S101` se resolvió por ruta `full-sdd` en su propio cambio
+  SDD `s101-policy-resolution`, con `verdict: pass`; `G1` cerró con evidencia de solo lectura.
+  Las dos figuraban como «lo que falta» y ya no lo son.
+- **`C06` y `C07` están cerrados.** `C06` el 2026-09-08 por corrección de compuerta autorizada;
+  `C07` el 2026-09-09 sobre identidades reproducibles.
+
+| Checkpoint | Estado | Nota |
+|---|---|---|
+| C01–C05 | ✅ | Prerrequisito de Radar, congelado del corpus fuente, inventarios, linaje y partición |
+| M0.4.5A (R1, R2, P1, D1, D2, G1) | ✅ | Contrato de referencia, proyecciones y evidencia de cierre |
+| S101 | ✅ | Ruta `full-sdd`, cerrada en su propio cambio SDD |
+| C06 | ✅ | Cerrado el 2026-09-08 vía corrección de compuerta autorizada |
+| C07 | ✅ | Cerrado el 2026-09-09 sobre identidades reproducibles |
+| C08 | ✅ | Cerrado el 2026-09-09 tras traer `master` a la rama; reproducción READY |
+| C09 | 📋 | Activación atómica — **paso único irreversible** |
+| M0.4.9 | 📋 | Verificación post-entrega y registro de cierre |
+
+Tareas de implementación: **38 cerradas, 7 abiertas** (6 de C08/C09 más `T0.4.5.2`, superseded
+por M0.4.5A).
+
+### Estado de C07 — cerrado el 2026-09-09
+
+La prueba `migration/proof/rebuild-c07-r14.sh` reproduce el sujeto técnico en un `GIT_DIR`
+privado enlazado por alternates al almacén de objetos real, de modo que el repositorio nunca se
+muta: los inventarios de refs y objetos se comparan idénticos antes y después.
+
+| Verificación | Resultado |
 |---|---|
-| Rama de trabajo, respaldada y **no integrada** | `origin/feat/s0.4-plan-zones-migration@8081c4b779ad8761184637a4e8a12e7d1bfce02b` |
-| `master` — estado de la migración | `a3da3f60dc07cadaa0a789d921e0e1baf2f6b690` |
-| `master` — este registro y `master-index` | `67fc0ff808081e3c7cd784036ae9f0b1967a1942` |
+| Corrida limpia de la prueba | PASS — árbol del sujeto `b50de802…`, 589 entradas, digest `7b4ca256…` |
+| Re-corrida **después** de editar los receipts | PASS — árbol, conteo y digest idénticos; confirma que `receipt_exclusions` se sostiene |
+| Estabilidad entre corridas de los 7 digests vinculados | ESTABLE |
+| Partición exacta (P1) | PASS: 75 completas / 7 futuras / 4 históricas = 86 |
+| Descubrimiento de Sesiones | PASS: 72 + 2 − 1 = 73 únicas |
+| Estados derivados | PASS: S9.10 y S101 ambos `BLOQUEADO` en el candidato |
+| `bun test .../migration/proof/` | **30 pass · 0 fail** |
+| Ambos caminos de cierre documental sin push | PASS |
 
-`master` recibió únicamente documentación. Ningún commit de la migración está integrado: el corpus
-legacy sigue siendo la autoridad vigente hasta la activación atómica de C09.
+**Defecto corregido.** Los receipts vinculaban valores que no podían reproducir: una receta
+vieja, y además identidades con marca de tiempo por construcción —el OID del commit del sujeto,
+el digest de la atestación, los inventarios del repo vivo y el estado del doc-guard—. Ahora
+vinculan sólo el **árbol** del sujeto, el digest de path/mode/blob y el `recipe_sha256`. Es la
+diferencia entre *el plano* y *la hora en que se imprimió el plano*.
+
+### C08 — cerrado el 2026-09-09, tras resolver la divergencia con `master`
+
+`reproduce-c08.sh` sale 0 con `READY`. Reproduce contra el manifest de C07 el plan `b794dd1a…`,
+el ROADMAP generado `1b183579…`, las 31 copias y los 14 retiros, **sin calcular OID de paquete**.
+El blob del ROADMAP **no cambió con el merge**: traer 14 commits de master no movió el plan
+renderizado, lo que confirma que el candidato es estable. Proyección de activación: 33 archivos,
++13.977 / −250, árbol de 600 rutas. Suite completa tras el merge: **1212 pass · 0 fail**.
+
+**Re-corte del archivo, 2026-09-09.** Cuatro entradas del inventario todavía archivaban la foto
+del fork (`43130ad4`) y habían quedado 14 commits atrás. Por decisión del maintainer se
+re-apuntaron al tip de master `fbcb546e` —`plan-0/STATUS.md`, `plan-5/STATUS.md`,
+`master-index.md` y `decision-register.md`— con el mismo patrón que ya usaba `plan-9`:
+`source_commit` propio por entrada. **Verificado:** el blob de `plan-5` que se archiva contiene
+el registro del arreglo de `jornada` que master agregó después del fork, así que los 14 commits
+sobreviven al archivo en vez de perderse.
+
+C07 y C08 se re-probaron sobre el inventario nuevo y pasan. Identidades nuevas de C07: sujeto
+`923f1fb8…`, 589 entradas, digest `9a2bfd5b…`. **El plan `b794dd1a…` y el ROADMAP `1b183579…` no
+cambiaron**: sólo se movió la identidad del sujeto, que es lo que corresponde. Proyección de
+activación: 33 archivos, +14.022 / −134, árbol de 602 rutas. Suites: `bun test` 1212 pass · 0
+fail; `go test` de Radar ok.
+
+**Queda un hallazgo para C09:** el bloque `validation.expected` de `partition.yaml` declara 588
+archivos contra 602 observados. Radar nunca lo lee, y corregirlo reiniciaría toda la cascada de
+identidades porque ese archivo está dentro del sujeto de C07.
+
+#### La divergencia que hubo que resolver
+
+El arnés `migration/proof/reproduce-c08.sh` corre y encontró el bloqueo antes de que C09 pudiera
+romper nada. Radar exige que el commit de origen de cada Sesión importada sea **ancestro
+estricto** del HEAD. Un sujeto sin padre produjo 119 rechazos; parenteándolo en el HEAD de
+entrega bajaron a 4 —S9.9, S9.10 y S101—, todos resolviendo al padre lógico `e6b7e673`, que
+**no es ancestro de esta rama**.
+
+| Dato | Valor |
+|---|---|
+| Merge base | `43130ad4` — el `source_commit` de la migración |
+| Esta rama por delante | 125 commits |
+| `origin/master` por delante | 14 commits |
+| Padre lógico `e6b7e673` | está en master, 3 commits atrás de su tip `fbcb546e` |
+| Fuentes de archivo que master cambió | **5 de 31** |
+
+Las cinco son `master-index.md`, `plan-0/STATUS.md`, `plan-5/STATUS.md`, `plan-9/STATUS.md` y
+`decision-register.md` — justo los archivos que C09 archiva y retira. C07 dio verde porque su
+prueba parentea el sujeto en `e6b7e673`, un commit de master: es el árbol de esta rama con la
+ascendencia de master, una combinación que ningún commit de esta rama tenía.
+
+**Si C09 se activara sin resolver esto, archivaría los bytes viejos de esos cinco archivos y
+descartaría 14 commits de master**, incluidos el cierre de S9.9, el gate de S9.10 y el arreglo
+de política de entrega de `jornada`.
+
+**Resolución elegida el 2026-09-09:** traer `master` a la rama. Este documento y `master-index`
+se resolvieron **a favor de master**, que estaba más avanzado y era más preciso. Una enumeración
+de `S0.4` escrita ese mismo día en la rama resultó redundante —master ya la tenía— y se descartó;
+lo que sobrevive es la evidencia de C07 y este bloqueo, que master no tenía.
+
+### Punto de retoma
+
+**Próximo paso concreto — C08 (`T0.4.8.1`).** Reproducir con índice Git privado únicamente la
+receta, el contenido y la evidencia que lista el manifest de C07, y registrar readiness **sin
+calcular ni afirmar OID de paquete**.
+
+| Debe reproducir | No debe compararse |
+|---|---|
+| Árbol del sujeto `b50de802c21c0d0e778d1dd8423636cff851d9fb` | OID del commit del sujeto (lleva timestamp) |
+| `path_mode_blob_inputs`: 589 entradas, digest `7b4ca256…` | Digest del archivo de atestación (lleva el proof_root) |
+| `recipe_sha256` `64ca75e2…` | Digests de refs/objects del repo vivo |
+| Blobs de contenido: plan `b794dd1a…`, ROADMAP `1b183579…` | `state_sha256` del doc-guard (lleva epoch UNIX) |
+
+**Chequeo que C08 arrastra:** `partition.yaml` `validation.expected` declara `588` archivos
+(`archivo: 228`, `cimientos: 45`, `instalacion: 11`) contra `589` observados (`229`, `46`, `10`).
+El `+1` de `archivo` es el propio script de prueba; el intercambio entre `cimientos` e
+`instalacion` **no** queda explicado. Radar nunca lee ese bloque —verificado con `rg`— y no se
+corrigió porque `partition.yaml` está dentro del sujeto. C08 materializa el árbol de activación
+real, que es donde corresponde comparar.
+
+**Cómo reproducir las pruebas desde cero:**
+
+```
+migration/proof/rebuild-c07-r14.sh <repo> <proof-root-vacío> <doc-guard> <sha256-del-hook>
+migration/proof/reproduce-c08.sh   <repo> <work-root-vacío>
+```
+
+Los root son desechables y deben estar ausentes o vacíos. Los tests van con `bun test`, nunca con
+`node --test`: los imports `bun:` hacen fallar a Node con `ERR_UNSUPPORTED_ESM_URL_SCHEME`, que
+parece un error de código y no lo es.
+
+**Riesgo abierto.** `rebuild-c07-r14.sh` se incluye a sí mismo en el sujeto que atestigua, así que
+cualquier edición futura del script invalida en silencio todos los receipts. Sacarlo de su propio
+overlay, o fijar `GIT_AUTHOR_DATE`/`GIT_COMMITTER_DATE`, elimina la trampa; ambas cambian la
+identidad del sujeto y exigen re-prueba autorizada.
+
+**C09 no se empieza sin cabeza fresca.** Reemplaza todo el corpus de planificación heredado en un
+solo movimiento y es el **único paso irreversible** de esta migración. El diff completo son
+18 856 líneas y debe partirse en lotes de revisión de **≤400 líneas** antes de la entrega.
