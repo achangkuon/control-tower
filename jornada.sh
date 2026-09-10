@@ -190,6 +190,19 @@ discover_worktrees() {
     if [ -n "$cur_path" ]; then PATHS+=("$cur_path"); BRANCHES+=("$cur_branch"); fi
 }
 
+# ---- Worktrees internos de herramientas: no son tuyos ----
+# `git worktree list` incluye los checkouts que una herramienta crea dentro de
+# `.git/` — por ejemplo las vistas de candidato congeladas de gentle-ai en
+# `.git/gentle-ai/candidate-views/<lineage>`. Son de solo lectura y pertenecen a
+# una revision en curso: aconsejar `switch` sobre ellas corrompe la revision.
+# Se excluyen del diagnostico, del plan y del veredicto.
+es_interno() {
+    case "$1" in
+        */.git/*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
 # ---- Clasificar el estado de cada worktree ----
 # Cada elemento de ESTADOS: name|path|branch|agente|sit|dirtyN|behind|unpushed|hasup
 ESTADOS=()
@@ -198,6 +211,7 @@ compute_estados() {
     local i path branch name agente dirty dirtyN ahead behind unpushed hasup sit
     for i in "${!PATHS[@]}"; do
         path="${PATHS[$i]}"; branch="${BRANCHES[$i]}"
+        es_interno "$path" && continue
         name="$(basename "$path")"; agente="${name#U-}"
         dirty="$(git -C "$path" status --porcelain 2>/dev/null)" || { echo "${C_RED}ABORTADO: no se pudo validar el estado de '$path'.${C_RESET}"; exit 1; }
         dirtyN=0; [ -n "$dirty" ] && dirtyN="$(printf '%s\n' "$dirty" | grep -c '')"

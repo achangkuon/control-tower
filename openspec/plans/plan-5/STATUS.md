@@ -1562,4 +1562,11 @@ staged y sin trackear.
 y del guard de `--mergear-pr` contra los seis checkouts reales. 124 líneas authored, dentro del
 presupuesto de 400.
 
+**Los worktrees internos de herramientas salen del diagnóstico (mismo día).** `git worktree list`
+incluye los checkouts que otras herramientas crean dentro de `.git/` — en particular las vistas de
+candidato congeladas de gentle-ai en `.git/gentle-ai/candidate-views/<lineage>`. El asesor las
+listaba como worktrees del maintainer y le proponía `switch -c` sobre una vista **de solo lectura
+y ligada a una revisión en curso**, que es exactamente la operación que corrompe esa revisión.
+Ahora se excluyen del diagnóstico, del plan y del veredicto.
+
 **Estado de P5:** sin cambios. Ninguna Sesión enumerada cambió de estado.
