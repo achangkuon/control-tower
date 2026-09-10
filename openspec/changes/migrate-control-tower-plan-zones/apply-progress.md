@@ -5422,3 +5422,84 @@ No canonical path, no push, `master` untouched. C09 is un-activated and re-runna
 evidence stands unchanged. Blocked on a maintainer decision about how the radiografía engine
 reads progress after activation. That work is unenumerated: no Sesión owns the engine, exactly as
 `plan-0/STATUS.md` already records for the method skills.
+
+## C09 re-activated and delivered — 2026-09-10
+
+### The consumer migration, decided and done
+
+The maintainer selected option 1 from the three recorded above, in its stricter form: **Radar
+computes, the report asks.** `agent-workflows/tools/radar/state.go` is 309 lines of non-trivial
+rules — git ancestry for delivery evidence, contamination propagation between Sesiones,
+topological queue order per Zona. Reimplementing that in JavaScript so the report could read
+`plan.yaml` on its own would have recreated the two-sources-of-truth failure this whole change
+exists to remove. The same fact would again carry two numbers, both defensible.
+
+| Commit | Unit |
+|---|---|
+| `b50c0b3` | `radar status --json` emits `radar.snapshot/v1`: producto, HEAD, total and per-Zona avance, each Sesión's derived state, compatible seats, and the count of Sesiones with no Zona. States carry no emoji — the vocabulary word is the contract. No Zona state is computed, because a Zona is territory, not work. It refuses exactly where `radar status` refuses. |
+| `969f189` | The radiografía engine runs that command, validates the schema, and draws what it receives. `parsePlanTable`, `parseQueue` and `parseGlobalProgress` are gone. View vocabulary is now Zona/Sesión. |
+| `b28022b` | The four simple consumers. |
+| `d5a15d3` | **C09 activation**, `final_package_identity=71b43b07f41c79d19ccdc3c8968ca52305bc717d`, equal to the commit's own tree. |
+
+### What the 1198/1 actually was
+
+One file. `test/contracts/session-plan-snapshot.test.mjs` read the real `plan-5/STATUS.md` at
+**module** level, so retiring the view failed the whole file's import: 14 tests lost, 1 failure.
+1212 − 14 = 1198. The radiografía tests never broke — they build temporary roots. The engine broke
+at runtime, not in the suite, which is why the suite count alone never located it.
+
+### The suite baseline changed, and that is correct
+
+**1210 pass / 0 fail**, not 1212. The three Markdown parsers and their six tests no longer exist,
+because the document they parsed no longer exists. `HOJA-DE-RUTA.md`'s closure criterion of
+"1212 · 0" is obsolete; the criterion is **0 fail** with the canonical paths present.
+
+### The projection moved, and why
+
+C08 reproduced against the exact delivery HEAD gives **33 files, +14023 / −183, 604 paths** — not
+the 602 / +14022 / −147 recorded earlier. The two extra paths are the new Go files. The 36-line
+delta is `plan-0/STATUS.md`: the previous session wrote 183 lines of migration bookkeeping into it
+*after* the archive was re-cut to master's `fbcb546e`. That is precisely the moving target this
+document warns about — every new record in the legacy corpus enlarges the delta C09 must absorb.
+
+The activation archives master's `plan-0`, per the 2026-09-09 decision for the whole inventory, so
+those 183 branch-side lines do not survive into the archive. They are not lost: the C09 attempt,
+the finding and the reversion are recorded here and in `HOJA-DE-RUTA.md`, neither of which C09
+touches. Verified before committing; `name-status` and `numstat` digests matched the reproduction
+byte for byte.
+
+### Delivered and verified
+
+Pushed on explicit maintainer authorization: `fbcb546..d5a15d3 HEAD -> master`, 144 commits,
+fast-forward, `master` unmoved since the archive re-cut. Remote OID equals local HEAD and ancestry
+holds. Post-delivery readback: `radar check` validates 11 Zonas and 75 Sesiones; a fresh render
+equals the committed `ROADMAP.md` byte for byte; `go test` passes; **`bun test` 1210 · 0**; all 31
+archived files readable; zero live legacy views remain. The pre-push hook regenerated the
+radiografía report against the migrated engine for the first time: `51/75 Sesiones`.
+
+### Documentation close — declaration, not a plan record
+
+`T0.4.9.3` allows the plan-data record **only** if the delivery closes an enumerated canonical
+Sesión. It does not. `openspec/plan.yaml` holds 75 Sesiones, none with an `S0` prefix, and zero
+references to this change folder: **`S0.4` was never enumerated in the new corpus.** It existed
+only in `plan-0/STATUS.md`, which this very activation retired. Inventing an `S0.4` entry to clear
+the gate is exactly what that task forbids, so the close is the standalone declaration and the
+evidence lives here.
+
+### Two findings left open
+
+1. `T0.4.8.3` and `HOJA-DE-RUTA.md` both prescribe `go run ./agent-workflows/tools/radar …` from
+   the repository root. **That command cannot work**: there is no `go.mod` at the root, and Go
+   walks up to `$HOME`. The working form is to run from `agent-workflows/tools/radar` with
+   `-C <repo>`. The readback was executed in the working form. The prescribed text is wrong and
+   was left unedited, because rewriting an executed task's contract after the fact is worse than
+   recording the defect.
+2. Commit `969f189` is 572 changed lines, above the 400-line review lot cap. Splitting it between
+   `measure` and `render` would have left an intermediate commit with a red suite, and the
+   maintainer's standing rule that no commit leaves the repository broken outranks the cap. Stated
+   in the commit message rather than hidden.
+
+### Boundary
+
+`S0.4`'s implementation contract is complete: C01–C09 closed, delivery authorized and verified.
+Rollback after delivery is one conventional revert of the complete activation contract.

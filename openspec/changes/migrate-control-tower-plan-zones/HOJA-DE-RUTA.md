@@ -1,5 +1,18 @@
 # Hoja de ruta — migración del plan al modelo de Zonas
 
+> ## ✅ ENTREGADA el 2026-09-10 — `fbcb546..d5a15d3 HEAD -> master`
+>
+> C09 se re-activó y se entregó. `openspec/plan.yaml` es el plan canónico y `openspec/ROADMAP.md`
+> su vista generada. Las 14 vistas legacy están retiradas y las 31 copias archivadas.
+> Readback post-entrega en verde: `radar check` 11 Zonas / 75 Sesiones, render idéntico byte a
+> byte, `go test` ok, **`bun test` 1210 · 0**, 31/31 archivos legibles.
+>
+> **Todo lo que sigue es el registro de cómo se llegó, no trabajo pendiente.** Dos correcciones
+> que este documento todavía arrastra: la suite son **1210 · 0**, no 1212 —desaparecieron los tres
+> parsers de Markdown y sus seis tests—, y `go run ./agent-workflows/tools/radar` **desde la raíz
+> no funciona** (no hay `go.mod` ahí): se corre desde el módulo con `-C <repo>`. El registro de
+> cierre completo está en `apply-progress.md`.
+
 > Estado al **2026-09-09**. Rama `feat/s0.4-plan-zones-migration`, worktree `implementer-1`.
 > Este documento es el punto de entrada para retomar en cualquier runtime (Claude, Pi, OpenCode,
 > Codex). El registro técnico exhaustivo vive en `apply-progress.md`; acá está sólo lo que hace
