@@ -33,7 +33,7 @@ Activa cuando hay que convertir una intención en alcance aprobado, Zonas y auto
 1. Identificá cuál entrada nominal describe el pedido sin reinterpretarlo.
 2. Cargá sólo la skill correspondiente.
 3. Conservá su resultado y presentá el alcance para aprobación humana.
-4. Con aprobación, entregá el alcance a `planificador-granular` o el delta aplicable a Support.
+4. Con aprobación, entregá el alcance a `chanks-2-planificador-granular` o el delta aplicable a Support.
 
 ## Output Contract
 
@@ -41,5 +41,5 @@ Devuelve variante elegida, autoridad consultada, alcance aprobado o pendiente, a
 
 ## References
 
-- `../planificador-granular/SKILL.md`
+- `../chanks-2-planificador-granular/SKILL.md`
 - `../chanks-0-agente-soporte/SKILL.md`

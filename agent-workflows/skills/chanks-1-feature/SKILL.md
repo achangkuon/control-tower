@@ -34,7 +34,7 @@ Activa para agregar o cambiar capacidad de producto en un repositorio vivo con a
 2. Delimitá resultado, usuario, reglas, no-objetivos e impacto por Zona.
 3. Ejecutá `chanks-1-prd` sólo para la actualización afectada.
 4. Obtené aprobación humana del delta de producto.
-5. Enviá el alcance aprobado a `planificador-granular` y cualquier delta a Support.
+5. Enviá el alcance aprobado a `chanks-2-planificador-granular` y cualquier delta a Support.
 
 ## Output Contract
 
@@ -44,4 +44,4 @@ Devuelve fuentes, diferencia actual→deseada, impacto por Zona, delta de PRD, d
 
 - `../chanks-1-prd/SKILL.md`
 - `../chanks-1-descubrimiento/SKILL.md`
-- `../planificador-granular/SKILL.md`
+- `../chanks-2-planificador-granular/SKILL.md`

@@ -109,7 +109,7 @@ const ASSET_PATHS = Object.keys(ASSET_CONTRACTS).sort()
 const PROFILE_PATHS = ASSET_PATHS.filter((path) => ASSET_CONTRACTS[path].kind === "profile")
 const SKILL_PATHS = ASSET_PATHS.filter((path) => ASSET_CONTRACTS[path].kind === "skill")
 const VENDOR_LEAKAGE = /(?:\bPi\b|OpenCode|Claude|Intercom|@[^\s/]+\/|\.opencode|\.claude|(?:^|[\s`'"(])(?:~\/|\/(?!\/))|\b(?:home|global) path\b)/im
-const GENERIC_COPY = /(?:Gentle AI|planificador-granular|\b(?:full-)?SDD\b|Strict TDD|branch-pr|chained-pr|work-unit)/i
+const GENERIC_COPY = /(?:Gentle AI|chanks-2-planificador-granular|\b(?:full-)?SDD\b|Strict TDD|branch-pr|chained-pr|work-unit)/i
 
 const fail = (code, detail = "") => {
   throw new Error(`${code}${detail ? `: ${detail}` : ""}`)

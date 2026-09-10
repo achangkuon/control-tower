@@ -25,7 +25,7 @@ Activa sólo para un proyecto nuevo. Es mini-parent: ordena hijas nominales y so
 |---|---|
 | Incompleto o contradictorio | Mantener el gate y devolverlo a la misma hija. |
 | Aprobado por el humano | Invocar la siguiente hija nominal. |
-| REQUIREMENTS aprobado | Entregar alcance a `planificador-granular`. |
+| REQUIREMENTS aprobado | Entregar alcance a `chanks-2-planificador-granular`. |
 
 ## Execution Steps
 
@@ -44,4 +44,4 @@ Devuelve estado de cada gate, artefactos escritos por cada hija, decisiones pend
 - `../chanks-1-prd/SKILL.md`
 - `../chanks-1-rfc/SKILL.md`
 - `../chanks-1-requirements/SKILL.md`
-- `../planificador-granular/SKILL.md`
+- `../chanks-2-planificador-granular/SKILL.md`

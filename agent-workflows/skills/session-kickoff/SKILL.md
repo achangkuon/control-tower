@@ -31,7 +31,7 @@ Activa dentro del worktree cuando el ejecutor recibe un brief aprobado con asien
 ## Execution Steps
 
 1. **Verificar terreno:** confirmá repositorio, `HEAD`, rama esperada y árbol limpio contra el brief y el asiento.
-2. **Revalidar ruta:** abrí el código real del Área, cargá `../planificador-granular/references/juicio-de-ruta.md` y contrastá la propuesta una vez.
+2. **Revalidar ruta:** abrí el código real del Área, cargá `../chanks-2-planificador-granular/references/juicio-de-ruta.md` y contrastá la propuesta una vez.
 3. **Enviar delta:** construí `ruta.revalidacion` con resultado, base Git, evidencia y razón si cambia; enviá el delta a Support.
 4. **Pedir medidor:** si la Sesión reserva Cimientos **o declara un `Recurso` exclusivo** —modo de base de datos, token de entrega—, pedí a MAIN/Tower adquisición viva antes de editar; si no aplica, declaralo.
 5. **Liberar:** liberá cada adquisición al terminar la Sesión, también cuando falle o se bloquee, y reportá la evidencia de liberación.
@@ -42,6 +42,6 @@ Devuelve brief recibido, asiento/rama/runtime, `HEAD`, limpieza, ruta propuesta 
 
 ## References
 
-- `../planificador-granular/references/juicio-de-ruta.md`
+- `../chanks-2-planificador-granular/references/juicio-de-ruta.md`
 - `../chanks-0-agente-soporte/SKILL.md`
 - `../chanks-4-puente/SKILL.md`

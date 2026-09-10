@@ -1,5 +1,5 @@
 ---
-name: planificador-granular
+name: chanks-2-planificador-granular
 description: "Trigger: planificar, desglosar, enumerar Sesiones. Ejecuta ocho pasos fijos y propone una de tres rutas para alcance aprobado."
 license: Apache-2.0
 metadata:

@@ -105,7 +105,7 @@ o un Módulo.
 
 ## Rutas: propuesta y revalidación
 
-- `planificador-granular` escribe `ruta.propuesta` y su autoridad.
+- `chanks-2-planificador-granular` escribe `ruta.propuesta` y su autoridad.
 - `session-kickoff` revalida una vez. Registra la ruta resultante, el `HEAD` exacto actual y
   una referencia de evidencia/autoridad. Si cambia la propuesta, `razon` es obligatoria.
 - La revalidación gana para implementar. No existe un segundo dispatcher.

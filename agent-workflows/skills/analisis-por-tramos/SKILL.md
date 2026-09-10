@@ -13,7 +13,7 @@ Usá esta skill cuando un producto tiene piezas construidas pero **su flujo de p
 
 Es conversacional por diseño. El humano cierra cada tramo antes del siguiente; sin ese cierre el análisis avanza sobre supuestos y produce un documento lindo que nadie puede ejecutar. **No la corras desatendida.**
 
-No la uses para diagnosticar fallas de un producto vivo (`chanks-1-descubrimiento`), ni para escribir un PRD (`chanks-1-prd`), ni para cortar alcance ya aprobado en Sesiones (`planificador-granular`).
+No la uses para diagnosticar fallas de un producto vivo (`chanks-1-descubrimiento`), ni para escribir un PRD (`chanks-1-prd`), ni para cortar alcance ya aprobado en Sesiones (`chanks-2-planificador-granular`).
 
 ## Hard Rules
 

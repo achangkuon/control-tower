@@ -34,7 +34,7 @@ Activa después de PRD y RFC aprobados para fijar detalle suficiente antes de pl
 2. Enumerá datos, reglas, fórmulas, contratos, errores y límites.
 3. Definí criterios técnicos binarios y evidencia de verificación.
 4. Señalá trazabilidad y cualquier contradicción.
-5. Escribí REQUIREMENTS, pedí aprobación y entregá a `planificador-granular`.
+5. Escribí REQUIREMENTS, pedí aprobación y entregá a `chanks-2-planificador-granular`.
 
 ## Output Contract
 
@@ -44,4 +44,4 @@ Devuelve ruta del artefacto, requisitos y trazabilidad, criterios binarios, deci
 
 - `../chanks-1-prd/SKILL.md`
 - `../chanks-1-rfc/SKILL.md`
-- `../planificador-granular/SKILL.md`
+- `../chanks-2-planificador-granular/SKILL.md`

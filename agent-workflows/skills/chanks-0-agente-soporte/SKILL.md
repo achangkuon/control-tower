@@ -26,7 +26,7 @@ Activa para consultas de capacidad/conflictos, briefs de Jornada o aplicación a
 | Pedido | Acción |
 |---|---|
 | Contexto, capacidad o conflictos | Leer y producir brief verificable. |
-| Nueva descomposición | Derivar a `planificador-granular`. |
+| Nueva descomposición | Derivar a `chanks-2-planificador-granular`. |
 | Delta confirmado y vigente | Aplicar, checkear y renderizar. |
 | Delta ambiguo o stale | No escribir; pedir una aclaración a su autoridad. |
 | Sesión reserva Cimientos | Reportar forecast y necesidad de reserva viva. |

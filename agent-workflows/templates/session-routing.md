@@ -3,7 +3,7 @@
 
 - Primary authority for starting or continuing one approved Sesión is `session-kickoff` at
   `{{REPO_ROOT}}/skills/session-kickoff/SKILL.md`.
-- Planning is one fixed eight-step flow. `planificador-granular` executes it directly; it is
+- Planning is one fixed eight-step flow. `chanks-2-planificador-granular` executes it directly; it is
   not a parent router and has no child-skill hierarchy.
 - Kickoff receives the assigned Sesión, verifies HEAD, branch and clean tree, then revalidates
   its proposed route once against the code in the Zona. It sends the exact delta to Support;

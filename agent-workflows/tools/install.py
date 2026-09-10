@@ -39,7 +39,7 @@ CHANKS_SKILLS = (
 SESSION_SKILLS = (
     "session-kickoff",
     "chanks-0-session-context-loader",
-    "planificador-granular",
+    "chanks-2-planificador-granular",
     "chanks-0-agente-soporte",
     "session-doc",
 )
@@ -65,6 +65,7 @@ SKILLS = SHARED + CHANKS_SKILLS + SESSION_SKILLS + DELIVERY_SKILLS + SUPPORT_SKI
 # Explicit ownership migration. Normal installs retire only these known derived
 # copies; unlisted directories remain untouched.
 RETIRED_SKILLS = (
+    "planificador-granular",
     "cierre-de-decisiones",
     "skill-composer",
     "session-context-loader",
