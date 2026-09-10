@@ -70,10 +70,16 @@ describe("reproduce-c08 preconditions", () => {
     expect(source).not.toMatch(/final_package_identity=\$\(/)
   })
 
-  test("declares an empty WORK_ROOT acceptable", () => {
+  test("accepts an empty WORK_ROOT and moves past the argument gate", () => {
+    // ROOT is a real directory that is not a repository, so the script clears both argument
+    // gates and then fails fast on its repository preconditions. Passing the workspace here
+    // would run the whole reproduction, which is far slower than a unit test should be.
+    const root = temp()
     const work = join(temp(), "absent")
     mkdirSync(work)
-    const result = run(workspace, work)
+    const result = run(root, work)
+    expect(result.status).not.toBe(64)
     expect(result.stderr).not.toContain("WORK_ROOT must be absent or empty")
+    expect(result.stderr).not.toContain("WORK_ROOT must be an absolute directory")
   })
 })

@@ -5366,3 +5366,59 @@ decides how to proceed; the consumers' migration is unenumerated work that no Se
 | GREEN | Not reached — fixing consumers is outside C09's allowed edit surface. | Blocked pending decision. |
 | TRIANGULATE | Swept every `openspec/plans/**` reference in tests and production; five distinct consumers break, one of them the radiografía progress engine. | Scope quantified. |
 | REFACTOR | None; the activation commit stands unmodified pending the decision. | No mutation. |
+
+## C09 reverted; consumer migration is larger than a path change
+
+### Revert
+
+`8628319` reverted on the maintainer's decision: migrate the consumers first, then re-activate,
+so no commit leaves the repository broken. The finding record `a98243a` was deliberately **not**
+reverted — the evidence stays, only the activation was undone. Canonical paths are absent again
+and the 14 legacy views are restored.
+
+A pre-existing defect in this session's own `reproduce-c08.test.mjs` surfaced during the
+post-revert run: `declares an empty WORK_ROOT acceptable` passed the workspace as ROOT, so it ran
+the entire reproduction and timed out at 5 s. It asserted a two-line argument gate by executing
+minutes of work. Fixed to use a non-repository temporary ROOT, which clears both argument gates
+and then fails fast on the repository preconditions: 195 ms, 7 pass.
+
+### The radiografía engine needs a parser, not a redirect
+
+The planned fix for `agent-workflows/radiografia/config.mjs` was to repoint `masterIndex` from
+`openspec/plans/master-index.md` to the generated `openspec/ROADMAP.md`. **That does not work.**
+
+`measure.mjs` parses the master index for `| P<n> |` plan rows (`CT_RADIOGRAFIA_NO_PLAN_TABLE`),
+an `Avance global` line (`CT_RADIOGRAFIA_NO_GLOBAL_PROGRESS`), and an execution queue. The
+generated ROADMAP is organised by **Zona**, not by Plan: rendering the candidate and grepping it
+returns **0** `| P<n> |` rows and **0** `Avance global` lines. Repointing would trade a missing
+file for a parse failure.
+
+The engine measures delivered progress, so pointing it at the archived snapshot would freeze that
+measurement forever — the opposite of its purpose, which exists precisely because documentation
+once asserted false things about the code.
+
+Options, none of which is a one-line change:
+
+1. Teach the engine to read `openspec/plan.yaml` directly. Cleanest: it consumes structured data
+   instead of re-parsing a rendered document, and Radar already owns the vocabulary.
+2. Rewrite the Markdown parser against the Zona-shaped ROADMAP. Keeps the engine document-driven
+   but couples it to a rendering format it does not own.
+3. Have Radar additionally emit the sections the engine expects. Mixes responsibilities and makes
+   the generated view carry a legacy shape.
+
+`agent-workflows/test/{render,measure,cli}.test.mjs` follow whichever option is chosen.
+
+### Consumers that really are simple redirects
+
+| Consumer | Fix |
+|---|---|
+| `test/contracts/session-plan-snapshot.test.mjs` | reads plan-5 as a byte fixture; can read the archived copy |
+| `ROADMAP.md` (repository root) | documentation reference to `plan-12/STATUS.md` |
+| `agent-workflows/MIGRACION-ZONAS.md` | documentation reference to `plan-9/STATUS.md` |
+
+### Boundary
+
+No canonical path, no push, `master` untouched. C09 is un-activated and re-runnable; C07 and C08
+evidence stands unchanged. Blocked on a maintainer decision about how the radiografía engine
+reads progress after activation. That work is unenumerated: no Sesión owns the engine, exactly as
+`plan-0/STATUS.md` already records for the method skills.
