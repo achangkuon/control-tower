@@ -5132,3 +5132,80 @@ Commit `03254d1` enumerated `S0.4` in `plan-0/STATUS.md` and moved `master-index
 | GREEN | Harness ABI and fail-closed preconditions: 7 pass, 0 fail, 19 assertions. | PASS. |
 | TRIANGULATE | Merge-base arithmetic (123 vs 14 commits) and set intersection of `archive-inventory` sources against master's changed paths → 5 of 31. | Blocker quantified. |
 | REFACTOR | Parented the private subject on the delivery HEAD and documented why. | PASS; no candidate or receipt byte changed. |
+
+## C08 closed — master merged into the branch, reproduction READY
+
+### The merge
+
+`7f9f8bf` brings `origin/master` (`fbcb546e`) into the migration branch, on the maintainer's
+explicit decision. Two conflicts, both caused by this session's own earlier work:
+
+- `master-index.md` → resolved **wholly in favour of master**. Its global progress (`65/93`,
+  computed over every enumerated Plan row) and its P0 row (listing `S0.4` **and** `S101`) are
+  more accurate than the branch's `56/84`. The branch recalculation is discarded.
+- `plan-0/STATUS.md` → **real content merge**. Kept from master the history the branch never
+  had: the verified-progress table by commit, the product decisions closed 2026-09-06, the Área
+  and the Fase A dependency. Added today's state, which master never had: the `86 = 75+7+4`
+  contract, S101 and G1 closed, C06 and C07 closed, C08 and its blocker, the retake point. The
+  branch's own `S0.4` enumeration was redundant and was dropped.
+
+The other three files master changed — `plan-5/STATUS.md`, `plan-9/STATUS.md`,
+`decision-register.md` — merged without conflict, as did the jornada delivery-policy fix, the two
+method skills and the hosts changes. Full suite after the merge: **1212 pass, 0 fail**, 6482
+assertions across 92 files.
+
+### C08 result
+
+`reproduce-c08.sh` now exits 0 with `C08 reproduction READY`. The merge resolved the ancestry:
+`e6b7e673` is an ancestor of HEAD, and Radar's four remaining rejections are gone.
+
+| Reproduced against the C07 manifest | Result |
+|---|---|
+| Candidate plan blob `b794dd1a…` → `openspec/plan.yaml` | agrees |
+| Generated ROADMAP blob `1b183579…` → `openspec/ROADMAP.md` | agrees |
+| Archive copies / active retirements | 31 / 14, agrees |
+| Recipe `64ca75e2…` | agrees |
+| Package OID | **not computed** — C09 alone owns it |
+| Common Git refs/objects before-after | identical |
+| Active worktree | clean, canonical paths absent |
+
+**The generated ROADMAP blob is unchanged by the merge.** Bringing 14 commits of master in did
+not move the rendered plan, which confirms the candidate is stable and the merge was additive.
+
+Activation projection: **33 files, +13 977 / −250, activation tree of 600 paths.**
+
+### Two findings carried into C09
+
+1. **`partition.yaml` `validation.expected`** declares `tracked_files: 588` against **600**
+   observed. Radar never reads that block, so nothing validates it, and it cannot be corrected
+   without changing the C07 subject that contains it.
+2. **The candidate lags master by 3 commits.** It reflects master through `e6b7e673` only; the
+   tip is `fbcb546e`. Master has since recorded planning facts the candidate does not carry,
+   including the jornada delivery-policy fix logged as unplanned scope in `plan-5`. This is the
+   dual-source-of-truth problem in its concrete form and it needs a maintainer decision before
+   C09: either fold those facts into the candidate and re-prove C07/C08, or declare the cutoff
+   explicitly so it is not read as lost information.
+
+### Root cause, named
+
+The legacy corpus and the new corpus are both live. The same facts get written twice, in two
+formats, under two calculation rules — which is why the same progress figure existed as both
+`56/84` and `65/93`, and why `S0.4` got enumerated independently in each. **While C09 has not
+activated, every new write to the legacy corpus enlarges the delta C09 must absorb.** The
+operating rule until activation is recorded in `HOJA-DE-RUTA.md`.
+
+### Boundary
+
+`T0.4.8.1` complete; 39 tasks closed, 6 open. `T0.4.8.2`/`T0.4.8.3` not started. No package OID,
+canonical path, archive byte, commit to master or push to master occurred. Resume checkpoint:
+settle the candidate-versus-master cutoff, then C09. Rollback boundary: the merge commit plus
+the C08 receipt and roadmap files.
+
+### TDD cycle evidence
+
+| Cycle | Evidence | Result |
+|---|---|---|
+| RED | Pre-merge C08 failed with 4 Radar ancestry rejections against a logical parent absent from the branch. | Blocker reproduced. |
+| GREEN | Post-merge C08 exits 0 READY; plan, roadmap, 31 copies and 14 retirements all agree with the manifest. | PASS. |
+| TRIANGULATE | Full suite 1212 pass / 0 fail; ROADMAP blob unchanged by the merge; common-Git refs and objects identical before and after. | PASS. |
+| REFACTOR | Resolved both conflicts by content rather than by side, keeping master's history and this branch's current state. | PASS; no candidate byte changed. |

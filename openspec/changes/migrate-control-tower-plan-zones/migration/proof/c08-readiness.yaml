@@ -1,0 +1,49 @@
+schema: c08-reproduction-readiness
+schema_version: 1
+evidence_status: {state: pass, usable_for: [c08-closure, c09-input], prohibits: [activation, delivery, final-package-identity]}
+readiness: ready
+package_identity: not-computed-c09-alone-owns-final-package-identity
+delivery_checkout_head: 7f9f8bfd573224344ec9ceb7dbc1f2fe21997489
+reproduced_against_manifest:
+  plan: {mode: "100644", blob: b794dd1a425b75808ffb9c5c03881979fc23f58f, target: openspec/plan.yaml, agrees: true}
+  roadmap: {mode: "100644", blob: 1b18357985ec68afaa1a7dbfc30a6a64fe2a0e1a, target: openspec/ROADMAP.md, generation: radar-deterministic-render, agrees: true}
+  archives: {copies: 31, retirements: 14, agrees: true}
+  recipe_sha256: 64ca75e29c88d1370a74cf42bc68d4389bc41690dfb3cc247685903e497d1eb3
+activation_projection:
+  paths: 600
+  changed_files: 33
+  added_lines: 13977
+  deleted_lines: 250
+  name_status_sha256: c6c743883e211e0e99225061f6d5f72b614a5a0cf99f17c35849387ae0d39423
+  numstat_sha256: 23274c77808921fa80d6d59d48ddcef57180d37bf296ec6db0b232267924027c
+isolation:
+  private_git: {object_writes: private-c08-only}
+  common_git: {refs_before_after_equal: true, objects_before_after_equal: true}
+  active_worktree: {clean: true, canonical_paths_absent: true}
+proof_script: {path: migration/proof/reproduce-c08.sh, sha256: 1d006b56593364edcabab0001ead1a45ecc6f839efda98fe75b283f0033ddd4c}
+ancestry:
+  resolved_by: merge 7f9f8bf bringing origin/master into the migration branch
+  logical_parent_is_ancestor: true
+  note: >-
+    Before the merge the C07 logical parent e6b7e673 was not an ancestor of this branch and Radar
+    rejected S9.9, S9.10 and S101 with "origen no es ancestro estricto". The merge resolved it.
+    The generated ROADMAP blob is unchanged by the merge, which confirms the candidate is stable.
+open_findings_for_c09:
+  partition_expected_block:
+    declared_tracked_files: 588
+    observed_activation_paths: 600
+    agrees: false
+    binding: false
+    reason: >-
+      partition.yaml validation.expected is declarative; Radar never reads tracked_files or
+      validation.expected (verified with rg over agent-workflows/tools/radar). It cannot be
+      corrected without changing the C07 subject, because partition.yaml is inside that subject.
+  candidate_lags_master:
+    candidate_reflects_master_through: e6b7e673f671e6bba30f9a600bf0333a1cd90af2
+    master_tip: fbcb546efd07dc654c611405b3a34f898df7c800
+    commits_not_reflected: 3
+    reason: >-
+      The candidate incorporated the Plan 9 supplement up to e6b7e673 only. Master has since
+      recorded further planning facts, including the jornada delivery-policy fix as unplanned
+      scope in plan-5. Those facts exist in the legacy corpus but not in the candidate plan.
+forbidden: [package-oid, commit-to-master, push-to-master, canonical-path-materialization, c09-activation]
