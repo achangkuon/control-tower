@@ -20,7 +20,7 @@ nothing_to_record_observation:
   state_keys: [shipped, docs, docs_source]
   state_sha256: not-binding-the-doc-guard-state-records-unix-epoch-shipped-and-docs-markers
 proof_binding:
-  radar_execution_tree: b50de802c21c0d0e778d1dd8423636cff851d9fb
+  radar_execution_tree: 923f1fb8c8e2b230a435e0b9de75641068752aef
   proof_script_sha256: 64ca75e29c88d1370a74cf42bc68d4389bc41690dfb3cc247685903e497d1eb3
   binding_rule: the subject tree and proof_script_sha256 are binding; the subject commit OID and the attestation file digest are not, because both embed per-run timestamps or paths.
 superseded_receipt_revision:

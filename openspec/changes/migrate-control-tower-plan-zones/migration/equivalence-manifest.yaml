@@ -15,14 +15,21 @@ content:
   plan: {mode: "100644", blob: b794dd1a425b75808ffb9c5c03881979fc23f58f, sha256: e559f13409570c66827c452c8c305450ba23a402ea157e9fa1b927ee1107e614}
   roadmap: {mode: "100644", blob: 1b18357985ec68afaa1a7dbfc30a6a64fe2a0e1a, sha256: 29078dd9d4a8917f1405e4851b5dd2048cbde92264fa894e02f76b1b68d9910c}
   partition: {mode: "100644", blob: a0cd26d4e34422fd5ea4ae510a66c3f39096dc07, sha256: 3b58bef8d999ec143593be0cf06b868b3c26e00e52ef5648a8f12092aef945c2, contract: "75/7/4=86"}
-  candidate_inputs: {mode: "100644", blob: d92778e9f9834c9b68ac2aa10114a54e3203f018, sha256: ab2bc84bd55d6a2babce60ab1c17cfb8336009c8d58d33b1d3c87a2edb9ac0c5}
+  candidate_inputs: {mode: "100644", blob: 7fb620fb12243547426eb0663855a9ea1c464da4, sha256: 790b2749c0ede77412fe52f73815c728c9838e8d55da20f9cdc1d5bcc370da64}
   ledgers: {source_inventory: 55afc8fe2846bf029b8cb1bcecb059bf93b88c92, lineage: bddb27d72e595e2bafa5a72cd275b0a50a6b736a}
-  archives: {entries: 31, retirements: 14, retained_archive_only: 17, identity_sha256: a45fec33a42336051ebe38c3fe7a7caf612666cafcd3b8a4ee0434f0de3ef942}
+  archives:
+    entries: 31
+    retirements: 14
+    retained_archive_only: 17
+    archive_plan_tsv_sha256: b7b1ea6a404ac69653956b2e31c73ec20bd72e4e1b86371d0755f6e1c7f0ac17
+    recipe: sha256 over the archive plan, one line per entry as
+      "<source_commit>\t<source_path>\t<destination>\t<activation_treatment>", inventory order, LF-terminated
+    inventory: {blob: 01f9852534498da93195d18b9b642b4ca01f7b6a, sha256: 93db9a86eb96232f0120a5d07f5e1623958cffef06466a9a93fea7a50208eeb1}
 radar_execution_subject:
-  tree: b50de802c21c0d0e778d1dd8423636cff851d9fb
+  tree: 923f1fb8c8e2b230a435e0b9de75641068752aef
   semantics: technical-non-product-non-activating-not-package-or-candidate-identity
   recipe_sha256: 64ca75e29c88d1370a74cf42bc68d4389bc41690dfb3cc247685903e497d1eb3
-  path_mode_blob_inputs: {count: 589, sha256: 7b4ca2561f6296a6b331378c32e05ae321721c05036e84b94f0d6c2b9c3c2732}
+  path_mode_blob_inputs: {count: 589, sha256: 9a2bfd5bed1baad1adeef262eb0b9cf3031ce6a65250325125123aff404bc736}
   receipt_exclusions: [migration/equivalence-manifest.yaml, migration/proof/c07-radar-results.yaml, migration/proof/c07-doc-close-results.yaml]
   binding_rule: the subject tree, the path/mode/blob digest, and recipe_sha256 are the only binding subject identities; C08 reproduces those and must not compare a commit OID.
 non_reproducible_by_construction:

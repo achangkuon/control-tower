@@ -7,16 +7,16 @@ inputs:
   logical_parent: e6b7e673f671e6bba30f9a600bf0333a1cd90af2
   source_commit: 43130ad40af06f3ed05671000719217bee74f0a5
   candidate: {mode: "100644", blob: b794dd1a425b75808ffb9c5c03881979fc23f58f, sha256: e559f13409570c66827c452c8c305450ba23a402ea157e9fa1b927ee1107e614}
-  candidate_inputs: {mode: "100644", blob: d92778e9f9834c9b68ac2aa10114a54e3203f018, sha256: ab2bc84bd55d6a2babce60ab1c17cfb8336009c8d58d33b1d3c87a2edb9ac0c5}
+  candidate_inputs: {mode: "100644", blob: 7fb620fb12243547426eb0663855a9ea1c464da4, sha256: 790b2749c0ede77412fe52f73815c728c9838e8d55da20f9cdc1d5bcc370da64}
 session_discovery:
   base: {commit: 43130ad40af06f3ed05671000719217bee74f0a5, rows: 72}
   plan_9_supplement: {commit: e6b7e673f671e6bba30f9a600bf0333a1cd90af2, rows: 2, replace: [S9.9], add: [S9.10]}
   result: {merged_rows: 73, unique_session_ids: 73, inventory_exact: true, stdout_sha256: 34f8b49d12468c9c089b5ce1212f469f23ea5b54f61eee07d86faae6da09103d}
 radar_execution_subject:
-  tree: b50de802c21c0d0e778d1dd8423636cff851d9fb
+  tree: 923f1fb8c8e2b230a435e0b9de75641068752aef
   semantics: technical-non-product-non-activating-not-package-or-candidate-identity
   recipe_sha256: 64ca75e29c88d1370a74cf42bc68d4389bc41690dfb3cc247685903e497d1eb3
-  path_mode_blob_inputs: {count: 589, sha256: 7b4ca2561f6296a6b331378c32e05ae321721c05036e84b94f0d6c2b9c3c2732}
+  path_mode_blob_inputs: {count: 589, sha256: 9a2bfd5bed1baad1adeef262eb0b9cf3031ce6a65250325125123aff404bc736}
   receipt_exclusions: [migration/equivalence-manifest.yaml, migration/proof/c07-radar-results.yaml, migration/proof/c07-doc-close-results.yaml]
   private_git: {head: detached, refs: 0, object_writes: private-r14-only}
   binding_rule: the subject tree, the path/mode/blob digest, and recipe_sha256 are the only binding subject identities; the commit OID is omitted because git commit-tree embeds timestamps the recipe does not fix.
@@ -24,7 +24,7 @@ content:
   plan: {mode: "100644", blob: b794dd1a425b75808ffb9c5c03881979fc23f58f, sha256: e559f13409570c66827c452c8c305450ba23a402ea157e9fa1b927ee1107e614}
   roadmap: {mode: "100644", blob: 1b18357985ec68afaa1a7dbfc30a6a64fe2a0e1a, sha256: 29078dd9d4a8917f1405e4851b5dd2048cbde92264fa894e02f76b1b68d9910c}
   partition: {full_sessions: 75, future_successors: 7, satisfied_history: 4, activation_records: 86}
-  archives: {copies: 31, retirements: 14, retained_archive_only: 17, identity_sha256: a45fec33a42336051ebe38c3fe7a7caf612666cafcd3b8a4ee0434f0de3ef942}
+  archives: {copies: 31, retirements: 14, retained_archive_only: 17, archive_plan_tsv_sha256: b7b1ea6a404ac69653956b2e31c73ec20bd72e4e1b86371d0755f6e1c7f0ac17}
 command_observations:
   candidate_inputs_check: {exit: 0, stdout_sha256: d7f2bb034959ef84cb33fb89ad2e766e3d841b0ce870a5f8f4627e6a6095e79e}
   check: {exit: 0, stdout_sha256: 1226ea05d068d6c99ef6f561f5e5937f4484e4433ca108f98dde80f464f02ab5}
