@@ -7,6 +7,7 @@ el próximo trabajo. No existen un `STATUS.md` ni un `master-index.md` paralelos
 ```sh
 radar check                         # usa openspec/plan.yaml y el repo actual
 radar status                        # estado, colas por Zona y asientos compatibles
+radar status --json                 # el mismo cálculo, legible por máquina (radar.snapshot/v1)
 radar zonas                         # cobertura de la partición sobre git ls-files
 radar render                        # escribe openspec/ROADMAP.md atómicamente
 radar render -f otro.yaml -o salida.md -C /repo
@@ -176,6 +177,20 @@ artefactos como ejemplo; cada producto los crea al adoptar el modelo.
 - Criterios binarios declarados para Sesiones y Tareas abiertas.
 - Propuesta/revalidación de ruta y base Git exacta.
 - Evidencia de entrega local e integrada; PR opcional positivo.
+
+## Snapshot legible por máquina
+
+`radar status --json` emite `radar.snapshot/v1`: producto, HEAD, avance total, avance y cola
+por Zona, estado derivado de cada Sesión, asientos compatibles y cuántas Sesiones quedan sin
+Zona. Los estados salen sin emoji: la palabra del vocabulario es el contrato, el emoji es
+presentación que Radar posee.
+
+Existe para que ningún consumidor vuelva a derivar el avance por su cuenta. Un lector que
+re-parsea un documento renderizado —o que reimplementa la regla— termina discrepando del plan
+que dice mostrar, y ambos números parecen correctos. Radar calcula; el consumidor dibuja.
+
+Se niega exactamente donde se niega `radar status`: si la validación da errores no emite nada
+y sale distinto de cero. Un consumidor que recibe JSON recibe cifras que Radar firma.
 
 ## Frontera honesta
 

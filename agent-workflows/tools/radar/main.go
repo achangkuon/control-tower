@@ -12,7 +12,7 @@ import (
 const uso = `radar — herramienta determinista de planificación
 
   radar check   [-f openspec/plan.yaml] [-C raíz] valida el dato, git y la partición
-  radar status  [-f openspec/plan.yaml] [-C raíz] estado, colas y asientos calculados
+  radar status  [-f openspec/plan.yaml] [-C raíz] [--json] estado, colas y asientos calculados
   radar zonas   [-f openspec/plan.yaml] [-C raíz] cobertura sobre archivos rastreados
   radar render  [-f openspec/plan.yaml] [-o openspec/ROADMAP.md] [-C raíz]
 
@@ -31,6 +31,7 @@ func main() {
 	archivo := fs.String("f", "openspec/plan.yaml", "archivo de plan")
 	salida := fs.String("o", "openspec/ROADMAP.md", "salida generada (sólo render)")
 	raiz := fs.String("C", "", "raíz del repositorio")
+	comoJSON := fs.Bool("json", false, "emitir el snapshot legible por máquina (sólo status)")
 	_ = fs.Parse(os.Args[2:])
 
 	if comando == "help" || comando == "-h" || comando == "--help" {
@@ -53,6 +54,13 @@ func main() {
 	case "check":
 		os.Exit(cmdCheck(p, root))
 	case "status":
+		if *comoJSON {
+			if err := cmdStatusJSON(os.Stdout, p, root); err != nil {
+				fmt.Fprintln(os.Stderr, "✗", err)
+				os.Exit(1)
+			}
+			return
+		}
 		if err := cmdStatus(p, root); err != nil {
 			fmt.Fprintln(os.Stderr, "✗", err)
 			os.Exit(1)
