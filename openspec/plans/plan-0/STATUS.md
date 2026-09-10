@@ -385,6 +385,13 @@ congelaría para siempre la medición de avance — justo lo contrario de para l
 existe. Necesita leer `openspec/plan.yaml` directamente, y eso es trabajo que **ninguna Sesión
 posee**.
 
+Los otros cuatro consumidores sí son re-apuntes simples: el fixture de bytes en
+`test/contracts/session-plan-snapshot.test.mjs`, la referencia a `plan-12/STATUS.md` en el
+`ROADMAP.md` de la raíz, la de `plan-9/STATUS.md` en `agent-workflows/MIGRACION-ZONAS.md`, y los
+tres tests del motor, que siguen a la decisión que se tome sobre él.
+
+Trazabilidad: activación `8628319`, registro del hallazgo `a98243a`, reversión `116ee27`.
+
 ### Punto de retoma
 
 **Próximo paso concreto — C08 (`T0.4.8.1`).** Reproducir con índice Git privado únicamente la
