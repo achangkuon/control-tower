@@ -272,3 +272,41 @@ re-prueba autorizada.
 
 El diff completo de la migración es de 18 856 líneas y **debe partirse en lotes de revisión
 de 400 líneas o menos antes de la entrega**.
+
+### 📍 Punto de retoma de S0.4
+
+**Estado al 2026-09-09:** C07 cerrado en `ac1c501`; documentación de plan en `03254d1`. La
+rama va 116+ commits adelante de `master` y **no se integra hasta C09, por diseño**.
+
+**Próximo paso concreto — C08 (`T0.4.8.1`).** Reproducir con un índice Git privado
+únicamente la receta, el contenido y la evidencia que lista el manifest de C07, y registrar
+readiness **sin calcular ni afirmar OID de paquete**. Se para ante cualquier byte cambiado,
+ruta no nombrada, mode/blob que no coincida, estado canónico parcial, o total autorado de
+C08 mayor a 400.
+
+Qué debe coincidir, y qué no:
+
+| Debe reproducir | No debe compararse |
+|---|---|
+| Árbol del sujeto `b50de802c21c0d0e778d1dd8423636cff851d9fb` | OID del commit del sujeto (lleva timestamp) |
+| `path_mode_blob_inputs`: 589 entradas, digest `7b4ca256…` | Digest del archivo de atestación (lleva el proof_root) |
+| `recipe_sha256` `64ca75e2…` | Digests de refs/objects del repo vivo |
+| Blobs de contenido: plan `b794dd1a…`, ROADMAP `1b183579…` | `state_sha256` del doc-guard (lleva epoch UNIX) |
+
+**Chequeo explícito que C08 arrastra:** comparar el conteo real del árbol de activación
+—que **no** incluye el script de prueba— contra `validation.expected` de `partition.yaml`,
+y explicar el intercambio entre `cimientos` e `instalacion` o corregir el bloque declarado.
+
+**Cómo reproducir la prueba de C07 desde cero:**
+
+```
+openspec/changes/migrate-control-tower-plan-zones/migration/proof/rebuild-c07-r14.sh \
+  <repo> <proof-root-vacío> ~/.claude/hooks/doc-guard.sh <sha256-del-hook>
+```
+
+El `proof-root` es desechable y debe estar ausente o vacío. Los tests van con `bun test`,
+nunca con `node --test`: los imports `bun:` hacen fallar a Node con
+`ERR_UNSUPPORTED_ESM_URL_SCHEME`, que parece un error de código y no lo es.
+
+**C09 no se empieza sin cabeza fresca.** Reemplaza todo el corpus de planificación heredado
+en un solo movimiento y es el **único paso irreversible** de esta migración.
