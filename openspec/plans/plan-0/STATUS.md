@@ -392,6 +392,13 @@ tres tests del motor, que siguen a la decisión que se tome sobre él.
 
 Trazabilidad: activación `8628319`, registro del hallazgo `a98243a`, reversión `116ee27`.
 
+**Para retomar** — el punto de entrada es
+[`HOJA-DE-RUTA.md`](../../changes/migrate-control-tower-plan-zones/HOJA-DE-RUTA.md), que lleva el
+bloqueo vigente, los pasos exactos de la activación ya ejecutados con éxito y las trampas
+conocidas. El registro técnico completo está en `apply-progress.md` del mismo directorio.
+Criterio de cierre del paso que falta: `bun test` vuelve a **1212 · 0** con las rutas canónicas
+presentes.
+
 ### Punto de retoma
 
 **Próximo paso concreto — C08 (`T0.4.8.1`).** Reproducir con índice Git privado únicamente la
