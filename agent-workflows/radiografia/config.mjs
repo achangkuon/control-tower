@@ -8,7 +8,12 @@ export const CONFIG_FILE = "radiografia.json"
 // assumed — otherwise every other project would report a meaningless 0% shipped.
 const DEFAULTS = Object.freeze({
   title: "Radiografía del producto",
-  masterIndex: "openspec/plans/master-index.md",
+  // The plan is the only editable planning source, and Radar is the only thing
+  // that computes progress from it. The report asks; it never re-derives.
+  // `radar.cwd` is resolved against the repository root, because the tool may
+  // live in its own module rather than at the top level.
+  plan: "openspec/plan.yaml",
+  radar: Object.freeze({ command: Object.freeze(["radar"]), cwd: "." }),
   judgment: "openspec/plans/radiografia.md",
   out: "radiografia.html",
   cache: ".radiografia-cache.json",

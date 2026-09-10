@@ -35,5 +35,5 @@ const m = result.measurements
 const ship = m.code.shipping ? ` · ${m.code.shipping.installed_pct}% instalado` : ""
 const suite = m.tests ? `${m.tests.pass} pass / ${m.tests.fail} fail${m.tests.at_head ? "" : " (de otro commit)"}` : "sin medir"
 console.log(`radiografía → ${relative(resolve(root), result.path)}`)
-console.log(`  ${m.git.short}${m.git.clean ? "" : " · árbol sucio"} · ${m.global.sessions_closed}/${m.global.sessions_total} Sesiones${ship} · suite: ${suite}`)
+console.log(`  ${m.git.short}${m.git.clean ? "" : " · árbol sucio"} · ${m.global.sesiones_cerradas}/${m.global.sesiones_total} Sesiones${ship} · suite: ${suite}`)
 if (result.recorded) console.log("  resultado de la suite registrado para este commit")

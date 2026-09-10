@@ -5,7 +5,12 @@ const fail = (code, detail) => { throw Object.assign(new Error(`${code}: ${detai
 
 const STYLE = readFileSync(join(import.meta.dir, "style.css"), "utf8")
 const CHIPS = { sólido: "c-ok", crítico: "c-stop", estructural: "c-stop", nuevo: "c-stop", deuda: "c-wait", ritmo: "c-wait", resuelto: "c-ok" }
-const STATE_CLASS = { COMPLETO: "s-ok", "EN CURSO": "s-wait", BLOQUEADO: "s-stop", FRENADO: "s-stop", PLANIFICADO: "s-flat", DIFERIDO: "s-wait" }
+// The closed vocabulary of seven, plus the one word a Zona row needs and no
+// Sesión ever carries: a Zona with nothing enumerated is not in any state yet.
+const STATE_CLASS = {
+  COMPLETO: "s-ok", ARCHIVADO: "s-ok", "EN CURSO": "s-wait", DIFERIDO: "s-wait",
+  BLOQUEADO: "s-stop", LISTO: "s-ok", PLANIFICADO: "s-flat", "SIN ENUMERAR": "s-flat",
+}
 
 const escape = (text) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
 
@@ -32,18 +37,21 @@ export function parseAuthored(source) {
   return Object.freeze({ meta: Object.freeze(meta), body })
 }
 
+const pct = (part, whole) => whole ? `${Math.round((part / whole) * 100)}%` : "—"
+
 const instruments = (m) => {
   const ship = m.code.shipping
-  const enumerated = m.plans.filter((plan) => plan.total !== null).length
+  const g = m.global
+  const enumerated = m.zonas.filter((zona) => zona.total !== null).length
   const cells = [
-    { value: `${Math.round((m.global.plans_closed / m.global.plans_total) * 100)}%`, label: `Planes cerrados · ${m.global.plans_closed} de ${m.global.plans_total}`, tone: "" },
-    { value: `${Math.round((m.global.sessions_closed / m.global.sessions_total) * 100)}%`, label: `Sesiones cerradas · ${m.global.sessions_closed} de ${m.global.sessions_total}`, tone: "" },
+    { value: pct(g.zonas_cerradas, g.zonas_total), label: `Zonas cerradas · ${g.zonas_cerradas} de ${g.zonas_total}`, tone: "" },
+    { value: pct(g.sesiones_cerradas, g.sesiones_total), label: `Sesiones cerradas · ${g.sesiones_cerradas} de ${g.sesiones_total}`, tone: "" },
     m.tests
       ? { value: number(m.tests.pass), label: m.tests.fail ? `tests en verde · ${m.tests.fail} rojos` : "tests en verde · 0 rojos", tone: m.tests.fail ? "i-stop" : "i-ok" }
       : { value: "—", label: "suite sin medir en este commit", tone: "i-wait" },
-    // Plans without a `(n/m S)` fraction cannot report an auditable percentage. Surfacing
-    // the count makes planning debt visible instead of hiding it behind a bare number.
-    { value: `${enumerated}/${m.plans.length}`, label: "Planes con Sesiones enumeradas", tone: enumerated === m.plans.length ? "i-ok" : "i-wait" },
+    // A Zona with no enumerated Sesión cannot report an auditable percentage.
+    // Surfacing the count keeps planning debt visible instead of hiding it.
+    { value: `${enumerated}/${m.zonas.length}`, label: "Zonas con Sesiones enumeradas", tone: enumerated === m.zonas.length ? "i-ok" : "i-wait" },
     { value: `${m.code.doc_ratio}×`, label: "se documenta más de lo que se construye", tone: "i-wait" },
   ]
   if (ship) cells.splice(2, 0,
@@ -53,29 +61,54 @@ const instruments = (m) => {
     `    <div${cell.tone ? ` class="${cell.tone}"` : ""}><b>${cell.value}</b><span>${escape(cell.label)}</span></div>`).join("\n")}\n  </div>`
 }
 
-const planRows = (m) => m.plans.map((plan) => {
-  const measured = plan.total !== null
-  const width = measured ? plan.pct : 100
-  const label = measured ? `${plan.pct}% ${plan.closed}/${plan.total}` : "sin medir"
-  return `        <tr><td class="mono">${escape(plan.id)}</td><td>${escape(plan.name)}</td>` +
+// A Zona is territory, not work, so Radar deliberately computes no state for one.
+// The row still needs a word, and it is read off facts Radar did compute: the
+// queue head's own state while work is open, COMPLETO when nothing is left, and
+// DIFERIDO when what remains was postponed rather than queued.
+const zonaState = (zona) => {
+  if (zona.total === null) return "SIN ENUMERAR"
+  if (zona.cola.length) return zona.cola[0].estado
+  return zona.cerradas === zona.total ? "COMPLETO" : "DIFERIDO"
+}
+
+const zonaRemaining = (zona) => {
+  if (zona.total === null) return zona.unmeasured_reason ?? ""
+  const [next] = zona.cola
+  if (!next) return zona.cerradas === zona.total ? "—" : "sin cola: lo que queda está diferido"
+  return `\`${next.sesion}\` — ${next.resultado}`
+}
+
+const zonaRows = (m) => m.zonas.map((zona) => {
+  const measured = zona.total !== null
+  const width = measured ? zona.pct : 100
+  const label = measured ? `${zona.pct}% ${zona.cerradas}/${zona.total}` : "sin medir"
+  const state = zonaState(zona)
+  return `        <tr><td class="mono">${escape(zona.id)}</td><td>${escape(zona.nombre)}</td>` +
     `<td><div class="meter"><div class="track"><div class="fill${measured ? "" : " zero"}" style="width:${width}%"></div></div><span class="pct">${escape(label)}</span></div></td>` +
-    `<td><span class="state ${STATE_CLASS[plan.state] ?? "s-flat"}">${escape(plan.state)}</span></td>` +
-    `<td>${inline(measured ? plan.remaining : plan.unmeasured_reason ?? plan.remaining)}</td></tr>`
+    `<td><span class="state ${STATE_CLASS[state] ?? "s-flat"}">${escape(state)}</span></td>` +
+    `<td>${inline(zonaRemaining(zona))}</td></tr>`
 }).join("\n")
 
 const progressTable = (m) => `<div class="scroll">
       <table>
-        <thead><tr><th>Plan</th><th>Qué resuelve</th><th>Avance</th><th>Estado</th><th>Qué queda</th></tr></thead>
+        <thead><tr><th>Zona</th><th>Qué territorio es</th><th>Avance</th><th>Estado</th><th>Qué queda</th></tr></thead>
         <tbody>
-${planRows(m)}
+${zonaRows(m)}
         </tbody>
       </table>
     </div>`
 
-const queueList = (m) => m.queue.length === 0
-  ? `<p class="lede">La cola de ejecución está vacía en el índice maestro.</p>`
-  : `<div class="queue">\n${m.queue.map((item) =>
-      `      <div class="queue-item"><span class="pos">${item.pos}</span><span class="sid">${escape(item.session)}</span><span class="desc">—</span></div>`).join("\n")}\n    </div>`
+// The plan has no single global queue: work is ordered inside each Zona, and the
+// seats say which Zonas can run at once. Showing one flat list would invent an
+// ordering across Zonas that nobody decided.
+const queueList = (m) => {
+  const heads = m.zonas.filter((zona) => zona.cola.length).map((zona) => ({ zona, next: zona.cola[0] }))
+  if (!heads.length) return `<p class="lede">Ninguna Zona tiene trabajo en cola.</p>`
+  const seats = new Set(m.asientos)
+  return `<div class="queue">\n${heads.map(({ zona, next }) =>
+    `      <div class="queue-item"><span class="pos">${escape(zona.id)}</span><span class="sid">${escape(next.sesion)}</span>` +
+    `<span class="desc">${inline(next.resultado || "—")}${seats.has(zona.id) ? " · asiento disponible" : ""}</span></div>`).join("\n")}\n    </div>`
+}
 
 const DERIVED = { instrumentos: instruments, avance: progressTable, cola: queueList }
 
@@ -187,7 +220,7 @@ ${m.code.shipping ? `    Instalado: ${number(m.code.shipping.installed_lines)} l
 ` : ""}    Documentación: ${number(m.code.doc_lines)} líneas, ratio ${m.code.doc_ratio}× sobre producto ·
     Últimas ${m.git.recent.window_hours} h: ${number(m.git.recent.total)} commits, ${number(m.git.recent.docs)} de documentación y ${number(m.git.recent.code)} de código ·
     Juicio escrito el ${escape(doc.meta.verified_at ?? "—")} contra <code>${escape(doc.meta.verified_against.slice(0, 7))}</code> ·
-    Fuente de las cifras de planificación: <code>${escape(m.source.masterIndex)}</code>. Este documento se regenera solo; no lo edites a mano.
+    Fuente de las cifras de planificación: <code>${escape(m.source.plan)}</code>, leído con Radar. Este documento se regenera solo; no lo edites a mano.
   </footer>`
 
 export function renderReport(doc, m) {

@@ -7,6 +7,29 @@ import { dirname, join } from "node:path"
 import { parseSuiteSummary, radiografia } from "../radiografia/cli.mjs"
 import { defaults } from "../radiografia/config.mjs"
 
+// Radar is a separate tool with its own toolchain; the CLI's contract with it is
+// the JSON on stdout, so the fixture project ships a stand-in that prints one.
+const RADAR_STUB = `import { readFileSync } from "node:fs"
+import { dirname, join } from "node:path"
+const here = dirname(new URL(import.meta.url).pathname)
+const fixture = JSON.parse(readFileSync(join(here, "radar-fixture.json"), "utf8"))
+process.stdout.write(fixture.stdout)
+`
+
+const SNAPSHOT = {
+  schema: "radar.snapshot/v1",
+  producto: "fixture",
+  head: "0".repeat(40),
+  avance: { cerradas: 35, total: 50 },
+  zonas: [
+    { id: "contratos", nombre: "Contratos", cerradas: 3, total: 3, cola: [] },
+    { id: "hosts", nombre: "Hosts", cerradas: 2, total: 9, cola: [{ posicion: 1, sesion: "S5.2", estado: "LISTO", resultado: "Parking y retoma del loop" }] },
+  ],
+  sesiones: [{ id: "S5.2", zona: "hosts", estado: "LISTO", resultado: "Parking y retoma del loop" }],
+  asientos: ["hosts"],
+  territorio_pendiente: 0,
+}
+
 const roots = []
 const git = (root, ...args) => execFileSync("git", ["-C", root, ...args], { encoding: "utf8" }).trim()
 const write = (root, path, body) => {
@@ -17,18 +40,20 @@ const project = () => {
   const root = mkdtempSync(join(tmpdir(), "ct-radiografia-cli-")); roots.push(root)
   git(root, "init", "-q", "-b", "master")
   git(root, "config", "user.email", "test@example.com"); git(root, "config", "user.name", "Test")
-  write(root, "openspec/plans/master-index.md", [
-    "# Índice", "", "## 🎯 Cola de ejecución", "", "`#1 S5.2` — hoy.", "",
-    "**Avance global**: 3/11 Planes cerrados (27%) · Sesiones cerradas en planes activos: 35/50 (70%).", "",
-    "| ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |",
-    "|----|------|--------|---|------|-------|-----------|-----|",
-    "| P0 | Documentación | ✅ COMPLETO | 100% (3/3 S) | — | Maintainer | — | [STATUS](plan-0/STATUS.md) |", "",
-  ].join("\n"))
+  write(root, ".gitignore", ".radar-stub/\n")
+  write(root, ".radar-stub/radar-stub.mjs", RADAR_STUB)
+  write(root, ".radar-stub/radar-fixture.json", JSON.stringify({ stdout: `${JSON.stringify(SNAPSHOT)}\n` }))
+  write(root, "openspec/plan.yaml", "schema: plan\nschema_version: 3\nproducto: fixture\n")
   write(root, "core.mjs", "export const a = 1\n")
   write(root, "install/runtime-payload.mjs", 'export const RUNTIME_PAYLOAD_FILES = [\n  "core.mjs",\n]\n')
-  write(root, "radiografia.json", JSON.stringify({ project: "Fixture", title: "Radiografía de prueba", payload: { manifest: "install/runtime-payload.mjs" } }))
+  write(root, "radiografia.json", JSON.stringify({
+    project: "Fixture",
+    title: "Radiografía de prueba",
+    radar: { command: ["bun", ".radar-stub/radar-stub.mjs"], cwd: "." },
+    payload: { manifest: "install/runtime-payload.mjs" },
+  }))
   write(root, "openspec/plans/radiografia.md", "---\nverified_against: pendiente\nverified_at: 2026-08-20\nstandfirst: Semilla.\n---\n\n{{instrumentos}}\n\n## Avance\n\n{{avance}}\n")
-  git(root, "add", "-A"); git(root, "commit", "-qm", "docs(plans): seed")
+  git(root, "add", "-A"); git(root, "commit", "-qm", "docs(plan): seed")
   return root
 }
 afterEach(() => { while (roots.length) rmSync(roots.pop(), { recursive: true, force: true }) })

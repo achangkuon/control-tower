@@ -1,6 +1,8 @@
 {
   "project": "Control Tower",
   "title": "Radiografía de la Torre",
+  "plan": "openspec/plan.yaml",
+  "radar": { "command": ["go", "run", "."], "cwd": "agent-workflows/tools/radar" },
   "code": {
     "extensions": [".mjs", ".js"],
     "exclude": ["test", "node_modules", "openspec", "scripts"],

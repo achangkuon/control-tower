@@ -25,50 +25,52 @@ const lineCount = (path) => {
 const listUnder = (tracked, dirs, keep) =>
   tracked.filter((rel) => dirs.includes(topSegment(rel)) && keep(rel))
 
-export function parsePlanTable(markdown) {
-  const rows = markdown.split("\n").filter((line) => /^\|\s*P\d+\s*\|/.test(line))
-  if (!rows.length) fail("CT_RADIOGRAFIA_NO_PLAN_TABLE", "master-index has no `| P<n> |` rows")
-  return Object.freeze(rows.map((row) => {
-    const cells = row.split("|").slice(1, -1).map((cell) => cell.trim())
-    const [id, name, state, progress, , owner, remaining] = cells
-    const fraction = progress.match(/(\d+)%\s*\((\d+)\s*\/\s*(\d+)\s*S\)/)
-    // The standard derives the percentage from `Sesiones cerradas / Sesiones enumeradas`.
-    // A bare `100%` has no denominator to audit, so it is unmeasured, not complete.
-    const reason = fraction
-      ? null
-      : (progress.match(/\((.+)\)/)?.[1] ?? (/%/.test(progress) ? `${progress} sin fracción de Sesiones` : progress))
-    // Some projects append a note to the state cell after an em dash; the state is the
-    // vocabulary word, and the note is kept rather than mangled into it.
-    const [stateWord, ...noteParts] = state.split(/\s+—\s+/)
-    return Object.freeze({
-      id,
-      name,
-      state: stateWord.replace(/[^\p{L}\s]/gu, "").trim(),
-      state_note: noteParts.length ? noteParts.join(" — ").trim() : null,
-      pct: fraction ? Number(fraction[1]) : null,
-      closed: fraction ? Number(fraction[2]) : null,
-      total: fraction ? Number(fraction[3]) : null,
-      unmeasured_reason: reason,
-      owner: owner ?? "",
-      remaining: remaining ?? "",
+// The wire contract with Radar. An unrecognised schema stops the report: guessing
+// at fields is how a reader starts disagreeing with the plan it claims to show.
+export const SNAPSHOT_SCHEMA = "radar.snapshot/v1"
+
+// Progress is computed once, by the tool that owns the plan vocabulary, and read
+// here. The engine deliberately cannot derive a state, close a Sesión, or total a
+// Zona — every number below arrives already decided.
+export function readPlanSnapshot(root, config) {
+  const plan = join(root, config.plan)
+  if (!existsSync(plan)) fail("CT_RADIOGRAFIA_NO_PLAN", `missing ${config.plan}`)
+
+  const [program, ...leading] = config.radar.command
+  let raw
+  try {
+    raw = execFileSync(program, [...leading, "status", "--json", "-f", plan, "-C", root], {
+      cwd: join(root, config.radar.cwd ?? "."),
+      encoding: "utf8",
+      maxBuffer: 64 * 1024 * 1024,
     })
-  }))
+  } catch (error) {
+    const detail = (error.stderr || error.message || "").toString().trim()
+    fail("CT_RADIOGRAFIA_RADAR_FAILED", `${config.radar.command.join(" ")} status --json — ${detail}`)
+  }
+
+  let snapshot
+  try { snapshot = JSON.parse(raw) } catch (error) {
+    fail("CT_RADIOGRAFIA_RADAR_BAD_JSON", `${config.radar.command.join(" ")} did not emit JSON — ${error.message}`)
+  }
+  if (snapshot?.schema !== SNAPSHOT_SCHEMA) {
+    fail("CT_RADIOGRAFIA_RADAR_SCHEMA", `expected ${SNAPSHOT_SCHEMA}, got ${snapshot?.schema ?? "no schema"}`)
+  }
+  return Object.freeze(snapshot)
 }
 
-export function parseQueue(markdown) {
-  const section = markdown.split(/^##\s.*Cola de ejecución.*$/m)[1]
-  if (!section) return []
-  const line = section.split("\n").find((candidate) => /`#\d+\s+S[\d.]+`/.test(candidate))
-  if (!line) return []
-  return [...line.matchAll(/`#(\d+)\s+(S[\d.]+)`/g)].map(([, pos, session]) => ({ pos: Number(pos), session }))
-}
-
-export function parseGlobalProgress(markdown) {
-  // Written as `**Avance global**:` here and `**Avance global:**` in three other projects.
-  const match = markdown.match(/Avance global:?\*{0,2}:?\s*(\d+)\/(\d+)\s*Planes cerrados[^·]*·[^:]*:\s*(\d+)\/(\d+)/)
-  if (!match) fail("CT_RADIOGRAFIA_NO_GLOBAL_PROGRESS", "master-index has no `Avance global` line")
-  return { plans_closed: Number(match[1]), plans_total: Number(match[2]), sessions_closed: Number(match[3]), sessions_total: Number(match[4]) }
-}
+// A Zona with nothing enumerated has no auditable percentage: 0% reads as "not
+// started" and 100% as "done", and neither is a claim the plan makes. Surfacing
+// the absence keeps planning debt visible instead of dressed as progress.
+const zonaRow = (zona) => Object.freeze({
+  id: zona.id,
+  nombre: zona.nombre,
+  cerradas: zona.total ? zona.cerradas : null,
+  total: zona.total || null,
+  pct: zona.total ? Math.round((zona.cerradas / zona.total) * 100) : null,
+  unmeasured_reason: zona.total ? null : "sin Sesiones enumeradas",
+  cola: Object.freeze((zona.cola ?? []).map((entry) => Object.freeze({ ...entry }))),
+})
 
 export function readTestCache(root, head, cacheFile = ".radiografia-cache.json") {
   const path = join(root, cacheFile)
@@ -146,9 +148,7 @@ const measureGit = (root, windowHours, judgmentSha, judgmentPath, generated) => 
 
 export function measureRepository(root, { config, judgmentSha = null } = {}) {
   const windowHours = config.windowHours
-  const indexPath = join(root, config.masterIndex)
-  if (!existsSync(indexPath)) fail("CT_RADIOGRAFIA_NO_MASTER_INDEX", `missing ${config.masterIndex}`)
-  const index = readFileSync(indexPath, "utf8")
+  const snapshot = readPlanSnapshot(root, config)
 
   const tracked = trackedFiles(root)
   const lines = (paths) => paths.reduce((total, rel) => total + lineCount(join(root, rel)), 0)
@@ -178,12 +178,18 @@ export function measureRepository(root, { config, judgmentSha = null } = {}) {
 
   const git_ = measureGit(root, windowHours, judgmentSha, config.judgment, generatedPaths(config))
 
+  const zonas = Object.freeze(snapshot.zonas.map(zonaRow))
+  // A Zona with no enumerated Sesión can never be closed, so counting it in the
+  // denominator would depress the figure forever. It is unmeasured, not open.
+  const medidas = zonas.filter((zona) => zona.total !== null)
+
   return Object.freeze({
     measured_at: new Date().toISOString(),
     source: Object.freeze({
       project: config.project ?? basename(root),
       title: config.title,
-      masterIndex: config.masterIndex,
+      plan: config.plan,
+      producto: snapshot.producto,
     }),
     git: git_,
     code: Object.freeze({
@@ -195,9 +201,15 @@ export function measureRepository(root, { config, judgmentSha = null } = {}) {
       doc_lines: docLines,
       doc_ratio: productLines ? Number((docLines / productLines).toFixed(2)) : null,
     }),
-    plans: parsePlanTable(index),
-    queue: Object.freeze(parseQueue(index)),
-    global: Object.freeze(parseGlobalProgress(index)),
+    zonas,
+    asientos: Object.freeze([...snapshot.asientos]),
+    territorio_pendiente: snapshot.territorio_pendiente,
+    global: Object.freeze({
+      zonas_cerradas: medidas.filter((zona) => zona.cerradas === zona.total).length,
+      zonas_total: medidas.length,
+      sesiones_cerradas: snapshot.avance.cerradas,
+      sesiones_total: snapshot.avance.total,
+    }),
     tests: readTestCache(root, git_.head, config.cache),
   })
 }
