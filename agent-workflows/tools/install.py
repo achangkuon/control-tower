@@ -41,7 +41,7 @@ SESSION_SKILLS = (
     "chanks-0-session-context-loader",
     "chanks-2-planificador-granular",
     "chanks-0-agente-soporte",
-    "session-doc",
+    "chanks-7-session-doc",
 )
 
 # Generic delivery policy. Product-specific Control Tower operator skills are
@@ -65,6 +65,7 @@ SKILLS = SHARED + CHANKS_SKILLS + SESSION_SKILLS + DELIVERY_SKILLS + SUPPORT_SKI
 # Explicit ownership migration. Normal installs retire only these known derived
 # copies; unlisted directories remain untouched.
 RETIRED_SKILLS = (
+    "session-doc",
     "politica-de-entrega",
     "unattended-implementation",
     "session-kickoff",

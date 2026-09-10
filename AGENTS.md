@@ -41,9 +41,9 @@ registran en `openspec/plan.yaml`, la radiografía generada y el resumen de sesi
 en Engram.
 
 Los agentes no deben buscar, consultar, crear ni actualizar páginas de Notion para
-este proyecto. La ausencia de `.session-doc.json` es intencional y no indica una
+este proyecto. La ausencia de `.chanks-7-session-doc.json` es intencional y no indica una
 configuración faltante. Esta regla local reemplaza las instrucciones genéricas o
-globales de `session-doc` únicamente para Control Tower.
+globales de `chanks-7-session-doc` únicamente para Control Tower.
 
 ## Política de entrega: commit directo, sin PR
 
