@@ -1524,3 +1524,42 @@ La [decisión 63](../decision-register.md) cerró la Fase 2 del plan de depuraci
 **El propósito de P5 sigue pendiente de reescribir.** ~~Es la Fase 3 del plan de depuración~~ — **ejecutada el 2026-08-21**: el propósito está declarado arriba de este archivo, la clasificación pieza por pieza está en §3.1, la frontera está escrita, y el recorte quedó enumerado como `S5.13`. El candidato identificado era correcto pero **más chico de lo que se creía**: no es `policy/delivery-policy.mjs` entero, son tres campos — y dos de ellos el candidato original ni los nombraba. Ver la sección [Fase 3](#fase-3-del-plan-de-depuración--la-verificación-vuelve-a-gentle-ai-2026-08-21).
 
 **Estado de P5 tras la reconciliación:** sin cambios. 92% (11/12 S), con `S5.5` 🟢 LISTO. **Superado por la Fase 3 del mismo día:** 85% (11/13 S), con `S5.5` 🟢 LISTO y destrabada, y `S5.13` 📋 PLANIFICADO.
+
+## Alcance sin ID — `jornada.sh` deja de asumir el flujo de PR (2026-09-09)
+
+**Entregado en `be68b52`, commit directo a `master`.** Trabajo no planificado: ninguna Sesión
+enumerada posee el asesor de jornada. Queda registrado acá porque el cambio consume
+`delivery-policy`, que sí es alcance de P5.
+
+**El defecto.** `jornada.sh` tenía clavado el flujo genérico rama → PR → merge. En un repo cuyo
+`AGENTS.md` declara `delivery.shape: direct-push` eso produjo consejo accionable sobre algo
+inexistente: proponía `gh pr create`, reportaba `support-agent` como *"pusheado, falta mergear el
+PR"* y ofrecía `--mergear-pr`. Verificado el mismo día: `gh pr list --state all` no devuelve **ningún**
+PR para esa rama, ni abierto ni cerrado. El script no leía la política del repo; la suponía.
+
+**El arreglo.** Ahora parsea el bloque `schema: delivery-policy` de `AGENTS.md` y se adapta:
+
+| Antes | Ahora bajo `direct-push` |
+|---|---|
+| `git push && gh pr create --base master` | `git push` |
+| `pusheado, falta mergear el PR` | `limpio y publicado, pero N commit(s) fuera de master` |
+| `--mergear-pr` busca un PR ausente | aborta y nombra la política que lo prohíbe |
+
+Un repo que declare `pull-request` conserva el comportamiento anterior; no se hardcodeó nada.
+
+**Worktree ocupado.** Un worktree con archivos tocados en los últimos 30 minutos —ventana en
+`JORNADA_VENTANA_OCUPADO_MIN`— se reporta `OCUPADO` y sale del plan de acción y del veredicto:
+hay un agente escribiendo ahí, no es trabajo abandonado. Cerró un falso positivo que empujaba a
+commitear o stashear sobre un agente vivo.
+
+**PARTE 3 — veredicto de limpieza.** El script ahora declara cuántos worktrees están limpios sobre
+los evaluables, y lista aparte los ocupados. Se sumaron dos avisos que el consejo anterior omitía:
+el stack de `stash` es **compartido entre todos los worktrees**, y `switch` arrastra los archivos
+staged y sin trackear.
+
+**Verificación.** `bash -n` limpio; `test/policy/delivery-policy.test.mjs` y
+`test/policy/jornada.test.mjs` → 13 pass / 0 fail; corridas manuales del diagnóstico, del veredicto
+y del guard de `--mergear-pr` contra los seis checkouts reales. 124 líneas authored, dentro del
+presupuesto de 400.
+
+**Estado de P5:** sin cambios. Ninguna Sesión enumerada cambió de estado.
