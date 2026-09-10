@@ -13,11 +13,62 @@
 | C06 | ✅ cerrado 2026-09-08 |
 | C07 | ✅ cerrado 2026-09-09 sobre identidades reproducibles |
 | **C08** | ✅ **READY** — reproduce contra el manifest re-cortado a master |
-| **C09** | 📋 **siguiente** — activación atómica, **paso único irreversible** |
+| **C09** | 🔴 **intentado y revertido** — la activación es correcta; falla el readback |
 | M0.4.9 | 📋 verificación post-entrega |
 
 Tareas: **39 cerradas, 6 abiertas**. Trabajo autorado restante: **0–220 líneas** (C09) más la
-verificación posterior, que no autora código.
+migración de los consumidores, que es trabajo nuevo y sin dueño.
+
+## 🔴 Lo que bloquea hoy — leer esto primero
+
+**C09 se ejecutó, salió byte-perfecto, y se revirtió a propósito.** No fue un error de la
+activación: fue el readback haciendo su trabajo.
+
+La activación produjo `final_package_identity = f459dfd451419c2c4cb2a31f128810eaf3b38c54`, igual
+al tree de su propio commit, con el plan `b794dd1a…`, el ROADMAP generado `1b183579…`, 31 copias
+de archivo, 14 retiros, 33 archivos +14.022/−147 y 602 rutas — todo idéntico a lo que C08 había
+proyectado sobre ese mismo HEAD. Radar validó 11 Zonas y 75 Sesiones y el ROADMAP se regeneró
+byte a byte.
+
+**Entonces `bun test` cayó de 1212/0 a 1198/1.** Al retirar las vistas legacy, cinco consumidores
+quedaron leyendo archivos que ya no existen. `T0.4.8.3` dice parar ante cualquier fallo, así que
+no hubo push, y por decisión del maintainer se revirtió la activación (`116ee27`) para migrar
+primero a los consumidores y que **ningún commit deje el repositorio roto**.
+
+Trazabilidad: activación `8628319` · hallazgo `a98243a` · reversión `116ee27`.
+
+### El consumidor difícil: el motor de radiografía
+
+`agent-workflows/radiografia/config.mjs` tiene `masterIndex: "openspec/plans/master-index.md"`,
+y `measure.mjs` **parsea** de ahí las filas `| P<n> |` (`CT_RADIOGRAFIA_NO_PLAN_TABLE`), la línea
+`Avance global` (`CT_RADIOGRAFIA_NO_GLOBAL_PROGRESS`) y la cola de ejecución.
+
+**Verificado: el ROADMAP generado tiene CERO de ambas.** Es por Zona, no por Plan. Entonces:
+
+- Re-apuntarlo al ROADMAP cambia un archivo faltante por un fallo de parseo.
+- Apuntarlo al archivo congela la medición de avance para siempre, que es exactamente lo
+  contrario de para lo que ese motor existe.
+
+Tres caminos, ninguno de una línea:
+
+1. **Que lea `openspec/plan.yaml` directamente.** El más limpio: consume dato estructurado en vez
+   de re-parsear un documento renderizado, y Radar ya es dueño del vocabulario.
+2. Reescribir el parser Markdown contra el ROADMAP por Zonas. Lo acopla a un formato que no
+   posee.
+3. Que Radar emita además las secciones que el motor espera. Mezcla responsabilidades.
+
+`agent-workflows/test/{render,measure,cli}.test.mjs` siguen a la opción elegida.
+
+**Ninguna Sesión posee este motor.** Es trabajo no enumerado, igual que las skills de método.
+
+### Los cuatro consumidores fáciles
+
+| Consumidor | Arreglo |
+|---|---|
+| `test/contracts/session-plan-snapshot.test.mjs` | lee plan-5 como fixture de bytes; puede leer la copia archivada |
+| `ROADMAP.md` (raíz del repo) | referencia documental a `plan-12/STATUS.md` |
+| `agent-workflows/MIGRACION-ZONAS.md` | referencia documental a `plan-9/STATUS.md` |
+| `agent-workflows/test/*.test.mjs` (3) | siguen a la decisión sobre el motor |
 
 ## La causa raíz que hay que entender antes de tocar nada
 
@@ -65,7 +116,16 @@ que master agregó después del fork. Los 14 commits de master sobreviven al arc
 Identidades nuevas de C07: sujeto `923f1fb8…`, 589 entradas, digest `9a2bfd5b…`. El plan
 `b794dd1a…` y el ROADMAP `1b183579…` **no cambiaron**.
 
-### 2. C09 — activación atómica (`T0.4.8.2`)
+### 1-bis. Migrar los consumidores del corpus legacy ⬅️ **el paso que falta**
+
+Decidir primero cómo mide el avance el motor de radiografía (ver arriba: las tres opciones), y
+arreglar de paso los cuatro consumidores fáciles. Todo en **su propio commit**, antes de
+re-activar. Criterio de cierre: `bun test` vuelve a **1212 · 0** con las rutas canónicas
+presentes.
+
+Este trabajo no lo posee ninguna Sesión. Conviene enumerarlo antes de ejecutarlo.
+
+### 2. C09 — activación atómica (`T0.4.8.2`), a repetir
 
 Un solo commit convencional que, junto:
 
@@ -80,7 +140,23 @@ Inmediatamente antes de commitear: `git diff --cached --name-status`, `--numstat
 `final_package_identity=$(git write-tree)`, que se vincula en el mensaje del commit. **C09 es el
 único que calcula esa identidad.** Ante cualquier discrepancia: parar, no commitear.
 
-Proyección medida por C08: **33 archivos, +14.022 / −134, árbol de activación de 602 rutas**.
+Proyección medida por C08: **33 archivos, +14.022 / −147, árbol de activación de 602 rutas**.
+
+**Medir la proyección sobre el HEAD exacto al que C09 va a commitear.** Ya pasó una vez: un
+commit intermedio tocó `plan-0/STATUS.md` —una de las 14 vistas retiradas— entre la medición de
+C08 y la activación, el numstat dejó de coincidir y C09 se detuvo, que es lo correcto. Si el
+HEAD se mueve, re-correr C08 antes de activar.
+
+Los pasos exactos de la activación, ya ejecutados una vez con éxito:
+
+```
+cp migration/candidate/plan.yaml openspec/plan.yaml      # verificar blob b794dd1a
+radar render -f openspec/plan.yaml -o openspec/ROADMAP.md  # verificar blob 1b183579
+# por cada entrada del archive-inventory: git cat-file blob <source_commit>:<source_path> > <destination>
+# retirar las 14 con activation_treatment retire-active-view-and-archive-byte-faithfully
+git add -A && git diff --cached --numstat HEAD    # debe dar 33 / +14022 / -147
+final_package_identity=$(git write-tree)          # solo C09 la calcula
+```
 
 ### 3. `T0.4.8.3` — readback local antes de cualquier push
 
