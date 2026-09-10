@@ -182,3 +182,93 @@ El principio de §16.1 no se toca — **Hermes presenta; Main crea, valida y con
 ### Alcance sin ID surgido en esta Sesión
 
 `T0.3.2.1` quedó registrado como **nota en el YAML, no como campo machine-readable**. Convertirlo en un campo con su test exige tocar `test/provenance/provenance.test.mjs:116-117`, que está **fuera del `Área`** y fija ambos `release_lane`. No se le abre Sesión propia: es una línea de test que puede viajar con cualquier Sesión futura que ya toque `test/provenance/**`, y hasta entonces la autoridad de la unificación vive en [release-chain](../release-chain.md), que sí es canónica.
+
+## Sesión 0.4 — Migración del plan al modelo de Zonas
+
+**Estado:** 🔵 EN CURSO
+**Depende de:** —
+**Área:** `openspec/changes/migrate-control-tower-plan-zones/**`, `agent-workflows/tools/radar/**`, y en la activación `openspec/plan.yaml`, `openspec/ROADMAP.md`, `openspec/archive/legacy-planning/**`
+**Recurso:** — (sin DB, sin migraciones)
+**Rama:** `feat/s0.4-plan-zones-migration` — no integrada a `master` por diseño hasta C09
+
+> **Enumeración tardía, 2026-09-09.** Esta Sesión existía como rama y como cambio SDD
+> desde hacía semanas, pero nunca se enumeró acá, y por eso el `master-index` declaraba
+> P0 ✅ COMPLETO 3/3 mientras S0.4 acumulaba 116 commits. Se documenta ahora con su
+> estado real. Las Sesiones 0.1–0.3 no cambian de estado.
+
+Convierte el corpus de planificación heredado —los `openspec/plans/plan-N/STATUS.md` y su
+`master-index`— en un único `openspec/plan.yaml` bajo el modelo de Zonas, con `ROADMAP.md`
+generado por Radar. El trabajo se ejecuta como checkpoints `C01`–`C09` dentro del cambio SDD
+[`migrate-control-tower-plan-zones`](../../changes/migrate-control-tower-plan-zones/), cuyo
+registro técnico canónico es su `apply-progress.md`.
+
+| Checkpoint | Estado | Nota |
+|---|---|---|
+| C01–C05 | ✅ | Prerrequisito de compatibilidad de Radar, congelado del corpus fuente, inventarios, linaje y partición |
+| M0.4.5A (R1, R2, P1, D1, D2, G1) | ✅ | Contrato de referencia, proyecciones y evidencia de cierre de solo lectura |
+| C06 | ✅ | Cerrado el 2026-09-08 vía corrección de gate autorizada por el maintainer |
+| C07 | ✅ | Cerrado el 2026-09-09 sobre identidades reproducibles |
+| C08 | 📋 | Reproducción de la prueba con índice Git privado; sin OID de paquete |
+| C09 | 📋 | Activación atómica — **paso único irreversible** |
+| M0.4.9 | 📋 | Verificación post-entrega y registro de cierre |
+
+Tareas de implementación: **38 cerradas, 7 abiertas** (6 de C08/C09 más `T0.4.5.2`, superseded
+por M0.4.5A).
+
+**Criterios de aceptación de S0.4** — ninguno se da por cumplido hasta C09:
+
+- [x] Radar acepta el contrato de referencia sin cambiar vocabulario de estados ni la partición existente
+- [x] Todo origen heredado tiene identidad de bytes, clasificación y destino de archivo o razón de solo-archivo
+- [x] El candidato inactivo valida con Radar y renderiza de forma determinista
+- [x] La prueba de C07 reproduce desde su propia receta commiteada
+- [ ] C08 reproduce la receta, el contenido y la evidencia de C07 sin calcular OID de paquete
+- [ ] C09 activa ambas rutas canónicas, el archivo histórico y el cambio de guía en un único commit
+- [ ] El `ROADMAP.md` entregado se regenera byte a byte desde el `plan.yaml` entregado
+
+### Estado de C07 — cerrado el 2026-09-09
+
+La prueba `migration/proof/rebuild-c07-r14.sh` reproduce el sujeto técnico en un `GIT_DIR`
+privado enlazado por alternates al almacén de objetos real, de modo que el repositorio nunca
+se muta: los inventarios de refs y objetos se comparan idénticos antes y después.
+
+| Verificación | Resultado |
+|---|---|
+| Corrida limpia de la prueba | PASS, exit 0 — árbol del sujeto `b50de802…`, 589 entradas, digest `7b4ca256…` |
+| Re-corrida **después** de editar los receipts | PASS — árbol, conteo y digest idénticos; confirma que `receipt_exclusions` se sostiene |
+| Estabilidad entre corridas de los 7 digests vinculados | ESTABLE — `check`, `status`, `zonas`, P1, descubrimiento, identidad de entradas y semántica |
+| Partición exacta (P1) | PASS: 75 completas / 7 futuras / 4 historia satisfecha = 86 |
+| Descubrimiento de Sesiones | PASS: 72 base + 2 suplemento − 1 reemplazada = 73 únicas |
+| Estados derivados | PASS: S9.10 y S101 ambos `BLOQUEADO` |
+| `bun test .../migration/proof/` | **30 pass · 0 fail**, 73 aserciones |
+| Ambos caminos de cierre documental sin push | PASS: `docs_source=plan` y `docs_source=declaration` |
+
+**Defecto corregido en C07.** Los receipts vinculaban valores que no podían reproducir: una
+receta vieja, y además identidades que llevan marca de tiempo por construcción —el OID del
+commit del sujeto, el digest del archivo de atestación, los inventarios del repositorio vivo
+y el estado del doc-guard—. Ahora vinculan sólo el **árbol** del sujeto, el digest de
+path/mode/blob y el `recipe_sha256`; el resto queda registrado como no vinculante con su
+razón. Es la diferencia entre *el plano* y *la hora en que se imprimió el plano*.
+
+### Pendiente arrastrado a C08
+
+`migration/partition.yaml` declara en `validation.expected` un conteo de `588` archivos
+(`archivo: 228`, `cimientos: 45`, `instalacion: 11`) frente a los `589` observados
+(`archivo: 229`, `cimientos: 46`, `instalacion: 10`). El `+1` de `archivo` es el propio script
+de prueba; el intercambio entre `cimientos` e `instalacion` **no** queda explicado por eso.
+No bloquea C07: Radar nunca lee ese bloque —verificado con `rg` sobre
+`agent-workflows/tools/radar`— y `check`/`zonas` pasan con cero warnings y cero huérfanos.
+No se corrige acá porque `partition.yaml` está **dentro** del sujeto y editarlo invalidaría
+el receipt recién reparado. C08 materializa el árbol de activación real, que excluye el
+script de prueba: ese es el lugar correcto para comparar estos conteos.
+
+### Riesgo abierto
+
+`rebuild-c07-r14.sh` se incluye a sí mismo en el sujeto que atestigua, así que cualquier
+edición futura del script invalida en silencio todos los receipts — que es exactamente el
+defecto recién reparado y volverá a ocurrir. Sacarlo de su propio overlay, o fijar
+`GIT_AUTHOR_DATE`/`GIT_COMMITTER_DATE` para que el OID del commit sea reproducible,
+eliminaría la trampa. Ambas cosas cambian la identidad del sujeto y exigen su propia
+re-prueba autorizada.
+
+El diff completo de la migración es de 18 856 líneas y **debe partirse en lotes de revisión
+de 400 líneas o menos antes de la entrega**.

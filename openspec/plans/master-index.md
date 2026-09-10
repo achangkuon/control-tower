@@ -1,7 +1,7 @@
 # Índice Maestro — Control Tower
 
 > Fuente técnica de verdad. Los planes, `STATUS.md` y artefactos enlazados tienen el detalle; este archivo dice DÓNDE estamos.
-> Última reconciliación: 2026-09-01 sobre `master/origin@1ea625b`, registrando `S9.9` 🔴 BLOQUEADO y su candidato parcial estacionado por decisión 107.
+> Última reconciliación: 2026-09-09, enumerando `S0.4` (migración del plan al modelo de Zonas, C07 cerrado) y devolviendo P0 al denominador. La reconciliación previa fue el 2026-09-01 sobre `master/origin@1ea625b`, registrando `S9.9` 🔴 BLOQUEADO y su candidato parcial estacionado por decisión 107.
 > Para estado de código ver [implementation-state](implementation-state.md); para ownership de producto ver [inventario](inventario-de-producto.md); para orden de salida ver [release-chain](release-chain.md); para autoridad ver [decision-register](decision-register.md).
 
 ## 📍 Punto de retoma
@@ -26,11 +26,18 @@ Plan → Sesión → Módulo → Tarea. **Sesión = alcance coherente de revisi�
 
 ## 📊 Estado de un vistazo
 
-**Avance global**: 4/13 Planes cerrados (31%) · Sesiones cerradas en planes activos con denominador derivable: 53/80 (66%). Cálculo: P1 `18/20` + P4 `10/13` + P5 `12/15` + P7 `0/1` + P8 `8/13` + P9 `3/9` + P12 `2/9` = `53/80`. P0, P3, P10 y P11 están cerrados. P2 y P6 conservan `—`: P2 todavía tiene responsabilidades no enumeradas de storage/revisión, alias/resolución y validación de root/common-dir/remote; P6 no tiene Sesiones enumeradas.
+**Avance global**: 3/13 Planes cerrados (23%) · Sesiones cerradas en planes activos con denominador derivable: 56/84 (67%). Cálculo: P0 `3/4` + P1 `18/20` + P4 `10/13` + P5 `12/15` + P7 `0/1` + P8 `8/13` + P9 `3/9` + P12 `2/9` = `56/84`. P3, P10 y P11 están cerrados. P2 y P6 conservan `—`: P2 todavía tiene responsabilidades no enumeradas de storage/revisión, alias/resolución y validación de root/common-dir/remote; P6 no tiene Sesiones enumeradas.
+
+> **Corrección del denominador, 2026-09-09.** P0 salía como ✅ COMPLETO 3/3 mientras `S0.4`
+> —la migración del plan al modelo de Zonas— llevaba 116 commits en
+> `feat/s0.4-plan-zones-migration`. La Sesión existía como rama y como cambio SDD pero nunca
+> se había enumerado, así que el índice declaraba cerrado un Plan que no lo estaba. `S0.4`
+> queda enumerada con su estado real y P0 vuelve al denominador. Ninguna otra Sesión cambia
+> de estado.
 
 | ID | Plan | Estado | % | Est. | Dueño | Qué falta | Ref |
 |----|------|--------|---|------|-------|-----------|-----|
-| P0 | Documentación canónica | ✅ COMPLETO | 100% (3/3 S) | — | Maintainer | — | [STATUS](plan-0/STATUS.md) |
+| P0 | Documentación canónica | 🔵 EN CURSO | 75% (3/4 S) | — | Maintainer | `S0.4` | [STATUS](plan-0/STATUS.md) |
 | P1 | Sustrato mecánico | 🔵 EN CURSO | 90% (18/20 S) | — | Main | `S1.19`, `S1.20` | [STATUS](plan-1/STATUS.md) |
 | P2 | Contratos y registro de producto | 🔵 EN CURSO | — (responsabilidades todavía sin Sesión enumerada) | — | Main | `S2.9`, `S2.10` | [STATUS](plan-2/STATUS.md) |
 | P3 | Workspace y orquestación | ✅ COMPLETO | 100% (4/4 S) | — | Main | — | [STATUS](plan-3/STATUS.md) |
