@@ -1,9 +1,10 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://gentle-ai.local/schemas/unattended-execution-contract-v2.json",
-  "title": "Sealed Unattended Execution Contract",
+  "$id": "https://gentle-ai.local/schemas/unattended-execution-contract-v3.json",
+  "title": "Standalone Sealed Unattended Execution Contract",
   "type": "object",
   "additionalProperties": false,
+  "not": { "required": ["_retired_runtime"] },
   "required": [
     "schema_version",
     "contract_id",
@@ -17,7 +18,6 @@
     "ownership",
     "artifact_policy",
     "runtime",
-    "tower",
     "chain",
     "validation",
     "candidate_recipe",
@@ -25,7 +25,7 @@
     "terminal"
   ],
   "properties": {
-    "schema_version": { "const": "gentle-ai.unattended-execution-contract/v2" },
+    "schema_version": { "const": "gentle-ai.unattended-execution-contract/v3" },
     "contract_id": { "$ref": "#/$defs/nonEmpty" },
     "sealed_at": { "$ref": "#/$defs/dateTime" },
     "expires_at": { "$ref": "#/$defs/dateTime" },
@@ -77,7 +77,7 @@
       "properties": {
         "read_paths": { "$ref": "#/$defs/pathList" },
         "edit_paths": { "$ref": "#/$defs/pathList" },
-        "commands": { "$ref": "#/$defs/stringList" },
+        "commands": { "$ref": "#/$defs/commandList" },
         "network": { "$ref": "#/$defs/stringList" },
         "processes": { "$ref": "#/$defs/stringList" },
         "cleanup_paths": { "$ref": "#/$defs/pathList" },
@@ -86,7 +86,7 @@
         "prohibitions": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["commit", "amend", "rebase", "tag", "push", "pr_create", "pr_update", "merge", "release", "deploy", "db_mutation", "global_closure", "token_request", "token_acquire", "token_transfer", "token_release", "unlisted_sesion"],
+          "required": ["commit", "amend", "rebase", "tag", "push", "pr_create", "pr_update", "merge", "release", "deploy", "db_mutation", "global_closure", "unlisted_sesion"],
           "properties": {
             "commit": { "type": "boolean" },
             "amend": { "const": true },
@@ -100,11 +100,7 @@
             "deploy": { "const": true },
             "db_mutation": { "const": true },
             "global_closure": { "const": true },
-            "token_request": { "const": true },
-            "token_acquire": { "const": true },
-            "token_transfer": { "const": true },
-            "token_release": { "const": true },
-            "unlisted_sesion": { "const": true }
+                                                            "unlisted_sesion": { "const": true }
           }
         }
       }
@@ -144,7 +140,7 @@
       "additionalProperties": false,
       "required": ["mode", "mode_evidence", "delivery_ceiling", "state_root"],
       "properties": {
-        "mode": { "enum": ["tower", "standalone"] },
+        "mode": { "const": "standalone" },
         "mode_evidence": { "$ref": "#/$defs/nonEmpty" },
         "delivery_ceiling": { "enum": ["none", "commit", "push", "draft-pr"] },
         "state_root": { "$ref": "#/$defs/absolutePath" },
@@ -152,7 +148,7 @@
       },
       "allOf": [
         {
-          "if": { "properties": { "mode": { "const": "tower" } }, "required": ["mode"] },
+          "if": false,
           "then": { "properties": { "delivery_ceiling": { "const": "none" } } }
         },
         {
@@ -161,7 +157,7 @@
         }
       ]
     },
-    "tower": {
+    "_retired_runtime": {
       "type": "object",
       "additionalProperties": false,
       "required": ["mode", "mode_locked", "git_delivery_token", "active_marker_scope"],
@@ -169,7 +165,7 @@
         "mode": { "enum": ["active-supervision", "absent"] },
         "mode_locked": { "type": "boolean" },
         "git_delivery_token": { "const": "forbidden" },
-        "active_marker_scope": { "const": ".git/control-tower/ACTIVE" }
+        "active_marker_scope": { "const": ".git/retired-runtime/ACTIVE" }
       }
     },
     "chain": {
@@ -225,9 +221,8 @@
     "validation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["live_tower_active", "method", "source_root_realpath", "source_common_dir_realpath", "clone_root_realpath", "clone_common_dir_realpath", "baseline_commands", "candidate_commands"],
+      "required": ["method", "source_root_realpath", "source_common_dir_realpath", "clone_root_realpath", "clone_common_dir_realpath", "baseline_commands", "candidate_commands"],
       "properties": {
-        "live_tower_active": { "type": "boolean" },
         "method": { "const": "separate-regular-clone" },
         "source_root_realpath": { "$ref": "#/$defs/absolutePath" },
         "source_common_dir_realpath": { "$ref": "#/$defs/absolutePath" },
@@ -339,20 +334,20 @@
   },
   "allOf": [
     {
-      "if": { "properties": { "runtime": { "properties": { "mode": { "const": "tower" } }, "required": ["mode"] } }, "required": ["runtime"] },
+      "if": false,
       "then": {
         "properties": {
-          "tower": { "properties": { "mode": { "const": "active-supervision" }, "mode_locked": { "const": true } } },
-          "validation": { "properties": { "live_tower_active": { "const": true } } }
+          "standalone": { "not": {} },
+          "validation": { "not": {} }
         }
       }
     },
     {
-      "if": { "properties": { "runtime": { "properties": { "mode": { "const": "standalone" } }, "required": ["mode"] } }, "required": ["runtime"] },
+      "if": false,
       "then": {
         "properties": {
-          "tower": { "properties": { "mode": { "const": "absent" } } },
-          "validation": { "properties": { "live_tower_active": { "const": false } } }
+          "standalone": { "not": {} },
+          "validation": { "not": {} }
         }
       }
     },
@@ -409,8 +404,10 @@
     "gitSha": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
     "stringList": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/nonEmpty" } },
     "stringListNonEmpty": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/nonEmpty" } },
-    "pathList": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/nonEmpty" } },
-    "finalVerificationNotRun": {
+    "pathList": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/exactPath" } },
+        "exactPath": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?/)(?!.*[*?\\[\\]{}]).+$" },
+        "commandList": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^(?:bun|go|npm|pnpm|python3?|pytest|node|git|radar|make|cargo)(?: [^;|&`$<>\\n]*)?$" } }
+    , "finalVerificationNotRun": {
       "type": "object",
       "additionalProperties": false,
       "required": ["attempts", "status"],
