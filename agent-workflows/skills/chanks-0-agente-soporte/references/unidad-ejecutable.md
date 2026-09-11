@@ -1,30 +1,29 @@
-# Unidades ejecutables, conflictos y capacidad
+# Executable candidates, conflicts, and capacity
 
-## Contexto mínimo
+## Minimum context
 
-Registrá identidad del repo, base exacta, instrucciones, plan, vista, reservas, forge y runtime. Para cada Sesión o trabajo de planificación: objetivo, autoridad, alcance permitido/prohibido, dependencias, Cimientos, pruebas, asiento, rama y runtime.
+Record repository identity, exact base, instructions, plan, generated view, delivery policy, and
+observed Git state. For each candidate, record objective, authority, allowed/forbidden scope,
+dependencies, shared-path risk, checks, and rollback boundary.
 
-No inventes rutas, ramas, comandos, scopes ni trabajo para completar una cantidad.
+Do not invent routes, branches, commands, scope, or work to fill a target.
 
-## Grafo de conflictos
+## Conflict graph
 
-Agregá una arista exclusiva cuando dos trabajos solapen rutas, comportamiento, fuente de verdad, salida generada, migración, recurso exclusivo, contrato compartido, entrega o dependencia todavía no integrada.
+Add an exclusive edge when two candidates overlap paths, behavior, source of truth, generated
+output, migration, shared resource, contract, delivery surface, or unintegrated dependency.
 
-| Clasificación | Significado |
+| Classification | Meaning |
 |---|---|
-| `independent` | Pueden avanzar sin checkpoint común. |
-| `parallel_with_checkpoint` | Pueden avanzar, pero uno espera evidencia nombrada antes de entregar. |
-| `serial` | No pueden comenzar de forma segura a la vez. |
-| `not_executable` | Falta autoridad, acceso, runtime o dependencia. |
+| `independent` | May advance without a common checkpoint. |
+| `parallel_with_checkpoint` | May advance, but one needs named evidence before delivery. |
+| `serial` | Must not begin safely together. |
+| `not_executable` | Missing authority, access, evidence, or dependency. |
 
-El pronóstico de `radar status` no adquiere una reserva viva.
+`radar status` is a static forecast. It never acquires a live lock or proves another actor is idle.
 
-## Capacidad
+## Capacity
 
-Reportá cantidad pedida, recomendada y máxima segura. La máxima segura es el conjunto independiente actualmente ejecutable después de dependencias, reservas, runtime y worktrees. La recomendada puede ser menor por incertidumbre o costo de coordinación.
-
-Los asientos pueden destinarse a implementar Sesiones o planificar huecos por Zona. Esta regla sólo amplía el cálculo textual: no crea dispatch, registro, acuse ni otra maquinaria.
-
-## Brief
-
-Cada asignación propuesta debe contener asiento, rama, runtime, alcance y dependencias. Mostrá fuentes, conflictos, reservas y confianza; obtené aprobación humana antes de transportarla. Recalculá si cambia cualquiera de esos datos.
+Report requested, recommended, and maximum-safe capacity with their evidence. The maximum-safe
+set excludes conflicts and unresolved dependencies; it is advice for the human-directed parent,
+not an assignment, dispatch, queue, or runtime claim.

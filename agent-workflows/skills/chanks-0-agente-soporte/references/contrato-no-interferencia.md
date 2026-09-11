@@ -1,25 +1,22 @@
-# Contrato de no interferencia
+# Non-interference contract
 
-Support observa, calcula briefs y aplica una única excepción de escritura. No implementa, entrega ni ocupa un asiento de ejecución.
+The planning evidence helper is read-only. It observes and returns evidence; it does not
+implement, deliver, coordinate peers, or write planning data.
 
-## Frontera de escritura
+## Boundary
 
-Support puede aplicar un delta confirmado y acotado a `openspec/plan.yaml`. Después ejecuta `radar check` y, si pasa, `radar render` para regenerar `openspec/ROADMAP.md`. Nunca edita la vista a mano.
+Only the responsible parent may record a confirmed, bounded delta in `openspec/plan.yaml` and
+regenerate `openspec/ROADMAP.md` through `radar render`. This responsibility is human-directed
+workflow policy, not a live system permission or lock.
 
-Esta exclusividad es política del workflow, no un permiso autenticado del sistema operativo.
+## Prohibitions
 
-## Prohibiciones
+- Do not edit code, planning data, generated views, or external services.
+- Do not stage, commit, push, open a PR, merge, deploy, or mutate a database.
+- Do not acquire, release, transfer, simulate, or claim shared resources.
+- Do not create parallel planning/status artifacts or expand a proposed delta.
 
-- No editar código ni documentos fuera de la frontera.
-- No stagear, commitear, pushear, abrir PR, mergear, desplegar ni mutar bases de datos.
-- No adquirir, liberar ni transferir reservas Tower.
-- No crear artefactos paralelos de planificación o estado.
-- No ampliar ni reinterpretar un delta.
+## Proposed-delta precondition
 
-## Precondición
-
-Cada operación nombra Sesión/campo, valor anterior esperado, valor nuevo y autoridad. Si la precondición no coincide, Support conserva evidencia y detiene la escritura.
-
-## Transporte
-
-El brief aprobado incluye asiento, rama, runtime, alcance y dependencias. Con Torre encendida viaja por su transporte; apagada, MAIN lo entrega al peer aprobado. Support no inventa persistencia, acuse ni retry.
+A proposed operation names its Sesión/field, expected old value, new value, and authority. If
+the evidence is stale or contradictory, preserve it and return the missing human choice.

@@ -1,54 +1,43 @@
-# Brief de Jornada
+# Planning evidence brief
 
-El brief deriva qué puede implementarse o planificarse hoy. No asigna, despacha, reserva ni muta estado.
+This brief derives what the responsible parent may consider next. It does not assign work,
+create a queue, reserve resources, or mutate state.
 
-## Fuentes
+## Sources
 
-1. `openspec/plan.yaml` y `openspec/ROADMAP.md` generada.
-2. `radar check`, `radar status` y `radar zonas`.
-3. Reservas vivas y runtime disponibles, si existen.
-4. Git, forge y política de entrega.
+1. `openspec/plan.yaml` and generated `openspec/ROADMAP.md`.
+2. `radar check`, `radar status`, and `radar zonas` when available.
+3. Repository instructions, Git state, and delivery policy.
 
 ## Template
 
 ```markdown
-# BRIEF — <proyecto> · <fecha>
+# PLANNING EVIDENCE — <project>
 
-**Base:** `<rama>@<sha>` · **Fuente:** `<ruta/comando>`
+**Base:** `<branch>@<sha>` · **Sources:** <paths/commands>
 
-## Capacidad
+## Candidates and static capacity
 
-| Tipo | Disponibles | Evidencia |
-|---|---:|---|
-| Implementar | N | <IDs y fuente> |
-| Planificar | N | <Zonas/huecos y fuente> |
+| Sesión/objective | Scope | Dependencies | Required checks | Risk |
+|---|---|---|---|---|
+| <ID> | <paths/result> | <IDs/evidence> | <commands> | <risk> |
 
-## Asignaciones propuestas
+## Conflicts and shared paths
 
-| Sesión/objetivo | Asiento | Rama | Runtime | Alcance | Dependencias |
-|---|---|---|---|---|---|
-| <ID> | <seat> | <branch> | <runtime> | <paths/resultado> | <IDs/evidencia> |
+<exact crossings; a forecast is not a live lock>
 
-## Conflictos y Cimientos
+## Human choices
 
-<cruces exactos, reservas requeridas y dueño de cada desbloqueo>
+<scope/risk/authority question, options, consequences, and checkpoint>
 
-## Decisiones humanas
+## Proposed parent record
 
-<pregunta, consecuencia de opciones y costo de no decidir>
-
-## Cómo verificar
-
-- `radar check -f openspec/plan.yaml -C <repo>`
-- `radar status -f openspec/plan.yaml -C <repo>`
-- <comandos Git/runtime observados>
+<exact delta, old value, new value, authority, or “none”>
 ```
 
-## Reglas de derivación
+## Derivation rules
 
-- Contá por separado trabajo implementable y huecos planificables.
-- Un asiento puede planificar; no inventes dispatch, persistencia o acuse para hacerlo.
-- No fabriques unidades para alcanzar una cantidad pedida.
-- Separá dependencia, decisión humana, conflicto y falta de runtime.
-- Cada fila debe incluir los cinco campos: asiento, rama, runtime, alcance y dependencias.
-- Si fuentes o sumas contradicen, reportá la contradicción y no promedies.
+- Separate a dependency, a human decision, a conflict, and missing evidence.
+- Never fabricate work to meet a capacity target.
+- Preserve Git contamination as evidence; do not normalize or discard it.
+- If sources contradict, report the contradiction and stop instead of averaging it away.

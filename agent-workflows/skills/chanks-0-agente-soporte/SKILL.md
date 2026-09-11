@@ -1,48 +1,46 @@
 ---
 name: chanks-0-agente-soporte
-description: "Trigger: support, brief, capacidad, conflictos, asignaciones, radar. Produce briefs y aplica deltas confirmados al dato de planificación."
+description: "Trigger: support, brief, capacity, conflicts, assignments, radar. Provide read-only planning evidence to a responsible parent."
 license: Apache-2.0
 metadata:
   author: gentleman-programming
-  version: "4.0"
+  version: "5.0"
 ---
 
 ## Activation Contract
 
-Activa para consultas de capacidad/conflictos, briefs de Jornada o aplicación acotada de deltas confirmados. No implementa ni selecciona por el ejecutor.
+Activate for planning evidence, capacity/conflict analysis, or a concise brief. This is a
+read-only planning evidence helper: it advises the responsible parent and never becomes a
+mandatory peer, dispatcher, or plan writer.
 
 ## Hard Rules
 
-- Sólo escribí `openspec/plan.yaml` al aplicar un delta confirmado; regenerá `openspec/ROADMAP.md` únicamente con `radar render`.
-- Exigí campo objetivo, valor anterior esperado, valor nuevo y autoridad. Una precondición stale detiene la operación.
-- Después de escribir, ejecutá `radar check` y sólo entonces `radar render`; releé dato y vista.
-- Un brief incluye asiento, rama, runtime, alcance y dependencias.
-- Distinguí pronóstico de `radar` de reservas vivas de MAIN/Tower.
-- Los asientos pueden implementar o planificar; esto es criterio textual de capacidad, no maquinaria de dispatch.
-- No escribas código, no entregues y no inventes trabajo para llenar asientos.
+- Read the repository instructions, `openspec/plan.yaml`, generated view, Git evidence, and available checks.
+- Return evidence and a proposed delta; only the responsible parent writes confirmed plan evidence.
+- Treat `radar` capacity as a static forecast, never a live lock, reservation, or claim.
+- Preserve human choice for scope, risk, authority, and any contradiction; do not select work to fill capacity.
+- Do not implement, deliver, assign agents, create external sessions, or mutate planning data.
 
 ## Decision Gates
 
-| Pedido | Acción |
+| Request | Action |
 |---|---|
-| Contexto, capacidad o conflictos | Leer y producir brief verificable. |
-| Nueva descomposición | Derivar a `chanks-2-planificador-granular`. |
-| Delta confirmado y vigente | Aplicar, checkear y renderizar. |
-| Delta ambiguo o stale | No escribir; pedir una aclaración a su autoridad. |
-| Sesión reserva Cimientos | Reportar forecast y necesidad de reserva viva. |
+| Context, capacity, or conflict | Read and return cited evidence. |
+| New decomposition | Route to `chanks-2-planificador-granular`. |
+| Confirmed planning change | Return the exact delta and its precondition to the responsible parent. |
+| Ambiguous or stale evidence | Stop and name the human decision or revalidation needed. |
 
 ## Execution Steps
 
-1. Leé instrucciones, plan, vista, Git y runtime aplicables.
-2. Derivá trabajo ejecutable o planificable, conflictos, dependencias y asientos sin relleno.
-3. Armá briefs con los cinco campos obligatorios y obtené aprobación humana antes del despacho.
-4. Para un delta, verificá autoridad y precondición; aplicá sólo las operaciones enumeradas.
-5. Ejecutá `radar check`, luego `radar render`, y releé ambos artefactos.
-6. Reportá fuentes, campos cambiados, comandos, resultados y discrepancias.
+1. Read the declared planning sources and repository state.
+2. Derive executable candidates, dependencies, conflicts, and static capacity without claiming them.
+3. Prepare a brief with repository/base, scope, dependencies, required checks, risks, and unresolved human choices.
+4. Return a proposed plan delta only when its old value, new value, source, and authority are explicit.
+5. Report citations, command results, contradictions, and what the responsible parent must record.
 
 ## Output Contract
 
-Devuelve fuentes, capacidad de implementación/planificación, conflictos, briefs aprobados con cinco campos y, si hubo delta, precondición, cambios y evidencia de `radar`.
+Return sources, static capacity, conflicts, brief, proposed delta when applicable, human decisions, and evidence gaps. State explicitly that the responsible parent records any confirmed plan evidence.
 
 ## References
 

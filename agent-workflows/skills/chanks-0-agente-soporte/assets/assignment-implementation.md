@@ -1,24 +1,27 @@
-# Implementation assignment
+# Implementation handoff
 
-Reemplazá cada placeholder y enviá un único bloque al ejecutor.
+Replace every placeholder and give one bounded handoff to the selected implementer.
 
 ```text
-IMPLEMENTATION ASSIGNMENT: <SESSION_ID>
+IMPLEMENTATION HANDOFF: <SESSION_ID>
 
 Project/repository: <IDENTITY>
 Verified base: <BASE_REF>@<SHA>
-Seat: <SEAT>
-Branch: <BRANCH>
-Runtime: <RUNTIME_AND_CAPABILITIES>
+Current branch: <BRANCH>
 Scope: <ALLOWED_PATHS_AND_BEHAVIORS>
 Dependencies: <IDS_AND_UNBLOCK_EVIDENCE>
 Authority and criteria: <SOURCES_AND_BINARY_CRITERIA>
-Shared foundations: <EXACT_PATHS_OR_NONE>
-Exclusive resource: <DB_MODE_DELIVERY_TOKEN_OR_NONE>
+Shared-path risk: <EXACT_PATHS_OR_NONE>
 Required checks: <COMMANDS_AND_EXPECTED_EVIDENCE>
 Forbidden scope: <PATHS_AND_EFFECTS>
-
-Verify repository, HEAD, branch, clean terrain and runtime before editing. Do not select another Session or widen scope. If foundations or an exclusive `Recurso` are listed — database mode, delivery token — request their live meter from MAIN/Tower before editing or touching that resource, and release every acquisition when the Session ends, including on failure or block. Follow the route revalidated by chanks-3-session-kickoff and enter the common SDD pipeline through chanks-4-puente. Keep each Module independently revertible with its tests. Stop and report any mismatch, stale dependency, missing authority or unavailable required runtime.
-
-Return: Session, seat, branch, runtime, verified base, changed paths, checks with exact results, foundation and `Recurso` acquisition/release evidence, rollback boundary, discoveries and blockers.
+Responsible parent: <IDENTITY_AND_RETURN_CHANNEL>
 ```
+
+Verify repository, `HEAD`, branch, and worktree state before editing. Do not select another
+Sesión or widen scope. A static planning forecast never grants a live lock; stop and report a
+shared-path conflict to the responsible parent. Follow the route revalidated by
+`chanks-3-session-kickoff`, enter the shared SDD pipeline through `chanks-4-puente`, keep each
+Módulo independently revertible with its tests, and report Git contamination rather than hiding it.
+
+Return: Sesión, repository and branch evidence, changed paths, checks with exact results,
+rollback boundary, discoveries, risks, blockers, and the evidence for the responsible parent.
