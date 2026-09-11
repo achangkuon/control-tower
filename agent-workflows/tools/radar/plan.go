@@ -138,47 +138,61 @@ type FragmentLocator struct {
 // neither Engram nor the Tower.
 var TiposDeAutoridad = []string{"repo", "decision", "engram"}
 
-// Autoridad is where a Sesión says it came from. It accepts two shapes: the
-// legacy free-text string, and the typed form. Both are accepted until S115
-// requires the type — S114 migrates one Zona per Módulo, so demanding it now
-// would fail every Sesión at once.
-type Autoridad struct {
-	Texto string // legacy free text; empty once the typed form is used
-
+// Cita is one typed source a Sesión rests on.
+type Cita struct {
 	Tipo string          // one of TiposDeAutoridad
 	Ref  int             // decision number, `decision` only
 	ID   int             // observation id, `engram` only
 	Loc  FragmentLocator // `repo` and `decision` only
 }
 
-type autoridadTipada struct {
+// Autoridad is where a Sesión says it came from. It accepts three shapes: the
+// legacy free-text string, one typed Cita, and a list of them. The list is the
+// model and not a concession to old prose — 29 of the 82 authorities in the
+// plan name more than one class of source, so a single citation cannot hold
+// the real data. Free text is still accepted until S115 requires the type:
+// S114 migrates one Zona per Módulo, so demanding it now would fail every
+// Sesión at once.
+type Autoridad struct {
+	Texto string // legacy free text; empty once the typed form is used
+	Citas []Cita // one entry for the simple form, several for the composed one
+}
+
+type citaTipada struct {
 	Tipo            string `yaml:"tipo"`
 	Ref             int    `yaml:"ref"`
 	ID              int    `yaml:"id"`
 	FragmentLocator `yaml:",inline"`
 }
 
-// UnmarshalYAML accepts a scalar or a mapping. A mapping that is not the typed
-// shape fails here rather than resolving to an empty authority, which would
-// read downstream as "not declared" and hide the real mistake.
+// UnmarshalYAML accepts a scalar, a mapping, or a sequence of mappings. A
+// mapping that is not the typed shape fails here rather than resolving to an
+// empty authority, which would read downstream as "not declared" and hide the
+// real mistake.
 func (a *Autoridad) UnmarshalYAML(value *yaml.Node) error {
 	if value.Kind == yaml.ScalarNode {
 		a.Texto = value.Value
 		return nil
 	}
-	var forma autoridadTipada
-	if err := value.Decode(&forma); err != nil {
-		return err
+	nodos := []*yaml.Node{value}
+	if value.Kind == yaml.SequenceNode {
+		nodos = value.Content
 	}
-	a.Tipo, a.Ref, a.ID, a.Loc = forma.Tipo, forma.Ref, forma.ID, forma.FragmentLocator
+	for _, n := range nodos {
+		var forma citaTipada
+		if err := n.Decode(&forma); err != nil {
+			return err
+		}
+		a.Citas = append(a.Citas, Cita{Tipo: forma.Tipo, Ref: forma.Ref, ID: forma.ID, Loc: forma.FragmentLocator})
+	}
 	return nil
 }
 
 // Declarada reports whether the Sesión said anything at all.
-func (a Autoridad) Declarada() bool { return strings.TrimSpace(a.Texto) != "" || a.Tipo != "" }
+func (a Autoridad) Declarada() bool { return strings.TrimSpace(a.Texto) != "" || len(a.Citas) > 0 }
 
 // Tipada reports whether it uses the typed form rather than free text.
-func (a Autoridad) Tipada() bool { return a.Tipo != "" }
+func (a Autoridad) Tipada() bool { return len(a.Citas) > 0 }
 
 // Modulo groups concrete files that change together inside a Sesion.
 type Modulo struct {

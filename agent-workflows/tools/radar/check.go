@@ -885,9 +885,11 @@ func validarTopeDeLote(p *Plan, lineas int) []Hallazgo {
 // `decisiones` field, and the register stopped growing at 108.
 const RegistroDeDecisiones = "openspec/archive/legacy-planning/decision-register.md"
 
-// validarAutoridad checks where a Sesión says it came from. The legacy free
-// text passes untouched: S114 migrates one Zona per Módulo and S115 turns the
-// requirement on, so demanding the type here would fail every Sesión at once.
+// validarAutoridad checks where a Sesión says it came from. Every citation it
+// declares is verified on its own, with the same demand whether it stands alone
+// or inside a list. The legacy free text passes untouched: S114 migrates one
+// Zona per Módulo and S115 turns the requirement on, so demanding the type here
+// would fail every Sesión at once.
 func validarAutoridad(root string, s *Sesion) []Hallazgo {
 	a := s.Autoridad
 	if !a.Declarada() {
@@ -896,46 +898,66 @@ func validarAutoridad(root string, s *Sesion) []Hallazgo {
 	if !a.Tipada() {
 		return nil
 	}
-	if !contiene(TiposDeAutoridad, a.Tipo) {
-		return []Hallazgo{{"error", "autoridad", fmt.Sprintf("%s declara el tipo de autoridad %q, que no es uno de %s", s.ID, a.Tipo, strings.Join(TiposDeAutoridad, ", "))}}
+	var h []Hallazgo
+	for i, c := range a.Citas {
+		h = append(h, validarCita(root, nombreDeCita(s.ID, i, len(a.Citas)), c)...)
 	}
-	etiqueta := s.ID + " autoridad"
-	switch a.Tipo {
+	return h
+}
+
+// nombreDeCita is what a finding calls the citation it is about. A Sesión that
+// rests on one source is written without a list, so the Sesión alone names it;
+// inside a list the finding has to say which of them failed.
+func nombreDeCita(sesion string, i, total int) string {
+	if total == 1 {
+		return sesion
+	}
+	return fmt.Sprintf("%s (cita %d de %d)", sesion, i+1, total)
+}
+
+// validarCita is the single verification of one citation, applied with the same
+// demand to the simple form and to every element of the composed one.
+func validarCita(root, nombre string, c Cita) []Hallazgo {
+	if !contiene(TiposDeAutoridad, c.Tipo) {
+		return []Hallazgo{{"error", "autoridad", fmt.Sprintf("%s declara el tipo de autoridad %q, que no es uno de %s", nombre, c.Tipo, strings.Join(TiposDeAutoridad, ", "))}}
+	}
+	etiqueta := nombre + " autoridad"
+	switch c.Tipo {
 	case "engram":
-		if a.ID <= 0 {
-			return []Hallazgo{{"error", "autoridad", fmt.Sprintf("%s cita Engram sin declarar un id", s.ID)}}
+		if c.ID <= 0 {
+			return []Hallazgo{{"error", "autoridad", fmt.Sprintf("%s cita Engram sin declarar un id", nombre)}}
 		}
 		// Reported, never counted as proven. Saying "verified" about something
 		// this tool cannot open is how a pass stops meaning anything.
-		return []Hallazgo{{"aviso", "autoridad no verificable", fmt.Sprintf("%s cita Engram %d, que vive fuera de Git: se declara y no se prueba", s.ID, a.ID)}}
+		return []Hallazgo{{"aviso", "autoridad no verificable", fmt.Sprintf("%s cita Engram %d, que vive fuera de Git: se declara y no se prueba", nombre, c.ID)}}
 	case "repo":
-		return validateFragmentLocator(root, a.Loc, etiqueta)
+		return validateFragmentLocator(root, c.Loc, etiqueta)
 	case "decision":
-		if a.Ref <= 0 {
-			return []Hallazgo{{"error", "autoridad", fmt.Sprintf("%s cita una decisión sin declarar su número", s.ID)}}
+		if c.Ref <= 0 {
+			return []Hallazgo{{"error", "autoridad", fmt.Sprintf("%s cita una decisión sin declarar su número", nombre)}}
 		}
-		if a.Loc.Path != RegistroDeDecisiones {
-			return []Hallazgo{{"error", "autoridad", fmt.Sprintf("%s cita la decisión %d fuera del registro: %q", s.ID, a.Ref, a.Loc.Path)}}
+		if c.Loc.Path != RegistroDeDecisiones {
+			return []Hallazgo{{"error", "autoridad", fmt.Sprintf("%s cita la decisión %d fuera del registro: %q", nombre, c.Ref, c.Loc.Path)}}
 		}
-		if h := validateFragmentLocator(root, a.Loc, etiqueta); len(h) > 0 {
+		if h := validateFragmentLocator(root, c.Loc, etiqueta); len(h) > 0 {
 			return h
 		}
-		return verificarNumeroDeDecision(root, a, s.ID)
+		return verificarNumeroDeDecision(root, c, nombre)
 	}
 	return nil
 }
 
 // verificarNumeroDeDecision is the one check `repo` cannot make: that the bytes
-// proven by the locator actually name the decision the Sesión claims. Without
+// proven by the locator actually name the decision the citation claims. Without
 // it a mis-copied range passes, and the citation says nothing.
-func verificarNumeroDeDecision(root string, a Autoridad, sesion string) []Hallazgo {
-	raw, err := exec.Command("git", "-C", root, "cat-file", "blob", a.Loc.Blob).Output()
-	if err != nil || a.Loc.ByteEnd > len(raw) {
-		return []Hallazgo{{"error", "autoridad", fmt.Sprintf("%s: el fragmento de la decisión %d no se pudo leer", sesion, a.Ref)}}
+func verificarNumeroDeDecision(root string, c Cita, nombre string) []Hallazgo {
+	raw, err := exec.Command("git", "-C", root, "cat-file", "blob", c.Loc.Blob).Output()
+	if err != nil || c.Loc.ByteEnd > len(raw) {
+		return []Hallazgo{{"error", "autoridad", fmt.Sprintf("%s: el fragmento de la decisión %d no se pudo leer", nombre, c.Ref)}}
 	}
-	fragmento := string(raw[a.Loc.ByteStart:a.Loc.ByteEnd])
-	if !fragmentoNombra(fragmento, a.Ref) {
-		return []Hallazgo{{"error", "autoridad", fmt.Sprintf("%s cita la decisión %d pero el fragmento declarado no la nombra", sesion, a.Ref)}}
+	fragmento := string(raw[c.Loc.ByteStart:c.Loc.ByteEnd])
+	if !fragmentoNombra(fragmento, c.Ref) {
+		return []Hallazgo{{"error", "autoridad", fmt.Sprintf("%s cita la decisión %d pero el fragmento declarado no la nombra", nombre, c.Ref)}}
 	}
 	return nil
 }
