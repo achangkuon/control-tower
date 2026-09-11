@@ -1,19 +1,13 @@
-# Migración al modelo de zonas
+# Historical record: migración al modelo de zonas
 
-> **Constancia de trabajo.** Este archivo es la fuente de verdad de QUÉ estamos haciendo,
-> qué está implementado localmente y qué falta. El razonamiento completo, con dibujos, está en
-> el documento de decisión:
-> https://claude.ai/code/artifact/e92d2b38-10ad-480d-b7b2-ba9cc68283ec
+> **Historical, non-operative record.** This document preserves migration-era status, flow, and
+> delivery claims; it is not an authority for current planning, execution, or product state.
+> The current editable planning authority is [`openspec/plan.yaml`](../openspec/plan.yaml);
+> [`openspec/ROADMAP.md`](../openspec/ROADMAP.md) is its generated view. The current generic
+> method sources are `agent-workflows/skills/_shared/plan-naming-convention.md` and the active
+> skills under `agent-workflows/skills/`.
 >
-> La autoridad del flujo es [FLUJO-END-TO-END.md](FLUJO-END-TO-END.md). El reparto de tres
-> escritores de [EJECUCION-EN-PARALELO.md](EJECUCION-EN-PARALELO.md) describe la construcción
-> inicial y queda como historia útil; la corrección actual usa **un solo escritor secuencial**.
->
-> Última reconciliación: el resto del inventario nominal de Fase A quedó cerrado y entregado
-> en `ed4dab8`. Las diez skills restantes usan `chanks-<tramo>-<nombre>`, el canon enumera
-> la familia completa, las copias runtime retiraron los nombres anteriores mediante
-> `.retired-skills`, y `python3 agent-workflows/tools/install.py --check` devuelve `OK` con
-> los bloques manuales preservados.
+> The original historical record begins below. It is retained for traceability only.
 
 ---
 

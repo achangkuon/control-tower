@@ -1,11 +1,13 @@
-# El flujo end-to-end de la Torre de Control
+# Historical Control Tower flow
 
-> **Este documento cierra el gate de investigación de [MIGRACION-ZONAS.md](MIGRACION-ZONAS.md).**
-> Ese archivo frenó la Fase 1 con una instrucción textual: *«antes de actualizar o propagar
-> bloques globales/manuales, hay que incorporar la investigación en curso a esta misma fuente
-> de verdad y reconciliar sus hallazgos contra las decisiones ya cerradas»*.
-> La investigación en curso eran los **siete tramos**, definidos y aprobados el 2026-09-02.
-> Acá se integran, y acá se listan los choques contra las 20 decisiones cerradas.
+> **Frozen product documentation.** The original candidate is also preserved byte-for-byte at
+> `product/tower/generic/FLUJO-END-TO-END.md`. It explains prior product choreography only;
+> it does not direct the current generic builder, which uses a human-directed responsible parent,
+> read-only planning evidence, current-repository kickoff, and evidence-returning bridge/closure.
+> No global installation or consumer has been updated by this source migration.
+>
+> The following gate and flow claims are historical record only; they create no live gate or
+> instruction for current work.
 >
 > **Nada fue implementado.** Este documento se escribe para implementar después.
 > Escrito el 2026-09-02 sobre `agent-workflows@f7bd95e` y `control-tower@ed81454`.
