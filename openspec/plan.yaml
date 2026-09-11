@@ -6695,6 +6695,31 @@ sesiones:
       - "Queda una sola copia del registro de decisiones en el árbol: openspec/plans/decision-register.md se retira y openspec/archive/legacy-planning/decision-register.md queda como la citable."
       - "El diff toca sólo Área."
     decisiones:
+      - tipo: resuelta
+        pregunta: "¿Puede el esquema entregado por S112 representar las autoridades reales del plan?"
+        resolucion: "No. S112 modeló autoridad como una cita única y el dato exige una lista: 29 de las 82 autoridades citan más de una clase de fuente —26 citan dos y 3 citan tres— y la más cargada nombra 40 números distintos. Extender el campo a una lista de citas es trabajo de la Zona metodo y nace como Sesión propia, S116, porque el alcance descubierto nunca se agrega en silencio a una Sesión ya entregada."
+        autoridad: "Descubrimiento de esta Sesión al medir las 82 autoridades del plan vigente contra el esquema entregado en f138e1b."
+        clase: contrato-visible
+        falsificador: "Se migra una autoridad multi-fuente aplastándola a una sola cita, o se extiende el esquema dentro de S112 en vez de en una Sesión nueva."
+        descartadas:
+          - opcion: "Elegir una autoridad primaria por Sesión y descartar el resto."
+            razon: "Pierde información que hoy está escrita, y la Sesión dejaría de poder probar las fuentes que realmente la sostienen."
+      - tipo: escala
+        pregunta: "¿Qué fidelidad conserva la migración cuando la autoridad es prosa que nombra decenas de fuentes?"
+        evidencia: "Cinco autoridades no encajan en ninguno de los tres tipos: citan «REQUIREMENTS §14.4», «Change E», un reseal del maintainer sin documento, un SHA suelto, y un artifact. Y la más cargada nombra 40 números: eso no es una cita, es un párrafo. Convertirla en localizadores exigiría escribir 40 localizadores, o aceptar que la Sesión tiene menos autoridades reales que las que su prosa enumera."
+        checkpoint: "antes del primer Módulo."
+        clase: migracion-o-perdida-de-datos
+        alcanza: criterios
+        contamina: [S114, S115]
+        opciones:
+          - opcion: "Migrar cada cita enumerable y conservar el resto de la prosa en un campo de contexto no verificable."
+            consecuencia: "Nada se pierde y lo verificable queda probado, a costa de un campo más y de que parte de la autoridad siga sin prueba."
+          - opcion: "Migrar sólo las citas que ya resuelven, y declarar el resto como tipo engram o no verificable."
+            consecuencia: "La migración es más barata, a costa de que autoridades que sí son archivos queden reportadas como no probables."
+          - opcion: "Reescribir las autoridades cargadas para que nombren sólo las fuentes que de verdad las sostienen."
+            consecuencia: "El plan queda más honesto y verificable, pero es reescribir autoridad aprobada, que es lo único que ninguna Sesión puede hacer sola."
+          - opcion: "Ampliar el conjunto de tipos para cubrir REQUIREMENTS, artifacts y decisiones de conversación."
+            consecuencia: "Cubre el dato real, a costa de agrandar el contrato que S112 acaba de cerrar y de volver a tocar la Zona metodo."
       - tipo: derivable
         pregunta: "¿En qué orden se migran las Zonas?"
         criterio: "Por cantidad de Sesiones, de menor a mayor, para que el primer lote sea el más barato de revisar y cualquier error del contrato aparezca temprano."
