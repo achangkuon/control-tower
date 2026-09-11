@@ -6543,6 +6543,12 @@ sesiones:
     ruta:
       propuesta: direct
       autoridad: "El contrato de entrada es exacto y está publicado, el mecanismo de consumo ya existe en ledger.go, y la única elección restante —qué hacer ante un status ilegible— es derivable del precedente del propio archivo."
+      revalidacion:
+        resultado: direct
+        base: 638a3f78cff475215cd1cc86cd37b8a3dcc09be5
+        evidencia: "Salida real de gentle-ai sdd-status --json bajo 2.7.0, con schemaName, schemaVersion, nextRecommended y dependencies verificados campo por campo antes de escribir código."
+    entrega:
+      commit: 271a32a63a0f6ae554a2690448535bbc6ead7692
     modulos:
       - id: M111.1
         resultado: "Radar consume el contrato de estado de fases y lo valida"
@@ -6741,7 +6747,8 @@ sesiones:
     cimientos: []
     recurso: []
     criterios:
-      - "Una Sesión marcada como archivada sin evidencia de entrega integrada falla cerrado, nombrando la Sesión y qué evidencia falta."
+      - "Una Sesión archivada declara por cuál de los tres caminos se archivó —entregada, reemplazada o evidencia histórica retenida— y una archivada que no declara ninguno falla cerrado, nombrando la Sesión."
+      - "Una Sesión que declara haberse archivado por entrega y no tiene evidencia integrada falla cerrado; una archivada por reemplazo exige que su sucesora exista; una retenida como evidencia histórica no exige ninguna de las dos."
       - "Radar mide las líneas escritas del candidato contra el tope declarado y emite un hallazgo cuando lo supera; el tope es un dato del plan, no una constante en el código."
       - "La medición usa la misma prueba de ancestría inmutable que ya usa la evidencia de entrega, y no una lectura del árbol de trabajo."
       - "Ninguna de las dos reglas bloquea una Sesión que todavía no entregó: son verificaciones de cierre, no compuertas previas."
@@ -6768,6 +6775,11 @@ sesiones:
     ruta:
       propuesta: direct
       autoridad: "Las dos reglas están escritas en el canon, la infraestructura de evidencia y ancestría ya existe, y la única elección restante —cuándo medir— es derivable del contrato de HEAD inmutable que la propia herramienta ya aplica."
+      revalidacion:
+        resultado: design-tasks
+        base: 271a32a63a0f6ae554a2690448535bbc6ead7692
+        evidencia: "Las 6 Sesiones archivadas del plan vigente —S4.9, S5.14, S5.15, S9.3, S9.4, S9.5— no tienen ninguna evidencia de entrega. Cuatro están reemplazadas desde references.future_successors (S102 a S108) y dos, S4.9 y S9.4, se retienen como evidencia histórica sin entrega ni reemplazo: la autoridad de S9.4 lo dice textual."
+        razon: "La ruta propuesta daba por sentado que archivar implica haber entregado, y el árbol real prueba que hay tres caminos de archivo, no uno. Decidir cuál de los tres debe declararse y cuál puede inferirse es diseño de contrato, no implementación mecánica: el criterio propuesto habría marcado las 6 archivadas del plan vigente, dos de ellas legítimas."
     modulos:
       - id: M113.1
         resultado: "Archive exige entrega integrada"
