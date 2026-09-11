@@ -1,6 +1,6 @@
 ---
-verified_against: cceb3e65e12b0dd55709a488e10271a2b87fdbc7
-verified_at: 2026-09-01
+verified_against: 0360f6548e2ce4a52032a60840717f2839948893
+verified_at: 2026-09-11
 standfirst: S1.18 ya entregó el adapter Pi, pero S9.9 quedó bloqueada al comprobar que la apertura de asientos no ata todas sus operaciones al workspace Herdr autorizado. El candidato parcial está estacionado sin crédito; la apertura de workers y S1.20 permanecen suspendidas.
 ---
 
@@ -47,10 +47,10 @@ Lo técnico: `S4.10` cerró las cinco formas públicas de identidad y binding; `
 En simple: El enchufe común ya no sólo identifica a cada runtime: también permite mirarlo, comprobar su salud, pedirle que se detenga y adjuntarse sin confiar en lo que el propio caller afirma. Pi puede conectarse sobre una base ya entregada, no sobre una promesa.
 Evidencia: `openspec/specs/host-runtime/spec.md` · `openspec/changes/archive/2026-08-28-s4-11-host-neutral-operations/verify-report.md` · `master/origin/master@6ddf6bc77d236dffad5b8ec625379117a91ce0b3`
 
-### 3 · crítico · El adapter Pi ya está entregado, pero la Torre instalada todavía no lo usa
-Lo técnico: `S1.18` cerró en `3ebb83373cf9507274a87e5206f315dce34a6a4f` y `2cd64c4a32e178c88632348696353c2dd8654c56` el lifecycle con ownership validado, dispatch reconocido, progreso, terminalidad retryable y snapshot inmutable de decisiones. La verificación fue determinista sobre seams inyectados; no ejecutó procesos Pi ni broker Intercom reales. `S8.12` todavía debe incorporar los bytes al payload y `S8.13` debe materializar, probar, activar y poder revertir `control-tower-activation.json`.
-En simple: El enchufe entre la Torre y Pi ya existe y sabe evitar dobles cierres o perder para siempre un cierre que falló al enviarse. Aún no está conectado a la instalación real, y su examen usó dobles controlados: falta demostrarlo con Pi e Intercom funcionando de verdad antes de prometer operación desatendida.
-Evidencia: `openspec/plans/plan-1/STATUS.md` S1.18 · `openspec/plans/plan-8/STATUS.md` S8.12–S8.13 · `2cd64c4a32e178c88632348696353c2dd8654c56`
+### 3 · crítico · El adapter Pi está entregado; la Torre no está activa
+Lo técnico: `S1.18` cerró en `3ebb83373cf9507274a87e5206f315dce34a6a4f` y `2cd64c4a32e178c88632348696353c2dd8654c56` el lifecycle con ownership validado, dispatch reconocido, progreso, terminalidad retryable y snapshot inmutable de decisiones. La separación del builder sincronizó los globals genéricos y `check` pasó, pero no probó una Sesión nueva. La Torre sigue inactiva; `product/tower/generic/` preserva el original pasivo y los perfiles y skills candidatos de `product/tower/` siguen editables, sin release. `S8.12` todavía debe empaquetar los bytes Tower actuales y `S8.13` debe ejercitar, sólo en un HOME/runtime aislado, materialización, preflight, activación y rollback de `control-tower-activation.json`.
+En simple: El enchufe entre la Torre y Pi existe, pero no está funcionando en una Torre activa ni fue probado en una sesión nueva. Mover el producto separa sus fuentes del builder; no lo instala, publica ni lo convierte en una promesa operativa.
+Evidencia: `openspec/plans/plan-1/STATUS.md` S1.18 · `openspec/plans/plan-8/STATUS.md` S8.12–S8.13 · `0c48356f43dc76cd4838bbd97638fa10954fde00` · `0360f6548e2ce4a52032a60840717f2839948893`
 
 ## Avance por Plan
 

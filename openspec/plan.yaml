@@ -17,6 +17,7 @@ zonas:
     rutas: [contracts/, schemas/, registry/, test/contracts/, test/registry/]
   - id: asientos
     nombre: Asientos
+    # Clasificación exclusiva de procedencia cerrada para S8.14: profiles/ no es una fuente activa en HEAD; las fuentes activas están bajo product/tower/.
     rutas: [supervision/, profiles/, escalation/, support/, workspace/, test/escalation/, test/supervision/, test/support/, test/workspace/]
   - id: jornada
     nombre: Jornada
@@ -36,6 +37,9 @@ zonas:
   - id: metodo
     nombre: Método
     rutas: [agent-workflows/]
+  - id: producto-torre
+    nombre: Producto Torre
+    rutas: [product/tower/]
 
 cimientos:
   rutas:
@@ -61,9 +65,12 @@ cimientos:
     - radiografia.json
     - scripts/payload-closure.mjs
     - scripts/publish-runtime.mjs
+    # Clasificación exclusiva de procedencia cerrada para S8.14/S9.1: estas rutas legacy no existen ni autorizan una fuente activa en HEAD.
     - skills/torre-control-entregas/SKILL.md
     - skills/torre-control-soporte/SKILL.md
     - skills/torre-control/SKILL.md
+    - product/tower/skills/torre-control-entregas/SKILL.md
+    - product/tower/skills/torre-control/SKILL.md
     - test/console-executor.test.mjs
     - test/console-validator.test.mjs
     - test/console/cli.test.mjs
@@ -4315,7 +4322,7 @@ sesiones:
             criterios: [RUNTIME_PAYLOAD_FILES conserva igualdad exacta y todos sus miembros tienen llamador.]
   - id: S7.1
     zona: entrega
-    resultado: Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral, preservando OpenCode como conformidad diferida.
+    resultado: Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral en un HOME/runtime aislado, preservando OpenCode como conformidad diferida.
     autoridad: Decisiones 32, 33 y 85 del maintainer; reconciliación Pi-first vigente en openspec/plans/plan-7/STATUS.md líneas 69-79; asignación Entrega aprobada en agent-workflows/ASIGNACION-24-SESIONES.md líneas 161-174.
     depende_de: [S1.19, S4.12, S8.13, S5.5]
     recurso: [candidato inmutable, entorno Pi aislado]
@@ -4323,9 +4330,10 @@ sesiones:
       - Un único candidate_revision inmutable identifica la corrida completa.
       - Toda evidencia se traza al contrato host-neutral y a ese candidato.
       - La cadena Pi y la recuperación mínima pasan.
-      - La instalación, el rollback y el preflight completos pasan.
+      - La instalación, el rollback y el preflight completos pasan en un HOME/runtime aislado, sin instalar ni activar en globals reales.
       - La corrida larga, el crash del broker bajo tráfico y cinco clientes producen evidencia.
       - No se afirma soporte por encima de cinco clientes.
+      - "Secuencia futura obligatoria: prueba aislada -> publicación de una release V1 probada -> autorización humana explícita posterior -> distribución global real; una V1 meramente probada no basta y esta gate no autoriza publicar ni distribuir ahora."
       - S5.3 se trata como dependencia satisfecha y no se modifica ningún path fuera del Área declarada.
     decisiones:
       - tipo: resuelta
@@ -4386,9 +4394,9 @@ sesiones:
             resultado: "RED: congelar candidato y registrar todo rojo Gate A-G sin reinterpretarlo."
             criterios: [Todo rojo Gate A-G queda registrado contra el único candidato inmutable sin reinterpretación.]
           - id: T7.1.1.2
-            accion: "GREEN: ejecutar piloto en control-tower contra contrato neutral e instalación real."
-            resultado: "GREEN: ejecutar piloto en control-tower contra contrato neutral e instalación real."
-            criterios: [El piloto Pi-first corre contra el contrato host-neutral y la instalación real.]
+            accion: "GREEN: ejecutar piloto en control-tower contra contrato neutral e instalación real sólo dentro del HOME/runtime aislado."
+            resultado: "GREEN: ejecutar piloto en control-tower contra contrato host-neutral e instalación real aislada."
+            criterios: ["El piloto Pi-first corre contra el contrato host-neutral y la instalación real aislada, sin globals reales."]
           - id: T7.1.1.3
             accion: "REFACTOR: consolidar evidencia atribuible y declaración de alcance máximo de cinco clientes."
             resultado: "REFACTOR: consolidar evidencia atribuible y declaración de alcance máximo de cinco clientes."
@@ -4401,15 +4409,16 @@ sesiones:
     cimientos: [scripts/payload-closure.mjs]
     recurso:
       - contrato RUNTIME_PAYLOAD_FILES
-      - bytes fuente Tower-owned de profiles/tower/** consumidos sin modificarlos
-      - bytes fuente Tower-owned de skills/torre-control/** consumidos sin modificarlos
-      - bytes fuente Tower-owned de skills/torre-control-entregas/** consumidos sin modificarlos
-      - bytes fuente Tower-owned de skills/torre-control-soporte/** consumidos sin modificarlos
+      - bytes fuente Tower-owned editables de product/tower/profiles/{main,support,implementer}.md consumidos sin modificarlos
+      - bytes fuente Tower-owned editables de product/tower/skills/torre-control/SKILL.md consumidos sin modificar
+      - bytes fuente Tower-owned editables de product/tower/skills/torre-control-entregas/SKILL.md consumidos sin modificar
+      - bytes fuente Tower-owned editables de product/tower/skills/torre-control-soporte/SKILL.md consumidos sin modificar
+      - bytes originales inmutables de product/tower/generic/** preservados como evidencia de producto, no como raíz de instrucciones activa
       - bytes fuente Tower-owned de adapters/pi/** consumidos sin modificarlos
       - bytes fuente Tower-owned de extensions/pi/** consumidos sin modificarlos
     criterios:
-      - El bundle contiene exactamente los bytes Tower-owned locales, incluidos route padre Pi-first, torre-control, perfiles y skills propietarias con dispatch fire-and-forget; no copia configuración Pi/Intercom ni skills genéricas Gentle AI.
-      - Los tres perfiles y sus skills se materializan desde el bundle sin modificar sus fuentes canónicas.
+      - El bundle contiene exactamente la membresía runtime/engine derivada de RUNTIME_PAYLOAD_FILES, el contrato host-neutral retenido, adapters/pi/**, extensions/pi/** y los perfiles/skills Tower editables bajo product/tower/; excluye configuración Pi/Intercom, skills genéricas Gentle AI y el snapshot inmutable product/tower/generic/, sin relocalizar el engine completo.
+      - Los tres perfiles y sus skills se materializan desde el bundle sin modificar sus fuentes canónicas editables bajo product/tower/.
       - Faltante, extra, symlink, provenance divergente o incoherencia interceptor/torre-control falla cerrado.
       - Declaración, derivación y guardia observan un único conjunto exacto y determinista.
       - "La Sesión sólo empaqueta: no instala, activa, reescribe configuración global ni ejecuta rollback."
@@ -4553,23 +4562,23 @@ sesiones:
             criterios: [Existe una sola enumeración auditable sin Planner permanente ni assets globales.]
   - id: S8.13
     zona: instalacion
-    resultado: Instalación global, activación y rollback
-    autoridad: Contrato propietario de la Sesión y autoridades aprobadas del lifecycle versionado; decisiones 88, 100 y 102; Engram 9921, 9956 rev2 y 9963.
+    resultado: Instalador, preflight, activación y rollback del bundle Tower ejercitados sólo en un HOME/runtime aislado
+    autoridad: Contrato propietario de la Sesión y autoridades aprobadas del lifecycle versionado; decisiones 88, 100 y 102; Engram 9921, 9956 rev2 y 9963; alcance interpretativo supersedido por Engram 10782, que registra la aprobación posterior del maintainer para la frontera producto/Torre.
     depende_de: [S8.12, S1.19, S4.12]
-    recurso: [puntero activo, ubicación global de la extensión Pi, backups y rollback del bundle Tower, preflight de host externo]
+    recurso: [puntero activo y destino de extensión Pi aislados, backups y rollback del bundle Tower aislado, preflight de host externo aislado; prohibidos globals reales]
     criterios:
       - torre-control --update selecciona el lifecycle atómico versionado; no ejecuta el camino legado divergente.
       - El shim symlink se reemplaza atómicamente; ningún cp sigue su target owner-read-only.
       - El diagnóstico prueba revisión activa y coherencia exacta entre plugin, MCP y runtime/engine; una mezcla falla cerrado.
       - Ningún chequeo de sólo existencia/ejecutabilidad/key puede devolver un falso positivo saludable.
-      - Instalación limpia activa el bundle completo y una capacidad ausente, rota o ambigua, un fallo de carga o cualquier preflight incompatible falla con error local tipado antes de mutar, sin route genérico.
-      - Rollback restaura runtime, interceptor, perfiles y skills Tower juntos; no escribe configuración/skills externas ni toca fuera de Área.
-      - La extensión global se carga realmente y el fingerprint cerrado prueba factory de un argumento, pi.on("input"), campos y source requeridos de InputEvent, continue|transform|handled, notificación local, enrolamiento, bytes/provenance de torre-control e inventario/orden revisados de transforms antes de quedar activa; un mismatch deja cero activación parcial y ninguna versión acepta o rechaza por sí sola.
-      - El diff toca sólo Área; no modifica Pi core, pi-intercom, skills genéricas, worktrees ni evidencia estacionada.
+      - Instalación limpia en el HOME/runtime aislado activa el bundle completo y una capacidad ausente, rota o ambigua, un fallo de carga o cualquier preflight incompatible falla con error local tipado antes de mutar, sin route genérico ni global real.
+      - Rollback restaura runtime, interceptor, perfiles y skills Tower juntos dentro del destino aislado; no escribe configuración/skills externas, globals reales ni toca fuera de Área.
+      - La extensión Pi del destino aislado se carga realmente y el fingerprint cerrado prueba factory de un argumento, pi.on("input"), campos y source requeridos de InputEvent, continue|transform|handled, notificación local, enrolamiento, bytes/provenance de torre-control e inventario/orden revisados de transforms antes de quedar activa en la prueba; un mismatch deja cero activación parcial y ninguna versión acepta o rechaza por sí sola.
+      - El diff toca sólo Área; no modifica Pi core, pi-intercom, skills genéricas, worktrees, evidencia estacionada ni globals reales.
     decisiones:
       - tipo: resuelta
-        pregunta: ¿Qué instala Tower y qué recuperación parcial se admite?
-        resolucion: Tower instala sólo el bundle Tower-owned, valida compatibilidad y rechaza upgrade --shim como recuperación parcial.
+        pregunta: ¿Qué instala Tower en el destino aislado y qué recuperación parcial se admite?
+        resolucion: Tower instala sólo el bundle Tower-owned en el HOME/runtime aislado, valida compatibilidad y rechaza upgrade --shim como recuperación parcial.
         autoridad: Decisiones 88, 100 y 102.
         clase: operaciones-irreversibles; seguridad-y-permisos; contrato-visible-del-producto
         falsificador: La instalación incluye bytes ajenos al bundle Tower-owned o acepta upgrade --shim como recuperación parcial.
@@ -4578,8 +4587,8 @@ sesiones:
             razon: Mantendría una instalación incoherente.
         contaminaba: [S8.13, S7.1]
       - tipo: resuelta
-        pregunta: ¿Qué preflight permite activar la instalación global?
-        resolucion: La instalación habilita el interceptor sólo si enrolamiento, carga real de extensión, fingerprint cerrado Pi, bytes/provenance de torre-control e inventario/orden de transforms pasan; fallo o ambigüedad bloquea antes de mutar y rollback restaura la unidad coherente.
+        pregunta: ¿Qué preflight permite activar la instalación aislada?
+        resolucion: La instalación aislada habilita el interceptor sólo si enrolamiento, carga real de extensión, fingerprint cerrado Pi, bytes/provenance de torre-control e inventario/orden de transforms pasan; fallo o ambigüedad bloquea antes de mutar y rollback restaura la unidad coherente.
         autoridad: Engram 9921 y 9963.
         clase: contrato-visible-del-producto; operaciones-irreversibles; seguridad-y-permisos
         falsificador: Una capacidad ausente, rota o ambigua, un fallo de carga o una decisión basada sólo en versión activa total o parcialmente la instalación.
@@ -4598,6 +4607,18 @@ sesiones:
             consecuencia: Cualquier fallo deja el estado previo byte-idéntico; activación parcial, diagnóstico existence-only o decisión sólo por versión falsifican la derivación.
         criterio: Toda carga y validación conductual ocurre antes de la primera mutación y cualquier fallo deja el estado previo byte-idéntico.
         autoridad: Decisiones 88, 100 y 102; Engram 9921, 9956 rev2 y 9963.
+      - tipo: resuelta
+        pregunta: ¿Dónde se ejercita el instalador antes de V1 y quién puede autorizar globals reales?
+        resolucion: "Secuencia futura obligatoria: prueba aislada de instalador, preflight, activación y rollback contra product/tower/ -> publicación de una release V1 probada -> autorización humana explícita posterior -> distribución global real. Una V1 meramente probada no basta; esta gate no autoriza publicar ni distribuir ahora, y ningún commit de Sesión concede distribución."
+        autoridad: "Engram 10782: aprobación posterior del maintainer de la frontera producto/Torre y de esta secuencia; interpreta el alcance sin reatribuir las decisiones históricas 88, 100 y 102."
+        clase: operaciones-irreversibles; seguridad-y-permisos; contrato-visible-del-producto
+        falsificador: Una prueba escribe o activa un global real, una distribución ocurre sin prueba aislada, release V1 publicada y probada, y autorización humana posterior en ese orden, o un commit de Sesión se toma como autorización.
+        descartadas:
+          - opcion: Ejercitar o activar directamente globals reales.
+            razon: Mezcla prueba con distribución y omite la autorización humana explícita posterior.
+          - opcion: Tratar un commit de Sesión como autorización de distribución.
+            razon: La entrega de código no es autoridad para activar ni distribuir.
+        contaminaba: [S8.13, S7.1]
     ruta:
       propuesta: full-sdd
       autoridad: Decisiones 88, 100 y 102; Engram 9921, 9956 rev2 y 9963.
@@ -4848,7 +4869,7 @@ sesiones:
 
   - id: S9.7
     zona: hosts
-    cimientos: [skills/torre-control/SKILL.md]
+    cimientos: [product/tower/skills/torre-control/SKILL.md]
     resultado: Route padre registrado y triggers públicos exactos
     autoridad: decisión 104, Engram 10008 y fuente cerrada de S9.6 como antecedente, no como contrato visible vigente.
     depende_de: [S1.20, S2.9, S9.6]
@@ -4889,7 +4910,7 @@ sesiones:
     modulos:
       - id: M9.7.1
         resultado: Gramática registrada y selección de modo
-        rutas: [extensions/pi/tower-session-router.ts, extensions/pi/package.json, test/extensions/pi/tower-session-router.test.mjs, skills/torre-control/SKILL.md]
+        rutas: [extensions/pi/tower-session-router.ts, extensions/pi/package.json, test/extensions/pi/tower-session-router.test.mjs, product/tower/skills/torre-control/SKILL.md]
         tareas:
           - id: T9.7.1.1
             accion: "RED: cubrir las cuatro frases exactas, Sesión/topic opcional, quinta forma, repo no registrado y ON/OFF/INDETERMINATE sin declaración del usuario."
@@ -4907,7 +4928,7 @@ sesiones:
 
   - id: S9.8
     zona: hosts
-    cimientos: [skills/torre-control/SKILL.md, skills/torre-control-entregas/SKILL.md]
+    cimientos: [product/tower/skills/torre-control/SKILL.md, product/tower/skills/torre-control-entregas/SKILL.md]
     resultado: Dispatch fire-and-forget y cierre asíncrono
     autoridad: decisión 104 y Engram 10008.
     depende_de: [S108, S1.18]
@@ -4948,7 +4969,7 @@ sesiones:
     modulos:
       - id: M9.8.1
         resultado: Política de dispatch y contrato terminal
-        rutas: [skills/torre-control/SKILL.md, skills/torre-control-entregas/SKILL.md, test/extensions/pi/tower-session-router.test.mjs]
+        rutas: [product/tower/skills/torre-control/SKILL.md, product/tower/skills/torre-control-entregas/SKILL.md, test/extensions/pi/tower-session-router.test.mjs]
         tareas:
           - id: T9.8.1.1
             accion: "RED: cubrir espera ordinaria prohibida, uso indebido de ask, terminal faltante/duplicado/stale y crédito falso por candidato parcial."

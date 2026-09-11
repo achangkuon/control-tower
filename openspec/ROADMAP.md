@@ -30,6 +30,7 @@
 - **Instalación:** 0% (0/2 S)
 - **Jornada:** — (sin Sesiones enumeradas)
 - **Método:** 80% (4/5 S)
+- **Producto Torre:** — (sin Sesiones enumeradas)
 
 ## Zonas y colas
 ###  ()
@@ -62,7 +63,7 @@
 1. **S2.9** · 🟢 LISTO · Enrollment público canónico por CLI
 
 ### Entrega (entrega)
-1. **S7.1** · 📋 PLANIFICADO · Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral, preservando OpenCode como conformidad diferida.
+1. **S7.1** · 📋 PLANIFICADO · Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral en un HOME/runtime aislado, preservando OpenCode como conformidad diferida.
 
 ### Hosts (hosts)
 1. **S4.12** · 🟢 LISTO · Recuperación mínima de Pi
@@ -72,13 +73,16 @@
 
 ### Instalación (instalacion)
 1. **S8.12** · 📋 PLANIFICADO · Packaging del bundle Tower: una membresía versionada contiene exactamente los bytes Tower-owned locales y no instala, activa, reescribe configuración global ni ejecuta rollback.
-2. **S8.13** · 📋 PLANIFICADO · Instalación global, activación y rollback
+2. **S8.13** · 📋 PLANIFICADO · Instalador, preflight, activación y rollback del bundle Tower ejercitados sólo en un HOME/runtime aislado
 
 ### Jornada (jornada)
 - Sin Sesiones abiertas.
 
 ### Método (metodo)
 1. **S115** · 📋 PLANIFICADO · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
+
+### Producto Torre (producto-torre)
+- Sin Sesiones abiertas.
 
 ## Bloqueos
 - **S1.19:** Which exact test files will own the Pi-first integration regression?
@@ -1798,7 +1802,7 @@ Rutas históricas (evidencia): contracts/schema-registry.mjs, install/runtime-pa
 - **T5.15.2.3:** REFACTOR: RUNTIME&#95;PAYLOAD&#95;FILES conserva igualdad exacta de conjunto y ningún miembro queda sin llamador. → REFACTOR: RUNTIME&#95;PAYLOAD&#95;FILES conserva igualdad exacta de conjunto y ningún miembro queda sin llamador.
   - [ ] RUNTIME&#95;PAYLOAD&#95;FILES conserva igualdad exacta y todos sus miembros tienen llamador.
 
-### S7.1 — Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral, preservando OpenCode como conformidad diferida.
+### S7.1 — Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral en un HOME/runtime aislado, preservando OpenCode como conformidad diferida.
 - Estado derivado: 📋 PLANIFICADO
 - Zona/Área: entrega · delivery/, continuation/, test/delivery/, test/continuation/
 - Depende de: S1.19, S4.12, S8.13, S5.5
@@ -1808,9 +1812,10 @@ Rutas históricas (evidencia): contracts/schema-registry.mjs, install/runtime-pa
   - [ ] Un único candidate&#95;revision inmutable identifica la corrida completa.
   - [ ] Toda evidencia se traza al contrato host-neutral y a ese candidato.
   - [ ] La cadena Pi y la recuperación mínima pasan.
-  - [ ] La instalación, el rollback y el preflight completos pasan.
+  - [ ] La instalación, el rollback y el preflight completos pasan en un HOME/runtime aislado, sin instalar ni activar en globals reales.
   - [ ] La corrida larga, el crash del broker bajo tráfico y cinco clientes producen evidencia.
   - [ ] No se afirma soporte por encima de cinco clientes.
+  - [ ] Secuencia futura obligatoria: prueba aislada -&gt; publicación de una release V1 probada -&gt; autorización humana explícita posterior -&gt; distribución global real; una V1 meramente probada no basta y esta gate no autoriza publicar ni distribuir ahora.
   - [ ] S5.3 se trata como dependencia satisfecha y no se modifica ningún path fuera del Área declarada.
 
 #### M7.1.1 — Piloto terminal Pi-first
@@ -1818,8 +1823,8 @@ Rutas: —
 
 - **T7.1.1.1:** RED: congelar candidato y registrar todo rojo Gate A-G sin reinterpretarlo. → RED: congelar candidato y registrar todo rojo Gate A-G sin reinterpretarlo.
   - [ ] Todo rojo Gate A-G queda registrado contra el único candidato inmutable sin reinterpretación.
-- **T7.1.1.2:** GREEN: ejecutar piloto en control-tower contra contrato neutral e instalación real. → GREEN: ejecutar piloto en control-tower contra contrato neutral e instalación real.
-  - [ ] El piloto Pi-first corre contra el contrato host-neutral y la instalación real.
+- **T7.1.1.2:** GREEN: ejecutar piloto en control-tower contra contrato neutral e instalación real sólo dentro del HOME/runtime aislado. → GREEN: ejecutar piloto en control-tower contra contrato host-neutral e instalación real aislada.
+  - [ ] El piloto Pi-first corre contra el contrato host-neutral y la instalación real aislada, sin globals reales.
 - **T7.1.1.3:** REFACTOR: consolidar evidencia atribuible y declaración de alcance máximo de cinco clientes. → REFACTOR: consolidar evidencia atribuible y declaración de alcance máximo de cinco clientes.
   - [ ] La evidencia queda atribuida al candidato y no declara soporte por encima de cinco clientes.
 
@@ -1828,10 +1833,10 @@ Rutas: —
 - Zona/Área: instalacion · install/, test/install/
 - Depende de: S8.10, S8.14, S9.8
 - Cimientos: scripts/payload-closure.mjs
-- Recursos: contrato RUNTIME&#95;PAYLOAD&#95;FILES, bytes fuente Tower-owned de profiles/tower/&#42;&#42; consumidos sin modificarlos, bytes fuente Tower-owned de skills/torre-control/&#42;&#42; consumidos sin modificarlos, bytes fuente Tower-owned de skills/torre-control-entregas/&#42;&#42; consumidos sin modificarlos, bytes fuente Tower-owned de skills/torre-control-soporte/&#42;&#42; consumidos sin modificarlos, bytes fuente Tower-owned de adapters/pi/&#42;&#42; consumidos sin modificarlos, bytes fuente Tower-owned de extensions/pi/&#42;&#42; consumidos sin modificarlos
+- Recursos: contrato RUNTIME&#95;PAYLOAD&#95;FILES, bytes fuente Tower-owned editables de product/tower/profiles/{main,support,implementer}.md consumidos sin modificarlos, bytes fuente Tower-owned editables de product/tower/skills/torre-control/SKILL.md consumidos sin modificar, bytes fuente Tower-owned editables de product/tower/skills/torre-control-entregas/SKILL.md consumidos sin modificar, bytes fuente Tower-owned editables de product/tower/skills/torre-control-soporte/SKILL.md consumidos sin modificar, bytes originales inmutables de product/tower/generic/&#42;&#42; preservados como evidencia de producto, no como raíz de instrucciones activa, bytes fuente Tower-owned de adapters/pi/&#42;&#42; consumidos sin modificarlos, bytes fuente Tower-owned de extensions/pi/&#42;&#42; consumidos sin modificarlos
 - Criterios de aceptación:
-  - [ ] El bundle contiene exactamente los bytes Tower-owned locales, incluidos route padre Pi-first, torre-control, perfiles y skills propietarias con dispatch fire-and-forget; no copia configuración Pi/Intercom ni skills genéricas Gentle AI.
-  - [ ] Los tres perfiles y sus skills se materializan desde el bundle sin modificar sus fuentes canónicas.
+  - [ ] El bundle contiene exactamente la membresía runtime/engine derivada de RUNTIME&#95;PAYLOAD&#95;FILES, el contrato host-neutral retenido, adapters/pi/&#42;&#42;, extensions/pi/&#42;&#42; y los perfiles/skills Tower editables bajo product/tower/; excluye configuración Pi/Intercom, skills genéricas Gentle AI y el snapshot inmutable product/tower/generic/, sin relocalizar el engine completo.
+  - [ ] Los tres perfiles y sus skills se materializan desde el bundle sin modificar sus fuentes canónicas editables bajo product/tower/.
   - [ ] Faltante, extra, symlink, provenance divergente o incoherencia interceptor/torre-control falla cerrado.
   - [ ] Declaración, derivación y guardia observan un único conjunto exacto y determinista.
   - [ ] La Sesión sólo empaqueta: no instala, activa, reescribe configuración global ni ejecuta rollback.
@@ -1888,21 +1893,21 @@ Rutas históricas (evidencia): skills/torre-control-entregas/SKILL.md, test/inst
 - **T8.14.2.3:** REFACTOR: dejar una sola enumeración auditable, sin Planner permanente ni dependencia de assets globales. → REFACTOR: dejar una sola enumeración auditable, sin Planner permanente ni dependencia de assets globales.
   - [ ] Existe una sola enumeración auditable sin Planner permanente ni assets globales.
 
-### S8.13 — Instalación global, activación y rollback
+### S8.13 — Instalador, preflight, activación y rollback del bundle Tower ejercitados sólo en un HOME/runtime aislado
 - Estado derivado: 📋 PLANIFICADO
 - Zona/Área: instalacion · install/, test/install/
 - Depende de: S8.12, S1.19, S4.12
 - Cimientos: —
-- Recursos: puntero activo, ubicación global de la extensión Pi, backups y rollback del bundle Tower, preflight de host externo
+- Recursos: puntero activo y destino de extensión Pi aislados, backups y rollback del bundle Tower aislado, preflight de host externo aislado; prohibidos globals reales
 - Criterios de aceptación:
   - [ ] torre-control --update selecciona el lifecycle atómico versionado; no ejecuta el camino legado divergente.
   - [ ] El shim symlink se reemplaza atómicamente; ningún cp sigue su target owner-read-only.
   - [ ] El diagnóstico prueba revisión activa y coherencia exacta entre plugin, MCP y runtime/engine; una mezcla falla cerrado.
   - [ ] Ningún chequeo de sólo existencia/ejecutabilidad/key puede devolver un falso positivo saludable.
-  - [ ] Instalación limpia activa el bundle completo y una capacidad ausente, rota o ambigua, un fallo de carga o cualquier preflight incompatible falla con error local tipado antes de mutar, sin route genérico.
-  - [ ] Rollback restaura runtime, interceptor, perfiles y skills Tower juntos; no escribe configuración/skills externas ni toca fuera de Área.
-  - [ ] La extensión global se carga realmente y el fingerprint cerrado prueba factory de un argumento, pi.on("input"), campos y source requeridos de InputEvent, continue&#124;transform&#124;handled, notificación local, enrolamiento, bytes/provenance de torre-control e inventario/orden revisados de transforms antes de quedar activa; un mismatch deja cero activación parcial y ninguna versión acepta o rechaza por sí sola.
-  - [ ] El diff toca sólo Área; no modifica Pi core, pi-intercom, skills genéricas, worktrees ni evidencia estacionada.
+  - [ ] Instalación limpia en el HOME/runtime aislado activa el bundle completo y una capacidad ausente, rota o ambigua, un fallo de carga o cualquier preflight incompatible falla con error local tipado antes de mutar, sin route genérico ni global real.
+  - [ ] Rollback restaura runtime, interceptor, perfiles y skills Tower juntos dentro del destino aislado; no escribe configuración/skills externas, globals reales ni toca fuera de Área.
+  - [ ] La extensión Pi del destino aislado se carga realmente y el fingerprint cerrado prueba factory de un argumento, pi.on("input"), campos y source requeridos de InputEvent, continue&#124;transform&#124;handled, notificación local, enrolamiento, bytes/provenance de torre-control e inventario/orden revisados de transforms antes de quedar activa en la prueba; un mismatch deja cero activación parcial y ninguna versión acepta o rechaza por sí sola.
+  - [ ] El diff toca sólo Área; no modifica Pi core, pi-intercom, skills genéricas, worktrees, evidencia estacionada ni globals reales.
 
 ### S9.1 — Pool de asientos permanentes y asignación por Main
 - Estado derivado: ✅ COMPLETO
@@ -2018,7 +2023,7 @@ Rutas históricas (evidencia): hosts/herdr-topology.mjs, test/hosts/herdr-topolo
 - Estado derivado: 📋 PLANIFICADO
 - Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs, scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs
 - Depende de: S1.20, S2.9, S9.6
-- Cimientos: skills/torre-control/SKILL.md
+- Cimientos: product/tower/skills/torre-control/SKILL.md
 - Recursos: cadena global pi.on("input"), probe tipado de modo y resolución canónica de proyecto enrolado; sin Herdr, DB mutable ni procesos
 - Criterios de aceptación:
   - [ ] En un proyecto registrado, cada una de las cuatro frases exactas, con o sin Sesión/topic, alcanza el mismo parent route torre-control; ninguna otra frase se acepta.
@@ -2029,7 +2034,7 @@ Rutas históricas (evidencia): hosts/herdr-topology.mjs, test/hosts/herdr-topolo
   - [ ] El diff toca sólo Área.
 
 #### M9.7.1 — Gramática registrada y selección de modo
-Rutas: extensions/pi/tower-session-router.ts, extensions/pi/package.json, test/extensions/pi/tower-session-router.test.mjs, skills/torre-control/SKILL.md
+Rutas: extensions/pi/tower-session-router.ts, extensions/pi/package.json, test/extensions/pi/tower-session-router.test.mjs, product/tower/skills/torre-control/SKILL.md
 
 - **T9.7.1.1:** RED: cubrir las cuatro frases exactas, Sesión/topic opcional, quinta forma, repo no registrado y ON/OFF/INDETERMINATE sin declaración del usuario. → RED: las cuatro frases exactas, Sesión/topic opcional, quinta forma, repo no registrado y ON/OFF/INDETERMINATE sin declaración del usuario quedan cubiertos.
   - [ ] RED: las cuatro frases exactas, Sesión/topic opcional, quinta forma, repo no registrado y ON/OFF/INDETERMINATE sin declaración del usuario quedan cubiertos.
@@ -2042,7 +2047,7 @@ Rutas: extensions/pi/tower-session-router.ts, extensions/pi/package.json, test/e
 - Estado derivado: 📋 PLANIFICADO
 - Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs, scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs
 - Depende de: S108, S1.18
-- Cimientos: skills/torre-control/SKILL.md, skills/torre-control-entregas/SKILL.md
+- Cimientos: product/tower/skills/torre-control/SKILL.md, product/tower/skills/torre-control-entregas/SKILL.md
 - Recursos: dispatch&#95;id, canal Intercom ya ligado por S1.18 y mailbox de Main; sin ownership de Herdr, lifecycle de procesos o entrega Git
 - Criterios de aceptación:
   - [ ] Main despacha Support/worker, registra dispatch&#95;id y vuelve inmediatamente a coordinar después del acknowledgment de envío.
@@ -2053,7 +2058,7 @@ Rutas: extensions/pi/tower-session-router.ts, extensions/pi/package.json, test/e
   - [ ] El diff toca sólo Área.
 
 #### M9.8.1 — Política de dispatch y contrato terminal
-Rutas: skills/torre-control/SKILL.md, skills/torre-control-entregas/SKILL.md, test/extensions/pi/tower-session-router.test.mjs
+Rutas: product/tower/skills/torre-control/SKILL.md, product/tower/skills/torre-control-entregas/SKILL.md, test/extensions/pi/tower-session-router.test.mjs
 
 - **T9.8.1.1:** RED: cubrir espera ordinaria prohibida, uso indebido de ask, terminal faltante/duplicado/stale y crédito falso por candidato parcial. → RED: espera ordinaria prohibida, uso indebido de ask, terminal faltante/duplicado/stale y crédito falso por candidato parcial quedan cubiertos.
   - [ ] RED: espera ordinaria prohibida, uso indebido de ask, terminal faltante/duplicado/stale y crédito falso por candidato parcial quedan cubiertos.
