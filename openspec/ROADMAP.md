@@ -12,9 +12,10 @@
 - Contratos #1 → S100 — Contrato de schema de delivery-policy, incluido planning.prepare&#95;through fail-closed
 - Enrolamiento #1 → S2.9 — Enrollment público canónico por CLI
 - Hosts #1 → S4.12 — Recuperación mínima de Pi
+- Método #2 → S116 — El campo autoridad admite varias citas: una Sesión que se apoya en más de una fuente puede declararlas todas, y radar prueba cada una por separado.
 
 ## Avance
-- **Total:** 67% (55/82 S)
+- **Total:** 66% (55/83 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -28,7 +29,7 @@
 - **Hosts:** 28% (2/7 S)
 - **Instalación:** 0% (0/2 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 75% (3/4 S)
+- **Método:** 60% (3/5 S)
 
 ## Zonas y colas
 ###  ()
@@ -43,7 +44,7 @@
 1. **S5.5** · 🟢 LISTO · Parking y retoma del loop
 
 ### Autoridad (autoridad)
-1. **S114** · 🔴 BLOQUEADO · Las 76 Sesiones del plan declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado.
+1. **S114** · 📋 PLANIFICADO · Las 76 Sesiones del plan declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado.
 
 ### Capacidades (capacidades)
 1. **S101** · 🔴 BLOQUEADO · Resolución de política: prepare&#95;through opaco y horizon&#95;ceiling salen de la política resuelta
@@ -77,7 +78,8 @@
 - Sin Sesiones abiertas.
 
 ### Método (metodo)
-1. **S115** · 🔴 BLOQUEADO · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
+1. **S115** · 📋 PLANIFICADO · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
+2. **S116** · 🟢 LISTO · El campo autoridad admite varias citas: una Sesión que se apoya en más de una fuente puede declararlas todas, y radar prueba cada una por separado.
 
 ## Bloqueos
 - **S1.19:** Which exact test files will own the Pi-first integration regression?
@@ -90,8 +92,6 @@
 - **S12.7:** ¿Qué Módulos, Tareas, Zonas y puentes temporales migran las 26 carpetas sin retirar rutas de raíz antes de probar consumidores y payloads?
 - **S12.9:** ¿Qué valor lleva source&#95;commit en una revisión autoral?
 - **S101:** contaminación semántica declarada por otra Sesión
-- **S114:** ¿Qué fidelidad conserva la migración cuando la autoridad es prosa que nombra decenas de fuentes?
-- **S115:** contaminación semántica declarada por otra Sesión
 
 ## Rutas
 - **S1.20:** propuesta direct (decision 104 and Engram observation 10008); pendiente de revalidación en kickoff.
@@ -117,6 +117,7 @@
 - **S110:** propuesta direct (El resultado es binariamente verificable —el host Pi descubre o no descubre las tres skills— y no queda ninguna elección de diseño abierta: el mapeo de superficies está cerrado y verificado contra el árbol en f78216c.); revalidada direct sobre f78216cfec642cfe7cc5c32c87fa8cdf2da9108b con evidencia Árbol limpio en f78216c y .pi/settings.json declarando las tres skills; el test RED falló nombrando las tres antes de tocar nada..
 - **S111:** propuesta direct (El contrato de entrada es exacto y está publicado, el mecanismo de consumo ya existe en ledger.go, y la única elección restante —qué hacer ante un status ilegible— es derivable del precedente del propio archivo.); revalidada direct sobre 638a3f78cff475215cd1cc86cd37b8a3dcc09be5 con evidencia Salida real de gentle-ai sdd-status --json bajo 2.7.0, con schemaName, schemaVersion, nextRecommended y dependencies verificados campo por campo antes de escribir código..
 - **S112:** propuesta design-tasks (El producto está decidido —tres tipos, dos verificables, migración por Zona con exigencia al final— pero falta descubrimiento técnico acotado: la forma exacta de cada tipo en el esquema y cómo se prueba una cita a una decisión numerada dentro del registro archivado. Eso es diseño de contrato, no de comportamiento.); revalidada design-tasks sobre 4f4e2925befd92f7939b8459915499f5196909f3 con evidencia El descubrimiento encontró dos copias byte-idénticas del registro con md5 541a4eda, ninguna declarada autoridad por AGENTS.md, y dos formatos de escritura de decisiones más rangos. Las dos preguntas quedaron resueltas antes del primer Módulo..
+- **S116:** propuesta direct (El tipo de cita ya existe y está entregado en S112; esto lo repite en una lista y reporta cuál falló. No queda ninguna elección de diseño abierta: la decisión de producto está tomada y el canon §18 cierra la alternativa.); pendiente de revalidación en kickoff.
 - **S114:** propuesta direct (El contrato del campo lo fija S112 y la estrategia de migración está decidida; lo que queda es trabajo mecánico sobre un dato, con un criterio de cierre binario —cero Sesiones sin tipo— y ninguna elección de diseño abierta.); pendiente de revalidación en kickoff.
 - **S115:** propuesta direct (El contrato ya existe por S112 y el dato ya está migrado por S114; encender la exigencia es un cambio acotado con un criterio binario verificable en una sola corrida de radar check.); pendiente de revalidación en kickoff.
 - **S113:** propuesta direct (Las dos reglas están escritas en el canon, la infraestructura de evidencia y ancestría ya existe, y la única elección restante —cuándo medir— es derivable del contrato de HEAD inmutable que la propia herramienta ya aplica.); revalidada design-tasks sobre 271a32a63a0f6ae554a2690448535bbc6ead7692 con evidencia Las 6 Sesiones archivadas del plan vigente —S4.9, S5.14, S5.15, S9.3, S9.4, S9.5— no tienen ninguna evidencia de entrega. Cuatro están reemplazadas desde references.future&#95;successors (S102 a S108) y dos, S4.9 y S9.4, se retienen como evidencia histórica sin entrega ni reemplazo: la autoridad de S9.4 lo dice textual.; razón: La ruta propuesta daba por sentado que archivar implica haber entregado, y el árbol real prueba que hay tres caminos de archivo, no uno. Decidir cuál de los tres debe declararse y cuál puede inferirse es diseño de contrato, no implementación mecánica: el criterio propuesto habría marcado las 6 archivadas del plan vigente, dos de ellas legítimas..
@@ -2803,10 +2804,34 @@ Rutas: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go
 - **T112.1.3:** REFACTOR: reusar validateFragmentLocator en vez de duplicar la resolución de blob y rango, dejando una sola prueba de cita en la herramienta. → REFACTOR: existe una sola prueba de cita y los tests siguen pasando.
   - [ ] REFACTOR: existe una sola prueba de cita y los tests siguen pasando.
 
-### S114 — Las 76 Sesiones del plan declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado.
-- Estado derivado: 🔴 BLOQUEADO
-- Zona/Área: autoridad · openspec/plans/, openspec/plan.yaml, openspec/ROADMAP.md, openspec/prd/, openspec/rfc/, openspec/specs/, openspec/maintenance/, openspec/config.yaml, docs/
+### S116 — El campo autoridad admite varias citas: una Sesión que se apoya en más de una fuente puede declararlas todas, y radar prueba cada una por separado.
+- Estado derivado: 🟢 LISTO
+- Zona/Área: metodo · agent-workflows/
 - Depende de: S112
+- Cimientos: —
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] El campo autoridad admite una lista de citas tipadas, y cada una se verifica con la misma exigencia que hoy se aplica a una cita sola.
+  - [ ] Una autoridad con una sola cita se sigue escribiendo sin lista: la forma simple no se vuelve más ceremoniosa por existir la compuesta.
+  - [ ] Un hallazgo sobre una cita de la lista nombra cuál de ellas falló, no sólo la Sesión.
+  - [ ] El esquema no gana ningún campo de texto libre para prosa sin migrar, ni ningún tipo nuevo: el canon §18 prohíbe extender la herramienta para aceptar la forma vieja.
+  - [ ] La forma de texto libre sigue pasando; la exigencia se enciende en S115, después de que S114 haya migrado el dato.
+  - [ ] El diff toca sólo Área.
+
+#### M116.1 — Autoridad admite varias citas y cada una se verifica por separado
+Rutas: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/authority&#95;test.go
+
+- **T116.1.1:** RED: cubrir una lista con dos citas válidas, una lista donde la segunda falla, una cita sola sin lista, y la forma de texto libre. → RED: los cuatro casos quedan cubiertos y el que debe fallar, falla nombrando cuál cita de la lista fue.
+  - [ ] RED: los cuatro casos quedan cubiertos y el que debe fallar, falla nombrando cuál cita de la lista fue.
+- **T116.1.2:** GREEN: aceptar escalar, mapa y lista en el mismo campo, y verificar cada cita de la lista con la exigencia ya entregada. → GREEN: las tres formas cargan, cada cita se verifica por separado y el hallazgo nombra la posición que falló.
+  - [ ] GREEN: las tres formas cargan, cada cita se verifica por separado y el hallazgo nombra la posición que falló.
+- **T116.1.3:** REFACTOR: dejar una sola función que verifica una cita, usada igual por la forma simple y por cada elemento de la lista. → REFACTOR: existe una sola verificación de cita y los tests siguen pasando.
+  - [ ] REFACTOR: existe una sola verificación de cita y los tests siguen pasando.
+
+### S114 — Las 76 Sesiones del plan declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado.
+- Estado derivado: 📋 PLANIFICADO
+- Zona/Área: autoridad · openspec/plans/, openspec/plan.yaml, openspec/ROADMAP.md, openspec/prd/, openspec/rfc/, openspec/specs/, openspec/maintenance/, openspec/config.yaml, docs/
+- Depende de: S112, S116
 - Cimientos: —
 - Recursos: openspec/plan.yaml; la migración es el único trabajo que lo escribe mientras dura
 - Criterios de aceptación:
@@ -2828,7 +2853,7 @@ Rutas: openspec/plan.yaml, openspec/plans/decision-register.md
   - [ ] REFACTOR: cero Sesiones conservan la forma vieja y radar check pasa.
 
 ### S115 — Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
-- Estado derivado: 🔴 BLOQUEADO
+- Estado derivado: 📋 PLANIFICADO
 - Zona/Área: metodo · agent-workflows/
 - Depende de: S114
 - Cimientos: —
@@ -2887,7 +2912,7 @@ Rutas: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go
   - [ ] REFACTOR: un plan sin tope declarado se comporta de forma explícita y los tests siguen pasando.
 
 ## Capacidad
-5 Zona(s) compatibles con trabajo LISTO: asientos, cimientos, contratos, enrolamiento, hosts.
+6 Zona(s) compatibles con trabajo LISTO: asientos, cimientos, contratos, enrolamiento, hosts, metodo.
 Este valor es un pronóstico estático. No adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
