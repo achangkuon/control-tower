@@ -6483,6 +6483,12 @@ sesiones:
     ruta:
       propuesta: direct
       autoridad: "El resultado es binariamente verificable —el host Pi descubre o no descubre las tres skills— y no queda ninguna elección de diseño abierta: el mapeo de superficies está cerrado y verificado contra el árbol en f78216c."
+      revalidacion:
+        resultado: direct
+        base: f78216cfec642cfe7cc5c32c87fa8cdf2da9108b
+        evidencia: "Árbol limpio en f78216c y .pi/settings.json declarando las tres skills; el test RED falló nombrando las tres antes de tocar nada."
+    entrega:
+      commit: 638a3f78cff475215cd1cc86cd37b8a3dcc09be5
     modulos:
       - id: M110.1
         resultado: "El repositorio deja de exponerle skills de la Torre a Pi"
