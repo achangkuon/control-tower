@@ -2858,9 +2858,12 @@ Rutas: agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/check&#
 - Cimientos: —
 - Recursos: —
 - Criterios de aceptación:
-  - [ ] Una Sesión archivada declara por cuál de los tres caminos se archivó —entregada, reemplazada o evidencia histórica retenida— y una archivada que no declara ninguno falla cerrado, nombrando la Sesión.
-  - [ ] Una Sesión que declara haberse archivado por entrega y no tiene evidencia integrada falla cerrado; una archivada por reemplazo exige que su sucesora exista; una retenida como evidencia histórica no exige ninguna de las dos.
+  - [ ] El esquema admite el campo que declara por cuál de los tres caminos se archivó una Sesión —entregada, reemplazada o evidencia histórica retenida— y un valor fuera de esos tres falla cerrado.
+  - [ ] Una Sesión archivada que declara entrega y no tiene evidencia integrada falla cerrado; una que declara reemplazo y no tiene sucesora falla cerrado; una que declara evidencia histórica no exige ninguna de las dos.
+  - [ ] Una archivada que todavía no declara su camino sigue pasando: exigirlo aquí fallaría S4.9 y S9.4, que hoy no tienen cómo declararlo. La exigencia se enciende en una Sesión posterior, después de que el dato esté declarado.
+  - [ ] El camino no se infiere nunca. Inferir «evidencia histórica» de la ausencia de las otras dos convertiría cada entrega olvidada en historia legítima, que es exactamente el error que este chequeo existe para atrapar.
   - [ ] Radar mide las líneas escritas del candidato contra el tope declarado y emite un hallazgo cuando lo supera; el tope es un dato del plan, no una constante en el código.
+  - [ ] Un plan que no declara tope no se mide y no falla: el tope es política, y una herramienta que inventa una política que nadie declaró es peor que una que no la verifica.
   - [ ] La medición usa la misma prueba de ancestría inmutable que ya usa la evidencia de entrega, y no una lectura del árbol de trabajo.
   - [ ] Ninguna de las dos reglas bloquea una Sesión que todavía no entregó: son verificaciones de cierre, no compuertas previas.
   - [ ] El diff toca sólo Área.
