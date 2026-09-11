@@ -185,3 +185,53 @@ test("an executable planted inside the working tree is never run", () => {
   expect(result.stderr).toContain("se omite la validación del plan")
   expect(result.status).toBe(0)
 })
+
+// `core.hooksPath` is per-clone configuration and does not travel with the repository, so a
+// fresh clone carries the hook file and runs none of it. That is the gap the installer has to
+// close: shipping `.githooks/pre-push` in the tree is not the same as arming it. These two
+// tests pin both halves — the gap, and the one command that closes it — so that a future
+// change to the installer cannot silently stop wiring the gate.
+const unwiredScenario = () => {
+  const root = mkdtempSync(join(tmpdir(), "pre-push-unwired-"))
+  temporaryRoots.push(root)
+  const origin = join(root, "origin")
+  const work = join(root, "work")
+  mkdirSync(origin)
+  mkdirSync(work)
+
+  git(origin, ["init", "--quiet", "--bare", "."])
+  git(work, ["init", "--quiet", "."])
+  // Deliberately no core.hooksPath: this is what `git clone` leaves behind.
+  git(work, ["config", "user.email", "gate@test"])
+  git(work, ["config", "user.name", "gate"])
+  git(work, ["remote", "add", "origin", origin])
+
+  return { origin, work }
+}
+
+test("a clone that never configured core.hooksPath runs no gate at all", () => {
+  const { origin, work } = unwiredScenario()
+  mkdirSync(join(work, "openspec"), { recursive: true })
+  writeFileSync(join(work, "openspec", "plan.yaml"), brokenPlan)
+  commit(work, "invalid plan, unwired clone")
+
+  const result = push(work)
+
+  // The plan is invalid, yet nothing stops the push: the hook was never reachable.
+  expect(result.status).toBe(0)
+  expect(originCommits(origin)).toContain("invalid plan, unwired clone")
+})
+
+test("configuring core.hooksPath is the single step that arms the gate", () => {
+  const { origin, work } = unwiredScenario()
+  mkdirSync(join(work, "openspec"), { recursive: true })
+  writeFileSync(join(work, "openspec", "plan.yaml"), brokenPlan)
+  commit(work, "invalid plan, wired clone")
+
+  git(work, ["config", "core.hooksPath", hooksPath])
+  const result = push(work)
+
+  expect(result.status).not.toBe(0)
+  expect(result.stderr).toContain("el plan no valida")
+  expect(originCommits(origin)).toBe("")
+})

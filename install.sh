@@ -87,6 +87,11 @@ if $check_only; then
         && ok "skills instaladas" || bad "skills sin instalar"
     command -v radar >/dev/null 2>&1 \
         && ok "radar en PATH" || bad "radar sin instalar o fuera del PATH"
+    # radar instalado no es lo mismo que el gate armado. `core.hooksPath` es configuración
+    # local del clon y no viaja con `git clone`, así que un clon recién hecho trae
+    # .githooks/pre-push en el árbol y no ejecuta nada de él. Se diagnostica por separado.
+    [[ "$(git -C "$SRC" config --get core.hooksPath 2>/dev/null)" == ".githooks" ]] \
+        && ok "gate de plan armado" || bad "gate de plan sin armar (core.hooksPath)"
     exit 0
 fi
 
@@ -197,6 +202,29 @@ elif command -v go >/dev/null 2>&1; then
 else
     echo "  ~ sin go: radar no se instala. Sin radar no hay validación del plan"
     echo "    ni puerta pre-push. Instalá go y corré agent-workflows/tools/install-radar.sh"
+fi
+
+# ── Gate de plan: armar el hook en este clon ────────────────────────────────
+# Embarcar .githooks/pre-push en el árbol no arma nada: `core.hooksPath` es configuración
+# local del clon y `git clone` no la copia, así que un clon nuevo trae el hook y no ejecuta
+# una línea de él. Esta es la única orden que lo enciende, y por eso vive acá y no en la
+# documentación. Es idempotente y no se toca si el usuario ya eligió otra ruta de hooks.
+if [[ "$want_plan" == "no" ]]; then
+    :
+elif [[ ! -d "$SRC/.githooks" ]]; then
+    echo "  ~ este repo no trae .githooks; no hay gate de plan que armar"
+else
+    hooks_actual="$(git -C "$SRC" config --get core.hooksPath 2>/dev/null || true)"
+    if [[ "$hooks_actual" == ".githooks" ]]; then
+        ok "gate de plan ya estaba armado"
+    elif [[ -n "$hooks_actual" ]]; then
+        echo "  ~ core.hooksPath apunta a '$hooks_actual', no a .githooks. No lo piso:"
+        echo "    si querés el gate, corré  git config core.hooksPath .githooks"
+    elif git -C "$SRC" config core.hooksPath .githooks 2>/dev/null; then
+        ok "gate de plan armado (core.hooksPath → .githooks)"
+    else
+        bad "no pude armar el gate; corré  git config core.hooksPath .githooks"
+    fi
 fi
 
 cat <<'EOF'
