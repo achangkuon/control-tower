@@ -8,7 +8,6 @@
 
 ## Estado y próximo trabajo
 - Asientos #1 → S5.5 — Parking y retoma del loop
-- Autoridad #1 → S114 — Las 76 Sesiones del plan declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado.
 - cimientos #1 → S1.20 — Probe tipado y read-only del modo Tower
 - Contratos #1 → S100 — Contrato de schema de delivery-policy, incluido planning.prepare&#95;through fail-closed
 - Enrolamiento #1 → S2.9 — Enrollment público canónico por CLI
@@ -45,7 +44,7 @@
 1. **S5.5** · 🟢 LISTO · Parking y retoma del loop
 
 ### Autoridad (autoridad)
-1. **S114** · 🟢 LISTO · Las 76 Sesiones del plan declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado.
+1. **S114** · 🔴 BLOQUEADO · Las 76 Sesiones del plan declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado.
 
 ### Capacidades (capacidades)
 1. **S101** · 🔴 BLOQUEADO · Resolución de política: prepare&#95;through opaco y horizon&#95;ceiling salen de la política resuelta
@@ -80,7 +79,7 @@
 
 ### Método (metodo)
 1. **S113** · 🟢 LISTO · Radar verifica las dos reglas de entrega que hoy no verifica nadie: que archive corra después de entregar, y que el lote de revisión no pase de 400 líneas.
-2. **S115** · 📋 PLANIFICADO · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
+2. **S115** · 🔴 BLOQUEADO · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
 
 ## Bloqueos
 - **S1.19:** Which exact test files will own the Pi-first integration regression?
@@ -93,6 +92,8 @@
 - **S12.7:** ¿Qué Módulos, Tareas, Zonas y puentes temporales migran las 26 carpetas sin retirar rutas de raíz antes de probar consumidores y payloads?
 - **S12.9:** ¿Qué valor lleva source&#95;commit en una revisión autoral?
 - **S101:** contaminación semántica declarada por otra Sesión
+- **S114:** ¿Qué fidelidad conserva la migración cuando la autoridad es prosa que nombra decenas de fuentes?
+- **S115:** contaminación semántica declarada por otra Sesión
 
 ## Rutas
 - **S1.20:** propuesta direct (decision 104 and Engram observation 10008); pendiente de revalidación en kickoff.
@@ -2805,7 +2806,7 @@ Rutas: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go
   - [ ] REFACTOR: existe una sola prueba de cita y los tests siguen pasando.
 
 ### S114 — Las 76 Sesiones del plan declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: 🔴 BLOQUEADO
 - Zona/Área: autoridad · openspec/plans/, openspec/plan.yaml, openspec/ROADMAP.md, openspec/prd/, openspec/rfc/, openspec/specs/, openspec/maintenance/, openspec/config.yaml, docs/
 - Depende de: S112
 - Cimientos: —
@@ -2829,7 +2830,7 @@ Rutas: openspec/plan.yaml, openspec/plans/decision-register.md
   - [ ] REFACTOR: cero Sesiones conservan la forma vieja y radar check pasa.
 
 ### S115 — Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
-- Estado derivado: 📋 PLANIFICADO
+- Estado derivado: 🔴 BLOQUEADO
 - Zona/Área: metodo · agent-workflows/
 - Depende de: S114
 - Cimientos: —
@@ -2885,7 +2886,7 @@ Rutas: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go
   - [ ] REFACTOR: un plan sin tope declarado se comporta de forma explícita y los tests siguen pasando.
 
 ## Capacidad
-7 Zona(s) compatibles con trabajo LISTO: asientos, autoridad, cimientos, contratos, enrolamiento, hosts, metodo.
+6 Zona(s) compatibles con trabajo LISTO: asientos, cimientos, contratos, enrolamiento, hosts, metodo.
 Este valor es un pronóstico estático. No adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references

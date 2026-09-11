@@ -6818,6 +6818,15 @@ sesiones:
           - opcion: "Fijar 400 como constante en Go."
             razon: "Convierte una política de producto en una decisión de compilación."
       - tipo: derivable
+        pregunta: "¿Dónde se declara el tope del lote, si hoy no existe el campo en ningún lado?"
+        criterio: "En openspec/plan.yaml, como política de planificación que radar lee junto al resto del dato. No se agrega al bloque delivery-policy de AGENTS.md, cuyo conjunto de campos está declarado exactamente cerrado y lo gobierna otro contrato."
+        autoridad: "El criterio ya resuelto de esta Sesión —el tope es un dato del plan, no una constante del código— más el conjunto cerrado de delivery-policy declarado en el propio plan."
+        evidencia: "Verificado sobre el árbol: ni openspec/plan.yaml ni agent-workflows/tools/radar/plan.go tienen campo para el tope, y el conjunto de delivery-policy se declara exactamente cerrado en effective_limits, delivery.shape, delivery.target_branch, planning.horizon_ceiling, documentation_close.*, allowed_operations y allowed_hosts."
+        checkpoint: "antes del primer Módulo."
+        opciones:
+          - opcion: "Declararlo en el plan, junto al resto de la política de planificación."
+            consecuencia: "radar lo lee de la misma fuente que todo lo demás y no hay que abrir un conjunto de campos que otro contrato declaró cerrado."
+      - tipo: derivable
         pregunta: "¿Cuándo se mide el tamaño del lote?"
         criterio: "Después de que exista evidencia de entrega integrada, contra el mismo HEAD inmutable que prueba la ancestría; nunca contra el árbol de trabajo."
         autoridad: "El contrato de evidencia ya escrito en agent-workflows/tools/radar/state.go:46 y check.go:29-31, que fija un HEAD y valida todo contra él."
