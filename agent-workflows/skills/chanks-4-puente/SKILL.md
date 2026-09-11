@@ -14,6 +14,7 @@ and return resulting evidence to the responsible parent.
 
 ## Hard Rules
 
+- This work reads the plan through `../chanks-0-agente-soporte/SKILL.md`. A repository with no `openspec/plan.yaml` has not adopted plan management: say what this step needed it for, offer to start one, and stop. Never improvise a substitute record.
 - Translate; do not redefine scope, authority, criteria, Zonas, or decisions.
 - Show the loaded SDD preflight and ask for confirmation or change before entering it.
 - One pipeline, three entry gates: `direct`→`apply`, `design-tasks`→`design`, `full-sdd`→`proposal`.

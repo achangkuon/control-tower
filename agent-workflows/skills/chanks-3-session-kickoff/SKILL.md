@@ -14,6 +14,7 @@ branch; do not require a named seat, a peer role, or an external runtime.
 
 ## Hard Rules
 
+- This work reads the plan through `../chanks-0-agente-soporte/SKILL.md`. A repository with no `openspec/plan.yaml` has not adopted plan management: say what this step needed it for, offer to start one, and stop. Never improvise a substitute record.
 - Receive the named Sesión; never select work or search for the first ready item.
 - Perform the four arrival steps and stop on a failed precondition.
 - Revalidate only by opening the real scoped code in the Área and using the three canonical routes.

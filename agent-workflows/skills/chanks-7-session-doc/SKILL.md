@@ -14,6 +14,7 @@ parent records any confirmed plan evidence and regenerates the view under reposi
 
 ## Hard Rules
 
+- This work reads the plan through `../chanks-0-agente-soporte/SKILL.md`. A repository with no `openspec/plan.yaml` has not adopted plan management: say what this step needed it for, offer to start one, and stop. Never improvise a substitute record.
 - `archive` occurs after delivery and before a complete closure is declared.
 - Closure requires verified binary criteria and integrated `entrega.commit` evidence.
 - The commit must resolve and be an ancestor of the integrated `HEAD`.

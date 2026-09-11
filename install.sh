@@ -27,6 +27,24 @@ BIN="${TORRE_BIN_DIR:-$HOME/.local/bin}"
 check_only=false
 [[ "${1:-}" == "--check" ]] && check_only=true
 
+# ── Gestión del plan: la única elección del instalador ───────────────────────
+# El motor y las skills se instalan siempre. Lo que se pregunta es si además se instala
+# `radar`, la herramienta que lee y valida `openspec/plan.yaml`.
+#
+# Decir que no NO cierra la puerta: las skills del método se instalan igual y, al
+# encontrarse sin plan, ofrecen armarlo. El usuario descubre lo que le falta en el
+# momento en que le haría falta, no en una pantalla de instalación.
+#
+# --with-plan / --no-plan saltean la pregunta; sin TTY el default es instalarlo, porque
+# un `radar` de más no molesta a nadie y uno de menos deja al método sin dato.
+want_plan=""
+for arg in "$@"; do
+    case "$arg" in
+        --with-plan) want_plan=yes ;;
+        --no-plan)   want_plan=no ;;
+    esac
+done
+
 ok()   { echo "  ✓ $1"; }
 bad()  { echo "  ✗ $1" >&2; }
 
@@ -145,7 +163,32 @@ else
     echo "    agent-workflows/tools/install.py"
 fi
 
-if command -v go >/dev/null 2>&1; then
+if [[ -z "$want_plan" ]]; then
+    if [[ -t 0 ]]; then
+        echo
+        echo "  La Torre puede llevar tu planificación en openspec/plan.yaml: qué Sesiones"
+        echo "  hay, cuáles están listas y qué se cerró. Sirve para que cada sesión de"
+        echo "  trabajo arranque sabiendo lo que pasó en la anterior."
+        echo
+        echo "  Si decís que no, el método se instala igual y te lo vuelve a ofrecer"
+        echo "  cuando lo necesites. No es una puerta que se cierra."
+        echo
+        printf '  ¿Instalar la gestión del plan? [S/n] '
+        read -r answer || answer=""
+        case "$answer" in
+            [nN]*) want_plan=no ;;
+            *)     want_plan=yes ;;
+        esac
+        echo
+    else
+        want_plan=yes
+    fi
+fi
+
+if [[ "$want_plan" == "no" ]]; then
+    echo "  ~ gestión del plan omitida. Cuando la quieras:"
+    echo "    agent-workflows/tools/install-radar.sh"
+elif command -v go >/dev/null 2>&1; then
     if "$SRC/agent-workflows/tools/install-radar.sh" >/dev/null 2>&1; then
         ok "radar instalado en ${TORRE_BIN_DIR:-$HOME/.local/bin}/radar"
     else
@@ -153,7 +196,7 @@ if command -v go >/dev/null 2>&1; then
     fi
 else
     echo "  ~ sin go: radar no se instala. Sin radar no hay validación del plan"
-    echo "    ni puerta pre-commit. Instalá go y corré agent-workflows/tools/install-radar.sh"
+    echo "    ni puerta pre-push. Instalá go y corré agent-workflows/tools/install-radar.sh"
 fi
 
 cat <<'EOF'

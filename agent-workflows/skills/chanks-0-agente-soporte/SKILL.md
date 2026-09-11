@@ -16,6 +16,7 @@ mandatory peer, dispatcher, or plan writer.
 ## Hard Rules
 
 - Read the repository instructions, `openspec/plan.yaml`, generated view, Git evidence, and available checks.
+- A repository with no `openspec/plan.yaml` has not adopted plan management, which is a choice and not a fault. Say what the request needs a plan for, offer to start one, and stop. Never fail, never improvise a substitute record, and never adopt it without the human saying yes.
 - Return evidence and a proposed delta; only the responsible parent writes confirmed plan evidence.
 - Treat `radar` capacity as a static forecast, never a live lock, reservation, or claim.
 - Preserve human choice for scope, risk, authority, and any contradiction; do not select work to fill capacity.
@@ -29,6 +30,7 @@ mandatory peer, dispatcher, or plan writer.
 | New decomposition | Route to `chanks-2-planificador-granular`. |
 | Confirmed planning change | Return the exact delta and its precondition to the responsible parent. |
 | Ambiguous or stale evidence | Stop and name the human decision or revalidation needed. |
+| No `openspec/plan.yaml` in the repository | Name what the request needed it for, offer to start one, and stop. |
 
 ## Execution Steps
 

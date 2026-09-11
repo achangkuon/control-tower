@@ -14,6 +14,7 @@ planning delta for the responsible parent to confirm and record.
 
 ## Hard Rules
 
+- This work reads the plan through `../chanks-0-agente-soporte/SKILL.md`. A repository with no `openspec/plan.yaml` has not adopted plan management: say what this step needed it for, offer to start one, and stop. Never improvise a substitute record.
 - Run all eight steps in order. Do not add a hierarchy level.
 - Preserve `Zona → Sesión → Módulo → Tarea`; one Sesión belongs to one Zona.
 - Load each reference only when its step needs it.
