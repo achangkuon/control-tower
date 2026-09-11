@@ -6447,6 +6447,355 @@ sesiones:
       autoridad: "La propuesta está aprobada pero el diseño no: qué contiene exactamente la asignación única, cómo se declara el proveedor por proyecto y cómo se empaqueta Radar son decisiones de diseño abiertas. Radar prohíbe Módulos en full-sdd (agent-workflows/tools/radar/check.go:514-524), así que la descomposición nace de la ejecución posterior de esta ruta."
     modulos: []
 
+  - id: S110
+    zona: hosts
+    resultado: "Corte del entorno constructor: el repositorio deja de exponerle skills de la Torre a un host Pi, y ningún agente que construye la Torre la recibe como sistema de coordinación."
+    autoridad: "Idea aprobada por el maintainer el 2026-09-10 sobre el mapeo de territorios «La Línea de Corte» (artifact 78dac4ab-a68b-4f1b-86a3-a5c4e197cc26) y los alcances de «El Corte y el Enforcer» (artifact b33c4b87-990a-44cd-b8cf-546702375ad1), medido sobre master en f78216c. La evidencia verificada: .pi/settings.json es el único cargador vivo de skills/torre-control*, que no están instaladas en ningún directorio global de agentes; y el modelo de tres territorios —Entorno, Método, Maquinaria— ya lo había declarado el maintainer el 2026-09-02."
+    depende_de: []
+    cimientos: [.pi/settings.json]
+    recurso: []
+    criterios:
+      - "El repositorio deja de declararle skills/torre-control, skills/torre-control-entregas y skills/torre-control-soporte a un host Pi; una sesión Pi abierta sobre este árbol no descubre ninguna de las tres."
+      - ".pi/settings.json sigue existiendo y sigue siendo un cimiento declarado: se le quita la clave que carga las skills de la Torre, no el archivo."
+      - "Las skills del Método y las de gentle-ai siguen disponibles para cualquier agente: el corte saca Maquinaria y nunca Método."
+      - ".git/control-tower/ACTIVE sigue ausente y nada bajo ~/.local/share/control-tower/ se lee, escribe ni desinstala."
+      - "openspec/plan.yaml sigue siendo la única autoridad sobre el trabajo pendiente, y radar check pasa antes y después."
+      - "El diff toca sólo Área."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Se borra .pi/settings.json o se le quita la clave que carga las skills de la Torre?"
+        resolucion: "Se le quita la clave. El archivo es un cimiento declarado y la ruta de un Módulo debe nombrar un archivo del repositorio; borrarlo dejaría la reserva apuntando al vacío y agranda el diff sin necesidad."
+        autoridad: "Maintainer, 2026-09-10; contrato de reservas en agent-workflows/tools/radar/check.go:772-795 y de rutas de Módulo en check.go:362-382."
+        clase: contrato-visible
+        falsificador: ".pi/settings.json deja de existir en el árbol, o su reserva de cimiento queda declarada sobre una ruta ausente."
+        descartadas:
+          - opcion: "Borrar el archivo entero."
+            razon: "Deja la reserva de cimiento huérfana y amplía el diff sin necesidad."
+      - tipo: resuelta
+        pregunta: "¿La limpieza de los archivos de instrucciones globales entra en esta Sesión?"
+        resolucion: "No. ~/.claude/CLAUDE.md, ~/.codex/AGENTS.md y ~/.pi/agent/APPEND_SYSTEM.md viven fuera del repositorio, no pertenecen a ninguna Zona y openspec/plan.yaml no los gobierna. Son trabajo de Entorno y se ejecutan aparte, bajo la misma aprobación del maintainer."
+        autoridad: "Modelo de tres territorios del maintainer, 2026-09-02: «Entorno — ~/.claude/ — no es un repo»."
+        clase: expansion-de-alcance
+        falsificador: "Un criterio de esta Sesión exige verificar un archivo fuera del repositorio, o un Módulo declara una ruta que no está rastreada acá."
+        descartadas:
+          - opcion: "Declarar los tres archivos globales como rutas de Módulo."
+            razon: "radar exige que la ruta de un Módulo sea un archivo del repositorio; los tres viven en el home del usuario."
+    ruta:
+      propuesta: direct
+      autoridad: "El resultado es binariamente verificable —el host Pi descubre o no descubre las tres skills— y no queda ninguna elección de diseño abierta: el mapeo de superficies está cerrado y verificado contra el árbol en f78216c."
+    modulos:
+      - id: M110.1
+        resultado: "El repositorio deja de exponerle skills de la Torre a Pi"
+        rutas: [.pi/settings.json, test/extensions/pi/tower-skill-exposure.test.mjs]
+        tareas:
+          - id: T110.1.1
+            accion: "RED: escribir el test que falla hoy, afirmando que la configuración Pi del repositorio no declara ninguna ruta bajo skills/torre-control*."
+            resultado: "RED: existe un test que falla contra el árbol actual porque .pi/settings.json declara las tres skills de la Torre."
+            criterios: ["RED: existe un test que falla contra el árbol actual porque .pi/settings.json declara las tres skills de la Torre."]
+          - id: T110.1.2
+            accion: "GREEN: quitar de .pi/settings.json la clave que carga las skills de la Torre, conservando el archivo y cualquier otra configuración Pi legítima."
+            resultado: "GREEN: el test pasa, el archivo sigue existiendo y ninguna skill de la Torre queda declarada."
+            criterios: ["GREEN: el test pasa, el archivo sigue existiendo y ninguna skill de la Torre queda declarada."]
+          - id: T110.1.3
+            accion: "REFACTOR: dejar el test afirmando la regla general —ninguna configuración del repositorio expone Maquinaria a un host— en vez de las tres rutas exactas de hoy."
+            resultado: "REFACTOR: el test prueba la regla y no la lista, y sigue pasando."
+            criterios: ["REFACTOR: el test prueba la regla y no la lista, y sigue pasando."]
+
+  - id: S111
+    zona: metodo
+    resultado: "Radar deja de creerle a la ruta declarada: consume gentle-ai.sdd-status@2 y rechaza una Sesión cuyo pipeline no entró por la puerta que su ruta declara."
+    autoridad: "Idea aprobada por el maintainer el 2026-09-10 sobre «El Corte y el Enforcer» (artifact b33c4b87-990a-44cd-b8cf-546702375ad1). La evidencia verificada: hoy radar le pide a gentle-ai un solo booleano, decision_required (agent-workflows/tools/radar/ledger.go:17-24), mientras gentle-ai sdd-status@2 ya devuelve next, el estado de cada compuerta y los artefactos existentes —salida real contra migrate-control-tower-plan-zones bajo gentle-ai 2.7.0. El canon exige las tres puertas en plan-naming-convention.md §15."
+    depende_de: []
+    cimientos: []
+    recurso: [el binario gentle-ai instalado; sin dependencias nuevas más allá de git y gentle-ai]
+    criterios:
+      - "Radar lee gentle-ai.sdd-status@2 para toda Sesión que declare un cambio, y valida el nombre y la versión del schema antes de usar cualquier campo."
+      - "Una Sesión cuya ruta declara una puerta de entrada distinta de la que el pipeline realmente usó falla cerrado con un hallazgo que nombra la Sesión, la ruta declarada y la puerta observada."
+      - "Un cambio ausente, un status ilegible, un schema no reconocido o un JSON inválido producen un hallazgo nombrado y nunca un pase silencioso."
+      - "Radar no reimplementa ninguna regla de fases de gentle-ai: consume el contrato y no deriva el estado de las compuertas por su cuenta."
+      - "Las dependencias externas de radar siguen siendo exactamente git y gentle-ai; el Método sigue siendo portable a un repositorio que no tenga Engram ni la Torre."
+      - "El diff toca sólo Área."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Radar calcula el gating de fases o lo consume?"
+        resolucion: "Lo consume. gentle-ai ya lo computa y lo publica en un contrato versionado; reimplementarlo sería una segunda fuente de verdad sobre el mismo hecho."
+        autoridad: "Maintainer, 2026-09-10; salida verificada de gentle-ai sdd-status --cwd . bajo 2.7.0, y el principio ya aplicado en S109."
+        clase: contrato-visible
+        falsificador: "Alguna regla de avance de fases de gentle-ai aparece reimplementada en Go, o radar decide una compuerta sin leer el contrato."
+        descartadas:
+          - opcion: "Derivar el estado de las fases mirando los archivos del change directamente."
+            razon: "Duplica la regla de gentle-ai y se desincroniza en la primera versión que cambie el layout."
+      - tipo: derivable
+        pregunta: "¿Qué hace radar cuando el status no se puede leer?"
+        criterio: "Falla cerrado con un hallazgo nombrado; nunca omite la verificación ni asume que la ruta declarada es correcta."
+        autoridad: "El precedente ya escrito en ledger.go:26-47, que trata un ledger ilegible como error y no como ausencia."
+        evidencia: "agent-workflows/tools/radar/ledger.go:26-47 y check.go:41-46."
+        checkpoint: "antes de emitir el veredicto de check."
+        opciones:
+          - opcion: "Tratar un status ilegible como error de la Sesión que declara el cambio."
+            consecuencia: "Un entorno sin gentle-ai no produce un pase falso; produce un hallazgo que nombra qué falta."
+    ruta:
+      propuesta: direct
+      autoridad: "El contrato de entrada es exacto y está publicado, el mecanismo de consumo ya existe en ledger.go, y la única elección restante —qué hacer ante un status ilegible— es derivable del precedente del propio archivo."
+    modulos:
+      - id: M111.1
+        resultado: "Radar consume el contrato de estado de fases y lo valida"
+        rutas: [agent-workflows/tools/radar/ledger.go, agent-workflows/tools/radar/ledger_test.go]
+        tareas:
+          - id: T111.1.1
+            accion: "RED: cubrir schema no reconocido, JSON inválido, cambio ausente y status ilegible, cada uno con su hallazgo nombrado."
+            resultado: "RED: los cuatro modos de falla del contrato quedan cubiertos y fallan."
+            criterios: ["RED: los cuatro modos de falla del contrato quedan cubiertos y fallan."]
+          - id: T111.1.2
+            accion: "GREEN: leer gentle-ai.sdd-status@2, validar nombre y versión del schema y exponer la puerta observada junto al estado de cada compuerta."
+            resultado: "GREEN: el contrato se lee y se valida, y los cuatro modos de falla producen hallazgos nombrados."
+            criterios: ["GREEN: el contrato se lee y se valida, y los cuatro modos de falla producen hallazgos nombrados."]
+          - id: T111.1.3
+            accion: "REFACTOR: unificar la invocación de gentle-ai con la del ledger de intentos, dejando una sola forma de hablarle al proveedor."
+            resultado: "REFACTOR: existe una sola forma de invocar gentle-ai y los tests siguen pasando."
+            criterios: ["REFACTOR: existe una sola forma de invocar gentle-ai y los tests siguen pasando."]
+      - id: M111.2
+        resultado: "Check rechaza una ruta que miente sobre su puerta de entrada"
+        rutas: [agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/check_test.go]
+        tareas:
+          - id: T111.2.1
+            accion: "RED: cubrir las tres rutas contra su puerta —direct/apply, design-tasks/design, full-sdd/proposal— y el caso en que la observada no coincide."
+            resultado: "RED: las tres correspondencias y el desacuerdo quedan cubiertos y fallan."
+            criterios: ["RED: las tres correspondencias y el desacuerdo quedan cubiertos y fallan."]
+          - id: T111.2.2
+            accion: "GREEN: emitir un hallazgo que nombre la Sesión, la ruta declarada y la puerta observada cuando no coinciden."
+            resultado: "GREEN: el desacuerdo produce el hallazgo exacto y las tres correspondencias pasan."
+            criterios: ["GREEN: el desacuerdo produce el hallazgo exacto y las tres correspondencias pasan."]
+          - id: T111.2.3
+            accion: "REFACTOR: mover la correspondencia ruta→puerta a una tabla única, para que agregar una ruta no requiera tocar la lógica de check."
+            resultado: "REFACTOR: la correspondencia vive en una tabla única y los tests siguen pasando."
+            criterios: ["REFACTOR: la correspondencia vive en una tabla única y los tests siguen pasando."]
+
+  - id: S112
+    zona: metodo
+    resultado: "El campo autoridad deja de ser texto libre: declara su tipo y radar prueba lo que se puede probar, diciendo explícitamente lo que no."
+    autoridad: "Decisión del maintainer del 2026-09-10, tomada sobre el conteo verificado de las 76 Sesiones de openspec/plan.yaml: 13 citan un archivo del repositorio, 60 citan decisiones numeradas y 26 citan observaciones de Engram, que no son archivos y están fuera de Git. La máquina de prueba ya existe sin usarse para esto: validateFragmentLocator en agent-workflows/tools/radar/check.go:928, aplicada hoy sólo en check.go:841 y check.go:866."
+    depende_de: []
+    cimientos: []
+    recurso: [el registro de decisiones archivado en openspec/archive/legacy-planning/; sin dependencia nueva de Engram]
+    criterios:
+      - "El campo autoridad admite tres tipos declarados: repo, decision y engram; un tipo ausente o desconocido falla cerrado."
+      - "Los tipos repo y decision se prueban contra Git con la misma exigencia byte a byte que ya usa validateFragmentLocator; una cita que no resuelva falla cerrado."
+      - "El tipo engram se declara y no se verifica, y radar lo reporta explícitamente como no verificable: nunca lo cuenta como probado."
+      - "Las dependencias externas de radar siguen siendo exactamente git y gentle-ai: el Método no queda atado al Engram del maintainer y sigue siendo portable a otro producto."
+      - "Las 76 Sesiones existentes quedan migradas o declaradas con su tipo; ninguna conserva la forma vieja sin tipo al cerrar la Sesión."
+      - "El diff toca sólo Área."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Radar verifica también las autoridades que citan Engram?"
+        resolucion: "No. Se declaran con tipo engram y radar las reporta como no verificables. Verificarlas ataría el Método al Engram personal del maintainer, y que un ID exista hoy no prueba que su contenido siga siendo el que la Sesión citó, porque Engram es mutable."
+        autoridad: "Decisión del maintainer del 2026-09-10, elegida sobre tres alternativas presentadas con su consecuencia."
+        clase: contrato-visible
+        falsificador: "Radar adquiere una dependencia de Engram, o cuenta una autoridad de tipo engram como probada."
+        descartadas:
+          - opcion: "Verificar el ID contra el CLI de Engram."
+            razon: "Suma una dependencia externa y rompe la portabilidad del Método; además Engram es mutable y la existencia del ID no prueba el contenido citado."
+          - opcion: "Espejar las 26 citas de Engram en un registro versionado del repositorio."
+            razon: "Crea una segunda fuente de verdad que hay que sincronizar a mano, que es exactamente lo que el canon prohíbe."
+          - opcion: "Verificar sólo el tipo repo y dejar los otros dos como texto libre."
+            razon: "Deja 63 de 76 sin ninguna prueba y la compuerta del Tramo 1 prácticamente abierta."
+      - tipo: resuelta
+        pregunta: "¿Las 76 Sesiones existentes se migran de una sola vez, o radar acepta las dos formas durante una transición?"
+        resolucion: "Ninguna de las dos. Se migra Zona por Zona y la exigencia se enciende al final, en una Sesión aparte que depende de que la migración haya terminado. Durante la migración radar acepta la forma vieja porque todavía no exige nada, así que nunca hay dos formas exigidas a la vez ni un lote de revisión por encima del tope."
+        autoridad: "Decisión del maintainer del 2026-09-10, elegida sobre tres alternativas presentadas con su consecuencia."
+        clase: migracion-o-perdida-de-datos
+        falsificador: "Un solo commit migra más Sesiones de las que caben en el tope de lote declarado, o radar exige el tipo antes de que la migración haya terminado."
+        descartadas:
+          - opcion: "Migrar las 76 en un solo Módulo, sin aceptar nunca la forma vieja."
+            razon: "El lote de revisión sería openspec/plan.yaml entero, muy por encima del tope de 400 líneas, y revertirlo tocaría el archivo que gobierna todo el trabajo abierto."
+          - opcion: "Aceptar las dos formas detrás de una fecha declarada."
+            razon: "Deja dos formas del mismo dato conviviendo por tiempo indefinido, que es la segunda fuente de verdad que el canon prohíbe."
+      - tipo: resuelta
+        pregunta: "¿Esta Sesión también migra las 76 Sesiones de openspec/plan.yaml?"
+        resolucion: "No. openspec/plan.yaml lo posee la Zona autoridad y no es un cimiento declarado, así que una Sesión de la Zona metodo no puede declararlo como ruta de Módulo. El trabajo se parte por Zona: S112 construye el contrato en Go, S114 migra el plan desde la Zona autoridad, y S115 enciende la exigencia."
+        autoridad: "Partición vigente en openspec/plan.yaml:30-32 y contrato de rutas de Módulo en agent-workflows/tools/radar/check.go:362-382; regla de cruces entre Zonas en plan-naming-convention.md §3."
+        clase: expansion-de-alcance
+        falsificador: "Un Módulo de esta Sesión declara openspec/plan.yaml como ruta, o la migración del plan ocurre desde la Zona metodo."
+        descartadas:
+          - opcion: "Declarar openspec/plan.yaml como cimiento para poder reservarlo."
+            razon: "Un cimiento es terreno que más de una Zona modifica de forma permanente; el plan lo escribe sólo la Zona autoridad y convertirlo en cimiento debilitaría la partición para resolver un caso puntual."
+    ruta:
+      propuesta: design-tasks
+      autoridad: "El producto está decidido —tres tipos, dos verificables, migración por Zona con exigencia al final— pero falta descubrimiento técnico acotado: la forma exacta de cada tipo en el esquema y cómo se prueba una cita a una decisión numerada dentro del registro archivado. Eso es diseño de contrato, no de comportamiento."
+    modulos:
+      - id: M112.1
+        resultado: "El esquema admite los tres tipos y radar los valida sin exigirlos todavía"
+        rutas: [agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/check_test.go]
+        tareas:
+          - id: T112.1.1
+            accion: "RED: cubrir tipo desconocido, tipo repo cuya cita no resuelve, tipo decision cuya referencia no está en el registro, tipo engram, y la forma vieja sin tipo."
+            resultado: "RED: los cinco casos quedan cubiertos y los que deben fallar, fallan."
+            criterios: ["RED: los cinco casos quedan cubiertos y los que deben fallar, fallan."]
+          - id: T112.1.2
+            accion: "GREEN: aceptar los tres tipos, probar repo y decision contra Git con la exigencia de validateFragmentLocator, y reportar engram como no verificable."
+            resultado: "GREEN: repo y decision se prueban byte a byte, engram se reporta no verificable, y la forma vieja sigue pasando porque todavía no se exige el tipo."
+            criterios: ["GREEN: repo y decision se prueban byte a byte, engram se reporta no verificable, y la forma vieja sigue pasando porque todavía no se exige el tipo."]
+          - id: T112.1.3
+            accion: "REFACTOR: reusar validateFragmentLocator en vez de duplicar la resolución de blob y rango, dejando una sola prueba de cita en la herramienta."
+            resultado: "REFACTOR: existe una sola prueba de cita y los tests siguen pasando."
+            criterios: ["REFACTOR: existe una sola prueba de cita y los tests siguen pasando."]
+
+  - id: S114
+    zona: autoridad
+    resultado: "Las 76 Sesiones del plan declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado."
+    autoridad: "Decisión del maintainer del 2026-09-10 sobre la migración del campo autoridad, elegida entre tres alternativas: migrar por Zona y encender la exigencia al final. El conteo verificado sobre openspec/plan.yaml: 13 Sesiones citan un archivo del repositorio, 60 citan decisiones numeradas y 26 citan observaciones de Engram."
+    depende_de: [S112]
+    cimientos: []
+    recurso: [openspec/plan.yaml; la migración es el único trabajo que lo escribe mientras dura]
+    criterios:
+      - "Cada Módulo migra las Sesiones de exactamente una Zona, y su lote de revisión queda por debajo del tope declarado."
+      - "radar check pasa después de cada Módulo, no sólo al final: una migración parcial nunca deja el plan inválido."
+      - "Ninguna autoridad cambia de sentido al migrar: se declara el tipo de la cita que ya estaba escrita, nunca se inventa una nueva."
+      - "Al cerrar, cero Sesiones conservan la forma vieja sin tipo declarado."
+      - "El diff toca sólo Área."
+    decisiones:
+      - tipo: derivable
+        pregunta: "¿En qué orden se migran las Zonas?"
+        criterio: "Por cantidad de Sesiones, de menor a mayor, para que el primer lote sea el más barato de revisar y cualquier error del contrato aparezca temprano."
+        autoridad: "Decisión del maintainer del 2026-09-10 sobre la estrategia de migración, y el tope de lote declarado en el bloque manual de política del 2026-09-03."
+        evidencia: "radar status calcula las Sesiones por Zona, así que el orden es derivable del propio dato."
+        checkpoint: "antes del primer Módulo."
+        opciones:
+          - opcion: "Ordenar las Zonas por cantidad de Sesiones ascendente."
+            consecuencia: "El contrato se prueba primero sobre el lote más barato; si la forma está mal, se corrige antes de tocar las Zonas grandes."
+    ruta:
+      propuesta: direct
+      autoridad: "El contrato del campo lo fija S112 y la estrategia de migración está decidida; lo que queda es trabajo mecánico sobre un dato, con un criterio de cierre binario —cero Sesiones sin tipo— y ninguna elección de diseño abierta."
+    modulos:
+      - id: M114.1
+        resultado: "Las Sesiones del plan declaran el tipo de su autoridad, una Zona por Módulo"
+        rutas: [openspec/plan.yaml]
+        tareas:
+          - id: T114.1.1
+            accion: "RED: fijar el orden de Zonas desde radar status y verificar que la primera Zona todavía tiene Sesiones sin tipo."
+            resultado: "RED: el orden queda fijado y la primera Zona tiene Sesiones sin tipo declarado."
+            criterios: ["RED: el orden queda fijado y la primera Zona tiene Sesiones sin tipo declarado."]
+          - id: T114.1.2
+            accion: "GREEN: migrar las Sesiones de esa Zona declarando el tipo de la cita que ya estaba escrita, sin cambiar su sentido."
+            resultado: "GREEN: la Zona queda migrada, radar check pasa y ninguna autoridad cambió de sentido."
+            criterios: ["GREEN: la Zona queda migrada, radar check pasa y ninguna autoridad cambió de sentido."]
+          - id: T114.1.3
+            accion: "REFACTOR: repetir el ciclo por Zona hasta que el conteo de Sesiones sin tipo llegue a cero."
+            resultado: "REFACTOR: cero Sesiones conservan la forma vieja y radar check pasa."
+            criterios: ["REFACTOR: cero Sesiones conservan la forma vieja y radar check pasa."]
+
+  - id: S115
+    zona: metodo
+    resultado: "Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada."
+    autoridad: "Decisión del maintainer del 2026-09-10: la exigencia se enciende al final, en una Sesión aparte que depende de que la migración haya terminado, para que nunca convivan dos formas exigidas ni un lote por encima del tope."
+    depende_de: [S114]
+    cimientos: []
+    recurso: []
+    criterios:
+      - "Una Sesión cuya autoridad no declara tipo falla cerrado con un hallazgo que la nombra."
+      - "La exigencia se enciende sobre un plan que ya está migrado entero: encenderla no produce ni un solo hallazgo sobre el plan vigente."
+      - "Una autoridad de tipo engram sigue reportándose como no verificable y nunca cuenta como probada, ni siquiera con la exigencia encendida."
+      - "El diff toca sólo Área."
+    decisiones:
+      - tipo: derivable
+        pregunta: "¿Qué pasa si al encender la exigencia aparece una Sesión sin migrar?"
+        criterio: "Falla cerrado y la Sesión no se cierra: encender la exigencia sobre un plan incompleto es exactamente lo que esta secuencia existe para evitar."
+        autoridad: "La estrategia de migración decidida el 2026-09-10, cuyo criterio de cierre en S114 es cero Sesiones sin tipo."
+        evidencia: "El criterio de cierre de S114 y la dependencia declarada de esta Sesión sobre ella."
+        checkpoint: "antes de encender la exigencia."
+        opciones:
+          - opcion: "Fallar cerrado y volver a S114."
+            consecuencia: "La exigencia sólo queda encendida sobre un plan íntegro; nunca se acepta una excepción para destrabar."
+    ruta:
+      propuesta: direct
+      autoridad: "El contrato ya existe por S112 y el dato ya está migrado por S114; encender la exigencia es un cambio acotado con un criterio binario verificable en una sola corrida de radar check."
+    modulos:
+      - id: M115.1
+        resultado: "El tipo de autoridad pasa a ser obligatorio"
+        rutas: [agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/check_test.go]
+        tareas:
+          - id: T115.1.1
+            accion: "RED: cubrir una Sesión sin tipo declarado y otra con cada uno de los tres tipos válidos."
+            resultado: "RED: la Sesión sin tipo falla y las tres válidas pasan."
+            criterios: ["RED: la Sesión sin tipo falla y las tres válidas pasan."]
+          - id: T115.1.2
+            accion: "GREEN: exigir el tipo y emitir el hallazgo que nombra la Sesión cuando falta."
+            resultado: "GREEN: falta de tipo falla cerrado y el plan vigente migrado no produce ningún hallazgo."
+            criterios: ["GREEN: falta de tipo falla cerrado y el plan vigente migrado no produce ningún hallazgo."]
+          - id: T115.1.3
+            accion: "REFACTOR: dejar la validación del campo en un solo lugar, compartido entre la aceptación de S112 y la exigencia de esta Sesión."
+            resultado: "REFACTOR: existe una sola validación del campo y los tests siguen pasando."
+            criterios: ["REFACTOR: existe una sola validación del campo y los tests siguen pasando."]
+
+  - id: S113
+    zona: metodo
+    resultado: "Radar verifica las dos reglas de entrega que hoy no verifica nadie: que archive corra después de entregar, y que el lote de revisión no pase de 400 líneas."
+    autoridad: "Idea aprobada por el maintainer el 2026-09-10 sobre «El Corte y el Enforcer» (artifact b33c4b87-990a-44cd-b8cf-546702375ad1). La evidencia verificada: un grep sobre agent-workflows/tools/radar/*.go no devuelve ninguna coincidencia para el orden de archive ni para el tope de 400 líneas, mientras el canon los exige en plan-naming-convention.md §15 y la política de lote de revisión está declarada en el bloque manual de ~/.claude/CLAUDE.md desde el 2026-09-03."
+    depende_de: []
+    cimientos: []
+    recurso: []
+    criterios:
+      - "Una Sesión marcada como archivada sin evidencia de entrega integrada falla cerrado, nombrando la Sesión y qué evidencia falta."
+      - "Radar mide las líneas escritas del candidato contra el tope declarado y emite un hallazgo cuando lo supera; el tope es un dato del plan, no una constante en el código."
+      - "La medición usa la misma prueba de ancestría inmutable que ya usa la evidencia de entrega, y no una lectura del árbol de trabajo."
+      - "Ninguna de las dos reglas bloquea una Sesión que todavía no entregó: son verificaciones de cierre, no compuertas previas."
+      - "El diff toca sólo Área."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿El tope de líneas es una constante del código o un dato del plan?"
+        resolucion: "Un dato del plan. El tope es política del producto y otro repositorio puede declarar otro; una constante en Go obligaría a recompilar la herramienta para cambiar una política."
+        autoridad: "Maintainer, 2026-09-10; el mismo principio ya aplicado a la política de entrega, que se declara por repositorio en AGENTS.md."
+        clase: contrato-visible
+        falsificador: "El tope aparece escrito como literal en el código de radar, o no se puede cambiar sin recompilar."
+        descartadas:
+          - opcion: "Fijar 400 como constante en Go."
+            razon: "Convierte una política de producto en una decisión de compilación."
+      - tipo: derivable
+        pregunta: "¿Cuándo se mide el tamaño del lote?"
+        criterio: "Después de que exista evidencia de entrega integrada, contra el mismo HEAD inmutable que prueba la ancestría; nunca contra el árbol de trabajo."
+        autoridad: "El contrato de evidencia ya escrito en agent-workflows/tools/radar/state.go:46 y check.go:29-31, que fija un HEAD y valida todo contra él."
+        evidencia: "agent-workflows/tools/radar/check.go:29-31 y state.go:44-53."
+        checkpoint: "al calcular el estado de una Sesión entregada."
+        opciones:
+          - opcion: "Medir contra el HEAD inmutable ya fijado por check."
+            consecuencia: "La medición es reproducible y no cambia según lo que haya sin commitear en el árbol."
+    ruta:
+      propuesta: direct
+      autoridad: "Las dos reglas están escritas en el canon, la infraestructura de evidencia y ancestría ya existe, y la única elección restante —cuándo medir— es derivable del contrato de HEAD inmutable que la propia herramienta ya aplica."
+    modulos:
+      - id: M113.1
+        resultado: "Archive exige entrega integrada"
+        rutas: [agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/check_test.go]
+        tareas:
+          - id: T113.1.1
+            accion: "RED: cubrir una Sesión archivada sin entrega, una archivada con entrega no integrada y una archivada correctamente."
+            resultado: "RED: los tres casos quedan cubiertos y los dos inválidos fallan."
+            criterios: ["RED: los tres casos quedan cubiertos y los dos inválidos fallan."]
+          - id: T113.1.2
+            accion: "GREEN: emitir el hallazgo que nombra la Sesión y la evidencia faltante cuando se archiva sin entrega integrada."
+            resultado: "GREEN: archivar sin entrega integrada falla cerrado y el caso válido pasa."
+            criterios: ["GREEN: archivar sin entrega integrada falla cerrado y el caso válido pasa."]
+          - id: T113.1.3
+            accion: "REFACTOR: reusar la prueba de ancestría existente en vez de duplicar la resolución del commit."
+            resultado: "REFACTOR: existe una sola resolución de ancestría y los tests siguen pasando."
+            criterios: ["REFACTOR: existe una sola resolución de ancestría y los tests siguen pasando."]
+      - id: M113.2
+        resultado: "El tope del lote de revisión se declara y se mide"
+        rutas: [agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/check_test.go]
+        tareas:
+          - id: T113.2.1
+            accion: "RED: cubrir un plan sin tope declarado, un candidato por debajo y uno por encima del tope."
+            resultado: "RED: los tres casos quedan cubiertos y el excedido falla."
+            criterios: ["RED: los tres casos quedan cubiertos y el excedido falla."]
+          - id: T113.2.2
+            accion: "GREEN: leer el tope del plan y emitir un hallazgo cuando las líneas escritas del candidato lo superan."
+            resultado: "GREEN: el tope se lee del plan y el candidato excedido produce el hallazgo."
+            criterios: ["GREEN: el tope se lee del plan y el candidato excedido produce el hallazgo."]
+          - id: T113.2.3
+            accion: "REFACTOR: dejar el tope ausente resolviendo a una política declarada y no a un número escondido en el código."
+            resultado: "REFACTOR: un plan sin tope declarado se comporta de forma explícita y los tests siguen pasando."
+            criterios: ["REFACTOR: un plan sin tope declarado se comporta de forma explícita y los tests siguen pasando."]
+
 references:
   future_successors:
     - id: S102
