@@ -39,6 +39,7 @@ func (p *Plan) CheckAt(root, head string) []Hallazgo {
 			continue
 		}
 		p.ledgerDecisionRequired[s.ID] = decisionRequired
+		h = append(h, checkPuertaSDD(root, s)...)
 	}
 	h = append(h, p.checkZonas()...)
 	h = append(h, p.checkGrafo()...)
@@ -769,6 +770,37 @@ func (p *Plan) checkLinaje() []Hallazgo {
 // checkCimientos verifies that reserved files are actually declared cimientos.
 // Reserving a file that is not shared is noise; reserving a shared file that was
 // never declared means the partition does not know it is shared.
+// checkPuertaSDD proves that the declared route is not claiming a gate the
+// pipeline cannot reach yet. Convention §15: the three routes are three doors
+// into one pipeline, so a Sesión entering at `apply` whose change is still owed
+// a proposal is declaring a route it cannot run.
+//
+// The comparison is deliberately one-directional. Being further along than the
+// declared gate is ordinary — work advances. Being *behind* it is the lie.
+func checkPuertaSDD(root string, s *Sesion) []Hallazgo {
+	ruta := s.RutaEfectiva()
+	puerta, conocida := PuertaDeRuta[ruta]
+	if !conocida {
+		// An invalid route value is already reported by checkRuta; saying it
+		// twice in different words helps nobody.
+		return nil
+	}
+	status, err := readSDDStatus(root, s.Cambio)
+	if err != nil {
+		return []Hallazgo{{"error", "estado SDD", fmt.Sprintf("%s declara cambio %q pero su estado no está disponible: %v", s.ID, s.Cambio, err)}}
+	}
+	observada := fasePos(status.Next)
+	if observada < 0 {
+		return []Hallazgo{{"error", "puerta de ruta", fmt.Sprintf("%s: el cambio %q reporta la fase %q, que no pertenece al pipeline", s.ID, s.Cambio, status.Next)}}
+	}
+	if observada < fasePos(puerta) {
+		return []Hallazgo{{"error", "puerta de ruta", fmt.Sprintf(
+			"%s declara la ruta %s, que entra por %q, pero su cambio %q todavía debe %q",
+			s.ID, ruta, puerta, s.Cambio, status.Next)}}
+	}
+	return nil
+}
+
 func (p *Plan) checkCimientos(root string) []Hallazgo {
 	var h []Hallazgo
 	for _, s := range p.Sesiones {

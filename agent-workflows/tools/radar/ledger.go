@@ -45,3 +45,74 @@ func readAttemptStatus(root, change string) (bool, error) {
 	}
 	return *status.DecisionRequired, nil
 }
+
+// FasesSDD is the pipeline in order. A route's entry gate is a position in it,
+// and "earlier than the declared gate" is the only comparison this tool makes.
+// Convention §15.
+var FasesSDD = []string{"proposal", "specs", "design", "tasks", "apply", "verify", "archive"}
+
+// PuertaDeRuta maps each route to the phase it enters at. The three routes are
+// not three methods: they are three doors into the same pipeline.
+var PuertaDeRuta = map[string]string{
+	"direct":       "apply",
+	"design-tasks": "design",
+	"full-sdd":     "proposal",
+}
+
+// fasePos returns the position of a phase in the pipeline, or -1 when the name
+// is not one this contract knows. An unknown phase is never treated as valid.
+func fasePos(fase string) int {
+	for i, f := range FasesSDD {
+		if f == fase {
+			return i
+		}
+	}
+	return -1
+}
+
+// sddStatus is the part of gentle-ai.sdd-status@2 this tool reads. Radar never
+// derives phase progress itself: gentle-ai owns that rule and publishes it, and
+// a second implementation of the same fact is a second source of truth.
+type sddStatus struct {
+	SchemaName    string `json:"schemaName"`
+	SchemaVersion int    `json:"schemaVersion"`
+	Next          string `json:"nextRecommended"`
+}
+
+var runSDDStatus = func(root, change string) ([]byte, error) {
+	cmd := exec.Command(sddAttemptExecutable, "sdd-status", change, "--cwd", root, "--json")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("gentle-ai sdd-status: %w: %s", err, bytes.TrimSpace(out))
+	}
+	return out, nil
+}
+
+// readSDDStatus validates the schema before any field is used. An unrecognised
+// name or version fails closed: consuming fields from a contract this tool does
+// not know is how a silent pass gets manufactured.
+func readSDDStatus(root, change string) (*sddStatus, error) {
+	raw, err := runSDDStatus(root, change)
+	if err != nil {
+		return nil, err
+	}
+	var status sddStatus
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	if err := dec.Decode(&status); err != nil {
+		return nil, fmt.Errorf("JSON inválido: %w", err)
+	}
+	var trailing any
+	if err := dec.Decode(&trailing); err != io.EOF {
+		if err == nil {
+			return nil, fmt.Errorf("JSON inválido: contiene otro valor")
+		}
+		return nil, fmt.Errorf("JSON inválido después del primer valor: %w", err)
+	}
+	if status.SchemaName != "gentle-ai.sdd-status" || status.SchemaVersion != 2 {
+		return nil, fmt.Errorf("schema no reconocido: %q v%d", status.SchemaName, status.SchemaVersion)
+	}
+	if status.Next == "" {
+		return nil, fmt.Errorf("JSON corrupto: falta nextRecommended")
+	}
+	return &status, nil
+}
