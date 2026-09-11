@@ -202,6 +202,8 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 			h = append(h, Hallazgo{"error", "resultado", fmt.Sprintf("%s debe declarar un resultado no vacío", s.ID)})
 		}
 		h = append(h, validarAutoridad(root, s)...)
+		h = append(h, validarArchivo(p, s)...)
+		h = append(h, medirLoteEntregado(p, root, s)...)
 		if abierta && len(s.Criterios) == 0 && !permiteCriteriosPendientes(s) {
 			h = append(h, Hallazgo{"error", "criterios binarios", fmt.Sprintf("%s no tiene criterios de aceptación", s.ID)})
 		}
@@ -769,6 +771,113 @@ func (p *Plan) checkLinaje() []Hallazgo {
 // checkCimientos verifies that reserved files are actually declared cimientos.
 // Reserving a file that is not shared is noise; reserving a shared file that was
 // never declared means the partition does not know it is shared.
+// validarArchivo checks the declared way a Sesión left the live plan. The six
+// archived Sesiones of this plan proved there are three: four are replaced,
+// and S4.9 and S9.4 are retained as historical evidence with neither delivery
+// nor replacement.
+//
+// A Sesión that has not declared its path yet still passes. Requiring it here
+// would fail exactly those two, which have no way to declare it until the
+// field exists; a later Sesión turns the requirement on once the data is in.
+func validarArchivo(p *Plan, s *Sesion) []Hallazgo {
+	if s.Archivo == "" {
+		return nil
+	}
+	if !s.Archivada {
+		return []Hallazgo{{"error", "camino de archivo", fmt.Sprintf("%s declara el camino de archivo %q pero no está archivada", s.ID, s.Archivo)}}
+	}
+	if !contiene(CaminosDeArchivo, s.Archivo) {
+		return []Hallazgo{{"error", "camino de archivo", fmt.Sprintf("%s declara el camino %q, que no es uno de %s", s.ID, s.Archivo, strings.Join(CaminosDeArchivo, ", "))}}
+	}
+	switch s.Archivo {
+	case "entregada":
+		if s.Entrega == nil || strings.TrimSpace(s.Entrega.Commit) == "" {
+			return []Hallazgo{{"error", "camino de archivo", fmt.Sprintf("%s se archivó por entrega y no declara su entrega", s.ID)}}
+		}
+	case "reemplazada":
+		if !tieneSucesora(p, s.ID) {
+			return []Hallazgo{{"error", "camino de archivo", fmt.Sprintf("%s se archivó por reemplazo y no tiene sucesora que la reemplace", s.ID)}}
+		}
+	}
+	return nil
+}
+
+// tieneSucesora accepts both shapes the plan uses: a Sesión declaring
+// `reemplaza`, and a future successor declaring `replaces`. S5.14 arrives by
+// the first and S9.3 by the second, so neither can be left out.
+func tieneSucesora(p *Plan, id string) bool {
+	for i := range p.Sesiones {
+		if contiene(p.Sesiones[i].Reemplaza, id) {
+			return true
+		}
+	}
+	if p.References != nil {
+		for _, f := range p.References.FutureSuccessors {
+			if contiene(f.Replaces, id) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// medirLoteEntregado measures the recorded delivery against the declared
+// ceiling. It runs after delivery, never before: the cap is a closing check,
+// not a gate, and there is nothing to measure until a commit exists.
+func medirLoteEntregado(p *Plan, root string, s *Sesion) []Hallazgo {
+	if p.Politica.TopeDeLote <= 0 || s.Entrega == nil || strings.TrimSpace(s.Entrega.Commit) == "" {
+		return nil
+	}
+	lineas, err := lineasEscritas(root, s.Entrega.Commit)
+	if err != nil {
+		return []Hallazgo{{"error", "tope de lote", fmt.Sprintf("%s: no se pudo medir el candidato entregado: %v", s.ID, err)}}
+	}
+	var h []Hallazgo
+	for _, hallazgo := range validarTopeDeLote(p, lineas) {
+		hallazgo.Detalle = s.ID + ": " + hallazgo.Detalle
+		h = append(h, hallazgo)
+	}
+	return h
+}
+
+// lineasEscritas counts added lines in one commit. Binary files report "-" in
+// numstat and are skipped rather than guessed at.
+func lineasEscritas(root, commit string) (int, error) {
+	out, err := gitOutput(root, "show", "--numstat", "--format=", commit)
+	if err != nil {
+		return 0, err
+	}
+	total := 0
+	for _, linea := range strings.Split(out, "\n") {
+		campos := strings.Fields(linea)
+		if len(campos) < 3 || campos[0] == "-" {
+			continue
+		}
+		n, err := strconv.Atoi(campos[0])
+		if err != nil {
+			continue
+		}
+		total += n
+	}
+	return total, nil
+}
+
+// validarTopeDeLote measures authored lines against the declared ceiling. An
+// absent ceiling measures nothing: the cap is policy, and a tool that invents
+// a policy nobody declared is worse than one that does not verify it.
+func validarTopeDeLote(p *Plan, lineas int) []Hallazgo {
+	if p.Politica.TopeDeLote == 0 {
+		return nil
+	}
+	if p.Politica.TopeDeLote < 0 {
+		return []Hallazgo{{"error", "tope de lote", fmt.Sprintf("el tope declarado es %d, y un tope no puede ser negativo", p.Politica.TopeDeLote)}}
+	}
+	if lineas > p.Politica.TopeDeLote {
+		return []Hallazgo{{"aviso", "tope de lote", fmt.Sprintf("el candidato escribió %d líneas y el tope declarado es %d", lineas, p.Politica.TopeDeLote)}}
+	}
+	return nil
+}
+
 // RegistroDeDecisiones is the one citable register. Its twin under
 // openspec/plans/ is retired by S114: two byte-identical copies of the same
 // authority is the second source of truth the canon forbids. It is frozen —

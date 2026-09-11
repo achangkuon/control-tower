@@ -14,12 +14,29 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// CaminosDeArchivo is the closed set of ways a Sesión leaves the live plan.
+// The path is declared, never inferred: reading "historica" from the absence
+// of the other two would turn every forgotten delivery into legitimate
+// history, which is the mistake the check exists to catch.
+var CaminosDeArchivo = []string{"entregada", "reemplazada", "historica"}
+
+// Politica holds planning policy the tool reads rather than assumes. The
+// delivery-policy block in AGENTS.md cannot hold this: its field set is
+// declared exactly closed and another contract governs it.
+type Politica struct {
+	// TopeDeLote is the review-lot ceiling in authored lines. Absent means no
+	// ceiling was declared, and radar measures nothing — inventing a policy
+	// nobody declared is worse than not checking one.
+	TopeDeLote int `yaml:"tope_de_lote"`
+}
+
 // Plan is the single written artifact for one product.
 type Plan struct {
 	Schema        string      `yaml:"schema"`
 	SchemaVersion int         `yaml:"schema_version"`
 	Producto      string      `yaml:"producto"`
 	Raiz          string      `yaml:"raiz"`
+	Politica      Politica    `yaml:"politica"`
 	Zonas         []Zona      `yaml:"zonas"`
 	Cimientos     Cimientos   `yaml:"cimientos"`
 	Sesiones      []Sesion    `yaml:"sesiones"`
@@ -62,6 +79,7 @@ type Sesion struct {
 	Entrega           *Entrega           `yaml:"entrega"`
 	Diferida          bool               `yaml:"diferida"`
 	Archivada         bool               `yaml:"archivada"`
+	Archivo           string             `yaml:"archivo"`
 	ImportacionLegacy *ImportacionLegacy `yaml:"importacion_legacy"`
 }
 
