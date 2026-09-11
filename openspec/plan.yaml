@@ -6846,6 +6846,8 @@ sesiones:
         base: 271a32a63a0f6ae554a2690448535bbc6ead7692
         evidencia: "Las 6 Sesiones archivadas del plan vigente —S4.9, S5.14, S5.15, S9.3, S9.4, S9.5— no tienen ninguna evidencia de entrega. Cuatro están reemplazadas desde references.future_successors (S102 a S108) y dos, S4.9 y S9.4, se retienen como evidencia histórica sin entrega ni reemplazo: la autoridad de S9.4 lo dice textual."
         razon: "La ruta propuesta daba por sentado que archivar implica haber entregado, y el árbol real prueba que hay tres caminos de archivo, no uno. Decidir cuál de los tres debe declararse y cuál puede inferirse es diseño de contrato, no implementación mecánica: el criterio propuesto habría marcado las 6 archivadas del plan vigente, dos de ellas legítimas."
+    entrega:
+      commit: 312e22f3c5267b55e372f94e04c4ada376665805
     modulos:
       - id: M113.1
         resultado: "Una Sesión archivada declara por cuál de los tres caminos se archivó"

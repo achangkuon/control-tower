@@ -2,7 +2,7 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S10.1, S10.2, S10.3, S11.1, S110, S111, S112, S12.2, S12.8, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S10.1, S10.2, S10.3, S11.1, S110, S111, S112, S113, S12.2, S12.8, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Próximo trabajo ejecutable: Asientos #1 → S5.5 — Parking y retoma del loop.
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
@@ -12,10 +12,9 @@
 - Contratos #1 → S100 — Contrato de schema de delivery-policy, incluido planning.prepare&#95;through fail-closed
 - Enrolamiento #1 → S2.9 — Enrollment público canónico por CLI
 - Hosts #1 → S4.12 — Recuperación mínima de Pi
-- Método #1 → S113 — Radar verifica las dos reglas de entrega que hoy no verifica nadie: que archive corra después de entregar, y que el lote de revisión no pase de 400 líneas.
 
 ## Avance
-- **Total:** 65% (54/82 S)
+- **Total:** 67% (55/82 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -29,7 +28,7 @@
 - **Hosts:** 28% (2/7 S)
 - **Instalación:** 0% (0/2 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 50% (2/4 S)
+- **Método:** 75% (3/4 S)
 
 ## Zonas y colas
 ###  ()
@@ -78,8 +77,7 @@
 - Sin Sesiones abiertas.
 
 ### Método (metodo)
-1. **S113** · 🟢 LISTO · Radar verifica las dos reglas de entrega que hoy no verifica nadie: que archive corra después de entregar, y que el lote de revisión no pase de 400 líneas.
-2. **S115** · 🔴 BLOQUEADO · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
+1. **S115** · 🔴 BLOQUEADO · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
 
 ## Bloqueos
 - **S1.19:** Which exact test files will own the Pi-first integration regression?
@@ -2852,7 +2850,7 @@ Rutas: agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/check&#
   - [ ] REFACTOR: existe una sola validación del campo y los tests siguen pasando.
 
 ### S113 — Radar verifica las dos reglas de entrega que hoy no verifica nadie: que archive corra después de entregar, y que el lote de revisión no pase de 400 líneas.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: ✅ COMPLETO
 - Zona/Área: metodo · agent-workflows/
 - Depende de: —
 - Cimientos: —
@@ -2889,7 +2887,7 @@ Rutas: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go
   - [ ] REFACTOR: un plan sin tope declarado se comporta de forma explícita y los tests siguen pasando.
 
 ## Capacidad
-6 Zona(s) compatibles con trabajo LISTO: asientos, cimientos, contratos, enrolamiento, hosts, metodo.
+5 Zona(s) compatibles con trabajo LISTO: asientos, cimientos, contratos, enrolamiento, hosts.
 Este valor es un pronóstico estático. No adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
