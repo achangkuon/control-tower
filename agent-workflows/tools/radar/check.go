@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -200,9 +201,7 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 		if strings.TrimSpace(s.Resultado) == "" {
 			h = append(h, Hallazgo{"error", "resultado", fmt.Sprintf("%s debe declarar un resultado no vacío", s.ID)})
 		}
-		if strings.TrimSpace(s.Autoridad) == "" {
-			h = append(h, Hallazgo{"error", "autoridad de Sesión", fmt.Sprintf("%s debe declarar la autoridad que delimita su alcance", s.ID)})
-		}
+		h = append(h, validarAutoridad(root, s)...)
 		if abierta && len(s.Criterios) == 0 && !permiteCriteriosPendientes(s) {
 			h = append(h, Hallazgo{"error", "criterios binarios", fmt.Sprintf("%s no tiene criterios de aceptación", s.ID)})
 		}
@@ -770,6 +769,93 @@ func (p *Plan) checkLinaje() []Hallazgo {
 // checkCimientos verifies that reserved files are actually declared cimientos.
 // Reserving a file that is not shared is noise; reserving a shared file that was
 // never declared means the partition does not know it is shared.
+// RegistroDeDecisiones is the one citable register. Its twin under
+// openspec/plans/ is retired by S114: two byte-identical copies of the same
+// authority is the second source of truth the canon forbids. It is frozen —
+// cited, never edited — because new decisions live in each Sesión's
+// `decisiones` field, and the register stopped growing at 108.
+const RegistroDeDecisiones = "openspec/archive/legacy-planning/decision-register.md"
+
+// validarAutoridad checks where a Sesión says it came from. The legacy free
+// text passes untouched: S114 migrates one Zona per Módulo and S115 turns the
+// requirement on, so demanding the type here would fail every Sesión at once.
+func validarAutoridad(root string, s *Sesion) []Hallazgo {
+	a := s.Autoridad
+	if !a.Declarada() {
+		return []Hallazgo{{"error", "autoridad de Sesión", fmt.Sprintf("%s debe declarar la autoridad que delimita su alcance", s.ID)}}
+	}
+	if !a.Tipada() {
+		return nil
+	}
+	if !contiene(TiposDeAutoridad, a.Tipo) {
+		return []Hallazgo{{"error", "autoridad", fmt.Sprintf("%s declara el tipo de autoridad %q, que no es uno de %s", s.ID, a.Tipo, strings.Join(TiposDeAutoridad, ", "))}}
+	}
+	etiqueta := s.ID + " autoridad"
+	switch a.Tipo {
+	case "engram":
+		if a.ID <= 0 {
+			return []Hallazgo{{"error", "autoridad", fmt.Sprintf("%s cita Engram sin declarar un id", s.ID)}}
+		}
+		// Reported, never counted as proven. Saying "verified" about something
+		// this tool cannot open is how a pass stops meaning anything.
+		return []Hallazgo{{"aviso", "autoridad no verificable", fmt.Sprintf("%s cita Engram %d, que vive fuera de Git: se declara y no se prueba", s.ID, a.ID)}}
+	case "repo":
+		return validateFragmentLocator(root, a.Loc, etiqueta)
+	case "decision":
+		if a.Ref <= 0 {
+			return []Hallazgo{{"error", "autoridad", fmt.Sprintf("%s cita una decisión sin declarar su número", s.ID)}}
+		}
+		if a.Loc.Path != RegistroDeDecisiones {
+			return []Hallazgo{{"error", "autoridad", fmt.Sprintf("%s cita la decisión %d fuera del registro: %q", s.ID, a.Ref, a.Loc.Path)}}
+		}
+		if h := validateFragmentLocator(root, a.Loc, etiqueta); len(h) > 0 {
+			return h
+		}
+		return verificarNumeroDeDecision(root, a, s.ID)
+	}
+	return nil
+}
+
+// verificarNumeroDeDecision is the one check `repo` cannot make: that the bytes
+// proven by the locator actually name the decision the Sesión claims. Without
+// it a mis-copied range passes, and the citation says nothing.
+func verificarNumeroDeDecision(root string, a Autoridad, sesion string) []Hallazgo {
+	raw, err := exec.Command("git", "-C", root, "cat-file", "blob", a.Loc.Blob).Output()
+	if err != nil || a.Loc.ByteEnd > len(raw) {
+		return []Hallazgo{{"error", "autoridad", fmt.Sprintf("%s: el fragmento de la decisión %d no se pudo leer", sesion, a.Ref)}}
+	}
+	fragmento := string(raw[a.Loc.ByteStart:a.Loc.ByteEnd])
+	if !fragmentoNombra(fragmento, a.Ref) {
+		return []Hallazgo{{"error", "autoridad", fmt.Sprintf("%s cita la decisión %d pero el fragmento declarado no la nombra", sesion, a.Ref)}}
+	}
+	return nil
+}
+
+// fragmentoNombra accepts the two shapes the register uses: `Decisión 54` and
+// ranges like `Decisiones 49–53`, plus the older numbered prose list.
+func fragmentoNombra(fragmento string, ref int) bool {
+	for _, m := range rangoDeDecision.FindAllStringSubmatch(fragmento, -1) {
+		desde, err := strconv.Atoi(m[1])
+		if err != nil {
+			continue
+		}
+		hasta := desde
+		if m[2] != "" {
+			if v, err := strconv.Atoi(m[2]); err == nil {
+				hasta = v
+			}
+		}
+		if ref >= desde && ref <= hasta {
+			return true
+		}
+	}
+	return false
+}
+
+// rangoDeDecision matches `Decisión N`, `Decisiones N–M` (en dash or hyphen),
+// and a leading `N.` from the numbered prose list of decisions 1 to 48.
+var rangoDeDecision = regexp.MustCompile(`(?i)(?:decisi[oó]n(?:es)?\s+|^\s*|\n\s*)(\d+)(?:\s*[–-]\s*(\d+))?[.\s]`)
+
 // checkPuertaSDD proves that the declared route is not claiming a gate the
 // pipeline cannot reach yet. Convention §15: the three routes are three doors
 // into one pipeline, so a Sesión entering at `apply` whose change is still owed

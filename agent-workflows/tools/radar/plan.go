@@ -48,7 +48,7 @@ type Sesion struct {
 	ID                string             `yaml:"id"`
 	Zona              string             `yaml:"zona"`
 	Resultado         string             `yaml:"resultado"`
-	Autoridad         string             `yaml:"autoridad"`
+	Autoridad         Autoridad          `yaml:"autoridad"`
 	Cambio            string             `yaml:"cambio"`
 	DependeDe         []string           `yaml:"depende_de"`
 	Cimientos         []string           `yaml:"cimientos"`
@@ -111,6 +111,56 @@ type FragmentLocator struct {
 	ByteEnd        int    `yaml:"byte_end"`
 	FragmentSHA256 string `yaml:"fragment_sha256"`
 }
+
+// TiposDeAutoridad is the closed set. `repo` and `decision` resolve to exact
+// bytes in Git. `engram` is declared and never verified: it lives outside this
+// repository, and proving an id exists today would not prove its content is
+// still what the Sesión cited, because Engram is mutable. Radar depends on git
+// and gentle-ai only, so the Método stays portable to a repository that has
+// neither Engram nor the Tower.
+var TiposDeAutoridad = []string{"repo", "decision", "engram"}
+
+// Autoridad is where a Sesión says it came from. It accepts two shapes: the
+// legacy free-text string, and the typed form. Both are accepted until S115
+// requires the type — S114 migrates one Zona per Módulo, so demanding it now
+// would fail every Sesión at once.
+type Autoridad struct {
+	Texto string // legacy free text; empty once the typed form is used
+
+	Tipo string          // one of TiposDeAutoridad
+	Ref  int             // decision number, `decision` only
+	ID   int             // observation id, `engram` only
+	Loc  FragmentLocator // `repo` and `decision` only
+}
+
+type autoridadTipada struct {
+	Tipo            string `yaml:"tipo"`
+	Ref             int    `yaml:"ref"`
+	ID              int    `yaml:"id"`
+	FragmentLocator `yaml:",inline"`
+}
+
+// UnmarshalYAML accepts a scalar or a mapping. A mapping that is not the typed
+// shape fails here rather than resolving to an empty authority, which would
+// read downstream as "not declared" and hide the real mistake.
+func (a *Autoridad) UnmarshalYAML(value *yaml.Node) error {
+	if value.Kind == yaml.ScalarNode {
+		a.Texto = value.Value
+		return nil
+	}
+	var forma autoridadTipada
+	if err := value.Decode(&forma); err != nil {
+		return err
+	}
+	a.Tipo, a.Ref, a.ID, a.Loc = forma.Tipo, forma.Ref, forma.ID, forma.FragmentLocator
+	return nil
+}
+
+// Declarada reports whether the Sesión said anything at all.
+func (a Autoridad) Declarada() bool { return strings.TrimSpace(a.Texto) != "" || a.Tipo != "" }
+
+// Tipada reports whether it uses the typed form rather than free text.
+func (a Autoridad) Tipada() bool { return a.Tipo != "" }
 
 // Modulo groups concrete files that change together inside a Sesion.
 type Modulo struct {

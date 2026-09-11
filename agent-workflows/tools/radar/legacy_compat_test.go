@@ -49,7 +49,7 @@ func legacyFixtureFor(t *testing.T, id string, sourceLines ...string) (string, s
 
 func importedSession(prov ImportacionLegacy, pending bool) Sesion {
 	prov.TerritorioPendiente = pending
-	s := Sesion{ID: "S2.10", Zona: "z", Resultado: "legacy", Autoridad: "approved", Criterios: []string{"binary"}, ImportacionLegacy: &prov,
+	s := Sesion{ID: "S2.10", Zona: "z", Resultado: "legacy", Autoridad: Autoridad{Texto: "approved"}, Criterios: []string{"binary"}, ImportacionLegacy: &prov,
 		Ruta: RutaSesion{Propuesta: "direct", Autoridad: "approved"}, Modulos: []Modulo{{ID: "M2.10.1", Resultado: "module", Rutas: []string{"tracked.txt"}, Tareas: []Tarea{{ID: "T2.10.1.1", Accion: "act", Resultado: "done", Criterios: []string{"binary"}}}}}}
 	if pending {
 		s.Zona = ""
@@ -224,7 +224,7 @@ func TestDeferredImportedDesignTasksAllowsZeroModulesOnlyWithFrozenDeferral(t *t
 	valid := func(prov ImportacionLegacy, id string) Sesion {
 		prov.DescomposicionDiferida = true
 		return Sesion{
-			ID: id, Resultado: "legacy", Autoridad: "approved", Criterios: []string{"binary"}, Diferida: true,
+			ID: id, Resultado: "legacy", Autoridad: Autoridad{Texto: "approved"}, Criterios: []string{"binary"}, Diferida: true,
 			ImportacionLegacy: &prov, Ruta: RutaSesion{Propuesta: "design-tasks", Autoridad: "approved"},
 			Decisiones: []Decision{{Tipo: "escala", Pregunta: "How should this resume?", Evidencia: "frozen source", Checkpoint: "before first Module", Opciones: []Opcion{{Opcion: "write decomposition", Consecuencia: "kickoff can revalidate"}}, Clase: "dependencias-o-evidencia-contradictorias", Alcanza: "primer-modulo"}},
 		}
@@ -232,7 +232,7 @@ func TestDeferredImportedDesignTasksAllowsZeroModulesOnlyWithFrozenDeferral(t *t
 	validS129 := func(prov ImportacionLegacy) Sesion {
 		prov.DescomposicionDiferida = true
 		return Sesion{
-			ID: "S12.9", Resultado: "legacy", Autoridad: "approved", Criterios: []string{"binary"},
+			ID: "S12.9", Resultado: "legacy", Autoridad: Autoridad{Texto: "approved"}, Criterios: []string{"binary"},
 			ImportacionLegacy: &prov, Ruta: RutaSesion{Propuesta: "full-sdd", Autoridad: "approved"},
 			Decisiones: []Decision{{Tipo: "escala", Pregunta: "How should this resume?", Evidencia: "frozen source", Checkpoint: "before first Module", Opciones: []Opcion{{Opcion: "design the contract", Consecuencia: "SDD can plan"}}, Clase: "contrato-visible", Alcanza: "primer-modulo"}},
 		}

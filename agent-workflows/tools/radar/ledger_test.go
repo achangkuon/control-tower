@@ -55,7 +55,7 @@ func TestLedgerSDDDeclaradoSeConsultaYPuedeBloquear(t *testing.T) {
 				return []byte(tt.json), nil
 			}
 			p := &Plan{Sesiones: []Sesion{{
-				ID: "S1", Zona: "z", Resultado: "r", Autoridad: "PRD", Cambio: "mi-cambio",
+				ID: "S1", Zona: "z", Resultado: "r", Autoridad: Autoridad{Texto: "PRD"}, Cambio: "mi-cambio",
 				Criterios: []string{"c"}, Ruta: RutaSesion{Propuesta: "full-sdd", Autoridad: "kickoff"},
 			}}}
 			if got := hallazgosDe(p.CheckAt(root, head), "ledger SDD"); len(got) != 0 {

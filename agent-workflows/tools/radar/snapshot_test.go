@@ -213,7 +213,7 @@ func pendiente(id, zona string, deps ...string) Sesion {
 		ID:        id,
 		Zona:      zona,
 		Resultado: "Resultado observable de " + id,
-		Autoridad: "openspec/changes/ejemplo/tasks.md",
+		Autoridad: Autoridad{Texto: "openspec/changes/ejemplo/tasks.md"},
 		DependeDe: deps,
 		Criterios: []string{"Criterio binario verificable"},
 		Ruta:      RutaSesion{Propuesta: "direct", Autoridad: "openspec/changes/ejemplo/tasks.md"},

@@ -54,7 +54,7 @@ func futurePlan(loc FragmentLocator) *Plan {
 }
 
 func sesion(id string, archivada bool, dependeDe, reemplaza []string) Sesion {
-	return Sesion{ID: id, Zona: "z", Resultado: "r", Autoridad: "a", Criterios: []string{"c"}, Archivada: archivada, DependeDe: dependeDe, Reemplaza: reemplaza}
+	return Sesion{ID: id, Zona: "z", Resultado: "r", Autoridad: Autoridad{Texto: "a"}, Criterios: []string{"c"}, Archivada: archivada, DependeDe: dependeDe, Reemplaza: reemplaza}
 }
 
 func writePlanFile(t *testing.T, body string) string {

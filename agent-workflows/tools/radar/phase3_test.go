@@ -13,7 +13,7 @@ func sesionEjecutable(id, zona string) Sesion {
 		ID:        id,
 		Zona:      zona,
 		Resultado: "resultado observable",
-		Autoridad: "PRD §1",
+		Autoridad: Autoridad{Texto: "PRD §1"},
 		Criterios: []string{"el resultado existe"},
 		Ruta:      RutaSesion{Propuesta: "direct", Autoridad: "RFC §1"},
 		Modulos: []Modulo{{
