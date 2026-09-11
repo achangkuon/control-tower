@@ -1,53 +1,48 @@
 ---
 name: chanks-7-session-doc
-description: "Trigger: final session closure, close session, document session. Reúne evidencia después de entrega y envía el delta de cierre a Support."
+description: "Trigger: final session closure, close session, document session. Gather post-delivery evidence for the responsible parent."
 license: Apache-2.0
 metadata:
   author: gentleman-programming
-  version: "4.1"
+  version: "5.0"
 ---
 
 ## Activation Contract
 
-Activa después de verificación, revisión y entrega. Reúne evidencia; Support escribe el dato y regenera la vista.
+Activate after verification, review, and delivery. Gather closure evidence; the responsible
+parent records any confirmed plan evidence and regenerates the view under repository policy.
 
 ## Hard Rules
 
-- `archive` ocurre después de la entrega y antes de declarar el cierre completo.
-- Cierre exige criterios binarios verificados y `entrega.commit` integrado.
-- El commit debe resolver y ser ancestro del `HEAD` integrado.
-- `entrega.pr` es opcional y sólo se declara cuando existe.
-- No escribas plan ni ROADMAP; enviá un delta a Support.
-- Notion y Engram son proyecciones opcionales y nunca reemplazan plan, Git o `radar`.
-- Si `.session-doc.json` existe, validá el archivo completo contra `assets/session-doc.schema.json` antes de evaluar Notion; una configuración inválida o mixta bloquea el cierre.
-- Ese bloqueo alcanza sólo al registro documental: la entrega ya hecha no se revierte. Devolvé la restricción exacta que falló y las dos formas válidas —`notion_page_id` sin `notion`, o `notion.enabled: false` sin `notion_page_id` ni `notion_url`— para que la corrección sea de un paso.
-- Notion conserva el comportamiento vigente por defecto; sólo un archivo válido con `notion.enabled: false` exacto deshabilita esa proyección para el proyecto.
-- Con ese opt-out válido, no resuelvas mapas, no autentiques, no leas ni actualices Notion; registrá la proyección como omitida por política.
-- Sin ese opt-out, resolvé el destino de Notion desde `.session-doc.json`, preservá contenido y nunca borres.
+- `archive` occurs after delivery and before a complete closure is declared.
+- Closure requires verified binary criteria and integrated `entrega.commit` evidence.
+- The commit must resolve and be an ancestor of the integrated `HEAD`.
+- `entrega.pr` is optional and recorded only when it exists.
+- Do not write plan data or `ROADMAP`; return closure evidence and a proposed delta.
+- Optional projections never replace plan, Git, or `radar` evidence.
+- Preserve a documentation configuration failure as evidence; delivery already completed is not reversed.
 
 ## Decision Gates
 
-| Condición | Acción |
+| Condition | Action |
 |---|---|
-| Verificación o criterio falla | No cerrar; devolver evidencia exacta. |
-| Commit no está integrado | No cerrar; conservar delta pendiente. |
-| Support o `radar` falla | No afirmar cierre; reportar el fallo. |
-| `.session-doc.json` existe pero no valida | Bloquear el cierre; no inferir política ni usar el mapa de bootstrap. |
-| Archivo válido y `notion.enabled` es exactamente `false` | Omitir Notion sin intentar autenticación, bootstrap ni actualización. |
-| Evidencia válida | Enviar delta, checkear, renderizar y luego reconciliar proyecciones habilitadas. |
+| Verification or criterion fails | Do not close; return exact evidence. |
+| Commit is not integrated | Do not close; preserve the pending delta. |
+| Parent record or `radar` check fails | Do not assert closure; report the failure. |
+| Evidence is valid | Return closure evidence and the exact proposed parent record. |
 
 ## Execution Steps
 
-1. Reuní criterios, commit, `HEAD` integrado y PR si existe.
-2. Verificá resolución y ancestro del commit.
-3. Confirmá que `chanks-4-puente` ejecutó `archive` después de entregar.
-4. Enviá a Support el delta de `entrega.commit` y `entrega.pr` opcional.
-5. Exigí evidencia de `radar check` y `radar render`; releé ROADMAP.
-6. Actualizá Engram si la política del proyecto lo habilita; actualizá Notion sólo cuando no exista el opt-out exacto `notion.enabled: false`.
+1. Gather criteria, commit, integrated `HEAD`, and PR evidence when present.
+2. Verify the commit resolves and is an ancestor of the integrated base.
+3. Confirm `chanks-4-puente` executed `archive` after delivery.
+4. Return closure evidence and the `entrega.commit`/optional `entrega.pr` delta to the responsible parent.
+5. Require and report `radar check`/`radar render` evidence after the parent records confirmation.
 
 ## Output Contract
 
-Devuelve criterios, commit/HEAD/PR, evidencia de archive, delta, resultados de `radar`, cierre o causa exacta de fallo y proyecciones actualizadas/omitidas.
+Return criteria, commit/`HEAD`/PR evidence, archive evidence, proposed delta, `radar` results,
+closure outcome or exact failure, and the closure evidence the responsible parent must record.
 
 ## References
 
@@ -55,4 +50,3 @@ Devuelve criterios, commit/HEAD/PR, evidencia de archive, delta, resultados de `
 - `../chanks-0-agente-soporte/SKILL.md`
 - `references/links.md`
 - `assets/session-doc.schema.json`
-- `assets/project-notion-map.json`

@@ -1,58 +1,52 @@
 ---
 name: skill-orchestrator
-description: "Trigger: skill orquestadora, coordinar agentes, despachar trabajo, skill que manda a otro proceso. Diseña skills que comandan trabajo que corre fuera del turno."
+description: "Trigger: skill orquestadora, coordinar agentes, despachar trabajo, skill que manda a otro proceso. Design skills that coordinate external work without inventing authority."
 license: Apache-2.0
 metadata:
   author: gentleman-programming
-  version: "1.0"
+  version: "2.0"
 ---
 
 ## Activation Contract
 
-Usá esta skill para diseñar o auditar una skill que **manda trabajo a otro proceso**: despachar agentes, tomar asientos, comandar un runtime vivo o coordinar actores que trabajan solos. No la uses para una skill madre que carga hijas y las ejecuta en su propio turno: eso es `chanks-0-skill-composer`.
-
-La frontera es una sola pregunta: **¿el trabajo ocurre en tu turno, o en otro?** Una madre es un maletín —abrís, sacás la herramienta, la usás ahí mismo—. Una orquestadora es un handy: llamás a alguien en otro cuarto, con sus herramientas, trabajando solo. No ves lo que pasa, no podés deshacerlo, y si la radio se corta no sabés si la orden llegó.
+Use this skill to design or audit a skill that coordinates work outside its own turn. Do not use
+it for a parent skill that loads children and executes them in the same turn; use
+`chanks-0-skill-composer` for that shape.
 
 ## Hard Rules
 
-- **Sondeá el estado antes de decidir.** La orquestadora lee el estado vivo del runtime y recién ahí elige. Una orquestadora que asume estado está inventando.
-- **Declará un conjunto cerrado de modos, con una regla por modo.** Encendido, apagado, indeterminado, control caído. Si un modo no tiene regla escrita, no existe: el agente la va a improvisar.
-- **Falla cerrada ante pérdida de control.** Transporte de mensajes no es fallback y no otorga autoridad. Si el control no responde: parar, no reparar, no reintentar a ciegas, no degradar a un camino manual.
-- **Verificá por readback todo efecto remoto, y deshacé lo propio ante discrepancia.** Lo que no leíste de vuelta no pasó. Deshacé sólo lo que creaste vos.
-- **Separá autoridad de evidencia.** La memoria, los logs y los reportes son evidencia; nunca autorizan. Nombrá quién despacha, quién aconseja y quién nunca se autoasigna.
-- **La disposición nunca es automática.** Cerrar, reciclar, reusar o borrar un recurso vivo exige autorización explícita del humano, y se previsualiza antes.
-- **No copies el procedimiento de las skills que cargás.** La orquestadora posee ruteo, orden y gates; cada hija conserva su procedimiento.
-- **Una orquestadora no implementa.** Si empieza a escribir el trabajo que despachó, dejó de orquestar.
+- Name the real external runtime before designing orchestration; a generic builder must not invent one.
+- Declare closed modes and a rule per mode. If no authoritative state read exists, stop rather than simulate a lock, queue, assignment, or delivery state.
+- Separate authority from evidence. A human-directed responsible parent decides scope and risk; reports and memory are evidence only.
+- Verify remote effects by readback only when an actual runtime owns those effects. Never describe a fake rollback or live claim.
+- Disposition of a live resource is never automatic and requires human authorization.
+- Do not copy a child procedure into the orchestrator, and never implement the work it coordinates.
 
 ## Decision Gates
 
-| Diagnóstico | Acción |
-| --- | --- |
-| El trabajo corre en tu turno, mismo proceso | No es orquestadora: usá `chanks-0-skill-composer` |
-| El trabajo corre en otro proceso, turno o máquina | Orquestadora: aplicá las ocho reglas duras |
-| No hay forma de leer el estado del runtime | Detenerse: sin sonda no hay orquestación honesta, sólo esperanza |
-| No hay forma de verificar el efecto remoto | Detenerse: definí el readback antes de escribir la skill |
-| El runtime no distingue modos | Detenerse: definí el conjunto cerrado antes de rutear |
-| La orquestadora necesita el procedimiento completo de una hija | Detenerse: el diseño está creando un monolito |
-| Coordinación y ejecución viven en la misma skill | Extraé la ejecución a una hija y dejá el ruteo arriba |
+| Diagnosis | Action |
+|---|---|
+| Work occurs in the same turn and process | Use `chanks-0-skill-composer`, not an orchestrator. |
+| Work occurs elsewhere and runtime/readback are real | Define bounded orchestration. |
+| Runtime, state read, or readback is unavailable | Stop; return a human decision or use the generic parent/subagent flow without orchestration. |
+| Coordination and implementation mix | Extract implementation to a child. |
 
 ## Execution Steps
 
-1. Nombrá el runtime que se comanda, su superficie exacta de control y qué pasa cuando no responde.
-2. Enumerá el conjunto cerrado de modos y escribí la regla de cada uno, incluido el modo degradado.
-3. Definí la sonda: qué comando lee el estado, qué campos son autoridad y cuáles son sólo evidencia.
-4. Definí el readback de cada efecto remoto y la reversión de lo propio ante discrepancia.
-5. Nombrá los roles: quién despacha, quién aconseja, quién ejecuta, quién nunca se autoasigna.
-6. Escribí los gates de fallo cerrado antes que los caminos felices.
-7. Listá las skills hermanas que se cargan por ruta, sin copiar sus reglas.
-8. Auditá contra las ocho reglas duras y contra un ejemplar que ya funcione antes de publicar.
+1. Name the external runtime, its authority, and the safe outcome when it does not respond.
+2. Define closed modes, authoritative state fields, and readback for each permitted remote effect.
+3. Name the responsible parent, advisor, implementer, and the roles that cannot self-assign.
+4. Write fail-closed gates before the happy path and preserve human decisions for disposal, scope, and risk.
+5. List loaded child skills by route without duplicating their procedures.
+6. Audit against `references/ejemplar.md`; publish no orchestration rule unsupported by a real control surface.
 
 ## Output Contract
 
-Devolvé: el runtime comandado, el conjunto cerrado de modos con su regla, la sonda de estado, el contrato de readback y reversión, la tabla de roles y autoridad, los gates de fallo cerrado, las hijas cargadas por ruta, y toda regla que no pudiste escribir por falta de superficie de control.
+Return runtime, modes, state read, readback/reversal contract, authority table, fail-closed gates,
+children by route, and every rule that cannot be written because a required control surface is absent.
 
 ## References
 
-- `../chanks-0-skill-composer/SKILL.md` — la topología hermana: madres, hijas y ruteo en el mismo turno.
-- `../skill-creator/SKILL.md` y `../skill-improver/SKILL.md` — creación y auditoría del archivo.
-- `references/ejemplar.md` — `torre-control` leído regla por regla como orquestadora de referencia.
+- `../chanks-0-skill-composer/SKILL.md`
+- `../skill-creator/SKILL.md` and `../skill-improver/SKILL.md`
+- `references/ejemplar.md`
