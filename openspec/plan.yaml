@@ -6631,6 +6631,28 @@ sesiones:
         descartadas:
           - opcion: "Declarar openspec/plan.yaml como cimiento para poder reservarlo."
             razon: "Un cimiento es terreno que más de una Zona modifica de forma permanente; el plan lo escribe sólo la Zona autoridad y convertirlo en cimiento debilitaría la partición para resolver un caso puntual."
+      - tipo: resuelta
+        pregunta: "¿Cuál archivo es el registro de decisiones citable, si la política del repositorio declara que ninguno de los dos es autoridad?"
+        resolucion: "openspec/archive/legacy-planning/decision-register.md es el registro citable, congelado: se cita y no se edita. La copia bajo openspec/plans/ se retira, y esa retirada le pertenece a S114 porque openspec/plans/ es territorio de la Zona autoridad. Las decisiones nuevas siguen viviendo en el campo decisiones de cada Sesión, que es donde ya viven de hecho."
+        autoridad: "Decisión del maintainer del 2026-09-10, elegida sobre cuatro alternativas presentadas con su consecuencia. La evidencia: las dos copias tienen el mismo md5 541a4eda; AGENTS.md:27 declara el archivo «histórico, sólo lectura: se cita, no se edita» y AGENTS.md:29 declara openspec/plans/ «narrativa histórica… no es autoridad»; el registro llega hasta la decisión 108 y no crece, mientras las decisiones cerradas hoy quedaron en el campo decisiones de esta misma Sesión."
+        clase: contrato-visible
+        falsificador: "Se agrega una decisión nueva al registro, o queda más de una copia del registro en el árbol."
+        descartadas:
+          - opcion: "openspec/plans/decision-register.md pasa a ser excepción viva en AGENTS.md, como radiografia.md."
+            razon: "Deja dos lugares donde vive una decisión —el registro y el campo decisiones del plan— y obliga a declarar cuál gana cuando se contradicen."
+          - opcion: "Nace un registro vivo en una Zona que lo posea, y las dos copias actuales se archivan."
+            razon: "Exige una migración de contenido que ninguna Sesión tiene planificada y agranda el alcance antes de empezar."
+          - opcion: "Se elimina el tipo decision: una cita a decisión se declara como tipo repo apuntando a donde esté."
+            razon: "radar dejaría de poder verificar que el fragmento citado contenga de verdad la decisión que la Sesión nombra; un rango mal copiado pasaría el check."
+      - tipo: resuelta
+        pregunta: "¿Cómo resuelve radar una cita a decisión, si el registro tiene dos formas de escribirlas?"
+        resolucion: "La cita declara su localizador exacto, igual que el tipo repo, y además el número de decisión. radar prueba los bytes y después prueba que el fragmento nombre esa decisión. No parsea el registro ni infiere dónde está cada número: el localizador lo dice."
+        autoridad: "Descubrimiento técnico de esta Sesión: el registro escribe las decisiones 49 a 108 como encabezados `## Decisión N`, con rangos como `## Decisiones 49–53`, y las anteriores como ítems de una lista numerada en prosa. Dos formas, más rangos, más ítems repetidos entre sublistas."
+        clase: contrato-visible
+        falsificador: "radar deduce la ubicación de una decisión parseando el registro en vez de leer el localizador declarado."
+        descartadas:
+          - opcion: "Declarar sólo el número y que radar encuentre la decisión en el registro."
+            razon: "Obliga a parsear dos formatos distintos más rangos; un cambio de redacción del registro rompería la verificación de 60 Sesiones."
     ruta:
       propuesta: design-tasks
       autoridad: "El producto está decidido —tres tipos, dos verificables, migración por Zona con exigencia al final— pero falta descubrimiento técnico acotado: la forma exacta de cada tipo en el esquema y cómo se prueba una cita a una decisión numerada dentro del registro archivado. Eso es diseño de contrato, no de comportamiento."
@@ -6664,6 +6686,7 @@ sesiones:
       - "radar check pasa después de cada Módulo, no sólo al final: una migración parcial nunca deja el plan inválido."
       - "Ninguna autoridad cambia de sentido al migrar: se declara el tipo de la cita que ya estaba escrita, nunca se inventa una nueva."
       - "Al cerrar, cero Sesiones conservan la forma vieja sin tipo declarado."
+      - "Queda una sola copia del registro de decisiones en el árbol: openspec/plans/decision-register.md se retira y openspec/archive/legacy-planning/decision-register.md queda como la citable."
       - "El diff toca sólo Área."
     decisiones:
       - tipo: derivable
@@ -6681,7 +6704,7 @@ sesiones:
     modulos:
       - id: M114.1
         resultado: "Las Sesiones del plan declaran el tipo de su autoridad, una Zona por Módulo"
-        rutas: [openspec/plan.yaml]
+        rutas: [openspec/plan.yaml, openspec/plans/decision-register.md]
         tareas:
           - id: T114.1.1
             accion: "RED: fijar el orden de Zonas desde radar status y verificar que la primera Zona todavía tiene Sesiones sin tipo."
