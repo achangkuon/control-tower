@@ -6782,21 +6782,21 @@ sesiones:
         razon: "La ruta propuesta daba por sentado que archivar implica haber entregado, y el árbol real prueba que hay tres caminos de archivo, no uno. Decidir cuál de los tres debe declararse y cuál puede inferirse es diseño de contrato, no implementación mecánica: el criterio propuesto habría marcado las 6 archivadas del plan vigente, dos de ellas legítimas."
     modulos:
       - id: M113.1
-        resultado: "Archive exige entrega integrada"
+        resultado: "Una Sesión archivada declara por cuál de los tres caminos se archivó"
         rutas: [agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/check_test.go]
         tareas:
           - id: T113.1.1
-            accion: "RED: cubrir una Sesión archivada sin entrega, una archivada con entrega no integrada y una archivada correctamente."
-            resultado: "RED: los tres casos quedan cubiertos y los dos inválidos fallan."
-            criterios: ["RED: los tres casos quedan cubiertos y los dos inválidos fallan."]
+            accion: "RED: cubrir los tres caminos con las seis archivadas reales del plan —entregada, reemplazada desde references.future_successors, y retenida como evidencia histórica— más una archivada que no declara ninguno."
+            resultado: "RED: los tres caminos legítimos quedan cubiertos y sólo la que no declara ninguno falla."
+            criterios: ["RED: los tres caminos legítimos quedan cubiertos y sólo la que no declara ninguno falla."]
           - id: T113.1.2
-            accion: "GREEN: emitir el hallazgo que nombra la Sesión y la evidencia faltante cuando se archiva sin entrega integrada."
-            resultado: "GREEN: archivar sin entrega integrada falla cerrado y el caso válido pasa."
-            criterios: ["GREEN: archivar sin entrega integrada falla cerrado y el caso válido pasa."]
+            accion: "GREEN: exigir que una archivada declare su camino, y verificar cada uno como corresponde: entrega integrada, sucesora existente, o nada más que la declaración."
+            resultado: "GREEN: una archivada sin camino declarado falla cerrado y las seis del plan vigente pasan."
+            criterios: ["GREEN: una archivada sin camino declarado falla cerrado y las seis del plan vigente pasan."]
           - id: T113.1.3
-            accion: "REFACTOR: reusar la prueba de ancestría existente en vez de duplicar la resolución del commit."
-            resultado: "REFACTOR: existe una sola resolución de ancestría y los tests siguen pasando."
-            criterios: ["REFACTOR: existe una sola resolución de ancestría y los tests siguen pasando."]
+            accion: "REFACTOR: reusar la prueba de ancestría y la resolución de linaje que ya existen, en vez de duplicarlas para este chequeo."
+            resultado: "REFACTOR: no hay una segunda resolución de ancestría ni de linaje, y los tests siguen pasando."
+            criterios: ["REFACTOR: no hay una segunda resolución de ancestría ni de linaje, y los tests siguen pasando."]
       - id: M113.2
         resultado: "El tope del lote de revisión se declara y se mide"
         rutas: [agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/check_test.go]
