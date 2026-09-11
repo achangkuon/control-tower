@@ -90,6 +90,13 @@ cimientos:
     - test/identity.test.mjs
     - test/lifecycle.test.mjs
     - test/install/launch-worker-cli.test.mjs
+    # Reservado por S119, que lo edita desde la Zona producto-torre. S117 lo crea al partir
+    # tower-role-assets.test.mjs, y hasta entonces `radar check` avisa que la ruta no resuelve a
+    # ningún archivo: es trabajo declarado y pendiente, no un defecto. Las otras dos rutas que
+    # crea S117 —payload-closure.contract.mjs y runtime-payload.contract.mjs— NO se reservan acá:
+    # caen bajo la ruta amplia test/install/ de su propia Zona, que ya las autoriza. Sólo ésta
+    # cruza de Zona y por eso necesita la reserva exacta (check.go:184-206).
+    - test/install/tower-role-assets.contract.mjs
     - test/migration.test.mjs
     - test/polling.test.mjs
     - test/pre-push-plan-gate.test.mjs
@@ -6953,6 +6960,247 @@ sesiones:
             accion: "REFACTOR: dejar el tope ausente resolviendo a una política declarada y no a un número escondido en el código."
             resultado: "REFACTOR: un plan sin tope declarado se comporta de forma explícita y los tests siguen pasando."
             criterios: ["REFACTOR: un plan sin tope declarado se comporta de forma explícita y los tests siguen pasando."]
+
+  # S117, S118 y S119 se enumeran el 2026-09-11 desde tres propuestas escritas el 2026-09-03/04 en
+  # schema v3 y conservadas fuera de master en la rama support/read-only-20260830. Sus autores
+  # dejaron el id en null a propósito: §8 del canon prohíbe renumerar, y la secuencia plana no
+  # estaba asignada mientras Fase B seguía en vuelo. Fase B cerró, así que la secuencia se asigna
+  # acá una vez y no se vuelve a tocar. Las propuestas originales y sus auditorías quedan en
+  # openspec/plans/ como narrativa, sin autoridad.
+
+  - id: S117
+    zona: instalacion
+    resultado: "Los tres registros de instalación dejan de forzar ediciones cross-Zona: sus datos enumerados salen del test a un módulo propio declarado como Cimiento exacto."
+    autoridad: "openspec/plans/audits/cross-zona-registry-audit.md (Audit G, 2026-09-04), rescatada de support/read-only-20260830 y enumerada por decisión del maintainer del 2026-09-11 al integrar las tres propuestas pendientes."
+    depende_de: []
+    # Los tres `*.contract.mjs` que esta Sesión crea caen bajo `test/install/`, la ruta amplia de
+    # su propia Zona, que ya los autoriza. Reservarlos acá los sacaría de esa cobertura sin
+    # ganar nada. El único que se reserva globalmente es tower-role-assets.contract.mjs, y lo
+    # hace por S119, que lo edita desde otra Zona — y por eso esta Sesión, que lo crea, también
+    # tiene que reservarlo: un Cimiento exacto sale de la cobertura de la Zona, así que la
+    # reserva deja de ser opcional para quien lo toca. La reserva es exclusiva por archivo, de
+    # modo que S117 y S119 no pueden correr en paralelo; por eso S119 declara `depende_de: [S117]`.
+    cimientos:
+      - test/install/tower-role-assets.contract.mjs
+    recurso: []
+    criterios:
+      - "Cada uno de los tres registros queda partido en dos: un `*.contract.mjs` con sólo el dato enumerado, y el `*.test.mjs` original con sólo la lógica, que lo importa."
+      - "Cada valor extraído es idéntico byte a byte al que reemplazó. Falsificador: cualquier diferencia entre el literal viejo y el export nuevo, más allá del formato, falla este criterio."
+      - "La suite completa pasa antes y después de cada Módulo, sin debilitar, quitar ni condicionar ninguna aserción para acomodar la partición."
+      - "`radar check` no reporta huérfanos, solapes ni reglas sin uso con las tres rutas `*.contract.mjs` declaradas en `cimientos.rutas`."
+      - "`owners()` resuelve cada `*.contract.mjs` nuevo a `cimientos` solo, no a `cimientos + instalacion`. Falsificador: dos dueños significan que el recorte exacto no se aplicó y la partición sí solapa."
+      - "Ningún archivo cambia de directorio. Falsificador: cualquier ruta fuera de `test/install/` en el diff significa que no se usó el recorte y la Zona instalacion perdió territorio que debía conservar."
+      - "`install/runtime-payload.mjs` queda intacto: su lista es generada y editarlo sería alcance que la auditoría excluyó explícitamente."
+    decisiones:
+      - tipo: derivable
+        pregunta: "¿Generar las tres listas en vez de extraerlas?"
+        resolucion: "No. Extraer. La generación es el remedio más fuerte y ya se usa donde aplica, pero ninguna de estas tres listas es derivable."
+        autoridad: "openspec/plans/audits/cross-zona-registry-audit.md §3"
+        clase: interna
+        checkpoint: "antes de T117.1.1"
+        evidencia: "`ASSET_CONTRACTS` guarda valores de frontmatter esperados y tres juegos de regex que fijan oraciones exactas, y ninguna herramienta los computa del árbol. Las dos listas golden son deliberadamente escritas a mano, y un golden generado por el mismo código que verifica no prueba nada. El precedente de generación que sí aplica, `<generated:runtime-payload>`, ya está entregado y cubre el caso derivable."
+        criterio: "Si alguna de las tres listas pudiera computarse del repositorio sin leer el propio código que verifica, esta resolución es incorrecta y corresponde generar en vez de extraer."
+        opciones:
+          - opcion: "Extraer el dato a un módulo propio declarado como Cimiento exacto."
+            consecuencia: "El dato deja de forzar ediciones cross-Zona y se conserva byte a byte; el test queda con sólo lógica."
+          - opcion: "Generar las tres listas desde el árbol."
+            consecuencia: "Un golden generado por el código que verifica deja de probar nada, y los markers de frontmatter y las oraciones exactas se pierden porque ninguna herramienta los computa."
+      - tipo: derivable
+        pregunta: "¿Los módulos extraídos deben salir de `test/install/`?"
+        resolucion: "No. Se quedan donde están y se declaran como Cimientos de archivo exacto."
+        autoridad: "agent-workflows/tools/radar/partition.go:81-83"
+        clase: interna
+        checkpoint: "antes de T117.1.3"
+        evidencia: "Un Cimiento exacto recorta un archivo de una ruta amplia de Zona (partition.go:81-83), comportamiento cubierto por TestCimientoExactoRecortaUnaRutaAmpliaDeZona. El recorte resuelve el caso sin tocar la ruta amplia `test/install/` ni mover ningún archivo de directorio."
+        criterio: "Si `owners()` devolviera dos dueños para una ruta exacta declarada bajo una ruta amplia, el recorte no aplicó y mudar los módulos fuera de `test/install/` sería obligatorio."
+        opciones:
+          - opcion: "Dejarlos en `test/install/` y declararlos como Cimientos exactos."
+            consecuencia: "Ningún archivo cambia de directorio y la Zona instalacion conserva su territorio; el dato queda recortado a `cimientos`."
+          - opcion: "Mudarlos fuera de `test/install/`."
+            consecuencia: "La Zona instalacion pierde territorio que le corresponde y el diff toca rutas que la auditoría excluyó del alcance."
+    ruta:
+      propuesta: direct
+      autoridad: "Tres extracciones mecánicas sin decisión de diseño abierta: el dato a mover ya está delimitado en cada archivo, la forma destino la fija el precedente `<generated:runtime-payload>` ya entregado, y el mecanismo de partición está cubierto por tests."
+    modulos:
+      - id: M117.1
+        resultado: "Registro payload-closure extraído y declarado"
+        rutas: [test/install/payload-closure.contract.mjs, test/install/payload-closure.test.mjs]
+        tareas:
+          - id: T117.1.1
+            accion: "Mover el conjunto de entrypoints esperados fuera de `test/install/payload-closure.test.mjs` a un `payload-closure.contract.mjs` nuevo que lo exporta, y hacer que el test lo importe."
+            resultado: "El dato vive en su propio módulo y el test lo lee."
+            criterios: ["`bun test test/install/payload-closure.test.mjs` pasa y el test ya no contiene el literal enumerado."]
+          - id: T117.1.2
+            accion: "Verificar que el traslado no cambió ningún valor ni ninguna expectativa."
+            resultado: "Evidencia de que la partición movió bytes y no cambió expectativas."
+            criterios: ["El diff del test muestra sólo la sustitución del literal por el import.", "La suite completa pasa."]
+          - id: T117.1.3
+            accion: "Declarar `test/install/payload-closure.contract.mjs` en `cimientos.rutas` y correr `radar check`."
+            resultado: "La partición es dueña del dato extraído."
+            criterios: ["`radar check` reporta 0 huérfanos, 0 solapes y 0 reglas sin uso.", "`owners()` resuelve la ruta a `cimientos` solo."]
+      - id: M117.2
+        resultado: "Registro tower-role-assets extraído y declarado"
+        rutas: [test/install/tower-role-assets.contract.mjs, test/install/tower-role-assets.test.mjs]
+        tareas:
+          - id: T117.2.1
+            accion: "Mover `ASSET_CONTRACTS` —frontmatter esperado, referencias y markers— a un `tower-role-assets.contract.mjs` nuevo, dejando la lógica de verificación en el test."
+            resultado: "El dato sale del test; la lógica se queda."
+            criterios: ["`bun test test/install/tower-role-assets.test.mjs` pasa y el test ya no contiene la tabla de datos."]
+          - id: T117.2.2
+            accion: "Verificar que ningún marker ni valor esperado cambió al moverse."
+            resultado: "Evidencia de que ninguna expectativa viajó con el dato."
+            criterios: ["Cada marker del módulo nuevo es idéntico al que estaba en el test.", "La suite completa pasa."]
+          - id: T117.2.3
+            accion: "Declarar `test/install/tower-role-assets.contract.mjs` en `cimientos.rutas` y correr `radar check`."
+            resultado: "La partición es dueña del registro que más ediciones cross-Zona forzaba."
+            criterios: ["`radar check` reporta 0 huérfanos, 0 solapes y 0 reglas sin uso.", "`owners()` resuelve la ruta a `cimientos` solo."]
+      - id: M117.3
+        resultado: "Registro runtime-payload extraído y declarado"
+        rutas: [test/install/runtime-payload.contract.mjs, test/install/runtime-payload.test.mjs]
+        tareas:
+          - id: T117.3.1
+            accion: "Mover el dato enumerado de `test/install/runtime-payload.test.mjs` a un `runtime-payload.contract.mjs` nuevo, sin tocar `install/runtime-payload.mjs`."
+            resultado: "El tercer registro queda extraído y el módulo generado sigue intacto."
+            criterios: ["`bun test test/install/runtime-payload.test.mjs` pasa.", "`install/runtime-payload.mjs` no aparece en el diff."]
+          - id: T117.3.2
+            accion: "Declarar `test/install/runtime-payload.contract.mjs` en `cimientos.rutas` y correr `radar check` sobre los tres registros juntos."
+            resultado: "Los tres registros dejan de forzar ediciones cross-Zona."
+            criterios: ["`radar check` reporta 0 huérfanos, 0 solapes y 0 reglas sin uso.", "La suite completa pasa.", "Los tres `*.contract.mjs` resuelven a `cimientos` solo."]
+
+  - id: S118
+    zona: hosts
+    resultado: "Una operación de la Torre se reconoce a simple vista dentro de una sesión Pi: emoji, nombre y color propios en los cuatro estados observables."
+    autoridad: "openspec/plans/audits/pi-tui-badge-audit-d.md (Audit D) y la decisión 109 del maintainer del 2026-09-03 —renumerada desde 108 por colisión—, conservadas en openspec/plans/proposals/p13-badge-torre-pi.md y enumeradas el 2026-09-11."
+    depende_de: []
+    cimientos: []
+    recurso: [superficie de render de la extensión Pi y el contrato de capacidades de extensions/pi/package.json]
+    criterios:
+      - "Las filas de las tools de la Torre renderizan emoji, nombre y color en los cuatro estados observables: preparando, corriendo, completado y fallido."
+      - "`torre` se expone como UN tool con subcomando enumerado. Falsificador: el catálogo expone más de un tool para el vocabulario de `bin/torre`."
+      - "`extensions/pi/package.json` declara las capacidades de render nuevas y conserva un único inventario de transforms; no quedan listas paralelas."
+      - "El badge consume tokens de tema ya existentes. Falsificador: se declara un token nuevo, que falla cerrado contra el schema de Pi."
+      - "El diff toca sólo `extensions/pi/**` y `test/extensions/pi/**`."
+      - "Ninguna mutación de Pi core, `pi-intercom`, skills genéricas de Gentle AI, `adapters/pi/**`, `mcp.mjs`, `bin/torre`, `hosts/**` ni `install/**`: esta Sesión presenta, no redefine router de input, enrolamiento, autoridad ni transporte."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿La Torre se presenta en Pi como extensión propia o como servidor MCP?"
+        resolucion: "Como extensión propia. Es contrato visible del producto."
+        autoridad: "Decisión 109 del maintainer del 2026-09-03, registrada en openspec/plans/decision-register.md."
+        clase: contrato-visible
+        falsificador: "La presentación de la Torre en Pi se resuelve por MCP en vez de por la extensión declarada."
+      - tipo: derivable
+        pregunta: "¿Granularidad de la superficie tipeable de `torre`?"
+        resolucion: "Un único tool con subcomando enumerado."
+        autoridad: "Decisión del maintainer del 2026-09-03, registrada en openspec/plans/decision-register.md."
+        clase: interna
+        checkpoint: "antes de T118.1.1"
+        evidencia: "El vocabulario tipeable de `bin/torre` ya está cerrado y enumerado: cada comando es un subcomando de un verbo único, no una superficie independiente. Exponer un tool por comando multiplicaría el catálogo de Pi por el tamaño de ese vocabulario sin agregar ninguna capacidad."
+        criterio: "El catálogo expone más de un tool para el vocabulario de `bin/torre`."
+        opciones:
+          - opcion: "Un tool `torre` con subcomando enumerado."
+            consecuencia: "El catálogo de Pi crece en una entrada y el vocabulario queda enumerado en un solo lugar."
+          - opcion: "Un tool por comando de `bin/torre`."
+            consecuencia: "El catálogo crece con cada comando nuevo y el vocabulario queda repartido, sin ganar ninguna capacidad."
+      - tipo: derivable
+        pregunta: "¿De dónde sale el color del badge?"
+        resolucion: "De un token existente del tema."
+        autoridad: "openspec/plans/audits/pi-tui-badge-audit-d.md §3"
+        clase: interna
+        checkpoint: "antes de T118.1.2"
+        evidencia: "El schema de temas de Pi enumera sus tokens y falla cerrado ante uno no declarado, así que un token nuevo no es una decisión de estilo sino un cambio de contrato de Pi, que está fuera del Área de esta Sesión."
+        criterio: "El badge declara un token de tema que no existía, o el render falla cerrado contra el schema de Pi."
+        opciones:
+          - opcion: "Consumir un token de tema existente."
+            consecuencia: "El badge respeta el tema del usuario y el diff no sale del Área declarada."
+          - opcion: "Declarar un token de tema nuevo."
+            consecuencia: "Falla cerrado contra el schema de Pi y convierte una Sesión de presentación en un cambio del contrato de temas."
+    ruta:
+      propuesta: direct
+      autoridad: "El mecanismo, la implementación de referencia y los archivos quedaron fijados por Audit D; no hay diseño sin resolver. `chanks-3-session-kickoff` la revalida una vez contra el código de la Zona."
+    modulos:
+      - id: M118.1
+        resultado: "Renderer del badge y contrato de capacidades"
+        rutas: [extensions/pi/package.json, test/extensions/pi/tower-session-router.test.mjs]
+        tareas:
+          - id: T118.1.1
+            accion: "RED: escribir el test que afirma emoji, nombre y color de la Torre en los cuatro estados observables, y un único tool `torre` con subcomando enumerado."
+            resultado: "RED: el test falla nombrando los estados sin badge y el catálogo sin subcomando."
+            criterios: ["RED: existe un test que falla contra el árbol actual y nombra los cuatro estados."]
+          - id: T118.1.2
+            accion: "GREEN: declarar las capacidades de render en `extensions/pi/package.json` y emitir el badge consumiendo tokens de tema existentes."
+            resultado: "GREEN: los cuatro estados renderizan el badge y el catálogo expone un solo tool."
+            criterios: ["GREEN: el test de T118.1.1 pasa sin debilitar ninguna aserción.", "No se declara ningún token de tema nuevo."]
+          - id: T118.1.3
+            accion: "REFACTOR: dejar un único inventario de transforms en el package, sin listas paralelas, y la suite en verde."
+            resultado: "REFACTOR: el inventario es uno solo y los tests siguen pasando."
+            criterios: ["REFACTOR: no quedan listas paralelas de transforms.", "La suite completa pasa."]
+
+  - id: S119
+    zona: producto-torre
+    resultado: "La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por `torre-control` → `torre asiento`."
+    autoridad: "openspec/plans/audits/herdr-skill-ownership-audit.md y el contrato preservado en openspec/plans/audits/evidence/herdr-skill-contract-d8a22841.patch, enumerados por decisión del maintainer del 2026-09-11, que además ubicó la Sesión en producto-torre al reubicarla tras la separación constructor/Torre."
+    depende_de: [S117]
+    # `product/tower/skills/herdr/SKILL.md` no se reserva: cae bajo `product/tower/`, la ruta
+    # amplia de esta misma Zona. Se reservan los dos que esta Sesión edita y NO le pertenecen:
+    # torre-control porque es Cimiento histórico, y el registro de assets porque vive en la Zona
+    # instalacion. Ese cruce es la razón por la que la escalada de la propuesta original quedó
+    # abierta, y lo que el maintainer cerró el 2026-09-11 al ubicar la Sesión en producto-torre.
+    cimientos:
+      - product/tower/skills/torre-control/SKILL.md
+      - test/install/tower-role-assets.contract.mjs
+    recurso: []
+    criterios:
+      - "`product/tower/skills/herdr/SKILL.md` existe y reproduce textualmente el párrafo de activación del patch preservado: Herdr activa sólo ante un pedido explícito de Herdr, y despacho de la Torre, decisiones ON/OFF, selección de topología y ciclo de vida de asiento enrutan por `torre-control` → `torre asiento`."
+      - "La skill lleva las cuatro claves de frontmatter que exige `SKILL_FRONTMATTER_KEYS` (name, description, license, metadata) y las seis secciones que exige `SKILL_SECTIONS`."
+      - "El registro de assets declara la skill con markers que fijan las dos oraciones de propiedad de la Torre y las dos de aprobación humana del patch preservado, y la suite completa pasa."
+      - "La skill no documenta ninguna mecánica de la CLI de Herdr que `herdr --skill` ya emite. Falsificador: cualquier flag, timeout o código de error documentado en ambos archivos es un duplicado y falla este criterio."
+      - "`radar check` reporta 0 huérfanos, 0 solapes y 0 reglas sin uso con `product/tower/skills/herdr/SKILL.md` declarada en `cimientos.rutas`."
+      - "`product/tower/skills/torre-control/SKILL.md` gana una referencia a la skill nueva y sus markers existentes siguen pasando sin cambios."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿En qué Zona vive esta Sesión, si la skill está en producto-torre y el manifest que la declara en instalacion?"
+        resolucion: "En `producto-torre`. La Sesión vive donde vive el producto —es una skill de la Torre— y el manifest declarante se reserva como Cimiento de archivo exacto, que es el mecanismo que el plan ya usa para archivos compartidos."
+        autoridad: "Decisión del maintainer del 2026-09-11, tomada sobre la escalada que la propuesta original del 2026-09-04 dejó abierta y que la separación constructor/Torre volvió inevitable: cuando se escribió, la skill y su manifest vivían en un solo territorio."
+        clase: contrato-visible
+        falsificador: "Una Sesión de la Zona instalacion escribe dentro de `product/tower/`, cruzando la frontera entre el constructor y la Torre."
+        descartadas:
+          - opcion: "Dejarla en `instalacion` como la escribió su autor."
+            razon: "Hoy significaría que una Sesión de instalación escribe dentro de product/tower/, que es exactamente la frontera que la separación trazó."
+          - opcion: "Partirla en dos Sesiones, una por Zona."
+            razon: "Cada territorio quedaría limpio, pero el resultado deja de ser revisable de una sola vez: la primera entregaría una skill que nada declara todavía."
+      - tipo: derivable
+        pregunta: "¿Esta skill toma un nombre `chanks-<tramo>-<nombre>`?"
+        resolucion: "No. Es una skill de maquinaria y vive al lado de `torre-control`."
+        autoridad: "agent-workflows/FLUJO-END-TO-END.md:164-168"
+        clase: interna
+        checkpoint: "antes de T119.1.2"
+        evidencia: "El flujo aprobado dice que la skill de runtime de Herdr «no reemplaza `torre asiento` ni se convierte en una skill nueva del método». El prefijo `chanks-` es la marca de las skills del método, que se instalan globalmente en los cuatro agentes; esta skill vive dentro del producto Torre y se empaqueta con él."
+        criterio: "La skill toma un nombre `chanks-<tramo>-<nombre>`, o queda instalada en los directorios globales de skills de los agentes."
+        opciones:
+          - opcion: "Nombre de maquinaria, al lado de `torre-control` dentro de `product/tower/skills/`."
+            consecuencia: "La skill viaja con el producto Torre y no entra al método global; la frontera constructor/Torre se mantiene."
+          - opcion: "Nombre `chanks-<tramo>-<nombre>` como skill del método."
+            consecuencia: "Contradice la oración del flujo aprobado y mete una skill del producto en el método global de los cuatro agentes."
+    ruta:
+      propuesta: direct
+      autoridad: "Dos archivos conocidos con contrato declarado y ninguna pregunta de diseño abierta: el texto de la skill lo fija el patch preservado y la forma del registro la fijan las entradas que ya viven en él. La única elección abierta —la Zona— la cerró el maintainer el 2026-09-11."
+    modulos:
+      - id: M119.1
+        resultado: "La skill, declarada y con compuerta"
+        rutas: [product/tower/skills/herdr/SKILL.md, product/tower/skills/torre-control/SKILL.md, test/install/tower-role-assets.contract.mjs]
+        tareas:
+          - id: T119.1.1
+            accion: "RED: agregar la entrada de `product/tower/skills/herdr/SKILL.md` al registro de assets con su frontmatter, referencias y markers, y ver fallar la suite porque el archivo no existe."
+            resultado: "RED: un test que falla nombrando la skill ausente."
+            criterios: ["RED: la suite de assets falla y el fallo nombra `product/tower/skills/herdr/SKILL.md`."]
+          - id: T119.1.2
+            accion: "GREEN: escribir la skill con las seis secciones exigidas, cargando el párrafo de activación y las dos reglas de aprobación humana del patch preservado, y difiriendo toda acción de asiento a `torre asiento`."
+            resultado: "GREEN: la skill existe y la compuerta del registro pasa."
+            criterios: ["GREEN: la suite de assets pasa.", "Cada marker declarado en T119.1.1 matchea, sin debilitar ninguno para hacerla pasar."]
+          - id: T119.1.3
+            accion: "REFACTOR: referenciar la skill nueva desde `product/tower/skills/torre-control/SKILL.md` y confirmar la reserva de `product/tower/skills/herdr/SKILL.md` en `cimientos.rutas`."
+            resultado: "REFACTOR: la skill es alcanzable desde la ruta padre y la partición es su dueña."
+            criterios: ["Los markers existentes de `torre-control` siguen pasando sin cambios.", "`radar check` reporta 0 huérfanos, 0 solapes y 0 reglas sin uso.", "La suite completa pasa."]
 
 references:
   future_successors:
