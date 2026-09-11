@@ -18,6 +18,7 @@ zonas:
   - id: asientos
     nombre: Asientos
     # Clasificación exclusiva de procedencia cerrada para S8.14: profiles/ no es una fuente activa en HEAD; las fuentes activas están bajo product/tower/.
+    # NO borres profiles/ para silenciar el aviso "no le corresponde ningún archivo": es el dueño actual de rutas de Módulo de S8.14 y sin él esa Sesión histórica queda huérfana (check.go:186). Verificado el 2026-09-11.
     rutas: [supervision/, profiles/, escalation/, support/, workspace/, test/escalation/, test/supervision/, test/support/, test/workspace/]
   - id: jornada
     nombre: Jornada
@@ -66,6 +67,7 @@ cimientos:
     - scripts/payload-closure.mjs
     - scripts/publish-runtime.mjs
     # Clasificación exclusiva de procedencia cerrada para S8.14/S9.1: estas rutas legacy no existen ni autorizan una fuente activa en HEAD.
+    # NO las borres para silenciar el aviso "no le corresponde ningún archivo". Son el dueño actual de las rutas de Módulo de S8.14/S9.1: sin ellas esas Sesiones históricas quedan huérfanas y `radar check` pasa de 4 avisos a 2 errores (check.go:186). Verificado el 2026-09-11.
     - skills/torre-control-entregas/SKILL.md
     - skills/torre-control-soporte/SKILL.md
     - skills/torre-control/SKILL.md
@@ -90,6 +92,7 @@ cimientos:
     - test/install/launch-worker-cli.test.mjs
     - test/migration.test.mjs
     - test/polling.test.mjs
+    - test/pre-push-plan-gate.test.mjs
     - test/provenance/provenance.test.mjs
     - test/recovery.test.mjs
     - validate-compact-message.py

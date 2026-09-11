@@ -63,6 +63,12 @@ if $check_only; then
     [[ -x "$BIN/torre" ]] && ok "comando torre instalado" || bad "comando torre sin instalar"
     jq -e '.mcp["control-tower"]' "$OC_JSON" >/dev/null 2>&1 \
         && ok "MCP registrado" || bad "MCP sin registrar"
+    # El método se diagnostica acá también: un motor instalado sin skills ni radar es
+    # media instalación, y el usuario no tiene por qué descubrirlo al primer commit.
+    [[ -d "$HOME/.claude/skills/chanks-2-planificador-granular" ]] \
+        && ok "skills instaladas" || bad "skills sin instalar"
+    command -v radar >/dev/null 2>&1 \
+        && ok "radar en PATH" || bad "radar sin instalar o fuera del PATH"
     exit 0
 fi
 
@@ -118,6 +124,37 @@ fi
 
 mv "$tmp" "$OC_JSON"
 ok "MCP registrado en opencode.json${backup:+ (backup: $(basename "$backup"))}"
+
+# ── El método: skills y radar ────────────────────────────────────────────────
+# La Torre de Control como producto son tres piezas: el motor (arriba), el método
+# (agent-workflows) y el dato de planificación que el método lee. El motor no depende
+# del método —no tiene una sola referencia a plan.yaml ni a radar— así que cada pieza
+# trae su propio instalador y este archivo sólo los compone. Ninguno pisa al otro.
+echo
+echo "Método (agent-workflows)"
+echo
+
+if command -v python3 >/dev/null 2>&1; then
+    if python3 "$SRC/agent-workflows/tools/install.py" >/dev/null 2>&1; then
+        ok "skills instaladas en los agentes"
+    else
+        bad "las skills no se instalaron; corré agent-workflows/tools/install.py para ver por qué"
+    fi
+else
+    echo "  ~ sin python3: las skills no se instalan. Instalalo y corré"
+    echo "    agent-workflows/tools/install.py"
+fi
+
+if command -v go >/dev/null 2>&1; then
+    if "$SRC/agent-workflows/tools/install-radar.sh" >/dev/null 2>&1; then
+        ok "radar instalado en ${TORRE_BIN_DIR:-$HOME/.local/bin}/radar"
+    else
+        bad "radar no se instaló; corré agent-workflows/tools/install-radar.sh para ver por qué"
+    fi
+else
+    echo "  ~ sin go: radar no se instala. Sin radar no hay validación del plan"
+    echo "    ni puerta pre-commit. Instalá go y corré agent-workflows/tools/install-radar.sh"
+fi
 
 cat <<'EOF'
 

@@ -1,13 +1,102 @@
 #!/usr/bin/env sh
-# Regenerates the product report at delivery time.
+# Two jobs at delivery time, in order: validate the plan, then regenerate the report.
 #
 # Agent-agnostic on purpose: git runs it for Claude Code, opencode, PI, Codex and for a
-# human alike. Nothing here depends on which assistant is driving.
+# human alike. Nothing here depends on which assistant is driving. That is the point —
+# a gate each runtime enforces differently is not a gate.
 #
-# It NEVER blocks a push. A report is not a gate; a stale report labels itself stale.
+# Why pre-push and not pre-commit: radar validates one immutable HEAD snapshot
+# (git.go:61 pins HEAD^{commit}). At pre-commit time HEAD is the state BEFORE the commit,
+# so the gate would validate stale data and would report every newly added file as
+# unowned. At pre-push time HEAD already carries the commits being published, which is
+# exactly what must be validated.
+#
+# The two sections below differ deliberately in how they resolve their engine. The report
+# loads a script through an interpreter the user already trusts and never blocks, so a
+# repo-relative lookup is acceptable there. The gate EXECUTES a binary and can stop a
+# push, so it refuses any candidate that lives inside the tree being pushed.
 set -u
 
 root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+
+# ── 1. The plan gate — this one BLOCKS ───────────────────────────────────────
+# No plan, no gate: a project that never adopted the method is not failing it. Same for
+# a machine without radar — a missing tool is not a broken plan, so it warns and passes.
+if [ -f "$root/openspec/plan.yaml" ]; then
+  # Engine lookup. NEVER resolve the binary from inside the working tree: a hook that
+  # prefers a repo-relative executable runs whatever a checked-out branch happens to
+  # carry, which is binary planting with the contributor's own privileges. Only these
+  # three sources are trusted, and every one of them is chosen by the user, not by the
+  # content being pushed: PATH, an explicit RADAR_BIN, and the fixed install location.
+  radar=""
+  if command -v radar >/dev/null 2>&1; then
+    radar="radar"
+  elif [ -n "${RADAR_BIN:-}" ] && [ -x "${RADAR_BIN:-}" ]; then
+    radar="$RADAR_BIN"
+  elif [ -x "$HOME/.local/bin/radar" ]; then
+    radar="$HOME/.local/bin/radar"
+  fi
+
+  if [ -z "$radar" ]; then
+    printf 'radar: no encontrado, se omite la validación del plan. El push sigue.\n' >&2
+    printf '       Instalalo con agent-workflows/tools/install-radar.sh\n' >&2
+  else
+    # Bound the run. This is the first blocking hook in the file, and it runs for
+    # unattended agents with nobody present to Ctrl-C a hang and retry with --no-verify.
+    # A gate that can hang forever is worse than no gate: an expired check warns and
+    # lets the push through, because a timeout is not evidence of an invalid plan.
+    #
+    # Expiry is recorded explicitly, never inferred from an exit code: radar is free to
+    # exit 124 for its own reasons, and reading that as "timed out, let it through" would
+    # turn an invalid plan into a silent pass.
+    # One path, always. timeout(1) is not usable here: it returns 124 both when IT expires
+    # and when the child itself exits 124, so an invalid plan that happened to exit 124
+    # would be waved through as "timed out". It is also absent on stock macOS. A watchdog
+    # that writes an explicit marker has neither problem and behaves the same everywhere.
+    gate_timeout=120
+    expired=""
+    marker=$(mktemp 2>/dev/null) || marker=""
+
+    (cd "$root" && "$radar" check) &
+    radar_pid=$!
+
+    watchdog_pid=""
+    if [ -n "$marker" ]; then
+      # Redirected: a watchdog holding git's stderr keeps the push waiting even after
+      # radar has already answered.
+      { sleep "$gate_timeout"
+        kill -TERM "$radar_pid" 2>/dev/null && printf 'expired' > "$marker"
+      } >/dev/null 2>&1 &
+      watchdog_pid=$!
+    fi
+
+    wait "$radar_pid"
+    status=$?
+
+    if [ -n "$watchdog_pid" ]; then
+      kill -TERM "$watchdog_pid" >/dev/null 2>&1
+      wait "$watchdog_pid" >/dev/null 2>&1
+    fi
+
+    if [ -n "$marker" ]; then
+      [ -s "$marker" ] && expired="yes"
+      rm -f "$marker"
+    fi
+
+    if [ -n "$expired" ]; then
+      printf 'radar: la validación excedió %ss, se omite. El push sigue.\n' "$gate_timeout" >&2
+    elif [ "$status" -ne 0 ]; then
+      printf '\n'
+      printf 'radar: el plan no valida. El push se detuvo.\n' >&2
+      printf '       Corregí openspec/plan.yaml y volvé a intentar.\n' >&2
+      printf '       Para saltear esta validación una vez: git push --no-verify\n' >&2
+      exit 1
+    fi
+  fi
+fi
+
+# ── 2. The report — this one NEVER blocks ────────────────────────────────────
+# A report is not a gate; a stale report labels itself stale.
 [ -f "$root/radiografia.json" ] || exit 0
 command -v bun >/dev/null 2>&1 || exit 0
 
