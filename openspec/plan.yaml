@@ -6656,6 +6656,12 @@ sesiones:
     ruta:
       propuesta: design-tasks
       autoridad: "El producto está decidido —tres tipos, dos verificables, migración por Zona con exigencia al final— pero falta descubrimiento técnico acotado: la forma exacta de cada tipo en el esquema y cómo se prueba una cita a una decisión numerada dentro del registro archivado. Eso es diseño de contrato, no de comportamiento."
+      revalidacion:
+        resultado: design-tasks
+        base: 4f4e2925befd92f7939b8459915499f5196909f3
+        evidencia: "El descubrimiento encontró dos copias byte-idénticas del registro con md5 541a4eda, ninguna declarada autoridad por AGENTS.md, y dos formatos de escritura de decisiones más rangos. Las dos preguntas quedaron resueltas antes del primer Módulo."
+    entrega:
+      commit: f138e1b3f79c0428ea0493789b81b2d6005ddfb1
     modulos:
       - id: M112.1
         resultado: "El esquema admite los tres tipos y radar los valida sin exigirlos todavía"
