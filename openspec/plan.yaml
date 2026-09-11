@@ -6707,6 +6707,10 @@ sesiones:
     ruta:
       propuesta: direct
       autoridad: "El tipo de cita ya existe y está entregado en S112; esto lo repite en una lista y reporta cuál falló. No queda ninguna elección de diseño abierta: la decisión de producto está tomada y el canon §18 cierra la alternativa."
+      revalidacion:
+        resultado: direct
+        base: 8e42897bf4b7c4b0a3c12fd9cd88b21ada7d6cb0
+        evidencia: "Autoridad y validarAutoridad abiertos en el árbol: plan.go:141-181 declara el struct y su UnmarshalYAML de escalar o mapa, check.go:891-925 verifica una cita sola. Ningún archivo fuera de plan.go, check.go y authority_test.go lee Tipo, Ref, ID, Loc, Tipada ni Declarada, así que el radio del cambio es exactamente el Área declarada y no queda decisión de diseño abierta."
     modulos:
       - id: M116.1
         resultado: "Autoridad admite varias citas y cada una se verifica por separado"
