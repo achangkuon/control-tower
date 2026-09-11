@@ -44,4 +44,4 @@ Return verified sources, plan state, safe capacity, conflict edges, excluded ass
 
 ## References
 
-- `../../profiles/tower/support.md`
+- `../../profiles/support.md`

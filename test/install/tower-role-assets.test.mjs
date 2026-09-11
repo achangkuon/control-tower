@@ -10,7 +10,7 @@ const PROFILE_FRONTMATTER_KEYS = ["name", "role", "permanent", "skill", "capabil
 const SKILL_FRONTMATTER_KEYS = ["name", "description", "license", "metadata"]
 const SKILL_SECTIONS = ["Activation Contract", "Hard Rules", "Decision Gates", "Execution Steps", "Output Contract", "References"]
 const ASSET_CONTRACTS = {
-  "profiles/tower/main.md": {
+  "product/tower/profiles/main.md": {
     kind: "profile",
     frontmatter: {
       name: "main",
@@ -21,7 +21,7 @@ const ASSET_CONTRACTS = {
     },
     body: ["## Identity", "Coordinates mandatory Tower topology and confirmed work as the sole dispatcher.", "", "## Authority", "Dispatches approved assignments after live topology readback.", "", "## Boundaries", "Does not host Support or worker panes and does not execute implementation work assigned to other roles."].join("\n"),
   },
-  "profiles/tower/support.md": {
+  "product/tower/profiles/support.md": {
     kind: "profile",
     frontmatter: {
       name: "support",
@@ -32,7 +32,7 @@ const ASSET_CONTRACTS = {
     },
     body: ["## Identity", "Provides read-only planning and capacity support to Main.", "", "## Authority", "Advises Main without dispatching or executing assignments.", "", "## Boundaries", "Does not write files, run commands, or dispatch work."].join("\n"),
   },
-  "profiles/tower/implementer.md": {
+  "product/tower/profiles/implementer.md": {
     kind: "profile",
     frontmatter: {
       name: "implementer",
@@ -43,7 +43,7 @@ const ASSET_CONTRACTS = {
     },
     body: ["## Identity", "Executes approved scope and returns implementation evidence.", "", "## Authority", "May use approved execution capabilities within the assigned scope.", "", "## Boundaries", "Has no dispatch authority and does not expand approved scope."].join("\n"),
   },
-  "skills/torre-control/SKILL.md": {
+  "product/tower/skills/torre-control/SKILL.md": {
     kind: "skill",
     frontmatter: {
       name: "torre-control",
@@ -51,7 +51,7 @@ const ASSET_CONTRACTS = {
       license: "Apache-2.0",
       metadata: { author: "gentleman-programming", version: "1.0" },
     },
-    references: ["../../profiles/tower/main.md", "../torre-control-soporte/SKILL.md", "../torre-control-entregas/SKILL.md"],
+    references: ["../../profiles/main.md", "../torre-control-soporte/SKILL.md", "../torre-control-entregas/SKILL.md"],
     // The seat topology moved out of this prose into `hosts/herdr-topology.mjs`, so these markers no
     // longer freeze the sentences that described it. They pin the two things prose still owns: that the
     // skill routes every seating action to the enforcing command, and the rules that have no code yet.
@@ -73,7 +73,7 @@ const ASSET_CONTRACTS = {
     ],
     fixtureText: "Never invoke `herdr` to seat a worker. Always `torre asiento`: it owns the topology in code (`hosts/herdr-topology.mjs`), works with Tower OFF or ON, and fails closed where prose is forgotten. A hand-written `herdr pane split` is drift. `abrir <asiento>` — opens the pane inside `AGENTES` split `right`, verifies tab and both cwd values by readback, closes what it opened on mismatch, and refuses Main, Support and occupied seats. `limpiar` — previews disposal; `--confirmar` removes only seats proven clean, merged and free. Herdr tabs are visibility, never Git isolation. `MAIN → SUPPORT → AGENTES`. Permanent pool: `implementer-1`, `implementer-2`, `implementer-3`, plus `support-agent`; any other worktree is temporary and must be disposed once its work lands. A correct brief never overrides intrinsic bindings; message transport is no fallback and grants no authority. Never silently `cd`, recycle, reuse, move, close or reconcile a pane or seat, and `--confirmar` is maintainer-authorized. Main alone dispatches; Support advises; workers never self-assign. Engram is evidence, never authority. Enforce bindings with Tower OFF or ON, and never activate Tower. `S9.5` automates this rule from the same module. Tower is OFF (`ACTIVE` absent) or Tower is ON and authority matches; keep implementation outside Main, route through `chanks-3-session-kickoff`, and report pending approval. ",
   },
-  "skills/torre-control-entregas/SKILL.md": {
+  "product/tower/skills/torre-control-entregas/SKILL.md": {
     kind: "skill",
     frontmatter: {
       name: "torre-control-entregas",
@@ -81,7 +81,7 @@ const ASSET_CONTRACTS = {
       license: "Apache-2.0",
       metadata: { author: "gentleman-programming", version: "2.0" },
     },
-    references: ["../../AGENTS.md", "../../profiles/tower/main.md", "../torre-control/SKILL.md"],
+    references: ["../../../../AGENTS.md", "../../profiles/main.md", "../torre-control/SKILL.md"],
     markers: [
       /Main is the sole delivery-token issuer, queue coordinator, and target-branch mover/,
       /Keep exactly one active token/,
@@ -92,7 +92,7 @@ const ASSET_CONTRACTS = {
     ],
     fixtureText: "Main is the sole delivery-token issuer, queue coordinator, and target-branch mover. Keep exactly one active token. Bind it to assignment, worker, worktree, source branch, candidate commit and tree, target branch, and policy revision. Unknown, missing, or contradictory policy fails closed. When Another candidate owns the token, Wait; never grant, steal, or duplicate it. Release the token only after the observed result matches its frozen binding. ",
   },
-  "skills/torre-control-soporte/SKILL.md": {
+  "product/tower/skills/torre-control-soporte/SKILL.md": {
     kind: "skill",
     frontmatter: {
       name: "torre-control-soporte",
@@ -100,7 +100,7 @@ const ASSET_CONTRACTS = {
       license: "Apache-2.0",
       metadata: { author: "gentleman-programming", version: "1.0" },
     },
-    references: ["../../profiles/tower/support.md"],
+    references: ["../../profiles/support.md"],
     markers: [/read-only/, /capacity/, /conflicts/, /exact brief/, /never dispatch/i, /Never (?:write|reserve|commit|deliver|mutate)/i],
     fixtureText: "Remain read-only while checking capacity and conflicts. Return an exact brief to Main; never dispatch and Never write, reserve, commit, deliver, or mutate. ",
   },
@@ -231,13 +231,22 @@ describe("Tower role asset author-time contracts", () => {
     await validateAssets(repoRoot)
   })
 
+  test("resolves the delivery policy reference from its product source path", () => {
+    const skillPath = "product/tower/skills/torre-control-entregas/SKILL.md"
+    const reference = ASSET_CONTRACTS[skillPath].references[0]
+    const target = resolve(dirname(join(repoRoot, skillPath)), reference)
+
+    expect(target).toBe(join(repoRoot, "AGENTS.md"))
+    expect(lstatSync(target).isFile()).toBe(true)
+  })
+
   test("rejects missing or extra profiles and skills", async () => {
     for (const path of [PROFILE_PATHS[0], SKILL_PATHS[0]]) {
       const missingRoot = fixture()
       rmSync(join(missingRoot, path))
       await expect(validateAssets(missingRoot)).rejects.toThrow("CT_TOWER_ROLE_ASSET_MANIFEST_DRIFT")
     }
-    for (const path of ["profiles/tower/planner.md", `${dirname(SKILL_PATHS[0])}/extra.md`]) {
+    for (const path of ["product/tower/profiles/planner.md", `${dirname(SKILL_PATHS[0])}/extra.md`]) {
       const extraRoot = fixture()
       writeFileSync(join(extraRoot, path), "forbidden\n")
       await expect(validateAssets(extraRoot)).rejects.toThrow("CT_TOWER_ROLE_ASSET_MANIFEST_DRIFT")

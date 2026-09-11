@@ -58,6 +58,6 @@ Return Tower mode, the seat table, tab/pane bindings, Support evidence, dispatch
 
 ## References
 
-- `../../profiles/tower/main.md`
+- `../../profiles/main.md`
 - `../torre-control-soporte/SKILL.md`
 - `../torre-control-entregas/SKILL.md`

@@ -47,6 +47,6 @@ Return policy resolution, queue order, token state and complete binding, `worker
 
 ## References
 
-- `../../AGENTS.md`
-- `../../profiles/tower/main.md`
+- `../../../../AGENTS.md`
+- `../../profiles/main.md`
 - `../torre-control/SKILL.md`
