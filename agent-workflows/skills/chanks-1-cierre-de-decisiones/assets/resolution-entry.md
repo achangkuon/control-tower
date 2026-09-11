@@ -1,6 +1,6 @@
 # Delta de resolución
 
-Usá este shape para enviar una resolución a Support:
+Usá este shape para devolver una resolución al responsible parent:
 
 ```yaml
 operacion: replace

@@ -17,7 +17,7 @@ Activa para particionar un producto existente en Zonas disjuntas y Cimientos com
 - Una Zona se define por superficies que modifica, no por carpetas, capas o afinidad temática.
 - Toda ruta exacta modificada por más de una Zona es Cimiento.
 - Probá cobertura y disjunción con `radar check` contra `git ls-files`.
-- No escribas el plan: enviá a Support un delta confirmado con precondición.
+- No escribas el plan: devolvé al responsible parent un delta confirmado con precondición.
 
 ## Decision Gates
 
@@ -35,7 +35,7 @@ Activa para particionar un producto existente en Zonas disjuntas y Cimientos com
 2. Aplicá la ubicación y matriz de cruces compartida.
 3. Proponé Zonas, Cimientos y dependencias.
 4. Construí un delta con ubicación, valor anterior esperado y valor nuevo.
-5. Pedí aprobación humana y enviá el delta a Support para `radar check` y `radar render`.
+5. Pedí aprobación humana y devolvé el delta al responsible parent para que registre evidencia y ejecute `radar check`/`radar render`.
 
 ## Output Contract
 

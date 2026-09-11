@@ -99,20 +99,20 @@ class InstallerTests(unittest.TestCase):
                     route, gate = line.strip(b" -.").split(b" enters at ")
                     entries[route.strip(b"`")] = gate.strip(b"`")
             self.assertEqual(entries, expected_entries, path)
-            self.assertIn(b"`verify` and post-delivery `archive` are common", block, path)
+            self.assertIn(b"`verify`, review, and post-delivery `archive` are common and mandatory", block, path)
             self.assertNotIn(b"`session-plan`", block, path)
             self.assertNotIn(b"`blocked` is a route", block, path)
 
     def test_installed_session_routing_uses_contamination_aware_blocking(self):
         INSTALLER.apply(self.home, ROOT)
         expected = (
-            b"Always-escalate decisions never become derivable. Block the Sesi\xc3\xb3n only when "
+            b"Always-escalate decisions never become derivable. A Sesi\xc3\xb3n BLOCKS only when "
             b"authority or evidence is missing or contradictory, or contamination reaches "
             b"acceptance criteria, the first M\xc3\xb3dulo, or another Sesi\xc3\xb3n. "
             b"Later-M\xc3\xb3dulo contamination parks that M\xc3\xb3dulo while approved earlier "
             b"work continues."
         )
-        blanket_stop = b"Stop before SDD when an unresolved decision belongs to an always-escalate class."
+        blanket_stop = b"Stop every Sesi\xc3\xb3n when an unresolved decision belongs to an always-escalate class."
         paths = INSTALLER.manual_paths(self.home)
         self.assertEqual(len(paths), 4)
         for path in paths:
@@ -454,32 +454,51 @@ class InstallerTests(unittest.TestCase):
         hard_rules = content.split("## Hard Rules", 1)[1].split("## Decision Gates", 1)[0]
         execution = content.split("## Execution Steps", 1)[1].split("## Output Contract", 1)[0]
 
-        self.assertIn("código real del Área", hard_rules)
-        self.assertIn("tres rutas canónicas", hard_rules)
-        self.assertIn("contrastá la propuesta una vez", execution)
-        for term in ("`ruta.revalidacion`", "resultado", "base Git", "evidencia", "razón si cambia"):
+        self.assertIn("scoped code in the Área", hard_rules)
+        self.assertIn("three canonical routes", hard_rules)
+        self.assertIn("compare the proposal once", execution)
+        for term in ("`ruta.revalidacion`", "result", "Git base", "evidence", "reason when it changes"):
             self.assertIn(term, execution)
 
 
-    def test_successful_install_preserves_customized_retired_skill_bytes(self):
+    def test_all_tower_skills_are_archived_without_installing_candidates(self):
+        tower_skills = (
+            "torre-control",
+            "torre-control-soporte",
+            "torre-control-entregas",
+        )
+        self.assertTrue(set(tower_skills).issubset(INSTALLER.RETIRED_SKILLS))
+        self.assertTrue(set(tower_skills).isdisjoint(INSTALLER.SKILLS))
+        self.assertTrue(
+            set(tower_skills).isdisjoint(skill for skill, _, _ in INSTALLER.source_files(ROOT))
+        )
+
         runtime_root = INSTALLER.runtime_skill_roots(self.home)[0]
-        retired = runtime_root / INSTALLER.RETIRED_SKILLS[0]
-        (retired / "references").mkdir(parents=True)
-        skill_payload = b"# locally customized retired skill\n"
-        nested_payload = b"local reference\n"
-        (retired / "SKILL.md").write_bytes(skill_payload)
-        (retired / "references/local.md").write_bytes(nested_payload)
+        expected_payloads = {}
+        for skill in tower_skills:
+            retired = runtime_root / skill
+            (retired / "references").mkdir(parents=True)
+            skill_payload = f"# customized {skill}\n".encode()
+            nested_payload = f"reference for {skill}\n".encode()
+            (retired / "SKILL.md").write_bytes(skill_payload)
+            (retired / "references/local.md").write_bytes(nested_payload)
+            expected_payloads[skill] = (skill_payload, nested_payload)
 
         INSTALLER.apply(self.home, ROOT)
 
-        self.assertFalse(retired.exists())
-        archived = INSTALLER.retired_skill_archive_root(runtime_root)
-        preserved = sorted(archived.rglob("SKILL.md"))
-        self.assertEqual(len(preserved), 1)
-        self.assertEqual(preserved[0].read_bytes(), skill_payload)
-        self.assertEqual(
-            (preserved[0].parent / "references/local.md").read_bytes(), nested_payload
-        )
+        archive = INSTALLER.retired_skill_archive_root(runtime_root)
+        for skill, (skill_payload, nested_payload) in expected_payloads.items():
+            self.assertFalse((runtime_root / skill).exists())
+            preserved = [
+                path for path in archive.rglob("SKILL.md") if path.read_bytes() == skill_payload
+            ]
+            self.assertEqual(len(preserved), 1)
+            self.assertEqual(
+                (preserved[0].parent / "references/local.md").read_bytes(), nested_payload
+            )
+
+        self.assertEqual(INSTALLER.apply(self.home, ROOT), [])
+        self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
 
     def test_retired_skill_archive_is_not_reported_as_drift(self):
         runtime_root = INSTALLER.runtime_skill_roots(self.home)[0]
@@ -491,20 +510,25 @@ class InstallerTests(unittest.TestCase):
 
         self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
 
-    def test_kickoff_requires_live_acquisition_for_exclusive_resource(self):
+    def test_kickoff_requires_confirmed_exclusive_or_serial_resource_evidence(self):
         content = (ROOT / "skills/chanks-3-session-kickoff/SKILL.md").read_text(encoding="utf-8")
         execution = content.split("## Execution Steps", 1)[1].split("## Output Contract", 1)[0]
 
         self.assertIn("Recurso", execution)
-        self.assertIn("liberá", execution)
+        self.assertIn("confirmed exclusive or serial execution evidence", execution)
+        self.assertIn("release only actual resources", execution)
+        self.assertNotIn("MAIN", content)
+        self.assertNotIn("Tower", content)
 
-    def test_implementation_assignment_requires_resource_meter_and_release(self):
+    def test_routing_preserves_resource_evidence_without_a_fictitious_lock(self):
         content = (
-            ROOT / "skills/chanks-0-agente-soporte/assets/assignment-implementation.md"
+            ROOT / "templates/session-routing.md"
         ).read_text(encoding="utf-8")
 
         self.assertIn("Recurso", content)
-        self.assertIn("release", content)
+        self.assertIn("confirmed exclusive or serial execution evidence", content)
+        self.assertIn("release only actual resources", content)
+        self.assertNotIn("fictitious", content)
 
     def test_hyphenated_retired_skill_is_actually_retired(self):
         # Listed only under the underscore spelling, it matched no directory on disk.

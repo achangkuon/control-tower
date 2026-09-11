@@ -1,10 +1,12 @@
 # Agent Workflows
 
-Version-controlled source of truth for the generic user-owned skill family:
-session workflow routing, planning, support, closure, delivery policy, and shared
-resource coordination. Product-specific Control Tower skills live in the Control
-Tower repository. Gentle AI owns SDD phase skills and orchestrator surfaces; this
-package does not replace, edit, invoke, or regenerate those managed assets.
+Version-controlled source of truth for the generic user-owned builder: human-directed
+parent/subagent workflow routing, planning evidence, closure evidence, delivery policy, and
+shared-path risk. The active builder does not require roles, seats, dispatch, tokens, queues,
+or an external coordination API. The original Control Tower candidate flow is frozen
+byte-for-byte under `product/tower/generic/`; it is product history, not active builder policy.
+Gentle AI owns SDD phase skills and orchestrator surfaces; this package does not replace, edit,
+invoke, or regenerate those managed assets.
 
 These skills do **not** ship with Gentle AI. The `author: gentleman-programming`
 frontmatter on several of them is a `skill-creator` template default, not
@@ -135,12 +137,13 @@ deletes, so it overlays the owned convention and leaves the Gentle AI files for
 `gentle-ai sync` to manage. Do not add the managed files here — a frozen copy
 would silently defeat their upstream updates.
 
-### Project-owned Tower coordination
+### Frozen product flow and current builder
 
-Installing this package never installs a Control Tower operator or delivery
-coordinator. Generic skills may consume a Tower authority registered by the active
-project, but remain usable without one. Tower ON/OFF routing and operator topology
-belong to that project's canonical repository.
+The installer/setup description below remains existing installation evidence and is not rewritten
+by this migration. The active skill source is the generic builder described above. Any Control
+Tower-specific choreography belongs only in the frozen product snapshot under
+`product/tower/generic/` or in its own product repository; it is not a generic dependency.
+Global synchronization and fresh-session verification remain outstanding after source changes.
 
 ## Installation
 

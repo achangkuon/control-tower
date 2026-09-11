@@ -34,7 +34,7 @@ Activa para entender qué existe, qué es real o simulado y dónde falla un prod
 2. Trazá flujos, datos y capas con citas exactas.
 3. Clasificá real/mock, reglas, fallas y superficies modificadas.
 4. Si aplica, cargá `../chanks-1-heredado/references/ubicacion-y-cruces.md`.
-5. Entregá hallazgos y delta candidato a Support cuando corresponda.
+5. Entregá hallazgos y el delta candidato al responsible parent cuando corresponda.
 
 ## Output Contract
 

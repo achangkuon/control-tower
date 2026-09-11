@@ -16,7 +16,7 @@ Construí una matriz `ruta exacta → Zonas que la modifican`.
 | Resultado | Tratamiento |
 |---|---|
 | Una Zona modifica la ruta | La ruta pertenece a esa Zona. |
-| Más de una Zona modifica la ruta | La ruta es Cimiento y requiere reserva viva al ejecutar. |
+| Más de una Zona modifica la ruta | La ruta es Cimiento; reportá el conflicto y dejá la coordinación a una decisión humana. |
 | El resultado puede dividirse sin perder valor | Cortá por Zona y declarà dependencias. |
 | Dividir destruye el resultado | Proponé una Zona nueva con autoridad humana. |
 | El mismo cruce reaparece | Revisá la partición; no agregues excepciones sucesivas. |

@@ -1,6 +1,6 @@
 # Plan Naming Convention (shared across all agents and projects)
 
-**Status**: canonical. Zone model approved 2026-09-01, replacing the multi-plan model of 2026-07-29.
+**Status**: canonical builder source. This local builder is not a statement that global installed copies are updated. The frozen Control Tower product flow is preserved separately under `product/tower/generic/`.
 
 This file is the SINGLE source of truth for how work is decomposed, how it is distributed
 across parallel agents, and how a roadmap is written. Where any skill, project file, or
@@ -10,7 +10,7 @@ Applies to Claude, opencode, codex, and pi, in every project.
 
 **What changed and why**: the previous model cut work by *delivery size* (what fits in one
 PR) and bolted on a hand-written `Área` afterwards to keep agents from colliding. Nothing
-validated that field, the roadmap grew one row per Plan while a single global queue jumped
+validated that field, the roadmap grew one row per Plan while a single global ordering jumped
 between plans unreadably, and a single fact — "did S2.3 close?" — was transcribed by hand
 into six documents (ten, in `control-tower`). Work is now cut by *place*, state is computed
 rather than written, and the roadmap is generated.
@@ -140,24 +140,24 @@ never touched this file?* If yes, it is also a cimiento.
 - Any agent may declare the Cimientos its own Sesión requires.
 - The plan records each reservation as an exact file path.
 - Only one agent may edit a reserved file at a time. Cimientos do **not** authorize concurrent writes.
-- `plan check` validates declarations and `plan status` forecasts a compatible deterministic set;
+- `radar check` validates declarations and `radar status` forecasts a compatible deterministic set;
   neither command acquires a live lock or knows whether another agent already holds the file.
-- The later Tower runtime, coordinated by MAIN, authoritatively acquires and releases reservations,
-  records owner identity, prevents stale simultaneous starts, and recovers stale or interrupted claims.
+- This builder neither grants nor simulates acquisition. A shared-path conflict remains evidence
+  for a human-directed parent to resolve before concurrent mutation.
 
 `zona: cimientos` is valid when a Sesión's primary result consists only of Cimientos. This is
 an execution domicile, not permanent ownership: exclusivity remains per exact file, so two
 such Sesiones may run together only when their reservations are disjoint.
 
 Treating all Cimientos as one coarse lock would idle every other agent behind a one-line
-manifest change. Per-file reservation constrains only the exact file in dispute once the Tower
-acquires it, while MAIN keeps delivery ordered.
+manifest change. Per-file reservation identifies only the exact file in dispute; it never claims
+that a live lock exists or orders delivery.
 
 ## 5. Work vocabulary — three terms that do not overlap
 
 | Term | Meaning |
 |------|---------|
-| **Jornada** | One workday. Support prepares its brief once per Jornada. |
+| **Jornada** | One workday. A read-only helper may prepare evidence for the responsible parent. |
 | **Conversación** | One human-agent interaction: open the terminal, work together, close it. |
 | **Sesión** | The plan's work unit. It closes with a delivered commit. |
 
@@ -216,8 +216,8 @@ A Sesión's identifier is flat and sequential across the whole product: `S23`, `
   may point to the same archived original. Before an original is archived, every successor and
   every affected dependency edge must be registered: an active Sesión may not depend on an
   archived original that has successors, and must name the applicable replacement Sesión(s).
-- **It is not a reading order.** Humans read the roadmap by Zona and position (§10). The
-  identifier is a name, not a place in a queue.
+- **It is not a reading order.** Humans read the roadmap by Zona and declared position (§10). The
+  identifier is a name, not an instruction to dispatch work.
 
 ## 9. Status — closed set of seven, computed not written
 
@@ -253,7 +253,7 @@ or reconciles it by hand. It starts with a clear generated/do-not-edit notice an
    explicit trustworthy ordering source the view MUST NOT claim a “last” close. It is derived
    and rewritten in full, never appended. Dated history belongs in Git and PRs.
 2. **Current status and next executable work**, followed by open Sesiones grouped by Zona and
-   their deterministic queues. Position comes first so work cannot hide behind a percentage.
+   their deterministic declared ordering. Position comes first so work cannot hide behind a percentage.
 3. **Avance** — completed Sesiones / enumerated Sesiones, total and per Zona (§11).
 4. **Blockers and route evidence** — planning proposal plus implementation revalidation.
 5. **Módulo/Tarea detail** needed to execute and review the enumerated work.
@@ -267,9 +267,9 @@ publication if HEAD changes, resolves the output inside the plan repository (can
 temporary file, atomic rename and parent-directory sync. Repeated runs over the same plan and
 Git evidence converge byte for byte.
 
-One column per Zona, `#1 #2 #3` inside it. **Within a Zona the order is the order**, because
-dependencies are mostly local. The disorder of a single global queue came from mixing Zonas
-that have nothing to do with each other.
+One column per Zona, `#1 #2 #3` inside it. **Within a Zona the declared order is evidence**,
+because dependencies are mostly local. A single global ordering mixes Zonas that have nothing
+to do with each other.
 
 ## 11. Progress percentage
 
@@ -294,7 +294,7 @@ Derived, never authored. Recompute from Sesión states.
 | `Área` | **Derived from the Zona.** Never hand-written. |
 | `Cimientos` | The exact shared files this Sesión will reserve, or `—`. |
 | `Reemplaza` | Archived Sesión IDs superseded by this result, as a list; `—` if none. |
-| `Recurso` | Shared non-file resources it claims: DB mode, delivery token. `—` if none. |
+| `Recurso` | Shared non-file resource identity, such as DB mode. `—` if none. |
 | `Decisiones` | The decision points it is expected to hit, each derivable or escalating (§14). |
 
 `Área` was the previous model's only collision guard and its weakest link: hand-written
@@ -308,7 +308,7 @@ never "mostly", "with warnings", or "pending follow-up".
 
 ```markdown
 **Criterios de aceptación** — todos deben pasar para cerrar:
-- [ ] Two enrolled projects keep identity and Tower state isolated
+- [ ] Two declared projects keep planning evidence isolated
 - [ ] An unsafe existing layout fails closed and mutates nothing
 - [ ] The diff touches no path outside the Zona, except reserved Cimientos
 ```
@@ -335,28 +335,17 @@ Two Sesiones may run concurrently when all three hold:
    Sesiones may coexist when their exact reservations are disjoint.
 3. **Disjoint `Recurso`** and no conflicting Cimientos reservation.
 
-**Available implementation seats = a deterministic compatible forecast of Zonas with ready
-work.** The first ready Sesión in each Zona queue is considered in stable Zona order; a candidate
-whose exact Cimientos or exact exclusive `Recurso` identities intersect an earlier candidate is
-not offered concurrently. This is not a live claim.
+**Available capacity = a deterministic compatible forecast of Zonas with ready work.** The first
+ready Sesión in each Zona order is considered in stable Zona order; a candidate whose exact
+Cimientos or exclusive `Recurso` identities intersect an earlier candidate is not offered as
+compatible. This is a forecast, never a live lock, claim, assignment, or queue.
 
-Capacity also includes **planning seats**: a Zona may need planning work even when it has no ready
-implementation Sesión. This correction recognizes both seat purposes only. The combined
-calculation, live acquisition runtime, and planning-horizon behavior are defined elsewhere and
-remain outside this canon change.
+A Zona may also have planning work even without a ready implementation Sesión. The human decides
+how much concurrent work to supervise after reviewing scope, risks, and conflicts. The builder
+never raises that limit, dispatches work, or invents work to fill it.
 
-The human sets a **ceiling** — how many agents they want to supervise across implementation and
-planning work. For implementation, the current forecast opens `min(Zonas con trabajo listo,
-techo)`. The ceiling is a human decision that changes when the human wants; computed capacity
-changes with the plan. When eligible work exceeds the ceiling, the orchestrator proposes raising
-it. It never raises it alone, and it never batches work to fill seats — that is cutting work to
-fit the furniture.
-
-**Agents are assigned to Zonas, and take Sesiones from their Zona's queue.** Assigning an
-agent to a theme, an app, or a layer leaves cross-cutting results with no owner.
-
-Worktrees remove the *editing* collision, not the *merge* collision. The partition is what
-prevents that.
+Worktrees remove the *editing* collision, not the *merge* collision. The partition identifies
+risk; real Git contamination and human approval determine whether work can proceed.
 
 ## 14. Deferrable planning — declare the decisions, not only the work
 
@@ -482,7 +471,7 @@ The route is recorded at two moments in one structure; a single ambiguous route 
 
 Both values use the same closed three-route set. **The implementation-time revalidation wins.**
 When it differs from the proposal, it also records a mandatory reason. `chanks-3-session-kickoff` performs
-this revalidation once and sends the exact delta to Support; it does not create a second dispatcher.
+this revalidation once and returns the exact delta to the responsible parent; it does not select or dispatch work.
 A changed Git base invalidates the old revalidation instead of silently reusing it.
 
 ## 16. Proportional output
@@ -492,7 +481,7 @@ three-Sesión single-Zona product it produces ceremony nobody reads.
 
 | Shape | Required | May be omitted |
 |---|---|---|
-| One Zona, ≤ 3 Sesiones, linear | Sesión fields, binary criteria, the queue | Per-Zona capacity, `%` (write `3 S, cadena lineal`) |
+| One Zona, ≤ 3 Sesiones, linear | Sesión fields, binary criteria, declared ordering | Per-Zona capacity, `%` (write `3 S, cadena lineal`) |
 | Two or more Zonas, or any parallelism | Everything in this document | — |
 
 Omission is a **declared choice** written on the plan, never a silent skip. The Sesión
@@ -507,8 +496,8 @@ that will be overwritten, and doing it less reliably.
 |---|---|
 | Every Sesión's `Estado` | Cutting the product into Zonas |
 | `%` and its fraction | Whether a decision is derivable or escalates, and its class |
-| The queue inside each Zona | The binary acceptance criteria |
-| Available seats | Semantic contamination between Sesiones |
+| Declared ordering inside each Zona | The binary acceptance criteria |
+| Static compatible capacity | Semantic contamination between Sesiones |
 | `Área`, from the Zona | |
 | Partition validity: disjoint, exhaustive, paths real | |
 | Declared Cimientos reservations and static scheduling conflicts | |
@@ -544,7 +533,7 @@ into Zonas, and historical planning prose contributes nothing to that partition.
 
 | Never | Why |
 |---|---|
-| Import closed Sesiones as plan rows | They declare no Zona, enter no queue, hold no seat, and consume review budget forever |
+| Import closed Sesiones as plan rows | They declare no Zona, enter no active order, and consume review budget forever |
 | Extend the tool to accept the legacy shape | The schema is the contract. Data the schema rejects belongs in the archive, not in a compatibility branch |
 | Hand-edit the generated roadmap while adopting | §10 has no adoption exception |
 
@@ -552,16 +541,12 @@ The partition rule that is most expensive to learn twice: **if more than one Zon
 the same file, that file is Cimientos**, regardless of which directory contains it. Grouping
 by directory name fails predictably on entrypoints, CLI vocabulary and skill definitions.
 
-### Control Tower is the exception, not the template
+### Historical exception — Control Tower
 
-Control Tower was migrated before this section existed, under a full-fidelity policy: all 72
-enumerated legacy Sesiones imported with cryptographic provenance, plus a provenance-gated
-compatibility contract added to the tool. That work is completed on its own terms rather than
-reworked, because its remaining modules are proof and activation, which cost the same under
-either policy.
-
-Do not read Control Tower's plan as a worked example of adoption. Its shape is historical.
-Every other repository, starting with Servi-Task-U, adopts the model by the four steps above.
+The previous Control Tower flow was migrated before this section existed under a full-fidelity
+policy. Its candidate design is frozen byte-for-byte under `product/tower/generic/`; it is
+historical product evidence, not an operative dependency or adoption template. Every other
+repository adopts this builder through the four steps above.
 
 ## 19. Chanks skill naming inventory
 
@@ -594,7 +579,7 @@ Only what the tool cannot check. Everything else is enforced, not remembered.
 - [ ] Crossings followed the order: Cimientos → split by Zona → new Zona; recurring crossings reopened the partition
 - [ ] No plan field estimates time or uses time to define a level
 - [ ] Jornada, Conversación and Sesión are used with the distinct meanings in §5
-- [ ] No agent wrote a status, a `%`, a queue position, or an `Área`
+- [ ] No agent wrote a status, a `%`, an undeclared priority, or an `Área`
 - [ ] A Sesión that outgrew one PR was split into Sesiones, not renamed
 - [ ] Every Sesión carries `Zona`, `Depende de`, `Cimientos`, `Reemplaza`, `Recurso` and `Decisiones`
 - [ ] Every Sesión carries binary acceptance criteria, authored before the work started

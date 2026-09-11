@@ -1,44 +1,46 @@
 ---
 name: chanks-3-session-kickoff
-description: "Trigger: start session, continue session, resume session. Recibe brief y asiento, verifica llegada y revalida la ruta sin elegir trabajo."
+description: "Trigger: start session, continue session, resume session. Revalidate an approved Sesión in the current repository and branch without selecting work."
 license: Apache-2.0
 metadata:
   author: emili
-  version: "4.0"
+  version: "5.0"
 ---
 
 ## Activation Contract
 
-Activa dentro del worktree cuando el ejecutor recibe un brief aprobado con asiento, rama, runtime, alcance y dependencias.
+Activate after a human-approved Sesión handoff. Work in the user-approved current repository and
+branch; do not require a named seat, a peer role, or an external runtime.
 
 ## Hard Rules
 
-- Recibí la Sesión; nunca selecciones trabajo ni busques la primera lista.
-- Ejecutá exactamente cuatro pasos de llegada y detenete ante una precondición fallida.
-- Revalidá sólo abriendo el código real del Área y usando las tres rutas canónicas.
-- No escribas el plan ni invoques elaboración técnica adicional.
-- El pronóstico de `radar` no adquiere Cimientos; una reserva viva pertenece a MAIN/Tower.
+- Receive the named Sesión; never select work or search for the first ready item.
+- Perform the four arrival steps and stop on a failed precondition.
+- Revalidate only by opening the real scoped code in the Área and using the three canonical routes.
+- Do not write plan data, create a live lock, or invoke an external coordination API.
+- Preserve Git contamination as evidence. The responsible parent and human choose whether it is acceptable, isolated, or blocking.
 
 ## Decision Gates
 
-| Evidencia al abrir el Área | Resultado |
+| Evidence in the scoped code | Result |
 |---|---|
-| Contrato y ejecución determinados | `direct` |
-| Falta diseño técnico acotado | `design-tasks` |
-| Falta diseño de comportamiento o contrato compartido | `full-sdd` |
-| No hay autoridad o la evidencia se contradice | Reportar estado no ejecutable; no inventar ruta. |
+| Contract and execution determined | `direct` |
+| Bounded technical design missing | `design-tasks` |
+| Behavior or shared contract needs design | `full-sdd` |
+| Authority/evidence missing or contradictory | Return non-executable evidence; do not invent a route. |
 
 ## Execution Steps
 
-1. **Verificar terreno:** confirmá repositorio, `HEAD`, rama esperada y árbol limpio contra el brief y el asiento.
-2. **Revalidar ruta:** abrí el código real del Área, cargá `../chanks-2-planificador-granular/references/juicio-de-ruta.md` y contrastá la propuesta una vez.
-3. **Enviar delta:** construí `ruta.revalidacion` con resultado, base Git, evidencia y razón si cambia; enviá el delta a Support.
-4. **Pedir medidor:** si la Sesión reserva Cimientos **o declara un `Recurso` exclusivo** —modo de base de datos, token de entrega—, pedí a MAIN/Tower adquisición viva antes de editar; si no aplica, declaralo.
-5. **Liberar:** liberá cada adquisición al terminar la Sesión, también cuando falle o se bloquee, y reportá la evidencia de liberación.
+1. **Verify terrain:** confirm the current repository, `HEAD`, current branch, and worktree state against the approved handoff. Report Git contamination exactly; do not clean or hide it.
+2. **Revalidate route:** open the scoped code in the Área, load `../chanks-2-planificador-granular/references/juicio-de-ruta.md`, and compare the proposal once.
+3. **Return delta:** build `ruta.revalidacion` with result, Git base, evidence, and a reason when it changes; return it to the responsible parent.
+4. **Surface shared-path risk:** for a declared `Recurso`, require confirmed exclusive or serial execution evidence before mutation. A forecast is not a live lock; never invent an acquisition. release only actual resources that this work demonstrably acquired, and return that release evidence to the responsible parent.
 
 ## Output Contract
 
-Devuelve brief recibido, asiento/rama/runtime, `HEAD`, limpieza, ruta propuesta y revalidada, evidencia, delta enviado, y estado del medidor con la evidencia de adquisición y liberación de Cimientos y `Recurso`.
+Return approved handoff, current repository and branch evidence, `HEAD`, exact Git contamination,
+proposed/revalidated route, evidence, route delta, shared-path risk, human choice required for
+scope/risks, and the evidence for the responsible parent.
 
 ## References
 

@@ -15,7 +15,7 @@ Activa cuando hay que convertir una intención en alcance aprobado, Zonas y auto
 
 - Enrutá; no fusiones variantes ni produzcas sus artefactos.
 - Conservá decisiones humanas, evidencia y límites de alcance.
-- Enviá todo cambio del dato de planificación como delta confirmado a Support; no escribas el plan.
+- Devolvé todo cambio del dato de planificación como delta confirmado al responsible parent; no escribas el plan.
 - No avances a planificación sin aprobación humana del alcance.
 
 ## Decision Gates
@@ -33,7 +33,7 @@ Activa cuando hay que convertir una intención en alcance aprobado, Zonas y auto
 1. Identificá cuál entrada nominal describe el pedido sin reinterpretarlo.
 2. Cargá sólo la skill correspondiente.
 3. Conservá su resultado y presentá el alcance para aprobación humana.
-4. Con aprobación, entregá el alcance a `chanks-2-planificador-granular` o el delta aplicable a Support.
+4. Con aprobación, entregá el alcance a `chanks-2-planificador-granular` o devolvé el delta aplicable al responsible parent.
 
 ## Output Contract
 

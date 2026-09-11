@@ -1,6 +1,6 @@
 ---
 name: chanks-1-cierre-de-decisiones
-description: "Trigger: decisiones abiertas, cerrar decisiones, decision sweep. Presenta resoluciones humanas y envía un delta acotado a Support."
+description: "Trigger: decisiones abiertas, cerrar decisiones, decision sweep. Presenta resoluciones humanas y returns a bounded delta to the responsible parent."
 license: Apache-2.0
 metadata:
   author: achangkuon
@@ -17,7 +17,7 @@ Activa cuando el maintainer quiere resolver decisiones abiertas de Sesiones enum
 - Presentá una pregunta humana por vez, con consecuencias reales y una recomendación.
 - No respondas por el maintainer ni amplíes el alcance de una resolución.
 - No escribas plan, estado, porcentajes, registro ni vista.
-- Convertí resoluciones en un delta con precondición y envialo a Support.
+- Convertí resoluciones en un delta con precondición y devolvelo al responsible parent.
 - Una resolución no garantiza ejecución: el estado se recalcula desde todos sus datos.
 
 ## Decision Gates
@@ -36,8 +36,8 @@ Activa cuando el maintainer quiere resolver decisiones abiertas de Sesiones enum
 2. Auditá el conjunto y declarà el alcance exacto del conteo.
 3. Ordená por impacto y presentá una pregunta por vez.
 4. Formateá cada respuesta según `assets/resolution-entry.md`.
-5. Construí un delta con valor anterior esperado y resolución nueva; envialo a Support.
-6. Pedí evidencia de `radar check` y `radar render`; reportá decisiones, dependencias y residuos por separado.
+5. Construí un delta con valor anterior esperado y resolución nueva; devolvelo al responsible parent.
+6. Pedí evidencia de `radar check` y `radar render` después de que el parent registre la confirmación; reportá decisiones, dependencias y residuos por separado.
 
 ## Output Contract
 

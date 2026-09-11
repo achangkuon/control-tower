@@ -74,6 +74,8 @@ RETIRED_SKILLS = (
     "architecture-audit",
     "project-kickoff",
     "big-files-remediation-loop",
+    "torre-control",
+    "torre-control-soporte",
     "torre-control-entregas",
 )
 

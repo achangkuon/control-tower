@@ -17,7 +17,7 @@ Activa para agregar o cambiar capacidad de producto en un repositorio vivo con a
 - Separá modificación de producto, deuda técnica y diagnóstico.
 - No cambies tecnología ni partición territorial por conveniencia de implementación.
 - Cargá `chanks-1-prd` de forma independiente; no reinicies el arranque de proyecto.
-- Enviá cambios del dato de planificación como delta a Support; no escribas el plan.
+- Devolvé cambios del dato de planificación como delta al responsible parent; no escribas el plan.
 
 ## Decision Gates
 
@@ -34,7 +34,7 @@ Activa para agregar o cambiar capacidad de producto en un repositorio vivo con a
 2. Delimitá resultado, usuario, reglas, no-objetivos e impacto por Zona.
 3. Ejecutá `chanks-1-prd` sólo para la actualización afectada.
 4. Obtené aprobación humana del delta de producto.
-5. Enviá el alcance aprobado a `chanks-2-planificador-granular` y cualquier delta a Support.
+5. Enviá el alcance aprobado a `chanks-2-planificador-granular` y devolvé cualquier delta al responsible parent.
 
 ## Output Contract
 
