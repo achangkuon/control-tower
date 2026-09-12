@@ -5503,3 +5503,57 @@ evidence lives here.
 
 `S0.4`'s implementation contract is complete: C01–C09 closed, delivery authorized and verified.
 Rollback after delivery is one conventional revert of the complete activation contract.
+
+## Documentary task-disposition reconciliation
+
+### Completed disposition
+
+- [x] T0.4.5.2 is recorded as **superseded, not performed**. Its checkbox closes only that obsolete direct-step disposition; M0.4.5A is its recorded replacement. No old candidate assembly is claimed.
+
+### Deferred parent lifecycle facts
+
+The four parent-owned rows remain byte-for-byte unchanged and unchecked. No post-apply review, verify, archive, parent authorization, revert decision, commit, push, branch deletion, Tower activation, or product work ran here.
+
+- The C01/C02–C09 review remains the upcoming verify; it was not performed.
+- The historical human approvals for S100/S101 and the frozen C09 candidate are unknown/not reconstructible from this reconciliation. The current approval authorizes this documentary update only and is not represented as a historical signature.
+- No C09 failure was evaluated here; the conditional revert decision is therefore not applicable, not completed.
+
+### Verification and boundary
+
+- `git diff --check` — PASS.
+- `git diff --numstat -- openspec/changes/migrate-control-tower-plan-zones/tasks.md openspec/changes/migrate-control-tower-plan-zones/apply-progress.md` — documentary delta remains within the user-approved 100-line boundary.
+- `gentle-ai sdd-status migrate-control-tower-plan-zones` — `applyState: ready`; `verify: blocked`; `archive: blocked`; 45/49 checked after this disposition.
+- Strict TDD: N/A. No executable code changed; no RED/GREEN/TRIANGULATE/REFACTOR evidence was invented.
+
+### Remaining exact unchecked rows
+
+- [ ] Conduct the bounded post-apply review for C01 before allowing migration data, then independently inspect C02–C08 and the C09 frozen tree/OID evidence against this task plan. <!-- sdd-owner: parent -->
+- [ ] Separately plan and approve S100's and S101's complete Session contracts (route, acceptance criteria, decisions, Modules, Tasks) before T0.4.5A.10 (D2) appends them; horizon selection alone grants no readiness. <!-- sdd-owner: parent -->
+- [ ] Obtain explicit maintainer authorization for the exact frozen C09 candidate before `git push origin HEAD:master`; no PR, branch PR, or chained PR is permitted. <!-- sdd-owner: parent -->
+- [ ] If post-delivery evidence identifies a C09 contract failure, decide on the documented single conventional revert rather than authorizing a partial repair. <!-- sdd-owner: parent -->
+
+### Structured status consumed
+
+- `gentle-ai.sdd-status@2`; OpenSpec; repo-local `/home/emili/projects/control-tower/Main`; allowed root honored; no action-context warnings.
+- Runtime attempt authority remains exclusively in the native provider ledger; no attempt state is recorded here.
+
+## Parent actions moved to a disposition ledger (2026-09-12)
+
+This supersedes the "Remaining exact unchecked rows" list above, which recorded the state at that reconciliation.
+
+### Why
+
+- The native `gentle-ai` 2.7.0 binary contains no `sdd-owner`, `deferredParentActions`, or `taskArtifactErrors` handling. Its `taskProgress` counts every checkbox, so the four parent rows kept `verify` and `archive` blocked at 45/49.
+- Only gentle-pi's status engine (`lib/sdd-status.ts`) separates `parent` rows, and gentle-pi itself treats that marker as a legacy form (`assets/agents/sdd-apply.md`).
+- A checkbox has two states. P3 (authorization not reconstructible) and P4 (conditional, never triggered) cannot honestly be checked.
+
+### What changed
+
+- `tasks.md` "Parent lifecycle actions" now lists P1–P4 as plain entries with their original wording and a real disposition: P1 pending, P2 approval recorded with ordering not reconstructed, P3 delivered with authorization not reconstructible, P4 not applicable.
+- No action is marked as performed, no historical approval is signed, and no implementation row changed.
+- Maintainer approval: the format change was approved on 2026-09-12. The maintainer chose not to report the engine mismatch upstream.
+
+### Carried into verify
+
+- P1 is an open obligation for the formal `sdd-verify` of this change.
+- P3 and P4 must appear in the verify report as recorded evidence limits, not as passes.

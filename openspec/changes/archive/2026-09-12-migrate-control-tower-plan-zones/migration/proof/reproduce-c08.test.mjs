@@ -4,7 +4,7 @@ import { execFileSync } from "node:child_process"
 import { join } from "node:path"
 
 const workspace = process.cwd()
-const script = join(workspace, "openspec/changes/migrate-control-tower-plan-zones/migration/proof/reproduce-c08.sh")
+const script = join(import.meta.dir, "reproduce-c08.sh")
 const scratch = []
 
 const temp = () => {

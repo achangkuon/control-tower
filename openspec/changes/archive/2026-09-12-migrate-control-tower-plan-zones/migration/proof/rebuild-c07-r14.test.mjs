@@ -5,7 +5,7 @@ import { createHash } from "node:crypto"
 import { join } from "node:path"
 
 const workspace = process.cwd()
-const script = join(workspace, "openspec/changes/migrate-control-tower-plan-zones/migration/proof/rebuild-c07-r14.sh")
+const script = join(import.meta.dir, "rebuild-c07-r14.sh")
 const scratch = []
 
 const temp = () => {
