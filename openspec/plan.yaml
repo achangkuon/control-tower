@@ -7202,6 +7202,40 @@ sesiones:
             resultado: "REFACTOR: la skill es alcanzable desde la ruta padre y la partición es su dueña."
             criterios: ["Los markers existentes de `torre-control` siguen pasando sin cambios.", "`radar check` reporta 0 huérfanos, 0 solapes y 0 reglas sin uso.", "La suite completa pasa."]
 
+  - id: S120
+    zona: metodo
+    resultado: "Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo."
+    autoridad: "Aprobación explícita de Emilio el 2026-09-12: «SI es correcto, esto es justo lo qeu necesitabamos. Lo apruebo, porfa hagamos la planficiacion para pasar a implementar». Alcance aprobado: reutilizar implementación general y controles de verificación SDD con antecedentes del plan, sin duplicar planificación ni activar globalmente antes de probar. Engram #10839, sdd/proportional-routes-approved-planning."
+    depende_de: []
+    cimientos: []
+    recurso: []
+    criterios:
+      - "El contrato identifica una revisión inmutable del plan, la Sesión, su ruta aprobada, límites, decisiones, tareas y criterios binarios; no crea otra fuente editable de planificación."
+      - "El diseño distingue capacidades reutilizables existentes de adaptaciones necesarias, con archivos y contratos observados; no presenta la entrada externa como una configuración ya soportada."
+      - "Direct y design-tasks reciben antecedentes del plan mediante una entrada explícita; el contrato prohíbe fabricar documentos SDD, fingir fases completadas o evadir el dispatcher."
+      - "La ruta media completa únicamente diseño técnico y tareas faltantes, sin cambiar objetivo, límites ni criterios aprobados."
+      - "La verificación relaciona cada criterio con evidencia observable y conserva los controles aplicables de SDD; una suite verde con un criterio incumplido no puede producir aprobación."
+      - "El diseño declara pruebas positivas y negativas para revisión del plan cambiada, criterios omitidos, evidencia faltante o contradictoria y resultado no verificable; ninguno habilita cierre aprobatorio."
+      - "Full-sdd conserva implementación, verificación y cierre nativos; el diseño diferencia consolidación de especificaciones e historial SDD de actualizar el avance en plan.yaml."
+      - "La matriz de viabilidad identifica por cada capacidad su soporte actual, adaptación requerida y prueba aislada pendiente; termina con una propuesta implementable sustentada o una incompatibilidad explícita, nunca con una afirmación de ejecución no realizada."
+      - "El resultado enumera las superficies del método afectadas, dependencias externas, criterios de la prueba aislada y condiciones de activación posterior, sin modificar paquetes externos, instalar componentes ni cambiar instrucciones globales."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Direct y design-tasks reemplazan la verificación de cumplimiento por comprobaciones técnicas generales?"
+        resolucion: "No. Reutilizan el implementador general existente y requieren una entrada desde el plan a los controles de verificación semántica; full-sdd mantiene el recorrido nativo."
+        autoridad: "Aprobación explícita de Emilio el 2026-09-12; Engram #10839."
+        clase: contrato-visible
+        falsificador: "Una ruta puede aprobarse sólo porque sus comandos pasan, sin evidencia de cumplimiento de cada criterio aprobado."
+        descartadas:
+          - opcion: "Usar sólo el verificador general de comandos para direct y design-tasks."
+            razon: "No conserva la comprobación de cumplimiento de producto que el maintainer aprobó."
+          - opcion: "Forzar documentos SDD previos en las tres rutas."
+            razon: "Reintroduce la preparación duplicada y el choque que motivaron el cambio."
+    ruta:
+      propuesta: full-sdd
+      autoridad: "La nueva entrada de antecedentes y la reutilización de verificación definen un contrato compartido todavía no resuelto. Esta ruta se propone para diseñar S120, no obliga a usar full-sdd en las futuras Sesiones direct o design-tasks. No se inicia SDD al registrar el plan."
+    modulos: []
+
 references:
   future_successors:
     - id: S102
