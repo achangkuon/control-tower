@@ -12,10 +12,12 @@
 - cimientos #1 → S1.20 — Probe tipado y read-only del modo Tower
 - Contratos #1 → S100 — Contrato de schema de delivery-policy, incluido planning.prepare&#95;through fail-closed
 - Enrolamiento #1 → S2.9 — Enrollment público canónico por CLI
-- Hosts #1 → S4.12 — Recuperación mínima de Pi
+- Hosts #1 → S118 — Una operación de la Torre se reconoce a simple vista dentro de una sesión Pi: emoji, nombre y color propios en los cuatro estados observables.
+- Instalación #1 → S117 — Los tres registros de instalación dejan de forzar ediciones cross-Zona: sus datos enumerados salen del test a un módulo propio declarado como Cimiento exacto.
+- Método #2 → S120 — Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
 
 ## Avance
-- **Total:** 67% (56/83 S)
+- **Total:** 64% (56/87 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -26,11 +28,11 @@
 - **Contratos:** 0% (0/2 S)
 - **Enrolamiento:** 0% (0/1 S)
 - **Entrega:** 0% (0/1 S)
-- **Hosts:** 28% (2/7 S)
-- **Instalación:** 0% (0/2 S)
+- **Hosts:** 25% (2/8 S)
+- **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 80% (4/5 S)
-- **Producto Torre:** — (sin Sesiones enumeradas)
+- **Método:** 66% (4/6 S)
+- **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
 ###  ()
@@ -66,23 +68,26 @@
 1. **S7.1** · 📋 PLANIFICADO · Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral en un HOME/runtime aislado, preservando OpenCode como conformidad diferida.
 
 ### Hosts (hosts)
-1. **S4.12** · 🟢 LISTO · Recuperación mínima de Pi
-2. **S4.4** · 🟢 LISTO · Recuperación lógica same-host con raíz sucesora
-3. **S9.7** · 📋 PLANIFICADO · Route padre registrado y triggers públicos exactos
-4. **S9.8** · 📋 PLANIFICADO · Dispatch fire-and-forget y cierre asíncrono
+1. **S118** · 🟢 LISTO · Una operación de la Torre se reconoce a simple vista dentro de una sesión Pi: emoji, nombre y color propios en los cuatro estados observables.
+2. **S4.12** · 🟢 LISTO · Recuperación mínima de Pi
+3. **S4.4** · 🟢 LISTO · Recuperación lógica same-host con raíz sucesora
+4. **S9.7** · 📋 PLANIFICADO · Route padre registrado y triggers públicos exactos
+5. **S9.8** · 📋 PLANIFICADO · Dispatch fire-and-forget y cierre asíncrono
 
 ### Instalación (instalacion)
-1. **S8.12** · 📋 PLANIFICADO · Packaging del bundle Tower: una membresía versionada contiene exactamente los bytes Tower-owned locales y no instala, activa, reescribe configuración global ni ejecuta rollback.
-2. **S8.13** · 📋 PLANIFICADO · Instalador, preflight, activación y rollback del bundle Tower ejercitados sólo en un HOME/runtime aislado
+1. **S117** · 🟢 LISTO · Los tres registros de instalación dejan de forzar ediciones cross-Zona: sus datos enumerados salen del test a un módulo propio declarado como Cimiento exacto.
+2. **S8.12** · 📋 PLANIFICADO · Packaging del bundle Tower: una membresía versionada contiene exactamente los bytes Tower-owned locales y no instala, activa, reescribe configuración global ni ejecuta rollback.
+3. **S8.13** · 📋 PLANIFICADO · Instalador, preflight, activación y rollback del bundle Tower ejercitados sólo en un HOME/runtime aislado
 
 ### Jornada (jornada)
 - Sin Sesiones abiertas.
 
 ### Método (metodo)
 1. **S115** · 📋 PLANIFICADO · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
+2. **S120** · 🟢 LISTO · Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
 
 ### Producto Torre (producto-torre)
-- Sin Sesiones abiertas.
+1. **S119** · 📋 PLANIFICADO · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
 
 ## Bloqueos
 - **S1.19:** Which exact test files will own the Pi-first integration regression?
@@ -124,6 +129,10 @@
 - **S114:** propuesta direct (El contrato del campo lo fija S112 y la estrategia de migración está decidida; lo que queda es trabajo mecánico sobre un dato, con un criterio de cierre binario —cero Sesiones sin tipo— y ninguna elección de diseño abierta.); pendiente de revalidación en kickoff.
 - **S115:** propuesta direct (El contrato ya existe por S112 y el dato ya está migrado por S114; encender la exigencia es un cambio acotado con un criterio binario verificable en una sola corrida de radar check.); pendiente de revalidación en kickoff.
 - **S113:** propuesta direct (Las dos reglas están escritas en el canon, la infraestructura de evidencia y ancestría ya existe, y la única elección restante —cuándo medir— es derivable del contrato de HEAD inmutable que la propia herramienta ya aplica.); revalidada design-tasks sobre 271a32a63a0f6ae554a2690448535bbc6ead7692 con evidencia Las 6 Sesiones archivadas del plan vigente —S4.9, S5.14, S5.15, S9.3, S9.4, S9.5— no tienen ninguna evidencia de entrega. Cuatro están reemplazadas desde references.future&#95;successors (S102 a S108) y dos, S4.9 y S9.4, se retienen como evidencia histórica sin entrega ni reemplazo: la autoridad de S9.4 lo dice textual.; razón: La ruta propuesta daba por sentado que archivar implica haber entregado, y el árbol real prueba que hay tres caminos de archivo, no uno. Decidir cuál de los tres debe declararse y cuál puede inferirse es diseño de contrato, no implementación mecánica: el criterio propuesto habría marcado las 6 archivadas del plan vigente, dos de ellas legítimas..
+- **S117:** propuesta direct (Tres extracciones mecánicas sin decisión de diseño abierta: el dato a mover ya está delimitado en cada archivo, la forma destino la fija el precedente &#96;&lt;generated:runtime-payload&gt;&#96; ya entregado, y el mecanismo de partición está cubierto por tests.); pendiente de revalidación en kickoff.
+- **S118:** propuesta direct (El mecanismo, la implementación de referencia y los archivos quedaron fijados por Audit D; no hay diseño sin resolver. &#96;chanks-3-session-kickoff&#96; la revalida una vez contra el código de la Zona.); pendiente de revalidación en kickoff.
+- **S119:** propuesta direct (Dos archivos conocidos con contrato declarado y ninguna pregunta de diseño abierta: el texto de la skill lo fija el patch preservado y la forma del registro la fijan las entradas que ya viven en él. La única elección abierta —la Zona— la cerró el maintainer el 2026-09-11.); pendiente de revalidación en kickoff.
+- **S120:** propuesta full-sdd (La nueva entrada de antecedentes y la reutilización de verificación definen un contrato compartido todavía no resuelto. Esta ruta se propone para diseñar S120, no obliga a usar full-sdd en las futuras Sesiones direct o design-tasks. No se inicia SDD al registrar el plan.); pendiente de revalidación en kickoff.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -2915,8 +2924,128 @@ Rutas: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go
 - **T113.2.3:** REFACTOR: dejar el tope ausente resolviendo a una política declarada y no a un número escondido en el código. → REFACTOR: un plan sin tope declarado se comporta de forma explícita y los tests siguen pasando.
   - [ ] REFACTOR: un plan sin tope declarado se comporta de forma explícita y los tests siguen pasando.
 
+### S117 — Los tres registros de instalación dejan de forzar ediciones cross-Zona: sus datos enumerados salen del test a un módulo propio declarado como Cimiento exacto.
+- Estado derivado: 🟢 LISTO
+- Zona/Área: instalacion · install/, test/install/
+- Depende de: —
+- Cimientos: test/install/tower-role-assets.contract.mjs
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] Cada uno de los tres registros queda partido en dos: un &#96;&#42;.contract.mjs&#96; con sólo el dato enumerado, y el &#96;&#42;.test.mjs&#96; original con sólo la lógica, que lo importa.
+  - [ ] Cada valor extraído es idéntico byte a byte al que reemplazó. Falsificador: cualquier diferencia entre el literal viejo y el export nuevo, más allá del formato, falla este criterio.
+  - [ ] La suite completa pasa antes y después de cada Módulo, sin debilitar, quitar ni condicionar ninguna aserción para acomodar la partición.
+  - [ ] &#96;radar check&#96; no reporta huérfanos, solapes ni reglas sin uso con las tres rutas &#96;&#42;.contract.mjs&#96; declaradas en &#96;cimientos.rutas&#96;.
+  - [ ] &#96;owners()&#96; resuelve cada &#96;&#42;.contract.mjs&#96; nuevo a &#96;cimientos&#96; solo, no a &#96;cimientos + instalacion&#96;. Falsificador: dos dueños significan que el recorte exacto no se aplicó y la partición sí solapa.
+  - [ ] Ningún archivo cambia de directorio. Falsificador: cualquier ruta fuera de &#96;test/install/&#96; en el diff significa que no se usó el recorte y la Zona instalacion perdió territorio que debía conservar.
+  - [ ] &#96;install/runtime-payload.mjs&#96; queda intacto: su lista es generada y editarlo sería alcance que la auditoría excluyó explícitamente.
+
+#### M117.1 — Registro payload-closure extraído y declarado
+Rutas: test/install/payload-closure.contract.mjs, test/install/payload-closure.test.mjs
+
+- **T117.1.1:** Mover el conjunto de entrypoints esperados fuera de &#96;test/install/payload-closure.test.mjs&#96; a un &#96;payload-closure.contract.mjs&#96; nuevo que lo exporta, y hacer que el test lo importe. → El dato vive en su propio módulo y el test lo lee.
+  - [ ] &#96;bun test test/install/payload-closure.test.mjs&#96; pasa y el test ya no contiene el literal enumerado.
+- **T117.1.2:** Verificar que el traslado no cambió ningún valor ni ninguna expectativa. → Evidencia de que la partición movió bytes y no cambió expectativas.
+  - [ ] El diff del test muestra sólo la sustitución del literal por el import.
+  - [ ] La suite completa pasa.
+- **T117.1.3:** Declarar &#96;test/install/payload-closure.contract.mjs&#96; en &#96;cimientos.rutas&#96; y correr &#96;radar check&#96;. → La partición es dueña del dato extraído.
+  - [ ] &#96;radar check&#96; reporta 0 huérfanos, 0 solapes y 0 reglas sin uso.
+  - [ ] &#96;owners()&#96; resuelve la ruta a &#96;cimientos&#96; solo.
+
+#### M117.2 — Registro tower-role-assets extraído y declarado
+Rutas: test/install/tower-role-assets.contract.mjs, test/install/tower-role-assets.test.mjs
+
+- **T117.2.1:** Mover &#96;ASSET&#95;CONTRACTS&#96; —frontmatter esperado, referencias y markers— a un &#96;tower-role-assets.contract.mjs&#96; nuevo, dejando la lógica de verificación en el test. → El dato sale del test; la lógica se queda.
+  - [ ] &#96;bun test test/install/tower-role-assets.test.mjs&#96; pasa y el test ya no contiene la tabla de datos.
+- **T117.2.2:** Verificar que ningún marker ni valor esperado cambió al moverse. → Evidencia de que ninguna expectativa viajó con el dato.
+  - [ ] Cada marker del módulo nuevo es idéntico al que estaba en el test.
+  - [ ] La suite completa pasa.
+- **T117.2.3:** Declarar &#96;test/install/tower-role-assets.contract.mjs&#96; en &#96;cimientos.rutas&#96; y correr &#96;radar check&#96;. → La partición es dueña del registro que más ediciones cross-Zona forzaba.
+  - [ ] &#96;radar check&#96; reporta 0 huérfanos, 0 solapes y 0 reglas sin uso.
+  - [ ] &#96;owners()&#96; resuelve la ruta a &#96;cimientos&#96; solo.
+
+#### M117.3 — Registro runtime-payload extraído y declarado
+Rutas: test/install/runtime-payload.contract.mjs, test/install/runtime-payload.test.mjs
+
+- **T117.3.1:** Mover el dato enumerado de &#96;test/install/runtime-payload.test.mjs&#96; a un &#96;runtime-payload.contract.mjs&#96; nuevo, sin tocar &#96;install/runtime-payload.mjs&#96;. → El tercer registro queda extraído y el módulo generado sigue intacto.
+  - [ ] &#96;bun test test/install/runtime-payload.test.mjs&#96; pasa.
+  - [ ] &#96;install/runtime-payload.mjs&#96; no aparece en el diff.
+- **T117.3.2:** Declarar &#96;test/install/runtime-payload.contract.mjs&#96; en &#96;cimientos.rutas&#96; y correr &#96;radar check&#96; sobre los tres registros juntos. → Los tres registros dejan de forzar ediciones cross-Zona.
+  - [ ] &#96;radar check&#96; reporta 0 huérfanos, 0 solapes y 0 reglas sin uso.
+  - [ ] La suite completa pasa.
+  - [ ] Los tres &#96;&#42;.contract.mjs&#96; resuelven a &#96;cimientos&#96; solo.
+
+### S118 — Una operación de la Torre se reconoce a simple vista dentro de una sesión Pi: emoji, nombre y color propios en los cuatro estados observables.
+- Estado derivado: 🟢 LISTO
+- Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs, scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs
+- Depende de: —
+- Cimientos: —
+- Recursos: superficie de render de la extensión Pi y el contrato de capacidades de extensions/pi/package.json
+- Criterios de aceptación:
+  - [ ] Las filas de las tools de la Torre renderizan emoji, nombre y color en los cuatro estados observables: preparando, corriendo, completado y fallido.
+  - [ ] &#96;torre&#96; se expone como UN tool con subcomando enumerado. Falsificador: el catálogo expone más de un tool para el vocabulario de &#96;bin/torre&#96;.
+  - [ ] &#96;extensions/pi/package.json&#96; declara las capacidades de render nuevas y conserva un único inventario de transforms; no quedan listas paralelas.
+  - [ ] El badge consume tokens de tema ya existentes. Falsificador: se declara un token nuevo, que falla cerrado contra el schema de Pi.
+  - [ ] El diff toca sólo &#96;extensions/pi/&#42;&#42;&#96; y &#96;test/extensions/pi/&#42;&#42;&#96;.
+  - [ ] Ninguna mutación de Pi core, &#96;pi-intercom&#96;, skills genéricas de Gentle AI, &#96;adapters/pi/&#42;&#42;&#96;, &#96;mcp.mjs&#96;, &#96;bin/torre&#96;, &#96;hosts/&#42;&#42;&#96; ni &#96;install/&#42;&#42;&#96;: esta Sesión presenta, no redefine router de input, enrolamiento, autoridad ni transporte.
+
+#### M118.1 — Renderer del badge y contrato de capacidades
+Rutas: extensions/pi/package.json, test/extensions/pi/tower-session-router.test.mjs
+
+- **T118.1.1:** RED: escribir el test que afirma emoji, nombre y color de la Torre en los cuatro estados observables, y un único tool &#96;torre&#96; con subcomando enumerado. → RED: el test falla nombrando los estados sin badge y el catálogo sin subcomando.
+  - [ ] RED: existe un test que falla contra el árbol actual y nombra los cuatro estados.
+- **T118.1.2:** GREEN: declarar las capacidades de render en &#96;extensions/pi/package.json&#96; y emitir el badge consumiendo tokens de tema existentes. → GREEN: los cuatro estados renderizan el badge y el catálogo expone un solo tool.
+  - [ ] GREEN: el test de T118.1.1 pasa sin debilitar ninguna aserción.
+  - [ ] No se declara ningún token de tema nuevo.
+- **T118.1.3:** REFACTOR: dejar un único inventario de transforms en el package, sin listas paralelas, y la suite en verde. → REFACTOR: el inventario es uno solo y los tests siguen pasando.
+  - [ ] REFACTOR: no quedan listas paralelas de transforms.
+  - [ ] La suite completa pasa.
+
+### S119 — La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
+- Estado derivado: 📋 PLANIFICADO
+- Zona/Área: producto-torre · product/tower/
+- Depende de: S117
+- Cimientos: product/tower/skills/torre-control/SKILL.md, test/install/tower-role-assets.contract.mjs
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] &#96;product/tower/skills/herdr/SKILL.md&#96; existe y reproduce textualmente el párrafo de activación del patch preservado: Herdr activa sólo ante un pedido explícito de Herdr, y despacho de la Torre, decisiones ON/OFF, selección de topología y ciclo de vida de asiento enrutan por &#96;torre-control&#96; → &#96;torre asiento&#96;.
+  - [ ] La skill lleva las cuatro claves de frontmatter que exige &#96;SKILL&#95;FRONTMATTER&#95;KEYS&#96; (name, description, license, metadata) y las seis secciones que exige &#96;SKILL&#95;SECTIONS&#96;.
+  - [ ] El registro de assets declara la skill con markers que fijan las dos oraciones de propiedad de la Torre y las dos de aprobación humana del patch preservado, y la suite completa pasa.
+  - [ ] La skill no documenta ninguna mecánica de la CLI de Herdr que &#96;herdr --skill&#96; ya emite. Falsificador: cualquier flag, timeout o código de error documentado en ambos archivos es un duplicado y falla este criterio.
+  - [ ] &#96;radar check&#96; reporta 0 huérfanos, 0 solapes y 0 reglas sin uso con &#96;product/tower/skills/herdr/SKILL.md&#96; declarada en &#96;cimientos.rutas&#96;.
+  - [ ] &#96;product/tower/skills/torre-control/SKILL.md&#96; gana una referencia a la skill nueva y sus markers existentes siguen pasando sin cambios.
+
+#### M119.1 — La skill, declarada y con compuerta
+Rutas: product/tower/skills/herdr/SKILL.md, product/tower/skills/torre-control/SKILL.md, test/install/tower-role-assets.contract.mjs
+
+- **T119.1.1:** RED: agregar la entrada de &#96;product/tower/skills/herdr/SKILL.md&#96; al registro de assets con su frontmatter, referencias y markers, y ver fallar la suite porque el archivo no existe. → RED: un test que falla nombrando la skill ausente.
+  - [ ] RED: la suite de assets falla y el fallo nombra &#96;product/tower/skills/herdr/SKILL.md&#96;.
+- **T119.1.2:** GREEN: escribir la skill con las seis secciones exigidas, cargando el párrafo de activación y las dos reglas de aprobación humana del patch preservado, y difiriendo toda acción de asiento a &#96;torre asiento&#96;. → GREEN: la skill existe y la compuerta del registro pasa.
+  - [ ] GREEN: la suite de assets pasa.
+  - [ ] Cada marker declarado en T119.1.1 matchea, sin debilitar ninguno para hacerla pasar.
+- **T119.1.3:** REFACTOR: referenciar la skill nueva desde &#96;product/tower/skills/torre-control/SKILL.md&#96; y confirmar la reserva de &#96;product/tower/skills/herdr/SKILL.md&#96; en &#96;cimientos.rutas&#96;. → REFACTOR: la skill es alcanzable desde la ruta padre y la partición es su dueña.
+  - [ ] Los markers existentes de &#96;torre-control&#96; siguen pasando sin cambios.
+  - [ ] &#96;radar check&#96; reporta 0 huérfanos, 0 solapes y 0 reglas sin uso.
+  - [ ] La suite completa pasa.
+
+### S120 — Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
+- Estado derivado: 🟢 LISTO
+- Zona/Área: metodo · agent-workflows/
+- Depende de: —
+- Cimientos: —
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] El contrato identifica una revisión inmutable del plan, la Sesión, su ruta aprobada, límites, decisiones, tareas y criterios binarios; no crea otra fuente editable de planificación.
+  - [ ] El diseño distingue capacidades reutilizables existentes de adaptaciones necesarias, con archivos y contratos observados; no presenta la entrada externa como una configuración ya soportada.
+  - [ ] Direct y design-tasks reciben antecedentes del plan mediante una entrada explícita; el contrato prohíbe fabricar documentos SDD, fingir fases completadas o evadir el dispatcher.
+  - [ ] La ruta media completa únicamente diseño técnico y tareas faltantes, sin cambiar objetivo, límites ni criterios aprobados.
+  - [ ] La verificación relaciona cada criterio con evidencia observable y conserva los controles aplicables de SDD; una suite verde con un criterio incumplido no puede producir aprobación.
+  - [ ] El diseño declara pruebas positivas y negativas para revisión del plan cambiada, criterios omitidos, evidencia faltante o contradictoria y resultado no verificable; ninguno habilita cierre aprobatorio.
+  - [ ] Full-sdd conserva implementación, verificación y cierre nativos; el diseño diferencia consolidación de especificaciones e historial SDD de actualizar el avance en plan.yaml.
+  - [ ] La matriz de viabilidad identifica por cada capacidad su soporte actual, adaptación requerida y prueba aislada pendiente; termina con una propuesta implementable sustentada o una incompatibilidad explícita, nunca con una afirmación de ejecución no realizada.
+  - [ ] El resultado enumera las superficies del método afectadas, dependencias externas, criterios de la prueba aislada y condiciones de activación posterior, sin modificar paquetes externos, instalar componentes ni cambiar instrucciones globales.
+
 ## Capacidad
-6 Zona(s) compatibles con trabajo LISTO: asientos, autoridad, cimientos, contratos, enrolamiento, hosts.
+8 Zona(s) compatibles con trabajo LISTO: asientos, autoridad, cimientos, contratos, enrolamiento, hosts, instalacion, metodo.
 Este valor es un pronóstico estático. No adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
