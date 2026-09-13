@@ -4336,6 +4336,41 @@ export const locate = (cwd) => {
 
 export const isActive = ({ place }) => existsSync(join(place.root, "ACTIVE"))
 
+export const TOWER_MODE_RESULTS = Object.freeze(["ON", "OFF", "INDETERMINATE"])
+const [MODE_ON, MODE_OFF, MODE_INDETERMINATE] = TOWER_MODE_RESULTS
+const runtimeFile = (path) => {
+  try { return lstatSync(path).isFile() ? "FILE" : "INVALID" }
+  catch (error) {
+    if (error.code === "ENOENT") return "ABSENT"
+    throw error
+  }
+}
+
+// This intentionally bypasses `open`: it must classify an uninitialized Tower
+// without creating its directory, database, WAL sidecars, or legacy schema.
+export const probeMode = (cwd = process.cwd()) => {
+  try {
+    const { root } = locate(cwd)
+    const marker = runtimeFile(join(root, "ACTIVE"))
+    const dbPath = join(root, "tower.db")
+    const database = runtimeFile(dbPath)
+    if ([marker, database].includes("INVALID")) return MODE_INDETERMINATE
+    if (database === "ABSENT") return marker === "FILE" ? MODE_INDETERMINATE : MODE_OFF
+    // A filesystem read-only SQLite connection updates its shared-memory file.
+    // Deserialize the immutable main database bytes instead; a live WAL means
+    // the persisted state cannot be read coherently without touching that state.
+    if ([runtimeFile(`${dbPath}-wal`), runtimeFile(`${dbPath}-shm`)].some((state) => state !== "ABSENT")) return MODE_INDETERMINATE
+    const db = Database.deserialize(readFileSync(dbPath))
+    try {
+      const rows = db.query("SELECT mode FROM ct_continuation_state").all()
+      if (rows.length !== 1 || ![MODE_ON, MODE_OFF].includes(rows[0].mode)) return MODE_INDETERMINATE
+      return (marker === "FILE") === (rows[0].mode === MODE_ON) ? rows[0].mode : MODE_INDETERMINATE
+    } finally { db.close() }
+  } catch {
+    return MODE_INDETERMINATE
+  }
+}
+
 export const assertActive = (handle) => {
   if (!isActive(handle)) throw new Error(INACTIVE_ERROR)
 }

@@ -5,7 +5,7 @@
 import { afterEach, describe, expect, test } from "bun:test"
 import { Database } from "bun:sqlite"
 import { createHash, randomBytes, randomUUID } from "node:crypto"
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -1008,6 +1008,113 @@ const forgeMixedClaimAuthorityHistory = (fixture, operation) => {
   db.run(triggerSql)
   db.close()
 }
+
+const modeProbeFixture = () => {
+  const root = mkdtempSync(join(tmpdir(), "control-tower-mode-probe-")), main = join(root, "main")
+  temporaryDirectories.push(root)
+  mkdirSync(main)
+  git(main, ["init", "-q", "-b", "main"])
+  git(main, ["config", "user.email", "tower-test@example.invalid"])
+  git(main, ["config", "user.name", "Tower Test"])
+  git(main, ["commit", "-q", "--allow-empty", "-m", "initial"])
+  const runtime = tower.locate(main).root
+  return { main, runtime, dbPath: join(runtime, "tower.db") }
+}
+const pathWitness = (path) => {
+  try {
+    const stat = lstatSync(path, { bigint: true })
+    return { exists: true, bytes: stat.isFile() ? readFileSync(path).toString("hex") : null, mode: stat.mode, size: stat.size, mtimeNs: stat.mtimeNs }
+  } catch (error) {
+    if (error.code === "ENOENT") return { exists: false }
+    throw error
+  }
+}
+const runtimeWitness = (runtime) => ({
+  entries: existsSync(runtime) ? readdirSync(runtime).sort() : null,
+  paths: ["ACTIVE", "tower.db", "tower.db-wal", "tower.db-shm"].map((name) => [name, pathWitness(join(runtime, name))]),
+})
+const persistedMode = (fixture, mode, rows = 1) => {
+  mkdirSync(fixture.runtime, { recursive: true })
+  const db = new Database(fixture.dbPath)
+  db.run("CREATE TABLE ct_continuation_state(mode TEXT NOT NULL)")
+  for (let index = 0; index < rows; index++) db.run("INSERT INTO ct_continuation_state VALUES (?)", [mode])
+  db.close()
+}
+
+describe("tower mode probe", () => {
+  test("classifies coherent ON and OFF evidence without mutating runtime bytes or metadata", () => {
+    const on = modeProbeFixture()
+    persistedMode(on, "ON")
+    writeFileSync(join(on.runtime, "ACTIVE"), "active\n")
+    const onBefore = runtimeWitness(on.runtime)
+    expect(tower.probeMode(on.main)).toBe("ON")
+    expect(tower.probeMode(on.main, { observe: () => { throw new Error("process health must not run") } })).toBe("ON")
+    expect(runtimeWitness(on.runtime)).toEqual(onBefore)
+
+    const persistedOff = modeProbeFixture()
+    persistedMode(persistedOff, "OFF")
+    const persistedOffBefore = runtimeWitness(persistedOff.runtime)
+    expect(tower.probeMode(persistedOff.main)).toBe("OFF")
+    expect(runtimeWitness(persistedOff.runtime)).toEqual(persistedOffBefore)
+
+    const freshOff = modeProbeFixture()
+    const freshOffBefore = runtimeWitness(freshOff.runtime)
+    expect(tower.probeMode(freshOff.main)).toBe("OFF")
+    expect(runtimeWitness(freshOff.runtime)).toEqual(freshOffBefore)
+  })
+
+  test("preserves present WAL sidecars and exposes only the closed result vocabulary", () => {
+    const fixture = modeProbeFixture()
+    mkdirSync(fixture.runtime, { recursive: true })
+    const writer = new Database(fixture.dbPath)
+    writer.run("PRAGMA journal_mode = WAL")
+    writer.run("CREATE TABLE ct_continuation_state(mode TEXT NOT NULL)")
+    writer.run("INSERT INTO ct_continuation_state VALUES ('ON')")
+    writeFileSync(join(fixture.runtime, "ACTIVE"), "active\n")
+    const before = runtimeWitness(fixture.runtime)
+    expect(before.paths.find(([name]) => name === "tower.db-wal")[1].exists).toBe(true)
+    expect(tower.probeMode(fixture.main)).toBe("INDETERMINATE")
+    expect(runtimeWitness(fixture.runtime)).toEqual(before)
+    writer.close()
+    expect(tower.TOWER_MODE_RESULTS).toEqual(["ON", "OFF", "INDETERMINATE"])
+    expect(Object.isFrozen(tower.TOWER_MODE_RESULTS)).toBe(true)
+  })
+
+  test("fails closed for contradictory, rollback, malformed, and unreadable repository evidence", () => {
+    const markerWithoutDatabase = modeProbeFixture()
+    mkdirSync(markerWithoutDatabase.runtime, { recursive: true })
+    writeFileSync(join(markerWithoutDatabase.runtime, "ACTIVE"), "active\n")
+    const markerBefore = runtimeWitness(markerWithoutDatabase.runtime)
+    expect(tower.probeMode(markerWithoutDatabase.main)).toBe("INDETERMINATE")
+    expect(runtimeWitness(markerWithoutDatabase.runtime)).toEqual(markerBefore)
+
+    const malformedMarker = modeProbeFixture()
+    mkdirSync(join(malformedMarker.runtime, "ACTIVE"), { recursive: true })
+    const malformedMarkerBefore = runtimeWitness(malformedMarker.runtime)
+    expect(tower.probeMode(malformedMarker.main)).toBe("INDETERMINATE")
+    expect(runtimeWitness(malformedMarker.runtime)).toEqual(malformedMarkerBefore)
+
+    for (const { marker, mode, rows = 1 } of [
+      { marker: false, mode: "ON" }, { marker: true, mode: "OFF" }, { marker: true, mode: "ROLLING_BACK" },
+      { marker: false, mode: "OFF", rows: 0 }, { marker: false, mode: "OFF", rows: 2 }, { marker: false, mode: "UNKNOWN" },
+    ]) {
+      const fixture = modeProbeFixture()
+      persistedMode(fixture, mode, rows)
+      if (marker) writeFileSync(join(fixture.runtime, "ACTIVE"), "active\n")
+      const before = runtimeWitness(fixture.runtime)
+      expect(tower.probeMode(fixture.main)).toBe("INDETERMINATE")
+      expect(runtimeWitness(fixture.runtime)).toEqual(before)
+    }
+
+    const malformed = modeProbeFixture()
+    mkdirSync(malformed.runtime, { recursive: true })
+    writeFileSync(malformed.dbPath, "not a sqlite database\n")
+    const malformedBefore = runtimeWitness(malformed.runtime)
+    expect(tower.probeMode(malformed.main)).toBe("INDETERMINATE")
+    expect(runtimeWitness(malformed.runtime)).toEqual(malformedBefore)
+    expect(tower.probeMode(join(malformed.main, "not-a-repository"))).toBe("INDETERMINATE")
+  })
+})
 
 describe("Judgment Day Slice 5 confirmed corrections", () => {
   test("CT-JD-S5-001 ack rejects a retired claim token after same-root claimant rebind", () => {
