@@ -6334,6 +6334,12 @@ sesiones:
     ruta:
       propuesta: direct
       autoridad: "Maintainer decision, this session, 2026-09-06: the schema-level contract is fully specified, has no remaining open product decision, and needs no design phase."
+      revalidacion:
+        resultado: direct
+        base: 1043d5efae487c61ae9b3e4af33cddcfe85ad38b
+        evidencia: "S100 remained a binary schema-only change after rebasing onto current master; the only upstream delta changed AGENTS.md, while the implementation diff and verified bytes remained limited to the two declared M100.1 paths."
+    entrega:
+      commit: 1237075200d2df72927c3b166ade1ba61929cbd2
     modulos:
       - id: M100.1
         resultado: "The delivery-policy schema declares the closed prepare_through contract."

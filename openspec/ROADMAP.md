@@ -2,7 +2,7 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S10.1, S10.2, S10.3, S11.1, S110, S111, S112, S113, S116, S12.2, S12.8, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S12.2, S12.8, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Próximo trabajo ejecutable: Asientos #1 → S5.5 — Parking y retoma del loop.
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
@@ -10,14 +10,14 @@
 - Asientos #1 → S5.5 — Parking y retoma del loop
 - Autoridad #1 → S114 — Las 76 Sesiones del plan declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado.
 - cimientos #1 → S1.20 — Probe tipado y read-only del modo Tower
-- Contratos #1 → S100 — Contrato de schema de delivery-policy, incluido planning.prepare&#95;through fail-closed
+- Contratos #1 → S109 — Ventanilla única de plan: la Torre responde una asignación completa y Main deja de derivarla
 - Enrolamiento #1 → S2.9 — Enrollment público canónico por CLI
 - Hosts #1 → S118 — Una operación de la Torre se reconoce a simple vista dentro de una sesión Pi: emoji, nombre y color propios en los cuatro estados observables.
 - Instalación #1 → S117 — Los tres registros de instalación dejan de forzar ediciones cross-Zona: sus datos enumerados salen del test a un módulo propio declarado como Cimiento exacto.
 - Método #2 → S120 — Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
 
 ## Avance
-- **Total:** 64% (56/87 S)
+- **Total:** 65% (57/87 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -25,7 +25,7 @@
 - **Autoridad:** 0% (0/1 S)
 - **Capacidades:** 0% (0/1 S)
 - **cimientos:** 0% (0/3 S)
-- **Contratos:** 0% (0/2 S)
+- **Contratos:** 50% (1/2 S)
 - **Enrolamiento:** 0% (0/1 S)
 - **Entrega:** 0% (0/1 S)
 - **Hosts:** 25% (2/8 S)
@@ -58,8 +58,7 @@
 3. **S12.6** · 📋 PLANIFICADO · La raíz se ordena y el README describe el producto real.
 
 ### Contratos (contratos)
-1. **S100** · 🟢 LISTO · Contrato de schema de delivery-policy, incluido planning.prepare&#95;through fail-closed
-2. **S109** · 🟢 LISTO · Ventanilla única de plan: la Torre responde una asignación completa y Main deja de derivarla
+1. **S109** · 🟢 LISTO · Ventanilla única de plan: la Torre responde una asignación completa y Main deja de derivarla
 
 ### Enrolamiento (enrolamiento)
 1. **S2.9** · 🟢 LISTO · Enrollment público canónico por CLI
@@ -119,7 +118,7 @@
 - **S12.6:** propuesta direct (Decisión 4 del maintainer, opción B combinada, 2026-08-30.); pendiente de revalidación en kickoff.
 - **S12.7:** propuesta design-tasks (Contrato inmutable S12.7 y decisión Emilio 10469; session-plan define la descomposición al desparquear.); pendiente de revalidación en kickoff.
 - **S12.9:** propuesta full-sdd (Contrato inmutable S12.9; no hay precedente para revisions/2, el puntero atómico y ownership son contratos compartidos sin ejercitar, y provenance.test.mjs requiere su propia Sesión.); pendiente de revalidación en kickoff.
-- **S100:** propuesta direct (Maintainer decision, this session, 2026-09-06: the schema-level contract is fully specified, has no remaining open product decision, and needs no design phase.); pendiente de revalidación en kickoff.
+- **S100:** propuesta direct (Maintainer decision, this session, 2026-09-06: the schema-level contract is fully specified, has no remaining open product decision, and needs no design phase.); revalidada direct sobre 1043d5efae487c61ae9b3e4af33cddcfe85ad38b con evidencia S100 remained a binary schema-only change after rebasing onto current master; the only upstream delta changed AGENTS.md, while the implementation diff and verified bytes remained limited to the two declared M100.1 paths..
 - **S101:** propuesta full-sdd (Approved S101 proposal/specification rev2 and Radar's canonical route-depth contract require full-sdd before the shared policy/Jornada behavior is designed.); revalidada full-sdd sobre e6b7e673f671e6bba30f9a600bf0333a1cd90af2 con evidencia C07 revalidates the same migration-only boundary over current logical master; S101 remains blocked by S9.10..
 - **S109:** propuesta full-sdd (La propuesta está aprobada pero el diseño no: qué contiene exactamente la asignación única, cómo se declara el proveedor por proyecto y cómo se empaqueta Radar son decisiones de diseño abiertas. Radar prohíbe Módulos en full-sdd (agent-workflows/tools/radar/check.go:514-524), así que la descomposición nace de la ejecución posterior de esta ruta.); pendiente de revalidación en kickoff.
 - **S110:** propuesta direct (El resultado es binariamente verificable —el host Pi descubre o no descubre las tres skills— y no queda ninguna elección de diseño abierta: el mapeo de superficies está cerrado y verificado contra el árbol en f78216c.); revalidada direct sobre f78216cfec642cfe7cc5c32c87fa8cdf2da9108b con evidencia Árbol limpio en f78216c y .pi/settings.json declarando las tres skills; el test RED falló nombrando las tres antes de tocar nada..
@@ -2684,7 +2683,7 @@ Rutas históricas (evidencia): test/git-isolation.test.mjs
   - [ ] Evidencia histórica no autorizante: el contenido está escrito y verificado en parked/s12.2-docs-congelados, resuelto como 2b0506ca3de04c29e7fab485b42c328cd3567c44; no es entrega ni autoridad de publicación.
 
 ### S100 — Contrato de schema de delivery-policy, incluido planning.prepare&#95;through fail-closed
-- Estado derivado: 🟢 LISTO
+- Estado derivado: ✅ COMPLETO
 - Zona/Área: contratos · contracts/, schemas/, registry/, test/contracts/, test/registry/
 - Depende de: S5.13
 - Cimientos: —
