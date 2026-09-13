@@ -60,6 +60,8 @@ cimientos:
     - console/validate.mjs
     - console/vocabulary.mjs
     - core.mjs
+    - hosts/herdr-topology.mjs
+    - hosts/seat-cli.mjs
     - install.sh
     - mcp.mjs
     - package.json
@@ -87,6 +89,8 @@ cimientos:
     - test/helpers/git.test.mjs
     - test/helpers/host-adapter-conformance.mjs
     - test/helpers/restore-fixture.mjs
+    - test/hosts/herdr-topology.test.mjs
+    - test/hosts/seat-cli.test.mjs
     - test/identity.test.mjs
     - test/lifecycle.test.mjs
     - test/install/launch-worker-cli.test.mjs
@@ -4954,7 +4958,9 @@ sesiones:
       - Progreso y cierre llegan por send; ask sólo aparece con una pregunta de decisión exacta y deja el assignment BLOCKED recuperable.
       - Cada assignment acepta exactamente un terminal COMPLETED, BLOCKED o FAILED con los campos de evidencia/recoverability aprobados; duplicado, stale o sin dispatch_id falla cerrado.
       - Un candidato local, un pane activo o trabajo parcial sin terminal no acredita progreso ni habilita downstream.
-      - OFF no atribuye persistencia/retry Tower-owned; ON no despacha sin binding, acknowledgment y retry.
+      - Antes de cada dispatch o retry, S9.8 invoca S108 para el binding objetivo; `active_unchanged` y cierres terminales exactos son convergencia válida, mientras evidencia ausente, fallida, ambigua o divergente produce cero dispatch.
+      - S9.8 no enumera, deriva, renombra ni cierra tabs, panes o workspaces Herdr y no interpreta los testigos persistidos por S121.
+      - OFF no atribuye persistencia/retry Tower-owned; ON exige binding y convergencia S108 del objetivo, sin bloquear por otras Sesiones activas válidas.
       - El diff toca sólo Área.
     decisiones:
       - tipo: resuelta
@@ -4988,22 +4994,22 @@ sesiones:
         rutas: [product/tower/skills/torre-control/SKILL.md, product/tower/skills/torre-control-entregas/SKILL.md, test/extensions/pi/tower-session-router.test.mjs]
         tareas:
           - id: T9.8.1.1
-            accion: "RED: cubrir espera ordinaria prohibida, uso indebido de ask, terminal faltante/duplicado/stale y crédito falso por candidato parcial."
-            resultado: "RED: espera ordinaria prohibida, uso indebido de ask, terminal faltante/duplicado/stale y crédito falso por candidato parcial quedan cubiertos."
-            criterios: ["RED: espera ordinaria prohibida, uso indebido de ask, terminal faltante/duplicado/stale y crédito falso por candidato parcial quedan cubiertos."]
+            accion: "RED: cubrir terminal inválido, crédito falso, reconcile S108 ausente/ambiguo y el deadlock que bloquea retry por una Session activa válida no objetivo."
+            resultado: "RED: las formas terminales inválidas y toda convergencia S108 no probada producen cero dispatch."
+            criterios: ["RED: espera ordinaria prohibida, uso indebido de ask, terminal inválido, crédito falso y convergencia S108 no probada quedan cubiertos."]
           - id: T9.8.1.2
-            accion: "GREEN: registrar dispatch_id, retornar tras acknowledgment y consumir send terminal con evidencia/recoverability exactas."
-            resultado: "GREEN: dispatch_id se registra, el control retorna tras acknowledgment y send terminal conserva evidencia/recoverability exactas."
-            criterios: ["GREEN: dispatch_id se registra, el control retorna tras acknowledgment y send terminal conserva evidencia/recoverability exactas."]
+            accion: "GREEN: registrar dispatch_id, invocar el puerto acotado de S108 antes de dispatch/retry, retornar tras acknowledgment y consumir send terminal con evidencia/recoverability exactas."
+            resultado: "GREEN: la convergencia S108 del objetivo habilita dispatch/retry; `active_unchanged` de otros bindings no bloquea y cada terminal conserva evidencia exacta."
+            criterios: ["GREEN: la reconciliación S108 válida precede cada dispatch/retry y un resultado fail-closed no produce efectos Herdr ni envío."]
           - id: T9.8.1.3
-            accion: "REFACTOR: separar coordinación de seguimiento, estabilizar rechazo fail-closed y probar divergencia ON/OFF sin cambiar autoridad."
-            resultado: "REFACTOR: coordinación y seguimiento se separan, el rechazo fail-closed se estabiliza y la divergencia ON/OFF queda probada sin cambiar autoridad."
-            criterios: ["REFACTOR: coordinación y seguimiento se separan, el rechazo fail-closed se estabiliza y la divergencia ON/OFF queda probada sin cambiar autoridad."]
+            accion: "REFACTOR: separar coordinación de seguimiento y reconciliación, sin enumerar ni controlar Herdr desde S9.8, y probar divergencia ON/OFF sin cambiar autoridad."
+            resultado: "REFACTOR: S9.8 consume un único resultado acotado de S108 y no deriva ni muta topología."
+            criterios: ["REFACTOR: ninguna Tarea o ruta de S9.8 enumera, deriva, renombra o cierra tabs, panes o workspaces Herdr."]
 
 
   - id: S9.9
     zona: hosts
-    cimientos: [test/install/launch-worker-cli.test.mjs]
+    cimientos: [test/install/launch-worker-cli.test.mjs, hosts/herdr-topology.mjs, test/hosts/herdr-topology.test.mjs, hosts/seat-cli.mjs, test/hosts/seat-cli.test.mjs]
     resultado: Binding explícito de workspace Herdr
     autoridad: master e6b7e673f671e6bba30f9a600bf0333a1cd90af2 Plan 9; delivery e9bcba7a8e9b7cc5ac7de67a11a867b17c8978f5.
     depende_de: []
@@ -6434,6 +6440,144 @@ sesiones:
         evidencia: "C07 revalidates the same migration-only boundary over current logical master; S101 remains blocked by S9.10."
     modulos: []
 
+  - id: S107
+    zona: hosts
+    resultado: "Topología Herdr Tower-owned dentro del workspace ligado: MAIN y una tab worker por Session ID canónico, con readback determinista"
+    autoridad: "Decisión del maintainer del 2026-09-13 y fuente inmutable: commit 43130ad40af06f3ed05671000719217bee74f0a5, agent-workflows/ASIGNACION-24-SESIONES.md, blob a7c4ced3b196a6ea92a7bd8f181b98b87fc70ae3, línea 155, bytes 7456-7583, SHA-256 05c38114c8d00c5b8a492cc8f8757b222fe233995c8e72de0066621f74678862. El contrato usa sólo HERDR_WORKSPACE_ID y APIs tab/pane observadas; no reclama workspace-name."
+    depende_de: [S1.18, S9.7, S121]
+    cimientos: [hosts/herdr-topology.mjs, test/hosts/herdr-topology.test.mjs, hosts/seat-cli.mjs, test/hosts/seat-cli.test.mjs]
+    recurso: [HERDR_WORKSPACE_ID explícito y recursos Herdr devueltos frescos; sin autoridad sobre recursos extranjeros]
+    reemplaza: [S9.5]
+    criterios:
+      - "Dentro del workspace ID ligado existe una MAIN exacta y cada launch crea a lo sumo una tab worker etiquetada sólo con el session_id emitido por S121; S107 no crea, nombra ni valida un workspace visible `Control Tower`."
+      - "AGENTES, labels de asiento y seat split salen; toda tab/pane nueva prueba workspace_id, IDs, label, cwd y foreground_cwd antes de éxito."
+      - "Sólo un recurso devuelto fresco o reprobado por binding/readback puede mutarse; extranjero o ambiguo queda intacto y falla cerrado."
+      - "Antes de crear, S107 persiste un intento ligado con workspace/session/cwd esperados; tras readback finaliza `recordTowerTab` idempotentemente. Retry recupera sólo una coincidencia exacta y única; conflicto/ambigüedad falla sin adoptar ni limpiar recursos ajenos."
+      - "Herdr genérico sigue Tower-agnostic y los tres Módulos se revisan en lotes de hasta 400 líneas."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Quién establece label y workspace visible?"
+        resolucion: "El label proviene sólo del session_id S121; S107 usa el workspace ID opaco y no reclama una API de nombre visible no observada."
+        autoridad: "Decisión explícita del maintainer del 2026-09-13 y evidencia de hosts/herdr-topology.mjs."
+        clase: seguridad-y-permisos; contrato-visible-del-producto
+        falsificador: "Caller o superficie runtime sustituye el label, o S107 inventa una API de workspace-name."
+        descartadas:
+          - opcion: "Inferir identidad desde branch, worktree, asiento, prompt, worker o OpenCode root_session_id."
+            razon: "No son autoridad y permitirían adoptar recursos ajenos."
+    ruta:
+      propuesta: direct
+      autoridad: "Puertos tab/pane, workspace ID y readback ya existen; S121 fija la identidad nueva y workspace naming queda explícitamente fuera."
+    modulos:
+      - id: M107.1
+        resultado: "MAIN y tabs worker ligadas con readback exacto"
+        rutas: [hosts/herdr-topology.mjs, test/hosts/herdr-topology.test.mjs]
+        tareas:
+          - id: T107.1.1
+            accion: "RED: cubrir binding/readback divergente, duplicado session_id, AGENTES/seat label, recurso extranjero y cleanup excedido."
+            resultado: "RED: identidad legacy, ambigua o extranjera falla antes de mutar."
+            criterios: ["Cero adopción/cierre extranjero y cero claim de workspace-name."]
+          - id: T107.1.2
+            accion: "GREEN: persistir intento antes de crear; crear la tab y finalizar su witness tras readback, aceptando retry exacto tras crash o respuesta perdida."
+            resultado: "GREEN: tab/pane frescos quedan probados sin AGENTES ni seat split."
+            criterios: ["Workspace, IDs, label, cwd y foreground_cwd coinciden."]
+          - id: T107.1.3
+            accion: "REFACTOR: encapsular witness/readback y compensar sólo la tab recién creada."
+            resultado: "REFACTOR: una frontera explícita gobierna creación, validación y cleanup."
+            criterios: ["Ningún ID se reconstruye ni se adopta sólo por label."]
+      - id: M107.2
+        resultado: "Session ID y witness atraviesan launch, view y provider"
+        rutas: [hosts/launch-worker.mjs, hosts/opencode-view.mjs, hosts/production-provider.mjs, test/hosts/launch-worker.test.mjs, test/hosts/opencode-view.test.mjs, test/hosts/production-provider.test.mjs]
+        tareas:
+          - id: T107.2.1
+            accion: "RED: probar request opaco, rechazo de session_id/label inyectado y fallo sin witness persistido."
+            resultado: "RED: identidad no autoritativa o witness faltante impiden éxito."
+            criterios: ["Sólo el binding S121 aporta identidad."]
+          - id: T107.2.2
+            accion: "GREEN: transportar binding→worker→view, abrir intento durable y finalizarlo con IDs frescos; retry recupera sólo workspace/label/cwd/foreground exactos y únicos."
+            resultado: "GREEN: launch termina después de persistir el witness ligado."
+            criterios: ["request_ref sigue siendo la única identidad pública."]
+          - id: T107.2.3
+            accion: "REFACTOR: separar transporte, view y persistencia sin filtrar labels, roots, IDs o credenciales."
+            resultado: "REFACTOR: fronteras mínimas y Herdr genérico Tower-agnostic."
+            criterios: ["No quedan imports AGENTES ni labels de asiento."]
+      - id: M107.3
+        resultado: "Seat CLI deja la topología manual y expone reconcile acotado"
+        rutas: [hosts/seat-cli.mjs, test/hosts/seat-cli.test.mjs]
+        tareas:
+          - id: T107.3.1
+            accion: "RED: rechazar AGENTES/seat split y flags de session/tab/workspace con cero efecto Herdr."
+            resultado: "RED: caller no materializa ni reclama topología."
+            criterios: ["Ninguna identidad llega por flags o payload libre."]
+          - id: T107.3.2
+            accion: "GREEN: dejar sólo un entrypoint Main/Tower-owned para el reconcile S108."
+            resultado: "GREEN: seat-cli no crea views y no acepta identidad del caller."
+            criterios: ["Sin flags, session_id o IDs Herdr."]
+          - id: T107.3.3
+            accion: "REFACTOR: eliminar helpers AGENTES/seat split y estabilizar errores fail-closed."
+            resultado: "REFACTOR: queda una sola frontera de reconcile."
+            criterios: ["Entrada no ligada produce cero efecto Herdr."]
+
+  - id: S108
+    zona: asientos
+    resultado: "Ciclo idempotente de tabs worker Tower-owned desde witnesses S121 y estado terminal Radar"
+    autoridad: "Decisión del maintainer del 2026-09-13: S121 prueba procedencia y Radar estado; S109 no participa. Fuente inmutable: commit 43130ad40af06f3ed05671000719217bee74f0a5, agent-workflows/ASIGNACION-24-SESIONES.md, blob a7c4ced3b196a6ea92a7bd8f181b98b87fc70ae3, línea 156, bytes 7583-7732, SHA-256 647abd52f3b0a53bce67ddeeeb45832da578d7ea8662685e845e98063494be63. Evidencia lifecycle: S100 COMPLETO, commit 1237075200d2df72927c3b166ade1ba61929cbd2 integrado y cierre exacto w6H."
+    depende_de: [S1.18, S9.7, S107]
+    cimientos: [hosts/herdr-topology.mjs, test/hosts/herdr-topology.test.mjs, hosts/seat-cli.mjs, test/hosts/seat-cli.test.mjs]
+    recurso: [witnesses S121 y puerto topology S107; sin roster o active-set paralelo]
+    reemplaza: [S9.5]
+    criterios:
+      - "Enumera sólo `listTowerTabs()`; antes de mutar re-lee workspace/tab/pane y valida `radar.snapshot/v1` para el session_id almacenado."
+      - "Sólo COMPLETO/ARCHIVADO cierra la tab exacta; un estado no terminal válido converge como `active_unchanged` sin mutar, mientras evidencia inválida, desconocida o divergente falla cerrado."
+      - "Terminal + recurso exacto ya ausente converge idempotentemente; ausencia no terminal, desconocida o divergente falla."
+      - "No infiere ownership/liveness desde branch, worktree, asiento, label, prompt, proceso, worker o caller; no depende de S109 ni expone Herdr raw."
+      - "Los dos Módulos se revisan separados y cada lote queda bajo 400 líneas."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Qué prueba ownership y qué autoriza cierre?"
+        resolucion: "El witness S121 prueba procedencia; Radar fresco prueba COMPLETO/ARCHIVADO. Ambos deben coincidir."
+        autoridad: "Decisión del maintainer del 2026-09-13 y evidencia S100."
+        clase: seguridad-y-permisos; operaciones-irreversibles
+        falsificador: "Se cierra sin witness, readback o estado terminal exactos."
+        descartadas:
+          - opcion: "Usar S109, un segundo active-set o inferencia runtime."
+            razon: "Duplica autoridad o adopta evidencia no autoritativa."
+    ruta:
+      propuesta: direct
+      autoridad: "S121 fija procedencia/Session ID, S107 fija topology/readback y Radar ya publica estado terminal; no queda contrato sin resolver."
+    modulos:
+      - id: M108.1
+        resultado: "Reconcile stateless por witness contra Herdr y Radar"
+        rutas: [workspace/tower-tab-lifecycle.mjs, test/workspace/tower-tab-lifecycle.test.mjs]
+        tareas:
+          - id: T108.1.1
+            accion: "RED: cubrir snapshot/Session/witness/readback inválidos, estado no terminal, recurso extranjero y ausencia terminal/no terminal."
+            resultado: "RED: terminal exacto cierra, no terminal válido converge sin mutar y evidencia inválida/ambigua falla cerrado."
+            criterios: ["Negativos preservan recursos y nombran razón."]
+          - id: T108.1.2
+            accion: "GREEN: iterar witnesses, re-leer topology, consultar Radar y cerrar sólo COMPLETO/ARCHIVADO."
+            resultado: "GREEN: cada binding reconcilia independientemente y cierra una vez."
+            criterios: ["Terminal ausente converge; demás faltantes fallan."]
+          - id: T108.1.3
+            accion: "REFACTOR: dejar loop stateless con puertos inyectados y sin caché/roster."
+            resultado: "REFACTOR: ningún active-set o input público controla identidad."
+            criterios: ["Resultados ligan request_ref, assignment_ref y session_id internos."]
+      - id: M108.2
+        resultado: "Seat CLI conecta evento/recovery sin identidad del caller"
+        rutas: [hosts/seat-cli.mjs, test/hosts/seat-cli.test.mjs]
+        tareas:
+          - id: T108.2.1
+            accion: "RED: rechazar flags, IDs, claims, puerto ausente y convergencia ambigua con cero cierre/dispatch."
+            resultado: "RED: entrada pública no elige tab."
+            criterios: ["No reconstruye identidad."]
+          - id: T108.2.2
+            accion: "GREEN: inyectar puertos Radar/topology confiables para evento y recovery sin Herdr raw."
+            resultado: "GREEN: devuelve sólo el resultado acotado S108."
+            criterios: ["Sólo witnesses S121 y Radar controlan reconcile."]
+          - id: T108.2.3
+            accion: "REFACTOR: unificar evento/recovery y estabilizar fallos sin efectos."
+            resultado: "REFACTOR: una sola entrada Main/Tower-owned."
+            criterios: ["Sin flags de identidad ni cierre extranjero."]
+
   - id: S109
     zona: contratos
     resultado: "Ventanilla única de plan: la Torre responde una asignación completa y Main deja de derivarla"
@@ -6629,7 +6773,7 @@ sesiones:
   - id: S112
     zona: metodo
     resultado: "El campo autoridad deja de ser texto libre: declara su tipo y radar prueba lo que se puede probar, diciendo explícitamente lo que no."
-    autoridad: "Decisión del maintainer del 2026-09-10, tomada sobre el conteo verificado de las 76 Sesiones de openspec/plan.yaml: 13 citan un archivo del repositorio, 60 citan decisiones numeradas y 26 citan observaciones de Engram, que no son archivos y están fuera de Git. La máquina de prueba ya existe sin usarse para esto: validateFragmentLocator en agent-workflows/tools/radar/check.go:928, aplicada hoy sólo en check.go:841 y check.go:866."
+    autoridad: "Decisión del maintainer del 2026-09-10, tomada sobre un snapshot histórico fechado de openspec/plan.yaml que entonces enumeraba 76 Sesiones y reveló tres clases reales de cita —repo, decision y engram—; esos conteos son evidencia histórica del descubrimiento y no describen la población vigente. La máquina de prueba ya existía sin usarse para esto: validateFragmentLocator en agent-workflows/tools/radar/check.go:928, aplicada entonces sólo en check.go:841 y check.go:866."
     depende_de: []
     cimientos: []
     recurso: [el registro de decisiones archivado en openspec/archive/legacy-planning/; sin dependencia nueva de Engram]
@@ -6638,7 +6782,7 @@ sesiones:
       - "Los tipos repo y decision se prueban contra Git con la misma exigencia byte a byte que ya usa validateFragmentLocator; una cita que no resuelva falla cerrado."
       - "El tipo engram se declara y no se verifica, y radar lo reporta explícitamente como no verificable: nunca lo cuenta como probado."
       - "Las dependencias externas de radar siguen siendo exactamente git y gentle-ai: el Método no queda atado al Engram del maintainer y sigue siendo portable a otro producto."
-      - "Las 76 Sesiones existentes quedan migradas o declaradas con su tipo; ninguna conserva la forma vieja sin tipo al cerrar la Sesión."
+      - "Todas las Sesiones vigentes quedan migradas o declaradas con su tipo; ninguna conserva la forma vieja sin tipo al cerrar la migración."
       - "El diff toca sólo Área."
     decisiones:
       - tipo: resuelta
@@ -6650,23 +6794,23 @@ sesiones:
         descartadas:
           - opcion: "Verificar el ID contra el CLI de Engram."
             razon: "Suma una dependencia externa y rompe la portabilidad del Método; además Engram es mutable y la existencia del ID no prueba el contenido citado."
-          - opcion: "Espejar las 26 citas de Engram en un registro versionado del repositorio."
+          - opcion: "Espejar las citas de Engram del snapshot histórico en un registro versionado del repositorio."
             razon: "Crea una segunda fuente de verdad que hay que sincronizar a mano, que es exactamente lo que el canon prohíbe."
           - opcion: "Verificar sólo el tipo repo y dejar los otros dos como texto libre."
-            razon: "Deja 63 de 76 sin ninguna prueba y la compuerta del Tramo 1 prácticamente abierta."
+            razon: "Deja sin prueba toda cita que no sea repo y la compuerta del Tramo 1 prácticamente abierta."
       - tipo: resuelta
-        pregunta: "¿Las 76 Sesiones existentes se migran de una sola vez, o radar acepta las dos formas durante una transición?"
-        resolucion: "Ninguna de las dos. Se migra Zona por Zona y la exigencia se enciende al final, en una Sesión aparte que depende de que la migración haya terminado. Durante la migración radar acepta la forma vieja porque todavía no exige nada, así que nunca hay dos formas exigidas a la vez ni un lote de revisión por encima del tope."
+        pregunta: "¿La población vigente se migra de una sola vez, o radar acepta las dos formas durante una transición?"
+        resolucion: "La población del snapshot Radar vigente se migra Zona por Zona y la exigencia se enciende al final; nunca hay dos formas exigidas ni un lote sobre el tope."
         autoridad: "Decisión del maintainer del 2026-09-10, elegida sobre tres alternativas presentadas con su consecuencia."
         clase: migracion-o-perdida-de-datos
         falsificador: "Un solo commit migra más Sesiones de las que caben en el tope de lote declarado, o radar exige el tipo antes de que la migración haya terminado."
         descartadas:
-          - opcion: "Migrar las 76 en un solo Módulo, sin aceptar nunca la forma vieja."
+          - opcion: "Migrar toda la población vigente en un solo Módulo, sin aceptar nunca la forma vieja."
             razon: "El lote de revisión sería openspec/plan.yaml entero, muy por encima del tope de 400 líneas, y revertirlo tocaría el archivo que gobierna todo el trabajo abierto."
           - opcion: "Aceptar las dos formas detrás de una fecha declarada."
             razon: "Deja dos formas del mismo dato conviviendo por tiempo indefinido, que es la segunda fuente de verdad que el canon prohíbe."
       - tipo: resuelta
-        pregunta: "¿Esta Sesión también migra las 76 Sesiones de openspec/plan.yaml?"
+        pregunta: "¿Esta Sesión también migra la población vigente de openspec/plan.yaml?"
         resolucion: "No. openspec/plan.yaml lo posee la Zona autoridad y no es un cimiento declarado, así que una Sesión de la Zona metodo no puede declararlo como ruta de Módulo. El trabajo se parte por Zona: S112 construye el contrato en Go, S114 migra el plan desde la Zona autoridad, y S115 enciende la exigencia."
         autoridad: "Partición vigente en openspec/plan.yaml:30-32 y contrato de rutas de Módulo en agent-workflows/tools/radar/check.go:362-382; regla de cruces entre Zonas en plan-naming-convention.md §3."
         clase: expansion-de-alcance
@@ -6695,7 +6839,7 @@ sesiones:
         falsificador: "radar deduce la ubicación de una decisión parseando el registro en vez de leer el localizador declarado."
         descartadas:
           - opcion: "Declarar sólo el número y que radar encuentre la decisión en el registro."
-            razon: "Obliga a parsear dos formatos distintos más rangos; un cambio de redacción del registro rompería la verificación de 60 Sesiones."
+            razon: "Obliga a parsear formatos y rangos distintos; un cambio de redacción rompería las citas del snapshot histórico."
     ruta:
       propuesta: design-tasks
       autoridad: "El producto está decidido —tres tipos, dos verificables, migración por Zona con exigencia al final— pero falta descubrimiento técnico acotado: la forma exacta de cada tipo en el esquema y cómo se prueba una cita a una decisión numerada dentro del registro archivado. Eso es diseño de contrato, no de comportamiento."
@@ -6726,7 +6870,7 @@ sesiones:
   - id: S116
     zona: metodo
     resultado: "El campo autoridad admite varias citas: una Sesión que se apoya en más de una fuente puede declararlas todas, y radar prueba cada una por separado."
-    autoridad: "Descubrimiento de S114 al medir las 82 autoridades del plan contra el esquema entregado en f138e1b: 29 citan más de una clase de fuente —26 citan dos y 3 citan tres—, así que una cita única no puede representar el dato real. Decisión del maintainer del 2026-09-10: la lista es modelo legítimo y no una compatibility branch, porque una Sesión que de verdad se apoya en dos decisiones no es prosa desordenada."
+    autoridad: "Descubrimiento histórico de S114 sobre el snapshot fechado del 2026-09-10: el plan entonces medido contenía autoridades con dos y tres clases de fuente, así que una cita única no podía representar el dato real. Esas cantidades preservan sólo la evidencia datada del descubrimiento y no describen la población vigente. Decisión del maintainer del 2026-09-10: la lista es modelo legítimo y no una compatibility branch, porque una Sesión que de verdad se apoya en dos decisiones no es prosa desordenada."
     depende_de: [S112]
     cimientos: []
     recurso: []
@@ -6776,14 +6920,14 @@ sesiones:
 
   - id: S114
     zona: autoridad
-    resultado: "Las 76 Sesiones del plan declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado."
-    autoridad: "Decisión del maintainer del 2026-09-10 sobre la migración del campo autoridad, elegida entre tres alternativas: migrar por Zona y encender la exigencia al final. El conteo verificado sobre openspec/plan.yaml: 13 Sesiones citan un archivo del repositorio, 60 citan decisiones numeradas y 26 citan observaciones de Engram."
+    resultado: "Todas las Sesiones vigentes declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado."
+    autoridad: "Decisión del maintainer del 2026-09-10 sobre la migración del campo autoridad, elegida entre tres alternativas: migrar por Zona y encender la exigencia al final. La población vigente y el orden se obtienen en ejecución mediante un snapshot `radar status --json` ligado a su revisión; ningún total fijo forma parte del alcance vivo."
     depende_de: [S112, S116]
     cimientos: []
     recurso: [openspec/plan.yaml; la migración es el único trabajo que lo escribe mientras dura]
     criterios:
-      - "Cada Módulo migra las Sesiones de exactamente una Zona, y su lote de revisión queda por debajo del tope declarado."
-      - "radar check pasa después de cada Módulo, no sólo al final: una migración parcial nunca deja el plan inválido."
+      - "Cada lote de revisión migra exactamente una Zona y queda bajo el tope; M114.1 repite esos lotes serialmente."
+      - "radar check pasa después de cada lote de revisión, no sólo al final: una migración parcial nunca deja el plan inválido."
       - "Ninguna autoridad cambia de sentido al migrar: se declara el tipo de la cita que ya estaba escrita, nunca se inventa una nueva."
       - "Al cerrar, cero Sesiones conservan la forma vieja sin tipo declarado."
       - "Queda una sola copia del registro de decisiones en el árbol: openspec/plans/decision-register.md se retira y openspec/archive/legacy-planning/decision-register.md queda como la citable."
@@ -6791,8 +6935,8 @@ sesiones:
     decisiones:
       - tipo: resuelta
         pregunta: "¿Puede el esquema entregado por S112 representar las autoridades reales del plan?"
-        resolucion: "No. S112 modeló autoridad como una cita única y el dato exige una lista: 29 de las 82 autoridades citan más de una clase de fuente —26 citan dos y 3 citan tres— y la más cargada nombra 40 números distintos. Extender el campo a una lista de citas es trabajo de la Zona metodo y nace como Sesión propia, S116, porque el alcance descubierto nunca se agrega en silencio a una Sesión ya entregada."
-        autoridad: "Descubrimiento de esta Sesión al medir las 82 autoridades del plan vigente contra el esquema entregado en f138e1b."
+        resolucion: "No. El snapshot histórico fechado del 2026-09-10 probó que varias autoridades citaban más de una clase de fuente y que una cita única perdía información. Las cantidades observadas ese día quedan como evidencia datada y no como total vigente. Extender el campo a una lista de citas es trabajo de la Zona metodo y nació como Sesión propia, S116, porque el alcance descubierto nunca se agrega en silencio a una Sesión ya entregada."
+        autoridad: "Descubrimiento histórico de esta Sesión sobre el snapshot fechado del 2026-09-10, medido contra el esquema entregado en f138e1b."
         clase: contrato-visible
         falsificador: "Se migra una autoridad multi-fuente aplastándola a una sola cita, o se extiende el esquema dentro de S112 en vez de en una Sesión nueva."
         descartadas:
@@ -6825,19 +6969,19 @@ sesiones:
       autoridad: "El contrato del campo lo fija S112 y la estrategia de migración está decidida; lo que queda es trabajo mecánico sobre un dato, con un criterio de cierre binario —cero Sesiones sin tipo— y ninguna elección de diseño abierta."
     modulos:
       - id: M114.1
-        resultado: "Las Sesiones del plan declaran el tipo de su autoridad, una Zona por Módulo"
+        resultado: "Las Sesiones del plan declaran el tipo de su autoridad, una Zona por lote de revisión"
         rutas: [openspec/plan.yaml, openspec/plans/decision-register.md]
         tareas:
           - id: T114.1.1
-            accion: "RED: fijar el orden de Zonas desde radar status y verificar que la primera Zona todavía tiene Sesiones sin tipo."
-            resultado: "RED: el orden queda fijado y la primera Zona tiene Sesiones sin tipo declarado."
-            criterios: ["RED: el orden queda fijado y la primera Zona tiene Sesiones sin tipo declarado."]
+            accion: "RED: obtener `radar status --json`, registrar el snapshot y su revisión como evidencia del orden de Zonas, y verificar que la primera Zona todavía tiene Sesiones sin tipo."
+            resultado: "RED: el orden queda ligado a un snapshot/revisión de Radar y la primera Zona tiene Sesiones sin tipo declarado."
+            criterios: ["RED: existe evidencia recuperable del snapshot `radar.snapshot/v1`, su revisión y el orden derivado; ningún total estático autoriza el lote."]
           - id: T114.1.2
             accion: "GREEN: migrar las Sesiones de esa Zona declarando el tipo de la cita que ya estaba escrita, sin cambiar su sentido."
             resultado: "GREEN: la Zona queda migrada, radar check pasa y ninguna autoridad cambió de sentido."
             criterios: ["GREEN: la Zona queda migrada, radar check pasa y ninguna autoridad cambió de sentido."]
           - id: T114.1.3
-            accion: "REFACTOR: repetir el ciclo por Zona hasta que el conteo de Sesiones sin tipo llegue a cero."
+            accion: "REFACTOR: repetir en lotes separados, una Zona por lote, hasta llegar a cero Sesiones sin tipo."
             resultado: "REFACTOR: cero Sesiones conservan la forma vieja y radar check pasa."
             criterios: ["REFACTOR: cero Sesiones conservan la forma vieja y radar check pasa."]
 
@@ -6991,7 +7135,7 @@ sesiones:
     # hace por S119, que lo edita desde otra Zona — y por eso esta Sesión, que lo crea, también
     # tiene que reservarlo: un Cimiento exacto sale de la cobertura de la Zona, así que la
     # reserva deja de ser opcional para quien lo toca. La reserva es exclusiva por archivo, de
-    # modo que S117 y S119 no pueden correr en paralelo; por eso S119 declara `depende_de: [S117]`.
+    # modo que S117 y S119 no pueden correr en paralelo; por eso S119 conserva S117 como dependencia directa.
     cimientos:
       - test/install/tower-role-assets.contract.mjs
     recurso: []
@@ -7168,8 +7312,8 @@ sesiones:
   - id: S119
     zona: producto-torre
     resultado: "La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por `torre-control` → `torre asiento`."
-    autoridad: "openspec/plans/audits/herdr-skill-ownership-audit.md y el contrato preservado en openspec/plans/audits/evidence/herdr-skill-contract-d8a22841.patch, enumerados por decisión del maintainer del 2026-09-11, que además ubicó la Sesión en producto-torre al reubicarla tras la separación constructor/Torre."
-    depende_de: [S117]
+    autoridad: "openspec/plans/audits/herdr-skill-ownership-audit.md y su patch, más decisiones del maintainer del 2026-09-11/13: la skill activa sólo por pedido explícito y delega lifecycle a `torre-control` → `torre asiento` → S108, sin roster S109 ni Herdr raw."
+    depende_de: [S117, S108]
     # `product/tower/skills/herdr/SKILL.md` no se reserva: cae bajo `product/tower/`, la ruta
     # amplia de esta misma Zona. Se reservan los dos que esta Sesión edita y NO le pertenecen:
     # torre-control porque es Cimiento histórico, y el registro de assets porque vive en la Zona
@@ -7180,11 +7324,12 @@ sesiones:
       - test/install/tower-role-assets.contract.mjs
     recurso: []
     criterios:
-      - "`product/tower/skills/herdr/SKILL.md` existe y reproduce textualmente el párrafo de activación del patch preservado: Herdr activa sólo ante un pedido explícito de Herdr, y despacho de la Torre, decisiones ON/OFF, selección de topología y ciclo de vida de asiento enrutan por `torre-control` → `torre asiento`."
+      - "`product/tower/skills/herdr/SKILL.md` activa sólo ante pedido explícito y enruta assignment/topología/lifecycle por `torre-control` → `torre asiento`; cierre consume sólo S108."
+      - "La skill nunca deriva trabajo activo, enumera witnesses S121, interpreta Radar, acepta roster S109 ni manipula recursos extranjeros/ambiguos."
       - "La skill lleva las cuatro claves de frontmatter que exige `SKILL_FRONTMATTER_KEYS` (name, description, license, metadata) y las seis secciones que exige `SKILL_SECTIONS`."
       - "El registro de assets declara la skill con markers que fijan las dos oraciones de propiedad de la Torre y las dos de aprobación humana del patch preservado, y la suite completa pasa."
       - "La skill no documenta ninguna mecánica de la CLI de Herdr que `herdr --skill` ya emite. Falsificador: cualquier flag, timeout o código de error documentado en ambos archivos es un duplicado y falla este criterio."
-      - "`radar check` reporta 0 huérfanos, 0 solapes y 0 reglas sin uso con `product/tower/skills/herdr/SKILL.md` declarada en `cimientos.rutas`."
+      - "`radar check` reporta 0 huérfanos, 0 solapes y 0 reglas sin uso, y `owners()` resuelve `product/tower/skills/herdr/SKILL.md` sólo a producto-torre, sin Cimiento."
       - "`product/tower/skills/torre-control/SKILL.md` gana una referencia a la skill nueva y sus markers existentes siguen pasando sin cambios."
     decisiones:
       - tipo: resuelta
@@ -7213,7 +7358,7 @@ sesiones:
             consecuencia: "Contradice la oración del flujo aprobado y mete una skill del producto en el método global de los cuatro agentes."
     ruta:
       propuesta: direct
-      autoridad: "Dos archivos conocidos con contrato declarado y ninguna pregunta de diseño abierta: el texto de la skill lo fija el patch preservado y la forma del registro la fijan las entradas que ya viven en él. La única elección abierta —la Zona— la cerró el maintainer el 2026-09-11."
+      autoridad: "Tres rutas conocidas sin decisión abierta —product/tower/skills/herdr/SKILL.md, product/tower/skills/torre-control/SKILL.md y test/install/tower-role-assets.contract.mjs—; Zona y lifecycle quedaron fijados por el maintainer el 2026-09-11/13."
     modulos:
       - id: M119.1
         resultado: "La skill, declarada y con compuerta"
@@ -7224,13 +7369,13 @@ sesiones:
             resultado: "RED: un test que falla nombrando la skill ausente."
             criterios: ["RED: la suite de assets falla y el fallo nombra `product/tower/skills/herdr/SKILL.md`."]
           - id: T119.1.2
-            accion: "GREEN: escribir la skill con las seis secciones exigidas, cargando el párrafo de activación y las dos reglas de aprobación humana del patch preservado, y difiriendo toda acción de asiento a `torre asiento`."
-            resultado: "GREEN: la skill existe y la compuerta del registro pasa."
-            criterios: ["GREEN: la suite de assets pasa.", "Cada marker declarado en T119.1.1 matchea, sin debilitar ninguno para hacerla pasar."]
+            accion: "GREEN: escribir la skill, activar sólo por pedido explícito y enrutar lifecycle por `torre-control` → `torre asiento` → S108."
+            resultado: "GREEN: skill y asset gate pasan sin eludir S107/S108."
+            criterios: ["Markers fijan activación explícita y cierre S108 sin S109 ni Herdr raw."]
           - id: T119.1.3
-            accion: "REFACTOR: referenciar la skill nueva desde `product/tower/skills/torre-control/SKILL.md` y confirmar la reserva de `product/tower/skills/herdr/SKILL.md` en `cimientos.rutas`."
-            resultado: "REFACTOR: la skill es alcanzable desde la ruta padre y la partición es su dueña."
-            criterios: ["Los markers existentes de `torre-control` siguen pasando sin cambios.", "`radar check` reporta 0 huérfanos, 0 solapes y 0 reglas sin uso.", "La suite completa pasa."]
+            accion: "REFACTOR: referenciar la skill desde `torre-control`, fijar `torre asiento` como route lifecycle y confirmar ownership producto-torre."
+            resultado: "REFACTOR: la skill es alcanzable y no deriva trabajo ni controla recursos extranjeros."
+            criterios: ["Markers prueban S108 sin S109.", "`radar check` y suite completa pasan."]
 
   - id: S120
     zona: metodo
@@ -7265,6 +7410,66 @@ sesiones:
       propuesta: full-sdd
       autoridad: "La nueva entrada de antecedentes y la reutilización de verificación definen un contrato compartido todavía no resuelto. Esta ruta se propone para diseñar S120, no obliga a usar full-sdd en las futuras Sesiones direct o design-tasks. No se inicia SDD al registrar el plan."
     modulos: []
+
+  - id: S121
+    zona: enrolamiento
+    resultado: "Binding Main-validado con Session ID canónico y procedencia durable de cada tab Tower-owned"
+    autoridad: "Decisión del maintainer del 2026-09-13. Main establece assignment_ref↔session_id en assignment-location; binding/consumer lo transportan y persisten workspace/tab/pane sólo tras readback S107. main-store/launch-consumer.mjs:79-88 hoy guarda sólo request_ref y binding_path."
+    depende_de: [S4.2, S4.5]
+    cimientos: [test/install/launch-worker-cli.test.mjs]
+    recurso: [assignment-location, launch binding y namespace de witnesses Main-owned; sin segundo assignment store]
+    criterios:
+      - "assignment-location exige session_id canónico e inmutable; ausencia, forma inválida, conflicto o registro legacy falla cerrado."
+      - "El binding copia ese ID sin caller injection y consumer revalida schema; session_id de plan nunca se confunde con OpenCode root_session_id ni se infiere."
+      - "Antes de crear, S121 persiste un intento con identidades derivadas y expectativas workspace/cwd; `recordTowerTab(readback)` lo finaliza idempotentemente, acepta repetición byte-idéntica y rechaza conflicto, forged o ambigüedad."
+      - "`listTowerTabs()` enumera procedencia read-only, nunca liveness, active-set, dispatch o cierre."
+      - "La fixture registra sólo identidad Main-owned y la CLI acepta únicamente request_ref opaco. Cada lote de revisión queda bajo 400 líneas."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Quién establece Session ID y qué significa la lista de tabs?"
+        resolucion: "Sólo Main registra el session_id canónico; la lista prueba procedencia y Radar/S108 determinan estado y cierre."
+        autoridad: "Decisión explícita del maintainer del 2026-09-13."
+        clase: seguridad-y-permisos; contrato-visible-del-producto
+        falsificador: "Caller/runtime inyecta o infiere Session ID, o S121 usa witnesses como roster/liveness."
+        descartadas:
+          - opcion: "Persistir otro active-set o derivar identidad desde branch/worktree/seat/tab/worker."
+            razon: "Duplica autoridad o confía en superficies no autoritativas."
+    ruta:
+      propuesta: direct
+      autoridad: "Store, assignment-location, binding y consumer existen; schema, derivación y one-shot witness quedaron fijados sin decisión abierta."
+    modulos:
+      - id: M121.1
+        resultado: "Session ID y witness quedan ligados de punta a punta"
+        rutas: [main-store/store.mjs, main-store/launch-consumer.mjs, test/main-store.test.mjs]
+        tareas:
+          - id: T121.1.1
+            accion: "RED: cubrir ID ausente/malformado/legacy/injected y witness duplicado/forged/malformado."
+            resultado: "RED: identidad no Main-owned y witness no ligado fallan sin persistencia."
+            criterios: ["Registros existentes permanecen inmutables."]
+          - id: T121.1.2
+            accion: "GREEN: registrar ID en assignment-location, copiar/revalidar binding y exponer recordTowerTab/listTowerTabs ligados."
+            resultado: "GREEN: consumer devuelve ID canónico y persiste/lista un witness exacto."
+            criterios: ["Identidades se derivan internamente; IDs Herdr sólo del readback."]
+          - id: T121.1.3
+            accion: "REFACTOR: centralizar schema/error, escritura atómica owner-only y readback seguro."
+            resultado: "REFACTOR: frontera única, pública mínima y sin active-set."
+            criterios: ["Si alcanza 400 líneas, se subdivide antes de revisión."]
+      - id: M121.2
+        resultado: "Fixture empaquetada conserva request_ref opaco"
+        rutas: [test/install/launch-worker-cli.test.mjs]
+        tareas:
+          - id: T121.2.1
+            accion: "RED: exigir registro Main-owned de session_id y rechazar session_id/label público."
+            resultado: "RED: fixture actual falla por identidad faltante."
+            criterios: ["request_ref es la única identidad pública."]
+          - id: T121.2.2
+            accion: "GREEN: registrar session_id en assignment-location sin agregar argv/payload público."
+            resultado: "GREEN: CLI consume binding opaco y mantiene compatibilidad."
+            criterios: ["No expone label ni IDs Herdr."]
+          - id: T121.2.3
+            accion: "REFACTOR: retirar datos legacy/duplicados y dejar una fuente Main-owned."
+            resultado: "REFACTOR: una sola relación assignment_ref↔session_id."
+            criterios: ["Diff limitado a la fixture Cimiento."]
 
 references:
   future_successors:
@@ -7348,38 +7553,6 @@ references:
         byte_start: 7046
         byte_end: 7197
         fragment_sha256: cc09ac5e2b6454757c3af1d8f1aef0adb3570b565246884ba0b6731099f9fe8c
-    - id: S107
-      reason: outside-approved-horizon
-      result: "Topología Herdr exacta y readback determinista de labels, panes y cwd"
-      zone: hosts
-      dependencies: [S1.18, S9.7]
-      foundations: []
-      replaces: [S9.5]
-      assignment_source:
-        commit: 43130ad40af06f3ed05671000719217bee74f0a5
-        path: agent-workflows/ASIGNACION-24-SESIONES.md
-        blob: a7c4ced3b196a6ea92a7bd8f181b98b87fc70ae3
-        line_start: 155
-        line_end: 155
-        byte_start: 7456
-        byte_end: 7583
-        fragment_sha256: 05c38114c8d00c5b8a492cc8f8757b222fe233995c8e72de0066621f74678862
-    - id: S108
-      reason: outside-approved-horizon
-      result: "Materialización idempotente de los asientos aprobados, sin autoridad de dispatch"
-      zone: asientos
-      dependencies: [S1.18, S9.7, S107]
-      foundations: []
-      replaces: [S9.5]
-      assignment_source:
-        commit: 43130ad40af06f3ed05671000719217bee74f0a5
-        path: agent-workflows/ASIGNACION-24-SESIONES.md
-        blob: a7c4ced3b196a6ea92a7bd8f181b98b87fc70ae3
-        line_start: 156
-        line_end: 156
-        byte_start: 7583
-        byte_end: 7732
-        fragment_sha256: 647abd52f3b0a53bce67ddeeeb45832da578d7ea8662685e845e98063494be63
   satisfied_history:
     - id: S1.9
       reason: omitted-completed-import-dependency

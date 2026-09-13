@@ -3,32 +3,32 @@
 
 ## 📍 Punto de retoma
 - Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.2, S12.8, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
-- Próximo trabajo ejecutable: Asientos #1 → S5.5 — Parking y retoma del loop.
+- Próximo trabajo ejecutable: Asientos #2 → S5.5 — Parking y retoma del loop.
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
 ## Estado y próximo trabajo
-- Asientos #1 → S5.5 — Parking y retoma del loop
-- Autoridad #1 → S114 — Las 76 Sesiones del plan declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado.
+- Asientos #2 → S5.5 — Parking y retoma del loop
+- Autoridad #1 → S114 — Todas las Sesiones vigentes declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado.
 - cimientos #1 → S12.1 — Ningún commit llega a master sin que la suite haya corrido sola; va primera porque es la red que hace seguras las tres mudanzas de core.mjs y sin ella cada paso es a ciegas.
 - Contratos #1 → S109 — Ventanilla única de plan: la Torre responde una asignación completa y Main deja de derivarla
-- Enrolamiento #1 → S2.9 — Enrollment público canónico por CLI
-- Hosts #1 → S4.12 — Recuperación mínima de Pi
+- Enrolamiento #1 → S121 — Binding Main-validado con Session ID canónico y procedencia durable de cada tab Tower-owned
+- Hosts #3 → S4.12 — Recuperación mínima de Pi
 - Instalación #1 → S117 — Los tres registros de instalación dejan de forzar ediciones cross-Zona: sus datos enumerados salen del test a un módulo propio declarado como Cimiento exacto.
 - Método #2 → S120 — Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
 
 ## Avance
-- **Total:** 67% (59/87 S)
+- **Total:** 65% (59/90 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
-- **Asientos:** 0% (0/1 S)
+- **Asientos:** 0% (0/2 S)
 - **Autoridad:** 0% (0/1 S)
 - **Capacidades:** 0% (0/1 S)
 - **cimientos:** 33% (1/3 S)
 - **Contratos:** 50% (1/2 S)
-- **Enrolamiento:** 0% (0/1 S)
+- **Enrolamiento:** 0% (0/2 S)
 - **Entrega:** 0% (0/1 S)
-- **Hosts:** 37% (3/8 S)
+- **Hosts:** 33% (3/9 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
 - **Método:** 66% (4/6 S)
@@ -44,10 +44,11 @@
 - Sin Sesiones abiertas.
 
 ### Asientos (asientos)
-1. **S5.5** · 🟢 LISTO · Parking y retoma del loop
+1. **S108** · 📋 PLANIFICADO · Ciclo idempotente de tabs worker Tower-owned desde witnesses S121 y estado terminal Radar
+2. **S5.5** · 🟢 LISTO · Parking y retoma del loop
 
 ### Autoridad (autoridad)
-1. **S114** · 🟢 LISTO · Las 76 Sesiones del plan declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado.
+1. **S114** · 🟢 LISTO · Todas las Sesiones vigentes declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado.
 
 ### Capacidades (capacidades)
 1. **S101** · 🔴 BLOQUEADO · Resolución de política: prepare&#95;through opaco y horizon&#95;ceiling salen de la política resuelta
@@ -60,16 +61,18 @@
 1. **S109** · 🟢 LISTO · Ventanilla única de plan: la Torre responde una asignación completa y Main deja de derivarla
 
 ### Enrolamiento (enrolamiento)
-1. **S2.9** · 🟢 LISTO · Enrollment público canónico por CLI
+1. **S121** · 🟢 LISTO · Binding Main-validado con Session ID canónico y procedencia durable de cada tab Tower-owned
+2. **S2.9** · 🟢 LISTO · Enrollment público canónico por CLI
 
 ### Entrega (entrega)
 1. **S7.1** · 📋 PLANIFICADO · Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral en un HOME/runtime aislado, preservando OpenCode como conformidad diferida.
 
 ### Hosts (hosts)
-1. **S4.12** · 🟢 LISTO · Recuperación mínima de Pi
-2. **S4.4** · 🟢 LISTO · Recuperación lógica same-host con raíz sucesora
-3. **S9.7** · 📋 PLANIFICADO · Route padre registrado y triggers públicos exactos
-4. **S9.8** · 📋 PLANIFICADO · Dispatch fire-and-forget y cierre asíncrono
+1. **S9.7** · 📋 PLANIFICADO · Route padre registrado y triggers públicos exactos
+2. **S107** · 📋 PLANIFICADO · Topología Herdr Tower-owned dentro del workspace ligado: MAIN y una tab worker por Session ID canónico, con readback determinista
+3. **S4.12** · 🟢 LISTO · Recuperación mínima de Pi
+4. **S4.4** · 🟢 LISTO · Recuperación lógica same-host con raíz sucesora
+5. **S9.8** · 📋 PLANIFICADO · Dispatch fire-and-forget y cierre asíncrono
 
 ### Instalación (instalacion)
 1. **S117** · 🟢 LISTO · Los tres registros de instalación dejan de forzar ediciones cross-Zona: sus datos enumerados salen del test a un módulo propio declarado como Cimiento exacto.
@@ -118,6 +121,8 @@
 - **S12.9:** propuesta full-sdd (Contrato inmutable S12.9; no hay precedente para revisions/2, el puntero atómico y ownership son contratos compartidos sin ejercitar, y provenance.test.mjs requiere su propia Sesión.); pendiente de revalidación en kickoff.
 - **S100:** propuesta direct (Maintainer decision, this session, 2026-09-06: the schema-level contract is fully specified, has no remaining open product decision, and needs no design phase.); revalidada direct sobre 1043d5efae487c61ae9b3e4af33cddcfe85ad38b con evidencia S100 remained a binary schema-only change after rebasing onto current master; the only upstream delta changed AGENTS.md, while the implementation diff and verified bytes remained limited to the two declared M100.1 paths..
 - **S101:** propuesta full-sdd (Approved S101 proposal/specification rev2 and Radar's canonical route-depth contract require full-sdd before the shared policy/Jornada behavior is designed.); revalidada full-sdd sobre e6b7e673f671e6bba30f9a600bf0333a1cd90af2 con evidencia C07 revalidates the same migration-only boundary over current logical master; S101 remains blocked by S9.10..
+- **S107:** propuesta direct (Puertos tab/pane, workspace ID y readback ya existen; S121 fija la identidad nueva y workspace naming queda explícitamente fuera.); pendiente de revalidación en kickoff.
+- **S108:** propuesta direct (S121 fija procedencia/Session ID, S107 fija topology/readback y Radar ya publica estado terminal; no queda contrato sin resolver.); pendiente de revalidación en kickoff.
 - **S109:** propuesta full-sdd (La propuesta está aprobada pero el diseño no: qué contiene exactamente la asignación única, cómo se declara el proveedor por proyecto y cómo se empaqueta Radar son decisiones de diseño abiertas. Radar prohíbe Módulos en full-sdd (agent-workflows/tools/radar/check.go:514-524), así que la descomposición nace de la ejecución posterior de esta ruta.); pendiente de revalidación en kickoff.
 - **S110:** propuesta direct (El resultado es binariamente verificable —el host Pi descubre o no descubre las tres skills— y no queda ninguna elección de diseño abierta: el mapeo de superficies está cerrado y verificado contra el árbol en f78216c.); revalidada direct sobre f78216cfec642cfe7cc5c32c87fa8cdf2da9108b con evidencia Árbol limpio en f78216c y .pi/settings.json declarando las tres skills; el test RED falló nombrando las tres antes de tocar nada..
 - **S111:** propuesta direct (El contrato de entrada es exacto y está publicado, el mecanismo de consumo ya existe en ledger.go, y la única elección restante —qué hacer ante un status ilegible— es derivable del precedente del propio archivo.); revalidada direct sobre 638a3f78cff475215cd1cc86cd37b8a3dcc09be5 con evidencia Salida real de gentle-ai sdd-status --json bajo 2.7.0, con schemaName, schemaVersion, nextRecommended y dependencies verificados campo por campo antes de escribir código..
@@ -128,8 +133,9 @@
 - **S113:** propuesta direct (Las dos reglas están escritas en el canon, la infraestructura de evidencia y ancestría ya existe, y la única elección restante —cuándo medir— es derivable del contrato de HEAD inmutable que la propia herramienta ya aplica.); revalidada design-tasks sobre 271a32a63a0f6ae554a2690448535bbc6ead7692 con evidencia Las 6 Sesiones archivadas del plan vigente —S4.9, S5.14, S5.15, S9.3, S9.4, S9.5— no tienen ninguna evidencia de entrega. Cuatro están reemplazadas desde references.future&#95;successors (S102 a S108) y dos, S4.9 y S9.4, se retienen como evidencia histórica sin entrega ni reemplazo: la autoridad de S9.4 lo dice textual.; razón: La ruta propuesta daba por sentado que archivar implica haber entregado, y el árbol real prueba que hay tres caminos de archivo, no uno. Decidir cuál de los tres debe declararse y cuál puede inferirse es diseño de contrato, no implementación mecánica: el criterio propuesto habría marcado las 6 archivadas del plan vigente, dos de ellas legítimas..
 - **S117:** propuesta direct (Tres extracciones mecánicas sin decisión de diseño abierta: el dato a mover ya está delimitado en cada archivo, la forma destino la fija el precedente &#96;&lt;generated:runtime-payload&gt;&#96; ya entregado, y el mecanismo de partición está cubierto por tests.); pendiente de revalidación en kickoff.
 - **S118:** propuesta direct (El mecanismo, la implementación de referencia y los archivos quedaron fijados por Audit D; no hay diseño sin resolver. &#96;chanks-3-session-kickoff&#96; la revalida una vez contra el código de la Zona.); revalidada direct sobre 832ac9d2e32f6c0047b4c73ddb814f4cf2a1f802 con evidencia Audit D §§1-2 and the real entrypoint in extensions/pi/tower-session-router.ts confirm that Pi already loads the extension and the renderer is added through registerTool/renderCall/renderResult without an unresolved product-design choice; the current master delta is disjoint from S118's three product paths..
-- **S119:** propuesta direct (Dos archivos conocidos con contrato declarado y ninguna pregunta de diseño abierta: el texto de la skill lo fija el patch preservado y la forma del registro la fijan las entradas que ya viven en él. La única elección abierta —la Zona— la cerró el maintainer el 2026-09-11.); pendiente de revalidación en kickoff.
+- **S119:** propuesta direct (Tres rutas conocidas sin decisión abierta —product/tower/skills/herdr/SKILL.md, product/tower/skills/torre-control/SKILL.md y test/install/tower-role-assets.contract.mjs—; Zona y lifecycle quedaron fijados por el maintainer el 2026-09-11/13.); pendiente de revalidación en kickoff.
 - **S120:** propuesta full-sdd (La nueva entrada de antecedentes y la reutilización de verificación definen un contrato compartido todavía no resuelto. Esta ruta se propone para diseñar S120, no obliga a usar full-sdd en las futuras Sesiones direct o design-tasks. No se inicia SDD al registrar el plan.); pendiente de revalidación en kickoff.
+- **S121:** propuesta direct (Store, assignment-location, binding y consumer existen; schema, derivación y one-shot witness quedaron fijados sin decisión abierta.); pendiente de revalidación en kickoff.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -1917,7 +1923,7 @@ Rutas históricas (evidencia): skills/torre-control-entregas/SKILL.md, test/inst
 
 ### S9.1 — Pool de asientos permanentes y asignación por Main
 - Estado derivado: ✅ COMPLETO
-- Territorio histórico: evidencia no autorizante; propietarios actuales: Asientos, Hosts, Instalación, cimientos.
+- Territorio histórico: evidencia no autorizante; propietarios actuales: Asientos, Instalación, cimientos.
 - Depende de: —
 - Cimientos: —
 - Recursos: registro de asientos, binding de asignación
@@ -2004,7 +2010,7 @@ Rutas históricas (evidencia): workspace/pi-supervisor.mjs, test/workspace/pi-su
 
 ### S9.5 — Topología y materialización visual determinista
 - Estado derivado: 📚 ARCHIVADO
-- Territorio histórico: evidencia no autorizante; propietarios actuales: Asientos, Hosts.
+- Territorio histórico: evidencia no autorizante; propietarios actuales: Asientos, cimientos.
 - Depende de: S1.18, S9.7
 - Cimientos: —
 - Recursos: sesión Herdr enfocada, tabs/panes exactos y worktrees aprobados; sin autoridad de dispatch, DB, lifecycle de worktrees ni token de entrega
@@ -2060,24 +2066,26 @@ Rutas: extensions/pi/tower-session-router.ts, extensions/pi/package.json, test/e
   - [ ] Progreso y cierre llegan por send; ask sólo aparece con una pregunta de decisión exacta y deja el assignment BLOCKED recuperable.
   - [ ] Cada assignment acepta exactamente un terminal COMPLETED, BLOCKED o FAILED con los campos de evidencia/recoverability aprobados; duplicado, stale o sin dispatch&#95;id falla cerrado.
   - [ ] Un candidato local, un pane activo o trabajo parcial sin terminal no acredita progreso ni habilita downstream.
-  - [ ] OFF no atribuye persistencia/retry Tower-owned; ON no despacha sin binding, acknowledgment y retry.
+  - [ ] Antes de cada dispatch o retry, S9.8 invoca S108 para el binding objetivo; &#96;active&#95;unchanged&#96; y cierres terminales exactos son convergencia válida, mientras evidencia ausente, fallida, ambigua o divergente produce cero dispatch.
+  - [ ] S9.8 no enumera, deriva, renombra ni cierra tabs, panes o workspaces Herdr y no interpreta los testigos persistidos por S121.
+  - [ ] OFF no atribuye persistencia/retry Tower-owned; ON exige binding y convergencia S108 del objetivo, sin bloquear por otras Sesiones activas válidas.
   - [ ] El diff toca sólo Área.
 
 #### M9.8.1 — Política de dispatch y contrato terminal
 Rutas: product/tower/skills/torre-control/SKILL.md, product/tower/skills/torre-control-entregas/SKILL.md, test/extensions/pi/tower-session-router.test.mjs
 
-- **T9.8.1.1:** RED: cubrir espera ordinaria prohibida, uso indebido de ask, terminal faltante/duplicado/stale y crédito falso por candidato parcial. → RED: espera ordinaria prohibida, uso indebido de ask, terminal faltante/duplicado/stale y crédito falso por candidato parcial quedan cubiertos.
-  - [ ] RED: espera ordinaria prohibida, uso indebido de ask, terminal faltante/duplicado/stale y crédito falso por candidato parcial quedan cubiertos.
-- **T9.8.1.2:** GREEN: registrar dispatch&#95;id, retornar tras acknowledgment y consumir send terminal con evidencia/recoverability exactas. → GREEN: dispatch&#95;id se registra, el control retorna tras acknowledgment y send terminal conserva evidencia/recoverability exactas.
-  - [ ] GREEN: dispatch&#95;id se registra, el control retorna tras acknowledgment y send terminal conserva evidencia/recoverability exactas.
-- **T9.8.1.3:** REFACTOR: separar coordinación de seguimiento, estabilizar rechazo fail-closed y probar divergencia ON/OFF sin cambiar autoridad. → REFACTOR: coordinación y seguimiento se separan, el rechazo fail-closed se estabiliza y la divergencia ON/OFF queda probada sin cambiar autoridad.
-  - [ ] REFACTOR: coordinación y seguimiento se separan, el rechazo fail-closed se estabiliza y la divergencia ON/OFF queda probada sin cambiar autoridad.
+- **T9.8.1.1:** RED: cubrir terminal inválido, crédito falso, reconcile S108 ausente/ambiguo y el deadlock que bloquea retry por una Session activa válida no objetivo. → RED: las formas terminales inválidas y toda convergencia S108 no probada producen cero dispatch.
+  - [ ] RED: espera ordinaria prohibida, uso indebido de ask, terminal inválido, crédito falso y convergencia S108 no probada quedan cubiertos.
+- **T9.8.1.2:** GREEN: registrar dispatch&#95;id, invocar el puerto acotado de S108 antes de dispatch/retry, retornar tras acknowledgment y consumir send terminal con evidencia/recoverability exactas. → GREEN: la convergencia S108 del objetivo habilita dispatch/retry; &#96;active&#95;unchanged&#96; de otros bindings no bloquea y cada terminal conserva evidencia exacta.
+  - [ ] GREEN: la reconciliación S108 válida precede cada dispatch/retry y un resultado fail-closed no produce efectos Herdr ni envío.
+- **T9.8.1.3:** REFACTOR: separar coordinación de seguimiento y reconciliación, sin enumerar ni controlar Herdr desde S9.8, y probar divergencia ON/OFF sin cambiar autoridad. → REFACTOR: S9.8 consume un único resultado acotado de S108 y no deriva ni muta topología.
+  - [ ] REFACTOR: ninguna Tarea o ruta de S9.8 enumera, deriva, renombra o cierra tabs, panes o workspaces Herdr.
 
 ### S9.9 — Binding explícito de workspace Herdr
 - Estado derivado: ✅ COMPLETO
 - Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs, scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs
 - Depende de: —
-- Cimientos: test/install/launch-worker-cli.test.mjs
+- Cimientos: test/install/launch-worker-cli.test.mjs, hosts/herdr-topology.mjs, test/hosts/herdr-topology.test.mjs, hosts/seat-cli.mjs, test/hosts/seat-cli.test.mjs
 - Recursos: binding explícito de workspace Herdr y fixtures aislados; cero mutación real
 - Criterios de aceptación:
   - [ ] hosts/herdr-topology.mjs, hosts/seat-cli.mjs, test/hosts/herdr-topology.test.mjs, test/hosts/seat-cli.test.mjs y test/install/launch-worker-cli.test.mjs; sin fallback.
@@ -2718,6 +2726,82 @@ Rutas: schemas/delivery-policy-v1.schema.json, test/contracts/s3-2-schemas.test.
   - [ ] Main remains the sole assignment and dispatch authority; S101 grants no assignment, dispatch, continuation, delivery, Tower, Herdr, database, or merge authority.
   - [ ] Future S101 runtime design, Modules, Tasks, interfaces, implementation, and tests are approved only through a new post-activation execution of this Session's full-sdd route.
 
+### S107 — Topología Herdr Tower-owned dentro del workspace ligado: MAIN y una tab worker por Session ID canónico, con readback determinista
+- Estado derivado: 📋 PLANIFICADO
+- Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs, scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs
+- Depende de: S1.18, S9.7, S121
+- Cimientos: hosts/herdr-topology.mjs, test/hosts/herdr-topology.test.mjs, hosts/seat-cli.mjs, test/hosts/seat-cli.test.mjs
+- Recursos: HERDR&#95;WORKSPACE&#95;ID explícito y recursos Herdr devueltos frescos; sin autoridad sobre recursos extranjeros
+- Criterios de aceptación:
+  - [ ] Dentro del workspace ID ligado existe una MAIN exacta y cada launch crea a lo sumo una tab worker etiquetada sólo con el session&#95;id emitido por S121; S107 no crea, nombra ni valida un workspace visible &#96;Control Tower&#96;.
+  - [ ] AGENTES, labels de asiento y seat split salen; toda tab/pane nueva prueba workspace&#95;id, IDs, label, cwd y foreground&#95;cwd antes de éxito.
+  - [ ] Sólo un recurso devuelto fresco o reprobado por binding/readback puede mutarse; extranjero o ambiguo queda intacto y falla cerrado.
+  - [ ] Antes de crear, S107 persiste un intento ligado con workspace/session/cwd esperados; tras readback finaliza &#96;recordTowerTab&#96; idempotentemente. Retry recupera sólo una coincidencia exacta y única; conflicto/ambigüedad falla sin adoptar ni limpiar recursos ajenos.
+  - [ ] Herdr genérico sigue Tower-agnostic y los tres Módulos se revisan en lotes de hasta 400 líneas.
+
+#### M107.1 — MAIN y tabs worker ligadas con readback exacto
+Rutas: hosts/herdr-topology.mjs, test/hosts/herdr-topology.test.mjs
+
+- **T107.1.1:** RED: cubrir binding/readback divergente, duplicado session&#95;id, AGENTES/seat label, recurso extranjero y cleanup excedido. → RED: identidad legacy, ambigua o extranjera falla antes de mutar.
+  - [ ] Cero adopción/cierre extranjero y cero claim de workspace-name.
+- **T107.1.2:** GREEN: persistir intento antes de crear; crear la tab y finalizar su witness tras readback, aceptando retry exacto tras crash o respuesta perdida. → GREEN: tab/pane frescos quedan probados sin AGENTES ni seat split.
+  - [ ] Workspace, IDs, label, cwd y foreground&#95;cwd coinciden.
+- **T107.1.3:** REFACTOR: encapsular witness/readback y compensar sólo la tab recién creada. → REFACTOR: una frontera explícita gobierna creación, validación y cleanup.
+  - [ ] Ningún ID se reconstruye ni se adopta sólo por label.
+
+#### M107.2 — Session ID y witness atraviesan launch, view y provider
+Rutas: hosts/launch-worker.mjs, hosts/opencode-view.mjs, hosts/production-provider.mjs, test/hosts/launch-worker.test.mjs, test/hosts/opencode-view.test.mjs, test/hosts/production-provider.test.mjs
+
+- **T107.2.1:** RED: probar request opaco, rechazo de session&#95;id/label inyectado y fallo sin witness persistido. → RED: identidad no autoritativa o witness faltante impiden éxito.
+  - [ ] Sólo el binding S121 aporta identidad.
+- **T107.2.2:** GREEN: transportar binding→worker→view, abrir intento durable y finalizarlo con IDs frescos; retry recupera sólo workspace/label/cwd/foreground exactos y únicos. → GREEN: launch termina después de persistir el witness ligado.
+  - [ ] request&#95;ref sigue siendo la única identidad pública.
+- **T107.2.3:** REFACTOR: separar transporte, view y persistencia sin filtrar labels, roots, IDs o credenciales. → REFACTOR: fronteras mínimas y Herdr genérico Tower-agnostic.
+  - [ ] No quedan imports AGENTES ni labels de asiento.
+
+#### M107.3 — Seat CLI deja la topología manual y expone reconcile acotado
+Rutas: hosts/seat-cli.mjs, test/hosts/seat-cli.test.mjs
+
+- **T107.3.1:** RED: rechazar AGENTES/seat split y flags de session/tab/workspace con cero efecto Herdr. → RED: caller no materializa ni reclama topología.
+  - [ ] Ninguna identidad llega por flags o payload libre.
+- **T107.3.2:** GREEN: dejar sólo un entrypoint Main/Tower-owned para el reconcile S108. → GREEN: seat-cli no crea views y no acepta identidad del caller.
+  - [ ] Sin flags, session&#95;id o IDs Herdr.
+- **T107.3.3:** REFACTOR: eliminar helpers AGENTES/seat split y estabilizar errores fail-closed. → REFACTOR: queda una sola frontera de reconcile.
+  - [ ] Entrada no ligada produce cero efecto Herdr.
+
+### S108 — Ciclo idempotente de tabs worker Tower-owned desde witnesses S121 y estado terminal Radar
+- Estado derivado: 📋 PLANIFICADO
+- Zona/Área: asientos · supervision/, profiles/, escalation/, support/, workspace/, test/escalation/, test/supervision/, test/support/, test/workspace/
+- Depende de: S1.18, S9.7, S107
+- Cimientos: hosts/herdr-topology.mjs, test/hosts/herdr-topology.test.mjs, hosts/seat-cli.mjs, test/hosts/seat-cli.test.mjs
+- Recursos: witnesses S121 y puerto topology S107; sin roster o active-set paralelo
+- Criterios de aceptación:
+  - [ ] Enumera sólo &#96;listTowerTabs()&#96;; antes de mutar re-lee workspace/tab/pane y valida &#96;radar.snapshot/v1&#96; para el session&#95;id almacenado.
+  - [ ] Sólo COMPLETO/ARCHIVADO cierra la tab exacta; un estado no terminal válido converge como &#96;active&#95;unchanged&#96; sin mutar, mientras evidencia inválida, desconocida o divergente falla cerrado.
+  - [ ] Terminal + recurso exacto ya ausente converge idempotentemente; ausencia no terminal, desconocida o divergente falla.
+  - [ ] No infiere ownership/liveness desde branch, worktree, asiento, label, prompt, proceso, worker o caller; no depende de S109 ni expone Herdr raw.
+  - [ ] Los dos Módulos se revisan separados y cada lote queda bajo 400 líneas.
+
+#### M108.1 — Reconcile stateless por witness contra Herdr y Radar
+Rutas: workspace/tower-tab-lifecycle.mjs, test/workspace/tower-tab-lifecycle.test.mjs
+
+- **T108.1.1:** RED: cubrir snapshot/Session/witness/readback inválidos, estado no terminal, recurso extranjero y ausencia terminal/no terminal. → RED: terminal exacto cierra, no terminal válido converge sin mutar y evidencia inválida/ambigua falla cerrado.
+  - [ ] Negativos preservan recursos y nombran razón.
+- **T108.1.2:** GREEN: iterar witnesses, re-leer topology, consultar Radar y cerrar sólo COMPLETO/ARCHIVADO. → GREEN: cada binding reconcilia independientemente y cierra una vez.
+  - [ ] Terminal ausente converge; demás faltantes fallan.
+- **T108.1.3:** REFACTOR: dejar loop stateless con puertos inyectados y sin caché/roster. → REFACTOR: ningún active-set o input público controla identidad.
+  - [ ] Resultados ligan request&#95;ref, assignment&#95;ref y session&#95;id internos.
+
+#### M108.2 — Seat CLI conecta evento/recovery sin identidad del caller
+Rutas: hosts/seat-cli.mjs, test/hosts/seat-cli.test.mjs
+
+- **T108.2.1:** RED: rechazar flags, IDs, claims, puerto ausente y convergencia ambigua con cero cierre/dispatch. → RED: entrada pública no elige tab.
+  - [ ] No reconstruye identidad.
+- **T108.2.2:** GREEN: inyectar puertos Radar/topology confiables para evento y recovery sin Herdr raw. → GREEN: devuelve sólo el resultado acotado S108.
+  - [ ] Sólo witnesses S121 y Radar controlan reconcile.
+- **T108.2.3:** REFACTOR: unificar evento/recovery y estabilizar fallos sin efectos. → REFACTOR: una sola entrada Main/Tower-owned.
+  - [ ] Sin flags de identidad ni cierre extranjero.
+
 ### S109 — Ventanilla única de plan: la Torre responde una asignación completa y Main deja de derivarla
 - Estado derivado: 🟢 LISTO
 - Zona/Área: contratos · contracts/, schemas/, registry/, test/contracts/, test/registry/
@@ -2801,7 +2885,7 @@ Rutas: agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/check&#
   - [ ] Los tipos repo y decision se prueban contra Git con la misma exigencia byte a byte que ya usa validateFragmentLocator; una cita que no resuelva falla cerrado.
   - [ ] El tipo engram se declara y no se verifica, y radar lo reporta explícitamente como no verificable: nunca lo cuenta como probado.
   - [ ] Las dependencias externas de radar siguen siendo exactamente git y gentle-ai: el Método no queda atado al Engram del maintainer y sigue siendo portable a otro producto.
-  - [ ] Las 76 Sesiones existentes quedan migradas o declaradas con su tipo; ninguna conserva la forma vieja sin tipo al cerrar la Sesión.
+  - [ ] Todas las Sesiones vigentes quedan migradas o declaradas con su tipo; ninguna conserva la forma vieja sin tipo al cerrar la migración.
   - [ ] El diff toca sólo Área.
 
 #### M112.1 — El esquema admite los tres tipos y radar los valida sin exigirlos todavía
@@ -2838,28 +2922,28 @@ Rutas: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go
 - **T116.1.3:** REFACTOR: dejar una sola función que verifica una cita, usada igual por la forma simple y por cada elemento de la lista. → REFACTOR: existe una sola verificación de cita y los tests siguen pasando.
   - [ ] REFACTOR: existe una sola verificación de cita y los tests siguen pasando.
 
-### S114 — Las 76 Sesiones del plan declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado.
+### S114 — Todas las Sesiones vigentes declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado.
 - Estado derivado: 🟢 LISTO
 - Zona/Área: autoridad · openspec/plans/, openspec/plan.yaml, openspec/ROADMAP.md, openspec/prd/, openspec/rfc/, openspec/specs/, openspec/maintenance/, openspec/config.yaml, docs/
 - Depende de: S112, S116
 - Cimientos: —
 - Recursos: openspec/plan.yaml; la migración es el único trabajo que lo escribe mientras dura
 - Criterios de aceptación:
-  - [ ] Cada Módulo migra las Sesiones de exactamente una Zona, y su lote de revisión queda por debajo del tope declarado.
-  - [ ] radar check pasa después de cada Módulo, no sólo al final: una migración parcial nunca deja el plan inválido.
+  - [ ] Cada lote de revisión migra exactamente una Zona y queda bajo el tope; M114.1 repite esos lotes serialmente.
+  - [ ] radar check pasa después de cada lote de revisión, no sólo al final: una migración parcial nunca deja el plan inválido.
   - [ ] Ninguna autoridad cambia de sentido al migrar: se declara el tipo de la cita que ya estaba escrita, nunca se inventa una nueva.
   - [ ] Al cerrar, cero Sesiones conservan la forma vieja sin tipo declarado.
   - [ ] Queda una sola copia del registro de decisiones en el árbol: openspec/plans/decision-register.md se retira y openspec/archive/legacy-planning/decision-register.md queda como la citable.
   - [ ] El diff toca sólo Área.
 
-#### M114.1 — Las Sesiones del plan declaran el tipo de su autoridad, una Zona por Módulo
+#### M114.1 — Las Sesiones del plan declaran el tipo de su autoridad, una Zona por lote de revisión
 Rutas: openspec/plan.yaml, openspec/plans/decision-register.md
 
-- **T114.1.1:** RED: fijar el orden de Zonas desde radar status y verificar que la primera Zona todavía tiene Sesiones sin tipo. → RED: el orden queda fijado y la primera Zona tiene Sesiones sin tipo declarado.
-  - [ ] RED: el orden queda fijado y la primera Zona tiene Sesiones sin tipo declarado.
+- **T114.1.1:** RED: obtener &#96;radar status --json&#96;, registrar el snapshot y su revisión como evidencia del orden de Zonas, y verificar que la primera Zona todavía tiene Sesiones sin tipo. → RED: el orden queda ligado a un snapshot/revisión de Radar y la primera Zona tiene Sesiones sin tipo declarado.
+  - [ ] RED: existe evidencia recuperable del snapshot &#96;radar.snapshot/v1&#96;, su revisión y el orden derivado; ningún total estático autoriza el lote.
 - **T114.1.2:** GREEN: migrar las Sesiones de esa Zona declarando el tipo de la cita que ya estaba escrita, sin cambiar su sentido. → GREEN: la Zona queda migrada, radar check pasa y ninguna autoridad cambió de sentido.
   - [ ] GREEN: la Zona queda migrada, radar check pasa y ninguna autoridad cambió de sentido.
-- **T114.1.3:** REFACTOR: repetir el ciclo por Zona hasta que el conteo de Sesiones sin tipo llegue a cero. → REFACTOR: cero Sesiones conservan la forma vieja y radar check pasa.
+- **T114.1.3:** REFACTOR: repetir en lotes separados, una Zona por lote, hasta llegar a cero Sesiones sin tipo. → REFACTOR: cero Sesiones conservan la forma vieja y radar check pasa.
   - [ ] REFACTOR: cero Sesiones conservan la forma vieja y radar check pasa.
 
 ### S115 — Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
@@ -3000,15 +3084,16 @@ Rutas: extensions/pi/package.json, extensions/pi/tower-session-router.ts, test/e
 ### S119 — La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
 - Estado derivado: 📋 PLANIFICADO
 - Zona/Área: producto-torre · product/tower/
-- Depende de: S117
+- Depende de: S117, S108
 - Cimientos: product/tower/skills/torre-control/SKILL.md, test/install/tower-role-assets.contract.mjs
 - Recursos: —
 - Criterios de aceptación:
-  - [ ] &#96;product/tower/skills/herdr/SKILL.md&#96; existe y reproduce textualmente el párrafo de activación del patch preservado: Herdr activa sólo ante un pedido explícito de Herdr, y despacho de la Torre, decisiones ON/OFF, selección de topología y ciclo de vida de asiento enrutan por &#96;torre-control&#96; → &#96;torre asiento&#96;.
+  - [ ] &#96;product/tower/skills/herdr/SKILL.md&#96; activa sólo ante pedido explícito y enruta assignment/topología/lifecycle por &#96;torre-control&#96; → &#96;torre asiento&#96;; cierre consume sólo S108.
+  - [ ] La skill nunca deriva trabajo activo, enumera witnesses S121, interpreta Radar, acepta roster S109 ni manipula recursos extranjeros/ambiguos.
   - [ ] La skill lleva las cuatro claves de frontmatter que exige &#96;SKILL&#95;FRONTMATTER&#95;KEYS&#96; (name, description, license, metadata) y las seis secciones que exige &#96;SKILL&#95;SECTIONS&#96;.
   - [ ] El registro de assets declara la skill con markers que fijan las dos oraciones de propiedad de la Torre y las dos de aprobación humana del patch preservado, y la suite completa pasa.
   - [ ] La skill no documenta ninguna mecánica de la CLI de Herdr que &#96;herdr --skill&#96; ya emite. Falsificador: cualquier flag, timeout o código de error documentado en ambos archivos es un duplicado y falla este criterio.
-  - [ ] &#96;radar check&#96; reporta 0 huérfanos, 0 solapes y 0 reglas sin uso con &#96;product/tower/skills/herdr/SKILL.md&#96; declarada en &#96;cimientos.rutas&#96;.
+  - [ ] &#96;radar check&#96; reporta 0 huérfanos, 0 solapes y 0 reglas sin uso, y &#96;owners()&#96; resuelve &#96;product/tower/skills/herdr/SKILL.md&#96; sólo a producto-torre, sin Cimiento.
   - [ ] &#96;product/tower/skills/torre-control/SKILL.md&#96; gana una referencia a la skill nueva y sus markers existentes siguen pasando sin cambios.
 
 #### M119.1 — La skill, declarada y con compuerta
@@ -3016,13 +3101,11 @@ Rutas: product/tower/skills/herdr/SKILL.md, product/tower/skills/torre-control/S
 
 - **T119.1.1:** RED: agregar la entrada de &#96;product/tower/skills/herdr/SKILL.md&#96; al registro de assets con su frontmatter, referencias y markers, y ver fallar la suite porque el archivo no existe. → RED: un test que falla nombrando la skill ausente.
   - [ ] RED: la suite de assets falla y el fallo nombra &#96;product/tower/skills/herdr/SKILL.md&#96;.
-- **T119.1.2:** GREEN: escribir la skill con las seis secciones exigidas, cargando el párrafo de activación y las dos reglas de aprobación humana del patch preservado, y difiriendo toda acción de asiento a &#96;torre asiento&#96;. → GREEN: la skill existe y la compuerta del registro pasa.
-  - [ ] GREEN: la suite de assets pasa.
-  - [ ] Cada marker declarado en T119.1.1 matchea, sin debilitar ninguno para hacerla pasar.
-- **T119.1.3:** REFACTOR: referenciar la skill nueva desde &#96;product/tower/skills/torre-control/SKILL.md&#96; y confirmar la reserva de &#96;product/tower/skills/herdr/SKILL.md&#96; en &#96;cimientos.rutas&#96;. → REFACTOR: la skill es alcanzable desde la ruta padre y la partición es su dueña.
-  - [ ] Los markers existentes de &#96;torre-control&#96; siguen pasando sin cambios.
-  - [ ] &#96;radar check&#96; reporta 0 huérfanos, 0 solapes y 0 reglas sin uso.
-  - [ ] La suite completa pasa.
+- **T119.1.2:** GREEN: escribir la skill, activar sólo por pedido explícito y enrutar lifecycle por &#96;torre-control&#96; → &#96;torre asiento&#96; → S108. → GREEN: skill y asset gate pasan sin eludir S107/S108.
+  - [ ] Markers fijan activación explícita y cierre S108 sin S109 ni Herdr raw.
+- **T119.1.3:** REFACTOR: referenciar la skill desde &#96;torre-control&#96;, fijar &#96;torre asiento&#96; como route lifecycle y confirmar ownership producto-torre. → REFACTOR: la skill es alcanzable y no deriva trabajo ni controla recursos extranjeros.
+  - [ ] Markers prueban S108 sin S109.
+  - [ ] &#96;radar check&#96; y suite completa pasan.
 
 ### S120 — Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
 - Estado derivado: 🟢 LISTO
@@ -3041,6 +3124,39 @@ Rutas: product/tower/skills/herdr/SKILL.md, product/tower/skills/torre-control/S
   - [ ] La matriz de viabilidad identifica por cada capacidad su soporte actual, adaptación requerida y prueba aislada pendiente; termina con una propuesta implementable sustentada o una incompatibilidad explícita, nunca con una afirmación de ejecución no realizada.
   - [ ] El resultado enumera las superficies del método afectadas, dependencias externas, criterios de la prueba aislada y condiciones de activación posterior, sin modificar paquetes externos, instalar componentes ni cambiar instrucciones globales.
 
+### S121 — Binding Main-validado con Session ID canónico y procedencia durable de cada tab Tower-owned
+- Estado derivado: 🟢 LISTO
+- Zona/Área: enrolamiento · enroll/, main-store/, test/enroll/, test/main-store.test.mjs
+- Depende de: S4.2, S4.5
+- Cimientos: test/install/launch-worker-cli.test.mjs
+- Recursos: assignment-location, launch binding y namespace de witnesses Main-owned; sin segundo assignment store
+- Criterios de aceptación:
+  - [ ] assignment-location exige session&#95;id canónico e inmutable; ausencia, forma inválida, conflicto o registro legacy falla cerrado.
+  - [ ] El binding copia ese ID sin caller injection y consumer revalida schema; session&#95;id de plan nunca se confunde con OpenCode root&#95;session&#95;id ni se infiere.
+  - [ ] Antes de crear, S121 persiste un intento con identidades derivadas y expectativas workspace/cwd; &#96;recordTowerTab(readback)&#96; lo finaliza idempotentemente, acepta repetición byte-idéntica y rechaza conflicto, forged o ambigüedad.
+  - [ ] &#96;listTowerTabs()&#96; enumera procedencia read-only, nunca liveness, active-set, dispatch o cierre.
+  - [ ] La fixture registra sólo identidad Main-owned y la CLI acepta únicamente request&#95;ref opaco. Cada lote de revisión queda bajo 400 líneas.
+
+#### M121.1 — Session ID y witness quedan ligados de punta a punta
+Rutas: main-store/store.mjs, main-store/launch-consumer.mjs, test/main-store.test.mjs
+
+- **T121.1.1:** RED: cubrir ID ausente/malformado/legacy/injected y witness duplicado/forged/malformado. → RED: identidad no Main-owned y witness no ligado fallan sin persistencia.
+  - [ ] Registros existentes permanecen inmutables.
+- **T121.1.2:** GREEN: registrar ID en assignment-location, copiar/revalidar binding y exponer recordTowerTab/listTowerTabs ligados. → GREEN: consumer devuelve ID canónico y persiste/lista un witness exacto.
+  - [ ] Identidades se derivan internamente; IDs Herdr sólo del readback.
+- **T121.1.3:** REFACTOR: centralizar schema/error, escritura atómica owner-only y readback seguro. → REFACTOR: frontera única, pública mínima y sin active-set.
+  - [ ] Si alcanza 400 líneas, se subdivide antes de revisión.
+
+#### M121.2 — Fixture empaquetada conserva request&#95;ref opaco
+Rutas: test/install/launch-worker-cli.test.mjs
+
+- **T121.2.1:** RED: exigir registro Main-owned de session&#95;id y rechazar session&#95;id/label público. → RED: fixture actual falla por identidad faltante.
+  - [ ] request&#95;ref es la única identidad pública.
+- **T121.2.2:** GREEN: registrar session&#95;id en assignment-location sin agregar argv/payload público. → GREEN: CLI consume binding opaco y mantiene compatibilidad.
+  - [ ] No expone label ni IDs Herdr.
+- **T121.2.3:** REFACTOR: retirar datos legacy/duplicados y dejar una fuente Main-owned. → REFACTOR: una sola relación assignment&#95;ref↔session&#95;id.
+  - [ ] Diff limitado a la fixture Cimiento.
+
 ## Capacidad
 8 Zona(s) compatibles con trabajo LISTO: asientos, autoridad, cimientos, contratos, enrolamiento, hosts, instalacion, metodo.
 Este valor es un pronóstico estático. No adquiere locks, no autentica al proceso invocante y no recupera claims stale.
@@ -3051,8 +3167,6 @@ Este valor es un pronóstico estático. No adquiere locks, no autentica al proce
 - **S104** · future_successor · agent-workflows/ASIGNACION-24-SESIONES.md@43130ad40af06f3ed05671000719217bee74f0a5:L135-L135 · outside-approved-horizon
 - **S105** · future_successor · agent-workflows/ASIGNACION-24-SESIONES.md@43130ad40af06f3ed05671000719217bee74f0a5:L145-L145 · outside-approved-horizon
 - **S106** · future_successor · agent-workflows/ASIGNACION-24-SESIONES.md@43130ad40af06f3ed05671000719217bee74f0a5:L146-L146 · outside-approved-horizon
-- **S107** · future_successor · agent-workflows/ASIGNACION-24-SESIONES.md@43130ad40af06f3ed05671000719217bee74f0a5:L155-L155 · outside-approved-horizon
-- **S108** · future_successor · agent-workflows/ASIGNACION-24-SESIONES.md@43130ad40af06f3ed05671000719217bee74f0a5:L156-L156 · outside-approved-horizon
 - **S1.9** · satisfied_history · openspec/plans/plan-1/STATUS.md@43130ad40af06f3ed05671000719217bee74f0a5:L24-L24 · omitted-completed-import-dependency
 - **S1.10** · satisfied_history · openspec/plans/plan-1/STATUS.md@43130ad40af06f3ed05671000719217bee74f0a5:L25-L25 · omitted-completed-import-dependency
 - **S2.4** · satisfied_history · openspec/plans/plan-2/STATUS.md@43130ad40af06f3ed05671000719217bee74f0a5:L19-L19 · omitted-completed-import-dependency
