@@ -2,14 +2,14 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S12.2, S12.8, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S12.2, S12.8, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Próximo trabajo ejecutable: Asientos #1 → S5.5 — Parking y retoma del loop.
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
 ## Estado y próximo trabajo
 - Asientos #1 → S5.5 — Parking y retoma del loop
 - Autoridad #1 → S114 — Las 76 Sesiones del plan declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado.
-- cimientos #1 → S1.20 — Probe tipado y read-only del modo Tower
+- cimientos #1 → S12.1 — Ningún commit llega a master sin que la suite haya corrido sola; va primera porque es la red que hace seguras las tres mudanzas de core.mjs y sin ella cada paso es a ciegas.
 - Contratos #1 → S109 — Ventanilla única de plan: la Torre responde una asignación completa y Main deja de derivarla
 - Enrolamiento #1 → S2.9 — Enrollment público canónico por CLI
 - Hosts #1 → S118 — Una operación de la Torre se reconoce a simple vista dentro de una sesión Pi: emoji, nombre y color propios en los cuatro estados observables.
@@ -17,14 +17,14 @@
 - Método #2 → S120 — Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
 
 ## Avance
-- **Total:** 65% (57/87 S)
+- **Total:** 66% (58/87 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 0% (0/1 S)
 - **Autoridad:** 0% (0/1 S)
 - **Capacidades:** 0% (0/1 S)
-- **cimientos:** 0% (0/3 S)
+- **cimientos:** 33% (1/3 S)
 - **Contratos:** 50% (1/2 S)
 - **Enrolamiento:** 0% (0/1 S)
 - **Entrega:** 0% (0/1 S)
@@ -53,9 +53,8 @@
 1. **S101** · 🔴 BLOQUEADO · Resolución de política: prepare&#95;through opaco y horizon&#95;ceiling salen de la política resuelta
 
 ### cimientos (cimientos)
-1. **S1.20** · 🟢 LISTO · Probe tipado y read-only del modo Tower
-2. **S12.1** · 🟢 LISTO · Ningún commit llega a master sin que la suite haya corrido sola; va primera porque es la red que hace seguras las tres mudanzas de core.mjs y sin ella cada paso es a ciegas.
-3. **S12.6** · 📋 PLANIFICADO · La raíz se ordena y el README describe el producto real.
+1. **S12.1** · 🟢 LISTO · Ningún commit llega a master sin que la suite haya corrido sola; va primera porque es la red que hace seguras las tres mudanzas de core.mjs y sin ella cada paso es a ciegas.
+2. **S12.6** · 📋 PLANIFICADO · La raíz se ordena y el README describe el producto real.
 
 ### Contratos (contratos)
 1. **S109** · 🟢 LISTO · Ventanilla única de plan: la Torre responde una asignación completa y Main deja de derivarla
@@ -101,7 +100,7 @@
 - **S101:** contaminación semántica declarada por otra Sesión
 
 ## Rutas
-- **S1.20:** propuesta direct (decision 104 and Engram observation 10008); pendiente de revalidación en kickoff.
+- **S1.20:** propuesta direct (decision 104 and Engram observation 10008); revalidada direct sobre 89b75cccbee3a3fffe371e776a68f9a62c7912fe con evidencia The read-only Tower-mode contract remained fully specified after rebasing onto current master; upstream S100 changed disjoint schema/test paths, while S1.20 preserved its verified bytes and stayed limited to core.mjs and test/lifecycle.test.mjs..
 - **S2.9:** propuesta direct (decision 104, Engram observation 10008, and delivered S8.3 contract); pendiente de revalidación en kickoff.
 - **S4.4:** propuesta design-tasks (decisiones 37-40, decisión 45, Engram 9040/9044 y REQUIREMENTS §14.4); pendiente de revalidación en kickoff.
 - **S4.8:** propuesta design-tasks (contrato WIP preservado de S4.8); pendiente de revalidación en kickoff.
@@ -423,7 +422,7 @@ Rutas históricas (evidencia): adapters/pi/runtime.mjs, test/adapters/pi/runtime
   - [ ] and no claim above five clients is made.
 
 ### S1.20 — Probe tipado y read-only del modo Tower
-- Estado derivado: 🟢 LISTO
+- Estado derivado: ✅ COMPLETO
 - Zona/Área: cimientos · —
 - Depende de: —
 - Cimientos: core.mjs, test/lifecycle.test.mjs

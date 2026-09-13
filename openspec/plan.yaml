@@ -591,6 +591,12 @@ sesiones:
     ruta:
       propuesta: direct
       autoridad: decision 104 and Engram observation 10008
+      revalidacion:
+        resultado: direct
+        base: 89b75cccbee3a3fffe371e776a68f9a62c7912fe
+        evidencia: "The read-only Tower-mode contract remained fully specified after rebasing onto current master; upstream S100 changed disjoint schema/test paths, while S1.20 preserved its verified bytes and stayed limited to core.mjs and test/lifecycle.test.mjs."
+    entrega:
+      commit: 77c65d31e40de1992ceed2e7c4a39abf169d9a88
     importacion_legacy:
       origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
       origen_ruta: openspec/plans/plan-1/STATUS.md
