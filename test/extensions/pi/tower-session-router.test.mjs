@@ -94,38 +94,95 @@ async function activationFixture(overrides = {}) {
 }
 
 describe("Pi Tower session router", () => {
-  test("declares a closed capability contract with a tested-only Pi baseline", async () => {
+  test("keeps the reviewed transform inventory manifest-owned", async () => {
     const manifestUrl = new URL("../../../extensions/pi/package.json", import.meta.url);
+    const routerUrl = new URL("../../../extensions/pi/tower-session-router.ts", import.meta.url);
     const manifest = JSON.parse(await readFile(manifestUrl, "utf8"));
+    const routerSource = await readFile(routerUrl, "utf8");
+    const compatibility = manifest.controlTowerCompatibility;
 
-    expect(manifest.controlTowerCompatibility).toEqual({
-      contract: "pi-input-extension-capabilities/v1",
-      testedBaseline: { piVersion: "0.84.4" },
-      activationEvidence: {
-        schema: "control-tower-pi-activation/v1",
-        path: "./control-tower-activation.json",
-          exactBinding: ["repo.root.realpath+device+inode", "repo.gitCommonDir.realpath+device+inode"],
-        immutableSnapshot: ["manifest", "skill"],
-      },
-      requiredCapabilities: [
-        "extension.default-export.factory-arity-1",
-        "events.input.registration.pi-on-input",
-        "events.input.shape.text-images-source-streamingBehavior",
-        "events.input.result.continue-transform-handled",
-        "ui.local-notification",
-        "transforms.reviewed-inventory-and-order",
-      ],
-      reviewedTransforms: [
-        { order: 1, id: "tower-session-router", entrypoint: "./tower-session-router.ts" },
-      ],
+    expect(compatibility.contract).toBe("pi-input-extension-capabilities/v1");
+    expect(compatibility.testedBaseline).toEqual({ piVersion: "0.84.4" });
+    expect(compatibility.activationEvidence).toEqual({
+      schema: "control-tower-pi-activation/v1",
+      path: "./control-tower-activation.json",
+      exactBinding: ["repo.root.realpath+device+inode", "repo.gitCommonDir.realpath+device+inode"],
+      immutableSnapshot: ["manifest", "skill"],
     });
+    expect(compatibility.requiredCapabilities).toEqual([
+      "extension.default-export.factory-arity-1",
+      "events.input.registration.pi-on-input",
+      "events.input.shape.text-images-source-streamingBehavior",
+      "events.input.result.continue-transform-handled",
+      "ui.local-notification",
+      "tools.registration.pi-register-tool",
+      "tools.parameters.closed-subcommand-enum",
+      "tools.execution.pi-exec",
+      "tools.render-call.lifecycle-badge",
+      "transforms.reviewed-inventory-and-order",
+    ]);
+    expect(compatibility.reviewedTransforms).toHaveLength(1);
+    expect(compatibility.reviewedTransforms[0].order).toBe(1);
+    expect(compatibility.reviewedTransforms[0].id).toBe("tower-session-router");
+    expect(compatibility.reviewedTransforms[0].entrypoint).toBe("./tower-session-router.ts");
+    expect(routerSource).not.toContain("REVIEWED_TRANSFORMS");
     expect(manifest.pi).toEqual({ extensions: ["./tower-session-router.ts"] });
     expect(manifest).not.toHaveProperty("engines");
     expect(manifest).not.toHaveProperty("dependencies");
     expect(manifest).not.toHaveProperty("peerDependencies");
-    expect(JSON.stringify(manifest.controlTowerCompatibility)).not.toMatch(
+    expect(JSON.stringify(compatibility)).not.toMatch(
       /(?:min(?:imum)?Version|max(?:imum)?Version|versionRange|semver|accept(?:ed|s)?Version)/iu,
     );
+  });
+
+  test("registers exactly one enumerated Torre tool with its badge in every lifecycle state", () => {
+    const tools = [];
+    towerSessionRouter({ on: () => {}, registerTool: (tool) => tools.push(tool) });
+
+    expect(tools).toHaveLength(1);
+    const [torre] = tools;
+    expect(torre.name).toBe("torre");
+    expect(torre.parameters.properties.subcommand.enum).toEqual([
+      "asiento", "launch-worker", "install", "diagnose", "upgrade", "rollback", "uninstall",
+      "main-config", "provision-main", "bootstrap-admin", "on", "off", "status", "log", "unlock", "reset",
+      "CV_STATUS", "CV_INSPECT", "CV_REQUEST_CONTEXT", "CV_ASSIGN", "CV_PAUSE", "CV_RESUME", "CV_RUN_TESTS",
+      "CV_GRANT_DELIVERY", "CV_HOLD_DELIVERY", "CV_STOP_DELIVERY", "CV_ANSWER", "CV_MERGE_MAIN", "CV_DB_PUSH",
+    ]);
+
+    const theme = { fg: (tone, text) => `${tone}:${text}`, bold: (text) => text };
+    for (const [context, status, tone] of [
+      [{ argsComplete: false }, "preparing", "warning"],
+      [{ argsComplete: true }, "running", "warning"],
+      [{ executionStarted: true }, "completed", "success"],
+      [{ isError: true }, "failed", "error"],
+    ]) {
+      expect(torre.renderCall({ subcommand: "status" }, theme, context).render(80)).toEqual([
+        `${tone}:🗼 Torre · ${status} · status`,
+      ]);
+    }
+
+    const narrowTheme = { fg: (tone, text) => `${tone}:<${text}>`, bold: (text) => text };
+    const narrowBadge = torre.renderCall({ subcommand: "status" }, narrowTheme, { argsComplete: false });
+    expect(narrowBadge.render(12)).toEqual(["warning:<🗼 Torre · p>"]);
+    expect(narrowBadge.render(1)).toEqual(["warning:<>"]);
+  });
+
+  test("delegates the selected closed subcommand and surfaces CLI failures", async () => {
+    let torre;
+    let outcome = { code: 0, stdout: "ARMADA", stderr: "" };
+    const calls = [];
+    towerSessionRouter({
+      on: () => {}, registerTool: (tool) => { torre = tool; },
+      exec: async (...args) => { calls.push(args); return outcome; },
+    });
+
+    await expect(torre.execute("call", { subcommand: "status" }, undefined, undefined, { cwd: "/repo" })).resolves.toEqual({
+      content: [{ type: "text", text: "ARMADA" }], details: { subcommand: "status" },
+    });
+    expect(calls).toEqual([["torre", ["status"], { signal: undefined, cwd: "/repo" }]]);
+
+    outcome = { code: 2, stdout: "", stderr: "locked" };
+    await expect(torre.execute("call", { subcommand: "unlock" })).rejects.toThrow("locked");
   });
 
   test.each([

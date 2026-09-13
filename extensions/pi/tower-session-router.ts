@@ -30,8 +30,16 @@ type RouterContext = {
   isIdle(): boolean;
   ui: { notify(message: string, level: "error"): void };
 };
+type TowerTool = {
+  name: "torre"; label: "Torre"; description: string;
+  parameters: { type: "object"; properties: { subcommand: unknown }; required: readonly ["subcommand"] };
+  execute(toolCallId: string, params: { subcommand: TowerSubcommand }, signal?: AbortSignal, onUpdate?: unknown, ctx?: { cwd?: string }): Promise<unknown>;
+  renderCall(args: { subcommand: TowerSubcommand }, theme: TowerBadgeTheme, context?: TowerBadgeContext): TowerBadge;
+};
 type PiApi = {
   on(event: "input", handler: ReturnType<typeof createTowerSessionRouter>): void;
+  registerTool?(tool: TowerTool): void;
+  exec?(command: string, args: string[], options?: { signal?: AbortSignal; cwd?: string }): Promise<{ code: number; stdout: string; stderr: string }>;
 };
 export type TowerEnrollmentResolver = (pi?: PiApi) => TowerEnrollmentResult;
 
@@ -49,11 +57,63 @@ const REQUIRED_CAPABILITIES = Object.freeze([
   "events.input.shape.text-images-source-streamingBehavior",
   "events.input.result.continue-transform-handled",
   "ui.local-notification",
+  "tools.registration.pi-register-tool",
+  "tools.parameters.closed-subcommand-enum",
+  "tools.execution.pi-exec",
+  "tools.render-call.lifecycle-badge",
   "transforms.reviewed-inventory-and-order",
 ]);
-const REVIEWED_TRANSFORMS = Object.freeze([
-  Object.freeze({ order: 1, id: "tower-session-router", entrypoint: "./tower-session-router.ts" }),
-]);
+export const TORRE_SUBCOMMANDS = Object.freeze([
+  "asiento", "launch-worker", "install", "diagnose", "upgrade", "rollback", "uninstall",
+  "main-config", "provision-main", "bootstrap-admin", "on", "off", "status", "log", "unlock", "reset",
+  "CV_STATUS", "CV_INSPECT", "CV_REQUEST_CONTEXT", "CV_ASSIGN", "CV_PAUSE", "CV_RESUME", "CV_RUN_TESTS",
+  "CV_GRANT_DELIVERY", "CV_HOLD_DELIVERY", "CV_STOP_DELIVERY", "CV_ANSWER", "CV_MERGE_MAIN", "CV_DB_PUSH",
+] as const);
+type TowerSubcommand = (typeof TORRE_SUBCOMMANDS)[number];
+type TowerBadgeTheme = { fg(tone: "warning" | "success" | "error", text: string): string; bold(text: string): string };
+type TowerBadgeContext = { argsComplete?: boolean; executionStarted?: boolean; isError?: boolean; isPartial?: boolean; lastComponent?: unknown };
+type TowerLifecycle = "preparing" | "running" | "completed" | "failed";
+const TOWER_LIFECYCLE_TONES: Readonly<Record<TowerLifecycle, "warning" | "success" | "error">> = Object.freeze({
+  preparing: "warning", running: "warning", completed: "success", failed: "error",
+});
+
+const clipTowerBadgeText = (text: string, width: number): string => {
+  let remaining = Number.isFinite(width) ? Math.max(0, Math.floor(width)) : 0;
+  let clipped = "";
+  for (const character of text) {
+    const columns = character === "🗼" ? 2 : 1;
+    if (columns > remaining) break;
+    clipped += character;
+    remaining -= columns;
+  }
+  return clipped;
+};
+
+class TowerBadge {
+  private text = "";
+  private tone: "warning" | "success" | "error" = "warning";
+  private theme: TowerBadgeTheme | undefined;
+  update(text: string, tone: "warning" | "success" | "error", theme: TowerBadgeTheme): void {
+    this.text = text;
+    this.tone = tone;
+    this.theme = theme;
+  }
+  render(width: number): string[] {
+    return [this.theme!.fg(this.tone, this.theme!.bold(clipTowerBadgeText(this.text, width)))];
+  }
+  invalidate(): void {}
+}
+
+function renderTowerBadge(args: { subcommand: TowerSubcommand }, theme: TowerBadgeTheme, context?: TowerBadgeContext): TowerBadge {
+  const status: TowerLifecycle = context?.isError === true ? "failed"
+    : context?.executionStarted === true && context.isPartial !== true ? "completed"
+      : context?.argsComplete === false ? "preparing" : "running";
+  const tone = TOWER_LIFECYCLE_TONES[status];
+  const badge = context?.lastComponent instanceof TowerBadge ? context.lastComponent : new TowerBadge();
+  badge.update(`🗼 Torre · ${status} · ${args.subcommand}`, tone, theme);
+  return badge;
+}
+
 const ACTIVATION_FILE = "control-tower-activation.json";
 const ACTIVATION_CONTRACT = Object.freeze({
   schema: "control-tower-pi-activation/v1", path: `./${ACTIVATION_FILE}`,
@@ -66,6 +126,9 @@ const unsafe = (reason: "unsafe" | "corrupt" | "ambiguous"): TowerEnrollmentResu
 const record = (value: unknown): value is Record<string, any> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 const same = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right);
+const reviewedTransformInventory = (value: unknown) => Array.isArray(value) && value.length === 1 && record(value[0]) &&
+  Object.keys(value[0]).length === 3 && value[0].order === 1 &&
+  value[0].id === "tower-session-router" && value[0].entrypoint === "./tower-session-router.ts";
 const validSha = (value: unknown) => typeof value === "string" && /^[a-f0-9]{64}$/u.test(value);
 
 const physical = (value: unknown): value is PhysicalPath => record(value) &&
@@ -105,8 +168,8 @@ export function createTowerEnrollmentResolver(readers: ActivationReaders): Tower
       const compatibility = JSON.parse(manifestBytes).controlTowerCompatibility;
       if (!record(compatibility) || compatibility.contract !== "pi-input-extension-capabilities/v1" ||
         !same(compatibility.activationEvidence, ACTIVATION_CONTRACT) || !same(compatibility.requiredCapabilities, REQUIRED_CAPABILITIES) ||
-        !same(compatibility.reviewedTransforms, REVIEWED_TRANSFORMS) || !same(candidate.requiredCapabilities, REQUIRED_CAPABILITIES) ||
-        !same(candidate.reviewedTransforms, REVIEWED_TRANSFORMS)) return unsafe("unsafe");
+        !reviewedTransformInventory(compatibility.reviewedTransforms) || !same(candidate.requiredCapabilities, REQUIRED_CAPABILITIES) ||
+        !same(candidate.reviewedTransforms, compatibility.reviewedTransforms)) return unsafe("unsafe");
       if (!validSha(candidate.capabilityFingerprint) || readers.sha256(JSON.stringify(compatibility)) !== candidate.capabilityFingerprint) return unsafe("corrupt");
       return Object.freeze({ enrollment: "approved", skillLocation: skillRef.sourcePath, skillBase: skillRef.base,
         skillBody: skillBytes, sourceIsCurrent: () => readers.sha256(readers.readBytes(manifestRef.sourcePath)) === manifestRef.sha256 &&
@@ -231,6 +294,24 @@ export function createTowerSessionExtension(
     try { router = createTowerSessionRouter(resolveEnrollment(pi)); }
     catch { router = createTowerSessionRouter(unsafe("corrupt")); }
     pi.on("input", router);
+    pi.registerTool?.({
+      name: "torre",
+      label: "Torre",
+      description: "Run one closed Torre subcommand.",
+      parameters: {
+        type: "object",
+        properties: { subcommand: { type: "string", enum: TORRE_SUBCOMMANDS } },
+        required: ["subcommand"],
+      },
+      async execute(_toolCallId, params, signal, _onUpdate, ctx) {
+        if (!pi.exec) throw new Error("CT_PI_TORRE_EXEC_UNAVAILABLE");
+        const result = await pi.exec("torre", [params.subcommand], { signal, cwd: ctx?.cwd });
+        const output = [result.stdout, result.stderr].filter(Boolean).join("\n");
+        if (result.code !== 0) throw new Error(output || `torre ${params.subcommand} failed`);
+        return { content: [{ type: "text", text: output || `torre ${params.subcommand} completed` }], details: { subcommand: params.subcommand } };
+      },
+      renderCall: renderTowerBadge,
+    });
   };
 }
 

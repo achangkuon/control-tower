@@ -20,6 +20,10 @@
       "events.input.shape.text-images-source-streamingBehavior",
       "events.input.result.continue-transform-handled",
       "ui.local-notification",
+      "tools.registration.pi-register-tool",
+      "tools.parameters.closed-subcommand-enum",
+      "tools.execution.pi-exec",
+      "tools.render-call.lifecycle-badge",
       "transforms.reviewed-inventory-and-order"
     ],
     "reviewedTransforms": [
