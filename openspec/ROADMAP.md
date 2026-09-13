@@ -2,12 +2,11 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.2, S12.8, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
-- Próximo trabajo ejecutable: Asientos #2 → S5.5 — Parking y retoma del loop.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.2, S12.8, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Próximo trabajo ejecutable: Autoridad #1 → S114 — Todas las Sesiones vigentes declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
 ## Estado y próximo trabajo
-- Asientos #2 → S5.5 — Parking y retoma del loop
 - Autoridad #1 → S114 — Todas las Sesiones vigentes declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado.
 - cimientos #1 → S12.1 — Ningún commit llega a master sin que la suite haya corrido sola; va primera porque es la red que hace seguras las tres mudanzas de core.mjs y sin ella cada paso es a ciegas.
 - Contratos #1 → S109 — Ventanilla única de plan: la Torre responde una asignación completa y Main deja de derivarla
@@ -17,11 +16,11 @@
 - Método #2 → S120 — Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
 
 ## Avance
-- **Total:** 64% (59/92 S)
+- **Total:** 65% (60/92 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
-- **Asientos:** 0% (0/2 S)
+- **Asientos:** 50% (1/2 S)
 - **Autoridad:** 0% (0/1 S)
 - **Capacidades:** 0% (0/1 S)
 - **cimientos:** 33% (1/3 S)
@@ -45,7 +44,6 @@
 
 ### Asientos (asientos)
 1. **S108** · 📋 PLANIFICADO · Ciclo idempotente de tabs worker Tower-owned desde witnesses S121 y estado terminal Radar
-2. **S5.5** · 🟢 LISTO · Parking y retoma del loop
 
 ### Autoridad (autoridad)
 1. **S114** · 🟢 LISTO · Todas las Sesiones vigentes declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado.
@@ -109,7 +107,7 @@
 - **S4.4:** propuesta design-tasks (decisiones 37-40, decisión 45, Engram 9040/9044 y REQUIREMENTS §14.4); pendiente de revalidación en kickoff.
 - **S4.8:** propuesta design-tasks (contrato WIP preservado de S4.8); pendiente de revalidación en kickoff.
 - **S4.12:** propuesta design-tasks (contrato S4.12 y decisiones 81 y 87); pendiente de revalidación en kickoff.
-- **S5.5:** propuesta design-tasks (maintainer rebase 2026-08-17 and decision 78); pendiente de revalidación en kickoff.
+- **S5.5:** propuesta design-tasks (maintainer rebase 2026-08-17 and decision 78); revalidada design-tasks sobre 6c9b869acf952ac2b2e7d01d619e63e41ee81732 con evidencia El bloque canónico de S5.5 permanece byte-idéntico tras las entregas prioritarias de planificación; no hay solapamientos con sus nueve rutas ni cambios en sus dependencias importadas. La causalidad baseline de los dos fallos del gate pre-push quedó probada en archivos prístinos y el candidato conserva sus verificaciones focused y SDD..
 - **S7.1:** propuesta design-tasks (Decisiones 32, 33 y 85; reconciliación Pi-first vigente y asignación Entrega aprobada.); pendiente de revalidación en kickoff.
 - **S8.12:** propuesta design-tasks (Decisiones 88, 95 y 100; Engram 9921.); pendiente de revalidación en kickoff.
 - **S8.13:** propuesta full-sdd (Decisiones 88, 100 y 102; Engram 9921, 9956 rev2 y 9963.); pendiente de revalidación en kickoff.
@@ -1319,7 +1317,7 @@ Rutas históricas (evidencia): escalation/routing.mjs, test/escalation/routing.t
   - [ ] Los testigos de bytes permanecen idénticos.
 
 ### S5.5 — Parking y retoma del loop
-- Estado derivado: 🟢 LISTO
+- Estado derivado: ✅ COMPLETO
 - Zona/Área: asientos · supervision/, profiles/, escalation/, support/, workspace/, test/escalation/, test/supervision/, test/support/, test/workspace/
 - Depende de: S5.10
 - Cimientos: —
@@ -3252,7 +3250,7 @@ Rutas: agent-workflows/templates/session-routing.md
   - [ ] REFACTOR: la regla vive en un solo lugar y la prueba sigue pasando.
 
 ## Capacidad
-8 Zona(s) compatibles con trabajo LISTO: asientos, autoridad, cimientos, contratos, enrolamiento, hosts, instalacion, metodo.
+7 Zona(s) compatibles con trabajo LISTO: autoridad, cimientos, contratos, enrolamiento, hosts, instalacion, metodo.
 Este valor es un pronóstico estático. No adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references

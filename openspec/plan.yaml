@@ -3303,6 +3303,12 @@ sesiones:
     ruta:
       propuesta: design-tasks
       autoridad: maintainer rebase 2026-08-17 and decision 78
+      revalidacion:
+        resultado: design-tasks
+        base: 6c9b869acf952ac2b2e7d01d619e63e41ee81732
+        evidencia: "El bloque canónico de S5.5 permanece byte-idéntico tras las entregas prioritarias de planificación; no hay solapamientos con sus nueve rutas ni cambios en sus dependencias importadas. La causalidad baseline de los dos fallos del gate pre-push quedó probada en archivos prístinos y el candidato conserva sus verificaciones focused y SDD."
+    entrega:
+      commit: 2143a92785d4e95609469d7c6e4381f24b20b2be
     importacion_legacy:
       origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
       origen_ruta: openspec/plans/plan-5/STATUS.md
