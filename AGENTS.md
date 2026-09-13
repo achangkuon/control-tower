@@ -114,12 +114,15 @@ This builder has no candidate coordination route. Future enablement requires a t
   elaboración técnica compacta. Ambas continúan automáticamente por
   diseño/Tareas → apply → tests → checkpoint sin inventar proposal/spec ni inflarse a
   `full-sdd`.
-- El presupuesto duro aplica a **todas las rutas**: máximo **400 líneas authored**
-  —adiciones más eliminaciones— por unidad de commit directo que sea independientemente
-  verificable y revertible. No hay excepciones de tamaño silenciosas.
-- Un forecast superior a 400 se implementa como unidades secuenciales de trabajo,
-  cada una en su propio commit directo verificable y revertible; este repo no usa PRs
-  ni PRs encadenados.
+- Las **400 líneas** son una **referencia de revisión, no un límite duro**, y aplican a
+  todas las rutas. Miden adiciones más eliminaciones del **trabajo implementado** en cada
+  unidad de commit directo: código, tests y skills. No cuentan los artefactos de
+  planificación bajo `openspec/` —proposal, spec, design, tasks— ni los archivos generados.
+- Si el forecast supera 400, el agente **pregunta al responsable antes de implementar**:
+  se parte en unidades secuenciales, cada una en su propio commit directo verificable y
+  revertible, o se acepta una excepción de tamaño. Superar la referencia no es un
+  bloqueo; superarla sin preguntar sí está prohibido. Este repo no usa PRs ni PRs
+  encadenados.
 - Si ese desglose impide que una Sesión conserve un alcance coherente, se divide en dos
   o más Sesiones bajo la jerarquía canónica `Plan → Sesión → Módulo → Tarea`. No se
   crea un quinto nivel ni se renombra ninguno de los cuatro.
