@@ -545,6 +545,15 @@ class InstallerTests(unittest.TestCase):
         self.assertIn("release only actual resources", content)
         self.assertNotIn("fictitious", content)
 
+    def test_routing_selects_next_work_only_from_the_radar_queue(self):
+        content = (
+            ROOT / "templates/session-routing.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("radar status", content)
+        self.assertIn("`LISTO`", content)
+        self.assertIn("never selects work", content)
+
     def test_hyphenated_retired_skill_is_actually_retired(self):
         # Listed only under the underscore spelling, it matched no directory on disk.
         retired = INSTALLER.runtime_skill_roots(self.home)[0] / "coordinador-multi-agente"

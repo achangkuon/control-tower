@@ -3,6 +3,11 @@
 
 - Primary authority for starting or continuing one approved Sesión is `chanks-3-session-kickoff` at
   `{{REPO_ROOT}}/skills/chanks-3-session-kickoff/SKILL.md`.
+- In a repository with `openspec/plan.yaml`, what comes next is chosen only from `radar status`:
+  propose `LISTO` Sesiones in their Zona queue order and let the human choose. Memory, an old
+  SDD change, the archived corpus, or the next ID after the last delivered Sesión never selects work.
+  When one of them points at a Sesión that is not `LISTO`, report its computed state and blocker
+  instead of recommending it.
 - Planning is one fixed eight-step flow. `chanks-2-planificador-granular` executes it directly;
   it is not a parent router and has no child-skill hierarchy.
 - A read-only planning evidence helper may prepare sources, conflicts, and a proposed delta.
