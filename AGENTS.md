@@ -20,6 +20,21 @@ distintos y ambos defendibles.
 Un consumidor que necesite las cifras las pide con `radar status --json`
 (`radar.snapshot/v1`); no re-parsea el ROADMAP ni reimplementa el cálculo.
 
+### Cómo se elige qué sigue
+
+**Para saber qué trabajo sigue, corré `radar status`** (desde `agent-workflows/tools/radar`,
+con `-C <raíz del repo>`). Sólo se proponen para arrancar Sesiones en estado `LISTO`, en el
+orden de la cola de su Zona. El humano elige entre ellas; el agente propone, no decide.
+
+Nunca elijas trabajo a partir de la memoria (Engram), de un cambio viejo en
+`openspec/changes/`, del corpus archivado o del número siguiente a la última Sesión
+entregada. Si alguna de esas fuentes apunta a una Sesión que no está `LISTO`, decilo con su
+estado calculado y su bloqueo, y no la presentes como opción recomendada.
+
+Ya pasó: el 2026-09-12 un agente retomó la Torre desde la memoria, siguió la numeración
+hasta S1.19 y preparó una Sesión entera. Radar la daba `BLOQUEADO`: no tenía territorio y
+tenía una decisión abierta.
+
 Qué pasó con el corpus anterior:
 
 | Dónde | Qué es ahora |
