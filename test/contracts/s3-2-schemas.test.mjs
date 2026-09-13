@@ -55,4 +55,24 @@ describe("S3.2 schema contracts", () => {
       expect(validate(name, fixtures[name])).toEqual(fixtures[name])
     }
   })
+
+  test("allows a delivery policy that omits planning.prepare_through", () => {
+    expect(validate("deliveryPolicy", fixtures.deliveryPolicy)).toEqual(fixtures.deliveryPolicy)
+  })
+
+  test("rejects a delivery policy with an unsupported planning.prepare_through", () => {
+    expect(() => validate("deliveryPolicy", {
+      ...fixtures.deliveryPolicy,
+      planning: { horizon_ceiling: 1, prepare_through: "MODULOS" },
+    })).toThrow()
+  })
+
+  test("allows a delivery policy with planning.prepare_through set to TAREAS", () => {
+    const deliveryPolicy = {
+      ...fixtures.deliveryPolicy,
+      planning: { horizon_ceiling: 1, prepare_through: "TAREAS" },
+    }
+
+    expect(validate("deliveryPolicy", deliveryPolicy)).toEqual(deliveryPolicy)
+  })
 })
