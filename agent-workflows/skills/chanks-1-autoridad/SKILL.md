@@ -1,6 +1,6 @@
 ---
 name: chanks-1-autoridad
-description: "Trigger: autoridad, idea, feature, descubrimiento, heredado, proyecto nuevo. Enruta el trabajo de autoridad a una variante nominal."
+description: "Trigger: autoridad, idea, feature, descubrimiento, heredado, adopción, proyecto nuevo. Enruta el trabajo de autoridad a una variante nominal."
 license: Apache-2.0
 metadata:
   author: gentleman-programming
@@ -26,6 +26,7 @@ Activa cuando hay que convertir una intención en alcance aprobado, Zonas y auto
 | Alcance nuevo sobre producto vivo | `chanks-1-feature` |
 | Diagnóstico de producto vivo | `chanks-1-descubrimiento` |
 | Partición de producto heredado | `chanks-1-heredado` |
+| Repositorio existente sin plan.yaml | `chanks-1-adopcion` |
 | Proyecto nuevo desde cero | `chanks-1-project-kickoff` |
 
 ## Execution Steps

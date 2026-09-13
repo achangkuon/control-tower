@@ -27,6 +27,7 @@ CHANKS_SKILLS = (
     "chanks-1-descubrimiento",
     "chanks-1-feature",
     "chanks-1-heredado",
+    "chanks-1-adopcion",
     "chanks-1-prd",
     "chanks-1-project-kickoff",
     "chanks-1-requirements",

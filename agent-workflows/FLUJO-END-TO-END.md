@@ -114,6 +114,7 @@ no se fusionan skills solo porque participan del mismo flujo.**
 | Alcance nuevo sobre producto vivo | `chanks-1-feature` | ¿cómo entra sin romper el PRD? |
 | Producto vivo, diagnóstico | `chanks-1-descubrimiento` | ¿qué hay acá y qué está roto? |
 | Producto vivo, partición | `chanks-1-heredado` | ¿cómo se divide para trabajar en paralelo? |
+| Repo existente sin `plan.yaml` | `chanks-1-adopcion` | ¿cómo se adopta el modelo sin migrar la historia cerrada? |
 | Proyecto nuevo | `chanks-1-project-kickoff` (mini-madre) | ¿de cero, en qué orden? |
 
 `chanks-1-project-kickoff` **deja de escribir documentos**: solo ordena y sostiene el gate

@@ -559,7 +559,7 @@ installer's explicit reversible retirement archive; they are not aliases.
 | Tramo | Function | Canonical skills |
 |---|---|---|
 | `0` | Cross-cutting support | `chanks-0-agente-soporte`, `chanks-0-explicalo-simple`, `chanks-0-session-context-loader`, `chanks-0-skill-composer` |
-| `1` | Authority | `chanks-1-autoridad`, `chanks-1-brain-dump`, `chanks-1-cierre-de-decisiones`, `chanks-1-descubrimiento`, `chanks-1-feature`, `chanks-1-heredado`, `chanks-1-prd`, `chanks-1-project-kickoff`, `chanks-1-requirements`, `chanks-1-rfc`, `chanks-1-terreno` |
+| `1` | Authority | `chanks-1-adopcion`, `chanks-1-autoridad`, `chanks-1-brain-dump`, `chanks-1-cierre-de-decisiones`, `chanks-1-descubrimiento`, `chanks-1-feature`, `chanks-1-heredado`, `chanks-1-prd`, `chanks-1-project-kickoff`, `chanks-1-requirements`, `chanks-1-rfc`, `chanks-1-terreno` |
 | `2` | Planning | `chanks-2-planificador-granular` |
 | `3` | Routing | `chanks-3-session-kickoff` |
 | `4` | Execution | `chanks-4-puente`, `chanks-4-unattended-implementation` |

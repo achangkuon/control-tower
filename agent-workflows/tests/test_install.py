@@ -350,6 +350,21 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(set(INSTALLER.CHANKS_SKILLS), actual_chanks)
         self.assertTrue(set(INSTALLER.RETIRED_SKILLS).isdisjoint(INSTALLER.SKILLS))
 
+    def test_chanks_1_adopcion_is_installed_and_listed(self):
+        """The tramo-1 adoption skill must ship in the roster and land on disk.
+
+        Sibling to chanks-1-heredado/chanks-1-autoridad: an existing repo
+        adopting plan.yaml needs this skill on every runtime, not just in
+        the source tree.
+        """
+        self.assertIn("chanks-1-adopcion", INSTALLER.CHANKS_SKILLS)
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw)
+            self._seed_runtime(home)
+            INSTALLER.apply(home, ROOT)
+            for root in (home / ".agents/skills", home / ".claude/skills"):
+                self.assertTrue((root / "chanks-1-adopcion/SKILL.md").is_file())
+
     def test_project_owned_tower_delivery_skill_is_not_distributed(self):
         self.assertNotIn("torre-control-entregas", INSTALLER.SKILLS)
         self.assertIn("torre-control-entregas", INSTALLER.RETIRED_SKILLS)
