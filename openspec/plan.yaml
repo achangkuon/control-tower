@@ -7471,6 +7471,184 @@ sesiones:
             resultado: "REFACTOR: una sola relación assignment_ref↔session_id."
             criterios: ["Diff limitado a la fixture Cimiento."]
 
+  - id: S122
+    zona: metodo
+    resultado: "Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados."
+    autoridad: "Decisiones explícitas de Emilio del 2026-09-12 y 2026-09-13 en la conversación de diseño del horizonte (Claude Code, sesión ed42515b): los siete estados no cambian y Radar suma un motivo calculado; los tipos son espera natural, espera atascada, falta decidir y falta planificar; el horizonte mantiene 2 Sesiones LISTO por Zona como número propio, separado de planning.horizon_ceiling de S101. Hoy radar status --json expone sólo id, zona, estado y resultado (agent-workflows/tools/radar/snapshot.go:55-60) y la clasificación completa se obtuvo con un script aparte."
+    depende_de: []
+    cimientos: []
+    recurso: []
+    criterios:
+      - "Para el plan vigente, los siete estados que calcula Radar son idénticos antes y después del cambio."
+      - "Cada Sesión en PLANIFICADO o BLOQUEADO lleva un motivo con exactamente uno de cuatro tipos —espera-natural, espera-atascada, falta-decision, falta-planificar— y los IDs de su raíz; LISTO, COMPLETO, ARCHIVADO y DIFERIDO no llevan motivo."
+      - "Una Sesión PLANIFICADO cuya cadena de dependencias termina en una BLOQUEADO se clasifica espera-atascada y nombra esa raíz; una cuya cadena termina sólo en LISTO se clasifica espera-natural."
+      - "Una dependencia hacia un ID ausente de sesiones se clasifica falta-planificar y nombra ese ID; un ciclo de dependencias produce un resultado estable y nunca cuelga ni entra en pánico."
+      - "Por cada Zona, radar.snapshot/v1 informa cuántas Sesiones LISTO tiene en cola y marca déficit de horizonte cuando son menos de 2, con las raíces a preparar ordenadas por cuántas Sesiones destraba cada una."
+      - "El umbral de horizonte es 2 y el cálculo no lee planning.horizon_ceiling ni la política que resuelve S101."
+      - "La vista generada muestra el motivo al lado de cada Sesión no lista."
+      - "Radar sigue sin escribir openspec/plan.yaml y sin lanzar, asignar ni despachar trabajo."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Las situaciones que impiden estar LISTO se modelan como estados nuevos, como subestados de BLOQUEADO o como una nota de motivo?"
+        resolucion: "Como una nota de motivo calculada al lado del estado. Los siete estados del canon quedan intactos."
+        autoridad: "Decisión de Emilio del 2026-09-13, elegida sobre tres alternativas presentadas con su consecuencia."
+        clase: contrato-visible
+        falsificador: "Radar agrega, combina o renombra un estado, o cambia el estado calculado de alguna Sesión del plan vigente."
+        descartadas:
+          - opcion: "Agregar un estado nuevo por cada tipo."
+            razon: "Rompe el conjunto cerrado de siete del canon §9 y obliga a cambiar el schema versionado del snapshot de sesiones, su contrato, la vista y los cuatro agentes."
+          - opcion: "Mover espera atascada y falta planificar a BLOQUEADO con un subestado."
+            razon: "Cambia el significado de dos estados y lleva BLOQUEADO de 10 a 15 Sesiones, que el canon trata como defecto de planificación."
+      - tipo: resuelta
+        pregunta: "¿De dónde sale el umbral de 2 Sesiones LISTO por Zona?"
+        resolucion: "Es un número propio del horizonte, fijo en 2 por Zona y separado de planning.horizon_ceiling, que S101 resuelve con otro significado."
+        autoridad: "Decisión de Emilio del 2026-09-13, elegida sobre tres alternativas presentadas con su consecuencia."
+        clase: contrato-visible
+        falsificador: "Radar lee planning.horizon_ceiling o la política resuelta para calcular el déficit de horizonte."
+        descartadas:
+          - opcion: "Fijarlo en Radar ahora y reemplazarlo por la política de S101 cuando se destrabe."
+            razon: "Ata al mismo número dos significados distintos: cuántas Sesiones hereda una aprobación y cuántas LISTO mantiene cada Zona."
+          - opcion: "Leerlo de la política resuelta desde el principio."
+            razon: "S122 heredaría el bloqueo de S101 y no podría empezar."
+    ruta:
+      propuesta: design-tasks
+      autoridad: "El producto está decidido —cuatro tipos, estados intactos, umbral 2 por Zona— pero falta descubrimiento técnico acotado: la forma exacta del motivo y del déficit dentro de radar.snapshot/v1 y cómo se presentan en la vista generada."
+    modulos:
+      - id: M122.1
+        resultado: "Radar clasifica el motivo y la raíz de cada Sesión no lista"
+        rutas: [agent-workflows/tools/radar/state.go, agent-workflows/tools/radar/state_test.go]
+        tareas:
+          - id: T122.1.1
+            accion: "RED: cubrir espera natural, espera atascada, falta decidir propia y heredada por Contamina, falta planificar por ID ausente, un ciclo de dependencias y una Sesión DIFERIDO."
+            resultado: "RED: los siete casos quedan cubiertos y fallan contra la clasificación actual."
+            criterios: ["RED: los siete casos quedan cubiertos y fallan contra la clasificación actual."]
+          - id: T122.1.2
+            accion: "GREEN: calcular el motivo y la raíz siguiendo la cadena de dependencias después de EstadosAt, sin tocar el cálculo de estados."
+            resultado: "GREEN: cada caso recibe su tipo y su raíz, y los estados del plan vigente no cambian."
+            criterios: ["GREEN: cada caso recibe su tipo y su raíz, y los estados del plan vigente no cambian."]
+          - id: T122.1.3
+            accion: "REFACTOR: dejar un único clasificador que recorra el grafo una vez por Sesión y reutilice los estados ya calculados."
+            resultado: "REFACTOR: existe un solo clasificador y los tests siguen pasando."
+            criterios: ["REFACTOR: existe un solo clasificador y los tests siguen pasando."]
+      - id: M122.2
+        resultado: "radar.snapshot/v1 expone el motivo y el déficit de horizonte por Zona"
+        rutas: [agent-workflows/tools/radar/snapshot.go, agent-workflows/tools/radar/snapshot_test.go]
+        tareas:
+          - id: T122.2.1
+            accion: "RED: exigir motivo en las Sesiones no listas y, por Zona, el conteo LISTO, el déficit con menos de 2 y las raíces ordenadas por Sesiones destrabadas."
+            resultado: "RED: el snapshot actual falla por motivo y déficit ausentes."
+            criterios: ["RED: el snapshot actual falla por motivo y déficit ausentes."]
+          - id: T122.2.2
+            accion: "GREEN: proyectar el motivo de M122.1 y calcular el déficit con umbral fijo 2 sin leer política."
+            resultado: "GREEN: el snapshot informa motivo y déficit, y los campos existentes conservan su forma."
+            criterios: ["GREEN: el snapshot informa motivo y déficit, y los campos existentes conservan su forma."]
+          - id: T122.2.3
+            accion: "REFACTOR: nombrar el umbral en una sola constante del horizonte y mantener la proyección libre de lógica de clasificación."
+            resultado: "REFACTOR: el umbral vive en un solo lugar y los tests siguen pasando."
+            criterios: ["REFACTOR: el umbral vive en un solo lugar y los tests siguen pasando."]
+      - id: M122.3
+        resultado: "La vista generada muestra el motivo al lado de cada Sesión no lista"
+        rutas: [agent-workflows/tools/radar/render.go, agent-workflows/tools/radar/render_test.go, agent-workflows/tools/radar/testdata/ROADMAP.golden.md]
+        tareas:
+          - id: T122.3.1
+            accion: "RED: exigir en la vista el motivo y la raíz de una Sesión espera-atascada y de una falta-planificar."
+            resultado: "RED: la vista actual falla por no mostrar el motivo."
+            criterios: ["RED: la vista actual falla por no mostrar el motivo."]
+          - id: T122.3.2
+            accion: "GREEN: renderizar el motivo junto al estado y regenerar el golden."
+            resultado: "GREEN: la vista muestra el motivo sin cambiar el orden de las colas."
+            criterios: ["GREEN: la vista muestra el motivo sin cambiar el orden de las colas."]
+          - id: T122.3.3
+            accion: "REFACTOR: reutilizar resumenBloqueo en vez de duplicar el texto del bloqueo."
+            resultado: "REFACTOR: un solo lugar arma el texto del motivo y los tests siguen pasando."
+            criterios: ["REFACTOR: un solo lugar arma el texto del motivo y los tests siguen pasando."]
+
+  - id: S123
+    zona: metodo
+    resultado: "Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano."
+    autoridad: "Decisiones explícitas de Emilio del 2026-09-13 en la conversación de diseño del horizonte (Claude Code, sesión ed42515b): el horizonte se activa cuando una Zona queda con menos de 2 LISTO y nunca prepara más de 2; la detección es determinista, Support prepara, el humano decide y Main registra como único escritor del plan; Main despacha a Support directo, sin avisar antes. Support ya es un ayudante read-only que nunca despacha ni escribe el plan (agent-workflows/skills/chanks-0-agente-soporte/SKILL.md:12,22,24)."
+    depende_de: [S122]
+    cimientos: []
+    recurso: []
+    criterios:
+      - "La evidencia de cierre de chanks-7-session-doc incluye el déficit de horizonte por Zona que informa Radar, o declara explícitamente que no hay déficit."
+      - "chanks-0-agente-soporte acepta un pedido de horizonte: para falta-decision arma la decisión con chanks-1-cierre-de-decisiones, para falta-planificar deriva la propuesta a chanks-2-planificador-granular y para espera-atascada trabaja sobre la raíz."
+      - "Un pedido de horizonte nunca prepara más de 2 Sesiones LISTO por Zona, y espera natural o DIFERIDO nunca lo generan."
+      - "La plantilla de ruteo de Main declara que ante un déficit Main pide la preparación a Support directamente, presenta el resultado al humano y registra sólo lo que el humano confirma."
+      - "Ninguna superficie modificada da a Support autoridad para activarse solo, despachar, asignar o escribir openspec/plan.yaml."
+      - "Una prueba automatizada del Método falla si cualquiera de las tres superficies pierde su regla."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Quién ejecuta el horizonte: Support, Main o un agente de worktree dedicado?"
+        resolucion: "La detección es determinista y la hace Radar; Support prepara en su propio asiento; el humano decide; Main registra como único escritor. Un asiento de planificación sólo se usa cuando falta planificar muchas Sesiones, y también devuelve la propuesta a Main."
+        autoridad: "Decisión de Emilio del 2026-09-13, elegida sobre las alternativas presentadas con su consecuencia."
+        clase: seguridad-y-permisos
+        falsificador: "Support se activa solo, escribe openspec/plan.yaml o despacha trabajo, o un agente dedicado al horizonte registra decisiones sin pasar por Main."
+        descartadas:
+          - opcion: "Un agente de worktree dedicado al horizonte."
+            razon: "Duplica a Support o se convierte en un segundo escritor del plan, y ocupa un asiento bajo el techo humano."
+      - tipo: resuelta
+        pregunta: "Cuando Radar marca un déficit, ¿Main pone a Support a preparar directamente o primero avisa al humano?"
+        resolucion: "Directamente. Preparar sólo lee y propone, y la decisión igual pasa por el humano cuando Main presenta el resultado."
+        autoridad: "Decisión de Emilio del 2026-09-13."
+        clase: contrato-visible
+        falsificador: "Main pregunta antes de preparar, o registra una preparación sin que el humano la haya confirmado."
+        descartadas:
+          - opcion: "Avisar al humano antes de preparar."
+            razon: "Suma una interrupción por cada déficit antes de la que ya ocurre al decidir."
+    ruta:
+      propuesta: design-tasks
+      autoridad: "Las tres superficies y sus reglas están decididas, pero falta descubrimiento técnico acotado: qué prueba del Método fija el contrato de las skills y de la plantilla de ruteo, y dónde vive dentro de agent-workflows."
+    modulos:
+      - id: M123.1
+        resultado: "El cierre de una Sesión informa el déficit de horizonte"
+        rutas: [agent-workflows/skills/chanks-7-session-doc/SKILL.md]
+        tareas:
+          - id: T123.1.1
+            accion: "RED: exigir que la evidencia de cierre incluya el déficit de horizonte o declare que no hay."
+            resultado: "RED: la skill actual no informa el déficit y la prueba falla."
+            criterios: ["RED: la skill actual no informa el déficit y la prueba falla."]
+          - id: T123.1.2
+            accion: "GREEN: agregar el paso que lee el déficit de radar.snapshot/v1 y lo devuelve junto a la evidencia de cierre."
+            resultado: "GREEN: el cierre informa el déficit sin escribir el plan."
+            criterios: ["GREEN: el cierre informa el déficit sin escribir el plan."]
+          - id: T123.1.3
+            accion: "REFACTOR: dejar el déficit dentro del contrato de salida existente, sin sumar otra fuente."
+            resultado: "REFACTOR: un solo contrato de salida y la prueba sigue pasando."
+            criterios: ["REFACTOR: un solo contrato de salida y la prueba sigue pasando."]
+      - id: M123.2
+        resultado: "Support acepta un pedido de horizonte sin ganar autoridad"
+        rutas: [agent-workflows/skills/chanks-0-agente-soporte/SKILL.md]
+        tareas:
+          - id: T123.2.1
+            accion: "RED: exigir la puerta de pedido de horizonte por tipo y el tope de 2, y rechazar cualquier autoridad de despacho o escritura."
+            resultado: "RED: la skill actual no tiene la puerta y la prueba falla."
+            criterios: ["RED: la skill actual no tiene la puerta y la prueba falla."]
+          - id: T123.2.2
+            accion: "GREEN: agregar la puerta que deriva falta-decision a chanks-1-cierre-de-decisiones, falta-planificar a chanks-2-planificador-granular y espera-atascada a su raíz."
+            resultado: "GREEN: Support prepara según el tipo y devuelve la propuesta a Main."
+            criterios: ["GREEN: Support prepara según el tipo y devuelve la propuesta a Main."]
+          - id: T123.2.3
+            accion: "REFACTOR: conservar las reglas duras existentes de solo lectura sin duplicarlas."
+            resultado: "REFACTOR: las reglas de solo lectura quedan en un solo lugar y la prueba sigue pasando."
+            criterios: ["REFACTOR: las reglas de solo lectura quedan en un solo lugar y la prueba sigue pasando."]
+      - id: M123.3
+        resultado: "La regla de ruteo de Main despacha la preparación sin preguntar"
+        rutas: [agent-workflows/templates/session-routing.md]
+        tareas:
+          - id: T123.3.1
+            accion: "RED: exigir en la plantilla el despacho directo a Support ante un déficit y el registro sólo de lo confirmado."
+            resultado: "RED: la plantilla actual no tiene la regla y la prueba falla."
+            criterios: ["RED: la plantilla actual no tiene la regla y la prueba falla."]
+          - id: T123.3.2
+            accion: "GREEN: agregar la regla de despacho directo, presentación al humano y registro por Main."
+            resultado: "GREEN: la plantilla declara el flujo completo del horizonte."
+            criterios: ["GREEN: la plantilla declara el flujo completo del horizonte."]
+          - id: T123.3.3
+            accion: "REFACTOR: ubicar la regla junto al ruteo de Sesiones existente sin repetir el canon."
+            resultado: "REFACTOR: la regla vive en un solo lugar y la prueba sigue pasando."
+            criterios: ["REFACTOR: la regla vive en un solo lugar y la prueba sigue pasando."]
+
 references:
   future_successors:
     - id: S102

@@ -17,7 +17,7 @@
 - Método #2 → S120 — Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
 
 ## Avance
-- **Total:** 65% (59/90 S)
+- **Total:** 64% (59/92 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -31,7 +31,7 @@
 - **Hosts:** 33% (3/9 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 66% (4/6 S)
+- **Método:** 50% (4/8 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -85,6 +85,8 @@
 ### Método (metodo)
 1. **S115** · 📋 PLANIFICADO · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
 2. **S120** · 🟢 LISTO · Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
+3. **S122** · 🟢 LISTO · Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
+4. **S123** · 📋 PLANIFICADO · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -136,6 +138,8 @@
 - **S119:** propuesta direct (Tres rutas conocidas sin decisión abierta —product/tower/skills/herdr/SKILL.md, product/tower/skills/torre-control/SKILL.md y test/install/tower-role-assets.contract.mjs—; Zona y lifecycle quedaron fijados por el maintainer el 2026-09-11/13.); pendiente de revalidación en kickoff.
 - **S120:** propuesta full-sdd (La nueva entrada de antecedentes y la reutilización de verificación definen un contrato compartido todavía no resuelto. Esta ruta se propone para diseñar S120, no obliga a usar full-sdd en las futuras Sesiones direct o design-tasks. No se inicia SDD al registrar el plan.); pendiente de revalidación en kickoff.
 - **S121:** propuesta direct (Store, assignment-location, binding y consumer existen; schema, derivación y one-shot witness quedaron fijados sin decisión abierta.); pendiente de revalidación en kickoff.
+- **S122:** propuesta design-tasks (El producto está decidido —cuatro tipos, estados intactos, umbral 2 por Zona— pero falta descubrimiento técnico acotado: la forma exacta del motivo y del déficit dentro de radar.snapshot/v1 y cómo se presentan en la vista generada.); pendiente de revalidación en kickoff.
+- **S123:** propuesta design-tasks (Las tres superficies y sus reglas están decididas, pero falta descubrimiento técnico acotado: qué prueba del Método fija el contrato de las skills y de la plantilla de ruteo, y dónde vive dentro de agent-workflows.); pendiente de revalidación en kickoff.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -3156,6 +3160,96 @@ Rutas: test/install/launch-worker-cli.test.mjs
   - [ ] No expone label ni IDs Herdr.
 - **T121.2.3:** REFACTOR: retirar datos legacy/duplicados y dejar una fuente Main-owned. → REFACTOR: una sola relación assignment&#95;ref↔session&#95;id.
   - [ ] Diff limitado a la fixture Cimiento.
+
+### S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
+- Estado derivado: 🟢 LISTO
+- Zona/Área: metodo · agent-workflows/
+- Depende de: —
+- Cimientos: —
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] Para el plan vigente, los siete estados que calcula Radar son idénticos antes y después del cambio.
+  - [ ] Cada Sesión en PLANIFICADO o BLOQUEADO lleva un motivo con exactamente uno de cuatro tipos —espera-natural, espera-atascada, falta-decision, falta-planificar— y los IDs de su raíz; LISTO, COMPLETO, ARCHIVADO y DIFERIDO no llevan motivo.
+  - [ ] Una Sesión PLANIFICADO cuya cadena de dependencias termina en una BLOQUEADO se clasifica espera-atascada y nombra esa raíz; una cuya cadena termina sólo en LISTO se clasifica espera-natural.
+  - [ ] Una dependencia hacia un ID ausente de sesiones se clasifica falta-planificar y nombra ese ID; un ciclo de dependencias produce un resultado estable y nunca cuelga ni entra en pánico.
+  - [ ] Por cada Zona, radar.snapshot/v1 informa cuántas Sesiones LISTO tiene en cola y marca déficit de horizonte cuando son menos de 2, con las raíces a preparar ordenadas por cuántas Sesiones destraba cada una.
+  - [ ] El umbral de horizonte es 2 y el cálculo no lee planning.horizon&#95;ceiling ni la política que resuelve S101.
+  - [ ] La vista generada muestra el motivo al lado de cada Sesión no lista.
+  - [ ] Radar sigue sin escribir openspec/plan.yaml y sin lanzar, asignar ni despachar trabajo.
+
+#### M122.1 — Radar clasifica el motivo y la raíz de cada Sesión no lista
+Rutas: agent-workflows/tools/radar/state.go, agent-workflows/tools/radar/state&#95;test.go
+
+- **T122.1.1:** RED: cubrir espera natural, espera atascada, falta decidir propia y heredada por Contamina, falta planificar por ID ausente, un ciclo de dependencias y una Sesión DIFERIDO. → RED: los siete casos quedan cubiertos y fallan contra la clasificación actual.
+  - [ ] RED: los siete casos quedan cubiertos y fallan contra la clasificación actual.
+- **T122.1.2:** GREEN: calcular el motivo y la raíz siguiendo la cadena de dependencias después de EstadosAt, sin tocar el cálculo de estados. → GREEN: cada caso recibe su tipo y su raíz, y los estados del plan vigente no cambian.
+  - [ ] GREEN: cada caso recibe su tipo y su raíz, y los estados del plan vigente no cambian.
+- **T122.1.3:** REFACTOR: dejar un único clasificador que recorra el grafo una vez por Sesión y reutilice los estados ya calculados. → REFACTOR: existe un solo clasificador y los tests siguen pasando.
+  - [ ] REFACTOR: existe un solo clasificador y los tests siguen pasando.
+
+#### M122.2 — radar.snapshot/v1 expone el motivo y el déficit de horizonte por Zona
+Rutas: agent-workflows/tools/radar/snapshot.go, agent-workflows/tools/radar/snapshot&#95;test.go
+
+- **T122.2.1:** RED: exigir motivo en las Sesiones no listas y, por Zona, el conteo LISTO, el déficit con menos de 2 y las raíces ordenadas por Sesiones destrabadas. → RED: el snapshot actual falla por motivo y déficit ausentes.
+  - [ ] RED: el snapshot actual falla por motivo y déficit ausentes.
+- **T122.2.2:** GREEN: proyectar el motivo de M122.1 y calcular el déficit con umbral fijo 2 sin leer política. → GREEN: el snapshot informa motivo y déficit, y los campos existentes conservan su forma.
+  - [ ] GREEN: el snapshot informa motivo y déficit, y los campos existentes conservan su forma.
+- **T122.2.3:** REFACTOR: nombrar el umbral en una sola constante del horizonte y mantener la proyección libre de lógica de clasificación. → REFACTOR: el umbral vive en un solo lugar y los tests siguen pasando.
+  - [ ] REFACTOR: el umbral vive en un solo lugar y los tests siguen pasando.
+
+#### M122.3 — La vista generada muestra el motivo al lado de cada Sesión no lista
+Rutas: agent-workflows/tools/radar/render.go, agent-workflows/tools/radar/render&#95;test.go, agent-workflows/tools/radar/testdata/ROADMAP.golden.md
+
+- **T122.3.1:** RED: exigir en la vista el motivo y la raíz de una Sesión espera-atascada y de una falta-planificar. → RED: la vista actual falla por no mostrar el motivo.
+  - [ ] RED: la vista actual falla por no mostrar el motivo.
+- **T122.3.2:** GREEN: renderizar el motivo junto al estado y regenerar el golden. → GREEN: la vista muestra el motivo sin cambiar el orden de las colas.
+  - [ ] GREEN: la vista muestra el motivo sin cambiar el orden de las colas.
+- **T122.3.3:** REFACTOR: reutilizar resumenBloqueo en vez de duplicar el texto del bloqueo. → REFACTOR: un solo lugar arma el texto del motivo y los tests siguen pasando.
+  - [ ] REFACTOR: un solo lugar arma el texto del motivo y los tests siguen pasando.
+
+### S123 — Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
+- Estado derivado: 📋 PLANIFICADO
+- Zona/Área: metodo · agent-workflows/
+- Depende de: S122
+- Cimientos: —
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] La evidencia de cierre de chanks-7-session-doc incluye el déficit de horizonte por Zona que informa Radar, o declara explícitamente que no hay déficit.
+  - [ ] chanks-0-agente-soporte acepta un pedido de horizonte: para falta-decision arma la decisión con chanks-1-cierre-de-decisiones, para falta-planificar deriva la propuesta a chanks-2-planificador-granular y para espera-atascada trabaja sobre la raíz.
+  - [ ] Un pedido de horizonte nunca prepara más de 2 Sesiones LISTO por Zona, y espera natural o DIFERIDO nunca lo generan.
+  - [ ] La plantilla de ruteo de Main declara que ante un déficit Main pide la preparación a Support directamente, presenta el resultado al humano y registra sólo lo que el humano confirma.
+  - [ ] Ninguna superficie modificada da a Support autoridad para activarse solo, despachar, asignar o escribir openspec/plan.yaml.
+  - [ ] Una prueba automatizada del Método falla si cualquiera de las tres superficies pierde su regla.
+
+#### M123.1 — El cierre de una Sesión informa el déficit de horizonte
+Rutas: agent-workflows/skills/chanks-7-session-doc/SKILL.md
+
+- **T123.1.1:** RED: exigir que la evidencia de cierre incluya el déficit de horizonte o declare que no hay. → RED: la skill actual no informa el déficit y la prueba falla.
+  - [ ] RED: la skill actual no informa el déficit y la prueba falla.
+- **T123.1.2:** GREEN: agregar el paso que lee el déficit de radar.snapshot/v1 y lo devuelve junto a la evidencia de cierre. → GREEN: el cierre informa el déficit sin escribir el plan.
+  - [ ] GREEN: el cierre informa el déficit sin escribir el plan.
+- **T123.1.3:** REFACTOR: dejar el déficit dentro del contrato de salida existente, sin sumar otra fuente. → REFACTOR: un solo contrato de salida y la prueba sigue pasando.
+  - [ ] REFACTOR: un solo contrato de salida y la prueba sigue pasando.
+
+#### M123.2 — Support acepta un pedido de horizonte sin ganar autoridad
+Rutas: agent-workflows/skills/chanks-0-agente-soporte/SKILL.md
+
+- **T123.2.1:** RED: exigir la puerta de pedido de horizonte por tipo y el tope de 2, y rechazar cualquier autoridad de despacho o escritura. → RED: la skill actual no tiene la puerta y la prueba falla.
+  - [ ] RED: la skill actual no tiene la puerta y la prueba falla.
+- **T123.2.2:** GREEN: agregar la puerta que deriva falta-decision a chanks-1-cierre-de-decisiones, falta-planificar a chanks-2-planificador-granular y espera-atascada a su raíz. → GREEN: Support prepara según el tipo y devuelve la propuesta a Main.
+  - [ ] GREEN: Support prepara según el tipo y devuelve la propuesta a Main.
+- **T123.2.3:** REFACTOR: conservar las reglas duras existentes de solo lectura sin duplicarlas. → REFACTOR: las reglas de solo lectura quedan en un solo lugar y la prueba sigue pasando.
+  - [ ] REFACTOR: las reglas de solo lectura quedan en un solo lugar y la prueba sigue pasando.
+
+#### M123.3 — La regla de ruteo de Main despacha la preparación sin preguntar
+Rutas: agent-workflows/templates/session-routing.md
+
+- **T123.3.1:** RED: exigir en la plantilla el despacho directo a Support ante un déficit y el registro sólo de lo confirmado. → RED: la plantilla actual no tiene la regla y la prueba falla.
+  - [ ] RED: la plantilla actual no tiene la regla y la prueba falla.
+- **T123.3.2:** GREEN: agregar la regla de despacho directo, presentación al humano y registro por Main. → GREEN: la plantilla declara el flujo completo del horizonte.
+  - [ ] GREEN: la plantilla declara el flujo completo del horizonte.
+- **T123.3.3:** REFACTOR: ubicar la regla junto al ruteo de Sesiones existente sin repetir el canon. → REFACTOR: la regla vive en un solo lugar y la prueba sigue pasando.
+  - [ ] REFACTOR: la regla vive en un solo lugar y la prueba sigue pasando.
 
 ## Capacidad
 8 Zona(s) compatibles con trabajo LISTO: asientos, autoridad, cimientos, contratos, enrolamiento, hosts, instalacion, metodo.
