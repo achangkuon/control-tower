@@ -2,7 +2,7 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S12.2, S12.8, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.2, S12.8, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Próximo trabajo ejecutable: Asientos #1 → S5.5 — Parking y retoma del loop.
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
@@ -12,12 +12,12 @@
 - cimientos #1 → S12.1 — Ningún commit llega a master sin que la suite haya corrido sola; va primera porque es la red que hace seguras las tres mudanzas de core.mjs y sin ella cada paso es a ciegas.
 - Contratos #1 → S109 — Ventanilla única de plan: la Torre responde una asignación completa y Main deja de derivarla
 - Enrolamiento #1 → S2.9 — Enrollment público canónico por CLI
-- Hosts #1 → S118 — Una operación de la Torre se reconoce a simple vista dentro de una sesión Pi: emoji, nombre y color propios en los cuatro estados observables.
+- Hosts #1 → S4.12 — Recuperación mínima de Pi
 - Instalación #1 → S117 — Los tres registros de instalación dejan de forzar ediciones cross-Zona: sus datos enumerados salen del test a un módulo propio declarado como Cimiento exacto.
 - Método #2 → S120 — Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
 
 ## Avance
-- **Total:** 66% (58/87 S)
+- **Total:** 67% (59/87 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -28,7 +28,7 @@
 - **Contratos:** 50% (1/2 S)
 - **Enrolamiento:** 0% (0/1 S)
 - **Entrega:** 0% (0/1 S)
-- **Hosts:** 25% (2/8 S)
+- **Hosts:** 37% (3/8 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
 - **Método:** 66% (4/6 S)
@@ -66,11 +66,10 @@
 1. **S7.1** · 📋 PLANIFICADO · Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral en un HOME/runtime aislado, preservando OpenCode como conformidad diferida.
 
 ### Hosts (hosts)
-1. **S118** · 🟢 LISTO · Una operación de la Torre se reconoce a simple vista dentro de una sesión Pi: emoji, nombre y color propios en los cuatro estados observables.
-2. **S4.12** · 🟢 LISTO · Recuperación mínima de Pi
-3. **S4.4** · 🟢 LISTO · Recuperación lógica same-host con raíz sucesora
-4. **S9.7** · 📋 PLANIFICADO · Route padre registrado y triggers públicos exactos
-5. **S9.8** · 📋 PLANIFICADO · Dispatch fire-and-forget y cierre asíncrono
+1. **S4.12** · 🟢 LISTO · Recuperación mínima de Pi
+2. **S4.4** · 🟢 LISTO · Recuperación lógica same-host con raíz sucesora
+3. **S9.7** · 📋 PLANIFICADO · Route padre registrado y triggers públicos exactos
+4. **S9.8** · 📋 PLANIFICADO · Dispatch fire-and-forget y cierre asíncrono
 
 ### Instalación (instalacion)
 1. **S117** · 🟢 LISTO · Los tres registros de instalación dejan de forzar ediciones cross-Zona: sus datos enumerados salen del test a un módulo propio declarado como Cimiento exacto.
@@ -128,7 +127,7 @@
 - **S115:** propuesta direct (El contrato ya existe por S112 y el dato ya está migrado por S114; encender la exigencia es un cambio acotado con un criterio binario verificable en una sola corrida de radar check.); pendiente de revalidación en kickoff.
 - **S113:** propuesta direct (Las dos reglas están escritas en el canon, la infraestructura de evidencia y ancestría ya existe, y la única elección restante —cuándo medir— es derivable del contrato de HEAD inmutable que la propia herramienta ya aplica.); revalidada design-tasks sobre 271a32a63a0f6ae554a2690448535bbc6ead7692 con evidencia Las 6 Sesiones archivadas del plan vigente —S4.9, S5.14, S5.15, S9.3, S9.4, S9.5— no tienen ninguna evidencia de entrega. Cuatro están reemplazadas desde references.future&#95;successors (S102 a S108) y dos, S4.9 y S9.4, se retienen como evidencia histórica sin entrega ni reemplazo: la autoridad de S9.4 lo dice textual.; razón: La ruta propuesta daba por sentado que archivar implica haber entregado, y el árbol real prueba que hay tres caminos de archivo, no uno. Decidir cuál de los tres debe declararse y cuál puede inferirse es diseño de contrato, no implementación mecánica: el criterio propuesto habría marcado las 6 archivadas del plan vigente, dos de ellas legítimas..
 - **S117:** propuesta direct (Tres extracciones mecánicas sin decisión de diseño abierta: el dato a mover ya está delimitado en cada archivo, la forma destino la fija el precedente &#96;&lt;generated:runtime-payload&gt;&#96; ya entregado, y el mecanismo de partición está cubierto por tests.); pendiente de revalidación en kickoff.
-- **S118:** propuesta direct (El mecanismo, la implementación de referencia y los archivos quedaron fijados por Audit D; no hay diseño sin resolver. &#96;chanks-3-session-kickoff&#96; la revalida una vez contra el código de la Zona.); pendiente de revalidación en kickoff.
+- **S118:** propuesta direct (El mecanismo, la implementación de referencia y los archivos quedaron fijados por Audit D; no hay diseño sin resolver. &#96;chanks-3-session-kickoff&#96; la revalida una vez contra el código de la Zona.); revalidada direct sobre 832ac9d2e32f6c0047b4c73ddb814f4cf2a1f802 con evidencia Audit D §§1-2 and the real entrypoint in extensions/pi/tower-session-router.ts confirm that Pi already loads the extension and the renderer is added through registerTool/renderCall/renderResult without an unresolved product-design choice; the current master delta is disjoint from S118's three product paths..
 - **S119:** propuesta direct (Dos archivos conocidos con contrato declarado y ninguna pregunta de diseño abierta: el texto de la skill lo fija el patch preservado y la forma del registro la fijan las entradas que ya viven en él. La única elección abierta —la Zona— la cerró el maintainer el 2026-09-11.); pendiente de revalidación en kickoff.
 - **S120:** propuesta full-sdd (La nueva entrada de antecedentes y la reutilización de verificación definen un contrato compartido todavía no resuelto. Esta ruta se propone para diseñar S120, no obliga a usar full-sdd en las futuras Sesiones direct o design-tasks. No se inicia SDD al registrar el plan.); pendiente de revalidación en kickoff.
 
@@ -2973,7 +2972,7 @@ Rutas: test/install/runtime-payload.contract.mjs, test/install/runtime-payload.t
   - [ ] Los tres &#96;&#42;.contract.mjs&#96; resuelven a &#96;cimientos&#96; solo.
 
 ### S118 — Una operación de la Torre se reconoce a simple vista dentro de una sesión Pi: emoji, nombre y color propios en los cuatro estados observables.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: ✅ COMPLETO
 - Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs, scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs
 - Depende de: —
 - Cimientos: —
@@ -2987,7 +2986,7 @@ Rutas: test/install/runtime-payload.contract.mjs, test/install/runtime-payload.t
   - [ ] Ninguna mutación de Pi core, &#96;pi-intercom&#96;, skills genéricas de Gentle AI, &#96;adapters/pi/&#42;&#42;&#96;, &#96;mcp.mjs&#96;, &#96;bin/torre&#96;, &#96;hosts/&#42;&#42;&#96; ni &#96;install/&#42;&#42;&#96;: esta Sesión presenta, no redefine router de input, enrolamiento, autoridad ni transporte.
 
 #### M118.1 — Renderer del badge y contrato de capacidades
-Rutas: extensions/pi/package.json, test/extensions/pi/tower-session-router.test.mjs
+Rutas: extensions/pi/package.json, extensions/pi/tower-session-router.ts, test/extensions/pi/tower-session-router.test.mjs
 
 - **T118.1.1:** RED: escribir el test que afirma emoji, nombre y color de la Torre en los cuatro estados observables, y un único tool &#96;torre&#96; con subcomando enumerado. → RED: el test falla nombrando los estados sin badge y el catálogo sin subcomando.
   - [ ] RED: existe un test que falla contra el árbol actual y nombra los cuatro estados.

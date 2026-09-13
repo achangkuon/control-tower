@@ -7100,6 +7100,18 @@ sesiones:
         autoridad: "Decisión 109 del maintainer del 2026-09-03, registrada en openspec/plans/decision-register.md."
         clase: contrato-visible
         falsificador: "La presentación de la Torre en Pi se resuelve por MCP en vez de por la extensión declarada."
+      - tipo: resuelta
+        pregunta: "¿Qué identidad exacta muestra el badge de la Torre en Pi?"
+        resolucion: "El badge muestra exactamente `🗼 Torre`; preparando y corriendo usan el tono existente de advertencia, completado usa éxito y fallido usa error."
+        autoridad: "Selección explícita del maintainer en el preflight interactivo de S118."
+        clase: contrato-visible
+        falsificador: "El badge usa otro emoji o nombre, declara un color nuevo, o no distingue visualmente preparando/corriendo, completado y fallido con los tonos semánticos aprobados."
+        descartadas:
+          - opcion: "`🏰 Torre` con los mismos tonos semánticos."
+            razon: "El maintainer eligió la torre literal como identidad visible."
+          - opcion: "No definir identidad ni comenzar RED."
+            razon: "El maintainer decidió destrabar S118 y fijar el contrato antes del test."
+        contaminaba: [S118]
       - tipo: derivable
         pregunta: "¿Granularidad de la superficie tipeable de `torre`?"
         resolucion: "Un único tool con subcomando enumerado."
@@ -7129,10 +7141,16 @@ sesiones:
     ruta:
       propuesta: direct
       autoridad: "El mecanismo, la implementación de referencia y los archivos quedaron fijados por Audit D; no hay diseño sin resolver. `chanks-3-session-kickoff` la revalida una vez contra el código de la Zona."
+      revalidacion:
+        resultado: direct
+        base: 832ac9d2e32f6c0047b4c73ddb814f4cf2a1f802
+        evidencia: "Audit D §§1-2 and the real entrypoint in extensions/pi/tower-session-router.ts confirm that Pi already loads the extension and the renderer is added through registerTool/renderCall/renderResult without an unresolved product-design choice; the current master delta is disjoint from S118's three product paths."
+    entrega:
+      commit: 56df07adb6af20efed1b032f353c0c0492e6d602
     modulos:
       - id: M118.1
         resultado: "Renderer del badge y contrato de capacidades"
-        rutas: [extensions/pi/package.json, test/extensions/pi/tower-session-router.test.mjs]
+        rutas: [extensions/pi/package.json, extensions/pi/tower-session-router.ts, test/extensions/pi/tower-session-router.test.mjs]
         tareas:
           - id: T118.1.1
             accion: "RED: escribir el test que afirma emoji, nombre y color de la Torre en los cuatro estados observables, y un único tool `torre` con subcomando enumerado."
