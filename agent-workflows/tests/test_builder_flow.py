@@ -89,6 +89,25 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertIn("return evidence", bridge)
         self.assertIn("return closure evidence", closure)
 
+    def test_support_reads_the_plan_only_through_radar(self):
+        skill_path = "skills/chanks-0-agente-soporte/SKILL.md"
+        sources = {
+            relative: read(relative)
+            for relative in (skill_path, "skills/chanks-0-agente-soporte/assets/brief-diario.md")
+        }
+
+        for relative, source in sources.items():
+            self.assertIn("`radar status`", source, relative)
+            self.assertIn("`radar sesion <ID>`", source, relative)
+            self.assertNotIn("`openspec/ROADMAP.md`", source, relative)
+            for line in source.splitlines():
+                if "`openspec/plan.yaml`" in line:
+                    self.assertTrue(
+                        "no `openspec/plan.yaml`" in line.lower() or "never" in line.lower(),
+                        f"{relative} instructs reading the whole plan: {line}",
+                    )
+        self.assertIn("radar is missing or rejects the plan", sources[skill_path])
+
     def test_active_builder_retains_generic_route_review_archive_and_safety_contracts(self):
         canon = read("skills/_shared/plan-naming-convention.md")
         template = read("templates/session-routing.md")

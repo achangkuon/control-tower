@@ -15,7 +15,8 @@ mandatory peer, dispatcher, or plan writer.
 
 ## Hard Rules
 
-- Read the repository instructions, `openspec/plan.yaml`, generated view, Git evidence, and available checks.
+- Read the plan only through `radar status` (states, queues, capacity) and `radar sesion <ID>` (one Sesión's full contract); never open the plan file or its generated view whole. If radar is missing or rejects the plan, stop and report; never read the file as a fallback.
+- Read the repository instructions, Git evidence, and available checks directly.
 - A repository with no `openspec/plan.yaml` has not adopted plan management, which is a choice and not a fault. Say what the request needs a plan for, offer to start one, and stop. Never fail, never improvise a substitute record, and never adopt it without the human saying yes.
 - Return evidence and a proposed delta; only the responsible parent writes confirmed plan evidence.
 - Treat `radar` capacity as a static forecast, never a live lock, reservation, or claim.

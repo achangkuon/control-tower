@@ -5,8 +5,8 @@ create a queue, reserve resources, or mutate state.
 
 ## Sources
 
-1. `openspec/plan.yaml` and generated `openspec/ROADMAP.md`.
-2. `radar check`, `radar status`, and `radar zonas` when available.
+1. `radar status` for states, queues, and capacity, and `radar sesion <ID>` for each candidate's contract. Never read the whole plan or its generated view.
+2. `radar check` and `radar zonas`.
 3. Repository instructions, Git state, and delivery policy.
 
 ## Template
