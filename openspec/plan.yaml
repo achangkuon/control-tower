@@ -42,6 +42,17 @@ zonas:
     nombre: Producto Torre
     rutas: [product/tower/]
 
+# Orden de trabajo aprobado por Emilio el 2026-09-14: primero se cierra el Método V1, después se
+# construye, prueba, instala y usa la Torre V1, y recién entonces se construye la V2. Radar sólo
+# ofrece trabajo LISTO de la primera prioridad con Sesiones abiertas (S127).
+prioridades:
+  - id: metodo-v1
+    nombre: Método V1
+  - id: torre-v1
+    nombre: Torre V1
+  - id: v2
+    nombre: V2
+
 cimientos:
   rutas:
     - .doc-guard.json
@@ -522,6 +533,7 @@ sesiones:
             criterios: [Focused and full verification pass over only the two Area paths and the second commit remains at or below 400 authored lines.]
 
   - id: S1.19
+    prioridad: torre-v1
     resultado: Regresión integral Pi-first
     autoridad: decision 104, Engram observation 10008, approved Pi-first capacity contract, and Emilio's C05.2M territory-pending resolution
     depende_de: [S1.18]
@@ -625,6 +637,7 @@ sesiones:
             resultado: "REFACTOR: congelar el tipo cerrado, normalizar INDETERMINATE y repetir testigos de bytes/metadatos."
             criterios: ["REFACTOR: congelar el tipo cerrado, normalizar INDETERMINATE y repetir testigos de bytes/metadatos."]
   - id: S2.9
+    prioridad: torre-v1
     zona: enrolamiento
     cimientos: [bin/torre, test/console/cli.test.mjs]
     resultado: Enrollment público canónico por CLI
@@ -688,6 +701,7 @@ sesiones:
             resultado: "REFACTOR: eliminar validación duplicada, estabilizar errores/ayuda y repetir testigos de registro/ACTIVE."
             criterios: ["REFACTOR: eliminar validación duplicada, estabilizar errores/ayuda y repetir testigos de registro/ACTIVE."]
   - id: S2.10
+    prioridad: v2
     resultado: Enrollment desde el menú central
     autoridad: decision 104 and Engram 10008
     depende_de: [S2.9]
@@ -1706,6 +1720,7 @@ sesiones:
             criterios: ["REFACTOR: preservar readback/cleanup sin crear autoridad ni raíz"]
 
   - id: S4.4
+    prioridad: v2
     zona: hosts
     resultado: Recuperación lógica same-host con raíz sucesora
     autoridad: decisiones 37-40, decisión 45, Engram 9040/9044 y REQUIREMENTS §14.4
@@ -2031,6 +2046,7 @@ sesiones:
             criterios: ["REFACTOR: helper privado instalado como única ruta, raíz preservada y cero comando inseguro"]
 
   - id: S4.8
+    prioridad: v2
     zona: hosts
     resultado: Probar la CLI real OpenCode 1.18.23 contra backend, raíz, brief, vista y plugin/SDK 1.18.13; sólo con la matriz completa verde alinear juntos plugin y SDK a 1.18.23
     autoridad: decisión 68 y contrato WIP preservado de S4.8
@@ -2393,6 +2409,7 @@ sesiones:
             criterios: ["REFACTOR: unificar errores y aislar toda semántica de adapter."]
 
   - id: S4.12
+    prioridad: torre-v1
     zona: hosts
     resultado: Recuperación mínima de Pi
     autoridad: decisiones 81 y 87 del maintainer del 2026-08-27
@@ -4347,6 +4364,7 @@ sesiones:
             resultado: "REFACTOR: RUNTIME_PAYLOAD_FILES conserva igualdad exacta de conjunto y ningún miembro queda sin llamador."
             criterios: [RUNTIME_PAYLOAD_FILES conserva igualdad exacta y todos sus miembros tienen llamador.]
   - id: S7.1
+    prioridad: torre-v1
     zona: entrega
     resultado: Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral en un HOME/runtime aislado, preservando OpenCode como conformidad diferida.
     autoridad: Decisiones 32, 33 y 85 del maintainer; reconciliación Pi-first vigente en openspec/plans/plan-7/STATUS.md líneas 69-79; asignación Entrega aprobada en agent-workflows/ASIGNACION-24-SESIONES.md líneas 161-174.
@@ -4428,6 +4446,7 @@ sesiones:
             resultado: "REFACTOR: consolidar evidencia atribuible y declaración de alcance máximo de cinco clientes."
             criterios: [La evidencia queda atribuida al candidato y no declara soporte por encima de cinco clientes.]
   - id: S8.12
+    prioridad: torre-v1
     zona: instalacion
     resultado: "Packaging del bundle Tower: una membresía versionada contiene exactamente los bytes Tower-owned locales y no instala, activa, reescribe configuración global ni ejecuta rollback."
     autoridad: "Decisiones 88, 95, 100 y 104; Engram 9921 y 10008; contrato vigente enumerado de S8.12 aprobado por decisión 10315 del maintainer y citado en openspec/plans/plan-8/STATUS.md líneas 998-1031."
@@ -4587,6 +4606,7 @@ sesiones:
             resultado: "REFACTOR: dejar una sola enumeración auditable, sin Planner permanente ni dependencia de assets globales."
             criterios: [Existe una sola enumeración auditable sin Planner permanente ni assets globales.]
   - id: S8.13
+    prioridad: torre-v1
     zona: instalacion
     resultado: Instalador, preflight, activación y rollback del bundle Tower ejercitados sólo en un HOME/runtime aislado
     autoridad: Contrato propietario de la Sesión y autoridades aprobadas del lifecycle versionado; decisiones 88, 100 y 102; Engram 9921, 9956 rev2 y 9963; alcance interpretativo supersedido por Engram 10782, que registra la aprobación posterior del maintainer para la frontera producto/Torre.
@@ -4707,6 +4727,7 @@ sesiones:
             resultado: "REFACTOR: consolidar el binding y verificar que la asignación no modifica el reciclador manual."
             criterios: [El binding conserva path, rama y base_sha y no cambia rama, base ni reciclador manual.]
   - id: S9.2
+    prioridad: v2
     resultado: Main no puede reciclar un asiento ocupado; la ocupación es legible y el reciclado toma un lock exclusivo que falla cerrado si el asiento está tomado o si otro Main lo está mutando.
     autoridad: Decisión 62 para la frontera de comportamiento y decisión 10325 del maintainer para conservar S9.2 bloqueada por territorio pendiente.
     depende_de: [S9.1]
@@ -4894,6 +4915,7 @@ sesiones:
             criterios: ["REFACTOR: topología duplicada eliminada, readback/fallback estabilizado y convergencia probada."]
 
   - id: S9.7
+    prioridad: torre-v1
     zona: hosts
     cimientos: [product/tower/skills/torre-control/SKILL.md]
     resultado: Route padre registrado y triggers públicos exactos
@@ -4953,6 +4975,7 @@ sesiones:
 
 
   - id: S9.8
+    prioridad: torre-v1
     zona: hosts
     cimientos: [product/tower/skills/torre-control/SKILL.md, product/tower/skills/torre-control-entregas/SKILL.md]
     resultado: Dispatch fire-and-forget y cierre asíncrono
@@ -5043,6 +5066,7 @@ sesiones:
           - {id: T9.9.1.3, accion: "REFACTOR fixtures y negativos", resultado: "entregado", criterios: ["Cierre entregado."]}
 
   - id: S9.10
+    prioridad: v2
     resultado: Materialización canónica desde base_sha aprobado
     autoridad: Engram 10522 (full-binding), 10525/10527 (historical attempt), 10531 (verify FAIL), 10532 (no-action).
     depende_de: [S9.9]
@@ -5501,6 +5525,7 @@ sesiones:
             criterios: ['Cerrar las regresiones de CLI/payload y ejecutar la verificación completa.']
 
   - id: S12.1
+    prioridad: metodo-v1
     zona: cimientos
     cimientos: [.githooks/pre-push, package.json]
     resultado: Ningún commit llega a master sin que la suite haya corrido sola; va primera porque es la red que hace seguras las tres mudanzas de core.mjs y sin ella cada paso es a ciegas.
@@ -5765,6 +5790,7 @@ sesiones:
             criterios: [La cola activa no contiene alcance retirado.]
 
   - id: S12.3
+    prioridad: v2
     resultado: Las cinco migraciones y sus manifiestos viven en db/migrations/ y db/manifests.mjs; core.mjs los re-exporta, ningún import cambia y las firmas SHA-256 permanecen idénticas.
     autoridad: Decisión 2 del maintainer, 2026-08-30; aprobación humana 10433 permite sólo el estacionamiento migratorio provisional de S12.3.
     depende_de: [S8.10]
@@ -5900,6 +5926,7 @@ sesiones:
             criterios: [El conteo y la suite pasan.]
 
   - id: S12.4
+    prioridad: v2
     resultado: Las funciones que verifican coherencia entre SQLite y la versión del esquema viven en db/validators/ sin cambiar su cuerpo ni el comportamiento de persistencia.
     autoridad: Decisión 2 del maintainer, 2026-08-30; aprobación humana 10433 limita esta representación a formalización migratoria provisional de S12.4.
     depende_de: [S12.3]
@@ -6008,6 +6035,7 @@ sesiones:
             criterios: [El conteo y la suite pasan.]
 
   - id: S12.5
+    prioridad: v2
     resultado: El protocolo de continuación sale de core.mjs bajo continuation/ sin cambiar cuerpos ni comportamiento.
     autoridad: Decisión 2 del maintainer, 2026-08-30; decisión Emilio 10463 sustituye el conteo histórico fijo por la superficie actual medida antes de M12.5.1.
     depende_de: [S12.4]
@@ -6042,6 +6070,7 @@ sesiones:
     modulos: []
 
   - id: S12.6
+    prioridad: v2
     resultado: La raíz se ordena y el README describe el producto real.
     autoridad: Decisión 4 del maintainer, opción B combinada, 2026-08-30.
     depende_de: [S12.5]
@@ -6126,6 +6155,7 @@ sesiones:
             criterios: [La misma verificación conserva la coherencia README ↔ árbol.]
 
   - id: S12.7
+    prioridad: v2
     resultado: La migración futura por Zonas mueve las 26 carpetas planas a src/domain/, src/app/, src/adapters/ y src/contracts/ sin que domain/ ni app/ importen de adapters/.
     autoridad: Decisión 4 del maintainer, opción A, 2026-08-30; decisión Emilio 10469 para preservar el aplazamiento histórico sin inventar la descomposición sucesora.
     depende_de: [S12.6]
@@ -6249,6 +6279,7 @@ sesiones:
             criterios: [La prueba focalizada histórica registra 1 pass, 0 fail y 5 expectations.]
 
   - id: S12.9
+    prioridad: v2
     resultado: 'El PRD, el RFC y los requisitos quedan corregidos sin alcance retirado, y la procedencia queda intacta: la revisión 1 conserva sus digests como registro histórico y el puntero canónico avanza a una revisión 2 que describe los bytes nuevos.'
     autoridad: Decisión del maintainer del 2026-08-30, opción A, sobre el hallazgo de M12.2.2.
     depende_de: []
@@ -6377,6 +6408,7 @@ sesiones:
             criterios: ["git diff --cached --numstat reports changes only in schemas/delivery-policy-v1.schema.json and test/contracts/s3-2-schemas.test.mjs."]
 
   - id: S101
+    prioridad: v2
     zona: capacidades
     resultado: "Resolución de política: prepare_through opaco y horizon_ceiling salen de la política resuelta"
     autoridad: "Identity, result, zona, dependency, cimientos, and replacement lineage are copied from migration/lineage.yaml successors[S101], whose approved assignment source is immutable commit 43130ad40af06f3ed05671000719217bee74f0a5 at agent-workflows/ASIGNACION-24-SESIONES.md; predecessor S5.14 and its replacement edge remain recorded in migration/lineage.yaml archived_originals and migration/sessions/plan-5.yaml. Product boundaries and route depth are approved by openspec/changes/s101-policy-resolution/proposal.md rev2, specs/policy-resolution/spec.md rev2, and correction 10540. Kickoff route provenance is Engram 10536. Engram 10525/10532 later authority adds S9.10 as a separate prerequisite; it supersedes assignment edge [S100] only by adding S9.10 and preserves S100."
@@ -6447,6 +6479,7 @@ sesiones:
     modulos: []
 
   - id: S107
+    prioridad: torre-v1
     zona: hosts
     resultado: "Topología Herdr Tower-owned dentro del workspace ligado: MAIN y una tab worker por Session ID canónico, con readback determinista"
     autoridad: "Decisión del maintainer del 2026-09-13 y fuente inmutable: commit 43130ad40af06f3ed05671000719217bee74f0a5, agent-workflows/ASIGNACION-24-SESIONES.md, blob a7c4ced3b196a6ea92a7bd8f181b98b87fc70ae3, línea 155, bytes 7456-7583, SHA-256 05c38114c8d00c5b8a492cc8f8757b222fe233995c8e72de0066621f74678862. El contrato usa sólo HERDR_WORKSPACE_ID y APIs tab/pane observadas; no reclama workspace-name."
@@ -6524,6 +6557,7 @@ sesiones:
             criterios: ["Entrada no ligada produce cero efecto Herdr."]
 
   - id: S108
+    prioridad: torre-v1
     zona: asientos
     resultado: "Ciclo idempotente de tabs worker Tower-owned desde witnesses S121 y estado terminal Radar"
     autoridad: "Decisión del maintainer del 2026-09-13: S121 prueba procedencia y Radar estado; S109 no participa. Fuente inmutable: commit 43130ad40af06f3ed05671000719217bee74f0a5, agent-workflows/ASIGNACION-24-SESIONES.md, blob a7c4ced3b196a6ea92a7bd8f181b98b87fc70ae3, línea 156, bytes 7583-7732, SHA-256 647abd52f3b0a53bce67ddeeeb45832da578d7ea8662685e845e98063494be63. Evidencia lifecycle: S100 COMPLETO, commit 1237075200d2df72927c3b166ade1ba61929cbd2 integrado y cierre exacto w6H."
@@ -6585,6 +6619,7 @@ sesiones:
             criterios: ["Sin flags de identidad ni cierre extranjero."]
 
   - id: S109
+    prioridad: v2
     zona: contratos
     resultado: "Ventanilla única de plan: la Torre responde una asignación completa y Main deja de derivarla"
     autoridad: "Idea aprobada por el maintainer el 2026-09-10 sobre el documento de diseño «Torre coordina, Main juzga» (artifact 728134a6-47ab-4088-b688-74af1c92bf2a), medido sobre master en bae57ba. La evidencia que la sostiene: responder «qué sigue y quién lo toma» cuesta 512.563 bytes leyendo openspec/plan.yaml entero contra 3.293 bytes pidiéndole avance, colas y asientos a Radar. El contrato radar.snapshot/v1 y su consumidor de referencia ya existen desde b50c0b3 y 969f189."
@@ -6925,6 +6960,7 @@ sesiones:
             criterios: ["REFACTOR: existe una sola verificación de cita y los tests siguen pasando."]
 
   - id: S114
+    prioridad: v2
     zona: autoridad
     resultado: "Todas las Sesiones vigentes declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado."
     autoridad: "Decisión del maintainer del 2026-09-10 sobre la migración del campo autoridad, elegida entre tres alternativas: migrar por Zona y encender la exigencia al final. La población vigente y el orden se obtienen en ejecución mediante un snapshot `radar status --json` ligado a su revisión; ningún total fijo forma parte del alcance vivo."
@@ -6992,6 +7028,7 @@ sesiones:
             criterios: ["REFACTOR: cero Sesiones conservan la forma vieja y radar check pasa."]
 
   - id: S115
+    prioridad: v2
     zona: metodo
     resultado: "Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada."
     autoridad: "Decisión del maintainer del 2026-09-10: la exigencia se enciende al final, en una Sesión aparte que depende de que la migración haya terminado, para que nunca convivan dos formas exigidas ni un lote por encima del tope."
@@ -7131,6 +7168,7 @@ sesiones:
   # openspec/plans/ como narrativa, sin autoridad.
 
   - id: S117
+    prioridad: torre-v1
     zona: instalacion
     resultado: "Los tres registros de instalación dejan de forzar ediciones cross-Zona: sus datos enumerados salen del test a un módulo propio declarado como Cimiento exacto."
     autoridad: "openspec/plans/audits/cross-zona-registry-audit.md (Audit G, 2026-09-04), rescatada de support/read-only-20260830 y enumerada por decisión del maintainer del 2026-09-11 al integrar las tres propuestas pendientes."
@@ -7316,6 +7354,7 @@ sesiones:
             criterios: ["REFACTOR: no quedan listas paralelas de transforms.", "La suite completa pasa."]
 
   - id: S119
+    prioridad: torre-v1
     zona: producto-torre
     resultado: "La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por `torre-control` → `torre asiento`."
     autoridad: "openspec/plans/audits/herdr-skill-ownership-audit.md y su patch, más decisiones del maintainer del 2026-09-11/13: la skill activa sólo por pedido explícito y delega lifecycle a `torre-control` → `torre asiento` → S108, sin roster S109 ni Herdr raw."
@@ -7384,6 +7423,7 @@ sesiones:
             criterios: ["Markers prueban S108 sin S109.", "`radar check` y suite completa pasan."]
 
   - id: S120
+    prioridad: metodo-v1
     zona: metodo
     resultado: "Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo."
     autoridad: "Aprobación explícita de Emilio el 2026-09-12: «SI es correcto, esto es justo lo qeu necesitabamos. Lo apruebo, porfa hagamos la planficiacion para pasar a implementar». Alcance aprobado: reutilizar implementación general y controles de verificación SDD con antecedentes del plan, sin duplicar planificación ni activar globalmente antes de probar. Engram #10839, sdd/proportional-routes-approved-planning."
@@ -7418,6 +7458,7 @@ sesiones:
     modulos: []
 
   - id: S121
+    prioridad: torre-v1
     zona: enrolamiento
     resultado: "Binding Main-validado con Session ID canónico y procedencia durable de cada tab Tower-owned"
     autoridad: "Decisión del maintainer del 2026-09-13. Main establece assignment_ref↔session_id en assignment-location; binding/consumer lo transportan y persisten workspace/tab/pane sólo tras readback S107. main-store/launch-consumer.mjs:79-88 hoy guarda sólo request_ref y binding_path."
@@ -7478,6 +7519,7 @@ sesiones:
             criterios: ["Diff limitado a la fixture Cimiento."]
 
   - id: S122
+    prioridad: metodo-v1
     zona: metodo
     resultado: "Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados."
     autoridad: "Decisiones explícitas de Emilio del 2026-09-12 y 2026-09-13 en la conversación de diseño del horizonte (Claude Code, sesión ed42515b): los siete estados no cambian y Radar suma un motivo calculado; los tipos son espera natural, espera atascada, falta decidir y falta planificar; el horizonte mantiene 2 Sesiones LISTO por Zona como número propio, separado de planning.horizon_ceiling de S101. Hoy radar status --json expone sólo id, zona, estado y resultado (agent-workflows/tools/radar/snapshot.go:55-60) y la clasificación completa se obtuvo con un script aparte."
@@ -7572,6 +7614,7 @@ sesiones:
             criterios: ["REFACTOR: un solo lugar arma el texto del motivo y los tests siguen pasando."]
 
   - id: S123
+    prioridad: v2
     zona: metodo
     resultado: "Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano."
     autoridad: "Decisiones explícitas de Emilio del 2026-09-13 en la conversación de diseño del horizonte (Claude Code, sesión ed42515b): el horizonte se activa cuando una Zona queda con menos de 2 LISTO y nunca prepara más de 2; la detección es determinista, Support prepara, el humano decide y Main registra como único escritor del plan; Main despacha a Support directo, sin avisar antes. Support ya es un ayudante read-only que nunca despacha ni escribe el plan (agent-workflows/skills/chanks-0-agente-soporte/SKILL.md:12,22,24)."

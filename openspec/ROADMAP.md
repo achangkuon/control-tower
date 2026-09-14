@@ -3,16 +3,12 @@
 
 ## 📍 Punto de retoma
 - Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.2, S12.8, S124, S125, S126, S127, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
-- Próximo trabajo ejecutable: Autoridad #1 → S114 — Todas las Sesiones vigentes declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado..
+- Prioridad activa: Método V1.
+- Próximo trabajo ejecutable: cimientos #1 → S12.1 — Ningún commit llega a master sin que la suite haya corrido sola; va primera porque es la red que hace seguras las tres mudanzas de core.mjs y sin ella cada paso es a ciegas..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
 ## Estado y próximo trabajo
-- Autoridad #1 → S114 — Todas las Sesiones vigentes declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado.
 - cimientos #1 → S12.1 — Ningún commit llega a master sin que la suite haya corrido sola; va primera porque es la red que hace seguras las tres mudanzas de core.mjs y sin ella cada paso es a ciegas.
-- Contratos #1 → S109 — Ventanilla única de plan: la Torre responde una asignación completa y Main deja de derivarla
-- Enrolamiento #1 → S121 — Binding Main-validado con Session ID canónico y procedencia durable de cada tab Tower-owned
-- Hosts #3 → S4.12 — Recuperación mínima de Pi
-- Instalación #1 → S117 — Los tres registros de instalación dejan de forzar ediciones cross-Zona: sus datos enumerados salen del test a un módulo propio declarado como Cimiento exacto.
 - Método #2 → S120 — Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
 
 ## Avance
@@ -35,59 +31,55 @@
 
 ## Zonas y colas
 ###  ()
-1. **S12.5** · 🔴 BLOQUEADO · El protocolo de continuación sale de core.mjs bajo continuation/ sin cambiar cuerpos ni comportamiento.
-2. **S12.7** · 🔴 BLOQUEADO · La migración futura por Zonas mueve las 26 carpetas planas a src/domain/, src/app/, src/adapters/ y src/contracts/ sin que domain/ ni app/ importen de adapters/.
-3. **S12.9** · 🔴 BLOQUEADO · El PRD, el RFC y los requisitos quedan corregidos sin alcance retirado, y la procedencia queda intacta: la revisión 1 conserva sus digests como registro histórico y el puntero canónico avanza a una revisión 2 que describe los bytes nuevos.
+1. **S12.5** · 🔴 BLOQUEADO · prioridad V2 · El protocolo de continuación sale de core.mjs bajo continuation/ sin cambiar cuerpos ni comportamiento.
+2. **S12.7** · 🔴 BLOQUEADO · prioridad V2 · La migración futura por Zonas mueve las 26 carpetas planas a src/domain/, src/app/, src/adapters/ y src/contracts/ sin que domain/ ni app/ importen de adapters/.
+3. **S12.9** · 🔴 BLOQUEADO · prioridad V2 · El PRD, el RFC y los requisitos quedan corregidos sin alcance retirado, y la procedencia queda intacta: la revisión 1 conserva sus digests como registro histórico y el puntero canónico avanza a una revisión 2 que describe los bytes nuevos.
 
 ### Archivo (archivo)
 - Sin Sesiones abiertas.
 
 ### Asientos (asientos)
-1. **S108** · 📋 PLANIFICADO · Ciclo idempotente de tabs worker Tower-owned desde witnesses S121 y estado terminal Radar
+1. **S108** · 📋 PLANIFICADO · prioridad Torre V1 · Ciclo idempotente de tabs worker Tower-owned desde witnesses S121 y estado terminal Radar
 
 ### Autoridad (autoridad)
-1. **S114** · 🟢 LISTO · Todas las Sesiones vigentes declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado.
+- Sin Sesiones abiertas.
 
 ### Capacidades (capacidades)
-1. **S101** · 🔴 BLOQUEADO · Resolución de política: prepare&#95;through opaco y horizon&#95;ceiling salen de la política resuelta
+1. **S101** · 🔴 BLOQUEADO · prioridad V2 · Resolución de política: prepare&#95;through opaco y horizon&#95;ceiling salen de la política resuelta
 
 ### cimientos (cimientos)
-1. **S12.1** · 🟢 LISTO · Ningún commit llega a master sin que la suite haya corrido sola; va primera porque es la red que hace seguras las tres mudanzas de core.mjs y sin ella cada paso es a ciegas.
-2. **S12.6** · 📋 PLANIFICADO · La raíz se ordena y el README describe el producto real.
+1. **S12.1** · 🟢 LISTO · prioridad Método V1 · Ningún commit llega a master sin que la suite haya corrido sola; va primera porque es la red que hace seguras las tres mudanzas de core.mjs y sin ella cada paso es a ciegas.
+2. **S12.6** · 📋 PLANIFICADO · prioridad V2 · La raíz se ordena y el README describe el producto real.
 
 ### Contratos (contratos)
-1. **S109** · 🟢 LISTO · Ventanilla única de plan: la Torre responde una asignación completa y Main deja de derivarla
+- Sin Sesiones abiertas.
 
 ### Enrolamiento (enrolamiento)
-1. **S121** · 🟢 LISTO · Binding Main-validado con Session ID canónico y procedencia durable de cada tab Tower-owned
-2. **S2.9** · 🟢 LISTO · Enrollment público canónico por CLI
+- Sin Sesiones abiertas.
 
 ### Entrega (entrega)
-1. **S7.1** · 📋 PLANIFICADO · Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral en un HOME/runtime aislado, preservando OpenCode como conformidad diferida.
+1. **S7.1** · 📋 PLANIFICADO · prioridad Torre V1 · Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral en un HOME/runtime aislado, preservando OpenCode como conformidad diferida.
 
 ### Hosts (hosts)
-1. **S9.7** · 📋 PLANIFICADO · Route padre registrado y triggers públicos exactos
-2. **S107** · 📋 PLANIFICADO · Topología Herdr Tower-owned dentro del workspace ligado: MAIN y una tab worker por Session ID canónico, con readback determinista
-3. **S4.12** · 🟢 LISTO · Recuperación mínima de Pi
-4. **S4.4** · 🟢 LISTO · Recuperación lógica same-host con raíz sucesora
-5. **S9.8** · 📋 PLANIFICADO · Dispatch fire-and-forget y cierre asíncrono
+1. **S9.7** · 📋 PLANIFICADO · prioridad Torre V1 · Route padre registrado y triggers públicos exactos
+2. **S107** · 📋 PLANIFICADO · prioridad Torre V1 · Topología Herdr Tower-owned dentro del workspace ligado: MAIN y una tab worker por Session ID canónico, con readback determinista
+3. **S9.8** · 📋 PLANIFICADO · prioridad Torre V1 · Dispatch fire-and-forget y cierre asíncrono
 
 ### Instalación (instalacion)
-1. **S117** · 🟢 LISTO · Los tres registros de instalación dejan de forzar ediciones cross-Zona: sus datos enumerados salen del test a un módulo propio declarado como Cimiento exacto.
-2. **S8.12** · 📋 PLANIFICADO · Packaging del bundle Tower: una membresía versionada contiene exactamente los bytes Tower-owned locales y no instala, activa, reescribe configuración global ni ejecuta rollback.
-3. **S8.13** · 📋 PLANIFICADO · Instalador, preflight, activación y rollback del bundle Tower ejercitados sólo en un HOME/runtime aislado
+1. **S8.12** · 📋 PLANIFICADO · prioridad Torre V1 · Packaging del bundle Tower: una membresía versionada contiene exactamente los bytes Tower-owned locales y no instala, activa, reescribe configuración global ni ejecuta rollback.
+2. **S8.13** · 📋 PLANIFICADO · prioridad Torre V1 · Instalador, preflight, activación y rollback del bundle Tower ejercitados sólo en un HOME/runtime aislado
 
 ### Jornada (jornada)
 - Sin Sesiones abiertas.
 
 ### Método (metodo)
-1. **S115** · 📋 PLANIFICADO · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
-2. **S120** · 🟢 LISTO · Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
-3. **S122** · 🟢 LISTO · Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
-4. **S123** · 📋 PLANIFICADO · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
+1. **S115** · 📋 PLANIFICADO · prioridad V2 · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
+2. **S120** · 🟢 LISTO · prioridad Método V1 · Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
+3. **S122** · 🟢 LISTO · prioridad Método V1 · Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
+4. **S123** · 📋 PLANIFICADO · prioridad V2 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
 
 ### Producto Torre (producto-torre)
-1. **S119** · 📋 PLANIFICADO · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
+1. **S119** · 📋 PLANIFICADO · prioridad Torre V1 · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
 
 ## Bloqueos
 - **S1.19:** Which exact test files will own the Pi-first integration regression?
@@ -103,41 +95,41 @@
 
 ## Rutas
 - **S1.20:** propuesta direct (decision 104 and Engram observation 10008); revalidada direct sobre 89b75cccbee3a3fffe371e776a68f9a62c7912fe con evidencia The read-only Tower-mode contract remained fully specified after rebasing onto current master; upstream S100 changed disjoint schema/test paths, while S1.20 preserved its verified bytes and stayed limited to core.mjs and test/lifecycle.test.mjs..
-- **S2.9:** propuesta direct (decision 104, Engram observation 10008, and delivered S8.3 contract); pendiente de revalidación en kickoff.
-- **S4.4:** propuesta design-tasks (decisiones 37-40, decisión 45, Engram 9040/9044 y REQUIREMENTS §14.4); pendiente de revalidación en kickoff.
-- **S4.8:** propuesta design-tasks (contrato WIP preservado de S4.8); pendiente de revalidación en kickoff.
-- **S4.12:** propuesta design-tasks (contrato S4.12 y decisiones 81 y 87); pendiente de revalidación en kickoff.
+- **S2.9:** propuesta direct (decision 104, Engram observation 10008, and delivered S8.3 contract) · prioridad Torre V1; pendiente de revalidación en kickoff.
+- **S4.4:** propuesta design-tasks (decisiones 37-40, decisión 45, Engram 9040/9044 y REQUIREMENTS §14.4) · prioridad V2; pendiente de revalidación en kickoff.
+- **S4.8:** propuesta design-tasks (contrato WIP preservado de S4.8) · prioridad V2; pendiente de revalidación en kickoff.
+- **S4.12:** propuesta design-tasks (contrato S4.12 y decisiones 81 y 87) · prioridad Torre V1; pendiente de revalidación en kickoff.
 - **S5.5:** propuesta design-tasks (maintainer rebase 2026-08-17 and decision 78); revalidada design-tasks sobre 6c9b869acf952ac2b2e7d01d619e63e41ee81732 con evidencia El bloque canónico de S5.5 permanece byte-idéntico tras las entregas prioritarias de planificación; no hay solapamientos con sus nueve rutas ni cambios en sus dependencias importadas. La causalidad baseline de los dos fallos del gate pre-push quedó probada en archivos prístinos y el candidato conserva sus verificaciones focused y SDD..
-- **S7.1:** propuesta design-tasks (Decisiones 32, 33 y 85; reconciliación Pi-first vigente y asignación Entrega aprobada.); pendiente de revalidación en kickoff.
-- **S8.12:** propuesta design-tasks (Decisiones 88, 95 y 100; Engram 9921.); pendiente de revalidación en kickoff.
-- **S8.13:** propuesta full-sdd (Decisiones 88, 100 y 102; Engram 9921, 9956 rev2 y 9963.); pendiente de revalidación en kickoff.
-- **S9.7:** propuesta direct (decisión 104, Engram 10008 y contrato inmutable de S9.7); pendiente de revalidación en kickoff.
-- **S9.8:** propuesta direct (decisión 104 y Engram 10008; política operacional y formas terminales aprobadas en el contrato inmutable de S9.8.); pendiente de revalidación en kickoff.
+- **S7.1:** propuesta design-tasks (Decisiones 32, 33 y 85; reconciliación Pi-first vigente y asignación Entrega aprobada.) · prioridad Torre V1; pendiente de revalidación en kickoff.
+- **S8.12:** propuesta design-tasks (Decisiones 88, 95 y 100; Engram 9921.) · prioridad Torre V1; pendiente de revalidación en kickoff.
+- **S8.13:** propuesta full-sdd (Decisiones 88, 100 y 102; Engram 9921, 9956 rev2 y 9963.) · prioridad Torre V1; pendiente de revalidación en kickoff.
+- **S9.7:** propuesta direct (decisión 104, Engram 10008 y contrato inmutable de S9.7) · prioridad Torre V1; pendiente de revalidación en kickoff.
+- **S9.8:** propuesta direct (decisión 104 y Engram 10008; política operacional y formas terminales aprobadas en el contrato inmutable de S9.8.) · prioridad Torre V1; pendiente de revalidación en kickoff.
 - **S9.9:** propuesta direct (master e6b7e673f671e6bba30f9a600bf0333a1cd90af2 Plan 9 y autorización acotada del maintainer para la corrección C07.); pendiente de revalidación en kickoff.
-- **S12.1:** propuesta direct (Ruta histórica S12.1; su reanudación queda condicionada al cierre de S12.8 y no la autoriza esta importación.); pendiente de revalidación en kickoff.
-- **S12.5:** propuesta design-tasks (Decisión 2 del maintainer y contrato inmutable S12.5; la elaboración técnica acotada pertenece a session-plan.); pendiente de revalidación en kickoff.
-- **S12.6:** propuesta direct (Decisión 4 del maintainer, opción B combinada, 2026-08-30.); pendiente de revalidación en kickoff.
-- **S12.7:** propuesta design-tasks (Contrato inmutable S12.7 y decisión Emilio 10469; session-plan define la descomposición al desparquear.); pendiente de revalidación en kickoff.
-- **S12.9:** propuesta full-sdd (Contrato inmutable S12.9; no hay precedente para revisions/2, el puntero atómico y ownership son contratos compartidos sin ejercitar, y provenance.test.mjs requiere su propia Sesión.); pendiente de revalidación en kickoff.
+- **S12.1:** propuesta direct (Ruta histórica S12.1; su reanudación queda condicionada al cierre de S12.8 y no la autoriza esta importación.) · prioridad Método V1; pendiente de revalidación en kickoff.
+- **S12.5:** propuesta design-tasks (Decisión 2 del maintainer y contrato inmutable S12.5; la elaboración técnica acotada pertenece a session-plan.) · prioridad V2; pendiente de revalidación en kickoff.
+- **S12.6:** propuesta direct (Decisión 4 del maintainer, opción B combinada, 2026-08-30.) · prioridad V2; pendiente de revalidación en kickoff.
+- **S12.7:** propuesta design-tasks (Contrato inmutable S12.7 y decisión Emilio 10469; session-plan define la descomposición al desparquear.) · prioridad V2; pendiente de revalidación en kickoff.
+- **S12.9:** propuesta full-sdd (Contrato inmutable S12.9; no hay precedente para revisions/2, el puntero atómico y ownership son contratos compartidos sin ejercitar, y provenance.test.mjs requiere su propia Sesión.) · prioridad V2; pendiente de revalidación en kickoff.
 - **S100:** propuesta direct (Maintainer decision, this session, 2026-09-06: the schema-level contract is fully specified, has no remaining open product decision, and needs no design phase.); revalidada direct sobre 1043d5efae487c61ae9b3e4af33cddcfe85ad38b con evidencia S100 remained a binary schema-only change after rebasing onto current master; the only upstream delta changed AGENTS.md, while the implementation diff and verified bytes remained limited to the two declared M100.1 paths..
-- **S101:** propuesta full-sdd (Approved S101 proposal/specification rev2 and Radar's canonical route-depth contract require full-sdd before the shared policy/Jornada behavior is designed.); revalidada full-sdd sobre e6b7e673f671e6bba30f9a600bf0333a1cd90af2 con evidencia C07 revalidates the same migration-only boundary over current logical master; S101 remains blocked by S9.10..
-- **S107:** propuesta direct (Puertos tab/pane, workspace ID y readback ya existen; S121 fija la identidad nueva y workspace naming queda explícitamente fuera.); pendiente de revalidación en kickoff.
-- **S108:** propuesta direct (S121 fija procedencia/Session ID, S107 fija topology/readback y Radar ya publica estado terminal; no queda contrato sin resolver.); pendiente de revalidación en kickoff.
-- **S109:** propuesta full-sdd (La propuesta está aprobada pero el diseño no: qué contiene exactamente la asignación única, cómo se declara el proveedor por proyecto y cómo se empaqueta Radar son decisiones de diseño abiertas. Radar prohíbe Módulos en full-sdd (agent-workflows/tools/radar/check.go:514-524), así que la descomposición nace de la ejecución posterior de esta ruta.); pendiente de revalidación en kickoff.
+- **S101:** propuesta full-sdd (Approved S101 proposal/specification rev2 and Radar's canonical route-depth contract require full-sdd before the shared policy/Jornada behavior is designed.) · prioridad V2; revalidada full-sdd sobre e6b7e673f671e6bba30f9a600bf0333a1cd90af2 con evidencia C07 revalidates the same migration-only boundary over current logical master; S101 remains blocked by S9.10..
+- **S107:** propuesta direct (Puertos tab/pane, workspace ID y readback ya existen; S121 fija la identidad nueva y workspace naming queda explícitamente fuera.) · prioridad Torre V1; pendiente de revalidación en kickoff.
+- **S108:** propuesta direct (S121 fija procedencia/Session ID, S107 fija topology/readback y Radar ya publica estado terminal; no queda contrato sin resolver.) · prioridad Torre V1; pendiente de revalidación en kickoff.
+- **S109:** propuesta full-sdd (La propuesta está aprobada pero el diseño no: qué contiene exactamente la asignación única, cómo se declara el proveedor por proyecto y cómo se empaqueta Radar son decisiones de diseño abiertas. Radar prohíbe Módulos en full-sdd (agent-workflows/tools/radar/check.go:514-524), así que la descomposición nace de la ejecución posterior de esta ruta.) · prioridad V2; pendiente de revalidación en kickoff.
 - **S110:** propuesta direct (El resultado es binariamente verificable —el host Pi descubre o no descubre las tres skills— y no queda ninguna elección de diseño abierta: el mapeo de superficies está cerrado y verificado contra el árbol en f78216c.); revalidada direct sobre f78216cfec642cfe7cc5c32c87fa8cdf2da9108b con evidencia Árbol limpio en f78216c y .pi/settings.json declarando las tres skills; el test RED falló nombrando las tres antes de tocar nada..
 - **S111:** propuesta direct (El contrato de entrada es exacto y está publicado, el mecanismo de consumo ya existe en ledger.go, y la única elección restante —qué hacer ante un status ilegible— es derivable del precedente del propio archivo.); revalidada direct sobre 638a3f78cff475215cd1cc86cd37b8a3dcc09be5 con evidencia Salida real de gentle-ai sdd-status --json bajo 2.7.0, con schemaName, schemaVersion, nextRecommended y dependencies verificados campo por campo antes de escribir código..
 - **S112:** propuesta design-tasks (El producto está decidido —tres tipos, dos verificables, migración por Zona con exigencia al final— pero falta descubrimiento técnico acotado: la forma exacta de cada tipo en el esquema y cómo se prueba una cita a una decisión numerada dentro del registro archivado. Eso es diseño de contrato, no de comportamiento.); revalidada design-tasks sobre 4f4e2925befd92f7939b8459915499f5196909f3 con evidencia El descubrimiento encontró dos copias byte-idénticas del registro con md5 541a4eda, ninguna declarada autoridad por AGENTS.md, y dos formatos de escritura de decisiones más rangos. Las dos preguntas quedaron resueltas antes del primer Módulo..
 - **S116:** propuesta direct (El tipo de cita ya existe y está entregado en S112; esto lo repite en una lista y reporta cuál falló. No queda ninguna elección de diseño abierta: la decisión de producto está tomada y el canon §18 cierra la alternativa.); revalidada direct sobre 8e42897bf4b7c4b0a3c12fd9cd88b21ada7d6cb0 con evidencia Autoridad y validarAutoridad abiertos en el árbol: plan.go:141-181 declara el struct y su UnmarshalYAML de escalar o mapa, check.go:891-925 verifica una cita sola. Ningún archivo fuera de plan.go, check.go y authority&#95;test.go lee Tipo, Ref, ID, Loc, Tipada ni Declarada, así que el radio del cambio es exactamente el Área declarada y no queda decisión de diseño abierta..
-- **S114:** propuesta direct (El contrato del campo lo fija S112 y la estrategia de migración está decidida; lo que queda es trabajo mecánico sobre un dato, con un criterio de cierre binario —cero Sesiones sin tipo— y ninguna elección de diseño abierta.); pendiente de revalidación en kickoff.
-- **S115:** propuesta direct (El contrato ya existe por S112 y el dato ya está migrado por S114; encender la exigencia es un cambio acotado con un criterio binario verificable en una sola corrida de radar check.); pendiente de revalidación en kickoff.
+- **S114:** propuesta direct (El contrato del campo lo fija S112 y la estrategia de migración está decidida; lo que queda es trabajo mecánico sobre un dato, con un criterio de cierre binario —cero Sesiones sin tipo— y ninguna elección de diseño abierta.) · prioridad V2; pendiente de revalidación en kickoff.
+- **S115:** propuesta direct (El contrato ya existe por S112 y el dato ya está migrado por S114; encender la exigencia es un cambio acotado con un criterio binario verificable en una sola corrida de radar check.) · prioridad V2; pendiente de revalidación en kickoff.
 - **S113:** propuesta direct (Las dos reglas están escritas en el canon, la infraestructura de evidencia y ancestría ya existe, y la única elección restante —cuándo medir— es derivable del contrato de HEAD inmutable que la propia herramienta ya aplica.); revalidada design-tasks sobre 271a32a63a0f6ae554a2690448535bbc6ead7692 con evidencia Las 6 Sesiones archivadas del plan vigente —S4.9, S5.14, S5.15, S9.3, S9.4, S9.5— no tienen ninguna evidencia de entrega. Cuatro están reemplazadas desde references.future&#95;successors (S102 a S108) y dos, S4.9 y S9.4, se retienen como evidencia histórica sin entrega ni reemplazo: la autoridad de S9.4 lo dice textual.; razón: La ruta propuesta daba por sentado que archivar implica haber entregado, y el árbol real prueba que hay tres caminos de archivo, no uno. Decidir cuál de los tres debe declararse y cuál puede inferirse es diseño de contrato, no implementación mecánica: el criterio propuesto habría marcado las 6 archivadas del plan vigente, dos de ellas legítimas..
-- **S117:** propuesta direct (Tres extracciones mecánicas sin decisión de diseño abierta: el dato a mover ya está delimitado en cada archivo, la forma destino la fija el precedente &#96;&lt;generated:runtime-payload&gt;&#96; ya entregado, y el mecanismo de partición está cubierto por tests.); pendiente de revalidación en kickoff.
+- **S117:** propuesta direct (Tres extracciones mecánicas sin decisión de diseño abierta: el dato a mover ya está delimitado en cada archivo, la forma destino la fija el precedente &#96;&lt;generated:runtime-payload&gt;&#96; ya entregado, y el mecanismo de partición está cubierto por tests.) · prioridad Torre V1; pendiente de revalidación en kickoff.
 - **S118:** propuesta direct (El mecanismo, la implementación de referencia y los archivos quedaron fijados por Audit D; no hay diseño sin resolver. &#96;chanks-3-session-kickoff&#96; la revalida una vez contra el código de la Zona.); revalidada direct sobre 832ac9d2e32f6c0047b4c73ddb814f4cf2a1f802 con evidencia Audit D §§1-2 and the real entrypoint in extensions/pi/tower-session-router.ts confirm that Pi already loads the extension and the renderer is added through registerTool/renderCall/renderResult without an unresolved product-design choice; the current master delta is disjoint from S118's three product paths..
-- **S119:** propuesta direct (Tres rutas conocidas sin decisión abierta —product/tower/skills/herdr/SKILL.md, product/tower/skills/torre-control/SKILL.md y test/install/tower-role-assets.contract.mjs—; Zona y lifecycle quedaron fijados por el maintainer el 2026-09-11/13.); pendiente de revalidación en kickoff.
-- **S120:** propuesta full-sdd (La nueva entrada de antecedentes y la reutilización de verificación definen un contrato compartido todavía no resuelto. Esta ruta se propone para diseñar S120, no obliga a usar full-sdd en las futuras Sesiones direct o design-tasks. No se inicia SDD al registrar el plan.); pendiente de revalidación en kickoff.
-- **S121:** propuesta direct (Store, assignment-location, binding y consumer existen; schema, derivación y one-shot witness quedaron fijados sin decisión abierta.); pendiente de revalidación en kickoff.
-- **S122:** propuesta design-tasks (El producto está decidido —cuatro tipos, estados intactos, umbral 2 por Zona— pero falta descubrimiento técnico acotado: la forma exacta del motivo y del déficit dentro de radar.snapshot/v1 y cómo se presentan en la vista generada.); pendiente de revalidación en kickoff.
-- **S123:** propuesta design-tasks (Las tres superficies y sus reglas están decididas, pero falta descubrimiento técnico acotado: qué prueba del Método fija el contrato de las skills y de la plantilla de ruteo, y dónde vive dentro de agent-workflows.); pendiente de revalidación en kickoff.
+- **S119:** propuesta direct (Tres rutas conocidas sin decisión abierta —product/tower/skills/herdr/SKILL.md, product/tower/skills/torre-control/SKILL.md y test/install/tower-role-assets.contract.mjs—; Zona y lifecycle quedaron fijados por el maintainer el 2026-09-11/13.) · prioridad Torre V1; pendiente de revalidación en kickoff.
+- **S120:** propuesta full-sdd (La nueva entrada de antecedentes y la reutilización de verificación definen un contrato compartido todavía no resuelto. Esta ruta se propone para diseñar S120, no obliga a usar full-sdd en las futuras Sesiones direct o design-tasks. No se inicia SDD al registrar el plan.) · prioridad Método V1; pendiente de revalidación en kickoff.
+- **S121:** propuesta direct (Store, assignment-location, binding y consumer existen; schema, derivación y one-shot witness quedaron fijados sin decisión abierta.) · prioridad Torre V1; pendiente de revalidación en kickoff.
+- **S122:** propuesta design-tasks (El producto está decidido —cuatro tipos, estados intactos, umbral 2 por Zona— pero falta descubrimiento técnico acotado: la forma exacta del motivo y del déficit dentro de radar.snapshot/v1 y cómo se presentan en la vista generada.) · prioridad Método V1; pendiente de revalidación en kickoff.
+- **S123:** propuesta design-tasks (Las tres superficies y sus reglas están decididas, pero falta descubrimiento técnico acotado: qué prueba del Método fija el contrato de las skills y de la plantilla de ruteo, y dónde vive dentro de agent-workflows.) · prioridad V2; pendiente de revalidación en kickoff.
 - **S124:** propuesta direct (Comando, contenido de la salida, falla cerrada y texto de la skill quedan fijados en esta propuesta; resta implementación mecánica con pruebas y ninguna elección de diseño abierta.); revalidada direct sobre bbfaa216f33a09aa8d304f89dae2d90808501885 con evidencia Load (plan.go:282), CheckAt (check.go:29) y SesionPorID (plan.go:318) existen y status ya falla cerrado (main.go), así que el comando sólo reutiliza ese patrón. Las huellas SHA256 que T124.2.2 pedía actualizar protegen product/tower/generic y no las skills activas; quedaron intactas..
 - **S125:** propuesta direct (Fuente de evidencia, formato del trailer, salida y reglas de las skills quedan fijados en esta propuesta; no queda diseño abierto.); revalidada direct sobre ef792c1f9bcd811d06d42496cd301a9c0340cf82 con evidencia radar no leía trailers (ningún git log en tools/radar) y S124 dejó cmdSesion y validarAt listos para extender; el aviso vive en cmdCheck y la variante escribirSesionConAvance evita tocar check.go, plan.go y sesion&#95;test.go. Las huellas SHA256 que T125.2.2 pedía actualizar protegen product/tower/generic y quedaron intactas..
 - **S126:** propuesta direct (Disparador, pasos del despacho, layout, dueño de la entrega, los seis chequeos y el orden del retiro quedan fijados por las decisiones aprobadas; resta implementación mecánica con pruebas del Método.); revalidada direct sobre 5b2b754e0bd24e6f73f8d706af3a72414a59c8b0 con evidencia herdr tab close existe en la CLI instalada y el instalador ya registra skills por CHANKS&#95;SKILLS. La plantilla de ruteo prohíbe Tower, MAIN y Support por test, así que las líneas nombran la Torre. Hallazgo: git branch -d rechaza una rama integrada sólo por cherry-pick o rebase; retiro.md la conserva y la reporta, sin forzar..
@@ -456,7 +448,7 @@ Rutas: core.mjs, test/lifecycle.test.mjs
   - [ ] REFACTOR: congelar el tipo cerrado, normalizar INDETERMINATE y repetir testigos de bytes/metadatos.
 
 ### S2.9 — Enrollment público canónico por CLI
-- Estado derivado: 🟢 LISTO
+- Estado derivado: 🟡 DIFERIDO
 - Zona/Área: enrolamiento · enroll/, main-store/, test/enroll/, test/main-store.test.mjs
 - Depende de: —
 - Cimientos: bin/torre, test/console/cli.test.mjs
@@ -847,7 +839,7 @@ Rutas históricas (evidencia): hosts/stop-proof.mjs, hosts/rehydration.mjs, test
   - [ ] REFACTOR: preservar readback/cleanup sin crear autoridad ni raíz
 
 ### S4.4 — Recuperación lógica same-host con raíz sucesora
-- Estado derivado: 🟢 LISTO
+- Estado derivado: 🟡 DIFERIDO
 - Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs, scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs
 - Depende de: S4.3, S4.7
 - Cimientos: —
@@ -1067,7 +1059,7 @@ Rutas históricas (evidencia): hosts/runtime-port.mjs, hosts/runtime-observe.mjs
   - [ ] REFACTOR: unificar errores y aislar toda semántica de adapter.
 
 ### S4.12 — Recuperación mínima de Pi
-- Estado derivado: 🟢 LISTO
+- Estado derivado: 🟡 DIFERIDO
 - Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs, scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs
 - Depende de: S9.4, S1.18
 - Cimientos: —
@@ -2809,7 +2801,7 @@ Rutas: hosts/seat-cli.mjs, test/hosts/seat-cli.test.mjs
   - [ ] Sin flags de identidad ni cierre extranjero.
 
 ### S109 — Ventanilla única de plan: la Torre responde una asignación completa y Main deja de derivarla
-- Estado derivado: 🟢 LISTO
+- Estado derivado: 🟡 DIFERIDO
 - Zona/Área: contratos · contracts/, schemas/, registry/, test/contracts/, test/registry/
 - Depende de: —
 - Cimientos: mcp.mjs
@@ -2929,7 +2921,7 @@ Rutas: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go
   - [ ] REFACTOR: existe una sola verificación de cita y los tests siguen pasando.
 
 ### S114 — Todas las Sesiones vigentes declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: 🟡 DIFERIDO
 - Zona/Área: autoridad · openspec/plans/, openspec/plan.yaml, openspec/ROADMAP.md, openspec/prd/, openspec/rfc/, openspec/specs/, openspec/maintenance/, openspec/config.yaml, docs/
 - Depende de: S112, S116
 - Cimientos: —
@@ -3012,7 +3004,7 @@ Rutas: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go
   - [ ] REFACTOR: un plan sin tope declarado se comporta de forma explícita y los tests siguen pasando.
 
 ### S117 — Los tres registros de instalación dejan de forzar ediciones cross-Zona: sus datos enumerados salen del test a un módulo propio declarado como Cimiento exacto.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: 🟡 DIFERIDO
 - Zona/Área: instalacion · install/, test/install/
 - Depende de: —
 - Cimientos: test/install/tower-role-assets.contract.mjs
@@ -3131,7 +3123,7 @@ Rutas: product/tower/skills/herdr/SKILL.md, product/tower/skills/torre-control/S
   - [ ] El resultado enumera las superficies del método afectadas, dependencias externas, criterios de la prueba aislada y condiciones de activación posterior, sin modificar paquetes externos, instalar componentes ni cambiar instrucciones globales.
 
 ### S121 — Binding Main-validado con Session ID canónico y procedencia durable de cada tab Tower-owned
-- Estado derivado: 🟢 LISTO
+- Estado derivado: 🟡 DIFERIDO
 - Zona/Área: enrolamiento · enroll/, main-store/, test/enroll/, test/main-store.test.mjs
 - Depende de: S4.2, S4.5
 - Cimientos: test/install/launch-worker-cli.test.mjs
@@ -3403,7 +3395,7 @@ Rutas: agent-workflows/templates/session-routing.md, agent-workflows/tests/test&
   - [ ] El diff toca sólo Área.
 
 ## Capacidad
-7 Zona(s) compatibles con trabajo LISTO: autoridad, cimientos, contratos, enrolamiento, hosts, instalacion, metodo.
+2 Zona(s) compatibles con trabajo LISTO: cimientos, metodo.
 Este valor es un pronóstico estático. No adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
