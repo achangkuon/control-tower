@@ -46,6 +46,9 @@ func escribirSesionConAvance(w io.Writer, p *Plan, s *Sesion, estados map[string
 	fmt.Fprintf(w, "%s — %s\n", s.ID, s.Resultado)
 	fmt.Fprintf(w, "Estado: %s\n", estados[s.ID])
 	fmt.Fprintf(w, "Zona: %s · Área: %s\n", s.Zona, listaTexto(p.Area(s)))
+	if pr, ok := prioridadDeclarada(p, s.Prioridad); ok {
+		fmt.Fprintf(w, "Prioridad: %s\n", pr.Etiqueta())
+	}
 	fmt.Fprintf(w, "Autoridad: %s\n", autoridadTexto(s.Autoridad))
 	deps := make([]string, 0, len(s.DependeDe))
 	for _, d := range s.DependeDe {
@@ -135,6 +138,20 @@ func escribirSesionConAvance(w io.Writer, p *Plan, s *Sesion, estados map[string
 		}
 		fmt.Fprintf(w, "\nRetomar desde: %s\n", primerPendiente)
 	}
+}
+
+// prioridadDeclarada resolves a Sesión's priority only when the plan declares it,
+// so every text surface stays byte-identical for plans without priorities.
+func prioridadDeclarada(p *Plan, id string) (Prioridad, bool) {
+	if pos, ok := p.PrioridadPorID()[id]; ok {
+		return p.Prioridades[pos], true
+	}
+	return Prioridad{}, false
+}
+
+// Etiqueta names a priority for text surfaces as "Nombre (id)".
+func (pr Prioridad) Etiqueta() string {
+	return fmt.Sprintf("%s (%s)", pr.Nombre, pr.ID)
 }
 
 func abreviarCommit(commit string) string {

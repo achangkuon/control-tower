@@ -20,14 +20,16 @@ const SnapshotSchema = "radar.snapshot/v1"
 // Nothing is calculated twice, and nothing authored is invented — there is
 // deliberately no Zona "estado", because a Zona is territory, not work.
 type Snapshot struct {
-	Schema              string         `json:"schema"`
-	Producto            string         `json:"producto"`
-	Head                string         `json:"head"`
-	Avance              AvanceJSON     `json:"avance"`
-	Zonas               []ZonaSnapshot `json:"zonas"`
-	Sesiones            []SesionEstado `json:"sesiones"`
-	Asientos            []string       `json:"asientos"`
-	TerritorioPendiente int            `json:"territorio_pendiente"`
+	Schema              string          `json:"schema"`
+	Producto            string          `json:"producto"`
+	Head                string          `json:"head"`
+	Avance              AvanceJSON      `json:"avance"`
+	PrioridadActiva     *PrioridadJSON  `json:"prioridad_activa,omitempty"`
+	Prioridades         []PrioridadJSON `json:"prioridades,omitempty"`
+	Zonas               []ZonaSnapshot  `json:"zonas"`
+	Sesiones            []SesionEstado  `json:"sesiones"`
+	Asientos            []string        `json:"asientos"`
+	TerritorioPendiente int             `json:"territorio_pendiente"`
 }
 
 // AvanceJSON mirrors Avance with explicit JSON names so the wire contract does
@@ -57,6 +59,14 @@ type SesionEstado struct {
 	Zona      string `json:"zona"`
 	Estado    string `json:"estado"`
 	Resultado string `json:"resultado"`
+	Prioridad string `json:"prioridad,omitempty"`
+}
+
+// PrioridadJSON is one declared priority. Plans without priorities emit none of
+// these fields, so the v1 wire contract only grows.
+type PrioridadJSON struct {
+	ID     string `json:"id"`
+	Nombre string `json:"nombre"`
 }
 
 // Snapshot projects the plan at the current HEAD.
@@ -127,6 +137,7 @@ func (p *Plan) SnapshotAt(root, head string) Snapshot {
 			Zona:      s.Zona,
 			Estado:    vocabulario(estados[s.ID]),
 			Resultado: s.Resultado,
+			Prioridad: s.Prioridad,
 		})
 	}
 
@@ -135,11 +146,22 @@ func (p *Plan) SnapshotAt(root, head string) Snapshot {
 		asientos = []string{}
 	}
 
+	prioridades := make([]PrioridadJSON, 0, len(p.Prioridades))
+	for _, pr := range p.Prioridades {
+		prioridades = append(prioridades, PrioridadJSON{ID: pr.ID, Nombre: pr.Nombre})
+	}
+	var activa *PrioridadJSON
+	if pr, hay := p.PrioridadActivaAt(root, head); hay {
+		activa = &PrioridadJSON{ID: pr.ID, Nombre: pr.Nombre}
+	}
+
 	return Snapshot{
 		Schema:              SnapshotSchema,
 		Producto:            p.Producto,
 		Head:                head,
 		Avance:              AvanceJSON{Cerradas: total.Cerradas, Total: total.Total},
+		PrioridadActiva:     activa,
+		Prioridades:         prioridades,
 		Zonas:               zonas,
 		Sesiones:            sesiones,
 		Asientos:            asientos,

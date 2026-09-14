@@ -74,6 +74,13 @@ func RenderAt(p *Plan, root, head string) []byte {
 	fmt.Fprintf(&b, "# Hoja de ruta — %s\n\n", markdownText(p.Producto))
 	fmt.Fprintln(&b, "## 📍 Punto de retoma")
 	fmt.Fprintf(&b, "- Cierres registrados: %s.\n", cierresRegistrados(p, estados))
+	if len(p.Prioridades) > 0 {
+		activa := "ninguna"
+		if pr, hay := p.PrioridadActivaAt(root, head); hay {
+			activa = pr.Nombre
+		}
+		fmt.Fprintf(&b, "- Prioridad activa: %s.\n", markdownText(activa))
+	}
 	fmt.Fprintf(&b, "- Próximo trabajo ejecutable: %s.\n", proximoTrabajo(p, estados, colas))
 	fmt.Fprintf(&b, "- Decisión pendiente: %s.\n\n", primeraDecisionPendiente(p))
 
@@ -105,7 +112,7 @@ func RenderAt(p *Plan, root, head string) []byte {
 		} else {
 			for pos, id := range colas[zid] {
 				s := index[id]
-				fmt.Fprintf(&b, "%d. **%s** · %s · %s\n", pos+1, markdownText(id), estados[id], markdownText(s.Resultado))
+				fmt.Fprintf(&b, "%d. **%s** · %s%s · %s\n", pos+1, markdownText(id), estados[id], textoPrioridad(p, s), markdownText(s.Resultado))
 			}
 		}
 		fmt.Fprintln(&b)
@@ -129,7 +136,7 @@ func RenderAt(p *Plan, root, head string) []byte {
 		if esTerritorioPendiente(&s) || esTerritorioHistorico(&s) {
 			continue
 		}
-		fmt.Fprintf(&b, "- **%s:** propuesta %s (%s)", markdownText(s.ID), markdownText(s.Ruta.Propuesta), markdownText(s.Ruta.Autoridad))
+		fmt.Fprintf(&b, "- **%s:** propuesta %s (%s)%s", markdownText(s.ID), markdownText(s.Ruta.Propuesta), markdownText(s.Ruta.Autoridad), textoPrioridad(p, &s))
 		if r := s.Ruta.Revalidacion; r != nil {
 			fmt.Fprintf(&b, "; revalidada %s sobre %s con evidencia %s", markdownText(r.Resultado), markdownText(r.Base), markdownText(r.Evidencia))
 			if r.Razon != "" {
@@ -278,6 +285,15 @@ func markdownText(value string) string {
 		"#", "&#35;", "!", "&#33;",
 	)
 	return replacer.Replace(value)
+}
+
+// textoPrioridad is the ROADMAP suffix for a Sesión's priority; empty when the
+// plan declares none, which keeps the generated view byte-identical.
+func textoPrioridad(p *Plan, s *Sesion) string {
+	if pr, ok := prioridadDeclarada(p, s.Prioridad); ok {
+		return " · prioridad " + markdownText(pr.Nombre)
+	}
+	return ""
 }
 
 func zonasOrdenadas(p *Plan, colas map[string][]string) []string {

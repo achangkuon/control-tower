@@ -29,6 +29,16 @@ func TestRenderCoincideConGoldenYEsDeterminista(t *testing.T) {
 	}
 }
 
+func TestRenderMuestraLaPrioridadActivaYLaDeCadaSesion(t *testing.T) {
+	root, commit := repoGit(t)
+	got := string(RenderAt(planPriorizadoValido(commit), root, commit))
+	for _, want := range []string{"- Prioridad activa: A.", "· prioridad A", "· prioridad B"} {
+		if !bytes.Contains([]byte(got), []byte(want)) {
+			t.Fatalf("la vista debe incluir %q:\n%s", want, got)
+		}
+	}
+}
+
 func TestAtomicWriteConvergeSinArchivosTemporales(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "openspec", "ROADMAP.md")

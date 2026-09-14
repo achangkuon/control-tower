@@ -144,6 +144,61 @@ func TestStatusJSONNoNombraSesion(t *testing.T) {
 	}
 }
 
+func planPriorizadoValido(commit string) *Plan {
+	return &Plan{
+		Producto:    "control-tower",
+		Zonas:       []Zona{{ID: "hosts", Nombre: "Hosts", Rutas: []string{"tracked.txt"}}},
+		Prioridades: []Prioridad{{ID: "a", Nombre: "A"}, {ID: "b", Nombre: "B"}},
+		Sesiones: []Sesion{
+			conPrioridad(completa("S1", "hosts", commit), "a"),
+			conPrioridad(pendiente("S2", "hosts", "S1"), "a"),
+			conPrioridad(pendiente("S3", "hosts"), "b"),
+		},
+	}
+}
+
+func TestSesionMuestraSuPrioridadSoloSiElPlanLaDeclara(t *testing.T) {
+	root, commit := repoGit(t)
+	var out strings.Builder
+	if err := cmdSesion(&out, planPriorizadoValido(commit), root, "S3"); err != nil {
+		t.Fatalf("sesion falló sobre un plan priorizado válido: %v", err)
+	}
+	if !strings.Contains(out.String(), "Prioridad: B (b)") {
+		t.Fatalf("radar sesion debe mostrar la prioridad de la Sesión:\n%s", out.String())
+	}
+
+	out.Reset()
+	if err := cmdSesion(&out, planConDosSesiones(commit), root, "S2"); err != nil {
+		t.Fatalf("sesion falló: %v", err)
+	}
+	if strings.Contains(out.String(), "Prioridad") {
+		t.Fatalf("un plan sin prioridades no agrega la línea:\n%s", out.String())
+	}
+}
+
+func TestStatusMuestraLaPrioridadActivaSoloSiElPlanLaDeclara(t *testing.T) {
+	root, commit := repoGit(t)
+	out := captureStdout(t, func() {
+		if err := cmdStatus(planPriorizadoValido(commit), root); err != nil {
+			t.Fatalf("status falló sobre un plan priorizado válido: %v", err)
+		}
+	})
+	for _, want := range []string{"Prioridad activa: A (a)", "prioridad:a"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("status debe incluir %q:\n%s", want, out)
+		}
+	}
+
+	out = captureStdout(t, func() {
+		if err := cmdStatus(planConDosSesiones(commit), root); err != nil {
+			t.Fatalf("status falló: %v", err)
+		}
+	})
+	if strings.Contains(strings.ToLower(out), "prioridad") {
+		t.Fatalf("un plan sin prioridades no agrega líneas a status:\n%s", out)
+	}
+}
+
 func TestParsearArgsAceptaIDAntesYDespuesDeLasBanderas(t *testing.T) {
 	for _, args := range [][]string{{"-C", "/repo", "S114"}, {"S114", "-C", "/repo"}} {
 		opts, posicionales, err := parsearArgs("sesion", args)

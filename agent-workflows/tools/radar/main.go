@@ -194,7 +194,15 @@ func cmdStatus(p *Plan, root string) error {
 	if err != nil {
 		return fmt.Errorf("no se pudo leer el avance de Módulos: %w", err)
 	}
-	fmt.Printf("%s — %s\n\n", p.Producto, total)
+	fmt.Printf("%s — %s\n", p.Producto, total)
+	if len(p.Prioridades) > 0 {
+		activa := "ninguna"
+		if pr, hay := p.PrioridadActivaAt(root, head); hay {
+			activa = pr.Etiqueta()
+		}
+		fmt.Printf("Prioridad activa: %s\n", activa)
+	}
+	fmt.Println()
 
 	zonaSet := make(map[string]bool, len(p.Zonas)+1)
 	for _, z := range p.Zonas {
@@ -224,6 +232,9 @@ func cmdStatus(p *Plan, root string) error {
 			linea := fmt.Sprintf("  #%d  %-28s %s  %s  ruta:%s", i+1, truncar(s.Resultado, 28), id, estados[id], s.RutaEfectiva())
 			if k := modulosEntregados(s, entregados); k > 0 {
 				linea += fmt.Sprintf("  a medias %d/%d Módulos", k, len(s.Modulos))
+			}
+			if pr, ok := prioridadDeclarada(p, s.Prioridad); ok {
+				linea += "  prioridad:" + pr.ID
 			}
 			fmt.Println(linea)
 		}

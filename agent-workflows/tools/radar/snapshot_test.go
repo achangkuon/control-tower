@@ -200,6 +200,48 @@ func TestCmdStatusJSONRefusesInvalidData(t *testing.T) {
 	}
 }
 
+func TestSnapshotExponeLasPrioridadesSinCambiarSuEsquema(t *testing.T) {
+	root, commit := repoGit(t)
+	p := &Plan{
+		Producto:    "control-tower",
+		Zonas:       []Zona{{ID: "hosts", Nombre: "Hosts"}},
+		Prioridades: []Prioridad{{ID: "a", Nombre: "A"}, {ID: "b", Nombre: "B"}},
+		Sesiones:    []Sesion{conPrioridad(abierta("S1", "hosts"), "a"), conPrioridad(abierta("S2", "hosts"), "b")},
+	}
+	raw, err := json.Marshal(p.SnapshotAt(root, commit))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var decoded Snapshot
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	if decoded.Schema != SnapshotSchema {
+		t.Fatalf("las prioridades no cambian el esquema, dijo %q", decoded.Schema)
+	}
+	if decoded.PrioridadActiva == nil || decoded.PrioridadActiva.ID != "a" || decoded.PrioridadActiva.Nombre != "A" {
+		t.Fatalf("el snapshot debe exponer la prioridad activa: %s", raw)
+	}
+	if len(decoded.Prioridades) != 2 || decoded.Prioridades[1].ID != "b" {
+		t.Fatalf("el snapshot debe exponer la lista ordenada: %s", raw)
+	}
+	if decoded.Sesiones[0].Prioridad != "a" || decoded.Sesiones[1].Prioridad != "b" || decoded.Sesiones[1].Estado != "DIFERIDO" {
+		t.Fatalf("cada Sesión debe llevar su prioridad y su estado calculado: %s", raw)
+	}
+}
+
+func TestSnapshotSinPrioridadesNoAgregaCampos(t *testing.T) {
+	root, commit := repoGit(t)
+	p := &Plan{Producto: "control-tower", Zonas: []Zona{{ID: "hosts", Nombre: "Hosts"}}, Sesiones: []Sesion{abierta("S1", "hosts")}}
+	raw, err := json.Marshal(p.SnapshotAt(root, commit))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(raw), "prioridad") {
+		t.Fatalf("un plan sin prioridades no agrega campos al snapshot: %s", raw)
+	}
+}
+
 // completa and pendiente build Sesiones that satisfy the whole checker, so the
 // emission tests exercise the real refusal path instead of bypassing it.
 func completa(id, zona, commit string, deps ...string) Sesion {
