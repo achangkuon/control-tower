@@ -139,6 +139,20 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertNotIn("tower_", unattended)
         json.loads(read("skills/chanks-4-unattended-implementation/assets/execution-contract.schema.json"))
 
+    def test_canon_defines_priority_as_an_optional_ordering_attribute(self):
+        canon = read("skills/_shared/plan-naming-convention.md")
+        status = canon.split("## 9. Status", 1)[1].split("## 10.", 1)[0]
+
+        self.assertIn("### Priority", status)
+        for phrase in (
+            "`prioridades`", "`prioridad`", "optional ordering attribute", "never a level",
+            "no time field", "would be `LISTO`", "`DIFERIDO`",
+        ):
+            self.assertIn(phrase, status)
+        states = [row for row in status.splitlines() if row.startswith("| ") and "`" in row.split("|")[1]]
+        self.assertEqual(len(states), 7)
+        self.assertIn("Never add a fifth level.", canon)
+
     def test_frozen_product_snapshot_matches_the_pre_migration_builder(self):
         snapshot = ROOT.parent / "product" / "tower" / "generic"
         self.assertTrue(snapshot.is_dir(), "missing frozen product snapshot")

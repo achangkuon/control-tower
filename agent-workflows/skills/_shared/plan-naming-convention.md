@@ -243,6 +243,19 @@ Do not add, translate, combine, or invent states.
 
 `BLOQUEADO` is *cannot*; `DIFERIDO` is *chose not to*. Keeping them apart is the whole point.
 
+### Priority — optional ordering attribute, never a level
+
+A plan may declare `prioridades`, an ordered list of `{id, nombre}` entries named by the
+project itself. Each open Sesión then declares one `prioridad` from that list. It is an
+optional ordering attribute, never a level: it adds no node to §1, carries no time field, and
+names no owner.
+
+The active priority is the first entry that still has a Sesión not `COMPLETO` or `ARCHIVADO`.
+A Sesión of a later priority whose computed state would be `LISTO` becomes `DIFERIDO`; every
+other state stays as computed, so a blocked Sesión keeps showing its blocker while it waits.
+The next priority activates on its own when the active one closes. A plan without
+`prioridades` behaves exactly as if the attribute did not exist.
+
 ## 10. The roadmap is generated
 
 `openspec/ROADMAP.md` is a **view**, rendered only from `openspec/plan.yaml`. No agent writes

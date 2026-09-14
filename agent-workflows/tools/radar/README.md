@@ -54,11 +54,18 @@ zonas:
 cimientos:
   rutas: [package.json, shared/]
 
+prioridades:                        # opcional; orden de trabajo propio del proyecto
+  - id: estructura
+    nombre: Estructura
+  - id: terminaciones
+    nombre: Terminaciones
+
 sesiones:
   - id: S23
     zona: cocina
     resultado: instalar el horno
     autoridad: PRD cocina §2          # alcance aprobado de la Sesión
+    prioridad: estructura             # obligatoria en Sesiones abiertas si hay prioridades
     cambio: instalar-horno            # opcional; ledger SDD de gentle-ai
     depende_de: [S18]
     cimientos: [package.json]       # reservas exactas, no globs
@@ -122,6 +129,18 @@ o un Módulo.
   `HEAD` actual; rechaza commits laterales.
 
 El conjunto cerrado es: `direct`, `design-tasks`, `full-sdd`.
+
+## Prioridades
+
+`prioridades` es opcional y cada proyecto nombra las suyas. Qué significa una prioridad lo
+define el canon (`skills/_shared/plan-naming-convention.md` §9); Radar sólo la calcula y la
+valida:
+
+- `radar status`, `radar sesion`, `radar.snapshot/v1` y la vista generada muestran la
+  prioridad activa y la de cada Sesión sólo cuando el plan declara la lista.
+- `radar check` falla ante una lista inválida, una Sesión abierta sin prioridad conocida o una
+  dependencia hacia una prioridad posterior.
+- Un plan sin `prioridades` produce exactamente la misma salida que antes.
 
 ## Ledger SDD opcional
 
