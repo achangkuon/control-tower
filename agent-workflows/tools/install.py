@@ -40,6 +40,7 @@ CHANKS_SKILLS = (
     "chanks-1-cierre-de-decisiones",
     "chanks-2-planificador-granular",
     "chanks-3-session-kickoff",
+    "chanks-3-despacho-herdr",
     "chanks-4-puente",
     "chanks-4-unattended-implementation",
     "chanks-6-politica-de-entrega",
