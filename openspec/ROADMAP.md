@@ -16,7 +16,7 @@
 - Método #2 → S120 — Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
 
 ## Avance
-- **Total:** 65% (60/92 S)
+- **Total:** 63% (60/94 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -30,7 +30,7 @@
 - **Hosts:** 33% (3/9 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 50% (4/8 S)
+- **Método:** 40% (4/10 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -85,6 +85,8 @@
 2. **S120** · 🟢 LISTO · Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
 3. **S122** · 🟢 LISTO · Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 4. **S123** · 📋 PLANIFICADO · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
+5. **S124** · 🟢 LISTO · Un agente obtiene el contrato completo de una sola Sesión con &#96;radar sesion &lt;ID&gt;&#96;, y Support lee el plan sólo por Radar, nunca openspec/plan.yaml entero.
+6. **S125** · 📋 PLANIFICADO · Una Sesión con Módulos ya entregados se ve a medias en Radar y se retoma desde el primer Módulo pendiente, sin cambiar ninguno de los siete estados.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -138,6 +140,8 @@
 - **S121:** propuesta direct (Store, assignment-location, binding y consumer existen; schema, derivación y one-shot witness quedaron fijados sin decisión abierta.); pendiente de revalidación en kickoff.
 - **S122:** propuesta design-tasks (El producto está decidido —cuatro tipos, estados intactos, umbral 2 por Zona— pero falta descubrimiento técnico acotado: la forma exacta del motivo y del déficit dentro de radar.snapshot/v1 y cómo se presentan en la vista generada.); pendiente de revalidación en kickoff.
 - **S123:** propuesta design-tasks (Las tres superficies y sus reglas están decididas, pero falta descubrimiento técnico acotado: qué prueba del Método fija el contrato de las skills y de la plantilla de ruteo, y dónde vive dentro de agent-workflows.); pendiente de revalidación en kickoff.
+- **S124:** propuesta direct (Comando, contenido de la salida, falla cerrada y texto de la skill quedan fijados en esta propuesta; resta implementación mecánica con pruebas y ninguna elección de diseño abierta.); pendiente de revalidación en kickoff.
+- **S125:** propuesta direct (Fuente de evidencia, formato del trailer, salida y reglas de las skills quedan fijados en esta propuesta; no queda diseño abierto.); pendiente de revalidación en kickoff.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -3248,6 +3252,82 @@ Rutas: agent-workflows/templates/session-routing.md
   - [ ] GREEN: la plantilla declara el flujo completo del horizonte.
 - **T123.3.3:** REFACTOR: ubicar la regla junto al ruteo de Sesiones existente sin repetir el canon. → REFACTOR: la regla vive en un solo lugar y la prueba sigue pasando.
   - [ ] REFACTOR: la regla vive en un solo lugar y la prueba sigue pasando.
+
+### S124 — Un agente obtiene el contrato completo de una sola Sesión con &#96;radar sesion &lt;ID&gt;&#96;, y Support lee el plan sólo por Radar, nunca openspec/plan.yaml entero.
+- Estado derivado: 🟢 LISTO
+- Zona/Área: metodo · agent-workflows/
+- Depende de: —
+- Cimientos: —
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] &#96;radar sesion S114&#96; imprime sólo S114: estado calculado, Zona, autoridad, dependencias con su estado, cimientos, recurso, criterios, decisiones, ruta, Módulos y Tareas; ninguna otra Sesión aparece en la salida.
+  - [ ] La salida de &#96;radar sesion S114&#96; sobre el plan real pesa menos de 15 KB.
+  - [ ] Un ID inexistente o una referencia no ejecutable termina con código 1 y un mensaje de una línea.
+  - [ ] Si el plan no valida, &#96;radar sesion&#96; termina con código 1 igual que &#96;radar status&#96; y no imprime ningún estado.
+  - [ ] &#96;radar status&#96; en texto termina con una línea que indica &#96;radar sesion &lt;ID&gt;&#96;; &#96;radar status --json&#96; no cambia.
+  - [ ] &#96;radar render&#96; produce un ROADMAP byte a byte idéntico al anterior.
+  - [ ] chanks-0-agente-soporte y su brief no instruyen leer openspec/plan.yaml ni openspec/ROADMAP.md enteros y nombran &#96;radar status&#96; y &#96;radar sesion &lt;ID&gt;&#96; como la única vía de lectura.
+  - [ ] Si radar falta o rechaza el plan, la skill ordena detenerse y reportar; nunca leer el archivo como respaldo.
+  - [ ] Una prueba del Método falla si la skill vuelve a instruir la lectura completa del plan; &#96;go test ./...&#96; y los tests de agent-workflows pasan.
+  - [ ] Tras la entrega, el binario instalado responde &#96;radar sesion&#96; y la skill instalada en los cuatro runtimes coincide con el repo.
+  - [ ] El diff toca sólo Área.
+
+#### M124.1 — Radar imprime el contrato de una sola Sesión
+Rutas: agent-workflows/tools/radar/main.go, agent-workflows/tools/radar/sesion.go, agent-workflows/tools/radar/sesion&#95;test.go, agent-workflows/tools/radar/README.md
+
+- **T124.1.1:** RED: exigir que &#96;radar sesion &lt;ID&gt;&#96; imprima sólo esa Sesión completa, falle con ID inexistente o plan inválido, y que status indique el comando. → RED: el subcomando no existe y la prueba falla.
+  - [ ] RED: el subcomando no existe y la prueba falla.
+- **T124.1.2:** GREEN: agregar el subcomando usando Load, CheckAt y SesionPorID, y la línea final de status en texto. → GREEN: la prueba pasa, status --json no cambia y el ROADMAP generado es idéntico.
+  - [ ] GREEN: la prueba pasa, status --json no cambia y el ROADMAP generado es idéntico.
+- **T124.1.3:** REFACTOR: documentar el comando en README y en el uso de main.go sin duplicar helpers de render. → REFACTOR: una sola descripción del comando y las pruebas siguen pasando.
+  - [ ] REFACTOR: una sola descripción del comando y las pruebas siguen pasando.
+
+#### M124.2 — Support lee el plan sólo por Radar
+Rutas: agent-workflows/skills/chanks-0-agente-soporte/SKILL.md, agent-workflows/skills/chanks-0-agente-soporte/assets/brief-diario.md, agent-workflows/tests/test&#95;builder&#95;flow.py
+
+- **T124.2.1:** RED: exigir que la skill y el brief nombren &#96;radar sesion &lt;ID&gt;&#96; y no instruyan leer plan.yaml ni ROADMAP enteros. → RED: la skill actual instruye la lectura completa y la prueba falla.
+  - [ ] RED: la skill actual instruye la lectura completa y la prueba falla.
+- **T124.2.2:** GREEN: reescribir la regla de lectura y las fuentes del brief, y actualizar las huellas SHA256 fijadas en la prueba. → GREEN: la prueba pasa con la lectura acotada por Radar.
+  - [ ] GREEN: la prueba pasa con la lectura acotada por Radar.
+- **T124.2.3:** REFACTOR: conservar las reglas de solo lectura existentes sin duplicarlas. → REFACTOR: la regla de lectura vive en un solo lugar y la prueba sigue pasando.
+  - [ ] REFACTOR: la regla de lectura vive en un solo lugar y la prueba sigue pasando.
+
+### S125 — Una Sesión con Módulos ya entregados se ve a medias en Radar y se retoma desde el primer Módulo pendiente, sin cambiar ninguno de los siete estados.
+- Estado derivado: 📋 PLANIFICADO
+- Zona/Área: metodo · agent-workflows/
+- Depende de: S124
+- Cimientos: —
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] Un commit alcanzable desde HEAD con el trailer &#96;Modulo: M&lt;id&gt;&#96; de un Módulo del plan cuenta ese Módulo como entregado; un commit fuera de HEAD no cuenta.
+  - [ ] Una Sesión no cerrada con al menos un Módulo entregado conserva su estado calculado y &#96;radar status&#96; en texto le agrega &#96;a medias N/M Módulos&#96;.
+  - [ ] &#96;radar sesion &lt;ID&gt;&#96; marca cada Módulo como entregado con su commit o pendiente, y nombra el primer Módulo pendiente.
+  - [ ] &#96;radar status --json&#96;, &#96;radar render&#96; y el ROADMAP generado no cambian.
+  - [ ] Un trailer que nombra un Módulo inexistente produce un aviso en &#96;radar check&#96;, nunca un error.
+  - [ ] chanks-3-session-kickoff ordena retomar desde el primer Módulo pendiente y nunca rehacer uno entregado.
+  - [ ] chanks-4-puente exige el trailer &#96;Modulo: &lt;ID&gt;&#96; en cada commit de Módulo.
+  - [ ] Una prueba del Método falla si cualquiera de las dos skills pierde su regla; &#96;go test ./...&#96; y los tests de agent-workflows pasan.
+  - [ ] El diff toca sólo Área.
+
+#### M125.1 — Radar deriva los Módulos entregados desde Git y los muestra
+Rutas: agent-workflows/tools/radar/avance.go, agent-workflows/tools/radar/avance&#95;test.go, agent-workflows/tools/radar/main.go, agent-workflows/tools/radar/sesion.go, agent-workflows/tools/radar/README.md
+
+- **T125.1.1:** RED: exigir Módulos entregados por trailer alcanzable desde HEAD, la marca en status, el detalle en &#96;radar sesion&#96; y el aviso por Módulo inexistente. → RED: radar no lee trailers y la prueba falla.
+  - [ ] RED: radar no lee trailers y la prueba falla.
+- **T125.1.2:** GREEN: leer los trailers desde Git, cruzarlos con los Módulos del plan y mostrarlos en status y sesion. → GREEN: la prueba pasa y status --json y el ROADMAP no cambian.
+  - [ ] GREEN: la prueba pasa y status --json y el ROADMAP no cambian.
+- **T125.1.3:** REFACTOR: dejar la lectura de Git en un solo lugar y documentar el trailer en README. → REFACTOR: una sola lectura de trailers y las pruebas siguen pasando.
+  - [ ] REFACTOR: una sola lectura de trailers y las pruebas siguen pasando.
+
+#### M125.2 — Las skills dejan la marca y retoman desde ella
+Rutas: agent-workflows/skills/chanks-3-session-kickoff/SKILL.md, agent-workflows/skills/chanks-4-puente/SKILL.md, agent-workflows/tests/test&#95;builder&#95;flow.py
+
+- **T125.2.1:** RED: exigir la regla de retomar en kickoff y la del trailer en puente. → RED: las skills actuales no tienen las reglas y la prueba falla.
+  - [ ] RED: las skills actuales no tienen las reglas y la prueba falla.
+- **T125.2.2:** GREEN: agregar ambas reglas y actualizar las huellas SHA256 fijadas en la prueba. → GREEN: la prueba pasa con las dos reglas.
+  - [ ] GREEN: la prueba pasa con las dos reglas.
+- **T125.2.3:** REFACTOR: ubicar cada regla junto a sus pasos existentes sin duplicar el canon. → REFACTOR: cada regla vive en un solo lugar y la prueba sigue pasando.
+  - [ ] REFACTOR: cada regla vive en un solo lugar y la prueba sigue pasando.
 
 ## Capacidad
 7 Zona(s) compatibles con trabajo LISTO: autoridad, cimientos, contratos, enrolamiento, hosts, instalacion, metodo.

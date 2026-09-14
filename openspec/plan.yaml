@@ -7655,6 +7655,154 @@ sesiones:
             resultado: "REFACTOR: la regla vive en un solo lugar y la prueba sigue pasando."
             criterios: ["REFACTOR: la regla vive en un solo lugar y la prueba sigue pasando."]
 
+  - id: S124
+    zona: metodo
+    resultado: "Un agente obtiene el contrato completo de una sola Sesión con `radar sesion <ID>`, y Support lee el plan sólo por Radar, nunca openspec/plan.yaml entero."
+    autoridad: "Pedido de Emilio del 2026-09-14 (Claude Code): los agentes leen sólo la Sesión que sigue y nunca el plan completo, medido ese día en 630 KB contra 3,7 KB de `radar status`. Aprobación explícita de esta propuesta el mismo día."
+    depende_de: []
+    cimientos: []
+    recurso: []
+    criterios:
+      - "`radar sesion S114` imprime sólo S114: estado calculado, Zona, autoridad, dependencias con su estado, cimientos, recurso, criterios, decisiones, ruta, Módulos y Tareas; ninguna otra Sesión aparece en la salida."
+      - "La salida de `radar sesion S114` sobre el plan real pesa menos de 15 KB."
+      - "Un ID inexistente o una referencia no ejecutable termina con código 1 y un mensaje de una línea."
+      - "Si el plan no valida, `radar sesion` termina con código 1 igual que `radar status` y no imprime ningún estado."
+      - "`radar status` en texto termina con una línea que indica `radar sesion <ID>`; `radar status --json` no cambia."
+      - "`radar render` produce un ROADMAP byte a byte idéntico al anterior."
+      - "chanks-0-agente-soporte y su brief no instruyen leer openspec/plan.yaml ni openspec/ROADMAP.md enteros y nombran `radar status` y `radar sesion <ID>` como la única vía de lectura."
+      - "Si radar falta o rechaza el plan, la skill ordena detenerse y reportar; nunca leer el archivo como respaldo."
+      - "Una prueba del Método falla si la skill vuelve a instruir la lectura completa del plan; `go test ./...` y los tests de agent-workflows pasan."
+      - "Tras la entrega, el binario instalado responde `radar sesion` y la skill instalada en los cuatro runtimes coincide con el repo."
+      - "El diff toca sólo Área."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Qué hace `radar sesion` cuando el plan no valida?"
+        resolucion: "Falla cerrada, igual que `radar status`: el estado sólo existe sobre un plan válido."
+        autoridad: "Contrato vigente de `radar status` (agent-workflows/tools/radar/main.go) y aprobación de esta propuesta del 2026-09-14."
+        clase: contrato-visible
+        falsificador: "`radar sesion` imprime un estado con el plan inválido, o la skill permite leer plan.yaml como respaldo."
+        descartadas:
+          - opcion: "Imprimir la Sesión sin estado cuando el plan no valida."
+            razon: "Un agente arrancaría trabajo sobre un dato roto sin enterarse."
+      - tipo: resuelta
+        pregunta: "¿Se agrega salida `--json` a `radar sesion`?"
+        resolucion: "No en esta Sesión. Sólo texto; el JSON se agrega cuando exista un consumidor real."
+        autoridad: "Aprobación de esta propuesta del 2026-09-14; ningún consumidor actual lo pide."
+        clase: contrato-visible
+        falsificador: "Se entrega un esquema JSON sin consumidor que lo use."
+        descartadas:
+          - opcion: "Entregar `--json` desde el inicio."
+            razon: "Congela un contrato de máquina que nadie consume todavía."
+    ruta:
+      propuesta: direct
+      autoridad: "Comando, contenido de la salida, falla cerrada y texto de la skill quedan fijados en esta propuesta; resta implementación mecánica con pruebas y ninguna elección de diseño abierta."
+    modulos:
+      - id: M124.1
+        resultado: "Radar imprime el contrato de una sola Sesión"
+        rutas: [agent-workflows/tools/radar/main.go, agent-workflows/tools/radar/sesion.go, agent-workflows/tools/radar/sesion_test.go, agent-workflows/tools/radar/README.md]
+        tareas:
+          - id: T124.1.1
+            accion: "RED: exigir que `radar sesion <ID>` imprima sólo esa Sesión completa, falle con ID inexistente o plan inválido, y que status indique el comando."
+            resultado: "RED: el subcomando no existe y la prueba falla."
+            criterios: ["RED: el subcomando no existe y la prueba falla."]
+          - id: T124.1.2
+            accion: "GREEN: agregar el subcomando usando Load, CheckAt y SesionPorID, y la línea final de status en texto."
+            resultado: "GREEN: la prueba pasa, status --json no cambia y el ROADMAP generado es idéntico."
+            criterios: ["GREEN: la prueba pasa, status --json no cambia y el ROADMAP generado es idéntico."]
+          - id: T124.1.3
+            accion: "REFACTOR: documentar el comando en README y en el uso de main.go sin duplicar helpers de render."
+            resultado: "REFACTOR: una sola descripción del comando y las pruebas siguen pasando."
+            criterios: ["REFACTOR: una sola descripción del comando y las pruebas siguen pasando."]
+      - id: M124.2
+        resultado: "Support lee el plan sólo por Radar"
+        rutas: [agent-workflows/skills/chanks-0-agente-soporte/SKILL.md, agent-workflows/skills/chanks-0-agente-soporte/assets/brief-diario.md, agent-workflows/tests/test_builder_flow.py]
+        tareas:
+          - id: T124.2.1
+            accion: "RED: exigir que la skill y el brief nombren `radar sesion <ID>` y no instruyan leer plan.yaml ni ROADMAP enteros."
+            resultado: "RED: la skill actual instruye la lectura completa y la prueba falla."
+            criterios: ["RED: la skill actual instruye la lectura completa y la prueba falla."]
+          - id: T124.2.2
+            accion: "GREEN: reescribir la regla de lectura y las fuentes del brief, y actualizar las huellas SHA256 fijadas en la prueba."
+            resultado: "GREEN: la prueba pasa con la lectura acotada por Radar."
+            criterios: ["GREEN: la prueba pasa con la lectura acotada por Radar."]
+          - id: T124.2.3
+            accion: "REFACTOR: conservar las reglas de solo lectura existentes sin duplicarlas."
+            resultado: "REFACTOR: la regla de lectura vive en un solo lugar y la prueba sigue pasando."
+            criterios: ["REFACTOR: la regla de lectura vive en un solo lugar y la prueba sigue pasando."]
+
+  - id: S125
+    zona: metodo
+    resultado: "Una Sesión con Módulos ya entregados se ve a medias en Radar y se retoma desde el primer Módulo pendiente, sin cambiar ninguno de los siete estados."
+    autoridad: "Pedido de Emilio del 2026-09-14 (Claude Code) tras verificar que una Sesión a medias figura LISTO igual que una sin empezar (agent-workflows/tools/radar/state.go:29) y que 0 de 144 commits desde el 2026-09-05 nombran su Módulo. Aprobación explícita de esta propuesta, opción trailer, el mismo día."
+    depende_de: [S124]
+    cimientos: []
+    recurso: []
+    criterios:
+      - "Un commit alcanzable desde HEAD con el trailer `Modulo: M<id>` de un Módulo del plan cuenta ese Módulo como entregado; un commit fuera de HEAD no cuenta."
+      - "Una Sesión no cerrada con al menos un Módulo entregado conserva su estado calculado y `radar status` en texto le agrega `a medias N/M Módulos`."
+      - "`radar sesion <ID>` marca cada Módulo como entregado con su commit o pendiente, y nombra el primer Módulo pendiente."
+      - "`radar status --json`, `radar render` y el ROADMAP generado no cambian."
+      - "Un trailer que nombra un Módulo inexistente produce un aviso en `radar check`, nunca un error."
+      - "chanks-3-session-kickoff ordena retomar desde el primer Módulo pendiente y nunca rehacer uno entregado."
+      - "chanks-4-puente exige el trailer `Modulo: <ID>` en cada commit de Módulo."
+      - "Una prueba del Método falla si cualquiera de las dos skills pierde su regla; `go test ./...` y los tests de agent-workflows pasan."
+      - "El diff toca sólo Área."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Dónde vive la evidencia de un Módulo entregado?"
+        resolucion: "En un trailer del commit, leído desde Git. El plan no se escribe por Módulo."
+        autoridad: "AGENTS.md:15 (el estado se calcula desde la evidencia de entrega en Git) y aprobación de esta propuesta del 2026-09-14."
+        clase: contrato-visible
+        falsificador: "El avance de un Módulo se registra escribiendo openspec/plan.yaml o un archivo de estado paralelo."
+        descartadas:
+          - opcion: "Un campo entrega por Módulo en openspec/plan.yaml."
+            razon: "Suma un commit de plan por Módulo y es un paso más que el agente puede olvidar."
+      - tipo: resuelta
+        pregunta: "¿Se agrega un estado EMPEZADA?"
+        resolucion: "No. El conjunto de siete estados es canon cerrado; el avance es una marca al lado del estado."
+        autoridad: "Canon de estados en agent-workflows/skills/_shared/plan-naming-convention.md (conjunto cerrado)."
+        clase: contrato-visible
+        falsificador: "Radar emite un estado fuera de los siete."
+        descartadas:
+          - opcion: "Un estado nuevo EMPEZADA."
+            razon: "Cambia el canon compartido por todos los repos para resolver algo que una marca resuelve."
+    ruta:
+      propuesta: direct
+      autoridad: "Fuente de evidencia, formato del trailer, salida y reglas de las skills quedan fijados en esta propuesta; no queda diseño abierto."
+    modulos:
+      - id: M125.1
+        resultado: "Radar deriva los Módulos entregados desde Git y los muestra"
+        rutas: [agent-workflows/tools/radar/avance.go, agent-workflows/tools/radar/avance_test.go, agent-workflows/tools/radar/main.go, agent-workflows/tools/radar/sesion.go, agent-workflows/tools/radar/README.md]
+        tareas:
+          - id: T125.1.1
+            accion: "RED: exigir Módulos entregados por trailer alcanzable desde HEAD, la marca en status, el detalle en `radar sesion` y el aviso por Módulo inexistente."
+            resultado: "RED: radar no lee trailers y la prueba falla."
+            criterios: ["RED: radar no lee trailers y la prueba falla."]
+          - id: T125.1.2
+            accion: "GREEN: leer los trailers desde Git, cruzarlos con los Módulos del plan y mostrarlos en status y sesion."
+            resultado: "GREEN: la prueba pasa y status --json y el ROADMAP no cambian."
+            criterios: ["GREEN: la prueba pasa y status --json y el ROADMAP no cambian."]
+          - id: T125.1.3
+            accion: "REFACTOR: dejar la lectura de Git en un solo lugar y documentar el trailer en README."
+            resultado: "REFACTOR: una sola lectura de trailers y las pruebas siguen pasando."
+            criterios: ["REFACTOR: una sola lectura de trailers y las pruebas siguen pasando."]
+      - id: M125.2
+        resultado: "Las skills dejan la marca y retoman desde ella"
+        rutas: [agent-workflows/skills/chanks-3-session-kickoff/SKILL.md, agent-workflows/skills/chanks-4-puente/SKILL.md, agent-workflows/tests/test_builder_flow.py]
+        tareas:
+          - id: T125.2.1
+            accion: "RED: exigir la regla de retomar en kickoff y la del trailer en puente."
+            resultado: "RED: las skills actuales no tienen las reglas y la prueba falla."
+            criterios: ["RED: las skills actuales no tienen las reglas y la prueba falla."]
+          - id: T125.2.2
+            accion: "GREEN: agregar ambas reglas y actualizar las huellas SHA256 fijadas en la prueba."
+            resultado: "GREEN: la prueba pasa con las dos reglas."
+            criterios: ["GREEN: la prueba pasa con las dos reglas."]
+          - id: T125.2.3
+            accion: "REFACTOR: ubicar cada regla junto a sus pasos existentes sin duplicar el canon."
+            resultado: "REFACTOR: cada regla vive en un solo lugar y la prueba sigue pasando."
+            criterios: ["REFACTOR: cada regla vive en un solo lugar y la prueba sigue pasando."]
+
 references:
   future_successors:
     - id: S102
