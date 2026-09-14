@@ -66,7 +66,6 @@ sesiones:
     resultado: instalar el horno
     autoridad: PRD cocina §2          # alcance aprobado de la Sesión
     prioridad: estructura             # obligatoria en Sesiones abiertas si hay prioridades
-    cambio: instalar-horno            # opcional; ledger SDD de gentle-ai
     depende_de: [S18]
     cimientos: [package.json]       # reservas exactas, no globs
     recurso: [delivery-token]
@@ -144,7 +143,9 @@ valida:
 
 ## Ledger SDD opcional
 
-`cambio` enlaza una Sesión con el ledger de intentos de Gentle AI. Cuando está declarado,
+`cambio` enlaza una Sesión `full-sdd` con el ledger de intentos de Gentle AI; es la única ruta
+que recorre el SDD nativo (canon §15). Una Sesión `direct` o `design-tasks` que declara `cambio`
+hace fallar `radar check` sin consultar a Gentle AI. Cuando está declarado en una `full-sdd`,
 `radar` ejecuta únicamente `gentle-ai sdd-attempt status --cwd <raíz> --change <cambio>`.
 `decision_required: true` bloquea la Sesión abierta. Si el comando falla o devuelve JSON
 inválido/corrupto, `check`, `status` y `render` fallan cerrados. Ausente o vacío significa

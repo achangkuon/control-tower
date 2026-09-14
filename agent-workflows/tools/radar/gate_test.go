@@ -7,8 +7,9 @@ import (
 	"testing"
 )
 
-// S111: radar used to ask gentle-ai a single boolean and believe whatever the
-// plan declared about its route. These cover the contract it now reads instead.
+// S111 made radar read gentle-ai.sdd-status instead of believing a boolean.
+// S135 narrows that contract: only a full-sdd Sesión runs the native SDD
+// pipeline, so only a full-sdd Sesión may declare `cambio`.
 
 func conStatusSDD(t *testing.T, cuerpo string, fallo error) {
 	t.Helper()
@@ -22,6 +23,21 @@ func conStatusSDD(t *testing.T, cuerpo string, fallo error) {
 	}
 }
 
+// sinConsultarGentleAI fails the test if radar asks gentle-ai anything.
+func sinConsultarGentleAI(t *testing.T) {
+	t.Helper()
+	status, attempt := runSDDStatus, runSDDAttemptStatus
+	t.Cleanup(func() { runSDDStatus, runSDDAttemptStatus = status, attempt })
+	runSDDStatus = func(root, change string) ([]byte, error) {
+		t.Fatalf("radar no debe consultar sdd-status para %q", change)
+		return nil, nil
+	}
+	runSDDAttemptStatus = func(root, change string) ([]byte, error) {
+		t.Fatalf("radar no debe consultar sdd-attempt para %q", change)
+		return nil, nil
+	}
+}
+
 func statusValido(next string) string {
 	return fmt.Sprintf(`{"schemaName":"gentle-ai.sdd-status","schemaVersion":2,"nextRecommended":%q}`, next)
 }
@@ -30,44 +46,47 @@ func sesionConCambio(ruta string) *Sesion {
 	return &Sesion{ID: "S1", Cambio: "un-cambio", Ruta: RutaSesion{Propuesta: ruta}}
 }
 
-func TestPuertaSDDRechazaUnaRutaQueEntraAntesDeLoQuePuedeCorrer(t *testing.T) {
-	casos := map[string]struct{ ruta, next, espera string }{
-		"direct sin tasks":      {"direct", "tasks", "entra por \"apply\""},
-		"direct sin proposal":   {"direct", "proposal", "entra por \"apply\""},
-		"design-tasks sin spec": {"design-tasks", "specs", "entra por \"design\""},
-		"design-tasks sin nada": {"design-tasks", "proposal", "entra por \"design\""},
-	}
-	for nombre, c := range casos {
-		t.Run(nombre, func(t *testing.T) {
-			conStatusSDD(t, statusValido(c.next), nil)
-			h := checkPuertaSDD("/repo", sesionConCambio(c.ruta))
-			if len(h) != 1 || h[0].Regla != "puerta de ruta" {
-				t.Fatalf("se esperaba un hallazgo de puerta de ruta, salió %+v", h)
+func TestCambioFueraDeFullSDDFallaSinConsultarGentleAI(t *testing.T) {
+	for _, ruta := range []string{"direct", "design-tasks"} {
+		t.Run(ruta, func(t *testing.T) {
+			sinConsultarGentleAI(t)
+			h := checkPuertaSDD("/repo", sesionConCambio(ruta))
+			if len(h) != 1 || h[0].Regla != "cambio SDD" {
+				t.Fatalf("se esperaba un hallazgo de cambio SDD, salió %+v", h)
 			}
-			if !strings.Contains(h[0].Detalle, c.espera) {
-				t.Fatalf("el hallazgo no nombra la puerta declarada: %s", h[0].Detalle)
-			}
-			if !strings.Contains(h[0].Detalle, c.next) {
-				t.Fatalf("el hallazgo no nombra la fase observada: %s", h[0].Detalle)
+			if !strings.Contains(h[0].Detalle, "S1") || !strings.Contains(h[0].Detalle, ruta) || !strings.Contains(h[0].Detalle, "full-sdd") {
+				t.Fatalf("el hallazgo debe nombrar la Sesión, su ruta y full-sdd: %s", h[0].Detalle)
 			}
 		})
 	}
 }
 
-func TestPuertaSDDAceptaUnaRutaQueYaAlcanzoOPasoSuPuerta(t *testing.T) {
-	casos := map[string]struct{ ruta, next string }{
-		"direct en apply":          {"direct", "apply"},
-		"direct ya verificando":    {"direct", "verify"},
-		"design-tasks en design":   {"design-tasks", "design"},
-		"design-tasks ya en apply": {"design-tasks", "apply"},
-		"full-sdd en proposal":     {"full-sdd", "proposal"},
-		"full-sdd ya en archive":   {"full-sdd", "archive"},
+func TestCheckNoConsultaElLedgerParaCambioFueraDeFullSDD(t *testing.T) {
+	root, head := repoGit(t)
+	sinConsultarGentleAI(t)
+	p := &Plan{Sesiones: []Sesion{*sesionConCambio("direct")}}
+	if got := hallazgosDe(p.CheckAt(root, head), "cambio SDD"); len(got) != 1 {
+		t.Fatalf("radar check debe rechazar el cambio de una Sesión direct; salió %+v", got)
 	}
-	for nombre, c := range casos {
-		t.Run(nombre, func(t *testing.T) {
-			conStatusSDD(t, statusValido(c.next), nil)
-			if h := checkPuertaSDD("/repo", sesionConCambio(c.ruta)); len(h) != 0 {
-				t.Fatalf("una ruta honesta no debe producir hallazgos: %+v", h)
+}
+
+func TestCheckNoConsultaGentleAIConRutaInvalidaYCambio(t *testing.T) {
+	// checkRuta owns an invalid route; radar must not ask gentle-ai about a change
+	// that no full-sdd Sesión owns.
+	root, head := repoGit(t)
+	sinConsultarGentleAI(t)
+	p := &Plan{Sesiones: []Sesion{*sesionConCambio("inventada")}}
+	if got := hallazgosDe(p.CheckAt(root, head), "ledger SDD"); len(got) != 0 {
+		t.Fatalf("una ruta inválida no debe consultar el ledger; salió %+v", got)
+	}
+}
+
+func TestPuertaSDDAceptaFullSDDEnCualquierFaseDelPipeline(t *testing.T) {
+	for _, next := range []string{"proposal", "design", "apply", "archive"} {
+		t.Run(next, func(t *testing.T) {
+			conStatusSDD(t, statusValido(next), nil)
+			if h := checkPuertaSDD("/repo", sesionConCambio("full-sdd")); len(h) != 0 {
+				t.Fatalf("una Sesión full-sdd con su cambio no debe producir hallazgos: %+v", h)
 			}
 		})
 	}
@@ -90,7 +109,7 @@ func TestPuertaSDDFallaCerradoAnteUnContratoQueNoReconoce(t *testing.T) {
 	for nombre, c := range casos {
 		t.Run(nombre, func(t *testing.T) {
 			conStatusSDD(t, c.cuerpo, c.fallo)
-			h := checkPuertaSDD("/repo", sesionConCambio("direct"))
+			h := checkPuertaSDD("/repo", sesionConCambio("full-sdd"))
 			if len(h) != 1 || h[0].Regla != c.regla {
 				t.Fatalf("se esperaba un hallazgo %q, salió %+v", c.regla, h)
 			}
@@ -104,7 +123,7 @@ func TestPuertaSDDFallaCerradoAnteUnContratoQueNoReconoce(t *testing.T) {
 func TestPuertaSDDNoRepiteElHallazgoDeUnaRutaInvalida(t *testing.T) {
 	// checkRuta ya reporta un valor de ruta fuera del conjunto cerrado. Decirlo
 	// dos veces con otras palabras no ayuda a nadie.
-	conStatusSDD(t, statusValido("proposal"), nil)
+	sinConsultarGentleAI(t)
 	if h := checkPuertaSDD("/repo", sesionConCambio("inventada")); len(h) != 0 {
 		t.Fatalf("una ruta inválida la reporta checkRuta, no esta función: %+v", h)
 	}
@@ -152,11 +171,11 @@ func TestEstadoSDDSeLeeDelProveedorReal(t *testing.T) {
 
 func TestPuertaSDDUsaLaRevalidacionCuandoExiste(t *testing.T) {
 	// La revalidación gana sobre la propuesta: es la decisión de implementación.
-	conStatusSDD(t, statusValido("design"), nil)
+	sinConsultarGentleAI(t)
 	s := sesionConCambio("full-sdd")
 	s.Ruta.Revalidacion = &Revalidacion{Resultado: "direct"}
 	h := checkPuertaSDD("/repo", s)
-	if len(h) != 1 || !strings.Contains(h[0].Detalle, "direct") {
+	if len(h) != 1 || h[0].Regla != "cambio SDD" || !strings.Contains(h[0].Detalle, "direct") {
 		t.Fatalf("debe juzgar la ruta revalidada, no la propuesta: %+v", h)
 	}
 }

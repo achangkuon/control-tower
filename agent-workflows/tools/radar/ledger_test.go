@@ -90,7 +90,8 @@ func TestLedgerSDDFallaCerradoCuandoFueDeclarado(t *testing.T) {
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 			runSDDAttemptStatus = func(_, _ string) ([]byte, error) { return tt.raw, tt.err }
-			p := &Plan{Sesiones: []Sesion{{ID: "S1", Cambio: "mi-cambio"}}}
+			// Only a full-sdd Sesión owns a native change and consults its ledger (S135).
+			p := &Plan{Sesiones: []Sesion{{ID: "S1", Cambio: "mi-cambio", Ruta: RutaSesion{Propuesta: "full-sdd"}}}}
 			if got := hallazgosDe(p.CheckAt(root, head), "ledger SDD"); len(got) != 1 {
 				t.Fatalf("un ledger declarado ilegible debe fallar cerrado: %#v", got)
 			}

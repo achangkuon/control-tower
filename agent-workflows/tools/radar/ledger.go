@@ -51,13 +51,10 @@ func readAttemptStatus(root, change string) (bool, error) {
 // Convention §15.
 var FasesSDD = []string{"proposal", "specs", "design", "tasks", "apply", "verify", "archive"}
 
-// PuertaDeRuta maps each route to the phase it enters at. The three routes are
-// not three methods: they are three doors into the same pipeline.
-var PuertaDeRuta = map[string]string{
-	"direct":       "apply",
-	"design-tasks": "design",
-	"full-sdd":     "proposal",
-}
+// RutaSDDNativa is the only route that runs gentle-ai's native SDD pipeline.
+// direct and design-tasks use gentle-ai's non-SDD implementation path and verify
+// against the plan's criteria, so they never declare a `cambio`. Convention §15.
+const RutaSDDNativa = "full-sdd"
 
 // fasePos returns the position of a phase in the pipeline, or -1 when the name
 // is not one this contract knows. An unknown phase is never treated as valid.

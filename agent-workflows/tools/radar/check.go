@@ -34,6 +34,12 @@ func (p *Plan) CheckAt(root, head string) []Hallazgo {
 		if strings.TrimSpace(s.Cambio) == "" {
 			continue
 		}
+		if s.RutaEfectiva() != RutaSDDNativa {
+			// Only full-sdd owns a native SDD change; asking gentle-ai about any other
+			// route would report a pipeline that Sesión never enters.
+			h = append(h, checkPuertaSDD(root, s)...)
+			continue
+		}
 		decisionRequired, err := readAttemptStatus(root, s.Cambio)
 		if err != nil {
 			h = append(h, Hallazgo{"error", "ledger SDD", fmt.Sprintf("%s declara cambio %q pero su ledger no está disponible: %v", s.ID, s.Cambio, err)})
@@ -1055,24 +1061,22 @@ var rangoDeDecision = regexp.MustCompile(`(?i)(?:decisi[oó]n(?:es)?\s+|^\s*|\n\
 // declared gate is ordinary — work advances. Being *behind* it is the lie.
 func checkPuertaSDD(root string, s *Sesion) []Hallazgo {
 	ruta := s.RutaEfectiva()
-	puerta, conocida := PuertaDeRuta[ruta]
-	if !conocida {
+	if !contiene(RutasValidas, ruta) {
 		// An invalid route value is already reported by checkRuta; saying it
 		// twice in different words helps nobody.
 		return nil
+	}
+	if ruta != RutaSDDNativa {
+		return []Hallazgo{{"error", "cambio SDD", fmt.Sprintf(
+			"%s declara el cambio %q con ruta %s, pero sólo una Sesión %s recorre el SDD nativo",
+			s.ID, s.Cambio, ruta, RutaSDDNativa)}}
 	}
 	status, err := readSDDStatus(root, s.Cambio)
 	if err != nil {
 		return []Hallazgo{{"error", "estado SDD", fmt.Sprintf("%s declara cambio %q pero su estado no está disponible: %v", s.ID, s.Cambio, err)}}
 	}
-	observada := fasePos(status.Next)
-	if observada < 0 {
+	if fasePos(status.Next) < 0 {
 		return []Hallazgo{{"error", "puerta de ruta", fmt.Sprintf("%s: el cambio %q reporta la fase %q, que no pertenece al pipeline", s.ID, s.Cambio, status.Next)}}
-	}
-	if observada < fasePos(puerta) {
-		return []Hallazgo{{"error", "puerta de ruta", fmt.Sprintf(
-			"%s declara la ruta %s, que entra por %q, pero su cambio %q todavía debe %q",
-			s.ID, ruta, puerta, s.Cambio, status.Next)}}
 	}
 	return nil
 }
