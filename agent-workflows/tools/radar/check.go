@@ -44,6 +44,7 @@ func (p *Plan) CheckAt(root, head string) []Hallazgo {
 	}
 	h = append(h, p.checkZonas()...)
 	h = append(h, p.checkGrafo()...)
+	h = append(h, p.checkPrioridades()...)
 	h = append(h, p.checkLinaje()...)
 	h = append(h, p.checkReferencias(root)...)
 	h = append(h, p.checkCimientos(root)...)
@@ -676,6 +677,64 @@ func (p *Plan) checkGrafo() []Hallazgo {
 			fmt.Sprintf("ciclo: %s", c)})
 	}
 
+	return h
+}
+
+// checkPrioridades validates the optional work order. A priority can only
+// postpone ready work, so every shape that would silently drop a Sesión from the
+// order, or make one wait on work scheduled after it, fails closed.
+func (p *Plan) checkPrioridades() []Hallazgo {
+	var h []Hallazgo
+	if len(p.Prioridades) == 0 {
+		for _, s := range p.Sesiones {
+			if s.Prioridad != "" {
+				h = append(h, Hallazgo{"error", "prioridades",
+					fmt.Sprintf("%s declara la prioridad %q pero el plan no declara prioridades", s.ID, s.Prioridad)})
+			}
+		}
+		return h
+	}
+
+	vistas := map[string]bool{}
+	for i, pr := range p.Prioridades {
+		switch {
+		case strings.TrimSpace(pr.ID) == "":
+			h = append(h, Hallazgo{"error", "prioridades", fmt.Sprintf("la prioridad en la posición %d está sin id", i+1)})
+		case vistas[pr.ID]:
+			h = append(h, Hallazgo{"error", "prioridades", fmt.Sprintf("la prioridad %q está declarada dos veces", pr.ID)})
+		}
+		vistas[pr.ID] = true
+		if strings.TrimSpace(pr.Nombre) == "" {
+			h = append(h, Hallazgo{"error", "prioridades", fmt.Sprintf("la prioridad %q no tiene nombre", pr.ID)})
+		}
+	}
+
+	orden := p.PrioridadPorID()
+	index := p.SesionPorID()
+	for _, s := range p.Sesiones {
+		pos, conocida := orden[s.Prioridad]
+		abierta := s.Entrega == nil && !s.Archivada
+		switch {
+		case s.Prioridad == "" && abierta:
+			h = append(h, Hallazgo{"error", "prioridades", fmt.Sprintf("%s está abierta y no declara prioridad", s.ID)})
+		case s.Prioridad != "" && !conocida && abierta:
+			// Closed history may keep a retired priority id; only open work must resolve.
+			h = append(h, Hallazgo{"error", "prioridades", fmt.Sprintf("%s declara la prioridad %q, que no está en prioridades", s.ID, s.Prioridad)})
+		}
+		if !conocida {
+			continue
+		}
+		for _, dep := range s.DependeDe {
+			d, existe := index[dep]
+			if !existe {
+				continue
+			}
+			if posDep, ok := orden[d.Prioridad]; ok && posDep > pos {
+				h = append(h, Hallazgo{"error", "prioridades",
+					fmt.Sprintf("%s depende de %s, que pertenece a una prioridad posterior (%q va después de %q)", s.ID, d.ID, d.Prioridad, s.Prioridad)})
+			}
+		}
+	}
 	return h
 }
 

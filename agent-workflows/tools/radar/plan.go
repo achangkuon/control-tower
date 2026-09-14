@@ -38,11 +38,32 @@ type Plan struct {
 	Raiz          string      `yaml:"raiz"`
 	Politica      Politica    `yaml:"politica"`
 	Zonas         []Zona      `yaml:"zonas"`
+	Prioridades   []Prioridad `yaml:"prioridades"`
 	Cimientos     Cimientos   `yaml:"cimientos"`
 	Sesiones      []Sesion    `yaml:"sesiones"`
 	References    *References `yaml:"references"`
 
 	ledgerDecisionRequired map[string]bool
+}
+
+// Prioridad is one entry of the optional, project-defined work order. It is an
+// ordering attribute, never a level: it can only postpone ready work.
+type Prioridad struct {
+	ID     string `yaml:"id"`
+	Nombre string `yaml:"nombre"`
+}
+
+// PrioridadPorID maps each declared priority id to its position in the list.
+// The first occurrence wins and blank ids are skipped; checkPrioridades reports both.
+func (p *Plan) PrioridadPorID() map[string]int {
+	out := make(map[string]int, len(p.Prioridades))
+	for i, pr := range p.Prioridades {
+		if _, ya := out[pr.ID]; ya || strings.TrimSpace(pr.ID) == "" {
+			continue
+		}
+		out[pr.ID] = i
+	}
+	return out
 }
 
 // Zona is a set of files with a single owner. Defined by paths, never by theme.
@@ -66,6 +87,7 @@ type Sesion struct {
 	Zona              string             `yaml:"zona"`
 	Resultado         string             `yaml:"resultado"`
 	Autoridad         Autoridad          `yaml:"autoridad"`
+	Prioridad         string             `yaml:"prioridad"`
 	Cambio            string             `yaml:"cambio"`
 	DependeDe         []string           `yaml:"depende_de"`
 	Cimientos         []string           `yaml:"cimientos"`

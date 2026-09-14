@@ -110,7 +110,54 @@ func (p *Plan) EstadosAt(root, head string) map[string]string {
 		}
 	}
 
+	p.aplicarPrioridades(estados)
 	return estados
+}
+
+// aplicarPrioridades is the last pass on purpose. Dependencies unlock only on
+// COMPLETO or ARCHIVADO, so turning LISTO into DIFERIDO here cannot change any
+// other Sesión's state. Only would-be LISTO work is postponed: a BLOQUEADO
+// Sesión keeps showing its blocker while it waits.
+func (p *Plan) aplicarPrioridades(estados map[string]string) {
+	activa, hay := p.prioridadActiva(estados)
+	if !hay {
+		return
+	}
+	orden := p.PrioridadPorID()
+	for i := range p.Sesiones {
+		s := &p.Sesiones[i]
+		if pos, conocida := orden[s.Prioridad]; conocida && pos > activa && estados[s.ID] == Listo {
+			estados[s.ID] = Diferido
+		}
+	}
+}
+
+// prioridadActiva returns the position of the first priority that still has a
+// Sesión not COMPLETO or ARCHIVADO. A manually deferred Sesión keeps its priority
+// open. Sesiones without a known priority never choose it.
+func (p *Plan) prioridadActiva(estados map[string]string) (int, bool) {
+	orden := p.PrioridadPorID()
+	activa := -1
+	for i := range p.Sesiones {
+		s := &p.Sesiones[i]
+		pos, conocida := orden[s.Prioridad]
+		if !conocida || estados[s.ID] == Completo || estados[s.ID] == Archivado {
+			continue
+		}
+		if activa == -1 || pos < activa {
+			activa = pos
+		}
+	}
+	return activa, activa >= 0
+}
+
+// PrioridadActivaAt reports the priority currently offering work, if any.
+func (p *Plan) PrioridadActivaAt(root, head string) (Prioridad, bool) {
+	pos, hay := p.prioridadActiva(p.EstadosAt(root, head))
+	if !hay {
+		return Prioridad{}, false
+	}
+	return p.Prioridades[pos], true
 }
 
 // bloqueaAqui reports whether an open decision reaches far enough forward to

@@ -372,3 +372,95 @@ func TestOriginalArchivadaSinReemplazoSigueCerrandoDependenciasHistoricas(t *tes
 		t.Fatalf("una original archivada sin sucesoras conserva la semántica histórica; fue %#v", got)
 	}
 }
+
+func detallesDe(h []Hallazgo) string {
+	var partes []string
+	for _, x := range h {
+		partes = append(partes, x.Detalle)
+	}
+	return strings.Join(partes, " | ")
+}
+
+func TestPrioridadesValidasNoReportanErrores(t *testing.T) {
+	p := &Plan{
+		Prioridades: []Prioridad{{ID: "a", Nombre: "A"}, {ID: "b", Nombre: "B"}},
+		Sesiones:    []Sesion{{ID: "S1", Prioridad: "a"}, {ID: "S2", Prioridad: "b", DependeDe: []string{"S1"}}},
+	}
+	if got := hallazgosDe(p.checkPrioridades(), "prioridades"); len(got) != 0 {
+		t.Fatalf("una lista válida no debe fallar; fue %#v", got)
+	}
+}
+
+func TestListaDePrioridadesFallaCerrada(t *testing.T) {
+	casos := []struct {
+		nombre      string
+		prioridades []Prioridad
+		menciona    string
+	}{
+		{"id vacío", []Prioridad{{ID: " ", Nombre: "A"}}, "sin id"},
+		{"id duplicado", []Prioridad{{ID: "a", Nombre: "A"}, {ID: "a", Nombre: "Otra"}}, `"a"`},
+		{"nombre vacío", []Prioridad{{ID: "a", Nombre: ""}}, `"a"`},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			p := &Plan{Prioridades: c.prioridades}
+			got := hallazgosDe(p.checkPrioridades(), "prioridades")
+			if len(got) == 0 || !strings.Contains(detallesDe(got), c.menciona) {
+				t.Fatalf("%s debe fallar mencionando %s; fue %#v", c.nombre, c.menciona, got)
+			}
+		})
+	}
+}
+
+func TestPrioridadSinListaFalla(t *testing.T) {
+	p := &Plan{Sesiones: []Sesion{{ID: "S2", Prioridad: "a"}}}
+	if got := hallazgosDe(p.checkPrioridades(), "prioridades"); len(got) != 1 || !strings.Contains(got[0].Detalle, "S2") {
+		t.Fatalf("una prioridad sin lista declarada debe fallar nombrando S2; fue %#v", got)
+	}
+}
+
+func TestSesionAbiertaDebeDeclararUnaPrioridadConocida(t *testing.T) {
+	lista := []Prioridad{{ID: "a", Nombre: "A"}}
+	sinPrioridad := &Plan{Prioridades: lista, Sesiones: []Sesion{{ID: "S2"}}}
+	if got := hallazgosDe(sinPrioridad.checkPrioridades(), "prioridades"); len(got) != 1 || !strings.Contains(got[0].Detalle, "S2") {
+		t.Fatalf("una Sesión abierta sin prioridad debe fallar nombrándola; fue %#v", got)
+	}
+	desconocida := &Plan{Prioridades: lista, Sesiones: []Sesion{{ID: "S2", Prioridad: "z"}}}
+	got := hallazgosDe(desconocida.checkPrioridades(), "prioridades")
+	if len(got) != 1 || !strings.Contains(got[0].Detalle, "S2") || !strings.Contains(got[0].Detalle, `"z"`) {
+		t.Fatalf("una prioridad desconocida debe fallar nombrando S2 y z; fue %#v", got)
+	}
+}
+
+func TestSesionCerradaPuedeOmitirPrioridad(t *testing.T) {
+	p := &Plan{
+		Prioridades: []Prioridad{{ID: "a", Nombre: "A"}},
+		Sesiones: []Sesion{
+			{ID: "S1", Entrega: &Entrega{Commit: strings.Repeat("a", 40)}},
+			{ID: "S2", Archivada: true},
+			{ID: "S3", Archivada: true, Prioridad: "retirada"},
+		},
+	}
+	if got := hallazgosDe(p.checkPrioridades(), "prioridades"); len(got) != 0 {
+		t.Fatalf("una Sesión entregada o archivada puede omitir prioridad o conservar una ya retirada; fue %#v", got)
+	}
+}
+
+func TestDependenciaHaciaUnaPrioridadPosteriorFalla(t *testing.T) {
+	p := &Plan{
+		Prioridades: []Prioridad{{ID: "a", Nombre: "A"}, {ID: "b", Nombre: "B"}},
+		Sesiones:    []Sesion{{ID: "S1", Prioridad: "a", DependeDe: []string{"S2"}}, {ID: "S2", Prioridad: "b"}},
+	}
+	got := hallazgosDe(p.checkPrioridades(), "prioridades")
+	if len(got) != 1 || !strings.Contains(got[0].Detalle, "S1") || !strings.Contains(got[0].Detalle, "S2") {
+		t.Fatalf("depender de una prioridad posterior debe fallar nombrando S1 y S2; fue %#v", got)
+	}
+}
+
+func TestCheckIncluyeLasReglasDePrioridad(t *testing.T) {
+	root, head := repoGit(t)
+	p := &Plan{Sesiones: []Sesion{{ID: "S2", Prioridad: "a"}}}
+	if got := hallazgosDe(p.CheckAt(root, head), "prioridades"); len(got) == 0 {
+		t.Fatal("radar check debe aplicar las reglas de prioridad")
+	}
+}

@@ -138,3 +138,126 @@ func TestAsientosRespetanDependenciasYCimientos(t *testing.T) {
 		t.Fatalf("asientos inesperados: %s", got)
 	}
 }
+
+func conPrioridad(s Sesion, prioridad string) Sesion {
+	s.Prioridad = prioridad
+	return s
+}
+
+func planPriorizado(sesiones ...Sesion) *Plan {
+	return &Plan{
+		Prioridades: []Prioridad{{ID: "a", Nombre: "A"}, {ID: "b", Nombre: "B"}, {ID: "c", Nombre: "C"}},
+		Sesiones:    sesiones,
+	}
+}
+
+func commitNuevo(t *testing.T, root, nombre string) string {
+	t.Helper()
+	if err := os.WriteFile(filepath.Join(root, nombre), []byte(nombre+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	for _, args := range [][]string{{"add", nombre}, {"commit", "-qm", nombre}} {
+		if out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v: %s", args, err, out)
+		}
+	}
+	head, err := gitHEAD(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return head
+}
+
+func TestPrioridadActivaEsLaPrimeraConSesionesAbiertas(t *testing.T) {
+	root, head := repoGit(t)
+	p := planPriorizado(
+		conPrioridad(entregada("S1", "z", head), "a"),
+		conPrioridad(abierta("S2", "z"), "b"),
+		conPrioridad(abierta("S3", "z"), "c"),
+	)
+	activa, ok := p.PrioridadActivaAt(root, head)
+	if !ok || activa.ID != "b" {
+		t.Fatalf("la prioridad activa debe ser b; fue %#v (%v)", activa, ok)
+	}
+	estados := p.EstadosAt(root, head)
+	if estados["S1"] != Completo || estados["S2"] != Listo || estados["S3"] != Diferido {
+		t.Fatalf("estados inesperados: %#v", estados)
+	}
+}
+
+func TestSinPrioridadesLosEstadosNoCambian(t *testing.T) {
+	root, head := repoGit(t)
+	p := &Plan{Sesiones: []Sesion{abierta("S1", "z"), abierta("S2", "z", "S1")}}
+	if _, ok := p.PrioridadActivaAt(root, head); ok {
+		t.Fatal("un plan sin prioridades no tiene prioridad activa")
+	}
+	estados := p.EstadosAt(root, head)
+	if estados["S1"] != Listo || estados["S2"] != Planificado {
+		t.Fatalf("sin prioridades los estados deben ser los de siempre: %#v", estados)
+	}
+}
+
+func TestDiferidaAManoMantieneAbiertaSuPrioridad(t *testing.T) {
+	root, head := repoGit(t)
+	postergada := conPrioridad(abierta("S1", "z"), "a")
+	postergada.Diferida = true
+	p := planPriorizado(postergada, conPrioridad(abierta("S2", "z"), "b"))
+	activa, ok := p.PrioridadActivaAt(root, head)
+	if !ok || activa.ID != "a" {
+		t.Fatalf("una Sesión diferida a mano mantiene abierta su prioridad; activa fue %#v (%v)", activa, ok)
+	}
+	if got := p.EstadosAt(root, head)["S2"]; got != Diferido {
+		t.Fatalf("S2 espera a la prioridad a; fue %s", got)
+	}
+}
+
+func TestSoloLoQueSeriaListoPasaADiferido(t *testing.T) {
+	root, head := repoGit(t)
+	bloqueada := conPrioridad(abierta("S3", "z"), "b")
+	bloqueada.Decisiones = []Decision{{Tipo: "escala", Alcanza: "criterios"}}
+	p := planPriorizado(
+		conPrioridad(abierta("S1", "z"), "a"),
+		conPrioridad(abierta("S2", "z", "S1"), "b"),
+		bloqueada,
+		conPrioridad(abierta("S4", "z"), "b"),
+		conPrioridad(entregada("S5", "z", head), "b"),
+	)
+	estados := p.EstadosAt(root, head)
+	want := map[string]string{"S1": Listo, "S2": Planificado, "S3": Bloqueado, "S4": Diferido, "S5": Completo}
+	for id, estado := range want {
+		if estados[id] != estado {
+			t.Fatalf("%s debe quedar %s; fue %s", id, estado, estados[id])
+		}
+	}
+	if cola := strings.Join(p.ColaPorZonaAt(root, head)["z"], ","); strings.Contains(cola, "S4") {
+		t.Fatalf("una Sesión diferida por prioridad sale de la cola: %s", cola)
+	}
+}
+
+func TestSinSesionesAbiertasNoHayPrioridadActiva(t *testing.T) {
+	root, head := repoGit(t)
+	p := planPriorizado(conPrioridad(entregada("S1", "z", head), "a"), conPrioridad(entregada("S2", "z", head), "b"))
+	if activa, ok := p.PrioridadActivaAt(root, head); ok {
+		t.Fatalf("sin Sesiones abiertas no hay prioridad activa; fue %#v", activa)
+	}
+}
+
+func TestLaPrioridadAvanzaSolaTrasUnaEntregaIntegrada(t *testing.T) {
+	root, base := repoGit(t)
+	s1 := conPrioridad(abierta("S1", "z"), "a")
+	p := planPriorizado(s1, conPrioridad(abierta("S2", "z"), "b"))
+	if got := p.EstadosAt(root, base)["S2"]; got != Diferido {
+		t.Fatalf("antes de entregar S1, S2 espera; fue %s", got)
+	}
+
+	entrega := commitNuevo(t, root, "s1.txt")
+	p.Sesiones[0].Entrega = &Entrega{Commit: entrega}
+	head := commitNuevo(t, root, "otra.txt")
+	activa, ok := p.PrioridadActivaAt(root, head)
+	if !ok || activa.ID != "b" {
+		t.Fatalf("tras la entrega integrada de S1 la prioridad activa debe ser b; fue %#v (%v)", activa, ok)
+	}
+	if got := p.EstadosAt(root, head)["S2"]; got != Listo {
+		t.Fatalf("S2 queda LISTO sin editar el plan; fue %s", got)
+	}
+}
