@@ -37,9 +37,9 @@ Paths: `agent-workflows/tools/radar/plan.go`, `agent-workflows/tools/radar/state
 
 Paths: `agent-workflows/tools/radar/snapshot.go`, `agent-workflows/tools/radar/main.go`, `agent-workflows/tools/radar/sesion.go`, `agent-workflows/tools/radar/render.go`, `agent-workflows/tools/radar/snapshot_test.go`, `agent-workflows/tools/radar/sesion_test.go`, `agent-workflows/tools/radar/render_test.go`
 
-- [ ] T127.2.1 RED: require `prioridad_activa`, `prioridades`, and per-Sesión `prioridad` in the snapshot with the same schema string and no new keys when the list is absent; require the priority line in `radar sesion`, `radar status`, and the ROADMAP when declared, and unchanged output when absent. → The tests fail against the current projection.
-- [ ] T127.2.2 GREEN: add the `omitempty` snapshot fields and the conditional text lines in `cmdStatus`, `escribirSesionConAvance`, and `RenderAt`. → The new tests pass and `ROADMAP.golden.md` stays byte-identical.
-- [ ] T127.2.3 REFACTOR: format the priority label in one helper reused by the three text surfaces. → One formatter exists and `go test ./...` passes.
+- [x] T127.2.1 RED: require `prioridad_activa`, `prioridades`, and per-Sesión `prioridad` in the snapshot with the same schema string and no new keys when the list is absent; require the priority line in `radar sesion`, `radar status`, and the ROADMAP when declared, and unchanged output when absent. → The tests fail against the current projection.
+- [x] T127.2.2 GREEN: add the `omitempty` snapshot fields and the conditional text lines in `cmdStatus`, `escribirSesionConAvance`, and `RenderAt`. → The new tests pass and `ROADMAP.golden.md` stays byte-identical.
+- [x] T127.2.3 REFACTOR: format the priority label in one helper reused by the three text surfaces. → One formatter exists and `go test ./...` passes.
 
 ## M127.3 — Canon and README document priority
 

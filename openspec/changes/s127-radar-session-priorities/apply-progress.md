@@ -22,6 +22,26 @@ Independent verifier: PASS. It rebuilt the pre-change binary from `HEAD` and con
 - WARNING, corrected once: the unknown-priority rule also fired for COMPLETO/ARCHIVADO Sesiones, so retiring a priority id would force edits to closed history, contradicting design rule 3. RED: `TestSesionCerradaPuedeOmitirPrioridad` gained an archived Sesión with a retired id and failed. GREEN: the rule is scoped to open Sesiones in `checkPrioridades`; `go test ./...` ok.
 - SUGGESTION, not applied: a list id with surrounding whitespace is accepted by list validation but unreachable by a trimmed reference. It fails closed with an error, so it is recorded as a follow-up, not changed in this Módulo.
 
-## M127.2 — Pending
+Delivery: commit `4bc0710` (`Modulo: M127.1`), 343 authored lines.
+
+Native attempt settle: first settle counted 456 lines because M127.2 RED tests were already in the worktree, exceeding the 400 budget (`decision_required`). Root cause: the M127.2 work began before the M127.1 attempt was settled. Emilio authorized `gentle-ai sdd-attempt reset` (request `s127-reset-1`). Flow correction: settle each Módulo's attempt before touching the next Módulo's files.
+
+## M127.2 — Priorities are visible in every Radar surface
+
+Native attempt: request `s127-m127.2-apply-1` → `proceed`, acquired with the M127.2 RED tests stashed so they count inside this Módulo.
+
+| Tarea | Evidence |
+|-------|----------|
+| T127.2.1 RED | Added snapshot, sesion, status, and render tests; `go test ./...` failed to build on undefined `Snapshot.PrioridadActiva`, `Snapshot.Prioridades`, `SesionEstado.Prioridad`. |
+| T127.2.2 GREEN | `omitempty` snapshot fields (`snapshot.go`); conditional lines in `cmdStatus` (`main.go`), `escribirSesionConAvance` (`sesion.go`), and `RenderAt` queues, "Punto de retoma", and "Rutas" (`render.go`). `ROADMAP.golden.md` unchanged. |
+| T127.2.3 REFACTOR | `prioridadDeclarada` and `Prioridad.Etiqueta` (`sesion.go`) are the single resolver/formatter reused by the three text surfaces; `textoPrioridad` is the ROADMAP suffix. |
+
+Deviation from design, recorded: a DIFERIDO Sesión is not in any Zona queue, so the ROADMAP also shows each Sesión's priority in the "Rutas" section, which lists every Sesión (C8).
+
+C1 identity on the live plan: `radar status`, `radar sesion S120`, and `radar render` byte-identical to the pre-change binary; `radar status --json` identical except `head`.
+
+Size: 195 authored lines (+184 −11). Review: native consent for target `sha256:0fbdc94e…c5d05d` declined by Emilio for this candidate only. Off-path `gentle-ai review assess`: `medium` (`executable_change`, `main.go`) → writer self-verification; parent spot check `go test -count=1 ./...` ok.
+
+Delivery: commit `74cbaa5` (`Modulo: M127.2`). Native attempt settled `passed` with `--remediates-evidence-revision` of the reset chain → `complete`.
 
 ## M127.3 — Pending
