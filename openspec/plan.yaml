@@ -57,6 +57,7 @@ cimientos:
   rutas:
     - .doc-guard.json
     - .githooks/pre-push
+    - .github/ISSUE_TEMPLATE/friction_report.yml
     - .gitignore
     - .opencode/agent/support-agent.md
     - .opencode/plugins/tower-spike.js
@@ -8575,6 +8576,56 @@ sesiones:
             accion: "REFACTOR: dejar la regla completa sólo en el §15 del canon y hacer que las demás superficies remitan a él."
             resultado: "REFACTOR: la regla vive una vez y la suite del Método pasa."
             criterios: ["REFACTOR: la regla vive una vez y la suite del Método pasa."]
+
+  - id: S136
+    prioridad: metodo-v1
+    zona: cimientos
+    cimientos: [.github/ISSUE_TEMPLATE/friction_report.yml]
+    resultado: "Control Tower recibe errores, bugs y fricciones de proceso mediante un formulario único de GitHub que exige búsqueda de duplicados, evidencia y limpieza de datos sensibles antes de publicar."
+    autoridad: "Aprobación explícita de Emilio del 2026-09-14: crear el formulario en achangkuon/control-tower tomando como referencia los Issue Forms de Gentleman-Programming/gentle-pi y publicar los problemas observados durante la implementación."
+    depende_de: []
+    recurso: [github:achangkuon/control-tower:issues]
+    criterios:
+      - "La rama master contiene `.github/ISSUE_TEMPLATE/friction_report.yml` y GitHub lo expone como Issue Form de Control Tower."
+      - "El formulario exige confirmar búsqueda de duplicados y remoción de credenciales, tokens, rutas privadas, hostnames y otros datos sensibles."
+      - "El formulario distingue Bug, Process friction y Radar warning, y exige problema, impacto, evidencia o reproducción, y comportamiento esperado."
+      - "Un agente puede materializar el cuerpo en el orden del formulario, crear un issue y verificar por readback su título, cuerpo, estado y etiquetas."
+      - "No se agrega un formulario Markdown, un cuerpo libre alternativo ni una dependencia nueva."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Dónde se registran las fricciones detectadas mientras se implementa Control Tower?"
+        resolucion: "En GitHub Issues de achangkuon/control-tower, aunque la causa observada pertenezca a Gentle Pi, Gentle AI, Radar u otra herramienta."
+        autoridad: "Aclaración explícita de Emilio del 2026-09-14."
+        falsificador: "El maintainer designa otro tracker operativo para Control Tower."
+        descartadas:
+          - opcion: "Publicarlas en el repositorio de la herramienta causante."
+            razon: "Fragmenta la bitácora de implementación que Emilio quiere consultar como una sola cola."
+      - tipo: resuelta
+        pregunta: "¿Cuántos formularios iniciales se crean?"
+        resolucion: "Uno solo para errores, bugs y fricciones, derivado de los controles de privacidad y duplicados de gentle-pi."
+        autoridad: "Emilio pidió crear el formulario en singular y usarlo para toda fricción observada."
+        falsificador: "El formulario único no puede representar una clase real sin perder evidencia obligatoria."
+        descartadas: []
+    ruta:
+      propuesta: direct
+      autoridad: "El destino, el formulario de referencia, los controles obligatorios, la ruta exacta y los primeros reportes están determinados; no queda una decisión técnica abierta."
+    modulos:
+      - id: M136.1
+        resultado: "Formulario único y publicable de fricciones de Control Tower"
+        rutas: [.github/ISSUE_TEMPLATE/friction_report.yml]
+        tareas:
+          - id: T136.1.1
+            accion: "RED: comprobar que GitHub no encuentra `.github/ISSUE_TEMPLATE` en master y que no existe un formulario seleccionable."
+            resultado: "La consulta al repositorio devuelve 404 antes de implementar."
+            criterios: ["La ausencia actual del formulario queda probada por GitHub."]
+          - id: T136.1.2
+            accion: "GREEN: agregar el Issue Form con los controles y campos obligatorios derivados de gentle-pi."
+            resultado: "El YAML es válido y contiene el contrato de captura aprobado."
+            criterios: ["Todos los campos y opciones exigidos están presentes en orden estable."]
+          - id: T136.1.3
+            accion: "REFACTOR: validar el formulario, publicarlo en master y crear los primeros issues con readback exacto."
+            resultado: "GitHub expone el formulario y los primeros reportes quedan confirmados en el tracker de Control Tower."
+            criterios: ["La publicación y cada issue tienen identidad estable y readback coincidente."]
 
 references:
   future_successors:
