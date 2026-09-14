@@ -139,6 +139,40 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertNotIn("tower_", unattended)
         json.loads(read("skills/chanks-4-unattended-implementation/assets/execution-contract.schema.json"))
 
+    def test_native_sdd_runs_only_for_full_sdd(self):
+        canon = read("skills/_shared/plan-naming-convention.md")
+        routes = " ".join(canon.split("## 15. Planning flow", 1)[1].split("## 16.", 1)[0].split())
+        bridge = " ".join(read("skills/chanks-4-puente/SKILL.md").split())
+        judgment = " ".join(read("skills/chanks-2-planificador-granular/references/juicio-de-ruta.md").split())
+        closure = " ".join(read("skills/chanks-7-session-doc/SKILL.md").split())
+        links = " ".join(read("skills/chanks-7-session-doc/references/links.md").split())
+        handoff = " ".join(read("skills/chanks-0-agente-soporte/assets/assignment-implementation.md").split())
+
+        for phrase in (
+            "Only `full-sdd` runs Gentle AI's native SDD pipeline",
+            "`direct` and `design-tasks` use Gentle AI's non-SDD implementation path and never create `openspec/changes/`",
+            "criterion-by-criterion evidence in the body of the commit that records the delivery",
+            "records its design in the plan",
+            "`archive` runs only for `full-sdd`",
+        ):
+            self.assertIn(phrase, routes)
+        self.assertNotIn("They enter the same pipeline at different gates", routes)
+        checklist = " ".join(canon.split("## 20.", 1)[1].split())
+        self.assertNotIn("Every route entered the shared SDD pipeline", checklist)
+        self.assertIn("Only `full-sdd` entered the native SDD pipeline", checklist)
+        readme = " ".join(read("README.md").split())
+        self.assertNotIn("All routes continue through one shared pipeline", readme)
+        self.assertIn("Only `full-sdd` enters Gentle AI's native SDD pipeline", readme)
+        self.assertIn("canon §15", bridge)
+        self.assertNotIn("One pipeline, three entry gates", bridge)
+        self.assertNotIn("common and mandatory for every route", bridge)
+        self.assertIn("Sólo `full-sdd` entra en la pipeline SDD nativa", judgment)
+        self.assertNotIn("`archive` también es común y obligatorio", judgment)
+        self.assertIn("`archive` runs only for `full-sdd`", closure)
+        self.assertIn("en `full-sdd`, `archive`", links)
+        self.assertIn("only for `full-sdd`", handoff)
+        self.assertNotIn("enter the shared SDD pipeline", handoff)
+
     def test_compatible_seats_are_read_as_the_parallel_safety_verdict(self):
         canon = read("skills/_shared/plan-naming-convention.md")
         capacity = canon.split("## 13. Capacity", 1)[1].split("## 14.", 1)[0]

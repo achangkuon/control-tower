@@ -81,25 +81,24 @@ class InstallerTests(unittest.TestCase):
             self.assertEqual(content.count(INSTALLER.GATEKEEPER_START_MARKER), 1)
             self.assertIsNotNone(INSTALLER.GATEKEEPER_BLOCK_RE.search(content))
 
-    def test_installed_session_routing_has_three_entry_gates_and_common_closure(self):
+    def test_installed_session_routing_sends_only_full_sdd_through_native_sdd(self):
         INSTALLER.apply(self.home, ROOT)
-        expected_entries = {
-            b"direct": b"apply",
-            b"design-tasks": b"design",
-            b"full-sdd": b"proposal",
-        }
         for path in INSTALLER.manual_paths(self.home):
             match = INSTALLER.BLOCK_RE.search(path.read_bytes())
             self.assertIsNotNone(match, path)
             assert match is not None
             block = match.group()
+            text = b" ".join(block.split())
             entries = {}
             for line in block.splitlines():
                 if b" enters at " in line:
                     route, gate = line.strip(b" -.").split(b" enters at ")
                     entries[route.strip(b"`")] = gate.strip(b"`")
-            self.assertEqual(entries, expected_entries, path)
-            self.assertIn(b"`verify`, review, and post-delivery `archive` are common and mandatory", block, path)
+            self.assertEqual(entries, {b"full-sdd": b"proposal"}, path)
+            self.assertIn(b"`direct` and `design-tasks` use Gentle AI's non-SDD implementation path", text, path)
+            self.assertIn(b"`verify` and review are mandatory for all three routes; `archive` runs only for `full-sdd`", text, path)
+            self.assertNotIn(b"one shared SDD pipeline", text, path)
+            self.assertNotIn(b"`verify`, review, and post-delivery `archive` are common and mandatory", text, path)
             self.assertNotIn(b"`session-plan`", block, path)
             self.assertNotIn(b"`blocked` is a route", block, path)
 

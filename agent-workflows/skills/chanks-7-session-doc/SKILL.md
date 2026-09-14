@@ -15,7 +15,7 @@ parent records any confirmed plan evidence and regenerates the view under reposi
 ## Hard Rules
 
 - This work reads the plan through `../chanks-0-agente-soporte/SKILL.md`. A repository with no `openspec/plan.yaml` has not adopted plan management: say what this step needed it for, offer to start one, and stop. Never improvise a substitute record.
-- `archive` occurs after delivery and before a complete closure is declared.
+- `archive` runs only for `full-sdd`, after delivery and before a complete closure is declared; `direct` and `design-tasks` close with their verify evidence in the delivery-record commit (canon §15).
 - Closure requires verified binary criteria and integrated `entrega.commit` evidence.
 - The commit must resolve and be an ancestor of the integrated `HEAD`.
 - `entrega.pr` is optional and recorded only when it exists.
@@ -36,14 +36,15 @@ parent records any confirmed plan evidence and regenerates the view under reposi
 
 1. Gather criteria, commit, integrated `HEAD`, and PR evidence when present.
 2. Verify the commit resolves and is an ancestor of the integrated base.
-3. Confirm `chanks-4-puente` executed `archive` after delivery.
+3. For `full-sdd`, confirm `chanks-4-puente` executed `archive` after delivery; for `direct` and `design-tasks`, confirm the criterion-by-criterion verify evidence for the delivery-record commit body.
 4. Return closure evidence and the `entrega.commit`/optional `entrega.pr` delta to the responsible parent.
 5. Require and report `radar check`/`radar render` evidence after the parent records confirmation.
 
 ## Output Contract
 
-Return criteria, commit/`HEAD`/PR evidence, archive evidence, proposed delta, `radar` results,
-closure outcome or exact failure, and the closure evidence the responsible parent must record.
+Return criteria, commit/`HEAD`/PR evidence, `full-sdd` archive evidence or the verify evidence for
+the delivery-record commit, proposed delta, `radar` results, closure outcome or exact failure, and
+the closure evidence the responsible parent must record.
 
 ## References
 

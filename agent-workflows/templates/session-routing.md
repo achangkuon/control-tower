@@ -20,11 +20,12 @@
   Sesión. That dispatch is an explicit Herdr request made with the Torre off; it is not Torre dispatch.
 - After the responsible parent records a dispatched Sesión's delivery, it runs that skill's retire mode,
   which removes only worktrees that pass its six checks.
-- The plan↔SDD bridge translates the approved or revalidated route into exactly one entry gate:
-  - `direct` enters at `apply`.
-  - `design-tasks` enters at `design`.
+- The plan↔SDD bridge translates the approved or revalidated route into its execution path (canon §15).
+  Only `full-sdd` enters Gentle AI's native SDD pipeline:
   - `full-sdd` enters at `proposal`.
-- These are the only routes. Continue forward through one shared SDD pipeline. `verify`, review, and post-delivery `archive` are common and mandatory for all three routes; run it once per Sesión, never once per Módulo.
+- `direct` and `design-tasks` use Gentle AI's non-SDD implementation path, never create `openspec/changes/`,
+  and never declare `cambio`; a `design-tasks` Sesión records its design in the plan.
+- These are the only routes. `verify` and review are mandatory for all three routes; `archive` runs only for `full-sdd`, once per Sesión, never once per Módulo.
 - The bridge and closure return evidence to the responsible parent; neither writes the plan.
   `blocked` is not a route. `BLOQUEADO` is calculated from authority, evidence, dependencies,
   contamination, and exhausted attempts; execution resumes only from the recorded checkpoint.

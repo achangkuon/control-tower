@@ -452,25 +452,29 @@ the route → forecast size. Nothing selects or skips a branch, so planning has 
 Shared detail may live in references loaded on demand; that does not create a skill hierarchy.
 For `full-sdd`, planning deliberately leaves Módulos empty because design defines them.
 
-### Three entry gates into one SDD pipeline
+### Only full-sdd runs the native SDD pipeline
 
 Every Sesión carries exactly one route: `direct`, `design-tasks`, or `full-sdd`.
 
-| Route | Selected when | SDD entry gate |
+| Route | Selected when | Execution |
 |---|---|---|
-| `direct` | The contract has a binary-verifiable outcome and every remaining choice is derivable | `apply` |
-| `design-tasks` | The product outcome is fixed, but bounded technical discovery is required | `design` |
-| `full-sdd` | Outcome and boundaries exist, but behavior, lifecycle, or a shared contract still needs design | `proposal` |
+| `direct` | The contract has a binary-verifiable outcome and every remaining choice is derivable | Gentle AI non-SDD implementation from the plan's Módulos and Tareas |
+| `design-tasks` | The product outcome is fixed, but bounded technical discovery is required | A bounded design recorded in the plan, then Gentle AI non-SDD implementation |
+| `full-sdd` | Outcome and boundaries exist, but behavior, lifecycle, or a shared contract still needs design | Gentle AI native SDD pipeline, entering at `proposal` |
 
-These are not separate execution methods. They enter the same pipeline at different gates:
+Only `full-sdd` runs Gentle AI's native SDD pipeline:
 
 ```text
 proposal → spec → design → tasks → apply → verify → review → delivery → archive
 ```
 
-Start at the selected gate and continue forward. `verify` and `archive` are common and mandatory
-for all three routes; `archive` runs only after delivery. Never run a separate SDD pipeline per
-Módulo.
+`direct` and `design-tasks` use Gentle AI's non-SDD implementation path and never create `openspec/changes/`,
+so they never declare `cambio`. A `design-tasks` Sesión records its design in the plan: the responsible parent
+adds the route revalidation, the technical decisions, and the adjusted Tareas.
+
+`verify` and review are mandatory for all three routes. `direct` and `design-tasks` verify against the Sesión's
+binary criteria, with criterion-by-criterion evidence in the body of the commit that records the delivery.
+`archive` runs only for `full-sdd`, after delivery. Never run a separate SDD pipeline per Módulo.
 
 `blocked` is never a route. When authority is absent or stale, evidence contradicts, attempts are
 exhausted, or an open decision reaches the acceptance criteria or first Módulo, §9 and §14 compute
@@ -611,7 +615,7 @@ Only what the tool cannot check. Everything else is enforced, not remembered.
 - [ ] A Sesión is `BLOQUEADO` only per §14 — never merely because a decision escalates
 - [ ] Planning ran its fixed ordered flow without a parent skill
 - [ ] Planning proposed one of the three routes with authority; kickoff revalidated it against exact current Git evidence
-- [ ] Every route entered the shared SDD pipeline at its declared gate and completed `verify` and post-delivery `archive`
+- [ ] Only `full-sdd` entered the native SDD pipeline and completed post-delivery `archive`; every route completed `verify`, with `direct` and `design-tasks` evidence in the delivery-record commit
 - [ ] A route change at implementation time recorded why it changed
 - [ ] Nobody hand-edited `openspec/ROADMAP.md` or created parallel generated status/index files
 - [ ] Artifacts omitted on a small product are declared on the plan, not silently skipped

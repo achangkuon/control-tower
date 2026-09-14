@@ -20,7 +20,7 @@ Responsible parent: <IDENTITY_AND_RETURN_CHANNEL>
 Verify repository, `HEAD`, branch, and worktree state before editing. Do not select another
 Sesión or widen scope. A static planning forecast never grants a live lock; stop and report a
 shared-path conflict to the responsible parent. Follow the route revalidated by
-`chanks-3-session-kickoff`, enter the shared SDD pipeline through `chanks-4-puente`, keep each
+`chanks-3-session-kickoff` through `chanks-4-puente`, entering the native SDD pipeline only for `full-sdd`, keep each
 Módulo independently revertible with its tests, and report Git contamination rather than hiding it.
 
 Return: Sesión, repository and branch evidence, changed paths, checks with exact results,

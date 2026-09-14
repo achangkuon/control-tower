@@ -109,14 +109,14 @@ Servi-Task-U and Finanzas-Personales.
 
 ## Routes
 
-| Route | Unified pipeline entry |
+| Route | Execution |
 | --- | --- |
-| `direct` | Enter at `apply`. |
-| `design-tasks` | Enter at `design`. |
-| `full-sdd` | Enter at `proposal`. |
+| `direct` | Gentle AI non-SDD implementation from the plan's Módulos and Tareas. |
+| `design-tasks` | A bounded design recorded in the plan, then non-SDD implementation. |
+| `full-sdd` | Gentle AI native SDD pipeline, entering at `proposal`. |
 
-All routes continue through one shared pipeline. `verify` and post-delivery `archive`
-are common and mandatory. `blocked` is a calculated state, not a route.
+Only `full-sdd` enters Gentle AI's native SDD pipeline and its `archive` (canon §15).
+`verify` and review are mandatory for all three routes. `blocked` is a calculated state, not a route.
 
 ## Skill families
 
