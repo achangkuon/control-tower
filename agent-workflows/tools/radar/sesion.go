@@ -1,0 +1,137 @@
+package main
+
+import (
+	"fmt"
+	"io"
+	"strings"
+)
+
+// cmdSesion prints the complete contract of exactly one Sesión, so an agent reads
+// the work it was handed instead of the whole plan. It refuses exactly where
+// `radar status` refuses: a computed state only exists over a valid plan.
+func cmdSesion(w io.Writer, p *Plan, root, id string) error {
+	head, err := gitHEAD(root)
+	if err != nil {
+		return fmt.Errorf("no se pudo fijar HEAD para calcular sesion: %w", err)
+	}
+	if err := validarAt(p, root, head, "sesion"); err != nil {
+		return err
+	}
+	s, ok := p.SesionPorID()[id]
+	if !ok {
+		for _, r := range referenceRows(p) {
+			if r.ID == id {
+				return fmt.Errorf("%s es una referencia no ejecutable (%s): no tiene contrato de Sesión", id, r.Kind)
+			}
+		}
+		return fmt.Errorf("la Sesión %s no existe en el plan", id)
+	}
+	escribirSesion(w, p, s, p.EstadosAt(root, head))
+	return nil
+}
+
+// escribirSesion writes one Sesión's contract. Other Sesiones appear only as
+// dependency IDs next to their computed state.
+func escribirSesion(w io.Writer, p *Plan, s *Sesion, estados map[string]string) {
+	fmt.Fprintf(w, "%s — %s\n", s.ID, s.Resultado)
+	fmt.Fprintf(w, "Estado: %s\n", estados[s.ID])
+	fmt.Fprintf(w, "Zona: %s · Área: %s\n", s.Zona, listaTexto(p.Area(s)))
+	fmt.Fprintf(w, "Autoridad: %s\n", autoridadTexto(s.Autoridad))
+	deps := make([]string, 0, len(s.DependeDe))
+	for _, d := range s.DependeDe {
+		estado := estados[d]
+		if estado == "" {
+			estado = "sin estado"
+		}
+		deps = append(deps, fmt.Sprintf("%s (%s)", d, estado))
+	}
+	fmt.Fprintf(w, "Depende de: %s\n", listaTexto(deps))
+	fmt.Fprintf(w, "Cimientos: %s\n", listaTexto(s.Cimientos))
+	fmt.Fprintf(w, "Recurso: %s\n", listaTexto(s.Recurso))
+	fmt.Fprintf(w, "Ruta: propuesta %s (%s)", s.Ruta.Propuesta, s.Ruta.Autoridad)
+	if r := s.Ruta.Revalidacion; r != nil {
+		fmt.Fprintf(w, "; revalidada %s sobre %s: %s", r.Resultado, r.Base, r.Evidencia)
+		if r.Razon != "" {
+			fmt.Fprintf(w, "; razón: %s", r.Razon)
+		}
+	}
+	fmt.Fprintln(w)
+	if s.Entrega != nil {
+		fmt.Fprintf(w, "Entrega: %s\n", s.Entrega.Commit)
+	}
+
+	fmt.Fprintln(w, "\nCriterios:")
+	for _, c := range s.Criterios {
+		fmt.Fprintf(w, "  - %s\n", c)
+	}
+
+	fmt.Fprintln(w, "\nDecisiones:")
+	if len(s.Decisiones) == 0 {
+		fmt.Fprintln(w, "  —")
+	}
+	for _, d := range s.Decisiones {
+		fmt.Fprintf(w, "  - [%s · %s] %s\n", d.Tipo, d.Clase, d.Pregunta)
+		for _, campo := range [][2]string{
+			{"Resolución", d.Resolucion}, {"Criterio", d.Criterio}, {"Autoridad", d.Autoridad},
+			{"Evidencia", d.Evidencia}, {"Checkpoint", d.Checkpoint}, {"Alcanza", d.Alcanza},
+			{"Falsificador", d.Falsificador},
+		} {
+			if campo[1] != "" {
+				fmt.Fprintf(w, "    %s: %s\n", campo[0], campo[1])
+			}
+		}
+		if len(d.Contamina) > 0 {
+			fmt.Fprintf(w, "    Contamina: %s\n", listaTexto(d.Contamina))
+		}
+		for _, o := range d.Opciones {
+			fmt.Fprintf(w, "    Opción: %s → %s\n", o.Opcion, o.Consecuencia)
+		}
+		for _, x := range d.Descartadas {
+			fmt.Fprintf(w, "    Descartada: %s → %s\n", x.Opcion, x.Razon)
+		}
+	}
+
+	fmt.Fprintln(w, "\nMódulos:")
+	if len(s.Modulos) == 0 {
+		fmt.Fprintln(w, "  —")
+	}
+	for _, m := range s.Modulos {
+		fmt.Fprintf(w, "  %s — %s\n", m.ID, m.Resultado)
+		fmt.Fprintf(w, "    Rutas: %s\n", listaTexto(m.Rutas))
+		for _, t := range m.Tareas {
+			fmt.Fprintf(w, "    - %s: %s → %s\n", t.ID, t.Accion, t.Resultado)
+			for _, c := range t.Criterios {
+				if c != t.Resultado {
+					fmt.Fprintf(w, "        · %s\n", c)
+				}
+			}
+		}
+	}
+}
+
+func autoridadTexto(a Autoridad) string {
+	if !a.Tipada() {
+		return a.Texto
+	}
+	partes := make([]string, 0, len(a.Citas))
+	for _, c := range a.Citas {
+		switch c.Tipo {
+		case "decision":
+			partes = append(partes, fmt.Sprintf("decision %d · %s", c.Ref, locatorProvenance(c.Loc)))
+		case "engram":
+			partes = append(partes, fmt.Sprintf("engram #%d", c.ID))
+		case "repo":
+			partes = append(partes, "repo · "+locatorProvenance(c.Loc))
+		default:
+			partes = append(partes, c.Tipo)
+		}
+	}
+	return strings.Join(partes, "; ")
+}
+
+func listaTexto(items []string) string {
+	if len(items) == 0 {
+		return "—"
+	}
+	return strings.Join(items, ", ")
+}

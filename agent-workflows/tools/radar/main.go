@@ -13,12 +13,18 @@ const uso = `radar — herramienta determinista de planificación
 
   radar check   [-f openspec/plan.yaml] [-C raíz] valida el dato, git y la partición
   radar status  [-f openspec/plan.yaml] [-C raíz] [--json] estado, colas y asientos calculados
+  radar sesion  <ID> [-f openspec/plan.yaml] [-C raíz] contrato completo de una sola Sesión
   radar zonas   [-f openspec/plan.yaml] [-C raíz] cobertura sobre archivos rastreados
   radar render  [-f openspec/plan.yaml] [-o openspec/ROADMAP.md] [-C raíz]
 
 openspec/plan.yaml es la única fuente editable. openspec/ROADMAP.md es una vista
 atómica y determinista: nunca se edita a mano. El checker no adquiere locks vivos.
 `
+
+type opciones struct {
+	archivo, salida, raiz string
+	json                  bool
+}
 
 func main() {
 	if len(os.Args) < 2 {
@@ -27,24 +33,21 @@ func main() {
 	}
 
 	comando := os.Args[1]
-	fs := flag.NewFlagSet(comando, flag.ExitOnError)
-	archivo := fs.String("f", "openspec/plan.yaml", "archivo de plan")
-	salida := fs.String("o", "openspec/ROADMAP.md", "salida generada (sólo render)")
-	raiz := fs.String("C", "", "raíz del repositorio")
-	comoJSON := fs.Bool("json", false, "emitir el snapshot legible por máquina (sólo status)")
-	_ = fs.Parse(os.Args[2:])
-
 	if comando == "help" || comando == "-h" || comando == "--help" {
 		fmt.Print(uso)
 		return
 	}
+	opts, posicionales, err := parsearArgs(comando, os.Args[2:])
+	if err != nil {
+		os.Exit(2)
+	}
 
-	p, err := Load(*archivo)
+	p, err := Load(opts.archivo)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "✗", err)
 		os.Exit(1)
 	}
-	root, err := resolverRaiz(*raiz, p.Raiz, *archivo)
+	root, err := resolverRaiz(opts.raiz, p.Raiz, opts.archivo)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "✗", err)
 		os.Exit(1)
@@ -54,7 +57,7 @@ func main() {
 	case "check":
 		os.Exit(cmdCheck(p, root))
 	case "status":
-		if *comoJSON {
+		if opts.json {
 			if err := cmdStatusJSON(os.Stdout, p, root); err != nil {
 				fmt.Fprintln(os.Stderr, "✗", err)
 				os.Exit(1)
@@ -65,19 +68,50 @@ func main() {
 			fmt.Fprintln(os.Stderr, "✗", err)
 			os.Exit(1)
 		}
+	case "sesion":
+		if len(posicionales) != 1 {
+			fmt.Fprint(os.Stderr, "uso: radar sesion <ID> [-f openspec/plan.yaml] [-C raíz]\n")
+			os.Exit(2)
+		}
+		if err := cmdSesion(os.Stdout, p, root, posicionales[0]); err != nil {
+			fmt.Fprintln(os.Stderr, "✗", err)
+			os.Exit(1)
+		}
 	case "zonas":
 		if err := cmdZonas(p, root); err != nil {
 			fmt.Fprintln(os.Stderr, "✗", err)
 			os.Exit(1)
 		}
 	case "render":
-		if err := cmdRender(p, root, *salida); err != nil {
+		if err := cmdRender(p, root, opts.salida); err != nil {
 			fmt.Fprintln(os.Stderr, "✗", err)
 			os.Exit(1)
 		}
 	default:
 		fmt.Fprintf(os.Stderr, "comando desconocido: %s\n\n%s", comando, uso)
 		os.Exit(2)
+	}
+}
+
+// parsearArgs accepts positional arguments before or after the flags, so
+// `radar sesion S114 -C raíz` and `radar sesion -C raíz S114` mean the same.
+func parsearArgs(comando string, args []string) (opciones, []string, error) {
+	var o opciones
+	fs := flag.NewFlagSet(comando, flag.ContinueOnError)
+	fs.StringVar(&o.archivo, "f", "openspec/plan.yaml", "archivo de plan")
+	fs.StringVar(&o.salida, "o", "openspec/ROADMAP.md", "salida generada (sólo render)")
+	fs.StringVar(&o.raiz, "C", "", "raíz del repositorio")
+	fs.BoolVar(&o.json, "json", false, "emitir el snapshot legible por máquina (sólo status)")
+	var posicionales []string
+	for {
+		if err := fs.Parse(args); err != nil {
+			return o, nil, err
+		}
+		if fs.NArg() == 0 {
+			return o, posicionales, nil
+		}
+		posicionales = append(posicionales, fs.Arg(0))
+		args = fs.Args()[1:]
 	}
 }
 
@@ -130,11 +164,8 @@ func cmdCheck(p *Plan, root string) int {
 	return 0
 }
 
-func cmdStatus(p *Plan, root string) error {
-	head, err := gitHEAD(root)
-	if err != nil {
-		return fmt.Errorf("no se pudo fijar HEAD para calcular status: %w", err)
-	}
+// validarAt is the one refusal shared by every command that shows computed state.
+func validarAt(p *Plan, root, head, comando string) error {
 	var errores []string
 	for _, h := range p.CheckAt(root, head) {
 		if h.Severidad == "error" {
@@ -142,7 +173,18 @@ func cmdStatus(p *Plan, root string) error {
 		}
 	}
 	if len(errores) > 0 {
-		return fmt.Errorf("status no disponible: la validación falló con %d error(es): %s", len(errores), strings.Join(errores, "; "))
+		return fmt.Errorf("%s no disponible: la validación falló con %d error(es): %s", comando, len(errores), strings.Join(errores, "; "))
+	}
+	return nil
+}
+
+func cmdStatus(p *Plan, root string) error {
+	head, err := gitHEAD(root)
+	if err != nil {
+		return fmt.Errorf("no se pudo fijar HEAD para calcular status: %w", err)
+	}
+	if err := validarAt(p, root, head, "status"); err != nil {
+		return err
 	}
 	estados := p.EstadosAt(root, head)
 	colas := p.ColaPorZonaAt(root, head)
@@ -190,6 +232,7 @@ func cmdStatus(p *Plan, root string) error {
 			fmt.Printf("  %-18s %-8s %-24s %s\n", r.ID, r.Kind, r.Locator, r.Reason)
 		}
 	}
+	fmt.Println("\nContrato completo de una Sesión: radar sesion <ID>")
 	return nil
 }
 

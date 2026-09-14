@@ -8,6 +8,7 @@ el próximo trabajo. No existen un `STATUS.md` ni un `master-index.md` paralelos
 radar check                         # usa openspec/plan.yaml y el repo actual
 radar status                        # estado, colas por Zona y asientos compatibles
 radar status --json                 # el mismo cálculo, legible por máquina (radar.snapshot/v1)
+radar sesion S114                   # contrato completo de una sola Sesión; falla cerrado como status
 radar zonas                         # cobertura de la partición sobre git ls-files
 radar render                        # escribe openspec/ROADMAP.md atómicamente
 radar render -f otro.yaml -o salida.md -C /repo
