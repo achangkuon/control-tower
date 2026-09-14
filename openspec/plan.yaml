@@ -7803,6 +7803,136 @@ sesiones:
             resultado: "REFACTOR: cada regla vive en un solo lugar y la prueba sigue pasando."
             criterios: ["REFACTOR: cada regla vive en un solo lugar y la prueba sigue pasando."]
 
+  - id: S126
+    zona: metodo
+    resultado: "Con la Torre apagada, el padre responsable abre en Herdr una tab por cada Sesión que el humano eligió, cada una con su worktree y su agente, y al cerrar retira sola los worktrees que prueban estar integrados."
+    autoridad: "Diseño aprobado por Emilio el 2026-09-14 (Claude Code): despacho con una tab por Sesión, entrega integrada en serie por el padre, y retiro automático con autorización previa sólo si pasan seis chequeos. Orden serial acordado el mismo día con la conversación que enumeró S124 y S125 en 27ae517."
+    # Depende de S125, no sólo de S124: las tres Sesiones son de la Zona metodo y S124/S125 editan
+    # kickoff, Support y sus pruebas. La cola de la Zona ya las serializa; declararlo evita adivinar
+    # qué archivos toca S125.
+    depende_de: [S125]
+    cimientos: []
+    recurso: []
+    criterios:
+      - "`agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md` existe, figura en `CHANKS_SKILLS` y la instalación la copia idéntica a la fuente en las cuatro raíces de runtime."
+      - "El despacho actúa sólo sobre una lista explícita del humano con ID y runtime por Sesión. Sin lista, o con un ID que `radar status` no calcula `LISTO`, termina sin crear worktree, tab ni agente."
+      - "Dos Sesiones elegidas que comparten un Cimiento o un Recurso no se despachan en paralelo; la skill lo reporta y no crea nada para la segunda."
+      - "Por cada Sesión despachada existen el worktree hermano `Worktrees/<id>` sobre la rama `work/<id>` creada desde el master verificado, una tab de Herdr propia y un agente con el nombre de la Sesión; la salida es una tabla Sesión · worktree · rama · tab · agente con IDs leídos de las respuestas JSON de Herdr."
+      - "Sin `HERDR_ENV=1` la skill se detiene y ofrece el flujo con subagentes; ante una respuesta ambigua de Herdr cierra sólo lo que abrió y se detiene."
+      - "La skill nunca carga `torre-control`, nunca lee ni escribe `.git/control-tower/ACTIVE` ni `~/.local/share/control-tower/`, y nunca responde por el humano la pregunta de un agente bloqueado."
+      - "El agente despachado commitea sólo en `work/<id>`; nunca pushea a master ni escribe `openspec/plan.yaml`. El padre integra de a una Sesión por vez."
+      - "El retiro corre sólo después de que el padre registró la entrega de la Sesión en `openspec/plan.yaml`, y muta sólo si pasan los seis chequeos: `radar status` la calcula `COMPLETO` o `ARCHIVADO`; `entrega.commit` es ancestro de master; `git status --porcelain` del worktree está vacío; `git cherry master work/<id>` no tiene líneas `+`; el agente de la tab está `idle` o `done`, o la tab ya no existe; la ruta es `Worktrees/<id>` con rama `work/<id>` y nunca el checkout principal."
+      - "Si falla cualquiera de los seis chequeos, el retiro no cierra tab, no borra worktree ni rama, y reporta el chequeo que falló."
+      - "El retiro ejecuta en orden: cerrar la tab de esa Sesión, `git worktree remove` sin `--force`, `git branch -d` sin `-D`; después `git worktree list` ya no lista la ruta. Falsificador: aparece `--force` o `-D` en la skill."
+      - "Una rama integrada por cherry-pick o rebase, cuyo `git cherry` sólo muestra líneas `-`, se retira. Falsificador: la skill trata cualquier salida de `git cherry` como trabajo sin integrar."
+      - "La skill no copia procedimientos de la skill `herdr`: la carga para la mecánica de la CLI y no repite ningún bloque de código de ella."
+      - "El bloque de ruteo instalado nombra `chanks-3-despacho-herdr` después de la elección humana de Sesiones y su modo retiro después del registro de cierre, y declara que ese despacho con la Torre apagada es un pedido explícito de Herdr, no un despacho de Control Tower. Las pruebas de ruteo existentes siguen pasando."
+      - "Tras la entrega, una sesión Pi con la Torre apagada a la que se le pide despachar Sesiones aprobadas carga la skill y no se niega por la exclusión de Control Tower de la skill `herdr`."
+      - "`python3 -m unittest discover -s agent-workflows/tests` pasa y `radar check` no suma errores."
+      - "El diff toca sólo Área."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Dónde vive el despacho con Herdr para quien construye con la Torre apagada?"
+        resolucion: "En una skill del Método, `chanks-3-despacho-herdr`, instalada en los cuatro runtimes. La frase de `agent-workflows/FLUJO-END-TO-END.md:170` que lo excluía es historia congelada y no rige."
+        autoridad: "Aprobación de Emilio del 2026-09-14; S110 retiró `torre-control` del entorno constructor (openspec/plan.yaml, criterios de S110)."
+        clase: contrato-visible
+        falsificador: "El despacho depende de `torre-control`, `torre asiento` o cualquier skill de la Torre."
+        descartadas:
+          - opcion: "Esperar a S119, la skill de Herdr propia de la Torre."
+            razon: "S119 enruta por `torre-control`, que S110 sacó del entorno constructor; el constructor seguiría sin despacho."
+          - opcion: "Seguir sólo con subagentes."
+            razon: "Todos los resultados caen en el contexto de un orquestador y ningún subagente es dueño de su Sesión ni habla directo con el humano."
+      - tipo: resuelta
+        pregunta: "¿Cómo se ven las Sesiones despachadas en Herdr?"
+        resolucion: "Una tab por Sesión."
+        autoridad: "Aprobación de Emilio del 2026-09-14."
+        clase: contrato-visible
+        falsificador: "Dos Sesiones comparten una tab."
+        descartadas:
+          - opcion: "Una tab `AGENTES` dividida en paneles."
+            razon: "Con cuatro Sesiones los paneles quedan demasiado angostos para trabajar."
+      - tipo: resuelta
+        pregunta: "¿Quién entrega el trabajo de cada Sesión despachada?"
+        resolucion: "Cada agente commitea en su rama y el padre responsable integra en serie sobre master y registra el plan."
+        autoridad: "Aprobación de Emilio del 2026-09-14; AGENTS.md fija `openspec/plan.yaml` como único origen editable del plan."
+        clase: contrato-visible
+        falsificador: "Un agente despachado pushea a master o escribe `openspec/plan.yaml`."
+        descartadas:
+          - opcion: "Cada agente pushea directo a master."
+            razon: "Varias entregas simultáneas chocan sobre master y sobre `openspec/plan.yaml`."
+      - tipo: resuelta
+        pregunta: "¿El retiro de un worktree terminado necesita confirmación humana cada vez?"
+        resolucion: "No. La aprobación del despacho autoriza de antemano el retiro, y sólo cuando pasan los seis chequeos; si falla uno, no muta y pregunta."
+        autoridad: "Aprobación explícita de Emilio del 2026-09-14, que reemplaza para esta skill la regla de que el retiro nunca es automático."
+        clase: operaciones-irreversibles
+        falsificador: "Se borra un worktree o una rama con un chequeo fallido, o con `--force` o `-D`."
+        descartadas:
+          - opcion: "Vista previa y un OK del humano por cada worktree."
+            razon: "Con cuatro Sesiones por Jornada suma cuatro confirmaciones más."
+          - opcion: "No retirar worktrees."
+            razon: "El 2026-09-14 ya había ocho worktrees acumulados además del checkout principal."
+      - tipo: resuelta
+        pregunta: "¿Qué se hace con los worktrees que ya existían antes de esta Sesión?"
+        resolucion: "Quedan fuera de alcance: el retiro sólo actúa sobre Sesiones que despachó esta skill."
+        autoridad: "Aprobación de Emilio del 2026-09-14."
+        clase: expansion-de-alcance
+        falsificador: "El retiro toca un worktree que no sigue el patrón `Worktrees/<id>` con rama `work/<id>` de una Sesión del plan."
+        descartadas:
+          - opcion: "Limpiar en esta Sesión los ocho worktrees previos."
+            razon: "Es otra operación, con otra evidencia, y necesita su propia vista previa."
+    ruta:
+      propuesta: direct
+      autoridad: "Disparador, pasos del despacho, layout, dueño de la entrega, los seis chequeos y el orden del retiro quedan fijados por las decisiones aprobadas; resta implementación mecánica con pruebas del Método."
+    modulos:
+      - id: M126.1
+        resultado: "La skill abre una tab con worktree y agente por cada Sesión elegida"
+        rutas: [agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md, agent-workflows/tools/install.py, agent-workflows/tests/test_despacho_herdr.py, agent-workflows/README.md]
+        tareas:
+          - id: T126.1.1
+            accion: "RED: exigir que la skill exista en `CHANKS_SKILLS`, actúe sólo con lista humana de Sesiones LISTO, rechace Cimientos o Recursos compartidos, y fije una tab, un worktree `Worktrees/<id>` y un agente por Sesión sin tocar la Torre."
+            resultado: "RED: la skill no existe y la prueba falla."
+            criterios: ["RED: la skill no existe y la prueba falla."]
+          - id: T126.1.2
+            accion: "GREEN: escribir la skill con sus compuertas fail-closed y registrarla en el instalador y en la tabla del README."
+            resultado: "GREEN: la prueba y las pruebas de instalación pasan."
+            criterios: ["GREEN: la prueba y las pruebas de instalación pasan."]
+          - id: T126.1.3
+            accion: "REFACTOR: referenciar la skill `herdr`, Support y kickoff sin copiar sus procedimientos."
+            resultado: "REFACTOR: ningún bloque de otra skill queda duplicado y las pruebas siguen pasando."
+            criterios: ["REFACTOR: ningún bloque de otra skill queda duplicado y las pruebas siguen pasando."]
+      - id: M126.2
+        resultado: "El modo retiro borra sólo worktrees que pasan los seis chequeos"
+        rutas: [agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md, agent-workflows/skills/chanks-3-despacho-herdr/references/retiro.md, agent-workflows/tests/test_despacho_herdr.py]
+        tareas:
+          - id: T126.2.1
+            accion: "RED: exigir los seis chequeos, la parada sin mutación ante cualquier falla, el orden tab → worktree → rama, la ausencia de `--force` y `-D`, y que `git cherry` cuente sólo líneas `+`."
+            resultado: "RED: la skill no tiene modo retiro y la prueba falla."
+            criterios: ["RED: la skill no tiene modo retiro y la prueba falla."]
+          - id: T126.2.2
+            accion: "GREEN: escribir el modo retiro en su referencia y enlazarlo desde la skill."
+            resultado: "GREEN: la prueba pasa."
+            criterios: ["GREEN: la prueba pasa."]
+          - id: T126.2.3
+            accion: "REFACTOR: dejar cada chequeo en un solo lugar."
+            resultado: "REFACTOR: los chequeos viven sólo en la referencia y la prueba sigue pasando."
+            criterios: ["REFACTOR: los chequeos viven sólo en la referencia y la prueba sigue pasando."]
+      - id: M126.3
+        resultado: "El ruteo del padre enlaza despacho y retiro en el flujo"
+        rutas: [agent-workflows/templates/session-routing.md, agent-workflows/tests/test_despacho_herdr.py]
+        tareas:
+          - id: T126.3.1
+            accion: "RED: exigir que el bloque instalado nombre el despacho tras la elección humana, el retiro tras el registro de cierre, y que declare el despacho con Torre apagada como pedido explícito de Herdr."
+            resultado: "RED: el bloque actual no nombra la skill y la prueba falla."
+            criterios: ["RED: el bloque actual no nombra la skill y la prueba falla."]
+          - id: T126.3.2
+            accion: "GREEN: agregar las líneas al bloque de ruteo."
+            resultado: "GREEN: la prueba y las pruebas de ruteo existentes pasan."
+            criterios: ["GREEN: la prueba y las pruebas de ruteo existentes pasan."]
+          - id: T126.3.3
+            accion: "REFACTOR: mantener el bloque sin repetir reglas que ya declara."
+            resultado: "REFACTOR: ninguna regla del bloque queda duplicada y las pruebas siguen pasando."
+            criterios: ["REFACTOR: ninguna regla del bloque queda duplicada y las pruebas siguen pasando."]
+
 references:
   future_successors:
     - id: S102

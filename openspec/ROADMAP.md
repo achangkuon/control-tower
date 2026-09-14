@@ -16,7 +16,7 @@
 - Método #2 → S120 — Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
 
 ## Avance
-- **Total:** 63% (60/94 S)
+- **Total:** 63% (60/95 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -30,7 +30,7 @@
 - **Hosts:** 33% (3/9 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 40% (4/10 S)
+- **Método:** 36% (4/11 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -87,6 +87,7 @@
 4. **S123** · 📋 PLANIFICADO · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
 5. **S124** · 🟢 LISTO · Un agente obtiene el contrato completo de una sola Sesión con &#96;radar sesion &lt;ID&gt;&#96;, y Support lee el plan sólo por Radar, nunca openspec/plan.yaml entero.
 6. **S125** · 📋 PLANIFICADO · Una Sesión con Módulos ya entregados se ve a medias en Radar y se retoma desde el primer Módulo pendiente, sin cambiar ninguno de los siete estados.
+7. **S126** · 📋 PLANIFICADO · Con la Torre apagada, el padre responsable abre en Herdr una tab por cada Sesión que el humano eligió, cada una con su worktree y su agente, y al cerrar retira sola los worktrees que prueban estar integrados.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -142,6 +143,7 @@
 - **S123:** propuesta design-tasks (Las tres superficies y sus reglas están decididas, pero falta descubrimiento técnico acotado: qué prueba del Método fija el contrato de las skills y de la plantilla de ruteo, y dónde vive dentro de agent-workflows.); pendiente de revalidación en kickoff.
 - **S124:** propuesta direct (Comando, contenido de la salida, falla cerrada y texto de la skill quedan fijados en esta propuesta; resta implementación mecánica con pruebas y ninguna elección de diseño abierta.); pendiente de revalidación en kickoff.
 - **S125:** propuesta direct (Fuente de evidencia, formato del trailer, salida y reglas de las skills quedan fijados en esta propuesta; no queda diseño abierto.); pendiente de revalidación en kickoff.
+- **S126:** propuesta direct (Disparador, pasos del despacho, layout, dueño de la entrega, los seis chequeos y el orden del retiro quedan fijados por las decisiones aprobadas; resta implementación mecánica con pruebas del Método.); pendiente de revalidación en kickoff.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -3328,6 +3330,60 @@ Rutas: agent-workflows/skills/chanks-3-session-kickoff/SKILL.md, agent-workflows
   - [ ] GREEN: la prueba pasa con las dos reglas.
 - **T125.2.3:** REFACTOR: ubicar cada regla junto a sus pasos existentes sin duplicar el canon. → REFACTOR: cada regla vive en un solo lugar y la prueba sigue pasando.
   - [ ] REFACTOR: cada regla vive en un solo lugar y la prueba sigue pasando.
+
+### S126 — Con la Torre apagada, el padre responsable abre en Herdr una tab por cada Sesión que el humano eligió, cada una con su worktree y su agente, y al cerrar retira sola los worktrees que prueban estar integrados.
+- Estado derivado: 📋 PLANIFICADO
+- Zona/Área: metodo · agent-workflows/
+- Depende de: S125
+- Cimientos: —
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] &#96;agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md&#96; existe, figura en &#96;CHANKS&#95;SKILLS&#96; y la instalación la copia idéntica a la fuente en las cuatro raíces de runtime.
+  - [ ] El despacho actúa sólo sobre una lista explícita del humano con ID y runtime por Sesión. Sin lista, o con un ID que &#96;radar status&#96; no calcula &#96;LISTO&#96;, termina sin crear worktree, tab ni agente.
+  - [ ] Dos Sesiones elegidas que comparten un Cimiento o un Recurso no se despachan en paralelo; la skill lo reporta y no crea nada para la segunda.
+  - [ ] Por cada Sesión despachada existen el worktree hermano &#96;Worktrees/&lt;id&gt;&#96; sobre la rama &#96;work/&lt;id&gt;&#96; creada desde el master verificado, una tab de Herdr propia y un agente con el nombre de la Sesión; la salida es una tabla Sesión · worktree · rama · tab · agente con IDs leídos de las respuestas JSON de Herdr.
+  - [ ] Sin &#96;HERDR&#95;ENV=1&#96; la skill se detiene y ofrece el flujo con subagentes; ante una respuesta ambigua de Herdr cierra sólo lo que abrió y se detiene.
+  - [ ] La skill nunca carga &#96;torre-control&#96;, nunca lee ni escribe &#96;.git/control-tower/ACTIVE&#96; ni &#96;~/.local/share/control-tower/&#96;, y nunca responde por el humano la pregunta de un agente bloqueado.
+  - [ ] El agente despachado commitea sólo en &#96;work/&lt;id&gt;&#96;; nunca pushea a master ni escribe &#96;openspec/plan.yaml&#96;. El padre integra de a una Sesión por vez.
+  - [ ] El retiro corre sólo después de que el padre registró la entrega de la Sesión en &#96;openspec/plan.yaml&#96;, y muta sólo si pasan los seis chequeos: &#96;radar status&#96; la calcula &#96;COMPLETO&#96; o &#96;ARCHIVADO&#96;; &#96;entrega.commit&#96; es ancestro de master; &#96;git status --porcelain&#96; del worktree está vacío; &#96;git cherry master work/&lt;id&gt;&#96; no tiene líneas &#96;+&#96;; el agente de la tab está &#96;idle&#96; o &#96;done&#96;, o la tab ya no existe; la ruta es &#96;Worktrees/&lt;id&gt;&#96; con rama &#96;work/&lt;id&gt;&#96; y nunca el checkout principal.
+  - [ ] Si falla cualquiera de los seis chequeos, el retiro no cierra tab, no borra worktree ni rama, y reporta el chequeo que falló.
+  - [ ] El retiro ejecuta en orden: cerrar la tab de esa Sesión, &#96;git worktree remove&#96; sin &#96;--force&#96;, &#96;git branch -d&#96; sin &#96;-D&#96;; después &#96;git worktree list&#96; ya no lista la ruta. Falsificador: aparece &#96;--force&#96; o &#96;-D&#96; en la skill.
+  - [ ] Una rama integrada por cherry-pick o rebase, cuyo &#96;git cherry&#96; sólo muestra líneas &#96;-&#96;, se retira. Falsificador: la skill trata cualquier salida de &#96;git cherry&#96; como trabajo sin integrar.
+  - [ ] La skill no copia procedimientos de la skill &#96;herdr&#96;: la carga para la mecánica de la CLI y no repite ningún bloque de código de ella.
+  - [ ] El bloque de ruteo instalado nombra &#96;chanks-3-despacho-herdr&#96; después de la elección humana de Sesiones y su modo retiro después del registro de cierre, y declara que ese despacho con la Torre apagada es un pedido explícito de Herdr, no un despacho de Control Tower. Las pruebas de ruteo existentes siguen pasando.
+  - [ ] Tras la entrega, una sesión Pi con la Torre apagada a la que se le pide despachar Sesiones aprobadas carga la skill y no se niega por la exclusión de Control Tower de la skill &#96;herdr&#96;.
+  - [ ] &#96;python3 -m unittest discover -s agent-workflows/tests&#96; pasa y &#96;radar check&#96; no suma errores.
+  - [ ] El diff toca sólo Área.
+
+#### M126.1 — La skill abre una tab con worktree y agente por cada Sesión elegida
+Rutas: agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md, agent-workflows/tools/install.py, agent-workflows/tests/test&#95;despacho&#95;herdr.py, agent-workflows/README.md
+
+- **T126.1.1:** RED: exigir que la skill exista en &#96;CHANKS&#95;SKILLS&#96;, actúe sólo con lista humana de Sesiones LISTO, rechace Cimientos o Recursos compartidos, y fije una tab, un worktree &#96;Worktrees/&lt;id&gt;&#96; y un agente por Sesión sin tocar la Torre. → RED: la skill no existe y la prueba falla.
+  - [ ] RED: la skill no existe y la prueba falla.
+- **T126.1.2:** GREEN: escribir la skill con sus compuertas fail-closed y registrarla en el instalador y en la tabla del README. → GREEN: la prueba y las pruebas de instalación pasan.
+  - [ ] GREEN: la prueba y las pruebas de instalación pasan.
+- **T126.1.3:** REFACTOR: referenciar la skill &#96;herdr&#96;, Support y kickoff sin copiar sus procedimientos. → REFACTOR: ningún bloque de otra skill queda duplicado y las pruebas siguen pasando.
+  - [ ] REFACTOR: ningún bloque de otra skill queda duplicado y las pruebas siguen pasando.
+
+#### M126.2 — El modo retiro borra sólo worktrees que pasan los seis chequeos
+Rutas: agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md, agent-workflows/skills/chanks-3-despacho-herdr/references/retiro.md, agent-workflows/tests/test&#95;despacho&#95;herdr.py
+
+- **T126.2.1:** RED: exigir los seis chequeos, la parada sin mutación ante cualquier falla, el orden tab → worktree → rama, la ausencia de &#96;--force&#96; y &#96;-D&#96;, y que &#96;git cherry&#96; cuente sólo líneas &#96;+&#96;. → RED: la skill no tiene modo retiro y la prueba falla.
+  - [ ] RED: la skill no tiene modo retiro y la prueba falla.
+- **T126.2.2:** GREEN: escribir el modo retiro en su referencia y enlazarlo desde la skill. → GREEN: la prueba pasa.
+  - [ ] GREEN: la prueba pasa.
+- **T126.2.3:** REFACTOR: dejar cada chequeo en un solo lugar. → REFACTOR: los chequeos viven sólo en la referencia y la prueba sigue pasando.
+  - [ ] REFACTOR: los chequeos viven sólo en la referencia y la prueba sigue pasando.
+
+#### M126.3 — El ruteo del padre enlaza despacho y retiro en el flujo
+Rutas: agent-workflows/templates/session-routing.md, agent-workflows/tests/test&#95;despacho&#95;herdr.py
+
+- **T126.3.1:** RED: exigir que el bloque instalado nombre el despacho tras la elección humana, el retiro tras el registro de cierre, y que declare el despacho con Torre apagada como pedido explícito de Herdr. → RED: el bloque actual no nombra la skill y la prueba falla.
+  - [ ] RED: el bloque actual no nombra la skill y la prueba falla.
+- **T126.3.2:** GREEN: agregar las líneas al bloque de ruteo. → GREEN: la prueba y las pruebas de ruteo existentes pasan.
+  - [ ] GREEN: la prueba y las pruebas de ruteo existentes pasan.
+- **T126.3.3:** REFACTOR: mantener el bloque sin repetir reglas que ya declara. → REFACTOR: ninguna regla del bloque queda duplicada y las pruebas siguen pasando.
+  - [ ] REFACTOR: ninguna regla del bloque queda duplicada y las pruebas siguen pasando.
 
 ## Capacidad
 7 Zona(s) compatibles con trabajo LISTO: autoridad, cimientos, contratos, enrolamiento, hosts, instalacion, metodo.
