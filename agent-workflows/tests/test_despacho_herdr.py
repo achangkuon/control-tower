@@ -110,5 +110,28 @@ class DespachoHerdrRetireTests(unittest.TestCase):
         self.assertIn("starts with `-`", self.retire)
 
 
+class DespachoHerdrRoutingTests(unittest.TestCase):
+    def test_installed_routing_links_dispatch_and_retirement(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw)
+            old_block = INSTALLER.START_MARKER + b"\n- old routing\n" + INSTALLER.END_MARKER + b"\n"
+            for path in INSTALLER.manual_paths(home):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(old_block)
+            INSTALLER.apply(home, ROOT)
+
+            for path in INSTALLER.manual_paths(home):
+                match = INSTALLER.BLOCK_RE.search(path.read_bytes())
+                self.assertIsNotNone(match, path)
+                assert match is not None
+                text = " ".join(match.group().decode("utf-8").split())
+                self.assertLess(text.index("human chooses"), text.index(f"`{SKILL_NAME}`"), path)
+                self.assertIn("explicit Herdr request made with the Torre off", text, path)
+                self.assertIn("not Torre dispatch", text, path)
+                self.assertLess(text.index("records a dispatched Sesión's delivery"), text.index("retire mode"), path)
+
+
 if __name__ == "__main__":
     unittest.main()

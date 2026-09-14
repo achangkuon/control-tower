@@ -15,6 +15,11 @@
 - Kickoff runs in the user-approved current repository and branch. It verifies `HEAD`, branch,
   and Git contamination, revalidates the proposed route once against scoped code, and returns its
   delta to the responsible parent. It does not choose new work, dispatch agents, or claim a lock.
+- After the human chooses which `LISTO` Sesiones run in parallel and the agent kind for each, the
+  responsible parent may load `chanks-3-despacho-herdr` to open one Herdr tab, worktree, and agent per
+  Sesión. That dispatch is an explicit Herdr request made with the Torre off; it is not Torre dispatch.
+- After the responsible parent records a dispatched Sesión's delivery, it runs that skill's retire mode,
+  which removes only worktrees that pass its six checks.
 - The plan↔SDD bridge translates the approved or revalidated route into exactly one entry gate:
   - `direct` enters at `apply`.
   - `design-tasks` enters at `design`.
