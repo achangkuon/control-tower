@@ -7481,7 +7481,9 @@ sesiones:
     zona: metodo
     resultado: "Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados."
     autoridad: "Decisiones explícitas de Emilio del 2026-09-12 y 2026-09-13 en la conversación de diseño del horizonte (Claude Code, sesión ed42515b): los siete estados no cambian y Radar suma un motivo calculado; los tipos son espera natural, espera atascada, falta decidir y falta planificar; el horizonte mantiene 2 Sesiones LISTO por Zona como número propio, separado de planning.horizon_ceiling de S101. Hoy radar status --json expone sólo id, zona, estado y resultado (agent-workflows/tools/radar/snapshot.go:55-60) y la clasificación completa se obtuvo con un script aparte."
-    depende_de: []
+    # Depende de S127 por decisión de Emilio del 2026-09-14: las prioridades van primero y ambas
+    # Sesiones editan state.go, snapshot.go y render.go. El contrato de S122 no cambia.
+    depende_de: [S127]
     cimientos: []
     recurso: []
     criterios:
@@ -7950,6 +7952,113 @@ sesiones:
             accion: "REFACTOR: mantener el bloque sin repetir reglas que ya declara."
             resultado: "REFACTOR: ninguna regla del bloque queda duplicada y las pruebas siguen pasando."
             criterios: ["REFACTOR: ninguna regla del bloque queda duplicada y las pruebas siguen pasando."]
+  - id: S127
+    zona: metodo
+    resultado: "Radar ordena el trabajo por prioridades que define cada proyecto: sólo la primera prioridad con Sesiones abiertas ofrece trabajo LISTO, y la siguiente se activa sola cuando esa se cierra."
+    autoridad: "Aprobación explícita de Emilio del 2026-09-14 (Claude Code, sesión df306f72): Radar gana la capacidad genérica de priorizar Sesiones, con el nombre `prioridad`, opcional y con nombres definidos por cada proyecto; la primera lista de Control Tower es Método V1, Torre V1 y V2. Aprobó en la misma conversación la ruta full-sdd y las cuatro precisiones: sólo difiere lo que habría estado LISTO, lo diferido a mano mantiene abierta su prioridad, S122 pasa a depender de esta Sesión y cada Módulo queda bajo 400 líneas. Evidencia: Radar no tiene prioridad entre Zonas (agent-workflows/tools/radar/state.go:256-296) y lee el plan en modo estricto (agent-workflows/tools/radar/plan.go:290)."
+    depende_de: []
+    cimientos: []
+    recurso: []
+    criterios:
+      - "Con un plan que no declara `prioridades`, los estados, las colas por Zona, los asientos, `radar.snapshot/v1` y la vista generada son idénticos a los que produce Radar antes del cambio."
+      - "El plan acepta `prioridades` como lista ordenada de entradas `{id, nombre}` definidas por cada proyecto; `radar check` falla ante un id vacío, un id duplicado o un nombre vacío."
+      - "Con `prioridades` declarada, una Sesión abierta sin `prioridad` o con un id que no está en la lista hace fallar `radar check` nombrando esa Sesión; una Sesión COMPLETO o ARCHIVADO puede omitirla."
+      - "Una Sesión cuyo `depende_de` apunta a una Sesión de una prioridad posterior hace fallar `radar check` nombrando las dos Sesiones."
+      - "La prioridad activa es la primera de la lista con al menos una Sesión abierta; una Sesión con `diferida: true` cuenta como abierta. Si no queda ninguna abierta, no hay prioridad activa y ninguna Sesión se difiere por prioridad."
+      - "Una Sesión de una prioridad posterior a la activa cuyo estado calculado habría sido LISTO queda DIFERIDO; PLANIFICADO, BLOQUEADO, COMPLETO y ARCHIVADO conservan su estado, y las Sesiones de la prioridad activa no cambian."
+      - "Cuando la última Sesión abierta de la prioridad activa pasa a COMPLETO, la siguiente prioridad se activa sin editar `openspec/plan.yaml`; una prueba lo demuestra con dos entregas integradas sucesivas."
+      - "`radar status`, `radar sesion <ID>`, `radar.snapshot/v1` y la vista generada muestran la prioridad activa y la prioridad de cada Sesión; el snapshot conserva su schema y todos sus campos actuales."
+      - "`agent-workflows/skills/_shared/plan-naming-convention.md` declara `prioridad` como atributo opcional de orden, no como nivel, sin campo de tiempo; los cuatro niveles, los siete estados y la lista de sustantivos prohibidos no cambian."
+      - "Radar sigue sin escribir `openspec/plan.yaml`; `go test ./...` en `agent-workflows/tools/radar` pasa y `radar check` sobre el plan vigente no suma errores."
+      - "El diff toca sólo Área."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Cómo se llama el concepto?"
+        resolucion: "`prioridad`: nombra lo que hace, ordenar, y no choca con el vocabulario del canon."
+        autoridad: "Aprobación de Emilio del 2026-09-14."
+        clase: contrato-visible
+        falsificador: "El plan, Radar o el canon nombran el concepto con otra palabra."
+        descartadas:
+          - opcion: "`etapa`."
+            razon: "Es la traducción literal de `stage`, prohibido como nombre de nivel en el canon §7, y un agente la leería como un quinto nivel."
+      - tipo: resuelta
+        pregunta: "¿Las prioridades son fijas o las define cada proyecto?"
+        resolucion: "Opcionales y definidas por cada plan con id y nombre propios, igual que las Zonas; Radar fija sólo el concepto y su cálculo."
+        autoridad: "Aprobación de Emilio del 2026-09-14: las herramientas son para cualquier proyecto, no sólo para la Torre."
+        clase: contrato-visible
+        falsificador: "Radar trae nombres de prioridad predefinidos o exige declarar prioridades en un plan que no las usa."
+        descartadas:
+          - opcion: "Nombres fijos como V1 y V2."
+            razon: "Otro proyecto ordena su trabajo con otros cortes."
+      - tipo: resuelta
+        pregunta: "¿El orden lo calcula Radar o se marca a mano?"
+        resolucion: "Lo calcula Radar desde la lista de prioridades y la prioridad de cada Sesión."
+        autoridad: "Aprobación de Emilio del 2026-09-14, elegida sobre tres alternativas presentadas con su consecuencia."
+        clase: contrato-visible
+        falsificador: "Una Sesión difiere por prioridad sólo si alguien escribe `diferida: true` o un estado."
+        descartadas:
+          - opcion: "Marcar `diferida: true` a mano en las Sesiones de las prioridades posteriores."
+            razon: "Son unas 25 ediciones que alguien tiene que acordarse de revertir y el plan no dice por qué están diferidas."
+          - opcion: "Escribir el orden sólo en AGENTS.md."
+            razon: "Los agentes eligen trabajo desde `radar status`, que no conocería el orden."
+      - tipo: resuelta
+        pregunta: "¿Cómo pasa el trabajo de una prioridad a la siguiente?"
+        resolucion: "Solo: la siguiente se activa cuando la activa no tiene Sesiones abiertas."
+        autoridad: "Aprobación de Emilio del 2026-09-14; probar e instalar la Torre V1 queda cubierto porque su piloto S7.1 pertenece a esa prioridad."
+        clase: contrato-visible
+        falsificador: "Activar la siguiente prioridad requiere editar el plan o una orden humana."
+        descartadas:
+          - opcion: "Una apertura explícita del humano por cada prioridad."
+            razon: "Agrega un paso manual que el cierre de las propias Sesiones ya prueba."
+      - tipo: resuelta
+        pregunta: "¿Qué ruta toma esta Sesión?"
+        resolucion: "full-sdd."
+        autoridad: "Aprobación de Emilio del 2026-09-14."
+        clase: contrato-visible
+        falsificador: "La Sesión entra por apply o por design."
+        descartadas:
+          - opcion: "direct."
+            razon: "Cambia contratos que otros leen —el canon, la forma del plan y radar.snapshot/v1, que consume la radiografía— y, mientras S120 no esté entregada, sdd-verify exige proposal y spec que direct no produce, como le pasó a S121."
+      - tipo: resuelta
+        pregunta: "¿Qué Sesiones de una prioridad posterior pasan a DIFERIDO?"
+        resolucion: "Sólo las que habrían estado LISTO."
+        autoridad: "Aprobación de Emilio del 2026-09-14."
+        clase: contrato-visible
+        falsificador: "Una Sesión BLOQUEADO o PLANIFICADO de una prioridad posterior se muestra DIFERIDO."
+        descartadas:
+          - opcion: "Todas las Sesiones abiertas de las prioridades posteriores."
+            razon: "Canon §9: DIFERIDO es podría avanzar y elegimos que no; una BLOQUEADO no puede avanzar y ocultaría su bloqueo mientras espera."
+      - tipo: resuelta
+        pregunta: "¿Una Sesión con `diferida: true` mantiene abierta su prioridad?"
+        resolucion: "Sí: cuenta como abierta. Para dejarla atrás hay que moverla explícitamente a otra prioridad."
+        autoridad: "Aprobación de Emilio del 2026-09-14."
+        clase: contrato-visible
+        falsificador: "Una prioridad se cierra con una Sesión `diferida: true` todavía abierta."
+        descartadas:
+          - opcion: "Ignorar las Sesiones diferidas a mano al calcular la prioridad activa."
+            razon: "Postergar trabajo de una prioridad abriría la siguiente con ese trabajo sin cerrar."
+      - tipo: resuelta
+        pregunta: "¿Cómo convive con S122, que edita los mismos archivos y dice que DIFERIDO no lleva motivo?"
+        resolucion: "S122 depende de S127 y su contrato no cambia; S127 expone la prioridad con campos propios y no usa el motivo de S122."
+        autoridad: "Aprobación de Emilio del 2026-09-14: las prioridades van primero."
+        clase: contrato-visible
+        falsificador: "S127 cambia los criterios de S122 o escribe el motivo que S122 define."
+        descartadas:
+          - opcion: "Que el DIFERIDO por prioridad use el motivo de S122."
+            razon: "Contradice el criterio de S122 que deja a DIFERIDO sin motivo."
+      - tipo: resuelta
+        pregunta: "¿Cómo se trata el tamaño, estimado en unas 500 líneas?"
+        resolucion: "Una sola Sesión; el diseño corta Módulos de menos de 400 líneas cada uno, que se revisan por separado."
+        autoridad: "Aprobación de Emilio del 2026-09-14; política de lote de revisión de 400 líneas."
+        clase: expansion-de-alcance
+        falsificador: "Un Módulo de S127 supera 400 líneas en su lote de revisión."
+        descartadas:
+          - opcion: "Partirla en dos Sesiones."
+            razon: "Duplica el recorrido full-sdd completo sin reducir lo que se revisa por lote."
+    ruta:
+      propuesta: full-sdd
+      autoridad: "La Sesión cambia contratos compartidos —canon, forma del plan y radar.snapshot/v1— y, hasta que S120 esté entregada, es la única ruta cuya verificación nativa llega al cierre. No se inicia SDD al registrar el plan."
+    modulos: []
 
 references:
   future_successors:

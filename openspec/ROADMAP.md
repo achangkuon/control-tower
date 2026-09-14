@@ -16,7 +16,7 @@
 - Método #2 → S120 — Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
 
 ## Avance
-- **Total:** 66% (63/95 S)
+- **Total:** 65% (63/96 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -30,7 +30,7 @@
 - **Hosts:** 33% (3/9 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 63% (7/11 S)
+- **Método:** 58% (7/12 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -83,8 +83,9 @@
 ### Método (metodo)
 1. **S115** · 📋 PLANIFICADO · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
 2. **S120** · 🟢 LISTO · Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
-3. **S122** · 🟢 LISTO · Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
-4. **S123** · 📋 PLANIFICADO · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
+3. **S127** · 🟢 LISTO · Radar ordena el trabajo por prioridades que define cada proyecto: sólo la primera prioridad con Sesiones abiertas ofrece trabajo LISTO, y la siguiente se activa sola cuando esa se cierra.
+4. **S122** · 📋 PLANIFICADO · Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
+5. **S123** · 📋 PLANIFICADO · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -141,6 +142,7 @@
 - **S124:** propuesta direct (Comando, contenido de la salida, falla cerrada y texto de la skill quedan fijados en esta propuesta; resta implementación mecánica con pruebas y ninguna elección de diseño abierta.); revalidada direct sobre bbfaa216f33a09aa8d304f89dae2d90808501885 con evidencia Load (plan.go:282), CheckAt (check.go:29) y SesionPorID (plan.go:318) existen y status ya falla cerrado (main.go), así que el comando sólo reutiliza ese patrón. Las huellas SHA256 que T124.2.2 pedía actualizar protegen product/tower/generic y no las skills activas; quedaron intactas..
 - **S125:** propuesta direct (Fuente de evidencia, formato del trailer, salida y reglas de las skills quedan fijados en esta propuesta; no queda diseño abierto.); revalidada direct sobre ef792c1f9bcd811d06d42496cd301a9c0340cf82 con evidencia radar no leía trailers (ningún git log en tools/radar) y S124 dejó cmdSesion y validarAt listos para extender; el aviso vive en cmdCheck y la variante escribirSesionConAvance evita tocar check.go, plan.go y sesion&#95;test.go. Las huellas SHA256 que T125.2.2 pedía actualizar protegen product/tower/generic y quedaron intactas..
 - **S126:** propuesta direct (Disparador, pasos del despacho, layout, dueño de la entrega, los seis chequeos y el orden del retiro quedan fijados por las decisiones aprobadas; resta implementación mecánica con pruebas del Método.); revalidada direct sobre 5b2b754e0bd24e6f73f8d706af3a72414a59c8b0 con evidencia herdr tab close existe en la CLI instalada y el instalador ya registra skills por CHANKS&#95;SKILLS. La plantilla de ruteo prohíbe Tower, MAIN y Support por test, así que las líneas nombran la Torre. Hallazgo: git branch -d rechaza una rama integrada sólo por cherry-pick o rebase; retiro.md la conserva y la reporta, sin forzar..
+- **S127:** propuesta full-sdd (La Sesión cambia contratos compartidos —canon, forma del plan y radar.snapshot/v1— y, hasta que S120 esté entregada, es la única ruta cuya verificación nativa llega al cierre. No se inicia SDD al registrar el plan.); pendiente de revalidación en kickoff.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -3163,9 +3165,9 @@ Rutas: test/install/launch-worker-cli.test.mjs
   - [ ] Diff limitado a la fixture Cimiento.
 
 ### S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: 📋 PLANIFICADO
 - Zona/Área: metodo · agent-workflows/
-- Depende de: —
+- Depende de: S127
 - Cimientos: —
 - Recursos: —
 - Criterios de aceptación:
@@ -3381,6 +3383,25 @@ Rutas: agent-workflows/templates/session-routing.md, agent-workflows/tests/test&
   - [ ] GREEN: la prueba y las pruebas de ruteo existentes pasan.
 - **T126.3.3:** REFACTOR: mantener el bloque sin repetir reglas que ya declara. → REFACTOR: ninguna regla del bloque queda duplicada y las pruebas siguen pasando.
   - [ ] REFACTOR: ninguna regla del bloque queda duplicada y las pruebas siguen pasando.
+
+### S127 — Radar ordena el trabajo por prioridades que define cada proyecto: sólo la primera prioridad con Sesiones abiertas ofrece trabajo LISTO, y la siguiente se activa sola cuando esa se cierra.
+- Estado derivado: 🟢 LISTO
+- Zona/Área: metodo · agent-workflows/
+- Depende de: —
+- Cimientos: —
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] Con un plan que no declara &#96;prioridades&#96;, los estados, las colas por Zona, los asientos, &#96;radar.snapshot/v1&#96; y la vista generada son idénticos a los que produce Radar antes del cambio.
+  - [ ] El plan acepta &#96;prioridades&#96; como lista ordenada de entradas &#96;{id, nombre}&#96; definidas por cada proyecto; &#96;radar check&#96; falla ante un id vacío, un id duplicado o un nombre vacío.
+  - [ ] Con &#96;prioridades&#96; declarada, una Sesión abierta sin &#96;prioridad&#96; o con un id que no está en la lista hace fallar &#96;radar check&#96; nombrando esa Sesión; una Sesión COMPLETO o ARCHIVADO puede omitirla.
+  - [ ] Una Sesión cuyo &#96;depende&#95;de&#96; apunta a una Sesión de una prioridad posterior hace fallar &#96;radar check&#96; nombrando las dos Sesiones.
+  - [ ] La prioridad activa es la primera de la lista con al menos una Sesión abierta; una Sesión con &#96;diferida: true&#96; cuenta como abierta. Si no queda ninguna abierta, no hay prioridad activa y ninguna Sesión se difiere por prioridad.
+  - [ ] Una Sesión de una prioridad posterior a la activa cuyo estado calculado habría sido LISTO queda DIFERIDO; PLANIFICADO, BLOQUEADO, COMPLETO y ARCHIVADO conservan su estado, y las Sesiones de la prioridad activa no cambian.
+  - [ ] Cuando la última Sesión abierta de la prioridad activa pasa a COMPLETO, la siguiente prioridad se activa sin editar &#96;openspec/plan.yaml&#96;; una prueba lo demuestra con dos entregas integradas sucesivas.
+  - [ ] &#96;radar status&#96;, &#96;radar sesion &lt;ID&gt;&#96;, &#96;radar.snapshot/v1&#96; y la vista generada muestran la prioridad activa y la prioridad de cada Sesión; el snapshot conserva su schema y todos sus campos actuales.
+  - [ ] &#96;agent-workflows/skills/&#95;shared/plan-naming-convention.md&#96; declara &#96;prioridad&#96; como atributo opcional de orden, no como nivel, sin campo de tiempo; los cuatro niveles, los siete estados y la lista de sustantivos prohibidos no cambian.
+  - [ ] Radar sigue sin escribir &#96;openspec/plan.yaml&#96;; &#96;go test ./...&#96; en &#96;agent-workflows/tools/radar&#96; pasa y &#96;radar check&#96; sobre el plan vigente no suma errores.
+  - [ ] El diff toca sólo Área.
 
 ## Capacidad
 7 Zona(s) compatibles con trabajo LISTO: autoridad, cimientos, contratos, enrolamiento, hosts, instalacion, metodo.
