@@ -7775,6 +7775,12 @@ sesiones:
     ruta:
       propuesta: direct
       autoridad: "Fuente de evidencia, formato del trailer, salida y reglas de las skills quedan fijados en esta propuesta; no queda diseño abierto."
+      revalidacion:
+        resultado: direct
+        base: ef792c1f9bcd811d06d42496cd301a9c0340cf82
+        evidencia: "radar no leía trailers (ningún git log en tools/radar) y S124 dejó cmdSesion y validarAt listos para extender; el aviso vive en cmdCheck y la variante escribirSesionConAvance evita tocar check.go, plan.go y sesion_test.go. Las huellas SHA256 que T125.2.2 pedía actualizar protegen product/tower/generic y quedaron intactas."
+    entrega:
+      commit: 8c1f994521905a1be87f05e29ac6f58ab6c33638
     modulos:
       - id: M125.1
         resultado: "Radar deriva los Módulos entregados desde Git y los muestra"
