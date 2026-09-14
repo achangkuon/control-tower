@@ -45,7 +45,12 @@ func escribirSesion(w io.Writer, p *Plan, s *Sesion, estados map[string]string) 
 func escribirSesionConAvance(w io.Writer, p *Plan, s *Sesion, estados map[string]string, entregados map[string]string) {
 	fmt.Fprintf(w, "%s — %s\n", s.ID, s.Resultado)
 	fmt.Fprintf(w, "Estado: %s\n", estados[s.ID])
-	fmt.Fprintf(w, "Zona: %s · Área: %s\n", s.Zona, listaTexto(p.Area(s)))
+	area := p.Area(s)
+	if s.Zona == "cimientos" {
+		// A cimientos Sesión owns no Zona: its exact reservations are its whole territory.
+		area = s.Cimientos
+	}
+	fmt.Fprintf(w, "Zona: %s · Área: %s\n", s.Zona, listaTexto(area))
 	if pr, ok := prioridadDeclarada(p, s.Prioridad); ok {
 		fmt.Fprintf(w, "Prioridad: %s\n", pr.Etiqueta())
 	}

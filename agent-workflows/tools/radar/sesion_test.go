@@ -199,6 +199,39 @@ func TestStatusMuestraLaPrioridadActivaSoloSiElPlanLaDeclara(t *testing.T) {
 	}
 }
 
+func TestSesionDeCimientosMuestraSusReservasComoArea(t *testing.T) {
+	s := sesionEjecutable("S7", "cimientos")
+	s.Cimientos = []string{".githooks/pre-push", "package.json"}
+	p := &Plan{Sesiones: []Sesion{s}}
+
+	var out strings.Builder
+	escribirSesion(&out, p, &p.Sesiones[0], map[string]string{"S7": Listo})
+	got := out.String()
+	if !strings.Contains(got, "Zona: cimientos · Área: .githooks/pre-push, package.json") {
+		t.Fatalf("una Sesión de cimientos debe mostrar sus reservas como Área:\n%s", got)
+	}
+	if strings.Contains(got, "Área: —") {
+		t.Fatalf("una Sesión de cimientos nunca muestra un Área vacía:\n%s", got)
+	}
+}
+
+func TestStatusPresentaLosAsientosComoVeredictoDeParalelo(t *testing.T) {
+	root, commit := repoGit(t)
+	out := captureStdout(t, func() {
+		if err := cmdStatus(planConDosSesiones(commit), root); err != nil {
+			t.Fatalf("status falló: %v", err)
+		}
+	})
+	for _, want := range []string{"pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso", "Radar no reserva el asiento"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("status debe decir %q:\n%s", want, out)
+		}
+	}
+	if strings.Contains(out, "pronóstico, no locks") {
+		t.Fatalf("status no debe presentar los asientos como un pronóstico dudoso:\n%s", out)
+	}
+}
+
 func TestParsearArgsAceptaIDAntesYDespuesDeLasBanderas(t *testing.T) {
 	for _, args := range [][]string{{"-C", "/repo", "S114"}, {"S114", "-C", "/repo"}} {
 		opts, posicionales, err := parsearArgs("sesion", args)

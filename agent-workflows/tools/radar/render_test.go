@@ -39,6 +39,19 @@ func TestRenderMuestraLaPrioridadActivaYLaDeCadaSesion(t *testing.T) {
 	}
 }
 
+func TestRenderPresentaLaCapacidadComoVeredictoDeParalelo(t *testing.T) {
+	root, commit := repoGit(t)
+	got := RenderAt(planPriorizadoValido(commit), root, commit)
+	for _, want := range []string{"pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso", "Radar no reserva el asiento"} {
+		if !bytes.Contains(got, []byte(want)) {
+			t.Fatalf("la vista debe decir %q:\n%s", want, got)
+		}
+	}
+	if bytes.Contains(got, []byte("Este valor es un pronóstico estático")) {
+		t.Fatalf("la vista no debe presentar la capacidad como un pronóstico dudoso:\n%s", got)
+	}
+}
+
 func TestAtomicWriteConvergeSinArchivosTemporales(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "openspec", "ROADMAP.md")

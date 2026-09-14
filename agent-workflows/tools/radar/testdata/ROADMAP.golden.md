@@ -60,5 +60,5 @@ Rutas: patio/riego.go
   - [ ] la alternativa aprobada está representada
 
 ## Capacidad
-1 Zona(s) compatibles con trabajo LISTO: cocina.
-Este valor es un pronóstico estático. No adquiere locks, no autentica al proceso invocante y no recupera claims stale.
+1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: cocina.
+Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.

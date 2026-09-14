@@ -241,9 +241,9 @@ func cmdStatus(p *Plan, root string) error {
 		fmt.Println()
 	}
 	if len(asientos) == 0 {
-		fmt.Println("Asientos: 0 zonas compatibles con trabajo listo (pronóstico, no locks)")
+		fmt.Printf("Asientos: ninguna Zona tiene trabajo LISTO (%s)\n", sinReservaDeAsiento)
 	} else {
-		fmt.Printf("Asientos: %d zona(s) compatibles — %v (pronóstico, no locks)\n", len(asientos), asientos)
+		fmt.Printf("Asientos: %d zona(s) %s — %v (%s)\n", len(asientos), veredictoDeParalelo, asientos, sinReservaDeAsiento)
 	}
 	if rows := referenceRows(p); len(rows) > 0 {
 		fmt.Println("\nNon-executable references (no status/queue/seat/capacity):")

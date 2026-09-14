@@ -197,11 +197,11 @@ func RenderAt(p *Plan, root, head string) []byte {
 
 	fmt.Fprintln(&b, "## Capacidad")
 	if len(asientos) == 0 {
-		fmt.Fprintln(&b, "0 Zonas compatibles con trabajo LISTO.")
+		fmt.Fprintln(&b, "Ninguna Zona tiene trabajo LISTO.")
 	} else {
-		fmt.Fprintf(&b, "%d Zona(s) compatibles con trabajo LISTO: %s.\n", len(asientos), markdownList(asientos))
+		fmt.Fprintf(&b, "%d Zona(s) con trabajo LISTO %s: %s.\n", len(asientos), veredictoDeParalelo, markdownList(asientos))
 	}
-	fmt.Fprintln(&b, "Este valor es un pronóstico estático. No adquiere locks, no autentica al proceso invocante y no recupera claims stale.")
+	fmt.Fprintf(&b, "%s: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.\n", sinReservaDeAsiento)
 	if rows := referenceRows(p); len(rows) > 0 {
 		fmt.Fprintln(&b, "\n## Non-executable references")
 		for _, r := range rows {
@@ -286,6 +286,14 @@ func markdownText(value string) string {
 	)
 	return replacer.Replace(value)
 }
+
+// The compatible seats are a parallel verdict derived from the partition: AsientosAt
+// already excludes Zonas that share Cimientos or Recurso. What Radar does not do is
+// reserve the seat at runtime. Both sentences live here so status and the view agree.
+const (
+	veredictoDeParalelo = "pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso"
+	sinReservaDeAsiento = "Radar no reserva el asiento"
+)
 
 // textoPrioridad is the ROADMAP suffix for a Sesión's priority; empty when the
 // plan declares none, which keeps the generated view byte-identical.
