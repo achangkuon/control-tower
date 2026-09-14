@@ -34,7 +34,7 @@ and return resulting evidence to the responsible parent.
 
 1. Translate handoff, Sesión, criteria, decisions, Módulos/Tareas, and base into SDD preflight inputs.
 2. Show mode, artifact store, testing/TDD, and delivery strategy for confirmation or change.
-3. Enter at the route gate and continue the one pipeline through `apply` and `verify`.
+3. Enter at the route gate and continue the one pipeline through `apply` and `verify`. Give every Módulo commit the trailer `Modulo: <ID>` so the Sesión can resume from Git.
 4. After review and delivery under repository policy, execute `archive`.
 5. Translate progress, validation, delivery, and archive evidence into a delta with expected old value; return evidence to the responsible parent.
 

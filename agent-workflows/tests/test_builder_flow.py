@@ -108,6 +108,15 @@ class GenericBuilderFlowTests(unittest.TestCase):
                     )
         self.assertIn("radar is missing or rejects the plan", sources[skill_path])
 
+    def test_kickoff_resumes_and_bridge_requires_module_trailer(self):
+        kickoff = read("skills/chanks-3-session-kickoff/SKILL.md")
+        bridge = read("skills/chanks-4-puente/SKILL.md")
+
+        self.assertIn("first pending Módulo", kickoff)
+        self.assertIn("never redo a delivered Módulo", kickoff)
+        self.assertIn("`Modulo: <ID>`", bridge)
+        self.assertIn("every Módulo commit", bridge)
+
     def test_active_builder_retains_generic_route_review_archive_and_safety_contracts(self):
         canon = read("skills/_shared/plan-naming-convention.md")
         template = read("templates/session-routing.md")

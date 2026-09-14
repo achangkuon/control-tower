@@ -32,7 +32,7 @@ branch; do not require a named seat, a peer role, or an external runtime.
 
 ## Execution Steps
 
-1. **Verify terrain:** confirm the current repository, `HEAD`, current branch, and worktree state against the approved handoff. Report Git contamination exactly; do not clean or hide it.
+1. **Verify terrain:** confirm the current repository, `HEAD`, current branch, and worktree state against the approved handoff. Report Git contamination exactly; do not clean or hide it. Run `radar sesion <ID>` and resume from the first pending Módulo it names; never redo a delivered Módulo.
 2. **Revalidate route:** open the scoped code in the Área, load `../chanks-2-planificador-granular/references/juicio-de-ruta.md`, and compare the proposal once.
 3. **Return delta:** build `ruta.revalidacion` with result, Git base, evidence, and a reason when it changes; return it to the responsible parent.
 4. **Surface shared-path risk:** for a declared `Recurso`, require confirmed exclusive or serial execution evidence before mutation. A forecast is not a live lock; never invent an acquisition. release only actual resources that this work demonstrably acquired, and return that release evidence to the responsible parent.
