@@ -7895,6 +7895,12 @@ sesiones:
     ruta:
       propuesta: direct
       autoridad: "Disparador, pasos del despacho, layout, dueño de la entrega, los seis chequeos y el orden del retiro quedan fijados por las decisiones aprobadas; resta implementación mecánica con pruebas del Método."
+      revalidacion:
+        resultado: direct
+        base: 5b2b754e0bd24e6f73f8d706af3a72414a59c8b0
+        evidencia: "herdr tab close existe en la CLI instalada y el instalador ya registra skills por CHANKS_SKILLS. La plantilla de ruteo prohíbe Tower, MAIN y Support por test, así que las líneas nombran la Torre. Hallazgo: git branch -d rechaza una rama integrada sólo por cherry-pick o rebase; retiro.md la conserva y la reporta, sin forzar."
+    entrega:
+      commit: d2a56cecadba99e4d3136f16308bec5938612245
     modulos:
       - id: M126.1
         resultado: "La skill abre una tab con worktree y agente por cada Sesión elegida"
