@@ -33,6 +33,7 @@ dispatch. Load the `herdr` skill for every Herdr command, flag, and error code.
 | `HERDR_ENV` is not `1` | Stop; offer the subagent flow. |
 | Ambiguous or failed Herdr response | Close only what this dispatch opened; stop. |
 | A dispatched agent is blocked | Tell the human which tab needs them; never answer for them. |
+| The responsible parent recorded a dispatched Sesión's delivery | Run the retire mode in `references/retiro.md`. |
 
 ## Execution Steps
 
@@ -42,14 +43,17 @@ dispatch. Load the `herdr` skill for every Herdr command, flag, and error code.
 4. Open one Herdr tab with that worktree as its directory, start the chosen agent kind named after the Sesión, and record the tab and agent IDs from the JSON responses.
 5. Send the handoff from `../chanks-0-agente-soporte/assets/assignment-implementation.md`; the agent runs `../chanks-3-session-kickoff/SKILL.md` inside its own tab.
 6. Wait on each agent's state without reading its transcript, then read only its final report.
+7. After the responsible parent integrates and records a Sesión, run the retire mode in `references/retiro.md`.
 
 ## Output Contract
 
 Return one row per Sesión — Sesión · worktree · branch · tab · agent, with IDs from Herdr's JSON —
-plus every refused Sesión with its reason and every blocked agent that needs the human.
+plus every refused Sesión with its reason, every blocked agent that needs the human, and every
+retire result.
 
 ## References
 
+- `references/retiro.md`
 - `herdr` skill, emitted by `herdr --skill`
 - `../chanks-0-agente-soporte/SKILL.md`
 - `../chanks-3-session-kickoff/SKILL.md`

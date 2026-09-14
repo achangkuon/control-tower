@@ -75,5 +75,40 @@ class DespachoHerdrDispatchTests(unittest.TestCase):
         self.assertNotIn("```", self.skill)
 
 
+class DespachoHerdrRetireTests(unittest.TestCase):
+    def setUp(self):
+        self.skill = read(f"skills/{SKILL_NAME}/SKILL.md")
+        self.retire = read(f"skills/{SKILL_NAME}/references/retiro.md")
+
+    def test_skill_links_the_retire_mode(self):
+        self.assertIn("`references/retiro.md`", self.skill)
+
+    def test_retire_requires_the_six_checks(self):
+        text = self.retire.lower()
+        for phrase in (
+            "after the responsible parent records", "authorizes", "`✅ COMPLETO`", "`📚 ARCHIVADO`",
+            "`git merge-base --is-ancestor`", "`git status --porcelain`", "`git cherry master work/<id>`",
+            "`idle`", "`done`", "`Worktrees/<id>`", "never the main checkout",
+        ):
+            self.assertIn(phrase.lower(), text, phrase)
+
+    def test_any_failed_check_changes_nothing(self):
+        self.assertIn("change nothing", self.retire.lower())
+
+    def test_retire_order_is_tab_then_worktree_then_branch(self):
+        steps = ("Close the Sesión's Herdr tab", "`git worktree remove", "`git branch -d", "`git worktree list`")
+        positions = [self.retire.index(step) for step in steps]
+        self.assertEqual(positions, sorted(positions))
+
+    def test_retire_never_forces(self):
+        for source in (self.skill, self.retire):
+            self.assertNotIn("--force", source)
+            self.assertNotIn("-D", source)
+
+    def test_only_plus_lines_of_git_cherry_block(self):
+        self.assertIn("starts with `+`", self.retire)
+        self.assertIn("starts with `-`", self.retire)
+
+
 if __name__ == "__main__":
     unittest.main()
