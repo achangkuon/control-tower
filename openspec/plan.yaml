@@ -8533,6 +8533,9 @@ sesiones:
     ruta:
       propuesta: direct
       autoridad: "Las cuatro decisiones están tomadas, las superficies y archivos están identificados y el cambio en Radar es una regla acotada; no queda decisión de diseño abierta."
+    # Entregada en 96c38d8 (M135.1) y 2e2e6e0 (M135.2); la evidencia de verify está en el commit que registra esta entrega.
+    entrega:
+      commit: 2e2e6e06e03b8eb5148e1948c708d18c67f034c6
     modulos:
       - id: M135.1
         resultado: "Radar sólo acepta `cambio` y la puerta SDD en Sesiones full-sdd"
