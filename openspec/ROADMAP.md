@@ -12,7 +12,7 @@
 - Método #2 → S120 — Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
 
 ## Avance
-- **Total:** 62% (64/102 S)
+- **Total:** 62% (64/103 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -26,7 +26,7 @@
 - **Hosts:** 33% (3/9 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 47% (8/17 S)
+- **Método:** 44% (8/18 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -83,6 +83,7 @@
 7. **S130** · 🟢 LISTO · prioridad Método V1 · El puente protege el lote de revisión: revisa sólo el código del Módulo en staging, commitea los artefactos SDD aparte y cierra el intento nativo de un Módulo antes de tocar el siguiente.
 8. **S131** · 🟢 LISTO · prioridad Método V1 · El despacho con Herdr prepara cada worktree con la preparación que declara el AGENTS.md del repositorio antes de lanzar el agente.
 9. **S133** · 🟢 LISTO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
+10. **S134** · 🟢 LISTO · prioridad Método V1 · Un agente decide si dos Sesiones pueden correr en paralelo leyendo sólo a Radar: la capacidad se presenta como veredicto de paralelo, una Sesión de cimientos muestra su territorio real y el ruteo carga la skill de despacho al elegir paralelo.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · prioridad Torre V1 · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -146,6 +147,7 @@
 - **S131:** propuesta direct (La fuente de la preparación y el comportamiento ante ausencia o falla están decididos; el cambio se limita a una skill y su prueba.) · prioridad Método V1; pendiente de revalidación en kickoff.
 - **S132:** propuesta direct (Las dos declaraciones y el comportamiento de la prueba están decididos y los archivos son dos Cimientos exactos reservados.) · prioridad Método V1; pendiente de revalidación en kickoff.
 - **S133:** propuesta direct (El momento, la fuente y la confirmación humana para las skills están decididos; el cambio se limita a una skill y su prueba.) · prioridad Método V1; pendiente de revalidación en kickoff.
+- **S134:** propuesta direct (Las frases, las superficies y los archivos están identificados y el cálculo de capacidad no cambia; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -3556,6 +3558,40 @@ Rutas: agent-workflows/skills/chanks-7-session-doc/SKILL.md, agent-workflows/tes
   - [ ] GREEN: la suite del Método pasa.
 - **T133.1.3:** REFACTOR: dejar la regla de reinstalación escrita una sola vez y referenciada desde la compuerta. → REFACTOR: la regla aparece una sola vez y la suite del Método pasa.
   - [ ] REFACTOR: la regla aparece una sola vez y la suite del Método pasa.
+
+### S134 — Un agente decide si dos Sesiones pueden correr en paralelo leyendo sólo a Radar: la capacidad se presenta como veredicto de paralelo, una Sesión de cimientos muestra su territorio real y el ruteo carga la skill de despacho al elegir paralelo.
+- Estado derivado: 🟢 LISTO
+- Zona/Área: metodo · agent-workflows/
+- Depende de: —
+- Cimientos: —
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] &#96;radar sesion&#96; de una Sesión con &#96;zona: cimientos&#96; muestra como Área sus reservas exactas de Cimientos y nunca &#96;—&#96;.
+  - [ ] &#96;radar status&#96; dice que las Zonas listadas en Asientos pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso, y que Radar no reserva el asiento; la frase «pronóstico, no locks» desaparece.
+  - [ ] La vista generada presenta la capacidad con el mismo veredicto de paralelo y la misma aclaración sobre reservas, y el golden de render queda regenerado.
+  - [ ] &#96;agent-workflows/templates/session-routing.md&#96; declara que, cuando el humano elige Sesiones LISTO en paralelo, el padre responsable carga &#96;chanks-3-despacho-herdr&#96;; ya no dice «may load».
+  - [ ] La skill de soporte y el §13 del canon declaran que la compatibilidad de Asientos es el veredicto de paralelo derivado de la partición y que no reserva nada en vivo; el canon conserva «forecast, never a live lock».
+  - [ ] &#96;go test ./...&#96; en &#96;agent-workflows/tools/radar&#96; y &#96;cd agent-workflows &amp;&amp; python3 -m unittest discover -s tests&#96; pasan, y el diff toca sólo Área.
+
+#### M134.1 — Radar presenta el paralelo como veredicto y el territorio de cimientos
+Rutas: agent-workflows/tools/radar/sesion.go, agent-workflows/tools/radar/main.go, agent-workflows/tools/radar/render.go, agent-workflows/tools/radar/sesion&#95;test.go, agent-workflows/tools/radar/render&#95;test.go, agent-workflows/tools/radar/testdata/ROADMAP.golden.md
+
+- **T134.1.1:** RED: exigir que radar sesion muestre las reservas de una Sesión de cimientos como Área, que status diga que las Zonas compatibles pueden trabajar en paralelo sin reservar el asiento y que la vista generada diga lo mismo. → RED: las pruebas fallan contra las frases actuales.
+  - [ ] RED: las pruebas fallan contra las frases actuales.
+- **T134.1.2:** GREEN: cambiar la línea de Área para cimientos, la línea de Asientos de cmdStatus y la sección de capacidad de RenderAt, y regenerar el golden. → GREEN: go test pasa con el golden regenerado.
+  - [ ] GREEN: go test pasa con el golden regenerado.
+- **T134.1.3:** REFACTOR: escribir la frase del veredicto de paralelo en un solo lugar reutilizado por status y por la vista. → REFACTOR: la frase existe una sola vez y go test pasa.
+  - [ ] REFACTOR: la frase existe una sola vez y go test pasa.
+
+#### M134.2 — El Método lee la compatibilidad como veredicto y carga el despacho
+Rutas: agent-workflows/templates/session-routing.md, agent-workflows/skills/chanks-0-agente-soporte/SKILL.md, agent-workflows/skills/&#95;shared/plan-naming-convention.md, agent-workflows/tools/radar/README.md, agent-workflows/tests/test&#95;builder&#95;flow.py, agent-workflows/tests/test&#95;despacho&#95;herdr.py
+
+- **T134.2.1:** RED: exigir que el ruteo cargue chanks-3-despacho-herdr al elegir paralelo y que la skill de soporte y el canon declaren la compatibilidad como veredicto de paralelo sin reserva en vivo. → RED: las pruebas del Método fallan contra los textos actuales.
+  - [ ] RED: las pruebas del Método fallan contra los textos actuales.
+- **T134.2.2:** GREEN: cambiar «may load» por «loads» y agregar el veredicto de paralelo a la plantilla, a la skill de soporte, al §13 del canon y al README de Radar. → GREEN: la suite del Método pasa.
+  - [ ] GREEN: la suite del Método pasa.
+- **T134.2.3:** REFACTOR: hacer que la skill de soporte, la plantilla y el README remitan al §13 del canon sin repetir la regla completa. → REFACTOR: la regla vive en el canon y la suite del Método pasa.
+  - [ ] REFACTOR: la regla vive en el canon y la suite del Método pasa.
 
 ## Capacidad
 2 Zona(s) compatibles con trabajo LISTO: cimientos, metodo.
