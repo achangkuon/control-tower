@@ -17,6 +17,14 @@ radar render -f otro.yaml -o salida.md -C /repo
 El contrato canónico está en
 [`skills/_shared/plan-naming-convention.md`](../../skills/_shared/plan-naming-convention.md).
 
+## Avance por Módulo
+
+Cada commit de un Módulo lleva el trailer `Modulo: <ID>` (por ejemplo `Modulo: M125.1`). `radar`
+lo lee sólo de commits alcanzables desde HEAD, así que el plan nunca se escribe por Módulo. Una
+Sesión abierta con Módulos entregados aparece `a medias N/M Módulos` en `radar status`, y
+`radar sesion <ID>` marca cada Módulo y nombra desde dónde retomar. Un trailer que no nombra un
+Módulo del plan es un aviso de `radar check`, nunca un error.
+
 ## Compilar y verificar
 
 ```sh

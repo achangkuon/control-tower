@@ -131,7 +131,7 @@ func resolverRaiz(explicita, declarada, archivo string) (string, error) {
 }
 
 func cmdCheck(p *Plan, root string) int {
-	hallazgos := p.Check(root)
+	hallazgos := append(p.Check(root), p.avisosDeTrailers(root)...)
 	var errores, avisos int
 	for _, h := range hallazgos {
 		if h.Severidad == "error" {
@@ -190,6 +190,10 @@ func cmdStatus(p *Plan, root string) error {
 	colas := p.ColaPorZonaAt(root, head)
 	porZona, total := p.AvanceAt(root, head)
 	asientos := p.AsientosAt(root, head)
+	entregados, _, err := p.AvanceModulosAt(root, head)
+	if err != nil {
+		return fmt.Errorf("no se pudo leer el avance de Módulos: %w", err)
+	}
 	fmt.Printf("%s — %s\n\n", p.Producto, total)
 
 	zonaSet := make(map[string]bool, len(p.Zonas)+1)
@@ -217,7 +221,11 @@ func cmdStatus(p *Plan, root string) error {
 		fmt.Printf("%s  %s\n", nombre, porZona[zid])
 		for i, id := range cola {
 			s := p.SesionPorID()[id]
-			fmt.Printf("  #%d  %-28s %s  %s  ruta:%s\n", i+1, truncar(s.Resultado, 28), id, estados[id], s.RutaEfectiva())
+			linea := fmt.Sprintf("  #%d  %-28s %s  %s  ruta:%s", i+1, truncar(s.Resultado, 28), id, estados[id], s.RutaEfectiva())
+			if k := modulosEntregados(s, entregados); k > 0 {
+				linea += fmt.Sprintf("  a medias %d/%d Módulos", k, len(s.Modulos))
+			}
+			fmt.Println(linea)
 		}
 		fmt.Println()
 	}

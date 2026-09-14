@@ -26,13 +26,23 @@ func cmdSesion(w io.Writer, p *Plan, root, id string) error {
 		}
 		return fmt.Errorf("la Sesión %s no existe en el plan", id)
 	}
-	escribirSesion(w, p, s, p.EstadosAt(root, head))
+	entregados, _, err := p.AvanceModulosAt(root, head)
+	if err != nil {
+		return fmt.Errorf("no se pudo leer el avance de Módulos: %w", err)
+	}
+	escribirSesionConAvance(w, p, s, p.EstadosAt(root, head), entregados)
 	return nil
 }
 
-// escribirSesion writes one Sesión's contract. Other Sesiones appear only as
-// dependency IDs next to their computed state.
+// escribirSesion writes one Sesión's contract without Módulo progress.
 func escribirSesion(w io.Writer, p *Plan, s *Sesion, estados map[string]string) {
+	escribirSesionConAvance(w, p, s, estados, nil)
+}
+
+// escribirSesionConAvance writes one Sesión's contract. Other Sesiones appear only
+// as dependency IDs next to their computed state. A non-nil entregados marks each
+// Módulo delivered or pending and names the Módulo to resume from.
+func escribirSesionConAvance(w io.Writer, p *Plan, s *Sesion, estados map[string]string, entregados map[string]string) {
 	fmt.Fprintf(w, "%s — %s\n", s.ID, s.Resultado)
 	fmt.Fprintf(w, "Estado: %s\n", estados[s.ID])
 	fmt.Fprintf(w, "Zona: %s · Área: %s\n", s.Zona, listaTexto(p.Area(s)))
@@ -95,8 +105,20 @@ func escribirSesion(w io.Writer, p *Plan, s *Sesion, estados map[string]string) 
 	if len(s.Modulos) == 0 {
 		fmt.Fprintln(w, "  —")
 	}
+	primerPendiente := ""
 	for _, m := range s.Modulos {
-		fmt.Fprintf(w, "  %s — %s\n", m.ID, m.Resultado)
+		marca := ""
+		if entregados != nil {
+			if commit, ok := entregados[m.ID]; ok {
+				marca = " · entregado " + abreviarCommit(commit)
+			} else {
+				marca = " · pendiente"
+				if primerPendiente == "" {
+					primerPendiente = m.ID
+				}
+			}
+		}
+		fmt.Fprintf(w, "  %s — %s%s\n", m.ID, m.Resultado, marca)
 		fmt.Fprintf(w, "    Rutas: %s\n", listaTexto(m.Rutas))
 		for _, t := range m.Tareas {
 			fmt.Fprintf(w, "    - %s: %s → %s\n", t.ID, t.Accion, t.Resultado)
@@ -107,6 +129,19 @@ func escribirSesion(w io.Writer, p *Plan, s *Sesion, estados map[string]string) 
 			}
 		}
 	}
+	if entregados != nil && len(s.Modulos) > 0 {
+		if primerPendiente == "" {
+			primerPendiente = "— (todos los Módulos entregados)"
+		}
+		fmt.Fprintf(w, "\nRetomar desde: %s\n", primerPendiente)
+	}
+}
+
+func abreviarCommit(commit string) string {
+	if len(commit) > 12 {
+		return commit[:12]
+	}
+	return commit
 }
 
 func autoridadTexto(a Autoridad) string {
