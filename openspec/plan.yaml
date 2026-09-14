@@ -5563,6 +5563,12 @@ sesiones:
     ruta:
       propuesta: direct
       autoridad: Ruta histórica S12.1; su reanudación queda condicionada al cierre de S12.8 y no la autoriza esta importación.
+      revalidacion:
+        resultado: direct
+        base: a9a3d4ac932620b5f1deea7aa51dd9e5816fadaa
+        evidencia: "S12.8 está COMPLETO y el contrato binario sigue acotado a package.json y .githooks/pre-push. La integración preserva el gate Radar vigente, ejecuta la suite sobre el SHA exacto y limpio enviado a master, y deja la radiografía como informe no bloqueante."
+    entrega:
+      commit: 77e4814e1c9e3f7012af619dc3b061e74449fcb4
     importacion_legacy:
       origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
       origen_ruta: openspec/plans/plan-12/STATUS.md

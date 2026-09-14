@@ -2,24 +2,24 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.2, S12.8, S120, S124, S125, S126, S127, S134, S135, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S134, S135, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Método V1.
-- Próximo trabajo ejecutable: cimientos #1 → S12.1 — Ningún commit llega a master sin que la suite haya corrido sola; va primera porque es la red que hace seguras las tres mudanzas de core.mjs y sin ella cada paso es a ciegas..
+- Próximo trabajo ejecutable: cimientos #2 → S132 — Un worktree limpio de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y su AGENTS.md declara la preparación del worktree y qué reinstalar cuando cambian las herramientas..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
 ## Estado y próximo trabajo
-- cimientos #1 → S12.1 — Ningún commit llega a master sin que la suite haya corrido sola; va primera porque es la red que hace seguras las tres mudanzas de core.mjs y sin ella cada paso es a ciegas.
+- cimientos #2 → S132 — Un worktree limpio de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y su AGENTS.md declara la preparación del worktree y qué reinstalar cuando cambian las herramientas.
 - Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 
 ## Avance
-- **Total:** 64% (67/104 S)
+- **Total:** 65% (68/104 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 50% (1/2 S)
 - **Autoridad:** 0% (0/1 S)
 - **Capacidades:** 0% (0/1 S)
-- **cimientos:** 25% (1/4 S)
+- **cimientos:** 50% (2/4 S)
 - **Contratos:** 50% (1/2 S)
 - **Enrolamiento:** 0% (0/2 S)
 - **Entrega:** 0% (0/1 S)
@@ -48,9 +48,8 @@
 1. **S101** · 🔴 BLOQUEADO · prioridad V2 · Resolución de política: prepare&#95;through opaco y horizon&#95;ceiling salen de la política resuelta
 
 ### cimientos (cimientos)
-1. **S12.1** · 🟢 LISTO · prioridad Método V1 · Ningún commit llega a master sin que la suite haya corrido sola; va primera porque es la red que hace seguras las tres mudanzas de core.mjs y sin ella cada paso es a ciegas.
-2. **S12.6** · 📋 PLANIFICADO · prioridad V2 · La raíz se ordena y el README describe el producto real.
-3. **S132** · 📋 PLANIFICADO · prioridad Método V1 · Un worktree limpio de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y su AGENTS.md declara la preparación del worktree y qué reinstalar cuando cambian las herramientas.
+1. **S12.6** · 📋 PLANIFICADO · prioridad V2 · La raíz se ordena y el README describe el producto real.
+2. **S132** · 🟢 LISTO · prioridad Método V1 · Un worktree limpio de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y su AGENTS.md declara la preparación del worktree y qué reinstalar cuando cambian las herramientas.
 
 ### Contratos (contratos)
 - Sin Sesiones abiertas.
@@ -111,7 +110,7 @@
 - **S9.7:** propuesta direct (decisión 104, Engram 10008 y contrato inmutable de S9.7) · prioridad Torre V1; pendiente de revalidación en kickoff.
 - **S9.8:** propuesta direct (decisión 104 y Engram 10008; política operacional y formas terminales aprobadas en el contrato inmutable de S9.8.) · prioridad Torre V1; pendiente de revalidación en kickoff.
 - **S9.9:** propuesta direct (master e6b7e673f671e6bba30f9a600bf0333a1cd90af2 Plan 9 y autorización acotada del maintainer para la corrección C07.); pendiente de revalidación en kickoff.
-- **S12.1:** propuesta direct (Ruta histórica S12.1; su reanudación queda condicionada al cierre de S12.8 y no la autoriza esta importación.) · prioridad Método V1; pendiente de revalidación en kickoff.
+- **S12.1:** propuesta direct (Ruta histórica S12.1; su reanudación queda condicionada al cierre de S12.8 y no la autoriza esta importación.) · prioridad Método V1; revalidada direct sobre a9a3d4ac932620b5f1deea7aa51dd9e5816fadaa con evidencia S12.8 está COMPLETO y el contrato binario sigue acotado a package.json y .githooks/pre-push. La integración preserva el gate Radar vigente, ejecuta la suite sobre el SHA exacto y limpio enviado a master, y deja la radiografía como informe no bloqueante..
 - **S12.5:** propuesta design-tasks (Decisión 2 del maintainer y contrato inmutable S12.5; la elaboración técnica acotada pertenece a session-plan.) · prioridad V2; pendiente de revalidación en kickoff.
 - **S12.6:** propuesta direct (Decisión 4 del maintainer, opción B combinada, 2026-08-30.) · prioridad V2; pendiente de revalidación en kickoff.
 - **S12.7:** propuesta design-tasks (Contrato inmutable S12.7 y decisión Emilio 10469; session-plan define la descomposición al desparquear.) · prioridad V2; pendiente de revalidación en kickoff.
@@ -2333,7 +2332,7 @@ Rutas históricas (evidencia): bin/torre, scripts/payload-closure.mjs, install/r
   - [ ] Cerrar las regresiones de CLI/payload y ejecutar la verificación completa.
 
 ### S12.1 — Ningún commit llega a master sin que la suite haya corrido sola; va primera porque es la red que hace seguras las tres mudanzas de core.mjs y sin ella cada paso es a ciegas.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: ✅ COMPLETO
 - Zona/Área: cimientos · —
 - Depende de: S12.8
 - Cimientos: .githooks/pre-push, package.json
@@ -3503,7 +3502,7 @@ Rutas: agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md, agent-workflows/
   - [ ] REFACTOR: el paso aparece una sola vez y la suite del Método pasa.
 
 ### S132 — Un worktree limpio de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y su AGENTS.md declara la preparación del worktree y qué reinstalar cuando cambian las herramientas.
-- Estado derivado: 📋 PLANIFICADO
+- Estado derivado: 🟢 LISTO
 - Zona/Área: cimientos · —
 - Depende de: S12.1
 - Cimientos: AGENTS.md, test/pre-push-plan-gate.test.mjs
