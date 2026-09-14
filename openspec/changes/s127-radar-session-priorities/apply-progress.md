@@ -2,6 +2,20 @@
 
 Sesión authority: `openspec/plan.yaml` S127. Base: `master@89d1633`. Strict TDD active. Delivery strategy: ask-on-risk.
 
+## TDD Cycle Evidence
+
+| Task | RED | GREEN | TRIANGULATE | SAFETY NET | REFACTOR |
+|------|-----|-------|-------------|------------|----------|
+| T127.1.1 | ✅ Written — `state_test.go` (6 tests), `check_test.go` (7 tests); build failed on undefined priority symbols | ✅ Passed after T127.1.2 | ✅ 13 cases (active priority first/manual/none, deferral per state, advance, no-list identity; list, membership, closed, backward dependency, wiring) | ✅ 1 baseline run of `go test ./...` ok before modification | — |
+| T127.1.2 | ✅ Covered by T127.1.1 tests | ✅ Passed — `go test ./...` ok; correction RED `TestSesionCerradaPuedeOmitirPrioridad` failed, then passed | ✅ Closed-history case added as a distinct expectation | ✅ Existing radar suite ok after change | — |
+| T127.1.3 | ➖ Refactor only | ✅ Passed | ➖ Single | ✅ Full radar suite ok | ✅ `PrioridadPorID` shared by state and check |
+| T127.2.1 | ✅ Written — `snapshot_test.go` (2), `sesion_test.go` (2), `render_test.go` (1); build failed on undefined snapshot fields | ✅ Passed after T127.2.2 | ✅ 5 cases (declared vs absent for snapshot, sesion, status; render queue and Rutas) | ✅ Radar suite ok at M127.1 commit `4bc0710` | — |
+| T127.2.2 | ✅ Covered by T127.2.1 tests | ✅ Passed — `go test -count=1 ./...` ok; `ROADMAP.golden.md` unchanged | ✅ Absent-list cases assert no new text | ✅ Existing golden and status tests ok | — |
+| T127.2.3 | ➖ Refactor only | ✅ Passed | ➖ Single | ✅ Full radar suite ok | ✅ `prioridadDeclarada` and `Prioridad.Etiqueta` reused by three surfaces |
+| T127.3.1 | ✅ Written — `test_builder_flow.py` `test_canon_defines_priority_as_an_optional_ordering_attribute`; failed against the canon | ✅ Passed after T127.3.2 | ✅ Asserts priority phrases, seven state rows, and the unchanged level rule | ✅ Method suite 55 tests ok before modification | — |
+| T127.3.2 | ✅ Covered by T127.3.1 test | ✅ Passed — Method suite 56 tests ok | ➖ Single | ✅ Frozen snapshot pin test still ok | — |
+| T127.3.3 | ➖ Refactor only | ✅ Passed | ➖ Single | ✅ Method suite ok | ✅ README points to canon §9 |
+
 ## M127.1 — Radar declares, validates, and computes priorities
 
 Native attempt: `gentle-ai sdd-attempt acquire` request `s127-m127.1-apply-1` → `proceed`.
@@ -44,4 +58,18 @@ Size: 195 authored lines (+184 −11). Review: native consent for target `sha256
 
 Delivery: commit `74cbaa5` (`Modulo: M127.2`). Native attempt settled `passed` with `--remediates-evidence-revision` of the reset chain → `complete`.
 
-## M127.3 — Pending
+## M127.3 — Canon and README document priority
+
+Native attempt: request `s127-m127.3-apply-1` → `proceed`, acquired after committing the M127.2 SDD records.
+
+| Tarea | Evidence |
+|-------|----------|
+| T127.3.1 RED | Added `test_canon_defines_priority_as_an_optional_ordering_attribute` (`tests/test_builder_flow.py`); it failed against the current canon. |
+| T127.3.2 GREEN | Added "Priority — optional ordering attribute, never a level" under canon §9 and a "Prioridades" section plus YAML example in `tools/radar/README.md`. Method suite: 56 tests OK. |
+| T127.3.3 REFACTOR | The README points to canon §9 for the meaning and only lists what Radar computes and validates. |
+
+Deviation from design and tasks, recorded: the pinned SHA-256 of `skills/_shared/plan-naming-convention.md` (`test_builder_flow.py:56`) hashes the frozen copy at `product/tower/generic/` (`test_builder_flow.py:142-150`), not the live canon, so the pin was correctly left unchanged.
+
+Size: 46 authored lines. Review: native consent for target `sha256:67404517…40d550` declined by Emilio for this candidate only. Off-path `gentle-ai review assess`: `medium` (`executable_change`, canon) → writer self-verification; parent spot check of the Method suite OK.
+
+Delivery: commit `5612669` (`Modulo: M127.3`). Native attempt settled `passed` → `complete`.

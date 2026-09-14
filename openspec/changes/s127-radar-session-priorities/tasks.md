@@ -45,6 +45,6 @@ Paths: `agent-workflows/tools/radar/snapshot.go`, `agent-workflows/tools/radar/m
 
 Paths: `agent-workflows/skills/_shared/plan-naming-convention.md`, `agent-workflows/tools/radar/README.md`, `agent-workflows/tests/test_builder_flow.py`
 
-- [ ] T127.3.1 RED: assert in `test_builder_flow.py` that the canon names `prioridad` as an optional ordering attribute that is not a level and has no time field, and that the §9 state table still lists exactly seven states. → The test fails against the current canon.
-- [ ] T127.3.2 GREEN: add the §9 priority subsection to the canon, document the YAML in the Radar README, and update the canon's pinned SHA-256 in `test_builder_flow.py`. → `python3 -m unittest discover -s agent-workflows/tests` passes.
-- [ ] T127.3.3 REFACTOR: make the canon and README point to one definition without restating the rules. → No rule text is duplicated and the Method tests pass.
+- [x] T127.3.1 RED: assert in `test_builder_flow.py` that the canon names `prioridad` as an optional ordering attribute that is not a level and has no time field, and that the §9 state table still lists exactly seven states. → The test fails against the current canon.
+- [x] T127.3.2 GREEN: add the §9 priority subsection to the canon and document the YAML in the Radar README. → `python3 -m unittest discover -s tests` passes. (Correction during apply: the pinned SHA-256 at `test_builder_flow.py:56` guards the frozen copy under `product/tower/generic/`, not the live canon, so it must not change.)
+- [x] T127.3.3 REFACTOR: make the canon and README point to one definition without restating the rules. → No rule text is duplicated and the Method tests pass.
