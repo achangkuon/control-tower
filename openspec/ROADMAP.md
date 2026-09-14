@@ -2,7 +2,7 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.2, S12.8, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.2, S12.8, S124, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Próximo trabajo ejecutable: Autoridad #1 → S114 — Todas las Sesiones vigentes declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
@@ -16,7 +16,7 @@
 - Método #2 → S120 — Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
 
 ## Avance
-- **Total:** 63% (60/95 S)
+- **Total:** 64% (61/95 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -30,7 +30,7 @@
 - **Hosts:** 33% (3/9 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 36% (4/11 S)
+- **Método:** 45% (5/11 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -85,9 +85,8 @@
 2. **S120** · 🟢 LISTO · Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
 3. **S122** · 🟢 LISTO · Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 4. **S123** · 📋 PLANIFICADO · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
-5. **S124** · 🟢 LISTO · Un agente obtiene el contrato completo de una sola Sesión con &#96;radar sesion &lt;ID&gt;&#96;, y Support lee el plan sólo por Radar, nunca openspec/plan.yaml entero.
-6. **S125** · 📋 PLANIFICADO · Una Sesión con Módulos ya entregados se ve a medias en Radar y se retoma desde el primer Módulo pendiente, sin cambiar ninguno de los siete estados.
-7. **S126** · 📋 PLANIFICADO · Con la Torre apagada, el padre responsable abre en Herdr una tab por cada Sesión que el humano eligió, cada una con su worktree y su agente, y al cerrar retira sola los worktrees que prueban estar integrados.
+5. **S125** · 🟢 LISTO · Una Sesión con Módulos ya entregados se ve a medias en Radar y se retoma desde el primer Módulo pendiente, sin cambiar ninguno de los siete estados.
+6. **S126** · 📋 PLANIFICADO · Con la Torre apagada, el padre responsable abre en Herdr una tab por cada Sesión que el humano eligió, cada una con su worktree y su agente, y al cerrar retira sola los worktrees que prueban estar integrados.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -141,7 +140,7 @@
 - **S121:** propuesta direct (Store, assignment-location, binding y consumer existen; schema, derivación y one-shot witness quedaron fijados sin decisión abierta.); pendiente de revalidación en kickoff.
 - **S122:** propuesta design-tasks (El producto está decidido —cuatro tipos, estados intactos, umbral 2 por Zona— pero falta descubrimiento técnico acotado: la forma exacta del motivo y del déficit dentro de radar.snapshot/v1 y cómo se presentan en la vista generada.); pendiente de revalidación en kickoff.
 - **S123:** propuesta design-tasks (Las tres superficies y sus reglas están decididas, pero falta descubrimiento técnico acotado: qué prueba del Método fija el contrato de las skills y de la plantilla de ruteo, y dónde vive dentro de agent-workflows.); pendiente de revalidación en kickoff.
-- **S124:** propuesta direct (Comando, contenido de la salida, falla cerrada y texto de la skill quedan fijados en esta propuesta; resta implementación mecánica con pruebas y ninguna elección de diseño abierta.); pendiente de revalidación en kickoff.
+- **S124:** propuesta direct (Comando, contenido de la salida, falla cerrada y texto de la skill quedan fijados en esta propuesta; resta implementación mecánica con pruebas y ninguna elección de diseño abierta.); revalidada direct sobre bbfaa216f33a09aa8d304f89dae2d90808501885 con evidencia Load (plan.go:282), CheckAt (check.go:29) y SesionPorID (plan.go:318) existen y status ya falla cerrado (main.go), así que el comando sólo reutiliza ese patrón. Las huellas SHA256 que T124.2.2 pedía actualizar protegen product/tower/generic y no las skills activas; quedaron intactas..
 - **S125:** propuesta direct (Fuente de evidencia, formato del trailer, salida y reglas de las skills quedan fijados en esta propuesta; no queda diseño abierto.); pendiente de revalidación en kickoff.
 - **S126:** propuesta direct (Disparador, pasos del despacho, layout, dueño de la entrega, los seis chequeos y el orden del retiro quedan fijados por las decisiones aprobadas; resta implementación mecánica con pruebas del Método.); pendiente de revalidación en kickoff.
 
@@ -3256,7 +3255,7 @@ Rutas: agent-workflows/templates/session-routing.md
   - [ ] REFACTOR: la regla vive en un solo lugar y la prueba sigue pasando.
 
 ### S124 — Un agente obtiene el contrato completo de una sola Sesión con &#96;radar sesion &lt;ID&gt;&#96;, y Support lee el plan sólo por Radar, nunca openspec/plan.yaml entero.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: ✅ COMPLETO
 - Zona/Área: metodo · agent-workflows/
 - Depende de: —
 - Cimientos: —
@@ -3295,7 +3294,7 @@ Rutas: agent-workflows/skills/chanks-0-agente-soporte/SKILL.md, agent-workflows/
   - [ ] REFACTOR: la regla de lectura vive en un solo lugar y la prueba sigue pasando.
 
 ### S125 — Una Sesión con Módulos ya entregados se ve a medias en Radar y se retoma desde el primer Módulo pendiente, sin cambiar ninguno de los siete estados.
-- Estado derivado: 📋 PLANIFICADO
+- Estado derivado: 🟢 LISTO
 - Zona/Área: metodo · agent-workflows/
 - Depende de: S124
 - Cimientos: —

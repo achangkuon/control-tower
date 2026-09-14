@@ -7696,6 +7696,12 @@ sesiones:
     ruta:
       propuesta: direct
       autoridad: "Comando, contenido de la salida, falla cerrada y texto de la skill quedan fijados en esta propuesta; resta implementación mecánica con pruebas y ninguna elección de diseño abierta."
+      revalidacion:
+        resultado: direct
+        base: bbfaa216f33a09aa8d304f89dae2d90808501885
+        evidencia: "Load (plan.go:282), CheckAt (check.go:29) y SesionPorID (plan.go:318) existen y status ya falla cerrado (main.go), así que el comando sólo reutiliza ese patrón. Las huellas SHA256 que T124.2.2 pedía actualizar protegen product/tower/generic y no las skills activas; quedaron intactas."
+    entrega:
+      commit: 2f7ec7f20c50e2daf7d8615382a7162ab7b62004
     modulos:
       - id: M124.1
         resultado: "Radar imprime el contrato de una sola Sesión"
