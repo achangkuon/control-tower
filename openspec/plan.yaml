@@ -8058,6 +8058,10 @@ sesiones:
     ruta:
       propuesta: full-sdd
       autoridad: "La Sesión cambia contratos compartidos —canon, forma del plan y radar.snapshot/v1— y, hasta que S120 esté entregada, es la única ruta cuya verificación nativa llega al cierre. No se inicia SDD al registrar el plan."
+    # Entregada en tres commits con trailer Modulo (4bc0710 M127.1, 74cbaa5 M127.2, 5612669 M127.3);
+    # verify PASS WITH WARNINGS y archive en openspec/changes/archive/2026-09-14-s127-radar-session-priorities/.
+    entrega:
+      commit: 56126695d674d3b1daab068422e26f2e3d4d00a1
     modulos: []
 
 references:
