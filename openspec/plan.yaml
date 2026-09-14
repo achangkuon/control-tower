@@ -8433,6 +8433,10 @@ sesiones:
     ruta:
       propuesta: direct
       autoridad: "Las frases, las superficies y los archivos están identificados y el cálculo de capacidad no cambia; no queda decisión de diseño abierta."
+    # Entregada en ce25b68 (M134.1) y 6885cf1 (M134.2); verify PASS y archive en
+    # openspec/changes/archive/2026-09-14-s134-radar-parallel-verdict/.
+    entrega:
+      commit: 6885cf1926268ed556eef3d6e45b7d0b848aba85
     modulos:
       - id: M134.1
         resultado: "Radar presenta el paralelo como veredicto y el territorio de cimientos"

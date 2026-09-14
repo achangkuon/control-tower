@@ -2,7 +2,7 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.2, S12.8, S124, S125, S126, S127, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.2, S12.8, S124, S125, S126, S127, S134, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Método V1.
 - Próximo trabajo ejecutable: cimientos #1 → S12.1 — Ningún commit llega a master sin que la suite haya corrido sola; va primera porque es la red que hace seguras las tres mudanzas de core.mjs y sin ella cada paso es a ciegas..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
@@ -12,7 +12,7 @@
 - Método #2 → S120 — Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
 
 ## Avance
-- **Total:** 62% (64/103 S)
+- **Total:** 63% (65/103 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -26,7 +26,7 @@
 - **Hosts:** 33% (3/9 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 44% (8/18 S)
+- **Método:** 50% (9/18 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -83,7 +83,6 @@
 7. **S130** · 🟢 LISTO · prioridad Método V1 · El puente protege el lote de revisión: revisa sólo el código del Módulo en staging, commitea los artefactos SDD aparte y cierra el intento nativo de un Módulo antes de tocar el siguiente.
 8. **S131** · 🟢 LISTO · prioridad Método V1 · El despacho con Herdr prepara cada worktree con la preparación que declara el AGENTS.md del repositorio antes de lanzar el agente.
 9. **S133** · 🟢 LISTO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
-10. **S134** · 🟢 LISTO · prioridad Método V1 · Un agente decide si dos Sesiones pueden correr en paralelo leyendo sólo a Radar: la capacidad se presenta como veredicto de paralelo, una Sesión de cimientos muestra su territorio real y el ruteo carga la skill de despacho al elegir paralelo.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · prioridad Torre V1 · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -3560,7 +3559,7 @@ Rutas: agent-workflows/skills/chanks-7-session-doc/SKILL.md, agent-workflows/tes
   - [ ] REFACTOR: la regla aparece una sola vez y la suite del Método pasa.
 
 ### S134 — Un agente decide si dos Sesiones pueden correr en paralelo leyendo sólo a Radar: la capacidad se presenta como veredicto de paralelo, una Sesión de cimientos muestra su territorio real y el ruteo carga la skill de despacho al elegir paralelo.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: ✅ COMPLETO
 - Zona/Área: metodo · agent-workflows/
 - Depende de: —
 - Cimientos: —
@@ -3594,8 +3593,8 @@ Rutas: agent-workflows/templates/session-routing.md, agent-workflows/skills/chan
   - [ ] REFACTOR: la regla vive en el canon y la suite del Método pasa.
 
 ## Capacidad
-2 Zona(s) compatibles con trabajo LISTO: cimientos, metodo.
-Este valor es un pronóstico estático. No adquiere locks, no autentica al proceso invocante y no recupera claims stale.
+2 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: cimientos, metodo.
+Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
 - **S102** · future_successor · agent-workflows/ASIGNACION-24-SESIONES.md@43130ad40af06f3ed05671000719217bee74f0a5:L124-L124 · outside-approved-horizon
