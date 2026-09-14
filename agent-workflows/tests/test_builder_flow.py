@@ -139,6 +139,18 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertNotIn("tower_", unattended)
         json.loads(read("skills/chanks-4-unattended-implementation/assets/execution-contract.schema.json"))
 
+    def test_compatible_seats_are_read_as_the_parallel_safety_verdict(self):
+        canon = read("skills/_shared/plan-naming-convention.md")
+        capacity = canon.split("## 13. Capacity", 1)[1].split("## 14.", 1)[0]
+        support = read("skills/chanks-0-agente-soporte/SKILL.md")
+
+        self.assertIn("parallel-safety verdict", capacity)
+        self.assertIn("reserve nothing live", capacity)
+        self.assertIn("forecast, never a live lock", canon)
+        self.assertIn("parallel-safety verdict", support)
+        self.assertIn("§13", support)
+        self.assertNotIn("capacity as a static forecast", support)
+
     def test_canon_defines_priority_as_an_optional_ordering_attribute(self):
         canon = read("skills/_shared/plan-naming-convention.md")
         status = canon.split("## 9. Status", 1)[1].split("## 10.", 1)[0]

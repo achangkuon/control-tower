@@ -353,6 +353,12 @@ ready Sesión in each Zona order is considered in stable Zona order; a candidate
 Cimientos or exclusive `Recurso` identities intersect an earlier candidate is not offered as
 compatible. This is a forecast, never a live lock, claim, assignment, or queue.
 
+Compatibility is the **parallel-safety verdict**. The partition guarantees that Sesiones in
+compatible Zonas cannot write the same file, Cimiento, or `Recurso`, so they can run in parallel
+without further isolation checks. What the verdict does not do is reserve the seat:
+seats reserve nothing live, so another actor may still claim the same work, and real Git
+contamination still decides whether a worktree can proceed.
+
 A Zona may also have planning work even without a ready implementation Sesión. The human decides
 how much concurrent work to supervise after reviewing scope, risks, and conflicts. The builder
 never raises that limit, dispatches work, or invents work to fill it.

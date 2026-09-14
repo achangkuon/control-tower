@@ -131,6 +131,10 @@ class DespachoHerdrRoutingTests(unittest.TestCase):
                 self.assertIn("explicit Herdr request made with the Torre off", text, path)
                 self.assertIn("not Torre dispatch", text, path)
                 self.assertLess(text.index("records a dispatched Sesión's delivery"), text.index("retire mode"), path)
+                self.assertIn(f"responsible parent loads `{SKILL_NAME}`", text, path)
+                self.assertNotIn("may load", text, path)
+                self.assertIn("parallel-safety verdict", text, path)
+                self.assertIn("reserve nothing live", text, path)
 
 
 if __name__ == "__main__":

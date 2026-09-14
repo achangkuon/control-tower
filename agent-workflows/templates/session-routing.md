@@ -16,7 +16,7 @@
   and Git contamination, revalidates the proposed route once against scoped code, and returns its
   delta to the responsible parent. It does not choose new work, dispatch agents, or claim a lock.
 - After the human chooses which `LISTO` Sesiones run in parallel and the agent kind for each, the
-  responsible parent may load `chanks-3-despacho-herdr` to open one Herdr tab, worktree, and agent per
+  responsible parent loads `chanks-3-despacho-herdr` to open one Herdr tab, worktree, and agent per
   Sesión. That dispatch is an explicit Herdr request made with the Torre off; it is not Torre dispatch.
 - After the responsible parent records a dispatched Sesión's delivery, it runs that skill's retire mode,
   which removes only worktrees that pass its six checks.
@@ -31,7 +31,7 @@
 - Each Módulo is one independently revertible commit with its tests. With Strict TDD, each Tarea
   follows RED → GREEN → REFACTOR.
 - Always-escalate decisions never become derivable. A Sesión BLOCKS only when authority or evidence is missing or contradictory, or contamination reaches acceptance criteria, the first Módulo, or another Sesión. Later-Módulo contamination parks that Módulo while approved earlier work continues.
-- Preserve human choice for scope, risk, and authority. A static forecast is never a live lock. For an explicit shared `Recurso`, require confirmed exclusive or serial execution evidence before mutation; release only actual resources that were demonstrably acquired, and return the evidence to the responsible parent. Report real Git contamination and conflicts rather than pretending a runtime acquired them.
+- Preserve human choice for scope, risk, and authority. Radar's compatible seats are the parallel-safety verdict (canon §13); they reserve nothing live. For an explicit shared `Recurso`, require confirmed exclusive or serial execution evidence before mutation; release only actual resources that were demonstrably acquired, and return the evidence to the responsible parent. Report real Git contamination and conflicts rather than pretending a runtime acquired them.
 - After installation, this manual block controls the generic builder routing. It does not claim
   global installation, runtime activation, or fresh-session verification; those remain separate evidence.
 <!-- /SESSION-SKILL-ARCHITECTURE:MANUAL -->

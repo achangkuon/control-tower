@@ -19,7 +19,7 @@ mandatory peer, dispatcher, or plan writer.
 - Read the repository instructions, Git evidence, and available checks directly.
 - A repository with no `openspec/plan.yaml` has not adopted plan management, which is a choice and not a fault. Say what the request needs a plan for, offer to start one, and stop. Never fail, never improvise a substitute record, and never adopt it without the human saying yes.
 - Return evidence and a proposed delta; only the responsible parent writes confirmed plan evidence.
-- Treat `radar` capacity as a static forecast, never a live lock, reservation, or claim.
+- Treat `radar` compatible seats as the parallel-safety verdict of canon §13: they reserve nothing, so never report them as a live lock, reservation, or claim.
 - Preserve human choice for scope, risk, authority, and any contradiction; do not select work to fill capacity.
 - Do not implement, deliver, assign agents, create external sessions, or mutate planning data.
 

@@ -223,8 +223,9 @@ y sale distinto de cero. Un consumidor que recibe JSON recibe cifras que Radar f
 ## Frontera honesta
 
 `radar status` ejecuta primero la validación aplicable y falla cerrado: nunca muestra evidencia de
-entrega inválida o no verificable como trabajo ejecutable. El pronóstico evita simultaneidad cuando
-las primeras Sesiones listas comparten un Cimiento exacto o la misma identidad exacta de `Recurso`.
+entrega inválida o no verificable como trabajo ejecutable. Los asientos compatibles son el veredicto
+de paralelo del canon (§13): excluyen las primeras Sesiones listas que comparten un Cimiento exacto o la
+misma identidad exacta de `Recurso`, así que las Zonas listadas pueden trabajar en paralelo sin pisarse.
 
 `radar` valida datos y partición, deriva estado desde Git, pronostica asientos compatibles y
 renderiza. **No** adquiere reservas vivas, autentica la identidad del owner/invocante, recupera locks stale
