@@ -1,0 +1,77 @@
+name: Friction Report
+description: Report bugs, Radar warnings, or process friction found while implementing Control Tower.
+title: "[Friction]: "
+labels:
+  - "status:needs-review"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Before you submit
+
+        Friction reports are a triage inbox, not automatic approval. Include only public-safe content and remove sensitive details before submitting.
+
+  - type: checkboxes
+    id: duplicate-preflight
+    attributes:
+      label: Duplicate preflight
+      options:
+        - label: I searched open and closed issues and found no equivalent.
+          required: true
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: public-safety
+    attributes:
+      label: Public safety
+      options:
+        - label: I removed credentials, tokens, private paths, hostnames, and other sensitive data.
+          required: true
+    validations:
+      required: true
+
+  - type: dropdown
+    id: friction-type
+    attributes:
+      label: Friction type
+      options:
+        - Bug
+        - Process friction
+        - Radar warning
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence-or-reproduction
+    attributes:
+      label: Evidence or reproduction
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: input
+    id: session-or-context
+    attributes:
+      label: Session or context
+      description: Provide a Session ID or short context, if applicable.
