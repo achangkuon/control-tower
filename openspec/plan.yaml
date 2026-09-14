@@ -7425,6 +7425,9 @@ sesiones:
   - id: S120
     prioridad: metodo-v1
     zona: metodo
+    # Reemplazada por S135 el 2026-09-14 por decisión de Emilio: SDD nativo sólo para full-sdd.
+    archivada: true
+    archivo: reemplazada
     resultado: "Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo."
     autoridad: "Aprobación explícita de Emilio el 2026-09-12: «SI es correcto, esto es justo lo qeu necesitabamos. Lo apruebo, porfa hagamos la planficiacion para pasar a implementar». Alcance aprobado: reutilizar implementación general y controles de verificación SDD con antecedentes del plan, sin duplicar planificación ni activar globalmente antes de probar. Engram #10839, sdd/proportional-routes-approved-planning."
     depende_de: []
@@ -8213,7 +8216,8 @@ sesiones:
     prioridad: metodo-v1
     resultado: "El puente protege el lote de revisión: revisa sólo el código del Módulo en staging, commitea los artefactos SDD aparte y cierra el intento nativo de un Módulo antes de tocar el siguiente."
     autoridad: "Aprobación de Emilio del 2026-09-14 (Claude Code, sesión df306f72), problema 2, opción 1, y decisión 3. Evidencia: en la sesión con Pi la revisión nativa contó 584 líneas por incluir los OpenSpec sin commitear frente a 254 de código; en S127 el conteo del intento de M127.1 sumó 456 líneas porque las pruebas de M127.2 ya estaban escritas, y Emilio autorizó el reinicio auditado s127-reset-1."
-    depende_de: []
+    # Depende de S135: ambas editan el puente y S135 redefine qué rutas producen artefactos SDD.
+    depende_de: [S135]
     cimientos: []
     recurso: []
     criterios:
@@ -8364,7 +8368,8 @@ sesiones:
     prioridad: metodo-v1
     resultado: "El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio."
     autoridad: "Aprobación de Emilio del 2026-09-14 (Claude Code, sesión df306f72), problema 4, opción 1. Evidencia: ninguna skill ni plantilla de agent-workflows reinstala Radar o las skills; el push de de098bf fue rechazado porque ~/.local/bin/radar era anterior a S127 y hubo que correr install-radar.sh a mano."
-    depende_de: []
+    # Depende de S135: ambas editan la skill de cierre y S135 limita el archive a full-sdd.
+    depende_de: [S135]
     cimientos: []
     recurso: []
     criterios:
@@ -8470,6 +8475,97 @@ sesiones:
             accion: "REFACTOR: hacer que la skill de soporte, la plantilla y el README remitan al §13 del canon sin repetir la regla completa."
             resultado: "REFACTOR: la regla vive en el canon y la suite del Método pasa."
             criterios: ["REFACTOR: la regla vive en el canon y la suite del Método pasa."]
+  - id: S135
+    zona: metodo
+    prioridad: metodo-v1
+    reemplaza: [S120]
+    resultado: "SDD nativo sólo para full-sdd: direct y design-tasks usan el camino no-SDD de Gentle AI y verifican contra los criterios del plan sin crear openspec/changes, y Radar sólo acepta `cambio` en Sesiones full-sdd."
+    autoridad: "Aprobación de Emilio del 2026-09-14 (Claude Code, sesión df306f72): opción 1 y cuatro decisiones —S120 se archiva como reemplazada, el design de design-tasks se registra en el plan, la evidencia de verify de direct y design-tasks va en el commit que registra la entrega, y S130 y S133 dependen de esta Sesión—. Evidencia: `gentle-ai sdd-status s134-radar-parallel-verdict` respondió `nextRecommended: propose` para una Sesión direct; plan-naming-convention.md:455-473 manda las tres rutas por una sola pipeline SDD; las reglas instaladas de Gentle AI dicen que SDD se selecciona sólo por pedido explícito y que la implementación directa tiene su propia verificación; agent-workflows/tools/radar/ledger.go:54-60 mapea las tres rutas a fases SDD."
+    depende_de: []
+    cimientos: []
+    recurso: []
+    criterios:
+      - "El §15 de `agent-workflows/skills/_shared/plan-naming-convention.md` declara que sólo `full-sdd` recorre la pipeline SDD nativa de Gentle AI y su `archive`, y que `direct` y `design-tasks` usan el camino no-SDD de Gentle AI sin crear `openspec/changes/`."
+      - "El canon declara que `verify` sigue siendo obligatorio para las tres rutas y que en `direct` y `design-tasks` se verifica contra los criterios del plan, con la evidencia criterio por criterio en el cuerpo del commit que registra la entrega."
+      - "El canon declara que una Sesión `design-tasks` registra el resultado de su design en el plan —revalidación, decisiones y Tareas ajustadas— y no en un documento aparte."
+      - "`chanks-4-puente`, `templates/session-routing.md`, `references/juicio-de-ruta.md`, `chanks-7-session-doc` y la plantilla de asignación de Support remiten a esa regla y no afirman que las tres rutas pasan por SDD ni que `archive` es común a las tres."
+      - "`radar check` falla, sin consultar a Gentle AI, cuando una Sesión cuya ruta efectiva no es `full-sdd` declara `cambio`; para `full-sdd` sigue validando el estado SDD nativo."
+      - "`go test ./...` en `agent-workflows/tools/radar` y `cd agent-workflows && python3 -m unittest discover -s tests` pasan, y el diff toca sólo Área."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Qué rutas recorren la pipeline SDD nativa de Gentle AI?"
+        resolucion: "Sólo full-sdd. direct y design-tasks usan el camino no-SDD de Gentle AI y conservan un verify obligatorio contra los criterios del plan."
+        autoridad: "Aprobación de Emilio del 2026-09-14, opción 1."
+        clase: contrato-visible
+        falsificador: "Una Sesión direct o design-tasks crea `openspec/changes/` o necesita proposal y spec para pasar verify."
+        descartadas:
+          - opcion: "Mantener S120 como full-sdd para adaptar el verify nativo a las tres rutas."
+            razon: "Es la Sesión más pesada de Método V1, depende del comportamiento interno de Gentle AI y puede terminar en incompatibilidad."
+          - opcion: "Desinstalar SDD."
+            razon: "Se pierde el camino full-sdd que necesitan S109, S8.13 y S12.9."
+      - tipo: resuelta
+        pregunta: "¿Cómo se reemplaza S120?"
+        resolucion: "S120 se archiva como reemplazada y S135 declara `reemplaza: [S120]`."
+        autoridad: "Aprobación de Emilio del 2026-09-14, decisión 1; canon §8."
+        clase: contrato-visible
+        falsificador: "S120 se edita en el lugar o queda abierta junto a S135."
+        descartadas:
+          - opcion: "Editar el contrato de S120 en el lugar."
+            razon: "Borra el rastro del contrato que Emilio aprobó el 2026-09-12."
+      - tipo: resuelta
+        pregunta: "¿Dónde queda el design de una Sesión design-tasks?"
+        resolucion: "En el plan: el padre registra la revalidación, las decisiones técnicas y las Tareas ajustadas."
+        autoridad: "Aprobación de Emilio del 2026-09-14, decisión 2."
+        clase: contrato-visible
+        falsificador: "Una Sesión design-tasks necesita un documento de design fuera del plan para avanzar."
+        descartadas:
+          - opcion: "Un documento de design en una carpeta nueva."
+            razon: "Crea una segunda fuente fuera del plan y la carpeta caería en otra Zona."
+      - tipo: resuelta
+        pregunta: "¿Dónde queda la evidencia de verify de direct y design-tasks?"
+        resolucion: "En el cuerpo del commit que registra la entrega en el plan, criterio por criterio con los comandos corridos."
+        autoridad: "Aprobación de Emilio del 2026-09-14, decisión 3."
+        clase: contrato-visible
+        falsificador: "El verify de una Sesión direct o design-tasks sólo existe en un archivo de openspec/changes o no queda registrado."
+        descartadas:
+          - opcion: "Seguir escribiendo verify-report.md fuera de openspec/changes."
+            razon: "Necesita una carpeta nueva en otra Zona; Git ya es la evidencia que Radar lee."
+    ruta:
+      propuesta: direct
+      autoridad: "Las cuatro decisiones están tomadas, las superficies y archivos están identificados y el cambio en Radar es una regla acotada; no queda decisión de diseño abierta."
+    modulos:
+      - id: M135.1
+        resultado: "Radar sólo acepta `cambio` y la puerta SDD en Sesiones full-sdd"
+        rutas: [agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/ledger.go, agent-workflows/tools/radar/gate_test.go, agent-workflows/tools/radar/README.md]
+        tareas:
+          - id: T135.1.1
+            accion: "RED: exigir que radar check falle sin consultar a Gentle AI cuando una Sesión direct o design-tasks declara `cambio`, y que siga leyendo el estado nativo sólo para full-sdd."
+            resultado: "RED: las pruebas fallan contra la puerta de tres rutas."
+            criterios: ["RED: las pruebas fallan contra la puerta de tres rutas."]
+          - id: T135.1.2
+            accion: "GREEN: rechazar `cambio` fuera de la ruta efectiva full-sdd antes de cualquier consulta al ledger o al estado, y conservar la validación del estado para full-sdd."
+            resultado: "GREEN: go test pasa."
+            criterios: ["GREEN: go test pasa."]
+          - id: T135.1.3
+            accion: "REFACTOR: reemplazar el mapa de tres puertas por una única regla de full-sdd y actualizar el README de Radar."
+            resultado: "REFACTOR: no queda mapa de ruta a fase y go test pasa."
+            criterios: ["REFACTOR: no queda mapa de ruta a fase y go test pasa."]
+      - id: M135.2
+        resultado: "El Método sólo manda full-sdd por la pipeline SDD nativa"
+        rutas: [agent-workflows/skills/_shared/plan-naming-convention.md, agent-workflows/skills/chanks-4-puente/SKILL.md, agent-workflows/templates/session-routing.md, agent-workflows/skills/chanks-2-planificador-granular/references/juicio-de-ruta.md, agent-workflows/skills/chanks-7-session-doc/SKILL.md, agent-workflows/skills/chanks-7-session-doc/references/links.md, agent-workflows/skills/chanks-0-agente-soporte/assets/assignment-implementation.md, agent-workflows/tests/test_install.py, agent-workflows/tests/test_builder_flow.py]
+        tareas:
+          - id: T135.2.1
+            accion: "RED: exigir que canon, puente, ruteo, juicio de ruta, cierre y asignación declaren SDD nativo y archive sólo para full-sdd, verify contra criterios con evidencia en el commit de entrega para direct y design-tasks, y el design de design-tasks en el plan."
+            resultado: "RED: las pruebas del Método fallan contra los textos actuales."
+            criterios: ["RED: las pruebas del Método fallan contra los textos actuales."]
+          - id: T135.2.2
+            accion: "GREEN: reescribir la regla de rutas en cada superficie."
+            resultado: "GREEN: la suite del Método pasa."
+            criterios: ["GREEN: la suite del Método pasa."]
+          - id: T135.2.3
+            accion: "REFACTOR: dejar la regla completa sólo en el §15 del canon y hacer que las demás superficies remitan a él."
+            resultado: "REFACTOR: la regla vive una vez y la suite del Método pasa."
+            criterios: ["REFACTOR: la regla vive una vez y la suite del Método pasa."]
 
 references:
   future_successors:

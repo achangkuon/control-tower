@@ -2,17 +2,17 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.2, S12.8, S124, S125, S126, S127, S134, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.2, S12.8, S120, S124, S125, S126, S127, S134, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Método V1.
 - Próximo trabajo ejecutable: cimientos #1 → S12.1 — Ningún commit llega a master sin que la suite haya corrido sola; va primera porque es la red que hace seguras las tres mudanzas de core.mjs y sin ella cada paso es a ciegas..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
 ## Estado y próximo trabajo
 - cimientos #1 → S12.1 — Ningún commit llega a master sin que la suite haya corrido sola; va primera porque es la red que hace seguras las tres mudanzas de core.mjs y sin ella cada paso es a ciegas.
-- Método #2 → S120 — Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
+- Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 
 ## Avance
-- **Total:** 63% (65/103 S)
+- **Total:** 63% (66/104 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -26,7 +26,7 @@
 - **Hosts:** 33% (3/9 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 50% (9/18 S)
+- **Método:** 52% (10/19 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -75,14 +75,14 @@
 
 ### Método (metodo)
 1. **S115** · 📋 PLANIFICADO · prioridad V2 · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
-2. **S120** · 🟢 LISTO · prioridad Método V1 · Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
-3. **S122** · 🟢 LISTO · prioridad Método V1 · Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
-4. **S123** · 📋 PLANIFICADO · prioridad V2 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
-5. **S128** · 🟢 LISTO · prioridad Método V1 · Radar reconoce el trailer Modulo de una Sesión full-sdd: el commit cuenta como Módulo entregado de su Sesión y deja de aparecer como trailer desconocido.
-6. **S129** · 📋 PLANIFICADO · prioridad Método V1 · Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
-7. **S130** · 🟢 LISTO · prioridad Método V1 · El puente protege el lote de revisión: revisa sólo el código del Módulo en staging, commitea los artefactos SDD aparte y cierra el intento nativo de un Módulo antes de tocar el siguiente.
+2. **S122** · 🟢 LISTO · prioridad Método V1 · Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
+3. **S123** · 📋 PLANIFICADO · prioridad V2 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
+4. **S128** · 🟢 LISTO · prioridad Método V1 · Radar reconoce el trailer Modulo de una Sesión full-sdd: el commit cuenta como Módulo entregado de su Sesión y deja de aparecer como trailer desconocido.
+5. **S129** · 📋 PLANIFICADO · prioridad Método V1 · Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
+6. **S135** · 🟢 LISTO · prioridad Método V1 · SDD nativo sólo para full-sdd: direct y design-tasks usan el camino no-SDD de Gentle AI y verifican contra los criterios del plan sin crear openspec/changes, y Radar sólo acepta &#96;cambio&#96; en Sesiones full-sdd.
+7. **S130** · 📋 PLANIFICADO · prioridad Método V1 · El puente protege el lote de revisión: revisa sólo el código del Módulo en staging, commitea los artefactos SDD aparte y cierra el intento nativo de un Módulo antes de tocar el siguiente.
 8. **S131** · 🟢 LISTO · prioridad Método V1 · El despacho con Herdr prepara cada worktree con la preparación que declara el AGENTS.md del repositorio antes de lanzar el agente.
-9. **S133** · 🟢 LISTO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
+9. **S133** · 📋 PLANIFICADO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · prioridad Torre V1 · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -147,6 +147,7 @@
 - **S132:** propuesta direct (Las dos declaraciones y el comportamiento de la prueba están decididos y los archivos son dos Cimientos exactos reservados.) · prioridad Método V1; pendiente de revalidación en kickoff.
 - **S133:** propuesta direct (El momento, la fuente y la confirmación humana para las skills están decididos; el cambio se limita a una skill y su prueba.) · prioridad Método V1; pendiente de revalidación en kickoff.
 - **S134:** propuesta direct (Las frases, las superficies y los archivos están identificados y el cálculo de capacidad no cambia; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
+- **S135:** propuesta direct (Las cuatro decisiones están tomadas, las superficies y archivos están identificados y el cambio en Radar es una regla acotada; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -3119,7 +3120,7 @@ Rutas: product/tower/skills/herdr/SKILL.md, product/tower/skills/torre-control/S
   - [ ] &#96;radar check&#96; y suite completa pasan.
 
 ### S120 — Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: 📚 ARCHIVADO
 - Zona/Área: metodo · agent-workflows/
 - Depende de: —
 - Cimientos: —
@@ -3457,9 +3458,9 @@ Rutas: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go
   - [ ] REFACTOR: existe una única función de medición y go test pasa.
 
 ### S130 — El puente protege el lote de revisión: revisa sólo el código del Módulo en staging, commitea los artefactos SDD aparte y cierra el intento nativo de un Módulo antes de tocar el siguiente.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: 📋 PLANIFICADO
 - Zona/Área: metodo · agent-workflows/
-- Depende de: —
+- Depende de: S135
 - Cimientos: —
 - Recursos: —
 - Criterios de aceptación:
@@ -3536,9 +3537,9 @@ Rutas: AGENTS.md
   - [ ] REFACTOR: las secciones están enlazadas y no hay reglas duplicadas.
 
 ### S133 — El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: 📋 PLANIFICADO
 - Zona/Área: metodo · agent-workflows/
-- Depende de: —
+- Depende de: S135
 - Cimientos: —
 - Recursos: —
 - Criterios de aceptación:
@@ -3591,6 +3592,40 @@ Rutas: agent-workflows/templates/session-routing.md, agent-workflows/skills/chan
   - [ ] GREEN: la suite del Método pasa.
 - **T134.2.3:** REFACTOR: hacer que la skill de soporte, la plantilla y el README remitan al §13 del canon sin repetir la regla completa. → REFACTOR: la regla vive en el canon y la suite del Método pasa.
   - [ ] REFACTOR: la regla vive en el canon y la suite del Método pasa.
+
+### S135 — SDD nativo sólo para full-sdd: direct y design-tasks usan el camino no-SDD de Gentle AI y verifican contra los criterios del plan sin crear openspec/changes, y Radar sólo acepta &#96;cambio&#96; en Sesiones full-sdd.
+- Estado derivado: 🟢 LISTO
+- Zona/Área: metodo · agent-workflows/
+- Depende de: —
+- Cimientos: —
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] El §15 de &#96;agent-workflows/skills/&#95;shared/plan-naming-convention.md&#96; declara que sólo &#96;full-sdd&#96; recorre la pipeline SDD nativa de Gentle AI y su &#96;archive&#96;, y que &#96;direct&#96; y &#96;design-tasks&#96; usan el camino no-SDD de Gentle AI sin crear &#96;openspec/changes/&#96;.
+  - [ ] El canon declara que &#96;verify&#96; sigue siendo obligatorio para las tres rutas y que en &#96;direct&#96; y &#96;design-tasks&#96; se verifica contra los criterios del plan, con la evidencia criterio por criterio en el cuerpo del commit que registra la entrega.
+  - [ ] El canon declara que una Sesión &#96;design-tasks&#96; registra el resultado de su design en el plan —revalidación, decisiones y Tareas ajustadas— y no en un documento aparte.
+  - [ ] &#96;chanks-4-puente&#96;, &#96;templates/session-routing.md&#96;, &#96;references/juicio-de-ruta.md&#96;, &#96;chanks-7-session-doc&#96; y la plantilla de asignación de Support remiten a esa regla y no afirman que las tres rutas pasan por SDD ni que &#96;archive&#96; es común a las tres.
+  - [ ] &#96;radar check&#96; falla, sin consultar a Gentle AI, cuando una Sesión cuya ruta efectiva no es &#96;full-sdd&#96; declara &#96;cambio&#96;; para &#96;full-sdd&#96; sigue validando el estado SDD nativo.
+  - [ ] &#96;go test ./...&#96; en &#96;agent-workflows/tools/radar&#96; y &#96;cd agent-workflows &amp;&amp; python3 -m unittest discover -s tests&#96; pasan, y el diff toca sólo Área.
+
+#### M135.1 — Radar sólo acepta &#96;cambio&#96; y la puerta SDD en Sesiones full-sdd
+Rutas: agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/ledger.go, agent-workflows/tools/radar/gate&#95;test.go, agent-workflows/tools/radar/README.md
+
+- **T135.1.1:** RED: exigir que radar check falle sin consultar a Gentle AI cuando una Sesión direct o design-tasks declara &#96;cambio&#96;, y que siga leyendo el estado nativo sólo para full-sdd. → RED: las pruebas fallan contra la puerta de tres rutas.
+  - [ ] RED: las pruebas fallan contra la puerta de tres rutas.
+- **T135.1.2:** GREEN: rechazar &#96;cambio&#96; fuera de la ruta efectiva full-sdd antes de cualquier consulta al ledger o al estado, y conservar la validación del estado para full-sdd. → GREEN: go test pasa.
+  - [ ] GREEN: go test pasa.
+- **T135.1.3:** REFACTOR: reemplazar el mapa de tres puertas por una única regla de full-sdd y actualizar el README de Radar. → REFACTOR: no queda mapa de ruta a fase y go test pasa.
+  - [ ] REFACTOR: no queda mapa de ruta a fase y go test pasa.
+
+#### M135.2 — El Método sólo manda full-sdd por la pipeline SDD nativa
+Rutas: agent-workflows/skills/&#95;shared/plan-naming-convention.md, agent-workflows/skills/chanks-4-puente/SKILL.md, agent-workflows/templates/session-routing.md, agent-workflows/skills/chanks-2-planificador-granular/references/juicio-de-ruta.md, agent-workflows/skills/chanks-7-session-doc/SKILL.md, agent-workflows/skills/chanks-7-session-doc/references/links.md, agent-workflows/skills/chanks-0-agente-soporte/assets/assignment-implementation.md, agent-workflows/tests/test&#95;install.py, agent-workflows/tests/test&#95;builder&#95;flow.py
+
+- **T135.2.1:** RED: exigir que canon, puente, ruteo, juicio de ruta, cierre y asignación declaren SDD nativo y archive sólo para full-sdd, verify contra criterios con evidencia en el commit de entrega para direct y design-tasks, y el design de design-tasks en el plan. → RED: las pruebas del Método fallan contra los textos actuales.
+  - [ ] RED: las pruebas del Método fallan contra los textos actuales.
+- **T135.2.2:** GREEN: reescribir la regla de rutas en cada superficie. → GREEN: la suite del Método pasa.
+  - [ ] GREEN: la suite del Método pasa.
+- **T135.2.3:** REFACTOR: dejar la regla completa sólo en el §15 del canon y hacer que las demás superficies remitan a él. → REFACTOR: la regla vive una vez y la suite del Método pasa.
+  - [ ] REFACTOR: la regla vive una vez y la suite del Método pasa.
 
 ## Capacidad
 2 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: cimientos, metodo.
