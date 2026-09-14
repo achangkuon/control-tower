@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
-# Two jobs at delivery time, in order: validate the plan, then regenerate the report.
+# Three jobs at delivery time, in order: run the suite, validate the plan, then regenerate
+# the report. Only the suite and plan validation can block a push.
 #
 # Agent-agnostic on purpose: git runs it for Claude Code, opencode, PI, Codex and for a
 # human alike. Nothing here depends on which assistant is driving. That is the point —
@@ -19,7 +20,80 @@ set -u
 
 root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
 
-# ── 1. The plan gate — this one BLOCKS ───────────────────────────────────────
+# ── 1. The suite gate — this one BLOCKS ──────────────────────────────────────
+# The hook also runs from fixture repositories in the plan-gate tests. Gate only when this
+# hook physically belongs to the pushed root; external fixture hooks continue to Radar.
+gated=0
+master_local_sha=""
+while read -r _local_ref pushed_local_sha remote_ref _remote_sha; do
+  if [ "$remote_ref" = "refs/heads/master" ]; then
+    gated=1
+    master_local_sha=$pushed_local_sha
+  fi
+done
+
+hook_dir=$(CDPATH= cd -P "$(dirname "$0")" 2>/dev/null && pwd -P) || hook_dir=""
+root_hooks_dir=$(CDPATH= cd -P "$root/.githooks" 2>/dev/null && pwd -P) || root_hooks_dir=""
+
+if [ "$gated" -eq 1 ] && [ -n "$hook_dir" ] && [ "$hook_dir" = "$root_hooks_dir" ]; then
+  if [ "$master_local_sha" != "$(git rev-parse 'HEAD^{commit}' 2>/dev/null)" ] ||
+    ! git diff --quiet || ! git diff --cached --quiet ||
+    [ -n "$(git ls-files --others --exclude-standard)" ]
+  then
+    printf 'pre-push: el commit master a publicar debe ser el HEAD limpio del checkout. Push rechazado.\n' >&2
+    exit 1
+  fi
+  if ! command -v bun >/dev/null 2>&1; then
+    printf 'pre-push: bun no está disponible, no se puede verificar. Push rechazado.\n' >&2
+    exit 1
+  fi
+
+  if [ ! -f "$root/package.json" ]; then
+    printf 'pre-push: falta package.json válido; no se puede verificar. Push rechazado.\n' >&2
+    exit 1
+  fi
+
+  bun -e '
+    let pkg
+    try {
+      pkg = JSON.parse(await Bun.file(process.argv.at(-1)).text())
+    } catch {
+      process.exit(3)
+    }
+    if (pkg?.scripts?.test !== "bun test") process.exit(2)
+  ' "$root/package.json" 2>/dev/null
+  package_status=$?
+  if [ "$package_status" -eq 3 ]; then
+    printf 'pre-push: package.json inválido; no se puede verificar. Push rechazado.\n' >&2
+    exit 1
+  fi
+  if [ "$package_status" -ne 0 ]; then
+    printf 'pre-push: scripts.test debe ser exactamente "bun test". Push rechazado.\n' >&2
+    exit 1
+  fi
+
+  # bin/torre must resolve these modules from the checkout being delivered.
+  export CONTROL_TOWER_CORE="$root/core.mjs"
+  export CONTROL_TOWER_LIFECYCLE="$root/install/lifecycle.mjs"
+
+  # Git exports these variables to hooks. Unset them only for the suite so fixture
+  # repositories created by tests cannot operate on this repository; later stages retain
+  # their inherited environment.
+  printf 'pre-push: corriendo la suite contra este checkout...\n' >&2
+  if ! (
+    cd "$root" &&
+    unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR \
+          GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_QUARANTINE_PATH &&
+    bun run test
+  ); then
+    printf '\npre-push: la suite falló. Push rechazado.\n' >&2
+    printf 'pre-push: arreglalo, o pusheá con --no-verify y decí por qué.\n' >&2
+    exit 1
+  fi
+  printf 'pre-push: suite verde.\n' >&2
+fi
+
+# ── 2. The plan gate — this one BLOCKS ───────────────────────────────────────
 # No plan, no gate: a project that never adopted the method is not failing it. Same for
 # a machine without radar — a missing tool is not a broken plan, so it warns and passes.
 if [ -f "$root/openspec/plan.yaml" ]; then
@@ -41,7 +115,7 @@ if [ -f "$root/openspec/plan.yaml" ]; then
     printf 'radar: no encontrado, se omite la validación del plan. El push sigue.\n' >&2
     printf '       Instalalo con agent-workflows/tools/install-radar.sh\n' >&2
   else
-    # Bound the run. This is the first blocking hook in the file, and it runs for
+    # Bound the run. This blocking hook runs for
     # unattended agents with nobody present to Ctrl-C a hang and retry with --no-verify.
     # A gate that can hang forever is worse than no gate: an expired check warns and
     # lets the push through, because a timeout is not evidence of an invalid plan.
@@ -95,7 +169,7 @@ if [ -f "$root/openspec/plan.yaml" ]; then
   fi
 fi
 
-# ── 2. The report — this one NEVER blocks ────────────────────────────────────
+# ── 3. The report — this one NEVER blocks ────────────────────────────────────
 # A report is not a gate; a stale report labels itself stale.
 [ -f "$root/radiografia.json" ] || exit 0
 command -v bun >/dev/null 2>&1 || exit 0
