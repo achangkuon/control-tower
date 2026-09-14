@@ -8106,6 +8106,303 @@ sesiones:
     entrega:
       commit: 56126695d674d3b1daab068422e26f2e3d4d00a1
     modulos: []
+  - id: S128
+    zona: metodo
+    prioridad: metodo-v1
+    resultado: "Radar reconoce el trailer Modulo de una Sesión full-sdd: el commit cuenta como Módulo entregado de su Sesión y deja de aparecer como trailer desconocido."
+    autoridad: "Aprobación de Emilio del 2026-09-14 (Claude Code, sesión df306f72), problema 3, opción 1. Evidencia: agent-workflows/tools/radar/avance.go:22-27 sólo conoce los Módulos escritos en el plan y avance.go:62-77 avisa por los trailers M127.1, M127.2 y M127.3 de S127, una Sesión full-sdd que por canon no declara Módulos."
+    depende_de: []
+    cimientos: []
+    recurso: []
+    criterios:
+      - "Un trailer `Modulo: M<n>.<k>` cuya Sesión S<n> existe y tiene ruta efectiva full-sdd se reconoce como Módulo entregado de esa Sesión y no produce el aviso `trailer de Módulo`."
+      - "Un trailer que no nombra un Módulo del plan ni pertenece a una Sesión full-sdd sigue produciendo el aviso `trailer de Módulo`."
+      - "Para Sesiones direct y design-tasks el avance por Módulo y la marca `a medias k/N` de `radar status` no cambian."
+      - "`radar status` muestra para una Sesión full-sdd con Módulos entregados la cantidad entregada sin un total."
+      - "Sobre el plan vigente, `radar check` deja de reportar los avisos de M127.1, M127.2 y M127.3 y conserva los demás avisos."
+      - "`go test ./...` en `agent-workflows/tools/radar` pasa y el diff toca sólo Área."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Cómo se reconoce un Módulo de una Sesión full-sdd, cuyo plan no declara Módulos?"
+        resolucion: "Por su dueño: el ID del Módulo nombra a su Sesión y, si esa Sesión es full-sdd, el trailer es válido."
+        autoridad: "Aprobación de Emilio del 2026-09-14, problema 3, opción 1."
+        clase: contrato-visible
+        falsificador: "Un trailer de una Sesión full-sdd existente produce el aviso `trailer de Módulo`, o Radar exige copiar al plan los Módulos de tasks.md."
+        descartadas:
+          - opcion: "Copiar al plan los Módulos que define el design."
+            razon: "Contradice el tramo 3 —full-sdd trae sólo la Sesión— y crea dos fuentes de la misma lista."
+          - opcion: "Quitar el trailer en las Sesiones full-sdd."
+            razon: "Esas Sesiones quedarían sin medición de tamaño por Módulo."
+    ruta:
+      propuesta: direct
+      autoridad: "El contrato está determinado —reconocer el trailer por el prefijo de una Sesión con ruta efectiva full-sdd— y los archivos son conocidos; no queda decisión de diseño abierta."
+    modulos:
+      - id: M128.1
+        resultado: "Radar reconoce los trailers de Sesiones full-sdd"
+        rutas: [agent-workflows/tools/radar/avance.go, agent-workflows/tools/radar/avance_test.go, agent-workflows/tools/radar/main.go]
+        tareas:
+          - id: T128.1.1
+            accion: "RED: exigir que un trailer de una Sesión full-sdd cuente como Módulo entregado sin aviso, que un trailer ajeno siga avisando, que direct y design-tasks no cambien y que status muestre la cantidad entregada sin total."
+            resultado: "RED: las pruebas fallan contra el lector de trailers actual."
+            criterios: ["RED: las pruebas fallan contra el lector de trailers actual."]
+          - id: T128.1.2
+            accion: "GREEN: reconocer en AvanceModulosAt los trailers cuyo prefijo nombra una Sesión con ruta efectiva full-sdd y mostrar la cantidad en cmdStatus."
+            resultado: "GREEN: las pruebas nuevas y existentes de Go pasan."
+            criterios: ["GREEN: las pruebas nuevas y existentes de Go pasan."]
+          - id: T128.1.3
+            accion: "REFACTOR: resolver el dueño de un trailer en un solo helper reutilizado por el avance y por los avisos."
+            resultado: "REFACTOR: existe un único resolvedor de dueño y go test pasa."
+            criterios: ["REFACTOR: existe un único resolvedor de dueño y go test pasa."]
+  - id: S129
+    zona: metodo
+    prioridad: metodo-v1
+    resultado: "Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado."
+    autoridad: "Aprobación de Emilio del 2026-09-14 (Claude Code, sesión df306f72), problema 2, opción 1, y decisión 2 sobre dónde viven las exclusiones. Evidencia: agent-workflows/tools/radar/check.go:905-922 cuenta sólo líneas agregadas del commit de entrega e incluye openspec/, mientras AGENTS.md:117 fija 400 líneas por lote revisado, agregadas más borradas y sin artefactos de planificación ni generados."
+    depende_de: [S128]
+    cimientos: []
+    recurso: []
+    criterios:
+      - "Con `politica.tope_de_lote` declarado, Radar mide cada Módulo entregado de una Sesión sumando líneas agregadas y borradas de los commits que llevan su trailer `Modulo:`."
+      - "Las rutas declaradas en `politica.excluir_del_lote` —prefijos de directorio o archivos exactos— no cuentan; sin esa lista no se excluye ninguna ruta."
+      - "Un Módulo que supera el tope emite un aviso `tope de lote` que nombra la Sesión, el Módulo, las líneas medidas y el tope; nunca un error."
+      - "Una Sesión entregada sin trailers de Módulo se mide por su commit de entrega con la misma fórmula."
+      - "Sin `tope_de_lote` declarado Radar no mide ni falla."
+      - "La medición usa la ancestría del HEAD inmutable y nunca el árbol de trabajo."
+      - "`go test ./...` en `agent-workflows/tools/radar` pasa y el diff toca sólo Área."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Las rutas excluidas del tope son constantes del código o un dato del plan?"
+        resolucion: "Un dato del plan: `politica.excluir_del_lote`."
+        autoridad: "Aprobación de Emilio del 2026-09-14, decisión 2, con el mismo principio que S113 aplicó al tope."
+        clase: contrato-visible
+        falsificador: "Las rutas excluidas aparecen escritas como literal en el código de Radar."
+        descartadas:
+          - opcion: "Fijar las exclusiones como constantes en Go."
+            razon: "Convierte una política de cada proyecto en una decisión de compilación."
+      - tipo: resuelta
+        pregunta: "¿Con qué fórmula se mide el lote?"
+        resolucion: "Líneas agregadas más borradas de cada Módulo entregado, sin las rutas excluidas."
+        autoridad: "AGENTS.md:117 y aprobación de Emilio del 2026-09-14, problema 2, opción 1."
+        clase: contrato-visible
+        falsificador: "Radar cuenta sólo líneas agregadas, o mide sólo el commit de entrega de una Sesión que tiene trailers de Módulo."
+        descartadas:
+          - opcion: "Conservar la fórmula de S113."
+            razon: "Cuenta los .md de planificación, ignora las líneas borradas y mide un solo commit."
+    ruta:
+      propuesta: direct
+      autoridad: "La fórmula, la fuente de las exclusiones y el alcance están decididos, y los archivos son conocidos; no queda decisión de diseño abierta."
+    modulos:
+      - id: M129.1
+        resultado: "Radar mide el lote por Módulo con la fórmula de la política"
+        rutas: [agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/check_test.go, agent-workflows/tools/radar/avance.go]
+        tareas:
+          - id: T129.1.1
+            accion: "RED: cubrir la medición por Módulo con agregadas y borradas, las exclusiones por prefijo y por archivo exacto, el aviso que nombra Sesión y Módulo, la Sesión sin trailers y el plan sin tope."
+            resultado: "RED: las pruebas fallan contra la medición actual."
+            criterios: ["RED: las pruebas fallan contra la medición actual."]
+          - id: T129.1.2
+            accion: "GREEN: agregar `politica.excluir_del_lote`, agrupar por trailer los commits entregados de cada Módulo y medir agregadas más borradas sin las rutas excluidas."
+            resultado: "GREEN: las pruebas nuevas y existentes de Go pasan."
+            criterios: ["GREEN: las pruebas nuevas y existentes de Go pasan."]
+          - id: T129.1.3
+            accion: "REFACTOR: dejar una sola función de medición que reciba commits y exclusiones, reutilizada por el Módulo y por la Sesión sin trailers."
+            resultado: "REFACTOR: existe una única función de medición y go test pasa."
+            criterios: ["REFACTOR: existe una única función de medición y go test pasa."]
+  - id: S130
+    zona: metodo
+    prioridad: metodo-v1
+    resultado: "El puente protege el lote de revisión: revisa sólo el código del Módulo en staging, commitea los artefactos SDD aparte y cierra el intento nativo de un Módulo antes de tocar el siguiente."
+    autoridad: "Aprobación de Emilio del 2026-09-14 (Claude Code, sesión df306f72), problema 2, opción 1, y decisión 3. Evidencia: en la sesión con Pi la revisión nativa contó 584 líneas por incluir los OpenSpec sin commitear frente a 254 de código; en S127 el conteo del intento de M127.1 sumó 456 líneas porque las pruebas de M127.2 ya estaban escritas, y Emilio autorizó el reinicio auditado s127-reset-1."
+    depende_de: []
+    cimientos: []
+    recurso: []
+    criterios:
+      - "`agent-workflows/skills/chanks-4-puente/SKILL.md` declara que la revisión nativa de cada Módulo se hace sobre la proyección staged que contiene sólo los archivos de ese Módulo."
+      - "La skill declara que proposal, specs, design, tasks, apply-progress y verify-report se commitean en un commit de documentación separado de cada commit de Módulo."
+      - "La skill declara que el intento nativo de un Módulo se cierra con `gentle-ai sdd-attempt settle` antes de modificar cualquier archivo del Módulo siguiente."
+      - "`agent-workflows/tests/test_builder_flow.py` falla si alguna de las tres reglas desaparece de la skill."
+      - "`cd agent-workflows && python3 -m unittest discover -s tests` pasa y el diff toca sólo Área."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿El puente también exige cerrar el intento de un Módulo antes de abrir el siguiente?"
+        resolucion: "Sí: el intento nativo se cierra antes de modificar cualquier archivo del Módulo siguiente."
+        autoridad: "Aprobación de Emilio del 2026-09-14, decisión 3."
+        clase: contrato-visible
+        falsificador: "La skill permite empezar un Módulo con el intento del anterior todavía abierto."
+        descartadas:
+          - opcion: "Dejar la regla sólo en la memoria del agente."
+            razon: "Otro agente no la conoce y el conteo de líneas vuelve a mezclar dos Módulos."
+    ruta:
+      propuesta: direct
+      autoridad: "Las tres reglas están decididas y el cambio se limita a una skill y su prueba; no queda decisión de diseño abierta."
+    modulos:
+      - id: M130.1
+        resultado: "El puente escribe las tres reglas que protegen el lote"
+        rutas: [agent-workflows/skills/chanks-4-puente/SKILL.md, agent-workflows/tests/test_builder_flow.py]
+        tareas:
+          - id: T130.1.1
+            accion: "RED: exigir en test_builder_flow.py las reglas de revisión sobre staged, commit separado de artefactos SDD y cierre del intento antes del Módulo siguiente."
+            resultado: "RED: la prueba falla contra el puente actual."
+            criterios: ["RED: la prueba falla contra el puente actual."]
+          - id: T130.1.2
+            accion: "GREEN: agregar las tres reglas a las Hard Rules o a los pasos de ejecución del puente."
+            resultado: "GREEN: la suite del Método pasa."
+            criterios: ["GREEN: la suite del Método pasa."]
+          - id: T130.1.3
+            accion: "REFACTOR: dejar cada regla escrita una sola vez en la skill, sin repetirla entre secciones."
+            resultado: "REFACTOR: ninguna regla queda duplicada y la suite del Método pasa."
+            criterios: ["REFACTOR: ninguna regla queda duplicada y la suite del Método pasa."]
+  - id: S131
+    zona: metodo
+    prioridad: metodo-v1
+    resultado: "El despacho con Herdr prepara cada worktree con la preparación que declara el AGENTS.md del repositorio antes de lanzar el agente."
+    autoridad: "Aprobación de Emilio del 2026-09-14 (Claude Code, sesión df306f72), problema 1, opción 2, y decisión 1 sobre la fuente genérica. Evidencia: agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md crea worktree, tab y agente sin ningún paso de instalación; en la sesión con Pi los cuatro worktrees nacieron sin node_modules y hubo que enlazar dependencias a mano."
+    depende_de: []
+    cimientos: []
+    recurso: []
+    criterios:
+      - "Después de crear `Worktrees/<id>` y antes de abrir la tab, `chanks-3-despacho-herdr` ejecuta dentro de ese worktree el comando de preparación que declara el `AGENTS.md` del repositorio."
+      - "Si el repositorio no declara preparación, la skill lo informa en su tabla de salida y continúa."
+      - "Si la preparación falla, la skill no abre tab ni agente para esa Sesión, reporta el error y deja el worktree creado para que el humano decida."
+      - "La skill nunca copia ni enlaza `node_modules` u otra carpeta de dependencias desde otro checkout."
+      - "`agent-workflows/tests/test_despacho_herdr.py` falla si alguna de esas reglas desaparece; la suite del Método pasa y el diff toca sólo Área."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿De dónde saca la skill de despacho, que sirve para cualquier proyecto, cómo preparar un worktree?"
+        resolucion: "Del `AGENTS.md` del repositorio, que declara su comando de preparación."
+        autoridad: "Aprobación de Emilio del 2026-09-14, decisión 1."
+        clase: contrato-visible
+        falsificador: "La skill fija `bun`, `npm` u otra herramienta concreta, o adivina el comando por el tipo de lockfile."
+        descartadas:
+          - opcion: "Detectar la herramienta por el lockfile presente."
+            razon: "Es frágil y adivina una política que el repositorio no declaró."
+          - opcion: "Fijar `bun ci` en la skill."
+            razon: "La skill dejaría de servir para proyectos que no usan Bun."
+    ruta:
+      propuesta: direct
+      autoridad: "La fuente de la preparación y el comportamiento ante ausencia o falla están decididos; el cambio se limita a una skill y su prueba."
+    modulos:
+      - id: M131.1
+        resultado: "El despacho prepara cada worktree antes de lanzar el agente"
+        rutas: [agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md, agent-workflows/tests/test_despacho_herdr.py]
+        tareas:
+          - id: T131.1.1
+            accion: "RED: exigir que la skill ejecute la preparación declarada en AGENTS.md antes de abrir la tab, informe su ausencia, no lance el agente si falla y nunca enlace dependencias de otro checkout."
+            resultado: "RED: la prueba falla contra la skill actual."
+            criterios: ["RED: la prueba falla contra la skill actual."]
+          - id: T131.1.2
+            accion: "GREEN: agregar el paso de preparación y sus compuertas a la skill de despacho."
+            resultado: "GREEN: la suite del Método pasa."
+            criterios: ["GREEN: la suite del Método pasa."]
+          - id: T131.1.3
+            accion: "REFACTOR: dejar la preparación como un solo paso de ejecución referenciado por las compuertas, sin repetirlo."
+            resultado: "REFACTOR: el paso aparece una sola vez y la suite del Método pasa."
+            criterios: ["REFACTOR: el paso aparece una sola vez y la suite del Método pasa."]
+  - id: S132
+    zona: cimientos
+    prioridad: metodo-v1
+    resultado: "Un worktree limpio de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y su AGENTS.md declara la preparación del worktree y qué reinstalar cuando cambian las herramientas."
+    autoridad: "Aprobación de Emilio del 2026-09-14 (Claude Code, sesión df306f72), problemas 1 y 4, opción 2 y opción 1. Evidencia: test/pre-push-plan-gate.test.mjs:11 apunta a agent-workflows/tools/radar/radar, que no está versionado, y fallaba fuera del checkout principal; el push de de098bf fue rechazado porque ~/.local/bin/radar era anterior a S127. La decisión de S9.3 fija `bun ci` sin reutilizar node_modules."
+    # Depende de S12.1: esa Sesión cambia .githooks/pre-push, el hook que esta prueba ejercita.
+    depende_de: [S12.1]
+    cimientos: [AGENTS.md, test/pre-push-plan-gate.test.mjs]
+    recurso: []
+    criterios:
+      - "`AGENTS.md` declara una sección de preparación de worktree con `bun ci`, sin reutilizar `node_modules` entre checkouts."
+      - "`AGENTS.md` declara qué reinstalar al cerrar: `agent-workflows/tools/install-radar.sh` cuando la entrega toca `agent-workflows/tools/radar/`, y `python3 agent-workflows/tools/install.py` seguido de `--check` cuando toca `agent-workflows/skills/` o `agent-workflows/templates/`, con confirmación humana previa para las skills."
+      - "`test/pre-push-plan-gate.test.mjs` compila Radar en un directorio temporal cuando `agent-workflows/tools/radar/radar` no existe, y usa ese binario cuando existe."
+      - "En un worktree nuevo sin el binario de Radar, `bun test test/pre-push-plan-gate.test.mjs` pasa."
+      - "El diff toca sólo los dos Cimientos reservados."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Quién resuelve que la prueba del gate encuentre Radar en un checkout limpio?"
+        resolucion: "La propia prueba: compila Radar cuando falta el binario."
+        autoridad: "Aprobación de Emilio del 2026-09-14, problema 1, opción 2."
+        clase: contrato-visible
+        falsificador: "La prueba falla en un worktree nuevo por no encontrar el binario de Radar."
+        descartadas:
+          - opcion: "Que la skill de despacho compile Radar."
+            razon: "La prueba seguiría fallando en cualquier otro checkout limpio: un clon nuevo, otra máquina o CI."
+    ruta:
+      propuesta: direct
+      autoridad: "Las dos declaraciones y el comportamiento de la prueba están decididos y los archivos son dos Cimientos exactos reservados."
+    modulos:
+      - id: M132.1
+        resultado: "La prueba del gate compila su propio Radar cuando falta"
+        rutas: [test/pre-push-plan-gate.test.mjs]
+        tareas:
+          - id: T132.1.1
+            accion: "RED: ejecutar la prueba del gate con el binario de Radar ausente y observar que falla por no encontrarlo."
+            resultado: "RED: la prueba falla sin el binario de Radar."
+            criterios: ["RED: la prueba falla sin el binario de Radar."]
+          - id: T132.1.2
+            accion: "GREEN: compilar Radar en un directorio temporal cuando el binario no existe y apuntar RADAR_BIN a ese resultado."
+            resultado: "GREEN: la prueba pasa con y sin el binario presente."
+            criterios: ["GREEN: la prueba pasa con y sin el binario presente."]
+          - id: T132.1.3
+            accion: "REFACTOR: resolver el binario de Radar en un solo helper de la prueba y limpiar el directorio temporal al terminar."
+            resultado: "REFACTOR: existe un único resolvedor y no quedan temporales."
+            criterios: ["REFACTOR: existe un único resolvedor y no quedan temporales."]
+      - id: M132.2
+        resultado: "AGENTS.md declara la preparación del worktree y la reinstalación de herramientas"
+        rutas: [AGENTS.md]
+        tareas:
+          - id: T132.2.1
+            accion: "RED: comprobar que AGENTS.md no declara todavía la preparación del worktree ni qué reinstalar al cerrar."
+            resultado: "RED: las dos declaraciones están ausentes."
+            criterios: ["RED: las dos declaraciones están ausentes."]
+          - id: T132.2.2
+            accion: "GREEN: agregar la sección de preparación con `bun ci` y la tabla de reinstalación por rutas tocadas."
+            resultado: "GREEN: AGENTS.md declara ambas secciones."
+            criterios: ["GREEN: AGENTS.md declara ambas secciones."]
+          - id: T132.2.3
+            accion: "REFACTOR: enlazar las secciones nuevas desde la tabla de contenido de AGENTS.md sin repetir la política de entrega."
+            resultado: "REFACTOR: las secciones están enlazadas y no hay reglas duplicadas."
+            criterios: ["REFACTOR: las secciones están enlazadas y no hay reglas duplicadas."]
+  - id: S133
+    zona: metodo
+    prioridad: metodo-v1
+    resultado: "El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio."
+    autoridad: "Aprobación de Emilio del 2026-09-14 (Claude Code, sesión df306f72), problema 4, opción 1. Evidencia: ninguna skill ni plantilla de agent-workflows reinstala Radar o las skills; el push de de098bf fue rechazado porque ~/.local/bin/radar era anterior a S127 y hubo que correr install-radar.sh a mano."
+    depende_de: []
+    cimientos: []
+    recurso: []
+    criterios:
+      - "`agent-workflows/skills/chanks-7-session-doc/SKILL.md` exige leer del `AGENTS.md` del repositorio qué reinstalar según las rutas que tocó la entrega."
+      - "Cuando corresponde reinstalar, la evidencia de cierre incluye el comando ejecutado y su verificación; sin esa evidencia el cierre no se declara completo y se reporta qué falta."
+      - "Antes de reinstalar skills, la skill exige la confirmación del humano, porque la sincronización cierra las sesiones de Pi abiertas."
+      - "Si el repositorio no declara reinstalación, la skill lo informa y no la exige."
+      - "`agent-workflows/tests/test_builder_flow.py` falla si alguna de esas reglas desaparece; la suite del Método pasa y el diff toca sólo Área."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Quién lleva a la máquina las herramientas que cambió una entrega?"
+        resolucion: "El cierre de la Sesión, según lo que declara el AGENTS.md del repositorio."
+        autoridad: "Aprobación de Emilio del 2026-09-14, problema 4, opción 1."
+        clase: contrato-visible
+        falsificador: "Una Sesión que cambió Radar o una skill se declara cerrada sin evidencia de reinstalación."
+        descartadas:
+          - opcion: "Que el hook de pre-push use el Radar del repositorio en vez del instalado."
+            razon: "En un worktree nuevo ese binario no existe y las skills seguirían sin propagarse."
+    ruta:
+      propuesta: direct
+      autoridad: "El momento, la fuente y la confirmación humana para las skills están decididos; el cambio se limita a una skill y su prueba."
+    modulos:
+      - id: M133.1
+        resultado: "El cierre exige reinstalar lo que cambió la entrega"
+        rutas: [agent-workflows/skills/chanks-7-session-doc/SKILL.md, agent-workflows/tests/test_builder_flow.py]
+        tareas:
+          - id: T133.1.1
+            accion: "RED: exigir en test_builder_flow.py que el cierre lea la reinstalación de AGENTS.md, pida evidencia, exija confirmación humana para skills y no la exija cuando el repositorio no la declara."
+            resultado: "RED: la prueba falla contra la skill de cierre actual."
+            criterios: ["RED: la prueba falla contra la skill de cierre actual."]
+          - id: T133.1.2
+            accion: "GREEN: agregar la reinstalación a las compuertas y a los pasos de ejecución del cierre."
+            resultado: "GREEN: la suite del Método pasa."
+            criterios: ["GREEN: la suite del Método pasa."]
+          - id: T133.1.3
+            accion: "REFACTOR: dejar la regla de reinstalación escrita una sola vez y referenciada desde la compuerta."
+            resultado: "REFACTOR: la regla aparece una sola vez y la suite del Método pasa."
+            criterios: ["REFACTOR: la regla aparece una sola vez y la suite del Método pasa."]
 
 references:
   future_successors:

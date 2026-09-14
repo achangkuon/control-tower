@@ -12,21 +12,21 @@
 - Método #2 → S120 — Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
 
 ## Avance
-- **Total:** 66% (64/96 S)
+- **Total:** 62% (64/102 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 50% (1/2 S)
 - **Autoridad:** 0% (0/1 S)
 - **Capacidades:** 0% (0/1 S)
-- **cimientos:** 33% (1/3 S)
+- **cimientos:** 25% (1/4 S)
 - **Contratos:** 50% (1/2 S)
 - **Enrolamiento:** 0% (0/2 S)
 - **Entrega:** 0% (0/1 S)
 - **Hosts:** 33% (3/9 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 66% (8/12 S)
+- **Método:** 47% (8/17 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -50,6 +50,7 @@
 ### cimientos (cimientos)
 1. **S12.1** · 🟢 LISTO · prioridad Método V1 · Ningún commit llega a master sin que la suite haya corrido sola; va primera porque es la red que hace seguras las tres mudanzas de core.mjs y sin ella cada paso es a ciegas.
 2. **S12.6** · 📋 PLANIFICADO · prioridad V2 · La raíz se ordena y el README describe el producto real.
+3. **S132** · 📋 PLANIFICADO · prioridad Método V1 · Un worktree limpio de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y su AGENTS.md declara la preparación del worktree y qué reinstalar cuando cambian las herramientas.
 
 ### Contratos (contratos)
 - Sin Sesiones abiertas.
@@ -77,6 +78,11 @@
 2. **S120** · 🟢 LISTO · prioridad Método V1 · Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
 3. **S122** · 🟢 LISTO · prioridad Método V1 · Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 4. **S123** · 📋 PLANIFICADO · prioridad V2 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
+5. **S128** · 🟢 LISTO · prioridad Método V1 · Radar reconoce el trailer Modulo de una Sesión full-sdd: el commit cuenta como Módulo entregado de su Sesión y deja de aparecer como trailer desconocido.
+6. **S129** · 📋 PLANIFICADO · prioridad Método V1 · Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
+7. **S130** · 🟢 LISTO · prioridad Método V1 · El puente protege el lote de revisión: revisa sólo el código del Módulo en staging, commitea los artefactos SDD aparte y cierra el intento nativo de un Módulo antes de tocar el siguiente.
+8. **S131** · 🟢 LISTO · prioridad Método V1 · El despacho con Herdr prepara cada worktree con la preparación que declara el AGENTS.md del repositorio antes de lanzar el agente.
+9. **S133** · 🟢 LISTO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · prioridad Torre V1 · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -134,6 +140,12 @@
 - **S125:** propuesta direct (Fuente de evidencia, formato del trailer, salida y reglas de las skills quedan fijados en esta propuesta; no queda diseño abierto.); revalidada direct sobre ef792c1f9bcd811d06d42496cd301a9c0340cf82 con evidencia radar no leía trailers (ningún git log en tools/radar) y S124 dejó cmdSesion y validarAt listos para extender; el aviso vive en cmdCheck y la variante escribirSesionConAvance evita tocar check.go, plan.go y sesion&#95;test.go. Las huellas SHA256 que T125.2.2 pedía actualizar protegen product/tower/generic y quedaron intactas..
 - **S126:** propuesta direct (Disparador, pasos del despacho, layout, dueño de la entrega, los seis chequeos y el orden del retiro quedan fijados por las decisiones aprobadas; resta implementación mecánica con pruebas del Método.); revalidada direct sobre 5b2b754e0bd24e6f73f8d706af3a72414a59c8b0 con evidencia herdr tab close existe en la CLI instalada y el instalador ya registra skills por CHANKS&#95;SKILLS. La plantilla de ruteo prohíbe Tower, MAIN y Support por test, así que las líneas nombran la Torre. Hallazgo: git branch -d rechaza una rama integrada sólo por cherry-pick o rebase; retiro.md la conserva y la reporta, sin forzar..
 - **S127:** propuesta full-sdd (La Sesión cambia contratos compartidos —canon, forma del plan y radar.snapshot/v1— y, hasta que S120 esté entregada, es la única ruta cuya verificación nativa llega al cierre. No se inicia SDD al registrar el plan.); pendiente de revalidación en kickoff.
+- **S128:** propuesta direct (El contrato está determinado —reconocer el trailer por el prefijo de una Sesión con ruta efectiva full-sdd— y los archivos son conocidos; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
+- **S129:** propuesta direct (La fórmula, la fuente de las exclusiones y el alcance están decididos, y los archivos son conocidos; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
+- **S130:** propuesta direct (Las tres reglas están decididas y el cambio se limita a una skill y su prueba; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
+- **S131:** propuesta direct (La fuente de la preparación y el comportamiento ante ausencia o falla están decididos; el cambio se limita a una skill y su prueba.) · prioridad Método V1; pendiente de revalidación en kickoff.
+- **S132:** propuesta direct (Las dos declaraciones y el comportamiento de la prueba están decididos y los archivos son dos Cimientos exactos reservados.) · prioridad Método V1; pendiente de revalidación en kickoff.
+- **S133:** propuesta direct (El momento, la fuente y la confirmación humana para las skills están decididos; el cambio se limita a una skill y su prueba.) · prioridad Método V1; pendiente de revalidación en kickoff.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -3393,6 +3405,157 @@ Rutas: agent-workflows/templates/session-routing.md, agent-workflows/tests/test&
   - [ ] &#96;agent-workflows/skills/&#95;shared/plan-naming-convention.md&#96; declara &#96;prioridad&#96; como atributo opcional de orden, no como nivel, sin campo de tiempo; los cuatro niveles, los siete estados y la lista de sustantivos prohibidos no cambian.
   - [ ] Radar sigue sin escribir &#96;openspec/plan.yaml&#96;; &#96;go test ./...&#96; en &#96;agent-workflows/tools/radar&#96; pasa y &#96;radar check&#96; sobre el plan vigente no suma errores.
   - [ ] El diff toca sólo Área.
+
+### S128 — Radar reconoce el trailer Modulo de una Sesión full-sdd: el commit cuenta como Módulo entregado de su Sesión y deja de aparecer como trailer desconocido.
+- Estado derivado: 🟢 LISTO
+- Zona/Área: metodo · agent-workflows/
+- Depende de: —
+- Cimientos: —
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] Un trailer &#96;Modulo: M&lt;n&gt;.&lt;k&gt;&#96; cuya Sesión S&lt;n&gt; existe y tiene ruta efectiva full-sdd se reconoce como Módulo entregado de esa Sesión y no produce el aviso &#96;trailer de Módulo&#96;.
+  - [ ] Un trailer que no nombra un Módulo del plan ni pertenece a una Sesión full-sdd sigue produciendo el aviso &#96;trailer de Módulo&#96;.
+  - [ ] Para Sesiones direct y design-tasks el avance por Módulo y la marca &#96;a medias k/N&#96; de &#96;radar status&#96; no cambian.
+  - [ ] &#96;radar status&#96; muestra para una Sesión full-sdd con Módulos entregados la cantidad entregada sin un total.
+  - [ ] Sobre el plan vigente, &#96;radar check&#96; deja de reportar los avisos de M127.1, M127.2 y M127.3 y conserva los demás avisos.
+  - [ ] &#96;go test ./...&#96; en &#96;agent-workflows/tools/radar&#96; pasa y el diff toca sólo Área.
+
+#### M128.1 — Radar reconoce los trailers de Sesiones full-sdd
+Rutas: agent-workflows/tools/radar/avance.go, agent-workflows/tools/radar/avance&#95;test.go, agent-workflows/tools/radar/main.go
+
+- **T128.1.1:** RED: exigir que un trailer de una Sesión full-sdd cuente como Módulo entregado sin aviso, que un trailer ajeno siga avisando, que direct y design-tasks no cambien y que status muestre la cantidad entregada sin total. → RED: las pruebas fallan contra el lector de trailers actual.
+  - [ ] RED: las pruebas fallan contra el lector de trailers actual.
+- **T128.1.2:** GREEN: reconocer en AvanceModulosAt los trailers cuyo prefijo nombra una Sesión con ruta efectiva full-sdd y mostrar la cantidad en cmdStatus. → GREEN: las pruebas nuevas y existentes de Go pasan.
+  - [ ] GREEN: las pruebas nuevas y existentes de Go pasan.
+- **T128.1.3:** REFACTOR: resolver el dueño de un trailer en un solo helper reutilizado por el avance y por los avisos. → REFACTOR: existe un único resolvedor de dueño y go test pasa.
+  - [ ] REFACTOR: existe un único resolvedor de dueño y go test pasa.
+
+### S129 — Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
+- Estado derivado: 📋 PLANIFICADO
+- Zona/Área: metodo · agent-workflows/
+- Depende de: S128
+- Cimientos: —
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] Con &#96;politica.tope&#95;de&#95;lote&#96; declarado, Radar mide cada Módulo entregado de una Sesión sumando líneas agregadas y borradas de los commits que llevan su trailer &#96;Modulo:&#96;.
+  - [ ] Las rutas declaradas en &#96;politica.excluir&#95;del&#95;lote&#96; —prefijos de directorio o archivos exactos— no cuentan; sin esa lista no se excluye ninguna ruta.
+  - [ ] Un Módulo que supera el tope emite un aviso &#96;tope de lote&#96; que nombra la Sesión, el Módulo, las líneas medidas y el tope; nunca un error.
+  - [ ] Una Sesión entregada sin trailers de Módulo se mide por su commit de entrega con la misma fórmula.
+  - [ ] Sin &#96;tope&#95;de&#95;lote&#96; declarado Radar no mide ni falla.
+  - [ ] La medición usa la ancestría del HEAD inmutable y nunca el árbol de trabajo.
+  - [ ] &#96;go test ./...&#96; en &#96;agent-workflows/tools/radar&#96; pasa y el diff toca sólo Área.
+
+#### M129.1 — Radar mide el lote por Módulo con la fórmula de la política
+Rutas: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/check&#95;test.go, agent-workflows/tools/radar/avance.go
+
+- **T129.1.1:** RED: cubrir la medición por Módulo con agregadas y borradas, las exclusiones por prefijo y por archivo exacto, el aviso que nombra Sesión y Módulo, la Sesión sin trailers y el plan sin tope. → RED: las pruebas fallan contra la medición actual.
+  - [ ] RED: las pruebas fallan contra la medición actual.
+- **T129.1.2:** GREEN: agregar &#96;politica.excluir&#95;del&#95;lote&#96;, agrupar por trailer los commits entregados de cada Módulo y medir agregadas más borradas sin las rutas excluidas. → GREEN: las pruebas nuevas y existentes de Go pasan.
+  - [ ] GREEN: las pruebas nuevas y existentes de Go pasan.
+- **T129.1.3:** REFACTOR: dejar una sola función de medición que reciba commits y exclusiones, reutilizada por el Módulo y por la Sesión sin trailers. → REFACTOR: existe una única función de medición y go test pasa.
+  - [ ] REFACTOR: existe una única función de medición y go test pasa.
+
+### S130 — El puente protege el lote de revisión: revisa sólo el código del Módulo en staging, commitea los artefactos SDD aparte y cierra el intento nativo de un Módulo antes de tocar el siguiente.
+- Estado derivado: 🟢 LISTO
+- Zona/Área: metodo · agent-workflows/
+- Depende de: —
+- Cimientos: —
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] &#96;agent-workflows/skills/chanks-4-puente/SKILL.md&#96; declara que la revisión nativa de cada Módulo se hace sobre la proyección staged que contiene sólo los archivos de ese Módulo.
+  - [ ] La skill declara que proposal, specs, design, tasks, apply-progress y verify-report se commitean en un commit de documentación separado de cada commit de Módulo.
+  - [ ] La skill declara que el intento nativo de un Módulo se cierra con &#96;gentle-ai sdd-attempt settle&#96; antes de modificar cualquier archivo del Módulo siguiente.
+  - [ ] &#96;agent-workflows/tests/test&#95;builder&#95;flow.py&#96; falla si alguna de las tres reglas desaparece de la skill.
+  - [ ] &#96;cd agent-workflows &amp;&amp; python3 -m unittest discover -s tests&#96; pasa y el diff toca sólo Área.
+
+#### M130.1 — El puente escribe las tres reglas que protegen el lote
+Rutas: agent-workflows/skills/chanks-4-puente/SKILL.md, agent-workflows/tests/test&#95;builder&#95;flow.py
+
+- **T130.1.1:** RED: exigir en test&#95;builder&#95;flow.py las reglas de revisión sobre staged, commit separado de artefactos SDD y cierre del intento antes del Módulo siguiente. → RED: la prueba falla contra el puente actual.
+  - [ ] RED: la prueba falla contra el puente actual.
+- **T130.1.2:** GREEN: agregar las tres reglas a las Hard Rules o a los pasos de ejecución del puente. → GREEN: la suite del Método pasa.
+  - [ ] GREEN: la suite del Método pasa.
+- **T130.1.3:** REFACTOR: dejar cada regla escrita una sola vez en la skill, sin repetirla entre secciones. → REFACTOR: ninguna regla queda duplicada y la suite del Método pasa.
+  - [ ] REFACTOR: ninguna regla queda duplicada y la suite del Método pasa.
+
+### S131 — El despacho con Herdr prepara cada worktree con la preparación que declara el AGENTS.md del repositorio antes de lanzar el agente.
+- Estado derivado: 🟢 LISTO
+- Zona/Área: metodo · agent-workflows/
+- Depende de: —
+- Cimientos: —
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] Después de crear &#96;Worktrees/&lt;id&gt;&#96; y antes de abrir la tab, &#96;chanks-3-despacho-herdr&#96; ejecuta dentro de ese worktree el comando de preparación que declara el &#96;AGENTS.md&#96; del repositorio.
+  - [ ] Si el repositorio no declara preparación, la skill lo informa en su tabla de salida y continúa.
+  - [ ] Si la preparación falla, la skill no abre tab ni agente para esa Sesión, reporta el error y deja el worktree creado para que el humano decida.
+  - [ ] La skill nunca copia ni enlaza &#96;node&#95;modules&#96; u otra carpeta de dependencias desde otro checkout.
+  - [ ] &#96;agent-workflows/tests/test&#95;despacho&#95;herdr.py&#96; falla si alguna de esas reglas desaparece; la suite del Método pasa y el diff toca sólo Área.
+
+#### M131.1 — El despacho prepara cada worktree antes de lanzar el agente
+Rutas: agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md, agent-workflows/tests/test&#95;despacho&#95;herdr.py
+
+- **T131.1.1:** RED: exigir que la skill ejecute la preparación declarada en AGENTS.md antes de abrir la tab, informe su ausencia, no lance el agente si falla y nunca enlace dependencias de otro checkout. → RED: la prueba falla contra la skill actual.
+  - [ ] RED: la prueba falla contra la skill actual.
+- **T131.1.2:** GREEN: agregar el paso de preparación y sus compuertas a la skill de despacho. → GREEN: la suite del Método pasa.
+  - [ ] GREEN: la suite del Método pasa.
+- **T131.1.3:** REFACTOR: dejar la preparación como un solo paso de ejecución referenciado por las compuertas, sin repetirlo. → REFACTOR: el paso aparece una sola vez y la suite del Método pasa.
+  - [ ] REFACTOR: el paso aparece una sola vez y la suite del Método pasa.
+
+### S132 — Un worktree limpio de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y su AGENTS.md declara la preparación del worktree y qué reinstalar cuando cambian las herramientas.
+- Estado derivado: 📋 PLANIFICADO
+- Zona/Área: cimientos · —
+- Depende de: S12.1
+- Cimientos: AGENTS.md, test/pre-push-plan-gate.test.mjs
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] &#96;AGENTS.md&#96; declara una sección de preparación de worktree con &#96;bun ci&#96;, sin reutilizar &#96;node&#95;modules&#96; entre checkouts.
+  - [ ] &#96;AGENTS.md&#96; declara qué reinstalar al cerrar: &#96;agent-workflows/tools/install-radar.sh&#96; cuando la entrega toca &#96;agent-workflows/tools/radar/&#96;, y &#96;python3 agent-workflows/tools/install.py&#96; seguido de &#96;--check&#96; cuando toca &#96;agent-workflows/skills/&#96; o &#96;agent-workflows/templates/&#96;, con confirmación humana previa para las skills.
+  - [ ] &#96;test/pre-push-plan-gate.test.mjs&#96; compila Radar en un directorio temporal cuando &#96;agent-workflows/tools/radar/radar&#96; no existe, y usa ese binario cuando existe.
+  - [ ] En un worktree nuevo sin el binario de Radar, &#96;bun test test/pre-push-plan-gate.test.mjs&#96; pasa.
+  - [ ] El diff toca sólo los dos Cimientos reservados.
+
+#### M132.1 — La prueba del gate compila su propio Radar cuando falta
+Rutas: test/pre-push-plan-gate.test.mjs
+
+- **T132.1.1:** RED: ejecutar la prueba del gate con el binario de Radar ausente y observar que falla por no encontrarlo. → RED: la prueba falla sin el binario de Radar.
+  - [ ] RED: la prueba falla sin el binario de Radar.
+- **T132.1.2:** GREEN: compilar Radar en un directorio temporal cuando el binario no existe y apuntar RADAR&#95;BIN a ese resultado. → GREEN: la prueba pasa con y sin el binario presente.
+  - [ ] GREEN: la prueba pasa con y sin el binario presente.
+- **T132.1.3:** REFACTOR: resolver el binario de Radar en un solo helper de la prueba y limpiar el directorio temporal al terminar. → REFACTOR: existe un único resolvedor y no quedan temporales.
+  - [ ] REFACTOR: existe un único resolvedor y no quedan temporales.
+
+#### M132.2 — AGENTS.md declara la preparación del worktree y la reinstalación de herramientas
+Rutas: AGENTS.md
+
+- **T132.2.1:** RED: comprobar que AGENTS.md no declara todavía la preparación del worktree ni qué reinstalar al cerrar. → RED: las dos declaraciones están ausentes.
+  - [ ] RED: las dos declaraciones están ausentes.
+- **T132.2.2:** GREEN: agregar la sección de preparación con &#96;bun ci&#96; y la tabla de reinstalación por rutas tocadas. → GREEN: AGENTS.md declara ambas secciones.
+  - [ ] GREEN: AGENTS.md declara ambas secciones.
+- **T132.2.3:** REFACTOR: enlazar las secciones nuevas desde la tabla de contenido de AGENTS.md sin repetir la política de entrega. → REFACTOR: las secciones están enlazadas y no hay reglas duplicadas.
+  - [ ] REFACTOR: las secciones están enlazadas y no hay reglas duplicadas.
+
+### S133 — El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
+- Estado derivado: 🟢 LISTO
+- Zona/Área: metodo · agent-workflows/
+- Depende de: —
+- Cimientos: —
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] &#96;agent-workflows/skills/chanks-7-session-doc/SKILL.md&#96; exige leer del &#96;AGENTS.md&#96; del repositorio qué reinstalar según las rutas que tocó la entrega.
+  - [ ] Cuando corresponde reinstalar, la evidencia de cierre incluye el comando ejecutado y su verificación; sin esa evidencia el cierre no se declara completo y se reporta qué falta.
+  - [ ] Antes de reinstalar skills, la skill exige la confirmación del humano, porque la sincronización cierra las sesiones de Pi abiertas.
+  - [ ] Si el repositorio no declara reinstalación, la skill lo informa y no la exige.
+  - [ ] &#96;agent-workflows/tests/test&#95;builder&#95;flow.py&#96; falla si alguna de esas reglas desaparece; la suite del Método pasa y el diff toca sólo Área.
+
+#### M133.1 — El cierre exige reinstalar lo que cambió la entrega
+Rutas: agent-workflows/skills/chanks-7-session-doc/SKILL.md, agent-workflows/tests/test&#95;builder&#95;flow.py
+
+- **T133.1.1:** RED: exigir en test&#95;builder&#95;flow.py que el cierre lea la reinstalación de AGENTS.md, pida evidencia, exija confirmación humana para skills y no la exija cuando el repositorio no la declara. → RED: la prueba falla contra la skill de cierre actual.
+  - [ ] RED: la prueba falla contra la skill de cierre actual.
+- **T133.1.2:** GREEN: agregar la reinstalación a las compuertas y a los pasos de ejecución del cierre. → GREEN: la suite del Método pasa.
+  - [ ] GREEN: la suite del Método pasa.
+- **T133.1.3:** REFACTOR: dejar la regla de reinstalación escrita una sola vez y referenciada desde la compuerta. → REFACTOR: la regla aparece una sola vez y la suite del Método pasa.
+  - [ ] REFACTOR: la regla aparece una sola vez y la suite del Método pasa.
 
 ## Capacidad
 2 Zona(s) compatibles con trabajo LISTO: cimientos, metodo.
