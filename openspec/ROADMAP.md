@@ -2,7 +2,7 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S134, S135, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S134, S135, S136, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Método V1.
 - Próximo trabajo ejecutable: cimientos #2 → S132 — Un worktree limpio de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y su AGENTS.md declara la preparación del worktree y qué reinstalar cuando cambian las herramientas..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
@@ -12,14 +12,14 @@
 - Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 
 ## Avance
-- **Total:** 64% (68/105 S)
+- **Total:** 65% (69/105 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 50% (1/2 S)
 - **Autoridad:** 0% (0/1 S)
 - **Capacidades:** 0% (0/1 S)
-- **cimientos:** 40% (2/5 S)
+- **cimientos:** 60% (3/5 S)
 - **Contratos:** 50% (1/2 S)
 - **Enrolamiento:** 0% (0/2 S)
 - **Entrega:** 0% (0/1 S)
@@ -50,7 +50,6 @@
 ### cimientos (cimientos)
 1. **S12.6** · 📋 PLANIFICADO · prioridad V2 · La raíz se ordena y el README describe el producto real.
 2. **S132** · 🟢 LISTO · prioridad Método V1 · Un worktree limpio de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y su AGENTS.md declara la preparación del worktree y qué reinstalar cuando cambian las herramientas.
-3. **S136** · 🟢 LISTO · prioridad Método V1 · Control Tower recibe errores, bugs y fricciones de proceso mediante un formulario único de GitHub que exige búsqueda de duplicados, evidencia y limpieza de datos sensibles antes de publicar.
 
 ### Contratos (contratos)
 - Sin Sesiones abiertas.
@@ -147,7 +146,7 @@
 - **S133:** propuesta direct (El momento, la fuente y la confirmación humana para las skills están decididos; el cambio se limita a una skill y su prueba.) · prioridad Método V1; pendiente de revalidación en kickoff.
 - **S134:** propuesta direct (Las frases, las superficies y los archivos están identificados y el cálculo de capacidad no cambia; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
 - **S135:** propuesta direct (Las cuatro decisiones están tomadas, las superficies y archivos están identificados y el cambio en Radar es una regla acotada; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
-- **S136:** propuesta direct (El destino, el formulario de referencia, los controles obligatorios, la ruta exacta y los primeros reportes están determinados; no queda una decisión técnica abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
+- **S136:** propuesta direct (El destino, el formulario de referencia, los controles obligatorios, la ruta exacta y los primeros reportes están determinados; no queda una decisión técnica abierta.) · prioridad Método V1; revalidada direct sobre b97b41cde3ebab70cade2c8201a59d1ea876af2c con evidencia El formulario de referencia de gentle-pi, las etiquetas existentes, el permiso ADMIN, la ausencia inicial 404 y el contrato de S136 fijaron una única ruta y un único archivo; la verificación independiente pasó sin ampliar el alcance..
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -3628,7 +3627,7 @@ Rutas: agent-workflows/skills/&#95;shared/plan-naming-convention.md, agent-workf
   - [ ] REFACTOR: la regla vive una vez y la suite del Método pasa.
 
 ### S136 — Control Tower recibe errores, bugs y fricciones de proceso mediante un formulario único de GitHub que exige búsqueda de duplicados, evidencia y limpieza de datos sensibles antes de publicar.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: ✅ COMPLETO
 - Zona/Área: cimientos · —
 - Depende de: —
 - Cimientos: .github/ISSUE&#95;TEMPLATE/friction&#95;report.yml

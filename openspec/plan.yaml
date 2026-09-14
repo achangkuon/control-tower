@@ -8609,6 +8609,12 @@ sesiones:
     ruta:
       propuesta: direct
       autoridad: "El destino, el formulario de referencia, los controles obligatorios, la ruta exacta y los primeros reportes están determinados; no queda una decisión técnica abierta."
+      revalidacion:
+        resultado: direct
+        base: b97b41cde3ebab70cade2c8201a59d1ea876af2c
+        evidencia: "El formulario de referencia de gentle-pi, las etiquetas existentes, el permiso ADMIN, la ausencia inicial 404 y el contrato de S136 fijaron una única ruta y un único archivo; la verificación independiente pasó sin ampliar el alcance."
+    entrega:
+      commit: 9731cf5cdc0fc9caebf79612778c39f754089bb2
     modulos:
       - id: M136.1
         resultado: "Formulario único y publicable de fricciones de Control Tower"
