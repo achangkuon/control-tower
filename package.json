@@ -2,6 +2,10 @@
   "name": "control-tower",
   "private": true,
   "type": "module",
+  "scripts": {
+    "test": "bun test",
+    "hooks": "git config core.hooksPath .githooks"
+  },
   "dependencies": {
     "@opencode-ai/plugin": "1.18.13",
     "@opencode-ai/sdk": "1.18.13",
