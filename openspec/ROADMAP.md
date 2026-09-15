@@ -11,7 +11,7 @@
 - Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 
 ## Avance
-- **Total:** 70% (77/109 S)
+- **Total:** 70% (77/110 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -25,7 +25,7 @@
 - **Hosts:** 33% (3/9 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 77% (17/22 S)
+- **Método:** 73% (17/23 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -76,6 +76,7 @@
 3. **S123** · 📋 PLANIFICADO · prioridad V2 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
 4. **S129** · 🟢 LISTO · prioridad Método V1 · Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
 5. **S133** · 🟢 LISTO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
+6. **S141** · 🟢 LISTO · prioridad Método V1 · Toda intención manual de iniciar, continuar o retomar implementación atraviesa una admisión Radar fresca antes de elegir skill; una Sesión no elegible sólo produce su estado y las opciones LISTO actuales, sin caer en cierre de decisiones.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · prioridad Torre V1 · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -146,6 +147,7 @@
 - **S138:** propuesta direct (El contrato del issue &#35;134, las tres rutas y las aserciones textuales están determinados; no queda diseño técnico ni cambio de ownership de rutas pendiente.) · prioridad Método V1; revalidada direct sobre f61894b0614b8a4eda6d4374c19ceb57ed805e4e con evidencia Sobre master limpio, agent-workflows/skills/chanks-4-puente/SKILL.md:21,37-38 exige verify, review y trailer por Módulo pero no declara una única candidata de Sesión ni separa Tareas de commits/review; agent-workflows/tests/test&#95;builder&#95;flow.py:111-120 fija trailers y commits por Módulo sin cubrir Tareas, alcance de review ni excepción humana. S130 quedó archivada y S135 conserva ownership de rutas. El delta está completamente determinado en estas dos rutas, por lo que direct sigue siendo la ruta proporcional..
 - **S139:** propuesta direct (El formato, los enums, la conducta stale, la compatibilidad y las pruebas negativas están determinados; no queda una decisión técnica abierta.) · prioridad Método V1; revalidada direct sobre 5043970caba49a8a91f68f80187f51358d0791df con evidencia partition.go origina los cinco avisos desde reglas sin uso; plan.go mantiene rutas como strings para diez consumidores y más de cincuenta fixtures, por lo que un parser union inline que proyecta a strings minimiza el cambio sin duplicar ownership..
 - **S140:** propuesta direct (S139 define el único formato admitido y las cinco declaraciones exactas ya están identificadas; la activación es una migración mecánica del plan.) · prioridad Método V1; revalidada direct sobre 1458037f74069127d782e6088a184aa377c1493b con evidencia El parser entregado carga formas escalares e inline sin cambiar ownership; las cinco rutas observadas siguen ausentes en HEAD y corresponden exactamente a los dos enums cerrados de S139..
+- **S141:** propuesta direct (Radar ya expone HEAD, prioridad, estados, colas y asientos; el cambio sólo conecta esos datos en contratos y regresiones Chanks con conducta completamente determinada.) · prioridad Método V1; revalidada direct sobre 168a47e528c174868c4487537a5b9319efbdc28c con evidencia El bypass persiste: session-routing contiene prosa advisory, kickoff consulta sólo &#96;radar sesion&#96;, cierre de decisiones lee plan.yaml directamente y las pruebas de instalación verifican palabras aisladas en vez de la ruta negativa. Support ya posee la frontera Radar reutilizable..
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -3751,6 +3753,31 @@ Rutas: openspec/plan.yaml
   - [ ] Cada anotación queda junto a su única declaración de ruta.
 - **T140.1.3:** REFACTOR: regenerar ROADMAP y confirmar que status, render y la suite Radar no cambian su semántica. → REFACTOR: la vista y las comprobaciones quedan convergentes.
   - [ ] &#96;go test ./...&#96;, &#96;radar check&#96; y &#96;radar render&#96; pasan.
+
+### S141 — Toda intención manual de iniciar, continuar o retomar implementación atraviesa una admisión Radar fresca antes de elegir skill; una Sesión no elegible sólo produce su estado y las opciones LISTO actuales, sin caer en cierre de decisiones.
+- Estado derivado: 🟢 LISTO
+- Zona/Área: metodo · agent-workflows/
+- Depende de: —
+- Cimientos: —
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] Support define un bundle de admisibilidad ligado al HEAD actual, compuesto por &#96;radar status --json&#96;, &#96;radar sesion &lt;ID&gt;&#96;, el estado/bloqueo pedido y las opciones &#96;LISTO&#96; en orden de cola por Zona.
+  - [ ] El bundle distingue explícitamente capacidad compatible (&#96;asientos&#96;), longitud/orden de cola y cantidad de opciones &#96;LISTO&#96;; ninguno se presenta como cantidad de agentes asignables.
+  - [ ] El routing exige ese bundle fresco antes de seleccionar cualquier skill para start/continue/resume implementation; una Sesión no &#96;LISTO&#96; produce sólo estado, bloqueo y opciones actuales.
+  - [ ] &#96;chanks-3-session-kickoff&#96; falla cerrado ante bundle ausente, HEAD divergente o ID no admisible, y preserva el resume exacto desde el primer Módulo pendiente cuando la Sesión ya iniciada tiene evidencia válida.
+  - [ ] &#96;chanks-1-cierre-de-decisiones&#96; se activa sólo por pedido humano explícito de resolver la decisión nombrada, consume evidencia Radar mediante Support y nunca es fallback de una continuación rechazada.
+  - [ ] La plantilla instalada proyecta el mismo gate en los cuatro runtimes; las pruebas fallan si reaparece lectura directa de &#96;plan.yaml&#96;, bypass de kickoff o confusión entre asientos, cola y opciones LISTO.
+  - [ ] El cambio toca sólo &#96;agent-workflows/&#96;, no carga Tower, y &#96;python3 -m unittest discover -s agent-workflows/tests&#96; pasa.
+
+#### M141.1 — Gate de admisión Radar imposible de saltear en routing, Support, kickoff y cierre de decisiones.
+Rutas: agent-workflows/skills/chanks-0-agente-soporte/SKILL.md, agent-workflows/skills/chanks-0-agente-soporte/assets/brief-diario.md, agent-workflows/skills/chanks-0-agente-soporte/assets/assignment-implementation.md, agent-workflows/skills/chanks-3-session-kickoff/SKILL.md, agent-workflows/skills/chanks-1-cierre-de-decisiones/SKILL.md, agent-workflows/skills/chanks-1-cierre-de-decisiones/references/decision-extraction.md, agent-workflows/templates/session-routing.md, agent-workflows/tests/test&#95;builder&#95;flow.py, agent-workflows/tests/test&#95;install.py
+
+- **T141.1.1:** RED: exigir bundle fresco, rechazo de no-LISTO sin fallback, pedido explícito de decisiones, resume exacto y separación asientos/cola/opciones. → RED: las pruebas contractuales fallan contra el routing advisory, kickoff sin admisión y lectura directa del plan.
+  - [ ] Cada bypass y confusión de capacidad tiene una aserción negativa nombrada.
+- **T141.1.2:** GREEN: definir el bundle en Support y hacerlo obligatorio en routing, kickoff y cierre de decisiones sin duplicar el cálculo de Radar. → GREEN: una intención elegible llega a kickoff; una no elegible termina con estado y opciones, y una decisión sólo abre por pedido explícito.
+  - [ ] El mismo HEAD e ID aparecen en status, sesion, handoff y readback.
+- **T141.1.3:** REFACTOR: eliminar lectura directa y prosa duplicada, proyectar el gate a instalación y conservar el boundary manual/Tower. → REFACTOR: Support produce evidencia, routing elige, kickoff defiende y cierre de decisiones queda aislado.
+  - [ ] El diff queda en las nueve rutas declaradas y la suite del Método pasa.
 
 ## Capacidad
 1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: metodo.
