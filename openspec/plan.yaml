@@ -8847,6 +8847,97 @@ sesiones:
     entrega:
       commit: dc182f99500a1f6d13fe1232e74607582dee6890
 
+  - id: S139
+    zona: metodo
+    prioridad: metodo-v1
+    resultado: "Radar admite una clasificación inline y cerrada para rutas intencionalmente ausentes, silencia sólo esas declaraciones y falla si la clasificación queda obsoleta."
+    autoridad: "Issue #135 aprobado por Emilio para este lote: los cinco avisos permanentes corresponden a cuatro rutas legacy retiradas y una reserva futura; deben seguir auditables en plan.yaml sin duplicar la declaración de ownership ni ocultar ausencias inesperadas."
+    depende_de: []
+    cimientos: []
+    recurso: []
+    criterios:
+      - "Las reglas de `zonas[].rutas` y `cimientos.rutas` aceptan la forma escalar vigente o una forma inline con `ruta` y `ausencia_intencional`, sin una lista paralela de excepciones."
+      - "`ausencia_intencional` acepta sólo `legado-retirado` o `reserva-futura`; claves, valores o formas desconocidas fallan cerrado al cargar el plan."
+      - "Una regla anotada y realmente ausente no emite `rutas reales`, mientras toda regla ausente no anotada conserva el aviso actual."
+      - "Si una regla anotada ya corresponde a un archivo tracked, Radar devuelve un error stale en vez de conservar o ignorar silenciosamente la clasificación."
+      - "La representación interna preserva los consumidores existentes de rutas, y `go test ./...` pasa en `agent-workflows/tools/radar`."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Dónde se declara que una ruta ausente es intencional?"
+        resolucion: "En la misma entrada de ruta, mediante metadato inline; no existe un registro raíz que repita la identidad de la regla."
+        autoridad: "Diseño derivable del requisito explícito de #135 de conservar una sola fuente de verdad."
+        clase: contrato-visible
+        falsificador: "Una excepción repite la ruta fuera de su declaración de ownership o puede silenciar otra regla."
+        descartadas:
+          - opcion: "Lista raíz de rutas ausentes."
+            razon: "Repite la identidad zona/cimiento+ruta y crea dos lugares que pueden divergir."
+      - tipo: resuelta
+        pregunta: "¿Qué razones machine-readable admite la clasificación?"
+        resolucion: "Un enum cerrado con `legado-retirado` y `reserva-futura`."
+        autoridad: "Los cinco casos observados pertenecen exactamente a esas dos causas y requieren evidencia distinguible."
+        clase: contrato-visible
+        falsificador: "Un valor libre o desconocido es aceptado, o las dos causas dejan de distinguirse."
+        descartadas: []
+    ruta:
+      propuesta: direct
+      autoridad: "El formato, los enums, la conducta stale, la compatibilidad y las pruebas negativas están determinados; no queda una decisión técnica abierta."
+      revalidacion:
+        resultado: direct
+        base: 5043970caba49a8a91f68f80187f51358d0791df
+        evidencia: "partition.go origina los cinco avisos desde reglas sin uso; plan.go mantiene rutas como strings para diez consumidores y más de cincuenta fixtures, por lo que un parser union inline que proyecta a strings minimiza el cambio sin duplicar ownership."
+    modulos:
+      - id: M139.1
+        resultado: "Contrato Radar para clasificar una ausencia intencional en su única declaración de ruta."
+        rutas: [agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/partition.go, agent-workflows/tools/radar/contract_test.go, agent-workflows/tools/radar/future_paths_test.go]
+        tareas:
+          - id: T139.1.1
+            accion: "RED: exigir parser cerrado, supresión exacta, preservación de avisos no anotados y rechazo stale."
+            resultado: "RED: las pruebas fallan contra el parser escalar y los avisos actuales."
+            criterios: ["Cada forma inválida, supresión indebida y clasificación stale tiene una aserción falsificable."]
+          - id: T139.1.2
+            accion: "GREEN: aceptar el metadato inline, proyectar las rutas a los consumidores actuales y aplicar sólo la supresión exacta."
+            resultado: "GREEN: las nuevas pruebas y la suite Radar pasan."
+            criterios: ["No cambia el resultado para planes que usan sólo rutas escalares."]
+          - id: T139.1.3
+            accion: "REFACTOR: centralizar el enum y separar coincidencia tracked de reserva futura para que stale no dependa de `usadas`."
+            resultado: "REFACTOR: el contrato queda cerrado, legible y sin una segunda lista de ownership."
+            criterios: ["El diff queda dentro de las cuatro rutas declaradas y `go test ./...` pasa."]
+
+  - id: S140
+    zona: autoridad
+    prioridad: metodo-v1
+    resultado: "El plan clasifica inline sus cinco rutas intencionalmente ausentes y `radar check` vuelve a cero avisos sin borrar ownership histórico o futuro."
+    autoridad: "Activación de #135 separada de S139 porque `openspec/plan.yaml` pertenece a la Zona Autoridad y el motor Radar pertenece a Método."
+    depende_de: [S139]
+    cimientos: []
+    recurso: []
+    criterios:
+      - "`profiles/` y las tres rutas retiradas `skills/torre-control-*` se declaran inline como `legado-retirado`."
+      - "`test/install/tower-role-assets.contract.mjs` se declara inline como `reserva-futura`."
+      - "No cambia ninguna regla de ownership, no aparece una lista paralela y los comentarios narrativos dejan de ser la única clasificación operativa."
+      - "`radar check -C .` devuelve 0 errores y 0 avisos; `radar status` y `radar render` siguen pasando."
+    decisiones: []
+    ruta:
+      propuesta: direct
+      autoridad: "S139 define el único formato admitido y las cinco declaraciones exactas ya están identificadas; la activación es una migración mecánica del plan."
+    modulos:
+      - id: M140.1
+        resultado: "Activación de las cinco clasificaciones de ausencia intencional."
+        rutas: [openspec/plan.yaml]
+        tareas:
+          - id: T140.1.1
+            accion: "RED: ejecutar Radar contra el plan sin anotaciones y conservar los cinco avisos observados."
+            resultado: "RED: `radar check` informa 0 errores y 5 avisos."
+            criterios: ["Los cinco avisos corresponden exactamente a las rutas de #135."]
+          - id: T140.1.2
+            accion: "GREEN: convertir sólo esas cinco entradas a la forma inline con su enum aprobado."
+            resultado: "GREEN: `radar check` informa 0 errores y 0 avisos."
+            criterios: ["Cada anotación queda junto a su única declaración de ruta."]
+          - id: T140.1.3
+            accion: "REFACTOR: regenerar ROADMAP y confirmar que status, render y la suite Radar no cambian su semántica."
+            resultado: "REFACTOR: la vista y las comprobaciones quedan convergentes."
+            criterios: ["`go test ./...`, `radar check` y `radar render` pasan."]
+
 references:
   future_successors:
     - id: S102

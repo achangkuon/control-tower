@@ -11,12 +11,12 @@
 - Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 
 ## Avance
-- **Total:** 70% (75/107 S)
+- **Total:** 68% (75/109 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 50% (1/2 S)
-- **Autoridad:** 0% (0/1 S)
+- **Autoridad:** 0% (0/2 S)
 - **Capacidades:** 0% (0/1 S)
 - **cimientos:** 80% (4/5 S)
 - **Contratos:** 50% (1/2 S)
@@ -25,7 +25,7 @@
 - **Hosts:** 33% (3/9 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 76% (16/21 S)
+- **Método:** 72% (16/22 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -41,7 +41,7 @@
 1. **S108** · 📋 PLANIFICADO · prioridad Torre V1 · Ciclo idempotente de tabs worker Tower-owned desde witnesses S121 y estado terminal Radar
 
 ### Autoridad (autoridad)
-- Sin Sesiones abiertas.
+1. **S140** · 📋 PLANIFICADO · prioridad Método V1 · El plan clasifica inline sus cinco rutas intencionalmente ausentes y &#96;radar check&#96; vuelve a cero avisos sin borrar ownership histórico o futuro.
 
 ### Capacidades (capacidades)
 1. **S101** · 🔴 BLOQUEADO · prioridad V2 · Resolución de política: prepare&#95;through opaco y horizon&#95;ceiling salen de la política resuelta
@@ -76,6 +76,7 @@
 3. **S123** · 📋 PLANIFICADO · prioridad V2 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
 4. **S129** · 🟢 LISTO · prioridad Método V1 · Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
 5. **S133** · 🟢 LISTO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
+6. **S139** · 🟢 LISTO · prioridad Método V1 · Radar admite una clasificación inline y cerrada para rutas intencionalmente ausentes, silencia sólo esas declaraciones y falla si la clasificación queda obsoleta.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · prioridad Torre V1 · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -144,6 +145,8 @@
 - **S136:** propuesta direct (El destino, el formulario de referencia, los controles obligatorios, la ruta exacta y los primeros reportes están determinados; no queda una decisión técnica abierta.) · prioridad Método V1; revalidada direct sobre b97b41cde3ebab70cade2c8201a59d1ea876af2c con evidencia El formulario de referencia de gentle-pi, las etiquetas existentes, el permiso ADMIN, la ausencia inicial 404 y el contrato de S136 fijaron una única ruta y un único archivo; la verificación independiente pasó sin ampliar el alcance..
 - **S137:** propuesta direct (El runtime admitido, la separación Herdr/Intercom, las operaciones permitidas, los rechazos, la ruta de decisiones y el límite pre-V1 están resueltos y se verifican en una skill, su routing instalado y pruebas contractuales.) · prioridad Método V1; revalidada direct sobre 87f80ba6320eaf98618cf7e51b8bc3d8948da7dc con evidencia El dispatcher actual acepta cualquier agent kind y en su paso 6 espera cada agente; el routing instalado repite el despacho Herdr sin contrato de transporte. Las tres rutas declaradas contienen toda la corrección: pruebas textuales RED, skill Pi-only con Intercom fire-and-forget y proyección del mismo límite en las instrucciones instaladas. No requiere diseño técnico ni toca el lifecycle de pool reservado a S131..
 - **S138:** propuesta direct (El contrato del issue &#35;134, las tres rutas y las aserciones textuales están determinados; no queda diseño técnico ni cambio de ownership de rutas pendiente.) · prioridad Método V1; revalidada direct sobre f61894b0614b8a4eda6d4374c19ceb57ed805e4e con evidencia Sobre master limpio, agent-workflows/skills/chanks-4-puente/SKILL.md:21,37-38 exige verify, review y trailer por Módulo pero no declara una única candidata de Sesión ni separa Tareas de commits/review; agent-workflows/tests/test&#95;builder&#95;flow.py:111-120 fija trailers y commits por Módulo sin cubrir Tareas, alcance de review ni excepción humana. S130 quedó archivada y S135 conserva ownership de rutas. El delta está completamente determinado en estas dos rutas, por lo que direct sigue siendo la ruta proporcional..
+- **S139:** propuesta direct (El formato, los enums, la conducta stale, la compatibilidad y las pruebas negativas están determinados; no queda una decisión técnica abierta.) · prioridad Método V1; revalidada direct sobre 5043970caba49a8a91f68f80187f51358d0791df con evidencia partition.go origina los cinco avisos desde reglas sin uso; plan.go mantiene rutas como strings para diez consumidores y más de cincuenta fixtures, por lo que un parser union inline que proyecta a strings minimiza el cambio sin duplicar ownership..
+- **S140:** propuesta direct (S139 define el único formato admitido y las cinco declaraciones exactas ya están identificadas; la activación es una migración mecánica del plan.) · prioridad Método V1; pendiente de revalidación en kickoff.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -3704,6 +3707,51 @@ Rutas: agent-workflows/skills/chanks-4-puente/SKILL.md, agent-workflows/tests/te
   - [ ] Las reglas aprobadas aparecen una vez y las aserciones nuevas y existentes pasan.
 - **T138.1.3:** REFACTOR: eliminar ambigüedad o duplicación entre el flujo de ejecución y el contrato de review, conservando verify obligatorio, archive exclusivo de full-sdd y el límite de 400 líneas de la política. → REFACTOR: la regla queda coherente, no recrea S130 y mantiene la compatibilidad de rutas.
   - [ ] El diff queda dentro de las dos rutas declaradas y la suite del Método pasa.
+
+### S139 — Radar admite una clasificación inline y cerrada para rutas intencionalmente ausentes, silencia sólo esas declaraciones y falla si la clasificación queda obsoleta.
+- Estado derivado: 🟢 LISTO
+- Zona/Área: metodo · agent-workflows/
+- Depende de: —
+- Cimientos: —
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] Las reglas de &#96;zonas&#91;&#93;.rutas&#96; y &#96;cimientos.rutas&#96; aceptan la forma escalar vigente o una forma inline con &#96;ruta&#96; y &#96;ausencia&#95;intencional&#96;, sin una lista paralela de excepciones.
+  - [ ] &#96;ausencia&#95;intencional&#96; acepta sólo &#96;legado-retirado&#96; o &#96;reserva-futura&#96;; claves, valores o formas desconocidas fallan cerrado al cargar el plan.
+  - [ ] Una regla anotada y realmente ausente no emite &#96;rutas reales&#96;, mientras toda regla ausente no anotada conserva el aviso actual.
+  - [ ] Si una regla anotada ya corresponde a un archivo tracked, Radar devuelve un error stale en vez de conservar o ignorar silenciosamente la clasificación.
+  - [ ] La representación interna preserva los consumidores existentes de rutas, y &#96;go test ./...&#96; pasa en &#96;agent-workflows/tools/radar&#96;.
+
+#### M139.1 — Contrato Radar para clasificar una ausencia intencional en su única declaración de ruta.
+Rutas: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/partition.go, agent-workflows/tools/radar/contract&#95;test.go, agent-workflows/tools/radar/future&#95;paths&#95;test.go
+
+- **T139.1.1:** RED: exigir parser cerrado, supresión exacta, preservación de avisos no anotados y rechazo stale. → RED: las pruebas fallan contra el parser escalar y los avisos actuales.
+  - [ ] Cada forma inválida, supresión indebida y clasificación stale tiene una aserción falsificable.
+- **T139.1.2:** GREEN: aceptar el metadato inline, proyectar las rutas a los consumidores actuales y aplicar sólo la supresión exacta. → GREEN: las nuevas pruebas y la suite Radar pasan.
+  - [ ] No cambia el resultado para planes que usan sólo rutas escalares.
+- **T139.1.3:** REFACTOR: centralizar el enum y separar coincidencia tracked de reserva futura para que stale no dependa de &#96;usadas&#96;. → REFACTOR: el contrato queda cerrado, legible y sin una segunda lista de ownership.
+  - [ ] El diff queda dentro de las cuatro rutas declaradas y &#96;go test ./...&#96; pasa.
+
+### S140 — El plan clasifica inline sus cinco rutas intencionalmente ausentes y &#96;radar check&#96; vuelve a cero avisos sin borrar ownership histórico o futuro.
+- Estado derivado: 📋 PLANIFICADO
+- Zona/Área: autoridad · openspec/plans/, openspec/plan.yaml, openspec/ROADMAP.md, openspec/prd/, openspec/rfc/, openspec/specs/, openspec/maintenance/, openspec/config.yaml, docs/
+- Depende de: S139
+- Cimientos: —
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] &#96;profiles/&#96; y las tres rutas retiradas &#96;skills/torre-control-&#42;&#96; se declaran inline como &#96;legado-retirado&#96;.
+  - [ ] &#96;test/install/tower-role-assets.contract.mjs&#96; se declara inline como &#96;reserva-futura&#96;.
+  - [ ] No cambia ninguna regla de ownership, no aparece una lista paralela y los comentarios narrativos dejan de ser la única clasificación operativa.
+  - [ ] &#96;radar check -C .&#96; devuelve 0 errores y 0 avisos; &#96;radar status&#96; y &#96;radar render&#96; siguen pasando.
+
+#### M140.1 — Activación de las cinco clasificaciones de ausencia intencional.
+Rutas: openspec/plan.yaml
+
+- **T140.1.1:** RED: ejecutar Radar contra el plan sin anotaciones y conservar los cinco avisos observados. → RED: &#96;radar check&#96; informa 0 errores y 5 avisos.
+  - [ ] Los cinco avisos corresponden exactamente a las rutas de &#35;135.
+- **T140.1.2:** GREEN: convertir sólo esas cinco entradas a la forma inline con su enum aprobado. → GREEN: &#96;radar check&#96; informa 0 errores y 0 avisos.
+  - [ ] Cada anotación queda junto a su única declaración de ruta.
+- **T140.1.3:** REFACTOR: regenerar ROADMAP y confirmar que status, render y la suite Radar no cambian su semántica. → REFACTOR: la vista y las comprobaciones quedan convergentes.
+  - [ ] &#96;go test ./...&#96;, &#96;radar check&#96; y &#96;radar render&#96; pasan.
 
 ## Capacidad
 1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: metodo.
