@@ -1,6 +1,42 @@
 <!-- SESSION-SKILL-ARCHITECTURE:MANUAL -->
 ## Durable Session Skill Routing
 
+<!-- SESSION-ADMISSION-CONTRACT:CANONICAL -->
+```json
+{
+  "intents": ["start", "continue", "resume"],
+  "evidence": {
+    "source": "Radar via the read-only planning evidence helper",
+    "commands": ["radar status --json", "radar sesion <ID>"],
+    "binding": ["HEAD", "Session ID", "SHA-256(radar status --json exact bytes)", "SHA-256(radar sesion <ID> exact bytes)"]
+  },
+  "admissible": {
+    "start": {"states": ["LISTO"]},
+    "continue": {"states": ["LISTO", "EN CURSO"], "requires": "first pending Módulo"},
+    "resume": {"states": ["LISTO", "EN CURSO"], "requires": "first pending Módulo"},
+    "route": "chanks-3-session-kickoff"
+  },
+  "non_admissible": {
+    "output": ["state", "blocker", "Zone-ordered LISTO choices"],
+    "forbidden_fallbacks": ["chanks-3-session-kickoff", "chanks-1-cierre-de-decisiones"]
+  },
+  "decision_closure": "separate explicit human request for the named decision",
+  "semantics": {
+    "seats": "compatible capacity, never assigned agents",
+    "queue": "Zone-ordered rows and length, never assigned agents",
+    "listo_choices": "count of current LISTO choices, never assigned agents"
+  },
+  "tower_boundary": "manual-only; no Tower runtime or skills"
+}
+```
+<!-- /SESSION-ADMISSION-CONTRACT:CANONICAL -->
+
+This canonical contract is authoritative for manual admission. Before selecting any skill for a
+manual start, continue, or resume, obtain its fresh bundle. `start` requires `LISTO`; `continue`
+and `resume` accept `LISTO` or `EN CURSO` only when Radar names a first pending Módulo. Every other
+state returns only state, blocker, and Zone-ordered `LISTO` choices; it never falls back to kickoff
+or decision closure. Decision closure needs a separate explicit human request for the named decision.
+
 - Primary authority for starting or continuing one approved Sesión is `chanks-3-session-kickoff` at
   `{{REPO_ROOT}}/skills/chanks-3-session-kickoff/SKILL.md`.
 - In a repository with `openspec/plan.yaml`, what comes next is chosen only from `radar status`:

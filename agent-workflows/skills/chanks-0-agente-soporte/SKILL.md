@@ -23,6 +23,24 @@ mandatory peer, dispatcher, or plan writer.
 - Preserve human choice for scope, risk, authority, and any contradiction; do not select work to fill capacity.
 - Do not implement, deliver, assign agents, create external sessions, or mutate planning data.
 
+## Admission Evidence Bundle
+
+For a manual implementation intent to start, continue, or resume, return one fresh admission
+bundle before any skill selection. Run `radar status --json` and `radar sesion <ID>` through this
+read-only helper. Bind the evidence to current `HEAD`, requested `Session ID`, and SHA-256 digests
+of each command's exact output bytes, then return:
+
+- the requested state and blocker;
+- current `LISTO` choices in Zona queue order;
+- `seats`: compatible capacity, never assigned agents;
+- `queue rows and length`: Zona ordering, never assigned agents; and
+- `LISTO choice count`: current choices, never assigned agents.
+
+`start` requires `LISTO`; `continue` and `resume` accept `LISTO` or `EN CURSO` only when Radar names
+a first pending Módulo. Every other state returns only state, blocker, and Zone-ordered `LISTO` choices.
+It never selects a skill, dispatches work, or opens decision closure. The responsible parent
+owns all follow-up choices; this helper only returns the evidence.
+
 ## Decision Gates
 
 | Request | Action |

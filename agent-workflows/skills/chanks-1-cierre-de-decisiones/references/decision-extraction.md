@@ -2,7 +2,7 @@
 
 ## Fuente
 
-Leé `openspec/plan.yaml` y enumerá cada decisión de las Sesiones incluidas en el pedido. Para cada una extraé pregunta, tipo, criterio, autoridad, clase, evidencia, opciones, checkpoint, alcance y contaminación. Engram puede corroborar, pero no reemplaza el dato.
+Never read `openspec/plan.yaml` directly. Para el pedido humano nuevo y explícito que nombra la decisión, consumí la evidencia Radar returned by the read-only planning evidence helper: su `radar status --json`, `radar sesion <ID>`, `HEAD`, `Session ID`, estado, bloqueo y opciones `LISTO`. Extraé pregunta, tipo, criterio, autoridad, clase, evidencia, opciones, checkpoint, alcance y contaminación. Engram puede corroborar, pero no reemplaza el dato. Esto nunca recibe una continuación rechazada ni abre una decisión como fallback.
 
 ## Vocabulario
 

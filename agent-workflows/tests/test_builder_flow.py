@@ -64,6 +64,16 @@ def read(relative):
     return (ROOT / relative).read_text(encoding="utf-8")
 
 
+ADMISSION_CONTRACT_START = "<!-- SESSION-ADMISSION-CONTRACT:CANONICAL -->"
+ADMISSION_CONTRACT_END = "<!-- /SESSION-ADMISSION-CONTRACT:CANONICAL -->"
+def admission_contract(source):
+    start = source.index(ADMISSION_CONTRACT_START)
+    payload_start = source.index("```json", start) + len("```json")
+    payload_end = source.index("```", payload_start)
+    end = source.index(ADMISSION_CONTRACT_END, payload_end) + len(ADMISSION_CONTRACT_END)
+    return json.loads(source[payload_start:payload_end]), start, end
+
+
 class GenericBuilderFlowTests(unittest.TestCase):
     def test_active_builder_uses_a_responsible_parent_not_tower_roles(self):
         support = read("skills/chanks-0-agente-soporte/SKILL.md")
@@ -77,11 +87,14 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertNotIn("Support", support)
         self.assertNotIn("openspec/plan.yaml` al", support)
 
-        for source in (kickoff, bridge, closure, template):
+        for source in (kickoff, bridge, closure):
             self.assertIn("responsible parent", source)
             self.assertNotIn("Support", source)
             self.assertNotIn("Tower", source)
             self.assertNotIn("MAIN", source)
+        self.assertIn("responsible parent", template)
+        self.assertNotIn("Support", template)
+        self.assertNotIn("MAIN", template)
 
         self.assertIn("current repository and branch", kickoff)
         self.assertIn("Git contamination", kickoff)
@@ -236,6 +249,81 @@ class GenericBuilderFlowTests(unittest.TestCase):
             self.assertTrue(frozen.is_file(), f"missing snapshot {relative}")
             actual = hashlib.sha256(frozen.read_bytes()).hexdigest()
             self.assertEqual(actual, expected_sha256, relative)
+
+    def test_manual_admission_contract_is_closed_and_precedes_kickoff_routing(self):
+        template = read("templates/session-routing.md")
+        contract, start, _ = admission_contract(template)
+        self.assertEqual(template.count(ADMISSION_CONTRACT_START), 1)
+        self.assertEqual(template.count(ADMISSION_CONTRACT_END), 1)
+        self.assertEqual(contract, {
+            "intents": ["start", "continue", "resume"],
+            "evidence": {
+                "source": "Radar via the read-only planning evidence helper",
+                "commands": ["radar status --json", "radar sesion <ID>"],
+                "binding": [
+                    "HEAD", "Session ID", "SHA-256(radar status --json exact bytes)",
+                    "SHA-256(radar sesion <ID> exact bytes)",
+                ],
+            },
+            "admissible": {
+                "start": {"states": ["LISTO"]},
+                "continue": {"states": ["LISTO", "EN CURSO"], "requires": "first pending Módulo"},
+                "resume": {"states": ["LISTO", "EN CURSO"], "requires": "first pending Módulo"},
+                "route": "chanks-3-session-kickoff",
+            },
+            "non_admissible": {
+                "output": ["state", "blocker", "Zone-ordered LISTO choices"],
+                "forbidden_fallbacks": [
+                    "chanks-3-session-kickoff",
+                    "chanks-1-cierre-de-decisiones",
+                ],
+            },
+            "decision_closure": "separate explicit human request for the named decision",
+            "semantics": {
+                "seats": "compatible capacity, never assigned agents",
+                "queue": "Zone-ordered rows and length, never assigned agents",
+                "listo_choices": "count of current LISTO choices, never assigned agents",
+            },
+            "tower_boundary": "manual-only; no Tower runtime or skills",
+        })
+        self.assertLess(start, template.index("Primary authority for starting or continuing"))
+
+    def test_manual_admission_bundle_kickoff_and_decision_closure_are_bounded(self):
+        support = read("skills/chanks-0-agente-soporte/SKILL.md")
+        brief = read("skills/chanks-0-agente-soporte/assets/brief-diario.md")
+        handoff = read("skills/chanks-0-agente-soporte/assets/assignment-implementation.md")
+        kickoff = read("skills/chanks-3-session-kickoff/SKILL.md")
+        closure = read("skills/chanks-1-cierre-de-decisiones/SKILL.md")
+        extraction = read("skills/chanks-1-cierre-de-decisiones/references/decision-extraction.md")
+
+        bundle = support.split("## Admission Evidence Bundle", 1)[1].split("## Decision Gates", 1)[0]
+        for phrase in ("`radar status --json`", "`radar sesion <ID>`", "current `HEAD`", "requested `Session ID`", "SHA-256", "exact output bytes", "first pending Módulo", "EN CURSO", "Zone-ordered `LISTO` choices", "seats", "queue rows and length", "LISTO choice count", "never assigned agents"):
+            self.assertIn(phrase, bundle)
+        self.assertIn("Admission bundle", brief)
+        self.assertIn("fresh admission bundle", handoff)
+
+        kickoff_hard = kickoff.split("## Hard Rules", 1)[1].split("## Decision Gates", 1)[0]
+        kickoff_steps = kickoff.split("## Execution Steps", 1)[1].split("## Output Contract", 1)[0]
+        self.assertIn("fresh admission bundle", kickoff_hard)
+        self.assertIn("byte-digest-mismatched", kickoff_hard)
+        for phrase in ("immediately recapture both Radar commands", "identical SHA-256 digests"): self.assertIn(phrase, kickoff_steps)
+        self.assertLess(kickoff_steps.index("Validate admission bundle"), kickoff_steps.index("Resume exact work"))
+        for number in range(1, 6):
+            self.assertIn(f"{number}. **", kickoff_steps)
+        self.assertIn("only state, blocker, and Zone-ordered LISTO choices", kickoff_hard)
+        self.assertNotIn("cierre-de-decisiones", kickoff_hard + kickoff_steps)
+
+        closure_activation = closure.split("## Activation Contract", 1)[1].split("## Hard Rules", 1)[0]
+        closure_hard = closure.split("## Hard Rules", 1)[1].split("## Decision Gates", 1)[0]
+        closure_steps = closure.split("## Execution Steps", 1)[1].split("## Output Contract", 1)[0]
+        self.assertIn("new explicit human request", closure_activation)
+        self.assertLess(closure.index("new explicit human request"), closure.index("returned by the read-only planning evidence helper"))
+        self.assertIn("nunca es un fallback", closure_hard)
+        self.assertIn("returned by the read-only planning evidence helper", extraction)
+        for source in (kickoff, closure, extraction):
+            for line in source.splitlines():
+                if "`openspec/plan.yaml`" in line:
+                    self.assertIn("never", line.lower(), line)
 
     def test_registry_does_not_register_frozen_product_assets_or_tower_skills(self):
         forbidden = {

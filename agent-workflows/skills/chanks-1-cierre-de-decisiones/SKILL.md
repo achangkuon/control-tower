@@ -9,11 +9,12 @@ metadata:
 
 ## Activation Contract
 
-Activa cuando el maintainer quiere resolver decisiones abiertas de Sesiones enumeradas o distinguir decisiones de dependencias.
+Activa sólo ante un new explicit human request para resolver la decisión nombrada de una Sesión o distinguirla de una dependencia. Una continuación manual rechazada nunca activa este skill.
 
 ## Hard Rules
 
-- Derivá preguntas y conteos desde `openspec/plan.yaml`; Engram sólo corrobora.
+- Never read `openspec/plan.yaml` directly. Consumí sólo el bundle Radar devuelto por el read-only planning evidence helper; Engram sólo corrobora.
+- El pedido debe nombrar la decisión y ser separado de cualquier intento de start, continue o resume; esto nunca es un fallback de admisión rechazada.
 - Presentá una pregunta humana por vez, con consecuencias reales y una recomendación.
 - No respondas por el maintainer ni amplíes el alcance de una resolución.
 - No escribas plan, estado, porcentajes, registro ni vista.
@@ -32,7 +33,7 @@ Activa cuando el maintainer quiere resolver decisiones abiertas de Sesiones enum
 
 ## Execution Steps
 
-1. Extraé decisiones abiertas, autoridad, evidencia, opciones, checkpoint y contaminación.
+1. Extraé decisiones abiertas, autoridad, evidencia, opciones, checkpoint y contaminación del bundle returned by the read-only planning evidence helper.
 2. Auditá el conjunto y declarà el alcance exacto del conteo.
 3. Ordená por impacto y presentá una pregunta por vez.
 4. Formateá cada respuesta según `assets/resolution-entry.md`.

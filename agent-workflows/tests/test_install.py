@@ -81,6 +81,60 @@ class InstallerTests(unittest.TestCase):
             self.assertEqual(content.count(INSTALLER.GATEKEEPER_START_MARKER), 1)
             self.assertIsNotNone(INSTALLER.GATEKEEPER_BLOCK_RE.search(content))
 
+    def test_installed_manual_admission_contract_exactly_matches_canonical_source(self):
+        source = (ROOT / "templates/session-routing.md").read_text(encoding="utf-8")
+        start_marker = "<!-- SESSION-ADMISSION-CONTRACT:CANONICAL -->"
+        end_marker = "<!-- /SESSION-ADMISSION-CONTRACT:CANONICAL -->"
+        start = source.index(start_marker)
+        end = source.index(end_marker, start) + len(end_marker)
+        canonical = source[start:end]
+        expected = {
+            "intents": ["start", "continue", "resume"],
+            "evidence": {
+                "source": "Radar via the read-only planning evidence helper",
+                "commands": ["radar status --json", "radar sesion <ID>"],
+                "binding": [
+                    "HEAD", "Session ID", "SHA-256(radar status --json exact bytes)",
+                    "SHA-256(radar sesion <ID> exact bytes)",
+                ],
+            },
+            "admissible": {
+                "start": {"states": ["LISTO"]},
+                "continue": {"states": ["LISTO", "EN CURSO"], "requires": "first pending Módulo"},
+                "resume": {"states": ["LISTO", "EN CURSO"], "requires": "first pending Módulo"},
+                "route": "chanks-3-session-kickoff",
+            },
+            "non_admissible": {
+                "output": ["state", "blocker", "Zone-ordered LISTO choices"],
+                "forbidden_fallbacks": [
+                    "chanks-3-session-kickoff",
+                    "chanks-1-cierre-de-decisiones",
+                ],
+            },
+            "decision_closure": "separate explicit human request for the named decision",
+            "semantics": {
+                "seats": "compatible capacity, never assigned agents",
+                "queue": "Zone-ordered rows and length, never assigned agents",
+                "listo_choices": "count of current LISTO choices, never assigned agents",
+            },
+            "tower_boundary": "manual-only; no Tower runtime or skills",
+        }
+
+        INSTALLER.apply(self.home, ROOT)
+        for path in INSTALLER.manual_paths(self.home):
+            match = INSTALLER.BLOCK_RE.search(path.read_bytes())
+            self.assertIsNotNone(match, path)
+            assert match is not None
+            installed = match.group().decode("utf-8")
+            self.assertEqual(installed.count(start_marker), 1, path)
+            self.assertEqual(installed.count(end_marker), 1, path)
+            installed_start = installed.index(start_marker)
+            installed_end = installed.index(end_marker, installed_start) + len(end_marker)
+            self.assertEqual(installed[installed_start:installed_end], canonical, path)
+            payload_start = installed.index("```json", installed_start) + len("```json")
+            payload_end = installed.index("```", payload_start)
+            self.assertEqual(json.loads(installed[payload_start:payload_end]), expected, path)
+
     def test_installed_session_routing_sends_only_full_sdd_through_native_sdd(self):
         INSTALLER.apply(self.home, ROOT)
         for path in INSTALLER.manual_paths(self.home):

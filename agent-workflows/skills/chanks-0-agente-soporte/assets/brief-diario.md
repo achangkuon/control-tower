@@ -9,6 +9,15 @@ create a queue, reserve resources, or mutate state.
 2. `radar check` and `radar zonas`.
 3. Repository instructions, Git state, and delivery policy.
 
+## Admission bundle
+
+For manual implementation start, continue, or resume, the read-only helper returns a fresh bundle
+bound to current `HEAD`, requested `Session ID`, and SHA-256 digests of both commands' exact bytes:
+requested state/blocker, Zone-ordered `LISTO` choices, compatible `seats`, queue rows and length,
+and `LISTO` choice count. `start` requires `LISTO`; `continue`/`resume` also accept `EN CURSO` only
+with a first pending Módulo. Other states return only state, blocker, and choices; never a skill or
+decision closure. Seats, queue, and choices are distinct facts, never assigned agents.
+
 ## Template
 
 ```markdown

@@ -7,6 +7,7 @@ IMPLEMENTATION HANDOFF: <SESSION_ID>
 
 Project/repository: <IDENTITY>
 Verified base: <BASE_REF>@<SHA>
+Admission bundle: fresh `HEAD` + `Session ID` + SHA-256 digests of exact `radar status --json`/`radar sesion <ID>` bytes; state/blocker; Zone-ordered `LISTO` choices; seats, queue rows/length, and choice count (never assigned agents)
 Current branch: <BRANCH>
 Scope: <ALLOWED_PATHS_AND_BEHAVIORS>
 Dependencies: <IDS_AND_UNBLOCK_EVIDENCE>
@@ -17,8 +18,11 @@ Forbidden scope: <PATHS_AND_EFFECTS>
 Responsible parent: <IDENTITY_AND_RETURN_CHANNEL>
 ```
 
-Verify repository, `HEAD`, branch, and worktree state before editing. Do not select another
-Sesión or widen scope. A static planning forecast never grants a live lock; stop and report a
+Accept only a fresh admission bundle binding this `HEAD`, Sesión, and both command-output byte digests before
+skill selection; `start` requires `LISTO`, while `continue`/`resume` accept `EN CURSO` only with a
+first pending Módulo. Other states return only state, blocker, and choices. Verify repository, `HEAD`,
+branch, and worktree state before editing. Do not select another Sesión or widen scope. A static
+planning forecast never grants a live lock; stop and report a
 shared-path conflict to the responsible parent. Follow the route revalidated by
 `chanks-3-session-kickoff` through `chanks-4-puente`, entering the native SDD pipeline only for `full-sdd`, keep each
 Módulo independently revertible with its tests, and report Git contamination rather than hiding it.
