@@ -8742,6 +8742,8 @@ sesiones:
         resultado: direct
         base: 87f80ba6320eaf98618cf7e51b8bc3d8948da7dc
         evidencia: "El dispatcher actual acepta cualquier agent kind y en su paso 6 espera cada agente; el routing instalado repite el despacho Herdr sin contrato de transporte. Las tres rutas declaradas contienen toda la corrección: pruebas textuales RED, skill Pi-only con Intercom fire-and-forget y proyección del mismo límite en las instrucciones instaladas. No requiere diseño técnico ni toca el lifecycle de pool reservado a S131."
+    entrega:
+      commit: 4e38713076d286b6d0354dc1f75fc12200db80e6
     modulos:
       - id: M137.1
         resultado: "Despacho Pi por Intercom sin espera del coordinador"

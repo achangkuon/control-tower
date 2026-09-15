@@ -2,7 +2,7 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S134, S135, S136, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S134, S135, S136, S137, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Método V1.
 - Próximo trabajo ejecutable: cimientos #2 → S132 — Un worker reutilizable de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y AGENTS.md declara la preparación persistente, la reinstalación de herramientas y la captura inmediata de fricciones..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
@@ -12,7 +12,7 @@
 - Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 
 ## Avance
-- **Total:** 65% (69/106 S)
+- **Total:** 66% (70/106 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -26,7 +26,7 @@
 - **Hosts:** 33% (3/9 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 55% (11/20 S)
+- **Método:** 60% (12/20 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -81,7 +81,6 @@
 6. **S130** · 🟢 LISTO · prioridad Método V1 · El puente protege el lote de revisión: revisa sólo el código del Módulo en staging, commitea los artefactos SDD aparte y cierra el intento nativo de un Módulo antes de tocar el siguiente.
 7. **S131** · 🟢 LISTO · prioridad Método V1 · El despacho manual con Herdr reutiliza el pool de workers que declara el repositorio: conserva worktree, tab y dependencias entre Sesiones, y renueva sólo la rama de asignación y el agente.
 8. **S133** · 🟢 LISTO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
-9. **S137** · 🟢 LISTO · prioridad Método V1 · El despacho manual pre-V1 usa Herdr sólo para asientos y procesos, transporta el trabajo de workers Pi por Intercom sin bloquear a Main y devuelve cada evento por una ruta explícita.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · prioridad Torre V1 · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -3662,7 +3661,7 @@ Rutas: .github/ISSUE&#95;TEMPLATE/friction&#95;report.yml
   - [ ] La publicación y cada issue tienen identidad estable y readback coincidente.
 
 ### S137 — El despacho manual pre-V1 usa Herdr sólo para asientos y procesos, transporta el trabajo de workers Pi por Intercom sin bloquear a Main y devuelve cada evento por una ruta explícita.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: ✅ COMPLETO
 - Zona/Área: metodo · agent-workflows/
 - Depende de: —
 - Cimientos: —
