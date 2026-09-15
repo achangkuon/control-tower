@@ -2,7 +2,7 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S134, S135, S136, S137, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S128, S134, S135, S136, S137, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Método V1.
 - Próximo trabajo ejecutable: cimientos #2 → S132 — Un worker reutilizable de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y AGENTS.md declara la preparación persistente, la reinstalación de herramientas y la captura inmediata de fricciones..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
@@ -12,7 +12,7 @@
 - Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 
 ## Avance
-- **Total:** 66% (70/106 S)
+- **Total:** 66% (71/106 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -26,7 +26,7 @@
 - **Hosts:** 33% (3/9 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 60% (12/20 S)
+- **Método:** 65% (13/20 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -76,11 +76,10 @@
 1. **S115** · 📋 PLANIFICADO · prioridad V2 · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
 2. **S122** · 🟢 LISTO · prioridad Método V1 · Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 3. **S123** · 📋 PLANIFICADO · prioridad V2 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
-4. **S128** · 🟢 LISTO · prioridad Método V1 · Radar reconoce el trailer Modulo de una Sesión full-sdd: el commit cuenta como Módulo entregado de su Sesión y deja de aparecer como trailer desconocido.
-5. **S129** · 📋 PLANIFICADO · prioridad Método V1 · Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
-6. **S130** · 🟢 LISTO · prioridad Método V1 · El puente protege el lote de revisión: revisa sólo el código del Módulo en staging, commitea los artefactos SDD aparte y cierra el intento nativo de un Módulo antes de tocar el siguiente.
-7. **S131** · 🟢 LISTO · prioridad Método V1 · El despacho manual con Herdr reutiliza el pool de workers que declara el repositorio: conserva worktree, tab y dependencias entre Sesiones, y renueva sólo la rama de asignación y el agente.
-8. **S133** · 🟢 LISTO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
+4. **S129** · 🟢 LISTO · prioridad Método V1 · Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
+5. **S130** · 🟢 LISTO · prioridad Método V1 · El puente protege el lote de revisión: revisa sólo el código del Módulo en staging, commitea los artefactos SDD aparte y cierra el intento nativo de un Módulo antes de tocar el siguiente.
+6. **S131** · 🟢 LISTO · prioridad Método V1 · El despacho manual con Herdr reutiliza el pool de workers que declara el repositorio: conserva worktree, tab y dependencias entre Sesiones, y renueva sólo la rama de asignación y el agente.
+7. **S133** · 🟢 LISTO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · prioridad Torre V1 · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -138,7 +137,7 @@
 - **S125:** propuesta direct (Fuente de evidencia, formato del trailer, salida y reglas de las skills quedan fijados en esta propuesta; no queda diseño abierto.); revalidada direct sobre ef792c1f9bcd811d06d42496cd301a9c0340cf82 con evidencia radar no leía trailers (ningún git log en tools/radar) y S124 dejó cmdSesion y validarAt listos para extender; el aviso vive en cmdCheck y la variante escribirSesionConAvance evita tocar check.go, plan.go y sesion&#95;test.go. Las huellas SHA256 que T125.2.2 pedía actualizar protegen product/tower/generic y quedaron intactas..
 - **S126:** propuesta direct (Disparador, pasos del despacho, layout, dueño de la entrega, los seis chequeos y el orden del retiro quedan fijados por las decisiones aprobadas; resta implementación mecánica con pruebas del Método.); revalidada direct sobre 5b2b754e0bd24e6f73f8d706af3a72414a59c8b0 con evidencia herdr tab close existe en la CLI instalada y el instalador ya registra skills por CHANKS&#95;SKILLS. La plantilla de ruteo prohíbe Tower, MAIN y Support por test, así que las líneas nombran la Torre. Hallazgo: git branch -d rechaza una rama integrada sólo por cherry-pick o rebase; retiro.md la conserva y la reporta, sin forzar..
 - **S127:** propuesta full-sdd (La Sesión cambia contratos compartidos —canon, forma del plan y radar.snapshot/v1— y, hasta que S120 esté entregada, es la única ruta cuya verificación nativa llega al cierre. No se inicia SDD al registrar el plan.); pendiente de revalidación en kickoff.
-- **S128:** propuesta direct (El contrato está determinado —reconocer el trailer por el prefijo de una Sesión con ruta efectiva full-sdd— y los archivos son conocidos; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
+- **S128:** propuesta direct (El contrato está determinado —reconocer el trailer por el prefijo de una Sesión con ruta efectiva full-sdd— y los archivos son conocidos; no queda decisión de diseño abierta.) · prioridad Método V1; revalidada direct sobre 956d4c367771ef008d536868c6f38aba15fa789c con evidencia agent-workflows/tools/radar/avance.go todavía limita los trailers conocidos a los Módulos declarados en el plan y agent-workflows/tools/radar/main.go sólo presenta avance con un total planificado; S127 sigue siendo una Sesión full-sdd sin Módulos declarados y sus tres trailers producen avisos en radar check. El contrato, las pruebas y las tres rutas de M128.1 siguen determinados sobre este HEAD..
 - **S129:** propuesta direct (La fórmula, la fuente de las exclusiones y el alcance están decididos, y los archivos son conocidos; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
 - **S130:** propuesta direct (Las tres reglas están decididas y el cambio se limita a una skill y su prueba; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
 - **S131:** propuesta direct (El lifecycle, la fuente del pool, el lock atómico, la reserva all-or-nothing, la preparación condicional y el retiro persistente están decididos; el cambio se concentra en una skill, su referencia de retiro y su prueba contractual.) · prioridad Método V1; revalidada direct sobre 52abac97e7be4d23a9b2370726e9f9dec9ef20b3 con evidencia agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md:18-23 y 40-47 contienen todos los gates y pasos existentes, pero :21/:42 todavía crean worktree+tab por Sesión y :32 permite despacho parcial; agent-workflows/skills/chanks-3-despacho-herdr/references/retiro.md:21-25 todavía cierra tab, elimina worktree y espera su ausencia; agent-workflows/tests/test&#95;despacho&#95;herdr.py:46-75 y 86-110 fijan contractualmente ese lifecycle efímero. El contrato S131 ya determina el reemplazo en esos mismos tres paths: pool declarado por AGENTS.md, lock atómico común, reserva all-or-nothing, rama/agente nuevos, preparación condicional, rollback acotado y retiro persistente..
@@ -3409,7 +3408,7 @@ Rutas: agent-workflows/templates/session-routing.md, agent-workflows/tests/test&
   - [ ] El diff toca sólo Área.
 
 ### S128 — Radar reconoce el trailer Modulo de una Sesión full-sdd: el commit cuenta como Módulo entregado de su Sesión y deja de aparecer como trailer desconocido.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: ✅ COMPLETO
 - Zona/Área: metodo · agent-workflows/
 - Depende de: —
 - Cimientos: —
@@ -3433,7 +3432,7 @@ Rutas: agent-workflows/tools/radar/avance.go, agent-workflows/tools/radar/avance
   - [ ] REFACTOR: existe un único resolvedor de dueño y go test pasa.
 
 ### S129 — Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
-- Estado derivado: 📋 PLANIFICADO
+- Estado derivado: 🟢 LISTO
 - Zona/Área: metodo · agent-workflows/
 - Depende de: S128
 - Cimientos: —

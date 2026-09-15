@@ -8150,6 +8150,8 @@ sesiones:
         resultado: direct
         base: 956d4c367771ef008d536868c6f38aba15fa789c
         evidencia: "agent-workflows/tools/radar/avance.go todavía limita los trailers conocidos a los Módulos declarados en el plan y agent-workflows/tools/radar/main.go sólo presenta avance con un total planificado; S127 sigue siendo una Sesión full-sdd sin Módulos declarados y sus tres trailers producen avisos en radar check. El contrato, las pruebas y las tres rutas de M128.1 siguen determinados sobre este HEAD."
+    entrega:
+      commit: 03554030c4d1e1a0136912d3c5f0d627fe914866
     modulos:
       - id: M128.1
         resultado: "Radar reconoce los trailers de Sesiones full-sdd"
