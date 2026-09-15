@@ -1,16 +1,41 @@
 import { afterEach, expect, test } from "bun:test"
-import { existsSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs"
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { dirname, join } from "node:path"
+import { dirname, join, resolve } from "node:path"
+import { spawnSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
 
 import { git } from "./helpers/git.mjs"
 
 const packageRoot = dirname(dirname(fileURLToPath(import.meta.url)))
 const hooksPath = join(packageRoot, ".githooks")
-const radarBinary = join(packageRoot, "agent-workflows", "tools", "radar", "radar")
+const radarSource = join(packageRoot, "agent-workflows", "tools", "radar")
+const radarBinary = join(radarSource, "radar")
 
 const temporaryRoots = []
+const temporaryDirectory = (prefix) => {
+  const root = mkdtempSync(join(tmpdir(), prefix))
+  temporaryRoots.push(root)
+  return root
+}
+
+const shellQuote = (value) => `'${value.replaceAll("'", "'\"'\"'")}'`
+
+const resolveRadar = (repositoryBinary = radarBinary) => {
+  if (existsSync(repositoryBinary)) return repositoryBinary
+
+  const buildDirectory = temporaryDirectory("pre-push-radar-")
+  const compiled = join(buildDirectory, "radar")
+  const build = spawnSync("go", ["build", "-o", compiled, "."], { cwd: radarSource, encoding: "utf8" })
+  if (build.status !== 0) throw new Error(`could not compile radar: ${build.stderr || build.error}`)
+  return compiled
+}
+
+const radarWrapper = (planPath, repositoryBinary) => {
+  const wrapper = join(temporaryDirectory("pre-push-radar-wrapper-"), "radar")
+  writeFileSync(wrapper, `#!/bin/sh\nexec ${shellQuote(resolveRadar(repositoryBinary))} check -f ${shellQuote(resolve(planPath))}\n`, { mode: 0o755 })
+  return wrapper
+}
 
 afterEach(() => {
   while (temporaryRoots.length > 0) rmSync(temporaryRoots.pop(), { recursive: true, force: true })
@@ -19,8 +44,7 @@ afterEach(() => {
 // A push origin plus a working clone, both wired to the repository's own hooks. The gate
 // must behave identically for every runtime, so the test drives plain git and nothing else.
 const scenario = () => {
-  const root = mkdtempSync(join(tmpdir(), "pre-push-gate-"))
-  temporaryRoots.push(root)
+  const root = temporaryDirectory("pre-push-gate-")
   const origin = join(root, "origin")
   const work = join(root, "work")
   mkdirSync(origin)
@@ -44,14 +68,14 @@ const commit = (work, message) => {
 // Every push that asserts gate behavior must pin which radar the hook resolves. Left to
 // the ambient machine, a test meaning "radar found, check fails, push blocked" can
 // silently fall into the "radar missing, warn and pass" branch and still look green.
-const withRadar = {
+const withRadar = (work, repositoryBinary = radarBinary) => ({
   ...process.env,
-  RADAR_BIN: radarBinary,
+  RADAR_BIN: radarWrapper(join(work, "openspec", "plan.yaml"), repositoryBinary),
   HOME: "/nonexistent-home-for-gate-test",
   PATH: [process.env.CT_GIT_PROXY_DIR, "/usr/bin", "/bin"].filter(Boolean).join(":"),
-}
+})
 
-const push = (work, extra = [], env = withRadar) =>
+const push = (work, extra = [], env = withRadar(work)) =>
   git(work, ["push", ...extra, "origin", "HEAD"], { result: true, encoding: "utf8", env })
 
 const originCommits = (origin) =>
@@ -72,6 +96,13 @@ const brokenPlan = [
   "    resultado: invalid on purpose",
   "",
 ].join("\n")
+
+test("an executable repository radar is preferred over a temporary build", () => {
+  const repositoryBinary = join(temporaryDirectory("pre-push-repository-radar-"), "radar")
+  writeFileSync(repositoryBinary, "#!/bin/sh\nexit 0\n", { mode: 0o755 })
+
+  expect(resolveRadar(repositoryBinary)).toBe(repositoryBinary)
+})
 
 test("a repository without a plan pushes untouched", () => {
   const { origin, work } = scenario()
@@ -98,6 +129,44 @@ test("an invalid plan stops the push and never reaches the remote", () => {
   expect(originCommits(origin)).not.toContain("invalid plan")
 })
 
+test("a missing repository binary is compiled so an invalid target plan still blocks", () => {
+  const { origin, work } = scenario()
+  mkdirSync(join(work, "openspec"), { recursive: true })
+  writeFileSync(join(work, "openspec", "plan.yaml"), brokenPlan)
+  commit(work, "invalid plan without repository radar")
+
+  const missingBinary = join(work, "missing-radar")
+  const blocked = push(work, [], withRadar(work, missingBinary))
+
+  expect(blocked.status).not.toBe(0)
+  expect(blocked.stderr).toContain("el plan no valida")
+  expect(originCommits(origin)).toBe("")
+})
+
+test("radar receives the absolute target plan from a foreign cwd", () => {
+  const { work } = scenario()
+  const planPath = join(work, "openspec", "plan.yaml")
+  mkdirSync(join(work, "openspec"), { recursive: true })
+  writeFileSync(planPath, brokenPlan)
+  commit(work, "invalid plan from foreign cwd")
+
+  const argumentsPath = join(work, "radar-arguments")
+  const fake = join(work, "fake-radar")
+  writeFileSync(fake, `#!/bin/sh\nprintf '%s\\n' "$@" > ${shellQuote(argumentsPath)}\nexit 3\n`, { mode: 0o755 })
+
+  const originalCwd = process.cwd()
+  process.chdir(temporaryDirectory("pre-push-foreign-cwd-"))
+  let blocked
+  try {
+    blocked = push(work, [], withRadar(work, fake))
+  } finally {
+    process.chdir(originalCwd)
+  }
+
+  expect(blocked.status).not.toBe(0)
+  expect(readFileSync(argumentsPath, "utf8")).toBe(`check\n-f\n${resolve(planPath)}\n`)
+})
+
 test("--no-verify remains the documented escape hatch", () => {
   const { origin, work } = scenario()
   mkdirSync(join(work, "openspec"), { recursive: true })
@@ -117,7 +186,7 @@ test("a missing radar warns and lets the push through", () => {
   writeFileSync(join(work, "openspec", "plan.yaml"), brokenPlan)
   commit(work, "invalid plan")
 
-  const blind = { ...withRadar, HOME: join(work, "empty-home"), RADAR_BIN: "" }
+  const blind = { ...withRadar(work), HOME: join(work, "empty-home"), RADAR_BIN: "" }
   const skipped = push(work, [], blind)
 
   expect(skipped.status).toBe(0)
@@ -137,7 +206,7 @@ test("an exit code of 124 from radar itself still blocks the push", () => {
   const fake = join(work, "fake-radar")
   writeFileSync(fake, "#!/bin/sh\nexit 124\n", { mode: 0o755 })
 
-  const blocked = push(work, [], { ...withRadar, RADAR_BIN: fake })
+  const blocked = push(work, [], withRadar(work, fake))
   expect(blocked.status).not.toBe(0)
   expect(blocked.stderr).toContain("el plan no valida")
   expect(originCommits(origin)).not.toContain("invalid plan")
@@ -156,7 +225,7 @@ test("a fast verdict returns immediately and does not wait out the timeout", () 
   writeFileSync(fake, "#!/bin/sh\nexit 3\n", { mode: 0o755 })
 
   const started = Date.now()
-  const blocked = push(work, [], { ...withRadar, RADAR_BIN: fake })
+  const blocked = push(work, [], withRadar(work, fake))
   const elapsed = Date.now() - started
 
   expect(blocked.status).not.toBe(0)
@@ -178,7 +247,7 @@ test("an executable planted inside the working tree is never run", () => {
   commit(work, "invalid plan with planted radar")
 
   // No radar anywhere the hook is allowed to look: the planted one is the only candidate.
-  const blind = { ...withRadar, HOME: join(work, "empty-home"), RADAR_BIN: "" }
+  const blind = { ...withRadar(work), HOME: join(work, "empty-home"), RADAR_BIN: "" }
   const result = push(work, [], blind)
 
   expect(existsSync(marker)).toBe(false)
@@ -192,8 +261,7 @@ test("an executable planted inside the working tree is never run", () => {
 // tests pin both halves — the gap, and the one command that closes it — so that a future
 // change to the installer cannot silently stop wiring the gate.
 const unwiredScenario = () => {
-  const root = mkdtempSync(join(tmpdir(), "pre-push-unwired-"))
-  temporaryRoots.push(root)
+  const root = temporaryDirectory("pre-push-unwired-")
   const origin = join(root, "origin")
   const work = join(root, "work")
   mkdirSync(origin)
