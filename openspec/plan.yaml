@@ -8227,6 +8227,9 @@ sesiones:
   - id: S130
     zona: metodo
     prioridad: metodo-v1
+    # Reemplazada por S138 el 2026-09-15 por decisión de Emilio: Tareas como evidencia, commits por Módulo y una revisión por Sesión.
+    archivada: true
+    archivo: reemplazada
     resultado: "El puente protege el lote de revisión: revisa sólo el código del Módulo en staging, commitea los artefactos SDD aparte y cierra el intento nativo de un Módulo antes de tocar el siguiente."
     autoridad: "Aprobación de Emilio del 2026-09-14 (Claude Code, sesión df306f72), problema 2, opción 1, y decisión 3. Evidencia: en la sesión con Pi la revisión nativa contó 584 líneas por incluir los OpenSpec sin commitear frente a 254 de código; en S127 el conteo del intento de M127.1 sumó 456 líneas porque las pruebas de M127.2 ya estaban escritas, y Emilio autorizó el reinicio auditado s127-reset-1."
     # Depende de S135: ambas editan el puente y S135 redefine qué rutas producen artefactos SDD.
@@ -8771,6 +8774,72 @@ sesiones:
             accion: "REFACTOR: eliminar reglas de transporte duplicadas y conservar intactos autoridad humana, gates Radar, lifecycle Herdr y el límite entre coordinación manual y Tower V1."
             resultado: "REFACTOR: una sola frontera separa asiento, mensaje y autoridad, y la suite del Método pasa."
             criterios: ["REFACTOR: el diff queda dentro de las tres rutas declaradas y no modifica S131, S132 ni runtime Tower."]
+
+  - id: S138
+    zona: metodo
+    prioridad: metodo-v1
+    reemplaza: [S130]
+    resultado: "El puente ejecuta Tareas como evidencia interna RED/GREEN/REFACTOR, entrega exactamente un commit reversible por Módulo y revisa por defecto una única candidata inmutable de Sesión mediante RDD nativo antes de la entrega."
+    autoridad: "Aprobación explícita de Emilio para el issue #134: el contrato aplica a toda Sesión abierta y nueva, preserva la historia entregada, reemplaza S130 sin editar su contrato histórico y mantiene una única revisión RDD nativa de la candidata completa por defecto, un commit reversible por Módulo y Tareas sin commits ni checkpoints de review. S135 conserva la propiedad de rutas: sólo full-sdd entra en la pipeline SDD nativa."
+    depende_de: [S135]
+    cimientos: []
+    recurso: []
+    criterios:
+      - "`agent-workflows/skills/chanks-4-puente/SKILL.md` declara que cada Tarea sólo aporta evidencia interna RED/GREEN/REFACTOR y no produce ni un commit ni un checkpoint de revisión RDD nativa."
+      - "La skill declara que cada Módulo completado produce exactamente un commit independientemente reversible que incluye su código y pruebas y lleva el trailer `Modulo: M<n>.<k>`."
+      - "La skill declara que, por defecto, una única transacción RDD nativa revisa la candidata inmutable completa de la Sesión después de completar todos sus Módulos y verify, y antes de delivery."
+      - "La skill permite una revisión anterior o por Módulo sólo cuando el humano la seleccionó explícitamente para una unidad sobredimensionada o independientemente entregable; la mera existencia de un Módulo nunca selecciona esa excepción."
+      - "La skill declara que los artefactos de planificación y SDD permanecen fuera de la referencia de 400 líneas según la política del repositorio y no reinstala el modelo de review o intento por Módulo de S130."
+      - "La regla se aplica a direct, design-tasks y full-sdd sin alterar que sólo full-sdd posee la pipeline SDD nativa y archive."
+      - "`agent-workflows/tests/test_builder_flow.py` falla si desaparece cualquiera de estas reglas; `cd agent-workflows && python3 -m unittest discover -s tests` pasa y el diff toca sólo las rutas del Módulo."
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Qué efecto de entrega o revisión tiene una Tarea?"
+        resolucion: "Ninguno: una Tarea registra exclusivamente evidencia interna RED/GREEN/REFACTOR; el límite de commit y review se aplica al Módulo y a la Sesión."
+        autoridad: "Aprobación explícita de Emilio para el issue #134."
+        clase: contrato-visible
+        falsificador: "La skill permite o exige un commit o checkpoint RDD nativo por Tarea."
+        descartadas:
+          - opcion: "Un commit o review nativo por Tarea."
+            razon: "Fragmenta la evidencia interna en entregas y revisiones que el contrato reserva al Módulo y a la Sesión."
+      - tipo: resuelta
+        pregunta: "¿Cuál es el alcance por defecto de la revisión RDD nativa?"
+        resolucion: "Una única transacción sobre la candidata inmutable completa de la Sesión, tras todos los Módulos y verify y antes de delivery."
+        autoridad: "Aprobación explícita de Emilio para el issue #134."
+        clase: contrato-visible
+        falsificador: "La skill inicia una review o intento por Módulo sin una selección humana explícita para la excepción admitida."
+        descartadas:
+          - opcion: "Una revisión o intento nativo por cada Módulo."
+            razon: "Recrea el modelo de S130 y vuelve a inferir una review de la mera existencia del Módulo."
+      - tipo: resuelta
+        pregunta: "¿Este contrato cambia la propiedad de rutas definida por S135?"
+        resolucion: "No. Direct y design-tasks conservan el camino no-SDD; full-sdd conserva la única pipeline SDD nativa y archive."
+        autoridad: "S135 entregada y aprobación explícita de Emilio para el issue #134."
+        clase: contrato-visible
+        falsificador: "El puente hace entrar direct o design-tasks a la pipeline SDD nativa, o elimina el archive exclusivo de full-sdd."
+        descartadas:
+          - opcion: "Reabrir la selección de ruta en S138."
+            razon: "Duplicaría y contradice la autoridad de S135."
+    ruta:
+      propuesta: direct
+      autoridad: "El contrato del issue #134, las tres rutas y las aserciones textuales están determinados; no queda diseño técnico ni cambio de ownership de rutas pendiente."
+    modulos:
+      - id: M138.1
+        resultado: "El puente y su prueba fijan el alcance de Tareas, commits por Módulo y revisión RDD por Sesión."
+        rutas: [agent-workflows/skills/chanks-4-puente/SKILL.md, agent-workflows/tests/test_builder_flow.py]
+        tareas:
+          - id: T138.1.1
+            accion: "RED: agregar una prueba contractual que exija evidencia RED/GREEN/REFACTOR interna por Tarea, exactamente un commit reversible con pruebas y trailer por Módulo, una transacción RDD nativa por candidata completa de Sesión y la excepción sólo por selección humana explícita."
+            resultado: "RED: la prueba falla contra el puente actual."
+            criterios: ["Cada límite de Tarea, Módulo, Sesión, excepción humana y ownership de ruta tiene una aserción falsificable."]
+          - id: T138.1.2
+            accion: "GREEN: declarar en el puente el contrato único para direct, design-tasks y full-sdd, sin convertir Módulos en checkpoints RDD ni cambiar la propiedad de ruta de S135."
+            resultado: "GREEN: el puente expresa el contrato aprobado y la suite del Método pasa."
+            criterios: ["Las reglas aprobadas aparecen una vez y las aserciones nuevas y existentes pasan."]
+          - id: T138.1.3
+            accion: "REFACTOR: eliminar ambigüedad o duplicación entre el flujo de ejecución y el contrato de review, conservando verify obligatorio, archive exclusivo de full-sdd y el límite de 400 líneas de la política."
+            resultado: "REFACTOR: la regla queda coherente, no recrea S130 y mantiene la compatibilidad de rutas."
+            criterios: ["El diff queda dentro de las dos rutas declaradas y la suite del Método pasa."]
 
 references:
   future_successors:
