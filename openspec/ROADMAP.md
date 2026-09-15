@@ -11,7 +11,7 @@
 - Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 
 ## Avance
-- **Total:** 70% (78/110 S)
+- **Total:** 70% (78/111 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -25,7 +25,7 @@
 - **Hosts:** 33% (3/9 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 78% (18/23 S)
+- **Método:** 75% (18/24 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -76,6 +76,7 @@
 3. **S123** · 📋 PLANIFICADO · prioridad V2 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
 4. **S129** · 🟢 LISTO · prioridad Método V1 · Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
 5. **S133** · 🟢 LISTO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
+6. **S142** · 🟢 LISTO · prioridad Método V1 · Una skill stateless de Tramo 3 coordina lotes manuales Tower-off ya aprobados, retorna tras el handoff, reacciona a eventos worker y serializa integración/cierre sin asumir trabajo, review ni autoridad Tower.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · prioridad Torre V1 · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -147,6 +148,7 @@
 - **S139:** propuesta direct (El formato, los enums, la conducta stale, la compatibilidad y las pruebas negativas están determinados; no queda una decisión técnica abierta.) · prioridad Método V1; revalidada direct sobre 5043970caba49a8a91f68f80187f51358d0791df con evidencia partition.go origina los cinco avisos desde reglas sin uso; plan.go mantiene rutas como strings para diez consumidores y más de cincuenta fixtures, por lo que un parser union inline que proyecta a strings minimiza el cambio sin duplicar ownership..
 - **S140:** propuesta direct (S139 define el único formato admitido y las cinco declaraciones exactas ya están identificadas; la activación es una migración mecánica del plan.) · prioridad Método V1; revalidada direct sobre 1458037f74069127d782e6088a184aa377c1493b con evidencia El parser entregado carga formas escalares e inline sin cambiar ownership; las cinco rutas observadas siguen ausentes en HEAD y corresponden exactamente a los dos enums cerrados de S139..
 - **S141:** propuesta direct (Radar ya expone HEAD, prioridad, estados, colas y asientos; el cambio sólo conecta esos datos en contratos y regresiones Chanks con conducta completamente determinada.) · prioridad Método V1; revalidada direct sobre 168a47e528c174868c4487537a5b9319efbdc28c con evidencia El bypass persiste: session-routing contiene prosa advisory, kickoff consulta sólo &#96;radar sesion&#96;, cierre de decisiones lee plan.yaml directamente y las pruebas de instalación verifican palabras aisladas en vez de la ruta negativa. Support ya posee la frontera Radar reutilizable..
+- **S142:** propuesta direct (Las decisiones de artefacto, ubicación, aprobación, runtime, eventos, ownership, reconstrucción y migración están cerradas; las dependencias entregadas fijan las interfaces que la skill sólo referencia.) · prioridad Método V1; revalidada direct sobre 1e88aa1d82758ad182085d491561fcbe2a8d3e2d con evidencia S131 entrega pool persistente; S137 separa Herdr/Intercom y retorna tras send; S141 instala admisión Radar; chanks-4-puente conserva verify/RDD/commits en implementers y chanks-7-session-doc conserva cierre. Falta únicamente el router stateless entre esos límites..
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -3777,6 +3779,33 @@ Rutas: agent-workflows/skills/chanks-0-agente-soporte/SKILL.md, agent-workflows/
   - [ ] El mismo HEAD e ID aparecen en status, sesion, handoff y readback.
 - **T141.1.3:** REFACTOR: eliminar lectura directa y prosa duplicada, proyectar el gate a instalación y conservar el boundary manual/Tower. → REFACTOR: Support produce evidencia, routing elige, kickoff defiende y cierre de decisiones queda aislado.
   - [ ] El diff queda en las nueve rutas declaradas y la suite del Método pasa.
+
+### S142 — Una skill stateless de Tramo 3 coordina lotes manuales Tower-off ya aprobados, retorna tras el handoff, reacciona a eventos worker y serializa integración/cierre sin asumir trabajo, review ni autoridad Tower.
+- Estado derivado: 🟢 LISTO
+- Zona/Área: metodo · agent-workflows/
+- Depende de: S131, S137, S141
+- Cimientos: —
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] &#96;chanks-3-coordinador-manual&#96; carga sólo después de una aprobación humana completa que liga cantidad paralela, IDs de Sesión, alias/worker y kind/runtime Pi exacto; no selecciona, sustituye, reduce, amplía ni reordena el lote.
+  - [ ] El coordinador delega admisión, pool, Herdr, Intercom, locks y retiro a &#96;chanks-3-despacho-herdr&#96;, confirma cada handoff y retorna inmediatamente sin wait, polling, retry ni seguimiento activo.
+  - [ ] Cada implementer conserva implementación, self-verification, RDD y commits de Módulo; Main no inspecciona, revisa, corrige ni vuelve a ejecutar la candidata del worker.
+  - [ ] Main procesa sólo eventos inbound &#96;COMPLETED&#96;, &#96;BLOCKED&#96; o &#96;FAILED&#96;: integra una Sesión confirmada por vez, detiene conflictos sin resolverlos y coordina evidencia de plan/cierre/retiro mediante las skills existentes.
+  - [ ] &#96;BLOCKED&#96;, &#96;FAILED&#96;, progreso, desconexión o ausencia de Main preservan worker y worktree; no crean cola, roster, ledger, auto-resume, fallback de transporte ni inferencia de completion.
+  - [ ] Tras salida de Main, una activación humana puede reconstruir sólo una asignación ya despachada desde Git, Radar, Herdr y readback Intercom; terminal y readbacks exactos autorizan integrar/cerrar esa asignación, nunca despachar, reintentar o cambiar su mapeo.
+  - [ ] La misma skill permanece como fallback manual Tower-off después de completar V1, sin leer/escribir estado Tower, cargar skills Tower ni reclamar autoridad Tower.
+  - [ ] La skill incluye una tabla de migración que separa evidencia/choreography manual de autoridad, ack/retry, terminalidad, checkpoint y delivery Tower V1.
+  - [ ] Un journey contractual prueba dos workers Pi, handoffs independientes, retorno de Main, eventos terminales e integración serial; las suites del Método e instalación pasan y el diff implementado no supera 400 líneas.
+
+#### M142.1 — Coordinador manual stateless y journey de dos workers con integración serial.
+Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workflows/templates/session-routing.md, agent-workflows/tools/install.py, agent-workflows/README.md, agent-workflows/tests/test&#95;coordinador&#95;manual.py, agent-workflows/tests/test&#95;despacho&#95;herdr.py
+
+- **T142.1.1:** RED: exigir aprobación completa previa, dispatch delegado no bloqueante, eventos inbound, ownership del implementer, integración serial, reconstrucción acotada y exclusiones Tower/state. → RED: el routing actual carga dispatcher directamente y no existe el coordinador ni su journey terminal.
+  - [ ] Cada autoridad, evento, efecto prohibido y fila de migración tiene una aserción falsificable.
+- **T142.1.2:** GREEN: crear la skill stateless, registrarla en instalador/README y enrutar lotes aprobados a ella antes del dispatcher. → GREEN: dos workers Pi reciben handoffs independientes y Main integra sus terminales uno por vez sin supervisión activa.
+  - [ ] La skill sólo referencia contratos existentes y no crea estado, runtime o procedimientos duplicados.
+- **T142.1.3:** REFACTOR: consolidar modos dispatch/event/reconstruction, tabla de migración y límites Tower-off; eliminar frases que transfieran review o ejecución a Main. → REFACTOR: una frontera legible separa choreography manual, evidencia y autoridad Tower V1.
+  - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
 
 ## Capacidad
 1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: metodo.
