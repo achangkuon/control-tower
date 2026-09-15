@@ -2,16 +2,17 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S128, S130, S131, S132, S134, S135, S136, S137, S138, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S128, S130, S131, S132, S134, S135, S136, S137, S138, S139, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Método V1.
-- Próximo trabajo ejecutable: Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados..
+- Próximo trabajo ejecutable: Autoridad #1 → S140 — El plan clasifica inline sus cinco rutas intencionalmente ausentes y &#96;radar check&#96; vuelve a cero avisos sin borrar ownership histórico o futuro..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
 ## Estado y próximo trabajo
+- Autoridad #1 → S140 — El plan clasifica inline sus cinco rutas intencionalmente ausentes y &#96;radar check&#96; vuelve a cero avisos sin borrar ownership histórico o futuro.
 - Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 
 ## Avance
-- **Total:** 68% (75/109 S)
+- **Total:** 69% (76/109 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -25,7 +26,7 @@
 - **Hosts:** 33% (3/9 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 72% (16/22 S)
+- **Método:** 77% (17/22 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -41,7 +42,7 @@
 1. **S108** · 📋 PLANIFICADO · prioridad Torre V1 · Ciclo idempotente de tabs worker Tower-owned desde witnesses S121 y estado terminal Radar
 
 ### Autoridad (autoridad)
-1. **S140** · 📋 PLANIFICADO · prioridad Método V1 · El plan clasifica inline sus cinco rutas intencionalmente ausentes y &#96;radar check&#96; vuelve a cero avisos sin borrar ownership histórico o futuro.
+1. **S140** · 🟢 LISTO · prioridad Método V1 · El plan clasifica inline sus cinco rutas intencionalmente ausentes y &#96;radar check&#96; vuelve a cero avisos sin borrar ownership histórico o futuro.
 
 ### Capacidades (capacidades)
 1. **S101** · 🔴 BLOQUEADO · prioridad V2 · Resolución de política: prepare&#95;through opaco y horizon&#95;ceiling salen de la política resuelta
@@ -76,7 +77,6 @@
 3. **S123** · 📋 PLANIFICADO · prioridad V2 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
 4. **S129** · 🟢 LISTO · prioridad Método V1 · Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
 5. **S133** · 🟢 LISTO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
-6. **S139** · 🟢 LISTO · prioridad Método V1 · Radar admite una clasificación inline y cerrada para rutas intencionalmente ausentes, silencia sólo esas declaraciones y falla si la clasificación queda obsoleta.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · prioridad Torre V1 · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -146,7 +146,7 @@
 - **S137:** propuesta direct (El runtime admitido, la separación Herdr/Intercom, las operaciones permitidas, los rechazos, la ruta de decisiones y el límite pre-V1 están resueltos y se verifican en una skill, su routing instalado y pruebas contractuales.) · prioridad Método V1; revalidada direct sobre 87f80ba6320eaf98618cf7e51b8bc3d8948da7dc con evidencia El dispatcher actual acepta cualquier agent kind y en su paso 6 espera cada agente; el routing instalado repite el despacho Herdr sin contrato de transporte. Las tres rutas declaradas contienen toda la corrección: pruebas textuales RED, skill Pi-only con Intercom fire-and-forget y proyección del mismo límite en las instrucciones instaladas. No requiere diseño técnico ni toca el lifecycle de pool reservado a S131..
 - **S138:** propuesta direct (El contrato del issue &#35;134, las tres rutas y las aserciones textuales están determinados; no queda diseño técnico ni cambio de ownership de rutas pendiente.) · prioridad Método V1; revalidada direct sobre f61894b0614b8a4eda6d4374c19ceb57ed805e4e con evidencia Sobre master limpio, agent-workflows/skills/chanks-4-puente/SKILL.md:21,37-38 exige verify, review y trailer por Módulo pero no declara una única candidata de Sesión ni separa Tareas de commits/review; agent-workflows/tests/test&#95;builder&#95;flow.py:111-120 fija trailers y commits por Módulo sin cubrir Tareas, alcance de review ni excepción humana. S130 quedó archivada y S135 conserva ownership de rutas. El delta está completamente determinado en estas dos rutas, por lo que direct sigue siendo la ruta proporcional..
 - **S139:** propuesta direct (El formato, los enums, la conducta stale, la compatibilidad y las pruebas negativas están determinados; no queda una decisión técnica abierta.) · prioridad Método V1; revalidada direct sobre 5043970caba49a8a91f68f80187f51358d0791df con evidencia partition.go origina los cinco avisos desde reglas sin uso; plan.go mantiene rutas como strings para diez consumidores y más de cincuenta fixtures, por lo que un parser union inline que proyecta a strings minimiza el cambio sin duplicar ownership..
-- **S140:** propuesta direct (S139 define el único formato admitido y las cinco declaraciones exactas ya están identificadas; la activación es una migración mecánica del plan.) · prioridad Método V1; pendiente de revalidación en kickoff.
+- **S140:** propuesta direct (S139 define el único formato admitido y las cinco declaraciones exactas ya están identificadas; la activación es una migración mecánica del plan.) · prioridad Método V1; revalidada direct sobre 1458037f74069127d782e6088a184aa377c1493b con evidencia El parser entregado carga formas escalares e inline sin cambiar ownership; las cinco rutas observadas siguen ausentes en HEAD y corresponden exactamente a los dos enums cerrados de S139..
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -3709,7 +3709,7 @@ Rutas: agent-workflows/skills/chanks-4-puente/SKILL.md, agent-workflows/tests/te
   - [ ] El diff queda dentro de las dos rutas declaradas y la suite del Método pasa.
 
 ### S139 — Radar admite una clasificación inline y cerrada para rutas intencionalmente ausentes, silencia sólo esas declaraciones y falla si la clasificación queda obsoleta.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: ✅ COMPLETO
 - Zona/Área: metodo · agent-workflows/
 - Depende de: —
 - Cimientos: —
@@ -3732,7 +3732,7 @@ Rutas: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/partitio
   - [ ] El diff queda dentro de las cuatro rutas declaradas y &#96;go test ./...&#96; pasa.
 
 ### S140 — El plan clasifica inline sus cinco rutas intencionalmente ausentes y &#96;radar check&#96; vuelve a cero avisos sin borrar ownership histórico o futuro.
-- Estado derivado: 📋 PLANIFICADO
+- Estado derivado: 🟢 LISTO
 - Zona/Área: autoridad · openspec/plans/, openspec/plan.yaml, openspec/ROADMAP.md, openspec/prd/, openspec/rfc/, openspec/specs/, openspec/maintenance/, openspec/config.yaml, docs/
 - Depende de: S139
 - Cimientos: —
@@ -3754,7 +3754,7 @@ Rutas: openspec/plan.yaml
   - [ ] &#96;go test ./...&#96;, &#96;radar check&#96; y &#96;radar render&#96; pasan.
 
 ## Capacidad
-1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: metodo.
+2 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: autoridad, metodo.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references

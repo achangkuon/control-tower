@@ -18,8 +18,17 @@ zonas:
   - id: asientos
     nombre: Asientos
     # Clasificación exclusiva de procedencia cerrada para S8.14: profiles/ no es una fuente activa en HEAD; las fuentes activas están bajo product/tower/.
-    # NO borres profiles/ para silenciar el aviso "no le corresponde ningún archivo": es el dueño actual de rutas de Módulo de S8.14 y sin él esa Sesión histórica queda huérfana (check.go:186). Verificado el 2026-09-11.
-    rutas: [supervision/, profiles/, escalation/, support/, workspace/, test/escalation/, test/supervision/, test/support/, test/workspace/]
+    rutas:
+      - supervision/
+      - ruta: profiles/
+        ausencia_intencional: legado-retirado
+      - escalation/
+      - support/
+      - workspace/
+      - test/escalation/
+      - test/supervision/
+      - test/support/
+      - test/workspace/
   - id: jornada
     nombre: Jornada
     rutas: [jornada/, jornada.sh, test/jornada/]
@@ -81,10 +90,12 @@ cimientos:
     - scripts/payload-closure.mjs
     - scripts/publish-runtime.mjs
     # Clasificación exclusiva de procedencia cerrada para S8.14/S9.1: estas rutas legacy no existen ni autorizan una fuente activa en HEAD.
-    # NO las borres para silenciar el aviso "no le corresponde ningún archivo". Son el dueño actual de las rutas de Módulo de S8.14/S9.1: sin ellas esas Sesiones históricas quedan huérfanas y `radar check` pasa de 4 avisos a 2 errores (check.go:186). Verificado el 2026-09-11.
-    - skills/torre-control-entregas/SKILL.md
-    - skills/torre-control-soporte/SKILL.md
-    - skills/torre-control/SKILL.md
+    - ruta: skills/torre-control-entregas/SKILL.md
+      ausencia_intencional: legado-retirado
+    - ruta: skills/torre-control-soporte/SKILL.md
+      ausencia_intencional: legado-retirado
+    - ruta: skills/torre-control/SKILL.md
+      ausencia_intencional: legado-retirado
     - product/tower/skills/torre-control-entregas/SKILL.md
     - product/tower/skills/torre-control/SKILL.md
     - test/console-executor.test.mjs
@@ -106,13 +117,9 @@ cimientos:
     - test/identity.test.mjs
     - test/lifecycle.test.mjs
     - test/install/launch-worker-cli.test.mjs
-    # Reservado por S119, que lo edita desde la Zona producto-torre. S117 lo crea al partir
-    # tower-role-assets.test.mjs, y hasta entonces `radar check` avisa que la ruta no resuelve a
-    # ningún archivo: es trabajo declarado y pendiente, no un defecto. Las otras dos rutas que
-    # crea S117 —payload-closure.contract.mjs y runtime-payload.contract.mjs— NO se reservan acá:
-    # caen bajo la ruta amplia test/install/ de su propia Zona, que ya las autoriza. Sólo ésta
-    # cruza de Zona y por eso necesita la reserva exacta (check.go:184-206).
-    - test/install/tower-role-assets.contract.mjs
+    # Reservado por S119 y creado por S117; las otras dos rutas nuevas caen bajo test/install/.
+    - ruta: test/install/tower-role-assets.contract.mjs
+      ausencia_intencional: reserva-futura
     - test/migration.test.mjs
     - test/polling.test.mjs
     - test/pre-push-plan-gate.test.mjs
@@ -8902,6 +8909,8 @@ sesiones:
             accion: "REFACTOR: centralizar el enum y separar coincidencia tracked de reserva futura para que stale no dependa de `usadas`."
             resultado: "REFACTOR: el contrato queda cerrado, legible y sin una segunda lista de ownership."
             criterios: ["El diff queda dentro de las cuatro rutas declaradas y `go test ./...` pasa."]
+    entrega:
+      commit: 1458037f74069127d782e6088a184aa377c1493b
 
   - id: S140
     zona: autoridad
@@ -8920,6 +8929,10 @@ sesiones:
     ruta:
       propuesta: direct
       autoridad: "S139 define el único formato admitido y las cinco declaraciones exactas ya están identificadas; la activación es una migración mecánica del plan."
+      revalidacion:
+        resultado: direct
+        base: 1458037f74069127d782e6088a184aa377c1493b
+        evidencia: "El parser entregado carga formas escalares e inline sin cambiar ownership; las cinco rutas observadas siguen ausentes en HEAD y corresponden exactamente a los dos enums cerrados de S139."
     modulos:
       - id: M140.1
         resultado: "Activación de las cinco clasificaciones de ausencia intencional."
