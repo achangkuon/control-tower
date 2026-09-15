@@ -8332,6 +8332,10 @@ sesiones:
     ruta:
       propuesta: direct
       autoridad: "El lifecycle, la fuente del pool, el lock atómico, la reserva all-or-nothing, la preparación condicional y el retiro persistente están decididos; el cambio se concentra en una skill, su referencia de retiro y su prueba contractual."
+      revalidacion:
+        resultado: direct
+        base: 52abac97e7be4d23a9b2370726e9f9dec9ef20b3
+        evidencia: "agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md:18-23 y 40-47 contienen todos los gates y pasos existentes, pero :21/:42 todavía crean worktree+tab por Sesión y :32 permite despacho parcial; agent-workflows/skills/chanks-3-despacho-herdr/references/retiro.md:21-25 todavía cierra tab, elimina worktree y espera su ausencia; agent-workflows/tests/test_despacho_herdr.py:46-75 y 86-110 fijan contractualmente ese lifecycle efímero. El contrato S131 ya determina el reemplazo en esos mismos tres paths: pool declarado por AGENTS.md, lock atómico común, reserva all-or-nothing, rama/agente nuevos, preparación condicional, rollback acotado y retiro persistente."
     modulos:
       - id: M131.1
         resultado: "El despacho y retiro reciclan workers declarados sin perder su entorno"
@@ -8402,6 +8406,10 @@ sesiones:
     ruta:
       propuesta: direct
       autoridad: "Las reglas, los dos archivos, el fallback de Radar, la topología persistente y la frontera de autoridad del issue-resolver están decididos y son verificables sin diseño abierto."
+      revalidacion:
+        resultado: direct
+        base: 52abac97e7be4d23a9b2370726e9f9dec9ef20b3
+        evidencia: "test/pre-push-plan-gate.test.mjs:11,47-53; AGENTS.md todavía no declara política de pool persistente, intake ni reinstalación; issues #139 y #140. El contrato revisado de radar sesion S132 fija fallback temporal de Radar con -f absoluto, topología persistente, preparación por ausencia o drift, intake de fricción y frontera del issue-resolver."
     modulos:
       - id: M132.1
         resultado: "La prueba del gate compila su propio Radar y liga el plan objetivo cuando falta el binario"
