@@ -51,12 +51,12 @@ or decision closure. Decision closure needs a separate explicit human request fo
 - Kickoff runs in the user-approved current repository and branch. It verifies `HEAD`, branch,
   and Git contamination, revalidates the proposed route once against scoped code, and returns its
   delta to the responsible parent. It does not choose new work, dispatch agents, or claim a lock.
-- After the human chooses which `LISTO` Sesiones run in parallel and approves a Pi worker for each,
-  the responsible parent loads `chanks-3-despacho-herdr`. Manual pre-V1 dispatch accepts Pi workers
+- After one human approval binds the parallel count, exact `LISTO` Sesión IDs, and exact Pi worker alias, exact Pi session ID, exact cwd/worktree, runtime, and kind for each Sesión,
+  the responsible parent loads `chanks-3-coordinador-manual`, which delegates approved dispatch to `chanks-3-despacho-herdr`. Manual pre-V1 dispatch accepts Pi workers
   only: Herdr owns only authorized seats and process topology, while Pi Intercom is message transport
   without selection, assignment, role, permission, review, or delivery authority. Before each handoff,
-  Main uses one fresh Intercom live-roster readback bound to the exact human-approved alias, session,
-  and cwd; a missing, ambiguous, disconnected, or mismatched identity fails closed before dispatch is
+  Main uses one fresh Intercom live-roster readback bound to the exact human-approved alias, exact Pi session ID,
+  and exact cwd/worktree; a missing, ambiguous, disconnected, or mismatched identity fails closed before dispatch is
   declared. Ordinary Intercom `send` has no wait timeout; a worker-initiated human-decision `ask`
   timeout preserves the worktree and candidate as `BLOCKED`: Main does not guess the answer or report
   completion. Main sends each handoff with fire-and-forget `send` and returns after one delivery result
@@ -69,12 +69,15 @@ or decision closure. Decision closure needs a separate explicit human request fo
   never an unthreaded substitute or its own `ask`. Main never initiates `ask`.
   Herdr JSON proves only seat and process identity; Intercom delivery results prove only message
   delivery; neither grants authority or proves work completion, and the worker reports terminal result
-  evidence. A later disconnect creates no polling, retry, inferred completion, transport fallback, or
+  evidence. Before terminal handling, fresh Intercom and Herdr readbacks must prove the sender matches the
+  already human-approved/dispatched exact alias, exact Pi session ID, and exact cwd/worktree; Git readback must prove the
+  reported commit is the dispatched worktree candidate before integration. Any missing, mismatched, or unavailable
+  readback stops: no integration, retry, remapping, or inferred terminal. A later disconnect creates no polling, retry, inferred completion, transport fallback, or
   autonomous resume; human reactivation and reapproval are required before a new dispatch. There is no persistent queue,
   roster, state, non-Pi fallback, or provisional cross-runtime bridge; the future tower V1 remains the
   heterogeneous and hybrid owner. This dispatch is an explicit Herdr request made with the Torre off;
   it is not Torre dispatch.
-- After the responsible parent records a dispatched Sesión's delivery, it runs that skill's retire mode,
+- After serial integration and closure evidence through `chanks-7-session-doc`, the coordinator delegates retirement to `chanks-3-despacho-herdr`'s retire mode,
   which removes only worktrees that pass its six checks.
 - The plan↔SDD bridge translates the approved or revalidated route into its execution path (canon §15).
   Only `full-sdd` enters Gentle AI's native SDD pipeline:
