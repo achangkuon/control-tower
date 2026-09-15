@@ -117,6 +117,34 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertIn("`Modulo: <ID>`", bridge)
         self.assertIn("every Módulo commit", bridge)
 
+    def test_bridge_uses_tasks_as_evidence_module_commits_and_one_session_review(self):
+        bridge = read("skills/chanks-4-puente/SKILL.md")
+        compact = " ".join(bridge.split())
+
+        for phrase in (
+            "Every Tarea is internal RED → GREEN → REFACTOR evidence only",
+            "must not create a commit or a native RDD review checkpoint",
+            "exactly one independently revertible commit",
+            "includes that Módulo's implementation and tests",
+            "complete immutable Session candidate",
+            "after all Módulos and criterion-by-criterion `verify`",
+            "before delivery",
+            "only when the human explicitly selected",
+            "oversized or independently deliverable unit",
+            "mere existence of a Módulo never selects this exception",
+            "Planning and SDD artifacts stay outside the 400-line review reference",
+            "applies to `direct`, `design-tasks`, and `full-sdd`",
+        ):
+            self.assertIn(phrase, compact)
+
+        self.assertEqual(bridge.count("`Modulo: <ID>`"), 1)
+        self.assertLess(
+            compact.index("before delivery and before any Módulo commit"),
+            compact.index("Only after that review approves"),
+        )
+        self.assertNotIn("review each Módulo by default", compact)
+        self.assertNotIn("one native attempt per Módulo", compact)
+
     def test_active_builder_retains_generic_route_review_archive_and_safety_contracts(self):
         canon = read("skills/_shared/plan-naming-convention.md")
         template = read("templates/session-routing.md")

@@ -8823,6 +8823,10 @@ sesiones:
     ruta:
       propuesta: direct
       autoridad: "El contrato del issue #134, las tres rutas y las aserciones textuales están determinados; no queda diseño técnico ni cambio de ownership de rutas pendiente."
+      revalidacion:
+        resultado: direct
+        base: f61894b0614b8a4eda6d4374c19ceb57ed805e4e
+        evidencia: "Sobre master limpio, agent-workflows/skills/chanks-4-puente/SKILL.md:21,37-38 exige verify, review y trailer por Módulo pero no declara una única candidata de Sesión ni separa Tareas de commits/review; agent-workflows/tests/test_builder_flow.py:111-120 fija trailers y commits por Módulo sin cubrir Tareas, alcance de review ni excepción humana. S130 quedó archivada y S135 conserva ownership de rutas. El delta está completamente determinado en estas dos rutas, por lo que direct sigue siendo la ruta proporcional."
     modulos:
       - id: M138.1
         resultado: "El puente y su prueba fijan el alcance de Tareas, commits por Módulo y revisión RDD por Sesión."

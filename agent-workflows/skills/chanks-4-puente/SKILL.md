@@ -21,6 +21,17 @@ and return resulting evidence to the responsible parent.
 - `verify` and review are mandatory for every route; `archive` runs only for `full-sdd`, after delivery.
 - Never write plan data or a generated view. Return evidence and a preconditioned delta for the responsible parent to record.
 
+## TDD, Commit, and Review Cadence
+
+This cadence applies to `direct`, `design-tasks`, and `full-sdd`; it does not change which route
+owns native SDD or archive.
+
+- Every Tarea is internal RED → GREEN → REFACTOR evidence only. It must not create a commit or a native RDD review checkpoint.
+- Planning and SDD artifacts stay outside the 400-line review reference under repository policy; their presence never recreates a per-Módulo review or attempt.
+- By default, open exactly one native RDD transaction for the complete immutable Session candidate after all Módulos and criterion-by-criterion `verify`; it occurs before delivery and before any Módulo commit.
+- Only after that review approves, materialize exactly one independently revertible commit per completed Módulo from the reviewed bytes; every Módulo commit includes that Módulo's implementation and tests and carries the single trailer `Modulo: <ID>`.
+- Earlier or per-Módulo review is an exception only when the human explicitly selected an oversized or independently deliverable unit. The mere existence of a Módulo never selects this exception.
+
 ## Decision Gates
 
 | Revalidated route | Execution path |
@@ -34,8 +45,8 @@ and return resulting evidence to the responsible parent.
 
 1. Translate handoff, Sesión, criteria, decisions, Módulos/Tareas, and base into the route's inputs.
 2. For `full-sdd`, show mode, artifact store, testing/TDD, and delivery strategy for confirmation or change.
-3. Implement through the route's path and verify against the Sesión's binary criteria. Give every Módulo commit the trailer `Modulo: <ID>` so the Sesión can resume from Git.
-4. After review and delivery under repository policy, execute `archive` only for `full-sdd`.
+3. Implement every Módulo through the route's path, verify the Sesión's binary criteria, and review the complete uncommitted Session candidate before creating its Módulo commits.
+4. After approval, materialize the reviewed bytes into the Módulo commits without content changes, deliver under repository policy, and execute `archive` only for `full-sdd` after delivery.
 5. Translate progress, validation, delivery, and `full-sdd` archive evidence into a delta with expected old value. For `direct` and `design-tasks`, include the criterion-by-criterion verify evidence for the body of the delivery-record commit, and return evidence to the responsible parent.
 
 ## Output Contract
