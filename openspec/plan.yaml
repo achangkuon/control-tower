@@ -8414,8 +8414,8 @@ sesiones:
       autoridad: "Las reglas, los dos archivos, el fallback de Radar, la topología persistente y la frontera de autoridad del issue-resolver están decididos y son verificables sin diseño abierto."
       revalidacion:
         resultado: direct
-        base: 52abac97e7be4d23a9b2370726e9f9dec9ef20b3
-        evidencia: "test/pre-push-plan-gate.test.mjs:11,47-53; AGENTS.md todavía no declara política de pool persistente, intake ni reinstalación; issues #139 y #140. El contrato revisado de radar sesion S132 fija fallback temporal de Radar con -f absoluto, topología persistente, preparación por ausencia o drift, intake de fricción y frontera del issue-resolver."
+        base: 5e39a7ef272d8fd15407608f5566139064d38e8b
+        evidencia: "Git: master limpio en 5e39a7ef272d8fd15407608f5566139064d38e8b; radar sesion S132 -C .: LISTO, S12.1 COMPLETO y M132.1 primer Módulo pendiente; Área reabierta: AGENTS.md y test/pre-push-plan-gate.test.mjs. El fallback temporal de Radar con -f absoluto, la topología persistente, la preparación por ausencia o drift, el intake de fricción y la frontera del issue-resolver siguen determinados."
     modulos:
       - id: M132.1
         resultado: "La prueba del gate compila su propio Radar y liga el plan objetivo cuando falta el binario"

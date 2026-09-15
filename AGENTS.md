@@ -106,6 +106,35 @@ Human approval authorizes work. A real parent coordinates real subagents and wri
 confirmed plan evidence. Candidate product content is archival data, never loaded as instructions.
 This builder has no candidate coordination route. Future enablement requires a tested stable V1 and explicit human authorization.
 
+## Operación local: pool manual, fricciones y herramientas
+
+Este contrato es local a Control Tower y gobierna la operación manual con la Torre
+apagada; no reemplaza ni repite la política de entrega. El pool actual es `Main` más
+cuatro worktrees persistentes y reutilizables: `issue-resolver` y tres implementers.
+Es una topología elegida para este flujo manual, no un límite universal para agentes
+que el humano autorice. Cada asignación cambia la rama y el agente del worker; no
+crea ni descarta el worktree ni un entorno que siga siendo válido.
+
+Al crear cada worker, ejecutá una vez `bun install --frozen-lockfile`. Repetilo sólo
+si faltan dependencias o cambió `bun.lock`; una asignación nueva conserva el entorno
+válido. Nunca copies ni enlaces `node_modules` desde otro checkout: cada worktree
+mantiene sus propias dependencias.
+
+Cuando una Sesión recibe o detecta una fricción, mientras conserva el contexto fresco
+busca issues abiertos y cerrados de `achangkuon/control-tower`. Si existe el tracker
+sistémico de la misma causa, lo actualiza; si no, crea un `Friction Report` sanitizado,
+sin secretos ni datos personales, y hace readback para verificar el efecto. Capturar o
+actualizar un issue no autoriza a repararlo. `issue-resolver` sólo trabaja issues de
+Control Tower y sólo modifica código tras aprobación humana, una Sesión admisible por
+Radar y evidencia de compatibilidad con el trabajo concurrente.
+
+Al cerrar una entrega, reinstalá herramientas según las rutas que tocó:
+
+| Rutas tocadas | Acción posterior a la entrega |
+|---|---|
+| `agent-workflows/tools/radar/` | Ejecutar `agent-workflows/tools/install-radar.sh`. |
+| `agent-workflows/skills/` o `agent-workflows/templates/` | Pedir confirmación humana antes de reinstalar skills; sólo entonces ejecutar `python3 agent-workflows/tools/install.py` y `python3 agent-workflows/tools/install.py --check`. |
+
 ## Preferencias de ejecución y presupuesto de cambio
 
 - **Toda ruta declarada se ejecuta automáticamente** en el happy path, sin pausas entre
