@@ -8266,110 +8266,175 @@ sesiones:
   - id: S131
     zona: metodo
     prioridad: metodo-v1
-    resultado: "El despacho con Herdr prepara cada worktree con la preparación que declara el AGENTS.md del repositorio antes de lanzar el agente."
-    autoridad: "Aprobación de Emilio del 2026-09-14 (Claude Code, sesión df306f72), problema 1, opción 2, y decisión 1 sobre la fuente genérica. Evidencia: agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md crea worktree, tab y agente sin ningún paso de instalación; en la sesión con Pi los cuatro worktrees nacieron sin node_modules y hubo que enlazar dependencias a mano."
-    depende_de: []
+    resultado: "El despacho manual con Herdr reutiliza el pool de workers que declara el repositorio: conserva worktree, tab y dependencias entre Sesiones, y renueva sólo la rama de asignación y el agente."
+    autoridad: "Aprobación de Emilio del 2026-09-14 sobre preparación genérica desde AGENTS.md, reemplazada y ampliada por su decisión explícita del 2026-09-15: estabilizar primero la fricción de agentes con S132 + S131 y mantener Main más cuatro workers permanentes, recreando agentes y ramas pero no worktrees ni dependencias. #139 documenta que el contrato entregado por S126 y la versión anterior de S131 destruían ese pool. Esta Sesión supersede sólo el lifecycle efímero de despacho/retiro de S126; conserva su lista humana, gates de Radar, aislamiento por Sesión, integración serial y prohibición de Torre."
+    depende_de: [S126]
     cimientos: []
-    recurso: []
+    recurso: ["lock efímero atómico del pool bajo el Git common-dir y uso exclusivo de los workers declarados durante despacho o retiro"]
     criterios:
-      - "Después de crear `Worktrees/<id>` y antes de abrir la tab, `chanks-3-despacho-herdr` ejecuta dentro de ese worktree el comando de preparación que declara el `AGENTS.md` del repositorio."
-      - "Si el repositorio no declara preparación, la skill lo informa en su tabla de salida y continúa."
-      - "Si la preparación falla, la skill no abre tab ni agente para esa Sesión, reporta el error y deja el worktree creado para que el humano decida."
-      - "La skill nunca copia ni enlaza `node_modules` u otra carpeta de dependencias desde otro checkout."
-      - "`agent-workflows/tests/test_despacho_herdr.py` falla si alguna de esas reglas desaparece; la suite del Método pasa y el diff toca sólo Área."
+      - "`chanks-3-despacho-herdr` lee de `AGENTS.md` la declaración del pool reutilizable, sus roles y cuándo preparar o refrescar cada worker; no fija Bun, npm, cantidad ni nombres para otros proyectos."
+      - "Si el repositorio no declara un pool reutilizable completo, la skill falla cerrado antes de crear ramas o agentes; nunca crea un worktree efímero por Sesión ni adivina una topología."
+      - "Antes de leer disponibilidad, asignar o retirar, el padre adquiere con una operación atómica un único lock efímero bajo `git rev-parse --git-common-dir`; si ya existe, su identidad es ambigua o no puede probar su ownership, no lo roba ni lo borra y se detiene para decisión humana."
+      - "Con el lock adquirido, el padre valida y reserva el lote humano completo antes de lanzar el primer agente: todas las Sesiones siguen LISTO, son compatibles y tienen un worker apto. Si una falla, libera sólo el lock propio y lanza cero agentes; el orden de la lista nunca produce un despacho parcial."
+      - "El mapeo reservado asigna cada Sesión a un worker declarado que prueba estar libre, limpio y fuera del checkout Main; `issue-resolver` sólo recibe una Sesión respaldada por un issue de Control Tower elegido por el humano."
+      - "El worktree y la tab identifican al worker y permanecen entre asignaciones; cada Sesión activa conserva una tab propia, una rama nueva `work/<id>` desde el master verificado y un agente nuevo con el nombre de la Sesión. Una rama ya existente o un readback ambiguo detiene el lote sin reset ni force."
+      - "La disponibilidad se prueba dentro del lock desde Git, Radar y el readback vivo de Herdr: no hay árbol sucio, agente anterior activo, entrega pendiente ni identidad divergente. El lock se libera sólo después del readback de todos los agentes lanzados o de un rollback comprobado; no existe roster ni estado de planificación paralelo."
+      - "La preparación declarada corre sólo al provisionar el worker o cuando falta su entorno o la evidencia declarada quedó stale; una reasignación con entorno válido ejecuta cero reinstalaciones y nunca copia ni enlaza dependencias desde otro checkout."
+      - "Si preparación o lanzamiento falla, se cierran sólo los agentes abiertos por ese lote y se devuelven sólo sus ramas nuevas a un estado limpio comprobado; worktrees, tabs y dependencias permanecen. Un rollback ambiguo conserva el lock y pide decisión humana."
+      - "El modo retiro adquiere el mismo lock, conserva los seis chequeos seguros aplicables de S126, cierra sólo el agente terminado, mantiene tab, worktree y dependencias, deja el worker detached en el master integrado y libera el lock después de confirmar por readback que quedó libre; nunca ejecuta `git worktree remove` para un worker del pool."
+      - "Un retiro o asignación fallidos no reciclan por inferencia, no borran ramas con force y no tocan otro worker. El padre sigue integrando una Sesión por vez y es el único que escribe `openspec/plan.yaml`."
+      - "`agent-workflows/tests/test_despacho_herdr.py` falla si reaparece creación o borrado por Sesión, reinstalación incondicional, check-then-act sin lock, despacho parcial, selección no humana, reutilización ocupada o coupling con Torre; la suite del Método pasa y el diff toca sólo Área."
     decisiones:
       - tipo: resuelta
-        pregunta: "¿De dónde saca la skill de despacho, que sirve para cualquier proyecto, cómo preparar un worktree?"
-        resolucion: "Del `AGENTS.md` del repositorio, que declara su comando de preparación."
-        autoridad: "Aprobación de Emilio del 2026-09-14, decisión 1."
-        clase: contrato-visible
-        falsificador: "La skill fija `bun`, `npm` u otra herramienta concreta, o adivina el comando por el tipo de lockfile."
+        pregunta: "¿Qué parte de un worker se conserva entre Sesiones?"
+        resolucion: "Se conservan su worktree, tab y dependencias válidas; para cada asignación se crean una rama `work/<id>` y un agente nuevos."
+        autoridad: "Elección explícita de Emilio del 2026-09-15."
+        clase: contrato-visible; expansion-de-alcance
+        falsificador: "El despacho ordinario crea o retira el worktree por Sesión, cierra su tab estable, reinstala un entorno válido o reutiliza el agente anterior."
         descartadas:
-          - opcion: "Detectar la herramienta por el lockfile presente."
-            razon: "Es frágil y adivina una política que el repositorio no declaró."
-          - opcion: "Fijar `bun ci` en la skill."
-            razon: "La skill dejaría de servir para proyectos que no usan Bun."
+          - opcion: "Un worktree nuevo por Sesión."
+            razon: "Descarta la preparación válida y reprodujo la fricción sistémica de #139."
+          - opcion: "Compartir un solo checkout entre varios agentes."
+            razon: "Mezcla ramas y árboles de trabajo y elimina el aislamiento por Sesión."
+      - tipo: resuelta
+        pregunta: "¿Dónde se define un pool para que la skill siga siendo genérica entre proyectos?"
+        resolucion: "En el `AGENTS.md` de cada repositorio; la skill interpreta ese contrato y falla cerrado si falta, sin adivinar herramienta, cantidad, nombres ni preparación."
+        autoridad: "Decisión de Emilio del 2026-09-14 sobre la fuente genérica y aclaración del 2026-09-15 de que las reglas vivan donde corresponde."
+        clase: contrato-visible
+        falsificador: "La skill fija la topología de Control Tower para otros proyectos, detecta la herramienta por lockfile o cae al lifecycle efímero cuando falta declaración."
+        descartadas:
+          - opcion: "Detectar herramienta y topología desde archivos del checkout."
+            razon: "Adivina intención y no expresa roles ni condiciones de refresh."
+          - opcion: "Fijar Main más cuatro workers en la skill global."
+            razon: "Convierte una topología local elegida en un límite universal."
+      - tipo: resuelta
+        pregunta: "¿Qué significa retirar una Sesión de un worker persistente?"
+        resolucion: "Cerrar el agente terminado y devolver el mismo worktree/tab limpio y detached en el master integrado; nunca eliminar el worker ni sus dependencias."
+        autoridad: "Decisión explícita de Emilio del 2026-09-15, que reemplaza para workers declarados la autorización de S126 de borrar worktree y rama."
+        clase: operaciones-irreversibles; contrato-visible
+        falsificador: "El retiro ejecuta `git worktree remove`, pierde dependencias, deja trabajo no integrado o declara libre un worker sin readback."
+        descartadas:
+          - opcion: "Conservar el retiro efímero de S126."
+            razon: "Destruye exactamente el recurso reutilizable que esta Sesión protege."
+          - opcion: "No retirar nada ni verificar disponibilidad."
+            razon: "Deja agentes, ramas o trabajo previo contaminando la siguiente asignación."
+      - tipo: resuelta
+        pregunta: "¿Cómo se evita que dos despachos elijan el mismo worker o que el orden deje un lote a medias?"
+        resolucion: "Despacho y retiro comparten un lock efímero adquirido atómicamente bajo el Git common-dir; el despacho reserva y valida el lote completo antes del primer lanzamiento y falla entero ante cualquier conflicto."
+        autoridad: "Corrección técnica derivada de la revisión nativa review-dce350ed1dfd9d41: R4-worker-reservation-race corroborado y R3-dispatch-order-deadlock señalado."
+        clase: contrato-visible
+        falsificador: "La skill separa lectura y asignación sin exclusión, lanza una Sesión antes de validar el lote completo, roba un lock ajeno o representa la reserva como estado de planificación."
+        descartadas:
+          - opcion: "Confiar sólo en que habrá un único padre."
+            razon: "Es una convención no atómica; dos procesos todavía pueden observar el mismo worker libre."
+          - opcion: "Guardar un roster persistente de workers ocupados."
+            razon: "Crea una segunda fuente de estado y exige reconciliarla con Git, Radar y Herdr."
     ruta:
       propuesta: direct
-      autoridad: "La fuente de la preparación y el comportamiento ante ausencia o falla están decididos; el cambio se limita a una skill y su prueba."
+      autoridad: "El lifecycle, la fuente del pool, el lock atómico, la reserva all-or-nothing, la preparación condicional y el retiro persistente están decididos; el cambio se concentra en una skill, su referencia de retiro y su prueba contractual."
     modulos:
       - id: M131.1
-        resultado: "El despacho prepara cada worktree antes de lanzar el agente"
-        rutas: [agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md, agent-workflows/tests/test_despacho_herdr.py]
+        resultado: "El despacho y retiro reciclan workers declarados sin perder su entorno"
+        rutas: [agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md, agent-workflows/skills/chanks-3-despacho-herdr/references/retiro.md, agent-workflows/tests/test_despacho_herdr.py]
         tareas:
           - id: T131.1.1
-            accion: "RED: exigir que la skill ejecute la preparación declarada en AGENTS.md antes de abrir la tab, informe su ausencia, no lance el agente si falla y nunca enlace dependencias de otro checkout."
-            resultado: "RED: la prueba falla contra la skill actual."
-            criterios: ["RED: la prueba falla contra la skill actual."]
+            accion: "RED: exigir pool declarado, lock atómico compartido, validación all-or-nothing del lote, disponibilidad probada, rama y agente nuevos, preparación sólo por ausencia o drift, especialización de issue-resolver y retiro persistente bajo el mismo lock."
+            resultado: "RED: las pruebas fallan contra el lifecycle efímero y el check-then-act de S126."
+            criterios: ["RED: cubre contención, lock ambiguo, conflicto tardío sin lanzamiento parcial y rollback ambiguo además del camino válido."]
           - id: T131.1.2
-            accion: "GREEN: agregar el paso de preparación y sus compuertas a la skill de despacho."
-            resultado: "GREEN: la suite del Método pasa."
-            criterios: ["GREEN: la suite del Método pasa."]
+            accion: "GREEN: reescribir despacho y retiro para reservar el lote bajo el lock común, lanzar agentes nuevos y devolver cada worker limpio y detached sin perder entorno ni crear estado paralelo."
+            resultado: "GREEN: la suite contractual pasa; dos despachos no toman el mismo worker y una reasignación válida conserva dependencias."
+            criterios: ["GREEN: crear o retirar una Sesión ejecuta cero creación o borrado del worktree declarado y libera sólo el lock propio tras readback."]
           - id: T131.1.3
-            accion: "REFACTOR: dejar la preparación como un solo paso de ejecución referenciado por las compuertas, sin repetirlo."
-            resultado: "REFACTOR: el paso aparece una sola vez y la suite del Método pasa."
-            criterios: ["REFACTOR: el paso aparece una sola vez y la suite del Método pasa."]
+            accion: "REFACTOR: concentrar exclusión, disponibilidad, preparación y retorno en un solo lifecycle referenciado por ambos modos, preservando gates humanos, Radar y Herdr de S126."
+            resultado: "REFACTOR: no hay check-then-act, reglas duplicadas ni regresiones de autoridad y la suite del Método pasa."
+            criterios: ["REFACTOR: una sola frontera all-or-nothing gobierna asignación y devolución del pool."]
   - id: S132
     zona: cimientos
     prioridad: metodo-v1
-    resultado: "Un worktree limpio de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y su AGENTS.md declara la preparación del worktree y qué reinstalar cuando cambian las herramientas."
-    autoridad: "Aprobación de Emilio del 2026-09-14 (Claude Code, sesión df306f72), problemas 1 y 4, opción 2 y opción 1. Evidencia: test/pre-push-plan-gate.test.mjs:11 apunta a agent-workflows/tools/radar/radar, que no está versionado, y fallaba fuera del checkout principal; el push de de098bf fue rechazado porque ~/.local/bin/radar era anterior a S127. La decisión de S9.3 fija `bun ci` sin reutilizar node_modules."
+    resultado: "Un worker reutilizable de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y AGENTS.md declara la preparación persistente, la reinstalación de herramientas y la captura inmediata de fricciones."
+    autoridad: "Aprobación de Emilio del 2026-09-14 (Claude Code, sesión df306f72), problemas 1 y 4, opción 2 y opción 1; ampliación explícita de Emilio del 2026-09-15: el flujo manual Herdr-off mantiene Main más cuatro worktrees permanentes —issue-resolver y tres implementers— para conservar dependencias, y toda Sesión crea o actualiza automáticamente un issue de Control Tower cuando detecta fricción. Evidencia: test/pre-push-plan-gate.test.mjs:11 apunta a agent-workflows/tools/radar/radar, que no está versionado, y fallaba fuera del checkout principal; #139 registra que S126/S131 recrean worktrees contra el pool reutilizable aprobado; #140 reproduce que Radar requiere un fallback y `-f` absoluto en un checkout limpio."
     # Depende de S12.1: esa Sesión cambia .githooks/pre-push, el hook que esta prueba ejercita.
     depende_de: [S12.1]
     cimientos: [AGENTS.md, test/pre-push-plan-gate.test.mjs]
     recurso: []
     criterios:
-      - "`AGENTS.md` declara una sección de preparación de worktree con `bun ci`, sin reutilizar `node_modules` entre checkouts."
+      - "`AGENTS.md` declara el pool manual Herdr-off actual como Main más `issue-resolver` y tres implementers reutilizables: es una topología elegida, no un límite universal para agentes autorizados por el humano."
+      - "Cada worker ejecuta `bun install --frozen-lockfile` al crearse y sólo lo repite si faltan dependencias o cambió `bun.lock`; nunca copia ni enlaza `node_modules` desde otro checkout y una nueva asignación conserva el entorno válido."
+      - "Toda Sesión que detecta o recibe una fricción busca issues abiertos y cerrados de `achangkuon/control-tower` mientras conserva el contexto fresco; actualiza el issue sistémico canónico o crea un Friction Report sanitizado y verifica el efecto por readback."
+      - "Crear o actualizar un issue nunca autoriza repararlo; `issue-resolver` sólo trabaja en issues de Control Tower y sólo modifica código después de aprobación humana, una Sesión admisible por Radar y evidencia de compatibilidad con el trabajo concurrente."
       - "`AGENTS.md` declara qué reinstalar al cerrar: `agent-workflows/tools/install-radar.sh` cuando la entrega toca `agent-workflows/tools/radar/`, y `python3 agent-workflows/tools/install.py` seguido de `--check` cuando toca `agent-workflows/skills/` o `agent-workflows/templates/`, con confirmación humana previa para las skills."
-      - "`test/pre-push-plan-gate.test.mjs` compila Radar en un directorio temporal cuando `agent-workflows/tools/radar/radar` no existe, y usa ese binario cuando existe."
-      - "En un worktree nuevo sin el binario de Radar, `bun test test/pre-push-plan-gate.test.mjs` pasa."
+      - "`test/pre-push-plan-gate.test.mjs` compila Radar en un directorio temporal cuando `agent-workflows/tools/radar/radar` no existe, pasa `-f` con el plan absoluto del repositorio objetivo y usa el binario versionado cuando existe."
+      - "En un worker reutilizable sin el binario de Radar, `bun test test/pre-push-plan-gate.test.mjs` pasa sin depender del checkout principal."
       - "El diff toca sólo los dos Cimientos reservados."
     decisiones:
       - tipo: resuelta
         pregunta: "¿Quién resuelve que la prueba del gate encuentre Radar en un checkout limpio?"
-        resolucion: "La propia prueba: compila Radar cuando falta el binario."
-        autoridad: "Aprobación de Emilio del 2026-09-14, problema 1, opción 2."
+        resolucion: "La propia prueba: compila Radar cuando falta el binario y liga `-f` al plan absoluto del repositorio objetivo."
+        autoridad: "Aprobación de Emilio del 2026-09-14, problema 1, opción 2; reproducciones frescas #140 del 2026-09-15."
         clase: contrato-visible
-        falsificador: "La prueba falla en un worktree nuevo por no encontrar el binario de Radar."
+        falsificador: "La prueba falla en un worker reutilizable por no encontrar el binario de Radar o por resolver el plan contra su cwd antes de aplicar `-C`."
         descartadas:
           - opcion: "Que la skill de despacho compile Radar."
             razon: "La prueba seguiría fallando en cualquier otro checkout limpio: un clon nuevo, otra máquina o CI."
+      - tipo: resuelta
+        pregunta: "¿Los workers manuales se crean por Sesión o conservan su entorno entre asignaciones?"
+        resolucion: "Main conserva cuatro worktrees permanentes: `issue-resolver` y tres implementers; cada asignación cambia rama y agente, no el worktree ni sus dependencias válidas."
+        autoridad: "Aclaración y elección explícita de Emilio del 2026-09-15; topología materializada y verificada desde master@e6f81e4."
+        clase: contrato-visible; expansion-de-alcance
+        falsificador: "Una asignación ordinaria elimina el worktree, reinstala dependencias sin ausencia o drift, o presenta cuatro workers como límite universal del flujo manual."
+        descartadas:
+          - opcion: "Crear y retirar un worktree por cada Sesión."
+            razon: "Reinstala dependencias, descarta preparación válida y produjo la fricción registrada en #139."
+          - opcion: "Reutilizar `node_modules` entre checkouts distintos."
+            razon: "Mezcla identidades de checkout; la reutilización aprobada ocurre dentro del mismo worker persistente."
+      - tipo: resuelta
+        pregunta: "¿Qué hace una Sesión cuando detecta una fricción mientras todavía conserva el contexto?"
+        resolucion: "Busca issues abiertos y cerrados; actualiza el tracker sistémico de la misma causa o crea y verifica un Friction Report sanitizado. La captura no autoriza la reparación."
+        autoridad: "Elección explícita de Emilio del 2026-09-15: crear o actualizar automáticamente."
+        clase: contrato-visible
+        falsificador: "La Sesión difiere el reporte, crea un duplicado sin búsqueda, publica datos sensibles, no verifica el efecto remoto o comienza a reparar sólo porque existe el issue."
+        descartadas:
+          - opcion: "Preguntar antes de cada captura."
+            razon: "Interrumpe al humano y permite que se pierda el contexto fresco."
+          - opcion: "Registrar sólo las fricciones bloqueantes."
+            razon: "Oculta desgaste acumulativo del proceso."
     ruta:
       propuesta: direct
-      autoridad: "Las dos declaraciones y el comportamiento de la prueba están decididos y los archivos son dos Cimientos exactos reservados."
+      autoridad: "Las reglas, los dos archivos, el fallback de Radar, la topología persistente y la frontera de autoridad del issue-resolver están decididos y son verificables sin diseño abierto."
     modulos:
       - id: M132.1
-        resultado: "La prueba del gate compila su propio Radar cuando falta"
+        resultado: "La prueba del gate compila su propio Radar y liga el plan objetivo cuando falta el binario"
         rutas: [test/pre-push-plan-gate.test.mjs]
         tareas:
           - id: T132.1.1
-            accion: "RED: ejecutar la prueba del gate con el binario de Radar ausente y observar que falla por no encontrarlo."
-            resultado: "RED: la prueba falla sin el binario de Radar."
-            criterios: ["RED: la prueba falla sin el binario de Radar."]
+            accion: "RED: ejecutar la prueba del gate sin el binario y desde un cwd cuyo plan no es el objetivo; observar los fallos de resolución."
+            resultado: "RED: la prueba falla por binario ausente o por resolver el plan equivocado."
+            criterios: ["RED: ambos fallos quedan reproducidos antes de implementar."]
           - id: T132.1.2
-            accion: "GREEN: compilar Radar en un directorio temporal cuando el binario no existe y apuntar RADAR_BIN a ese resultado."
-            resultado: "GREEN: la prueba pasa con y sin el binario presente."
-            criterios: ["GREEN: la prueba pasa con y sin el binario presente."]
+            accion: "GREEN: compilar Radar en un directorio temporal cuando falta y pasar `-f` con el plan absoluto del repositorio objetivo."
+            resultado: "GREEN: la prueba pasa con y sin binario versionado y desde un worker distinto."
+            criterios: ["GREEN: las tres variantes usan el mismo plan objetivo y pasan."]
           - id: T132.1.3
-            accion: "REFACTOR: resolver el binario de Radar en un solo helper de la prueba y limpiar el directorio temporal al terminar."
+            accion: "REFACTOR: resolver binario y plan objetivo en un solo helper y limpiar el directorio temporal al terminar."
             resultado: "REFACTOR: existe un único resolvedor y no quedan temporales."
-            criterios: ["REFACTOR: existe un único resolvedor y no quedan temporales."]
+            criterios: ["REFACTOR: la resolución está concentrada y la prueba permanece verde."]
       - id: M132.2
-        resultado: "AGENTS.md declara la preparación del worktree y la reinstalación de herramientas"
+        resultado: "AGENTS.md declara workers reutilizables, reinstalación de herramientas y captura inmediata de fricción"
         rutas: [AGENTS.md]
         tareas:
           - id: T132.2.1
-            accion: "RED: comprobar que AGENTS.md no declara todavía la preparación del worktree ni qué reinstalar al cerrar."
-            resultado: "RED: las dos declaraciones están ausentes."
-            criterios: ["RED: las dos declaraciones están ausentes."]
+            accion: "RED: comprobar que AGENTS.md no declara todavía el pool persistente, la preparación por ausencia o drift, la captura inmediata ni qué reinstalar al cerrar."
+            resultado: "RED: las cuatro reglas están ausentes o contradicen el modelo aprobado."
+            criterios: ["RED: cada ausencia o contradicción queda enumerada antes de editar."]
           - id: T132.2.2
-            accion: "GREEN: agregar la sección de preparación con `bun ci` y la tabla de reinstalación por rutas tocadas."
-            resultado: "GREEN: AGENTS.md declara ambas secciones."
-            criterios: ["GREEN: AGENTS.md declara ambas secciones."]
+            accion: "GREEN: agregar una política única con topología reutilizable, preparación inicial o por drift, intake sistémico sanitizado y tabla de reinstalación por rutas tocadas."
+            resultado: "GREEN: AGENTS.md gobierna el ciclo completo sin autorizar reparaciones desde un issue."
+            criterios: ["GREEN: las cuatro reglas y sus límites están presentes y no contradicen la entrega directa. "]
           - id: T132.2.3
-            accion: "REFACTOR: enlazar las secciones nuevas desde la tabla de contenido de AGENTS.md sin repetir la política de entrega."
-            resultado: "REFACTOR: las secciones están enlazadas y no hay reglas duplicadas."
-            criterios: ["REFACTOR: las secciones están enlazadas y no hay reglas duplicadas."]
+            accion: "REFACTOR: enlazar la política operativa sin repetir la política de entrega, el formulario ni los criterios de Radar."
+            resultado: "REFACTOR: existe una sola regla operativa y las fuentes canónicas siguen separadas."
+            criterios: ["REFACTOR: no hay instrucciones duplicadas ni una segunda fuente de verdad."]
   - id: S133
     zona: metodo
     prioridad: metodo-v1

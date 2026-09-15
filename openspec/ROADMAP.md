@@ -4,11 +4,11 @@
 ## 📍 Punto de retoma
 - Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S134, S135, S136, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Método V1.
-- Próximo trabajo ejecutable: cimientos #2 → S132 — Un worktree limpio de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y su AGENTS.md declara la preparación del worktree y qué reinstalar cuando cambian las herramientas..
+- Próximo trabajo ejecutable: cimientos #2 → S132 — Un worker reutilizable de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y AGENTS.md declara la preparación persistente, la reinstalación de herramientas y la captura inmediata de fricciones..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
 ## Estado y próximo trabajo
-- cimientos #2 → S132 — Un worktree limpio de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y su AGENTS.md declara la preparación del worktree y qué reinstalar cuando cambian las herramientas.
+- cimientos #2 → S132 — Un worker reutilizable de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y AGENTS.md declara la preparación persistente, la reinstalación de herramientas y la captura inmediata de fricciones.
 - Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 
 ## Avance
@@ -49,7 +49,7 @@
 
 ### cimientos (cimientos)
 1. **S12.6** · 📋 PLANIFICADO · prioridad V2 · La raíz se ordena y el README describe el producto real.
-2. **S132** · 🟢 LISTO · prioridad Método V1 · Un worktree limpio de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y su AGENTS.md declara la preparación del worktree y qué reinstalar cuando cambian las herramientas.
+2. **S132** · 🟢 LISTO · prioridad Método V1 · Un worker reutilizable de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y AGENTS.md declara la preparación persistente, la reinstalación de herramientas y la captura inmediata de fricciones.
 
 ### Contratos (contratos)
 - Sin Sesiones abiertas.
@@ -79,7 +79,7 @@
 4. **S128** · 🟢 LISTO · prioridad Método V1 · Radar reconoce el trailer Modulo de una Sesión full-sdd: el commit cuenta como Módulo entregado de su Sesión y deja de aparecer como trailer desconocido.
 5. **S129** · 📋 PLANIFICADO · prioridad Método V1 · Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
 6. **S130** · 🟢 LISTO · prioridad Método V1 · El puente protege el lote de revisión: revisa sólo el código del Módulo en staging, commitea los artefactos SDD aparte y cierra el intento nativo de un Módulo antes de tocar el siguiente.
-7. **S131** · 🟢 LISTO · prioridad Método V1 · El despacho con Herdr prepara cada worktree con la preparación que declara el AGENTS.md del repositorio antes de lanzar el agente.
+7. **S131** · 🟢 LISTO · prioridad Método V1 · El despacho manual con Herdr reutiliza el pool de workers que declara el repositorio: conserva worktree, tab y dependencias entre Sesiones, y renueva sólo la rama de asignación y el agente.
 8. **S133** · 🟢 LISTO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
 
 ### Producto Torre (producto-torre)
@@ -141,8 +141,8 @@
 - **S128:** propuesta direct (El contrato está determinado —reconocer el trailer por el prefijo de una Sesión con ruta efectiva full-sdd— y los archivos son conocidos; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
 - **S129:** propuesta direct (La fórmula, la fuente de las exclusiones y el alcance están decididos, y los archivos son conocidos; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
 - **S130:** propuesta direct (Las tres reglas están decididas y el cambio se limita a una skill y su prueba; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
-- **S131:** propuesta direct (La fuente de la preparación y el comportamiento ante ausencia o falla están decididos; el cambio se limita a una skill y su prueba.) · prioridad Método V1; pendiente de revalidación en kickoff.
-- **S132:** propuesta direct (Las dos declaraciones y el comportamiento de la prueba están decididos y los archivos son dos Cimientos exactos reservados.) · prioridad Método V1; pendiente de revalidación en kickoff.
+- **S131:** propuesta direct (El lifecycle, la fuente del pool, el lock atómico, la reserva all-or-nothing, la preparación condicional y el retiro persistente están decididos; el cambio se concentra en una skill, su referencia de retiro y su prueba contractual.) · prioridad Método V1; pendiente de revalidación en kickoff.
+- **S132:** propuesta direct (Las reglas, los dos archivos, el fallback de Radar, la topología persistente y la frontera de autoridad del issue-resolver están decididos y son verificables sin diseño abierto.) · prioridad Método V1; pendiente de revalidación en kickoff.
 - **S133:** propuesta direct (El momento, la fuente y la confirmación humana para las skills están decididos; el cambio se limita a una skill y su prueba.) · prioridad Método V1; pendiente de revalidación en kickoff.
 - **S134:** propuesta direct (Las frases, las superficies y los archivos están identificados y el cálculo de capacidad no cambia; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
 - **S135:** propuesta direct (Las cuatro decisiones están tomadas, las superficies y archivos están identificados y el cambio en Radar es una regla acotada; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
@@ -3479,61 +3479,71 @@ Rutas: agent-workflows/skills/chanks-4-puente/SKILL.md, agent-workflows/tests/te
 - **T130.1.3:** REFACTOR: dejar cada regla escrita una sola vez en la skill, sin repetirla entre secciones. → REFACTOR: ninguna regla queda duplicada y la suite del Método pasa.
   - [ ] REFACTOR: ninguna regla queda duplicada y la suite del Método pasa.
 
-### S131 — El despacho con Herdr prepara cada worktree con la preparación que declara el AGENTS.md del repositorio antes de lanzar el agente.
+### S131 — El despacho manual con Herdr reutiliza el pool de workers que declara el repositorio: conserva worktree, tab y dependencias entre Sesiones, y renueva sólo la rama de asignación y el agente.
 - Estado derivado: 🟢 LISTO
 - Zona/Área: metodo · agent-workflows/
-- Depende de: —
+- Depende de: S126
 - Cimientos: —
-- Recursos: —
+- Recursos: lock efímero atómico del pool bajo el Git common-dir y uso exclusivo de los workers declarados durante despacho o retiro
 - Criterios de aceptación:
-  - [ ] Después de crear &#96;Worktrees/&lt;id&gt;&#96; y antes de abrir la tab, &#96;chanks-3-despacho-herdr&#96; ejecuta dentro de ese worktree el comando de preparación que declara el &#96;AGENTS.md&#96; del repositorio.
-  - [ ] Si el repositorio no declara preparación, la skill lo informa en su tabla de salida y continúa.
-  - [ ] Si la preparación falla, la skill no abre tab ni agente para esa Sesión, reporta el error y deja el worktree creado para que el humano decida.
-  - [ ] La skill nunca copia ni enlaza &#96;node&#95;modules&#96; u otra carpeta de dependencias desde otro checkout.
-  - [ ] &#96;agent-workflows/tests/test&#95;despacho&#95;herdr.py&#96; falla si alguna de esas reglas desaparece; la suite del Método pasa y el diff toca sólo Área.
+  - [ ] &#96;chanks-3-despacho-herdr&#96; lee de &#96;AGENTS.md&#96; la declaración del pool reutilizable, sus roles y cuándo preparar o refrescar cada worker; no fija Bun, npm, cantidad ni nombres para otros proyectos.
+  - [ ] Si el repositorio no declara un pool reutilizable completo, la skill falla cerrado antes de crear ramas o agentes; nunca crea un worktree efímero por Sesión ni adivina una topología.
+  - [ ] Antes de leer disponibilidad, asignar o retirar, el padre adquiere con una operación atómica un único lock efímero bajo &#96;git rev-parse --git-common-dir&#96;; si ya existe, su identidad es ambigua o no puede probar su ownership, no lo roba ni lo borra y se detiene para decisión humana.
+  - [ ] Con el lock adquirido, el padre valida y reserva el lote humano completo antes de lanzar el primer agente: todas las Sesiones siguen LISTO, son compatibles y tienen un worker apto. Si una falla, libera sólo el lock propio y lanza cero agentes; el orden de la lista nunca produce un despacho parcial.
+  - [ ] El mapeo reservado asigna cada Sesión a un worker declarado que prueba estar libre, limpio y fuera del checkout Main; &#96;issue-resolver&#96; sólo recibe una Sesión respaldada por un issue de Control Tower elegido por el humano.
+  - [ ] El worktree y la tab identifican al worker y permanecen entre asignaciones; cada Sesión activa conserva una tab propia, una rama nueva &#96;work/&lt;id&gt;&#96; desde el master verificado y un agente nuevo con el nombre de la Sesión. Una rama ya existente o un readback ambiguo detiene el lote sin reset ni force.
+  - [ ] La disponibilidad se prueba dentro del lock desde Git, Radar y el readback vivo de Herdr: no hay árbol sucio, agente anterior activo, entrega pendiente ni identidad divergente. El lock se libera sólo después del readback de todos los agentes lanzados o de un rollback comprobado; no existe roster ni estado de planificación paralelo.
+  - [ ] La preparación declarada corre sólo al provisionar el worker o cuando falta su entorno o la evidencia declarada quedó stale; una reasignación con entorno válido ejecuta cero reinstalaciones y nunca copia ni enlaza dependencias desde otro checkout.
+  - [ ] Si preparación o lanzamiento falla, se cierran sólo los agentes abiertos por ese lote y se devuelven sólo sus ramas nuevas a un estado limpio comprobado; worktrees, tabs y dependencias permanecen. Un rollback ambiguo conserva el lock y pide decisión humana.
+  - [ ] El modo retiro adquiere el mismo lock, conserva los seis chequeos seguros aplicables de S126, cierra sólo el agente terminado, mantiene tab, worktree y dependencias, deja el worker detached en el master integrado y libera el lock después de confirmar por readback que quedó libre; nunca ejecuta &#96;git worktree remove&#96; para un worker del pool.
+  - [ ] Un retiro o asignación fallidos no reciclan por inferencia, no borran ramas con force y no tocan otro worker. El padre sigue integrando una Sesión por vez y es el único que escribe &#96;openspec/plan.yaml&#96;.
+  - [ ] &#96;agent-workflows/tests/test&#95;despacho&#95;herdr.py&#96; falla si reaparece creación o borrado por Sesión, reinstalación incondicional, check-then-act sin lock, despacho parcial, selección no humana, reutilización ocupada o coupling con Torre; la suite del Método pasa y el diff toca sólo Área.
 
-#### M131.1 — El despacho prepara cada worktree antes de lanzar el agente
-Rutas: agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md, agent-workflows/tests/test&#95;despacho&#95;herdr.py
+#### M131.1 — El despacho y retiro reciclan workers declarados sin perder su entorno
+Rutas: agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md, agent-workflows/skills/chanks-3-despacho-herdr/references/retiro.md, agent-workflows/tests/test&#95;despacho&#95;herdr.py
 
-- **T131.1.1:** RED: exigir que la skill ejecute la preparación declarada en AGENTS.md antes de abrir la tab, informe su ausencia, no lance el agente si falla y nunca enlace dependencias de otro checkout. → RED: la prueba falla contra la skill actual.
-  - [ ] RED: la prueba falla contra la skill actual.
-- **T131.1.2:** GREEN: agregar el paso de preparación y sus compuertas a la skill de despacho. → GREEN: la suite del Método pasa.
-  - [ ] GREEN: la suite del Método pasa.
-- **T131.1.3:** REFACTOR: dejar la preparación como un solo paso de ejecución referenciado por las compuertas, sin repetirlo. → REFACTOR: el paso aparece una sola vez y la suite del Método pasa.
-  - [ ] REFACTOR: el paso aparece una sola vez y la suite del Método pasa.
+- **T131.1.1:** RED: exigir pool declarado, lock atómico compartido, validación all-or-nothing del lote, disponibilidad probada, rama y agente nuevos, preparación sólo por ausencia o drift, especialización de issue-resolver y retiro persistente bajo el mismo lock. → RED: las pruebas fallan contra el lifecycle efímero y el check-then-act de S126.
+  - [ ] RED: cubre contención, lock ambiguo, conflicto tardío sin lanzamiento parcial y rollback ambiguo además del camino válido.
+- **T131.1.2:** GREEN: reescribir despacho y retiro para reservar el lote bajo el lock común, lanzar agentes nuevos y devolver cada worker limpio y detached sin perder entorno ni crear estado paralelo. → GREEN: la suite contractual pasa; dos despachos no toman el mismo worker y una reasignación válida conserva dependencias.
+  - [ ] GREEN: crear o retirar una Sesión ejecuta cero creación o borrado del worktree declarado y libera sólo el lock propio tras readback.
+- **T131.1.3:** REFACTOR: concentrar exclusión, disponibilidad, preparación y retorno en un solo lifecycle referenciado por ambos modos, preservando gates humanos, Radar y Herdr de S126. → REFACTOR: no hay check-then-act, reglas duplicadas ni regresiones de autoridad y la suite del Método pasa.
+  - [ ] REFACTOR: una sola frontera all-or-nothing gobierna asignación y devolución del pool.
 
-### S132 — Un worktree limpio de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y su AGENTS.md declara la preparación del worktree y qué reinstalar cuando cambian las herramientas.
+### S132 — Un worker reutilizable de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y AGENTS.md declara la preparación persistente, la reinstalación de herramientas y la captura inmediata de fricciones.
 - Estado derivado: 🟢 LISTO
 - Zona/Área: cimientos · —
 - Depende de: S12.1
 - Cimientos: AGENTS.md, test/pre-push-plan-gate.test.mjs
 - Recursos: —
 - Criterios de aceptación:
-  - [ ] &#96;AGENTS.md&#96; declara una sección de preparación de worktree con &#96;bun ci&#96;, sin reutilizar &#96;node&#95;modules&#96; entre checkouts.
+  - [ ] &#96;AGENTS.md&#96; declara el pool manual Herdr-off actual como Main más &#96;issue-resolver&#96; y tres implementers reutilizables: es una topología elegida, no un límite universal para agentes autorizados por el humano.
+  - [ ] Cada worker ejecuta &#96;bun install --frozen-lockfile&#96; al crearse y sólo lo repite si faltan dependencias o cambió &#96;bun.lock&#96;; nunca copia ni enlaza &#96;node&#95;modules&#96; desde otro checkout y una nueva asignación conserva el entorno válido.
+  - [ ] Toda Sesión que detecta o recibe una fricción busca issues abiertos y cerrados de &#96;achangkuon/control-tower&#96; mientras conserva el contexto fresco; actualiza el issue sistémico canónico o crea un Friction Report sanitizado y verifica el efecto por readback.
+  - [ ] Crear o actualizar un issue nunca autoriza repararlo; &#96;issue-resolver&#96; sólo trabaja en issues de Control Tower y sólo modifica código después de aprobación humana, una Sesión admisible por Radar y evidencia de compatibilidad con el trabajo concurrente.
   - [ ] &#96;AGENTS.md&#96; declara qué reinstalar al cerrar: &#96;agent-workflows/tools/install-radar.sh&#96; cuando la entrega toca &#96;agent-workflows/tools/radar/&#96;, y &#96;python3 agent-workflows/tools/install.py&#96; seguido de &#96;--check&#96; cuando toca &#96;agent-workflows/skills/&#96; o &#96;agent-workflows/templates/&#96;, con confirmación humana previa para las skills.
-  - [ ] &#96;test/pre-push-plan-gate.test.mjs&#96; compila Radar en un directorio temporal cuando &#96;agent-workflows/tools/radar/radar&#96; no existe, y usa ese binario cuando existe.
-  - [ ] En un worktree nuevo sin el binario de Radar, &#96;bun test test/pre-push-plan-gate.test.mjs&#96; pasa.
+  - [ ] &#96;test/pre-push-plan-gate.test.mjs&#96; compila Radar en un directorio temporal cuando &#96;agent-workflows/tools/radar/radar&#96; no existe, pasa &#96;-f&#96; con el plan absoluto del repositorio objetivo y usa el binario versionado cuando existe.
+  - [ ] En un worker reutilizable sin el binario de Radar, &#96;bun test test/pre-push-plan-gate.test.mjs&#96; pasa sin depender del checkout principal.
   - [ ] El diff toca sólo los dos Cimientos reservados.
 
-#### M132.1 — La prueba del gate compila su propio Radar cuando falta
+#### M132.1 — La prueba del gate compila su propio Radar y liga el plan objetivo cuando falta el binario
 Rutas: test/pre-push-plan-gate.test.mjs
 
-- **T132.1.1:** RED: ejecutar la prueba del gate con el binario de Radar ausente y observar que falla por no encontrarlo. → RED: la prueba falla sin el binario de Radar.
-  - [ ] RED: la prueba falla sin el binario de Radar.
-- **T132.1.2:** GREEN: compilar Radar en un directorio temporal cuando el binario no existe y apuntar RADAR&#95;BIN a ese resultado. → GREEN: la prueba pasa con y sin el binario presente.
-  - [ ] GREEN: la prueba pasa con y sin el binario presente.
-- **T132.1.3:** REFACTOR: resolver el binario de Radar en un solo helper de la prueba y limpiar el directorio temporal al terminar. → REFACTOR: existe un único resolvedor y no quedan temporales.
-  - [ ] REFACTOR: existe un único resolvedor y no quedan temporales.
+- **T132.1.1:** RED: ejecutar la prueba del gate sin el binario y desde un cwd cuyo plan no es el objetivo; observar los fallos de resolución. → RED: la prueba falla por binario ausente o por resolver el plan equivocado.
+  - [ ] RED: ambos fallos quedan reproducidos antes de implementar.
+- **T132.1.2:** GREEN: compilar Radar en un directorio temporal cuando falta y pasar &#96;-f&#96; con el plan absoluto del repositorio objetivo. → GREEN: la prueba pasa con y sin binario versionado y desde un worker distinto.
+  - [ ] GREEN: las tres variantes usan el mismo plan objetivo y pasan.
+- **T132.1.3:** REFACTOR: resolver binario y plan objetivo en un solo helper y limpiar el directorio temporal al terminar. → REFACTOR: existe un único resolvedor y no quedan temporales.
+  - [ ] REFACTOR: la resolución está concentrada y la prueba permanece verde.
 
-#### M132.2 — AGENTS.md declara la preparación del worktree y la reinstalación de herramientas
+#### M132.2 — AGENTS.md declara workers reutilizables, reinstalación de herramientas y captura inmediata de fricción
 Rutas: AGENTS.md
 
-- **T132.2.1:** RED: comprobar que AGENTS.md no declara todavía la preparación del worktree ni qué reinstalar al cerrar. → RED: las dos declaraciones están ausentes.
-  - [ ] RED: las dos declaraciones están ausentes.
-- **T132.2.2:** GREEN: agregar la sección de preparación con &#96;bun ci&#96; y la tabla de reinstalación por rutas tocadas. → GREEN: AGENTS.md declara ambas secciones.
-  - [ ] GREEN: AGENTS.md declara ambas secciones.
-- **T132.2.3:** REFACTOR: enlazar las secciones nuevas desde la tabla de contenido de AGENTS.md sin repetir la política de entrega. → REFACTOR: las secciones están enlazadas y no hay reglas duplicadas.
-  - [ ] REFACTOR: las secciones están enlazadas y no hay reglas duplicadas.
+- **T132.2.1:** RED: comprobar que AGENTS.md no declara todavía el pool persistente, la preparación por ausencia o drift, la captura inmediata ni qué reinstalar al cerrar. → RED: las cuatro reglas están ausentes o contradicen el modelo aprobado.
+  - [ ] RED: cada ausencia o contradicción queda enumerada antes de editar.
+- **T132.2.2:** GREEN: agregar una política única con topología reutilizable, preparación inicial o por drift, intake sistémico sanitizado y tabla de reinstalación por rutas tocadas. → GREEN: AGENTS.md gobierna el ciclo completo sin autorizar reparaciones desde un issue.
+  - [ ] GREEN: las cuatro reglas y sus límites están presentes y no contradicen la entrega directa.
+- **T132.2.3:** REFACTOR: enlazar la política operativa sin repetir la política de entrega, el formulario ni los criterios de Radar. → REFACTOR: existe una sola regla operativa y las fuentes canónicas siguen separadas.
+  - [ ] REFACTOR: no hay instrucciones duplicadas ni una segunda fuente de verdad.
 
 ### S133 — El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
 - Estado derivado: 🟢 LISTO
