@@ -12,7 +12,7 @@
 - Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 
 ## Avance
-- **Total:** 65% (69/105 S)
+- **Total:** 65% (69/106 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -26,7 +26,7 @@
 - **Hosts:** 33% (3/9 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 57% (11/19 S)
+- **Método:** 55% (11/20 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -81,6 +81,7 @@
 6. **S130** · 🟢 LISTO · prioridad Método V1 · El puente protege el lote de revisión: revisa sólo el código del Módulo en staging, commitea los artefactos SDD aparte y cierra el intento nativo de un Módulo antes de tocar el siguiente.
 7. **S131** · 🟢 LISTO · prioridad Método V1 · El despacho manual con Herdr reutiliza el pool de workers que declara el repositorio: conserva worktree, tab y dependencias entre Sesiones, y renueva sólo la rama de asignación y el agente.
 8. **S133** · 🟢 LISTO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
+9. **S137** · 🟢 LISTO · prioridad Método V1 · El despacho manual pre-V1 usa Herdr sólo para asientos y procesos, transporta el trabajo de workers Pi por Intercom sin bloquear a Main y devuelve cada evento por una ruta explícita.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · prioridad Torre V1 · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -147,6 +148,7 @@
 - **S134:** propuesta direct (Las frases, las superficies y los archivos están identificados y el cálculo de capacidad no cambia; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
 - **S135:** propuesta direct (Las cuatro decisiones están tomadas, las superficies y archivos están identificados y el cambio en Radar es una regla acotada; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
 - **S136:** propuesta direct (El destino, el formulario de referencia, los controles obligatorios, la ruta exacta y los primeros reportes están determinados; no queda una decisión técnica abierta.) · prioridad Método V1; revalidada direct sobre b97b41cde3ebab70cade2c8201a59d1ea876af2c con evidencia El formulario de referencia de gentle-pi, las etiquetas existentes, el permiso ADMIN, la ausencia inicial 404 y el contrato de S136 fijaron una única ruta y un único archivo; la verificación independiente pasó sin ampliar el alcance..
+- **S137:** propuesta direct (El runtime admitido, la separación Herdr/Intercom, las operaciones permitidas, los rechazos, la ruta de decisiones y el límite pre-V1 están resueltos y se verifican en una skill, su routing instalado y pruebas contractuales.) · prioridad Método V1; pendiente de revalidación en kickoff.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -3658,6 +3660,30 @@ Rutas: .github/ISSUE&#95;TEMPLATE/friction&#95;report.yml
   - [ ] Todos los campos y opciones exigidos están presentes en orden estable.
 - **T136.1.3:** REFACTOR: validar el formulario, publicarlo en master y crear los primeros issues con readback exacto. → GitHub expone el formulario y los primeros reportes quedan confirmados en el tracker de Control Tower.
   - [ ] La publicación y cada issue tienen identidad estable y readback coincidente.
+
+### S137 — El despacho manual pre-V1 usa Herdr sólo para asientos y procesos, transporta el trabajo de workers Pi por Intercom sin bloquear a Main y devuelve cada evento por una ruta explícita.
+- Estado derivado: 🟢 LISTO
+- Zona/Área: metodo · agent-workflows/
+- Depende de: —
+- Cimientos: —
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] &#96;chanks-3-despacho-herdr&#96; rechaza antes de cualquier efecto todo lote sin aprobación humana completa o cuyo agent kind no sea Pi, y nunca sustituye el runtime elegido.
+  - [ ] Herdr se usa sólo para crear o identificar los asientos y procesos ya autorizados; el handoff de trabajo a cada worker Pi usa Intercom &#96;send&#96; y Main retorna después del resultado de entrega sin &#96;herdr agent wait&#96;, &#96;prompt --wait&#96; ni &#96;intercom ask&#96;.
+  - [ ] Cada worker Pi reporta progreso y estados terminales COMPLETED, BLOCKED o FAILED a Main por Intercom; una decisión humana usa una solicitud bloqueante iniciada por el worker, nunca polling iniciado por Main.
+  - [ ] Una identidad Intercom ausente, ambigua, desconectada o distinta del worker aprobado falla cerrado y no se declara despachada; la skill no agrega retry, cola, roster, persistencia, autoasignación ni fallback a otro transporte.
+  - [ ] El routing instalado conserva explícitamente que Intercom es transporte sin autoridad, que el modo manual pre-V1 es Pi-only y que el bridge heterogéneo pertenece a Tower V1.
+  - [ ] Las pruebas contractuales fallan si reaparece una espera ordinaria de Main, un agent kind no-Pi, un mensaje que otorgue autoridad o un bridge provisional, y la suite del Método pasa sobre el diff declarado.
+
+#### M137.1 — Despacho Pi por Intercom sin espera del coordinador
+Rutas: agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md, agent-workflows/templates/session-routing.md, agent-workflows/tests/test&#95;despacho&#95;herdr.py
+
+- **T137.1.1:** RED: exigir Pi-only, separación entre topología Herdr y transporte Intercom, handoff con send, eventos worker→Main y ausencia de wait, polling, autoridad o bridge provisional. → RED: la prueba contractual falla contra el dispatcher que acepta runtimes mixtos y espera cada agente.
+  - [ ] RED: cada regresión de runtime, transporte, dirección del evento y no bloqueo tiene una aserción falsificable.
+- **T137.1.2:** GREEN: ajustar el dispatcher y el routing instalado para validar workers Pi, enviar cada handoff por Intercom y devolver control tras la entrega, con decisiones bloqueantes iniciadas sólo por el worker. → GREEN: dos handoffs Pi independientes quedan definidos como fire-and-forget y Main no supervisa por espera o polling.
+  - [ ] GREEN: el contrato nombra identidad, fallo cerrado, observabilidad y los tres resultados terminales sin persistencia nueva.
+- **T137.1.3:** REFACTOR: eliminar reglas de transporte duplicadas y conservar intactos autoridad humana, gates Radar, lifecycle Herdr y el límite entre coordinación manual y Tower V1. → REFACTOR: una sola frontera separa asiento, mensaje y autoridad, y la suite del Método pasa.
+  - [ ] REFACTOR: el diff queda dentro de las tres rutas declaradas y no modifica S131, S132 ni runtime Tower.
 
 ## Capacidad
 2 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: cimientos, metodo.
