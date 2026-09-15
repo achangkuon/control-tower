@@ -8738,6 +8738,10 @@ sesiones:
     ruta:
       propuesta: direct
       autoridad: "El runtime admitido, la separación Herdr/Intercom, las operaciones permitidas, los rechazos, la ruta de decisiones y el límite pre-V1 están resueltos y se verifican en una skill, su routing instalado y pruebas contractuales."
+      revalidacion:
+        resultado: direct
+        base: 87f80ba6320eaf98618cf7e51b8bc3d8948da7dc
+        evidencia: "El dispatcher actual acepta cualquier agent kind y en su paso 6 espera cada agente; el routing instalado repite el despacho Herdr sin contrato de transporte. Las tres rutas declaradas contienen toda la corrección: pruebas textuales RED, skill Pi-only con Intercom fire-and-forget y proyección del mismo límite en las instrucciones instaladas. No requiere diseño técnico ni toca el lifecycle de pool reservado a S131."
     modulos:
       - id: M137.1
         resultado: "Despacho Pi por Intercom sin espera del coordinador"
