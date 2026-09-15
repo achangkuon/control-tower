@@ -8416,6 +8416,8 @@ sesiones:
         resultado: direct
         base: 5e39a7ef272d8fd15407608f5566139064d38e8b
         evidencia: "Git: master limpio en 5e39a7ef272d8fd15407608f5566139064d38e8b; radar sesion S132 -C .: LISTO, S12.1 COMPLETO y M132.1 primer Módulo pendiente; Área reabierta: AGENTS.md y test/pre-push-plan-gate.test.mjs. El fallback temporal de Radar con -f absoluto, la topología persistente, la preparación por ausencia o drift, el intake de fricción y la frontera del issue-resolver siguen determinados."
+    entrega:
+      commit: ddc18e5c936cb1c9b7361be6585773c669c9f53b
     modulos:
       - id: M132.1
         resultado: "La prueba del gate compila su propio Radar y liga el plan objetivo cuando falta el binario"

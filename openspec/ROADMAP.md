@@ -2,24 +2,23 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S128, S134, S135, S136, S137, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S128, S132, S134, S135, S136, S137, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Método V1.
-- Próximo trabajo ejecutable: cimientos #2 → S132 — Un worker reutilizable de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y AGENTS.md declara la preparación persistente, la reinstalación de herramientas y la captura inmediata de fricciones..
+- Próximo trabajo ejecutable: Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
 ## Estado y próximo trabajo
-- cimientos #2 → S132 — Un worker reutilizable de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y AGENTS.md declara la preparación persistente, la reinstalación de herramientas y la captura inmediata de fricciones.
 - Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 
 ## Avance
-- **Total:** 66% (71/106 S)
+- **Total:** 67% (72/106 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 50% (1/2 S)
 - **Autoridad:** 0% (0/1 S)
 - **Capacidades:** 0% (0/1 S)
-- **cimientos:** 60% (3/5 S)
+- **cimientos:** 80% (4/5 S)
 - **Contratos:** 50% (1/2 S)
 - **Enrolamiento:** 0% (0/2 S)
 - **Entrega:** 0% (0/1 S)
@@ -49,7 +48,6 @@
 
 ### cimientos (cimientos)
 1. **S12.6** · 📋 PLANIFICADO · prioridad V2 · La raíz se ordena y el README describe el producto real.
-2. **S132** · 🟢 LISTO · prioridad Método V1 · Un worker reutilizable de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y AGENTS.md declara la preparación persistente, la reinstalación de herramientas y la captura inmediata de fricciones.
 
 ### Contratos (contratos)
 - Sin Sesiones abiertas.
@@ -141,7 +139,7 @@
 - **S129:** propuesta direct (La fórmula, la fuente de las exclusiones y el alcance están decididos, y los archivos son conocidos; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
 - **S130:** propuesta direct (Las tres reglas están decididas y el cambio se limita a una skill y su prueba; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
 - **S131:** propuesta direct (El lifecycle, la fuente del pool, el lock atómico, la reserva all-or-nothing, la preparación condicional y el retiro persistente están decididos; el cambio se concentra en una skill, su referencia de retiro y su prueba contractual.) · prioridad Método V1; revalidada direct sobre 52abac97e7be4d23a9b2370726e9f9dec9ef20b3 con evidencia agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md:18-23 y 40-47 contienen todos los gates y pasos existentes, pero :21/:42 todavía crean worktree+tab por Sesión y :32 permite despacho parcial; agent-workflows/skills/chanks-3-despacho-herdr/references/retiro.md:21-25 todavía cierra tab, elimina worktree y espera su ausencia; agent-workflows/tests/test&#95;despacho&#95;herdr.py:46-75 y 86-110 fijan contractualmente ese lifecycle efímero. El contrato S131 ya determina el reemplazo en esos mismos tres paths: pool declarado por AGENTS.md, lock atómico común, reserva all-or-nothing, rama/agente nuevos, preparación condicional, rollback acotado y retiro persistente..
-- **S132:** propuesta direct (Las reglas, los dos archivos, el fallback de Radar, la topología persistente y la frontera de autoridad del issue-resolver están decididos y son verificables sin diseño abierto.) · prioridad Método V1; revalidada direct sobre 52abac97e7be4d23a9b2370726e9f9dec9ef20b3 con evidencia test/pre-push-plan-gate.test.mjs:11,47-53; AGENTS.md todavía no declara política de pool persistente, intake ni reinstalación; issues &#35;139 y &#35;140. El contrato revisado de radar sesion S132 fija fallback temporal de Radar con -f absoluto, topología persistente, preparación por ausencia o drift, intake de fricción y frontera del issue-resolver..
+- **S132:** propuesta direct (Las reglas, los dos archivos, el fallback de Radar, la topología persistente y la frontera de autoridad del issue-resolver están decididos y son verificables sin diseño abierto.) · prioridad Método V1; revalidada direct sobre 5e39a7ef272d8fd15407608f5566139064d38e8b con evidencia Git: master limpio en 5e39a7ef272d8fd15407608f5566139064d38e8b; radar sesion S132 -C .: LISTO, S12.1 COMPLETO y M132.1 primer Módulo pendiente; Área reabierta: AGENTS.md y test/pre-push-plan-gate.test.mjs. El fallback temporal de Radar con -f absoluto, la topología persistente, la preparación por ausencia o drift, el intake de fricción y la frontera del issue-resolver siguen determinados..
 - **S133:** propuesta direct (El momento, la fuente y la confirmación humana para las skills están decididos; el cambio se limita a una skill y su prueba.) · prioridad Método V1; pendiente de revalidación en kickoff.
 - **S134:** propuesta direct (Las frases, las superficies y los archivos están identificados y el cálculo de capacidad no cambia; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
 - **S135:** propuesta direct (Las cuatro decisiones están tomadas, las superficies y archivos están identificados y el cambio en Radar es una regla acotada; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
@@ -3510,7 +3508,7 @@ Rutas: agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md, agent-workflows/
   - [ ] REFACTOR: una sola frontera all-or-nothing gobierna asignación y devolución del pool.
 
 ### S132 — Un worker reutilizable de control-tower corre la prueba del gate de pre-push sin preparar Radar a mano, y AGENTS.md declara la preparación persistente, la reinstalación de herramientas y la captura inmediata de fricciones.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: ✅ COMPLETO
 - Zona/Área: cimientos · —
 - Depende de: S12.1
 - Cimientos: AGENTS.md, test/pre-push-plan-gate.test.mjs
@@ -3684,7 +3682,7 @@ Rutas: agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md, agent-workflows/
   - [ ] REFACTOR: el diff queda dentro de las tres rutas declaradas y no modifica S131, S132 ni runtime Tower.
 
 ## Capacidad
-2 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: cimientos, metodo.
+1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: metodo.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
