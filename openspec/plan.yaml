@@ -9010,6 +9010,8 @@ sesiones:
             accion: "REFACTOR: eliminar lectura directa y prosa duplicada, proyectar el gate a instalación y conservar el boundary manual/Tower."
             resultado: "REFACTOR: Support produce evidencia, routing elige, kickoff defiende y cierre de decisiones queda aislado."
             criterios: ["El diff queda en las nueve rutas declaradas y la suite del Método pasa."]
+    entrega:
+      commit: 832b115bd358a68b7b9253e1c936f8a223c24d94
 
 references:
   future_successors:
