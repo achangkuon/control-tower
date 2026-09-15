@@ -8950,6 +8950,8 @@ sesiones:
             accion: "REFACTOR: regenerar ROADMAP y confirmar que status, render y la suite Radar no cambian su semántica."
             resultado: "REFACTOR: la vista y las comprobaciones quedan convergentes."
             criterios: ["`go test ./...`, `radar check` y `radar render` pasan."]
+    entrega:
+      commit: c573332b98e60beddfb0c19dad80fe4032df3e1f
 
 references:
   future_successors:

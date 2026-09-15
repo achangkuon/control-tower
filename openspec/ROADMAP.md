@@ -2,22 +2,21 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S128, S130, S131, S132, S134, S135, S136, S137, S138, S139, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S128, S130, S131, S132, S134, S135, S136, S137, S138, S139, S140, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Método V1.
-- Próximo trabajo ejecutable: Autoridad #1 → S140 — El plan clasifica inline sus cinco rutas intencionalmente ausentes y &#96;radar check&#96; vuelve a cero avisos sin borrar ownership histórico o futuro..
+- Próximo trabajo ejecutable: Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
 ## Estado y próximo trabajo
-- Autoridad #1 → S140 — El plan clasifica inline sus cinco rutas intencionalmente ausentes y &#96;radar check&#96; vuelve a cero avisos sin borrar ownership histórico o futuro.
 - Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 
 ## Avance
-- **Total:** 69% (76/109 S)
+- **Total:** 70% (77/109 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 50% (1/2 S)
-- **Autoridad:** 0% (0/2 S)
+- **Autoridad:** 50% (1/2 S)
 - **Capacidades:** 0% (0/1 S)
 - **cimientos:** 80% (4/5 S)
 - **Contratos:** 50% (1/2 S)
@@ -42,7 +41,7 @@
 1. **S108** · 📋 PLANIFICADO · prioridad Torre V1 · Ciclo idempotente de tabs worker Tower-owned desde witnesses S121 y estado terminal Radar
 
 ### Autoridad (autoridad)
-1. **S140** · 🟢 LISTO · prioridad Método V1 · El plan clasifica inline sus cinco rutas intencionalmente ausentes y &#96;radar check&#96; vuelve a cero avisos sin borrar ownership histórico o futuro.
+- Sin Sesiones abiertas.
 
 ### Capacidades (capacidades)
 1. **S101** · 🔴 BLOQUEADO · prioridad V2 · Resolución de política: prepare&#95;through opaco y horizon&#95;ceiling salen de la política resuelta
@@ -3732,7 +3731,7 @@ Rutas: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/partitio
   - [ ] El diff queda dentro de las cuatro rutas declaradas y &#96;go test ./...&#96; pasa.
 
 ### S140 — El plan clasifica inline sus cinco rutas intencionalmente ausentes y &#96;radar check&#96; vuelve a cero avisos sin borrar ownership histórico o futuro.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: ✅ COMPLETO
 - Zona/Área: autoridad · openspec/plans/, openspec/plan.yaml, openspec/ROADMAP.md, openspec/prd/, openspec/rfc/, openspec/specs/, openspec/maintenance/, openspec/config.yaml, docs/
 - Depende de: S139
 - Cimientos: —
@@ -3754,7 +3753,7 @@ Rutas: openspec/plan.yaml
   - [ ] &#96;go test ./...&#96;, &#96;radar check&#96; y &#96;radar render&#96; pasan.
 
 ## Capacidad
-2 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: autoridad, metodo.
+1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: metodo.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
