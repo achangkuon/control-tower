@@ -34,7 +34,7 @@ func (p *Plan) AvanceModulosAt(root, head string) (map[string]string, []string, 
 			id := strings.TrimSpace(valor)
 			switch {
 			case id == "":
-			case conocidos[id]:
+			case conocidos[id] || p.trailerPerteneceAFullSDD(id):
 				if _, ya := entregados[id]; !ya {
 					entregados[id] = campos[0]
 				}
@@ -48,8 +48,38 @@ func (p *Plan) AvanceModulosAt(root, head string) (map[string]string, []string, 
 	return entregados, desconocidos, nil
 }
 
-// modulosEntregados counts how many of one Sesión's Módulos are delivered.
+// trailerPerteneceAFullSDD reports whether a valid Módulo trailer belongs to an
+// existing Sesión that effectively runs the native SDD route. Full SDD owns no
+// planned Módulos, so its committed Módulo trailers are its delivery evidence.
+func (p *Plan) trailerPerteneceAFullSDD(id string) bool {
+	if !legacyModuloID.MatchString(id) {
+		return false
+	}
+	for i := range p.Sesiones {
+		s := &p.Sesiones[i]
+		prefijo := "M" + strings.TrimPrefix(s.ID, "S") + "."
+		if s.RutaEfectiva() == RutaSDDNativa && strings.HasPrefix(id, prefijo) {
+			return true
+		}
+	}
+	return false
+}
+
+// modulosEntregados counts delivery evidence for one Sesión. Direct and
+// design-tasks Sesiones count their declared Módulos; full-sdd counts trailers
+// owned by its Session ID because it has no planned Módulos to enumerate.
 func modulosEntregados(s *Sesion, entregados map[string]string) int {
+	if s.RutaEfectiva() == RutaSDDNativa {
+		n := 0
+		prefijo := "M" + strings.TrimPrefix(s.ID, "S") + "."
+		for id := range entregados {
+			if legacyModuloID.MatchString(id) && strings.HasPrefix(id, prefijo) {
+				n++
+			}
+		}
+		return n
+	}
+
 	n := 0
 	for _, m := range s.Modulos {
 		if _, ok := entregados[m.ID]; ok {

@@ -231,7 +231,11 @@ func cmdStatus(p *Plan, root string) error {
 			s := p.SesionPorID()[id]
 			linea := fmt.Sprintf("  #%d  %-28s %s  %s  ruta:%s", i+1, truncar(s.Resultado, 28), id, estados[id], s.RutaEfectiva())
 			if k := modulosEntregados(s, entregados); k > 0 {
-				linea += fmt.Sprintf("  a medias %d/%d Módulos", k, len(s.Modulos))
+				if s.RutaEfectiva() == RutaSDDNativa {
+					linea += fmt.Sprintf("  entregados %d Módulos", k)
+				} else {
+					linea += fmt.Sprintf("  a medias %d/%d Módulos", k, len(s.Modulos))
+				}
 			}
 			if pr, ok := prioridadDeclarada(p, s.Prioridad); ok {
 				linea += "  prioridad:" + pr.ID

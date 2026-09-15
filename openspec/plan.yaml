@@ -8146,6 +8146,10 @@ sesiones:
     ruta:
       propuesta: direct
       autoridad: "El contrato está determinado —reconocer el trailer por el prefijo de una Sesión con ruta efectiva full-sdd— y los archivos son conocidos; no queda decisión de diseño abierta."
+      revalidacion:
+        resultado: direct
+        base: 956d4c367771ef008d536868c6f38aba15fa789c
+        evidencia: "agent-workflows/tools/radar/avance.go todavía limita los trailers conocidos a los Módulos declarados en el plan y agent-workflows/tools/radar/main.go sólo presenta avance con un total planificado; S127 sigue siendo una Sesión full-sdd sin Módulos declarados y sus tres trailers producen avisos en radar check. El contrato, las pruebas y las tres rutas de M128.1 siguen determinados sobre este HEAD."
     modulos:
       - id: M128.1
         resultado: "Radar reconoce los trailers de Sesiones full-sdd"

@@ -81,6 +81,64 @@ func TestTrailerFueraDeHEADNoCuenta(t *testing.T) {
 	}
 }
 
+func TestTrailerDeModuloFullSDDPerteneceASesionPorPrefijo(t *testing.T) {
+	root, _ := repoGit(t)
+	full := sesionEjecutable("S1", "z")
+	full.Modulos = nil
+	full.Ruta.Revalidacion = &Revalidacion{Resultado: RutaSDDNativa}
+	direct := sesionEjecutable("S2", "z")
+	designTasks := sesionEjecutable("S3", "z")
+	designTasks.Ruta.Propuesta = "design-tasks"
+	p := &Plan{Sesiones: []Sesion{full, direct, designTasks}}
+
+	for _, modulo := range []string{"M1.1", "M1.2", "M2.2", "M3.2", "M9.9"} {
+		commitConModulo(t, root, modulo)
+	}
+	entregados, desconocidos, err := p.AvanceModulosAt(root, gitEn(t, root, "rev-parse", "HEAD"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, modulo := range []string{"M1.1", "M1.2"} {
+		if _, ok := entregados[modulo]; !ok {
+			t.Fatalf("%s debe pertenecer a la Sesión full-sdd: %v", modulo, entregados)
+		}
+	}
+	wantDesconocidos := []string{"M2.2", "M3.2", "M9.9"}
+	if strings.Join(desconocidos, ",") != strings.Join(wantDesconocidos, ",") {
+		t.Fatalf("direct y design-tasks no deben reconocer trailers fuera de sus Módulos; desconocidos: %v", desconocidos)
+	}
+	avisos := p.avisosDeTrailers(root)
+	if len(avisos) != len(wantDesconocidos) || avisos[2].Severidad != "aviso" || !strings.Contains(avisos[2].Detalle, "M9.9") {
+		t.Fatalf("los trailers realmente desconocidos deben conservar sus avisos: %#v", avisos)
+	}
+}
+
+func TestStatusMuestraEntregadosDeFullSDDSinDenominador(t *testing.T) {
+	root, _ := repoGit(t)
+	s := sesionEjecutable("S1", "z")
+	s.Modulos = nil
+	s.Ruta.Propuesta = RutaSDDNativa
+	p := &Plan{
+		Producto: "x",
+		Zonas:    []Zona{{ID: "z", Nombre: "Zona", Rutas: []string{"tracked.txt"}}},
+		Sesiones: []Sesion{s},
+	}
+	commitConModulo(t, root, "M1.1")
+	commitConModulo(t, root, "M1.2")
+
+	out := captureStdout(t, func() {
+		if err := cmdStatus(p, root); err != nil {
+			t.Fatalf("status falló: %v", err)
+		}
+	})
+	if !strings.Contains(out, "entregados 2 Módulos") {
+		t.Fatalf("status debe mostrar los Módulos entregados de full-sdd:\n%s", out)
+	}
+	if strings.Contains(out, "2/0 Módulos") {
+		t.Fatalf("full-sdd no debe mostrar un denominador inexistente:\n%s", out)
+	}
+}
+
 func TestStatusMarcaSesionAMediasSinCambiarSuEstado(t *testing.T) {
 	p, root := planDosModulos(t)
 	commitConModulo(t, root, "M1.1")
