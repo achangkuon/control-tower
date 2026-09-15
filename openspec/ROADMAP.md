@@ -2,7 +2,7 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S128, S130, S131, S132, S134, S135, S136, S137, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S128, S130, S131, S132, S134, S135, S136, S137, S138, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Método V1.
 - Próximo trabajo ejecutable: Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
@@ -11,7 +11,7 @@
 - Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 
 ## Avance
-- **Total:** 69% (74/107 S)
+- **Total:** 70% (75/107 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -25,7 +25,7 @@
 - **Hosts:** 33% (3/9 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 71% (15/21 S)
+- **Método:** 76% (16/21 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -76,7 +76,6 @@
 3. **S123** · 📋 PLANIFICADO · prioridad V2 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
 4. **S129** · 🟢 LISTO · prioridad Método V1 · Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
 5. **S133** · 🟢 LISTO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
-6. **S138** · 🟢 LISTO · prioridad Método V1 · El puente ejecuta Tareas como evidencia interna RED/GREEN/REFACTOR, entrega exactamente un commit reversible por Módulo y revisa por defecto una única candidata inmutable de Sesión mediante RDD nativo antes de la entrega.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · prioridad Torre V1 · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -144,7 +143,7 @@
 - **S135:** propuesta direct (Las cuatro decisiones están tomadas, las superficies y archivos están identificados y el cambio en Radar es una regla acotada; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
 - **S136:** propuesta direct (El destino, el formulario de referencia, los controles obligatorios, la ruta exacta y los primeros reportes están determinados; no queda una decisión técnica abierta.) · prioridad Método V1; revalidada direct sobre b97b41cde3ebab70cade2c8201a59d1ea876af2c con evidencia El formulario de referencia de gentle-pi, las etiquetas existentes, el permiso ADMIN, la ausencia inicial 404 y el contrato de S136 fijaron una única ruta y un único archivo; la verificación independiente pasó sin ampliar el alcance..
 - **S137:** propuesta direct (El runtime admitido, la separación Herdr/Intercom, las operaciones permitidas, los rechazos, la ruta de decisiones y el límite pre-V1 están resueltos y se verifican en una skill, su routing instalado y pruebas contractuales.) · prioridad Método V1; revalidada direct sobre 87f80ba6320eaf98618cf7e51b8bc3d8948da7dc con evidencia El dispatcher actual acepta cualquier agent kind y en su paso 6 espera cada agente; el routing instalado repite el despacho Herdr sin contrato de transporte. Las tres rutas declaradas contienen toda la corrección: pruebas textuales RED, skill Pi-only con Intercom fire-and-forget y proyección del mismo límite en las instrucciones instaladas. No requiere diseño técnico ni toca el lifecycle de pool reservado a S131..
-- **S138:** propuesta direct (El contrato del issue &#35;134, las tres rutas y las aserciones textuales están determinados; no queda diseño técnico ni cambio de ownership de rutas pendiente.) · prioridad Método V1; pendiente de revalidación en kickoff.
+- **S138:** propuesta direct (El contrato del issue &#35;134, las tres rutas y las aserciones textuales están determinados; no queda diseño técnico ni cambio de ownership de rutas pendiente.) · prioridad Método V1; revalidada direct sobre f61894b0614b8a4eda6d4374c19ceb57ed805e4e con evidencia Sobre master limpio, agent-workflows/skills/chanks-4-puente/SKILL.md:21,37-38 exige verify, review y trailer por Módulo pero no declara una única candidata de Sesión ni separa Tareas de commits/review; agent-workflows/tests/test&#95;builder&#95;flow.py:111-120 fija trailers y commits por Módulo sin cubrir Tareas, alcance de review ni excepción humana. S130 quedó archivada y S135 conserva ownership de rutas. El delta está completamente determinado en estas dos rutas, por lo que direct sigue siendo la ruta proporcional..
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -3682,7 +3681,7 @@ Rutas: agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md, agent-workflows/
   - [ ] REFACTOR: el diff queda dentro de las tres rutas declaradas y no modifica S131, S132 ni runtime Tower.
 
 ### S138 — El puente ejecuta Tareas como evidencia interna RED/GREEN/REFACTOR, entrega exactamente un commit reversible por Módulo y revisa por defecto una única candidata inmutable de Sesión mediante RDD nativo antes de la entrega.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: ✅ COMPLETO
 - Zona/Área: metodo · agent-workflows/
 - Depende de: S135
 - Cimientos: —

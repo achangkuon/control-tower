@@ -8844,6 +8844,8 @@ sesiones:
             accion: "REFACTOR: eliminar ambigüedad o duplicación entre el flujo de ejecución y el contrato de review, conservando verify obligatorio, archive exclusivo de full-sdd y el límite de 400 líneas de la política."
             resultado: "REFACTOR: la regla queda coherente, no recrea S130 y mantiene la compatibilidad de rutas."
             criterios: ["El diff queda dentro de las dos rutas declaradas y la suite del Método pasa."]
+    entrega:
+      commit: dc182f99500a1f6d13fe1232e74607582dee6890
 
 references:
   future_successors:
