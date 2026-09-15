@@ -27,6 +27,72 @@ func TestParticionAceptaSoloRutaFuturaExactaDeSesionAbiertaEnSuZona(t *testing.T
 	}
 }
 
+func TestParticionRutaAnotadaSuprimeSoloSuAviso(t *testing.T) {
+	root, head := repoGit(t)
+	raw := "schema: plan\nschema_version: 3\nproducto: x\nzonas:\n  - id: base\n    rutas: [tracked.txt]\n  - id: future\n    rutas:\n      - ruta: scripts/host-compatibility/opencode.mjs\n        ausencia_intencional: reserva-futura\n      - scripts/host-compatibility/other.mjs\n"
+	p, err := loadYAML(t, raw)
+	if err != nil {
+		t.Fatalf("la ruta futura anotada debería cargar: %v", err)
+	}
+	h, err := p.VerificarParticionAt(root, head)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, finding := range hallazgosDe(h, "rutas reales") {
+		if strings.Contains(finding.Detalle, "opencode.mjs") {
+			t.Fatalf("la anotación debe suprimir solamente su aviso: %#v", h)
+		}
+	}
+	foundUnannotated := false
+	for _, finding := range hallazgosDe(h, "rutas reales") {
+		foundUnannotated = foundUnannotated || strings.Contains(finding.Detalle, "other.mjs")
+	}
+	if !foundUnannotated {
+		t.Fatalf("una ruta ausente sin anotación debe conservar su aviso: %#v", h)
+	}
+}
+
+func TestParticionRutaAnotadaReservadaNoEsErrorObsoleto(t *testing.T) {
+	root, head := repoGit(t)
+	const future = "scripts/host-compatibility/opencode.mjs"
+	raw := "schema: plan\nschema_version: 3\nproducto: x\nzonas:\n  - id: base\n    rutas: [tracked.txt]\n  - id: future\n    rutas:\n      - ruta: " + future + "\n        ausencia_intencional: reserva-futura\n"
+	p, err := loadYAML(t, raw)
+	if err != nil {
+		t.Fatalf("la ruta futura anotada debería cargar: %v", err)
+	}
+	s := sesionEjecutable("S1", "future")
+	s.Modulos[0].Rutas = []string{future}
+	p.Sesiones = []Sesion{s}
+	h, err := p.VerificarParticionAt(root, head)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, finding := range h {
+		if strings.Contains(finding.Detalle, future) && (finding.Regla == "rutas reales" || finding.Regla == "ausencia intencional") {
+			t.Fatalf("una reserva de Sesión no debe alterar la supresión ni volver obsoleta la anotación: %#v", h)
+		}
+	}
+}
+
+func TestParticionRutaAnotadaConArchivoTrackedEsErrorObsoleto(t *testing.T) {
+	root, head := repoGit(t)
+	raw := "schema: plan\nschema_version: 3\nproducto: x\nzonas:\n  - id: base\n    rutas: [tracked.txt]\n  - id: retired\n    rutas:\n      - ruta: tracked.txt\n        ausencia_intencional: legado-retirado\n"
+	p, err := loadYAML(t, raw)
+	if err != nil {
+		t.Fatalf("la ruta retirada anotada debería cargar: %v", err)
+	}
+	h, err := p.VerificarParticionAt(root, head)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, finding := range h {
+		if finding.Severidad == "error" && finding.Regla == "ausencia intencional" && strings.Contains(finding.Detalle, "tracked.txt") {
+			return
+		}
+	}
+	t.Fatalf("una anotación que coincide con HEAD debe ser error obsoleto: %#v", h)
+}
+
 func TestParticionNoRelajaRutasNoUsadas(t *testing.T) {
 	root, head := repoGit(t)
 	future := "scripts/host-compatibility/opencode.mjs"

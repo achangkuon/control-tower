@@ -80,6 +80,45 @@ func TestDecisionExigeEvidenciaCheckpointYOpcionesEstructuradas(t *testing.T) {
 	}
 }
 
+func TestLoadAceptaRutasEscalaresYAnotadasSinCambiarElConsumidor(t *testing.T) {
+	raw := "schema: plan\nschema_version: 3\nproducto: x\nzonas:\n  - id: z\n    rutas:\n      - legacy/path\n      - ruta: future/path\n        ausencia_intencional: reserva-futura\ncimientos:\n  rutas:\n    - ruta: retired/path\n      ausencia_intencional: legado-retirado\n"
+	p, err := loadYAML(t, raw)
+	if err != nil {
+		t.Fatalf("las rutas escalares y anotadas deberían cargar: %v", err)
+	}
+	if got := strings.Join(p.Zonas[0].Rutas, ","); got != "legacy/path,future/path" {
+		t.Fatalf("las rutas deben conservar semántica []string; fue %q", got)
+	}
+	if got := strings.Join(p.Area(&Sesion{Zona: "z"}), ","); got != "legacy/path,future/path" {
+		t.Fatalf("Área debe seguir exponiendo rutas escalares; fue %q", got)
+	}
+	if got := strings.Join(p.Cimientos.Rutas, ","); got != "retired/path" {
+		t.Fatalf("cimientos debe conservar la ruta anotada; fue %q", got)
+	}
+}
+
+func TestLoadRechazaRutasAnotadasInvalidas(t *testing.T) {
+	cases := []struct {
+		name  string
+		rutas string
+	}{
+		{"forma de secuencia", "      - [future/path]\n"},
+		{"clave desconocida", "      - ruta: future/path\n        ausencia_intencional: reserva-futura\n        nota: no\n"},
+		{"sin ruta", "      - ausencia_intencional: reserva-futura\n"},
+		{"sin ausencia", "      - ruta: future/path\n"},
+		{"ruta vacía", "      - ruta: ''\n        ausencia_intencional: reserva-futura\n"},
+		{"enum desconocido", "      - ruta: future/path\n        ausencia_intencional: temporal\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			raw := "schema: plan\nschema_version: 3\nproducto: x\nzonas:\n  - id: z\n    rutas:\n" + tc.rutas
+			if p, err := loadYAML(t, raw); err == nil {
+				t.Fatalf("la ruta anotada inválida debería fallar cerrada; cargó %#v", p)
+			}
+		})
+	}
+}
+
 func TestSchemaV2ExigeMigracionExplicita(t *testing.T) {
 	_, err := loadYAML(t, "schema: plan\nschema_version: 2\nproducto: x\n")
 	if err == nil || !strings.Contains(err.Error(), "migr") || !strings.Contains(err.Error(), "v3") {

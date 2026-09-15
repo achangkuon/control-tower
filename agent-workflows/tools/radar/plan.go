@@ -66,18 +66,130 @@ func (p *Plan) PrioridadPorID() map[string]int {
 	return out
 }
 
+// rutasDeclaradas accepts the legacy scalar form and the annotated form while
+// retaining []string for production consumers. Annotation positions, rather than
+// route values, keep metadata with its owner without duplicating route identity.
+type rutasDeclaradas struct {
+	values    []string
+	ausencias map[int]string
+}
+
+var ausenciasIntencionales = map[string]bool{
+	"legado-retirado": true,
+	"reserva-futura":  true,
+}
+
+func (r *rutasDeclaradas) UnmarshalYAML(value *yaml.Node) error {
+	if value.Tag == "!!null" {
+		return nil
+	}
+	if value.Kind != yaml.SequenceNode {
+		return fmt.Errorf("rutas debe ser una secuencia de escalares o anotaciones")
+	}
+	for _, entry := range value.Content {
+		if entry.Kind == yaml.ScalarNode {
+			if strings.TrimSpace(entry.Value) == "" {
+				return fmt.Errorf("ruta escalar vacía")
+			}
+			r.values = append(r.values, entry.Value)
+			continue
+		}
+		if entry.Kind != yaml.MappingNode || len(entry.Content) != 4 {
+			return fmt.Errorf("cada ruta anotada debe tener exactamente ruta y ausencia_intencional")
+		}
+		values := map[string]string{}
+		for i := 0; i < len(entry.Content); i += 2 {
+			key, field := entry.Content[i], entry.Content[i+1]
+			if key.Kind != yaml.ScalarNode || field.Kind != yaml.ScalarNode || (key.Value != "ruta" && key.Value != "ausencia_intencional") {
+				return fmt.Errorf("cada ruta anotada debe tener exactamente ruta y ausencia_intencional")
+			}
+			if _, duplicated := values[key.Value]; duplicated {
+				return fmt.Errorf("cada ruta anotada debe tener exactamente ruta y ausencia_intencional")
+			}
+			values[key.Value] = field.Value
+		}
+		ruta, ausencia := values["ruta"], values["ausencia_intencional"]
+		if strings.TrimSpace(ruta) == "" || strings.TrimSpace(ausencia) == "" || !ausenciasIntencionales[ausencia] {
+			return fmt.Errorf("ruta anotada inválida")
+		}
+		r.values = append(r.values, ruta)
+		if r.ausencias == nil {
+			r.ausencias = map[int]string{}
+		}
+		r.ausencias[len(r.values)-1] = ausencia
+	}
+	return nil
+}
+
+func camposConocidos(value *yaml.Node, permitidos map[string]bool) error {
+	if value.Kind != yaml.MappingNode {
+		return fmt.Errorf("se esperaba una declaración YAML")
+	}
+	for i := 0; i < len(value.Content); i += 2 {
+		if value.Content[i].Kind != yaml.ScalarNode || !permitidos[value.Content[i].Value] {
+			return fmt.Errorf("campo desconocido %q", value.Content[i].Value)
+		}
+	}
+	return nil
+}
+
 // Zona is a set of files with a single owner. Defined by paths, never by theme.
 type Zona struct {
 	ID        string   `yaml:"id"`
 	Nombre    string   `yaml:"nombre"`
 	Rutas     []string `yaml:"rutas"`
 	DependeDe []string `yaml:"depende_de"`
+
+	ausenciasIntencionales map[int]string
+}
+
+func (z *Zona) UnmarshalYAML(value *yaml.Node) error {
+	if err := camposConocidos(value, map[string]bool{"id": true, "nombre": true, "rutas": true, "depende_de": true}); err != nil {
+		return err
+	}
+	var raw struct {
+		ID        string          `yaml:"id"`
+		Nombre    string          `yaml:"nombre"`
+		Rutas     rutasDeclaradas `yaml:"rutas"`
+		DependeDe []string        `yaml:"depende_de"`
+	}
+	if err := value.Decode(&raw); err != nil {
+		return err
+	}
+	z.ID, z.Nombre, z.Rutas, z.DependeDe = raw.ID, raw.Nombre, raw.Rutas.values, raw.DependeDe
+	z.ausenciasIntencionales = raw.Rutas.ausencias
+	return nil
+}
+
+func (z Zona) ausenciaIntencional(ruta int) string {
+	return z.ausenciasIntencionales[ruta]
 }
 
 // Cimientos classifies shared terrain that no Zona owns. Its rules may be
 // directories or patterns; each Sesion reservation must still name exact files.
 type Cimientos struct {
 	Rutas []string `yaml:"rutas"`
+
+	ausenciasIntencionales map[int]string
+}
+
+func (c *Cimientos) UnmarshalYAML(value *yaml.Node) error {
+	if err := camposConocidos(value, map[string]bool{"rutas": true}); err != nil {
+		return err
+	}
+	var raw struct {
+		Rutas rutasDeclaradas `yaml:"rutas"`
+	}
+	if err := value.Decode(&raw); err != nil {
+		return err
+	}
+	c.Rutas = raw.Rutas.values
+	c.ausenciasIntencionales = raw.Rutas.ausencias
+	return nil
+}
+
+func (c Cimientos) ausenciaIntencional(ruta int) string {
+	return c.ausenciasIntencionales[ruta]
 }
 
 // Sesion is one independently reviewable result, inside exactly one Zona.

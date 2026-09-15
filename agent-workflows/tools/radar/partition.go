@@ -18,6 +18,15 @@ type Owner struct {
 	Kind string // "zona" or "cimientos"
 	ID   string // zone id, or "cimientos"
 	Rule string // the pattern that matched, for reporting
+	Ruta int    // declaration position, for metadata and duplicate rules
+}
+
+func claveRuta(kind, id string, ruta int) string {
+	return fmt.Sprintf("%s:%s:%d", kind, id, ruta)
+}
+
+func claveOwner(o Owner) string {
+	return claveRuta(o.Kind, o.ID, o.Ruta)
 }
 
 // Hallazgo is one partition problem, in the reader's language.
@@ -53,20 +62,20 @@ func matchRule(pattern, file string) bool {
 func (p *Plan) owners(file string) []Owner {
 	var zonas []Owner
 	for i := range p.Zonas {
-		for _, r := range p.Zonas[i].Rutas {
+		for ruta, r := range p.Zonas[i].Rutas {
 			if matchRule(r, file) {
-				zonas = append(zonas, Owner{Kind: "zona", ID: p.Zonas[i].ID, Rule: r})
+				zonas = append(zonas, Owner{Kind: "zona", ID: p.Zonas[i].ID, Rule: r, Ruta: ruta})
 				break
 			}
 		}
 	}
 
 	var cimiento *Owner
-	for _, r := range p.Cimientos.Rutas {
+	for ruta, r := range p.Cimientos.Rutas {
 		if !matchRule(r, file) {
 			continue
 		}
-		o := Owner{Kind: "cimientos", ID: "cimientos", Rule: r}
+		o := Owner{Kind: "cimientos", ID: "cimientos", Rule: r, Ruta: ruta}
 		cimiento = &o
 		if r == file {
 			break // an exact declaration wins over any broader Cimiento rule
@@ -145,6 +154,7 @@ func (p *Plan) VerificarParticionAt(root, head string) ([]Hallazgo, error) {
 	huerfanos := []string{}
 	solapes := map[string][]Owner{}
 	usadas := map[string]bool{}
+	coincideConHEAD := map[string]bool{}
 	for _, s := range p.Sesiones {
 		if s.Entrega != nil || s.Archivada || s.Zona == "" || s.Zona == "cimientos" {
 			continue
@@ -159,9 +169,9 @@ func (p *Plan) VerificarParticionAt(root, head string) ([]Hallazgo, error) {
 					if z.ID != s.Zona {
 						continue
 					}
-					for _, regla := range z.Rutas {
+					for ruta, regla := range z.Rutas {
 						if !esRutaAmplia(regla) && regla == normalizada {
-							usadas["zona:"+z.ID+":"+regla] = true
+							usadas[claveRuta("zona", z.ID, ruta)] = true
 						}
 					}
 				}
@@ -170,6 +180,18 @@ func (p *Plan) VerificarParticionAt(root, head string) ([]Hallazgo, error) {
 	}
 
 	for _, f := range files {
+		for _, z := range p.Zonas {
+			for ruta, regla := range z.Rutas {
+				if matchRule(regla, f) {
+					coincideConHEAD[claveRuta("zona", z.ID, ruta)] = true
+				}
+			}
+		}
+		for ruta, regla := range p.Cimientos.Rutas {
+			if matchRule(regla, f) {
+				coincideConHEAD[claveRuta("cimientos", "cimientos", ruta)] = true
+			}
+		}
 		own := p.owners(f)
 		switch {
 		case len(own) == 0:
@@ -178,7 +200,7 @@ func (p *Plan) VerificarParticionAt(root, head string) ([]Hallazgo, error) {
 			solapes[f] = own
 		}
 		for _, o := range own {
-			usadas[o.Kind+":"+o.ID+":"+o.Rule] = true
+			usadas[claveOwner(o)] = true
 		}
 	}
 
@@ -225,8 +247,15 @@ func (p *Plan) VerificarParticionAt(root, head string) ([]Hallazgo, error) {
 	// A rule that matches nothing is a rule that describes a tree that no longer
 	// exists. It is not fatal today, but it is how a partition rots.
 	for i := range p.Zonas {
-		for _, r := range p.Zonas[i].Rutas {
-			if !usadas["zona:"+p.Zonas[i].ID+":"+r] {
+		for ruta, r := range p.Zonas[i].Rutas {
+			key := claveRuta("zona", p.Zonas[i].ID, ruta)
+			if ausencia := p.Zonas[i].ausenciaIntencional(ruta); ausencia != "" && coincideConHEAD[key] {
+				hallazgos = append(hallazgos, Hallazgo{
+					Severidad: "error",
+					Regla:     "ausencia intencional",
+					Detalle:   fmt.Sprintf("la zona %q clasifica %q como %q, pero coincide con un archivo trackeado en HEAD", p.Zonas[i].ID, r, ausencia),
+				})
+			} else if ausencia == "" && !usadas[key] {
 				hallazgos = append(hallazgos, Hallazgo{
 					Severidad: "aviso",
 					Regla:     "rutas reales",
@@ -235,8 +264,15 @@ func (p *Plan) VerificarParticionAt(root, head string) ([]Hallazgo, error) {
 			}
 		}
 	}
-	for _, r := range p.Cimientos.Rutas {
-		if !usadas["cimientos:cimientos:"+r] {
+	for ruta, r := range p.Cimientos.Rutas {
+		key := claveRuta("cimientos", "cimientos", ruta)
+		if ausencia := p.Cimientos.ausenciaIntencional(ruta); ausencia != "" && coincideConHEAD[key] {
+			hallazgos = append(hallazgos, Hallazgo{
+				Severidad: "error",
+				Regla:     "ausencia intencional",
+				Detalle:   fmt.Sprintf("cimientos clasifica %q como %q, pero coincide con un archivo trackeado en HEAD", r, ausencia),
+			})
+		} else if ausencia == "" && !usadas[key] {
 			hallazgos = append(hallazgos, Hallazgo{
 				Severidad: "aviso",
 				Regla:     "rutas reales",
