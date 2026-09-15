@@ -2,7 +2,7 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S128, S132, S134, S135, S136, S137, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S128, S131, S132, S134, S135, S136, S137, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Método V1.
 - Próximo trabajo ejecutable: Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
@@ -11,7 +11,7 @@
 - Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 
 ## Avance
-- **Total:** 67% (72/106 S)
+- **Total:** 68% (73/106 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -25,7 +25,7 @@
 - **Hosts:** 33% (3/9 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 65% (13/20 S)
+- **Método:** 70% (14/20 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -76,8 +76,7 @@
 3. **S123** · 📋 PLANIFICADO · prioridad V2 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
 4. **S129** · 🟢 LISTO · prioridad Método V1 · Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
 5. **S130** · 🟢 LISTO · prioridad Método V1 · El puente protege el lote de revisión: revisa sólo el código del Módulo en staging, commitea los artefactos SDD aparte y cierra el intento nativo de un Módulo antes de tocar el siguiente.
-6. **S131** · 🟢 LISTO · prioridad Método V1 · El despacho manual con Herdr reutiliza el pool de workers que declara el repositorio: conserva worktree, tab y dependencias entre Sesiones, y renueva sólo la rama de asignación y el agente.
-7. **S133** · 🟢 LISTO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
+6. **S133** · 🟢 LISTO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · prioridad Torre V1 · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -138,7 +137,7 @@
 - **S128:** propuesta direct (El contrato está determinado —reconocer el trailer por el prefijo de una Sesión con ruta efectiva full-sdd— y los archivos son conocidos; no queda decisión de diseño abierta.) · prioridad Método V1; revalidada direct sobre 956d4c367771ef008d536868c6f38aba15fa789c con evidencia agent-workflows/tools/radar/avance.go todavía limita los trailers conocidos a los Módulos declarados en el plan y agent-workflows/tools/radar/main.go sólo presenta avance con un total planificado; S127 sigue siendo una Sesión full-sdd sin Módulos declarados y sus tres trailers producen avisos en radar check. El contrato, las pruebas y las tres rutas de M128.1 siguen determinados sobre este HEAD..
 - **S129:** propuesta direct (La fórmula, la fuente de las exclusiones y el alcance están decididos, y los archivos son conocidos; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
 - **S130:** propuesta direct (Las tres reglas están decididas y el cambio se limita a una skill y su prueba; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
-- **S131:** propuesta direct (El lifecycle, la fuente del pool, el lock atómico, la reserva all-or-nothing, la preparación condicional y el retiro persistente están decididos; el cambio se concentra en una skill, su referencia de retiro y su prueba contractual.) · prioridad Método V1; revalidada direct sobre 52abac97e7be4d23a9b2370726e9f9dec9ef20b3 con evidencia agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md:18-23 y 40-47 contienen todos los gates y pasos existentes, pero :21/:42 todavía crean worktree+tab por Sesión y :32 permite despacho parcial; agent-workflows/skills/chanks-3-despacho-herdr/references/retiro.md:21-25 todavía cierra tab, elimina worktree y espera su ausencia; agent-workflows/tests/test&#95;despacho&#95;herdr.py:46-75 y 86-110 fijan contractualmente ese lifecycle efímero. El contrato S131 ya determina el reemplazo en esos mismos tres paths: pool declarado por AGENTS.md, lock atómico común, reserva all-or-nothing, rama/agente nuevos, preparación condicional, rollback acotado y retiro persistente..
+- **S131:** propuesta direct (El lifecycle, la fuente del pool, el lock atómico, la reserva all-or-nothing, la preparación condicional y el retiro persistente están decididos; el cambio se concentra en una skill, su referencia de retiro y su prueba contractual.) · prioridad Método V1; revalidada direct sobre 00745a3a3d867ed432f63a98a93ea0a2828bf2b5 con evidencia Sobre master limpio, agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md:12-24 y 53-60 conserva el lifecycle efímero y despacho parcial de S126: todavía faltan pool declarado por AGENTS.md, lock atómico común, reserva all-or-nothing, worker libre/limpio fuera de Main, rama/agente nuevos, preparación condicional y rollback acotado. agent-workflows/skills/chanks-3-despacho-herdr/references/retiro.md:3-25 aún cierra tab, elimina worktree/rama y no comparte el lock ni confirma readback. agent-workflows/tests/test&#95;despacho&#95;herdr.py:52-56,145-149,216-227 fija ese modelo temporal y omite las regresiones decididas. El contrato aprobado determina todo el reemplazo dentro de esos tres paths, por lo que la ruta sigue direct; la ejecución es serial y no adquiere el lock runtime porque modifica su contrato sin despachar ni retirar workers..
 - **S132:** propuesta direct (Las reglas, los dos archivos, el fallback de Radar, la topología persistente y la frontera de autoridad del issue-resolver están decididos y son verificables sin diseño abierto.) · prioridad Método V1; revalidada direct sobre 5e39a7ef272d8fd15407608f5566139064d38e8b con evidencia Git: master limpio en 5e39a7ef272d8fd15407608f5566139064d38e8b; radar sesion S132 -C .: LISTO, S12.1 COMPLETO y M132.1 primer Módulo pendiente; Área reabierta: AGENTS.md y test/pre-push-plan-gate.test.mjs. El fallback temporal de Radar con -f absoluto, la topología persistente, la preparación por ausencia o drift, el intake de fricción y la frontera del issue-resolver siguen determinados..
 - **S133:** propuesta direct (El momento, la fuente y la confirmación humana para las skills están decididos; el cambio se limita a una skill y su prueba.) · prioridad Método V1; pendiente de revalidación en kickoff.
 - **S134:** propuesta direct (Las frases, las superficies y los archivos están identificados y el cálculo de capacidad no cambia; no queda decisión de diseño abierta.) · prioridad Método V1; pendiente de revalidación en kickoff.
@@ -3478,19 +3477,19 @@ Rutas: agent-workflows/skills/chanks-4-puente/SKILL.md, agent-workflows/tests/te
   - [ ] REFACTOR: ninguna regla queda duplicada y la suite del Método pasa.
 
 ### S131 — El despacho manual con Herdr reutiliza el pool de workers que declara el repositorio: conserva worktree, tab y dependencias entre Sesiones, y renueva sólo la rama de asignación y el agente.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: ✅ COMPLETO
 - Zona/Área: metodo · agent-workflows/
 - Depende de: S126
 - Cimientos: —
-- Recursos: lock efímero atómico del pool bajo el Git common-dir y uso exclusivo de los workers declarados durante despacho o retiro
+- Recursos: directorio persistente de sincronización bajo el Git common-dir con ownership HELD efímero protegido por flock y uso exclusivo de los workers declarados durante despacho o retiro
 - Criterios de aceptación:
   - [ ] &#96;chanks-3-despacho-herdr&#96; lee de &#96;AGENTS.md&#96; la declaración del pool reutilizable, sus roles y cuándo preparar o refrescar cada worker; no fija Bun, npm, cantidad ni nombres para otros proyectos.
   - [ ] Si el repositorio no declara un pool reutilizable completo, la skill falla cerrado antes de crear ramas o agentes; nunca crea un worktree efímero por Sesión ni adivina una topología.
-  - [ ] Antes de leer disponibilidad, asignar o retirar, el padre adquiere con una operación atómica un único lock efímero bajo &#96;git rev-parse --git-common-dir&#96;; si ya existe, su identidad es ambigua o no puede probar su ownership, no lo roba ni lo borra y se detiene para decisión humana.
+  - [ ] Antes de leer disponibilidad, asignar o retirar, el padre toma un &#96;flock&#96; exclusivo no bloqueante sobre el único directorio persistente de sincronización bajo &#96;git rev-parse --git-common-dir&#96;, valida path+inode y publica ownership &#96;HELD&#96; efímero con readback exacto; un owner vivo o ambiguo nunca se recupera, y un estado interrumpido sólo se reemplaza con autorización fresca del mantenedor ligada a la evidencia exacta y con el pool quiescente.
   - [ ] Con el lock adquirido, el padre valida y reserva el lote humano completo antes de lanzar el primer agente: todas las Sesiones siguen LISTO, son compatibles y tienen un worker apto. Si una falla, libera sólo el lock propio y lanza cero agentes; el orden de la lista nunca produce un despacho parcial.
   - [ ] El mapeo reservado asigna cada Sesión a un worker declarado que prueba estar libre, limpio y fuera del checkout Main; &#96;issue-resolver&#96; sólo recibe una Sesión respaldada por un issue de Control Tower elegido por el humano.
   - [ ] El worktree y la tab identifican al worker y permanecen entre asignaciones; cada Sesión activa conserva una tab propia, una rama nueva &#96;work/&lt;id&gt;&#96; desde el master verificado y un agente nuevo con el nombre de la Sesión. Una rama ya existente o un readback ambiguo detiene el lote sin reset ni force.
-  - [ ] La disponibilidad se prueba dentro del lock desde Git, Radar y el readback vivo de Herdr: no hay árbol sucio, agente anterior activo, entrega pendiente ni identidad divergente. El lock se libera sólo después del readback de todos los agentes lanzados o de un rollback comprobado; no existe roster ni estado de planificación paralelo.
+  - [ ] La disponibilidad se prueba bajo el &#96;flock&#96; desde Git, Radar y el readback vivo de Herdr: no hay árbol sucio, agente anterior activo, entrega pendiente ni identidad divergente. El ownership vuelve atómicamente a &#96;RELEASED&#96; y el &#96;flock&#96; se libera sólo después del readback de todos los agentes lanzados o de un rollback comprobado; no existe roster ni estado de planificación paralelo.
   - [ ] La preparación declarada corre sólo al provisionar el worker o cuando falta su entorno o la evidencia declarada quedó stale; una reasignación con entorno válido ejecuta cero reinstalaciones y nunca copia ni enlaza dependencias desde otro checkout.
   - [ ] Si preparación o lanzamiento falla, se cierran sólo los agentes abiertos por ese lote y se devuelven sólo sus ramas nuevas a un estado limpio comprobado; worktrees, tabs y dependencias permanecen. Un rollback ambiguo conserva el lock y pide decisión humana.
   - [ ] El modo retiro adquiere el mismo lock, conserva los seis chequeos seguros aplicables de S126, cierra sólo el agente terminado, mantiene tab, worktree y dependencias, deja el worker detached en el master integrado y libera el lock después de confirmar por readback que quedó libre; nunca ejecuta &#96;git worktree remove&#96; para un worker del pool.

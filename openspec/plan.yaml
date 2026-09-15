@@ -8359,6 +8359,8 @@ sesiones:
             accion: "REFACTOR: concentrar exclusión, disponibilidad, preparación y retorno en un solo lifecycle referenciado por ambos modos, preservando gates humanos, Radar y Herdr de S126."
             resultado: "REFACTOR: no hay check-then-act, reglas duplicadas ni regresiones de autoridad y la suite del Método pasa."
             criterios: ["REFACTOR: una sola frontera all-or-nothing gobierna asignación y devolución del pool."]
+    entrega:
+      commit: 61d7be35dc66f2af4051555847dd1914bcd6314d
   - id: S132
     zona: cimientos
     prioridad: metodo-v1
