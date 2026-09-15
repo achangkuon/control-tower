@@ -1,5 +1,6 @@
 import importlib.util
 from pathlib import Path
+import re
 import sys
 import unittest
 
@@ -27,14 +28,31 @@ def read(relative):
     return (ROOT / relative).read_text(encoding="utf-8")
 
 
+def section(source, heading):
+    start = source.index(f"{heading}\n")
+    end = source.find("\n## ", start + len(heading))
+    return source[start:] if end == -1 else source[start:end]
+
+
+def assert_in_order(case, source, *clauses):
+    positions = [source.index(clause) for clause in clauses]
+    case.assertEqual(positions, sorted(positions), clauses)
+
+
+def assert_no_contradictory_clause(case, source, *patterns):
+    for pattern in patterns:
+        case.assertIsNone(re.search(pattern, source, re.IGNORECASE | re.MULTILINE), pattern)
+
+
 class DespachoHerdrDispatchTests(unittest.TestCase):
     def setUp(self):
         self.skill = read(f"skills/{SKILL_NAME}/SKILL.md")
         self.text = self.skill.lower()
+        self.normalized = " ".join(self.text.split())
 
     def assert_phrases(self, *phrases):
         for phrase in phrases:
-            self.assertIn(phrase.lower(), self.text, phrase)
+            self.assertIn(" ".join(phrase.lower().split()), self.normalized, phrase)
 
     def test_skill_is_registered_listed_and_well_formed(self):
         self.assertIn(SKILL_NAME, INSTALLER.CHANKS_SKILLS)
@@ -44,19 +62,203 @@ class DespachoHerdrDispatchTests(unittest.TestCase):
         self.assertIn(f"`{SKILL_NAME}`", read("README.md"))
 
     def test_dispatch_acts_only_on_the_human_list_of_ready_sesiones(self):
-        self.assert_phrases("explicit list", "agent kind", "`radar status`", "`radar sesion <ID>`", "LISTO", "create nothing")
+        self.assert_phrases("explicit complete list", "agent kind", "`radar status`", "`radar sesion <ID>`", "LISTO", "create nothing")
 
     def test_shared_cimientos_or_recursos_are_never_dispatched_in_parallel(self):
-        self.assert_phrases("share a Cimiento or a Recurso")
+        self.assert_phrases("Cimiento or Recurso conflict")
 
-    def test_one_tab_worktree_and_agent_per_sesion(self):
+    def test_persistent_declared_pool_replaces_ephemeral_session_worktrees(self):
         self.assert_phrases(
-            "`Worktrees/<id>`", "`work/<id>`", "one Herdr tab", "named after the Sesión",
-            "JSON", "never the main checkout",
+            "complete reusable worker-pool declaration from repository `AGENTS.md`",
+            "missing or incomplete declaration fails closed",
+            "never falls back to ephemeral per-Session worktrees",
+            "no hardcoded package manager, worker count, or worker names",
+            "declared worker's worktree, tab, and dependencies persist",
+        )
+        combined = self.skill + read(f"skills/{SKILL_NAME}/references/retiro.md")
+        for forbidden in ("git worktree add", "git worktree remove", "create `Worktrees/<id>`"):
+            self.assertNotIn(forbidden, combined, forbidden)
+
+    def test_control_tower_pool_declaration_is_complete_and_local(self):
+        pool = section((ROOT.parent / "AGENTS.md").read_text(encoding="utf-8"), "## Operación local: pool manual, fricciones y herramientas")
+        expected_workers = ("issue-resolver", "implementer-1", "implementer-2", "implementer-3")
+        for worker in expected_workers:
+            self.assertIn(f"`{worker}`", pool)
+            self.assertIn(f"`../Worktrees/{worker}`", pool)
+        self.assertIn("identificador de tab Herdr de cada worker es exactamente su ID de worker", pool)
+        self.assertIn("`issue-resolver`", pool)
+        self.assertIn("respaldada por un issue de Control Tower", pool)
+        self.assertEqual(pool.count("admisible por Radar y compatible con el trabajo concurrente"), 4)
+        self.assertIn("topología elegida para este flujo manual, no un límite universal", " ".join(pool.split()))
+        self.assertIn("`bun install --frozen-lockfile`", pool)
+        self.assertIn("sólo si faltan dependencias o cambió `bun.lock`", " ".join(pool.split()))
+
+    def test_shared_lock_protocol_is_persistent_flock_fenced_and_inode_bound(self):
+        retire = read(f"skills/{SKILL_NAME}/references/retiro.md")
+        protocol = section(retire, "## Shared lock protocol")
+        activation = section(self.skill, "## Activation Contract")
+        execution = section(self.skill, "## Execution Steps")
+        for source in (activation, execution, retire):
+            self.assertIn("`references/retiro.md`'s `## Shared lock protocol`", source)
+        for phrase in (
+            "`git rev-parse --path-format=absolute --git-common-dir`",
+            "`$common_dir/gentle-ai.chanks-3-despacho-herdr.lock`",
+            "persistent synchronization directory",
+            "never removed during normal release or recovery",
+            "Linux/local coherent advisory `flock` semantics",
+            "fail closed",
+            "directory/no-follow semantics",
+            "`flock(LOCK_EX|LOCK_NB)`",
+            "whole protocol",
+            "canonical pathname and `(st_dev, st_ino)`",
+            "fresh cryptographically unguessable owner token",
+            "parent identity and run ID",
+            "regular file, owner, mode `0600`, and one link",
+            "fsync the file and lock directory",
+            "complete `HELD` record",
+            "complete `RELEASED` record",
+            "Never unlink `owner-token` or remove `$lock_dir`",
+        ):
+            self.assertIn(phrase, protocol)
+        assert_in_order(
+            self,
+            protocol,
+            "Resolve the canonical absolute common directory",
+            "prove Linux/local coherent advisory `flock` semantics",
+            "Create `$lock_dir` only once by atomic",
+            "Open the canonical `$lock_dir`",
+            "Acquire and retain `flock(LOCK_EX|LOCK_NB)`",
+            "Release while still holding the flock",
+        )
+        self.assertNotIn("prove the lock directory is empty", protocol)
+        self.assertNotIn("remove only that owned `owner-token`", protocol)
+        self.assertNotIn("remove only the empty `$lock_dir`", protocol)
+
+    def test_stale_lock_recovery_is_authorized_flock_bound_and_preserves_foreign_evidence(self):
+        protocol = section(read(f"skills/{SKILL_NAME}/references/retiro.md"), "## Shared lock protocol")
+        dispatch = section(self.skill, "## Execution Steps")
+        for phrase in (
+            "fresh maintainer authorization bound to `$lock_dir`, its `(st_dev, st_ino)`, and the exact raw `HELD` record",
+            "exact owner process is absent or replaced",
+            "every declared worker is quiescent: no active agent, dirty tree, pending delivery, or identity divergence",
+            "replace that record with a new complete `HELD` record",
+            "`EMPTY` marker for absence",
+            "SHA-256 of the exact raw bytes for a readable malformed or interrupted record",
+            "Live, ambiguous, mismatched, or replaced-inode owner is never reclaimed",
+            "A second reclaimer that cannot acquire the flock mutates nothing",
+            "reread the pathname, `(st_dev, st_ino)`, owner record, and every authorization-bound fact before any mutation",
+            "No rename quarantine is used",
+            "Old quarantine evidence is foreign evidence",
+            "separately authorized by its exact path and `(st_dev, st_ino)`",
+        ):
+            self.assertIn(phrase, protocol)
+        self.assertIn("including its bounded stale-lock recovery", dispatch)
+        for phrase in (
+            "explicit `UNREADABLE` sentinel",
+            "file dev/inode, owner, mode, link count, size, timestamps",
+            "available without content",
+            "re-read and re-stat all bound metadata under the flock immediately before atomic replacement",
+            "Any drift fails closed",
+        ):
+            self.assertIn(phrase, protocol)
+        assert_in_order(
+            self,
+            protocol,
+            "`EMPTY` marker for absence",
+            "SHA-256 of the exact raw bytes for a readable malformed or interrupted record",
+            "explicit `UNREADABLE` sentinel",
+            "re-read and re-stat all bound metadata under the flock immediately before atomic replacement",
+        )
+        assert_no_contradictory_clause(
+            self, protocol,
+            r"unreadable[^\n]{0,240}SHA-256",
+            r"atomically renam(?:e|ing).*(?:lock_dir|quarantine)",
+            r"uniquely named quarantine",
+            r"normal atomic `mkdir -- \"\$lock_dir\"`",
+            r"\bpid[- ]only\b",
+            r"(?im)^(?![^\n]*\bnever\b)[^\n]*\bdelete\b[^\n]*\b(?:stale|lock)\b",
+        )
+
+    def test_lock_precedes_every_availability_assignment_or_retirement_decision(self):
+        execution = section(self.skill, "## Execution Steps")
+        assert_in_order(
+            self,
+            execution,
+            "Acquire the lock exactly through `references/retiro.md`'s `## Shared lock protocol`",
+            "collect Git, Radar, and fresh live Herdr readback",
+            "validate and reserve the complete human-selected batch",
+            "Create each reserved fresh `work/<id>` branch",
+        )
+
+    def test_batch_reservation_is_human_selected_complete_and_atomic(self):
+        self.assert_phrases(
+            "complete human-selected batch",
+            "validate and reserve the complete",
+            "every Session remains LISTO and compatible",
+            "maps to a declared apt worker",
+            "launch zero agents",
+            "order cannot cause partial dispatch",
+        )
+
+    def test_worker_reuse_has_free_clean_identity_and_issue_guards(self):
+        self.assert_phrases(
+            "prove free, clean, and non-Main",
+            "`issue-resolver` only handles a human-selected Session backed by a Control Tower issue",
+            "active prior agent", "pending delivery", "identity mismatch",
+            "fresh live Herdr readback",
+        )
+
+    def test_first_provisioning_is_declared_atomic_and_persistent(self):
+        hard_rules = section(self.skill, "## Hard Rules")
+        gates = section(self.skill, "## Decision Gates")
+        execution = section(self.skill, "## Execution Steps")
+        assert_no_contradictory_clause(
+            self,
+            hard_rules + gates,
+            r"missing worktree[^\n]{0,160}(?:reject|fail|stop)",
+        )
+        for phrase in (
+            "existing reusable worker",
+            "declared, explicitly provisionable, not-yet-created worker",
+            "exact worktree path and tab are both absent",
+            "declaration authorizes first provisioning",
+            "no branch, pending delivery, or conflicting identity exists",
+            "never creates per-Session worktrees",
+            "Provision its persistent worktree and tab once from the verified master",
+            "run the declared preparation",
+            "remains persistent",
+            "Ordinary assignment rejects a missing previously provisioned worker",
+        ):
+            self.assertIn(phrase, hard_rules + gates + execution, phrase)
+        assert_in_order(
+            self,
+            execution,
+            "validate and reserve the complete human-selected batch",
+            "Provision its persistent worktree and tab once from the verified master",
+            "Create each reserved fresh `work/<id>` branch",
+            "start a new Pi agent",
+        )
+
+    def test_launch_creates_only_fresh_branches_and_conditionally_prepares_workers(self):
+        self.assert_phrases(
+            "fresh `work/<id>` branch from verified master",
+            "existing branch or ambiguous readback stops the complete batch without reset or force",
+            "declared preparation only on provisioning or when the declared environment is missing or stale",
+            "valid reassignment performs zero reinstall",
+            "never copy or link dependencies across checkouts",
+        )
+
+    def test_failure_rollback_is_owned_and_ambiguous_rollback_keeps_the_lock(self):
+        self.assert_phrases(
+            "before the first handoff, preparation, branch, launch, batch-readback, or roster-validation failure closes only agents launched by this batch",
+            "cleans only new branches",
+            "preserve worker worktrees, tabs, and dependencies",
+            "ambiguous rollback retains the lock and asks the human",
+            "release only an owned lock",
         )
 
     def test_herdr_failures_fail_closed(self):
-        self.assert_phrases("`HERDR_ENV=1`", "subagent flow", "close only what this dispatch opened")
+        self.assert_phrases("`HERDR_ENV=1`", "subagent flow", "owned rollback rule")
 
     def test_no_torre_coupling_and_no_answer_for_the_human(self):
         self.assert_phrases(
@@ -164,11 +366,56 @@ class DespachoHerdrDispatchTests(unittest.TestCase):
         for clause in incompatible_clauses:
             self.assertNotIn(clause, self.skill, clause)
 
+    def test_relevant_dispatch_sections_reject_semantic_contradictions(self):
+        relevant = "\n".join(
+            section(self.skill, heading)
+            for heading in ("## Activation Contract", "## Hard Rules", "## Decision Gates", "## Execution Steps")
+        )
+        assert_no_contradictory_clause(
+            self,
+            relevant,
+            r"\b(?:git\s+)?worktree\s+(?:add|remove|rm)\b",
+            r"\b(?:close|destroy|delete|remove)\b(?:\s+(?:a|the|any|declared|persistent|Herdr)){0,5}\s+tab\b",
+            r"\b(?:always|unconditionally)\s+(?:run|prepare|install)\b|\b(?:run|prepare|install)\b[^\n]{0,80}\b(?:for|on)\s+(?:every|each)\s+(?:assignment|dispatch|worker)\b",
+            r"\b(?:git\s+reset\b|git\s+clean(?:\s+-\w+)*|rm\s+-rf|git\s+branch\s+-D|--force)\b",
+            r"(?im)^(?![^\n]*\bnever\b)[^\n]*\bforce[- ]?(?:reset|delete|remove)\b",
+            r"(?im)^(?![^\n]*(?:never|do not|without|no)\b)[^\n]*\b(?:launch|dispatch)\s+(?:the\s+)?(?:first|some|a\s+prefix)\b",
+            r"\b(?:automatically|autonomously|the\s+(?:agent|runtime|system|tool))\s+(?:select|choose|assign|reorder|substitute)\b",
+            r"(?im)^(?![^\n]*(?:never|do not|must not)\b)[^\n]*\b(?:load|invoke)\s+`?torre-control\b",
+            r"(?im)^(?![^\n]*(?:never|do not|must not)\b)[^\n]*\b(?:read|write)\s+`?(?:\.git/control-tower/ACTIVE|~/.local/share/control-tower/)\b",
+            r"\b(?:is|acts as|uses)\s+(?:a\s+)?Torre dispatch\b",
+        )
+        execution = section(self.skill, "## Execution Steps")
+        assert_in_order(
+            self,
+            execution,
+            "validate and reserve the complete human-selected batch",
+            "Create each reserved fresh `work/<id>` branch",
+            "Open or reuse only the declared worker's Herdr tab",
+            "Read back every agent launched by this batch",
+        )
+
+    def test_batch_readback_and_roster_validation_precede_any_handoff(self):
+        execution = section(self.skill, "## Execution Steps")
+        assert_in_order(
+            self,
+            execution,
+            "Read back every agent launched by this batch",
+            "complete one fresh Intercom live-roster readback and identity validation for every worker in the batch",
+            "Only after every worker passes, send the independent fire-and-forget handoffs",
+        )
+        self.assert_phrases(
+            "After the first handoff is sent, never roll back, clean, reset, delete, or close any batch branch or agent",
+            "partial first provisioning requires fresh maintainer authorization",
+            "complete only the missing provisioning or preparation",
+            "never remove a persistent worker or infer readiness",
+        )
+
     def test_execution_sends_independent_handoffs_before_terminal_events(self):
         execution = self.skill.split("## Execution Steps", 1)[1].split("## Output Contract", 1)[0]
         self.assertLess(
-            execution.index("Before each handoff, Main uses one fresh Intercom live-roster readback"),
-            execution.index("Two approved Pi workers receive independent fire-and-forget handoffs"),
+            execution.index("complete one fresh Intercom live-roster readback and identity validation for every worker in the batch"),
+            execution.index("Only after every worker passes, send the independent fire-and-forget handoffs"),
         )
         self.assertLess(
             execution.index("Main sends worker 2 without waiting for worker 1"),
@@ -177,15 +424,15 @@ class DespachoHerdrDispatchTests(unittest.TestCase):
 
     def test_output_reports_roster_and_delivery_per_exact_session_worker_handoff(self):
         self.assertIn(
-            "one fresh Intercom live-roster readback and one Intercom delivery result per exact Sesión/worker handoff",
-            self.skill,
+            "one fresh complete-batch Intercom live-roster readback and one Intercom delivery result per exact Sesión/worker handoff",
+            " ".join(self.skill.split()),
         )
 
     def test_acceptance_edge_cases_preserve_candidate_identity_and_threading(self):
         self.assert_phrases(
             "preserves the worktree and candidate as `BLOCKED`",
             "does not guess the answer or report completion",
-            "before each handoff, Main uses one fresh Intercom live-roster readback",
+            "complete one fresh Intercom live-roster readback and identity validation for every worker in the batch",
             "exact human-approved alias, session, and cwd",
             "no polling, retry, inferred completion, transport fallback, or autonomous resume",
             "Main never initiates `ask`",
@@ -200,27 +447,57 @@ class DespachoHerdrRetireTests(unittest.TestCase):
     def test_skill_links_the_retire_mode(self):
         self.assertIn("`references/retiro.md`", self.skill)
 
-    def test_retire_requires_the_six_checks(self):
-        text = self.retire.lower()
+    def test_retire_requires_six_ordered_checks_before_the_first_worker_mutation(self):
+        checks = section(self.retire, "## Six checks")
+        order = section(self.retire, "## Order")
+        self.assertEqual(len(re.findall(r"^\d+\. ", checks, re.MULTILINE)), 6)
+        assert_in_order(
+            self,
+            checks,
+            "`radar status` computes",
+            "`entrega.commit` is an ancestor of master",
+            "`git status --porcelain`",
+            "`git cherry master work/<id>`",
+            "The agent for this Sesión",
+            "Git and fresh live Herdr readback prove",
+        )
+        assert_in_order(
+            self,
+            order,
+            "run all six checks before the first worker mutation",
+            "Only after all six pass, close only the completed agent",
+            "Only after that close succeeds, leave the worker detached",
+            "Perform fresh Git, Radar, and Herdr free readback",
+            "Release only through the `## Shared lock protocol`",
+        )
+        self.assertLess(self.retire.index("## Six checks"), self.retire.index("## Order"))
+
+    def test_retirement_preserves_worker_state_and_reuses_the_shared_lock_protocol(self):
+        self.assertIn("change no worker state", self.retire.lower())
+        self.assertIn("`references/retiro.md`'s `## Shared lock protocol`", self.retire)
         for phrase in (
-            "after the responsible parent records", "authorizes", "`✅ COMPLETO`", "`📚 ARCHIVADO`",
-            "`git merge-base --is-ancestor`", "`git status --porcelain`", "`git cherry master work/<id>`",
-            "`idle`", "`done`", "`Worktrees/<id>`", "never the main checkout",
+            "preserve its declared persistent tab, worktree, and dependencies",
+            "never remove a declared pool worker",
+            "never delete its reusable worker branch",
+            "never infers reuse",
+            "never force-deletes branches",
+            "never touches another worker",
         ):
-            self.assertIn(phrase.lower(), text, phrase)
+            self.assertIn(phrase, self.retire.lower(), phrase)
 
-    def test_any_failed_check_changes_nothing(self):
-        self.assertIn("change nothing", self.retire.lower())
-
-    def test_retire_order_is_tab_then_worktree_then_branch(self):
-        steps = ("Close the Sesión's Herdr tab", "`git worktree remove", "`git branch -d", "`git worktree list`")
-        positions = [self.retire.index(step) for step in steps]
-        self.assertEqual(positions, sorted(positions))
-
-    def test_retire_never_forces(self):
-        for source in (self.skill, self.retire):
-            self.assertNotIn("--force", source)
-            self.assertNotIn("-D", source)
+    def test_retirement_sections_reject_destructive_or_out_of_order_contradictions(self):
+        relevant = "\n".join((section(self.retire, "## Six checks"), section(self.retire, "## Order")))
+        assert_no_contradictory_clause(
+            self,
+            relevant,
+            r"\b(?:git\s+)?worktree\s+(?:add|remove|rm)\b",
+            r"\bgit\s+branch\s+(?:-d|-D)\b",
+            r"\b(?:destroy|delete|remove)\s+(?:the\s+)?(?:declared|persistent)\s+(?:Herdr\s+)?tab\b",
+            r"\b(?:git\s+reset\s+--hard|git\s+clean(?:\s+-\w+)*|rm\s+-rf|--force)\b",
+            r"\b(?:close|detach)\b[^\n]{0,100}\bbefore\b[^\n]{0,100}\b(?:six|checks)\b",
+            r"\b(?:automatically|autonomously)\s+(?:select|choose|assign|reorder|substitute)\b",
+            r"\b(?:load|invoke)\s+`?torre-control\b",
+        )
 
     def test_only_plus_lines_of_git_cherry_block(self):
         self.assertIn("starts with `+`", self.retire)

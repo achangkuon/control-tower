@@ -110,15 +110,24 @@ This builder has no candidate coordination route. Future enablement requires a t
 
 Este contrato es local a Control Tower y gobierna la operación manual con la Torre
 apagada; no reemplaza ni repite la política de entrega. El pool actual es `Main` más
-cuatro worktrees persistentes y reutilizables: `issue-resolver` y tres implementers.
-Es una topología elegida para este flujo manual, no un límite universal para agentes
-que el humano autorice. Cada asignación cambia la rama y el agente del worker; no
-crea ni descarta el worktree ni un entorno que siga siendo válido.
+estos cuatro workers persistentes y reutilizables. Esta es una topología elegida para
+este flujo manual, no un límite universal para agentes que el humano autorice. Cada
+asignación cambia la rama y el agente del worker; no crea ni descarta el worktree ni
+un entorno que siga siendo válido.
 
-Al crear cada worker, ejecutá una vez `bun install --frozen-lockfile`. Repetilo sólo
-si faltan dependencias o cambió `bun.lock`; una asignación nueva conserva el entorno
-válido. Nunca copies ni enlaces `node_modules` desde otro checkout: cada worktree
-mantiene sus propias dependencias.
+| Worker y tab Herdr exacto | Worktree persistente, relativo a `Main` | Elegibilidad de rol |
+|---|---|---|
+| `issue-resolver` | `../Worktrees/issue-resolver` | Sólo una Sesión seleccionada por humano, respaldada por un issue de Control Tower, admisible por Radar y compatible con el trabajo concurrente. |
+| `implementer-1` | `../Worktrees/implementer-1` | Sólo una Sesión seleccionada por humano, aprobada, admisible por Radar y compatible con el trabajo concurrente. |
+| `implementer-2` | `../Worktrees/implementer-2` | Sólo una Sesión seleccionada por humano, aprobada, admisible por Radar y compatible con el trabajo concurrente. |
+| `implementer-3` | `../Worktrees/implementer-3` | Sólo una Sesión seleccionada por humano, aprobada, admisible por Radar y compatible con el trabajo concurrente. |
+
+El identificador de tab Herdr de cada worker es exactamente su ID de worker de la
+primera columna. Al crear cada worker, ejecutá una vez `bun install --frozen-lockfile`.
+Éste sigue siendo el único comando de preparación: repetilo sólo si faltan dependencias
+o cambió `bun.lock`; ése sigue siendo el predicado autoritativo de entorno faltante o
+stale. Una asignación nueva conserva el entorno válido. Nunca copies ni enlaces
+`node_modules` desde otro checkout: cada worktree mantiene sus propias dependencias.
 
 Cuando una Sesión recibe o detecta una fricción, mientras conserva el contexto fresco
 busca issues abiertos y cerrados de `achangkuon/control-tower`. Si existe el tracker
