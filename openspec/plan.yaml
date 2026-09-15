@@ -9022,7 +9022,7 @@ sesiones:
     cimientos: []
     recurso: []
     criterios:
-      - "`chanks-3-coordinador-manual` carga sólo después de una aprobación humana completa que liga cantidad paralela, IDs de Sesión, alias/worker y kind/runtime Pi exacto; no selecciona, sustituye, reduce, amplía ni reordena el lote."
+      - "`chanks-3-coordinador-manual` carga sólo después de una aprobación humana completa que liga cantidad paralela, IDs de Sesión, alias/worker, kind/runtime Pi, session ID y cwd/worktree exactos; no selecciona, sustituye, reduce, amplía ni reordena el lote."
       - "El coordinador delega admisión, pool, Herdr, Intercom, locks y retiro a `chanks-3-despacho-herdr`, confirma cada handoff y retorna inmediatamente sin wait, polling, retry ni seguimiento activo."
       - "Cada implementer conserva implementación, self-verification, RDD y commits de Módulo; Main no inspecciona, revisa, corrige ni vuelve a ejecutar la candidata del worker."
       - "Main procesa sólo eventos inbound `COMPLETED`, `BLOCKED` o `FAILED`: integra una Sesión confirmada por vez, detiene conflictos sin resolverlos y coordina evidencia de plan/cierre/retiro mediante las skills existentes."
@@ -9045,7 +9045,7 @@ sesiones:
             razon: "La carga ocurre sólo tras aprobación del lote y pertenece al límite de routing."
       - tipo: resuelta
         pregunta: "¿Qué liga la aprobación previa a cargar el coordinador?"
-        resolucion: "Cantidad paralela, IDs exactos LISTO y worker/agent kind Pi exacto por Sesión, en una aprobación humana completa."
+        resolucion: "Cantidad paralela, IDs exactos LISTO y alias, kind/runtime Pi, session ID y cwd/worktree exactos por Sesión, en una aprobación humana completa."
         autoridad: "Decisión explícita de Emilio registrada en #143."
         clase: contrato-visible; seguridad-y-permisos
         falsificador: "El coordinador completa, reduce, sustituye o reordena cualquier parte del lote."
@@ -9087,6 +9087,8 @@ sesiones:
             accion: "REFACTOR: consolidar modos dispatch/event/reconstruction, tabla de migración y límites Tower-off; eliminar frases que transfieran review o ejecución a Main."
             resultado: "REFACTOR: una frontera legible separa choreography manual, evidencia y autoridad Tower V1."
             criterios: ["El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa."]
+    entrega:
+      commit: a825fc0fd1c2dd83a249488d970f7ab8d981fbd7
 
 references:
   future_successors:

@@ -2,7 +2,7 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S128, S130, S131, S132, S134, S135, S136, S137, S138, S139, S140, S141, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S128, S130, S131, S132, S134, S135, S136, S137, S138, S139, S140, S141, S142, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Método V1.
 - Próximo trabajo ejecutable: Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
@@ -11,7 +11,7 @@
 - Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 
 ## Avance
-- **Total:** 70% (78/111 S)
+- **Total:** 71% (79/111 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -25,7 +25,7 @@
 - **Hosts:** 33% (3/9 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 75% (18/24 S)
+- **Método:** 79% (19/24 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -76,7 +76,6 @@
 3. **S123** · 📋 PLANIFICADO · prioridad V2 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
 4. **S129** · 🟢 LISTO · prioridad Método V1 · Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
 5. **S133** · 🟢 LISTO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
-6. **S142** · 🟢 LISTO · prioridad Método V1 · Una skill stateless de Tramo 3 coordina lotes manuales Tower-off ya aprobados, retorna tras el handoff, reacciona a eventos worker y serializa integración/cierre sin asumir trabajo, review ni autoridad Tower.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · prioridad Torre V1 · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -3781,13 +3780,13 @@ Rutas: agent-workflows/skills/chanks-0-agente-soporte/SKILL.md, agent-workflows/
   - [ ] El diff queda en las nueve rutas declaradas y la suite del Método pasa.
 
 ### S142 — Una skill stateless de Tramo 3 coordina lotes manuales Tower-off ya aprobados, retorna tras el handoff, reacciona a eventos worker y serializa integración/cierre sin asumir trabajo, review ni autoridad Tower.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: ✅ COMPLETO
 - Zona/Área: metodo · agent-workflows/
 - Depende de: S131, S137, S141
 - Cimientos: —
 - Recursos: —
 - Criterios de aceptación:
-  - [ ] &#96;chanks-3-coordinador-manual&#96; carga sólo después de una aprobación humana completa que liga cantidad paralela, IDs de Sesión, alias/worker y kind/runtime Pi exacto; no selecciona, sustituye, reduce, amplía ni reordena el lote.
+  - [ ] &#96;chanks-3-coordinador-manual&#96; carga sólo después de una aprobación humana completa que liga cantidad paralela, IDs de Sesión, alias/worker, kind/runtime Pi, session ID y cwd/worktree exactos; no selecciona, sustituye, reduce, amplía ni reordena el lote.
   - [ ] El coordinador delega admisión, pool, Herdr, Intercom, locks y retiro a &#96;chanks-3-despacho-herdr&#96;, confirma cada handoff y retorna inmediatamente sin wait, polling, retry ni seguimiento activo.
   - [ ] Cada implementer conserva implementación, self-verification, RDD y commits de Módulo; Main no inspecciona, revisa, corrige ni vuelve a ejecutar la candidata del worker.
   - [ ] Main procesa sólo eventos inbound &#96;COMPLETED&#96;, &#96;BLOCKED&#96; o &#96;FAILED&#96;: integra una Sesión confirmada por vez, detiene conflictos sin resolverlos y coordina evidencia de plan/cierre/retiro mediante las skills existentes.
