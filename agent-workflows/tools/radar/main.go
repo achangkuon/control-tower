@@ -41,6 +41,8 @@ func main() {
 	if err != nil {
 		os.Exit(2)
 	}
+	opts.archivo = resolverRutaConRaiz(opts.archivo, opts.raiz)
+	opts.salida = resolverRutaConRaiz(opts.salida, opts.raiz)
 
 	p, err := Load(opts.archivo)
 	if err != nil {
@@ -113,6 +115,13 @@ func parsearArgs(comando string, args []string) (opciones, []string, error) {
 		posicionales = append(posicionales, fs.Arg(0))
 		args = fs.Args()[1:]
 	}
+}
+
+func resolverRutaConRaiz(ruta, raiz string) string {
+	if raiz == "" || filepath.IsAbs(ruta) {
+		return ruta
+	}
+	return filepath.Join(raiz, ruta)
 }
 
 func resolverRaiz(explicita, declarada, archivo string) (string, error) {

@@ -27,6 +27,8 @@ Módulo del plan es un aviso de `radar check`, nunca un error.
 
 ## Compilar y verificar
 
+La admisión usa el binario instalado `$HOME/.local/bin/radar`; nunca ejecuta código del checkout.
+
 ```sh
 go build -o radar .
 go test ./...

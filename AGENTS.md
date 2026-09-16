@@ -17,14 +17,15 @@ Git, y `radar status` es el único que lo calcula. Un archivo que lo declare a m
 una segunda fuente de verdad, y ya nos costó tener el mismo avance con dos números
 distintos y ambos defendibles.
 
-Un consumidor que necesite las cifras las pide con `radar status --json`
+Un consumidor que necesite las cifras las pide con `$HOME/.local/bin/radar status --json -C <raíz del repo>`
 (`radar.snapshot/v1`); no re-parsea el ROADMAP ni reimplementa el cálculo.
 
 ### Cómo se elige qué sigue
 
-**Para saber qué trabajo sigue, corré `radar status`** (desde `agent-workflows/tools/radar`,
-con `-C <raíz del repo>`). Sólo se proponen para arrancar Sesiones en estado `LISTO`, en el
-orden de la cola de su Zona. El humano elige entre ellas; el agente propone, no decide.
+**Para saber qué trabajo sigue, corré `$HOME/.local/bin/radar status --json -C <raíz del repo>`**.
+Para una Sesión usá `$HOME/.local/bin/radar sesion <ID> -C <raíz del repo>`. La admisión
+nunca ejecuta un binario del repositorio ni código del checkout. Sólo se proponen Sesiones
+`LISTO` en el orden de su Zona; el humano elige y el agente no decide.
 
 Nunca elijas trabajo a partir de la memoria (Engram), de un cambio viejo en
 `openspec/changes/`, del corpus archivado o del número siguiente a la última Sesión
