@@ -54,7 +54,14 @@ zonas:
 # Orden de trabajo aprobado por Emilio el 2026-09-14: primero se cierra el Método V1, después se
 # construye, prueba, instala y usa la Torre V1, y recién entonces se construye la V2. Radar sólo
 # ofrece trabajo LISTO de la primera prioridad con Sesiones abiertas (S127).
+# Emilio aprobó adelantar S145 → S143 → S144 → S146 (Engram 11171/11173).
+# Dos prioridades explícitas conservan el orden relativo del resto; las demás
+# alternativas LISTO quedan DIFERIDO mientras este conjunto siga pendiente.
 prioridades:
+  - id: metodo-v1-radar-prioritario
+    nombre: Método V1 · Radar prioritario
+  - id: metodo-v1-controles-prioritarios
+    nombre: Método V1 · Controles prioritarios
   - id: metodo-v1
     nombre: Método V1
   - id: torre-v1
@@ -9089,6 +9096,247 @@ sesiones:
             criterios: ["El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa."]
     entrega:
       commit: a825fc0fd1c2dd83a249488d970f7ab8d981fbd7
+
+  - id: S143
+    zona: metodo
+    prioridad: metodo-v1-controles-prioritarios
+    resultado: "Motor procedural Chanks verificable: los siete controles consumen autoridad y evidencia y permiten o bloquean transiciones sin ejecutar sus efectos."
+    autoridad:
+      - tipo: engram
+        id: 11119
+      - tipo: engram
+        id: 11127
+      - tipo: engram
+        id: 11171
+      - tipo: engram
+        id: 11173
+    depende_de: []
+    cimientos: []
+    recurso: []
+    reemplaza: []
+    criterios:
+      - "Hay casos permitidos y rechazados para los siete controles: alcance aprobado antes de planificar; delta exacto validado antes de registrar; admisión humana con Radar fresco; mutaciones dentro de archivos y recursos permitidos; consumo de resultados técnicos genuinos; entrega autorizada conforme a la política del repositorio; cierre con publicación comprobada, registro y documentación."
+      - "La autoridad, la ruta y el contrato aprobados y la evidencia quedan ligados al repositorio, Sesión y candidato correspondientes; una base desactualizada o evidencia de otro trabajo se rechaza. La ruta se valida dentro de la admisión existente, sin añadir un octavo control. Una afirmación del agente o una huella de archivos no fabrica aprobación humana."
+      - "Radar instalado conserva el cálculo de estados y openspec/plan.yaml conserva la autoridad editable del plan; el núcleo no reimplementa el cálculo ni crea otro registro de estados, caché o migración de almacenamiento."
+      - "Gentle AI conserva la implementación, las comprobaciones técnicas y su registro subordinado de continuidad existente. Chanks valida identidad, procedencia, actualidad y cobertura de sus resultados y referencias sin crear otro ejecutor, almacenamiento, evaluador, API de recibos ni revisión por Módulo. Un resultado desconocido, indisponible, vacío o declinado no se convierte en PASS; la declinación de revisión respeta el camino alternativo aplicable del proveedor, sin inventar un bloqueo incondicional. El registro del cierre y su documentación siguen a cargo del padre responsable de Chanks."
+      - "El permiso de publicación se distingue de la evidencia de publicación efectiva del candidato exacto. Una publicación lograda con registro fallido impide declarar el cierre y no dispara otra publicación ni una reversión automática."
+      - "El núcleo no escribe archivos, modifica Git, lanza workers ni publica. Sus pruebas verifican decisiones procedurales y no se presentan como demostración de que Pi impide efectos."
+      - "El diseño fija el contrato compartido de autoridad, evidencia y transiciones antes de apply; las decisiones nuevas de API pública, seguridad o permisos requieren aprobación humana y no se resuelven por inferencia."
+      - "El diff queda en la Zona Método, separado del router y del bundle Tower; una necesidad de modificar un archivo compartido exige declarar el Cimiento exacto y confirmar el cruce antes de mutarlo."
+    decisiones:
+      - tipo: resuelta
+        clase: contrato-visible
+        pregunta: "¿El método ejecutable debe funcionar por sí solo antes de integrar la Torre?"
+        resolucion: "Sí. Método V1 hace cumplir los siete controles en el flujo manual con Torre apagada; Torre V1 integra el mismo método y V2 recibe sólo ampliaciones no indispensables. Los alcances y el orden relativo del resto se conservan; la decisión posterior de Emilio adelanta exclusivamente S145 → S143 → S144 → S146 mediante prioridades explícitas. La integración Torre V1 y las ampliaciones V2 restantes quedan por desglosar, sin nuevas altas en esta decisión."
+        autoridad: "Emilio eligió Método independiente primero y confirmó los dos contratos; Engram 11119 y 11127. Aprobó después el alcance prioritario y su representación en Radar; Engram 11171 y 11173."
+        falsificador: "Método V1 necesita activar Torre, se construye otro método para Torre o se posterga a V2 una protección indispensable para V1."
+        descartadas:
+          - opcion: "Entregar los controles nuevos solamente junto con Torre V1."
+            razon: "El flujo manual seguiría dependiendo de instrucciones mientras espera a Torre."
+          - opcion: "No decidir ni incorporar el alcance faltante."
+            razon: "El humano aprobó preparar y registrar los dos resultados nuevos."
+      - tipo: resuelta
+        clase: contrato-visible
+        pregunta: "¿El motor procedural y la demostración de control efectivo en Pi se entregan como resultados distintos?"
+        resolucion: "Sí. S143 entrega el núcleo verificable sin efectos y S144 demuestra el control efectivo en Pi. Entrega y cierre manual forman parte de esos controles y no se cuentan otra vez como otro proyecto completo."
+        autoridad: "Confirmación de Emilio de la propuesta de dos Sesiones y sus rutas; Engram 11127."
+        falsificador: "Se presenta el núcleo solo como control efectivo de Pi o se duplica el alcance completo de entrega y cierre."
+        descartadas:
+          - opcion: "Declarar cumplidos los siete controles efectivos al entregar únicamente el núcleo."
+            razon: "Una decisión correcta no prueba que el efecto indebido haya sido impedido."
+    ruta:
+      propuesta: full-sdd
+      autoridad: "Emilio confirmó full-sdd y aprobó su implementación prioritaria; Engram 11127 y 11171. El comportamiento y contrato compartido de autoridad, evidencia y transiciones requieren diseño. El inicio y apply conservan la admisión fresca, los contratos nativos y los gates humanos aplicables."
+    # Previsión provisional: 800–1600 adiciones+eliminaciones de código y pruebas,
+    # no medidas. Reestimar Módulos tras el diseño; 400 es referencia por commit,
+    # no límite de Sesión ni excepción de tamaño aprobada.
+    modulos: []
+
+  - id: S144
+    zona: metodo
+    prioridad: metodo-v1-controles-prioritarios
+    resultado: "Controles Chanks efectivos en Pi con Torre apagada: el núcleo S143 gobierna los efectos del flujo manual y demuestra el recorrido autorizado completo en un entorno aislado."
+    autoridad:
+      - tipo: engram
+        id: 11121
+      - tipo: engram
+        id: 11127
+      - tipo: engram
+        id: 11171
+      - tipo: engram
+        id: 11173
+    depende_de: [S143]
+    cimientos: []
+    recurso:
+      - "runtime Pi aislado de ensayos Chanks Método V1; uso exclusivo a confirmar antes de ejecutar, sin configuración global activa"
+    reemplaza: []
+    criterios:
+      - "Un recorrido manual autorizado atraviesa los siete controles de S143 en Pi con Torre apagada, usando un entorno aislado sin instalación global ni publicación real del proyecto."
+      - "Cada efecto cubierto pasa por el control antes de ocurrir. Los casos rechazados demuestran ausencia del efecto prohibido, incluidas escrituras por herramientas, órdenes y procesos derivados; un aviso o bloqueo del editor por sí solo no constituye esa prueba."
+      - "Una operación cuyos efectos no puedan controlarse se rechaza sin salida permisiva alternativa. El mecanismo de intercepción y sus límites se demuestran en el runtime real antes de afirmar cobertura; si exige ampliar alcance o permisos, se pide decisión humana antes de apply."
+      - "Las activaciones muestran exactamente 💪 Chanks, la acción real del método, un resultado permitido o bloqueado separado y contexto suficiente. Los mensajes corresponden a transiciones significativas, sin duplicarse por cada llamada de herramienta. Main manual no se etiqueta como 🗼 Torre; implementación, pruebas y revisión de Gentle AI conservan su identidad nativa. Una autorización no afirma ejecución, publicación ni cierre; la marca visible no sustituye la comprobación de efectos."
+      - "El registro canónico exige el delta exacto aprobado y validado, rechaza bases desactualizadas sin escribir y conserva openspec/plan.yaml como único origen editable. No aparece otro registro de estados y el agente responsable conserva la confirmación de la evidencia."
+      - "La entrega exige autorización del candidato exacto, respeta la política del repositorio y serializa operaciones incompatibles sobre el mismo destino incluso entre candidatos distintos. Las pruebas aisladas registran evidencia de publicación efectiva, no sólo un permiso o un commit local."
+      - "Publicación exitosa con registro fallido conserva esa distinción: no declara cierre ni vuelve a publicar o revierte automáticamente. El cierre exige publicación comprobada, registro correspondiente y la documentación y reinstalación aplicables, preservando la confirmación humana exigida para skills."
+      - "El recorrido Pi entrega el contrato y la ruta aprobados al orquestador existente de Gentle AI y consume sus resultados y referencias de continuidad genuinos y actuales bajo sus requisitos aplicables. La retoma reconcilia el trabajo válido tras la admisión Radar, sin repetirlo por estar aún sin entregar. No se añade otro ejecutor, almacenamiento, evaluador, API de recibos, revisión por Módulo ni autoridad de entrega derivada de un veredicto técnico; Chanks conserva el registro y la documentación del cierre."
+      - "El adaptador y su distribución permanecen dentro de agent-workflows/, separados de extensions/pi/** y adapters/pi/** incluidos por S8.12 en el bundle Tower. No se cambia el contrato conservado del router S9.7 ni se afirma cobertura ejecutable equivalente para otros agentes."
+      - "El uso exclusivo del runtime de ensayo se confirma antes de cualquier efecto; la declaración de Recurso no equivale a adquisición. El diff respeta la Zona y cualquier cruce nuevo requiere una reserva exacta aprobada antes de modificar archivos compartidos."
+    decisiones:
+      - tipo: resuelta
+        clase: expansion-de-alcance
+        pregunta: "¿Qué agentes deben tener controles ejecutables reales al completar el alcance nuevo de Método V1?"
+        resolucion: "Pi primero, con núcleo reutilizable. Claude Code, Codex y OpenCode conservan sus instrucciones actuales; sus adaptadores ejecutables quedan como alcance posterior explícito de V2, por desglosar, sin afirmar cobertura equivalente."
+        autoridad: "Emilio eligió Pi primero y luego confirmó el contrato; Engram 11121 y 11127."
+        falsificador: "Se exige entregar los cuatro adaptadores para cerrar este alcance o se presentan instrucciones instaladas como controles ejecutables comprobados."
+        descartadas:
+          - opcion: "Exigir los cuatro agentes desde Método V1."
+            razon: "El humano eligió acotar la integración inicial al flujo Pi actual."
+          - opcion: "Dejar indefinida la cobertura de agentes."
+            razon: "Impediría comprobar de forma binaria el resultado de esta Sesión."
+      - tipo: resuelta
+        clase: seguridad-y-permisos
+        pregunta: "¿Basta con informar un bloqueo o se debe impedir el efecto indebido?"
+        resolucion: "Se debe impedir el efecto indebido, también cuando procede de órdenes o procesos derivados. Si no se puede controlar una operación, se rechaza; no se rebaja la garantía a instrucciones o avisos. El diseño y sus decisiones de permisos se aprueban antes de apply."
+        autoridad: "Siete controles aprobados y confirmación del contrato de control efectivo; Engram 11098, 11121 y 11127."
+        falsificador: "Una vía alternativa ejecuta el efecto que Chanks declaró bloqueado."
+        descartadas:
+          - opcion: "Dar por suficiente la distribución de skills o un aviso de bloqueo."
+            razon: "No demuestra que una mutación por otra vía haya sido impedida."
+      - tipo: resuelta
+        clase: expansion-de-alcance
+        pregunta: "¿Esta incorporación adelanta dependencias de V2 o reabre la recuperación aplazada?"
+        resolucion: "No se adelantan dependencias de Torre V1 o V2 ni se reabre recuperación. Se preservan los alcances y el orden relativo del resto; Emilio autorizó después adelantar exclusivamente S145 → S143 → S144 → S146 dentro del trabajo de Método V1. S102 sigue siendo una referencia futura, S12.5 no se trata como corrección de comportamiento y la auditoría exhaustiva de recuperación sigue aplazada. Si una dependencia de V2 resulta indispensable para V1, se presenta la contradicción al humano en vez de moverla o postergar seguridad silenciosamente."
+        autoridad: "Límites aprobados; Engram 11119, 11121 y 11127. Excepción posterior de prioridad expresamente aprobada; Engram 11171 y 11173."
+        falsificador: "Se adelanta trabajo fuera del conjunto expresamente aprobado, se inventa cobertura ejecutable de S102 o se reabre recuperación sin una nueva decisión humana."
+        descartadas:
+          - opcion: "Resolver automáticamente los cruces adelantando las Sesiones existentes."
+            razon: "El humano pidió conservar sus alcances y prioridades."
+    ruta:
+      propuesta: full-sdd
+      autoridad: "Emilio confirmó full-sdd y aprobó su implementación prioritaria; Engram 11127 y 11171. El ciclo de intercepción, efectos y evidencia compartida requiere diseño y prueba real. El inicio y apply conservan la admisión fresca, los contratos nativos y los gates humanos aplicables."
+    # Previsión provisional: 1500–3000 adiciones+eliminaciones de integración y
+    # pruebas, no medidas; el mecanismo puede exigir un nuevo corte. Reestimar
+    # Módulos tras diseño y pedir decisión antes de implementar un commit >400.
+    modulos: []
+
+  - id: S145
+    zona: metodo
+    prioridad: metodo-v1-radar-prioritario
+    resultado: "Radar explica alternativas LISTO, compatibilidad potencial por archivos, condiciones e hipotéticos mediante radar roadmap como vista humana de la evidencia canónica, sin autorizar ejecución."
+    autoridad:
+      - tipo: engram
+        id: 11159
+      - tipo: engram
+        id: 11171
+      - tipo: engram
+        id: 11173
+    depende_de: []
+    cimientos: []
+    recurso: []
+    reemplaza: []
+    criterios:
+      - "radar status --json conserva una única proyección canónica de evidencia para consumidores; radar roadmap es una vista humana determinista de esa misma evidencia, no otra fuente JSON ni otro cálculo de estados. Main no necesita parsear texto humano para consumir los resultados."
+      - "La vista enumera todas las alternativas LISTO actuales en su orden de Zona y muestra conjuntos explícitos de Sesiones, sus exclusiones y las condiciones de compatibilidad potencial por archivos. Distingue esa previsión del permiso de ejecución vigente y no convierte una Zona o un Cimiento compartidos en un veto indiscriminado sobre trabajo propio disjunto."
+      - "Cada conclusión por archivos usa una huella confirmada ligada al alcance diseñado, rutas exactas de los Módulos, Cimientos, recursos, dependencias y base vigentes. Una huella desconocida, incompleta o desactualizada nunca se interpreta como vacía o segura; un cambio de alcance o base invalida la conclusión anterior."
+      - "Un Cimiento compartido aparece con la condición explícita de intervención coordinada, y un recurso exclusivo incompatible excluye la combinación. El reporte no adquiere reservas, asigna workers, concede acceso ni supone que la coordinación futura ya está instalada."
+      - "Los escenarios hipotéticos distinguen dependencias satisfechas de nuevas Sesiones realmente LISTO según todos los criterios y la prioridad aplicable. Un caso demuestra que resolver la dependencia de S123 en S122 no vuelve ejecutable V2 mientras no sea la prioridad activa; los escenarios no modifican el plan, Git ni la evidencia de entrega real."
+      - "Sobre el mismo plan y base, se conservan los siete estados, el significado vigente de asientos y la admisión actual. La capacidad nueva queda condicionada a la integración, verificación y activación autorizada de sus consumidores en S146; ningún reporte se autoriza a sí mismo."
+      - "S122 conserva su resultado, criterios, umbral fijo de horizonte y orden relativo respecto del resto no priorizado. El diseño reutiliza los datos existentes antes de proponer extensiones; cualquier ruptura del contrato público de radar.snapshot/v1 requiere decisión humana antes de apply."
+      - "El diff permanece en la Zona Método; el diseño declara las rutas exactas y cualquier Cimiento necesario antes de mutar. Módulos aún sin diseño no aportan una huella completa ni capacidad paralela por el mero registro."
+    decisiones:
+      - tipo: resuelta
+        clase: contrato-visible
+        pregunta: "¿El reporte nuevo cambia la autoridad de ejecución o explica alternativas y condiciones sin autoactivarlas?"
+        resolucion: "Explica alternativas y condiciones como una función adicional del método. La proyección máquina canónica sigue siendo radar status --json y radar roadmap la presenta a la persona. Las reglas nuevas de paralelo requieren integración, verificación y activación autorizadas; no se infieren del reporte."
+        autoridad: "Contrato del punto 3 y alcance prioritario aprobados por Emilio; Engram 11159 y 11171. Política del repositorio sobre consumidores de radar.snapshot/v1."
+        falsificador: "Main interpreta una vista humana como autoridad alternativa o un reporte habilita automáticamente paralelo, una reserva o un efecto."
+        descartadas:
+          - opcion: "Dar por habilitado el paralelo al publicar la explicación."
+            razon: "La evidencia estática no demuestra que admisión, coordinación y controles efectivos apliquen el mismo contrato."
+          - opcion: "Crear otra fuente editable de planificación para los escenarios."
+            razon: "El humano aprobó ampliar la planificación existente, no crear un segundo plan ni estado vivo."
+      - tipo: resuelta
+        clase: contrato-visible
+        pregunta: "¿Cómo debe reflejar Radar el orden prioritario S145 → S143 → S144 → S146?"
+        resolucion: "Dos prioridades explícitas de Método V1 preceden a metodo-v1: S145 ocupa la primera y S143/S144/S146 la segunda. El resto conserva alcance y orden relativo; sus alternativas listas quedan DIFERIDO mientras siga pendiente una prioridad anterior. No se inventan dependencias para forzar la cola."
+        autoridad: "Emilio eligió Prioridad visible en Radar tras conocer su efecto sobre DIFERIDO; Engram 11173."
+        falsificador: "Se cambia el algoritmo, se añaden dependencias ficticias o se afirma que mover filas YAML produce ese orden."
+        descartadas:
+          - opcion: "Mantener la cola actual y seguir el orden sólo por selección humana."
+            razon: "El humano eligió que Radar también refleje la prioridad."
+          - opcion: "Pausar el registro."
+            razon: "El humano autorizó continuar con la prioridad visible."
+    ruta:
+      propuesta: full-sdd
+      autoridad: "Emilio aprobó el alcance y las rutas mostradas en el todo; Engram 11171. El contrato público de proyección, completitud e hipotéticos requiere diseño. El inicio exige admisión fresca y los gates nativos aplicables."
+      revalidacion:
+        resultado: full-sdd
+        base: 26367d9dd98cc15ebf5185a682f6ae9ad5781107
+        evidencia: "Kickoff S145 con Radar instalado y recaptura idéntica de HEAD, status y contrato; Engram 11174. main.go, state.go, snapshot.go y plan.go confirman que el comando y el contrato compartido necesitan diseño. La revalidación no afirma que el cambio SDD ya exista ni que haya comenzado la implementación."
+    # Forecast preliminar del planificador: 380–480 adiciones+eliminaciones totales,
+    # no medidas. Reestimar por Módulo tras diseño; 400 es referencia por commit,
+    # no una excepción de tamaño concedida ni un límite de Sesión.
+    # Comprobación estética: preservar la identidad de Radar y no insertar marcas
+    # humanas en JSON; los avisos Chanks sólo corresponden a acciones del método.
+    modulos: []
+
+  - id: S146
+    zona: metodo
+    prioridad: metodo-v1-controles-prioritarios
+    resultado: "El método manual coordina intervenciones de Cimientos y paralelo por archivos con controles efectivos en Pi: Main coordina, workers y Gentle AI implementan y verifican, con Torre apagada."
+    autoridad:
+      - tipo: engram
+        id: 11157
+      - tipo: engram
+        id: 11159
+      - tipo: engram
+        id: 11171
+      - tipo: engram
+        id: 11173
+    depende_de: [S144, S145]
+    cimientos: []
+    recurso:
+      - "runtime Pi aislado de ensayos Chanks Método V1; uso exclusivo a confirmar antes de ejecutar, sin configuración global activa"
+    reemplaza: []
+    criterios:
+      - "Tras integración, verificación y activación humana autorizada, la evidencia canónica de Radar, la admisión manual, el coordinador y los controles Chanks instalados aplican un único criterio acordado. El registro o el reporte S145 no activa ese criterio por sí solo ni mantiene un permiso alternativo incoherente."
+      - "Sesiones de la misma Zona pueden avanzar en archivos propios sólo con alcance autorizado y huellas completas, vigentes y disjuntas. Compartir un Cimiento exige intervención coordinada sobre ese archivo, no el veto global de ambas Sesiones; una huella desconocida no habilita paralelo."
+      - "Antes de tocar Cimientos, el worker solicita un conjunto coherente completo ligado a su trabajo y base; Main coordina las intervenciones sin solapamiento sobre el mismo archivo. No se acumulan concesiones parciales que permitan esperas circulares ni se amplía un conjunto silenciosamente."
+      - "Cada intervención usa la base integrada completa vigente y conserva el trabajo propio válido; no sustituye esa base copiando un Cimiento suelto. La liberación ocurre sólo tras integración confirmada conforme al flujo de entrega, nunca por terminar la edición local o por silencio del worker."
+      - "Pruebas reales en un entorno Pi aislado demuestran solicitudes e intervenciones autorizadas y rechazadas, conjuntos incompletos o en conflicto, base desactualizada, integración y liberación. Los casos rechazados demuestran ausencia del efecto prohibido; mensajes y pruebas de cadenas de texto no sustituyen esa evidencia."
+      - "Los workers y Gentle AI implementan y verifican; Main sólo coordina e integra bajo el contrato vigente. Main no inspecciona para emitir otro juicio técnico, corrige código ni repite las pruebas del worker. Se consumen los controles de S143/S144 sin duplicar su implementación ni cambiar sus dependencias."
+      - "Conflicto, cambio de alcance o base, desconexión o evidencia faltante detienen la intervención afectada y preservan trabajo y evidencia; no disparan reintentos, remapeos, permisos, liberaciones ni reanudaciones automáticos."
+      - "No se crea otro estado de planificación, cola persistente, gestor de locks artificial, almacenamiento de continuidad, API de recibos ni ejecutor técnico. Radar no adquiere reservas vivas; las evidencias de coordinación tampoco conceden autoridad a sí mismas. Torre permanece apagada."
+      - "S146 confirma su propio uso exclusivo del recurso Pi aislado antes de cualquier efecto; la declaración de S144 no lo concede. El diseño enumera rutas exactas y reservas de Cimientos antes de mutar, y escala permisos, API pública o cruces nuevos antes de apply."
+      - "Los mensajes de acciones del método usan 💪 Chanks con acción y resultado reales, sin confundir permiso con efecto o cierre; Main manual no se etiqueta como 🗼 Torre y los mensajes técnicos nativos de Gentle AI no se duplican."
+    decisiones:
+      - tipo: resuelta
+        clase: contrato-visible
+        pregunta: "¿Quién coordina y quién modifica los Cimientos compartidos en el método manual?"
+        resolucion: "Main coordina las intervenciones y su integración; workers y Gentle AI modifican y verifican. Las Sesiones pueden avanzar sobre archivos propios independientes antes de su intervención compartida. Un Cimiento compartido no veta toda la concurrencia, pero nunca autoriza intervenciones superpuestas sobre el mismo archivo."
+        autoridad: "Elección explícita Main coordina; workers modifican y confirmación del contrato de planificación; Engram 11157, 11159 y 11171."
+        falsificador: "Main se convierte en implementador o revisor técnico, o compartir un Cimiento implica permiso simultáneo o veto indiscriminado a toda la Sesión."
+        descartadas:
+          - opcion: "Centralizar en Main las modificaciones de Cimientos."
+            razon: "El humano eligió mantener la implementación y verificación en los workers y Gentle AI."
+          - opcion: "Prohibir todo paralelo entre Sesiones que compartan un Cimiento."
+            razon: "El humano rechazó bloquear también el trabajo propio independiente."
+      - tipo: resuelta
+        clase: contrato-visible
+        pregunta: "¿Bastan instrucciones y pruebas estáticas para cerrar esta coordinación nueva?"
+        resolucion: "No. La entrega demuestra el recorrido efectivo en Pi aislado y la coherencia de Radar, admisión y coordinación antes de activar el nuevo criterio. El método vigente controla la mejora; su versión candidata no se autoriza a sí misma."
+        autoridad: "Alcance de S146 con pruebas reales y activación controlada aprobado en el todo; Engram 11171."
+        falsificador: "Se declara operativo el paralelo nuevo por registrar una skill, por mostrar una marca o por aprobar únicamente pruebas de texto."
+        descartadas:
+          - opcion: "Dar por suficiente el contrato de skills sin recorrido real."
+            razon: "Eso repetiría la confusión entre instrucciones y efectos que el alcance aprobado exige corregir."
+    ruta:
+      propuesta: full-sdd
+      autoridad: "Emilio aprobó el alcance y las rutas mostradas en el todo; Engram 11171. El ciclo compartido de solicitud, concesión, base, integración y liberación requiere diseño y prueba efectiva; no se elige esta ruta por tamaño o riesgo solamente."
+    # Forecast preliminar: 430–600 adiciones+eliminaciones totales, no medidas.
+    # El diseño debe proponer Módulos revertibles y reestimar el presupuesto por
+    # commit; antes de superar 400 se pide partición o excepción, nunca se infiere.
+    modulos: []
 
 references:
   future_successors:

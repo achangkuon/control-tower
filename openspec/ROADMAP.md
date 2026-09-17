@@ -3,15 +3,15 @@
 
 ## 📍 Punto de retoma
 - Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S128, S130, S131, S132, S134, S135, S136, S137, S138, S139, S140, S141, S142, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
-- Prioridad activa: Método V1.
-- Próximo trabajo ejecutable: Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados..
+- Prioridad activa: Método V1 · Radar prioritario.
+- Próximo trabajo ejecutable: Método #4 → S145 — Radar explica alternativas LISTO, compatibilidad potencial por archivos, condiciones e hipotéticos mediante radar roadmap como vista humana de la evidencia canónica, sin autorizar ejecución..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
 ## Estado y próximo trabajo
-- Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
+- Método #4 → S145 — Radar explica alternativas LISTO, compatibilidad potencial por archivos, condiciones e hipotéticos mediante radar roadmap como vista humana de la evidencia canónica, sin autorizar ejecución.
 
 ## Avance
-- **Total:** 71% (79/111 S)
+- **Total:** 68% (79/115 S)
 - 6 Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.
 - **:** 0% (0/3 S)
 - **Archivo:** — (sin Sesiones enumeradas)
@@ -25,7 +25,7 @@
 - **Hosts:** 33% (3/9 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 79% (19/24 S)
+- **Método:** 67% (19/28 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -72,10 +72,10 @@
 
 ### Método (metodo)
 1. **S115** · 📋 PLANIFICADO · prioridad V2 · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
-2. **S122** · 🟢 LISTO · prioridad Método V1 · Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
-3. **S123** · 📋 PLANIFICADO · prioridad V2 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
-4. **S129** · 🟢 LISTO · prioridad Método V1 · Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
-5. **S133** · 🟢 LISTO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
+2. **S123** · 📋 PLANIFICADO · prioridad V2 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
+3. **S144** · 📋 PLANIFICADO · prioridad Método V1 · Controles prioritarios · Controles Chanks efectivos en Pi con Torre apagada: el núcleo S143 gobierna los efectos del flujo manual y demuestra el recorrido autorizado completo en un entorno aislado.
+4. **S145** · 🟢 LISTO · prioridad Método V1 · Radar prioritario · Radar explica alternativas LISTO, compatibilidad potencial por archivos, condiciones e hipotéticos mediante radar roadmap como vista humana de la evidencia canónica, sin autorizar ejecución.
+5. **S146** · 📋 PLANIFICADO · prioridad Método V1 · Controles prioritarios · El método manual coordina intervenciones de Cimientos y paralelo por archivos con controles efectivos en Pi: Main coordina, workers y Gentle AI implementan y verifican, con Torre apagada.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · prioridad Torre V1 · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -148,6 +148,10 @@
 - **S140:** propuesta direct (S139 define el único formato admitido y las cinco declaraciones exactas ya están identificadas; la activación es una migración mecánica del plan.) · prioridad Método V1; revalidada direct sobre 1458037f74069127d782e6088a184aa377c1493b con evidencia El parser entregado carga formas escalares e inline sin cambiar ownership; las cinco rutas observadas siguen ausentes en HEAD y corresponden exactamente a los dos enums cerrados de S139..
 - **S141:** propuesta direct (Radar ya expone HEAD, prioridad, estados, colas y asientos; el cambio sólo conecta esos datos en contratos y regresiones Chanks con conducta completamente determinada.) · prioridad Método V1; revalidada direct sobre 168a47e528c174868c4487537a5b9319efbdc28c con evidencia El bypass persiste: session-routing contiene prosa advisory, kickoff consulta sólo &#96;radar sesion&#96;, cierre de decisiones lee plan.yaml directamente y las pruebas de instalación verifican palabras aisladas en vez de la ruta negativa. Support ya posee la frontera Radar reutilizable..
 - **S142:** propuesta direct (Las decisiones de artefacto, ubicación, aprobación, runtime, eventos, ownership, reconstrucción y migración están cerradas; las dependencias entregadas fijan las interfaces que la skill sólo referencia.) · prioridad Método V1; revalidada direct sobre 1e88aa1d82758ad182085d491561fcbe2a8d3e2d con evidencia S131 entrega pool persistente; S137 separa Herdr/Intercom y retorna tras send; S141 instala admisión Radar; chanks-4-puente conserva verify/RDD/commits en implementers y chanks-7-session-doc conserva cierre. Falta únicamente el router stateless entre esos límites..
+- **S143:** propuesta full-sdd (Emilio confirmó full-sdd y aprobó su implementación prioritaria; Engram 11127 y 11171. El comportamiento y contrato compartido de autoridad, evidencia y transiciones requieren diseño. El inicio y apply conservan la admisión fresca, los contratos nativos y los gates humanos aplicables.) · prioridad Método V1 · Controles prioritarios; pendiente de revalidación en kickoff.
+- **S144:** propuesta full-sdd (Emilio confirmó full-sdd y aprobó su implementación prioritaria; Engram 11127 y 11171. El ciclo de intercepción, efectos y evidencia compartida requiere diseño y prueba real. El inicio y apply conservan la admisión fresca, los contratos nativos y los gates humanos aplicables.) · prioridad Método V1 · Controles prioritarios; pendiente de revalidación en kickoff.
+- **S145:** propuesta full-sdd (Emilio aprobó el alcance y las rutas mostradas en el todo; Engram 11171. El contrato público de proyección, completitud e hipotéticos requiere diseño. El inicio exige admisión fresca y los gates nativos aplicables.) · prioridad Método V1 · Radar prioritario; revalidada full-sdd sobre 26367d9dd98cc15ebf5185a682f6ae9ad5781107 con evidencia Kickoff S145 con Radar instalado y recaptura idéntica de HEAD, status y contrato; Engram 11174. main.go, state.go, snapshot.go y plan.go confirman que el comando y el contrato compartido necesitan diseño. La revalidación no afirma que el cambio SDD ya exista ni que haya comenzado la implementación..
+- **S146:** propuesta full-sdd (Emilio aprobó el alcance y las rutas mostradas en el todo; Engram 11171. El ciclo compartido de solicitud, concesión, base, integración y liberación requiere diseño y prueba efectiva; no se elige esta ruta por tamaño o riesgo solamente.) · prioridad Método V1 · Controles prioritarios; pendiente de revalidación en kickoff.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -3170,7 +3174,7 @@ Rutas: test/install/launch-worker-cli.test.mjs
   - [ ] Diff limitado a la fixture Cimiento.
 
 ### S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: 🟡 DIFERIDO
 - Zona/Área: metodo · agent-workflows/
 - Depende de: S127
 - Cimientos: —
@@ -3433,7 +3437,7 @@ Rutas: agent-workflows/tools/radar/avance.go, agent-workflows/tools/radar/avance
   - [ ] REFACTOR: existe un único resolvedor de dueño y go test pasa.
 
 ### S129 — Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: 🟡 DIFERIDO
 - Zona/Área: metodo · agent-workflows/
 - Depende de: S128
 - Cimientos: —
@@ -3547,7 +3551,7 @@ Rutas: AGENTS.md
   - [ ] REFACTOR: no hay instrucciones duplicadas ni una segunda fuente de verdad.
 
 ### S133 — El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
-- Estado derivado: 🟢 LISTO
+- Estado derivado: 🟡 DIFERIDO
 - Zona/Área: metodo · agent-workflows/
 - Depende de: S135
 - Cimientos: —
@@ -3805,6 +3809,74 @@ Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workfl
   - [ ] La skill sólo referencia contratos existentes y no crea estado, runtime o procedimientos duplicados.
 - **T142.1.3:** REFACTOR: consolidar modos dispatch/event/reconstruction, tabla de migración y límites Tower-off; eliminar frases que transfieran review o ejecución a Main. → REFACTOR: una frontera legible separa choreography manual, evidencia y autoridad Tower V1.
   - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
+
+### S143 — Motor procedural Chanks verificable: los siete controles consumen autoridad y evidencia y permiten o bloquean transiciones sin ejecutar sus efectos.
+- Estado derivado: 🟡 DIFERIDO
+- Zona/Área: metodo · agent-workflows/
+- Depende de: —
+- Cimientos: —
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] Hay casos permitidos y rechazados para los siete controles: alcance aprobado antes de planificar; delta exacto validado antes de registrar; admisión humana con Radar fresco; mutaciones dentro de archivos y recursos permitidos; consumo de resultados técnicos genuinos; entrega autorizada conforme a la política del repositorio; cierre con publicación comprobada, registro y documentación.
+  - [ ] La autoridad, la ruta y el contrato aprobados y la evidencia quedan ligados al repositorio, Sesión y candidato correspondientes; una base desactualizada o evidencia de otro trabajo se rechaza. La ruta se valida dentro de la admisión existente, sin añadir un octavo control. Una afirmación del agente o una huella de archivos no fabrica aprobación humana.
+  - [ ] Radar instalado conserva el cálculo de estados y openspec/plan.yaml conserva la autoridad editable del plan; el núcleo no reimplementa el cálculo ni crea otro registro de estados, caché o migración de almacenamiento.
+  - [ ] Gentle AI conserva la implementación, las comprobaciones técnicas y su registro subordinado de continuidad existente. Chanks valida identidad, procedencia, actualidad y cobertura de sus resultados y referencias sin crear otro ejecutor, almacenamiento, evaluador, API de recibos ni revisión por Módulo. Un resultado desconocido, indisponible, vacío o declinado no se convierte en PASS; la declinación de revisión respeta el camino alternativo aplicable del proveedor, sin inventar un bloqueo incondicional. El registro del cierre y su documentación siguen a cargo del padre responsable de Chanks.
+  - [ ] El permiso de publicación se distingue de la evidencia de publicación efectiva del candidato exacto. Una publicación lograda con registro fallido impide declarar el cierre y no dispara otra publicación ni una reversión automática.
+  - [ ] El núcleo no escribe archivos, modifica Git, lanza workers ni publica. Sus pruebas verifican decisiones procedurales y no se presentan como demostración de que Pi impide efectos.
+  - [ ] El diseño fija el contrato compartido de autoridad, evidencia y transiciones antes de apply; las decisiones nuevas de API pública, seguridad o permisos requieren aprobación humana y no se resuelven por inferencia.
+  - [ ] El diff queda en la Zona Método, separado del router y del bundle Tower; una necesidad de modificar un archivo compartido exige declarar el Cimiento exacto y confirmar el cruce antes de mutarlo.
+
+### S144 — Controles Chanks efectivos en Pi con Torre apagada: el núcleo S143 gobierna los efectos del flujo manual y demuestra el recorrido autorizado completo en un entorno aislado.
+- Estado derivado: 📋 PLANIFICADO
+- Zona/Área: metodo · agent-workflows/
+- Depende de: S143
+- Cimientos: —
+- Recursos: runtime Pi aislado de ensayos Chanks Método V1; uso exclusivo a confirmar antes de ejecutar, sin configuración global activa
+- Criterios de aceptación:
+  - [ ] Un recorrido manual autorizado atraviesa los siete controles de S143 en Pi con Torre apagada, usando un entorno aislado sin instalación global ni publicación real del proyecto.
+  - [ ] Cada efecto cubierto pasa por el control antes de ocurrir. Los casos rechazados demuestran ausencia del efecto prohibido, incluidas escrituras por herramientas, órdenes y procesos derivados; un aviso o bloqueo del editor por sí solo no constituye esa prueba.
+  - [ ] Una operación cuyos efectos no puedan controlarse se rechaza sin salida permisiva alternativa. El mecanismo de intercepción y sus límites se demuestran en el runtime real antes de afirmar cobertura; si exige ampliar alcance o permisos, se pide decisión humana antes de apply.
+  - [ ] Las activaciones muestran exactamente 💪 Chanks, la acción real del método, un resultado permitido o bloqueado separado y contexto suficiente. Los mensajes corresponden a transiciones significativas, sin duplicarse por cada llamada de herramienta. Main manual no se etiqueta como 🗼 Torre; implementación, pruebas y revisión de Gentle AI conservan su identidad nativa. Una autorización no afirma ejecución, publicación ni cierre; la marca visible no sustituye la comprobación de efectos.
+  - [ ] El registro canónico exige el delta exacto aprobado y validado, rechaza bases desactualizadas sin escribir y conserva openspec/plan.yaml como único origen editable. No aparece otro registro de estados y el agente responsable conserva la confirmación de la evidencia.
+  - [ ] La entrega exige autorización del candidato exacto, respeta la política del repositorio y serializa operaciones incompatibles sobre el mismo destino incluso entre candidatos distintos. Las pruebas aisladas registran evidencia de publicación efectiva, no sólo un permiso o un commit local.
+  - [ ] Publicación exitosa con registro fallido conserva esa distinción: no declara cierre ni vuelve a publicar o revierte automáticamente. El cierre exige publicación comprobada, registro correspondiente y la documentación y reinstalación aplicables, preservando la confirmación humana exigida para skills.
+  - [ ] El recorrido Pi entrega el contrato y la ruta aprobados al orquestador existente de Gentle AI y consume sus resultados y referencias de continuidad genuinos y actuales bajo sus requisitos aplicables. La retoma reconcilia el trabajo válido tras la admisión Radar, sin repetirlo por estar aún sin entregar. No se añade otro ejecutor, almacenamiento, evaluador, API de recibos, revisión por Módulo ni autoridad de entrega derivada de un veredicto técnico; Chanks conserva el registro y la documentación del cierre.
+  - [ ] El adaptador y su distribución permanecen dentro de agent-workflows/, separados de extensions/pi/&#42;&#42; y adapters/pi/&#42;&#42; incluidos por S8.12 en el bundle Tower. No se cambia el contrato conservado del router S9.7 ni se afirma cobertura ejecutable equivalente para otros agentes.
+  - [ ] El uso exclusivo del runtime de ensayo se confirma antes de cualquier efecto; la declaración de Recurso no equivale a adquisición. El diff respeta la Zona y cualquier cruce nuevo requiere una reserva exacta aprobada antes de modificar archivos compartidos.
+
+### S145 — Radar explica alternativas LISTO, compatibilidad potencial por archivos, condiciones e hipotéticos mediante radar roadmap como vista humana de la evidencia canónica, sin autorizar ejecución.
+- Estado derivado: 🟢 LISTO
+- Zona/Área: metodo · agent-workflows/
+- Depende de: —
+- Cimientos: —
+- Recursos: —
+- Criterios de aceptación:
+  - [ ] radar status --json conserva una única proyección canónica de evidencia para consumidores; radar roadmap es una vista humana determinista de esa misma evidencia, no otra fuente JSON ni otro cálculo de estados. Main no necesita parsear texto humano para consumir los resultados.
+  - [ ] La vista enumera todas las alternativas LISTO actuales en su orden de Zona y muestra conjuntos explícitos de Sesiones, sus exclusiones y las condiciones de compatibilidad potencial por archivos. Distingue esa previsión del permiso de ejecución vigente y no convierte una Zona o un Cimiento compartidos en un veto indiscriminado sobre trabajo propio disjunto.
+  - [ ] Cada conclusión por archivos usa una huella confirmada ligada al alcance diseñado, rutas exactas de los Módulos, Cimientos, recursos, dependencias y base vigentes. Una huella desconocida, incompleta o desactualizada nunca se interpreta como vacía o segura; un cambio de alcance o base invalida la conclusión anterior.
+  - [ ] Un Cimiento compartido aparece con la condición explícita de intervención coordinada, y un recurso exclusivo incompatible excluye la combinación. El reporte no adquiere reservas, asigna workers, concede acceso ni supone que la coordinación futura ya está instalada.
+  - [ ] Los escenarios hipotéticos distinguen dependencias satisfechas de nuevas Sesiones realmente LISTO según todos los criterios y la prioridad aplicable. Un caso demuestra que resolver la dependencia de S123 en S122 no vuelve ejecutable V2 mientras no sea la prioridad activa; los escenarios no modifican el plan, Git ni la evidencia de entrega real.
+  - [ ] Sobre el mismo plan y base, se conservan los siete estados, el significado vigente de asientos y la admisión actual. La capacidad nueva queda condicionada a la integración, verificación y activación autorizada de sus consumidores en S146; ningún reporte se autoriza a sí mismo.
+  - [ ] S122 conserva su resultado, criterios, umbral fijo de horizonte y orden relativo respecto del resto no priorizado. El diseño reutiliza los datos existentes antes de proponer extensiones; cualquier ruptura del contrato público de radar.snapshot/v1 requiere decisión humana antes de apply.
+  - [ ] El diff permanece en la Zona Método; el diseño declara las rutas exactas y cualquier Cimiento necesario antes de mutar. Módulos aún sin diseño no aportan una huella completa ni capacidad paralela por el mero registro.
+
+### S146 — El método manual coordina intervenciones de Cimientos y paralelo por archivos con controles efectivos en Pi: Main coordina, workers y Gentle AI implementan y verifican, con Torre apagada.
+- Estado derivado: 📋 PLANIFICADO
+- Zona/Área: metodo · agent-workflows/
+- Depende de: S144, S145
+- Cimientos: —
+- Recursos: runtime Pi aislado de ensayos Chanks Método V1; uso exclusivo a confirmar antes de ejecutar, sin configuración global activa
+- Criterios de aceptación:
+  - [ ] Tras integración, verificación y activación humana autorizada, la evidencia canónica de Radar, la admisión manual, el coordinador y los controles Chanks instalados aplican un único criterio acordado. El registro o el reporte S145 no activa ese criterio por sí solo ni mantiene un permiso alternativo incoherente.
+  - [ ] Sesiones de la misma Zona pueden avanzar en archivos propios sólo con alcance autorizado y huellas completas, vigentes y disjuntas. Compartir un Cimiento exige intervención coordinada sobre ese archivo, no el veto global de ambas Sesiones; una huella desconocida no habilita paralelo.
+  - [ ] Antes de tocar Cimientos, el worker solicita un conjunto coherente completo ligado a su trabajo y base; Main coordina las intervenciones sin solapamiento sobre el mismo archivo. No se acumulan concesiones parciales que permitan esperas circulares ni se amplía un conjunto silenciosamente.
+  - [ ] Cada intervención usa la base integrada completa vigente y conserva el trabajo propio válido; no sustituye esa base copiando un Cimiento suelto. La liberación ocurre sólo tras integración confirmada conforme al flujo de entrega, nunca por terminar la edición local o por silencio del worker.
+  - [ ] Pruebas reales en un entorno Pi aislado demuestran solicitudes e intervenciones autorizadas y rechazadas, conjuntos incompletos o en conflicto, base desactualizada, integración y liberación. Los casos rechazados demuestran ausencia del efecto prohibido; mensajes y pruebas de cadenas de texto no sustituyen esa evidencia.
+  - [ ] Los workers y Gentle AI implementan y verifican; Main sólo coordina e integra bajo el contrato vigente. Main no inspecciona para emitir otro juicio técnico, corrige código ni repite las pruebas del worker. Se consumen los controles de S143/S144 sin duplicar su implementación ni cambiar sus dependencias.
+  - [ ] Conflicto, cambio de alcance o base, desconexión o evidencia faltante detienen la intervención afectada y preservan trabajo y evidencia; no disparan reintentos, remapeos, permisos, liberaciones ni reanudaciones automáticos.
+  - [ ] No se crea otro estado de planificación, cola persistente, gestor de locks artificial, almacenamiento de continuidad, API de recibos ni ejecutor técnico. Radar no adquiere reservas vivas; las evidencias de coordinación tampoco conceden autoridad a sí mismas. Torre permanece apagada.
+  - [ ] S146 confirma su propio uso exclusivo del recurso Pi aislado antes de cualquier efecto; la declaración de S144 no lo concede. El diseño enumera rutas exactas y reservas de Cimientos antes de mutar, y escala permisos, API pública o cruces nuevos antes de apply.
+  - [ ] Los mensajes de acciones del método usan 💪 Chanks con acción y resultado reales, sin confundir permiso con efecto o cierre; Main manual no se etiqueta como 🗼 Torre y los mensajes técnicos nativos de Gentle AI no se duplican.
 
 ## Capacidad
 1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: metodo.
