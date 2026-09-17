@@ -34,6 +34,7 @@ CHANKS_SKILLS = (
     "chanks-1-rfc",
     "chanks-1-terreno",
     "chanks-0-agente-soporte",
+    "chanks-0-mensajes-visibles",
     "chanks-0-explicalo-simple",
     "chanks-0-session-context-loader",
     "chanks-0-skill-composer",

@@ -31,6 +31,14 @@ planning delta for the responsible parent to confirm and record.
 | Behavior or shared contract needs design | `full-sdd` |
 | Authority or evidence missing/contradictory | Return the required human decision; do not propose a route. |
 
+## Visible Messages Preamble
+
+After user ideas or points are clarified and approved, load
+`../chanks-0-mensajes-visibles/SKILL.md` for one lightweight cross-cutting cosmetic check. Carry
+its small suggestion, or `No messages needed`, to the responsible parent for the same feature's
+implementation Session. This unnumbered preamble does not add a planning step, Session, gate, or
+plan update.
+
 ## Execution Steps
 
 1. **Locate territory:** load `../chanks-1-heredado/references/ubicacion-y-cruces.md` and place the scope in a Zona.

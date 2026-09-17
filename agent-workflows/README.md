@@ -126,7 +126,7 @@ Only `full-sdd` enters Gentle AI's native SDD pipeline and its `archive` (canon 
 | Chanks planning and bridge | `chanks-1-adopcion`, `chanks-1-autoridad`, `chanks-1-brain-dump`, `chanks-1-descubrimiento`, `chanks-1-feature`, `chanks-1-heredado`, `chanks-1-prd`, `chanks-1-project-kickoff`, `chanks-1-requirements`, `chanks-1-rfc`, `chanks-1-terreno`, `chanks-4-puente` |
 | Session workflow | `chanks-3-session-kickoff`, `chanks-3-coordinador-manual`, `chanks-3-despacho-herdr`, `chanks-0-session-context-loader`, `chanks-2-planificador-granular`, `chanks-0-agente-soporte`, `chanks-7-session-doc` |
 | Delivery policy | `chanks-4-unattended-implementation`, `chanks-6-politica-de-entrega` |
-| Decision and communication support | `chanks-1-cierre-de-decisiones`, `chanks-0-explicalo-simple`, `chanks-0-skill-composer` |
+| Decision and communication support | `chanks-1-cierre-de-decisiones`, `chanks-0-explicalo-simple`, `chanks-0-mensajes-visibles`, `chanks-0-skill-composer` |
 
 ### `_shared` is deliberately partial
 
