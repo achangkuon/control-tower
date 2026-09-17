@@ -97,7 +97,7 @@ func RenderAt(p *Plan, root, head string) []byte {
 	fmt.Fprintln(&b, "## Avance")
 	fmt.Fprintf(&b, "- **Total:** %s\n", total)
 	if n := territoriosPendientes(p); n > 0 {
-		fmt.Fprintf(&b, "- %d Sesión(es) con territorio pendiente cuentan sólo en el avance total y no están asignadas a una Zona.\n", n)
+		fmt.Fprintf(&b, "- %d Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.\n", n)
 	}
 	for _, zid := range zonasOrdenadas(p, colas) {
 		fmt.Fprintf(&b, "- **%s:** %s\n", markdownText(nombreZona(p, zid)), porZona[zid])
@@ -133,7 +133,7 @@ func RenderAt(p *Plan, root, head string) []byte {
 
 	fmt.Fprintln(&b, "## Rutas")
 	for _, s := range p.Sesiones {
-		if esTerritorioPendiente(&s) || esTerritorioHistorico(&s) {
+		if s.esEncargo() || esTerritorioPendiente(&s) || esTerritorioHistorico(&s) {
 			continue
 		}
 		fmt.Fprintf(&b, "- **%s:** propuesta %s (%s)%s", markdownText(s.ID), markdownText(s.Ruta.Propuesta), markdownText(s.Ruta.Autoridad), textoPrioridad(p, &s))
@@ -149,8 +149,22 @@ func RenderAt(p *Plan, root, head string) []byte {
 	}
 	fmt.Fprintln(&b)
 
+	if tieneEncargos(p) {
+		fmt.Fprintln(&b, "## Detalle de Sesiones")
+		for i := range p.Sesiones {
+			s := &p.Sesiones[i]
+			if !s.esEncargo() {
+				continue
+			}
+			renderEncargo(&b, p, s, estados[s.ID])
+		}
+	}
+
 	fmt.Fprintln(&b, "## Detalle de Módulos y Tareas")
 	for _, s := range p.Sesiones {
+		if s.esEncargo() {
+			continue
+		}
 		fmt.Fprintf(&b, "### %s — %s\n", markdownText(s.ID), markdownText(s.Resultado))
 		fmt.Fprintf(&b, "- Estado derivado: %s\n", estados[s.ID])
 		if esTerritorioPendiente(&s) {
@@ -211,6 +225,65 @@ func RenderAt(p *Plan, root, head string) []byte {
 	return b.Bytes()
 }
 
+func tieneEncargos(p *Plan) bool {
+	for i := range p.Sesiones {
+		if p.Sesiones[i].esEncargo() {
+			return true
+		}
+	}
+	return false
+}
+
+func renderEncargo(b *bytes.Buffer, p *Plan, s *Sesion, estado string) {
+	fmt.Fprintf(b, "### %s — %s\n", markdownText(s.ID), markdownText(s.Resultado))
+	fmt.Fprintln(b, "- Coordinación:")
+	fmt.Fprintf(b, "  - Estado derivado: %s\n", estado)
+	if s.encargoIncompleto() {
+		fmt.Fprintln(b, "  - Encargo incompleto: no autoriza territorio, cola ni asiento.")
+	} else {
+		fmt.Fprintf(b, "  - Zona/Área: %s · %s\n", markdownText(s.Zona), markdownList(p.Area(s)))
+		if s.SoloLectura {
+			fmt.Fprintln(b, "  - Solo lectura: sí (sin archivos autorizados para modificar).")
+		} else {
+			fmt.Fprintf(b, "  - Archivos autorizados: %s\n", markdownList(s.Archivos))
+		}
+	}
+	fmt.Fprintf(b, "  - Depende de: %s\n", markdownList(s.DependeDe))
+	fmt.Fprintf(b, "  - Recursos: %s\n", markdownList(s.Recurso))
+	if s.ImportacionLegacy != nil {
+		fmt.Fprintf(b, "  - Importación legacy: %s@%s\n", markdownText(s.ImportacionLegacy.OrigenRuta), markdownText(s.ImportacionLegacy.OrigenCommit))
+		if len(s.Modulos) > 0 {
+			ids := make([]string, 0, len(s.Modulos))
+			for _, m := range s.Modulos {
+				ids = append(ids, m.ID)
+			}
+			fmt.Fprintf(b, "  - Módulos legacy preservados: %s\n", markdownList(ids))
+		}
+	}
+	if s.SolicitudSDD != nil {
+		fmt.Fprintf(b, "  - Solicitud SDD humana: %s\n", markdownText(s.SolicitudSDD.Autoridad))
+	} else {
+		fmt.Fprintln(b, "  - Ejecución: ODD nativo.")
+	}
+	fmt.Fprintln(b, "- Encargo:")
+	renderEncargoField(b, "Pedido y contexto", s.Encargo.PedidoContexto)
+	renderEncargoField(b, "Resultado y comportamiento", s.Encargo.ResultadoComportamiento)
+	renderEncargoField(b, "Restricciones y decisiones", s.Encargo.RestriccionesDecisiones)
+	for _, d := range s.Decisiones {
+		escribirDecisionEstructurada(b, d, "    - Decisión estructurada", "      - ", markdownText, markdownList)
+	}
+	renderEncargoField(b, "Referencias", s.Encargo.Referencias)
+	fmt.Fprintln(b)
+}
+
+func renderEncargoField(b *bytes.Buffer, label, value string) {
+	fmt.Fprintf(b, "  - %s:", label)
+	if rendered := markdownText(value); rendered != "" {
+		fmt.Fprintf(b, " %s", rendered)
+	}
+	fmt.Fprintln(b)
+}
+
 // referenceRow is one listed, non-executable reference: no status, ownership,
 // queue, seat, capacity, or completion credit attaches to it.
 type referenceRow struct {
@@ -243,7 +316,7 @@ func locatorProvenance(loc FragmentLocator) string {
 }
 
 func esTerritorioPendiente(s *Sesion) bool {
-	return s.ImportacionLegacy != nil && s.ImportacionLegacy.TerritorioPendiente
+	return (s.ImportacionLegacy != nil && s.ImportacionLegacy.TerritorioPendiente) || s.encargoIncompleto()
 }
 
 func (p *Plan) propietariosHistoricos(s *Sesion) []string {

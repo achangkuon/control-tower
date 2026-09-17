@@ -1,31 +1,28 @@
 # Implementation handoff
 
-Replace every placeholder and give one bounded handoff to the selected implementer.
+Replace every placeholder and issue one bounded handoff to the selected implementer. This handoff authorizes no plan mutation, lock, dispatch, runtime assignment, or delivery by itself.
 
 ```text
 IMPLEMENTATION HANDOFF: <SESSION_ID>
 
 Project/repository: <IDENTITY>
 Verified base: <BASE_REF>@<SHA>
-Admission bundle: fresh `HEAD` + `Session ID` + SHA-256 digests of exact `radar status --json`/`radar sesion <ID>` bytes; state/blocker; Zone-ordered `LISTO` choices; seats, queue rows/length, and choice count (never assigned agents)
+Admission bundle: fresh HEAD + Session ID + SHA-256 digests of exact radar status --json/radar sesion <ID> bytes; state/blocker; Zone-ordered LISTO choices; seats, queue rows/length, and choice count (never assigned agents)
+Session discriminator: <native encargo | legacy>
+Resume basis: <same Session identity plus native ODD record, code, and evidence | first pending Módulo for legacy>
 Current branch: <BRANCH>
-Scope: <ALLOWED_PATHS_AND_BEHAVIORS>
-Dependencies: <IDS_AND_UNBLOCK_EVIDENCE>
-Authority and criteria: <SOURCES_AND_BINARY_CRITERIA>
-Shared-path risk: <EXACT_PATHS_OR_NONE>
-Required checks: <COMMANDS_AND_EXPECTED_EVIDENCE>
+Exact authorized files: <PATHS_OR_READ_ONLY>
+Encargo constraints: <FOUR_PART_SUMMARY>
+Dependencies and authority: <EVIDENCE>
+Compatibility: <CIENTOS_RECURSO_EVIDENCE>
+Required checks/TDD config: <COMMANDS_AND_EFFECTIVE_CONFIG>
 Forbidden scope: <PATHS_AND_EFFECTS>
 Responsible parent: <IDENTITY_AND_RETURN_CHANNEL>
 ```
 
-Accept only a fresh admission bundle binding this `HEAD`, Sesión, and both command-output byte digests before
-skill selection; `start` requires `LISTO`, while `continue`/`resume` accept `EN CURSO` only with a
-first pending Módulo. Other states return only state, blocker, and choices. Verify repository, `HEAD`,
-branch, and worktree state before editing. Do not select another Sesión or widen scope. A static
-planning forecast never grants a live lock; stop and report a
-shared-path conflict to the responsible parent. Follow the route revalidated by
-`chanks-3-session-kickoff` through `chanks-4-puente`, entering the native SDD pipeline only for `full-sdd`, keep each
-Módulo independently revertible with its tests, and report Git contamination rather than hiding it.
-
-Return: Sesión, repository and branch evidence, changed paths, checks with exact results,
-rollback boundary, discoveries, risks, blockers, and the evidence for the responsible parent.
+Accept only the fresh binding before skill selection. Verify repository, HEAD, branch, worktree,
+and compatibility before editing. Native ODD retains the same Session identity and reconciles its
+native technical record, code, and evidence; legacy continues at first pending Módulo for legacy.
+Do not choose another Session, widen scope, create a fake lock, or infer SDD. Native SDD requires
+explicit human `solicitud_sdd` and its own preflight. Return changed paths, checks, review outcome
+where applicable, actual delivery evidence, rollback boundary, risks, blockers, and parent evidence.

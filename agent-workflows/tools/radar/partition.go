@@ -156,23 +156,21 @@ func (p *Plan) VerificarParticionAt(root, head string) ([]Hallazgo, error) {
 	usadas := map[string]bool{}
 	coincideConHEAD := map[string]bool{}
 	for _, s := range p.Sesiones {
-		if s.Entrega != nil || s.Archivada || s.Zona == "" || s.Zona == "cimientos" {
+		if s.Entrega != nil || s.Archivada || esTerritorioPendiente(&s) || s.Zona == "" || s.Zona == "cimientos" {
 			continue
 		}
-		for _, m := range s.Modulos {
-			for _, ruta := range m.Rutas {
-				normalizada, err := exactRepoFile(root, ruta)
-				if err != nil {
+		for _, ruta := range archivosDeSesion(&s) {
+			normalizada, err := exactRepoFile(root, ruta)
+			if err != nil {
+				continue
+			}
+			for _, z := range p.Zonas {
+				if z.ID != s.Zona {
 					continue
 				}
-				for _, z := range p.Zonas {
-					if z.ID != s.Zona {
-						continue
-					}
-					for ruta, regla := range z.Rutas {
-						if !esRutaAmplia(regla) && regla == normalizada {
-							usadas[claveRuta("zona", z.ID, ruta)] = true
-						}
+				for ruta, regla := range z.Rutas {
+					if !esRutaAmplia(regla) && regla == normalizada {
+						usadas[claveRuta("zona", z.ID, ruta)] = true
 					}
 				}
 			}

@@ -206,6 +206,10 @@ type Sesion struct {
 	Recurso           []string           `yaml:"recurso"`
 	Criterios         []string           `yaml:"criterios"`
 	Decisiones        []Decision         `yaml:"decisiones"`
+	Archivos          []string           `yaml:"archivos"`
+	SoloLectura       bool               `yaml:"solo_lectura"`
+	Encargo           *Encargo           `yaml:"encargo"`
+	SolicitudSDD      *SolicitudSDD      `yaml:"solicitud_sdd"`
 	Reemplaza         []string           `yaml:"reemplaza"`
 	Modulos           []Modulo           `yaml:"modulos"`
 	RutasHistoricas   []string           `yaml:"rutas_historicas"`
@@ -459,6 +463,9 @@ func (p *Plan) SesionPorID() map[string]*Sesion {
 
 // Area derives a Sesión's writable Zona paths.
 func (p *Plan) Area(s *Sesion) []string {
+	if esTerritorioPendiente(s) {
+		return nil
+	}
 	if z, ok := p.ZonaPorID()[s.Zona]; ok {
 		return z.Rutas
 	}
@@ -468,6 +475,12 @@ func (p *Plan) Area(s *Sesion) []string {
 // RutaEfectiva returns the implementation revalidation when present; otherwise
 // it returns the planning proposal.
 func (s *Sesion) RutaEfectiva() string {
+	if s.esEncargo() {
+		if s.solicitudSDDValida() {
+			return RutaSDDNativa
+		}
+		return "odd"
+	}
 	if s.Ruta.Revalidacion != nil {
 		return s.Ruta.Revalidacion.Resultado
 	}

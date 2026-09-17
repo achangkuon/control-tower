@@ -1,52 +1,40 @@
 # Planning evidence brief
 
-This brief derives what the responsible parent may consider next. It does not assign work,
-create a queue, reserve resources, or mutate state.
+This brief advises the responsible parent. It does not assign work, reserve resources, or mutate
+state. Radar is product authority; a native ODD technical record is subordinate continuity evidence.
 
 ## Sources
 
-1. `radar status` for states, queues, and capacity, and `radar sesion <ID>` for each candidate's contract. Never read the whole plan or its generated view.
-2. `radar check` and `radar zonas`.
-3. Repository instructions, Git state, and delivery policy.
+1. `$HOME/.local/bin/radar status --json -C <repo>` and `$HOME/.local/bin/radar sesion <ID> -C <repo>` only; never read the whole plan/view or execute a repository binary.
+2. Git evidence, repository instructions, and delivery policy.
 
 ## Admission bundle
 
-For manual implementation start, continue, or resume, the read-only helper returns a fresh bundle
-bound to current `HEAD`, requested `Session ID`, and SHA-256 digests of both commands' exact bytes:
-requested state/blocker, Zone-ordered `LISTO` choices, compatible `seats`, queue rows and length,
-and `LISTO` choice count. `start` requires `LISTO`; `continue`/`resume` also accept `EN CURSO` only
-with a first pending Módulo. Other states return only state, blocker, and choices; never a skill or
-decision closure. Seats, queue, and choices are distinct facts, never assigned agents.
+Bind fresh `HEAD`, requested Session ID, and SHA-256 digests of both commands' exact output bytes.
+`start` requires `LISTO`. `continue`/`resume` require same Session identity plus native ODD record, code, and evidence for `encargo`; they require first pending Módulo for legacy. Other states return
+only state, blocker, and Zone-ordered `LISTO` choices. Seats/queue/choices are never assigned agents.
 
 ## Template
 
 ```markdown
 # PLANNING EVIDENCE — <project>
 
-**Base:** `<branch>@<sha>` · **Sources:** <paths/commands>
+**Base:** `<branch>@<sha>` · **Admission:** <HEAD/ID/digests>
 
-## Candidates and static capacity
+## Session coordination and Encargo
 
-| Sesión/objective | Scope | Dependencies | Required checks | Risk |
-|---|---|---|---|---|
-| <ID> | <paths/result> | <IDs/evidence> | <commands> | <risk> |
+| Session | Discriminator | Exact files | Dependencies | Authority | Compatibility |
+|---|---|---|---|---|---|
+| <ID> | <native/legacy> | <paths> | <IDs> | <source> | <risk> |
 
-## Conflicts and shared paths
+## Resume and human choices
 
-<exact crossings; a forecast is not a live lock>
-
-## Human choices
-
-<scope/risk/authority question, options, consequences, and checkpoint>
+<native same-identity reconciliation or first pending Módulo for legacy; scope/authority choices>
 
 ## Proposed parent record
 
 <exact delta, old value, new value, authority, or “none”>
 ```
 
-## Derivation rules
-
-- Separate a dependency, a human decision, a conflict, and missing evidence.
-- Never fabricate work to meet a capacity target.
-- Preserve Git contamination as evidence; do not normalize or discard it.
-- If sources contradict, report the contradiction and stop instead of averaging it away.
+Never fabricate capacity, a lock, completion, or a decision answer. Scope/file expansion remains a
+human-approved change followed by fresh compatibility before affected mutation.

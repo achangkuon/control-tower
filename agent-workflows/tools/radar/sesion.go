@@ -45,6 +45,9 @@ func escribirSesion(w io.Writer, p *Plan, s *Sesion, estados map[string]string) 
 func escribirSesionConAvance(w io.Writer, p *Plan, s *Sesion, estados map[string]string, entregados map[string]string) {
 	fmt.Fprintf(w, "%s — %s\n", s.ID, s.Resultado)
 	fmt.Fprintf(w, "Estado: %s\n", estados[s.ID])
+	if s.esEncargo() {
+		fmt.Fprintln(w, "Coordinación:")
+	}
 	area := p.Area(s)
 	if s.Zona == "cimientos" {
 		// A cimientos Sesión owns no Zona: its exact reservations are its whole territory.
@@ -66,16 +69,36 @@ func escribirSesionConAvance(w io.Writer, p *Plan, s *Sesion, estados map[string
 	fmt.Fprintf(w, "Depende de: %s\n", listaTexto(deps))
 	fmt.Fprintf(w, "Cimientos: %s\n", listaTexto(s.Cimientos))
 	fmt.Fprintf(w, "Recurso: %s\n", listaTexto(s.Recurso))
-	fmt.Fprintf(w, "Ruta: propuesta %s (%s)", s.Ruta.Propuesta, s.Ruta.Autoridad)
-	if r := s.Ruta.Revalidacion; r != nil {
-		fmt.Fprintf(w, "; revalidada %s sobre %s: %s", r.Resultado, r.Base, r.Evidencia)
-		if r.Razon != "" {
-			fmt.Fprintf(w, "; razón: %s", r.Razon)
+	if s.esEncargo() && s.ImportacionLegacy != nil {
+		fmt.Fprintf(w, "Importación legacy: %s@%s\n", s.ImportacionLegacy.OrigenRuta, s.ImportacionLegacy.OrigenCommit)
+		for _, m := range s.Modulos {
+			if commit, ok := entregados[m.ID]; ok {
+				fmt.Fprintf(w, "Módulo legacy entregado: %s (%s)\n", m.ID, abreviarCommit(commit))
+			}
 		}
 	}
-	fmt.Fprintln(w)
+	if s.esEncargo() {
+		if s.SolicitudSDD != nil {
+			fmt.Fprintf(w, "Solicitud SDD humana: %s\n", s.SolicitudSDD.Autoridad)
+		} else {
+			fmt.Fprintln(w, "Ejecución: ODD nativo")
+		}
+	} else {
+		fmt.Fprintf(w, "Ruta: propuesta %s (%s)", s.Ruta.Propuesta, s.Ruta.Autoridad)
+		if r := s.Ruta.Revalidacion; r != nil {
+			fmt.Fprintf(w, "; revalidada %s sobre %s: %s", r.Resultado, r.Base, r.Evidencia)
+			if r.Razon != "" {
+				fmt.Fprintf(w, "; razón: %s", r.Razon)
+			}
+		}
+		fmt.Fprintln(w)
+	}
 	if s.Entrega != nil {
 		fmt.Fprintf(w, "Entrega: %s\n", s.Entrega.Commit)
+	}
+	if s.esEncargo() {
+		escribirEncargoSesion(w, s, entregados)
+		return
 	}
 
 	fmt.Fprintln(w, "\nCriterios:")
@@ -147,6 +170,96 @@ func escribirSesionConAvance(w io.Writer, p *Plan, s *Sesion, estados map[string
 
 // prioridadDeclarada resolves a Sesión's priority only when the plan declares it,
 // so every text surface stays byte-identical for plans without priorities.
+func escribirEncargoSesion(w io.Writer, s *Sesion, entregados map[string]string) {
+	if s.encargoIncompleto() {
+		fmt.Fprintln(w, "\nEncargo incompleto: no autoriza territorio, cola ni asiento.")
+	} else if s.SoloLectura {
+		fmt.Fprintln(w, "Archivos autorizados: — (solo lectura explícita)")
+	} else {
+		fmt.Fprintf(w, "Archivos autorizados: %s\n", listaTexto(s.Archivos))
+	}
+	fmt.Fprintln(w, "\nEncargo:")
+	escribirCampoEncargo(w, "Pedido y contexto", s.Encargo.PedidoContexto)
+	escribirCampoEncargo(w, "Resultado y comportamiento", s.Encargo.ResultadoComportamiento)
+	escribirCampoEncargo(w, "Restricciones y decisiones", s.Encargo.RestriccionesDecisiones)
+	for _, d := range s.Decisiones {
+		escribirDecisionEstructurada(w, d, "    Decisión estructurada:", "      ", textoPlano, listaTexto)
+	}
+	escribirCampoEncargo(w, "Referencias", s.Encargo.Referencias)
+	if s.Entrega == nil && !s.Archivada {
+		fmt.Fprintln(w, "\nRetomar desde: la misma Sesión y su continuidad ODD nativa")
+	}
+}
+
+func escribirCampoEncargo(w io.Writer, etiqueta, valor string) {
+	fmt.Fprintf(w, "  %s:", etiqueta)
+	if valor != "" {
+		fmt.Fprint(w, " "+valor)
+	}
+	fmt.Fprintln(w)
+}
+
+func escribirDecisionEstructurada(w io.Writer, d Decision, encabezado, sangria string, texto func(string) string, lista func([]string) string) {
+	fmt.Fprintf(w, "%s [%s · %s]", encabezado, texto(d.Tipo), texto(d.Clase))
+	if d.Pregunta != "" {
+		fmt.Fprintf(w, ": %s", texto(d.Pregunta))
+	}
+	fmt.Fprintln(w)
+	for _, campo := range []struct {
+		etiqueta string
+		valor    string
+	}{
+		{"Resolución", d.Resolucion},
+		{"Criterio", d.Criterio},
+		{"Autoridad", d.Autoridad},
+		{"Evidencia", d.Evidencia},
+		{"Checkpoint", d.Checkpoint},
+		{"Alcanza", d.Alcanza},
+		{"Falsificador", d.Falsificador},
+	} {
+		if campo.valor != "" {
+			fmt.Fprintf(w, "%s%s: %s\n", sangria, campo.etiqueta, texto(campo.valor))
+		}
+	}
+	for _, campo := range []struct {
+		etiqueta string
+		valores  []string
+	}{
+		{"Contamina", d.Contamina},
+		{"Contaminaba", d.Contaminaba},
+	} {
+		if len(campo.valores) > 0 {
+			fmt.Fprintf(w, "%s%s: %s\n", sangria, campo.etiqueta, lista(campo.valores))
+		}
+	}
+	for _, opcion := range d.Opciones {
+		escribirDecisionPar(w, sangria, "Opción", opcion.Opcion, opcion.Consecuencia, texto)
+	}
+	for _, descartada := range d.Descartadas {
+		escribirDecisionPar(w, sangria, "Descartada", descartada.Opcion, descartada.Razon, texto)
+	}
+}
+
+func escribirDecisionPar(w io.Writer, sangria, etiqueta, izquierda, derecha string, texto func(string) string) {
+	if izquierda == "" && derecha == "" {
+		return
+	}
+	fmt.Fprintf(w, "%s%s:", sangria, etiqueta)
+	if izquierda != "" {
+		fmt.Fprint(w, " "+texto(izquierda))
+	}
+	if derecha != "" {
+		separador := " "
+		if izquierda != "" {
+			separador = " → "
+		}
+		fmt.Fprint(w, separador+texto(derecha))
+	}
+	fmt.Fprintln(w)
+}
+
+func textoPlano(valor string) string { return valor }
+
 func prioridadDeclarada(p *Plan, id string) (Prioridad, bool) {
 	if pos, ok := p.PrioridadPorID()[id]; ok {
 		return p.Prioridades[pos], true

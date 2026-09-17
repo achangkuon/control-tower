@@ -31,7 +31,10 @@ func (p *Plan) CheckAt(root, head string) []Hallazgo {
 	p.ledgerDecisionRequired = make(map[string]bool)
 	for i := range p.Sesiones {
 		s := &p.Sesiones[i]
-		if strings.TrimSpace(s.Cambio) == "" {
+		// Normal native ODD never has a provider change. A valid explicit human
+		// SDD request does: it reaches the same fail-closed ledger checks as the
+		// established full-sdd route without starting a lifecycle.
+		if strings.TrimSpace(s.Cambio) == "" || (s.esEncargo() && !s.solicitudSDDValida()) {
 			continue
 		}
 		if s.RutaEfectiva() != RutaSDDNativa {
@@ -127,19 +130,23 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 		sesionesVistas[s.ID] = true
 
 		importada := s.ImportacionLegacy != nil
-		pendiente := importada && s.ImportacionLegacy.TerritorioPendiente
+		pendiente := importada && s.ImportacionLegacy.TerritorioPendiente && !s.esEncargo()
+		encargoIncompleto := s.encargoIncompleto()
 		decomposicionDiferida := importada && s.ImportacionLegacy.DescomposicionDiferida
 		historica := esTerritorioHistorico(s)
 		if importada {
 			h = append(h, checkImportacionLegacy(root, head, s, provenienciasVistas)...)
 		}
-		if decomposicionDiferida {
+		if decomposicionDiferida && !s.esEncargo() {
 			h = append(h, checkDescomposicionDiferida(s)...)
 		}
 		if len(s.RutasHistoricas) > 0 && (!importada || !s.Archivada || s.Entrega != nil || pendiente || len(s.Modulos) != 0 || s.Zona != "" || len(s.Cimientos) != 0 || s.Ruta != (RutaSesion{})) {
 			h = append(h, Hallazgo{"error", "rutas históricas", fmt.Sprintf("%s sólo puede preservar rutas históricas sin Módulos como importación archivada", s.ID)})
 		}
-		if pendiente {
+		if encargoIncompleto {
+			// An explicit incomplete Encargo is storable and visible but grants no
+			// execution territory. checkEncargo validates its retained context.
+		} else if pendiente {
 			if s.Zona != "" || len(s.Cimientos) != 0 || s.Ruta != (RutaSesion{}) || s.Entrega != nil || s.Archivada || s.Diferida {
 				h = append(h, Hallazgo{"error", "territorio pendiente", fmt.Sprintf("%s declara territorio, ruta o estado terminal", s.ID)})
 			}
@@ -211,14 +218,20 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 		h = append(h, validarAutoridad(root, s)...)
 		h = append(h, validarArchivo(p, s)...)
 		h = append(h, medirLoteEntregado(p, root, s)...)
-		if abierta && len(s.Criterios) == 0 && !permiteCriteriosPendientes(s) {
+		if s.esEncargo() {
+			h = append(h, p.checkEncargo(root, head, s)...)
+			h = append(h, checkSolicitudSDD(s)...)
+		} else if len(s.Archivos) != 0 || s.SoloLectura || s.SolicitudSDD != nil {
+			h = append(h, Hallazgo{"error", "contrato legacy", fmt.Sprintf("%s declara archivos, solo_lectura o solicitud_sdd sin encargo", s.ID)})
+		}
+		if abierta && !s.esEncargo() && len(s.Criterios) == 0 && !permiteCriteriosPendientes(s) {
 			h = append(h, Hallazgo{"error", "criterios binarios", fmt.Sprintf("%s no tiene criterios de aceptación", s.ID)})
 		}
-		if abierta && !pendiente {
+		if abierta && !pendiente && !encargoIncompleto && !s.esEncargo() {
 			h = append(h, checkRuta(s, root, head)...)
 			h = append(h, checkProfundidad(s)...)
 		}
-		if abierta || len(s.Modulos) > 0 {
+		if !s.esEncargo() && (abierta || len(s.Modulos) > 0) {
 			h = append(h, p.checkModulos(root, s, modulosVistos, tareasVistas, importada, pendiente, historica)...)
 		}
 		h = append(h, checkDecisiones(s)...)
@@ -485,7 +498,7 @@ func checkImportacionLegacy(root, head string, s *Sesion, vistas map[string]bool
 			route, ok := deferredDecompositionRoute(legacySessionSection(raw, p.OrigenEncabezado))
 			if !ok {
 				h = append(h, Hallazgo{"error", "importación legacy", fmt.Sprintf("%s no prueba el aplazamiento de Módulos y Tareas", s.ID)})
-			} else if route != s.Ruta.Propuesta {
+			} else if !s.esEncargo() && route != s.Ruta.Propuesta {
 				h = append(h, Hallazgo{"error", "importación legacy", fmt.Sprintf("%s usa %s pero su firma congelada exige %s", s.ID, s.Ruta.Propuesta, route)})
 			}
 		}

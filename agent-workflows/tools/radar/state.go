@@ -53,6 +53,8 @@ func (p *Plan) EstadosAt(root, head string) map[string]string {
 			}
 		case s.Diferida:
 			estados[s.ID] = Diferido
+		case s.encargoIncompleto():
+			estados[s.ID] = Bloqueado
 		}
 	}
 
@@ -171,7 +173,7 @@ func bloqueaAqui(s *Sesion) bool {
 		if d.Tipo != "escala" {
 			continue
 		}
-		if d.Alcanza == "criterios" || d.Alcanza == "primer-modulo" {
+		if d.Alcanza == "criterios" || d.Alcanza == "primer-modulo" || d.Alcanza == "encargo" {
 			return true
 		}
 	}
@@ -193,7 +195,7 @@ func (p *Plan) ColaPorZonaAt(root, head string) map[string][]string {
 	porZona := map[string][]*Sesion{}
 	for i := range p.Sesiones {
 		s := &p.Sesiones[i]
-		if s.ImportacionLegacy != nil && s.ImportacionLegacy.TerritorioPendiente {
+		if esTerritorioPendiente(s) {
 			continue
 		}
 		st := estados[s.ID]

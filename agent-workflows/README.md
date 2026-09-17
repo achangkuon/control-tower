@@ -5,8 +5,9 @@ parent/subagent workflow routing, planning evidence, closure evidence, delivery 
 shared-path risk. The active builder does not require roles, seats, dispatch, tokens, queues,
 or an external coordination API. The original Control Tower candidate flow is frozen
 byte-for-byte under `product/tower/generic/`; it is product history, not active builder policy.
-Gentle AI owns SDD phase skills and orchestrator surfaces; this package does not replace, edit,
-invoke, or regenerate those managed assets.
+Gentle AI owns technical decomposition, implementation, checks, continuity, and native SDD phase
+surfaces; this package does not replace, edit, invoke, or regenerate those managed assets. Chanks
+owns product Session coordination, plan authority, and closure.
 
 These skills do **not** ship with Gentle AI. The `author: gentleman-programming`
 frontmatter on several of them is a `skill-creator` template default, not
@@ -107,16 +108,20 @@ not an assistant. It never blocks a push.
 See `radiografia/README.md`. Adopted today by control-tower, ecom-ecuador,
 Servi-Task-U and Finanzas-Personales.
 
-## Routes
+## Native Sessions
 
-| Route | Execution |
-| --- | --- |
-| `direct` | Gentle AI non-SDD implementation from the plan's Módulos and Tareas. |
-| `design-tasks` | A bounded design recorded in the plan, then non-SDD implementation. |
-| `full-sdd` | Gentle AI native SDD pipeline, entering at `proposal`. |
+Native product coordination is `Zona → Sesión`. A Session declares Zona, identity,
+priority/dependencies, exact authorized files, Cimientos/resources, authority, and an `encargo`
+with exactly `pedido_contexto`, `resultado_comportamiento`, `restricciones_decisiones`, and
+`referencias`. ODD is the default technical path. Its document and Engram record are subordinate
+continuity evidence, not a second product plan or status source.
 
-Only `full-sdd` enters Gentle AI's native SDD pipeline and its `archive` (canon §15).
-`verify` and review are mandatory for all three routes. `blocked` is a calculated state, not a route.
+SDD is available only after explicit human `solicitud_sdd`; Gentle AI's existing native
+preflight/authority/archive controls then apply. Complexity does not select it. Historical legacy
+`direct`, `design-tasks`, `full-sdd`, Módulo, and Task contracts remain readable as historical or
+technical evidence and are not retrofitted into native planning. Native resume reconciles the same
+Session identity with its technical record, code, and evidence; legacy resume keeps first pending
+Módulo behavior.
 
 ## Skill families
 

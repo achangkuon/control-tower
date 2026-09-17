@@ -1,63 +1,67 @@
 ---
 name: chanks-2-planificador-granular
-description: "Trigger: planificar, desglosar, enumerar Sesiones. Run eight fixed steps and propose one of three routes for approved scope."
+description: "Trigger: planificar, preparar Sesión, enumerar Sesiones. Prepare approved native Session coordination without technical decomposition."
 license: Apache-2.0
 metadata:
   author: gentleman-programming
-  version: "5.0"
+  version: "6.0"
 ---
 
 ## Activation Contract
 
-Activate to incorporate approved scope into one plan. Decompose and propose; return a bounded
-planning delta for the responsible parent to confirm and record.
+Activate to prepare approved scope as one Session. Keep this ID for compatibility: its purpose is
+**Session preparation**, not technical decomposition. Return a bounded delta for the responsible
+parent; do not write the plan or generated view.
 
 ## Hard Rules
 
-- This work reads the plan through `../chanks-0-agente-soporte/SKILL.md`. A repository with no `openspec/plan.yaml` has not adopted plan management: say what this step needed it for, offer to start one, and stop. Never improvise a substitute record.
-- Run all eight steps in order. Do not add a hierarchy level.
-- Preserve `Zona → Sesión → Módulo → Tarea`; one Sesión belongs to one Zona.
-- Load each reference only when its step needs it.
-- The only routes are `direct`, `design-tasks`, and `full-sdd`.
-- For `full-sdd`, leave Módulos and Tareas empty because design defines them.
-- Do not write plan data or the generated view. Preserve human choice for scope, risks, and authority.
+- Read planning evidence only through `../chanks-0-agente-soporte/SKILL.md`; never substitute a plan record.
+- For a native Session, product coordination is Zona → Sesión. Do not create Chanks Modules/Tasks,
+  Module trailers, separate scope/criteria headings, or a route-choice menu.
+- Prepare exact `archivos` when known from repository evidence; they are declared/inferred here, not
+  mandatory provider discovery. Unknown files require `encargo.incompleto` and no execution claim.
+- Preserve Zona, Cimientos, Recurso, dependencies, priorities, IDs, authority, and decision safety.
+  Expansion later needs approved scope and fresh compatibility before affected mutation.
+- Draft exactly `pedido_contexto`, `resultado_comportamiento`, `restricciones_decisiones`, and
+  `referencias`. Keep outcome/constraint meaning inside them.
+- ODD is default. Only an explicit human `solicitud_sdd` can request native SDD; complexity never does.
+- Legacy Module/Task contracts remain historical/technical evidence and are not rewritten here.
 
 ## Decision Gates
 
-| Honest cut depth | Route |
+| Condition | Result |
 |---|---|
-| Contract and execution determined | `direct` |
-| Fixed result; bounded technical design missing | `design-tasks` |
-| Behavior or shared contract needs design | `full-sdd` |
-| Authority or evidence missing/contradictory | Return the required human decision; do not propose a route. |
+| Territory, authority, and four-part Encargo are known | Return prepared native Session delta. |
+| Exact files remain unknown | Return incomplete Encargo and the missing evidence; do not authorize mutation. |
+| Scope/file expansion or incompatible resource forecast | Return the approval and compatibility decision needed. |
+| Explicit human `solicitud_sdd` | Preserve it and hand off to existing native SDD preflight later. |
+| Missing or contradictory authority | Return one human decision package; do not infer it. |
 
 ## Visible Messages Preamble
 
-After user ideas or points are clarified and approved, load
-`../chanks-0-mensajes-visibles/SKILL.md` for one lightweight cross-cutting cosmetic check. Carry
-its small suggestion, or `No messages needed`, to the responsible parent for the same feature's
-implementation Session. This unnumbered preamble does not add a planning step, Session, gate, or
-plan update.
+After approved product scope is clear, load `../chanks-0-mensajes-visibles/SKILL.md` for its
+nonblocking cosmetic suggestion or `No messages needed`. Carry it to the same feature's
+implementation Session; this does not add product planning, authority, or a step.
 
 ## Execution Steps
 
-1. **Locate territory:** load `../chanks-1-heredado/references/ubicacion-y-cruces.md` and place the scope in a Zona.
-2. **Resolve crossings:** declare Cimientos, dependencies, or a required recut; do not simulate a lock.
-3. **Cut the Sesión:** define one independently reviewable result.
-4. **Write binary contract:** fix observable, falsifiable criteria.
-5. **Decompose:** for `direct`/`design-tasks`, enumerate file-based Módulos and atomic Tareas; for `full-sdd`, leave them empty.
-6. **Declare decisions:** record authority, evidence, options, class, checkpoint, and contamination.
-7. **Judge route:** load `references/juicio-de-ruta.md` and propose one route.
-8. **Forecast size:** count authored additions+deletions; split into Sesiones or declare a chain when needed.
+1. Locate Zona territory from repository evidence.
+2. Resolve crossings/Cimientos without claiming a lock.
+3. Define Session identity, result, dependencies, priority, and authority.
+4. Declare exact files when known, or an incomplete Encargo without mutation authority.
+5. Record Cimientos/Recurso compatibility and required fresh evidence for expansion.
+6. Draft the exact four Encargo parts with outcome/constraint meaning inside them.
+7. Record decisions with evidence, options/consequences, class, `Contamina:`, and checkpoint.
+8. Forecast review size and report an approved exception or an honest Session split; never code-golf.
 
 ## Output Contract
 
-Return the eight results, proposed route and authority, authored-size forecast, exact proposed
-delta, human decisions, unenumerated responsibilities, and what the responsible parent must
-record after confirmation.
+Return prepared coordination, four-part Encargo, file/compatibility evidence, size forecast, human
+decisions, and the exact parent-record delta. State whether it is complete or incomplete; do not
+claim planning status, a lock, technical task decomposition, or execution authority.
 
 ## References
 
+- `../chanks-0-agente-soporte/SKILL.md`
 - `../chanks-1-heredado/references/ubicacion-y-cruces.md`
 - `references/juicio-de-ruta.md`
-- `../chanks-0-agente-soporte/SKILL.md`

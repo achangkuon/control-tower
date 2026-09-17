@@ -12,8 +12,11 @@ metadata:
 Activate only after the human names the complete batch of Sesión IDs and assigns each one to a
 specific approved Pi worker. Manual pre-V1 dispatch accepts Pi workers only. This is an explicit
 Herdr request for independent Sesión work with the Torre off; it is not Torre dispatch. Herdr owns
-only the authorized seats and process topology; Pi Intercom is only the message transport. Load the
-`herdr` skill for every Herdr command, flag, and error code.
+only the authorized seats and process topology; Pi Intercom is only the message transport. Dispatch
+does not grant execution authority, ODD continuity, plan status, or delivery authority. Preserve the
+admitted discriminator: native Encargo work resumes under the same Session identity through native
+ODD record/code/evidence reconciliation; legacy work resumes at first pending Módulo for legacy. Load
+the `herdr` skill for every Herdr command, flag, and error code.
 
 Read the complete reusable worker-pool declaration from repository `AGENTS.md` before any pool
 operation. It is the sole source for the declared workers, their persistent worktrees and tabs, their
@@ -29,7 +32,7 @@ configuration, not persistent roster or planning state.
 ## Hard Rules
 
 - Dispatch only the human's explicit complete list of Sesión IDs, each with its approved Pi worker. Never select, add, reorder, or substitute work.
-- Reject a non-Pi agent kind before creating anything; never substitute the approved runtime. Every listed Sesión must be `LISTO` in `radar status`; read each contract with `radar sesion <ID>`.
+- Reject a non-Pi agent kind before creating anything; never substitute the approved runtime. Every listed Sesión must be `LISTO` in `radar status`; read each contract with `radar sesion <ID>`. Preserve same Session identity for native Encargo continuity and first pending Módulo for legacy; never make topology a fake execution controller.
 - Under the acquired lock, validate and reserve the complete human-selected batch before the first launch: every Session remains LISTO and compatible, every Session maps to a declared apt worker, and all selected workers are distinct.
 - A selected worker is either an existing reusable worker or a declared, explicitly provisionable, not-yet-created worker. An existing worker must prove free, clean, and non-Main from Git, Radar, and a fresh live Herdr readback; a dirty tree, active prior agent, pending delivery, identity mismatch, or ambiguous readback rejects it. Ordinary assignment rejects a missing previously provisioned worker; a partial first provisioning stops ordinary admission and never creates per-Session worktrees.
 - `issue-resolver` only handles a human-selected Session backed by a Control Tower issue. Do not infer the issue or reuse an occupied worker.

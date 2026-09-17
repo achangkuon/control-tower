@@ -100,8 +100,14 @@ class InstallerTests(unittest.TestCase):
             },
             "admissible": {
                 "start": {"states": ["LISTO"]},
-                "continue": {"states": ["LISTO", "EN CURSO"], "requires": "first pending Módulo"},
-                "resume": {"states": ["LISTO", "EN CURSO"], "requires": "first pending Módulo"},
+                "continue": {"states": ["LISTO", "EN CURSO"], "requires": {
+                    "native_encargo": "same Session identity plus reconciliation of native ODD record, code, and evidence",
+                    "legacy": "first pending Módulo for legacy",
+                }},
+                "resume": {"states": ["LISTO", "EN CURSO"], "requires": {
+                    "native_encargo": "same Session identity plus reconciliation of native ODD record, code, and evidence",
+                    "legacy": "first pending Módulo for legacy",
+                }},
                 "route": "chanks-3-session-kickoff",
             },
             "non_admissible": {
@@ -135,47 +141,32 @@ class InstallerTests(unittest.TestCase):
             payload_end = installed.index("```", payload_start)
             self.assertEqual(json.loads(installed[payload_start:payload_end]), expected, path)
 
-    def test_installed_session_routing_sends_only_full_sdd_through_native_sdd(self):
+    def test_installed_session_routing_keeps_odd_default_and_sdd_explicit(self):
         INSTALLER.apply(self.home, ROOT)
         for path in INSTALLER.manual_paths(self.home):
             match = INSTALLER.BLOCK_RE.search(path.read_bytes())
             self.assertIsNotNone(match, path)
             assert match is not None
-            block = match.group()
-            text = b" ".join(block.split())
-            entries = {}
-            for line in block.splitlines():
-                if b" enters at " in line:
-                    route, gate = line.strip(b" -.").split(b" enters at ")
-                    entries[route.strip(b"`")] = gate.strip(b"`")
-            self.assertEqual(entries, {b"full-sdd": b"proposal"}, path)
-            self.assertIn(b"`direct` and `design-tasks` use Gentle AI's non-SDD implementation path", text, path)
-            self.assertIn(b"`verify` and review are mandatory for all three routes; `archive` runs only for `full-sdd`", text, path)
+            text = b" ".join(match.group().split())
+            self.assertIn(b"ODD is default", text, path)
+            self.assertIn(b"explicit human `solicitud_sdd`", text, path)
+            self.assertIn(b"same Session identity", text, path)
+            self.assertIn(b"first pending M\xc3\xb3dulo for legacy", text, path)
+            self.assertIn(b"review outcome never authorizes delivery", text, path)
             self.assertNotIn(b"one shared SDD pipeline", text, path)
-            self.assertNotIn(b"`verify`, review, and post-delivery `archive` are common and mandatory", text, path)
-            self.assertNotIn(b"`session-plan`", block, path)
-            self.assertNotIn(b"`blocked` is a route", block, path)
+            self.assertNotIn(b"`session-plan`", text, path)
 
-    def test_installed_session_routing_uses_contamination_aware_blocking(self):
+    def test_installed_session_routing_preserves_native_authority_boundaries(self):
         INSTALLER.apply(self.home, ROOT)
-        expected = (
-            b"Always-escalate decisions never become derivable. A Sesi\xc3\xb3n BLOCKS only when "
-            b"authority or evidence is missing or contradictory, or contamination reaches "
-            b"acceptance criteria, the first M\xc3\xb3dulo, or another Sesi\xc3\xb3n. "
-            b"Later-M\xc3\xb3dulo contamination parks that M\xc3\xb3dulo while approved earlier "
-            b"work continues."
-        )
-        blanket_stop = b"Stop every Sesi\xc3\xb3n when an unresolved decision belongs to an always-escalate class."
-        paths = INSTALLER.manual_paths(self.home)
-        self.assertEqual(len(paths), 4)
-        for path in paths:
-            content = path.read_bytes()
-            match = INSTALLER.BLOCK_RE.search(content)
+        for path in INSTALLER.manual_paths(self.home):
+            match = INSTALLER.BLOCK_RE.search(path.read_bytes())
             self.assertIsNotNone(match, path)
             assert match is not None
             normalized = b" ".join(match.group().split())
-            self.assertIn(expected, normalized, path)
-            self.assertNotIn(blanket_stop, match.group(), path)
+            self.assertIn(b"Radar is the only admission binary", normalized, path)
+            self.assertIn(b"Forecasts reserve nothing live", normalized, path)
+            self.assertIn(b"do not grant execution", normalized, path)
+            self.assertIn(b"fake topology control", normalized, path)
 
     def test_all_runtime_skill_paths_match_canonical_source(self):
         INSTALLER.apply(self.home, ROOT)
@@ -517,16 +508,17 @@ class InstallerTests(unittest.TestCase):
                 self.assertEqual(retired.read_bytes(), b"user-file")
                 self.assertFalse((home / ".agents/skills/chanks-3-session-kickoff").exists())
 
-    def test_session_route_is_revalidated_once_before_execution(self):
+    def test_native_kickoff_reconciles_identity_without_inventing_a_route(self):
         content = (ROOT / "skills/chanks-3-session-kickoff/SKILL.md").read_text(encoding="utf-8")
         hard_rules = content.split("## Hard Rules", 1)[1].split("## Decision Gates", 1)[0]
         execution = content.split("## Execution Steps", 1)[1].split("## Output Contract", 1)[0]
 
-        self.assertIn("scoped code in the Área", hard_rules)
-        self.assertIn("three canonical routes", hard_rules)
-        self.assertIn("compare the proposal once", execution)
-        for term in ("`ruta.revalidacion`", "result", "Git base", "evidence", "reason when it changes"):
-            self.assertIn(term, execution)
+        self.assertIn("same Session identity", hard_rules)
+        self.assertIn("first pending Módulo for legacy", hard_rules)
+        self.assertIn("explicit human `solicitud_sdd`", hard_rules)
+        self.assertNotIn("three canonical routes", hard_rules)
+        self.assertIn("native record, code, and evidence", execution)
+        self.assertIn("Do not write a route revalidation for native ODD", execution)
 
 
     def test_all_tower_skills_are_archived_without_installing_candidates(self):

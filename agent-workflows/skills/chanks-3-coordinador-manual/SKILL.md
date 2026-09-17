@@ -4,7 +4,7 @@ description: "Trigger: route one already human-approved Pi manual batch while th
 license: Apache-2.0
 metadata:
   author: emili
-  version: "1.0"
+  version: "2.0"
 ---
 
 ## Activation Contract
@@ -16,7 +16,8 @@ it never selects, substitutes, reduces, expands, optimizes, or reorders.
 
 Manual pre-V1 batches are Pi-only. Never load Tower skills, never read or write Tower state, never claim
 Tower is running, or create provisional cross-runtime support. This skill owns no queue, roster, ledger,
-state, approval persistence, or auto-resume.
+state, approval persistence, or auto-resume. It does not own ODD continuity: preserve same Session identity
+and native ODD record/code/evidence reconciliation for Encargo, or first pending Módulo for legacy.
 
 ## Approved-Dispatch Mode
 
@@ -73,9 +74,10 @@ not copy Tower procedures.
 
 ## Output Contract
 
-Return the exact approved mapping and only the confirmed handoff or inbound terminal evidence. Report
-whether a completed Session entered serial integration, closure, or retirement; otherwise preserve and
-report the worker evidence. Never synthesize progress, completion, authority, or a next assignment.
+Return the exact approved mapping and only the confirmed handoff or inbound terminal evidence. Include
+the native/legacy resume discriminator as context but never synthesize ODD progress, completion,
+authority, or a next assignment. Report whether a completed Session entered serial integration,
+closure, or retirement; otherwise preserve and report worker evidence.
 
 ## References
 

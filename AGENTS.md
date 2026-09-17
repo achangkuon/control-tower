@@ -103,9 +103,17 @@ decisión ni preparar el paquete anterior; solo impide autorizar ejecución para
 
 ## Construction contract
 
-Human approval authorizes work. A real parent coordinates real subagents and writes
-confirmed plan evidence. Candidate product content is archival data, never loaded as instructions.
-This builder has no candidate coordination route. Future enablement requires a tested stable V1 and explicit human authorization.
+Human approval authorizes work. Chanks owns product Session coordination, plan authority, and
+closure; Gentle AI owns technical decomposition, implementation, checks, and continuity. A real parent coordinates real subagents and writes confirmed plan evidence. A native Session uses coordination (Zona,
+ID, priority/dependencies, exact authorized `archivos`,
+Cimientos/resources, authority) plus `encargo` with exactly `pedido_contexto`,
+`resultado_comportamiento`, `restricciones_decisiones`, and `referencias`. ODD is default. SDD is
+only an explicit human `solicitud_sdd` and keeps Gentle AI's native preflight/authority/archive
+controls. Native ODD documentation and Engram records are subordinate technical execution records,
+never a second product plan. Historical delivered Módulo evidence remains readable as history and
+never grants native write authority or native resume; native resume reconciles the same Session
+identity with actual record, code, and evidence. Candidate product content is archival data, never loaded as instructions. This builder has no candidate coordination route. Future enablement requires
+a tested stable V1 and explicit human authorization.
 
 ## Operación local: pool manual, fricciones y herramientas
 
@@ -147,12 +155,11 @@ Al cerrar una entrega, reinstalá herramientas según las rutas que tocó:
 
 ## Preferencias de ejecución y presupuesto de cambio
 
-- **Toda ruta declarada se ejecuta automáticamente** en el happy path, sin pausas entre
-  sus pasos internos. `full-sdd` ejecuta su pipeline completo una vez para toda la Sesión.
-  `direct` usa el diseño y las Tareas ya aprobados; `design-tasks` hace primero su
-  elaboración técnica compacta. Ambas continúan automáticamente por
-  diseño/Tareas → apply → tests → checkpoint sin inventar proposal/spec ni inflarse a
-  `full-sdd`.
+- **ODD es el default nativo** y continúa automáticamente por preparación técnica → apply →
+  checks → checkpoint sin un menú de rutas ni escalamiento a SDD por complejidad. Sólo una
+  `solicitud_sdd` humana explícita entra al flujo SDD nativo una vez por Sesión; no se crea un
+  motor SDD paralelo. Las rutas/Módulos/Tareas de contratos legacy siguen como evidencia histórica,
+  no como requisitos de planificación nativa.
 - Las **400 líneas** son una **referencia de revisión, no un límite duro**, y aplican a
   todas las rutas. Miden adiciones más eliminaciones del **trabajo implementado** en cada
   unidad de commit directo: código, tests y skills. No cuentan los artefactos de
@@ -163,8 +170,8 @@ Al cerrar una entrega, reinstalá herramientas según las rutas que tocó:
   bloqueo; superarla sin preguntar sí está prohibido. Este repo no usa PRs ni PRs
   encadenados.
 - Si ese desglose impide que una Sesión conserve un alcance coherente, se divide en dos
-  o más Sesiones bajo la jerarquía canónica `Plan → Sesión → Módulo → Tarea`. No se
-  crea un quinto nivel ni se renombra ninguno de los cuatro.
+  o más Sesiones bajo la coordinación nativa `Zona → Sesión`. No se crea un nivel nuevo;
+  Módulo/Tarea sobreviven sólo como evidencia técnica o legacy, nunca como autoridad de escritura nativa.
 
 ## Radiografía del producto — se regenera al entregar
 

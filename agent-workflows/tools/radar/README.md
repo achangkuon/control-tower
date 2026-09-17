@@ -17,6 +17,45 @@ radar render -f otro.yaml -o salida.md -C /repo
 El contrato canónico está en
 [`skills/_shared/plan-naming-convention.md`](../../skills/_shared/plan-naming-convention.md).
 
+## Sesiones nativas con Encargo
+
+Una Sesión nueva usa `encargo` en lugar de `ruta`, `modulos` y `tareas`. Su presencia es el
+discriminante compatible: las Sesiones históricas conservan su jerarquía legacy sin reinterpretarse.
+La parte superior conserva identidad, Zona, autoridad, dependencias, Cimientos, recursos y `archivos`
+exactos autorizados. El Encargo tiene exactamente cuatro textos: `pedido_contexto`,
+`resultado_comportamiento`, `restricciones_decisiones` y `referencias`; el resultado/comportamiento
+contiene los requisitos observables de cierre. Una Sesión nativa no declara `criterios` root; ningún
+checkbox sustituye `entrega.commit` integrado.
+
+`archivos` no acepta globs, directorios, escapes ni symlinks. Cada archivo debe pertenecer a la Zona
+indicada o a un Cimiento exacto reservado. Una Sesión sin archivos sólo es válida con
+`solo_lectura: true`; una entrada todavía desconocida sólo se conserva con `encargo.incompleto: true`,
+queda BLOQUEADA y no recibe territorio, cola ni asiento. Ausencia de archivos nunca se interpreta como
+lectura segura.
+
+ODD es el modo nativo. La única excepción declarable es `solicitud_sdd`, que exige
+`solicitud_humana: true` y una `autoridad`; Radar no elige esa excepción ni inicia un proveedor. Las
+Sesiones nativas retoman la misma identidad y continuidad ODD, no el primer Módulo pendiente. Una
+migración puede conservar `importacion_legacy` y Módulos históricos sólo si cada Módulo tiene un trailer
+`Modulo:` alcanzable desde el HEAD fijado; esa evidencia no amplía `archivos` ni crea progreso native.
+`radar sesion` muestra dos bloques (coordinación y Encargo) y `radar render` agrega el detalle de
+Sesiones sin alterar el bloque histórico de Módulos y Tareas. `radar.snapshot/v1` conserva sus claves y
+cálculos existentes.
+
+```yaml
+sesiones:
+  - id: S23
+    zona: cocina
+    resultado: instalar el horno
+    autoridad: PRD cocina §2
+    archivos: [cocina/horno.go, cocina/horno_test.go]
+    encargo:
+      pedido_contexto: El usuario necesita preparar el horno antes de la apertura.
+      resultado_comportamiento: El horno enciende y conserva su protocolo actual.
+      restricciones_decisiones: No cambiar la API; las decisiones estructuradas siguen en decisiones.
+      referencias: PRD cocina §2; RFC cocina §4
+```
+
 ## Avance por Módulo
 
 Cada commit de un Módulo lleva el trailer `Modulo: <ID>` (por ejemplo `Modulo: M125.1`). `radar`

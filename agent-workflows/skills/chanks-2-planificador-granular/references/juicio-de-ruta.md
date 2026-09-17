@@ -1,18 +1,20 @@
-# Juicio de ruta
+# Native Session execution judgment
 
-Juzgá la profundidad necesaria, no el tamaño, riesgo o número de archivos por sí solos.
+Native Sessions default to ODD. This reference does not offer a route-choice menu and does not
+escalate to SDD because of size, risk, file count, seams, or technical uncertainty alone.
 
-| Evidencia actual | Ruta propuesta |
+| Evidence | Preparation result |
 |---|---|
-| El contrato binario, decisiones, archivos y acciones ya están determinados | `direct` → implementación no-SDD de Gentle AI |
-| El resultado está fijo, pero falta resolver una pregunta técnica acotada | `design-tasks` → design acotado registrado en el plan y luego implementación no-SDD |
-| El comportamiento, lifecycle o contrato compartido todavía necesita diseño dentro de autoridad | `full-sdd` → pipeline SDD nativa, entra por `proposal` |
-| Falta autoridad, la evidencia se contradice o una decisión humana contamina el resultado | No hay ruta ejecutable; reportá el estado calculable y la decisión necesaria |
+| Approved coordination and four-part Encargo | ODD technical execution record under Gentle AI policy. |
+| Exact files or authority missing | Incomplete/blocked evidence; no mutation. |
+| Scope/files expand | Human-approved change plus fresh compatibility before affected mutation. |
+| Explicit human `solicitud_sdd` with authority | Existing native SDD preflight and authority flow, not a custom Chanks engine. |
 
-## Reglas
+## Rules
 
-- Sólo existen tres rutas: `direct`, `design-tasks`, `full-sdd`.
-- La propuesta del planificador no reemplaza la revalidación al llegar al worktree.
-- Sólo `full-sdd` entra en la pipeline SDD nativa (canon §15); `direct` y `design-tasks` no crean `openspec/changes/` ni declaran `cambio`.
-- `verify` es obligatorio para las tres rutas; `archive` sólo corre en `full-sdd`, después de la entrega.
-- Si cambia la ruta, citá evidencia concreta y conservá propuesta y revalidación como datos distintos.
+- An explicit human `solicitud_sdd` is the only native SDD selection; its absence means ODD.
+- Preserve legacy `direct`, `design-tasks`, and `full-sdd` data as legacy contracts. Do not map a
+  native Encargo to them or rewrite earlier S143–S146 choices during this source adaptation.
+- Strict TDD comes from effective explicit configuration. Technical checks/review follow Gentle AI
+  native policy; review outcome never authorizes delivery.
+- ODD documents and Engram recovery are subordinate technical continuity records, never plan status.
