@@ -795,7 +795,7 @@
 ### S115 — Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
 - Coordinación:
   - Estado derivado: 📋 PLANIFICADO
-  - Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/check&#95;test.go
   - Depende de: S114
   - Recursos: —
@@ -891,7 +891,7 @@
 ### S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 - Coordinación:
   - Estado derivado: 🟡 DIFERIDO
-  - Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/tools/radar/state.go, agent-workflows/tools/radar/state&#95;test.go, agent-workflows/tools/radar/snapshot.go, agent-workflows/tools/radar/snapshot&#95;test.go, agent-workflows/tools/radar/render.go, agent-workflows/tools/radar/render&#95;test.go, agent-workflows/tools/radar/testdata/ROADMAP.golden.md
   - Depende de: S127
   - Recursos: —
@@ -917,7 +917,7 @@
 ### S123 — Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
 - Coordinación:
   - Estado derivado: 📋 PLANIFICADO
-  - Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/skills/chanks-7-session-doc/SKILL.md, agent-workflows/skills/chanks-0-agente-soporte/SKILL.md, agent-workflows/templates/session-routing.md
   - Depende de: S122
   - Recursos: —
@@ -941,7 +941,7 @@
 ### S129 — Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
 - Coordinación:
   - Estado derivado: 🟡 DIFERIDO
-  - Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/check&#95;test.go, agent-workflows/tools/radar/avance.go
   - Depende de: S128
   - Recursos: —
@@ -965,7 +965,7 @@
 ### S133 — El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
 - Coordinación:
   - Estado derivado: 🟡 DIFERIDO
-  - Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/skills/chanks-7-session-doc/SKILL.md, agent-workflows/tests/test&#95;builder&#95;flow.py
   - Depende de: S135
   - Recursos: —
@@ -984,7 +984,7 @@
 ### S143 — Motor procedural Chanks verificable: los siete controles consumen autoridad y evidencia y permiten o bloquean transiciones sin ejecutar sus efectos.
 - Coordinación:
   - Estado derivado: 🟡 DIFERIDO
-  - Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/chanks/controls.mjs, agent-workflows/tests/chanks/controls.test.mjs
   - Depende de: —
   - Recursos: —
@@ -1009,7 +1009,7 @@
 ### S144 — Controles Chanks efectivos en Pi con Torre apagada: el núcleo S143 gobierna los efectos del flujo manual y demuestra el recorrido autorizado completo en un entorno aislado.
 - Coordinación:
   - Estado derivado: 📋 PLANIFICADO
-  - Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/chanks/pi-controls.mjs, agent-workflows/tests/chanks/pi-controls.test.mjs, agent-workflows/tools/install.py, agent-workflows/tests/test&#95;install.py
   - Depende de: S143
   - Recursos: runtime Pi aislado de ensayos Chanks Método V1; uso exclusivo a confirmar antes de ejecutar, sin configuración global activa
@@ -1039,7 +1039,7 @@
 ### S145 — Radar explica alternativas LISTO, compatibilidad potencial por archivos, condiciones e hipotéticos mediante radar roadmap como vista humana de la evidencia canónica, sin autorizar ejecución.
 - Coordinación:
   - Estado derivado: 🟢 LISTO
-  - Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/tools/radar/main.go, agent-workflows/tools/radar/snapshot.go, agent-workflows/tools/radar/state.go, agent-workflows/tools/radar/roadmap.go, agent-workflows/tools/radar/main&#95;test.go, agent-workflows/tools/radar/snapshot&#95;test.go, agent-workflows/tools/radar/state&#95;test.go, agent-workflows/tools/radar/roadmap&#95;test.go, agent-workflows/tools/radar/README.md
   - Depende de: —
   - Recursos: —
@@ -1065,7 +1065,7 @@
 ### S146 — El método manual coordina intervenciones de Cimientos y paralelo por archivos con controles efectivos en Pi: Main coordina, workers y Gentle AI implementan y verifican, con Torre apagada.
 - Coordinación:
   - Estado derivado: 📋 PLANIFICADO
-  - Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/chanks/interventions.mjs, agent-workflows/chanks/pi-controls.mjs, agent-workflows/tests/chanks/interventions.test.mjs, agent-workflows/tests/chanks/pi-controls.test.mjs, agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workflows/tests/test&#95;coordinador&#95;manual.py
   - Depende de: S144, S145
   - Recursos: runtime Pi aislado de ensayos Chanks Método V1; uso exclusivo a confirmar antes de ejecutar, sin configuración global activa
@@ -3249,7 +3249,7 @@ Rutas: .pi/settings.json, test/extensions/pi/tower-skill-exposure.test.mjs
 
 ### S111 — Radar deja de creerle a la ruta declarada: consume gentle-ai.sdd-status@2 y rechaza una Sesión cuyo pipeline no entró por la puerta que su ruta declara.
 - Estado derivado: ✅ COMPLETO
-- Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+- Zona/Área: metodo · agent-workflows/, odd/tasks/
 - Depende de: —
 - Cimientos: —
 - Recursos: el binario gentle-ai instalado; sin dependencias nuevas más allá de git y gentle-ai
@@ -3283,7 +3283,7 @@ Rutas: agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/check&#
 
 ### S112 — El campo autoridad deja de ser texto libre: declara su tipo y radar prueba lo que se puede probar, diciendo explícitamente lo que no.
 - Estado derivado: ✅ COMPLETO
-- Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+- Zona/Área: metodo · agent-workflows/, odd/tasks/
 - Depende de: —
 - Cimientos: —
 - Recursos: el registro de decisiones archivado en openspec/archive/legacy-planning/; sin dependencia nueva de Engram
@@ -3307,7 +3307,7 @@ Rutas: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go
 
 ### S116 — El campo autoridad admite varias citas: una Sesión que se apoya en más de una fuente puede declararlas todas, y radar prueba cada una por separado.
 - Estado derivado: ✅ COMPLETO
-- Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+- Zona/Área: metodo · agent-workflows/, odd/tasks/
 - Depende de: S112
 - Cimientos: —
 - Recursos: —
@@ -3331,7 +3331,7 @@ Rutas: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go
 
 ### S113 — Radar verifica las dos reglas de entrega que hoy no verifica nadie: que archive corra después de entregar, y que el lote de revisión no pase de 400 líneas.
 - Estado derivado: ✅ COMPLETO
-- Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+- Zona/Área: metodo · agent-workflows/, odd/tasks/
 - Depende de: —
 - Cimientos: —
 - Recursos: —
@@ -3394,7 +3394,7 @@ Rutas: extensions/pi/package.json, extensions/pi/tower-session-router.ts, test/e
 
 ### S120 — Contrato verificable de integración: direct y design-tasks usan el implementador general de Gentle AI y una entrada de verificación semántica desde el plan; full-sdd conserva su recorrido nativo.
 - Estado derivado: 📚 ARCHIVADO
-- Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+- Zona/Área: metodo · agent-workflows/, odd/tasks/
 - Depende de: —
 - Cimientos: —
 - Recursos: —
@@ -3411,7 +3411,7 @@ Rutas: extensions/pi/package.json, extensions/pi/tower-session-router.ts, test/e
 
 ### S124 — Un agente obtiene el contrato completo de una sola Sesión con &#96;radar sesion &lt;ID&gt;&#96;, y Support lee el plan sólo por Radar, nunca openspec/plan.yaml entero.
 - Estado derivado: ✅ COMPLETO
-- Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+- Zona/Área: metodo · agent-workflows/, odd/tasks/
 - Depende de: —
 - Cimientos: —
 - Recursos: —
@@ -3450,7 +3450,7 @@ Rutas: agent-workflows/skills/chanks-0-agente-soporte/SKILL.md, agent-workflows/
 
 ### S125 — Una Sesión con Módulos ya entregados se ve a medias en Radar y se retoma desde el primer Módulo pendiente, sin cambiar ninguno de los siete estados.
 - Estado derivado: ✅ COMPLETO
-- Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+- Zona/Área: metodo · agent-workflows/, odd/tasks/
 - Depende de: S124
 - Cimientos: —
 - Recursos: —
@@ -3487,7 +3487,7 @@ Rutas: agent-workflows/skills/chanks-3-session-kickoff/SKILL.md, agent-workflows
 
 ### S126 — Con la Torre apagada, el padre responsable abre en Herdr una tab por cada Sesión que el humano eligió, cada una con su worktree y su agente, y al cerrar retira sola los worktrees que prueban estar integrados.
 - Estado derivado: ✅ COMPLETO
-- Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+- Zona/Área: metodo · agent-workflows/, odd/tasks/
 - Depende de: S125
 - Cimientos: —
 - Recursos: —
@@ -3541,7 +3541,7 @@ Rutas: agent-workflows/templates/session-routing.md, agent-workflows/tests/test&
 
 ### S127 — Radar ordena el trabajo por prioridades que define cada proyecto: sólo la primera prioridad con Sesiones abiertas ofrece trabajo LISTO, y la siguiente se activa sola cuando esa se cierra.
 - Estado derivado: ✅ COMPLETO
-- Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+- Zona/Área: metodo · agent-workflows/, odd/tasks/
 - Depende de: —
 - Cimientos: —
 - Recursos: —
@@ -3560,7 +3560,7 @@ Rutas: agent-workflows/templates/session-routing.md, agent-workflows/tests/test&
 
 ### S128 — Radar reconoce el trailer Modulo de una Sesión full-sdd: el commit cuenta como Módulo entregado de su Sesión y deja de aparecer como trailer desconocido.
 - Estado derivado: ✅ COMPLETO
-- Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+- Zona/Área: metodo · agent-workflows/, odd/tasks/
 - Depende de: —
 - Cimientos: —
 - Recursos: —
@@ -3584,7 +3584,7 @@ Rutas: agent-workflows/tools/radar/avance.go, agent-workflows/tools/radar/avance
 
 ### S130 — El puente protege el lote de revisión: revisa sólo el código del Módulo en staging, commitea los artefactos SDD aparte y cierra el intento nativo de un Módulo antes de tocar el siguiente.
 - Estado derivado: 📚 ARCHIVADO
-- Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+- Zona/Área: metodo · agent-workflows/, odd/tasks/
 - Depende de: S135
 - Cimientos: —
 - Recursos: —
@@ -3607,7 +3607,7 @@ Rutas: agent-workflows/skills/chanks-4-puente/SKILL.md, agent-workflows/tests/te
 
 ### S131 — El despacho manual con Herdr reutiliza el pool de workers que declara el repositorio: conserva worktree, tab y dependencias entre Sesiones, y renueva sólo la rama de asignación y el agente.
 - Estado derivado: ✅ COMPLETO
-- Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+- Zona/Área: metodo · agent-workflows/, odd/tasks/
 - Depende de: S126
 - Cimientos: —
 - Recursos: directorio persistente de sincronización bajo el Git common-dir con ownership HELD efímero protegido por flock y uso exclusivo de los workers declarados durante despacho o retiro
@@ -3673,7 +3673,7 @@ Rutas: AGENTS.md
 
 ### S134 — Un agente decide si dos Sesiones pueden correr en paralelo leyendo sólo a Radar: la capacidad se presenta como veredicto de paralelo, una Sesión de cimientos muestra su territorio real y el ruteo carga la skill de despacho al elegir paralelo.
 - Estado derivado: ✅ COMPLETO
-- Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+- Zona/Área: metodo · agent-workflows/, odd/tasks/
 - Depende de: —
 - Cimientos: —
 - Recursos: —
@@ -3707,7 +3707,7 @@ Rutas: agent-workflows/templates/session-routing.md, agent-workflows/skills/chan
 
 ### S135 — SDD nativo sólo para full-sdd: direct y design-tasks usan el camino no-SDD de Gentle AI y verifican contra los criterios del plan sin crear openspec/changes, y Radar sólo acepta &#96;cambio&#96; en Sesiones full-sdd.
 - Estado derivado: ✅ COMPLETO
-- Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+- Zona/Área: metodo · agent-workflows/, odd/tasks/
 - Depende de: —
 - Cimientos: —
 - Recursos: —
@@ -3764,7 +3764,7 @@ Rutas: .github/ISSUE&#95;TEMPLATE/friction&#95;report.yml
 
 ### S137 — El despacho manual pre-V1 usa Herdr sólo para asientos y procesos, transporta el trabajo de workers Pi por Intercom sin bloquear a Main y devuelve cada evento por una ruta explícita.
 - Estado derivado: ✅ COMPLETO
-- Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+- Zona/Área: metodo · agent-workflows/, odd/tasks/
 - Depende de: —
 - Cimientos: —
 - Recursos: —
@@ -3788,7 +3788,7 @@ Rutas: agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md, agent-workflows/
 
 ### S138 — El puente ejecuta Tareas como evidencia interna RED/GREEN/REFACTOR, entrega exactamente un commit reversible por Módulo y revisa por defecto una única candidata inmutable de Sesión mediante RDD nativo antes de la entrega.
 - Estado derivado: ✅ COMPLETO
-- Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+- Zona/Área: metodo · agent-workflows/, odd/tasks/
 - Depende de: S135
 - Cimientos: —
 - Recursos: —
@@ -3813,7 +3813,7 @@ Rutas: agent-workflows/skills/chanks-4-puente/SKILL.md, agent-workflows/tests/te
 
 ### S139 — Radar admite una clasificación inline y cerrada para rutas intencionalmente ausentes, silencia sólo esas declaraciones y falla si la clasificación queda obsoleta.
 - Estado derivado: ✅ COMPLETO
-- Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+- Zona/Área: metodo · agent-workflows/, odd/tasks/
 - Depende de: —
 - Cimientos: —
 - Recursos: —
@@ -3858,7 +3858,7 @@ Rutas: openspec/plan.yaml
 
 ### S141 — Toda intención manual de iniciar, continuar o retomar implementación atraviesa una admisión Radar fresca antes de elegir skill; una Sesión no elegible sólo produce su estado y las opciones LISTO actuales, sin caer en cierre de decisiones.
 - Estado derivado: ✅ COMPLETO
-- Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+- Zona/Área: metodo · agent-workflows/, odd/tasks/
 - Depende de: —
 - Cimientos: —
 - Recursos: —
@@ -3883,7 +3883,7 @@ Rutas: agent-workflows/skills/chanks-0-agente-soporte/SKILL.md, agent-workflows/
 
 ### S142 — Una skill stateless de Tramo 3 coordina lotes manuales Tower-off ya aprobados, retorna tras el handoff, reacciona a eventos worker y serializa integración/cierre sin asumir trabajo, review ni autoridad Tower.
 - Estado derivado: ✅ COMPLETO
-- Zona/Área: metodo · agent-workflows/, odd/tasks/chanks-odd-session-model.md
+- Zona/Área: metodo · agent-workflows/, odd/tasks/
 - Depende de: S131, S137, S141
 - Cimientos: —
 - Recursos: —

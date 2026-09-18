@@ -46,7 +46,11 @@ zonas:
     rutas: [openspec/changes/, openspec/archive/legacy-planning/]
   - id: metodo
     nombre: Método
-    rutas: [agent-workflows/, odd/tasks/chanks-odd-session-model.md]
+    # odd/tasks/ es continuidad de ejecución ODD, evidencia técnica subordinada y no
+    # autoridad de producto. Vive en Método porque ODD es el flujo de Chanks. Antes se
+    # declaraba sólo chanks-odd-session-model.md y el resto de los registros quedaba sin
+    # dueño, lo que rompe la partición exhaustiva al trackearlos (2026-09-18).
+    rutas: [agent-workflows/, odd/tasks/]
   - id: producto-torre
     nombre: Producto Torre
     rutas: [product/tower/]
