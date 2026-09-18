@@ -57,6 +57,15 @@ zonas:
 # Emilio aprobó adelantar S145 → S143 → S144 → S146 (Engram 11171/11173).
 # Dos prioridades explícitas conservan el orden relativo del resto; las demás
 # alternativas LISTO quedan DIFERIDO mientras este conjunto siga pendiente.
+#
+# Corte aprobado por Emilio el 2026-09-18 (Engram 11327): la Torre V1 es el semáforo
+# compilado, Radar y las skills, instalables desde el instalador. La prioridad torre-v1
+# deja de enumerar handoffs y topología Herdr: esas Sesiones pasan a torre-v2, y la ex
+# prioridad v2 pasa a torre-v3. El semáforo (core.mjs:4318-4681) ya entrega el resultado
+# que define el producto; la capa continuation está en el paso 1 de los 11 que enumera
+# docs/architecture/torre-motor-determinista.md, sección 17, y su despacho manual
+# equivalente ya funciona mediante la skill chanks-3-despacho-herdr con la Torre apagada.
+# Ninguna Sesión cerrada declara prioridad, así que el corte no altera la historia.
 prioridades:
   - id: metodo-v1-radar-prioritario
     nombre: Método V1 · Radar prioritario
@@ -65,9 +74,11 @@ prioridades:
   - id: metodo-v1
     nombre: Método V1
   - id: torre-v1
-    nombre: Torre V1
-  - id: v2
-    nombre: V2
+    nombre: Torre V1 · Release instalable
+  - id: torre-v2
+    nombre: Torre V2 · Handoffs y despacho Tower-owned
+  - id: torre-v3
+    nombre: Torre V3
 
 cimientos:
   rutas:
@@ -548,7 +559,7 @@ sesiones:
             criterios: [Focused and full verification pass over only the two Area paths and the second commit remains at or below 400 authored lines.]
 
   - id: S1.19
-    prioridad: torre-v1
+    prioridad: torre-v2
     resultado: Regresión integral Pi-first
     autoridad: "decision 104, Engram observation 10008, approved Pi-first capacity contract, and Emilio's C05.2M territory-pending resolution"
     depende_de:
@@ -639,7 +650,7 @@ sesiones:
             resultado: "REFACTOR: congelar el tipo cerrado, normalizar INDETERMINATE y repetir testigos de bytes/metadatos."
             criterios: ["REFACTOR: congelar el tipo cerrado, normalizar INDETERMINATE y repetir testigos de bytes/metadatos."]
   - id: S2.9
-    prioridad: torre-v1
+    prioridad: torre-v2
     zona: enrolamiento
     cimientos:
       - bin/torre
@@ -693,7 +704,7 @@ sesiones:
       origen_encabezado: "## Sesión 2.9 — Enrollment público canónico por CLI"
       territorio_pendiente: false
   - id: S2.10
-    prioridad: v2
+    prioridad: torre-v3
     resultado: Enrollment desde el menú central
     autoridad: decision 104 and Engram 10008
     depende_de:
@@ -1710,7 +1721,7 @@ sesiones:
             criterios: ["REFACTOR: preservar readback/cleanup sin crear autoridad ni raíz"]
 
   - id: S4.4
-    prioridad: v2
+    prioridad: torre-v3
     zona: hosts
     resultado: Recuperación lógica same-host con raíz sucesora
     autoridad: "decisiones 37-40, decisión 45, Engram 9040/9044 y REQUIREMENTS §14.4"
@@ -2013,7 +2024,7 @@ sesiones:
             criterios: ["REFACTOR: helper privado instalado como única ruta, raíz preservada y cero comando inseguro"]
 
   - id: S4.8
-    prioridad: v2
+    prioridad: torre-v3
     zona: hosts
     resultado: "Probar la CLI real OpenCode 1.18.23 contra backend, raíz, brief, vista y plugin/SDK 1.18.13; sólo con la matriz completa verde alinear juntos plugin y SDK a 1.18.23"
     autoridad: decisión 68 y contrato WIP preservado de S4.8
@@ -2354,7 +2365,7 @@ sesiones:
             criterios: ["REFACTOR: unificar errores y aislar toda semántica de adapter."]
 
   - id: S4.12
-    prioridad: torre-v1
+    prioridad: torre-v2
     zona: hosts
     resultado: Recuperación mínima de Pi
     autoridad: decisiones 81 y 87 del maintainer del 2026-08-27; enmienda de autoridad mecánica aprobada por Emilio, Engram 11293, sin reinterpretar las decisiones originales.
@@ -4300,7 +4311,7 @@ sesiones:
             resultado: "REFACTOR: RUNTIME_PAYLOAD_FILES conserva igualdad exacta de conjunto y ningún miembro queda sin llamador."
             criterios: [RUNTIME_PAYLOAD_FILES conserva igualdad exacta y todos sus miembros tienen llamador.]
   - id: S7.1
-    prioridad: torre-v1
+    prioridad: torre-v2
     zona: entrega
     resultado: "Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral en un HOME/runtime aislado, preservando OpenCode como conformidad diferida."
     autoridad: "Decisiones 32, 33 y 85 del maintainer; reconciliación Pi-first vigente en openspec/plans/plan-7/STATUS.md líneas 69-79; asignación Entrega aprobada en agent-workflows/ASIGNACION-24-SESIONES.md líneas 161-174."
@@ -4370,12 +4381,12 @@ sesiones:
   - id: S8.12
     prioridad: torre-v1
     zona: instalacion
-    resultado: "Packaging del bundle Tower: una membresía versionada contiene exactamente los bytes Tower-owned locales y no instala, activa, reescribe configuración global ni ejecuta rollback."
-    autoridad: "Decisiones 88, 95, 100 y 104; Engram 9921 y 10008; contrato vigente enumerado de S8.12 aprobado por decisión 10315 del maintainer y citado en openspec/plans/plan-8/STATUS.md líneas 998-1031."
+    resultado: "Packaging del bundle Torre V1: una membresía versionada contiene exactamente los bytes Tower-owned del semáforo —binario, contrato host-neutral, adapter Pi, perfiles y skills Torre— y no instala, activa, reescribe configuración global ni ejecuta rollback."
+    autoridad: "Alcance V1 aprobado por Emilio el 2026-09-18 (Engram 11327), que reemplaza explícitamente el contrato de bundle completo aprobado por decisión 10315: el bundle deja de transportar la política de despacho Tower-owned de S9.8, que pasa a torre-v2. Se conservan las Decisiones 88, 95 y 100 sobre qué bytes son Tower-owned, Engram 9921, y el contrato enumerado citado en openspec/plans/plan-8/STATUS.md líneas 998-1031 en todo lo que no dependa del despacho."
     depende_de:
       - S8.10
       - S8.14
-      - S9.8
+      - S149
     cimientos:
       - scripts/payload-closure.mjs
     recurso:
@@ -4394,8 +4405,8 @@ sesiones:
       - test/install/runtime-payload.test.mjs
       - test/install/tower-role-assets.test.mjs
     encargo:
-      pedido_contexto: "Packaging del bundle Tower: una membresía versionada contiene exactamente los bytes Tower-owned locales y no instala, activa, reescribe configuración global ni ejecuta rollback."
-      resultado_comportamiento: "El bundle contiene exactamente la membresía runtime/engine derivada de RUNTIME_PAYLOAD_FILES, el contrato host-neutral retenido, adapters/pi/**, extensions/pi/** y los perfiles/skills Tower editables bajo product/tower/; excluye configuración Pi/Intercom, skills genéricas Gentle AI y el snapshot inmutable product/tower/generic/, sin relocalizar el engine completo.\n\nLos tres perfiles y sus skills se materializan desde el bundle sin modificar sus fuentes canónicas editables bajo product/tower/.\n\nFaltante, extra, symlink, provenance divergente o incoherencia interceptor/torre-control falla cerrado.\n\nDeclaración, derivación y guardia observan un único conjunto exacto y determinista.\n\nLa Sesión sólo empaqueta: no instala, activa, reescribe configuración global ni ejecuta rollback.\n\nEl diff toca sólo Área."
+      pedido_contexto: "Packaging del bundle Torre V1: una membresía versionada contiene exactamente los bytes Tower-owned del semáforo y no instala, activa, reescribe configuración global ni ejecuta rollback. El bundle empaqueta el producto que S149 compila; no empaqueta handoffs, continuation ni despacho Tower-owned, que pertenecen a torre-v2."
+      resultado_comportamiento: "El bundle contiene exactamente la membresía runtime/engine derivada de RUNTIME_PAYLOAD_FILES, el binario del semáforo producido por S149, el contrato host-neutral retenido, adapters/pi/**, extensions/pi/** y los perfiles/skills Tower editables bajo product/tower/; excluye configuración Pi/Intercom, skills genéricas Gentle AI y el snapshot inmutable product/tower/generic/, sin relocalizar el engine completo.\n\nLa membresía enumera el binario por su ruta y su huella exacta, no por el árbol fuente que lo produjo. Un bundle que incluya bytes de continuation, de despacho Tower-owned o de una operación MCP fuera del contrato tower_* falla cerrado.\n\nLos tres perfiles y sus skills se materializan desde el bundle sin modificar sus fuentes canónicas editables bajo product/tower/.\n\nFaltante, extra, symlink, provenance divergente o incoherencia interceptor/torre-control falla cerrado.\n\nDeclaración, derivación y guardia observan un único conjunto exacto y determinista.\n\nLa Sesión sólo empaqueta: no instala, activa, reescribe configuración global ni ejecuta rollback.\n\nEl diff toca sólo Área."
       restricciones_decisiones: "Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación."
       referencias: "Autoridad original: Decisiones 88, 95, 100 y 104; Engram 9921 y 10008; contrato vigente enumerado de S8.12 aprobado por decisión 10315 del maintainer y citado en openspec/plans/plan-8/STATUS.md líneas 998-1031. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S8.12. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Contraste aprobado Engram 11293 con docs/architecture/torre-motor-determinista.md, secciones 14 y 16: el resultado de bundle se conserva. Una futura membresía engine/harness/adapters requiere evidencia concreta de bytes y versiones; esta referencia no cambia el inventario ni amplía archivos o dependencias."
     decisiones:
@@ -4414,16 +4425,16 @@ sesiones:
           - S8.12
           - S8.13
       - tipo: resuelta
-        pregunta: ¿Qué contrato de routing y dispatch viaja como bytes Tower-owned?
-        resolucion: "El route padre torre-control, los cuatro triggers registrados y la política fire-and-forget de S9.8 viajan como bytes Tower-owned coherentes; el bundle no conserva rutas públicas alternativas ni acredita trabajo sin terminal."
-        autoridad: Decisión 104 y Engram 10008.
+        pregunta: ¿Qué contrato de routing viaja como bytes Tower-owned en el bundle V1?
+        resolucion: "Viajan el route padre torre-control y sus triggers registrados, coherentes con el contrato tower_* del semáforo. La política fire-and-forget de S9.8 NO viaja en el bundle V1: el despacho pasa a torre-v2 y el camino vigente es la skill manual chanks-3-despacho-herdr con la Torre apagada. El bundle no conserva rutas públicas alternativas."
+        autoridad: "Alcance V1 aprobado por Emilio el 2026-09-18 (Engram 11327), que acota la Decisión 104 y Engram 10008 a lo que no depende del despacho Tower-owned; la Decisión 104 conserva su autoridad íntegra dentro de torre-v2."
         clase: contrato-visible-del-producto
-        falsificador: "El bundle conserva una ruta pública alternativa, omite un trigger registrado o acredita trabajo sin terminal."
+        falsificador: "El bundle conserva una ruta pública alternativa, omite un trigger registrado, o transporta la política de despacho de S9.8 pese a que S9.8 pertenece a torre-v2."
         descartadas:
           - opcion: Conservar rutas públicas alternativas.
             razon: Rompería la autoridad única de torre-control.
-          - opcion: Acreditar trabajo sin terminal.
-            razon: Contradiría la política fire-and-forget aprobada para S9.8.
+          - opcion: Transportar la política fire-and-forget de S9.8 en el bundle V1.
+            razon: Ataría el release del semáforo a la topología Herdr, que es justamente lo que el corte del 2026-09-18 separa.
         contaminaba:
           - S8.12
           - S8.13
@@ -4522,12 +4533,10 @@ sesiones:
   - id: S8.13
     prioridad: torre-v1
     zona: instalacion
-    resultado: "Instalador, preflight, activación y rollback del bundle Tower ejercitados sólo en un HOME/runtime aislado"
-    autoridad: "Contrato propietario de la Sesión y autoridades aprobadas del lifecycle versionado; decisiones 88, 100 y 102; Engram 9921, 9956 rev2 y 9963; alcance interpretativo supersedido por Engram 10782, que registra la aprobación posterior del maintainer para la frontera producto/Torre."
+    resultado: "Instalador, preflight, activación y rollback del bundle Torre V1 ejercitados sólo en un HOME/runtime aislado"
+    autoridad: "Contrato propietario de la Sesión y autoridades aprobadas del lifecycle versionado; decisiones 88, 100 y 102; Engram 9921, 9956 rev2 y 9963; alcance interpretativo supersedido por Engram 10782, que registra la aprobación posterior del maintainer para la frontera producto/Torre. Alcance V1 aprobado por Emilio el 2026-09-18 (Engram 11327): el instalador deja de depender de S1.19 y S4.12, que pasan a torre-v2. Consecuencia declarada y aceptada: la instalación V1 se ejercita en su HOME/runtime aislado con sus propias pruebas y NO queda respaldada por la regresión integral Pi-first ni por la recuperación mínima de Pi; ese respaldo llega en torre-v2."
     depende_de:
       - S8.12
-      - S1.19
-      - S4.12
     recurso:
       - puntero activo y destino de extensión Pi aislados
       - backups y rollback del bundle Tower aislado
@@ -4545,7 +4554,7 @@ sesiones:
       - test/install/runtime-payload.test.mjs
       - test/install/launch-worker-cli.test.mjs
     encargo:
-      pedido_contexto: "Instalador, preflight, activación y rollback del bundle Tower ejercitados sólo en un HOME/runtime aislado"
+      pedido_contexto: "Instalador, preflight, activación y rollback del bundle Torre V1 ejercitados sólo en un HOME/runtime aislado. El bundle instalado es el de S8.12: semáforo, contrato host-neutral, adapter Pi, perfiles y skills Torre. El instalador no instala, activa ni diagnostica handoffs, continuation ni despacho Tower-owned, que pertenecen a torre-v2."
       resultado_comportamiento: "torre-control --update selecciona el lifecycle atómico versionado; no ejecuta el camino legado divergente.\n\nEl shim symlink se reemplaza atómicamente; ningún cp sigue su target owner-read-only.\n\nEl diagnóstico prueba revisión activa y coherencia exacta entre plugin, MCP y runtime/engine; una mezcla falla cerrado.\n\nNingún chequeo de sólo existencia/ejecutabilidad/key puede devolver un falso positivo saludable.\n\nInstalación limpia en el HOME/runtime aislado activa el bundle completo y una capacidad ausente, rota o ambigua, un fallo de carga o cualquier preflight incompatible falla con error local tipado antes de mutar, sin route genérico ni global real.\n\nRollback restaura runtime, interceptor, perfiles y skills Tower juntos dentro del destino aislado; no escribe configuración/skills externas, globals reales ni toca fuera de Área.\n\nLa extensión Pi del destino aislado se carga realmente y el fingerprint cerrado prueba factory de un argumento, pi.on(\"input\"), campos y source requeridos de InputEvent, continue|transform|handled, notificación local, enrolamiento, bytes/provenance de torre-control e inventario/orden revisados de transforms antes de quedar activa en la prueba; un mismatch deja cero activación parcial y ninguna versión acepta o rechaza por sí sola.\n\nEl diff toca sólo Área; no modifica Pi core, pi-intercom, skills genéricas, worktrees, evidencia estacionada ni globals reales."
       restricciones_decisiones: "Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación."
       referencias: "Autoridad original: Contrato propietario de la Sesión y autoridades aprobadas del lifecycle versionado; decisiones 88, 100 y 102; Engram 9921, 9956 rev2 y 9963; alcance interpretativo supersedido por Engram 10782, que registra la aprobación posterior del maintainer para la frontera producto/Torre. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S8.13. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Contraste aprobado Engram 11293 con docs/architecture/torre-motor-determinista.md, secciones 14 y 17: se conserva la instalación aislada; la futura unidad engine/contratos/harness deberá demostrar compatibilidad y rollback con evidencia. No se aprueba aquí formato, conversión de datos, activación ni nuevo miembro del payload."
@@ -4657,7 +4666,7 @@ sesiones:
             resultado: "REFACTOR: consolidar el binding y verificar que la asignación no modifica el reciclador manual."
             criterios: [El binding conserva path, rama y base_sha y no cambia rama, base ni reciclador manual.]
   - id: S9.2
-    prioridad: v2
+    prioridad: torre-v3
     resultado: Main no puede reciclar un asiento ocupado; la ocupación es legible y el reciclado toma un lock exclusivo que falla cerrado si el asiento está tomado o si otro Main lo está mutando.
     autoridad: Decisión 62 para la frontera de comportamiento y decisión 10325 del maintainer para conservar S9.2 bloqueada por territorio pendiente.
     depende_de:
@@ -4852,7 +4861,7 @@ sesiones:
             criterios: ["REFACTOR: topología duplicada eliminada, readback/fallback estabilizado y convergencia probada."]
 
   - id: S9.7
-    prioridad: torre-v1
+    prioridad: torre-v2
     zona: hosts
     cimientos:
       - product/tower/skills/torre-control/SKILL.md
@@ -4902,7 +4911,7 @@ sesiones:
       origen_encabezado: "## Sesión 9.7 — Route padre registrado y triggers públicos exactos"
       territorio_pendiente: false
   - id: S9.8
-    prioridad: torre-v1
+    prioridad: torre-v2
     zona: hosts
     cimientos:
       - product/tower/skills/torre-control/SKILL.md
@@ -4980,7 +4989,7 @@ sesiones:
           - {id: T9.9.1.3, accion: "REFACTOR fixtures y negativos", resultado: "entregado", criterios: ["Cierre entregado."]}
 
   - id: S9.10
-    prioridad: v2
+    prioridad: torre-v3
     resultado: Materialización canónica desde base_sha aprobado
     autoridad: "Engram 10522 (full-binding), 10525/10527 (historical attempt), 10531 (verify FAIL), 10532 (no-action)."
     depende_de:
@@ -5705,7 +5714,7 @@ sesiones:
             criterios: [La cola activa no contiene alcance retirado.]
 
   - id: S12.3
-    prioridad: v2
+    prioridad: torre-v3
     resultado: "Las cinco migraciones y sus manifiestos viven en db/migrations/ y db/manifests.mjs; core.mjs los re-exporta, ningún import cambia y las firmas SHA-256 permanecen idénticas."
     autoridad: "Decisión 2 del maintainer, 2026-08-30; aprobación humana 10433 permite sólo el estacionamiento migratorio provisional de S12.3."
     depende_de:
@@ -5744,7 +5753,7 @@ sesiones:
       origen_encabezado: "## Sesión 12.3 — El SQL de las migraciones sale de `core.mjs`"
       territorio_pendiente: true
   - id: S12.4
-    prioridad: v2
+    prioridad: torre-v3
     resultado: Las funciones que verifican coherencia entre SQLite y la versión del esquema viven en db/validators/ sin cambiar su cuerpo ni el comportamiento de persistencia.
     autoridad: "Decisión 2 del maintainer, 2026-08-30; aprobación humana 10433 limita esta representación a formalización migratoria provisional de S12.4."
     depende_de:
@@ -5774,7 +5783,7 @@ sesiones:
       origen_encabezado: "## Sesión 12.4 — Los validadores de persistencia salen de `core.mjs`"
       territorio_pendiente: true
   - id: S12.5
-    prioridad: v2
+    prioridad: torre-v3
     resultado: El protocolo de continuación sale de core.mjs bajo continuation/ sin cambiar cuerpos ni comportamiento.
     autoridad: "Decisión 2 del maintainer, 2026-08-30; decisión Emilio 10463 sustituye el conteo histórico fijo por la superficie actual medida antes de M12.5.1."
     depende_de:
@@ -5805,11 +5814,12 @@ sesiones:
       territorio_pendiente: false
       descomposicion_diferida: true
   - id: S12.6
-    prioridad: v2
-    resultado: La raíz se ordena y el README describe el producto real.
-    autoridad: "Decisión 4 del maintainer, opción B combinada, 2026-08-30."
+    prioridad: torre-v3
+    resultado: La raíz se ordena después de la descomposición de core.mjs y el README se reconcilia con esa estructura.
+    autoridad: "Decisión 4 del maintainer, opción B combinada, 2026-08-30. Corte Torre V1 del 2026-09-18 (Engram 11327): la parte del README que el release necesita se entrega en S150 dentro de torre-v1; S12.6 conserva la reorganización de la raíz, que sí depende de S12.5, y sólo reconcilia el README con la estructura resultante."
     depende_de:
       - S12.5
+      - S150
     zona: cimientos
     cimientos:
       - README.md
@@ -5837,7 +5847,7 @@ sesiones:
       origen_encabezado: "## Sesión 12.6 — La raíz se ordena y el README describe el producto real"
       territorio_pendiente: false
   - id: S12.7
-    prioridad: v2
+    prioridad: torre-v3
     resultado: "La migración futura por Zonas mueve las 26 carpetas planas a src/domain/, src/app/, src/adapters/ y src/contracts/ sin que domain/ ni app/ importen de adapters/."
     autoridad: "Decisión 4 del maintainer, opción A, 2026-08-30; decisión Emilio 10469 para preservar el aplazamiento histórico sin inventar la descomposición sucesora."
     depende_de:
@@ -5957,7 +5967,7 @@ sesiones:
             criterios: [La prueba focalizada histórica registra 1 pass, 0 fail y 5 expectations.]
 
   - id: S12.9
-    prioridad: v2
+    prioridad: torre-v3
     resultado: "El PRD, el RFC y los requisitos quedan corregidos sin alcance retirado, y la procedencia queda intacta: la revisión 1 conserva sus digests como registro histórico y el puntero canónico avanza a una revisión 2 que describe los bytes nuevos."
     autoridad: "Decisión del maintainer del 2026-08-30, opción A, sobre el hallazgo de M12.2.2."
     depende_de:
@@ -6077,7 +6087,7 @@ sesiones:
             criterios: ["git diff --cached --numstat reports changes only in schemas/delivery-policy-v1.schema.json and test/contracts/s3-2-schemas.test.mjs."]
 
   - id: S101
-    prioridad: v2
+    prioridad: torre-v3
     zona: capacidades
     resultado: "Resolución de política: prepare_through opaco y horizon_ceiling salen de la política resuelta"
     autoridad: "Identity, result, zona, dependency, cimientos, and replacement lineage are copied from migration/lineage.yaml successors[S101], whose approved assignment source is immutable commit 43130ad40af06f3ed05671000719217bee74f0a5 at agent-workflows/ASIGNACION-24-SESIONES.md; predecessor S5.14 and its replacement edge remain recorded in migration/lineage.yaml archived_originals and migration/sessions/plan-5.yaml. Product boundaries and route depth are approved by openspec/changes/s101-policy-resolution/proposal.md rev2, specs/policy-resolution/spec.md rev2, and correction 10540. Kickoff route provenance is Engram 10536. Engram 10525/10532 later authority adds S9.10 as a separate prerequisite; it supersedes assignment edge [S100] only by adding S9.10 and preserves S100."
@@ -6147,7 +6157,7 @@ sesiones:
           - opcion: Embed future runtime Modules and Tasks in the migration candidate.
             razon: Rejected because Radar forbids Modules for full-sdd and migration activation must precede runtime decomposition.
   - id: S107
-    prioridad: torre-v1
+    prioridad: torre-v2
     zona: hosts
     resultado: "Topología Herdr Tower-owned dentro del workspace ligado: MAIN y una tab worker por Session ID canónico, con readback determinista"
     autoridad: "Enmienda core-adapter aprobada por Emilio, Engram 11293, conservando procedencia y garantías originales. Decisión del maintainer del 2026-09-13 y fuente inmutable: commit 43130ad40af06f3ed05671000719217bee74f0a5, agent-workflows/ASIGNACION-24-SESIONES.md, blob a7c4ced3b196a6ea92a7bd8f181b98b87fc70ae3, línea 155, bytes 7456-7583, SHA-256 05c38114c8d00c5b8a492cc8f8757b222fe233995c8e72de0066621f74678862. El contrato usa sólo HERDR_WORKSPACE_ID y APIs tab/pane observadas; no reclama workspace-name."
@@ -6192,7 +6202,7 @@ sesiones:
           - opcion: "Inferir identidad desde branch, worktree, asiento, prompt, worker o OpenCode root_session_id."
             razon: No son autoridad y permitirían adoptar recursos ajenos.
   - id: S108
-    prioridad: torre-v1
+    prioridad: torre-v2
     zona: asientos
     resultado: Ciclo idempotente de tabs worker Tower-owned desde witnesses S121 y estado terminal Radar
     autoridad: "Enmienda de autoridad mecánica aprobada por Emilio, Engram 11293. Decisión del maintainer del 2026-09-13: S121 prueba procedencia y Radar estado; S109 no participa. Fuente inmutable: commit 43130ad40af06f3ed05671000719217bee74f0a5, agent-workflows/ASIGNACION-24-SESIONES.md, blob a7c4ced3b196a6ea92a7bd8f181b98b87fc70ae3, línea 156, bytes 7583-7732, SHA-256 647abd52f3b0a53bce67ddeeeb45832da578d7ea8662685e845e98063494be63. Evidencia lifecycle: S100 COMPLETO, commit 1237075200d2df72927c3b166ade1ba61929cbd2 integrado y cierre exacto w6H."
@@ -6233,7 +6243,7 @@ sesiones:
           - opcion: "Usar S109, un segundo active-set o inferencia runtime."
             razon: Duplica autoridad o adopta evidencia no autoritativa.
   - id: S109
-    prioridad: v2
+    prioridad: torre-v3
     zona: contratos
     resultado: "Ventanilla única de plan: la Torre responde una asignación completa y Main deja de derivarla"
     autoridad: "Idea aprobada por el maintainer el 2026-09-10 sobre el documento de diseño «Torre coordina, Main juzga» (artifact 728134a6-47ab-4088-b688-74af1c92bf2a), medido sobre master en bae57ba. La evidencia que la sostiene: responder «qué sigue y quién lo toma» cuesta 512.563 bytes leyendo openspec/plan.yaml entero contra 3.293 bytes pidiéndole avance, colas y asientos a Radar. El contrato radar.snapshot/v1 y su consumidor de referencia ya existen desde b50c0b3 y 969f189."
@@ -6577,7 +6587,7 @@ sesiones:
             criterios: ["REFACTOR: existe una sola verificación de cita y los tests siguen pasando."]
 
   - id: S114
-    prioridad: v2
+    prioridad: torre-v3
     zona: autoridad
     resultado: "Todas las Sesiones vigentes declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado."
     autoridad: "Decisión del maintainer del 2026-09-10 sobre la migración del campo autoridad, elegida entre tres alternativas: migrar por Zona y encender la exigencia al final. La población vigente y el orden se obtienen en ejecución mediante un snapshot `radar status --json` ligado a su revisión; ningún total fijo forma parte del alcance vivo."
@@ -6629,7 +6639,7 @@ sesiones:
           - opcion: Ordenar las Zonas por cantidad de Sesiones ascendente.
             consecuencia: "El contrato se prueba primero sobre el lote más barato; si la forma está mal, se corrige antes de tocar las Zonas grandes."
   - id: S115
-    prioridad: v2
+    prioridad: torre-v3
     zona: metodo
     resultado: "Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada."
     autoridad: "Decisión del maintainer del 2026-09-10: la exigencia se enciende al final, en una Sesión aparte que depende de que la migración haya terminado, para que nunca convivan dos formas exigidas ni un lote por encima del tope."
@@ -6890,7 +6900,7 @@ sesiones:
             criterios: ["REFACTOR: no quedan listas paralelas de transforms.", "La suite completa pasa."]
 
   - id: S119
-    prioridad: torre-v1
+    prioridad: torre-v2
     zona: producto-torre
     resultado: "La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por `torre-control` → `torre asiento`."
     autoridad: "openspec/plans/audits/herdr-skill-ownership-audit.md y su patch, más decisiones del maintainer del 2026-09-11/13: la skill activa sólo por pedido explícito y delega lifecycle a `torre-control` → `torre asiento` → S108, sin roster S109 ni Herdr raw."
@@ -6975,7 +6985,7 @@ sesiones:
     modulos: []
 
   - id: S121
-    prioridad: torre-v1
+    prioridad: torre-v2
     zona: enrolamiento
     resultado: Binding Main-validado con Session ID canónico y procedencia durable de cada tab Tower-owned
     autoridad: "Enmienda de persistencia mecánica aprobada por Emilio, Engram 11293. La decisión del maintainer del 2026-09-13 conserva a Main como única autoridad assignment_ref↔session_id y exige readback S107 para procedencia; el core es escritor del estado operativo y main-store JSON será proyección de compatibilidad, no una segunda autoridad."
@@ -7056,7 +7066,7 @@ sesiones:
           - opcion: Leerlo de la política resuelta desde el principio.
             razon: S122 heredaría el bloqueo de S101 y no podría empezar.
   - id: S123
-    prioridad: v2
+    prioridad: torre-v3
     zona: metodo
     resultado: "Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano."
     autoridad: "Decisiones explícitas de Emilio del 2026-09-13 en la conversación de diseño del horizonte (Claude Code, sesión ed42515b): el horizonte se activa cuando una Zona queda con menos de 2 LISTO y nunca prepara más de 2; la detección es determinista, Support prepara, el humano decide y Main registra como único escritor del plan; Main despacha a Support directo, sin avisar antes. Support ya es un ayudante read-only que nunca despacha ni escribe el plan (agent-workflows/skills/chanks-0-agente-soporte/SKILL.md:12,22,24)."
@@ -8685,7 +8695,7 @@ sesiones:
             razon: Eso repetiría la confusión entre instrucciones y efectos que el alcance aprobado exige corregir.
   - id: S147
     zona: contratos
-    prioridad: torre-v1
+    prioridad: torre-v2
     resultado: Contratos versionados verificables de Ejecución, paquete y evidencia sin duplicar autoridades externas
     autoridad: "Emilio aprobó los cuatro formatos V1 y la huella de diez archivos (Engram 11305), su registro y posteriormente entregas secuenciales con S147 antes de S148 (11316). Autoriza publicar esta documentación, no iniciar implementación, conceder excepción de tamaño, instalar, activar ni declarar entregada S147. Conserva 11293, arquitectura y prioridades aprobadas."
     depende_de: []
@@ -8855,7 +8865,7 @@ sesiones:
         falsificador: "Se inicia S148 antes de entregar S147, se presenta un corte o forecast concreto como aprobado, se concede una excepción por inferencia o se escribe código sin desglose refinado, pruebas y autoridad de inicio."
   - id: S148
     zona: cimientos
-    prioridad: torre-v1
+    prioridad: torre-v2
     resultado: Raíz de Ejecución estable en SQLite con revisión, estado e historial ligados a handoffs existentes
     autoridad: "Emilio aprobó persistencia, preservación y compatibilidad (Engram 11310), su registro y posteriormente entregas secuenciales sólo después de S147 entregada (11316). Autoriza publicar esta documentación, no iniciar implementación, conceder excepción de tamaño, migrar la base real, instalar, activar ni declarar entregada S148. Conserva 11293, arquitectura y prioridades aprobadas."
     depende_de: [S147]
@@ -9026,6 +9036,102 @@ sesiones:
           - opcion: Mantener pendiente la implementación.
             razon: Resolvió la elección de forma de entrega, conservando S147 como dependencia y sin autorizar el inicio de esta Sesión.
         falsificador: "Se inicia S148 sin S147 entregada e integrada, se presume un corte, forecast o excepción aprobados, se escribe SQL/código sin desglose y autoridad de inicio o se permite perder historia o activar la Torre por esta decisión."
+  - id: S149
+    prioridad: torre-v1
+    resultado: La capa semáforo se distribuye como un ejecutable único que no exige bun instalado y conserva el contrato tower_* observable.
+    autoridad: "Corte Torre V1 aprobado por Emilio el 2026-09-18 (Engram 11327): la Torre V1 es el semáforo compilado, Radar y las skills. Eligió explícitamente compilar con `bun build --compile` sobre el código vigente en lugar de reescribir en Go, aceptando un ejecutable de mayor tamaño por llevar el runtime adentro, para preservar las 364 líneas ya verificadas y su suite. La medición que sostiene el corte está en Engram 11325 y 11326."
+    depende_de: []
+    encargo:
+      pedido_contexto: >-
+        La capa semáforo de core.mjs —register, setState, send, receive, acquire, release,
+        transfer, forceRelease, status, locate, probeMode, open y deactivate, medidas hoy en
+        core.mjs:4318-4681— se distribuye como ejecutable único. Hoy la Torre exige bun
+        instalado y se presenta como un conjunto de scripts; el producto que se entrega a un
+        tercero necesita un artefacto que se copie y corra. Esta Sesión produce el binario y su
+        frontera observable; no rediseña el semáforo, no toca la capa continuation y no decide
+        el empaquetado, que pertenece a S8.12.
+      resultado_comportamiento: >-
+        Existe un ejecutable único, reproducible desde el árbol, que expone el contrato tower_*
+        con el mismo comportamiento observable que hoy: registro por directorio, estados,
+        mensajes, y los locks git-delivery y db-writer con su semántica de transferencia. El
+        interruptor ACTIVE y la base por repositorio bajo git-common-dir conservan su ubicación
+        y su formato; un repositorio ya armado sigue funcionando sin migración ni reimportación.
+
+        El binario no transporta la capa continuation. Una invocación de una operación de
+        continuation contra el binario falla cerrado con error tipado, no con un éxito parcial
+        ni con una operación silenciosamente ausente.
+
+        La suite vigente sigue pasando sobre el código fuente sin modificar sus aserciones, y
+        una prueba nueva ejercita el ejecutable ya construido —no el módulo importado— sobre un
+        repositorio temporal: registrar dos agentes, encolar y consumir un mensaje, tomar el
+        lock de entrega, transferirlo y soltarlo.
+
+        El ejecutable declara su versión y la revisión del árbol que lo produjo, de modo que
+        S8.12 pueda enumerarlo por huella exacta.
+      restricciones_decisiones: >-
+        Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana
+        explícita. El territorio todavía no está resuelto: falta decidir si la capa semáforo se
+        extrae a un módulo propio o se compila desde core.mjs tal como está, y esa decisión
+        determina los archivos y los Cimientos exactos. Hasta resolverla el Encargo permanece
+        incompleto y no autoriza archivos, Cimientos ni escritura.
+
+        core.mjs, mcp.mjs, bin/torre, install.sh y package.json son Cimientos: su intervención
+        exige reserva exacta por archivo y aprobación humana fresca. No se toca la capa
+        continuation, ni sus migraciones, ni sus pruebas. No se cambia el esquema de las tablas
+        agent, message y lock. No se activa la Torre, no se instala y no se publica.
+      referencias: >-
+        Medición del corte: Engram 11325 (core.mjs partido 90/10 entre continuation y semáforo,
+        con el semáforo en core.mjs:4318-4681 creando sus tres tablas en open() sin el sistema
+        de migraciones) y Engram 11326 (continuation en el paso 1 de los 11 de
+        docs/architecture/torre-motor-determinista.md, sección 17). Decisión de alcance:
+        Engram 11327. Línea base de código: core.mjs:4318-4681, mcp.mjs (ocho herramientas
+        tower_*), bin/torre. Revalidar contra el código vigente antes de implementar.
+      incompleto: true
+  - id: S150
+    prioridad: torre-v1
+    zona: cimientos
+    resultado: El README describe el producto que se entrega —el semáforo instalable— y no promete capacidades que pertenecen a torre-v2.
+    autoridad: "Corte Torre V1 aprobado por Emilio el 2026-09-18 (Engram 11327). El resultado documental se separa de S12.6, que conserva en torre-v3 la reorganización de la raíz y su dependencia de la descomposición de core.mjs (S12.3 → S12.4 → S12.5); esta Sesión toma sólo la parte del README, que el release necesita y que no depende de ese refactor."
+    depende_de: []
+    cimientos:
+      - README.md
+    archivos:
+      - README.md
+    encargo:
+      pedido_contexto: >-
+        El README vigente describe la Torre como un conjunto de piezas —core.mjs, mcp.mjs,
+        plugin, bin/torre, validador— y enumera las ocho herramientas tower_*. Describe el
+        repositorio, no el producto. Quien reciba la Torre V1 instalada necesita leer qué
+        resuelve, cómo se instala y cuál es su frontera. Esta Sesión reescribe esa lectura; no
+        reorganiza la raíz ni mueve archivos.
+      resultado_comportamiento: >-
+        El README abre con el problema que la Torre resuelve —varias sesiones de agente sobre
+        el mismo repositorio entregan en orden y no se pisan en master— y con el resultado
+        observable, antes que con su inventario de archivos.
+
+        Declara explícitamente la frontera de la V1: coordina y serializa la entrega; no reparte
+        trabajo, no traspasa encargos entre agentes y no recupera una sesión caída. Nombra que
+        el traspaso de trabajo se coordina hoy con el método, no con la Torre, y que la versión
+        automática pertenece a una versión posterior.
+
+        Explica la instalación del artefacto entregable y el interruptor on/off con su efecto
+        real sobre el estado existente. Describe la relación con Radar como dos programas
+        distintos que se instalan juntos y se versionan por separado.
+
+        Ninguna afirmación del README describe una capacidad que no exista en el árbol al
+        momento de escribirlo; cada capacidad enunciada es verificable contra el código o
+        contra una prueba.
+      restricciones_decisiones: >-
+        Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana
+        explícita. README.md es Cimiento: su intervención exige reserva exacta y exclusividad o
+        serialización demostrada. Sólo se autoriza README.md; ROADMAP.md, AGENTS.md, CLAUDE.md
+        y la documentación bajo docs/ quedan fuera. No se reorganiza la raíz, no se mueven ni
+        renombran archivos y no se toca código: esa parte permanece en S12.6 dentro de
+        torre-v3. El texto no anticipa capacidades de torre-v2 como disponibles.
+      referencias: >-
+        Decisión de alcance: Engram 11327. README.md vigente en HEAD como línea base. S12.6
+        conserva en torre-v3 la reorganización de la raíz. La frontera del producto se apoya en
+        la medición de Engram 11325 y 11326. Revalidar contra el árbol vigente antes de escribir.
 references:
   future_successors:
     - id: S102
