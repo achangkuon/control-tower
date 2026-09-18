@@ -1731,7 +1731,7 @@ sesiones:
       pedido_contexto: Recuperación lógica same-host con raíz sucesora
       resultado_comportamiento: "Si backend y raíz siguen vivos, perder Herdr/TUI sólo vuelve a adjuntar la vista al mismo root y conserva host_epoch\n\nRecovery por muerte exige stop proof canónico, mismo host/worktree/checkpoint y lineage del predecesor terminal; cualquier drift falla CT_RECOVERY_UNSAFE sin iniciar nada\n\nMain incrementa host_epoch, crea backend aislado y raíz primaria nuevos mediante el owner de S4.5, persiste un root_session_id distinto y abre automáticamente la nueva TUI adjunta\n\nEl brief respeta el orden de autoridad declarado; Engram no sustituye Git/OpenSpec/checkpoint y Notion no participa\n\nTodo claim, mensaje o efecto del epoch previo devuelve CT_ASSIGNMENT_STALE; el root anterior nunca se reutiliza ni resucita\n\nNo se reconstruye memoria de proceso/subagentes, no se relocaliza multi-host y el diff queda dentro del Área"
       restricciones_decisiones: "Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación."
-      referencias: "Autoridad original: decisiones 37-40, decisión 45, Engram 9040/9044 y REQUIREMENTS §14.4. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S4.4. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto."
+      referencias: "Autoridad original: decisiones 37-40, decisión 45, Engram 9040/9044 y REQUIREMENTS §14.4. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S4.4. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Contraste aprobado Engram 11293 con docs/architecture/torre-motor-determinista.md, sección 14: root_session_id y host_epoch identifican al host y no son la raíz de Ejecución Tower. Se conservan decisiones, recursos, resultado y dependencias; no se traslada esa autoridad por confusión de identidades."
     decisiones:
       - tipo: resuelta
         pregunta: ¿recovery_epoch y host_epoch son contadores distintos o el mismo contador?
@@ -2357,7 +2357,7 @@ sesiones:
     prioridad: torre-v1
     zona: hosts
     resultado: Recuperación mínima de Pi
-    autoridad: decisiones 81 y 87 del maintainer del 2026-08-27
+    autoridad: decisiones 81 y 87 del maintainer del 2026-08-27; enmienda de autoridad mecánica aprobada por Emilio, Engram 11293, sin reinterpretar las decisiones originales.
     depende_de:
       - S9.4
       - S1.18
@@ -2369,10 +2369,11 @@ sesiones:
       - hosts/pi-recovery.mjs
       - test/hosts/pi-recovery.test.mjs
     encargo:
+      incompleto: true
       pedido_contexto: Recuperación mínima de Pi
-      resultado_comportamiento: "Muerte probada termina todo el árbol y prueba quiescencia.\n\nEl sucesor usa un ID nuevo e impredecible, --fork y lineage explícito.\n\nNingún mensaje volátil es autoridad.\n\nEl replay desde estado durable es idempotente.\n\nLa recuperación no reconstruye memoria OpenCode ni toca fuera del Área exacta."
+      resultado_comportamiento: "El core admite las transiciones mecánicas de recuperación ligadas a la Ejecución persistida; el adapter Pi ejecuta y atestigua terminación del árbol, quiescencia y creación del sucesor. No decide lifecycle ni trata el transporte como prueba del efecto.\n\nMuerte probada termina todo el árbol y prueba quiescencia antes de crear el sucesor, con ID nuevo e impredecible, --fork y lineage explícito. El contexto de implementación conserva sus fuentes durables y la continuidad técnica de Gentle AI; la Ejecución no reemplaza Git, OpenSpec ni Engram.\n\nNingún mensaje volátil es autoridad.\n\nEl replay desde estado durable es idempotente.\n\nLa recuperación no reconstruye memoria OpenCode ni toca fuera del Área exacta."
       restricciones_decisiones: "Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación."
-      referencias: "Autoridad original: decisiones 81 y 87 del maintainer del 2026-08-27. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S4.12. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto."
+      referencias: "Autoridad original: decisiones 81 y 87 del maintainer del 2026-08-27. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S4.12. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Enmienda aprobada: Engram 11293 e informe docs/architecture/torre-motor-determinista.md, secciones 7, 10 y 14. Preparación incompleta: falta delimitar el contrato de recuperación core-adapter, su cobertura de API y la huella final; se conservan los archivos conocidos sin permiso de expansión. S147/S148 no cubren por sí solas esa interfaz ni habilitan esta implementación."
     decisiones:
       - tipo: resuelta
         pregunta: ¿Qué recuperación mínima conserva Pi después de la muerte probada de la raíz?
@@ -4396,7 +4397,7 @@ sesiones:
       pedido_contexto: "Packaging del bundle Tower: una membresía versionada contiene exactamente los bytes Tower-owned locales y no instala, activa, reescribe configuración global ni ejecuta rollback."
       resultado_comportamiento: "El bundle contiene exactamente la membresía runtime/engine derivada de RUNTIME_PAYLOAD_FILES, el contrato host-neutral retenido, adapters/pi/**, extensions/pi/** y los perfiles/skills Tower editables bajo product/tower/; excluye configuración Pi/Intercom, skills genéricas Gentle AI y el snapshot inmutable product/tower/generic/, sin relocalizar el engine completo.\n\nLos tres perfiles y sus skills se materializan desde el bundle sin modificar sus fuentes canónicas editables bajo product/tower/.\n\nFaltante, extra, symlink, provenance divergente o incoherencia interceptor/torre-control falla cerrado.\n\nDeclaración, derivación y guardia observan un único conjunto exacto y determinista.\n\nLa Sesión sólo empaqueta: no instala, activa, reescribe configuración global ni ejecuta rollback.\n\nEl diff toca sólo Área."
       restricciones_decisiones: "Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación."
-      referencias: "Autoridad original: Decisiones 88, 95, 100 y 104; Engram 9921 y 10008; contrato vigente enumerado de S8.12 aprobado por decisión 10315 del maintainer y citado en openspec/plans/plan-8/STATUS.md líneas 998-1031. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S8.12. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto."
+      referencias: "Autoridad original: Decisiones 88, 95, 100 y 104; Engram 9921 y 10008; contrato vigente enumerado de S8.12 aprobado por decisión 10315 del maintainer y citado en openspec/plans/plan-8/STATUS.md líneas 998-1031. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S8.12. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Contraste aprobado Engram 11293 con docs/architecture/torre-motor-determinista.md, secciones 14 y 16: el resultado de bundle se conserva. Una futura membresía engine/harness/adapters requiere evidencia concreta de bytes y versiones; esta referencia no cambia el inventario ni amplía archivos o dependencias."
     decisiones:
       - tipo: resuelta
         pregunta: ¿Qué incluye y excluye el bundle Tower?
@@ -4547,7 +4548,7 @@ sesiones:
       pedido_contexto: "Instalador, preflight, activación y rollback del bundle Tower ejercitados sólo en un HOME/runtime aislado"
       resultado_comportamiento: "torre-control --update selecciona el lifecycle atómico versionado; no ejecuta el camino legado divergente.\n\nEl shim symlink se reemplaza atómicamente; ningún cp sigue su target owner-read-only.\n\nEl diagnóstico prueba revisión activa y coherencia exacta entre plugin, MCP y runtime/engine; una mezcla falla cerrado.\n\nNingún chequeo de sólo existencia/ejecutabilidad/key puede devolver un falso positivo saludable.\n\nInstalación limpia en el HOME/runtime aislado activa el bundle completo y una capacidad ausente, rota o ambigua, un fallo de carga o cualquier preflight incompatible falla con error local tipado antes de mutar, sin route genérico ni global real.\n\nRollback restaura runtime, interceptor, perfiles y skills Tower juntos dentro del destino aislado; no escribe configuración/skills externas, globals reales ni toca fuera de Área.\n\nLa extensión Pi del destino aislado se carga realmente y el fingerprint cerrado prueba factory de un argumento, pi.on(\"input\"), campos y source requeridos de InputEvent, continue|transform|handled, notificación local, enrolamiento, bytes/provenance de torre-control e inventario/orden revisados de transforms antes de quedar activa en la prueba; un mismatch deja cero activación parcial y ninguna versión acepta o rechaza por sí sola.\n\nEl diff toca sólo Área; no modifica Pi core, pi-intercom, skills genéricas, worktrees, evidencia estacionada ni globals reales."
       restricciones_decisiones: "Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación."
-      referencias: "Autoridad original: Contrato propietario de la Sesión y autoridades aprobadas del lifecycle versionado; decisiones 88, 100 y 102; Engram 9921, 9956 rev2 y 9963; alcance interpretativo supersedido por Engram 10782, que registra la aprobación posterior del maintainer para la frontera producto/Torre. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S8.13. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto."
+      referencias: "Autoridad original: Contrato propietario de la Sesión y autoridades aprobadas del lifecycle versionado; decisiones 88, 100 y 102; Engram 9921, 9956 rev2 y 9963; alcance interpretativo supersedido por Engram 10782, que registra la aprobación posterior del maintainer para la frontera producto/Torre. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S8.13. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Contraste aprobado Engram 11293 con docs/architecture/torre-motor-determinista.md, secciones 14 y 17: se conserva la instalación aislada; la futura unidad engine/contratos/harness deberá demostrar compatibilidad y rollback con evidencia. No se aprueba aquí formato, conversión de datos, activación ni nuevo miembro del payload."
     decisiones:
       - tipo: resuelta
         pregunta: ¿Qué instala Tower en el destino aislado y qué recuperación parcial se admite?
@@ -4856,7 +4857,7 @@ sesiones:
     cimientos:
       - product/tower/skills/torre-control/SKILL.md
     resultado: Route padre registrado y triggers públicos exactos
-    autoridad: "decisión 104, Engram 10008 y fuente cerrada de S9.6 como antecedente, no como contrato visible vigente."
+    autoridad: "decisión 104, Engram 10008 y fuente cerrada de S9.6 como antecedente, no como contrato visible vigente; enmienda core-adapter aprobada por Emilio, Engram 11293, conservando triggers y autoridad externa."
     depende_de:
       - S1.20
       - S2.9
@@ -4871,10 +4872,11 @@ sesiones:
       - test/extensions/pi/tower-session-router.test.mjs
       - product/tower/skills/torre-control/SKILL.md
     encargo:
+      incompleto: true
       pedido_contexto: Route padre registrado y triggers públicos exactos
-      resultado_comportamiento: "En un proyecto registrado, cada una de las cuatro frases exactas, con o sin Sesión/topic, alcanza el mismo parent route torre-control; ninguna otra frase se acepta.\n\nEl route consulta el probe compartido y selecciona ON u OFF sin pedir al usuario que declare el modo; INDETERMINATE falla cerrado y no llega al modelo.\n\nUn proyecto no registrado continúa sin captura y explica enrollment sólo cuando el usuario invoca explícitamente la superficie Tower correspondiente.\n\nOFF usa peers vivos aprobados y skills sin fabricar garantías Tower; ON exige binding/persistencia/ack/retry Tower-owned.\n\nEl contrato viejo de S9.6 queda como historia cerrada y no se reabre ni recibe crédito nuevo.\n\nEl diff toca sólo Área."
+      resultado_comportamiento: "En un proyecto registrado, cada una de las cuatro frases exactas, con o sin Sesión/topic, alcanza el mismo parent route torre-control; ninguna otra frase se acepta.\n\nEl route consulta el probe compartido y selecciona ON u OFF sin pedir al usuario que declare el modo; INDETERMINATE falla cerrado y no llega al modelo.\n\nUn proyecto no registrado continúa sin captura y explica enrollment sólo cuando el usuario invoca explícitamente la superficie Tower correspondiente.\n\nOFF usa peers vivos aprobados y skills sin fabricar garantías Tower. En ON, el route es un adaptador delgado del core: solicita la transición admitida y materializa su paquete ligado; no reconstruye lifecycle, binding, persistencia ni retry desde prompts o transcripts. El core conserva la autoridad mecánica de esas transiciones sin elegir trabajo ni sustituir la aprobación humana.\n\nEl contrato viejo de S9.6 queda como historia cerrada y no se reabre ni recibe crédito nuevo.\n\nEl diff toca sólo Área."
       restricciones_decisiones: "Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación."
-      referencias: "Autoridad original: decisión 104, Engram 10008 y fuente cerrada de S9.6 como antecedente, no como contrato visible vigente. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S9.7. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto."
+      referencias: "Autoridad original: decisión 104, Engram 10008 y fuente cerrada de S9.6 como antecedente, no como contrato visible vigente. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S9.7. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Enmienda aprobada: Engram 11293 e informe docs/architecture/torre-motor-determinista.md, secciones 11 y 14. Preparación incompleta: falta delimitar la API/IPC consumida por el harness ON, su cobertura y la huella final; no se amplían los archivos conocidos ni se implementa esa API aquí por inferencia. S147/S148 no sustituyen esa cobertura ni autorizan activación."
     decisiones:
       - tipo: resuelta
         pregunta: ¿Cuál es el route padre y qué triggers públicos acepta?
@@ -4906,7 +4908,7 @@ sesiones:
       - product/tower/skills/torre-control/SKILL.md
       - product/tower/skills/torre-control-entregas/SKILL.md
     resultado: Dispatch fire-and-forget y cierre asíncrono
-    autoridad: decisión 104 y Engram 10008.
+    autoridad: decisión 104 y Engram 10008; enmienda de despacho core-adapter aprobada por Emilio, Engram 11293.
     depende_de:
       - S108
       - S1.18
@@ -4919,10 +4921,11 @@ sesiones:
       - product/tower/skills/torre-control-entregas/SKILL.md
       - test/extensions/pi/tower-session-router.test.mjs
     encargo:
+      incompleto: true
       pedido_contexto: Dispatch fire-and-forget y cierre asíncrono
-      resultado_comportamiento: "Main despacha Support/worker, registra dispatch_id y vuelve inmediatamente a coordinar después del acknowledgment de envío.\n\nProgreso y cierre llegan por send; ask sólo aparece con una pregunta de decisión exacta y deja el assignment BLOCKED recuperable.\n\nCada assignment acepta exactamente un terminal COMPLETED, BLOCKED o FAILED con los campos de evidencia/recoverability aprobados; duplicado, stale o sin dispatch_id falla cerrado.\n\nUn candidato local, un pane activo o trabajo parcial sin terminal no acredita progreso ni habilita downstream.\n\nAntes de cada dispatch o retry, S9.8 invoca S108 para el binding objetivo; `active_unchanged` y cierres terminales exactos son convergencia válida, mientras evidencia ausente, fallida, ambigua o divergente produce cero dispatch.\n\nS9.8 no enumera, deriva, renombra ni cierra tabs, panes o workspaces Herdr y no interpreta los testigos persistidos por S121.\n\nOFF no atribuye persistencia/retry Tower-owned; ON exige binding y convergencia S108 del objetivo, sin bloquear por otras Sesiones activas válidas.\n\nEl diff toca sólo Área."
+      resultado_comportamiento: "Main conserva la autoridad humana de assignment y solicita el despacho. Para una Ejecución admitida, el core registra el intento y dispatch_id y emite el paquete ligado; el adapter transporta el envío y Main vuelve inmediatamente a coordinar después del acknowledgment de envío. La entrega del mensaje no prueba ejecución ni avance.\n\nProgreso y cierre llegan por send; ask sólo aparece con una pregunta de decisión exacta y deja el assignment BLOCKED recuperable.\n\nCada assignment acepta exactamente un terminal COMPLETED, BLOCKED o FAILED con los campos de evidencia/recoverability aprobados; duplicado, stale o sin dispatch_id falla cerrado.\n\nUn candidato local, un pane activo o trabajo parcial sin terminal no acredita progreso ni habilita downstream.\n\nAntes de cada dispatch o retry, S9.8 invoca S108 para el binding objetivo; `active_unchanged` y cierres terminales exactos son convergencia válida, mientras evidencia ausente, fallida, ambigua o divergente produce cero dispatch.\n\nS9.8 no enumera, deriva, renombra ni cierra tabs, panes o workspaces Herdr y no interpreta los testigos persistidos por S121.\n\nOFF no atribuye persistencia/retry Tower-owned; ON exige binding y convergencia S108 del objetivo, sin bloquear por otras Sesiones activas válidas.\n\nEl diff toca sólo Área."
       restricciones_decisiones: "Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación."
-      referencias: "Autoridad original: decisión 104 y Engram 10008. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S9.8. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto."
+      referencias: "Autoridad original: decisión 104 y Engram 10008. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S9.8. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Enmienda aprobada: Engram 11293 e informe docs/architecture/torre-motor-determinista.md, secciones 9, 10 y 14. Preparación incompleta: falta delimitar paquetes, admisión de resultados externos y cobertura de API/IPC con su huella final. RDD sigue siendo autoridad externa: no se inventan verdicts, FINALIZE ni archivos de receipt de Gentle AI. S147/S148 no implementan este circuito ni desbloquean por sí solas sus consumidores."
     decisiones:
       - tipo: resuelta
         pregunta: ¿Cuál es la política de dispatch y cierre asíncrono?
@@ -6147,7 +6150,7 @@ sesiones:
     prioridad: torre-v1
     zona: hosts
     resultado: "Topología Herdr Tower-owned dentro del workspace ligado: MAIN y una tab worker por Session ID canónico, con readback determinista"
-    autoridad: "Decisión del maintainer del 2026-09-13 y fuente inmutable: commit 43130ad40af06f3ed05671000719217bee74f0a5, agent-workflows/ASIGNACION-24-SESIONES.md, blob a7c4ced3b196a6ea92a7bd8f181b98b87fc70ae3, línea 155, bytes 7456-7583, SHA-256 05c38114c8d00c5b8a492cc8f8757b222fe233995c8e72de0066621f74678862. El contrato usa sólo HERDR_WORKSPACE_ID y APIs tab/pane observadas; no reclama workspace-name."
+    autoridad: "Enmienda core-adapter aprobada por Emilio, Engram 11293, conservando procedencia y garantías originales. Decisión del maintainer del 2026-09-13 y fuente inmutable: commit 43130ad40af06f3ed05671000719217bee74f0a5, agent-workflows/ASIGNACION-24-SESIONES.md, blob a7c4ced3b196a6ea92a7bd8f181b98b87fc70ae3, línea 155, bytes 7456-7583, SHA-256 05c38114c8d00c5b8a492cc8f8757b222fe233995c8e72de0066621f74678862. El contrato usa sólo HERDR_WORKSPACE_ID y APIs tab/pane observadas; no reclama workspace-name."
     depende_de:
       - S1.18
       - S9.7
@@ -6173,10 +6176,11 @@ sesiones:
       - hosts/seat-cli.mjs
       - test/hosts/seat-cli.test.mjs
     encargo:
+      incompleto: true
       pedido_contexto: "Topología Herdr Tower-owned dentro del workspace ligado: MAIN y una tab worker por Session ID canónico, con readback determinista"
-      resultado_comportamiento: "Dentro del workspace ID ligado existe una MAIN exacta y cada launch crea a lo sumo una tab worker etiquetada sólo con el session_id emitido por S121; S107 no crea, nombra ni valida un workspace visible `Control Tower`.\n\nAGENTES, labels de asiento y seat split salen; toda tab/pane nueva prueba workspace_id, IDs, label, cwd y foreground_cwd antes de éxito.\n\nSólo un recurso devuelto fresco o reprobado por binding/readback puede mutarse; extranjero o ambiguo queda intacto y falla cerrado.\n\nAntes de crear, S107 persiste un intento ligado con workspace/session/cwd esperados; tras readback finaliza `recordTowerTab` idempotentemente. Retry recupera sólo una coincidencia exacta y única; conflicto/ambigüedad falla sin adoptar ni limpiar recursos ajenos.\n\nHerdr genérico sigue Tower-agnostic y las unidades de implementación se revisan en lotes de hasta 400 líneas."
+      resultado_comportamiento: "Dentro del workspace ID ligado existe una MAIN exacta y cada launch crea a lo sumo una tab worker etiquetada sólo con el session_id emitido por S121; S107 no crea, nombra ni valida un workspace visible `Control Tower`.\n\nAGENTES, labels de asiento y seat split salen; toda tab/pane nueva prueba workspace_id, IDs, label, cwd y foreground_cwd antes de éxito.\n\nSólo un recurso devuelto fresco o reprobado por binding/readback puede mutarse; extranjero o ambiguo queda intacto y falla cerrado.\n\nAntes de crear, el core persiste el intento mecánico ligado con workspace/session/cwd esperados. El adapter Herdr ejecuta sólo el efecto admitido y devuelve readback; el core admite la procedencia y finaliza el intento idempotentemente. Un retry admitido por el core recupera sólo una coincidencia exacta y única; conflicto/ambigüedad falla sin adoptar ni limpiar recursos ajenos. El adapter no decide transiciones ni adquiere autoridad de assignment.\n\nHerdr genérico sigue Tower-agnostic y las unidades de implementación se revisan en lotes de hasta 400 líneas."
       restricciones_decisiones: "Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación."
-      referencias: "Autoridad original: Decisión del maintainer del 2026-09-13 y fuente inmutable: commit 43130ad40af06f3ed05671000719217bee74f0a5, agent-workflows/ASIGNACION-24-SESIONES.md, blob a7c4ced3b196a6ea92a7bd8f181b98b87fc70ae3, línea 155, bytes 7456-7583, SHA-256 05c38114c8d00c5b8a492cc8f8757b222fe233995c8e72de0066621f74678862. El contrato usa sólo HERDR_WORKSPACE_ID y APIs tab/pane observadas; no reclama workspace-name. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S107. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto."
+      referencias: "Autoridad original: Decisión del maintainer del 2026-09-13 y fuente inmutable: commit 43130ad40af06f3ed05671000719217bee74f0a5, agent-workflows/ASIGNACION-24-SESIONES.md, blob a7c4ced3b196a6ea92a7bd8f181b98b87fc70ae3, línea 155, bytes 7456-7583, SHA-256 05c38114c8d00c5b8a492cc8f8757b222fe233995c8e72de0066621f74678862. El contrato usa sólo HERDR_WORKSPACE_ID y APIs tab/pane observadas; no reclama workspace-name. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S107. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Enmienda aprobada: Engram 11293 e informe docs/architecture/torre-motor-determinista.md, secciones 6, 11 y 14. Preparación incompleta: falta cerrar el contrato de efecto/readback con el core y revalidar la huella y cobertura de API. Los archivos y Cimientos conocidos se conservan; no habilitan escrituras de core ni otro store. S147/S148 no implementan el adapter ni su admisión completa."
     decisiones:
       - tipo: resuelta
         pregunta: ¿Quién establece label y workspace visible?
@@ -6191,7 +6195,7 @@ sesiones:
     prioridad: torre-v1
     zona: asientos
     resultado: Ciclo idempotente de tabs worker Tower-owned desde witnesses S121 y estado terminal Radar
-    autoridad: "Decisión del maintainer del 2026-09-13: S121 prueba procedencia y Radar estado; S109 no participa. Fuente inmutable: commit 43130ad40af06f3ed05671000719217bee74f0a5, agent-workflows/ASIGNACION-24-SESIONES.md, blob a7c4ced3b196a6ea92a7bd8f181b98b87fc70ae3, línea 156, bytes 7583-7732, SHA-256 647abd52f3b0a53bce67ddeeeb45832da578d7ea8662685e845e98063494be63. Evidencia lifecycle: S100 COMPLETO, commit 1237075200d2df72927c3b166ade1ba61929cbd2 integrado y cierre exacto w6H."
+    autoridad: "Enmienda de autoridad mecánica aprobada por Emilio, Engram 11293. Decisión del maintainer del 2026-09-13: S121 prueba procedencia y Radar estado; S109 no participa. Fuente inmutable: commit 43130ad40af06f3ed05671000719217bee74f0a5, agent-workflows/ASIGNACION-24-SESIONES.md, blob a7c4ced3b196a6ea92a7bd8f181b98b87fc70ae3, línea 156, bytes 7583-7732, SHA-256 647abd52f3b0a53bce67ddeeeb45832da578d7ea8662685e845e98063494be63. Evidencia lifecycle: S100 COMPLETO, commit 1237075200d2df72927c3b166ade1ba61929cbd2 integrado y cierre exacto w6H."
     depende_de:
       - S1.18
       - S9.7
@@ -6213,10 +6217,11 @@ sesiones:
       - hosts/herdr-topology.mjs
       - test/hosts/herdr-topology.test.mjs
     encargo:
+      incompleto: true
       pedido_contexto: Ciclo idempotente de tabs worker Tower-owned desde witnesses S121 y estado terminal Radar
-      resultado_comportamiento: "Enumera sólo `listTowerTabs()`; antes de mutar re-lee workspace/tab/pane y valida `radar.snapshot/v1` para el session_id almacenado.\n\nSólo COMPLETO/ARCHIVADO cierra la tab exacta; un estado no terminal válido converge como `active_unchanged` sin mutar, mientras evidencia inválida, desconocida o divergente falla cerrado.\n\nTerminal + recurso exacto ya ausente converge idempotentemente; ausencia no terminal, desconocida o divergente falla.\n\nNo infiere ownership/liveness desde branch, worktree, asiento, label, prompt, proceso, worker o caller; no depende de S109 ni expone Herdr raw.\n\nLas unidades de implementación se revisan separadas y cada lote queda bajo 400 líneas."
+      resultado_comportamiento: "El core decide la transición contra procedencia S121 y evidencia fresca `radar.snapshot/v1` coincidentes para el session_id almacenado. El adapter enumera sólo recursos Tower-owned mediante `listTowerTabs()`, re-lee workspace/tab/pane y ejecuta y atestigua únicamente el cierre exacto admitido; no reimplementa el cálculo de Radar ni decide lifecycle.\n\nSólo COMPLETO/ARCHIVADO cierra la tab exacta; un estado no terminal válido converge como `active_unchanged` sin mutar, mientras evidencia inválida, desconocida o divergente falla cerrado.\n\nTerminal + recurso exacto ya ausente converge idempotentemente; ausencia no terminal, desconocida o divergente falla.\n\nNo infiere ownership/liveness desde branch, worktree, asiento, label, prompt, proceso, worker o caller; no depende de S109 ni expone Herdr raw.\n\nLas unidades de implementación se revisan separadas y cada lote queda bajo 400 líneas."
       restricciones_decisiones: "Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación."
-      referencias: "Autoridad original: Decisión del maintainer del 2026-09-13: S121 prueba procedencia y Radar estado; S109 no participa. Fuente inmutable: commit 43130ad40af06f3ed05671000719217bee74f0a5, agent-workflows/ASIGNACION-24-SESIONES.md, blob a7c4ced3b196a6ea92a7bd8f181b98b87fc70ae3, línea 156, bytes 7583-7732, SHA-256 647abd52f3b0a53bce67ddeeeb45832da578d7ea8662685e845e98063494be63. Evidencia lifecycle: S100 COMPLETO, commit 1237075200d2df72927c3b166ade1ba61929cbd2 integrado y cierre exacto w6H. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S108. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto."
+      referencias: "Autoridad original: Decisión del maintainer del 2026-09-13: S121 prueba procedencia y Radar estado; S109 no participa. Fuente inmutable: commit 43130ad40af06f3ed05671000719217bee74f0a5, agent-workflows/ASIGNACION-24-SESIONES.md, blob a7c4ced3b196a6ea92a7bd8f181b98b87fc70ae3, línea 156, bytes 7583-7732, SHA-256 647abd52f3b0a53bce67ddeeeb45832da578d7ea8662685e845e98063494be63. Evidencia lifecycle: S100 COMPLETO, commit 1237075200d2df72927c3b166ade1ba61929cbd2 integrado y cierre exacto w6H. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S108. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Enmienda aprobada: Engram 11293 e informe docs/architecture/torre-motor-determinista.md, secciones 10, 11 y 14. Preparación incompleta: falta cerrar la admisión de evidencias de lifecycle y la interfaz core-adapter con su huella final. Se preservan los terminales exactos y los Cimientos conocidos; no se implementa API/IPC ni persistencia central por expansión tácita. S147/S148 no cubren por sí solas este recorrido."
     decisiones:
       - tipo: resuelta
         pregunta: ¿Qué prueba ownership y qué autoriza cierre?
@@ -6973,7 +6978,7 @@ sesiones:
     prioridad: torre-v1
     zona: enrolamiento
     resultado: Binding Main-validado con Session ID canónico y procedencia durable de cada tab Tower-owned
-    autoridad: Decisión del maintainer del 2026-09-13. Main establece assignment_ref↔session_id en assignment-location; binding/consumer lo transportan y persisten workspace/tab/pane sólo tras readback S107. main-store/launch-consumer.mjs:79-88 hoy guarda sólo request_ref y binding_path.
+    autoridad: "Enmienda de persistencia mecánica aprobada por Emilio, Engram 11293. La decisión del maintainer del 2026-09-13 conserva a Main como única autoridad assignment_ref↔session_id y exige readback S107 para procedencia; el core es escritor del estado operativo y main-store JSON será proyección de compatibilidad, no una segunda autoridad."
     depende_de:
       - S4.2
       - S4.5
@@ -6988,10 +6993,11 @@ sesiones:
       - test/main-store.test.mjs
       - test/install/launch-worker-cli.test.mjs
     encargo:
+      incompleto: true
       pedido_contexto: Binding Main-validado con Session ID canónico y procedencia durable de cada tab Tower-owned
-      resultado_comportamiento: "assignment-location exige session_id canónico e inmutable; ausencia, forma inválida, conflicto o registro legacy falla cerrado.\n\nEl binding copia ese ID sin caller injection y consumer revalida schema; session_id de plan nunca se confunde con OpenCode root_session_id ni se infiere.\n\nAntes de crear, S121 persiste un intento con identidades derivadas y expectativas workspace/cwd; `recordTowerTab(readback)` lo finaliza idempotentemente, acepta repetición byte-idéntica y rechaza conflicto, forged o ambigüedad.\n\n`listTowerTabs()` enumera procedencia read-only, nunca liveness, active-set, dispatch o cierre.\n\nLa fixture registra sólo identidad Main-owned y la CLI acepta únicamente request_ref opaco. Cada lote de revisión queda bajo 400 líneas."
+      resultado_comportamiento: "assignment-location exige session_id canónico e inmutable; ausencia, forma inválida, conflicto o registro legacy falla cerrado.\n\nEl binding copia ese ID sin caller injection y consumer revalida schema; session_id de plan nunca se confunde con OpenCode root_session_id ni se infiere.\n\nMain establece exclusivamente assignment_ref↔session_id. Para una Ejecución admitida, el core persiste el intento mecánico con esa identidad validada y expectativas workspace/cwd; el adapter devuelve el readback que permite admitir procedencia idempotente, aceptar repetición byte-idéntica y rechazar conflicto, forged o ambigüedad. Ni core ni adapter eligen assignments. main-store JSON será proyección de compatibilidad del estado canónico en SQLite, nunca un segundo escritor de autoridad; la migración y proyección necesitan su propia cobertura antes de cambiar consumidores.\n\n`listTowerTabs()` enumera procedencia read-only, nunca liveness, active-set, dispatch o cierre.\n\nLa fixture registra sólo identidad Main-owned y la CLI acepta únicamente request_ref opaco. Cada lote de revisión queda bajo 400 líneas."
       restricciones_decisiones: "Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación."
-      referencias: "Autoridad original: Decisión del maintainer del 2026-09-13. Main establece assignment_ref↔session_id en assignment-location; binding/consumer lo transportan y persisten workspace/tab/pane sólo tras readback S107. main-store/launch-consumer.mjs:79-88 hoy guarda sólo request_ref y binding_path. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S121. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto."
+      referencias: "Autoridad original: Decisión del maintainer del 2026-09-13. Main establece assignment_ref↔session_id en assignment-location; binding/consumer lo transportan y persisten workspace/tab/pane sólo tras readback S107. main-store/launch-consumer.mjs:79-88 hoy guarda sólo request_ref y binding_path. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S121. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Enmienda aprobada: Engram 11293 e informe docs/architecture/torre-motor-determinista.md, secciones 12 y 14. Preparación incompleta: falta delimitar API, proyección/migración y huella completa conservando la procedencia y los datos previos. No se ejecuta migración ni se concede escritura de core desde esta declaración; S147/S148 no implementan outbox, proyección ni conversión de main-store."
     decisiones:
       - tipo: resuelta
         pregunta: ¿Quién establece Session ID y qué significa la lista de tabs?
@@ -8677,6 +8683,349 @@ sesiones:
         descartadas:
           - opcion: Dar por suficiente el contrato de skills sin recorrido real.
             razon: Eso repetiría la confusión entre instrucciones y efectos que el alcance aprobado exige corregir.
+  - id: S147
+    zona: contratos
+    prioridad: torre-v1
+    resultado: Contratos versionados verificables de Ejecución, paquete y evidencia sin duplicar autoridades externas
+    autoridad: "Emilio aprobó los cuatro formatos V1 y la huella de diez archivos (Engram 11305), su registro y posteriormente entregas secuenciales con S147 antes de S148 (11316). Autoriza publicar esta documentación, no iniciar implementación, conceder excepción de tamaño, instalar, activar ni declarar entregada S147. Conserva 11293, arquitectura y prioridades aprobadas."
+    depende_de: []
+    cimientos:
+      - test/fixtures/contracts/schema-cases-v1.json
+    recurso: []
+    archivos:
+      - contracts/schema-registry.mjs
+      - contracts/validate.mjs
+      - contracts/tower-execution.mjs
+      - schemas/observed-content-ref-v1.schema.json
+      - schemas/tower-execution-context-v1.schema.json
+      - schemas/sealed-packet-v1.schema.json
+      - schemas/execution-evidence-v1.schema.json
+      - test/contracts/schema.test.mjs
+      - test/contracts/tower-execution.test.mjs
+      - test/fixtures/contracts/schema-cases-v1.json
+    encargo:
+      pedido_contexto: >-
+        Incorporar al registro existente cuatro contratos V1 compartidos por el futuro core:
+        observed-content-ref, tower-execution-context, sealed-packet y execution-evidence.
+        Distinguir Sesión, Ejecución, paquete e intento sin confundirlos con Jornada o proceso
+        del host. Esta base valida datos y sus vínculos; no es un motor de admisión ni una
+        nueva jerarquía del plan. Los consumidores posteriores deberán adoptar estos contratos
+        bajo su propio alcance, sin inferir que S147 los adapta o habilita.
+      resultado_comportamiento: >-
+        Registrar observedContentRef, towerExecutionContext, sealedPacket y executionEvidence
+        con los cuatro archivos schema V1 declarados, Draft 2020-12, schema y schema_version
+        constantes y propiedades declaradas estrictamente. Reutilizar el registro y conectar
+        sus invariantes a contracts/validate.mjs; contracts/tower-execution.mjs aporta las
+        funciones puras de huellas y vínculos, no una utilidad opcional desconectada.
+
+        observed-content-ref identifica una captura local mediante observation_id, producer,
+        source_kind, media_type, digest_mode raw-bytes, content_digest y observed_at; incluye
+        issuer_reference sólo cuando el emisor realmente la haya emitido. Conserva el sujeto
+        original en el registro capturado, sin reasignarlo a un execution_id posterior.
+        Las referencias admiten este formato para capturas efímeras y el artifact-ref existente
+        sólo para blobs reales de un commit Git. Radar status y radar sesion se vinculan por los
+        bytes exactos de su stdout, nunca por una recanonicalización o procedencia Git inventada.
+
+        tower-execution-context contiene execution_id, execution_revision, execution_context_digest,
+        repository_snapshot_binding (repository_id, canonical_root, git_common_dir, base_sha),
+        session_id, radar_status_ref, session_contract_ref, coordination_ref, encargo_ref,
+        start_authority_refs y created_at. Es una instantánea de identidad y contexto, no la raíz
+        mutable completa de SQLite. Conserva IDs de Sesión como S147 y S4.12 sin convertirlos a
+        slug minúsculo. Las rutas locales vinculan ese checkout; no prueban identidad portable.
+
+        sealed-packet contiene packet_id, packet_revision, packet_digest, attempt, el contexto
+        de ejecución validado, transition_binding, idempotency_ref, expires_at, actor_binding_ref,
+        work_purpose_ref al mismo Encargo, decision_refs, readonly_input_refs, materialized_context,
+        scope, expected_evidence y predecessor. El alcance declara archivos exactos, Cimientos,
+        recursos, efectos permitidos/prohibidos, comandos y checks autorizados y frontera de
+        rollback/compensación. Vincula host/worker/capacidades esperados sin concederlos. Materializa
+        sólo el contexto necesario y sus referencias/huellas, no una skill como autoridad ni acceso
+        directo al store. La primera revisión carece de predecesor; las siguientes conservan
+        Ejecución y enlazan paquete/revisión/huella anteriores, motivo, autoridad, presupuesto y
+        evidencia terminal real. No fabrica comprobantes todavía inexistentes ni agrega partes
+        al Encargo nativo de cuatro campos.
+
+        execution-evidence incluye evidence_id/evidence_digest, execution_id/execution_revision/
+        execution_context_digest, packet_id/packet_revision/packet_digest, attempt, actor_binding_ref,
+        emitted_at, result_ref, changed_paths, check_observation_refs y external_observation_refs;
+        sólo incorpora referencias a candidato/commit/tree cuando existan. changed_paths es un
+        subconjunto de los archivos autorizados, no necesariamente toda su lista; admite subconjunto
+        vacío y rechaza salidas de alcance. Los resultados y checks remiten a datos estructurados
+        observados, no a veredictos o terminalidad inventados por el agente.
+
+        Las huellas propias usan JCS/SHA-256 con dominios
+        control-tower/tower-execution-context/artifact/v1, control-tower/sealed-packet/artifact/v1
+        y control-tower/execution-evidence/artifact/v1, excluyendo sólo su propio campo de huella.
+        Las huellas externas identifican bytes originales; los handles del proveedor permanecen
+        opacos. La validación devuelve datos inmutables y rechazos deterministas CT_SCHEMA_INVALID.
+        Pruebas aisladas deben aceptar cada formato válido y el legado sin regresión, y rechazar
+        versiones desconocidas, propiedades extra, huellas incorrectas, vínculos cruzados entre
+        ejecuciones/revisiones/intentos, predecesores incoherentes y archivos fuera de alcance.
+        Deben distinguir captura efímera sin commit de referencia Git real, comprobar el vínculo
+        con el contexto/paquete suministrado y la integración por la entrada común de validación.
+      restricciones_decisiones: >-
+        La propuesta pública y la forma de entrega secuencial están aprobadas. Previsión inicial
+        de 700–1100 líneas autorales añadidas más eliminadas, incluidos schemas, código, fixtures
+        y pruebas. Antes de RED, Gentle AI debe afinar el forecast y producir el desglose técnico
+        de entregas independientes, verificables y reversibles, cada una con pruebas y frontera
+        de reversión propias. No se aprobaron cortes concretos, cantidad de entregas ni excepción
+        de tamaño. Las 400 líneas son referencia, no límite duro: una unidad que la supere requiere
+        consultar antes de implementarla, sin recortar pruebas ni fragmentar artificialmente.
+        Gentle AI posee el desglose, implementación y verificación mediante ODD; SDD sólo por
+        solicitud humana explícita. S147 se entrega antes de iniciar S148. El inicio requiere
+        selección humana, admisión Radar y compatibilidad frescas, no esta publicación documental.
+
+        Los V1 coexisten con los formatos anteriores: no conversión automática, importación,
+        reescritura histórica ni interpretación silenciosa de otra versión. No modificar
+        contracts/index.mjs ni duplicar el registro. Registrar los schemas cambia la lista derivada
+        de assets instalables, pero no ejecuta una instalación. Validar forma, huella o igualdad
+        contra contexto suministrado no prueba autenticidad, vigencia, permiso ni admisión de
+        efectos. Tampoco el veto de nombres de campos garantiza ausencia de secretos dentro de
+        texto; no transportar credenciales, tokens reutilizables o acceso al store como evidencia.
+        No exigir un receipt de Gentle AI, FINALIZE ni copiar su lifecycle.
+
+        Quedan fuera SQLite/migración, estados y transiciones del motor, transporte API/IPC,
+        outbox/proyecciones, despacho, adapters, autenticación real, RDD, entrega, cierre y activación.
+        Cualquier archivo adicional requiere aprobación y compatibilidad fresca antes de escribir;
+        los Cimientos y recursos compartidos exigen exclusividad o serialización demostrada.
+        No hay asiento ni recurso adquirido. Las pruebas descritas son resultados por demostrar,
+        no un PASS ni comportamiento instalado.
+      referencias: >-
+        Autoridad inicial Engram 11293; propuesta 11304 y aprobación humana 11305, seguidas por
+        autorización de registro en el plan y decisión 11316 de entregas secuenciales, orden S147
+        antes de S148 y publicación documental. Este Encargo contiene el contrato operativo de alcance;
+        Engram conserva procedencia, no es una dependencia necesaria para reconstruir sus requisitos.
+        docs/architecture/torre-motor-determinista.md, secciones 3, 8, 9, 10, 15 y 17,
+        SHA-256 cc9949d367e93a1b809534335248cbd9916d7acf99ed6d9f188dff63b7b04f62.
+        Base de investigación HEAD 1658444ff52cddba3516f7e4e39bd314ccd21cdc:
+        contracts/schema-registry.mjs:6–43, contracts/validate.mjs:169–220,
+        contracts/artifact-ref.mjs:22–59 y schemas/artifact-ref-v1.schema.json.
+        Revalidar contra el código vigente antes de implementar. Se conserva Torre V1 detrás del
+        Método, la Zona contratos y el Cimiento exacto de fixtures; sin nuevas Sesiones o dependencias.
+    decisiones:
+      - tipo: resuelta
+        clase: api-publica
+        alcanza: encargo
+        pregunta: "¿Se aprueba la propuesta concreta de nombres, campos, versiones, compatibilidad y archivos de estos contratos cuando se presente, o qué ajustes requiere antes de implementar?"
+        evidencia: "La arquitectura fija contratos versionados y autoridades externas, pero el informe deja sin cerrar los schemas y nombres públicos; la lista actual sólo identifica archivos existentes y no los schemas nuevos."
+        contaminaba: [S147, S148]
+        checkpoint: "Antes de RED y de completar la autorización de archivos de S147; presentar primero la propuesta concreta sin implementar."
+        opciones:
+          - opcion: Aprobar una propuesta concreta compatible con las decisiones arquitectónicas vigentes.
+            consecuencia: Permite completar el Encargo y su huella; no autoriza consumidores, transporte ni activación.
+          - opcion: Pedir ajustes o mantener la preparación incompleta.
+            consecuencia: No se implementan contratos ni se presume compatibilidad del núcleo o sus consumidores.
+        resolucion: >-
+          Aprobados los cuatro formatos V1 y los diez archivos de este Encargo, con rechazo de datos
+          incompatibles, referencias observadas sin falsa procedencia, validación integrada y sin
+          conversión automática de la historia. Permite preparar S148 sobre esta interfaz, no
+          implementarla, instalarla o activarla. El presupuesto y la selección de ejecución quedan
+          pendientes; la autorización posterior permite registrar aquí esa resolución.
+        autoridad: "Emilio; respuesta UI explícita Aprobar la propuesta, registrada en Engram 11305 y ratificada por su pedido de plasmar ambas propuestas en el plan."
+        descartadas:
+          - opcion: Pedir ajustes o mantener la preparación incompleta.
+            razon: Emilio eligió aprobar la propuesta concreta presentada, incluidos sus límites y diez archivos, en vez de dejar abierta esa definición pública.
+        falsificador: "Se altera un formato histórico, se fabrica autoridad/procedencia Git o un receipt externo, se omite el validador común, se cambia el contrato V1 aprobado sin nueva autoridad o se amplían archivos sin aprobación."
+      - tipo: resuelta
+        alcanza: encargo
+        pregunta: "Antes de RED, con la previsión inicial de 700–1100 líneas y su refinamiento técnico, ¿se aprueban entregas secuenciales verificables y reversibles o una excepción de tamaño para S147?"
+        evidencia: "La aprobación 11305 excluyó expresamente presupuesto e implementación; el forecast de schemas, helpers, fixtures y pruebas supera la referencia de revisión de 400 líneas."
+        contaminaba: [S147]
+        checkpoint: "Antes de RED o cualquier escritura de código de S147; presentar forecast refinado y unidades técnicas propuestas sin crear Módulos/Tareas Chanks."
+        opciones:
+          - opcion: Aprobar un desglose técnico en entregas secuenciales.
+            consecuencia: Cada unidad requiere pruebas y reversibilidad propias bajo la política de entrega del repositorio; no implica PRs ni nuevas Sesiones por tamaño.
+          - opcion: Aprobar una excepción de tamaño explícita.
+            consecuencia: Acepta el volumen refinado para la unidad coherente aprobada, sin ampliar alcance ni omitir pruebas o revisión.
+          - opcion: Mantener pendiente la implementación.
+            consecuencia: Conserva este contrato aprobado, pero no autoriza RED ni escritura de código.
+        resolucion: >-
+          Emilio elige entregas secuenciales verificables y reversibles, con S147 entregada antes
+          de iniciar S148. Resuelve la elección de forma de entrega: el desglose técnico refinado
+          queda a cargo de Gentle AI antes de RED, sin cortes concretos ni excepción de tamaño
+          preaprobados. Autoriza publicar la documentación, no comenzar implementación ni alterar
+          las prioridades. La restricción de presupuesto pendiente en la resolución 11305 describe
+          aquella aprobación anterior; esta decisión posterior resuelve sólo la forma secuencial.
+        autoridad: "Emilio; respuesta explícita «1. secuenciales. 2. si respetamos el orden. 3.publicamos y com esto cerramos esta magnifca sesio», registrada en Engram 11316."
+        descartadas:
+          - opcion: Aprobar una excepción de tamaño explícita.
+            razon: Eligió entregas secuenciales; no concedió excepción de tamaño.
+          - opcion: Mantener pendiente la implementación.
+            razon: Resolvió la elección de forma de entrega, sin seleccionar ni autorizar todavía el inicio de esta Sesión.
+        falsificador: "Se inicia S148 antes de entregar S147, se presenta un corte o forecast concreto como aprobado, se concede una excepción por inferencia o se escribe código sin desglose refinado, pruebas y autoridad de inicio."
+  - id: S148
+    zona: cimientos
+    prioridad: torre-v1
+    resultado: Raíz de Ejecución estable en SQLite con revisión, estado e historial ligados a handoffs existentes
+    autoridad: "Emilio aprobó persistencia, preservación y compatibilidad (Engram 11310), su registro y posteriormente entregas secuenciales sólo después de S147 entregada (11316). Autoriza publicar esta documentación, no iniciar implementación, conceder excepción de tamaño, migrar la base real, instalar, activar ni declarar entregada S148. Conserva 11293, arquitectura y prioridades aprobadas."
+    depende_de: [S147]
+    cimientos:
+      - core.mjs
+      - test/migration.test.mjs
+    recurso: []
+    archivos:
+      - core.mjs
+      - test/migration.test.mjs
+    encargo:
+      pedido_contexto: >-
+        Incorporar una raíz de Ejecución duradera en tower.db, separada de Sesión, Jornada y proceso
+        host, reutilizando ct_handoff como sistema de intentos. Implementar la base de persistencia
+        y preparación de borradores aprobada, no un segundo motor ni un ciclo operativo completo.
+        S147 aporta los contratos V1: aprobar su propuesta no satisface su dependencia de entrega.
+        El payload anterior exige datos source_merge y proyecciones que un paquete nativo no tiene
+        necesariamente; no inventarlos ni aceptar dos documentos independientes como autoridad del
+        mismo trabajo. La ampliación del formato existente forma parte explícita de S148.
+      resultado_comportamiento: >-
+        Sobre la base de código que conoce schema 5, añadir la migración 006 sin editar las
+        migraciones 001–005 ni sus checksums. No es DDL exclusivamente aditivo: ct_handoff debe
+        distinguir el formato anterior del sealed-packet V1, conservar las exigencias anteriores
+        para sus filas y permitir ausencia de proyecciones específicas del legado en filas nativas,
+        sin falsos SHA/URL de entrega o unidades de trabajo. El payload nativo es el paquete S147
+        real, único; los metadatos comunes se derivan de identidades y contexto reales del Core.
+        packet_digest y los digest/fingerprint propios del handoff conservan sus dominios distintos.
+
+        Crear ct_execution_root (identidad estable, contexto, revisión, fase/estado separados y
+        paquete vigente), ct_execution_history (sucesos append-only con revisiones y contextos) y
+        ct_execution_handoff (asociación explícita al handoff real). Registrar por separado
+        packet_id/revisión/intento lógico y lineage/revisión/generación nativos: no igualar el
+        intento a la generación de lease ni deducir la Ejecución de un lineage, Sesión o proceso.
+        Una identidad de paquete/revisión no puede reutilizarse con contenido o intento distintos.
+        Reutilizar ct_idempotency del Core para clave/ámbito de operación, digest de solicitud/CAS
+        y respuesta: repetición idéntica no duplica filas; identidad reutilizada con otro contenido
+        se rechaza. Las relaciones se comprueban en Core y sus restricciones/guards: una declaración
+        FK sin enforcement no basta, ni se habilita un PRAGMA global por suposición.
+
+        Delimitar operaciones internas createExecutionRoot, registerManagedPacket,
+        retirePreparedPacket y readExecutionRoot, sin agregar transporte o entrada de despacho.
+        Sólo Core crea la raíz, registra borradores, retira borradores no despachados y lee estado
+        e historial. Fase y estado se persisten separados con las etiquetas semánticas de la
+        arquitectura; inicialmente ADMISSION y OPEN significan preparado para admisión posterior,
+        no trabajo autorizado. No hay setter libre de fase/estado ni COMPLETED declarado por el
+        agente. Los avances de negocio requieren trabajo posterior del Core, no autoridad de adapters.
+
+        Separar el CAS previo n del contexto esperado posterior n+1 del paquete registrado.
+        Core deriva/valida la instantánea y su huella de revisión; al confirmar, el contexto del
+        paquete coincide con la raíz n+1. El ID estable no congela la huella inicial para siempre
+        ni permite ciclos de autohuella. Raíz, hijo, asociación, historial y respuesta idempotente
+        se actualizan atómicamente; una revisión vieja no deja escrituras parciales. Retirar un
+        borrador conserva su prueba terminal real antes de que el siguiente paquete la cite;
+        nunca anticipa un comprobante todavía no emitido ni opera sobre trabajo iniciado.
+
+        Las rutas anteriores mantienen su comportamiento para los registros anteriores pero
+        rechazan operar sobre los nuevos gestionados cuando eludirían la raíz, su CAS o historial.
+        Cubrir también revisiones, recovery y operaciones globales que crucen esos datos; no
+        confundir compatibilidad del legado con permiso para pasar paquetes nuevos por su validador.
+        Los nuevos intentos permanecen sin despacho hasta completar admisión y controles posteriores.
+
+        La migración preserva exactamente los valores previos de identidad, payload_json, huellas,
+        metadatos de productor, revisiones, generaciones, estados e historial, sin reserializar
+        contenidos ni asociar filas previas automáticamente. Sólo clasifica un formato previo
+        cuando lo comprueba; datos desconocidos o inconsistentes abortan sin cambios parciales.
+        Conservar el límite existente de 65536 bytes por payload: rechazar excesos, no truncar
+        ni ampliar la cuota automáticamente. El rollback después de nueva historia es reparación
+        que la preserve, no DROP de tablas nuevas ni restauración que la borre silenciosamente.
+
+        Pruebas futuras en bases aisladas con historia no vacía deben demostrar migración y
+        solicitudes repetibles, preservación de valores/bytes y checksums anteriores, formato nuevo
+        sin campos ficticios, fallos tardíos/ocupación sin esquema o filas parciales, conflicto CAS,
+        contexto correcto tras registrar, vínculos explícitos entre intentos, identidad estable a
+        través de borradores sucesivos, historial inmutable y rechazo de atajos por rutas anteriores.
+        Mantener regresiones del formato previo. No hay prueba de ciclo operativo completo ni
+        preservación de una base viva por haber leído el código o pasado fixtures.
+      restricciones_decisiones: >-
+        La propuesta de estructura, compatibilidad y forma de entrega secuencial está aprobada;
+        la implementación no. Previsión inicial de 1200–1800 líneas autorales añadidas más eliminadas
+        para migración, adaptación del formato, persistencia, guards y pruebas; no reutilizar el
+        forecast menor de un almacén parcial. Antes de RED, Gentle AI debe afinarla y producir el
+        desglose técnico de entregas independientes, verificables y reversibles, con pruebas y
+        preservación de historia propias. No hay cortes concretos, cantidad de entregas ni excepción
+        de tamaño preaprobados. Las 400 líneas son referencia, no límite duro: una unidad que la
+        supere requiere consultar antes de implementarla, sin recortar pruebas ni fragmentar
+        artificialmente. Gentle AI posee el desglose, implementación y verificación mediante ODD;
+        SDD sólo por solicitud humana explícita, sin Módulos/Tareas Chanks nuevos.
+
+        El inicio requiere selección humana, admisión Radar fresca y dependencia S147 entregada.
+        La versión 5 es evidencia del código base, no de la base real: no se inspeccionó ni se
+        autoriza mutar esa base. Cualquier conversión real exige inventario, respaldo, exclusividad
+        y aprobación separados; no restaurar una copia antigua sobre historia posterior. Mantener
+        la Torre apagada. No importar main-store JSON, inferir asociaciones históricas ni sustituir
+        autoridad humana, Radar, Git o Gentle AI con datos de forma válida.
+
+        No incluye transporte/API IPC, despacho operativo, máquina completa de admisión/avance,
+        outbox/proyección JSON, adapters, RDD, entrega, cierre o activación. Tampoco habilita
+        automáticamente los seis consumidores pendientes. Cualquier archivo adicional requiere
+        aprobación y compatibilidad fresca antes de escribir; los dos Cimientos requieren evidencia
+        exclusiva o serial para su mutación. No hay recurso adquirido. Los ensayos descritos siguen
+        pendientes y no son un PASS. Revalidar el baseline antes de implementar; una contradicción
+        de esquema, contrato o alcance no autoriza reescribir historia o ampliar superficies.
+      referencias: >-
+        Autoridad inicial Engram 11293; descubrimiento 11308, propuesta 11309 y aprobación humana
+        11310, seguidas por autorización de registro y decisión 11316 de entregas secuenciales,
+        S147 antes de S148 y publicación documental. Este Encargo explicita el alcance;
+        Engram conserva la procedencia de las decisiones, no un diseño imprescindible fuera del plan.
+        docs/architecture/torre-motor-determinista.md, secciones 3, 7, 8, 12, 15 y 17,
+        SHA-256 cc9949d367e93a1b809534335248cbd9916d7acf99ed6d9f188dff63b7b04f62.
+        Base de investigación HEAD 1658444ff52cddba3516f7e4e39bd314ccd21cdc:
+        core.mjs:86–112,231–318,855–1058,2442–2591; test/migration.test.mjs:1679–1740.
+        test/recovery.test.mjs:86–95 es lectura de regresión que provisiona explícitamente schema 5,
+        no permiso de editar ese archivo. Reutilizar los validadores entregados de S147 sin ampliar
+        su huella. Se conservan Torre V1 detrás del Método, S148→S147 y los dos Cimientos exactos.
+        Son dos bases iniciales, no cobertura completa de API/IPC, admisión de efectos, proyección
+        o cierre; no se inventan ahora otras Sesiones, dependencias o prioridades.
+    decisiones:
+      - tipo: resuelta
+        clase: migracion-o-perdida-de-datos
+        alcanza: encargo
+        pregunta: "¿Qué estrategia concreta de introducción de la raíz conserva los handoffs y datos previos, y qué interfaces y archivos se aprueban para implementarla en pruebas aisladas?"
+        evidencia: "SQLite y la reutilización de ct_handoff ya están decididos; el enlace de datos previos, tablas, compatibilidad y huella final no. No se inspeccionó ni se autoriza mutar la base viva."
+        contaminaba: [S148]
+        checkpoint: "Antes de RED o cualquier cambio de esquema; presentar estrategia, compatibilidad y huella concreta para aprobación."
+        opciones:
+          - opcion: Aprobar una estrategia concreta que demuestre preservación en fixtures aisladas.
+            consecuencia: Permite completar el Encargo; una instalación o migración real sigue necesitando su propia autorización.
+          - opcion: Mantener la preparación incompleta hasta resolver preservación e interfaces.
+            consecuencia: No se implementa persistencia ni se habilitan consumidores o conversiones por inferencia.
+        resolucion: >-
+          Aprobada la ampliación explícita del almacenamiento ct_handoff para paquetes S147,
+          migración 006 con historia anterior intacta, raíz/historial/asociación, CAS e idempotencia,
+          controles de compatibilidad y borradores sin despacho descritos en este Encargo, sólo en
+          core.mjs y test/migration.test.mjs. La elección incluye la compatibilidad del contrato
+          existente: no se sustituye por un almacén sin integración ni por conversión ficticia al
+          formato anterior. El presupuesto sigue pendiente. No autoriza código, base viva,
+          instalación, activación o entrega; la autorización posterior permite este registro.
+        autoridad: "Emilio; respuesta UI explícita Aprobar la propuesta, registrada en Engram 11310 después de S147/11305 y ratificada por su pedido de plasmar ambas propuestas en el plan."
+        descartadas:
+          - opcion: Mantener la preparación incompleta hasta resolver preservación e interfaces.
+            razon: Emilio aprobó la estrategia concreta, su ampliación de formato y sus límites en lugar de dejar S148 sin resolución.
+        falsificador: "Se reescriben datos o migraciones anteriores, se inventa source_merge/procedencia, se infiere una asociación histórica, se elude la raíz por rutas anteriores, el paquete nace ligado a una revisión obsoleta o se habilitan despacho/migración viva sin autoridad adicional."
+      - tipo: resuelta
+        alcanza: encargo
+        pregunta: "Antes de RED, con la previsión inicial de 1200–1800 líneas y su refinamiento técnico, ¿se aprueban entregas secuenciales verificables y reversibles o una excepción de tamaño para S148?"
+        evidencia: "La aprobación 11310 excluyó expresamente presupuesto e implementación; adaptar el formato, migración, raíz, guards y pruebas supera la referencia de revisión de 400 líneas y no equivale al almacén parcial descartado."
+        contaminaba: [S148]
+        checkpoint: "Antes de RED o cualquier escritura SQL/código de S148; presentar forecast refinado y unidades técnicas propuestas, sin conceder migración real ni crear Módulos/Tareas Chanks."
+        opciones:
+          - opcion: Aprobar un desglose técnico en entregas secuenciales.
+            consecuencia: Cada unidad conserva pruebas y reversibilidad propias bajo la política de entrega; no permite perder historia ni activar una integración parcial.
+          - opcion: Aprobar una excepción de tamaño explícita.
+            consecuencia: Acepta el volumen refinado para la unidad coherente aprobada, sin ampliar alcance ni omitir controles de preservación o revisión.
+          - opcion: Mantener pendiente la implementación.
+            consecuencia: Conserva la estrategia aprobada, pero no autoriza RED, escritura SQL/código o conversión de datos.
+        resolucion: >-
+          Emilio elige entregas secuenciales verificables y reversibles para S148, sólo después
+          de S147 entregada e integrada. Resuelve la elección de forma de entrega; Gentle AI debe
+          refinar el desglose técnico antes de RED sin presumir cortes concretos ni excepción de
+          tamaño aprobados. La aprobación publica documentación, no autoriza implementación,
+          migración real, activación ni cambios de prioridad. El presupuesto pendiente de la
+          resolución 11310 describe aquella aprobación anterior; esta decisión posterior resuelve
+          sólo la forma secuencial y no satisface por sí misma la dependencia S147.
+        autoridad: "Emilio; respuesta explícita «1. secuenciales. 2. si respetamos el orden. 3.publicamos y com esto cerramos esta magnifca sesio», registrada en Engram 11316."
+        descartadas:
+          - opcion: Aprobar una excepción de tamaño explícita.
+            razon: Eligió entregas secuenciales; no concedió excepción de tamaño.
+          - opcion: Mantener pendiente la implementación.
+            razon: Resolvió la elección de forma de entrega, conservando S147 como dependencia y sin autorizar el inicio de esta Sesión.
+        falsificador: "Se inicia S148 sin S147 entregada e integrada, se presume un corte, forecast o excepción aprobados, se escribe SQL/código sin desglose y autoridad de inicio o se permite perder historia o activar la Torre por esta decisión."
 references:
   future_successors:
     - id: S102
