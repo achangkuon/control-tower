@@ -138,7 +138,13 @@ const BASE_DEL_CUARTO = [
   "--ro-bind", "/", "/",
   "--dev", "/dev",
   "--proc", "/proc",
-  "--tmpfs", "/tmp",
+  // Deliberately NOT `--tmpfs /tmp`. Masking /tmp made a forbidden write there *succeed*
+  // into a throwaway filesystem: the host file stayed intact, but the command reported 0 and
+  // the worker believed it had written. A silent fake success is worse than a refusal, because
+  // nothing downstream knows to stop. /tmp stays read-only like everything else, so such a
+  // write fails loudly, and real scratch space lives at its own path instead.
+  "--tmpfs", "/var/tmp",
+  "--setenv", "TMPDIR", "/var/tmp",
   "--unshare-all",
   "--unshare-net",
   "--die-with-parent",

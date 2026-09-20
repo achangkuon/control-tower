@@ -58,6 +58,43 @@ terminal plus exact readbacks authorizes integration and closure only for that a
 assignment. Never authorize a new dispatch, retry, changed mapping, or inferred completion. It creates no
 durable reconstruction record and never auto-resumes.
 
+## Cimiento Interventions And File-Level Parallel
+
+Sesiones in one Zona advance on their own files only when every fingerprint is complete,
+current against the same integrated base, and disjoint. Sharing a Zona is not a conflict, and a
+shared Cimiento is a condition of coordinated intervention, **not a veto** on both Sesiones'
+own work. An **unknown fingerprint** never enables parallel: what was not declared is not read
+as empty and not read as safe.
+
+Before touching Cimientos, the worker requests the **complete coherent set** it needs, bound to
+its Sesión, its worker and the current integrated base. Main grants that set **granted whole or
+not at all**, with no overlap on any file. Partial grants are refused on purpose: accumulating
+them is what produces a **circular wait**, where two workers each hold half of what the other
+needs. A live set is never widened silently — release it and request the complete one again.
+
+Each intervention runs on the full current integrated base and preserves its own valid work. A
+loose Cimiento copied in its place is not that base.
+
+Release happens only after **confirmed integration** under the delivery flow, **never by
+finished local editing or worker silence**. Conflict, scope change, base change, disconnection
+or missing evidence stop the affected intervention: a stop **preserves the work and the
+evidence** and carries **no automatic retry, remapping, permission, release, or resumption**. A
+human resolves it, and the grant is kept meanwhile rather than handed to someone else half
+written.
+
+**Main coordinates and integrates.** It does not inspect to issue a second technical judgement,
+correct code, or rerun the worker's tests. The effective controls are consumed from the Chanks
+core, never reimplemented here, and the refusal is an absence rather than a message: a Sesión
+whose request was denied has no writable path to that file, so the write does not happen —
+including from a process its command spawns.
+
+This creates **no persistent queue**, **no artificial lock manager**, no other planning state,
+no continuity storage, no receipts API and no technical executor. Radar acquires no live
+reservation, and none of this evidence grants authority to itself. The Tower stays off.
+
+Implemented by `agent-workflows/chanks/interventions.mjs`, proven in
+`agent-workflows/tests/chanks/interventions.test.mjs`.
+
 ## Migration to Tower V1
 
 This table maps manual evidence and choreography to future Tower V1 authority and capabilities. It does

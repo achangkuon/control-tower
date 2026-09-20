@@ -119,3 +119,49 @@ class CoordinadorManualTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class IntervencionesDeCimientosTests(CoordinadorManualTests):
+    """S146: the coordinator documents the intervention protocol it now routes.
+
+    These assert the rules are stated, not that they work — the behaviour is proven in
+    agent-workflows/tests/chanks/interventions.test.mjs, where a refused intervention is shown
+    to leave the Cimiento file untouched. A skill test that claimed otherwise would be the
+    "prueba de cadenas de texto" the Encargo explicitly refuses as evidence.
+    """
+
+    def test_documents_all_or_nothing_acquisition(self):
+        self.assert_phrases(
+            "complete coherent set",
+            "granted whole or not at all",
+        )
+
+    def test_documents_why_partial_grants_are_refused(self):
+        self.assert_phrases("circular wait")
+
+    def test_documents_that_a_shared_cimiento_is_a_condition_not_a_veto(self):
+        self.assert_phrases("not a veto")
+
+    def test_documents_that_an_unknown_fingerprint_never_enables_parallel(self):
+        self.assert_phrases("unknown fingerprint")
+
+    def test_documents_release_only_after_confirmed_integration(self):
+        self.assert_phrases(
+            "confirmed integration",
+            "never by finished local editing or worker silence",
+        )
+
+    def test_documents_that_a_stop_preserves_and_triggers_nothing(self):
+        self.assert_phrases(
+            "preserves the work and the evidence",
+            "no automatic retry, remapping, permission, release, or resumption",
+        )
+
+    def test_keeps_main_out_of_technical_judgement(self):
+        self.assert_phrases("main coordinates and integrates")
+
+    def test_creates_no_lock_manager_or_parallel_state(self):
+        self.assert_phrases("no persistent queue", "no artificial lock manager")
+
+    def test_points_at_the_module_that_implements_it(self):
+        self.assert_phrases("interventions.mjs")

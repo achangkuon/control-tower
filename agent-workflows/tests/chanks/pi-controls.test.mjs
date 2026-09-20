@@ -202,7 +202,7 @@ describe("el mensaje no se duplica por cada llamada de herramienta", () => {
 // --- T3: construir el cuarto chico -----------------------------------------
 
 import { spawnSync } from "node:child_process"
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs"
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -407,6 +407,54 @@ describe("el efecto prohibido no ocurre (runtime real)", () => {
       const permitidoRuta = join(raiz, "agent-workflows", "chanks", "permitido.mjs")
       const c = confinarComando("getent hosts github.com", { escribibles: [permitidoRuta] })
       expect(correr(c.argv).status).not.toBe(0)
+    } finally {
+      rmSync(raiz, { recursive: true, force: true })
+    }
+  })
+})
+
+// Found by an S146 test, fixed here: masking /tmp with a tmpfs made a forbidden write *under
+// /tmp* report success while landing in a throwaway filesystem. The host file stayed intact,
+// so the effect was absent — but the command exited 0 and the worker believed it had written.
+// A silent fake success is worse than a refusal, because nothing downstream knows to stop.
+describe("el cuarto no finge éxitos", () => {
+  test("una escritura prohibida bajo /tmp falla, no se pierde en un tmpfs", () => {
+    const raiz = cuarto()
+    try {
+      const permitidoRuta = join(raiz, "agent-workflows", "chanks", "permitido.mjs")
+      // The forbidden path sits beside an allowed one, so its parent directory exists inside
+      // the room. That is exactly the shape that used to succeed silently.
+      const vecino = join(raiz, "agent-workflows", "chanks", "vecino.mjs")
+      const c = confinarComando(`echo colado > ${vecino}`, { escribibles: [permitidoRuta] })
+      const r = correr(c.argv)
+      expect(r.status).not.toBe(0)
+      expect(existsSync(vecino)).toBe(false)
+    } finally {
+      rmSync(raiz, { recursive: true, force: true })
+    }
+  })
+
+  test("/tmp no se enmascara con un tmpfs", () => {
+    const raiz = cuarto()
+    try {
+      const c = confinarComando("true", { escribibles: [join(raiz, "prohibido", "testigo.txt")] })
+      const montajes = c.argv.join(" ")
+      expect(montajes).not.toContain("--tmpfs /tmp ")
+      expect(montajes).toContain("--tmpfs /var/tmp")
+    } finally {
+      rmSync(raiz, { recursive: true, force: true })
+    }
+  })
+
+  // Real work still needs scratch space, so the room gives it one at its own path.
+  test("hay espacio temporal de verdad, apuntado por TMPDIR", () => {
+    const raiz = cuarto()
+    try {
+      const permitidoRuta = join(raiz, "agent-workflows", "chanks", "permitido.mjs")
+      const c = confinarComando('echo ok > "$TMPDIR/scratch" && cat "$TMPDIR/scratch"', { escribibles: [permitidoRuta] })
+      const r = correr(c.argv)
+      expect(r.status).toBe(0)
+      expect(r.stdout.trim()).toBe("ok")
     } finally {
       rmSync(raiz, { recursive: true, force: true })
     }
