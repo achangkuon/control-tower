@@ -8707,6 +8707,8 @@ sesiones:
         descartadas:
           - opcion: Dar por suficiente el contrato de skills sin recorrido real.
             razon: Eso repetiría la confusión entre instrucciones y efectos que el alcance aprobado exige corregir.
+    entrega:
+      commit: 6c339e8ab34d78341884b025b9db9dcc950bce25
   - id: S147
     zona: contratos
     prioridad: torre-v2
