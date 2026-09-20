@@ -8640,6 +8640,8 @@ sesiones:
             razon: El humano eligió que Radar también refleje la prioridad.
           - opcion: Pausar el registro.
             razon: El humano autorizó continuar con la prioridad visible.
+    entrega:
+      commit: 140cab5d194acbe08195711e2120559987ba9391
   - id: S146
     zona: metodo
     prioridad: metodo-v1-controles-prioritarios
