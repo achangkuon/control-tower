@@ -74,9 +74,10 @@ Baseline al admitir: **1248 pass / 0 fail**, HEAD `0b02b9c`. RED observado antes
 
 ## Tamaño del lote
 
-Estimado por encima de la referencia de 400 líneas. A diferencia de S145, acá **no** hay
-excepción concedida, así que la entrega se parte en lotes revisables por tarea. Si el corte
-resulta artificial lo digo y pregunto, en vez de partir por partir.
+Resultó en 1079 líneas (384 de módulo + 695 de test), por encima de la referencia de 400.
+Le ofrecí a Emilio partirlo en cuatro lotes revisables —cada uno verde por sí solo, porque
+llevaría su módulo y sus tests juntos— y eligió **un solo commit con excepción de tamaño**,
+igual que en S145. Queda registrado como decisión suya, no como un descuido.
 
 ## Tareas
 
@@ -132,4 +133,8 @@ resulta artificial lo digo y pregunto, en vez de partir por partir.
 
 ## Próximo paso
 
-Decidir el corte del lote de revisión y entregar.
+Entregada en `2acb6408aaeb33e725808f305d4fd36066924d54`. Sigue **S144**, que ahora queda
+`LISTO`: demuestra el control **efectivo** en Pi. Declara un Recurso exclusivo —«runtime Pi
+aislado de ensayos Chanks Método V1»— cuyo uso hay que confirmarle a Emilio antes de tocar
+nada, porque declarar el Recurso no equivale a adquirirlo. Después S146, que es la que
+conecta el paralelo por archivos que entregó S145.

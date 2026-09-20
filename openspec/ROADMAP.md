@@ -2,16 +2,16 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S128, S130, S131, S132, S134, S135, S136, S137, S138, S139, S140, S141, S142, S145, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S128, S130, S131, S132, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S145, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Método V1 · Controles prioritarios.
-- Próximo trabajo ejecutable: Método #3 → S143 — Motor procedural Chanks verificable: los siete controles consumen autoridad y evidencia y permiten o bloquean transiciones sin ejecutar sus efectos..
+- Próximo trabajo ejecutable: Método #3 → S144 — Controles Chanks efectivos en Pi con Torre apagada: el núcleo S143 gobierna los efectos del flujo manual y demuestra el recorrido autorizado completo en un entorno aislado..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
 ## Estado y próximo trabajo
-- Método #3 → S143 — Motor procedural Chanks verificable: los siete controles consumen autoridad y evidencia y permiten o bloquean transiciones sin ejecutar sus efectos.
+- Método #3 → S144 — Controles Chanks efectivos en Pi con Torre apagada: el núcleo S143 gobierna los efectos del flujo manual y demuestra el recorrido autorizado completo en un entorno aislado.
 
 ## Avance
-- **Total:** 67% (80/119 S)
+- **Total:** 68% (81/119 S)
 - 16 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
@@ -24,7 +24,7 @@
 - **Hosts:** 60% (3/5 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 71% (20/28 S)
+- **Método:** 75% (21/28 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -66,9 +66,8 @@
 ### Método (metodo)
 1. **S115** · 📋 PLANIFICADO · prioridad Torre V3 · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
 2. **S123** · 📋 PLANIFICADO · prioridad Torre V3 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
-3. **S143** · 🟢 LISTO · prioridad Método V1 · Controles prioritarios · Motor procedural Chanks verificable: los siete controles consumen autoridad y evidencia y permiten o bloquean transiciones sin ejecutar sus efectos.
-4. **S144** · 📋 PLANIFICADO · prioridad Método V1 · Controles prioritarios · Controles Chanks efectivos en Pi con Torre apagada: el núcleo S143 gobierna los efectos del flujo manual y demuestra el recorrido autorizado completo en un entorno aislado.
-5. **S146** · 📋 PLANIFICADO · prioridad Método V1 · Controles prioritarios · El método manual coordina intervenciones de Cimientos y paralelo por archivos con controles efectivos en Pi: Main coordina, workers y Gentle AI implementan y verifican, con Torre apagada.
+3. **S144** · 🟢 LISTO · prioridad Método V1 · Controles prioritarios · Controles Chanks efectivos en Pi con Torre apagada: el núcleo S143 gobierna los efectos del flujo manual y demuestra el recorrido autorizado completo en un entorno aislado.
+4. **S146** · 📋 PLANIFICADO · prioridad Método V1 · Controles prioritarios · El método manual coordina intervenciones de Cimientos y paralelo por archivos con controles efectivos en Pi: Main coordina, workers y Gentle AI implementan y verifican, con Torre apagada.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · prioridad Torre V2 · Handoffs y despacho Tower-owned · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -983,7 +982,7 @@
 
 ### S143 — Motor procedural Chanks verificable: los siete controles consumen autoridad y evidencia y permiten o bloquean transiciones sin ejecutar sus efectos.
 - Coordinación:
-  - Estado derivado: 🟢 LISTO
+  - Estado derivado: ✅ COMPLETO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/chanks/controls.mjs, agent-workflows/tests/chanks/controls.test.mjs
   - Depende de: —
@@ -1008,7 +1007,7 @@
 
 ### S144 — Controles Chanks efectivos en Pi con Torre apagada: el núcleo S143 gobierna los efectos del flujo manual y demuestra el recorrido autorizado completo en un entorno aislado.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO
+  - Estado derivado: 🟢 LISTO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/chanks/pi-controls.mjs, agent-workflows/tests/chanks/pi-controls.test.mjs, agent-workflows/tools/install.py, agent-workflows/tests/test&#95;install.py
   - Depende de: S143

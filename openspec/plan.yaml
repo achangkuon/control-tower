@@ -8506,6 +8506,8 @@ sesiones:
         descartadas:
           - opcion: Declarar cumplidos los siete controles efectivos al entregar únicamente el núcleo.
             razon: Una decisión correcta no prueba que el efecto indebido haya sido impedido.
+    entrega:
+      commit: 2acb6408aaeb33e725808f305d4fd36066924d54
   - id: S144
     zona: metodo
     prioridad: metodo-v1-controles-prioritarios
