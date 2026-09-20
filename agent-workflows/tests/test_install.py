@@ -637,3 +637,57 @@ class SessionDocSchemaTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PiExtensionTests(unittest.TestCase):
+    """S144: Pi auto-discovers only *.ts, so the .mjs adapter needs a shim.
+
+    The shim is generated here rather than kept as a repository file because S144's authorized
+    files do not include a .ts one, and widening the Session's scope for a discovery detail
+    would cost a human approval for no product reason.
+    """
+
+    def setUp(self):
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.home = Path(self.tempdir.name)
+
+    def tearDown(self):
+        self.tempdir.cleanup()
+
+    def test_shim_lands_where_pi_actually_discovers_extensions(self):
+        path = INSTALLER.pi_extension_path(self.home)
+        self.assertEqual(path.suffix, ".ts")
+        self.assertTrue(str(path).endswith(".pi/agent/extensions/chanks-controls.ts"))
+
+    def test_shim_imports_the_adapter_and_never_reimplements_it(self):
+        body = INSTALLER.desired_pi_extension(ROOT).decode("utf8")
+        self.assertIn("pi-controls.mjs", body)
+        self.assertIn("gobernar", body)
+        # A shim that decided anything would be a second answer to the same question.
+        for rule in ["archivos", "bwrap", "--ro-bind", "block: true"]:
+            self.assertNotIn(rule, body)
+
+    def test_shim_registers_the_tool_call_gate(self):
+        body = INSTALLER.desired_pi_extension(ROOT).decode("utf8")
+        self.assertIn("tool_call", body)
+
+    def test_install_writes_the_shim_and_is_idempotent(self):
+        INSTALLER.install_pi_extension(self.home, ROOT)
+        path = INSTALLER.pi_extension_path(self.home)
+        self.assertTrue(path.is_file())
+        first = path.read_bytes()
+        INSTALLER.install_pi_extension(self.home, ROOT)
+        self.assertEqual(path.read_bytes(), first)
+
+    def test_plan_reports_drift_when_the_shim_is_missing_or_stale(self):
+        self.assertTrue(INSTALLER.pi_extension_changes(self.home, ROOT))
+        INSTALLER.install_pi_extension(self.home, ROOT)
+        self.assertFalse(INSTALLER.pi_extension_changes(self.home, ROOT))
+        INSTALLER.pi_extension_path(self.home).write_bytes(b"manoseado\n")
+        changes = INSTALLER.pi_extension_changes(self.home, ROOT)
+        self.assertTrue(changes)
+        self.assertEqual(changes[0].kind, "pi-extension")
+
+    def test_shim_points_at_this_checkout_so_a_stale_copy_cannot_be_loaded(self):
+        body = INSTALLER.desired_pi_extension(ROOT).decode("utf8")
+        self.assertIn(str((ROOT / "chanks/pi-controls.mjs").resolve()), body)
