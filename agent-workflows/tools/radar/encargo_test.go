@@ -661,17 +661,41 @@ sesiones:
 			t.Fatalf("snapshot/v1 perdió la clave %q: %s", key, status)
 		}
 	}
-	if len(snapshot) != 8 || snapshot["schema"] != SnapshotSchema {
-		t.Fatalf("snapshot/v1 cambió su forma o schema: %s", status)
+	if snapshot["schema"] != SnapshotSchema {
+		t.Fatalf("snapshot/v1 cambió su schema: %s", status)
+	}
+	// The contract is protected by an allow-list, not by a key count. Removing or
+	// renaming a field still fails here, while a deliberate additive field only
+	// passes once it is named below — which is what `only grows` means in
+	// snapshot.go. A bare count also failed on growth the contract permits.
+	conocidas := map[string]bool{
+		"schema": true, "producto": true, "head": true, "avance": true,
+		"prioridad_activa": true, "prioridades": true, "zonas": true,
+		"sesiones": true, "asientos": true, "territorio_pendiente": true,
+		"compatibilidad": true, "escenarios": true,
+	}
+	for key := range snapshot {
+		if !conocidas[key] {
+			t.Fatalf("snapshot/v1 expone la clave no declarada %q: %s", key, status)
+		}
 	}
 	sessions, ok := snapshot["sesiones"].([]any)
 	if !ok || len(sessions) != 2 {
 		t.Fatalf("snapshot/v1 cambió sus Sesiones: %s", status)
 	}
+	camposDeSesion := map[string]bool{
+		"id": true, "zona": true, "estado": true, "resultado": true, "prioridad": true,
+		"archivos": true, "cimientos": true, "recurso": true, "depende_de": true,
+	}
 	for _, row := range sessions {
 		fields, ok := row.(map[string]any)
-		if !ok || len(fields) != 4 || fields["id"] == nil || fields["zona"] == nil || fields["estado"] == nil || fields["resultado"] == nil {
-			t.Fatalf("snapshot/v1 agregó o perdió datos de Sesión: %s", status)
+		if !ok || fields["id"] == nil || fields["zona"] == nil || fields["estado"] == nil || fields["resultado"] == nil {
+			t.Fatalf("snapshot/v1 perdió datos de Sesión: %s", status)
+		}
+		for key := range fields {
+			if !camposDeSesion[key] {
+				t.Fatalf("snapshot/v1 expone el campo de Sesión no declarado %q: %s", key, status)
+			}
 		}
 	}
 	for _, id := range []string{"S1", "S2"} {

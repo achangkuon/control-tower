@@ -30,6 +30,39 @@ type Snapshot struct {
 	Sesiones            []SesionEstado  `json:"sesiones"`
 	Asientos            []string        `json:"asientos"`
 	TerritorioPendiente int             `json:"territorio_pendiente"`
+	// Compatibilidad and Escenarios are the machine side of `radar roadmap`.
+	// They exist so Main never has to parse the human view to learn which
+	// combinations are possible: the drawn page and this projection are two
+	// renderings of one computation, not two sources.
+	//
+	// Both are forecasts. Neither reserves capacity, assigns a worker, grants
+	// access, or changes what admission allows.
+	Compatibilidad []ParJSON       `json:"compatibilidad,omitempty"`
+	Escenarios     []EscenarioJSON `json:"escenarios,omitempty"`
+}
+
+// ParJSON is one pairwise verdict with the exact evidence behind it.
+type ParJSON struct {
+	A       string   `json:"a"`
+	B       string   `json:"b"`
+	Clase   string   `json:"clase"`
+	Motivo  string   `json:"motivo"`
+	Detalle []string `json:"detalle,omitempty"`
+}
+
+// EscenarioJSON keeps the distinction the whole feature exists for: a satisfied
+// dependency is not a startable Sesión.
+type EscenarioJSON struct {
+	Si             string         `json:"si"`
+	Desbloquea     []string       `json:"desbloquea,omitempty"`
+	QuedanListo    []string       `json:"quedan_listo,omitempty"`
+	SiguenSinAbrir []RetenidaJSON `json:"siguen_sin_abrir,omitempty"`
+}
+
+type RetenidaJSON struct {
+	Sesion string `json:"sesion"`
+	Estado string `json:"estado"`
+	Motivo string `json:"motivo"`
 }
 
 // AvanceJSON mirrors Avance with explicit JSON names so the wire contract does
@@ -60,6 +93,14 @@ type SesionEstado struct {
 	Estado    string `json:"estado"`
 	Resultado string `json:"resultado"`
 	Prioridad string `json:"prioridad,omitempty"`
+	// The declarations every compatibility conclusion is derived from. They are
+	// omitted when undeclared rather than emitted empty, because an absent
+	// declaration and an empty one are different claims: the first is unknown,
+	// and unknown is never read as safe.
+	Archivos  []string `json:"archivos,omitempty"`
+	Cimientos []string `json:"cimientos,omitempty"`
+	Recurso   []string `json:"recurso,omitempty"`
+	DependeDe []string `json:"depende_de,omitempty"`
 }
 
 // PrioridadJSON is one declared priority. Plans without priorities emit none of
@@ -138,6 +179,10 @@ func (p *Plan) SnapshotAt(root, head string) Snapshot {
 			Estado:    vocabulario(estados[s.ID]),
 			Resultado: s.Resultado,
 			Prioridad: s.Prioridad,
+			Archivos:  copiaOrdenada(s.Archivos),
+			Cimientos: copiaOrdenada(s.Cimientos),
+			Recurso:   copiaOrdenada(s.Recurso),
+			DependeDe: copiaOrdenada(s.DependeDe),
 		})
 	}
 
@@ -155,6 +200,24 @@ func (p *Plan) SnapshotAt(root, head string) Snapshot {
 		activa = &PrioridadJSON{ID: pr.ID, Nombre: pr.Nombre}
 	}
 
+	roadmap := p.RoadmapAt(root, head)
+	compatibilidad := make([]ParJSON, 0, len(roadmap.Pares))
+	for _, par := range roadmap.Pares {
+		compatibilidad = append(compatibilidad, ParJSON{
+			A: par.A, B: par.B, Clase: string(par.Clase), Motivo: par.Motivo, Detalle: par.Detalle,
+		})
+	}
+	escenarios := make([]EscenarioJSON, 0, len(roadmap.Escenarios))
+	for _, e := range roadmap.Escenarios {
+		retenidas := make([]RetenidaJSON, 0, len(e.SiguenSinAbrir))
+		for _, r := range e.SiguenSinAbrir {
+			retenidas = append(retenidas, RetenidaJSON{Sesion: r.Sesion, Estado: r.Estado, Motivo: r.Motivo})
+		}
+		escenarios = append(escenarios, EscenarioJSON{
+			Si: e.Si, Desbloquea: e.Desbloquea, QuedanListo: e.QuedanListo, SiguenSinAbrir: retenidas,
+		})
+	}
+
 	return Snapshot{
 		Schema:              SnapshotSchema,
 		Producto:            p.Producto,
@@ -166,6 +229,8 @@ func (p *Plan) SnapshotAt(root, head string) Snapshot {
 		Sesiones:            sesiones,
 		Asientos:            asientos,
 		TerritorioPendiente: pendiente,
+		Compatibilidad:      compatibilidad,
+		Escenarios:          escenarios,
 	}
 }
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -270,5 +271,126 @@ func pendiente(id, zona string, deps ...string) Sesion {
 				Criterios: []string{"Criterio binario verificable"},
 			}},
 		}},
+	}
+}
+
+// --- S145: the machine side of the roadmap ---------------------------------
+
+// Criterion 11: Main consumes facts, never prose. Every declaration the human
+// view reasons about has to be reachable from the canonical JSON projection.
+func TestSnapshotExponeLasDeclaracionesDeCadaSesion(t *testing.T) {
+	root, commit := repoGit(t)
+	s := abierta("S2", "metodo", "S1")
+	s.Archivos = []string{"radar/roadmap.go", "radar/main.go"}
+	s.Cimientos = []string{"shared/base.go"}
+	s.Recurso = []string{"raíz Pi"}
+	p := &Plan{
+		Producto: "control-tower",
+		Zonas:    []Zona{{ID: "metodo", Nombre: "Método"}},
+		Sesiones: []Sesion{entregada("S1", "metodo", commit), s},
+	}
+
+	var encontrada *SesionEstado
+	for i, ses := range p.SnapshotAt(root, commit).Sesiones {
+		if ses.ID == "S2" {
+			encontrada = &p.SnapshotAt(root, commit).Sesiones[i]
+		}
+	}
+	if encontrada == nil {
+		t.Fatal("S2 debe estar en el snapshot")
+	}
+	// Sorted, so a consumer can compare two declarations without normalising.
+	if !reflect.DeepEqual(encontrada.Archivos, []string{"radar/main.go", "radar/roadmap.go"}) {
+		t.Fatalf("archivos esperados ordenados, obtenido %v", encontrada.Archivos)
+	}
+	if !reflect.DeepEqual(encontrada.Cimientos, []string{"shared/base.go"}) {
+		t.Fatalf("cimientos inesperados: %v", encontrada.Cimientos)
+	}
+	if !reflect.DeepEqual(encontrada.Recurso, []string{"raíz Pi"}) {
+		t.Fatalf("recurso inesperado: %v", encontrada.Recurso)
+	}
+	if !reflect.DeepEqual(encontrada.DependeDe, []string{"S1"}) {
+		t.Fatalf("depende_de inesperado: %v", encontrada.DependeDe)
+	}
+}
+
+// The pairwise verdicts are a result, so they belong in the machine projection
+// and not only in the rendered page.
+func TestSnapshotExponeLosParesDeCompatibilidad(t *testing.T) {
+	root, commit := repoGit(t)
+	a := abierta("S1", "metodo")
+	a.Archivos = []string{"radar/state.go"}
+	b := abierta("S2", "metodo")
+	b.Archivos = []string{"radar/state.go"}
+	p := &Plan{Producto: "control-tower", Zonas: []Zona{{ID: "metodo"}}, Sesiones: []Sesion{a, b}}
+
+	s := p.SnapshotAt(root, commit)
+	if len(s.Compatibilidad) != 1 {
+		t.Fatalf("se esperaba un par, hay %d: %#v", len(s.Compatibilidad), s.Compatibilidad)
+	}
+	par := s.Compatibilidad[0]
+	if par.Clase != string(SolapaArchivos) || par.A != "S1" || par.B != "S2" {
+		t.Fatalf("par inesperado: %#v", par)
+	}
+	if !reflect.DeepEqual(par.Detalle, []string{"radar/state.go"}) {
+		t.Fatalf("el par debe cargar su evidencia exacta: %v", par.Detalle)
+	}
+}
+
+func TestSnapshotExponeLosEscenarios(t *testing.T) {
+	root, commit := repoGit(t)
+	dep := abierta("S2", "hosts", "S1")
+	dep.Archivos = []string{"b.go"}
+	a := abierta("S1", "metodo")
+	a.Archivos = []string{"a.go"}
+	p := &Plan{Producto: "control-tower", Zonas: []Zona{{ID: "metodo"}, {ID: "hosts"}}, Sesiones: []Sesion{a, dep}}
+
+	s := p.SnapshotAt(root, commit)
+	if len(s.Escenarios) != 1 {
+		t.Fatalf("se esperaba un escenario, hay %d: %#v", len(s.Escenarios), s.Escenarios)
+	}
+	if s.Escenarios[0].Si != "S1" || !reflect.DeepEqual(s.Escenarios[0].QuedanListo, []string{"S2"}) {
+		t.Fatalf("escenario inesperado: %#v", s.Escenarios[0])
+	}
+}
+
+// The wire contract only grows. The schema keeps its version, every field that
+// was already there keeps its name, and the new ones disappear when empty.
+func TestSnapshotConservaElContratoV1YSoloCrece(t *testing.T) {
+	root, commit := repoGit(t)
+	p := &Plan{
+		Producto: "control-tower",
+		Zonas:    []Zona{{ID: "metodo", Nombre: "Método"}},
+		Sesiones: []Sesion{entregada("S1", "metodo", commit)},
+	}
+
+	crudo, err := json.Marshal(p.SnapshotAt(root, commit))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var wire map[string]any
+	if err := json.Unmarshal(crudo, &wire); err != nil {
+		t.Fatal(err)
+	}
+	if wire["schema"] != SnapshotSchema {
+		t.Fatalf("el schema no cambia de versión al crecer: %v", wire["schema"])
+	}
+	for _, campo := range []string{"producto", "head", "avance", "zonas", "sesiones", "asientos", "territorio_pendiente"} {
+		if _, hay := wire[campo]; !hay {
+			t.Fatalf("el campo v1 %q desapareció del contrato", campo)
+		}
+	}
+	// Nothing to say, nothing emitted: a closed plan does not grow the payload.
+	for _, campo := range []string{"compatibilidad", "escenarios"} {
+		if _, hay := wire[campo]; hay {
+			t.Fatalf("%q debe omitirse cuando está vacío", campo)
+		}
+	}
+	sesiones := wire["sesiones"].([]any)
+	primera := sesiones[0].(map[string]any)
+	for _, campo := range []string{"archivos", "cimientos", "recurso", "depende_de"} {
+		if _, hay := primera[campo]; hay {
+			t.Fatalf("%q debe omitirse cuando la Sesión no lo declara", campo)
+		}
 	}
 }

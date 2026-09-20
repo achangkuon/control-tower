@@ -15,6 +15,8 @@ const uso = `radar — herramienta determinista de planificación
   radar status  [-f openspec/plan.yaml] [-C raíz] [--json] estado, colas y asientos calculados
   radar sesion  <ID> [-f openspec/plan.yaml] [-C raíz] contrato completo de una sola Sesión
   radar zonas   [-f openspec/plan.yaml] [-C raíz] cobertura sobre archivos rastreados
+  radar roadmap [-f openspec/plan.yaml] [-C raíz] alternativas LISTO, compatibilidad
+                potencial por archivos e hipotéticos — previsión, no permiso
   radar render  [-f openspec/plan.yaml] [-o openspec/ROADMAP.md] [-C raíz]
 
 openspec/plan.yaml es la única fuente editable. openspec/ROADMAP.md es una vista
@@ -76,6 +78,11 @@ func main() {
 			os.Exit(2)
 		}
 		if err := cmdSesion(os.Stdout, p, root, posicionales[0]); err != nil {
+			fmt.Fprintln(os.Stderr, "✗", err)
+			os.Exit(1)
+		}
+	case "roadmap":
+		if err := cmdRoadmap(os.Stdout, p, root); err != nil {
 			fmt.Fprintln(os.Stderr, "✗", err)
 			os.Exit(1)
 		}

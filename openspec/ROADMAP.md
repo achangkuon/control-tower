@@ -1040,7 +1040,7 @@
 - Coordinación:
   - Estado derivado: 🟢 LISTO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
-  - Archivos autorizados: agent-workflows/tools/radar/main.go, agent-workflows/tools/radar/snapshot.go, agent-workflows/tools/radar/state.go, agent-workflows/tools/radar/roadmap.go, agent-workflows/tools/radar/main&#95;test.go, agent-workflows/tools/radar/snapshot&#95;test.go, agent-workflows/tools/radar/state&#95;test.go, agent-workflows/tools/radar/roadmap&#95;test.go, agent-workflows/tools/radar/README.md
+  - Archivos autorizados: agent-workflows/tools/radar/main.go, agent-workflows/tools/radar/snapshot.go, agent-workflows/tools/radar/state.go, agent-workflows/tools/radar/roadmap.go, agent-workflows/tools/radar/main&#95;test.go, agent-workflows/tools/radar/snapshot&#95;test.go, agent-workflows/tools/radar/state&#95;test.go, agent-workflows/tools/radar/roadmap&#95;test.go, agent-workflows/tools/radar/README.md, agent-workflows/tools/radar/encargo&#95;test.go, agent-workflows/skills/chanks-0-agente-soporte/SKILL.md
   - Depende de: —
   - Recursos: —
   - Ejecución: ODD nativo.

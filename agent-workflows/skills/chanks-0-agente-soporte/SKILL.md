@@ -38,6 +38,28 @@ Zone-ordered `LISTO` choices, never a fallback skill.
 Include requested state/blocker, Zone-ordered choices, compatible seats, queue rows/length, choice
 count, and exact output bytes digest binding. `seats`, queues, and choices never assign agents.
 
+## Parallel Alternatives From The Snapshot
+
+When the request is what could run in parallel — resuming work, planning a batch, or choosing among
+`LISTO` alternatives — read it from the `compatibilidad` and `escenarios` arrays of
+`radar status --json`. Never parse a rendered view for these facts, and never recompute them.
+
+- `compatibilidad` carries one verdict per combination of current `LISTO` Sesiones: `compatible`,
+  `cimiento-compartido`, `solapa-archivos`, `recurso-excluyente`, or `indeterminado`, each with the
+  exact files or resources in `detalle`. Sharing a Zona is not a conflict; a shared Cimiento is a
+  condition of coordinated intervention, not a veto.
+- `indeterminado` means a side did not declare its exact files. Report it as unknown. An undeclared
+  scope is never read as empty or safe, and never as a compatible combination.
+- `escenarios` separates the two claims people conflate: `desbloquea` is whose declared dependencies
+  a closure would satisfy, and `quedan_listo` is who would actually derive to `LISTO` under every
+  criterion and the active priority. `siguen_sin_abrir` carries the state and the reason for the rest.
+- Each Sesión row now also carries its `archivos`, `cimientos`, `recurso`, and `depende_de`, which are
+  the declarations every verdict above is derived from.
+
+All of this is a forecast over the current plan and base. It reserves nothing, assigns no agent,
+grants no access, and does not change what admission allows. `radar roadmap` renders the same
+evidence for a person to read; it is never the machine path and never an authority.
+
 ## Decision Gates
 
 | Request | Action |

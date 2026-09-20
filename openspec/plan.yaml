@@ -8590,6 +8590,8 @@ sesiones:
         id: 11214
       - tipo: engram
         id: 11218
+      - tipo: engram
+        id: 11353
     depende_de:
       []
     cimientos:
@@ -8608,6 +8610,8 @@ sesiones:
       - agent-workflows/tools/radar/state_test.go
       - agent-workflows/tools/radar/roadmap_test.go
       - agent-workflows/tools/radar/README.md
+      - agent-workflows/tools/radar/encargo_test.go
+      - agent-workflows/skills/chanks-0-agente-soporte/SKILL.md
     encargo:
       pedido_contexto: "Radar explica alternativas LISTO, compatibilidad potencial por archivos, condiciones e hipotéticos mediante radar roadmap como vista humana de la evidencia canónica, sin autorizar ejecución."
       resultado_comportamiento: "radar status --json conserva una única proyección canónica de evidencia para consumidores; radar roadmap es una vista humana determinista de esa misma evidencia, no otra fuente JSON ni otro cálculo de estados. Main no necesita parsear texto humano para consumir los resultados.\n\nLa vista enumera todas las alternativas LISTO actuales en su orden de Zona y muestra conjuntos explícitos de Sesiones, sus exclusiones y las condiciones de compatibilidad potencial por archivos. Distingue esa previsión del permiso de ejecución vigente y no convierte una Zona o un Cimiento compartidos en un veto indiscriminado sobre trabajo propio disjunto.\n\nCada conclusión por archivos usa los archivos exactos autorizados de la Sesión, declarados durante su preparación, junto con Cimientos, recursos, dependencias y base vigentes. Una declaración desconocida, incompleta o desactualizada nunca se interpreta como vacía o segura; un cambio de alcance o base exige aprobación y recalcular compatibilidad antes de escribir.\n\nUn Cimiento compartido aparece con la condición explícita de intervención coordinada, y un recurso exclusivo incompatible excluye la combinación. El reporte no adquiere reservas, asigna workers, concede acceso ni supone que la coordinación futura ya está instalada.\n\nLos escenarios hipotéticos distinguen dependencias satisfechas de nuevas Sesiones realmente LISTO según todos los criterios y la prioridad aplicable. Un caso demuestra que resolver la dependencia de S123 en S122 no vuelve ejecutable V2 mientras no sea la prioridad activa; los escenarios no modifican el plan, Git ni la evidencia de entrega real.\n\nSobre el mismo plan y base, se conservan los siete estados, el significado vigente de asientos y la admisión actual. La capacidad nueva queda condicionada a la integración, verificación y activación autorizada de sus consumidores en S146; ningún reporte se autoriza a sí mismo.\n\nS122 conserva su resultado, criterios, umbral fijo de horizonte y orden relativo respecto del resto no priorizado. El diseño reutiliza los datos existentes antes de proponer extensiones; cualquier ruptura del contrato público de radar.snapshot/v1 requiere decisión humana antes de apply.\n\nEl diff permanece en la Zona Método; los archivos exactos y cualquier Cimiento necesario se declaran al preparar la Sesión, sin exigir descubrimiento ni desglose previo de ODD. Esa declaración no reserva capacidad ni autoriza ampliaciones silenciosas."

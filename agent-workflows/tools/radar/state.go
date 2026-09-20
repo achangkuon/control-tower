@@ -35,12 +35,29 @@ func (p *Plan) Estados(root string) map[string]string {
 }
 
 func (p *Plan) EstadosAt(root, head string) map[string]string {
+	return p.estadosAsumiendo(root, head, nil)
+}
+
+// EstadosAsumiendoCerradas answers "what would the plan look like if these
+// Sesiones were closed" without touching the plan, Git, or real delivery
+// evidence. The assumption is a parameter, never a mutation, so a hypothetical
+// can never leak into the states every other command reports.
+//
+// It deliberately shares one body with EstadosAt: a second copy of the
+// derivation would be a second answer, and the plan only gets to have one.
+func (p *Plan) EstadosAsumiendoCerradas(root, head string, cerradas map[string]bool) map[string]string {
+	return p.estadosAsumiendo(root, head, cerradas)
+}
+
+func (p *Plan) estadosAsumiendo(root, head string, cerradas map[string]bool) map[string]string {
 	estados := make(map[string]string, len(p.Sesiones))
 	index := p.SesionPorID()
 
 	for i := range p.Sesiones {
 		s := &p.Sesiones[i]
 		switch {
+		case cerradas[s.ID]:
+			estados[s.ID] = Completo
 		case s.Archivada:
 			estados[s.ID] = Archivado
 		case s.Entrega != nil:

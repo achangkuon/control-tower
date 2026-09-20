@@ -10,6 +10,7 @@ radar status                        # estado, colas por Zona y asientos compatib
 radar status --json                 # el mismo cálculo, legible por máquina (radar.snapshot/v1)
 radar sesion S114                   # contrato completo de una sola Sesión; falla cerrado como status
 radar zonas                         # cobertura de la partición sobre git ls-files
+radar roadmap                       # alternativas LISTO, compatibilidad e hipotéticos (previsión)
 radar render                        # escribe openspec/ROADMAP.md atómicamente
 radar render -f otro.yaml -o salida.md -C /repo
 ```
@@ -261,6 +262,53 @@ que dice mostrar, y ambos números parecen correctos. Radar calcula; el consumid
 
 Se niega exactamente donde se niega `radar status`: si la validación da errores no emite nada
 y sale distinto de cero. Un consumidor que recibe JSON recibe cifras que Radar firma.
+
+El contrato v1 **crece, no rompe**. Cada Sesión carga además sus `archivos`, `cimientos`,
+`recurso` y `depende_de`, y el snapshot agrega `compatibilidad` y `escenarios`. Todos se omiten
+cuando no hay nada que declarar: una declaración ausente y una vacía son afirmaciones distintas,
+y la ausente significa *desconocido*, que nunca se lee como seguro. `encargo_test.go` protege la
+forma con una lista blanca de claves —quitar o renombrar sigue fallando; agregar exige nombrar la
+clave nueva ahí— en lugar de un conteo exacto, que también fallaba ante el crecimiento permitido.
+
+## `radar roadmap` — alternativas, compatibilidad e hipotéticos
+
+`radar roadmap` responde tres preguntas que `status` no responde: cuáles son **todas** las
+alternativas `LISTO` de hoy, cuáles podrían trabajarse a la vez sin pisarse, y qué se abriría de
+verdad si tal Sesión cerrara.
+
+Es una vista humana. La proyección canónica de máquina sigue siendo `radar status --json`, que
+carga los mismos hechos en `compatibilidad` y `escenarios`: un agente los lee de ahí y nunca
+parsea esta página. Las dos salidas son dos dibujos de un cálculo, no dos fuentes.
+
+**Compatibilidad por archivos.** Cada combinación recibe un veredicto con su evidencia exacta,
+por precedencia de más fuerte a más débil:
+
+| Clase | Significado |
+|---|---|
+| `recurso-excluyente` | Ambas declaran el mismo recurso exclusivo. La combinación queda excluida. |
+| `solapa-archivos` | Las dos nombran el mismo archivo fuera de todo Cimiento. Chocan. |
+| `indeterminado` | Falta la declaración exacta de alguna. Desconocido, nunca seguro. |
+| `cimiento-compartido` | Comparten un Cimiento: exige intervención coordinada sobre ese archivo. |
+| `compatible` | Archivos disjuntos, sin Cimiento ni recurso compartido. |
+
+Compartir Zona **no** es conflicto, y un Cimiento compartido es condición, no veto. Ahí está la
+diferencia con la línea `Asientos:`, que pronostica por Zona y ofrece una sola por Zona: esto
+mira los `archivos` exactos que cada Sesión declaró al prepararse.
+
+**Escenarios hipotéticos.** Separan dos afirmaciones que se confunden todo el tiempo:
+`desbloquea` es a quién le quedaría satisfecha la dependencia, y `quedan_listo` es quién
+derivaría a `LISTO` de verdad, según todos los criterios y la prioridad activa. El caso que el
+plan real produce hoy: cerrar S122 le satisface la dependencia a S123, y S123 **sigue en
+DIFERIDO**, porque su prioridad todavía no es la activa. Resolver una dependencia no vuelve
+ejecutable una prioridad posterior.
+
+Los escenarios no modifican el plan, Git ni la evidencia de entrega real: la hipótesis entra como
+parámetro a la misma derivación de estados, nunca como mutación.
+
+**Lo que no hace.** No autoriza ejecución, no reserva capacidad, no asigna workers, no concede
+acceso y no supone que la coordinación esté instalada. La admisión sigue siendo la de siempre, y
+la capacidad nueva depende de que sus consumidores se integren, verifiquen y activen en S146.
+El reporte lo dice en su propia salida para que nadie lo cite como permiso.
 
 ## Frontera honesta
 
