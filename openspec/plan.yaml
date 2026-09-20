@@ -8575,6 +8575,8 @@ sesiones:
         descartadas:
           - opcion: Resolver automáticamente los cruces adelantando las Sesiones existentes.
             razon: El humano pidió conservar sus alcances y prioridades.
+    entrega:
+      commit: 8f72abe5ae708d4631592091fb05947d6557c2e8
   - id: S145
     zona: metodo
     prioridad: metodo-v1-radar-prioritario
