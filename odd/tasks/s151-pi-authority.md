@@ -97,13 +97,13 @@ Only these repository files may be written:
   - Evidence: Strict TDD observed failing shim-contract tests before implementation. Final suite passes 50/50; independent verification also passed 50/50. The generated extension consumes one host-owned `CHANKS_PI_ADMISSION` envelope, validates live Git/Radar evidence and a retained no-follow identity proof file before solicitation and every capability operation, requests exactly one human confirmation, rewrites actual `event.input`, and revokes/cleans descriptors on every lifecycle/failure path. Native four-lens review `review-5b800720b9046611` approved and acknowledgement burned authority; five non-blocking maintainability/resilience warnings remain separate later work. Final delta is 568 additions and 13 deletions under Emilio's recorded S151 size exception. Work-unit commit: `35ee1a34bfad4a535392f6f4cb4edb9ffab71ff5`. No extension was installed globally.
 
 - [ ] **S151-T4 — Carry the activation contract through kickoff and bridge**
-  - Status: in progress.
+  - Status: implementation, verification, and native review complete; work-unit commit pending.
   - Route: delegated to `gentle-ai-worker`.
   - Trigger: two skills and two non-trivial contract test files.
   - Files: `agent-workflows/skills/chanks-3-session-kickoff/SKILL.md`, `agent-workflows/skills/chanks-4-puente/SKILL.md`, `agent-workflows/tests/test_builder_flow.py`, `agent-workflows/tests/test_puente_sdd_start.py`.
   - Outcome: preserve fresh Radar binding, exact resource/Cimiento evidence, and the host-confirmation boundary without turning ODD continuity into product authority or allowing model self-activation.
   - Checks: `python3 -m unittest agent-workflows/tests/test_builder_flow.py`; `python3 -m unittest agent-workflows/tests/test_puente_sdd_start.py`.
-  - Evidence: pending.
+  - Evidence: Strict TDD observed RED before the bounded JSON contracts existed. Final suites pass 14/14 builder tests and 10/10 bridge tests; one native SDD integration test is explicitly skipped because `GENTLE_AI_SDD_TEST_BINARY` is unavailable. Independent verification passed the same checks and confirmed the machine-readable host/model responsibilities, one-use admission envelope, exact proof keys, lifecycle revocation, and review/delivery rebind triggers. Native four-lens review `review-968e467c457866e7` approved and acknowledgement burned authority; three non-blocking documentation/test-boundary advisories remain separate later work. Final delta is 279 additions and 4 deletions; work-unit commit pending. Skills were not installed or propagated.
 
 - [ ] **S151-T5 — Prove the isolated runtime path end to end**
   - Route: delegated verification after implementation because the check loads generated Pi extension behavior and executes Bubblewrap.
@@ -140,8 +140,9 @@ Only these repository files may be written:
 - Native validation outcome: unavailable after transport/native failure; risk-gated fallback satisfied.
 - S151-T2 is complete in `5d3cf8f38231e4ed3106c59bd0457903d694af55`.
 - S151-T3 is complete in `35ee1a34bfad4a535392f6f4cb4edb9ffab71ff5`.
-- S151-T4 is in progress. Nothing has been pushed and no extension was installed globally.
+- S151-T4 passed Strict TDD, independent verification, and native four-lens review; its local commit is pending.
+- Nothing has been pushed; no extension or skill was installed globally.
 
 ## Next step
 
-Delegate S151-T4 with observed RED before changing kickoff and bridge contracts.
+Create the authorized local work-unit commit for S151-T4, record its identity, then execute S151-T5 in an isolated runtime.

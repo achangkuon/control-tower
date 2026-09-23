@@ -12,6 +12,68 @@ metadata:
 Activate after validated kickoff to translate one Session contract into its authorized execution path
 and return resulting evidence to the responsible parent.
 
+## Admitted Pi Execution Boundary
+
+Forward the host-admitted contract into technical execution without converting it into plan status,
+lock, ledger, or receipt. The bridge carries only the exact Session identity, HEAD, Radar stdout
+digests, authorized files/Cimientos, confirmed exclusive-or-serial Recurso, runtime identity, and
+compatible-execution evidence; it neither selects work nor widens that authority.
+
+<!-- PI-EXECUTION-REBIND:JSON -->
+```json
+{
+  "rebind_triggers": [
+    "review",
+    "delivery"
+  ],
+  "rebind_owner": "host_coordinator_only",
+  "rebind_inputs": [
+    "actual_immutable_candidate",
+    "refreshed_git_evidence",
+    "refreshed_radar_evidence"
+  ],
+  "drift_result": "revoke_before_policy",
+  "changed_candidate_or_runtime": [
+    "fresh_envelope",
+    "isolated_process",
+    "exact_human_acceptance"
+  ],
+  "model_responsibilities": {
+    "forbidden": [
+      "edit_or_renew_envelope",
+      "edit_or_renew_proof",
+      "paths",
+      "grants",
+      "resource_confirmation"
+    ],
+    "permitted": []
+  },
+  "evidence_boundaries": {
+    "s151_t3": {
+      "classification": "executable_generated_shim_evidence",
+      "path": "agent-workflows/tests/test_install.py",
+      "suite": "PiAuthorityExtensionTests"
+    },
+    "s151_t5": {
+      "classification": "separate_real_pi_bubblewrap_journey",
+      "status": "not_implemented_or_simulated_by_t4"
+    }
+  }
+}
+```
+<!-- /PI-EXECUTION-REBIND:JSON -->
+
+- ODD remains the default technical route. Its continuity document and Engram record do not select
+  work, grant authority, replace Radar, or widen scope. Use SDD only for explicit human
+  `solicitud_sdd`; neither route changes the host-owned admission boundary.
+- Before native review or delivery, the responsible host/coordinator must rebind/update the proof
+  to the actual immutable candidate and refresh live Radar/Git evidence. Any byte/HEAD/session/runtime
+  drift revokes authority and requires fresh host admission/confirmation and a new exact human
+  acceptance in an isolated Pi process; the model/worker cannot perform that renewal or edit its
+  envelope, proof, paths, or resource confirmation.
+- Return concrete proof binding, revalidation, TDD/check, and closure evidence to the responsible
+  parent. Native review remains evidence only: never treat native review as delivery authority.
+
 ## Hard Rules
 
 - Read plan evidence through `../chanks-0-agente-soporte/SKILL.md`. Translate; never redefine scope,
