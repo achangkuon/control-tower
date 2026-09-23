@@ -9148,6 +9148,207 @@ sesiones:
         Decisión de alcance: Engram 11327. README.md vigente en HEAD como línea base. S12.6
         conserva en torre-v3 la reorganización de la raíz. La frontera del producto se apoya en
         la medición de Engram 11325 y 11326. Revalidar contra el árbol vigente antes de escribir.
+  - id: S151
+    zona: metodo
+    prioridad: metodo-v1-controles-prioritarios
+    resultado: >-
+      Pi activa los controles Chanks únicamente con autoridad efímera de una Sesión humana
+      admitida, aplica realmente el confinamiento al comando ejecutado y bloquea ante autoridad,
+      reservas o recursos ausentes o vencidos.
+    autoridad:
+      - tipo: engram
+        id: 11366
+      - tipo: engram
+        id: 11368
+    depende_de:
+      - S146
+    cimientos: []
+    recurso:
+      - >-
+        runtime Pi aislado de ensayos Chanks Método V1; uso exclusivo a confirmar antes de
+        ejecutar, sin configuración global activa
+    reemplaza: []
+    archivos:
+      - agent-workflows/chanks/pi-authority.mjs
+      - agent-workflows/chanks/pi-controls.mjs
+      - agent-workflows/tools/install.py
+      - agent-workflows/skills/chanks-3-session-kickoff/SKILL.md
+      - agent-workflows/skills/chanks-4-puente/SKILL.md
+      - agent-workflows/tests/chanks/pi-authority.test.mjs
+      - agent-workflows/tests/chanks/pi-controls.test.mjs
+      - agent-workflows/tests/test_install.py
+      - agent-workflows/tests/test_builder_flow.py
+      - agent-workflows/tests/test_puente_sdd_start.py
+      - odd/tasks/s151-pi-authority.md
+    encargo:
+      pedido_contexto: >-
+        Completar el cableado entre la admisión humana basada en Radar y la extensión tool_call
+        de Pi. Hoy el shim consulta una autoridad inexistente, descarta el comando confinado y no
+        transporta evidencia real de Cimientos y Recurso. El shim no está instalado y Pi funciona
+        normalmente; esta Sesión enumera la pieza faltante sin tratar el fallo cerrado como defecto.
+      resultado_comportamiento: >-
+        Una Sesión seleccionada por humano y admitida con evidencia Radar fresca activa una
+        autoridad congelada y ligada a repositorio, Sesión, base y candidato de ejecución. El
+        agente puede solicitarla, pero sólo una confirmación humana explícita mostrada y resuelta
+        por el host de Pi la activa; el usuario no ejecuta comandos y el modelo no puede fabricar
+        la aceptación. Sin UI humana disponible, ante rechazo o ante cambio de Sesión, base o
+        runtime, la autoridad queda inactiva.
+
+        Write y edit sólo alcanzan archivos exactos autorizados. Bash ejecuta el comando realmente
+        reescrito dentro del confinamiento. Los Cimientos sólo son escribibles cuando existe una
+        concesión exacta y un Recurso declarado sólo habilita mutación cuando su uso exclusivo o
+        serial fue confirmado. Ausencia, drift, alcance ampliado o evidencia vencida bloquean sin
+        alternativa permisiva.
+
+        Radar conserva el cálculo de estado y declaraciones; la admisión aporta selección humana,
+        digests frescos y compatibilidad; la coordinación aporta reservas y confirmación efectiva.
+        La extensión combina esas evidencias en memoria sin convertirlas en plan, lock, ledger,
+        recibo o permiso persistente. Antes de revisión o entrega, el vínculo se vuelve a ligar al
+        candidato inmutable real y un permiso anterior no sobrevive a otros bytes.
+
+        La demostración de runtime carga el shim en una sesión Pi aislada, observa el handler real y
+        prueba que una escritura rechazada no ocurre, incluida una orden derivada; un test directo de
+        gobernar o un mensaje de bloqueo no sustituyen ese recorrido.
+      restricciones_decisiones: >-
+        Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana
+        explícita. No se debilita controls.mjs ni se duplica su lógica. No se parsea ROADMAP ni se
+        recalcula estado fuera del Radar instalado. El modelo no recibe una vía para autoatribuirse
+        autoridad, reservas o confirmación de Recurso. Los archivos escribibles son rutas exactas
+        canónicas dentro del repositorio; una ruta ausente, ambigua, escapada o enlazada bloquea.
+
+        Emilio aprobó una autoridad efímera por Sesión y rechazó autoridad global o persistida.
+        También aprobó una excepción explícita sobre la referencia de 400 líneas para conservar un
+        único resultado coherente; la excepción no amplía archivos, omite pruebas, reduce revisión
+        ni autoriza implementación antes de una admisión fresca de S151. Instalar o reinstalar skills
+        requiere la confirmación humana posterior exigida por la política del repositorio.
+      referencias: >-
+        Investigación verificada en master@51d2a2ee460685a54ba88206597bf8e0636aab75: Engram 11366.
+        Decisiones humanas 1A y 2A: Engram 11368. Antecedentes: S143, S144 y S146. Evidencia de
+        código: agent-workflows/tools/install.py:518-547;
+        agent-workflows/chanks/pi-controls.mjs:50,159-208;
+        agent-workflows/chanks/controls.mjs:28,206-244;
+        agent-workflows/chanks/interventions.mjs:15-18,190-193;
+        agent-workflows/skills/chanks-3-session-kickoff/SKILL.md:19-45. La documentación oficial de
+        Pi confirma que el estado se reconstruye por sesión y que mutar event.input cambia la
+        ejecución real. Revalidar HEAD, Radar, Recurso y disponibilidad de bwrap antes de RED.
+    decisiones:
+      - tipo: resuelta
+        clase: seguridad-y-permisos
+        pregunta: >-
+          ¿La autoridad de Pi se activa únicamente para una Sesión humana admitida y se invalida
+          ante cambio de Sesión, base o runtime?
+        evidencia: >-
+          El shim global actual no tiene productor de autoridad; Pi ejecuta extensiones con los
+          permisos completos del usuario y una autoridad persistida podría sobrevivir al trabajo
+          para el que fue aprobada.
+        contaminaba: [S151]
+        checkpoint: antes de RED y antes de instalar o cargar el shim
+        opciones:
+          - opcion: Activación efímera por Sesión con invalidación fail-closed.
+            consecuencia: >-
+              Conserva aislamiento y trazabilidad; cada Sesión requiere selección humana y
+              admisión fresca.
+          - opcion: Autoridad global o persistida.
+            consecuencia: >-
+              Reduce pasos pero permite heredar permisos entre sesiones, bases o repositorios.
+          - opcion: No instalar ni activar el shim.
+            consecuencia: >-
+              Mantiene Pi funcionando como hoy, pero los controles Chanks no gobiernan efectos
+              reales.
+        resolucion: >-
+          La autoridad se activa de forma efímera sólo para una Sesión humana admitida, queda
+          ligada a su repositorio, base, candidato de ejecución y runtime, y se invalida ante
+          cualquier cambio de esa identidad. No existe fallback global, persistido o autoatribuido.
+        autoridad: "Emilio eligió 1A explícitamente; Engram 11368."
+        descartadas:
+          - opcion: Autoridad global o persistida.
+            razon: Permitiría que un permiso sobreviva fuera de la Sesión y base aprobadas.
+          - opcion: No instalar ni activar el shim.
+            razon: Mantendría sin uso los controles efectivos entregados por S143, S144 y S146.
+        falsificador: >-
+          Una herramienta mutante se ejecuta sin activación humana fresca, una autoridad sobrevive
+          a un cambio de Sesión/base/runtime o el modelo puede fabricar el permiso que lo gobierna.
+      - tipo: resuelta
+        clase: seguridad-y-permisos
+        pregunta: >-
+          ¿Cómo solicita el agente la activación sin obligar al usuario a ejecutar un comando ni
+          permitir que el modelo se otorgue autoridad?
+        evidencia: >-
+          El shim espera una autoridad que hoy nadie produce. Un comando manual conserva el control
+          humano pero agrega fricción, y una bandera al arrancar ocurre antes de conocer y aprobar
+          la identidad exacta de la sesión Pi. La API de extensiones permite que una solicitud del
+          agente abra una confirmación perteneciente al host.
+        contaminaba: [S151]
+        checkpoint: antes de RED y antes de instalar o cargar el shim
+        opciones:
+          - opcion: Solicitud del agente con confirmación humana perteneciente al host.
+            consecuencia: >-
+              El usuario sólo acepta o rechaza en Pi; el agente puede pedir permiso pero no puede
+              responder la confirmación ni activar autoridad por sí mismo.
+          - opcion: Comando manual del usuario dentro del Pi destino.
+            consecuencia: >-
+              Conserva el control humano, pero obliga a escribir un comando después de cada
+              admisión y expone una fricción innecesaria.
+          - opcion: Bandera de autoridad al arrancar Pi.
+            consecuencia: >-
+              Automatiza el arranque, pero precede al ID exacto y a la segunda aprobación humana de
+              la sesión destino.
+          - opcion: No activar los controles todavía.
+            consecuencia: >-
+              Evita el nuevo canal, pero deja Método V1 incompleto y el shim sin gobernar efectos
+              reales.
+        resolucion: >-
+          El agente solicita la autoridad y Pi muestra una confirmación perteneciente al host. Sólo
+          la aceptación humana explícita activa la autoridad efímera. El usuario no ejecuta un
+          comando; rechazo, cancelación, UI no disponible o evidencia inválida bloquean sin
+          alternativa permisiva.
+        autoridad: "Emilio lo decidió explícitamente; Engram 11423."
+        descartadas:
+          - opcion: Comando manual del usuario dentro del Pi destino.
+            razon: Agrega una acción manual que Emilio rechazó para la experiencia V1.
+          - opcion: Bandera de autoridad al arrancar Pi.
+            razon: No puede quedar ligada a la identidad exacta aprobada después del arranque.
+          - opcion: No activar los controles todavía.
+            razon: Impide cerrar Método V1 y preparar el release Torre V1 solicitado.
+        falsificador: >-
+          El usuario debe escribir un comando, el modelo puede responder o eludir la confirmación,
+          la ausencia de UI concede autoridad o una solicitud inválida llega a activar permisos.
+      - tipo: resuelta
+        alcanza: encargo
+        pregunta: >-
+          Con una previsión inicial de 500–800 líneas implementadas, ¿se conserva una sola Sesión
+          coherente con excepción de tamaño o se divide la entrega?
+        evidencia: >-
+          El productor de autoridad, el handoff de admisión, la aplicación real del comando
+          confinado y sus pruebas de runtime forman un único recorrido; dividirlo puede dejar una
+          mitad instalada pero inoperante. La previsión supera la referencia de 400 líneas.
+        contaminaba: [S151]
+        checkpoint: antes de RED o cualquier escritura de implementación
+        opciones:
+          - opcion: Aprobar una excepción de tamaño para una sola Sesión coherente.
+            consecuencia: >-
+              Conserva un resultado utilizable y reversible; no reduce pruebas, revisión ni alcance
+              exacto.
+          - opcion: Dividir en entregas secuenciales.
+            consecuencia: >-
+              Reduce cada revisión, pero cada corte debe ser independientemente útil y no puede
+              instalar una protección incompleta.
+          - opcion: Mantener pendiente la implementación.
+            consecuencia: >-
+              Conserva el diagnóstico y deja el shim sin instalar ni gobernar efectos reales.
+        resolucion: >-
+          Se conserva S151 como una sola Sesión coherente y se aprueba la excepción explícita sobre
+          la referencia de 400 líneas para este alcance exacto. La excepción no autoriza expansión,
+          omisión de pruebas o reducción de revisión.
+        autoridad: "Emilio eligió 2A explícitamente; Engram 11368."
+        descartadas:
+          - opcion: Dividir en entregas secuenciales.
+            razon: La opción elegida prioriza que el cableado completo sea una única unidad utilizable.
+          - opcion: Mantener pendiente la implementación.
+            razon: Emilio autorizó enumerar el trabajo con su presupuesto excepcional explícito.
+        falsificador: >-
+          La excepción se usa para ampliar archivos o comportamiento, omitir pruebas/revisión o
+          presentar una integración parcial como control efectivo completo.
 references:
   future_successors:
     - id: S102

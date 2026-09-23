@@ -3,15 +3,15 @@
 
 ## 📍 Punto de retoma
 - Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S128, S130, S131, S132, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
-- Prioridad activa: Método V1.
-- Próximo trabajo ejecutable: Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados..
+- Prioridad activa: Método V1 · Controles prioritarios.
+- Próximo trabajo ejecutable: Método #3 → S151 — Pi activa los controles Chanks únicamente con autoridad efímera de una Sesión humana admitida, aplica realmente el confinamiento al comando ejecutado y bloquea ante autoridad, reservas o recursos ausentes o vencidos..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
 ## Estado y próximo trabajo
-- Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
+- Método #3 → S151 — Pi activa los controles Chanks únicamente con autoridad efímera de una Sesión humana admitida, aplica realmente el confinamiento al comando ejecutado y bloquea ante autoridad, reservas o recursos ausentes o vencidos.
 
 ## Avance
-- **Total:** 69% (83/119 S)
+- **Total:** 69% (83/120 S)
 - 16 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
@@ -24,7 +24,7 @@
 - **Hosts:** 60% (3/5 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 82% (23/28 S)
+- **Método:** 79% (23/29 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -65,10 +65,8 @@
 
 ### Método (metodo)
 1. **S115** · 📋 PLANIFICADO · prioridad Torre V3 · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
-2. **S122** · 🟢 LISTO · prioridad Método V1 · Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
-3. **S123** · 📋 PLANIFICADO · prioridad Torre V3 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
-4. **S129** · 🟢 LISTO · prioridad Método V1 · Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
-5. **S133** · 🟢 LISTO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
+2. **S123** · 📋 PLANIFICADO · prioridad Torre V3 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
+3. **S151** · 🟢 LISTO · prioridad Método V1 · Controles prioritarios · Pi activa los controles Chanks únicamente con autoridad efímera de una Sesión humana admitida, aplica realmente el confinamiento al comando ejecutado y bloquea ante autoridad, reservas o recursos ausentes o vencidos.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · prioridad Torre V2 · Handoffs y despacho Tower-owned · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -890,7 +888,7 @@
 
 ### S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 - Coordinación:
-  - Estado derivado: 🟢 LISTO
+  - Estado derivado: 🟡 DIFERIDO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/tools/radar/state.go, agent-workflows/tools/radar/state&#95;test.go, agent-workflows/tools/radar/snapshot.go, agent-workflows/tools/radar/snapshot&#95;test.go, agent-workflows/tools/radar/render.go, agent-workflows/tools/radar/render&#95;test.go, agent-workflows/tools/radar/testdata/ROADMAP.golden.md
   - Depende de: S127
@@ -940,7 +938,7 @@
 
 ### S129 — Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
 - Coordinación:
-  - Estado derivado: 🟢 LISTO
+  - Estado derivado: 🟡 DIFERIDO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/check&#95;test.go, agent-workflows/tools/radar/avance.go
   - Depende de: S128
@@ -964,7 +962,7 @@
 
 ### S133 — El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
 - Coordinación:
-  - Estado derivado: 🟢 LISTO
+  - Estado derivado: 🟡 DIFERIDO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/skills/chanks-7-session-doc/SKILL.md, agent-workflows/tests/test&#95;builder&#95;flow.py
   - Depende de: S135
@@ -1189,6 +1187,59 @@
   - Resultado y comportamiento: El README abre con el problema que la Torre resuelve —varias sesiones de agente sobre el mismo repositorio entregan en orden y no se pisan en master— y con el resultado observable, antes que con su inventario de archivos. Declara explícitamente la frontera de la V1: coordina y serializa la entrega; no reparte trabajo, no traspasa encargos entre agentes y no recupera una sesión caída. Nombra que el traspaso de trabajo se coordina hoy con el método, no con la Torre, y que la versión automática pertenece a una versión posterior. Explica la instalación del artefacto entregable y el interruptor on/off con su efecto real sobre el estado existente. Describe la relación con Radar como dos programas distintos que se instalan juntos y se versionan por separado. Ninguna afirmación del README describe una capacidad que no exista en el árbol al momento de escribirlo; cada capacidad enunciada es verificable contra el código o contra una prueba.
   - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. README.md es Cimiento: su intervención exige reserva exacta y exclusividad o serialización demostrada. Sólo se autoriza README.md; ROADMAP.md, AGENTS.md, CLAUDE.md y la documentación bajo docs/ quedan fuera. No se reorganiza la raíz, no se mueven ni renombran archivos y no se toca código: esa parte permanece en S12.6 dentro de torre-v3. El texto no anticipa capacidades de torre-v2 como disponibles.
   - Referencias: Decisión de alcance: Engram 11327. README.md vigente en HEAD como línea base. S12.6 conserva en torre-v3 la reorganización de la raíz. La frontera del producto se apoya en la medición de Engram 11325 y 11326. Revalidar contra el árbol vigente antes de escribir.
+
+### S151 — Pi activa los controles Chanks únicamente con autoridad efímera de una Sesión humana admitida, aplica realmente el confinamiento al comando ejecutado y bloquea ante autoridad, reservas o recursos ausentes o vencidos.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/chanks/pi-authority.mjs, agent-workflows/chanks/pi-controls.mjs, agent-workflows/tools/install.py, agent-workflows/skills/chanks-3-session-kickoff/SKILL.md, agent-workflows/skills/chanks-4-puente/SKILL.md, agent-workflows/tests/chanks/pi-authority.test.mjs, agent-workflows/tests/chanks/pi-controls.test.mjs, agent-workflows/tests/test&#95;install.py, agent-workflows/tests/test&#95;builder&#95;flow.py, agent-workflows/tests/test&#95;puente&#95;sdd&#95;start.py, odd/tasks/s151-pi-authority.md
+  - Depende de: S146
+  - Recursos: runtime Pi aislado de ensayos Chanks Método V1; uso exclusivo a confirmar antes de ejecutar, sin configuración global activa
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Completar el cableado entre la admisión humana basada en Radar y la extensión tool&#95;call de Pi. Hoy el shim consulta una autoridad inexistente, descarta el comando confinado y no transporta evidencia real de Cimientos y Recurso. El shim no está instalado y Pi funciona normalmente; esta Sesión enumera la pieza faltante sin tratar el fallo cerrado como defecto.
+  - Resultado y comportamiento: Una Sesión seleccionada por humano y admitida con evidencia Radar fresca activa una autoridad congelada y ligada a repositorio, Sesión, base y candidato de ejecución. El agente puede solicitarla, pero sólo una confirmación humana explícita mostrada y resuelta por el host de Pi la activa; el usuario no ejecuta comandos y el modelo no puede fabricar la aceptación. Sin UI humana disponible, ante rechazo o ante cambio de Sesión, base o runtime, la autoridad queda inactiva. Write y edit sólo alcanzan archivos exactos autorizados. Bash ejecuta el comando realmente reescrito dentro del confinamiento. Los Cimientos sólo son escribibles cuando existe una concesión exacta y un Recurso declarado sólo habilita mutación cuando su uso exclusivo o serial fue confirmado. Ausencia, drift, alcance ampliado o evidencia vencida bloquean sin alternativa permisiva. Radar conserva el cálculo de estado y declaraciones; la admisión aporta selección humana, digests frescos y compatibilidad; la coordinación aporta reservas y confirmación efectiva. La extensión combina esas evidencias en memoria sin convertirlas en plan, lock, ledger, recibo o permiso persistente. Antes de revisión o entrega, el vínculo se vuelve a ligar al candidato inmutable real y un permiso anterior no sobrevive a otros bytes. La demostración de runtime carga el shim en una sesión Pi aislada, observa el handler real y prueba que una escritura rechazada no ocurre, incluida una orden derivada; un test directo de gobernar o un mensaje de bloqueo no sustituyen ese recorrido.
+  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. No se debilita controls.mjs ni se duplica su lógica. No se parsea ROADMAP ni se recalcula estado fuera del Radar instalado. El modelo no recibe una vía para autoatribuirse autoridad, reservas o confirmación de Recurso. Los archivos escribibles son rutas exactas canónicas dentro del repositorio; una ruta ausente, ambigua, escapada o enlazada bloquea. Emilio aprobó una autoridad efímera por Sesión y rechazó autoridad global o persistida. También aprobó una excepción explícita sobre la referencia de 400 líneas para conservar un único resultado coherente; la excepción no amplía archivos, omite pruebas, reduce revisión ni autoriza implementación antes de una admisión fresca de S151. Instalar o reinstalar skills requiere la confirmación humana posterior exigida por la política del repositorio.
+    - Decisión estructurada [resuelta · seguridad-y-permisos]: ¿La autoridad de Pi se activa únicamente para una Sesión humana admitida y se invalida ante cambio de Sesión, base o runtime?
+      - Resolución: La autoridad se activa de forma efímera sólo para una Sesión humana admitida, queda ligada a su repositorio, base, candidato de ejecución y runtime, y se invalida ante cualquier cambio de esa identidad. No existe fallback global, persistido o autoatribuido.
+      - Autoridad: Emilio eligió 1A explícitamente; Engram 11368.
+      - Evidencia: El shim global actual no tiene productor de autoridad; Pi ejecuta extensiones con los permisos completos del usuario y una autoridad persistida podría sobrevivir al trabajo para el que fue aprobada.
+      - Checkpoint: antes de RED y antes de instalar o cargar el shim
+      - Falsificador: Una herramienta mutante se ejecuta sin activación humana fresca, una autoridad sobrevive a un cambio de Sesión/base/runtime o el modelo puede fabricar el permiso que lo gobierna.
+      - Contaminaba: S151
+      - Opción: Activación efímera por Sesión con invalidación fail-closed. → Conserva aislamiento y trazabilidad; cada Sesión requiere selección humana y admisión fresca.
+      - Opción: Autoridad global o persistida. → Reduce pasos pero permite heredar permisos entre sesiones, bases o repositorios.
+      - Opción: No instalar ni activar el shim. → Mantiene Pi funcionando como hoy, pero los controles Chanks no gobiernan efectos reales.
+      - Descartada: Autoridad global o persistida. → Permitiría que un permiso sobreviva fuera de la Sesión y base aprobadas.
+      - Descartada: No instalar ni activar el shim. → Mantendría sin uso los controles efectivos entregados por S143, S144 y S146.
+    - Decisión estructurada [resuelta · seguridad-y-permisos]: ¿Cómo solicita el agente la activación sin obligar al usuario a ejecutar un comando ni permitir que el modelo se otorgue autoridad?
+      - Resolución: El agente solicita la autoridad y Pi muestra una confirmación perteneciente al host. Sólo la aceptación humana explícita activa la autoridad efímera. El usuario no ejecuta un comando; rechazo, cancelación, UI no disponible o evidencia inválida bloquean sin alternativa permisiva.
+      - Autoridad: Emilio lo decidió explícitamente; Engram 11423.
+      - Evidencia: El shim espera una autoridad que hoy nadie produce. Un comando manual conserva el control humano pero agrega fricción, y una bandera al arrancar ocurre antes de conocer y aprobar la identidad exacta de la sesión Pi. La API de extensiones permite que una solicitud del agente abra una confirmación perteneciente al host.
+      - Checkpoint: antes de RED y antes de instalar o cargar el shim
+      - Falsificador: El usuario debe escribir un comando, el modelo puede responder o eludir la confirmación, la ausencia de UI concede autoridad o una solicitud inválida llega a activar permisos.
+      - Contaminaba: S151
+      - Opción: Solicitud del agente con confirmación humana perteneciente al host. → El usuario sólo acepta o rechaza en Pi; el agente puede pedir permiso pero no puede responder la confirmación ni activar autoridad por sí mismo.
+      - Opción: Comando manual del usuario dentro del Pi destino. → Conserva el control humano, pero obliga a escribir un comando después de cada admisión y expone una fricción innecesaria.
+      - Opción: Bandera de autoridad al arrancar Pi. → Automatiza el arranque, pero precede al ID exacto y a la segunda aprobación humana de la sesión destino.
+      - Opción: No activar los controles todavía. → Evita el nuevo canal, pero deja Método V1 incompleto y el shim sin gobernar efectos reales.
+      - Descartada: Comando manual del usuario dentro del Pi destino. → Agrega una acción manual que Emilio rechazó para la experiencia V1.
+      - Descartada: Bandera de autoridad al arrancar Pi. → No puede quedar ligada a la identidad exacta aprobada después del arranque.
+      - Descartada: No activar los controles todavía. → Impide cerrar Método V1 y preparar el release Torre V1 solicitado.
+    - Decisión estructurada [resuelta · ]: Con una previsión inicial de 500–800 líneas implementadas, ¿se conserva una sola Sesión coherente con excepción de tamaño o se divide la entrega?
+      - Resolución: Se conserva S151 como una sola Sesión coherente y se aprueba la excepción explícita sobre la referencia de 400 líneas para este alcance exacto. La excepción no autoriza expansión, omisión de pruebas o reducción de revisión.
+      - Autoridad: Emilio eligió 2A explícitamente; Engram 11368.
+      - Evidencia: El productor de autoridad, el handoff de admisión, la aplicación real del comando confinado y sus pruebas de runtime forman un único recorrido; dividirlo puede dejar una mitad instalada pero inoperante. La previsión supera la referencia de 400 líneas.
+      - Checkpoint: antes de RED o cualquier escritura de implementación
+      - Alcanza: encargo
+      - Falsificador: La excepción se usa para ampliar archivos o comportamiento, omitir pruebas/revisión o presentar una integración parcial como control efectivo completo.
+      - Contaminaba: S151
+      - Opción: Aprobar una excepción de tamaño para una sola Sesión coherente. → Conserva un resultado utilizable y reversible; no reduce pruebas, revisión ni alcance exacto.
+      - Opción: Dividir en entregas secuenciales. → Reduce cada revisión, pero cada corte debe ser independientemente útil y no puede instalar una protección incompleta.
+      - Opción: Mantener pendiente la implementación. → Conserva el diagnóstico y deja el shim sin instalar ni gobernar efectos reales.
+      - Descartada: Dividir en entregas secuenciales. → La opción elegida prioriza que el cableado completo sea una única unidad utilizable.
+      - Descartada: Mantener pendiente la implementación. → Emilio autorizó enumerar el trabajo con su presupuesto excepcional explícito.
+  - Referencias: Investigación verificada en master@51d2a2ee460685a54ba88206597bf8e0636aab75: Engram 11366. Decisiones humanas 1A y 2A: Engram 11368. Antecedentes: S143, S144 y S146. Evidencia de código: agent-workflows/tools/install.py:518-547; agent-workflows/chanks/pi-controls.mjs:50,159-208; agent-workflows/chanks/controls.mjs:28,206-244; agent-workflows/chanks/interventions.mjs:15-18,190-193; agent-workflows/skills/chanks-3-session-kickoff/SKILL.md:19-45. La documentación oficial de Pi confirma que el estado se reconstruye por sesión y que mutar event.input cambia la ejecución real. Revalidar HEAD, Radar, Recurso y disponibilidad de bwrap antes de RED.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
