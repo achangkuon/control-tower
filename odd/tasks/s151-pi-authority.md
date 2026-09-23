@@ -69,16 +69,17 @@ Only these repository files may be written:
 
 ## Tasks
 
-- [ ] **S151-T1 — Define and test the ephemeral authority lifecycle**
-  - Status: implementation and verification complete; work-unit commit pending.
+- [x] **S151-T1 — Define and test the ephemeral authority lifecycle**
+  - Status: complete.
   - Route: delegated to `gentle-ai-worker`.
   - Trigger: new production module plus a non-trivial test file.
   - Files: `agent-workflows/chanks/pi-authority.mjs`, `agent-workflows/tests/chanks/pi-authority.test.mjs`.
   - Outcome: validate fresh admission data, canonical repository and exact files; create in-memory authority bound to Session/base/candidate/runtime; invalidate on drift and lifecycle changes; expose trusted Cimiento/resource evidence without accepting model-authored claims.
   - Checks: `bun test agent-workflows/tests/chanks/pi-authority.test.mjs`.
-  - Evidence: Initial RED observed because the production module did not exist. Review and verification drove portable containment, opaque consent correlation, revocable capabilities, single-link files, retained no-follow descriptors, nonempty resources, and exception-safe cleanup. The final Strict TDD RED had 3 expected failures; GREEN passes 20 tests with 0 failures. Native targeted validation became unavailable after a transport/native failure, so the provider-required high-risk fallback ran: the independent verifier repeated the focused suite once (20 pass, 0 fail) and found no concrete gap. Source and test files total 733 authored lines. Work-unit commit pending.
+  - Evidence: Initial RED observed because the production module did not exist. Review and verification drove portable containment, opaque consent correlation, revocable capabilities, single-link files, retained no-follow descriptors, nonempty resources, and exception-safe cleanup. The final Strict TDD RED had 3 expected failures; GREEN passes 20 tests with 0 failures. Native targeted validation became unavailable after a transport/native failure, so the provider-required high-risk fallback ran: the independent verifier repeated the focused suite once (20 pass, 0 fail) and found no concrete gap. Source and test files total 733 authored lines. Work-unit commit: `dca75689f6919edc1fe3784bf091b26d38c0691f`.
 
 - [ ] **S151-T2 — Enforce authority in Pi mutating controls**
+  - Status: in progress.
   - Route: delegated to `gentle-ai-worker`.
   - Trigger: two non-trivial implementation/test files.
   - Files: `agent-workflows/chanks/pi-controls.mjs`, `agent-workflows/tests/chanks/pi-controls.test.mjs`.
@@ -132,11 +133,11 @@ Only these repository files may be written:
 - Admission and exact-file expansion validated.
 - Product/security decisions resolved.
 - Read-only architecture map completed.
-- S151-T1 final candidate is implemented and independently verified.
+- S151-T1 is complete in `dca75689f6919edc1fe3784bf091b26d38c0691f`.
 - Focused suite: 20 passed, 0 failed; independent fallback verification also passed 20/20.
 - Native validation outcome: unavailable after transport/native failure; risk-gated fallback satisfied.
-- No commit or push exists yet.
+- S151-T2 is in progress. Nothing has been pushed.
 
 ## Next step
 
-Create the authorized local work-unit commit for S151-T1, record its identity, then start S151-T2.
+Delegate S151-T2 with observed RED before changing Pi controls.
