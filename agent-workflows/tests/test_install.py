@@ -1,6 +1,9 @@
+import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
+import shlex
 import shutil
 import stat
 import subprocess
@@ -659,12 +662,12 @@ class PiExtensionTests(unittest.TestCase):
         self.assertEqual(path.suffix, ".ts")
         self.assertTrue(str(path).endswith(".pi/agent/extensions/chanks-controls.ts"))
 
-    def test_shim_imports_the_adapter_and_never_reimplements_it(self):
+    def test_shim_imports_the_revocable_authority_and_never_reimplements_controls(self):
         body = INSTALLER.desired_pi_extension(ROOT).decode("utf8")
-        self.assertIn("pi-controls.mjs", body)
-        self.assertIn("gobernar", body)
-        # A shim that decided anything would be a second answer to the same question.
-        for rule in ["archivos", "bwrap", "--ro-bind", "block: true"]:
+        self.assertIn("pi-authority.mjs", body)
+        self.assertIn("crearAutoridadPi", body)
+        # The shim requests host confirmation and delegates control decisions to its capability.
+        for rule in ["bwrap", "--ro-bind"]:
             self.assertNotIn(rule, body)
 
     def test_shim_registers_the_tool_call_gate(self):
@@ -690,4 +693,315 @@ class PiExtensionTests(unittest.TestCase):
 
     def test_shim_points_at_this_checkout_so_a_stale_copy_cannot_be_loaded(self):
         body = INSTALLER.desired_pi_extension(ROOT).decode("utf8")
-        self.assertIn(str((ROOT / "chanks/pi-controls.mjs").resolve()), body)
+        self.assertIn(str((ROOT / "chanks/pi-authority.mjs").resolve()), body)
+
+
+class PiAuthorityExtensionTests(unittest.TestCase):
+    """Execute the generated extension against a minimal Pi host, never text-match its policy."""
+
+    def setUp(self):
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.home = Path(self.tempdir.name)
+        self.live = self.home / "host-live"
+        self.live.mkdir()
+        self.head = self.live / "head"
+        self.status = self.live / "status.json"
+        self.session = self.live / "session.json"
+        self.head.write_text("a" * 40 + "\n", encoding="utf-8")
+        self.status.write_text('{"schema":"radar.snapshot/v1"}\n', encoding="utf-8")
+        self.session.write_text('{"sessionId":"S151"}\n', encoding="utf-8")
+        self.host_bin = self.home / "host-bin"
+        self.host_bin.mkdir()
+        self.git = self.host_bin / "git"
+        self.radar = self.host_bin / "radar"
+        self.git.write_text("#!/bin/sh\n/bin/cat " + shlex.quote(str(self.head)) + "\n", encoding="utf-8")
+        self.radar.write_text(
+            "#!/bin/sh\ncase \"$1\" in\n"
+            + "status) /bin/cat " + shlex.quote(str(self.status)) + ";;\n"
+            + "sesion) /bin/cat " + shlex.quote(str(self.session)) + ";;\n"
+            + "*) exit 64;;\nesac\n",
+            encoding="utf-8",
+        )
+        self.git.chmod(0o755)
+        self.radar.chmod(0o755)
+        self.identity = self.home / "live-identity.json"
+
+    def tearDown(self):
+        self.tempdir.cleanup()
+
+    @staticmethod
+    def _digest(path):
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+
+    def _bundle(self):
+        root = ROOT.parent.resolve()
+        authorized = str((root / "agent-workflows/tools/install.py").resolve())
+        return {
+            "repositoryRoot": str(root),
+            "sessionId": "S151",
+            "baseCommit": self.head.read_text(encoding="utf-8").strip(),
+            "candidateDigest": "b" * 64,
+            "runtimeIdentity": "pi-test-runtime",
+            "radar": {"statusDigest": self._digest(self.status), "sessionDigest": self._digest(self.session)},
+            "authorizedFiles": [authorized],
+            "cimientoGrants": [authorized],
+            "resources": [{"id": "isolated-pi", "mode": "exclusive", "confirmed": True}],
+        }
+
+    def _identity(self, admission=None):
+        admission = admission or self._bundle()
+        return {
+            "repositoryRoot": admission["repositoryRoot"],
+            "sessionId": admission["sessionId"],
+            "baseCommit": admission["baseCommit"],
+            "candidateDigest": admission["candidateDigest"],
+            "runtimeIdentity": admission["runtimeIdentity"],
+            "statusDigest": admission["radar"]["statusDigest"],
+            "sessionDigest": admission["radar"]["sessionDigest"],
+        }
+
+    def _envelope(self, admission):
+        self.identity.write_text(json.dumps(self._identity(admission)), encoding="utf-8")
+        return {
+            "admission": admission,
+            "radarExecutable": str(self.radar),
+            "gitExecutable": str(self.git),
+            "identityFile": str(self.identity),
+        }
+
+    def _run_shim(self, *, admission=None, envelope=None, has_ui=True, confirmation=True, shutdown=None,
+                  mutate_head=None, mutate_status=None, mutate_session=None, mutate_identity=None,
+                  replace_identity=None):
+        INSTALLER.install_pi_extension(self.home, ROOT)
+        package = self.home / "node_modules/@earendil-works/pi-ai"
+        package.mkdir(parents=True, exist_ok=True)
+        (package / "package.json").write_text(
+            json.dumps({"name": "@earendil-works/pi-ai", "type": "module", "exports": "./index.js"}),
+            encoding="utf-8",
+        )
+        (package / "index.js").write_text(
+            "export const Type = { Object: (properties, options = {}) => ({ type: 'object', properties, ...options }) };\n",
+            encoding="utf-8",
+        )
+        runner = self.home / "run-shim.mjs"
+        runner.write_text(
+            """
+import { readlinkSync, readdirSync, renameSync, writeFileSync } from 'node:fs'
+const extension = (await import(process.argv[2])).default
+const scenario = JSON.parse(process.argv[3])
+const handlers = {}
+let tool
+const confirmations = []
+const pi = {
+  on(name, handler) { (handlers[name] ??= []).push(handler) },
+  registerTool(definition) { tool = definition },
+}
+const ctx = {
+  hasUI: scenario.hasUI,
+  ui: {
+    async confirm(title, message) {
+      confirmations.push({ title, message })
+      if (scenario.confirmation === 'throw') throw new Error('cancelled UI')
+      return scenario.confirmation
+    },
+  },
+}
+extension(pi)
+const call = async (command) => {
+  const event = { type: 'tool_call', toolName: 'bash', input: { command } }
+  const result = await handlers.tool_call[0](event, ctx)
+  return { result, input: event.input }
+}
+const before = await call('printf before')
+const activation = await tool.execute('model-call', {
+  approved: true,
+  repositoryRoot: '/model-must-not-grant',
+  command: 'model-must-not-confine',
+  gitExecutable: '/model-must-not-select-git',
+  radarExecutable: '/model-must-not-select-radar',
+  runtimeIdentity: 'model-must-not-select-runtime',
+  identityFile: '/model-must-not-select-identity',
+}, undefined, undefined, ctx)
+if (scenario.mutateHead !== null) writeFileSync(scenario.headPath, scenario.mutateHead)
+if (scenario.mutateStatus !== null) writeFileSync(scenario.statusPath, scenario.mutateStatus)
+if (scenario.mutateSession !== null) writeFileSync(scenario.sessionPath, scenario.mutateSession)
+if (scenario.mutateIdentity !== null) writeFileSync(scenario.identityFile, scenario.mutateIdentity)
+if (scenario.replaceIdentity !== null) {
+  const replacement = `${scenario.identityFile}.replacement`
+  writeFileSync(replacement, scenario.replaceIdentity)
+  renameSync(replacement, scenario.identityFile)
+}
+const after = await call('printf allowed')
+let afterShutdown
+if (scenario.shutdown) {
+  for (const handler of handlers.session_shutdown ?? []) await handler({ type: 'session_shutdown', reason: scenario.shutdown }, ctx)
+  for (const handler of handlers.session_start ?? []) await handler({ type: 'session_start', reason: 'resume' }, ctx)
+  afterShutdown = await call('printf after-shutdown')
+}
+const proofDescriptors = () => readdirSync('/proc/self/fd').filter((fd) => {
+  try { return readlinkSync(`/proc/self/fd/${fd}`) === scenario.identityFile } catch { return false }
+})
+console.log(JSON.stringify({
+  tool: { name: tool.name, executionMode: tool.executionMode, parameters: tool.parameters },
+  before, activation, after, afterShutdown, confirmations,
+  envConsumed: process.env.CHANKS_PI_ADMISSION === undefined,
+  proofDescriptors: proofDescriptors(),
+}))
+""",
+            encoding="utf-8",
+        )
+        env = os.environ.copy()
+        if admission is None and envelope is None:
+            env.pop("CHANKS_PI_ADMISSION", None)
+        else:
+            payload = envelope if envelope is not None else (
+                admission if isinstance(admission, str) else self._envelope(admission)
+            )
+            env["CHANKS_PI_ADMISSION"] = payload if isinstance(payload, str) else json.dumps(payload)
+        run = subprocess.run(
+            ["bun", str(runner), str(INSTALLER.pi_extension_path(self.home)), json.dumps({
+                "hasUI": has_ui, "confirmation": confirmation, "shutdown": shutdown,
+                "headPath": str(self.head), "statusPath": str(self.status), "sessionPath": str(self.session),
+                "identityFile": str(self.identity), "mutateIdentity": mutate_identity,
+                "replaceIdentity": replace_identity,
+                "mutateHead": mutate_head, "mutateStatus": mutate_status, "mutateSession": mutate_session,
+            })],
+            capture_output=True,
+            text=True,
+            cwd=ROOT.parent,
+            env=env,
+        )
+        self.assertEqual(run.returncode, 0, run.stderr)
+        return json.loads(run.stdout)
+
+    def test_generated_shim_requires_host_admission_and_exact_human_confirmation(self):
+        outcome = self._run_shim(admission=self._bundle(), confirmation=True)
+
+        self.assertEqual(outcome["tool"]["name"], "chanks_request_activation")
+        self.assertEqual(outcome["tool"]["executionMode"], "sequential")
+        self.assertEqual(outcome["tool"]["parameters"]["properties"], {})
+        self.assertFalse(outcome["tool"]["parameters"]["additionalProperties"])
+        self.assertTrue(outcome["before"]["result"].get("block", False))
+        self.assertEqual(outcome["after"]["result"], {})
+        self.assertEqual(len(outcome["confirmations"]), 1)
+        confirmation = outcome["confirmations"][0]
+        for field in ("S151", str(ROOT.parent.resolve()), "tools/install.py", "isolated-pi", "exclusive", "Base", "Candidate", "Runtime"):
+            self.assertIn(field, confirmation["message"])
+        self.assertTrue(outcome["envConsumed"])
+        self.assertEqual(len(outcome["proofDescriptors"]), 1)
+        self.assertEqual(set(outcome["after"]["input"]), {"command"})
+        self.assertNotEqual(outcome["after"]["input"]["command"], "printf allowed")
+        self.assertIn("/usr/bin/bwrap", outcome["after"]["input"]["command"])
+
+    def test_generated_shim_fails_closed_for_missing_invalid_or_non_true_consent(self):
+        cases = (
+            ("missing", None, True, True),
+            ("invalid", "{not json", True, True),
+            ("no UI", self._bundle(), False, True),
+            ("decline", self._bundle(), True, False),
+            ("cancel", self._bundle(), True, None),
+            ("UI error", self._bundle(), True, "throw"),
+        )
+        for label, admission, has_ui, confirmation in cases:
+            with self.subTest(label=label):
+                outcome = self._run_shim(
+                    admission=admission, has_ui=has_ui, confirmation=confirmation
+                )
+                self.assertTrue(outcome["before"]["result"].get("block", False))
+                self.assertTrue(outcome["after"]["result"].get("block", False))
+                self.assertIn("blocked", outcome["activation"]["content"][0]["text"].lower())
+                self.assertEqual(len(outcome["confirmations"]), 1 if admission == self._bundle() and has_ui else 0)
+
+    def test_live_git_or_radar_drift_invalidates_an_active_capability_before_execution(self):
+        cases = (
+            ("Git HEAD", {"mutate_head": "e" * 40 + "\n"}),
+            ("Radar status", {"mutate_status": '{"schema":"radar.snapshot/v1","drift":true}\n'}),
+            ("Radar session", {"mutate_session": '{"sessionId":"S151","drift":true}\n'}),
+        )
+        for label, mutation in cases:
+            with self.subTest(label=label):
+                outcome = self._run_shim(admission=self._bundle(), confirmation=True, **mutation)
+                self.assertTrue(outcome["after"]["result"].get("block", False))
+                self.assertTrue(outcome["envConsumed"])
+
+    def test_live_identity_file_candidate_runtime_and_replacement_drift_block_execution(self):
+        identity = self._identity()
+        cases = (
+            ("candidate", json.dumps({**identity, "candidateDigest": "e" * 64})),
+            ("runtime", json.dumps({**identity, "runtimeIdentity": "replaced-runtime"})),
+            ("replacement", json.dumps(identity)),
+        )
+        for label, changed in cases:
+            with self.subTest(label=label):
+                arguments = {"replace_identity": changed} if label == "replacement" else {"mutate_identity": changed}
+                outcome = self._run_shim(admission=self._bundle(), confirmation=True, **arguments)
+                self.assertTrue(outcome["after"]["result"].get("block", False))
+
+    def test_identity_file_rejects_links_and_releases_its_descriptor_once(self):
+        admission = self._bundle()
+        envelope = self._envelope(admission)
+        linked = self.home / "identity-link.json"
+        linked.symlink_to(self.identity)
+        envelope["identityFile"] = str(linked)
+        symlinked = self._run_shim(envelope=envelope)
+        self.assertTrue(symlinked["before"]["result"].get("block", False))
+        self.assertEqual(symlinked["proofDescriptors"], [])
+
+        self._envelope(admission)
+        hard = self.home / "identity-hard.json"
+        os.link(self.identity, hard)
+        hard_linked = self._run_shim(envelope={
+            "admission": admission,
+            "radarExecutable": str(self.radar),
+            "gitExecutable": str(self.git),
+            "identityFile": str(hard),
+        })
+        self.assertTrue(hard_linked["before"]["result"].get("block", False))
+        self.assertEqual(hard_linked["proofDescriptors"], [])
+
+        for reason in ("quit", "reload"):
+            with self.subTest(reason=reason):
+                outcome = self._run_shim(admission=self._bundle(), confirmation=True, shutdown=reason)
+                self.assertEqual(outcome["proofDescriptors"], [])
+
+    def test_host_executables_cannot_be_replaced_by_model_or_writable_repository_paths(self):
+        model_payload = self._run_shim(admission=self._bundle(), confirmation=True)
+        self.assertEqual(model_payload["after"]["result"], {})
+        self.assertIn("/usr/bin/bwrap", model_payload["after"]["input"]["command"])
+
+        rejected = self._run_shim(envelope={
+            "admission": self._bundle(),
+            "radarExecutable": str((ROOT / "tools/install.py").resolve()),
+            "gitExecutable": str(self.git),
+            "identityFile": str(self.identity),
+        })
+        self.assertTrue(rejected["before"]["result"].get("block", False))
+        self.assertIn("blocked", rejected["activation"]["content"][0]["text"].lower())
+
+    def test_model_arguments_cannot_self_grant_and_shutdown_erases_the_capability(self):
+        self_grant = self._run_shim(admission=self._bundle(), has_ui=False, confirmation=True)
+        self.assertTrue(self_grant["after"]["result"].get("block", False))
+
+        reloaded = self._run_shim(admission=self._bundle(), confirmation=True, shutdown="reload")
+        self.assertEqual(reloaded["after"]["result"], {})
+        self.assertTrue(reloaded["afterShutdown"]["result"].get("block", False))
+        self.assertEqual(len(reloaded["confirmations"]), 1)
+
+    def test_every_shutdown_reason_erases_admission_before_a_new_session_starts(self):
+        for reason in ("quit", "reload", "new", "resume", "fork"):
+            with self.subTest(reason=reason):
+                outcome = self._run_shim(
+                    admission=self._bundle(), confirmation=True, shutdown=reason
+                )
+                self.assertEqual(outcome["after"]["result"], {})
+                self.assertTrue(outcome["afterShutdown"]["result"].get("block", False))
+                self.assertEqual(len(outcome["confirmations"]), 1)
+
+    def test_generated_shim_consumes_env_and_never_exposes_a_raw_grant(self):
+        body = INSTALLER.desired_pi_extension(ROOT).decode("utf8")
+        self.assertIn("CHANKS_PI_ADMISSION", body)
+        self.assertIn("delete process.env", body)
+        self.assertIn("crearAutoridadPi", body)
+        self.assertNotIn("pi.chanksAutoridad", body)
+        self.assertNotIn("pi.chanksConfinamiento", body)
+        self.assertNotIn("gobernar(pi.", body)

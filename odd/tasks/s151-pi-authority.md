@@ -88,13 +88,13 @@ Only these repository files may be written:
   - Evidence: Strict TDD RED observed 3 intended failures. Final GREEN passes `pi-controls` 53/53, `controls` 95/95, and `interventions` 37/37. Independent verification passed all three suites. Native review `review-977b43222b3a430e` found one critical PATH-shadow risk in the pre-confinement Bubblewrap probe; the single bounded correction uses trusted absolute `/usr/bin/bwrap` and stayed within 97 diff lines. Targeted validation approved and acknowledgement burned the review authority. Two non-blocking advisory test-quality findings remain separate later work. Final source/test delta is 256 additions and 21 deletions. Work-unit commit: `5d3cf8f38231e4ed3106c59bd0457903d694af55`.
 
 - [ ] **S151-T3 — Add host-owned consent and real shim rewriting**
-  - Status: in progress.
+  - Status: implementation, verification, and native review complete; work-unit commit pending.
   - Route: delegated to `gentle-ai-worker`.
   - Trigger: generated extension behavior plus Python generation tests.
   - Files: `agent-workflows/tools/install.py`, `agent-workflows/tests/test_install.py`.
   - Outcome: generate a Pi extension where the agent can request authority, the host shows the exact human confirmation, only acceptance activates in-memory authority, and the `tool_call` handler mutates `event.input` to the confined command Pi will execute.
   - Checks: `python3 -m unittest agent-workflows/tests/test_install.py`.
-  - Evidence: pending.
+  - Evidence: Strict TDD observed failing shim-contract tests before implementation. Final suite passes 50/50; independent verification also passed 50/50. The generated extension consumes one host-owned `CHANKS_PI_ADMISSION` envelope, validates live Git/Radar evidence and a retained no-follow identity proof file before solicitation and every capability operation, requests exactly one human confirmation, rewrites actual `event.input`, and revokes/cleans descriptors on every lifecycle/failure path. Native four-lens review `review-5b800720b9046611` approved and acknowledgement burned authority; five non-blocking maintainability/resilience warnings remain separate later work. Final delta is 568 additions and 13 deletions under Emilio's recorded S151 size exception. Work-unit commit pending. No extension was installed globally.
 
 - [ ] **S151-T4 — Carry the activation contract through kickoff and bridge**
   - Route: delegated to `gentle-ai-worker`.
@@ -138,8 +138,9 @@ Only these repository files may be written:
 - Focused suite: 20 passed, 0 failed; independent fallback verification also passed 20/20.
 - Native validation outcome: unavailable after transport/native failure; risk-gated fallback satisfied.
 - S151-T2 is complete in `5d3cf8f38231e4ed3106c59bd0457903d694af55`.
-- S151-T3 is in progress. Nothing has been pushed.
+- S151-T3 passed Strict TDD, independent verification, and native four-lens review; its local commit is pending.
+- Nothing has been pushed and no extension was installed globally.
 
 ## Next step
 
-Delegate S151-T3 with observed RED before changing the generated Pi shim.
+Create the authorized local work-unit commit for S151-T3, record its identity, then start S151-T4.
