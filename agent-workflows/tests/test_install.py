@@ -771,7 +771,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
 
     def _run_shim(self, *, admission=None, envelope=None, has_ui=True, confirmation=True, shutdown=None,
                   mutate_head=None, mutate_status=None, mutate_session=None, mutate_identity=None,
-                  replace_identity=None):
+                  replace_identity=None, ordered_activation=False):
         INSTALLER.install_pi_extension(self.home, ROOT)
         package = self.home / "node_modules/@earendil-works/pi-ai"
         package.mkdir(parents=True, exist_ok=True)
@@ -807,13 +807,19 @@ const ctx = {
   },
 }
 extension(pi)
+const dispatch = async (event) => {
+  for (const handler of handlers.tool_call ?? []) {
+    const result = await handler(event, ctx)
+    if (result?.block) return result
+  }
+  return {}
+}
 const call = async (command) => {
   const event = { type: 'tool_call', toolName: 'bash', input: { command } }
-  const result = await handlers.tool_call[0](event, ctx)
+  const result = await dispatch(event)
   return { result, input: event.input }
 }
-const before = await call('printf before')
-const activation = await tool.execute('model-call', {
+const modelArguments = {
   approved: true,
   repositoryRoot: '/model-must-not-grant',
   command: 'model-must-not-confine',
@@ -821,7 +827,25 @@ const activation = await tool.execute('model-call', {
   radarExecutable: '/model-must-not-select-radar',
   runtimeIdentity: 'model-must-not-select-runtime',
   identityFile: '/model-must-not-select-identity',
-}, undefined, undefined, ctx)
+}
+const before = await call('printf before')
+let activation
+let ordered
+if (scenario.orderedActivation) {
+  ordered = {}
+  for (const [name, input] of [
+    ['write', { path: '/model-write' }], ['edit', { path: '/model-edit' }],
+    ['bash', { command: 'printf blocked' }], ['Chanks_Request_Activation', {}],
+    ['chanks_request_activation_alias', {}], ['unknown_mutation', {}],
+    ['chanks_request_activation', { approved: true }],
+  ]) ordered[name] = await dispatch({ type: 'tool_call', toolName: name, input })
+  const gate = await dispatch({ type: 'tool_call', toolName: 'chanks_request_activation', input: {} })
+  activation = gate.block
+    ? { content: [{ type: 'text', text: 'Blocked before activation execute.' }], details: undefined }
+    : await tool.execute('model-call', modelArguments, undefined, undefined, ctx)
+} else {
+  activation = await tool.execute('model-call', modelArguments, undefined, undefined, ctx)
+}
 if (scenario.mutateHead !== null) writeFileSync(scenario.headPath, scenario.mutateHead)
 if (scenario.mutateStatus !== null) writeFileSync(scenario.statusPath, scenario.mutateStatus)
 if (scenario.mutateSession !== null) writeFileSync(scenario.sessionPath, scenario.mutateSession)
@@ -843,7 +867,7 @@ const proofDescriptors = () => readdirSync('/proc/self/fd').filter((fd) => {
 })
 console.log(JSON.stringify({
   tool: { name: tool.name, executionMode: tool.executionMode, parameters: tool.parameters },
-  before, activation, after, afterShutdown, confirmations,
+  before, activation, after, afterShutdown, confirmations, ordered,
   envConsumed: process.env.CHANKS_PI_ADMISSION === undefined,
   proofDescriptors: proofDescriptors(),
 }))
@@ -865,6 +889,7 @@ console.log(JSON.stringify({
                 "identityFile": str(self.identity), "mutateIdentity": mutate_identity,
                 "replaceIdentity": replace_identity,
                 "mutateHead": mutate_head, "mutateStatus": mutate_status, "mutateSession": mutate_session,
+                "orderedActivation": ordered_activation,
             })],
             capture_output=True,
             text=True,
@@ -892,6 +917,17 @@ console.log(JSON.stringify({
         self.assertEqual(set(outcome["after"]["input"]), {"command"})
         self.assertNotEqual(outcome["after"]["input"]["command"], "printf allowed")
         self.assertIn("/usr/bin/bwrap", outcome["after"]["input"]["command"])
+
+    def test_activation_tool_reaches_execute_only_after_ordered_tool_call_dispatch(self):
+        outcome = self._run_shim(
+            admission=self._bundle(), confirmation=True, ordered_activation=True
+        )
+
+        self.assertEqual(outcome["activation"]["content"][0]["text"], "Chanks authority is active.")
+        self.assertEqual(len(outcome["confirmations"]), 1)
+        self.assertEqual(outcome["after"]["result"], {})
+        for name, result in outcome["ordered"].items():
+            self.assertTrue(result.get("block", False), name)
 
     def test_generated_shim_fails_closed_for_missing_invalid_or_non_true_consent(self):
         cases = (

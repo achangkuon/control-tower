@@ -748,6 +748,11 @@ export default function chanksControls(pi: any) {{
   }})
 
   pi.on("tool_call", (event: any) => {{
+    // Pi dispatches global tool_call handlers before custom-tool execute. Only the exact empty
+    // activation request may reach that execute path; it grants nothing and makes no decision.
+    if (event?.toolName === "chanks_request_activation"
+      && event.input && typeof event.input === "object" && !Array.isArray(event.input)
+      && Object.keys(event.input).length === 0) return {{}}
     const capability = controller?.capacidad()
     if (!capability) {{
       // A pending request has not yet received human confirmation. Any other absent capability

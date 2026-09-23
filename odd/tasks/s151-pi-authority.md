@@ -87,14 +87,14 @@ Only these repository files may be written:
   - Checks: `bun test agent-workflows/tests/chanks/pi-controls.test.mjs`; regression checks for `controls.mjs` and `interventions.mjs`.
   - Evidence: Strict TDD RED observed 3 intended failures. Final GREEN passes `pi-controls` 53/53, `controls` 95/95, and `interventions` 37/37. Independent verification passed all three suites. Native review `review-977b43222b3a430e` found one critical PATH-shadow risk in the pre-confinement Bubblewrap probe; the single bounded correction uses trusted absolute `/usr/bin/bwrap` and stayed within 97 diff lines. Targeted validation approved and acknowledgement burned the review authority. Two non-blocking advisory test-quality findings remain separate later work. Final source/test delta is 256 additions and 21 deletions. Work-unit commit: `5d3cf8f38231e4ed3106c59bd0457903d694af55`.
 
-- [x] **S151-T3 — Add host-owned consent and real shim rewriting**
-  - Status: complete.
+- [ ] **S151-T3 — Add host-owned consent and real shim rewriting**
+  - Status: runtime remediation implemented, independently verified, and natively reviewed; remediation commit pending.
   - Route: delegated to `gentle-ai-worker`.
   - Trigger: generated extension behavior plus Python generation tests.
   - Files: `agent-workflows/tools/install.py`, `agent-workflows/tests/test_install.py`.
   - Outcome: generate a Pi extension where the agent can request authority, the host shows the exact human confirmation, only acceptance activates in-memory authority, and the `tool_call` handler mutates `event.input` to the confined command Pi will execute.
   - Checks: `python3 -m unittest agent-workflows/tests/test_install.py`.
-  - Evidence: Strict TDD observed failing shim-contract tests before implementation. Final suite passes 50/50; independent verification also passed 50/50. The generated extension consumes one host-owned `CHANKS_PI_ADMISSION` envelope, validates live Git/Radar evidence and a retained no-follow identity proof file before solicitation and every capability operation, requests exactly one human confirmation, rewrites actual `event.input`, and revokes/cleans descriptors on every lifecycle/failure path. Native four-lens review `review-5b800720b9046611` approved and acknowledgement burned authority; five non-blocking maintainability/resilience warnings remain separate later work. Final delta is 568 additions and 13 deletions under Emilio's recorded S151 size exception. Work-unit commit: `35ee1a34bfad4a535392f6f4cb4edb9ffab71ff5`. No extension was installed globally.
+  - Evidence: Strict TDD observed failing shim-contract tests before implementation. The generated extension consumes one host-owned `CHANKS_PI_ADMISSION` envelope, validates live Git/Radar evidence and a retained no-follow identity proof file before solicitation and every capability operation, requests exactly one human confirmation, rewrites actual `event.input`, and revokes/cleans descriptors on every lifecycle/failure path. Original work-unit commit: `35ee1a34bfad4a535392f6f4cb4edb9ffab71ff5`; native review `review-5b800720b9046611` approved it. S151-T5 then proved with Pi 0.87.1's real dispatch path that the global `tool_call` guard also intercepted `chanks_request_activation`. The remediation added an ordered-dispatch RED test and now exempts only the exact zero-argument activation request from pre-activation blocking; the sequential tool remains the sole UI/accept path. Final suite passes 51/51, independent verification passed, and native four-lens review `review-6a81dbdb1d5615ad` approved/acknowledged the remediation. Remediation commit pending. No extension was installed globally.
 
 - [x] **S151-T4 — Carry the activation contract through kickoff and bridge**
   - Status: complete.
@@ -106,7 +106,7 @@ Only these repository files may be written:
   - Evidence: Strict TDD observed RED before the bounded JSON contracts existed. Final suites pass 14/14 builder tests and 10/10 bridge tests; one native SDD integration test is explicitly skipped because `GENTLE_AI_SDD_TEST_BINARY` is unavailable. Independent verification passed the same checks and confirmed the machine-readable host/model responsibilities, one-use admission envelope, exact proof keys, lifecycle revocation, and review/delivery rebind triggers. Native four-lens review `review-968e467c457866e7` approved and acknowledgement burned authority; three non-blocking documentation/test-boundary advisories remain separate later work. Final delta is 279 additions and 4 deletions. Work-unit commit: `193e8f8c8191b3dd27c9a146791537ccb42b9509`. Skills were not installed or propagated.
 
 - [ ] **S151-T5 — Prove the isolated runtime path end to end**
-  - Status: in progress.
+  - Status: blocked until the T3 activation self-block remediation is verified; then rerun from a fresh isolated runtime.
   - Route: delegated verification after implementation because the check loads generated Pi extension behavior and executes Bubblewrap.
   - Trigger: external runtime and multi-file verification boundary.
   - Files: read-only verification of all S151 implementation files; no new write surface.
@@ -140,10 +140,10 @@ Only these repository files may be written:
 - Focused suite: 20 passed, 0 failed; independent fallback verification also passed 20/20.
 - Native validation outcome: unavailable after transport/native failure; risk-gated fallback satisfied.
 - S151-T2 is complete in `5d3cf8f38231e4ed3106c59bd0457903d694af55`.
-- S151-T3 is complete in `35ee1a34bfad4a535392f6f4cb4edb9ffab71ff5`.
+- S151-T3 remediation passed 51/51 tests, independent verification, and native four-lens review; its local commit is pending.
 - S151-T4 is complete in `193e8f8c8191b3dd27c9a146791537ccb42b9509`.
-- S151-T5 is in progress. Nothing has been pushed; no extension or skill was installed globally.
+- S151-T5 is blocked on that remediation. Nothing has been pushed; no extension or skill was installed globally.
 
 ## Next step
 
-Run the isolated real Pi/Bubblewrap journey without changing the global runtime.
+Create the authorized local remediation commit, record it, then rerun S151-T5 from a fresh isolated runtime.
