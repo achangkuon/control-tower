@@ -79,13 +79,13 @@ Only these repository files may be written:
   - Evidence: Initial RED observed because the production module did not exist. Review and verification drove portable containment, opaque consent correlation, revocable capabilities, single-link files, retained no-follow descriptors, nonempty resources, and exception-safe cleanup. The final Strict TDD RED had 3 expected failures; GREEN passes 20 tests with 0 failures. Native targeted validation became unavailable after a transport/native failure, so the provider-required high-risk fallback ran: the independent verifier repeated the focused suite once (20 pass, 0 fail) and found no concrete gap. Source and test files total 733 authored lines. Work-unit commit: `dca75689f6919edc1fe3784bf091b26d38c0691f`.
 
 - [ ] **S151-T2 — Enforce authority in Pi mutating controls**
-  - Status: in progress.
+  - Status: implementation, verification, and native review complete; work-unit commit pending.
   - Route: delegated to `gentle-ai-worker`.
   - Trigger: two non-trivial implementation/test files.
   - Files: `agent-workflows/chanks/pi-controls.mjs`, `agent-workflows/tests/chanks/pi-controls.test.mjs`.
   - Outcome: consume only validated authority, remove hardcoded resource confirmation, derive exact writable files and Cimiento grants, reject symlinks/escapes, apply the confined Bash command, and fail closed for unsupported PowerShell mutation.
   - Checks: `bun test agent-workflows/tests/chanks/pi-controls.test.mjs`; regression checks for `controls.mjs` and `interventions.mjs`.
-  - Evidence: pending.
+  - Evidence: Strict TDD RED observed 3 intended failures. Final GREEN passes `pi-controls` 53/53, `controls` 95/95, and `interventions` 37/37. Independent verification passed all three suites. Native review `review-977b43222b3a430e` found one critical PATH-shadow risk in the pre-confinement Bubblewrap probe; the single bounded correction uses trusted absolute `/usr/bin/bwrap` and stayed within 97 diff lines. Targeted validation approved and acknowledgement burned the review authority. Two non-blocking advisory test-quality findings remain separate later work. Final source/test delta is 256 additions and 21 deletions; work-unit commit pending.
 
 - [ ] **S151-T3 — Add host-owned consent and real shim rewriting**
   - Route: delegated to `gentle-ai-worker`.
@@ -136,8 +136,9 @@ Only these repository files may be written:
 - S151-T1 is complete in `dca75689f6919edc1fe3784bf091b26d38c0691f`.
 - Focused suite: 20 passed, 0 failed; independent fallback verification also passed 20/20.
 - Native validation outcome: unavailable after transport/native failure; risk-gated fallback satisfied.
-- S151-T2 is in progress. Nothing has been pushed.
+- S151-T2 passed Strict TDD, independent verification, and native review; its local commit is pending.
+- Nothing has been pushed.
 
 ## Next step
 
-Delegate S151-T2 with observed RED before changing Pi controls.
+Create the authorized local work-unit commit for S151-T2, record its identity, then start S151-T3.

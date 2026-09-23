@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test"
 
 import { aPi, confinarComando, crearActivaciones, decidirHerramienta, gobernar } from "../../chanks/pi-controls.mjs"
+import { crearAutoridadPi } from "../../chanks/pi-authority.mjs"
 
 // The real shapes Pi hands an extension, from
 // @earendil-works/pi-coding-agent/dist/core/tools/{bash,write,edit}.d.ts.
@@ -202,7 +203,7 @@ describe("el mensaje no se duplica por cada llamada de herramienta", () => {
 // --- T3: construir el cuarto chico -----------------------------------------
 
 import { spawnSync } from "node:child_process"
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs"
+import { chmodSync, existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, symlinkSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -226,6 +227,28 @@ describe("construir el cuarto chico", () => {
       // Read-only root first, then the exact writable paths mounted over it.
       expect(c.argv.join(" ")).toContain(`--bind ${escribible} ${escribible}`)
     } finally {
+      rmSync(raiz, { recursive: true, force: true })
+    }
+  })
+
+  test("un bwrap sombreado por PATH nunca se ejecuta ni llega al argv", () => {
+    const raiz = cuarto()
+    const anterior = process.env.PATH
+    try {
+      const sombra = join(raiz, "sombra")
+      const testigo = join(raiz, "se-ejecuto")
+      mkdirSync(sombra)
+      const falsoBwrap = join(sombra, "bwrap")
+      writeFileSync(falsoBwrap, `#!/bin/sh\necho sombra > '${testigo}'\n`)
+      chmodSync(falsoBwrap, 0o700)
+      process.env.PATH = `${sombra}:${anterior ?? ""}`
+
+      const c = confinarComando("echo hola", { escribibles: [join(raiz, "prohibido", "testigo.txt")] })
+      expect(existsSync(testigo)).toBe(false)
+      expect(c.argv[0]).toBe("/usr/bin/bwrap")
+    } finally {
+      if (anterior === undefined) delete process.env.PATH
+      else process.env.PATH = anterior
       rmSync(raiz, { recursive: true, force: true })
     }
   })
@@ -260,6 +283,21 @@ describe("construir el cuarto chico", () => {
       expect(c.confinable).toBe(false)
       expect(c.motivo).toMatch(/no existe/i)
       expect(c.argv).toBeUndefined()
+    } finally {
+      rmSync(raiz, { recursive: true, force: true })
+    }
+  })
+
+  test("rutas ambiguas, no regulares o simbólicas no se montan", () => {
+    const raiz = cuarto()
+    try {
+      const permitidoRuta = join(raiz, "agent-workflows", "chanks", "permitido.mjs")
+      const enlace = join(raiz, "agent-workflows", "chanks", "enlace.mjs")
+      symlinkSync(permitidoRuta, enlace)
+      expect(confinarComando("echo hola", { escribibles: [permitidoRuta, permitidoRuta] }).confinable).toBe(false)
+      expect(confinarComando("echo hola", { escribibles: [join(raiz, "prohibido")] }).confinable).toBe(false)
+      expect(confinarComando("echo hola", { escribibles: [enlace] }).confinable).toBe(false)
+      expect(confinarComando("echo hola", { escribibles: [permitidoRuta], bwrapPath: join(raiz, "no-bwrap") }).confinable).toBe(false)
     } finally {
       rmSync(raiz, { recursive: true, force: true })
     }
@@ -315,7 +353,7 @@ describe("gobernar una llamada de herramienta", () => {
       const g = gobernar(autoridad(), evento("bash", { command: "echo hola" }), { escribibles: [permitidoRuta] })
       expect(g.decision.permitido).toBe(true)
       expect(g.pi.block).toBeUndefined()
-      expect(g.comandoConfinado.argv).toContain("bwrap")
+      expect(g.comandoConfinado.argv[0]).toBe("/usr/bin/bwrap")
     } finally {
       rmSync(raiz, { recursive: true, force: true })
     }
@@ -335,6 +373,108 @@ describe("gobernar una llamada de herramienta", () => {
     try {
       const g = gobernar(autoridad(), evento("teletransportar", {}), { escribibles: [join(raiz, "prohibido", "testigo.txt")] })
       expect(g.pi.block).toBe(true)
+    } finally {
+      rmSync(raiz, { recursive: true, force: true })
+    }
+  })
+})
+
+// --- S151-T2: autoridad revocable y comando que Pi debe ejecutar -----------
+
+const BASE_S151 = "51d2a2ee460685a54ba88206597bf8e0636aab75"
+const DIGEST_S151 = "30b0e6a8f90d3ebfebd57cfb3fdd1805eee37802bad2fd9d042617958ab891de"
+const SESSION_DIGEST_S151 = "6729f4c51df5f5e539d47cbd8db786a4993361a65e6521dcef4f11737515cfca"
+
+const autoridadActiva = (raiz) => {
+  const propio = join(raiz, "agent-workflows", "chanks", "permitido.mjs")
+  const cimiento = join(raiz, "prohibido", "testigo.txt")
+  const identidadActual = {
+    repositoryRoot: raiz,
+    sessionId: "S151",
+    baseCommit: BASE_S151,
+    candidateDigest: DIGEST_S151,
+    runtimeIdentity: "pi:isolated:s151-t2",
+  }
+  const autoridad = crearAutoridadPi({ identidadActual: () => identidadActual })
+  const solicitud = autoridad.solicitar({
+    ...identidadActual,
+    radar: { statusDigest: DIGEST_S151, sessionDigest: SESSION_DIGEST_S151 },
+    authorizedFiles: [propio, cimiento],
+    cimientoGrants: [cimiento],
+    resources: [{ id: "pi-runtime", mode: "exclusive", confirmed: true }],
+  })
+  expect(autoridad.aceptar(solicitud.solicitud)).toBe(true)
+  return { autoridad, capacidad: autoridad.capacidad(), propio, cimiento }
+}
+
+describe("S151-T2 — la autoridad vive en cada decisión mutante", () => {
+  test("una capacidad revocada bloquea el write en vez de reutilizar un grant", () => {
+    const raiz = cuarto()
+    try {
+      const { autoridad, capacidad, propio } = autoridadActiva(raiz)
+      autoridad.invalidar()
+      const resultado = capacidad.gobernar(evento("write", { path: propio, content: "x" }))
+      expect(resultado.pi.block).toBe(true)
+    } finally {
+      rmSync(raiz, { recursive: true, force: true })
+    }
+  })
+
+  test("una deriva del archivo bloquea bash al volver a consultar la capacidad", () => {
+    const raiz = cuarto()
+    try {
+      const { autoridad, capacidad, propio } = autoridadActiva(raiz)
+      rmSync(propio)
+      writeFileSync(propio, "reemplazado\\n")
+      expect(capacidad.gobernar(evento("bash", { command: "echo no" })).pi.block).toBe(true)
+      expect(autoridad.capacidad()).toBeNull()
+    } finally {
+      rmSync(raiz, { recursive: true, force: true })
+    }
+  })
+
+  test("write sólo acepta el archivo canónico exacto de la capacidad viva", () => {
+    const raiz = cuarto()
+    try {
+      const { autoridad, capacidad, propio } = autoridadActiva(raiz)
+      const resultado = capacidad.gobernar(evento("write", { path: "agent-workflows/chanks/permitido.mjs", content: "x" }))
+      expect(resultado.pi.block).toBe(true)
+      autoridad.invalidar()
+      expect(propio).toBeTruthy()
+    } finally {
+      rmSync(raiz, { recursive: true, force: true })
+    }
+  })
+
+  test("bash expone argv y la entrada serializada exacta que Pi debe ejecutar", () => {
+    const raiz = cuarto()
+    try {
+      const { autoridad, capacidad, propio, cimiento } = autoridadActiva(raiz)
+      const resultado = capacidad.gobernar(evento("bash", { command: "printf '%s\\n' 'un argumento; no otro comando'" }))
+      expect(resultado.pi.block).toBeUndefined()
+      expect(resultado.comandoConfinado.argv[0]).toBe("/usr/bin/bwrap")
+      expect(resultado.entradaPi).toEqual({ command: expect.any(String) })
+      expect(resultado.entradaPi.command).toContain("bwrap")
+      expect(resultado.entradaPi.command).toContain("'\"'\"'")
+      expect(resultado.comandoConfinado.argv).toContain(propio)
+      expect(resultado.comandoConfinado.argv).toContain(cimiento)
+      autoridad.invalidar()
+    } finally {
+      rmSync(raiz, { recursive: true, force: true })
+    }
+  })
+
+  test("PowerShell mutante se bloquea porque no tiene confinamiento Linux equivalente", () => {
+    const raiz = cuarto()
+    try {
+      const { autoridad, capacidad, propio, cimiento } = autoridadActiva(raiz)
+      const resultado = capacidad.gobernar(
+        evento("powershell", { command: "Set-Content x y" }),
+        { escribibles: [propio, cimiento] },
+      )
+      expect(resultado.pi.block).toBe(true)
+      expect(resultado.entradaPi).toBeUndefined()
+      autoridad.invalidar()
     } finally {
       rmSync(raiz, { recursive: true, force: true })
     }

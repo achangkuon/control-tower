@@ -11,7 +11,9 @@
 // because a second implementation of a rule is a second answer, and the two drift while both
 // look right.
 
-import { existsSync } from "node:fs"
+import { existsSync, lstatSync, realpathSync } from "node:fs"
+import { spawnSync } from "node:child_process"
+import { isAbsolute } from "node:path"
 
 import { bloqueado, mutacionPermitida, permitido } from "./controls.mjs"
 
@@ -25,7 +27,7 @@ const MUTAN_UNA_RUTA = ["write", "edit"]
 
 // Shell tools have no path to check: their effect is whatever the command does, including
 // whatever it spawns. They are governed by the confinement, never by a path.
-const EJECUTAN_SHELL = ["bash", "powershell"]
+const EJECUTAN_SHELL = ["bash"]
 
 // decidirHerramienta maps one Pi tool call to the control that governs it.
 //
@@ -47,7 +49,7 @@ export const decidirHerramienta = (autoridad, evento) => {
     if (typeof ruta !== "string" || ruta.trim() === "") {
       return bloqueado("mutacion", `${herramienta} no declara la ruta que va a mutar`, ["path"])
     }
-    return mutacionPermitida(autoridad, { vinculo: autoridad?.vinculo, mutaciones: [ruta], recursoConfirmado: true })
+    return mutacionPermitida(autoridadParaMutar(autoridad), evidenciaDeMutacion(autoridad, [ruta]))
   }
 
   if (EJECUTAN_SHELL.includes(herramienta)) {
@@ -55,13 +57,25 @@ export const decidirHerramienta = (autoridad, evento) => {
     if (typeof comando !== "string" || comando.trim() === "") {
       return bloqueado("mutacion", `${herramienta} no declara el comando que va a ejecutar`, ["command"])
     }
+    const escribibles = escribiblesAutorizados(autoridad)
+    const decision = mutacionPermitida(autoridadParaMutar(autoridad), evidenciaDeMutacion(autoridad, escribibles))
+    if (decision.permitido === false) return decision
     // Permitted here means "permitted to be confined", not "permitted to run loose". The caller
     // must honour `exigeConfinamiento`; a decision that is passed on without it is a bug in the
     // caller, not a licence in this module.
     return {
       ...permitido("mutacion", `${herramienta} sólo puede ejecutarse dentro del confinamiento autorizado`),
       exigeConfinamiento: true,
+      escribibles,
     }
+  }
+
+  if (herramienta === "powershell") {
+    return bloqueado(
+      "mutacion",
+      "PowerShell no tiene confinamiento Linux equivalente, así que una mutación se rechaza sin salida permisiva",
+      ["powershell"],
+    )
   }
 
   return bloqueado(
@@ -69,6 +83,48 @@ export const decidirHerramienta = (autoridad, evento) => {
     `los efectos de «${herramienta}» no se pueden controlar, así que la operación se rechaza sin salida permisiva`,
     [herramienta],
   )
+}
+
+// `crearAutoridadPi` owns the opaque live authority and invokes this adapter only from its
+// capability. This adapter retains neither that authority nor a copy of a Cimiento grant.
+const recursosConfirmados = (autoridad) => {
+  const recursos = autoridad?.recursos
+  if (!Array.isArray(recursos)) return Array.isArray(autoridad?.recurso) && autoridad.recurso.length === 0
+  return recursos.length > 0 && recursos.every((recurso) => (
+    recurso
+    && typeof recurso.id === "string"
+    && recurso.id.trim() !== ""
+    && (recurso.mode === "exclusive" || recurso.mode === "serial")
+    && recurso.confirmed === true
+  ))
+}
+
+const recursosDeclarados = (autoridad) => {
+  if (!Array.isArray(autoridad?.recursos)) return autoridad?.recurso
+  const ids = autoridad.recursos.map((recurso) => recurso?.id)
+  return ids.every((id) => typeof id === "string" && id.trim() !== "") ? ids : ["recursos inválidos"]
+}
+
+const autoridadParaMutar = (autoridad) => ({
+  vinculo: autoridad?.vinculo,
+  archivos: autoridad?.archivos,
+  cimientos: autoridad?.cimientos,
+  recurso: recursosDeclarados(autoridad),
+})
+
+const evidenciaDeMutacion = (autoridad, mutaciones) => ({
+  vinculo: autoridad?.vinculo,
+  mutaciones,
+  reservas: autoridad?.cimientos,
+  recursoConfirmado: recursosConfirmados(autoridad),
+})
+
+const escribiblesAutorizados = (autoridad) => {
+  const archivos = Array.isArray(autoridad?.archivos) ? autoridad.archivos : []
+  const cimientos = Array.isArray(autoridad?.cimientos) ? autoridad.cimientos : []
+  // Cimientos are already exact authorized files, so their intentional overlap is not an
+  // ambiguity. A duplicate inside either live grant stays visible for confinarComando to block.
+  return [...archivos, ...cimientos.filter((cimiento) => !archivos.includes(cimiento))]
 }
 
 // aPi translates a decision into the result Pi expects.
@@ -125,8 +181,9 @@ export const crearActivaciones = () => {
 
 // The confinement. Pi ships no sandbox by design — its own docs say real isolation has to come
 // from the operating system — so the room is built with bubblewrap and the command is rewritten
-// to run inside it. This module builds the argv and executes nothing: Pi's own bash tool runs
-// what we hand back, which keeps the decision layer free of the effects it governs.
+// to run inside it. This module only probes Bubblewrap's availability and builds argv; Pi's own
+// bash tool runs the untrusted command we hand back, which keeps the decision layer free of the
+// effects it governs.
 //
 // The room Emilio approved is the small one: the whole filesystem read-only, exactly the
 // Session's authorized files mounted writable over it, and no network. It is deliberately too
@@ -134,7 +191,7 @@ export const crearActivaciones = () => {
 // delivery itself happens outside, in the human's hands. Saying otherwise would be claiming a
 // coverage this rehearsal does not have.
 const BASE_DEL_CUARTO = [
-  "bwrap",
+  "/usr/bin/bwrap",
   "--ro-bind", "/", "/",
   "--dev", "/dev",
   "--proc", "/proc",
@@ -156,29 +213,57 @@ const BASE_DEL_CUARTO = [
 // directory instead would quietly make every sibling writable, which is a bigger room than the
 // one that was authorized. That refusal is the contract's rule, not an implementation shortcut
 // — an operation whose effects cannot be confined has no permissive alternative.
-export const confinarComando = (comando, { escribibles = [], existe = null } = {}) => {
+const bwrapDisponible = (ruta) => {
+  try {
+    return rutaMontable(ruta, existsSync) && (lstatSync(ruta).mode & 0o111) !== 0
+      && spawnSync(ruta, ["--version"], { stdio: "ignore" }).status === 0
+  } catch {
+    return false
+  }
+}
+
+const rutaMontable = (ruta, hayRuta) => {
+  if (typeof ruta !== "string" || ruta.trim() === "" || !isAbsolute(ruta)) return false
+  try {
+    if (!hayRuta(ruta)) return false
+    const stat = lstatSync(ruta)
+    return stat.isFile() && !stat.isSymbolicLink() && stat.nlink === 1 && realpathSync(ruta) === ruta
+  } catch {
+    return false
+  }
+}
+
+// Pi's bash tool accepts a command string. Quoting every argv element makes that string an exact
+// serialization of the validated argv: metacharacters in an authorized path or command remain
+// data for bwrap/bash rather than becoming syntax in Pi's outer shell.
+const serializarArgv = (argv) => argv.map((argumento) => `'${argumento.replaceAll("'", "'\"'\"'")}'`).join(" ")
+
+export const confinarComando = (comando, { escribibles = [], existe = null, bwrapPath = "/usr/bin/bwrap" } = {}) => {
   if (typeof comando !== "string" || comando.trim() === "") {
     return { confinable: false, motivo: "no hay comando que confinar" }
   }
-  const rutas = Array.isArray(escribibles) ? escribibles.filter((r) => typeof r === "string" && r.trim() !== "") : []
-  if (rutas.length === 0) {
+  if (!bwrapDisponible(bwrapPath)) {
+    return { confinable: false, motivo: "Bubblewrap confiable no está disponible para construir el confinamiento" }
+  }
+  if (!Array.isArray(escribibles) || escribibles.length === 0) {
     return { confinable: false, motivo: "no hay ninguna ruta escribible autorizada, así que no hay nada que el comando pueda cambiar" }
   }
+  if (new Set(escribibles).size !== escribibles.length) {
+    return { confinable: false, motivo: "las rutas escribibles autorizadas son ambiguas" }
+  }
 
-  // The existence probe is injected so the builder itself stays testable without a filesystem,
-  // and so a caller can supply the project's own view of what exists.
   const hayRuta = existe ?? ((ruta) => existsSync(ruta))
-  const faltantes = rutas.filter((ruta) => !hayRuta(ruta))
-  if (faltantes.length > 0) {
+  const invalidas = escribibles.filter((ruta) => !rutaMontable(ruta, hayRuta))
+  if (invalidas.length > 0) {
     return {
       confinable: false,
-      motivo: "una ruta autorizada no existe y no se puede montar sin ensanchar el cuarto más allá de lo aprobado",
-      detalle: faltantes,
+      motivo: "una ruta autorizada no existe o no es un archivo canónico regular, y no se puede montar sin ensanchar el cuarto más allá de lo aprobado",
+      detalle: invalidas,
     }
   }
 
-  const argv = [...BASE_DEL_CUARTO]
-  for (const ruta of rutas) argv.push("--bind", ruta, ruta)
+  const argv = [bwrapPath, ...BASE_DEL_CUARTO.slice(1)]
+  for (const ruta of escribibles) argv.push("--bind", ruta, ruta)
   argv.push("bash", "-c", comando)
   return { confinable: true, argv }
 }
@@ -195,7 +280,10 @@ export const gobernar = (autoridad, evento, opciones = {}) => {
     return { decision, pi: aPi(decision) }
   }
 
-  const confinado = confinarComando(evento?.input?.command, opciones)
+  // A live capability supplies the writable set on every call. Legacy direct callers keep their
+  // explicit test hook, but a capability authority never accepts an externally supplied path.
+  const escribibles = Array.isArray(autoridad?.recursos) ? decision.escribibles : opciones.escribibles
+  const confinado = confinarComando(evento?.input?.command, { escribibles })
   if (!confinado.confinable) {
     const rechazo = bloqueado(
       "mutacion",
@@ -205,5 +293,12 @@ export const gobernar = (autoridad, evento, opciones = {}) => {
     return { decision: rechazo, pi: aPi(rechazo) }
   }
 
-  return { decision, pi: aPi(decision), comandoConfinado: confinado }
+  // T3 assigns this exact field to event.input. `argv` remains available for an executor that
+  // preserves argv boundaries; `entradaPi.command` is the safe equivalent for Pi's string API.
+  return {
+    decision,
+    pi: aPi(decision),
+    comandoConfinado: confinado,
+    entradaPi: Object.freeze({ command: serializarArgv(confinado.argv) }),
+  }
 }
