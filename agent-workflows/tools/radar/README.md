@@ -9,6 +9,8 @@ radar check                         # usa openspec/plan.yaml y el repo actual
 radar status                        # estado, colas por Zona y asientos compatibles
 radar status --json                 # el mismo cálculo, legible por máquina (radar.snapshot/v1)
 radar sesion S114                   # contrato completo de una sola Sesión; falla cerrado como status
+radar faltan                        # todas las Sesiones abiertas agrupadas por meta y subprioridad
+radar faltan S114                   # localizador de una línea: meta, subprioridad, Zona, título, estado
 radar zonas                         # cobertura de la partición sobre git ls-files
 radar roadmap                       # alternativas LISTO, compatibilidad e hipotéticos (previsión)
 radar render                        # escribe openspec/ROADMAP.md atómicamente
@@ -309,6 +311,48 @@ parámetro a la misma derivación de estados, nunca como mutación.
 acceso y no supone que la coordinación esté instalada. La admisión sigue siendo la de siempre, y
 la capacidad nueva depende de que sus consumidores se integren, verifiquen y activen en S146.
 El reporte lo dice en su propia salida para que nadie lo cite como permiso.
+
+## `radar faltan` — todo lo que falta, por meta
+
+`radar status` sólo muestra la cola ejecutable por Zona: oculta la mayoría de las Sesiones
+abiertas y no distingue lo apartado a propósito de lo que espera el turno de su prioridad.
+`radar faltan` responde la pregunta distinta que un dueño de producto hace: qué falta para
+terminar cada meta, y por qué una Sesión no aparece en la cola.
+
+Es sólo lectura: no cambia `status`, `status --json`, `sesion`, el cálculo de estados ni el
+esquema del plan. Reusa `EstadosAt` y `resumenBloqueo` tal cual existen hoy.
+
+**Metas y subprioridades** se derivan del orden y los nombres de `prioridades`, sin campo
+nuevo: el texto antes del primer ` · ` es la meta y el texto después es la subprioridad. Una
+prioridad declarada sin ` · ` (por ejemplo `Torre V3`) es una meta sin subprioridad. Una Sesión
+abierta cuya `prioridad` no coincide con ninguna declarada cae en la meta de reserva
+`Sin meta declarada`, que sólo aparece cuando eso ocurre de verdad.
+
+**Porcentaje.** Cada meta muestra `N% (C/T S)`, igual que `Avance.String()`. El denominador
+excluye únicamente las Sesiones con `diferida: true` (Engram 11432). Las Sesiones que Radar
+pasa a `DIFERIDO` sólo porque su prioridad todavía no es la activa siguen contando para su
+meta, y se listan como `espera turno`.
+
+**Listado.** Bajo cada meta, las Sesiones abiertas se agrupan por subprioridad (`  Subprioridad`
+más `    - S23 — resultado (estado)`); las de una meta sin subprioridad declarada van directo
+bajo la meta (`  - S23 — ...`). Una Sesión `BLOQUEADO` muestra su bloqueo reusando
+`resumenBloqueo`, la misma frase que ya usa `radar render` en `## Bloqueos`. Las Sesiones
+`diferida: true` **no** aparecen en el listado — sólo se cuentan en el aviso del pie — para no
+repetir la misma información apartada de dos formas distintas.
+
+**Pie.** Cuenta el total de Sesiones que faltan (abiertas y no apartadas), cuántas están
+`LISTO` para empezar, y — sólo si hay alguna — un aviso con la cantidad de Sesiones apartadas
+(`diferida: true`).
+
+**`radar faltan <ID>`** imprime una sola línea localizadora:
+
+```
+<ID> (<meta> › [<subprioridad> ›] <Zona> — <título>, <estado>)
+```
+
+La subprioridad se omite cuando la prioridad declarada no tiene una. Es el formato que todo
+agente debe usar para nombrar una Sesión en una conversación o un artefacto escrito — nunca el
+ID solo — según `skills/_shared/plan-naming-convention.md` §8 y `AGENTS.md`.
 
 ## Frontera honesta
 

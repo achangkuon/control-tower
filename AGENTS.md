@@ -23,9 +23,15 @@ Un consumidor que necesite las cifras las pide con `$HOME/.local/bin/radar statu
 ### Cómo se elige qué sigue
 
 **Para saber qué trabajo sigue, corré `$HOME/.local/bin/radar status --json -C <raíz del repo>`**.
-Para una Sesión usá `$HOME/.local/bin/radar sesion <ID> -C <raíz del repo>`. La admisión
-nunca ejecuta un binario del repositorio ni código del checkout. Sólo se proponen Sesiones
-`LISTO` en el orden de su Zona; el humano elige y el agente no decide.
+Para una Sesión usá `$HOME/.local/bin/radar sesion <ID> -C <raíz del repo>`. Para ver todo lo
+que falta agrupado por meta, o ubicar una Sesión en una línea, usá
+`$HOME/.local/bin/radar faltan [<ID>] -C <raíz del repo>`. La admisión nunca ejecuta un binario
+del repositorio ni código del checkout. Sólo se proponen Sesiones `LISTO` en el orden de su
+Zona; el humano elige y el agente no decide.
+
+Al nombrar una Sesión en una conversación o en un artefacto escrito, usá siempre el formato de
+`radar faltan <ID>` — meta, subprioridad, Zona, título y estado —, nunca el ID solo. Por
+ejemplo: `S148 (Torre V2 › cimientos — título, PLANIFICADO)`.
 
 Nunca elijas trabajo a partir de la memoria (Engram), de un cambio viejo en
 `openspec/changes/`, del corpus archivado o del número siguiente a la última Sesión
