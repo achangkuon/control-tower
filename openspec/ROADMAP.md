@@ -2,16 +2,17 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S128, S130, S131, S132, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S151, S152, S153, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
-- Prioridad activa: Método V1.
-- Próximo trabajo ejecutable: Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados..
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S151, S152, S153, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Prioridad activa: Torre V1 · Release instalable.
+- Próximo trabajo ejecutable: cimientos #1 → S150 — El README describe el producto que se entrega —el semáforo instalable— y no promete capacidades que pertenecen a torre-v2..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
 ## Estado y próximo trabajo
-- Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
+- cimientos #1 → S150 — El README describe el producto que se entrega —el semáforo instalable— y no promete capacidades que pertenecen a torre-v2.
+- Instalación #1 → S117 — Los tres registros de instalación dejan de forzar ediciones cross-Zona: sus datos enumerados salen del test a un módulo propio declarado como Cimiento exacto.
 
 ## Avance
-- **Total:** 70% (86/122 S)
+- **Total:** 72% (89/122 S)
 - 16 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
@@ -24,7 +25,7 @@
 - **Hosts:** 60% (3/5 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 83% (26/31 S)
+- **Método:** 93% (29/31 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -38,11 +39,12 @@
 - Sin Sesiones abiertas.
 
 ### Capacidades (capacidades)
-1. **S101** · 🔴 BLOQUEADO · prioridad Torre V3 · Resolución de política: prepare&#95;through opaco y horizon&#95;ceiling salen de la política resuelta
+1. **S101** · 🔴 BLOQUEADO · falta-decision (S9.10) · prioridad Torre V3 · Resolución de política: prepare&#95;through opaco y horizon&#95;ceiling salen de la política resuelta
 
 ### cimientos (cimientos)
-1. **S12.6** · 📋 PLANIFICADO · prioridad Torre V3 · La raíz se ordena después de la descomposición de core.mjs y el README se reconcilia con esa estructura.
-2. **S148** · 📋 PLANIFICADO · prioridad Torre V2 · Handoffs y despacho Tower-owned · Raíz de Ejecución estable en SQLite con revisión, estado e historial ligados a handoffs existentes
+1. **S150** · 🟢 LISTO · prioridad Torre V1 · Release instalable · El README describe el producto que se entrega —el semáforo instalable— y no promete capacidades que pertenecen a torre-v2.
+2. **S12.6** · 📋 PLANIFICADO · espera-atascada (S12.5) · prioridad Torre V3 · La raíz se ordena después de la descomposición de core.mjs y el README se reconcilia con esa estructura.
+3. **S148** · 📋 PLANIFICADO · espera-atascada (S147) · prioridad Torre V2 · Handoffs y despacho Tower-owned · Raíz de Ejecución estable en SQLite con revisión, estado e historial ligados a handoffs existentes
 
 ### Contratos (contratos)
 - Sin Sesiones abiertas.
@@ -51,46 +53,43 @@
 - Sin Sesiones abiertas.
 
 ### Entrega (entrega)
-1. **S7.1** · 📋 PLANIFICADO · prioridad Torre V2 · Handoffs y despacho Tower-owned · Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral en un HOME/runtime aislado, preservando OpenCode como conformidad diferida.
+1. **S7.1** · 📋 PLANIFICADO · falta-planificar (S8.10) · prioridad Torre V2 · Handoffs y despacho Tower-owned · Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral en un HOME/runtime aislado, preservando OpenCode como conformidad diferida.
 
 ### Hosts (hosts)
 - Sin Sesiones abiertas.
 
 ### Instalación (instalacion)
-1. **S8.12** · 📋 PLANIFICADO · prioridad Torre V1 · Release instalable · Packaging del bundle Torre V1: una membresía versionada contiene exactamente los bytes Tower-owned del semáforo —binario, contrato host-neutral, adapter Pi, perfiles y skills Torre— y no instala, activa, reescribe configuración global ni ejecuta rollback.
-2. **S8.13** · 📋 PLANIFICADO · prioridad Torre V1 · Release instalable · Instalador, preflight, activación y rollback del bundle Torre V1 ejercitados sólo en un HOME/runtime aislado
+1. **S117** · 🟢 LISTO · prioridad Torre V1 · Release instalable · Los tres registros de instalación dejan de forzar ediciones cross-Zona: sus datos enumerados salen del test a un módulo propio declarado como Cimiento exacto.
+2. **S8.12** · 📋 PLANIFICADO · falta-planificar (S8.10) · prioridad Torre V1 · Release instalable · Packaging del bundle Torre V1: una membresía versionada contiene exactamente los bytes Tower-owned del semáforo —binario, contrato host-neutral, adapter Pi, perfiles y skills Torre— y no instala, activa, reescribe configuración global ni ejecuta rollback.
+3. **S8.13** · 📋 PLANIFICADO · falta-planificar (S8.10) · prioridad Torre V1 · Release instalable · Instalador, preflight, activación y rollback del bundle Torre V1 ejercitados sólo en un HOME/runtime aislado
 
 ### Jornada (jornada)
 - Sin Sesiones abiertas.
 
 ### Método (metodo)
-1. **S115** · 📋 PLANIFICADO · prioridad Torre V3 · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
-2. **S122** · 🟢 LISTO · prioridad Método V1 · Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
-3. **S123** · 📋 PLANIFICADO · prioridad Torre V3 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
-4. **S129** · 🟢 LISTO · prioridad Método V1 · Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
-5. **S133** · 🟢 LISTO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
+1. **S115** · 📋 PLANIFICADO · espera-atascada (S114) · prioridad Torre V3 · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
 
 ### Producto Torre (producto-torre)
-1. **S119** · 📋 PLANIFICADO · prioridad Torre V2 · Handoffs y despacho Tower-owned · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
+1. **S119** · 📋 PLANIFICADO · espera-atascada (S108) · prioridad Torre V2 · Handoffs y despacho Tower-owned · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
 
 ## Bloqueos
-- **S1.19:** Which exact test files will own the Pi-first integration regression?
-- **S2.10:** ¿Qué repositorio y path poseen el renderer/handler del menú central que debe ofrecer enrollment y cómo invoca la CLI canónica sin duplicar lógica?
-- **S4.12:** contaminación semántica declarada por otra Sesión
-- **S9.2:** Which exact concrete repository-relative paths comprise the S9.2 Area, and which single Zone owns each path without crossing into Cimientos or another Zone?
-- **S9.7:** contaminación semántica declarada por otra Sesión
-- **S9.8:** contaminación semántica declarada por otra Sesión
-- **S9.10:** ¿Se autoriza una nueva corrección tras cuatro CRITICAL y presupuesto agotado?
-- **S12.3:** ¿Debe S12.3 permanecer en el estacionamiento migratorio provisional autorizado, sin territorio ni ejecución?
-- **S12.4:** ¿Puede formalizarse toda S12.4 con territorio, ruta, Cimientos y reservas ejecutables sin resolver ni reemplazar el hold histórico de M12.4.2?
-- **S12.5:** ¿Qué Módulos y Tareas preservan la superficie operativa actual de continuation sin cambiar cuerpos ni comportamiento?
-- **S12.7:** ¿Qué Módulos, Tareas, Zonas y puentes temporales migran las 26 carpetas sin retirar rutas de raíz antes de probar consumidores y payloads?
-- **S12.9:** ¿Qué valor lleva source&#95;commit en una revisión autoral?
-- **S101:** contaminación semántica declarada por otra Sesión
-- **S107:** contaminación semántica declarada por otra Sesión
-- **S108:** contaminación semántica declarada por otra Sesión
-- **S121:** contaminación semántica declarada por otra Sesión
-- **S149:** contaminación semántica declarada por otra Sesión
+- **S1.19:** Which exact test files will own the Pi-first integration regression? · falta-decision (S1.19)
+- **S2.10:** ¿Qué repositorio y path poseen el renderer/handler del menú central que debe ofrecer enrollment y cómo invoca la CLI canónica sin duplicar lógica? · falta-decision (S2.10)
+- **S4.12:** contaminación semántica declarada por otra Sesión · falta-planificar (S4.12)
+- **S9.2:** Which exact concrete repository-relative paths comprise the S9.2 Area, and which single Zone owns each path without crossing into Cimientos or another Zone? · falta-decision (S9.2)
+- **S9.7:** contaminación semántica declarada por otra Sesión · falta-planificar (S9.7)
+- **S9.8:** contaminación semántica declarada por otra Sesión · falta-planificar (S9.8)
+- **S9.10:** ¿Se autoriza una nueva corrección tras cuatro CRITICAL y presupuesto agotado? · falta-decision (S9.10)
+- **S12.3:** ¿Debe S12.3 permanecer en el estacionamiento migratorio provisional autorizado, sin territorio ni ejecución? · falta-decision (S12.3)
+- **S12.4:** ¿Puede formalizarse toda S12.4 con territorio, ruta, Cimientos y reservas ejecutables sin resolver ni reemplazar el hold histórico de M12.4.2? · falta-decision (S12.4)
+- **S12.5:** ¿Qué Módulos y Tareas preservan la superficie operativa actual de continuation sin cambiar cuerpos ni comportamiento? · falta-decision (S12.5)
+- **S12.7:** ¿Qué Módulos, Tareas, Zonas y puentes temporales migran las 26 carpetas sin retirar rutas de raíz antes de probar consumidores y payloads? · falta-decision (S12.7)
+- **S12.9:** ¿Qué valor lleva source&#95;commit en una revisión autoral? · falta-decision (S12.9)
+- **S101:** contaminación semántica declarada por otra Sesión · falta-decision (S9.10)
+- **S107:** contaminación semántica declarada por otra Sesión · falta-planificar (S107)
+- **S108:** contaminación semántica declarada por otra Sesión · falta-planificar (S108)
+- **S121:** contaminación semántica declarada por otra Sesión · falta-planificar (S121)
+- **S149:** contaminación semántica declarada por otra Sesión · falta-planificar (S149)
 
 ## Rutas
 - **S1.20:** propuesta direct (decision 104 and Engram observation 10008); revalidada direct sobre 89b75cccbee3a3fffe371e776a68f9a62c7912fe con evidencia The read-only Tower-mode contract remained fully specified after rebasing onto current master; upstream S100 changed disjoint schema/test paths, while S1.20 preserved its verified bytes and stayed limited to core.mjs and test/lifecycle.test.mjs..
@@ -126,7 +125,7 @@
 ## Detalle de Sesiones
 ### S1.19 — Regresión integral Pi-first
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO
+  - Estado derivado: 🔴 BLOQUEADO · falta-decision (S1.19)
   - Encargo incompleto: no autoriza territorio, cola ni asiento.
   - Depende de: S1.18
   - Recursos: up to five isolated Pi clients and ephemeral test brokers
@@ -177,7 +176,7 @@
 
 ### S2.10 — Enrollment desde el menú central
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO
+  - Estado derivado: 🔴 BLOQUEADO · falta-decision (S2.10)
   - Encargo incompleto: no autoriza territorio, cola ni asiento.
   - Depende de: S2.9
   - Recursos: menú central y registro de proyectos; serial con S2.9 por la operación canónica de enrollment
@@ -267,7 +266,7 @@
 
 ### S4.12 — Recuperación mínima de Pi
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO
+  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S4.12)
   - Encargo incompleto: no autoriza territorio, cola ni asiento.
   - Depende de: S9.4, S1.18
   - Recursos: árbol de procesos Tower-owned, checkpoint durable, lineage Pi
@@ -297,7 +296,7 @@
 
 ### S7.1 — Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral en un HOME/runtime aislado, preservando OpenCode como conformidad diferida.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO
+  - Estado derivado: 📋 PLANIFICADO · falta-planificar (S8.10)
   - Zona/Área: entrega · delivery/, continuation/, test/delivery/, test/continuation/
   - Solo lectura: sí (sin archivos autorizados para modificar).
   - Depende de: S1.19, S4.12, S8.13, S5.5
@@ -334,7 +333,7 @@
 
 ### S8.12 — Packaging del bundle Torre V1: una membresía versionada contiene exactamente los bytes Tower-owned del semáforo —binario, contrato host-neutral, adapter Pi, perfiles y skills Torre— y no instala, activa, reescribe configuración global ni ejecuta rollback.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO
+  - Estado derivado: 📋 PLANIFICADO · falta-planificar (S8.10)
   - Zona/Área: instalacion · install/, test/install/
   - Archivos autorizados: scripts/payload-closure.mjs, install/runtime-payload.mjs, test/install/payload-closure.test.mjs, test/install/runtime-payload.test.mjs, test/install/tower-role-assets.test.mjs
   - Depende de: S8.10, S8.14, S149
@@ -369,7 +368,7 @@
 
 ### S8.13 — Instalador, preflight, activación y rollback del bundle Torre V1 ejercitados sólo en un HOME/runtime aislado
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO
+  - Estado derivado: 📋 PLANIFICADO · falta-planificar (S8.10)
   - Zona/Área: instalacion · install/, test/install/
   - Archivos autorizados: install/lifecycle.mjs, install/active-pointer.mjs, install/runtime-payload.mjs, bin/torre, test/install/lifecycle.test.mjs, test/install/entrypoint-resolution.test.mjs, test/install/runtime-payload.test.mjs, test/install/launch-worker-cli.test.mjs
   - Depende de: S8.12
@@ -410,7 +409,7 @@
 
 ### S9.2 — Main no puede reciclar un asiento ocupado; la ocupación es legible y el reciclado toma un lock exclusivo que falla cerrado si el asiento está tomado o si otro Main lo está mutando.
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO
+  - Estado derivado: 🔴 BLOQUEADO · falta-decision (S9.2)
   - Encargo incompleto: no autoriza territorio, cola ni asiento.
   - Depende de: S9.1
   - Recursos: lock exclusivo de mutación de asiento, estado de ocupación
@@ -437,7 +436,7 @@
 
 ### S9.7 — Route padre registrado y triggers públicos exactos
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO
+  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S9.7)
   - Encargo incompleto: no autoriza territorio, cola ni asiento.
   - Depende de: S1.20, S2.9, S9.6
   - Recursos: cadena global pi.on("input"), probe tipado de modo y resolución canónica de proyecto enrolado; sin Herdr, DB mutable ni procesos
@@ -461,7 +460,7 @@
 
 ### S9.8 — Dispatch fire-and-forget y cierre asíncrono
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO
+  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S9.8)
   - Encargo incompleto: no autoriza territorio, cola ni asiento.
   - Depende de: S108, S1.18
   - Recursos: dispatch&#95;id, canal Intercom ya ligado por S1.18 y mailbox de Main; sin ownership de Herdr, lifecycle de procesos o entrega Git
@@ -485,7 +484,7 @@
 
 ### S9.10 — Materialización canónica desde base&#95;sha aprobado
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO
+  - Estado derivado: 🔴 BLOQUEADO · falta-decision (S9.10)
   - Encargo incompleto: no autoriza territorio, cola ni asiento.
   - Depende de: S9.9
   - Recursos: asiento permanente limpio, base&#95;sha no-master exacto, binding público completo
@@ -509,7 +508,7 @@
 
 ### S12.3 — Las cinco migraciones y sus manifiestos viven en db/migrations/ y db/manifests.mjs; core.mjs los re-exporta, ningún import cambia y las firmas SHA-256 permanecen idénticas.
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO
+  - Estado derivado: 🔴 BLOQUEADO · falta-decision (S12.3)
   - Encargo incompleto: no autoriza territorio, cola ni asiento.
   - Depende de: S8.10
   - Recursos: —
@@ -534,7 +533,7 @@
 
 ### S12.4 — Las funciones que verifican coherencia entre SQLite y la versión del esquema viven en db/validators/ sin cambiar su cuerpo ni el comportamiento de persistencia.
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO
+  - Estado derivado: 🔴 BLOQUEADO · falta-decision (S12.4)
   - Encargo incompleto: no autoriza territorio, cola ni asiento.
   - Depende de: S12.3
   - Recursos: —
@@ -554,7 +553,7 @@
 
 ### S12.5 — El protocolo de continuación sale de core.mjs bajo continuation/ sin cambiar cuerpos ni comportamiento.
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO
+  - Estado derivado: 🔴 BLOQUEADO · falta-decision (S12.5)
   - Encargo incompleto: no autoriza territorio, cola ni asiento.
   - Depende de: S12.4
   - Recursos: —
@@ -574,7 +573,7 @@
 
 ### S12.6 — La raíz se ordena después de la descomposición de core.mjs y el README se reconcilia con esa estructura.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S12.5)
   - Zona/Área: cimientos · —
   - Archivos autorizados: README.md
   - Depende de: S12.5, S150
@@ -595,7 +594,7 @@
 
 ### S12.7 — La migración futura por Zonas mueve las 26 carpetas planas a src/domain/, src/app/, src/adapters/ y src/contracts/ sin que domain/ ni app/ importen de adapters/.
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO
+  - Estado derivado: 🔴 BLOQUEADO · falta-decision (S12.7)
   - Encargo incompleto: no autoriza territorio, cola ni asiento.
   - Depende de: S12.6
   - Recursos: —
@@ -615,7 +614,7 @@
 
 ### S12.9 — El PRD, el RFC y los requisitos quedan corregidos sin alcance retirado, y la procedencia queda intacta: la revisión 1 conserva sus digests como registro histórico y el puntero canónico avanza a una revisión 2 que describe los bytes nuevos.
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO
+  - Estado derivado: 🔴 BLOQUEADO · falta-decision (S12.9)
   - Encargo incompleto: no autoriza territorio, cola ni asiento.
   - Depende de: —
   - Recursos: —
@@ -653,7 +652,7 @@
 
 ### S101 — Resolución de política: prepare&#95;through opaco y horizon&#95;ceiling salen de la política resuelta
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO
+  - Estado derivado: 🔴 BLOQUEADO · falta-decision (S9.10)
   - Zona/Área: capacidades · capabilities/, policy/, test/capabilities/, test/policy/
   - Archivos autorizados: policy/delivery-policy.mjs, policy/jornada.mjs, test/policy/delivery-policy.test.mjs, test/policy/jornada.test.mjs
   - Depende de: S100, S9.10
@@ -692,7 +691,7 @@
 
 ### S107 — Topología Herdr Tower-owned dentro del workspace ligado: MAIN y una tab worker por Session ID canónico, con readback determinista
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO
+  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S107)
   - Encargo incompleto: no autoriza territorio, cola ni asiento.
   - Depende de: S1.18, S9.7, S121
   - Recursos: HERDR&#95;WORKSPACE&#95;ID explícito y recursos Herdr devueltos frescos; sin autoridad sobre recursos extranjeros
@@ -710,7 +709,7 @@
 
 ### S108 — Ciclo idempotente de tabs worker Tower-owned desde witnesses S121 y estado terminal Radar
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO
+  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S108)
   - Encargo incompleto: no autoriza territorio, cola ni asiento.
   - Depende de: S1.18, S9.7, S107
   - Recursos: witnesses S121 y puerto topology S107; sin roster o active-set paralelo
@@ -794,7 +793,7 @@
 
 ### S115 — Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S114)
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/check&#95;test.go
   - Depende de: S114
@@ -814,7 +813,7 @@
 
 ### S117 — Los tres registros de instalación dejan de forzar ediciones cross-Zona: sus datos enumerados salen del test a un módulo propio declarado como Cimiento exacto.
 - Coordinación:
-  - Estado derivado: 🟡 DIFERIDO
+  - Estado derivado: 🟢 LISTO
   - Zona/Área: instalacion · install/, test/install/
   - Archivos autorizados: test/install/payload-closure.contract.mjs, test/install/payload-closure.test.mjs, test/install/tower-role-assets.contract.mjs, test/install/tower-role-assets.test.mjs, test/install/runtime-payload.contract.mjs, test/install/runtime-payload.test.mjs
   - Depende de: —
@@ -844,7 +843,7 @@
 
 ### S119 — La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S108)
   - Zona/Área: producto-torre · product/tower/
   - Archivos autorizados: product/tower/skills/herdr/SKILL.md, product/tower/skills/torre-control/SKILL.md, test/install/tower-role-assets.contract.mjs
   - Depende de: S117, S108
@@ -872,7 +871,7 @@
 
 ### S121 — Binding Main-validado con Session ID canónico y procedencia durable de cada tab Tower-owned
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO
+  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S121)
   - Encargo incompleto: no autoriza territorio, cola ni asiento.
   - Depende de: S4.2, S4.5
   - Recursos: assignment-location, launch binding y namespace de witnesses Main-owned; sin segundo assignment store
@@ -890,9 +889,9 @@
 
 ### S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 - Coordinación:
-  - Estado derivado: 🟢 LISTO
+  - Estado derivado: ✅ COMPLETO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
-  - Archivos autorizados: agent-workflows/tools/radar/state.go, agent-workflows/tools/radar/state&#95;test.go, agent-workflows/tools/radar/snapshot.go, agent-workflows/tools/radar/snapshot&#95;test.go, agent-workflows/tools/radar/render.go, agent-workflows/tools/radar/render&#95;test.go, agent-workflows/tools/radar/testdata/ROADMAP.golden.md
+  - Archivos autorizados: agent-workflows/tools/radar/state.go, agent-workflows/tools/radar/state&#95;test.go, agent-workflows/tools/radar/snapshot.go, agent-workflows/tools/radar/snapshot&#95;test.go, agent-workflows/tools/radar/render.go, agent-workflows/tools/radar/render&#95;test.go, agent-workflows/tools/radar/testdata/ROADMAP.golden.md, odd/tasks/s122-radar-motivos-horizonte.md
   - Depende de: S127
   - Recursos: —
   - Ejecución: ODD nativo.
@@ -916,7 +915,7 @@
 
 ### S123 — Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO
+  - Estado derivado: 🟡 DIFERIDO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/skills/chanks-7-session-doc/SKILL.md, agent-workflows/skills/chanks-0-agente-soporte/SKILL.md, agent-workflows/templates/session-routing.md
   - Depende de: S122
@@ -940,9 +939,9 @@
 
 ### S129 — Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
 - Coordinación:
-  - Estado derivado: 🟢 LISTO
+  - Estado derivado: ✅ COMPLETO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
-  - Archivos autorizados: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/check&#95;test.go, agent-workflows/tools/radar/avance.go
+  - Archivos autorizados: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/check&#95;test.go, agent-workflows/tools/radar/avance.go, odd/tasks/s129-radar-tope-lote.md
   - Depende de: S128
   - Recursos: —
   - Ejecución: ODD nativo.
@@ -964,9 +963,9 @@
 
 ### S133 — El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
 - Coordinación:
-  - Estado derivado: 🟢 LISTO
+  - Estado derivado: ✅ COMPLETO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
-  - Archivos autorizados: agent-workflows/skills/chanks-7-session-doc/SKILL.md, agent-workflows/tests/test&#95;builder&#95;flow.py
+  - Archivos autorizados: agent-workflows/skills/chanks-7-session-doc/SKILL.md, agent-workflows/tests/test&#95;builder&#95;flow.py, odd/tasks/s133-reinstalacion-cierre.md
   - Depende de: S135
   - Recursos: —
   - Ejecución: ODD nativo.
@@ -1127,7 +1126,7 @@
 
 ### S148 — Raíz de Ejecución estable en SQLite con revisión, estado e historial ligados a handoffs existentes
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S147)
   - Zona/Área: cimientos · —
   - Archivos autorizados: core.mjs, test/migration.test.mjs
   - Depende de: S147
@@ -1165,7 +1164,7 @@
 
 ### S149 — La capa semáforo se distribuye como un ejecutable único que no exige bun instalado y conserva el contrato tower&#95;&#42; observable.
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO
+  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S149)
   - Encargo incompleto: no autoriza territorio, cola ni asiento.
   - Depende de: —
   - Recursos: —
@@ -1178,7 +1177,7 @@
 
 ### S150 — El README describe el producto que se entrega —el semáforo instalable— y no promete capacidades que pertenecen a torre-v2.
 - Coordinación:
-  - Estado derivado: 🟡 DIFERIDO
+  - Estado derivado: 🟢 LISTO
   - Zona/Área: cimientos · —
   - Archivos autorizados: README.md
   - Depende de: —
@@ -4032,7 +4031,7 @@ Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workfl
   - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
 
 ## Capacidad
-1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: metodo.
+2 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: cimientos, instalacion.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
