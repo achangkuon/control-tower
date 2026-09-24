@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import { execFileSync } from "node:child_process"
 import {
-  chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync,
+  chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync,
 } from "node:fs"
 import { tmpdir } from "node:os"
 import { delimiter, join } from "node:path"
@@ -14,7 +14,6 @@ const CANDIDATE = "30b0e6a8f90d3ebfebd57cfb3fdd1805eee37802bad2fd9d042617958ab89
 
 const site = () => {
   const root = mkdtempSync(join(tmpdir(), "chanks-pi-admission-"))
-  const runtime = mkdtempSync(join(tmpdir(), "chanks-pi-admission-runtime-"))
   const bin = mkdtempSync(join(tmpdir(), "chanks-pi-admission-bin-"))
   const files = ["a.mjs", "b.mjs", "cimiento.mjs"]
   for (const relative of files) writeFileSync(join(root, relative), `export const ${relative.split(".")[0]} = true\n`)
@@ -23,10 +22,9 @@ const site = () => {
   chmodSync(git, 0o755)
   const dispose = () => {
     rmSync(root, { recursive: true, force: true })
-    rmSync(runtime, { recursive: true, force: true })
     rmSync(bin, { recursive: true, force: true })
   }
-  return { root, runtime, bin, git, dispose }
+  return { root, bin, git, dispose }
 }
 
 const radarScript = (statusRows, sessionText = "") => `#!/bin/sh
@@ -59,7 +57,7 @@ describe("buildAdmission — llave de Sesión", () => {
       const admission = buildAdmission({
         repositoryRoot: s.root, kind: "session", sessionId: "S200",
         runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
-        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
+        dependencies: { git: s.git, radar },
       })
       expect(admission.bundle.sessionId).toBe("S200")
       expect(admission.bundle.authorizedFiles).toEqual([join(s.root, "a.mjs"), join(s.root, "cimiento.mjs")])
@@ -71,8 +69,6 @@ describe("buildAdmission — llave de Sesión", () => {
       const request = authority.solicitar(admission.bundle)
       expect(authority.aceptar(request.solicitud)).toBe(true)
       expect(authority.capacidad()).not.toBeNull()
-      expect(existsSync(admission.proofPath)).toBe(true)
-      admission.cerrar()
     } finally {
       s.dispose()
     }
@@ -85,7 +81,7 @@ describe("buildAdmission — llave de Sesión", () => {
       expect(() => buildAdmission({
         repositoryRoot: s.root, kind: "session", sessionId: "S200",
         runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
-        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
+        dependencies: { git: s.git, radar },
       })).toThrow(/LISTO/)
     } finally {
       s.dispose()
@@ -99,7 +95,7 @@ describe("buildAdmission — llave de Sesión", () => {
       expect(() => buildAdmission({
         repositoryRoot: s.root, kind: "session", sessionId: "S999",
         runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
-        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
+        dependencies: { git: s.git, radar },
       })).toThrow()
     } finally {
       s.dispose()
@@ -115,7 +111,7 @@ describe("buildAdmission — llave de Sesión", () => {
       expect(() => buildAdmission({
         repositoryRoot: s.root, kind: "session", sessionId: "S200",
         runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
-        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
+        dependencies: { git: s.git, radar },
       })).toThrow(/Cimiento/)
     } finally {
       s.dispose()
@@ -129,7 +125,7 @@ describe("buildAdmission — llave de Sesión", () => {
       expect(() => buildAdmission({
         repositoryRoot: s.root, kind: "session", sessionId: "S200",
         runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
-        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
+        dependencies: { git: s.git, radar },
       })).toThrow(/archivos existentes/)
     } finally {
       s.dispose()
@@ -145,7 +141,7 @@ describe("buildAdmission — llave de Sesión", () => {
       const admission = buildAdmission({
         repositoryRoot: s.root, kind: "session", sessionId: "S200",
         runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
-        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
+        dependencies: { git: s.git, radar },
       })
       expect(admission.bundle.authorizedFiles).toEqual([join(s.root, "a.mjs")])
       expect(admission.bundle.newFiles).toEqual([join(s.root, "todavia-no-existe.mjs")])
@@ -153,7 +149,6 @@ describe("buildAdmission — llave de Sesión", () => {
       const authority = crearAutoridadPi({ identidadActual: admission.identidadActual })
       const request = authority.solicitar(admission.bundle)
       expect(authority.aceptar(request.solicitud)).toBe(true)
-      admission.cerrar()
     } finally {
       s.dispose()
     }
@@ -168,7 +163,7 @@ describe("buildAdmission — llave de Sesión", () => {
       expect(() => buildAdmission({
         repositoryRoot: s.root, kind: "session", sessionId: "S200",
         runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
-        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
+        dependencies: { git: s.git, radar },
       })).toThrow()
     } finally {
       s.dispose()
@@ -184,39 +179,27 @@ describe("buildAdmission — llave de Sesión", () => {
       expect(() => buildAdmission({
         repositoryRoot: s.root, kind: "session", sessionId: "S200",
         runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
-        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
+        dependencies: { git: s.git, radar },
       })).toThrow(/escapa/)
     } finally {
       s.dispose()
     }
   })
 
-  test("identidadActual falla cerrado cuando el estado vivo se aparta del capturado", () => {
+  test("identidadActual nunca vuelve a invocar git ni radar, y siempre devuelve la misma identidad fija", () => {
+    // A referential key (Engram 11475) has nothing left to keep proving live: once built, its
+    // identity is the fixed snapshot captured here — never a fresh git/radar read. This is the
+    // module-level guarantee that HEAD advancing, and any plan row changing (even this Session's
+    // own), can never drop the key: there is no live re-check left that could observe either.
     const s = site()
     try {
-      const rows = [{ id: "S200", estado: "LISTO", archivos: ["a.mjs"] }]
-      const radar = withRadar(s.bin, rows, "S200")
-      const admission = buildAdmission({
-        repositoryRoot: s.root, kind: "session", sessionId: "S200",
-        runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
-        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
-      })
-      expect(admission.identidadActual()).toBeTruthy()
-      writeFileSync(s.git, "#!/bin/sh\necho " + "e".repeat(40) + "\n")
-      expect(() => admission.identidadActual()).toThrow()
-    } finally {
-      s.dispose()
-    }
-  })
-
-  test("una Sesión ajena que cambia en el plan no tira la llave, y la revalidación nunca vuelve a leer radar status", () => {
-    const s = site()
-    try {
-      const calls = join(s.runtime, "calls.log")
+      const calls = join(s.bin, "calls.log")
       writeFileSync(calls, "")
+      const git = s.git
+      writeFileSync(git, `#!/bin/sh\necho "git" >> ${JSON.stringify(calls)}\necho ${BASE}\n`)
       const radar = join(s.bin, "radar")
       const script = (statusRows, sessionText) => `#!/bin/sh
-echo "$1" >> ${JSON.stringify(calls)}
+echo "radar $1" >> ${JSON.stringify(calls)}
 case "$1" in
   status) cat <<'JSON'
 ${JSON.stringify({ schema: "radar.snapshot/v1", sesiones: statusRows })}
@@ -232,49 +215,25 @@ esac
       const admission = buildAdmission({
         repositoryRoot: s.root, kind: "session", sessionId: "S200",
         runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
-        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
+        dependencies: { git, radar },
       })
-      // An unrelated Session S201 appears in the plan; S200's own contract text is untouched.
+      const first = admission.identidadActual()
+      expect(first.baseCommit).toBe(BASE)
+
+      // Advance HEAD, change the Session's own row, and add an unrelated one — none of it is
+      // ever read again.
+      writeFileSync(git, `#!/bin/sh\necho "git" >> ${JSON.stringify(calls)}\necho ${"e".repeat(40)}\n`)
       writeFileSync(radar, script([
-        { id: "S200", estado: "LISTO", archivos: ["a.mjs"] },
+        { id: "S200", estado: "EN CURSO", archivos: ["a.mjs", "b.mjs"] },
         { id: "S201", estado: "EN CURSO", archivos: ["b.mjs"] },
-      ], "S200 — Estado: LISTO"))
+      ], "S200 — Estado: EN CURSO"))
       chmodSync(radar, 0o755)
       writeFileSync(calls, "")
-      expect(admission.identidadActual()).toBeTruthy()
-      const invocations = readFileSync(calls, "utf8").trim().split("\n").filter(Boolean)
-      expect(invocations).not.toContain("status")
-      expect(invocations).toContain("sesion")
-    } finally {
-      s.dispose()
-    }
-  })
 
-  test("un cambio de estado o archivos de la propia Sesión sí tira la llave", () => {
-    const s = site()
-    try {
-      const radar = join(s.bin, "radar")
-      const script = (sessionText) => `#!/bin/sh
-case "$1" in
-  status) cat <<'JSON'
-${JSON.stringify({ schema: "radar.snapshot/v1", sesiones: [{ id: "S200", estado: "LISTO", archivos: ["a.mjs"] }] })}
-JSON
-  ;;
-  sesion) printf '%s' ${JSON.stringify(sessionText)}
-  ;;
-  *) exit 64 ;;
-esac
-`
-      writeFileSync(radar, script("S200 — Estado: LISTO"))
-      chmodSync(radar, 0o755)
-      const admission = buildAdmission({
-        repositoryRoot: s.root, kind: "session", sessionId: "S200",
-        runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
-        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
-      })
-      writeFileSync(radar, script("S200 — Estado: EN CURSO"))
-      chmodSync(radar, 0o755)
-      expect(() => admission.identidadActual()).toThrow()
+      expect(admission.identidadActual()).toEqual(first)
+      expect(admission.identidadActual().baseCommit).toBe(BASE)
+      const invocations = readFileSync(calls, "utf8").trim().split("\n").filter(Boolean)
+      expect(invocations).toEqual([])
     } finally {
       s.dispose()
     }
@@ -292,7 +251,7 @@ describe("buildAdmission — llave de planificación", () => {
       const admission = buildAdmission({
         repositoryRoot: s.root, kind: "planning",
         runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
-        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
+        dependencies: { git: s.git, radar },
       })
       expect(admission.bundle.sessionId).toBe("PLANNING")
       expect(admission.bundle.authorizedFiles).toEqual([
@@ -317,7 +276,7 @@ describe("buildAdmission — llave de planificación", () => {
       expect(() => buildAdmission({
         repositoryRoot: s.root, kind: "planning",
         runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
-        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
+        dependencies: { git: s.git, radar },
       })).toThrow()
     } finally {
       s.dispose()
@@ -333,7 +292,7 @@ describe("buildAdmission — llave de planificación", () => {
       const admission = buildAdmission({
         repositoryRoot: s.root, kind: "planning",
         runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
-        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
+        dependencies: { git: s.git, radar },
       })
       expect(admission.bundle.authorizedFiles).toEqual([join(s.root, "openspec", "plan.yaml")])
     } finally {
@@ -352,7 +311,7 @@ describe("buildAdmission — llave de planificación", () => {
       const admission = buildAdmission({
         repositoryRoot: s.root, kind: "planning",
         runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
-        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
+        dependencies: { git: s.git, radar },
       })
       // Simulate the write this key exists to authorize: plan.yaml changes shape entirely.
       writeFileSync(join(s.root, "openspec", "plan.yaml"), "sesiones:\n  - id: S999\n")
@@ -376,7 +335,7 @@ describe("timeouts de ejecución", () => {
       buildAdmission({
         repositoryRoot: s.root, kind: "session", sessionId: "S200",
         runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
-        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime, execFile },
+        dependencies: { git: s.git, radar, execFile },
       })
       expect(seen.length).toBeGreaterThan(0)
       for (const options of seen) expect(typeof options.timeout).toBe("number")

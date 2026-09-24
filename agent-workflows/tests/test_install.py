@@ -670,6 +670,11 @@ class PiExtensionTests(unittest.TestCase):
         # (`confinarComando` is named only in a comment explaining why it is not reused here.)
         for decision in ["decidirHerramienta", "mutacionPermitida", "const confinarComando ="]:
             self.assertNotIn(decision, body)
+        # An active key is referential (Engram 11475): the shim never calls into
+        # pi-controls.mjs's confinement at all once a key is active, so neither call appears in
+        # the generated body.
+        for call in ["gobernar(", "capacidad(", ".cerrar("]:
+            self.assertNotIn(call, body)
 
     def test_shim_registers_the_tool_call_gate(self):
         body = INSTALLER.desired_pi_extension(ROOT).decode("utf8")
@@ -750,6 +755,14 @@ if (tool) activation = await tool.execute('model-call', scenario.activationParam
 let secondActivation = null
 if (scenario.secondActivationParams) {
   secondActivation = await tool.execute('model-call-2', scenario.secondActivationParams, undefined, undefined, ctx)
+}
+if (scenario.afterActivationShell) {
+  const cp = await import('node:child_process')
+  cp.execSync(scenario.afterActivationShell, { cwd: process.cwd(), stdio: 'ignore' })
+}
+if (scenario.afterActivationWrite) {
+  const fs = await import('node:fs')
+  fs.writeFileSync(scenario.afterActivationWrite.path, scenario.afterActivationWrite.content)
 }
 if (scenario.disableSwitchAt) {
   const fs = await import('node:fs')
@@ -992,7 +1005,10 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         for name in ("read", "write", "edit", "bash", "activationDispatch"):
             self.assertEqual(outcome["before"][name]["result"], {})
 
-    def test_session_key_activation_grants_exactly_its_authorized_files(self):
+    def test_session_key_activation_is_referential_and_blocks_no_write_or_bash(self):
+        # Since Engram 11475, the key identifies which Session is working, for the Main agent,
+        # and confines nothing: a file the Session never declared still passes once the key is
+        # active, and bash runs completely unconfined (no bwrap at all).
         self._write_radar([{
             "id": "S200", "estado": "LISTO", "archivos": ["a.mjs", "cimiento.mjs"],
             "cimientos": ["cimiento.mjs"], "recurso": ["runtime aislado exclusivo"],
@@ -1008,11 +1024,11 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         for field in ("S200", "a.mjs", "cimiento.mjs", "exclusive"):
             self.assertIn(field, message)
         self.assertEqual(outcome["after"]["write"]["result"], {})
-        self.assertTrue(outcome["after"]["otherWrite"]["result"].get("block", False))
+        self.assertEqual(outcome["after"]["otherWrite"]["result"], {})
         self.assertEqual(outcome["after"]["bash"]["result"], {})
-        self.assertIn("/usr/bin/bwrap", outcome["after"]["bash"]["input"]["command"])
+        self.assertEqual(outcome["after"]["bash"]["input"]["command"], "printf allowed")
 
-    def test_planning_key_activation_grants_exactly_plan_and_roadmap(self):
+    def test_planning_key_activation_is_referential_and_blocks_no_write(self):
         outcome = self._run_shim(self._default_scenario(
             activationParams={"kind": "planning"},
             writePath=str(self.repo / "openspec" / "plan.yaml"),
@@ -1023,7 +1039,36 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         for field in ("Planning key", "plan.yaml", "ROADMAP.md"):
             self.assertIn(field, message)
         self.assertEqual(outcome["after"]["write"]["result"], {})
-        self.assertTrue(outcome["after"]["otherWrite"]["result"].get("block", False))
+        self.assertEqual(outcome["after"]["otherWrite"]["result"], {})
+
+    def test_active_session_key_survives_head_advancing_and_an_unrelated_radar_row_change(self):
+        # W2: HEAD advancing (the agent's own commits) and an unrelated plan row changing must
+        # never drop a referential key. The extension never re-derives live identity per
+        # tool_call (it checks plain in-memory state, not pi-authority.mjs's capacidad()), so
+        # neither a host-side commit nor a rewritten `radar` between the activation and later
+        # writes has any effect on the active key.
+        self._write_radar([{"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"]}])
+        unrelated_rows = json.dumps({"schema": "radar.snapshot/v1", "sesiones": [
+            {"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"]},
+            {"id": "S201", "estado": "EN CURSO", "archivos": ["b.mjs"]},
+        ]})
+        radar_script = (
+            "#!/bin/sh\ncase \"$1\" in\n"
+            "  status) cat <<'JSON'\n" + unrelated_rows + "\nJSON\n  ;;\n"
+            "  sesion) printf 'S200 modified' ;;\n"
+            "  *) exit 64 ;;\nesac\n"
+        )
+        outcome = self._run_shim(self._default_scenario(
+            activationParams={"kind": "session", "sessionId": "S200"},
+            writePath=str(self.repo / "a.mjs"),
+            otherWritePath=str(self.repo / "not-declared.mjs"),
+            afterActivationShell="git commit --allow-empty -q -m unrelated",
+            afterActivationWrite={"path": str(self.radar), "content": radar_script},
+        ))
+        self.assertEqual(outcome["activation"]["content"][0]["text"], "Chanks authority is active.")
+        self.assertEqual(outcome["after"]["write"]["result"], {})
+        self.assertEqual(outcome["after"]["otherWrite"]["result"], {})
+        self.assertEqual(outcome["after"]["bash"]["input"]["command"], "printf allowed")
 
     def test_declined_missing_ui_or_cancelled_confirmation_leaves_writes_blocked(self):
         self._write_radar([{"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"]}])
@@ -1067,7 +1112,10 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         outcome = self._run_shim(self._default_scenario())
         self.assertEqual(outcome["before"]["activationDispatch"]["result"], {})
 
-    def test_a_new_activation_replaces_a_previous_one_and_narrows_authorized_files(self):
+    def test_a_new_activation_replaces_a_previous_one_and_both_still_pass_once_active(self):
+        # Replacement still works (two confirmations, both accepted) — but since neither key
+        # confines anything, the first key's own target keeps passing too, exactly like every
+        # other path, once any key is active.
         self._write_radar([{
             "id": "S200", "estado": "LISTO", "archivos": ["a.mjs"],
         }])
@@ -1080,8 +1128,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         self.assertEqual(outcome["activation"]["content"][0]["text"], "Chanks authority is active.")
         self.assertEqual(outcome["secondActivation"]["content"][0]["text"], "Chanks authority is active.")
         self.assertEqual(len(outcome["confirmations"]), 2)
-        # The planning key is gone once the Session key replaces it.
-        self.assertTrue(outcome["after"]["write"]["result"].get("block", False))
+        self.assertEqual(outcome["after"]["write"]["result"], {})
         self.assertEqual(outcome["secondWrite"]["result"], {})
 
     def test_switch_turned_off_mid_session_passes_through_the_very_next_tool_call(self):

@@ -3,28 +3,30 @@
 // module, from trusted executables it resolves itself.
 //
 // Two kinds of key exist. `session` names one plan Session (state LISTO or EN CURSO) and
-// derives its authorized files, Cimiento grants and declared resources from Radar's own
-// structured status. `planning` names no Session and authorizes exactly the two planning
-// artifacts — nothing here reads plan.yaml itself; Radar's installed binary is still the only
-// source of truth about the repository.
+// derives its files, Cimiento grants and declared resources from Radar's own structured status,
+// for display in Pi's own confirmation question. `planning` names no Session and authorizes
+// exactly the two planning artifacts — nothing here reads plan.yaml itself; Radar's installed
+// binary is still the only source of truth about the repository.
+//
+// Since Engram 11475, a key is purely referential: it identifies which Session (or planning) a
+// Pi is working, for the Main agent, and confines nothing once active. Git and Radar are
+// consulted here exactly once, at request time, to build the confirmation the human sees and the
+// `radar` evidence pi-authority.mjs's admission validation still expects. `identidadActual()`
+// never re-derives any of that: it is the fixed identity this request was built with, so HEAD
+// advancing (the agent's own commits) and any plan row changing later — this Session's own row
+// included — never drop the key, and no subprocess is ever spawned again on its account. (The
+// generated Pi extension no longer even calls anything that would reach this function on every
+// tool call — see install.py — but it stays this cheap regardless of who calls it.)
 
 import { execFileSync } from "node:child_process"
 import { createHash } from "node:crypto"
-import {
-  chmodSync, closeSync, constants, fstatSync, lstatSync, mkdtempSync, openSync,
-  readSync, realpathSync, rmSync, writeFileSync,
-} from "node:fs"
-import { tmpdir } from "node:os"
+import { lstatSync, realpathSync } from "node:fs"
 import { basename, delimiter, isAbsolute, join, relative, resolve, sep } from "node:path"
 
 const LISTO_STATES = new Set(["LISTO", "EN CURSO"])
 const PLANNING_FILES = ["openspec/plan.yaml", "openspec/ROADMAP.md"]
 const SESSION = /^S[1-9][0-9]*$/
 const SHA_256 = /^[a-f0-9]{64}$/
-const PROOF_FIELDS = [
-  "repositoryRoot", "kind", "sessionId", "baseCommit", "candidateDigest",
-  "runtimeIdentity", "sessionDigest",
-]
 
 const fail = (message) => {
   throw new Error(`pi-admission: ${message}`)
@@ -38,17 +40,8 @@ const inside = (root, path) => {
 const defaultDependencies = () => ({
   execFile: execFileSync,
   pathEnv: process.env.PATH ?? "",
-  runtimeDirectory: process.env.XDG_RUNTIME_DIR ?? tmpdir(),
-  mkdtemp: mkdtempSync,
-  chmod: chmodSync,
-  writeFile: writeFileSync,
   realpath: realpathSync,
   lstat: lstatSync,
-  open: openSync,
-  fstat: fstatSync,
-  read: readSync,
-  close: closeSync,
-  rm: rmSync,
 })
 
 const withDefaults = (dependencies) => ({ ...defaultDependencies(), ...(dependencies ?? {}) })
@@ -240,45 +233,10 @@ const resourcesFromRow = (row) => {
   return declared.map((description) => ({ id: description, mode: "exclusive", confirmed: true }))
 }
 
-const writeProof = (value, deps) => {
-  const dir = deps.mkdtemp(join(deps.runtimeDirectory, "chanks-pi-admission-"))
-  deps.chmod(dir, 0o700)
-  const path = join(dir, "identity.json")
-  deps.writeFile(path, JSON.stringify(value), { mode: 0o600, flag: "wx" })
-  return path
-}
-
-const readProof = (path, deps) => {
-  let descriptor
-  try {
-    const canonical = deps.realpath(path)
-    if (canonical !== path) fail("el archivo de evidencia dejó de ser canónico")
-    descriptor = deps.open(canonical, constants.O_RDONLY | constants.O_NOFOLLOW)
-    const stat = deps.fstat(descriptor)
-    if (!stat.isFile() || stat.nlink !== 1) fail("el archivo de evidencia no es regular")
-    const buffer = Buffer.alloc(stat.size)
-    deps.read(descriptor, buffer, 0, buffer.length, 0)
-    const value = JSON.parse(buffer.toString("utf8"))
-    if (PROOF_FIELDS.some((field) => !(field in value))) fail("el archivo de evidencia está incompleto")
-    return value
-  } catch (error) {
-    fail(error instanceof Error && error.message.startsWith("pi-admission:") ? error.message : "el archivo de evidencia no se pudo leer")
-  } finally {
-    if (descriptor !== undefined) try { deps.close(descriptor) } catch {}
-  }
-}
-
-// buildAdmission captures once, at construction, everything that needs the *whole* plan status
-// to derive a Session's authorizedFiles/cimientoGrants/resources. `identidadActual` never
-// repeats that whole-plan read: it only re-checks `git rev-parse HEAD` and, for a session key,
-// `radar sesion <ID>` — this Session's own contract, rendered as text (state and archivos
-// included) — never the full `radar status --json` digest. That whole-file digest used to be
-// part of live identity (R3-status-digest-fragility / R3/R4-planning-key-self-invalidates): an
-// unrelated Session's row changing, or writing plan.yaml itself, changed that digest and
-// silently dropped a key that had nothing to do with either. Binding to the scoped
-// `radar sesion <ID>` digest instead means only a change to THIS Session's own row (or base,
-// candidate, runtime) still invalidates; a planning key does not call Radar again at all after
-// being built, so it survives the very writes it exists to authorize.
+// buildAdmission captures once, at request time, everything Pi's own confirmation question
+// needs to show: the Session's (or planning's) files, Cimientos, resources and base commit.
+// `identidadActual` below never repeats any of this: a referential key has nothing left to
+// revalidate against git or Radar, so it is simply the fixed identity captured here, forever.
 export const buildAdmission = ({ repositoryRoot, kind, sessionId, runtimeIdentity, candidateDigest, dependencies } = {}) => {
   const deps = withDefaults(dependencies)
   const root = canonicalRepositoryRoot(repositoryRoot, deps)
@@ -302,8 +260,11 @@ export const buildAdmission = ({ repositoryRoot, kind, sessionId, runtimeIdentit
   if (kind === "session") {
     const status = captureStatus(radar, root, deps)
     const row = sessionRow(status, sessionId)
-    const sessionRaw = captureSessionRaw(radar, root, sessionId, deps)
-    sessionDigest = sha256(sessionRaw)
+    // pi-authority.mjs's admission validation still expects a `radar.sessionDigest` for a
+    // Session key — a real digest of this Session's own `radar sesion` text, computed once here
+    // and never recomputed. It is evidence shown alongside the bundle, not a value anything ever
+    // re-derives to decide whether the key survives (Engram 11475).
+    sessionDigest = sha256(captureSessionRaw(radar, root, sessionId, deps))
     const statuses = archivoStatuses(root, row.archivos, deps)
     authorizedFiles = statuses.filter((entry) => entry.exists).map((entry) => entry.path)
     newFiles = statuses.filter((entry) => !entry.exists).map((entry) => entry.path)
@@ -339,45 +300,19 @@ export const buildAdmission = ({ repositoryRoot, kind, sessionId, runtimeIdentit
     resources: Object.freeze(resources.map((resource) => Object.freeze({ ...resource }))),
   })
 
-  const proofPath = writeProof({
+  // The identity a key is bound to, fixed forever at this point. No later call ever spawns git
+  // or Radar again on its account (Engram 11475): the key only identifies, for the Main agent,
+  // which Session or planning a Pi is working — it does not keep proving that identity is still
+  // "live" in some stronger sense, because nothing here confines anything for it to protect.
+  const fixedIdentity = Object.freeze({
     repositoryRoot: root,
     kind,
     sessionId: effectiveSessionId,
     baseCommit,
     candidateDigest,
     runtimeIdentity,
-    sessionDigest,
-  }, deps)
+  })
+  const identidadActual = () => fixedIdentity
 
-  const identidadActual = () => {
-    const liveBaseCommit = captureHead(git, root, deps)
-    const liveSessionDigest = kind === "session"
-      ? sha256(captureSessionRaw(radar, root, sessionId, deps))
-      : ""
-    const proof = readProof(proofPath, deps)
-    const matches = (
-      proof.repositoryRoot === root
-      && proof.kind === kind
-      && proof.sessionId === effectiveSessionId
-      && proof.baseCommit === liveBaseCommit
-      && proof.candidateDigest === candidateDigest
-      && proof.runtimeIdentity === runtimeIdentity
-      && proof.sessionDigest === liveSessionDigest
-    )
-    if (!matches) fail("la evidencia viva ya no coincide con la admisión")
-    return {
-      repositoryRoot: root,
-      kind,
-      sessionId: effectiveSessionId,
-      baseCommit: liveBaseCommit,
-      candidateDigest,
-      runtimeIdentity,
-    }
-  }
-
-  const cerrar = () => {
-    try { deps.rm(join(proofPath, ".."), { recursive: true, force: true }) } catch {}
-  }
-
-  return Object.freeze({ bundle, identidadActual, proofPath, cerrar })
+  return Object.freeze({ bundle, identidadActual })
 }

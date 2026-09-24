@@ -663,9 +663,16 @@ export default function chanksControls(pi: any) {{
   }})
   let currentAdmission: any = null
 
+  // A key is purely referential (Engram 11475): once active it identifies which Session or
+  // planning is working, for the Main agent, and confines nothing. `estado()` is a plain,
+  // no-I/O state read. The authority's other, live-checking accessor still hands back
+  // pi-controls.mjs's confinement, but this extension deliberately never reaches for it: doing
+  // so would re-derive live identity through pi-admission.mjs and could silently invalidate a
+  // key on a HEAD or plan change the key must survive.
+  const isActive = () => authority.estado() === "activa"
+
   const erase = () => {{
     try {{ authority.invalidar() }} catch {{}}
-    try {{ currentAdmission?.cerrar() }} catch {{}}
     currentAdmission = null
   }}
 
@@ -690,8 +697,9 @@ export default function chanksControls(pi: any) {{
       }}
       // Already active for this exact kind (and Session, when it names one): nothing to do. A
       // request for a *different* key still falls through and replaces the current one, the
-      // same way a brand-new one would — see the note below on why that is safe.
-      if (authority.capacidad() && currentAdmission?.bundle.kind === kind
+      // same way a brand-new one would — see the note below on why that is safe. `isActive()`
+      // is the plain state read defined above, not the live-checking accessor.
+      if (isActive() && currentAdmission?.bundle.kind === kind
         && (kind !== "session" || currentAdmission.bundle.sessionId === sessionId)) {{
         return {{ content: [{{ type: "text", text: "Chanks authority is already active." }}], details: undefined }}
       }}
@@ -711,12 +719,8 @@ export default function chanksControls(pi: any) {{
         request = authority.solicitar(candidate.bundle)
       }} catch (error: any) {{
         currentAdmission = previous
-        candidate.cerrar()
         return blocked(`the admission is invalid: ${{error?.message ?? error}}`)
       }}
-      // solicitar() already discarded the previous pending/active authority internally; its own
-      // proof file is only ours to release, and only now that the replacement is confirmed live.
-      if (previous && previous !== candidate) previous.cerrar()
 
       try {{
         const confirmed = await ctx.ui.confirm(
@@ -725,12 +729,10 @@ export default function chanksControls(pi: any) {{
         )
         if (confirmed !== true || !authority.aceptar(request.solicitud)) {{
           currentAdmission = null
-          candidate.cerrar()
           return blocked("human activation was not accepted")
         }}
       }} catch {{
         currentAdmission = null
-        candidate.cerrar()
         return blocked("human activation could not be confirmed")
       }}
 
@@ -749,15 +751,11 @@ export default function chanksControls(pi: any) {{
     // session (R4-switch-evaluated-once-at-load).
     if (!isEffective()) return {{}}
 
-    const capability = authority.capacidad()
-    if (capability) {{
-      const governed = capability.gobernar(event)
-      if (governed.entradaPi) {{
-        for (const key of Object.keys(event.input ?? {{}})) delete event.input[key]
-        Object.assign(event.input, governed.entradaPi)
-      }}
-      return governed.pi
-    }}
+    // An active key is purely referential (Engram 11475): it identifies which Session or
+    // planning this Pi is working, for the Main agent, and blocks nothing. Every tool passes
+    // through exactly as if this extension were absent — no bwrap room, no path limits, and no
+    // call into pi-controls.mjs's confinement.
+    if (isActive()) return {{}}
 
     const herramienta = event?.toolName
     if (typeof herramienta === "string" && READ_ONLY_TOOLS.includes(herramienta)) return {{}}
