@@ -3,15 +3,15 @@
 
 ## 📍 Punto de retoma
 - Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S128, S130, S131, S132, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S151, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
-- Prioridad activa: Método V1.
-- Próximo trabajo ejecutable: Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados..
+- Prioridad activa: Método V1 · Controles prioritarios.
+- Próximo trabajo ejecutable: Método #3 → S152 — El dueño de producto ve con &#96;radar faltan&#96; todas las Sesiones que faltan, agrupadas por meta y subprioridad con un porcentaje honesto, y ubica cualquier Sesión en una línea; los agentes nombran cada Sesión con su meta, Zona, título y estado..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
 ## Estado y próximo trabajo
-- Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
+- Método #3 → S152 — El dueño de producto ve con &#96;radar faltan&#96; todas las Sesiones que faltan, agrupadas por meta y subprioridad con un porcentaje honesto, y ubica cualquier Sesión en una línea; los agentes nombran cada Sesión con su meta, Zona, título y estado.
 
 ## Avance
-- **Total:** 70% (84/120 S)
+- **Total:** 69% (84/121 S)
 - 16 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
@@ -24,7 +24,7 @@
 - **Hosts:** 60% (3/5 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 82% (24/29 S)
+- **Método:** 80% (24/30 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -65,10 +65,8 @@
 
 ### Método (metodo)
 1. **S115** · 📋 PLANIFICADO · prioridad Torre V3 · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
-2. **S122** · 🟢 LISTO · prioridad Método V1 · Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
-3. **S123** · 📋 PLANIFICADO · prioridad Torre V3 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
-4. **S129** · 🟢 LISTO · prioridad Método V1 · Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
-5. **S133** · 🟢 LISTO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
+2. **S123** · 📋 PLANIFICADO · prioridad Torre V3 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
+3. **S152** · 🟢 LISTO · prioridad Método V1 · Controles prioritarios · El dueño de producto ve con &#96;radar faltan&#96; todas las Sesiones que faltan, agrupadas por meta y subprioridad con un porcentaje honesto, y ubica cualquier Sesión en una línea; los agentes nombran cada Sesión con su meta, Zona, título y estado.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · prioridad Torre V2 · Handoffs y despacho Tower-owned · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -890,7 +888,7 @@
 
 ### S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 - Coordinación:
-  - Estado derivado: 🟢 LISTO
+  - Estado derivado: 🟡 DIFERIDO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/tools/radar/state.go, agent-workflows/tools/radar/state&#95;test.go, agent-workflows/tools/radar/snapshot.go, agent-workflows/tools/radar/snapshot&#95;test.go, agent-workflows/tools/radar/render.go, agent-workflows/tools/radar/render&#95;test.go, agent-workflows/tools/radar/testdata/ROADMAP.golden.md
   - Depende de: S127
@@ -940,7 +938,7 @@
 
 ### S129 — Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
 - Coordinación:
-  - Estado derivado: 🟢 LISTO
+  - Estado derivado: 🟡 DIFERIDO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/check&#95;test.go, agent-workflows/tools/radar/avance.go
   - Depende de: S128
@@ -964,7 +962,7 @@
 
 ### S133 — El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
 - Coordinación:
-  - Estado derivado: 🟢 LISTO
+  - Estado derivado: 🟡 DIFERIDO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/skills/chanks-7-session-doc/SKILL.md, agent-workflows/tests/test&#95;builder&#95;flow.py
   - Depende de: S135
@@ -1242,6 +1240,31 @@
       - Descartada: Dividir en entregas secuenciales. → La opción elegida prioriza que el cableado completo sea una única unidad utilizable.
       - Descartada: Mantener pendiente la implementación. → Emilio autorizó enumerar el trabajo con su presupuesto excepcional explícito.
   - Referencias: Investigación verificada en master@51d2a2ee460685a54ba88206597bf8e0636aab75: Engram 11366. Decisiones humanas 1A y 2A: Engram 11368. Antecedentes: S143, S144 y S146. Evidencia de código: agent-workflows/tools/install.py:518-547; agent-workflows/chanks/pi-controls.mjs:50,159-208; agent-workflows/chanks/controls.mjs:28,206-244; agent-workflows/chanks/interventions.mjs:15-18,190-193; agent-workflows/skills/chanks-3-session-kickoff/SKILL.md:19-45. La documentación oficial de Pi confirma que el estado se reconstruye por sesión y que mutar event.input cambia la ejecución real. Revalidar HEAD, Radar, Recurso y disponibilidad de bwrap antes de RED.
+
+### S152 — El dueño de producto ve con &#96;radar faltan&#96; todas las Sesiones que faltan, agrupadas por meta y subprioridad con un porcentaje honesto, y ubica cualquier Sesión en una línea; los agentes nombran cada Sesión con su meta, Zona, título y estado.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/radar/faltan.go, agent-workflows/tools/radar/faltan&#95;test.go, agent-workflows/tools/radar/testdata/faltan.golden.txt, agent-workflows/tools/radar/main.go, agent-workflows/tools/radar/README.md, agent-workflows/skills/&#95;shared/plan-naming-convention.md, AGENTS.md, odd/tasks/s152-radar-faltan.md
+  - Depende de: S151
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: &#96;radar status&#96; informa el avance global (69% el 2026-09-23), pero sólo muestra la cola ejecutable de cada Zona: oculta la mayoría de las Sesiones abiertas y no distingue lo apartado a propósito de lo que espera el turno de su prioridad. El dueño de producto no puede ver qué falta para terminar cada meta ni ubicar rápido una Sesión cuando un agente la nombra sólo por su ID.
+  - Resultado y comportamiento: &#96;radar faltan&#96; lista todas las Sesiones abiertas agrupadas por meta (Método V1, Torre V1, Torre V2, Torre V3) con sus subprioridades como subcategorías. Cada meta muestra su porcentaje y "N de M". El porcentaje excluye sólo las Sesiones con &#96;diferida: true&#96;; las diferidas por prioridad siguen contando para su meta y se muestran como "espera turno". Cada Sesión bloqueada muestra qué la bloquea. Al pie aparecen el total que falta, cuántas están listas para empezar y un aviso con la cantidad de Sesiones apartadas. &#96;radar faltan &lt;ID&gt;&#96; imprime una sola línea con meta, subprioridad, Zona, título y estado. La convención compartida exige que los agentes nombren una Sesión con ese formato, por ejemplo &#96;S148 (Torre V2 › cimientos — título, PLANIFICADO)&#96;, nunca con el ID solo.
+  - Restricciones y decisiones: Sólo lectura: no cambia &#96;radar status&#96;, &#96;radar status --json&#96;, &#96;radar sesion&#96;, el cálculo de estados ni el esquema del plan. Las metas y subcategorías se derivan del orden y los nombres de &#96;prioridades&#96;, sin campo nuevo. El comando es una vista para humanos; la admisión de agentes sigue usando &#96;status --json&#96; y &#96;sesion&#96;. Excepción de tamaño aprobada (~500 líneas) para una sola Sesión coherente; no autoriza ampliar archivos ni omitir pruebas o revisión. Al cerrar, reinstalar &#96;~/.local/bin/radar&#96; y ofrecer la propagación de la convención a los demás agentes.
+    - Decisión estructurada [resuelta · ]: ¿Qué Sesiones diferidas excluye el porcentaje de cada meta?
+      - Resolución: El porcentaje excluye sólo las Sesiones con &#96;diferida: true&#96;; las diferidas por prioridad cuentan y se muestran como "espera turno".
+      - Autoridad: Emilio lo aprobó explícitamente el 2026-09-23; Engram 11432.
+      - Evidencia: El 2026-09-23 había 11 Sesiones DIFERIDO, pero sólo una declaraba &#96;diferida: true&#96;; las demás las difiere Radar porque pertenecen a una prioridad posterior a la activa.
+      - Checkpoint: antes de RED
+      - Alcanza: encargo
+      - Falsificador: Una Sesión diferida por prioridad desaparece del porcentaje de su meta, o una Sesión con &#96;diferida: true&#96; lo reduce.
+      - Contaminaba: S152
+      - Opción: Excluir sólo las apartadas explícitamente con &#96;diferida: true&#96;. → El porcentaje de cada meta refleja todo el trabajo que falta para terminarla.
+      - Opción: Excluir todas las Sesiones en estado DIFERIDO. → Las metas futuras mostrarían avances falsos porque su trabajo en espera no contaría.
+      - Descartada: Excluir todas las Sesiones en estado DIFERIDO. → Ocultaría trabajo real de Torre V1, V2 y V3.
+  - Referencias: Decisión y alcance: Engram 11432. Evidencia de código: agent-workflows/tools/radar/state.go (aplicarPrioridades, ColaPorZonaAt, AvanceAt); agent-workflows/tools/radar/render.go:450 (resumenBloqueo); agent-workflows/tools/radar/main.go:60-97 (despacho de subcomandos); agent-workflows/tools/radar/render&#95;test.go:11-25 (patrón de golden files); openspec/specs/radar-session-priorities/spec.md. Una dependencia pendiente produce PLANIFICADO, no BLOQUEADO. Revalidar HEAD y Radar antes de RED.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7

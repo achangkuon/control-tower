@@ -9351,6 +9351,92 @@ sesiones:
           presentar una integración parcial como control efectivo completo.
     entrega:
       commit: 8f367437c8463bf6023937b1b16544f1c7452cee
+  - id: S152
+    zona: metodo
+    prioridad: metodo-v1-controles-prioritarios
+    resultado: >-
+      El dueño de producto ve con `radar faltan` todas las Sesiones que faltan, agrupadas por meta
+      y subprioridad con un porcentaje honesto, y ubica cualquier Sesión en una línea; los agentes
+      nombran cada Sesión con su meta, Zona, título y estado.
+    autoridad:
+      - tipo: engram
+        id: 11432
+    depende_de:
+      - S151
+    cimientos:
+      - AGENTS.md
+    recurso: []
+    reemplaza: []
+    archivos:
+      - agent-workflows/tools/radar/faltan.go
+      - agent-workflows/tools/radar/faltan_test.go
+      - agent-workflows/tools/radar/testdata/faltan.golden.txt
+      - agent-workflows/tools/radar/main.go
+      - agent-workflows/tools/radar/README.md
+      - agent-workflows/skills/_shared/plan-naming-convention.md
+      - AGENTS.md
+      - odd/tasks/s152-radar-faltan.md
+    encargo:
+      pedido_contexto: >-
+        `radar status` informa el avance global (69% el 2026-09-23), pero sólo muestra la cola
+        ejecutable de cada Zona: oculta la mayoría de las Sesiones abiertas y no distingue lo
+        apartado a propósito de lo que espera el turno de su prioridad. El dueño de producto no
+        puede ver qué falta para terminar cada meta ni ubicar rápido una Sesión cuando un agente
+        la nombra sólo por su ID.
+      resultado_comportamiento: >-
+        `radar faltan` lista todas las Sesiones abiertas agrupadas por meta (Método V1, Torre V1,
+        Torre V2, Torre V3) con sus subprioridades como subcategorías. Cada meta muestra su
+        porcentaje y "N de M". El porcentaje excluye sólo las Sesiones con `diferida: true`; las
+        diferidas por prioridad siguen contando para su meta y se muestran como "espera turno".
+        Cada Sesión bloqueada muestra qué la bloquea. Al pie aparecen el total que falta, cuántas
+        están listas para empezar y un aviso con la cantidad de Sesiones apartadas.
+
+        `radar faltan <ID>` imprime una sola línea con meta, subprioridad, Zona, título y estado.
+        La convención compartida exige que los agentes nombren una Sesión con ese formato, por
+        ejemplo `S148 (Torre V2 › cimientos — título, PLANIFICADO)`, nunca con el ID solo.
+      restricciones_decisiones: >-
+        Sólo lectura: no cambia `radar status`, `radar status --json`, `radar sesion`, el cálculo
+        de estados ni el esquema del plan. Las metas y subcategorías se derivan del orden y los
+        nombres de `prioridades`, sin campo nuevo. El comando es una vista para humanos; la
+        admisión de agentes sigue usando `status --json` y `sesion`. Excepción de tamaño aprobada
+        (~500 líneas) para una sola Sesión coherente; no autoriza ampliar archivos ni omitir
+        pruebas o revisión. Al cerrar, reinstalar `~/.local/bin/radar` y ofrecer la propagación
+        de la convención a los demás agentes.
+      referencias: >-
+        Decisión y alcance: Engram 11432. Evidencia de código:
+        agent-workflows/tools/radar/state.go (aplicarPrioridades, ColaPorZonaAt, AvanceAt);
+        agent-workflows/tools/radar/render.go:450 (resumenBloqueo);
+        agent-workflows/tools/radar/main.go:60-97 (despacho de subcomandos);
+        agent-workflows/tools/radar/render_test.go:11-25 (patrón de golden files);
+        openspec/specs/radar-session-priorities/spec.md. Una dependencia pendiente produce
+        PLANIFICADO, no BLOQUEADO. Revalidar HEAD y Radar antes de RED.
+    decisiones:
+      - tipo: resuelta
+        alcanza: encargo
+        pregunta: >-
+          ¿Qué Sesiones diferidas excluye el porcentaje de cada meta?
+        evidencia: >-
+          El 2026-09-23 había 11 Sesiones DIFERIDO, pero sólo una declaraba `diferida: true`; las
+          demás las difiere Radar porque pertenecen a una prioridad posterior a la activa.
+        contaminaba: [S152]
+        checkpoint: antes de RED
+        opciones:
+          - opcion: "Excluir sólo las apartadas explícitamente con `diferida: true`."
+            consecuencia: >-
+              El porcentaje de cada meta refleja todo el trabajo que falta para terminarla.
+          - opcion: Excluir todas las Sesiones en estado DIFERIDO.
+            consecuencia: >-
+              Las metas futuras mostrarían avances falsos porque su trabajo en espera no contaría.
+        resolucion: >-
+          El porcentaje excluye sólo las Sesiones con `diferida: true`; las diferidas por
+          prioridad cuentan y se muestran como "espera turno".
+        autoridad: "Emilio lo aprobó explícitamente el 2026-09-23; Engram 11432."
+        descartadas:
+          - opcion: Excluir todas las Sesiones en estado DIFERIDO.
+            razon: Ocultaría trabajo real de Torre V1, V2 y V3.
+        falsificador: >-
+          Una Sesión diferida por prioridad desaparece del porcentaje de su meta, o una Sesión
+          con `diferida: true` lo reduce.
 references:
   future_successors:
     - id: S102
