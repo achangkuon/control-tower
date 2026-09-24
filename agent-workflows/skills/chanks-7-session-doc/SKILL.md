@@ -22,7 +22,9 @@ the responsible parent records confirmed plan evidence and generates the view un
 - Review follows Gentle AI native policy. A decline/provider fallback is reported, never hidden;
   review outcome never authorizes delivery and does not create a deadlock.
 - Only explicitly selected native SDD follows its existing archive controls after delivery. Do not
-  claim future enforcement, install anything, or create per-task/per-Módulo review loops.
+  claim future enforcement or create per-task/per-Módulo review loops.
+- This skill gathers evidence and coordinates outstanding work; do not execute installers in this skill.
+  The responsible parent arranges execution under repository policy and records the observed result.
 - Preserve documentation configuration failures as evidence; do not reverse completed delivery.
 
 ## Decision Gates
@@ -32,20 +34,36 @@ the responsible parent records confirmed plan evidence and generates the view un
 | Check/outcome evidence fails | Do not close; return exact failure. |
 | Commit is absent or not integrated | Do not close; preserve pending delta. |
 | Review declined/unavailable | Report applicable policy fallback; ordinary delivery evidence still decides closure. |
-| Evidence is valid | Return closure evidence and exact parent-record delta. |
+| A required reinstall, its successful verification, or skill-install confirmation is missing | Do not close; report the exact pending command, verification, or human confirmation. |
+| Evidence is valid, including any required reinstall evidence | Return closure evidence and exact parent-record delta. |
 
 ## Execution Steps
 
 1. Gather native Encargo outcome/constraint evidence, configured TDD/check results, commit, integrated HEAD, and optional PR.
 2. Confirm commit resolution and ancestry; distinguish actual delivery from review information.
-3. For explicit native SDD, gather existing archive evidence after delivery; otherwise return native ODD continuity only as subordinate evidence.
-4. Return `entrega.commit`/optional PR delta and require/report Radar check/render after the parent records confirmation.
+3. Read the repository's `AGENTS.md` for post-delivery reinstall policy. Compare the actual
+   delivered changed paths (not just the current dirty tree) with every declared path rule; collect
+   every matching tool command and its prescribed verification. If the policy cannot be read, report
+   the missing evidence rather than assuming no rule.
+4. If no reinstall rule is declared, explicitly report none and require no reinstall. If rules
+   exist but no delivered path matches, report no reinstall applicable and the paths checked.
+   For each matching rule, record the executed reinstall command and its verification result
+   (including observed success); if no check is prescribed, obtain an observed verification of the
+   installed tool. If execution or verification is missing, name the pending command/check; do not declare the Session closed
+   until required reinstall and verification evidence exist. Do not treat a proposed command as run.
+5. Ask for explicit human confirmation before reinstalling skills: sync can terminate open Pi sessions.
+   Without that confirmation, report the approval and reinstall as pending; never infer approval
+   from delivery or from this skill. The parent coordinates any authorized execution after delivery.
+6. For explicit native SDD, gather existing archive evidence after delivery; otherwise return native ODD continuity only as subordinate evidence.
+7. Return `entrega.commit`/optional PR delta and require/report Radar check/render after the parent records confirmation.
 
 ## Output Contract
 
 Return outcome/check evidence, commit/HEAD/PR evidence, review result or fallback, applicable native
-SDD archive evidence, Radar results, closure outcome/failure, and the exact evidence the responsible
-parent must record. State that ordinary delivery policy and Chanks close gates still apply.
+SDD archive evidence, Radar results, reinstall policy source, matched delivered paths, executed
+commands and verification results (or explicit none/pending work), human skill-install confirmation
+when applicable, closure outcome/failure, and the exact evidence the responsible parent must record.
+State that ordinary delivery policy and Chanks close gates still apply.
 
 ## References
 

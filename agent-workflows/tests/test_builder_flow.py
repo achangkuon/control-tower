@@ -14,6 +14,7 @@ assert SPEC.loader is not None
 sys.modules[SPEC.name] = INSTALLER
 SPEC.loader.exec_module(INSTALLER)
 SKILLS = ROOT / "skills"
+SOURCE_CLOSURE_SKILL_SHA256 = "8b210e75bf021b1b7f7a35b267d83a8cca37bb49c2afbe4ed91c10618a0d94b6"
 SNAPSHOT_SHA256 = {
     "skills/chanks-0-agente-soporte/SKILL.md": "25eb5b1f0f253ca9df24829add72f91cadbf24aadb80034e90e42501110fc032",
     "skills/chanks-0-agente-soporte/assets/assignment-implementation.md": "70752539f85ffa8565dc32d9a1c6d9d32082d7df8357331bd8a500112816e7da",
@@ -142,6 +143,29 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertIn("actual delivery evidence", closure)
         self.assertIn("no per-task or per-Módulo reviewer loop", canon)
         self.assertIn("archive controls remain native SDD controls", canon)
+
+    def test_closure_requires_repository_reinstall_evidence_or_explicit_exemption(self):
+        closure = read("skills/chanks-7-session-doc/SKILL.md")
+        for rule in (
+            "Read the repository's `AGENTS.md`",
+            "delivered changed paths",
+            "If no reinstall rule is declared, explicitly report none",
+            "no delivered path matches, report no reinstall applicable",
+            "If the policy cannot be read, report",
+            "record the executed reinstall command and its verification result",
+            "if no check is prescribed, obtain an observed verification",
+            "do not declare the Session closed",
+            "Ask for explicit human confirmation before reinstalling skills",
+            "sync can terminate open Pi sessions",
+            "do not execute installers in this skill",
+        ):
+            with self.subTest(rule=rule):
+                self.assertIn(rule, closure)
+        # The source changes with this contract; the frozen product snapshot below must not.
+        self.assertEqual(
+            hashlib.sha256(closure.encode("utf-8")).hexdigest(),
+            SOURCE_CLOSURE_SKILL_SHA256,
+        )
 
     def test_manual_coordinator_and_dispatch_remain_topology_only(self):
         coordinator = read("skills/chanks-3-coordinador-manual/SKILL.md")
