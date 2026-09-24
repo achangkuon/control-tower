@@ -543,6 +543,9 @@ const confirmationOf = (bundle: any) => [
   `Repository: ${{bundle.repositoryRoot}}`,
   "Authorized files:",
   ...bundle.authorizedFiles.map((file: string) => `- ${{file}}`),
+  ...((bundle.newFiles ?? []).length > 0
+    ? ["New files (not yet created):", ...bundle.newFiles.map((file: string) => `- ${{file}}`)]
+    : []),
   "Cimientos:",
   ...bundle.cimientoGrants.map((file: string) => `- ${{file}}`),
   "Resources:",

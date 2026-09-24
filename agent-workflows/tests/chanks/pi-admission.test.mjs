@@ -121,7 +121,7 @@ describe("buildAdmission — llave de Sesión", () => {
     }
   })
 
-  test("rechaza un archivo declarado que aún no existe", () => {
+  test("rechaza una Sesión cuyo único archivo declarado no existe todavía", () => {
     const s = site()
     try {
       const radar = withRadar(s.bin, [{ id: "S200", estado: "LISTO", archivos: ["nuevo.mjs"] }], "S200")
@@ -129,7 +129,62 @@ describe("buildAdmission — llave de Sesión", () => {
         repositoryRoot: s.root, kind: "session", sessionId: "S200",
         runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
         dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
+      })).toThrow(/archivos existentes/)
+    } finally {
+      s.dispose()
+    }
+  })
+
+  test("un archivo declarado que aún no existe no bloquea la admisión de los que sí existen", () => {
+    const s = site()
+    try {
+      const radar = withRadar(s.bin, [{
+        id: "S200", estado: "LISTO", archivos: ["a.mjs", "todavia-no-existe.mjs"],
+      }], "S200")
+      const admission = buildAdmission({
+        repositoryRoot: s.root, kind: "session", sessionId: "S200",
+        runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
+        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
+      })
+      expect(admission.bundle.authorizedFiles).toEqual([join(s.root, "a.mjs")])
+      expect(admission.bundle.newFiles).toEqual([join(s.root, "todavia-no-existe.mjs")])
+
+      const authority = crearAutoridadPi({ identidadActual: admission.identidadActual })
+      const request = authority.solicitar(admission.bundle)
+      expect(authority.aceptar(request.solicitud)).toBe(true)
+      admission.cerrar()
+    } finally {
+      s.dispose()
+    }
+  })
+
+  test("un archivo nuevo cuyo directorio todavía no existe se rechaza", () => {
+    const s = site()
+    try {
+      const radar = withRadar(s.bin, [{
+        id: "S200", estado: "LISTO", archivos: ["a.mjs", "carpeta-inexistente/nuevo.mjs"],
+      }], "S200")
+      expect(() => buildAdmission({
+        repositoryRoot: s.root, kind: "session", sessionId: "S200",
+        runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
+        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
       })).toThrow()
+    } finally {
+      s.dispose()
+    }
+  })
+
+  test("un archivo nuevo que escapa del repositorio se rechaza aunque no exista", () => {
+    const s = site()
+    try {
+      const radar = withRadar(s.bin, [{
+        id: "S200", estado: "LISTO", archivos: ["a.mjs", "../fuera-del-repo.mjs"],
+      }], "S200")
+      expect(() => buildAdmission({
+        repositoryRoot: s.root, kind: "session", sessionId: "S200",
+        runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
+        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
+      })).toThrow(/escapa/)
     } finally {
       s.dispose()
     }

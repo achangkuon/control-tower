@@ -15,7 +15,7 @@ import {
   readSync, realpathSync, rmSync, writeFileSync,
 } from "node:fs"
 import { tmpdir } from "node:os"
-import { delimiter, isAbsolute, join, relative, resolve, sep } from "node:path"
+import { basename, delimiter, isAbsolute, join, relative, resolve, sep } from "node:path"
 
 const LISTO_STATES = new Set(["LISTO", "EN CURSO"])
 const PLANNING_FILES = ["openspec/plan.yaml", "openspec/ROADMAP.md"]
@@ -82,6 +82,45 @@ const canonicalRepoFile = (root, relativePath, deps) => {
   }
   if (canonical !== candidate || !inside(root, canonical)) fail(`«${relativePath}» escapa del repositorio`)
   return canonical
+}
+
+// A file that does not exist yet on disk is not, by itself, a reason to refuse the whole
+// admission (R3-new-file-blocks-admission): a Session may legitimately declare a file it plans
+// to create. What still must hold is path safety — the candidate's containing directory already
+// exists inside the repository, with no symlink anywhere in the chain down to it. Creating the
+// file is left entirely to whatever harness the Session uses; pi-controls.mjs is not touched
+// here and grants nothing for a path that does not exist.
+const repoPathStatus = (root, relativePath, deps) => {
+  const candidate = resolve(root, relativePath)
+  let stat
+  try {
+    stat = deps.lstat(candidate)
+  } catch {
+    stat = null
+  }
+  if (stat) {
+    let canonical
+    try {
+      canonical = deps.realpath(candidate)
+    } catch {
+      fail(`«${relativePath}» no se pudo resolver`)
+    }
+    if (stat.isSymbolicLink() || !stat.isFile() || stat.nlink !== 1) {
+      fail(`«${relativePath}» no es un archivo regular autorizable`)
+    }
+    if (canonical !== candidate || !inside(root, canonical)) fail(`«${relativePath}» escapa del repositorio`)
+    return { path: canonical, exists: true }
+  }
+  let canonicalParent
+  try {
+    canonicalParent = deps.realpath(resolve(candidate, ".."))
+    if (!deps.lstat(canonicalParent).isDirectory()) fail(`«${relativePath}» no es declarable`)
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("pi-admission:")) throw error
+    fail(`el directorio de «${relativePath}» no existe todavía en el repositorio`)
+  }
+  if (!inside(root, canonicalParent)) fail(`«${relativePath}» escapa del repositorio`)
+  return { path: join(canonicalParent, basename(candidate)), exists: false }
 }
 
 const canonicalExecutable = (path, deps) => {
@@ -151,10 +190,15 @@ const sessionRow = (status, sessionId) => {
   return row
 }
 
-const filesFromRow = (root, list, field, deps) => {
-  if (!Array.isArray(list) || list.length === 0) fail(`la Sesión no declara ${field}`)
-  const result = list.map((relativePath) => canonicalRepoFile(root, relativePath, deps))
-  if (new Set(result).size !== result.length) fail(`${field} duplicados`)
+// Declared files that already exist go to `authorizedFiles`; declared files that do not yet
+// exist go to `newFiles`, listed for the human but excluded from the retained-fd set below —
+// there is nothing to retain a handle to. A Session with no existing file at all still has
+// nothing to authorize, so the caller must reject an empty `authorizedFiles`.
+const archivoStatuses = (root, list, deps) => {
+  if (!Array.isArray(list) || list.length === 0) fail("la Sesión no declara archivos")
+  const result = list.map((relativePath) => repoPathStatus(root, relativePath, deps))
+  const paths = result.map((entry) => entry.path)
+  if (new Set(paths).size !== paths.length) fail("archivos duplicados")
   return result
 }
 
@@ -229,13 +273,17 @@ export const buildAdmission = ({ repositoryRoot, kind, sessionId, runtimeIdentit
     if (kind === "session") {
       const row = sessionRow(status, sessionId)
       const sessionRaw = captureSessionRaw(radar, root, sessionId, deps)
-      const authorizedFiles = filesFromRow(root, row.archivos, "archivos", deps)
+      const statuses = archivoStatuses(root, row.archivos, deps)
+      const authorizedFiles = statuses.filter((entry) => entry.exists).map((entry) => entry.path)
+      const newFiles = statuses.filter((entry) => !entry.exists).map((entry) => entry.path)
+      if (authorizedFiles.length === 0) fail("la Sesión no tiene archivos existentes para autorizar")
       return {
         baseCommit,
         statusDigest,
         sessionDigest: sha256(sessionRaw),
         effectiveSessionId: sessionId,
         authorizedFiles,
+        newFiles,
         cimientoGrants: cimientosFromRow(root, row, authorizedFiles, deps),
         resources: resourcesFromRow(row),
       }
@@ -246,6 +294,7 @@ export const buildAdmission = ({ repositoryRoot, kind, sessionId, runtimeIdentit
       sessionDigest: "",
       effectiveSessionId: "PLANNING",
       authorizedFiles: PLANNING_FILES.map((relativePath) => canonicalRepoFile(root, relativePath, deps)),
+      newFiles: [],
       cimientoGrants: [],
       resources: [],
     }
@@ -264,6 +313,7 @@ export const buildAdmission = ({ repositoryRoot, kind, sessionId, runtimeIdentit
       ? Object.freeze({ statusDigest: first.statusDigest, sessionDigest: first.sessionDigest })
       : Object.freeze({ statusDigest: first.statusDigest }),
     authorizedFiles: Object.freeze([...first.authorizedFiles]),
+    newFiles: Object.freeze([...first.newFiles]),
     cimientoGrants: Object.freeze([...first.cimientoGrants]),
     resources: Object.freeze(first.resources.map((resource) => Object.freeze({ ...resource }))),
   })
