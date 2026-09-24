@@ -107,6 +107,7 @@ cimientos:
     - hosts/seat-cli.mjs
     - install.sh
     - mcp.mjs
+    - odd/tasks/s117-instalacion-registros.md
     - package.json
     - radiografia.json
     - scripts/payload-closure.mjs
@@ -138,10 +139,11 @@ cimientos:
     - test/hosts/seat-cli.test.mjs
     - test/identity.test.mjs
     - test/lifecycle.test.mjs
+    # Los tres registros extraídos por S117 son Cimientos exactos compartibles.
+    - test/install/payload-closure.contract.mjs
+    - test/install/runtime-payload.contract.mjs
+    - test/install/tower-role-assets.contract.mjs
     - test/install/launch-worker-cli.test.mjs
-    # Reservado por S119 y creado por S117; las otras dos rutas nuevas caen bajo test/install/.
-    - ruta: test/install/tower-role-assets.contract.mjs
-      ausencia_intencional: reserva-futura
     - test/migration.test.mjs
     - test/polling.test.mjs
     - test/pre-push-plan-gate.test.mjs
@@ -6775,10 +6777,14 @@ sesiones:
     depende_de:
       []
     cimientos:
+      - odd/tasks/s117-instalacion-registros.md
+      - test/install/payload-closure.contract.mjs
+      - test/install/runtime-payload.contract.mjs
       - test/install/tower-role-assets.contract.mjs
     recurso:
       []
     archivos:
+      - odd/tasks/s117-instalacion-registros.md
       - test/install/payload-closure.contract.mjs
       - test/install/payload-closure.test.mjs
       - test/install/tower-role-assets.contract.mjs
@@ -6787,7 +6793,7 @@ sesiones:
       - test/install/runtime-payload.test.mjs
     encargo:
       pedido_contexto: "Los tres registros de instalación dejan de forzar ediciones cross-Zona: sus datos enumerados salen del test a un módulo propio declarado como Cimiento exacto."
-      resultado_comportamiento: "Cada uno de los tres registros queda partido en dos: un `*.contract.mjs` con sólo el dato enumerado, y el `*.test.mjs` original con sólo la lógica, que lo importa.\n\nCada valor extraído es idéntico byte a byte al que reemplazó. Falsificador: cualquier diferencia entre el literal viejo y el export nuevo, más allá del formato, falla este criterio.\n\nLa suite completa pasa antes y después de cada unidad de implementación, sin debilitar, quitar ni condicionar ninguna aserción para acomodar la partición.\n\n`radar check` no reporta huérfanos, solapes ni reglas sin uso con las tres rutas `*.contract.mjs` declaradas en `cimientos.rutas`.\n\n`owners()` resuelve cada `*.contract.mjs` nuevo a `cimientos` solo, no a `cimientos + instalacion`. Falsificador: dos dueños significan que el recorte exacto no se aplicó y la partición sí solapa.\n\nNingún archivo cambia de directorio. Falsificador: cualquier ruta fuera de `test/install/` en el diff significa que no se usó el recorte y la Zona instalacion perdió territorio que debía conservar.\n\n`install/runtime-payload.mjs` queda intacto: su lista es generada y editarlo sería alcance que la auditoría excluyó explícitamente."
+      resultado_comportamiento: "Cada uno de los tres registros queda partido en dos: un `*.contract.mjs` con sólo el dato enumerado, y el `*.test.mjs` original con sólo la lógica, que lo importa.\n\nCada valor extraído es idéntico byte a byte al que reemplazó. Falsificador: cualquier diferencia entre el literal viejo y el export nuevo, más allá del formato, falla este criterio.\n\nLa suite completa pasa antes y después de cada unidad de implementación, sin debilitar, quitar ni condicionar ninguna aserción para acomodar la partición.\n\n`radar check` no reporta huérfanos, solapes ni reglas sin uso con las tres rutas `*.contract.mjs` declaradas en `cimientos.rutas`.\n\n`owners()` resuelve cada `*.contract.mjs` nuevo a `cimientos` solo, no a `cimientos + instalacion`. Falsificador: dos dueños significan que el recorte exacto no se aplicó y la partición sí solapa.\n\nNingún archivo de implementación cambia de directorio. Falsificador: cualquier ruta de implementación fuera de `test/install/` en el diff significa que no se usó el recorte y la Zona instalacion perdió territorio que debía conservar. La única excepción documental autorizada es `odd/tasks/s117-instalacion-registros.md`, declarado como Cimiento exacto; `openspec/plan.yaml` registra esta ampliación aprobada antes de implementar.\n\n`install/runtime-payload.mjs` queda intacto: su lista es generada y editarlo sería alcance que la auditoría excluyó explícitamente."
       restricciones_decisiones: "Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación."
       referencias: "Autoridad original: openspec/plans/audits/cross-zona-registry-audit.md (Audit G, 2026-09-04), rescatada de support/read-only-20260830 y enumerada por decisión del maintainer del 2026-09-11 al integrar las tres propuestas pendientes. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S117. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto."
     decisiones:

@@ -5,6 +5,7 @@ import { dirname, join, resolve } from "node:path"
 
 import { RUNTIME_PAYLOAD_FILES } from "../../install/runtime-payload.mjs"
 import { RUNTIME_PAYLOAD_ASSETS, RUNTIME_PAYLOAD_ROOTS, composeRuntimePayload, computePayloadClosure, renderRuntimePayloadDeclaration, runtimePayloadDrift } from "../../scripts/payload-closure.mjs"
+import { EXPECTED_RUNTIME_PAYLOAD_ASSETS, EXPECTED_RUNTIME_PAYLOAD_ROOTS } from "./payload-closure.contract.mjs"
 
 const repoRoot = resolve(import.meta.dir, "../..")
 const fixtures = []
@@ -24,19 +25,11 @@ afterEach(() => fixtures.splice(0).forEach((root) => rmSync(root, { recursive: t
 
 describe("author-time runtime payload closure", () => {
   test("declares only bin/torre as an explicit non-JavaScript asset", () => {
-    expect(RUNTIME_PAYLOAD_ASSETS).toEqual(["bin/torre"])
+    expect(RUNTIME_PAYLOAD_ASSETS).toEqual(EXPECTED_RUNTIME_PAYLOAD_ASSETS)
   })
 
   test("declares exactly the seven approved runtime roots", () => {
-    expect(RUNTIME_PAYLOAD_ROOTS).toEqual([
-      "install/active-pointer.mjs",
-      "install/lifecycle.mjs",
-      "core.mjs",
-      "hosts/launch-worker-cli.mjs",
-      "hosts/seat-cli.mjs",
-      "console/executor.mjs",
-      "console/validate.mjs",
-    ])
+    expect(RUNTIME_PAYLOAD_ROOTS).toEqual(EXPECTED_RUNTIME_PAYLOAD_ROOTS)
   })
 
   test("resolves transitive static relative imports in stable sorted order", () => {
