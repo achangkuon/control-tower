@@ -139,7 +139,13 @@ Direct commit to `master` per `AGENTS.md`. Every task closes with a work-unit co
     shim is still absent there; still parked in `~/.pi/agent/extensions-disabled/`), and the real
     repository's `.git/chanks` switch state does not exist (untouched). No repository source file
     was modified by this verification.
-- [ ] T6 — Delivery after human confirmation: push, reinstall, switch on here, offer propagation.
+- [x] T6 — Delivery after human confirmation: push, reinstall, switch on here, offer propagation.
+  - Done 2026-09-24 on Emilio's explicit request to finish the delivery. Pushed `48d7dda`
+    (contract correction for the referential key; pre-push: Radar 0 errors, suite 1210 pass).
+    No Pi process was running. `python3 agent-workflows/tools/install.py` then `--check`: "runtime
+    copies and manual blocks match the repository"; `~/.pi/agent/extensions/chanks-controls.ts`
+    installed. `node agent-workflows/chanks/pi-switch.mjs on` here: `effective: true`; other
+    repositories stay off by default. Plan records `entrega.commit: 48d7dda`.
 - [x] Advisory fixes — four non-blocking advisories from lineage `review-51f99d6a30b92ffe`, each
   its own work unit, strict TDD (RED observed before GREEN), one Conventional Commit per fix, no
   AI attribution. Route: inline parent (bounded writer for this Session).
