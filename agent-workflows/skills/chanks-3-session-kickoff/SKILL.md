@@ -23,18 +23,21 @@ with no question and no block, and this section does not apply.
 With the switch on, the generated extension (`agent-workflows/chanks/pi-admission.mjs` +
 `pi-authority.mjs`) builds the admission itself from git and the installed Radar — no external
 envelope, no separate host process. Reading always works; Bash without a key runs inside a
-read-only confinement; Write and Edit are blocked until a key is active. The key identifies which
-Session is working and guards a cooperative agent against accidental writes; it is not a sandbox
-against an agent that deliberately tries to escape:
+read-only confinement; Write and Edit are blocked until a key is active. Once active, the key is
+purely referential: it identifies, for the Main agent, which Session (or planning) this Pi is
+working, and blocks nothing — every tool call passes through exactly as if this extension were
+absent. It is not a sandbox and it is not a guard against a mistaken write; it is a name tag:
 
 - After the human confirms starting, continuing, or resuming the named Session in this skill's
   own admission steps below, the agent calls the `chanks_request_activation` tool with
   `{kind: "session", sessionId: "<the Session ID>"}`. Pi's own question shows the Session,
-  repository, authorized files, Cimientos, resources, and base commit. Only the human's exact
-  acceptance in that question activates the key, and it enables exactly those files.
-- The model can request the key but can never answer Pi's question, flip the switch, or widen
-  the files. A decline, a missing UI, or invalid/stale evidence leaves writes blocked with no
-  fallback. The key drops on a change of Session, base, worktree, or runtime.
+  repository, files, Cimientos, resources, and base commit. Only the human's exact acceptance in
+  that question activates the key.
+- The model can request the key but can never answer Pi's question or flip the switch. A
+  decline, a missing UI, or invalid/stale evidence leaves writes blocked with no fallback. The
+  key survives HEAD advancing (the agent's own commits) and any plan row changing later — it is a
+  fixed reference, not a live confinement. It drops when the Pi session shuts down, reloads, or
+  is replaced; when the repository root or worktree differs; or when the switch is turned off.
 - A brand-new activation request (a different Session, or the planning key from
   `chanks-1-autoridad`/`chanks-2-planificador-granular`) replaces whichever key was active
   before it, the same way this skill's own resume replaces a stale admission.
