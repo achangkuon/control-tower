@@ -97,7 +97,42 @@ Direct commit to `master` per `AGENTS.md`. Every task closes with a work-unit co
   - Lineage `review-973d5c4dbd3093eb` (candidate through `d220623`, granted, 4 lenses): one CRITICAL finding, the stale `test_builder_flow` assertion. Correction `b07326e` rewrites it to assert the organic flow. The targeted validator approved it, and the acknowledgement was issued (`gentle-ai.review-acknowledged/v1`). There were 15 non-blocking advisories, listed as follow-ups below.
   - Option 1 work unit: the no-key room re-binds the working directory read-only after the tmpfs mounts, and the stated guarantee is aligned with objective A in `install.py`, the kickoff skill and AC3. RED: a worktree under /tmp was invisible (`cat marker.txt: No such file`). GREEN: `python3 -m unittest discover -s agent-workflows/tests` gives 155 pass, 0 fail, 1 skipped, and `bun test agent-workflows/tests/chanks` gives 230 pass.
   - Advisory follow-ups (not blocking): R4-new-file-blocks-whole-admission, R4-planning-key-self-invalidates, R3-status-digest-fragility, R3-subdirectory-cwd-disables-gate, R4-switch-read-once, R1-resource-confirmation-fabricated, R2-resource-confirmation-waived, R2-candidate-digest-misnamed, R3-drift-coverage-regressed, and six suggestions.
-- [ ] T5 — Real isolated Pi journey. Requires the human's exclusive-resource confirmation. Route: delegated verifier.
+- [x] T5 — Real isolated Pi journey. Requires the human's exclusive-resource confirmation. Route: delegated verifier.
+  - Done. Real Pi 0.87.1 (`/home/emili/.npm-global/bin/pi`), loaded through its own SDK
+    (`@earendil-works/pi-coding-agent`: `createAgentSession`, `DefaultResourceLoader`,
+    `ModelRuntime`, `SessionManager`) — same pattern as S151-T5. The extension was generated into
+    an isolated temp HOME via `install.py`'s own `install_pi_extension()` (unmodified production
+    code), never into the real `~/.pi`. A temp git repo held `openspec/plan.yaml` and a fixture
+    Session `S900`; a fake `radar` executable (outside the repo, first on PATH) answered
+    `status --json` / `sesion S900`. The human-confirmation UI was a host-side `ctx.ui.confirm`
+    stub bound via `session.bindExtensions({uiContext, mode:"rpc"})` — the model's tool path never
+    answered it. The "model" driving tool calls was a deterministic scripted provider (no network)
+    registered through `ModelRuntime.registerProvider`, so real dispatch ran through Pi's actual
+    Agent loop, `beforeToolCall` hook, and the extension's real `tool_call` handler and
+    `chanks_request_activation` tool — not direct unit calls.
+  - Results, all PASS: (1) switch off → write/edit/bash pass through, 0 UI interactions;
+    (2) `on` refused via `pi-switch.mjs` CLI against a repo with no `openspec/plan.yaml`;
+    (3) switch on, no key → read passed, write and edit blocked, bash was rewritten into the
+    read-only bwrap room and a write attempt inside it failed (host file never created);
+    (4) session key request showed exactly one `ctx.ui.confirm` naming `Session: S900` and
+    `src/feature.md`; on accept, three consecutive authorized writes to `src/feature.md` all
+    succeeded and a write to `docs/notes.md` was blocked; (5) declining the same request left
+    writes blocked; (6) planning key accept let two consecutive writes to `openspec/plan.yaml`
+    succeed (key survives its own write) while a write elsewhere was blocked; (7) a fresh Pi
+    session started with `cwd` inside `<repo>/src` still gated a write, proving the
+    `git rev-parse --show-toplevel` subdirectory resolution; (8) turning the switch off via the
+    CLI while the planning key was still active in-memory let the very next `tool_call` pass
+    through in the same Pi session, no restart.
+  - Advisory observation (reported, not fixed): watched for R3-per-call-subprocess-revokes-key
+    across the three consecutive authorized writes in item 4 — NOT observed in this run; all
+    three landed and the live-identity check held every time.
+  - Isolation: every harness file, the temp HOME, the two temp git repos, and the fake `radar`
+    lived under the session scratchpad's `t5/` directory; all deleted at the end except a short
+    evidence log. Repository `git status --short` was captured before and after and is
+    byte-identical (clean in both). Real `~/.pi/agent/extensions/` was not touched (the generated
+    shim is still absent there; still parked in `~/.pi/agent/extensions-disabled/`), and the real
+    repository's `.git/chanks` switch state does not exist (untouched). No repository source file
+    was modified by this verification.
 - [ ] T6 — Delivery after human confirmation: push, reinstall, switch on here, offer propagation.
 - [x] Advisory fixes — four non-blocking advisories from lineage `review-51f99d6a30b92ffe`, each
   its own work unit, strict TDD (RED observed before GREEN), one Conventional Commit per fix, no
