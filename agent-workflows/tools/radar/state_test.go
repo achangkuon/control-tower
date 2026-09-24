@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -49,6 +50,77 @@ func TestEstadoListoSoloConDependenciasCerradas(t *testing.T) {
 	e := p.Estados(root)
 	if e["S1"] != Completo || e["S2"] != Listo || e["S3"] != Planificado {
 		t.Fatalf("estados derivados inesperados: %#v", e)
+	}
+}
+
+func TestMotivosSiguenRaicesYConservanEstados(t *testing.T) {
+	root, head := repoGit(t)
+	blocked := abierta("B", "z")
+	blocked.Decisiones = []Decision{{Tipo: "escala", Alcanza: "criterios"}}
+	p := &Plan{Sesiones: []Sesion{
+		entregada("C", "z", head), abierta("R", "z", "C"),
+		abierta("N", "z", "R"), blocked, abierta("A", "z", "B"),
+		abierta("M", "z", "ABSENT"), abierta("X", "z", "Y"), abierta("Y", "z", "X"),
+	}}
+	states := p.EstadosAt(root, head)
+	motivos := p.Motivos(states)
+	for id, want := range map[string]Motivo{
+		"N": {Tipo: "espera-natural", Raices: []string{"R"}},
+		"B": {Tipo: "falta-decision", Raices: []string{"B"}},
+		"A": {Tipo: "espera-atascada", Raices: []string{"B"}},
+		"M": {Tipo: "falta-planificar", Raices: []string{"ABSENT"}},
+		"X": {Tipo: "espera-atascada", Raices: []string{"X", "Y"}},
+		"Y": {Tipo: "espera-atascada", Raices: []string{"X", "Y"}},
+	} {
+		if got := motivos[id]; !reflect.DeepEqual(got, want) {
+			t.Errorf("%s: got %#v, want %#v", id, got, want)
+		}
+	}
+	if states["N"] != Planificado || states["A"] != Planificado || states["B"] != Bloqueado || states["M"] != Planificado {
+		t.Fatalf("derived states changed: %#v", states)
+	}
+	for _, id := range []string{"C", "R"} {
+		if _, exists := motivos[id]; exists {
+			t.Errorf("%s should not carry a reason", id)
+		}
+	}
+	if !reflect.DeepEqual(motivos, p.Motivos(states)) {
+		t.Fatal("cycle analysis must be deterministic")
+	}
+}
+
+func TestMotivosPriorizaAusenciasYNoAtribuyeMotivoATerminales(t *testing.T) {
+	root, head := repoGit(t)
+	blocked := abierta("B", "z")
+	blocked.Decisiones = []Decision{{Tipo: "escala", Alcanza: "criterios"}}
+	deferred := abierta("D", "z")
+	deferred.Diferida = true
+	p := &Plan{Sesiones: []Sesion{
+		entregada("C", "z", head), blocked, deferred,
+		abierta("M", "z", "B", "ABSENT"), abierta("W", "z", "D"),
+	}}
+	states := p.EstadosAt(root, head)
+	reasons := p.Motivos(states)
+	if got := reasons["M"]; !reflect.DeepEqual(got, Motivo{Tipo: "falta-planificar", Raices: []string{"ABSENT"}}) {
+		t.Fatalf("a missing ID takes precedence: %#v", got)
+	}
+	if got := reasons["W"]; !reflect.DeepEqual(got, Motivo{Tipo: "espera-atascada", Raices: []string{"D"}}) {
+		t.Fatalf("deferred dependency must not be called ready: %#v", got)
+	}
+	for _, id := range []string{"C", "D"} {
+		if _, ok := reasons[id]; ok {
+			t.Fatalf("terminal %s has a reason", id)
+		}
+	}
+}
+
+func TestMotivoDeContaminacionNombraDecisionOrigen(t *testing.T) {
+	source := abierta("S1", "z")
+	source.Decisiones = []Decision{{Tipo: "escala", Alcanza: "M1.2", Contamina: []string{"S2"}}}
+	p := &Plan{Sesiones: []Sesion{source, abierta("S2", "z")}}
+	got := p.Motivos(p.EstadosAt("", ""))["S2"]
+	if !reflect.DeepEqual(got, Motivo{Tipo: "falta-decision", Raices: []string{"S1"}}) {
+		t.Fatalf("semantic contamination should name the originating decision: %#v", got)
 	}
 }
 

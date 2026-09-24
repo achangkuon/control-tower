@@ -73,11 +73,19 @@ type AvanceJSON struct {
 }
 
 type ZonaSnapshot struct {
-	ID       string      `json:"id"`
-	Nombre   string      `json:"nombre"`
-	Cerradas int         `json:"cerradas"`
-	Total    int         `json:"total"`
-	Cola     []ColaEntry `json:"cola"`
+	ID                string            `json:"id"`
+	Nombre            string            `json:"nombre"`
+	Cerradas          int               `json:"cerradas"`
+	Total             int               `json:"total"`
+	Cola              []ColaEntry       `json:"cola"`
+	Listas            int               `json:"listas"`
+	DeficitHorizonte  int               `json:"deficit_horizonte"`
+	RaicesPreparacion []RaizPreparacion `json:"raices_preparacion,omitempty"`
+}
+
+type RaizPreparacion struct {
+	ID         string `json:"id"`
+	Desbloquea int    `json:"desbloquea"`
 }
 
 type ColaEntry struct {
@@ -88,11 +96,12 @@ type ColaEntry struct {
 }
 
 type SesionEstado struct {
-	ID        string `json:"id"`
-	Zona      string `json:"zona"`
-	Estado    string `json:"estado"`
-	Resultado string `json:"resultado"`
-	Prioridad string `json:"prioridad,omitempty"`
+	ID        string  `json:"id"`
+	Zona      string  `json:"zona"`
+	Estado    string  `json:"estado"`
+	Resultado string  `json:"resultado"`
+	Prioridad string  `json:"prioridad,omitempty"`
+	Motivo    *Motivo `json:"motivo,omitempty"`
 	// The declarations every compatibility conclusion is derived from. They are
 	// omitted when undeclared rather than emitted empty, because an absent
 	// declaration and an empty one are different claims: the first is unknown,
@@ -118,6 +127,7 @@ func (p *Plan) Snapshot(root string) Snapshot {
 
 func (p *Plan) SnapshotAt(root, head string) Snapshot {
 	estados := p.EstadosAt(root, head)
+	motivos := p.Motivos(estados)
 	colas := p.ColaPorZonaAt(root, head)
 	porZona, total := p.AvanceAt(root, head)
 	index := p.SesionPorID()
@@ -157,12 +167,36 @@ func (p *Plan) SnapshotAt(root, head string) Snapshot {
 			}
 			cola = append(cola, entry)
 		}
+		listas := 0
+		impacto := map[string]int{}
+		for _, entry := range cola {
+			if estados[entry.Sesion] == Listo {
+				listas++
+			}
+			if reason, ok := motivos[entry.Sesion]; ok {
+				for _, root := range reason.Raices {
+					impacto[root]++
+				}
+			}
+		}
+		roots := make([]RaizPreparacion, 0, len(impacto))
+		for root, count := range impacto {
+			roots = append(roots, RaizPreparacion{ID: root, Desbloquea: count})
+		}
+		sort.Slice(roots, func(i, j int) bool {
+			if roots[i].Desbloquea != roots[j].Desbloquea {
+				return roots[i].Desbloquea > roots[j].Desbloquea
+			}
+			return roots[i].ID < roots[j].ID
+		})
+		deficit := 2 - listas // Horizon is independent of planning.horizon_ceiling.
+		if deficit < 0 {
+			deficit = 0
+		}
 		zonas = append(zonas, ZonaSnapshot{
-			ID:       id,
-			Nombre:   nombre,
-			Cerradas: porZona[id].Cerradas,
-			Total:    porZona[id].Total,
-			Cola:     cola,
+			ID: id, Nombre: nombre, Cerradas: porZona[id].Cerradas,
+			Total: porZona[id].Total, Cola: cola, Listas: listas,
+			DeficitHorizonte: deficit, RaicesPreparacion: roots,
 		})
 	}
 
@@ -173,7 +207,12 @@ func (p *Plan) SnapshotAt(root, head string) Snapshot {
 		if esTerritorioPendiente(s) {
 			pendiente++
 		}
+		var motivo *Motivo
+		if reason, ok := motivos[s.ID]; ok {
+			motivo = &reason
+		}
 		sesiones = append(sesiones, SesionEstado{
+			Motivo:    motivo,
 			ID:        s.ID,
 			Zona:      s.Zona,
 			Estado:    vocabulario(estados[s.ID]),

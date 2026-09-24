@@ -19,10 +19,10 @@
 1. **S1** · 🟢 LISTO · instalar horno
 
 ### Patio (patio)
-1. **S2** · 🔴 BLOQUEADO · definir riego
+1. **S2** · 🔴 BLOQUEADO · falta-decision (S2) · definir riego
 
 ## Bloqueos
-- **S2:** ¿riego manual o automático?
+- **S2:** ¿riego manual o automático? · falta-decision (S2)
 
 ## Rutas
 - **S1:** propuesta direct (RFC cocina §1); pendiente de revalidación en kickoff.
@@ -45,7 +45,7 @@ Rutas: cocina/horno.go
   - [ ] la prueba falla sin conexión
 
 ### S2 — definir riego
-- Estado derivado: 🔴 BLOQUEADO
+- Estado derivado: 🔴 BLOQUEADO · falta-decision (S2)
 - Zona/Área: patio · patio/
 - Depende de: S1
 - Cimientos: —

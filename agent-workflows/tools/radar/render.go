@@ -65,6 +65,7 @@ func Render(p *Plan, root string) []byte {
 func RenderAt(p *Plan, root, head string) []byte {
 	var b bytes.Buffer
 	estados := p.EstadosAt(root, head)
+	motivos := p.Motivos(estados)
 	colas := p.ColaPorZonaAt(root, head)
 	porZona, total := p.AvanceAt(root, head)
 	asientos := p.AsientosAt(root, head)
@@ -112,7 +113,7 @@ func RenderAt(p *Plan, root, head string) []byte {
 		} else {
 			for pos, id := range colas[zid] {
 				s := index[id]
-				fmt.Fprintf(&b, "%d. **%s** · %s%s · %s\n", pos+1, markdownText(id), estados[id], textoPrioridad(p, s), markdownText(s.Resultado))
+				fmt.Fprintf(&b, "%d. **%s** · %s%s%s · %s\n", pos+1, markdownText(id), estados[id], textoMotivo(motivos[id]), textoPrioridad(p, s), markdownText(s.Resultado))
 			}
 		}
 		fmt.Fprintln(&b)
@@ -123,7 +124,7 @@ func RenderAt(p *Plan, root, head string) []byte {
 	for _, s := range p.Sesiones {
 		if estados[s.ID] == Bloqueado {
 			bloqueos++
-			fmt.Fprintf(&b, "- **%s:** %s\n", markdownText(s.ID), markdownText(resumenBloqueo(&s, p.ledgerDecisionRequired[s.ID])))
+			fmt.Fprintf(&b, "- **%s:** %s%s\n", markdownText(s.ID), markdownText(resumenBloqueo(&s, p.ledgerDecisionRequired[s.ID])), textoMotivo(motivos[s.ID]))
 		}
 	}
 	if bloqueos == 0 {
@@ -156,7 +157,7 @@ func RenderAt(p *Plan, root, head string) []byte {
 			if !s.esEncargo() {
 				continue
 			}
-			renderEncargo(&b, p, s, estados[s.ID])
+			renderEncargo(&b, p, s, estados[s.ID]+textoMotivo(motivos[s.ID]))
 		}
 	}
 
@@ -166,7 +167,7 @@ func RenderAt(p *Plan, root, head string) []byte {
 			continue
 		}
 		fmt.Fprintf(&b, "### %s — %s\n", markdownText(s.ID), markdownText(s.Resultado))
-		fmt.Fprintf(&b, "- Estado derivado: %s\n", estados[s.ID])
+		fmt.Fprintf(&b, "- Estado derivado: %s%s\n", estados[s.ID], textoMotivo(motivos[s.ID]))
 		if esTerritorioPendiente(&s) {
 			fmt.Fprintln(&b, "- Importación legacy con territorio pendiente probado; sin asignación de Zona ni capacidad.")
 		} else if esTerritorioHistorico(&s) {
@@ -223,6 +224,13 @@ func RenderAt(p *Plan, root, head string) []byte {
 		}
 	}
 	return b.Bytes()
+}
+
+func textoMotivo(m Motivo) string {
+	if m.Tipo == "" {
+		return ""
+	}
+	return " · " + markdownText(m.Tipo) + " (" + markdownList(m.Raices) + ")"
 }
 
 func tieneEncargos(p *Plan) bool {

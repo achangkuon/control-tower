@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -26,6 +27,20 @@ func TestRenderCoincideConGoldenYEsDeterminista(t *testing.T) {
 	}
 	if !bytes.HasPrefix(first, []byte(avisoGenerado)) {
 		t.Fatal("la vista debe empezar con el aviso de no editar")
+	}
+}
+
+func TestRenderMuestraMotivosJuntoALasSesionesNoListas(t *testing.T) {
+	root, head := repoGit(t)
+	p := &Plan{Zonas: []Zona{{ID: "z", Nombre: "Z"}}, Sesiones: []Sesion{
+		abierta("R", "z"), abierta("N", "z", "R"),
+	}}
+	got := string(RenderAt(p, root, head))
+	if !strings.Contains(got, "**N** · 📋 PLANIFICADO · espera-natural (R)") {
+		t.Fatalf("missing adjacent reason in queue: %s", got)
+	}
+	if strings.Contains(got, "**R** · 🟢 LISTO · espera-") {
+		t.Fatalf("ready session must not have reason: %s", got)
 	}
 }
 

@@ -7,6 +7,32 @@ import (
 	"testing"
 )
 
+func TestSnapshotHorizonCountsReadyAndRanksPreparationRoots(t *testing.T) {
+	root, head := repoGit(t)
+	blocked := abierta("B", "z")
+	blocked.Decisiones = []Decision{{Tipo: "escala", Alcanza: "criterios"}}
+	p := &Plan{Zonas: []Zona{{ID: "empty"}, {ID: "z"}}, Sesiones: []Sesion{
+		abierta("R", "z"), abierta("N", "z", "R"), abierta("N2", "z", "R"),
+		blocked, abierta("A", "z", "B"), abierta("M", "z", "ABSENT"),
+	}}
+	s := p.SnapshotAt(root, head)
+	if s.Zonas[0].Listas != 0 || s.Zonas[0].DeficitHorizonte != 2 || s.Zonas[1].Listas != 1 || s.Zonas[1].DeficitHorizonte != 1 {
+		t.Fatalf("incorrect horizon: %#v", s.Zonas)
+	}
+	want := []RaizPreparacion{{ID: "B", Desbloquea: 2}, {ID: "R", Desbloquea: 2}, {ID: "ABSENT", Desbloquea: 1}}
+	if !reflect.DeepEqual(s.Zonas[1].RaicesPreparacion, want) {
+		t.Fatalf("roots: got %#v want %#v", s.Zonas[1].RaicesPreparacion, want)
+	}
+	for _, ses := range s.Sesiones {
+		if ses.ID == "N" && (ses.Motivo == nil || ses.Motivo.Tipo != "espera-natural") {
+			t.Fatalf("planned session missing reason: %#v", ses)
+		}
+		if ses.ID == "R" && ses.Motivo != nil {
+			t.Fatalf("ready session has reason: %#v", ses)
+		}
+	}
+}
+
 func TestSnapshotReportsTotalAndPerZonaAvance(t *testing.T) {
 	root, commit := repoGit(t)
 	p := &Plan{

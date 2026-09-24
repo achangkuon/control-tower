@@ -45,6 +45,118 @@ func (p *Plan) EstadosAt(root, head string) map[string]string {
 //
 // It deliberately shares one body with EstadosAt: a second copy of the
 // derivation would be a second answer, and the plan only gets to have one.
+// Motivo explains why an open Sesión cannot start; Raices are sorted IDs of
+// the earliest actionable blockers at the selected severity.
+type Motivo struct {
+	Tipo   string   `json:"tipo"`
+	Raices []string `json:"raices"`
+}
+
+// Motivos is a projection of derived states, never another state machine.
+// Missing dependencies outrank decisions, stalled chains and natural waits.
+func (p *Plan) Motivos(estados map[string]string) map[string]Motivo {
+	index := p.SesionPorID()
+	cache := map[string]Motivo{}
+	visiting := map[string]int{}
+	var walk func(string, []string) Motivo
+	walk = func(id string, path []string) Motivo {
+		if start, cycle := visiting[id]; cycle {
+			roots := append([]string(nil), path[start:]...)
+			sort.Strings(roots)
+			return Motivo{Tipo: "espera-atascada", Raices: roots}
+		}
+		if reason, ok := cache[id]; ok {
+			return reason
+		}
+		s, exists := index[id]
+		if !exists {
+			return Motivo{Tipo: "falta-planificar", Raices: []string{id}}
+		}
+		var reason Motivo
+		switch estados[id] {
+		case Bloqueado:
+			roots := map[string]bool{}
+			if bloqueaAqui(s) || p.ledgerDecisionRequired[id] {
+				roots[id] = true
+			}
+			for _, other := range p.Sesiones {
+				for _, d := range other.Decisiones {
+					if d.Tipo != "escala" {
+						continue
+					}
+					for _, victim := range d.Contamina {
+						if victim == id {
+							roots[other.ID] = true
+						}
+					}
+				}
+			}
+			if len(roots) == 0 {
+				reason = Motivo{Tipo: "falta-planificar", Raices: []string{id}}
+			} else {
+				reason = Motivo{Tipo: "falta-decision"}
+				for root := range roots {
+					reason.Raices = append(reason.Raices, root)
+				}
+				sort.Strings(reason.Raices)
+			}
+		case Listo:
+			reason = Motivo{Tipo: "espera-natural", Raices: []string{id}}
+		case Planificado:
+			visiting[id] = len(path)
+			path = append(path, id)
+			for _, dep := range s.DependeDe {
+				if estados[dep] == Completo || estados[dep] == Archivado {
+					continue
+				}
+				part := walk(dep, path)
+				if estados[dep] == Bloqueado {
+					part = Motivo{Tipo: "espera-atascada", Raices: []string{dep}}
+				}
+				if part.Tipo == "" { // A deferred dependency cannot be prepared yet.
+					part = Motivo{Tipo: "espera-atascada", Raices: []string{dep}}
+				}
+				reason = combinarMotivos(reason, part)
+			}
+			delete(visiting, id)
+			if reason.Tipo == "" {
+				reason = Motivo{Tipo: "falta-planificar", Raices: []string{id}}
+			}
+		}
+		cache[id] = reason
+		return reason
+	}
+	out := map[string]Motivo{}
+	for _, s := range p.Sesiones {
+		if estados[s.ID] == Planificado || estados[s.ID] == Bloqueado {
+			out[s.ID] = walk(s.ID, nil)
+		}
+	}
+	return out
+}
+
+func combinarMotivos(a, b Motivo) Motivo {
+	rank := map[string]int{"espera-natural": 1, "espera-atascada": 2, "falta-decision": 3, "falta-planificar": 4}
+	if rank[a.Tipo] < rank[b.Tipo] {
+		return b
+	}
+	if rank[a.Tipo] > rank[b.Tipo] {
+		return a
+	}
+	roots := map[string]bool{}
+	for _, ids := range [][]string{a.Raices, b.Raices} {
+		for _, id := range ids {
+			roots[id] = true
+		}
+	}
+	a.Raices = make([]string, 0, len(roots))
+	for id := range roots {
+		a.Raices = append(a.Raices, id)
+	}
+	sort.Strings(a.Raices)
+	return a
+}
+
 func (p *Plan) EstadosAsumiendoCerradas(root, head string, cerradas map[string]bool) map[string]string {
 	return p.estadosAsumiendo(root, head, cerradas)
 }
