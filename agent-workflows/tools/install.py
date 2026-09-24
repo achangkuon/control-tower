@@ -529,9 +529,13 @@ import {{ createHash, randomUUID }} from "node:crypto"
 import {{ execFileSync }} from "node:child_process"
 import {{ realpathSync }} from "node:fs"
 import {{ Type }} from "@earendil-works/pi-ai"
-import {{ buildAdmission }} from "{admision}"
+import {{ buildAdmission, resolveExecutable }} from "{admision}"
 import {{ crearAutoridadPi }} from "{autoridad}"
 import {{ effectiveSwitch }} from "{interruptor}"
+
+// A timeout fails a mutation-relevant call closed rather than hanging the extension forever
+// (R3-no-exec-timeout / R4-unbounded-sync-subprocess-per-tool-call).
+const EXEC_TIMEOUT_MS = 10_000
 
 const blocked = (reason: string) => ({{
   content: [{{ type: "text", text: `Blocked: ${{reason}}` }}],
@@ -587,21 +591,38 @@ const quoteArgv = (argv: string[]) => argv.map((part) => `'${{part.replaceAll("'
 // pi-controls.mjs's confinarComando refuses to build a room with zero writable binds, because
 // that module only ever confines an already-authorized mutation. A read-only room, with
 // nothing writable at all, is a fixed policy for the no-key case, not a decision — so it is
-// built here rather than by widening that module's contract for one caller.
-const readOnlyConfinement = (command: string, root: string): string | null => {{
+// built here rather than by widening that module's contract for one caller. `root` (the
+// repository top level) is what gets read-only bound back into visibility after the tmpfs
+// mounts; `chdirTo` is the agent's actual working directory, which may be a subdirectory of
+// `root` — starting Pi there must land the shell in the same place, not silently at the
+// repository root (R1/R3/R4-subdirectory-cwd).
+const readOnlyConfinement = (command: string, root: string, chdirTo: string): string | null => {{
   try {{
     if (realpathSync("/usr/bin/bwrap") !== "/usr/bin/bwrap") return null
-    execFileSync("/usr/bin/bwrap", ["--version"], {{ stdio: "ignore" }})
+    execFileSync("/usr/bin/bwrap", ["--version"], {{ stdio: "ignore", timeout: EXEC_TIMEOUT_MS }})
   }} catch {{
     return null
   }}
-  return quoteArgv([...READ_ONLY_ROOM, "--ro-bind", root, root, "--chdir", root, "bash", "-c", command])
+  return quoteArgv([...READ_ONLY_ROOM, "--ro-bind", root, root, "--chdir", chdirTo, "bash", "-c", command])
 }}
 
 export default function chanksControls(pi: any) {{
+  // `process.cwd()` is the agent's actual working directory, which may be any subdirectory of
+  // the repository. The repository root the switch, the plan check and the admission all care
+  // about is resolved from it with `git rev-parse --show-toplevel`, run through the same
+  // never-trust-a-repo-supplied-binary lookup pi-admission.mjs uses for git and Radar. A cwd
+  // outside any git repository — or a broken/absent git — leaves the extension inert, exactly
+  // as before.
+  let workingDirectory: string
   let root: string
   try {{
-    root = realpathSync(process.cwd())
+    workingDirectory = realpathSync(process.cwd())
+    const git = resolveExecutable("git", workingDirectory)
+    const raw = execFileSync(
+      git, ["-C", workingDirectory, "rev-parse", "--show-toplevel"],
+      {{ stdio: ["ignore", "pipe", "ignore"], timeout: EXEC_TIMEOUT_MS }},
+    ).toString("utf8").trim()
+    root = realpathSync(raw)
   }} catch {{
     return
   }}
@@ -727,7 +748,7 @@ export default function chanksControls(pi: any) {{
       if (typeof command !== "string" || command.trim() === "") {{
         return {{ block: true, reason: "💪 Chanks · blocked · bash no declara el comando que va a ejecutar" }}
       }}
-      const confined = readOnlyConfinement(command, root)
+      const confined = readOnlyConfinement(command, root, workingDirectory)
       if (confined === null) {{
         return {{ block: true, reason: "💪 Chanks · blocked · no hay confinamiento de sólo lectura disponible, así que se rechaza sin salida permisiva" }}
       }}

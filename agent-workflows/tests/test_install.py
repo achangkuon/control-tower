@@ -834,7 +834,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         env["PATH"] = f"{self.bin}{os.pathsep}{env.get('PATH', '')}"
         return env
 
-    def _run_shim(self, scenario):
+    def _run_shim(self, scenario, cwd=None):
         INSTALLER.install_pi_extension(self.home, ROOT)
         package = self.home / "node_modules/@earendil-works/pi-ai"
         package.mkdir(parents=True, exist_ok=True)
@@ -856,7 +856,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
             ["bun", str(runner), str(INSTALLER.pi_extension_path(self.home)), json.dumps(scenario)],
             capture_output=True,
             text=True,
-            cwd=self.repo,
+            cwd=cwd or self.repo,
             env=self._env(),
         )
         self.assertEqual(run.returncode, 0, run.stderr)
@@ -939,6 +939,45 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout, f"{repo}\nvisible\n")
+
+    def test_starting_pi_in_a_subdirectory_still_applies_the_gate(self):
+        subdirectory = self.repo / "agent-workflows"
+        subdirectory.mkdir()
+        self._write_radar([{"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"]}])
+        outcome = self._run_shim(self._default_scenario(), cwd=subdirectory)
+        self.assertTrue(outcome["registered"])
+        self.assertEqual(outcome["before"]["read"]["result"], {})
+        self.assertTrue(outcome["before"]["write"]["result"].get("block", False))
+        confined = outcome["before"]["bash"]["input"]["command"]
+        self.assertIn("/usr/bin/bwrap", confined)
+
+    def test_no_key_room_chdirs_to_the_actual_working_directory_not_the_repo_root(self):
+        subdirectory = self.repo / "agent-workflows"
+        subdirectory.mkdir()
+        outcome = self._run_shim(self._default_scenario(), cwd=subdirectory)
+        confined = outcome["before"]["bash"]["input"]["command"]
+        probe = confined.replace("'printf before'", "'pwd'")
+        self.assertNotEqual(probe, confined)
+        result = subprocess.run(
+            ["bash", "-c", probe], capture_output=True, text=True, cwd=subdirectory, timeout=30,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, f"{subdirectory.resolve()}\n")
+
+    def test_switch_and_plan_apply_from_a_subdirectory_even_though_they_live_at_the_repo_root(self):
+        # Before the fix, planExists() joined "openspec/plan.yaml" onto the subdirectory itself,
+        # so the switch always looked ineffective from anywhere but the true repository root.
+        subdirectory = self.repo / "agent-workflows" / "chanks"
+        subdirectory.mkdir(parents=True)
+        outcome = self._run_shim(self._default_scenario(), cwd=subdirectory)
+        self.assertTrue(outcome["registered"])
+
+    def test_cwd_outside_any_git_repository_is_inert(self):
+        with tempfile.TemporaryDirectory() as not_a_repo:
+            outcome = self._run_shim(self._default_scenario(), cwd=Path(not_a_repo))
+        self.assertFalse(outcome["registered"])
+        for name in ("read", "write", "edit", "bash", "activationDispatch"):
+            self.assertEqual(outcome["before"][name]["result"], {})
 
     def test_session_key_activation_grants_exactly_its_authorized_files(self):
         self._write_radar([{
