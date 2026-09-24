@@ -6823,6 +6823,8 @@ sesiones:
             consecuencia: "Ningún archivo cambia de directorio y la Zona instalacion conserva su territorio; el dato queda recortado a `cimientos`."
           - opcion: "Mudarlos fuera de `test/install/`."
             consecuencia: La Zona instalacion pierde territorio que le corresponde y el diff toca rutas que la auditoría excluyó del alcance.
+    entrega:
+      commit: 49b7555d54ff6be795e3f75c4a460ec9f4186857
   - id: S118
     zona: hosts
     resultado: "Una operación de la Torre se reconoce a simple vista dentro de una sesión Pi: emoji, nombre y color propios en los cuatro estados observables."
