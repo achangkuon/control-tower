@@ -9441,9 +9441,10 @@ sesiones:
     zona: metodo
     prioridad: metodo-v1-controles-prioritarios
     resultado: >-
-      En un repositorio con plan y el interruptor de Chanks encendido, Pi lee libremente y sólo
-      escribe tras aprobar en su propia pregunta la llave de la Sesión o de la planificación; con
-      el interruptor apagado o sin plan, Pi trabaja como antes y las skills no cambian.
+      En un repositorio con plan y el interruptor de Chanks encendido, Pi lee libremente y bloquea
+      escrituras sin llave; al aprobar en su propia pregunta la llave referencial de Sesión o de
+      planificación, todas las herramientas pasan sin límite de archivos impuesto por la extensión.
+      Con el interruptor apagado o sin plan, Pi trabaja como antes y las skills no cambian.
     autoridad:
       - tipo: engram
         id: 11462
@@ -9484,16 +9485,18 @@ sesiones:
         el interruptor apagado, o sin plan, la extensión no pregunta ni bloquea nada y las skills
         siguen iguales.
 
-        Con el interruptor encendido, Pi lee e investiga sin llave, y toda escritura se bloquea
-        hasta que exista una llave activa. La extensión arma la admisión por sí misma a partir
-        de git y del Radar instalado, sin sobre externo, y la muestra en la pregunta nativa de
-        Pi. Hay dos llaves. La llave de Sesión se pide cuando se confirma arrancar o retomar una
-        Sesión del plan: nombra la Sesión, el worktree, los archivos, los Cimientos y los
-        recursos, y al aprobarla habilita sólo esos archivos. La llave de planificación se pide
-        durante los tramos 1 y 2 de Chanks: al aprobarla habilita sólo `openspec/plan.yaml` y
-        `openspec/ROADMAP.md`. El agente pide la llave pero nunca la responde; rechazo, UI
-        ausente o evidencia inválida dejan la escritura bloqueada. La llave cae ante un cambio
-        de Sesión, base, worktree o runtime.
+        Con el interruptor encendido y sin llave, Pi lee e investiga, Bash queda en un entorno
+        de sólo lectura y toda escritura se bloquea. La extensión arma la admisión por sí misma
+        a partir de git y del Radar instalado, sin sobre externo, y la muestra en la pregunta
+        nativa de Pi. Hay dos llaves. La llave de Sesión se pide cuando se confirma arrancar o
+        retomar una Sesión del plan: la pregunta nombra la Sesión, el worktree, los archivos, los
+        Cimientos y los recursos. La llave de planificación se pide durante los tramos 1 y 2 de
+        Chanks. Ambas identifican el trabajo para Main: una vez aprobadas, todas las herramientas
+        pasan sin confinamiento ni límite de archivos impuesto por la extensión. El agente pide
+        la llave pero nunca la responde; rechazo, UI ausente o evidencia inválida dejan la
+        escritura bloqueada. La llave sobrevive cambios de HEAD y del plan, incluso de la propia
+        Sesión; cae al cerrar, recargar o reemplazar la sesión Pi, al cambiar de repositorio o
+        worktree, o al apagar el interruptor.
 
         Las skills de arranque de Sesión y de los tramos 1 y 2 indican cuándo pedir la llave. Al
         entregar, la extensión se reinstala, este repositorio queda encendido y los demás
@@ -9501,24 +9504,26 @@ sesiones:
       restricciones_decisiones: >-
         Gentle AI desglosa, implementa y verifica mediante ODD con TDD estricto; SDD sólo por
         solicitud humana explícita. La implementa Claude Code. Se conservan las decisiones de
-        S151: autoridad efímera por Sesión, confirmación humana perteneciente al host,
-        confinamiento real y ningún fallback permisivo; el modelo no puede encender el
-        interruptor, fabricar la aceptación ni ampliar archivos. No se debilita controls.mjs ni se
-        recalcula estado fuera del Radar instalado. Quedan fuera Claude Code, OpenCode y la
-        Torre. La demostración de runtime carga la extensión real en un Pi aislado; un test
-        directo no la sustituye. Excepción de tamaño aprobada (~500–600 líneas) para una sola
-        Sesión coherente; no autoriza ampliar archivos ni omitir pruebas o revisión. Instalar
+        S151: confirmación humana perteneciente al host y ningún fallback permisivo sin llave;
+        la decisión posterior Engram 11475 vuelve referencial la llave activa, sin confinamiento
+        de herramientas. El modelo no puede encender el interruptor ni fabricar la aceptación;
+        la llave no amplía la autoridad de escritura del plan, aunque la extensión no la imponga
+        una vez activa. No se debilita controls.mjs ni se recalcula estado fuera del Radar
+        instalado. Quedan fuera Claude Code, OpenCode y la Torre. La demostración de runtime
+        carga la extensión real en un Pi aislado; un test directo no la sustituye. Excepción de
+        tamaño aprobada (~500–600 líneas) para una sola Sesión coherente; no autoriza ampliar
+        archivos ni omitir pruebas o revisión. Instalar
         globalmente y encender el interruptor requieren la confirmación humana de entrega;
         editar skills exige ofrecer la propagación a los demás agentes.
       referencias: >-
         Decisión y alcance: Engram 11462. Diagnóstico del bloqueo: Engram 11461. Antecedentes:
-        S151 y sus decisiones (Engram 11368, 11423), instalación global (Engram 11453). Evidencia
-        de código: agent-workflows/tools/install.py:520-790 (plantilla de la extensión,
-        consumeAdmission, hostEnvelope, liveIdentity), 421 y 506 (instalación global
-        incondicional); agent-workflows/chanks/pi-authority.mjs (crearAutoridadPi);
-        agent-workflows/skills/chanks-3-session-kickoff/SKILL.md:60-110. Modelo de interruptor:
-        `gentle-ai review mode enable|disable|status`. Revalidar HEAD, Radar y disponibilidad de
-        bwrap antes de RED.
+        S151 y sus decisiones (Engram 11368, 11423), instalación global (Engram 11453).
+        Decisión posterior sobre llave referencial: Engram 11475. Evidencia vigente:
+        agent-workflows/tools/install.py (plantilla de la extensión y paso libre con llave
+        activa), agent-workflows/chanks/pi-admission.mjs (admisión desde git y Radar),
+        agent-workflows/chanks/pi-switch.mjs (interruptor compartido por worktrees),
+        agent-workflows/skills/chanks-3-session-kickoff/SKILL.md (pedido de llave).
+        Modelo de interruptor: `gentle-ai review mode enable|disable|status`.
     decisiones:
       - tipo: resuelta
         clase: seguridad-y-permisos
