@@ -114,6 +114,22 @@ func TestRenderFaltanPie(t *testing.T) {
 	}
 }
 
+// Legacy Sesiones without a declared priority are all closed in the real plan;
+// the fallback bucket must stay hidden instead of printing "100% ... Sin
+// Sesiones abiertas." noise.
+func TestRenderFaltanOcultaSinMetaDeclaradaSinAbiertas(t *testing.T) {
+	root, head := repoGit(t)
+	p := planFaltanDeMuestra(head)
+	legacy := entregada("S8", "hosts", head)
+	legacy.Resultado = "Octava sesión, legacy cerrada"
+	p.Sesiones[6] = legacy
+	got := string(RenderFaltanAt(p, root, head))
+
+	if strings.Contains(got, metaSinDeclarar) {
+		t.Fatalf("la meta de reserva sólo aparece con una Sesión abierta en ella:\n%s", got)
+	}
+}
+
 func TestLineaFaltanUnoFormatoConSubprioridad(t *testing.T) {
 	root, head := repoGit(t)
 	p := planFaltanDeMuestra(head)

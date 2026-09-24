@@ -116,6 +116,16 @@ func construirFaltan(p *Plan, estados map[string]string) []*metaFaltan {
 	return metas
 }
 
+// tieneAbiertas reports whether any sub-priority of m lists an open Sesión.
+func tieneAbiertas(m *metaFaltan) bool {
+	for _, sub := range m.Subs {
+		if len(sub.Sesiones) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
 // estadoFaltan renames only the DIFERIDO Radar assigns because a higher
 // priority is still open — never the explicit `diferida: true` case, which
 // never reaches the listing at all (construirFaltan excludes it above).
@@ -153,6 +163,9 @@ func RenderFaltanAt(p *Plan, root, head string) []byte {
 	fmt.Fprintf(&b, "%s — lo que falta\n\n", p.Producto)
 
 	for _, m := range metas {
+		if m.Nombre == metaSinDeclarar && !tieneAbiertas(m) {
+			continue
+		}
 		fmt.Fprintf(&b, "%s: %s\n", m.Nombre, m.Avance)
 		huboSesiones := false
 		for _, sub := range m.Subs {
