@@ -28,7 +28,8 @@ parent; do not write the plan or generated view.
 - Legacy Module/Task contracts remain historical/technical evidence and are not rewritten here.
 - In Pi, with the Chanks switch on, before the responsible parent writes `openspec/plan.yaml`
   from this delta, request the planning key (`chanks_request_activation` with
-  `{kind: "planning"}`); with the switch off this does not apply.
+  `{kind: "planning"}`); with the switch off, or in the main working tree (Main), this does
+  not apply.
 
 ## Decision Gates
 

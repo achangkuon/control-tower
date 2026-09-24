@@ -18,7 +18,9 @@ Fresh Radar admission is the only planning/admission evidence. In Pi, a per-repo
 (`pi-switch.mjs`, off by default, refused `on` without `openspec/plan.yaml`) decides whether
 Chanks controls apply at all, re-read on every tool call rather than once at load. With the
 switch off, or with no plan, Pi works exactly as before — every call passes straight through
-with no question and no block, and this section does not apply.
+with no question and no block, and this section does not apply. The controls govern linked
+worktrees only: in the repository's main working tree, where the human drives Main and Support,
+the extension stays inert even with the switch on, and `chanks_request_activation` does not exist.
 
 With the switch on, the generated extension (`agent-workflows/chanks/pi-admission.mjs` +
 `pi-authority.mjs`) builds the admission itself from git and the installed Radar — no external

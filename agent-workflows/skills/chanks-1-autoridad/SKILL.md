@@ -19,7 +19,8 @@ Activa cuando hay que convertir una intención en alcance aprobado, Zonas y auto
 - No avances a planificación sin aprobación humana del alcance.
 - En Pi, con el interruptor de Chanks encendido, antes de que el responsible parent escriba
   `openspec/plan.yaml` pedí la llave de planificación (`chanks_request_activation` con
-  `{kind: "planning"}`); con el interruptor apagado esto no aplica.
+  `{kind: "planning"}`); con el interruptor apagado, o en el árbol principal del repositorio
+  (Main), esto no aplica.
 
 ## Decision Gates
 

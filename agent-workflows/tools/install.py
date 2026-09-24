@@ -620,6 +620,7 @@ export default function chanksControls(pi: any) {{
   let workingDirectory: string
   let root: string
   let commonDir: string
+  let gitDir: string
   try {{
     workingDirectory = realpathSync(process.cwd())
     const git = resolveExecutable("git", workingDirectory)
@@ -629,11 +630,22 @@ export default function chanksControls(pi: any) {{
     ).toString("utf8").trim()
     root = realpathSync(runGit(["rev-parse", "--show-toplevel"]))
     commonDir = runGit(["rev-parse", "--path-format=absolute", "--git-common-dir"])
+    gitDir = runGit(["rev-parse", "--path-format=absolute", "--git-dir"])
   }} catch {{
     // A cwd outside any git repository, or a broken/absent git, leaves the extension inert —
     // exactly as if this file were absent.
     return
   }}
+
+  // The controls confine implementer worktrees only. The main working tree is where the human
+  // drives Main and Support directly, so it stays free: git reports the same directory for
+  // `--git-dir` and `--git-common-dir` only there, never in a linked worktree. An unresolvable
+  // path keeps the controls on rather than freeing a worktree by accident.
+  let isMainWorkingTree = false
+  try {{
+    isMainWorkingTree = realpathSync(gitDir) === realpathSync(commonDir)
+  }} catch {{}}
+  if (isMainWorkingTree) return
 
   // Read on every governed decision below (R4-switch-evaluated-once-at-load /
   // R2-switch-contradictory-read-contract): the extension's handlers are registered

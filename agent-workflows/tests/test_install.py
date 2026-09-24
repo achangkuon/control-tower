@@ -811,6 +811,12 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         (self.repo / "openspec" / "ROADMAP.md").write_text("# roadmap\n", encoding="utf-8")
         self._git("add", "-A")
         self._git("commit", "--quiet", "-m", "seed")
+        # The controls govern implementer worktrees only; the main working tree belongs to the
+        # human. Every scenario below therefore runs from a linked worktree, and `self.main`
+        # keeps the primary checkout for the tests that prove it stays free.
+        self.main = self.repo
+        self.repo = Path(self.tempdir.name) / "worktree"
+        self._git_in(self.main, "worktree", "add", "--quiet", "-b", "implementer", str(self.repo))
         self._set_switch(True)
 
         self.bin = Path(self.tempdir.name) / "bin"
@@ -822,7 +828,10 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         self.tempdir.cleanup()
 
     def _git(self, *args):
-        subprocess.run(["git", *args], cwd=self.repo, check=True, capture_output=True)
+        self._git_in(self.repo, *args)
+
+    def _git_in(self, cwd, *args):
+        subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True)
 
     def _switch_path(self):
         common = subprocess.run(
@@ -997,6 +1006,23 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         subdirectory.mkdir(parents=True)
         outcome = self._run_shim(self._default_scenario(), cwd=subdirectory)
         self.assertTrue(outcome["registered"])
+
+    def test_main_working_tree_is_inert_even_with_the_switch_on_and_no_key(self):
+        # The human drives Main and Support directly; only implementer worktrees are confined.
+        # With the switch on and no key, Main still writes and runs bash with its full
+        # environment, exactly as if this extension were absent.
+        outcome = self._run_shim(self._default_scenario(), cwd=self.main)
+        for name in ("read", "write", "edit", "bash", "activationDispatch"):
+            self.assertEqual(outcome["before"][name]["result"], {})
+        self.assertEqual(outcome["before"]["bash"]["input"]["command"], "printf before")
+        self.assertEqual(outcome["confirmations"], [])
+
+    def test_main_working_tree_subdirectory_is_also_inert(self):
+        subdirectory = self.main / "agent-workflows"
+        subdirectory.mkdir()
+        outcome = self._run_shim(self._default_scenario(), cwd=subdirectory)
+        self.assertEqual(outcome["before"]["write"]["result"], {})
+        self.assertEqual(outcome["before"]["bash"]["input"]["command"], "printf before")
 
     def test_cwd_outside_any_git_repository_is_inert(self):
         with tempfile.TemporaryDirectory() as not_a_repo:
