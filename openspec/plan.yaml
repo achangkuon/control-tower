@@ -9124,8 +9124,8 @@ sesiones:
     prioridad: torre-v1
     zona: cimientos
     resultado: El README describe el producto que se entrega —el semáforo instalable— y no promete capacidades que pertenecen a torre-v2.
-    autoridad: "Corte Torre V1 aprobado por Emilio el 2026-09-18 (Engram 11327). El resultado documental se separa de S12.6, que conserva en torre-v3 la reorganización de la raíz y su dependencia de la descomposición de core.mjs (S12.3 → S12.4 → S12.5); esta Sesión toma sólo la parte del README, que el release necesita y que no depende de ese refactor."
-    depende_de: []
+    autoridad: "Corte Torre V1 aprobado por Emilio el 2026-09-18 (Engram 11327). El resultado documental se separa de S12.6, que conserva en torre-v3 la reorganización de la raíz y su dependencia de la descomposición de core.mjs (S12.3 → S12.4 → S12.5); esta Sesión toma sólo la parte del README, que el release necesita y que no depende de ese refactor. Emilio aprobó posponer la escritura de S150 hasta la entrega de S8.13: el README final no puede describir como instalable un artefacto que todavía no existe (decisión registrada en Engram, topic sessions/s150/dependency-on-installation)."
+    depende_de: [S8.13]
     cimientos:
       - README.md
     archivos:
