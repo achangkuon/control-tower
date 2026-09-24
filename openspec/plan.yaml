@@ -7041,6 +7041,7 @@ sesiones:
       - agent-workflows/tools/radar/render.go
       - agent-workflows/tools/radar/render_test.go
       - agent-workflows/tools/radar/testdata/ROADMAP.golden.md
+      - odd/tasks/s122-radar-motivos-horizonte.md
     encargo:
       pedido_contexto: "Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados."
       resultado_comportamiento: "Para el plan vigente, los siete estados que calcula Radar son idénticos antes y después del cambio.\n\nCada Sesión en PLANIFICADO o BLOQUEADO lleva un motivo con exactamente uno de cuatro tipos —espera-natural, espera-atascada, falta-decision, falta-planificar— y los IDs de su raíz; LISTO, COMPLETO, ARCHIVADO y DIFERIDO no llevan motivo.\n\nUna Sesión PLANIFICADO cuya cadena de dependencias termina en una BLOQUEADO se clasifica espera-atascada y nombra esa raíz; una cuya cadena termina sólo en LISTO se clasifica espera-natural.\n\nUna dependencia hacia un ID ausente de sesiones se clasifica falta-planificar y nombra ese ID; un ciclo de dependencias produce un resultado estable y nunca cuelga ni entra en pánico.\n\nPor cada Zona, radar.snapshot/v1 informa cuántas Sesiones LISTO tiene en cola y marca déficit de horizonte cuando son menos de 2, con las raíces a preparar ordenadas por cuántas Sesiones destraba cada una.\n\nEl umbral de horizonte es 2 y el cálculo no lee planning.horizon_ceiling ni la política que resuelve S101.\n\nLa vista generada muestra el motivo al lado de cada Sesión no lista.\n\nRadar sigue sin escribir openspec/plan.yaml y sin lanzar, asignar ni despachar trabajo."
@@ -7583,6 +7584,7 @@ sesiones:
       - agent-workflows/tools/radar/check.go
       - agent-workflows/tools/radar/check_test.go
       - agent-workflows/tools/radar/avance.go
+      - odd/tasks/s129-radar-tope-lote.md
     encargo:
       pedido_contexto: "Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado."
       resultado_comportamiento: "Con `politica.tope_de_lote` declarado, Radar mide cada Módulo entregado de una Sesión sumando líneas agregadas y borradas de los commits que llevan su trailer `Modulo:`.\n\nLas rutas declaradas en `politica.excluir_del_lote` —prefijos de directorio o archivos exactos— no cuentan; sin esa lista no se excluye ninguna ruta.\n\nUn Módulo que supera el tope emite un aviso `tope de lote` que nombra la Sesión, el Módulo, las líneas medidas y el tope; nunca un error.\n\nUna Sesión entregada sin trailers de Módulo se mide por su commit de entrega con la misma fórmula.\n\nSin `tope_de_lote` declarado Radar no mide ni falla.\n\nLa medición usa la ancestría del HEAD inmutable y nunca el árbol de trabajo.\n\n`go test ./...` en `agent-workflows/tools/radar` pasa y el diff toca sólo Área."
@@ -7853,6 +7855,7 @@ sesiones:
     archivos:
       - agent-workflows/skills/chanks-7-session-doc/SKILL.md
       - agent-workflows/tests/test_builder_flow.py
+      - odd/tasks/s133-reinstalacion-cierre.md
     encargo:
       pedido_contexto: "El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio."
       resultado_comportamiento: "`agent-workflows/skills/chanks-7-session-doc/SKILL.md` exige leer del `AGENTS.md` del repositorio qué reinstalar según las rutas que tocó la entrega.\n\nCuando corresponde reinstalar, la evidencia de cierre incluye el comando ejecutado y su verificación; sin esa evidencia el cierre no se declara completo y se reporta qué falta.\n\nAntes de reinstalar skills, la skill exige la confirmación del humano, porque la sincronización cierra las sesiones de Pi abiertas.\n\nSi el repositorio no declara reinstalación, la skill lo informa y no la exige.\n\n`agent-workflows/tests/test_builder_flow.py` falla si alguna de esas reglas desaparece; la suite del Método pasa y el diff toca sólo Área."
