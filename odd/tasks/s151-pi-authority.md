@@ -105,14 +105,14 @@ Only these repository files may be written:
   - Checks: `python3 -m unittest agent-workflows/tests/test_builder_flow.py`; `python3 -m unittest agent-workflows/tests/test_puente_sdd_start.py`.
   - Evidence: Strict TDD observed RED before the bounded JSON contracts existed. Final suites pass 14/14 builder tests and 10/10 bridge tests; one native SDD integration test is explicitly skipped because `GENTLE_AI_SDD_TEST_BINARY` is unavailable. Independent verification passed the same checks and confirmed the machine-readable host/model responsibilities, one-use admission envelope, exact proof keys, lifecycle revocation, and review/delivery rebind triggers. Native four-lens review `review-968e467c457866e7` approved and acknowledgement burned authority; three non-blocking documentation/test-boundary advisories remain separate later work. Final delta is 279 additions and 4 deletions. Work-unit commit: `193e8f8c8191b3dd27c9a146791537ccb42b9509`. Skills were not installed or propagated.
 
-- [ ] **S151-T5 — Prove the isolated runtime path end to end**
-  - Status: in progress; rerunning from a fresh isolated runtime after the T3 remediation.
+- [x] **S151-T5 — Prove the isolated runtime path end to end**
+  - Status: complete.
   - Route: delegated verification after implementation because the check loads generated Pi extension behavior and executes Bubblewrap.
   - Trigger: external runtime and multi-file verification boundary.
   - Files: read-only verification of all S151 implementation files; no new write surface.
   - Outcome: an isolated Pi runtime loads the generated shim, presents host-owned consent, blocks without acceptance, executes an allowed Bash command through Bubblewrap after acceptance, and proves a rejected direct or derived write does not occur.
   - Checks: focused JavaScript and Python suites, isolated runtime journey, then repository-required broad checks.
-  - Evidence: pending.
+  - Evidence: Pi 0.87.1 loaded the production-generated extension through `DefaultResourceLoader` and real session dispatch in a fresh temporary HOME. Before activation, mutation was blocked. Rejection showed exactly one host confirmation and kept later mutation blocked. A fresh accepted runtime showed exactly one confirmation, activated without a user command, rewrote and executed an allowed Bash command through absolute `/usr/bin/bwrap`, actively denied unauthorized Write/Edit while authority remained valid, and executed a derived external-write attempt under Bubblewrap where both writes failed read-only and the sentinels stayed unchanged/absent. In-place candidate/runtime proof drift revoked authority and closed all 12 retained descriptors; reload emitted shutdown and kept authority absent, then documented session disposal reaped Pi-owned process handles. `CHANKS_PI_ADMISSION` was consumed once. The initial apparent post-Bash authority loss was diagnosed as verifier timeout interference, not product drift; the final immutable evidence was re-evaluated PASS without rerun. Repository status before/after was byte-identical and clean, all temporary assets were deleted, and no extension or skill was installed globally.
 
 ## Acceptance criteria
 
@@ -129,7 +129,7 @@ Only these repository files may be written:
 - Forecast: 850–1,050 authored changed lines, excluding generated planning views.
 - Approved strategy: one coherent S151 result under the explicit size exception.
 - Delivery policy: direct push to `master` only after explicit delivery authorization, completed checks, applicable native review, and plan/documentation reconciliation.
-- Current authored implementation count: 733 additions before the first work-unit commit.
+- Current authored implementation count: 1,927 additions plus deletions across code, tests, and skills; covered by Emilio's explicit S151 size exception.
 
 ## Progress
 
@@ -142,8 +142,9 @@ Only these repository files may be written:
 - S151-T2 is complete in `5d3cf8f38231e4ed3106c59bd0457903d694af55`.
 - S151-T3 is complete with original commit `35ee1a34bfad4a535392f6f4cb4edb9ffab71ff5` and real-dispatch remediation `7c232c83afc8d250c3a3f8df8b1921c572065a56`.
 - S151-T4 is complete in `193e8f8c8191b3dd27c9a146791537ccb42b9509`.
-- S151-T5 is in progress. Nothing has been pushed; no extension or skill was installed globally.
+- S151-T5 is complete with real Pi 0.87.1 and Bubblewrap evidence.
+- All five S151 tasks are complete locally. Nothing has been pushed; no extension or skill was installed globally.
 
 ## Next step
 
-Rerun S151-T5 through Pi 0.87.1's actual extension loader and Bubblewrap path from a fresh isolated runtime.
+Commit this final evidence, read back Radar state, then request the separate human authorization for direct push and post-delivery skill installation.
