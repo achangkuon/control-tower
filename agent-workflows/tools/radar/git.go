@@ -5,13 +5,17 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+	"sync"
 )
 
 var hexadecimal = regexp.MustCompile(`^[0-9a-fA-F]+$`)
 
+// gitCommand is the single place Radar spawns git, so a test can count processes.
+var gitCommand = func(args ...string) *exec.Cmd { return exec.Command("git", args...) }
+
 func gitOutput(root string, args ...string) (string, error) {
 	cmdArgs := append([]string{"-C", root}, args...)
-	out, err := exec.Command("git", cmdArgs...).CombinedOutput()
+	out, err := gitCommand(cmdArgs...).CombinedOutput()
 	if err != nil {
 		detail := strings.TrimSpace(string(out))
 		if detail == "" {
@@ -22,8 +26,12 @@ func gitOutput(root string, args ...string) (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
+// formatosDeObjetos remembers each repository's object format: it is fixed at
+// init, and gitOID asks for it on every verification.
+var formatosDeObjetos sync.Map
+
 func gitObjectFormat(root string) (string, int, error) {
-	format, err := gitOutput(root, "rev-parse", "--show-object-format=storage")
+	format, err := formatoDeObjetos(root)
 	if err != nil {
 		return "", 0, err
 	}
@@ -35,6 +43,18 @@ func gitObjectFormat(root string) (string, int, error) {
 	default:
 		return "", 0, fmt.Errorf("formato de objetos Git no soportado %q", format)
 	}
+}
+
+func formatoDeObjetos(root string) (string, error) {
+	if format, hay := formatosDeObjetos.Load(root); hay {
+		return format.(string), nil
+	}
+	format, err := gitOutput(root, "rev-parse", "--show-object-format=storage")
+	if err != nil {
+		return "", err
+	}
+	formatosDeObjetos.Store(root, format)
+	return format, nil
 }
 
 // gitOID verifies that value is an immutable, unabbreviated object identity in
@@ -65,28 +85,54 @@ func gitHEAD(root string) (string, error) {
 	return gitOID(root, head)
 }
 
+type integracion struct {
+	integrada bool
+	detalle   string
+}
+
+// integraciones remembers definitive ancestry answers. Both ends are full OIDs,
+// so the answer never changes; a projection asks it once per hypothetical
+// scenario, which spawned thousands of identical git processes. Lookup errors
+// are never remembered, so a transient failure is always asked again.
+var integraciones sync.Map
+
 // entregaIntegrada verifies evidence against one immutable HEAD snapshot.
 func entregaIntegrada(root, commit, head string) (bool, string) {
+	clave := root + "\x00" + commit + "\x00" + head
+	if previa, hay := integraciones.Load(clave); hay {
+		r := previa.(integracion)
+		return r.integrada, r.detalle
+	}
+	integrada, detalle, definitiva := verificarIntegracion(root, commit, head)
+	if definitiva {
+		integraciones.Store(clave, integracion{integrada, detalle})
+	}
+	return integrada, detalle
+}
+
+// verificarIntegracion reports whether its answer is definitive: only a
+// completed ancestry check is, every lookup failure is not.
+func verificarIntegracion(root, commit, head string) (bool, string, bool) {
 	if strings.TrimSpace(commit) == "" {
-		return false, "falta entrega.commit"
+		return false, "falta entrega.commit", true
 	}
 	resolved, err := gitOID(root, commit)
 	if err != nil {
-		return false, fmt.Sprintf("el commit %q no es un OID completo válido del repositorio: %v", commit, err)
+		return false, fmt.Sprintf("el commit %q no es un OID completo válido del repositorio: %v", commit, err), false
 	}
 	if _, err := gitOID(root, head); err != nil {
-		return false, fmt.Sprintf("el HEAD de validación no es un OID completo válido: %v", err)
+		return false, fmt.Sprintf("el HEAD de validación no es un OID completo válido: %v", err), false
 	}
-	cmd := exec.Command("git", "-C", root, "merge-base", "--is-ancestor", resolved, head)
+	cmd := gitCommand("-C", root, "merge-base", "--is-ancestor", resolved, head)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		if exit, ok := err.(*exec.ExitError); ok && exit.ExitCode() == 1 {
-			return false, fmt.Sprintf("el commit %s no es ancestro del HEAD integrado %s", resolved, head)
+			return false, fmt.Sprintf("el commit %s no es ancestro del HEAD integrado %s", resolved, head), true
 		}
 		detail := strings.TrimSpace(string(out))
 		if detail == "" {
 			detail = err.Error()
 		}
-		return false, fmt.Sprintf("no se pudo verificar si %s está integrado en %s: %s", resolved, head, detail)
+		return false, fmt.Sprintf("no se pudo verificar si %s está integrado en %s: %s", resolved, head, detail), false
 	}
-	return true, ""
+	return true, "", true
 }
