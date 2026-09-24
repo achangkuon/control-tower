@@ -21,8 +21,10 @@ the generated extension registers nothing, and this section does not apply.
 
 With the switch on, the generated extension (`agent-workflows/chanks/pi-admission.mjs` +
 `pi-authority.mjs`) builds the admission itself from git and the installed Radar — no external
-envelope, no separate host process. Reading always works; Bash without a key runs inside a fully
-read-only confinement; Write and Edit are blocked until a key is active:
+envelope, no separate host process. Reading always works; Bash without a key runs inside a
+read-only confinement; Write and Edit are blocked until a key is active. The key identifies which
+Session is working and guards a cooperative agent against accidental writes; it is not a sandbox
+against an agent that deliberately tries to escape:
 
 - After the human confirms starting, continuing, or resuming the named Session in this skill's
   own admission steps below, the agent calls the `chanks_request_activation` tool with

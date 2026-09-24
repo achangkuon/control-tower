@@ -924,6 +924,22 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         self.assertNotIn("socket-visible", result.stdout)
         self.assertIn("leaked=\n", result.stdout)
 
+    def test_no_key_room_keeps_a_worktree_under_tmp_visible(self):
+        # Hiding /tmp and /run must not hide the repository the room exists to inspect.
+        repo = Path(tempfile.mkdtemp(prefix="chanks-worktree-", dir="/tmp")).resolve()
+        self.addCleanup(shutil.rmtree, repo, True)
+        (repo / "marker.txt").write_text("visible\n")
+        outcome = self._run_shim(self._default_scenario())
+        confined = outcome["before"]["bash"]["input"]["command"]
+        confined = confined.replace(str(self.repo.resolve()), str(repo))
+        probe = confined.replace("'printf before'", "'pwd; cat marker.txt'")
+        self.assertNotEqual(probe, confined)
+        result = subprocess.run(
+            ["bash", "-c", probe], capture_output=True, text=True, cwd=repo, timeout=30,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, f"{repo}\nvisible\n")
+
     def test_session_key_activation_grants_exactly_its_authorized_files(self):
         self._write_radar([{
             "id": "S200", "estado": "LISTO", "archivos": ["a.mjs", "cimiento.mjs"],

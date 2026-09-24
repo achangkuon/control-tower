@@ -555,10 +555,13 @@ const confirmationOf = (bundle: any) => [
 // decision: with no active key there is no authority object for pi-controls.mjs to decide over.
 const READ_ONLY_TOOLS = ["read", "grep", "find", "ls"]
 
-// A read-only bind does not stop connect() on a socket inode, so host daemons listening under
-// /tmp or /run (user bus, tmux, docker, ssh-agent) could write on the agent's behalf. The room
-// hides both directories behind empty tmpfs mounts and starts from a clean environment, which
-// also drops socket addresses such as SSH_AUTH_SOCK or DBUS_SESSION_BUS_ADDRESS.
+// The no-key room is a guardrail against accidental writes by a cooperative agent (the key
+// identifies which Session is working); it is not a sandbox against an agent that deliberately
+// tries to escape. A read-only bind does not stop connect() on a socket inode, so the room hides
+// the common daemon socket directories (/tmp, /run) and starts from a clean environment, which
+// drops SSH_AUTH_SOCK and DBUS_SESSION_BUS_ADDRESS. Sockets elsewhere (under $HOME or /mnt) stay
+// reachable by design of that scope. The working directory is re-bound read-only afterwards so a
+// worktree under /tmp or /run stays visible.
 const READ_ONLY_ROOM = [
   "/usr/bin/bwrap",
   "--ro-bind", "/", "/",
@@ -579,17 +582,17 @@ const READ_ONLY_ROOM = [
 const quoteArgv = (argv: string[]) => argv.map((part) => `'${{part.replaceAll("'", "'\\"'\\"'")}}'`).join(" ")
 
 // pi-controls.mjs's confinarComando refuses to build a room with zero writable binds, because
-// that module only ever confines an already-authorized mutation. A fully read-only room, with
+// that module only ever confines an already-authorized mutation. A read-only room, with
 // nothing writable at all, is a fixed policy for the no-key case, not a decision — so it is
 // built here rather than by widening that module's contract for one caller.
-const readOnlyConfinement = (command: string): string | null => {{
+const readOnlyConfinement = (command: string, root: string): string | null => {{
   try {{
     if (realpathSync("/usr/bin/bwrap") !== "/usr/bin/bwrap") return null
     execFileSync("/usr/bin/bwrap", ["--version"], {{ stdio: "ignore" }})
   }} catch {{
     return null
   }}
-  return quoteArgv([...READ_ONLY_ROOM, "bash", "-c", command])
+  return quoteArgv([...READ_ONLY_ROOM, "--ro-bind", root, root, "--chdir", root, "bash", "-c", command])
 }}
 
 export default function chanksControls(pi: any) {{
@@ -721,7 +724,7 @@ export default function chanksControls(pi: any) {{
       if (typeof command !== "string" || command.trim() === "") {{
         return {{ block: true, reason: "💪 Chanks · blocked · bash no declara el comando que va a ejecutar" }}
       }}
-      const confined = readOnlyConfinement(command)
+      const confined = readOnlyConfinement(command, root)
       if (confined === null) {{
         return {{ block: true, reason: "💪 Chanks · blocked · no hay confinamiento de sólo lectura disponible, así que se rechaza sin salida permisiva" }}
       }}
