@@ -1,0 +1,20 @@
+Control Tower — lo que falta
+
+Método V1: 33% (1/3 S)
+  Radar prioritario
+    - S2 — Segunda sesión, lista (🟢 LISTO)
+  - S3 — Tercera sesión, depende de S2 (📋 PLANIFICADO)
+
+Torre V1: 0% (0/2 S)
+  Release instalable
+    - S4 — Cuarta sesión, espera su turno (espera turno)
+    - S5 — Quinta sesión, bloqueada (🔴 BLOQUEADO: ¿Se aprueba el criterio X?)
+
+Torre V2: — (sin Sesiones enumeradas)
+  Sin Sesiones abiertas.
+
+Sin meta declarada: 0% (0/1 S)
+  - S7 — Séptima sesión, sin meta declarada (🟢 LISTO)
+
+Faltan 5 Sesión(es); 2 lista(s) para empezar.
+1 Sesión(es) apartada(s) (diferida: true) no cuentan en los porcentajes ni en la lista.

@@ -14,6 +14,8 @@ const uso = `radar — herramienta determinista de planificación
   radar check   [-f openspec/plan.yaml] [-C raíz] valida el dato, git y la partición
   radar status  [-f openspec/plan.yaml] [-C raíz] [--json] estado, colas y asientos calculados
   radar sesion  <ID> [-f openspec/plan.yaml] [-C raíz] contrato completo de una sola Sesión
+  radar faltan  [<ID>] [-f openspec/plan.yaml] [-C raíz] todas las Sesiones abiertas por meta y
+                subprioridad, con porcentaje honesto; con <ID>, una línea localizadora
   radar zonas   [-f openspec/plan.yaml] [-C raíz] cobertura sobre archivos rastreados
   radar roadmap [-f openspec/plan.yaml] [-C raíz] alternativas LISTO, compatibilidad
                 potencial por archivos e hipotéticos — previsión, no permiso
@@ -78,6 +80,19 @@ func main() {
 			os.Exit(2)
 		}
 		if err := cmdSesion(os.Stdout, p, root, posicionales[0]); err != nil {
+			fmt.Fprintln(os.Stderr, "✗", err)
+			os.Exit(1)
+		}
+	case "faltan":
+		if len(posicionales) > 1 {
+			fmt.Fprint(os.Stderr, "uso: radar faltan [<ID>] [-f openspec/plan.yaml] [-C raíz]\n")
+			os.Exit(2)
+		}
+		id := ""
+		if len(posicionales) == 1 {
+			id = posicionales[0]
+		}
+		if err := cmdFaltan(os.Stdout, p, root, id); err != nil {
 			fmt.Fprintln(os.Stderr, "✗", err)
 			os.Exit(1)
 		}
