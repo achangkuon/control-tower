@@ -27,7 +27,8 @@ type Politica struct {
 	// TopeDeLote is the review-lot ceiling in authored lines. Absent means no
 	// ceiling was declared, and radar measures nothing — inventing a policy
 	// nobody declared is worse than not checking one.
-	TopeDeLote int `yaml:"tope_de_lote"`
+	TopeDeLote     int      `yaml:"tope_de_lote"`
+	ExcluirDelLote []string `yaml:"excluir_del_lote"`
 }
 
 // Plan is the single written artifact for one product.

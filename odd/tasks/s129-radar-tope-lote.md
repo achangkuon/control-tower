@@ -1,0 +1,19 @@
+# S129 — Radar module delivery batch measurement
+
+Technical continuity only; product authority is the native Session contract from installed Radar. Admission HEAD: `a51b3c3d76182eef3c0d8350ca310927bcc5bc51`, LISTO, native Encargo. The maintainer explicitly authorized this exact ODD record; Main amended the plan and Radar still reports all three selected Sessions compatible (0 errors in `radar check`).
+
+## Objective and scope
+
+When `politica.tope_de_lote` exists, count additions plus deletions in the delivered commits belonging to each `Modulo:` trailer, excluding exact files or directory prefixes named by `politica.excluir_del_lote`; without that list exclude nothing. Warn, never error, when a Module exceeds the top; fallback to the delivery commit for a Session with no Module trailers. Use immutable HEAD ancestry, not the working tree. Without a declared top, do not measure. No unrelated policy change.
+
+Authorized implementation: `agent-workflows/tools/radar/plan.go`, `check.go`, `check_test.go`, `avance.go`, plus this record. Do not edit other files or product plan without new human authorization and fresh compatibility. Execute serially in Main.
+
+## Execution
+
+- [ ] S129-W1 (delegated): Extend the policy type and immutable Git commit/Module measurement, add focused regression coverage for exclusions, deletions, fallback, warnings, no limit, and ancestry. Use RED → GREEN → REFACTOR under explicitly configured strict TDD. Run `go test ./...` in `agent-workflows/tools/radar`, read back the relevant Radar behavior, and prepare the normalized complete Session candidate for one review. The maintainer explicitly authorized this candidate's local work-unit commit despite unavailable native review; no push or S133 review exception is authorized. Evidence: delegated writer observed RED (`TestLoteEntregadoMideCadaModulo` initially produced one warning rather than two); GREEN and refactor passed. `cd agent-workflows/tools/radar && go test ./...` passed; `git diff --check` passed. Only `plan.go`, `check.go`, and `check_test.go` changed, 217 authored additions+deletions. Tests cover deletions, exact/prefix exclusions, missing list/top, fallback, warnings, pinned ancestry and dirty-tree isolation. Merge-commit diff accounting was not separately tested. Independent verifier ran `go test -count=1 ./...` (PASS, 4.413s), `git diff --check` (PASS), and scope readback. Its negative-limit concern was confirmed pre-existing in HEAD, so no candidate-caused failure remains demonstrated; merge-commit accounting remains untested. Native review inspect selected only this ODD record, then stopped `managed_assets_outdated` without a lineage; assess returned unassessable and required this independent verifier. Local S129 commit authorized and pending; delivery remains pending.
+
+Acceptance: each delivered Module gets its own measured additions+deletions; excluded paths do not count, absent exclusions count everything; excess produces `tope de lote` warning naming Session, Module, count and limit; Session without trailers measures delivery commit; no top means no measurement; only authorized files change. Rollback: this Session's authorized Radar files only.
+
+Route: delegated generic bounded writer (4 files to understand, 2+ nontrivial writes). TDD source: `openspec/config.yaml` has `strict_tdd: true`; per-language runner is the Session's `go test ./...`. Delivery strategy: ask-on-risk. Preliminary authored estimate 180–300 diff lines. Only the local S129 work-unit commit is authorized; no push and no commit/review exception for S133. Do not mark task complete until behavior, checks and work-unit commit are observed.
+
+Next: commit exactly the checked S129 candidate and this record locally, then revalidate Radar admission for S133. Do not sync agent assets or push.

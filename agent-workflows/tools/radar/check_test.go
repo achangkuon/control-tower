@@ -2,10 +2,126 @@ package main
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 )
+
+func commitLote(t *testing.T, root, path, body, message string) string {
+	t.Helper()
+	file := filepath.Join(root, path)
+	if err := os.MkdirAll(filepath.Dir(file), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(file, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	for _, args := range [][]string{{"add", "--", path}, {"commit", "-qm", message}} {
+		if out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v: %s", args, err, out)
+		}
+	}
+	head, err := gitHEAD(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return head
+}
+
+func TestLoteEntregadoMideCadaModulo(t *testing.T) {
+	root, _ := repoGit(t)
+	commitLote(t, root, "one.txt", "a\nb\nc\n", "first\n\nModulo: M1.1")
+	delivery := commitLote(t, root, "two.txt", "d\ne\nf\ng\n", "second\n\nModulo: M1.2")
+	p := &Plan{Politica: Politica{TopeDeLote: 2}}
+	s := &Sesion{ID: "S1", Entrega: &Entrega{Commit: delivery}, Modulos: []Modulo{{ID: "M1.1"}, {ID: "M1.2"}}}
+	h := medirLoteEntregado(p, root, delivery, s)
+	if len(h) != 2 || h[0].Severidad != "aviso" || h[1].Severidad != "aviso" ||
+		!strings.Contains(h[0].Detalle, "M1.1") || !strings.Contains(h[0].Detalle, "3") ||
+		!strings.Contains(h[1].Detalle, "M1.2") || !strings.Contains(h[1].Detalle, "4") {
+		t.Fatalf("cada Módulo debe tener su aviso y su medida: %+v", h)
+	}
+	p.Sesiones = []Sesion{*s}
+	if got := hallazgosDe(p.checkSesionesAt(root, delivery), "tope de lote"); len(got) != 2 || got[0].Severidad != "aviso" || got[1].Severidad != "aviso" {
+		t.Fatalf("radar check debe publicar avisos, nunca errores: %+v", got)
+	}
+}
+
+func TestLoteSumaBorradosYExcluyeRutasDeclaradas(t *testing.T) {
+	root, _ := repoGit(t)
+	commitLote(t, root, "code.txt", "a\nb\nc\n", "start\n\nModulo: M1.1")
+	delivery := commitLote(t, root, "code.txt", "a\n", "delete\n\nModulo: M1.1")
+	commitLote(t, root, "policy.txt", "p\nq\nr\ns\nt\n", "policy\n\nModulo: M1.1")
+	commitLote(t, root, "notes/doc.md", "p\nq\nr\ns\n", "docs\n\nModulo: M1.1")
+	head := commitLote(t, root, "notes-sibling/doc.md", "x\ny\nz\n", "other\n\nModulo: M1.1")
+	s := &Sesion{ID: "S1", Entrega: &Entrega{Commit: delivery}, Modulos: []Modulo{{ID: "M1.1"}}}
+	p := &Plan{Politica: Politica{TopeDeLote: 7, ExcluirDelLote: []string{"policy.txt", "notes/"}}}
+	// Three added and two deleted lines plus the sibling's three: 8.
+	got := medirLoteEntregado(p, root, head, s)
+	if len(got) != 1 || got[0].Severidad != "aviso" || !strings.Contains(got[0].Detalle, "S1, M1.1: 8 líneas medidas; tope 7") {
+		t.Fatalf("la exclusión exacta y de prefijo no debe esconder un directorio hermano: %+v", got)
+	}
+	p.Politica.TopeDeLote = 8
+	if got := medirLoteEntregado(p, root, head, s); len(got) != 0 {
+		t.Fatalf("el borde exacto no avisa: %+v", got)
+	}
+	p.Politica.ExcluirDelLote = nil
+	p.Politica.TopeDeLote = 16
+	if got := medirLoteEntregado(p, root, head, s); len(got) != 1 || !strings.Contains(got[0].Detalle, "17 líneas medidas") {
+		t.Fatalf("sin exclusiones se cuenta todo, incluidos borrados: %+v", got)
+	}
+}
+
+func TestLoteNativoConTrailerSinModulosDeclarados(t *testing.T) {
+	root, _ := repoGit(t)
+	commitLote(t, root, "first.txt", "a\nb\n", "first\n\nModulo: M1.1")
+	delivery := commitLote(t, root, "last.txt", "c\n", "delivery")
+	s := &Sesion{ID: "S1", Entrega: &Entrega{Commit: delivery}}
+	p := &Plan{Politica: Politica{TopeDeLote: 1}}
+	got := medirLoteEntregado(p, root, delivery, s)
+	if len(got) != 1 || !strings.Contains(got[0].Detalle, "M1.1: 2 líneas") {
+		t.Fatalf("los trailers nativos cuentan aun sin Módulos declarados: %+v", got)
+	}
+}
+
+func TestLoteSinTrailersUsaEntregaYSinTopeNoMide(t *testing.T) {
+	root, _ := repoGit(t)
+	delivery := commitLote(t, root, "code.txt", "a\nb\n", "delivery")
+	head := commitLote(t, root, "later.txt", "a\nb\nc\nd\n", "later")
+	s := &Sesion{ID: "S1", Entrega: &Entrega{Commit: delivery}}
+	p := &Plan{Politica: Politica{TopeDeLote: 1}}
+	got := medirLoteEntregado(p, root, head, s)
+	if len(got) != 1 || got[0].Severidad != "aviso" || !strings.Contains(got[0].Detalle, "S1, sin Módulo: 2 líneas medidas; tope 1") {
+		t.Fatalf("la Sesión sin trailers mide sólo su entrega: %+v", got)
+	}
+	p.Politica.TopeDeLote = 0
+	s.Entrega.Commit = "not-a-commit"
+	if got := medirLoteEntregado(p, root, head, s); len(got) != 0 {
+		t.Fatalf("sin tope no se consulta Git ni se falla: %+v", got)
+	}
+}
+
+func TestLoteSoloLeeAncestriaDelHeadFijado(t *testing.T) {
+	root, base := repoGit(t)
+	fixtureGit := func(args ...string) {
+		t.Helper()
+		if out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v: %s", args, err, out)
+		}
+	}
+	fixtureGit("switch", "-qc", "outside", base)
+	commitLote(t, root, "off.txt", "a\nb\nc\nd\n", "outside\n\nModulo: M1.1")
+	fixtureGit("switch", "-q", "-")
+	delivery := commitLote(t, root, "inside.txt", "a\n", "inside\n\nModulo: M1.1")
+	if err := os.WriteFile(filepath.Join(root, "inside.txt"), []byte("a\nb\nc\nd\ne\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	s := &Sesion{ID: "S1", Entrega: &Entrega{Commit: delivery}, Modulos: []Modulo{{ID: "M1.1"}}}
+	p := &Plan{Politica: Politica{TopeDeLote: 1}}
+	if got := medirLoteEntregado(p, root, delivery, s); len(got) != 0 {
+		t.Fatalf("ni la rama ajena ni el árbol sucio pertenecen al HEAD fijado: %+v", got)
+	}
+}
 
 func hallazgosDe(h []Hallazgo, regla string) []Hallazgo {
 	var out []Hallazgo

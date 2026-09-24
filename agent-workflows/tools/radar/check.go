@@ -217,7 +217,7 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 		}
 		h = append(h, validarAutoridad(root, s)...)
 		h = append(h, validarArchivo(p, s)...)
-		h = append(h, medirLoteEntregado(p, root, s)...)
+		h = append(h, medirLoteEntregado(p, root, head, s)...)
 		if s.esEncargo() {
 			h = append(h, p.checkEncargo(root, head, s)...)
 			h = append(h, checkSolicitudSDD(s)...)
@@ -899,23 +899,101 @@ func tieneSucesora(p *Plan, id string) bool {
 	return false
 }
 
-// medirLoteEntregado measures the recorded delivery against the declared
-// ceiling. It runs after delivery, never before: the cap is a closing check,
-// not a gate, and there is nothing to measure until a commit exists.
-func medirLoteEntregado(p *Plan, root string, s *Sesion) []Hallazgo {
+// medirLoteEntregado reads only commits reachable from the pinned HEAD. A
+// Session without Module trailers retains its delivery-commit fallback.
+func medirLoteEntregado(p *Plan, root, head string, s *Sesion) []Hallazgo {
 	if p.Politica.TopeDeLote <= 0 || s.Entrega == nil || strings.TrimSpace(s.Entrega.Commit) == "" {
 		return nil
 	}
-	lineas, err := lineasEscritas(root, s.Entrega.Commit)
-	if err != nil {
-		return []Hallazgo{{"error", "tope de lote", fmt.Sprintf("%s: no se pudo medir el candidato entregado: %v", s.ID, err)}}
+	if ok, _ := entregaIntegrada(root, s.Entrega.Commit, head); !ok {
+		return nil // checkSesionesAt reports invalid delivery evidence separately.
 	}
+	formato := "--format=%H%x1f%(trailers:key=" + trailerDeModulo + ",valueonly,separator=%x1f)%x1e"
+	out, err := gitOutput(root, "log", formato, head)
+	if err != nil {
+		return []Hallazgo{{"error", "tope de lote", fmt.Sprintf("%s: no se pudieron leer los commits: %v", s.ID, err)}}
+	}
+	deSesion := map[string]bool{}
+	for _, m := range s.Modulos {
+		deSesion[m.ID] = true
+	}
+	prefijo := "M" + strings.TrimPrefix(s.ID, "S") + "."
+	lineas := map[string]int{}
+	for _, registro := range strings.Split(out, "\x1e") {
+		campos := strings.Split(strings.TrimSpace(registro), "\x1f")
+		if len(campos) < 2 || campos[0] == "" {
+			continue
+		}
+		ids := map[string]bool{}
+		for _, trailer := range campos[1:] {
+			id := strings.TrimSpace(trailer)
+			if deSesion[id] || (legacyModuloID.MatchString(id) && strings.HasPrefix(id, prefijo)) {
+				ids[id] = true
+			}
+		}
+		if len(ids) == 0 {
+			continue
+		}
+		n, measureErr := lineasDelCommit(root, campos[0], p.Politica.ExcluirDelLote)
+		if measureErr != nil {
+			return []Hallazgo{{"error", "tope de lote", fmt.Sprintf("%s: no se pudo medir %s: %v", s.ID, campos[0], measureErr)}}
+		}
+		for id := range ids {
+			lineas[id] += n
+		}
+	}
+	if len(lineas) == 0 {
+		n, measureErr := lineasDelCommit(root, s.Entrega.Commit, p.Politica.ExcluirDelLote)
+		if measureErr != nil {
+			return []Hallazgo{{"error", "tope de lote", fmt.Sprintf("%s: no se pudo medir la entrega: %v", s.ID, measureErr)}}
+		}
+		lineas["sin Módulo"] = n
+	}
+	ids := make([]string, 0, len(lineas))
+	for id := range lineas {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
 	var h []Hallazgo
-	for _, hallazgo := range validarTopeDeLote(p, lineas) {
-		hallazgo.Detalle = s.ID + ": " + hallazgo.Detalle
-		h = append(h, hallazgo)
+	for _, id := range ids {
+		if lineas[id] > p.Politica.TopeDeLote {
+			h = append(h, Hallazgo{"aviso", "tope de lote", fmt.Sprintf("%s, %s: %d líneas medidas; tope %d", s.ID, id, lineas[id], p.Politica.TopeDeLote)})
+		}
 	}
 	return h
+}
+
+// lineasDelCommit counts text additions and deletions, ignoring only declared
+// exact files or directory prefixes. NUL numstat preserves paths with spaces.
+func lineasDelCommit(root, commit string, excluir []string) (int, error) {
+	out, err := gitOutput(root, "show", "--no-renames", "--numstat", "-z", "--format=", commit)
+	if err != nil {
+		return 0, err
+	}
+	total := 0
+	for _, entry := range strings.Split(out, "\x00") {
+		campos := strings.SplitN(strings.TrimPrefix(entry, "\n"), "\t", 3)
+		if len(campos) != 3 || campos[0] == "-" || campos[1] == "-" {
+			continue // Git cannot count binary lines.
+		}
+		skip := false
+		for _, path := range excluir {
+			if path != "" && (campos[2] == path || (strings.HasSuffix(path, "/") && strings.HasPrefix(campos[2], path))) {
+				skip = true
+				break
+			}
+		}
+		if skip {
+			continue
+		}
+		added, e1 := strconv.Atoi(campos[0])
+		deleted, e2 := strconv.Atoi(campos[1])
+		if e1 != nil || e2 != nil {
+			return 0, fmt.Errorf("numstat inválido para %q", campos[2])
+		}
+		total += added + deleted
+	}
+	return total, nil
 }
 
 // lineasEscritas counts added lines in one commit. Binary files report "-" in
