@@ -46,13 +46,13 @@ Only these repository files may be written:
 
 1. Switch `on` / `off` / `status` per repository. Only the human changes it. Default is `off`. `on` is refused when `openspec/plan.yaml` is missing. Worktrees of the same repository share the state, which lives outside the versioned tree.
 2. With the switch off, or with no plan, the extension neither asks nor blocks anything.
-3. With the switch on and no key, reading tools work and Bash runs under a read-only confinement. Write and Edit are blocked. The goal is objective A, confirmed by Emilio on 2026-09-23: the key identifies which Session is working and guards a cooperative agent against accidental writes. It is not a sandbox against an agent that deliberately tries to escape.
+3. With the switch on and no key, reading tools work and Bash runs under a read-only confinement. Write and Edit are blocked. The goal is objective A, confirmed by Emilio on 2026-09-23: the key identifies which Session is working. It is not a sandbox against an agent that deliberately tries to escape.
 4. The extension builds the admission from git and the installed Radar by itself. No external envelope is used.
-5. Session key: requested for a named Session in `LISTO` or `EN CURSO`. Pi's own question shows the Session, worktree, files, Cimientos, resources, and base. Acceptance enables exactly those files.
-6. Planning key: acceptance enables only `openspec/plan.yaml` and `openspec/ROADMAP.md`.
-7. The model can request a key but can never answer the question, flip the switch, or widen files. A decline, a missing UI, or invalid or stale evidence keeps writes blocked. The key drops on a change of Session, base, worktree, or runtime.
+5. **Superseded 2026-09-23 (Engram 11475 — see "Referential key" below).** Session key: requested for a named Session in `LISTO` or `EN CURSO`. Pi's own question shows the Session, worktree, files, Cimientos, resources, and base. Acceptance *identifies* the Session for the Main agent — it enables nothing and blocks nothing; every tool call passes through exactly as if the extension were absent.
+6. **Superseded 2026-09-23 (Engram 11475 — see "Referential key" below).** Planning key: acceptance identifies the planning key as active for the Main agent — it does not enable or limit any particular file; every tool call passes through once active.
+7. The model can request a key but can never answer the question or flip the switch. A decline, a missing UI, or invalid or stale evidence keeps writes blocked. The key survives HEAD advancing (the agent's own commits) and any plan row changing later, including the Session's own. It drops when the Pi session shuts down, reloads, or is replaced; when the repository root or worktree differs; or when the switch is turned off.
 8. The session kickoff skill and the tramo 1 and tramo 2 skills say when to request each key.
-9. A real Pi (0.87.1) in an isolated HOME loads the generated extension and proves points 2, 3, 5, 6, and 7 through actual dispatch.
+9. A real Pi (0.87.1) in an isolated HOME loads the generated extension and proves points 2, 3, 5, 6, and 7 through actual dispatch (points 5 and 6 as superseded: acceptance identifies, blocks nothing).
 
 ## Checks
 
@@ -126,6 +126,12 @@ Direct commit to `master` per `AGENTS.md`. Every task closes with a work-unit co
   - Advisory observation (reported, not fixed): watched for R3-per-call-subprocess-revokes-key
     across the three consecutive authorized writes in item 4 — NOT observed in this run; all
     three landed and the live-identity check held every time.
+  - **Superseded 2026-09-23 (Engram 11475 — see "Referential key" below).** Results 4 and 6 above
+    ("a write to `docs/notes.md` was blocked" under the Session key; "a write elsewhere was
+    blocked" under the planning key) proved the confinement this Session originally shipped. That
+    confinement is now removed: once a key is active, every write passes. This journey is not
+    re-run against the new behavior here; the real validation is Pi actually implementing S152
+    after delivery.
   - Isolation: every harness file, the temp HOME, the two temp git repos, and the fake `radar`
     lived under the session scratchpad's `t5/` directory; all deleted at the end except a short
     evidence log. Repository `git status --short` was captured before and after and is
@@ -207,6 +213,60 @@ Direct commit to `master` per `AGENTS.md`. Every task closes with a work-unit co
     have pi-controls.mjs *create* that file — F1 only stops that declaration from blocking
     admission for the files that do exist. Creation itself stays whatever `pi-controls.mjs` does
     today, per the human's explicit scope decision for this addendum.
+- [x] Referential key (Engram 11475, human decision 2026-09-23) — the key must not prevent
+  anything; it only identifies, for the Main agent, which Session (or planning) a Pi is working.
+  Evidence for the decision: under the previous confinement, a real Session (S152) could not
+  create its 4 new files, run `go test` (build cache), or `git commit` (`.git`) while its key was
+  active. Route: inline parent (bounded writer for this Session).
+  - **W1 — unconstrained once active.** `install.py`'s generated `tool_call` handler now checks
+    `authority.estado() === "activa"` (a plain, no-I/O state read) and returns `{}` for every tool
+    once a key is active: no bwrap room, no path limits, no call into pi-controls.mjs's
+    confinement (`gobernar`/`capacidad`). Without a key, behavior is unchanged: reads pass, Bash
+    runs in the read-only room, write/edit are blocked telling the agent to call
+    `chanks_request_activation`. Switch off/no plan stays pass-through, key or no key. Every
+    now-dead `.cerrar()` call was dropped from the activation tool.
+  - **W2 — key lifetime.** `pi-admission.mjs`'s `identidadActual()` is now a fixed, no-I/O
+    snapshot captured once when the admission is built, instead of re-deriving live identity from
+    `git`/Radar on every call. A referential key has nothing left to prove "live" against, so HEAD
+    advancing (the agent's own commits) and any plan row changing later — including the Session's
+    own — never drop the key, and no subprocess is ever spawned again on its account.
+    `pi-authority.mjs` and `pi-controls.mjs` were **not** simplified or edited: their full
+    confinement capability (`capacidad()` → `gobernar()`, retained file handles, drift detection)
+    stays intact and is still directly exercised by the out-of-scope, untouchable
+    `pi-controls.test.mjs` — the generated extension simply stops calling any of it. This was a
+    correction mid-implementation: an earlier attempt to also strip that machinery out of
+    `pi-authority.mjs` broke `pi-controls.test.mjs` (5 failures), and was reverted.
+  - **W3 — wording.** The kickoff skill's "Organic Pi Admission" section no longer says the key
+    "guards a cooperative agent against accidental writes" or "enables exactly those files" —
+    both false once active. It now says plainly: the key identifies the Session for the Main
+    agent and blocks nothing once active; without it, writes are blocked; and it names the exact
+    three drop conditions (session shutdown/reload/replace, worktree/root differs, switch off)
+    against the two things it explicitly survives (HEAD advancing, any plan row changing).
+    `chanks-1-autoridad` and `chanks-2-planificador-granular` were checked and left unchanged:
+    their one-line planning-key rules ("request the key before writing plan.yaml") never implied
+    a limit, so there was nothing to correct. `test_builder_flow.py` needed no changes — its
+    assertions check for phrase presence (`chanks_request_activation`, `never answer`, etc.), none
+    of which depended on the removed "guards"/"enables exactly" language.
+  - RED (W1+W2, combined since both touched the same two files): reverted `pi-admission.mjs`
+    alone and reran `pi-admission.test.mjs` — 1 new test failed with "la evidencia viva ya no
+    coincide con la admisión" (16 pass / 1 fail). Separately reverted `install.py` alone and
+    reran `test_install.py`'s `PiAuthorityExtensionTests` — 3 tests failed asserting a write to a
+    non-declared file, or bash, stayed unconfined under an active key (17 pass / 3 fail).
+  - GREEN: both restored. `bun test agent-workflows/tests/chanks` — 239 pass, 0 fail (net −2 from
+    241: three old file-identity/subprocess-tracking tests in `pi-admission.test.mjs` collapsed
+    into one "identidadActual nunca vuelve a invocar git ni radar" test that proves the same
+    module directly). `python3 -m unittest discover -s agent-workflows/tests` — 161 tests, 1
+    skipped (pre-existing, environment-dependent), 0 fail — net +1 from 160 (two new proof tests
+    in `test_install.py` for the HEAD-change/unrelated-row-change survival, two renamed/rewritten
+    in place, no test removed).
+  - Commits: `7f53da0` (W1+W2, `pi-admission.mjs` + `install.py` + their tests), `1d90414` (W3,
+    kickoff skill wording).
+  - T5 superseded: items 4 ("a write to `docs/notes.md` was blocked" under the Session key) and 6
+    ("a write elsewhere was blocked" under the planning key) in that section's real-Pi journey no
+    longer hold and are not re-verified here — this decision was made and implemented *after* T5
+    ran, against the confinement T5 was built to prove. The real validation of the new,
+    unconstrained behavior is Pi actually implementing S152 after delivery, per the human's own
+    framing of this decision.
 
 ## Progress
 
@@ -220,6 +280,8 @@ Direct commit to `master` per `AGENTS.md`. Every task closes with a work-unit co
 
 ## Next step
 
-T5 (real isolated Pi journey) and T6 (delivery) both require the human's explicit confirmation
-first — T5 for exclusive use of the isolated Pi runtime resource, T6 for push/reinstall/switch-on.
-Neither was started by this writer.
+T1–T5, the review corrections, the four advisory fixes, and the referential-key decision
+(Engram 11475) are all done, each with its own RED/GREEN evidence and commit(s). Only T6
+(delivery: push, reinstall, switch on here, offer propagation) remains, and it requires the
+human's explicit confirmation first, per the Session's own Delivery section. Not started by this
+writer.
