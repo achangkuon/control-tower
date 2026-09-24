@@ -9437,6 +9437,8 @@ sesiones:
         falsificador: >-
           Una Sesión diferida por prioridad desaparece del porcentaje de su meta, o una Sesión
           con `diferida: true` lo reduce.
+    entrega:
+      commit: 452957a0d9394043b3be79724fc4271182ad7b53
   - id: S153
     zona: metodo
     prioridad: metodo-v1-controles-prioritarios

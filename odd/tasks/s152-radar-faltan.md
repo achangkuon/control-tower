@@ -56,7 +56,7 @@ Direct commit to `master` per `AGENTS.md`. One work-unit commit per task; RDD is
 - [x] T1 — `radar faltan` grouped view with percentages, "espera turno", blockers, footer; golden test. Files: `faltan.go`, `faltan_test.go`, `testdata/faltan.golden.txt`, `main.go`. Route: delegated writer (writer trigger: 2+ non-trivial files; mapping trigger: 4+ files to understand).
 - [x] T2 — `radar faltan <ID>` one-line locator; tests. Files: same as T1. Route: same delegated writer.
 - [x] T3 — Documentation: README, shared naming convention, `AGENTS.md` naming rule. Route: same delegated writer.
-- [ ] T4 — Delivery after human confirmation: push, reinstall Radar, record `entrega.commit`, offer propagation.
+- [x] T4 — Delivery after human confirmation: push, reinstall Radar, record `entrega.commit`, offer propagation.
 
 ## Progress
 
@@ -97,3 +97,14 @@ Direct commit to `master` per `AGENTS.md`. One work-unit commit per task; RDD is
 - 2026-09-24: T4 intentionally not done — delivery requires the human's confirmation per
   this Session's own Delivery section (push, reinstall `~/.local/bin/radar`, offer
   propagation). Nothing was pushed; `install-radar.sh` was not run.
+- 2026-09-24: parent spot check against the real plan found the "Sin meta declarada"
+  fallback bucket printed with 64 closed legacy Sessions and no open ones, contradicting
+  README. RED: `go test -run TestRenderFaltan ./...` → new
+  `TestRenderFaltanOcultaSinMetaDeclaradaSinAbiertas` FAIL. GREEN: `go test ./...` → ok;
+  `go vet ./...` clean. Commit `452957a`.
+- 2026-09-24: RDD assessment of `51a7981..452957a`: risk medium, `review_due` true
+  (`slice_budget_reached`). The provider START required `--base-ref`, which the maintainer's
+  policy bans for new reviews; Emilio chose to deliver without review (option A).
+- 2026-09-24: T4 delivered. Pushed `452957a` (pre-push: Radar 0 errors, suite green);
+  `agent-workflows/tools/install-radar.sh` reinstalled `~/.local/bin/radar`, and the
+  installed binary answers `radar faltan S152`. Plan records `entrega.commit: 452957a`.
