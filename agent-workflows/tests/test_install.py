@@ -897,6 +897,33 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         self.assertNotEqual(confined, "printf before")
         self.assertIn("requires", outcome["activation"]["content"][0]["text"])
 
+    def test_no_key_room_hides_host_unix_sockets_and_environment(self):
+        # A read-only bind does not stop connect() on a socket inode: a host daemon reachable
+        # through /tmp or /run could write on the agent's behalf. The room must hide both
+        # directories and must not inherit the host environment.
+        import socket
+        socket_dir = Path(tempfile.mkdtemp(prefix="chanks-sock-", dir="/tmp"))
+        self.addCleanup(shutil.rmtree, socket_dir, True)
+        socket_path = socket_dir / "daemon.sock"
+        server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.addCleanup(server.close)
+        server.bind(str(socket_path))
+        server.listen(1)
+        outcome = self._run_shim(self._default_scenario())
+        confined = outcome["before"]["bash"]["input"]["command"]
+        probe = confined.replace(
+            "'printf before'",
+            f"'test -e {socket_path} && echo socket-visible; echo leaked=${{CHANKS_ROOM_SENTINEL:-}}'",
+        )
+        self.assertNotEqual(probe, confined)
+        result = subprocess.run(
+            ["bash", "-c", probe], capture_output=True, text=True,
+            env={**os.environ, "CHANKS_ROOM_SENTINEL": "host"}, timeout=30,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("socket-visible", result.stdout)
+        self.assertIn("leaked=\n", result.stdout)
+
     def test_session_key_activation_grants_exactly_its_authorized_files(self):
         self._write_radar([{
             "id": "S200", "estado": "LISTO", "archivos": ["a.mjs", "cimiento.mjs"],

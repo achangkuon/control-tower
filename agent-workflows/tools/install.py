@@ -555,15 +555,24 @@ const confirmationOf = (bundle: any) => [
 // decision: with no active key there is no authority object for pi-controls.mjs to decide over.
 const READ_ONLY_TOOLS = ["read", "grep", "find", "ls"]
 
+// A read-only bind does not stop connect() on a socket inode, so host daemons listening under
+// /tmp or /run (user bus, tmux, docker, ssh-agent) could write on the agent's behalf. The room
+// hides both directories behind empty tmpfs mounts and starts from a clean environment, which
+// also drops socket addresses such as SSH_AUTH_SOCK or DBUS_SESSION_BUS_ADDRESS.
 const READ_ONLY_ROOM = [
   "/usr/bin/bwrap",
   "--ro-bind", "/", "/",
   "--dev", "/dev",
   "--proc", "/proc",
+  "--tmpfs", "/tmp",
+  "--tmpfs", "/run",
   "--tmpfs", "/var/tmp",
+  "--clearenv",
+  "--setenv", "PATH", "/usr/local/bin:/usr/bin:/bin",
   "--setenv", "TMPDIR", "/var/tmp",
   "--unshare-all",
   "--unshare-net",
+  "--new-session",
   "--die-with-parent",
 ]
 
