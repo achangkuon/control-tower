@@ -9349,6 +9349,8 @@ sesiones:
         falsificador: >-
           La excepción se usa para ampliar archivos o comportamiento, omitir pruebas/revisión o
           presentar una integración parcial como control efectivo completo.
+    entrega:
+      commit: 8f367437c8463bf6023937b1b16544f1c7452cee
 references:
   future_successors:
     - id: S102

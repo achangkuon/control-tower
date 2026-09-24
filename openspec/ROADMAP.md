@@ -2,16 +2,16 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S128, S130, S131, S132, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
-- Prioridad activa: Método V1 · Controles prioritarios.
-- Próximo trabajo ejecutable: Método #3 → S151 — Pi activa los controles Chanks únicamente con autoridad efímera de una Sesión humana admitida, aplica realmente el confinamiento al comando ejecutado y bloquea ante autoridad, reservas o recursos ausentes o vencidos..
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S124, S125, S126, S127, S128, S130, S131, S132, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S151, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Prioridad activa: Método V1.
+- Próximo trabajo ejecutable: Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
 ## Estado y próximo trabajo
-- Método #3 → S151 — Pi activa los controles Chanks únicamente con autoridad efímera de una Sesión humana admitida, aplica realmente el confinamiento al comando ejecutado y bloquea ante autoridad, reservas o recursos ausentes o vencidos.
+- Método #2 → S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 
 ## Avance
-- **Total:** 69% (83/120 S)
+- **Total:** 70% (84/120 S)
 - 16 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
@@ -24,7 +24,7 @@
 - **Hosts:** 60% (3/5 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 79% (23/29 S)
+- **Método:** 82% (24/29 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -65,8 +65,10 @@
 
 ### Método (metodo)
 1. **S115** · 📋 PLANIFICADO · prioridad Torre V3 · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
-2. **S123** · 📋 PLANIFICADO · prioridad Torre V3 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
-3. **S151** · 🟢 LISTO · prioridad Método V1 · Controles prioritarios · Pi activa los controles Chanks únicamente con autoridad efímera de una Sesión humana admitida, aplica realmente el confinamiento al comando ejecutado y bloquea ante autoridad, reservas o recursos ausentes o vencidos.
+2. **S122** · 🟢 LISTO · prioridad Método V1 · Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
+3. **S123** · 📋 PLANIFICADO · prioridad Torre V3 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
+4. **S129** · 🟢 LISTO · prioridad Método V1 · Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
+5. **S133** · 🟢 LISTO · prioridad Método V1 · El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · prioridad Torre V2 · Handoffs y despacho Tower-owned · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -888,7 +890,7 @@
 
 ### S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 - Coordinación:
-  - Estado derivado: 🟡 DIFERIDO
+  - Estado derivado: 🟢 LISTO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/tools/radar/state.go, agent-workflows/tools/radar/state&#95;test.go, agent-workflows/tools/radar/snapshot.go, agent-workflows/tools/radar/snapshot&#95;test.go, agent-workflows/tools/radar/render.go, agent-workflows/tools/radar/render&#95;test.go, agent-workflows/tools/radar/testdata/ROADMAP.golden.md
   - Depende de: S127
@@ -938,7 +940,7 @@
 
 ### S129 — Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
 - Coordinación:
-  - Estado derivado: 🟡 DIFERIDO
+  - Estado derivado: 🟢 LISTO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/check&#95;test.go, agent-workflows/tools/radar/avance.go
   - Depende de: S128
@@ -962,7 +964,7 @@
 
 ### S133 — El cierre de una Sesión no se declara completo hasta reinstalar las herramientas que cambió la entrega, según lo que declara el AGENTS.md del repositorio.
 - Coordinación:
-  - Estado derivado: 🟡 DIFERIDO
+  - Estado derivado: 🟢 LISTO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/skills/chanks-7-session-doc/SKILL.md, agent-workflows/tests/test&#95;builder&#95;flow.py
   - Depende de: S135
@@ -1190,7 +1192,7 @@
 
 ### S151 — Pi activa los controles Chanks únicamente con autoridad efímera de una Sesión humana admitida, aplica realmente el confinamiento al comando ejecutado y bloquea ante autoridad, reservas o recursos ausentes o vencidos.
 - Coordinación:
-  - Estado derivado: 🟢 LISTO
+  - Estado derivado: ✅ COMPLETO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/chanks/pi-authority.mjs, agent-workflows/chanks/pi-controls.mjs, agent-workflows/tools/install.py, agent-workflows/skills/chanks-3-session-kickoff/SKILL.md, agent-workflows/skills/chanks-4-puente/SKILL.md, agent-workflows/tests/chanks/pi-authority.test.mjs, agent-workflows/tests/chanks/pi-controls.test.mjs, agent-workflows/tests/test&#95;install.py, agent-workflows/tests/test&#95;builder&#95;flow.py, agent-workflows/tests/test&#95;puente&#95;sdd&#95;start.py, odd/tasks/s151-pi-authority.md
   - Depende de: S146
