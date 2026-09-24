@@ -98,6 +98,7 @@ cimientos:
     - README.md
     - ROADMAP.md
     - bin/torre
+    - bin/torre-semaphore.mjs
     - bun.lock
     - console/executor.mjs
     - console/validate.mjs
@@ -105,13 +106,18 @@ cimientos:
     - core.mjs
     - hosts/herdr-topology.mjs
     - hosts/seat-cli.mjs
+    # S149 comparte el inventario generado con S8.12 y S8.13; reserva exacta aprobada por Emilio (Engram 11564).
+    - install/runtime-payload.mjs
     - install.sh
     - mcp.mjs
     - odd/tasks/s117-instalacion-registros.md
+    - odd/tasks/s149-semaphore.md
     - package.json
     - radiografia.json
+    - scripts/build-semaphore.mjs
     - scripts/payload-closure.mjs
     - scripts/publish-runtime.mjs
+    - semaphore.mjs
     # Clasificación exclusiva de procedencia cerrada para S8.14/S9.1: estas rutas legacy no existen ni autorizan una fuente activa en HEAD.
     - ruta: skills/torre-control-entregas/SKILL.md
       ausencia_intencional: legado-retirado
@@ -149,6 +155,7 @@ cimientos:
     - test/pre-push-plan-gate.test.mjs
     - test/provenance/provenance.test.mjs
     - test/recovery.test.mjs
+    - test/semaphore-binary.test.mjs
     - validate-compact-message.py
 
 sesiones:
@@ -4395,6 +4402,7 @@ sesiones:
       - S149
     cimientos:
       - scripts/payload-closure.mjs
+      - install/runtime-payload.mjs
     recurso:
       - contrato RUNTIME_PAYLOAD_FILES
       - "bytes fuente Tower-owned editables de product/tower/profiles/{main,support,implementer}.md consumidos sin modificarlos"
@@ -4549,6 +4557,7 @@ sesiones:
       - preflight de host externo aislado; prohibidos globals reales
     cimientos:
       - bin/torre
+      - install/runtime-payload.mjs
       - test/install/launch-worker-cli.test.mjs
     archivos:
       - install/lifecycle.mjs
@@ -9071,9 +9080,26 @@ sesiones:
         falsificador: "Se inicia S148 sin S147 entregada e integrada, se presume un corte, forecast o excepción aprobados, se escribe SQL/código sin desglose y autoridad de inicio o se permite perder historia o activar la Torre por esta decisión."
   - id: S149
     prioridad: torre-v1
+    zona: cimientos
     resultado: La capa semáforo se distribuye como un ejecutable único que no exige bun instalado y conserva el contrato tower_* observable.
-    autoridad: "Corte Torre V1 aprobado por Emilio el 2026-09-18 (Engram 11327): la Torre V1 es el semáforo compilado, Radar y las skills. Eligió explícitamente compilar con `bun build --compile` sobre el código vigente en lugar de reescribir en Go, aceptando un ejecutable de mayor tamaño por llevar el runtime adentro, para preservar las 364 líneas ya verificadas y su suite. La medición que sostiene el corte está en Engram 11325 y 11326."
+    autoridad: "Corte Torre V1 aprobado por Emilio el 2026-09-18 (Engram 11327): la Torre V1 es el semáforo compilado, Radar y las skills. Eligió explícitamente compilar con `bun build --compile` sobre el código vigente en lugar de reescribir en Go, aceptando un ejecutable de mayor tamaño por llevar el runtime adentro, para preservar las 364 líneas ya verificadas y su suite. La medición que sostiene el corte está en Engram 11325 y 11326. Emilio eligió extraer la capa semáforo a un módulo propio y aprobó preparar siete archivos exactos en Cimientos, incluida la reserva compartida del inventario generado con S8.12 y S8.13 (Engram 11555 y 11564); esta preparación no autoriza aún implementar ni una excepción al tamaño de revisión."
     depende_de: []
+    cimientos:
+      - core.mjs
+      - semaphore.mjs
+      - bin/torre-semaphore.mjs
+      - scripts/build-semaphore.mjs
+      - test/semaphore-binary.test.mjs
+      - install/runtime-payload.mjs
+      - odd/tasks/s149-semaphore.md
+    archivos:
+      - core.mjs
+      - semaphore.mjs
+      - bin/torre-semaphore.mjs
+      - scripts/build-semaphore.mjs
+      - test/semaphore-binary.test.mjs
+      - install/runtime-payload.mjs
+      - odd/tasks/s149-semaphore.md
     encargo:
       pedido_contexto: >-
         La capa semáforo de core.mjs —register, setState, send, receive, acquire, release,
@@ -9103,23 +9129,43 @@ sesiones:
         S8.12 pueda enumerarlo por huella exacta.
       restricciones_decisiones: >-
         Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana
-        explícita. El territorio todavía no está resuelto: falta decidir si la capa semáforo se
-        extrae a un módulo propio o se compila desde core.mjs tal como está, y esa decisión
-        determina los archivos y los Cimientos exactos. Hasta resolverla el Encargo permanece
-        incompleto y no autoriza archivos, Cimientos ni escritura.
+        explícita. El territorio aprobado para preparación es Cimientos, con los siete archivos
+        exactos declarados. Se extrae el semáforo a semaphore.mjs y se conserva la interfaz
+        vigente de core.mjs para sus consumidores; el binario entra por
+        bin/torre-semaphore.mjs y scripts/build-semaphore.mjs, con prueba propia. El inventario
+        generado install/runtime-payload.mjs se normaliza sólo para reflejar la importación
+        nueva de core.mjs, no para decidir el empaquetado de S8.12. Su reserva exacta es
+        compartida con S8.12 y S8.13 y requiere exclusividad o serialización demostrada.
 
-        core.mjs, mcp.mjs, bin/torre, install.sh y package.json son Cimientos: su intervención
-        exige reserva exacta por archivo y aprobación humana fresca. No se toca la capa
-        continuation, ni sus migraciones, ni sus pruebas. No se cambia el esquema de las tablas
-        agent, message y lock. No se activa la Torre, no se instala y no se publica.
+        No se modifica mcp.mjs, bin/torre, install.sh, package.json ni las aserciones de la
+        suite existente. No se toca la capa continuation, sus migraciones ni sus pruebas; no se
+        cambia el esquema de agent, message y lock. No se activa la Torre, no se instala y no
+        se publica. Mover 364 líneas implica al menos 728 líneas de diff antes de binario y
+        tests: pedir la elección humana entre commits secuenciales verificables y excepción de
+        tamaño antes de implementar; aprobar archivos no concede esa excepción.
       referencias: >-
         Medición del corte: Engram 11325 (core.mjs partido 90/10 entre continuation y semáforo,
         con el semáforo en core.mjs:4318-4681 creando sus tres tablas en open() sin el sistema
         de migraciones) y Engram 11326 (continuation en el paso 1 de los 11 de
         docs/architecture/torre-motor-determinista.md, sección 17). Decisión de alcance:
         Engram 11327. Línea base de código: core.mjs:4318-4681, mcp.mjs (ocho herramientas
-        tower_*), bin/torre. Revalidar contra el código vigente antes de implementar.
-      incompleto: true
+        tower_*), bin/torre. Decisión y aprobación de preparación: Engram 11555 y 11564.
+        El cierre de imports incluye core.mjs en scripts/payload-closure.mjs:7-15 y su igualdad
+        con el inventario generado se prueba en test/install/payload-closure.test.mjs:86-103.
+        Revalidar contra el código vigente antes de implementar.
+    decisiones:
+      - tipo: resuelta
+        pregunta: ¿La frontera V1 se extrae a un módulo propio o se compila directamente desde core.mjs?
+        resolucion: Extraer el semáforo a semaphore.mjs y compilar sólo la entrada V1 aislada; conservar la interfaz fuente de core.mjs y demostrar que el binario excluye continuation.
+        autoridad: Elección explícita de Emilio en esta Conversación (Engram 11555); siete archivos y reserva compartida aprobados sólo para preparación (Engram 11564).
+        clase: contrato-visible-del-producto; expansion-de-alcance
+        falsificador: El binario transporta continuation, una operación tower_* cambia su comportamiento observable o se muta un archivo fuera de los siete autorizados.
+        descartadas:
+          - opcion: Compilar directamente desde core.mjs sin extraer.
+            razon: Compartiría la entrada con continuation y no demostraría por sí solo su exclusión del binario.
+          - opcion: Mantener pendiente la frontera sin decidir.
+            razon: Dejaría S149 sin territorio ejecutable y frenaría el release V1.
+        contaminaba: [S149, S8.12, S8.13, S150]
   - id: S150
     prioridad: torre-v1
     zona: cimientos
