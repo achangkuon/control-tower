@@ -66,21 +66,6 @@ def read(relative):
 
 ADMISSION_CONTRACT_START = "<!-- SESSION-ADMISSION-CONTRACT:CANONICAL -->"
 ADMISSION_CONTRACT_END = "<!-- /SESSION-ADMISSION-CONTRACT:CANONICAL -->"
-PI_ADMISSION_HANDOFF_START = "<!-- PI-ADMISSION-HANDOFF:JSON -->"
-PI_ADMISSION_HANDOFF_END = "<!-- /PI-ADMISSION-HANDOFF:JSON -->"
-
-
-def marked_json(source, start_marker, end_marker):
-    self = unittest.TestCase()
-    self.assertEqual(source.count(start_marker), 1)
-    self.assertEqual(source.count(end_marker), 1)
-    start = source.index(start_marker) + len(start_marker)
-    payload_start = source.index("```json", start) + len("```json")
-    payload_end = source.index("```", payload_start)
-    self.assertLess(payload_end, source.index(end_marker, payload_end))
-    return json.loads(source[payload_start:payload_end])
-
-
 def admission_contract(source):
     start = source.index(ADMISSION_CONTRACT_START)
     payload_start = source.index("```json", start) + len("```json")
@@ -109,54 +94,23 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertIn("explicit human `solicitud_sdd`", judgment)
         self.assertNotIn("three routes", judgment)
 
-    def test_kickoff_pi_admission_handoff_schema_is_bounded(self):
-        schema = marked_json(read("skills/chanks-3-session-kickoff/SKILL.md"), PI_ADMISSION_HANDOFF_START, PI_ADMISSION_HANDOFF_END)
+    def test_kickoff_describes_the_organic_pi_key_without_an_external_envelope(self):
+        kickoff = read("skills/chanks-3-session-kickoff/SKILL.md")
+        autoridad = read("skills/chanks-1-autoridad/SKILL.md")
+        planner = read("skills/chanks-2-planificador-granular/SKILL.md")
 
-        self.assertEqual(set(schema), {
-            "envelope_keys", "proof_keys", "sequence", "model_responsibilities",
-            "blocking_conditions", "revocation_conditions", "evidence_boundaries",
-        })
-        self.assertEqual(schema["envelope_keys"], [
-            "admission", "radarExecutable", "gitExecutable", "identityFile",
-        ])
-        self.assertEqual(schema["proof_keys"], [
-            "repositoryRoot", "sessionId", "baseCommit", "candidateDigest", "runtimeIdentity",
-            "statusDigest", "sessionDigest",
-        ])
-        self.assertEqual(schema["sequence"], [
-            "host_captures_git_radar_evidence", "host_creates_external_proof_and_one_use_envelope",
-            "host_launches_isolated_pi", "shim_consumes_and_deletes_environment",
-            "shim_validates_before_solicitation", "model_requests_activation_only",
-            "host_ui_requests_confirmation", "only_exact_human_true_accepts",
-            "shim_revalidates_every_capability_use", "shim_rewrites_actual_tool_input",
-        ])
-        self.assertEqual(set(schema["model_responsibilities"]), {"forbidden", "permitted"})
-        self.assertEqual(schema["model_responsibilities"]["forbidden"], [
-            "admission", "executable_paths", "proof_path_content", "writable_paths", "grants",
-            "acceptance", "resource_confirmation", "confinement_options",
-        ])
-        self.assertEqual(schema["model_responsibilities"]["permitted"], ["request_activation"])
-        self.assertTrue(set(schema["model_responsibilities"]["forbidden"]).isdisjoint(
-            schema["model_responsibilities"]["permitted"]
-        ))
-        self.assertEqual(schema["blocking_conditions"], [
-            "missing_malformed_stale_or_contradictory_evidence", "ui_absent", "human_decline_or_cancel",
-            "lifecycle_change", "runtime_disconnected_or_replaced", "widened_files",
-        ])
-        self.assertEqual(schema["revocation_conditions"], [
-            "lifecycle_change", "runtime_disconnected", "runtime_replaced",
-        ])
-        self.assertEqual(schema["evidence_boundaries"], {
-            "s151_t3": {
-                "classification": "executable_generated_shim_evidence",
-                "path": "agent-workflows/tests/test_install.py",
-                "suite": "PiAuthorityExtensionTests",
-            },
-            "s151_t5": {
-                "classification": "separate_real_pi_bubblewrap_journey",
-                "status": "not_implemented_or_simulated_by_t4",
-            },
-        })
+        # S153 retired the host-built envelope: the extension builds the admission itself and
+        # the human accepts the key in Pi's own question, gated by the per-repository switch.
+        self.assertNotIn("PI-ADMISSION-HANDOFF", kickoff)
+        self.assertNotIn("CHANKS_PI_ADMISSION", kickoff)
+        self.assertIn("pi-switch.mjs", kickoff)
+        self.assertIn("openspec/plan.yaml", kickoff)
+        self.assertIn("chanks_request_activation", kickoff)
+        self.assertIn('{kind: "session"', kickoff)
+        self.assertIn("never answer", kickoff)
+        for planning_skill in (autoridad, planner):
+            self.assertIn("chanks_request_activation", planning_skill)
+            self.assertIn("planning", planning_skill)
 
     def test_native_resume_reconciles_same_identity_but_legacy_keeps_pending_module(self):
         support = read("skills/chanks-0-agente-soporte/SKILL.md")
