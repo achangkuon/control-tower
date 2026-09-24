@@ -9141,8 +9141,9 @@ sesiones:
         suite existente. No se toca la capa continuation, sus migraciones ni sus pruebas; no se
         cambia el esquema de agent, message y lock. No se activa la Torre, no se instala y no
         se publica. Mover 364 líneas implica al menos 728 líneas de diff antes de binario y
-        tests: pedir la elección humana entre commits secuenciales verificables y excepción de
-        tamaño antes de implementar; aprobar archivos no concede esa excepción.
+        tests: Emilio aprobó una excepción a la referencia de 400 líneas para un único commit
+        coherente de S149 (Engram 11566). La excepción no amplía archivos, elimina pruebas,
+        omite revisión ni autoriza por sí sola implementar o entregar.
       referencias: >-
         Medición del corte: Engram 11325 (core.mjs partido 90/10 entre continuation y semáforo,
         con el semáforo en core.mjs:4318-4681 creando sus tres tablas en open() sin el sistema
@@ -9166,6 +9167,18 @@ sesiones:
           - opcion: Mantener pendiente la frontera sin decidir.
             razon: Dejaría S149 sin territorio ejecutable y frenaría el release V1.
         contaminaba: [S149, S8.12, S8.13, S150]
+      - tipo: resuelta
+        pregunta: ¿Cómo se trata el tamaño de la extracción de S149, que supera la referencia de 400 líneas de diff?
+        resolucion: Un solo commit coherente con excepción de tamaño para S149; conservar pruebas, revisión proporcional y reversibilidad de esa unidad.
+        autoridad: Elección explícita de Emilio en esta Conversación (Engram 11566).
+        clase: expansion-de-alcance
+        falsificador: La excepción se usa para agregar archivos fuera de los siete declarados, saltear pruebas o revisión, o mezclar resultados ajenos a S149.
+        descartadas:
+          - opcion: Commits secuenciales verificables.
+            razon: Emilio eligió mantener la extracción y el binario como una unidad coherente, aceptando mayor carga de revisión.
+          - opcion: No hacer nada por ahora.
+            razon: Emilio eligió resolver la forma de entrega sin autorizar todavía el inicio de código.
+        contaminaba: [S149]
   - id: S150
     prioridad: torre-v1
     zona: cimientos
