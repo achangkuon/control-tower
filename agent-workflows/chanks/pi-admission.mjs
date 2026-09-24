@@ -160,9 +160,13 @@ export const resolveExecutable = (name, repositoryRoot, dependencies) => {
   fail(`no se encontró un ejecutable confiable para «${name}» fuera del repositorio`)
 }
 
+// A timeout fails a mutation-relevant capture closed instead of letting a wedged git or Radar
+// process hang admission forever (R3-no-exec-timeout).
+const EXEC_TIMEOUT_MS = 10_000
+
 const run = (executable, args, cwd, deps) => {
   try {
-    return deps.execFile(executable, args, { cwd, stdio: ["ignore", "pipe", "ignore"] })
+    return deps.execFile(executable, args, { cwd, stdio: ["ignore", "pipe", "ignore"], timeout: EXEC_TIMEOUT_MS })
   } catch (error) {
     fail(`no se pudo ejecutar ${[executable, ...args].join(" ")}: ${error.message}`)
   }

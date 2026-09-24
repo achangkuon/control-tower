@@ -4,7 +4,9 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { effectiveSwitch, gitCommonDir, setSwitch, switchStatus } from "../../chanks/pi-switch.mjs"
+import {
+  effectiveSwitch, effectiveSwitchAt, gitCommonDir, setSwitch, switchStatus, switchStatusAt,
+} from "../../chanks/pi-switch.mjs"
 
 const git = (cwd, ...args) => execFileSync("git", args, { cwd, stdio: ["ignore", "pipe", "pipe"] })
 
@@ -108,6 +110,25 @@ describe("pi-switch", () => {
 
   test("rejects a non-absolute repository root", () => {
     expect(() => switchStatus("relative/path")).toThrow()
+  })
+
+  test("switchStatusAt/effectiveSwitchAt never spawn a subprocess: fs reads only", () => {
+    withPlan(root)
+    setSwitch(root, true)
+    const commonDir = gitCommonDir(root)
+    const poisoned = { execFile: () => { throw new Error("must not invoke git") } }
+    expect(switchStatusAt(commonDir, root, poisoned).effective).toBe(true)
+    expect(effectiveSwitchAt(commonDir, root, poisoned)).toBe(true)
+  })
+
+  test("switchStatusAt tracks on/off and plan absence exactly like switchStatus", () => {
+    withPlan(root)
+    const commonDir = gitCommonDir(root)
+    expect(effectiveSwitchAt(commonDir, root)).toBe(false)
+    setSwitch(root, true)
+    expect(effectiveSwitchAt(commonDir, root)).toBe(true)
+    rmSync(join(root, "openspec", "plan.yaml"))
+    expect(effectiveSwitchAt(commonDir, root)).toBe(false)
   })
 
   test("CLI prints JSON status without mutating state", () => {

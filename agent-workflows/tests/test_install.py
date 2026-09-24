@@ -751,6 +751,10 @@ let secondActivation = null
 if (scenario.secondActivationParams) {
   secondActivation = await tool.execute('model-call-2', scenario.secondActivationParams, undefined, undefined, ctx)
 }
+if (scenario.disableSwitchAt) {
+  const fs = await import('node:fs')
+  fs.writeFileSync(scenario.disableSwitchAt, JSON.stringify({ on: false }))
+}
 const after = {
   write: await call('write', { path: scenario.writePath ?? '/model-write' }),
   otherWrite: await call('write', { path: scenario.otherWritePath ?? '/not-authorized' }),
@@ -807,14 +811,17 @@ class PiAuthorityExtensionTests(unittest.TestCase):
     def _git(self, *args):
         subprocess.run(["git", *args], cwd=self.repo, check=True, capture_output=True)
 
-    def _set_switch(self, on):
+    def _switch_path(self):
         common = subprocess.run(
             ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
             cwd=self.repo, capture_output=True, text=True, check=True,
         ).stdout.strip()
         state_dir = Path(common) / "chanks" / "controls"
         state_dir.mkdir(parents=True, exist_ok=True)
-        (state_dir / "switch.json").write_text(json.dumps({"on": on}), encoding="utf-8")
+        return state_dir / "switch.json"
+
+    def _set_switch(self, on):
+        self._switch_path().write_text(json.dumps({"on": on}), encoding="utf-8")
 
     def _write_radar(self, sessions, session_text="S200 — contrato"):
         rows = json.dumps({"schema": "radar.snapshot/v1", "sesiones": sessions})
@@ -867,20 +874,26 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         scenario.update(overrides)
         return scenario
 
-    def test_switch_off_registers_nothing_and_never_asks_or_blocks(self):
+    def test_switch_off_registers_handlers_but_stays_inert(self):
+        # The extension is inside a git repository, so it always registers its handlers
+        # (R4-switch-evaluated-once-at-load): the switch itself is what stays inert, checked
+        # fresh on every tool_call rather than once at load. Observable behavior is unchanged —
+        # nothing asks or blocks, and bash passes through with its command untouched.
         self._set_switch(False)
         outcome = self._run_shim(self._default_scenario())
-        self.assertFalse(outcome["registered"])
+        self.assertTrue(outcome["registered"])
         for name in ("read", "write", "edit", "bash", "activationDispatch"):
             self.assertEqual(outcome["before"][name]["result"], {})
+        self.assertEqual(outcome["before"]["bash"]["input"]["command"], "printf before")
         self.assertEqual(outcome["confirmations"], [])
 
     def test_switch_on_without_a_plan_is_also_inert(self):
         (self.repo / "openspec" / "plan.yaml").unlink()
         outcome = self._run_shim(self._default_scenario())
-        self.assertFalse(outcome["registered"])
+        self.assertTrue(outcome["registered"])
         for name in ("read", "write", "edit", "bash"):
             self.assertEqual(outcome["before"][name]["result"], {})
+        self.assertEqual(outcome["before"]["bash"]["input"]["command"], "printf before")
 
     def test_no_key_allows_reads_confines_bash_read_only_and_blocks_writes(self):
         outcome = self._run_shim(self._default_scenario())
@@ -1070,6 +1083,35 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         # The planning key is gone once the Session key replaces it.
         self.assertTrue(outcome["after"]["write"]["result"].get("block", False))
         self.assertEqual(outcome["secondWrite"]["result"], {})
+
+    def test_switch_turned_off_mid_session_passes_through_the_very_next_tool_call(self):
+        # The switch is read on every tool_call, not cached at load (R4-switch-evaluated-once-
+        # at-load): flipping it off between the activation and the next write must take effect
+        # immediately, in the same loaded extension instance, without a new Pi session.
+        self._write_radar([{"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"]}])
+        outcome = self._run_shim(self._default_scenario(
+            activationParams={"kind": "session", "sessionId": "S200"},
+            writePath=str(self.repo / "a.mjs"),
+            otherWritePath=str(self.repo / "not-authorized.mjs"),
+            disableSwitchAt=str(self._switch_path()),
+        ))
+        self.assertEqual(outcome["activation"]["content"][0]["text"], "Chanks authority is active.")
+        # Even a file the active key never authorized now passes through untouched: the switch
+        # being off means the extension behaves as if it were absent, key or no key.
+        self.assertEqual(outcome["after"]["otherWrite"]["result"], {})
+        self.assertEqual(outcome["after"]["bash"]["input"]["command"], "printf allowed")
+
+    def test_requesting_activation_while_the_switch_is_off_is_rejected(self):
+        self._write_radar([{"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"]}])
+        self._set_switch(False)
+        outcome = self._run_shim({
+            "hasUI": True, "confirmation": True,
+            "activationParams": {"kind": "session", "sessionId": "S200"},
+        })
+        # Registering unconditionally never means the switch stops gating: the tool itself, not
+        # just the passive gate, must also refuse to activate while effectively off.
+        self.assertEqual(outcome["confirmations"], [])
+        self.assertIn("switch", outcome["activation"]["content"][0]["text"].lower())
 
     def test_every_shutdown_reason_erases_the_active_key(self):
         for reason in ("quit", "reload", "new", "resume", "fork"):

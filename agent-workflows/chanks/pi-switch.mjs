@@ -54,12 +54,13 @@ export const gitCommonDir = (repoRoot, dependencies) => {
   return trimmed
 }
 
-const statePath = (repoRoot, deps) => join(gitCommonDir(repoRoot, deps), ...STATE_RELATIVE)
+const statePathFromCommonDir = (commonDir) => join(commonDir, ...STATE_RELATIVE)
+
+const statePath = (repoRoot, deps) => statePathFromCommonDir(gitCommonDir(repoRoot, deps))
 
 const planExists = (repoRoot, deps) => deps.existsSync(join(repoRoot, PLAN_RELATIVE))
 
-const readState = (repoRoot, deps) => {
-  const path = statePath(repoRoot, deps)
+const readStateAt = (path, deps) => {
   if (!deps.existsSync(path)) return { on: false, path }
   try {
     const parsed = JSON.parse(deps.readFileSync(path, "utf8"))
@@ -71,15 +72,30 @@ const readState = (repoRoot, deps) => {
   }
 }
 
-// switchStatus is the only read the extension may use in production. `effective` is the field
-// that matters: it folds in the plan requirement so a caller never has to remember to re-check
-// it, and it goes false the moment `openspec/plan.yaml` disappears even if the switch was left
-// on.
-export const switchStatus = (repoRoot, dependencies) => {
+// switchStatusAt takes an already-resolved git common directory instead of deriving it itself,
+// so it never spawns `git` — only `existsSync`/`readFileSync`. This is the read the generated Pi
+// extension must use on every `tool_call` (R4-switch-evaluated-once-at-load /
+// R4-unbounded-sync-subprocess-per-tool-call): the common directory is computed once, at load,
+// and every governed operation after that re-reads only these two files.
+export const switchStatusAt = (commonDir, repoRoot, dependencies) => {
   const deps = withDefaults(dependencies)
-  const state = readState(repoRoot, deps)
+  const state = readStateAt(statePathFromCommonDir(commonDir), deps)
   const plan = planExists(repoRoot, deps)
   return Object.freeze({ on: state.on, planExists: plan, effective: state.on && plan, path: state.path })
+}
+
+export const effectiveSwitchAt = (commonDir, repoRoot, dependencies) => (
+  switchStatusAt(commonDir, repoRoot, dependencies).effective
+)
+
+// switchStatus is the convenience entry point for a human-facing caller (the CLI below, tests):
+// it resolves the git common directory itself, via one `git` subprocess call, then delegates to
+// switchStatusAt. `effective` is the field that matters: it folds in the plan requirement so a
+// caller never has to remember to re-check it, and it goes false the moment
+// `openspec/plan.yaml` disappears even if the switch was left on.
+export const switchStatus = (repoRoot, dependencies) => {
+  const deps = withDefaults(dependencies)
+  return switchStatusAt(gitCommonDir(repoRoot, deps), repoRoot, deps)
 }
 
 export const effectiveSwitch = (repoRoot, dependencies) => switchStatus(repoRoot, dependencies).effective

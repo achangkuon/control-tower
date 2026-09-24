@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test"
+import { execFileSync } from "node:child_process"
 import {
   chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync,
 } from "node:fs"
@@ -356,6 +357,29 @@ describe("buildAdmission — llave de planificación", () => {
       // Simulate the write this key exists to authorize: plan.yaml changes shape entirely.
       writeFileSync(join(s.root, "openspec", "plan.yaml"), "sesiones:\n  - id: S999\n")
       expect(admission.identidadActual()).toBeTruthy()
+    } finally {
+      s.dispose()
+    }
+  })
+})
+
+describe("timeouts de ejecución", () => {
+  test("cada invocación de git o radar lleva un timeout, para fallar cerrado ante un proceso colgado", () => {
+    const s = site()
+    try {
+      const seen = []
+      const execFile = (executable, args, options) => {
+        seen.push(options)
+        return execFileSync(executable, args, options)
+      }
+      const radar = withRadar(s.bin, [{ id: "S200", estado: "LISTO", archivos: ["a.mjs"] }], "S200")
+      buildAdmission({
+        repositoryRoot: s.root, kind: "session", sessionId: "S200",
+        runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
+        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime, execFile },
+      })
+      expect(seen.length).toBeGreaterThan(0)
+      for (const options of seen) expect(typeof options.timeout).toBe("number")
     } finally {
       s.dispose()
     }

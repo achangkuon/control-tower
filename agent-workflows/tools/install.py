@@ -531,7 +531,7 @@ import {{ realpathSync }} from "node:fs"
 import {{ Type }} from "@earendil-works/pi-ai"
 import {{ buildAdmission, resolveExecutable }} from "{admision}"
 import {{ crearAutoridadPi }} from "{autoridad}"
-import {{ effectiveSwitch }} from "{interruptor}"
+import {{ effectiveSwitchAt }} from "{interruptor}"
 
 // A timeout fails a mutation-relevant call closed rather than hanging the extension forever
 // (R3-no-exec-timeout / R4-unbounded-sync-subprocess-per-tool-call).
@@ -613,29 +613,41 @@ export default function chanksControls(pi: any) {{
   // never-trust-a-repo-supplied-binary lookup pi-admission.mjs uses for git and Radar. A cwd
   // outside any git repository — or a broken/absent git — leaves the extension inert, exactly
   // as before.
+  // The git common directory is resolved once here, at load — never per tool_call
+  // (R4-unbounded-sync-subprocess-per-tool-call). Every governed operation after this point
+  // reads the switch through `effectiveSwitchAt(commonDir, root)`, which is `existsSync`/
+  // `readFileSync` only, no subprocess.
   let workingDirectory: string
   let root: string
+  let commonDir: string
   try {{
     workingDirectory = realpathSync(process.cwd())
     const git = resolveExecutable("git", workingDirectory)
-    const raw = execFileSync(
-      git, ["-C", workingDirectory, "rev-parse", "--show-toplevel"],
+    const runGit = (args: string[]) => execFileSync(
+      git, ["-C", workingDirectory, ...args],
       {{ stdio: ["ignore", "pipe", "ignore"], timeout: EXEC_TIMEOUT_MS }},
     ).toString("utf8").trim()
-    root = realpathSync(raw)
+    root = realpathSync(runGit(["rev-parse", "--show-toplevel"]))
+    commonDir = runGit(["rev-parse", "--path-format=absolute", "--git-common-dir"])
   }} catch {{
+    // A cwd outside any git repository, or a broken/absent git, leaves the extension inert —
+    // exactly as if this file were absent.
     return
   }}
 
-  let effective = false
-  try {{
-    effective = effectiveSwitch(root)
-  }} catch {{
-    effective = false
+  // Read on every governed decision below (R4-switch-evaluated-once-at-load /
+  // R2-switch-contradictory-read-contract): the extension's handlers are registered
+  // unconditionally whenever cwd resolves inside a git repository, and each one re-checks this
+  // instead of trusting a value captured once at load. Turning the switch off while a key is
+  // active makes every subsequent tool_call pass through immediately, without waiting for a new
+  // Pi session.
+  const isEffective = () => {{
+    try {{
+      return effectiveSwitchAt(commonDir, root)
+    }} catch {{
+      return false
+    }}
   }}
-  // Off, or no plan: the extension registers nothing at all, so it neither asks nor blocks —
-  // Pi behaves exactly as if this file were absent.
-  if (!effective) return
 
   // Generated once per loaded instance of this extension. Nothing here claims these describe
   // the candidate's content; they are this activation's own opaque, stable evidence, and the
@@ -667,6 +679,7 @@ export default function chanksControls(pi: any) {{
     }}, {{ additionalProperties: false }}),
     executionMode: "sequential",
     async execute(_toolCallId: string, params: any, _signal: any, _onUpdate: any, ctx: any) {{
+      if (!isEffective()) return blocked("the repository switch is off, or there is no plan")
       const kind = params?.kind
       if (kind !== "session" && kind !== "planning") {{
         return blocked('chanks_request_activation requires {{kind: "session", sessionId}} or {{kind: "planning"}}')
@@ -730,6 +743,11 @@ export default function chanksControls(pi: any) {{
     // activation tool itself may pass through unconditionally; it grants nothing by passing —
     // the human gate lives entirely inside its execute above.
     if (event?.toolName === "chanks_request_activation") return {{}}
+
+    // Off, or no plan: pass through immediately, without asking, even with an active key —
+    // turning the switch off must take effect on the very next tool call, not on the next Pi
+    // session (R4-switch-evaluated-once-at-load).
+    if (!isEffective()) return {{}}
 
     const capability = authority.capacidad()
     if (capability) {{
