@@ -17,6 +17,9 @@ Activa cuando hay que convertir una intención en alcance aprobado, Zonas y auto
 - Conservá decisiones humanas, evidencia y límites de alcance.
 - Devolvé todo cambio del dato de planificación como delta confirmado al responsible parent; no escribas el plan.
 - No avances a planificación sin aprobación humana del alcance.
+- En Pi, con el interruptor de Chanks encendido, antes de que el responsible parent escriba
+  `openspec/plan.yaml` pedí la llave de planificación (`chanks_request_activation` con
+  `{kind: "planning"}`); con el interruptor apagado esto no aplica.
 
 ## Decision Gates
 

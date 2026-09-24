@@ -86,14 +86,25 @@ Direct commit to `master` per `AGENTS.md`. Every task closes with a work-unit co
   - Full suite after T3: `bun test agent-workflows/tests/chanks` — 230 pass, 0 fail. `python3 -m unittest discover -s agent-workflows/tests` — 152 pass (1 skipped), 0 fail.
   - Out-of-scope observation: `pi-controls.mjs` is not in this Session's Scope, so the fixed "fully read-only room" bwrap invocation is duplicated (not re-decided) in the template rather than exposed as a `confinarComando` mode; flagged for a future Session to fold in if desired.
   - Size: cumulative T1–T3 authored+changed lines are now well past the ~500–600 exception (see running total below); T4 remains (prose-only skill edits, small).
-- [ ] T4 — Skills: kickoff, tramo 1 router, and tramo 2 say when to request the key. Route: delegated writer.
+- [x] T4 — Skills: kickoff, tramo 1 router, and tramo 2 say when to request the key. Route: delegated writer.
+  - Done. `chanks-3-session-kickoff/SKILL.md`: replaced "Host-Owned Pi Admission" (envelope/launcher description + `PI-ADMISSION-HANDOFF:JSON` block) with "Organic Pi Admission" — switch off/no-plan → unaffected; switch on → after the human confirms starting/resuming the Session, the agent calls `chanks_request_activation {kind:"session", sessionId}`, Pi's own question shows Session/files/Cimientos/resources/base, only exact human acceptance activates, model can never answer/flip/widen, key drops on Session/base/worktree/runtime change, a new request replaces the old one. `chanks-1-autoridad/SKILL.md` and `chanks-2-planificador-granular/SKILL.md`: one Hard Rules bullet each — before the responsible parent writes `openspec/plan.yaml`, request the planning key (`{kind:"planning"}`) when the switch is on; no-op when off. Kept existing tone/register per file (Spanish voseo for chanks-1-autoridad, English for the other two).
+  - Out-of-scope test broken (anticipated and reported, not fixed): `agent-workflows/tests/test_builder_flow.py::GenericBuilderFlowTests::test_kickoff_pi_admission_handoff_schema_is_bounded` hard-asserts the exact old `PI-ADMISSION-HANDOFF:JSON` marker and schema (`envelope_keys`, `sequence` of `host_*`/`shim_*` steps, `evidence_boundaries.s151_t3/t5`, etc.) against the *live* `agent-workflows/skills/chanks-3-session-kickoff/SKILL.md`. That file is not in this Session's Scope, so it was not edited. Verified this is the *only* new failure: the file's other 13 tests, including `test_frozen_product_snapshot_matches_the_pre_migration_builder` (which reads a separately-frozen copy under `product/tower/generic/...`, untouched by this Session), all still pass. `agent-workflows/tests/test_builder_flow.py` needs a follow-up edit (out of scope here) to drop or rewrite that one test for the organic model.
+  - Full suite after T4: `bun test agent-workflows/tests/chanks` — 230 pass, 0 fail. `python3 -m unittest discover -s agent-workflows/tests` — 151 pass, 1 fail (the out-of-scope test above), 1 skipped.
 - [ ] T5 — Real isolated Pi journey. Requires the human's exclusive-resource confirmation. Route: delegated verifier.
 - [ ] T6 — Delivery after human confirmation: push, reinstall, switch on here, offer propagation.
 
 ## Progress
 
-- Admission recorded. No source written yet.
+- T1–T4 done (commits ce8da1c, 0c0b567, 866c476, and this one). Switch, admission builder,
+  generated extension, and skills all implemented and green on the two required checks, with
+  one anticipated, reported (not fixed) failure in the out-of-scope `test_builder_flow.py`.
+- Running authored+changed lines across T1–T4 (code/tests/skills, `git diff --stat` additions +
+  deletions, excluding this planning document): T1 ≈263, T2 ≈749 (code+tests only), T3 ≈928,
+  T4 ≈126 → total well past the ~500–600 line exception. Flagged for the human; every task still
+  shipped with full tests and no shortcuts, per the exception's own condition.
 
 ## Next step
 
-T1.
+T5 (real isolated Pi journey) and T6 (delivery) both require the human's explicit confirmation
+first — T5 for exclusive use of the isolated Pi runtime resource, T6 for push/reinstall/switch-on.
+Neither was started by this writer.

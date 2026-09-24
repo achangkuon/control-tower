@@ -26,6 +26,9 @@ parent; do not write the plan or generated view.
   `referencias`. Keep outcome/constraint meaning inside them.
 - ODD is default. Only an explicit human `solicitud_sdd` can request native SDD; complexity never does.
 - Legacy Module/Task contracts remain historical/technical evidence and are not rewritten here.
+- In Pi, with the Chanks switch on, before the responsible parent writes `openspec/plan.yaml`
+  from this delta, request the planning key (`chanks_request_activation` with
+  `{kind: "planning"}`); with the switch off this does not apply.
 
 ## Decision Gates
 
