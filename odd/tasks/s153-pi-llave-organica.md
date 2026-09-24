@@ -70,7 +70,13 @@ Direct commit to `master` per `AGENTS.md`. Every task closes with a work-unit co
   - RED: hid `pi-switch.mjs`, `bun test agent-workflows/tests/chanks/pi-switch.test.mjs` failed with "Cannot find module" (1 error, 0 pass).
   - GREEN: restored the module, same command: 10 pass, 0 fail, 23 expect() calls.
   - Full suite after T1: `bun test agent-workflows/tests/chanks` — 215 pass, 0 fail.
-- [ ] T2 — Admission builder for Session and planning keys (`pi-admission.mjs`, `pi-authority.mjs` + tests). Route: delegated writer.
+- [x] T2 — Admission builder for Session and planning keys (`pi-admission.mjs`, `pi-authority.mjs` + tests). Route: delegated writer.
+  - Done. `pi-admission.mjs` resolves `git`/`radar` off PATH (never inside the repo, never model-supplied), captures HEAD + `radar status --json` + (for session keys) `radar sesion <ID>`, derives `authorizedFiles`/`cimientoGrants`/`resources` from the structured status row, and writes a private 0700 proof file re-read on every `identidadActual()` call (no caching). `pi-authority.mjs` gained a `kind` field (`session` default, `planning`): planning skips the Session-ID shape check and the `radar.sessionDigest` requirement (and rejects one if smuggled in); `confirmedResources` now accepts an empty array since most Sessions declare no `recurso`.
+  - Known deviation: `canonicalRepoFile` still requires the file to already exist on disk (inherited from `pi-authority.mjs`'s own retained-handle model, which needs an openable fd) — a Session that names a brand-new file cannot be admitted for that file until it exists. Out of scope to fix here; flagged for a later Session.
+  - RED: hid `pi-admission.mjs` — "Cannot find module" (1 error, 0 pass). Also stashed the `pi-authority.mjs` edit alone and reran its suite — 3 of the 3 new/changed tests failed with `TypeError: admisión de autoridad inválida: …` (21 pass / 3 fail).
+  - GREEN: restored both — `bun test agent-workflows/tests/chanks/pi-admission.test.mjs` 11 pass; `bun test agent-workflows/tests/chanks/pi-authority.test.mjs` 24 pass.
+  - Full suite after T2: `bun test agent-workflows/tests/chanks` — 230 pass, 0 fail. `python3 -m unittest discover -s agent-workflows/tests` — 149 pass (1 skipped), unaffected (T3 not started).
+  - Size: T1+T2 authored code+tests ≈ 907 lines, already above the ~500–600 exception before T3/T4. Flagging for the human at close; proceeding since T3/T4 are required to unblock Pi at all, and T3's template shrinks materially (env-parsing logic moves into `pi-admission.mjs`).
 - [ ] T3 — Generated extension: switch gating, read-only without a key, key request through Pi's question, no environment envelope (`install.py` + `test_install.py`). Route: delegated writer.
 - [ ] T4 — Skills: kickoff, tramo 1 router, and tramo 2 say when to request the key. Route: delegated writer.
 - [ ] T5 — Real isolated Pi journey. Requires the human's exclusive-resource confirmation. Route: delegated verifier.

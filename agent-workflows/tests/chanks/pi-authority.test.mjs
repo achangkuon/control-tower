@@ -202,13 +202,14 @@ describe("validación de la admisión del host", () => {
     }
   })
 
-  test("no admite recursos vacíos en la ruta de activación", () => {
+  test("una Sesión sin recursos declarados no tiene nada que confirmar", () => {
     const site = terreno()
     try {
       const { authority } = crear(site)
-      expect(() => authority.solicitar(admision(site, { resources: [] }))).toThrow()
-      expect(authority.estado()).toBe("inactiva")
-      expect(authority.capacidad()).toBeNull()
+      const request = authority.solicitar(admision(site, { resources: [] }))
+      expect(request.estado).toBe("pendiente")
+      expect(authority.aceptar(request.solicitud)).toBe(true)
+      expect(authority.capacidad()).not.toBeNull()
     } finally {
       site.dispose()
     }
@@ -392,6 +393,72 @@ describe("revalidación antes de entregar autoridad activa", () => {
         authority.invalidar()
       }
       expect(descriptorCount()).toBe(before)
+    } finally {
+      site.dispose()
+    }
+  })
+})
+
+describe("la llave de planificación", () => {
+  const planificacion = (site, extra = {}) => ({
+    repositoryRoot: site.root,
+    kind: "planning",
+    sessionId: "PLANNING",
+    baseCommit: BASE,
+    candidateDigest: DIGEST,
+    runtimeIdentity: "pi:isolated:worker-1",
+    radar: { statusDigest: DIGEST },
+    authorizedFiles: [site.source, site.foundation],
+    cimientoGrants: [],
+    resources: [],
+    ...extra,
+  })
+
+  test("se activa sin forma de Session ID ni digest de Sesión", () => {
+    const site = terreno()
+    try {
+      const { authority } = crear(site, { repositoryRoot: site.root, kind: "planning", sessionId: "PLANNING", baseCommit: BASE, candidateDigest: DIGEST, runtimeIdentity: "pi:isolated:worker-1" })
+      const request = authority.solicitar(planificacion(site))
+      expect(request.estado).toBe("pendiente")
+      expect(authority.aceptar(request.solicitud)).toBe(true)
+      expect(authority.capacidad()).not.toBeNull()
+    } finally {
+      site.dispose()
+    }
+  })
+
+  test("rechaza un digest de Sesión colado en una admisión de planificación", () => {
+    const site = terreno()
+    try {
+      const { authority } = crear(site)
+      expect(() => authority.solicitar(planificacion(site, {
+        radar: { statusDigest: DIGEST, sessionDigest: SESSION_DIGEST },
+      }))).toThrow()
+    } finally {
+      site.dispose()
+    }
+  })
+
+  test("rechaza un kind desconocido", () => {
+    const site = terreno()
+    try {
+      const { authority } = crear(site)
+      expect(() => authority.solicitar(planificacion(site, { kind: "otra-cosa" }))).toThrow()
+    } finally {
+      site.dispose()
+    }
+  })
+
+  test("una deriva de kind entre la admisión y la identidad viva invalida la autoridad", () => {
+    const site = terreno()
+    try {
+      const { authority, cambiarIdentidad } = crear(site, { repositoryRoot: site.root, kind: "planning", sessionId: "PLANNING", baseCommit: BASE, candidateDigest: DIGEST, runtimeIdentity: "pi:isolated:worker-1" })
+      const request = authority.solicitar(planificacion(site))
+      authority.aceptar(request.solicitud)
+      const capability = authority.capacidad()
+      cambiarIdentidad({ repositoryRoot: site.root, sessionId: "PLANNING", baseCommit: BASE, candidateDigest: DIGEST, runtimeIdentity: "pi:isolated:worker-1" })
+      expect(capability.gobernar(writeEvent(site.source)).pi.block).toBe(true)
+      expect(authority.estado()).toBe("invalidada")
     } finally {
       site.dispose()
     }

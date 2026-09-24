@@ -13,6 +13,7 @@ const SHA_1_OR_256 = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/
 const SHA_256 = /^[a-f0-9]{64}$/
 const SESSION = /^S[1-9][0-9]*$/
 const RESOURCE_MODES = new Set(["exclusive", "serial"])
+const KINDS = new Set(["session", "planning"])
 
 const fail = (field) => {
   throw new TypeError(`admisión de autoridad inválida: ${field}`)
@@ -126,8 +127,11 @@ const cimientoGrants = (root, grants, files) => {
   return result
 }
 
+// A Session or planning key with no declared resource has nothing to confirm, so an empty
+// array is valid: the strict part of this check is that a resource which *is* declared must
+// carry a valid mode and an explicit `confirmed: true` — nothing here waives that.
 const confirmedResources = (resources) => {
-  if (!Array.isArray(resources) || resources.length === 0) fail("resources")
+  if (!Array.isArray(resources)) fail("resources")
   const result = resources.map((resource) => {
     exactObject(resource, "resources")
     const id = text(resource.id, "resources.id")
@@ -138,21 +142,28 @@ const confirmedResources = (resources) => {
   return result
 }
 
+// `kind` defaults to "session" when absent, so every pre-existing caller that never heard of
+// planning keys keeps exactly its old, strict Session validation. A planning key is expressible
+// without weakening that: it only relaxes the Session ID *shape*, never the requirement that
+// one be present.
 const binding = (source, field = "identity") => {
   exactObject(source, field)
   const repositoryRoot = canonicalRoot(source.repositoryRoot, `${field}.repositoryRoot`)
+  const kind = source.kind === undefined ? "session" : source.kind
+  if (!KINDS.has(kind)) fail(`${field}.kind`)
   const sessionId = text(source.sessionId, `${field}.sessionId`)
   const baseCommit = text(source.baseCommit, `${field}.baseCommit`)
   const candidateDigest = text(source.candidateDigest, `${field}.candidateDigest`)
   const runtimeIdentity = text(source.runtimeIdentity, `${field}.runtimeIdentity`)
-  if (!SESSION.test(sessionId)) fail(`${field}.sessionId`)
+  if (kind === "session" && !SESSION.test(sessionId)) fail(`${field}.sessionId`)
   if (!SHA_1_OR_256.test(baseCommit)) fail(`${field}.baseCommit`)
   if (!SHA_256.test(candidateDigest)) fail(`${field}.candidateDigest`)
-  return { repositoryRoot, sessionId, baseCommit, candidateDigest, runtimeIdentity }
+  return { repositoryRoot, kind, sessionId, baseCommit, candidateDigest, runtimeIdentity }
 }
 
 const sameBinding = (a, b) => (
   a.repositoryRoot === b.repositoryRoot
+  && a.kind === b.kind
   && a.sessionId === b.sessionId
   && a.baseCommit === b.baseCommit
   && a.candidateDigest === b.candidateDigest
@@ -182,8 +193,17 @@ const authorityFrom = (bundle, dependencies) => {
   const current = binding(bundle, "bundle")
   const radar = exactObject(bundle.radar, "radar")
   const statusDigest = text(radar.statusDigest, "radar.statusDigest")
-  const sessionDigest = text(radar.sessionDigest, "radar.sessionDigest")
-  if (!SHA_256.test(statusDigest) || !SHA_256.test(sessionDigest)) fail("radar")
+  if (!SHA_256.test(statusDigest)) fail("radar")
+  // A Session key must prove one exact `radar sesion` capture. A planning key names no
+  // Session, so it must not carry one either — accepting a stray sessionDigest there would be
+  // silently trusting evidence nothing asked for.
+  let sessionDigest = null
+  if (current.kind === "session") {
+    sessionDigest = text(radar.sessionDigest, "radar.sessionDigest")
+    if (!SHA_256.test(sessionDigest)) fail("radar")
+  } else if (radar.sessionDigest !== undefined) {
+    fail("radar")
+  }
 
   const files = exactFiles(current.repositoryRoot, bundle.authorizedFiles, "authorizedFiles")
   const grants = cimientoGrants(current.repositoryRoot, bundle.cimientoGrants, files)
@@ -195,6 +215,7 @@ const authorityFrom = (bundle, dependencies) => {
     const authority = freezeAuthority({
     vinculo: {
       repositorio: current.repositoryRoot,
+      tipo: current.kind,
       sesion: current.sessionId,
       base: current.baseCommit,
       candidato: current.candidateDigest,
@@ -216,6 +237,7 @@ const authorityFrom = (bundle, dependencies) => {
 
 const identityFromAuthority = (authority) => ({
   repositoryRoot: authority.vinculo.repositorio,
+  kind: authority.vinculo.tipo,
   sessionId: authority.vinculo.sesion,
   baseCommit: authority.vinculo.base,
   candidateDigest: authority.vinculo.candidato,
