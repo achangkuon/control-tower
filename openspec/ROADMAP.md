@@ -11,7 +11,7 @@
 - Método #3 → S152 — El dueño de producto ve con &#96;radar faltan&#96; todas las Sesiones que faltan, agrupadas por meta y subprioridad con un porcentaje honesto, y ubica cualquier Sesión en una línea; los agentes nombran cada Sesión con su meta, Zona, título y estado.
 
 ## Avance
-- **Total:** 69% (84/121 S)
+- **Total:** 68% (84/122 S)
 - 16 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
@@ -24,7 +24,7 @@
 - **Hosts:** 60% (3/5 S)
 - **Instalación:** 0% (0/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 80% (24/30 S)
+- **Método:** 77% (24/31 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -67,6 +67,7 @@
 1. **S115** · 📋 PLANIFICADO · prioridad Torre V3 · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
 2. **S123** · 📋 PLANIFICADO · prioridad Torre V3 · Al cerrar una Sesión, si una Zona quedó con menos de 2 Sesiones LISTO, Main le pide a Support que prepare el horizonte sin preguntar y después le presenta el resultado al humano.
 3. **S152** · 🟢 LISTO · prioridad Método V1 · Controles prioritarios · El dueño de producto ve con &#96;radar faltan&#96; todas las Sesiones que faltan, agrupadas por meta y subprioridad con un porcentaje honesto, y ubica cualquier Sesión en una línea; los agentes nombran cada Sesión con su meta, Zona, título y estado.
+4. **S153** · 🟢 LISTO · prioridad Método V1 · Controles prioritarios · En un repositorio con plan y el interruptor de Chanks encendido, Pi lee libremente y sólo escribe tras aprobar en su propia pregunta la llave de la Sesión o de la planificación; con el interruptor apagado o sin plan, Pi trabaja como antes y las skills no cambian.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · prioridad Torre V2 · Handoffs y despacho Tower-owned · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -1265,6 +1266,51 @@
       - Opción: Excluir todas las Sesiones en estado DIFERIDO. → Las metas futuras mostrarían avances falsos porque su trabajo en espera no contaría.
       - Descartada: Excluir todas las Sesiones en estado DIFERIDO. → Ocultaría trabajo real de Torre V1, V2 y V3.
   - Referencias: Decisión y alcance: Engram 11432. Evidencia de código: agent-workflows/tools/radar/state.go (aplicarPrioridades, ColaPorZonaAt, AvanceAt); agent-workflows/tools/radar/render.go:450 (resumenBloqueo); agent-workflows/tools/radar/main.go:60-97 (despacho de subcomandos); agent-workflows/tools/radar/render&#95;test.go:11-25 (patrón de golden files); openspec/specs/radar-session-priorities/spec.md. Una dependencia pendiente produce PLANIFICADO, no BLOQUEADO. Revalidar HEAD y Radar antes de RED.
+
+### S153 — En un repositorio con plan y el interruptor de Chanks encendido, Pi lee libremente y sólo escribe tras aprobar en su propia pregunta la llave de la Sesión o de la planificación; con el interruptor apagado o sin plan, Pi trabaja como antes y las skills no cambian.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/chanks/pi-admission.mjs, agent-workflows/chanks/pi-switch.mjs, agent-workflows/chanks/pi-authority.mjs, agent-workflows/tools/install.py, agent-workflows/tests/chanks/pi-admission.test.mjs, agent-workflows/tests/chanks/pi-switch.test.mjs, agent-workflows/tests/chanks/pi-authority.test.mjs, agent-workflows/tests/test&#95;install.py, agent-workflows/skills/chanks-3-session-kickoff/SKILL.md, agent-workflows/skills/chanks-1-autoridad/SKILL.md, agent-workflows/skills/chanks-2-planificador-granular/SKILL.md, odd/tasks/s153-pi-llave-organica.md
+  - Depende de: S151
+  - Recursos: runtime Pi aislado de ensayos Chanks Método V1 con HOME temporal; uso exclusivo a confirmar antes de ejecutar, sin tocar la configuración global real hasta la entrega
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Desde la instalación global posterior a S151 (2026-09-23), toda sesión Pi queda bloqueada con «no active validated authority», incluso para leer. La extensión sólo se activa con el sobre &#96;CHANKS&#95;PI&#95;ADMISSION&#96; que debía preparar un host de Pi, y ninguna Sesión construyó ese host: el sobre nunca se produce. Además la extensión rige en todos los repositorios, incluso los que no adoptaron plan. Emilio pidió que la llave se entregue de forma orgánica, preguntando dentro de Pi, y un interruptor como el de RDD para apagar los controles cuando generen fricción.
+  - Resultado y comportamiento: Un interruptor por repositorio con &#96;on&#96;, &#96;off&#96; y &#96;status&#96; decide si los controles Chanks rigen. Sólo el humano lo cambia. Arranca apagado; &#96;on&#96; se rechaza si el repositorio no tiene &#96;openspec/plan.yaml&#96;; los worktrees del mismo repositorio comparten su estado. Con el interruptor apagado, o sin plan, la extensión no pregunta ni bloquea nada y las skills siguen iguales. Con el interruptor encendido, Pi lee e investiga sin llave, y toda escritura se bloquea hasta que exista una llave activa. La extensión arma la admisión por sí misma a partir de git y del Radar instalado, sin sobre externo, y la muestra en la pregunta nativa de Pi. Hay dos llaves. La llave de Sesión se pide cuando se confirma arrancar o retomar una Sesión del plan: nombra la Sesión, el worktree, los archivos, los Cimientos y los recursos, y al aprobarla habilita sólo esos archivos. La llave de planificación se pide durante los tramos 1 y 2 de Chanks: al aprobarla habilita sólo &#96;openspec/plan.yaml&#96; y &#96;openspec/ROADMAP.md&#96;. El agente pide la llave pero nunca la responde; rechazo, UI ausente o evidencia inválida dejan la escritura bloqueada. La llave cae ante un cambio de Sesión, base, worktree o runtime. Las skills de arranque de Sesión y de los tramos 1 y 2 indican cuándo pedir la llave. Al entregar, la extensión se reinstala, este repositorio queda encendido y los demás apagados hasta que migren.
+  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD con TDD estricto; SDD sólo por solicitud humana explícita. La implementa Claude Code. Se conservan las decisiones de S151: autoridad efímera por Sesión, confirmación humana perteneciente al host, confinamiento real y ningún fallback permisivo; el modelo no puede encender el interruptor, fabricar la aceptación ni ampliar archivos. No se debilita controls.mjs ni se recalcula estado fuera del Radar instalado. Quedan fuera Claude Code, OpenCode y la Torre. La demostración de runtime carga la extensión real en un Pi aislado; un test directo no la sustituye. Excepción de tamaño aprobada (~500–600 líneas) para una sola Sesión coherente; no autoriza ampliar archivos ni omitir pruebas o revisión. Instalar globalmente y encender el interruptor requieren la confirmación humana de entrega; editar skills exige ofrecer la propagación a los demás agentes.
+    - Decisión estructurada [resuelta · seguridad-y-permisos]: ¿Cómo recibe Pi la llave de una Sesión admitida?
+      - Resolución: La extensión arma la admisión a partir de git y Radar y la presenta en la pregunta nativa de Pi; sólo la aceptación humana la activa.
+      - Autoridad: Emilio lo aprobó explícitamente el 2026-09-23; Engram 11462.
+      - Evidencia: La extensión espera un sobre externo que ninguna pieza produce. Un lanzador con Herdr lo produciría, pero agrega integración y fricción; la API de extensiones permite preguntar dentro de Pi.
+      - Checkpoint: antes de RED
+      - Falsificador: Una escritura ocurre sin aceptación humana visible, o el modelo activa la llave sin que el humano la acepte.
+      - Contaminaba: S153
+      - Opción: La extensión arma la admisión y pregunta dentro de Pi. → Pi se abre normalmente y la llave se aprueba en el momento de escribir; no hay lanzador.
+      - Opción: Lanzador de host integrado al despacho Herdr. → Conserva el sobre externo, pero exige integración con Herdr y deja los Pi abiertos a mano sin forma de obtener llave.
+      - Descartada: Lanzador de host integrado al despacho Herdr. → Más complejo y no orgánico.
+    - Decisión estructurada [resuelta · seguridad-y-permisos]: ¿Dónde rigen los controles y cómo se apagan?
+      - Resolución: Interruptor por repositorio con &#96;on&#96;, &#96;off&#96; y &#96;status&#96;, apagado por defecto, rechazado sin &#96;openspec/plan.yaml&#96; y compartido por los worktrees; apagado deja la extensión inerte y las skills intactas.
+      - Autoridad: Emilio lo aprobó explícitamente el 2026-09-23; Engram 11462.
+      - Evidencia: La extensión global bloquea todos los repositorios, incluso los que no tienen plan. RDD de gentle-ai ofrece un interruptor que sólo el humano cambia.
+      - Checkpoint: antes de RED
+      - Falsificador: Un repositorio apagado o sin plan pregunta o bloquea, o el agente cambia el interruptor.
+      - Contaminaba: S153
+      - Opción: Interruptor por repositorio, apagado por defecto y sólo encendible con plan. → Los repositorios sin migrar no se afectan; este repositorio se enciende al entregar.
+      - Opción: Controles siempre activos. → Sin salida ante fricción o falla, y bloquean repositorios sin plan.
+      - Descartada: Controles siempre activos. → Reproduce el bloqueo actual y no permite apagar ante fricción.
+    - Decisión estructurada [resuelta · ]: Con una previsión de ~500–600 líneas, ¿una sola Sesión o varias entregas?
+      - Resolución: Una sola Sesión con excepción de tamaño aprobada; no autoriza ampliar archivos ni omitir pruebas o revisión.
+      - Autoridad: Emilio lo aprobó explícitamente el 2026-09-23; Engram 11462.
+      - Evidencia: El interruptor, la admisión propia y la pregunta forman un único recorrido; partirlo deja una llave a medias o una extensión que sigue bloqueando.
+      - Checkpoint: antes de RED
+      - Alcanza: encargo
+      - Falsificador: La excepción se usa para ampliar archivos o comportamiento u omitir pruebas o revisión.
+      - Contaminaba: S153
+      - Opción: Excepción de tamaño para una sola Sesión. → Un resultado utilizable sin reducir pruebas ni revisión.
+      - Opción: Dividir en entregas. → Revisiones más chicas con cortes intermedios inútiles.
+      - Descartada: Dividir en entregas. → Un corte intermedio mantendría Pi bloqueado o la llave incompleta.
+  - Referencias: Decisión y alcance: Engram 11462. Diagnóstico del bloqueo: Engram 11461. Antecedentes: S151 y sus decisiones (Engram 11368, 11423), instalación global (Engram 11453). Evidencia de código: agent-workflows/tools/install.py:520-790 (plantilla de la extensión, consumeAdmission, hostEnvelope, liveIdentity), 421 y 506 (instalación global incondicional); agent-workflows/chanks/pi-authority.mjs (crearAutoridadPi); agent-workflows/skills/chanks-3-session-kickoff/SKILL.md:60-110. Modelo de interruptor: &#96;gentle-ai review mode enable&#124;disable&#124;status&#96;. Revalidar HEAD, Radar y disponibilidad de bwrap antes de RED.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
