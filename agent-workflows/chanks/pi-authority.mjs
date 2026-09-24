@@ -188,15 +188,17 @@ const freezeAuthority = (authority) => Object.freeze({
   recursos: Object.freeze(authority.recursos.map((resource) => Object.freeze({ ...resource }))),
 })
 
+// The bundle no longer needs to carry the whole-plan `radar status --json` digest
+// (R3-status-digest-fragility / R3/R4-planning-key-self-invalidates live entirely in
+// pi-admission.mjs's own capture, which no longer binds identity to that digest). This
+// validation stays permissive about a stray extra field on `radar` — a caller built against the
+// previous contract still validates — and keeps enforcing exactly what identity actually needs:
+// a Session key must prove one exact `radar sesion` capture; a planning key names no Session,
+// so it must not carry one either.
 const authorityFrom = (bundle, dependencies) => {
   exactObject(bundle, "bundle")
   const current = binding(bundle, "bundle")
   const radar = exactObject(bundle.radar, "radar")
-  const statusDigest = text(radar.statusDigest, "radar.statusDigest")
-  if (!SHA_256.test(statusDigest)) fail("radar")
-  // A Session key must prove one exact `radar sesion` capture. A planning key names no
-  // Session, so it must not carry one either — accepting a stray sessionDigest there would be
-  // silently trusting evidence nothing asked for.
   let sessionDigest = null
   if (current.kind === "session") {
     sessionDigest = text(radar.sessionDigest, "radar.sessionDigest")
@@ -221,7 +223,7 @@ const authorityFrom = (bundle, dependencies) => {
       candidato: current.candidateDigest,
       runtime: current.runtimeIdentity,
     },
-    radar: { estadoDigest: statusDigest, sesionDigest: sessionDigest },
+    radar: { sesionDigest: sessionDigest },
     archivos: files,
     cimientos: grants,
     identidadesArchivos: identities,

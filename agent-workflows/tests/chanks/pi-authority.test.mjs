@@ -29,7 +29,7 @@ const identidad = (root, extra = {}) => ({
 
 const admision = (site, extra = {}) => ({
   ...identidad(site.root),
-  radar: { statusDigest: DIGEST, sessionDigest: SESSION_DIGEST },
+  radar: { sessionDigest: SESSION_DIGEST },
   authorizedFiles: [site.source, site.foundation],
   cimientoGrants: [site.foundation],
   resources: [{ id: "pi-runtime", mode: "exclusive", confirmed: true }],
@@ -143,10 +143,23 @@ describe("validación de la admisión del host", () => {
         admision(site, { sessionId: "151" }),
         admision(site, { baseCommit: BASE.slice(0, 12) }),
         admision(site, { candidateDigest: "not-a-digest" }),
-        admision(site, { radar: { statusDigest: DIGEST, sessionDigest: "bad" } }),
+        admision(site, { radar: { sessionDigest: "bad" } }),
       ]) {
         expect(() => crear(site).authority.solicitar(input)).toThrow()
       }
+    } finally {
+      site.dispose()
+    }
+  })
+
+  test("acepta un radar con un statusDigest heredado de bajo, ya no exigido por la identidad", () => {
+    const site = terreno()
+    try {
+      const { authority } = crear(site)
+      const request = authority.solicitar(
+        admision(site, { radar: { sessionDigest: SESSION_DIGEST, statusDigest: DIGEST } }),
+      )
+      expect(authority.aceptar(request.solicitud)).toBe(true)
     } finally {
       site.dispose()
     }
@@ -407,7 +420,7 @@ describe("la llave de planificación", () => {
     baseCommit: BASE,
     candidateDigest: DIGEST,
     runtimeIdentity: "pi:isolated:worker-1",
-    radar: { statusDigest: DIGEST },
+    radar: {},
     authorizedFiles: [site.source, site.foundation],
     cimientoGrants: [],
     resources: [],
@@ -432,7 +445,7 @@ describe("la llave de planificación", () => {
     try {
       const { authority } = crear(site)
       expect(() => authority.solicitar(planificacion(site, {
-        radar: { statusDigest: DIGEST, sessionDigest: SESSION_DIGEST },
+        radar: { sessionDigest: SESSION_DIGEST },
       }))).toThrow()
     } finally {
       site.dispose()

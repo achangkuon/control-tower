@@ -23,7 +23,7 @@ const SESSION = /^S[1-9][0-9]*$/
 const SHA_256 = /^[a-f0-9]{64}$/
 const PROOF_FIELDS = [
   "repositoryRoot", "kind", "sessionId", "baseCommit", "candidateDigest",
-  "runtimeIdentity", "statusDigest", "sessionDigest",
+  "runtimeIdentity", "sessionDigest",
 ]
 
 const fail = (message) => {
@@ -121,6 +121,19 @@ const repoPathStatus = (root, relativePath, deps) => {
   }
   if (!inside(root, canonicalParent)) fail(`«${relativePath}» escapa del repositorio`)
   return { path: join(canonicalParent, basename(candidate)), exists: false }
+}
+
+// A file that may legitimately be absent (openspec/ROADMAP.md before it is ever rendered) is
+// simply left out — never an error — while an existing-but-invalid path (a symlink, a
+// directory, a non-regular file) still fails closed via canonicalRepoFile.
+const optionalRepoFile = (root, relativePath, deps) => {
+  const candidate = resolve(root, relativePath)
+  try {
+    deps.lstat(candidate)
+  } catch {
+    return null
+  }
+  return canonicalRepoFile(root, relativePath, deps)
 }
 
 const canonicalExecutable = (path, deps) => {
@@ -251,10 +264,17 @@ const readProof = (path, deps) => {
   }
 }
 
-// buildAdmission does the entire capture in one call: it never caches results across calls, so
-// every field it returns reflects this exact invocation. `identidadActual` re-captures live
-// evidence and re-reads the proof file on every call, which is what lets `pi-authority.mjs`
-// revalidate before each governed operation instead of trusting a snapshot.
+// buildAdmission captures once, at construction, everything that needs the *whole* plan status
+// to derive a Session's authorizedFiles/cimientoGrants/resources. `identidadActual` never
+// repeats that whole-plan read: it only re-checks `git rev-parse HEAD` and, for a session key,
+// `radar sesion <ID>` — this Session's own contract, rendered as text (state and archivos
+// included) — never the full `radar status --json` digest. That whole-file digest used to be
+// part of live identity (R3-status-digest-fragility / R3/R4-planning-key-self-invalidates): an
+// unrelated Session's row changing, or writing plan.yaml itself, changed that digest and
+// silently dropped a key that had nothing to do with either. Binding to the scoped
+// `radar sesion <ID>` digest instead means only a change to THIS Session's own row (or base,
+// candidate, runtime) still invalidates; a planning key does not call Radar again at all after
+// being built, so it survives the very writes it exists to authorize.
 export const buildAdmission = ({ repositoryRoot, kind, sessionId, runtimeIdentity, candidateDigest, dependencies } = {}) => {
   const deps = withDefaults(dependencies)
   const root = canonicalRepositoryRoot(repositoryRoot, deps)
@@ -266,88 +286,86 @@ export const buildAdmission = ({ repositoryRoot, kind, sessionId, runtimeIdentit
   const git = deps.git ?? resolveExecutable("git", root, deps)
   const radar = deps.radar ?? resolveExecutable("radar", root, deps)
 
-  const capture = () => {
-    const baseCommit = captureHead(git, root, deps)
-    const status = captureStatus(radar, root, deps)
-    const statusDigest = sha256(status.raw)
-    if (kind === "session") {
-      const row = sessionRow(status, sessionId)
-      const sessionRaw = captureSessionRaw(radar, root, sessionId, deps)
-      const statuses = archivoStatuses(root, row.archivos, deps)
-      const authorizedFiles = statuses.filter((entry) => entry.exists).map((entry) => entry.path)
-      const newFiles = statuses.filter((entry) => !entry.exists).map((entry) => entry.path)
-      if (authorizedFiles.length === 0) fail("la Sesión no tiene archivos existentes para autorizar")
-      return {
-        baseCommit,
-        statusDigest,
-        sessionDigest: sha256(sessionRaw),
-        effectiveSessionId: sessionId,
-        authorizedFiles,
-        newFiles,
-        cimientoGrants: cimientosFromRow(root, row, authorizedFiles, deps),
-        resources: resourcesFromRow(row),
-      }
-    }
-    return {
-      baseCommit,
-      statusDigest,
-      sessionDigest: "",
-      effectiveSessionId: "PLANNING",
-      authorizedFiles: PLANNING_FILES.map((relativePath) => canonicalRepoFile(root, relativePath, deps)),
-      newFiles: [],
-      cimientoGrants: [],
-      resources: [],
-    }
-  }
+  const baseCommit = captureHead(git, root, deps)
 
-  const first = capture()
+  let effectiveSessionId
+  let authorizedFiles
+  let newFiles
+  let cimientoGrants
+  let resources
+  let sessionDigest = ""
+
+  if (kind === "session") {
+    const status = captureStatus(radar, root, deps)
+    const row = sessionRow(status, sessionId)
+    const sessionRaw = captureSessionRaw(radar, root, sessionId, deps)
+    sessionDigest = sha256(sessionRaw)
+    const statuses = archivoStatuses(root, row.archivos, deps)
+    authorizedFiles = statuses.filter((entry) => entry.exists).map((entry) => entry.path)
+    newFiles = statuses.filter((entry) => !entry.exists).map((entry) => entry.path)
+    if (authorizedFiles.length === 0) fail("la Sesión no tiene archivos existentes para autorizar")
+    cimientoGrants = cimientosFromRow(root, row, authorizedFiles, deps)
+    resources = resourcesFromRow(row)
+    effectiveSessionId = sessionId
+  } else {
+    effectiveSessionId = "PLANNING"
+    // A missing openspec/ROADMAP.md must never block the planning key
+    // (R3-missing-roadmap-blocks-planning): plan.yaml is always required, ROADMAP.md only when
+    // it already exists.
+    const roadmap = optionalRepoFile(root, PLANNING_FILES[1], deps)
+    authorizedFiles = roadmap
+      ? [canonicalRepoFile(root, PLANNING_FILES[0], deps), roadmap]
+      : [canonicalRepoFile(root, PLANNING_FILES[0], deps)]
+    newFiles = []
+    cimientoGrants = []
+    resources = []
+  }
 
   const bundle = Object.freeze({
     repositoryRoot: root,
     kind,
-    sessionId: first.effectiveSessionId,
-    baseCommit: first.baseCommit,
+    sessionId: effectiveSessionId,
+    baseCommit,
     candidateDigest,
     runtimeIdentity,
-    radar: kind === "session"
-      ? Object.freeze({ statusDigest: first.statusDigest, sessionDigest: first.sessionDigest })
-      : Object.freeze({ statusDigest: first.statusDigest }),
-    authorizedFiles: Object.freeze([...first.authorizedFiles]),
-    newFiles: Object.freeze([...first.newFiles]),
-    cimientoGrants: Object.freeze([...first.cimientoGrants]),
-    resources: Object.freeze(first.resources.map((resource) => Object.freeze({ ...resource }))),
+    radar: kind === "session" ? Object.freeze({ sessionDigest }) : Object.freeze({}),
+    authorizedFiles: Object.freeze([...authorizedFiles]),
+    newFiles: Object.freeze([...newFiles]),
+    cimientoGrants: Object.freeze([...cimientoGrants]),
+    resources: Object.freeze(resources.map((resource) => Object.freeze({ ...resource }))),
   })
 
   const proofPath = writeProof({
     repositoryRoot: root,
     kind,
-    sessionId: first.effectiveSessionId,
-    baseCommit: first.baseCommit,
+    sessionId: effectiveSessionId,
+    baseCommit,
     candidateDigest,
     runtimeIdentity,
-    statusDigest: first.statusDigest,
-    sessionDigest: first.sessionDigest,
+    sessionDigest,
   }, deps)
 
   const identidadActual = () => {
-    const live = capture()
+    const liveBaseCommit = captureHead(git, root, deps)
+    const liveSessionDigest = kind === "session"
+      ? sha256(captureSessionRaw(radar, root, sessionId, deps))
+      : ""
     const proof = readProof(proofPath, deps)
     const matches = (
       proof.repositoryRoot === root
       && proof.kind === kind
-      && proof.sessionId === first.effectiveSessionId
-      && proof.baseCommit === live.baseCommit
+      && proof.sessionId === effectiveSessionId
+      && proof.baseCommit === liveBaseCommit
       && proof.candidateDigest === candidateDigest
       && proof.runtimeIdentity === runtimeIdentity
-      && proof.statusDigest === live.statusDigest
-      && proof.sessionDigest === live.sessionDigest
+      && proof.sessionDigest === liveSessionDigest
     )
     if (!matches) fail("la evidencia viva ya no coincide con la admisión")
     return {
       repositoryRoot: root,
       kind,
-      sessionId: first.effectiveSessionId,
-      baseCommit: live.baseCommit,
+      sessionId: effectiveSessionId,
+      baseCommit: liveBaseCommit,
       candidateDigest,
       runtimeIdentity,
     }

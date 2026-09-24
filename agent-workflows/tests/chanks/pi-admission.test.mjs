@@ -207,6 +207,77 @@ describe("buildAdmission — llave de Sesión", () => {
       s.dispose()
     }
   })
+
+  test("una Sesión ajena que cambia en el plan no tira la llave, y la revalidación nunca vuelve a leer radar status", () => {
+    const s = site()
+    try {
+      const calls = join(s.runtime, "calls.log")
+      writeFileSync(calls, "")
+      const radar = join(s.bin, "radar")
+      const script = (statusRows, sessionText) => `#!/bin/sh
+echo "$1" >> ${JSON.stringify(calls)}
+case "$1" in
+  status) cat <<'JSON'
+${JSON.stringify({ schema: "radar.snapshot/v1", sesiones: statusRows })}
+JSON
+  ;;
+  sesion) printf '%s' ${JSON.stringify(sessionText)}
+  ;;
+  *) exit 64 ;;
+esac
+`
+      writeFileSync(radar, script([{ id: "S200", estado: "LISTO", archivos: ["a.mjs"] }], "S200 — Estado: LISTO"))
+      chmodSync(radar, 0o755)
+      const admission = buildAdmission({
+        repositoryRoot: s.root, kind: "session", sessionId: "S200",
+        runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
+        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
+      })
+      // An unrelated Session S201 appears in the plan; S200's own contract text is untouched.
+      writeFileSync(radar, script([
+        { id: "S200", estado: "LISTO", archivos: ["a.mjs"] },
+        { id: "S201", estado: "EN CURSO", archivos: ["b.mjs"] },
+      ], "S200 — Estado: LISTO"))
+      chmodSync(radar, 0o755)
+      writeFileSync(calls, "")
+      expect(admission.identidadActual()).toBeTruthy()
+      const invocations = readFileSync(calls, "utf8").trim().split("\n").filter(Boolean)
+      expect(invocations).not.toContain("status")
+      expect(invocations).toContain("sesion")
+    } finally {
+      s.dispose()
+    }
+  })
+
+  test("un cambio de estado o archivos de la propia Sesión sí tira la llave", () => {
+    const s = site()
+    try {
+      const radar = join(s.bin, "radar")
+      const script = (sessionText) => `#!/bin/sh
+case "$1" in
+  status) cat <<'JSON'
+${JSON.stringify({ schema: "radar.snapshot/v1", sesiones: [{ id: "S200", estado: "LISTO", archivos: ["a.mjs"] }] })}
+JSON
+  ;;
+  sesion) printf '%s' ${JSON.stringify(sessionText)}
+  ;;
+  *) exit 64 ;;
+esac
+`
+      writeFileSync(radar, script("S200 — Estado: LISTO"))
+      chmodSync(radar, 0o755)
+      const admission = buildAdmission({
+        repositoryRoot: s.root, kind: "session", sessionId: "S200",
+        runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
+        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
+      })
+      writeFileSync(radar, script("S200 — Estado: EN CURSO"))
+      chmodSync(radar, 0o755)
+      expect(() => admission.identidadActual()).toThrow()
+    } finally {
+      s.dispose()
+    }
+  })
 })
 
 describe("buildAdmission — llave de planificación", () => {
@@ -247,6 +318,44 @@ describe("buildAdmission — llave de planificación", () => {
         runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
         dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
       })).toThrow()
+    } finally {
+      s.dispose()
+    }
+  })
+
+  test("autoriza sólo plan.yaml cuando ROADMAP.md todavía no existe", () => {
+    const s = site()
+    try {
+      mkdirSync(join(s.root, "openspec"), { recursive: true })
+      writeFileSync(join(s.root, "openspec", "plan.yaml"), "sesiones: []\n")
+      const radar = withRadar(s.bin, [])
+      const admission = buildAdmission({
+        repositoryRoot: s.root, kind: "planning",
+        runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
+        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
+      })
+      expect(admission.bundle.authorizedFiles).toEqual([join(s.root, "openspec", "plan.yaml")])
+    } finally {
+      s.dispose()
+    }
+  })
+
+  test("la llave de planificación sobrevive a escribir plan.yaml, porque nunca vuelve a leer Radar", () => {
+    const s = site()
+    try {
+      mkdirSync(join(s.root, "openspec"), { recursive: true })
+      writeFileSync(join(s.root, "openspec", "plan.yaml"), "sesiones: []\n")
+      const radar = join(s.bin, "radar")
+      writeFileSync(radar, "#!/bin/sh\nexit 64\n")
+      chmodSync(radar, 0o755)
+      const admission = buildAdmission({
+        repositoryRoot: s.root, kind: "planning",
+        runtimeIdentity: "pi:test:1", candidateDigest: CANDIDATE,
+        dependencies: { git: s.git, radar, runtimeDirectory: s.runtime },
+      })
+      // Simulate the write this key exists to authorize: plan.yaml changes shape entirely.
+      writeFileSync(join(s.root, "openspec", "plan.yaml"), "sesiones:\n  - id: S999\n")
+      expect(admission.identidadActual()).toBeTruthy()
     } finally {
       s.dispose()
     }
