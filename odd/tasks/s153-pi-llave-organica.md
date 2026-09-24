@@ -99,6 +99,79 @@ Direct commit to `master` per `AGENTS.md`. Every task closes with a work-unit co
   - Advisory follow-ups (not blocking): R4-new-file-blocks-whole-admission, R4-planning-key-self-invalidates, R3-status-digest-fragility, R3-subdirectory-cwd-disables-gate, R4-switch-read-once, R1-resource-confirmation-fabricated, R2-resource-confirmation-waived, R2-candidate-digest-misnamed, R3-drift-coverage-regressed, and six suggestions.
 - [ ] T5 — Real isolated Pi journey. Requires the human's exclusive-resource confirmation. Route: delegated verifier.
 - [ ] T6 — Delivery after human confirmation: push, reinstall, switch on here, offer propagation.
+- [x] Advisory fixes — four non-blocking advisories from lineage `review-51f99d6a30b92ffe`, each
+  its own work unit, strict TDD (RED observed before GREEN), one Conventional Commit per fix, no
+  AI attribution. Route: inline parent (bounded writer for this Session).
+  - [x] F1 — R3-new-file-blocks-admission. `pi-admission.mjs`'s `canonicalRepoFile` required
+    every declared `archivos` entry to already exist, so one not-yet-created file blocked the
+    whole Session admission. Added `repoPathStatus`, which validates path safety (canonical
+    parent directory inside the repo, no symlink/escape) for a file that does not exist yet, and
+    `archivoStatuses`, which splits a Session's declared files into `authorizedFiles` (retained
+    fd set) and `newFiles` (informational only, listed in the confirmation text as "New files
+    (not yet created)"). A Session whose *only* declared file is new still has nothing to
+    authorize and is rejected. File creation stays out of scope: `pi-controls.mjs` untouched.
+    RED: `bun test agent-workflows/tests/chanks/pi-admission.test.mjs` — 3 of the 3 new tests
+    failed against the pre-fix module (`«…» no existe todavía en el repositorio`), 11 pre-existing
+    pass. GREEN: same command, 14 pass. Commit `3031a39`.
+  - [x] F2 — R3/R4-planning-key-self-invalidates, R3-status-digest-fragility,
+    R3-missing-roadmap-blocks-planning. `pi-admission.mjs` bound live identity (inside
+    `identidadActual`) to the whole-file `radar status --json` digest for both key kinds, so
+    writing `plan.yaml` (which changes that digest by design) silently invalidated the very
+    planning key that write was supposed to use, and an unrelated Session's row changing dropped
+    an unrelated Session key. The whole-plan status is now read only once, at `buildAdmission`
+    time, to derive a Session's files/cimientos/resources; ongoing revalidation binds a Session
+    key to `radar sesion <ID>` (that Session's own state and archivos, rendered as text) plus
+    `baseCommit`, and binds a planning key to repository root, base commit and kind alone — it
+    never calls Radar again after being built. A missing `openspec/ROADMAP.md` no longer blocks
+    the planning key (`optionalRepoFile`): `plan.yaml` is always required, `ROADMAP.md` only when
+    present. `pi-authority.mjs` no longer requires `radar.statusDigest` (still tolerates it as a
+    harmless legacy field, which is what keeps `pi-controls.test.mjs` — out of this Session's
+    scope — green).
+    RED: `bun test agent-workflows/tests/chanks/pi-admission.test.mjs agent-workflows/tests/chanks/pi-authority.test.mjs`
+    — 18 of 43 failed against the pre-fix modules (mostly `radar.statusDigest` required-field
+    errors from the new fixtures). GREEN: same command, 43 pass. Full `bun test
+    agent-workflows/tests/chanks` — 238 pass (0 fail) after also relaxing the unknown-field
+    strictness that had broken the out-of-scope `pi-controls.test.mjs`. Commit `04675e9`.
+  - [x] F3 — R1/R3/R4-subdirectory-cwd. The generated extension treated `process.cwd()` as the
+    repository root directly, so starting Pi in a subdirectory made the plan check (and
+    everything gated behind it) look for `openspec/plan.yaml` under that subdirectory and stay
+    inert even with the switch on and a real plan at the true root. The extension now resolves
+    the repository root with a trusted `git rev-parse --show-toplevel` from cwd (through
+    `pi-admission.mjs`'s own never-trust-a-repo-supplied-binary `resolveExecutable`, with a 10s
+    timeout) and uses it for the switch, the plan check and admission; the read-only room binds
+    that root back into visibility after the tmpfs mounts but `--chdir`s into the agent's actual
+    working directory, so a subdirectory session lands in the same place instead of silently at
+    the repository root. A cwd outside any git repository stays inert.
+    RED: `python3 -m unittest test_install.PiAuthorityExtensionTests.test_starting_pi_in_a_subdirectory_still_applies_the_gate test_install.PiAuthorityExtensionTests.test_no_key_room_chdirs_to_the_actual_working_directory_not_the_repo_root test_install.PiAuthorityExtensionTests.test_switch_and_plan_apply_from_a_subdirectory_even_though_they_live_at_the_repo_root test_install.PiAuthorityExtensionTests.test_cwd_outside_any_git_repository_is_inert`
+    — 3 of 4 failed against the pre-fix template (the not-a-repo case already passed). GREEN:
+    same command, 4 pass. Commit `a7b97b3`.
+  - [x] F4 — R4-switch-evaluated-once-at-load, R2-switch-contradictory-read-contract,
+    R4-unbounded-sync-subprocess-per-tool-call, R3-no-exec-timeout. The switch was read once, at
+    extension load, to decide whether to register handlers at all: turning it on after Pi
+    started did nothing until a new session, and turning it off while a key was active never
+    took effect. `pi-switch.mjs` gained `switchStatusAt`/`effectiveSwitchAt`, which read the
+    state file and plan existence with plain `fs` calls given an already-resolved git common
+    directory (no subprocess); the extension now always registers its handlers once cwd resolves
+    inside a git repository, computes the common directory once at load, and re-reads the switch
+    on every `tool_call` and inside `chanks_request_activation`'s own `execute`, passing through
+    `{}` immediately once effectively off, key or no key. Every `execFileSync` in
+    `pi-admission.mjs` and the template now carries a 10s timeout.
+    RED: `python3 -m unittest test_install.PiAuthorityExtensionTests.test_switch_off_registers_handlers_but_stays_inert test_install.PiAuthorityExtensionTests.test_switch_on_without_a_plan_is_also_inert test_install.PiAuthorityExtensionTests.test_switch_turned_off_mid_session_passes_through_the_very_next_tool_call test_install.PiAuthorityExtensionTests.test_requesting_activation_while_the_switch_is_off_is_rejected`
+    — 3 fail + 1 error against the pre-fix template. GREEN: same command, 4 pass. Also RED/GREEN
+    on the unit level: `bun test agent-workflows/tests/chanks/pi-switch.test.mjs
+    agent-workflows/tests/chanks/pi-admission.test.mjs` — 2 fail (missing export, missing
+    timeout) → 31 pass. Commit `897117a`.
+  - Kickoff skill wording updated in the same delivery (not a separate work unit, no behavior
+    change): "the generated extension registers nothing" was no longer accurate after F4 (it now
+    always registers inside a git repo and passes through inert); reworded to describe the
+    observable behavior instead of the removed implementation detail.
+  - Final check results after all four fixes: `bun test agent-workflows/tests/chanks` — 241
+    pass, 0 fail. `python3 -m unittest discover -s agent-workflows/tests` — 160 pass, 0 fail, 1
+    skipped (pre-existing, environment-dependent: "native SDD test binary is unavailable").
+  - Remaining limitation, unchanged from T2: a Session that names a brand-new file still cannot
+    have pi-controls.mjs *create* that file — F1 only stops that declaration from blocking
+    admission for the files that do exist. Creation itself stays whatever `pi-controls.mjs` does
+    today, per the human's explicit scope decision for this addendum.
 
 ## Progress
 

@@ -16,8 +16,9 @@ named Session only; never select a ready row, dispatch a worker, or write plan e
 
 Fresh Radar admission is the only planning/admission evidence. In Pi, a per-repository switch
 (`pi-switch.mjs`, off by default, refused `on` without `openspec/plan.yaml`) decides whether
-Chanks controls apply at all. With the switch off, or with no plan, Pi works exactly as before —
-the generated extension registers nothing, and this section does not apply.
+Chanks controls apply at all, re-read on every tool call rather than once at load. With the
+switch off, or with no plan, Pi works exactly as before — every call passes straight through
+with no question and no block, and this section does not apply.
 
 With the switch on, the generated extension (`agent-workflows/chanks/pi-admission.mjs` +
 `pi-authority.mjs`) builds the admission itself from git and the installed Radar — no external
