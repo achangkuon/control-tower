@@ -859,9 +859,12 @@ sesiones:
     autoridad: "Alcance V1 aprobado por Emilio el 2026-09-18 (Engram 11327), que reemplaza explícitamente el contrato de bundle completo aprobado por decisión 10315: el bundle deja de transportar la política de despacho Tower-owned de S9.8, que pasa a torre-v2. Se conservan las Decisiones 88, 95 y 100 sobre qué bytes son Tower-owned, Engram 9921, y el contrato enumerado citado en openspec/plans/plan-8/STATUS.md líneas 998-1031 en todo lo que no dependa del despacho."
     # S8.10 salió de depende_de el 2026-09-24 con aprobación de Emilio: cerró el 2026-08-21
     # (a448af2, 2e26367, 58aa879) y ya consta en satisfied_history, que nunca es destino de dependencia.
+    # S163 entró el 2026-09-25 con aprobación de Emilio (Engram 11749): el paquete no se arma
+    # hasta que los avisos de Torre y Chanks queden en su forma final.
     depende_de:
       - S8.14
       - S149
+      - S163
     cimientos:
       - scripts/payload-closure.mjs
       - install/runtime-payload.mjs
@@ -3303,6 +3306,146 @@ sesiones:
           - opcion: Dos commits secuenciales.
             razon: Emilio eligió explícitamente una sola unidad para el runtime y su guía de etapas.
         contaminaba: [S159]
+  - id: S161
+    zona: metodo
+    prioridad: metodo-v1
+    resultado: >-
+      Chanks abre y cierra la jornada con jornada.sh: al empezar diagnostica master y los
+      worktrees, trae master con pull --ff-only, pone al día los worktrees limpios y recicla
+      asientos limpios a una rama nueva; al cerrar muestra el diagnóstico de fin de día. Un
+      worktree con trabajo sin entregar nunca se recicla sin la decisión explícita del humano.
+    autoridad: >-
+      Aprobación explícita de Emilio el 2026-09-25 en esta Conversación: Control Tower es un
+      producto con dos modos, manual (Chanks) y automático (motor), y los pasos 0 (abrir) y 10
+      (cerrar) de la jornada no tienen dueño en ninguno de los dos (Engram 11739, 11747). Regla de
+      reciclado: Engram 9235.
+    depende_de:
+      - S159
+    cimientos: []
+    recurso: []
+    archivos:
+      - agent-workflows/skills/chanks-0-jornada/SKILL.md
+      - agent-workflows/tools/install.py
+      - agent-workflows/tests/test_chanks_jornada.py
+      - agent-workflows/tests/test_install.py
+    encargo:
+      pedido_contexto: >-
+        jornada.sh ya hace el diagnóstico (sin opciones), la puesta al día (--ejecutar: pull
+        --ff-only del tronco y rebase de los worktrees limpios atrasados) y el reciclado
+        (--reciclar <ruta> --nueva-rama <rama>), y la decisión 62 lo conserva como reciclador
+        manual. Ninguna skill chanks lo invoca: el maintainer lo corre a mano y los agentes
+        arrancan sin saber si su worktree está al día. Engram 9235 ya autorizó reciclar asientos
+        permanentes con la Torre apagada, sólo sobre worktrees limpios. install.py registra las
+        skills de Chanks en CHANKS_SKILLS y test_install.py fija ese conjunto exacto.
+      resultado_comportamiento: >-
+        Una skill nueva chanks-0-jornada responde a "empezamos la jornada" y "cerramos la
+        jornada". Al abrir corre jornada.sh, presenta el diagnóstico, ejecuta --ejecutar y, por
+        cada asiento limpio que el humano asigna, --reciclar hacia una rama sacada de master
+        fresco. Un worktree sucio u ocupado se reporta con su evidencia y se pregunta una sola
+        decisión (entregar, guardar o descartar) antes de tocarlo. Al cerrar corre el diagnóstico
+        y lista lo pendiente. La skill llama a jornada.sh como herramienta de la Torre y no copia
+        su lógica. install.py registra la skill en CHANKS_SKILLS. Las pruebas verifican los
+        triggers, que la skill nunca pasa --borrar-rama-vieja por su cuenta, que nunca recicla un
+        worktree sucio u ocupado y que el instalador la incluye.
+      restricciones_decisiones: >-
+        Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana
+        explícita. jornada.sh no se modifica: la skill sólo lo llama. Nunca reciclar, limpiar,
+        resetear ni borrar ramas sin la decisión explícita del humano, y nunca desactivar el
+        rechazo de worktrees sucios de jornada.sh. La entrega sigue la política de AGENTS.md.
+        Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana
+        y compatibilidad fresca antes de escribir. Al entregar se reinstala y se propaga a los
+        demás agentes.
+      referencias: >-
+        jornada.sh:1-35 (modos y flags), jornada.sh:257-286 (--reciclar), decisión 62
+        (openspec/plans/decision-register.md:281), Engram 9235 (reciclado con la Torre apagada),
+        Engram 10138 (--reciclar parte de origin/master), install.py:24 (CHANKS_SKILLS),
+        test_install.py:396 (conjunto exacto de skills). Revalidar contra el árbol vigente antes
+        de escribir.
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Qué hace la skill con un worktree que tiene trabajo sin entregar?"
+        resolucion: Lo reporta con su evidencia y pregunta una sola decisión al humano (entregar, guardar o descartar) antes de tocarlo; nunca lo recicla, limpia ni guarda por su cuenta.
+        autoridad: Engram 9235 y aprobación explícita de Emilio el 2026-09-25 en esta Conversación.
+        clase: operaciones-irreversibles
+        falsificador: La skill recicla, limpia, resetea o guarda un worktree sucio u ocupado sin una decisión explícita del humano.
+        descartadas:
+          - opcion: Guardar el trabajo automáticamente (stash o rama de respaldo) y reciclar.
+            razon: Esconde trabajo sin que el humano lo decida y rompe la regla de Engram 9235.
+        contaminaba: [S161]
+  - id: S163
+    zona: metodo
+    prioridad: torre-v1
+    resultado: >-
+      El aviso visible nombra la pieza que corrió: 💪 Chanks cuando habla el flujo (una skill,
+      un cambio de etapa o un bloqueo de la extensión) y 🗼 Torre · <herramienta> cada vez que
+      corre una herramienta del motor (radar, una edición de openspec/plan.yaml o jornada.sh),
+      esté o no encendida la Torre, en Pi y en Claude Code.
+    autoridad: >-
+      Aprobación explícita de Emilio el 2026-09-25 en esta Conversación (Engram 11748), con la
+      página visual 'Avisos de Control Tower' (claude.ai artifact Wam6u32cvcEhdFo13k2MfK) y el
+      gráfico actualizado del documento 'Chanks como guía de etapas'.
+    depende_de:
+      - S159
+    cimientos: []
+    recurso: []
+    archivos:
+      - agent-workflows/chanks/torre-firma.mjs
+      - agent-workflows/tests/chanks/torre-firma.test.mjs
+      - agent-workflows/tools/hooks/torre-firma.sh
+      - agent-workflows/tools/install.py
+      - agent-workflows/tests/test_install.py
+      - agent-workflows/skills/chanks-0-mensajes-visibles/SKILL.md
+      - agent-workflows/tests/test_mensajes_visibles.py
+      - agent-workflows/tests/chanks/pi-controls.test.mjs
+    encargo:
+      pedido_contexto: >-
+        Hoy 🗼 Torre sólo aparece cuando corre el comando torre
+        (extensions/pi/tower-session-router.ts:113). La regla escrita en
+        chanks-0-mensajes-visibles/SKILL.md:18 dice que 🗼 es sólo para operaciones reales del
+        motor y que Main manual no es Torre, y pi-controls.test.mjs:141-146 lo cita. Las llamadas
+        a radar, las ediciones de plan.yaml y jornada.sh no tienen firma propia o las firma
+        Chanks, aunque son herramientas del motor. 💪 Chanks aparece en los cambios de etapa
+        (install.py:647, hooks/chanks-etapa.sh:68) y en los bloqueos de la extensión. Con "un
+        producto, dos modos", la misma herramienta no puede llevar dos nombres según el modo.
+      resultado_comportamiento: >-
+        Un módulo nuevo torre-firma.mjs decide, a partir de una llamada de herramienta, si
+        corresponde una firma 🗼 Torre y cuál: un comando bash que invoca radar o jornada.sh, o
+        una escritura o edición de openspec/plan.yaml, produce "🗼 Torre · <herramienta>
+        <subcomando>"; cualquier otra llamada no produce firma. La extensión de Pi (plantilla de
+        install.py) muestra esa firma en la llamada correspondiente. Un hook nuevo de Claude Code,
+        torre-firma.sh, muestra la misma firma en las llamadas a Bash, Write y Edit; install.py
+        lo instala sin cablearlo en ~/.claude/settings.json. 💪 Chanks conserva los cambios de
+        etapa y los bloqueos de la extensión, y nunca lleva 🗼. El comando torre con el motor
+        encendido conserva su formato "🗼 Torre · estado · subcomando". La regla de
+        chanks-0-mensajes-visibles se reescribe: 💪 = habla el flujo, 🗼 = corrió una herramienta
+        del motor, Gentle AI = su identidad propia. Las pruebas cubren radar, jornada.sh,
+        plan.yaml, llamadas sin firma, la separación entre 💪 y 🗼 y que el hook no toca
+        settings.json.
+      restricciones_decisiones: >-
+        Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana
+        explícita. El aviso sólo informa: no bloquea, no autoriza ni cambia ninguna decisión de
+        admisión. extensions/pi/tower-session-router.ts (Zona hosts) no se toca. Cablear el hook
+        nuevo en ~/.claude/settings.json requiere confirmación humana explícita al entregar;
+        install.py no lo hace por sí solo. Sólo los archivos declarados están autorizados; toda
+        expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Al
+        entregar se reinstala y se propaga a los demás agentes.
+      referencias: >-
+        chanks-0-mensajes-visibles/SKILL.md:18-19, pi-controls.test.mjs:141-146,
+        test_mensajes_visibles.py:76-88, install.py:647 (aviso de etapa), install.py:406-410
+        (instalación de hooks de Claude), hooks/chanks-etapa.sh:66-68,
+        extensions/pi/tower-session-router.ts:113. Engram 11739, 11748. Revalidar contra el árbol
+        vigente antes de escribir.
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿El aviso dice en qué modo estás o qué pieza corrió?"
+        resolucion: "Qué pieza corrió: 💪 Chanks cuando habla el flujo y 🗼 Torre · <herramienta> cuando corre una herramienta del motor, esté o no encendida la Torre. Reemplaza la regla anterior «Main manual no es Torre»."
+        autoridad: Aprobación explícita de Emilio el 2026-09-25 en esta Conversación (Engram 11748).
+        clase: contrato-visible-del-producto
+        falsificador: Una llamada a radar, jornada.sh o una edición de plan.yaml no muestra 🗼 Torre, o un cambio de etapa o un bloqueo de la extensión muestra 🗼.
+        descartadas:
+          - opcion: Dejar la regla anterior, donde 🗼 sólo aparece con el motor encendido.
+            razon: La misma herramienta lleva dos nombres según el modo y contradice "un producto, dos modos".
+        contaminaba: [S163]
   - {id: S160, entrega: {commit: 5eb62d8b350611742a3d7325939b6ca5f5444ca3}, historico: openspec/archive/sesiones/S160.md}
 references:
   future_successors:
