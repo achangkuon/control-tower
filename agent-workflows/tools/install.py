@@ -425,6 +425,24 @@ def etapa_hook_changes(home: Path, root: Path) -> list[Change]:
     return [Change(target, "stage-hook")]
 
 
+def firma_hook_path(home: Path) -> Path:
+    return home / ".claude/hooks/torre-firma.sh"
+
+
+def firma_hook_changes(home: Path, root: Path) -> list[Change]:
+    if not (home / ".claude").is_dir():
+        return []
+    source = root / "tools/hooks/torre-firma.sh"
+    if not source.is_file() or stat.S_IMODE(source.stat().st_mode) != 0o755:
+        raise InstallError("Tower signature hook source must be a regular executable 755 file")
+    target = firma_hook_path(home)
+    _validate_directory_path(target.parent, "signature hook directory")
+    _validate_file_destination(home / ".claude", target, "signature hook")
+    if target.is_file() and target.read_bytes() == source.read_bytes() and stat.S_IMODE(target.stat().st_mode) == 0o755:
+        return []
+    return [Change(target, "signature-hook")]
+
+
 def build_plan(home: Path, root: Path | None = None) -> list[Change]:
     root = root or repo_root()
     preflight(home, root)
@@ -445,6 +463,7 @@ def build_plan(home: Path, root: Path | None = None) -> list[Change]:
             changes.append(Change(path, "manual"))
     changes.extend(pi_extension_changes(home, root))
     changes.extend(etapa_hook_changes(home, root))
+    changes.extend(firma_hook_changes(home, root))
     return changes
 
 
@@ -533,6 +552,8 @@ def apply(home: Path, root: Path | None = None) -> list[Change]:
         install_pi_extension(home, root)
     if etapa_hook_path(home) in change_paths:
         _atomic_copy(etapa_hook_source(root), etapa_hook_path(home), home / ".claude")
+    if firma_hook_path(home) in change_paths:
+        _atomic_copy(root / "tools/hooks/torre-firma.sh", firma_hook_path(home), home / ".claude")
     return changes
 
 
@@ -558,6 +579,7 @@ import {{ realpathSync }} from "node:fs"
 import {{ buildAdmission, resolveExecutable }} from "{admision}"
 import {{ crearAutoridadPi }} from "{autoridad}"
 import {{ effectiveSwitchAt }} from "{interruptor}"
+import {{ firmaHerramienta }} from "{firma}"
 
 // A timeout fails a mutation-relevant call closed rather than hanging the extension forever
 // (R3-no-exec-timeout / R4-unbounded-sync-subprocess-per-tool-call).
@@ -618,7 +640,7 @@ export default function chanksControls(pi: any) {{
   let currentAdmission: any = null
   let previousStage: string | null = null
   let admissionFailure = "no exact dispatch marker or fresh Radar evidence"
-  const outcomes = new Map<string, {{ kind: string, owner?: any, toolName: string, originalPath?: string }}>()
+  const outcomes = new Map<string, {{ kind: string, owner?: any, toolName: string, originalPath?: string, signature?: string }}>()
   const seen = new Set<string>()
 
   const initialize = () => {{
@@ -633,12 +655,18 @@ export default function chanksControls(pi: any) {{
     }} catch {{ root = null; commonDir = null; workingDirectory = null }}
   }}
 
+  const notifyRadar = (ctx: any, subcommand: string) => {{
+    try {{ if (ctx?.hasUI) ctx.ui.notify(`🗼 Torre · radar ${{subcommand}}`, "info") }}
+    catch {{ /* A visibility failure cannot change Radar output or admission. */ }}
+  }}
+
   const guidance = (ctx: any) => {{
     if (!root) return
     try {{
       const radar = resolveExecutable("radar", root)
       const raw = execFileSync(radar, ["etapa", "-C", root],
         {{ cwd: root, timeout: EXEC_TIMEOUT_MS, stdio: ["ignore", "pipe", "ignore"], maxBuffer: 4096 }})
+      notifyRadar(ctx, "etapa")
       const stage = JSON.parse(raw.toString("utf8"))
       if (stage?.schema !== "radar.etapa/v1" || !Number.isInteger(stage.etapa) ||
         stage.etapa < 1 || typeof stage.nombre !== "string" || !stage.nombre.trim()) return
@@ -676,11 +704,17 @@ export default function chanksControls(pi: any) {{
     currentAdmission = null
   }}
 
-  const admit = () => {{
+  const admit = (ctx: any) => {{
     if (!root || !isEffective() || isMainWorkingTree) return false
     if (authority?.estado() === "activa") return true
     try {{
-      currentAdmission = buildAdmission({{ repositoryRoot: root }})
+      const radar = resolveExecutable("radar", root)
+      const dependencies = {{ radar, execFile: (exe: string, args: string[], options: any) => {{
+        const raw = execFileSync(exe, args, options)
+        if (exe === radar && ["status", "sesion"].includes(args[0])) notifyRadar(ctx, args[0])
+        return raw
+      }} }}
+      currentAdmission = buildAdmission({{ repositoryRoot: root, dependencies }})
       authority = crearAutoridadPi({{ identidadActual: () => currentAdmission.identidadActual() }})
       if (!authority.activarAutomaticamente(currentAdmission.bundle)) throw new Error("admission rejected")
       return true
@@ -691,42 +725,49 @@ export default function chanksControls(pi: any) {{
     }}
   }}
 
-  pi.on("tool_call", (event: any) => {{
+  pi.on("tool_call", (event: any, ctx: any) => {{
     const id = event?.toolCallId
     if (typeof id !== "string" || !id || seen.has(id)) return {{ block: true, reason: "duplicate or missing tool-call identity" }}
     seen.add(id)
-    if (!isEffective() || isMainWorkingTree) {{ outcomes.set(id, {{ kind: "bypassed", toolName: event?.toolName }}); return {{}} }}
-    if (READ_ONLY_TOOLS.includes(event?.toolName)) {{ outcomes.set(id, {{ kind: "read", toolName: event.toolName }}); return {{}} }}
+    // Retain the original command before confinement rewrites it. The notice is emitted only
+    // for an accepted call's matching tool_result, never for an admission refusal.
+    let signature: string | undefined
+    try {{ signature = firmaHerramienta(event) ?? undefined }} catch {{ /* A notice cannot gate a call. */ }}
+    if (!isEffective() || isMainWorkingTree) {{ outcomes.set(id, {{ kind: "bypassed", toolName: event?.toolName, signature }}); return {{}} }}
+    if (READ_ONLY_TOOLS.includes(event?.toolName)) {{ outcomes.set(id, {{ kind: "read", toolName: event.toolName, signature }}); return {{}} }}
     if (event?.toolName === "bash") {{
       const command = event?.input?.command
       if (typeof command !== "string" || !command.trim()) return {{ block: true, reason: "bash requires a command" }}
       const confined = readOnlyConfinement(command, root!, workingDirectory!)
       if (!confined) return {{ block: true, reason: "read-only/no-network confinement unavailable" }}
       event.input.command = confined
-      outcomes.set(id, {{ kind: "read-only bash", toolName: "bash" }})
+      outcomes.set(id, {{ kind: "read-only bash", toolName: "bash", signature }})
       return {{}}
     }}
     if (!["write", "edit"].includes(event?.toolName)) return {{ block: true, reason: "unknown tool blocked" }}
     const originalPath = event?.input?.path
     if (typeof originalPath === "string" && [...outcomes.values()].some((outcome) => outcome.owner && outcome.originalPath === originalPath))
       return {{ block: true, reason: "same-file tool-call collision" }}
-    if (!admit()) return {{ block: true, reason: `automatic dispatch admission unavailable: ${{admissionFailure}}` }}
+    if (!admit(ctx)) return {{ block: true, reason: `automatic dispatch admission unavailable: ${{admissionFailure}}` }}
     try {{
       currentAdmission.recapture()
       const result = authority.capacidad()?.gobernar(event)
       if (!result || result.pi.block) return result?.pi ?? {{ block: true, reason: "authority unavailable" }}
-      outcomes.set(id, {{ kind: event.toolName, toolName: event.toolName, owner: authority, originalPath }})
+      outcomes.set(id, {{ kind: event.toolName, toolName: event.toolName, owner: authority, originalPath, signature }})
       return result.pi
     }} catch {{ return {{ block: true, reason: "admission drift" }} }}
   }})
 
-  pi.on("tool_result", (event: any) => {{
+  pi.on("tool_result", (event: any, ctx: any) => {{
     const id = event?.toolCallId
     if (!outcomes.has(id)) return
     const outcome = outcomes.get(id)
     if (outcome.toolName !== event.toolName) return
     outcomes.delete(id)
     if (outcome.owner) outcome.owner.completar(id, outcome.kind)
+    try {{
+      if (!event?.isError && outcome.signature && ctx?.hasUI) ctx.ui.notify(outcome.signature, "info")
+    }} catch {{ /* UI failure cannot change the completed tool result. */ }}
   }})
   pi.on("session_shutdown", () => erase(true))
   pi.on("session_start", (_event: any, ctx: any) => {{ erase(true); initialize(); guidance(ctx) }})
@@ -746,11 +787,12 @@ def desired_pi_extension(root: Path | None = None) -> bytes:
     admision = (root / "chanks/pi-admission.mjs").resolve()
     autoridad = (root / "chanks/pi-authority.mjs").resolve()
     interruptor = (root / "chanks/pi-switch.mjs").resolve()
-    for modulo in (admision, autoridad, interruptor):
+    firma = (root / "chanks/torre-firma.mjs").resolve()
+    for modulo in (admision, autoridad, interruptor, firma):
         if not modulo.is_file():
             raise InstallError(f"missing Pi control module: {modulo}")
     return PI_EXTENSION_TEMPLATE.format(
-        admision=admision, autoridad=autoridad, interruptor=interruptor,
+        admision=admision, autoridad=autoridad, interruptor=interruptor, firma=firma,
     ).encode("utf8")
 
 

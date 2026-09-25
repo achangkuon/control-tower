@@ -150,9 +150,9 @@ describe("el mensaje visible", () => {
     expect(aPi({ permitido: false, control: "mutacion", motivo: "bloqueado", detalle: [] }).reason).not.toContain("💪 Chanks")
   })
 
-  // "Main manual no se etiqueta como 🗼 Torre." The manual method running with the Tower off
-  // must not borrow the Tower's identity, or the transcript stops saying what actually ran.
-  test("nunca se etiqueta como 🗼 Torre", () => {
+  // The workflow verdict is Chanks-owned, even when a separate tool-call notice identifies
+  // radar, jornada.sh, or plan.yaml as a Tower tool independently of the switch.
+  test("un resultado del flujo nunca se etiqueta como 🗼 Torre", () => {
     const a = crearActivaciones()
     expect(a.anunciar(transicion())).not.toContain("🗼")
     expect(a.anunciar(bloqueo())).not.toContain("Torre")

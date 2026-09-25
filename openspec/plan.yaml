@@ -3397,7 +3397,12 @@ sesiones:
     autoridad: >-
       Aprobación explícita de Emilio el 2026-09-25 en esta Conversación (Engram 11748), con la
       página visual 'Avisos de Control Tower' (claude.ai artifact Wam6u32cvcEhdFo13k2MfK) y el
-      gráfico actualizado del documento 'Chanks como guía de etapas'.
+      gráfico actualizado del documento 'Chanks como guía de etapas'. Emilio autorizó en esta
+      Conversación agregar el registro técnico odd/tasks/s163-tower-tool-signatures.md y aceptó
+      la excepción de tamaño para un pronóstico de 450–650 líneas implementadas; no autorizó
+      commits ni push por esa elección. Luego Emilio eligió cobertura visual fácil + media
+      dentro de Pi: llamadas directas comprobables y consultas internas reales de Radar, sin
+      trazador de procesos ni atribuciones a ramas condicionales inciertas.
     depende_de:
       - S159
     cimientos: []
@@ -3411,6 +3416,7 @@ sesiones:
       - agent-workflows/skills/chanks-0-mensajes-visibles/SKILL.md
       - agent-workflows/tests/test_mensajes_visibles.py
       - agent-workflows/tests/chanks/pi-controls.test.mjs
+      - odd/tasks/s163-tower-tool-signatures.md
     encargo:
       pedido_contexto: >-
         Hoy 🗼 Torre sólo aparece cuando corre el comando torre
@@ -3434,7 +3440,12 @@ sesiones:
         chanks-0-mensajes-visibles se reescribe: 💪 = habla el flujo, 🗼 = corrió una herramienta
         del motor, Gentle AI = su identidad propia. Las pruebas cubren radar, jornada.sh,
         plan.yaml, llamadas sin firma, la separación entre 💪 y 🗼 y que el hook no toca
-        settings.json.
+        settings.json. En Pi, las llamadas internas reales a radar etapa y a radar
+        status/sesion durante la admisión también muestran 🗼, separadas del aviso 💪 de
+        etapa. Una rama Bash condicionada cuya ejecución no puede probarse no se firma;
+        tampoco se simula un inexistente radar admite, ni se atribuyen hooks Git o shells
+        externos a Pi. jornada.sh usa sus opciones reales --... o ninguna: sin opciones
+        la firma nombra sólo jornada.sh, sin inventar abrir/cerrar.
       restricciones_decisiones: >-
         Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana
         explícita. El aviso sólo informa: no bloquea, no autoriza ni cambia ninguna decisión de
@@ -3450,6 +3461,16 @@ sesiones:
         extensions/pi/tower-session-router.ts:113. Engram 11739, 11748. Revalidar contra el árbol
         vigente antes de escribir.
     decisiones:
+      - tipo: resuelta
+        pregunta: "¿Qué cobertura visual de herramientas Torre se implementa en Pi para el flujo de etapas?"
+        resolucion: "Cobertura fácil + media: llamadas directas comprobables de Pi y ejecuciones internas reales de radar etapa/status/sesion; omitir ramas Bash condicionadas no probadas, pre-push y shells externos. Claude conserva el hook copiado sin activación."
+        autoridad: Elección explícita de Emilio en esta Conversación tras comparar caja por caja el flujo propuesto y la vía fácil + media.
+        clase: contrato-visible-del-producto
+        falsificador: Una consulta interna exitosa a radar etapa/status/sesion en Pi no muestra 🗼, o una rama omitida como false && radar status sí lo muestra.
+        descartadas:
+          - opcion: Afirmar que todas las cajas ámbar del diagrama son observables desde un tool_call directo.
+            razon: Git hooks, shells externos y comandos inexistentes no producen esos eventos de Pi.
+        contaminaba: [S163]
       - tipo: resuelta
         pregunta: "¿El aviso dice en qué modo estás o qué pieza corrió?"
         resolucion: "Qué pieza corrió: 💪 Chanks cuando habla el flujo y 🗼 Torre · <herramienta> cuando corre una herramienta del motor, esté o no encendida la Torre. Reemplaza la regla anterior «Main manual no es Torre»."

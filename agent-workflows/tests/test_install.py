@@ -808,8 +808,17 @@ const before = {
   edit: await call('edit', { path: '/model-edit' }),
   bash: await call('bash', { command: scenario.bashCommand ?? 'printf before' }),
   activationDispatch: await call('chanks_request_activation', { kind: 'planning' }),
+  planWrite: await call('write', { path: 'openspec/plan.yaml', content: 'x' }),
+  planEdit: await call('edit', { path: '/tmp/project/openspec/plan.yaml', edits: [] }),
 }
-for (const [name, value] of Object.entries(before)) if (!value.result.block) await complete(value.id, name === 'activationDispatch' ? 'chanks_request_activation' : name)
+const rejectedRadar = scenario.blockedRadar ? {
+  duplicate: await call('bash', { command: 'radar status' }, before.bash.id),
+  missingId: await call('bash', { command: 'radar status' }, ''),
+} : null
+const messagesAtCall = [...messages]
+for (const [name, value] of Object.entries(before)) if (!value.result.block && !(scenario.withholdRadarResult && name === 'bash'))
+  await complete(value.id, name === 'activationDispatch' ? 'chanks_request_activation' : name === 'planWrite' ? 'write' : name === 'planEdit' ? 'edit' : name)
+if (scenario.replayRadarResult) await complete(before.bash.id, 'bash')
 if (scenario.beforeWriteReplace) writeFileSync(scenario.beforeWriteReplace.path, scenario.beforeWriteReplace.content)
 const write = await call(scenario.toolName ?? 'write', { path: scenario.path ?? '/not-authorized', content: 'changed' }, 'write-1')
 if (!write.result.block && scenario.swapTarget) {
@@ -839,7 +848,7 @@ if (scenario.shutdown) for (const handler of handlers.session_shutdown ?? []) aw
 const fdAfterShutdown = scenario.shutdown && write.input.path.startsWith('/proc/self/fd/') ? existsSync(write.input.path) : null
 if (scenario.stageReplacement) writeFileSync(scenario.stagePath, JSON.stringify(scenario.stageReplacement))
 if (scenario.stageAgain) for (const handler of handlers.agent_end ?? []) await handler({ type: 'agent_end' }, ctx)
-console.log(JSON.stringify({ registered: true, tools, before, write, after, third, duplicate, messages, active: [...active.keys()], fdAfterResult, fdAfterShutdown }))
+console.log(JSON.stringify({ registered: true, tools, before, write, after, third, duplicate, rejectedRadar, messagesAtCall, messages, active: [...active.keys()], fdAfterResult, fdAfterShutdown }))
 """
 
 
@@ -896,6 +905,29 @@ class PiNativeAdmissionContractTests(unittest.TestCase):
             INSTALLER._atomic_copy(INSTALLER.etapa_hook_source(ROOT), target, home / ".claude")
             self.assertEqual(target.stat().st_mode & 0o777, 0o755)
             self.assertEqual(INSTALLER.etapa_hook_changes(home, ROOT), [])
+
+    def test_tool_signature_hook_is_copied_but_never_wired_to_settings(self):
+        with tempfile.TemporaryDirectory() as location:
+            home = Path(location)
+            (home / ".claude").mkdir()
+            (home / ".claude/CLAUDE.md").write_bytes(
+                INSTALLER.START_MARKER + b"\noriginal\n" + INSTALLER.END_MARKER + b"\n"
+            )
+            pi_agent = home / ".pi/agent"
+            pi_agent.mkdir(parents=True)
+            (pi_agent / "APPEND_SYSTEM.md").write_bytes(
+                INSTALLER.START_MARKER + b"\noriginal\n" + INSTALLER.END_MARKER + b"\n"
+            )
+            settings = home / ".claude/settings.json"
+            settings.write_text('{"hooks": {"PreToolUse": []}}', encoding="utf8")
+            INSTALLER.apply(home, ROOT)
+            target = home / ".claude/hooks/torre-firma.sh"
+            self.assertEqual(target.read_bytes(), (ROOT / "tools/hooks/torre-firma.sh").read_bytes())
+            self.assertEqual(target.stat().st_mode & 0o777, 0o755)
+            self.assertEqual(settings.read_text(encoding="utf8"), '{"hooks": {"PreToolUse": []}}')
+            self.assertEqual(INSTALLER.build_plan(home, ROOT), [])
+            target.write_text("stale", encoding="utf8")
+            self.assertIn(target, [change.path for change in INSTALLER.build_plan(home, ROOT)])
 
     def test_no_activation_tool_or_confirmation_path(self):
         body = INSTALLER.desired_pi_extension(ROOT).decode("utf8")
@@ -981,15 +1013,16 @@ class PiAuthorityExtensionTests(unittest.TestCase):
                                       "worker": "implementer-1", **overrides}), encoding="utf8")
         return marker
 
-    def _write_radar(self, sessions, session_text="S200 — contrato"):
+    def _write_radar(self, sessions, session_text="S200 — contrato", fail_commands=(), log=None):
         rows = json.dumps({"schema": "radar.snapshot/v1", "sesiones": sessions})
+        record = ("printf '%s\\n' \"$1\" >> " + shlex.quote(str(log)) + "\n") if log else ""
         script = (
-            "#!/bin/sh\n"
-            "case \"$1\" in\n"
-            "  status) cat <<'JSON'\n" + rows + "\nJSON\n  ;;\n"
-            "  sesion) printf '%s' " + shlex.quote(session_text) + "\n  ;;\n"
-            "  etapa) cat " + shlex.quote(str(self.stage)) + "\n  ;;\n"
-            "  *) exit 64 ;;\n"
+            "#!/bin/sh\n" + record
+            + "case \"$1\" in\n"
+            + ("  status) exit 66 ;;\n" if "status" in fail_commands else "  status) cat <<'JSON'\n" + rows + "\nJSON\n  ;;\n")
+            + ("  sesion) exit 66 ;;\n" if "sesion" in fail_commands else "  sesion) printf '%s' " + shlex.quote(session_text) + "\n  ;;\n")
+            + ("  etapa) exit 66 ;;\n" if "etapa" in fail_commands else "  etapa) cat " + shlex.quote(str(self.stage)) + "\n  ;;\n")
+            + "  *) exit 64 ;;\n"
             "esac\n"
         )
         self.radar.write_text(script, encoding="utf-8")
@@ -1032,6 +1065,104 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         scenario = {"hasUI": True, "confirmation": True}
         scenario.update(overrides)
         return scenario
+
+    def test_tower_tool_notice_is_independent_of_switch_and_follows_tool_result(self):
+        for on in (False, True):
+            self._set_switch(on)
+            outcome = self._run_shim(self._default_scenario(
+                bashCommand="radar sesion S163 -C .", blockedRadar=True))
+            self.assertNotIn("🗼 Torre · radar sesion", outcome["messagesAtCall"])
+            self.assertTrue(outcome["rejectedRadar"]["duplicate"]["result"]["block"])
+            self.assertTrue(outcome["rejectedRadar"]["missingId"]["result"]["block"])
+            self.assertEqual(outcome["before"]["bash"]["result"], {})
+            self.assertEqual(outcome["messages"].count("🗼 Torre · radar sesion"), 1)
+            self.assertNotIn("🗼 Torre · radar status", outcome["messages"])
+            for kind in ("planWrite", "planEdit"):
+                self.assertEqual(outcome["before"][kind]["result"].get("block", False), on)
+                signature = "🗼 Torre · plan.yaml " + ("write" if kind == "planWrite" else "edit")
+                self.assertEqual(outcome["messages"].count(signature), 0 if on else 1)
+            self.assertEqual(outcome["messages"].count("🗼 Torre · radar etapa"), 1)
+            self.assertEqual(sum(message.startswith("🗼") for message in outcome["messages"]), 2 if on else 4)
+            self.assertTrue(any("Radar etapa ·" in message for message in outcome["messages"]))
+
+    def test_failed_matching_bash_result_does_not_emit_tower_signature(self):
+        self._set_switch(False)
+        failed = self._run_shim(self._default_scenario(
+            bashCommand="radar status", errorResult=True, replayRadarResult=True))
+        self.assertEqual(failed["before"]["bash"]["result"], {})
+        self.assertNotIn("🗼 Torre · radar status", failed["messagesAtCall"])
+        self.assertNotIn("🗼 Torre · radar status", failed["messages"])
+        self.assertEqual(failed["messages"].count("🗼 Torre · radar etapa"), 1)
+        successful = self._run_shim(self._default_scenario(bashCommand="radar status"))
+        self.assertEqual(successful["messages"].count("🗼 Torre · radar status"), 1)
+
+    def test_failed_matching_plan_result_does_not_emit_tower_signature(self):
+        self._set_switch(False)
+        failed = self._run_shim(self._default_scenario(errorResult=True))
+        successful = self._run_shim(self._default_scenario())
+        for kind, action in (("planWrite", "write"), ("planEdit", "edit")):
+            signature = f"🗼 Torre · plan.yaml {action}"
+            self.assertEqual(failed["before"][kind]["result"], {})
+            self.assertNotIn(signature, failed["messagesAtCall"])
+            self.assertNotIn(signature, failed["messages"])
+            self.assertEqual(successful["messages"].count(signature), 1)
+
+    def test_internal_radar_stage_signs_each_success_separately_from_chanks_transition(self):
+        outcome = self._run_shim({"stageAgain": True, "stagePath": str(self.stage),
+                                  "stageReplacement": {"schema": "radar.etapa/v1", "etapa": 2, "nombre": "Preparar"}})
+        self.assertEqual(outcome["messages"].count("🗼 Torre · radar etapa"), 2)
+        self.assertEqual(sum("💪 Chanks" in message for message in outcome["messages"]), 1)
+        self._write_radar([], fail_commands=("etapa",))
+        failed = self._run_shim({})
+        self.assertNotIn("🗼 Torre · radar etapa", failed["messages"])
+
+    def test_admission_signs_only_successful_status_and_sesion_execfile_calls(self):
+        self._marker()
+        row = {"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"]}
+        log = self.bin / "radar-calls"
+        self._write_radar([row], log=log)
+        success = self._run_shim({"path": str(self.repo / "a.mjs")})
+        calls = log.read_text(encoding="utf8").splitlines()
+        self.assertFalse(success["write"]["result"].get("block", False))
+        for command in ("status", "sesion"):
+            self.assertGreater(calls.count(command), 0)
+            self.assertEqual(success["messages"].count("🗼 Torre · radar " + command), calls.count(command))
+        self.assertEqual(success["messages"].count("🗼 Torre · radar etapa"), calls.count("etapa"))
+        for failing in ("status", "sesion"):
+            log.write_text("", encoding="utf8")
+            self._write_radar([row], fail_commands=(failing,), log=log)
+            stopped = self._run_shim({"path": str(self.repo / "a.mjs")})
+            self.assertTrue(stopped["write"]["result"].get("block", False))
+            calls = log.read_text(encoding="utf8").splitlines()
+            self.assertEqual(stopped["messages"].count("🗼 Torre · radar " + failing), 0)
+            for command in ("status", "sesion"):
+                if command != failing:
+                    self.assertEqual(stopped["messages"].count("🗼 Torre · radar " + command), calls.count(command))
+
+    def test_false_and_true_conditional_bash_never_claim_a_child_was_run(self):
+        self._set_switch(False)
+        log = self.bin / "radar-calls"
+        self._write_radar([], log=log)
+        for command in ("false && radar status", "true && radar status"):
+            outcome = self._run_shim({"bashCommand": command})
+            self.assertEqual(outcome["before"]["bash"]["input"]["command"], command)
+            self.assertEqual(outcome["before"]["bash"]["result"], {})
+            self.assertNotIn("🗼 Torre · radar status", outcome["messages"])
+        before = log.read_text(encoding="utf8")
+        false_command = subprocess.run(["bash", "-c", "false && radar status"],
+                                       cwd=self.repo, env=self._env(), capture_output=True, text=True)
+        self.assertNotEqual(false_command.returncode, 0)
+        self.assertEqual(log.read_text(encoding="utf8"), before)
+
+    def test_tower_notice_requires_a_matching_result_and_is_not_replayed(self):
+        self._set_switch(False)
+        pending = self._run_shim(self._default_scenario(
+            bashCommand="radar status", withholdRadarResult=True))
+        self.assertEqual(pending["before"]["bash"]["result"], {})
+        self.assertNotIn("🗼 Torre · radar status", pending["messages"])
+        completed = self._run_shim(self._default_scenario(
+            bashCommand="radar status", replayRadarResult=True))
+        self.assertEqual(completed["messages"].count("🗼 Torre · radar status"), 1)
 
     def test_switch_off_registers_handlers_but_stays_inert(self):
         # The extension is inside a git repository, so it always registers its handlers
