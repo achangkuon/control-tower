@@ -110,6 +110,18 @@ func TestResumenBloqueoDecisionPropiaSigueGanandoSobreEncargoIncompleto(t *testi
 	}
 }
 
+// A required ledger decision keeps winning over an incomplete Encargo: the new
+// reason only replaces the generic fallback, never an existing reason.
+func TestResumenBloqueoLedgerSigueGanandoSobreEncargoIncompleto(t *testing.T) {
+	s := &Sesion{ID: "S1", Encargo: &Encargo{Incompleto: true, PedidoContexto: "x"}}
+
+	got := resumenBloqueo(s, true)
+	want := "ledger SDD requiere una decisión"
+	if got != want {
+		t.Fatalf("quería %q, fue %q", want, got)
+	}
+}
+
 func TestAtomicWriteConvergeSinArchivosTemporales(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "openspec", "ROADMAP.md")
