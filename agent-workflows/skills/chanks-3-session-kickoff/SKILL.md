@@ -25,8 +25,8 @@ admits execution, not a new selection, worker dispatch, plan update, or runtime 
   rejected state: report state, blocker, and Zone-ordered LISTO choices only.
 - Preserve Git contamination and shared-resource evidence; a forecast is not a live lock.
   Check exact authorized files and Cimiento/Recurso compatibility before mutation. Scope expansion
-  needs human approval and fresh compatibility. ODD is default; SDD needs explicit human
-  `solicitud_sdd`.
+  needs human approval and fresh compatibility. ODD is default; SDD needs
+  explicit human `solicitud_sdd`.
 - S159 owns Pi runtime write-unblocking; admission here does not assert it is implemented.
 
 ## Decision Gates
@@ -42,10 +42,12 @@ admits execution, not a new selection, worker dispatch, plan update, or runtime 
 
 1. Verify approved identity, repository, branch, HEAD, and contamination against the handoff.
 2. Recapture installed Radar's exact stdout and digest both results; check state and resume basis.
-3. Verify declared exact-file and Cimiento/Recurso compatibility. A declared Recurso needs confirmed
-   exclusive or serial evidence; release only resources demonstrably acquired, not fictitious locks.
+   A native resume reconciles the same Session identity with its native record, code, and evidence.
+3. Verify declared exact-file and Cimiento/Recurso compatibility. A declared Recurso needs
+   confirmed exclusive or serial execution evidence; release only actual resources demonstrably
+   acquired, never a fictitious lock.
 4. Only on successful transition send the stage 4 execution handoff to the responsible parent and
-   `chanks-4-puente`; announce 💪. Never on refusal. Do not create a native ODD route revalidation.
+   `chanks-4-puente`; announce 💪. Never on refusal. Do not write a route revalidation for native ODD.
 
 ## Output Contract
 

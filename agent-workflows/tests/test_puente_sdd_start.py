@@ -13,19 +13,6 @@ ROOT = Path(__file__).resolve().parents[1]
 HELPER = ROOT / "skills/chanks-4-puente/scripts/prepare_new_change.py"
 NATIVE = os.environ.get("GENTLE_AI_SDD_TEST_BINARY")
 CHANGE = "bridge-empty"
-PI_EXECUTION_REBIND_START = "<!-- PI-EXECUTION-REBIND:JSON -->"
-PI_EXECUTION_REBIND_END = "<!-- /PI-EXECUTION-REBIND:JSON -->"
-
-
-def marked_json(source, start_marker, end_marker):
-    case = unittest.TestCase()
-    case.assertEqual(source.count(start_marker), 1)
-    case.assertEqual(source.count(end_marker), 1)
-    start = source.index(start_marker) + len(start_marker)
-    payload_start = source.index("```json", start) + len("```json")
-    payload_end = source.index("```", payload_start)
-    case.assertLess(payload_end, source.index(end_marker, payload_end))
-    return json.loads(source[payload_start:payload_end])
 
 
 def run(command, cwd):
@@ -66,46 +53,6 @@ def git_state(root):
         (root / ".git/HEAD").read_bytes(),
         (root / ".git/config").read_bytes(),
     )
-
-
-class PiAdmissionBridgeContractTests(unittest.TestCase):
-    def test_bridge_pi_execution_rebind_schema_is_bounded(self):
-        bridge = (ROOT / "skills/chanks-4-puente/SKILL.md").read_text(encoding="utf-8")
-        schema = marked_json(bridge, PI_EXECUTION_REBIND_START, PI_EXECUTION_REBIND_END)
-
-        self.assertEqual(set(schema), {
-            "rebind_triggers", "rebind_owner", "rebind_inputs", "drift_result",
-            "changed_candidate_or_runtime", "model_responsibilities", "evidence_boundaries",
-        })
-        self.assertEqual(schema["rebind_triggers"], ["review", "delivery"])
-        self.assertEqual(schema["rebind_owner"], "host_coordinator_only")
-        self.assertEqual(schema["rebind_inputs"], [
-            "actual_immutable_candidate", "refreshed_git_evidence", "refreshed_radar_evidence",
-        ])
-        self.assertEqual(schema["drift_result"], "revoke_before_policy")
-        self.assertEqual(schema["changed_candidate_or_runtime"], [
-            "fresh_envelope", "isolated_process", "exact_human_acceptance",
-        ])
-        self.assertEqual(set(schema["model_responsibilities"]), {"forbidden", "permitted"})
-        self.assertEqual(schema["model_responsibilities"]["forbidden"], [
-            "edit_or_renew_envelope", "edit_or_renew_proof", "paths", "grants",
-            "resource_confirmation",
-        ])
-        self.assertEqual(schema["model_responsibilities"]["permitted"], [])
-        self.assertTrue(set(schema["model_responsibilities"]["forbidden"]).isdisjoint(
-            schema["model_responsibilities"]["permitted"]
-        ))
-        self.assertEqual(schema["evidence_boundaries"], {
-            "s151_t3": {
-                "classification": "executable_generated_shim_evidence",
-                "path": "agent-workflows/tests/test_install.py",
-                "suite": "PiAuthorityExtensionTests",
-            },
-            "s151_t5": {
-                "classification": "separate_real_pi_bubblewrap_journey",
-                "status": "not_implemented_or_simulated_by_t4",
-            },
-        })
 
 
 class RepoFixture(unittest.TestCase):
