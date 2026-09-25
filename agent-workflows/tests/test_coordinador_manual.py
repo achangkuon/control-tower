@@ -47,7 +47,7 @@ class CoordinadorManualTests(unittest.TestCase):
         self.assert_phrases(
             "human approval binds the parallel count, exact LISTO Sesión IDs, and exact Pi worker alias, exact Pi session ID, exact cwd/worktree, runtime, and kind for each Sesión",
             "never selects, substitutes, reduces, expands, optimizes, or reorders",
-            "no queue, roster, ledger, state, approval persistence, or auto-resume",
+            "no queue, roster, ledger, assignment state, approval persistence, or auto-resume",
             "manual pre-V1 batches are Pi-only",
         )
 
@@ -80,6 +80,17 @@ class CoordinadorManualTests(unittest.TestCase):
             "integrate one completed Sesión at a time",
             "integration conflict stops and escalates without resolution",
             "BLOCKED and FAILED preserve the worker and worktree and report the worker evidence",
+        )
+
+    def test_review_ready_witness_is_bound_and_marker_survives_nonclosure(self):
+        self.assert_phrases(
+            "only after verified inbound `listo para revisión`",
+            "review_ready", "transport", "intercom", "message_id", "received_at",
+            "sesion", "worker", "worktree", "branch",
+            "radar.despacho/v1", "Git common dir", "atomic",
+            "BLOCKED", "FAILED", "ambiguous", "orphaned", "not-yet-closed",
+            "only after verified serial integration and stage-5 closure",
+            "never merely on COMPLETED",
         )
 
     def test_negative_terminal_disconnect_and_no_main_paths_do_not_create_control_state(self):
@@ -165,3 +176,15 @@ class IntervencionesDeCimientosTests(CoordinadorManualTests):
 
     def test_points_at_the_module_that_implements_it(self):
         self.assert_phrases("interventions.mjs")
+
+
+class DespachoS157ContractTests(unittest.TestCase):
+    def test_marker_follows_confirmed_handoff_only_and_seal_is_carried(self):
+        dispatch = read("skills/chanks-3-despacho-herdr/SKILL.md")
+        for phrase in ("radar.despacho/v1", "Git common dir", "atomic", "sesion",
+                       "worktree", "refs/heads/", "worker", "confirmed exact handoff",
+                       "ambiguous delivery", "valid approved unattended seal"):
+            self.assertIn(phrase, dispatch)
+        self.assertIn("no marker", dispatch)
+        self.assertIn("pre-send owned rollback", dispatch)
+        self.assertIn("fire-and-forget", dispatch)

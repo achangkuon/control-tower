@@ -16,7 +16,8 @@ it never selects, substitutes, reduces, expands, optimizes, or reorders.
 
 Manual pre-V1 batches are Pi-only. Never load Tower skills, never read or write Tower state, never claim
 Tower is running, or create provisional cross-runtime support. This skill owns no queue, roster, ledger,
-state, approval persistence, or auto-resume. It does not own ODD continuity: preserve same Session identity
+assignment state, approval persistence, or auto-resume. S155's dispatch marker is evidence only,
+not a queue or assignment ledger. It does not own ODD continuity: preserve same Session identity
 and native ODD record/code/evidence reconciliation for Encargo, or first pending Módulo for legacy.
 
 ## Approved-Dispatch Mode
@@ -39,10 +40,23 @@ already human-approved/dispatched exact alias, exact Pi session ID, and exact cw
 reported commit is the dispatched worktree candidate before integration. Any missing, mismatched, or unavailable
 readback stops: no integration, retry, remapping, or inferred terminal.
 
-A `COMPLETED` event can enter serial integration only: integrate one completed Sesión at a time. Main
+Only after verified inbound `listo para revisión` from the exact dispatched Session/worker and
+Intercom/Herdr/Git readbacks, persist S155's structured `review_ready` witness atomically on the
+existing `radar.despacho/v1` marker in the Git common dir at `chanks/despachos/<ID>.json`. Its
+`transport: intercom`, `type: listo para revisión`, nonempty `message_id`, RFC3339 `received_at`,
+`sesion`, `worker`, absolute `worktree`, and full `branch` must match the marker and verified receipt.
+Check existing marker/path identity; never manufacture a witness from an outbound send or terminal
+claim, overwrite a mismatch, or infer receipt when readback is unavailable. This is evidence, not
+an assignment state or delivery permission.
+
+A `COMPLETED` event can enter serial integration only with that verified review-ready witness:
+integrate one completed Sesión at a time. Main
 may integrate that already-produced commit, then record planning and closure evidence through
-`chanks-7-session-doc`, then delegate retirement to `chanks-3-despacho-herdr`. An integration conflict
-stops and escalates without resolution. BLOCKED and FAILED preserve the worker and worktree and report
+`chanks-7-session-doc`, then delegate retirement to `chanks-3-despacho-herdr`. Delete the marker
+only after verified serial integration and stage-5 closure, never merely on COMPLETED. Preserve
+marker/evidence on BLOCKED, FAILED, ambiguous, orphaned, or not-yet-closed outcomes; stop rather
+than discard unverifiable evidence. An integration conflict stops and escalates without resolution.
+BLOCKED and FAILED preserve the worker and worktree and report
 the worker evidence; no polling, retry, state, correction, or inferred completion follows. A disconnected
 worker or absent Main preserves the worktree and candidate and does not create a retry,
 support, or cross-runtime path.
@@ -111,7 +125,8 @@ not copy Tower procedures.
 
 ## Output Contract
 
-Return the exact approved mapping and only the confirmed handoff or inbound terminal evidence. Include
+Return the exact approved mapping and only the confirmed handoff, verified review-ready witness,
+or inbound terminal evidence. Include
 the native/legacy resume discriminator as context but never synthesize ODD progress, completion,
 authority, or a next assignment. Report whether a completed Session entered serial integration,
 closure, or retirement; otherwise preserve and report worker evidence.

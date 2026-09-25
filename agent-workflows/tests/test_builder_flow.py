@@ -95,20 +95,21 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertIn("explicit human `solicitud_sdd`", judgment)
         self.assertNotIn("three routes", judgment)
 
-    def test_kickoff_describes_the_organic_pi_key_without_an_external_envelope(self):
+    def test_kickoff_admits_fresh_radar_without_a_key_or_host_envelope(self):
         kickoff = read("skills/chanks-3-session-kickoff/SKILL.md")
         autoridad = read("skills/chanks-1-autoridad/SKILL.md")
         planner = read("skills/chanks-2-planificador-granular/SKILL.md")
 
-        # S153 retired the host-built envelope: the extension builds the admission itself and
-        # the human accepts the key in Pi's own question, gated by the per-repository switch.
-        self.assertNotIn("PI-ADMISSION-HANDOFF", kickoff)
-        self.assertNotIn("CHANKS_PI_ADMISSION", kickoff)
-        self.assertIn("pi-switch.mjs", kickoff)
-        self.assertIn("openspec/plan.yaml", kickoff)
-        self.assertIn("chanks_request_activation", kickoff)
-        self.assertIn('{kind: "session"', kickoff)
-        self.assertIn("never answer", kickoff)
+        for obsolete in ("PI-ADMISSION-HANDOFF", "CHANKS_PI_ADMISSION", "pi-switch.mjs",
+                         "chanks_request_activation", "activation key", "planning key",
+                         "human click", "host envelope", "host-attested"):
+            self.assertNotIn(obsolete, kickoff.lower() if obsolete.islower() else kickoff)
+        for evidence in ("installed Radar", "named approved Session", "HEAD", "SHA-256",
+                         "exact stdout", "stage 4", "💪"):
+            self.assertIn(evidence, kickoff)
+        self.assertIn("only on successful transition", kickoff)
+        self.assertIn("never on refusal", kickoff)
+        self.assertIn("S159", kickoff)
         for planning_skill in (autoridad, planner):
             self.assertNotIn("chanks_request_activation", planning_skill)
             self.assertNotIn("llave de planificación", planning_skill.lower())
@@ -129,7 +130,7 @@ class GenericBuilderFlowTests(unittest.TestCase):
             self.assertIn("SHA-256", source)
         self.assertIn("native record, code, and evidence", kickoff)
         self.assertIn("never execute a repository binary", support)
-        self.assertIn("no fallback from a rejected state", kickoff)
+        self.assertIn("no fallback from a rejected state", " ".join(kickoff.split()).lower())
 
     def test_bridge_and_closure_keep_native_odd_subordinate_to_plan_authority(self):
         bridge = read("skills/chanks-4-puente/SKILL.md")
@@ -138,9 +139,13 @@ class GenericBuilderFlowTests(unittest.TestCase):
 
         for phrase in (
             "native ODD technical record", "does not become a second product plan",
-            "explicit human `solicitud_sdd`", "Strict TDD", "one Session review",
+            "explicit human `solicitud_sdd`", "Strict TDD", "per work-unit commit",
+            "final pending unit before closure", "parent-record delta",
         ):
             self.assertIn(phrase, bridge)
+        for obsolete in ("PI-EXECUTION-REBIND", "host-admitted", "one Session review",
+                         "prepare_new_change.py", "planningHome", "Módulo commits"):
+            self.assertNotIn(obsolete, bridge)
         self.assertIn("review outcome never authorizes delivery", bridge)
         self.assertIn("ordinary delivery policy", closure)
         self.assertIn("actual delivery evidence", closure)
@@ -285,29 +290,32 @@ class GenericBuilderFlowTests(unittest.TestCase):
         ):
             self.assertIn(phrase, handoff)
 
-    def test_legacy_cadence_and_native_odd_are_explicitly_separate(self):
+    def test_legacy_evidence_and_native_odd_are_explicitly_separate(self):
         bridge = read("skills/chanks-4-puente/SKILL.md")
         canon = read("skills/_shared/plan-naming-convention.md")
 
         self.assertIn("it never imposes Módulos", bridge)
-        self.assertIn("commit cadence on native ODD", bridge)
-        self.assertIn("Every legacy Tarea is internal RED → GREEN → REFACTOR evidence only", bridge)
-        self.assertIn("every Módulo commit includes implementation and tests", bridge)
-        self.assertIn("Native ODD has one Session review boundary", bridge)
+        self.assertIn("historical legacy evidence", bridge.lower())
+        self.assertIn("per work-unit commit", bridge)
         self.assertIn("Only legacy `full-sdd` runs", canon)
         self.assertIn("Gentle AI's native SDD pipeline", canon)
         self.assertIn("direct` and `design-tasks` remain non-SDD", canon)
         self.assertIn("review", canon)
         self.assertIn("outcome never authorizes delivery", canon)
 
-    def test_sdd_resume_binds_existing_change_without_new_start_preparation(self):
+    def test_authorized_legacy_full_sdd_reaches_existing_native_controls(self):
         bridge = " ".join(read("skills/chanks-4-puente/SKILL.md").split())
+        self.assertIn("authorized legacy `full-sdd`", bridge.lower())
+        self.assertIn("Gentle AI's existing native SDD controls", bridge)
+        self.assertIn("native SDD is exclusive to explicit human `solicitud_sdd`", bridge)
+        self.assertNotIn("prepare_new_change.py", bridge)
 
-        self.assertIn("CONTINUE/RESUME existing authorized native SDD or legacy `full-sdd`", bridge)
-        self.assertIn("do not prepare or create a container", bridge)
-        self.assertIn("Bind the existing change", bridge)
-        self.assertIn("fresh native v2 `sdd-status`", bridge)
-        self.assertIn("exact provider-returned continuation from the preserved checkpoint", bridge)
+    def test_sdd_exception_delegates_to_native_controls_without_embedded_recipe(self):
+        bridge = " ".join(read("skills/chanks-4-puente/SKILL.md").split())
+        self.assertIn("explicit human `solicitud_sdd`", bridge)
+        self.assertIn("native SDD preflight, authority, and archive controls", bridge)
+        self.assertNotIn("sdd-status", bridge)
+        self.assertNotIn("prepare_new_change.py", bridge)
 
     def test_no_debt_scope_rule_preserves_authorized_in_session_adjustments(self):
         canon = " ".join(read("skills/_shared/plan-naming-convention.md").split())
@@ -335,14 +343,9 @@ class GenericBuilderFlowTests(unittest.TestCase):
         handoff = read("skills/chanks-0-agente-soporte/assets/assignment-implementation.md")
         canon = read("skills/_shared/plan-naming-convention.md")
 
-        for phrase in (
-            "native v2 `planningHome` and `actionContext`", "human NEW-start authority and preflight",
-            "`sdd-status` to return `sdd-new`", "python3 scripts/prepare_new_change.py",
-            "--intent new --route full-sdd --native-artifact-store openspec",
-            "fresh native v2 `sdd-status` after preparation", "exact legacy/dated archive match",
-            "legacy `direct`", "Módulo commits", "criterion-by-criterion `verify`",
-        ):
-            self.assertIn(phrase, bridge)
+        for phrase in ("native ODD", "historical legacy evidence", "Strict TDD",
+                       "exact authorized files", "observed execution", "parent-record delta"):
+            self.assertIn(phrase.lower(), bridge.lower())
         self.assertIn("has not adopted plan management", support)
         self.assertIn("Issue one bounded implementation handoff", support)
         self.assertIn("selected implementer", handoff)
@@ -350,6 +353,23 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertIn("The four steps", canon)
         self.assertIn("no-debt closure", canon.lower())
         self.assertIn("incomplete Encargo retains known declarations", canon)
+
+    def test_s157_handoff_requires_review_ready_and_preserves_seal(self):
+        handoff = " ".join(read("skills/chanks-0-agente-soporte/assets/assignment-implementation.md").split())
+        for phrase in ("listo para revisión", "all ODD tasks are checked", "full unattended seal",
+                       "expiry", "base", "permissions", "commit ceiling", "RDD consent policy",
+                       "independent revalidation", "Session", "worker", "checks", "commits",
+                       "changed paths", "review outcomes", "stopped decisions", "budget"):
+            self.assertIn(phrase, handoff)
+        self.assertIn("neither signal nor report authorizes delivery", handoff.lower())
+
+    def test_sealed_terminal_wake_report_is_unconditional_but_review_ready_is_not(self):
+        handoff = " ".join(read("skills/chanks-0-agente-soporte/assets/assignment-implementation.md").split())
+        self.assertIn("Only after all ODD tasks are checked, send", handoff)
+        self.assertIn("`listo para revisión`", handoff)
+        self.assertIn("For every sealed terminal outcome — COMPLETED, BLOCKED, or FAILED — send", handoff)
+        self.assertIn("even when ODD tasks are unfinished", handoff)
+        self.assertLess(handoff.index("`listo para revisión`"), handoff.index("For every sealed terminal outcome"))
 
     def test_frozen_product_snapshot_matches_the_pre_migration_builder(self):
         snapshot = ROOT.parent / "product" / "tower" / "generic"
