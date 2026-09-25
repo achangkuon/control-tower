@@ -43,7 +43,9 @@ zonas:
     rutas: [openspec/plans/, openspec/plan.yaml, openspec/ROADMAP.md, openspec/prd/, openspec/rfc/, openspec/specs/, openspec/maintenance/, openspec/config.yaml, docs/]
   - id: archivo
     nombre: Archivo
-    rutas: [openspec/changes/, openspec/archive/legacy-planning/]
+    # openspec/archive/sesiones/ recibe el histórico en markdown de las Sesiones cerradas (S160,
+    # aprobado por Emilio el 2026-09-24).
+    rutas: [openspec/changes/, openspec/archive/legacy-planning/, openspec/archive/sesiones/]
   - id: metodo
     nombre: Método
     # odd/tasks/ es continuidad de ejecución ODD, evidencia técnica subordinada y no
@@ -10260,6 +10262,99 @@ sesiones:
           - opcion: Cablear el hook automáticamente al instalar.
             razon: Cambia el comportamiento de Claude Code fuera del repo sin que el humano lo confirme explícitamente.
         contaminaba: [S159]
+  - id: S160
+    zona: metodo
+    prioridad: metodo-v1
+    resultado: >-
+      openspec/plan.yaml deja de crecer sin fin: una Sesión cerrada pasa a un histórico en
+      markdown y deja una sola línea de referencia en el plan, y radar status muestra por
+      defecto sólo las Sesiones vivas.
+    autoridad: >-
+      Aprobación explícita de Emilio el 2026-09-24 en esta Conversación, tras medir el plan en
+      10.389 líneas y 897 KB con 92 de 128 Sesiones cerradas, y radar status --json en 77 KB con
+      las 128 Sesiones (Engram topic chanks/plan-archive-s160). Se ubica en la etapa 5 de la guía
+      de Chanks (Entregar y cerrar).
+    depende_de:
+      - S155
+      - S158
+    cimientos: []
+    recurso: []
+    archivos:
+      - agent-workflows/tools/radar/main.go
+      - agent-workflows/tools/radar/plan.go
+      - agent-workflows/tools/radar/state.go
+      - agent-workflows/tools/radar/snapshot.go
+      - agent-workflows/tools/radar/check.go
+      - agent-workflows/tools/radar/render.go
+      - agent-workflows/tools/radar/archivar.go
+      - agent-workflows/tools/radar/archivar_test.go
+      - agent-workflows/tools/radar/check_test.go
+      - agent-workflows/tools/radar/snapshot_test.go
+      - agent-workflows/tools/radar/state_test.go
+      - agent-workflows/skills/chanks-5-session-doc/SKILL.md
+    encargo:
+      pedido_contexto: >-
+        El plan es la autoridad viva, pero guarda completas las Sesiones cerradas: hoy 92 de 128.
+        Con 10.389 líneas ya no entra en la ventana de contexto de un agente; para escribir hay
+        que buscar y leer pedazos, y el resumen general de Radar trae también todo lo cerrado.
+        Emilio quiere que plan.yaml sea sólo lo que está en caliente y la autoridad, y que lo
+        cerrado quede como histórico archivado en markdown.
+      resultado_comportamiento: >-
+        Un comando nuevo, radar archivar <ID>, toma una Sesión ✅ COMPLETO cuya entrega está
+        integrada en master, escribe su bloque completo en openspec/archive/sesiones/<ID>.md y lo
+        reemplaza en plan.yaml por una referencia de una línea con el ID, el commit de entrega y
+        la ruta del histórico. Rechaza con error una Sesión abierta, sin entrega integrada o ya
+        archivada, y no toca nada más del plan.
+
+        Para Radar, una Sesión propia archivada con entrega verificable cuenta como terminada:
+        las Sesiones abiertas que dependen de ella pueden quedar LISTO, a diferencia de la
+        historia importada de satisfied_history, que sigue sin conceder readiness. radar check
+        valida cada referencia archivada: el commit existe y está integrado en master, el
+        histórico existe y el ID no se repite. Sus estados cerrados y el conteo de avance no
+        cambian por archivar.
+
+        radar status, en texto y en --json, muestra por defecto sólo las Sesiones vivas; una
+        opción explícita agrega las cerradas y archivadas. La skill de cierre de la etapa 5 indica
+        correr radar archivar al cerrar cada Sesión.
+
+        Pruebas nuevas cubren archivar, el rechazo de los casos inválidos, la dependencia hacia
+        una Sesión archivada y el status liviano; la suite de Radar completa pasa y radar check
+        sobre el plan vigente sigue sin errores.
+      restricciones_decisiones: >-
+        Gentle AI desglosa, implementa y verifica mediante ODD con TDD estricto; SDD sólo por
+        solicitud humana explícita. Sólo los archivos declarados están autorizados; toda
+        expansión requiere aprobación humana y compatibilidad fresca antes de escribir. S115
+        reserva también check.go y check_test.go, pero está PLANIFICADO detrás de S114 DIFERIDO y
+        no corren a la vez. La pasada inicial que archiva las Sesiones ya cerradas es un paso
+        operativo de Main al entregar, con radar archivar y en su propio commit; no es parte de
+        esta Sesión. Al entregar se reinstala ~/.local/bin/radar.
+      referencias: >-
+        Antecedente de la historia fuera del plan: la migración a Zonas (8628319) y
+        openspec/archive/legacy-planning/, con referencias satisfied_history. Contrato actual:
+        agent-workflows/tools/radar/plan.go:253 (SatisfiedHistory), state.go (readiness sólo
+        contra Sesiones), render.go:312 (filas de referencias), check.go:625-660 (dependencias
+        hacia referencias, S154). La skill chanks-5-session-doc existe tras S158.
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Una Sesión archivada cuenta como terminada para quien depende de ella?"
+        resolucion: "Sí, si es una Sesión propia con commit de entrega integrado en master. La historia importada de satisfied_history conserva su regla actual: no concede readiness."
+        autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación.
+        clase: contrato-visible-del-producto
+        falsificador: Una Sesión abierta que depende de una archivada con entrega verificable queda bloqueada para siempre, o satisfied_history empieza a conceder readiness.
+        descartadas:
+          - opcion: Tratar lo archivado igual que satisfied_history.
+            razon: Repetiría la trampa de S8.12 y S8.10 con cada Sesión archivada.
+        contaminaba: [S160]
+      - tipo: resuelta
+        pregunta: "¿Dónde vive el histórico y quién escribe su ruta en el plan?"
+        resolucion: "En openspec/archive/sesiones/<ID>.md, dentro de la Zona archivo. Main agregó esa ruta a la partición al enumerar esta Sesión."
+        autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación.
+        clase: expansion-de-alcance
+        falsificador: Un histórico queda fuera de toda Zona y radar check reporta archivos huérfanos.
+        descartadas:
+          - opcion: Guardar el histórico dentro de plan.yaml.
+            razon: Es justamente lo que hace crecer el plan sin fin.
+        contaminaba: [S160]
 references:
   future_successors:
     - id: S102
