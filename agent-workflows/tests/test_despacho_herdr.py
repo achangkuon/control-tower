@@ -439,6 +439,57 @@ class DespachoHerdrDispatchTests(unittest.TestCase):
         )
 
 
+    def test_stage3_jornada_invocation_precedes_lock_and_readback(self):
+        execution = section(self.skill, "## Execution Steps")
+        assert_in_order(
+            self,
+            execution,
+            "invoke `chanks-0-jornada` in its stage-3 dispatch entry mode",
+            "Acquire the lock exactly through `references/retiro.md`'s `## Shared lock protocol`",
+            "collect Git, Radar, and fresh live Herdr readback",
+        )
+        self.assert_phrases(
+            "before selecting or locking any worker, invoke `chanks-0-jornada`",
+            "diagnosis plus `jornada.sh --ejecutar` only, never `--reciclar`",
+        )
+
+    def test_stage3_jornada_brings_clean_behind_seats_current_without_reimplementing(self):
+        self.assert_phrases(
+            "clean-but-behind declared seat is now current, brought up from verified master",
+            "this dispatch still creates each reserved `work/<id>` branch itself",
+        )
+
+    def test_stage3_jornada_dirty_or_ocupado_seat_is_one_decision_and_excluded(self):
+        gates = section(self.skill, "## Decision Gates")
+        self.assertIn(
+            "| `chanks-0-jornada`'s stage-3 dispatch entry reports a dirty or OCUPADO seat "
+            "| Report its evidence; ask exactly one decision (deliver, save, or discard); "
+            "exclude that seat from this batch until answered while other seats continue; "
+            "never clean, stash, or reset it automatically. |",
+            gates,
+        )
+        self.assert_phrases(
+            "an unanswered seat is excluded from this batch while other seats continue",
+            "never cleaned, stashed, or reset automatically",
+        )
+
+    def test_stage3_jornada_missing_seat_keeps_existing_provisioning_path(self):
+        self.assert_phrases("a missing seat keeps the existing provisioning path")
+
+    def test_stage3_jornada_failure_gate_stops_before_lock_held_readback(self):
+        gates = section(self.skill, "## Decision Gates")
+        self.assertIn(
+            "| `jornada.sh` is missing at the target repository root, exits non-zero, or "
+            "its `--ejecutar` output reports a partial failure | Stop before the lock-held "
+            "readback; report the exact output; ask the human; never retry or work around "
+            "it. |",
+            gates,
+        )
+        self.assert_phrases(
+            "does not proceed to the lock-held readback on unverified state",
+        )
+
+
 class DespachoHerdrRetireTests(unittest.TestCase):
     def setUp(self):
         self.skill = read(f"skills/{SKILL_NAME}/SKILL.md")

@@ -112,6 +112,73 @@ class ChanksJornadaSkillTests(unittest.TestCase):
         self.assertIn("9235", self.skill)
         self.assertIn("62", self.skill)
 
+    def test_jornada_sh_resolves_from_target_repository_root_not_installed_copy(self):
+        # S161 finding (a): `../../../jornada.sh` does not resolve from a runtime skill
+        # copy (~/.claude/skills/...); the script must be found at the target repo root.
+        self.assertIn("`git rev-parse --show-toplevel`", self.skill)
+        self.assertNotIn("../../../jornada.sh", self.skill)
+        self.assertIn(
+            "If `jornada.sh` is absent at that root, this skill stops and reports it",
+            self.skill,
+        )
+        self.assertIn(
+            "it never reimplements jornada.sh's own logic to work around a missing script",
+            self.skill,
+        )
+
+    def test_jornada_sh_failure_or_partial_ejecutar_gate_stops_and_asks(self):
+        # S161 finding (b): a non-zero exit, or a partial `--ejecutar` failure reported in
+        # its own output, must stop and ask -- never a silent retry or workaround.
+        self.assertIn(
+            "If `jornada.sh` exits non-zero, or its `--ejecutar` output reports a partial "
+            "failure",
+            self.skill,
+        )
+        self.assertIn(
+            "it never retries, retries with different flags, or works around the failure",
+            self.skill,
+        )
+        self.assertIn("does not proceed on unverified state", self.skill)
+
+    def test_decision_gates_cover_missing_jornada_and_jornada_failure(self):
+        gates = self.skill.split("## Decision Gates", 1)[1].split("## Execution Steps", 1)[0]
+        self.assertIn(
+            "| `jornada.sh` not found at the target repository root "
+            "(`git rev-parse --show-toplevel`) | Stop; report it is missing; never "
+            "reimplement its logic to work around it. |",
+            gates,
+        )
+        self.assertIn(
+            "| `jornada.sh` exits non-zero, or its `--ejecutar` output reports a partial "
+            "failure | Stop; report the exact output; ask the human; never retry or work "
+            "around it. |",
+            gates,
+        )
+        self.assertIn(
+            "| Invoked by `chanks-3-despacho-herdr` as stage-3 dispatch entry, before it "
+            "selects or locks workers | Run diagnosis and `--ejecutar` only; never "
+            "`--reciclar`. A dirty or OCUPADO seat is excluded from that batch until the "
+            "human answers. |",
+            gates,
+        )
+
+    def test_stage3_dispatch_entry_mode_runs_diagnosis_and_ejecutar_only_never_reciclar(self):
+        self.assertIn("Stage-3 dispatch entry mode:", self.skill)
+        self.assertIn("`chanks-3-despacho-herdr`", self.skill)
+        steps = self.skill.split("## Execution Steps", 1)[1].split(
+            "## Output Contract", 1
+        )[0]
+        self.assertIn(
+            "run step 1 (diagnosis) and step 2 (`--ejecutar`) only; skip step 3 "
+            "(`--reciclar`) entirely",
+            steps,
+        )
+        self.assertIn(
+            "stays excluded from that dispatch batch until answered; a missing seat keeps "
+            "the existing provisioning path",
+            steps,
+        )
+
     def test_installer_lists_and_ships_the_skill(self):
         self.assertIn(SKILL_NAME, INSTALLER.CHANKS_SKILLS)
         sources = {skill for skill, _, _ in INSTALLER.source_files(ROOT)}
