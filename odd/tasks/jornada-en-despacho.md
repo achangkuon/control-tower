@@ -45,7 +45,7 @@ Known pre-existing failures on base: `test_kickoff_requires_confirmed_exclusive_
 ## Tasks
 
 - [x] T1 — RED tests, dispatch hook, jornada fixes (route: delegated writer; 2+ non-trivial files).
-- [ ] T2 — Review, commit, push, reinstall, propagate (route: inline).
+- [x] T2 — Review, commit, push, reinstall, propagate (route: inline).
 - [x] T3 — Close native review findings R3-batch-exclusion-contradicts-atomic-batch,
       R3-ejecutar-mutation-outside-lock, R3-partial-failure-signal-undefined (route: bounded
       writer; 2+ non-trivial files: both SKILL.md and both test files).
@@ -76,8 +76,12 @@ Known pre-existing failures on base: `test_kickoff_requires_confirmed_exclusive_
   - `git status --porcelain`: only the four authorized files plus this task
     file changed. `git diff --stat`: 159 insertions / 17 deletions across the
     two SKILL.md and two test files — well under the ~400-line heuristic.
-- T2 (review/commit/push/reinstall/propagate) not yet done — reserved for the
-  inline step after this writer's report is accepted.
+- T2 done inline: `59a78c4` reviewed (staged, medium, granted, approved with four advisories,
+  acknowledged) and committed; the T3 follow-up `f092f11` review was declined by the maintainer
+  for that candidate. Both pushed to `master`. `install.py` updated Claude, Pi, OpenCode and
+  Codex; Hermes received additive file copies. All five copies match source
+  (`chanks-0-jornada` 7cf4063280a0, `chanks-3-despacho-herdr` c14a03d8a2fe). Parent re-ran the
+  full suite: 209 tests, only the 3 known pre-existing failures.
 - T3 done by a bounded writer (strict TDD observed), closing the three S161/59a78c4
   native-review advisory findings:
   - RED: updated 3 existing assertions that pinned the old "excluded ... while other
