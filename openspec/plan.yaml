@@ -3195,6 +3195,8 @@ sesiones:
       - S157
     cimientos: []
     recurso: []
+    entrega:
+      commit: f225de2f5dc26d6a67e2ac362e80abdcf6d1c980
     archivos:
       - agent-workflows/tools/install.py
       - agent-workflows/chanks/pi-admission.mjs
@@ -3226,9 +3228,11 @@ sesiones:
       resultado_comportamiento: >-
         La plantilla de la extensión de Pi ya no pregunta chanks_request_activation ni usa
         ctx.ui.confirm. Con el interruptor por repositorio encendido y una Sesión aprobada sin
-        admitir, la extensión sigue bloqueando escrituras del worktree; en cuanto Radar admite la
-        Sesión (misma verificación de S157), el bloqueo se libera solo, sin pregunta. En Main la
-        extensión deja de quedar inerte: guía mostrando el menú de etapas que calcula
+        admitir, la extensión sigue bloqueando escrituras del worktree; en cuanto Radar admite una
+        Sesión sin Cimientos ni Recursos (misma verificación de S157), el bloqueo se libera solo,
+        sin pregunta. Si declara alguno, queda bloqueada hasta contar con evidencia durable de la
+        reserva o adquisición: Radar y el marcador no la fabrican. En Main la extensión deja de
+        quedar inerte: guía mostrando el menú de etapas que calcula
         `radar etapa`, y anuncia 💪 únicamente en una transición de etapa, nunca en un bloqueo.
         pi-admission.mjs, pi-authority.mjs, pi-switch.mjs y pi-controls.mjs reflejan ese cambio;
         controls.mjs e interventions.mjs se conservan porque siguen siendo importados, y sólo se
@@ -3276,6 +3280,28 @@ sesiones:
         descartadas:
           - opcion: Cablear el hook automáticamente al instalar.
             razon: Cambia el comportamiento de Claude Code fuera del repo sin que el humano lo confirme explícitamente.
+        contaminaba: [S159]
+      - tipo: resuelta
+        pregunta: "¿Radar y el marcador alcanzan para liberar automáticamente una Sesión que declara Cimientos o Recursos?"
+        resolucion: No; la admisión automática libera sólo Sesiones sin Cimientos ni Recursos. Las demás quedan bloqueadas porque el marcador prueba Sesión, worktree y branch, pero no una reserva exacta ni una adquisición exclusiva o serial.
+        autoridad: Decisión explícita de Emilio el 2026-09-25 en esta Conversación.
+        clase: seguridad-y-permisos
+        falsificador: Una declaración de Cimiento o Recurso se transforma en confirmación, o una mutación compartida avanza sin evidencia durable de reserva o adquisición.
+        descartadas:
+          - opcion: Tratar la declaración de Radar como confirmación.
+            razon: Fabricaría autoridad de seguridad que Radar no observa.
+          - opcion: Ampliar S159 para crear un nuevo registro durable.
+            razon: Excede los archivos autorizados y requiere una expansión aprobada separada.
+        contaminaba: [S159]
+      - tipo: resuelta
+        pregunta: "¿Cómo se trata el tamaño final de S159, superior a la referencia de 400 líneas?"
+        resolucion: Un solo commit coherente con excepción de tamaño, conservando strict TDD, verificación independiente y reversibilidad de la unidad completa.
+        autoridad: Decisión explícita de Emilio el 2026-09-25 en esta Conversación.
+        clase: expansion-de-alcance
+        falsificador: La excepción se usa para tocar archivos no declarados o saltear pruebas, revisión o límites de autoridad.
+        descartadas:
+          - opcion: Dos commits secuenciales.
+            razon: Emilio eligió explícitamente una sola unidad para el runtime y su guía de etapas.
         contaminaba: [S159]
   - {id: S160, entrega: {commit: 5eb62d8b350611742a3d7325939b6ca5f5444ca3}, historico: openspec/archive/sesiones/S160.md}
 references:

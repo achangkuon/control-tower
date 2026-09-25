@@ -26,8 +26,13 @@
 - [x] T3 — Add Main stage guidance and the portable non-blocking Claude hook, with 💪 only on observed stage transitions and no settings mutation. Proof: mode/syntax/payload, invalid-output, same-stage, and settings-free tests passed; independent verifier inspected lifecycle-bound process use.
 - [ ] T4 — Run focused/regression verification and native review or fallback, deliver the coherent size-exception commit, record closure, then perform the approved final skill installation/propagation and separately resolve Claude hook wiring.
 
-## Restart checkpoint
+## Delivery checkpoint (2026-09-25)
 
-The first uncommitted draft was discarded with explicit maintainer authorization after its single correction round still mislabeled one switch-transition result. The source tree is back at base `ce2a48c`; this task record preserves the approved decisions.
+- The first uncommitted draft was discarded with explicit maintainer authorization after its single correction round still mislabeled one switch-transition result.
+- The fresh candidate implemented ordinary-only marker admission, fail-closed Cimientos/Recursos, per-tool-call descriptor-bound `write`/`edit`, read-only confined bash, call-start switch semantics, exact lease cleanup, Main guidance with transition-only 💪, and the executable unwired Claude hook.
+- Strict TDD/regression evidence: affected Bun suite 237/237; focused Python Pi authority suite 28/28; hook syntax/mode and `git diff --check` passed. Full Python installer kept two base-identical out-of-scope kickoff string failures and introduced none.
+- Independent verification returned PASS. Native review could not create a lineage because intended-untracked selection returned `schema-incompatible`; no authority mutation occurred.
+- Implementation commit `f225de2f5dc26d6a67e2ac362e80abdcf6d1c980` was pushed directly to `master`; pre-push passed 1,486/1,486 repository tests.
+- `openspec/plan.yaml` now records the immutable commit and the approved ordinary-only/shared-evidence and size-exception decisions.
 
-The fresh candidate must implement from the outset: ordinary-only marker admission; fail-closed Cimientos/Recursos; per-tool-call descriptor-bound `write`/`edit` effects; read-only confined bash rather than pathname-racy writable mounts; switch state bound at call start so an off-path completion is never mistaken for a missing lease; exact parallel/error/shutdown cleanup; Main guidance with transition-only 💪; and an executable but unwired Claude hook. Next: delegate a new bounded writer and require RED→GREEN plus independent verification before any review or delivery.
+Next: commit/push this closure record, run the already approved final repository skill installation across all configured runtimes, verify it, and ask the separate explicit question before wiring the Claude hook in personal settings.
