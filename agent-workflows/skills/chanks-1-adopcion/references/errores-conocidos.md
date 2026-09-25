@@ -86,14 +86,16 @@ error → por qué duele → qué hacer en vez → evidencia.
     Evidencia: caso `.pi/settings.json`, arreglado en `70d5d40` (memoria
     `plan-yaml-es-la-autoridad`).
 
-11. **Superar el cupo de 400 líneas autoradas por lote de revisión sin justificarlo.**
+11. **Tratar las 400 líneas como cupo que se consume o se divide.**
     El commit `969f189` (migrar la radiografía a leer Radar en vez de parsear el
     índice legacy) fue de 572 líneas cambiadas; se aceptó como excepción única y
     documentada porque partirlo habría dejado un commit intermedio con la suite en
-    rojo.
-    → Mantené el cupo de 400 líneas; si una excepción es inevitable, documentala en
-    el propio commit y en el registro de avance, y que la razón sea "partir rompe la
-    suite", no comodidad.
+    rojo. Esa evidencia histórica no convierte el número en límite duro.
+    → Usá 400 adiciones más eliminaciones de implementación autorada como referencia
+    de planificación/revisión; excluí artefactos de planificación o generados. Antes
+    de superarla, preguntá al maintainer: dividir en unidades secuenciales verificables y revertibles
+    o aprobar una excepción explícita. No es un cupo que se consume o se divide; registrá
+    la decisión como evidencia sin crear un índice de avance ni otra fuente de verdad.
     Evidencia: `verify-report.md:130,197`; `archive-report.md:115`.
 
 12. **Resolver rutas de scripts de prueba contra la raíz del repo.** Al mover el

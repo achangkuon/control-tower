@@ -14,7 +14,7 @@ assert SPEC.loader is not None
 sys.modules[SPEC.name] = INSTALLER
 SPEC.loader.exec_module(INSTALLER)
 SKILLS = ROOT / "skills"
-SOURCE_CLOSURE_SKILL_SHA256 = "8b210e75bf021b1b7f7a35b267d83a8cca37bb49c2afbe4ed91c10618a0d94b6"
+SOURCE_CLOSURE_SKILL_SHA256 = "ac0216b2a7d18eec9086bf48c3f272b8ba06d794b7827a792ab43ac23fc48a3a"
 SNAPSHOT_SHA256 = {
     "skills/chanks-0-agente-soporte/SKILL.md": "25eb5b1f0f253ca9df24829add72f91cadbf24aadb80034e90e42501110fc032",
     "skills/chanks-0-agente-soporte/assets/assignment-implementation.md": "70752539f85ffa8565dc32d9a1c6d9d32082d7df8357331bd8a500112816e7da",
@@ -110,8 +110,11 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertIn('{kind: "session"', kickoff)
         self.assertIn("never answer", kickoff)
         for planning_skill in (autoridad, planner):
-            self.assertIn("chanks_request_activation", planning_skill)
-            self.assertIn("planning", planning_skill)
+            self.assertNotIn("chanks_request_activation", planning_skill)
+            self.assertNotIn("llave de planificación", planning_skill.lower())
+            self.assertNotIn("planning key", planning_skill.lower())
+            self.assertNotIn("clic de activación", planning_skill.lower())
+            self.assertNotIn("activation click", planning_skill.lower())
 
     def test_native_resume_reconciles_same_identity_but_legacy_keeps_pending_module(self):
         support = read("skills/chanks-0-agente-soporte/SKILL.md")
@@ -141,8 +144,50 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertIn("review outcome never authorizes delivery", bridge)
         self.assertIn("ordinary delivery policy", closure)
         self.assertIn("actual delivery evidence", closure)
-        self.assertIn("no per-task or per-Módulo reviewer loop", canon)
+        self.assertIn("per work-unit commit", canon)
+        self.assertIn("final pending unit before closure", canon)
+        self.assertNotIn("one Session review", canon)
+        self.assertNotIn("no per-task or per-Módulo reviewer loop", canon)
         self.assertIn("archive controls remain native SDD controls", canon)
+
+    def test_s156_planning_handoff_and_review_reference(self):
+        autoridad = read("skills/chanks-1-autoridad/SKILL.md")
+        planner = read("skills/chanks-2-planificador-granular/SKILL.md")
+        canon = read("skills/_shared/plan-naming-convention.md")
+        errors = read("skills/chanks-1-adopcion/references/errores-conocidos.md")
+
+        self.assertIn("chanks-2-planificador-granular", autoridad)
+        self.assertIn("aprobación humana", autoridad)
+        self.assertIn("evidencia", autoridad)
+        self.assertIn("responsible parent", autoridad)
+        self.assertIn("chanks-3-session-kickoff", planner)
+        self.assertIn("evidence", planner)
+        self.assertIn("responsible parent", planner)
+        for source in (autoridad, planner):
+            self.assertNotIn("chanks_request_activation", source)
+            self.assertNotIn("llave de planificación", source.lower())
+            self.assertNotIn("planning key", source.lower())
+            self.assertNotIn("clic de activación", source.lower())
+            self.assertNotIn("activation click", source.lower())
+        self.assertIn("stage 4", canon)
+        self.assertIn("per work-unit commit", canon)
+        self.assertIn("final pending unit before closure", canon)
+        self.assertIn("review outcome never authorizes delivery", canon)
+        for phrase in (
+            "400", "additions plus deletions", "planning or generated artifacts",
+            "sequential verifiable reversible units", "explicit exception", "not a quota",
+        ):
+            self.assertIn(phrase, canon)
+        for phrase in (
+            "400", "adiciones más eliminaciones", "artefactos de planificación o generados",
+            "unidades secuenciales verificables y revertibles", "excepción explícita",
+            "no es un cupo",
+        ):
+            self.assertIn(phrase, errors.lower())
+        self.assertIn("572", errors)
+        self.assertIn("969f189", errors)
+        self.assertNotIn("Mantené el cupo", errors)
+        self.assertNotIn("registro de avance", errors)
 
     def test_closure_requires_repository_reinstall_evidence_or_explicit_exemption(self):
         closure = read("skills/chanks-7-session-doc/SKILL.md")

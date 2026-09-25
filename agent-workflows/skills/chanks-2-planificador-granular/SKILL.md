@@ -26,10 +26,9 @@ parent; do not write the plan or generated view.
   `referencias`. Keep outcome/constraint meaning inside them.
 - ODD is default. Only an explicit human `solicitud_sdd` can request native SDD; complexity never does.
 - Legacy Module/Task contracts remain historical/technical evidence and are not rewritten here.
-- In Pi, with the Chanks switch on, before the responsible parent writes `openspec/plan.yaml`
-  from this delta, request the planning key (`chanks_request_activation` with
-  `{kind: "planning"}`); with the switch off, or in the main working tree (Main), this does
-  not apply.
+- Announce `chanks-3-session-kickoff` as the next stage only after approved scope, complete
+  authority, exact-file evidence, and the responsible parent's plan write; fresh Radar admission
+  remains required there. This handoff neither approves execution nor claims a live status.
 
 ## Decision Gates
 
@@ -56,13 +55,16 @@ implementation Session; this does not add product planning, authority, or a step
 5. Record Cimientos/Recurso compatibility and required fresh evidence for expansion.
 6. Draft the exact four Encargo parts with outcome/constraint meaning inside them.
 7. Record decisions with evidence, options/consequences, class, `Contamina:`, and checkpoint.
-8. Forecast review size and report an approved exception or an honest Session split; never code-golf.
+8. Forecast against 400 authored implementation additions plus deletions (excluding planning
+   and generated artifacts). Before exceeding the reference, ask the maintainer to split into
+   sequential verifiable reversible units or approve an explicit exception; never code-golf.
 
 ## Output Contract
 
 Return prepared coordination, four-part Encargo, file/compatibility evidence, size forecast, human
 decisions, and the exact parent-record delta. State whether it is complete or incomplete; do not
-claim planning status, a lock, technical task decomposition, or execution authority.
+claim planning status, a lock, technical task decomposition, or execution authority. Announce
+`chanks-3-session-kickoff` only when its evidence-backed handoff conditions are met.
 
 ## References
 

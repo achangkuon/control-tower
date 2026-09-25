@@ -59,10 +59,12 @@ product work unit closed by integrated delivery evidence. Do not use those terms
 
 ## 6. Review size
 
-A Session may contain several technical implementation steps. The review reference counts authored
-implementation additions plus deletions, not planning/generated artifacts. Split only when an
-independently reversible product result exists; never golf code, tests, or documentation to fit a
-number. A human-approved exception is recorded as evidence, not a new hierarchy level.
+A Session may contain several technical implementation steps. The 400-line planning/review reference
+counts authored implementation additions plus deletions, excluding planning or generated artifacts.
+Before exceeding it, ask the maintainer to split into sequential verifiable reversible units or
+approve an explicit exception. It is a reference, not a quota to consume or divide; never golf code,
+tests, or documentation to fit a number. Record the human decision as evidence, not a new hierarchy
+level or progress index.
 
 ## 7. Banned plan levels
 
@@ -184,8 +186,8 @@ legacy fields into a native Session.
 When a human explicitly selects SDD for a native Session, run only Gentle AI's existing native SDD
 flow after its actual preflight and authority gates. `archive` is a native SDD control after delivery;
 it is not required for ODD. Strict TDD is forwarded from effective explicit configuration, never
-inferred from test presence. Verification and review follow Gentle AI native policy; a review
-outcome never authorizes delivery. There is one Session review, no per-task or per-Módulo reviewer loop,
+inferred from test presence. Native technical review occurs inside stage 4 per work-unit commit,
+including the final pending unit before closure; a review outcome never authorizes delivery,
 and archive controls remain native SDD controls.
 
 ## 16. Resume
