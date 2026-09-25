@@ -411,6 +411,20 @@ class InstallerTests(unittest.TestCase):
             for root in (home / ".agents/skills", home / ".claude/skills"):
                 self.assertTrue((root / "chanks-1-adopcion/SKILL.md").is_file())
 
+    def test_chanks_0_jornada_is_installed_and_listed(self):
+        """The workday-open/close skill must ship in the roster and land on disk.
+
+        It calls jornada.sh as a Tower tool for "empezamos/cerramos la jornada"; it
+        needs the same install treatment as every other chanks-0-* skill.
+        """
+        self.assertIn("chanks-0-jornada", INSTALLER.CHANKS_SKILLS)
+        with tempfile.TemporaryDirectory() as raw:
+            home = Path(raw)
+            self._seed_runtime(home)
+            INSTALLER.apply(home, ROOT)
+            for root in (home / ".agents/skills", home / ".claude/skills"):
+                self.assertTrue((root / "chanks-0-jornada/SKILL.md").is_file())
+
     def test_project_owned_tower_delivery_skill_is_not_distributed(self):
         self.assertNotIn("torre-control-entregas", INSTALLER.SKILLS)
         self.assertIn("torre-control-entregas", INSTALLER.RETIRED_SKILLS)
