@@ -44,7 +44,7 @@ Runner: `python3 -m unittest discover -s agent-workflows/tests -p 'test_*.py'`.
 ## Tasks
 
 - [x] T1 — RED tests + skill + installer registration (route: delegated writer; trigger: 2+ non-trivial files).
-- [ ] T2 — Delivery: commit, review assess, push, reinstall, propagate.
+- [x] T2 — Delivery: commit, review assess, push, reinstall, propagate (route: inline).
 
 ## Acceptance criteria
 
@@ -72,7 +72,17 @@ Runner: `python3 -m unittest discover -s agent-workflows/tests -p 'test_*.py'`.
 - New skill: `agent-workflows/skills/chanks-0-jornada/SKILL.md` (66 lines). Diff:
   `install.py` +1, `test_install.py` +14, plus the new `test_chanks_jornada.py` (122 lines).
 
+- Parent re-ran the full suite: same 3 failures; confirmed pre-existing on base `99dca9b` in a
+  detached temporary worktree.
+- Native review: staged projection, risk high, consent granted, 4 lenses, approved with only
+  advisory findings; acknowledged lineage `review-c933b048974090b7`.
+- Delivered: commit `1c3a056` pushed to `master`. `install.py` installed the skill for Claude,
+  Pi (`~/.agents`), OpenCode and Codex; `install.py --check` OK. Hermes received an additive copy.
+  All five runtime copies share the source SHA-256 prefix `1543a5733e36`.
+- Advisory follow-ups (non-blocking): tests for the dirty-worktree rule are textual and partly
+  vacuous (R3); `../../../jornada.sh` reference does not resolve from installed copies (R3/R2-005);
+  no explicit gate when jornada.sh itself fails (R4).
+
 ## Next step
 
-T2 — delivery (commit, review assess, push, reinstall, propagate) is out of this writer's
-authorized scope (no commit/push/review here); hand back to the responsible parent.
+None for S161. Advisory findings are candidate later work, not reopened here.

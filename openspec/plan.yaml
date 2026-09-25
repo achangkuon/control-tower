@@ -3335,6 +3335,8 @@ sesiones:
       - S159
     cimientos: []
     recurso: []
+    entrega:
+      commit: 1c3a056c405d76b9e13ba70298dbaf3554b2cf61
     archivos:
       - agent-workflows/skills/chanks-0-jornada/SKILL.md
       - agent-workflows/tools/install.py
