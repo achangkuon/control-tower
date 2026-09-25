@@ -57,6 +57,7 @@ export const CANONICAL_RUNTIME_PAYLOAD = [
   "install/version-store.mjs",
   "jornada/lifecycle.mjs",
   "main-store/launch-consumer.mjs",
+  "semaphore.mjs",
   "workspace/seat-inventory.mjs",
   "workspace/slots.mjs",
 ]

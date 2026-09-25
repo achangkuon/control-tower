@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test"
 import { Database } from "bun:sqlite"
 import { createHash, createHmac, randomBytes, randomUUID } from "node:crypto"
-import { chmodSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
+import { chmodSync, copyFileSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
 import { fileURLToPath, pathToFileURL } from "node:url"
@@ -1091,6 +1091,9 @@ describe("P4-A1c evolved schema-4 validation and total replay", () => {
       const fixture = setupEvolved(fault)
       expect(errorCode(() => tower.bootstrapAdmin(fixture.migrationRequest, fixture.main))).toBe("CT_SCHEMA_INVALID")
       const mutationRoot = mkdtempSync(join(tmpdir(), "control-tower-reverse-mutation-")); temporaryDirectories.push(mutationRoot)
+      // core.mjs imports its sibling semaphore.mjs; the mutated copy below needs it
+      // alongside to resolve, unmutated, so this stays a mutation test of core.mjs only.
+      copyFileSync(join(packageRoot, "semaphore.mjs"), join(mutationRoot, "semaphore.mjs"))
       const seam = "const schema4ReverseLinkValid = (_operation, valid) => valid"
       const source = readFileSync(join(packageRoot, "core.mjs"), "utf8")
       expect(source.includes(seam)).toBe(true)
