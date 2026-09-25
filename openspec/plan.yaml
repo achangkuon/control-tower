@@ -9196,6 +9196,8 @@ sesiones:
           - opcion: Detener S149 sin ampliar alcance.
             razon: Dejaba el candidato con la suite en rojo y la release V1 trabada detrás de S149.
         contaminaba: [S149]
+    entrega:
+      commit: d0bf31a51cc24c484a16fb25414ca80dec3f41fe
   - id: S150
     prioridad: torre-v1
     zona: cimientos
