@@ -26,16 +26,15 @@ const (
 //     even when its dependencies are met.
 //  3. Then LISTO vs PLANIFICADO, from the dependency graph.
 //
-// EN CURSO is deliberately absent: it is a runtime claim held by an agent, not
-// a property of the plan. Asking the plan who is working right now is asking the
-// wrong document.
+// EN CURSO comes only from a live dispatch marker in Git's common directory,
+// never from plan.yaml. Terminal, blocked and deferred states still win.
 func (p *Plan) Estados(root string) map[string]string {
 	head, _ := gitHEAD(root)
 	return p.EstadosAt(root, head)
 }
 
 func (p *Plan) EstadosAt(root, head string) map[string]string {
-	return p.estadosAsumiendo(root, head, nil)
+	return p.estadosConObservacion(root, head, nil, p.observarDespachos(root))
 }
 
 // EstadosAsumiendoCerradas answers "what would the plan look like if these
@@ -158,10 +157,10 @@ func combinarMotivos(a, b Motivo) Motivo {
 }
 
 func (p *Plan) EstadosAsumiendoCerradas(root, head string, cerradas map[string]bool) map[string]string {
-	return p.estadosAsumiendo(root, head, cerradas)
+	return p.estadosConObservacion(root, head, cerradas, dispatchObservation{})
 }
 
-func (p *Plan) estadosAsumiendo(root, head string, cerradas map[string]bool) map[string]string {
+func (p *Plan) estadosConObservacion(root, head string, cerradas map[string]bool, obs dispatchObservation) map[string]string {
 	estados := make(map[string]string, len(p.Sesiones))
 	index := p.SesionPorID()
 	master := ""
@@ -210,21 +209,14 @@ func (p *Plan) estadosAsumiendo(root, head string, cerradas map[string]bool) map
 		}
 	}
 
-	// Blocking declared by someone else's `Contamina:` — the semantic case that
-	// is invisible in the graph, the Zona and the Recurso.
-	for i := range p.Sesiones {
-		for _, d := range p.Sesiones[i].Decisiones {
-			if d.Tipo != "escala" {
-				continue
-			}
-			for _, victima := range d.Contamina {
-				if st, ya := estados[victima]; ya && (st == Completo || st == Archivado || st == Diferido) {
-					continue
-				}
-				if _, existe := index[victima]; existe {
-					estados[victima] = Bloqueado
-				}
-			}
+	// Blocking declared by someone else's `Contamina:` takes precedence
+	// over an incomplete Encargo's otherwise preparable state.
+	for _, s := range p.Sesiones {
+		if st := estados[s.ID]; st == Completo || st == Archivado || st == Diferido {
+			continue
+		}
+		if p.contaminadaPorEscala(s.ID) {
+			estados[s.ID] = Bloqueado
 		}
 	}
 
@@ -254,7 +246,30 @@ func (p *Plan) estadosAsumiendo(root, head string, cerradas map[string]bool) map
 	}
 
 	p.aplicarPrioridades(estados)
+	if cerradas == nil {
+		for _, s := range p.Sesiones {
+			if estados[s.ID] == Listo && obs.live[s.ID] {
+				estados[s.ID] = EnCurso
+			}
+		}
+	}
 	return estados
+}
+
+func (p *Plan) contaminadaPorEscala(id string) bool {
+	for _, s := range p.Sesiones {
+		for _, d := range s.Decisiones {
+			if d.Tipo != "escala" {
+				continue
+			}
+			for _, victim := range d.Contamina {
+				if victim == id {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 // aplicarPrioridades is the last pass on purpose. Dependencies unlock only on
@@ -330,7 +345,10 @@ func (p *Plan) ColaPorZona(root string) map[string][]string {
 }
 
 func (p *Plan) ColaPorZonaAt(root, head string) map[string][]string {
-	estados := p.EstadosAt(root, head)
+	return p.colaConEstados(p.EstadosAt(root, head))
+}
+
+func (p *Plan) colaConEstados(estados map[string]string) map[string][]string {
 	index := p.SesionPorID()
 
 	porZona := map[string][]*Sesion{}
@@ -349,7 +367,16 @@ func (p *Plan) ColaPorZonaAt(root, head string) map[string][]string {
 	out := map[string][]string{}
 	for zona, sesiones := range porZona {
 		orden := ordenTopologico(sesiones, index)
-		out[zona] = orden
+		for _, id := range orden {
+			if estados[id] == EnCurso {
+				out[zona] = append(out[zona], id)
+			}
+		}
+		for _, id := range orden {
+			if estados[id] != EnCurso {
+				out[zona] = append(out[zona], id)
+			}
+		}
 	}
 	return out
 }
@@ -417,7 +444,10 @@ func (p *Plan) Avance(root string) (map[string]Avance, Avance) {
 }
 
 func (p *Plan) AvanceAt(root, head string) (map[string]Avance, Avance) {
-	estados := p.EstadosAt(root, head)
+	return p.avanceConEstados(p.EstadosAt(root, head))
+}
+
+func (p *Plan) avanceConEstados(estados map[string]string) (map[string]Avance, Avance) {
 	porZona := map[string]Avance{}
 	var total Avance
 
@@ -451,8 +481,11 @@ func (p *Plan) Asientos(root string) []string {
 
 func (p *Plan) AsientosAt(root, head string) []string {
 	estados := p.EstadosAt(root, head)
+	return p.asientosConEstados(estados, p.colaConEstados(estados))
+}
+
+func (p *Plan) asientosConEstados(estados map[string]string, colas map[string][]string) []string {
 	index := p.SesionPorID()
-	colas := p.ColaPorZonaAt(root, head)
 
 	zonas := make([]string, 0, len(colas))
 	for zona := range colas {

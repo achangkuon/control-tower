@@ -63,8 +63,8 @@ type Par struct {
 }
 
 // Roadmap is the structured evidence behind the human view. It is deliberately
-// not a second source of truth: every state in it came from EstadosAt, and
-// every queue order from ColaPorZonaAt.
+// not a second source of truth: states and queues use the same derivation as
+// EstadosAt and ColaPorZonaAt, from one captured observation.
 type Roadmap struct {
 	Head            string
 	PrioridadActiva string
@@ -101,25 +101,27 @@ func (p *Plan) Roadmap(root string) Roadmap {
 	return p.RoadmapAt(root, head)
 }
 
-// RoadmapAt enumerates every LISTO alternative in Zona order and classifies
-// every combination of them.
-//
-// It recomputes nothing: states come from EstadosAt and the order inside a Zona
-// from ColaPorZonaAt, the same functions status and render already consume.
-// What it adds is the pairwise reading of declarations the snapshot holds but
-// never compared.
+// RoadmapAt samples dispatch evidence once; states, queues and priority all
+// derive from that observation. Hypothetical scenarios remain marker-free.
 func (p *Plan) RoadmapAt(root, head string) Roadmap {
-	estados := p.EstadosAt(root, head)
-	colas := p.ColaPorZonaAt(root, head)
-	index := p.SesionPorID()
+	return p.roadmapConObservacion(root, head, p.observarDespachos(root))
+}
 
+func (p *Plan) roadmapConObservacion(root, head string, obs dispatchObservation) Roadmap {
+	estados := p.estadosConObservacion(root, head, nil, obs)
+	return p.roadmapConEstados(root, head, estados, p.colaConEstados(estados))
+}
+
+// roadmapConEstados is shared by Roadmap and Snapshot so their forecasts use
+// exactly the states and queues derived from each command's single observation.
+func (p *Plan) roadmapConEstados(root, head string, estados map[string]string, colas map[string][]string) Roadmap {
+	index := p.SesionPorID()
+	alternativas := make([]Alternativa, 0)
 	zonas := make([]string, 0, len(colas))
 	for zona := range colas {
 		zonas = append(zonas, zona)
 	}
 	sort.Strings(zonas)
-
-	alternativas := make([]Alternativa, 0)
 	for _, zona := range zonas {
 		for _, id := range colas[zona] {
 			if estados[id] != Listo {
@@ -130,37 +132,26 @@ func (p *Plan) RoadmapAt(root, head string) Roadmap {
 				continue
 			}
 			alternativas = append(alternativas, Alternativa{
-				Sesion:    s.ID,
-				Zona:      s.Zona,
-				Resultado: s.Resultado,
-				Prioridad: s.Prioridad,
-				Archivos:  copiaOrdenada(s.Archivos),
-				Cimientos: copiaOrdenada(s.Cimientos),
-				Recurso:   copiaOrdenada(s.Recurso),
+				Sesion: s.ID, Zona: s.Zona, Resultado: s.Resultado,
+				Prioridad: s.Prioridad, Archivos: copiaOrdenada(s.Archivos),
+				Cimientos: copiaOrdenada(s.Cimientos), Recurso: copiaOrdenada(s.Recurso),
 			})
 		}
 	}
-
 	pares := make([]Par, 0)
 	for i := range alternativas {
 		for j := i + 1; j < len(alternativas); j++ {
 			pares = append(pares, clasificarPar(alternativas[i], alternativas[j]))
 		}
 	}
-
 	activa := sinPrioridadDeclarada
-	if pr, hay := p.PrioridadActivaAt(root, head); hay {
-		activa = pr.ID
+	if pos, ok := p.prioridadActiva(estados); ok {
+		activa = p.Prioridades[pos].ID
 	}
-
 	return Roadmap{
-		Head:            head,
-		PrioridadActiva: activa,
-		Prevision:       previsionNoEsPermiso,
-		Autoriza:        false,
-		Alternativas:    alternativas,
-		Pares:           pares,
-		Escenarios:      p.escenariosAt(root, head, estados, index),
+		Head: head, PrioridadActiva: activa, Prevision: previsionNoEsPermiso,
+		Alternativas: alternativas, Pares: pares,
+		Escenarios: p.escenariosAt(root, head, estados, index),
 	}
 }
 

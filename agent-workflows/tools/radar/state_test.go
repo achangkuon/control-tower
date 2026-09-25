@@ -40,6 +40,138 @@ func abierta(id, zona string, deps ...string) Sesion {
 	return Sesion{ID: id, Zona: zona, DependeDe: deps, Criterios: []string{"algo verificable"}}
 }
 
+func TestUnaObservacionPorComandoNoMezclaEstadosYAsientos(t *testing.T) {
+	root, head := repoGit(t)
+	testDispatch(t, root, "S2", false)
+	p := &Plan{Producto: "Producto", Zonas: []Zona{{ID: "z", Nombre: "Z", Rutas: []string{"tracked.txt"}}}, Sesiones: []Sesion{abierta("S2", "z")}}
+	valid := &Plan{Producto: "Producto", Zonas: p.Zonas, Sesiones: []Sesion{pendiente("S2", "z")}}
+	original := readDispatchMarker
+	defer func() { readDispatchMarker = original }()
+	for _, tc := range []struct {
+		name string
+		run  func()
+	}{
+		{"snapshot", func() {
+			s := p.SnapshotAt(root, head)
+			if s.Sesiones[0].Estado != "EN CURSO" || s.Zonas[0].Cola[0].Estado != "EN CURSO" || len(s.Asientos) != 0 || len(s.DespachosHuerfanos) != 0 {
+				t.Fatalf("snapshot contradiction: %#v", s)
+			}
+		}},
+		{"render", func() {
+			text := string(RenderAt(p, root, head))
+			if !strings.Contains(text, "🔵 EN CURSO") || strings.Contains(text, "Ninguna Zona tiene trabajo LISTO.") == false {
+				t.Fatalf("render contradiction: %s", text)
+			}
+		}},
+		{"faltan", func() {
+			text := string(RenderFaltanAt(p, root, head))
+			if !strings.Contains(text, "Reanudar EN CURSO") || strings.Contains(text, "1 lista(s) para empezar") {
+				t.Fatalf("faltan contradiction: %s", text)
+			}
+		}},
+		{"status --json", func() {
+			var out strings.Builder
+			if err := cmdStatusJSON(&out, valid, root); err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(out.String(), `"estado": "EN CURSO"`) || !strings.Contains(out.String(), `"asientos": []`) {
+				t.Fatalf("status contradiction: %s", out.String())
+			}
+		}},
+		{"etapa", func() {
+			var out strings.Builder
+			if err := cmdEtapa(&out, valid, root, "S2"); err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(out.String(), "Implementar y revisar") {
+				t.Fatalf("etapa contradiction: %s", out.String())
+			}
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			calls := 0
+			readDispatchMarker = func(root, id string) (*despacho, error) {
+				calls++
+				if calls != 1 {
+					return nil, nil
+				}
+				return original(root, id)
+			}
+			tc.run()
+			if calls != 1 {
+				t.Fatalf("read marker %d times, want one", calls)
+			}
+		})
+	}
+}
+
+func TestRoadmapYSnapshotUsanLaMismaObservacionAunqueDiscoDifiera(t *testing.T) {
+	root, head := repoGit(t)
+	testDispatch(t, root, "S1", false) // Disk says EN CURSO; the sampled observation says LISTO.
+	s1 := abierta("S1", "z")
+	s1.Archivos = []string{"tracked.txt"}
+	s2 := abierta("S2", "z")
+	s2.Archivos = []string{"other.txt"}
+	p := &Plan{Sesiones: []Sesion{s1, s2, abierta("S3", "z", "S1")}}
+	original := readDispatchMarker
+	defer func() { readDispatchMarker = original }()
+	for _, tc := range []struct {
+		name string
+		run  func() ([]string, []Par, []Escenario)
+	}{
+		{"roadmap", func() ([]string, []Par, []Escenario) {
+			r := p.RoadmapAt(root, head)
+			ids := make([]string, 0, len(r.Alternativas))
+			for _, a := range r.Alternativas {
+				ids = append(ids, a.Sesion)
+			}
+			return ids, r.Pares, r.Escenarios
+		}},
+		{"snapshot", func() ([]string, []Par, []Escenario) {
+			s := p.SnapshotAt(root, head)
+			if s.Sesiones[0].Estado != "LISTO" || s.Zonas[0].Listas != 2 {
+				t.Fatalf("snapshot contradicts observed state: %#v", s)
+			}
+			ids := make([]string, 0, len(s.Compatibilidad)+1)
+			for _, entry := range s.Zonas[0].Cola {
+				if entry.Estado == "LISTO" {
+					ids = append(ids, entry.Sesion)
+				}
+			}
+			pairs := make([]Par, 0, len(s.Compatibilidad))
+			for _, pair := range s.Compatibilidad {
+				pairs = append(pairs, Par{A: pair.A, B: pair.B, Clase: ClaseCompatibilidad(pair.Clase)})
+			}
+			scenarios := make([]Escenario, 0, len(s.Escenarios))
+			for _, scenario := range s.Escenarios {
+				scenarios = append(scenarios, Escenario{Si: scenario.Si, QuedanListo: scenario.QuedanListo})
+			}
+			return ids, pairs, scenarios
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			calls := 0
+			readDispatchMarker = func(root, id string) (*despacho, error) {
+				calls++
+				if calls <= len(p.Sesiones) {
+					return nil, nil
+				}
+				return original(root, id)
+			}
+			ids, pairs, scenarios := tc.run()
+			if calls != len(p.Sesiones) {
+				t.Fatalf("marker sampled %d times for %d sessions", calls, len(p.Sesiones))
+			}
+			if !reflect.DeepEqual(ids, []string{"S1", "S2"}) || len(pairs) != 1 || pairs[0].A != "S1" || pairs[0].B != "S2" || pairs[0].Clase != Compatible {
+				t.Fatalf("alternatives/pairs contradict first observation: ids=%v pairs=%#v", ids, pairs)
+			}
+			if len(scenarios) != 1 || scenarios[0].Si != "S1" || !reflect.DeepEqual(scenarios[0].QuedanListo, []string{"S3"}) {
+				t.Fatalf("scenario contradicts marker-free assumption: %#v", scenarios)
+			}
+		})
+	}
+}
+
 func TestEstadoListoSoloConDependenciasCerradas(t *testing.T) {
 	root, commit := repoGit(t)
 	p := &Plan{Sesiones: []Sesion{

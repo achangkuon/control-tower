@@ -2791,6 +2791,7 @@ sesiones:
       - agent-workflows/tools/radar/state.go
       - agent-workflows/tools/radar/snapshot.go
       - agent-workflows/tools/radar/render.go
+      - agent-workflows/tools/radar/roadmap.go
       - agent-workflows/tools/radar/faltan.go
       - agent-workflows/tools/radar/git.go
       - agent-workflows/tools/radar/etapa.go
@@ -2836,12 +2837,15 @@ sesiones:
         reserva también check.go y check_test.go pero está PLANIFICADO detrás de S114 DIFERIDO:
         esta Sesión no toca ninguno de los dos. El cerebro calcula el menú; no decide por el
         humano ni reemplaza las preguntas de escalación existentes. Sumar el subcomando nuevo y
-        mover el cálculo de EN CURSO fuera de state.go:29-31 se estima entre 600 y 900 líneas de
-        diff; Emilio aprobó una excepción a la referencia de 400 líneas para un único commit
-        coherente de S155. La excepción no amplía archivos, elimina pruebas, omite revisión ni
-        autoriza por sí sola implementar o entregar. Al entregar se reinstala
-        ~/.local/bin/radar para que el pre-push y las demás Sesiones usen la versión nueva; la
-        reinstalación es un paso operativo, no un archivo del plan.
+        mover el cálculo de EN CURSO fuera de state.go:29-31 se estimó inicialmente entre 600 y
+        900 líneas de diff. El candidato portátil y sus regresiones alcanzaron aproximadamente
+        1.250 líneas; Emilio amplió explícitamente la excepción a 1.250–1.350 líneas para el mismo
+        commit coherente de S155 y autorizó sumar roadmap.go para que cada comando reutilice una
+        sola observación de las marcas, tras una compatibilidad fresca sin solapamientos. La
+        excepción no elimina pruebas, omite revisión ni autoriza por sí sola implementar o
+        entregar. Al entregar se reinstala ~/.local/bin/radar para que el pre-push y las demás
+        Sesiones usen la versión nueva; la reinstalación es un paso operativo, no un archivo del
+        plan.
       referencias: >-
         state.go:29-31 (EN CURSO deliberadamente ausente). Corte Torre V1: Engram 11327 (Radar
         incluido en la Torre V1). Documento de diseño: 'Chanks como guía de etapas — análisis por
@@ -2872,8 +2876,8 @@ sesiones:
         contaminaba: [S155, S157, S159]
       - tipo: resuelta
         pregunta: "¿Cómo se trata el tamaño de S155, que supera la referencia de 400 líneas de diff?"
-        resolucion: Un solo commit coherente con excepción de tamaño para S155; conserva pruebas, revisión proporcional y reversibilidad de esa unidad.
-        autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación.
+        resolucion: Un solo commit coherente con excepción ampliada a aproximadamente 1.250–1.350 líneas para S155; conserva pruebas, revisión proporcional y reversibilidad de esa unidad. La misma aprobación suma roadmap.go al alcance exacto para que el comando use una sola observación de marcas.
+        autoridad: Aprobación inicial de Emilio el 2026-09-24 y ampliación explícita en esta Conversación después de observar el candidato portátil y la compatibilidad fresca.
         clase: expansion-de-alcance
         falsificador: La excepción se usa para agregar archivos fuera de los declarados, saltear pruebas o revisión, o mezclar resultados ajenos a S155.
         descartadas:

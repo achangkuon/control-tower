@@ -28,6 +28,8 @@ type Snapshot struct {
 	Prioridades         []PrioridadJSON `json:"prioridades,omitempty"`
 	Zonas               []ZonaSnapshot  `json:"zonas"`
 	Sesiones            []SesionEstado  `json:"sesiones"`
+	DespachosHuerfanos  []string        `json:"despachos_huerfanos,omitempty"`
+	DespachosInvalidos  []string        `json:"despachos_invalidos,omitempty"`
 	Asientos            []string        `json:"asientos"`
 	TerritorioPendiente int             `json:"territorio_pendiente"`
 	// Compatibilidad and Escenarios are the machine side of `radar roadmap`.
@@ -126,10 +128,14 @@ func (p *Plan) Snapshot(root string) Snapshot {
 }
 
 func (p *Plan) SnapshotAt(root, head string) Snapshot {
-	estados := p.EstadosAt(root, head)
+	return p.snapshotConObservacion(root, head, p.observarDespachos(root))
+}
+
+func (p *Plan) snapshotConObservacion(root, head string, obs dispatchObservation) Snapshot {
+	estados := p.estadosConObservacion(root, head, nil, obs)
 	motivos := p.Motivos(estados)
-	colas := p.ColaPorZonaAt(root, head)
-	porZona, total := p.AvanceAt(root, head)
+	colas := p.colaConEstados(estados)
+	porZona, total := p.avanceConEstados(estados)
 	index := p.SesionPorID()
 	nombres := p.ZonaPorID()
 
@@ -225,7 +231,12 @@ func (p *Plan) SnapshotAt(root, head string) Snapshot {
 		})
 	}
 
-	asientos := p.AsientosAt(root, head)
+	// Resume live work first; orphaned markers stay visible as evidence but
+	// never acquire an EN CURSO state or a LISTO seat.
+	sort.SliceStable(sesiones, func(i, j int) bool {
+		return sesiones[i].Estado == "EN CURSO" && sesiones[j].Estado != "EN CURSO"
+	})
+	asientos := p.asientosConEstados(estados, colas)
 	if asientos == nil {
 		asientos = []string{}
 	}
@@ -235,11 +246,12 @@ func (p *Plan) SnapshotAt(root, head string) Snapshot {
 		prioridades = append(prioridades, PrioridadJSON{ID: pr.ID, Nombre: pr.Nombre})
 	}
 	var activa *PrioridadJSON
-	if pr, hay := p.PrioridadActivaAt(root, head); hay {
+	if pos, hay := p.prioridadActiva(estados); hay {
+		pr := p.Prioridades[pos]
 		activa = &PrioridadJSON{ID: pr.ID, Nombre: pr.Nombre}
 	}
 
-	roadmap := p.RoadmapAt(root, head)
+	roadmap := p.roadmapConEstados(root, head, estados, colas)
 	compatibilidad := make([]ParJSON, 0, len(roadmap.Pares))
 	for _, par := range roadmap.Pares {
 		compatibilidad = append(compatibilidad, ParJSON{
@@ -266,6 +278,8 @@ func (p *Plan) SnapshotAt(root, head string) Snapshot {
 		Prioridades:         prioridades,
 		Zonas:               zonas,
 		Sesiones:            sesiones,
+		DespachosHuerfanos:  obs.orphan,
+		DespachosInvalidos:  obs.invalid,
 		Asientos:            asientos,
 		TerritorioPendiente: pendiente,
 		Compatibilidad:      compatibilidad,

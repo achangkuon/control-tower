@@ -63,12 +63,16 @@ func Render(p *Plan, root string) []byte {
 }
 
 func RenderAt(p *Plan, root, head string) []byte {
+	return renderConObservacion(p, root, head, p.observarDespachos(root))
+}
+
+func renderConObservacion(p *Plan, root, head string, obs dispatchObservation) []byte {
 	var b bytes.Buffer
-	estados := p.EstadosAt(root, head)
+	estados := p.estadosConObservacion(root, head, nil, obs)
 	motivos := p.Motivos(estados)
-	colas := p.ColaPorZonaAt(root, head)
-	porZona, total := p.AvanceAt(root, head)
-	asientos := p.AsientosAt(root, head)
+	colas := p.colaConEstados(estados)
+	porZona, total := p.avanceConEstados(estados)
+	asientos := p.asientosConEstados(estados, colas)
 	index := p.SesionPorID()
 
 	fmt.Fprintln(&b, avisoGenerado)
@@ -77,20 +81,33 @@ func RenderAt(p *Plan, root, head string) []byte {
 	fmt.Fprintf(&b, "- Cierres registrados: %s.\n", cierresRegistrados(p, estados))
 	if len(p.Prioridades) > 0 {
 		activa := "ninguna"
-		if pr, hay := p.PrioridadActivaAt(root, head); hay {
-			activa = pr.Nombre
+		if pos, hay := p.prioridadActiva(estados); hay {
+			activa = p.Prioridades[pos].Nombre
 		}
 		fmt.Fprintf(&b, "- Prioridad activa: %s.\n", markdownText(activa))
+	}
+	retoma := sesionesEnCurso(estados)
+	if len(retoma) > 0 {
+		fmt.Fprintf(&b, "- Reanudar EN CURSO antes de trabajo LISTO: %s.\n", markdownList(retoma))
+	}
+	if len(obs.orphan) > 0 {
+		fmt.Fprintf(&b, "- Despachos huérfanos (no EN CURSO): %s.\n", markdownList(obs.orphan))
+	}
+	if len(obs.invalid) > 0 {
+		fmt.Fprintf(&b, "- Despachos inválidos (no EN CURSO): %s.\n", markdownList(obs.invalid))
 	}
 	fmt.Fprintf(&b, "- Próximo trabajo ejecutable: %s.\n", proximoTrabajo(p, estados, colas))
 	fmt.Fprintf(&b, "- Decisión pendiente: %s.\n\n", primeraDecisionPendiente(p))
 
 	fmt.Fprintln(&b, "## Estado y próximo trabajo")
 	ejecutable := trabajoEjecutable(p, estados, colas)
+	for _, id := range retoma {
+		fmt.Fprintf(&b, "- Reanudar EN CURSO → %s.\n", markdownText(id))
+	}
 	for _, item := range ejecutable {
 		fmt.Fprintf(&b, "- %s\n", item)
 	}
-	if len(ejecutable) == 0 {
+	if len(ejecutable) == 0 && len(retoma) == 0 {
 		fmt.Fprintln(&b, "- No hay Sesiones LISTO.")
 	}
 	fmt.Fprintln(&b)
@@ -422,7 +439,21 @@ func cierresRegistrados(p *Plan, estados map[string]string) string {
 	return markdownList(ids)
 }
 
+func sesionesEnCurso(estados map[string]string) []string {
+	var ids []string
+	for id, state := range estados {
+		if state == EnCurso {
+			ids = append(ids, id)
+		}
+	}
+	sort.Strings(ids)
+	return ids
+}
+
 func proximoTrabajo(p *Plan, estados map[string]string, colas map[string][]string) string {
+	if ids := sesionesEnCurso(estados); len(ids) > 0 {
+		return "reanudar EN CURSO → " + markdownText(ids[0])
+	}
 	items := trabajoEjecutable(p, estados, colas)
 	if len(items) == 0 {
 		return "ninguno"

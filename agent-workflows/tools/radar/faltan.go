@@ -110,7 +110,13 @@ func construirFaltan(p *Plan, estados map[string]string) []*metaFaltan {
 
 	for _, m := range metas {
 		for _, sub := range m.Subs {
-			sort.Slice(sub.Sesiones, func(i, j int) bool { return sub.Sesiones[i].ID < sub.Sesiones[j].ID })
+			sort.Slice(sub.Sesiones, func(i, j int) bool {
+				a, b := estados[sub.Sesiones[i].ID] == EnCurso, estados[sub.Sesiones[j].ID] == EnCurso
+				if a != b {
+					return a
+				}
+				return sub.Sesiones[i].ID < sub.Sesiones[j].ID
+			})
 		}
 	}
 	return metas
@@ -156,11 +162,31 @@ func RenderFaltan(p *Plan, root string) []byte {
 }
 
 func RenderFaltanAt(p *Plan, root, head string) []byte {
+	return renderFaltanConObservacion(p, root, head, p.observarDespachos(root))
+}
+
+func renderFaltanConObservacion(p *Plan, root, head string, obs dispatchObservation) []byte {
 	var b bytes.Buffer
-	estados := p.EstadosAt(root, head)
+	estados := p.estadosConObservacion(root, head, nil, obs)
 	metas := construirFaltan(p, estados)
 
 	fmt.Fprintf(&b, "%s — lo que falta\n\n", p.Producto)
+	var reanudar []string
+	for _, s := range p.Sesiones {
+		if estados[s.ID] == EnCurso {
+			reanudar = append(reanudar, s.ID)
+		}
+	}
+	if len(reanudar) > 0 {
+		sort.Strings(reanudar)
+		fmt.Fprintf(&b, "Reanudar EN CURSO antes de empezar trabajo LISTO: %s\n\n", strings.Join(reanudar, ", "))
+	}
+	if len(obs.orphan) > 0 {
+		fmt.Fprintf(&b, "Despachos huérfanos (no EN CURSO): %s\n\n", strings.Join(obs.orphan, ", "))
+	}
+	if len(obs.invalid) > 0 {
+		fmt.Fprintf(&b, "Despachos inválidos (no EN CURSO): %s\n\n", strings.Join(obs.invalid, ", "))
+	}
 
 	for _, m := range metas {
 		if m.Nombre == metaSinDeclarar && !tieneAbiertas(m) {

@@ -2,11 +2,41 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 )
+
+func TestRenderReanudaAntesDeListoYExponeOrfanos(t *testing.T) {
+	root, head := repoGit(t)
+	p := &Plan{Producto: "Producto", Zonas: []Zona{{ID: "z", Nombre: "Z"}}, Sesiones: []Sesion{abierta("S1", "z"), abierta("S2", "z")}}
+	path := testDispatch(t, root, "S2", false)
+	live := string(RenderAt(p, root, head))
+	if !strings.Contains(live, "Reanudar EN CURSO") || strings.Index(live, "**S2** · 🔵 EN CURSO") > strings.Index(live, "**S1** · 🟢 LISTO") {
+		t.Fatalf("render must resume first: %s", live)
+	}
+	m, err := leerDespacho(root, "S2")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m.Branch = "refs/heads/gone"
+	data, err := json.Marshal(m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	orphan := string(RenderAt(p, root, head))
+	if !strings.Contains(orphan, "Despachos huérfanos") || strings.Contains(orphan, "Reanudar EN CURSO") {
+		t.Fatalf("render must report orphan without live work: %s", orphan)
+	}
+	if _, err := os.Stat(path); err != nil {
+		t.Fatal("orphan was removed", err)
+	}
+}
 
 func TestRenderCoincideConGoldenYEsDeterminista(t *testing.T) {
 	p, err := Load(filepath.Join("testdata", "plan.yaml"))

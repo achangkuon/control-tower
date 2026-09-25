@@ -14,6 +14,7 @@ const uso = `radar — herramienta determinista de planificación
   radar check   [-f openspec/plan.yaml] [-C raíz] valida el dato, git y la partición
   radar status  [-f openspec/plan.yaml] [-C raíz] [--json] [--all] Sesiones vivas (con --all, también cerradas)
   radar sesion  <ID> [-f openspec/plan.yaml] [-C raíz] contrato completo de una sola Sesión
+  radar etapa   [<ID>] [-f openspec/plan.yaml] [-C raíz] única etapa aplicable o razón de rechazo
   radar faltan  [<ID>] [-f openspec/plan.yaml] [-C raíz] todas las Sesiones abiertas por meta y
                 subprioridad, con porcentaje honesto; con <ID>, una línea localizadora
   radar zonas   [-f openspec/plan.yaml] [-C raíz] cobertura sobre archivos rastreados
@@ -92,6 +93,19 @@ func main() {
 		}
 		if err := cmdSesion(os.Stdout, p, root, posicionales[0]); err != nil {
 			fmt.Fprintln(os.Stderr, "✗", err)
+			os.Exit(1)
+		}
+	case "etapa":
+		if len(posicionales) > 1 {
+			fmt.Fprintln(os.Stderr, "uso: radar etapa [<ID>] [-C raíz]")
+			os.Exit(2)
+		}
+		id := ""
+		if len(posicionales) == 1 {
+			id = posicionales[0]
+		}
+		if err := cmdEtapa(os.Stdout, p, root, id); err != nil {
+			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
 	case "faltan":
@@ -231,10 +245,11 @@ func cmdStatusView(p *Plan, root string, all bool) error {
 	if err := validarAt(p, root, head, "status"); err != nil {
 		return err
 	}
-	estados := p.EstadosAt(root, head)
-	colas := p.ColaPorZonaAt(root, head)
-	porZona, total := p.AvanceAt(root, head)
-	asientos := p.AsientosAt(root, head)
+	obs := p.observarDespachos(root)
+	estados := p.estadosConObservacion(root, head, nil, obs)
+	colas := p.colaConEstados(estados)
+	porZona, total := p.avanceConEstados(estados)
+	asientos := p.asientosConEstados(estados, colas)
 	entregados, _, err := p.AvanceModulosAt(root, head)
 	if err != nil {
 		return fmt.Errorf("no se pudo leer el avance de Módulos: %w", err)
@@ -242,12 +257,28 @@ func cmdStatusView(p *Plan, root string, all bool) error {
 	fmt.Printf("%s — %s\n", p.Producto, total)
 	if len(p.Prioridades) > 0 {
 		activa := "ninguna"
-		if pr, hay := p.PrioridadActivaAt(root, head); hay {
-			activa = pr.Etiqueta()
+		if pos, hay := p.prioridadActiva(estados); hay {
+			activa = p.Prioridades[pos].Etiqueta()
 		}
 		fmt.Printf("Prioridad activa: %s\n", activa)
 	}
 	fmt.Println()
+	var enCurso []string
+	for _, s := range p.Sesiones {
+		if estados[s.ID] == EnCurso {
+			enCurso = append(enCurso, s.ID)
+		}
+	}
+	sort.Strings(enCurso)
+	if len(enCurso) > 0 {
+		fmt.Printf("Reanudar EN CURSO: %v\n\n", enCurso)
+	}
+	if len(obs.orphan) > 0 {
+		fmt.Printf("Despachos huérfanos (no EN CURSO): %v\n\n", obs.orphan)
+	}
+	if len(obs.invalid) > 0 {
+		fmt.Printf("Despachos inválidos (no EN CURSO): %v\n\n", obs.invalid)
+	}
 
 	zonaSet := make(map[string]bool, len(p.Zonas)+1)
 	for _, z := range p.Zonas {

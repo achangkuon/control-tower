@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -48,6 +49,32 @@ func planFaltanDeMuestra(head string) *Plan {
 			{ID: "torre-v2", Nombre: "Torre V2"},
 		},
 		Sesiones: []Sesion{s1, s2, s3, s4, s5, s6, s7},
+	}
+}
+
+func TestFaltanReanudaAntesDeListoYConservaHuerfanos(t *testing.T) {
+	root, head := repoGit(t)
+	p := &Plan{Producto: "Producto", Sesiones: []Sesion{abierta("S1", "z"), abierta("S2", "z"), abierta("S3", "z")}}
+	path := testDispatch(t, root, "S2", false)
+	first := string(RenderFaltanAt(p, root, head))
+	if !strings.Contains(first, "Reanudar EN CURSO antes de empezar trabajo LISTO: S2") || strings.Index(first, "S2 —") > strings.Index(first, "S1 —") {
+		t.Fatalf("active must precede LISTO: %s", first)
+	}
+	m, err := leerDespacho(root, "S2")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m.Branch = "refs/heads/gone"
+	data, err := json.Marshal(m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	second := string(RenderFaltanAt(p, root, head))
+	if !strings.Contains(second, "Despachos huérfanos (no EN CURSO): S2") || strings.Contains(second, "Reanudar EN CURSO") {
+		t.Fatalf("orphan must be visible but not active: %s", second)
 	}
 }
 
