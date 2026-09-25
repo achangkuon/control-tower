@@ -275,7 +275,7 @@ const entorno = () => {
 }
 
 describe("T6 — el efecto sobre el Cimiento", () => {
-  test("una intervención autorizada sí puede escribir su Cimiento", () => {
+  test("una reserva de coordinación no desbloquea bash para escribir un Cimiento", () => {
     const raiz = entorno()
     try {
       const cimiento = join(raiz, "cimiento.mjs")
@@ -286,8 +286,9 @@ describe("T6 — el efecto sobre el Cimiento", () => {
       const cuarto = confinarComando(`echo intervenido > ${cimiento}`, {
         escribibles: escribiblesPara(c, "S1", [join(raiz, "propio", "mio.mjs")]),
       })
-      expect(spawnSync(cuarto.argv[0], cuarto.argv.slice(1), { encoding: "utf8" }).status).toBe(0)
-      expect(readFileSync(cimiento, "utf8")).toBe("intervenido\n")
+      expect(cuarto.confinable).toBe(false)
+      expect(cuarto.motivo).toMatch(/sólo lectura/)
+      expect(readFileSync(cimiento, "utf8")).toBe("original\n")
     } finally {
       rmSync(raiz, { recursive: true, force: true })
     }
@@ -305,7 +306,8 @@ describe("T6 — el efecto sobre el Cimiento", () => {
       const cuarto = confinarComando(`echo colado > ${cimiento}`, {
         escribibles: escribiblesPara(c, "S2", [join(raiz, "propio", "mio.mjs")]),
       })
-      expect(spawnSync(cuarto.argv[0], cuarto.argv.slice(1), { encoding: "utf8" }).status).not.toBe(0)
+      expect(cuarto.confinable).toBe(false)
+      expect(cuarto.argv).toBeUndefined()
       expect(readFileSync(cimiento, "utf8")).toBe("original\n")
     } finally {
       rmSync(raiz, { recursive: true, force: true })
@@ -323,7 +325,8 @@ describe("T6 — el efecto sobre el Cimiento", () => {
       const cuarto = confinarComando(`python3 -c "open('${cimiento}','w').write('derivado')"`, {
         escribibles: escribiblesPara(c, "S2", [join(raiz, "propio", "mio.mjs")]),
       })
-      expect(spawnSync(cuarto.argv[0], cuarto.argv.slice(1), { encoding: "utf8" }).status).not.toBe(0)
+      expect(cuarto.confinable).toBe(false)
+      expect(cuarto.argv).toBeUndefined()
       expect(readFileSync(cimiento, "utf8")).toBe("original\n")
     } finally {
       rmSync(raiz, { recursive: true, force: true })

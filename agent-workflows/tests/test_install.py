@@ -717,11 +717,9 @@ class PiExtensionTests(unittest.TestCase):
         # (`confinarComando` is named only in a comment explaining why it is not reused here.)
         for decision in ["decidirHerramienta", "mutacionPermitida", "const confinarComando ="]:
             self.assertNotIn(decision, body)
-        # An active key is referential (Engram 11475): the shim never calls into
-        # pi-controls.mjs's confinement at all once a key is active, so neither call appears in
-        # the generated body.
-        for call in ["gobernar(", "capacidad(", ".cerrar("]:
-            self.assertNotIn(call, body)
+        # The extension must consult the live capability and close it on shutdown.
+        self.assertIn("capacidad()?.gobernar(event)", body)
+        self.assertIn("owner.completar(id, outcome.kind)", body)
 
     def test_shim_registers_the_tool_call_gate(self):
         body = INSTALLER.desired_pi_extension(ROOT).decode("utf8")
@@ -758,82 +756,138 @@ class PiExtensionTests(unittest.TestCase):
 
 
 RUN_SHIM_SOURCE = """
+import { existsSync, writeFileSync, readFileSync, renameSync, symlinkSync } from 'node:fs'
 const extension = (await import(process.argv[2])).default
 const scenario = JSON.parse(process.argv[3])
 const handlers = {}
-let tool
-const confirmations = []
+const messages = []
+const tools = []
 const pi = {
   on(name, handler) { (handlers[name] ??= []).push(handler) },
-  registerTool(definition) { tool = definition },
+  registerTool(definition) { tools.push(definition.name) },
 }
-const ctx = {
-  hasUI: scenario.hasUI,
-  ui: {
-    async confirm(title, message) {
-      confirmations.push({ title, message })
-      if (scenario.confirmation === 'throw') throw new Error('cancelled UI')
-      return scenario.confirmation
-    },
-  },
-}
+const ctx = { hasUI: true, mode: 'tui', ui: { notify(message) { messages.push(message) } } }
 extension(pi)
-const dispatch = async (event) => {
+const factoryCalls = 0 // factory may register handlers, but performs no Git/Radar work
+for (const handler of handlers.session_start ?? []) await handler({ type: 'session_start', reason: 'startup' }, ctx)
+let counter = 0
+const active = new Map()
+async function call(toolName, input, id = `call-${++counter}`) {
+  const event = { type: 'tool_call', toolCallId: id, toolName, input }
+  let result = {}
   for (const handler of handlers.tool_call ?? []) {
-    const result = await handler(event, ctx)
-    if (result?.block) return result
+    result = await handler(event, ctx) ?? {}
+    if (result.block) break
   }
-  return {}
+  if (!result.block) active.set(id, { toolName, input: event.input })
+  return { id, result, input: event.input }
 }
-const call = async (toolName, input) => {
-  const event = { type: 'tool_call', toolName, input }
-  const result = await dispatch(event)
-  return { result, input: event.input }
+async function complete(id, toolName) {
+  const original = active.get(id)
+  for (const handler of handlers.tool_result ?? []) await handler({ type: 'tool_result', toolCallId: id,
+    toolName, input: original?.input ?? {}, isError: scenario.errorResult === true, content: [] }, ctx)
+  if (original?.toolName === toolName) active.delete(id)
 }
 const before = {
   read: await call('read', { path: '/etc/hostname' }),
   write: await call('write', { path: '/model-write' }),
   edit: await call('edit', { path: '/model-edit' }),
-  bash: await call('bash', { command: 'printf before' }),
-  activationDispatch: await call('chanks_request_activation', { anything: true }),
+  bash: await call('bash', { command: scenario.bashCommand ?? 'printf before' }),
+  activationDispatch: await call('chanks_request_activation', { kind: 'planning' }),
 }
-let activation = null
-if (tool) activation = await tool.execute('model-call', scenario.activationParams ?? {}, undefined, undefined, ctx)
-let secondActivation = null
-if (scenario.secondActivationParams) {
-  secondActivation = await tool.execute('model-call-2', scenario.secondActivationParams, undefined, undefined, ctx)
+for (const [name, value] of Object.entries(before)) if (!value.result.block) await complete(value.id, name === 'activationDispatch' ? 'chanks_request_activation' : name)
+if (scenario.beforeWriteReplace) writeFileSync(scenario.beforeWriteReplace.path, scenario.beforeWriteReplace.content)
+const write = await call(scenario.toolName ?? 'write', { path: scenario.path ?? '/not-authorized', content: 'changed' }, 'write-1')
+if (!write.result.block && scenario.swapTarget) {
+  renameSync(scenario.path, scenario.swapRetained)
+  symlinkSync(scenario.swapTarget, scenario.path)
+  if (scenario.toolName === 'edit') {
+    const oldText = readFileSync(write.input.path, 'utf8')
+    writeFileSync(write.input.path, oldText.replace(oldText, 'changed'))
+  } else writeFileSync(write.input.path, 'changed')
 }
-if (scenario.afterActivationShell) {
-  const cp = await import('node:child_process')
-  cp.execSync(scenario.afterActivationShell, { cwd: process.cwd(), stdio: 'ignore' })
+if (scenario.switchOnBeforeResult) writeFileSync(scenario.switchPath, JSON.stringify({ on: true }))
+if (scenario.switchOffBeforeResult) writeFileSync(scenario.switchPath, JSON.stringify({ on: false }))
+if (scenario.complete !== false) await complete(write.id, scenario.resultToolName ?? scenario.toolName ?? 'write')
+const fdAfterResult = write.input.path.startsWith('/proc/self/fd/') ? existsSync(write.input.path) : null
+if (scenario.betweenWritesReplace) writeFileSync(scenario.betweenWritesReplace.path, scenario.betweenWritesReplace.content)
+if (scenario.replaceInode) {
+  const original = readFileSync(scenario.path)
+  renameSync(scenario.path, scenario.replaceInode)
+  writeFileSync(scenario.path, original)
 }
-if (scenario.afterActivationWrite) {
-  const fs = await import('node:fs')
-  fs.writeFileSync(scenario.afterActivationWrite.path, scenario.afterActivationWrite.content)
-}
-if (scenario.disableSwitchAt) {
-  const fs = await import('node:fs')
-  fs.writeFileSync(scenario.disableSwitchAt, JSON.stringify({ on: false }))
-}
-const after = {
-  write: await call('write', { path: scenario.writePath ?? '/model-write' }),
-  otherWrite: await call('write', { path: scenario.otherWritePath ?? '/not-authorized' }),
-  bash: await call('bash', { command: 'printf allowed' }),
-}
-let secondWrite = null
-if (scenario.secondWritePath) secondWrite = await call('write', { path: scenario.secondWritePath })
-let afterShutdown = null
-if (scenario.shutdown) {
-  for (const handler of handlers.session_shutdown ?? []) await handler({ type: 'session_shutdown', reason: scenario.shutdown }, ctx)
-  for (const handler of handlers.session_start ?? []) await handler({ type: 'session_start', reason: 'resume' }, ctx)
-  afterShutdown = await call('write', { path: scenario.writePath ?? '/model-write' })
-}
-console.log(JSON.stringify({
-  registered: Boolean(tool),
-  tool: tool ? { name: tool.name, executionMode: tool.executionMode, parameters: tool.parameters } : null,
-  before, activation, after, secondActivation, secondWrite, afterShutdown, confirmations,
-}))
+const after = scenario.afterPath ? await call('write', { path: scenario.afterPath, content: 'after' }) : null
+if (after && !after.result.block) await complete(after.id, 'write')
+const third = scenario.thirdPath ? await call('write', { path: scenario.thirdPath, content: 'third' }) : null
+if (third && !third.result.block) await complete(third.id, 'write')
+const duplicate = scenario.duplicate ? await call('write', { path: scenario.path }, 'write-1') : null
+if (scenario.shutdown) for (const handler of handlers.session_shutdown ?? []) await handler({ type: 'session_shutdown', reason: scenario.shutdown }, ctx)
+const fdAfterShutdown = scenario.shutdown && write.input.path.startsWith('/proc/self/fd/') ? existsSync(write.input.path) : null
+if (scenario.stageReplacement) writeFileSync(scenario.stagePath, JSON.stringify(scenario.stageReplacement))
+if (scenario.stageAgain) for (const handler of handlers.agent_end ?? []) await handler({ type: 'agent_end' }, ctx)
+console.log(JSON.stringify({ registered: true, tools, before, write, after, third, duplicate, messages, active: [...active.keys()], fdAfterResult, fdAfterShutdown }))
 """
+
+
+class PiNativeAdmissionContractTests(unittest.TestCase):
+    def test_hook_source_is_executable_and_not_wired_to_settings(self):
+        hook = ROOT / "tools/hooks/chanks-etapa.sh"
+        self.assertTrue(hook.is_file())
+        self.assertEqual(hook.stat().st_mode & 0o777, 0o755)
+        self.assertNotIn("settings.json", hook.read_text(encoding="utf8"))
+        self.assertNotIn("settings.json", Path(INSTALLER.__file__).read_text(encoding="utf8"))
+
+    def test_hook_uses_external_radar_handles_spaces_and_only_valid_prior_transition(self):
+        with tempfile.TemporaryDirectory() as location:
+            directory = Path(location)
+            repo = directory / "repo with spaces"
+            repo.mkdir()
+            subprocess.run(["git", "init", "--quiet", str(repo)], check=True, capture_output=True)
+            bin_dir = directory / "installed tools"
+            bin_dir.mkdir()
+            radar = bin_dir / "radar"
+            radar.write_text('#!/bin/sh\ncat "$CHANKS_STAGE_FILE"\n', encoding="utf8")
+            radar.chmod(0o755)
+            stage = directory / "stage.json"
+            stage.write_text(json.dumps({"schema": "radar.etapa/v1", "etapa": 2, "nombre": "Prepare"}), encoding="utf8")
+            env = {**os.environ, "PATH": f"{bin_dir}:/usr/bin:/bin", "CHANKS_STAGE_FILE": str(stage)}
+            hook = INSTALLER.etapa_hook_source(ROOT)
+            run = lambda extra=None: subprocess.run([str(hook)], cwd=repo, env={**env, **(extra or {})},
+                                                      capture_output=True, text=True, timeout=15)
+            self.assertEqual(run().returncode, 0)
+            self.assertNotIn("💪 Chanks", run().stdout)
+            previous = json.dumps({"schema": "radar.etapa/v1", "etapa": 2, "nombre": "Prepare", "sesion": "S1"})
+            self.assertNotIn("💪 Chanks", run({"CHANKS_PREVIOUS_ETAPA_JSON": previous}).stdout)
+            previous = json.dumps({"schema": "radar.etapa/v1", "etapa": 1, "nombre": "Define"})
+            self.assertIn("💪 Chanks", run({"CHANKS_PREVIOUS_ETAPA_JSON": previous}).stdout)
+            stage.write_text("invalid output", encoding="utf8")
+            invalid = run({"CHANKS_PREVIOUS_ETAPA_JSON": previous})
+            self.assertEqual(invalid.returncode, 0)
+            self.assertNotIn("💪 Chanks", invalid.stdout)
+            stage.write_text("x" * 5000, encoding="utf8")
+            self.assertEqual(run().stdout, "")
+            inside = repo / "radar"
+            inside.write_text('#!/bin/sh\nprintf injected\n', encoding="utf8")
+            inside.chmod(0o755)
+            self.assertEqual(run({"PATH": f"{repo}:/usr/bin:/bin"}).stdout, "")
+
+    def test_hook_payload_installs_with_mode_without_settings_wiring(self):
+        with tempfile.TemporaryDirectory() as location:
+            home = Path(location)
+            (home / ".claude").mkdir()
+            pending = INSTALLER.etapa_hook_changes(home, ROOT)
+            self.assertEqual(len(pending), 1)
+            self.assertEqual(pending[0].kind, "stage-hook")
+            target = INSTALLER.etapa_hook_path(home)
+            INSTALLER._atomic_copy(INSTALLER.etapa_hook_source(ROOT), target, home / ".claude")
+            self.assertEqual(target.stat().st_mode & 0o777, 0o755)
+            self.assertEqual(INSTALLER.etapa_hook_changes(home, ROOT), [])
+
+    def test_no_activation_tool_or_confirmation_path(self):
+        body = INSTALLER.desired_pi_extension(ROOT).decode("utf8")
+        self.assertNotIn('name: "chanks_request_activation"', body)
+        self.assertNotIn("ctx.ui.confirm", body)
+        self.assertIn('pi.on("tool_result"', body)
 
 
 class PiAuthorityExtensionTests(unittest.TestCase):
@@ -869,6 +923,8 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         self.bin = Path(self.tempdir.name) / "bin"
         self.bin.mkdir()
         self.radar = self.bin / "radar"
+        self.stage = self.bin / "stage.json"
+        self._stage(1, "Definir")
         self._write_radar([])
 
     def tearDown(self):
@@ -892,6 +948,25 @@ class PiAuthorityExtensionTests(unittest.TestCase):
     def _set_switch(self, on):
         self._switch_path().write_text(json.dumps({"on": on}), encoding="utf-8")
 
+    def _stage(self, number, name, session=None):
+        stage = {"schema": "radar.etapa/v1", "etapa": number, "nombre": name}
+        if session:
+            stage["sesion"] = session
+        self.stage.write_text(json.dumps(stage), encoding="utf8")
+
+    def _marker(self, session="S200", **overrides):
+        common = subprocess.run(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
+                                cwd=self.repo, capture_output=True, text=True, check=True).stdout.strip()
+        branch = subprocess.run(["git", "symbolic-ref", "--quiet", "HEAD"], cwd=self.repo,
+                                capture_output=True, text=True, check=True).stdout.strip()
+        directory = Path(common) / "chanks/despachos"
+        directory.mkdir(parents=True, exist_ok=True)
+        marker = directory / (session + ".json")
+        marker.write_text(json.dumps({"schema": "radar.despacho/v1", "sesion": session,
+                                      "worktree": str(self.repo.resolve()), "branch": branch,
+                                      "worker": "implementer-1", **overrides}), encoding="utf8")
+        return marker
+
     def _write_radar(self, sessions, session_text="S200 — contrato"):
         rows = json.dumps({"schema": "radar.snapshot/v1", "sesiones": sessions})
         script = (
@@ -899,6 +974,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
             "case \"$1\" in\n"
             "  status) cat <<'JSON'\n" + rows + "\nJSON\n  ;;\n"
             "  sesion) printf '%s' " + shlex.quote(session_text) + "\n  ;;\n"
+            "  etapa) cat " + shlex.quote(str(self.stage)) + "\n  ;;\n"
             "  *) exit 64 ;;\n"
             "esac\n"
         )
@@ -954,7 +1030,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         for name in ("read", "write", "edit", "bash", "activationDispatch"):
             self.assertEqual(outcome["before"][name]["result"], {})
         self.assertEqual(outcome["before"]["bash"]["input"]["command"], "printf before")
-        self.assertEqual(outcome["confirmations"], [])
+        self.assertEqual(outcome["tools"], [])
 
     def test_switch_on_without_a_plan_is_also_inert(self):
         (self.repo / "openspec" / "plan.yaml").unlink()
@@ -970,14 +1046,29 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         self.assertEqual(outcome["before"]["read"]["result"], {})
         self.assertTrue(outcome["before"]["write"]["result"].get("block", False))
         self.assertTrue(outcome["before"]["edit"]["result"].get("block", False))
-        self.assertEqual(outcome["before"]["activationDispatch"]["result"], {})
+        self.assertTrue(outcome["before"]["activationDispatch"]["result"].get("block"))
         self.assertEqual(outcome["before"]["bash"]["result"], {})
         confined = outcome["before"]["bash"]["input"]["command"]
         self.assertIn("/usr/bin/bwrap", confined)
         self.assertIn("--ro-bind", confined)
         self.assertNotIn("--bind", confined)
         self.assertNotEqual(confined, "printf before")
-        self.assertIn("requires", outcome["activation"]["content"][0]["text"])
+        self.assertEqual(outcome["tools"], [])
+
+    def test_admitted_bash_remains_read_only_and_reports_write_failure(self):
+        self._marker()
+        self._write_radar([{"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"]}])
+        original = (self.repo / "a.mjs").read_text(encoding="utf8")
+        outcome = self._run_shim({"path": str(self.repo / "a.mjs"),
+                                  "bashCommand": "printf inspection; echo changed > " + shlex.quote(str(self.repo / "a.mjs"))})
+        command = outcome["before"]["bash"]["input"]["command"]
+        self.assertIn("--ro-bind", command)
+        self.assertNotIn("'--bind'", command)
+        result = subprocess.run(["bash", "-c", command], cwd=self.repo,
+                                capture_output=True, text=True, timeout=30)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("inspection", result.stdout)
+        self.assertEqual((self.repo / "a.mjs").read_text(encoding="utf8"), original)
 
     def test_no_key_room_hides_host_unix_sockets_and_environment(self):
         # A read-only bind does not stop connect() on a socket inode: a host daemon reachable
@@ -1062,7 +1153,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         for name in ("read", "write", "edit", "bash", "activationDispatch"):
             self.assertEqual(outcome["before"][name]["result"], {})
         self.assertEqual(outcome["before"]["bash"]["input"]["command"], "printf before")
-        self.assertEqual(outcome["confirmations"], [])
+        self.assertEqual(outcome["tools"], [])
 
     def test_main_working_tree_subdirectory_is_also_inert(self):
         subdirectory = self.main / "agent-workflows"
@@ -1074,176 +1165,174 @@ class PiAuthorityExtensionTests(unittest.TestCase):
     def test_cwd_outside_any_git_repository_is_inert(self):
         with tempfile.TemporaryDirectory() as not_a_repo:
             outcome = self._run_shim(self._default_scenario(), cwd=Path(not_a_repo))
-        self.assertFalse(outcome["registered"])
+        self.assertTrue(outcome["registered"])
         for name in ("read", "write", "edit", "bash", "activationDispatch"):
             self.assertEqual(outcome["before"][name]["result"], {})
 
-    def test_session_key_activation_is_referential_and_blocks_no_write_or_bash(self):
-        # Since Engram 11475, the key identifies which Session is working, for the Main agent,
-        # and confines nothing: a file the Session never declared still passes once the key is
-        # active, and bash runs completely unconfined (no bwrap at all).
-        self._write_radar([{
-            "id": "S200", "estado": "LISTO", "archivos": ["a.mjs", "cimiento.mjs"],
-            "cimientos": ["cimiento.mjs"], "recurso": ["runtime aislado exclusivo"],
-        }])
-        outcome = self._run_shim(self._default_scenario(
-            activationParams={"kind": "session", "sessionId": "S200"},
-            writePath=str(self.repo / "a.mjs"),
-            otherWritePath=str(self.repo / "openspec" / "plan.yaml"),
-        ))
-        self.assertEqual(outcome["activation"]["content"][0]["text"], "Chanks authority is active.")
-        self.assertEqual(len(outcome["confirmations"]), 1)
-        message = outcome["confirmations"][0]["message"]
-        for field in ("S200", "a.mjs", "cimiento.mjs", "exclusive"):
-            self.assertIn(field, message)
-        self.assertEqual(outcome["after"]["write"]["result"], {})
-        self.assertEqual(outcome["after"]["otherWrite"]["result"], {})
-        self.assertEqual(outcome["after"]["bash"]["result"], {})
-        self.assertEqual(outcome["after"]["bash"]["input"]["command"], "printf allowed")
-
-    def test_planning_key_activation_is_referential_and_blocks_no_write(self):
-        outcome = self._run_shim(self._default_scenario(
-            activationParams={"kind": "planning"},
-            writePath=str(self.repo / "openspec" / "plan.yaml"),
-            otherWritePath=str(self.repo / "a.mjs"),
-        ))
-        self.assertEqual(outcome["activation"]["content"][0]["text"], "Chanks authority is active.")
-        message = outcome["confirmations"][0]["message"]
-        for field in ("Planning key", "plan.yaml", "ROADMAP.md"):
-            self.assertIn(field, message)
-        self.assertEqual(outcome["after"]["write"]["result"], {})
-        self.assertEqual(outcome["after"]["otherWrite"]["result"], {})
-
-    def test_active_session_key_survives_head_advancing_and_an_unrelated_radar_row_change(self):
-        # W2: HEAD advancing (the agent's own commits) and an unrelated plan row changing must
-        # never drop a referential key. The extension never re-derives live identity per
-        # tool_call (it checks plain in-memory state, not pi-authority.mjs's capacidad()), so
-        # neither a host-side commit nor a rewritten `radar` between the activation and later
-        # writes has any effect on the active key.
+    def test_ordinary_worker_auto_admits_exact_path_and_blocks_every_other_file(self):
+        self._marker()
         self._write_radar([{"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"]}])
-        unrelated_rows = json.dumps({"schema": "radar.snapshot/v1", "sesiones": [
-            {"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"]},
-            {"id": "S201", "estado": "EN CURSO", "archivos": ["b.mjs"]},
-        ]})
-        radar_script = (
-            "#!/bin/sh\ncase \"$1\" in\n"
-            "  status) cat <<'JSON'\n" + unrelated_rows + "\nJSON\n  ;;\n"
-            "  sesion) printf 'S200 modified' ;;\n"
-            "  *) exit 64 ;;\nesac\n"
-        )
-        outcome = self._run_shim(self._default_scenario(
-            activationParams={"kind": "session", "sessionId": "S200"},
-            writePath=str(self.repo / "a.mjs"),
-            otherWritePath=str(self.repo / "not-declared.mjs"),
-            afterActivationShell="git commit --allow-empty -q -m unrelated",
-            afterActivationWrite={"path": str(self.radar), "content": radar_script},
-        ))
-        self.assertEqual(outcome["activation"]["content"][0]["text"], "Chanks authority is active.")
-        self.assertEqual(outcome["after"]["write"]["result"], {})
-        self.assertEqual(outcome["after"]["otherWrite"]["result"], {})
-        self.assertEqual(outcome["after"]["bash"]["input"]["command"], "printf allowed")
+        outcome = self._run_shim({"path": str(self.repo / "a.mjs"),
+                                  "afterPath": str(self.repo / "openspec/plan.yaml")})
+        self.assertEqual(outcome["tools"], [])
+        self.assertEqual(outcome["write"]["result"], {})
+        self.assertTrue(outcome["write"]["input"]["path"].startswith("/proc/self/fd/"))
+        self.assertTrue(outcome["after"]["result"].get("block"))
 
-    def test_declined_missing_ui_or_cancelled_confirmation_leaves_writes_blocked(self):
+    def test_shared_resource_and_planning_path_remain_blocked(self):
+        self._marker()
+        self._write_radar([{"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"],
+                            "recurso": ["exclusive"]}])
+        outcome = self._run_shim({"path": str(self.repo / "a.mjs")})
+        self.assertTrue(outcome["write"]["result"].get("block"))
+        self.assertIn("reserva/adquisición", outcome["write"]["result"]["reason"])
         self._write_radar([{"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"]}])
-        cases = (
-            ("decline", True, False),
-            ("no UI", False, True),
-            ("cancel", True, None),
-            ("UI error", True, "throw"),
-        )
-        for label, has_ui, confirmation in cases:
-            with self.subTest(label=label):
-                outcome = self._run_shim({
-                    "hasUI": has_ui, "confirmation": confirmation,
-                    "activationParams": {"kind": "session", "sessionId": "S200"},
-                    "writePath": str(self.repo / "a.mjs"),
-                })
-                self.assertIn("blocked", outcome["activation"]["content"][0]["text"].lower())
-                self.assertTrue(outcome["after"]["write"]["result"].get("block", False))
+        outcome = self._run_shim({"path": str(self.repo / "openspec/plan.yaml")})
+        self.assertTrue(outcome["write"]["result"].get("block"))
 
-    def test_unknown_kind_or_missing_session_id_is_rejected_before_any_confirmation(self):
-        cases = (
-            {"kind": "not-a-kind"},
-            {"kind": "session"},
-            {"kind": "session", "sessionId": "   "},
-        )
-        for params in cases:
-            with self.subTest(params=params):
-                outcome = self._run_shim(self._default_scenario(activationParams=params))
-                self.assertEqual(outcome["confirmations"], [])
-                self.assertIn("blocked", outcome["activation"]["content"][0]["text"].lower())
-
-    def test_session_not_listo_or_absent_is_rejected_before_any_confirmation(self):
-        self._write_radar([{"id": "S200", "estado": "BLOQUEADO", "archivos": ["a.mjs"]}])
-        outcome = self._run_shim(self._default_scenario(
-            activationParams={"kind": "session", "sessionId": "S200"},
-        ))
-        self.assertEqual(outcome["confirmations"], [])
-        self.assertIn("blocked", outcome["activation"]["content"][0]["text"].lower())
-
-    def test_activation_tool_always_passes_the_global_gate_before_its_own_execute(self):
-        outcome = self._run_shim(self._default_scenario())
-        self.assertEqual(outcome["before"]["activationDispatch"]["result"], {})
-
-    def test_a_new_activation_replaces_a_previous_one_and_both_still_pass_once_active(self):
-        # Replacement still works (two confirmations, both accepted) — but since neither key
-        # confines anything, the first key's own target keeps passing too, exactly like every
-        # other path, once any key is active.
-        self._write_radar([{
-            "id": "S200", "estado": "LISTO", "archivos": ["a.mjs"],
-        }])
-        outcome = self._run_shim(self._default_scenario(
-            activationParams={"kind": "planning"},
-            secondActivationParams={"kind": "session", "sessionId": "S200"},
-            writePath=str(self.repo / "openspec" / "plan.yaml"),
-            secondWritePath=str(self.repo / "a.mjs"),
-        ))
-        self.assertEqual(outcome["activation"]["content"][0]["text"], "Chanks authority is active.")
-        self.assertEqual(outcome["secondActivation"]["content"][0]["text"], "Chanks authority is active.")
-        self.assertEqual(len(outcome["confirmations"]), 2)
-        self.assertEqual(outcome["after"]["write"]["result"], {})
-        self.assertEqual(outcome["secondWrite"]["result"], {})
-
-    def test_switch_turned_off_mid_session_passes_through_the_very_next_tool_call(self):
-        # The switch is read on every tool_call, not cached at load (R4-switch-evaluated-once-
-        # at-load): flipping it off between the activation and the next write must take effect
-        # immediately, in the same loaded extension instance, without a new Pi session.
+    def test_radar_drift_between_calls_blocks_even_when_file_is_still_declared(self):
+        self._marker()
         self._write_radar([{"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"]}])
-        outcome = self._run_shim(self._default_scenario(
-            activationParams={"kind": "session", "sessionId": "S200"},
-            writePath=str(self.repo / "a.mjs"),
-            otherWritePath=str(self.repo / "not-authorized.mjs"),
-            disableSwitchAt=str(self._switch_path()),
-        ))
-        self.assertEqual(outcome["activation"]["content"][0]["text"], "Chanks authority is active.")
-        # Even a file the active key never authorized now passes through untouched: the switch
-        # being off means the extension behaves as if it were absent, key or no key.
-        self.assertEqual(outcome["after"]["otherWrite"]["result"], {})
-        self.assertEqual(outcome["after"]["bash"]["input"]["command"], "printf allowed")
+        replacement = self.radar.read_text(encoding="utf8").replace("S200 — contrato", "S200 changed")
+        outcome = self._run_shim({"path": str(self.repo / "a.mjs"),
+                                  "afterPath": str(self.repo / "a.mjs"),
+                                  "betweenWritesReplace": {"path": str(self.radar), "content": replacement}})
+        self.assertFalse(outcome["write"]["result"].get("block", False))
+        self.assertTrue(outcome["after"]["result"].get("block", False))
 
-    def test_requesting_activation_while_the_switch_is_off_is_rejected(self):
+    def test_ui_choices_cannot_activate_and_there_is_no_model_tool(self):
+        self._marker()
         self._write_radar([{"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"]}])
+        for choice in (True, False, None, "throw"):
+            with self.subTest(choice=choice):
+                outcome = self._run_shim({"hasUI": bool(choice), "confirmation": choice,
+                                          "path": str(self.repo / "a.mjs")})
+                self.assertEqual(outcome["tools"], [])
+                self.assertEqual(outcome["write"]["result"], {})
+                self.assertTrue(outcome["before"]["activationDispatch"]["result"].get("block"))
+
+    def test_absent_or_blocked_radar_row_never_selects_a_different_session(self):
+        self._marker()
+        self._write_radar([{"id": "S200", "estado": "BLOQUEADO", "archivos": ["a.mjs"]},
+                           {"id": "S201", "estado": "LISTO", "archivos": ["a.mjs"]}])
+        outcome = self._run_shim({"path": str(self.repo / "a.mjs")})
+        self.assertTrue(outcome["write"]["result"].get("block"))
+
+    def test_activation_tool_is_blocked_as_an_unknown_tool(self):
+        outcome = self._run_shim({})
+        self.assertEqual(outcome["tools"], [])
+        self.assertTrue(outcome["before"]["activationDispatch"]["result"].get("block"))
+
+    def test_same_file_collision_survives_authority_replacement_while_old_lease_is_open(self):
+        self._marker()
+        self._write_radar([{"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"]}])
+        replacement = self.radar.read_text(encoding="utf8").replace("S200 — contrato", "S200 changed")
+        outcome = self._run_shim({"path": str(self.repo / "a.mjs"), "complete": False,
+                                  "afterPath": str(self.repo / "a.mjs"),
+                                  "thirdPath": str(self.repo / "a.mjs"),
+                                  "betweenWritesReplace": {"path": str(self.radar), "content": replacement},
+                                  "shutdown": "quit"})
+        self.assertFalse(outcome["write"]["result"].get("block", False))
+        self.assertTrue(outcome["after"]["result"].get("block"))
+        self.assertTrue(outcome["third"]["result"].get("block"))
+        self.assertFalse(outcome["fdAfterShutdown"])
+
+    def test_global_same_path_collision_remains_blocked_after_live_authority_invalidates(self):
+        self._marker()
+        self._write_radar([{"id": "S200", "estado": "LISTO", "archivos": ["a.mjs", "cimiento.mjs"]}])
+        outcome = self._run_shim({"path": str(self.repo / "a.mjs"), "complete": False,
+                                  "replaceInode": str(self.repo / "retained.mjs"),
+                                  "afterPath": str(self.repo / "cimiento.mjs"),
+                                  "thirdPath": str(self.repo / "a.mjs"), "shutdown": "quit"})
+        self.assertFalse(outcome["write"]["result"].get("block", False))
+        self.assertTrue(outcome["after"]["result"].get("block"))
+        self.assertTrue(outcome["third"]["result"].get("block"))
+        self.assertFalse(outcome["fdAfterShutdown"])
+
+    def test_duplicate_identity_and_unknown_completion_never_authorize(self):
+        self._marker()
+        self._write_radar([{"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"]}])
+        outcome = self._run_shim({"path": str(self.repo / "a.mjs"), "duplicate": True,
+                                  "resultToolName": "read", "afterPath": str(self.repo / "a.mjs")})
+        self.assertTrue(outcome["duplicate"]["result"].get("block"))
+        self.assertTrue(outcome["after"]["result"].get("block"))
+
+    def test_off_to_on_completion_stays_bound_to_off_call(self):
         self._set_switch(False)
-        outcome = self._run_shim({
-            "hasUI": True, "confirmation": True,
-            "activationParams": {"kind": "session", "sessionId": "S200"},
-        })
-        # Registering unconditionally never means the switch stops gating: the tool itself, not
-        # just the passive gate, must also refuse to activate while effectively off.
-        self.assertEqual(outcome["confirmations"], [])
-        self.assertIn("switch", outcome["activation"]["content"][0]["text"].lower())
+        outcome = self._run_shim({"path": str(self.repo / "a.mjs"),
+                                  "switchOnBeforeResult": True,
+                                  "switchPath": str(self._switch_path()),
+                                  "afterPath": str(self.repo / "a.mjs")})
+        self.assertEqual(outcome["write"]["result"], {})
+        self.assertEqual(outcome["after"]["result"].get("block"), True)
 
-    def test_every_shutdown_reason_erases_the_active_key(self):
+    def test_switch_off_mid_session_bypasses_next_call_without_leaking_prior_authority(self):
+        self._marker()
+        self._write_radar([{"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"]}])
+        outcome = self._run_shim({"path": str(self.repo / "a.mjs"),
+                                  "switchOffBeforeResult": True,
+                                  "switchPath": str(self._switch_path()),
+                                  "afterPath": str(self.repo / "not-declared.mjs")})
+        self.assertEqual(outcome["write"]["result"], {})
+        self.assertEqual(outcome["after"]["result"], {})
+
+    def test_error_result_releases_exact_descriptor_and_duplicate_result_is_inert(self):
+        self._marker()
+        self._write_radar([{"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"]}])
+        outcome = self._run_shim({"path": str(self.repo / "a.mjs"), "errorResult": True,
+                                  "duplicate": True})
+        self.assertEqual(outcome["write"]["result"], {})
+        self.assertFalse(outcome["fdAfterResult"])
+        self.assertTrue(outcome["duplicate"]["result"].get("block"))
+
+    def test_shutdown_closes_in_flight_lease_for_every_reason(self):
+        self._marker()
+        self._write_radar([{"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"]}])
         for reason in ("quit", "reload", "new", "resume", "fork"):
             with self.subTest(reason=reason):
+                outcome = self._run_shim({"path": str(self.repo / "a.mjs"), "complete": False,
+                                          "shutdown": reason})
+                self.assertEqual(outcome["write"]["result"], {})
+                self.assertFalse(outcome["fdAfterShutdown"])
+
+    def test_descriptor_effect_remains_on_retained_inode_after_symlink_swap_for_write_and_edit(self):
+        for tool in ("write", "edit"):
+            with self.subTest(tool=tool):
+                self._marker()
                 self._write_radar([{"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"]}])
-                outcome = self._run_shim(self._default_scenario(
-                    activationParams={"kind": "session", "sessionId": "S200"},
-                    writePath=str(self.repo / "a.mjs"),
-                    shutdown=reason,
-                ))
-                self.assertEqual(outcome["after"]["write"]["result"], {})
-                self.assertTrue(outcome["afterShutdown"]["result"].get("block", False))
+                original = (self.repo / "a.mjs").read_text(encoding="utf8")
+                target = self.repo / "cimiento.mjs"
+                prior = target.read_text(encoding="utf8")
+                retained = self.repo / "retained.mjs"
+                outcome = self._run_shim({"path": str(self.repo / "a.mjs"), "toolName": tool,
+                                          "swapTarget": str(target), "swapRetained": str(retained)})
+                self.assertEqual(outcome["write"]["result"], {})
+                self.assertEqual(target.read_text(encoding="utf8"), prior)
+                self.assertEqual(retained.read_text(encoding="utf8"), "changed")
+                (self.repo / "a.mjs").unlink()
+                retained.rename(self.repo / "a.mjs")
+                (self.repo / "a.mjs").write_text(original, encoding="utf8")
+
+    def test_main_stage_guidance_announces_only_a_real_valid_transition(self):
+        base = self._run_shim({"stageAgain": True}, cwd=self.main)
+        self.assertTrue(any("Radar etapa" in text for text in base["messages"]))
+        self.assertFalse(any("💪 Chanks" in text for text in base["messages"]))
+        same = self._run_shim({"stageAgain": True, "stagePath": str(self.stage),
+                               "stageReplacement": {"schema": "radar.etapa/v1", "etapa": 1,
+                                                    "nombre": "Definir", "sesion": "S999"}}, cwd=self.main)
+        self.assertFalse(any("💪 Chanks" in text for text in same["messages"]))
+        changed = self._run_shim({"stageAgain": True, "stagePath": str(self.stage),
+                                  "stageReplacement": {"schema": "radar.etapa/v1", "etapa": 2,
+                                                       "nombre": "Preparar"}}, cwd=self.main)
+        self.assertEqual(sum("💪 Chanks" in text for text in changed["messages"]), 1)
+        renamed = self._run_shim({"stageAgain": True, "stagePath": str(self.stage),
+                                  "stageReplacement": {"schema": "radar.etapa/v1", "etapa": 2,
+                                                       "nombre": "Construir"}}, cwd=self.main)
+        self.assertEqual(sum("💪 Chanks" in text for text in renamed["messages"]), 1)
+        invalid = self._run_shim({"stageAgain": True, "stagePath": str(self.stage),
+                                  "stageReplacement": {"schema": "radar.etapa/v1", "etapa": "bad",
+                                                       "nombre": "fake"}}, cwd=self.main)
+        self.assertFalse(any("💪 Chanks" in text for text in invalid["messages"]))
 
     def test_generated_shim_never_exposes_a_raw_grant_or_reimplements_pi_controls(self):
         body = INSTALLER.desired_pi_extension(ROOT).decode("utf8")

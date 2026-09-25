@@ -7,9 +7,8 @@
 // process that writes anywhere. The block covers the decision; the confinement covers the
 // effect, and a tool whose effects cannot be covered by either is refused.
 //
-// This module re-decides nothing. Every verdict and every wording comes from `controls.mjs`,
-// because a second implementation of a rule is a second answer, and the two drift while both
-// look right.
+// The core checks file scope; this adapter also blocks shared declarations when no trusted
+// reservation/acquisition evidence exists.
 
 import { existsSync, lstatSync, realpathSync } from "node:fs"
 import { spawnSync } from "node:child_process"
@@ -21,8 +20,8 @@ import { bloqueado, mutacionPermitida, permitido } from "./controls.mjs"
 // theatre, and theatre is what this Sesión exists to replace.
 const SIN_EFECTO = ["read", "grep", "find", "ls"]
 
-// Tools whose effect is exactly one declared path. The path is known before anything happens,
-// so control 4 answers completely and no confinement is needed.
+// The core checks the exact declared path. pi-authority.mjs separately binds the actual
+// built-in write/edit effect to a retained descriptor; path approval alone is not confinement.
 const MUTAN_UNA_RUTA = ["write", "edit"]
 
 // Shell tools have no path to check: their effect is whatever the command does, including
@@ -49,6 +48,12 @@ export const decidirHerramienta = (autoridad, evento) => {
     if (typeof ruta !== "string" || ruta.trim() === "") {
       return bloqueado("mutacion", `${herramienta} no declara la ruta que va a mutar`, ["path"])
     }
+    const cimientos = Array.isArray(autoridad?.cimientos) ? autoridad.cimientos : []
+    const recursos = recursosDeclarados(autoridad)
+    if (cimientos.length || (Array.isArray(recursos) && recursos.length)) {
+      return bloqueado("mutacion", "Cimiento/Recurso declarado: falta evidencia de reserva/adquisición antes de mutar",
+        [...cimientos, ...(Array.isArray(recursos) ? recursos : ["Recurso inválido"])])
+    }
     return mutacionPermitida(autoridadParaMutar(autoridad), evidenciaDeMutacion(autoridad, [ruta]))
   }
 
@@ -57,16 +62,13 @@ export const decidirHerramienta = (autoridad, evento) => {
     if (typeof comando !== "string" || comando.trim() === "") {
       return bloqueado("mutacion", `${herramienta} no declara el comando que va a ejecutar`, ["command"])
     }
-    const escribibles = escribiblesAutorizados(autoridad)
-    const decision = mutacionPermitida(autoridadParaMutar(autoridad), evidenciaDeMutacion(autoridad, escribibles))
-    if (decision.permitido === false) return decision
+    // Shell has no writable file binding. Its only permitted effect is read-only inspection.
     // Permitted here means "permitted to be confined", not "permitted to run loose". The caller
     // must honour `exigeConfinamiento`; a decision that is passed on without it is a bug in the
     // caller, not a licence in this module.
     return {
-      ...permitido("mutacion", `${herramienta} sólo puede ejecutarse dentro del confinamiento autorizado`),
+      ...permitido("mutacion", `${herramienta} sólo puede inspeccionar en un confinamiento de sólo lectura; no puede mutar archivos`),
       exigeConfinamiento: true,
-      escribibles,
     }
   }
 
@@ -87,18 +89,6 @@ export const decidirHerramienta = (autoridad, evento) => {
 
 // `crearAutoridadPi` owns the opaque live authority and invokes this adapter only from its
 // capability. This adapter retains neither that authority nor a copy of a Cimiento grant.
-const recursosConfirmados = (autoridad) => {
-  const recursos = autoridad?.recursos
-  if (!Array.isArray(recursos)) return Array.isArray(autoridad?.recurso) && autoridad.recurso.length === 0
-  return recursos.length > 0 && recursos.every((recurso) => (
-    recurso
-    && typeof recurso.id === "string"
-    && recurso.id.trim() !== ""
-    && (recurso.mode === "exclusive" || recurso.mode === "serial")
-    && recurso.confirmed === true
-  ))
-}
-
 const recursosDeclarados = (autoridad) => {
   if (!Array.isArray(autoridad?.recursos)) return autoridad?.recurso
   const ids = autoridad.recursos.map((recurso) => recurso?.id)
@@ -115,17 +105,9 @@ const autoridadParaMutar = (autoridad) => ({
 const evidenciaDeMutacion = (autoridad, mutaciones) => ({
   vinculo: autoridad?.vinculo,
   mutaciones,
-  reservas: autoridad?.cimientos,
-  recursoConfirmado: recursosConfirmados(autoridad),
+  reservas: [],
+  recursoConfirmado: false,
 })
-
-const escribiblesAutorizados = (autoridad) => {
-  const archivos = Array.isArray(autoridad?.archivos) ? autoridad.archivos : []
-  const cimientos = Array.isArray(autoridad?.cimientos) ? autoridad.cimientos : []
-  // Cimientos are already exact authorized files, so their intentional overlap is not an
-  // ambiguity. A duplicate inside either live grant stays visible for confinarComando to block.
-  return [...archivos, ...cimientos.filter((cimiento) => !archivos.includes(cimiento))]
-}
 
 // aPi translates a decision into the result Pi expects.
 //
@@ -142,10 +124,9 @@ export const aPi = (decision) => {
   return { block: true, reason: `${MARCA} · bloqueado · ${decision.motivo}${evidencia}` }
 }
 
-// The visible mark. Exactly "💪 Chanks" — the manual method running with the Tower off must
-// not borrow the Tower's identity, because a transcript that misattributes what ran stops
-// being evidence of anything.
-const MARCA = "💪 Chanks"
+// The stage transition owns the 💪 mark. Tool refusals and legacy decision announcements
+// never claim a stage transition or borrow that mark.
+const MARCA = "Chanks"
 
 // crearActivaciones builds one announcer per session.
 //
@@ -185,11 +166,8 @@ export const crearActivaciones = () => {
 // bash tool runs the untrusted command we hand back, which keeps the decision layer free of the
 // effects it governs.
 //
-// The room Emilio approved is the small one: the whole filesystem read-only, exactly the
-// Session's authorized files mounted writable over it, and no network. It is deliberately too
-// small to commit or publish from — the last two controls still decide about delivery, but the
-// delivery itself happens outside, in the human's hands. Saying otherwise would be claiming a
-// coverage this rehearsal does not have.
+// The shell room is read-only with no network and no writable file binds. It cannot commit,
+// publish or modify repository files. A scratch-only /var/tmp exists for inspection tools.
 const BASE_DEL_CUARTO = [
   "/usr/bin/bwrap",
   "--ro-bind", "/", "/",
@@ -209,10 +187,8 @@ const BASE_DEL_CUARTO = [
 
 // confinarComando returns the argv that runs `comando` inside the room, or says why it cannot.
 //
-// A writable path that does not exist is refused rather than widened: mounting its parent
-// directory instead would quietly make every sibling writable, which is a bigger room than the
-// one that was authorized. That refusal is the contract's rule, not an implementation shortcut
-// — an operation whose effects cannot be confined has no permissive alternative.
+// The legacy writable-path parameter is rejected even for declared files; never mount
+// a pathname-racy writable bind. A missing Bubblewrap also fails closed.
 const bwrapDisponible = (ruta) => {
   try {
     return rutaMontable(ruta, existsSync) && (lstatSync(ruta).mode & 0o111) !== 0
@@ -245,25 +221,10 @@ export const confinarComando = (comando, { escribibles = [], existe = null, bwra
   if (!bwrapDisponible(bwrapPath)) {
     return { confinable: false, motivo: "Bubblewrap confiable no está disponible para construir el confinamiento" }
   }
-  if (!Array.isArray(escribibles) || escribibles.length === 0) {
-    return { confinable: false, motivo: "no hay ninguna ruta escribible autorizada, así que no hay nada que el comando pueda cambiar" }
+  if (!Array.isArray(escribibles) || escribibles.length !== 0) {
+    return { confinable: false, motivo: "bash no admite rutas escribibles; sólo lectura" }
   }
-  if (new Set(escribibles).size !== escribibles.length) {
-    return { confinable: false, motivo: "las rutas escribibles autorizadas son ambiguas" }
-  }
-
-  const hayRuta = existe ?? ((ruta) => existsSync(ruta))
-  const invalidas = escribibles.filter((ruta) => !rutaMontable(ruta, hayRuta))
-  if (invalidas.length > 0) {
-    return {
-      confinable: false,
-      motivo: "una ruta autorizada no existe o no es un archivo canónico regular, y no se puede montar sin ensanchar el cuarto más allá de lo aprobado",
-      detalle: invalidas,
-    }
-  }
-
   const argv = [bwrapPath, ...BASE_DEL_CUARTO.slice(1)]
-  for (const ruta of escribibles) argv.push("--bind", ruta, ruta)
   argv.push("bash", "-c", comando)
   return { confinable: true, argv }
 }
@@ -280,10 +241,8 @@ export const gobernar = (autoridad, evento, opciones = {}) => {
     return { decision, pi: aPi(decision) }
   }
 
-  // A live capability supplies the writable set on every call. Legacy direct callers keep their
-  // explicit test hook, but a capability authority never accepts an externally supplied path.
-  const escribibles = Array.isArray(autoridad?.recursos) ? decision.escribibles : opciones.escribibles
-  const confinado = confinarComando(evento?.input?.command, { escribibles })
+  // Shell never receives writable file binds, regardless of caller-provided options.
+  const confinado = confinarComando(evento?.input?.command, { escribibles: [] })
   if (!confinado.confinable) {
     const rechazo = bloqueado(
       "mutacion",

@@ -402,6 +402,28 @@ def preflight(home: Path, root: Path) -> None:
         desired_manual_content(path, replacements)
 
 
+def etapa_hook_path(home: Path) -> Path:
+    return home / ".claude/hooks/chanks-etapa.sh"
+
+
+def etapa_hook_source(root: Path) -> Path:
+    return root / "tools/hooks/chanks-etapa.sh"
+
+
+def etapa_hook_changes(home: Path, root: Path) -> list[Change]:
+    if not (home / ".claude").is_dir():
+        return []
+    source = etapa_hook_source(root)
+    if not source.is_file() or stat.S_IMODE(source.stat().st_mode) != 0o755:
+        raise InstallError("Chanks stage hook source must be a regular executable 755 file")
+    target = etapa_hook_path(home)
+    _validate_directory_path(target.parent, "stage hook directory")
+    _validate_file_destination(home / ".claude", target, "stage hook", require_existing=False)
+    if target.is_file() and target.read_bytes() == source.read_bytes() and stat.S_IMODE(target.stat().st_mode) == 0o755:
+        return []
+    return [Change(target, "stage-hook")]
+
+
 def build_plan(home: Path, root: Path | None = None) -> list[Change]:
     root = root or repo_root()
     preflight(home, root)
@@ -421,6 +443,7 @@ def build_plan(home: Path, root: Path | None = None) -> list[Change]:
         if path.read_bytes() != desired:
             changes.append(Change(path, "manual"))
     changes.extend(pi_extension_changes(home, root))
+    changes.extend(etapa_hook_changes(home, root))
     return changes
 
 
@@ -507,6 +530,8 @@ def apply(home: Path, root: Path | None = None) -> list[Change]:
                 _archive_retired_skill(runtime_root, destination)
     if pi_extension_path(home) in change_paths:
         install_pi_extension(home, root)
+    if etapa_hook_path(home) in change_paths:
+        _atomic_copy(etapa_hook_source(root), etapa_hook_path(home), home / ".claude")
     return changes
 
 
@@ -527,10 +552,8 @@ PI_EXTENSION_TEMPLATE = """\
 // No external envelope is consumed. The switch decides whether Chanks controls apply at all in
 // this repository; when they do, the admission is captured live, by pi-admission.mjs itself,
 // from git and the installed Radar — never from the model and never from a host process.
-import {{ createHash, randomUUID }} from "node:crypto"
 import {{ execFileSync }} from "node:child_process"
 import {{ realpathSync }} from "node:fs"
-import {{ Type }} from "@earendil-works/pi-ai"
 import {{ buildAdmission, resolveExecutable }} from "{admision}"
 import {{ crearAutoridadPi }} from "{autoridad}"
 import {{ effectiveSwitchAt }} from "{interruptor}"
@@ -539,25 +562,6 @@ import {{ effectiveSwitchAt }} from "{interruptor}"
 // (R3-no-exec-timeout / R4-unbounded-sync-subprocess-per-tool-call).
 const EXEC_TIMEOUT_MS = 10_000
 
-const blocked = (reason: string) => ({{
-  content: [{{ type: "text", text: `Blocked: ${{reason}}` }}],
-  details: undefined,
-}})
-
-const confirmationOf = (bundle: any) => [
-  bundle.kind === "session" ? `Session: ${{bundle.sessionId}}` : "Planning key",
-  `Repository: ${{bundle.repositoryRoot}}`,
-  "Authorized files:",
-  ...bundle.authorizedFiles.map((file: string) => `- ${{file}}`),
-  ...((bundle.newFiles ?? []).length > 0
-    ? ["New files (not yet created):", ...bundle.newFiles.map((file: string) => `- ${{file}}`)]
-    : []),
-  "Cimientos:",
-  ...bundle.cimientoGrants.map((file: string) => `- ${{file}}`),
-  "Resources:",
-  ...bundle.resources.map((resource: any) => `- ${{resource.id}} (${{resource.mode}})`),
-  `Base: ${{bundle.baseCommit}}`,
-].join("\\n")
 
 // Reading has no effect anywhere in this extension, active key or not — see pi-controls.mjs's
 // own SIN_EFECTO for the authoritative list this mirrors. The list is duplicated here, not the
@@ -590,14 +594,8 @@ const READ_ONLY_ROOM = [
 
 const quoteArgv = (argv: string[]) => argv.map((part) => `'${{part.replaceAll("'", "'\\"'\\"'")}}'`).join(" ")
 
-// pi-controls.mjs's confinarComando refuses to build a room with zero writable binds, because
-// that module only ever confines an already-authorized mutation. A read-only room, with
-// nothing writable at all, is a fixed policy for the no-key case, not a decision — so it is
-// built here rather than by widening that module's contract for one caller. `root` (the
-// repository top level) is what gets read-only bound back into visibility after the tmpfs
-// mounts; `chdirTo` is the agent's actual working directory, which may be a subdirectory of
-// `root` — starting Pi there must land the shell in the same place, not silently at the
-// repository root (R1/R3/R4-subdirectory-cwd).
+// Shell is never writable, even for an admitted Session. Worktree and original cwd are
+// rebound read-only when /tmp is masked; failures stop the call rather than running loose.
 const readOnlyConfinement = (command: string, root: string, chdirTo: string): string | null => {{
   try {{
     if (realpathSync("/usr/bin/bwrap") !== "/usr/bin/bwrap") return null
@@ -609,45 +607,48 @@ const readOnlyConfinement = (command: string, root: string, chdirTo: string): st
 }}
 
 export default function chanksControls(pi: any) {{
-  // `process.cwd()` is the agent's actual working directory, which may be any subdirectory of
-  // the repository. The repository root the switch, the plan check and the admission all care
-  // about is resolved from it with `git rev-parse --show-toplevel`, run through the same
-  // never-trust-a-repo-supplied-binary lookup pi-admission.mjs uses for git and Radar. A cwd
-  // outside any git repository — or a broken/absent git — leaves the extension inert, exactly
-  // as before.
-  // The git common directory is resolved once here, at load — never per tool_call
-  // (R4-unbounded-sync-subprocess-per-tool-call). Every governed operation after this point
-  // reads the switch through `effectiveSwitchAt(commonDir, root)`, which is `existsSync`/
-  // `readFileSync` only, no subprocess.
-  let workingDirectory: string
-  let root: string
-  let commonDir: string
-  let gitDir: string
-  try {{
-    workingDirectory = realpathSync(process.cwd())
-    const git = resolveExecutable("git", workingDirectory)
-    const runGit = (args: string[]) => execFileSync(
-      git, ["-C", workingDirectory, ...args],
-      {{ stdio: ["ignore", "pipe", "ignore"], timeout: EXEC_TIMEOUT_MS }},
-    ).toString("utf8").trim()
-    root = realpathSync(runGit(["rev-parse", "--show-toplevel"]))
-    commonDir = runGit(["rev-parse", "--path-format=absolute", "--git-common-dir"])
-    gitDir = runGit(["rev-parse", "--path-format=absolute", "--git-dir"])
-  }} catch {{
-    // A cwd outside any git repository, or a broken/absent git, leaves the extension inert —
-    // exactly as if this file were absent.
-    return
+  // Registration is side-effect-free. Resolve the current checkout at session_start, never
+  // while Pi merely loads extensions (e.g. print mode without an active session).
+  let workingDirectory: string | null = null
+  let root: string | null = null
+  let commonDir: string | null = null
+  let isMainWorkingTree = false
+  let authority: any = null
+  let currentAdmission: any = null
+  let previousStage: string | null = null
+  let admissionFailure = "no exact dispatch marker or fresh Radar evidence"
+  const outcomes = new Map<string, {{ kind: string, owner?: any, toolName: string, originalPath?: string }}>()
+  const seen = new Set<string>()
+
+  const initialize = () => {{
+    try {{
+      workingDirectory = realpathSync(process.cwd())
+      const git = resolveExecutable("git", workingDirectory)
+      const runGit = (args: string[]) => execFileSync(git, ["-C", workingDirectory!, ...args],
+        {{ stdio: ["ignore", "pipe", "ignore"], timeout: EXEC_TIMEOUT_MS }}).toString("utf8").trim()
+      root = realpathSync(runGit(["rev-parse", "--show-toplevel"]))
+      commonDir = runGit(["rev-parse", "--path-format=absolute", "--git-common-dir"])
+      isMainWorkingTree = realpathSync(runGit(["rev-parse", "--path-format=absolute", "--git-dir"])) === realpathSync(commonDir)
+    }} catch {{ root = null; commonDir = null; workingDirectory = null }}
   }}
 
-  // The controls confine implementer worktrees only. The main working tree is where the human
-  // drives Main and Support directly, so it stays free: git reports the same directory for
-  // `--git-dir` and `--git-common-dir` only there, never in a linked worktree. An unresolvable
-  // path keeps the controls on rather than freeing a worktree by accident.
-  let isMainWorkingTree = false
-  try {{
-    isMainWorkingTree = realpathSync(gitDir) === realpathSync(commonDir)
-  }} catch {{}}
-  if (isMainWorkingTree) return
+  const guidance = (ctx: any) => {{
+    if (!root) return
+    try {{
+      const radar = resolveExecutable("radar", root)
+      const raw = execFileSync(radar, ["etapa", "-C", root],
+        {{ cwd: root, timeout: EXEC_TIMEOUT_MS, stdio: ["ignore", "pipe", "ignore"], maxBuffer: 4096 }})
+      const stage = JSON.parse(raw.toString("utf8"))
+      if (stage?.schema !== "radar.etapa/v1" || !Number.isInteger(stage.etapa) ||
+        stage.etapa < 1 || typeof stage.nombre !== "string" || !stage.nombre.trim()) return
+      const key = `${{stage.etapa}}:${{stage.nombre}}`
+      if (key !== previousStage && ctx?.hasUI) {{
+        const transition = previousStage !== null && previousStage !== key
+        ctx.ui.notify(`${{transition ? "💪 Chanks · " : "Radar etapa · "}}${{stage.etapa}} · ${{stage.nombre}}`, "info")
+      }}
+      previousStage = key
+    }} catch {{ /* Invalid observations do not manufacture a transition. */ }}
+  }}
 
   // Read on every governed decision below (R4-switch-evaluated-once-at-load /
   // R2-switch-contradictory-read-contract): the extension's handlers are registered
@@ -657,142 +658,78 @@ export default function chanksControls(pi: any) {{
   // Pi session.
   const isEffective = () => {{
     try {{
-      return effectiveSwitchAt(commonDir, root)
+      return Boolean(root && commonDir && effectiveSwitchAt(commonDir, root))
     }} catch {{
       return false
     }}
   }}
 
-  // Generated once per loaded instance of this extension. Nothing here claims these describe
-  // the candidate's content; they are this activation's own opaque, stable evidence, and the
-  // Session/base/worktree fields carry the real drift protection.
-  const runtimeIdentity = `pi:isolated:${{randomUUID()}}`
-  const candidateDigest = createHash("sha256").update(randomUUID()).digest("hex")
-
-  const authority = crearAutoridadPi({{
-    identidadActual: () => {{
-      if (!currentAdmission) throw new Error("no hay una admisión pendiente o activa")
-      return currentAdmission.identidadActual()
-    }},
-  }})
-  let currentAdmission: any = null
-
-  // A key is purely referential (Engram 11475): once active it identifies which Session or
-  // planning is working, for the Main agent, and confines nothing. `estado()` is a plain,
-  // no-I/O state read. The authority's other, live-checking accessor still hands back
-  // pi-controls.mjs's confinement, but this extension deliberately never reaches for it: doing
-  // so would re-derive live identity through pi-admission.mjs and could silently invalidate a
-  // key on a HEAD or plan change the key must survive.
-  const isActive = () => authority.estado() === "activa"
-
-  const erase = () => {{
-    try {{ authority.invalidar() }} catch {{}}
+  const erase = (shutdown = false) => {{
+    try {{ shutdown ? authority?.cerrar() : authority?.invalidar() }} catch {{}}
+    if (shutdown) {{
+      for (const [id, outcome] of outcomes) if (outcome.owner && outcome.owner !== authority) outcome.owner.completar(id, outcome.kind)
+      outcomes.clear()
+      seen.clear()
+    }}
+    authority = null
     currentAdmission = null
   }}
 
-  pi.registerTool({{
-    name: "chanks_request_activation",
-    label: "Request Chanks activation",
-    description: "Ask the human, in Pi's own question, to approve the Session or planning key that unlocks writes.",
-    parameters: Type.Object({{
-      kind: Type.String(),
-      sessionId: Type.Optional(Type.String()),
-    }}, {{ additionalProperties: false }}),
-    executionMode: "sequential",
-    async execute(_toolCallId: string, params: any, _signal: any, _onUpdate: any, ctx: any) {{
-      if (!isEffective()) return blocked("the repository switch is off, or there is no plan")
-      const kind = params?.kind
-      if (kind !== "session" && kind !== "planning") {{
-        return blocked('chanks_request_activation requires {{kind: "session", sessionId}} or {{kind: "planning"}}')
-      }}
-      const sessionId = params?.sessionId
-      if (kind === "session" && (typeof sessionId !== "string" || sessionId.trim() === "")) {{
-        return blocked("a Session key requires sessionId")
-      }}
-      // Already active for this exact kind (and Session, when it names one): nothing to do. A
-      // request for a *different* key still falls through and replaces the current one, the
-      // same way a brand-new one would — see the note below on why that is safe. `isActive()`
-      // is the plain state read defined above, not the live-checking accessor.
-      if (isActive() && currentAdmission?.bundle.kind === kind
-        && (kind !== "session" || currentAdmission.bundle.sessionId === sessionId)) {{
-        return {{ content: [{{ type: "text", text: "Chanks authority is already active." }}], details: undefined }}
-      }}
-      if (!ctx.hasUI) return blocked("human confirmation UI is unavailable")
-
-      let candidate: any
-      try {{
-        candidate = buildAdmission({{ repositoryRoot: root, kind, sessionId, runtimeIdentity, candidateDigest }})
-      }} catch (error: any) {{
-        return blocked(`could not build the admission: ${{error?.message ?? error}}`)
-      }}
-
-      const previous = currentAdmission
-      currentAdmission = candidate
-      let request: any
-      try {{
-        request = authority.solicitar(candidate.bundle)
-      }} catch (error: any) {{
-        currentAdmission = previous
-        return blocked(`the admission is invalid: ${{error?.message ?? error}}`)
-      }}
-
-      try {{
-        const confirmed = await ctx.ui.confirm(
-          kind === "session" ? `Activate the Session ${{sessionId}} key?` : "Activate the planning key?",
-          confirmationOf(candidate.bundle),
-        )
-        if (confirmed !== true || !authority.aceptar(request.solicitud)) {{
-          currentAdmission = null
-          return blocked("human activation was not accepted")
-        }}
-      }} catch {{
-        currentAdmission = null
-        return blocked("human activation could not be confirmed")
-      }}
-
-      return {{ content: [{{ type: "text", text: "Chanks authority is active." }}], details: undefined }}
-    }},
-  }})
+  const admit = () => {{
+    if (!root || !isEffective() || isMainWorkingTree) return false
+    if (authority?.estado() === "activa") return true
+    try {{
+      currentAdmission = buildAdmission({{ repositoryRoot: root }})
+      authority = crearAutoridadPi({{ identidadActual: () => currentAdmission.identidadActual() }})
+      if (!authority.activarAutomaticamente(currentAdmission.bundle)) throw new Error("admission rejected")
+      return true
+    }} catch (error: any) {{
+      admissionFailure = String(error?.message ?? "admission unavailable").slice(0, 300)
+      erase()
+      return false
+    }}
+  }}
 
   pi.on("tool_call", (event: any) => {{
-    // Pi dispatches global tool_call handlers before the custom tool's own execute. Only the
-    // activation tool itself may pass through unconditionally; it grants nothing by passing —
-    // the human gate lives entirely inside its execute above.
-    if (event?.toolName === "chanks_request_activation") return {{}}
-
-    // Off, or no plan: pass through immediately, without asking, even with an active key —
-    // turning the switch off must take effect on the very next tool call, not on the next Pi
-    // session (R4-switch-evaluated-once-at-load).
-    if (!isEffective()) return {{}}
-
-    // An active key is purely referential (Engram 11475): it identifies which Session or
-    // planning this Pi is working, for the Main agent, and blocks nothing. Every tool passes
-    // through exactly as if this extension were absent — no bwrap room, no path limits, and no
-    // call into pi-controls.mjs's confinement.
-    if (isActive()) return {{}}
-
-    const herramienta = event?.toolName
-    if (typeof herramienta === "string" && READ_ONLY_TOOLS.includes(herramienta)) return {{}}
-    if (herramienta === "bash") {{
+    const id = event?.toolCallId
+    if (typeof id !== "string" || !id || seen.has(id)) return {{ block: true, reason: "duplicate or missing tool-call identity" }}
+    seen.add(id)
+    if (!isEffective() || isMainWorkingTree) {{ outcomes.set(id, {{ kind: "bypassed", toolName: event?.toolName }}); return {{}} }}
+    if (READ_ONLY_TOOLS.includes(event?.toolName)) {{ outcomes.set(id, {{ kind: "read", toolName: event.toolName }}); return {{}} }}
+    if (event?.toolName === "bash") {{
       const command = event?.input?.command
-      if (typeof command !== "string" || command.trim() === "") {{
-        return {{ block: true, reason: "💪 Chanks · blocked · bash no declara el comando que va a ejecutar" }}
-      }}
-      const confined = readOnlyConfinement(command, root, workingDirectory)
-      if (confined === null) {{
-        return {{ block: true, reason: "💪 Chanks · blocked · no hay confinamiento de sólo lectura disponible, así que se rechaza sin salida permisiva" }}
-      }}
-      for (const key of Object.keys(event.input ?? {{}})) delete event.input[key]
+      if (typeof command !== "string" || !command.trim()) return {{ block: true, reason: "bash requires a command" }}
+      const confined = readOnlyConfinement(command, root!, workingDirectory!)
+      if (!confined) return {{ block: true, reason: "read-only/no-network confinement unavailable" }}
       event.input.command = confined
+      outcomes.set(id, {{ kind: "read-only bash", toolName: "bash" }})
       return {{}}
     }}
-    return {{ block: true, reason: "💪 Chanks · blocked · no hay una llave activa: pedí chanks_request_activation" }}
+    if (!["write", "edit"].includes(event?.toolName)) return {{ block: true, reason: "unknown tool blocked" }}
+    const originalPath = event?.input?.path
+    if (typeof originalPath === "string" && [...outcomes.values()].some((outcome) => outcome.owner && outcome.originalPath === originalPath))
+      return {{ block: true, reason: "same-file tool-call collision" }}
+    if (!admit()) return {{ block: true, reason: `automatic dispatch admission unavailable: ${{admissionFailure}}` }}
+    try {{
+      currentAdmission.recapture()
+      const result = authority.capacidad()?.gobernar(event)
+      if (!result || result.pi.block) return result?.pi ?? {{ block: true, reason: "authority unavailable" }}
+      outcomes.set(id, {{ kind: event.toolName, toolName: event.toolName, owner: authority, originalPath }})
+      return result.pi
+    }} catch {{ return {{ block: true, reason: "admission drift" }} }}
   }})
 
-  pi.on("session_shutdown", () => erase())
-  pi.on("session_start", (event: any) => {{
-    if (event.reason !== "startup") erase()
+  pi.on("tool_result", (event: any) => {{
+    const id = event?.toolCallId
+    if (!outcomes.has(id)) return
+    const outcome = outcomes.get(id)
+    if (outcome.toolName !== event.toolName) return
+    outcomes.delete(id)
+    if (outcome.owner) outcome.owner.completar(id, outcome.kind)
   }})
+  pi.on("session_shutdown", () => erase(true))
+  pi.on("session_start", (_event: any, ctx: any) => {{ erase(true); initialize(); guidance(ctx) }})
+  pi.on("agent_end", (_event: any, ctx: any) => guidance(ctx))
 }}
 """
 

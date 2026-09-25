@@ -1,318 +1,225 @@
-// Builds the admission bundle that `pi-authority.mjs` expects, from git and the installed
-// Radar alone. No external envelope is consumed: everything here is captured live, by this
-// module, from trusted executables it resolves itself.
-//
-// Two kinds of key exist. `session` names one plan Session (state LISTO or EN CURSO) and
-// derives its files, Cimiento grants and declared resources from Radar's own structured status,
-// for display in Pi's own confirmation question. `planning` names no Session and authorizes
-// exactly the two planning artifacts — nothing here reads plan.yaml itself; Radar's installed
-// binary is still the only source of truth about the repository.
-//
-// Since Engram 11475, a key is purely referential: it identifies which Session (or planning) a
-// Pi is working, for the Main agent, and confines nothing once active. Git and Radar are
-// consulted here exactly once, at request time, to build the confirmation the human sees and the
-// `radar` evidence pi-authority.mjs's admission validation still expects. `identidadActual()`
-// never re-derives any of that: it is the fixed identity this request was built with, so HEAD
-// advancing (the agent's own commits) and any plan row changing later — this Session's own row
-// included — never drop the key, and no subprocess is ever spawned again on its account. (The
-// generated Pi extension no longer even calls anything that would reach this function on every
-// tool call — see install.py — but it stays this cheap regardless of who calls it.)
-
+// Worker admission is derived from the dispatch receipt, never from a tool argument.
 import { execFileSync } from "node:child_process"
 import { createHash } from "node:crypto"
-import { lstatSync, realpathSync } from "node:fs"
-import { basename, delimiter, isAbsolute, join, relative, resolve, sep } from "node:path"
+import { closeSync, constants, existsSync, fstatSync, lstatSync, openSync, opendirSync, readSync, realpathSync } from "node:fs"
+import { basename, delimiter, dirname, isAbsolute, join, relative, resolve, sep } from "node:path"
 
-const LISTO_STATES = new Set(["LISTO", "EN CURSO"])
-const PLANNING_FILES = ["openspec/plan.yaml", "openspec/ROADMAP.md"]
-const SESSION = /^S[1-9][0-9]*$/
-const SHA_256 = /^[a-f0-9]{64}$/
-
-const fail = (message) => {
-  throw new Error(`pi-admission: ${message}`)
-}
-
-const inside = (root, path) => {
-  const rel = relative(root, path)
-  return rel === "" || (!rel.startsWith(`..${sep}`) && rel !== ".." && !isAbsolute(rel))
-}
-
-const defaultDependencies = () => ({
-  execFile: execFileSync,
-  pathEnv: process.env.PATH ?? "",
-  realpath: realpathSync,
-  lstat: lstatSync,
-})
-
-const withDefaults = (dependencies) => ({ ...defaultDependencies(), ...(dependencies ?? {}) })
-
-const canonicalRepositoryRoot = (root, deps) => {
-  if (typeof root !== "string" || root.trim() === "" || !isAbsolute(root)) fail("repositoryRoot inválido")
-  let canonical
-  try {
-    canonical = deps.realpath(root)
-    if (!deps.lstat(canonical).isDirectory()) fail("repositoryRoot no es un directorio")
-  } catch (error) {
-    if (error instanceof Error && error.message.startsWith("pi-admission:")) throw error
-    fail("repositoryRoot no existe")
-  }
-  if (canonical !== root) fail("repositoryRoot debe estar ya resuelto de forma canónica")
-  return canonical
-}
-
-const canonicalRepoFile = (root, relativePath, deps) => {
-  const candidate = resolve(root, relativePath)
-  let canonical
-  let stat
-  try {
-    stat = deps.lstat(candidate)
-    canonical = deps.realpath(candidate)
-  } catch {
-    fail(`«${relativePath}» no existe todavía en el repositorio`)
-  }
-  if (stat.isSymbolicLink() || !stat.isFile() || stat.nlink !== 1) {
-    fail(`«${relativePath}» no es un archivo regular autorizable`)
-  }
-  if (canonical !== candidate || !inside(root, canonical)) fail(`«${relativePath}» escapa del repositorio`)
-  return canonical
-}
-
-// A file that does not exist yet on disk is not, by itself, a reason to refuse the whole
-// admission (R3-new-file-blocks-admission): a Session may legitimately declare a file it plans
-// to create. What still must hold is path safety — the candidate's containing directory already
-// exists inside the repository, with no symlink anywhere in the chain down to it. Creating the
-// file is left entirely to whatever harness the Session uses; pi-controls.mjs is not touched
-// here and grants nothing for a path that does not exist.
-const repoPathStatus = (root, relativePath, deps) => {
-  const candidate = resolve(root, relativePath)
-  let stat
-  try {
-    stat = deps.lstat(candidate)
-  } catch {
-    stat = null
-  }
-  if (stat) {
-    let canonical
-    try {
-      canonical = deps.realpath(candidate)
-    } catch {
-      fail(`«${relativePath}» no se pudo resolver`)
-    }
-    if (stat.isSymbolicLink() || !stat.isFile() || stat.nlink !== 1) {
-      fail(`«${relativePath}» no es un archivo regular autorizable`)
-    }
-    if (canonical !== candidate || !inside(root, canonical)) fail(`«${relativePath}» escapa del repositorio`)
-    return { path: canonical, exists: true }
-  }
-  let canonicalParent
-  try {
-    canonicalParent = deps.realpath(resolve(candidate, ".."))
-    if (!deps.lstat(canonicalParent).isDirectory()) fail(`«${relativePath}» no es declarable`)
-  } catch (error) {
-    if (error instanceof Error && error.message.startsWith("pi-admission:")) throw error
-    fail(`el directorio de «${relativePath}» no existe todavía en el repositorio`)
-  }
-  if (!inside(root, canonicalParent)) fail(`«${relativePath}» escapa del repositorio`)
-  return { path: join(canonicalParent, basename(candidate)), exists: false }
-}
-
-// A file that may legitimately be absent (openspec/ROADMAP.md before it is ever rendered) is
-// simply left out — never an error — while an existing-but-invalid path (a symlink, a
-// directory, a non-regular file) still fails closed via canonicalRepoFile.
-const optionalRepoFile = (root, relativePath, deps) => {
-  const candidate = resolve(root, relativePath)
-  try {
-    deps.lstat(candidate)
-  } catch {
-    return null
-  }
-  return canonicalRepoFile(root, relativePath, deps)
-}
-
-const canonicalExecutable = (path, deps) => {
-  try {
-    const canonical = deps.realpath(path)
-    if (canonical !== path) return null
-    const stat = deps.lstat(canonical)
-    if (!stat.isFile() || stat.isSymbolicLink() || (stat.mode & 0o111) === 0) return null
-    return canonical
-  } catch {
-    return null
+const fail = (reason) => { throw new Error(`pi-admission: ${reason}`) }
+const inside = (root, file) => { const rel = relative(root, file); return rel !== "" && rel !== ".." && !rel.startsWith(`..${sep}`) && !isAbsolute(rel) }
+const dependenciesFor = (provided) => ({ execFile: execFileSync, realpath: realpathSync, lstat: lstatSync, pathEnv: process.env.PATH ?? "", ...provided })
+const inCheckout = (file, deps) => {
+  let directory = dirname(file)
+  while (true) {
+    try { deps.lstat(join(directory, ".git")); return true } catch {}
+    const parent = dirname(directory)
+    if (parent === directory) return false
+    directory = parent
   }
 }
 
-// resolveExecutable never trusts a model-, caller-, or repository-supplied path: it only ever
-// walks the process PATH and refuses any candidate that resolves inside the repository.
-export const resolveExecutable = (name, repositoryRoot, dependencies) => {
-  const deps = withDefaults(dependencies)
-  for (const dir of deps.pathEnv.split(delimiter).filter(Boolean)) {
+export const resolveExecutable = (name, root, provided) => {
+  const deps = dependenciesFor(provided)
+  for (const dir of deps.pathEnv.split(delimiter)) {
     if (!isAbsolute(dir)) continue
-    const candidate = canonicalExecutable(join(dir, name), deps)
-    if (candidate && !inside(repositoryRoot, candidate)) return candidate
+    const candidate = join(dir, name)
+    try {
+      const stat = deps.lstat(candidate)
+      if (deps.realpath(candidate) === candidate && stat.isFile() && !stat.isSymbolicLink() && (stat.mode & 0o111) && !inside(root, candidate) && !inCheckout(candidate, deps)) return candidate
+    } catch {}
   }
-  fail(`no se encontró un ejecutable confiable para «${name}» fuera del repositorio`)
+  fail(`ejecutable ${name} fuera del repositorio no disponible`)
 }
 
-// A timeout fails a mutation-relevant capture closed instead of letting a wedged git or Radar
-// process hang admission forever (R3-no-exec-timeout).
-const EXEC_TIMEOUT_MS = 10_000
-
-const run = (executable, args, cwd, deps) => {
+const run = (exe, args, root, deps) => {
   try {
-    return deps.execFile(executable, args, { cwd, stdio: ["ignore", "pipe", "ignore"], timeout: EXEC_TIMEOUT_MS })
-  } catch (error) {
-    fail(`no se pudo ejecutar ${[executable, ...args].join(" ")}: ${error.message}`)
-  }
+    const raw = deps.execFile(exe, args, { cwd: root, stdio: ["ignore", "pipe", "ignore"], timeout: 10_000, maxBuffer: 1024 * 1024 })
+    if (!Buffer.isBuffer(raw) && typeof raw !== "string") fail("respuesta no acotada")
+    return Buffer.from(raw)
+  } catch { fail(`captura fallida: ${basename(exe)} ${args[0]}`) }
 }
-
-const sha256 = (buffer) => createHash("sha256").update(buffer).digest("hex")
-
-const captureHead = (git, root, deps) => {
-  const raw = run(git, ["rev-parse", "HEAD"], root, deps).toString("utf8").trim()
-  if (!/^[a-f0-9]{40}(?:[a-f0-9]{24})?$/.test(raw)) fail("git rev-parse HEAD devolvió un valor inesperado")
-  return raw
-}
-
-const captureStatus = (radar, root, deps) => {
-  const raw = run(radar, ["status", "--json", "-C", root], root, deps)
-  let parsed
-  try {
-    parsed = JSON.parse(raw.toString("utf8"))
-  } catch {
-    fail("radar status --json no devolvió JSON válido")
-  }
-  if (!parsed || parsed.schema !== "radar.snapshot/v1" || !Array.isArray(parsed.sesiones)) {
-    fail("radar status --json no trae el schema esperado")
-  }
-  return { raw, parsed }
-}
-
-const captureSessionRaw = (radar, root, sessionId, deps) => {
-  const raw = run(radar, ["sesion", sessionId, "-C", root], root, deps)
-  if (!raw.toString("utf8").includes(sessionId)) fail("radar sesion no devolvió evidencia de la Sesión pedida")
-  return raw
-}
-
-const sessionRow = (status, sessionId) => {
-  const row = status.parsed.sesiones.find((entry) => entry?.id === sessionId)
-  if (!row) fail(`la Sesión «${sessionId}» no aparece en radar status`)
-  if (!LISTO_STATES.has(row.estado)) fail(`la Sesión «${sessionId}» no está LISTO ni EN CURSO`)
-  return row
-}
-
-// Declared files that already exist go to `authorizedFiles`; declared files that do not yet
-// exist go to `newFiles`, listed for the human but excluded from the retained-fd set below —
-// there is nothing to retain a handle to. A Session with no existing file at all still has
-// nothing to authorize, so the caller must reject an empty `authorizedFiles`.
-const archivoStatuses = (root, list, deps) => {
-  if (!Array.isArray(list) || list.length === 0) fail("la Sesión no declara archivos")
-  const result = list.map((relativePath) => repoPathStatus(root, relativePath, deps))
-  const paths = result.map((entry) => entry.path)
-  if (new Set(paths).size !== paths.length) fail("archivos duplicados")
-  return result
-}
-
-const cimientosFromRow = (root, row, authorizedFiles, deps) => {
-  const declared = Array.isArray(row.cimientos) ? row.cimientos : []
-  return declared.map((relativePath) => {
-    const canonical = canonicalRepoFile(root, relativePath, deps)
-    if (!authorizedFiles.includes(canonical)) {
-      fail(`Cimiento «${relativePath}» no está entre los archivos autorizados de la Sesión`)
+const line = (buffer) => buffer.toString("utf8").trim()
+const sha = (raw) => createHash("sha256").update(raw).digest("hex")
+const sameStat = (a, b) => a.dev === b.dev && a.ino === b.ino && a.mode === b.mode &&
+  a.nlink === b.nlink && a.size === b.size && a.mtimeMs === b.mtimeMs && a.ctimeMs === b.ctimeMs
+const uniqueJSONKeys = (raw) => {
+  const tokens = [...raw.matchAll(/"(?:\\.|[^"\\])*"|[{}\[\]:]/g)].map((match) => match[0])
+  const stack = []
+  for (let index = 0; index < tokens.length; index++) {
+    const token = tokens[index]
+    if (token === "{") stack.push(new Set())
+    else if (token === "[") stack.push(null)
+    else if (token === "}" || token === "]") stack.pop()
+    else if (token.startsWith('"') && tokens[index + 1] === ":") {
+      const keys = stack.at(-1)
+      const key = JSON.parse(token)
+      if (!keys || keys.has(key)) fail("marcador con claves duplicadas")
+      keys.add(key)
     }
-    return canonical
-  })
+  }
 }
 
-// Radar's `recurso` is free text, not a structured id/mode pair. Every declared resource is
-// treated as exclusive: that is the coordination Radar's own model exists to name. `confirmed`
-// is set true here because the one real confirmation gate is the human accepting Pi's own
-// question before `pi-authority.mjs` moves this bundle from pending to active — there is no
-// earlier, separate confirmation step to represent.
-const resourcesFromRow = (row) => {
-  const declared = Array.isArray(row?.recurso) ? row.recurso : []
-  return declared.map((description) => ({ id: description, mode: "exclusive", confirmed: true }))
+// Check every directory in the receipt chain, compare pathname and descriptor both before
+// and after a bounded read, and reject duplicate JSON keys rather than JSON.parse's last-wins.
+export const readDispatch = (commonDir, root, branch, provided = {}) => {
+  const deps = { lstat: lstatSync, open: openSync, fstat: fstatSync, read: readSync, close: closeSync, opendir: opendirSync, ...provided }
+  if (!isAbsolute(commonDir) || !/^refs\/heads\/[A-Za-z0-9._\/-]+$/.test(branch)) fail("identidad Git inválida")
+  const dir = join(commonDir, "chanks", "despachos")
+  const chain = [commonDir, join(commonDir, "chanks"), dir]
+  const checked = []
+  const directories = []
+  const namespace = deps.descriptorNamespace ?? existsSync
+  if (!namespace("/proc/self/fd")) fail("namespace de descriptores ausente")
+  const inspect = (boundPath, namedPath, directory) => {
+    const before = deps.lstat(namedPath)
+    const atHandle = deps.lstat(boundPath)
+    if (before.isSymbolicLink() || atHandle.isSymbolicLink() || !sameStat(before, atHandle) ||
+      (directory ? !before.isDirectory() : !before.isFile()) || (!directory && before.nlink !== 1)) fail("marcador no regular")
+    const fd = deps.open(boundPath, (directory ? constants.O_RDONLY | constants.O_DIRECTORY : constants.O_RDONLY) | constants.O_NOFOLLOW)
+    try {
+      if (!sameStat(before, deps.fstat(fd))) fail("marcador cambió durante apertura")
+      checked.push({ path: namedPath, before })
+      return fd
+    } catch (error) { deps.close(fd); throw error }
+  }
+  try {
+    let bound = commonDir
+    for (const [index, path] of chain.entries()) {
+      const fd = inspect(bound, path, true)
+      directories.push(fd)
+      bound = `/proc/self/fd/${fd}/${["chanks", "despachos"][index] ?? ""}`
+    }
+    const directoryPath = `/proc/self/fd/${directories.at(-1)}`
+    const entries = []
+    const directory = deps.opendir(directoryPath)
+    try {
+      for (let index = 0; index <= 256; index++) {
+        const entry = directory.readSync()
+        if (!entry) break
+        entries.push(entry.name)
+      }
+    } finally { directory.closeSync() }
+    if (entries.length > 256) fail("marcadores ambiguos o no acotados")
+    let match = null
+    for (const entry of entries) {
+      if (!/^[A-Za-z][A-Za-z0-9._-]*\.json$/.test(entry)) fail("marcador desconocido")
+      const path = join(dir, entry)
+      const fd = inspect(join(directoryPath, entry), path, false)
+      let raw
+      try {
+        const stat = deps.fstat(fd)
+        if (stat.size > 4096) fail("marcador excede límite")
+        const buffer = Buffer.alloc(4097)
+        const count = deps.read(fd, buffer, 0, buffer.length, 0)
+        if (count > 4096) fail("marcador excede límite")
+        const confirm = Buffer.alloc(4097)
+        const repeated = deps.read(fd, confirm, 0, confirm.length, 0)
+        if (repeated !== count || !buffer.subarray(0, count).equals(confirm.subarray(0, repeated)) ||
+          !sameStat(stat, deps.fstat(fd))) fail("marcador cambió durante lectura")
+        raw = buffer.subarray(0, count).toString("utf8")
+      } finally { deps.close(fd) }
+      let marker
+      try { marker = JSON.parse(raw); uniqueJSONKeys(raw) } catch { fail("marcador inválido o con claves duplicadas") }
+      if (!marker || Array.isArray(marker) || marker.schema !== "radar.despacho/v1" ||
+        marker.sesion !== entry.slice(0, -5) || !/^S[1-9][0-9]*$/.test(marker.sesion) ||
+        typeof marker.worker !== "string" || !/^[A-Za-z0-9._-]+$/.test(marker.worker) ||
+        typeof marker.worktree !== "string" || !isAbsolute(marker.worktree) || resolve(marker.worktree) !== marker.worktree ||
+        typeof marker.branch !== "string" || !/^refs\/heads\/[A-Za-z0-9._\/-]+$/.test(marker.branch) || marker.branch.includes("..") ||
+        Object.keys(marker).some((key) => !["schema", "sesion", "worker", "worktree", "branch", "review_ready"].includes(key))) fail("contrato del marcador inválido")
+      if (marker.review_ready !== undefined) {
+        const witness = marker.review_ready
+        if (!witness || Array.isArray(witness) || typeof witness !== "object" ||
+          Object.keys(witness).some((key) => !["transport", "type", "message_id", "sesion", "received_at", "worker", "worktree", "branch"].includes(key)) ||
+          witness.transport !== "intercom" || witness.type !== "listo para revisión" ||
+          typeof witness.message_id !== "string" || !/^[^\s]+$/.test(witness.message_id) ||
+          typeof witness.received_at !== "string" || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)$/.test(witness.received_at) ||
+          Number.isNaN(Date.parse(witness.received_at)) || witness.sesion !== marker.sesion ||
+          witness.worker !== marker.worker || witness.worktree !== marker.worktree || witness.branch !== marker.branch) fail("testigo del marcador inválido")
+      }
+      if (marker.worktree === root && marker.branch === branch) {
+        if (match) fail("más de un despacho coincide")
+        match = { sessionId: marker.sesion, digest: sha(Buffer.from(raw)) }
+      }
+    }
+    for (const { path, before } of checked) if (!sameStat(before, deps.lstat(path))) fail("marcador cambió durante lectura")
+    if (!match) fail("no hay despacho exacto para este worktree y branch")
+    return match
+  } catch (error) { if (error?.message?.startsWith("pi-admission:")) throw error; fail("marcador ausente, inválido o inestable") }
+  finally { for (const fd of directories.reverse()) try { deps.close(fd) } catch {} }
+}
+const fileStatus = (root, name, deps) => {
+  if (typeof name !== "string" || !name || isAbsolute(name) || name.split(/[\\/]/).includes("..")) fail("ruta declarada inválida")
+  const path = resolve(root, name)
+  if (!inside(root, path)) fail("ruta fuera del repositorio")
+  let stat
+  try { stat = deps.lstat(path) } catch { stat = null }
+  if (stat) {
+    if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1 || deps.realpath(path) !== path) fail("archivo declarado no regular")
+    return { path, exists: true }
+  }
+  const parent = resolve(path, "..")
+  if (!inside(root, parent) && parent !== root) fail("directorio inválido")
+  try { if (deps.realpath(parent) !== parent || !deps.lstat(parent).isDirectory()) fail("directorio no canónico") } catch { fail("directorio de archivo nuevo inválido") }
+  return { path, exists: false }
 }
 
-// buildAdmission captures once, at request time, everything Pi's own confirmation question
-// needs to show: the Session's (or planning's) files, Cimientos, resources and base commit.
-// `identidadActual` below never repeats any of this: a referential key has nothing left to
-// revalidate against git or Radar, so it is simply the fixed identity captured here, forever.
 export const buildAdmission = ({ repositoryRoot, kind, sessionId, runtimeIdentity, candidateDigest, dependencies } = {}) => {
-  const deps = withDefaults(dependencies)
-  const root = canonicalRepositoryRoot(repositoryRoot, deps)
-  if (kind !== "session" && kind !== "planning") fail("kind debe ser «session» o «planning»")
-  if (kind === "session" && (typeof sessionId !== "string" || !SESSION.test(sessionId))) fail("sessionId inválido")
-  if (typeof runtimeIdentity !== "string" || runtimeIdentity.trim() === "") fail("runtimeIdentity requerido")
-  if (typeof candidateDigest !== "string" || !SHA_256.test(candidateDigest)) fail("candidateDigest inválido")
-
+  const deps = dependenciesFor(dependencies)
+  if (kind !== undefined || sessionId !== undefined) fail("selección del llamador no admitida; hace falta despacho")
+  if (!isAbsolute(repositoryRoot ?? "") || deps.realpath(repositoryRoot) !== repositoryRoot || !deps.lstat(repositoryRoot).isDirectory()) fail("repositoryRoot inválido")
+  const root = repositoryRoot
   const git = deps.git ?? resolveExecutable("git", root, deps)
   const radar = deps.radar ?? resolveExecutable("radar", root, deps)
-
-  const baseCommit = captureHead(git, root, deps)
-
-  let effectiveSessionId
-  let authorizedFiles
-  let newFiles
-  let cimientoGrants
-  let resources
-  let sessionDigest = ""
-
-  if (kind === "session") {
-    const status = captureStatus(radar, root, deps)
-    const row = sessionRow(status, sessionId)
-    // pi-authority.mjs's admission validation still expects a `radar.sessionDigest` for a
-    // Session key — a real digest of this Session's own `radar sesion` text, computed once here
-    // and never recomputed. It is evidence shown alongside the bundle, not a value anything ever
-    // re-derives to decide whether the key survives (Engram 11475).
-    sessionDigest = sha256(captureSessionRaw(radar, root, sessionId, deps))
-    const statuses = archivoStatuses(root, row.archivos, deps)
-    authorizedFiles = statuses.filter((entry) => entry.exists).map((entry) => entry.path)
-    newFiles = statuses.filter((entry) => !entry.exists).map((entry) => entry.path)
-    if (authorizedFiles.length === 0) fail("la Sesión no tiene archivos existentes para autorizar")
-    cimientoGrants = cimientosFromRow(root, row, authorizedFiles, deps)
-    resources = resourcesFromRow(row)
-    effectiveSessionId = sessionId
-  } else {
-    effectiveSessionId = "PLANNING"
-    // A missing openspec/ROADMAP.md must never block the planning key
-    // (R3-missing-roadmap-blocks-planning): plan.yaml is always required, ROADMAP.md only when
-    // it already exists.
-    const roadmap = optionalRepoFile(root, PLANNING_FILES[1], deps)
-    authorizedFiles = roadmap
-      ? [canonicalRepoFile(root, PLANNING_FILES[0], deps), roadmap]
-      : [canonicalRepoFile(root, PLANNING_FILES[0], deps)]
-    newFiles = []
-    cimientoGrants = []
-    resources = []
+  const top = line(run(git, ["rev-parse", "--show-toplevel"], root, deps))
+  const commonDir = line(run(git, ["rev-parse", "--path-format=absolute", "--git-common-dir"], root, deps))
+  const branch = line(run(git, ["symbolic-ref", "--quiet", "HEAD"], root, deps))
+  if (top !== root || !isAbsolute(commonDir) || deps.realpath(commonDir) !== commonDir ||
+    !/^refs\/heads\/[A-Za-z0-9._\/-]+$/.test(branch) || branch.includes("..")) fail("identidad Git inválida")
+  const marker = readDispatch(commonDir, root, branch, deps.dispatch)
+  const capture = () => {
+    const headBefore = line(run(git, ["rev-parse", "HEAD"], root, deps))
+    const status = run(radar, ["status", "--json", "-C", root], root, deps)
+    const headMiddle = line(run(git, ["rev-parse", "HEAD"], root, deps))
+    const session = run(radar, ["sesion", marker.sessionId, "-C", root], root, deps)
+    const headAfter = line(run(git, ["rev-parse", "HEAD"], root, deps))
+    if (!/^[a-f0-9]{40}(?:[a-f0-9]{24})?$/.test(headBefore) || headBefore !== headMiddle || headBefore !== headAfter) fail("HEAD cambió durante captura")
+    let parsed
+    try { parsed = JSON.parse(status.toString("utf8")) } catch { fail("Radar no devolvió JSON") }
+    if (parsed?.schema !== "radar.snapshot/v1" || !Array.isArray(parsed.sesiones) || !session.toString("utf8").includes(marker.sessionId)) fail("Radar inválido")
+    const rows = parsed.sesiones.filter((row) => row?.id === marker.sessionId)
+    if (rows.length !== 1 || !["LISTO", "EN CURSO"].includes(rows[0].estado)) fail("Sesión no admisible o ambigua")
+    return { head: headBefore, status, session, row: rows[0] }
   }
-
-  const bundle = Object.freeze({
-    repositoryRoot: root,
-    kind,
-    sessionId: effectiveSessionId,
-    baseCommit,
-    candidateDigest,
-    runtimeIdentity,
-    radar: kind === "session" ? Object.freeze({ sessionDigest }) : Object.freeze({}),
-    authorizedFiles: Object.freeze([...authorizedFiles]),
-    newFiles: Object.freeze([...newFiles]),
-    cimientoGrants: Object.freeze([...cimientoGrants]),
-    resources: Object.freeze(resources.map((resource) => Object.freeze({ ...resource }))),
-  })
-
-  // The identity a key is bound to, fixed forever at this point. No later call ever spawns git
-  // or Radar again on its account (Engram 11475): the key only identifies, for the Main agent,
-  // which Session or planning a Pi is working — it does not keep proving that identity is still
-  // "live" in some stronger sense, because nothing here confines anything for it to protect.
-  const fixedIdentity = Object.freeze({
-    repositoryRoot: root,
-    kind,
-    sessionId: effectiveSessionId,
-    baseCommit,
-    candidateDigest,
-    runtimeIdentity,
-  })
-  const identidadActual = () => fixedIdentity
-
-  return Object.freeze({ bundle, identidadActual })
+  const first = capture()
+  const second = capture()
+  if (first.head !== second.head || !first.status.equals(second.status) || !first.session.equals(second.session) ||
+    line(run(git, ["symbolic-ref", "--quiet", "HEAD"], root, deps)) !== branch ||
+    line(run(git, ["rev-parse", "--path-format=absolute", "--git-common-dir"], root, deps)) !== commonDir ||
+    readDispatch(commonDir, root, branch, deps.dispatch).digest !== marker.digest) fail("Radar, HEAD o despacho inestable")
+  const row = second.row
+  if (!Array.isArray(row.archivos) || !row.archivos.length) fail("Sesión sin archivos")
+  const statuses = row.archivos.map((path) => fileStatus(root, path, deps))
+  if (new Set(statuses.map((entry) => entry.path)).size !== statuses.length) fail("archivos duplicados")
+  if ((row.cimientos !== undefined && !Array.isArray(row.cimientos)) ||
+    (row.recurso !== undefined && !Array.isArray(row.recurso))) fail("declaración de Cimiento/Recurso inválida")
+  const foundations = row.cimientos ?? []
+  const resources = row.recurso ?? []
+  if (foundations.length || resources.length) fail("Cimiento/Recurso requiere evidencia de reserva/adquisición que este runtime no posee")
+  const files = statuses.filter((entry) => entry.exists).map((entry) => entry.path)
+  if (!files.length) fail("ningún archivo existente autorizable")
+  const identity = Object.freeze({ repositoryRoot: root, kind: "session", sessionId: marker.sessionId,
+    baseCommit: second.head, candidateDigest: candidateDigest ?? sha(second.status), runtimeIdentity: runtimeIdentity ?? `worker:${branch}` })
+  const bundle = Object.freeze({ ...identity, radar: { sessionDigest: sha(second.session), statusDigest: sha(second.status), markerDigest: marker.digest },
+    authorizedFiles: files, newFiles: statuses.filter((entry) => !entry.exists).map((entry) => entry.path),
+    cimientoGrants: [], resources: [] })
+  // The live identity is consulted only after a fresh Radar/Git/receipt recapture.
+  const recapture = () => {
+    const now = buildAdmission({ repositoryRoot: root, runtimeIdentity: identity.runtimeIdentity, candidateDigest: identity.candidateDigest, dependencies })
+    if (now.bundle.sessionId !== identity.sessionId || now.bundle.baseCommit !== identity.baseCommit ||
+      now.bundle.radar.sessionDigest !== bundle.radar.sessionDigest || now.bundle.radar.statusDigest !== bundle.radar.statusDigest ||
+      now.bundle.radar.markerDigest !== bundle.radar.markerDigest ||
+      JSON.stringify(now.bundle.authorizedFiles) !== JSON.stringify(bundle.authorizedFiles) ||
+      JSON.stringify(now.bundle.newFiles) !== JSON.stringify(bundle.newFiles)) fail("deriva de admisión")
+    return now.bundle
+  }
+  return Object.freeze({ bundle, recapture, identidadActual: () => { recapture(); return identity } })
 }

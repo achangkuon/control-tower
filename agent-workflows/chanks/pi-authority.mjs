@@ -3,7 +3,7 @@
 // Radar state, and its closure is deliberately the only place the resulting authority lives.
 
 import { randomUUID } from "node:crypto"
-import { closeSync, constants, fstatSync, lstatSync, openSync, realpathSync } from "node:fs"
+import { closeSync, constants, existsSync, fstatSync, lstatSync, openSync, realpathSync } from "node:fs"
 import { isAbsolute, relative, sep } from "node:path"
 
 import { bloqueado } from "./controls.mjs"
@@ -256,6 +256,15 @@ export const crearAutoridadPi = (host, injectedDependencies) => {
   let state = "inactiva"
   let pending = null
   let active = null
+  const leases = new Map()
+  const release = (id, toolName) => {
+    const lease = leases.get(id)
+    if (!lease || lease.toolName !== toolName) return false
+    leases.delete(id)
+    try { dependencies.close(lease.fd) } catch {}
+    return true
+  }
+  const closeLeases = () => { for (const [id, lease] of leases) release(id, lease.toolName) }
 
   const discard = (...authorities) => {
     for (const authority of new Set(authorities.filter(Boolean))) releaseAuthority(authority)
@@ -263,6 +272,8 @@ export const crearAutoridadPi = (host, injectedDependencies) => {
 
   const invalidate = () => {
     const changed = state !== "invalidada"
+    // An in-flight built-in tool still owns its descriptor until its exact result arrives.
+    // Invalidating future admission must not close (and potentially reuse) that descriptor.
     discard(pending?.autoridad, active)
     pending = null
     active = null
@@ -306,7 +317,34 @@ export const crearAutoridadPi = (host, injectedDependencies) => {
   const capability = Object.freeze({
     gobernar(evento, opciones) {
       const authority = liveAuthority()
-      return authority ? gobernar(authority, evento, opciones) : blockedCapability()
+      if (!authority) return blockedCapability()
+      const result = gobernar(authority, evento, opciones)
+      if (result.pi.block || !["write", "edit"].includes(evento?.toolName)) return result
+      const id = evento?.toolCallId
+      const path = evento?.input?.path
+      if (typeof id !== "string" || !id || leases.has(id) || leases.size > 128 ||
+        typeof path !== "string" || path.startsWith("/proc/self/fd/") ||
+        [...leases.values()].some((lease) => lease.path === path)) {
+        return blockedCapability()
+      }
+      const expected = authority.identidadesArchivos.find((item) => item.ruta === path)
+      const namespace = dependencies.descriptorNamespace ?? existsSync
+      if (!expected || !namespace("/proc/self/fd")) return blockedCapability()
+      let fd
+      try {
+        fd = dependencies.open(path, constants.O_RDONLY | dependencies.noFollow)
+        const held = fstatSync(fd)
+        const current = fileIdentity(authority.vinculo.repositorio, path, "authorizedFiles")
+        if (held.dev !== expected.dispositivo || held.ino !== expected.inodo || !sameFileIdentity(expected, current)) fail("archivo cambió")
+        const handle = `/proc/self/fd/${fd}`
+        if (!namespace(handle)) fail("namespace de descriptores ausente")
+        leases.set(id, { fd, path, toolName: evento.toolName })
+        evento.input.path = handle
+        return result
+      } catch {
+        if (fd !== undefined) try { dependencies.close(fd) } catch {}
+        return blockedCapability()
+      }
     },
   })
 
@@ -351,6 +389,15 @@ export const crearAutoridadPi = (host, injectedDependencies) => {
     },
 
     capacidad: () => (liveAuthority() ? capability : null),
+
+    activarAutomaticamente(bundle) {
+      const request = this.solicitar(bundle)
+      return this.aceptar(request.solicitud)
+    },
+
+    completar: release,
+    cerrar() { invalidate(); closeLeases() },
+    leasesActivas: () => leases.size,
 
     invalidar: invalidate,
     estado: () => state,

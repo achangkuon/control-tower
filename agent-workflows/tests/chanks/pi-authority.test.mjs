@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { closeSync, constants, linkSync, lstatSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
+import { closeSync, constants, linkSync, lstatSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -44,15 +44,91 @@ const crear = (site, current = identidad(site.root), dependencies) => {
   }
 }
 
-const writeEvent = (path) => ({ toolName: "write", input: { path, content: "x" } })
+let nextToolCall = 0
+const writeEvent = (path) => ({ toolCallId: `write-${++nextToolCall}`, toolName: "write", input: { path, content: "x" } })
 const descriptorCount = () => readdirSync("/proc/self/fd").length
+
+describe("descriptor-bound tool effects", () => {
+  test("parallel identities do not cross-release; same-file collision and injected fd path are blocked", () => {
+    const site = terreno()
+    try {
+      const { authority } = crear(site)
+      authority.activarAutomaticamente(admision(site, { cimientoGrants: [], resources: [] }))
+      const first = { ...writeEvent(site.source), toolCallId: "parallel-1" }
+      const second = { ...writeEvent(site.foundation), toolCallId: "parallel-2" }
+      expect(authority.capacidad().gobernar(first).pi.block).toBeUndefined()
+      expect(authority.capacidad().gobernar(second).pi.block).toBeUndefined()
+      expect(authority.capacidad().gobernar({ ...writeEvent(site.source), toolCallId: "parallel-3" }).pi.block).toBe(true)
+      expect(authority.capacidad().gobernar({ ...writeEvent(first.input.path), toolCallId: "untrusted-fd" }).pi.block).toBe(true)
+      expect(authority.completar("parallel-1", "edit")).toBe(false)
+      expect(authority.leasesActivas()).toBe(2)
+      expect(authority.completar("parallel-1", "write")).toBe(true)
+      expect(authority.leasesActivas()).toBe(1)
+      authority.cerrar()
+      expect(authority.leasesActivas()).toBe(0)
+      expect(authority.completar("parallel-2", "write")).toBe(false)
+    } finally { site.dispose() }
+  })
+
+  test("missing descriptor namespace rejects writes without a lease", () => {
+    const site = terreno()
+    try {
+      const deps = { uuid: () => "id", open: openSync, close: closeSync,
+        noFollow: constants.O_NOFOLLOW, descriptorNamespace: () => false }
+      const { authority } = crear(site, identidad(site.root), deps)
+      authority.activarAutomaticamente(admision(site, { cimientoGrants: [], resources: [] }))
+      expect(authority.capacidad().gobernar(writeEvent(site.source)).pi.block).toBe(true)
+      expect(authority.leasesActivas()).toBe(0)
+    } finally { site.dispose() }
+  })
+
+  test("invalidation during execution keeps descriptor until exact result, then closes once", () => {
+    const site = terreno()
+    try {
+      const { authority, cambiarIdentidad } = crear(site)
+      authority.activarAutomaticamente(admision(site, { cimientoGrants: [], resources: [] }))
+      const call = writeEvent(site.source)
+      expect(authority.capacidad().gobernar(call).pi.block).toBeUndefined()
+      cambiarIdentidad(identidad(site.root, { baseCommit: "a".repeat(40) }))
+      expect(authority.capacidad()).toBeNull()
+      expect(authority.leasesActivas()).toBe(1)
+      writeFileSync(call.input.path, "retained")
+      expect(readFileSync(site.source, "utf8")).toBe("retained")
+      expect(authority.completar(call.toolCallId, "write")).toBe(true)
+      expect(authority.leasesActivas()).toBe(0)
+    } finally { site.dispose() }
+  })
+  test("write uses a retained inode after a symlink swap, and result closes exactly that lease", () => {
+    const site = terreno()
+    const outside = join(site.root, "outside.mjs")
+    writeFileSync(outside, "protected")
+    try {
+      const { authority } = crear(site, identidad(site.root), undefined)
+      expect(authority.activarAutomaticamente(admision(site, { cimientoGrants: [], resources: [] }))).toBe(true)
+      const event = { ...writeEvent(site.source), toolCallId: "call-1" }
+      expect(authority.capacidad().gobernar(event).pi.block).toBeUndefined()
+      expect(event.input.path).toMatch(/^\/proc\/self\/fd\/\d+$/)
+      const retained = join(site.root, "retained.mjs")
+      renameSync(site.source, retained)
+      symlinkSync(outside, site.source)
+      writeFileSync(event.input.path, "new")
+      expect(readFileSync(outside, "utf8")).toBe("protected")
+      expect(readFileSync(retained, "utf8")).toBe("new")
+      expect(authority.leasesActivas()).toBe(1)
+      expect(authority.completar("unknown", "write")).toBe(false)
+      expect(authority.completar("call-1", "write")).toBe(true)
+      expect(authority.completar("call-1", "write")).toBe(false)
+      expect(authority.leasesActivas()).toBe(0)
+    } finally { site.dispose() }
+  })
+})
 
 describe("la autoridad efímera de Pi", () => {
   test("queda pendiente hasta que el host la acepta y expone sólo la evidencia validada", () => {
     const site = terreno()
     try {
       const { authority } = crear(site)
-      const request = authority.solicitar(admision(site))
+      const request = authority.solicitar(admision(site, { cimientoGrants: [], resources: [] }))
       expect(request.estado).toBe("pendiente")
       expect(typeof request.solicitud).toBe("string")
       expect(authority.estado()).toBe("pendiente")
@@ -344,7 +420,7 @@ describe("revalidación antes de entregar autoridad activa", () => {
         uuid: () => { calls += 1; if (calls === 2) throw new Error("UUID failed"); return "first" }, noFollow: constants.O_NOFOLLOW,
         open: openSync, close: (descriptor) => { closed.push(descriptor); closeSync(descriptor) },
       })
-      const first = authority.solicitar(admision(site))
+      const first = authority.solicitar(admision(site, { cimientoGrants: [], resources: [] }))
       authority.aceptar(first.solicitud)
       const capability = authority.capacidad()
       expect(() => authority.solicitar(admision(site))).toThrow("UUID failed")

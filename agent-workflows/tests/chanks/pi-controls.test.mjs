@@ -33,6 +33,17 @@ describe("de un evento de Pi a una decisión", () => {
     })
   }
 
+  test("declared foundation or resource never self-confirms a reservation or acquisition", () => {
+    const foundation = decidirHerramienta({ ...autoridad(), cimientos: ["agent-workflows/chanks/pi-controls.mjs"] },
+      evento("write", { path: "agent-workflows/chanks/pi-controls.mjs", content: "x" }))
+    const resource = decidirHerramienta({ ...autoridad(), recurso: ["exclusive"] },
+      evento("write", { path: "agent-workflows/chanks/pi-controls.mjs", content: "x" }))
+    expect(foundation.permitido).toBe(false)
+    expect(foundation.motivo).toMatch(/reserva/)
+    expect(resource.permitido).toBe(false)
+    expect(resource.motivo).toMatch(/adquisición/)
+  })
+
   test("write dentro de los archivos autorizados se permite", () => {
     const d = decidirHerramienta(autoridad(), evento("write", { path: "agent-workflows/chanks/pi-controls.mjs", content: "x" }))
     expect(d.permitido).toBe(true)
@@ -134,8 +145,9 @@ const bloqueo = (detalle = ["core.mjs"]) => transicion({
 })
 
 describe("el mensaje visible", () => {
-  test("muestra exactamente 💪 Chanks", () => {
-    expect(crearActivaciones().anunciar(transicion())).toContain("💪 Chanks")
+  test("no reclama 💪 Chanks sin una transición de etapa", () => {
+    expect(crearActivaciones().anunciar(transicion())).not.toContain("💪 Chanks")
+    expect(aPi({ permitido: false, control: "mutacion", motivo: "bloqueado", detalle: [] }).reason).not.toContain("💪 Chanks")
   })
 
   // "Main manual no se etiqueta como 🗼 Torre." The manual method running with the Tower off
@@ -217,15 +229,15 @@ const cuarto = () => {
 }
 
 describe("construir el cuarto chico", () => {
-  test("monta todo sólo lectura y sólo lo autorizado como escribible", () => {
+  test("monta todo sólo lectura sin bind escribible", () => {
     const raiz = cuarto()
     try {
       const escribible = join(raiz, "agent-workflows", "chanks", "permitido.mjs")
-      const c = confinarComando("echo hola", { escribibles: [escribible] })
+      const c = confinarComando("echo hola")
       expect(c.confinable).toBe(true)
       expect(c.argv).toContain("--ro-bind")
-      // Read-only root first, then the exact writable paths mounted over it.
-      expect(c.argv.join(" ")).toContain(`--bind ${escribible} ${escribible}`)
+      expect(c.argv).not.toContain("--bind")
+      expect(confinarComando("echo hola", { escribibles: [escribible] }).confinable).toBe(false)
     } finally {
       rmSync(raiz, { recursive: true, force: true })
     }
@@ -243,7 +255,7 @@ describe("construir el cuarto chico", () => {
       chmodSync(falsoBwrap, 0o700)
       process.env.PATH = `${sombra}:${anterior ?? ""}`
 
-      const c = confinarComando("echo hola", { escribibles: [join(raiz, "prohibido", "testigo.txt")] })
+      const c = confinarComando("echo hola")
       expect(existsSync(testigo)).toBe(false)
       expect(c.argv[0]).toBe("/usr/bin/bwrap")
     } finally {
@@ -256,7 +268,7 @@ describe("construir el cuarto chico", () => {
   test("la red queda apagada", () => {
     const raiz = cuarto()
     try {
-      const c = confinarComando("echo hola", { escribibles: [join(raiz, "prohibido", "testigo.txt")] })
+      const c = confinarComando("echo hola")
       expect(c.argv).toContain("--unshare-net")
     } finally {
       rmSync(raiz, { recursive: true, force: true })
@@ -266,7 +278,7 @@ describe("construir el cuarto chico", () => {
   test("preserva el comando original sin reinterpretarlo", () => {
     const raiz = cuarto()
     try {
-      const c = confinarComando("echo 'hola mundo' && ls -la", { escribibles: [join(raiz, "prohibido", "testigo.txt")] })
+      const c = confinarComando("echo 'hola mundo' && ls -la")
       expect(c.argv.at(-1)).toBe("echo 'hola mundo' && ls -la")
     } finally {
       rmSync(raiz, { recursive: true, force: true })
@@ -281,7 +293,7 @@ describe("construir el cuarto chico", () => {
     try {
       const c = confinarComando("echo hola", { escribibles: [join(raiz, "todavia-no.mjs")] })
       expect(c.confinable).toBe(false)
-      expect(c.motivo).toMatch(/no existe/i)
+      expect(c.motivo).toMatch(/sólo lectura/i)
       expect(c.argv).toBeUndefined()
     } finally {
       rmSync(raiz, { recursive: true, force: true })
@@ -303,9 +315,9 @@ describe("construir el cuarto chico", () => {
     }
   })
 
-  test("sin ninguna ruta escribible el comando no es confinable", () => {
+  test("sin ninguna ruta escribible el comando sí es confinable para inspección", () => {
     const c = confinarComando("echo hola", { escribibles: [] })
-    expect(c.confinable).toBe(false)
+    expect(c.confinable).toBe(true)
   })
 
   test("un comando vacío no es confinable", () => {
@@ -322,8 +334,7 @@ describe("construir el cuarto chico", () => {
   test("construir dos veces da exactamente lo mismo", () => {
     const raiz = cuarto()
     try {
-      const opciones = { escribibles: [join(raiz, "prohibido", "testigo.txt")] }
-      expect(confinarComando("bun test", opciones)).toEqual(confinarComando("bun test", opciones))
+      expect(confinarComando("bun test")).toEqual(confinarComando("bun test"))
     } finally {
       rmSync(raiz, { recursive: true, force: true })
     }
@@ -361,11 +372,11 @@ describe("gobernar una llamada de herramienta", () => {
 
   // The rule the whole Sesión turns on: no permissive alternative. If the effects cannot be
   // confined, the operation is refused — it does not fall back to running loose with a warning.
-  test("bash no confinable se rechaza, sin salida permisiva", () => {
-    const g = gobernar(autoridad(), evento("bash", { command: "echo hola" }), { escribibles: [] })
-    expect(g.decision.permitido).toBe(false)
-    expect(g.pi.block).toBe(true)
-    expect(g.comandoConfinado).toBeUndefined()
+  test("bash con archivos declarados sigue sólo lectura", () => {
+    const g = gobernar(autoridad(), evento("bash", { command: "echo hola" }), { escribibles: ["allowed.mjs"] })
+    expect(g.decision.permitido).toBe(true)
+    expect(g.decision.motivo).toMatch(/sólo lectura/)
+    expect(g.comandoConfinado.argv).not.toContain("--bind")
   })
 
   test("una herramienta desconocida se rechaza aunque haya cuarto disponible", () => {
@@ -456,8 +467,8 @@ describe("S151-T2 — la autoridad vive en cada decisión mutante", () => {
       expect(resultado.entradaPi).toEqual({ command: expect.any(String) })
       expect(resultado.entradaPi.command).toContain("bwrap")
       expect(resultado.entradaPi.command).toContain("'\"'\"'")
-      expect(resultado.comandoConfinado.argv).toContain(propio)
-      expect(resultado.comandoConfinado.argv).toContain(cimiento)
+      expect(resultado.comandoConfinado.argv).not.toContain("--bind")
+      expect(resultado.decision.motivo).toMatch(/sólo lectura/)
       autoridad.invalidar()
     } finally {
       rmSync(raiz, { recursive: true, force: true })
@@ -502,7 +513,7 @@ describe("el efecto prohibido no ocurre (runtime real)", () => {
     try {
       const permitidoRuta = join(raiz, "agent-workflows", "chanks", "permitido.mjs")
       const testigo = join(raiz, "prohibido", "testigo.txt")
-      const c = confinarComando(`echo mutado > ${testigo}`, { escribibles: [permitidoRuta] })
+      const c = confinarComando(`echo mutado > ${testigo}`)
       const r = correr(c.argv)
       expect(r.status).not.toBe(0)
       expect(readFileSync(testigo, "utf8")).toBe("original\n")
@@ -518,7 +529,7 @@ describe("el efecto prohibido no ocurre (runtime real)", () => {
     try {
       const permitidoRuta = join(raiz, "agent-workflows", "chanks", "permitido.mjs")
       const testigo = join(raiz, "prohibido", "testigo.txt")
-      const c = confinarComando(`python3 -c "open('${testigo}','w').write('derivado')"`, { escribibles: [permitidoRuta] })
+      const c = confinarComando(`python3 -c "open('${testigo}','w').write('derivado')"`)
       const r = correr(c.argv)
       expect(r.status).not.toBe(0)
       expect(readFileSync(testigo, "utf8")).toBe("original\n")
@@ -527,14 +538,14 @@ describe("el efecto prohibido no ocurre (runtime real)", () => {
     }
   })
 
-  test("la escritura dentro del cuarto sí ocurre: el confinamiento no rompe el trabajo real", () => {
+  test("ni siquiera la escritura de un archivo declarado ocurre desde bash", () => {
     const raiz = cuarto()
     try {
       const permitidoRuta = join(raiz, "agent-workflows", "chanks", "permitido.mjs")
-      const c = confinarComando(`echo trabajado > ${permitidoRuta}`, { escribibles: [permitidoRuta] })
+      const c = confinarComando(`echo trabajado > ${permitidoRuta}`)
       const r = correr(c.argv)
-      expect(r.status).toBe(0)
-      expect(readFileSync(permitidoRuta, "utf8")).toBe("trabajado\n")
+      expect(r.status).not.toBe(0)
+      expect(readFileSync(permitidoRuta, "utf8")).toBe("original\n")
     } finally {
       rmSync(raiz, { recursive: true, force: true })
     }
@@ -545,7 +556,7 @@ describe("el efecto prohibido no ocurre (runtime real)", () => {
     const raiz = cuarto()
     try {
       const permitidoRuta = join(raiz, "agent-workflows", "chanks", "permitido.mjs")
-      const c = confinarComando("getent hosts github.com", { escribibles: [permitidoRuta] })
+      const c = confinarComando("getent hosts github.com")
       expect(correr(c.argv).status).not.toBe(0)
     } finally {
       rmSync(raiz, { recursive: true, force: true })
@@ -565,7 +576,7 @@ describe("el cuarto no finge éxitos", () => {
       // The forbidden path sits beside an allowed one, so its parent directory exists inside
       // the room. That is exactly the shape that used to succeed silently.
       const vecino = join(raiz, "agent-workflows", "chanks", "vecino.mjs")
-      const c = confinarComando(`echo colado > ${vecino}`, { escribibles: [permitidoRuta] })
+      const c = confinarComando(`echo colado > ${vecino}`)
       const r = correr(c.argv)
       expect(r.status).not.toBe(0)
       expect(existsSync(vecino)).toBe(false)
@@ -577,7 +588,7 @@ describe("el cuarto no finge éxitos", () => {
   test("/tmp no se enmascara con un tmpfs", () => {
     const raiz = cuarto()
     try {
-      const c = confinarComando("true", { escribibles: [join(raiz, "prohibido", "testigo.txt")] })
+      const c = confinarComando("true")
       const montajes = c.argv.join(" ")
       expect(montajes).not.toContain("--tmpfs /tmp ")
       expect(montajes).toContain("--tmpfs /var/tmp")
@@ -591,7 +602,7 @@ describe("el cuarto no finge éxitos", () => {
     const raiz = cuarto()
     try {
       const permitidoRuta = join(raiz, "agent-workflows", "chanks", "permitido.mjs")
-      const c = confinarComando('echo ok > "$TMPDIR/scratch" && cat "$TMPDIR/scratch"', { escribibles: [permitidoRuta] })
+      const c = confinarComando('echo ok > "$TMPDIR/scratch" && cat "$TMPDIR/scratch"')
       const r = correr(c.argv)
       expect(r.status).toBe(0)
       expect(r.stdout.trim()).toBe("ok")
