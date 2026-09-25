@@ -18,11 +18,19 @@ Implement the approved native Encargo on `master` from fresh Radar admission at 
 
 ## Tasks
 
-- [ ] T1 — Add strict-TDD contracts for click-free Radar admission, exact dispatch marker/witness lifecycle, unattended seal handoff/wake evidence, and retention/deletion conditions.
-- [ ] T2 — Update kickoff, manual dispatch/coordinator, and implementation handoff while preserving authority, identity, lock, and transport boundaries.
-- [ ] T3 — Slim the bridge without losing bidirectional evidence, the explicit-human SDD exception, strict TDD, stage-4 per-work-unit review, or delivery separation.
-- [ ] T4 — Run independent verification/native review, deliver the coherent S157 commit, keep skill propagation deferred until S159, and record closure evidence.
+- [x] T1 — Add strict-TDD contracts for click-free Radar admission, exact dispatch marker/witness lifecycle, unattended seal handoff/wake evidence, and retention/deletion conditions. Proof: five focused RED cases followed by GREEN; commit `4adb9bc2046280d6507a8557350198b3de33c8a8`.
+- [x] T2 — Update kickoff, manual dispatch/coordinator, and implementation handoff while preserving authority, identity, lock, and transport boundaries. Proof: coordinator discovery suite 30/30 and dispatch suite 39/39; commit `4adb9bc2046280d6507a8557350198b3de33c8a8`.
+- [x] T3 — Slim the bridge without losing bidirectional evidence, the explicit-human SDD exception, strict TDD, stage-4 per-work-unit review, or delivery separation. Proof: bridge reduced by 127 lines, builder-flow 19/19, final independent PASS; commit `4adb9bc2046280d6507a8557350198b3de33c8a8`.
+- [x] T4 — Run independent verification/native review, deliver the coherent S157 commit, keep skill propagation deferred until S159, and record closure evidence. Proof: native review unavailable before lineage (`schema-incompatible`); direct push of `4adb9bc2046280d6507a8557350198b3de33c8a8`; pre-push 1,488/0; propagation remains deferred by maintainer decision.
+
+## Delivery (2026-09-25)
+
+- Strict TDD: five narrow contract tests failed before prose changes and passed after implementation; the scoped correction added RED→GREEN for unconditional sealed wake reports and explicit legacy `full-sdd` routing.
+- Verification: builder-flow passed 19/19; coordinator discovery passed 30/30, including the S157 class declared after the direct-run entry point; dispatch regression passed 39/39; `git diff --check` passed; independent verification returned PASS.
+- Native review: intended-untracked selection returned `schema-incompatible` before lineage creation or authority mutation, so independent verification supplied the high-risk fallback evidence.
+- Delivery: commit `4adb9bc2046280d6507a8557350198b3de33c8a8` was pushed directly to `master`; the pre-push suite passed 1,488 tests.
+- Propagation: remains intentionally deferred until S159 so the final skill/runtime set is installed and verified once.
 
 ## Checkpoint
 
-Fresh admission and read-only mapping are complete. No S157 source path has changed yet. Next: delegate T1–T3 to one bounded writer with strict RED→GREEN evidence.
+S157 implementation is delivered and its immutable commit is recorded in `openspec/plan.yaml`. This close record is pending its documentation commit/push; after that, recapture Radar before admitting S158 and S159.

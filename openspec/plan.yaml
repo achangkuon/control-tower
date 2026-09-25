@@ -2979,6 +2979,8 @@ sesiones:
       - S156
     cimientos: []
     recurso: []
+    entrega:
+      commit: 4adb9bc2046280d6507a8557350198b3de33c8a8
     archivos:
       - agent-workflows/skills/chanks-3-session-kickoff/SKILL.md
       - agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md
