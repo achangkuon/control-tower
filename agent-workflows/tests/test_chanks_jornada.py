@@ -155,10 +155,11 @@ class ChanksJornadaSkillTests(unittest.TestCase):
             gates,
         )
         self.assertIn(
-            "| Invoked by `chanks-3-despacho-herdr` as stage-3 dispatch entry, before it "
-            "selects or locks workers | Run diagnosis and `--ejecutar` only; never "
-            "`--reciclar`. A dirty or OCUPADO seat is excluded from that batch until the "
-            "human answers. |",
+            "| Invoked by `chanks-3-despacho-herdr` as stage-3 dispatch entry, under its "
+            "acquired dispatch lock | Run diagnosis and `--ejecutar` only; never "
+            "`--reciclar`. A dirty or OCUPADO seat surfaces its evidence and one human "
+            "decision (deliver, save, discard); until answered, the whole batch does not "
+            "proceed — release only the owned lock and launch nothing. |",
             gates,
         )
 
@@ -169,13 +170,14 @@ class ChanksJornadaSkillTests(unittest.TestCase):
             "## Output Contract", 1
         )[0]
         self.assertIn(
-            "run step 1 (diagnosis) and step 2 (`--ejecutar`) only; skip step 3 "
-            "(`--reciclar`) entirely",
+            "run step 1 (diagnosis) and step 2 (`--ejecutar`) only; skip step 3 (`--reciclar`) "
+            "entirely",
             steps,
         )
         self.assertIn(
-            "stays excluded from that dispatch batch until answered; a missing seat keeps "
-            "the existing provisioning path",
+            "until the human decides, the whole batch does not proceed — dispatch releases "
+            "only its owned lock and launches nothing; a missing seat keeps the existing "
+            "provisioning path",
             steps,
         )
 
@@ -183,6 +185,36 @@ class ChanksJornadaSkillTests(unittest.TestCase):
         self.assertIn(SKILL_NAME, INSTALLER.CHANKS_SKILLS)
         sources = {skill for skill, _, _ in INSTALLER.source_files(ROOT)}
         self.assertIn(SKILL_NAME, sources)
+
+    def test_ejecutar_failure_signal_is_defined_by_concrete_markers(self):
+        # R3-partial-failure-signal-undefined: the partial-failure signal must be concrete,
+        # naming the exact markers jornada.sh's own --ejecutar block prints, not a vague
+        # "reports a partial failure" left undefined.
+        for marker in ("FALLO", "CONFLICTO", "ABORTADO"):
+            self.assertIn(f"`{marker}`", self.skill)
+        self.assertIn("--ejecutar", self.skill)
+        self.assertIn("pull --ff-only", self.skill.lower() + self.skill)
+        self.assertIn("rebase", self.skill.lower())
+
+    def test_stage3_jornada_invocation_runs_under_the_dispatch_lock(self):
+        # R3-ejecutar-mutation-outside-lock: chanks-3-despacho-herdr now invokes this skill's
+        # stage-3 mode under its acquired lock, not before the lock is held.
+        self.assertIn("invoked under the dispatch lock, never before it is acquired", self.skill)
+        self.assertNotIn("before the dispatch lock is held", self.skill)
+        self.assertNotIn("before selecting or locking workers", self.skill.lower())
+
+    def test_old_batch_exclusion_phrase_is_absent(self):
+        # R3-batch-exclusion-contradicts-atomic-batch: no wording anywhere still describes an
+        # unanswered seat as excluded while the rest of the batch continues.
+        for phrase in (
+            "excluded from that dispatch batch while other seats continue",
+            "excluded from this batch while other seats continue",
+            "stays excluded from that dispatch batch until answered",
+            "is excluded from that batch until the human answers",
+        ):
+            self.assertNotIn(phrase, self.skill)
+        self.assertIn("the whole batch does not proceed", self.skill)
+        self.assertIn("a fresh dispatch request", self.skill)
 
 
 if __name__ == "__main__":

@@ -46,6 +46,9 @@ Known pre-existing failures on base: `test_kickoff_requires_confirmed_exclusive_
 
 - [x] T1 — RED tests, dispatch hook, jornada fixes (route: delegated writer; 2+ non-trivial files).
 - [ ] T2 — Review, commit, push, reinstall, propagate (route: inline).
+- [x] T3 — Close native review findings R3-batch-exclusion-contradicts-atomic-batch,
+      R3-ejecutar-mutation-outside-lock, R3-partial-failure-signal-undefined (route: bounded
+      writer; 2+ non-trivial files: both SKILL.md and both test files).
 
 ## Progress / evidence
 
@@ -75,3 +78,43 @@ Known pre-existing failures on base: `test_kickoff_requires_confirmed_exclusive_
     two SKILL.md and two test files — well under the ~400-line heuristic.
 - T2 (review/commit/push/reinstall/propagate) not yet done — reserved for the
   inline step after this writer's report is accepted.
+- T3 done by a bounded writer (strict TDD observed), closing the three S161/59a78c4
+  native-review advisory findings:
+  - RED: updated 3 existing assertions that pinned the old "excluded ... while other
+    seats continue" wording (one gate row each in `chanks-0-jornada` and
+    `chanks-3-despacho-herdr`, one execution-step phrase in `chanks-0-jornada`) and
+    added 7 new tests (3 in `test_chanks_jornada.py`, 4 in `test_despacho_herdr.py`)
+    covering: the concrete `FALLO`/`CONFLICTO`/`ABORTADO` marker definition, the
+    "invoked under the dispatch lock, never before it is acquired" wording in both
+    skills, the reordered lock→jornada→fetch/confirm execution-step sequence, the
+    new whole-batch-stops-and-releases-only-the-lock rule, and absence of every old
+    exclusion phrase. Ran both files, observed 5 failures in
+    `test_chanks_jornada.py` and 4 in `test_despacho_herdr.py` (RED), all
+    pre-existing tests in both files still green.
+  - Implementation: edited `agent-workflows/skills/chanks-0-jornada/SKILL.md`
+    (Activation Contract addendum, new failure-signal-definition Hard Rule bullet
+    naming `FALLO`/`CONFLICTO`/`ABORTADO` from jornada.sh's own `--ejecutar` block,
+    stage-3 Hard Rule/Decision-Gate/Execution-step/Output-Contract wording replaced
+    with the whole-batch-stops rule and "invoked under the dispatch lock, never
+    before it is acquired") and
+    `agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md` (Activation Contract,
+    Hard Rule, both Decision Gates rows, Output Contract addendum updated to the
+    same whole-batch-stops rule; Execution Steps reordered so lock acquisition is
+    step 2, the `chanks-0-jornada` invocation moves to step 3 under the acquired
+    lock, and the fetch/confirm-master step stays step 4).
+  - GREEN: `test_chanks_jornada.py` 18/18 pass; `test_despacho_herdr.py` 45/45
+    pass (after fixing two self-inflicted RED-phase inconsistencies: a
+    capitalization mismatch from joining two step clauses with a period instead of
+    a semicolon, and a contradiction between a despacho test requiring the literal
+    old "before the dispatch lock is held" substring and a jornada test forbidding
+    it — resolved by adopting "invoked under the dispatch lock, never before it is
+    acquired" as the one canonical phrase used everywhere).
+  - Full suite (`test_*.py`): 209 tests, 3 failures — the same three known
+    pre-existing base failures listed above; 1 skipped; unrelated to this patch.
+  - `git status --porcelain`: only the two SKILL.md files, the two test files, and
+    this task file changed. `git diff --stat` (excluding this task file): 118
+    insertions / 40 deletions across the four authorized source/test files — well
+    under the ~400-line heuristic.
+  - Not done: commit, push, gentle-ai review, and agent orchestration — out of
+    scope for this bounded writer by explicit instruction; reserved for the
+    inline step (T2) after this report is accepted.

@@ -439,19 +439,25 @@ class DespachoHerdrDispatchTests(unittest.TestCase):
         )
 
 
-    def test_stage3_jornada_invocation_precedes_lock_and_readback(self):
+    def test_stage3_jornada_invocation_runs_under_lock_before_fetch_confirm(self):
+        # R3-ejecutar-mutation-outside-lock: jornada.sh --ejecutar mutates worktrees, so it must
+        # run under the acquired dispatch lock -- right after lock acquisition and before the
+        # step that fetches and confirms local master equals remote master.
         execution = section(self.skill, "## Execution Steps")
         assert_in_order(
             self,
             execution,
-            "invoke `chanks-0-jornada` in its stage-3 dispatch entry mode",
             "Acquire the lock exactly through `references/retiro.md`'s `## Shared lock protocol`",
-            "collect Git, Radar, and fresh live Herdr readback",
+            "invoke `chanks-0-jornada` in its stage-3 dispatch entry mode",
+            "fetch and confirm local master equals remote master",
         )
         self.assert_phrases(
-            "before selecting or locking any worker, invoke `chanks-0-jornada`",
+            "under the acquired lock",
+            "right after lock acquisition",
+            "invoked under the dispatch lock, never before it is acquired",
             "diagnosis plus `jornada.sh --ejecutar` only, never `--reciclar`",
         )
+        self.assertNotIn("before selecting or locking any worker, invoke", self.skill)
 
     def test_stage3_jornada_brings_clean_behind_seats_current_without_reimplementing(self):
         self.assert_phrases(
@@ -459,35 +465,64 @@ class DespachoHerdrDispatchTests(unittest.TestCase):
             "this dispatch still creates each reserved `work/<id>` branch itself",
         )
 
-    def test_stage3_jornada_dirty_or_ocupado_seat_is_one_decision_and_excluded(self):
+    def test_stage3_jornada_dirty_or_ocupado_seat_stops_the_whole_batch(self):
+        # R3-batch-exclusion-contradicts-atomic-batch: this no longer excludes the seat and
+        # continues with the rest -- that contradicted "dispatch only the human's explicit
+        # complete list" and "do not dispatch a prefix of the batch". The whole batch now
+        # waits on the human's single decision; dispatch only ever releases its own lock.
         gates = section(self.skill, "## Decision Gates")
         self.assertIn(
             "| `chanks-0-jornada`'s stage-3 dispatch entry reports a dirty or OCUPADO seat "
             "| Report its evidence; ask exactly one decision (deliver, save, or discard); "
-            "exclude that seat from this batch until answered while other seats continue; "
-            "never clean, stash, or reset it automatically. |",
+            "until the human decides, the whole batch does not proceed — release only the "
+            "owned lock and launch nothing; never clean, stash, or reset it automatically. "
+            "The human may instead give a new explicit complete list without that seat, "
+            "which is a fresh dispatch request. |",
             gates,
         )
         self.assert_phrases(
-            "an unanswered seat is excluded from this batch while other seats continue",
+            "until the human decides, the whole batch does not proceed",
+            "releases only its owned lock and launches nothing",
+            "dispatch never drops a seat on its own",
+            "a fresh dispatch request",
             "never cleaned, stashed, or reset automatically",
         )
+        for phrase in (
+            "excluded from this batch while other seats continue",
+            "exclude that seat from this batch until answered while other seats continue",
+        ):
+            self.assertNotIn(phrase, self.skill)
 
     def test_stage3_jornada_missing_seat_keeps_existing_provisioning_path(self):
         self.assert_phrases("a missing seat keeps the existing provisioning path")
 
-    def test_stage3_jornada_failure_gate_stops_before_lock_held_readback(self):
+    def test_activation_contract_and_hard_rule_describe_the_same_under_lock_order(self):
+        activation = section(self.skill, "## Activation Contract")
+        hard_rules = section(self.skill, "## Hard Rules")
+        for source in (activation, hard_rules):
+            self.assertIn("invoked under the dispatch lock, never before it is acquired", source)
+        self.assertNotIn("before selecting or locking any worker, this skill invokes", self.skill.lower())
+        self.assertNotIn("before selecting or locking workers, invoke", self.skill.lower())
+
+    def test_stage3_jornada_failure_gate_releases_only_the_owned_lock(self):
+        # R3-ejecutar-mutation-outside-lock: jornada now runs under the lock, so a jornada stop
+        # releases that owned lock instead of stopping "before" it. R3-partial-failure-signal-
+        # undefined: the gate points at chanks-0-jornada's concrete FALLO/CONFLICTO/ABORTADO
+        # marker definition instead of restating a vaguer "partial failure".
         gates = section(self.skill, "## Decision Gates")
         self.assertIn(
             "| `jornada.sh` is missing at the target repository root, exits non-zero, or "
-            "its `--ejecutar` output reports a partial failure | Stop before the lock-held "
-            "readback; report the exact output; ask the human; never retry or work around "
-            "it. |",
+            "its `--ejecutar` output reports a partial failure (`chanks-0-jornada`'s "
+            "failure-signal definition: a line with `FALLO`, `CONFLICTO`, or `ABORTADO`, or "
+            "a non-zero exit) | Release only the owned lock and launch nothing; report the "
+            "exact output; ask the human; never retry or work around it. |",
             gates,
         )
         self.assert_phrases(
-            "does not proceed to the lock-held readback on unverified state",
+            "does not proceed to the next step on unverified state",
+            "failure-signal definition",
         )
+        self.assertNotIn("Stop before the lock-held readback", self.skill)
 
 
 class DespachoHerdrRetireTests(unittest.TestCase):
