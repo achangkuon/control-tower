@@ -4396,8 +4396,9 @@ sesiones:
     zona: instalacion
     resultado: "Packaging del bundle Torre V1: una membresía versionada contiene exactamente los bytes Tower-owned del semáforo —binario, contrato host-neutral, adapter Pi, perfiles y skills Torre— y no instala, activa, reescribe configuración global ni ejecuta rollback."
     autoridad: "Alcance V1 aprobado por Emilio el 2026-09-18 (Engram 11327), que reemplaza explícitamente el contrato de bundle completo aprobado por decisión 10315: el bundle deja de transportar la política de despacho Tower-owned de S9.8, que pasa a torre-v2. Se conservan las Decisiones 88, 95 y 100 sobre qué bytes son Tower-owned, Engram 9921, y el contrato enumerado citado en openspec/plans/plan-8/STATUS.md líneas 998-1031 en todo lo que no dependa del despacho."
+    # S8.10 salió de depende_de el 2026-09-24 con aprobación de Emilio: cerró el 2026-08-21
+    # (a448af2, 2e26367, 58aa879) y ya consta en satisfied_history, que nunca es destino de dependencia.
     depende_de:
-      - S8.10
       - S8.14
       - S149
     cimientos:
@@ -5732,8 +5733,10 @@ sesiones:
     prioridad: torre-v3
     resultado: "Las cinco migraciones y sus manifiestos viven en db/migrations/ y db/manifests.mjs; core.mjs los re-exporta, ningún import cambia y las firmas SHA-256 permanecen idénticas."
     autoridad: "Decisión 2 del maintainer, 2026-08-30; aprobación humana 10433 permite sólo el estacionamiento migratorio provisional de S12.3."
+    # S8.10 salió de depende_de el 2026-09-24 con aprobación de Emilio: cerró el 2026-08-21
+    # (a448af2, 2e26367, 58aa879) y ya consta en satisfied_history, que nunca es destino de dependencia.
     depende_de:
-      - S8.10
+      []
     recurso:
       []
     encargo:
@@ -9092,6 +9095,8 @@ sesiones:
       - test/semaphore-binary.test.mjs
       - install/runtime-payload.mjs
       - odd/tasks/s149-semaphore.md
+      - test/identity.test.mjs
+      - test/install/runtime-payload.contract.mjs
     archivos:
       - core.mjs
       - semaphore.mjs
@@ -9100,6 +9105,8 @@ sesiones:
       - test/semaphore-binary.test.mjs
       - install/runtime-payload.mjs
       - odd/tasks/s149-semaphore.md
+      - test/identity.test.mjs
+      - test/install/runtime-payload.contract.mjs
     encargo:
       pedido_contexto: >-
         La capa semáforo de core.mjs —register, setState, send, receive, acquire, release,
@@ -9129,8 +9136,8 @@ sesiones:
         S8.12 pueda enumerarlo por huella exacta.
       restricciones_decisiones: >-
         Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana
-        explícita. El territorio aprobado para preparación es Cimientos, con los siete archivos
-        exactos declarados. Se extrae el semáforo a semaphore.mjs y se conserva la interfaz
+        explícita. El territorio aprobado para preparación es Cimientos, con los nueve archivos
+        exactos declarados (siete originales más dos pruebas agregadas por decisión resuelta). Se extrae el semáforo a semaphore.mjs y se conserva la interfaz
         vigente de core.mjs para sus consumidores; el binario entra por
         bin/torre-semaphore.mjs y scripts/build-semaphore.mjs, con prueba propia. El inventario
         generado install/runtime-payload.mjs se normaliza sólo para reflejar la importación
@@ -9178,6 +9185,16 @@ sesiones:
             razon: Emilio eligió mantener la extracción y el binario como una unidad coherente, aceptando mayor carga de revisión.
           - opcion: No hacer nada por ahora.
             razon: Emilio eligió resolver la forma de entrega sin autorizar todavía el inicio de código.
+        contaminaba: [S149]
+      - tipo: resuelta
+        pregunta: ¿Se amplía S149 a los dos archivos de prueba que la extracción deja desalineados?
+        resolucion: "Agregar test/identity.test.mjs y test/install/runtime-payload.contract.mjs como Cimientos exactos de S149. El fixture P4-A1c copia core.mjs sin su nueva importación hermana semaphore.mjs, y el registro canónico del payload no enumera semaphore.mjs que el inventario generado ya incluye. Se alinean el fixture y el dato enumerado; ninguna aserción se debilita, quita ni condiciona."
+        autoridad: "Autorización explícita de Emilio el 2026-09-24 en esta Conversación, que revierte su decisión previa de detener S149 sin ampliar alcance (Engram topic s149/fixture-scope-decision)."
+        clase: expansion-de-alcance
+        falsificador: Se modifica una aserción existente, se toca un archivo fuera de los nueve declarados, o la suite completa no pasa con cero fallos.
+        descartadas:
+          - opcion: Detener S149 sin ampliar alcance.
+            razon: Dejaba el candidato con la suite en rojo y la release V1 trabada detrás de S149.
         contaminaba: [S149]
   - id: S150
     prioridad: torre-v1
