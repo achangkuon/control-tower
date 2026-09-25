@@ -855,7 +855,7 @@ sesiones:
   - id: S8.12
     prioridad: torre-v1
     zona: instalacion
-    resultado: "Packaging del bundle Torre V1: una membresía versionada contiene exactamente los bytes Tower-owned del semáforo —binario, contrato host-neutral, adapter Pi, perfiles y skills Torre— y no instala, activa, reescribe configuración global ni ejecuta rollback."
+    resultado: "Packaging del bundle Torre V1: una membresía versionada contiene exactamente los bytes Tower-owned del semáforo —binario, contrato host-neutral, adapter Pi, jornada.sh, perfiles y skills Torre— y no instala, activa, reescribe configuración global ni ejecuta rollback."
     autoridad: "Alcance V1 aprobado por Emilio el 2026-09-18 (Engram 11327), que reemplaza explícitamente el contrato de bundle completo aprobado por decisión 10315: el bundle deja de transportar la política de despacho Tower-owned de S9.8, que pasa a torre-v2. Se conservan las Decisiones 88, 95 y 100 sobre qué bytes son Tower-owned, Engram 9921, y el contrato enumerado citado en openspec/plans/plan-8/STATUS.md líneas 998-1031 en todo lo que no dependa del despacho."
     # S8.10 salió de depende_de el 2026-09-24 con aprobación de Emilio: cerró el 2026-08-21
     # (a448af2, 2e26367, 58aa879) y ya consta en satisfied_history, que nunca es destino de dependencia.
@@ -877,6 +877,7 @@ sesiones:
       - "bytes originales inmutables de product/tower/generic/** preservados como evidencia de producto, no como raíz de instrucciones activa"
       - bytes fuente Tower-owned de adapters/pi/** consumidos sin modificarlos
       - bytes fuente Tower-owned de extensions/pi/** consumidos sin modificarlos
+      - bytes fuente Tower-owned de jornada.sh consumidos sin modificarlos
     archivos:
       - scripts/payload-closure.mjs
       - install/runtime-payload.mjs
@@ -885,7 +886,7 @@ sesiones:
       - test/install/tower-role-assets.test.mjs
     encargo:
       pedido_contexto: "Packaging del bundle Torre V1: una membresía versionada contiene exactamente los bytes Tower-owned del semáforo y no instala, activa, reescribe configuración global ni ejecuta rollback. El bundle empaqueta el producto que S149 compila; no empaqueta handoffs, continuation ni despacho Tower-owned, que pertenecen a torre-v2."
-      resultado_comportamiento: "El bundle contiene exactamente la membresía runtime/engine derivada de RUNTIME_PAYLOAD_FILES, el binario del semáforo producido por S149, el contrato host-neutral retenido, adapters/pi/**, extensions/pi/** y los perfiles/skills Tower editables bajo product/tower/; excluye configuración Pi/Intercom, skills genéricas Gentle AI y el snapshot inmutable product/tower/generic/, sin relocalizar el engine completo.\n\nLa membresía enumera el binario por su ruta y su huella exacta, no por el árbol fuente que lo produjo. Un bundle que incluya bytes de continuation, de despacho Tower-owned o de una operación MCP fuera del contrato tower_* falla cerrado.\n\nLos tres perfiles y sus skills se materializan desde el bundle sin modificar sus fuentes canónicas editables bajo product/tower/.\n\nFaltante, extra, symlink, provenance divergente o incoherencia interceptor/torre-control falla cerrado.\n\nDeclaración, derivación y guardia observan un único conjunto exacto y determinista.\n\nLa Sesión sólo empaqueta: no instala, activa, reescribe configuración global ni ejecuta rollback.\n\nEl diff toca sólo Área."
+      resultado_comportamiento: "El bundle contiene exactamente la membresía runtime/engine derivada de RUNTIME_PAYLOAD_FILES, el binario del semáforo producido por S149, el contrato host-neutral retenido, adapters/pi/**, extensions/pi/**, jornada.sh y los perfiles/skills Tower editables bajo product/tower/; excluye configuración Pi/Intercom, skills genéricas Gentle AI y el snapshot inmutable product/tower/generic/, sin relocalizar el engine completo.\n\nLa membresía enumera el binario por su ruta y su huella exacta, no por el árbol fuente que lo produjo. Un bundle que incluya bytes de continuation, de despacho Tower-owned o de una operación MCP fuera del contrato tower_* falla cerrado.\n\nLos tres perfiles y sus skills se materializan desde el bundle sin modificar sus fuentes canónicas editables bajo product/tower/.\n\njornada.sh viaja en la membresía como herramienta de la Torre que el modo manual (skill chanks-0-jornada de S161) y el motor invocan igual, consumido sin modificar sus bytes; ya descubre los worktrees sin rutas fijas, así que no se adapta a otro proyecto dentro de esta Sesión.\n\nFaltante, extra, symlink, provenance divergente o incoherencia interceptor/torre-control falla cerrado.\n\nDeclaración, derivación y guardia observan un único conjunto exacto y determinista.\n\nLa Sesión sólo empaqueta: no instala, activa, reescribe configuración global ni ejecuta rollback.\n\nEl diff toca sólo Área."
       restricciones_decisiones: "Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación."
       referencias: "Autoridad original: Decisiones 88, 95, 100 y 104; Engram 9921 y 10008; contrato vigente enumerado de S8.12 aprobado por decisión 10315 del maintainer y citado en openspec/plans/plan-8/STATUS.md líneas 998-1031. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S8.12. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Contraste aprobado Engram 11293 con docs/architecture/torre-motor-determinista.md, secciones 14 y 16: el resultado de bundle se conserva. Una futura membresía engine/harness/adapters requiere evidencia concreta de bytes y versiones; esta referencia no cambia el inventario ni amplía archivos o dependencias."
     decisiones:
@@ -926,6 +927,17 @@ sesiones:
             consecuencia: "Faltante, extra, symlink o bytes divergentes falla cerrado; dos enumeraciones distintas falsifican la derivación."
         criterio: "Una sola composición produce declaración y guardia; faltante, extra, symlink o bytes divergentes falla cerrado."
         autoridad: "Decisiones 88, 95 y 100; Engram 9921."
+      - tipo: resuelta
+        pregunta: ¿Quién suma jornada.sh al bundle V1?
+        resolucion: "S8.12, dentro de la membresía que ya posee. Se descarta una Sesión aparte en la Zona jornada: la lista RUNTIME_PAYLOAD_FILES (install/runtime-payload.mjs) y su prueba exacta (test/install/runtime-payload.test.mjs) son territorio de S8.12, y jornada.sh ya es portable."
+        autoridad: "Aprobación explícita de Emilio el 2026-09-25 en esta Conversación (Engram 11739, 11747): un producto, dos modos; jornada.sh viaja con la Torre como Radar."
+        clase: contrato-visible-del-producto
+        falsificador: "El bundle V1 no contiene jornada.sh, o una Sesión distinta de S8.12 modifica RUNTIME_PAYLOAD_FILES para agregarlo."
+        descartadas:
+          - opcion: "Una Sesión S162 en la Zona jornada que agregue jornada.sh al bundle."
+            razon: "Tendría que escribir la lista y la prueba exacta que reserva S8.12; dos Sesiones quedarían tocando la misma membresía."
+        contaminaba:
+          - S8.12
     importacion_legacy:
       origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
       origen_ruta: openspec/plans/plan-8/STATUS.md
