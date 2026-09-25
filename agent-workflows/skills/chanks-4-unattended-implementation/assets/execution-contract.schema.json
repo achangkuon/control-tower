@@ -1,10 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://gentle-ai.local/schemas/unattended-execution-contract-v3.json",
-  "title": "Standalone Sealed Unattended Execution Contract",
+  "$id": "https://gentle-ai.local/schemas/unattended-execution-contract-v4.json",
+  "title": "Sealed Plan-Session Unattended Execution Contract",
   "type": "object",
   "additionalProperties": false,
-  "not": { "required": ["_retired_runtime"] },
   "required": [
     "schema_version",
     "contract_id",
@@ -12,20 +11,16 @@
     "expires_at",
     "contract_digest",
     "repository",
-    "artifacts",
-    "assignment",
+    "session",
     "permissions",
     "ownership",
     "artifact_policy",
-    "runtime",
-    "chain",
-    "validation",
-    "candidate_recipe",
-    "retries",
-    "terminal"
+    "execution",
+    "review_policy",
+    "retries"
   ],
   "properties": {
-    "schema_version": { "const": "gentle-ai.unattended-execution-contract/v3" },
+    "schema_version": { "const": "gentle-ai.unattended-execution-contract/v4" },
     "contract_id": { "$ref": "#/$defs/nonEmpty" },
     "sealed_at": { "$ref": "#/$defs/dateTime" },
     "expires_at": { "$ref": "#/$defs/dateTime" },
@@ -33,41 +28,47 @@
     "repository": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["identity", "root", "common_dir", "worktree", "branch", "base_ref", "base_sha"],
+      "required": ["identity", "root", "branch", "base_ref", "base_sha"],
       "properties": {
         "identity": { "$ref": "#/$defs/nonEmpty" },
         "root": { "$ref": "#/$defs/absolutePath" },
-        "common_dir": { "$ref": "#/$defs/absolutePath" },
-        "worktree": { "$ref": "#/$defs/absolutePath" },
-        "branch": { "$ref": "#/$defs/nonEmpty" },
+        "branch": { "type": "string", "pattern": "^work/[^\\s]+$" },
         "base_ref": { "$ref": "#/$defs/nonEmpty" },
         "base_sha": { "$ref": "#/$defs/gitSha" }
       }
     },
-    "artifacts": {
-      "type": "array",
-      "minItems": 1,
-      "uniqueItems": true,
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["kind", "locator", "sha256"],
-        "properties": {
-          "kind": { "enum": ["proposal", "spec", "design", "tasks", "status", "config", "instruction", "other"] },
-          "locator": { "$ref": "#/$defs/nonEmpty" },
-          "sha256": { "$ref": "#/$defs/sha256" }
-        }
-      }
-    },
-    "assignment": {
+    "session": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["sesion_id", "task_ids", "objective", "continuation"],
+      "required": [
+        "sesion_id",
+        "radar_status_stdout_sha256",
+        "radar_sesion_stdout_sha256",
+        "listo_confirmed",
+        "unresolved_escalating_decision",
+        "solicitud_sdd"
+      ],
       "properties": {
         "sesion_id": { "$ref": "#/$defs/nonEmpty" },
-        "task_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/nonEmpty" } },
-        "objective": { "$ref": "#/$defs/nonEmpty" },
-        "continuation": { "const": "none" }
+        "radar_status_stdout_sha256": { "$ref": "#/$defs/sha256" },
+        "radar_sesion_stdout_sha256": { "$ref": "#/$defs/sha256" },
+        "listo_confirmed": { "const": true },
+        "unresolved_escalating_decision": { "const": false },
+        "solicitud_sdd": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["requested"],
+          "properties": {
+            "requested": { "type": "boolean" },
+            "evidence": { "$ref": "#/$defs/nonEmpty" }
+          },
+          "allOf": [
+            {
+              "if": { "properties": { "requested": { "const": true } }, "required": ["requested"] },
+              "then": { "required": ["evidence"] }
+            }
+          ]
+        }
       }
     },
     "permissions": {
@@ -86,21 +87,22 @@
         "prohibitions": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["commit", "amend", "rebase", "tag", "push", "pr_create", "pr_update", "merge", "release", "deploy", "db_mutation", "global_closure", "unlisted_sesion"],
+          "required": ["commit", "amend", "rebase", "tag", "push", "pr_create", "pr_update", "merge", "release", "deploy", "db_mutation", "global_closure", "unlisted_sesion", "plan_yaml_write"],
           "properties": {
             "commit": { "type": "boolean" },
             "amend": { "const": true },
             "rebase": { "const": true },
             "tag": { "const": true },
-            "push": { "type": "boolean" },
-            "pr_create": { "type": "boolean" },
-            "pr_update": { "type": "boolean" },
+            "push": { "const": true },
+            "pr_create": { "const": true },
+            "pr_update": { "const": true },
             "merge": { "const": true },
             "release": { "const": true },
             "deploy": { "const": true },
             "db_mutation": { "const": true },
             "global_closure": { "const": true },
-                                                            "unlisted_sesion": { "const": true }
+            "unlisted_sesion": { "const": true },
+            "plan_yaml_write": { "const": true }
           }
         }
       }
@@ -108,13 +110,13 @@
     "ownership": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["exclusive_paths", "package_manifests", "lockfiles", "generated_outputs", "sdd_progress_files", "shared_resources", "known_conflicts"],
+      "required": ["exclusive_paths", "package_manifests", "lockfiles", "generated_outputs", "progress_files", "shared_resources", "known_conflicts"],
       "properties": {
         "exclusive_paths": { "$ref": "#/$defs/pathList" },
         "package_manifests": { "$ref": "#/$defs/pathList" },
         "lockfiles": { "$ref": "#/$defs/pathList" },
         "generated_outputs": { "$ref": "#/$defs/pathList" },
-        "sdd_progress_files": { "$ref": "#/$defs/pathList" },
+        "progress_files": { "$ref": "#/$defs/pathList" },
         "shared_resources": { "$ref": "#/$defs/stringList" },
         "known_conflicts": { "$ref": "#/$defs/stringList" }
       }
@@ -135,126 +137,25 @@
         "caches": { "$ref": "#/$defs/localArtifactDisposition" }
       }
     },
-    "runtime": {
+    "execution": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["mode", "mode_evidence", "delivery_ceiling", "state_root"],
+      "required": ["executor", "worker_kickoff_skill", "delivery_ceiling", "state_root"],
       "properties": {
-        "mode": { "const": "standalone" },
-        "mode_evidence": { "$ref": "#/$defs/nonEmpty" },
-        "delivery_ceiling": { "enum": ["none", "commit", "push", "draft-pr"] },
-        "state_root": { "$ref": "#/$defs/absolutePath" },
-        "ci_gate": { "enum": ["no-pr-workflows", "draft-guarded", "maintainer-allowed", "degraded-to-commit"] }
-      },
-      "allOf": [
-        {
-          "if": false,
-          "then": { "properties": { "delivery_ceiling": { "const": "none" } } }
-        },
-        {
-          "if": { "properties": { "delivery_ceiling": { "enum": ["push", "draft-pr"] } }, "required": ["delivery_ceiling"] },
-          "then": { "required": ["ci_gate"] }
-        }
-      ]
-    },
-    "_retired_runtime": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["mode", "mode_locked", "git_delivery_token", "active_marker_scope"],
-      "properties": {
-        "mode": { "enum": ["active-supervision", "absent"] },
-        "mode_locked": { "type": "boolean" },
-        "git_delivery_token": { "const": "forbidden" },
-        "active_marker_scope": { "const": ".git/retired-runtime/ACTIVE" }
+        "executor": { "const": "pi-worker-dispatched-by-chanks-3-despacho-herdr" },
+        "worker_kickoff_skill": { "const": "chanks-3-session-kickoff" },
+        "delivery_ceiling": { "enum": ["none", "commit"] },
+        "state_root": { "$ref": "#/$defs/absolutePath" }
       }
     },
-    "chain": {
+    "review_policy": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["strategy", "delivery_strategy", "budget_risk", "chained_recommended", "decision_needed", "position", "total", "base_target_map", "line_budget", "rollback_boundary"],
+      "required": ["high", "medium", "passive"],
       "properties": {
-        "strategy": { "enum": ["single-pr", "stacked-to-main", "feature-branch-chain", "size-exception"] },
-        "delivery_strategy": { "enum": ["ask-on-risk", "auto-chain", "single-pr", "exception-ok"] },
-        "budget_risk": { "enum": ["Low", "Medium", "High"] },
-        "chained_recommended": { "type": "boolean" },
-        "decision_needed": { "const": false },
-        "position": { "type": "integer", "minimum": 1 },
-        "total": { "type": "integer", "minimum": 1 },
-        "base_target_map": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["sesion_id", "branch", "base", "target"],
-            "properties": {
-              "sesion_id": { "$ref": "#/$defs/nonEmpty" },
-              "branch": { "$ref": "#/$defs/nonEmpty" },
-              "base": { "$ref": "#/$defs/nonEmpty" },
-              "target": { "$ref": "#/$defs/nonEmpty" }
-            }
-          }
-        },
-        "line_budget": { "type": "integer", "minimum": 1, "maximum": 400 },
-        "rollback_boundary": { "$ref": "#/$defs/nonEmpty" }
-      },
-      "allOf": [
-        {
-          "if": { "properties": { "budget_risk": { "const": "High" } }, "required": ["budget_risk"] },
-          "then": { "properties": { "chained_recommended": { "const": true } } }
-        },
-        {
-          "if": { "properties": { "strategy": { "enum": ["stacked-to-main", "feature-branch-chain"] } }, "required": ["strategy"] },
-          "then": { "properties": { "chained_recommended": { "const": true } } }
-        },
-        {
-          "if": { "properties": { "strategy": { "const": "size-exception" } }, "required": ["strategy"] },
-          "then": { "properties": { "delivery_strategy": { "const": "exception-ok" } } }
-        },
-        {
-          "if": { "properties": { "delivery_strategy": { "const": "auto-chain" } }, "required": ["delivery_strategy"] },
-          "then": { "properties": { "strategy": { "enum": ["stacked-to-main", "feature-branch-chain"] } } }
-        }
-      ]
-    },
-    "validation": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["method", "source_root_realpath", "source_common_dir_realpath", "clone_root_realpath", "clone_common_dir_realpath", "baseline_commands", "candidate_commands"],
-      "properties": {
-        "method": { "const": "separate-regular-clone" },
-        "source_root_realpath": { "$ref": "#/$defs/absolutePath" },
-        "source_common_dir_realpath": { "$ref": "#/$defs/absolutePath" },
-        "clone_root_realpath": { "$ref": "#/$defs/absolutePath" },
-        "clone_common_dir_realpath": { "$ref": "#/$defs/absolutePath" },
-        "baseline_commands": { "$ref": "#/$defs/stringListNonEmpty" },
-        "candidate_commands": { "$ref": "#/$defs/stringListNonEmpty" }
-      }
-    },
-    "candidate_recipe": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["entries", "identity_algorithm", "staging_required", "commit_required"],
-      "properties": {
-        "entries": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["path", "mode", "class"],
-            "properties": {
-              "path": { "$ref": "#/$defs/nonEmpty" },
-              "mode": { "type": "string", "pattern": "^[0-7]{6}$" },
-              "class": { "enum": ["authored-tracked", "generated-tracked"] }
-            }
-          }
-        },
-        "identity_algorithm": { "const": "sorted-path-mode-size-sha256" },
-        "staging_required": { "const": true },
-        "commit_required": { "type": "boolean" }
+        "high": { "const": "granted_in_advance" },
+        "medium": { "const": "declined" },
+        "passive": { "const": "no_consent_needed" }
       }
     },
     "retries": {
@@ -270,133 +171,59 @@
         "corrections_after_final_verification_failure": { "const": 0 }
       }
     },
-    "terminal": {
+    "result": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["states", "ready_definition", "occupied_ready_slot"],
+      "required": ["state", "sesion_id", "worker", "checks", "commits", "changed_paths", "reviews", "stopped_questions", "budget_used"],
       "properties": {
-        "states": { "type": "array", "prefixItems": [{ "const": "READY" }, { "const": "BLOCKED" }], "items": false },
-        "ready_definition": { "enum": ["exact-staged-uncommitted-candidate", "exact-committed-candidate"] },
-        "occupied_ready_slot": { "const": "preserve-and-block-with-evidence" }
-      }
-    },
-    "runtime_result": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["state", "terminal_evidence", "retry_counters", "final_verification"],
-      "properties": {
-        "state": { "enum": ["READY", "BLOCKED"] },
-        "observed_candidate": { "$ref": "#/$defs/observedCandidate" },
-        "baseline_evidence": { "$ref": "#/$defs/evidenceList" },
-        "candidate_evidence": { "$ref": "#/$defs/evidenceList" },
-        "terminal_evidence": { "$ref": "#/$defs/stringListNonEmpty" },
-        "retry_counters": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["same_input_transient_before_final_verification", "implementation_corrections_before_final_verification", "authorization_scope", "retries_after_final_verification_failure", "corrections_after_final_verification_failure"],
-          "properties": {
-            "same_input_transient_before_final_verification": { "type": "integer", "minimum": 0, "maximum": 1 },
-            "implementation_corrections_before_final_verification": { "type": "integer", "minimum": 0, "maximum": 2 },
-            "authorization_scope": { "const": 0 },
-            "retries_after_final_verification_failure": { "const": 0 },
-            "corrections_after_final_verification_failure": { "const": 0 }
-          }
-        },
-        "final_verification": {
-          "oneOf": [
-            { "$ref": "#/$defs/finalVerificationNotRun" },
-            { "$ref": "#/$defs/finalVerificationPassed" },
-            { "$ref": "#/$defs/finalVerificationFailed" }
-          ]
-        }
-      },
-      "oneOf": [
-        {
-          "required": ["observed_candidate", "baseline_evidence", "candidate_evidence"],
-          "properties": {
-            "state": { "const": "READY" },
-            "final_verification": { "$ref": "#/$defs/finalVerificationPassed" }
-          }
-        },
-        {
-          "properties": {
-            "state": { "const": "BLOCKED" },
-            "final_verification": {
-              "oneOf": [
-                { "$ref": "#/$defs/finalVerificationNotRun" },
-                { "$ref": "#/$defs/finalVerificationFailed" }
-              ]
+        "state": { "enum": ["COMPLETED", "BLOCKED", "FAILED"] },
+        "sesion_id": { "$ref": "#/$defs/nonEmpty" },
+        "worker": { "$ref": "#/$defs/nonEmpty" },
+        "checks": { "$ref": "#/$defs/evidenceList" },
+        "commits": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/gitSha" } },
+        "changed_paths": { "$ref": "#/$defs/pathList" },
+        "reviews": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["risk", "outcome"],
+            "properties": {
+              "risk": { "enum": ["high", "medium", "passive"] },
+              "outcome": { "enum": ["granted", "declined", "not_needed"] }
             }
           }
-        }
-      ]
+        },
+        "stopped_questions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["question", "evidence", "options", "decision_class", "checkpoint"],
+            "properties": {
+              "question": { "$ref": "#/$defs/nonEmpty" },
+              "evidence": { "$ref": "#/$defs/nonEmpty" },
+              "options": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/nonEmpty" } },
+              "decision_class": { "$ref": "#/$defs/nonEmpty" },
+              "checkpoint": { "$ref": "#/$defs/nonEmpty" }
+            }
+          }
+        },
+        "budget_used": { "$ref": "#/$defs/nonEmpty" }
+      }
     }
   },
   "allOf": [
     {
-      "if": false,
-      "then": {
-        "properties": {
-          "standalone": { "not": {} },
-          "validation": { "not": {} }
-        }
-      }
+      "if": { "properties": { "execution": { "properties": { "delivery_ceiling": { "const": "none" } }, "required": ["delivery_ceiling"] } }, "required": ["execution"] },
+      "then": { "properties": { "permissions": { "properties": { "prohibitions": { "properties": { "commit": { "const": true } } } } } } }
     },
     {
-      "if": false,
-      "then": {
-        "properties": {
-          "standalone": { "not": {} },
-          "validation": { "not": {} }
-        }
-      }
-    },
-    {
-      "if": { "properties": { "runtime": { "properties": { "delivery_ceiling": { "const": "none" } }, "required": ["delivery_ceiling"] } }, "required": ["runtime"] },
-      "then": { "$ref": "#/$defs/ceilingNone" }
-    },
-    {
-      "if": { "properties": { "runtime": { "properties": { "delivery_ceiling": { "const": "commit" } }, "required": ["delivery_ceiling"] } }, "required": ["runtime"] },
-      "then": { "$ref": "#/$defs/ceilingCommit" }
-    },
-    {
-      "if": { "properties": { "runtime": { "properties": { "delivery_ceiling": { "const": "push" } }, "required": ["delivery_ceiling"] } }, "required": ["runtime"] },
-      "then": { "$ref": "#/$defs/ceilingPush" }
-    },
-    {
-      "if": { "properties": { "runtime": { "properties": { "delivery_ceiling": { "const": "draft-pr" } }, "required": ["delivery_ceiling"] } }, "required": ["runtime"] },
-      "then": { "$ref": "#/$defs/ceilingDraftPr" }
-    },
-    {
-      "if": { "properties": { "runtime": { "properties": { "ci_gate": { "const": "degraded-to-commit" } }, "required": ["ci_gate"] } }, "required": ["runtime"] },
-      "then": { "properties": { "runtime": { "properties": { "delivery_ceiling": { "const": "commit" } } } } }
+      "if": { "properties": { "execution": { "properties": { "delivery_ceiling": { "const": "commit" } }, "required": ["delivery_ceiling"] } }, "required": ["execution"] },
+      "then": { "properties": { "permissions": { "properties": { "prohibitions": { "properties": { "commit": { "const": false } } } } } } }
     }
   ],
   "$defs": {
-    "ceilingNone": {
-      "properties": {
-        "permissions": { "properties": { "prohibitions": { "properties": { "commit": { "const": true }, "push": { "const": true }, "pr_create": { "const": true }, "pr_update": { "const": true } } } } },
-        "candidate_recipe": { "properties": { "commit_required": { "const": false } } }
-      }
-    },
-    "ceilingCommit": {
-      "properties": {
-        "permissions": { "properties": { "prohibitions": { "properties": { "commit": { "const": false }, "push": { "const": true }, "pr_create": { "const": true }, "pr_update": { "const": true } } } } },
-        "candidate_recipe": { "properties": { "commit_required": { "const": true } } }
-      }
-    },
-    "ceilingPush": {
-      "properties": {
-        "permissions": { "properties": { "prohibitions": { "properties": { "commit": { "const": false }, "push": { "const": false }, "pr_create": { "const": true }, "pr_update": { "const": true } } } } },
-        "candidate_recipe": { "properties": { "commit_required": { "const": true } } }
-      }
-    },
-    "ceilingDraftPr": {
-      "properties": {
-        "permissions": { "properties": { "prohibitions": { "properties": { "commit": { "const": false }, "push": { "const": false }, "pr_create": { "const": false }, "pr_update": { "const": false } } } } },
-        "candidate_recipe": { "properties": { "commit_required": { "const": true } } }
-      }
-    },
     "nonEmpty": { "type": "string", "minLength": 1, "pattern": "^(?!.*(?:TBD|TODO|PENDING|PLACEHOLDER|<[^>]+>)).+$" },
     "absolutePath": { "type": "string", "pattern": "^/[^\\u0000]+$" },
     "dateTime": { "type": "string", "format": "date-time" },
@@ -405,35 +232,8 @@
     "stringList": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/nonEmpty" } },
     "stringListNonEmpty": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/nonEmpty" } },
     "pathList": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/exactPath" } },
-        "exactPath": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?/)(?!.*[*?\\[\\]{}]).+$" },
-        "commandList": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^(?:bun|go|npm|pnpm|python3?|pytest|node|git|radar|make|cargo)(?: [^;|&`$<>\\n]*)?$" } }
-    , "finalVerificationNotRun": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["attempts", "status"],
-      "properties": {
-        "attempts": { "const": 0 },
-        "status": { "const": "not_run" }
-      }
-    },
-    "finalVerificationPassed": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["attempts", "status"],
-      "properties": {
-        "attempts": { "const": 1 },
-        "status": { "const": "passed" }
-      }
-    },
-    "finalVerificationFailed": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["attempts", "status"],
-      "properties": {
-        "attempts": { "const": 1 },
-        "status": { "const": "failed" }
-      }
-    },
+    "exactPath": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?/)(?!.*[*?\\[\\]{}]).+$" },
+    "commandList": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^(?:bun|go|npm|pnpm|python3?|pytest|node|git|radar|make|cargo)(?: [^;|&`$<>\\n]*)?$" } },
     "localArtifactDisposition": {
       "type": "object",
       "additionalProperties": false,
@@ -458,33 +258,6 @@
           "started_at": { "$ref": "#/$defs/dateTime" },
           "ended_at": { "$ref": "#/$defs/dateTime" }
         }
-      }
-    },
-    "observedCandidate": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["entries", "tree_sha256", "staged", "committed"],
-      "properties": {
-        "entries": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["path", "mode", "size_bytes", "sha256", "class"],
-            "properties": {
-              "path": { "$ref": "#/$defs/nonEmpty" },
-              "mode": { "type": "string", "pattern": "^[0-7]{6}$" },
-              "size_bytes": { "type": "integer", "minimum": 0 },
-              "sha256": { "$ref": "#/$defs/sha256" },
-              "class": { "enum": ["authored-tracked", "generated-tracked"] }
-            }
-          }
-        },
-        "tree_sha256": { "$ref": "#/$defs/sha256" },
-        "staged": { "const": true },
-        "committed": { "type": "boolean" }
       }
     }
   }
