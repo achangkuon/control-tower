@@ -16,10 +16,19 @@ Implement the approved native Encargo on `master` from fresh Radar admission at 
 
 ## Tasks
 
-- [ ] T1 — Add strict-TDD assertions for stage-transition language, absence of planning activation clicks, stage-4 per-work-unit review semantics, and 400-as-reference wording while preserving current S157-owned bridge/kickoff expectations.
-- [ ] T2 — Update the canonical convention, authority/preparation skills, and adoption reference without renaming skills or expanding behavior.
-- [ ] T3 — Verify skill structure and contract tests, run independent verification/native review, deliver the coherent S156 commit, propagate/install only with explicit human confirmation, and record closure evidence.
+- [x] T1 — Add strict-TDD assertions for stage-transition language, absence of planning activation clicks, stage-4 per-work-unit review semantics, and 400-as-reference wording while preserving current S157-owned bridge/kickoff expectations. Proof: focused RED→GREEN; commit `40235d3fcf6ee5f893da5695f25e495298b6c448`.
+- [x] T2 — Update the canonical convention, authority/preparation skills, and adoption reference without renaming skills or expanding behavior. Proof: structural readback and final independent PASS; commit `40235d3fcf6ee5f893da5695f25e495298b6c448`.
+- [x] T3 — Verify skill structure and contract tests, run independent verification/native review, deliver the coherent S156 commit, propagate/install only with explicit human confirmation, and record closure evidence. Proof: 16/16 builder-flow tests; pre-push 1,488/0; native review unavailable before lineage (`schema-incompatible`); direct push of `40235d3fcf6ee5f893da5695f25e495298b6c448`; maintainer chose one final propagation after S159.
+
+## Delivery (2026-09-25)
+
+- Strict TDD: the new S156 contract test failed against the old planning-key language, then passed after the five scoped edits.
+- Correction: the complete builder-flow suite exposed a stale closure-skill source hash already present on clean HEAD; the exact authorized test fixture was updated to the independently proven HEAD digest, with no closure behavior change.
+- Verification: focused S156/kickoff/bridge/closure checks passed; full `test_builder_flow.py` passed 16/16; `git diff --check` passed; independent verification returned PASS.
+- Native review: intended-untracked selection returned `schema-incompatible` before lineage creation or authority mutation, so the review was unavailable and the independent PASS supplied the high-risk fallback evidence.
+- Delivery: commit `40235d3fcf6ee5f893da5695f25e495298b6c448` was pushed directly to `master`; the pre-push suite passed 1,488 tests.
+- Propagation: explicitly deferred by the maintainer until S159 so the final S156–S159 skill set is installed and verified once, avoiding repeated Pi-session disruption.
 
 ## Checkpoint
 
-Fresh admission and read-only mapping are complete. No S156 source path has changed yet. Next: delegate T1–T2 to one bounded writer with focused RED→GREEN evidence.
+S156 implementation is delivered and its immutable commit is recorded in `openspec/plan.yaml`. This close record is pending its documentation commit/push; after that, recapture Radar before admitting S157.

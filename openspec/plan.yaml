@@ -2901,6 +2901,8 @@ sesiones:
     depende_de: []
     cimientos: []
     recurso: []
+    entrega:
+      commit: 40235d3fcf6ee5f893da5695f25e495298b6c448
     archivos:
       - agent-workflows/skills/_shared/plan-naming-convention.md
       - agent-workflows/skills/chanks-1-autoridad/SKILL.md
