@@ -3407,6 +3407,8 @@ sesiones:
       - S159
     cimientos: []
     recurso: []
+    entrega:
+      commit: bce90890965a99f4f9568c82174f26df2c9f8594
     archivos:
       - agent-workflows/chanks/torre-firma.mjs
       - agent-workflows/tests/chanks/torre-firma.test.mjs
