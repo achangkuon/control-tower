@@ -464,6 +464,9 @@ func resumenBloqueo(s *Sesion, ledgerDecisionRequired bool) string {
 			return d.Pregunta
 		}
 	}
+	if s.encargoIncompleto() {
+		return "Encargo incompleto: falta planificar"
+	}
 	if ledgerDecisionRequired {
 		return "ledger SDD requiere una decisión"
 	}

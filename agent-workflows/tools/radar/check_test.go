@@ -259,6 +259,70 @@ func TestDependenciaInexistenteSeReporta(t *testing.T) {
 	}
 }
 
+// An open Sesión (no entrega, not archivada) that depends on a
+// satisfied_history id can never become LISTO through that edge: plan.go:253
+// documents that satisfied_history never becomes a dependency target, and
+// EstadosAt only resolves depende_de against p.SesionPorID(). checkGrafo must
+// say so, naming the Sesión and the id, instead of accepting it in silence
+// like a future_successors edge.
+func TestDependenciaHaciaSatisfiedHistoryEsError(t *testing.T) {
+	p := &Plan{
+		References: &References{SatisfiedHistory: []SatisfiedHistory{{ID: "S8.10", Reason: "cerrada por evidencia legacy"}}},
+		Sesiones:   []Sesion{{ID: "S8.12", Zona: "z", DependeDe: []string{"S8.10"}}},
+	}
+
+	got := hallazgosDe(p.checkGrafo(), "dependencias hacia historia satisfecha")
+	if len(got) != 1 {
+		t.Fatalf("una dependencia viva hacia satisfied_history debe reportarse como error; obtuvo %#v", got)
+	}
+	if !strings.Contains(got[0].Detalle, "S8.12") || !strings.Contains(got[0].Detalle, "S8.10") {
+		t.Fatalf("el hallazgo debe nombrar la Sesión y el id: %q", got[0].Detalle)
+	}
+}
+
+// A closed Sesión — one with entrega registered — keeps a satisfied_history
+// edge silently: satisfied_history exists precisely to close a frozen legacy
+// dependency for an imported Sesión that already delivered (migration to
+// Zonas, design.md:564), so this is not an authoring error.
+func TestDependenciaHaciaSatisfiedHistoryDesdeSesionConEntregaNoEsError(t *testing.T) {
+	p := &Plan{
+		References: &References{SatisfiedHistory: []SatisfiedHistory{{ID: "S1.9", Reason: "cerrada por evidencia legacy"}}},
+		Sesiones:   []Sesion{{ID: "S1.11", Zona: "z", DependeDe: []string{"S1.9"}, Entrega: &Entrega{Commit: "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"}}},
+	}
+
+	if got := hallazgosDe(p.checkGrafo(), "dependencias hacia historia satisfecha"); len(got) != 0 {
+		t.Fatalf("una Sesión con entrega no debe reportar error al depender de satisfied_history: %#v", got)
+	}
+}
+
+// A closed Sesión — one marked archivada — keeps a satisfied_history edge
+// silently for the same reason: it is closed, not open work waiting on an
+// edge that can never resolve.
+func TestDependenciaHaciaSatisfiedHistoryDesdeSesionArchivadaNoEsError(t *testing.T) {
+	p := &Plan{
+		References: &References{SatisfiedHistory: []SatisfiedHistory{{ID: "S2.4", Reason: "cerrada por evidencia legacy"}}},
+		Sesiones:   []Sesion{{ID: "S3.1", Zona: "z", DependeDe: []string{"S2.4"}, Archivada: true}},
+	}
+
+	if got := hallazgosDe(p.checkGrafo(), "dependencias hacia historia satisfecha"); len(got) != 0 {
+		t.Fatalf("una Sesión archivada no debe reportar error al depender de satisfied_history: %#v", got)
+	}
+}
+
+// A dependency toward a future_successors id keeps today's behavior exactly:
+// it is structurally present but grants no readiness, and checkGrafo stays
+// silent about it — only checkReferencias owns its shape and cycle rules.
+func TestDependenciaHaciaFutureSuccessorsMantieneSilencio(t *testing.T) {
+	p := &Plan{
+		References: &References{FutureSuccessors: []FutureSuccessor{{ID: "S200", Reason: "sucesora aprobada", Result: "x", Zone: "z"}}},
+		Sesiones:   []Sesion{{ID: "S1", Zona: "z", DependeDe: []string{"S200"}}},
+	}
+
+	if got := p.checkGrafo(); len(got) != 0 {
+		t.Fatalf("una dependencia hacia future_successors no debe reportarse: %#v", got)
+	}
+}
+
 func TestReservaDeCimientoNoDeclarado(t *testing.T) {
 	root, _ := repoGit(t)
 	p := &Plan{

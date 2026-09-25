@@ -626,7 +626,7 @@ func (p *Plan) checkGrafo() []Hallazgo {
 		for _, dep := range s.DependeDe {
 			d, ok := index[dep]
 			if !ok {
-				if referencias[dep] != "" {
+				if kind := referencias[dep]; kind != "" {
 					// A future or satisfied-history reference is structurally
 					// present (design.md:577, design.md:587: "closes only that
 					// missing structural edge" / "may register structural
@@ -635,6 +635,20 @@ func (p *Plan) checkGrafo() []Hallazgo {
 					// p.SesionPorID() and this dependency never becomes met by
 					// this edge alone. See checkReferencias for reference-owned
 					// graph rules (identity, locator, leaf, cycle).
+					if kind == "satisfied" && s.Entrega == nil && !s.Archivada {
+						// Unlike future_successors, satisfied_history proves
+						// history already closed and never becomes a
+						// dependency target (plan.go:253): an OPEN Sesión
+						// waiting on it could never become LISTO through this
+						// edge. That is an authoring error, not silent. A
+						// closed Sesión (entrega registered, or archivada)
+						// keeps the edge silently — satisfied_history exists
+						// to close exactly that frozen legacy dependency for
+						// an imported Sesión (migrate-control-tower-plan-zones
+						// design.md:564).
+						h = append(h, Hallazgo{"error", "dependencias hacia historia satisfecha",
+							fmt.Sprintf("%s depende de %q, que ya es historia satisfecha (references.satisfied_history): una Sesión abierta nunca queda LISTO por esa arista", s.ID, dep)})
+					}
 					continue
 				}
 				h = append(h, Hallazgo{"error", "dependencias",

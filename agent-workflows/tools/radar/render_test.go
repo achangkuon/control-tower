@@ -67,6 +67,49 @@ func TestRenderPresentaLaCapacidadComoVeredictoDeParalelo(t *testing.T) {
 	}
 }
 
+// A Sesión BLOQUEADO only by its own incomplete Encargo must say so, instead
+// of falling through to the generic "contaminación semántica declarada por
+// otra Sesión" text that blames another Sesión for something it never
+// declared (see state.go:185, encargo.go:29).
+func TestResumenBloqueoDiceEncargoIncompleto(t *testing.T) {
+	s := &Sesion{ID: "S149", Encargo: &Encargo{Incompleto: true, PedidoContexto: "x"}}
+
+	got := resumenBloqueo(s, false)
+	want := "Encargo incompleto: falta planificar"
+	if got != want {
+		t.Fatalf("quería %q, fue %q", want, got)
+	}
+}
+
+// Entrega inválida keeps deciding first, exactly as before.
+func TestResumenBloqueoEntregaSigueGanandoSobreEncargoIncompleto(t *testing.T) {
+	s := &Sesion{ID: "S1", Encargo: &Encargo{Incompleto: true, PedidoContexto: "x"}, Entrega: &Entrega{Commit: "deadbeef"}}
+
+	got := resumenBloqueo(s, false)
+	want := "evidencia de entrega inválida o no integrada"
+	if got != want {
+		t.Fatalf("quería %q, fue %q", want, got)
+	}
+}
+
+// A Sesión's own escalating decision keeps winning over its incomplete
+// Encargo — existing behavior for Sesiones that already had one.
+func TestResumenBloqueoDecisionPropiaSigueGanandoSobreEncargoIncompleto(t *testing.T) {
+	s := &Sesion{
+		ID:      "S1",
+		Encargo: &Encargo{Incompleto: true, PedidoContexto: "x"},
+		Decisiones: []Decision{
+			{Tipo: "escala", Alcanza: "criterios", Pregunta: "¿Se aprueba el criterio X?"},
+		},
+	}
+
+	got := resumenBloqueo(s, false)
+	want := "¿Se aprueba el criterio X?"
+	if got != want {
+		t.Fatalf("quería %q, fue %q", want, got)
+	}
+}
+
 func TestAtomicWriteConvergeSinArchivosTemporales(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "openspec", "ROADMAP.md")
