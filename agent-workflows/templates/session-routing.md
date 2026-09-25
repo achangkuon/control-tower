@@ -70,7 +70,7 @@ there is no fallback to kickoff or decision closure.
   Herdr JSON proves only seat and process identity; Intercom delivery results prove only message delivery; neither grants authority or proves work completion, and the worker reports terminal result evidence. fresh Intercom and Herdr readbacks must prove the sender matches the exact binding; the reported commit is the dispatched worktree candidate before integration, otherwise no integration, retry, remapping, or inferred terminal.
   Two approved Pi workers receive independent fire-and-forget handoffs; Main sends worker 2 without waiting for worker 1.
   Workers report `COMPLETED`, `BLOCKED`, or `FAILED`; no provisional cross-runtime bridge exists and the future tower V1 remains the heterogeneous and hybrid owner.
-- The bridge and `chanks-7-session-doc` return closure evidence before retire mode to the responsible
+- The bridge and `chanks-5-session-doc` return closure evidence before retire mode to the responsible
   parent. Actual delivery evidence, ordinary policy, and Chanks plan/document close gates decide
   closure. Radar compatible capacity is the parallel-safety verdict. Forecasts reserve nothing live;
   no worker/runtime implementation is implied by this manual routing block.

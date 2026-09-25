@@ -1,5 +1,5 @@
 ---
-name: chanks-7-session-doc
+name: chanks-5-session-doc
 description: "Trigger: final session closure, close session, document session. Gather post-delivery evidence for the responsible parent."
 license: Apache-2.0
 metadata:

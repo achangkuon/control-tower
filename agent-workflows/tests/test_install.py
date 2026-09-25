@@ -601,6 +601,25 @@ class InstallerTests(unittest.TestCase):
         self.assertIn("`LISTO`", content)
         self.assertIn("never selects work", content)
 
+    def test_renamed_runtime_trees_are_archived_without_losing_nested_user_bytes(self):
+        runtime = INSTALLER.runtime_skill_roots(self.home)[0]
+        for old in ("chanks-6-politica-de-entrega", "chanks-7-session-doc"):
+            retired = runtime / old
+            (retired / "references").mkdir(parents=True)
+            (retired / "references/local.md").write_bytes(f"custom {old}".encode())
+
+        INSTALLER.apply(self.home, ROOT)
+
+        archive = INSTALLER.retired_skill_archive_root(runtime)
+        for old, new in (("chanks-6-politica-de-entrega", "chanks-5-politica-de-entrega"),
+                         ("chanks-7-session-doc", "chanks-5-session-doc")):
+            self.assertFalse((runtime / old).exists())
+            self.assertTrue((runtime / new / "SKILL.md").is_file())
+            preserved = list(archive.glob(f"{old}-*/references/local.md"))
+            self.assertEqual(len(preserved), 1)
+            self.assertEqual(preserved[0].read_bytes(), f"custom {old}".encode())
+        self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
+
     def test_hyphenated_retired_skill_is_actually_retired(self):
         # Listed only under the underscore spelling, it matched no directory on disk.
         retired = INSTALLER.runtime_skill_roots(self.home)[0] / "coordinador-multi-agente"
@@ -612,10 +631,38 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
 
 
+class StageFiveSkillInventoryTests(unittest.TestCase):
+    def test_new_names_ship_complete_source_trees_and_retire_old_names(self):
+        replacements = {
+            "chanks-6-politica-de-entrega": "chanks-5-politica-de-entrega",
+            "chanks-7-session-doc": "chanks-5-session-doc",
+        }
+        installed = {(skill, relative.as_posix()) for skill, relative, _ in INSTALLER.source_files(ROOT)}
+        for old, new in replacements.items():
+            with self.subTest(skill=new):
+                self.assertIn(new, INSTALLER.CHANKS_SKILLS)
+                self.assertNotIn(old, INSTALLER.SKILLS)
+                self.assertIn(old, INSTALLER.RETIRED_SKILLS)
+                source = ROOT / "skills" / new
+                self.assertEqual(
+                    {path.relative_to(source).as_posix() for path in source.rglob("*") if path.is_file()},
+                    {relative for skill, relative in installed if skill == new},
+                )
+        self.assertEqual(
+            {relative for skill, relative in installed if skill == "chanks-5-politica-de-entrega"},
+            {"SKILL.md"},
+        )
+        self.assertEqual(
+            {relative for skill, relative in installed if skill == "chanks-5-session-doc"},
+            {"SKILL.md", "assets/project-notion-map.json",
+             "assets/session-doc.schema.json", "references/links.md"},
+        )
+
+
 class SessionDocSchemaTest(unittest.TestCase):
     """The oneOf contract gates session closure, so its matrix is pinned here."""
 
-    SCHEMA = ROOT / "skills/chanks-7-session-doc/assets/session-doc.schema.json"
+    SCHEMA = ROOT / "skills/chanks-5-session-doc/assets/session-doc.schema.json"
     HEX, DASHED = "387e23cc934581f99b44eb519210c801", "387e23cc-9345-81f9-9b44-eb519210c801"
     SCRIPT = ("const A=require('ajv'),f=require('fs');const v=new A({strict:false}).compile("
               "JSON.parse(f.readFileSync(process.argv[1],'utf8')));console.log("

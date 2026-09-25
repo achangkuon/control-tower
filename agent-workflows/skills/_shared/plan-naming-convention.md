@@ -240,7 +240,7 @@ rewrite a frozen product archive. Report unknown historical evidence rather than
 
 `chanks-0-` is cross-cutting, including `chanks-0-mensajes-visibles`; `chanks-2-planificador-granular`
 prepares Sessions; `chanks-3-*` admits/routes only; `chanks-4-puente` translates into the authorized
-native flow; and `chanks-7-session-doc` gathers closure evidence. These IDs are compatibility names,
+native flow; and `chanks-5-session-doc` gathers closure evidence. These IDs are compatibility names,
 not hierarchy levels or runtime authority.
 
 ## 20. Compliance checklist

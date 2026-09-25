@@ -45,8 +45,8 @@ CHANKS_SKILLS = (
     "chanks-3-despacho-herdr",
     "chanks-4-puente",
     "chanks-4-unattended-implementation",
-    "chanks-6-politica-de-entrega",
-    "chanks-7-session-doc",
+    "chanks-5-politica-de-entrega",
+    "chanks-5-session-doc",
 )
 
 # Non-Chanks support skills.
@@ -60,6 +60,8 @@ SKILLS = SHARED + CHANKS_SKILLS + SUPPORT_SKILLS
 # Explicit ownership migration. Normal installs retire only these known derived
 # copies; unlisted directories remain untouched.
 RETIRED_SKILLS = (
+    "chanks-6-politica-de-entrega",
+    "chanks-7-session-doc",
     "session-doc",
     "politica-de-entrega",
     "unattended-implementation",

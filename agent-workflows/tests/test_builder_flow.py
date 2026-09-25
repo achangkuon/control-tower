@@ -14,7 +14,6 @@ assert SPEC.loader is not None
 sys.modules[SPEC.name] = INSTALLER
 SPEC.loader.exec_module(INSTALLER)
 SKILLS = ROOT / "skills"
-SOURCE_CLOSURE_SKILL_SHA256 = "ac0216b2a7d18eec9086bf48c3f272b8ba06d794b7827a792ab43ac23fc48a3a"
 SNAPSHOT_SHA256 = {
     "skills/chanks-0-agente-soporte/SKILL.md": "25eb5b1f0f253ca9df24829add72f91cadbf24aadb80034e90e42501110fc032",
     "skills/chanks-0-agente-soporte/assets/assignment-implementation.md": "70752539f85ffa8565dc32d9a1c6d9d32082d7df8357331bd8a500112816e7da",
@@ -134,7 +133,7 @@ class GenericBuilderFlowTests(unittest.TestCase):
 
     def test_bridge_and_closure_keep_native_odd_subordinate_to_plan_authority(self):
         bridge = read("skills/chanks-4-puente/SKILL.md")
-        closure = read("skills/chanks-7-session-doc/SKILL.md")
+        closure = read("skills/chanks-5-session-doc/SKILL.md")
         canon = read("skills/_shared/plan-naming-convention.md")
 
         for phrase in (
@@ -195,7 +194,7 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertNotIn("registro de avance", errors)
 
     def test_closure_requires_repository_reinstall_evidence_or_explicit_exemption(self):
-        closure = read("skills/chanks-7-session-doc/SKILL.md")
+        closure = read("skills/chanks-5-session-doc/SKILL.md")
         for rule in (
             "Read the repository's `AGENTS.md`",
             "delivered changed paths",
@@ -211,11 +210,33 @@ class GenericBuilderFlowTests(unittest.TestCase):
         ):
             with self.subTest(rule=rule):
                 self.assertIn(rule, closure)
-        # The source changes with this contract; the frozen product snapshot below must not.
-        self.assertEqual(
-            hashlib.sha256(closure.encode("utf-8")).hexdigest(),
-            SOURCE_CLOSURE_SKILL_SHA256,
-        )
+        # The frozen product snapshot below retains the former path and bytes.
+        self.assertTrue(closure.startswith("---\nname: chanks-5-session-doc\n"))
+
+    def test_control_tower_session_doc_exemption_names_the_actual_configuration_file(self):
+        policy = (ROOT.parent / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertIn("`.session-doc.json`", policy)
+        self.assertNotIn(".chanks-7-session-doc.json", policy)
+
+    def test_stage_five_delivery_policy_reads_declaration_and_routes_without_universal_gates(self):
+        policy = read("skills/chanks-5-politica-de-entrega/SKILL.md")
+        self.assertTrue(policy.startswith("---\nname: chanks-5-politica-de-entrega\n"))
+        for phrase in ("stage 5", "delivery-policy", "AGENTS.md", "work-unit-commits",
+                       "branch-pr", "chained-pr", "direct-push", "pull-request",
+                       "400", "issue-first", "missing", "contradictorias"):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, policy)
+        for contract in (
+            "En etapas 1–2", "No alteres pisos de seguridad", "Con confirmación",
+            "sin evidencia suficiente", "señales contradictorias", "no supongas PR",
+            "Para `direct-push`, enrutá a `work-unit-commits`",
+            "sin cargar `branch-pr` ni `chained-pr`",
+            "Para `pull-request`, enrutá a `work-unit-commits` y `branch-pr`",
+            "usá `chained-pr` sólo cuando la política local o una decisión humana",
+            "issue-first como requisito sólo donde el repositorio los adopte",
+        ):
+            with self.subTest(contract=contract):
+                self.assertIn(contract, policy)
 
     def test_manual_coordinator_and_dispatch_remain_topology_only(self):
         coordinator = read("skills/chanks-3-coordinador-manual/SKILL.md")

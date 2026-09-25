@@ -52,7 +52,7 @@ an assignment state or delivery permission.
 A `COMPLETED` event can enter serial integration only with that verified review-ready witness:
 integrate one completed Sesión at a time. Main
 may integrate that already-produced commit, then record planning and closure evidence through
-`chanks-7-session-doc`, then delegate retirement to `chanks-3-despacho-herdr`. Delete the marker
+`chanks-5-session-doc`, then delegate retirement to `chanks-3-despacho-herdr`. Delete the marker
 only after verified serial integration and stage-5 closure, never merely on COMPLETED. Preserve
 marker/evidence on BLOCKED, FAILED, ambiguous, orphaned, or not-yet-closed outcomes; stop rather
 than discard unverifiable evidence. An integration conflict stops and escalates without resolution.
@@ -61,7 +61,7 @@ the worker evidence; no polling, retry, state, correction, or inferred completio
 worker or absent Main preserves the worktree and candidate and does not create a retry,
 support, or cross-runtime path.
 
-For the contractual two-worker journey: terminal A integrates, closes through `chanks-7-session-doc`,
+For the contractual two-worker journey: terminal A integrates, closes through `chanks-5-session-doc`,
 and retires through `chanks-3-despacho-herdr`; terminal B enters integration only after A completes
 serial integration, closure, and retirement.
 
@@ -134,5 +134,5 @@ closure, or retirement; otherwise preserve and report worker evidence.
 ## References
 
 - `../chanks-3-despacho-herdr/SKILL.md`
-- `../chanks-7-session-doc/SKILL.md`
+- `../chanks-5-session-doc/SKILL.md`
 - `herdr` skill

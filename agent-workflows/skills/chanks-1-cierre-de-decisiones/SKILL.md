@@ -25,7 +25,7 @@ Activa sólo ante un new explicit human request para resolver la decisión nombr
 
 | Situación | Acción |
 |---|---|
-| No hay política de entrega declarada | Cargar `chanks-6-politica-de-entrega`. |
+| No hay política de entrega declarada | Cargar `chanks-5-politica-de-entrega`. |
 | La pregunta pertenece a una clase que siempre escala | Exigir respuesta humana. |
 | La decisión carece de Sesión dueña | Incluir deuda de enumeración en el delta. |
 | El impedimento es una dependencia | Reportarlo aparte; no contarlo como decisión resuelta. |
@@ -49,4 +49,4 @@ Devuelve alcance auditado, decisiones presentadas/resueltas, delta enviado, resu
 - `references/decision-extraction.md`
 - `assets/resolution-entry.md`
 - `../chanks-0-agente-soporte/SKILL.md`
-- `../chanks-6-politica-de-entrega/SKILL.md`
+- `../chanks-5-politica-de-entrega/SKILL.md`

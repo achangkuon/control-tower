@@ -65,7 +65,7 @@ class CoordinadorManualTests(unittest.TestCase):
             "two approved Pi workers receive independent fire-and-forget handoffs",
             "handoff B is sent without waiting for worker A",
             "Main returns after both delivery results",
-            "terminal A integrates, closes through `chanks-7-session-doc`, and retires through `chanks-3-despacho-herdr`",
+            "terminal A integrates, closes through `chanks-5-session-doc`, and retires through `chanks-3-despacho-herdr`",
             "terminal B enters integration only after A completes serial integration, closure, and retirement",
         )
 
