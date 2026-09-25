@@ -2105,7 +2105,7 @@ sesiones:
     recurso:
       []
     archivos:
-      - agent-workflows/skills/chanks-7-session-doc/SKILL.md
+      - agent-workflows/skills/chanks-5-session-doc/SKILL.md
       - agent-workflows/skills/chanks-0-agente-soporte/SKILL.md
       - agent-workflows/templates/session-routing.md
     encargo:
@@ -3099,6 +3099,8 @@ sesiones:
     cimientos:
       - AGENTS.md
     recurso: []
+    entrega:
+      commit: 929ac91594a94b81c5747a7340f5c123f0a18355
     archivos:
       - agent-workflows/skills/chanks-6-politica-de-entrega/SKILL.md
       - agent-workflows/skills/chanks-5-politica-de-entrega/SKILL.md
