@@ -9763,6 +9763,8 @@ sesiones:
         render.go:458-471 (resumenBloqueo) y sus llamadores render.go:127 y faltan.go:146.
         Corrección del plan: commit 50713da. Diagnóstico: Engram topic
         sessions/torre-v1/readiness-blockers.
+    entrega:
+      commit: d5cb7b8a6a92c92a2e93d9b8c3f287fa6493c0c2
 references:
   future_successors:
     - id: S102
