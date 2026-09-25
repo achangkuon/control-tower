@@ -15,6 +15,64 @@ const archiveDir = "openspec/archive/sesiones/"
 
 func archivePath(id string) string { return archiveDir + id + ".md" }
 
+// canonicalPlanPath resolves planPath the same way canonicalRoot resolves a
+// root: absolute, symlink-free, cleaned. A relative planPath (the CLI default
+// `-f openspec/plan.yaml` stays relative even under `-C .`) must canonicalize
+// to the same bytes as an equivalent absolute one, or the safety comparison
+// below rejects every relative invocation regardless of the actual file.
+func canonicalPlanPath(planPath string) (string, error) {
+	abs, err := filepath.Abs(planPath)
+	if err != nil {
+		return "", err
+	}
+	real, err := filepath.EvalSymlinks(abs)
+	if err != nil {
+		return "", fmt.Errorf("no se pudo resolver el plan %s: %w", abs, err)
+	}
+	return filepath.Clean(real), nil
+}
+
+// lineageFindings reuses checkLinaje/checkGrafo rather than re-deriving a
+// narrower archivar-only lineage rule that could drift from what `radar
+// check` actually enforces.
+func lineageFindings(p *Plan) []Hallazgo {
+	var h []Hallazgo
+	for _, f := range append(p.checkLinaje(), p.checkGrafo()...) {
+		if f.Severidad == "error" {
+			h = append(h, f)
+		}
+	}
+	return h
+}
+
+// archivingWouldInvalidateLineage simulates archiving id and reports the first
+// lineage error that only appears afterward — e.g. the target itself declares
+// `reemplaza` (checkLinaje: "declara reemplazos pero está archivada"), or some
+// other active Sesión still depends directly on id while an active successor
+// already replaces it (checkGrafo: "dependencias reemplazadas"). Refusing here
+// keeps the plan valid; archivar never writes a Session into a state `radar
+// check` would immediately reject.
+func archivingWouldInvalidateLineage(p *Plan, id string) *Hallazgo {
+	before := map[Hallazgo]bool{}
+	for _, f := range lineageFindings(p) {
+		before[f] = true
+	}
+	simulated := *p
+	simulated.Sesiones = append([]Sesion(nil), p.Sesiones...)
+	for i := range simulated.Sesiones {
+		if simulated.Sesiones[i].ID == id {
+			simulated.Sesiones[i].Archivada = true
+		}
+	}
+	for _, f := range lineageFindings(&simulated) {
+		if !before[f] {
+			f := f
+			return &f
+		}
+	}
+	return nil
+}
+
 // sessionSpan locates a top-level YAML sequence item without round-tripping the plan.
 // Whitespace and standalone comments after the item belong to the following
 // plan content, not its history.
@@ -104,7 +162,10 @@ func sessionSpan(raw []byte, id string) (int, int, []byte, error) {
 }
 
 func archiveSession(planPath, root, id string) error {
-	if !sesionID.MatchString(id) {
+	// IDs are permanent and never renumbered (canon), so a legacy dotted Session
+	// (S1.11) is as archivable as a plain one; legacySesionID is a strict
+	// superset of sesionID and accepts both.
+	if !legacySesionID.MatchString(id) {
 		return fmt.Errorf("ID inválido: %q", id)
 	}
 	root, err := canonicalRoot(root)
@@ -115,7 +176,14 @@ func archiveSession(planPath, root, id string) error {
 	if err != nil {
 		return err
 	}
-	if filepath.Clean(planPath) != filepath.Join(root, filepath.FromSlash(planFile)) {
+	// planPath may arrive relative (e.g. `-C .` leaves the default `-f` relative
+	// too): canonicalize before comparing against the canonical root join, the
+	// same way canonicalRoot already does for root itself.
+	canonicalPlanPath, err := canonicalPlanPath(planPath)
+	if err != nil {
+		return err
+	}
+	if canonicalPlanPath != filepath.Join(root, filepath.FromSlash(planFile)) {
 		return fmt.Errorf("archivar sólo admite openspec/plan.yaml en la raíz seleccionada")
 	}
 	info, err := os.Lstat(planPath)
@@ -160,6 +228,9 @@ func archiveSession(planPath, root, id string) error {
 	}
 	if p.EstadosAt(root, head)[id] != Completo {
 		return fmt.Errorf("%s no está completa", id)
+	}
+	if h := archivingWouldInvalidateLineage(p, id); h != nil {
+		return fmt.Errorf("%s: archivar dejaría el plan inválido (%s): %s", id, h.Regla, h.Detalle)
 	}
 	start, end, block, err := sessionSpan(raw, id)
 	if err != nil {
@@ -299,7 +370,7 @@ func validateArchivedReferenceShape(raw []byte) error {
 // archivedSession reads the exact fenced block; a reference may never redirect
 // to another path, supply another ID or replace the delivery evidence.
 func archivedSession(root string, ref Sesion) (Sesion, error) {
-	if !sesionID.MatchString(ref.ID) || ref.Historico != archivePath(ref.ID) {
+	if !legacySesionID.MatchString(ref.ID) || ref.Historico != archivePath(ref.ID) {
 		return Sesion{}, fmt.Errorf("referencia histórica de %s inválida", ref.ID)
 	}
 	if _, err := exactRepoFile(root, ref.Historico); err != nil {
