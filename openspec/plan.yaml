@@ -2786,6 +2786,8 @@ sesiones:
       - S160
     cimientos: []
     recurso: []
+    entrega:
+      commit: 282cfceca77375c253ad6feee85559aef56d2387
     archivos:
       - agent-workflows/tools/radar/main.go
       - agent-workflows/tools/radar/state.go
