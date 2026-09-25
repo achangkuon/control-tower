@@ -24,7 +24,8 @@
 - [x] T1 — Add strict-TDD contracts for click removal, exact marker-bound automatic admission, fail-closed drift/races, and preserved control exports. Proof: focused RED exposed caller-selected admission, the activation tool, mutable markers, and synthetic Cimiento confirmation; rebuilt candidate affected suite passed 237/237.
 - [x] T2 — Replace the Pi activation flow with fresh per-mutation Radar admission while preserving switch, confinement, and authority boundaries. Proof: descriptor-bound symlink-swap, exact lease lifecycle/parallelism/off→on, ordinary-only admission, shared-case block, and real read-only bash tests passed; independent verifier returned PASS.
 - [x] T3 — Add Main stage guidance and the portable non-blocking Claude hook, with 💪 only on observed stage transitions and no settings mutation. Proof: mode/syntax/payload, invalid-output, same-stage, and settings-free tests passed; independent verifier inspected lifecycle-bound process use.
-- [ ] T4 — Run focused/regression verification and native review or fallback, deliver the coherent size-exception commit, record closure, then perform the approved final skill installation/propagation and separately resolve Claude hook wiring.
+- [x] T4 — Run focused/regression verification and native review or fallback, deliver the coherent size-exception commit, record closure, then perform the approved final skill installation/propagation. Proof: `f225de2` and closure `79d3c36` on `origin/master`; Radar reports S159 ✅ COMPLETO; `install.py --check` reports runtime copies and manual blocks match; Claude, Codex, OpenCode, and Pi hold byte-identical `chanks-*` skills including `chanks-5-*`.
+- [ ] T5 — Resolve Claude hook wiring: `agent-workflows/tools/hooks/chanks-etapa.sh` is not referenced from `~/.claude/settings.json`; wiring it requires an explicit maintainer decision.
 
 ## Delivery checkpoint (2026-09-25)
 
@@ -35,4 +36,9 @@
 - Implementation commit `f225de2f5dc26d6a67e2ac362e80abdcf6d1c980` was pushed directly to `master`; pre-push passed 1,486/1,486 repository tests.
 - `openspec/plan.yaml` now records the immutable commit and the approved ordinary-only/shared-evidence and size-exception decisions.
 
-Next: commit/push this closure record, run the already approved final repository skill installation across all configured runtimes, verify it, and ask the separate explicit question before wiring the Claude hook in personal settings.
+## Installation checkpoint (2026-09-25)
+
+- The approved installation completed for every runtime that `install.py` manages; the Pi process running it then exited with `ENOENT` from its recursive skills watcher, a known effect of the sync replacing skill directories under a live Pi session. The installed state was re-verified afterward from a separate session.
+- Hermes (`~/.hermes/skills`) is not an `install.py` target and still holds the pre-S158 names `chanks-6-politica-de-entrega` and `chanks-7-session-doc`. This drift predates S159 and is outside its scope.
+
+Next: ask the maintainer whether to wire the Claude hook (T5).
