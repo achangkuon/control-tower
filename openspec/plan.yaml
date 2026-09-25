@@ -9765,6 +9765,501 @@ sesiones:
         sessions/torre-v1/readiness-blockers.
     entrega:
       commit: d5cb7b8a6a92c92a2e93d9b8c3f287fa6493c0c2
+  - id: S155
+    zona: metodo
+    prioridad: metodo-v1
+    resultado: >-
+      Radar ofrece `radar etapa`, que calcula desde el dato del plan y la evidencia de Git qué
+      etapas de la guía Chanks de 5 etapas están habilitadas para una Sesión, y calcula 🔵 EN
+      CURSO desde una marca temporal fuera de plan.yaml en vez de dejarlo deliberadamente ausente.
+    autoridad: >-
+      Aprobación explícita de Emilio el 2026-09-24 en esta Conversación: Chanks pasa a ser una
+      guía de etapas de 5 etapas (1 Definir, 2 Preparar, 3 Despachar, 4 Implementar y revisar =
+      gentle-ai, 5 Entregar y cerrar). Análisis por tramos en el documento 'Chanks como guía de
+      etapas — análisis por tramos' (claude.ai artifact 56421c44-de32-4b92-b4f7-6b428a6db555) y
+      Engram topics chanks/stage-router-*.
+    depende_de: []
+    cimientos: []
+    recurso: []
+    archivos:
+      - agent-workflows/tools/radar/main.go
+      - agent-workflows/tools/radar/state.go
+      - agent-workflows/tools/radar/snapshot.go
+      - agent-workflows/tools/radar/render.go
+      - agent-workflows/tools/radar/faltan.go
+      - agent-workflows/tools/radar/git.go
+      - agent-workflows/tools/radar/etapa.go
+      - agent-workflows/tools/radar/etapa_test.go
+      - agent-workflows/tools/radar/state_test.go
+      - agent-workflows/tools/radar/faltan_test.go
+      - agent-workflows/tools/radar/render_test.go
+      - agent-workflows/tools/radar/testdata/ROADMAP.golden.md
+      - agent-workflows/tools/radar/testdata/faltan.golden.txt
+    encargo:
+      pedido_contexto: >-
+        Chanks deja de mostrar 💪 en cada bloqueo y de exigir el clic de activación
+        (chanks_request_activation + ctx.ui.confirm) que hoy vive en S153; en su lugar, un
+        cerebro en Radar calcula qué etapa de la guía de 5 etapas corresponde a una Sesión y sólo
+        se anuncia en las transiciones. Hoy state.go:29-31 deja 🔵 EN CURSO deliberadamente
+        ausente porque es una marca de ejecución, no un dato de plan; esta Sesión le da esa marca
+        un lugar fuera de plan.yaml. Esta Sesión construye el cerebro; no toca las skills que lo
+        consumen ni la extensión de Pi, que son S157 y S159.
+      resultado_comportamiento: >-
+        `radar etapa <ID>` calcula, sin interpretar texto humano, el menú de etapas que la
+        evidencia permite para una Sesión: sin Sesión para una idea suelta ofrece sólo la etapa 1
+        (Definir); una Sesión con Encargo incompleto ofrece la etapa 2 (Preparar); LISTO ofrece
+        la etapa 3 (Despachar); EN CURSO ofrece la etapa 4 (Implementar y revisar); un archivo
+        odd/tasks/*.md con cada tarea marcada más una constancia de Intercom "listo para
+        revisión" del worker ofrecen la etapa 5 (Entregar y cerrar). El modelo elige sólo entre
+        las etapas que el comando ofrece; si ninguna corresponde, hace una sola pregunta y no
+        adivina.
+
+        🔵 EN CURSO se calcula a partir de una marca temporal por Sesión bajo el directorio común
+        de Git (por ejemplo `.git/chanks/despachos/<ID>.json`), escrita por el despacho o por
+        Main cuando toma una Sesión directamente, y borrada al cerrar la etapa 5; la marca nunca
+        se escribe en plan.yaml. El resumen de retomar trabajo ofrece primero las Sesiones EN
+        CURSO con marca vigente y después las LISTO. Una marca cuya rama o worktree ya no existe
+        se reporta como huérfana en el resumen, sin borrarla automáticamente.
+
+        Pruebas nuevas cubren el menú de las cinco etapas y el cálculo de EN CURSO, incluida una
+        marca huérfana. `go test ./...` de Radar pasa completo y `radar check` sobre el plan
+        vigente sigue sin errores.
+      restricciones_decisiones: >-
+        Gentle AI desglosa, implementa y verifica mediante ODD con TDD estricto; SDD sólo por
+        solicitud humana explícita. Sólo los archivos declarados están autorizados; toda
+        expansión requiere aprobación humana y compatibilidad fresca antes de escribir. S115
+        reserva también check.go y check_test.go pero está PLANIFICADO detrás de S114 DIFERIDO:
+        esta Sesión no toca ninguno de los dos. El cerebro calcula el menú; no decide por el
+        humano ni reemplaza las preguntas de escalación existentes. Sumar el subcomando nuevo y
+        mover el cálculo de EN CURSO fuera de state.go:29-31 se estima entre 600 y 900 líneas de
+        diff; Emilio aprobó una excepción a la referencia de 400 líneas para un único commit
+        coherente de S155. La excepción no amplía archivos, elimina pruebas, omite revisión ni
+        autoriza por sí sola implementar o entregar. Al entregar se reinstala
+        ~/.local/bin/radar para que el pre-push y las demás Sesiones usen la versión nueva; la
+        reinstalación es un paso operativo, no un archivo del plan.
+      referencias: >-
+        state.go:29-31 (EN CURSO deliberadamente ausente). Corte Torre V1: Engram 11327 (Radar
+        incluido en la Torre V1). Documento de diseño: 'Chanks como guía de etapas — análisis por
+        tramos' (claude.ai artifact 56421c44-de32-4b92-b4f7-6b428a6db555) y Engram topics
+        chanks/stage-router-*. S154 (agent-workflows/tools/radar/check.go, render.go, faltan.go)
+        como antecedente inmediato del mismo territorio. Revalidar contra el código vigente antes
+        de implementar.
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Quién decide la etapa que corresponde a una Sesión: el modelo interpretando texto o un menú determinista?"
+        resolucion: Un menú determinista calculado por Radar desde el dato y Git; el modelo elige sólo entre las opciones que el menú ofrece y pregunta una vez si ninguna corresponde.
+        autoridad: "Aprobación explícita de Emilio el 2026-09-24 en esta Conversación (documento 'Chanks como guía de etapas — análisis por tramos', artifact 56421c44-de32-4b92-b4f7-6b428a6db555)."
+        clase: contrato-visible-del-producto
+        falsificador: El modelo asigna una etapa sin que el menú la ofrezca, o dos criterios del menú se solapan sin desempate determinista.
+        descartadas:
+          - opcion: Dejar que el modelo interprete libremente en qué etapa está una Sesión.
+            razon: Pierde verificabilidad y repite el problema que motivó reemplazar el clic de activación.
+        contaminaba: [S155, S157, S159]
+      - tipo: resuelta
+        pregunta: "¿Dónde vive la marca de 🔵 EN CURSO y quién la escribe y la borra?"
+        resolucion: Una marca temporal por Sesión en el directorio común de Git, nunca en plan.yaml; la escribe el despacho o Main al tomar la Sesión, y se borra al cerrar la etapa 5. Una marca huérfana se reporta, no se borra sola.
+        autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación.
+        clase: contrato-visible-del-producto
+        falsificador: EN CURSO se escribe en plan.yaml, o Radar borra una marca huérfana sin que el humano lo pida.
+        descartadas:
+          - opcion: Seguir sin EN CURSO calculado, como hoy en state.go:29-31.
+            razon: Main no puede distinguir una Sesión realmente en curso de una LISTO al ofrecer el resumen de retomar.
+        contaminaba: [S155, S157, S159]
+      - tipo: resuelta
+        pregunta: "¿Cómo se trata el tamaño de S155, que supera la referencia de 400 líneas de diff?"
+        resolucion: Un solo commit coherente con excepción de tamaño para S155; conserva pruebas, revisión proporcional y reversibilidad de esa unidad.
+        autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación.
+        clase: expansion-de-alcance
+        falsificador: La excepción se usa para agregar archivos fuera de los declarados, saltear pruebas o revisión, o mezclar resultados ajenos a S155.
+        descartadas:
+          - opcion: Commits secuenciales verificables.
+            razon: El cerebro y su cálculo de EN CURSO forman una unidad coherente; partirla deja un menú a medias.
+        contaminaba: [S155]
+  - id: S156
+    zona: metodo
+    prioridad: metodo-v1
+    resultado: >-
+      El canon y las skills de las etapas 1 y 2 dejan de describir el clic de activación y la
+      revisión única por Sesión, y tratan el tope de 400 líneas como referencia y no como cupo.
+    autoridad: >-
+      Aprobación explícita de Emilio el 2026-09-24 en esta Conversación: Chanks pasa a ser una
+      guía de etapas de 5 etapas (1 Definir, 2 Preparar, 3 Despachar, 4 Implementar y revisar =
+      gentle-ai, 5 Entregar y cerrar). Análisis por tramos en el documento 'Chanks como guía de
+      etapas — análisis por tramos' (claude.ai artifact 56421c44-de32-4b92-b4f7-6b428a6db555) y
+      Engram topics chanks/stage-router-*.
+    depende_de: []
+    cimientos: []
+    recurso: []
+    archivos:
+      - agent-workflows/skills/_shared/plan-naming-convention.md
+      - agent-workflows/skills/chanks-1-autoridad/SKILL.md
+      - agent-workflows/skills/chanks-2-planificador-granular/SKILL.md
+      - agent-workflows/skills/chanks-1-adopcion/references/errores-conocidos.md
+      - agent-workflows/tests/test_builder_flow.py
+    encargo:
+      pedido_contexto: >-
+        plan-naming-convention.md §15 (línea ~188) todavía describe "una Sesión review, no un
+        reviewer loop por tarea o por Módulo", lo que choca con la revisión dentro de la etapa 4
+        que S157 implementa: gentle-ai RDD corre por commit de unidad de trabajo, incluido el
+        tramo final pendiente. chanks-1-autoridad/SKILL.md:21 y
+        chanks-2-planificador-granular/SKILL.md:30 nombran la llave de planificación del clic de
+        activación que S153 introdujo y que la guía de etapas reemplaza por transiciones.
+        chanks-1-adopcion/references/errores-conocidos.md:89-94 describe el tope de 400 líneas
+        como un "cupo" que se agota, en vez de una referencia de planificación.
+        test_builder_flow.py afirma en ~107-113 que chanks_request_activation aparece en
+        session-kickoff y en la skill de planificación.
+      resultado_comportamiento: >-
+        plan-naming-convention.md ya no dice que existe una sola revisión por Sesión; describe la
+        revisión dentro de la etapa 4, por commit de unidad de trabajo, incluido el tramo final
+        pendiente antes de cerrar. chanks-1-autoridad/SKILL.md y
+        chanks-2-planificador-granular/SKILL.md dejan de nombrar la llave de planificación atada
+        al clic de activación y describen en su lugar la transición 💪 a la etapa que corresponde.
+        errores-conocidos.md describe el tope de 400 líneas como referencia de planificación, no
+        como cupo que se agota o se reparte. test_builder_flow.py deja de exigir
+        chanks_request_activation en session-kickoff y en la skill de planificación granular; sus
+        aserciones nuevas verifican el lenguaje de transición por etapas en su lugar. La suite del
+        Método pasa completa.
+      restricciones_decisiones: >-
+        Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana
+        explícita. Sólo los archivos declarados están autorizados; toda expansión requiere
+        aprobación humana y compatibilidad fresca antes de escribir. No se renombra ninguna skill
+        en esta Sesión: los renombres de chanks-6-politica-de-entrega y chanks-7-session-doc
+        pertenecen a S158. La convención canónica también está instalada en
+        ~/.claude/skills/_shared vía install.py; al entregar se ofrece propagarla a los demás
+        agentes (Codex, OpenCode, Pi, Hermes) siguiendo la rutina ya establecida para propagar
+        skills.
+      referencias: >-
+        plan-naming-convention.md línea ~188 ("una Sesión review"). chanks-1-autoridad/SKILL.md:21.
+        chanks-2-planificador-granular/SKILL.md:30. errores-conocidos.md:89-94.
+        test_builder_flow.py:107-113 (aserción actual de chanks_request_activation). Documento de
+        diseño: 'Chanks como guía de etapas — análisis por tramos' (claude.ai artifact
+        56421c44-de32-4b92-b4f7-6b428a6db555) y Engram topics chanks/stage-router-*. Aprobación:
+        Emilio, 2026-09-24, esta Conversación. Revalidar contra el árbol vigente antes de
+        escribir.
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Se retira la regla de una sola revisión por Sesión del canon antes o después de que S157 implemente la revisión por commit dentro de la etapa 4?"
+        resolucion: Antes; el canon describe la regla de producto que S157 va a implementar, no al revés, y las skills chanks-1-autoridad y chanks-2-planificador-granular se actualizan en la misma Sesión para no dejar el canon y las skills de etapas 1-2 contradiciéndose entre sí.
+        autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación.
+        clase: contrato-visible-del-producto
+        falsificador: El canon sigue describiendo una revisión única por Sesión después de que S157 entregue revisión por commit, o las skills de etapas 1-2 citan un mecanismo de activación que ya no existe.
+        descartadas:
+          - opcion: Cambiar el canon recién cuando S157 entregue.
+            razon: Deja el canon describiendo un comportamiento que el código de S157 ya contradice.
+        contaminaba: [S156, S157]
+  - id: S157
+    zona: metodo
+    prioridad: metodo-v1
+    resultado: >-
+      session-kickoff deja de pedir el clic de activación humano; Radar libera automáticamente el
+      bloqueo de escritura del worktree al admitir la Sesión, despacho-herdr y coordinador-manual
+      escriben y borran la marca EN CURSO, la revisión gentle-ai vive dentro de la etapa 4 por
+      commit de unidad de trabajo, y el puente queda liviano conservando su contrato de evidencia.
+    autoridad: >-
+      Aprobación explícita de Emilio el 2026-09-24 en esta Conversación: Chanks pasa a ser una
+      guía de etapas de 5 etapas (1 Definir, 2 Preparar, 3 Despachar, 4 Implementar y revisar =
+      gentle-ai, 5 Entregar y cerrar). Análisis por tramos en el documento 'Chanks como guía de
+      etapas — análisis por tramos' (claude.ai artifact 56421c44-de32-4b92-b4f7-6b428a6db555) y
+      Engram topics chanks/stage-router-*.
+    depende_de:
+      - S155
+      - S156
+    cimientos: []
+    recurso: []
+    archivos:
+      - agent-workflows/skills/chanks-3-session-kickoff/SKILL.md
+      - agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md
+      - agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md
+      - agent-workflows/skills/chanks-4-puente/SKILL.md
+      - agent-workflows/skills/chanks-0-agente-soporte/assets/assignment-implementation.md
+      - agent-workflows/tests/test_builder_flow.py
+      - agent-workflows/tests/test_coordinador_manual.py
+    encargo:
+      pedido_contexto: >-
+        session-kickoff/SKILL.md pide hoy en sus líneas ~25-45 el clic de activación
+        (chanks_request_activation + ctx.ui.confirm) que S153 introdujo; la guía de etapas lo
+        retira porque el cerebro de S155 ya calcula cuándo una Sesión puede pasar a la etapa 3.
+        despacho-herdr/SKILL.md:51 prohíbe hoy una forma de bloqueo pensada para la Torre ACTIVE
+        retirada; esa prohibición se acota a ese camino legado y despacho-herdr pasa a escribir la
+        marca EN CURSO que S155 define al despachar. coordinador-manual la borra al cerrar. El
+        puente (chanks-4-puente/SKILL.md) acumuló instrucciones de topología que ya no aplican
+        (líneas 15-64, 84-99, 102-103, 107-122) y necesita adelgazarse sin perder el contrato de
+        devolver evidencia ni la excepción de dos líneas para SDD. La skill unattended ya se
+        entregó en el commit 4989357, fuera de este plan por decisión de Emilio, y agregó el
+        bloque manual UNATTENDED-SEALED-CONSENT a los cinco archivos de instrucciones de agente;
+        la plantilla de handoff y el despacho deben alinearse con ese sello (viaja en el handoff
+        de Intercom, y el aviso terminal lleva el reporte de despertar).
+      resultado_comportamiento: >-
+        session-kickoff ya no pide ni espera un clic humano de activación; cuando Radar admite la
+        Sesión (misma identidad de Encargo nativo, o primer Módulo pendiente para legacy), la
+        etapa 4 queda disponible y la skill anuncia 💪 sólo en esa transición, nunca en un
+        bloqueo.
+
+        despacho-herdr escribe la marca EN CURSO definida por S155 al despachar una Sesión
+        aprobada a un worker Pi persistente, y la prohibición de su línea 51 queda acotada
+        exactamente al camino Torre ACTIVE retirado, sin alcanzar el despacho manual vigente.
+        coordinador-manual borra esa marca al aceptar la evidencia terminal y cerrar. La
+        plantilla de handoff y el despacho reconocen el sello UNATTENDED-SEALED-CONSENT: lo hacen
+        viajar en el handoff de Intercom y esperan que el aviso terminal traiga el reporte de
+        despertar cuando la Sesión se selló para ejecución desatendida.
+
+        chanks-4-puente pierde las instrucciones de topología retiradas (15-64, 84-99, 102-103,
+        107-122) y conserva sólo el contrato de traducir evidencia en ambas direcciones sin
+        escribir el plan, la excepción de dos líneas para SDD, y la frase "review outcome never
+        authorizes delivery" que test_builder_flow.py:120 sigue verificando.
+
+        assignment-implementation.md exige que el worker mande por Intercom "listo para revisión"
+        al completar su lista de tareas ODD, y declara los campos del sello desatendido que el
+        handoff debe preservar. Las pruebas de test_builder_flow.py y test_coordinador_manual.py
+        cubren la ausencia del clic de activación, la marca EN CURSO al despachar y al cerrar, y
+        la frase conservada del puente; la suite del Método pasa completa.
+      restricciones_decisiones: >-
+        Gentle AI desglosa, implementa y verifica mediante ODD con TDD estricto; SDD sólo por
+        solicitud humana explícita. Sólo los archivos declarados están autorizados; toda
+        expansión requiere aprobación humana y compatibilidad fresca antes de escribir. La
+        revisión gentle-ai RDD por commit de unidad de trabajo, incluido el tramo final
+        pendiente, queda dentro de la etapa 4; esta Sesión no cambia cómo RDD decide su propio
+        riesgo ni su consentimiento. No se toca la topología Herdr en sí (hosts/herdr-topology.mjs
+        es Cimiento de otra Sesión). El adelgazamiento del puente se estima junto con los cambios
+        de session-kickoff y despacho-herdr en un rango que supera la referencia de 400 líneas de
+        diff; Emilio aprobó una excepción a la referencia para un único commit coherente de S157.
+        La excepción no amplía archivos, elimina pruebas, omite revisión ni autoriza por sí sola
+        implementar o entregar. test_builder_flow.py también lo toca S156, que se entrega antes
+        (depende_de).
+      referencias: >-
+        session-kickoff/SKILL.md líneas ~25-45 (clic de activación actual).
+        despacho-herdr/SKILL.md:51 (prohibición actual). chanks-4-puente/SKILL.md líneas 15-64,
+        84-99, 102-103, 107-122 (a retirar) y test_builder_flow.py:120 (frase a conservar).
+        Commit 4989357 (skill unattended entregada fuera de plan) y el bloque manual
+        UNATTENDED-SEALED-CONSENT en los cinco archivos de instrucciones de agente. Documento de
+        diseño: 'Chanks como guía de etapas — análisis por tramos' (claude.ai artifact
+        56421c44-de32-4b92-b4f7-6b428a6db555) y Engram topics chanks/stage-router-*. Revalidar
+        contra el árbol vigente antes de escribir.
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Quién libera el bloqueo de escritura de la Sesión si ya no hay clic humano de activación?"
+        resolucion: Radar, al admitir la Sesión con la misma verificación que ya usa para el resumen de retomar (identidad exacta, HEAD y evidencia); ningún agente ni el modelo decide la admisión por sí mismo.
+        autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación.
+        clase: seguridad-y-permisos
+        falsificador: Una escritura ocurre sin admisión de Radar, o el modelo se auto-admite sin que exista la evidencia que Radar exige.
+        descartadas:
+          - opcion: Mantener el clic humano de activación de S153.
+            razon: Repite el punto de fricción que motivó este rediseño; el humano ya aprobó el trabajo al dejar la Sesión LISTO.
+        contaminaba: [S157, S159]
+      - tipo: resuelta
+        pregunta: "¿Quién escribe y quién borra la marca EN CURSO que S155 define?"
+        resolucion: despacho-herdr la escribe al despachar; coordinador-manual la borra al aceptar la evidencia terminal y cerrar la etapa 5.
+        autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación.
+        clase: contrato-visible-del-producto
+        falsificador: La marca queda escrita después de cerrar una Sesión, o ningún agente la borra nunca.
+        descartadas:
+          - opcion: Que Main la escriba y la borre siempre, incluso en despacho Herdr.
+            razon: Duplica responsabilidad con despacho-herdr, que ya sabe cuándo despacha.
+        contaminaba: [S157]
+      - tipo: resuelta
+        pregunta: "¿Cómo se trata el tamaño de S157, que supera la referencia de 400 líneas de diff?"
+        resolucion: Un solo commit coherente con excepción de tamaño para S157; conserva pruebas, revisión proporcional y reversibilidad de esa unidad.
+        autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación.
+        clase: expansion-de-alcance
+        falsificador: La excepción se usa para agregar archivos fuera de los declarados, saltear pruebas o revisión, o mezclar resultados ajenos a S157.
+        descartadas:
+          - opcion: Commits secuenciales verificables.
+            razon: El retiro del clic, la marca EN CURSO y el adelgazamiento del puente son una unidad coherente de la etapa 3-4.
+        contaminaba: [S157]
+  - id: S158
+    zona: metodo
+    prioridad: metodo-v1
+    resultado: >-
+      chanks-6-politica-de-entrega se renombra chanks-5-politica-de-entrega y suma el modo leer
+      para la etapa 5; chanks-7-session-doc se renombra chanks-5-session-doc completa; toda
+      referencia cruzada vigente apunta al nombre nuevo.
+    autoridad: >-
+      Aprobación explícita de Emilio el 2026-09-24 en esta Conversación: Chanks pasa a ser una
+      guía de etapas de 5 etapas (1 Definir, 2 Preparar, 3 Despachar, 4 Implementar y revisar =
+      gentle-ai, 5 Entregar y cerrar). Análisis por tramos en el documento 'Chanks como guía de
+      etapas — análisis por tramos' (claude.ai artifact 56421c44-de32-4b92-b4f7-6b428a6db555) y
+      Engram topics chanks/stage-router-*.
+    depende_de:
+      - S157
+    cimientos:
+      - AGENTS.md
+    recurso: []
+    archivos:
+      - agent-workflows/skills/chanks-6-politica-de-entrega/SKILL.md
+      - agent-workflows/skills/chanks-5-politica-de-entrega/SKILL.md
+      - agent-workflows/skills/chanks-7-session-doc/SKILL.md
+      - agent-workflows/skills/chanks-5-session-doc/SKILL.md
+      - agent-workflows/templates/session-routing.md
+      - agent-workflows/skills/chanks-7-session-doc/assets/project-notion-map.json
+      - agent-workflows/skills/chanks-5-session-doc/assets/project-notion-map.json
+      - agent-workflows/skills/chanks-7-session-doc/assets/session-doc.schema.json
+      - agent-workflows/skills/chanks-5-session-doc/assets/session-doc.schema.json
+      - agent-workflows/skills/chanks-7-session-doc/references/links.md
+      - agent-workflows/skills/chanks-5-session-doc/references/links.md
+      - agent-workflows/tools/install.py
+      - agent-workflows/skills/chanks-1-cierre-de-decisiones/SKILL.md
+      - agent-workflows/skills/chanks-1-terreno/SKILL.md
+      - agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md
+      - agent-workflows/skills/chanks-4-puente/SKILL.md
+      - agent-workflows/skills/_shared/plan-naming-convention.md
+      - agent-workflows/README.md
+      - agent-workflows/EJECUCION-EN-PARALELO.md
+      - agent-workflows/FLUJO-END-TO-END.md
+      - agent-workflows/tests/test_builder_flow.py
+      - agent-workflows/tests/test_install.py
+      - agent-workflows/tests/test_coordinador_manual.py
+      - AGENTS.md
+    encargo:
+      pedido_contexto: >-
+        La guía de etapas nombra la etapa 5 (Entregar y cerrar) con dos skills que hoy llevan
+        números fuera de secuencia: chanks-6-politica-de-entrega y chanks-7-session-doc. Esta
+        Sesión las renombra a chanks-5-politica-de-entrega y chanks-5-session-doc y agrega a la
+        primera un modo leer para la etapa 5, que lee el bloque de política de entrega del repo y
+        rutea a work-unit-commits, branch-pr o chained-pr, tratando sus reglas de 400 líneas y de
+        abrir issue primero como referencia por repo; el modo declarar existente, usado en las
+        etapas 1-2, no cambia. install.py deja de instalar los nombres retirados y agrega los
+        nuevos a CHANKS_SKILLS y RETIRED_SKILLS. S123 (DIFERIDO) reserva hoy
+        chanks-7-session-doc/SKILL.md y templates/session-routing.md; como está diferida no
+        corre en paralelo, y al entregar S158 Main repunta su reserva al nombre nuevo.
+      resultado_comportamiento: >-
+        agent-workflows/skills/chanks-5-politica-de-entrega/SKILL.md existe con el contenido de
+        chanks-6-politica-de-entrega más el modo leer: en la etapa 5 lee el bloque de política de
+        entrega declarado por el repo (o lo detecta si falta) y rutea a la skill de entrega que
+        corresponde, tratando sus topes como referencia y no como bloqueo duro; el modo declarar
+        se conserva igual para las etapas 1-2. chanks-7-session-doc completa —SKILL.md, assets y
+        referencias— pasa a chanks-5-session-doc con el mismo contenido. Toda referencia cruzada vigente en
+        chanks-1-cierre-de-decisiones, chanks-1-terreno, chanks-3-coordinador-manual,
+        chanks-4-puente, la convención canónica, los templates y la documentación del método usa
+        los nombres nuevos. install.py instala chanks-5-politica-de-entrega y
+        chanks-5-session-doc y retira los nombres viejos del listado activo; las pruebas de
+        instalación y de coordinador-manual verifican los nombres nuevos.
+      restricciones_decisiones: >-
+        Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana
+        explícita. Sólo los archivos declarados están autorizados; toda expansión requiere
+        aprobación humana y compatibilidad fresca antes de escribir. AGENTS.md es Cimiento: su
+        intervención exige reserva exacta y exclusividad o serialización demostrada, y aquí sólo
+        se corrigen sus menciones de los nombres viejos en las líneas que los citan. S123 queda
+        DIFERIDO: su contenido y su estado no se tocan; sólo cambia la ruta de su reserva.
+      referencias: >-
+        Diseño de la etapa 5: 'Chanks como guía de etapas — análisis por tramos' (claude.ai
+        artifact 56421c44-de32-4b92-b4f7-6b428a6db555) y Engram topics chanks/stage-router-*.
+        install.py CHANKS_SKILLS (~48-49) y RETIRED_SKILLS. AGENTS.md líneas ~66 y ~68 (nombres
+        viejos). S123 (DIFERIDO) y su reserva exacta de chanks-7-session-doc/SKILL.md,
+        chanks-0-agente-soporte/SKILL.md y templates/session-routing.md. Aprobación: Emilio,
+        2026-09-24, esta Conversación. Revalidar contra el árbol vigente antes de escribir.
+    decisiones:
+      - tipo: resuelta
+        pregunta: "S123 (DIFERIDO) reserva chanks-7-session-doc/SKILL.md y templates/session-routing.md, que el renombre de la etapa 5 necesitaría tocar. ¿Cómo avanza S158 sin invadir esa reserva?"
+        resolucion: S158 declara y mueve esos dos archivos, porque renombrar la skill exige mover su SKILL.md y actualizar la referencia del template. S123 está DIFERIDO y no corre en paralelo; radar check acepta el solapamiento. Al entregar S158, Main repunta la ruta reservada por S123 de chanks-7-session-doc/SKILL.md a chanks-5-session-doc/SKILL.md, sin tocar el contenido de S123 ni su estado.
+        autoridad: Propuesta presentada a Emilio el 2026-09-24 al aprobar las cinco Sesiones (repuntar la reserva de S123 al preparar la etapa 5).
+        clase: expansion-de-alcance; dependencias-o-evidencia-contradictorias
+        falsificador: El repunte cambia algo del contrato de S123 más allá de la ruta reservada, o S158 se ejecuta mientras S123 deja de estar DIFERIDO sin reconciliar la reserva.
+        descartadas:
+          - opcion: Excluir esos dos archivos de S158.
+            razon: La skill no se puede renombrar sin mover su SKILL.md; la Sesión quedaría imposible de cumplir.
+          - opcion: Cerrar o reabrir S123 junto con S158.
+            razon: Decide por S123 sin la autorización específica que esa Sesión requiere.
+        contaminaba: [S123, S158]
+  - id: S159
+    zona: metodo
+    prioridad: metodo-v1
+    resultado: >-
+      La extensión de Pi deja de pedir el clic de activación y bloquea escrituras de worktree
+      sólo hasta que Radar admite la Sesión, guiando siempre a Main en vez de quedar inerte; un
+      hook nuevo de Claude Code muestra el mismo menú de etapas llamando a `radar etapa`.
+    autoridad: >-
+      Aprobación explícita de Emilio el 2026-09-24 en esta Conversación: Chanks pasa a ser una
+      guía de etapas de 5 etapas (1 Definir, 2 Preparar, 3 Despachar, 4 Implementar y revisar =
+      gentle-ai, 5 Entregar y cerrar). Análisis por tramos en el documento 'Chanks como guía de
+      etapas — análisis por tramos' (claude.ai artifact 56421c44-de32-4b92-b4f7-6b428a6db555) y
+      Engram topics chanks/stage-router-*.
+    depende_de:
+      - S155
+      - S157
+    cimientos: []
+    recurso: []
+    archivos:
+      - agent-workflows/tools/install.py
+      - agent-workflows/chanks/pi-admission.mjs
+      - agent-workflows/chanks/pi-authority.mjs
+      - agent-workflows/chanks/pi-switch.mjs
+      - agent-workflows/chanks/pi-controls.mjs
+      - agent-workflows/chanks/controls.mjs
+      - agent-workflows/chanks/interventions.mjs
+      - agent-workflows/tests/chanks/pi-admission.test.mjs
+      - agent-workflows/tests/chanks/pi-authority.test.mjs
+      - agent-workflows/tests/chanks/pi-switch.test.mjs
+      - agent-workflows/tests/chanks/pi-controls.test.mjs
+      - agent-workflows/tests/chanks/controls.test.mjs
+      - agent-workflows/tests/chanks/interventions.test.mjs
+      - agent-workflows/tests/test_install.py
+      - agent-workflows/tools/hooks/chanks-etapa.sh
+    encargo:
+      pedido_contexto: >-
+        La plantilla PI_EXTENSION_TEMPLATE de install.py (~523-795, con sus imports ~806-811)
+        todavía pide chanks_request_activation y ctx.ui.confirm, que S153 introdujo como llave de
+        Sesión y de planificación. La guía de etapas la reemplaza: el bloqueo de escritura de
+        worktree se sostiene hasta que Radar admite la Sesión (S157), calculado por el cerebro de
+        S155, y ya no hace falta una pregunta nativa de Pi para liberarlo. Hoy la extensión queda
+        inerte en Main; pasa a guiarlo siempre, mostrando 💪 sólo en las transiciones de etapa.
+        controls.mjs sigue siendo importado por pi-authority.mjs:9 e interventions.mjs:20, así
+        que no se retira completo: sólo se quita lo que quede efectivamente sin uso tras remover
+        el clic. Claude Code no tiene hoy un mecanismo que muestre el menú de etapas; esta Sesión
+        agrega el hook que lo hace, sin cablearlo todavía a ~/.claude/settings.json.
+      resultado_comportamiento: >-
+        La plantilla de la extensión de Pi ya no pregunta chanks_request_activation ni usa
+        ctx.ui.confirm. Con el interruptor por repositorio encendido y una Sesión aprobada sin
+        admitir, la extensión sigue bloqueando escrituras del worktree; en cuanto Radar admite la
+        Sesión (misma verificación de S157), el bloqueo se libera solo, sin pregunta. En Main la
+        extensión deja de quedar inerte: guía mostrando el menú de etapas que calcula
+        `radar etapa`, y anuncia 💪 únicamente en una transición de etapa, nunca en un bloqueo.
+        pi-admission.mjs, pi-authority.mjs, pi-switch.mjs y pi-controls.mjs reflejan ese cambio;
+        controls.mjs e interventions.mjs se conservan porque siguen siendo importados, y sólo se
+        retira el código que la remoción del clic deja genuinamente sin uso. Las pruebas bajo
+        agent-workflows/tests/chanks/ y test_install.py cubren la ausencia del clic, la
+        liberación automática al admitir, y que Main ya no queda inerte.
+
+        Un hook nuevo para Claude Code ejecuta `radar etapa` y presenta el mismo menú y la misma
+        transición 💪 que ve Pi. install.py no toca ~/.claude/settings.json hoy y esta Sesión no
+        lo cambia: cablear el hook ahí es un paso operativo que exige confirmación humana
+        explícita al entregar, no un archivo del repo.
+      restricciones_decisiones: >-
+        Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana
+        explícita. Sólo los archivos declarados están autorizados; toda expansión requiere
+        aprobación humana y compatibilidad fresca antes de escribir. El modelo no puede fabricar
+        la admisión de Radar ni encender el interruptor por repositorio; esa autoridad sigue
+        siendo del humano y de Radar, igual que en S153. controls.mjs e interventions.mjs se
+        tocan sólo para retirar código genuinamente muerto, nunca sus exports usados por
+        pi-authority.mjs o interventions.mjs. Cablear el hook nuevo en ~/.claude/settings.json y
+        habilitarlo de verdad requiere confirmación humana explícita al entregar; install.py no lo
+        hace por sí solo.
+      referencias: >-
+        install.py PI_EXTENSION_TEMPLATE (~523-795) e imports (~806-811). controls.mjs importado
+        por pi-authority.mjs:9 e interventions.mjs:20. Decisiones conservadas de S151 y S153
+        (Engram 11368, 11423, 11462, 11475). Documento de diseño: 'Chanks como guía de etapas —
+        análisis por tramos' (claude.ai artifact 56421c44-de32-4b92-b4f7-6b428a6db555) y Engram
+        topics chanks/stage-router-*. Revalidar contra el árbol vigente antes de escribir.
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Qué reemplaza a ctx.ui.confirm como condición para liberar la escritura del worktree en Pi?"
+        resolucion: La admisión de Radar sobre la misma Sesión (misma identidad, HEAD y evidencia que ya usa session-kickoff en S157); ninguna pregunta nativa de Pi ni una respuesta del modelo liberan la escritura por sí solas.
+        autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación.
+        clase: seguridad-y-permisos
+        falsificador: Una escritura de worktree ocurre sin admisión de Radar, o la extensión acepta una respuesta del modelo como si fuera la del humano.
+        descartadas:
+          - opcion: Mantener ctx.ui.confirm en Pi y sólo quitarlo del resto de los runtimes.
+            razon: Deja a Pi con un mecanismo distinto al resto y no resuelve la fricción que motivó el rediseño.
+        contaminaba: [S157, S159]
+      - tipo: resuelta
+        pregunta: "¿Esta Sesión cablea el hook nuevo de Claude Code en ~/.claude/settings.json?"
+        resolucion: No. install.py no toca settings.json hoy y esta Sesión entrega el script del hook sin activarlo; cablearlo y confirmarlo de verdad queda para la entrega, con confirmación humana explícita.
+        autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación.
+        clase: seguridad-y-permisos
+        falsificador: install.py o esta Sesión modifican ~/.claude/settings.json sin confirmación humana explícita al entregar.
+        descartadas:
+          - opcion: Cablear el hook automáticamente al instalar.
+            razon: Cambia el comportamiento de Claude Code fuera del repo sin que el humano lo confirme explícitamente.
+        contaminaba: [S159]
 references:
   future_successors:
     - id: S102
