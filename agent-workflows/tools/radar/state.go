@@ -164,12 +164,24 @@ func (p *Plan) EstadosAsumiendoCerradas(root, head string, cerradas map[string]b
 func (p *Plan) estadosAsumiendo(root, head string, cerradas map[string]bool) map[string]string {
 	estados := make(map[string]string, len(p.Sesiones))
 	index := p.SesionPorID()
+	master := ""
 
 	for i := range p.Sesiones {
 		s := &p.Sesiones[i]
 		switch {
 		case cerradas[s.ID]:
 			estados[s.ID] = Completo
+		case s.Historico != "":
+			if master == "" {
+				master, _ = gitOutput(root, "rev-parse", "--verify", "refs/heads/master^{commit}")
+			}
+			if s.Entrega != nil {
+				if ok, _ := entregaIntegrada(root, s.Entrega.Commit, master); ok {
+					estados[s.ID] = Archivado
+					break
+				}
+			}
+			estados[s.ID] = Bloqueado
 		case s.Archivada:
 			estados[s.ID] = Archivado
 		case s.Entrega != nil:
@@ -229,7 +241,7 @@ func (p *Plan) estadosAsumiendo(root, head string, cerradas map[string]bool) map
 				listo = false
 				break
 			}
-			if !(estados[d.ID] == Completo || d.Archivada) {
+			if !(estados[d.ID] == Completo || estados[d.ID] == Archivado) {
 				listo = false
 				break
 			}

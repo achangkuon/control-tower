@@ -7,6 +7,74 @@ import (
 	"testing"
 )
 
+func TestStatusViewOmitsClosedAndArchivedButPreservesTotals(t *testing.T) {
+	root, head := repoGit(t)
+	p := &Plan{Sesiones: []Sesion{
+		entregada("S1", "z", head),
+		{ID: "S2", Zona: "z", Archivada: true, Historico: archivePath("S2"), Entrega: &Entrega{Commit: head}},
+		abierta("S3", "z", "S2"),
+	}}
+	short := p.SnapshotViewAt(root, head, false)
+	full := p.SnapshotViewAt(root, head, true)
+	if short.Avance.Total != 3 || short.Avance.Cerradas != 2 || len(short.Sesiones) != 1 || short.Sesiones[0].ID != "S3" {
+		t.Fatalf("default projection loses live work or totals: %+v", short)
+	}
+	if len(full.Sesiones) != 3 || full.Sesiones[1].Estado != "ARCHIVADO" || full.Sesiones[2].Estado != "LISTO" {
+		t.Fatalf("--all loses archived readiness: %+v", full.Sesiones)
+	}
+}
+
+func TestStatusJSONDefaultAndAll(t *testing.T) {
+	root, head := repoGit(t)
+	p := planConDosSesiones(head)
+	for _, tc := range []struct {
+		all    bool
+		closed bool
+	}{{false, false}, {true, true}} {
+		var out strings.Builder
+		if err := cmdStatusJSONView(&out, p, root, tc.all); err != nil {
+			t.Fatal(err)
+		}
+		var snapshot Snapshot
+		if err := json.Unmarshal([]byte(out.String()), &snapshot); err != nil {
+			t.Fatal(err)
+		}
+		if snapshot.Avance.Total != 3 {
+			t.Fatalf("lost total: %+v", snapshot.Avance)
+		}
+		found := false
+		for _, s := range snapshot.Sesiones {
+			if s.ID == "S1" {
+				found = true
+			}
+		}
+		if found != tc.closed {
+			t.Fatalf("all=%v: closed visible=%v", tc.all, found)
+		}
+	}
+}
+
+func TestStatusTextOnlyListsClosedWithAll(t *testing.T) {
+	root, head := repoGit(t)
+	p := planConDosSesiones(head)
+	short := captureStdout(t, func() {
+		if err := cmdStatusView(p, root, false); err != nil {
+			t.Fatal(err)
+		}
+	})
+	full := captureStdout(t, func() {
+		if err := cmdStatusView(p, root, true); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if strings.Contains(short, "Sesiones cerradas y archivadas:") || strings.Contains(short, "S1  ✅ COMPLETO") {
+		t.Fatalf("default text exposed completed Session: %s", short)
+	}
+	if !strings.Contains(full, "S1  ✅ COMPLETO") || !strings.Contains(full, "1/3 S") {
+		t.Fatalf("--all lost closed Session or progress: %s", full)
+	}
+}
+
 func TestSnapshotHorizonCountsReadyAndRanksPreparationRoots(t *testing.T) {
 	root, head := repoGit(t)
 	blocked := abierta("B", "z")

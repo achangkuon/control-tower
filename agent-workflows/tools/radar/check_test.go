@@ -8,6 +8,160 @@ import (
 	"testing"
 )
 
+func TestArchivedHistoryStillReceivesCompletedSessionValidation(t *testing.T) {
+	for _, tc := range []struct {
+		name, old, replacement, rule string
+	}{
+		{"empty result", "    resultado: Finished\n", "    resultado: \"   \"\n", "resultado"},
+		{"missing authority", "    autoridad: repo evidence\n", "    autoridad: \"\"\n", "autoridad de Sesión"},
+		{"invalid zone", "    zona: method\n", "    zona: fabricated\n", "sesión"},
+		{"invalid PR", "    entrega:\n", "    entrega:\n      pr: 0\n", "entrega"},
+		{"incomplete brief", "    resultado: Finished\n", "    resultado: Finished\n    encargo:\n      pedido_contexto: preserved\n", "encargo"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root, plan, head, _ := archiveFixture(t)
+			replacePlan(t, plan, "    resultado: Finished\n", "    resultado: Finished\n    autoridad: repo evidence\n")
+			replacePlan(t, plan, "sesiones:\n", "zonas:\n  - id: method\n    rutas: [tracked.txt]\nsesiones:\n")
+			if err := archiveSession(plan, root, "S1"); err != nil {
+				t.Fatal(err)
+			}
+			archive := filepath.Join(root, "openspec", "archive", "sesiones", "S1.md")
+			p, err := Load(plan)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, finding := range hallazgosDe(p.checkSesionesAt(root, head), tc.rule) {
+				if strings.Contains(finding.Detalle, "S1") {
+					t.Fatalf("valid archive already fails %s: %+v", tc.rule, finding)
+				}
+			}
+			replacePlan(t, archive, tc.old, tc.replacement)
+			p, err = Load(plan)
+			if err != nil {
+				t.Fatalf("tampered shape should load for validation: %v", err)
+			}
+			for _, finding := range hallazgosDe(p.checkSesionesAt(root, head), tc.rule) {
+				if finding.Severidad == "error" && strings.Contains(finding.Detalle, "S1") {
+					return
+				}
+			}
+			t.Fatalf("archived S1 lost %s validation", tc.rule)
+		})
+	}
+}
+
+func TestArchivedBriefKeepsShapeButNotLiveOwnership(t *testing.T) {
+	root, plan, head, _ := archiveFixture(t)
+	replacePlan(t, plan, "sesiones:\n", "zonas:\n  - id: method\n    rutas: [tracked.txt]\nsesiones:\n")
+	replacePlan(t, plan, "    resultado: Finished\n", "    resultado: Finished\n    autoridad: repo evidence\n    archivos: [tracked.txt]\n    encargo:\n      pedido_contexto: context\n      resultado_comportamiento: behavior\n      restricciones_decisiones: constraints\n      referencias: refs\n")
+	if err := archiveSession(plan, root, "S1"); err != nil {
+		t.Fatal(err)
+	}
+	// Later ownership changes do not revoke historical authorizations.
+	replacePlan(t, plan, "rutas: [tracked.txt]", "rutas: [new.txt]")
+	p, err := Load(plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, rule := range []string{"autoridad de archivo", "archivo autorizado", "encargo"} {
+		for _, finding := range hallazgosDe(p.checkSesionesAt(root, head), rule) {
+			if strings.Contains(finding.Detalle, "S1") {
+				t.Fatalf("historical S1 failed %s after ownership moved: %+v", rule, finding)
+			}
+		}
+	}
+}
+
+func TestArchivedReferenceCheckRejectsLostHistoryAndDuplicateID(t *testing.T) {
+	root, plan, _, _ := archiveFixture(t)
+	if err := archiveSession(plan, root, "S1"); err != nil {
+		t.Fatal(err)
+	}
+	p, err := Load(plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	head, err := gitHEAD(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := hallazgosDe(p.checkSesionesAt(root, head), "histórico"); len(got) != 0 {
+		t.Fatalf("valid historical reference rejected: %+v", got)
+	}
+	p.Sesiones = append(p.Sesiones, p.Sesiones[0])
+	if got := hallazgosDe(p.checkSesionesAt(root, head), "sesión"); len(got) == 0 {
+		t.Fatal("duplicate archived ID accepted")
+	}
+	p.Sesiones = p.Sesiones[:2]
+	archive := filepath.Join(root, "openspec", "archive", "sesiones", "S1.md")
+	if err := os.Rename(archive, archive+".away"); err != nil {
+		t.Fatal(err)
+	}
+	if got := hallazgosDe(p.checkSesionesAt(root, head), "histórico"); len(got) == 0 {
+		t.Fatal("missing history accepted")
+	}
+}
+
+func TestArchivedModulesKeepShapeWhenFormerFileBecomesSymlink(t *testing.T) {
+	root, plan, head, _ := archiveFixture(t)
+	replacePlan(t, plan, "sesiones:\n", "zonas:\n  - id: method\n    rutas: [tracked.txt]\nsesiones:\n")
+	replacePlan(t, plan, "    resultado: Finished\n", "    resultado: Finished\n    autoridad: repo evidence\n    modulos:\n      - id: M1.1\n        resultado: module\n        rutas: [tracked.txt]\n        tareas:\n          - id: T1.1.1\n            accion: do\n            resultado: done\n            criterios: [done]\n")
+	if err := archiveSession(plan, root, "S1"); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(filepath.Join(root, "tracked.txt"), filepath.Join(root, "old.txt")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink("old.txt", filepath.Join(root, "tracked.txt")); err != nil {
+		t.Fatal(err)
+	}
+	p, err := Load(plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, finding := range hallazgosDe(p.checkSesionesAt(root, head), "ruta de Módulo") {
+		if strings.Contains(finding.Detalle, "M1.1") {
+			t.Fatalf("historical module path treated as live write target: %+v", finding)
+		}
+	}
+}
+
+func TestArchivedReferenceRejectsHistoryChangedSinceLoad(t *testing.T) {
+	root, plan, head, _ := archiveFixture(t)
+	replacePlan(t, plan, "    resultado: Finished\n", "    resultado: Finished\n    autoridad: repo evidence\n")
+	if err := archiveSession(plan, root, "S1"); err != nil {
+		t.Fatal(err)
+	}
+	p, err := Load(plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	archive := filepath.Join(root, "openspec", "archive", "sesiones", "S1.md")
+	replacePlan(t, archive, "autoridad: repo evidence", "autoridad: different evidence")
+	if got := hallazgosDe(p.checkSesionesAt(root, head), "histórico"); len(got) == 0 {
+		t.Fatal("a history changed after Load was accepted from stale memory")
+	}
+}
+
+func TestArchivedReferenceCheckRejectsInvalidDelivery(t *testing.T) {
+	root, plan, _, _ := archiveFixture(t)
+	if err := archiveSession(plan, root, "S1"); err != nil {
+		t.Fatal(err)
+	}
+	p, err := Load(plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p.Sesiones[0].Entrega.Commit = strings.Repeat("f", 40)
+	head, err := gitHEAD(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := hallazgosDe(p.checkSesionesAt(root, head), "histórico"); len(got) == 0 {
+		t.Fatal("invalid delivery accepted")
+	}
+}
+
 func commitLote(t *testing.T, root, path, body, message string) string {
 	t.Helper()
 	file := filepath.Join(root, path)

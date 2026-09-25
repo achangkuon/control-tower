@@ -55,12 +55,17 @@ the responsible parent records confirmed plan evidence and generates the view un
    Without that confirmation, report the approval and reinstall as pending; never infer approval
    from delivery or from this skill. The parent coordinates any authorized execution after delivery.
 6. For explicit native SDD, gather existing archive evidence after delivery; otherwise return native ODD continuity only as subordinate evidence.
-7. Return `entrega.commit`/optional PR delta and require/report Radar check/render after the parent records confirmation.
+7. Return `entrega.commit`/optional PR delta. After the parent records confirmed delivery in
+   `openspec/plan.yaml`, instruct the parent to run `radar archivar <ID>` for that completed,
+   master-integrated Session, then `radar check` and `radar render`. The archiver writes
+   `openspec/archive/sesiones/<ID>.md` and leaves one reference in the live plan. Never
+   archive an open Session or batch-archive older Sessions as part of this closure.
+   The parent owns these writes and their separate delivery evidence.
 
 ## Output Contract
 
 Return outcome/check evidence, commit/HEAD/PR evidence, review result or fallback, applicable native
-SDD archive evidence, Radar results, reinstall policy source, matched delivered paths, executed
+SDD archive evidence, Radar archive/check/render results or pending parent commands, reinstall policy source, matched delivered paths, executed
 commands and verification results (or explicit none/pending work), human skill-install confirmation
 when applicable, closure outcome/failure, and the exact evidence the responsible parent must record.
 State that ordinary delivery policy and Chanks close gates still apply.

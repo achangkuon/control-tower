@@ -12,7 +12,7 @@ import (
 const uso = `radar — herramienta determinista de planificación
 
   radar check   [-f openspec/plan.yaml] [-C raíz] valida el dato, git y la partición
-  radar status  [-f openspec/plan.yaml] [-C raíz] [--json] estado, colas y asientos calculados
+  radar status  [-f openspec/plan.yaml] [-C raíz] [--json] [--all] Sesiones vivas (con --all, también cerradas)
   radar sesion  <ID> [-f openspec/plan.yaml] [-C raíz] contrato completo de una sola Sesión
   radar faltan  [<ID>] [-f openspec/plan.yaml] [-C raíz] todas las Sesiones abiertas por meta y
                 subprioridad, con porcentaje honesto; con <ID>, una línea localizadora
@@ -20,6 +20,7 @@ const uso = `radar — herramienta determinista de planificación
   radar roadmap [-f openspec/plan.yaml] [-C raíz] alternativas LISTO, compatibilidad
                 potencial por archivos e hipotéticos — previsión, no permiso
   radar render  [-f openspec/plan.yaml] [-o openspec/ROADMAP.md] [-C raíz]
+  radar archivar <ID> [-C raíz] archiva una Sesión completa con entrega integrada
 
 openspec/plan.yaml es la única fuente editable. openspec/ROADMAP.md es una vista
 atómica y determinista: nunca se edita a mano. El checker no adquiere locks vivos.
@@ -27,7 +28,7 @@ atómica y determinista: nunca se edita a mano. El checker no adquiere locks viv
 
 type opciones struct {
 	archivo, salida, raiz string
-	json                  bool
+	json, all             bool
 }
 
 func main() {
@@ -62,15 +63,25 @@ func main() {
 	switch comando {
 	case "check":
 		os.Exit(cmdCheck(p, root))
+	case "archivar":
+		if len(posicionales) != 1 {
+			fmt.Fprintln(os.Stderr, "uso: radar archivar <ID> [-C raíz]")
+			os.Exit(2)
+		}
+		if err := archiveSession(opts.archivo, root, posicionales[0]); err != nil {
+			fmt.Fprintln(os.Stderr, "✗", err)
+			os.Exit(1)
+		}
+		fmt.Printf("✓ %s archivada\n", posicionales[0])
 	case "status":
 		if opts.json {
-			if err := cmdStatusJSON(os.Stdout, p, root); err != nil {
+			if err := cmdStatusJSONView(os.Stdout, p, root, opts.all); err != nil {
 				fmt.Fprintln(os.Stderr, "✗", err)
 				os.Exit(1)
 			}
 			return
 		}
-		if err := cmdStatus(p, root); err != nil {
+		if err := cmdStatusView(p, root, opts.all); err != nil {
 			fmt.Fprintln(os.Stderr, "✗", err)
 			os.Exit(1)
 		}
@@ -126,6 +137,7 @@ func parsearArgs(comando string, args []string) (opciones, []string, error) {
 	fs.StringVar(&o.salida, "o", "openspec/ROADMAP.md", "salida generada (sólo render)")
 	fs.StringVar(&o.raiz, "C", "", "raíz del repositorio")
 	fs.BoolVar(&o.json, "json", false, "emitir el snapshot legible por máquina (sólo status)")
+	fs.BoolVar(&o.all, "all", false, "incluir Sesiones cerradas y archivadas (sólo status)")
 	var posicionales []string
 	for {
 		if err := fs.Parse(args); err != nil {
@@ -209,7 +221,9 @@ func validarAt(p *Plan, root, head, comando string) error {
 	return nil
 }
 
-func cmdStatus(p *Plan, root string) error {
+func cmdStatus(p *Plan, root string) error { return cmdStatusView(p, root, false) }
+
+func cmdStatusView(p *Plan, root string, all bool) error {
 	head, err := gitHEAD(root)
 	if err != nil {
 		return fmt.Errorf("no se pudo fijar HEAD para calcular status: %w", err)
@@ -279,6 +293,14 @@ func cmdStatus(p *Plan, root string) error {
 		fmt.Printf("Asientos: ninguna Zona tiene trabajo LISTO (%s)\n", sinReservaDeAsiento)
 	} else {
 		fmt.Printf("Asientos: %d zona(s) %s — %v (%s)\n", len(asientos), veredictoDeParalelo, asientos, sinReservaDeAsiento)
+	}
+	if all {
+		fmt.Println("Sesiones cerradas y archivadas:")
+		for _, s := range p.Sesiones {
+			if st := estados[s.ID]; st == Completo || st == Archivado {
+				fmt.Printf("  %s  %s  %s\n", s.ID, st, s.Resultado)
+			}
+		}
 	}
 	if rows := referenceRows(p); len(rows) > 0 {
 		fmt.Println("\nNon-executable references (no status/queue/seat/capacity):")

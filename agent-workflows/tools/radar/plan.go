@@ -219,6 +219,7 @@ type Sesion struct {
 	Diferida          bool               `yaml:"diferida"`
 	Archivada         bool               `yaml:"archivada"`
 	Archivo           string             `yaml:"archivo"`
+	Historico         string             `yaml:"historico"`
 	ImportacionLegacy *ImportacionLegacy `yaml:"importacion_legacy"`
 }
 
@@ -442,6 +443,23 @@ func Load(path string) (*Plan, error) {
 	}
 	if p.SchemaVersion != 3 {
 		return nil, fmt.Errorf("%s: schema_version %d no soportada; migrá explícitamente el plan a v3", path, p.SchemaVersion)
+	}
+	if err := validateArchivedReferenceShape(raw); err != nil {
+		return nil, fmt.Errorf("%s: %w", path, err)
+	}
+	for i := range p.Sesiones {
+		if p.Sesiones[i].Historico == "" {
+			continue
+		}
+		root, err := resolverRaiz("", p.Raiz, path)
+		if err != nil {
+			return nil, err
+		}
+		s, err := archivedSession(root, p.Sesiones[i])
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", path, err)
+		}
+		p.Sesiones[i] = s
 	}
 	return &p, nil
 }

@@ -5,6 +5,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os/exec"
+	"path"
+	"path/filepath"
+	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
@@ -117,6 +120,7 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 	modulosVistos := map[string]bool{}
 	tareasVistas := map[string]bool{}
 	provenienciasVistas := map[string]bool{}
+	master := ""
 
 	for i := range p.Sesiones {
 		s := &p.Sesiones[i]
@@ -128,6 +132,39 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 			h = append(h, Hallazgo{"error", "sesión", fmt.Sprintf("la Sesión %q está declarada dos veces", s.ID)})
 		}
 		sesionesVistas[s.ID] = true
+		archivoPropio := s.Historico != ""
+		validationHead := head
+		if archivoPropio {
+			if s.Historico != archivePath(s.ID) || s.Entrega == nil {
+				h = append(h, Hallazgo{"error", "histórico", fmt.Sprintf("%s tiene una referencia histórica inválida", s.ID)})
+			} else {
+				archived, err := archivedSession(root, *s)
+				if err != nil || !reflect.DeepEqual(archived, *s) {
+					h = append(h, Hallazgo{"error", "histórico", fmt.Sprintf("%s: histórico ausente, modificado o inválido: %v", s.ID, err)})
+				}
+				if master == "" {
+					resolved, resolveErr := gitOutput(root, "rev-parse", "--verify", "refs/heads/master^{commit}")
+					if resolveErr != nil {
+						h = append(h, Hallazgo{"error", "histórico", fmt.Sprintf("no se pudo resolver master: %v", resolveErr)})
+					} else {
+						master = resolved
+					}
+				}
+				if master != "" {
+					validationHead = master
+					if ok, detail := entregaIntegrada(root, s.Entrega.Commit, master); !ok {
+						h = append(h, Hallazgo{"error", "histórico", fmt.Sprintf("%s: %s", s.ID, detail)})
+					}
+				}
+			}
+			// Load replaces the compact reference with its full historical record.
+			// Validate it as a completed Session, not as archived legacy work.
+			// Keep the actual plan object unchanged.
+			original := *s
+			original.Archivada = false
+			original.Historico = ""
+			s = &original
+		}
 
 		importada := s.ImportacionLegacy != nil
 		pendiente := importada && s.ImportacionLegacy.TerritorioPendiente && !s.esEncargo()
@@ -135,7 +172,7 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 		decomposicionDiferida := importada && s.ImportacionLegacy.DescomposicionDiferida
 		historica := esTerritorioHistorico(s)
 		if importada {
-			h = append(h, checkImportacionLegacy(root, head, s, provenienciasVistas)...)
+			h = append(h, checkImportacionLegacy(root, validationHead, s, provenienciasVistas)...)
 		}
 		if decomposicionDiferida && !s.esEncargo() {
 			h = append(h, checkDescomposicionDiferida(s)...)
@@ -211,15 +248,19 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 			h = append(h, Hallazgo{"error", "sesión", fmt.Sprintf("%s vive en la zona %q, que no existe", s.ID, s.Zona)})
 		}
 
-		abierta := s.Entrega == nil && !s.Archivada
+		abierta := !archivoPropio && s.Entrega == nil && !s.Archivada
 		if strings.TrimSpace(s.Resultado) == "" {
 			h = append(h, Hallazgo{"error", "resultado", fmt.Sprintf("%s debe declarar un resultado no vacío", s.ID)})
 		}
 		h = append(h, validarAutoridad(root, s)...)
 		h = append(h, validarArchivo(p, s)...)
-		h = append(h, medirLoteEntregado(p, root, head, s)...)
+		h = append(h, medirLoteEntregado(p, root, validationHead, s)...)
 		if s.esEncargo() {
-			h = append(h, p.checkEncargo(root, head, s)...)
+			if archivoPropio {
+				h = append(h, p.checkArchivedEncargo(root, validationHead, s)...)
+			} else {
+				h = append(h, p.checkEncargo(root, validationHead, s)...)
+			}
 			h = append(h, checkSolicitudSDD(s)...)
 		} else if len(s.Archivos) != 0 || s.SoloLectura || s.SolicitudSDD != nil {
 			h = append(h, Hallazgo{"error", "contrato legacy", fmt.Sprintf("%s declara archivos, solo_lectura o solicitud_sdd sin encargo", s.ID)})
@@ -232,19 +273,77 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 			h = append(h, checkProfundidad(s)...)
 		}
 		if !s.esEncargo() && (abierta || len(s.Modulos) > 0) {
-			h = append(h, p.checkModulos(root, s, modulosVistos, tareasVistas, importada, pendiente, historica)...)
+			h = append(h, p.checkModulos(root, s, modulosVistos, tareasVistas, importada, pendiente, historica, archivoPropio)...)
 		}
 		h = append(h, checkDecisiones(s)...)
 		if s.Entrega != nil {
 			if s.Entrega.PR != nil && *s.Entrega.PR <= 0 {
 				h = append(h, Hallazgo{"error", "entrega", fmt.Sprintf("%s declara un PR que no es positivo", s.ID)})
 			}
-			if ok, detalle := entregaIntegrada(root, s.Entrega.Commit, head); !ok {
-				h = append(h, Hallazgo{"error", "entrega integrada", fmt.Sprintf("%s: %s", s.ID, detalle)})
+			if !archivoPropio {
+				if ok, detalle := entregaIntegrada(root, s.Entrega.Commit, head); !ok {
+					h = append(h, Hallazgo{"error", "entrega integrada", fmt.Sprintf("%s: %s", s.ID, detalle)})
+				}
 			}
 		}
 	}
 	return h
+}
+
+// Historical write paths retain their exact lexical shape without resolving
+// today's filesystem, where a former file may now be absent or a symlink.
+func rutaHistoricaNormalizada(value string) bool {
+	if value == "" || strings.TrimSpace(value) != value || filepath.IsAbs(value) || path.Clean(value) != value || value == "." || strings.ContainsAny(value, `\*?[`) {
+		return false
+	}
+	for _, part := range strings.Split(value, "/") {
+		if part == "" || part == "." || part == ".." {
+			return false
+		}
+	}
+	return true
+}
+
+// checkArchivedEncargo keeps historical contract shape and legacy evidence but
+// never reassigns delivered files against today's active ownership partition.
+func (p *Plan) checkArchivedEncargo(root, head string, s *Sesion) []Hallazgo {
+	var h []Hallazgo
+	if s.Ruta != (RutaSesion{}) || len(s.RutasHistoricas) != 0 || (strings.TrimSpace(s.Cambio) != "" && !s.solicitudSDDValida()) {
+		h = append(h, Hallazgo{"error", "contrato de encargo", fmt.Sprintf("%s declara ruta o cambio incompatible con su encargo", s.ID)})
+	}
+	if s.Encargo.Incompleto {
+		h = append(h, Hallazgo{"error", "encargo incompleto", fmt.Sprintf("%s tiene entrega pero su encargo está incompleto", s.ID)})
+	} else {
+		for _, field := range []struct{ name, value string }{
+			{"pedido_contexto", s.Encargo.PedidoContexto},
+			{"resultado_comportamiento", s.Encargo.ResultadoComportamiento},
+			{"restricciones_decisiones", s.Encargo.RestriccionesDecisiones},
+			{"referencias", s.Encargo.Referencias},
+		} {
+			if strings.TrimSpace(field.value) == "" {
+				h = append(h, Hallazgo{"error", "encargo", fmt.Sprintf("%s debe declarar encargo.%s", s.ID, field.name)})
+			}
+		}
+	}
+	if (s.SoloLectura && (len(s.Archivos) != 0 || len(s.Cimientos) != 0)) || (!s.SoloLectura && len(s.Archivos) == 0) {
+		h = append(h, Hallazgo{"error", "archivo autorizado", fmt.Sprintf("%s tiene archivos incompatibles con su encargo", s.ID)})
+	}
+	seen := map[string]bool{}
+	for _, archivo := range s.Archivos {
+		if !rutaHistoricaNormalizada(archivo) {
+			h = append(h, Hallazgo{"error", "archivo autorizado", fmt.Sprintf("%s conserva una ruta histórica no normalizada: %q", s.ID, archivo)})
+		}
+		if seen[archivo] {
+			h = append(h, Hallazgo{"error", "archivo autorizado", fmt.Sprintf("%s declara dos veces %q", s.ID, archivo)})
+		}
+		seen[archivo] = true
+	}
+	for _, cimiento := range s.Cimientos {
+		if !contiene(s.Archivos, cimiento) {
+			h = append(h, Hallazgo{"error", "archivo autorizado", fmt.Sprintf("%s reserva el Cimiento %q sin declararlo en archivos", s.ID, cimiento)})
+		}
+	}
+	return append(h, p.checkEvidenciaLegacyDeEncargo(root, head, s)...)
 }
 
 var (
@@ -335,7 +434,7 @@ func checkDescomposicionDiferida(s *Sesion) []Hallazgo {
 	return []Hallazgo{{"error", "descomposición diferida", fmt.Sprintf("%s debe conservar una decisión escala completa que alcance primer-modulo", s.ID)}}
 }
 
-func (p *Plan) checkModulos(root string, s *Sesion, modulosVistos, tareasVistas map[string]bool, importada, pendiente, historica bool) []Hallazgo {
+func (p *Plan) checkModulos(root string, s *Sesion, modulosVistos, tareasVistas map[string]bool, importada, pendiente, historica, archivoPropio bool) []Hallazgo {
 	var h []Hallazgo
 	permiteTareasPendientes := false
 	if pendiente {
@@ -382,6 +481,12 @@ func (p *Plan) checkModulos(root string, s *Sesion, modulosVistos, tareasVistas 
 			h = append(h, Hallazgo{"error", "jerarquía", fmt.Sprintf("%s no tiene Tareas enumeradas", m.ID)})
 		}
 		for _, ruta := range m.Rutas {
+			if archivoPropio {
+				if !rutaHistoricaNormalizada(ruta) {
+					h = append(h, Hallazgo{"error", "ruta de Módulo", fmt.Sprintf("%s: ruta histórica no normalizada %q", m.ID, ruta)})
+				}
+				continue // no present-day filesystem or ownership claim
+			}
 			normalizada, err := exactRepoFile(root, ruta)
 			if err != nil {
 				h = append(h, Hallazgo{"error", "ruta de Módulo", fmt.Sprintf("%s: %v", m.ID, err)})

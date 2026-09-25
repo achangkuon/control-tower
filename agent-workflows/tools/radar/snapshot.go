@@ -283,10 +283,31 @@ func vocabulario(estado string) string {
 	return palabra
 }
 
+// SnapshotViewAt keeps the totals derived from the whole plan while limiting
+// the default wire projection to Sessions that still need work.
+func (p *Plan) SnapshotViewAt(root, head string, all bool) Snapshot {
+	snapshot := p.SnapshotAt(root, head)
+	if all {
+		return snapshot
+	}
+	live := make([]SesionEstado, 0, len(snapshot.Sesiones))
+	for _, s := range snapshot.Sesiones {
+		if s.Estado != "COMPLETO" && s.Estado != "ARCHIVADO" {
+			live = append(live, s)
+		}
+	}
+	snapshot.Sesiones = live
+	return snapshot
+}
+
 // cmdStatusJSON emits the machine-readable projection. It refuses on the same
 // validation errors as the human status: a consumer must never receive numbers
 // Radar itself would not stand behind.
 func cmdStatusJSON(w io.Writer, p *Plan, root string) error {
+	return cmdStatusJSONView(w, p, root, false)
+}
+
+func cmdStatusJSONView(w io.Writer, p *Plan, root string, all bool) error {
 	head, err := gitHEAD(root)
 	if err != nil {
 		return fmt.Errorf("no se pudo fijar HEAD para calcular status: %w", err)
@@ -302,5 +323,5 @@ func cmdStatusJSON(w io.Writer, p *Plan, root string) error {
 	}
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
-	return enc.Encode(p.SnapshotAt(root, head))
+	return enc.Encode(p.SnapshotViewAt(root, head, all))
 }
