@@ -13,9 +13,15 @@ Implement the approved S160 native Encargo in Radar: move one completed, integra
 
 ## Tasks
 
-- [ ] T1 — Add archived-reference representation, validation, readiness, and progress preservation. Tests cover valid/invalid references, duplicate IDs, missing/nonintegrated commits and history, archived dependency versus `satisfied_history`. Route: delegated writer (multi-file). Proof: observed RED/GREEN plus `go test ./...`; commit: pending.
-- [ ] T2 — Implement `radar archivar <ID>` with surgical plan replacement and safe archive publication. Tests cover successful extraction and rejection of open, unintegrated, already archived, or conflicting targets; untouched unrelated plan content. Route: same single writer (multi-file). Proof: observed RED/GREEN plus focused Go tests; commit: pending.
-- [ ] T3 — Default status text/JSON to live Sessions, provide explicit all-Sessions option, and update the close skill. Tests cover lightweight/default versus full view and stable total progress. Route: same single writer (multi-file). Proof: observed RED/GREEN, full Radar suite, `radar check` against the current plan; commit: pending.
+- [x] T1 — Add archived-reference representation, validation, readiness, and progress preservation. Tests cover valid/invalid references, duplicate IDs, missing/nonintegrated commits and history, archived dependency versus `satisfied_history`. Route: delegated writer (multi-file). Proof: observed RED/GREEN plus `go test ./...`; commit: 5eb62d8.
+- [x] T2 — Implement `radar archivar <ID>` with surgical plan replacement and safe archive publication. Tests cover successful extraction and rejection of open, unintegrated, already archived, or conflicting targets; untouched unrelated plan content. Route: same single writer (multi-file). Proof: observed RED/GREEN plus focused Go tests; commit: 5eb62d8.
+- [x] T3 — Default status text/JSON to live Sessions, provide explicit all-Sessions option, and update the close skill. Tests cover lightweight/default versus full view and stable total progress. Route: same single writer (multi-file). Proof: observed RED/GREEN, full Radar suite, `radar check` against the current plan; commit: 5eb62d8.
+
+## Delivery (2026-09-25)
+
+- Revalidated: `go test ./... -count=1` passed; source `radar check`: 0 errors/33 warnings; `git diff --check` clean.
+- Review: the earlier `schema-incompatible` block came from untracked-file selection. Staging the unit and using `--projection staged` produced a clean START; consent envelope reported risk high (11 files, 987 lines). The maintainer chose "Skip this time" → `declined_this_candidate`, no lineage.
+- Delivered as 5eb62d8 on master and pushed; installed Radar reinstalled via `install-radar.sh` before push. Closure recorded in `openspec/plan.yaml` (`entrega.commit`).
 
 ## Acceptance and current checkpoint
 

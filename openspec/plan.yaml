@@ -10358,6 +10358,8 @@ sesiones:
           - opcion: Guardar el histórico dentro de plan.yaml.
             razon: Es justamente lo que hace crecer el plan sin fin.
         contaminaba: [S160]
+    entrega:
+      commit: 5eb62d8b350611742a3d7325939b6ca5f5444ca3
 references:
   future_successors:
     - id: S102

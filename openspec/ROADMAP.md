@@ -2,30 +2,29 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S151, S152, S153, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
-- Prioridad activa: Torre V1 · Release instalable.
-- Próximo trabajo ejecutable: cimientos #1 → S150 — El README describe el producto que se entrega —el semáforo instalable— y no promete capacidades que pertenecen a torre-v2..
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S151, S152, S153, S154, S160, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Prioridad activa: Método V1.
+- Próximo trabajo ejecutable: Método #2 → S155 — Radar ofrece &#96;radar etapa&#96;, que calcula desde el dato del plan y la evidencia de Git qué etapas de la guía Chanks de 5 etapas están habilitadas para una Sesión, y calcula 🔵 EN CURSO desde una marca temporal fuera de plan.yaml en vez de dejarlo deliberadamente ausente..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
 ## Estado y próximo trabajo
-- cimientos #1 → S150 — El README describe el producto que se entrega —el semáforo instalable— y no promete capacidades que pertenecen a torre-v2.
-- Instalación #1 → S117 — Los tres registros de instalación dejan de forzar ediciones cross-Zona: sus datos enumerados salen del test a un módulo propio declarado como Cimiento exacto.
+- Método #2 → S155 — Radar ofrece &#96;radar etapa&#96;, que calcula desde el dato del plan y la evidencia de Git qué etapas de la guía Chanks de 5 etapas están habilitadas para una Sesión, y calcula 🔵 EN CURSO desde una marca temporal fuera de plan.yaml en vez de dejarlo deliberadamente ausente.
 
 ## Avance
-- **Total:** 72% (89/122 S)
-- 16 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
+- **Total:** 72% (93/129 S)
+- 15 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 50% (1/2 S)
 - **Capacidades:** 0% (0/1 S)
-- **cimientos:** 57% (4/7 S)
+- **cimientos:** 62% (5/8 S)
 - **Contratos:** 33% (1/3 S)
 - **Enrolamiento:** 0% (0/1 S)
 - **Entrega:** 0% (0/1 S)
 - **Hosts:** 60% (3/5 S)
-- **Instalación:** 0% (0/3 S)
+- **Instalación:** 33% (1/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 93% (29/31 S)
+- **Método:** 81% (31/38 S)
 - **Producto Torre:** 0% (0/1 S)
 
 ## Zonas y colas
@@ -42,8 +41,8 @@
 1. **S101** · 🔴 BLOQUEADO · falta-decision (S9.10) · prioridad Torre V3 · Resolución de política: prepare&#95;through opaco y horizon&#95;ceiling salen de la política resuelta
 
 ### cimientos (cimientos)
-1. **S150** · 🟢 LISTO · prioridad Torre V1 · Release instalable · El README describe el producto que se entrega —el semáforo instalable— y no promete capacidades que pertenecen a torre-v2.
-2. **S12.6** · 📋 PLANIFICADO · espera-atascada (S12.5) · prioridad Torre V3 · La raíz se ordena después de la descomposición de core.mjs y el README se reconcilia con esa estructura.
+1. **S150** · 📋 PLANIFICADO · espera-atascada (S8.12) · prioridad Torre V1 · Release instalable · El README describe el producto que se entrega —el semáforo instalable— y no promete capacidades que pertenecen a torre-v2.
+2. **S12.6** · 📋 PLANIFICADO · espera-atascada (S12.5, S8.12) · prioridad Torre V3 · La raíz se ordena después de la descomposición de core.mjs y el README se reconcilia con esa estructura.
 3. **S148** · 📋 PLANIFICADO · espera-atascada (S147) · prioridad Torre V2 · Handoffs y despacho Tower-owned · Raíz de Ejecución estable en SQLite con revisión, estado e historial ligados a handoffs existentes
 
 ### Contratos (contratos)
@@ -53,21 +52,24 @@
 - Sin Sesiones abiertas.
 
 ### Entrega (entrega)
-1. **S7.1** · 📋 PLANIFICADO · falta-planificar (S8.10) · prioridad Torre V2 · Handoffs y despacho Tower-owned · Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral en un HOME/runtime aislado, preservando OpenCode como conformidad diferida.
+1. **S7.1** · 📋 PLANIFICADO · espera-atascada (S1.19, S4.12, S8.12) · prioridad Torre V2 · Handoffs y despacho Tower-owned · Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral en un HOME/runtime aislado, preservando OpenCode como conformidad diferida.
 
 ### Hosts (hosts)
 - Sin Sesiones abiertas.
 
 ### Instalación (instalacion)
-1. **S117** · 🟢 LISTO · prioridad Torre V1 · Release instalable · Los tres registros de instalación dejan de forzar ediciones cross-Zona: sus datos enumerados salen del test a un módulo propio declarado como Cimiento exacto.
-2. **S8.12** · 📋 PLANIFICADO · falta-planificar (S8.10) · prioridad Torre V1 · Release instalable · Packaging del bundle Torre V1: una membresía versionada contiene exactamente los bytes Tower-owned del semáforo —binario, contrato host-neutral, adapter Pi, perfiles y skills Torre— y no instala, activa, reescribe configuración global ni ejecuta rollback.
-3. **S8.13** · 📋 PLANIFICADO · falta-planificar (S8.10) · prioridad Torre V1 · Release instalable · Instalador, preflight, activación y rollback del bundle Torre V1 ejercitados sólo en un HOME/runtime aislado
+1. **S8.13** · 📋 PLANIFICADO · espera-atascada (S8.12) · prioridad Torre V1 · Release instalable · Instalador, preflight, activación y rollback del bundle Torre V1 ejercitados sólo en un HOME/runtime aislado
 
 ### Jornada (jornada)
 - Sin Sesiones abiertas.
 
 ### Método (metodo)
 1. **S115** · 📋 PLANIFICADO · espera-atascada (S114) · prioridad Torre V3 · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
+2. **S155** · 🟢 LISTO · prioridad Método V1 · Radar ofrece &#96;radar etapa&#96;, que calcula desde el dato del plan y la evidencia de Git qué etapas de la guía Chanks de 5 etapas están habilitadas para una Sesión, y calcula 🔵 EN CURSO desde una marca temporal fuera de plan.yaml en vez de dejarlo deliberadamente ausente.
+3. **S156** · 🟢 LISTO · prioridad Método V1 · El canon y las skills de las etapas 1 y 2 dejan de describir el clic de activación y la revisión única por Sesión, y tratan el tope de 400 líneas como referencia y no como cupo.
+4. **S157** · 📋 PLANIFICADO · espera-natural (S155, S156) · prioridad Método V1 · session-kickoff deja de pedir el clic de activación humano; Radar libera automáticamente el bloqueo de escritura del worktree al admitir la Sesión, despacho-herdr y coordinador-manual escriben y borran la marca EN CURSO, la revisión gentle-ai vive dentro de la etapa 4 por commit de unidad de trabajo, y el puente queda liviano conservando su contrato de evidencia.
+5. **S158** · 📋 PLANIFICADO · espera-natural (S155, S156) · prioridad Método V1 · chanks-6-politica-de-entrega se renombra chanks-5-politica-de-entrega y suma el modo leer para la etapa 5; chanks-7-session-doc se renombra chanks-5-session-doc completa; toda referencia cruzada vigente apunta al nombre nuevo.
+6. **S159** · 📋 PLANIFICADO · espera-natural (S155, S156) · prioridad Método V1 · La extensión de Pi deja de pedir el clic de activación y bloquea escrituras de worktree sólo hasta que Radar admite la Sesión, guiando siempre a Main en vez de quedar inerte; un hook nuevo de Claude Code muestra el mismo menú de etapas llamando a &#96;radar etapa&#96;.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · espera-atascada (S108) · prioridad Torre V2 · Handoffs y despacho Tower-owned · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -75,10 +77,10 @@
 ## Bloqueos
 - **S1.19:** Which exact test files will own the Pi-first integration regression? · falta-decision (S1.19)
 - **S2.10:** ¿Qué repositorio y path poseen el renderer/handler del menú central que debe ofrecer enrollment y cómo invoca la CLI canónica sin duplicar lógica? · falta-decision (S2.10)
-- **S4.12:** contaminación semántica declarada por otra Sesión · falta-planificar (S4.12)
+- **S4.12:** Encargo incompleto: falta planificar · falta-planificar (S4.12)
 - **S9.2:** Which exact concrete repository-relative paths comprise the S9.2 Area, and which single Zone owns each path without crossing into Cimientos or another Zone? · falta-decision (S9.2)
-- **S9.7:** contaminación semántica declarada por otra Sesión · falta-planificar (S9.7)
-- **S9.8:** contaminación semántica declarada por otra Sesión · falta-planificar (S9.8)
+- **S9.7:** Encargo incompleto: falta planificar · falta-planificar (S9.7)
+- **S9.8:** Encargo incompleto: falta planificar · falta-planificar (S9.8)
 - **S9.10:** ¿Se autoriza una nueva corrección tras cuatro CRITICAL y presupuesto agotado? · falta-decision (S9.10)
 - **S12.3:** ¿Debe S12.3 permanecer en el estacionamiento migratorio provisional autorizado, sin territorio ni ejecución? · falta-decision (S12.3)
 - **S12.4:** ¿Puede formalizarse toda S12.4 con territorio, ruta, Cimientos y reservas ejecutables sin resolver ni reemplazar el hold histórico de M12.4.2? · falta-decision (S12.4)
@@ -86,10 +88,9 @@
 - **S12.7:** ¿Qué Módulos, Tareas, Zonas y puentes temporales migran las 26 carpetas sin retirar rutas de raíz antes de probar consumidores y payloads? · falta-decision (S12.7)
 - **S12.9:** ¿Qué valor lleva source&#95;commit en una revisión autoral? · falta-decision (S12.9)
 - **S101:** contaminación semántica declarada por otra Sesión · falta-decision (S9.10)
-- **S107:** contaminación semántica declarada por otra Sesión · falta-planificar (S107)
-- **S108:** contaminación semántica declarada por otra Sesión · falta-planificar (S108)
-- **S121:** contaminación semántica declarada por otra Sesión · falta-planificar (S121)
-- **S149:** contaminación semántica declarada por otra Sesión · falta-planificar (S149)
+- **S107:** Encargo incompleto: falta planificar · falta-planificar (S107)
+- **S108:** Encargo incompleto: falta planificar · falta-planificar (S108)
+- **S121:** Encargo incompleto: falta planificar · falta-planificar (S121)
 
 ## Rutas
 - **S1.20:** propuesta direct (decision 104 and Engram observation 10008); revalidada direct sobre 89b75cccbee3a3fffe371e776a68f9a62c7912fe con evidencia The read-only Tower-mode contract remained fully specified after rebasing onto current master; upstream S100 changed disjoint schema/test paths, while S1.20 preserved its verified bytes and stayed limited to core.mjs and test/lifecycle.test.mjs..
@@ -296,7 +297,7 @@
 
 ### S7.1 — Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral en un HOME/runtime aislado, preservando OpenCode como conformidad diferida.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · falta-planificar (S8.10)
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S1.19, S4.12, S8.12)
   - Zona/Área: entrega · delivery/, continuation/, test/delivery/, test/continuation/
   - Solo lectura: sí (sin archivos autorizados para modificar).
   - Depende de: S1.19, S4.12, S8.13, S5.5
@@ -333,10 +334,10 @@
 
 ### S8.12 — Packaging del bundle Torre V1: una membresía versionada contiene exactamente los bytes Tower-owned del semáforo —binario, contrato host-neutral, adapter Pi, perfiles y skills Torre— y no instala, activa, reescribe configuración global ni ejecuta rollback.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · falta-planificar (S8.10)
+  - Estado derivado: 🟡 DIFERIDO
   - Zona/Área: instalacion · install/, test/install/
   - Archivos autorizados: scripts/payload-closure.mjs, install/runtime-payload.mjs, test/install/payload-closure.test.mjs, test/install/runtime-payload.test.mjs, test/install/tower-role-assets.test.mjs
-  - Depende de: S8.10, S8.14, S149
+  - Depende de: S8.14, S149
   - Recursos: contrato RUNTIME&#95;PAYLOAD&#95;FILES, bytes fuente Tower-owned editables de product/tower/profiles/{main,support,implementer}.md consumidos sin modificarlos, bytes fuente Tower-owned editables de product/tower/skills/torre-control/SKILL.md consumidos sin modificar, bytes fuente Tower-owned editables de product/tower/skills/torre-control-entregas/SKILL.md consumidos sin modificar, bytes fuente Tower-owned editables de product/tower/skills/torre-control-soporte/SKILL.md consumidos sin modificar, bytes originales inmutables de product/tower/generic/&#42;&#42; preservados como evidencia de producto, no como raíz de instrucciones activa, bytes fuente Tower-owned de adapters/pi/&#42;&#42; consumidos sin modificarlos, bytes fuente Tower-owned de extensions/pi/&#42;&#42; consumidos sin modificarlos
   - Importación legacy: openspec/plans/plan-8/STATUS.md@43130ad40af06f3ed05671000719217bee74f0a5
   - Ejecución: ODD nativo.
@@ -368,7 +369,7 @@
 
 ### S8.13 — Instalador, preflight, activación y rollback del bundle Torre V1 ejercitados sólo en un HOME/runtime aislado
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · falta-planificar (S8.10)
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S8.12)
   - Zona/Área: instalacion · install/, test/install/
   - Archivos autorizados: install/lifecycle.mjs, install/active-pointer.mjs, install/runtime-payload.mjs, bin/torre, test/install/lifecycle.test.mjs, test/install/entrypoint-resolution.test.mjs, test/install/runtime-payload.test.mjs, test/install/launch-worker-cli.test.mjs
   - Depende de: S8.12
@@ -510,7 +511,7 @@
 - Coordinación:
   - Estado derivado: 🔴 BLOQUEADO · falta-decision (S12.3)
   - Encargo incompleto: no autoriza territorio, cola ni asiento.
-  - Depende de: S8.10
+  - Depende de: —
   - Recursos: —
   - Importación legacy: openspec/plans/plan-12/STATUS.md@43130ad40af06f3ed05671000719217bee74f0a5
   - Ejecución: ODD nativo.
@@ -573,7 +574,7 @@
 
 ### S12.6 — La raíz se ordena después de la descomposición de core.mjs y el README se reconcilia con esa estructura.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S12.5)
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S12.5, S8.12)
   - Zona/Área: cimientos · —
   - Archivos autorizados: README.md
   - Depende de: S12.5, S150
@@ -813,15 +814,15 @@
 
 ### S117 — Los tres registros de instalación dejan de forzar ediciones cross-Zona: sus datos enumerados salen del test a un módulo propio declarado como Cimiento exacto.
 - Coordinación:
-  - Estado derivado: 🟢 LISTO
+  - Estado derivado: ✅ COMPLETO
   - Zona/Área: instalacion · install/, test/install/
-  - Archivos autorizados: test/install/payload-closure.contract.mjs, test/install/payload-closure.test.mjs, test/install/tower-role-assets.contract.mjs, test/install/tower-role-assets.test.mjs, test/install/runtime-payload.contract.mjs, test/install/runtime-payload.test.mjs
+  - Archivos autorizados: odd/tasks/s117-instalacion-registros.md, test/install/payload-closure.contract.mjs, test/install/payload-closure.test.mjs, test/install/tower-role-assets.contract.mjs, test/install/tower-role-assets.test.mjs, test/install/runtime-payload.contract.mjs, test/install/runtime-payload.test.mjs
   - Depende de: —
   - Recursos: —
   - Ejecución: ODD nativo.
 - Encargo:
   - Pedido y contexto: Los tres registros de instalación dejan de forzar ediciones cross-Zona: sus datos enumerados salen del test a un módulo propio declarado como Cimiento exacto.
-  - Resultado y comportamiento: Cada uno de los tres registros queda partido en dos: un &#96;&#42;.contract.mjs&#96; con sólo el dato enumerado, y el &#96;&#42;.test.mjs&#96; original con sólo la lógica, que lo importa. Cada valor extraído es idéntico byte a byte al que reemplazó. Falsificador: cualquier diferencia entre el literal viejo y el export nuevo, más allá del formato, falla este criterio. La suite completa pasa antes y después de cada unidad de implementación, sin debilitar, quitar ni condicionar ninguna aserción para acomodar la partición. &#96;radar check&#96; no reporta huérfanos, solapes ni reglas sin uso con las tres rutas &#96;&#42;.contract.mjs&#96; declaradas en &#96;cimientos.rutas&#96;. &#96;owners()&#96; resuelve cada &#96;&#42;.contract.mjs&#96; nuevo a &#96;cimientos&#96; solo, no a &#96;cimientos + instalacion&#96;. Falsificador: dos dueños significan que el recorte exacto no se aplicó y la partición sí solapa. Ningún archivo cambia de directorio. Falsificador: cualquier ruta fuera de &#96;test/install/&#96; en el diff significa que no se usó el recorte y la Zona instalacion perdió territorio que debía conservar. &#96;install/runtime-payload.mjs&#96; queda intacto: su lista es generada y editarlo sería alcance que la auditoría excluyó explícitamente.
+  - Resultado y comportamiento: Cada uno de los tres registros queda partido en dos: un &#96;&#42;.contract.mjs&#96; con sólo el dato enumerado, y el &#96;&#42;.test.mjs&#96; original con sólo la lógica, que lo importa. Cada valor extraído es idéntico byte a byte al que reemplazó. Falsificador: cualquier diferencia entre el literal viejo y el export nuevo, más allá del formato, falla este criterio. La suite completa pasa antes y después de cada unidad de implementación, sin debilitar, quitar ni condicionar ninguna aserción para acomodar la partición. &#96;radar check&#96; no reporta huérfanos, solapes ni reglas sin uso con las tres rutas &#96;&#42;.contract.mjs&#96; declaradas en &#96;cimientos.rutas&#96;. &#96;owners()&#96; resuelve cada &#96;&#42;.contract.mjs&#96; nuevo a &#96;cimientos&#96; solo, no a &#96;cimientos + instalacion&#96;. Falsificador: dos dueños significan que el recorte exacto no se aplicó y la partición sí solapa. Ningún archivo de implementación cambia de directorio. Falsificador: cualquier ruta de implementación fuera de &#96;test/install/&#96; en el diff significa que no se usó el recorte y la Zona instalacion perdió territorio que debía conservar. La única excepción documental autorizada es &#96;odd/tasks/s117-instalacion-registros.md&#96;, declarado como Cimiento exacto; &#96;openspec/plan.yaml&#96; registra esta ampliación aprobada antes de implementar. &#96;install/runtime-payload.mjs&#96; queda intacto: su lista es generada y editarlo sería alcance que la auditoría excluyó explícitamente.
   - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación.
     - Decisión estructurada [derivable · interna]: ¿Generar las tres listas en vez de extraerlas?
       - Resolución: No. Extraer. La generación es el remedio más fuerte y ya se usa donde aplica, pero ninguna de estas tres listas es derivable.
@@ -1164,23 +1165,44 @@
 
 ### S149 — La capa semáforo se distribuye como un ejecutable único que no exige bun instalado y conserva el contrato tower&#95;&#42; observable.
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S149)
-  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Estado derivado: ✅ COMPLETO
+  - Zona/Área: cimientos · —
+  - Archivos autorizados: core.mjs, semaphore.mjs, bin/torre-semaphore.mjs, scripts/build-semaphore.mjs, test/semaphore-binary.test.mjs, install/runtime-payload.mjs, odd/tasks/s149-semaphore.md, test/identity.test.mjs, test/install/runtime-payload.contract.mjs
   - Depende de: —
   - Recursos: —
   - Ejecución: ODD nativo.
 - Encargo:
   - Pedido y contexto: La capa semáforo de core.mjs —register, setState, send, receive, acquire, release, transfer, forceRelease, status, locate, probeMode, open y deactivate, medidas hoy en core.mjs:4318-4681— se distribuye como ejecutable único. Hoy la Torre exige bun instalado y se presenta como un conjunto de scripts; el producto que se entrega a un tercero necesita un artefacto que se copie y corra. Esta Sesión produce el binario y su frontera observable; no rediseña el semáforo, no toca la capa continuation y no decide el empaquetado, que pertenece a S8.12.
   - Resultado y comportamiento: Existe un ejecutable único, reproducible desde el árbol, que expone el contrato tower&#95;&#42; con el mismo comportamiento observable que hoy: registro por directorio, estados, mensajes, y los locks git-delivery y db-writer con su semántica de transferencia. El interruptor ACTIVE y la base por repositorio bajo git-common-dir conservan su ubicación y su formato; un repositorio ya armado sigue funcionando sin migración ni reimportación. El binario no transporta la capa continuation. Una invocación de una operación de continuation contra el binario falla cerrado con error tipado, no con un éxito parcial ni con una operación silenciosamente ausente. La suite vigente sigue pasando sobre el código fuente sin modificar sus aserciones, y una prueba nueva ejercita el ejecutable ya construido —no el módulo importado— sobre un repositorio temporal: registrar dos agentes, encolar y consumir un mensaje, tomar el lock de entrega, transferirlo y soltarlo. El ejecutable declara su versión y la revisión del árbol que lo produjo, de modo que S8.12 pueda enumerarlo por huella exacta.
-  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. El territorio todavía no está resuelto: falta decidir si la capa semáforo se extrae a un módulo propio o se compila desde core.mjs tal como está, y esa decisión determina los archivos y los Cimientos exactos. Hasta resolverla el Encargo permanece incompleto y no autoriza archivos, Cimientos ni escritura. core.mjs, mcp.mjs, bin/torre, install.sh y package.json son Cimientos: su intervención exige reserva exacta por archivo y aprobación humana fresca. No se toca la capa continuation, ni sus migraciones, ni sus pruebas. No se cambia el esquema de las tablas agent, message y lock. No se activa la Torre, no se instala y no se publica.
-  - Referencias: Medición del corte: Engram 11325 (core.mjs partido 90/10 entre continuation y semáforo, con el semáforo en core.mjs:4318-4681 creando sus tres tablas en open() sin el sistema de migraciones) y Engram 11326 (continuation en el paso 1 de los 11 de docs/architecture/torre-motor-determinista.md, sección 17). Decisión de alcance: Engram 11327. Línea base de código: core.mjs:4318-4681, mcp.mjs (ocho herramientas tower&#95;&#42;), bin/torre. Revalidar contra el código vigente antes de implementar.
+  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. El territorio aprobado para preparación es Cimientos, con los nueve archivos exactos declarados (siete originales más dos pruebas agregadas por decisión resuelta). Se extrae el semáforo a semaphore.mjs y se conserva la interfaz vigente de core.mjs para sus consumidores; el binario entra por bin/torre-semaphore.mjs y scripts/build-semaphore.mjs, con prueba propia. El inventario generado install/runtime-payload.mjs se normaliza sólo para reflejar la importación nueva de core.mjs, no para decidir el empaquetado de S8.12. Su reserva exacta es compartida con S8.12 y S8.13 y requiere exclusividad o serialización demostrada. No se modifica mcp.mjs, bin/torre, install.sh, package.json ni las aserciones de la suite existente. No se toca la capa continuation, sus migraciones ni sus pruebas; no se cambia el esquema de agent, message y lock. No se activa la Torre, no se instala y no se publica. Mover 364 líneas implica al menos 728 líneas de diff antes de binario y tests: Emilio aprobó una excepción a la referencia de 400 líneas para un único commit coherente de S149 (Engram 11566). La excepción no amplía archivos, elimina pruebas, omite revisión ni autoriza por sí sola implementar o entregar.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto; expansion-de-alcance]: ¿La frontera V1 se extrae a un módulo propio o se compila directamente desde core.mjs?
+      - Resolución: Extraer el semáforo a semaphore.mjs y compilar sólo la entrada V1 aislada; conservar la interfaz fuente de core.mjs y demostrar que el binario excluye continuation.
+      - Autoridad: Elección explícita de Emilio en esta Conversación (Engram 11555); siete archivos y reserva compartida aprobados sólo para preparación (Engram 11564).
+      - Falsificador: El binario transporta continuation, una operación tower&#95;&#42; cambia su comportamiento observable o se muta un archivo fuera de los siete autorizados.
+      - Contaminaba: S149, S8.12, S8.13, S150
+      - Descartada: Compilar directamente desde core.mjs sin extraer. → Compartiría la entrada con continuation y no demostraría por sí solo su exclusión del binario.
+      - Descartada: Mantener pendiente la frontera sin decidir. → Dejaría S149 sin territorio ejecutable y frenaría el release V1.
+    - Decisión estructurada [resuelta · expansion-de-alcance]: ¿Cómo se trata el tamaño de la extracción de S149, que supera la referencia de 400 líneas de diff?
+      - Resolución: Un solo commit coherente con excepción de tamaño para S149; conservar pruebas, revisión proporcional y reversibilidad de esa unidad.
+      - Autoridad: Elección explícita de Emilio en esta Conversación (Engram 11566).
+      - Falsificador: La excepción se usa para agregar archivos fuera de los siete declarados, saltear pruebas o revisión, o mezclar resultados ajenos a S149.
+      - Contaminaba: S149
+      - Descartada: Commits secuenciales verificables. → Emilio eligió mantener la extracción y el binario como una unidad coherente, aceptando mayor carga de revisión.
+      - Descartada: No hacer nada por ahora. → Emilio eligió resolver la forma de entrega sin autorizar todavía el inicio de código.
+    - Decisión estructurada [resuelta · expansion-de-alcance]: ¿Se amplía S149 a los dos archivos de prueba que la extracción deja desalineados?
+      - Resolución: Agregar test/identity.test.mjs y test/install/runtime-payload.contract.mjs como Cimientos exactos de S149. El fixture P4-A1c copia core.mjs sin su nueva importación hermana semaphore.mjs, y el registro canónico del payload no enumera semaphore.mjs que el inventario generado ya incluye. Se alinean el fixture y el dato enumerado; ninguna aserción se debilita, quita ni condiciona.
+      - Autoridad: Autorización explícita de Emilio el 2026-09-24 en esta Conversación, que revierte su decisión previa de detener S149 sin ampliar alcance (Engram topic s149/fixture-scope-decision).
+      - Falsificador: Se modifica una aserción existente, se toca un archivo fuera de los nueve declarados, o la suite completa no pasa con cero fallos.
+      - Contaminaba: S149
+      - Descartada: Detener S149 sin ampliar alcance. → Dejaba el candidato con la suite en rojo y la release V1 trabada detrás de S149.
+  - Referencias: Medición del corte: Engram 11325 (core.mjs partido 90/10 entre continuation y semáforo, con el semáforo en core.mjs:4318-4681 creando sus tres tablas en open() sin el sistema de migraciones) y Engram 11326 (continuation en el paso 1 de los 11 de docs/architecture/torre-motor-determinista.md, sección 17). Decisión de alcance: Engram 11327. Línea base de código: core.mjs:4318-4681, mcp.mjs (ocho herramientas tower&#95;&#42;), bin/torre. Decisión y aprobación de preparación: Engram 11555 y 11564. El cierre de imports incluye core.mjs en scripts/payload-closure.mjs:7-15 y su igualdad con el inventario generado se prueba en test/install/payload-closure.test.mjs:86-103. Revalidar contra el código vigente antes de implementar.
 
 ### S150 — El README describe el producto que se entrega —el semáforo instalable— y no promete capacidades que pertenecen a torre-v2.
 - Coordinación:
-  - Estado derivado: 🟢 LISTO
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S8.12)
   - Zona/Área: cimientos · —
   - Archivos autorizados: README.md
-  - Depende de: —
+  - Depende de: S8.13
   - Recursos: —
   - Ejecución: ODD nativo.
 - Encargo:
@@ -1311,6 +1333,177 @@
       - Opción: Dividir en entregas. → Revisiones más chicas con cortes intermedios inútiles.
       - Descartada: Dividir en entregas. → Un corte intermedio mantendría Pi bloqueado o la llave incompleta.
   - Referencias: Decisión y alcance: Engram 11462. Diagnóstico del bloqueo: Engram 11461. Antecedentes: S151 y sus decisiones (Engram 11368, 11423), instalación global (Engram 11453). Decisión posterior sobre llave referencial: Engram 11475. Evidencia vigente: agent-workflows/tools/install.py (plantilla de la extensión y paso libre con llave activa), agent-workflows/chanks/pi-admission.mjs (admisión desde git y Radar), agent-workflows/chanks/pi-switch.mjs (interruptor compartido por worktrees), agent-workflows/skills/chanks-3-session-kickoff/SKILL.md (pedido de llave). Modelo de interruptor: &#96;gentle-ai review mode enable&#124;disable&#124;status&#96;.
+
+### S154 — Radar rechaza como error que una Sesión abierta dependa de historia ya satisfecha y, cuando una Sesión está bloqueada por su propio Encargo incompleto, lo dice en vez de culpar a otra Sesión.
+- Coordinación:
+  - Estado derivado: ✅ COMPLETO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/check&#95;test.go, agent-workflows/tools/radar/render.go, agent-workflows/tools/radar/render&#95;test.go, agent-workflows/tools/radar/faltan&#95;test.go
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: El 2026-09-24 el plan quedó sin ninguna Sesión LISTO. La migración 8628319 pasó S8.10 a satisfied&#95;history pero dejó a S8.12 y S12.3 dependiendo de ella; como satisfied&#95;history nunca es destino de dependencia (plan.go:253), esas Sesiones no podían avanzar nunca, y checkGrafo (check.go:625-641) lo aceptaba en silencio. Además, resumenBloqueo (render.go:458-471) no contempla el Encargo incompleto y para S149 mostró «contaminación semántica declarada por otra Sesión», culpando a otra Sesión. El plan ya se corrigió en 50713da; esta Sesión evita que se repita.
+  - Resultado y comportamiento: &#96;radar check&#96; reporta un error, no un aviso, cuando una Sesión abierta —sin entrega ni archivo registrados— declara en depende&#95;de un id registrado en references.satisfied&#95;history, y nombra la Sesión y el id. Una Sesión cerrada importada conserva esa arista sin error, porque satisfied&#95;history existe para cerrar su dependencia histórica congelada (design.md:564 de la migración a Zonas). Una dependencia hacia references.future&#95;successors conserva su comportamiento actual. &#96;radar faltan&#96; y &#96;radar render&#96; muestran para una Sesión BLOQUEADA por su propio Encargo incompleto un motivo que lo dice, en lugar del texto genérico de contaminación por otra Sesión. Los demás motivos de bloqueo conservan su texto y su precedencia. Pruebas nuevas cubren los dos casos: una falla sin el cambio y pasa con él. La suite de Radar completa pasa, y &#96;radar check&#96; sobre el plan vigente sigue sin errores.
+  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD con TDD estricto; SDD sólo por solicitud humana explícita. Sólo los cinco archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. No se cambian los siete estados ni cómo se calculan, ni el esquema de plan.yaml. S115 reserva también check.go y check&#95;test.go, pero está PLANIFICADO detrás de S114 DIFERIDO, así que no corren a la vez. Al entregar se reinstala ~/.local/bin/radar para que el pre-push use la versión nueva.
+  - Referencias: agent-workflows/tools/radar/check.go:625-641 (checkGrafo), check.go:761-780 (tipos de referencia), plan.go:253 (contrato de satisfied&#95;history), state.go:222-233 (readiness), render.go:458-471 (resumenBloqueo) y sus llamadores render.go:127 y faltan.go:146. Corrección del plan: commit 50713da. Diagnóstico: Engram topic sessions/torre-v1/readiness-blockers.
+
+### S155 — Radar ofrece &#96;radar etapa&#96;, que calcula desde el dato del plan y la evidencia de Git qué etapas de la guía Chanks de 5 etapas están habilitadas para una Sesión, y calcula 🔵 EN CURSO desde una marca temporal fuera de plan.yaml en vez de dejarlo deliberadamente ausente.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/radar/main.go, agent-workflows/tools/radar/state.go, agent-workflows/tools/radar/snapshot.go, agent-workflows/tools/radar/render.go, agent-workflows/tools/radar/faltan.go, agent-workflows/tools/radar/git.go, agent-workflows/tools/radar/etapa.go, agent-workflows/tools/radar/etapa&#95;test.go, agent-workflows/tools/radar/state&#95;test.go, agent-workflows/tools/radar/faltan&#95;test.go, agent-workflows/tools/radar/render&#95;test.go, agent-workflows/tools/radar/testdata/ROADMAP.golden.md, agent-workflows/tools/radar/testdata/faltan.golden.txt
+  - Depende de: S160
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Chanks deja de mostrar 💪 en cada bloqueo y de exigir el clic de activación (chanks&#95;request&#95;activation + ctx.ui.confirm) que hoy vive en S153; en su lugar, un cerebro en Radar calcula qué etapa de la guía de 5 etapas corresponde a una Sesión y sólo se anuncia en las transiciones. Hoy state.go:29-31 deja 🔵 EN CURSO deliberadamente ausente porque es una marca de ejecución, no un dato de plan; esta Sesión le da esa marca un lugar fuera de plan.yaml. Esta Sesión construye el cerebro; no toca las skills que lo consumen ni la extensión de Pi, que son S157 y S159.
+  - Resultado y comportamiento: &#96;radar etapa &lt;ID&gt;&#96; calcula, sin interpretar texto humano, el menú de etapas que la evidencia permite para una Sesión: sin Sesión para una idea suelta ofrece sólo la etapa 1 (Definir); una Sesión con Encargo incompleto ofrece la etapa 2 (Preparar); LISTO ofrece la etapa 3 (Despachar); EN CURSO ofrece la etapa 4 (Implementar y revisar); un archivo odd/tasks/&#42;.md con cada tarea marcada más una constancia de Intercom "listo para revisión" del worker ofrecen la etapa 5 (Entregar y cerrar). El modelo elige sólo entre las etapas que el comando ofrece; si ninguna corresponde, hace una sola pregunta y no adivina. 🔵 EN CURSO se calcula a partir de una marca temporal por Sesión bajo el directorio común de Git (por ejemplo &#96;.git/chanks/despachos/&lt;ID&gt;.json&#96;), escrita por el despacho o por Main cuando toma una Sesión directamente, y borrada al cerrar la etapa 5; la marca nunca se escribe en plan.yaml. El resumen de retomar trabajo ofrece primero las Sesiones EN CURSO con marca vigente y después las LISTO. Una marca cuya rama o worktree ya no existe se reporta como huérfana en el resumen, sin borrarla automáticamente. Pruebas nuevas cubren el menú de las cinco etapas y el cálculo de EN CURSO, incluida una marca huérfana. &#96;go test ./...&#96; de Radar pasa completo y &#96;radar check&#96; sobre el plan vigente sigue sin errores.
+  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD con TDD estricto; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. S115 reserva también check.go y check&#95;test.go pero está PLANIFICADO detrás de S114 DIFERIDO: esta Sesión no toca ninguno de los dos. El cerebro calcula el menú; no decide por el humano ni reemplaza las preguntas de escalación existentes. Sumar el subcomando nuevo y mover el cálculo de EN CURSO fuera de state.go:29-31 se estima entre 600 y 900 líneas de diff; Emilio aprobó una excepción a la referencia de 400 líneas para un único commit coherente de S155. La excepción no amplía archivos, elimina pruebas, omite revisión ni autoriza por sí sola implementar o entregar. Al entregar se reinstala ~/.local/bin/radar para que el pre-push y las demás Sesiones usen la versión nueva; la reinstalación es un paso operativo, no un archivo del plan.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto]: ¿Quién decide la etapa que corresponde a una Sesión: el modelo interpretando texto o un menú determinista?
+      - Resolución: Un menú determinista calculado por Radar desde el dato y Git; el modelo elige sólo entre las opciones que el menú ofrece y pregunta una vez si ninguna corresponde.
+      - Autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación (documento 'Chanks como guía de etapas — análisis por tramos', artifact 56421c44-de32-4b92-b4f7-6b428a6db555).
+      - Falsificador: El modelo asigna una etapa sin que el menú la ofrezca, o dos criterios del menú se solapan sin desempate determinista.
+      - Contaminaba: S155, S157, S159
+      - Descartada: Dejar que el modelo interprete libremente en qué etapa está una Sesión. → Pierde verificabilidad y repite el problema que motivó reemplazar el clic de activación.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto]: ¿Dónde vive la marca de 🔵 EN CURSO y quién la escribe y la borra?
+      - Resolución: Una marca temporal por Sesión en el directorio común de Git, nunca en plan.yaml; la escribe el despacho o Main al tomar la Sesión, y se borra al cerrar la etapa 5. Una marca huérfana se reporta, no se borra sola.
+      - Autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación.
+      - Falsificador: EN CURSO se escribe en plan.yaml, o Radar borra una marca huérfana sin que el humano lo pida.
+      - Contaminaba: S155, S157, S159
+      - Descartada: Seguir sin EN CURSO calculado, como hoy en state.go:29-31. → Main no puede distinguir una Sesión realmente en curso de una LISTO al ofrecer el resumen de retomar.
+    - Decisión estructurada [resuelta · expansion-de-alcance]: ¿Cómo se trata el tamaño de S155, que supera la referencia de 400 líneas de diff?
+      - Resolución: Un solo commit coherente con excepción de tamaño para S155; conserva pruebas, revisión proporcional y reversibilidad de esa unidad.
+      - Autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación.
+      - Falsificador: La excepción se usa para agregar archivos fuera de los declarados, saltear pruebas o revisión, o mezclar resultados ajenos a S155.
+      - Contaminaba: S155
+      - Descartada: Commits secuenciales verificables. → El cerebro y su cálculo de EN CURSO forman una unidad coherente; partirla deja un menú a medias.
+  - Referencias: state.go:29-31 (EN CURSO deliberadamente ausente). Corte Torre V1: Engram 11327 (Radar incluido en la Torre V1). Documento de diseño: 'Chanks como guía de etapas — análisis por tramos' (claude.ai artifact 56421c44-de32-4b92-b4f7-6b428a6db555) y Engram topics chanks/stage-router-&#42;. S154 (agent-workflows/tools/radar/check.go, render.go, faltan.go) como antecedente inmediato del mismo territorio. Revalidar contra el código vigente antes de implementar.
+
+### S156 — El canon y las skills de las etapas 1 y 2 dejan de describir el clic de activación y la revisión única por Sesión, y tratan el tope de 400 líneas como referencia y no como cupo.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/skills/&#95;shared/plan-naming-convention.md, agent-workflows/skills/chanks-1-autoridad/SKILL.md, agent-workflows/skills/chanks-2-planificador-granular/SKILL.md, agent-workflows/skills/chanks-1-adopcion/references/errores-conocidos.md, agent-workflows/tests/test&#95;builder&#95;flow.py
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: plan-naming-convention.md §15 (línea ~188) todavía describe "una Sesión review, no un reviewer loop por tarea o por Módulo", lo que choca con la revisión dentro de la etapa 4 que S157 implementa: gentle-ai RDD corre por commit de unidad de trabajo, incluido el tramo final pendiente. chanks-1-autoridad/SKILL.md:21 y chanks-2-planificador-granular/SKILL.md:30 nombran la llave de planificación del clic de activación que S153 introdujo y que la guía de etapas reemplaza por transiciones. chanks-1-adopcion/references/errores-conocidos.md:89-94 describe el tope de 400 líneas como un "cupo" que se agota, en vez de una referencia de planificación. test&#95;builder&#95;flow.py afirma en ~107-113 que chanks&#95;request&#95;activation aparece en session-kickoff y en la skill de planificación.
+  - Resultado y comportamiento: plan-naming-convention.md ya no dice que existe una sola revisión por Sesión; describe la revisión dentro de la etapa 4, por commit de unidad de trabajo, incluido el tramo final pendiente antes de cerrar. chanks-1-autoridad/SKILL.md y chanks-2-planificador-granular/SKILL.md dejan de nombrar la llave de planificación atada al clic de activación y describen en su lugar la transición 💪 a la etapa que corresponde. errores-conocidos.md describe el tope de 400 líneas como referencia de planificación, no como cupo que se agota o se reparte. test&#95;builder&#95;flow.py deja de exigir chanks&#95;request&#95;activation en session-kickoff y en la skill de planificación granular; sus aserciones nuevas verifican el lenguaje de transición por etapas en su lugar. La suite del Método pasa completa.
+  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. No se renombra ninguna skill en esta Sesión: los renombres de chanks-6-politica-de-entrega y chanks-7-session-doc pertenecen a S158. La convención canónica también está instalada en ~/.claude/skills/&#95;shared vía install.py; al entregar se ofrece propagarla a los demás agentes (Codex, OpenCode, Pi, Hermes) siguiendo la rutina ya establecida para propagar skills.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto]: ¿Se retira la regla de una sola revisión por Sesión del canon antes o después de que S157 implemente la revisión por commit dentro de la etapa 4?
+      - Resolución: Antes; el canon describe la regla de producto que S157 va a implementar, no al revés, y las skills chanks-1-autoridad y chanks-2-planificador-granular se actualizan en la misma Sesión para no dejar el canon y las skills de etapas 1-2 contradiciéndose entre sí.
+      - Autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación.
+      - Falsificador: El canon sigue describiendo una revisión única por Sesión después de que S157 entregue revisión por commit, o las skills de etapas 1-2 citan un mecanismo de activación que ya no existe.
+      - Contaminaba: S156, S157
+      - Descartada: Cambiar el canon recién cuando S157 entregue. → Deja el canon describiendo un comportamiento que el código de S157 ya contradice.
+  - Referencias: plan-naming-convention.md línea ~188 ("una Sesión review"). chanks-1-autoridad/SKILL.md:21. chanks-2-planificador-granular/SKILL.md:30. errores-conocidos.md:89-94. test&#95;builder&#95;flow.py:107-113 (aserción actual de chanks&#95;request&#95;activation). Documento de diseño: 'Chanks como guía de etapas — análisis por tramos' (claude.ai artifact 56421c44-de32-4b92-b4f7-6b428a6db555) y Engram topics chanks/stage-router-&#42;. Aprobación: Emilio, 2026-09-24, esta Conversación. Revalidar contra el árbol vigente antes de escribir.
+
+### S157 — session-kickoff deja de pedir el clic de activación humano; Radar libera automáticamente el bloqueo de escritura del worktree al admitir la Sesión, despacho-herdr y coordinador-manual escriben y borran la marca EN CURSO, la revisión gentle-ai vive dentro de la etapa 4 por commit de unidad de trabajo, y el puente queda liviano conservando su contrato de evidencia.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S155, S156)
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/skills/chanks-3-session-kickoff/SKILL.md, agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md, agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workflows/skills/chanks-4-puente/SKILL.md, agent-workflows/skills/chanks-0-agente-soporte/assets/assignment-implementation.md, agent-workflows/tests/test&#95;builder&#95;flow.py, agent-workflows/tests/test&#95;coordinador&#95;manual.py
+  - Depende de: S155, S156
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: session-kickoff/SKILL.md pide hoy en sus líneas ~25-45 el clic de activación (chanks&#95;request&#95;activation + ctx.ui.confirm) que S153 introdujo; la guía de etapas lo retira porque el cerebro de S155 ya calcula cuándo una Sesión puede pasar a la etapa 3. despacho-herdr/SKILL.md:51 prohíbe hoy una forma de bloqueo pensada para la Torre ACTIVE retirada; esa prohibición se acota a ese camino legado y despacho-herdr pasa a escribir la marca EN CURSO que S155 define al despachar. coordinador-manual la borra al cerrar. El puente (chanks-4-puente/SKILL.md) acumuló instrucciones de topología que ya no aplican (líneas 15-64, 84-99, 102-103, 107-122) y necesita adelgazarse sin perder el contrato de devolver evidencia ni la excepción de dos líneas para SDD. La skill unattended ya se entregó en el commit 4989357, fuera de este plan por decisión de Emilio, y agregó el bloque manual UNATTENDED-SEALED-CONSENT a los cinco archivos de instrucciones de agente; la plantilla de handoff y el despacho deben alinearse con ese sello (viaja en el handoff de Intercom, y el aviso terminal lleva el reporte de despertar).
+  - Resultado y comportamiento: session-kickoff ya no pide ni espera un clic humano de activación; cuando Radar admite la Sesión (misma identidad de Encargo nativo, o primer Módulo pendiente para legacy), la etapa 4 queda disponible y la skill anuncia 💪 sólo en esa transición, nunca en un bloqueo. despacho-herdr escribe la marca EN CURSO definida por S155 al despachar una Sesión aprobada a un worker Pi persistente, y la prohibición de su línea 51 queda acotada exactamente al camino Torre ACTIVE retirado, sin alcanzar el despacho manual vigente. coordinador-manual borra esa marca al aceptar la evidencia terminal y cerrar. La plantilla de handoff y el despacho reconocen el sello UNATTENDED-SEALED-CONSENT: lo hacen viajar en el handoff de Intercom y esperan que el aviso terminal traiga el reporte de despertar cuando la Sesión se selló para ejecución desatendida. chanks-4-puente pierde las instrucciones de topología retiradas (15-64, 84-99, 102-103, 107-122) y conserva sólo el contrato de traducir evidencia en ambas direcciones sin escribir el plan, la excepción de dos líneas para SDD, y la frase "review outcome never authorizes delivery" que test&#95;builder&#95;flow.py:120 sigue verificando. assignment-implementation.md exige que el worker mande por Intercom "listo para revisión" al completar su lista de tareas ODD, y declara los campos del sello desatendido que el handoff debe preservar. Las pruebas de test&#95;builder&#95;flow.py y test&#95;coordinador&#95;manual.py cubren la ausencia del clic de activación, la marca EN CURSO al despachar y al cerrar, y la frase conservada del puente; la suite del Método pasa completa.
+  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD con TDD estricto; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. La revisión gentle-ai RDD por commit de unidad de trabajo, incluido el tramo final pendiente, queda dentro de la etapa 4; esta Sesión no cambia cómo RDD decide su propio riesgo ni su consentimiento. No se toca la topología Herdr en sí (hosts/herdr-topology.mjs es Cimiento de otra Sesión). El adelgazamiento del puente se estima junto con los cambios de session-kickoff y despacho-herdr en un rango que supera la referencia de 400 líneas de diff; Emilio aprobó una excepción a la referencia para un único commit coherente de S157. La excepción no amplía archivos, elimina pruebas, omite revisión ni autoriza por sí sola implementar o entregar. test&#95;builder&#95;flow.py también lo toca S156, que se entrega antes (depende&#95;de).
+    - Decisión estructurada [resuelta · seguridad-y-permisos]: ¿Quién libera el bloqueo de escritura de la Sesión si ya no hay clic humano de activación?
+      - Resolución: Radar, al admitir la Sesión con la misma verificación que ya usa para el resumen de retomar (identidad exacta, HEAD y evidencia); ningún agente ni el modelo decide la admisión por sí mismo.
+      - Autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación.
+      - Falsificador: Una escritura ocurre sin admisión de Radar, o el modelo se auto-admite sin que exista la evidencia que Radar exige.
+      - Contaminaba: S157, S159
+      - Descartada: Mantener el clic humano de activación de S153. → Repite el punto de fricción que motivó este rediseño; el humano ya aprobó el trabajo al dejar la Sesión LISTO.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto]: ¿Quién escribe y quién borra la marca EN CURSO que S155 define?
+      - Resolución: despacho-herdr la escribe al despachar; coordinador-manual la borra al aceptar la evidencia terminal y cerrar la etapa 5.
+      - Autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación.
+      - Falsificador: La marca queda escrita después de cerrar una Sesión, o ningún agente la borra nunca.
+      - Contaminaba: S157
+      - Descartada: Que Main la escriba y la borre siempre, incluso en despacho Herdr. → Duplica responsabilidad con despacho-herdr, que ya sabe cuándo despacha.
+    - Decisión estructurada [resuelta · expansion-de-alcance]: ¿Cómo se trata el tamaño de S157, que supera la referencia de 400 líneas de diff?
+      - Resolución: Un solo commit coherente con excepción de tamaño para S157; conserva pruebas, revisión proporcional y reversibilidad de esa unidad.
+      - Autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación.
+      - Falsificador: La excepción se usa para agregar archivos fuera de los declarados, saltear pruebas o revisión, o mezclar resultados ajenos a S157.
+      - Contaminaba: S157
+      - Descartada: Commits secuenciales verificables. → El retiro del clic, la marca EN CURSO y el adelgazamiento del puente son una unidad coherente de la etapa 3-4.
+  - Referencias: session-kickoff/SKILL.md líneas ~25-45 (clic de activación actual). despacho-herdr/SKILL.md:51 (prohibición actual). chanks-4-puente/SKILL.md líneas 15-64, 84-99, 102-103, 107-122 (a retirar) y test&#95;builder&#95;flow.py:120 (frase a conservar). Commit 4989357 (skill unattended entregada fuera de plan) y el bloque manual UNATTENDED-SEALED-CONSENT en los cinco archivos de instrucciones de agente. Documento de diseño: 'Chanks como guía de etapas — análisis por tramos' (claude.ai artifact 56421c44-de32-4b92-b4f7-6b428a6db555) y Engram topics chanks/stage-router-&#42;. Revalidar contra el árbol vigente antes de escribir.
+
+### S158 — chanks-6-politica-de-entrega se renombra chanks-5-politica-de-entrega y suma el modo leer para la etapa 5; chanks-7-session-doc se renombra chanks-5-session-doc completa; toda referencia cruzada vigente apunta al nombre nuevo.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S155, S156)
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/skills/chanks-6-politica-de-entrega/SKILL.md, agent-workflows/skills/chanks-5-politica-de-entrega/SKILL.md, agent-workflows/skills/chanks-7-session-doc/SKILL.md, agent-workflows/skills/chanks-5-session-doc/SKILL.md, agent-workflows/templates/session-routing.md, agent-workflows/skills/chanks-7-session-doc/assets/project-notion-map.json, agent-workflows/skills/chanks-5-session-doc/assets/project-notion-map.json, agent-workflows/skills/chanks-7-session-doc/assets/session-doc.schema.json, agent-workflows/skills/chanks-5-session-doc/assets/session-doc.schema.json, agent-workflows/skills/chanks-7-session-doc/references/links.md, agent-workflows/skills/chanks-5-session-doc/references/links.md, agent-workflows/tools/install.py, agent-workflows/skills/chanks-1-cierre-de-decisiones/SKILL.md, agent-workflows/skills/chanks-1-terreno/SKILL.md, agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workflows/skills/chanks-4-puente/SKILL.md, agent-workflows/skills/&#95;shared/plan-naming-convention.md, agent-workflows/README.md, agent-workflows/EJECUCION-EN-PARALELO.md, agent-workflows/FLUJO-END-TO-END.md, agent-workflows/tests/test&#95;builder&#95;flow.py, agent-workflows/tests/test&#95;install.py, agent-workflows/tests/test&#95;coordinador&#95;manual.py, AGENTS.md
+  - Depende de: S157
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: La guía de etapas nombra la etapa 5 (Entregar y cerrar) con dos skills que hoy llevan números fuera de secuencia: chanks-6-politica-de-entrega y chanks-7-session-doc. Esta Sesión las renombra a chanks-5-politica-de-entrega y chanks-5-session-doc y agrega a la primera un modo leer para la etapa 5, que lee el bloque de política de entrega del repo y rutea a work-unit-commits, branch-pr o chained-pr, tratando sus reglas de 400 líneas y de abrir issue primero como referencia por repo; el modo declarar existente, usado en las etapas 1-2, no cambia. install.py deja de instalar los nombres retirados y agrega los nuevos a CHANKS&#95;SKILLS y RETIRED&#95;SKILLS. S123 (DIFERIDO) reserva hoy chanks-7-session-doc/SKILL.md y templates/session-routing.md; como está diferida no corre en paralelo, y al entregar S158 Main repunta su reserva al nombre nuevo.
+  - Resultado y comportamiento: agent-workflows/skills/chanks-5-politica-de-entrega/SKILL.md existe con el contenido de chanks-6-politica-de-entrega más el modo leer: en la etapa 5 lee el bloque de política de entrega declarado por el repo (o lo detecta si falta) y rutea a la skill de entrega que corresponde, tratando sus topes como referencia y no como bloqueo duro; el modo declarar se conserva igual para las etapas 1-2. chanks-7-session-doc completa —SKILL.md, assets y referencias— pasa a chanks-5-session-doc con el mismo contenido. Toda referencia cruzada vigente en chanks-1-cierre-de-decisiones, chanks-1-terreno, chanks-3-coordinador-manual, chanks-4-puente, la convención canónica, los templates y la documentación del método usa los nombres nuevos. install.py instala chanks-5-politica-de-entrega y chanks-5-session-doc y retira los nombres viejos del listado activo; las pruebas de instalación y de coordinador-manual verifican los nombres nuevos.
+  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. AGENTS.md es Cimiento: su intervención exige reserva exacta y exclusividad o serialización demostrada, y aquí sólo se corrigen sus menciones de los nombres viejos en las líneas que los citan. S123 queda DIFERIDO: su contenido y su estado no se tocan; sólo cambia la ruta de su reserva.
+    - Decisión estructurada [resuelta · expansion-de-alcance; dependencias-o-evidencia-contradictorias]: S123 (DIFERIDO) reserva chanks-7-session-doc/SKILL.md y templates/session-routing.md, que el renombre de la etapa 5 necesitaría tocar. ¿Cómo avanza S158 sin invadir esa reserva?
+      - Resolución: S158 declara y mueve esos dos archivos, porque renombrar la skill exige mover su SKILL.md y actualizar la referencia del template. S123 está DIFERIDO y no corre en paralelo; radar check acepta el solapamiento. Al entregar S158, Main repunta la ruta reservada por S123 de chanks-7-session-doc/SKILL.md a chanks-5-session-doc/SKILL.md, sin tocar el contenido de S123 ni su estado.
+      - Autoridad: Propuesta presentada a Emilio el 2026-09-24 al aprobar las cinco Sesiones (repuntar la reserva de S123 al preparar la etapa 5).
+      - Falsificador: El repunte cambia algo del contrato de S123 más allá de la ruta reservada, o S158 se ejecuta mientras S123 deja de estar DIFERIDO sin reconciliar la reserva.
+      - Contaminaba: S123, S158
+      - Descartada: Excluir esos dos archivos de S158. → La skill no se puede renombrar sin mover su SKILL.md; la Sesión quedaría imposible de cumplir.
+      - Descartada: Cerrar o reabrir S123 junto con S158. → Decide por S123 sin la autorización específica que esa Sesión requiere.
+  - Referencias: Diseño de la etapa 5: 'Chanks como guía de etapas — análisis por tramos' (claude.ai artifact 56421c44-de32-4b92-b4f7-6b428a6db555) y Engram topics chanks/stage-router-&#42;. install.py CHANKS&#95;SKILLS (~48-49) y RETIRED&#95;SKILLS. AGENTS.md líneas ~66 y ~68 (nombres viejos). S123 (DIFERIDO) y su reserva exacta de chanks-7-session-doc/SKILL.md, chanks-0-agente-soporte/SKILL.md y templates/session-routing.md. Aprobación: Emilio, 2026-09-24, esta Conversación. Revalidar contra el árbol vigente antes de escribir.
+
+### S159 — La extensión de Pi deja de pedir el clic de activación y bloquea escrituras de worktree sólo hasta que Radar admite la Sesión, guiando siempre a Main en vez de quedar inerte; un hook nuevo de Claude Code muestra el mismo menú de etapas llamando a &#96;radar etapa&#96;.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S155, S156)
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/install.py, agent-workflows/chanks/pi-admission.mjs, agent-workflows/chanks/pi-authority.mjs, agent-workflows/chanks/pi-switch.mjs, agent-workflows/chanks/pi-controls.mjs, agent-workflows/chanks/controls.mjs, agent-workflows/chanks/interventions.mjs, agent-workflows/tests/chanks/pi-admission.test.mjs, agent-workflows/tests/chanks/pi-authority.test.mjs, agent-workflows/tests/chanks/pi-switch.test.mjs, agent-workflows/tests/chanks/pi-controls.test.mjs, agent-workflows/tests/chanks/controls.test.mjs, agent-workflows/tests/chanks/interventions.test.mjs, agent-workflows/tests/test&#95;install.py, agent-workflows/tools/hooks/chanks-etapa.sh
+  - Depende de: S155, S157
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: La plantilla PI&#95;EXTENSION&#95;TEMPLATE de install.py (~523-795, con sus imports ~806-811) todavía pide chanks&#95;request&#95;activation y ctx.ui.confirm, que S153 introdujo como llave de Sesión y de planificación. La guía de etapas la reemplaza: el bloqueo de escritura de worktree se sostiene hasta que Radar admite la Sesión (S157), calculado por el cerebro de S155, y ya no hace falta una pregunta nativa de Pi para liberarlo. Hoy la extensión queda inerte en Main; pasa a guiarlo siempre, mostrando 💪 sólo en las transiciones de etapa. controls.mjs sigue siendo importado por pi-authority.mjs:9 e interventions.mjs:20, así que no se retira completo: sólo se quita lo que quede efectivamente sin uso tras remover el clic. Claude Code no tiene hoy un mecanismo que muestre el menú de etapas; esta Sesión agrega el hook que lo hace, sin cablearlo todavía a ~/.claude/settings.json.
+  - Resultado y comportamiento: La plantilla de la extensión de Pi ya no pregunta chanks&#95;request&#95;activation ni usa ctx.ui.confirm. Con el interruptor por repositorio encendido y una Sesión aprobada sin admitir, la extensión sigue bloqueando escrituras del worktree; en cuanto Radar admite la Sesión (misma verificación de S157), el bloqueo se libera solo, sin pregunta. En Main la extensión deja de quedar inerte: guía mostrando el menú de etapas que calcula &#96;radar etapa&#96;, y anuncia 💪 únicamente en una transición de etapa, nunca en un bloqueo. pi-admission.mjs, pi-authority.mjs, pi-switch.mjs y pi-controls.mjs reflejan ese cambio; controls.mjs e interventions.mjs se conservan porque siguen siendo importados, y sólo se retira el código que la remoción del clic deja genuinamente sin uso. Las pruebas bajo agent-workflows/tests/chanks/ y test&#95;install.py cubren la ausencia del clic, la liberación automática al admitir, y que Main ya no queda inerte. Un hook nuevo para Claude Code ejecuta &#96;radar etapa&#96; y presenta el mismo menú y la misma transición 💪 que ve Pi. install.py no toca ~/.claude/settings.json hoy y esta Sesión no lo cambia: cablear el hook ahí es un paso operativo que exige confirmación humana explícita al entregar, no un archivo del repo.
+  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. El modelo no puede fabricar la admisión de Radar ni encender el interruptor por repositorio; esa autoridad sigue siendo del humano y de Radar, igual que en S153. controls.mjs e interventions.mjs se tocan sólo para retirar código genuinamente muerto, nunca sus exports usados por pi-authority.mjs o interventions.mjs. Cablear el hook nuevo en ~/.claude/settings.json y habilitarlo de verdad requiere confirmación humana explícita al entregar; install.py no lo hace por sí solo.
+    - Decisión estructurada [resuelta · seguridad-y-permisos]: ¿Qué reemplaza a ctx.ui.confirm como condición para liberar la escritura del worktree en Pi?
+      - Resolución: La admisión de Radar sobre la misma Sesión (misma identidad, HEAD y evidencia que ya usa session-kickoff en S157); ninguna pregunta nativa de Pi ni una respuesta del modelo liberan la escritura por sí solas.
+      - Autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación.
+      - Falsificador: Una escritura de worktree ocurre sin admisión de Radar, o la extensión acepta una respuesta del modelo como si fuera la del humano.
+      - Contaminaba: S157, S159
+      - Descartada: Mantener ctx.ui.confirm en Pi y sólo quitarlo del resto de los runtimes. → Deja a Pi con un mecanismo distinto al resto y no resuelve la fricción que motivó el rediseño.
+    - Decisión estructurada [resuelta · seguridad-y-permisos]: ¿Esta Sesión cablea el hook nuevo de Claude Code en ~/.claude/settings.json?
+      - Resolución: No. install.py no toca settings.json hoy y esta Sesión entrega el script del hook sin activarlo; cablearlo y confirmarlo de verdad queda para la entrega, con confirmación humana explícita.
+      - Autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación.
+      - Falsificador: install.py o esta Sesión modifican ~/.claude/settings.json sin confirmación humana explícita al entregar.
+      - Contaminaba: S159
+      - Descartada: Cablear el hook automáticamente al instalar. → Cambia el comportamiento de Claude Code fuera del repo sin que el humano lo confirme explícitamente.
+  - Referencias: install.py PI&#95;EXTENSION&#95;TEMPLATE (~523-795) e imports (~806-811). controls.mjs importado por pi-authority.mjs:9 e interventions.mjs:20. Decisiones conservadas de S151 y S153 (Engram 11368, 11423, 11462, 11475). Documento de diseño: 'Chanks como guía de etapas — análisis por tramos' (claude.ai artifact 56421c44-de32-4b92-b4f7-6b428a6db555) y Engram topics chanks/stage-router-&#42;. Revalidar contra el árbol vigente antes de escribir.
+
+### S160 — openspec/plan.yaml deja de crecer sin fin: una Sesión cerrada pasa a un histórico en markdown y deja una sola línea de referencia en el plan, y radar status muestra por defecto sólo las Sesiones vivas.
+- Coordinación:
+  - Estado derivado: ✅ COMPLETO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/radar/main.go, agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/state.go, agent-workflows/tools/radar/snapshot.go, agent-workflows/tools/radar/check.go, agent-workflows/tools/radar/render.go, agent-workflows/tools/radar/archivar.go, agent-workflows/tools/radar/archivar&#95;test.go, agent-workflows/tools/radar/check&#95;test.go, agent-workflows/tools/radar/snapshot&#95;test.go, agent-workflows/tools/radar/state&#95;test.go, agent-workflows/skills/chanks-7-session-doc/SKILL.md
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: El plan es la autoridad viva, pero guarda completas las Sesiones cerradas: hoy 92 de 128. Con 10.389 líneas ya no entra en la ventana de contexto de un agente; para escribir hay que buscar y leer pedazos, y el resumen general de Radar trae también todo lo cerrado. Emilio quiere que plan.yaml sea sólo lo que está en caliente y la autoridad, y que lo cerrado quede como histórico archivado en markdown.
+  - Resultado y comportamiento: Un comando nuevo, radar archivar &lt;ID&gt;, toma una Sesión ✅ COMPLETO cuya entrega está integrada en master, escribe su bloque completo en openspec/archive/sesiones/&lt;ID&gt;.md y lo reemplaza en plan.yaml por una referencia de una línea con el ID, el commit de entrega y la ruta del histórico. Rechaza con error una Sesión abierta, sin entrega integrada o ya archivada, y no toca nada más del plan. Para Radar, una Sesión propia archivada con entrega verificable cuenta como terminada: las Sesiones abiertas que dependen de ella pueden quedar LISTO, a diferencia de la historia importada de satisfied&#95;history, que sigue sin conceder readiness. radar check valida cada referencia archivada: el commit existe y está integrado en master, el histórico existe y el ID no se repite. Sus estados cerrados y el conteo de avance no cambian por archivar. radar status, en texto y en --json, muestra por defecto sólo las Sesiones vivas; una opción explícita agrega las cerradas y archivadas. La skill de cierre de la etapa 5 indica correr radar archivar al cerrar cada Sesión. Pruebas nuevas cubren archivar, el rechazo de los casos inválidos, la dependencia hacia una Sesión archivada y el status liviano; la suite de Radar completa pasa y radar check sobre el plan vigente sigue sin errores.
+  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD con TDD estricto; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. S115 reserva también check.go y check&#95;test.go, pero está PLANIFICADO detrás de S114 DIFERIDO y no corren a la vez. La pasada inicial que archiva las Sesiones ya cerradas es un paso operativo de Main al entregar, con radar archivar y en su propio commit; no es parte de esta Sesión. Al entregar se reinstala ~/.local/bin/radar.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto]: ¿Una Sesión archivada cuenta como terminada para quien depende de ella?
+      - Resolución: Sí, si es una Sesión propia con commit de entrega integrado en master. La historia importada de satisfied&#95;history conserva su regla actual: no concede readiness.
+      - Autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación.
+      - Falsificador: Una Sesión abierta que depende de una archivada con entrega verificable queda bloqueada para siempre, o satisfied&#95;history empieza a conceder readiness.
+      - Contaminaba: S160
+      - Descartada: Tratar lo archivado igual que satisfied&#95;history. → Repetiría la trampa de S8.12 y S8.10 con cada Sesión archivada.
+    - Decisión estructurada [resuelta · expansion-de-alcance]: ¿Dónde vive el histórico y quién escribe su ruta en el plan?
+      - Resolución: En openspec/archive/sesiones/&lt;ID&gt;.md, dentro de la Zona archivo. Main agregó esa ruta a la partición al enumerar esta Sesión.
+      - Autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación.
+      - Falsificador: Un histórico queda fuera de toda Zona y radar check reporta archivos huérfanos.
+      - Contaminaba: S160
+      - Descartada: Guardar el histórico dentro de plan.yaml. → Es justamente lo que hace crecer el plan sin fin.
+  - Referencias: Antecedente de la historia fuera del plan: la migración a Zonas (8628319) y openspec/archive/legacy-planning/, con referencias satisfied&#95;history. Contrato actual: agent-workflows/tools/radar/plan.go:253 (SatisfiedHistory), state.go (readiness sólo contra Sesiones), render.go:312 (filas de referencias), check.go:625-660 (dependencias hacia referencias, S154). La skill de cierre se edita con su nombre actual (chanks-7-session-doc, reservada también por S123 en DIFERIDO); S158 la renombra después con este contenido incluido.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -1876,7 +2069,7 @@ Rutas históricas (evidencia): hosts/production-provider.mjs, install/lifecycle.
 
 ### S4.5 — Raíz primaria Main-owned con vista adjunta
 - Estado derivado: ✅ COMPLETO
-- Territorio histórico: evidencia no autorizante; propietarios actuales: Enrolamiento, Hosts, Instalación.
+- Territorio histórico: evidencia no autorizante; propietarios actuales: Enrolamiento, Hosts, Instalación, cimientos.
 - Depende de: S4.2
 - Cimientos: —
 - Recursos: namespace owner-only de backend, proceso, puerto loopback, secreto y binding de raíz por worktree asignado, vista TUI local
@@ -2803,7 +2996,7 @@ Rutas históricas (evidencia): continuation/integrated-base.mjs, test/continuati
 
 ### S5.15 — Ninguna línea de producción de la Torre abre un documento de plan; deriveNextModule y session-plan-snapshot se retiran, mientras compareWorkerClaim sobrevive intacto.
 - Estado derivado: 📚 ARCHIVADO
-- Territorio histórico: evidencia no autorizante; propietarios actuales: Contratos, Entrega, Instalación.
+- Territorio histórico: evidencia no autorizante; propietarios actuales: Contratos, Entrega, Instalación, cimientos.
 - Depende de: S5.5, S102
 - Cimientos: —
 - Recursos: RUNTIME&#95;PAYLOAD&#95;FILES
@@ -4031,7 +4224,7 @@ Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workfl
   - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
 
 ## Capacidad
-2 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: cimientos, instalacion.
+1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: metodo.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
