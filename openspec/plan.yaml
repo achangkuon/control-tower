@@ -9705,6 +9705,64 @@ sesiones:
           revisión.
     entrega:
       commit: 48d7dda3956500fe5625091931c41f79a5a17904
+  - id: S154
+    zona: metodo
+    prioridad: torre-v1
+    resultado: >-
+      Radar rechaza como error que una Sesión abierta dependa de historia ya satisfecha y, cuando una
+      Sesión está bloqueada por su propio Encargo incompleto, lo dice en vez de culpar a otra
+      Sesión.
+    autoridad: >-
+      Aprobación explícita de Emilio el 2026-09-24 en esta Conversación, tras la investigación de
+      raíz del plan sin Sesiones LISTO (Engram topics sessions/s154/approval,
+      radar/guards-zero-listo-2026-09-24 y sessions/torre-v1/readiness-blockers-s810). El corte
+      Torre V1 del 2026-09-18 (Engram 11327) incluye Radar en la Torre V1.
+    depende_de: []
+    cimientos: []
+    recurso: []
+    archivos:
+      - agent-workflows/tools/radar/check.go
+      - agent-workflows/tools/radar/check_test.go
+      - agent-workflows/tools/radar/render.go
+      - agent-workflows/tools/radar/render_test.go
+      - agent-workflows/tools/radar/faltan_test.go
+    encargo:
+      pedido_contexto: >-
+        El 2026-09-24 el plan quedó sin ninguna Sesión LISTO. La migración 8628319 pasó S8.10 a
+        satisfied_history pero dejó a S8.12 y S12.3 dependiendo de ella; como satisfied_history
+        nunca es destino de dependencia (plan.go:253), esas Sesiones no podían avanzar nunca, y
+        checkGrafo (check.go:625-641) lo aceptaba en silencio. Además, resumenBloqueo
+        (render.go:458-471) no contempla el Encargo incompleto y para S149 mostró «contaminación
+        semántica declarada por otra Sesión», culpando a otra Sesión. El plan ya se corrigió en
+        50713da; esta Sesión evita que se repita.
+      resultado_comportamiento: >-
+        `radar check` reporta un error, no un aviso, cuando una Sesión abierta —sin entrega ni
+        archivo registrados— declara en depende_de un id registrado en
+        references.satisfied_history, y nombra la Sesión y el id. Una Sesión cerrada importada
+        conserva esa arista sin error, porque satisfied_history existe para cerrar su
+        dependencia histórica congelada (design.md:564 de la migración a Zonas). Una
+        dependencia hacia references.future_successors conserva su comportamiento actual.
+
+        `radar faltan` y `radar render` muestran para una Sesión BLOQUEADA por su propio Encargo
+        incompleto un motivo que lo dice, en lugar del texto genérico de contaminación por otra
+        Sesión. Los demás motivos de bloqueo conservan su texto y su precedencia.
+
+        Pruebas nuevas cubren los dos casos: una falla sin el cambio y pasa con él. La suite de
+        Radar completa pasa, y `radar check` sobre el plan vigente sigue sin errores.
+      restricciones_decisiones: >-
+        Gentle AI desglosa, implementa y verifica mediante ODD con TDD estricto; SDD sólo por
+        solicitud humana explícita. Sólo los cinco archivos declarados están autorizados; toda
+        expansión requiere aprobación humana y compatibilidad fresca antes de escribir. No se
+        cambian los siete estados ni cómo se calculan, ni el esquema de plan.yaml. S115 reserva
+        también check.go y check_test.go, pero está PLANIFICADO detrás de S114 DIFERIDO, así que
+        no corren a la vez. Al entregar se reinstala ~/.local/bin/radar para que el pre-push use
+        la versión nueva.
+      referencias: >-
+        agent-workflows/tools/radar/check.go:625-641 (checkGrafo), check.go:761-780 (tipos de
+        referencia), plan.go:253 (contrato de satisfied_history), state.go:222-233 (readiness),
+        render.go:458-471 (resumenBloqueo) y sus llamadores render.go:127 y faltan.go:146.
+        Corrección del plan: commit 50713da. Diagnóstico: Engram topic
+        sessions/torre-v1/readiness-blockers.
 references:
   future_successors:
     - id: S102
