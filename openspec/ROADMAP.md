@@ -1507,7 +1507,7 @@
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Archivo.
 - Depende de: S1.9, S1.10
 - Cimientos: —
@@ -1533,7 +1533,7 @@ Rutas históricas (evidencia): openspec/changes/p7-host-neutral-loop-opencode-ad
   - [ ] Approve the P7 gate only after the record and binary checks are complete.
 
 ### S1.12 — Reconciliación independiente P8
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Archivo.
 - Depende de: S1.11
 - Cimientos: —
@@ -1582,7 +1582,7 @@ Rutas históricas (evidencia): openspec/changes/p8-slice-planning/reconciliation
   - [ ] Confirm the design threat matrix remains N/A; no runtime RED tests are required for this documentation-only change.
 
 ### S1.13 — Root lifecycle e invalidación sincrónica
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Hosts, cimientos.
 - Depende de: S1.12
 - Cimientos: —
@@ -1607,7 +1607,7 @@ Rutas históricas (evidencia): hosts/loop.mjs, test/polling.test.mjs
   - [ ] Run bun test test/polling.test.mjs and node --check hosts/loop.mjs; record exact results, an authored-line receipt from git diff --numstat, runtime harness result N/A, and the bounded S1.13 rollback boundary.
 
 ### S1.14 — Polling y wake safety
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Hosts, cimientos.
 - Depende de: S1.13
 - Cimientos: —
@@ -1633,7 +1633,7 @@ Rutas históricas (evidencia): hosts/loop.mjs, test/polling.test.mjs
   - [ ] Focused tests and syntax validation pass; runtime harness is correctly recorded as N/A.
 
 ### S1.15 — Conformidad lifecycle OpenCode
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Hosts, cimientos.
 - Depende de: S1.14
 - Cimientos: —
@@ -1661,7 +1661,7 @@ Rutas históricas (evidencia): plugin/tower-spike.js, test/helpers/host-adapter-
   - [ ] Focused suites and syntax checks pass and the CT-R5-S1 through CT-R5-S5 boundary is recorded.
 
 ### S1.16 — Transporte reconciliado y composición wake
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Hosts, cimientos.
 - Depende de: S1.15
 - Cimientos: —
@@ -1694,7 +1694,7 @@ Rutas históricas (evidencia): hosts/loop.mjs, plugin/tower-spike.js, test/host-
   - [ ] All prescribed checks pass and rollback is limited to S1.16 composition and seam changes.
 
 ### S1.17 — Gate y RED del adapter Pi
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Hosts.
 - Depende de: S9.4
 - Cimientos: —
@@ -1723,7 +1723,7 @@ Rutas históricas (evidencia): adapters/pi/contract.mjs, test/adapters/pi/contra
   - [ ] or Intercom surface changes and focused and complete verification pass.
 
 ### S1.18 — Adapter Pi/Intercom y reporte terminal asíncrono
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Hosts.
 - Depende de: S1.17
 - Cimientos: —
@@ -1770,7 +1770,7 @@ Rutas históricas (evidencia): adapters/pi/runtime.mjs, test/adapters/pi/runtime
   - [ ] Focused and full verification pass over only the two Area paths and the second commit remains at or below 400 authored lines.
 
 ### S1.20 — Probe tipado y read-only del modo Tower
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Zona/Área: cimientos · —
 - Depende de: —
 - Cimientos: core.mjs, test/lifecycle.test.mjs
@@ -1793,7 +1793,7 @@ Rutas: core.mjs, test/lifecycle.test.mjs
   - [ ] REFACTOR: congelar el tipo cerrado, normalizar INDETERMINATE y repetir testigos de bytes/metadatos.
 
 ### S2.8 — Los nombres de fase salen del contrato de binding
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Contratos, cimientos.
 - Depende de: —
 - Cimientos: —
@@ -1828,7 +1828,7 @@ Rutas históricas (evidencia): test/fixtures/contracts/schema-cases-v1.json, tes
   - [ ] suites y territorio exacto quedan probados.
 
 ### S3.1 — Change C Workspace checkpoint
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Asientos.
 - Depende de: S2.4
 - Cimientos: —
@@ -1856,7 +1856,7 @@ Rutas históricas (evidencia): workspace/checkpoint.mjs, test/workspace/checkpoi
   - [ ] Los digests raw-bytes y rfc8785-jcs verifican la identidad exacta.
 
 ### S3.2 — Change D Global/project Policy/Jornada
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Capacidades, Contratos, Enrolamiento.
 - Depende de: S3.1
 - Cimientos: —
@@ -1912,7 +1912,7 @@ Rutas históricas (evidencia): policy/delivery-policy.mjs, schemas/delivery-poli
   - [ ] Las pruebas focalizadas de delivery-policy pasan.
 
 ### S3.3 — Agent Capability Registry
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Capacidades, Contratos, cimientos.
 - Depende de: S3.2
 - Cimientos: —
@@ -1945,7 +1945,7 @@ Rutas históricas (evidencia): capabilities/registry.mjs, schemas/agent-capabili
   - [ ] Suites focalizadas pasan sin tocar Prohibido.
 
 ### S3.4 — Persistencia y ciclo de vida de Jornada
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Enrolamiento, Jornada.
 - Depende de: S3.2, S3.3
 - Cimientos: —
@@ -1986,7 +1986,7 @@ Rutas históricas (evidencia): jornada/lifecycle.mjs, test/jornada/lifecycle.tes
   - [ ] Suites focalizadas pasan y la invalidación permanece pasiva.
 
 ### S4.1 — Change E single-host candidate fence
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Hosts.
 - Depende de: S3.1, S3.2, S5.1
 - Cimientos: —
@@ -2023,7 +2023,7 @@ Rutas históricas (evidencia): hosts/candidate-fence.mjs, test/hosts/candidate-f
   - [ ] REFACTOR: preservar errores tipados, garantizar cero mutación durable antes de publish, prohibir rollback que borre un epoch publicado y exigir readback tras DURABILITY&#95;UNKNOWN; ejecutar evidencia de todas las ramas y cleanup. bun test test/hosts y luego bun test pasaron una vez post-GREEN.
 
 ### S4.2 — Lanzamiento visible de raíz OpenCode
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Hosts, Instalación, cimientos.
 - Depende de: S4.1, S1.16
 - Cimientos: —
@@ -2068,7 +2068,7 @@ Rutas históricas (evidencia): hosts/production-provider.mjs, install/lifecycle.
   - [ ] REFACTOR: registros nuevos declaran compatibilidad 0.8, los v1 legados siguen fail-closed y no existe segunda ruta de wiring.
 
 ### S4.5 — Raíz primaria Main-owned con vista adjunta
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Enrolamiento, Hosts, Instalación, cimientos.
 - Depende de: S4.2
 - Cimientos: —
@@ -2115,7 +2115,7 @@ Rutas históricas (evidencia): hosts/opencode-view.mjs, hosts/herdr.mjs, install
   - [ ] REFACTOR: aislar el adapter Herdr reemplazable fuera de launch/health/stop/rehidratación/recovery críticos.
 
 ### S4.3 — Inspección, liveness y rehidratación segura
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Contratos, Hosts.
 - Depende de: S4.5
 - Cimientos: —
@@ -2147,7 +2147,7 @@ Rutas históricas (evidencia): hosts/stop-proof.mjs, hosts/rehydration.mjs, test
   - [ ] REFACTOR: preservar readback/cleanup sin crear autoridad ni raíz
 
 ### S4.6 — Herdr deja de ser prerrequisito bloqueante de la instalación y deja de participar del camino crítico de lanzamiento; sobrevive únicamente como launcher reemplazable del panel de vista, que ya degrada solo
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Hosts, Instalación, cimientos.
 - Depende de: —
 - Cimientos: —
@@ -2181,7 +2181,7 @@ Rutas históricas (evidencia): install/lifecycle.mjs, test/install/lifecycle.tes
   - [ ] REFACTOR: matriz ausente/0.8.0/0.8.2, sin adoptar 0.8.2
 
 ### S4.7 — La raíz Main-owned exacta admite los bytes exactos del brief antes de éxito; la vista pública actual permanece DEGRADED con una envolvente mínima no ejecutable y el helper autenticado permanece privado
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Hosts, Instalación, cimientos.
 - Depende de: S4.5
 - Cimientos: —
@@ -2257,7 +2257,7 @@ Rutas históricas (evidencia): scripts/host-compatibility/herdr.mjs, test/compat
   - [ ] REFACTOR: rollback, readback y cleanup
 
 ### S4.10 — Identidad, binding y puerto runtime host-neutral
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Contratos.
 - Depende de: —
 - Cimientos: —
@@ -2279,7 +2279,7 @@ Rutas históricas (evidencia): contracts/host-runtime/binding-context.mjs, contr
   - [ ] REFACTOR: separar contrato neutral de cualquier adapter, ajustar únicamente expect(schemaFiles).toHaveLength(26) a expect(schemaFiles).toHaveLength(31) en el gate manual y verificar frontera de Área.
 
 ### S4.11 — Observe, health, stop y attach host-neutral
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Hosts.
 - Depende de: S4.10
 - Cimientos: —
@@ -2301,7 +2301,7 @@ Rutas históricas (evidencia): hosts/runtime-port.mjs, hosts/runtime-observe.mjs
   - [ ] REFACTOR: unificar errores y aislar toda semántica de adapter.
 
 ### S4.13 — La adquisición neutral valida opcionalmente ownership aún no publicado, conserva compatibilidad cuando no hay hook y garantiza que sólo el registro puede cerrar o cuarentenar la adquisición exacta.
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Autoridad, Contratos.
 - Depende de: S4.10
 - Cimientos: —
@@ -2326,7 +2326,7 @@ Rutas históricas (evidencia): contracts/host-runtime/ownership-registry.mjs, te
   - [ ] TRIANGULATE/REFACTOR: cubrir alternos negativos, sincronizar la spec y simplificar sin host policy ni paths extra.
 
 ### S4.14 — El registro neutral confirma sincrónicamente la actualidad del ocupante exacto inmediatamente antes de publicar ownership, sin transferir autoridad ni alterar la compatibilidad cuando el guard está ausente.
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Autoridad, Contratos.
 - Depende de: S4.13
 - Cimientos: —
@@ -2354,7 +2354,7 @@ Rutas históricas (evidencia): contracts/host-runtime/ownership-registry.mjs, te
   - [ ] REFACTOR: sincronizar la spec y simplificar sin exposición de cierre, vocabulario de host ni paths extra.
 
 ### S5.1 — Un candidato congelado liga identidad y autorización inmutables, deriva el siguiente Módulo sólo desde evidencia del ledger y mantiene a Support aislado bajo autoridad exclusiva de Main.
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Contratos, Enrolamiento, Entrega, Hosts, cimientos.
 - Depende de: S3.2, S3.3, S3.4
 - Cimientos: —
@@ -2421,7 +2421,7 @@ Rutas históricas (evidencia): .opencode/agent/support-agent.md, .opencode/plugi
   - [ ] Provider o binding inválido falla antes de spawn/persistencia y Support nunca recibe autoridad.
 
 ### S5.2 — Change F delivery adapters/reconciliation
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Contratos, Entrega, cimientos.
 - Depende de: S4.1, S3.3
 - Cimientos: —
@@ -2457,7 +2457,7 @@ Rutas históricas (evidencia): contracts/schema-registry.mjs, contracts/validate
   - [ ] El flujo verifica commit/árbol, congela candidate&#95;revision, entrega y registra delivery-record-v1 sin segunda ruta de autoridad.
 
 ### S5.3 — Continuación planner/implementer desde base integrada fresca
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Entrega.
 - Depende de: S5.2
 - Cimientos: —
@@ -2479,7 +2479,7 @@ Rutas históricas (evidencia): continuation/integrated-base.mjs, test/continuati
   - [ ] Los casos negativos permanecen en despacho cero y ningún primitive preexistente es modificado.
 
 ### S5.4 — Ruteo de escalamiento fuera/en casa
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Asientos.
 - Depende de: S5.1
 - Cimientos: —
@@ -2532,7 +2532,7 @@ Rutas históricas (evidencia): escalation/routing.mjs, test/escalation/routing.t
   - [ ] Los testigos de bytes permanecen idénticos.
 
 ### S5.5 — Parking y retoma del loop
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Zona/Área: asientos · supervision/, profiles/, escalation/, support/, workspace/, test/escalation/, test/supervision/, test/support/, test/workspace/
 - Depende de: S5.10
 - Cimientos: —
@@ -2599,7 +2599,7 @@ Rutas: escalation/resume.mjs, test/escalation/resume.test.mjs
   - [ ] No se retoma otro checkpoint ni una base stale.
 
 ### S5.6 — Contrato canónico de snapshot de Sesión
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Contratos, cimientos.
 - Depende de: S5.4
 - Cimientos: —
@@ -2659,7 +2659,7 @@ Rutas históricas (evidencia): contracts/schema-registry.mjs, contracts/validate
   - [ ] SHM y estado de Torre permanecen byte-idénticos.
 
 ### S5.7 — Contratos canónicos de decisión estacionada y respuesta
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Contratos, cimientos.
 - Depende de: S5.6
 - Cimientos: —
@@ -2713,7 +2713,7 @@ Rutas históricas (evidencia): contracts/parked-decision.mjs, schemas/parked-dec
   - [ ] Casos válidos e inválidos pasan por el registro real.
 
 ### S5.8 — Binding de opción seleccionada en la autoridad canónica
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Enrolamiento.
 - Depende de: S5.7
 - Cimientos: —
@@ -2768,7 +2768,7 @@ Rutas históricas (evidencia): main-store/store.mjs, test/main-store.test.mjs
   - [ ] authority paralela ni caller assertion.
 
 ### S5.11 — La captura y la reconciliación producen artefactos inmutables con identidad y digest propios, más los bindings cruzados necesarios para que Main pueda probar que ambos nombran el mismo checkpoint sin aceptar afirmaciones del caller.
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Asientos, Contratos, cimientos.
 - Depende de: S5.8
 - Cimientos: —
@@ -2810,7 +2810,7 @@ Rutas históricas (evidencia): workspace/reconciliation.mjs, schemas/reconciled-
   - [ ] La canonicalización única rechaza cada mismatch y ningún consumidor sintetiza el artefacto.
 
 ### S5.12 — Main invoca los productores canónicos mediante capabilities ligadas en constructor, conserva sus artefactos inmutables sin cambios y los entrega juntos a una sola transacción de parking.
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Asientos, Enrolamiento.
 - Depende de: S5.11
 - Cimientos: —
@@ -2852,7 +2852,7 @@ Rutas históricas (evidencia): main-store/store.mjs, test/main-store.test.mjs
   - [ ] segundo writer y mutación posterior.
 
 ### S5.9 — Persistir bajo autoridad exclusiva de Main una prueba inmutable que liga el valor exacto de parked.checkpoint a la captura canónica y a la evidencia de reconciliación que identifican el mismo punto de retoma.
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Contratos, Enrolamiento, cimientos.
 - Depende de: S5.12
 - Cimientos: —
@@ -2881,7 +2881,7 @@ Rutas históricas (evidencia): contracts/parked-checkpoint-binding.mjs, contract
   - [ ] atomicidad y readback quedan cerrados sobre los bytes persistidos.
 
 ### S5.10 — Persistir bajo autoridad exclusiva de Main una prueba inmutable que liga trabajo independiente completado a la decisión estacionada exacta y a la opción o supuesto explícito bajo el que se ejecutó.
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Contratos, Enrolamiento, cimientos.
 - Depende de: S5.9
 - Cimientos: —
@@ -2911,7 +2911,7 @@ Rutas históricas (evidencia): contracts/completed-work-binding.mjs, contracts/s
   - [ ] atomicidad y readback quedan cerrados sobre la provenance completa.
 
 ### S5.13 — Retirar de la Torre la verificación de proceso de la entrega y transportar sólo un recibo opaco, sin interpretación ni gate.
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Asientos, Capacidades, Contratos, Enrolamiento, Entrega, cimientos.
 - Depende de: —
 - Cimientos: —
@@ -3032,7 +3032,7 @@ Rutas históricas (evidencia): contracts/schema-registry.mjs, install/runtime-pa
   - [ ] RUNTIME&#95;PAYLOAD&#95;FILES conserva igualdad exacta y todos sus miembros tienen llamador.
 
 ### S8.14 — Perfiles permanentes Tower, neutrales al host
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Asientos, Instalación, cimientos.
 - Depende de: —
 - Cimientos: —
@@ -3069,7 +3069,7 @@ Rutas históricas (evidencia): skills/torre-control-entregas/SKILL.md, test/inst
   - [ ] Existe una sola enumeración auditable sin Planner permanente ni assets globales.
 
 ### S9.1 — Pool de asientos permanentes y asignación por Main
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Asientos, Instalación, cimientos.
 - Depende de: —
 - Cimientos: —
@@ -3172,7 +3172,7 @@ Rutas históricas (evidencia): hosts/herdr-topology.mjs, test/hosts/herdr-topolo
   - [ ] REFACTOR: topología duplicada eliminada, readback/fallback estabilizado y convergencia probada.
 
 ### S9.9 — Binding explícito de workspace Herdr
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs, scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs
 - Depende de: —
 - Cimientos: test/install/launch-worker-cli.test.mjs, hosts/herdr-topology.mjs, test/hosts/herdr-topology.test.mjs, hosts/seat-cli.mjs, test/hosts/seat-cli.test.mjs
@@ -3192,7 +3192,7 @@ Rutas: hosts/herdr-topology.mjs, hosts/seat-cli.mjs, test/hosts/herdr-topology.t
   - [ ] Cierre entregado.
 
 ### S9.6 — Interceptor de intención Pi-first
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Hosts.
 - Depende de: —
 - Cimientos: —
@@ -3228,7 +3228,7 @@ Rutas históricas (evidencia): extensions/pi/tower-session-router.ts, extensions
   - [ ] REFACTOR: snapshot/fingerprint/evidencia convergen y los fallos devuelven CT&#95;PI&#95;TOWER&#95;&#42; handled sin versión, prioridad implícita ni turno de modelo.
 
 ### S10.3 — Contrato de ejecución versionado
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Contratos.
 - Depende de: S3.4
 - Cimientos: —
@@ -3250,7 +3250,7 @@ Rutas históricas (evidencia): schemas/execution-contract-v1.schema.json
   - [ ] REFACTOR: &#96;cmp&#96; confirmó identidad; readback confirmó 17.297 bytes, 407 líneas, SHA-256 esperado y modo Git &#96;100644&#96;. JSON parseó y conservó Draft 2020-12, &#96;$id&#96;, &#96;type: object&#96;, &#96;additionalProperties: false&#96;, 17 propiedades requeridas y &#96;$defs&#96; estructuralmente presentes. Runtime harness: N/A, artefacto pasivo sin frontera ejecutable.
 
 ### S10.1 — Preparación persistida de Jornada
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Jornada.
 - Depende de: S10.3
 - Cimientos: —
@@ -3296,7 +3296,7 @@ Rutas históricas (evidencia): jornada/execution-contract.mjs, test/jornada/exec
   - [ ] REFACTOR: readback/errores aislados sin Main store, SQLite ni writer alternativo.
 
 ### S10.2 — Supervisión sin armado local
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Asientos.
 - Depende de: S10.1
 - Cimientos: —
@@ -3325,7 +3325,7 @@ Rutas históricas (evidencia): supervision/state.mjs, test/supervision/state.tes
   - [ ] REFACTOR: validación y errores quedaron consolidados dentro del Área; focused 4/0/22, full 721/0/4361 en 52 archivos durante supervisión externa válida y verificación &#96;remote-control&#96; 2/0/14, con centinela limpiado.
 
 ### S11.1 — cada comando dirigido a un agente y validado emite una sola directiva &#96;send&#96; hacia el &#96;target&#95;agent&#96; inmutable; &#96;CV&#95;STATUS&#96; es la única lectura local de toda la Torre y no requiere destino ni llama &#96;core.send&#96;. Los trece verbos quedan tipeables en &#96;bin/torre&#96;.
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Instalación, cimientos.
 - Depende de: —
 - Cimientos: —
@@ -3369,7 +3369,7 @@ Rutas históricas (evidencia): bin/torre, scripts/payload-closure.mjs, install/r
   - [ ] Cerrar las regresiones de CLI/payload y ejecutar la verificación completa.
 
 ### S12.1 — Ningún commit llega a master sin que la suite haya corrido sola; va primera porque es la red que hace seguras las tres mudanzas de core.mjs y sin ella cada paso es a ciegas.
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Zona/Área: cimientos · —
 - Depende de: S12.8
 - Cimientos: .githooks/pre-push, package.json
@@ -3403,7 +3403,7 @@ Rutas: .githooks/pre-push
   - [ ] El caso sano es verde y la trazabilidad del workflow retirado permanece.
 
 ### S12.2 — Ningún documento de alcance vigente menciona VPS, Hermes o Telegram como parte del producto; el cambio de Telegram queda archivado y el archivo histórico conserva su traza intacta.
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Archivo, Autoridad, cimientos.
 - Depende de: —
 - Cimientos: —
@@ -3469,7 +3469,7 @@ Rutas históricas (evidencia): openspec/changes/archive/2026-08-30-sdd-tower-tel
   - [ ] La cola activa no contiene alcance retirado.
 
 ### S12.8 — La suite sanea el entorno Git heredado antes de ejecutar comandos y una regresión de aislamiento demuestra que el repositorio real conserva configuración, referencias y worktrees.
-- Estado derivado: ✅ COMPLETO
+- Estado derivado: 📚 ARCHIVADO
 - Territorio histórico: evidencia no autorizante; propietarios actuales: Asientos, Contratos, Enrolamiento, Hosts, cimientos.
 - Depende de: —
 - Cimientos: —
