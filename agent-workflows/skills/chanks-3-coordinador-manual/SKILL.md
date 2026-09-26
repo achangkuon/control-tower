@@ -10,15 +10,39 @@ metadata:
 ## Activation Contract
 
 This is the deliberate stateless Tranche 3 router and explicit Tower-off manual fallback after V1.
-Load it only after one human approval binds the parallel count, exact LISTO Sesión IDs, and exact Pi
+For a Session batch, load it only after one human approval binds the parallel count, exact LISTO Sesión IDs, and exact Pi
 worker alias, exact Pi session ID, exact cwd/worktree, runtime, and kind for each Sesión. The approval is a complete batch, not a proposal:
 it never selects, substitutes, reduces, expands, optimizes, or reorders.
 
+The separate Issue-Patch Mode below does not relax this Session-batch binding.
 Manual pre-V1 batches are Pi-only. Never load Tower skills, never read or write Tower state, never claim
 Tower is running, or create provisional cross-runtime support. This skill owns no queue, roster, ledger,
 assignment state, approval persistence, or auto-resume. S155's dispatch marker is evidence only,
 not a queue or assignment ledger. It does not own ODD continuity: preserve same Session identity
 and native ODD record/code/evidence reconciliation for Encargo, or first pending Módulo for legacy.
+
+## Human-Authorized Issue-Patch Mode
+
+Only an explicit human decision for one Control Tower issue may enter this **separate** route.
+It binds the exact current Git base, restoring outcome, `issue-resolver`, exact files,
+Cimientos, and Recursos; an issue report alone or a past dispatch never approves a fix.
+New product outcome, API, permissions, or data work goes back to Session authority.
+Delegate patch admission, fresh active-Session comparison, persistent-seat preparation,
+Herdr/Intercom binding, and retirement to `chanks-3-despacho-herdr`'s issue-patch mode.
+Do not route a patch through Session kickoff, require `LISTO`, or make a
+`radar.despacho/v1` marker. An unknown set, conflict, changed base or identity stops
+only the patch; leave active Sessions undisturbed. Main returns after the exact
+fire-and-forget delivery result, not after worker completion.
+
+Accept an inbound patch `COMPLETED`, `BLOCKED`, or `FAILED` only from the actual launched
+Pi session ID freshly verified against the assigned Herdr tab, Intercom live roster,
+worker worktree and issue/branch binding. Verify the reported immutable commit against
+the exact worker branch and approved files before serial integration; an uncertain result
+preserves the candidate and worker, never infers completion or resends. Main integrates
+only the verified candidate, gathers patch closure through `chanks-5-session-doc`, and
+retires through `references/retiro.md`'s patch checks. A patch never changes Radar
+Session progress or `openspec/plan.yaml`; absent planned-work closure declare
+«nada que registrar». No review outcome grants delivery authorization.
 
 ## Approved-Dispatch Mode
 

@@ -1,12 +1,45 @@
 # Persistent-worker retire mode
 
-Run this mode only after the responsible parent records a dispatched Sesión's delivery in
-`openspec/plan.yaml`. The human's approval of the dispatch authorizes this retirement in advance,
-and only when all six applicable checks pass for that Sesión. Read the worker declaration from the
+For Session retirement, run only after the responsible parent records a dispatched Sesión's
+delivery in `openspec/plan.yaml`. The human's approval of the Session dispatch authorizes
+that retirement in advance, and only when all six applicable checks pass for that Sesión.
+Issue-patch retirement instead follows its separate section below; never apply the Session
+`COMPLETO` check to a patch. Read the worker declaration from the
 repository `AGENTS.md`; it remains the source for the worker's persistent worktree and tab.
 
 Dispatch and retirement both cite and follow `references/retiro.md`'s `## Shared lock protocol`
 exactly. All checks and retirement decisions happen only under the lock it proves owned.
+
+## Issue-patch retirement (separate from Session six checks)
+
+Only after the responsible parent has verified a human-authorized issue patch's
+exact terminal sender, immutable full candidate commit, approved file set, branch
+and worker, completed serial integration and recorded closure evidence may the
+patch worker retire. Never require Radar `COMPLETO`, `entrega.commit`, or a fabricated
+Session for the issue. The issue report or Intercom delivery result alone proves
+none of these facts. Use the same `## Shared lock protocol`; no other lock or ledger.
+
+Under the owned lock, before the first worker mutation, re-read human approval
+(issue, exact base/outcome/files/Cimientos/Recursos, worker), the original actual
+launched Pi session ID and verified handoff evidence, Git and fresh Herdr/Intercom
+identity. Prove the full candidate commit is the one reported on the exact
+`refs/heads/work/issue-<number>` branch in the declared `issue-resolver` worktree;
+prove the branch tip is still that exact OID and the commit is an ancestor of
+integrated master, not merely a matching diff or a cherry-picked replacement.
+Confirm approved changes and checks, a clean worker (`git status --porcelain` empty),
+`git cherry master work/issue-<number>` has no `+` lines, and the only assigned agent
+is idle/done or absent. Confirm the master/branch relationship and no pending delivery;
+a new commit, changed identity, missing evidence, or ambiguity stops without closing
+or detaching. Never infer worker availability from Radar Session status.
+
+Only then close the exact agent and detach the persistent worker at integrated
+master; preserve tab, worktree, dependencies and branch. Fresh Git/Herdr readback
+must prove clean, free, non-Main, detached at integrated master, and no pending
+delivery before release through the shared protocol. If close/detach/readback is
+uncertain, retain the owned lock and ask the human; never force-delete, reuse,
+release on silence, or change another worker. Report every check, integration OID,
+agent close, free readback, and lock outcome. This is a procedural contract, not
+evidence that a live worker was actually retired.
 
 ## Shared lock protocol
 

@@ -9,10 +9,11 @@
 
 ## Estado y próximo trabajo
 - Hosts #1 → S165 — Adapter y extensión Pi V1 propios del semáforo Torre: registran exactamente las ocho herramientas tower&#95;&#42;, sin interceptor pi.on("input"), sin comandos CV&#95;&#42; ni slash commands, y sin reusar adapters/pi/runtime.mjs ni extensions/pi/tower-session-router.ts.
+- Método #2 → S167 — Ruta manual de parches de errores de flujo en issue-resolver, autorizada sólo por el humano, sin Sesión ficticia y compatible de manera verificable con Sesiones activas.
 - Producto Torre #2 → S164 — Copias V1 separadas de los seis assets de rol Torre —tres perfiles y tres skills— bajo product/tower/v1/, sin bytes de continuation ni despacho V2 y sin modificar los originales; la skill de entregas viaja como referencia inerte, no activable en V1.
 
 ## Avance
-- **Total:** 74% (100/134 S)
+- **Total:** 74% (100/135 S)
 - 16 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
@@ -25,7 +26,7 @@
 - **Hosts:** 50% (3/6 S)
 - **Instalación:** 33% (1/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 95% (38/40 S)
+- **Método:** 92% (38/41 S)
 - **Producto Torre:** 0% (0/2 S)
 
 ## Zonas y colas
@@ -67,6 +68,7 @@
 
 ### Método (metodo)
 1. **S115** · 📋 PLANIFICADO · espera-atascada (S114) · prioridad Torre V3 · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
+2. **S167** · 🟢 LISTO · prioridad Torre V1 · Release instalable · Ruta manual de parches de errores de flujo en issue-resolver, autorizada sólo por el humano, sin Sesión ficticia y compatible de manera verificable con Sesiones activas.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · espera-atascada (S108) · prioridad Torre V2 · Handoffs y despacho Tower-owned · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -1647,6 +1649,30 @@
       - Descartada: Aceptar compatibilidad sólo por versión o existencia. → No prueba conducta ni coherencia del runtime instalado.
       - Descartada: Activar parcialmente y reparar después. → Viola atomicidad y deja un estado global incoherente.
   - Referencias: Texto preservado del bloque S8.13 en openspec/plan.yaml@da8544016ec814603a3eee837630e753d762631c (Engram 9921, 9963). Corte V1/V2: Engram 11327. Opción A: Engram 11799.
+
+### S167 — Ruta manual de parches de errores de flujo en issue-resolver, autorizada sólo por el humano, sin Sesión ficticia y compatible de manera verificable con Sesiones activas.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: AGENTS.md, agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md, agent-workflows/skills/chanks-3-despacho-herdr/references/retiro.md, agent-workflows/skills/chanks-3-despacho-herdr/assets/issue-patch-handoff.md, agent-workflows/skills/chanks-5-session-doc/SKILL.md, agent-workflows/templates/session-routing.md, agent-workflows/tests/test&#95;coordinador&#95;manual.py, agent-workflows/tests/test&#95;despacho&#95;herdr.py, agent-workflows/tests/test&#95;builder&#95;flow.py, agent-workflows/tests/test&#95;issue&#95;patch&#95;flow.py, odd/tasks/human-authorized-issue-patches.md
+  - Depende de: —
+  - Recursos: contrato de despacho manual Herdr/Intercom y proyección instalada de skills; no iniciar nuevos despachos mientras se cambia o reinstala este contrato
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Hoy issue-resolver exige una Sesión LISTO y el despacho, el marcador y el retiro están ligados a un ID de Sesión. El issue &#35;148 documenta un bloqueo distinto: el contrato pide conocer el ID de la sesión Pi antes de lanzar al agente que lo produce. Emilio quiere poder autorizar por separado la reparación de un error de un flujo ya aprobado, sin sumar una Sesión de producto por cada parche. Esta Sesión sólo habilita esa vía; no implementa el parche del issue &#35;148.
+  - Resultado y comportamiento: Un parche requiere un issue de Control Tower y aprobación humana explícita vinculada al issue, base Git, resultado de restauración, worker issue-resolver, archivos exactos y Cimientos/Recursos necesarios. Sólo repara un defecto reproducible de un flujo ya aprobado: resultado nuevo, API, permisos, datos o alcance de producto nuevos vuelven a la autoridad de Sesión. Sin aprobación, datos completos o identidad verificable, no hay escritura ni handoff. La admisión compara los archivos exactos, Cimientos y Recursos del parche contra cada Sesión activa y la base vigente. Solapes o datos desconocidos detienen sólo el parche; la compatibilidad de Radar entre Sesiones no se presenta como veredicto sobre un issue. issue-resolver usa su worktree persistente con un handoff y una rama propios del issue, sin inventar una Sesión LISTO, marcador radar.despacho/v1, estado, cola o porcentaje paralelo. El despacho de Sesiones y su kickoff permanecen exclusivamente Session-based. Antes de enviar trabajo, Herdr e Intercom prueban la identidad real del agente recién lanzado; no se predice ni se sustituye su ID de sesión Pi por la tab o el alias. Main acepta sólo el candidato exacto, las pruebas y el resultado comunicado por ese worker; ausencia, drift o ambigüedad detienen handoff, integración o retiro sin reintento inferido. La entrega y el retiro verifican el commit integrado y el worker libre sin exigir que Radar marque una Sesión del parche COMPLETO. Un parche sin trabajo planificado cerrado declara «nada que registrar»; nunca altera el avance de openspec/plan.yaml. Las pruebas cubren autorizaciones ausentes, colisiones, datos desconocidos, drift de base/identidad, entrega ambigua y retiro seguro.
+  - Restricciones y decisiones: Sólo los archivos declarados están autorizados; cualquier expansión exige aprobación humana y compatibilidad fresca antes de escribir. ODD es la ruta técnica; SDD sólo por solicitud humana explícita. La excepción de 500–750 líneas es para una sola unidad de habilitación, no un permiso de comprimir pruebas o de autorizar automáticamente parches futuros. No se crea un campo informal en delivery-policy v1, un segundo plan, un ledger de parches ni un estado Radar ficticio. openspec/plan.yaml lo escribe sólo el parent para registrar coordinación y cierre, no el worker. El parche del issue &#35;148 es trabajo posterior con autorización humana propia. Commit y push siguen la política de entrega ordinaria; tras tocar skills o templates, su reinstalación requiere confirmación humana explícita.
+    - Decisión estructurada [resuelta · expansion-de-alcance; contrato-visible-del-producto]: ¿Pueden los parches de errores de flujo autorizados por Emilio ejecutarse en issue-resolver sin Sesión y en paralelo con Sesiones activas?
+      - Resolución: Sí, con issue y aprobación humana exacta por parche; comparación actual de archivos, Cimientos y Recursos contra cada Sesión activa; ausencia o colisión detiene el parche. No se usa admisión ni marcador de una Sesión ficticia.
+      - Autoridad: Elección explícita de Emilio de la ruta B para issue-resolver (Engram 11810) y de concurrencia B (Engram 11811).
+      - Falsificador: Un parche escribe sin aprobación humana o con solape/alcance desconocido, o un issue aparece en Radar como Sesión LISTO o cambia su porcentaje de avance.
+      - Contaminaba: S167, S164, S165
+    - Decisión estructurada [resuelta · expansion-de-alcance]: ¿La habilitación se divide o conserva una sola unidad por encima de la referencia de 400 líneas?
+      - Resolución: Una sola unidad coherente y reversible con excepción de tamaño explícita; conserva pruebas y documentación completas.
+      - Autoridad: Elección explícita de Emilio de la opción B, excepción para 500–750 líneas implementadas (Engram 11812).
+      - Falsificador: La habilitación se reparte en commits parciales no verificables, omite pruebas para reducir líneas o usa la excepción para un parche futuro.
+      - Contaminaba: S167
+  - Referencias: Issue https://github.com/achangkuon/control-tower/issues/148; AGENTS.md:135,151-153; agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md:12-15,37-40; agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md:47,50,52,56,92-96; agent-workflows/skills/chanks-3-despacho-herdr/references/retiro.md:23-30; Engram 11809, 11810, 11811 y 11812. Línea base Git: openspec/plan.yaml@ea884263ce64a77f042434a1fecee6055f756c82.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -4367,7 +4393,7 @@ Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workfl
   - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
 
 ## Capacidad
-2 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: hosts, producto-torre.
+3 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: hosts, metodo, producto-torre.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references

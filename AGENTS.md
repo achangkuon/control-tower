@@ -132,7 +132,7 @@ un entorno que siga siendo válido.
 
 | Worker y tab Herdr exacto | Worktree persistente, relativo a `Main` | Elegibilidad de rol |
 |---|---|---|
-| `issue-resolver` | `../Worktrees/issue-resolver` | Sólo una Sesión seleccionada por humano, respaldada por un issue de Control Tower, admisible por Radar y compatible con el trabajo concurrente. |
+| `issue-resolver` | `../Worktrees/issue-resolver` | Sesión seleccionada por humano, respaldada por un issue de Control Tower y admisible por Radar; o parche de error de flujo ya aprobado con autorización humana exacta por issue, sin Sesión de producto y con compatibilidad actual verificada. |
 | `implementer-1` | `../Worktrees/implementer-1` | Sólo una Sesión seleccionada por humano, aprobada, admisible por Radar y compatible con el trabajo concurrente. |
 | `implementer-2` | `../Worktrees/implementer-2` | Sólo una Sesión seleccionada por humano, aprobada, admisible por Radar y compatible con el trabajo concurrente. |
 | `implementer-3` | `../Worktrees/implementer-3` | Sólo una Sesión seleccionada por humano, aprobada, admisible por Radar y compatible con el trabajo concurrente. |
@@ -149,8 +149,15 @@ busca issues abiertos y cerrados de `achangkuon/control-tower`. Si existe el tra
 sistémico de la misma causa, lo actualiza; si no, crea un `Friction Report` sanitizado,
 sin secretos ni datos personales, y hace readback para verificar el efecto. Capturar o
 actualizar un issue no autoriza a repararlo. `issue-resolver` sólo trabaja issues de
-Control Tower y sólo modifica código tras aprobación humana, una Sesión admisible por
-Radar y evidencia de compatibilidad con el trabajo concurrente.
+Control Tower. Para Sesiones conserva admisión Radar y aprobación humana. Alternativamente,
+un parche que restaura un flujo ya aprobado requiere autorización humana **por issue** vinculada
+a base Git exacta, resultado, worker, archivos exactos, Cimientos y Recursos; issue o fricción
+no son autorización. Compará esos conjuntos con cada Sesión activa y la base vigente antes
+de ocupar el worker o escribir. Ausencia, alcance desconocido, colisión o deriva detienen sólo
+el parche: no se inventa Sesión LISTO, marcador `radar.despacho/v1`, cola ni progreso.
+Producto nuevo, API, permisos o cambio de datos requieren autoridad de Sesión. El procedimiento
+está en `agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md` y su handoff de parche;
+la política aprobada no prueba que se haya lanzado, integrado o cerrado ningún parche.
 
 Al cerrar una entrega, reinstalá herramientas según las rutas que tocó:
 

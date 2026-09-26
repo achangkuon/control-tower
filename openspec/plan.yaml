@@ -3609,6 +3609,103 @@ sesiones:
             razon: Viola atomicidad y deja un estado global incoherente.
         contaminaba:
           - S166
+  - id: S167
+    prioridad: torre-v1
+    zona: metodo
+    resultado: "Ruta manual de parches de errores de flujo en issue-resolver, autorizada sólo por el humano, sin Sesión ficticia y compatible de manera verificable con Sesiones activas."
+    autoridad: >-
+      Emilio aprobó en esta Conversación crear una vía para corregir errores de flujos ya
+      aprobados sin abrir una Sesión por parche, con decisión y autorización humana exclusivas.
+      Eligió el worker issue-resolver (Engram 11810), concurrencia con Sesiones activas
+      (Engram 11811), y una excepción explícita a la referencia de 400 líneas para una
+      unidad de habilitación estimada en 500–750 líneas (Engram 11812). Aprobó preparar
+      esta Sesión inicial de cambio de política y sus archivos exactos antes de editar.
+      Esta autorización no aprueba ningún parche individual ni la entrega remota.
+    cimientos:
+      - AGENTS.md
+    recurso:
+      - "contrato de despacho manual Herdr/Intercom y proyección instalada de skills; no iniciar nuevos despachos mientras se cambia o reinstala este contrato"
+    archivos:
+      - AGENTS.md
+      - agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md
+      - agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md
+      - agent-workflows/skills/chanks-3-despacho-herdr/references/retiro.md
+      - agent-workflows/skills/chanks-3-despacho-herdr/assets/issue-patch-handoff.md
+      - agent-workflows/skills/chanks-5-session-doc/SKILL.md
+      - agent-workflows/templates/session-routing.md
+      - agent-workflows/tests/test_coordinador_manual.py
+      - agent-workflows/tests/test_despacho_herdr.py
+      - agent-workflows/tests/test_builder_flow.py
+      - agent-workflows/tests/test_issue_patch_flow.py
+      - odd/tasks/human-authorized-issue-patches.md
+    encargo:
+      pedido_contexto: >-
+        Hoy issue-resolver exige una Sesión LISTO y el despacho, el marcador y el retiro
+        están ligados a un ID de Sesión. El issue #148 documenta un bloqueo distinto:
+        el contrato pide conocer el ID de la sesión Pi antes de lanzar al agente que lo
+        produce. Emilio quiere poder autorizar por separado la reparación de un error
+        de un flujo ya aprobado, sin sumar una Sesión de producto por cada parche.
+        Esta Sesión sólo habilita esa vía; no implementa el parche del issue #148.
+      resultado_comportamiento: >-
+        Un parche requiere un issue de Control Tower y aprobación humana explícita
+        vinculada al issue, base Git, resultado de restauración, worker issue-resolver,
+        archivos exactos y Cimientos/Recursos necesarios. Sólo repara un defecto
+        reproducible de un flujo ya aprobado: resultado nuevo, API, permisos, datos o
+        alcance de producto nuevos vuelven a la autoridad de Sesión. Sin aprobación,
+        datos completos o identidad verificable, no hay escritura ni handoff.
+
+        La admisión compara los archivos exactos, Cimientos y Recursos del parche
+        contra cada Sesión activa y la base vigente. Solapes o datos desconocidos
+        detienen sólo el parche; la compatibilidad de Radar entre Sesiones no se
+        presenta como veredicto sobre un issue. issue-resolver usa su worktree
+        persistente con un handoff y una rama propios del issue, sin inventar una
+        Sesión LISTO, marcador radar.despacho/v1, estado, cola o porcentaje paralelo.
+        El despacho de Sesiones y su kickoff permanecen exclusivamente Session-based.
+
+        Antes de enviar trabajo, Herdr e Intercom prueban la identidad real del
+        agente recién lanzado; no se predice ni se sustituye su ID de sesión Pi por
+        la tab o el alias. Main acepta sólo el candidato exacto, las pruebas y el
+        resultado comunicado por ese worker; ausencia, drift o ambigüedad detienen
+        handoff, integración o retiro sin reintento inferido. La entrega y el retiro
+        verifican el commit integrado y el worker libre sin exigir que Radar marque
+        una Sesión del parche COMPLETO. Un parche sin trabajo planificado cerrado
+        declara «nada que registrar»; nunca altera el avance de openspec/plan.yaml.
+        Las pruebas cubren autorizaciones ausentes, colisiones, datos desconocidos,
+        drift de base/identidad, entrega ambigua y retiro seguro.
+      restricciones_decisiones: >-
+        Sólo los archivos declarados están autorizados; cualquier expansión exige
+        aprobación humana y compatibilidad fresca antes de escribir. ODD es la ruta
+        técnica; SDD sólo por solicitud humana explícita. La excepción de 500–750
+        líneas es para una sola unidad de habilitación, no un permiso de comprimir
+        pruebas o de autorizar automáticamente parches futuros. No se crea un campo
+        informal en delivery-policy v1, un segundo plan, un ledger de parches ni un
+        estado Radar ficticio. openspec/plan.yaml lo escribe sólo el parent para
+        registrar coordinación y cierre, no el worker. El parche del issue #148 es
+        trabajo posterior con autorización humana propia. Commit y push siguen la
+        política de entrega ordinaria; tras tocar skills o templates, su
+        reinstalación requiere confirmación humana explícita.
+      referencias: >-
+        Issue https://github.com/achangkuon/control-tower/issues/148; AGENTS.md:135,151-153;
+        agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md:12-15,37-40;
+        agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md:47,50,52,56,92-96;
+        agent-workflows/skills/chanks-3-despacho-herdr/references/retiro.md:23-30;
+        Engram 11809, 11810, 11811 y 11812. Línea base Git:
+        openspec/plan.yaml@ea884263ce64a77f042434a1fecee6055f756c82.
+    decisiones:
+      - tipo: resuelta
+        pregunta: "¿Pueden los parches de errores de flujo autorizados por Emilio ejecutarse en issue-resolver sin Sesión y en paralelo con Sesiones activas?"
+        resolucion: "Sí, con issue y aprobación humana exacta por parche; comparación actual de archivos, Cimientos y Recursos contra cada Sesión activa; ausencia o colisión detiene el parche. No se usa admisión ni marcador de una Sesión ficticia."
+        autoridad: "Elección explícita de Emilio de la ruta B para issue-resolver (Engram 11810) y de concurrencia B (Engram 11811)."
+        clase: expansion-de-alcance; contrato-visible-del-producto
+        falsificador: "Un parche escribe sin aprobación humana o con solape/alcance desconocido, o un issue aparece en Radar como Sesión LISTO o cambia su porcentaje de avance."
+        contaminaba: [S167, S164, S165]
+      - tipo: resuelta
+        pregunta: "¿La habilitación se divide o conserva una sola unidad por encima de la referencia de 400 líneas?"
+        resolucion: "Una sola unidad coherente y reversible con excepción de tamaño explícita; conserva pruebas y documentación completas."
+        autoridad: "Elección explícita de Emilio de la opción B, excepción para 500–750 líneas implementadas (Engram 11812)."
+        clase: expansion-de-alcance
+        falsificador: "La habilitación se reparte en commits parciales no verificables, omite pruebas para reducir líneas o usa la excepción para un parche futuro."
+        contaminaba: [S167]
 references:
   future_successors:
     - id: S102

@@ -1,6 +1,6 @@
 ---
 name: chanks-3-despacho-herdr
-description: "Trigger: dispatch human-selected approved Sessions into their declared persistent worker pool through Herdr, with the Torre off."
+description: "Trigger: dispatch approved Sessions or a human-authorized issue patch through the declared persistent worker pool in Herdr, with the Torre off."
 license: Apache-2.0
 metadata:
   author: emili
@@ -9,9 +9,11 @@ metadata:
 
 ## Activation Contract
 
-Activate only after the human names the complete batch of Sesión IDs and assigns each one to a
-specific approved Pi worker. Manual pre-V1 dispatch accepts Pi workers only. This is an explicit
-Herdr request for independent Sesión work with the Torre off; it is not Torre dispatch. Herdr owns
+Activate for one of two separate routes: Session dispatch only after the human names the
+complete batch of Sesión IDs and assigns each to a specific approved Pi worker; or
+Issue-Patch Mode after exact human approval for one Control Tower issue and `issue-resolver`,
+without a Session batch. Manual pre-V1 dispatch accepts Pi workers only. Both are explicit
+Herdr requests with the Torre off, not Torre dispatch. Herdr owns
 only the authorized seats and process topology; Pi Intercom is only the message transport. Dispatch
 does not grant execution authority, ODD continuity, plan status, or delivery authority. Preserve the
 admitted discriminator: native Encargo work resumes under the same Session identity through native
@@ -27,14 +29,20 @@ this procedure generic: no hardcoded package manager, worker count, or worker na
 Dispatch and retirement both follow the single shared lock procedure in
 `references/retiro.md`'s `## Shared lock protocol` exactly. It is the only lock algorithm and
 pathname for this skill: do not restate, vary, steal, or delete it. The declaration is reusable
-configuration, not persistent roster or planning state.
+configuration, not persistent roster or planning state. The Session-only Hard Rules,
+Decision Gates, Execution Steps, and Output Contract below apply to Session dispatch;
+the explicitly separate Issue-Patch Mode uses only its own route and the shared lock.
+Its exception does not weaken any Session admission rule.
 
-Under the acquired lock, right after lock acquisition, this skill invokes `chanks-0-jornada` in
-its stage-3 dispatch entry mode — diagnosis plus `jornada.sh --ejecutar` only, never `--reciclar`
-— so a clean-but-behind declared seat is current before the lock-held Git/Radar/Herdr readback
-below observes it. It is invoked under the dispatch lock, never before it is acquired, because
-`jornada.sh --ejecutar` mutates worktrees and must not run unfenced. Load
-`../chanks-0-jornada/SKILL.md` for that mode's exact rules and gates.
+For Session dispatch only, under the acquired lock and right after lock acquisition, invoke
+`chanks-0-jornada` in its stage-3 dispatch entry mode — diagnosis plus
+`jornada.sh --ejecutar` only, never `--reciclar` — so a clean-but-behind declared seat is
+current before the lock-held Git/Radar/Herdr readback below. It is
+invoked under the dispatch lock, never before it is acquired, because
+`jornada.sh --ejecutar` mutates worktrees. Load `../chanks-0-jornada/SKILL.md` for that
+Session entry's exact rules and gates;
+do not invoke the Session jornada entry for an issue patch,
+whose distinct preparation is specified in Issue-Patch Mode.
 
 ## Hard Rules
 
@@ -62,6 +70,79 @@ below observes it. It is invoked under the dispatch lock, never before it is acq
 - The dispatched agent commits only on `work/<id>`; it never pushes master and never writes `openspec/plan.yaml`. The responsible parent integrates one Sesión at a time and solely writes `openspec/plan.yaml`.
 - A later disconnect creates no polling, retry, inferred completion, transport fallback, or autonomous resume. Human reactivation and reapproval are required before any new dispatch.
 - No retries, persistent queue, roster, state, autonomous resume, non-Pi fallback, or provisional cross-runtime bridge. Tower V1 remains the future heterogeneous and hybrid owner.
+
+## Issue-Patch Mode (not Session dispatch)
+
+Use this mode only for a human-authorized repair of a reproducible error in an already
+approved flow, backed by one Control Tower issue. Read `assets/issue-patch-handoff.md`.
+The approval must name issue identity, exact Git base commit, restoring outcome, the
+`issue-resolver` worker, exact repository file set, exact shared Cimientos and non-file
+Recursos (explicitly empty if none). Validate every path as an exact canonical repo file,
+not a directory, glob, symlink, or escape; include all changed files in the approved set.
+Compare actual candidate intent to the issue symptom: new product outcome, API,
+permissions, migration or data changes need Session authority, not this mode. An
+issue/approval alone does not grant a live seat or mutation.
+
+1. Under the existing `references/retiro.md` `## Shared lock protocol`, re-read the
+   complete pool declaration, current integrated local/remote master commit, Git worker
+   state, Herdr seat, and active Sessions from installed Radar. Obtain each active
+   Session's exact files, Cimientos, and Recursos from current Radar contracts, and
+   reconcile live assignments, pending delivery, in-flight interventions, and worker
+   unintegrated changes against fresh Git/Herdr/Intercom evidence. Unknown or missing
+   scope (including an active Session's), inconsistent active identity, or unavailable
+   readback is **not** an empty set. Require same verified base for comparisons; no
+   Radar compatibility forecast is an issue-patch compatibility verdict. Check exact
+   file intersections (including Cimientos) and Recurso intersections with **every**
+   active Session; a collision refuses the patch, not the Session. Do not treat a
+   shared Cimiento as automatically free or silently grant an intervention.
+2. Confirm human approval still binds that exact base, issue, outcome and sets; prove
+   `issue-resolver` is clean, free, non-Main, has no active agent/pending delivery,
+   and matches its persistent tab/worktree declaration. If missing or stale environment,
+   use only the declaration's preparation predicate; do not run the Session batch's
+   `chanks-0-jornada --ejecutar` over occupied seats. A missing or partially
+   provisioned declared worker stops for its separately authorized provisioning
+   route, not an improvised worktree. Reserve a fresh issue-specific
+   `work/issue-<number>` branch from the verified base; collision or ambiguous branch
+   ownership stops without reset or reuse. Never use `work/<Session ID>` for a patch.
+   Recheck base, active sets, worker availability and approval immediately before launch;
+   on drift stop and ask for new exact human authorization, not an inferred update.
+3. Launch a new Pi agent in the declared Herdr tab. Herdr JSON must identify the
+   actual launched agent and its **Pi session ID**. Before any Intercom `send`, read
+   back the launched agent in Herdr and a fresh Intercom live roster and match the
+   actual Pi session ID, alias, tab, cwd/worktree and branch. Never predict the ID,
+   bind an unlaunched session, or substitute tab name/alias for session identity.
+   If identity is unavailable or mismatched, do not send. Before first send, only
+   proven owned branch/agent changes may be rolled back under the shared protocol;
+   preserve the persistent worktree, tab, dependencies and unrelated evidence.
+4. Recheck approval/base/compatibility immediately before first send. Send the exact
+   `assets/issue-patch-handoff.md` contract by fire-and-forget Intercom `send` to the
+   verified Pi session ID. A confirmed delivery proves only transport. An ambiguous
+   or failed send preserves branch, worktree, agent, and candidate; never resend,
+   poll, infer receipt, close, or reassign. No patch `radar.despacho/v1` marker,
+   fake `LISTO` Session, replacement queue, ledger, or plan entry is created.
+5. The worker must independently revalidate exact approval, base and current active
+   sets before its first write and after any scope/base change. Any unknown, conflict,
+   drift, or expanded file/Resource request stops the patch for fresh human approval
+   and comparison. It sends issue-bound progress/terminal evidence; a human decision
+   is a worker-initiated `ask` answered only via exact inbound `reply`. On disconnect
+   or timeout preserve candidate and request human reconciliation; no fallback route.
+6. For an inbound terminal, use `chanks-3-coordinador-manual` patch mode. Only a
+   freshly verified actual Pi sender, immutable full commit OID, exact worker branch,
+   expected base, approved changed files and successful focused checks can enter
+   serial integration. Verify branch tip equals that full OID, candidate descends
+   from the approved base, and its complete Git changed-file set matches approved
+   exact files before mutation. Integrate only in a way that preserves that exact
+   commit OID in master history; conflict or an unverified rewrite stops. If master
+   has advanced, rerun exact active compatibility and obtain fresh human approval
+   of the new base before integration; do not silently rebase or reuse the old
+   approval. Integration/closure precede patch retirement.
+
+Report the issue/approval/base, exact set comparisons, worker/branch/actual Pi
+session identity, confirmed or uncertain delivery, and each stop reason. On terminal,
+report immutable candidate/check/integration/closure/retirement evidence or the
+precise missing proof; do not report an issue as fixed from static policy alone.
+This mode leaves the Session-only execution steps, kickoff, marker and six Session
+retirement checks unchanged. It does not execute a patch merely by documenting it.
 
 ## Decision Gates
 

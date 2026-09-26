@@ -70,6 +70,18 @@ there is no fallback to kickoff or decision closure.
   Herdr JSON proves only seat and process identity; Intercom delivery results prove only message delivery; neither grants authority or proves work completion, and the worker reports terminal result evidence. fresh Intercom and Herdr readbacks must prove the sender matches the exact binding; the reported commit is the dispatched worktree candidate before integration, otherwise no integration, retry, remapping, or inferred terminal.
   Two approved Pi workers receive independent fire-and-forget handoffs; Main sends worker 2 without waiting for worker 1.
   Workers report `COMPLETED`, `BLOCKED`, or `FAILED`; no provisional cross-runtime bridge exists and the future tower V1 remains the heterogeneous and hybrid owner.
+- Issue patches are a separate human-authorized manual route, not an admission exception to
+  the canonical Session JSON above. For a reproducible defect in an already approved flow,
+  the human binds one Control Tower issue, exact Git base, restoring outcome, `issue-resolver`,
+  exact files, Cimientos and Recursos. `chanks-3-coordinador-manual` routes only that approval
+  to `chanks-3-despacho-herdr`'s Issue-Patch Mode and its `assets/issue-patch-handoff.md`.
+  Fresh exact-file/Cimiento/Recurso comparison against every active Session and the same base
+  must succeed; unknown or conflicting scope stops only the patch. The launched actual Pi
+  session ID must be proved by fresh Herdr and Intercom readbacks before send, never inferred
+  from a tab alias. Verify the immutable commit, issue branch and worker before serial
+  integration, issue-patch closure and patch retirement. No fake LISTO, Session kickoff,
+  `radar.despacho/v1` marker, plan progress, queue or ledger; absent planned-work closure
+  declares «nada que registrar». The Session-only route above remains unchanged.
 - The bridge and `chanks-5-session-doc` return closure evidence before retire mode to the responsible
   parent. Actual delivery evidence, ordinary policy, and Chanks plan/document close gates decide
   closure. Radar compatible capacity is the parallel-safety verdict. Forecasts reserve nothing live;
