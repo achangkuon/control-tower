@@ -2,18 +2,17 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S167, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Torre V1 · Release instalable.
 - Próximo trabajo ejecutable: Hosts #1 → S165 — Adapter y extensión Pi V1 propios del semáforo Torre: registran exactamente las ocho herramientas tower&#95;&#42;, sin interceptor pi.on("input"), sin comandos CV&#95;&#42; ni slash commands, y sin reusar adapters/pi/runtime.mjs ni extensions/pi/tower-session-router.ts..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
 ## Estado y próximo trabajo
 - Hosts #1 → S165 — Adapter y extensión Pi V1 propios del semáforo Torre: registran exactamente las ocho herramientas tower&#95;&#42;, sin interceptor pi.on("input"), sin comandos CV&#95;&#42; ni slash commands, y sin reusar adapters/pi/runtime.mjs ni extensions/pi/tower-session-router.ts.
-- Método #2 → S167 — Ruta manual de parches de errores de flujo en issue-resolver, autorizada sólo por el humano, sin Sesión ficticia y compatible de manera verificable con Sesiones activas.
 - Producto Torre #2 → S164 — Copias V1 separadas de los seis assets de rol Torre —tres perfiles y tres skills— bajo product/tower/v1/, sin bytes de continuation ni despacho V2 y sin modificar los originales; la skill de entregas viaja como referencia inerte, no activable en V1.
 
 ## Avance
-- **Total:** 74% (100/135 S)
+- **Total:** 74% (101/135 S)
 - 16 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
@@ -26,7 +25,7 @@
 - **Hosts:** 50% (3/6 S)
 - **Instalación:** 33% (1/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 92% (38/41 S)
+- **Método:** 95% (39/41 S)
 - **Producto Torre:** 0% (0/2 S)
 
 ## Zonas y colas
@@ -68,7 +67,6 @@
 
 ### Método (metodo)
 1. **S115** · 📋 PLANIFICADO · espera-atascada (S114) · prioridad Torre V3 · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
-2. **S167** · 🟢 LISTO · prioridad Torre V1 · Release instalable · Ruta manual de parches de errores de flujo en issue-resolver, autorizada sólo por el humano, sin Sesión ficticia y compatible de manera verificable con Sesiones activas.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · espera-atascada (S108) · prioridad Torre V2 · Handoffs y despacho Tower-owned · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
@@ -1652,7 +1650,7 @@
 
 ### S167 — Ruta manual de parches de errores de flujo en issue-resolver, autorizada sólo por el humano, sin Sesión ficticia y compatible de manera verificable con Sesiones activas.
 - Coordinación:
-  - Estado derivado: 🟢 LISTO
+  - Estado derivado: ✅ COMPLETO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: AGENTS.md, agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md, agent-workflows/skills/chanks-3-despacho-herdr/references/retiro.md, agent-workflows/skills/chanks-3-despacho-herdr/assets/issue-patch-handoff.md, agent-workflows/skills/chanks-5-session-doc/SKILL.md, agent-workflows/templates/session-routing.md, agent-workflows/tests/test&#95;coordinador&#95;manual.py, agent-workflows/tests/test&#95;despacho&#95;herdr.py, agent-workflows/tests/test&#95;builder&#95;flow.py, agent-workflows/tests/test&#95;issue&#95;patch&#95;flow.py, odd/tasks/human-authorized-issue-patches.md
   - Depende de: —
@@ -4393,7 +4391,7 @@ Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workfl
   - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
 
 ## Capacidad
-3 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: hosts, metodo, producto-torre.
+2 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: hosts, producto-torre.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references

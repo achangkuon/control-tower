@@ -3625,6 +3625,8 @@ sesiones:
       - AGENTS.md
     recurso:
       - "contrato de despacho manual Herdr/Intercom y proyección instalada de skills; no iniciar nuevos despachos mientras se cambia o reinstala este contrato"
+    entrega:
+      commit: 82fe27f00f0a21e6e7b749efcc24c645f8fac382
     archivos:
       - AGENTS.md
       - agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md
