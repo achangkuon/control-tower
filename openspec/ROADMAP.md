@@ -2,17 +2,18 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S151, S152, S153, S154, S160, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
-- Prioridad activa: Método V1.
-- Próximo trabajo ejecutable: Método #2 → S155 — Radar ofrece &#96;radar etapa&#96;, que calcula desde el dato del plan y la evidencia de Git qué etapas de la guía Chanks de 5 etapas están habilitadas para una Sesión, y calcula 🔵 EN CURSO desde una marca temporal fuera de plan.yaml en vez de dejarlo deliberadamente ausente..
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Prioridad activa: Torre V1 · Release instalable.
+- Próximo trabajo ejecutable: Hosts #1 → S165 — Adapter y extensión Pi V1 propios del semáforo Torre: registran exactamente las ocho herramientas tower&#95;&#42;, sin interceptor pi.on("input"), sin comandos CV&#95;&#42; ni slash commands, y sin reusar adapters/pi/runtime.mjs ni extensions/pi/tower-session-router.ts..
 - Decisión pendiente: S1.19 — Which exact test files will own the Pi-first integration regression?.
 
 ## Estado y próximo trabajo
-- Método #2 → S155 — Radar ofrece &#96;radar etapa&#96;, que calcula desde el dato del plan y la evidencia de Git qué etapas de la guía Chanks de 5 etapas están habilitadas para una Sesión, y calcula 🔵 EN CURSO desde una marca temporal fuera de plan.yaml en vez de dejarlo deliberadamente ausente.
+- Hosts #1 → S165 — Adapter y extensión Pi V1 propios del semáforo Torre: registran exactamente las ocho herramientas tower&#95;&#42;, sin interceptor pi.on("input"), sin comandos CV&#95;&#42; ni slash commands, y sin reusar adapters/pi/runtime.mjs ni extensions/pi/tower-session-router.ts.
+- Producto Torre #2 → S164 — Copias V1 separadas de los seis assets de rol Torre —tres perfiles y tres skills— bajo product/tower/v1/, sin bytes de continuation ni despacho V2 y sin modificar los originales; la skill de entregas viaja como referencia inerte, no activable en V1.
 
 ## Avance
-- **Total:** 72% (93/129 S)
-- 15 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
+- **Total:** 74% (100/134 S)
+- 16 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 50% (1/2 S)
@@ -21,11 +22,11 @@
 - **Contratos:** 33% (1/3 S)
 - **Enrolamiento:** 0% (0/1 S)
 - **Entrega:** 0% (0/1 S)
-- **Hosts:** 60% (3/5 S)
+- **Hosts:** 50% (3/6 S)
 - **Instalación:** 33% (1/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 81% (31/38 S)
-- **Producto Torre:** 0% (0/1 S)
+- **Método:** 95% (38/40 S)
+- **Producto Torre:** 0% (0/2 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -41,8 +42,8 @@
 1. **S101** · 🔴 BLOQUEADO · falta-decision (S9.10) · prioridad Torre V3 · Resolución de política: prepare&#95;through opaco y horizon&#95;ceiling salen de la política resuelta
 
 ### cimientos (cimientos)
-1. **S150** · 📋 PLANIFICADO · espera-atascada (S8.12) · prioridad Torre V1 · Release instalable · El README describe el producto que se entrega —el semáforo instalable— y no promete capacidades que pertenecen a torre-v2.
-2. **S12.6** · 📋 PLANIFICADO · espera-atascada (S12.5, S8.12) · prioridad Torre V3 · La raíz se ordena después de la descomposición de core.mjs y el README se reconcilia con esa estructura.
+1. **S150** · 📋 PLANIFICADO · espera-natural (S164, S165) · prioridad Torre V1 · Release instalable · El README describe el producto que se entrega —el semáforo instalable— y no promete capacidades que pertenecen a torre-v2.
+2. **S12.6** · 📋 PLANIFICADO · espera-atascada (S12.5) · prioridad Torre V3 · La raíz se ordena después de la descomposición de core.mjs y el README se reconcilia con esa estructura.
 3. **S148** · 📋 PLANIFICADO · espera-atascada (S147) · prioridad Torre V2 · Handoffs y despacho Tower-owned · Raíz de Ejecución estable en SQLite con revisión, estado e historial ligados a handoffs existentes
 
 ### Contratos (contratos)
@@ -52,27 +53,24 @@
 - Sin Sesiones abiertas.
 
 ### Entrega (entrega)
-1. **S7.1** · 📋 PLANIFICADO · espera-atascada (S1.19, S4.12, S8.12) · prioridad Torre V2 · Handoffs y despacho Tower-owned · Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral en un HOME/runtime aislado, preservando OpenCode como conformidad diferida.
+1. **S7.1** · 📋 PLANIFICADO · espera-atascada (S1.19, S4.12) · prioridad Torre V2 · Handoffs y despacho Tower-owned · Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral en un HOME/runtime aislado, preservando OpenCode como conformidad diferida.
 
 ### Hosts (hosts)
-- Sin Sesiones abiertas.
+1. **S165** · 🟢 LISTO · prioridad Torre V1 · Release instalable · Adapter y extensión Pi V1 propios del semáforo Torre: registran exactamente las ocho herramientas tower&#95;&#42;, sin interceptor pi.on("input"), sin comandos CV&#95;&#42; ni slash commands, y sin reusar adapters/pi/runtime.mjs ni extensions/pi/tower-session-router.ts.
 
 ### Instalación (instalacion)
-1. **S8.13** · 📋 PLANIFICADO · espera-atascada (S8.12) · prioridad Torre V1 · Release instalable · Instalador, preflight, activación y rollback del bundle Torre V1 ejercitados sólo en un HOME/runtime aislado
+1. **S8.12** · 📋 PLANIFICADO · espera-natural (S164, S165) · prioridad Torre V1 · Release instalable · Packaging del bundle Torre V1: una membresía positiva versionada, separada de RUNTIME&#95;PAYLOAD&#95;FILES, contiene exactamente el binario del semáforo, el adapter y la extensión Pi V1, jornada.sh y los seis assets de rol V1, con cero bytes de continuation o despacho V2; no instala, activa, reescribe configuración global ni ejecuta rollback.
+2. **S8.13** · 📋 PLANIFICADO · espera-natural (S164, S165) · prioridad Torre V1 · Release instalable · Instalador, preflight, activación y rollback del bundle Torre V1 ejercitados sólo en un HOME/runtime aislado; el preflight prueba el binario del semáforo y las ocho tower&#95;&#42; de la extensión Pi V1, y la ausencia de todo interceptor o comando V2.
 
 ### Jornada (jornada)
 - Sin Sesiones abiertas.
 
 ### Método (metodo)
 1. **S115** · 📋 PLANIFICADO · espera-atascada (S114) · prioridad Torre V3 · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
-2. **S155** · 🟢 LISTO · prioridad Método V1 · Radar ofrece &#96;radar etapa&#96;, que calcula desde el dato del plan y la evidencia de Git qué etapas de la guía Chanks de 5 etapas están habilitadas para una Sesión, y calcula 🔵 EN CURSO desde una marca temporal fuera de plan.yaml en vez de dejarlo deliberadamente ausente.
-3. **S156** · 🟢 LISTO · prioridad Método V1 · El canon y las skills de las etapas 1 y 2 dejan de describir el clic de activación y la revisión única por Sesión, y tratan el tope de 400 líneas como referencia y no como cupo.
-4. **S157** · 📋 PLANIFICADO · espera-natural (S155, S156) · prioridad Método V1 · session-kickoff deja de pedir el clic de activación humano; Radar libera automáticamente el bloqueo de escritura del worktree al admitir la Sesión, despacho-herdr y coordinador-manual escriben y borran la marca EN CURSO, la revisión gentle-ai vive dentro de la etapa 4 por commit de unidad de trabajo, y el puente queda liviano conservando su contrato de evidencia.
-5. **S158** · 📋 PLANIFICADO · espera-natural (S155, S156) · prioridad Método V1 · chanks-6-politica-de-entrega se renombra chanks-5-politica-de-entrega y suma el modo leer para la etapa 5; chanks-7-session-doc se renombra chanks-5-session-doc completa; toda referencia cruzada vigente apunta al nombre nuevo.
-6. **S159** · 📋 PLANIFICADO · espera-natural (S155, S156) · prioridad Método V1 · La extensión de Pi deja de pedir el clic de activación y bloquea escrituras de worktree sólo hasta que Radar admite la Sesión, guiando siempre a Main en vez de quedar inerte; un hook nuevo de Claude Code muestra el mismo menú de etapas llamando a &#96;radar etapa&#96;.
 
 ### Producto Torre (producto-torre)
 1. **S119** · 📋 PLANIFICADO · espera-atascada (S108) · prioridad Torre V2 · Handoffs y despacho Tower-owned · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
+2. **S164** · 🟢 LISTO · prioridad Torre V1 · Release instalable · Copias V1 separadas de los seis assets de rol Torre —tres perfiles y tres skills— bajo product/tower/v1/, sin bytes de continuation ni despacho V2 y sin modificar los originales; la skill de entregas viaja como referencia inerte, no activable en V1.
 
 ## Bloqueos
 - **S1.19:** Which exact test files will own the Pi-first integration regression? · falta-decision (S1.19)
@@ -91,6 +89,7 @@
 - **S107:** Encargo incompleto: falta planificar · falta-planificar (S107)
 - **S108:** Encargo incompleto: falta planificar · falta-planificar (S108)
 - **S121:** Encargo incompleto: falta planificar · falta-planificar (S121)
+- **S166:** Encargo incompleto: falta planificar · falta-planificar (S166)
 
 ## Rutas
 - **S1.20:** propuesta direct (decision 104 and Engram observation 10008); revalidada direct sobre 89b75cccbee3a3fffe371e776a68f9a62c7912fe con evidencia The read-only Tower-mode contract remained fully specified after rebasing onto current master; upstream S100 changed disjoint schema/test paths, while S1.20 preserved its verified bytes and stayed limited to core.mjs and test/lifecycle.test.mjs..
@@ -297,7 +296,7 @@
 
 ### S7.1 — Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral en un HOME/runtime aislado, preservando OpenCode como conformidad diferida.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S1.19, S4.12, S8.12)
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S1.19, S4.12)
   - Zona/Área: entrega · delivery/, continuation/, test/delivery/, test/continuation/
   - Solo lectura: sí (sin archivos autorizados para modificar).
   - Depende de: S1.19, S4.12, S8.13, S5.5
@@ -332,26 +331,26 @@
       - Descartada: Conservar S7.1 sólo para OpenCode. → Mediría un candidato distinto del Pi-first que se pretende declarar.
   - Referencias: Autoridad original: Decisiones 32, 33 y 85 del maintainer; reconciliación Pi-first vigente en openspec/plans/plan-7/STATUS.md líneas 69-79; asignación Entrega aprobada en agent-workflows/ASIGNACION-24-SESIONES.md líneas 161-174. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S7.1. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto.
 
-### S8.12 — Packaging del bundle Torre V1: una membresía versionada contiene exactamente los bytes Tower-owned del semáforo —binario, contrato host-neutral, adapter Pi, perfiles y skills Torre— y no instala, activa, reescribe configuración global ni ejecuta rollback.
+### S8.12 — Packaging del bundle Torre V1: una membresía positiva versionada, separada de RUNTIME&#95;PAYLOAD&#95;FILES, contiene exactamente el binario del semáforo, el adapter y la extensión Pi V1, jornada.sh y los seis assets de rol V1, con cero bytes de continuation o despacho V2; no instala, activa, reescribe configuración global ni ejecuta rollback.
 - Coordinación:
-  - Estado derivado: 🟡 DIFERIDO
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S164, S165)
   - Zona/Área: instalacion · install/, test/install/
-  - Archivos autorizados: scripts/payload-closure.mjs, install/runtime-payload.mjs, test/install/payload-closure.test.mjs, test/install/runtime-payload.test.mjs, test/install/tower-role-assets.test.mjs
-  - Depende de: S8.14, S149
-  - Recursos: contrato RUNTIME&#95;PAYLOAD&#95;FILES, bytes fuente Tower-owned editables de product/tower/profiles/{main,support,implementer}.md consumidos sin modificarlos, bytes fuente Tower-owned editables de product/tower/skills/torre-control/SKILL.md consumidos sin modificar, bytes fuente Tower-owned editables de product/tower/skills/torre-control-entregas/SKILL.md consumidos sin modificar, bytes fuente Tower-owned editables de product/tower/skills/torre-control-soporte/SKILL.md consumidos sin modificar, bytes originales inmutables de product/tower/generic/&#42;&#42; preservados como evidencia de producto, no como raíz de instrucciones activa, bytes fuente Tower-owned de adapters/pi/&#42;&#42; consumidos sin modificarlos, bytes fuente Tower-owned de extensions/pi/&#42;&#42; consumidos sin modificarlos
+  - Archivos autorizados: install/tower-v1-bundle.mjs, test/install/tower-v1-bundle.contract.mjs, test/install/tower-v1-bundle.test.mjs, test/install/tower-v1-role-assets.contract.mjs, test/install/tower-v1-role-assets.test.mjs
+  - Depende de: S8.14, S149, S163, S164, S165
+  - Recursos: contrato de membresía Tower V1 positiva, distinto de RUNTIME&#95;PAYLOAD&#95;FILES, binario del semáforo producido por S149, referenciado por la ruta absoluta que pasa el caller y almacenado bundle-relative con su huella SHA-256 calculada sobre esos mismos bytes, bytes fuente Tower-owned de product/tower/v1/&#42;&#42; (S164) consumidos sin modificarlos, bytes fuente Tower-owned de adapters/pi/semaphore-v1.mjs y extensions/pi/tower-v1/&#42;&#42; (S165) consumidos sin modificarlos, bytes fuente Tower-owned de jornada.sh consumidos sin modificarlos, install/runtime-payload.mjs y scripts/payload-closure.mjs leídos sólo para probar cero solapamiento con la membresía V1, nunca modificados
   - Importación legacy: openspec/plans/plan-8/STATUS.md@43130ad40af06f3ed05671000719217bee74f0a5
   - Ejecución: ODD nativo.
 - Encargo:
-  - Pedido y contexto: Packaging del bundle Torre V1: una membresía versionada contiene exactamente los bytes Tower-owned del semáforo y no instala, activa, reescribe configuración global ni ejecuta rollback. El bundle empaqueta el producto que S149 compila; no empaqueta handoffs, continuation ni despacho Tower-owned, que pertenecen a torre-v2.
-  - Resultado y comportamiento: El bundle contiene exactamente la membresía runtime/engine derivada de RUNTIME&#95;PAYLOAD&#95;FILES, el binario del semáforo producido por S149, el contrato host-neutral retenido, adapters/pi/&#42;&#42;, extensions/pi/&#42;&#42; y los perfiles/skills Tower editables bajo product/tower/; excluye configuración Pi/Intercom, skills genéricas Gentle AI y el snapshot inmutable product/tower/generic/, sin relocalizar el engine completo. La membresía enumera el binario por su ruta y su huella exacta, no por el árbol fuente que lo produjo. Un bundle que incluya bytes de continuation, de despacho Tower-owned o de una operación MCP fuera del contrato tower&#95;&#42; falla cerrado. Los tres perfiles y sus skills se materializan desde el bundle sin modificar sus fuentes canónicas editables bajo product/tower/. Faltante, extra, symlink, provenance divergente o incoherencia interceptor/torre-control falla cerrado. Declaración, derivación y guardia observan un único conjunto exacto y determinista. La Sesión sólo empaqueta: no instala, activa, reescribe configuración global ni ejecuta rollback. El diff toca sólo Área.
+  - Pedido y contexto: Packaging del bundle Torre V1 como membresía positiva separada. RUNTIME&#95;PAYLOAD&#95;FILES sigue sirviendo sin cambios al runtime legado y arrastra bytes de continuation y despacho V2, así que el bundle V1 no deriva de esa lista. El bundle empaqueta el binario que S149 compila, los seis assets V1 de S164, el puente Pi V1 de S165 y jornada.sh; no empaqueta handoffs, continuation ni despacho Tower-owned, que pertenecen a torre-v2.
+  - Resultado y comportamiento: Una única composición declara y deriva la membresía Torre V1: el binario del semáforo por su ruta y su huella exacta, adapters/pi/semaphore-v1.mjs, extensions/pi/tower-v1/&#42;&#42;, jornada.sh y los seis assets bajo product/tower/v1/. La membresía enumera el binario por ruta y huella, no por el árbol fuente que lo produjo. Ningún elemento de la membresía V1 aparece en RUNTIME&#95;PAYLOAD&#95;FILES; un solapamiento falla cerrado. Un bundle que incluya bytes de continuation, de despacho Tower-owned, un interceptor pi.on("input"), un comando CV&#95;&#42; o una operación fuera del contrato de las ocho tower&#95;&#42; falla cerrado. Los seis assets V1 se materializan desde product/tower/v1/ sin modificar las fuentes canónicas bajo product/tower/profiles/ y product/tower/skills/, y la skill V1 de entregas queda inerte. jornada.sh viaja en la membresía sin modificar sus bytes, como herramienta que el modo manual (skill chanks-0-jornada de S161) y el motor invocan igual. Faltante, extra, symlink o provenance divergente falla cerrado. Declaración, derivación y guardia observan un único conjunto exacto y determinista. La Sesión sólo empaqueta: no instala, activa, reescribe configuración global ni ejecuta rollback. El diff toca sólo install/tower-v1-bundle.mjs y sus pruebas; no modifica scripts/payload-closure.mjs, install/runtime-payload.mjs ni contracts/&#42;&#42;.
   - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación.
-    - Decisión estructurada [resuelta · contrato-visible-del-producto; seguridad-y-permisos]: ¿Qué incluye y excluye el bundle Tower?
-      - Resolución: El bundle incluye runtime, contrato neutral, adapter Pi y el set local de perfiles/skills Tower canónicos; excluye Planner permanente, configuración Pi/Intercom y skills genéricas Gentle AI.
-      - Autoridad: Decisiones 88, 95 y 100.
-      - Falsificador: El bundle omite un byte Tower-owned enumerado o incluye Planner permanente, configuración Pi/Intercom o una skill genérica Gentle AI.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto; seguridad-y-permisos]: ¿Qué incluye y excluye el bundle Tower V1?
+      - Resolución: El bundle incluye el binario del semáforo, el adapter y la extensión Pi V1, jornada.sh y los seis assets de rol V1; excluye RUNTIME&#95;PAYLOAD&#95;FILES, Planner permanente, configuración Pi/Intercom, skills genéricas Gentle AI, el snapshot product/tower/generic/ y todo byte de continuation o despacho V2.
+      - Autoridad: Decisiones 88, 95 y 100, acotadas por la frontera de cero bytes V2 aprobada por Emilio el 2026-09-25 (Engram 11793).
+      - Falsificador: El bundle omite un elemento de la membresía V1 enumerada, o incluye un byte presente en RUNTIME&#95;PAYLOAD&#95;FILES, Planner permanente, configuración Pi/Intercom, una skill genérica Gentle AI o un byte V2.
       - Contaminaba: S8.12, S8.13
+      - Descartada: Derivar la membresía V1 filtrando RUNTIME&#95;PAYLOAD&#95;FILES. → Esa lista arrastra transitivamente bytes V2; el filtro se rompe en la próxima regeneración del cierre transitivo.
       - Descartada: Incluir Planner permanente, configuración Pi/Intercom o skills genéricas Gentle AI. → Esos bytes no pertenecen al set local Tower-owned autorizado.
-      - Descartada: Omitir runtime, contrato neutral, adapter Pi o perfiles y skills Tower canónicos. → El bundle dejaría de representar la membresía aprobada.
     - Decisión estructurada [resuelta · contrato-visible-del-producto]: ¿Qué contrato de routing viaja como bytes Tower-owned en el bundle V1?
       - Resolución: Viajan el route padre torre-control y sus triggers registrados, coherentes con el contrato tower&#95;&#42; del semáforo. La política fire-and-forget de S9.8 NO viaja en el bundle V1: el despacho pasa a torre-v2 y el camino vigente es la skill manual chanks-3-despacho-herdr con la Torre apagada. El bundle no conserva rutas públicas alternativas.
       - Autoridad: Alcance V1 aprobado por Emilio el 2026-09-18 (Engram 11327), que acota la Decisión 104 y Engram 10008 a lo que no depende del despacho Tower-owned; la Decisión 104 conserva su autoridad íntegra dentro de torre-v2.
@@ -365,34 +364,48 @@
       - Evidencia: El contrato vigente enumerado de S8.12 en openspec/plans/plan-8/STATUS.md líneas 998-1031 exige una sola composición para declaración y guardia.
       - Checkpoint: S8.12 RED.
       - Opción: Derivar declaración y guardia desde una sola composición. → Faltante, extra, symlink o bytes divergentes falla cerrado; dos enumeraciones distintas falsifican la derivación.
-  - Referencias: Autoridad original: Decisiones 88, 95, 100 y 104; Engram 9921 y 10008; contrato vigente enumerado de S8.12 aprobado por decisión 10315 del maintainer y citado en openspec/plans/plan-8/STATUS.md líneas 998-1031. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S8.12. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Contraste aprobado Engram 11293 con docs/architecture/torre-motor-determinista.md, secciones 14 y 16: el resultado de bundle se conserva. Una futura membresía engine/harness/adapters requiere evidencia concreta de bytes y versiones; esta referencia no cambia el inventario ni amplía archivos o dependencias.
+    - Decisión estructurada [derivable · ]: ¿Entra el contrato host-neutral de contracts/host-runtime/&#42;&#42; en la membresía V1?
+      - Criterio: Cada archivo de contracts/host-runtime/&#42;&#42; en la membresía tiene un consumidor V1 comprobado en tiempo de ejecución y ninguno es byte V2; sin consumidor comprobado, la membresía no lo incluye.
+      - Autoridad: Frontera de cero bytes V2 aprobada por Emilio el 2026-09-25 (Engram 11793).
+      - Evidencia: El contrato vigente de S8.12 lo retenía, pero contracts/host-runtime/&#42;&#42; usa el vocabulario de binding runtime/worktree/incarnation que comparten hosts/candidate-fence.mjs y hosts/epoch-enforcement.mjs, bytes V2 de RUNTIME&#95;PAYLOAD&#95;FILES; no está probado que el semáforo V1 lo necesite en tiempo de ejecución.
+      - Checkpoint: S8.12 RED.
+      - Opción: Incluirlo sólo si el binario o el puente Pi V1 lo cargan en tiempo de ejecución y no arrastra bytes V2. → El bundle lleva sólo lo que el semáforo V1 usa; incluirlo sin uso comprobado, o incluir un byte V2 por arrastre, falsifica la derivación.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto]: ¿Quién suma jornada.sh al bundle V1?
+      - Resolución: S8.12, dentro de la membresía V1 positiva que posee. Se descarta una Sesión aparte en la Zona jornada. La vía anterior por RUNTIME&#95;PAYLOAD&#95;FILES quedó cerrada por la frontera de cero bytes V2, aprobada después el mismo día.
+      - Autoridad: Aprobación explícita de Emilio el 2026-09-25 (Engram 11739, 11747, registrada a las 13:30): un producto, dos modos; jornada.sh viaja con la Torre como Radar. El mecanismo lo acota la frontera de cero bytes V2 aprobada más tarde ese día (Engram 11793, 19:57).
+      - Falsificador: El bundle V1 no contiene jornada.sh, o una Sesión distinta de S8.12 escribe la membresía que lo incluye.
+      - Contaminaba: S8.12
+      - Descartada: Una Sesión S162 en la Zona jornada que agregue jornada.sh al bundle. → Dos Sesiones quedarían escribiendo la misma membresía.
+      - Descartada: Agregarlo a RUNTIME&#95;PAYLOAD&#95;FILES. → Esa lista queda sin cambios para el runtime legado y no es la membresía V1.
+  - Referencias: Autoridad original: Decisiones 88, 95, 100 y 104; Engram 9921 y 10008; contrato vigente enumerado de S8.12 aprobado por decisión 10315 y citado en openspec/plans/plan-8/STATUS.md líneas 998-1031, acotado por Engram 11327. Frontera de cero bytes V2 y opción A: Engram 11793, 11797 y 11799, aprobadas por Emilio el 2026-09-25. Línea base Git: openspec/plan.yaml@da8544016ec814603a3eee837630e753d762631c, bloque de Sesión S8.12 previo a la reescritura. La ruta y el desglose técnico legacy son sólo historia. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto.
 
-### S8.13 — Instalador, preflight, activación y rollback del bundle Torre V1 ejercitados sólo en un HOME/runtime aislado
+### S8.13 — Instalador, preflight, activación y rollback del bundle Torre V1 ejercitados sólo en un HOME/runtime aislado; el preflight prueba el binario del semáforo y las ocho tower&#95;&#42; de la extensión Pi V1, y la ausencia de todo interceptor o comando V2.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S8.12)
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S164, S165)
   - Zona/Área: instalacion · install/, test/install/
   - Archivos autorizados: install/lifecycle.mjs, install/active-pointer.mjs, install/runtime-payload.mjs, bin/torre, test/install/lifecycle.test.mjs, test/install/entrypoint-resolution.test.mjs, test/install/runtime-payload.test.mjs, test/install/launch-worker-cli.test.mjs
   - Depende de: S8.12
-  - Recursos: puntero activo y destino de extensión Pi aislados, backups y rollback del bundle Tower aislado, preflight de host externo aislado; prohibidos globals reales
+  - Recursos: puntero activo y destino de extensión Pi aislados, backups y rollback del bundle Tower aislado, preflight de host externo aislado; prohibidos globals reales, membresía Tower V1 de S8.12 (install/tower-v1-bundle.mjs) y su huella del binario, consumidas sin modificarlas
   - Importación legacy: openspec/plans/plan-8/STATUS.md@43130ad40af06f3ed05671000719217bee74f0a5
   - Ejecución: ODD nativo.
 - Encargo:
-  - Pedido y contexto: Instalador, preflight, activación y rollback del bundle Torre V1 ejercitados sólo en un HOME/runtime aislado. El bundle instalado es el de S8.12: semáforo, contrato host-neutral, adapter Pi, perfiles y skills Torre. El instalador no instala, activa ni diagnostica handoffs, continuation ni despacho Tower-owned, que pertenecen a torre-v2.
-  - Resultado y comportamiento: torre-control --update selecciona el lifecycle atómico versionado; no ejecuta el camino legado divergente. El shim symlink se reemplaza atómicamente; ningún cp sigue su target owner-read-only. El diagnóstico prueba revisión activa y coherencia exacta entre plugin, MCP y runtime/engine; una mezcla falla cerrado. Ningún chequeo de sólo existencia/ejecutabilidad/key puede devolver un falso positivo saludable. Instalación limpia en el HOME/runtime aislado activa el bundle completo y una capacidad ausente, rota o ambigua, un fallo de carga o cualquier preflight incompatible falla con error local tipado antes de mutar, sin route genérico ni global real. Rollback restaura runtime, interceptor, perfiles y skills Tower juntos dentro del destino aislado; no escribe configuración/skills externas, globals reales ni toca fuera de Área. La extensión Pi del destino aislado se carga realmente y el fingerprint cerrado prueba factory de un argumento, pi.on("input"), campos y source requeridos de InputEvent, continue&#124;transform&#124;handled, notificación local, enrolamiento, bytes/provenance de torre-control e inventario/orden revisados de transforms antes de quedar activa en la prueba; un mismatch deja cero activación parcial y ninguna versión acepta o rechaza por sí sola. El diff toca sólo Área; no modifica Pi core, pi-intercom, skills genéricas, worktrees, evidencia estacionada ni globals reales.
-  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación.
+  - Pedido y contexto: Instalador, preflight, activación y rollback del bundle Torre V1 ejercitados sólo en un HOME/runtime aislado. El bundle instalado es el de S8.12: binario del semáforo, adapter y extensión Pi V1, jornada.sh y los seis assets de rol V1. El instalador no instala, activa ni diagnostica handoffs, continuation, despacho Tower-owned ni el interceptor Pi V2, que pertenecen a torre-v2 (S166).
+  - Resultado y comportamiento: torre-control --update selecciona el lifecycle atómico versionado; no ejecuta el camino legado divergente. El shim symlink se reemplaza atómicamente; ningún cp sigue su target owner-read-only. El diagnóstico prueba que el binario del semáforo instalado corre y que su huella SHA-256 coincide exactamente con la declarada por la membresía de S8.12; una huella divergente falla cerrado. La extensión Pi del destino aislado se carga realmente y registra exactamente las ocho herramientas tower&#95;&#42;, ni una menos ni una de más. Chequeo negativo: el diagnóstico prueba la ausencia de todo interceptor de entrada pi.on("input") y de todo comando CV&#95;&#42; en el destino aislado; su presencia falla cerrado. Ningún chequeo de sólo existencia/ejecutabilidad/versión puede devolver un falso positivo saludable. Instalación limpia en el HOME/runtime aislado activa el bundle completo; una capacidad ausente, rota o ambigua, un fallo de carga, una huella divergente o un byte V2 presente falla con error local tipado antes de mutar, sin route genérico ni global real. Rollback restaura runtime, extensión Pi V1, perfiles y skills Tower V1 juntos dentro del destino aislado; no escribe configuración/skills externas, globals reales ni toca fuera de Área. Un mismatch deja cero activación parcial y ninguna versión acepta o rechaza por sí sola. El diff toca sólo Área; no modifica Pi core, pi-intercom, skills genéricas, worktrees, evidencia estacionada ni globals reales.
+  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación. Ningún preflight de esta Sesión exige pi.on("input"), InputEvent, continue&#124;transform&#124;handled, transforms, coherencia plugin/MCP ni enrolamiento: esos chequeos viven en S166.
     - Decisión estructurada [resuelta · operaciones-irreversibles; seguridad-y-permisos; contrato-visible-del-producto]: ¿Qué instala Tower en el destino aislado y qué recuperación parcial se admite?
-      - Resolución: Tower instala sólo el bundle Tower-owned en el HOME/runtime aislado, valida compatibilidad y rechaza upgrade --shim como recuperación parcial.
-      - Autoridad: Decisiones 88, 100 y 102.
-      - Falsificador: La instalación incluye bytes ajenos al bundle Tower-owned o acepta upgrade --shim como recuperación parcial.
+      - Resolución: Tower instala sólo el bundle Tower-owned V1 de S8.12 en el HOME/runtime aislado, valida compatibilidad y rechaza upgrade --shim como recuperación parcial.
+      - Autoridad: Decisiones 88, 100 y 102; frontera de cero bytes V2 del 2026-09-25 (Engram 11793).
+      - Falsificador: La instalación incluye bytes ajenos a la membresía V1 o acepta upgrade --shim como recuperación parcial.
       - Contaminaba: S8.13, S7.1
       - Descartada: Recuperar parcialmente con upgrade --shim. → Mantendría una instalación incoherente.
-    - Decisión estructurada [resuelta · contrato-visible-del-producto; operaciones-irreversibles; seguridad-y-permisos]: ¿Qué preflight permite activar la instalación aislada?
-      - Resolución: La instalación aislada habilita el interceptor sólo si enrolamiento, carga real de extensión, fingerprint cerrado Pi, bytes/provenance de torre-control e inventario/orden de transforms pasan; fallo o ambigüedad bloquea antes de mutar y rollback restaura la unidad coherente.
-      - Autoridad: Engram 9921 y 9963.
-      - Falsificador: Una capacidad ausente, rota o ambigua, un fallo de carga o una decisión basada sólo en versión activa total o parcialmente la instalación.
-      - Contaminaba: S8.13, S7.1
+    - Decisión estructurada [resuelta · contrato-visible-del-producto; operaciones-irreversibles; seguridad-y-permisos]: ¿Qué preflight permite activar la instalación aislada V1?
+      - Resolución: La instalación aislada V1 se activa sólo si el binario del semáforo corre con la huella declarada, la extensión Pi V1 carga y registra exactamente las ocho tower&#95;&#42;, y no hay interceptor pi.on("input") ni comando CV&#95;&#42;; fallo o ambigüedad bloquea antes de mutar y rollback restaura la unidad coherente. El preflight del interceptor V2 (Engram 9921, 9963) no es parte de este criterio: pasa íntegro a S166.
+      - Autoridad: Engram 9921 y 9963, acotados por la opción A aprobada por Emilio el 2026-09-25 (Engram 11799).
+      - Falsificador: Una capacidad ausente, rota o ambigua, un fallo de carga, una huella divergente, un registro distinto de exactamente ocho tower&#95;&#42;, la presencia de un interceptor o comando V2, o una decisión basada sólo en versión activa total o parcialmente la instalación.
+      - Contaminaba: S8.13, S7.1, S166
       - Descartada: Aceptar compatibilidad sólo por versión o existencia. → No prueba conducta ni coherencia del runtime instalado.
       - Descartada: Activar parcialmente y reparar después. → Viola atomicidad y deja un estado global incoherente.
+      - Descartada: Conservar el preflight del interceptor V2 en la instalación V1. → V1 no lleva ese interceptor: el preflight fallaría siempre o obligaría a meter bytes V2 en el bundle.
     - Decisión estructurada [derivable · ]: ¿Cómo se ordenan internamente probe, preflight, activación y diagnóstico?
       - Criterio: Toda carga y validación conductual ocurre antes de la primera mutación y cualquier fallo deja el estado previo byte-idéntico.
       - Autoridad: Decisiones 88, 100 y 102; Engram 9921, 9956 rev2 y 9963.
@@ -406,7 +419,7 @@
       - Contaminaba: S8.13, S7.1
       - Descartada: Ejercitar o activar directamente globals reales. → Mezcla prueba con distribución y omite la autorización humana explícita posterior.
       - Descartada: Tratar un commit de Sesión como autorización de distribución. → La entrega de código no es autoridad para activar ni distribuir.
-  - Referencias: Autoridad original: Contrato propietario de la Sesión y autoridades aprobadas del lifecycle versionado; decisiones 88, 100 y 102; Engram 9921, 9956 rev2 y 9963; alcance interpretativo supersedido por Engram 10782, que registra la aprobación posterior del maintainer para la frontera producto/Torre. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S8.13. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Contraste aprobado Engram 11293 con docs/architecture/torre-motor-determinista.md, secciones 14 y 17: se conserva la instalación aislada; la futura unidad engine/contratos/harness deberá demostrar compatibilidad y rollback con evidencia. No se aprueba aquí formato, conversión de datos, activación ni nuevo miembro del payload.
+  - Referencias: Autoridad original: Contrato propietario de la Sesión y autoridades aprobadas del lifecycle versionado; decisiones 88, 100 y 102; Engram 9921, 9956 rev2 y 9963; Engram 10782. Opción A y frontera de cero bytes V2: Engram 11793 y 11799, aprobadas por Emilio el 2026-09-25; el texto de los chequeos V2 retirados se conserva íntegro en S166. Línea base Git: openspec/plan.yaml@da8544016ec814603a3eee837630e753d762631c, bloque de Sesión S8.13 previo a la reescritura. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Contraste aprobado Engram 11293 con docs/architecture/torre-motor-determinista.md, secciones 14 y 17: se conserva la instalación aislada; la futura unidad engine/contratos/harness deberá demostrar compatibilidad y rollback con evidencia. No se aprueba aquí formato, conversión de datos, activación ni nuevo miembro del payload.
 
 ### S9.2 — Main no puede reciclar un asiento ocupado; la ocupación es legible y el reciclado toma un lock exclusivo que falla cerrado si el asiento está tomado o si otro Main lo está mutando.
 - Coordinación:
@@ -574,7 +587,7 @@
 
 ### S12.6 — La raíz se ordena después de la descomposición de core.mjs y el README se reconcilia con esa estructura.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S12.5, S8.12)
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S12.5)
   - Zona/Área: cimientos · —
   - Archivos autorizados: README.md
   - Depende de: S12.5, S150
@@ -918,7 +931,7 @@
 - Coordinación:
   - Estado derivado: 🟡 DIFERIDO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
-  - Archivos autorizados: agent-workflows/skills/chanks-7-session-doc/SKILL.md, agent-workflows/skills/chanks-0-agente-soporte/SKILL.md, agent-workflows/templates/session-routing.md
+  - Archivos autorizados: agent-workflows/skills/chanks-5-session-doc/SKILL.md, agent-workflows/skills/chanks-0-agente-soporte/SKILL.md, agent-workflows/templates/session-routing.md
   - Depende de: S122
   - Recursos: —
   - Ejecución: ODD nativo.
@@ -1199,7 +1212,7 @@
 
 ### S150 — El README describe el producto que se entrega —el semáforo instalable— y no promete capacidades que pertenecen a torre-v2.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S8.12)
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S164, S165)
   - Zona/Área: cimientos · —
   - Archivos autorizados: README.md
   - Depende de: S8.13
@@ -1350,16 +1363,16 @@
 
 ### S155 — Radar ofrece &#96;radar etapa&#96;, que calcula desde el dato del plan y la evidencia de Git qué etapas de la guía Chanks de 5 etapas están habilitadas para una Sesión, y calcula 🔵 EN CURSO desde una marca temporal fuera de plan.yaml en vez de dejarlo deliberadamente ausente.
 - Coordinación:
-  - Estado derivado: 🟢 LISTO
+  - Estado derivado: ✅ COMPLETO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
-  - Archivos autorizados: agent-workflows/tools/radar/main.go, agent-workflows/tools/radar/state.go, agent-workflows/tools/radar/snapshot.go, agent-workflows/tools/radar/render.go, agent-workflows/tools/radar/faltan.go, agent-workflows/tools/radar/git.go, agent-workflows/tools/radar/etapa.go, agent-workflows/tools/radar/etapa&#95;test.go, agent-workflows/tools/radar/state&#95;test.go, agent-workflows/tools/radar/faltan&#95;test.go, agent-workflows/tools/radar/render&#95;test.go, agent-workflows/tools/radar/testdata/ROADMAP.golden.md, agent-workflows/tools/radar/testdata/faltan.golden.txt
+  - Archivos autorizados: agent-workflows/tools/radar/main.go, agent-workflows/tools/radar/state.go, agent-workflows/tools/radar/snapshot.go, agent-workflows/tools/radar/render.go, agent-workflows/tools/radar/roadmap.go, agent-workflows/tools/radar/faltan.go, agent-workflows/tools/radar/git.go, agent-workflows/tools/radar/etapa.go, agent-workflows/tools/radar/etapa&#95;test.go, agent-workflows/tools/radar/state&#95;test.go, agent-workflows/tools/radar/faltan&#95;test.go, agent-workflows/tools/radar/render&#95;test.go, agent-workflows/tools/radar/testdata/ROADMAP.golden.md, agent-workflows/tools/radar/testdata/faltan.golden.txt
   - Depende de: S160
   - Recursos: —
   - Ejecución: ODD nativo.
 - Encargo:
   - Pedido y contexto: Chanks deja de mostrar 💪 en cada bloqueo y de exigir el clic de activación (chanks&#95;request&#95;activation + ctx.ui.confirm) que hoy vive en S153; en su lugar, un cerebro en Radar calcula qué etapa de la guía de 5 etapas corresponde a una Sesión y sólo se anuncia en las transiciones. Hoy state.go:29-31 deja 🔵 EN CURSO deliberadamente ausente porque es una marca de ejecución, no un dato de plan; esta Sesión le da esa marca un lugar fuera de plan.yaml. Esta Sesión construye el cerebro; no toca las skills que lo consumen ni la extensión de Pi, que son S157 y S159.
   - Resultado y comportamiento: &#96;radar etapa &lt;ID&gt;&#96; calcula, sin interpretar texto humano, el menú de etapas que la evidencia permite para una Sesión: sin Sesión para una idea suelta ofrece sólo la etapa 1 (Definir); una Sesión con Encargo incompleto ofrece la etapa 2 (Preparar); LISTO ofrece la etapa 3 (Despachar); EN CURSO ofrece la etapa 4 (Implementar y revisar); un archivo odd/tasks/&#42;.md con cada tarea marcada más una constancia de Intercom "listo para revisión" del worker ofrecen la etapa 5 (Entregar y cerrar). El modelo elige sólo entre las etapas que el comando ofrece; si ninguna corresponde, hace una sola pregunta y no adivina. 🔵 EN CURSO se calcula a partir de una marca temporal por Sesión bajo el directorio común de Git (por ejemplo &#96;.git/chanks/despachos/&lt;ID&gt;.json&#96;), escrita por el despacho o por Main cuando toma una Sesión directamente, y borrada al cerrar la etapa 5; la marca nunca se escribe en plan.yaml. El resumen de retomar trabajo ofrece primero las Sesiones EN CURSO con marca vigente y después las LISTO. Una marca cuya rama o worktree ya no existe se reporta como huérfana en el resumen, sin borrarla automáticamente. Pruebas nuevas cubren el menú de las cinco etapas y el cálculo de EN CURSO, incluida una marca huérfana. &#96;go test ./...&#96; de Radar pasa completo y &#96;radar check&#96; sobre el plan vigente sigue sin errores.
-  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD con TDD estricto; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. S115 reserva también check.go y check&#95;test.go pero está PLANIFICADO detrás de S114 DIFERIDO: esta Sesión no toca ninguno de los dos. El cerebro calcula el menú; no decide por el humano ni reemplaza las preguntas de escalación existentes. Sumar el subcomando nuevo y mover el cálculo de EN CURSO fuera de state.go:29-31 se estima entre 600 y 900 líneas de diff; Emilio aprobó una excepción a la referencia de 400 líneas para un único commit coherente de S155. La excepción no amplía archivos, elimina pruebas, omite revisión ni autoriza por sí sola implementar o entregar. Al entregar se reinstala ~/.local/bin/radar para que el pre-push y las demás Sesiones usen la versión nueva; la reinstalación es un paso operativo, no un archivo del plan.
+  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD con TDD estricto; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. S115 reserva también check.go y check&#95;test.go pero está PLANIFICADO detrás de S114 DIFERIDO: esta Sesión no toca ninguno de los dos. El cerebro calcula el menú; no decide por el humano ni reemplaza las preguntas de escalación existentes. Sumar el subcomando nuevo y mover el cálculo de EN CURSO fuera de state.go:29-31 se estimó inicialmente entre 600 y 900 líneas de diff. El candidato portátil y sus regresiones alcanzaron aproximadamente 1.250 líneas; Emilio amplió explícitamente la excepción a 1.250–1.350 líneas para el mismo commit coherente de S155 y autorizó sumar roadmap.go para que cada comando reutilice una sola observación de las marcas, tras una compatibilidad fresca sin solapamientos. La excepción no elimina pruebas, omite revisión ni autoriza por sí sola implementar o entregar. Al entregar se reinstala ~/.local/bin/radar para que el pre-push y las demás Sesiones usen la versión nueva; la reinstalación es un paso operativo, no un archivo del plan.
     - Decisión estructurada [resuelta · contrato-visible-del-producto]: ¿Quién decide la etapa que corresponde a una Sesión: el modelo interpretando texto o un menú determinista?
       - Resolución: Un menú determinista calculado por Radar desde el dato y Git; el modelo elige sólo entre las opciones que el menú ofrece y pregunta una vez si ninguna corresponde.
       - Autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación (documento 'Chanks como guía de etapas — análisis por tramos', artifact 56421c44-de32-4b92-b4f7-6b428a6db555).
@@ -1373,8 +1386,8 @@
       - Contaminaba: S155, S157, S159
       - Descartada: Seguir sin EN CURSO calculado, como hoy en state.go:29-31. → Main no puede distinguir una Sesión realmente en curso de una LISTO al ofrecer el resumen de retomar.
     - Decisión estructurada [resuelta · expansion-de-alcance]: ¿Cómo se trata el tamaño de S155, que supera la referencia de 400 líneas de diff?
-      - Resolución: Un solo commit coherente con excepción de tamaño para S155; conserva pruebas, revisión proporcional y reversibilidad de esa unidad.
-      - Autoridad: Aprobación explícita de Emilio el 2026-09-24 en esta Conversación.
+      - Resolución: Un solo commit coherente con excepción ampliada a aproximadamente 1.250–1.350 líneas para S155; conserva pruebas, revisión proporcional y reversibilidad de esa unidad. La misma aprobación suma roadmap.go al alcance exacto para que el comando use una sola observación de marcas.
+      - Autoridad: Aprobación inicial de Emilio el 2026-09-24 y ampliación explícita en esta Conversación después de observar el candidato portátil y la compatibilidad fresca.
       - Falsificador: La excepción se usa para agregar archivos fuera de los declarados, saltear pruebas o revisión, o mezclar resultados ajenos a S155.
       - Contaminaba: S155
       - Descartada: Commits secuenciales verificables. → El cerebro y su cálculo de EN CURSO forman una unidad coherente; partirla deja un menú a medias.
@@ -1382,7 +1395,7 @@
 
 ### S156 — El canon y las skills de las etapas 1 y 2 dejan de describir el clic de activación y la revisión única por Sesión, y tratan el tope de 400 líneas como referencia y no como cupo.
 - Coordinación:
-  - Estado derivado: 🟢 LISTO
+  - Estado derivado: ✅ COMPLETO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/skills/&#95;shared/plan-naming-convention.md, agent-workflows/skills/chanks-1-autoridad/SKILL.md, agent-workflows/skills/chanks-2-planificador-granular/SKILL.md, agent-workflows/skills/chanks-1-adopcion/references/errores-conocidos.md, agent-workflows/tests/test&#95;builder&#95;flow.py
   - Depende de: —
@@ -1402,7 +1415,7 @@
 
 ### S157 — session-kickoff deja de pedir el clic de activación humano; Radar libera automáticamente el bloqueo de escritura del worktree al admitir la Sesión, despacho-herdr y coordinador-manual escriben y borran la marca EN CURSO, la revisión gentle-ai vive dentro de la etapa 4 por commit de unidad de trabajo, y el puente queda liviano conservando su contrato de evidencia.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-natural (S155, S156)
+  - Estado derivado: ✅ COMPLETO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/skills/chanks-3-session-kickoff/SKILL.md, agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md, agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workflows/skills/chanks-4-puente/SKILL.md, agent-workflows/skills/chanks-0-agente-soporte/assets/assignment-implementation.md, agent-workflows/tests/test&#95;builder&#95;flow.py, agent-workflows/tests/test&#95;coordinador&#95;manual.py
   - Depende de: S155, S156
@@ -1434,7 +1447,7 @@
 
 ### S158 — chanks-6-politica-de-entrega se renombra chanks-5-politica-de-entrega y suma el modo leer para la etapa 5; chanks-7-session-doc se renombra chanks-5-session-doc completa; toda referencia cruzada vigente apunta al nombre nuevo.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-natural (S155, S156)
+  - Estado derivado: ✅ COMPLETO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/skills/chanks-6-politica-de-entrega/SKILL.md, agent-workflows/skills/chanks-5-politica-de-entrega/SKILL.md, agent-workflows/skills/chanks-7-session-doc/SKILL.md, agent-workflows/skills/chanks-5-session-doc/SKILL.md, agent-workflows/templates/session-routing.md, agent-workflows/skills/chanks-7-session-doc/assets/project-notion-map.json, agent-workflows/skills/chanks-5-session-doc/assets/project-notion-map.json, agent-workflows/skills/chanks-7-session-doc/assets/session-doc.schema.json, agent-workflows/skills/chanks-5-session-doc/assets/session-doc.schema.json, agent-workflows/skills/chanks-7-session-doc/references/links.md, agent-workflows/skills/chanks-5-session-doc/references/links.md, agent-workflows/tools/install.py, agent-workflows/skills/chanks-1-cierre-de-decisiones/SKILL.md, agent-workflows/skills/chanks-1-terreno/SKILL.md, agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workflows/skills/chanks-4-puente/SKILL.md, agent-workflows/skills/&#95;shared/plan-naming-convention.md, agent-workflows/README.md, agent-workflows/EJECUCION-EN-PARALELO.md, agent-workflows/FLUJO-END-TO-END.md, agent-workflows/tests/test&#95;builder&#95;flow.py, agent-workflows/tests/test&#95;install.py, agent-workflows/tests/test&#95;coordinador&#95;manual.py, AGENTS.md
   - Depende de: S157
@@ -1455,7 +1468,7 @@
 
 ### S159 — La extensión de Pi deja de pedir el clic de activación y bloquea escrituras de worktree sólo hasta que Radar admite la Sesión, guiando siempre a Main en vez de quedar inerte; un hook nuevo de Claude Code muestra el mismo menú de etapas llamando a &#96;radar etapa&#96;.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-natural (S155, S156)
+  - Estado derivado: ✅ COMPLETO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/tools/install.py, agent-workflows/chanks/pi-admission.mjs, agent-workflows/chanks/pi-authority.mjs, agent-workflows/chanks/pi-switch.mjs, agent-workflows/chanks/pi-controls.mjs, agent-workflows/chanks/controls.mjs, agent-workflows/chanks/interventions.mjs, agent-workflows/tests/chanks/pi-admission.test.mjs, agent-workflows/tests/chanks/pi-authority.test.mjs, agent-workflows/tests/chanks/pi-switch.test.mjs, agent-workflows/tests/chanks/pi-controls.test.mjs, agent-workflows/tests/chanks/controls.test.mjs, agent-workflows/tests/chanks/interventions.test.mjs, agent-workflows/tests/test&#95;install.py, agent-workflows/tools/hooks/chanks-etapa.sh
   - Depende de: S155, S157
@@ -1463,7 +1476,7 @@
   - Ejecución: ODD nativo.
 - Encargo:
   - Pedido y contexto: La plantilla PI&#95;EXTENSION&#95;TEMPLATE de install.py (~523-795, con sus imports ~806-811) todavía pide chanks&#95;request&#95;activation y ctx.ui.confirm, que S153 introdujo como llave de Sesión y de planificación. La guía de etapas la reemplaza: el bloqueo de escritura de worktree se sostiene hasta que Radar admite la Sesión (S157), calculado por el cerebro de S155, y ya no hace falta una pregunta nativa de Pi para liberarlo. Hoy la extensión queda inerte en Main; pasa a guiarlo siempre, mostrando 💪 sólo en las transiciones de etapa. controls.mjs sigue siendo importado por pi-authority.mjs:9 e interventions.mjs:20, así que no se retira completo: sólo se quita lo que quede efectivamente sin uso tras remover el clic. Claude Code no tiene hoy un mecanismo que muestre el menú de etapas; esta Sesión agrega el hook que lo hace, sin cablearlo todavía a ~/.claude/settings.json.
-  - Resultado y comportamiento: La plantilla de la extensión de Pi ya no pregunta chanks&#95;request&#95;activation ni usa ctx.ui.confirm. Con el interruptor por repositorio encendido y una Sesión aprobada sin admitir, la extensión sigue bloqueando escrituras del worktree; en cuanto Radar admite la Sesión (misma verificación de S157), el bloqueo se libera solo, sin pregunta. En Main la extensión deja de quedar inerte: guía mostrando el menú de etapas que calcula &#96;radar etapa&#96;, y anuncia 💪 únicamente en una transición de etapa, nunca en un bloqueo. pi-admission.mjs, pi-authority.mjs, pi-switch.mjs y pi-controls.mjs reflejan ese cambio; controls.mjs e interventions.mjs se conservan porque siguen siendo importados, y sólo se retira el código que la remoción del clic deja genuinamente sin uso. Las pruebas bajo agent-workflows/tests/chanks/ y test&#95;install.py cubren la ausencia del clic, la liberación automática al admitir, y que Main ya no queda inerte. Un hook nuevo para Claude Code ejecuta &#96;radar etapa&#96; y presenta el mismo menú y la misma transición 💪 que ve Pi. install.py no toca ~/.claude/settings.json hoy y esta Sesión no lo cambia: cablear el hook ahí es un paso operativo que exige confirmación humana explícita al entregar, no un archivo del repo.
+  - Resultado y comportamiento: La plantilla de la extensión de Pi ya no pregunta chanks&#95;request&#95;activation ni usa ctx.ui.confirm. Con el interruptor por repositorio encendido y una Sesión aprobada sin admitir, la extensión sigue bloqueando escrituras del worktree; en cuanto Radar admite una Sesión sin Cimientos ni Recursos (misma verificación de S157), el bloqueo se libera solo, sin pregunta. Si declara alguno, queda bloqueada hasta contar con evidencia durable de la reserva o adquisición: Radar y el marcador no la fabrican. En Main la extensión deja de quedar inerte: guía mostrando el menú de etapas que calcula &#96;radar etapa&#96;, y anuncia 💪 únicamente en una transición de etapa, nunca en un bloqueo. pi-admission.mjs, pi-authority.mjs, pi-switch.mjs y pi-controls.mjs reflejan ese cambio; controls.mjs e interventions.mjs se conservan porque siguen siendo importados, y sólo se retira el código que la remoción del clic deja genuinamente sin uso. Las pruebas bajo agent-workflows/tests/chanks/ y test&#95;install.py cubren la ausencia del clic, la liberación automática al admitir, y que Main ya no queda inerte. Un hook nuevo para Claude Code ejecuta &#96;radar etapa&#96; y presenta el mismo menú y la misma transición 💪 que ve Pi. install.py no toca ~/.claude/settings.json hoy y esta Sesión no lo cambia: cablear el hook ahí es un paso operativo que exige confirmación humana explícita al entregar, no un archivo del repo.
   - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. El modelo no puede fabricar la admisión de Radar ni encender el interruptor por repositorio; esa autoridad sigue siendo del humano y de Radar, igual que en S153. controls.mjs e interventions.mjs se tocan sólo para retirar código genuinamente muerto, nunca sus exports usados por pi-authority.mjs o interventions.mjs. Cablear el hook nuevo en ~/.claude/settings.json y habilitarlo de verdad requiere confirmación humana explícita al entregar; install.py no lo hace por sí solo.
     - Decisión estructurada [resuelta · seguridad-y-permisos]: ¿Qué reemplaza a ctx.ui.confirm como condición para liberar la escritura del worktree en Pi?
       - Resolución: La admisión de Radar sobre la misma Sesión (misma identidad, HEAD y evidencia que ya usa session-kickoff en S157); ninguna pregunta nativa de Pi ni una respuesta del modelo liberan la escritura por sí solas.
@@ -1477,7 +1490,66 @@
       - Falsificador: install.py o esta Sesión modifican ~/.claude/settings.json sin confirmación humana explícita al entregar.
       - Contaminaba: S159
       - Descartada: Cablear el hook automáticamente al instalar. → Cambia el comportamiento de Claude Code fuera del repo sin que el humano lo confirme explícitamente.
+    - Decisión estructurada [resuelta · seguridad-y-permisos]: ¿Radar y el marcador alcanzan para liberar automáticamente una Sesión que declara Cimientos o Recursos?
+      - Resolución: No; la admisión automática libera sólo Sesiones sin Cimientos ni Recursos. Las demás quedan bloqueadas porque el marcador prueba Sesión, worktree y branch, pero no una reserva exacta ni una adquisición exclusiva o serial.
+      - Autoridad: Decisión explícita de Emilio el 2026-09-25 en esta Conversación.
+      - Falsificador: Una declaración de Cimiento o Recurso se transforma en confirmación, o una mutación compartida avanza sin evidencia durable de reserva o adquisición.
+      - Contaminaba: S159
+      - Descartada: Tratar la declaración de Radar como confirmación. → Fabricaría autoridad de seguridad que Radar no observa.
+      - Descartada: Ampliar S159 para crear un nuevo registro durable. → Excede los archivos autorizados y requiere una expansión aprobada separada.
+    - Decisión estructurada [resuelta · expansion-de-alcance]: ¿Cómo se trata el tamaño final de S159, superior a la referencia de 400 líneas?
+      - Resolución: Un solo commit coherente con excepción de tamaño, conservando strict TDD, verificación independiente y reversibilidad de la unidad completa.
+      - Autoridad: Decisión explícita de Emilio el 2026-09-25 en esta Conversación.
+      - Falsificador: La excepción se usa para tocar archivos no declarados o saltear pruebas, revisión o límites de autoridad.
+      - Contaminaba: S159
+      - Descartada: Dos commits secuenciales. → Emilio eligió explícitamente una sola unidad para el runtime y su guía de etapas.
   - Referencias: install.py PI&#95;EXTENSION&#95;TEMPLATE (~523-795) e imports (~806-811). controls.mjs importado por pi-authority.mjs:9 e interventions.mjs:20. Decisiones conservadas de S151 y S153 (Engram 11368, 11423, 11462, 11475). Documento de diseño: 'Chanks como guía de etapas — análisis por tramos' (claude.ai artifact 56421c44-de32-4b92-b4f7-6b428a6db555) y Engram topics chanks/stage-router-&#42;. Revalidar contra el árbol vigente antes de escribir.
+
+### S161 — Chanks abre y cierra la jornada con jornada.sh: al empezar diagnostica master y los worktrees, trae master con pull --ff-only, pone al día los worktrees limpios y recicla asientos limpios a una rama nueva; al cerrar muestra el diagnóstico de fin de día. Un worktree con trabajo sin entregar nunca se recicla sin la decisión explícita del humano.
+- Coordinación:
+  - Estado derivado: ✅ COMPLETO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/skills/chanks-0-jornada/SKILL.md, agent-workflows/tools/install.py, agent-workflows/tests/test&#95;chanks&#95;jornada.py, agent-workflows/tests/test&#95;install.py
+  - Depende de: S159
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: jornada.sh ya hace el diagnóstico (sin opciones), la puesta al día (--ejecutar: pull --ff-only del tronco y rebase de los worktrees limpios atrasados) y el reciclado (--reciclar &lt;ruta&gt; --nueva-rama &lt;rama&gt;), y la decisión 62 lo conserva como reciclador manual. Ninguna skill chanks lo invoca: el maintainer lo corre a mano y los agentes arrancan sin saber si su worktree está al día. Engram 9235 ya autorizó reciclar asientos permanentes con la Torre apagada, sólo sobre worktrees limpios. install.py registra las skills de Chanks en CHANKS&#95;SKILLS y test&#95;install.py fija ese conjunto exacto.
+  - Resultado y comportamiento: Una skill nueva chanks-0-jornada responde a "empezamos la jornada" y "cerramos la jornada". Al abrir corre jornada.sh, presenta el diagnóstico, ejecuta --ejecutar y, por cada asiento limpio que el humano asigna, --reciclar hacia una rama sacada de master fresco. Un worktree sucio u ocupado se reporta con su evidencia y se pregunta una sola decisión (entregar, guardar o descartar) antes de tocarlo. Al cerrar corre el diagnóstico y lista lo pendiente. La skill llama a jornada.sh como herramienta de la Torre y no copia su lógica. install.py registra la skill en CHANKS&#95;SKILLS. Las pruebas verifican los triggers, que la skill nunca pasa --borrar-rama-vieja por su cuenta, que nunca recicla un worktree sucio u ocupado y que el instalador la incluye.
+  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. jornada.sh no se modifica: la skill sólo lo llama. Nunca reciclar, limpiar, resetear ni borrar ramas sin la decisión explícita del humano, y nunca desactivar el rechazo de worktrees sucios de jornada.sh. La entrega sigue la política de AGENTS.md. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Al entregar se reinstala y se propaga a los demás agentes.
+    - Decisión estructurada [resuelta · operaciones-irreversibles]: ¿Qué hace la skill con un worktree que tiene trabajo sin entregar?
+      - Resolución: Lo reporta con su evidencia y pregunta una sola decisión al humano (entregar, guardar o descartar) antes de tocarlo; nunca lo recicla, limpia ni guarda por su cuenta.
+      - Autoridad: Engram 9235 y aprobación explícita de Emilio el 2026-09-25 en esta Conversación.
+      - Falsificador: La skill recicla, limpia, resetea o guarda un worktree sucio u ocupado sin una decisión explícita del humano.
+      - Contaminaba: S161
+      - Descartada: Guardar el trabajo automáticamente (stash o rama de respaldo) y reciclar. → Esconde trabajo sin que el humano lo decida y rompe la regla de Engram 9235.
+  - Referencias: jornada.sh:1-35 (modos y flags), jornada.sh:257-286 (--reciclar), decisión 62 (openspec/plans/decision-register.md:281), Engram 9235 (reciclado con la Torre apagada), Engram 10138 (--reciclar parte de origin/master), install.py:24 (CHANKS&#95;SKILLS), test&#95;install.py:396 (conjunto exacto de skills). Revalidar contra el árbol vigente antes de escribir.
+
+### S163 — El aviso visible nombra la pieza que corrió: 💪 Chanks cuando habla el flujo (una skill, un cambio de etapa o un bloqueo de la extensión) y 🗼 Torre · &lt;herramienta&gt; cada vez que corre una herramienta del motor (radar, una edición de openspec/plan.yaml o jornada.sh), esté o no encendida la Torre, en Pi y en Claude Code.
+- Coordinación:
+  - Estado derivado: ✅ COMPLETO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/chanks/torre-firma.mjs, agent-workflows/tests/chanks/torre-firma.test.mjs, agent-workflows/tools/hooks/torre-firma.sh, agent-workflows/tools/install.py, agent-workflows/tests/test&#95;install.py, agent-workflows/skills/chanks-0-mensajes-visibles/SKILL.md, agent-workflows/tests/test&#95;mensajes&#95;visibles.py, agent-workflows/tests/chanks/pi-controls.test.mjs, odd/tasks/s163-tower-tool-signatures.md
+  - Depende de: S159
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Hoy 🗼 Torre sólo aparece cuando corre el comando torre (extensions/pi/tower-session-router.ts:113). La regla escrita en chanks-0-mensajes-visibles/SKILL.md:18 dice que 🗼 es sólo para operaciones reales del motor y que Main manual no es Torre, y pi-controls.test.mjs:141-146 lo cita. Las llamadas a radar, las ediciones de plan.yaml y jornada.sh no tienen firma propia o las firma Chanks, aunque son herramientas del motor. 💪 Chanks aparece en los cambios de etapa (install.py:647, hooks/chanks-etapa.sh:68) y en los bloqueos de la extensión. Con "un producto, dos modos", la misma herramienta no puede llevar dos nombres según el modo.
+  - Resultado y comportamiento: Un módulo nuevo torre-firma.mjs decide, a partir de una llamada de herramienta, si corresponde una firma 🗼 Torre y cuál: un comando bash que invoca radar o jornada.sh, o una escritura o edición de openspec/plan.yaml, produce "🗼 Torre · &lt;herramienta&gt; &lt;subcomando&gt;"; cualquier otra llamada no produce firma. La extensión de Pi (plantilla de install.py) muestra esa firma en la llamada correspondiente. Un hook nuevo de Claude Code, torre-firma.sh, muestra la misma firma en las llamadas a Bash, Write y Edit; install.py lo instala sin cablearlo en ~/.claude/settings.json. 💪 Chanks conserva los cambios de etapa y los bloqueos de la extensión, y nunca lleva 🗼. El comando torre con el motor encendido conserva su formato "🗼 Torre · estado · subcomando". La regla de chanks-0-mensajes-visibles se reescribe: 💪 = habla el flujo, 🗼 = corrió una herramienta del motor, Gentle AI = su identidad propia. Las pruebas cubren radar, jornada.sh, plan.yaml, llamadas sin firma, la separación entre 💪 y 🗼 y que el hook no toca settings.json. En Pi, las llamadas internas reales a radar etapa y a radar status/sesion durante la admisión también muestran 🗼, separadas del aviso 💪 de etapa. Una rama Bash condicionada cuya ejecución no puede probarse no se firma; tampoco se simula un inexistente radar admite, ni se atribuyen hooks Git o shells externos a Pi. jornada.sh usa sus opciones reales --... o ninguna: sin opciones la firma nombra sólo jornada.sh, sin inventar abrir/cerrar.
+  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. El aviso sólo informa: no bloquea, no autoriza ni cambia ninguna decisión de admisión. extensions/pi/tower-session-router.ts (Zona hosts) no se toca. Cablear el hook nuevo en ~/.claude/settings.json requiere confirmación humana explícita al entregar; install.py no lo hace por sí solo. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Al entregar se reinstala y se propaga a los demás agentes.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto]: ¿Qué cobertura visual de herramientas Torre se implementa en Pi para el flujo de etapas?
+      - Resolución: Cobertura fácil + media: llamadas directas comprobables de Pi y ejecuciones internas reales de radar etapa/status/sesion; omitir ramas Bash condicionadas no probadas, pre-push y shells externos. Claude conserva el hook copiado sin activación.
+      - Autoridad: Elección explícita de Emilio en esta Conversación tras comparar caja por caja el flujo propuesto y la vía fácil + media.
+      - Falsificador: Una consulta interna exitosa a radar etapa/status/sesion en Pi no muestra 🗼, o una rama omitida como false &amp;&amp; radar status sí lo muestra.
+      - Contaminaba: S163
+      - Descartada: Afirmar que todas las cajas ámbar del diagrama son observables desde un tool&#95;call directo. → Git hooks, shells externos y comandos inexistentes no producen esos eventos de Pi.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto]: ¿El aviso dice en qué modo estás o qué pieza corrió?
+      - Resolución: Qué pieza corrió: 💪 Chanks cuando habla el flujo y 🗼 Torre · &lt;herramienta&gt; cuando corre una herramienta del motor, esté o no encendida la Torre. Reemplaza la regla anterior «Main manual no es Torre».
+      - Autoridad: Aprobación explícita de Emilio el 2026-09-25 en esta Conversación (Engram 11748).
+      - Falsificador: Una llamada a radar, jornada.sh o una edición de plan.yaml no muestra 🗼 Torre, o un cambio de etapa o un bloqueo de la extensión muestra 🗼.
+      - Contaminaba: S163
+      - Descartada: Dejar la regla anterior, donde 🗼 sólo aparece con el motor encendido. → La misma herramienta lleva dos nombres según el modo y contradice "un producto, dos modos".
+  - Referencias: chanks-0-mensajes-visibles/SKILL.md:18-19, pi-controls.test.mjs:141-146, test&#95;mensajes&#95;visibles.py:76-88, install.py:647 (aviso de etapa), install.py:406-410 (instalación de hooks de Claude), hooks/chanks-etapa.sh:66-68, extensions/pi/tower-session-router.ts:113. Engram 11739, 11748. Revalidar contra el árbol vigente antes de escribir.
 
 ### S160 — openspec/plan.yaml deja de crecer sin fin: una Sesión cerrada pasa a un histórico en markdown y deja una sola línea de referencia en el plan, y radar status muestra por defecto sólo las Sesiones vivas.
 - Coordinación:
@@ -1504,6 +1576,66 @@
       - Contaminaba: S160
       - Descartada: Guardar el histórico dentro de plan.yaml. → Es justamente lo que hace crecer el plan sin fin.
   - Referencias: Antecedente de la historia fuera del plan: la migración a Zonas (8628319) y openspec/archive/legacy-planning/, con referencias satisfied&#95;history. Contrato actual: agent-workflows/tools/radar/plan.go:253 (SatisfiedHistory), state.go (readiness sólo contra Sesiones), render.go:312 (filas de referencias), check.go:625-660 (dependencias hacia referencias, S154). La skill de cierre se edita con su nombre actual (chanks-7-session-doc, reservada también por S123 en DIFERIDO); S158 la renombra después con este contenido incluido.
+
+### S164 — Copias V1 separadas de los seis assets de rol Torre —tres perfiles y tres skills— bajo product/tower/v1/, sin bytes de continuation ni despacho V2 y sin modificar los originales; la skill de entregas viaja como referencia inerte, no activable en V1.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/profiles/main.md, product/tower/v1/profiles/support.md, product/tower/v1/profiles/implementer.md, product/tower/v1/skills/torre-control/SKILL.md, product/tower/v1/skills/torre-control-entregas/SKILL.md, product/tower/v1/skills/torre-control-soporte/SKILL.md
+  - Depende de: —
+  - Recursos: bytes fuente Tower-owned editables de product/tower/profiles/{main,support,implementer}.md consumidos sin modificarlos, bytes fuente Tower-owned editables de product/tower/skills/{torre-control,torre-control-entregas,torre-control-soporte}/SKILL.md consumidos sin modificarlos
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: La Torre V1 necesita perfiles y skills de rol propios. Los seis assets canónicos vigentes bajo product/tower/profiles/ y product/tower/skills/ describen además continuation, handoffs y despacho Tower-owned, que pertenecen a torre-v2, y otras Sesiones los siguen versionando. Esta Sesión deriva copias V1 sin tocar esas fuentes.
+  - Resultado y comportamiento: product/tower/v1/ contiene exactamente tres perfiles y tres skills, con el mismo nombre de archivo que su original, derivados de los seis assets vigentes. Cada copia describe sólo la conducta V1: coordinar y serializar la entrega con las ocho tower&#95;&#42; del semáforo. Ninguna copia promete ni instruye continuation, traspaso de encargos, despacho Tower-owned, pi.on("input"), InputEvent, continue&#124;transform&#124;handled ni un comando CV&#95;&#42;. La copia V1 de torre-control-entregas es una referencia inerte: un marcador verificable impide que se active como skill y su texto declara que el despacho pertenece a una versión posterior. El diff toca sólo product/tower/v1/; no modifica product/tower/profiles/, product/tower/skills/ ni product/tower/generic/.
+  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación. La Zona producto-torre no declara ruta de pruebas propia: la prueba estructural de estas copias, incluida la inercia de la skill de entregas, vive en S8.12 (test/install/tower-v1-role-assets.test.mjs).
+    - Decisión estructurada [derivable · ]: ¿Qué marca a la copia V1 de torre-control-entregas como inerte y no activable?
+      - Criterio: Una prueba prueba que la copia V1 de torre-control-entregas no se activa como skill y que su texto no instruye despacho ni traspaso.
+      - Autoridad: Frontera de cero bytes V2 aprobada por Emilio el 2026-09-25 (Engram 11793).
+      - Evidencia: El corte aprobado exige que la instrucción de entregas viaje inerte, pero el árbol no tiene un mecanismo previo para una skill no activable.
+      - Checkpoint: S164 RED.
+      - Opción: Un marcador en el frontmatter que el cargador de skills y la prueba de S8.12 reconocen como no activable. → La inercia queda verificable por prueba; una copia que el cargador pueda activar, o un marcador que ninguna prueba lea, falsifica la derivación.
+  - Referencias: Autoridad: Engram 11327, 11793 y 11799. Assets canónicos vigentes: product/tower/profiles/{main,support,implementer}.md y product/tower/skills/{torre-control,torre-control-entregas,torre-control-soporte}/SKILL.md. product/tower/v1/ cae dentro de las rutas de la Zona producto-torre (product/tower/); la variante product/tower-v1/ quedaría sin Zona dueña. Línea base Git: openspec/plan.yaml@da8544016ec814603a3eee837630e753d762631c.
+
+### S165 — Adapter y extensión Pi V1 propios del semáforo Torre: registran exactamente las ocho herramientas tower&#95;&#42;, sin interceptor pi.on("input"), sin comandos CV&#95;&#42; ni slash commands, y sin reusar adapters/pi/runtime.mjs ni extensions/pi/tower-session-router.ts.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs, scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs
+  - Archivos autorizados: adapters/pi/semaphore-v1.mjs, extensions/pi/tower-v1/package.json, extensions/pi/tower-v1/semaphore.ts, test/adapters/pi/semaphore-v1.test.mjs, test/extensions/pi/tower-v1-semaphore.test.mjs
+  - Depende de: S149
+  - Recursos: binario del semáforo producido por S149, invocado por la ruta absoluta que provee el caller
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Pi necesita un puente propio hacia el semáforo Torre V1. El puente vigente (extensions/pi/tower-session-router.ts, adapters/pi/runtime.mjs) intercepta la entrada con pi.on("input") y expone comandos CV&#95;&#42; de continuation y despacho, que pertenecen a torre-v2 y no pueden viajar en el bundle V1.
+  - Resultado y comportamiento: adapters/pi/semaphore-v1.mjs invoca el binario del semáforo por la ruta absoluta que provee el caller. La extensión extensions/pi/tower-v1/ lo consume y registra con registerTool exactamente las ocho herramientas tower&#95;&#42; documentadas en README.md, ni una menos ni una de más. La extensión no llama pi.on("input"), no maneja InputEvent, no devuelve continue&#124;transform&#124;handled y no registra ningún comando CV&#95;&#42; ni slash command. Una novena herramienta, una faltante, pi.on("input") o un comando registrado falla la prueba. extensions/pi/tower-v1/&#42;&#42; no importa ni reexporta nada de extensions/pi/tower-session-router.ts ni de adapters/pi/runtime.mjs. El diff toca sólo los archivos declarados; no modifica adapters/pi/runtime.mjs, adapters/pi/contract.mjs ni extensions/pi/tower-session-router.ts.
+  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto]: ¿Puede la extensión Pi V1 reusar adapters/pi/runtime.mjs o extensions/pi/tower-session-router.ts?
+      - Resolución: No. Ambos son bytes Tower-owned V2 (interceptor pi.on("input") y comandos CV&#95;&#42;); la Torre V1 lleva su propio adapter y extensión, sin ese acoplamiento.
+      - Autoridad: Frontera de cero bytes V2 aprobada por Emilio el 2026-09-25 (Engram 11793).
+      - Falsificador: extensions/pi/tower-v1/&#42;&#42; o adapters/pi/semaphore-v1.mjs importa o reexporta algo de extensions/pi/tower-session-router.ts o de adapters/pi/runtime.mjs, o registra pi.on("input").
+      - Contaminaba: S165, S8.12
+      - Descartada: Reusar extensions/pi/tower-session-router.ts y apagar el interceptor por configuración. → Dejaría bytes V2 muertos dentro del bundle V1.
+  - Referencias: Autoridad: Engram 11327, 11793, 11795 y 11799. Las ocho tower&#95;&#42; están documentadas en README.md. Bytes V2 que esta Sesión no reusa: extensions/pi/tower-session-router.ts (pi.on("input") y registerTool en líneas 296-297, comandos CV&#95;&#42;) y adapters/pi/runtime.mjs. Línea base Git: openspec/plan.yaml@da8544016ec814603a3eee837630e753d762631c.
+
+### S166 — La instalación de la Torre V2 activa el interceptor Pi sólo si enrolamiento, carga real de la extensión, fingerprint cerrado, InputEvent, continue&#124;transform&#124;handled, inventario/orden de transforms, coherencia plugin/MCP/runtime y bytes/provenance de torre-control pasan, respaldada por la regresión integral Pi-first y la recuperación mínima de Pi.
+- Coordinación:
+  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S166)
+  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Depende de: S8.13, S1.19, S4.12
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: S8.13 retiró de la instalación V1 los chequeos del interceptor Pi V2 porque V1 no lo instala. Esta Sesión los conserva para la instalación V2, que sí instala el interceptor, respaldada por S1.19 (regresión integral Pi-first) y S4.12 (recuperación mínima de Pi). Queda incompleta: falta probar si install/lifecycle.mjs alcanza o si hace falta además una Sesión en la Zona hosts sobre extensions/pi/tower-session-router.ts.
+  - Resultado y comportamiento: El diagnóstico prueba revisión activa y coherencia exacta entre plugin, MCP y runtime/engine; una mezcla falla cerrado. La extensión Pi del destino instalado se carga realmente y el fingerprint cerrado prueba factory de un argumento, pi.on("input"), campos y source requeridos de InputEvent, continue&#124;transform&#124;handled, notificación local, enrolamiento, bytes/provenance de torre-control e inventario/orden revisados de transforms antes de quedar activa; un mismatch deja cero activación parcial y ninguna versión acepta o rechaza por sí sola. Rollback restaura runtime, interceptor, perfiles y skills Tower juntos.
+  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto; operaciones-irreversibles; seguridad-y-permisos]: ¿Qué preflight permite activar el interceptor Pi V2?
+      - Resolución: La instalación habilita el interceptor sólo si enrolamiento, carga real de extensión, fingerprint cerrado Pi, bytes/provenance de torre-control e inventario/orden de transforms pasan; fallo o ambigüedad bloquea antes de mutar y rollback restaura la unidad coherente.
+      - Autoridad: Engram 9921 y 9963.
+      - Falsificador: Una capacidad ausente, rota o ambigua, un fallo de carga o una decisión basada sólo en versión activa total o parcialmente la instalación.
+      - Contaminaba: S166
+      - Descartada: Aceptar compatibilidad sólo por versión o existencia. → No prueba conducta ni coherencia del runtime instalado.
+      - Descartada: Activar parcialmente y reparar después. → Viola atomicidad y deja un estado global incoherente.
+  - Referencias: Texto preservado del bloque S8.13 en openspec/plan.yaml@da8544016ec814603a3eee837630e753d762631c (Engram 9921, 9963). Corte V1/V2: Engram 11327. Opción A: Engram 11799.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -4224,7 +4356,7 @@ Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workfl
   - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
 
 ## Capacidad
-1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: metodo.
+2 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: hosts, producto-torre.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
