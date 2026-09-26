@@ -947,6 +947,23 @@ sesiones:
             razon: "Esa lista queda sin cambios para el runtime legado y no es la membresía V1."
         contaminaba:
           - S8.12
+      - tipo: resuelta
+        alcanza: encargo
+        pregunta: "Antes de RED, con la previsión de 450–750 líneas de autoría para la membresía V1, su guardia y las pruebas de assets de rol, ¿se divide S8.12 en entregas secuenciales o se aprueba una excepción de tamaño?"
+        evidencia: "El pronóstico de la enmienda de la opción A (bb2c4e0) suma un módulo nuevo de membresía y guardia más cuatro archivos de prueba, por encima de la referencia de revisión de 400 líneas."
+        contaminaba: [S8.12]
+        checkpoint: Antes de RED o cualquier escritura de código de S8.12.
+        opciones:
+          - opcion: Dividir en entregas secuenciales verificables y reversibles.
+            consecuencia: "Dos entregas más chicas, con un paso más en la fila del release."
+          - opcion: Aprobar una excepción de tamaño explícita.
+            consecuencia: Acepta el volumen para la unidad coherente aprobada, sin ampliar alcance ni omitir pruebas o revisión.
+        resolucion: "Emilio aprueba una excepción de tamaño explícita para S8.12: una sola entrega para la membresía V1, su guardia y sus pruebas. La excepción vale sólo para S8.12; no amplía archivos ni alcance, no omite pruebas ni revisión y no se extiende a S164, S165 ni S8.13."
+        autoridad: "Emilio; respuesta explícita «size exception» del 2026-09-25, registrada en Engram 11802."
+        descartadas:
+          - opcion: Dividir en entregas secuenciales verificables y reversibles.
+            razon: Eligió una sola entrega con excepción de tamaño.
+        falsificador: "La excepción se usa para agregar archivos o alcance, para omitir pruebas o revisión, o se invoca para otra Sesión."
     importacion_legacy:
       origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
       origen_ruta: openspec/plans/plan-8/STATUS.md

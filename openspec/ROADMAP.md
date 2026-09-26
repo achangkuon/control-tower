@@ -377,6 +377,17 @@
       - Contaminaba: S8.12
       - Descartada: Una Sesión S162 en la Zona jornada que agregue jornada.sh al bundle. → Dos Sesiones quedarían escribiendo la misma membresía.
       - Descartada: Agregarlo a RUNTIME&#95;PAYLOAD&#95;FILES. → Esa lista queda sin cambios para el runtime legado y no es la membresía V1.
+    - Decisión estructurada [resuelta · ]: Antes de RED, con la previsión de 450–750 líneas de autoría para la membresía V1, su guardia y las pruebas de assets de rol, ¿se divide S8.12 en entregas secuenciales o se aprueba una excepción de tamaño?
+      - Resolución: Emilio aprueba una excepción de tamaño explícita para S8.12: una sola entrega para la membresía V1, su guardia y sus pruebas. La excepción vale sólo para S8.12; no amplía archivos ni alcance, no omite pruebas ni revisión y no se extiende a S164, S165 ni S8.13.
+      - Autoridad: Emilio; respuesta explícita «size exception» del 2026-09-25, registrada en Engram 11802.
+      - Evidencia: El pronóstico de la enmienda de la opción A (bb2c4e0) suma un módulo nuevo de membresía y guardia más cuatro archivos de prueba, por encima de la referencia de revisión de 400 líneas.
+      - Checkpoint: Antes de RED o cualquier escritura de código de S8.12.
+      - Alcanza: encargo
+      - Falsificador: La excepción se usa para agregar archivos o alcance, para omitir pruebas o revisión, o se invoca para otra Sesión.
+      - Contaminaba: S8.12
+      - Opción: Dividir en entregas secuenciales verificables y reversibles. → Dos entregas más chicas, con un paso más en la fila del release.
+      - Opción: Aprobar una excepción de tamaño explícita. → Acepta el volumen para la unidad coherente aprobada, sin ampliar alcance ni omitir pruebas o revisión.
+      - Descartada: Dividir en entregas secuenciales verificables y reversibles. → Eligió una sola entrega con excepción de tamaño.
   - Referencias: Autoridad original: Decisiones 88, 95, 100 y 104; Engram 9921 y 10008; contrato vigente enumerado de S8.12 aprobado por decisión 10315 y citado en openspec/plans/plan-8/STATUS.md líneas 998-1031, acotado por Engram 11327. Frontera de cero bytes V2 y opción A: Engram 11793, 11797 y 11799, aprobadas por Emilio el 2026-09-25. Línea base Git: openspec/plan.yaml@da8544016ec814603a3eee837630e753d762631c, bloque de Sesión S8.12 previo a la reescritura. La ruta y el desglose técnico legacy son sólo historia. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto.
 
 ### S8.13 — Instalador, preflight, activación y rollback del bundle Torre V1 ejercitados sólo en un HOME/runtime aislado; el preflight prueba el binario del semáforo y las ocho tower&#95;&#42; de la extensión Pi V1, y la ausencia de todo interceptor o comando V2.
