@@ -45,11 +45,17 @@ class CoordinadorManualTests(unittest.TestCase):
 
     def test_approval_is_a_complete_exact_pi_binding_and_the_router_is_stateless(self):
         self.assert_phrases(
-            "human approval binds the parallel count, exact LISTO Sesión IDs, and exact Pi worker alias, exact Pi session ID, exact cwd/worktree, runtime, and kind for each Sesión",
+            "human approval binds the parallel count, exact LISTO Sesión IDs, and exact Pi worker alias, exact cwd/worktree, runtime, and kind for each Sesión, but not a Pi session ID",
+            "After launch, Main reads each actual Pi session ID from Herdr JSON",
+            "verifies the same session ID, alias/tab and cwd/worktree against a fresh Intercom live roster and the reserved branch against fresh Git readback before sending any handoff",
+            "Never predict or pre-approve an ID; missing, ambiguous, or mismatched identity sends nothing and uses the pre-send owned rollback rule",
             "never selects, substitutes, reduces, expands, optimizes, or reorders",
             "no queue, roster, ledger, assignment state, approval persistence, or auto-resume",
             "manual pre-V1 batches are Pi-only",
         )
+        self.assertLess(self.skill.index("After launch, Main reads each actual Pi session ID"),
+                        self.skill.index("before sending any handoff"))
+        self.assertNotIn("worker alias, exact Pi session ID, exact cwd/worktree", self.skill)
 
     def test_approved_dispatch_delegates_all_mechanics_and_returns_without_waiting(self):
         self.assert_phrases(
@@ -72,7 +78,7 @@ class CoordinadorManualTests(unittest.TestCase):
     def test_terminal_events_keep_implementation_rdd_and_module_commits_with_the_worker(self):
         self.assert_phrases(
             "accept only inbound `COMPLETED`, `BLOCKED`, or `FAILED`",
-            "fresh Intercom and Herdr readbacks must prove the sender matches the already human-approved/dispatched exact alias, exact Pi session ID, and exact cwd/worktree",
+            "fresh Intercom and Herdr readbacks must prove the sender matches the human-approved/dispatched exact alias and cwd/worktree, and the post-launch verified exact Pi session ID",
             "Git readback must prove the reported commit is the dispatched worktree candidate before integration",
             "Any missing, mismatched, or unavailable readback stops: no integration, retry, remapping, or inferred terminal",
             "implementer owns implementation, self-verification, native RDD, and Module commits",

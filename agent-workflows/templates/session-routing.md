@@ -52,7 +52,7 @@ there is no fallback to kickoff or decision closure.
   ODD document/Engram continuity is subordinate technical evidence, not plan status or authority.
   Technical checks/review follow Gentle AI native policy; review outcome never authorizes delivery.
 - After human approval binds the parallel count, exact LISTO Session IDs, and exact Pi worker alias,
-  exact Pi session ID, exact cwd/worktree, runtime, and kind for each Session, the responsible parent
+  exact cwd/worktree, runtime, and kind for each Session—but not a Pi session ID—the responsible parent
   loads `chanks-3-coordinador-manual`, which delegates approved dispatch to
   `chanks-3-despacho-herdr`. This is an explicit Herdr request made with the Torre off, not Torre
   dispatch. Manual pre-V1 dispatch accepts Pi workers only. Herdr owns only authorized seats and
@@ -65,9 +65,9 @@ there is no fallback to kickoff or decision closure.
   poll, or `intercom ask`. A true human decision is a worker-initiated blocking request; a
   worker-initiated human-decision `ask` timeout preserves the worktree and candidate as `BLOCKED`;
   Main does not guess the answer or report completion. A declared Recurso requires confirmed exclusive or serial execution evidence before mutation; release only actual resources demonstrably acquired.
-  Before each handoff, Main uses one fresh Intercom live-roster readback bound to the exact human-approved alias, exact Pi session ID, and exact cwd/worktree; it fails closed before dispatch is declared.
+  After launch, Main reads the actual Pi session ID from Herdr JSON; before each handoff, one fresh Intercom live-roster readback verifies the same session ID, human-approved alias, declared tab and cwd/worktree, with the reserved branch checked against fresh Git readback. Never predict or pre-approve an ID. A missing, ambiguous or mismatched identity sends nothing and uses the pre-send owned rollback rule; dispatch is not declared.
   A later disconnect creates no polling, retry, inferred completion, transport fallback, or autonomous resume; human reactivation and reapproval are required. Every progress and terminal `send` identifies the exact Sesión and worker. Main answers only an exact inbound human-decision request with `reply`, never an unthreaded substitute or its own `ask`; Main never initiates `ask`.
-  Herdr JSON proves only seat and process identity; Intercom delivery results prove only message delivery; neither grants authority or proves work completion, and the worker reports terminal result evidence. fresh Intercom and Herdr readbacks must prove the sender matches the exact binding; the reported commit is the dispatched worktree candidate before integration, otherwise no integration, retry, remapping, or inferred terminal.
+  Herdr JSON proves only seat and process identity; Intercom delivery results prove only message delivery; neither grants authority or proves work completion, and the worker reports terminal result evidence. Fresh Intercom and Herdr readbacks must prove the sender matches the human-approved worker binding and the post-launch verified Pi session ID; the reported commit is the dispatched worktree candidate before integration, otherwise no integration, retry, remapping, or inferred terminal.
   Two approved Pi workers receive independent fire-and-forget handoffs; Main sends worker 2 without waiting for worker 1.
   Workers report `COMPLETED`, `BLOCKED`, or `FAILED`; no provisional cross-runtime bridge exists and the future tower V1 remains the heterogeneous and hybrid owner.
 - Issue patches are a separate human-authorized manual route, not an admission exception to

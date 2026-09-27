@@ -326,7 +326,7 @@ class DespachoHerdrDispatchTests(unittest.TestCase):
     def test_fresh_live_roster_readback_binds_identity_and_disconnect_requires_reapproval(self):
         self.assert_phrases(
             "one fresh Intercom live-roster readback",
-            "exact human-approved alias, session, and cwd",
+            "actual Pi session ID, human-approved alias, declared tab and cwd/worktree against the live roster",
             "later disconnect creates no polling, retry, inferred completion, transport fallback, or autonomous resume",
             "human reactivation and reapproval are required",
         )
@@ -402,16 +402,25 @@ class DespachoHerdrDispatchTests(unittest.TestCase):
         assert_in_order(
             self,
             execution,
+            "validate and reserve the complete human-selected batch",
+            "start a new Pi agent named after the Session",
+            "record the tab, agent and actual Pi session ID from Herdr JSON",
             "Read back every agent launched by this batch",
             "complete one fresh Intercom live-roster readback and identity validation for every worker in the batch",
+            "matching the actual Herdr Pi session ID to the live roster's session ID",
             "Only after every worker passes, send the independent fire-and-forget handoffs",
         )
         self.assert_phrases(
+            "Human approval binds each exact LISTO Sesión ID, Pi worker alias, cwd/worktree, runtime, and kind, not a Pi session ID",
+            "Never predict or pre-approve a Pi session ID",
+            "Never substitute an alias or tab for a missing Pi session ID",
+            "Any failed or ambiguous batch readback or identity sends nothing and uses the pre-send owned rollback rule",
             "After the first handoff is sent, never roll back, clean, reset, delete, or close any batch branch or agent",
             "partial first provisioning requires fresh maintainer authorization",
             "complete only the missing provisioning or preparation",
             "never remove a persistent worker or infer readiness",
         )
+        self.assertNotIn("human-approved alias, session, and cwd", self.skill)
 
     def test_execution_sends_independent_handoffs_before_terminal_events(self):
         execution = self.skill.split("## Execution Steps", 1)[1].split("## Output Contract", 1)[0]
@@ -435,7 +444,7 @@ class DespachoHerdrDispatchTests(unittest.TestCase):
             "preserves the worktree and candidate as `BLOCKED`",
             "does not guess the answer or report completion",
             "complete one fresh Intercom live-roster readback and identity validation for every worker in the batch",
-            "exact human-approved alias, session, and cwd",
+            "actual Herdr Pi session ID to the live roster's session ID",
             "no polling, retry, inferred completion, transport fallback, or autonomous resume",
             "Main never initiates `ask`",
         )
@@ -632,9 +641,12 @@ class DespachoHerdrRoutingTests(unittest.TestCase):
                 self.assertIn("Ordinary Intercom `send` has no wait timeout", text, path)
                 self.assertIn("worker-initiated human-decision `ask` timeout preserves the worktree and candidate as `BLOCKED`", text, path)
                 self.assertIn("does not guess the answer or report completion", text, path)
-                self.assertIn("Before each handoff, Main uses one fresh Intercom live-roster readback", text, path)
+                self.assertIn("before each handoff, one fresh Intercom live-roster readback verifies the same session ID", text, path)
                 self.assertEqual(text.count("one fresh Intercom live-roster readback"), 1, path)
-                self.assertIn("exact human-approved alias, exact Pi session ID, and exact cwd/worktree", text, path)
+                self.assertIn("exact Pi worker alias, exact cwd/worktree, runtime, and kind for each Session—but not a Pi session ID", text, path)
+                self.assertIn("After launch, Main reads the actual Pi session ID from Herdr JSON", text, path)
+                self.assertIn("one fresh Intercom live-roster readback verifies the same session ID", text, path)
+                self.assertIn("A missing, ambiguous or mismatched identity sends nothing and uses the pre-send owned rollback rule", text, path)
                 self.assertIn("later disconnect creates no polling, retry, inferred completion, transport fallback, or", text, path)
                 self.assertIn("human reactivation and reapproval are required", text, path)
                 self.assertIn("Every progress and terminal `send` identifies the exact Sesión and worker", text, path)
@@ -645,7 +657,7 @@ class DespachoHerdrRoutingTests(unittest.TestCase):
                 self.assertIn("Intercom delivery results prove only message delivery", text, path)
                 self.assertIn("neither grants authority or proves work completion", text, path)
                 self.assertIn("worker reports terminal result evidence", text, path)
-                self.assertIn("fresh Intercom and Herdr readbacks must prove the sender matches the", text, path)
+                self.assertIn("Fresh Intercom and Herdr readbacks must prove the sender matches the human-approved worker binding and the post-launch verified Pi session ID", text, path)
                 self.assertIn("reported commit is the dispatched worktree candidate before integration", text, path)
                 self.assertIn("no integration, retry, remapping, or inferred terminal", text, path)
                 self.assertIn("Two approved Pi workers receive independent fire-and-forget handoffs", text, path)

@@ -11,8 +11,8 @@ metadata:
 
 This is the deliberate stateless Tranche 3 router and explicit Tower-off manual fallback after V1.
 For a Session batch, load it only after one human approval binds the parallel count, exact LISTO Sesión IDs, and exact Pi
-worker alias, exact Pi session ID, exact cwd/worktree, runtime, and kind for each Sesión. The approval is a complete batch, not a proposal:
-it never selects, substitutes, reduces, expands, optimizes, or reorders.
+worker alias, exact cwd/worktree, runtime, and kind for each Sesión, but not a Pi session ID. The approval is a complete batch, not a proposal:
+it never selects, substitutes, reduces, expands, optimizes, or reorders. After launch, Main reads each actual Pi session ID from Herdr JSON and verifies the same session ID, alias/tab and cwd/worktree against a fresh Intercom live roster and the reserved branch against fresh Git readback before sending any handoff. Never predict or pre-approve an ID; missing, ambiguous, or mismatched identity sends nothing and uses the pre-send owned rollback rule.
 
 The separate Issue-Patch Mode below does not relax this Session-batch binding.
 Manual pre-V1 batches are Pi-only. Never load Tower skills, never read or write Tower state, never claim
@@ -60,7 +60,7 @@ Accept only inbound `COMPLETED`, `BLOCKED`, or `FAILED` events that identify the
 worker, and worker evidence. Each implementer owns implementation, self-verification, native RDD, and
 Module commits. Main must not inspect, review, correct, rerun tests or RDD, or mutate the worker
 candidate. Before terminal handling, fresh Intercom and Herdr readbacks must prove the sender matches the
-already human-approved/dispatched exact alias, exact Pi session ID, and exact cwd/worktree; Git readback must prove the
+human-approved/dispatched exact alias and cwd/worktree, and the post-launch verified exact Pi session ID; Git readback must prove the
 reported commit is the dispatched worktree candidate before integration. Any missing, mismatched, or unavailable
 readback stops: no integration, retry, remapping, or inferred terminal.
 
