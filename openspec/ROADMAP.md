@@ -9,23 +9,23 @@
 
 ## Estado y próximo trabajo
 - Hosts #1 → S165 — Adapter y extensión Pi V1 propios del semáforo Torre: registran exactamente las ocho herramientas tower&#95;&#42;, sin interceptor pi.on("input"), sin comandos CV&#95;&#42; ni slash commands, y sin reusar adapters/pi/runtime.mjs ni extensions/pi/tower-session-router.ts.
-- Producto Torre #2 → S164 — Copias V1 separadas de los seis assets de rol Torre —tres perfiles y tres skills— bajo product/tower/v1/, sin bytes de continuation ni despacho V2 y sin modificar los originales; la skill de entregas viaja como referencia inerte, no activable en V1.
+- Producto Torre #1 → S164 — Copias V1 separadas de los seis assets de rol Torre —tres perfiles y tres skills— bajo product/tower/v1/, sin bytes de continuation ni despacho V2 y sin modificar los originales; la skill de entregas viaja como referencia inerte, no activable en V1.
 
 ## Avance
-- **Total:** 74% (101/135 S)
-- 16 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
+- **Total:** 73% (101/137 S)
+- 12 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
-- **Asientos:** 100% (1/1 S)
+- **Asientos:** 50% (1/2 S)
 - **Autoridad:** 50% (1/2 S)
 - **Capacidades:** 0% (0/1 S)
 - **cimientos:** 62% (5/8 S)
 - **Contratos:** 33% (1/3 S)
-- **Enrolamiento:** 0% (0/1 S)
+- **Enrolamiento:** 0% (0/2 S)
 - **Entrega:** 0% (0/1 S)
-- **Hosts:** 50% (3/6 S)
+- **Hosts:** 37% (3/8 S)
 - **Instalación:** 33% (1/3 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 95% (39/41 S)
+- **Método:** 90% (39/43 S)
 - **Producto Torre:** 0% (0/2 S)
 
 ## Zonas y colas
@@ -44,7 +44,6 @@
 ### cimientos (cimientos)
 1. **S150** · 📋 PLANIFICADO · espera-natural (S164, S165) · prioridad Torre V1 · Release instalable · El README describe el producto que se entrega —el semáforo instalable— y no promete capacidades que pertenecen a torre-v2.
 2. **S12.6** · 📋 PLANIFICADO · espera-atascada (S12.5) · prioridad Torre V3 · La raíz se ordena después de la descomposición de core.mjs y el README se reconcilia con esa estructura.
-3. **S148** · 📋 PLANIFICADO · espera-atascada (S147) · prioridad Torre V2 · Handoffs y despacho Tower-owned · Raíz de Ejecución estable en SQLite con revisión, estado e historial ligados a handoffs existentes
 
 ### Contratos (contratos)
 - Sin Sesiones abiertas.
@@ -69,8 +68,7 @@
 1. **S115** · 📋 PLANIFICADO · espera-atascada (S114) · prioridad Torre V3 · Radar exige el tipo de autoridad: una Sesión sin tipo declarado falla cerrado, y la compuerta del Tramo 1 queda cerrada.
 
 ### Producto Torre (producto-torre)
-1. **S119** · 📋 PLANIFICADO · espera-atascada (S108) · prioridad Torre V2 · Handoffs y despacho Tower-owned · La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
-2. **S164** · 🟢 LISTO · prioridad Torre V1 · Release instalable · Copias V1 separadas de los seis assets de rol Torre —tres perfiles y tres skills— bajo product/tower/v1/, sin bytes de continuation ni despacho V2 y sin modificar los originales; la skill de entregas viaja como referencia inerte, no activable en V1.
+1. **S164** · 🟢 LISTO · prioridad Torre V1 · Release instalable · Copias V1 separadas de los seis assets de rol Torre —tres perfiles y tres skills— bajo product/tower/v1/, sin bytes de continuation ni despacho V2 y sin modificar los originales; la skill de entregas viaja como referencia inerte, no activable en V1.
 
 ## Bloqueos
 - **S1.19:** Which exact test files will own the Pi-first integration regression? · falta-decision (S1.19)
@@ -78,7 +76,6 @@
 - **S4.12:** Encargo incompleto: falta planificar · falta-planificar (S4.12)
 - **S9.2:** Which exact concrete repository-relative paths comprise the S9.2 Area, and which single Zone owns each path without crossing into Cimientos or another Zone? · falta-decision (S9.2)
 - **S9.7:** Encargo incompleto: falta planificar · falta-planificar (S9.7)
-- **S9.8:** Encargo incompleto: falta planificar · falta-planificar (S9.8)
 - **S9.10:** ¿Se autoriza una nueva corrección tras cuatro CRITICAL y presupuesto agotado? · falta-decision (S9.10)
 - **S12.3:** ¿Debe S12.3 permanecer en el estacionamiento migratorio provisional autorizado, sin territorio ni ejecución? · falta-decision (S12.3)
 - **S12.4:** ¿Puede formalizarse toda S12.4 con territorio, ruta, Cimientos y reservas ejecutables sin resolver ni reemplazar el hold histórico de M12.4.2? · falta-decision (S12.4)
@@ -86,9 +83,6 @@
 - **S12.7:** ¿Qué Módulos, Tareas, Zonas y puentes temporales migran las 26 carpetas sin retirar rutas de raíz antes de probar consumidores y payloads? · falta-decision (S12.7)
 - **S12.9:** ¿Qué valor lleva source&#95;commit en una revisión autoral? · falta-decision (S12.9)
 - **S101:** contaminación semántica declarada por otra Sesión · falta-decision (S9.10)
-- **S107:** Encargo incompleto: falta planificar · falta-planificar (S107)
-- **S108:** Encargo incompleto: falta planificar · falta-planificar (S108)
-- **S121:** Encargo incompleto: falta planificar · falta-planificar (S121)
 - **S166:** Encargo incompleto: falta planificar · falta-planificar (S166)
 
 ## Rutas
@@ -234,6 +228,11 @@
       - Descartada: Resucitar la misma raíz y root&#95;session&#95;id. → Rompe la lineage y permite reutilizar identidad del predecesor.
       - Descartada: Recuperar subagentes o memoria in-flight. → Esa memoria es volátil y no forma parte de la autoridad durable.
       - Descartada: Relocalizar la recuperación a otro host o worktree. → S4.4 está limitada a recuperación lógica same-host sobre el mismo worktree y checkpoint.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto; dependencias-o-evidencia-contradictorias]: ¿OpenCode sigue como host objetivo futuro de la Torre, o se retira la recuperación lógica same-host con raíz sucesora que le daba soporte?
+      - Resolución: OpenCode deja de ser host objetivo de la Torre. La topología vigente es coordinador Claude Code o Codex, con trabajadores Pi corriendo un modelo Codex/OpenAI; S4.4 queda retirada junto con S4.8. La recuperación ante caída para el host vigente (Pi) sigue la decisión de detener y conservar (Engram 11838, S4.12), no la reconexión/sucesión de raíz que describía este Encargo.
+      - Autoridad: Emilio, 2026-09-26, Engram 11840. Supersede, sólo para este fin, las decisiones 37-40 y 45 del maintainer de 2026-08-18/19 sobre recuperación lógica de OpenCode; no las invalida como evidencia histórica de esa arquitectura.
+      - Falsificador: La Torre implementa recuperación lógica same-host/raíz sucesora para OpenCode, o adopta OpenCode como host objetivo sin una nueva decisión explícita.
+      - Descartada: Dejar S4.4 sin diferida: true y sin esta decisión estructurada, a la espera de OpenCode. → Radar no tiene un estado 'retirado' separado de DIFERIDO: el retiro se registra con diferida: true más esta decisión explícita, no con una marca distinta. Sin diferida: true, Radar seguiría calculando S4.4 como PLANIFICADO/BLOQUEADO igual que si siguiera vigente; sin la decisión, no quedaría registrada la autoridad ni el falsificador del retiro.
   - Referencias: Autoridad original: decisiones 37-40, decisión 45, Engram 9040/9044 y REQUIREMENTS §14.4. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S4.4. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Contraste aprobado Engram 11293 con docs/architecture/torre-motor-determinista.md, sección 14: root&#95;session&#95;id y host&#95;epoch identifican al host y no son la raíz de Ejecución Tower. Se conservan decisiones, recursos, resultado y dependencias; no se traslada esa autoridad por confusión de identidades.
 
 ### S4.8 — Probar la CLI real OpenCode 1.18.23 contra backend, raíz, brief, vista y plugin/SDK 1.18.13; sólo con la matriz completa verde alinear juntos plugin y SDK a 1.18.23
@@ -262,9 +261,14 @@
       - Checkpoint: antes de alinear los pins
       - Falsificador: La matriz se declara verde usando sólo --version, mocks o un subconjunto de los contratos enumerados.
       - Opción: Exigir todos los contratos reales usados por S4.8. → La alineación ocurre sólo con evidencia completa del runtime real.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto; dependencias-o-evidencia-contradictorias]: ¿La matriz real de compatibilidad OpenCode CLI/plugin/SDK sigue pendiente de un piloto futuro, o se retira junto con el host?
+      - Resolución: Se retira. OpenCode deja de ser host objetivo de la Torre (Engram 11840); ya no hay alineación de versión pendiente que probar porque no hay plan de adoptar ese host. El pin Herdr y el drift que la decisión 68 resolvía dejan de aplicar a un host retirado.
+      - Autoridad: Emilio, 2026-09-26, Engram 11840. Supersede, sólo para este fin, la decisión 68 del maintainer del 2026-08-25; no la invalida como evidencia histórica de por qué se conservaron esas versiones mientras OpenCode era host candidato.
+      - Falsificador: Se ejecuta o exige la matriz real de compatibilidad OpenCode sin una nueva decisión que reincorpore ese host.
+      - Descartada: Mantener S4.8 diferida a la espera de un futuro piloto OpenCode, sin registrar el motivo nuevo. → Emilio retiró OpenCode como objetivo, no aplazó la decisión; conservar el mismo diferida: true sin registrar el motivo nuevo dejaría una lectura ambigua del estado.
   - Referencias: Autoridad original: decisión 68 y contrato WIP preservado de S4.8. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S4.8. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto.
 
-### S4.12 — Recuperación mínima de Pi
+### S4.12 — Reporte de caída de Pi: detener y conservar rama/worktree/candidato sin recuperación automática
 - Coordinación:
   - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S4.12)
   - Encargo incompleto: no autoriza territorio, cola ni asiento.
@@ -273,8 +277,8 @@
   - Importación legacy: openspec/plans/plan-4/STATUS.md@43130ad40af06f3ed05671000719217bee74f0a5
   - Ejecución: ODD nativo.
 - Encargo:
-  - Pedido y contexto: Recuperación mínima de Pi
-  - Resultado y comportamiento: El core admite las transiciones mecánicas de recuperación ligadas a la Ejecución persistida; el adapter Pi ejecuta y atestigua terminación del árbol, quiescencia y creación del sucesor. No decide lifecycle ni trata el transporte como prueba del efecto. Muerte probada termina todo el árbol y prueba quiescencia antes de crear el sucesor, con ID nuevo e impredecible, --fork y lineage explícito. El contexto de implementación conserva sus fuentes durables y la continuidad técnica de Gentle AI; la Ejecución no reemplaza Git, OpenSpec ni Engram. Ningún mensaje volátil es autoridad. El replay desde estado durable es idempotente. La recuperación no reconstruye memoria OpenCode ni toca fuera del Área exacta.
+  - Pedido y contexto: Reporte de caída de Pi: ante desconexión, envío incierto o caída probada, el puesto afectado se detiene y conserva su rama, worktree y candidato exactamente como están, y produce un reporte claro para revisión humana. No hay reinicio de árbol de procesos, sucesor con ID nuevo ni recuperación automática de ningún tipo.
+  - Resultado y comportamiento: Ante una caída probada, desconexión o envío incierto del puesto Pi, el reporte de caída se construye únicamente desde evidencia que no depende de una raíz de Ejecución ni de una transición registrada por un core Tower-owned (S147/S148, retiradas): el estado de la rama y el worktree en Git, el estado del agente en la tab Herdr declarada, el marcador radar.despacho/v1 y el roster Intercom. No hay adapter que registre una transición contra un core; el propio reporte lee esas cuatro fuentes directamente, sin decidir lifecycle ni tratar el transporte como prueba del efecto. Ante esa evidencia, nada termina, reinicia ni crea un sucesor: la rama, el worktree y el candidato se conservan exactamente como están, y se produce un reporte de caída con assignment, rama, último estado conocido observado en Git/Herdr/Intercom, motivo y recuperabilidad. Otros puestos del mismo mandato aprobado siguen si no dependen del puesto detenido; ninguno se detiene por inferencia. El reporte no es una recuperación: ningún mensaje volátil ni readback sustituye la decisión humana de reanudar ese puesto. El reporte no reconstruye memoria OpenCode/Pi, no depende de una raíz de Ejecución ni de un core que la persista, y no toca fuera del Área exacta.
   - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación.
     - Decisión estructurada [resuelta · contrato-visible-del-producto; operaciones-irreversibles; seguridad-y-permisos; dependencias-o-evidencia-contradictorias]: ¿Qué recuperación mínima conserva Pi después de la muerte probada de la raíz?
       - Resolución: La Torre contiene y termina el árbol completo de procesos, prueba quiescencia y arranca un sucesor con ID nuevo e impredecible, --fork y lineage explícito. La continuidad proviene de OpenSpec, Engram y el checkpoint durables; no reconstruye briefs ordenados, epochs ni estado en memoria de OpenCode.
@@ -292,7 +296,12 @@
       - Descartada: Persistir el mailbox. → Duplicaría el estado durable y agregaría replay, orden y recuperación que la forma mínima no necesita.
       - Descartada: Tratar socket&#95;delivered como recepción. → No es prueba producer-owned.
       - Descartada: Dejar la semántica de pérdida indefinida. → Permitiría asumir continuidad de mensajes que el broker no garantiza.
-  - Referencias: Autoridad original: decisiones 81 y 87 del maintainer del 2026-08-27. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S4.12. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Enmienda aprobada: Engram 11293 e informe docs/architecture/torre-motor-determinista.md, secciones 7, 10 y 14. Preparación incompleta: falta delimitar el contrato de recuperación core-adapter, su cobertura de API y la huella final; se conservan los archivos conocidos sin permiso de expansión. S147/S148 no cubren por sí solas esa interfaz ni habilitan esta implementación.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto; operaciones-irreversibles; dependencias-o-evidencia-contradictorias]: ¿Ante una caída probada de Pi, la Torre reinicia el árbol de procesos con un sucesor, o el puesto se detiene y conserva evidencia para revisión humana?
+      - Resolución: El puesto se detiene y conserva su rama, worktree y candidato exactamente como están; produce un reporte de caída claro (assignment, rama, último estado conocido, motivo, recuperabilidad) para la mañana. No hay reinicio de árbol de procesos, sucesor con ID nuevo, --fork ni recuperación automática de ningún tipo; sólo intervención humana reanuda ese puesto. Otros puestos del mismo mandato siguen si no dependen del detenido.
+      - Autoridad: Emilio, 2026-09-26, Engram 11838. Supersede, sólo para este fin, las decisiones 81 y 87 del maintainer del 2026-08-27; no las invalida como evidencia histórica de la arquitectura de recuperación que se consideró y se decidió no construir ahora.
+      - Falsificador: La Torre reinicia, termina o crea un sucesor automáticamente tras una caída, o un puesto detenido bloquea otros puestos independientes del mismo mandato.
+      - Descartada: Mantener la recuperación automática mínima que describían las decisiones 81/87. → Emilio eligió detener y conservar en vez de recuperar automáticamente; construirla ahora contradice esa elección explícita.
+  - Referencias: Autoridad original: decisiones 81 y 87 del maintainer del 2026-08-27. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S4.12. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Enmienda aprobada: Engram 11293 e informe docs/architecture/torre-motor-determinista.md, secciones 7, 10 y 14. Reducción 2026-09-26 (Emilio, Engram 11838): ante caída, detener y conservar; S4.12 produce sólo el reporte, sin reinicio ni sucesor automático, construido directamente desde Git (rama/worktree), Herdr (estado del agente), el marcador radar.despacho/v1 e Intercom (roster) — sin raíz de Ejecución ni transición registrada por un core Tower-owned, porque S147/S148 (que la habrían provisto) quedan retiradas. La preparación anterior, que delimitaba un contrato de recuperación core-adapter para esa raíz, queda sin objeto: se conservan los archivos conocidos sin permiso de expansión.
 
 ### S7.1 — Ejecutar un piloto terminal Pi-first contra un único candidato inmutable de control-tower y el contrato host-neutral en un HOME/runtime aislado, preservando OpenCode como conformidad diferida.
 - Coordinación:
@@ -485,8 +494,9 @@
 
 ### S9.8 — Dispatch fire-and-forget y cierre asíncrono
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S9.8)
-  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Estado derivado: 🟡 DIFERIDO
+  - Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs, scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs
+  - Archivos autorizados: product/tower/skills/torre-control/SKILL.md, product/tower/skills/torre-control-entregas/SKILL.md, test/extensions/pi/tower-session-router.test.mjs
   - Depende de: S108, S1.18
   - Recursos: dispatch&#95;id, canal Intercom ya ligado por S1.18 y mailbox de Main; sin ownership de Herdr, lifecycle de procesos o entrega Git
   - Importación legacy: openspec/plans/plan-9/STATUS.md@43130ad40af06f3ed05671000719217bee74f0a5
@@ -505,7 +515,12 @@
       - Evidencia: Contrato inmutable de S9.8.
       - Checkpoint: antes de acreditar progreso o habilitar downstream.
       - Opción: Acreditar sólo un terminal válido ligado al dispatch&#95;id. → Progreso parcial, pane visible o candidato local no habilitan downstream.
-  - Referencias: Autoridad original: decisión 104 y Engram 10008. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S9.8. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Enmienda aprobada: Engram 11293 e informe docs/architecture/torre-motor-determinista.md, secciones 9, 10 y 14. Preparación incompleta: falta delimitar paquetes, admisión de resultados externos y cobertura de API/IPC con su huella final. RDD sigue siendo autoridad externa: no se inventan verdicts, FINALIZE ni archivos de receipt de Gentle AI. S147/S148 no implementan este circuito ni desbloquean por sí solas sus consumidores.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto; dependencias-o-evidencia-contradictorias]: ¿El despacho Tower-owned con dispatch&#95;id sigue siendo necesario para V2, o el despacho manual ya cubre fire-and-forget y cierre asíncrono?
+      - Resolución: El despacho manual (coordinador Claude Code o Codex, Herdr, candado flock compartido e Intercom Pi, skills chanks-3-coordinador-manual/chanks-3-despacho-herdr) es el camino oficial de V2. Ya envía sin esperar y cierra por recepción terminal asíncrona; el registro Tower-owned de intento/dispatch&#95;id que exigía este Encargo queda retirado. La evidencia de que el despacho ocurrió la cubren el marcador radar.despacho/v1, el nuevo verificador de solo lectura &#96;radar despacho verificar &lt;ID&gt;&#96; (S168), Git y openspec/plan.yaml.
+      - Autoridad: Emilio, 2026-09-26, Engram 11835. Supersede, sólo para este fin, la decisión 104 y Engram 10008 que exigían este motor Tower-owned; no invalida la decisión 104 en lo que no depende del despacho.
+      - Falsificador: Se implementa un motor Tower-owned de dispatch&#95;id para V2, o el despacho manual deja de registrar el marcador radar.despacho/v1 sin que S168 lo reemplace.
+      - Descartada: Mantener S9.8 activa e implementar el registro Tower-owned de intento/dispatch&#95;id. → Duplicaría un camino ya cubierto por el despacho manual y su marcador, sin evidencia de que la Torre necesite reintento o cola propia.
+  - Referencias: Autoridad original: decisión 104 y Engram 10008. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S9.8. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Enmienda aprobada: Engram 11293 e informe docs/architecture/torre-motor-determinista.md, secciones 9, 10 y 14. RDD sigue siendo autoridad externa: no se inventan verdicts, FINALIZE ni archivos de receipt de Gentle AI. S147/S148 no implementan este circuito ni desbloquean por sí solas sus consumidores. Retiro 2026-09-26 (Engram 11835): esta Sesión queda retirada por decisión de Emilio, no en preparación; las brechas que antes señalaba esta referencia (paquetes, admisión de resultados externos, huella final de API/IPC) quedan sin objeto porque no hay implementación que completar.
 
 ### S9.10 — Materialización canónica desde base&#95;sha aprobado
 - Coordinación:
@@ -716,8 +731,9 @@
 
 ### S107 — Topología Herdr Tower-owned dentro del workspace ligado: MAIN y una tab worker por Session ID canónico, con readback determinista
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S107)
-  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Estado derivado: 🟡 DIFERIDO
+  - Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs, scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs
+  - Archivos autorizados: hosts/herdr-topology.mjs, test/hosts/herdr-topology.test.mjs, hosts/launch-worker.mjs, hosts/opencode-view.mjs, hosts/production-provider.mjs, test/hosts/launch-worker.test.mjs, test/hosts/opencode-view.test.mjs, test/hosts/production-provider.test.mjs, hosts/seat-cli.mjs, test/hosts/seat-cli.test.mjs
   - Depende de: S1.18, S9.7, S121
   - Recursos: HERDR&#95;WORKSPACE&#95;ID explícito y recursos Herdr devueltos frescos; sin autoridad sobre recursos extranjeros
   - Ejecución: ODD nativo.
@@ -730,12 +746,18 @@
       - Autoridad: Decisión explícita del maintainer del 2026-09-13 y evidencia de hosts/herdr-topology.mjs.
       - Falsificador: Caller o superficie runtime sustituye el label, o S107 inventa una API de workspace-name.
       - Descartada: Inferir identidad desde branch, worktree, asiento, prompt, worker o OpenCode root&#95;session&#95;id. → No son autoridad y permitirían adoptar recursos ajenos.
-  - Referencias: Autoridad original: Decisión del maintainer del 2026-09-13 y fuente inmutable: commit 43130ad40af06f3ed05671000719217bee74f0a5, agent-workflows/ASIGNACION-24-SESIONES.md, blob a7c4ced3b196a6ea92a7bd8f181b98b87fc70ae3, línea 155, bytes 7456-7583, SHA-256 05c38114c8d00c5b8a492cc8f8757b222fe233995c8e72de0066621f74678862. El contrato usa sólo HERDR&#95;WORKSPACE&#95;ID y APIs tab/pane observadas; no reclama workspace-name. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S107. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Enmienda aprobada: Engram 11293 e informe docs/architecture/torre-motor-determinista.md, secciones 6, 11 y 14. Preparación incompleta: falta cerrar el contrato de efecto/readback con el core y revalidar la huella y cobertura de API. Los archivos y Cimientos conocidos se conservan; no habilitan escrituras de core ni otro store. S147/S148 no implementan el adapter ni su admisión completa.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto; dependencias-o-evidencia-contradictorias]: ¿La topología Herdr Tower-owned (una tab worker por Sesión) sigue siendo necesaria si el despacho manual es el camino oficial de V2?
+      - Resolución: No. El despacho manual usa una tab por worker (no por Sesión) y ya prueba identidad exacta con hosts/herdr-topology.mjs y su readback; S107 queda retirada. El nuevo verificador de solo lectura S168 cruza la tab declarada contra el marcador radar.despacho/v1 sin requerir la topología Tower-owned que proponía este Encargo.
+      - Autoridad: Emilio, 2026-09-26, Engram 11835. No hay decisión numerada previa que esta supersede: la autoridad original de S107 era la decisión del maintainer del 2026-09-13 sobre topología, que queda acotada a lo que el despacho manual ya prueba.
+      - Falsificador: Se implementa una topología MAIN/tab-por-Sesión Tower-owned, o el despacho manual deja de probar workspace&#95;id/tab/pane antes de éxito sin que S168 lo cubra.
+      - Descartada: Simplificar sólo el alcance en vez de retirar S107 entera. → Todo lo que S107 exigía (tab por Sesión, ownership Tower-owned del workspace) ya no tiene consumidor una vez que S9.8/S108/S119/S121 también se retiran.
+  - Referencias: Autoridad original: Decisión del maintainer del 2026-09-13 y fuente inmutable: commit 43130ad40af06f3ed05671000719217bee74f0a5, agent-workflows/ASIGNACION-24-SESIONES.md, blob a7c4ced3b196a6ea92a7bd8f181b98b87fc70ae3, línea 155, bytes 7456-7583, SHA-256 05c38114c8d00c5b8a492cc8f8757b222fe233995c8e72de0066621f74678862. El contrato usa sólo HERDR&#95;WORKSPACE&#95;ID y APIs tab/pane observadas; no reclama workspace-name. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S107. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Enmienda aprobada: Engram 11293 e informe docs/architecture/torre-motor-determinista.md, secciones 6, 11 y 14. Los archivos y Cimientos conocidos se conservan; no habilitan escrituras de core ni otro store. S147/S148 no implementan el adapter ni su admisión completa. Retiro 2026-09-26 (Engram 11835): esta Sesión queda retirada por decisión de Emilio, no en preparación; la brecha que antes señalaba esta referencia (contrato de efecto/readback con el core, huella y cobertura de API) queda sin objeto porque no hay implementación que completar.
 
 ### S108 — Ciclo idempotente de tabs worker Tower-owned desde witnesses S121 y estado terminal Radar
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S108)
-  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Estado derivado: 🟡 DIFERIDO
+  - Zona/Área: asientos · supervision/, profiles/, escalation/, support/, workspace/, test/escalation/, test/supervision/, test/support/, test/workspace/
+  - Archivos autorizados: workspace/tower-tab-lifecycle.mjs, test/workspace/tower-tab-lifecycle.test.mjs, hosts/seat-cli.mjs, test/hosts/seat-cli.test.mjs, hosts/herdr-topology.mjs, test/hosts/herdr-topology.test.mjs
   - Depende de: S1.18, S9.7, S107
   - Recursos: witnesses S121 y puerto topology S107; sin roster o active-set paralelo
   - Ejecución: ODD nativo.
@@ -748,9 +770,14 @@
       - Autoridad: Decisión del maintainer del 2026-09-13 y evidencia S100.
       - Falsificador: Se cierra sin witness, readback o estado terminal exactos.
       - Descartada: Usar S109, un segundo active-set o inferencia runtime. → Duplica autoridad o adopta evidencia no autoritativa.
-  - Referencias: Autoridad original: Decisión del maintainer del 2026-09-13: S121 prueba procedencia y Radar estado; S109 no participa. Fuente inmutable: commit 43130ad40af06f3ed05671000719217bee74f0a5, agent-workflows/ASIGNACION-24-SESIONES.md, blob a7c4ced3b196a6ea92a7bd8f181b98b87fc70ae3, línea 156, bytes 7583-7732, SHA-256 647abd52f3b0a53bce67ddeeeb45832da578d7ea8662685e845e98063494be63. Evidencia lifecycle: S100 COMPLETO, commit 1237075200d2df72927c3b166ade1ba61929cbd2 integrado y cierre exacto w6H. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S108. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Enmienda aprobada: Engram 11293 e informe docs/architecture/torre-motor-determinista.md, secciones 10, 11 y 14. Preparación incompleta: falta cerrar la admisión de evidencias de lifecycle y la interfaz core-adapter con su huella final. Se preservan los terminales exactos y los Cimientos conocidos; no se implementa API/IPC ni persistencia central por expansión tácita. S147/S148 no cubren por sí solas este recorrido.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto; operaciones-irreversibles]: ¿El cierre idempotente de tabs Tower-owned sigue siendo necesario si el despacho manual ya retira asientos con seis comprobaciones y candado?
+      - Resolución: No. El retiro manual (chanks-3-despacho-herdr, references/retiro.md) ya adquiere el candado compartido, compara pool/Git/Radar/Herdr/Intercom y cierra sólo tras seis pruebas; S108 queda retirada junto con S107, de quien depende. S168 verifica en solo lectura que ese cierre ocurrió, sin requerir el ciclo Tower-owned que proponía este Encargo.
+      - Autoridad: Emilio, 2026-09-26, Engram 11835. No hay decisión numerada previa que esta supersede: la autoridad original de S108 era la decisión del maintainer del 2026-09-13 sobre ownership/cierre, que queda acotada a lo que el retiro manual ya prueba.
+      - Falsificador: Se implementa un ciclo Tower-owned de cierre de tabs, o el retiro manual deja de exigir sus seis comprobaciones sin que S168 lo cubra.
+      - Descartada: Mantener S108 sólo para el cierre, sin S107. → S108 depende de la topología de S107; sin ella no hay recurso Tower-owned que cerrar.
+  - Referencias: Autoridad original: Decisión del maintainer del 2026-09-13: S121 prueba procedencia y Radar estado; S109 no participa. Fuente inmutable: commit 43130ad40af06f3ed05671000719217bee74f0a5, agent-workflows/ASIGNACION-24-SESIONES.md, blob a7c4ced3b196a6ea92a7bd8f181b98b87fc70ae3, línea 156, bytes 7583-7732, SHA-256 647abd52f3b0a53bce67ddeeeb45832da578d7ea8662685e845e98063494be63. Evidencia lifecycle: S100 COMPLETO, commit 1237075200d2df72927c3b166ade1ba61929cbd2 integrado y cierre exacto w6H. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S108. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Enmienda aprobada: Engram 11293 e informe docs/architecture/torre-motor-determinista.md, secciones 10, 11 y 14. Se preservan los terminales exactos y los Cimientos conocidos; no se implementa API/IPC ni persistencia central por expansión tácita. S147/S148 no cubren por sí solas este recorrido. Retiro 2026-09-26 (Engram 11835): esta Sesión queda retirada por decisión de Emilio, no en preparación; la brecha que antes señalaba esta referencia (admisión de evidencias de lifecycle, interfaz core-adapter y su huella final) queda sin objeto porque no hay implementación que completar.
 
-### S109 — Ventanilla única de plan: la Torre responde una asignación completa y Main deja de derivarla
+### S109 — Ventanilla de validación de mandato: la Torre confirma si un mandato humano —lista ordenada de Sesiones, worker y vencimiento— sigue siendo compatible; nunca elige ni deriva asignación nueva
 - Coordinación:
   - Estado derivado: 🟡 DIFERIDO
   - Zona/Área: contratos · contracts/, schemas/, registry/, test/contracts/, test/registry/
@@ -759,9 +786,9 @@
   - Recursos: —
   - Ejecución: ODD nativo.
 - Encargo:
-  - Pedido y contexto: Ventanilla única de plan: la Torre responde una asignación completa y Main deja de derivarla
-  - Resultado y comportamiento: mcp.mjs responde la asignación completa —Sesión, agente, asiento, contrato de ejecución y política de entrega— en una sola operación, sin que el consumidor lea openspec/plan.yaml ni el ROADMAP. La Torre valida que el snapshot declare schema radar.snapshot/v1 y falla cerrado con un resultado nombrado ante cualquier otro valor, ausencia o JSON inválido; nunca dibuja cifras que el productor no firmó. El registro de proyectos declara por proyecto cómo obtener su snapshot, junto a manifest&#95;path y roadmap&#95;path, y un proyecto sin declaración se reporta como no disponible en vez de asumir un default. Ninguna regla de cálculo de Radar —estado de Sesión, cola por Zona, avance, asientos— queda reimplementada en JavaScript: existe una sola implementación y el consumidor sólo la consume. Main conserva la autoridad de asignación y despacho: NON&#95;MAIN&#95;DISPATCH y WORKER&#95;SELF&#95;ASSIGNMENT siguen siendo pisos irrelajables y esta Sesión no otorga autoridad nueva a nadie. El diseño técnico, las interfaces y la implementación de S109 se elaboran en una ejecución posterior autorizada mediante Gentle AI; cualquier decisión de API pública conserva su aprobación humana previa.
-  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación. El alcance inicial se limita a contratos/MCP y no autoriza escrituras implícitas en Instalación o Método. Si el diseño de empaquetado requiere otros archivos con dueño, exige aprobación humana del padre y compatibilidad fresca antes de la escritura afectada; no se inventa una Sesión nueva ni se afirma que todo el diseño técnico ya sea conocido.
+  - Pedido y contexto: Ventanilla de validación de mandato: la Torre confirma si un mandato humano —lista ordenada de Sesiones, worker y vencimiento— sigue siendo compatible; nunca elige ni deriva asignación nueva
+  - Resultado y comportamiento: mcp.mjs valida, en una sola operación, un mandato humano ya aprobado al sellar —lista ordenada de Sesiones, worker asignado a cada una y vencimiento— contra el snapshot vigente: confirma si cada Sesión de la lista sigue siendo compatible y en el orden aprobado, y detiene la validación en el primer imprevisto (Sesión que dejó de ser LISTO, dependencia incumplida, decisión nueva, compatibilidad rota) sin proponer ni elegir trabajo fuera de esa lista. El consumidor no lee openspec/plan.yaml ni el ROADMAP. La Torre valida que el snapshot declare schema radar.snapshot/v1 y falla cerrado con un resultado nombrado ante cualquier otro valor, ausencia o JSON inválido; nunca dibuja cifras que el productor no firmó. El registro de proyectos declara por proyecto cómo obtener su snapshot, junto a manifest&#95;path y roadmap&#95;path, y un proyecto sin declaración se reporta como no disponible en vez de asumir un default. Ninguna regla de cálculo de Radar —estado de Sesión, cola por Zona, avance, asientos— queda reimplementada en JavaScript: existe una sola implementación y el consumidor sólo la consume. Main conserva la autoridad de asignación y despacho: NON&#95;MAIN&#95;DISPATCH y WORKER&#95;SELF&#95;ASSIGNMENT siguen siendo pisos irrelajables; S109 no elige, ordena ni asigna Sesiones nuevas, sólo confirma o refuta el mandato que el humano ya aprobó. El diseño técnico, las interfaces y la implementación de S109 se elaboran en una ejecución posterior autorizada mediante Gentle AI; cualquier decisión de API pública conserva su aprobación humana previa.
+  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación. El alcance inicial se limita a contratos/MCP y no autoriza escrituras implícitas en Instalación o Método. Si el diseño de empaquetado requiere otros archivos con dueño, exige aprobación humana del padre y compatibilidad fresca antes de la escritura afectada; no se inventa una Sesión nueva ni se afirma que todo el diseño técnico ya sea conocido. Esta Sesión valida un mandato ya aprobado por el humano al sellar; no aprueba, sella ni selecciona Sesiones por sí misma — esa autoridad sigue siendo humana, ejercida al sellar mediante S169/chanks-4-unattended-implementation cuando el mandato se sella sin supervisión.
     - Decisión estructurada [resuelta · contrato-visible]: ¿Se unifican los dos idiomas —Radar en Go y los módulos en JavaScript— o se unifica otra cosa?
       - Resolución: Se unifica el contrato, no los idiomas. La Torre no necesita ser Radar: necesita recibir radar.snapshot/v1 y validar el schema, sin saber quién lo produjo.
       - Autoridad: Maintainer, 2026-09-10, sobre el documento de diseño; el patrón ya está probado en agent-workflows/radiografia/measure.mjs desde 969f189.
@@ -782,7 +809,12 @@
       - Autoridad: Maintainer, 2026-09-10: «no estamos eliminando main, estamos protegiendo su ventana de contexto».
       - Falsificador: Un actor que no es Main obtiene autoridad de asignación o despacho a partir de esta Sesión.
       - Descartada: Que la Torre asuma también el despacho y Main desaparezca. → Rechazada por el maintainer: el objetivo es la ventana de contexto, no reemplazar al agente.
-  - Referencias: Autoridad original: Idea aprobada por el maintainer el 2026-09-10 sobre el documento de diseño «Torre coordina, Main juzga» (artifact 728134a6-47ab-4088-b688-74af1c92bf2a), medido sobre master en bae57ba. La evidencia que la sostiene: responder «qué sigue y quién lo toma» cuesta 512.563 bytes leyendo openspec/plan.yaml entero contra 3.293 bytes pidiéndole avance, colas y asientos a Radar. El contrato radar.snapshot/v1 y su consumidor de referencia ya existen desde b50c0b3 y 969f189. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S109. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto; seguridad-y-permisos]: ¿S109 deriva y elige la siguiente asignación, o valida un mandato que el humano ya aprobó por lote?
+      - Resolución: Valida. Al sellar, el humano aprueba una lista exacta y ordenada de Sesiones, su worker y un vencimiento; el coordinador avanza sólo dentro de esa lista y se detiene ante cualquier imprevisto. S109 confirma que el mandato sigue siendo compatible contra el snapshot vigente; nunca elige trabajo fuera de lo aprobado ni deriva una asignación nueva.
+      - Autoridad: Emilio, 2026-09-26, Engram 11837.
+      - Falsificador: S109 propone, ordena o asigna una Sesión que el humano no incluyó en el mandato sellado, o avanza el mandato después de un imprevisto sin detenerse.
+      - Descartada: Dejar que S109 derive libremente la siguiente Sesión, como en el diseño original de 2026-09-10. → Contradice la elección explícita de un mandato acotado y ordenado: el humano decide el lote, la Torre sólo lo valida.
+  - Referencias: Autoridad original: Idea aprobada por el maintainer el 2026-09-10 sobre el documento de diseño «Torre coordina, Main juzga» (artifact 728134a6-47ab-4088-b688-74af1c92bf2a), medido sobre master en bae57ba. La evidencia que la sostiene: responder «qué sigue y quién lo toma» cuesta 512.563 bytes leyendo openspec/plan.yaml entero contra 3.293 bytes pidiéndole avance, colas y asientos a Radar. El contrato radar.snapshot/v1 y su consumidor de referencia ya existen desde b50c0b3 y 969f189. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S109. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Acotación aprobada: Emilio, 2026-09-26, Engram 11837 — S109 valida el mandato, no lo deriva; relacionado con S169, que extiende el sello no supervisado a un mandato multi-Sesión.
 
 ### S114 — Todas las Sesiones vigentes declaran el tipo de su autoridad, migradas Zona por Zona para que ningún lote de revisión supere el tope declarado.
 - Coordinación:
@@ -868,7 +900,7 @@
 
 ### S119 — La Torre declara su propia skill de runtime de Herdr: activa sólo ante un pedido explícito de Herdr, y todo despacho, ON/OFF, topología y ciclo de vida de asiento sigue enrutando por &#96;torre-control&#96; → &#96;torre asiento&#96;.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S108)
+  - Estado derivado: 🟡 DIFERIDO
   - Zona/Área: producto-torre · product/tower/
   - Archivos autorizados: product/tower/skills/herdr/SKILL.md, product/tower/skills/torre-control/SKILL.md, test/install/tower-role-assets.contract.mjs
   - Depende de: S117, S108
@@ -892,12 +924,18 @@
       - Checkpoint: antes de T119.1.2
       - Opción: Nombre de maquinaria, al lado de &#96;torre-control&#96; dentro de &#96;product/tower/skills/&#96;. → La skill viaja con el producto Torre y no entra al método global; la frontera constructor/Torre se mantiene.
       - Opción: Nombre &#96;chanks-&lt;tramo&gt;-&lt;nombre&gt;&#96; como skill del método. → Contradice la oración del flujo aprobado y mete una skill del producto en el método global de los cuatro agentes.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto]: ¿La Torre necesita su propia skill de runtime de Herdr si S108 se retira?
+      - Resolución: No. &#96;product/tower/skills/herdr/SKILL.md&#96; sólo tenía sentido para enrutar el ciclo Tower-owned de S108; retirada esa Sesión, el despacho manual ya tiene su propia skill (&#96;chanks-3-despacho-herdr&#96;) y no necesita una segunda skill de producto. S119 queda retirada.
+      - Autoridad: Emilio, 2026-09-26, Engram 11835. No hay decisión numerada previa que esta supersede: la autoridad original de S119 eran las decisiones del maintainer del 2026-09-11/13 sobre propiedad de la skill, acotadas ahora a que el despacho manual ya cubre ese enrutamiento.
+      - Falsificador: Se instala &#96;product/tower/skills/herdr/SKILL.md&#96; sin un consumidor Tower-owned real, o el despacho manual pierde su propia skill de Herdr sin reemplazo.
+      - Descartada: Mantener S119 como wrapper delgado hacia el despacho manual. → Duplicaría &#96;chanks-3-despacho-herdr&#96; sin agregar comportamiento Tower-owned real, ya que S108 no existe para recibir el enrutamiento.
   - Referencias: Autoridad original: openspec/plans/audits/herdr-skill-ownership-audit.md y su patch, más decisiones del maintainer del 2026-09-11/13: la skill activa sólo por pedido explícito y delega lifecycle a &#96;torre-control&#96; → &#96;torre asiento&#96; → S108, sin roster S109 ni Herdr raw. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S119. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto.
 
 ### S121 — Binding Main-validado con Session ID canónico y procedencia durable de cada tab Tower-owned
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S121)
-  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Estado derivado: 🟡 DIFERIDO
+  - Zona/Área: enrolamiento · enroll/, main-store/, test/enroll/, test/main-store.test.mjs
+  - Archivos autorizados: main-store/store.mjs, main-store/launch-consumer.mjs, test/main-store.test.mjs, test/install/launch-worker-cli.test.mjs
   - Depende de: S4.2, S4.5
   - Recursos: assignment-location, launch binding y namespace de witnesses Main-owned; sin segundo assignment store
   - Ejecución: ODD nativo.
@@ -910,7 +948,12 @@
       - Autoridad: Decisión explícita del maintainer del 2026-09-13.
       - Falsificador: Caller/runtime inyecta o infiere Session ID, o S121 usa witnesses como roster/liveness.
       - Descartada: Persistir otro active-set o derivar identidad desde branch/worktree/seat/tab/worker. → Duplica autoridad o confía en superficies no autoritativas.
-  - Referencias: Autoridad original: Decisión del maintainer del 2026-09-13. Main establece assignment&#95;ref↔session&#95;id en assignment-location; binding/consumer lo transportan y persisten workspace/tab/pane sólo tras readback S107. main-store/launch-consumer.mjs:79-88 hoy guarda sólo request&#95;ref y binding&#95;path. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S121. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Enmienda aprobada: Engram 11293 e informe docs/architecture/torre-motor-determinista.md, secciones 12 y 14. Preparación incompleta: falta delimitar API, proyección/migración y huella completa conservando la procedencia y los datos previos. No se ejecuta migración ni se concede escritura de core desde esta declaración; S147/S148 no implementan outbox, proyección ni conversión de main-store.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto; dependencias-o-evidencia-contradictorias]: ¿El binding Main-validado con Session ID canónico en SQLite sigue siendo necesario si S107/S108 se retiran y S148 también?
+      - Resolución: No. La procedencia durable que S121 preparaba servía a la topología Tower-owned de S107/S108 y a la raíz SQLite de S148; los tres quedan retirados. El marcador radar.despacho/v1 que ya escribe el despacho manual, más el verificador de solo lectura S168, Git e Intercom, cubren la evidencia de procedencia que S121 buscaba, sin requerir un segundo escritor de identidad en Main-store/SQLite.
+      - Autoridad: Emilio, 2026-09-26, Engram 11835 y 11838. No hay decisión numerada previa que esta supersede: la autoridad original de S121 era la decisión del maintainer del 2026-09-13 sobre assignment&#95;ref↔session&#95;id, acotada ahora a lo que el marcador manual y S168 ya prueban.
+      - Falsificador: Se implementa un segundo escritor de identidad Main-owned en SQLite para tabs, o el despacho manual deja de registrar session&#95;id en el marcador sin que S168 lo cubra.
+      - Descartada: Mantener S121 sólo para persistencia sin S107/S108/S148. → Sin esos consumidores, S121 persistiría una identidad que nadie Tower-owned consume.
+  - Referencias: Autoridad original: Decisión del maintainer del 2026-09-13. Main establece assignment&#95;ref↔session&#95;id en assignment-location; binding/consumer lo transportan y persisten workspace/tab/pane sólo tras readback S107. main-store/launch-consumer.mjs:79-88 hoy guarda sólo request&#95;ref y binding&#95;path. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S121. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Enmienda aprobada: Engram 11293 e informe docs/architecture/torre-motor-determinista.md, secciones 12 y 14. No se ejecuta migración ni se concede escritura de core desde esta declaración; S147/S148 no implementan outbox, proyección ni conversión de main-store. Retiro 2026-09-26 (Engram 11835 y 11838): esta Sesión queda retirada por decisión de Emilio, no en preparación; la brecha que antes señalaba esta referencia (API, proyección/migración y huella completa) queda sin objeto porque no hay implementación que completar.
 
 ### S122 — Radar explica por qué una Sesión no está lista y marca qué Zona se queda sin trabajo LISTO por delante, sin cambiar ninguno de los siete estados.
 - Coordinación:
@@ -960,6 +1003,11 @@
       - Autoridad: Decisión de Emilio del 2026-09-13.
       - Falsificador: Main pregunta antes de preparar, o registra una preparación sin que el humano la haya confirmado.
       - Descartada: Avisar al humano antes de preparar. → Suma una interrupción por cada déficit antes de la que ya ocurre al decidir.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto]: ¿El pedido de horizonte de S123 elige o dispara trabajo por sí mismo, algo incompatible con el mandato acotado de la decisión de encadenamiento?
+      - Resolución: No. S123 ya está acotada a que Support prepare una propuesta de lectura cuando Radar informa déficit; nunca despacha, asigna ni escribe el plan, y el humano decide antes de que Main registre. Es compatible sin cambios con el mandato acotado: preparar horizonte no es avanzar el mandato ni elegir trabajo fuera de él.
+      - Autoridad: Emilio, 2026-09-26, Engram 11837 (revisión de S123 dentro de la decisión de encadenamiento acotado; sin cambio de alcance).
+      - Falsificador: S123 despacha, asigna o escribe el plan sin decisión humana, o su preparación de horizonte se usa para extender un mandato sellado sin nueva aprobación.
+      - Descartada: Reducir aún más S123 o fusionarla con S109. → S123 ya es de sólo lectura y propuesta; no hay superficie Tower-owned adicional que retirar, y fusionarla con S109 mezclaría validación de mandato con preparación de horizonte.
   - Referencias: Autoridad original: Decisiones explícitas de Emilio del 2026-09-13 en la conversación de diseño del horizonte (Claude Code, sesión ed42515b): el horizonte se activa cuando una Zona queda con menos de 2 LISTO y nunca prepara más de 2; la detección es determinista, Support prepara, el humano decide y Main registra como único escritor del plan; Main despacha a Support directo, sin avisar antes. Support ya es un ayudante read-only que nunca despacha ni escribe el plan (agent-workflows/skills/chanks-0-agente-soporte/SKILL.md:12,22,24). Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S123. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto.
 
 ### S129 — Radar mide cada Módulo entregado con la fórmula de la política —líneas agregadas más borradas, sin las rutas que el plan excluye— y avisa cuando supera el tope declarado.
@@ -1147,11 +1195,21 @@
       - Opción: Mantener pendiente la implementación. → Conserva este contrato aprobado, pero no autoriza RED ni escritura de código.
       - Descartada: Aprobar una excepción de tamaño explícita. → Eligió entregas secuenciales; no concedió excepción de tamaño.
       - Descartada: Mantener pendiente la implementación. → Resolvió la elección de forma de entrega, sin seleccionar ni autorizar todavía el inicio de esta Sesión.
+    - Decisión estructurada [resuelta · dependencias-o-evidencia-contradictorias]: ¿Los cuatro contratos versionados de Ejecución/paquete/evidencia siguen siendo necesarios sin un motor Tower-owned de dispatch (S9.8/S107/S108/S119/S121 retiradas)?
+      - Resolución: Retirada. Emilio elige no implementar S147: el marcador radar.despacho/v1, el verificador de solo lectura S168, Git y openspec/plan.yaml cubren la evidencia de despacho que estos contratos buscaban formalizar. Reapertura sólo si un piloto real muestra evidencia que esa combinación no cubre; tower.db del semáforo V1 no cambia.
+      - Autoridad: Emilio, 2026-09-26, Engram 11839. Supersede, sólo para este fin, Engram 11305 y 11316 (aprobación de los cuatro formatos y de entregas secuenciales); no invalida esas aprobaciones como evidencia histórica de lo que se propuso y se decidió publicar.
+      - Evidencia: S147 sólo tenía consumidores dentro del circuito Tower-owned que este delta retira; el despacho manual ya prueba envío e identidad sin estos contratos, y S168 cruza esa evidencia en solo lectura.
+      - Checkpoint: Antes de cualquier RED o escritura de código de S147.
+      - Alcanza: encargo
+      - Falsificador: Se implementan estos contratos sin evidencia de un piloto que muestre qué no cubre el marcador manual + S168 + Git + plan.yaml.
+      - Opción: Retirar S147: publicar la documentación aprobada como historia, sin implementar. → No hay contratos versionados de Ejecución; la evidencia de despacho queda en el marcador manual, Git y S168.
+      - Opción: Mantener S147 pendiente para un futuro piloto Tower-owned. → Conserva la aprobación 11305/11316 sin ejecutarla; reabre sólo con evidencia real de un piloto.
+      - Descartada: Mantener S147 pendiente para un futuro piloto Tower-owned. → Sin un motor Tower-owned de dispatch que los consuma, mantenerla pendiente prolonga una dependencia (S148) sin beneficio observable.
   - Referencias: Autoridad inicial Engram 11293; propuesta 11304 y aprobación humana 11305, seguidas por autorización de registro en el plan y decisión 11316 de entregas secuenciales, orden S147 antes de S148 y publicación documental. Este Encargo contiene el contrato operativo de alcance; Engram conserva procedencia, no es una dependencia necesaria para reconstruir sus requisitos. docs/architecture/torre-motor-determinista.md, secciones 3, 8, 9, 10, 15 y 17, SHA-256 cc9949d367e93a1b809534335248cbd9916d7acf99ed6d9f188dff63b7b04f62. Base de investigación HEAD 1658444ff52cddba3516f7e4e39bd314ccd21cdc: contracts/schema-registry.mjs:6–43, contracts/validate.mjs:169–220, contracts/artifact-ref.mjs:22–59 y schemas/artifact-ref-v1.schema.json. Revalidar contra el código vigente antes de implementar. Se conserva Torre V1 detrás del Método, la Zona contratos y el Cimiento exacto de fixtures; sin nuevas Sesiones o dependencias.
 
 ### S148 — Raíz de Ejecución estable en SQLite con revisión, estado e historial ligados a handoffs existentes
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S147)
+  - Estado derivado: 🟡 DIFERIDO
   - Zona/Área: cimientos · —
   - Archivos autorizados: core.mjs, test/migration.test.mjs
   - Depende de: S147
@@ -1185,6 +1243,16 @@
       - Opción: Mantener pendiente la implementación. → Conserva la estrategia aprobada, pero no autoriza RED, escritura SQL/código o conversión de datos.
       - Descartada: Aprobar una excepción de tamaño explícita. → Eligió entregas secuenciales; no concedió excepción de tamaño.
       - Descartada: Mantener pendiente la implementación. → Resolvió la elección de forma de entrega, conservando S147 como dependencia y sin autorizar el inicio de esta Sesión.
+    - Decisión estructurada [resuelta · migracion-o-perdida-de-datos]: ¿La raíz de Ejecución durable en SQLite sigue siendo necesaria sin un motor Tower-owned de dispatch, y sin S147 entregada?
+      - Resolución: Retirada. Emilio elige no migrar ni implementar S148: la migración 006, ct&#95;execution&#95;root, ct&#95;execution&#95;history y ct&#95;execution&#95;handoff quedan sin construir. El marcador radar.despacho/v1, el verificador de solo lectura S168, Git y openspec/plan.yaml cubren la evidencia de despacho que esta raíz buscaba persistir. Reapertura sólo si un piloto real muestra evidencia que esa combinación no cubre; tower.db del semáforo V1 no cambia y ninguna base viva se toca.
+      - Autoridad: Emilio, 2026-09-26, Engram 11839. Supersede, sólo para este fin, Engram 11310 y 11316 (aprobación de la estrategia SQLite y de entregas secuenciales); no invalida esas aprobaciones como evidencia histórica de lo que se propuso y se decidió publicar.
+      - Evidencia: S148 depende de S147, ahora retirada, y su único consumidor era el circuito Tower-owned que S9.8/S107/S108/S119/S121 también retiran. tower.db del semáforo V1 sigue intacto y no depende de esta raíz.
+      - Checkpoint: Antes de cualquier RED, migración o escritura SQL/código de S148.
+      - Alcanza: encargo
+      - Falsificador: Se migra o implementa esta raíz sin evidencia de un piloto que muestre qué no cubre el marcador manual + S168 + Git + plan.yaml, o se toca una base viva sin autorización separada.
+      - Opción: Retirar S148: no migrar ct&#95;execution&#95;root/history/handoff. → No hay raíz de Ejecución en SQLite; la evidencia de despacho queda en el marcador manual, Git y S168. tower.db V1 no cambia.
+      - Opción: Mantener S148 pendiente para un futuro piloto Tower-owned. → Conserva la aprobación 11310/11316 sin ejecutarla ni migrar; reabre sólo con evidencia real de un piloto, y sólo después de S147.
+      - Descartada: Mantener S148 pendiente para un futuro piloto Tower-owned. → Sin S147 ni un motor Tower-owned que consuma la raíz, mantenerla pendiente no tiene beneficio observable hoy.
   - Referencias: Autoridad inicial Engram 11293; descubrimiento 11308, propuesta 11309 y aprobación humana 11310, seguidas por autorización de registro y decisión 11316 de entregas secuenciales, S147 antes de S148 y publicación documental. Este Encargo explicita el alcance; Engram conserva la procedencia de las decisiones, no un diseño imprescindible fuera del plan. docs/architecture/torre-motor-determinista.md, secciones 3, 7, 8, 12, 15 y 17, SHA-256 cc9949d367e93a1b809534335248cbd9916d7acf99ed6d9f188dff63b7b04f62. Base de investigación HEAD 1658444ff52cddba3516f7e4e39bd314ccd21cdc: core.mjs:86–112,231–318,855–1058,2442–2591; test/migration.test.mjs:1679–1740. test/recovery.test.mjs:86–95 es lectura de regresión que provisiona explícitamente schema 5, no permiso de editar ese archivo. Reutilizar los validadores entregados de S147 sin ampliar su huella. Se conservan Torre V1 detrás del Método, S148→S147 y los dos Cimientos exactos. Son dos bases iniciales, no cobertura completa de API/IPC, admisión de efectos, proyección o cierre; no se inventan ahora otras Sesiones, dependencias o prioridades.
 
 ### S149 — La capa semáforo se distribuye como un ejecutable único que no exige bun instalado y conserva el contrato tower&#95;&#42; observable.
@@ -1671,6 +1739,44 @@
       - Falsificador: La habilitación se reparte en commits parciales no verificables, omite pruebas para reducir líneas o usa la excepción para un parche futuro.
       - Contaminaba: S167
   - Referencias: Issue https://github.com/achangkuon/control-tower/issues/148; AGENTS.md:135,151-153; agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md:12-15,37-40; agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md:47,50,52,56,92-96; agent-workflows/skills/chanks-3-despacho-herdr/references/retiro.md:23-30; Engram 11809, 11810, 11811 y 11812. Línea base Git: openspec/plan.yaml@ea884263ce64a77f042434a1fecee6055f756c82.
+
+### S168 — &#96;radar despacho verificar &lt;ID&gt;&#96;: comando de solo lectura que cruza el marcador radar.despacho/v1 con evidencia viva de Git, Herdr e Intercom y devuelve CONFIRMADO, INCOMPLETO o CONTRADICTORIO; nunca despacha, repara ni escribe.
+- Coordinación:
+  - Estado derivado: 🟡 DIFERIDO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/radar/despacho.go, agent-workflows/tools/radar/despacho&#95;test.go, agent-workflows/tools/radar/main.go
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Radar ya lee el marcador radar.despacho/v1 que escribe la skill de despacho manual (etapa.go, struct despacho; state.go, observarDespachos), pero nadie verifica esa evidencia contra la realidad viva: nadie prueba que la rama, el worktree, el agente Herdr y el roster Intercom declarados en el marcador existen de verdad. &#96;radar despacho verificar &lt;ID&gt;&#96; cierra esa brecha con una herramienta de solo lectura, independiente de las skills que escriben el marcador.
+  - Resultado y comportamiento: &#96;radar despacho verificar &lt;ID&gt;&#96; lee el marcador radar.despacho/v1 de la Sesión &lt;ID&gt; mediante la lectura ya validada de etapa.go/state.go y cruza, sin mutar nada: Git (existe branch work/&lt;ID&gt;, desciende del base registrado en el marcador, y esa rama está efectivamente checked out en el worktree del worker declarado), Herdr (hay un agente vivo en la tab declarada cuyo Session ID coincide con el del marcador) e Intercom (el roster vivo reporta el mismo Session ID y cwd). Devuelve exactamente uno de tres resultados nombrados: CONFIRMADO cuando las tres fuentes coinciden con el marcador; INCOMPLETO cuando falta evidencia verificable en alguna fuente (por ejemplo, Herdr o Intercom no responden) y nombra qué falta; CONTRADICTORIO cuando alguna fuente contradice el marcador (branch distinta, base que no desciende, worktree o Session ID que no coinciden) y nombra qué no coincide. El comando nunca despacha, repara, reintenta, cierra tabs, escribe el marcador, escribe openspec/plan.yaml ni muta ningún estado; es exclusivamente una lectura cruzada. Ausencia del marcador, marcador inválido o Sesión inexistente son casos nombrados, no un pánico ni un resultado ambiguo. El comando funciona sin conocer ni invocar chanks-3-despacho-herdr u otra skill: lee sólo evidencia observable (Git, Herdr, Intercom) y el propio marcador.
+  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. El comando es de solo lectura: no adquiere locks, no despacha, no repara evidencia divergente y no reemplaza el retiro manual de seis comprobaciones que ya usa chanks-3-despacho-herdr. Los nombres de archivo prospectivos delimitan autorización, no afirman una implementación elegida; toda expansión futura requiere aprobación.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto]: ¿La verificación de que un despacho ocurrió de verdad depende de las skills que lo escriben, o es una herramienta independiente?
+      - Resolución: Independiente. &#96;radar despacho verificar &lt;ID&gt;&#96; no invoca ni depende de chanks-3-coordinador-manual ni chanks-3-despacho-herdr; lee sólo el marcador ya validado y evidencia observable de Git, Herdr e Intercom, y nunca escribe ni repara.
+      - Autoridad: Emilio, 2026-09-26, Engram 11836.
+      - Falsificador: El comando invoca una skill, despacha, repara evidencia divergente o muta el marcador/plan.
+      - Descartada: Implementar la verificación dentro de la skill de despacho manual. → Mezclaría una herramienta de auditoría de solo lectura con el camino que escribe el marcador, perdiendo independencia de verificación.
+  - Referencias: Autoridad: Emilio, 2026-09-26, Engram 11835 y 11836. Evidencia de partida: agent-workflows/tools/radar/etapa.go (struct despacho, leerDespacho, despachoVivo) y state.go (observarDespachos) ya validan forma y vivacidad del marcador radar.despacho/v1 para calcular EN CURSO; este comando reutiliza esa lectura para un cruce adicional contra Git/Herdr/Intercom sin cambiar el cálculo de estado. Referencia de estilo: comandos existentes de un solo propósito bajo agent-workflows/tools/radar/ (archivar.go, avance.go, faltan.go, sesion.go) y su cableado en main.go.
+
+### S169 — chanks-4-unattended-implementation sella un mandato humano de una o más Sesiones LISTO, ordenadas por dependencia (pasos que pueden agrupar Sesiones que corren en paralelo, p. ej. S164+S165), cada una con su propio worker asignado bajo un único vencimiento para todo el mandato, en vez de sólo una Sesión; el coordinador avanza sólo dentro de esa lista y se detiene ante cualquier imprevisto.
+- Coordinación:
+  - Estado derivado: 🟡 DIFERIDO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/skills/chanks-4-unattended-implementation/SKILL.md, agent-workflows/skills/chanks-4-unattended-implementation/assets/execution-contract.schema.json, agent-workflows/skills/chanks-4-unattended-implementation/references/sealing-and-routing.md, agent-workflows/skills/chanks-4-unattended-implementation/references/night-mode.md, agent-workflows/skills/chanks-4-unattended-implementation/references/runtime-standalone.md
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: chanks-4-unattended-implementation hoy sella exactamente una Sesión LISTO por vez (&#96;session.sesion&#95;id&#96; singular en assets/execution-contract.schema.json; «one LISTO plan Session» en SKILL.md). Emilio aprobó ampliarlo a un mandato acotado: una lista ordenada de pasos por dependencia —un paso puede agrupar varias Sesiones que corren en paralelo, por ejemplo S164+S165—, cada Sesión con su propio worker, bajo un único vencimiento para todo el mandato, para que el coordinador pueda avanzar de un paso al siguiente sin pedir un sello nuevo por cada Sesión — pero nunca elegir trabajo fuera de esa lista ni seguir después de un imprevisto.
+  - Resultado y comportamiento: El sello acepta una lista ordenada por dependencia (un paso puede agrupar una o más Sesiones que corren en paralelo cuando no dependen entre sí, por ejemplo S164+S165); cada Sesión declara su propio sesion&#95;id y worker, y pasa las mismas validaciones de LISTO/base/decisión que hoy exige por Sesión. Un único expires&#95;at rige todo el mandato — ninguna Sesión declara su propio vencimiento — y la misma política de ceiling de entrega y de consentimiento RDD ya fijas por sello se aplica a cada una. El coordinador dispatcha respetando el grafo de dependencias declarado dentro del mandato: una Sesión arranca sólo después de que las Sesiones de las que depende dentro del mandato cerraron con un terminal válido (COMPLETED) e integraron su commit; Sesiones sin dependencia mutua en el mismo paso pueden dispatcharse y correr en paralelo. Ante cualquier imprevisto —caída, envío incierto, Sesión que dejó de ser LISTO, decisión nueva, base movida, contradicción de identidad— la Sesión afectada se detiene y conserva (S4.12/Engram 11838): las Sesiones del mandato que no dependen de ella pueden seguir de forma independiente, y las que sí dependen de ella no arrancan; ninguna se elige fuera de la lista original. Un mandato vencido, con lista vacía, con Sesiones repetidas, sin orden de dependencia explícito o con un vencimiento por Sesión en vez de uno por mandato es NOT&#95;READY. El worker dispatchado sigue verificando su propia admisión fresca (chanks-3-session-kickoff) antes de tocar cualquier Sesión de la lista; el sello nunca sustituye esa verificación.
+  - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. El sello sigue sin iniciar sesión, dispatchar, crear worktree, adquirir lock, crear cola ni simular un wake/resultado terminal: sigue preparando un registro, no ejecutándolo. Dispatch sigue siendo trabajo de chanks-3-despacho-herdr con la Torre apagada. Ningún cambio de base, alcance, permiso o decisión durante el mandato reutiliza el sello: requiere uno nuevo.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto; seguridad-y-permisos]: ¿El coordinador puede elegir la siguiente Sesión después de cerrar una del mandato, o sólo puede avanzar dentro de la lista sellada?
+      - Resolución: Sólo dentro de la lista sellada, en el orden declarado. El coordinador nunca elige, deriva o agrega una Sesión que el humano no incluyó al sellar; ante cualquier imprevisto se detiene y conserva, sin continuar el mandato por inferencia.
+      - Autoridad: Emilio, 2026-09-26, Engram 11837.
+      - Falsificador: El coordinador dispatcha una Sesión fuera de la lista sellada, cambia el orden declarado, o continúa el mandato después de un imprevisto sin detenerse.
+      - Descartada: Dejar que el coordinador reponga automáticamente la cola con la siguiente Sesión LISTO de Radar. → Es exactamente la autoselección que la decisión de encadenamiento acotado prohíbe; el humano elige el lote, no el coordinador.
+  - Referencias: Autoridad: Emilio, 2026-09-26, Engram 11837. Estado previo: agent-workflows/skills/chanks-4-unattended-implementation/SKILL.md (Activation Contract, «exactly one plan Session»), assets/execution-contract.schema.json (session.sesion&#95;id singular), references/sealing-and-routing.md (Seal gate ítems 1-8 en singular) y references/night-mode.md (pre-flight gates en singular); references/runtime-standalone.md ya declara «not a replacement coordinator» para una Sesión, y pasa a describir un mandato de una o más. Relacionado: S109 valida este mandato contra Radar; S168 verifica en solo lectura que cada Sesión del mandato efectivamente se despachó.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
