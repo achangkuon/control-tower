@@ -392,6 +392,32 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertIn("even when ODD tasks are unfinished", handoff)
         self.assertLess(handoff.index("`listo para revisión`"), handoff.index("For every sealed terminal outcome"))
 
+    def test_worker_revalidation_tolerates_only_the_dispatch_markers_listo_to_en_curso(self):
+        skill = read("skills/chanks-4-unattended-implementation/SKILL.md")
+        sealing = read("skills/chanks-4-unattended-implementation/references/sealing-and-routing.md")
+        handoff = " ".join(read("skills/chanks-0-agente-soporte/assets/assignment-implementation.md").split())
+
+        self.assertIn("Worker-side revalidation after dispatch tolerates exactly one drift", skill)
+        self.assertIn("references/sealing-and-routing.md", skill)
+
+        for phrase in (
+            "radar.despacho/v1",
+            "chanks/despachos/<ID>.json",
+            "is a regular file, never a symlink",
+            "Exactly one `Estado:` line may differ",
+            "radar_status_stdout_sha256` proves only the snapshot Radar showed at seal time",
+            "never recompares it after dispatch",
+            "Before dispatch, with no marker on disk",
+        ):
+            self.assertIn(phrase, sealing)
+
+        self.assertIn(
+            "tolerating only the dispatch marker's own `LISTO` to `EN CURSO` change",
+            handoff,
+        )
+        self.assertIn("chanks/despachos/<ID>.json", handoff)
+        self.assertIn("or any other drift, grants nothing", handoff)
+
     def test_frozen_product_snapshot_matches_the_pre_migration_builder(self):
         snapshot = ROOT.parent / "product" / "tower" / "generic"
         self.assertTrue(snapshot.is_dir(), "missing frozen product snapshot")

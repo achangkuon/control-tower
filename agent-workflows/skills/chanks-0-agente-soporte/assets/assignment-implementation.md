@@ -28,7 +28,10 @@ Do not choose another Session, widen scope, create a fake lock, or infer SDD. Na
 explicit human `solicitud_sdd` and its own preflight. Carry the full unattended seal without
 loosening any bindings, expiry, base, permissions, commit ceiling, or RDD consent policy; validate
 it with independent revalidation before work, including freshness against the worker's own Radar
-admission and Git identity. An absent, expired, mismatched, or changed seal grants nothing.
+admission and Git identity, tolerating only the dispatch marker's own `LISTO` to `EN CURSO` change
+when `chanks/despachos/<ID>.json` matches the seal's Session, branch, worktree, and worker exactly
+(`chanks-4-unattended-implementation/references/sealing-and-routing.md`). An absent, expired,
+mismatched, or changed seal, or any other drift, grants nothing.
 
 Only after all ODD tasks are checked, send the exact Session+worker `listo para revisión` signal
 through Intercom to Main, with receipt identity for the coordinator's verified readback.

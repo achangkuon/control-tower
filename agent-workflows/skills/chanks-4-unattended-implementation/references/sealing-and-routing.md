@@ -46,6 +46,33 @@ Validate the JSON schema, then return `NOT_READY` if any predicate fails:
 Reject placeholders, alternatives, implicit continuation, or prose that delegates a choice to the
 worker.
 
+## Worker revalidation after dispatch
+
+`chanks-3-despacho-herdr` writes its own `radar.despacho/v1` marker after a confirmed handoff, at
+`<git-common-dir>/chanks/despachos/<ID>.json`. That marker is what turns this Session from
+🟢 `LISTO` to 🔵 `EN CURSO` in Radar — the seal's own dispatch, not drift — so the dispatched
+worker's independent revalidation tolerates exactly that one change and nothing else:
+
+1. HEAD, the `work/<ID>` branch, worktree, and `base_sha` still match the seal exactly; no
+   tolerance here.
+2. The marker file exists, is a regular file, never a symlink, and its `sesion`, `branch`
+   (`refs/heads/work/<ID>`), `worktree` (absolute), and `worker` match the seal/handoff exactly.
+   A missing or mismatched marker grants nothing — the byte-for-byte rule below applies with no
+   tolerance, same as before dispatch.
+3. Take the fresh `radar sesion <ID>` stdout, replace its single `Estado:` line with the sealed
+   `Estado: 🟢 LISTO` line, and hash the result: it must equal `radar_sesion_stdout_sha256`.
+   Exactly one `Estado:` line may differ, and only from `LISTO` to `EN CURSO`; a second differing
+   line, a different transition, or a missing `Estado:` line invalidates the seal.
+4. `radar_status_stdout_sha256` proves only the snapshot Radar showed at seal time; the worker
+   never recompares it after dispatch. Instead it requires that a fresh `radar status --json`
+   lists this Session `EN CURSO` with no blocker.
+5. Every other check in the seal gate above — expiry, permissions, delivery ceiling, the RDD
+   consent policy, and rejection of any other drift (encargo text, files, decisions, base) — is
+   unchanged and still invalidates the seal on any mismatch.
+
+Before dispatch, with no marker on disk, both digests still match byte-for-byte with zero
+tolerance, exactly as the seal gate above requires.
+
 ## Immutable seal
 
 Canonicalize the contract without `contract_digest`, compute SHA-256, insert the digest, and

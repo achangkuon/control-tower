@@ -55,6 +55,11 @@ ask. There is no separate unattended stage and no 7-stage numbering.
   with the Torre off. If the base moves before dispatch, the seal is stale and needs a fresh one.
 - Do not depend on Pi's activation key/click (`chanks_request_activation`); it is being retired.
   The dispatched worker's own `chanks-3-session-kickoff` run supplies its own fresh admission.
+- Worker-side revalidation after dispatch tolerates exactly one drift: `chanks-3-despacho-herdr`'s
+  own `radar.despacho/v1` marker turning this Session from `LISTO` to `EN CURSO`, only when the
+  marker matches the seal's Session, branch, worktree, and worker exactly. See
+  `references/sealing-and-routing.md` for the exact byte-for-byte match rule; every other drift
+  still invalidates the seal.
 - On a question or risk discovered while sealing (not while running), stop and return it to the
   human-directed responsible parent.
 

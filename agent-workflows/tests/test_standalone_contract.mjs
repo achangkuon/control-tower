@@ -75,4 +75,18 @@ rejects((value) => { value.result = { state: "READY", sesion_id: "S1" } })
 
 const prose = await Bun.file(new URL("../skills/chanks-4-unattended-implementation/references/sealing-and-routing.md", import.meta.url)).text()
 assert.ok(prose.includes("cannot prove that `expires_at` is later than `sealed_at`"))
+
+// The dispatch marker is the seal's own state change (LISTO -> EN CURSO), not drift: the
+// worker's revalidation tolerates exactly that one change and nothing else.
+assert.ok(prose.includes("radar.despacho/v1"))
+assert.ok(prose.includes("chanks/despachos/<ID>.json"))
+assert.ok(prose.includes("is a regular file, never a symlink"))
+assert.ok(prose.includes("Exactly one `Estado:` line may differ"))
+assert.ok(prose.includes("radar_status_stdout_sha256` proves only the snapshot Radar showed at seal time"))
+assert.ok(prose.includes("never recompares it after dispatch"))
+assert.ok(prose.includes("Before dispatch, with no marker on disk"))
+
+const skillProse = await Bun.file(new URL("../skills/chanks-4-unattended-implementation/SKILL.md", import.meta.url)).text()
+assert.ok(skillProse.includes("Worker-side revalidation after dispatch tolerates exactly one drift"))
+
 console.log("standalone contract schema safety: PASS")
