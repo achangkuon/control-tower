@@ -44,14 +44,25 @@ function directWords(command) {
   return tokens
 }
 
+// One structured witness is shared by the live request renderer and result-bound stage logic.
+// A stage ID is admitted only when it is the explicit argument of an isolated direct call.
+export function radarDirecto(command) {
+  const tokens = directWords(command?.trim())
+  if (!tokens?.length || tokens[0].split("/").at(-1) !== "radar" || !RADAR_COMMANDS.has(tokens[1])) return null
+  const rest = tokens.slice(3)
+  const sessionId = tokens[1] === "etapa" && /^S[1-9]\d*(?:\.\d+)?$/.test(tokens[2] ?? "") &&
+    (rest.length === 0 || (rest.length === 2 && rest[0] === "-C" && !!rest[1])) ? tokens[2] : null
+  return { subcommand: tokens[1], sessionId }
+}
+
 function fromCommand(command) {
+  const radar = radarDirecto(command)
+  if (radar) return notice("radar", radar.subcommand)
   const tokens = directWords(command?.trim())
   if (!tokens?.length) return null
   const executable = tokens[0]
-  const name = executable.split("/").at(-1)
-  if (name === "radar" && RADAR_COMMANDS.has(tokens[1])) return notice(name, tokens[1])
-  if (name === "jornada.sh" && executable.includes("/") &&
-      (tokens.length === 1 || JORNADA_FLAGS.has(tokens[1]))) return notice(name, tokens[1])
+  if (executable.split("/").at(-1) === "jornada.sh" && executable.includes("/") &&
+      (tokens.length === 1 || JORNADA_FLAGS.has(tokens[1]))) return notice("jornada.sh", tokens[1])
   return null
 }
 

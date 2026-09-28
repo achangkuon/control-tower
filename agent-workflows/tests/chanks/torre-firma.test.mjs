@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test"
 import { spawnSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
 
-import { firmaHerramienta } from "../../chanks/torre-firma.mjs"
+import { firmaHerramienta, radarDirecto } from "../../chanks/torre-firma.mjs"
 
 const hook = fileURLToPath(new URL("../../tools/hooks/torre-firma.sh", import.meta.url))
 const pi = (toolName, input) => ({ toolName, input })
@@ -40,6 +40,17 @@ const cases = [
   ["bash", { command: "echo 🗼 Torre" }, null],
   ["write", { path: 42 }, null],
 ]
+
+describe("shared structured direct Radar parser", () => {
+  test("returns a subcommand and explicit stage Session without accepting shell compounds", () => {
+    expect(radarDirecto("$HOME/.local/bin/radar etapa S164 -C .")).toEqual({ subcommand: "etapa", sessionId: "S164" })
+    expect(radarDirecto("radar etapa")).toEqual({ subcommand: "etapa", sessionId: null })
+    for (const command of ["false && radar etapa S164", "radar etapa S164; echo done", "echo radar etapa S164", "radar etapa 'S164' | cat", "radar etapa S164 # comment"]) {
+      expect(radarDirecto(command)).toBeNull()
+    }
+    expect(radarDirecto("radar etapa garbage -C .")).toEqual({ subcommand: "etapa", sessionId: null })
+  })
+})
 
 describe("visible Tower tool identity", () => {
   for (const [tool, input, expected] of cases) {

@@ -776,9 +776,10 @@ const scenario = JSON.parse(process.argv[3])
 const handlers = {}
 const messages = []
 const tools = []
+const renderers = {}
 const pi = {
   on(name, handler) { (handlers[name] ??= []).push(handler) },
-  registerTool(definition) { tools.push(definition.name) },
+  registerTool(definition) { tools.push(definition.name); renderers[definition.name] = definition },
 }
 const ctx = { hasUI: true, mode: 'tui', ui: { notify(message) { messages.push(message) } } }
 extension(pi)
@@ -786,6 +787,7 @@ const factoryCalls = 0 // factory may register handlers, but performs no Git/Rad
 for (const handler of handlers.session_start ?? []) await handler({ type: 'session_start', reason: 'startup' }, ctx)
 let counter = 0
 const active = new Map()
+const displayed = {}
 async function call(toolName, input, id = `call-${++counter}`) {
   const event = { type: 'tool_call', toolCallId: id, toolName, input }
   let result = {}
@@ -794,12 +796,14 @@ async function call(toolName, input, id = `call-${++counter}`) {
     if (result.block) break
   }
   if (!result.block) active.set(id, { toolName, input: event.input })
+  const renderer = renderers[toolName]
+  if (renderer?.renderCall) displayed[id] = renderer.renderCall(event.input, {}, { toolCallId: id }).render(200).join('\\n')
   return { id, result, input: event.input }
 }
-async function complete(id, toolName) {
+async function complete(id, toolName, content = []) {
   const original = active.get(id)
   for (const handler of handlers.tool_result ?? []) await handler({ type: 'tool_result', toolCallId: id,
-    toolName, input: original?.input ?? {}, isError: scenario.errorResult === true, content: [] }, ctx)
+    toolName, input: original?.input ?? {}, isError: scenario.errorResult === true, content }, ctx)
   if (original?.toolName === toolName) active.delete(id)
 }
 const before = {
@@ -815,6 +819,14 @@ const rejectedRadar = scenario.blockedRadar ? {
   duplicate: await call('bash', { command: 'radar status' }, before.bash.id),
   missingId: await call('bash', { command: 'radar status' }, ''),
 } : null
+const stageCalls = []
+for (const step of scenario.stageCalls ?? []) {
+  const called = await call('bash', { command: step.command })
+  stageCalls.push(called)
+  if (!called.result.block) await complete(called.id, 'bash', [{ type: 'text', text: JSON.stringify(step.output) }])
+}
+const skillRead = scenario.skillPath ? await call('read', { path: scenario.skillPath }) : null
+if (skillRead && !skillRead.result.block) await complete(skillRead.id, 'read')
 const messagesAtCall = [...messages]
 for (const [name, value] of Object.entries(before)) if (!value.result.block && !(scenario.withholdRadarResult && name === 'bash'))
   await complete(value.id, name === 'activationDispatch' ? 'chanks_request_activation' : name === 'planWrite' ? 'write' : name === 'planEdit' ? 'edit' : name)
@@ -848,7 +860,7 @@ if (scenario.shutdown) for (const handler of handlers.session_shutdown ?? []) aw
 const fdAfterShutdown = scenario.shutdown && write.input.path.startsWith('/proc/self/fd/') ? existsSync(write.input.path) : null
 if (scenario.stageReplacement) writeFileSync(scenario.stagePath, JSON.stringify(scenario.stageReplacement))
 if (scenario.stageAgain) for (const handler of handlers.agent_end ?? []) await handler({ type: 'agent_end' }, ctx)
-console.log(JSON.stringify({ registered: true, tools, before, write, after, third, duplicate, rejectedRadar, messagesAtCall, messages, active: [...active.keys()], fdAfterResult, fdAfterShutdown }))
+console.log(JSON.stringify({ registered: true, tools, displayed, stageCalls, skillRead, before, write, after, third, duplicate, rejectedRadar, messagesAtCall, messages, active: [...active.keys()], fdAfterResult, fdAfterShutdown }))
 """
 
 
@@ -1031,6 +1043,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
     def _env(self):
         env = os.environ.copy()
         env["PATH"] = f"{self.bin}{os.pathsep}{env.get('PATH', '')}"
+        env["HOME"] = str(self.home)
         return env
 
     def _run_shim(self, scenario, cwd=None):
@@ -1042,6 +1055,8 @@ class PiAuthorityExtensionTests(unittest.TestCase):
             encoding="utf-8",
         )
         (package / "index.js").write_text(
+            "export const createReadTool = () => ({ description: 'read', parameters: {}, execute() {}, renderResult() {} });\n"
+            "export const createBashTool = () => ({ description: 'bash', parameters: {}, execute() {}, renderResult() {} });\n"
             "export const Type = {\n"
             "  Object: (properties, options = {}) => ({ type: 'object', properties, ...options }),\n"
             "  String: () => ({ type: 'string' }),\n"
@@ -1049,6 +1064,18 @@ class PiAuthorityExtensionTests(unittest.TestCase):
             "};\n",
             encoding="utf-8",
         )
+        coding = self.home / "node_modules/@earendil-works/pi-coding-agent"
+        coding.mkdir(parents=True, exist_ok=True)
+        (coding / "package.json").write_text(json.dumps({"name": "@earendil-works/pi-coding-agent", "type": "module", "exports": "./index.js"}), encoding="utf8")
+        (coding / "index.js").write_text(
+            "export const createReadToolDefinition = () => ({ name: 'read', description: 'read', parameters: {}, execute() {}, renderCall(args) { return { render: () => ['read ' + args.path] } }, renderResult() {} });\n"
+            "export const createBashToolDefinition = () => ({ name: 'bash', description: 'bash', parameters: {}, execute() {}, renderCall(args) { return { render: () => ['bash ' + args.command] } }, renderResult() {} });\n",
+            encoding="utf8",
+        )
+        tui = self.home / "node_modules/@earendil-works/pi-tui"
+        tui.mkdir(parents=True, exist_ok=True)
+        (tui / "package.json").write_text(json.dumps({"name": "@earendil-works/pi-tui", "type": "module", "exports": "./index.js"}), encoding="utf8")
+        (tui / "index.js").write_text("export class Text { constructor(text) { this.text = text } render() { return [this.text] } }; export class Container { children = []; addChild(c) { this.children.push(c) } render(w) { return this.children.flatMap(c => c.render(w)) } }\n", encoding="utf8")
         runner = self.home / "run-shim.mjs"
         runner.write_text(RUN_SHIM_SOURCE, encoding="utf-8")
         run = subprocess.run(
@@ -1066,35 +1093,88 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         scenario.update(overrides)
         return scenario
 
-    def test_tower_tool_notice_is_independent_of_switch_and_follows_tool_result(self):
+    def test_inline_request_badges_and_per_session_stage_observations(self):
+        self._set_switch(False)
+        skill_root = self.home / ".agents/skills"
+        skill = skill_root / "chanks-3-session-kickoff/SKILL.md"
+        skill.parent.mkdir(parents=True)
+        skill.write_text("# safe", encoding="utf8")
+        outside = self.home / "elsewhere/SKILL.md"
+        outside.parent.mkdir()
+        outside.write_text("# untrusted", encoding="utf8")
+        observations = [
+            {"command": "radar etapa", "output": {"schema": "radar.etapa/v1", "sesion": "S164", "etapa": 1, "nombre": "Definir"}},
+            {"command": "radar etapa S164", "output": {"schema": "radar.etapa/v1", "sesion": "S164", "etapa": 1, "nombre": "Definir"}},
+            {"command": "radar etapa S165", "output": {"schema": "radar.etapa/v1", "sesion": "S165", "etapa": 2, "nombre": "Preparar"}},
+            {"command": "radar etapa S164", "output": {"schema": "radar.etapa/v1", "sesion": "S165", "etapa": 9, "nombre": "Falso"}},
+            {"command": "radar etapa S164", "output": {"schema": "radar.etapa/v1", "sesion": "S164", "etapa": 2, "nombre": "Preparar"}},
+        ]
+        outcome = self._run_shim({"bashCommand": "radar etapa S164 -C .", "stageCalls": observations, "skillPath": str(skill)})
+        self.assertIn("🗼 Torre · radar etapa · solicitado", outcome["displayed"].get(outcome["before"]["bash"]["id"], str(outcome["tools"])))
+        self.assertIn("💪 Chanks · chanks-3-session-kickoff · lectura solicitada", outcome["displayed"][outcome["skillRead"]["id"]])
+        self.assertEqual(outcome["messages"].count("💪 Chanks · Etapa 2 · Preparar"), 1)
+        self.assertFalse(any("Radar etapa ·" in message or "🗼 Torre · radar etapa" in message for message in outcome["messages"]))
+        self.assertNotIn("💪 Chanks · Etapa 9 · Falso", outcome["messages"])
+        self.assertEqual(outcome["tools"].count("read"), 1)
+        self.assertEqual(outcome["tools"].count("bash"), 1)
+        self.assertEqual(outcome["before"]["bash"]["input"]["command"], "radar etapa S164 -C .")
+        forged = self._run_shim({"skillPath": str(outside), "bashCommand": "false && radar etapa S164"})
+        self.assertNotIn("💪 Chanks", forged["displayed"][forged["skillRead"]["id"]])
+        self.assertNotIn("🗼 Torre", forged["displayed"][forged["before"]["bash"]["id"]])
+        skill.unlink()
+        skill.symlink_to(outside)
+        escaped = self._run_shim({"skillPath": str(skill)})
+        self.assertNotIn("💪 Chanks", escaped["displayed"][escaped["skillRead"]["id"]])
+        skill.unlink()
+        skill.write_text("# safe again", encoding="utf8")
+        alias = self.home / "alias-skill.md"
+        alias.symlink_to(skill)
+        aliased = self._run_shim({"skillPath": str(alias)})
+        self.assertNotIn("💪 Chanks", aliased["displayed"][aliased["skillRead"]["id"]])
+        self._set_switch(True)
+        confined = self._run_shim({"bashCommand": "radar etapa S164 -C ."})
+        command = confined["before"]["bash"]["input"]["command"]
+        self.assertIn("/usr/bin/bwrap", command)
+        label = confined["displayed"][confined["before"]["bash"]["id"]]
+        self.assertIn("radar etapa S164 -C .", label)
+        self.assertNotIn("/usr/bin/bwrap", label)
+
+    def test_stage_failure_or_invalid_schema_cannot_become_a_transition(self):
+        self._set_switch(False)
+        prior = {"schema": "radar.etapa/v1", "sesion": "S200", "etapa": 1, "nombre": "Definir"}
+        bad = [
+            {"command": "radar etapa S200", "output": prior},
+            {"command": "radar etapa", "output": {**prior, "etapa": 2}},
+            {"command": "radar etapa S200", "output": {**prior, "schema": "other/v1", "etapa": 2}},
+            {"command": "radar etapa S200", "output": {**prior, "sesion": "S201", "etapa": 2}},
+        ]
+        result = self._run_shim({"stageCalls": bad})
+        self.assertFalse(any("💪 Chanks · Etapa" in m for m in result["messages"]))
+        error = self._run_shim({"errorResult": True, "stageCalls": [bad[0], {"command": "radar etapa S200", "output": {**prior, "etapa": 2}}]})
+        self.assertFalse(any("💪 Chanks · Etapa" in m for m in error["messages"]))
+
+    def test_direct_radar_identity_is_inline_independent_of_switch_and_not_replayed(self):
         for on in (False, True):
             self._set_switch(on)
             outcome = self._run_shim(self._default_scenario(
-                bashCommand="radar sesion S163 -C .", blockedRadar=True))
-            self.assertNotIn("🗼 Torre · radar sesion", outcome["messagesAtCall"])
+                bashCommand="radar sesion S163 -C .", blockedRadar=True, replayRadarResult=True))
             self.assertTrue(outcome["rejectedRadar"]["duplicate"]["result"]["block"])
             self.assertTrue(outcome["rejectedRadar"]["missingId"]["result"]["block"])
             self.assertEqual(outcome["before"]["bash"]["result"], {})
-            self.assertEqual(outcome["messages"].count("🗼 Torre · radar sesion"), 1)
-            self.assertNotIn("🗼 Torre · radar status", outcome["messages"])
+            self.assertIn("🗼 Torre · radar sesion · solicitado", outcome["displayed"][outcome["before"]["bash"]["id"]])
+            self.assertNotIn("🗼 Torre · radar sesion", outcome["messages"])
             for kind in ("planWrite", "planEdit"):
                 self.assertEqual(outcome["before"][kind]["result"].get("block", False), on)
                 signature = "🗼 Torre · plan.yaml " + ("write" if kind == "planWrite" else "edit")
                 self.assertEqual(outcome["messages"].count(signature), 0 if on else 1)
-            self.assertEqual(outcome["messages"].count("🗼 Torre · radar etapa"), 1)
-            self.assertEqual(sum(message.startswith("🗼") for message in outcome["messages"]), 2 if on else 4)
-            self.assertTrue(any("Radar etapa ·" in message for message in outcome["messages"]))
+            self.assertFalse(any("radar etapa" in message or "Radar etapa" in message for message in outcome["messages"]))
 
-    def test_failed_matching_bash_result_does_not_emit_tower_signature(self):
+    def test_failed_matching_bash_result_retains_request_identity_only(self):
         self._set_switch(False)
-        failed = self._run_shim(self._default_scenario(
-            bashCommand="radar status", errorResult=True, replayRadarResult=True))
-        self.assertEqual(failed["before"]["bash"]["result"], {})
-        self.assertNotIn("🗼 Torre · radar status", failed["messagesAtCall"])
-        self.assertNotIn("🗼 Torre · radar status", failed["messages"])
-        self.assertEqual(failed["messages"].count("🗼 Torre · radar etapa"), 1)
-        successful = self._run_shim(self._default_scenario(bashCommand="radar status"))
-        self.assertEqual(successful["messages"].count("🗼 Torre · radar status"), 1)
+        for error in (True, False):
+            outcome = self._run_shim({"bashCommand": "radar status", "errorResult": error, "replayRadarResult": True})
+            self.assertIn("🗼 Torre · radar status · solicitado", outcome["displayed"][outcome["before"]["bash"]["id"]])
+            self.assertFalse(any("🗼 Torre · radar status" in message for message in outcome["messages"]))
 
     def test_failed_matching_plan_result_does_not_emit_tower_signature(self):
         self._set_switch(False)
@@ -1107,16 +1187,14 @@ class PiAuthorityExtensionTests(unittest.TestCase):
             self.assertNotIn(signature, failed["messages"])
             self.assertEqual(successful["messages"].count(signature), 1)
 
-    def test_internal_radar_stage_signs_each_success_separately_from_chanks_transition(self):
-        outcome = self._run_shim({"stageAgain": True, "stagePath": str(self.stage),
-                                  "stageReplacement": {"schema": "radar.etapa/v1", "etapa": 2, "nombre": "Preparar"}})
-        self.assertEqual(outcome["messages"].count("🗼 Torre · radar etapa"), 2)
-        self.assertEqual(sum("💪 Chanks" in message for message in outcome["messages"]), 1)
-        self._write_radar([], fail_commands=("etapa",))
-        failed = self._run_shim({})
-        self.assertNotIn("🗼 Torre · radar etapa", failed["messages"])
+    def test_agent_end_does_not_poll_radar_or_announce_stage(self):
+        log = self.bin / "radar-calls"
+        self._write_radar([], log=log)
+        outcome = self._run_shim({"stageAgain": True})
+        self.assertEqual(outcome["messages"], [])
+        self.assertFalse(log.exists())
 
-    def test_admission_signs_only_successful_status_and_sesion_execfile_calls(self):
+    def test_admission_calls_status_and_sesion_without_inline_tool_or_stage_notices(self):
         self._marker()
         row = {"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"]}
         log = self.bin / "radar-calls"
@@ -1126,18 +1204,15 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         self.assertFalse(success["write"]["result"].get("block", False))
         for command in ("status", "sesion"):
             self.assertGreater(calls.count(command), 0)
-            self.assertEqual(success["messages"].count("🗼 Torre · radar " + command), calls.count(command))
-        self.assertEqual(success["messages"].count("🗼 Torre · radar etapa"), calls.count("etapa"))
+            self.assertNotIn("🗼 Torre · radar " + command, success["messages"])
+        self.assertNotIn("etapa", calls)
         for failing in ("status", "sesion"):
             log.write_text("", encoding="utf8")
             self._write_radar([row], fail_commands=(failing,), log=log)
             stopped = self._run_shim({"path": str(self.repo / "a.mjs")})
             self.assertTrue(stopped["write"]["result"].get("block", False))
             calls = log.read_text(encoding="utf8").splitlines()
-            self.assertEqual(stopped["messages"].count("🗼 Torre · radar " + failing), 0)
-            for command in ("status", "sesion"):
-                if command != failing:
-                    self.assertEqual(stopped["messages"].count("🗼 Torre · radar " + command), calls.count(command))
+            self.assertFalse(any("🗼 Torre · radar " in message for message in stopped["messages"]))
 
     def test_false_and_true_conditional_bash_never_claim_a_child_was_run(self):
         self._set_switch(False)
@@ -1148,21 +1223,17 @@ class PiAuthorityExtensionTests(unittest.TestCase):
             self.assertEqual(outcome["before"]["bash"]["input"]["command"], command)
             self.assertEqual(outcome["before"]["bash"]["result"], {})
             self.assertNotIn("🗼 Torre · radar status", outcome["messages"])
-        before = log.read_text(encoding="utf8")
+        before = log.read_text(encoding="utf8") if log.exists() else ""
         false_command = subprocess.run(["bash", "-c", "false && radar status"],
                                        cwd=self.repo, env=self._env(), capture_output=True, text=True)
         self.assertNotEqual(false_command.returncode, 0)
-        self.assertEqual(log.read_text(encoding="utf8"), before)
+        self.assertEqual(log.read_text(encoding="utf8") if log.exists() else "", before)
 
-    def test_tower_notice_requires_a_matching_result_and_is_not_replayed(self):
+    def test_unfinished_request_has_inline_label_without_a_completion_notice(self):
         self._set_switch(False)
-        pending = self._run_shim(self._default_scenario(
-            bashCommand="radar status", withholdRadarResult=True))
-        self.assertEqual(pending["before"]["bash"]["result"], {})
+        pending = self._run_shim({"bashCommand": "radar status", "withholdRadarResult": True})
+        self.assertIn("🗼 Torre · radar status · solicitado", pending["displayed"][pending["before"]["bash"]["id"]])
         self.assertNotIn("🗼 Torre · radar status", pending["messages"])
-        completed = self._run_shim(self._default_scenario(
-            bashCommand="radar status", replayRadarResult=True))
-        self.assertEqual(completed["messages"].count("🗼 Torre · radar status"), 1)
 
     def test_switch_off_registers_handlers_but_stays_inert(self):
         # The extension is inside a git repository, so it always registers its handlers
@@ -1175,7 +1246,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         for name in ("read", "write", "edit", "bash", "activationDispatch"):
             self.assertEqual(outcome["before"][name]["result"], {})
         self.assertEqual(outcome["before"]["bash"]["input"]["command"], "printf before")
-        self.assertEqual(outcome["tools"], [])
+        self.assertEqual(outcome["tools"], ["read", "bash"])
 
     def test_switch_on_without_a_plan_is_also_inert(self):
         (self.repo / "openspec" / "plan.yaml").unlink()
@@ -1198,7 +1269,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         self.assertIn("--ro-bind", confined)
         self.assertNotIn("--bind", confined)
         self.assertNotEqual(confined, "printf before")
-        self.assertEqual(outcome["tools"], [])
+        self.assertEqual(outcome["tools"], ["read", "bash"])
 
     def test_admitted_bash_remains_read_only_and_reports_write_failure(self):
         self._marker()
@@ -1298,7 +1369,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         for name in ("read", "write", "edit", "bash", "activationDispatch"):
             self.assertEqual(outcome["before"][name]["result"], {})
         self.assertEqual(outcome["before"]["bash"]["input"]["command"], "printf before")
-        self.assertEqual(outcome["tools"], [])
+        self.assertEqual(outcome["tools"], ["read", "bash"])
 
     def test_main_working_tree_subdirectory_is_also_inert(self):
         subdirectory = self.main / "agent-workflows"
@@ -1319,7 +1390,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         self._write_radar([{"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"]}])
         outcome = self._run_shim({"path": str(self.repo / "a.mjs"),
                                   "afterPath": str(self.repo / "openspec/plan.yaml")})
-        self.assertEqual(outcome["tools"], [])
+        self.assertEqual(outcome["tools"], ["read", "bash"])
         self.assertEqual(outcome["write"]["result"], {})
         self.assertTrue(outcome["write"]["input"]["path"].startswith("/proc/self/fd/"))
         self.assertTrue(outcome["after"]["result"].get("block"))
@@ -1352,7 +1423,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
             with self.subTest(choice=choice):
                 outcome = self._run_shim({"hasUI": bool(choice), "confirmation": choice,
                                           "path": str(self.repo / "a.mjs")})
-                self.assertEqual(outcome["tools"], [])
+                self.assertEqual(outcome["tools"], ["read", "bash"])
                 self.assertEqual(outcome["write"]["result"], {})
                 self.assertTrue(outcome["before"]["activationDispatch"]["result"].get("block"))
 
@@ -1365,7 +1436,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
 
     def test_activation_tool_is_blocked_as_an_unknown_tool(self):
         outcome = self._run_shim({})
-        self.assertEqual(outcome["tools"], [])
+        self.assertEqual(outcome["tools"], ["read", "bash"])
         self.assertTrue(outcome["before"]["activationDispatch"]["result"].get("block"))
 
     def test_same_file_collision_survives_authority_replacement_while_old_lease_is_open(self):
@@ -1458,26 +1529,14 @@ class PiAuthorityExtensionTests(unittest.TestCase):
                 retained.rename(self.repo / "a.mjs")
                 (self.repo / "a.mjs").write_text(original, encoding="utf8")
 
-    def test_main_stage_guidance_announces_only_a_real_valid_transition(self):
-        base = self._run_shim({"stageAgain": True}, cwd=self.main)
-        self.assertTrue(any("Radar etapa" in text for text in base["messages"]))
-        self.assertFalse(any("💪 Chanks" in text for text in base["messages"]))
-        same = self._run_shim({"stageAgain": True, "stagePath": str(self.stage),
-                               "stageReplacement": {"schema": "radar.etapa/v1", "etapa": 1,
-                                                    "nombre": "Definir", "sesion": "S999"}}, cwd=self.main)
-        self.assertFalse(any("💪 Chanks" in text for text in same["messages"]))
-        changed = self._run_shim({"stageAgain": True, "stagePath": str(self.stage),
-                                  "stageReplacement": {"schema": "radar.etapa/v1", "etapa": 2,
-                                                       "nombre": "Preparar"}}, cwd=self.main)
-        self.assertEqual(sum("💪 Chanks" in text for text in changed["messages"]), 1)
-        renamed = self._run_shim({"stageAgain": True, "stagePath": str(self.stage),
-                                  "stageReplacement": {"schema": "radar.etapa/v1", "etapa": 2,
-                                                       "nombre": "Construir"}}, cwd=self.main)
-        self.assertEqual(sum("💪 Chanks" in text for text in renamed["messages"]), 1)
-        invalid = self._run_shim({"stageAgain": True, "stagePath": str(self.stage),
-                                  "stageReplacement": {"schema": "radar.etapa/v1", "etapa": "bad",
-                                                       "nombre": "fake"}}, cwd=self.main)
-        self.assertFalse(any("💪 Chanks" in text for text in invalid["messages"]))
+    def test_main_tree_does_not_poll_and_can_observe_only_explicit_stage_results(self):
+        sequence = [
+            {"command": "radar etapa S200", "output": {"schema": "radar.etapa/v1", "sesion": "S200", "etapa": 1, "nombre": "Definir"}},
+            {"command": "radar etapa S200", "output": {"schema": "radar.etapa/v1", "sesion": "S200", "etapa": 2, "nombre": "Preparar"}},
+        ]
+        outcome = self._run_shim({"stageAgain": True, "stageCalls": sequence}, cwd=self.main)
+        self.assertEqual([m for m in outcome["messages"] if "💪 Chanks" in m], ["💪 Chanks · Etapa 2 · Preparar"])
+        self.assertEqual(outcome["tools"], ["read", "bash"])
 
     def test_generated_shim_never_exposes_a_raw_grant_or_reimplements_pi_controls(self):
         body = INSTALLER.desired_pi_extension(ROOT).decode("utf8")

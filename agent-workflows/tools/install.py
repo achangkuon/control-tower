@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+import json
 import os
 from pathlib import Path
 import re
@@ -576,10 +577,16 @@ PI_EXTENSION_TEMPLATE = """\
 // from git and the installed Radar — never from the model and never from a host process.
 import {{ execFileSync }} from "node:child_process"
 import {{ realpathSync }} from "node:fs"
+import {{ homedir }} from "node:os"
+import {{ resolve }} from "node:path"
+import {{ createReadToolDefinition, createBashToolDefinition }} from "@earendil-works/pi-coding-agent"
+import {{ Text, Container }} from "@earendil-works/pi-tui"
 import {{ buildAdmission, resolveExecutable }} from "{admision}"
 import {{ crearAutoridadPi }} from "{autoridad}"
 import {{ effectiveSwitchAt }} from "{interruptor}"
-import {{ firmaHerramienta }} from "{firma}"
+import {{ firmaHerramienta, radarDirecto }} from "{firma}"
+
+const CHANKS_SKILLS = new Set({chanks_skills})
 
 // A timeout fails a mutation-relevant call closed rather than hanging the extension forever
 // (R3-no-exec-timeout / R4-unbounded-sync-subprocess-per-tool-call).
@@ -638,9 +645,10 @@ export default function chanksControls(pi: any) {{
   let isMainWorkingTree = false
   let authority: any = null
   let currentAdmission: any = null
-  let previousStage: string | null = null
+  const stages = new Map<string, string>()
+  const originalCommands = new Map<string, string>()
   let admissionFailure = "no exact dispatch marker or fresh Radar evidence"
-  const outcomes = new Map<string, {{ kind: string, owner?: any, toolName: string, originalPath?: string, signature?: string }}>()
+  const outcomes = new Map<string, {{ kind: string, owner?: any, toolName: string, originalPath?: string, signature?: string, stageSession?: string }}>()
   const seen = new Set<string>()
 
   const initialize = () => {{
@@ -655,28 +663,62 @@ export default function chanksControls(pi: any) {{
     }} catch {{ root = null; commonDir = null; workingDirectory = null }}
   }}
 
-  const notifyRadar = (ctx: any, subcommand: string) => {{
-    try {{ if (ctx?.hasUI) ctx.ui.notify(`🗼 Torre · radar ${{subcommand}}`, "info") }}
-    catch {{ /* A visibility failure cannot change Radar output or admission. */ }}
+  // Trust only an exact installed skill name and canonical SKILL.md below the installed root.
+  // Resolving both paths prevents substring impostors and symlinks escaping the root.
+  const skillName = (path: unknown, cwd: string) => {{
+    if (typeof path !== "string") return null
+    try {{
+      const installed = realpathSync(resolve(homedir(), ".agents/skills"))
+      const requested = resolve(cwd, path.startsWith("~/") ? resolve(homedir(), path.slice(2)) : path)
+      const target = realpathSync(requested)
+      for (const name of CHANKS_SKILLS) {{
+        const exact = resolve(installed, name, "SKILL.md")
+        if (requested === exact && target === exact) return name
+      }}
+    }} catch {{ /* Missing files and broken symlinks are not trusted reads. */ }}
+    return null
   }}
 
-  const guidance = (ctx: any) => {{
-    if (!root) return
+  const renderBadge = (badge: string, original: any) => {{
+    const container = new Container()
+    container.addChild(new Text(badge, 0, 0))
+    container.addChild(original)
+    return container
+  }}
+  const readTool = createReadToolDefinition(process.cwd())
+  pi.registerTool({{
+    ...readTool,
+    renderCall(args: any, theme: any, context: any) {{
+      const original = readTool.renderCall(args, theme, context)
+      const name = skillName(args?.path, context?.cwd ?? process.cwd())
+      return name ? renderBadge(`💪 Chanks · ${{name}} · lectura solicitada`, original) : original
+    }},
+  }})
+  const bashTool = createBashToolDefinition(process.cwd())
+  pi.registerTool({{
+    ...bashTool,
+    renderCall(args: any, theme: any, context: any) {{
+      const command = originalCommands.get(context?.toolCallId) ?? args?.command
+      const displayArgs = {{ ...args, command }}
+      const original = bashTool.renderCall(displayArgs, theme, context)
+      const radar = radarDirecto(command)
+      return radar ? renderBadge(`🗼 Torre · radar ${{radar.subcommand}} · solicitado`, original) : original
+    }},
+  }})
+
+  const observeStage = (event: any, session: string, ctx: any) => {{
     try {{
-      const radar = resolveExecutable("radar", root)
-      const raw = execFileSync(radar, ["etapa", "-C", root],
-        {{ cwd: root, timeout: EXEC_TIMEOUT_MS, stdio: ["ignore", "pipe", "ignore"], maxBuffer: 4096 }})
-      notifyRadar(ctx, "etapa")
-      const stage = JSON.parse(raw.toString("utf8"))
-      if (stage?.schema !== "radar.etapa/v1" || !Number.isInteger(stage.etapa) ||
-        stage.etapa < 1 || typeof stage.nombre !== "string" || !stage.nombre.trim()) return
+      if (event.isError || event.details?.truncation || event.content?.length !== 1 || event.content[0]?.type !== "text") return
+      const stage = JSON.parse(event.content[0].text)
+      if (stage?.schema !== "radar.etapa/v1" || stage.sesion !== session ||
+        !Number.isInteger(stage.etapa) || stage.etapa < 1 ||
+        typeof stage.nombre !== "string" || !stage.nombre.trim()) return
       const key = `${{stage.etapa}}:${{stage.nombre}}`
-      if (key !== previousStage && ctx?.hasUI) {{
-        const transition = previousStage !== null && previousStage !== key
-        ctx.ui.notify(`${{transition ? "💪 Chanks · " : "Radar etapa · "}}${{stage.etapa}} · ${{stage.nombre}}`, "info")
-      }}
-      previousStage = key
-    }} catch {{ /* Invalid observations do not manufacture a transition. */ }}
+      const previous = stages.get(session)
+      stages.set(session, key)
+      if (previous && previous !== key && ctx?.hasUI)
+        ctx.ui.notify(`💪 Chanks · Etapa ${{stage.etapa}} · ${{stage.nombre}}`, "info")
+    }} catch {{ /* An invalid result cannot manufacture a stage transition. */ }}
   }}
 
   // Read on every governed decision below (R4-switch-evaluated-once-at-load /
@@ -709,11 +751,8 @@ export default function chanksControls(pi: any) {{
     if (authority?.estado() === "activa") return true
     try {{
       const radar = resolveExecutable("radar", root)
-      const dependencies = {{ radar, execFile: (exe: string, args: string[], options: any) => {{
-        const raw = execFileSync(exe, args, options)
-        if (exe === radar && ["status", "sesion"].includes(args[0])) notifyRadar(ctx, args[0])
-        return raw
-      }} }}
+      const dependencies = {{ radar, execFile: (exe: string, args: string[], options: any) =>
+        execFileSync(exe, args, options) }}
       currentAdmission = buildAdmission({{ repositoryRoot: root, dependencies }})
       authority = crearAutoridadPi({{ identidadActual: () => currentAdmission.identidadActual() }})
       if (!authority.activarAutomaticamente(currentAdmission.bundle)) throw new Error("admission rejected")
@@ -729,11 +768,13 @@ export default function chanksControls(pi: any) {{
     const id = event?.toolCallId
     if (typeof id !== "string" || !id || seen.has(id)) return {{ block: true, reason: "duplicate or missing tool-call identity" }}
     seen.add(id)
-    // Retain the original command before confinement rewrites it. The notice is emitted only
-    // for an accepted call's matching tool_result, never for an admission refusal.
+    // The renderer needs the original command even after the admission handler confines bash.
+    const command = event?.toolName === "bash" ? event?.input?.command : null
+    if (typeof command === "string") originalCommands.set(id, command)
+    const stageSession = radarDirecto(command)?.sessionId ?? undefined
     let signature: string | undefined
-    try {{ signature = firmaHerramienta(event) ?? undefined }} catch {{ /* A notice cannot gate a call. */ }}
-    if (!isEffective() || isMainWorkingTree) {{ outcomes.set(id, {{ kind: "bypassed", toolName: event?.toolName, signature }}); return {{}} }}
+    if (event?.toolName !== "bash") try {{ signature = firmaHerramienta(event) ?? undefined }} catch {{ /* A notice cannot gate a call. */ }}
+    if (!isEffective() || isMainWorkingTree) {{ outcomes.set(id, {{ kind: "bypassed", toolName: event?.toolName, signature, stageSession }}); return {{}} }}
     if (READ_ONLY_TOOLS.includes(event?.toolName)) {{ outcomes.set(id, {{ kind: "read", toolName: event.toolName, signature }}); return {{}} }}
     if (event?.toolName === "bash") {{
       const command = event?.input?.command
@@ -741,7 +782,7 @@ export default function chanksControls(pi: any) {{
       const confined = readOnlyConfinement(command, root!, workingDirectory!)
       if (!confined) return {{ block: true, reason: "read-only/no-network confinement unavailable" }}
       event.input.command = confined
-      outcomes.set(id, {{ kind: "read-only bash", toolName: "bash", signature }})
+      outcomes.set(id, {{ kind: "read-only bash", toolName: "bash", stageSession }})
       return {{}}
     }}
     if (!["write", "edit"].includes(event?.toolName)) return {{ block: true, reason: "unknown tool blocked" }}
@@ -765,13 +806,13 @@ export default function chanksControls(pi: any) {{
     if (outcome.toolName !== event.toolName) return
     outcomes.delete(id)
     if (outcome.owner) outcome.owner.completar(id, outcome.kind)
+    if (outcome.stageSession) observeStage(event, outcome.stageSession, ctx)
     try {{
       if (!event?.isError && outcome.signature && ctx?.hasUI) ctx.ui.notify(outcome.signature, "info")
     }} catch {{ /* UI failure cannot change the completed tool result. */ }}
   }})
-  pi.on("session_shutdown", () => erase(true))
-  pi.on("session_start", (_event: any, ctx: any) => {{ erase(true); initialize(); guidance(ctx) }})
-  pi.on("agent_end", (_event: any, ctx: any) => guidance(ctx))
+  pi.on("session_shutdown", () => {{ erase(true); stages.clear(); originalCommands.clear() }})
+  pi.on("session_start", () => {{ erase(true); stages.clear(); originalCommands.clear(); initialize() }})
 }}
 """
 
@@ -793,6 +834,7 @@ def desired_pi_extension(root: Path | None = None) -> bytes:
             raise InstallError(f"missing Pi control module: {modulo}")
     return PI_EXTENSION_TEMPLATE.format(
         admision=admision, autoridad=autoridad, interruptor=interruptor, firma=firma,
+        chanks_skills=json.dumps(CHANKS_SKILLS),
     ).encode("utf8")
 
 
