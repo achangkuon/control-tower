@@ -1,0 +1,680 @@
+From 483b50c9afef70f89c136a7b469187682682fd09 Mon Sep 17 00:00:00 2001
+From: achangkuon <achangkuon@gmail.com>
+Date: Mon, 28 Sep 2026 16:51:29 -0500
+Subject: [PATCH] feat(coding-agent,tui): add tool call annotations
+
+---
+ packages/coding-agent/docs/extensions.md      |  15 +++
+ .../coding-agent/src/core/extensions/index.ts |   1 +
+ .../src/core/extensions/loader.ts             |   7 ++
+ .../src/core/extensions/runner.ts             |  30 +++++
+ .../coding-agent/src/core/extensions/types.ts |   7 ++
+ packages/coding-agent/src/index.ts            |   1 +
+ .../interactive/components/tool-execution.ts  |  26 +++-
+ .../src/modes/interactive/interactive-mode.ts |   6 +
+ .../test/extensions-runner.test.ts            | 103 ++++++++++++++++
+ .../test/tool-execution-component.test.ts     | 114 ++++++++++++++++++
+ packages/tui/src/components/text.ts           |  37 +++++-
+ packages/tui/src/index.ts                     |   2 +-
+ packages/tui/test/text-inline-suffix.test.ts  |  54 +++++++++
+ 13 files changed, 396 insertions(+), 7 deletions(-)
+ create mode 100644 packages/tui/test/text-inline-suffix.test.ts
+
+diff --git a/packages/coding-agent/docs/extensions.md b/packages/coding-agent/docs/extensions.md
+index a0a833e05..a17d45538 100644
+--- a/packages/coding-agent/docs/extensions.md
++++ b/packages/coding-agent/docs/extensions.md
+@@ -81,6 +81,7 @@ Automatic retries, recovery, compaction, or queued work can continue afterward.
+ | Change active tools, model, or thinking level | Session control methods on `pi` |
+ | Add a model provider | `pi.registerProvider()` |
+ | Add terminal rendering | Renderer registration and `ctx.ui` |
++| Add presentation-only text to a tool call | `pi.registerToolCallAnnotation()` |
+ | Communicate with another extension | `pi.events` |
+ 
+ Use the exported declarations in [`extensions/types.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/extensions/types.ts) for exact event, context, tool, and result types.
+@@ -143,6 +144,20 @@ Truncate large model-facing results and tell the model where to read the complet
+ 
+ See [`hello.ts`](../examples/extensions/hello.ts), [`todo.ts`](../examples/extensions/todo.ts), [`dynamic-tools.ts`](../examples/extensions/dynamic-tools.ts), and [`truncated-tool.ts`](../examples/extensions/truncated-tool.ts).
+ 
++### Annotate a tool call without replacing it
++
++`pi.registerToolCallAnnotation(toolName, callback)` adds optional plain text to the **call row** in the interactive TUI. It does not register a tool, change arguments or results, or add model-visible content. The callback runs synchronously with a separate immutable clone of the current call arguments; return one line of plain text or `undefined`:
++
++```typescript
++export default function (pi: ExtensionAPI) {
++  pi.registerToolCallAnnotation("read", (args) =>
++    typeof args.path === "string" ? " · local" : undefined
++  );
++}
++```
++
++Multiple registrations are considered in extension registration order. Empty, multiline, control-character, terminal-escape, or throwing results are omitted independently. Only complete entries fitting the available cells after the tool's own text and intentional spaces appear; entries never add lines or truncate the owner. Standard `Text` call renderers support this pre-padding slot automatically (including built-in `read`). Other components need to explicitly implement `InlineSuffixComponent` from `@earendil-works/pi-tui`; generic rendered strings are never inspected for apparent whitespace. A `Text` subclass that overrides `render()` must also explicitly provide a compatible `setInlineSuffixes()` implementation or it fails closed. Print, JSON, and RPC modes do not evaluate annotations.
++
+ ### Activate tools dynamically
+ 
+ Register every tool first, keep optional tools inactive, and use `pi.setActiveTools()` from a loader tool to select the desired active tools. Names must already be registered; unknown names are ignored.
+diff --git a/packages/coding-agent/src/core/extensions/index.ts b/packages/coding-agent/src/core/extensions/index.ts
+index f9c989b35..9ce896981 100644
+--- a/packages/coding-agent/src/core/extensions/index.ts
++++ b/packages/coding-agent/src/core/extensions/index.ts
+@@ -167,6 +167,7 @@ export type {
+ 	TerminalInputHandler,
+ 	ThinkingLevelSelectEvent,
+ 	// Events - Tool
++	ToolCallAnnotation,
+ 	ToolCallEvent,
+ 	ToolCallEventResult,
+ 	// Tools
+diff --git a/packages/coding-agent/src/core/extensions/loader.ts b/packages/coding-agent/src/core/extensions/loader.ts
+index a957a3488..8bf2973c7 100644
+--- a/packages/coding-agent/src/core/extensions/loader.ts
++++ b/packages/coding-agent/src/core/extensions/loader.ts
+@@ -270,6 +270,12 @@ function createExtensionAPI(
+ 			};
+ 		},
+ 
++		registerToolCallAnnotation(toolName, callback): void {
++			assertActive();
++			extension.toolCallAnnotations ??= [];
++			extension.toolCallAnnotations.push({ toolName, callback });
++		},
++
+ 		registerTool(tool: ToolDefinition): void {
+ 			assertActive();
+ 			if (typeof tool.parameters !== "object" || tool.parameters === null || Array.isArray(tool.parameters)) {
+@@ -525,6 +531,7 @@ function createExtension(extensionPath: string, resolvedPath: string): Extension
+ 		sourceInfo: createSyntheticSourceInfo(extensionPath, { source, baseDir }),
+ 		handlers: new Map(),
+ 		tools: new Map(),
++		toolCallAnnotations: [],
+ 		messageRenderers: new Map(),
+ 		entryRenderers: new Map(),
+ 		commands: new Map(),
+diff --git a/packages/coding-agent/src/core/extensions/runner.ts b/packages/coding-agent/src/core/extensions/runner.ts
+index b0e99f8ff..49ec171a2 100644
+--- a/packages/coding-agent/src/core/extensions/runner.ts
++++ b/packages/coding-agent/src/core/extensions/runner.ts
+@@ -266,6 +266,13 @@ function snapshotEventHandlers(extensions: Extension[], event: ExtensionEvent["t
+ 	return extensions.map((ext) => ({ ext, handlers: ext.handlers.get(event)?.slice() ?? [] }));
+ }
+ 
++function freezeAnnotationArgs(value: unknown, seen = new WeakSet<object>()): void {
++	if (typeof value !== "object" || value === null || seen.has(value)) return;
++	seen.add(value);
++	for (const child of Object.values(value)) freezeAnnotationArgs(child, seen);
++	Object.freeze(value);
++}
++
+ function sameMessages(left: AgentMessage[], right: AgentMessage[]): boolean {
+ 	return left.length === right.length && left.every((message, index) => message === right[index]);
+ }
+@@ -583,6 +590,29 @@ export class ExtensionRunner {
+ 		return this.extensions.map((e) => e.path);
+ 	}
+ 
++	/** Evaluate only presentation callbacks in TUI mode; each sees its own immutable argument snapshot. */
++	getToolCallAnnotations(toolName: string, args: unknown): string[] {
++		if (this.mode !== "tui" || this.staleMessage) return [];
++		const annotations: string[] = [];
++		for (const ext of this.extensions) {
++			for (const registration of ext.toolCallAnnotations ?? []) {
++				if (registration.toolName !== toolName) continue;
++				try {
++					const copy: unknown = structuredClone(args);
++					if (typeof copy !== "object" || copy === null || Array.isArray(copy)) continue;
++					freezeAnnotationArgs(copy);
++					const text: unknown = registration.callback(copy as Readonly<Record<string, unknown>>);
++					if (typeof text === "string" && text.trim() && !/[\p{C}\p{Zl}\p{Zp}]/u.test(text)) {
++						annotations.push(text);
++					}
++				} catch {
++					// Annotation failures never become chat rows or affect tool execution.
++				}
++			}
++		}
++		return annotations;
++	}
++
+ 	/** Get all registered tools from all extensions (first registration per name wins). */
+ 	getAllRegisteredTools(): RegisteredTool[] {
+ 		const toolsByName = new Map<string, RegisteredTool>();
+diff --git a/packages/coding-agent/src/core/extensions/types.ts b/packages/coding-agent/src/core/extensions/types.ts
+index a51dab8b0..74ebe5d31 100644
+--- a/packages/coding-agent/src/core/extensions/types.ts
++++ b/packages/coding-agent/src/core/extensions/types.ts
+@@ -1319,6 +1319,9 @@ export interface MarkdownTransformContext {
+ 
+ export type MarkdownTransformer = (markdown: string, context: MarkdownTransformContext) => string;
+ 
++/** Presentation-only, synchronous text derived from cloned current call arguments. */
++export type ToolCallAnnotation = (args: Readonly<Record<string, unknown>>) => string | undefined;
++
+ export interface EntryRenderOptions {
+ 	expanded: boolean;
+ }
+@@ -1439,6 +1442,9 @@ export interface ExtensionAPI {
+ 	// Tool Registration
+ 	// =========================================================================
+ 
++	/** Add optional plain, single-line text to a tool's TUI call row without registering or replacing the tool. */
++	registerToolCallAnnotation(toolName: string, callback: ToolCallAnnotation): void;
++
+ 	/** Register a tool that the LLM can call. */
+ 	registerTool<TParams extends TSchema = TSchema, TDetails = unknown, TState = any>(
+ 		tool: ToolDefinition<TParams, TDetails, TState>,
+@@ -1943,6 +1949,7 @@ export interface Extension {
+ 	sourceInfo: SourceInfo;
+ 	handlers: Map<string, HandlerFn[]>;
+ 	tools: Map<string, RegisteredTool>;
++	toolCallAnnotations?: Array<{ toolName: string; callback: ToolCallAnnotation }>;
+ 	messageRenderers: Map<string, MessageRenderer>;
+ 	markdownTransformer?: MarkdownTransformer;
+ 	entryRenderers?: Map<string, EntryRenderer>;
+diff --git a/packages/coding-agent/src/index.ts b/packages/coding-agent/src/index.ts
+index 69a6569c3..d5d214299 100644
+--- a/packages/coding-agent/src/index.ts
++++ b/packages/coding-agent/src/index.ts
+@@ -162,6 +162,7 @@ export type {
+ 	SourceInfo,
+ 	TerminalInputHandler,
+ 	ThinkingLevelSelectEvent,
++	ToolCallAnnotation,
+ 	ToolCallEvent,
+ 	ToolCallEventResult,
+ 	ToolDefinition,
+diff --git a/packages/coding-agent/src/modes/interactive/components/tool-execution.ts b/packages/coding-agent/src/modes/interactive/components/tool-execution.ts
+index 2a69cdbd3..6c59d8fa9 100644
+--- a/packages/coding-agent/src/modes/interactive/components/tool-execution.ts
++++ b/packages/coding-agent/src/modes/interactive/components/tool-execution.ts
+@@ -5,6 +5,7 @@ import {
+ 	Container,
+ 	getCapabilities,
+ 	Image,
++	type InlineSuffixComponent,
+ 	MouseRegion,
+ 	Spacer,
+ 	Text,
+@@ -42,6 +43,8 @@ const FALLBACK_PREVIEW_LINES = 10;
+ export interface ToolExecutionOptions {
+ 	showImages?: boolean;
+ 	imageWidthCells?: number;
++	/** TUI-only presentation callback supplied by the active extension runtime. */
++	getCallAnnotations?: (toolName: string, args: unknown) => string[];
+ }
+ 
+ export class ToolExecutionComponent extends Container {
+@@ -63,6 +66,7 @@ export class ToolExecutionComponent extends Container {
+ 	private imageWidthCells: number;
+ 	private isPartial = true;
+ 	private toolDefinition?: ToolRenderers;
++	private getCallAnnotations?: ToolExecutionOptions["getCallAnnotations"];
+ 	private ui: TUI;
+ 	private cwd: string;
+ 	private executionStarted = false;
+@@ -92,6 +96,7 @@ export class ToolExecutionComponent extends Container {
+ 		this.toolCallId = toolCallId;
+ 		this.args = args;
+ 		this.toolDefinition = toolDefinition;
++		this.getCallAnnotations = options.getCallAnnotations;
+ 		this.showImages = options.showImages ?? true;
+ 		this.imageWidthCells = options.imageWidthCells ?? 60;
+ 		this.ui = ui;
+@@ -152,6 +157,21 @@ export class ToolExecutionComponent extends Container {
+ 		};
+ 	}
+ 
++	private annotateCall(component: Component): Component {
++		if (!this.getCallAnnotations || !("setInlineSuffixes" in component)) return component;
++		const slot = component as InlineSuffixComponent;
++		if (typeof slot.setInlineSuffixes !== "function") return component;
++		const style = (text: string) => theme.fg("muted", text);
++		try {
++			if (slot.setInlineSuffixes([], style)) {
++				slot.setInlineSuffixes(this.getCallAnnotations(this.toolName, this.args), style);
++			}
++		} catch {
++			// A broken optional presentation slot must not break the owner renderer.
++		}
++		return component;
++	}
++
+ 	private createCallFallback(): Component {
+ 		return new Text(theme.fg("toolTitle", theme.bold(this.toolName)), 0, 0);
+ 	}
+@@ -322,17 +342,17 @@ export class ToolExecutionComponent extends Container {
+ 
+ 			const callRenderer = this.getCallRenderer();
+ 			if (!callRenderer) {
+-				renderContainer.addChild(this.createResultRegion(this.createCallFallback()));
++				renderContainer.addChild(this.createResultRegion(this.annotateCall(this.createCallFallback())));
+ 				hasContent = true;
+ 			} else {
+ 				try {
+ 					const component = callRenderer(this.args, theme, this.getRenderContext(this.callRendererComponent));
+ 					this.callRendererComponent = component;
+-					renderContainer.addChild(this.createResultRegion(component));
++					renderContainer.addChild(this.createResultRegion(this.annotateCall(component)));
+ 					hasContent = true;
+ 				} catch {
+ 					this.callRendererComponent = undefined;
+-					renderContainer.addChild(this.createResultRegion(this.createCallFallback()));
++					renderContainer.addChild(this.createResultRegion(this.annotateCall(this.createCallFallback())));
+ 					hasContent = true;
+ 				}
+ 			}
+diff --git a/packages/coding-agent/src/modes/interactive/interactive-mode.ts b/packages/coding-agent/src/modes/interactive/interactive-mode.ts
+index 607eec41e..d70d2af61 100644
+--- a/packages/coding-agent/src/modes/interactive/interactive-mode.ts
++++ b/packages/coding-agent/src/modes/interactive/interactive-mode.ts
+@@ -3428,6 +3428,8 @@ export class InteractiveMode {
+ 									{
+ 										showImages: this.settingsManager.getShowImages(),
+ 										imageWidthCells: this.settingsManager.getImageWidthCells(),
++										getCallAnnotations: (name, args) =>
++											this.session.extensionRunner.getToolCallAnnotations(name, args),
+ 									},
+ 									this.getRegisteredToolDefinition(content.name),
+ 									this.ui,
+@@ -3504,6 +3506,8 @@ export class InteractiveMode {
+ 						{
+ 							showImages: this.settingsManager.getShowImages(),
+ 							imageWidthCells: this.settingsManager.getImageWidthCells(),
++							getCallAnnotations: (name, args) =>
++								this.session.extensionRunner.getToolCallAnnotations(name, args),
+ 						},
+ 						this.getRegisteredToolDefinition(event.toolName),
+ 						this.ui,
+@@ -3906,6 +3910,8 @@ export class InteractiveMode {
+ 							{
+ 								showImages: this.settingsManager.getShowImages(),
+ 								imageWidthCells: this.settingsManager.getImageWidthCells(),
++								getCallAnnotations: (name, args) =>
++									this.session.extensionRunner.getToolCallAnnotations(name, args),
+ 							},
+ 							this.getRegisteredToolDefinition(content.name),
+ 							this.ui,
+diff --git a/packages/coding-agent/test/extensions-runner.test.ts b/packages/coding-agent/test/extensions-runner.test.ts
+index 2660fb4df..4fa99394c 100644
+--- a/packages/coding-agent/test/extensions-runner.test.ts
++++ b/packages/coding-agent/test/extensions-runner.test.ts
+@@ -373,6 +373,109 @@ describe("ExtensionRunner", () => {
+ 		});
+ 	});
+ 
++	describe("tool-call annotations", () => {
++		it("composes registrations in extension order without registering tools or exposing mutable arguments", async () => {
++			const runtime = createExtensionRuntime();
++			const args = { path: "before", nested: { value: 1 } };
++			const observed: unknown[] = [];
++			const first = await loadExtensionFromFactory(
++				(pi) => {
++					pi.registerToolCallAnnotation("read", (input) => {
++						observed.push(input);
++						try {
++							(input as { path: string }).path = "changed";
++						} catch {
++							/* immutable */
++						}
++						try {
++							(input.nested as { value: number }).value = 2;
++						} catch {
++							/* immutable */
++						}
++						return "first";
++					});
++					pi.registerToolCallAnnotation("read", (input) => {
++						expect(input).toEqual(args);
++						return "second";
++					});
++				},
++				tempDir,
++				createEventBus(),
++				runtime,
++			);
++			const second = await loadExtensionFromFactory(
++				(pi) => {
++					pi.registerToolCallAnnotation("read", () => "third");
++				},
++				tempDir,
++				createEventBus(),
++				runtime,
++			);
++			const runner = new ExtensionRunner([first, second], runtime, tempDir, sessionManager, modelRegistry);
++			runner.setUIContext({} as ExtensionUIContext, "tui");
++			expect(runner.getAllRegisteredTools()).toEqual([]);
++			expect(runner.getToolCallAnnotations("read", args)).toEqual(["first", "second", "third"]);
++			expect(args).toEqual({ path: "before", nested: { value: 1 } });
++			expect(observed[0]).not.toBe(args);
++			expect(runner.getToolCallAnnotations("bash", args)).toEqual([]);
++			runner.setUIContext(undefined, "print");
++			expect(runner.getToolCallAnnotations("read", args)).toEqual([]);
++		});
++
++		it.each(["", "\n", "a\nb", "a\r", "\x1b[31mred", "\x1b]8;;url\x07link", "\x7f", "\u2028", "\u009b"])(
++			"rejects unsafe annotation %j independently",
++			async (unsafe) => {
++				const runtime = createExtensionRuntime();
++				const ext = await loadExtensionFromFactory(
++					(pi) => {
++						pi.registerToolCallAnnotation("read", () => unsafe);
++						pi.registerToolCallAnnotation("read", () => {
++							throw new Error("silent failure");
++						});
++						pi.registerToolCallAnnotation("read", () => "safe");
++					},
++					tempDir,
++					createEventBus(),
++					runtime,
++				);
++				const runner = new ExtensionRunner([ext], runtime, tempDir, sessionManager, modelRegistry);
++				runner.setUIContext({} as ExtensionUIContext, "tui");
++				const errors = vi.fn();
++				runner.onError(errors);
++				expect(runner.getToolCallAnnotations("read", {})).toEqual(["safe"]);
++				expect(errors).not.toHaveBeenCalled();
++			},
++		);
++
++		it("discards failed factories and invalidates old registrations on reload", async () => {
++			const runtime = createExtensionRuntime();
++			await expect(
++				loadExtensionFromFactory(
++					(pi) => {
++						pi.registerToolCallAnnotation("read", () => "failed");
++						throw new Error("factory failed");
++					},
++					tempDir,
++					createEventBus(),
++					runtime,
++				),
++			).rejects.toThrow("factory failed");
++			const ext = await loadExtensionFromFactory(
++				(pi) => {
++					pi.registerToolCallAnnotation("read", () => "current");
++				},
++				tempDir,
++				createEventBus(),
++				runtime,
++			);
++			const runner = new ExtensionRunner([ext], runtime, tempDir, sessionManager, modelRegistry);
++			runner.setUIContext({} as ExtensionUIContext, "tui");
++			expect(runner.getToolCallAnnotations("read", {})).toEqual(["current"]);
++			runner.invalidate();
++			expect(runner.getToolCallAnnotations("read", {})).toEqual([]);
++		});
++	});
++
+ 	describe("tool collection", () => {
+ 		it("collects tools from multiple extensions", async () => {
+ 			const toolCode = (name: string) => `
+diff --git a/packages/coding-agent/test/tool-execution-component.test.ts b/packages/coding-agent/test/tool-execution-component.test.ts
+index 089cff409..9fec646ae 100644
+--- a/packages/coding-agent/test/tool-execution-component.test.ts
++++ b/packages/coding-agent/test/tool-execution-component.test.ts
+@@ -82,6 +82,120 @@ describe("ToolExecutionComponent parity", () => {
+ 		expect(rendered).not.toContain("converted-partial");
+ 	});
+ 
++	test("actual read and custom Text calls annotate at wide widths without changing results or narrow rows", () => {
++		for (const [index, definition] of [
++			createReadToolDefinition(process.cwd()),
++			{ ...createBaseToolDefinition("read"), renderCall: () => new Text("custom read", 0, 0) },
++		].entries()) {
++			const options = { getCallAnnotations: () => [" +first", " +second"] };
++			const component = new ToolExecutionComponent(
++				"read",
++				"annotated",
++				{ path: "notes.txt" },
++				options,
++				definition,
++				createFakeTui(),
++				process.cwd(),
++			);
++			const wide = stripAnsi(component.render(120).join("\n"));
++			expect(wide).toContain(" +first +second");
++			expect(wide).toContain(index === 0 ? "read notes.txt" : "custom read");
++			const narrow = stripAnsi(component.render(13).join("\n"));
++			expect(narrow).not.toContain("+first");
++			expect(narrow).not.toContain("+second");
++			component.updateResult({ content: [{ type: "text", text: "result" }], isError: false }, false);
++			component.setExpanded(true);
++			expect(stripAnsi(component.render(120).join("\n"))).toContain("result");
++		}
++	});
++
++	test("streams current arguments and uses the same annotation on historical construction", () => {
++		const argsSeen: unknown[] = [];
++		const options = {
++			getCallAnnotations: (_tool: string, args: unknown) => {
++				argsSeen.push(args);
++				return [` +${String((args as Readonly<Record<string, unknown>>).path)}`];
++			},
++		};
++		const definition = { ...createBaseToolDefinition(), renderCall: () => new Text("owner", 0, 0) };
++		const component = new ToolExecutionComponent(
++			"custom_tool",
++			"stream",
++			{ path: "one" },
++			options,
++			definition,
++			createFakeTui(),
++			process.cwd(),
++		);
++		expect(stripAnsi(component.render(60).join("\n"))).toContain(" +one");
++		component.updateArgs({ path: "two" });
++		expect(stripAnsi(component.render(60).join("\n"))).toContain(" +two");
++		const replay = new ToolExecutionComponent(
++			"custom_tool",
++			"replay",
++			{ path: "two" },
++			options,
++			definition,
++			createFakeTui(),
++			process.cwd(),
++		);
++		expect(stripAnsi(replay.render(60).join("\n"))).toContain(" +two");
++		expect(argsSeen.length).toBeGreaterThanOrEqual(3);
++	});
++
++	test("custom full-width components and overridden Text renderers fail closed", () => {
++		class FullWidth {
++			invalidate(): void {}
++			render(width: number): string[] {
++				return ["X".repeat(width)];
++			}
++		}
++		class OverriddenText extends Text {
++			override render(width: number): string[] {
++				return super.render(width);
++			}
++		}
++		for (const renderCall of [() => new FullWidth(), () => new OverriddenText("owner", 0, 0)]) {
++			const getCallAnnotations = vi.fn(() => [" +note"]);
++			const component = new ToolExecutionComponent(
++				"custom_tool",
++				"fail-closed",
++				{},
++				{ getCallAnnotations },
++				{ ...createBaseToolDefinition(), renderCall },
++				createFakeTui(),
++				process.cwd(),
++			);
++			expect(stripAnsi(component.render(40).join("\n"))).not.toContain("+note");
++			expect(getCallAnnotations).not.toHaveBeenCalled();
++		}
++	});
++
++	test("allows a custom component only when it explicitly implements the inline slot", () => {
++		class OptInCall {
++			private text = new Text("opt-in owner", 0, 0);
++			invalidate(): void {
++				this.text.invalidate();
++			}
++			setInlineSuffixes(suffixes: readonly string[], style: (text: string) => string): boolean {
++				return this.text.setInlineSuffixes(suffixes, style);
++			}
++			render(width: number): string[] {
++				return this.text.render(width);
++			}
++		}
++		const component = new ToolExecutionComponent(
++			"custom_tool",
++			"opt-in",
++			{},
++			{ getCallAnnotations: () => [" +note"] },
++			{ ...createBaseToolDefinition(), renderCall: () => new OptInCall() },
++			createFakeTui(),
++			process.cwd(),
++		);
++		expect(stripAnsi(component.render(40).join("\n"))).toContain("opt-in owner +note");
++	});
++
+ 	test("stacks custom call and result renderers like the old implementation", () => {
+ 		const toolDefinition: ToolDefinition = {
+ 			...createBaseToolDefinition(),
+diff --git a/packages/tui/src/components/text.ts b/packages/tui/src/components/text.ts
+index 7a50e2721..46ef83b6c 100644
+--- a/packages/tui/src/components/text.ts
++++ b/packages/tui/src/components/text.ts
+@@ -1,14 +1,21 @@
+ import type { Component } from "../tui.ts";
+ import { applyBackgroundToLine, visibleWidth, wrapTextWithAnsi } from "../utils.ts";
+ 
++/** Opt-in pre-padding slot for textual call renderers. Non-text components have no implicit capacity. */
++export interface InlineSuffixComponent extends Component {
++	setInlineSuffixes(suffixes: readonly string[], style: (text: string) => string): boolean;
++}
++
+ /**
+  * Text component - displays multi-line text with word wrapping
+  */
+-export class Text implements Component {
++export class Text implements InlineSuffixComponent {
+ 	private text: string;
+ 	private paddingX: number; // Left/right padding
+ 	private paddingY: number; // Top/bottom padding
+ 	private customBgFn?: (text: string) => string;
++	private inlineSuffixes: readonly string[] = [];
++	private inlineSuffixStyle?: (text: string) => string;
+ 
+ 	// Cache for rendered output
+ 	private cachedText?: string;
+@@ -42,6 +49,15 @@ export class Text implements Component {
+ 		this.cachedLines = undefined;
+ 	}
+ 
++	/** Refuse subclasses with a different renderer unless they explicitly override this slot contract. */
++	setInlineSuffixes(suffixes: readonly string[], style: (text: string) => string): boolean {
++		if (this.render !== Text.prototype.render) return false;
++		this.inlineSuffixes = suffixes;
++		this.inlineSuffixStyle = style;
++		this.invalidate();
++		return true;
++	}
++
+ 	render(width: number): string[] {
+ 		// Check cache
+ 		if (this.cachedLines && this.cachedText === this.text && this.cachedWidth === width) {
+@@ -72,9 +88,24 @@ export class Text implements Component {
+ 		const rightMargin = " ".repeat(paddingX);
+ 		const contentLines: string[] = [];
+ 
+-		for (const line of wrappedLines) {
++		for (const [index, line] of wrappedLines.entries()) {
++			let content = line;
++			if (index === wrappedLines.length - 1 && this.inlineSuffixStyle) {
++				let available = contentWidth - visibleWidth(line);
++				const accepted: string[] = [];
++				for (const suffix of this.inlineSuffixes) {
++					const cells = visibleWidth(suffix);
++					if (cells <= 0 || cells > available) continue;
++					accepted.push(suffix);
++					available -= cells;
++				}
++				if (accepted.length > 0) {
++					// Isolate both OSC-8 links and SGR styles before and after the annotation.
++					content += `\x1b]8;;\x1b\\\x1b[0m${this.inlineSuffixStyle(accepted.join(""))}\x1b]8;;\x1b\\\x1b[0m`;
++				}
++			}
+ 			// Add margins
+-			const lineWithMargins = leftMargin + line + rightMargin;
++			const lineWithMargins = leftMargin + content + rightMargin;
+ 
+ 			// Apply background if specified (this also pads to full width)
+ 			if (this.customBgFn) {
+diff --git a/packages/tui/src/index.ts b/packages/tui/src/index.ts
+index 06a8ee086..182f59c49 100644
+--- a/packages/tui/src/index.ts
++++ b/packages/tui/src/index.ts
+@@ -61,7 +61,7 @@ export {
+ } from "./components/select-list.ts";
+ export { type SettingItem, SettingsList, type SettingsListTheme } from "./components/settings-list.ts";
+ export { Spacer } from "./components/spacer.ts";
+-export { Text } from "./components/text.ts";
++export { type InlineSuffixComponent, Text } from "./components/text.ts";
+ export { TruncatedText } from "./components/truncated-text.ts";
+ export {
+ 	type StackChild,
+diff --git a/packages/tui/test/text-inline-suffix.test.ts b/packages/tui/test/text-inline-suffix.test.ts
+new file mode 100644
+index 000000000..a402bb522
+--- /dev/null
++++ b/packages/tui/test/text-inline-suffix.test.ts
+@@ -0,0 +1,54 @@
++import assert from "node:assert/strict";
++import { test } from "node:test";
++import { stripTerminalSequences, Text, visibleWidth } from "../src/index.ts";
++
++const style = (value: string) => `\x1b[2m${value}\x1b[0m`;
++
++test("inline suffixes use only pre-padding cells and preserve owner spaces and Unicode width", () => {
++	const text = new Text("界  ", 0, 0);
++	assert.equal(text.setInlineSuffixes([" +a", " +b"], style), true);
++	assert.deepEqual(text.render(10).map(stripTerminalSequences), ["界   +a +b"]);
++	assert.deepEqual(text.render(7).map(stripTerminalSequences), ["界   +a"]);
++	assert.deepEqual(text.render(5).map(stripTerminalSequences), ["界   "]);
++	assert.equal(visibleWidth(text.render(10)[0]!), 10);
++});
++
++test("annotation closes owner style and OSC-8 links before styling and before padding", () => {
++	for (const end of ["\x07", "\x1b\\"]) {
++		for (const close of [true, false]) {
++			const owner = `\x1b]8;;https://example.test${end}\x1b[31mowner${close ? `\x1b]8;;${end}\x1b[0m` : ""}`;
++			const text = new Text(owner, 0, 0);
++			text.setInlineSuffixes([" +note"], style);
++			const row = text.render(20)[0]!;
++			assert.ok(row.includes(`${owner}\x1b]8;;\x1b\\\x1b[0m\x1b[2m +note\x1b[0m`));
++			assert.equal(visibleWidth(row), 20);
++		}
++	}
++});
++
++test("wrapping, line count, right margin, and background padding remain unchanged", () => {
++	const background = (value: string) => `\x1b[44m${value}\x1b[0m`;
++	const text = new Text("abcdefghij\nshort  ", 1, 1, background);
++	const original = text.render(12);
++	text.setInlineSuffixes([" +x"], style);
++	const annotated = text.render(12);
++	assert.equal(annotated.length, original.length);
++	assert.deepEqual(annotated.slice(0, -2), original.slice(0, -2));
++	assert.deepEqual(annotated.map(visibleWidth), original.map(visibleWidth));
++	assert.equal(stripTerminalSequences(annotated.at(-2)!), " short   +x ");
++	assert.ok(annotated.at(-2)!.startsWith("\x1b[44m"));
++});
++
++test("empty text remains empty and overridden Text rendering fails closed", () => {
++	const empty = new Text("", 0, 0);
++	assert.equal(empty.setInlineSuffixes([" +note"], style), true);
++	assert.deepEqual(empty.render(20), []);
++	class Overridden extends Text {
++		override render(width: number): string[] {
++			return super.render(width);
++		}
++	}
++	const overridden = new Overridden("owner", 0, 0);
++	assert.equal(overridden.setInlineSuffixes([" +note"], style), false);
++	assert.equal(overridden.render(20)[0], "owner               ");
++});
+-- 
+2.54.0
+

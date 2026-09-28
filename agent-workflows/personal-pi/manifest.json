@@ -1,0 +1,24 @@
+{
+  "upstream": "https://github.com/earendil-works/pi.git",
+  "base_commit": "fd889a2741891ee45116cb6131052d7fad220886",
+  "base_tree": "fe655b4bd6536d970aabdd7f7ca125df39d37b0a",
+  "reviewed_commit": "483b50c9afef70f89c136a7b469187682682fd09",
+  "evidence_commit": "7b84c8bb7f974e3d08681b6057b9b101c6ebf707",
+  "patch_sha256": "513e018c76a3f3b2f31216124a318aacef95e6e5824d6a6d4b1855fc151ae6a6",
+  "result_tree": "b38cc5a3a5f2c5a6fa3d10ea536dd09f343a0b6c",
+  "selected_paths": [
+    "packages/coding-agent/docs/extensions.md",
+    "packages/coding-agent/src/core/extensions/index.ts",
+    "packages/coding-agent/src/core/extensions/loader.ts",
+    "packages/coding-agent/src/core/extensions/runner.ts",
+    "packages/coding-agent/src/core/extensions/types.ts",
+    "packages/coding-agent/src/index.ts",
+    "packages/coding-agent/src/modes/interactive/components/tool-execution.ts",
+    "packages/coding-agent/src/modes/interactive/interactive-mode.ts",
+    "packages/coding-agent/test/extensions-runner.test.ts",
+    "packages/coding-agent/test/tool-execution-component.test.ts",
+    "packages/tui/src/components/text.ts",
+    "packages/tui/src/index.ts",
+    "packages/tui/test/text-inline-suffix.test.ts"
+  ]
+}
