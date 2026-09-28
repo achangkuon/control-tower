@@ -81,6 +81,10 @@ Authorized by Emilio on 2026-09-28 as a patch to the Chanks flow. Files:
     30 subsets, verified individually too).
   - `bun test` (repo root) — 1549 pass, 0 fail, 7712 expect() calls, across 106 files.
 
+- 2026-09-28: Main spot check reran `test_standalone_contract.mjs` (PASS) and `test_builder_flow`
+  (22/22 OK). RDD assess over `0affdd0..HEAD`: risk medium (`executable_change` on the handoff
+  template), `review_due: false`, reason `under_budget`; stays pending in the slice.
+
 ## Next step
 
 T2 — reinstall skills after Emilio confirms, then verify with `install.py --check`.
