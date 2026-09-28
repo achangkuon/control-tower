@@ -776,10 +776,11 @@ const scenario = JSON.parse(process.argv[3])
 const handlers = {}
 const messages = []
 const tools = []
-const renderers = {}
+const annotations = {}
 const pi = {
   on(name, handler) { (handlers[name] ??= []).push(handler) },
-  registerTool(definition) { tools.push(definition.name); renderers[definition.name] = definition },
+  registerTool(definition) { tools.push(definition.name) },
+  registerToolCallAnnotation(name, callback) { annotations[name] = callback },
 }
 const ctx = { hasUI: true, mode: 'tui', ui: { notify(message) { messages.push(message) } } }
 extension(pi)
@@ -790,14 +791,14 @@ const active = new Map()
 const displayed = {}
 async function call(toolName, input, id = `call-${++counter}`) {
   const event = { type: 'tool_call', toolCallId: id, toolName, input }
+  const displayArgs = structuredClone(input) // the real TUI keeps pre-policy args
   let result = {}
   for (const handler of handlers.tool_call ?? []) {
     result = await handler(event, ctx) ?? {}
     if (result.block) break
   }
   if (!result.block) active.set(id, { toolName, input: event.input })
-  const renderer = renderers[toolName]
-  if (renderer?.renderCall) displayed[id] = renderer.renderCall(event.input, {}, { toolCallId: id }).render(200).join('\\n')
+  if (!result.block && annotations[toolName]) displayed[id] = `${toolName} ${displayArgs.path ?? displayArgs.command ?? ''} ${annotations[toolName](displayArgs) ?? ''}`
   return { id, result, input: event.input }
 }
 async function complete(id, toolName, content = []) {
@@ -860,7 +861,7 @@ if (scenario.shutdown) for (const handler of handlers.session_shutdown ?? []) aw
 const fdAfterShutdown = scenario.shutdown && write.input.path.startsWith('/proc/self/fd/') ? existsSync(write.input.path) : null
 if (scenario.stageReplacement) writeFileSync(scenario.stagePath, JSON.stringify(scenario.stageReplacement))
 if (scenario.stageAgain) for (const handler of handlers.agent_end ?? []) await handler({ type: 'agent_end' }, ctx)
-console.log(JSON.stringify({ registered: true, tools, displayed, stageCalls, skillRead, before, write, after, third, duplicate, rejectedRadar, messagesAtCall, messages, active: [...active.keys()], fdAfterResult, fdAfterShutdown }))
+console.log(JSON.stringify({ registered: true, tools, annotations: Object.keys(annotations), displayed, stageCalls, skillRead, before, write, after, third, duplicate, rejectedRadar, messagesAtCall, messages, active: [...active.keys()], fdAfterResult, fdAfterShutdown }))
 """
 
 
@@ -1115,8 +1116,8 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         self.assertEqual(outcome["messages"].count("💪 Chanks · Etapa 2 · Preparar"), 1)
         self.assertFalse(any("Radar etapa ·" in message or "🗼 Torre · radar etapa" in message for message in outcome["messages"]))
         self.assertNotIn("💪 Chanks · Etapa 9 · Falso", outcome["messages"])
-        self.assertEqual(outcome["tools"].count("read"), 1)
-        self.assertEqual(outcome["tools"].count("bash"), 1)
+        self.assertEqual(outcome["tools"], [])  # quiet-tools owns read/bash, not Chanks
+        self.assertEqual(outcome["annotations"], ["read", "bash"])
         self.assertEqual(outcome["before"]["bash"]["input"]["command"], "radar etapa S164 -C .")
         forged = self._run_shim({"skillPath": str(outside), "bashCommand": "false && radar etapa S164"})
         self.assertNotIn("💪 Chanks", forged["displayed"][forged["skillRead"]["id"]])
@@ -1246,7 +1247,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         for name in ("read", "write", "edit", "bash", "activationDispatch"):
             self.assertEqual(outcome["before"][name]["result"], {})
         self.assertEqual(outcome["before"]["bash"]["input"]["command"], "printf before")
-        self.assertEqual(outcome["tools"], ["read", "bash"])
+        self.assertEqual(outcome["tools"], [])
 
     def test_switch_on_without_a_plan_is_also_inert(self):
         (self.repo / "openspec" / "plan.yaml").unlink()
@@ -1269,7 +1270,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         self.assertIn("--ro-bind", confined)
         self.assertNotIn("--bind", confined)
         self.assertNotEqual(confined, "printf before")
-        self.assertEqual(outcome["tools"], ["read", "bash"])
+        self.assertEqual(outcome["tools"], [])
 
     def test_admitted_bash_remains_read_only_and_reports_write_failure(self):
         self._marker()
@@ -1369,7 +1370,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         for name in ("read", "write", "edit", "bash", "activationDispatch"):
             self.assertEqual(outcome["before"][name]["result"], {})
         self.assertEqual(outcome["before"]["bash"]["input"]["command"], "printf before")
-        self.assertEqual(outcome["tools"], ["read", "bash"])
+        self.assertEqual(outcome["tools"], [])
 
     def test_main_working_tree_subdirectory_is_also_inert(self):
         subdirectory = self.main / "agent-workflows"
@@ -1390,7 +1391,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         self._write_radar([{"id": "S200", "estado": "LISTO", "archivos": ["a.mjs"]}])
         outcome = self._run_shim({"path": str(self.repo / "a.mjs"),
                                   "afterPath": str(self.repo / "openspec/plan.yaml")})
-        self.assertEqual(outcome["tools"], ["read", "bash"])
+        self.assertEqual(outcome["tools"], [])
         self.assertEqual(outcome["write"]["result"], {})
         self.assertTrue(outcome["write"]["input"]["path"].startswith("/proc/self/fd/"))
         self.assertTrue(outcome["after"]["result"].get("block"))
@@ -1423,7 +1424,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
             with self.subTest(choice=choice):
                 outcome = self._run_shim({"hasUI": bool(choice), "confirmation": choice,
                                           "path": str(self.repo / "a.mjs")})
-                self.assertEqual(outcome["tools"], ["read", "bash"])
+                self.assertEqual(outcome["tools"], [])
                 self.assertEqual(outcome["write"]["result"], {})
                 self.assertTrue(outcome["before"]["activationDispatch"]["result"].get("block"))
 
@@ -1436,7 +1437,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
 
     def test_activation_tool_is_blocked_as_an_unknown_tool(self):
         outcome = self._run_shim({})
-        self.assertEqual(outcome["tools"], ["read", "bash"])
+        self.assertEqual(outcome["tools"], [])
         self.assertTrue(outcome["before"]["activationDispatch"]["result"].get("block"))
 
     def test_same_file_collision_survives_authority_replacement_while_old_lease_is_open(self):
@@ -1536,7 +1537,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         ]
         outcome = self._run_shim({"stageAgain": True, "stageCalls": sequence}, cwd=self.main)
         self.assertEqual([m for m in outcome["messages"] if "💪 Chanks" in m], ["💪 Chanks · Etapa 2 · Preparar"])
-        self.assertEqual(outcome["tools"], ["read", "bash"])
+        self.assertEqual(outcome["tools"], [])
 
     def test_generated_shim_never_exposes_a_raw_grant_or_reimplements_pi_controls(self):
         body = INSTALLER.desired_pi_extension(ROOT).decode("utf8")

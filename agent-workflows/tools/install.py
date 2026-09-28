@@ -579,8 +579,6 @@ import {{ execFileSync }} from "node:child_process"
 import {{ realpathSync }} from "node:fs"
 import {{ homedir }} from "node:os"
 import {{ resolve }} from "node:path"
-import {{ createReadToolDefinition, createBashToolDefinition }} from "@earendil-works/pi-coding-agent"
-import {{ Text, Container }} from "@earendil-works/pi-tui"
 import {{ buildAdmission, resolveExecutable }} from "{admision}"
 import {{ crearAutoridadPi }} from "{autoridad}"
 import {{ effectiveSwitchAt }} from "{interruptor}"
@@ -646,7 +644,6 @@ export default function chanksControls(pi: any) {{
   let authority: any = null
   let currentAdmission: any = null
   const stages = new Map<string, string>()
-  const originalCommands = new Map<string, string>()
   let admissionFailure = "no exact dispatch marker or fresh Radar evidence"
   const outcomes = new Map<string, {{ kind: string, owner?: any, toolName: string, originalPath?: string, signature?: string, stageSession?: string }}>()
   const seen = new Set<string>()
@@ -679,31 +676,15 @@ export default function chanksControls(pi: any) {{
     return null
   }}
 
-  const renderBadge = (badge: string, original: any) => {{
-    const container = new Container()
-    container.addChild(new Text(badge, 0, 0))
-    container.addChild(original)
-    return container
-  }}
-  const readTool = createReadToolDefinition(process.cwd())
-  pi.registerTool({{
-    ...readTool,
-    renderCall(args: any, theme: any, context: any) {{
-      const original = readTool.renderCall(args, theme, context)
-      const name = skillName(args?.path, context?.cwd ?? process.cwd())
-      return name ? renderBadge(`💪 Chanks · ${{name}} · lectura solicitada`, original) : original
-    }},
+  // Presentation only: gentle-pi owns read/bash and Pi adds these to a compatible Text row.
+  // Custom lifecycle components have no inline slot and remain entirely owner-rendered.
+  pi.registerToolCallAnnotation("read", (args: any) => {{
+    const name = skillName(args?.path, workingDirectory ?? process.cwd())
+    return name ? `💪 Chanks · ${{name}} · lectura solicitada` : undefined
   }})
-  const bashTool = createBashToolDefinition(process.cwd())
-  pi.registerTool({{
-    ...bashTool,
-    renderCall(args: any, theme: any, context: any) {{
-      const command = originalCommands.get(context?.toolCallId) ?? args?.command
-      const displayArgs = {{ ...args, command }}
-      const original = bashTool.renderCall(displayArgs, theme, context)
-      const radar = radarDirecto(command)
-      return radar ? renderBadge(`🗼 Torre · radar ${{radar.subcommand}} · solicitado`, original) : original
-    }},
+  pi.registerToolCallAnnotation("bash", (args: any) => {{
+    const radar = radarDirecto(args?.command)
+    return radar ? `🗼 Torre · radar ${{radar.subcommand}} · solicitado` : undefined
   }})
 
   const observeStage = (event: any, session: string, ctx: any) => {{
@@ -768,9 +749,7 @@ export default function chanksControls(pi: any) {{
     const id = event?.toolCallId
     if (typeof id !== "string" || !id || seen.has(id)) return {{ block: true, reason: "duplicate or missing tool-call identity" }}
     seen.add(id)
-    // The renderer needs the original command even after the admission handler confines bash.
     const command = event?.toolName === "bash" ? event?.input?.command : null
-    if (typeof command === "string") originalCommands.set(id, command)
     const stageSession = radarDirecto(command)?.sessionId ?? undefined
     let signature: string | undefined
     if (event?.toolName !== "bash") try {{ signature = firmaHerramienta(event) ?? undefined }} catch {{ /* A notice cannot gate a call. */ }}
@@ -811,8 +790,8 @@ export default function chanksControls(pi: any) {{
       if (!event?.isError && outcome.signature && ctx?.hasUI) ctx.ui.notify(outcome.signature, "info")
     }} catch {{ /* UI failure cannot change the completed tool result. */ }}
   }})
-  pi.on("session_shutdown", () => {{ erase(true); stages.clear(); originalCommands.clear() }})
-  pi.on("session_start", () => {{ erase(true); stages.clear(); originalCommands.clear(); initialize() }})
+  pi.on("session_shutdown", () => {{ erase(true); stages.clear() }})
+  pi.on("session_start", () => {{ erase(true); stages.clear(); initialize() }})
 }}
 """
 
