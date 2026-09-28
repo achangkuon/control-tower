@@ -60,7 +60,7 @@ Authorized by Emilio on 2026-09-28 as a patch to the Chanks flow. Files:
 
 - [x] T1 — Rewrite the revalidation rule in the seal, sealing reference and handoff template;
   pin accepted/rejected cases in tests. Route: delegated (writer trigger: 3+ non-trivial files).
-- [ ] T2 — Reinstall skills after Emilio confirms; verify with `install.py --check`. Route: inline.
+- [x] T2 — Reinstall skills after Emilio confirms; verify with `install.py --check`. Route: inline.
 
 ## Progress
 
@@ -85,6 +85,11 @@ Authorized by Emilio on 2026-09-28 as a patch to the Chanks flow. Files:
   (22/22 OK). RDD assess over `0affdd0..HEAD`: risk medium (`executable_change` on the handoff
   template), `review_due: false`, reason `under_budget`; stays pending in the slice.
 
+- 2026-09-28: Emilio approved delivery without RDD review. Fast-forwarded master to `560a61f`
+  and pushed. `install.py` → INSTALLED; `install.py --check` → OK; the new rule is present in
+  `~/.claude/skills` and `~/.agents/skills` (Pi). Stale S164/S165 markers and empty `work/` branches
+  removed; both Sessions LISTO again.
+
 ## Next step
 
-T2 — reinstall skills after Emilio confirms, then verify with `install.py --check`.
+Re-seal S164 and S165 and dispatch them from Main running in Pi.
