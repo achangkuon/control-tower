@@ -4,6 +4,8 @@
 #   carril                  report the lane of THIS terminal
 #   carril limpio           Pi with only Gentle AI's shipped pieces (isolated config dir)
 #   carril estable          Pi with the everyday config (~/.pi/agent), same as plain `pi`
+#   carril candidato <wt>   the everyday config, with repo-owned skills, instructions and the
+#                           chanks extension taken from worktree <wt>; rebuilt on every launch
 #   carril preparar limpio  build the limpio lane once, from the stable settings
 #
 # The lane lives in this process's environment only: closing the terminal leaves nothing
@@ -26,6 +28,8 @@ Uso: carril [limpio|estable] [argumentos de pi...]
   carril                  muestra en qué carril está esta terminal
   carril limpio           Pi solo con Gentle AI
   carril estable          Pi con tu configuración de todos los días
+  carril candidato <wt>   tu Pi de siempre, con skills e instrucciones del worktree <wt>
+                          (nombre dentro de Worktrees/ o ruta completa)
   carril preparar limpio  arma el carril limpio (una sola vez)
 EOF
 }
@@ -121,6 +125,99 @@ preparar_limpio() {
   echo "carril: listo. Abrilo con: carril limpio"
 }
 
+# --- candidato: the stable setup, with every repo-owned piece read from one worktree ---
+
+CANDIDATO_BASE="${CARRIL_CANDIDATO_BASE:-$HOME/.pi/agent-candidato}"
+WORKTREES_DIR="${CARRIL_WORKTREES_DIR:-$HOME/projects/control-tower/Worktrees}"
+# Shared by link: credentials must stay one file (tokens rotate), the rest is read-only.
+CANDIDATO_LINKS=(auth.json mcp-oauth npm bin skills mcp-adapter.json)
+# Copied on every launch, so whatever the candidate changes never reaches the stable dir.
+# The MCP caches let servers connect lazily, as they do in the stable lane; without them every
+# server connects at startup and OAuth-only ones print errors the stable lane never shows.
+CANDIDATO_COPIES=(settings.json models-store.json trust.json subagents.json agents chains
+  mcp-cache.json mcp-npx-cache.json)
+
+resolve_worktree() {
+  local wanted="$1" dir
+  if [ -d "$wanted" ]; then
+    dir="$wanted"
+  else
+    dir="$WORKTREES_DIR/$wanted"
+  fi
+  if [ ! -d "$dir" ]; then
+    echo "carril: el worktree '$wanted' no existe (buscado en $WORKTREES_DIR)." >&2
+    exit 2
+  fi
+  if [ ! -f "$dir/agent-workflows/tools/install.py" ]; then
+    echo "carril: $dir no tiene agent-workflows/tools/install.py; no es un worktree de Control Tower." >&2
+    exit 2
+  fi
+  canonical "$dir"
+}
+
+# Runs the worktree's own installer functions, so the lane shows exactly what installing
+# that worktree would install, without installing it.
+worktree_render() {
+  python3 - "$@" <<'PY'
+import importlib.util, sys
+from pathlib import Path
+mode, root = sys.argv[1], Path(sys.argv[2])
+spec = importlib.util.spec_from_file_location("carril_candidate_install", root / "tools/install.py")
+installer = importlib.util.module_from_spec(spec)
+# Dataclasses with string annotations look their module up in sys.modules while loading.
+sys.modules[spec.name] = installer
+spec.loader.exec_module(installer)
+if mode == "append":
+    blocks = installer.render_manual_blocks(root)
+    sys.stdout.buffer.write(installer.desired_manual_content(Path(sys.argv[3]), blocks))
+elif mode == "extension":
+    sys.stdout.buffer.write(installer.desired_pi_extension(root))
+elif mode == "settings":
+    import json
+    with open(sys.argv[3]) as source:
+        settings = json.load(source)
+    # A settings entry outranks ~/.agents/skills in Pi's collision order; a --skill path
+    # does not, because Pi appends those after every discovered skill.
+    settings["skills"] = settings.get("skills", []) + [
+        str(root / "skills" / name) for name in installer.SKILLS if name != "_shared"
+    ]
+    print(json.dumps(settings, indent=2, ensure_ascii=False))
+PY
+}
+
+build_candidato() {
+  local root="$1" lane="$2" item
+  LIMPIO_DIR="$lane" refuse_stable_target
+  mkdir -p "$lane/extensions"
+
+  for item in "${CANDIDATO_LINKS[@]}"; do
+    [ -e "$STABLE_DIR/$item" ] || continue
+    rm -rf "${lane:?}/$item"
+    ln -s "$STABLE_DIR/$item" "$lane/$item"
+  done
+  for item in "${CANDIDATO_COPIES[@]}"; do
+    [ -e "$STABLE_DIR/$item" ] || continue
+    rm -rf "${lane:?}/$item"
+    cp -R "$STABLE_DIR/$item" "$lane/$item"
+  done
+
+  # Personal extensions by link; the repo-owned one rendered from the worktree.
+  rm -f "$lane"/extensions/*
+  if [ -d "$STABLE_DIR/extensions" ]; then
+    for item in "$STABLE_DIR"/extensions/*; do
+      [ -e "$item" ] || continue
+      [ "$(basename "$item")" = chanks-controls.ts ] && continue
+      ln -s "$item" "$lane/extensions/$(basename "$item")"
+    done
+  fi
+  worktree_render extension "$root" > "$lane/extensions/chanks-controls.ts"
+  worktree_render settings "$root" "$STABLE_DIR/settings.json" > "$lane/settings.json"
+
+  if [ -f "$STABLE_DIR/APPEND_SYSTEM.md" ]; then
+    worktree_render append "$root" "$STABLE_DIR/APPEND_SYSTEM.md" > "$lane/APPEND_SYSTEM.md"
+  fi
+}
+
 if [ $# -eq 0 ]; then
   echo "${CARRIL:-estable (sin carril)}"
   exit 0
@@ -158,8 +255,19 @@ case "$lane" in
     preparar_limpio
     ;;
   candidato)
-    echo "carril: el carril candidato todavía no existe (llega en el paso 3)." >&2
-    exit 3
+    if [ $# -eq 0 ]; then
+      echo "carril: decime qué worktree probar. Ej: carril candidato implementer-1" >&2
+      exit 64
+    fi
+    worktree="$(resolve_worktree "$1")"
+    shift
+    name="$(basename "$worktree")"
+    lane_dir="$CANDIDATO_BASE/$name"
+    build_candidato "$worktree/agent-workflows" "$lane_dir"
+    export CARRIL="candidato ($name)"
+    export PI_CODING_AGENT_DIR="$lane_dir"
+    unset GENTLE_PI_CONFIG_HOME
+    launch "🔬 CANDIDATO · $name" "$@"
     ;;
   -h|--help|help)
     usage

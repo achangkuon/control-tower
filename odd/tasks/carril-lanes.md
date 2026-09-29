@@ -66,6 +66,34 @@ safe place to try a candidate version.
   `~/.local/bin/carril`; `carril preparar limpio` built `~/.pi/agent-limpio` with gentle-pi@3.7.0
   and gentle-engram@0.1.12.
 
+- [x] C4 — `carril candidato <worktree>`: the stable setup, with every repo-owned piece (skills,
+  instructions, extensions) read from the chosen worktree; never writes installed runtime dirs.
+  Authorized 2026-09-28 ("Si, así me gustaría mucho"), chosen over a fixed candidate dir so two
+  candidates can run side by side. Route: delegated mapping of install sources and Pi precedence
+  (4+ files), then inline script + tests.
+  - Lane dir `~/.pi/agent-candidato/<worktree name>`, rebuilt on every launch; sessions kept.
+    Linked: auth.json, mcp-oauth, npm, bin, skills, mcp-adapter.json. Copied: settings, models,
+    trust, subagents, agents, chains, MCP caches. Rendered with the worktree's own `install.py`:
+    APPEND_SYSTEM.md (hand-written blocks kept, repo blocks swapped) and chanks-controls.ts.
+    Other personal extensions are linked.
+  - Two defects found by real runs, not by the stub tests, each reproduced in a test first:
+    (1) the real installer's string-annotated dataclasses need `sys.modules` registration;
+    (2) `--skill` paths load after `~/.agents/skills` and lose name collisions (explorer claim
+    was wrong: `resource-loader.js` appends them as `additionalSkillPaths`). The worktree skills
+    now ride as `settings.json` entries, rank 2 in `package-manager.js:resourcePrecedenceRank`,
+    above user auto-discovery (rank 3).
+  - Missing MCP caches made every server connect eagerly (Notion OAuth error absent in stable);
+    copying the caches restored parity.
+  - Tests 21/21. Real checks: `carril candidato <Main>` renders APPEND_SYSTEM.md and
+    chanks-controls.ts byte-identical to the installed ones (control), stable dir hashes unchanged;
+    `carril candidato implementer-1` loads all 28 repo skills from the worktree.
+  - Native review: staged projection (no `--base-ref`), risk `high`, consent envelope relayed; the
+    maintainer answered "Saltear esta vez" and the exact decline invocation returned
+    `declined_this_candidate` for `sha256:83b76a5b…2914`. Unreviewed by choice; RDD stays on.
+  - Known limits: the chanks extension's skill badge only recognises `~/.agents/skills` paths
+    (cosmetic); `_shared` resolves relative to each loaded skill, so worktree skills read the
+    worktree `_shared`.
+
 ## Verification evidence (2026-09-28)
 
 - Full `agent-workflows` suite: 273 run, 1 failure, 1 skipped. The failure is

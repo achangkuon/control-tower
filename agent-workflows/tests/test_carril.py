@@ -124,11 +124,151 @@ class CarrilTests(unittest.TestCase):
         self.assertEqual(seen["GENTLE_PI_CONFIG_HOME"], "<unset>")
         self.assertEqual(seen["ARGS"], "--name 🏠 ESTABLE")
 
-    def test_candidato_is_reserved_until_it_exists(self):
+    def make_worktree(self, name="implementer-1"):
+        worktree = self.home / "projects/control-tower/Worktrees" / name
+        tools = worktree / "agent-workflows/tools"
+        tools.mkdir(parents=True)
+        for skill in ("_shared", "chanks-a", "chanks-b"):
+            (worktree / "agent-workflows/skills" / skill).mkdir(parents=True)
+        # A stand-in for the worktree's installer: the lane must render through the
+        # worktree's own functions, never through the installed copies.
+        # The real installer declares dataclasses, which only load when the module is
+        # registered before it executes; the stand-in keeps that property.
+        (tools / "install.py").write_text(
+            "from __future__ import annotations\n"
+            "from dataclasses import dataclass\n"
+            "@dataclass(frozen=True)\n"
+            "class Plan:\n"
+            "    name: str\n"
+            "SKILLS = ('_shared', 'chanks-a', 'chanks-b')\n"
+            "def render_manual_blocks(root):\n"
+            "    return {b'block': str(root).encode()}\n"
+            "def desired_manual_content(path, replacements):\n"
+            "    return path.read_bytes() + b'|' + replacements[b'block']\n"
+            "def desired_pi_extension(root):\n"
+            "    return ('// chanks from ' + str(root)).encode()\n"
+        )
+        return worktree
+
+    def seed_candidate_stable(self):
+        stable = self.seed_stable()
+        for name in ("npm", "bin", "skills", "mcp-oauth", "agents", "chains", "extensions"):
+            (stable / name).mkdir()
+        (stable / "agents/sdd-research.md").write_text("agent")
+        (stable / "chains/sdd-full.chain.md").write_text("chain")
+        (stable / "extensions/chanks-controls.ts").write_text("// installed chanks")
+        (stable / "extensions/herdr-agent-state.ts").write_text("// herdr")
+        (stable / "models-store.json").write_text("{}")
+        (stable / "trust.json").write_text("{}")
+        (stable / "mcp-cache.json").write_text('{"tools": []}')
+        return stable
+
+    def candidate_dir(self, name="implementer-1"):
+        return self.home / ".pi/agent-candidato" / name
+
+    def test_candidato_requires_a_worktree(self):
         result = self.run_carril("candidato")
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("todavía no existe", result.stderr)
+        self.assertIn("worktree", result.stderr)
         self.assertFalse(self.record.exists())
+
+    def test_candidato_refuses_an_unknown_worktree(self):
+        self.seed_candidate_stable()
+        result = self.run_carril("candidato", "fantasma")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("no existe", result.stderr)
+        self.assertFalse(self.record.exists())
+
+    def test_candidato_refuses_a_dir_without_the_installer(self):
+        self.seed_candidate_stable()
+        (self.home / "projects/control-tower/Worktrees/vacio").mkdir(parents=True)
+        result = self.run_carril("candidato", "vacio")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("install.py", result.stderr)
+        self.assertFalse(self.candidate_dir("vacio").exists())
+
+    def test_candidato_launches_pi_with_the_worktree_pieces(self):
+        stable = self.seed_candidate_stable()
+        worktree = self.make_worktree()
+        before = self.snapshot(stable)
+
+        result = self.run_carril("candidato", "implementer-1", "--no-session")
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+        lane = self.candidate_dir()
+        root = worktree / "agent-workflows"
+        seen = self.invocation()
+        self.assertEqual(seen["CARRIL"], "candidato (implementer-1)")
+        self.assertEqual(seen["PI_CODING_AGENT_DIR"], str(lane))
+        self.assertEqual(seen["GENTLE_PI_CONFIG_HOME"], "<unset>")
+        self.assertEqual(seen["ARGS"], "--name 🔬 CANDIDATO · implementer-1 --no-session")
+
+        # `--skill` paths load after ~/.agents/skills and lose name collisions, so the
+        # worktree skills ride as settings entries, which Pi ranks above auto-discovery.
+        stable_settings = json.loads((stable / "settings.json").read_text())
+        lane_settings = json.loads((lane / "settings.json").read_text())
+        self.assertEqual(
+            lane_settings.pop("skills"),
+            stable_settings.pop("skills")
+            + [f"{root}/skills/chanks-a", f"{root}/skills/chanks-b"],
+        )
+        self.assertEqual(lane_settings, stable_settings)
+
+        # Shared by link: credentials and read-only machinery.
+        for name in ("auth.json", "mcp-oauth", "npm", "bin", "skills"):
+            self.assertTrue((lane / name).is_symlink(), name)
+            self.assertEqual(os.path.realpath(lane / name), str(stable / name))
+        # Copied, so a candidate that changes them leaves the stable ones alone.
+        for name in ("models-store.json", "trust.json", "mcp-cache.json",
+                     "agents/sdd-research.md", "chains/sdd-full.chain.md"):
+            self.assertFalse((lane / name).is_symlink(), name)
+            self.assertEqual((lane / name).read_bytes(), (stable / name).read_bytes())
+        # Rendered from the worktree.
+        self.assertEqual(
+            (lane / "APPEND_SYSTEM.md").read_text(),
+            f"personal rules|{root}",
+        )
+        self.assertEqual(
+            (lane / "extensions/chanks-controls.ts").read_text(),
+            f"// chanks from {root}",
+        )
+        self.assertFalse((lane / "extensions/chanks-controls.ts").is_symlink())
+        herdr = lane / "extensions/herdr-agent-state.ts"
+        self.assertEqual(os.path.realpath(herdr), str(stable / "extensions/herdr-agent-state.ts"))
+
+        self.assertEqual(before, self.snapshot(stable))
+
+    def test_candidato_does_not_launch_when_the_worktree_installer_is_broken(self):
+        self.seed_candidate_stable()
+        worktree = self.make_worktree()
+        (worktree / "agent-workflows/tools/install.py").write_text("raise SystemExit('roto')\n")
+        result = self.run_carril("candidato", "implementer-1")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(self.record.exists())
+
+    def test_candidato_accepts_a_worktree_path(self):
+        self.seed_candidate_stable()
+        worktree = self.make_worktree("en-ruta")
+        result = self.run_carril("candidato", str(worktree))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.invocation()["PI_CODING_AGENT_DIR"], str(self.candidate_dir("en-ruta")))
+
+    def test_candidato_relaunch_refreshes_from_the_worktree_and_keeps_sessions(self):
+        stable = self.seed_candidate_stable()
+        worktree = self.make_worktree()
+        self.assertEqual(self.run_carril("candidato", "implementer-1").returncode, 0)
+        sessions = self.candidate_dir() / "sessions"
+        sessions.mkdir()
+        (sessions / "s.jsonl").write_text("kept")
+
+        (stable / "APPEND_SYSTEM.md").write_text("personal rules v2")
+        (worktree / "agent-workflows/skills/chanks-a/new").mkdir()
+        result = self.run_carril("candidato", "implementer-1")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(
+            (self.candidate_dir() / "APPEND_SYSTEM.md").read_text().startswith("personal rules v2|")
+        )
+        self.assertEqual((sessions / "s.jsonl").read_text(), "kept")
 
     def test_unknown_lane_prints_usage(self):
         result = self.run_carril("turbo")
