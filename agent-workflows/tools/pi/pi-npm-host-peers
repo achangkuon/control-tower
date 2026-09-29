@@ -1,0 +1,111 @@
+#!/usr/bin/env node
+// Wraps Pi's package manager command (settings.json "npmCommand": [this, "--", "npm"]).
+// After a successful install/update/uninstall, it moves host-provided packages that Pi
+// extensions declare in "dependencies" into "peerDependencies" with a "*" range, which is
+// what Pi's extension loader expects. This silences the "Host-provided extension packages"
+// startup warning without touching the packages Pi itself ships.
+//
+// Usage:
+//   pi-npm-host-peers -- <command> [args...]   run the command, then repair its install root
+//   pi-npm-host-peers --repair <installRoot>   repair only
+import { spawnSync } from "node:child_process";
+import { existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { join, resolve } from "node:path";
+
+// Keep in sync with HOST_PROVIDED_EXTENSION_PACKAGES in pi-coding-agent's resource-loader.js.
+const HOST_PROVIDED = new Set([
+	"@earendil-works/pi-agent-core",
+	"@earendil-works/pi-ai",
+	"@earendil-works/pi-coding-agent",
+	"@earendil-works/pi-tui",
+	"@mariozechner/pi-agent-core",
+	"@mariozechner/pi-ai",
+	"@mariozechner/pi-coding-agent",
+	"@mariozechner/pi-tui",
+	"@sinclair/typebox",
+	"typebox",
+]);
+const MUTATING = new Set(["install", "i", "add", "update", "up", "uninstall", "remove", "rm", "ci"]);
+
+function packageDirs(nodeModules) {
+	if (!existsSync(nodeModules)) return [];
+	const dirs = [];
+	for (const entry of readdirSync(nodeModules, { withFileTypes: true })) {
+		if (entry.name.startsWith(".")) continue;
+		const full = join(nodeModules, entry.name);
+		if (entry.name.startsWith("@")) {
+			for (const scoped of readdirSync(full, { withFileTypes: true })) dirs.push(join(full, scoped.name));
+		} else {
+			dirs.push(full);
+		}
+	}
+	return dirs;
+}
+
+function repair(installRoot) {
+	const repaired = [];
+	for (const dir of packageDirs(join(installRoot, "node_modules"))) {
+		const manifestPath = join(dir, "package.json");
+		if (!existsSync(manifestPath)) continue;
+		const raw = readFileSync(manifestPath, "utf8");
+		let manifest;
+		try {
+			manifest = JSON.parse(raw.replace(/^﻿/, ""));
+		} catch {
+			continue;
+		}
+		// Only Pi extension packages are checked by Pi's loader.
+		if (manifest.pi === undefined) continue;
+		const deps = manifest.dependencies;
+		if (typeof deps !== "object" || deps === null || Array.isArray(deps)) continue;
+		const moved = Object.keys(deps).filter((name) => HOST_PROVIDED.has(name));
+		if (moved.length === 0) continue;
+		manifest.peerDependencies = { ...(manifest.peerDependencies ?? {}) };
+		for (const name of moved) {
+			delete deps[name];
+			manifest.peerDependencies[name] = "*";
+		}
+		const tmp = `${manifestPath}.host-peers.tmp`;
+		writeFileSync(tmp, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+		renameSync(tmp, manifestPath);
+		repaired.push(`${manifest.name}: ${moved.join(", ")}`);
+	}
+	for (const line of repaired) process.stderr.write(`pi-npm-host-peers: moved to peerDependencies in ${line}\n`);
+}
+
+function installRootFrom(args) {
+	for (const flag of ["--prefix", "--cwd", "-C"]) {
+		const index = args.indexOf(flag);
+		if (index >= 0 && args[index + 1]) return resolve(args[index + 1]);
+		const inline = args.find((arg) => arg.startsWith(`${flag}=`));
+		if (inline) return resolve(inline.slice(flag.length + 1));
+	}
+	return process.cwd();
+}
+
+const argv = process.argv.slice(2);
+if (argv[0] === "--repair") {
+	repair(resolve(argv[1] ?? process.cwd()));
+	process.exit(0);
+}
+const separator = argv.indexOf("--");
+const [command, ...args] = separator >= 0 ? argv.slice(separator + 1) : argv;
+if (!command) {
+	process.stderr.write("usage: pi-npm-host-peers -- <command> [args...] | --repair <installRoot>\n");
+	process.exit(2);
+}
+const result = spawnSync(command, args, { stdio: "inherit" });
+if (result.error) {
+	process.stderr.write(`pi-npm-host-peers: ${result.error.message}\n`);
+	process.exit(127);
+}
+const status = result.status ?? 1;
+if (status === 0 && MUTATING.has(args[0])) {
+	try {
+		repair(installRootFrom(args));
+	} catch (error) {
+		// Never fail an install because the cosmetic repair failed.
+		process.stderr.write(`pi-npm-host-peers: repair skipped: ${error.message}\n`);
+	}
+}
+process.exit(status);

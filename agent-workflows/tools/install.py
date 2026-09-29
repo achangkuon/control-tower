@@ -11,6 +11,7 @@ from pathlib import Path
 import re
 import shutil
 import stat
+import subprocess
 import sys
 import tempfile
 from dataclasses import dataclass
@@ -463,6 +464,7 @@ def build_plan(home: Path, root: Path | None = None) -> list[Change]:
         if path.read_bytes() != desired:
             changes.append(Change(path, "manual"))
     changes.extend(pi_extension_changes(home, root))
+    changes.extend(pi_npm_host_peers_changes(home, root))
     changes.extend(etapa_hook_changes(home, root))
     changes.extend(firma_hook_changes(home, root))
     return changes
@@ -551,6 +553,8 @@ def apply(home: Path, root: Path | None = None) -> list[Change]:
                 _archive_retired_skill(runtime_root, destination)
     if pi_extension_path(home) in change_paths:
         install_pi_extension(home, root)
+    if pi_npm_wrapper_path(home) in change_paths or pi_settings_path(home) in change_paths:
+        install_pi_npm_host_peers(home, root)
     if etapa_hook_path(home) in change_paths:
         _atomic_copy(etapa_hook_source(root), etapa_hook_path(home), home / ".claude")
     if firma_hook_path(home) in change_paths:
@@ -835,6 +839,111 @@ def install_pi_extension(home: Path, root: Path | None = None) -> None:
         label="Pi extension shim",
         require_existing=False,
     )
+
+
+# --- Pi host-peer npm wrapper ------------------------------------------------
+# Pi warns when an extension lists host-provided packages under "dependencies". The wrapper
+# repairs extension manifests after Pi's own npm install/update, and settings.json points
+# Pi at it through "npmCommand". The source lives in tools/pi/ next to tools/hooks/.
+
+PI_NPM_WRAPPER_SOURCE = Path("tools/pi/pi-npm-host-peers")
+PI_NPM_WRAPPER_RELATIVE = Path(".pi/agent/bin/pi-npm-host-peers")
+PI_SETTINGS_RELATIVE = Path(".pi/agent/settings.json")
+PI_NPM_INSTALL_RELATIVE = Path(".pi/agent/npm")
+
+
+def pi_npm_wrapper_path(home: Path) -> Path:
+    return home / PI_NPM_WRAPPER_RELATIVE
+
+
+def pi_settings_path(home: Path) -> Path:
+    return home / PI_SETTINGS_RELATIVE
+
+
+def _pi_npm_command(home: Path) -> list[str]:
+    return [str(pi_npm_wrapper_path(home)), "--", "npm"]
+
+
+def _read_pi_settings(home: Path) -> dict:
+    path = pi_settings_path(home)
+    if not path.is_file():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf8"))
+    except json.JSONDecodeError as exc:
+        raise InstallError(f"Pi settings.json is not valid JSON: {path}: {exc}") from exc
+    if not isinstance(data, dict):
+        raise InstallError(f"Pi settings.json must be a JSON object: {path}")
+    return data
+
+
+def _pi_wrapper_source(root: Path) -> Path:
+    source = root / PI_NPM_WRAPPER_SOURCE
+    if not source.is_file() or stat.S_IMODE(source.stat().st_mode) != 0o755:
+        raise InstallError("Pi npm host-peer wrapper source must be a regular executable 755 file")
+    return source
+
+
+def pi_npm_host_peers_changes(home: Path, root: Path | None = None) -> list[Change]:
+    root = root or repo_root()
+    source = _pi_wrapper_source(root)
+    changes: list[Change] = []
+    target = pi_npm_wrapper_path(home)
+    if not (
+        target.is_file()
+        and target.read_bytes() == source.read_bytes()
+        and stat.S_IMODE(target.stat().st_mode) == 0o755
+    ):
+        changes.append(Change(target, "pi-npm-wrapper"))
+    # A foreign npmCommand is the user's choice: it is never a drift we would rewrite.
+    if "npmCommand" not in _read_pi_settings(home):
+        changes.append(Change(pi_settings_path(home), "pi-npm-settings"))
+    return changes
+
+
+def install_pi_npm_host_peers(home: Path, root: Path | None = None) -> None:
+    root = root or repo_root()
+    source = _pi_wrapper_source(root)
+    target = pi_npm_wrapper_path(home)
+    if not (target.is_file() and target.read_bytes() == source.read_bytes()):
+        _atomic_copy(source, target, home / ".pi")
+    os.chmod(target, 0o755)
+
+    settings = _read_pi_settings(home)
+    desired = _pi_npm_command(home)
+    current = settings.get("npmCommand")
+    if current == desired:
+        pass
+    elif "npmCommand" in settings:
+        print(
+            f"WARNING: keeping the existing npmCommand in {pi_settings_path(home)}; "
+            "the Pi host-peer wrapper is installed but not wired. "
+            f"Set npmCommand to {json.dumps(desired)} to enable it.",
+            file=sys.stderr,
+        )
+    else:
+        settings["npmCommand"] = desired
+        _atomic_write(
+            pi_settings_path(home),
+            (json.dumps(settings, indent=2) + "\n").encode("utf8"),
+            home / ".pi",
+            label="Pi settings",
+            require_existing=False,
+        )
+
+    install_root = home / PI_NPM_INSTALL_RELATIVE
+    if install_root.is_dir():
+        try:
+            result = subprocess.run(
+                [str(target), "--repair", str(install_root)],
+                capture_output=True, text=True, timeout=60,
+            )
+            if result.returncode != 0:
+                raise OSError(f"exit {result.returncode}: {result.stderr.strip()}")
+            if result.stderr.strip():
+                print(result.stderr.strip(), file=sys.stderr)
+        except (OSError, subprocess.SubprocessError) as exc:
+            print(f"WARNING: Pi host-peer repair skipped: {exc}", file=sys.stderr)
 
 
 def main(argv: list[str] | None = None) -> int:

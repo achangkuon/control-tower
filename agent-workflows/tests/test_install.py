@@ -1,4 +1,6 @@
+import contextlib
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
@@ -871,7 +873,8 @@ class PiNativeAdmissionContractTests(unittest.TestCase):
         self.assertTrue(hook.is_file())
         self.assertEqual(hook.stat().st_mode & 0o777, 0o755)
         self.assertNotIn("settings.json", hook.read_text(encoding="utf8"))
-        self.assertNotIn("settings.json", Path(INSTALLER.__file__).read_text(encoding="utf8"))
+        # Pi's own settings.json is written by the host-peer wrapper wiring; Claude's never is.
+        self.assertNotIn(".claude/settings.json", Path(INSTALLER.__file__).read_text(encoding="utf8"))
 
     def test_hook_uses_external_radar_handles_spaces_and_only_valid_prior_transition(self):
         with tempfile.TemporaryDirectory() as location:
@@ -1548,3 +1551,129 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         self.assertNotIn("pi.chanksAutoridad", body)
         self.assertNotIn("pi.chanksConfinamiento", body)
         self.assertNotIn("gobernar(pi.", body)
+
+
+class PiNpmHostPeersTests(unittest.TestCase):
+    """The host-peer npm wrapper is versioned here and deployed by the installer."""
+
+    def setUp(self):
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.home = Path(self.tempdir.name)
+        self.wrapper = self.home / ".pi/agent/bin/pi-npm-host-peers"
+        self.settings = self.home / ".pi/agent/settings.json"
+
+    def tearDown(self):
+        self.tempdir.cleanup()
+
+    def _install(self):
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            INSTALLER.install_pi_npm_host_peers(self.home, ROOT)
+        return stderr.getvalue()
+
+    def _fake_extension(self, name="fake-ext"):
+        pkg = self.home / ".pi/agent/npm/node_modules" / name
+        pkg.mkdir(parents=True)
+        manifest = {
+            "name": name,
+            "pi": {"extensions": ["./index.ts"]},
+            "dependencies": {"typebox": "^1.0.0", "left-pad": "1.0.0"},
+        }
+        (pkg / "package.json").write_text(json.dumps(manifest))
+        return pkg / "package.json"
+
+    def test_wrapper_is_installed_executable_and_matches_source(self):
+        self._install()
+        self.assertEqual(
+            self.wrapper.read_bytes(), (ROOT / "tools/pi/pi-npm-host-peers").read_bytes()
+        )
+        self.assertEqual(stat.S_IMODE(self.wrapper.stat().st_mode), 0o755)
+
+    def test_settings_created_with_only_npm_command_when_missing(self):
+        self._install()
+        self.assertEqual(
+            json.loads(self.settings.read_text()),
+            {"npmCommand": [str(self.wrapper), "--", "npm"]},
+        )
+
+    def test_settings_merge_preserves_other_keys_and_mode(self):
+        self.settings.parent.mkdir(parents=True)
+        self.settings.write_text(json.dumps({"theme": "dark", "packages": ["a"]}))
+        self.settings.chmod(0o600)
+        self._install()
+        data = json.loads(self.settings.read_text())
+        self.assertEqual(data["theme"], "dark")
+        self.assertEqual(data["packages"], ["a"])
+        self.assertEqual(data["npmCommand"], [str(self.wrapper), "--", "npm"])
+        self.assertEqual(stat.S_IMODE(self.settings.stat().st_mode), 0o600)
+
+    def test_rerun_is_idempotent(self):
+        self._install()
+        self.assertTrue(INSTALLER.pi_npm_host_peers_changes(self.home, ROOT) == [])
+        before = (self.wrapper.read_bytes(), self.settings.read_bytes())
+        self._install()
+        self.assertEqual(before, (self.wrapper.read_bytes(), self.settings.read_bytes()))
+
+    def test_changed_wrapper_is_detected_and_overwritten(self):
+        self._install()
+        self.wrapper.write_bytes(b"tampered\n")
+        self.assertTrue(INSTALLER.pi_npm_host_peers_changes(self.home, ROOT))
+        self._install()
+        self.assertEqual(
+            self.wrapper.read_bytes(), (ROOT / "tools/pi/pi-npm-host-peers").read_bytes()
+        )
+
+    def test_foreign_npm_command_is_preserved_with_warning(self):
+        self.settings.parent.mkdir(parents=True)
+        foreign = {"npmCommand": ["/opt/mine/npm-wrap", "--", "npm"], "x": 1}
+        self.settings.write_text(json.dumps(foreign))
+        warning = self._install()
+        self.assertEqual(json.loads(self.settings.read_text()), foreign)
+        self.assertIn("npmCommand", warning)
+        self.assertIn("WARNING", warning)
+
+    def test_repair_moves_host_packages_to_peer_dependencies(self):
+        manifest = self._fake_extension()
+        self._install()
+        data = json.loads(manifest.read_text())
+        self.assertEqual(data["peerDependencies"], {"typebox": "*"})
+        self.assertEqual(data["dependencies"], {"left-pad": "1.0.0"})
+
+    def test_repair_failure_warns_without_aborting(self):
+        (self.home / ".pi/agent/npm").mkdir(parents=True)
+        with mock.patch.object(INSTALLER.subprocess, "run", side_effect=OSError("no node")):
+            warning = self._install()
+        self.assertIn("WARNING", warning)
+        self.assertTrue(self.wrapper.is_file())
+
+    def test_apply_deploys_the_wrapper(self):
+        INSTALLER.apply(self.home, ROOT)
+        self.assertTrue(self.wrapper.is_file())
+        self.assertIn("npmCommand", json.loads(self.settings.read_text()))
+
+    def test_wrapper_passes_through_exit_code_of_plain_command(self):
+        self._install()
+        result = subprocess.run(
+            [str(self.wrapper), "--", "node", "-e", "process.exit(3)"], capture_output=True
+        )
+        self.assertEqual(result.returncode, 3)
+
+    def test_wrapper_repairs_after_mutating_command(self):
+        manifest = self._fake_extension()
+        self._install()
+        # install already repaired once; reset to prove the wrapper repairs on its own.
+        manifest.write_text(json.dumps({
+            "name": "fake-ext", "pi": {}, "dependencies": {"typebox": "1"},
+        }))
+        root = self.home / ".pi/agent/npm"
+        fake_npm = self.home / "fake-npm"
+        fake_npm.write_text("#!/bin/sh\nexit 0\n")
+        fake_npm.chmod(0o755)
+        result = subprocess.run(
+            [str(self.wrapper), "--", str(fake_npm), "install", "--prefix", str(root)],
+            capture_output=True,
+        )
+        self.assertEqual(result.returncode, 0)
+        data = json.loads(manifest.read_text())
+        self.assertEqual(data["peerDependencies"], {"typebox": "*"})
+        self.assertEqual(data["dependencies"], {})
