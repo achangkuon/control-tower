@@ -141,6 +141,50 @@ Forecast cost disclosed: about $5–20 for the automatic runs.
   the Chanks question (t4) and process discipline on t1, but no measurable correctness gain on
   code tasks.
 
+### Step 2b — Layer ablation (authorized 2026-09-29: "Si, hazlo")
+
+The maintainer's side-by-side sessions showed the estable lane stalling: it asked for an exact
+Session ID and grepped its own rules before acting. The limpio lane dispatched three Herdr agents
+by reading `chanks-3-despacho-herdr` from the repo on demand. Hypothesis: the friction comes from
+always-on layers, not from missing capability. Five lanes, with one layer removed at a time:
+estable, A (no personal APPEND_SYSTEM.md), B (no personal skills announced; gentle-pi skills
+only), C (no personal extensions/packages), limpio. Each lane runs three prompts:
+"continuemos con lo último", dispatch three Herdr agents, and #146.
+
+- [x] B1 — `carril-medir` counts human questions (`ask_user_*` tool calls) and whether the run
+  ended on a question (route: inline, TDD). RED 2 errors → GREEN 5/5. Not yet committed.
+- [x] B2 — Experimental agent dirs `~/.pi/agent-exp/{A,B,C}`, built from the stable dir the same
+  way as candidato (links for credentials and packages, copies for writable state); stable hash
+  checked before and after (route: inline). Smoke run from an empty cwd, startup input tokens:
+  estable 28 741 (earlier) → A 22 664 (−6.1k, rules), B 23 011 (−5.7k, skills; 12 left),
+  C 26 415 (−2.3k, extensions; 26 tools vs 32); limpio 14 771.
+- [x] B3 — Fifteen runs in throwaway worktrees at `813d781`, with memory writes forbidden by the
+  prompt (route: inline, background). The first launch lost 11 of 15 runs to a provider
+  `fetch failed` outage. Those 11 were reset (worktree checkout/clean, sessions removed) and rerun
+  after a connectivity check; p1-A therefore ran alone rather than beside its peers. Two metric
+  defects found while reading the results were fixed test-first in `carril-medir`:
+  `--since` drops the stale subagent session of a failed attempt, and startup/input now include
+  `cacheRead` + `cacheWrite`. Step 2 token counts may be undercounted for the same reason; its
+  dollar costs are unaffected, because the provider's cost already includes cache.
+- [x] B4 — Per-layer attribution table (route: inline). USD / seconds:
+
+  | Prompt | estable | A no rules | B no skills | C no extensions | limpio |
+  |---|---|---|---|---|---|
+  | p1 "lo último" | 0.27/33 | 0.26/38 | 0.13/26 | 0.33/83 | 0.73/178 |
+  | p2 dispatch 3 | 0.61/140 | 0.41/118 | 0.32/78 | 0.49/94 | 0.63/121 |
+  | p3 #146 | 1.53/578 | 1.64/835 | 2.37/954 | 0.90/367 | 3.11/693 |
+  | total | 2.41/751 | 2.31/991 | 2.83/1058 | 1.72/544 | 4.47/992 |
+
+  - p1: all five lanes stopped and asked which work to resume; limpio investigated for 3 minutes
+    before asking.
+  - p2: all five dispatched, got "listo" from three agents and closed their workspace.
+  - p3: all five fixes pass `go test ./...` in radar.
+  - Startup tokens: estable ~33.5k, A ~27.4k, B ~27.8k, C ~31.2k, limpio ~19.6k.
+  - Reading: noise dominates. The same #146 task in limpio cost $0.57 in step 2 and $3.11 here.
+    Cost tracks how many subagents the orchestrator chose to spawn (2 to 5 sessions per p3 run),
+    not the removed layer. One run per cell cannot rank the layers. The only stable signal is the
+    fixed startup weight. No layer removal lost capability.
+
 ## Verification evidence (2026-09-28)
 
 - Full `agent-workflows` suite: 273 run, 1 failure, 1 skipped. The failure is

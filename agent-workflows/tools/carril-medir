@@ -38,27 +38,35 @@ def timestamp(event: dict) -> datetime | None:
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
-def sessions_for(worktree: str, search: list[Path]) -> list[list[dict]]:
+def sessions_for(worktree: str, search: list[Path],
+                 since: datetime | None = None) -> list[list[dict]]:
     wanted = os.path.realpath(worktree)
     found = []
     for directory in search:
         for path in sorted(directory.rglob("*.jsonl")):
             events = read_session(path)
-            if events and os.path.realpath(events[0].get("cwd", "")) == wanted:
-                found.append(events)
+            if not events or os.path.realpath(events[0].get("cwd", "")) != wanted:
+                continue
+            # A retried run reuses its worktree, so sessions from the failed attempt share
+            # its cwd; only the start time tells them apart.
+            started = timestamp(events[0])
+            if since and (started is None or started < since):
+                continue
+            found.append(events)
     # Oldest first: the run's own session starts before any subagent it spawns.
     return sorted(found, key=lambda events: timestamp(events[0]) or datetime.max)
 
 
-def measure(label: str, worktree: str, search: list[Path]) -> dict:
-    sessions = sessions_for(worktree, search)
+def measure(label: str, worktree: str, search: list[Path],
+            since: datetime | None = None) -> dict:
+    sessions = sessions_for(worktree, search, since)
     run = {"label": label, "worktree": worktree, "sessions": len(sessions)}
     if not sessions:
         return run | dict.fromkeys(
             ("startup_input", "input", "output", "cost", "turns", "tool_calls",
-             "tool_errors", "seconds", "final_stop"))
+             "tool_errors", "asks", "seconds", "final_stop", "ended_asking"))
 
-    totals = dict(input=0, output=0, cost=0.0, turns=0, tool_calls=0, tool_errors=0)
+    totals = dict(input=0, output=0, cost=0.0, turns=0, tool_calls=0, tool_errors=0, asks=0)
     startup_input = None
     moments = []
     for index, events in enumerate(sessions):
@@ -69,22 +77,35 @@ def measure(label: str, worktree: str, search: list[Path]) -> dict:
             message = event.get("message") or {}
             if message.get("role") == "assistant":
                 usage = message.get("usage") or {}
+                # Cached prompt tokens are billed apart but were still read by the model;
+                # leaving them out makes a warm-cache lane look lighter than it is.
+                prompt = (usage.get("input", 0) + usage.get("cacheRead", 0)
+                          + usage.get("cacheWrite", 0))
                 if index == 0 and startup_input is None:
-                    startup_input = usage.get("input", 0)
-                totals["input"] += usage.get("input", 0)
+                    startup_input = prompt
+                totals["input"] += prompt
                 totals["output"] += usage.get("output", 0)
                 totals["cost"] += (usage.get("cost") or {}).get("total", 0.0)
                 totals["turns"] += 1
-                totals["tool_calls"] += sum(
-                    1 for part in message.get("content") or [] if part.get("type") == "toolCall")
+                calls = [part for part in message.get("content") or []
+                         if part.get("type") == "toolCall"]
+                totals["tool_calls"] += len(calls)
+                # Every ask_user_* tool stops the work until the human answers.
+                totals["asks"] += sum(
+                    1 for part in calls if str(part.get("name", "")).startswith("ask_user"))
             elif message.get("role") == "toolResult" and message.get("isError"):
                 totals["tool_errors"] += 1
 
     final_stop = None
+    ended_asking = False
     for event in reversed(sessions[0]):
         message = event.get("message") or {}
         if message.get("role") == "assistant":
             final_stop = message.get("stopReason")
+            text = "".join(part.get("text", "") for part in message.get("content") or []
+                           if part.get("type") == "text")
+            # A run that hands back a question stopped short of doing the work.
+            ended_asking = text.rstrip().endswith("?")
             break
 
     totals["cost"] = round(totals["cost"], 6)
@@ -92,6 +113,7 @@ def measure(label: str, worktree: str, search: list[Path]) -> dict:
         "startup_input": startup_input,
         "seconds": round((max(moments) - min(moments)).total_seconds()),
         "final_stop": final_stop,
+        "ended_asking": ended_asking,
     }
 
 
@@ -99,7 +121,8 @@ COLUMNS = (
     ("Carril", "label"), ("Sesiones", "sessions"), ("Tokens arranque", "startup_input"),
     ("Tokens entrada", "input"), ("Tokens salida", "output"), ("Costo USD", "cost"),
     ("Turnos", "turns"), ("Herramientas", "tool_calls"), ("Errores", "tool_errors"),
-    ("Segundos", "seconds"), ("Cierre", "final_stop"),
+    ("Preguntas", "asks"), ("Segundos", "seconds"), ("Cierre", "final_stop"),
+    ("Terminó preguntando", "ended_asking"),
 )
 
 
@@ -123,6 +146,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("runs", nargs="+", metavar="carril=worktree")
     parser.add_argument("--search", action="append", default=[], type=Path, required=True)
     parser.add_argument("--json", action="store_true", help="print raw metrics")
+    parser.add_argument("--since", type=lambda value: timestamp({"timestamp": value}),
+                        help="ignore sessions started before this ISO time")
     args = parser.parse_args(argv)
 
     runs = []
@@ -130,7 +155,7 @@ def main(argv: list[str] | None = None) -> int:
         label, separator, worktree = spec.partition("=")
         if not separator:
             parser.error(f"expected carril=worktree, got {spec!r}")
-        runs.append(measure(label, worktree, args.search))
+        runs.append(measure(label, worktree, args.search, args.since))
     print(json.dumps(runs, indent=2) if args.json else table(runs))
     return 0
 

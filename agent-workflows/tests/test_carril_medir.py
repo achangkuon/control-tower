@@ -89,6 +89,50 @@ class CarrilMedirTests(unittest.TestCase):
         self.assertEqual(run["seconds"], 180)
         self.assertEqual(run["final_stop"], "stop")
 
+    def test_questions_to_the_human_are_counted(self):
+        session(self.main_dir / "main.jsonl", self.worktree, [
+            ("2026-09-28T10:00:00.000Z", {"role": "user", "content": []}),
+            ("2026-09-28T10:00:05.000Z",
+             assistant(100, 10, 0.01, tools=("ask_user_choice", "read", "ask_user_question"))),
+            ("2026-09-28T10:00:09.000Z", {
+                "role": "assistant", "stopReason": "stop",
+                "content": [{"type": "text", "text": "¿Qué Sesión querés retomar?\n"}],
+                "usage": {"input": 100, "output": 10, "cost": {"total": 0.01}},
+            }),
+        ])
+        [run] = self.measure(f"limpio={self.worktree}", "--search", str(self.main_dir))
+        self.assertEqual(run["asks"], 2)
+        self.assertTrue(run["ended_asking"])
+
+    def test_a_run_that_finishes_with_an_answer_did_not_end_asking(self):
+        self.seed()
+        [run] = self.measure(f"limpio={self.worktree}", "--search", str(self.main_dir))
+        self.assertEqual(run["asks"], 0)
+        self.assertFalse(run["ended_asking"])
+
+    def test_startup_counts_prompt_tokens_served_from_the_provider_cache(self):
+        first = assistant(15000, 100, 0.06)
+        first["usage"]["cacheRead"] = 7000
+        first["usage"]["cacheWrite"] = 500
+        session(self.main_dir / "main.jsonl", self.worktree, [
+            ("2026-09-28T10:00:00.000Z", {"role": "user", "content": []}),
+            ("2026-09-28T10:00:05.000Z", first),
+        ])
+        [run] = self.measure(f"limpio={self.worktree}", "--search", str(self.main_dir))
+        # The whole prompt the model read at startup, however it was billed.
+        self.assertEqual(run["startup_input"], 22500)
+        self.assertEqual(run["input"], 22500)
+
+    def test_since_drops_sessions_left_by_an_earlier_attempt(self):
+        self.seed()
+        [run] = self.measure(
+            f"limpio={self.worktree}", "--search", str(self.main_dir),
+            "--search", str(self.agents_dir), "--since", "2026-09-28T10:00:20Z",
+        )
+        # Only the subagent started after the cut-off remains.
+        self.assertEqual(run["sessions"], 1)
+        self.assertEqual(run["input"], 5000 + 5200)
+
     def test_a_run_without_sessions_is_reported_not_invented(self):
         [run] = self.measure(f"limpio={self.worktree}", "--search", str(self.main_dir))
         self.assertEqual(run["sessions"], 0)
