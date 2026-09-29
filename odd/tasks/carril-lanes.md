@@ -46,16 +46,48 @@ safe place to try a candidate version.
 
 ## Tasks
 
-- [ ] C1 — Isolation facts: credentials, skill discovery, packages, Gentle AI content, labels
-  (route: delegated exploration — mapping trigger, 4+ files outside repo).
+- [x] C1 — Isolation facts: credentials, skill discovery, packages, Gentle AI content, labels
+  (route: delegated exploration — mapping trigger, 4+ files outside repo). Findings that shaped
+  the design:
+  - `auth.json` is written in place under a lock; OpenAI Codex rotates refresh tokens, so the lane
+    symlinks the stable file instead of copying it.
+  - `~/.agents/skills` is discovered whatever `PI_CODING_AGENT_DIR` says, so limpio runs
+    `--no-skills --skill <gentle-pi>/skills`.
+  - gentle-pi injects its orchestrator prompt itself; the stable `APPEND_SYSTEM.md` has no managed
+    blocks, so limpio carries none of it. gentle-pi config lives in `GENTLE_PI_CONFIG_HOME`,
+    isolated per lane.
+  - Pi owns the terminal title but includes the session name, so the lane label is `--name`.
+  - Packages install under `<agent dir>/npm`, fully isolated.
 - [x] C2 — `carril` launcher with tests (RED → GREEN → REFACTOR) (route: inline, one new file + test).
   RED observed: 8/9 failed (script missing; the no-write test passed vacuously). GREEN: 9/9 OK.
   Files: `agent-workflows/tools/carril`, `agent-workflows/tests/test_carril.py`.
-- [ ] C3 — Limpio lane setup + first launch smoke check (route: inline, human-confirmed install).
+- [x] C3 — Limpio lane setup + first launch smoke check (route: inline, human-confirmed install).
+  Extended tests RED 5/14 → GREEN 14/14 (commit `9f6da94`; C2 was `d44314f`). Installed a copy at
+  `~/.local/bin/carril`; `carril preparar limpio` built `~/.pi/agent-limpio` with gentle-pi@3.7.0
+  and gentle-engram@0.1.12.
+
+## Verification evidence (2026-09-28)
+
+- Full `agent-workflows` suite: 273 run, 1 failure, 1 skipped. The failure is
+  `test_personal_pi_composition.test_fresh_normal_startup_and_policy`; it fails identically on the
+  base without these changes (missing local Pi source checkout). It is environmental.
+- Smoke run: same prompt, empty cwd, scratch session dir. Both lanes answered.
+
+  | Lane | First-turn input tokens | Cost | System prompt chars | Skills | Chanks skills |
+  |---|---|---|---|---|---|
+  | limpio | 14 771 | $0.059 | 17 917 | 12 | 0 |
+  | estable | 28 741 | $0.115 | 67 949 | 65 | 27 |
+
+- The stable dir changed during the smoke test. Timestamps show the writes came from the estable
+  run itself (pi-pretty frecency, gentle-ai managed assets), which happens on every plain `pi`
+  launch. The limpio run wrote only inside `~/.pi/agent-limpio`.
+- Limpio prints host-peer warnings for gentle-pi/gentle-engram. That is Gentle AI as shipped:
+  the stable lane hides them through the personal `pi-npm-host-peers` npm wrapper.
 
 ## Progress
 
-- C1 in progress.
+- Step 1 done. Known gap: `~/.local/bin/carril` is a manual copy. Updating it means re-copying
+  it; folding it into `tools/install.py` belongs with step 3.
 
 ## Later steps (not authorized yet)
 
