@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+# carril — open Pi in an explicit lane, one terminal at a time.
+#
+#   carril            report the lane of THIS terminal
+#   carril limpio     Pi with only Gentle AI's shipped pieces (isolated config dir)
+#   carril estable    Pi with the everyday config (~/.pi/agent), same as plain `pi`
+#
+# The lane lives in this process's environment only: closing the terminal leaves nothing
+# changed, and plain `pi` keeps working exactly as before. The launcher never writes into
+# the stable config dir.
+set -euo pipefail
+
+PI_BIN="${CARRIL_PI_BIN:-pi}"
+STABLE_DIR="$HOME/.pi/agent"
+LIMPIO_DIR="${CARRIL_LIMPIO_DIR:-$HOME/.pi/agent-limpio}"
+
+usage() {
+  cat >&2 <<'EOF'
+Uso: carril [limpio|estable] [argumentos de pi...]
+  carril            muestra en qué carril está esta terminal
+  carril limpio     Pi solo con Gentle AI
+  carril estable    Pi con tu configuración de todos los días
+EOF
+}
+
+# Canonical path without requiring it to exist, so a missing dir still compares correctly.
+canonical() {
+  python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "$1"
+}
+
+# Title and banner only when a human is looking; pipes and tests stay clean.
+announce() {
+  local label="$1"
+  if [ -t 1 ]; then
+    printf '\033]0;%s\007' "$label"
+  fi
+  if [ -t 2 ]; then
+    printf '── %s ──\n' "$label" >&2
+  fi
+}
+
+if [ $# -eq 0 ]; then
+  echo "${CARRIL:-estable (sin carril)}"
+  exit 0
+fi
+
+lane="$1"
+shift
+
+case "$lane" in
+  limpio)
+    if [ "$(canonical "$LIMPIO_DIR")" = "$(canonical "$STABLE_DIR")" ]; then
+      echo "carril: el carril limpio apunta a la configuración estable ($STABLE_DIR); no se abre." >&2
+      exit 2
+    fi
+    if [ ! -d "$LIMPIO_DIR" ]; then
+      echo "carril: el carril limpio no está preparado ($LIMPIO_DIR no existe)." >&2
+      exit 2
+    fi
+    announce "🧪 LIMPIO · solo Gentle AI"
+    export CARRIL=limpio
+    export PI_CODING_AGENT_DIR="$LIMPIO_DIR"
+    exec "$PI_BIN" "$@"
+    ;;
+  estable)
+    announce "🏠 ESTABLE"
+    export CARRIL=estable
+    unset PI_CODING_AGENT_DIR
+    exec "$PI_BIN" "$@"
+    ;;
+  candidato)
+    echo "carril: el carril candidato todavía no existe (llega en el paso 3)." >&2
+    exit 3
+    ;;
+  -h|--help|help)
+    usage
+    exit 0
+    ;;
+  *)
+    usage
+    exit 64
+    ;;
+esac
