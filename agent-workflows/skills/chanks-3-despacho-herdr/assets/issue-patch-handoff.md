@@ -4,6 +4,10 @@ Use only from `../SKILL.md`'s Issue-Patch Mode after an actual Pi session ID is
 read back from the launched Herdr agent and matched to a fresh Intercom live roster.
 This is a message template, not approval, a dispatch receipt, or a persisted assignment.
 Do not fill unknown values by inference or send an incomplete template.
+Issue #150 Unit 1 repairs attended reactivation without a seal; this issue-patch
+handoff is not a Session reactivation approval. The patch creates no new marker.
+Use the separate `../SKILL.md` attended reactivation route for an actual `EN CURSO`
+Session after a fresh human decision; this template cannot reactivate S164 or S165.
 
 - Issue: `<achangkuon/control-tower issue URL and number>`
 - Human approval: `<exact human decision and its issue/base/outcome/scope binding>`

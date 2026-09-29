@@ -536,6 +536,54 @@ class DespachoHerdrDispatchTests(unittest.TestCase):
         self.assertNotIn("Stop before the lock-held readback", self.skill)
 
 
+class AttendedReactivationContractTests(unittest.TestCase):
+    def setUp(self):
+        self.dispatch = read(f"skills/{SKILL_NAME}/SKILL.md")
+        self.handoff = read(f"skills/{SKILL_NAME}/assets/issue-patch-handoff.md")
+
+    def test_reactivation_is_separate_from_first_dispatch_and_issue_patch(self):
+        route = section(self.dispatch, "## Attended Reactivation of an Existing Session Dispatch")
+        self.assertLess(self.dispatch.index("## Issue-Patch Mode"),
+                        self.dispatch.index("## Attended Reactivation of an Existing Session Dispatch"))
+        for phrase in ("EN CURSO", "existing `radar.despacho/v1` marker",
+                       "same Session", "same worker", "same branch", "same worktree",
+                       "same candidate", "not Issue-Patch Mode", "not first dispatch"):
+            self.assertIn(phrase, route)
+        for forbidden in ("create a new marker", "create a new branch", "clean the candidate"):
+            self.assertNotIn(forbidden, route)
+
+    def test_exact_reapproval_and_shared_lock_precede_launch(self):
+        route = section(self.dispatch, "## Attended Reactivation of an Existing Session Dispatch")
+        for phrase in ("fresh exact human approval", "approved integrated base",
+                       "`references/retiro.md`'s `## Shared lock protocol`",
+                       "Git", "Radar", "Herdr", "Intercom", "marker identity",
+                       "original Pi process", "absent", "pending delivery"):
+            self.assertIn(phrase, route)
+        assert_in_order(self, route,
+                        "fresh exact human approval",
+                        "`references/retiro.md`'s `## Shared lock protocol`",
+                        "reconcile fresh Git, Radar, Herdr, and Intercom",
+                        "launch a new Pi process")
+        self.assertIn("missing, contradictory, foreign, or ambiguous", " ".join(route.lower().split()))
+
+    def test_verified_new_session_precedes_distinct_fire_and_forget_handoff(self):
+        route = section(self.dispatch, "## Attended Reactivation of an Existing Session Dispatch")
+        assert_in_order(self, route, "launch a new Pi process",
+                        "actual new Pi session ID from Herdr JSON",
+                        "fresh Intercom live roster",
+                        "distinguishable reactivation handoff")
+        for phrase in ("fire-and-forget", "never resend", "infer completion",
+                       "preserve marker, branch, worktree, candidate", "pre-send owned rollback"):
+            self.assertIn(phrase, route)
+        self.assertIn("no unattended seal", route)
+        self.assertIn("valid exact seal", route)
+
+    def test_issue_patch_handoff_distinguishes_unit_one_and_without_seal(self):
+        for phrase in ("Unit 1", "attended reactivation", "without a seal",
+                       "not a Session reactivation approval", "no new marker"):
+            self.assertIn(phrase, self.handoff)
+
+
 class DespachoHerdrRetireTests(unittest.TestCase):
     def setUp(self):
         self.skill = read(f"skills/{SKILL_NAME}/SKILL.md")

@@ -114,6 +114,21 @@ class CoordinadorManualTests(unittest.TestCase):
             "never authorize a new dispatch, retry, changed mapping, or inferred completion",
         )
 
+    def test_attended_reactivation_is_not_reconstruction_or_new_dispatch(self):
+        route = self.skill.split("## Human-Approved Attended Reactivation", 1)[1].split("\n## ", 1)[0]
+        for phrase in ("EN CURSO", "same marker", "same Session", "same worker",
+                       "same branch", "same worktree", "same candidate",
+                       "fresh exact human approval", "shared lock", "Git", "Radar",
+                       "Herdr", "Intercom", "actual new Pi session ID",
+                       "distinct reactivation handoff", "no unattended seal"):
+            self.assertIn(phrase.lower(), normalized(route))
+        self.assertIn("delegate (and do not reimplement)", normalized(route))
+        self.assertIn("never initiates `ask`", normalized(route))
+        self.assertLess(self.skill.index("## Terminal-Event Mode"),
+                        self.skill.index("## Human-Approved Attended Reactivation"))
+        self.assertLess(self.skill.index("## Human-Approved Attended Reactivation"),
+                        self.skill.index("## Human-Activated Reconstruction"))
+
     def test_migration_table_names_future_tower_authority_without_copying_procedures(self):
         for capability in (
             "binding", "pool/lifecycle", "ack/retry", "terminality",

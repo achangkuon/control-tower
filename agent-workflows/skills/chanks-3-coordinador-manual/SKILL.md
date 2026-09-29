@@ -89,6 +89,26 @@ For the contractual two-worker journey: terminal A integrates, closes through `c
 and retires through `chanks-3-despacho-herdr`; terminal B enters integration only after A completes
 serial integration, closure, and retirement.
 
+## Human-Approved Attended Reactivation
+
+This is a distinct human decision, not the initial `LISTO` dispatch and not
+Human-Activated Reconstruction of an already received terminal. Accept only an
+existing `EN CURSO` assignment after its original Pi process disappears. Fresh exact
+human approval binds the same marker, same Session, same worker, same branch, same
+worktree, same candidate and approved integrated base. Delegate (and do not
+reimplement) the shared lock, Git, Radar, Herdr, Intercom reconciliation, launch,
+actual new Pi session ID validation and distinct reactivation handoff to
+`chanks-3-despacho-herdr`'s attended reactivation route. An existing marker or
+previous dispatch is not fresh authority. A foreign agent, contradictory or
+missing evidence, changed base, or ambiguous send stops without remapping,
+replacement, deletion or inferred terminal. A failed pre-send launch permits
+only owned rollback; after sending, preserve the candidate and all dispatch evidence.
+Attended work requires no unattended seal; never use a seal as the human's answer.
+Main returns after the fire-and-forget delivery result, never initiates `ask`,
+and retains the Terminal-Event Mode's exact inbound sender/commit verification
+for any subsequent integration. No new marker, branch, Session, queue, ledger,
+or plan progress is created by reactivation.
+
 ## Human-Activated Reconstruction
 
 Human-activated reconstruction uses only exact Git, Radar, Herdr, and Intercom readbacks. A confirmed

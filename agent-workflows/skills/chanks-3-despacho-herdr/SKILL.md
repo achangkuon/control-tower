@@ -9,10 +9,11 @@ metadata:
 
 ## Activation Contract
 
-Activate for one of two separate routes: Session dispatch only after the human names the
-complete batch of Sesión IDs and assigns each to a specific approved Pi worker; or
+Activate for separate routes: initial Session dispatch only after the human names the
+complete batch of Sesión IDs and assigns each to a specific approved Pi worker;
 Issue-Patch Mode after exact human approval for one Control Tower issue and `issue-resolver`,
-without a Session batch. Manual pre-V1 dispatch accepts Pi workers only. Both are explicit
+without a Session batch; or human-approved attended reactivation of an existing Session
+dispatch after its Pi process disappears. Manual pre-V1 dispatch accepts Pi workers only. Both are explicit
 Herdr requests with the Torre off, not Torre dispatch. Herdr owns
 only the authorized seats and process topology; Pi Intercom is only the message transport. Dispatch
 does not grant execution authority, ODD continuity, plan status, or delivery authority. Preserve the
@@ -32,7 +33,8 @@ pathname for this skill: do not restate, vary, steal, or delete it. The declarat
 configuration, not persistent roster or planning state. The Session-only Hard Rules,
 Decision Gates, Execution Steps, and Output Contract below apply to Session dispatch;
 the explicitly separate Issue-Patch Mode uses only its own route and the shared lock.
-Its exception does not weaken any Session admission rule.
+Its exception does not weaken any Session admission rule. The distinct attended
+reactivation section below does not reuse first-dispatch `LISTO` or fresh-branch rules.
 
 For Session dispatch only, under the acquired lock and right after lock acquisition, invoke
 `chanks-0-jornada` in its stage-3 dispatch entry mode — diagnosis plus
@@ -143,6 +145,68 @@ report immutable candidate/check/integration/closure/retirement evidence or the
 precise missing proof; do not report an issue as fixed from static policy alone.
 This mode leaves the Session-only execution steps, kickoff, marker and six Session
 retirement checks unchanged. It does not execute a patch merely by documenting it.
+
+## Attended Reactivation of an Existing Session Dispatch
+
+This is not first dispatch, not Issue-Patch Mode, and not autonomous recovery. It
+accepts only the same Session already `EN CURSO` with an existing `radar.despacho/v1` marker.
+The original Pi process must be absent; a missing marker, another occupant, a terminal
+result awaiting integration, or an uncertain prior handoff is not permission to launch.
+Keep the same Session, same worker, same branch, same worktree, and same candidate;
+never create, replace, delete, or amend the marker or branch, and never clean, reset,
+stash, or replace candidate bytes. Its `review_ready` evidence, if present, remains
+untouched; conflicting delivery evidence stops rather than being recast as resume.
+
+1. Obtain fresh exact human approval for **attended reactivation**, bound to the
+   existing marker identity, Session ID, declared Pi worker/tab/canonical worktree,
+   full branch ref, approved integrated base commit, restoring outcome, and current
+   candidate state. A previous dispatch, transport receipt, optional unattended seal,
+   or approval for another base/worker does not authorize this operation. Attended
+   reactivation requires no unattended seal and does not apply sealed review consent.
+   An unattended request is a different decision requiring a currently valid exact seal
+   and its own authority; an expired or absent seal never authorizes unattended work.
+2. Use `references/retiro.md`'s `## Shared lock protocol` for the whole admission,
+   launch, and handoff. The responsible parent either already owns and retains that
+   lock for this run or acquires it through that protocol; do not reacquire a lock
+   held by the same run, invent another lock, or release a foreign owner's record.
+   Under the owned lock, reconcile fresh Git, Radar, Herdr, and Intercom readbacks:
+   local/remote integrated master equals the approved integrated base; Radar reports
+   this exact Session `EN CURSO` and its current exact files/Cimientos/Recursos;
+   the regular no-follow marker in the canonical Git common dir has schema,
+   Session, worker, absolute worktree, and full branch ref matching approval;
+   the existing worker branch/worktree match that marker, descend from the base,
+   and preserve the current candidate. Verify the originally dispatched Pi session
+   and handoff evidence, original Pi process absent from fresh Herdr and Intercom,
+   declared tab free, no foreign agent, no pending delivery or terminal claim, and
+   fresh compatibility against other active Sessions. Missing, contradictory,
+   foreign, or ambiguous identity/scope/base/candidate evidence stops without worker
+   mutation; an `EN CURSO` status or marker alone proves neither authority nor loss.
+3. Recheck approval, base, marker identity, candidate and live evidence immediately
+   before launch. Only with all prerequisites still true, launch a new Pi process
+   in the same declared tab and preserved worktree, without touching the branch or
+   marker. Read its actual new Pi session ID from Herdr JSON (never predict one).
+   Read back that exact agent, tab, cwd/worktree and a fresh Intercom live roster;
+   match the actual ID, approved alias and branch with fresh Git. Failure before
+   sending uses the pre-send owned rollback: close only a provably newly launched
+   agent, preserve marker, branch, worktree, candidate and persistent seat. If close
+   is ambiguous, retain the owned lock for human reconciliation; never erase evidence.
+4. Recheck the exact human approval, base, candidate and Session compatibility before
+   a distinguishable reactivation handoff headed `REACTIVATION HANDOFF`, carrying the
+   original and actual new Pi session IDs, original marker identity, current branch
+   tip/candidate, same-Session native ODD record/code/evidence reconciliation (or
+   first pending legacy Módulo), exact files/Cimientos/Recursos and attended/no-seal
+   status. Send it once via fire-and-forget Intercom to the verified new Pi session ID.
+   A confirmed send proves only transport, never resumption or completion. A failed
+   or ambiguous send preserves marker, branch, worktree, candidate and launched
+   agent; never resend, retry, infer completion, or auto-resume. Release only an
+   owned lock after proven success or rollback; on ambiguous post-send state retain
+   evidence and request human reconciliation under the shared protocol.
+5. The worker independently revalidates same Session, marker, base, branch, candidate,
+   human approval and live compatibility before writing. Subsequent progress and
+   terminal evidence uses the same Session/worker and actual new Pi ID. Main verifies
+   that identity before any terminal integration; human decisions remain worker-initiated
+   threaded `ask`/exact Main `reply`. This route changes no issue-patch admission,
+   Session kickoff rule, marker schema, plan progress, or Session retirement checks.
 
 ## Decision Gates
 
