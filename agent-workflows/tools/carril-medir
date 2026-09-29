@@ -1,0 +1,139 @@
+#!/usr/bin/env python3
+"""carril-medir — compare Pi runs across lanes from their session logs.
+
+    carril-medir limpio=<worktree> estable=<worktree> --search <dir> [--search <dir> ...]
+
+Each run is identified by the folder it worked in: every session file under the search dirs
+whose header `cwd` is that worktree belongs to the run. That includes the subagents the run
+delegated to, so a lane that delegates more is not made to look cheaper than it is.
+"""
+from __future__ import annotations
+
+import argparse
+from datetime import datetime
+import json
+import os
+from pathlib import Path
+import sys
+
+
+def read_session(path: Path) -> list[dict] | None:
+    try:
+        lines = path.read_text().splitlines()
+    except OSError:
+        return None
+    events = []
+    for line in lines:
+        try:
+            events.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return events if events and events[0].get("type") == "session" else None
+
+
+def timestamp(event: dict) -> datetime | None:
+    value = event.get("timestamp")
+    if not value:
+        return None
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
+def sessions_for(worktree: str, search: list[Path]) -> list[list[dict]]:
+    wanted = os.path.realpath(worktree)
+    found = []
+    for directory in search:
+        for path in sorted(directory.rglob("*.jsonl")):
+            events = read_session(path)
+            if events and os.path.realpath(events[0].get("cwd", "")) == wanted:
+                found.append(events)
+    # Oldest first: the run's own session starts before any subagent it spawns.
+    return sorted(found, key=lambda events: timestamp(events[0]) or datetime.max)
+
+
+def measure(label: str, worktree: str, search: list[Path]) -> dict:
+    sessions = sessions_for(worktree, search)
+    run = {"label": label, "worktree": worktree, "sessions": len(sessions)}
+    if not sessions:
+        return run | dict.fromkeys(
+            ("startup_input", "input", "output", "cost", "turns", "tool_calls",
+             "tool_errors", "seconds", "final_stop"))
+
+    totals = dict(input=0, output=0, cost=0.0, turns=0, tool_calls=0, tool_errors=0)
+    startup_input = None
+    moments = []
+    for index, events in enumerate(sessions):
+        for event in events:
+            moment = timestamp(event)
+            if moment:
+                moments.append(moment)
+            message = event.get("message") or {}
+            if message.get("role") == "assistant":
+                usage = message.get("usage") or {}
+                if index == 0 and startup_input is None:
+                    startup_input = usage.get("input", 0)
+                totals["input"] += usage.get("input", 0)
+                totals["output"] += usage.get("output", 0)
+                totals["cost"] += (usage.get("cost") or {}).get("total", 0.0)
+                totals["turns"] += 1
+                totals["tool_calls"] += sum(
+                    1 for part in message.get("content") or [] if part.get("type") == "toolCall")
+            elif message.get("role") == "toolResult" and message.get("isError"):
+                totals["tool_errors"] += 1
+
+    final_stop = None
+    for event in reversed(sessions[0]):
+        message = event.get("message") or {}
+        if message.get("role") == "assistant":
+            final_stop = message.get("stopReason")
+            break
+
+    totals["cost"] = round(totals["cost"], 6)
+    return run | totals | {
+        "startup_input": startup_input,
+        "seconds": round((max(moments) - min(moments)).total_seconds()),
+        "final_stop": final_stop,
+    }
+
+
+COLUMNS = (
+    ("Carril", "label"), ("Sesiones", "sessions"), ("Tokens arranque", "startup_input"),
+    ("Tokens entrada", "input"), ("Tokens salida", "output"), ("Costo USD", "cost"),
+    ("Turnos", "turns"), ("Herramientas", "tool_calls"), ("Errores", "tool_errors"),
+    ("Segundos", "seconds"), ("Cierre", "final_stop"),
+)
+
+
+def cell(key: str, value) -> str:
+    if value is None:
+        return "—"
+    if key == "cost":
+        return f"{value:.3f}"
+    return str(value)
+
+
+def table(runs: list[dict]) -> str:
+    header = "| " + " | ".join(title for title, _ in COLUMNS) + " |"
+    rule = "|" + "---|" * len(COLUMNS)
+    rows = ["| " + " | ".join(cell(key, run[key]) for _, key in COLUMNS) + " |" for run in runs]
+    return "\n".join([header, rule, *rows])
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("runs", nargs="+", metavar="carril=worktree")
+    parser.add_argument("--search", action="append", default=[], type=Path, required=True)
+    parser.add_argument("--json", action="store_true", help="print raw metrics")
+    args = parser.parse_args(argv)
+
+    runs = []
+    for spec in args.runs:
+        label, separator, worktree = spec.partition("=")
+        if not separator:
+            parser.error(f"expected carril=worktree, got {spec!r}")
+        runs.append(measure(label, worktree, args.search))
+    print(json.dumps(runs, indent=2) if args.json else table(runs))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

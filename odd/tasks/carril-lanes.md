@@ -94,6 +94,53 @@ safe place to try a candidate version.
     (cosmetic); `_shared` resolves relative to each loaded skill, so worktree skills read the
     worktree `_shared`.
 
+### Step 2 — A/B friction test (authorized 2026-09-28: "Si esas están bien")
+
+Tasks approved by the maintainer, each run once per lane (limpio, estable) in throwaway worktrees
+from the same commit, non-interactive (`-p`), sessions stored outside the daily history:
+1. #146 Radar non-ASCII paths (Go bug). 2. Fold `carril` into `install.py` (Python feature).
+3. #147 intermittent timeout, diagnosis only. 4. "Which Sessions can I start today?" (Chanks use).
+Excluded: #150 (in progress elsewhere), #144/#145 (Gentle AI internals), #138 (tracker).
+Forecast cost disclosed: about $5–20 for the automatic runs.
+
+- [x] A1 — `carril-medir`: sums a run's main session plus its subagent sessions (matched by the
+  session header `cwd`), then prints the comparison table (route: inline, one tool + test).
+  RED 3/3 → GREEN 3/3; on the real smoke session it reproduces 14 771 tokens / $0.059. Not yet
+  committed.
+- [x] A2 — Throwaway worktrees `Worktrees/ab-<task>-<lane>` at the same commit; the persistent pool
+  is never used (route: inline). Eight detached worktrees at `97ac50c`; `bun install
+  --frozen-lockfile` in both t3 worktrees. Stable snapshot: 67 hashed files. Prompts and runner are
+  in the session scratchpad; each task pairs both lanes in parallel, 40-minute timeout per run.
+- [x] A3 — Eight automatic runs, stable dir hash checked before and after (route: inline, background).
+  All 8 exited 0 (23:28–23:46). Only `models-store.json` changed in the stable dir, the model
+  catalog cache the estable runs themselves refresh. No subagent sessions were attributed to any
+  run. Raw metrics (limpio vs estable): t1 $0.572/152 s/28 tools vs $1.524/331 s/57;
+  t2 $1.120/279 s/35 vs $0.851/245 s/26; t3 $0.866/290 s/37 vs $1.049/332 s/47;
+  t4 $0.167/28 s/4 vs $0.363/80 s/6. Startup tokens were about 19.6k vs 33.6k in every run.
+  Quality grading is blind: bundles are relabelled A/B with a mixed key, and the t1/t2 patches are
+  applied on neutral `Worktrees/blind-*` checkouts.
+- [x] A4 — Comparison table (route: inline). Maintainer's interactive notes are still pending.
+  Blind grades by an independent verifier; the key was revealed only after grading:
+  - t1 #146: a tie on quality; both fixes are correct and both tests really reproduce the bug.
+    limpio's fix was cleaner (it reuses the `gitCommand` seam). estable's process was stronger
+    (it reported RED/GREEN, forced `core.quotepath=true` in the test, and wrote an ODD record) but
+    cost 2.7×.
+  - t2 installer: a tie on quality, with estable slightly ahead on tests. The two implementations
+    are near-identical. estable was also cheaper. Both runs' `test_install.py` errors came from
+    worktree file modes (775 against the installer's strict 0o755), not from the patches; with
+    modes normalised both pass.
+  - t3 #147: limpio slightly better, because it cited the real historical timeout record. Both
+    runs were honest, and both proposed a per-test timeout plus a protocol-driven close for the
+    mock server.
+  - t4 which Session: estable more faithful to Radar. It said Radar gives no reason to prefer S164
+    over S165. limpio was friendlier but invented a reason for ordering them ("discover problems
+    early"), which Radar does not support. Neither invented IDs or states.
+  - No rule violations. The stable dir was intact apart from its model-catalog cache.
+  Reading: with one run per task, the differences are within noise except cost. Personal config
+  costs about 40% more overall (startup 33.6k vs 19.6k tokens every run) and bought fidelity on
+  the Chanks question (t4) and process discipline on t1, but no measurable correctness gain on
+  code tasks.
+
 ## Verification evidence (2026-09-28)
 
 - Full `agent-workflows` suite: 273 run, 1 failure, 1 skipped. The failure is
