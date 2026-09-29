@@ -233,10 +233,11 @@ type ImportacionLegacy struct {
 	DescomposicionDiferida bool   `yaml:"descomposicion_diferida"`
 }
 
-// References is closed, non-executable context outside sesiones: neither kind grants status, ownership, queue, seat, capacity, or completion.
+// References is closed, non-executable context outside sesiones: no kind grants status, ownership, queue, seat, capacity, or completion.
 type References struct {
 	FutureSuccessors []FutureSuccessor  `yaml:"future_successors"`
 	SatisfiedHistory []SatisfiedHistory `yaml:"satisfied_history"`
+	RetiredSessions  []RetiredSession   `yaml:"retired_sessions"`
 }
 
 // FutureSuccessor registers one approved successor's lineage before it is planned and approved as a full Sesion.
@@ -256,6 +257,17 @@ type SatisfiedHistory struct {
 	ID             string          `yaml:"id"`
 	Reason         string          `yaml:"reason"`
 	TerminalSource FragmentLocator `yaml:"terminal_source"`
+}
+
+// RetiredSession reserves a removed Session identity and records its approved
+// disposition without retaining any executable or progress-bearing fields.
+type RetiredSession struct {
+	ID          string    `yaml:"id"`
+	Disposition string    `yaml:"disposition"`
+	Result      string    `yaml:"result"`
+	Reason      string    `yaml:"reason"`
+	Authority   Autoridad `yaml:"authority"`
+	AbsorbedBy  string    `yaml:"absorbed_by"`
 }
 
 // FragmentLocator fixes one immutable byte-exact fragment: commit, safe path, regular blob, line/byte bounds, and SHA-256.

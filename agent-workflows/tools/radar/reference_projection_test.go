@@ -16,10 +16,15 @@ func referencedFixturePlan(loc FragmentLocator) *Plan {
 	fut1 := FutureSuccessor{ID: "S103", Reason: "declared second", Result: "r", Zone: "entrega", AssignmentSource: loc}
 	fut2 := FutureSuccessor{ID: "S102", Reason: "outside-approved-horizon | escala", Result: "r", Zone: "entrega", AssignmentSource: loc}
 	hist := SatisfiedHistory{ID: "S1.9", Reason: "omitted-completed-import-dependency", TerminalSource: loc}
+	retired := RetiredSession{ID: "S4.4", Disposition: "retired", Result: "partial work preserved", Reason: "partial evidence is not whole-Session delivery", Authority: Autoridad{Citas: []Cita{{Tipo: "engram", ID: 12062}}}}
+	absorbed := RetiredSession{ID: "S121", Disposition: "absorbed", Result: "worker tabs", Reason: "scope consolidated", Authority: Autoridad{Citas: []Cita{{Tipo: "engram", ID: 12062}}}, AbsorbedBy: "S107"}
+	target := sesion("S107", false, nil, nil)
+	target.Entrega = &Entrega{Commit: loc.Commit}
 	return &Plan{
 		Schema: "plan", SchemaVersion: 3, Producto: "prueba",
 		Zonas:      []Zona{{ID: "z", Nombre: "Z", Rutas: []string{"ASIGNACION.md"}}},
-		References: &References{FutureSuccessors: []FutureSuccessor{fut1, fut2}, SatisfiedHistory: []SatisfiedHistory{hist}},
+		Sesiones:   []Sesion{target},
+		References: &References{FutureSuccessors: []FutureSuccessor{fut1, fut2}, SatisfiedHistory: []SatisfiedHistory{hist}, RetiredSessions: []RetiredSession{retired, absorbed}},
 	}
 }
 
@@ -52,8 +57,13 @@ func TestNonExecutableReferencesListedInRenderAndStatus(t *testing.T) {
 	if !strings.Contains(rendered, "Non-executable references") || future == -1 || second == -1 || history == -1 || !(future < second && second < history) {
 		t.Fatalf("render must expose the listing grouped by kind then declaration order:\n%s", rendered)
 	}
-	if !strings.Contains(rendered, "future_successor") || !strings.Contains(rendered, "satisfied_history") {
+	if !strings.Contains(rendered, "future_successor") || !strings.Contains(rendered, "satisfied_history") || !strings.Contains(rendered, "retired_session") {
 		t.Fatal("listing must show each reference's literal kind")
+	}
+	for _, want := range []string{"S4.4", "retired", "partial evidence is not whole-Session delivery", "S121", "absorbed → S107", "scope consolidated"} {
+		if !strings.Contains(rendered, want) {
+			t.Fatalf("retired reference listing must show %q:\n%s", want, rendered)
+		}
 	}
 	if !strings.Contains(rendered, "&#124;") {
 		t.Fatal("listing must escape the reason like every other rendered field")
@@ -89,11 +99,14 @@ func TestReferencesNeverLeakIntoOperationalProjections(t *testing.T) {
 	if _, ok := estados["S1.9"]; ok {
 		t.Fatal("EstadosAt must never assign a state to a reference")
 	}
+	if _, ok := estados["S4.4"]; ok {
+		t.Fatal("EstadosAt must never assign a state to a retired reference")
+	}
 
 	colas := p.ColaPorZonaAt(root, commit)
 	for zona, ids := range colas {
 		for _, id := range ids {
-			if id == "S102" || id == "S1.9" || id == "S103" {
+			if id == "S102" || id == "S1.9" || id == "S103" || id == "S4.4" || id == "S121" {
 				t.Fatalf("ColaPorZonaAt zone %s must never queue a reference, got %v", zona, ids)
 			}
 		}
@@ -116,6 +129,9 @@ func TestReferencesNeverLeakIntoOperationalProjections(t *testing.T) {
 	}
 	if _, ok := cobertura["S102"]; ok {
 		t.Fatal("zonas coverage must never key on a reference id")
+	}
+	if _, ok := cobertura["S4.4"]; ok {
+		t.Fatal("zonas coverage must never key on a retired reference id")
 	}
 }
 

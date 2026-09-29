@@ -78,14 +78,17 @@ func hasErr(h []Hallazgo) bool {
 func TestClosedReferenceShapeRejectsUnknownAndMixedFields(t *testing.T) {
 	loc := "assignment_source: {commit: '0', path: a, blob: '0', line_start: 1, line_end: 1, byte_start: 0, byte_end: 1, fragment_sha256: x}\n"
 	base := "references:\n  future_successors:\n    - id: S102\n      reason: r\n      result: r\n      zone: z\n      "
+	retired := "references:\n  retired_sessions:\n    - id: S4.4\n      disposition: retired\n      result: r\n      reason: r\n      authority: {tipo: engram, id: 12062}\n"
 	cases := map[string]struct {
 		body string
 		fail bool
 	}{
 		"valid minimal shape":                {base + loc, false},
+		"valid retired-session shape":        {retired, false},
 		"unknown field on future successor":  {base + "status: done\n      " + loc, true},
 		"mixed payload on future successor":  {base + "terminal_source: {commit: '0'}\n      " + loc, true},
 		"unknown field on satisfied history": {"references:\n  satisfied_history:\n    - id: S1.9\n      reason: r\n      extra: x\n      terminal_source: {commit: '0', path: a, blob: '0', line_start: 1, line_end: 1, byte_start: 0, byte_end: 1, fragment_sha256: x}\n", true},
+		"execution field on retired session": {strings.Replace(retired, "      authority:", "      status: done\n      authority:", 1), true},
 	}
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -97,6 +100,48 @@ func TestClosedReferenceShapeRejectsUnknownAndMixedFields(t *testing.T) {
 				t.Fatalf("expected valid minimal shape to parse, got %v", err)
 			}
 		})
+	}
+}
+
+func TestRetiredSessionReferenceContract(t *testing.T) {
+	authority := Autoridad{Citas: []Cita{{Tipo: "engram", ID: 12062}}}
+	retired := func(id, disposition, absorbedBy string) RetiredSession {
+		return RetiredSession{ID: id, Disposition: disposition, Result: "preserved result", Reason: "honest disposition", Authority: authority, AbsorbedBy: absorbedBy}
+	}
+	target := sesion("S107", false, nil, nil)
+	cases := []struct {
+		name string
+		plan *Plan
+		fail bool
+	}{
+		{"retired valid", &Plan{References: &References{RetiredSessions: []RetiredSession{retired("S4.4", "retired", "")}}}, false},
+		{"absorbed valid", &Plan{Sesiones: []Sesion{target}, References: &References{RetiredSessions: []RetiredSession{retired("S121", "absorbed", "S107")}}}, false},
+		{"unknown disposition", &Plan{References: &References{RetiredSessions: []RetiredSession{retired("S4.4", "paused", "")}}}, true},
+		{"absorbed requires destination", &Plan{References: &References{RetiredSessions: []RetiredSession{retired("S121", "absorbed", "")}}}, true},
+		{"retired forbids destination", &Plan{Sesiones: []Sesion{target}, References: &References{RetiredSessions: []RetiredSession{retired("S4.4", "retired", "S107")}}}, true},
+		{"absorbed destination must exist", &Plan{References: &References{RetiredSessions: []RetiredSession{retired("S121", "absorbed", "S107")}}}, true},
+		{"required text cannot be blank", &Plan{References: &References{RetiredSessions: []RetiredSession{{ID: "S4.4", Disposition: "retired", Result: " ", Reason: "r", Authority: authority}}}}, true},
+		{"authority must be typed", &Plan{References: &References{RetiredSessions: []RetiredSession{{ID: "S4.4", Disposition: "retired", Result: "r", Reason: "r", Authority: Autoridad{Texto: "Engram 12062"}}}}}, true},
+		{"id reserved against live sessions", &Plan{Sesiones: []Sesion{sesion("S4.4", false, nil, nil)}, References: &References{RetiredSessions: []RetiredSession{retired("S4.4", "retired", "")}}}, true},
+		{"id unique within retired references", &Plan{References: &References{RetiredSessions: []RetiredSession{retired("S4.4", "retired", ""), retired("S4.4", "retired", "")}}}, true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := hasErr(c.plan.checkReferencias("")); got != c.fail {
+				t.Fatalf("expected fail=%v, got findings %#v", c.fail, c.plan.checkReferencias(""))
+			}
+		})
+	}
+}
+
+func TestLiveSessionDependingOnRetiredIDIsExplicitError(t *testing.T) {
+	p := &Plan{
+		References: &References{RetiredSessions: []RetiredSession{{ID: "S4.4"}}},
+		Sesiones:   []Sesion{sesion("S200", false, []string{"S4.4"}, nil)},
+	}
+	got := hallazgosDe(p.checkGrafo(), "dependencias hacia sesiones retiradas")
+	if len(got) != 1 || !strings.Contains(got[0].Detalle, "S200") || !strings.Contains(got[0].Detalle, "S4.4") {
+		t.Fatalf("expected explicit retired dependency error naming both ids, got %#v", got)
 	}
 }
 

@@ -319,19 +319,26 @@ type referenceRow struct {
 }
 
 // referenceRows builds the closed "Non-executable references" listing, grouped
-// by kind and then by declaration order — the two YAML arrays already preserve
+// by kind and then by declaration order — the YAML arrays already preserve
 // that order, so no further sorting happens here. EstadosAt, ColaPorZonaAt,
 // AvanceAt, AsientosAt, Area, and Cobertura never call this function.
 func referenceRows(p *Plan) []referenceRow {
 	if p.References == nil {
 		return nil
 	}
-	rows := make([]referenceRow, 0, len(p.References.FutureSuccessors)+len(p.References.SatisfiedHistory))
+	rows := make([]referenceRow, 0, len(p.References.FutureSuccessors)+len(p.References.SatisfiedHistory)+len(p.References.RetiredSessions))
 	for _, f := range p.References.FutureSuccessors {
 		rows = append(rows, referenceRow{f.ID, "future_successor", locatorProvenance(f.AssignmentSource), f.Reason})
 	}
 	for _, s := range p.References.SatisfiedHistory {
 		rows = append(rows, referenceRow{s.ID, "satisfied_history", locatorProvenance(s.TerminalSource), s.Reason})
+	}
+	for _, r := range p.References.RetiredSessions {
+		disposition := r.Disposition
+		if r.Disposition == "absorbed" {
+			disposition += " → " + markdownText(r.AbsorbedBy)
+		}
+		rows = append(rows, referenceRow{r.ID, "retired_session", disposition, r.Reason})
 	}
 	return rows
 }

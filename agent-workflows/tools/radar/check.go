@@ -732,6 +732,13 @@ func (p *Plan) checkGrafo() []Hallazgo {
 			d, ok := index[dep]
 			if !ok {
 				if kind := referencias[dep]; kind != "" {
+					if kind == "retired" {
+						if s.Entrega == nil && !s.Archivada {
+							h = append(h, Hallazgo{"error", "dependencias hacia sesiones retiradas",
+								fmt.Sprintf("%s depende de %q, que fue retirada (references.retired_sessions) y no puede desbloquear trabajo vivo", s.ID, dep)})
+						}
+						continue
+					}
 					// A future or satisfied-history reference is structurally
 					// present (design.md:577, design.md:587: "closes only that
 					// missing structural edge" / "may register structural
@@ -876,8 +883,7 @@ func (p *Plan) checkPrioridades() []Hallazgo {
 	return h
 }
 
-// referenceKinds maps every reference identity (future_successors and
-// satisfied_history) to its kind, so checkGrafo can recognize a dependency
+// referenceKinds maps every reference identity to its kind, so checkGrafo can recognize a dependency
 // target that is structurally present without being a Sesión. It does not
 // validate shape or duplicates — checkReferencias owns that.
 func (p *Plan) referenceKinds() map[string]string {
@@ -893,6 +899,11 @@ func (p *Plan) referenceKinds() map[string]string {
 	for _, s := range p.References.SatisfiedHistory {
 		if s.ID != "" {
 			kinds[s.ID] = "satisfied"
+		}
+	}
+	for _, r := range p.References.RetiredSessions {
+		if r.ID != "" {
+			kinds[r.ID] = "retired"
 		}
 	}
 	return kinds
@@ -1386,6 +1397,38 @@ func (p *Plan) checkReferencias(root string) []Hallazgo {
 			h = append(h, Hallazgo{"error", "referencia histórica", ctx + " debe declarar reason"})
 		}
 		h = append(h, validateFragmentLocator(root, s.TerminalSource, ctx+" terminal_source")...)
+	}
+	for i := range p.References.RetiredSessions {
+		r := &p.References.RetiredSessions[i]
+		ctx := fmt.Sprintf("retired_sessions[%d]", i)
+		if r.ID != "" {
+			ctx = r.ID
+		}
+		add(r.ID, "retired", ctx)
+		if strings.TrimSpace(r.Result) == "" || strings.TrimSpace(r.Reason) == "" {
+			h = append(h, Hallazgo{"error", "referencia retirada", ctx + " debe declarar result y reason no vacíos"})
+		}
+		if !r.Authority.Tipada() {
+			h = append(h, Hallazgo{"error", "referencia retirada", ctx + " debe declarar authority tipada"})
+		} else {
+			for citation := range r.Authority.Citas {
+				h = append(h, validarCita(root, nombreDeCita(ctx, citation, len(r.Authority.Citas)), r.Authority.Citas[citation])...)
+			}
+		}
+		switch r.Disposition {
+		case "retired":
+			if strings.TrimSpace(r.AbsorbedBy) != "" {
+				h = append(h, Hallazgo{"error", "referencia retirada", ctx + " tiene disposition retired y no puede declarar absorbed_by"})
+			}
+		case "absorbed":
+			if strings.TrimSpace(r.AbsorbedBy) == "" {
+				h = append(h, Hallazgo{"error", "referencia retirada", ctx + " tiene disposition absorbed y debe declarar absorbed_by"})
+			} else if _, ok := sesionesPorID[r.AbsorbedBy]; !ok {
+				h = append(h, Hallazgo{"error", "referencia retirada", fmt.Sprintf("%s fue absorbida por %q, que no es una Sesión existente", ctx, r.AbsorbedBy)})
+			}
+		default:
+			h = append(h, Hallazgo{"error", "referencia retirada", fmt.Sprintf("%s declara disposition %q; sólo existen retired y absorbed", ctx, r.Disposition)})
+		}
 	}
 	for _, s := range p.Sesiones {
 		// A Sesión's depende_de closes structurally on a satisfied-history
