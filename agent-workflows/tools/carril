@@ -1,25 +1,32 @@
 #!/usr/bin/env bash
 # carril — open Pi in an explicit lane, one terminal at a time.
 #
-#   carril            report the lane of THIS terminal
-#   carril limpio     Pi with only Gentle AI's shipped pieces (isolated config dir)
-#   carril estable    Pi with the everyday config (~/.pi/agent), same as plain `pi`
+#   carril                  report the lane of THIS terminal
+#   carril limpio           Pi with only Gentle AI's shipped pieces (isolated config dir)
+#   carril estable          Pi with the everyday config (~/.pi/agent), same as plain `pi`
+#   carril preparar limpio  build the limpio lane once, from the stable settings
 #
 # The lane lives in this process's environment only: closing the terminal leaves nothing
-# changed, and plain `pi` keeps working exactly as before. The launcher never writes into
-# the stable config dir.
+# changed, and plain `pi` keeps working exactly as before. Nothing here writes into the
+# stable config dir.
 set -euo pipefail
 
 PI_BIN="${CARRIL_PI_BIN:-pi}"
 STABLE_DIR="$HOME/.pi/agent"
 LIMPIO_DIR="${CARRIL_LIMPIO_DIR:-$HOME/.pi/agent-limpio}"
+# Pi auto-discovers ~/.agents/skills whatever the config dir, so the limpio lane turns
+# discovery off and loads only the skills gentle-pi ships.
+GENTLE_SKILLS="$LIMPIO_DIR/npm/node_modules/gentle-pi/skills"
+# gentle-pi keeps persona and subagent models outside the Pi config dir unless told otherwise.
+GENTLE_CONFIG="$LIMPIO_DIR/gentle-config"
 
 usage() {
   cat >&2 <<'EOF'
 Uso: carril [limpio|estable] [argumentos de pi...]
-  carril            muestra en qué carril está esta terminal
-  carril limpio     Pi solo con Gentle AI
-  carril estable    Pi con tu configuración de todos los días
+  carril                  muestra en qué carril está esta terminal
+  carril limpio           Pi solo con Gentle AI
+  carril estable          Pi con tu configuración de todos los días
+  carril preparar limpio  arma el carril limpio (una sola vez)
 EOF
 }
 
@@ -28,15 +35,90 @@ canonical() {
   python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "$1"
 }
 
-# Title and banner only when a human is looking; pipes and tests stay clean.
-announce() {
+refuse_stable_target() {
+  if [ "$(canonical "$LIMPIO_DIR")" = "$(canonical "$STABLE_DIR")" ]; then
+    echo "carril: el carril limpio apunta a la configuración estable ($STABLE_DIR); no se toca." >&2
+    exit 2
+  fi
+}
+
+# Pi puts the session name in the terminal title, so the lane label rides on it. A name the
+# caller chose wins.
+has_name() {
+  local arg
+  for arg in "$@"; do
+    case "$arg" in
+      -n|--name|--name=*) return 0 ;;
+    esac
+  done
+  return 1
+}
+
+launch() {
   local label="$1"
-  if [ -t 1 ]; then
-    printf '\033]0;%s\007' "$label"
+  shift
+  if has_name "$@"; then
+    exec "$PI_BIN" "$@"
   fi
-  if [ -t 2 ]; then
-    printf '── %s ──\n' "$label" >&2
+  exec "$PI_BIN" --name "$label" "$@"
+}
+
+# Only the settings that keep the comparison fair (model, reasoning, UI) cross over;
+# packages, skills and the npm wrapper stay behind because they are the personal layer.
+write_limpio_settings() {
+  python3 - "$STABLE_DIR/settings.json" "$LIMPIO_DIR/settings.json" <<'PY'
+import json, sys
+KEEP = (
+    "defaultProvider", "defaultModel", "defaultThinkingLevel", "defaultProjectTrust",
+    "theme", "tuiMode", "hideThinkingBlock", "followUpMode", "steeringMode",
+)
+with open(sys.argv[1]) as source:
+    stable = json.load(source)
+limpio = {key: stable[key] for key in KEEP if key in stable}
+with open(sys.argv[2], "w") as target:
+    json.dump(limpio, target, indent=2)
+    target.write("\n")
+PY
+}
+
+# Same Gentle AI versions the stable lane runs, so only the personal layer differs.
+gentle_packages() {
+  python3 - "$STABLE_DIR/settings.json" <<'PY'
+import json, sys
+with open(sys.argv[1]) as source:
+    packages = json.load(source).get("packages", [])
+for entry in packages:
+    spec = entry["source"] if isinstance(entry, dict) else entry
+    name = spec.removeprefix("npm:").rsplit("@", 1)[0] if spec.count("@") else spec
+    if name.removeprefix("npm:") in ("gentle-pi", "gentle-engram"):
+        print(spec)
+PY
+}
+
+preparar_limpio() {
+  refuse_stable_target
+  if [ -e "$LIMPIO_DIR" ]; then
+    echo "carril: $LIMPIO_DIR ya existe; borralo a mano si querés rearmarlo." >&2
+    exit 2
   fi
+  if [ ! -f "$STABLE_DIR/settings.json" ] || [ ! -f "$STABLE_DIR/auth.json" ]; then
+    echo "carril: falta settings.json o auth.json en $STABLE_DIR." >&2
+    exit 2
+  fi
+
+  mkdir -p "$LIMPIO_DIR" "$GENTLE_CONFIG"
+  trap 'rm -rf "$LIMPIO_DIR"; echo "carril: falló la preparación; no quedó nada a medias." >&2' ERR
+  # One shared file: OAuth refresh tokens rotate, so two copies would log each other out.
+  ln -s "$STABLE_DIR/auth.json" "$LIMPIO_DIR/auth.json"
+  write_limpio_settings
+
+  local spec
+  while IFS= read -r spec; do
+    PI_CODING_AGENT_DIR="$LIMPIO_DIR" GENTLE_PI_CONFIG_HOME="$GENTLE_CONFIG" \
+      "$PI_BIN" install "$spec"
+  done < <(gentle_packages)
+  trap - ERR
+  echo "carril: listo. Abrilo con: carril limpio"
 }
 
 if [ $# -eq 0 ]; then
@@ -49,24 +131,31 @@ shift
 
 case "$lane" in
   limpio)
-    if [ "$(canonical "$LIMPIO_DIR")" = "$(canonical "$STABLE_DIR")" ]; then
-      echo "carril: el carril limpio apunta a la configuración estable ($STABLE_DIR); no se abre." >&2
-      exit 2
-    fi
+    refuse_stable_target
     if [ ! -d "$LIMPIO_DIR" ]; then
-      echo "carril: el carril limpio no está preparado ($LIMPIO_DIR no existe)." >&2
+      echo "carril: el carril limpio no está preparado ($LIMPIO_DIR no existe). Corré: carril preparar limpio" >&2
       exit 2
     fi
-    announce "🧪 LIMPIO · solo Gentle AI"
+    if [ ! -d "$GENTLE_SKILLS" ]; then
+      echo "carril: falta gentle-pi en el carril limpio. Borrá $LIMPIO_DIR y corré: carril preparar limpio" >&2
+      exit 2
+    fi
     export CARRIL=limpio
     export PI_CODING_AGENT_DIR="$LIMPIO_DIR"
-    exec "$PI_BIN" "$@"
+    export GENTLE_PI_CONFIG_HOME="$GENTLE_CONFIG"
+    launch "🧪 LIMPIO" --no-skills --skill "$GENTLE_SKILLS" "$@"
     ;;
   estable)
-    announce "🏠 ESTABLE"
     export CARRIL=estable
-    unset PI_CODING_AGENT_DIR
-    exec "$PI_BIN" "$@"
+    unset PI_CODING_AGENT_DIR GENTLE_PI_CONFIG_HOME
+    launch "🏠 ESTABLE" "$@"
+    ;;
+  preparar)
+    if [ "${1-}" != limpio ]; then
+      usage
+      exit 64
+    fi
+    preparar_limpio
     ;;
   candidato)
     echo "carril: el carril candidato todavía no existe (llega en el paso 3)." >&2
