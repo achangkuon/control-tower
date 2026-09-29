@@ -39,9 +39,10 @@ class IssuePatchContractTests(unittest.TestCase):
         activation = segment(self.dispatch, "## Activation Contract", "## Hard Rules")
         trigger = self.dispatch.split("description: ", 1)[1].splitlines()[0]
         self.assertIn("issue patch", trigger.lower())
-        self.assertIn("Activate for one of two separate routes", activation)
+        self.assertIn("Activate for separate routes", activation)
         self.assertIn("Session dispatch", activation)
         self.assertIn("Issue-Patch Mode", activation)
+        self.assertIn("attended continuation of an existing issue patch", activation)
         self.assertIn("without a Session batch", activation)
         self.assertNotIn("Activate only after the human names the complete batch", activation)
 

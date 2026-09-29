@@ -12,8 +12,9 @@ metadata:
 Activate for separate routes: initial Session dispatch only after the human names the
 complete batch of Sesión IDs and assigns each to a specific approved Pi worker;
 Issue-Patch Mode after exact human approval for one Control Tower issue and `issue-resolver`,
-without a Session batch; or human-approved attended reactivation of an existing Session
-dispatch after its Pi process disappears. Manual pre-V1 dispatch accepts Pi workers only. Both are explicit
+without a Session batch; human-approved attended reactivation of an existing Session
+dispatch after its Pi process disappears; or human-approved attended continuation of an existing issue patch
+after its Pi process disappears. Manual pre-V1 dispatch accepts Pi workers only. All routes are explicit
 Herdr requests with the Torre off, not Torre dispatch. Herdr owns
 only the authorized seats and process topology; Pi Intercom is only the message transport. Dispatch
 does not grant execution authority, ODD continuity, plan status, or delivery authority. Preserve the
@@ -34,7 +35,8 @@ configuration, not persistent roster or planning state. The Session-only Hard Ru
 Decision Gates, Execution Steps, and Output Contract below apply to Session dispatch;
 the explicitly separate Issue-Patch Mode uses only its own route and the shared lock.
 Its exception does not weaken any Session admission rule. The distinct attended
-reactivation section below does not reuse first-dispatch `LISTO` or fresh-branch rules.
+reactivation section below does not reuse first-dispatch `LISTO` or fresh-branch rules,
+and the distinct attended issue-patch continuation section reuses neither.
 
 For Session dispatch only, under the acquired lock and right after lock acquisition, invoke
 `chanks-0-jornada` in its stage-3 dispatch entry mode — diagnosis plus
@@ -105,7 +107,9 @@ issue/approval alone does not grant a live seat or mutation.
    provisioned declared worker stops for its separately authorized provisioning
    route, not an improvised worktree. Reserve a fresh issue-specific
    `work/issue-<number>` branch from the verified base; collision or ambiguous branch
-   ownership stops without reset or reuse. Never use `work/<Session ID>` for a patch.
+   ownership stops without reset or reuse; there is no automatic reuse, and a human may
+   continue an existing patch branch only through Attended Continuation of an Existing
+   Issue Patch. Never use `work/<Session ID>` for a patch.
    Recheck base, active sets, worker availability and approval immediately before launch;
    on drift stop and ask for new exact human authorization, not an inferred update.
 3. Launch a new Pi agent in the declared Herdr tab. Herdr JSON must identify the
@@ -127,7 +131,8 @@ issue/approval alone does not grant a live seat or mutation.
    drift, or expanded file/Resource request stops the patch for fresh human approval
    and comparison. It sends issue-bound progress/terminal evidence; a human decision
    is a worker-initiated `ask` answered only via exact inbound `reply`. On disconnect
-   or timeout preserve candidate and request human reconciliation; no fallback route.
+   or timeout preserve candidate and request human reconciliation; no fallback route
+   exists except a fresh human-approved Attended Continuation of an Existing Issue Patch.
 6. For an inbound terminal, use `chanks-3-coordinador-manual` patch mode. Only a
    freshly verified actual Pi sender, immutable full commit OID, exact worker branch,
    expected base, approved changed files and successful focused checks can enter
@@ -150,6 +155,8 @@ retirement checks unchanged. It does not execute a patch merely by documenting i
 
 This is not first dispatch, not Issue-Patch Mode, and not autonomous recovery. It
 accepts only the same Session already `EN CURSO` with an existing `radar.despacho/v1` marker.
+An existing issue patch is never a Session reactivation: it continues only through
+Attended Continuation of an Existing Issue Patch below.
 The original Pi process must be absent; a missing marker, another occupant, a terminal
 result awaiting integration, or an uncertain prior handoff is not permission to launch.
 Keep the same Session, same worker, same branch, same worktree, and same candidate;
@@ -207,6 +214,62 @@ untouched; conflicting delivery evidence stops rather than being recast as resum
    that identity before any terminal integration; human decisions remain worker-initiated
    threaded `ask`/exact Main `reply`. This route changes no issue-patch admission,
    Session kickoff rule, marker schema, plan progress, or Session retirement checks.
+
+## Attended Continuation of an Existing Issue Patch
+
+This is not first dispatch, not Session reactivation, and not autonomous recovery. It
+accepts only an existing issue patch: the same Control Tower issue still open, the
+same `issue-resolver` worker, the existing `work/issue-<number>` branch and its
+persistent worktree, and the current candidate (zero changes, or committed work on
+that branch). It is the only human-approved way to continue an existing patch branch
+after its Pi process is gone; it never reuses a branch automatically. It changes no
+Session rule, first-dispatch rule, or Session reactivation rule.
+
+1. Obtain fresh exact human approval for **attended issue-patch continuation**, bound
+   to the issue number, worker/tab/canonical worktree, full branch ref and current
+   tip OID, approved base commit, restoring outcome, the unit or scope being
+   continued, the exact file set, and exact Cimientos and Recursos (explicitly empty
+   if none). The route requires no seal, and a seal never authorizes it. A previous
+   dispatch, transport receipt, or approval for another base, branch or worker does
+   not authorize it.
+2. Use `references/retiro.md`'s `## Shared lock protocol` for the whole admission,
+   launch and handoff; do not reacquire a lock held by the same run, invent another
+   lock, or release a foreign record. Under the owned lock, reconcile fresh Git, Radar,
+   Herdr, and Intercom readbacks: local and remote master; the branch exists in that
+   worktree and descends from the approved base; the worktree is clean or its dirty
+   state exactly equals the recorded candidate; previous Pi process absent from Herdr
+   and Intercom; declared tab free; no foreign occupant; no pending delivery or
+   unintegrated terminal claim awaiting integration; and fresh exact-file, Cimiento
+   and Recurso compatibility against every active Session, with the same rules as
+   step 1 of Issue-Patch Mode. Missing, contradictory or ambiguous evidence stops
+   without worker mutation.
+3. Base advance: when master advanced beyond the branch base, the approval must
+   name the new base explicitly. Only a branch with zero commits of its own (its tip
+   equals the old base, an ancestor of master) may be brought forward, by fast-forward
+   only: `git merge --ff-only <new base>` in that worktree. Never reset, rebase, or
+   rewrite a branch that has its own commits; that case stops for a human decision.
+4. Never create, delete, rename, recreate, reset, or amend the branch; never clean or
+   stash the worktree; never rescue or reuse the previous Pi session ID.
+5. Recheck approval, base, candidate and compatibility immediately before launch. Only
+   with every prerequisite still true, launch a new Pi in the same declared tab and
+   worktree. Read its actual new Pi session ID from Herdr JSON (never predict it), then
+   read back that agent, tab and cwd/worktree in Herdr and a fresh Intercom live roster,
+   and match the ID, approved alias and tab, and the branch through fresh Git.
+   Failure before sending uses the pre-send owned rollback: close only a provably newly
+   launched agent and preserve branch, worktree, candidate and persistent seat. If
+   the close is ambiguous, retain the owned lock for human reconciliation.
+6. Recheck approval, base, candidate and compatibility again, then send once, by
+   fire-and-forget Intercom to the verified new Pi session ID, the handoff headed
+   `ISSUE-PATCH CONTINUATION HANDOFF` from `assets/issue-patch-handoff.md`. It carries the
+   previous and actual new Pi session IDs, branch tip and candidate, the approved unit
+   scope, and attended/no-seal status. A confirmed send proves only transport. A failed
+   or ambiguous send preserves branch, worktree, candidate and launched agent; never
+   resend, retry, infer completion, or auto-resume.
+7. The worker revalidates approval, base, branch, candidate and active-Session sets
+   before its first write, exactly as step 5 of Issue-Patch Mode. Terminal handling is
+   unchanged: step 6 of Issue-Patch Mode and `chanks-3-coordinador-manual` patch mode.
+   No `radar.despacho/v1` marker, fake `LISTO` Session, queue, ledger, or plan entry
+   is created.
 
 ## Decision Gates
 

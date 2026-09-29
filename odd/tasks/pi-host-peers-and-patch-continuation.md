@@ -23,7 +23,7 @@ Technical ODD record, not a product plan. No planned Session is closed by this w
 ## Tasks
 
 - [x] T1 — Versioned host-peer wrapper. Add the wrapper source under `agent-workflows/`, install it into `~/.pi/agent/bin/`, and merge `npmCommand` into `~/.pi/agent/settings.json` without clobbering other settings or a foreign user-set `npmCommand`. Covered by installer tests. Route: delegated writer (2+ non-trivial files).
-- [ ] T2 — Attended issue-patch continuation. Add a bounded, human-approved route in `chanks-3-despacho-herdr` to continue an existing issue patch with the same issue, worker, branch, worktree and candidate after its Pi process is gone. Launch a new Pi, verify its actual ID in Herdr and Intercom, and send one distinguishable handoff. No reset, recreate, seal or retry. Align the handoff asset and the policy tests. Route: delegated writer (2+ non-trivial files).
+- [x] T2 — Attended issue-patch continuation. Add a bounded, human-approved route in `chanks-3-despacho-herdr` to continue an existing issue patch with the same issue, worker, branch, worktree and candidate after its Pi process is gone. Launch a new Pi, verify its actual ID in Herdr and Intercom, and send one distinguishable handoff. No reset, recreate, seal or retry. Align the handoff asset and the policy tests. Route: delegated writer (2+ non-trivial files).
 
 ## Acceptance
 
@@ -41,3 +41,18 @@ T1 (delegated writer): the wrapper source lives at `agent-workflows/tools/pi/pi-
   - `test_personal_pi_composition...` needs the Pi and quiet-tools source directories, which are absent on this machine.
 - One existing assertion was narrowed to `.claude/settings.json`.
 - Parent spot-check: the source had mode 775 and failed the 755 convention; it was fixed to 755, and the focused suite was rerun OK.
+- Native review: high risk. The maintainer declined it for this candidate (lineage `review-f1e943de0856515f`, staged projection). Commit `f13ca78`.
+
+T2 (delegated writer): new section "Attended Continuation of an Existing Issue Patch" in `chanks-3-despacho-herdr/SKILL.md`, with 7 steps:
+- approval bound to issue, worker, branch and tip, base, unit scope and file set, with no seal;
+- reconciliation under the shared lock;
+- fast-forward-only base advance for branches with zero commits of their own;
+- no create, delete, reset, clean or stash;
+- new Pi ID from Herdr matched with Intercom;
+- one `ISSUE-PATCH CONTINUATION HANDOFF`;
+- worker revalidation, with terminal handling unchanged.
+
+The intro, the Session reactivation exclusion, and Issue-Patch step 2 and step 5 now point to this route. The asset gained the continuation handoff template, and the first-dispatch template is intact.
+- RED: focused run had 9 errors plus 1 failure (the stale intro pin).
+- GREEN: focused `test_despacho_herdr` and `test_issue_patch_flow`, 68 tests OK. Full suite: 259 tests, 1 failure, which is the known Pi-source environment failure.
+- `chanks-3-coordinador-manual` and `AGENTS.md` do not contradict the new route and were left unchanged.

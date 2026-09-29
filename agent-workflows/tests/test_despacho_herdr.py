@@ -584,6 +584,98 @@ class AttendedReactivationContractTests(unittest.TestCase):
             self.assertIn(phrase, self.handoff)
 
 
+class AttendedIssuePatchContinuationTests(unittest.TestCase):
+    HEADING = "## Attended Continuation of an Existing Issue Patch"
+
+    def setUp(self):
+        self.dispatch = read(f"skills/{SKILL_NAME}/SKILL.md")
+        self.handoff = read(f"skills/{SKILL_NAME}/assets/issue-patch-handoff.md")
+        self.route = section(self.dispatch, self.HEADING)
+        self.flat = " ".join(self.route.split())
+
+    def test_section_exists_and_is_distinct_from_the_other_routes(self):
+        self.assertLess(self.dispatch.index("## Issue-Patch Mode"), self.dispatch.index(self.HEADING))
+        for phrase in ("not first dispatch", "not Session reactivation", "not autonomous recovery",
+                       "same Control Tower issue", "still open", "same `issue-resolver` worker",
+                       "existing `work/issue-<number>` branch", "persistent worktree",
+                       "current candidate"):
+            self.assertIn(phrase, self.flat)
+        activation = section(self.dispatch, "## Activation Contract")
+        self.assertIn("attended continuation of an existing issue patch", activation)
+
+    def test_requires_fresh_exact_approval_bound_to_the_patch_identity(self):
+        for phrase in ("fresh exact human approval", "attended issue-patch continuation",
+                       "issue number", "full branch ref", "current tip OID",
+                       "approved base commit", "restoring outcome", "unit or scope being continued",
+                       "exact file set", "Cimientos", "Recursos", "explicitly empty",
+                       "requires no seal", "a seal never authorizes it",
+                       "transport receipt"):
+            self.assertIn(phrase, self.flat)
+
+    def test_reconciles_under_the_shared_lock_before_any_launch(self):
+        for phrase in ("`references/retiro.md`'s `## Shared lock protocol`",
+                       "descends from the approved base",
+                       "exactly equals the recorded candidate",
+                       "previous Pi process absent", "declared tab free", "no foreign occupant",
+                       "no pending delivery", "unintegrated terminal claim",
+                       "every active Session"):
+            self.assertIn(phrase, self.flat)
+        assert_in_order(self, self.flat,
+                        "fresh exact human approval",
+                        "`references/retiro.md`'s `## Shared lock protocol`",
+                        "previous Pi process absent",
+                        "launch a new Pi")
+
+    def test_branch_and_worktree_are_preserved(self):
+        for verb in ("create", "delete", "rename", "recreate", "reset", "amend", "clean", "stash"):
+            self.assertIn(verb, self.flat)
+        self.assertIn("Never create, delete, rename, recreate, reset, or amend the branch", self.flat)
+        self.assertIn("never clean or stash the worktree", self.flat)
+        self.assertIn("never rescue or reuse the previous Pi session ID", self.flat)
+
+    def test_base_advance_is_fast_forward_only_for_zero_own_commit_branches(self):
+        for phrase in ("name the new base explicitly", "zero commits of its own",
+                       "fast-forward only", "git merge --ff-only <new base>",
+                       "Never reset, rebase, or rewrite", "human decision"):
+            self.assertIn(phrase, self.flat)
+
+    def test_new_pi_identity_is_read_and_matched_before_one_handoff(self):
+        assert_in_order(self, self.flat, "launch a new Pi", "actual new Pi session ID from Herdr JSON",
+                        "fresh Intercom live roster", "`ISSUE-PATCH CONTINUATION HANDOFF`")
+        for phrase in ("never predict", "pre-send owned rollback", "provably newly launched",
+                       "fire-and-forget", "once", "proves only transport",
+                       "never resend, retry, infer completion, or auto-resume",
+                       "assets/issue-patch-handoff.md"):
+            self.assertIn(phrase, self.flat)
+
+    def test_worker_revalidates_and_no_plan_artifacts_are_created(self):
+        for phrase in ("revalidates", "before its first write", "step 5 of Issue-Patch Mode",
+                       "step 6", "`chanks-3-coordinador-manual`",
+                       "No `radar.despacho/v1` marker", "fake `LISTO`", "queue", "ledger",
+                       "plan entry",
+                       "changes no Session rule, first-dispatch rule, or Session reactivation rule"):
+            self.assertIn(phrase, self.flat)
+
+    def test_handoff_asset_defines_the_continuation_heading_and_fields(self):
+        self.assertIn("ISSUE-PATCH CONTINUATION HANDOFF", self.handoff)
+        continuation = self.handoff.split("ISSUE-PATCH CONTINUATION HANDOFF", 1)[1]
+        for phrase in ("Previous Pi session ID", "Actual new Pi session ID", "Current branch tip",
+                       "attended", "no seal", "Approved unit", "Approved integrated base",
+                       "`refs/heads/work/issue-<number>`", "Never resend"):
+            self.assertIn(phrase, continuation)
+        self.assertIn("Fresh issue branch", self.handoff.split("ISSUE-PATCH CONTINUATION HANDOFF", 1)[0])
+
+    def test_other_routes_point_to_the_continuation_instead_of_no_route(self):
+        reactivation = section(self.dispatch, "## Attended Reactivation of an Existing Session Dispatch")
+        self.assertIn("Attended Continuation of an Existing Issue Patch", reactivation)
+        issue_patch = section(self.dispatch, "## Issue-Patch Mode (not Session dispatch)")
+        flat = " ".join(issue_patch.split())
+        self.assertIn("no fallback route exists except a fresh human-approved Attended Continuation", flat)
+        self.assertGreaterEqual(flat.count("Attended Continuation of an Existing Issue Patch"), 2)
+        self.assertIn("collision or ambiguous branch ownership stops without reset or reuse", flat)
+        self.assertIn("no automatic reuse", flat)
+
+
 class DespachoHerdrRetireTests(unittest.TestCase):
     def setUp(self):
         self.skill = read(f"skills/{SKILL_NAME}/SKILL.md")
