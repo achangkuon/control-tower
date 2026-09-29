@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Informe de adelgazamiento</title>
+<style>
+  :root { --bg:#ffffff; --fg:#1d1d1f; --muted:#5f6368; --line:#d9dce1; --head:#f3f4f6; --accent:#1fa892;
+          --warn-bg:#fff6e5; --warn-line:#e08a1e; --info-bg:#eef6ff; --info-line:#3b82f6; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#16181d; --fg:#e6e6e6; --muted:#a0a4ab; --line:#33373f; --head:#20242b; --accent:#3cc9b0;
+            --warn-bg:#2b2416; --warn-line:#e08a1e; --info-bg:#172233; --info-line:#5b9cf6; }
+  }
+  body { background:var(--bg); color:var(--fg); font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;
+         max-width:1100px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:1.9rem; line-height:1.25; margin:0 0 .4rem; }
+  h2 { font-size:1.4rem; margin:2.4rem 0 .6rem; padding-bottom:.3rem; border-bottom:2px solid var(--accent); }
+  h3 { font-size:1.12rem; margin:1.6rem 0 .4rem; }
+  p, li { margin:.45rem 0; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.88em; background:var(--head);
+         padding:.08em .35em; border-radius:4px; }
+  .meta { color:var(--muted); font-size:.92rem; }
+  .box { border-left:4px solid var(--info-line); background:var(--info-bg); padding:.7rem 1rem; margin:1rem 0; border-radius:4px; }
+  .warn { border-left-color:var(--warn-line); background:var(--warn-bg); }
+  .table-wrap { overflow-x:auto; margin:1rem 0; }
+  table { border-collapse:collapse; width:100%; font-size:.92rem; }
+  th, td { border:1px solid var(--line); padding:.45rem .6rem; vertical-align:top; text-align:left; }
+  th { background:var(--head); }
+  nav ol { columns:2; column-gap:2rem; }
+  @media (max-width:640px) { nav ol { columns:1; } }
+</style>
+</head>
+<body>
+
+<h1>Informe de adelgazamiento: fricción de la configuración personal y dos ideas para resolverla</h1>
+<p class="meta">2026-09-29 · Control Tower · Base <code>master</code> en <code>807e862</code> · Complementa a
+<a href="chanks-guia-de-etapas.html">Chanks como guía de etapas</a></p>
+
+<div class="box">
+<strong>Para el agente que recibe este informe.</strong> Tu tarea es <strong>comparar las dos ideas</strong> (sección 5 y 6)
+y ayudar al dueño del producto a llegar a una conclusión. <strong>No implementes nada</strong> hasta que él decida.
+El plan de la sección 8 es una <em>propuesta</em>, no una decisión tomada. Toda afirmación trae su evidencia;
+lo que es inferencia está marcado como tal. Verificá antes de repetir una cifra.
+</div>
+
+<nav>
+<h2>Índice</h2>
+<ol>
+<li><a href="#problema">El problema</a></li>
+<li><a href="#pruebas">Qué se midió</a></li>
+<li><a href="#causas">Diagnóstico: de dónde sale la fricción</a></li>
+<li><a href="#decisiones-tomadas">Lo que ya está decidido</a></li>
+<li><a href="#ideas">Las dos ideas</a></li>
+<li><a href="#comparacion">Comparación lado a lado</a></li>
+<li><a href="#preguntas">Guía para comparar</a></li>
+<li><a href="#plan">Plan propuesto</a></li>
+<li><a href="#abiertas">Decisiones abiertas</a></li>
+<li><a href="#herramientas">Cómo verificar cada cambio</a></li>
+<li><a href="#anexos">Anexos de evidencia</a></li>
+</ol>
+</nav>
+
+<h2 id="problema">1. El problema</h2>
+<p>El dueño del producto trabaja con Pi y con Claude Code sobre una configuración personal grande: reglas globales,
+28 skills de Chanks, extensiones y bloques de instrucciones repetidos en cinco agentes. Los síntomas que reporta:</p>
+<ul>
+<li>El agente <strong>piensa demasiado y tarda</strong> en tareas sencillas.</li>
+<li><strong>Pide permiso o autorización a cada rato.</strong></li>
+<li>Las preguntas que hace <strong>nunca ofrecen una opción para escribir</strong> una respuesta propia.</li>
+<li>La máquina de <strong>sellos y ejecución sin atención</strong> se volvió sobreingeniería que ya no quiere mantener.</li>
+<li>Quiere que Control Tower sea un <strong>producto instalable y compartible</strong> que conviva con Gentle AI sin fricción.</li>
+</ul>
+
+<h2 id="pruebas">2. Qué se midió</h2>
+<p>Se construyeron herramientas para comparar configuraciones sin tocar la estable
+(ver <a href="#herramientas">sección 10</a>) y se corrieron tres pruebas.</p>
+
+<h3>2.1 Prueba A/B: Gentle AI solo contra la configuración personal</h3>
+<p>Cuatro tareas reales en worktrees descartables desde el mismo commit, en modo no interactivo, con calificación de
+calidad a ciegas hecha por un verificador independiente.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Tarea</th><th>Limpio (solo Gentle AI)</th><th>Estable (personal)</th><th>Calidad (a ciegas)</th></tr></thead>
+<tbody>
+<tr><td>#146, rutas no ASCII en Radar</td><td>$0,57 · 152 s</td><td>$1,52 · 331 s</td><td>Empate. Ambos arreglos correctos.</td></tr>
+<tr><td>Sumar <code>carril</code> al instalador</td><td>$1,12 · 279 s</td><td>$0,85 · 245 s</td><td>Empate, con el estable apenas mejor.</td></tr>
+<tr><td>#147, diagnóstico de timeout</td><td>$0,87 · 290 s</td><td>$1,05 · 332 s</td><td>Limpio apenas mejor.</td></tr>
+<tr><td>«¿Qué Sesión arranco hoy?»</td><td>$0,17 · 28 s</td><td>$0,36 · 80 s</td><td>Estable mejor: el limpio inventó un motivo de prioridad que Radar no da.</td></tr>
+<tr><th>Total</th><th>$2,72</th><th>$3,79 (+40 %)</th><th>Calidad equivalente en código; ventaja del estable en fidelidad a Chanks.</th></tr>
+</tbody></table></div>
+
+<h3>2.2 Ablación por capas: se saca una capa por vez</h3>
+<p>Cinco configuraciones y tres consignas. Las variantes son A (sin las reglas globales personales), B (sin las skills
+personales anunciadas) y C (sin las extensiones personales). Los 5 carriles resolvieron las 3 consignas: todos
+preguntaron antes de adivinar qué retomar, todos despacharon 3 agentes en Herdr y todos los arreglos pasaron
+<code>go test</code>.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Consigna (USD · segundos)</th><th>Estable</th><th>A · sin reglas</th><th>B · sin skills</th><th>C · sin extensiones</th><th>Limpio</th></tr></thead>
+<tbody>
+<tr><td>«Continuemos con lo último»</td><td>0,27 · 33</td><td>0,26 · 38</td><td>0,13 · 26</td><td>0,33 · 83</td><td>0,73 · 178</td></tr>
+<tr><td>Despachar 3 agentes en Herdr</td><td>0,61 · 140</td><td>0,41 · 118</td><td>0,32 · 78</td><td>0,49 · 94</td><td>0,63 · 121</td></tr>
+<tr><td>Arreglar #146</td><td>1,53 · 578</td><td>1,64 · 835</td><td>2,37 · 954</td><td>0,90 · 367</td><td>3,11 · 693</td></tr>
+<tr><th>Total</th><th>2,41 · 751</th><th>2,31 · 991</th><th>2,83 · 1058</th><th>1,72 · 544</th><th>4,47 · 992</th></tr>
+<tr><td>Tokens de arranque</td><td>~33,5k</td><td>~27,4k</td><td>~27,8k</td><td>~31,2k</td><td>~19,6k</td></tr>
+</tbody></table></div>
+
+<div class="box warn">
+<strong>Límite honesto de estas pruebas.</strong> Hubo una sola corrida por casilla. La misma tarea #146 en el carril limpio
+costó $0,57 un día y $3,11 al siguiente. El costo depende de cuántos sub-agentes decide lanzar Gentle AI (entre 2 y 5
+por corrida), no de la capa que se sacó, así que <strong>el ruido es mayor que el efecto de cada capa</strong>. Lo único
+estable es el peso fijo de arranque. Además, en modo no interactivo nadie responde preguntas, así que <strong>la fricción
+interactiva que siente el dueño no se reproduce en estas corridas</strong>. Esa fricción sí se ve en sus sesiones reales
+(sección 3).
+</div>
+
+<h3>2.3 Uso interactivo real (capturas del dueño y registros de sesión)</h3>
+<ul>
+<li>Con la configuración personal, ante «continuemos con lo último» el agente respondió «No puedo empezar todavía…
+Decime el ID exacto de la Sesión aprobada» y releyó varias veces sus propias reglas con <code>grep</code> antes de actuar.
+El carril limpio, en cambio, ofreció opciones concretas para elegir.</li>
+<li>Registros de Pi de los últimos 5 días: <strong>105 preguntas al humano</strong>. Unas 25 son decisiones de producto
+reales. El resto se reparte así: aprobación de despacho o de worker (19), excepciones de alcance o de tamaño (15),
+permiso de commit o push (11), consentimiento de revisión (7), selección de Sesión (6), reinstalar o propagar (5) y
+otros trámites.</li>
+<li>Las preguntas <strong>sin opción para escribir</strong>: en 49 llamadas a <code>ask_user_choice</code>, solo 2
+activaron <code>allowCustomResponse</code>, y en 9 el modelo lo desactivó explícitamente.</li>
+</ul>
+
+<h2 id="causas">3. Diagnóstico: de dónde sale la fricción</h2>
+<p>La fricción viene <strong>casi toda del texto de las instrucciones, no del código</strong>. La extensión que bloquea
+escrituras (<code>chanks-controls.ts</code>) está inactiva: <code>switch.json</code> está en <code>on:false</code> y Main
+no es un worktree enlazado. Estas son las causas, de mayor a menor peso:</p>
+
+<h3>3.1 Órdenes que chocan con Gentle AI</h3>
+<p>Hay 9 contradicciones directas entre las reglas globales personales y el orquestador de <code>gentle-pi</code>.
+El detalle está en el <a href="#anexo-a">Anexo A</a>. Ejemplo: las reglas personales dicen «revisar antes del commit y
+nunca con <code>--base-ref</code>», y Gentle AI dice «revisar cada commit con <code>--base-ref</code>». El modelo gasta
+razonamiento en conciliar órdenes opuestas a cada paso.</p>
+
+<h3>3.2 Reglas que obligan a frenar y preguntar</h3>
+<p>Las 15 peores están en el <a href="#anexo-c">Anexo C</a>. Por ejemplo:</p>
+<ul>
+<li>exigir el ID exacto de la Sesión;</li>
+<li>preguntar antes de pasar de 400 líneas (Gentle AI dice «explicá y seguí»);</li>
+<li>preguntar «¿lo propago?» después de cada edición;</li>
+<li>pedir confirmación antes de reinstalar skills;</li>
+<li>volver a aprobar despachos que ya estaban aprobados.</li>
+</ul>
+
+<h3>3.3 Tono de trámite formal</h3>
+<p>Las reglas hablan mucho de «consentimiento», «fail closed», «tokens exactos» y «dominio cerrado de respuestas».
+Ningún código fuerza las preguntas cerradas: <code>ask_user_choice</code> muestra «Otro…» solo si el modelo pasa
+<code>allowCustomResponse:true</code> (<code>gentle-pi/extensions/ask-user-choice.ts:250</code>). La causa probable,
+<em>inferida del comportamiento</em>, es que el modelo generaliza ese tono y trata cualquier pregunta como una
+autorización formal.</p>
+
+<h3>3.4 Peso y material acumulado</h3>
+<ul>
+<li><code>~/.pi/agent/APPEND_SYSTEM.md</code> ocupa 26,6 KB (~6,6k tokens). Un 30 % es exclusivo de Control Tower y
+un bloque entero repite a Gentle AI.</li>
+<li>Hay 22 skills duplicadas o viejas en <code>~/.agents/skills</code>:
+  <ul>
+  <li>11 son copias antiguas de skills de Gentle AI. Por ejemplo, <code>work-unit-commits</code> todavía menciona
+  «receipt validation», que ya fue retirada.</li>
+  <li>Las otras 11 son copias <code>sdd-*</code> que hoy son agentes de gentle-pi.</li>
+  </ul>
+  Cuando algo busca una skill por nombre, encuentra la copia vieja.</li>
+<li>Las skills de Chanks suman ~230 KB y tienen 12 contradicciones internas (<a href="#anexo-b">Anexo B</a>).
+<code>chanks-3-despacho-herdr</code> sola pesa 53,5 KB.</li>
+<li>El instalador copia 29 skills y ~9 KB de reglas <strong>en los cuatro agentes y en todos los proyectos</strong>,
+aunque solo sirven donde existe <code>openspec/plan.yaml</code>.</li>
+<li>Hay una regla que apunta a <code>chanks-7-session-doc</code>, que ya fue retirada.</li>
+</ul>
+
+<div class="box">
+<strong>Descartado como causa principal:</strong> el nivel de razonamiento <code>high</code>. El carril limpio usa el
+mismo nivel y el mismo modelo (<code>gpt-5.6-sol</code>), así que no es lo que diferencia a los dos carriles.
+</div>
+
+<h2 id="decisiones-tomadas">4. Lo que ya está decidido</h2>
+<p>El dueño del producto ya tomó estas decisiones (2026-09-29), así que no hace falta volver a discutirlas:</p>
+<ul>
+<li><strong>Hay que adelgazar la configuración personal.</strong></li>
+<li><strong>Se eliminan por completo los sellos y la ejecución sin atención</strong> («es sobreingeniería, ya no lo quiero
+tener»).</li>
+<li><strong>El agente no debe pedir permiso para todo.</strong></li>
+<li>La guía de etapas (<a href="chanks-guia-de-etapas.html">documento del 24/9</a>) describe «el flujo que quiero, en lo
+más simple».</li>
+</ul>
+<div class="box warn">
+<strong>Contradicción a resolver.</strong> La guía de etapas tiene la decisión <strong>D7 «Ejecución desatendida —
+Aprobada (2026-09-24)»</strong>, y su Sesión C incluye «ejecución desatendida con ODD». Esto choca con la decisión del
+29/9 de eliminar los sellos. Por fecha y por pedido explícito, <strong>D7 debe tratarse como anulada</strong>. El dueño
+debe confirmarlo (<a href="#abiertas">sección 9</a>).
+</div>
+
+<h2 id="ideas">5. Las dos ideas</h2>
+
+<h3>Idea A: Chanks como guía de etapas (documento del 24/9)</h3>
+<p>El sistema sabe en qué etapa (1 a 5) está el trabajo y se lo dice al agente, anunciándolo con 💪 Chanks. Tiene tres
+piezas:</p>
+<ul>
+<li><strong>El cerebro:</strong> un comando nuevo, <code>radar etapa</code>, que calcula la etapa desde la evidencia.</li>
+<li><strong>El altavoz:</strong> ganchos en Claude Code y en Pi que inyectan la etapa en cada mensaje.</li>
+<li><strong>El manual:</strong> las skills.</li>
+</ul>
+<p>Otras decisiones de esa guía:</p>
+<ul>
+<li>Se elimina el clic humano de la «llave». El bloqueo de escritura se conserva hasta que Radar admite la Sesión, y
+entonces se libera solo.</li>
+<li>La revisión vive dentro de la etapa 4, con Gentle AI.</li>
+<li>Se unen la entrega y el cierre en la etapa 5.</li>
+<li>Se adelgaza <code>chanks-4-puente</code> y se corrige «una revisión por Sesión».</li>
+</ul>
+<p>Propone cinco Sesiones, de la A a la E: el cerebro en Radar, el canon y las etapas 1-2, las etapas 3-4, la etapa 5,
+y la guía en Pi y Claude Code.</p>
+<p><strong>Qué resuelve:</strong> el agente deja de depender de recordar las skills. La etapa se calcula y se anuncia, y
+el rumbo queda claro.<br>
+<strong>Qué agrega:</strong> un comando nuevo, dos ganchos que inyectan texto en cada mensaje, una marca EN CURSO en git,
+y una liberación automática del bloqueo de escritura que depende de la admisión de Radar.</p>
+
+<h3>Idea B: adelgazar y «proyecto primero» (propuesta de esta auditoría)</h3>
+<p>Sacar ceremonia en lugar de sumar maquinaria. La propuesta tiene cinco partes:</p>
+<ol>
+<li><strong>Limpieza:</strong>
+  <ul>
+  <li>borrar las 22 skills duplicadas o viejas;</li>
+  <li>borrar el bloque 100 % redundante (<code>PI-ODD-COMPAT</code>);</li>
+  <li>arreglar la referencia rota;</li>
+  <li>que las preguntas normales tengan siempre la opción de escribir.</li>
+  </ul></li>
+<li><strong>Política de preguntas de 6 líneas</strong> en lugar de todas las reglas que frenan (ver
+<a href="#anexo-d">Anexo D</a>). En resumen: actuar por defecto, y preguntar solo ante algo irreversible, algo que sale
+hacia afuera o cuesta dinero, o una decisión real de producto.</li>
+<li><strong>Eliminar los sellos</strong> siguiendo un orden seguro de 5 pasos (<a href="#anexo-e">Anexo E</a>).</li>
+<li><strong>Resolver las contradicciones</strong>: las 9 con Gentle AI y las 12 internas. Gentle AI manda donde ya cubre
+el tema.</li>
+<li><strong>Proyecto primero:</strong>
+  <ul>
+  <li>en la máquina quedan solo los binarios (<code>radar</code>, <code>torre</code>, <code>carril</code>);</li>
+  <li><code>torre init</code> instala skills y reglas en el proyecto (<code>.agents/skills</code> y el
+  <code>AGENTS.md</code> del proyecto);</li>
+  <li>el registro de Gentle AI (<code>.atl/</code>) las indexa solo;</li>
+  <li>se anuncian unas 6 skills y el resto se carga solo cuando se lo llama.</li>
+  </ul></li>
+</ol>
+<p><strong>Qué resuelve:</strong> la fricción que el dueño siente (preguntas, permisos, órdenes cruzadas), el peso fijo, y
+la instalabilidad.<br>
+<strong>Qué no resuelve por sí sola:</strong> que el agente sepa en qué etapa está sin tener que razonarlo. Ese es el
+aporte de la idea A.</p>
+
+<h2 id="comparacion">6. Comparación lado a lado</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Dimensión</th><th>Idea A · Guía de etapas</th><th>Idea B · Adelgazar y proyecto primero</th></tr></thead>
+<tbody>
+<tr><td>Dirección</td><td>Suma maquinaria: un cerebro, ganchos y marcas</td><td>Quita ceremonia, duplicados y reglas</td></tr>
+<tr><td>Fricción de permisos</td><td>La reduce solo en parte: quita el clic de la llave, pero no la política de preguntas</td><td>Ataca la causa directa, con la política de 6 líneas</td></tr>
+<tr><td>Órdenes contradictorias</td><td>No las aborda de frente (salvo «una revisión por Sesión»)</td><td>Las resuelve una por una, y Gentle AI manda</td></tr>
+<tr><td>Peso de arranque</td><td>Lo <em>aumenta</em>: los ganchos inyectan la etapa en cada mensaje</td><td>Lo reduce: ~4-5k tokens menos por sesión, y cero en proyectos que no usan la torre</td></tr>
+<tr><td>Rumbo del agente</td><td><strong>Fuerte:</strong> la etapa se calcula y se anuncia</td><td>Depende de que el agente lea el <code>AGENTS.md</code> del proyecto (funcionó en las pruebas)</td></tr>
+<tr><td>Instalable y compartible</td><td>No lo aborda</td><td><strong>Fuerte:</strong> <code>torre init</code> y el registro de Gentle AI</td></tr>
+<tr><td>Convivencia con Gentle AI</td><td>Buena en la etapa 4; los ganchos son un canal propio</td><td>Buena: se enchufa en su registro de skills y deja su baseline intacto</td></tr>
+<tr><td>Sellos / desatendido</td><td><span style="color:var(--warn-line)">D7 los mantiene (contradice la decisión del 29/9)</span></td><td>Los elimina</td></tr>
+<tr><td>Costo de construir</td><td>Alto: 5 Sesiones, con código nuevo en Radar, ganchos y extensión</td><td>Medio: mayormente borrar y editar texto, más un <code>torre init</code></td></tr>
+<tr><td>Riesgo</td><td>Más código que mantener; el bloqueo automático puede volver a frenar si falla la admisión</td><td>Perder protecciones útiles si se borra de más; lo mitigan <code>carril candidato</code> y la medición</td></tr>
+<tr><td>¿Son excluyentes?</td><td colspan="2"><strong>No.</strong> B despeja el terreno y A puede montarse encima, en versión mínima. Hay
+<strong>dos tensiones reales</strong>: (1) los ganchos de A inyectan texto en cada mensaje, lo opuesto a «lazy»; (2) el bloqueo
+de escritura hasta la admisión de Radar es, técnicamente, un freno. Aunque no tenga clic humano, puede volver a trabar.</td></tr>
+</tbody></table></div>
+
+<h2 id="preguntas">7. Guía para comparar (para el agente evaluador)</h2>
+<p>Para cada pregunta, contrastá con la evidencia de este informe y del repo, y recomendá. Recordá que la decisión es
+del dueño.</p>
+<ol>
+<li>Después de aplicar B, ¿el agente sigue perdiendo el rumbo entre etapas? Si no lo pierde, ¿A sigue haciendo falta?
+Proponé medirlo con <code>carril candidato</code> (sección 10).</li>
+<li>¿Qué parte mínima de A aporta rumbo sin sumar peso fijo? Ejemplos: <code>radar etapa</code> invocado a pedido en lugar
+de un gancho en cada mensaje, o anunciar la etapa solo en los cambios de etapa.</li>
+<li>¿Vale la pena el bloqueo de escritura hasta la admisión, si el objetivo es que el agente no pida permiso? ¿O alcanza
+con que Radar informe y el pre-push valide?</li>
+<li>¿Qué de D1-D6 de la guía sigue vigente si D7 queda anulada?</li>
+<li>¿Qué skills de Chanks eliminar, fusionar o dejar solo para el proyecto? La tabla del <a href="#anexo-b">Anexo B</a>
+es la propuesta de un auditor, no una decisión.</li>
+<li>¿Cómo se ve la instalación para un usuario nuevo de Control Tower que ya usa Gentle AI?</li>
+</ol>
+
+<h2 id="plan">8. Plan propuesto (propuesta, pendiente de decisión)</h2>
+<p>El orden va de menor a mayor riesgo. Cada fase se prueba primero en <code>carril candidato</code> y se mide con
+<code>carril-medir</code> antes de instalarse en el estable. Las fases 0 a 3 sirven para las dos ideas; la 4 y la 5
+dependen de la conclusión.</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Fase</th><th>Qué</th><th>Dónde (evidencia)</th><th>Cómo se verifica</th><th>Riesgo</th></tr></thead>
+<tbody>
+<tr><td><strong>0 · Limpieza</strong><br>(sirve a A y B)</td>
+<td>
+<ul>
+<li>Borrar las 22 skills duplicadas o viejas.</li>
+<li>Borrar <code>PI-ODD-COMPAT</code>.</li>
+<li>Arreglar la referencia a <code>chanks-7-session-doc</code>.</li>
+<li>Agregar la regla «preguntas normales con <code>allowCustomResponse:true</code>; cerradas solo en consentimientos y autorizaciones formales».</li>
+<li>Arreglar los enlaces rotos en <code>~/.pi/agent/skills</code>.</li>
+</ul>
+</td>
+<td><code>~/.agents/skills</code> (Anexo F), <code>APPEND_SYSTEM.md:340-354</code>, <code>:228-236</code></td>
+<td>Revisar que el arranque de Pi liste menos skills y ninguna duplicada; en uso real, que las preguntas muestren «Otro…»</td>
+<td>Muy bajo</td></tr>
+<tr><td><strong>1 · Política de preguntas</strong></td>
+<td>Reemplazar las reglas que frenan por la política de 6 líneas (Anexo D). Quitar «¿lo propago?», la pregunta de las 400
+líneas, la confirmación de reinstalación y las reaprobaciones.</td>
+<td>Anexo C (15 generadores); <code>AGENTS.md:162-167, 180-184</code></td>
+<td>Contar las llamadas <code>ask_user_*</code> con <code>carril-medir</code> en consignas interactivas: antes contra después</td>
+<td>Medio: definir bien qué sigue siendo irreversible</td></tr>
+<tr><td><strong>2 · Eliminar sellos</strong></td>
+<td>Seguir el orden seguro de 5 pasos del Anexo E: bloques globales → código y tests de la torre → prosa de handoff y sus
+tests → directorio de la skill e instalador → plan (S169 y redacción de S109 y S123).</td>
+<td>Anexo E</td>
+<td><code>bun test</code>, <code>python3 -m unittest discover -s agent-workflows/tests</code>, <code>go test</code> en radar y
+<code>radar check</code> en verde después de cada paso</td>
+<td>Bajo: sin acoplamiento con radar, torre ni jornada</td></tr>
+<tr><td><strong>3 · Contradicciones</strong></td>
+<td>Resolver las 9 contradicciones con Gentle AI (Gentle AI manda donde ya cubre el tema) y las 12 internas de Chanks.</td>
+<td>Anexos A y B</td>
+<td>Leer las reglas finales y comprobar que no queda ninguna orden opuesta. Probar en candidato.</td>
+<td>Medio: algunas son decisiones de producto (sección 9)</td></tr>
+<tr><td><strong>4 · Proyecto primero</strong><br>(núcleo de B)</td>
+<td>
+<ul>
+<li>Dejar en la máquina solo los binarios.</li>
+<li>Crear <code>torre init</code> (skills en <code>.agents/skills</code>, bloque en el <code>AGENTS.md</code> del proyecto,
+ganchos del proyecto, <code>gentle-ai skill-registry refresh</code>).</li>
+<li>Anunciar unas 6 skills y marcar el resto con <code>disable-model-invocation</code>.</li>
+<li>Agregar las entradas <code>RETIRED_SKILLS</code> para limpiar las copias globales.</li>
+</ul>
+</td>
+<td><code>agent-workflows/tools/install.py</code>; Pi <code>package-manager.js:274-300</code>; gentle-pi
+<code>extensions/skill-registry.ts:77-93</code></td>
+<td>
+<ul>
+<li>En un proyecto sin torre, el arranque no muestra skills de Chanks.</li>
+<li>En control-tower, el agente despacha y consulta Radar leyendo las skills a pedido.</li>
+<li>Repetir la consigna de despacho de la sección 2.2.</li>
+</ul>
+</td>
+<td>Medio: cambia la instalación en 4 agentes</td></tr>
+<tr><td><strong>5 · Guía de etapas mínima</strong><br>(núcleo de A; condicional)</td>
+<td>Solo si, después de 0-4, el agente sigue perdiendo el rumbo: <code>radar etapa</code> a pedido y el anuncio 💪 Chanks
+solo en los cambios de etapa, sin D7.</td>
+<td>Guía de etapas, Sesiones A y E</td>
+<td>Consigna «continuemos con lo último» en candidato: ¿elige bien la etapa sin preguntar de más?</td>
+<td>Medio-alto: código nuevo</td></tr>
+</tbody></table></div>
+
+<div class="box">
+<strong>Criterio de éxito global</strong> (lo mide el dueño en uso real, lado a lado con el estable):
+<ul>
+<li>las preguntas al humano bajan de ~105 cada 5 días a sobre todo decisiones de producto;</li>
+<li>el agente no se niega a arrancar por un ID;</li>
+<li>toda pregunta normal tiene opción de escribir;</li>
+<li>el arranque pesa menos;</li>
+<li>se conserva la fidelidad a Radar observada en la prueba A/B (tarea 4).</li>
+</ul>
+</div>
+
+<h2 id="abiertas">9. Decisiones abiertas para el dueño del producto</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Decisión</th><th>Opciones y consecuencia</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>¿Se confirma D7 como anulada?</td><td>Sí: la guía queda alineada con la eliminación de sellos. No: habría que mantener parte de la maquinaria que hoy se quiere borrar.</td></tr>
+<tr><td>2</td><td>¿A, B, o B con A mínima encima?</td><td>A sola: más rumbo y más peso; no resuelve los permisos. B sola: menos fricción, y el rumbo depende del <code>AGENTS.md</code>. B + A mínima: las dos cosas, a costa de construir <code>radar etapa</code>. No hacer nada: la fricción sigue igual.</td></tr>
+<tr><td>3</td><td>¿Revisión antes o después del commit? ¿Se levanta la prohibición de <code>--base-ref</code>?</td><td>Hoy las reglas personales y Gentle AI dicen lo opuesto. #3551 está cerrado upstream desde el 2026-09-05, pendiente de verificación.</td></tr>
+<tr><td>4</td><td>¿Las 400 líneas son «preguntar antes» o «explicar y seguir»?</td><td>Gentle AI dice «explicar y seguir». Las reglas personales dicen «preguntar». Es una de las fuentes de preguntas.</td></tr>
+<tr><td>5</td><td>¿Qué skills de Chanks eliminar?</td><td>Propuesta del auditor: eliminar 10, fusionar 4, dejar el resto solo para el proyecto (Anexo B). Cada eliminación la decide el dueño.</td></tr>
+<tr><td>6</td><td>¿Se conserva el bloqueo de escritura hasta la admisión (D1 de la guía)?</td><td>Conservar: protege contra escribir fuera de la Sesión, pero es un freno. Quitar: menos fricción; la protección queda en el pre-push y <code>radar check</code>.</td></tr>
+<tr><td>7</td><td>¿La regla de propagación a los 5 agentes pasa a ser una skill?</td><td>Hoy es un bloque global que dispara «¿lo propago?» después de cada edición.</td></tr>
+</tbody></table></div>
+
+<h2 id="herramientas">10. Cómo verificar cada cambio sin tocar lo estable</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Comando</th><th>Qué hace</th></tr></thead>
+<tbody>
+<tr><td><code>carril</code></td><td>Dice en qué carril está esta terminal.</td></tr>
+<tr><td><code>carril limpio</code></td><td>Pi solo con Gentle AI (<code>~/.pi/agent-limpio</code>, credenciales compartidas por enlace).</td></tr>
+<tr><td><code>carril estable</code></td><td>Pi con la configuración diaria; es lo mismo que <code>pi</code>.</td></tr>
+<tr><td><code>carril candidato &lt;worktree&gt;</code></td><td>Tu Pi de siempre, con las skills de Chanks, los bloques del repo y la extensión de Chanks tomados de ese worktree. Se reconstruye en cada arranque y nunca escribe en lo estable.</td></tr>
+<tr><td><code>agent-workflows/tools/carril-medir carril=&lt;worktree&gt; … --search &lt;dir&gt; [--since ISO]</code></td>
+<td>Compara corridas a partir de sus sesiones de Pi, sub-agentes incluidos. Mide tokens de arranque (con caché), costo, turnos,
+herramientas, errores, preguntas al humano y tiempo.</td></tr>
+</tbody></table></div>
+<p>El registro completo del experimento está en <code>odd/tasks/carril-lanes.md</code>. Advertencias para quien repita
+las pruebas:</p>
+<ul>
+<li>Todos los carriles comparten la memoria de Engram y el <code>AGENTS.md</code> del proyecto.</li>
+<li>Conviene repetir cada consigna más de una vez, para separar el efecto real del ruido.</li>
+</ul>
+
+<h2 id="anexos">11. Anexos de evidencia</h2>
+
+<h3 id="anexo-a">Anexo A · Contradicciones entre las reglas globales personales y Gentle AI</h3>
+<p>Las líneas se refieren a <code>~/.pi/agent/APPEND_SYSTEM.md</code>; el lado de Gentle AI está en
+<code>gentle-pi/assets/orchestrator*.md</code>.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Tema</th><th>Regla personal</th><th>Gentle AI</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Base-ref</td><td><code>--base-ref</code> y <code>--committed-only</code> deshabilitados (:36)</td><td>Evaluar cada commit con baseRef y committedOnly (<code>orchestrator-delegation.md:102</code>)</td></tr>
+<tr><td>2</td><td>Momento de revisión</td><td>Revisar antes del commit (:24)</td><td>El commit es el candidato y se revisa enseguida (:102)</td></tr>
+<tr><td>3</td><td>400 líneas</td><td>Preguntar antes de implementar (:28-33)</td><td>No es tope ni freno: explicar y seguir (:82)</td></tr>
+<tr><td>4</td><td>Gatekeeper SDD</td><td>No repetir la revisión de deriva en cada fase (:263)</td><td>Validar después de cada fase (<code>sdd-orchestrator-workflow.md:123,207</code>)</td></tr>
+<tr><td>5</td><td>Largo de respuesta</td><td>Dos capas por hallazgo y siempre la opción «no hacer nada»</td><td>Síntesis corta por defecto</td></tr>
+<tr><td>6</td><td>Sin sub-agentes</td><td>Frenar y pedir autorización (:213-217)</td><td>Delegar con el mecanismo disponible e informar la alternativa usada</td></tr>
+<tr><td>7</td><td>Prompts bloqueantes</td><td>El sello responde por el humano (:318-338)</td><td>«Nunca respondas por el humano» (:48)</td></tr>
+<tr><td>8</td><td>Cierre de documentación</td><td>No se puede cerrar sin reconciliar los docs</td><td>Las compuertas de entrega son informativas; en Pi nada lo hace cumplir</td></tr>
+<tr><td>9</td><td>Precedencia de skills</td><td><code>~/.agents/skills</code> gana en colisión (:296)</td><td>Las skills de gentle-pi se llaman <code>gentle-ai-*</code>: no hay colisión, y la búsqueda por nombre cae en copias viejas</td></tr>
+</tbody></table></div>
+
+<h3 id="anexo-b">Anexo B · Skills de Chanks: propuesta del auditor (no decidida)</h3>
+<p>Son 28 skills más <code>_shared</code>, ~230 KB en total. Las más pesadas son <code>chanks-3-despacho-herdr</code>
+(53,5 KB), <code>chanks-4-unattended-implementation</code> (27,8 KB, se elimina con los sellos) y
+<code>_shared/plan-naming-convention.md</code> (14,9 KB).</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Veredicto</th><th>Skills</th></tr></thead>
+<tbody>
+<tr><td>Eliminar (redundante con el modelo o con Gentle AI)</td><td>chanks-0-mensajes-visibles, chanks-0-session-context-loader, chanks-0-skill-composer, skill-orchestrator, chanks-1-autoridad, chanks-1-brain-dump, chanks-1-descubrimiento, chanks-1-prd, chanks-1-rfc, chanks-1-requirements</td></tr>
+<tr><td>Fusionar</td><td>chanks-1-feature → chanks-1-prd; chanks-1-project-kickoff → chanks-1-terreno; chanks-1-terreno → chanks-5-politica-de-entrega; chanks-3-coordinador-manual → chanks-3-despacho-herdr; chanks-3-session-kickoff → chanks-4-puente</td></tr>
+<tr><td>Solo para el proyecto</td><td>chanks-0-agente-soporte, chanks-0-jornada, chanks-1-adopcion, chanks-1-cierre-de-decisiones, chanks-1-heredado, chanks-2-planificador-granular, chanks-3-despacho-herdr (adelgazar), chanks-5-session-doc (adelgazar), <code>_shared/plan-naming-convention.md</code></td></tr>
+<tr><td>Adelgazar</td><td>analisis-por-tramos, chanks-0-explicalo-simple (pasar a una preferencia global de 3 líneas), chanks-4-puente, chanks-5-politica-de-entrega</td></tr>
+</tbody></table></div>
+<p>Las 12 contradicciones internas principales son:</p>
+<ul>
+<li>se prohíben los IDs sueltos, pero se exige al humano un ID exacto;</li>
+<li>hay commits de Módulo en Sesiones nativas;</li>
+<li>la regla de 400 líneas aparece en tres versiones;</li>
+<li>la ejecución desatendida choca con «preguntar primero»;</li>
+<li>se prohíben los nombres fijos de worker, pero hay uno fijo (<code>issue-resolver</code>);</li>
+<li>«no hacerlo elegir entre implementaciones» choca con los paquetes de opciones;</li>
+<li>la entrega por PR por defecto choca con el push directo del repo;</li>
+<li>quedan assets de Notion obsoletos en session-doc;</li>
+<li>el alcance de «nunca hacer commit» en el modo desatendido es ambiguo;</li>
+<li>el cierre de sesión puede trabarse;</li>
+<li>el manejo de un asiento sucio se contradice;</li>
+<li>no hay ruta para crear <code>plan.yaml</code> en un proyecto nuevo.</li>
+</ul>
+
+<h3 id="anexo-c">Anexo C · Los 15 generadores de fricción principales</h3>
+<ol>
+<li><code>chanks-3-despacho-herdr:12-13,53</code> + <code>naming §8</code>: lista completa de IDs y worker por Sesión, aunque se prohíben los IDs sueltos.</li>
+<li><code>despacho:25-28,72</code>: falla cerrado si no hay pool declarado o si <code>HERDR_ENV≠1</code>.</li>
+<li><code>despacho:64,296-304</code> y <code>retiro.md</code>: candado, jornada, fetch y lecturas de verificación antes del primer envío («readback» aparece 54 veces).</li>
+<li><code>chanks-0-agente-soporte:17-22,31-39</code>: sin <code>plan.yaml</code> se detiene; exige un paquete con digests.</li>
+<li><code>chanks-3-session-kickoff:17-25</code>: recaptura y digiere Radar en cada arranque; rechaza cualquier deriva.</li>
+<li><code>chanks-0-jornada:31-41,53,66-67</code>: cualquier salida distinta de cero es «frenar y preguntar».</li>
+<li><code>AGENTS.md:91-100</code> + <code>naming §14</code>: una pregunta exacta con un paquete de 5 partes antes de RED.</li>
+<li><code>AGENTS.md:180-184</code> y otros: preguntar antes de pasar de 400 líneas.</li>
+<li><code>AGENTS.md:167</code> + <code>session-doc:59,76-78</code>: confirmación humana para reinstalar, y la Sesión no cierra sin ella.</li>
+<li><code>AGENTS.md:32-34</code>: cada mención de una Sesión exige la línea <code>radar faltan</code>.</li>
+<li><code>AGENTS.md:36-39</code>: no proponer trabajo desde la memoria.</li>
+<li><code>chanks-4-unattended-implementation</code>: exige vencimiento, techo y política de consentimiento (se elimina con los sellos).</li>
+<li><code>chanks-1-project-kickoff:18,32-35</code>: se detiene después de cada una de 4 etapas.</li>
+<li><code>chanks-5-politica-de-entrega:35,48</code>: sin bloque de política, muestra conflictos y pregunta.</li>
+<li><code>chanks-0-explicalo-simple</code>: se carga sola ante cualquier hallazgo; su disparador «no entiendo» es muy amplio.</li>
+</ol>
+<p>Hay además candados de código que siguen activos después de limpiar el texto:</p>
+<ul>
+<li><code>~/.claude/hooks/doc-guard.sh</code>, en el evento Stop (:195-224): candidato a suavizar.</li>
+<li><code>.githooks/pre-push</code>: conviene conservarlo.</li>
+<li>Los ganchos de Gentle AI: no se tocan.</li>
+</ul>
+<p><code>chanks-controls.ts</code> está inactivo mientras <code>switch.json</code> siga en <code>on:false</code>.</p>
+
+<h3 id="anexo-d">Anexo D · Política de preguntas propuesta (reemplaza las reglas que frenan)</h3>
+<ol>
+<li>Actuar por defecto. Preguntar solo ante algo irreversible, que sale hacia afuera o que cuesta dinero (force-push,
+borrar datos o ramas, publicar fuera del repo, gastar dinero, acceso remoto), o ante una decisión real de producto o de
+contrato.</li>
+<li>Una Sesión, un issue o un ítem del plan aprobado ya autoriza sus archivos, commits, push directo a
+<code>master</code>, la reinstalación de skills, los comentarios en el issue y el despacho de workers. Hacerlo e informar
+después.</li>
+<li>Pasar de 400 líneas, agregar un archivo o ampliar el alcance dentro de una Sesión aprobada: dividir o seguir, y anotar
+la elección en el informe. Preguntar solo si cambia el significado del producto.</li>
+<li>Si hay exactamente una Sesión LISTO admisible, arrancarla. Preguntar solo si hay varias o ninguna.</li>
+<li>Un reintento, una reactivación, la reparación de un asiento o instalar dependencias de algo ya aprobado no necesita
+aprobación nueva.</li>
+<li>La base de Gentle AI queda igual y tiene precedencia: sobres de consentimiento de revisión, git destructivo, publicar,
+autorización remota y preflight de SDD. Toda pregunta normal lleva opción de respuesta libre.</li>
+</ol>
+
+<h3 id="anexo-e">Anexo E · Huella de los sellos y orden seguro de eliminación</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Paso</th><th>Qué</th><th>Tamaño aprox.</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Borrar los bloques <code>UNATTENDED-SEALED-CONSENT:MANUAL</code> de 4 archivos:
+<ul>
+<li><code>~/.pi/agent/APPEND_SYSTEM.md:318-338</code></li>
+<li><code>~/.claude/CLAUDE.md:841-861</code></li>
+<li><code>~/.codex/AGENTS.md:618-638</code></li>
+<li><code>~/.config/opencode/AGENTS.md:627-647</code></li>
+</ul>
+Borrar solo lo que está entre los marcadores.</td><td>~84 líneas</td></tr>
+<tr><td>2</td><td>Borrar <code>jornada/execution-contract.mjs</code>, <code>schemas/execution-contract-v1.schema.json</code> y
+<code>supervision/state.mjs</code> (sin importadores fuera de tests). Borrar
+<code>test/jornada/execution-contract.test.mjs</code> (15 tests) y <code>test/supervision/state.test.mjs</code> (4).
+En <code>test/contracts/schema.test.mjs</code> quitar la carga y el test, y cambiar el conteo de 31 a 30. Quitar el
+bloque <code>_executionContractV2Compatibility</code> del fixture.</td><td>~1.000 borradas, ~25 editadas</td></tr>
+<tr><td>3</td><td>Quitar la prosa de sellos en:
+<ul>
+<li><code>chanks-0-agente-soporte/assets/assignment-implementation.md:15,28-34,39-42</code> (actualizar su pin de hash)</li>
+<li><code>chanks-3-despacho-herdr/SKILL.md:69,170-174,204,232,265,304,313</code></li>
+<li><code>assets/issue-patch-handoff.md:7,53,71</code></li>
+<li><code>chanks-3-coordinador-manual/SKILL.md:106</code></li>
+<li><code>chanks-3-session-kickoff/SKILL.md:18</code></li>
+</ul>
+Ajustar sus tests. Tocar solo las palabras de sellos: las reglas de parche y de reactivación que las rodean se conservan.</td><td>~100</td></tr>
+<tr><td>4</td><td>Borrar <code>agent-workflows/skills/chanks-4-unattended-implementation/</code> y la copia en
+<code>product/tower/generic/skills/</code>. En <code>install.py:50</code>, quitar la línea y sumar la skill a
+<code>RETIRED_SKILLS</code>. Borrar <code>test_standalone_contract.mjs</code>. En <code>test_builder_flow.py</code>,
+bajar los pins de 42 a 37 y quitar 3 tests. Editar <code>test_install.py:389</code>. Arreglar las líneas de
+<code>README</code> y <code>FLUJO-END-TO-END</code>. Reinstalar para que se borren las copias instaladas.</td><td>~1.400 borradas</td></tr>
+<tr><td>5</td><td>Plan: borrar S169 (DIFERIDO, sin dependientes), redactar de nuevo «mandato sellado» en S109 y S123, y borrar
+<code>odd/tasks/seal-survives-own-dispatch.md</code> (opcional). Correr <code>radar check</code>.</td><td>~30</td></tr>
+</tbody></table></div>
+<p>Riesgos a vigilar:</p>
+<ul>
+<li>Los pins de hash (<code>SNAPSHOT_SHA256</code>) y el conteo de esquemas.</li>
+<li>Las copias instaladas en ~6 agentes, si falta la entrada en <code>RETIRED_SKILLS</code>.</li>
+<li>No dejar workers en vuelo despachados con sello.</li>
+<li>Editar <code>plan.yaml</code> requiere autorización del dueño.</li>
+</ul>
+<p>Candidatos adyacentes que decide el dueño, sin recomendación de borrarlos:</p>
+<ul>
+<li>el paquete de admisión con digests;</li>
+<li>el reporte de despertar terminal;</li>
+<li>el pinning con <code>SNAPSHOT_SHA256</code>;</li>
+<li><code>supervision/state.mjs</code>.</li>
+</ul>
+
+<h3 id="anexo-f">Anexo F · Capa global: bloques de <code>APPEND_SYSTEM.md</code> y skills duplicadas</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Bloque (líneas)</th><th>Bytes</th><th>Veredicto propuesto</th></tr></thead>
+<tbody>
+<tr><td>review-lifecycle-policy (2-55)</td><td>3.845</td><td>Adelgazar a ~8 líneas (buena parte es bitácora histórica)</td></tr>
+<tr><td>NATIVE-CHECKING-CONTRACT (57-74)</td><td>1.298</td><td>Adelgazar a ~4 líneas</td></tr>
+<tr><td>PLAN-NAMING (76-117)</td><td>2.950</td><td>Mover al proyecto</td></tr>
+<tr><td>SESSION-SKILL-ARCHITECTURE (119-207)</td><td>7.872</td><td>Mover al proyecto (30 % del archivo)</td></tr>
+<tr><td>PI-INTERCOM-DELEGATION (209-226)</td><td>1.075</td><td>Adelgazar a 2 líneas</td></tr>
+<tr><td>doc-guard-rule (228-236)</td><td>1.860</td><td>Mover al proyecto; nombra una skill retirada</td></tr>
+<tr><td>EXPLAIN-TO-MAINTAINER (238-257)</td><td>1.179</td><td>Conservar como preferencia global de 3 líneas</td></tr>
+<tr><td>SDD-AUTO-GATEKEEPER-POLICY (259-270)</td><td>1.369</td><td>Adelgazar o llevar a Gentle AI</td></tr>
+<tr><td>AGENT-PROPAGATION-MAP (272-316)</td><td>2.810</td><td>Pasar a una skill; hoy dispara «¿lo propago?»</td></tr>
+<tr><td>UNATTENDED-SEALED-CONSENT (318-338)</td><td>1.510</td><td>Eliminar (decidido)</td></tr>
+<tr><td>PI-ODD-COMPAT (340-354)</td><td>834</td><td>Eliminar: 100 % redundante con Gentle AI</td></tr>
+</tbody></table></div>
+<p>Skills duplicadas o viejas en <code>~/.agents/skills</code>:</p>
+<ul>
+<li><strong>Copias de Gentle AI:</strong> branch-pr, chained-pr, cognitive-doc-design, skill-registry, comment-writer,
+rdd-defect-workflow, judgment-day, issue-creation, work-unit-commits, skill-creator, skill-improver.</li>
+<li><strong>Copias SDD</strong> (hoy son agentes de gentle-pi): sdd-apply, sdd-archive, sdd-design, sdd-explore,
+sdd-init, sdd-onboard, sdd-propose, sdd-research, sdd-spec, sdd-tasks, sdd-verify.</li>
+<li><strong>Enlaces rotos en <code>~/.pi/agent/skills</code>:</strong> find-skills y 5 higgsfield-*.</li>
+</ul>
+
+<p class="meta">Fuentes: 6 auditorías de solo lectura, cuyo detalle está en la memoria del proyecto (Engram), la prueba
+A/B y la ablación registradas en <code>odd/tasks/carril-lanes.md</code>, y las capturas y sesiones del dueño. Nada de
+este informe cambió configuración ni código.</p>
+
+</body>
+</html>
