@@ -84,6 +84,11 @@ safe place to try a candidate version.
 - Limpio prints host-peer warnings for gentle-pi/gentle-engram. That is Gentle AI as shipped:
   the stable lane hides them through the personal `pi-npm-host-peers` npm wrapper.
 
+- Native review: assess on `b458174..HEAD` returned risk `high`, `review_due: true`. The returned
+  preflight START carries `--base-ref`/`--committed-only`, which the maintainer has banned for new
+  reviews. The maintainer chose to skip review for this candidate only (2026-09-28), so it is
+  unreviewed. RDD itself was left on.
+
 ## Progress
 
 - Step 1 done. Known gap: `~/.local/bin/carril` is a manual copy. Updating it means re-copying
