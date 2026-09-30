@@ -233,6 +233,8 @@ only), C (no personal extensions/packages), limpio. Each lane runs three prompts
   composition failure already recorded above (missing local `pi-v2` and `gentle-pi` source
   checkouts) and one native-SDD skip. Candidate size: 349 changed lines, below the 400-line review
   reference.
+- Native review approved and acknowledged target `sha256:532ff04c…4333f` under lineage
+  `review-44b6885c0833c358`; implementation commit `0d8bdf97e334c07cc5961f423cecc34751763ae7`.
 - With explicit maintainer authorization, the active `limpio` lane was migrated in place after a
   dated backup because this Pi session was using that directory. Static live-state verification
   passed 7/7: model and wrapper byte parity, executable modes, lane-local `npmCommand`, both peer
