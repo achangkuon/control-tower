@@ -534,25 +534,31 @@ sesiones:
             criterios: [RUNTIME_PAYLOAD_FILES conserva igualdad exacta y todos sus miembros tienen llamador.]
   - id: S8.12
     prioridad: torre-v1
+    zona: producto-torre
     resultado: "Bundle local Torre V1 de membresía positiva y exacta: Radar, una única fuente canónica de la skill control-tower y sólo las referencias lazy que esa skill necesita."
     autoridad: "Corte V1 de seis unidades y bundle project-local seleccionados explícitamente por el maintainer."
     depende_de: [S164]
+    cimientos: []
+    recurso: []
+    archivos:
+      - product/tower/v1/bundle.mjs
+      - product/tower/v1/test/bundle.test.mjs
     encargo:
-      incompleto: true
       pedido_contexto: "Después de S164, V1 necesita empaquetar únicamente Radar, la fuente canónica de control-tower y sus referencias lazy, sin heredar payloads legacy."
-      resultado_comportamiento: "Una lista positiva declara exactamente Radar, la fuente canónica de control-tower y las referencias lazy que la skill usa. Faltantes, extras, symlinks o bytes divergentes fallan cerrado.\n\nNo incluye semáforo, package Pi, runtime routing, runtime-integrations.md, seis roles, jornada.sh, globals, continuation/V2 ni maquinaria unattended/sealed. La Sesión empaqueta; no instala ni activa."
-      restricciones_decisiones: "La Sesión permanece no ejecutable: no autoriza archivos, Cimientos ni Recursos. La membresía se deriva de S164 y no de filtros sobre payloads legacy."
-      referencias: "Autoridad canónica del corte V1 y entrega futura de S164. La importación legacy conserva sólo procedencia histórica."
+      resultado_comportamiento: "product/tower/v1/bundle.mjs posee una única lista positiva versionada. Declara exactamente diecinueve miembros fuente compilables de Radar —go.mod, go.sum y los diecisiete .go de producción vigentes— y los tres archivos canónicos entregados por S164: SKILL.md, adoption.md y authority-and-questions.md. Cada miembro fija source y destination relativos, únicos y normalizados; el lector calcula SHA-256 desde la fuente canónica y devuelve los bytes validados para que el lifecycle posterior los materialice.\n\nLa validación enumera el inventario de producción de Radar y la superficie de la skill, y falla cerrado ante miembro faltante o extra, raíz/ancestro/miembro symlink, tipo no regular, destino duplicado, digest o bytes divergentes. No incluye README, borradores, binario construido, tests ni testdata de Radar; tampoco semáforo, package Pi, runtime routing, runtime-integrations.md, seis roles, jornada.sh, globals, continuation/V2 ni maquinaria unattended/sealed. La Sesión empaqueta en memoria; no copia, compila, instala ni activa."
+      restricciones_decisiones: "ODD es la ruta técnica; SDD sólo por solicitud humana explícita. Sólo los dos archivos declarados están autorizados. bundle.mjs puede leer agent-workflows/tools/radar/ y product/tower/v1/skills/control-tower/ como fuentes entregadas, pero no los modifica ni importa install/runtime-payload.mjs, scripts/payload-closure.mjs u otro inventario legacy. Cimientos y Recursos quedan explícitamente vacíos; no hay Sesiones EN CURSO y toda expansión o forecast mayor a 400 líneas requiere volver al maintainer antes de RED."
+      referencias: "S164 entregada en ee633c7c863502e78d0f2eeef4210f22fcd3b390 y archivada en openspec/archive/sesiones/S164.md. Inventario Radar revalidado contra master f1e15abe25ab02c8c9fc065731122df50ff71319: go.mod, go.sum, archivar.go, avance.go, check.go, encargo.go, etapa.go, faltan.go, git.go, ledger.go, main.go, partition.go, plan.go, render.go, roadmap.go, safety.go, sesion.go, snapshot.go y state.go. La importación legacy conserva sólo procedencia histórica."
     decisiones:
       - tipo: derivable
         pregunta: ¿Qué manifest, guardia y pruebas exactos poseen la membresía positiva local V1?
-        criterio: "Una sola fuente exacta incluye Radar, control-tower y sus referencias lazy, y excluye semáforo, package/runtime routing, runtime-integrations.md y payloads legacy."
-        evidencia: "Los miembros canónicos quedan fijados por S164; antes de su entrega no hay paths seguros que reservar."
-        checkpoint: "Después de que S164 esté entregada y antes de preparar S8.12 o iniciar RED."
+        criterio: "Una sola fuente exacta incluye los diecinueve miembros compilables de Radar y los tres archivos canónicos de control-tower, y excluye todo miembro no enumerado y todo payload legacy."
+        evidencia: "S164 fija una skill pública y dos referencias lazy; la inspección post-entrega de agent-workflows/tools/radar/ fija diecisiete .go de producción más go.mod y go.sum, mientras README, borrador, binario, tests y testdata quedan fuera. Radar no reporta Sesiones EN CURSO sobre master f1e15abe25ab02c8c9fc065731122df50ff71319."
+        checkpoint: "Derivación completada después de entregar S164 y antes de RED de S8.12."
         opciones:
-          - opcion: "Enumerar los outputs reales de S164 y Radar, y completar entonces manifest, archivos, Cimientos y Recursos."
-            consecuencia: "S8.12 sólo pasa a ejecutable con una membresía comprobable y territorio exacto."
-        autoridad: "Selección explícita del maintainer del bundle local positivo."
+          - opcion: "Un manifiesto positivo y su validador viven juntos en bundle.mjs; una prueba dedicada posee la matriz de faltantes, extras, symlinks y bytes divergentes."
+            consecuencia: "S8.12 queda ejecutable con dos archivos propios y sin conceder escritura sobre Radar, la skill entregada ni inventarios legacy."
+        autoridad: "Selección explícita del maintainer del bundle local positivo y derivación técnica desde S164 entregada."
+        falsificador: "El bundle hereda un payload legacy, incluye un miembro no enumerado, omite un miembro Radar de producción o una referencia usada por la skill, acepta drift/symlinks, o escribe, instala o activa durante la validación."
     importacion_legacy:
       origen_commit: 43130ad40af06f3ed05671000719217bee74f0a5
       origen_ruta: openspec/plans/plan-8/STATUS.md

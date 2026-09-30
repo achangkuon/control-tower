@@ -4,15 +4,15 @@
 ## 📍 Punto de retoma
 - Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S167, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Torre V1 · Adopción project-local reversible.
-- Próximo trabajo ejecutable: ninguno.
+- Próximo trabajo ejecutable: Producto Torre #1 → S8.12 — Bundle local Torre V1 de membresía positiva y exacta: Radar, una única fuente canónica de la skill control-tower y sólo las referencias lazy que esa skill necesita..
 - Decisión pendiente: S12.2 — ¿Cómo avanza la revisión de un artefacto fijado por digest?.
 
 ## Estado y próximo trabajo
-- No hay Sesiones LISTO.
+- Producto Torre #1 → S8.12 — Bundle local Torre V1 de membresía positiva y exacta: Radar, una única fuente canónica de la skill control-tower y sólo las referencias lazy que esa skill necesita.
 
 ## Avance
 - **Total:** 91% (102/112 S)
-- 5 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
+- 4 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 100% (1/1 S)
@@ -24,7 +24,7 @@
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
 - **Método:** 97% (39/40 S)
-- **Producto Torre:** 100% (1/1 S)
+- **Producto Torre:** 50% (1/2 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -61,10 +61,9 @@
 - Sin Sesiones abiertas.
 
 ### Producto Torre (producto-torre)
-- Sin Sesiones abiertas.
+1. **S8.12** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · Bundle local Torre V1 de membresía positiva y exacta: Radar, una única fuente canónica de la skill control-tower y sólo las referencias lazy que esa skill necesita.
 
 ## Bloqueos
-- **S8.12:** Encargo incompleto: falta planificar · falta-planificar (S8.12)
 - **S8.13:** Encargo incompleto: falta planificar · falta-planificar (S8.13)
 - **S150:** Encargo incompleto: falta planificar · falta-planificar (S150)
 - **S172:** Encargo incompleto: falta planificar · falta-planificar (S172)
@@ -140,23 +139,25 @@
 
 ### S8.12 — Bundle local Torre V1 de membresía positiva y exacta: Radar, una única fuente canónica de la skill control-tower y sólo las referencias lazy que esa skill necesita.
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S8.12)
-  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/bundle.mjs, product/tower/v1/test/bundle.test.mjs
   - Depende de: S164
   - Recursos: —
   - Importación legacy: openspec/plans/plan-8/STATUS.md@43130ad40af06f3ed05671000719217bee74f0a5
   - Ejecución: ODD nativo.
 - Encargo:
   - Pedido y contexto: Después de S164, V1 necesita empaquetar únicamente Radar, la fuente canónica de control-tower y sus referencias lazy, sin heredar payloads legacy.
-  - Resultado y comportamiento: Una lista positiva declara exactamente Radar, la fuente canónica de control-tower y las referencias lazy que la skill usa. Faltantes, extras, symlinks o bytes divergentes fallan cerrado. No incluye semáforo, package Pi, runtime routing, runtime-integrations.md, seis roles, jornada.sh, globals, continuation/V2 ni maquinaria unattended/sealed. La Sesión empaqueta; no instala ni activa.
-  - Restricciones y decisiones: La Sesión permanece no ejecutable: no autoriza archivos, Cimientos ni Recursos. La membresía se deriva de S164 y no de filtros sobre payloads legacy.
+  - Resultado y comportamiento: product/tower/v1/bundle.mjs posee una única lista positiva versionada. Declara exactamente diecinueve miembros fuente compilables de Radar —go.mod, go.sum y los diecisiete .go de producción vigentes— y los tres archivos canónicos entregados por S164: SKILL.md, adoption.md y authority-and-questions.md. Cada miembro fija source y destination relativos, únicos y normalizados; el lector calcula SHA-256 desde la fuente canónica y devuelve los bytes validados para que el lifecycle posterior los materialice. La validación enumera el inventario de producción de Radar y la superficie de la skill, y falla cerrado ante miembro faltante o extra, raíz/ancestro/miembro symlink, tipo no regular, destino duplicado, digest o bytes divergentes. No incluye README, borradores, binario construido, tests ni testdata de Radar; tampoco semáforo, package Pi, runtime routing, runtime-integrations.md, seis roles, jornada.sh, globals, continuation/V2 ni maquinaria unattended/sealed. La Sesión empaqueta en memoria; no copia, compila, instala ni activa.
+  - Restricciones y decisiones: ODD es la ruta técnica; SDD sólo por solicitud humana explícita. Sólo los dos archivos declarados están autorizados. bundle.mjs puede leer agent-workflows/tools/radar/ y product/tower/v1/skills/control-tower/ como fuentes entregadas, pero no los modifica ni importa install/runtime-payload.mjs, scripts/payload-closure.mjs u otro inventario legacy. Cimientos y Recursos quedan explícitamente vacíos; no hay Sesiones EN CURSO y toda expansión o forecast mayor a 400 líneas requiere volver al maintainer antes de RED.
     - Decisión estructurada [derivable · ]: ¿Qué manifest, guardia y pruebas exactos poseen la membresía positiva local V1?
-      - Criterio: Una sola fuente exacta incluye Radar, control-tower y sus referencias lazy, y excluye semáforo, package/runtime routing, runtime-integrations.md y payloads legacy.
-      - Autoridad: Selección explícita del maintainer del bundle local positivo.
-      - Evidencia: Los miembros canónicos quedan fijados por S164; antes de su entrega no hay paths seguros que reservar.
-      - Checkpoint: Después de que S164 esté entregada y antes de preparar S8.12 o iniciar RED.
-      - Opción: Enumerar los outputs reales de S164 y Radar, y completar entonces manifest, archivos, Cimientos y Recursos. → S8.12 sólo pasa a ejecutable con una membresía comprobable y territorio exacto.
-  - Referencias: Autoridad canónica del corte V1 y entrega futura de S164. La importación legacy conserva sólo procedencia histórica.
+      - Criterio: Una sola fuente exacta incluye los diecinueve miembros compilables de Radar y los tres archivos canónicos de control-tower, y excluye todo miembro no enumerado y todo payload legacy.
+      - Autoridad: Selección explícita del maintainer del bundle local positivo y derivación técnica desde S164 entregada.
+      - Evidencia: S164 fija una skill pública y dos referencias lazy; la inspección post-entrega de agent-workflows/tools/radar/ fija diecisiete .go de producción más go.mod y go.sum, mientras README, borrador, binario, tests y testdata quedan fuera. Radar no reporta Sesiones EN CURSO sobre master f1e15abe25ab02c8c9fc065731122df50ff71319.
+      - Checkpoint: Derivación completada después de entregar S164 y antes de RED de S8.12.
+      - Falsificador: El bundle hereda un payload legacy, incluye un miembro no enumerado, omite un miembro Radar de producción o una referencia usada por la skill, acepta drift/symlinks, o escribe, instala o activa durante la validación.
+      - Opción: Un manifiesto positivo y su validador viven juntos en bundle.mjs; una prueba dedicada posee la matriz de faltantes, extras, symlinks y bytes divergentes. → S8.12 queda ejecutable con dos archivos propios y sin conceder escritura sobre Radar, la skill entregada ni inventarios legacy.
+  - Referencias: S164 entregada en ee633c7c863502e78d0f2eeef4210f22fcd3b390 y archivada en openspec/archive/sesiones/S164.md. Inventario Radar revalidado contra master f1e15abe25ab02c8c9fc065731122df50ff71319: go.mod, go.sum, archivar.go, avance.go, check.go, encargo.go, etapa.go, faltan.go, git.go, ledger.go, main.go, partition.go, plan.go, render.go, roadmap.go, safety.go, sesion.go, snapshot.go y state.go. La importación legacy conserva sólo procedencia histórica.
 
 ### S8.13 — Lifecycle lean y reversible por proyecto: init resuelve trust explícitamente, doctor verifica dos copias idénticas de la skill y uninstall restaura proyecto byte a byte; todo se prueba en repo y HOME aislados.
 - Coordinación:
@@ -3673,7 +3674,7 @@ Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workfl
   - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
 
 ## Capacidad
-Ninguna Zona tiene trabajo LISTO.
+1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: producto-torre.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
