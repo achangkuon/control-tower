@@ -4,19 +4,19 @@
 ## 📍 Punto de retoma
 - Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S167, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Torre V1 · Adopción project-local reversible.
-- Próximo trabajo ejecutable: ninguno.
+- Próximo trabajo ejecutable: Producto Torre #1 → S172 — cleanup/cleanupProject retira únicamente el journal local intacto que queda tras fallar la eliminación final de uninstall; rechaza cualquier ambigüedad o drift sin mutar el proyecto..
 - Decisión pendiente: S12.2 — ¿Cómo avanza la revisión de un artefacto fijado por digest?.
 
 ## Estado y próximo trabajo
-- No hay Sesiones LISTO.
+- Producto Torre #1 → S172 — cleanup/cleanupProject retira únicamente el journal local intacto que queda tras fallar la eliminación final de uninstall; rechaza cualquier ambigüedad o drift sin mutar el proyecto.
 
 ## Avance
-- **Total:** 92% (104/112 S)
-- 3 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
+- **Total:** 92% (104/113 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 100% (1/1 S)
 - **Capacidades:** — (sin Sesiones enumeradas)
+- **cimientos:** 83% (5/6 S)
 - **Contratos:** 100% (1/1 S)
 - **Enrolamiento:** — (sin Sesiones enumeradas)
 - **Entrega:** — (sin Sesiones enumeradas)
@@ -24,7 +24,7 @@
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
 - **Método:** 97% (39/40 S)
-- **Producto Torre:** 100% (3/3 S)
+- **Producto Torre:** 50% (3/6 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -38,6 +38,9 @@
 
 ### Capacidades (capacidades)
 - Sin Sesiones abiertas.
+
+### cimientos (cimientos)
+1. **S150** · 📋 PLANIFICADO · espera-natural (S172) · prioridad Torre V1 · Adopción project-local reversible · README de la V1 final entregada: instalador global privado torre-control, adopción project-local separada para Pi y Claude Code, gateway control-tower único y resultados medidos sin claims de seguridad inferidos.
 
 ### Contratos (contratos)
 - Sin Sesiones abiertas.
@@ -61,12 +64,12 @@
 - Sin Sesiones abiertas.
 
 ### Producto Torre (producto-torre)
-- Sin Sesiones abiertas.
+1. **S172** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · cleanup/cleanupProject retira únicamente el journal local intacto que queda tras fallar la eliminación final de uninstall; rechaza cualquier ambigüedad o drift sin mutar el proyecto.
+2. **S174** · 📋 PLANIFICADO · espera-natural (S172) · prioridad Torre V1 · Adopción project-local reversible · torre-control instala/actualiza y revierte el motor V1 global desde un Release privado verificado, ofrece menú y comandos cerrados, y delega adopción local explícita a S8.13/S172.
+3. **S173** · 📋 PLANIFICADO · espera-natural (S172) · prioridad Torre V1 · Adopción project-local reversible · Benchmark aislado Pi y Claude Code, adopter vs non-adopter: bytes realmente cargados por cada host, pregunta ordinaria y fidelidad Radar contra invocación canónica independiente.
 
 ## Bloqueos
-- **S150:** Encargo incompleto: falta planificar · falta-planificar (S150)
-- **S172:** Encargo incompleto: falta planificar · falta-planificar (S172)
-- **S173:** Encargo incompleto: falta planificar · falta-planificar (S173)
+- Ningún bloqueo derivado.
 
 ## Rutas
 - **S1.20:** propuesta direct (decision 104 and Engram observation 10008); revalidada direct sobre 89b75cccbee3a3fffe371e776a68f9a62c7912fe con evidencia The read-only Tower-mode contract remained fully specified after rebasing onto current master; upstream S100 changed disjoint schema/test paths, while S1.20 preserved its verified bytes and stayed limited to core.mjs and test/lifecycle.test.mjs..
@@ -469,24 +472,25 @@
       - Descartada: Detener S149 sin ampliar alcance. → Dejaba el candidato con la suite en rojo y la release V1 trabada detrás de S149.
   - Referencias: Medición del corte: Engram 11325 (core.mjs partido 90/10 entre continuation y semáforo, con el semáforo en core.mjs:4318-4681 creando sus tres tablas en open() sin el sistema de migraciones) y Engram 11326 (continuation en el paso 1 de los 11 de docs/architecture/torre-motor-determinista.md, sección 17). Decisión de alcance: Engram 11327. Línea base de código: core.mjs:4318-4681, mcp.mjs (ocho herramientas tower&#95;&#42;), bin/torre. Decisión y aprobación de preparación: Engram 11555 y 11564. El cierre de imports incluye core.mjs en scripts/payload-closure.mjs:7-15 y su igualdad con el inventario generado se prueba en test/install/payload-closure.test.mjs:86-103. Revalidar contra el código vigente antes de implementar.
 
-### S150 — El README documenta la V1 final: adopción project-local para Pi y Claude Code, una sola puerta control-tower, referencias lazy y lifecycle reversible.
+### S150 — README de la V1 final entregada: instalador global privado torre-control, adopción project-local separada para Pi y Claude Code, gateway control-tower único y resultados medidos sin claims de seguridad inferidos.
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S150)
-  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S172)
+  - Zona/Área: cimientos · —
+  - Archivos autorizados: README.md
   - Depende de: S173
   - Recursos: —
   - Ejecución: ODD nativo.
 - Encargo:
-  - Pedido y contexto: La documentación final debe describir el producto local y medido que cierre S173, no el inventario legacy, la instalación global ni capacidades futuras como si ya existieran.
-  - Resultado y comportamiento: El README explica adopción para Pi mediante .agents/skills/ con trust explícito y para Claude Code mediante .claude/skills/ y CLAUDE.md. control-tower es la única puerta pública y carga referencias sólo por intención. Documenta init, doctor y uninstall con la reversibilidad probada por S8.13. Describe los resultados de contexto inicial, pregunta ordinaria y fidelidad Radar medidos por S173 sin presentar screenshots como prueba del mecanismo de seguridad. Nombra las exclusiones V1 sin prometer runtime routing o capacidades V2.
-  - Restricciones y decisiones: La Sesión permanece no ejecutable: no autoriza archivos, Cimientos ni Recursos. Los claims de lifecycle provienen de S8.13 y los de benchmark de S173.
-    - Decisión estructurada [derivable · ]: ¿Qué claims exactos puede publicar el README después del benchmark integrado?
-      - Criterio: Cada claim de lifecycle y reversibilidad está respaldado por S8.13; cada claim de contexto, pregunta ordinaria y Radar está respaldado por S173.
-      - Autoridad: Selección explícita del maintainer de documentación project-local posterior a medición.
-      - Evidencia: Antes de S173 no existe evidencia final before/after para reservar README.md como Cimiento ni cerrar el texto sin prometer comportamiento no observado.
-      - Checkpoint: Después de que S173 esté entregada y antes de preparar S150, reservar README.md o escribir documentación.
-      - Opción: Derivar los claims desde la evidencia final de S173 y completar entonces README.md como archivo y Cimiento exactos. → S150 sólo pasa a ejecutable con documentación falsificable contra el benchmark; hasta entonces no concede escritura.
-  - Referencias: Autoridad canónica del corte V1; evidencia futura de lifecycle S8.13 y benchmark S173.
+  - Pedido y contexto: El README vigente mezcla instrucciones legacy de instalación y runtime con la V1 futura. La documentación se prepara ahora como territorio exacto, pero no se escribe ni se publica como producto hasta que S174 y S173 entreguen interfaces y mediciones reales.
+  - Resultado y comportamiento: Reemplaza la guía contradictoria por el flujo final: torre-control instala, actualiza y revierte el motor global desde un GitHub Release privado autenticado y verificado con SHA-256 obtenido por canal secundario; la adopción project-local es independiente para Pi (.agents/skills/ con trust explícito) y Claude Code (.claude/skills/), con una sola puerta pública control-tower y referencias lazy. Explica init, doctor, uninstall y cleanup como operaciones distintas y los límites de reversibilidad observados. Publica sólo comandos e interfaces efectivamente entregados por S174 y sólo resultados medidos por S173 (bytes cargados por cada host, pregunta ordinaria y fidelidad Radar). Las capturas prueban el flujo observado, nunca seguridad ni reversibilidad. Nombra las exclusiones de V2 sin prometer routing, procesos, sockets o supervisión en V1.
+  - Restricciones y decisiones: Una unidad documental reversible de 200–350 líneas authored, máximo 400. README.md es el único archivo y Cimiento; Recursos vacíos. Preparar la Sesión no habilita ejecución anticipada: depende de S173 y exige verificar interfaces/mediciones contra entregas efectivas, sin inventar cifras ni usar capturas como prueba de seguridad.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto]: ¿Se prepara README.md ahora o se espera la medición para asignar territorio?
+      - Resolución: Se reserva ahora README.md como archivo y Cimiento exactos, pero su escritura y los claims quedan bloqueados por S173 y se contrastan con S174/S173 entregadas.
+      - Autoridad: Elección explícita de Emilio en esta Conversación para las cuatro Sesiones finales.
+      - Falsificador: README publica un comando no entregado por S174, una cifra no medida por S173, o presenta una captura como garantía de seguridad.
+      - Contaminaba: S150
+      - Descartada: Escribir cifras e interfaces previstas antes de la entrega. → Una previsión no es evidencia de comportamiento ni medición real.
+  - Referencias: README.md vigente; S8.13 entregada (lifecycle project-local); S172 cleanup; S174 installer y subcomandos; S173 benchmark. Revalidar estas entregas al ejecutar.
 
 ### S151 — Pi activa los controles Chanks únicamente con autoridad efímera de una Sesión humana admitida, aplica realmente el confinamiento al comando ejecutado y bloquea ante autoridad, reservas o recursos ausentes o vencidos.
 - Coordinación:
@@ -924,43 +928,84 @@
       - Descartada: Dejar que el coordinador reponga automáticamente la cola con la siguiente Sesión LISTO de Radar. → Es exactamente la autoselección que la decisión de encadenamiento acotado prohíbe; el humano elige el lote, no el coordinador.
   - Referencias: Autoridad: Emilio, 2026-09-26, Engram 11837. Estado previo: agent-workflows/skills/chanks-4-unattended-implementation/SKILL.md (Activation Contract, «exactly one plan Session»), assets/execution-contract.schema.json (session.sesion&#95;id singular), references/sealing-and-routing.md (Seal gate ítems 1-8 en singular) y references/night-mode.md (pre-flight gates en singular); references/runtime-standalone.md ya declara «not a replacement coordinator» para una Sesión, y pasa a describir un mandato de una o más. Relacionado: S109 valida este mandato contra Radar; S168 verifica en solo lectura que cada Sesión del mandato efectivamente se despachó.
 
-### S172 — Cleanup gestionado y seguro del proyecto adoptante: retira sólo artefactos locales creados por init y ya cubiertos por uninstall, preservando todo drift o byte no reconocido.
+### S172 — cleanup/cleanupProject retira únicamente el journal local intacto que queda tras fallar la eliminación final de uninstall; rechaza cualquier ambigüedad o drift sin mutar el proyecto.
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S172)
-  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/adoption.mjs, product/tower/v1/test/adoption.test.mjs
   - Depende de: S8.13
   - Recursos: —
   - Ejecución: ODD nativo.
 - Encargo:
-  - Pedido y contexto: Después de probar el lifecycle lean, el proyecto necesita limpiar únicamente residuos managed de esa adopción local.
-  - Resultado y comportamiento: La limpieza opera sólo sobre artefactos project-local que init creó y que doctor identifica de forma inequívoca. Ante drift, ambigüedad o contenido no gestionado preserva los bytes y explica el bloqueo. No limpia globals, duplicados Gentle/SDD, seals, supervision/, state.mjs, AGENTS.md ni CLAUDE.md; esas capacidades desplazadas quedan fuera de V1.
-  - Restricciones y decisiones: La Sesión permanece no ejecutable: no autoriza archivos, Cimientos ni Recursos. No toca globals reales ni contenido humano.
-    - Decisión estructurada [derivable · ]: ¿Qué residuos exactos creados por init requieren cleanup adicional a uninstall?
-      - Criterio: Cada candidato es project-local, tiene marca o comparación exacta y una acción reversible; todo drift se preserva.
-      - Autoridad: Selección explícita del maintainer del cleanup acotado.
-      - Evidencia: S8.13 debe entregar primero el lifecycle y su inventario managed.
-      - Checkpoint: Después de que S8.13 esté entregada y antes de preparar S172.
-      - Opción: Derivar el inventario sólo desde artefactos reales de S8.13 y completar entonces territorio y pruebas. → S172 no amplía cleanup más allá de la adopción local probada.
-  - Referencias: Autoridad canónica del corte V1 y evidencia futura de S8.13.
+  - Pedido y contexto: S8.13 ya entregó initProject, doctorProject y uninstallProject. uninstall restaura los destinos originales y por último elimina .control-tower-adoption-v1; si sólo falla esa eliminación final, queda el journal pero los destinos ya están restaurados. El preflight de doctor/uninstall exige el snapshot instalado y no cubre ese caso.
+  - Resultado y comportamiento: La API cleanupProject y el comando dedicado cleanup atienden sólo ese residuo post-uninstall. product/tower/v1/adoption.mjs sirve la superficie pública exacta &#96;bun product/tower/v1/adoption.mjs cleanup --project &lt;absolute-Git-root&gt;&#96;, respaldada por cleanupProject; S172 no depende de product/tower/v1/cli.mjs ni de ningún archivo de S174. Antes de mutar verifican raíz Git y ancestros seguros, journal íntegro con esquema y modos de S8.13, snapshots original e instalado válidos, destinos y presencia de ancestros exactamente iguales al original, y que original e instalado no sean iguales. Rechazan journals parciales o malformados, symlinks, entradas peligrosas, bytes desconocidos, drift de destinos o ancestros y la ambigüedad original=instalado. Sólo entonces eliminan el journal exacto; no repiten la restauración ni amplían uninstall. Pruebas positivas y negativas demuestran que todos los rechazos preservan íntegramente el árbol.
+  - Restricciones y decisiones: Una unidad reversible con tests, 220–330 líneas authored y máximo 400. Sólo dos archivos declarados; Cimientos/Recursos vacíos. No toca globals, artefactos humanos/ajenos, AGENTS.md, CLAUDE.md, Gentle/SDD duplicados ni estado V2.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto; seguridad-y-permisos]: ¿Qué residuo permite limpiar S172 sin ampliar uninstall?
+      - Resolución: Sólo el journal intacto remanente tras el fallo de su eliminación final cuando el proyecto coincide exactamente con el snapshot original validado; usar cleanup/cleanupProject independiente y rechazar original=instalado.
+      - Autoridad: Elección explícita de Emilio en esta Conversación y evidencia de S8.13 entregada.
+      - Falsificador: cleanup altera destinos, acepta drift/journal parcial o elimina el journal cuando los snapshots original e instalado son indistinguibles.
+      - Contaminaba: S172, S174
+      - Descartada: Extender uninstall para borrar cualquier residuo managed. → Uninstall exige el estado instalado y los residuos ambiguos no acreditan propiedad.
+  - Referencias: S8.13 entregada: product/tower/v1/adoption.mjs (JOURNAL, preflight, uninstallProject), project-files.mjs (snapshots y ancestros) y sus pruebas.
 
-### S173 — Benchmark aislado adopter vs non-adopter para bytes de contexto inicial, camino de pregunta ordinaria y fidelidad de Radar; las capturas sólo muestran que el flujo funcionó.
+### S174 — torre-control instala/actualiza y revierte el motor V1 global desde un Release privado verificado, ofrece menú y comandos cerrados, y delega adopción local explícita a S8.13/S172.
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S173)
-  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S172)
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/bootstrap.mjs, product/tower/v1/release.mjs, product/tower/v1/global.mjs, product/tower/v1/projects.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/bootstrap.test.mjs, product/tower/v1/test/release.test.mjs, product/tower/v1/test/global.test.mjs, product/tower/v1/test/projects.test.mjs, product/tower/v1/test/cli.test.mjs
   - Depende de: S172
+  - Recursos: Mutación exclusiva sólo al invocar el instalador global: launcher V1, puntero active/previous, almacén de versiones y registro informativo de proyectos., Para operaciones de proyecto: journal y destinos sólo de la raíz exacta seleccionada explícitamente; nunca se buscan raíces arbitrarias.
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: El motor global aún carece de instalador/updater V1. La adopción project-local probada en S8.13/S172 no equivale a una versión del motor global, y el launcher legacy no otorga autoridad para importar estado ni sobrescribir bytes desconocidos.
+  - Resultado y comportamiento: torre-control sin argumentos abre un menú interactivo; comandos cerrados y scriptables cubren install, update, doctor y rollback globales, init, doctor, uninstall y cleanup de una raíz de proyecto explícita mediante las API entregadas por S8.13/S172, y list de proyectos registrados. No ejecuta hooks de adopción al instalar globalmente. El índice global de proyectos es informativo, se puebla sólo tras operaciones explícitas, se reconcilia con cada journal local antes de presentar estado y nunca autoriza adopción ni escanea raíces del filesystem. gh autenticado descarga únicamente un asset de GitHub Release privado fijado por tag exacto e inmutable; se exige SHA-256 provisto manualmente por un segundo canal antes de interpretar o activar bytes. Un manifiesto positivo y acotado valida cada ruta, tipo, tamaño y contenido admitido del artefacto; se rechazan rutas extra, symlinks y material inesperado. No hay fallback a latest mutable, checkout, install.sh ni setup.sh. Versiones globales, punteros active/previous y launcher son independientes de skills/journals locales. Activación de versión y migración de launcher legacy exacto son atómicas y compensables; sólo se acepta el launcher generado conocido, se respalda y se restaura en rollback, jamás se reemplaza un launcher desconocido ni se importa otro estado legacy. Tests usan dobles aislados de HOME/XDG/Git/GitHub sin tocar estado real.
+  - Restricciones y decisiones: Seis unidades secuenciales, cada una verde, verificable y reversible de máximo 400 líneas authored con pruebas; pronóstico total 1.800–2.300. 1) descarga autenticada y verificación previa al parseo (release y test); 2) manifiesto positivo e ingreso acotado (bootstrap y test); 3) versionado global, activación/rollback y migración exacta compensable (global y test); 4) registro informativo y wrappers de proyecto (projects y test); 5) comandos cerrados y errores fail-closed (cli y test); 6) menú y pruebas de integración con fallos inyectados sobre las mismas rutas declaradas. Cada unidad se prueba antes de continuar; si un corte excede 400, pedir decisión humana antes de implementar. No muta HOME real en pruebas, no importa estado legacy y nunca usa el índice como autorización de adopción. Sólo los diez archivos declarados están autorizados.
+    - Decisión estructurada [resuelta · seguridad-y-permisos; dependencias-o-evidencia-contradictorias]: ¿Cómo se adquiere el motor global desde un Release privado?
+      - Resolución: gh autenticado, tag exacto y asset inmutable, sin latest/checkout/scripts alternativos.
+      - Autoridad: Elección explícita de Emilio en esta Conversación.
+      - Falsificador: Se activa una descarga no fijada por tag o aparece un fallback a latest, checkout, install.sh o setup.sh.
+      - Contaminaba: S174
+    - Decisión estructurada [resuelta · seguridad-y-permisos]: ¿Qué prueba independiente precede a parsear un artefacto?
+      - Resolución: SHA-256 provisto manualmente desde un segundo canal, comprobado antes de interpretar o activar los bytes; luego manifiesto positivo acotado.
+      - Autoridad: Elección explícita de Emilio en esta Conversación.
+      - Falsificador: La descarga se parsea o activa sin el digest manual coincidente o admite miembros fuera del manifiesto.
+      - Contaminaba: S174
+    - Decisión estructurada [resuelta · contrato-visible-del-producto]: ¿Cuál es la interfaz pública de torre-control?
+      - Resolución: Sin argumentos abre menú interactivo; comandos cerrados scriptables cubren lifecycle global, lifecycle local delegado y lista informativa.
+      - Autoridad: Elección explícita de Emilio en esta Conversación.
+      - Falsificador: El menú sustituye a los comandos automatizables o instalar globalmente adopta proyectos sin elegir raíz.
+      - Contaminaba: S174, S150
+    - Decisión estructurada [resuelta · migraciones-o-perdida-de-datos; operaciones-irreversibles]: ¿Puede migrarse cualquier launcher legacy al activar V1?
+      - Resolución: Sólo el launcher generado exacto y conocido, con respaldo y restauración al rollback; lo desconocido se preserva y bloquea.
+      - Autoridad: Elección explícita de Emilio en esta Conversación.
+      - Falsificador: Un launcher desconocido se sobrescribe, otro estado legacy se importa o el rollback no restaura el respaldo exacto.
+      - Contaminaba: S174
+    - Decisión estructurada [resuelta · expansion-de-alcance]: ¿Cómo se reparte el presupuesto de implementación del instalador?
+      - Resolución: Seis unidades secuenciales independientemente verdes y reversibles de hasta 400 líneas authored cada una; total previsto 1.800–2.300.
+      - Autoridad: Elección explícita de Emilio en esta Conversación.
+      - Falsificador: Una unidad supera 400 líneas sin nueva decisión o depende de una unidad previa no verde.
+      - Contaminaba: S174
+  - Referencias: S8.13 y S172: product/tower/v1/adoption.mjs y sus tests; bundle.mjs para manifiesto existente; launcher legacy exacto se identifica y revalida contra el árbol vigente antes de codificar su migración. No autoriza tocar esas rutas.
+
+### S173 — Benchmark aislado Pi y Claude Code, adopter vs non-adopter: bytes realmente cargados por cada host, pregunta ordinaria y fidelidad Radar contra invocación canónica independiente.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S172)
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/benchmark.mjs, product/tower/v1/test/benchmark.test.mjs
+  - Depende de: S174
   - Recursos: —
   - Ejecución: ODD nativo.
 - Encargo:
-  - Pedido y contexto: Después del lifecycle y cleanup locales, V1 necesita medir sólo su costo inicial y sus dos caminos visibles esenciales.
-  - Resultado y comportamiento: El mismo harness aislado compara adopter y non-adopter para bytes de contexto inicial, una pregunta ordinaria con texto libre y fidelidad de Radar. El no-adopter no expone control-tower; el adopter expone una sola skill. Screenshots o capturas demuestran únicamente que el flujo observado funcionó; no prueban el mecanismo de seguridad, reversibilidad ni ausencia de efectos. Esa evidencia de lifecycle pertenece a S8.13.
-  - Restricciones y decisiones: La Sesión permanece no ejecutable: no autoriza archivos, Cimientos ni Recursos. No benchmarkea routing, procesos, sockets, Git ni rollback y no toca estado real.
-    - Decisión estructurada [derivable · ]: ¿Qué harness y baselines aislados comparan las tres dimensiones aprobadas?
-      - Criterio: Una corrida reproducible compara bytes iniciales, pregunta ordinaria y salida Radar sin atribuir seguridad a screenshots.
-      - Autoridad: Selección explícita del maintainer del benchmark mínimo.
-      - Evidencia: Los baselines válidos dependen del producto final después de S172.
-      - Checkpoint: Después de que S172 esté entregada y antes de preparar S173.
-      - Opción: Derivar el harness desde el producto final y congelar baselines aislados para las tres dimensiones. → S173 queda acotada a la evidencia comparativa aprobada.
-  - Referencias: Autoridad canónica del corte V1 y outputs futuros de S164-S172; reversibilidad en S8.13.
+  - Pedido y contexto: Tras S172 y S174 entregadas, V1 necesita una comparación reproducible del adopter y el non-adopter en Pi y Claude Code bajo condiciones idénticas por host. Contar bytes de archivos estáticos no prueba qué cargó realmente cada host.
+  - Resultado y comportamiento: Harness de raíces y fixtures desechables compara ambos brazos bajo el mismo host aislado, prompt y HEAD. La medida autoritativa de contexto inicial son los bytes que cada host real demuestra haber cargado mediante un límite observable confiable; los tamaños estáticos sólo explican diferencias. Si un host no expone ese límite, el benchmark bloquea/falla sin publicar proxy. Envía la misma pregunta ordinaria de texto libre en ambos brazos y detecta selección o ejecución accidental de control-tower. Compara la salida Radar del flujo con una invocación canónica independiente para el mismo fixture/HEAD, incluidos los errores. Registra observaciones y límites: capturas de pantalla o transcripción sólo demuestran el flujo observado, no seguridad, ausencia de efectos ni reversibilidad del lifecycle.
+  - Restricciones y decisiones: Dos unidades secuenciales reversibles con pruebas, 400–600 líneas authored totales y cada una máximo 400: 1) aislamiento, límites observables de Pi/Claude y pregunta ordinaria; 2) contraste independiente Radar, fallos y reporte sin proxies, manteniendo verde la primera. Sólo dos archivos declarados; Cimientos/Recursos vacíos: toda corrida usa raíces/fixtures desechables, nunca HOME, journals o destinos reales. No mide routing, procesos, sockets, operaciones Git de producto ni rollback.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto; dependencias-o-evidencia-contradictorias]: ¿Se pueden usar bytes estáticos como medida principal de contexto inicial?
+      - Resolución: No: medir únicamente los bytes cuya carga demuestre el host real en Pi y Claude Code, o bloquear la publicación si no hay frontera observable confiable. Los tamaños estáticos son sólo explicación.
+      - Autoridad: Elección explícita de Emilio en esta Conversación.
+      - Falsificador: Se presenta un conteo estático o una captura como medición autoritativa de bytes cargados sin prueba del host.
+      - Contaminaba: S173, S150
+      - Descartada: Publicar la suma de tamaños de archivos como proxy cuando falta instrumentación del host. → No demuestra qué cargó Pi o Claude Code en esa corrida.
+  - Referencias: S8.13 y S172 (reversibilidad), S174 (interfaces finales), contrato de snapshot de Radar en agent-workflows/tools/radar/; comprobar versión real de ambos hosts y sus límites observables al ejecutar. Ninguna referencia amplía archivos.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -3681,7 +3726,7 @@ Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workfl
   - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
 
 ## Capacidad
-Ninguna Zona tiene trabajo LISTO.
+1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: producto-torre.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
