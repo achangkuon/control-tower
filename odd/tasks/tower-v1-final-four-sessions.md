@@ -72,7 +72,7 @@ This is technical execution continuity, not another product backlog. The Session
 ### Resume tasks
 
 - [x] R1 — Verify, native-review and commit the preserved release-acquisition unit. DONE; delegated verification plus native review, parent exact-path staging/commit. Work-unit commit: `121e728d11f36b4a51344bc98f55f155387b910b`; focused/V1 checks passed, tree matches reviewed bytes, 144-line source-and-test unit retained.
-- [ ] R2 — Deliver the release unit with all three local planning commits through normal push. IN PROGRESS; parent delivery command, delegated report/suite readback. Acceptance: clean tracked/index/untracked state, hook suite and Radar results observed, origin/master matches delivered HEAD, report regenerated for that HEAD. No Session closure claimed.
+- [x] R2 — Deliver the release unit with all three local planning commits through normal push. DONE; parent normal push and delegated suite/report/remote readback. Delivery evidence: `9dd697ec214c41b60133c4bc94b8c75ebb15438e` on remote master, clean tree, all requested commits verified ancestors. Work-unit checkpoint `9dd697ec214c41b60133c4bc94b8c75ebb15438e`. Hook suite 1607 pass / 0 fail; Radar 0 errors / 63 warnings; documented `--with-tests` generation exit 0 refreshed the ignored report/cache for that same HEAD. No Session closure claimed.
 
 ### Fresh reconciliation evidence
 
@@ -88,4 +88,12 @@ This is technical execution continuity, not another product backlog. The Session
 - Native assessment unavailable: ambient assessment rejected untracked declaration; committed-range assessment reported schema incompatibility. Treated conservatively, not as low risk; independent functional verification and terminal native review already completed.
 - After product commit, Main is clean and ahead of origin by four commits. This passive checkpoint records observed evidence without amending the reviewed product candidate.
 
-Next checkpoint: commit this passive evidence checkpoint, run normal `git push origin master`, and inspect suite, external Radar, remote identity and regenerated radiografia.
+### Observed delivery closure
+
+- Normal push succeeded without bypass, publishing the three planning commits, product commit and evidence checkpoint. `HEAD`, `origin/master` and `git ls-remote origin refs/heads/master` all matched `9dd697ec214c41b60133c4bc94b8c75ebb15438e`; ancestry checks for all four requested content commits exited 0.
+- Delivery hook: 1607 pass / 0 fail, 8,938 assertions across 111 files; external Radar 0 errors / 63 warnings. Report generation succeeded but initially displayed a historical suite cache.
+- Documented `bun agent-workflows/radiografia/run.mjs --with-tests` subsequently exited 0 and reproduced 1607 pass / 0 fail, 8,938 assertions, 111 files. Ignored report/cache now carry delivery HEAD `9dd697e`; historical judgement remains honestly labeled outdated and was not re-stamped or repaired.
+- Repository remained clean after report verification. General planning was delivered unchanged; no general remediation, benchmark, final README, global installation or premature product Session closure was performed.
+- Preserve the current Radar and Chanks/Tower skill emojis. The maintainer explicitly says they work and are not friction; slimming V1 removes ambiguity, not useful visual identities.
+
+This final passive completion record does not amend the reviewed product commit. Publish it normally and regenerate ignored report evidence for its resulting HEAD. Next product checkpoint: the installer remains admitted; resume its second of six sequential units from fresh external Radar, then dependent host benchmark and final README. Do not start general remediation now.
