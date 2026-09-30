@@ -1935,33 +1935,7 @@ sesiones:
             razon: La misma herramienta lleva dos nombres según el modo y contradice "un producto, dos modos".
         contaminaba: [S163]
   - {id: S160, entrega: {commit: 5eb62d8b350611742a3d7325939b6ca5f5444ca3}, historico: openspec/archive/sesiones/S160.md}
-  - id: S164
-    prioridad: torre-v1
-    zona: producto-torre
-    resultado: "Una única skill project-local control-tower funciona como front door para Pi y Claude Code, contiene el kernel de autoridad y preguntas ordinarias, y carga sólo referencias lazy de adopción."
-    autoridad: "Corte V1 de seis unidades y front door única seleccionados explícitamente por el maintainer; absorbe S170."
-    depende_de: []
-    archivos:
-      - product/tower/v1/skills/control-tower/SKILL.md
-      - product/tower/v1/skills/control-tower/references/adoption.md
-      - product/tower/v1/skills/control-tower/references/authority-and-questions.md
-      - product/tower/v1/test/control-tower-skill.test.mjs
-    encargo:
-      pedido_contexto: "Torre V1 necesita una sola puerta project-local para Pi y Claude Code. El kernel de autoridad y preguntas vive dentro de la skill; no existe como sistema separado."
-      resultado_comportamiento: "La única skill pública se llama control-tower. Su SKILL.md contiene el contrato de entrada, el kernel mínimo que acepta texto libre para preguntas ordinarias y una selección humana acotada para trabajo de producto, y enlaces explícitos sólo a adoption.md y authority-and-questions.md. Cada referencia se carga cuando la intención correspondiente la necesita.\n\nLa skill describe delegación nativa in-session de subagentes tanto en Pi como en Claude Code, sin inventar un runtime router. Pi descubre skills del proyecto mediante .agents/skills/ sólo en proyectos confiables; Claude Code usa .claude/skills/ y CLAUDE.md, no AGENTS.md. Todo lo necesario vive en la skill y ningún managed block se escribe en AGENTS.md o CLAUDE.md.\n\nNo existe runtime-integrations.md ni dependencia de semáforo, package Pi, runtime routing, perfiles de rol, continuation/V2, stage UI obligatoria o configuración global."
-      restricciones_decisiones: "ODD es la ruta técnica; SDD sólo por solicitud humana explícita. Sólo los cuatro paths declarados están autorizados. No modifica AGENTS.md, CLAUDE.md, product/tower/profiles/, product/tower/skills/ ni configuración local o global."
-      referencias: "Autoridad canónica del corte V1; S170 queda absorbida por esta Sesión. Todos los paths pertenecen a Zona producto-torre."
-    decisiones:
-      - tipo: resuelta
-        pregunta: ¿Cuántas superficies públicas de skill expone Torre V1 y dónde vive el kernel?
-        resolucion: "Exactamente una: control-tower. El kernel de autoridad y preguntas vive dentro de esa skill; adopción y autoridad son referencias lazy, no skills públicas."
-        autoridad: "Selección explícita del maintainer del corte V1."
-        clase: contrato-visible-del-producto; api-publica
-        falsificador: "V1 publica otra skill o sistema de kernel, crea perfiles de rol, agrega runtime-integrations.md o carga todas las referencias al inicio."
-        descartadas:
-          - opcion: Mantener S170 o runtime integrations como unidades V1 separadas.
-            razon: El corte aprobado integra el kernel en S164 y retira runtime routing de V1.
-        contaminaba: [S164, S8.12]
+  - {id: S164, entrega: {commit: ee633c7c863502e78d0f2eeef4210f22fcd3b390}, historico: openspec/archive/sesiones/S164.md}
   - id: S165
     prioridad: torre-v2
     zona: hosts
