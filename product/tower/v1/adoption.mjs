@@ -134,8 +134,21 @@ export function doctorProject(options) {
 /** Refuse all drift before removing anything; restore the exact original destination trees. */
 export function uninstallProject(options) {
   if (!keys(options, ["projectRoot"])) fail("uninstall options");
-  const { original } = preflight(options.projectRoot);
-  restoreProjectFiles(options.projectRoot, original);
+  const { original, installed } = preflight(options.projectRoot);
+  try {
+    restoreProjectFiles(options.projectRoot, original);
+  } catch (error) {
+    try {
+      for (const destination of installed.destinations) {
+        const snapshot = { schema: installed.schema, destinations: [destination] };
+        if (!compareProjectFiles(options.projectRoot, snapshot)) restoreProjectFiles(options.projectRoot, snapshot);
+      }
+      if (!compareProjectFiles(options.projectRoot, installed)) fail("installation compensation drift");
+    } catch (compensationError) {
+      throw new AggregateError([error, compensationError], "Adoption uninstall compensation failed");
+    }
+    throw error;
+  }
   rmSync(join(options.projectRoot, JOURNAL), { recursive: true });
   return Object.freeze({ status: "uninstalled" });
 }

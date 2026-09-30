@@ -197,6 +197,28 @@ describe("project-local lifecycle API", () => {
     unchangedFailure(projectRoot, () => initProject(trusted(projectRoot)));
   }));
 
+  test("a late restore failure compensates changed destinations and allows retry", () => fixture(({ projectRoot }) => {
+    if (process.getuid?.() === 0) return; // Root bypasses directory write permissions.
+    put(projectRoot, `${targets[1]}/original.bin`, Buffer.from([0, 255, 42]), 0o440);
+    put(projectRoot, `${targets[2]}/original.bin`, "prior skill", 0o600);
+    const before = snapshot(projectRoot);
+    initProject(trusted(projectRoot));
+    const state = JSON.parse(readFileSync(join(projectRoot, journal, "state.json"), "utf8"));
+    const journalBytes = readFileSync(join(projectRoot, journal, "state.json"));
+    chmodSync(join(projectRoot, ".control-tower"), 0o555);
+    try {
+      let failure;
+      try { uninstallProject({ projectRoot }); } catch (error) { failure = error; }
+      expect(["EACCES", "EPERM"]).toContain(failure?.code);
+      expect(compareProjectFiles(projectRoot, state.installed)).toBe(true);
+      expect(readFileSync(join(projectRoot, journal, "state.json"))).toEqual(journalBytes);
+    } finally {
+      chmodSync(join(projectRoot, ".control-tower"), 0o755);
+    }
+    expect(uninstallProject({ projectRoot })).toEqual({ status: "uninstalled" });
+    expect(snapshot(projectRoot)).toEqual(before);
+  }));
+
   test("hardlinked destination and unsafe journal member reject without changing other destinations", () => fixture(({ projectRoot }) => {
     put(projectRoot, "foreign", "outside");
     mkdirSync(join(projectRoot, ".control-tower"));
