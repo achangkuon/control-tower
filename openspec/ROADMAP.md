@@ -4,15 +4,15 @@
 ## 📍 Punto de retoma
 - Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S167, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Torre V1 · Adopción project-local reversible.
-- Próximo trabajo ejecutable: ninguno.
+- Próximo trabajo ejecutable: Producto Torre #1 → S8.13 — Lifecycle lean y reversible por proyecto: init resuelve trust explícitamente, doctor verifica dos copias idénticas de la skill y uninstall restaura proyecto byte a byte; todo se prueba en repo y HOME aislados..
 - Decisión pendiente: S12.2 — ¿Cómo avanza la revisión de un artefacto fijado por digest?.
 
 ## Estado y próximo trabajo
-- No hay Sesiones LISTO.
+- Producto Torre #1 → S8.13 — Lifecycle lean y reversible por proyecto: init resuelve trust explícitamente, doctor verifica dos copias idénticas de la skill y uninstall restaura proyecto byte a byte; todo se prueba en repo y HOME aislados.
 
 ## Avance
 - **Total:** 91% (103/112 S)
-- 4 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
+- 3 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 100% (1/1 S)
@@ -24,7 +24,7 @@
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
 - **Método:** 97% (39/40 S)
-- **Producto Torre:** 100% (2/2 S)
+- **Producto Torre:** 66% (2/3 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -61,10 +61,9 @@
 - Sin Sesiones abiertas.
 
 ### Producto Torre (producto-torre)
-- Sin Sesiones abiertas.
+1. **S8.13** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · Lifecycle lean y reversible por proyecto: init resuelve trust explícitamente, doctor verifica dos copias idénticas de la skill y uninstall restaura proyecto byte a byte; todo se prueba en repo y HOME aislados.
 
 ## Bloqueos
-- **S8.13:** Encargo incompleto: falta planificar · falta-planificar (S8.13)
 - **S150:** Encargo incompleto: falta planificar · falta-planificar (S150)
 - **S172:** Encargo incompleto: falta planificar · falta-planificar (S172)
 - **S173:** Encargo incompleto: falta planificar · falta-planificar (S173)
@@ -161,23 +160,31 @@
 
 ### S8.13 — Lifecycle lean y reversible por proyecto: init resuelve trust explícitamente, doctor verifica dos copias idénticas de la skill y uninstall restaura proyecto byte a byte; todo se prueba en repo y HOME aislados.
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S8.13)
-  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/project-files.mjs, product/tower/v1/test/project-files.test.mjs, product/tower/v1/adoption.mjs, product/tower/v1/test/adoption.test.mjs
   - Depende de: S8.12
   - Recursos: —
   - Importación legacy: openspec/plans/plan-8/STATUS.md@43130ad40af06f3ed05671000719217bee74f0a5
   - Ejecución: ODD nativo.
 - Encargo:
-  - Pedido y contexto: El bundle exacto de S8.12 necesita init, doctor y uninstall reversibles para Pi y Claude Code, sin maquinaria de activación global o rollback de eras anteriores.
-  - Resultado y comportamiento: init exige una resolución explícita de trust del proyecto. Para un proyecto confiable instala una única fuente canónica en .agents/skills/control-tower/ para Pi y en .claude/skills/control-tower/ para Claude Code; Claude Code usa .claude/skills/ y CLAUDE.md, no AGENTS.md. Ningún managed block se escribe en AGENTS.md o CLAUDE.md. doctor verifica que ambas copias sean idénticas y que las referencias lazy requeridas estén presentes. uninstall restaura el proyecto byte-idéntico. Cada prueba usa repositorio y HOME aislados, falla antes de mutar y nunca toca HOME o proyecto reales. Quedan fuera update, activación atómica compleja, partial activation, rollback version-gated y rollback de las eras package/interceptor.
-  - Restricciones y decisiones: La Sesión permanece no ejecutable: no autoriza archivos, Cimientos ni Recursos. No instala globals, no modifica trust real ni escribe managed blocks en AGENTS.md o CLAUDE.md.
+  - Pedido y contexto: El bundle exacto entregado por S8.12 necesita init, doctor y uninstall reversibles para Pi y Claude Code, sin maquinaria de activación global o rollback de eras anteriores.
+  - Resultado y comportamiento: product/tower/v1/project-files.mjs posee la inspección fail-closed, el snapshot de destinos y la restauración reversible. product/tower/v1/adoption.mjs posee una API programática y la CLI &#96;bun product/tower/v1/adoption.mjs &lt;init&#124;doctor&#124;uninstall&gt; --project &lt;raíz-Git-absoluta&gt;&#96;; init exige además el argumento exacto &#96;--trust trusted&#96;. La declaración de trust sólo expresa la resolución explícita del llamador: no consulta ni modifica trust real del host. Para un proyecto confiable, init consume directamente &#96;validateBundle&#96; de S8.12, instala Radar bajo &#96;.control-tower/radar/&#96; y materializa desde los mismos buffers canónicos una copia en &#96;.agents/skills/control-tower/&#96; para Pi y otra en &#96;.claude/skills/control-tower/&#96; para Claude Code. Claude Code usa &#96;.claude/skills/&#96; y CLAUDE.md, no AGENTS.md; ningún managed block se escribe en ninguno de esos archivos. Un diario reservado &#96;.control-tower-adoption-v1/&#96; guarda el manifiesto y los destinos previos necesarios para restaurar estructura, bytes y modos; si ya existe, init se detiene. doctor no muta: compara Radar y ambas skills con el bundle y el diario, exige que las skills sean byte-idénticas y conserva exactamente las dos referencias lazy. uninstall hace preflight completo antes del primer borrado, rechaza drift del estado instalado o del respaldo y, sólo con evidencia íntegra, restaura cada destino previo y retira ancestros creados que continúen vacíos. La igualdad byte a byte cubre estructura, bytes y modos, no timestamps ni identidad de inode. Cada prueba usa repositorio Git y HOME/XDG/TMPDIR aislados; los casos inválidos fallan antes de mutar y ninguna ruta real se toca. Quedan fuera update, reparación automática, activación atómica compleja, partial activation, rollback version-gated y rollback de las eras package/interceptor.
+  - Restricciones y decisiones: ODD es la ruta técnica; SDD sólo por solicitud humana explícita. Sólo los cuatro archivos declarados están autorizados. bundle.mjs, Radar y la skill entregada son fuentes de sólo lectura y no se modifican. Cimientos y Recursos quedan explícitamente vacíos porque la implementación usa únicamente fixtures temporales propios; el diario runtime evita adoptar un proyecto con lifecycle ya activo. No se instalan globals, no se usa HOME real, no se modifica trust real ni se escribe AGENTS.md o CLAUDE.md. El forecast de 750–950 líneas se ejecuta, por elección explícita del maintainer, como tres unidades secuenciales y revertibles de hasta 400 líneas authored; cualquier expansión de paths, alcance o tamaño de una unidad vuelve al maintainer antes de escribir.
     - Decisión estructurada [derivable · ]: ¿Qué comandos, owners y fixtures exactos implementan init, doctor y uninstall sin tocar estado real?
       - Criterio: Las pruebas demuestran trust explícito, copias idénticas en .agents/skills/ y .claude/skills/, ausencia de managed blocks, fallo antes de mutar y restauración byte-idéntica en repo/HOME aislados.
-      - Autoridad: Selección explícita del maintainer del lifecycle lean project-local.
-      - Evidencia: El lifecycle se deriva de la membresía entregada por S8.12; antes no hay paths seguros que reservar.
-      - Checkpoint: Después de que S8.12 esté entregada y antes de preparar S8.13 o iniciar RED.
-      - Opción: Mapear init/doctor/uninstall sobre el bundle entregado y completar entonces archivos, Cimientos y Recursos. → S8.13 sólo pasa a ejecutable con territorio aislado y reversibilidad comprobable.
-  - Referencias: Autoridad canónica del corte V1 y bundle futuro de S8.12. Los pisos de fallo antes de mutar y reversibilidad se preservan sin reautorizar maquinaria legacy.
+      - Autoridad: Selección explícita del maintainer del lifecycle lean project-local y derivación técnica desde S8.12 entregada.
+      - Evidencia: S8.12 entregó un manifest in-memory exacto de diecinueve miembros Radar y tres miembros de skill. La inspección post-entrega asigna project-files.mjs a preflight/snapshot/restore y adoption.mjs a API/CLI; sus tests dedicados usan fixtures Git y HOME/XDG/TMPDIR temporales.
+      - Checkpoint: Derivación completada después de entregar S8.12 y antes de RED de S8.13.
+      - Falsificador: El lifecycle usa inventarios paralelos, acepta trust implícito, toca estado real, deja drift después de uninstall, repara en doctor, escribe instrucciones de host o reutiliza maquinaria legacy.
+      - Opción: Un owner de filesystem seguro y un owner lifecycle/CLI consumen directamente el bundle; dos tests dedicados poseen la matriz de reversibilidad y aislamiento. → S8.13 queda ejecutable con cuatro archivos propios, fuentes entregadas de sólo lectura y cero Cimientos o Recursos compartidos.
+    - Decisión estructurada [resuelta · ]: ¿Cómo se ejecuta el forecast de 750–950 líneas frente a la referencia de revisión de 400?
+      - Resolución: Tres unidades secuenciales y revertibles dentro de S8.13: filesystem seguro; lifecycle init/doctor/uninstall; CLI y aislamiento end-to-end. Cada unidad queda en su propio commit de hasta 400 líneas authored con sus pruebas verdes antes de avanzar.
+      - Autoridad: Emilio, esta conversación, después de entregar S8.12.
+      - Falsificador: Una unidad supera 400 líneas authored sin nueva autorización, se mezcla evidencia de unidades distintas en un commit o se implementa en paralelo sobre los mismos archivos.
+      - Contaminaba: S8.13
+      - Descartada: Aceptar una excepción y entregar las 750–950 líneas como un único commit. → El maintainer eligió conservar revisión y rollback acotados con tres unidades secuenciales.
+  - Referencias: S8.12 fue entregada en 4b1a2b9a0538133b2f48b83010fc50de452062e5 y archivada en openspec/archive/sesiones/S8.12.md. bundle.mjs posee la membresía positiva, bytes y SHA-256 canónicos; adoption.mjs deriva la raíz fuente desde su módulo y no acepta un override CLI. Radar no reporta otra Sesión LISTO o EN CURSO sobre master 9b58ca639af549d3bb94ccbe443f0a9e9cf86279. La importación legacy conserva sólo procedencia histórica.
 
 ### S9.8 — Dispatch sin espera y estado terminal visible en Main y tabs; absorbe S9.7, S168 y S171 sin reclamar paralelismo cuando el host serializa.
 - Coordinación:
@@ -3674,7 +3681,7 @@ Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workfl
   - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
 
 ## Capacidad
-Ninguna Zona tiene trabajo LISTO.
+1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: producto-torre.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
