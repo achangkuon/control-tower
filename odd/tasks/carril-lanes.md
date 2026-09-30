@@ -46,6 +46,11 @@ safe place to try a candidate version.
 
 ## Tasks
 
+Additional maintenance authorized 2026-09-29: make carril model selection explicit from the normal
+stable Pi configuration to control cost, and remove the host-peer dependency warnings shown by the
+Gentle packages in isolated lanes. This extends the carril continuity work; it does not change product
+planning authority.
+
 - [x] C1 — Isolation facts: credentials, skill discovery, packages, Gentle AI content, labels
   (route: delegated exploration — mapping trigger, 4+ files outside repo). Findings that shaped
   the design:
@@ -93,6 +98,15 @@ safe place to try a candidate version.
   - Known limits: the chanks extension's skill badge only recognises `~/.agents/skills` paths
     (cosmetic); `_shared` resolves relative to each loaded skill, so worktree skills read the
     worktree `_shared`.
+- [x] C5 — Copy the stable explicit generic/SDD/review model mappings into `limpio` after Gentle
+  package installation, preserving lane isolation and the distinct Pi (`effort`) and Gentle
+  (`thinking`) schemas. Added regression coverage for postinstall clobber and candidato's existing
+  `subagents.json` parity. RED: the lane lacked its local npm/model setup; GREEN: focused suite
+  24/24.
+- [x] C6 — Give `limpio` a lane-local copy of the stable `pi-npm-host-peers` wrapper and configure
+  package installation through it so `typebox` and `@earendil-works/pi-tui` are repaired as host
+  peers without modifying the stable setup. Added fail-closed and exact warning-regression coverage;
+  focused suite 24/24.
 
 ### Step 2 — A/B friction test (authorized 2026-09-28: "Si esas están bien")
 
@@ -208,10 +222,29 @@ only), C (no personal extensions/packages), limpio. Each lane runs three prompts
   reviews. The maintainer chose to skip review for this candidate only (2026-09-28), so it is
   unreviewed. RDD itself was left on.
 
+## Maintenance verification (2026-09-29)
+
+- Writer RED: 24 focused tests ran, 3 failed because `limpio` lacked the lane-local npm/model
+  setup. GREEN after implementation: 24/24.
+- Independent verification: `bash -n agent-workflows/tools/carril` passed; focused carril suite
+  passed 24/24 in 4.705s; no findings.
+- Pre-delivery verification on current `master`: carril 24/24, installer 99/99, and Bun 1550/1550
+  passed; `git diff --check` passed. The full Python suite ran 291 tests with the same environmental
+  composition failure already recorded above (missing local `pi-v2` and `gentle-pi` source
+  checkouts) and one native-SDD skip. Candidate size: 349 changed lines, below the 400-line review
+  reference.
+- With explicit maintainer authorization, the active `limpio` lane was migrated in place after a
+  dated backup because this Pi session was using that directory. Static live-state verification
+  passed 7/7: model and wrapper byte parity, executable modes, lane-local `npmCommand`, both peer
+  repairs, installed launcher parity, backup presence, and readable stable references.
+
 ## Progress
 
-- Step 1 done. Known gap: `~/.local/bin/carril` is a manual copy. Updating it means re-copying
-  it; folding it into `tools/install.py` belongs with step 3.
+- Step 1 and the explicit-model/peer-warning maintenance are implemented in the repository and
+  applied to `~/.pi/agent-limpio`.
+- Backup: `~/.pi/agent-limpio.backup-20260929-182505`.
+- `~/.local/bin/carril` is currently an explicit copy. Separate, pre-existing installer changes in
+  this worktree are outside C5/C6 and are not credited here until their own delivery closes.
 
 ## Later steps (not authorized yet)
 

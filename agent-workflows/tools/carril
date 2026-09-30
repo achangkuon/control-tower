@@ -21,6 +21,10 @@ LIMPIO_DIR="${CARRIL_LIMPIO_DIR:-$HOME/.pi/agent-limpio}"
 GENTLE_SKILLS="$LIMPIO_DIR/npm/node_modules/gentle-pi/skills"
 # gentle-pi keeps persona and subagent models outside the Pi config dir unless told otherwise.
 GENTLE_CONFIG="$LIMPIO_DIR/gentle-config"
+STABLE_PI_MODELS="$STABLE_DIR/subagents.json"
+STABLE_GENTLE_MODELS="$HOME/.pi/gentle-ai/models.json"
+STABLE_NPM_WRAPPER="$STABLE_DIR/bin/pi-npm-host-peers"
+LIMPIO_NPM_WRAPPER="$LIMPIO_DIR/bin/pi-npm-host-peers"
 
 usage() {
   cat >&2 <<'EOF'
@@ -67,10 +71,10 @@ launch() {
   exec "$PI_BIN" --name "$label" "$@"
 }
 
-# Only the settings that keep the comparison fair (model, reasoning, UI) cross over;
-# packages, skills and the npm wrapper stay behind because they are the personal layer.
+# Only the settings that keep the comparison fair (model, reasoning, UI) cross over.
+# Packages and skills stay behind; limpio gets its own copy of the stable npm wrapper.
 write_limpio_settings() {
-  python3 - "$STABLE_DIR/settings.json" "$LIMPIO_DIR/settings.json" <<'PY'
+  python3 - "$STABLE_DIR/settings.json" "$LIMPIO_DIR/settings.json" "$LIMPIO_NPM_WRAPPER" <<'PY'
 import json, sys
 KEEP = (
     "defaultProvider", "defaultModel", "defaultThinkingLevel", "defaultProjectTrust",
@@ -79,9 +83,77 @@ KEEP = (
 with open(sys.argv[1]) as source:
     stable = json.load(source)
 limpio = {key: stable[key] for key in KEEP if key in stable}
+limpio["npmCommand"] = [sys.argv[3], "--", "npm"]
 with open(sys.argv[2], "w") as target:
     json.dump(limpio, target, indent=2)
     target.write("\n")
+PY
+}
+
+validate_limpio_sources() {
+  if [ ! -f "$STABLE_DIR/settings.json" ] || [ ! -f "$STABLE_DIR/auth.json" ]; then
+    echo "carril: falta settings.json o auth.json en $STABLE_DIR." >&2
+    return 1
+  fi
+  if [ ! -f "$STABLE_PI_MODELS" ] || [ ! -f "$STABLE_GENTLE_MODELS" ]; then
+    echo "carril: faltan los modelos estables ($STABLE_PI_MODELS o $STABLE_GENTLE_MODELS)." >&2
+    return 1
+  fi
+  if [ ! -f "$STABLE_NPM_WRAPPER" ] || [ ! -x "$STABLE_NPM_WRAPPER" ]; then
+    echo "carril: falta un wrapper ejecutable en $STABLE_NPM_WRAPPER." >&2
+    return 1
+  fi
+
+  if ! python3 - "$STABLE_PI_MODELS" "$STABLE_GENTLE_MODELS" <<'PY'
+import json, sys
+
+def load_object(path):
+    with open(path) as source:
+        value = json.load(source)
+    if not isinstance(value, dict) or not value:
+        raise ValueError(f"{path} no contiene un objeto de modelos")
+    return value
+
+pi = load_object(sys.argv[1])
+profiles = pi.get("model_profiles")
+if not isinstance(profiles, dict) or not profiles:
+    raise ValueError("subagents.json no contiene model_profiles")
+for name, profile in profiles.items():
+    if not isinstance(profile, dict) or not isinstance(profile.get("model"), str):
+        raise ValueError(f"perfil Pi inválido: {name}")
+    if not isinstance(profile.get("effort"), str):
+        raise ValueError(f"perfil Pi sin effort: {name}")
+
+gentle = load_object(sys.argv[2])
+for name, profile in gentle.items():
+    if not isinstance(profile, dict) or not isinstance(profile.get("model"), str):
+        raise ValueError(f"perfil Gentle inválido: {name}")
+    if not isinstance(profile.get("thinking"), str):
+        raise ValueError(f"perfil Gentle sin thinking: {name}")
+PY
+  then
+    echo "carril: los modelos estables no tienen un esquema válido." >&2
+    return 1
+  fi
+}
+
+# Write a regular, byte-identical copy even if package postinstall created the destination.
+copy_regular() {
+  python3 - "$1" "$2" <<'PY'
+import os, shutil, sys, tempfile
+from pathlib import Path
+
+source, target = Path(sys.argv[1]), Path(sys.argv[2])
+target.parent.mkdir(parents=True, exist_ok=True)
+fd, temporary = tempfile.mkstemp(prefix=f".{target.name}.", dir=target.parent)
+os.close(fd)
+try:
+    shutil.copyfile(source, temporary)
+    shutil.copymode(source, temporary)
+    os.replace(temporary, target)
+except BaseException:
+    Path(temporary).unlink(missing_ok=True)
+    raise
 PY
 }
 
@@ -105,15 +177,15 @@ preparar_limpio() {
     echo "carril: $LIMPIO_DIR ya existe; borralo a mano si querés rearmarlo." >&2
     exit 2
   fi
-  if [ ! -f "$STABLE_DIR/settings.json" ] || [ ! -f "$STABLE_DIR/auth.json" ]; then
-    echo "carril: falta settings.json o auth.json en $STABLE_DIR." >&2
+  if ! validate_limpio_sources; then
     exit 2
   fi
 
-  mkdir -p "$LIMPIO_DIR" "$GENTLE_CONFIG"
+  mkdir -p "$LIMPIO_DIR" "$GENTLE_CONFIG" "$LIMPIO_DIR/bin"
   trap 'rm -rf "$LIMPIO_DIR"; echo "carril: falló la preparación; no quedó nada a medias." >&2' ERR
   # One shared file: OAuth refresh tokens rotate, so two copies would log each other out.
   ln -s "$STABLE_DIR/auth.json" "$LIMPIO_DIR/auth.json"
+  copy_regular "$STABLE_NPM_WRAPPER" "$LIMPIO_NPM_WRAPPER"
   write_limpio_settings
 
   local spec
@@ -121,6 +193,11 @@ preparar_limpio() {
     PI_CODING_AGENT_DIR="$LIMPIO_DIR" GENTLE_PI_CONFIG_HOME="$GENTLE_CONFIG" \
       "$PI_BIN" install "$spec"
   done < <(gentle_packages)
+
+  # Package postinstall may write defaults; stable's explicit mappings always win afterward.
+  # Copy each schema unchanged: Pi uses `effort`, while Gentle's config uses `thinking`.
+  copy_regular "$STABLE_PI_MODELS" "$LIMPIO_DIR/subagents.json"
+  copy_regular "$STABLE_GENTLE_MODELS" "$GENTLE_CONFIG/models.json"
   trap - ERR
   echo "carril: listo. Abrilo con: carril limpio"
 }

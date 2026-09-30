@@ -199,6 +199,31 @@ class InstallerTests(unittest.TestCase):
         self.assertIn("chanks-3-session-kickoff/SKILL.md", result.stdout)
         self.assertIn("APPEND_SYSTEM.md", result.stdout)
 
+    def test_carril_launcher_is_installed_and_check_detects_drift(self):
+        INSTALLER.apply(self.home, ROOT)
+        target = self.home / ".local/bin/carril"
+        source = ROOT / "tools/carril"
+        self.assertEqual(target.read_bytes(), source.read_bytes())
+        self.assertEqual(stat.S_IMODE(target.stat().st_mode), 0o755)
+
+        clean = subprocess.run(
+            [sys.executable, str(SCRIPT), "--check", "--home", str(self.home)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(clean.returncode, 0, clean.stdout + clean.stderr)
+
+        target.write_bytes(target.read_bytes() + b"\n# drift\n")
+        drifted = subprocess.run(
+            [sys.executable, str(SCRIPT), "--check", "--home", str(self.home)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(drifted.returncode, 1)
+        self.assertIn(f"DRIFT carril-launcher: {target}", drifted.stdout)
+
     def test_dry_run_does_not_write(self):
         result = subprocess.run(
             [sys.executable, str(SCRIPT), "--dry-run", "--home", str(self.home)],
@@ -209,6 +234,7 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
         self.assertIn("WOULD_UPDATE", result.stdout)
         self.assertFalse((self.home / ".agents/skills/chanks-3-session-kickoff/SKILL.md").exists())
+        self.assertFalse((self.home / ".local/bin/carril").exists())
 
     def test_rejects_symlinked_runtime_parent_without_touching_external_sentinel(self):
         external = Path(self.tempdir.name) / "external"

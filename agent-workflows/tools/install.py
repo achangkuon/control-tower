@@ -405,6 +405,35 @@ def preflight(home: Path, root: Path) -> None:
         desired_manual_content(path, replacements)
 
 
+CARRIL_SOURCE = Path("tools/carril")
+CARRIL_RELATIVE = Path(".local/bin/carril")
+
+
+def carril_path(home: Path) -> Path:
+    return home / CARRIL_RELATIVE
+
+
+def carril_source(root: Path) -> Path:
+    source = root / CARRIL_SOURCE
+    if not source.is_file() or stat.S_IMODE(source.stat().st_mode) != 0o755:
+        raise InstallError("Carril launcher source must be a regular executable 755 file")
+    return source
+
+
+def carril_changes(home: Path, root: Path) -> list[Change]:
+    source = carril_source(root)
+    target = carril_path(home)
+    _validate_directory_path(target.parent, "local binary directory")
+    _validate_file_destination(home / ".local", target, "Carril launcher")
+    if (
+        target.is_file()
+        and target.read_bytes() == source.read_bytes()
+        and stat.S_IMODE(target.stat().st_mode) == 0o755
+    ):
+        return []
+    return [Change(target, "carril-launcher")]
+
+
 def etapa_hook_path(home: Path) -> Path:
     return home / ".claude/hooks/chanks-etapa.sh"
 
@@ -463,6 +492,7 @@ def build_plan(home: Path, root: Path | None = None) -> list[Change]:
         desired = desired_manual_content(path, replacements)
         if path.read_bytes() != desired:
             changes.append(Change(path, "manual"))
+    changes.extend(carril_changes(home, root))
     changes.extend(pi_extension_changes(home, root))
     changes.extend(pi_npm_host_peers_changes(home, root))
     changes.extend(etapa_hook_changes(home, root))
@@ -551,6 +581,9 @@ def apply(home: Path, root: Path | None = None) -> list[Change]:
             destination = runtime_root / retired_skill
             if destination in change_paths:
                 _archive_retired_skill(runtime_root, destination)
+    if carril_path(home) in change_paths:
+        _atomic_copy(carril_source(root), carril_path(home), home / ".local")
+        os.chmod(carril_path(home), 0o755)
     if pi_extension_path(home) in change_paths:
         install_pi_extension(home, root)
     if pi_npm_wrapper_path(home) in change_paths or pi_settings_path(home) in change_paths:
