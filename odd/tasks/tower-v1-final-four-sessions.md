@@ -97,3 +97,33 @@ This is technical execution continuity, not another product backlog. The Session
 - Preserve the current Radar and Chanks/Tower skill emojis. The maintainer explicitly says they work and are not friction; slimming V1 removes ambiguity, not useful visual identities.
 
 This final passive completion record does not amend the reviewed product commit. Publish it normally and regenerate ignored report evidence for its resulting HEAD. Next product checkpoint: the installer remains admitted; resume its second of six sequential units from fresh external Radar, then dependent host benchmark and final README. Do not start general remediation now.
+
+## Authorized bootstrap-unit resumption
+
+The maintainer selected Main and requested only the second installer unit, manifest and bounded bootstrap intake, after published `4464d6f7303ecf9b9e61f60db0ab89f4faa43132`. Do not repeat planning, acquisition unit 1, or implement general remediation. Preserve current Radar and Chanks/Tower emojis.
+
+### Reconciliation and execution contract
+
+- Actual task file and full Engram observation 12212 matched before this append. Fresh independent Git readback: clean `master...origin/master`, HEAD `4464d6f7303ecf9b9e61f60db0ab89f4faa43132`.
+- Installed Radar freshly confirms S174 (Torre V1 › Adopción project-local reversible › producto-torre — torre-control instala/actualiza y revierte el motor V1 global desde un Release privado verificado, ofrece menú y comandos cerrados, y delega adopción local explícita a S8.13/S172., 🟢 LISTO), depending on delivered S172; check 0 errors / 63 warnings.
+- Product edit surface: only `product/tower/v1/bootstrap.mjs` and `product/tower/v1/test/bootstrap.test.mjs`. This subordinate document records technical continuity, not Session closure.
+- Route: delegated mapping (4+ files), one bounded writer (two non-trivial files), foreground checks. A scoped read-only assumption challenge rejected treating the 22-member local adoption bundle as a complete global runtime: adoption also needs its JS modules and canonical source layout.
+- Internal global-release membership: canonical source paths of existing `BUNDLE_MEMBERS`, plus adoption/bundle/project-files and the five declared bootstrap/release/global/projects/cli modules. A distinct closed release schema prevents confusion with the local bundle. Future-module fixtures do not claim those modules are delivered.
+- Acquire and manually supplied SHA-256 verification must precede all interpretation. Validate exact paths, regular-file type, fields, canonical encoding, safe lengths, per-member digests and bounded aggregate content. Return validated in-memory bytes only; no extraction, execution, build, activation, adoption, real download or HOME/global-state mutation.
+- TDD enabled by current `openspec/config.yaml` (`strict_tdd: true`), runner `bun test`, framework `bun:test`: observe RED before implementation, then GREEN and REFACTOR.
+- Checks: `bun test product/tower/v1/test/bootstrap.test.mjs`; `bun test product/tower/v1/test`; `bun run test`; whitespace validation including new files; independent focused spot check; native review under freshly observed global RDD on. Do not bypass failed checks.
+- Forecast: approximately 300–380 authored product/test lines, sequential direct-work-unit strategy under repository policy. Ask before implementation over 400. No new commit or push permission is inferred from historical delivery authority; request explicit authorization at checkpoint if needed.
+
+### Current unit task
+
+- [ ] B2 — Implement and verify the positive global-release manifest and bounded bootstrap intake, complete candidate review, and record an authorized work-unit checkpoint. IN PROGRESS: implementation, checks and native review completed; awaiting explicit commit authorization. No commit or push yet. Remaining installer units and dependent Sessions stay unclosed.
+
+### Bootstrap evidence and checkpoint
+
+- Writer changed only the two product paths: bootstrap 119 new lines, test 193, total 312 authored. Internal schema `tower.v1.release/1`, exactly 30 canonical regular files; bounds 16 MiB acquisition, 1 MiB per member, 8 MiB decoded aggregate. Duplicate-key/container/scalar preflight and complete manifest limits precede member decoding. Metadata is frozen, returned Buffers are mutable and isolated.
+- Observed strict RED: focused runner exit 1 because bootstrap was absent. GREEN: 8 pass / 551 assertions; triangulation and post-refactor: 8 pass / 556 assertions. `bun test product/tower/v1/test` → 65 pass / 0 fail; `bun run test` → 1615 pass / 0 fail, by writer. No historical RED invented.
+- Independent spot check: focused 8 pass / 0 fail / 556 assertions, exit 0. Tracked whitespace check exit 0; both no-index whitespace checks exit 1 with no diagnostics (ordinary differences). Full/V1 suites were not independently repeated; writer results stand.
+- Native assessment failed on untracked-declaration handling; conservatively treated as high for separate verification, never low. Native review selected both intended new paths plus this subordinate record: medium/reliability, `review-7b876e9332a8b415`, approved and acknowledged; returned authority burned. Reviewed tree `f1a256074782c263515b679bf507265efb59ea40`. No product correction. This passive evidence append follows review and changes no reviewed product bytes.
+- Source SHA-256: `39b3f31702ec582f68e7edc5ca54d2ed73839d9d89d139dc1fb68b1b78719a9c`; test: `18e2581d762edbe2dbb4dc28bcfc6bc090bad954e7120a7d7d045ff364993849`.
+- Final pre-checkpoint Git: `master...origin/master`, HEAD remains `4464d6f7303ecf9b9e61f60db0ab89f4faa43132`; only parent task document and two new product files changed, no staging. Tests used injected runners and fixture bytes, no real downloads, code execution from release, installation or HOME/global-state effects. Emojis unchanged.
+- Next: obtain explicit commit/push authorization under repository policy, commit this verified reversible unit normally and record the resulting identity. Do not close the installer Session or advance to global activation until this checkpoint is resolved.
