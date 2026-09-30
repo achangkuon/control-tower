@@ -2068,54 +2068,7 @@ sesiones:
         descartadas:
           - opcion: "Dejar que el coordinador reponga automáticamente la cola con la siguiente Sesión LISTO de Radar."
             razon: "Es exactamente la autoselección que la decisión de encadenamiento acotado prohíbe; el humano elige el lote, no el coordinador."
-  - id: S172
-    zona: producto-torre
-    prioridad: torre-v1
-    resultado: "cleanup/cleanupProject retira únicamente el journal local intacto que queda tras fallar la eliminación final de uninstall; rechaza cualquier ambigüedad o drift sin mutar el proyecto."
-    autoridad: "Emilio eligió explícitamente cleanup separado de uninstall en esta Conversación; el inventario se deriva del lifecycle S8.13 entregado."
-    depende_de: [S8.13]
-    cimientos: []
-    recurso: []
-    archivos:
-      - product/tower/v1/adoption.mjs
-      - product/tower/v1/test/adoption.test.mjs
-    encargo:
-      pedido_contexto: >-
-        S8.13 ya entregó initProject, doctorProject y uninstallProject. uninstall restaura los
-        destinos originales y por último elimina .control-tower-adoption-v1; si sólo falla
-        esa eliminación final, queda el journal pero los destinos ya están restaurados.
-        El preflight de doctor/uninstall exige el snapshot instalado y no cubre ese caso.
-      resultado_comportamiento: >-
-        La API cleanupProject y el comando dedicado cleanup atienden sólo ese residuo
-        post-uninstall. product/tower/v1/adoption.mjs sirve la superficie pública exacta
-        `bun product/tower/v1/adoption.mjs cleanup --project <absolute-Git-root>`,
-        respaldada por cleanupProject; S172 no depende de product/tower/v1/cli.mjs ni de
-        ningún archivo de S174. Antes de mutar verifican raíz Git y ancestros seguros, journal
-        íntegro con esquema y modos de S8.13, snapshots original e instalado válidos,
-        destinos y presencia de ancestros exactamente iguales al original, y que original
-        e instalado no sean iguales. Rechazan journals parciales o malformados, symlinks,
-        entradas peligrosas, bytes desconocidos, drift de destinos o ancestros y la
-        ambigüedad original=instalado. Sólo entonces eliminan el journal exacto; no
-        repiten la restauración ni amplían uninstall. Pruebas positivas y negativas
-        demuestran que todos los rechazos preservan íntegramente el árbol.
-      restricciones_decisiones: >-
-        Una unidad reversible con tests, 220–330 líneas authored y máximo 400. Sólo dos
-        archivos declarados; Cimientos/Recursos vacíos. No toca globals, artefactos
-        humanos/ajenos, AGENTS.md, CLAUDE.md, Gentle/SDD duplicados ni estado V2.
-      referencias: >-
-        S8.13 entregada: product/tower/v1/adoption.mjs (JOURNAL, preflight,
-        uninstallProject), project-files.mjs (snapshots y ancestros) y sus pruebas.
-    decisiones:
-      - tipo: resuelta
-        pregunta: "¿Qué residuo permite limpiar S172 sin ampliar uninstall?"
-        resolucion: "Sólo el journal intacto remanente tras el fallo de su eliminación final cuando el proyecto coincide exactamente con el snapshot original validado; usar cleanup/cleanupProject independiente y rechazar original=instalado."
-        autoridad: "Elección explícita de Emilio en esta Conversación y evidencia de S8.13 entregada."
-        clase: contrato-visible-del-producto; seguridad-y-permisos
-        falsificador: "cleanup altera destinos, acepta drift/journal parcial o elimina el journal cuando los snapshots original e instalado son indistinguibles."
-        descartadas:
-          - opcion: "Extender uninstall para borrar cualquier residuo managed."
-            razon: "Uninstall exige el estado instalado y los residuos ambiguos no acreditan propiedad."
-        contaminaba: [S172, S174]
+  - {id: S172, entrega: {commit: 8caaacf33e98ce236676533198761723154d6eef}, historico: openspec/archive/sesiones/S172.md}
 
   - id: S174
     zona: producto-torre

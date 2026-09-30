@@ -39,3 +39,13 @@ No product implementation, installer execution, HOME/global-state mutation, comm
 Baseline at `c837aa3121bec2a4dac9ad8ff206499a3e55d086`: clean tracked `master`, `radar check` reported 0 errors and 63 warnings, Tower V1 reported 8/11, S172/S173/S150 were incomplete, and S174 did not exist. This task document was already untracked before integration.
 
 Observed after integration (all commands exit 0): `$HOME/.local/bin/radar check -C /home/emili/projects/control-tower/Main` → 0 errors/63 pre-existing warnings; `$HOME/.local/bin/radar render -C /home/emili/projects/control-tower/Main` → ROADMAP regenerated; the same check → 0 errors/63 warnings. `radar status --json` and `radar faltan` → Tower V1 8/12 (66%), S172 LISTO, S174/S173/S150 PLANIFICADO; `radar sesion` for each confirmed S172→S174→S173→S150 via dependencies `[S8.13]`, `[S172]`, `[S174]`, `[S173]`. `git diff --check` → clean; status showed only plan.yaml, generated ROADMAP.md and the pre-existing untracked task document.
+
+## Sequential execution
+
+- [x] Deliver the reviewed planning candidate (`262d1cebc65da96db5f46131f6748231ad86fd94`).
+- [x] Implement, verify, review, deliver, and archive S172 (`8caaacf33e98ce236676533198761723154d6eef`; native review `review-99464decff2e806b`).
+- [ ] Re-run Radar and execute S174 only while it remains `LISTO`; six sequential units.
+- [ ] Re-run Radar and execute S173 only after S174 is delivered and Radar admits it; two sequential units.
+- [ ] Re-run Radar and execute S150 only after S173 is delivered and Radar admits it; one documentation unit.
+
+S172 strict-TDD evidence: the focused suite first failed with 19 pass / 3 fail because `cleanupProject` and the `cleanup` CLI did not exist, then passed with 23 pass / 0 fail. Independent verification passed; the reviewed diff was 126 authored lines across the two authorized files. The pre-push suite passed 1602 tests. Tests used disposable roots and isolated HOME/XDG/TMP state only. Radar archived S172 and admitted S174; the 63 existing warnings remain unchanged.
