@@ -216,9 +216,9 @@ func archiveSession(planPath, root, id string) error {
 	if target.Historico != "" || target.Archivada {
 		return fmt.Errorf("%s ya está archivada", id)
 	}
-	head, err := gitOutput(root, "rev-parse", "--verify", "refs/heads/master^{commit}")
+	integratedRef, head, err := integratedLocalBranch(root)
 	if err != nil {
-		return fmt.Errorf("no se pudo resolver master: %w", err)
+		return fmt.Errorf("no se pudo resolver la rama integrada: %w", err)
 	}
 	if target.Entrega == nil {
 		return fmt.Errorf("%s no tiene entrega", id)
@@ -314,12 +314,12 @@ func archiveSession(planPath, root, id string) error {
 		if !bytes.Equal(current, raw) {
 			return fmt.Errorf("el plan cambió mientras se archivaba %s", id)
 		}
-		currentMaster, err := gitOutput(root, "rev-parse", "--verify", "refs/heads/master^{commit}")
+		currentRef, currentHead, err := integratedLocalBranch(root)
 		if err != nil {
 			return err
 		}
-		if currentMaster != head {
-			return fmt.Errorf("master cambió mientras se archivaba %s", id)
+		if currentRef != integratedRef || currentHead != head {
+			return fmt.Errorf("la rama integrada cambió mientras se archivaba %s", id)
 		}
 		return nil
 	}); err != nil {

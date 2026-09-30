@@ -8,6 +8,66 @@ import (
 	"testing"
 )
 
+func TestArchivedHistoryUsesIntegratedMainNotCurrentHEAD(t *testing.T) {
+	root, plan, head, _ := archiveFixture(t)
+	if fixtureGit(t, root, "symbolic-ref", "--short", "HEAD") != "master" {
+		fixtureGit(t, root, "branch", "-m", "master")
+	}
+	if err := archiveSession(plan, root, "S1"); err != nil {
+		t.Fatal(err)
+	}
+	fixtureGit(t, root, "branch", "-m", "main")
+	fixtureGit(t, root, "switch", "-qc", "work", head)
+	p, err := Load(plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := hallazgosDe(p.checkSesionesAt(root, head), "histórico"); len(got) != 0 {
+		t.Fatalf("archived evidence on local main rejected: %+v", got)
+	}
+}
+
+func TestArchivedHistoryRejectsNoIntegratedBranch(t *testing.T) {
+	root, plan, head, _ := archiveFixture(t)
+	if fixtureGit(t, root, "symbolic-ref", "--short", "HEAD") != "master" {
+		fixtureGit(t, root, "branch", "-m", "master")
+	}
+	if err := archiveSession(plan, root, "S1"); err != nil {
+		t.Fatal(err)
+	}
+	fixtureGit(t, root, "branch", "-m", "work")
+	p, err := Load(plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	findings := hallazgosDe(p.checkSesionesAt(root, head), "histórico")
+	if len(findings) == 0 || !strings.Contains(findings[0].Detalle, "main") {
+		t.Fatalf("missing integrated branch should explain local main/master requirement: %+v", findings)
+	}
+}
+
+func TestArchivedHistoryRejectsAmbiguousIntegratedBranches(t *testing.T) {
+	root, plan, head, _ := archiveFixture(t)
+	if fixtureGit(t, root, "symbolic-ref", "--short", "HEAD") != "master" {
+		fixtureGit(t, root, "branch", "-m", "master")
+	}
+	if err := archiveSession(plan, root, "S1"); err != nil {
+		t.Fatal(err)
+	}
+	fixtureGit(t, root, "branch", "main")
+	p, err := Load(plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.EstadosAt(root, head)["S1"] != Bloqueado {
+		t.Fatal("ambiguous integrated branches must block archived completion")
+	}
+	findings := hallazgosDe(p.checkSesionesAt(root, head), "histórico")
+	if len(findings) == 0 || !strings.Contains(findings[0].Detalle, "origin/HEAD") {
+		t.Fatalf("ambiguous integrated branches must produce an actionable finding: %+v", findings)
+	}
+}
+
 func TestArchivedHistoryStillReceivesCompletedSessionValidation(t *testing.T) {
 	for _, tc := range []struct {
 		name, old, replacement, rule string

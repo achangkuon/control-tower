@@ -120,7 +120,8 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 	modulosVistos := map[string]bool{}
 	tareasVistas := map[string]bool{}
 	provenienciasVistas := map[string]bool{}
-	master := ""
+	integratedHead := ""
+	integratedResolved := false
 
 	for i := range p.Sesiones {
 		s := &p.Sesiones[i]
@@ -142,17 +143,18 @@ func (p *Plan) checkSesionesAt(root, head string) []Hallazgo {
 				if err != nil || !reflect.DeepEqual(archived, *s) {
 					h = append(h, Hallazgo{"error", "histórico", fmt.Sprintf("%s: histórico ausente, modificado o inválido: %v", s.ID, err)})
 				}
-				if master == "" {
-					resolved, resolveErr := gitOutput(root, "rev-parse", "--verify", "refs/heads/master^{commit}")
+				if !integratedResolved {
+					integratedResolved = true
+					_, resolved, resolveErr := integratedLocalBranch(root)
 					if resolveErr != nil {
-						h = append(h, Hallazgo{"error", "histórico", fmt.Sprintf("no se pudo resolver master: %v", resolveErr)})
+						h = append(h, Hallazgo{"error", "histórico", fmt.Sprintf("no se pudo resolver la rama integrada: %v", resolveErr)})
 					} else {
-						master = resolved
+						integratedHead = resolved
 					}
 				}
-				if master != "" {
-					validationHead = master
-					if ok, detail := entregaIntegrada(root, s.Entrega.Commit, master); !ok {
+				if integratedHead != "" {
+					validationHead = integratedHead
+					if ok, detail := entregaIntegrada(root, s.Entrega.Commit, integratedHead); !ok {
 						h = append(h, Hallazgo{"error", "histórico", fmt.Sprintf("%s: %s", s.ID, detail)})
 					}
 				}

@@ -32,6 +32,64 @@ func repoGit(t *testing.T) (string, string) {
 	return root, head
 }
 
+// fixtureGit runs repository-local Git setup without relying on the host's default branch.
+func fixtureGit(t *testing.T, root string, args ...string) string {
+	t.Helper()
+	out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput()
+	if err != nil {
+		t.Fatalf("git %v: %v: %s", args, err, out)
+	}
+	return strings.TrimSpace(string(out))
+}
+
+func TestIntegratedLocalBranchSelection(t *testing.T) {
+	for _, tc := range []struct {
+		name, local, origin, selected, failure string
+	}{
+		{"master only", "master", "", "master", ""},
+		{"main only", "main", "", "main", ""},
+		{"origin selects main over master", "both", "main", "main", ""},
+		{"origin selects master over main", "both", "master", "master", ""},
+		{"stale origin falls back to sole branch", "master", "main", "master", ""},
+		{"stale origin does not break ambiguity", "both", "missing", "", "origin/HEAD"},
+		{"both without origin are ambiguous", "both", "", "", "origin/HEAD"},
+		{"neither branch exists", "neither", "", "", "main"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root, head := repoGit(t)
+			if fixtureGit(t, root, "symbolic-ref", "--short", "HEAD") != "master" {
+				fixtureGit(t, root, "branch", "-m", "master")
+			}
+			switch tc.local {
+			case "main":
+				fixtureGit(t, root, "branch", "-m", "main")
+			case "both":
+				fixtureGit(t, root, "branch", "main")
+				fixtureGit(t, root, "commit", "--allow-empty", "-qm", "master advance")
+			case "neither":
+				fixtureGit(t, root, "branch", "-m", "work")
+			}
+			if tc.origin != "" {
+				fixtureGit(t, root, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/"+tc.origin)
+			}
+			ref, oid, err := integratedLocalBranch(root)
+			if tc.failure != "" {
+				if err == nil || !strings.Contains(err.Error(), tc.failure) {
+					t.Fatalf("expected actionable error containing %q, got %v", tc.failure, err)
+				}
+				return
+			}
+			wantOID := head
+			if tc.local == "both" && tc.selected == "master" {
+				wantOID = fixtureGit(t, root, "rev-parse", "HEAD")
+			}
+			if err != nil || ref != "refs/heads/"+tc.selected || oid != wantOID {
+				t.Fatalf("wanted %s at %s, got ref=%q oid=%q err=%v", tc.selected, wantOID, ref, oid, err)
+			}
+		})
+	}
+}
+
 func entregada(id, zona, commit string, deps ...string) Sesion {
 	return Sesion{ID: id, Zona: zona, DependeDe: deps, Entrega: &Entrega{Commit: commit}}
 }

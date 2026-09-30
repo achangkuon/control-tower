@@ -163,7 +163,8 @@ func (p *Plan) EstadosAsumiendoCerradas(root, head string, cerradas map[string]b
 func (p *Plan) estadosConObservacion(root, head string, cerradas map[string]bool, obs dispatchObservation) map[string]string {
 	estados := make(map[string]string, len(p.Sesiones))
 	index := p.SesionPorID()
-	master := ""
+	integratedHead := ""
+	integratedResolved := false
 
 	for i := range p.Sesiones {
 		s := &p.Sesiones[i]
@@ -171,11 +172,12 @@ func (p *Plan) estadosConObservacion(root, head string, cerradas map[string]bool
 		case cerradas[s.ID]:
 			estados[s.ID] = Completo
 		case s.Historico != "":
-			if master == "" {
-				master, _ = gitOutput(root, "rev-parse", "--verify", "refs/heads/master^{commit}")
+			if !integratedResolved {
+				integratedResolved = true
+				_, integratedHead, _ = integratedLocalBranch(root)
 			}
-			if s.Entrega != nil {
-				if ok, _ := entregaIntegrada(root, s.Entrega.Commit, master); ok {
+			if s.Entrega != nil && integratedHead != "" {
+				if ok, _ := entregaIntegrada(root, s.Entrega.Commit, integratedHead); ok {
 					estados[s.ID] = Archivado
 					break
 				}

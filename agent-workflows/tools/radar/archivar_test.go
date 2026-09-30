@@ -24,6 +24,80 @@ func archiveFixture(t *testing.T) (string, string, string, string) {
 	return root, plan, head, original
 }
 
+func TestArchivarUsesOnlyLocalMainAndPreservesCompletion(t *testing.T) {
+	root, plan, head, _ := archiveFixture(t)
+	if fixtureGit(t, root, "symbolic-ref", "--short", "HEAD") != "main" {
+		fixtureGit(t, root, "branch", "-m", "main")
+	}
+	if err := archiveSession(plan, root, "S1"); err != nil {
+		t.Fatalf("local main should be archivable: %v", err)
+	}
+	p, err := Load(plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.EstadosAt(root, head)["S1"] != Archivado {
+		t.Fatalf("main archive lost completion: %v; findings: %+v", p.EstadosAt(root, head), p.CheckAt(root, head))
+	}
+}
+
+func TestArchivarRefusesAmbiguousBranchesBeforePublishing(t *testing.T) {
+	root, plan, _, _ := archiveFixture(t)
+	if fixtureGit(t, root, "symbolic-ref", "--short", "HEAD") != "master" {
+		fixtureGit(t, root, "branch", "-m", "master")
+	}
+	fixtureGit(t, root, "branch", "main")
+	before, err := os.ReadFile(plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := archiveSession(plan, root, "S1"); err == nil || !strings.Contains(err.Error(), "origin/HEAD") {
+		t.Fatalf("ambiguous branches must require an authoritative origin/HEAD: %v", err)
+	}
+	after, err := os.ReadFile(plan)
+	if err != nil || string(after) != string(before) {
+		t.Fatalf("ambiguous archive changed plan: %v", err)
+	}
+	if _, err := os.Lstat(filepath.Join(root, "openspec", "archive", "sesiones", "S1.md")); !os.IsNotExist(err) {
+		t.Fatalf("ambiguous archive published historical file: %v", err)
+	}
+}
+
+func TestArchivarOriginHEADSelectsMainAndRevalidatesSelection(t *testing.T) {
+	root, plan, _, _ := archiveFixture(t)
+	if fixtureGit(t, root, "symbolic-ref", "--short", "HEAD") != "master" {
+		fixtureGit(t, root, "branch", "-m", "master")
+	}
+	fixtureGit(t, root, "branch", "main") // same OID: selection identity still matters
+	fixtureGit(t, root, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main")
+	original := gitCommand
+	defer func() { gitCommand = original }()
+	reads := 0
+	gitCommand = func(args ...string) *exec.Cmd {
+		if len(args) >= 5 && args[2] == "symbolic-ref" && args[len(args)-1] == "refs/remotes/origin/HEAD" {
+			reads++
+			if reads == 2 {
+				fixtureGit(t, root, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/master")
+			}
+		}
+		return original(args...)
+	}
+	before, _ := os.ReadFile(plan)
+	if err := archiveSession(plan, root, "S1"); err == nil {
+		t.Fatal("selection changed before publication but archive succeeded")
+	}
+	if reads != 2 {
+		t.Fatalf("expected initial and publication-time selection checks, got %d", reads)
+	}
+	after, _ := os.ReadFile(plan)
+	if string(after) != string(before) {
+		t.Fatal("failed selection revalidation changed plan")
+	}
+	if _, err := os.Lstat(filepath.Join(root, "openspec", "archive", "sesiones", "S1.md")); !os.IsNotExist(err) {
+		t.Fatalf("failed selection revalidation published historical file: %v", err)
+	}
+}
+
 func TestArchivarPreservesOtherPlanBytesAndCompletion(t *testing.T) {
 	root, plan, head, original := archiveFixture(t)
 	if err := archiveSession(plan, root, "S1"); err != nil {

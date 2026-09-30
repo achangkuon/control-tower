@@ -85,6 +85,42 @@ func gitHEAD(root string) (string, error) {
 	return gitOID(root, head)
 }
 
+// integratedLocalBranch resolves the local integrated ref and its immutable
+// commit. A valid origin/HEAD selects the matching local branch; absent that
+// authority, only a single local master/main is unambiguous.
+func integratedLocalBranch(root string) (string, string, error) {
+	resolve := func(ref string) (string, error) {
+		oid, err := gitOutput(root, "rev-parse", "--verify", "--end-of-options", ref+"^{commit}")
+		if err != nil {
+			return "", err
+		}
+		return gitOID(root, oid)
+	}
+	remote, err := gitOutput(root, "symbolic-ref", "--quiet", "refs/remotes/origin/HEAD")
+	if err == nil {
+		if name, ok := strings.CutPrefix(remote, "refs/remotes/origin/"); ok && name != "" && name != "HEAD" {
+			ref := "refs/heads/" + name
+			if oid, err := resolve(ref); err == nil {
+				return ref, oid, nil
+			}
+		}
+	}
+	var selectedRef, selectedOID string
+	for _, name := range []string{"master", "main"} {
+		ref := "refs/heads/" + name
+		if oid, err := resolve(ref); err == nil {
+			if selectedRef != "" {
+				return "", "", fmt.Errorf("ramas locales master y main ambiguas: configurá refs/remotes/origin/HEAD para seleccionar una rama local")
+			}
+			selectedRef, selectedOID = ref, oid
+		}
+	}
+	if selectedRef == "" {
+		return "", "", fmt.Errorf("no hay rama integrada local: creá refs/heads/main o refs/heads/master, o configurá refs/remotes/origin/HEAD hacia una rama local existente")
+	}
+	return selectedRef, selectedOID, nil
+}
+
 type integracion struct {
 	integrada bool
 	detalle   string
