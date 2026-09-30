@@ -266,7 +266,12 @@ Qué significa cada campo:
 | `merge.authorizing_party` | `human`, `automatic` | Quién autoriza el merge. La autorización sigue siendo obligatoria y atada al candidato inmutable; esto solo define quién la emite. |
 | `delivery.shape` | `direct-push`, `pull-request` | Forma de la entrega remota. No altera el orden commit → verificar tree → congelar SHA. |
 | `delivery.target_branch` | nombre de rama | Destino de la entrega. |
-| `planning.horizon_ceiling` | entero ≥ 1 | Cuántas Sesiones se pueden planificar por delante. |
+| `planning.horizon_ceiling` | entero ≥ 1 | Cuántas Sesiones puede planificar por delante el loop autónomo diferido a V2. |
+
+El valor `2` rige sólo ese loop autónomo. La planificación manual —enumeración y
+preparación de Sesiones aprobadas por el humano— no está limitada por ese valor.
+Esto no autoriza ejecutar Sesiones, saltar la admisión de Radar ni la prioridad
+vigente, autoasignar workers, ampliar el alcance ni quitar otros floors de seguridad.
 
 **Esto NO puede tocar los floors de seguridad.** Ninguna combinación de valores
 habilita mutación remota antes de `DELIVERY_READY`, ni reescribe un candidato
@@ -275,8 +280,9 @@ sin aprobación humana. Un bloque que lo intente se rechaza nombrando el floor v
 
 **Fail-closed.** Un campo ausente, un valor desconocido o un bloque no parseable
 **no vale como default permisivo**: resuelve al valor más restrictivo
-(`merge.authorizing_party: human`, `horizon_ceiling: 2`) y el motivo queda nombrado.
-Un repo sin este bloque se comporta como antes de que existiera.
+(`merge.authorizing_party: human`, `horizon_ceiling: 2` para el loop autónomo) y
+el motivo queda nombrado. Un repo sin este bloque se comporta como antes de que
+existiera.
 
 ### Por qué
 

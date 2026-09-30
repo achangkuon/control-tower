@@ -11,19 +11,20 @@
 - Producto Torre #1 → S174 — torre-control instala/actualiza y revierte el motor V1 global desde un Release privado verificado, ofrece menú y comandos cerrados, y delega adopción local explícita a S8.13/S172.
 
 ## Avance
-- **Total:** 92% (105/113 S)
+- **Total:** 87% (105/120 S)
+- 4 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 100% (1/1 S)
 - **Capacidades:** — (sin Sesiones enumeradas)
-- **cimientos:** 83% (5/6 S)
+- **cimientos:** 62% (5/8 S)
 - **Contratos:** 100% (1/1 S)
 - **Enrolamiento:** — (sin Sesiones enumeradas)
 - **Entrega:** — (sin Sesiones enumeradas)
 - **Hosts:** 42% (3/7 S)
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 97% (39/40 S)
+- **Método:** 95% (39/41 S)
 - **Producto Torre:** 66% (4/6 S)
 
 ## Zonas y colas
@@ -41,6 +42,8 @@
 
 ### cimientos (cimientos)
 1. **S150** · 📋 PLANIFICADO · espera-natural (S174) · prioridad Torre V1 · Adopción project-local reversible · README de la V1 final entregada: instalador global privado torre-control, adopción project-local separada para Pi y Claude Code, gateway control-tower único y resultados medidos sin claims de seguridad inferidos.
+2. **S175** · 📋 PLANIFICADO · espera-natural (S174) · prioridad Resolución de problemas · Generales · Resolver Radar fuera del checkout antes del push.
+3. **S177** · 📋 PLANIFICADO · espera-natural (S174) · prioridad Resolución de problemas · Generales · Distinguir diseño histórico y autoridad vigente en el ROADMAP raíz.
 
 ### Contratos (contratos)
 - Sin Sesiones abiertas.
@@ -61,14 +64,17 @@
 - Sin Sesiones abiertas.
 
 ### Método (metodo)
-- Sin Sesiones abiertas.
+1. **S176** · 📋 PLANIFICADO · espera-natural (S174) · prioridad Resolución de problemas · Generales · Invalidar el verde anterior cuando una nueva suite no produce resumen.
 
 ### Producto Torre (producto-torre)
 1. **S174** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · torre-control instala/actualiza y revierte el motor V1 global desde un Release privado verificado, ofrece menú y comandos cerrados, y delega adopción local explícita a S8.13/S172.
 2. **S173** · 📋 PLANIFICADO · espera-natural (S174) · prioridad Torre V1 · Adopción project-local reversible · Benchmark aislado Pi y Claude Code, adopter vs non-adopter: bytes realmente cargados por cada host, pregunta ordinaria y fidelidad Radar contra invocación canónica independiente.
 
 ## Bloqueos
-- Ningún bloqueo derivado.
+- **S178:** Encargo incompleto: falta planificar · falta-planificar (S178)
+- **S179:** Encargo incompleto: falta planificar · falta-planificar (S179)
+- **S180:** Encargo incompleto: falta planificar · falta-planificar (S180)
+- **S181:** Encargo incompleto: falta planificar · falta-planificar (S181)
 
 ## Rutas
 - **S1.20:** propuesta direct (decision 104 and Engram observation 10008); revalidada direct sobre 89b75cccbee3a3fffe371e776a68f9a62c7912fe con evidencia The read-only Tower-mode contract remained fully specified after rebasing onto current master; upstream S100 changed disjoint schema/test paths, while S1.20 preserved its verified bytes and stayed limited to core.mjs and test/lifecycle.test.mjs..
@@ -1005,6 +1011,100 @@
       - Contaminaba: S173, S150
       - Descartada: Publicar la suma de tamaños de archivos como proxy cuando falta instrumentación del host. → No demuestra qué cargó Pi o Claude Code en esa corrida.
   - Referencias: S8.13 y S172 (reversibilidad), S174 (interfaces finales), contrato de snapshot de Radar en agent-workflows/tools/radar/; comprobar versión real de ambos hosts y sus límites observables al ejecutar. Ninguna referencia amplía archivos.
+
+### S175 — Resolver Radar fuera del checkout antes del push.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S174)
+  - Zona/Área: cimientos · —
+  - Archivos autorizados: .githooks/pre-push, test/pre-push-plan-gate.test.mjs
+  - Depende de: S150
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: El hook acepta candidatos desde PATH, RADAR&#95;BIN y una ruta fija sin comprobar su destino real; un binario plantado dentro del checkout puede sustituir al Radar instalado antes del push. Mantener la promesa vigente de ejecutarlo fuera del checkout sin cambiar la admisión ni lanzar un push real.
+  - Resultado y comportamiento: Resolver también rutas relativas y symlinks, rechazar cada candidato cuyo destino real esté dentro del checkout y continuar con el próximo candidato seguro. Si no hay Radar seguro, conservar advertencia y paso permitido; un plan inválido sigue rechazado y se conserva el tratamiento del timeout y el gate actual de la suite. Probar rutas maliciosas y un Radar externo permitido con fixtures, sin ejecutar binarios plantados ni un push real.
+  - Restricciones y decisiones: Sólo los dos archivos y Cimientos declarados; sin ampliar permisos, admisión ni alcance de seguridad. Prueba enfocada: bun test test/pre-push-plan-gate.test.mjs. Pronóstico de 80–180 líneas authored; revalidar antes de implementar y preguntar si supera 400.
+  - Referencias: .githooks/pre-push líneas 101–117 y test/pre-push-plan-gate.test.mjs líneas 233–257; hallazgo validado de candidatos PATH/RADAR&#95;BIN/ruta fija.
+
+### S176 — Invalidar el verde anterior cuando una nueva suite no produce resumen.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S174)
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/radiografia/cli.mjs, agent-workflows/test/cli.test.mjs
+  - Depende de: S175
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Con el mismo HEAD, una nueva corrida fallida sin resumen conserva y muestra el verde de la suite anterior. El contrato existente para una corrida sin resumen es «sin medir», no el éxito guardado.
+  - Resultado y comportamiento: Invalidar o ignorar el verde anterior cuando la última suite no produce resumen en el mismo HEAD. Cubrir primero verde y después sin resumen, caché ausente y resumen rojo que permanece rojo. --check ordinario es sólo lectura; preservar métricas, comando de pruebas y diseño amplio del historial de caché.
+  - Restricciones y decisiones: Sólo los dos archivos declarados; no extender la corrección a la visualización histórica entre HEAD distintos ni escribir en otras fuentes. Pruebas enfocadas: bun test agent-workflows/test/cli.test.mjs agent-workflows/test/measure.test.mjs agent-workflows/test/render.test.mjs. Pronóstico de 40–110 líneas authored.
+  - Referencias: agent-workflows/radiografia/cli.mjs líneas 25–64, agent-workflows/test/cli.test.mjs líneas 109–115 y reproducción del bug de caché verde con corrida sin resumen sobre el mismo HEAD.
+
+### S177 — Distinguir diseño histórico y autoridad vigente en el ROADMAP raíz.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S174)
+  - Zona/Área: cimientos · —
+  - Archivos autorizados: ROADMAP.md
+  - Depende de: S176
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: El ROADMAP de la raíz todavía describe avance automático histórico junto a la planificación actual y puede confundirse con autoridad de ejecución.
+  - Resultado y comportamiento: Distinguir ese diseño como histórico y diferido para V2, dirigir a openspec/plan.yaml y Radar como autoridad vigente y preservar el sentido del diseño anterior sin promoverlo a ejecución aprobada o requisitos nuevos. Verificar referencias cruzadas de la fuente y git diff --check.
+  - Restricciones y decisiones: Únicamente ROADMAP.md raíz; openspec/ROADMAP.md es generado y no se edita manualmente. No reescribir requisitos V2, borrar historia ni tocar README, ya planificado aparte. Pronóstico de 20–60 líneas authored.
+  - Referencias: ROADMAP.md raíz, openspec/plan.yaml y su vista openspec/ROADMAP.md generada; la regla del horizonte autónomo ya fue aclarada en AGENTS.md y no se duplica.
+
+### S178 — Definir métricas de producto, pruebas anidadas y paquete instalado.
+- Coordinación:
+  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S178)
+  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Depende de: S176
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: La medición actual excluye sólo pruebas de nivel superior y el manifiesto de runtime en radiografia.json es legacy. Falta definir qué cuenta como producto, prueba anidada y paquete instalado para el cálculo vigente.
+  - Resultado y comportamiento: Una vez resuelto el contrato de medición, representar fielmente los segmentos y el paquete instalado sin publicar cifras inferidas. Verificar con pruebas enfocadas de measure y cli y con el manifiesto del bundle confirmado después de la entrega V1.
+  - Restricciones y decisiones: Encargo incompleto: el maintainer debe decidir si installed-share mide V1 actual, legacy o ambos separados, y el denominador y clasificación de producto/pruebas. Faltan los archivos finales exactos y la evidencia de implementación según esa decisión. No elegir definición ni reemplazar el manifiesto o ampliar motor compartido/API de configuración por inferencia; los archivos conocidos no autorizan ejecución ni capacidad paralela.
+  - Referencias: radiografia.json y agent-workflows/radiografia/measure.mjs; pruebas agent-workflows/test/measure.test.mjs y cli.test.mjs; manifiesto de bundle a confirmar con V1 entregada.
+
+### S179 — Definir cobertura de suites y prerrequisitos portables de entrega.
+- Coordinación:
+  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S179)
+  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Depende de: S175
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: El gate sólo ejecuta Bun; las pruebas Go de Radar y Python de composición son separadas. Python depende de repositorios hermanos/versión fijada y algunos tests omiten un binario SDD nativo cuando falta.
+  - Resultado y comportamiento: Tras decidir el contrato de entrega, cubrir las suites y comunicar prerrequisitos portables distinguiendo falla, no medido y omisión, sin anunciar un verde falso. Las comprobaciones futuras candidatas son bun run test; go test ./... desde agent-workflows/tools/radar; PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s agent-workflows/tests -v. Ninguna se ejecuta para esta planificación.
+  - Restricciones y decisiones: Encargo incompleto: el maintainer debe decidir qué suites bloquean o sólo informan, semántica de prerrequisitos faltantes (opcionales/obligatorios) y costo aceptable. Aún faltan autorización y rutas exactas para posibles ajustes Python/setup. No ampliar el gate, instalar repositorios terceros, alterar hosts personales ni cambiar scripts/tests antes de esa decisión; ausencia ambiental no equivale por sí misma a bug del producto.
+  - Referencias: .githooks/pre-push, test/pre-push-plan-gate.test.mjs, package.json, suites Go de agent-workflows/tools/radar y Python de agent-workflows/tests.
+
+### S180 — Investigar dependencias y módulos aparentemente sin uso.
+- Coordinación:
+  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S180)
+  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Depende de: S177
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Hay dependencias y módulos aparentemente sin uso; el aspecto de uso sólo en tests no demuestra que estén muertos. La evidencia histórica tampoco convierte product/tower/generic u openspec/archive en basura.
+  - Resultado y comportamiento: Investigar manifiestos raíz y .opencode, uso directo del SDK y alcance de callers de módulos candidatos; clasificar necesario, incierto u obsoleto sólo con prueba verificable. El informe debe ser de sólo lectura y no autoriza correcciones automáticas.
+  - Restricciones y decisiones: Encargo incompleto: faltan el alcance preciso de fuentes/comandos y la evidencia legítima de entrega Git para cerrar la investigación mediante el coordinador existente. No crear reporte de estado, índice ni commit ficticio; Engram solo no cierra producto. Sin borrados, upgrades, reinstalaciones ni reparación de legacy o V2; no afirmar capacidad paralela con territorio sin cerrar.
+  - Referencias: Manifiestos raíz/.opencode, imports directos del SDK y callers de módulos candidatos; el histórico de openspec/archive sigue siendo sólo histórico.
+
+### S181 — Revisar V1 entregada: instalación, reversibilidad y documentación.
+- Coordinación:
+  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S181)
+  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Depende de: S150
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: La revisión final debe contrastar la V1 efectivamente entregada tras instalador, benchmark y README, sin convertir sus componentes aún en construcción en hallazgos o resultados definitivos.
+  - Resultado y comportamiento: Revisar en sólo lectura instalación, reversibilidad y documentación contra identidades e interfaces entregadas, seleccionar comprobaciones aisladas y registrar evidencia de cierre verificable. Hallazgos futuros exigen aprobación humana nueva y alcance propio antes de reparar.
+  - Restricciones y decisiones: Encargo incompleto: faltan identidades congeladas del instalador, benchmark y README, interfaces finales, checks aislados elegidos y evidencia legítima de cierre. No duplicar construcción V1 ni usar archivos release untracked como prueba final; no instalar globalmente, mutar HOME real, terceros ni producción. Fixtures desechables sólo con plan posterior de comprobación explícito. No afirmar capacidad paralela sin territorio.
+  - Referencias: Las entregas del instalador global, benchmark y README final ya declaradas en la prioridad torre-v1; la elección humana de revisión V1 final, sin bugs V1 presupuestos.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7

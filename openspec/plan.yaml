@@ -2233,6 +2233,215 @@ sesiones:
             razon: "No demuestra qué cargó Pi o Claude Code en esa corrida."
         contaminaba: [S173, S150]
 
+  - id: S175
+    prioridad: resolucion-problemas-generales
+    zona: cimientos
+    resultado: "Resolver Radar fuera del checkout antes del push."
+    autoridad: "Pedido explícito del maintainer en esta Conversación de planificar los problemas generales y la V1; autoriza esta coordinación, no la implementación."
+    depende_de: [S150]
+    archivos: [.githooks/pre-push, test/pre-push-plan-gate.test.mjs]
+    cimientos: [.githooks/pre-push, test/pre-push-plan-gate.test.mjs]
+    recurso: []
+    encargo:
+      pedido_contexto: >-
+        El hook acepta candidatos desde PATH, RADAR_BIN y una ruta fija sin comprobar
+        su destino real; un binario plantado dentro del checkout puede sustituir al
+        Radar instalado antes del push. Mantener la promesa vigente de ejecutarlo
+        fuera del checkout sin cambiar la admisión ni lanzar un push real.
+      resultado_comportamiento: >-
+        Resolver también rutas relativas y symlinks, rechazar cada candidato cuyo
+        destino real esté dentro del checkout y continuar con el próximo candidato
+        seguro. Si no hay Radar seguro, conservar advertencia y paso permitido;
+        un plan inválido sigue rechazado y se conserva el tratamiento del timeout
+        y el gate actual de la suite. Probar rutas maliciosas y un Radar externo
+        permitido con fixtures, sin ejecutar binarios plantados ni un push real.
+      restricciones_decisiones: >-
+        Sólo los dos archivos y Cimientos declarados; sin ampliar permisos, admisión
+        ni alcance de seguridad. Prueba enfocada: bun test test/pre-push-plan-gate.test.mjs.
+        Pronóstico de 80–180 líneas authored; revalidar antes de implementar y
+        preguntar si supera 400.
+      referencias: >-
+        .githooks/pre-push líneas 101–117 y test/pre-push-plan-gate.test.mjs
+        líneas 233–257; hallazgo validado de candidatos PATH/RADAR_BIN/ruta fija.
+
+  - id: S176
+    prioridad: resolucion-problemas-generales
+    zona: metodo
+    resultado: "Invalidar el verde anterior cuando una nueva suite no produce resumen."
+    autoridad: "Pedido explícito del maintainer en esta Conversación de planificar los problemas generales y la V1; autoriza esta coordinación, no la implementación."
+    depende_de: [S175]
+    archivos: [agent-workflows/radiografia/cli.mjs, agent-workflows/test/cli.test.mjs]
+    cimientos: []
+    recurso: []
+    encargo:
+      pedido_contexto: >-
+        Con el mismo HEAD, una nueva corrida fallida sin resumen conserva y muestra
+        el verde de la suite anterior. El contrato existente para una corrida sin
+        resumen es «sin medir», no el éxito guardado.
+      resultado_comportamiento: >-
+        Invalidar o ignorar el verde anterior cuando la última suite no produce
+        resumen en el mismo HEAD. Cubrir primero verde y después sin resumen,
+        caché ausente y resumen rojo que permanece rojo. --check ordinario es
+        sólo lectura; preservar métricas, comando de pruebas y diseño amplio
+        del historial de caché.
+      restricciones_decisiones: >-
+        Sólo los dos archivos declarados; no extender la corrección a la visualización
+        histórica entre HEAD distintos ni escribir en otras fuentes. Pruebas enfocadas:
+        bun test agent-workflows/test/cli.test.mjs agent-workflows/test/measure.test.mjs
+        agent-workflows/test/render.test.mjs. Pronóstico de 40–110 líneas authored.
+      referencias: >-
+        agent-workflows/radiografia/cli.mjs líneas 25–64,
+        agent-workflows/test/cli.test.mjs líneas 109–115 y reproducción del bug
+        de caché verde con corrida sin resumen sobre el mismo HEAD.
+
+  - id: S177
+    prioridad: resolucion-problemas-generales
+    zona: cimientos
+    resultado: "Distinguir diseño histórico y autoridad vigente en el ROADMAP raíz."
+    autoridad: "Pedido explícito del maintainer en esta Conversación de planificar los problemas generales y la V1; autoriza esta coordinación, no la implementación."
+    depende_de: [S176]
+    archivos: [ROADMAP.md]
+    cimientos: [ROADMAP.md]
+    recurso: []
+    encargo:
+      pedido_contexto: >-
+        El ROADMAP de la raíz todavía describe avance automático histórico junto
+        a la planificación actual y puede confundirse con autoridad de ejecución.
+      resultado_comportamiento: >-
+        Distinguir ese diseño como histórico y diferido para V2, dirigir a
+        openspec/plan.yaml y Radar como autoridad vigente y preservar el sentido
+        del diseño anterior sin promoverlo a ejecución aprobada o requisitos nuevos.
+        Verificar referencias cruzadas de la fuente y git diff --check.
+      restricciones_decisiones: >-
+        Únicamente ROADMAP.md raíz; openspec/ROADMAP.md es generado y no se edita
+        manualmente. No reescribir requisitos V2, borrar historia ni tocar README,
+        ya planificado aparte. Pronóstico de 20–60 líneas authored.
+      referencias: >-
+        ROADMAP.md raíz, openspec/plan.yaml y su vista openspec/ROADMAP.md generada;
+        la regla del horizonte autónomo ya fue aclarada en AGENTS.md y no se duplica.
+
+  - id: S178
+    prioridad: resolucion-problemas-generales
+    zona: metodo
+    resultado: "Definir métricas de producto, pruebas anidadas y paquete instalado."
+    autoridad: "Pedido explícito del maintainer en esta Conversación de planificar los problemas generales y la V1; autoriza registrar investigación incompleta, no elegir métricas ni implementarlas."
+    depende_de: [S176]
+    archivos: [radiografia.json, agent-workflows/radiografia/measure.mjs, agent-workflows/test/measure.test.mjs]
+    cimientos: [radiografia.json]
+    encargo:
+      incompleto: true
+      pedido_contexto: >-
+        La medición actual excluye sólo pruebas de nivel superior y el manifiesto
+        de runtime en radiografia.json es legacy. Falta definir qué cuenta como
+        producto, prueba anidada y paquete instalado para el cálculo vigente.
+      resultado_comportamiento: >-
+        Una vez resuelto el contrato de medición, representar fielmente los
+        segmentos y el paquete instalado sin publicar cifras inferidas. Verificar
+        con pruebas enfocadas de measure y cli y con el manifiesto del bundle
+        confirmado después de la entrega V1.
+      restricciones_decisiones: >-
+        Encargo incompleto: el maintainer debe decidir si installed-share mide V1
+        actual, legacy o ambos separados, y el denominador y clasificación de
+        producto/pruebas. Faltan los archivos finales exactos y la evidencia de
+        implementación según esa decisión. No elegir definición ni reemplazar el
+        manifiesto o ampliar motor compartido/API de configuración por inferencia;
+        los archivos conocidos no autorizan ejecución ni capacidad paralela.
+      referencias: >-
+        radiografia.json y agent-workflows/radiografia/measure.mjs; pruebas
+        agent-workflows/test/measure.test.mjs y cli.test.mjs; manifiesto de bundle
+        a confirmar con V1 entregada.
+
+  - id: S179
+    prioridad: resolucion-problemas-generales
+    zona: cimientos
+    resultado: "Definir cobertura de suites y prerrequisitos portables de entrega."
+    autoridad: "Pedido explícito del maintainer en esta Conversación de planificar los problemas generales y la V1; autoriza registrar investigación incompleta, no cambiar el gate."
+    depende_de: [S175]
+    archivos: [.githooks/pre-push, test/pre-push-plan-gate.test.mjs, package.json]
+    cimientos: [.githooks/pre-push, test/pre-push-plan-gate.test.mjs, package.json]
+    encargo:
+      incompleto: true
+      pedido_contexto: >-
+        El gate sólo ejecuta Bun; las pruebas Go de Radar y Python de composición
+        son separadas. Python depende de repositorios hermanos/versión fijada y
+        algunos tests omiten un binario SDD nativo cuando falta.
+      resultado_comportamiento: >-
+        Tras decidir el contrato de entrega, cubrir las suites y comunicar
+        prerrequisitos portables distinguiendo falla, no medido y omisión, sin
+        anunciar un verde falso. Las comprobaciones futuras candidatas son bun
+        run test; go test ./... desde agent-workflows/tools/radar;
+        PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s
+        agent-workflows/tests -v. Ninguna se ejecuta para esta planificación.
+      restricciones_decisiones: >-
+        Encargo incompleto: el maintainer debe decidir qué suites bloquean o sólo
+        informan, semántica de prerrequisitos faltantes (opcionales/obligatorios)
+        y costo aceptable. Aún faltan autorización y rutas exactas para posibles
+        ajustes Python/setup. No ampliar el gate, instalar repositorios terceros,
+        alterar hosts personales ni cambiar scripts/tests antes de esa decisión;
+        ausencia ambiental no equivale por sí misma a bug del producto.
+      referencias: >-
+        .githooks/pre-push, test/pre-push-plan-gate.test.mjs, package.json,
+        suites Go de agent-workflows/tools/radar y Python de agent-workflows/tests.
+
+  - id: S180
+    prioridad: resolucion-problemas-generales
+    zona: metodo
+    resultado: "Investigar dependencias y módulos aparentemente sin uso."
+    autoridad: "Pedido explícito del maintainer en esta Conversación de planificar los problemas generales y la V1; sólo autoriza investigación futura, no eliminación ni cambios de dependencias."
+    depende_de: [S177]
+    solo_lectura: true
+    encargo:
+      incompleto: true
+      pedido_contexto: >-
+        Hay dependencias y módulos aparentemente sin uso; el aspecto de uso sólo
+        en tests no demuestra que estén muertos. La evidencia histórica tampoco
+        convierte product/tower/generic u openspec/archive en basura.
+      resultado_comportamiento: >-
+        Investigar manifiestos raíz y .opencode, uso directo del SDK y alcance
+        de callers de módulos candidatos; clasificar necesario, incierto u
+        obsoleto sólo con prueba verificable. El informe debe ser de sólo lectura
+        y no autoriza correcciones automáticas.
+      restricciones_decisiones: >-
+        Encargo incompleto: faltan el alcance preciso de fuentes/comandos y la
+        evidencia legítima de entrega Git para cerrar la investigación mediante
+        el coordinador existente. No crear reporte de estado, índice ni commit
+        ficticio; Engram solo no cierra producto. Sin borrados, upgrades,
+        reinstalaciones ni reparación de legacy o V2; no afirmar capacidad
+        paralela con territorio sin cerrar.
+      referencias: >-
+        Manifiestos raíz/.opencode, imports directos del SDK y callers de módulos
+        candidatos; el histórico de openspec/archive sigue siendo sólo histórico.
+
+  - id: S181
+    prioridad: resolucion-problemas-v1
+    zona: producto-torre
+    resultado: "Revisar V1 entregada: instalación, reversibilidad y documentación."
+    autoridad: "Pedido explícito del maintainer en esta Conversación de planificar problemas generales y V1 y elección previa de revisión V1 final; autoriza revisión futura, no implementación ni reparaciones."
+    depende_de: [S150]
+    solo_lectura: true
+    encargo:
+      incompleto: true
+      pedido_contexto: >-
+        La revisión final debe contrastar la V1 efectivamente entregada tras
+        instalador, benchmark y README, sin convertir sus componentes aún en
+        construcción en hallazgos o resultados definitivos.
+      resultado_comportamiento: >-
+        Revisar en sólo lectura instalación, reversibilidad y documentación
+        contra identidades e interfaces entregadas, seleccionar comprobaciones
+        aisladas y registrar evidencia de cierre verificable. Hallazgos futuros
+        exigen aprobación humana nueva y alcance propio antes de reparar.
+      restricciones_decisiones: >-
+        Encargo incompleto: faltan identidades congeladas del instalador,
+        benchmark y README, interfaces finales, checks aislados elegidos y
+        evidencia legítima de cierre. No duplicar construcción V1 ni usar archivos
+        release untracked como prueba final; no instalar globalmente, mutar HOME
+        real, terceros ni producción. Fixtures desechables sólo con plan posterior
+        de comprobación explícito. No afirmar capacidad paralela sin territorio.
+      referencias: >-
+        Las entregas del instalador global, benchmark y README final ya declaradas
+        en la prioridad torre-v1; la elección humana de revisión V1 final, sin
+        bugs V1 presupuestos.
+
 references:
   future_successors:
     - id: S102
