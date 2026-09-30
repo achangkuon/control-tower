@@ -24,10 +24,10 @@ The maintainer clarified that `planning.horizon_ceiling: 2` belongs only to the 
 
 ## Work unit
 
-- [ ] P1 — Record and validate the manual planning package.
+- [x] P1 — Record and validate the manual planning package.
   - Route: delegated bounded writers; multi-file planning, followed by independent verification and parent readback.
-  - Content is recorded locally and independently validated. Native review and delivery remain separate.
-  - Commit: pending for this package; no remote delivery claimed.
+  - Content is independently validated and native review is approved and acknowledged. Remote delivery remains separate.
+  - Work-unit commit: `b7eedd246c7e876367f6ccb1e1c6a33fcc56515b`, explicitly authorized by the maintainer. Its tree matches the reviewed candidate exactly; no remote delivery claimed.
 
 ## Observed verification
 
@@ -48,5 +48,5 @@ This is planning/configuration documentation. No runtime implementation RED/GREE
 - The seven authoritative records now exist in `openspec/plan.yaml`; do not reconstruct or duplicate their contents in this document.
 - The report repair preserves the reproduced same-HEAD failed-suite/cache scope. Cross-HEAD historical display changes are not authorized by that record.
 - Native risk assessment could not evaluate the ambient tree because of untracked files; its required independent verification was completed.
-- Native review consent/closure is still pending for the final scoped package. Review outcomes do not authorize commit or push.
+- Native review `review-d4078e43e720b26e` was approved and acknowledged, with one non-blocking informational warning. The reviewed tree is `8d763819b1d316db7b0d753a05aaa54926a93b04`; the work-unit commit preserves it unchanged. This later passive documentation checkpoint records closure without amending that commit. Review outcomes do not authorize commit or push.
 - Planning and generated artifacts are excluded from the runtime implementation-line budget.
