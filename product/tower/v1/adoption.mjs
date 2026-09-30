@@ -153,11 +153,32 @@ export function uninstallProject(options) {
   return Object.freeze({ status: "uninstalled" });
 }
 
+/** Remove only an intact journal left after the original destination trees were fully restored. */
+export function cleanupProject(options) {
+  if (!keys(options, ["projectRoot"])) fail("cleanup options");
+  const { projectRoot } = options;
+  gitRoot(projectRoot);
+  const journal = captureProjectFiles(projectRoot, [JOURNAL]).destinations[0].tree;
+  if (journal.type !== "directory" || journal.mode !== 0o700 || journal.entries.length !== 1 ||
+      journal.entries[0].name !== "state.json" || journal.entries[0].tree.type !== "file" ||
+      journal.entries[0].tree.mode !== 0o600) fail("journal tree");
+  let state;
+  try { state = JSON.parse(Buffer.from(journal.entries[0].tree.bytes, "base64").toString("utf8")); }
+  catch { fail("journal JSON"); }
+  if (!keys(state, ["schema", "original", "installed"]) || state.schema !== SCHEMA) fail("journal schema");
+  snapshotPaths(state.original);
+  snapshotPaths(state.installed);
+  if (isDeepStrictEqual(state.original, state.installed)) fail("identical snapshots");
+  if (!compareProjectFiles(projectRoot, state.original)) fail("original destination drift");
+  rmSync(join(projectRoot, JOURNAL), { recursive: true });
+  return Object.freeze({ status: "cleaned" });
+}
+
 // The positional CLI is deliberately closed: no source, global, or legacy override flags.
 function parseCli(args) {
   const [command, projectFlag, projectRoot, trustFlag, trust] = args;
   if (!command) throw new Error("command required");
-  if (!["init", "doctor", "uninstall"].includes(command)) throw new Error("unknown command");
+  if (!["init", "doctor", "uninstall", "cleanup"].includes(command)) throw new Error("unknown command");
   if (projectFlag !== "--project" || !projectRoot || projectRoot.startsWith("--")) throw new Error("invalid arguments");
   if (command === "init") {
     if (args.length !== 5 || trustFlag !== "--trust" || !trust || trust.startsWith("--")) throw new Error("invalid arguments");
@@ -170,7 +191,8 @@ if (import.meta.main) {
   try {
     const { command, projectRoot } = parseCli(process.argv.slice(2));
     const result = command === "init" ? initProject({ projectRoot, trustResolution: "trusted" }) :
-      command === "doctor" ? doctorProject({ projectRoot }) : uninstallProject({ projectRoot });
+      command === "doctor" ? doctorProject({ projectRoot }) :
+      command === "uninstall" ? uninstallProject({ projectRoot }) : cleanupProject({ projectRoot });
     process.stdout.write(`${JSON.stringify(result)}\n`);
   } catch (error) {
     process.stderr.write(`Invalid Tower adoption CLI: ${String(error.message).split(/[\r\n]/, 1)[0]}\n`);

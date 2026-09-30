@@ -5,8 +5,9 @@ import { chmodSync, linkSync, mkdirSync, mkdtempSync, readFileSync, readdirSync,
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { BUNDLE_MEMBERS, validateBundle } from "../bundle.mjs";
-import { captureProjectFiles, compareProjectFiles } from "../project-files.mjs";
+import { captureProjectFiles, compareProjectFiles, restoreProjectFiles } from "../project-files.mjs";
 import { initProject, doctorProject, uninstallProject } from "../adoption.mjs";
+import * as adoption from "../adoption.mjs";
 
 const journal = ".control-tower-adoption-v1";
 const targets = [".control-tower/radar", ".agents/skills/control-tower", ".claude/skills/control-tower"];
@@ -45,7 +46,15 @@ function fixture(fn) {
   }
 }
 const snapshot = (root) => captureProjectFiles(root, observed);
+const snapshotWithoutJournal = (root) => captureProjectFiles(root, observed.filter((path) => path !== journal));
 const trusted = (projectRoot) => ({ projectRoot, trustResolution: "trusted" });
+function residue(projectRoot) {
+  initProject(trusted(projectRoot));
+  const state = JSON.parse(readFileSync(join(projectRoot, journal, "state.json"), "utf8"));
+  restoreProjectFiles(projectRoot, state.original);
+  expect(compareProjectFiles(projectRoot, state.original)).toBe(true);
+  return state;
+}
 const unchangedFailure = (root, action) => {
   const before = snapshot(root);
   expect(action).toThrow();
@@ -174,6 +183,74 @@ describe("project-local lifecycle API", () => {
     }
   }));
 
+  test("cleanup removes only a fully restored uninstall residue and returns a frozen result", () => fixture(({ projectRoot }) => {
+    put(projectRoot, targets[0], Buffer.from([0, 255, 23]), 0o600);
+    put(projectRoot, `${targets[1]}/unknown.bin`, Buffer.from([255, 0, 4]), 0o444);
+    const before = snapshot(projectRoot);
+    residue(projectRoot);
+    const result = adoption.cleanupProject({ projectRoot });
+    expect(result).toEqual({ status: "cleaned" });
+    expect(Object.isFrozen(result)).toBe(true);
+    expect(snapshot(projectRoot)).toEqual(before);
+    unchangedFailure(projectRoot, () => adoption.cleanupProject({ projectRoot }));
+  }));
+
+  test("cleanup rejects drift, incomplete journals, invalid snapshots and no-op history without mutation", () => {
+    for (const mutate of [
+      (p) => put(p, targets[0], "drift"),
+      (p) => mkdirSync(join(p, ".agents")), // Ancestor presence is part of original.
+      (p) => put(p, `${journal}/extra`, "unknown"),
+      (p) => chmodSync(join(p, journal, "state.json"), 0o644),
+      (p) => writeFileSync(join(p, journal, "state.json"), "not JSON"),
+      (p) => tamper(p, (s) => { s.schema = "wrong"; }),
+      (p) => tamper(p, (s) => { s.original.destinations[0].tree.sha256 = "0".repeat(64); }),
+      (p) => tamper(p, (s) => { s.installed.destinations[0].path = "../escape"; }),
+      (p) => tamper(p, (s) => { s.installed = s.original; }),
+    ]) fixture(({ projectRoot }) => {
+      put(projectRoot, targets[0], "original");
+      residue(projectRoot);
+      mutate(projectRoot);
+      unchangedFailure(projectRoot, () => adoption.cleanupProject({ projectRoot }));
+    });
+  });
+
+  test("cleanup rejects malformed options and unsafe journal entries without mutation", () => fixture(({ projectRoot, base }) => {
+    put(projectRoot, targets[0], "original");
+    residue(projectRoot);
+    for (const options of [undefined, null, {}, { projectRoot, extra: true },
+      { projectRoot: "relative" }, { projectRoot: `${projectRoot}/../project` }, { projectRoot: base }]) {
+      unchangedFailure(projectRoot, () => adoption.cleanupProject(options));
+    }
+    const path = join(projectRoot, journal, "state.json");
+    const bytes = readFileSync(path);
+    rmSync(path);
+    symlinkSync("../AGENTS.md", path);
+    const before = snapshotWithoutJournal(projectRoot);
+    expect(() => adoption.cleanupProject({ projectRoot })).toThrow();
+    expect(snapshotWithoutJournal(projectRoot)).toEqual(before);
+    expect(readlinkSync(path)).toBe("../AGENTS.md");
+    rmSync(path);
+    put(projectRoot, "foreign", bytes);
+    linkSync(join(projectRoot, "foreign"), path);
+    const linked = snapshotWithoutJournal(projectRoot);
+    expect(() => adoption.cleanupProject({ projectRoot })).toThrow();
+    expect(snapshotWithoutJournal(projectRoot)).toEqual(linked);
+    expect(readFileSync(path)).toEqual(bytes);
+    expect(readFileSync(join(projectRoot, "foreign"))).toEqual(bytes);
+  }));
+
+  test("cleanup refuses a symlinked destination ancestor and keeps the entire journal", () => fixture(({ projectRoot, base }) => {
+    put(projectRoot, targets[0], "original");
+    residue(projectRoot);
+    symlinkSync(base, join(projectRoot, ".agents"));
+    const safe = captureProjectFiles(projectRoot, [".control-tower", ".claude", "AGENTS.md", "CLAUDE.md", journal]);
+    const entries = readdirSync(projectRoot).sort();
+    expect(() => adoption.cleanupProject({ projectRoot })).toThrow();
+    expect(captureProjectFiles(projectRoot, [".control-tower", ".claude", "AGENTS.md", "CLAUDE.md", journal])).toEqual(safe);
+    expect(readdirSync(projectRoot).sort()).toEqual(entries);
+    expect(readlinkSync(join(projectRoot, ".agents"))).toBe(base);
+  }));
+
   test("regular worktree-style .git marker accepts a valid gitdir and rejects malformed text", () => fixture(({ projectRoot, base }) => {
     const gitdir = join(base, "gitdir");
     renameSync(join(projectRoot, ".git"), gitdir);
@@ -285,6 +362,27 @@ describe("project-local CLI (real isolated Bun processes)", () => {
     success(runCli(env, "doctor", "--project", projectRoot), "healthy");
     expect(snapshot(projectRoot)).toEqual(installed);
     success(runCli(env, "uninstall", "--project", projectRoot), "uninstalled");
+    expect(snapshot(projectRoot)).toEqual(before);
+  }));
+
+  test("cleanup CLI removes only the journal in a separate isolated Bun process", () => fixture(({ projectRoot, env }) => {
+    put(projectRoot, targets[0], "original");
+    const before = snapshot(projectRoot);
+    residue(projectRoot);
+    success(runCli(env, "cleanup", "--project", projectRoot), "cleaned");
+    expect(snapshot(projectRoot)).toEqual(before);
+    const clean = snapshot(projectRoot);
+    rejected(runCli(env, "cleanup", "--project", projectRoot), "Invalid Tower adoption: journal tree");
+    expect(snapshot(projectRoot)).toEqual(clean);
+  }));
+
+  test("cleanup CLI rejects destination drift and unknown flags without mutation", () => fixture(({ projectRoot, env }) => {
+    put(projectRoot, targets[0], "original");
+    residue(projectRoot);
+    put(projectRoot, targets[0], "drift");
+    const before = snapshot(projectRoot);
+    rejected(runCli(env, "cleanup", "--project", projectRoot), "Invalid Tower adoption: original destination drift");
+    rejected(runCli(env, "cleanup", "--project", projectRoot, "--trust", "trusted"), "invalid arguments");
     expect(snapshot(projectRoot)).toEqual(before);
   }));
 
