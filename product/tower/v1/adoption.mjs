@@ -139,3 +139,28 @@ export function uninstallProject(options) {
   rmSync(join(options.projectRoot, JOURNAL), { recursive: true });
   return Object.freeze({ status: "uninstalled" });
 }
+
+// The positional CLI is deliberately closed: no source, global, or legacy override flags.
+function parseCli(args) {
+  const [command, projectFlag, projectRoot, trustFlag, trust] = args;
+  if (!command) throw new Error("command required");
+  if (!["init", "doctor", "uninstall"].includes(command)) throw new Error("unknown command");
+  if (projectFlag !== "--project" || !projectRoot || projectRoot.startsWith("--")) throw new Error("invalid arguments");
+  if (command === "init") {
+    if (args.length !== 5 || trustFlag !== "--trust" || !trust || trust.startsWith("--")) throw new Error("invalid arguments");
+    if (trust !== "trusted") throw new Error("trust must be trusted");
+  } else if (args.length !== 3) throw new Error("invalid arguments");
+  return { command, projectRoot };
+}
+
+if (import.meta.main) {
+  try {
+    const { command, projectRoot } = parseCli(process.argv.slice(2));
+    const result = command === "init" ? initProject({ projectRoot, trustResolution: "trusted" }) :
+      command === "doctor" ? doctorProject({ projectRoot }) : uninstallProject({ projectRoot });
+    process.stdout.write(`${JSON.stringify(result)}\n`);
+  } catch (error) {
+    process.stderr.write(`Invalid Tower adoption CLI: ${String(error.message).split(/[\r\n]/, 1)[0]}\n`);
+    process.exitCode = 1;
+  }
+}
