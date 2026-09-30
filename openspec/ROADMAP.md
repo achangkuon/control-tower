@@ -2,16 +2,16 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S167, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S167, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Torre V1 · Adopción project-local reversible.
-- Próximo trabajo ejecutable: Producto Torre #1 → S8.12 — Bundle local Torre V1 de membresía positiva y exacta: Radar, una única fuente canónica de la skill control-tower y sólo las referencias lazy que esa skill necesita..
+- Próximo trabajo ejecutable: ninguno.
 - Decisión pendiente: S12.2 — ¿Cómo avanza la revisión de un artefacto fijado por digest?.
 
 ## Estado y próximo trabajo
-- Producto Torre #1 → S8.12 — Bundle local Torre V1 de membresía positiva y exacta: Radar, una única fuente canónica de la skill control-tower y sólo las referencias lazy que esa skill necesita.
+- No hay Sesiones LISTO.
 
 ## Avance
-- **Total:** 91% (102/112 S)
+- **Total:** 91% (103/112 S)
 - 4 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
@@ -24,7 +24,7 @@
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
 - **Método:** 97% (39/40 S)
-- **Producto Torre:** 50% (1/2 S)
+- **Producto Torre:** 100% (2/2 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -61,7 +61,7 @@
 - Sin Sesiones abiertas.
 
 ### Producto Torre (producto-torre)
-1. **S8.12** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · Bundle local Torre V1 de membresía positiva y exacta: Radar, una única fuente canónica de la skill control-tower y sólo las referencias lazy que esa skill necesita.
+- Sin Sesiones abiertas.
 
 ## Bloqueos
 - **S8.13:** Encargo incompleto: falta planificar · falta-planificar (S8.13)
@@ -139,7 +139,7 @@
 
 ### S8.12 — Bundle local Torre V1 de membresía positiva y exacta: Radar, una única fuente canónica de la skill control-tower y sólo las referencias lazy que esa skill necesita.
 - Coordinación:
-  - Estado derivado: 🟢 LISTO
+  - Estado derivado: 📚 ARCHIVADO
   - Zona/Área: producto-torre · product/tower/
   - Archivos autorizados: product/tower/v1/bundle.mjs, product/tower/v1/test/bundle.test.mjs
   - Depende de: S164
@@ -3674,7 +3674,7 @@ Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workfl
   - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
 
 ## Capacidad
-1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: producto-torre.
+Ninguna Zona tiene trabajo LISTO.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
