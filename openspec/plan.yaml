@@ -70,6 +70,10 @@ zonas:
 # resultado opcional: varias Sesiones trabajan durante horas en tabs separadas mientras
 # Main y las tabs muestran finalización, stalls o decisiones humanas. La observación
 # remota usa Moshi + Tailscale; Telegram queda fuera.
+#
+# Orden de remediación aprobado por el maintainer: completar Torre V1; resolver problemas
+# generales, de V1 y de V2 existentes; construir Torre V2; resolver problemas del sistema
+# anterior. Estas categorías no crean ni reasignan Sesiones por sí solas.
 prioridades:
   - id: metodo-v1-radar-prioritario
     nombre: Método V1 · Radar prioritario
@@ -79,8 +83,16 @@ prioridades:
     nombre: Método V1
   - id: torre-v1
     nombre: Torre V1 · Adopción project-local reversible
+  - id: resolucion-problemas-generales
+    nombre: Resolución de problemas · Generales
+  - id: resolucion-problemas-v1
+    nombre: Resolución de problemas · Torre V1
+  - id: resolucion-problemas-v2
+    nombre: Resolución de problemas · Torre V2
   - id: torre-v2
     nombre: Torre V2 · Tabs de trabajo prolongado visibles
+  - id: resolucion-problemas-anteriores
+    nombre: Resolución de problemas · Sistema anterior
 
 cimientos:
   rutas:
