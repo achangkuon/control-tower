@@ -71,8 +71,8 @@ This is technical execution continuity, not another product backlog. The Session
 
 ### Resume tasks
 
-- [ ] R1 — Verify, native-review and commit the preserved release-acquisition unit. IN PROGRESS; route delegated verification plus native review, parent exact-path staging/commit. Acceptance: focused/V1 checks observed, reviewed bytes match committed tree, 144-line source-and-test unit retained. Commit and review evidence pending.
-- [ ] R2 — Deliver the release unit with all three local planning commits through normal push. PENDING; parent delivery command, delegated report/suite readback. Acceptance: clean tracked/index/untracked state, hook suite and Radar results observed, origin/master matches delivered HEAD, report regenerated for that HEAD. No Session closure claimed.
+- [x] R1 — Verify, native-review and commit the preserved release-acquisition unit. DONE; delegated verification plus native review, parent exact-path staging/commit. Work-unit commit: `121e728d11f36b4a51344bc98f55f155387b910b`; focused/V1 checks passed, tree matches reviewed bytes, 144-line source-and-test unit retained.
+- [ ] R2 — Deliver the release unit with all three local planning commits through normal push. IN PROGRESS; parent delivery command, delegated report/suite readback. Acceptance: clean tracked/index/untracked state, hook suite and Radar results observed, origin/master matches delivered HEAD, report regenerated for that HEAD. No Session closure claimed.
 
 ### Fresh reconciliation evidence
 
@@ -82,6 +82,10 @@ This is technical execution continuity, not another product backlog. The Session
 - Both hashes match the prior session's preservation record exactly.
 - Installed `/home/emili/.local/bin/radar` freshly reports admission LISTO, 0 errors / 63 warnings. No warning-equivalence assertion was independently tested.
 - `core.hooksPath` is `.githooks`; RDD globally on; no peers currently advertised.
-- `git diff --check` has no diagnostics but does not inspect the untracked source/test; dedicated checking remains pending.
+- Fresh independent GREEN: focused 5 pass / 0 fail (93 assertions); V1 57 pass / 0 fail (1,218 assertions). Both commands exit 0. Original RED output remains unavailable; no new TDD-history assertion is made.
+- Tracked and no-index whitespace checks produced no diagnostics; no-index exit 1 means ordinary differences from `/dev/null`. Hashes and Git status remained unchanged through tests.
+- Native review `review-826bb1daca1cf79b`: medium, reliability lens; approved and acknowledged, authority burned. Reviewed tree `2098df099fd652861a46d68925d216657feb4e3f` matches the staged and committed tree exactly. One non-blocking informational advisory `R3-host-binding` at `release.mjs:44-45`; no correction was offered.
+- Native assessment unavailable: ambient assessment rejected untracked declaration; committed-range assessment reported schema incompatibility. Treated conservatively, not as low risk; independent functional verification and terminal native review already completed.
+- After product commit, Main is clean and ahead of origin by four commits. This passive checkpoint records observed evidence without amending the reviewed product candidate.
 
-Next checkpoint: focused/V1 verification, native review of the two-file release unit with this subordinate technical record, exact-path commit, then normal delivery.
+Next checkpoint: commit this passive evidence checkpoint, run normal `git push origin master`, and inspect suite, external Radar, remote identity and regenerated radiografia.
