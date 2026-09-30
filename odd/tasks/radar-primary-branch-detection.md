@@ -28,3 +28,4 @@ Technical ODD continuity only; not a product Session, plan status, or delivery a
 - Native review: approved and acknowledged under lineage `review-d54ba6652edcfcb8` before installation.
 - Installation: `agent-workflows/tools/install-radar.sh` compiled and installed `$HOME/.local/bin/radar` successfully.
 - Operational proof without a local `master`: ecom-ecuador Main `radar status` returned `21% (12/55 S)` and `radar faltan` returned 24 sessions; the revision worktree also returned 24 sessions. All three commands exited 0 and neither historical `master` error appeared.
+- Work-unit commit: `32d4ee73f80011c35ff8768b76bb8e4a7ba32c2d` (`fix(radar): detect integrated main branch`). Rollback boundary: revert this commit to restore the previous fixed-`master` behavior together with its tests and ODD record.
