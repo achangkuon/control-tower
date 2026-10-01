@@ -191,10 +191,12 @@ class ChanksJornadaSkillTests(unittest.TestCase):
             steps,
         )
 
-    def test_installer_lists_and_ships_the_skill(self):
-        self.assertIn(SKILL_NAME, INSTALLER.CHANKS_SKILLS)
+    def test_installer_defers_the_skill_to_v3_and_keeps_its_source(self):
+        self.assertIn(SKILL_NAME, INSTALLER.V3_DEFERRED_SKILLS)
+        self.assertIn(SKILL_NAME, INSTALLER.RETIRED_SKILLS)
         sources = {skill for skill, _, _ in INSTALLER.source_files(ROOT)}
-        self.assertIn(SKILL_NAME, sources)
+        self.assertNotIn(SKILL_NAME, sources)
+        self.assertTrue((ROOT / "skills" / SKILL_NAME / "SKILL.md").is_file())
 
     def test_ejecutar_failure_signal_is_defined_by_concrete_markers(self):
         # R3-partial-failure-signal-undefined: the partial-failure signal must be concrete,

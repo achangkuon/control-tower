@@ -55,7 +55,8 @@ class DespachoHerdrDispatchTests(unittest.TestCase):
             self.assertIn(" ".join(phrase.lower().split()), self.normalized, phrase)
 
     def test_skill_is_registered_listed_and_well_formed(self):
-        self.assertIn(SKILL_NAME, INSTALLER.CHANKS_SKILLS)
+        self.assertIn(SKILL_NAME, INSTALLER.V3_DEFERRED_SKILLS)
+        self.assertNotIn(SKILL_NAME, INSTALLER.SKILLS)
         self.assertTrue(self.skill.startswith(f"---\nname: {SKILL_NAME}\n"))
         for section in SECTIONS:
             self.assertIn(section, self.skill)

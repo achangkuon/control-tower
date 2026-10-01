@@ -33,7 +33,8 @@ class CoordinadorManualTests(unittest.TestCase):
             self.assertIn(" ".join(phrase.lower().split()), self.text, phrase)
 
     def test_registration_and_routing_preserve_the_canonical_admission_contract(self):
-        self.assertIn(SKILL_NAME, INSTALLER.CHANKS_SKILLS)
+        self.assertIn(SKILL_NAME, INSTALLER.V3_DEFERRED_SKILLS)
+        self.assertNotIn(SKILL_NAME, INSTALLER.SKILLS)
         self.assertNotIn("coordinador-multi-agente", INSTALLER.CHANKS_SKILLS)
         self.assertIn("coordinador-multi-agente", INSTALLER.RETIRED_SKILLS)
         self.assertTrue(self.skill.startswith(f"---\nname: {SKILL_NAME}\n"))

@@ -38,7 +38,6 @@ CHANKS_SKILLS = (
     "chanks-1-rfc",
     "chanks-1-terreno",
     "chanks-0-agente-soporte",
-    "chanks-0-jornada",
     "chanks-0-mensajes-visibles",
     "chanks-0-explicalo-simple",
     "chanks-0-session-context-loader",
@@ -47,12 +46,19 @@ CHANKS_SKILLS = (
     "chanks-2-planificador-granular",
     "chanks-3-session-kickoff",
     "chanks-3-paralelo",
-    "chanks-3-coordinador-manual",
-    "chanks-3-despacho-herdr",
     "chanks-4-puente",
-    "chanks-4-unattended-implementation",
     "chanks-5-politica-de-entrega",
     "chanks-5-session-doc",
+)
+
+# Automatic-Tower skills deferred until V3. Their sources stay under skills/ but
+# they are not installed, and copies already installed are archived through
+# RETIRED_SKILLS, so the removal is reversible.
+V3_DEFERRED_SKILLS = (
+    "chanks-0-jornada",
+    "chanks-3-coordinador-manual",
+    "chanks-3-despacho-herdr",
+    "chanks-4-unattended-implementation",
 )
 
 # Non-Chanks support skills.
@@ -89,7 +95,7 @@ RETIRED_SKILLS = (
     "torre-control",
     "torre-control-soporte",
     "torre-control-entregas",
-)
+) + V3_DEFERRED_SKILLS
 
 # Retiring a runtime copy must never destroy bytes the user owns: a locally
 # customized skill sharing a retired name is archived beside the runtime root

@@ -321,7 +321,9 @@ class InstallerTests(unittest.TestCase):
 
             self.assertFalse((home / ".codex").exists())
             for root in (home / ".agents/skills", home / ".claude/skills"):
-                self.assertTrue((root / "chanks-4-unattended-implementation/SKILL.md").is_file())
+                self.assertTrue((root / "chanks-4-puente/SKILL.md").is_file())
+                for deferred in INSTALLER.V3_DEFERRED_SKILLS:
+                    self.assertFalse((root / deferred).exists(), deferred)
                 self.assertFalse((root / "torre-control-entregas").exists())
             self.assertNotIn("torre-control-entregas", INSTALLER.SKILLS)
             self.assertEqual(INSTALLER.build_plan(home, ROOT), [])
@@ -330,7 +332,10 @@ class InstallerTests(unittest.TestCase):
         actual_chanks = {
             path.parent.name for path in (ROOT / "skills").glob("chanks-*/SKILL.md")
         }
-        self.assertEqual(set(INSTALLER.CHANKS_SKILLS), actual_chanks)
+        self.assertEqual(
+            set(INSTALLER.CHANKS_SKILLS) | set(INSTALLER.V3_DEFERRED_SKILLS), actual_chanks
+        )
+        self.assertTrue(set(INSTALLER.CHANKS_SKILLS).isdisjoint(INSTALLER.V3_DEFERRED_SKILLS))
         self.assertTrue(set(INSTALLER.RETIRED_SKILLS).isdisjoint(INSTALLER.SKILLS))
 
     def test_chanks_1_adopcion_is_installed_and_listed(self):
@@ -348,19 +353,59 @@ class InstallerTests(unittest.TestCase):
             for root in (home / ".agents/skills", home / ".claude/skills"):
                 self.assertTrue((root / "chanks-1-adopcion/SKILL.md").is_file())
 
-    def test_chanks_0_jornada_is_installed_and_listed(self):
-        """The workday-open/close skill must ship in the roster and land on disk.
-
-        It calls jornada.sh as a Tower tool for "empezamos/cerramos la jornada"; it
-        needs the same install treatment as every other chanks-0-* skill.
-        """
-        self.assertIn("chanks-0-jornada", INSTALLER.CHANKS_SKILLS)
+    def test_v3_deferred_skills_are_not_installed_but_stay_in_the_repo(self):
+        """The four automatic-Tower skills wait for V3: source kept, never installed."""
+        self.assertEqual(
+            set(INSTALLER.V3_DEFERRED_SKILLS),
+            {
+                "chanks-0-jornada",
+                "chanks-3-coordinador-manual",
+                "chanks-3-despacho-herdr",
+                "chanks-4-unattended-implementation",
+            },
+        )
+        self.assertTrue(set(INSTALLER.V3_DEFERRED_SKILLS).isdisjoint(INSTALLER.SKILLS))
+        self.assertTrue(set(INSTALLER.V3_DEFERRED_SKILLS).issubset(INSTALLER.RETIRED_SKILLS))
+        installed = {skill for skill, _, _ in INSTALLER.source_files(ROOT)}
+        for skill in INSTALLER.V3_DEFERRED_SKILLS:
+            self.assertTrue((ROOT / "skills" / skill / "SKILL.md").is_file(), skill)
+            self.assertNotIn(skill, installed)
         with tempfile.TemporaryDirectory() as raw:
             home = Path(raw)
             self._seed_runtime(home)
             INSTALLER.apply(home, ROOT)
             for root in (home / ".agents/skills", home / ".claude/skills"):
-                self.assertTrue((root / "chanks-0-jornada/SKILL.md").is_file())
+                for skill in INSTALLER.V3_DEFERRED_SKILLS:
+                    self.assertFalse((root / skill).exists(), skill)
+
+    def test_installed_v3_deferred_copies_are_planned_and_archived(self):
+        roots = INSTALLER.installed_skill_roots(self.home)
+        self.assertTrue(roots)
+        for runtime_root in roots:
+            for skill in INSTALLER.V3_DEFERRED_SKILLS:
+                (runtime_root / skill).mkdir(parents=True)
+                (runtime_root / skill / "SKILL.md").write_text("installed copy\n", encoding="utf-8")
+        planned = {
+            change.path
+            for change in INSTALLER.build_plan(self.home, ROOT)
+            if change.kind == "retired-skill"
+        }
+        for runtime_root in roots:
+            for skill in INSTALLER.V3_DEFERRED_SKILLS:
+                self.assertIn(runtime_root / skill, planned)
+
+        INSTALLER.apply(self.home, ROOT)
+
+        for runtime_root in roots:
+            archive = INSTALLER.retired_skill_archive_root(runtime_root)
+            for skill in INSTALLER.V3_DEFERRED_SKILLS:
+                self.assertFalse((runtime_root / skill).exists(), skill)
+                archived = list(archive.glob(f"{skill}-*"))
+                self.assertEqual(len(archived), 1, skill)
+                self.assertEqual(
+                    (archived[0] / "SKILL.md").read_text(encoding="utf-8"), "installed copy\n"
+                )
+        self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
 
     def test_project_owned_tower_delivery_skill_is_not_distributed(self):
         self.assertNotIn("torre-control-entregas", INSTALLER.SKILLS)

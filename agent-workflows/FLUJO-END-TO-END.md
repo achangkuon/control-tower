@@ -208,7 +208,7 @@ distintas, con `verify` y `archive` COMUNES.**
 Eso cerró tres problemas de un saque: la falta de revisión en `direct`, la redundancia con
 gentle-ai, y el puente plan↔SDD.
 
-Quedan **dos** skills: `chanks-4-unattended-implementation` y `chanks-4-puente`.
+Quedan **dos** skills: `chanks-4-unattended-implementation` y `chanks-4-puente`. (Desde 2026-10-01 `chanks-4-unattended-implementation` está diferida a V3: su fuente se conserva, pero el instalador no la instala y archiva las copias instaladas.)
 **Tres se disuelven** — `session-plan`, `coordinador_multi_agente`, `big-files-remediation-loop`.
 Es el primer tramo donde el método **se achica**, porque al ser todo SDD, gentle-ai cubre lo que
 antes cubría el método propio.
