@@ -782,14 +782,19 @@ export default function chanksControls(pi: any) {{
 
   // Presentation only: gentle-pi owns read/bash and Pi adds these to a compatible Text row.
   // Custom lifecycle components have no inline slot and remain entirely owner-rendered.
-  pi.registerToolCallAnnotation("read", (args: any) => {{
-    const name = skillName(args?.path, workingDirectory ?? process.cwd())
-    return name ? `💪 Chanks · ${{name}} · lectura solicitada` : undefined
-  }})
-  pi.registerToolCallAnnotation("bash", (args: any) => {{
-    const radar = radarDirecto(args?.command)
-    return radar ? `🗼 Torre · radar ${{radar.subcommand}} · solicitado` : undefined
-  }})
+  // A Pi build without the overlay has no such API: stay loadable, run every gate, and say once
+  // at session start that the labels are off.
+  const hasAnnotations = typeof pi.registerToolCallAnnotation === "function"
+  if (hasAnnotations) {{
+    pi.registerToolCallAnnotation("read", (args: any) => {{
+      const name = skillName(args?.path, workingDirectory ?? process.cwd())
+      return name ? `💪 Chanks · ${{name}} · lectura solicitada` : undefined
+    }})
+    pi.registerToolCallAnnotation("bash", (args: any) => {{
+      const radar = radarDirecto(args?.command)
+      return radar ? `🗼 Torre · radar ${{radar.subcommand}} · solicitado` : undefined
+    }})
+  }}
 
   const observeStage = (event: any, session: string, ctx: any) => {{
     try {{
@@ -895,7 +900,13 @@ export default function chanksControls(pi: any) {{
     }} catch {{ /* UI failure cannot change the completed tool result. */ }}
   }})
   pi.on("session_shutdown", () => {{ erase(true); stages.clear() }})
-  pi.on("session_start", () => {{ erase(true); stages.clear(); initialize() }})
+  pi.on("session_start", (_event: any, ctx: any) => {{
+    erase(true); stages.clear(); initialize()
+    try {{
+      if (!hasAnnotations && ctx?.hasUI) ctx.ui.notify(
+        "Chanks labels are off: this Pi build has no tool-call annotations. Run pi-overlay-rebuild to restore them.", "warning")
+    }} catch {{ /* A missing or failing UI cannot stop the session. */ }}
+  }})
 }}
 """
 

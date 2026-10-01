@@ -1009,6 +1009,7 @@ const pi = {
   registerTool(definition) { tools.push(definition.name) },
   registerToolCallAnnotation(name, callback) { annotations[name] = callback },
 }
+if (scenario.noAnnotationApi) delete pi.registerToolCallAnnotation
 const ctx = { hasUI: true, mode: 'tui', ui: { notify(message) { messages.push(message) } } }
 extension(pi)
 const factoryCalls = 0 // factory may register handlers, but performs no Git/Radar work
@@ -1321,6 +1322,20 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         scenario = {"hasUI": True, "confirmation": True}
         scenario.update(overrides)
         return scenario
+
+    def test_missing_annotation_api_loads_normally_and_notifies_once(self):
+        self._set_switch(False)
+        notice = ("Chanks labels are off: this Pi build has no tool-call annotations. "
+                  "Run pi-overlay-rebuild to restore them.")
+        degraded = self._run_shim({"noAnnotationApi": True})
+        self.assertEqual(degraded["annotations"], [])
+        self.assertEqual(degraded["messages"].count(notice), 1)
+        # Gates and handlers are unchanged: the same calls still reach the policy handlers.
+        present = self._run_shim({})
+        self.assertEqual({k: v["result"] for k, v in degraded["before"].items()},
+                         {k: v["result"] for k, v in present["before"].items()})
+        self.assertEqual(present["annotations"], ["read", "bash"])
+        self.assertNotIn(notice, present["messages"])
 
     def test_inline_request_badges_and_per_session_stage_observations(self):
         self._set_switch(False)

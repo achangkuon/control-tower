@@ -49,7 +49,7 @@ The port was mechanical (`git apply --3way`); no independent review was run for 
 - [x] T1 — Re-pin. Replace `personal-pi/patches/0001-tool-call-annotations.patch` and update
   `personal-pi/manifest.json` with the identities above; refresh `personal-pi/README.md` where it names the old
   base. Route: delegated writer.
-- [ ] T2 — Non-fatal missing API. The generated Chanks controls extension registers annotations only when
+- [x] T2 — Non-fatal missing API. The generated Chanks controls extension registers annotations only when
   `pi.registerToolCallAnnotation` is a function; otherwise it loads normally and tells the user once, at session
   start, that labels are off and which command restores them. Gates and event handling are unchanged.
   Route: delegated writer.
@@ -79,4 +79,7 @@ The port was mechanical (`git apply --3way`); no independent review was run for 
 - T1 done. RED: new `PinnedManifestTests` failed on base commit (old `fd889a27`). GREEN: `tests.test_personal_pi_materialize`
   4 tests OK after replacing patch/manifest. Offline check: `materialize.py` against a `--no-local` clone of the
   v1.0.0 source reproduced the pinned result tree. Commit: recorded in git log (`feat(pi-overlay): re-pin ...`).
-
+- T2 done. RED: `test_missing_annotation_api_loads_normally_and_notifies_once` threw
+  `pi.registerToolCallAnnotation is not a function` at extension load. GREEN: registration guarded by a
+  `typeof` check and a one-time `session_start` warning via `ctx.ui.notify`; `tests.test_install` 116 tests OK.
+  Commit: see git log (`fix(pi): keep chanks controls loadable ...`).
