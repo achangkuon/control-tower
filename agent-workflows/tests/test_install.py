@@ -1973,3 +1973,74 @@ class PiNpmHostPeersTests(unittest.TestCase):
         data = json.loads(manifest.read_text())
         self.assertEqual(data["peerDependencies"], {"typebox": "*"})
         self.assertEqual(data["dependencies"], {})
+
+
+class PiNpmOverlayTriggerTests(unittest.TestCase):
+    """After a global Pi install/update the wrapper re-applies the overlay, never failing npm."""
+
+    PACKAGE = "@earendil-works/pi-coding-agent"
+
+    def setUp(self):
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tempdir.cleanup)
+        self.home = Path(self.tempdir.name)
+        INSTALLER.install_pi_npm_host_peers(self.home, ROOT)
+        self.wrapper = self.home / ".pi/agent/bin/pi-npm-host-peers"
+        self.record = self.home / "rebuild-calls"
+        self.rebuild = self.home / ".pi/agent/bin/pi-overlay-rebuild"
+
+    def _stub_rebuild(self, status=0):
+        self.rebuild.write_text(f'#!/bin/sh\necho "$@" >> "{self.record}"\nexit {status}\n')
+        self.rebuild.chmod(0o755)
+
+    def _npm(self, status=0):
+        fake = self.home / "fake-npm"
+        fake.write_text(f"#!/bin/sh\nexit {status}\n")
+        fake.chmod(0o755)
+        return fake
+
+    def _run(self, *npm_args, npm_status=0):
+        return subprocess.run([str(self.wrapper), "--", str(self._npm(npm_status)), *npm_args],
+                              capture_output=True, text=True)
+
+    def _calls(self):
+        return self.record.read_text().splitlines() if self.record.exists() else []
+
+    def test_global_install_or_update_of_pi_triggers_the_rebuild_with_allow_running(self):
+        self._stub_rebuild()
+        for args in (("install", "-g", self.PACKAGE), ("i", "--global", f"{self.PACKAGE}@latest"),
+                     ("update", "-g", f"{self.PACKAGE}@1.2.3"), ("install", "--silent", "-g", "other", self.PACKAGE)):
+            self.record.unlink(missing_ok=True)
+            with self.subTest(args=args):
+                result = self._run(*args)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(self._calls(), ["--allow-running"])
+
+    def test_other_commands_never_trigger_the_rebuild(self):
+        self._stub_rebuild()
+        for args in (("install", self.PACKAGE), ("install", "-g", "left-pad"),
+                     ("install", "-g", f"{self.PACKAGE}-extra"), ("uninstall", "-g", self.PACKAGE),
+                     ("list", "-g", self.PACKAGE), ("view", self.PACKAGE, "-g")):
+            with self.subTest(args=args):
+                self.assertEqual(self._run(*args).returncode, 0)
+                self.assertEqual(self._calls(), [])
+
+    def test_failed_npm_command_keeps_its_status_and_skips_the_rebuild(self):
+        self._stub_rebuild()
+        result = self._run("install", "-g", self.PACKAGE, npm_status=4)
+        self.assertEqual(result.returncode, 4)
+        self.assertEqual(self._calls(), [])
+
+    def test_rebuild_failure_warns_but_keeps_the_npm_status(self):
+        self._stub_rebuild(status=7)
+        result = self._run("install", "-g", self.PACKAGE)
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(self._calls(), ["--allow-running"])
+        warnings = [line for line in result.stderr.splitlines() if "pi-overlay-rebuild" in line]
+        self.assertEqual(len(warnings), 1, result.stderr)
+
+    def test_missing_rebuild_tool_warns_but_keeps_the_npm_status(self):
+        result = self._run("update", "-g", self.PACKAGE)
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(len([l for l in result.stderr.splitlines() if "pi-overlay-rebuild" in l]), 1, result.stderr)
+

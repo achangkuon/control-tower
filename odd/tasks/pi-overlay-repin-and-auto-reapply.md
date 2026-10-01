@@ -56,7 +56,7 @@ The port was mechanical (`git apply --3way`); no independent review was run for 
 - [x] T3 — Rebuild tool. Add `agent-workflows/tools/pi/pi-overlay-rebuild` and install it to
   `~/.pi/agent/bin/`. It detects an unpatched global Pi, materializes the overlay for the installed version,
   builds, verifies, swaps `dist` with a backup, smoke-tests, and rolls back on failure. Route: delegated writer.
-- [ ] T4 — Automatic trigger. `tools/pi/pi-npm-host-peers` runs the rebuild tool after a successful global
+- [x] T4 — Automatic trigger. `tools/pi/pi-npm-host-peers` runs the rebuild tool after a successful global
   install/update of `@earendil-works/pi-coding-agent`. A rebuild failure never fails the npm command.
   Route: delegated writer.
 
@@ -87,3 +87,8 @@ The port was mechanical (`git apply --3way`); no independent review was run for 
   (no installer entries). GREEN: both pass; `tests.test_install` + `tests.test_pi_overlay_rebuild` 134 tests OK.
   Node pin `v24.21.0` SHA-256 `fd8e59d5...cb2d6` read from the official SHASUMS256.txt. Extra flag `--backup-root`
   added for hermetic tests. Commit: see git log (`feat(pi): add pi-overlay-rebuild ...`).
+- T4 done. RED: `PiNpmOverlayTriggerTests` 6 failures (rebuild never invoked). GREEN: wrapper runs the sibling
+  `pi-overlay-rebuild --allow-running` after a successful global install/update of the Pi package; warns once on
+  failure or absence; exit status stays npm's. Final: `discover -s tests` 380 tests, 1 failure (known
+  `test_fresh_normal_startup_and_policy`), 1 skipped. `pi-overlay-rebuild --dry-run` from the repo root: runtime
+  already patched, no-op, repository unchanged. Commit: see git log (`feat(pi): re-apply the overlay ...`).

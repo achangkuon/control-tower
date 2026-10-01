@@ -5,12 +5,17 @@
 // what Pi's extension loader expects. This silences the "Host-provided extension packages"
 // startup warning without touching the packages Pi itself ships.
 //
+// After a successful global install/update of Pi itself it also runs the sibling
+// pi-overlay-rebuild, which re-applies the private tool-call annotation overlay. A rebuild
+// problem only warns; the exit status is always the npm command's.
+//
 // Usage:
 //   pi-npm-host-peers -- <command> [args...]   run the command, then repair its install root
 //   pi-npm-host-peers --repair <installRoot>   repair only
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 // Keep in sync with HOST_PROVIDED_EXTENSION_PACKAGES in pi-coding-agent's resource-loader.js.
 const HOST_PROVIDED = new Set([
@@ -26,6 +31,8 @@ const HOST_PROVIDED = new Set([
 	"typebox",
 ]);
 const MUTATING = new Set(["install", "i", "add", "update", "up", "uninstall", "remove", "rm", "ci"]);
+const PI_PACKAGE = "@earendil-works/pi-coding-agent";
+const INSTALL_OR_UPDATE = new Set(["install", "i", "add", "update", "up"]);
 
 function packageDirs(nodeModules) {
 	if (!existsSync(nodeModules)) return [];
@@ -83,6 +90,21 @@ function installRootFrom(args) {
 	return process.cwd();
 }
 
+function targetsGlobalPi(args) {
+	if (!INSTALL_OR_UPDATE.has(args[0])) return false;
+	if (!args.some((arg) => arg === "-g" || arg === "--global")) return false;
+	return args.slice(1).some((arg) => arg === PI_PACKAGE || arg.startsWith(`${PI_PACKAGE}@`));
+}
+
+function rebuildOverlay() {
+	const tool = join(dirname(fileURLToPath(import.meta.url)), "pi-overlay-rebuild");
+	const rebuilt = spawnSync(tool, ["--allow-running"], { stdio: "inherit" });
+	if (rebuilt.error || rebuilt.status !== 0) {
+		const why = rebuilt.error ? rebuilt.error.message : `exit ${rebuilt.status ?? rebuilt.signal}`;
+		process.stderr.write(`pi-npm-host-peers: pi-overlay-rebuild did not complete (${why}); run it manually\n`);
+	}
+}
+
 const argv = process.argv.slice(2);
 if (argv[0] === "--repair") {
 	repair(resolve(argv[1] ?? process.cwd()));
@@ -108,4 +130,5 @@ if (status === 0 && MUTATING.has(args[0])) {
 		process.stderr.write(`pi-npm-host-peers: repair skipped: ${error.message}\n`);
 	}
 }
+if (status === 0 && targetsGlobalPi(args)) rebuildOverlay();
 process.exit(status);
