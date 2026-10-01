@@ -92,3 +92,34 @@ The port was mechanical (`git apply --3way`); no independent review was run for 
   failure or absence; exit status stays npm's. Final: `discover -s tests` 380 tests, 1 failure (known
   `test_fresh_normal_startup_and_policy`), 1 skipped. `pi-overlay-rebuild --dry-run` from the repo root: runtime
   already patched, no-op, repository unchanged. Commit: see git log (`feat(pi): re-apply the overlay ...`).
+
+Commits: T1 `d0a76fc`, T2 `1bc7f3b`, T3 `527f9fe`, T4 `788c69f`.
+
+## Verification after the writer
+
+- Parent spot check: `tests.test_pi_overlay_rebuild` + `tests.test_personal_pi_materialize`, 18 tests OK.
+- Real end-to-end run against a scratch copy of the global package restored to the public `1.0.0` dist
+  (`--package-dir`, `--cache-dir`, `--backup-root` all outside the live runtime): clone of `v1.0.0`, strict apply,
+  Node `v24.21.0` download, `npm ci`, build, overlay tests 4/4 and 109/109, backup, swap, smoke test, exit 0.
+  A second run was a no-op. A first run without `--allow-running` stopped with exit 5 because a live Pi session
+  was open, and left the copy untouched. Drift mode (another Pi version) is covered by unit tests only.
+- Trigger form checked against Pi `v1.0.0` source (`packages/coding-agent/src/config.ts`, npm method): the
+  self-update runs `<npmCommand...> install -g --ignore-scripts --min-release-age=0 <spec>` with inherited stdio
+  and no timeout, which `targetsGlobalPi` matches once the wrapper strips `-- npm`.
+- Native review: assessed high risk; the maintainer declined it for this candidate
+  (lineage `review-e5d02e8cb1bd68fc`).
+- Independent read-only verifier: pass with warnings, no blocker or critical. Disposition:
+  - Smoke-test timeout skipped the rollback: fixed. RED `test_smoke_test_timeout_restores_the_backup` (exit 1,
+    expected 6); GREEN after catching `TimeoutExpired`.
+  - Failed restore gave a vague message: fixed. RED `test_failed_restore_names_the_backup_for_manual_recovery`
+    (no `EXIT_RESTORE_FAILED`); GREEN with exit 7 and the backup path in the message.
+  - Open, accepted for now: the `/proc` scan can misjudge on manual runs (false positives for unrelated commands
+    named `pi`; the tool's own ancestor Pi is ignored by design); a missing `node` on PATH fails instead of
+    falling back to the download; an interrupted Node extraction is not detected; the smoke test checks
+    `--version` and the marker, not extension loading; the wrapper does not pass the package directory.
+- After the fix: `tests.test_pi_overlay_rebuild` 16 OK; `tests.test_install` + `tests.test_personal_pi_materialize`
+  129 OK.
+
+## Next step
+
+Deploy with `tools/install.py` while no Pi session is open. Push is a maintainer decision.

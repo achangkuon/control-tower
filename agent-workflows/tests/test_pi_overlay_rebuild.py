@@ -215,6 +215,39 @@ class RebuildTests(unittest.TestCase):
         self.assertEqual(self.snapshot(package), before)
         self.assertTrue(list(self.backups.iterdir()))
 
+    def test_smoke_test_timeout_restores_the_backup(self):
+        package = self.make_package()
+        before = self.snapshot(package)
+
+        class TimingOut(FakeSteps):
+            def smoke(self, package_dir, version):
+                raise subprocess.TimeoutExpired(["cli.js", "--version"], 60)
+
+        code, _, err = self.run_tool(package, steps=TimingOut())
+        self.assertEqual(code, self.tool.EXIT_ROLLED_BACK)
+        self.assertIn("timed out", err)
+        self.assertEqual(self.snapshot(package), before)
+
+    def test_failed_restore_names_the_backup_for_manual_recovery(self):
+        package = self.make_package()
+        steps = FakeSteps(smoke_error="version mismatch")
+        original, calls = self.tool.replace_tree, []
+
+        def failing_restore(target, source):
+            calls.append(target)
+            # The first two calls are the swap; the restore is what fails.
+            if len(calls) > 2:
+                raise OSError("disk full")
+            original(target, source)
+
+        self.tool.replace_tree = failing_restore
+        code, _, err = self.run_tool(package, steps=steps)
+        (backup,) = list(self.backups.iterdir())
+        self.assertEqual(code, self.tool.EXIT_RESTORE_FAILED)
+        self.assertIn(str(backup), err)
+        self.assertIn("restore it manually", err)
+        self.assertEqual((backup / "coding-agent-dist/index.js").read_text(), "// public\n")
+
     def test_refuses_while_another_pi_runs_unless_allowed(self):
         package = self.make_package()
         before = self.snapshot(package)

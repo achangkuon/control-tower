@@ -37,6 +37,7 @@ EXIT_CONFLICT = 3
 EXIT_LOCKED = 4
 EXIT_RUNNING = 5
 EXIT_ROLLED_BACK = 6
+EXIT_RESTORE_FAILED = 7
 
 
 class RebuildError(Exception):
@@ -249,12 +250,21 @@ def install(package_dir, src, version, backup_root, steps):
             if (package_dir / relative).is_file():
                 os.chmod(package_dir / relative, 0o755)
         failure = steps.smoke(package_dir, version)
-    except (OSError, shutil.Error) as error:
+    except subprocess.TimeoutExpired:
+        failure = "the smoke test timed out"
+    except (OSError, shutil.Error, subprocess.SubprocessError) as error:
         failure = f"swap failed: {error}"
     if failure:
         log(f"smoke test failed ({failure}); restoring the backup")
-        for target, _, name in targets:
-            replace_tree(target, backup / name)
+        try:
+            for target, _, name in targets:
+                # A swap that failed halfway may have removed the target already.
+                target.mkdir(parents=True, exist_ok=True)
+                replace_tree(target, backup / name)
+        except (OSError, shutil.Error) as error:
+            raise RebuildError(f"the rebuilt Pi failed verification ({failure}) and the backup could not be "
+                               f"restored ({error}). The runtime may be incomplete; restore it manually from "
+                               f"{backup}", EXIT_RESTORE_FAILED)
         raise RebuildError(f"the rebuilt Pi failed verification ({failure}); the backup was restored",
                            EXIT_ROLLED_BACK)
     log("installed and verified")
