@@ -42,6 +42,10 @@ V2_SKILLS = (
 )
 
 
+def _lexists(path):
+    return os.path.lexists(path)
+
+
 class InstallerTests(unittest.TestCase):
     def setUp(self):
         self.tempdir = tempfile.TemporaryDirectory()
@@ -126,13 +130,20 @@ class InstallerTests(unittest.TestCase):
             for skill in V2_SKILLS:
                 self.assertNotIn(skill, text, path)
 
-    def test_all_runtime_skill_paths_match_canonical_source(self):
+    def test_central_folder_holds_every_skill_and_other_roots_only_the_shared_overlay(self):
         INSTALLER.apply(self.home, ROOT)
-        for runtime_root in INSTALLER.runtime_skill_roots(self.home):
-            for skill, relative, source in INSTALLER.source_files(ROOT):
+        central, claude, opencode, codex = INSTALLER.runtime_skill_roots(self.home)
+        for skill, relative, source in INSTALLER.source_files(ROOT):
+            destination = central / skill / relative
+            self.assertTrue(destination.is_file(), destination)
+            self.assertEqual(source.read_bytes(), destination.read_bytes())
+        for runtime_root in (claude, opencode, codex):
+            for skill, relative, source in INSTALLER.source_files(ROOT, INSTALLER.SHARED):
                 destination = runtime_root / skill / relative
-                self.assertTrue(destination.is_file(), destination)
                 self.assertEqual(source.read_bytes(), destination.read_bytes())
+        for runtime_root in (opencode, codex):
+            for skill in INSTALLER.OWN_SKILLS:
+                self.assertFalse(_lexists(runtime_root / skill), (runtime_root, skill))
 
     def test_check_mode_detects_skill_and_manual_drift(self):
         INSTALLER.apply(self.home, ROOT)
@@ -321,6 +332,7 @@ class InstallerTests(unittest.TestCase):
 
             self.assertFalse((home / ".codex").exists())
             for root in (home / ".agents/skills", home / ".claude/skills"):
+                # Claude reaches the central copy through a symlink; is_file follows it.
                 self.assertTrue((root / "chanks-4-puente/SKILL.md").is_file())
                 for deferred in INSTALLER.V3_DEFERRED_SKILLS:
                     self.assertFalse((root / deferred).exists(), deferred)
@@ -699,7 +711,9 @@ class RetiredSkillFileTests(unittest.TestCase):
         with self.registry_patch():
             for version in range(2):
                 seeded = []
-                for runtime in INSTALLER.runtime_skill_roots(self.home):
+                # Retired files are retired in the central folder; the other roots
+                # hold links or no own skill at all.
+                for runtime in INSTALLER.runtime_skill_roots(self.home)[:1]:
                     for relative, payloads in self.payloads.items():
                         payload = payloads[min(version, len(payloads) - 1)]
                         seeded.append((runtime, relative, payload, self.seed(runtime, relative, payload)))
@@ -720,7 +734,7 @@ class RetiredSkillFileTests(unittest.TestCase):
 
     def test_modified_unlisted_and_missing_files_are_not_retired(self):
         preserved = []
-        for runtime in INSTALLER.runtime_skill_roots(self.home):
+        for runtime in INSTALLER.runtime_skill_roots(self.home)[:1]:
             for relative in self.payloads:
                 preserved.append(self.seed(runtime, relative, b"user edit\x00\n"))
             preserved.append(self.seed(runtime, "chanks-0-agente-soporte/references/my-notes.md", b"user edit\x00\n"))
@@ -1947,3 +1961,149 @@ class PiNpmHostPeersTests(unittest.TestCase):
         data = json.loads(manifest.read_text())
         self.assertEqual(data["peerDependencies"], {"typebox": "*"})
         self.assertEqual(data["dependencies"], {})
+
+
+class CentralSkillsFolderTests(unittest.TestCase):
+    """Own skills live once in ~/.agents/skills; Claude links to them."""
+
+    def setUp(self):
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tempdir.cleanup)
+        self.home = Path(self.tempdir.name)
+        InstallerTests._seed_runtime(self)
+        self.central = self.home / ".agents/skills"
+        self.claude = self.home / ".claude/skills"
+        self.opencode = self.home / ".config/opencode/skills"
+        self.codex = self.home / ".codex/skills"
+
+    def kinds(self, kind):
+        return {c.path for c in INSTALLER.build_plan(self.home, ROOT) if c.kind == kind}
+
+    def test_claude_gets_one_relative_symlink_per_own_skill(self):
+        INSTALLER.apply(self.home, ROOT)
+        for skill in INSTALLER.OWN_SKILLS:
+            link = self.claude / skill
+            self.assertTrue(link.is_symlink(), skill)
+            self.assertEqual(os.readlink(link), f"../../.agents/skills/{skill}")
+            self.assertEqual(link.resolve(), (self.central / skill).resolve())
+            self.assertTrue((link / "SKILL.md").is_file(), skill)
+
+    def test_central_copy_is_a_real_directory_written_as_before(self):
+        INSTALLER.apply(self.home, ROOT)
+        for skill, relative, source in INSTALLER.source_files(ROOT):
+            destination = self.central / skill / relative
+            self.assertFalse(destination.is_symlink())
+            self.assertEqual(source.read_bytes(), destination.read_bytes())
+        for skill in INSTALLER.OWN_SKILLS:
+            self.assertFalse((self.central / skill).is_symlink(), skill)
+
+    def test_opencode_and_codex_receive_no_own_skill(self):
+        INSTALLER.apply(self.home, ROOT)
+        for root in (self.opencode, self.codex):
+            for skill in INSTALLER.OWN_SKILLS:
+                self.assertFalse(_lexists(root / skill), (root, skill))
+            self.assertTrue((root / "_shared/plan-naming-convention.md").is_file())
+
+    def test_shared_overlay_is_still_written_to_all_four_roots(self):
+        INSTALLER.apply(self.home, ROOT)
+        source = (ROOT / "skills/_shared/plan-naming-convention.md").read_bytes()
+        for root in (self.central, self.claude, self.opencode, self.codex):
+            installed = root / "_shared/plan-naming-convention.md"
+            self.assertFalse((root / "_shared").is_symlink())
+            self.assertEqual(installed.read_bytes(), source)
+
+    def test_real_own_copies_are_archived_then_linked(self):
+        for root in (self.claude, self.opencode, self.codex):
+            for skill in INSTALLER.OWN_SKILLS:
+                (root / skill).mkdir(parents=True)
+                (root / skill / "SKILL.md").write_text(f"old {root.name} {skill}\n")
+        planned = INSTALLER.build_plan(self.home, ROOT)
+        archives = {c.path for c in planned if c.kind == "own-skill-archive"}
+        for root in (self.claude, self.opencode, self.codex):
+            for skill in INSTALLER.OWN_SKILLS:
+                self.assertIn(root / skill, archives)
+        INSTALLER.apply(self.home, ROOT)
+        for root in (self.claude, self.opencode, self.codex):
+            archive = INSTALLER.retired_skill_archive_root(root)
+            for skill in INSTALLER.OWN_SKILLS:
+                found = list(archive.glob(f"{skill}-*"))
+                self.assertEqual(len(found), 1, (root, skill))
+                self.assertEqual(
+                    (found[0] / "SKILL.md").read_text(), f"old {root.name} {skill}\n"
+                )
+        for skill in INSTALLER.OWN_SKILLS:
+            self.assertTrue((self.claude / skill).is_symlink())
+            self.assertFalse(_lexists(self.opencode / skill))
+            self.assertFalse(_lexists(self.codex / skill))
+        self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
+
+    def test_correct_symlink_is_idempotent_and_wrong_symlink_is_replaced(self):
+        INSTALLER.apply(self.home, ROOT)
+        self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
+        wrong = self.claude / "chanks-4-puente"
+        wrong.unlink()
+        elsewhere = self.home / "elsewhere"
+        elsewhere.mkdir()
+        wrong.symlink_to(elsewhere, target_is_directory=True)
+        planned = [c for c in INSTALLER.build_plan(self.home, ROOT)]
+        self.assertEqual([(c.path, c.kind) for c in planned], [(wrong, "skill-link-replace")])
+        INSTALLER.apply(self.home, ROOT)
+        self.assertEqual(os.readlink(wrong), "../../.agents/skills/chanks-4-puente")
+        self.assertEqual(list(elsewhere.iterdir()), [])
+        self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
+
+    def test_symlinked_runtime_root_is_still_refused(self):
+        external = self.home / "external"
+        external.mkdir()
+        (self.claude).parent.mkdir(parents=True, exist_ok=True)
+        self.claude.symlink_to(external, target_is_directory=True)
+        with self.assertRaises(INSTALLER.InstallError):
+            INSTALLER.apply(self.home, ROOT)
+        self.assertEqual(list(external.iterdir()), [])
+
+    def test_nothing_is_ever_written_through_a_skill_symlink(self):
+        INSTALLER.apply(self.home, ROOT)
+        before = {p: p.read_bytes() for p in self.central.rglob("*") if p.is_file()}
+        # Drift in the central copy is repaired in the central folder only.
+        target = self.central / "chanks-4-puente/SKILL.md"
+        target.chmod(0o644)
+        target.write_bytes(b"drift")
+        INSTALLER.apply(self.home, ROOT)
+        self.assertEqual(before, {p: p.read_bytes() for p in self.central.rglob("*") if p.is_file()})
+        self.assertTrue((self.claude / "chanks-4-puente").is_symlink())
+
+    def test_non_directory_own_skill_entry_fails_before_any_write(self):
+        self.claude.mkdir(parents=True)
+        (self.claude / "chanks-4-puente").write_bytes(b"a file")
+        with self.assertRaises(INSTALLER.InstallError):
+            INSTALLER.apply(self.home, ROOT)
+        self.assertFalse(self.central.exists())
+
+    def test_absent_runtime_is_skipped(self):
+        shutil.rmtree(self.home / ".claude")
+        INSTALLER.apply(self.home, ROOT)
+        self.assertFalse((self.home / ".claude").exists())
+        self.assertTrue((self.central / "chanks-4-puente/SKILL.md").is_file())
+        self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
+
+    def test_cli_describes_the_new_changes_and_a_second_run_is_clean(self):
+        (self.claude / "chanks-4-puente").mkdir(parents=True)
+        command = [sys.executable, str(SCRIPT), "--home", str(self.home)]
+        dry = subprocess.run(command + ["--dry-run"], capture_output=True, text=True, check=False)
+        self.assertEqual(dry.returncode, 0, dry.stderr)
+        self.assertIn(f"WOULD_UPDATE own-skill-archive: {self.claude / 'chanks-4-puente'}", dry.stdout)
+        self.assertIn(
+            f"WOULD_UPDATE skill-link: {self.claude / 'chanks-4-puente'} "
+            "(-> ../../.agents/skills/chanks-4-puente)",
+            dry.stdout,
+        )
+        self.assertFalse((self.central / "chanks-4-puente").exists())
+        check = subprocess.run(command + ["--check"], capture_output=True, text=True, check=False)
+        self.assertEqual(check.returncode, 1)
+        self.assertIn("DRIFT skill-link:", check.stdout)
+        applied = subprocess.run(command, capture_output=True, text=True, check=False)
+        self.assertEqual(applied.returncode, 0, applied.stderr)
+        again = subprocess.run(command + ["--dry-run"], capture_output=True, text=True, check=False)
+        self.assertIn("NO_CHANGES", again.stdout)
+        clean = subprocess.run(command + ["--check"], capture_output=True, text=True, check=False)
+        self.assertEqual(clean.returncode, 0, clean.stdout + clean.stderr)

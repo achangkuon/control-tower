@@ -67,7 +67,12 @@ SUPPORT_SKILLS = (
     "skill-orchestrator",
 )
 
-SKILLS = SHARED + CHANKS_SKILLS + SUPPORT_SKILLS
+# The maintainer's own skills: one real copy each in the central folder, reached
+# from Claude Code through per-skill symlinks. Gentle AI skills are not part of
+# this roster and stay per runtime under `gentle-ai`.
+OWN_SKILLS = CHANKS_SKILLS + SUPPORT_SKILLS
+
+SKILLS = SHARED + OWN_SKILLS
 
 # Explicit ownership migration. Normal installs retire only these known derived
 # copies; unlisted directories remain untouched.
@@ -153,6 +158,7 @@ MANAGED_MARKER_RE = re.compile(
 class Change:
     path: Path
     kind: str
+    detail: str = ""
 
 
 class InstallError(RuntimeError):
@@ -170,6 +176,28 @@ def runtime_skill_roots(home: Path) -> tuple[Path, ...]:
         home / ".config/opencode/skills",
         home / ".codex/skills",
     )
+
+
+CENTRAL_SKILLS_RELATIVE = ".agents/skills"
+LINK_SKILLS_RELATIVE = ".claude/skills"
+RETIRE_ONLY_SKILLS_RELATIVE = (".config/opencode/skills", ".codex/skills")
+LINK_TARGET_PREFIX = "../../.agents/skills"
+
+
+def _relative_root(home: Path, runtime_root: Path) -> str:
+    return runtime_root.relative_to(home).as_posix()
+
+
+def skill_link_target(skill: str) -> str:
+    return f"{LINK_TARGET_PREFIX}/{skill}"
+
+
+def skills_for_root(home: Path, runtime_root: Path) -> tuple[str, ...]:
+    """Skills whose real files live in this root: all of them centrally, only
+    the shared overlay elsewhere (own skills are linked or retired there)."""
+    if _relative_root(home, runtime_root) == CENTRAL_SKILLS_RELATIVE:
+        return SKILLS
+    return SHARED
 
 
 def manual_paths(home: Path) -> tuple[Path, ...]:
@@ -201,8 +229,8 @@ def installed_manual_paths(home: Path) -> tuple[Path, ...]:
     return tuple(path for path in manual_paths(home) if path.parent.is_dir())
 
 
-def source_files(root: Path):
-    for skill in SKILLS:
+def source_files(root: Path, skills: tuple[str, ...] = SKILLS):
+    for skill in skills:
         source_root = root / "skills" / skill
         if not source_root.is_dir():
             raise InstallError(f"missing canonical skill directory: {source_root}")
@@ -272,7 +300,9 @@ def _validate_retired_skill_destination(runtime_root: Path, destination: Path) -
     runtime_root = _absolute(runtime_root)
     destination = _absolute(destination)
     _validate_directory_path(runtime_root, "runtime skill root")
-    if destination.parent != runtime_root or destination.name not in RETIRED_SKILLS:
+    if destination.parent != runtime_root or destination.name not in (
+        RETIRED_SKILLS + OWN_SKILLS
+    ):
         raise InstallError(f"invalid retired skill destination: {destination}")
     if not _lexists(destination) or destination.is_symlink():
         return
@@ -409,11 +439,15 @@ def preflight(home: Path, root: Path) -> None:
     for runtime_root in installed_skill_roots(home):
         _validate_directory_path(runtime_root, "runtime skill")
         _validate_retired_file_archive(runtime_root)
-        for relative in retired_files:
+        central = _relative_root(home, runtime_root) == CENTRAL_SKILLS_RELATIVE
+        for relative in retired_files if central else ():
             _validate_file_destination(runtime_root, runtime_root / relative, "retired skill file")
         for retired_skill in RETIRED_SKILLS:
             _validate_retired_skill_destination(runtime_root, runtime_root / retired_skill)
-        for skill, relative, _ in source_files(root):
+        if not central:
+            for own_skill in OWN_SKILLS:
+                _validate_own_skill_entry(runtime_root, runtime_root / own_skill)
+        for skill, relative, _ in source_files(root, skills_for_root(home, runtime_root)):
             skill_root = runtime_root / skill
             _validate_directory_path(skill_root, "runtime skill directory")
             _validate_file_destination(
@@ -498,6 +532,9 @@ def firma_hook_changes(home: Path, root: Path) -> list[Change]:
     return [Change(target, "signature-hook")]
 
 
+OWN_SKILL_ENTRY_KINDS = ("own-skill-archive", "skill-link", "skill-link-replace")
+
+
 def build_plan(home: Path, root: Path | None = None) -> list[Change]:
     root = root or repo_root()
     preflight(home, root)
@@ -505,7 +542,10 @@ def build_plan(home: Path, root: Path | None = None) -> list[Change]:
     retired_files = retired_skill_files(root)
     changes: list[Change] = []
     for runtime_root in installed_skill_roots(home):
+        relative_root = _relative_root(home, runtime_root)
         for relative, digests in retired_files.items():
+            if relative_root != CENTRAL_SKILLS_RELATIVE:
+                break
             destination = runtime_root / relative
             if _matches_retired_file(destination, digests):
                 changes.append(Change(destination, "retired-skill-file"))
@@ -513,7 +553,9 @@ def build_plan(home: Path, root: Path | None = None) -> list[Change]:
             destination = runtime_root / retired_skill
             if _lexists(destination):
                 changes.append(Change(destination, "retired-skill"))
-        for skill, relative, source in source_files(root):
+        if relative_root != CENTRAL_SKILLS_RELATIVE:
+            changes.extend(own_skill_entry_changes(runtime_root, relative_root))
+        for skill, relative, source in source_files(root, skills_for_root(home, runtime_root)):
             destination = runtime_root / skill / relative
             if not destination.is_file() or destination.read_bytes() != source.read_bytes():
                 changes.append(Change(destination, "skill"))
@@ -527,6 +569,62 @@ def build_plan(home: Path, root: Path | None = None) -> list[Change]:
     changes.extend(etapa_hook_changes(home, root))
     changes.extend(firma_hook_changes(home, root))
     return changes
+
+
+def _validate_own_skill_entry(runtime_root: Path, destination: Path) -> None:
+    """An own-skill entry outside the central folder is a symlink, a retired real
+    directory, or absent. Only the final component may be a symlink: the root and
+    its parents are still refused, so no write ever goes through a link."""
+    runtime_root = _absolute(runtime_root)
+    destination = _absolute(destination)
+    _validate_directory_path(runtime_root, "runtime skill root")
+    if destination.parent != runtime_root or destination.name not in OWN_SKILLS:
+        raise InstallError(f"invalid own skill destination: {destination}")
+    if _lexists(destination) and not destination.is_symlink() and not destination.is_dir():
+        raise InstallError(f"expected directory or symlink for own skill: {destination}")
+
+
+def own_skill_entry_changes(runtime_root: Path, relative_root: str) -> list[Change]:
+    changes: list[Change] = []
+    linked = relative_root == LINK_SKILLS_RELATIVE
+    for skill in OWN_SKILLS:
+        destination = runtime_root / skill
+        target = skill_link_target(skill)
+        if destination.is_symlink():
+            if not linked:
+                continue  # never remove a link the installer did not create
+            if os.readlink(destination) != target:
+                changes.append(Change(
+                    destination, "skill-link-replace",
+                    f"{os.readlink(destination)} -> {target}",
+                ))
+            continue
+        if _lexists(destination):
+            changes.append(Change(destination, "own-skill-archive"))
+        if linked:
+            changes.append(Change(destination, "skill-link", f"-> {target}"))
+    return changes
+
+
+def _create_skill_link(runtime_root: Path, skill: str) -> None:
+    destination = runtime_root / skill
+    _validate_own_skill_entry(runtime_root, destination)
+    if _lexists(destination) and not destination.is_symlink():
+        raise InstallError(f"own skill directory must be archived before linking: {destination}")
+    for attempt in range(100):
+        temporary = runtime_root / f".{skill}.link-{os.getpid()}-{attempt}"
+        try:
+            os.symlink(skill_link_target(skill), temporary)
+            break
+        except FileExistsError:
+            continue
+    else:
+        raise InstallError(f"cannot create temporary link for own skill: {destination}")
+    try:
+        os.replace(temporary, destination)
+    finally:
+        if temporary.is_symlink():
+            temporary.unlink()
 
 
 def _atomic_copy(source: Path, destination: Path, runtime_root: Path) -> None:
@@ -634,7 +732,7 @@ def apply(home: Path, root: Path | None = None) -> list[Change]:
     replacements = render_manual_blocks(root)
     change_paths = {change.path for change in changes}
     for runtime_root in installed_skill_roots(home):
-        for skill, relative, source in source_files(root):
+        for skill, relative, source in source_files(root, skills_for_root(home, runtime_root)):
             destination = runtime_root / skill / relative
             if destination in change_paths:
                 _atomic_copy(source, destination, runtime_root)
@@ -646,6 +744,15 @@ def apply(home: Path, root: Path | None = None) -> list[Change]:
             destination = runtime_root / retired_skill
             if destination in change_paths:
                 _archive_retired_skill(runtime_root, destination)
+    # The central copies exist by now, so archiving a runtime's own real copy and
+    # linking it back never leaves a window with no skill at all.
+    entry_changes = [c for c in changes if c.kind in OWN_SKILL_ENTRY_KINDS]
+    for change in entry_changes:
+        if change.kind == "own-skill-archive":
+            _archive_retired_skill(change.path.parent, change.path)
+    for change in entry_changes:
+        if change.kind in ("skill-link", "skill-link-replace"):
+            _create_skill_link(change.path.parent, change.path.name)
     if carril_path(home) in change_paths:
         _atomic_copy(carril_source(root), carril_path(home), home / ".local")
         os.chmod(carril_path(home), 0o755)
@@ -1052,6 +1159,10 @@ def install_pi_npm_host_peers(home: Path, root: Path | None = None) -> None:
             print(f"WARNING: Pi host-peer repair skipped: {exc}", file=sys.stderr)
 
 
+def _detail(change: Change) -> str:
+    return f" ({change.detail})" if change.detail else ""
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group()
@@ -1064,14 +1175,14 @@ def main(argv: list[str] | None = None) -> int:
         if args.check:
             if changes:
                 for change in changes:
-                    print(f"DRIFT {change.kind}: {change.path}")
+                    print(f"DRIFT {change.kind}: {change.path}{_detail(change)}")
                 return 1
             print("OK: runtime copies and manual blocks match the repository")
             return 0
         if args.dry_run:
             if changes:
                 for change in changes:
-                    print(f"WOULD_UPDATE {change.kind}: {change.path}")
+                    print(f"WOULD_UPDATE {change.kind}: {change.path}{_detail(change)}")
             else:
                 print("NO_CHANGES")
             return 0

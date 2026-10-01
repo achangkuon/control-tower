@@ -153,12 +153,31 @@ Global synchronization and fresh-session verification remain outstanding after s
 
 ## Installation
 
-`tools/install.py` mirrors the canonical skill directories to:
+The rule is single: the maintainer's own skills (the installer roster,
+`CHANKS_SKILLS` and `SUPPORT_SKILLS`) are edited in `agent-workflows/skills/` from
+any agent and installed into one central folder, `~/.agents/skills`.
 
-- `~/.agents/skills`
-- `~/.claude/skills`
-- `~/.config/opencode/skills`
-- `~/.codex/skills`
+- `~/.agents/skills` holds the only real copy of every own skill, written per file
+  and atomically. Pi, OpenCode and Codex read it natively.
+- Claude Code has no skills-path setting, so `~/.claude/skills/<name>` is a relative
+  symlink to `../../.agents/skills/<name>`, one per own skill. A real directory
+  already at that name is archived to `~/.claude/skills/.retired-skills/<name>-<UTC
+  stamp>` and then replaced by the link; a link pointing elsewhere is replaced; the
+  correct link is left alone.
+- `~/.config/opencode/skills` and `~/.codex/skills` no longer receive own skills.
+  Any real copy found there is archived to that root's `.retired-skills/`, never
+  deleted. A symlink found there is left untouched.
+- `_shared/plan-naming-convention.md` keeps its per-root overlay in all four roots:
+  `_shared` is a Gentle AI directory with per-runtime content.
+- Hermes is handled in a later step.
+- Gentle AI skills (`sdd-*` and the rest) are managed by `gentle-ai` per runtime and
+  are not part of this.
+
+`--check` and `--dry-run` report the new change kinds as `own-skill-archive` (a real
+copy to archive), `skill-link` (a missing link to create) and `skill-link-replace`
+(a link pointing elsewhere), the last two with the target. A second run after an
+install reports no changes. The installer still refuses a symlinked runtime root and
+never writes through a skill symlink.
 
 It also owns one manual prompt-policy block in the Claude, OpenCode, Codex,
 and Pi instruction files: `SESSION-SKILL-ARCHITECTURE:MANUAL` states the
