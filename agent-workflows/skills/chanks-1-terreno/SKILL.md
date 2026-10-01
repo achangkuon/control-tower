@@ -1,6 +1,6 @@
 ---
 name: chanks-1-terreno
-description: "Trigger: terreno de proyecto nuevo, bootstrap de agentes. Crea la base operativa y la política pull-request inicial."
+description: "Trigger: Chanks etapa 1, terreno de un proyecto nuevo, bootstrap de agentes pedido explícitamente. Crea la base operativa y la política pull-request inicial."
 license: Apache-2.0
 metadata:
   author: gentleman-programming

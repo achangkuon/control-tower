@@ -1,6 +1,6 @@
 ---
 name: chanks-1-descubrimiento
-description: "Trigger: descubrimiento, diagnóstico, auditar producto vivo. Traza comportamiento real y fallas con evidencia archivo:línea sin corregir."
+description: "Trigger: Chanks etapa 1, descubrimiento de un producto vivo, auditar su comportamiento real. Traza comportamiento real y fallas con evidencia archivo:línea sin corregir."
 license: Apache-2.0
 metadata:
   author: gentleman-programming

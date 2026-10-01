@@ -1,6 +1,6 @@
 ---
 name: chanks-1-adopcion
-description: "Trigger: migrar repo, adoptar plan.yaml, repo sin plan, adopción, congelar historia, partición existente. Adopta el modelo de plan en un repo existente sin migrar su historia cerrada."
+description: "Trigger: Chanks etapa 1, adoptar plan.yaml en un repo existente sin plan, congelar historia, partición existente. Adopta el modelo de plan en un repo existente sin migrar su historia cerrada."
 license: Apache-2.0
 metadata:
   author: gentleman-programming
@@ -25,7 +25,9 @@ nuevo: usá `chanks-1-terreno`/`chanks-1-project-kickoff`.
   progreso.
 - No escribís `plan.yaml`: devolvé al responsible parent un delta de adopción
   confirmado y esperá aprobación humana del alcance.
-- Cargá `references/errores-conocidos.md` antes de ejecutar y no repitas sus errores.
+- Leé `references/errores-conocidos.md` sólo cuando aparezca uno de sus síntomas (vista retirada con
+  consumidores, suite en rojo tras mover el corpus, advertencia de Radar ya aceptada, `radar` que no
+  corre como está documentado); no repitas sus errores.
 
 ## Decision Gates
 
@@ -49,9 +51,9 @@ Los cuatro pasos son §18 del canon; acá sólo el orden y los gates propios de 
    un commit propio antes de congelar.
 4. Paso 3: congelá el corpus (ver Hard Rules) y registrá en `AGENTS.md` qué se movió.
 5. Paso 4: eliminá cada `depende_de` que apunte a trabajo ya cerrado.
-6. Actualizá en la misma entrega los archivos de instrucciones de los cuatro agentes
-   (Claude, Codex, opencode, Pi): un bloque viejo con mayor precedencia declarada gana
-   sobre el canon correcto aunque también esté instalado.
+6. Actualizá en la misma entrega los archivos de instrucciones de todos los runtimes del
+   maintainer: un bloque viejo seguiría instruyendo al agente con el modelo anterior
+   aunque el canon correcto también esté instalado.
 7. Devolvé el delta al responsible parent para aprobación humana y `radar check`/`render`.
 
 ## Output Contract

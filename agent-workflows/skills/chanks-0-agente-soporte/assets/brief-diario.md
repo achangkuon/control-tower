@@ -8,18 +8,18 @@ state. Radar is product authority; a native ODD technical record is subordinate 
 1. `$HOME/.local/bin/radar status --json -C <repo>` and `$HOME/.local/bin/radar sesion <ID> -C <repo>` only; never read the whole plan/view or execute a repository binary.
 2. Git evidence, repository instructions, and delivery policy.
 
-## Admission bundle
+## Admission
 
-Bind fresh `HEAD`, requested Session ID, and SHA-256 digests of both commands' exact output bytes.
-`start` requires `LISTO`. `continue`/`resume` require same Session identity plus native ODD record, code, and evidence for `encargo`; they require first pending Módulo for legacy. Other states return
-only state, blocker, and Zone-ordered `LISTO` choices. Seats/queue/choices are never assigned agents.
+Whether a Session may start, continue or resume is decided once, in `chanks-3-session-kickoff`. This
+brief only reports the Radar state, the blocker, and the Zone-ordered `LISTO` choices. Seats, queue
+and choices are never assigned agents.
 
 ## Template
 
 ```markdown
 # PLANNING EVIDENCE — <project>
 
-**Base:** `<branch>@<sha>` · **Admission:** <HEAD/ID/digests>
+**Base:** `<branch>@<sha>` · **Radar state:** <state/blocker>
 
 ## Session coordination and Encargo
 

@@ -22,14 +22,20 @@ const uso = `radar — herramienta determinista de planificación
                 potencial por archivos e hipotéticos — previsión, no permiso
   radar render  [-f openspec/plan.yaml] [-o openspec/ROADMAP.md] [-C raíz]
   radar archivar <ID> [-C raíz] archiva una Sesión completa con entrega integrada
+  radar marcar  <ID> --worktree <ruta absoluta> [--worker <nombre>] [-C raíz]
+                marca una Sesión LISTO como EN CURSO (escribe su marcador de despacho)
+  radar marcar  <ID> --listo [-C raíz] registra el testigo local de "listo para revisión"
+  radar desmarcar <ID> [-C raíz] quita el marcador de despacho de esa Sesión
 
 openspec/plan.yaml es la única fuente editable. openspec/ROADMAP.md es una vista
 atómica y determinista: nunca se edita a mano. El checker no adquiere locks vivos.
+Sólo marcar y desmarcar escriben bajo el directorio común de Git (el marcador de despacho).
 `
 
 type opciones struct {
 	archivo, salida, raiz string
-	json, all             bool
+	worktree, worker      string
+	json, all, listo      bool
 }
 
 func main() {
@@ -74,6 +80,30 @@ func main() {
 			os.Exit(1)
 		}
 		fmt.Printf("✓ %s archivada\n", posicionales[0])
+	case "marcar":
+		if len(posicionales) != 1 || (opts.listo && (opts.worktree != "" || opts.worker != "")) || (!opts.listo && opts.worktree == "") {
+			fmt.Fprintln(os.Stderr, "uso: radar marcar <ID> --worktree <ruta absoluta> [--worker <nombre>] [-C raíz]\n     radar marcar <ID> --listo [-C raíz]")
+			os.Exit(2)
+		}
+		var err error
+		if opts.listo {
+			err = cmdMarcarListo(os.Stdout, p, root, posicionales[0])
+		} else {
+			err = cmdMarcar(os.Stdout, p, root, posicionales[0], opts.worktree, opts.worker)
+		}
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "✗", err)
+			os.Exit(1)
+		}
+	case "desmarcar":
+		if len(posicionales) != 1 {
+			fmt.Fprintln(os.Stderr, "uso: radar desmarcar <ID> [-C raíz]")
+			os.Exit(2)
+		}
+		if err := cmdDesmarcar(os.Stdout, root, posicionales[0]); err != nil {
+			fmt.Fprintln(os.Stderr, "✗", err)
+			os.Exit(1)
+		}
 	case "status":
 		if opts.json {
 			if err := cmdStatusJSONView(os.Stdout, p, root, opts.all); err != nil {
@@ -152,6 +182,9 @@ func parsearArgs(comando string, args []string) (opciones, []string, error) {
 	fs.StringVar(&o.raiz, "C", "", "raíz del repositorio")
 	fs.BoolVar(&o.json, "json", false, "emitir el snapshot legible por máquina (sólo status)")
 	fs.BoolVar(&o.all, "all", false, "incluir Sesiones cerradas y archivadas (sólo status)")
+	fs.StringVar(&o.worktree, "worktree", "", "worktree absoluto de la Sesión (sólo marcar)")
+	fs.StringVar(&o.worker, "worker", "", "nombre del worker; por defecto, el directorio del worktree (sólo marcar)")
+	fs.BoolVar(&o.listo, "listo", false, "registrar el testigo local de listo para revisión (sólo marcar)")
 	var posicionales []string
 	for {
 		if err := fs.Parse(args); err != nil {

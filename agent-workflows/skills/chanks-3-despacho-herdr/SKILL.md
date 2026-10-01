@@ -1,13 +1,21 @@
 ---
 name: chanks-3-despacho-herdr
-description: "Trigger: dispatch approved Sessions or a human-authorized issue patch through the declared persistent worker pool in Herdr, with the Torre off."
+description: "Trigger: V2 only; explicitly requested chanks-3-despacho-herdr, Herdr dispatch, Pi worker pool, Intercom handoffs or issue patch through Herdr with the Torre off. Dispatch approved work; ordinary parallel work uses chanks-3-paralelo."
+disable-model-invocation: true
 license: Apache-2.0
 metadata:
   author: emili
-  version: "1.2"
+  version: "2.0"
 ---
 
 ## Activation Contract
+
+V2 only. Load this skill only when the human explicitly names it or explicitly asks for Herdr
+dispatch, a Pi worker pool, Pi Intercom handoffs or an issue patch through Herdr. For ordinary
+parallel work use `chanks-3-paralelo`. Chanks decides what is worked on and what runs in
+parallel; Gentle AI decides how it is implemented, reviewed and delivered, and nothing in this
+skill overrides Gentle AI. The transport and evidence rules that used to live in an always-loaded
+block are here and in `references/dispatch-protocol.md`.
 
 Activate for separate routes: initial Session dispatch only after the human names the
 complete batch of Sesión IDs and assigns each to a specific approved Pi worker;
@@ -22,8 +30,9 @@ admitted discriminator: native Encargo work resumes under the same Session ident
 ODD record/code/evidence reconciliation; legacy work resumes at first pending Módulo for legacy. Load
 the `herdr` skill for every Herdr command, flag, and error code.
 
-Read the complete reusable worker-pool declaration from repository `AGENTS.md` before any pool
-operation. It is the sole source for the declared workers, their persistent worktrees and tabs, their
+Read the complete reusable worker-pool declaration before any pool operation:
+`references/worker-pool.md` for Control Tower; any other repository declares its own in its
+`AGENTS.md`. It is the sole source for the declared workers, their persistent worktrees and tabs, their
 preparation command, and its stale-environment predicate. Missing or incomplete declaration fails
 closed before branch or agent creation and never falls back to ephemeral per-Session worktrees. Keep
 this procedure generic: no hardcoded package manager, worker count, or worker names.
@@ -60,16 +69,17 @@ whose distinct preparation is specified in Issue-Patch Mode.
 - An existing branch or ambiguous readback stops the complete batch without reset or force. Do not launch any agent until every selected worker and branch reservation has succeeded; order cannot cause partial dispatch.
 - Run declared preparation only on provisioning or when the declared environment is missing or stale. A valid reassignment performs zero reinstall. Never copy or link dependencies across checkouts.
 - Read every tab and agent ID from Herdr's JSON responses; never predict them. Herdr owns only the authorized seats and process topology.
+- Parallel-safety, live-reservation, delivery-result, Recurso and closure-ordering rules are in `references/dispatch-protocol.md`.
 - Pi Intercom is only the message transport. Intercom never grants selection, assignment, role, permission, review, or delivery authority.
 - Human approval binds each exact LISTO Sesión ID, Pi worker alias, cwd/worktree, runtime, and kind, not a Pi session ID. After launch, Main reads each actual Pi session ID from Herdr JSON. Before the first handoff, Main completes fresh Herdr agent readback and one fresh Intercom live-roster identity validation for the entire batch, matching every actual Pi session ID, human-approved alias, declared tab and cwd/worktree against the live roster and the reserved branch against fresh Git readback. Never predict or pre-approve a Pi session ID. A missing, ambiguous, disconnected, or mismatched Intercom identity must send nothing and fail closed before declaring the Sesión dispatched; any failure uses the pre-send owned rollback rule.
 - Ordinary Intercom `send` has no wait timeout. A true human decision uses a blocking request initiated by the worker; its worker-initiated human-decision `ask` timeout preserves the worktree and candidate as `BLOCKED`: Main does not guess the answer or report completion.
 - Every progress and terminal `send` identifies the exact Sesión and worker. Main answers only an exact inbound human-decision request with `reply`, carrying the human's answer; never an unthreaded substitute or its own `ask`. Main never initiates `ask`.
 - Herdr JSON proves only seat and process identity. Intercom delivery results prove only message delivery; neither grants authority or proves work completion. The worker reports terminal result evidence.
 - After a confirmed exact handoff only, atomically create S155's `radar.despacho/v1` marker in the Git common dir at `chanks/despachos/<ID>.json`: `schema`, `sesion` (exact Session ID), `worktree` (absolute canonical worker worktree), `branch` (`refs/heads/work/<ID>` full branch ref), and `worker` (approved alias). Verify Git common-dir and existing path identity; never overwrite, symlink-follow, or invent a receipt. An ambiguous delivery has no marker; preserve all artifacts for human reconciliation. A marker-write failure after confirmed delivery is post-send: stop and preserve all artifacts, never roll back or resend. This is observation evidence, not a roster or grant.
-- If a valid approved unattended seal exists, carry its complete unmodified contract in the handoff; check identity, base, digest, expiry, and permission/commit ceiling before sending. Missing/stale/mismatched seals grant nothing; the worker independently revalidates at kickoff.
+- The worker handoff is `assets/worker-handoff.md`. If a valid approved unattended seal exists, carry its complete unmodified contract in the handoff; check identity, base, digest, expiry, and permission/commit ceiling before sending. Missing/stale/mismatched seals grant nothing; the worker independently revalidates at kickoff.
 - Before the first handoff, preparation, branch, launch, batch-readback, or roster-validation failure closes only agents launched by this batch and cleans only new branches created by this batch. Preserve worker worktrees, tabs, and dependencies. Release only an owned lock after proven rollback; ambiguous rollback retains the lock and asks the human.
 - After the first handoff is sent, never roll back, clean, reset, delete, or close any batch branch or agent: a later send failure or ambiguity preserves all worker branches, worktrees, tabs, agents, and candidates, marks unsent or uncertain Sessions `BLOCKED` for human reconciliation, and never resends or infers delivery. Main remains non-waiting and does not poll.
-- Stop when `HERDR_ENV=1` is absent and offer the subagent flow instead. On an ambiguous or failed Herdr response, use the owned rollback rule and stop.
+- Stop and offer `chanks-3-paralelo` when `HERDR_ENV=1` is absent. On an ambiguous or failed Herdr response, use the owned rollback rule and stop.
 - Never load `torre-control`, never read or write `.git/control-tower/ACTIVE` or `~/.local/share/control-tower/`, and never answer a blocked agent's question for the human outside that exact inbound human-decision `reply`.
 - The dispatched agent commits only on `work/<id>`; it never pushes master and never writes `openspec/plan.yaml`. The responsible parent integrates one Sesión at a time and solely writes `openspec/plan.yaml`.
 - A later disconnect creates no polling, retry, inferred completion, transport fallback, or autonomous resume. Human reactivation and reapproval are required before any new dispatch.
@@ -142,7 +152,8 @@ issue/approval alone does not grant a live seat or mutation.
    commit OID in master history; conflict or an unverified rewrite stops. If master
    has advanced, rerun exact active compatibility and obtain fresh human approval
    of the new base before integration; do not silently rebase or reuse the old
-   approval. Integration/closure precede patch retirement.
+   approval. Integration/closure precede patch retirement; closure follows
+   `references/issue-patch-closure.md`.
 
 Report the issue/approval/base, exact set comparisons, worker/branch/actual Pi
 session identity, confirmed or uncertain delivery, and each stop reason. On terminal,
@@ -275,7 +286,7 @@ Session rule, first-dispatch rule, or Session reactivation rule.
 
 | Condition | Action |
 |---|---|
-| No complete human list, a listed Sesión is not `LISTO`, a declared worker is not Pi, or the `AGENTS.md` declaration is incomplete | Release only an owned lock, create nothing, and report the failed prerequisite. |
+| No complete human list, a listed Sesión is not `LISTO`, a declared worker is not Pi, or the worker-pool declaration is incomplete | Release only an owned lock, create nothing, and report the failed prerequisite. |
 | `chanks-0-jornada`'s stage-3 dispatch entry reports a dirty or OCUPADO seat | Report its evidence; ask exactly one decision (deliver, save, or discard); until the human decides, the whole batch does not proceed — release only the owned lock and launch nothing; never clean, stash, or reset it automatically. The human may instead give a new explicit complete list without that seat, which is a fresh dispatch request. |
 | `jornada.sh` is missing at the target repository root, exits non-zero, or its `--ejecutar` output reports a partial failure (`chanks-0-jornada`'s failure-signal definition: a line with `FALLO`, `CONFLICTO`, or `ABORTADO`, or a non-zero exit) | Release only the owned lock and launch nothing; report the exact output; ask the human; never retry or work around it. |
 | The batch has a Cimiento or Recurso conflict, duplicate/undeclared/unapt worker, branch collision, or any failed reservation | Release only an owned lock; launch zero agents. Do not dispatch a prefix of the batch. |
@@ -287,12 +298,12 @@ Session rule, first-dispatch rule, or Session reactivation rule.
 | After the first handoff, a send fails or is ambiguous | Preserve all branches, worktrees, tabs, agents, and candidates; mark unsent or uncertain Sessions `BLOCKED` for human reconciliation. Never roll back, resend, infer delivery, wait, or poll. |
 | A later Intercom disconnect occurs | Do not poll, retry, infer completion, use a transport fallback, or resume; require human reactivation and reapproval before a new dispatch. |
 | A worker-initiated human-decision `ask` times out | Preserve the worktree and candidate as `BLOCKED`; never guess the answer or report completion. |
-| `HERDR_ENV` is not `1` | Stop; offer the subagent flow. |
+| `HERDR_ENV` is not `1` | Stop; offer `chanks-3-paralelo`. |
 | The responsible parent recorded a dispatched Sesión's delivery | Run the persistent-worker retire mode in `references/retiro.md`. |
 
 ## Execution Steps
 
-1. Read the complete reusable worker-pool declaration from repository `AGENTS.md`. Reject missing or incomplete declaration before creating branches or agents.
+1. Read the complete reusable worker-pool declaration (`references/worker-pool.md` for Control Tower). Reject missing or incomplete declaration before creating branches or agents.
 2. Acquire the lock exactly through `references/retiro.md`'s `## Shared lock protocol`, including its bounded stale-lock recovery; prove byte-identical ownership before any release. Use only its normal-acquisition or expressly authorized recovery path; every other pre-existing, partial, unreadable, ambiguous, or foreign state stops without mutation.
 3. Under the acquired lock, right after lock acquisition and before the next step, invoke `chanks-0-jornada` in its stage-3 dispatch entry mode: diagnosis plus `jornada.sh --ejecutar` only, never `--reciclar`. It is invoked under the dispatch lock, never before it is acquired, because `jornada.sh --ejecutar` mutates worktrees. A clean-but-behind declared seat is now current, brought up from verified master; this dispatch still creates each reserved `work/<id>` branch itself later in this procedure. A dirty or OCUPADO seat surfaces its evidence and exactly one human decision (deliver, save, or discard); until the human decides, the whole batch does not proceed — release only the owned lock and launch nothing. Dispatch never drops a seat on its own; the human may instead give a new explicit complete list without that seat, which is a fresh dispatch request. It is never cleaned, stashed, or reset automatically. A missing seat keeps the existing provisioning path below. If `jornada.sh` is missing at the target repository root, exits non-zero, or its `--ejecutar` output reports a partial failure (`chanks-0-jornada`'s failure-signal definition: a line with `FALLO`, `CONFLICTO`, or `ABORTADO`, or a non-zero exit), stop, release only the owned lock, launch nothing, report the exact output, and ask the human; never retry or work around it, and do not proceed to the next step on unverified state.
 4. Under the acquired lock, fetch and confirm local master equals remote master; that commit is the base. Re-read `radar status` and `radar sesion <ID>` for every human-selected Session.
@@ -301,7 +312,7 @@ Session rule, first-dispatch rule, or Session reactivation rule.
 7. For each reserved absent explicitly provisionable slot, Provision its persistent worktree and tab once from the verified master, run the declared preparation, and record the created tab from Herdr JSON; it then remains persistent. For every existing worker, run declared preparation only when the declaration proves the environment missing or stale; otherwise perform zero reinstall. Create each reserved fresh `work/<id>` branch from the verified master in its persistent declared worktree; any late conflict triggers rollback before any agent launch.
 8. Open or reuse only the declared worker's Herdr tab, which is existing or provisioned, start a new Pi agent named after the Session, and record the tab, agent and actual Pi session ID from Herdr JSON. Do not predict IDs.
 9. Read back every agent launched by this batch, then complete one fresh Intercom live-roster readback and identity validation for every worker in the batch, matching the actual Herdr Pi session ID to the live roster's session ID, the human-approved alias, declared tab and cwd/worktree, and the reserved branch to fresh Git readback. Never substitute an alias or tab for a missing Pi session ID. Any failed or ambiguous batch readback or identity sends nothing and uses the pre-send owned rollback rule.
-10. Only after every worker passes, send the independent fire-and-forget handoffs from `../chanks-0-agente-soporte/assets/assignment-implementation.md` with Intercom `send`; carry the full valid approved unattended seal when present. The worker runs `../chanks-3-session-kickoff/SKILL.md` inside its own tab. Two approved Pi workers receive independent fire-and-forget handoffs: ordinary `send` has no wait timeout, so Main sends worker 2 without waiting for worker 1; Main returns after the delivery result for each handoff; Main performs no ordinary `herdr agent wait`, `prompt --wait`, poll, or `intercom ask`. Persist the atomic marker only for each confirmed exact Session/worker/cwd handoff; no marker for ambiguous delivery. After the first send, any later send failure or ambiguity preserves all batch artifacts and marks unsent or uncertain Sessions `BLOCKED` for human reconciliation; never resend, infer delivery, or roll back.
+10. Only after every worker passes, send the independent fire-and-forget handoffs from `assets/worker-handoff.md` with Intercom `send`; carry the full valid approved unattended seal when present. The worker runs `../chanks-3-session-kickoff/SKILL.md` inside its own tab. Two approved Pi workers receive independent fire-and-forget handoffs: ordinary `send` has no wait timeout, so Main sends worker 2 without waiting for worker 1; Main returns after the delivery result for each handoff; Main performs no ordinary `herdr agent wait`, `prompt --wait`, poll, or `intercom ask`. Persist the atomic marker only for each confirmed exact Session/worker/cwd handoff; no marker for ambiguous delivery. After the first send, any later send failure or ambiguity preserves all batch artifacts and marks unsent or uncertain Sessions `BLOCKED` for human reconciliation; never resend, infer delivery, or roll back.
 11. Workers send progress to Main through Intercom and send terminal `COMPLETED`, `BLOCKED`, or `FAILED` events; every progress and terminal `send` identifies the exact Sesión and worker. The worker reports terminal result evidence. A true human decision uses a worker-initiated `ask`; Main answers only an exact inbound human-decision request with `reply`, carrying the human's answer, never an unthreaded substitute or its own `ask`. Main never initiates `ask`. If that `ask` times out, preserve the worktree and candidate as `BLOCKED`; do not guess the answer or report completion.
 12. A later disconnect creates no polling, retry, inferred completion, transport fallback, or autonomous resume. Require human reactivation and reapproval before a new dispatch. After the responsible parent integrates and records a Sesión, run the retire mode in `references/retiro.md`.
 
@@ -322,6 +333,11 @@ human's decision or a fresh dispatch request without that seat.
 ## References
 
 - `references/retiro.md`
+- `references/dispatch-protocol.md`
+- `references/issue-patch-closure.md`
+- `references/worker-pool.md`
+- `assets/worker-handoff.md`
+- `assets/issue-patch-handoff.md`
 - `herdr` skill, emitted by `herdr --skill`
-- `../chanks-0-agente-soporte/SKILL.md`
+- `../chanks-3-paralelo/SKILL.md` — the V1 route for ordinary parallel work
 - `../chanks-3-session-kickoff/SKILL.md`

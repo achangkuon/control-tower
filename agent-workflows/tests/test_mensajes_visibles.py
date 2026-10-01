@@ -39,20 +39,18 @@ class MensajesVisiblesTests(unittest.TestCase):
             self.assertIn(heading, self.skill)
         self.assertLess(len(self.skill.split()), 701)
 
-    def test_planner_has_one_unnumbered_preamble_before_the_unchanged_eight_steps(self):
-        preamble = self.planner.split("## Visible Messages Preamble", 1)[1].split(
-            "## Execution Steps", 1
-        )[0]
+    def test_planner_does_not_wire_the_skill_in_as_a_planning_step(self):
         steps = self.planner.split("## Execution Steps", 1)[1].split("## Output Contract", 1)[0]
 
-        self.assertEqual(self.planner.count("## Visible Messages Preamble"), 1)
-        self.assertIn(f"../{SKILL_NAME}/SKILL.md", preamble)
-        self.assertNotIn("0.", preamble)
+        self.assertNotIn("## Visible Messages Preamble", self.planner)
+        self.assertIn(f"../{SKILL_NAME}/SKILL.md", self.planner)
+        self.assertIn("only when the human asks", self.planner)
         self.assertEqual(
             [line.split(".", 1)[0] for line in steps.splitlines() if line[:1].isdigit() and ". " in line],
             [str(number) for number in range(1, 9)],
         )
         self.assertNotIn("9.", steps)
+        self.assertIn("Load only when the human asks", self.skill)
 
     def test_skill_returns_a_suggestion_or_a_nonblocking_no_message_result(self):
         for phrase in (

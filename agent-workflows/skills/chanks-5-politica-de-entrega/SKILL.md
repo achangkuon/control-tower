@@ -1,15 +1,15 @@
 ---
 name: chanks-5-politica-de-entrega
-description: "Trigger: política de entrega, delivery policy, onboarding de repo, stage 5. Detecta, declara o lee la política de entrega del repositorio y enruta su ejecución."
+description: "Trigger: Chanks política de entrega, declarar delivery policy de un repo, onboarding de repo, stage 5. Detecta, declara o lee la política de entrega del repositorio y la informa."
 license: Apache-2.0
 metadata:
   author: gentleman-programming
-  version: "2.0"
+  version: "3.0"
 ---
 
 ## Activation Contract
 
-En etapas 1–2, activa para declarar o reparar el único bloque machine-readable de política de entrega de un repositorio. En stage 5, lee la política vigente para enrutar la entrega sin modificarla.
+En etapas 1–2, activa para declarar o reparar el único bloque machine-readable de política de entrega de un repositorio. En stage 5, lee la política vigente del repositorio y la informa sin modificarla; Gentle AI entrega siguiéndola.
 
 ## Hard Rules
 
@@ -20,7 +20,7 @@ En etapas 1–2, activa para declarar o reparar el único bloque machine-readabl
 - No alteres pisos de seguridad ni agregues campos fuera del esquema.
 - Repará el bloque existente; no agregues un segundo.
 - En stage 5, sólo leé: ni una declaración ausente ni evidencia contradictoria autoriza escribir o inventar un default.
-- La referencia de 400 líneas y el requisito issue-first de una skill enrutada se aplican sólo si la política de este repositorio los declara; no son bloqueos universales.
+- El tamaño y la división del cambio siguen la guía nativa de Gentle AI; Chanks no agrega regla de tamaño. El requisito issue-first de una skill enrutada se aplica sólo si la política de este repositorio lo declara; no es un bloqueo universal.
 
 ## Decision Gates
 
@@ -32,7 +32,7 @@ En etapas 1–2, activa para declarar o reparar el único bloque machine-readabl
 | Proyecto nuevo | Proponer `pull-request`. |
 | Proyecto nuevo elige push directo | Exigir justificación registrada. |
 | Stage 5, bloque `delivery-policy` válido | Seguir la forma de entrega declarada por el repositorio. |
-| Stage 5, bloque ausente o no interpretable | Detectar evidencia con el mismo orden de etapas 1–2; declarar que falta, mostrar conflictos y pedir decisión al responsable antes de enrutar. |
+| Stage 5, bloque ausente o no interpretable | Detectar evidencia con el mismo orden de etapas 1–2; declarar que falta, mostrar conflictos y pedir decisión al responsable antes de informar una forma de entrega. |
 
 ## Execution Steps
 
@@ -42,16 +42,16 @@ En etapas 1–2, activa para declarar o reparar el único bloque machine-readabl
 4. Mostrá campo, valor propuesto, evidencia y confianza; preguntá sólo por conflictos o huecos.
 5. Con confirmación, escribí un único bloque `delivery-policy` en el archivo canónico y releelo (sólo etapas 1–2).
 
-### Lectura y enrutamiento de stage 5
+### Lectura de stage 5
 
 1. Leé el bloque machine-readable `delivery-policy` del archivo de política del repositorio (por ejemplo, `AGENTS.md`); registrá ruta, campos y valores. No infieras desde el nombre de la rama ni desde una skill genérica si hay un bloque válido.
 2. Si falta el bloque, aplicá la detección de repos existentes en el orden del paso 2; declaralo **missing** y no supongas PR. Si no hay evidencia suficiente o hay señales contradictorias, mostrálas y pedí decisión; un bloque malformado, incompleto o con valores desconocidos no otorga permiso de entrega por omisión. Respetá cualquier fallback restrictivo que declare el repositorio; no lo reinterpretes como una aprobación humana.
-3. Para `direct-push`, enrutá a `work-unit-commits` y a los gates locales de commit/push, sin cargar `branch-pr` ni `chained-pr`. Para `pull-request`, enrutá a `work-unit-commits` y `branch-pr`; usá `chained-pr` sólo cuando la política local o una decisión humana pida dividir cambios grandes en PRs encadenados. No sustituye el gate humano ni los pisos de seguridad.
-4. Interpretá 400 líneas como referencia de revisión y issue-first como requisito sólo donde el repositorio los adopte; ante divergencias entre skills enrutadas y política local, prevalece la política local y se explicita el conflicto, no se inventa un blocker global.
+3. Informá al responsable la forma declarada (`direct-push` o `pull-request`) y los gates locales que el propio repositorio declare; cómo se entrega es de Gentle AI, que sigue esa política. No sustituye el gate humano ni los pisos de seguridad.
+4. Tomá issue-first como requisito sólo donde el repositorio lo adopte; ante divergencias entre una skill y la política local, prevalece la política local y se explicita el conflicto, no se inventa un blocker global.
 
 ## Output Contract
 
-Para etapas 1–2, devuelve tipo de repo, evidencia por señal, propuesta confirmada, bloque/ruta escritos, justificación de cualquier desviación y campos sin declarar. Para stage 5, devuelve ruta y valores leídos (o bloque missing/inválido), evidencia de detección, conflictos, forma de entrega y skills enrutadas; nunca afirma que leyó un bloque ausente.
+Para etapas 1–2, devuelve tipo de repo, evidencia por señal, propuesta confirmada, bloque/ruta escritos, justificación de cualquier desviación y campos sin declarar. Para stage 5, devuelve ruta y valores leídos (o bloque missing/inválido), evidencia de detección, conflictos y forma de entrega; nunca afirma que leyó un bloque ausente.
 
 ## References
 

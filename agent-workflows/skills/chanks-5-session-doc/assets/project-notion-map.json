@@ -1,5 +1,5 @@
 {
-  "_comment": "Bootstrap seed for chanks-7-session-doc. Maps known repos to their Notion page. Match by repo folder name (basename of git toplevel). Used ONLY to create a missing .session-doc.json; the committed pointer is the source of truth thereafter.",
+  "_comment": "Bootstrap seed for chanks-5-session-doc. Maps known repos to their Notion page. Match by repo folder name (basename of git toplevel). Used ONLY to create a missing .session-doc.json; the committed pointer is the source of truth thereafter.",
   "projects": [
     {
       "match": ["Servi-Task-U", "Servitask", "servi-task", "servitask"],

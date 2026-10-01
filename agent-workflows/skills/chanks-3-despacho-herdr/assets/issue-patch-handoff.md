@@ -33,8 +33,8 @@ restores an approved flow; new product outcome, API, permissions, migration or d
 changes require a product Session. Do not run Session kickoff, claim LISTO, create a
 `radar.despacho/v1` marker, or write `openspec/plan.yaml`.
 
-Run configured focused checks and applicable native review. Commit only to the
-issue branch after ordinary authorization; do not push or integrate from this seat.
+Gentle AI decides how the patch is implemented, checked, reviewed and committed. Work
+only on the issue branch; do not push or integrate from this seat.
 Send progress and `COMPLETED`, `BLOCKED`, or `FAILED` with the issue, actual Pi
 session ID, worker, branch, full immutable commit OID (if any), changed-file list,
 check evidence and candidate state. A delivery receipt is not completion. If

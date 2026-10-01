@@ -15,6 +15,9 @@ radar zonas                         # cobertura de la partición sobre git ls-fi
 radar roadmap                       # alternativas LISTO, compatibilidad e hipotéticos (previsión)
 radar render                        # escribe openspec/ROADMAP.md atómicamente
 radar render -f otro.yaml -o salida.md -C /repo
+radar marcar S114 --worktree /ruta/absoluta [--worker nombre]   # LISTO -> EN CURSO
+radar marcar S114 --listo           # testigo local de "listo para revisión" (etapa 5)
+radar desmarcar S114                # quita el marcador (cierre o abandono)
 ```
 
 El contrato canónico está en
@@ -311,6 +314,38 @@ parámetro a la misma derivación de estados, nunca como mutación.
 acceso y no supone que la coordinación esté instalada. La admisión sigue siendo la de siempre, y
 la capacidad nueva depende de que sus consumidores se integren, verifiquen y activen en S146.
 El reporte lo dice en su propia salida para que nadie lo cite como permiso.
+
+## `radar marcar` / `radar desmarcar` — marcador de despacho sin Herdr
+
+`EN CURSO` sólo se deriva de un marcador vivo `<git-common-dir>/chanks/despachos/<ID>.json`
+(esquema `radar.despacho/v1`). Estos dos comandos son los únicos que escriben o quitan ese archivo
+(y nada más bajo el directorio común de Git); sirven para despachar sin Herdr, p. ej. con subagentes
+de Gentle AI, cada uno en su propio worktree. Los marcadores que escribe Herdr siguen siendo válidos.
+
+- `marcar <ID> --worktree <ruta>` exige: Sesión existente y `LISTO`, ruta absoluta normalizada que sea
+  la raíz de un worktree del mismo repositorio, HEAD en una rama con commits, worker sin espacios ni
+  barras (por defecto, el nombre del directorio) y ningún marcador previo (nunca se sobrescribe, ni
+  siquiera uno huérfano). Escritura atómica: temporal en el mismo directorio y `link`, que falla si el
+  nombre existe. Un rechazo no modifica nada.
+- `marcar` además rechaza, con exit 1, a una Sesión que choque con otra ya `EN CURSO` (marcador vivo):
+  reusa `clasificarPar` sobre los dos registros y sólo deja pasar `compatible`; el mensaje nombra a la
+  otra Sesión, la clase y el detalle (p. ej. el archivo). `cimiento-compartido` también se rechaza: exige
+  intervención coordinada sobre ese archivo exacto y no hay anulación. Los marcadores huérfanos o
+  inválidos no cuentan como Sesión viva. También rechaza un worktree o una rama que cualquier otro
+  marcador (vivo o huérfano) ya nombre; el checkout primario admite una sola Sesión. Si en lugar del
+  marcador hay un directorio o un enlace (aun colgante), `marcar` pide quitarlo a mano y nombra la ruta.
+- `marcar <ID> --listo` agrega al marcador vivo el testigo `transport:"local"`, que la etapa 5 acepta
+  igual que `"intercom"`; el resto de requisitos de la etapa 5 (p. ej. la lista `odd/tasks/<id>*.md`
+  cerrada) no cambia. No acepta `--worktree` ni `--worker`.
+- `desmarcar <ID>` borra exactamente `<despachos>/<ID>.json`, también si está huérfano o es inválido
+  (ése es su propósito); rechaza si no existe, si el ID está mal formado o si el nodo no es un archivo
+  regular. Nunca toca worktrees, ramas ni el plan.
+- Ninguno sigue enlaces simbólicos en `chanks/` ni en `despachos/`.
+
+**Limitaciones conocidas.** `marcar --listo` lee, modifica y renombra sin candado: dos `--listo`
+simultáneos sobre la misma Sesión pueden pisarse. Un `kill -9` en plena escritura puede dejar un
+temporal `.<ID>.json.tmp-<pid>` en `despachos/` que ningún comando limpia. Ninguna de las dos
+se corrige aquí; ambas se aceptan para V1.
 
 ## `radar faltan` — todo lo que falta, por meta
 

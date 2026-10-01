@@ -57,13 +57,11 @@ remains; this contract does not enable future file-parallel behavior.
 A Jornada is a workday, a Conversación is one human-agent interaction, and a Sesión is the
 product work unit closed by integrated delivery evidence. Do not use those terms as aliases.
 
-## 6. Review size
+## 6. Implementation size
 
-A Session may contain several technical implementation steps. The 400-line planning/review reference
-counts authored implementation additions plus deletions, excluding planning or generated artifacts.
-Before exceeding it, ask the maintainer to split into sequential verifiable reversible units or
-approve an explicit exception. It is a reference, not a quota to consume or divide; never golf code,
-tests, or documentation to fit a number. Record the human decision as evidence, not a new hierarchy
+A Session may contain several technical implementation steps. Size and slicing of that implementation
+follow Gentle AI's native guidance; Chanks adds no size rule and asks no size question. Never golf
+code, tests, or documentation to fit a number, and never turn a size decision into a new hierarchy
 level or progress index.
 
 ## 7. Banned plan levels
@@ -173,8 +171,7 @@ never inferred or silently recast as an external blocker.
 
 `chanks-2-planificador-granular` is retained by ID for compatibility but prepares a native Session;
 it does not technically decompose product work. It confirms territory, crossings/Cimientos,
-coordination, the four Encargo parts, exact files when known, decisions, authority, and review-size
-forecast. ODD is the default technical execution path. Native ODD creates its own document and
+coordination, the four Encargo parts, exact files when known, decisions, and authority. ODD is the default technical execution path. Native ODD creates its own document and
 Engram continuity record under Gentle AI ownership; those records are subordinate to Radar plan
 status.
 
@@ -185,15 +182,13 @@ legacy fields into a native Session.
 
 When a human explicitly selects SDD for a native Session, run only Gentle AI's existing native SDD
 flow after its actual preflight and authority gates. `archive` is a native SDD control after delivery;
-it is not required for ODD. Strict TDD is forwarded from effective explicit configuration, never
-inferred from test presence. Native technical review occurs inside stage 4 per work-unit commit,
-including the final pending unit before closure; a review outcome never authorizes delivery,
-and archive controls remain native SDD controls.
+it is not required for ODD. Stage 4 belongs to Gentle AI: Chanks prescribes nothing about review
+timing, consent, or delivery gates, and archive controls remain native SDD controls.
 
 ## 16. Resume
 
-Every start/continue/resume first has fresh valid Radar admission bound to exact HEAD, Session ID,
-and digests of exact command stdout. A native Encargo Session resumes the **same Session identity**
+Every start/continue/resume first has fresh valid Radar admission for that Session and the
+current HEAD. A native Encargo Session resumes the **same Session identity**
 by reconciling its native ODD record, actual code, and observed evidence. It does not require a
 first pending Chanks Module. A legacy Session keeps its first pending Módulo resume rule. Rejected
 states have no fallback to kickoff, decision closure, or a repository executable.
@@ -239,8 +234,8 @@ rewrite a frozen product archive. Report unknown historical evidence rather than
 ## 19. Chanks inventory
 
 `chanks-0-` is cross-cutting, including `chanks-0-mensajes-visibles`; `chanks-2-planificador-granular`
-prepares Sessions; `chanks-3-*` admits/routes only; `chanks-4-puente` translates into the authorized
-native flow; and `chanks-5-session-doc` gathers closure evidence. These IDs are compatibility names,
+prepares Sessions; `chanks-3-*` admits/routes only; `chanks-4-puente` hands the Session to Gentle AI
+and receives its delivered commit; and `chanks-5-session-doc` closes a delivered Session. These IDs are compatibility names,
 not hierarchy levels or runtime authority.
 
 ## 20. Compliance checklist
@@ -252,4 +247,4 @@ not hierarchy levels or runtime authority.
 - [ ] Native resume reconciles same identity, record, code and evidence; legacy resume uses first pending Módulo.
 - [ ] No forecast claims a live lock, worker assignment, or topology control.
 - [ ] Technical ODD/Engram records remain subordinate to Radar product authority.
-- [ ] Delivery requires actual Git evidence and ordinary policy; review never authorizes delivery.
+- [ ] Delivery requires actual Git evidence and ordinary repository policy.

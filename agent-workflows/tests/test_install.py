@@ -1,4 +1,5 @@
 import contextlib
+import hashlib
 import importlib.util
 import io
 import json
@@ -21,6 +22,24 @@ INSTALLER = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 sys.modules[SPEC.name] = INSTALLER
 SPEC.loader.exec_module(INSTALLER)
+
+
+BOUNDARY_RULE = (
+    "Chanks decides what is worked on and what runs in parallel. "
+    "Gentle AI decides how it is implemented, reviewed and delivered. "
+    "If they collide, Gentle AI wins."
+)
+STAGE_OWNERSHIP = (
+    "Chanks owns stages 1 Definir, 2 Preparar, 3 Paralelo and 5 Cerrar. "
+    "Stage 4, implementing and reviewing, belongs to Gentle AI"
+)
+BLOCK_SIZE_CEILING = 2000
+V2_SKILLS = (
+    "chanks-3-coordinador-manual",
+    "chanks-3-despacho-herdr",
+    "chanks-4-unattended-implementation",
+    "chanks-0-jornada",
+)
 
 
 class InstallerTests(unittest.TestCase):
@@ -80,97 +99,32 @@ class InstallerTests(unittest.TestCase):
             self.assertEqual(surrounding[path], (content[: match.start()], content[match.end() :]))
             self.assertEqual(modes[path], stat.S_IMODE(path.stat().st_mode))
             self.assertEqual(original_modes[path], stat.S_IMODE(path.stat().st_mode))
-            self.assertIn(ROOT.as_posix().encode(), content)
+            self.assertNotIn(ROOT.as_posix().encode(), content)
             self.assertEqual(content.count(INSTALLER.START_MARKER), 1)
-            self.assertEqual(content.count(INSTALLER.GATEKEEPER_START_MARKER), 1)
-            self.assertIsNotNone(INSTALLER.GATEKEEPER_BLOCK_RE.search(content))
+            self.assertNotIn(b"SDD-AUTO-GATEKEEPER-POLICY", content)
 
-    def test_installed_manual_admission_contract_exactly_matches_canonical_source(self):
-        source = (ROOT / "templates/session-routing.md").read_text(encoding="utf-8")
-        start_marker = "<!-- SESSION-ADMISSION-CONTRACT:CANONICAL -->"
-        end_marker = "<!-- /SESSION-ADMISSION-CONTRACT:CANONICAL -->"
-        start = source.index(start_marker)
-        end = source.index(end_marker, start) + len(end_marker)
-        canonical = source[start:end]
-        expected = {
-            "intents": ["start", "continue", "resume"],
-            "evidence": {
-                "source": "Radar via the read-only planning evidence helper",
-                "commands": ["radar status --json", "radar sesion <ID>"],
-                "binding": [
-                    "HEAD", "Session ID", "SHA-256(radar status --json exact bytes)",
-                    "SHA-256(radar sesion <ID> exact bytes)",
-                ],
-            },
-            "admissible": {
-                "start": {"states": ["LISTO"]},
-                "continue": {"states": ["LISTO", "EN CURSO"], "requires": {
-                    "native_encargo": "same Session identity plus reconciliation of native ODD record, code, and evidence",
-                    "legacy": "first pending Módulo for legacy",
-                }},
-                "resume": {"states": ["LISTO", "EN CURSO"], "requires": {
-                    "native_encargo": "same Session identity plus reconciliation of native ODD record, code, and evidence",
-                    "legacy": "first pending Módulo for legacy",
-                }},
-                "route": "chanks-3-session-kickoff",
-            },
-            "non_admissible": {
-                "output": ["state", "blocker", "Zone-ordered LISTO choices"],
-                "forbidden_fallbacks": [
-                    "chanks-3-session-kickoff",
-                    "chanks-1-cierre-de-decisiones",
-                ],
-            },
-            "decision_closure": "separate explicit human request for the named decision",
-            "semantics": {
-                "seats": "compatible capacity, never assigned agents",
-                "queue": "Zone-ordered rows and length, never assigned agents",
-                "listo_choices": "count of current LISTO choices, never assigned agents",
-            },
-            "tower_boundary": "manual-only; no Tower runtime or skills",
-        }
-
+    def test_installed_block_carries_the_boundary_rule_and_no_admission_contract(self):
         INSTALLER.apply(self.home, ROOT)
         for path in INSTALLER.manual_paths(self.home):
             match = INSTALLER.BLOCK_RE.search(path.read_bytes())
             self.assertIsNotNone(match, path)
             assert match is not None
-            installed = match.group().decode("utf-8")
-            self.assertEqual(installed.count(start_marker), 1, path)
-            self.assertEqual(installed.count(end_marker), 1, path)
-            installed_start = installed.index(start_marker)
-            installed_end = installed.index(end_marker, installed_start) + len(end_marker)
-            self.assertEqual(installed[installed_start:installed_end], canonical, path)
-            payload_start = installed.index("```json", installed_start) + len("```json")
-            payload_end = installed.index("```", payload_start)
-            self.assertEqual(json.loads(installed[payload_start:payload_end]), expected, path)
+            text = " ".join(match.group().decode("utf-8").split())
+            self.assertIn(BOUNDARY_RULE, text, path)
+            self.assertIn(STAGE_OWNERSHIP, text, path)
+            self.assertNotIn("SESSION-ADMISSION-CONTRACT", text, path)
+            self.assertNotIn("```json", text, path)
+            self.assertLessEqual(len(match.group()), BLOCK_SIZE_CEILING, path)
 
-    def test_installed_session_routing_keeps_odd_default_and_sdd_explicit(self):
+    def test_installed_block_does_not_route_to_v2_dispatch_skills(self):
         INSTALLER.apply(self.home, ROOT)
         for path in INSTALLER.manual_paths(self.home):
             match = INSTALLER.BLOCK_RE.search(path.read_bytes())
             self.assertIsNotNone(match, path)
             assert match is not None
-            text = b" ".join(match.group().split())
-            self.assertIn(b"ODD is default", text, path)
-            self.assertIn(b"explicit human `solicitud_sdd`", text, path)
-            self.assertIn(b"same Session identity", text, path)
-            self.assertIn(b"first pending M\xc3\xb3dulo for legacy", text, path)
-            self.assertIn(b"review outcome never authorizes delivery", text, path)
-            self.assertNotIn(b"one shared SDD pipeline", text, path)
-            self.assertNotIn(b"`session-plan`", text, path)
-
-    def test_installed_session_routing_preserves_native_authority_boundaries(self):
-        INSTALLER.apply(self.home, ROOT)
-        for path in INSTALLER.manual_paths(self.home):
-            match = INSTALLER.BLOCK_RE.search(path.read_bytes())
-            self.assertIsNotNone(match, path)
-            assert match is not None
-            normalized = b" ".join(match.group().split())
-            self.assertIn(b"Radar is the only admission binary", normalized, path)
-            self.assertIn(b"Forecasts reserve nothing live", normalized, path)
-            self.assertIn(b"do not grant execution", normalized, path)
-            self.assertIn(b"fake topology control", normalized, path)
+            text = match.group().decode("utf-8")
+            for skill in V2_SKILLS:
+                self.assertNotIn(skill, text, path)
 
     def test_all_runtime_skill_paths_match_canonical_source(self):
         INSTALLER.apply(self.home, ROOT)
@@ -186,8 +140,7 @@ class InstallerTests(unittest.TestCase):
         skill_path.chmod(0o644)
         skill_path.write_bytes(skill_path.read_bytes() + b"\nDRIFT\n")
         manual_path = self.home / ".pi/agent/APPEND_SYSTEM.md"
-        drifted = manual_path.read_bytes().replace(ROOT.as_posix().encode(), b"/wrong")
-        drifted = drifted.replace(b"Proportional Automatic SDD Gatekeeper", b"Drifted Gatekeeper")
+        drifted = manual_path.read_bytes().replace(b"Gentle AI wins", b"Chanks wins")
         manual_path.write_bytes(drifted)
         result = subprocess.run(
             [sys.executable, str(SCRIPT), "--check", "--home", str(self.home)],
@@ -267,11 +220,10 @@ class InstallerTests(unittest.TestCase):
         for path in INSTALLER.manual_paths(self.home):
             content = path.read_bytes()
             ranges = INSTALLER._managed_ranges(content, path)
-            for pattern in (INSTALLER.BLOCK_RE, INSTALLER.GATEKEEPER_BLOCK_RE):
-                match = pattern.search(content)
-                self.assertIsNotNone(match)
-                assert match is not None
-                self.assertTrue(all(not (start < match.end() and match.start() < end) for start, end in ranges))
+            match = INSTALLER.BLOCK_RE.search(content)
+            self.assertIsNotNone(match)
+            assert match is not None
+            self.assertTrue(all(not (start < match.end() and match.start() < end) for start, end in ranges))
 
     def test_install_preserves_unrelated_manual_block(self):
         unrelated = b"<!-- OWNER-NOTES:MANUAL -->\nkeep me\n<!-- /OWNER-NOTES:MANUAL -->\n"
@@ -296,10 +248,10 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(path.read_bytes(), nested)
         self.assertFalse((self.home / ".agents").exists())
 
-    def test_rejects_duplicate_gatekeeper_block_before_mutation(self):
+    def test_rejects_duplicate_session_routing_block_before_mutation(self):
         path = self.home / ".pi/agent/APPEND_SYSTEM.md"
-        gatekeeper = (ROOT / "templates/sdd-auto-gatekeeper-policy.md").read_bytes()
-        path.write_bytes(path.read_bytes() + gatekeeper + gatekeeper)
+        block = INSTALLER.render_manual_block(ROOT)
+        path.write_bytes(path.read_bytes() + block + block)
         before = {item: item.read_bytes() for item in INSTALLER.manual_paths(self.home)}
 
         with self.assertRaises(INSTALLER.InstallError):
@@ -307,59 +259,16 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(before, {item: item.read_bytes() for item in INSTALLER.manual_paths(self.home)})
         self.assertFalse((self.home / ".agents").exists())
 
-    def test_rejects_gatekeeper_block_nested_in_section_block_before_mutation(self):
-        path = self.home / ".codex/AGENTS.md"
-        gatekeeper = (ROOT / "templates/sdd-auto-gatekeeper-policy.md").read_bytes()
-        path.write_bytes(
-            path.read_bytes()
-            + b"<!-- section:model-capable -->\n"
-            + gatekeeper
-            + b"<!-- /section:model-capable -->\n"
-        )
-        before = {item: item.read_bytes() for item in INSTALLER.manual_paths(self.home)}
-
-        with self.assertRaises(INSTALLER.InstallError):
-            INSTALLER.apply(self.home, ROOT)
-        self.assertEqual(before, {item: item.read_bytes() for item in INSTALLER.manual_paths(self.home)})
-        self.assertFalse((self.home / ".agents").exists())
-
-    def test_rejects_nested_owned_blocks_before_mutation(self):
+    def test_gatekeeper_policy_is_no_longer_owned_by_the_installer(self):
+        self.assertFalse((ROOT / "templates/sdd-auto-gatekeeper-policy.md").exists())
+        self.assertEqual([entry[0] for entry in INSTALLER.MANUAL_BLOCKS], ["session-routing.md"])
+        self.assertFalse(hasattr(INSTALLER, "GATEKEEPER_START_MARKER"))
+        legacy = b"<!-- SDD-AUTO-GATEKEEPER-POLICY:MANUAL -->\nlegacy\n<!-- /SDD-AUTO-GATEKEEPER-POLICY:MANUAL -->\n"
         path = self.home / ".claude/CLAUDE.md"
-        session = path.read_bytes()
-        gatekeeper = (ROOT / "templates/sdd-auto-gatekeeper-policy.md").read_bytes()
-        malformed_inputs = (
-            (
-                "session-routing",
-                session.replace(
-                    b"- old runtime path\n",
-                    b"- old runtime path\n" + gatekeeper,
-                ),
-            ),
-            (
-                "gatekeeper",
-                INSTALLER.GATEKEEPER_START_MARKER
-                + b"\n"
-                + session
-                + INSTALLER.GATEKEEPER_END_MARKER
-                + b"\n",
-            ),
-        )
-
-        for outer, malformed in malformed_inputs:
-            with self.subTest(outer=outer):
-                self._seed_runtime()
-                path.write_bytes(malformed)
-                before = {
-                    item: item.read_bytes() for item in INSTALLER.manual_paths(self.home)
-                }
-
-                with self.assertRaises(INSTALLER.InstallError):
-                    INSTALLER.apply(self.home, ROOT)
-                self.assertEqual(
-                    before,
-                    {item: item.read_bytes() for item in INSTALLER.manual_paths(self.home)},
-                )
-                self.assertFalse((self.home / ".agents").exists())
+        path.write_bytes(path.read_bytes() + legacy)
+        desired = INSTALLER.desired_manual_content(path, INSTALLER.render_manual_blocks(ROOT))
+        self.assertIn(legacy, desired)
+        self.assertEqual(desired.count(INSTALLER.START_MARKER), 1)
 
     def test_wrong_type_destination_is_rejected_before_any_mutation(self):
         wrong_type = self.home / ".agents/skills/chanks-4-puente/SKILL.md"
@@ -555,14 +464,14 @@ class InstallerTests(unittest.TestCase):
     def test_native_kickoff_reconciles_identity_without_inventing_a_route(self):
         content = (ROOT / "skills/chanks-3-session-kickoff/SKILL.md").read_text(encoding="utf-8")
         hard_rules = content.split("## Hard Rules", 1)[1].split("## Decision Gates", 1)[0]
-        execution = content.split("## Execution Steps", 1)[1].split("## Output Contract", 1)[0]
 
         self.assertIn("same Session identity", hard_rules)
         self.assertIn("first pending Módulo for legacy", hard_rules)
-        self.assertIn("explicit human `solicitud_sdd`", hard_rules)
-        self.assertNotIn("three canonical routes", hard_rules)
-        self.assertIn("native record, code, and evidence", execution)
-        self.assertIn("Do not write a route revalidation for native ODD", execution)
+        self.assertIn("native record, code, and evidence", hard_rules)
+        self.assertNotIn("three canonical routes", content)
+        # SDD-vs-ODD selection is Gentle AI's: kickoff admits, it never routes.
+        self.assertNotIn("solicitud_sdd", content)
+        self.assertNotIn("route revalidation", content)
 
 
     def test_all_tower_skills_are_archived_without_installing_candidates(self):
@@ -624,24 +533,22 @@ class InstallerTests(unittest.TestCase):
         self.assertNotIn("MAIN", content)
         self.assertNotIn("Tower", content)
 
-    def test_routing_preserves_resource_evidence_without_a_fictitious_lock(self):
-        content = (
-            ROOT / "templates/session-routing.md"
-        ).read_text(encoding="utf-8")
+    def test_routing_leaves_resource_mechanics_to_the_kickoff_skill(self):
+        content = (ROOT / "templates/session-routing.md").read_text(encoding="utf-8")
 
-        self.assertIn("Recurso", content)
-        self.assertIn("confirmed exclusive or serial execution evidence", content)
-        self.assertIn("release only actual resources", content)
-        self.assertNotIn("fictitious", content)
+        self.assertNotIn("Recurso", content)
+        self.assertNotIn("exclusive or serial", content)
+        self.assertIn("chanks-3-session-kickoff", content)
 
     def test_routing_selects_next_work_only_from_the_radar_queue(self):
         content = (
             ROOT / "templates/session-routing.md"
         ).read_text(encoding="utf-8")
 
-        self.assertIn("radar status", content)
+        self.assertIn("radar status --json", content)
         self.assertIn("`LISTO`", content)
-        self.assertIn("never selects work", content)
+        self.assertIn("Radar never selects work", content)
+        self.assertIn("Zona order", content)
 
     def test_renamed_runtime_trees_are_archived_without_losing_nested_user_bytes(self):
         runtime = INSTALLER.runtime_skill_roots(self.home)[0]
@@ -673,6 +580,323 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
 
 
+class RetiredSkillFileTests(unittest.TestCase):
+    # Portable byte fixtures exercise the same digest/path registry without depending
+    # on Git history. Historical digest identities are pinned separately below.
+    HISTORICAL_DIGESTS = {
+        "chanks-0-agente-soporte/assets/assignment-readonly.md": (
+            "1066822ccc072dc21cd5dd67965cbbcf0a03b186d276a70b593d26e4e0c8d72f",
+            "9b35256b723d835665783739526a12497bf037c822521c498850a3bf253bc622",
+        ),
+        "chanks-0-agente-soporte/references/contrato-no-interferencia.md": (
+            "c9f5b2db842d9b4751ab2a86a94cd7c30d7d538f433f4165674a5db88d6edf61",
+            "b2c15bc842cc310b06489f3160d4e75a9ca111cf59bab525d1024000de7e981e",
+        ),
+        "chanks-0-agente-soporte/references/unidad-ejecutable.md": (
+            "2d78b7322467476ce1e8c127f5ce746c62e9adb392d4ec8c8d4bac2cd8baf322",
+            "a5362b5289abf87269ffbf879ab55976205cf0485cfa2c4e4132b20e5626a612",
+        ),
+        "chanks-5-session-doc/references/links.md": (
+            "6d75a865769a7561193f06bb5f2f86f39d65b1911e6337a0a11077c863b6885b",
+        ),
+    }
+
+    def setUp(self):
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tempdir.cleanup)
+        self.home = Path(self.tempdir.name) / "home"
+        InstallerTests._seed_runtime(self)
+        self.source = Path(self.tempdir.name) / "source"
+        shutil.copytree(ROOT, self.source)
+        for relative in (
+            "tools/carril", "tools/hooks/chanks-etapa.sh",
+            "tools/hooks/torre-firma.sh", "tools/pi/pi-npm-host-peers",
+        ):
+            (self.source / relative).chmod(0o755)
+        self.payloads = {
+            relative: tuple(f"old fixture {relative} v{index}\n".encode()
+                            for index in range(len(digests)))
+            for relative, digests in self.HISTORICAL_DIGESTS.items()
+        }
+        self.registry = {
+            relative: frozenset(hashlib.sha256(payload).hexdigest() for payload in payloads)
+            for relative, payloads in self.payloads.items()
+        }
+
+    def seed(self, runtime, relative, payload=None):
+        destination = runtime / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(payload if payload is not None else self.payloads[relative][0])
+        return destination
+
+    def snapshot(self):
+        return tuple(
+            (str(path.relative_to(self.home)),
+             os.readlink(path) if path.is_symlink() else
+             (path.read_bytes() if path.is_file() else None))
+            for path in sorted(self.home.rglob("*"))
+        )
+
+    def archived(self, runtime, relative):
+        return list((runtime / ".retired-skills/files").glob(f"*/{relative}"))
+
+    def registry_patch(self):
+        return mock.patch.object(INSTALLER, "RETIRED_SKILL_FILES", self.registry, create=True)
+
+    def test_tombstones_pin_only_all_known_historical_versions(self):
+        self.assertEqual(
+            dict(INSTALLER.RETIRED_SKILL_FILES),
+            {relative: frozenset(digests)
+             for relative, digests in self.HISTORICAL_DIGESTS.items()},
+        )
+
+    def test_all_known_paths_and_versions_archive_identical_bytes_in_every_runtime(self):
+        with self.registry_patch():
+            for version in range(2):
+                seeded = []
+                for runtime in INSTALLER.runtime_skill_roots(self.home):
+                    for relative, payloads in self.payloads.items():
+                        payload = payloads[min(version, len(payloads) - 1)]
+                        seeded.append((runtime, relative, payload, self.seed(runtime, relative, payload)))
+                planned = INSTALLER.build_plan(self.home, self.source)
+                self.assertEqual(
+                    {change.path for change in planned if change.kind == "retired-skill-file"},
+                    {path for _, _, _, path in seeded},
+                )
+                INSTALLER.apply(self.home, self.source)
+                for runtime, relative, payload, path in seeded:
+                    self.assertFalse(path.exists())
+                    self.assertTrue(path.parent.is_dir(), "leave empty skill directories intact")
+                    backups = self.archived(runtime, relative)
+                    self.assertEqual(len(backups), version + 1)
+                    self.assertIn(payload, [backup.read_bytes() for backup in backups])
+                self.assertEqual(INSTALLER.apply(self.home, self.source), [])
+                self.assertEqual(INSTALLER.build_plan(self.home, self.source), [])
+
+    def test_modified_unlisted_and_missing_files_are_not_retired(self):
+        preserved = []
+        for runtime in INSTALLER.runtime_skill_roots(self.home):
+            for relative in self.payloads:
+                preserved.append(self.seed(runtime, relative, b"user edit\x00\n"))
+            preserved.append(self.seed(runtime, "chanks-0-agente-soporte/references/my-notes.md", b"user edit\x00\n"))
+        with self.registry_patch():
+            self.assertFalse(any(change.kind == "retired-skill-file"
+                                 for change in INSTALLER.build_plan(self.home, self.source)))
+            INSTALLER.apply(self.home, self.source)
+            for path in preserved:
+                self.assertEqual(path.read_bytes(), b"user edit\x00\n")
+            for path in preserved:
+                path.unlink()
+            self.assertEqual(INSTALLER.build_plan(self.home, self.source), [])
+
+    def test_reintroduced_source_and_restored_notion_are_never_retirement_candidates(self):
+        runtime = INSTALLER.runtime_skill_roots(self.home)[0]
+        relative = next(iter(self.payloads))
+        self.seed(runtime, relative)
+        self.seed(self.source / "skills", relative, b"reintroduced canonical\n")
+        with self.registry_patch():
+            planned = INSTALLER.build_plan(self.home, self.source)
+            self.assertFalse(any(change.kind == "retired-skill-file" for change in planned))
+            INSTALLER.apply(self.home, self.source)
+        self.assertEqual((runtime / relative).read_bytes(), b"reintroduced canonical\n")
+        for _, nested, source in INSTALLER.source_files(self.source):
+            if "notion" in str(nested) or "session-doc" in source.name:
+                installed = runtime / source.relative_to(self.source / "skills")
+                self.assertEqual(installed.read_bytes(), source.read_bytes())
+        self.assertEqual(self.archived(runtime, relative), [])
+
+    def test_unsafe_retired_and_archive_paths_fail_before_any_writes(self):
+        relative = next(iter(self.payloads))
+        external = Path(self.tempdir.name) / "external"
+        external.mkdir()
+        sentinel = external / "sentinel"
+        sentinel.write_bytes(b"outside owned surface")
+        for unsafe in (relative, str(Path(relative).parent), ".retired-skills", ".retired-skills/files"):
+            for kind in ("symlink", "wrong-type"):
+                with self.subTest(unsafe=unsafe, kind=kind):
+                    shutil.rmtree(self.home)
+                    InstallerTests._seed_runtime(self)
+                    runtime = INSTALLER.runtime_skill_roots(self.home)[0]
+                    target = runtime / unsafe
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    if kind == "symlink":
+                        target.symlink_to(external, target_is_directory=True)
+                    elif unsafe == relative:
+                        target.mkdir()
+                    else:
+                        target.write_bytes(b"not a directory")
+                    before = self.snapshot()
+                    with self.registry_patch(), self.assertRaises(INSTALLER.InstallError):
+                        INSTALLER.apply(self.home, self.source)
+                    self.assertEqual(self.snapshot(), before)
+                    self.assertEqual(sentinel.read_bytes(), b"outside owned surface")
+                    self.assertEqual(list(external.iterdir()), [sentinel])
+                    if target.is_symlink() or target.is_file():
+                        target.unlink()
+                    else:
+                        target.rmdir()
+
+    def test_escaping_tombstone_fails_before_any_writes(self):
+        self.registry["../outside.md"] = frozenset()
+        before = self.snapshot()
+        with self.registry_patch(), self.assertRaises(INSTALLER.InstallError):
+            INSTALLER.apply(self.home, self.source)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_changed_digest_after_planning_is_preserved(self):
+        runtime = INSTALLER.runtime_skill_roots(self.home)[0]
+        relative = next(iter(self.payloads))
+        path = self.seed(runtime, relative)
+        original_copy = INSTALLER._atomic_copy
+
+        def edit_then_copy(*args):
+            path.write_bytes(b"changed after plan\n")
+            return original_copy(*args)
+
+        with self.registry_patch(), mock.patch.object(INSTALLER, "_atomic_copy", side_effect=edit_then_copy):
+            INSTALLER.apply(self.home, self.source)
+        self.assertEqual(path.read_bytes(), b"changed after plan\n")
+        self.assertEqual(self.archived(runtime, relative), [])
+
+    def test_late_install_failure_leaves_obsolete_file_active(self):
+        runtime = INSTALLER.runtime_skill_roots(self.home)[0]
+        relative = next(iter(self.payloads))
+        path = self.seed(runtime, relative)
+        with self.registry_patch(), mock.patch.object(INSTALLER, "install_pi_extension", side_effect=OSError("late failure")):
+            with self.assertRaisesRegex(OSError, "late failure"):
+                INSTALLER.apply(self.home, self.source)
+        self.assertEqual(path.read_bytes(), self.payloads[relative][0])
+        self.assertEqual(self.archived(runtime, relative), [])
+
+    def test_archive_error_preserves_original_and_existing_backup(self):
+        runtime = INSTALLER.runtime_skill_roots(self.home)[0]
+        relative = next(iter(self.payloads))
+        path = self.seed(runtime, relative)
+        with self.registry_patch():
+            INSTALLER.apply(self.home, self.source)
+            old_backup = self.archived(runtime, relative)[0]
+            self.seed(runtime, relative)
+            with mock.patch.object(INSTALLER.os, "replace", side_effect=OSError("archive failure")):
+                with self.assertRaisesRegex(OSError, "archive failure"):
+                    INSTALLER.apply(self.home, self.source)
+            self.assertEqual(path.read_bytes(), self.payloads[relative][0])
+            self.assertEqual(old_backup.read_bytes(), self.payloads[relative][0])
+
+    def test_same_timestamp_retirements_preserve_both_backups(self):
+        runtime = INSTALLER.runtime_skill_roots(self.home)[0]
+        relative = next(iter(self.payloads))
+        with self.registry_patch(), mock.patch.object(INSTALLER, "datetime") as clock:
+            clock.now.return_value.strftime.return_value = "20261001T000000Z"
+            for payload in self.payloads[relative]:
+                self.seed(runtime, relative, payload)
+                INSTALLER.apply(self.home, self.source)
+        backups = self.archived(runtime, relative)
+        self.assertEqual(len(backups), 2)
+        self.assertEqual({path.read_bytes() for path in backups}, set(self.payloads[relative]))
+        self.assertTrue(all(path.relative_to(runtime / ".retired-skills/files").parts[0]
+                            .startswith("20261001T000000Z-") for path in backups))
+
+    def test_cli_dry_run_check_apply_and_clean_check_use_real_historical_bytes(self):
+        # Exact immutable 929ac91 links.md blob, not a fabricated ownership fixture.
+        historical = (
+            "# Skills y herramientas relacionadas\n\n"
+            "- `cognitive-doc-design` — estructura la narrativa de cierre para lectura rápida.\n"
+            "- `chanks-4-puente` — aporta evidencia de `verify`, entrega y, en `full-sdd`, `archive`.\n"
+            "- `chanks-0-agente-soporte` — aplica el delta de evidencia y ejecuta `radar check`/`radar render`.\n"
+            "- Notion MCP `notion-fetch` — lee la página antes de editar.\n"
+            "- Notion MCP `notion-update-page` — actualiza o inserta contenido; nunca reemplaza toda la página.\n"
+        ).encode()
+        relative = "chanks-5-session-doc/references/links.md"
+        self.assertEqual(hashlib.sha256(historical).hexdigest(), self.HISTORICAL_DIGESTS[relative][0])
+        runtime = INSTALLER.runtime_skill_roots(self.home)[0]
+        path = self.seed(runtime, relative, historical)
+        before = self.snapshot()
+        command = [sys.executable, str(self.source / "tools/install.py"), "--home", str(self.home)]
+        for flag, code, prefix in (("--dry-run", 0, "WOULD_UPDATE"), ("--check", 1, "DRIFT")):
+            result = subprocess.run(command + [flag], capture_output=True, text=True, check=False,
+                                    env={**os.environ, "HOME": str(self.home)})
+            self.assertEqual(result.returncode, code, result.stderr)
+            self.assertIn(f"{prefix} retired-skill-file: {path}", result.stdout)
+            self.assertEqual(self.snapshot(), before)
+        applied = subprocess.run(command, capture_output=True, text=True, check=False,
+                                 env={**os.environ, "HOME": str(self.home)})
+        self.assertEqual(applied.returncode, 0, applied.stderr)
+        self.assertFalse(path.exists())
+        self.assertEqual([backup.read_bytes() for backup in self.archived(runtime, relative)], [historical])
+        clean = subprocess.run(command + ["--check"], capture_output=True, text=True, check=False,
+                               env={**os.environ, "HOME": str(self.home)})
+        self.assertEqual(clean.returncode, 0, clean.stdout + clean.stderr)
+
+
+class SessionBoundaryBlockTests(unittest.TestCase):
+    """The always-loaded block is one short rule; V2 machinery and admission live in skills."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.template = (ROOT / "templates/session-routing.md").read_text(encoding="utf-8")
+        cls.rendered = INSTALLER.render_manual_blocks(ROOT)[INSTALLER.START_MARKER]
+
+    def test_template_is_the_marked_block_with_no_root_placeholder(self):
+        self.assertTrue(self.rendered.startswith(INSTALLER.START_MARKER + b"\n"))
+        self.assertTrue(self.rendered.rstrip().endswith(INSTALLER.END_MARKER))
+        self.assertNotIn("{{REPO_ROOT}}", self.template)
+        self.assertEqual(self.rendered, self.template.encode("utf-8"))
+
+    def test_block_states_the_three_sentence_rule_and_stage_ownership(self):
+        text = " ".join(self.template.split())
+        self.assertIn(BOUNDARY_RULE, text)
+        self.assertIn(STAGE_OWNERSHIP, text)
+        self.assertIn("Chanks hands over the Session and receives the delivered commit", text)
+
+    def test_rendered_block_stays_under_the_size_ceiling(self):
+        self.assertLessEqual(len(self.rendered), BLOCK_SIZE_CEILING)
+
+    def test_block_names_herdr_and_intercom_only_in_the_single_v2_line(self):
+        lines = [line for line in self.template.splitlines()
+                 if "herdr" in line.lower() or "intercom" in line.lower()]
+        self.assertEqual(len(lines), 1, lines)
+        self.assertIn("V2", lines[0])
+        self.assertIn("sealed unattended execution", lines[0])
+
+    def test_block_does_not_route_to_v2_skills_or_carry_how_rules(self):
+        for skill in V2_SKILLS:
+            self.assertNotIn(skill, self.template)
+        for how in ("--base-ref", "400", "work-unit", "Review before"):
+            self.assertNotIn(how, self.template)
+
+    def test_admission_contract_lives_in_the_kickoff_skill_and_is_installed(self):
+        reference = ROOT / "skills/chanks-3-session-kickoff/references/admission-contract.md"
+        self.assertTrue(reference.is_file())
+        self.assertIn("references/admission-contract.md",
+                      (ROOT / "skills/chanks-3-session-kickoff/SKILL.md").read_text(encoding="utf-8"))
+        installed = {(skill, relative.as_posix()) for skill, relative, _ in INSTALLER.source_files(ROOT)}
+        self.assertIn(("chanks-3-session-kickoff", "references/admission-contract.md"), installed)
+        self.assertNotIn("SESSION-ADMISSION-CONTRACT", self.template)
+
+    def test_block_nested_in_another_marked_block_is_rejected_before_mutation(self):
+        with tempfile.TemporaryDirectory() as raw:
+            path = Path(raw) / "CLAUDE.md"
+            nested = (
+                b"<!-- gentle-ai:persona -->\n" + self.rendered
+                + b"<!-- /gentle-ai:persona -->\n"
+            )
+            path.write_bytes(nested)
+
+            with self.assertRaises(INSTALLER.InstallError):
+                INSTALLER.desired_manual_content(path, INSTALLER.render_manual_blocks(ROOT))
+            self.assertEqual(path.read_bytes(), nested)
+
+    def test_block_nested_in_a_section_marker_is_rejected(self):
+        with tempfile.TemporaryDirectory() as raw:
+            path = Path(raw) / "AGENTS.md"
+            path.write_bytes(
+                b"<!-- section:team-rules -->\n" + self.rendered
+                + b"<!-- /section:team-rules -->\n"
+            )
+            with self.assertRaises(INSTALLER.InstallError):
+                INSTALLER.desired_manual_content(path, INSTALLER.render_manual_blocks(ROOT))
+
+
 class StageFiveSkillInventoryTests(unittest.TestCase):
     def test_new_names_ship_complete_source_trees_and_retire_old_names(self):
         replacements = {
@@ -696,34 +920,9 @@ class StageFiveSkillInventoryTests(unittest.TestCase):
         )
         self.assertEqual(
             {relative for skill, relative in installed if skill == "chanks-5-session-doc"},
-            {"SKILL.md", "assets/project-notion-map.json",
-             "assets/session-doc.schema.json", "references/links.md"},
+            {"SKILL.md", "assets/project-notion-map.json", "assets/session-doc.schema.json",
+             "references/notion-closure.md"},
         )
-
-
-class SessionDocSchemaTest(unittest.TestCase):
-    """The oneOf contract gates session closure, so its matrix is pinned here."""
-
-    SCHEMA = ROOT / "skills/chanks-5-session-doc/assets/session-doc.schema.json"
-    HEX, DASHED = "387e23cc934581f99b44eb519210c801", "387e23cc-9345-81f9-9b44-eb519210c801"
-    SCRIPT = ("const A=require('ajv'),f=require('fs');const v=new A({strict:false}).compile("
-              "JSON.parse(f.readFileSync(process.argv[1],'utf8')));console.log("
-              "JSON.parse(process.argv[2]).map(d=>!!v(d)).join(','))")
-
-    def test_closure_gate_matrix(self):
-        cases = [({"notion_page_id": self.HEX}, True),
-                 ({"notion_page_id": self.DASHED}, True),  # the shape Notion's UI shows
-                 ({"notion": {"enabled": False}}, True),
-                 ({"notion_page_id": self.HEX, "notion": {"enabled": False}}, False),
-                 ({"notion": {"enabled": True}}, False),
-                 ({"notion_page_id": "not-a-page-id"}, False),
-                 ({}, False)]
-        run = subprocess.run(
-            ["bun", "-e", self.SCRIPT, str(self.SCHEMA), json.dumps([c[0] for c in cases])],
-            capture_output=True, text=True, cwd=ROOT.parent)
-        self.assertEqual(run.returncode, 0, run.stderr)
-        self.assertEqual(run.stdout.strip().split(","),
-                         [str(c[1]).lower() for c in cases], cases)
 
 
 if __name__ == "__main__":

@@ -31,11 +31,11 @@ error → por qué duele → qué hacer en vez → evidencia.
    is 0 fail").
 
 4. **Dejar desactualizados los archivos de instrucciones de los otros agentes.**
-   Codex y opencode quedaron con un bloque pre-migración que se autodeclara de mayor
-   precedencia que cualquier bloque gestionado o skill, así que ganaba sobre el canon
-   correcto que esos mismos agentes ya tenían instalado. Además, `gentle-ai sync`
-   puede sobreescribir bloques manuales de Codex sin marcadores `<!-- -->`.
-   → Actualizá los cuatro archivos de agente (Claude, Codex, opencode, Pi) en la
+   Codex y opencode quedaron con un bloque pre-migración que seguía instruyendo el
+   modelo anterior junto al canon correcto que esos mismos agentes ya tenían
+   instalado. Además, `gentle-ai sync` puede sobreescribir bloques manuales de Codex
+   sin marcadores `<!-- -->`.
+   → Actualizá los archivos de instrucciones de todos los runtimes en la
    misma entrega que la activación, y snapshoteá los bloques manuales antes de un
    `sync`/`install`.
    Evidencia: auditoría de propagación 2026-09-10 (memoria
@@ -91,11 +91,9 @@ error → por qué duele → qué hacer en vez → evidencia.
     índice legacy) fue de 572 líneas cambiadas; se aceptó como excepción única y
     documentada porque partirlo habría dejado un commit intermedio con la suite en
     rojo. Esa evidencia histórica no convierte el número en límite duro.
-    → Usá 400 adiciones más eliminaciones de implementación autorada como referencia
-    de planificación/revisión; excluí artefactos de planificación o generados. Antes
-    de superarla, preguntá al maintainer: dividir en unidades secuenciales verificables y revertibles
-    o aprobar una excepción explícita. No es un cupo que se consume o se divide; registrá
-    la decisión como evidencia sin crear un índice de avance ni otra fuente de verdad.
+    → El tamaño y la división de la implementación siguen la guía nativa de Gentle AI;
+    Chanks no agrega regla de tamaño ni pregunta por tamaño. No lo trates como cupo que
+    se consume o se divide, y no crees un índice de avance ni otra fuente de verdad.
     Evidencia: `verify-report.md:130,197`; `archive-report.md:115`.
 
 12. **Resolver rutas de scripts de prueba contra la raíz del repo.** Al mover el

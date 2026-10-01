@@ -29,6 +29,16 @@ class ChanksJornadaSkillTests(unittest.TestCase):
         self.assertIn(f"name: {SKILL_NAME}", self.skill)
         self.assertIn('description: "Trigger:', self.skill)
 
+    def test_skill_is_v2_and_loads_only_on_an_explicit_request(self):
+        description = self.skill.splitlines()[2]
+        self.assertIn("V2", description)
+        self.assertIn("explicitly", description)
+        self.assertIn("empezamos la jornada", description)
+        self.assertIn("disable-model-invocation: true", self.skill.split("\n---\n", 1)[0])
+        self.assertIn("V2 only", self.skill)
+        self.assertIn("`chanks-3-paralelo`", self.skill)
+        self.assertIn("overrides Gentle AI", " ".join(self.skill.split()))
+
     def test_triggers_include_the_spanish_open_and_close_phrases(self):
         self.assertIn("empezamos la jornada", self.skill)
         self.assertIn("cerramos la jornada", self.skill)

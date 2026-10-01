@@ -1,6 +1,6 @@
 ---
 name: chanks-1-feature
-description: "Trigger: nueva feature, alcance nuevo, ampliar producto vivo. Incorpora alcance aprobado sin romper el PRD ni la partición vigente."
+description: "Trigger: Chanks etapa 1, definir el alcance de capacidad nueva en un producto vivo con PRD. Incorpora alcance aprobado sin romper el PRD ni la partición vigente."
 license: Apache-2.0
 metadata:
   author: gentleman-programming

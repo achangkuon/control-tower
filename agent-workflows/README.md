@@ -129,7 +129,7 @@ Módulo behavior.
 | --- | --- |
 | Shared conventions | `_shared/plan-naming-convention.md` |
 | Chanks planning and bridge | `chanks-1-adopcion`, `chanks-1-autoridad`, `chanks-1-brain-dump`, `chanks-1-descubrimiento`, `chanks-1-feature`, `chanks-1-heredado`, `chanks-1-prd`, `chanks-1-project-kickoff`, `chanks-1-requirements`, `chanks-1-rfc`, `chanks-1-terreno`, `chanks-4-puente` |
-| Session workflow | `chanks-3-session-kickoff`, `chanks-3-coordinador-manual`, `chanks-3-despacho-herdr`, `chanks-0-session-context-loader`, `chanks-2-planificador-granular`, `chanks-0-agente-soporte`, `chanks-5-session-doc` |
+| Session workflow | `chanks-3-session-kickoff`, `chanks-3-paralelo`, `chanks-3-coordinador-manual`, `chanks-3-despacho-herdr`, `chanks-0-session-context-loader`, `chanks-2-planificador-granular`, `chanks-0-agente-soporte`, `chanks-5-session-doc` |
 | Delivery policy | `chanks-4-unattended-implementation`, `chanks-5-politica-de-entrega` |
 | Decision and communication support | `chanks-1-cierre-de-decisiones`, `chanks-0-explicalo-simple`, `chanks-0-mensajes-visibles`, `chanks-0-skill-composer` |
 
@@ -159,11 +159,13 @@ Global synchronization and fresh-session verification remain outstanding after s
 - `~/.config/opencode/skills`
 - `~/.codex/skills`
 
-It also owns two manual prompt-policy blocks in the Claude, OpenCode, Codex,
-and Pi instruction files: `SESSION-SKILL-ARCHITECTURE:MANUAL` points to the
-canonical router, while `SDD-AUTO-GATEKEEPER-POLICY:MANUAL` makes Automatic
-SDD semantic checking proportional without changing mechanical gates or final
-verify. These are prompt instructions, not executable Gentle AI enforcement.
+It also owns one manual prompt-policy block in the Claude, OpenCode, Codex,
+and Pi instruction files: `SESSION-SKILL-ARCHITECTURE:MANUAL` states the
+Chanks and Gentle AI boundary in under 2 KB; the Session admission contract
+loads lazily from `chanks-3-session-kickoff/references/admission-contract.md`. It is a prompt instruction, not executable Gentle AI
+enforcement. The installer no longer ships an SDD gatekeeper block: how SDD is
+run belongs to Gentle AI. A gatekeeper block already present in an instruction
+file is left untouched.
 
 Gentle AI `sync` or `install` may rewrite instruction surfaces; survival is not
 guaranteed. Before either operation, back up the manual blocks. Afterwards,
@@ -172,9 +174,8 @@ inspect the actual diff, restore only when the canonical blocks were lost, run
 requires a controlled runtime smoke verification before claiming the policy is
 effective; file presence alone is insufficient evidence of prompt loading.
 
-The installer preserves every byte outside its two declared blocks, requires
-the existing routing marker, safely appends the gatekeeper policy outside
-managed ranges when absent, rejects duplicate/nested owned markers, and never
+The installer preserves every byte outside its declared block, requires
+the existing routing marker, rejects duplicate/nested owned markers, and never
 invokes Gentle AI. Before writing, it preflights every destination. Runtime skill roots may be created;
 instruction files and their parent directories must already exist as regular
 paths. Missing, wrong-type, symlinked, escaping, or managed-block-nested paths
@@ -183,6 +184,30 @@ raise `InstallError` and leave all destinations untouched.
 Use `--check` to fail when runtime copies drift. Use `--dry-run` to print the
 planned changes without writing anything. Both modes accept `--home PATH` for
 isolated verification.
+
+### Retiring obsolete skill files
+
+Removed files inside retained skills are retired only when their relative path
+and SHA-256 match an explicit historical entry in `RETIRED_SKILL_FILES`. Modified,
+unlisted, or missing files stay untouched; current source files always win over
+tombstones, including reintroduced paths and restored Notion assets. Future
+removals must extend the registry with reviewed canonical hashes; there is no
+mutable ownership database or recursive directory cleanup.
+
+`--check` and `--dry-run` report matching copies as `retired-skill-file` without
+mutation. After ordinary installation succeeds, apply rechecks the path and
+digest and moves matching bytes to
+`<runtime-root>/.retired-skills/files/<timestamp-unique>/<original-relative-path>`.
+Each backup has a private collision-safe directory. To undo retirement, inspect
+the backup and move it back to its original relative path without overwriting
+new user content. Empty skill directories remain in place.
+
+Known obsolete destinations and archive ancestors are validated before writes:
+symlinks, wrong types, and path escapes fail closed. A content edit after planning
+is preserved by the final digest check; this is not a lock or a guarantee against
+concurrent writers changing paths between validation and rename. Run installation
+without other processes editing the same skill files. Existing whole-skill
+retirement remains separate.
 
 Do not edit `sdd-*`, the Gentle AI files inside `_shared`,
 `gentle-orchestrator`, `opencode.json`, or any content inside
@@ -193,8 +218,7 @@ discovery surfaces; this repository is the canonical source.
 
 ```text
 skills/                         canonical generic user-owned skills
-templates/session-routing.md    manual routing block template
-templates/sdd-auto-gatekeeper-policy.md  Automatic SDD prompt-policy block
+templates/session-routing.md    manual boundary block template (<= 2000 bytes)
 tools/install.py                install, check, and dry-run implementation
 tests/test_install.py           focused standard-library tests
 ```

@@ -1,6 +1,6 @@
 ---
 name: chanks-1-heredado
-description: "Trigger: proyecto heredado, particionar producto, definir Zonas. Divide un producto vivo por superficies reales y cruces verificables."
+description: "Trigger: Chanks etapa 1, particionar un producto heredado, definir Zonas. Divide un producto vivo por superficies reales y cruces verificables."
 license: Apache-2.0
 metadata:
   author: gentleman-programming

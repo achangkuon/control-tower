@@ -5,16 +5,16 @@ escalate to SDD because of size, risk, file count, seams, or technical uncertain
 
 | Evidence | Preparation result |
 |---|---|
-| Approved coordination and four-part Encargo | ODD technical execution record under Gentle AI policy. |
+| Approved coordination and four-part Encargo | Hand the prepared Session to stage 3 for fresh Radar admission. |
 | Exact files or authority missing | Incomplete/blocked evidence; no mutation. |
 | Scope/files expand | Human-approved change plus fresh compatibility before affected mutation. |
-| Explicit human `solicitud_sdd` with authority | Existing native SDD preflight and authority flow, not a custom Chanks engine. |
+| Explicit human `solicitud_sdd` with authority | Preserve the request verbatim in the Encargo for Gentle AI. |
 
 ## Rules
 
 - An explicit human `solicitud_sdd` is the only native SDD selection; its absence means ODD.
 - Preserve legacy `direct`, `design-tasks`, and `full-sdd` data as legacy contracts. Do not map a
   native Encargo to them or rewrite earlier S143–S146 choices during this source adaptation.
-- Strict TDD comes from effective explicit configuration. Technical checks/review follow Gentle AI
-  native policy; review outcome never authorizes delivery.
-- ODD documents and Engram recovery are subordinate technical continuity records, never plan status.
+- Gentle AI owns technical execution policy. Hand over product outcome, constraints, references,
+  and approved decisions; do not prescribe implementation, tests, review, or technical recovery here.
+- Gentle AI's returned technical evidence is subordinate to the product plan, never plan status.

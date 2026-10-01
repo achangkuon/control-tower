@@ -56,7 +56,7 @@ Es el mismo modelo de Zonas aplicado a esta obra.
 
 ```
 agent-workflows/skills/_shared/plan-naming-convention.md
-~/.claude/CLAUDE.md          (solo los bloques "Plan Naming Standard" y "Durable Session Skill Routing")
+~/.claude/CLAUDE.md          (solo los bloques "Plan Naming Standard" y "Chanks and Gentle AI boundary")
 ```
 
 **Trabajo:**
@@ -145,7 +145,7 @@ control-tower/skills/torre-control-entregas/
    ⚠️ `chanks-3-session-kickoff:54` invoca a `session-plan` para la ruta `design-tasks`: si se disuelve
    sin tocar el kickoff, esa ruta apunta al vacío. **Van en el mismo commit.**
 5. **Tramo 6 — `torre-control-entregas`** (caja 3, vive en `control-tower`) reparte el token de
-   entrega entre obreros. `chanks-6-politica-de-entrega` cambia su orden de detección.
+   entrega entre obreros. `chanks-5-politica-de-entrega` cambia su orden de detección.
 
 **NO toca:** `plan-naming-convention.md`, `tools/`, ni ningún otro archivo de `control-tower`.
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -15,6 +16,7 @@ import subprocess
 import sys
 import tempfile
 from dataclasses import dataclass
+from types import MappingProxyType
 
 
 # Shared conventions read by several skills. Installed like a skill directory
@@ -44,6 +46,7 @@ CHANKS_SKILLS = (
     "chanks-1-cierre-de-decisiones",
     "chanks-2-planificador-granular",
     "chanks-3-session-kickoff",
+    "chanks-3-paralelo",
     "chanks-3-coordinador-manual",
     "chanks-3-despacho-herdr",
     "chanks-4-puente",
@@ -93,6 +96,27 @@ RETIRED_SKILLS = (
 # instead of deleted, so an install is always reversible by hand.
 RETIRED_SKILL_ARCHIVE = ".retired-skills"
 
+# Net removals from ab959f5: immutable canonical bytes from 1b3a53b/f7612de
+# (support references) and 929ac91 (session-doc links). No runtime ownership
+# manifest exists; new removals must explicitly extend this registry.
+RETIRED_SKILL_FILES = MappingProxyType({
+    "chanks-0-agente-soporte/assets/assignment-readonly.md": frozenset({
+        "1066822ccc072dc21cd5dd67965cbbcf0a03b186d276a70b593d26e4e0c8d72f",
+        "9b35256b723d835665783739526a12497bf037c822521c498850a3bf253bc622",
+    }),
+    "chanks-0-agente-soporte/references/contrato-no-interferencia.md": frozenset({
+        "c9f5b2db842d9b4751ab2a86a94cd7c30d7d538f433f4165674a5db88d6edf61",
+        "b2c15bc842cc310b06489f3160d4e75a9ca111cf59bab525d1024000de7e981e",
+    }),
+    "chanks-0-agente-soporte/references/unidad-ejecutable.md": frozenset({
+        "2d78b7322467476ce1e8c127f5ce746c62e9adb392d4ec8c8d4bac2cd8baf322",
+        "a5362b5289abf87269ffbf879ab55976205cf0485cfa2c4e4132b20e5626a612",
+    }),
+    "chanks-5-session-doc/references/links.md": frozenset({
+        "6d75a865769a7561193f06bb5f2f86f39d65b1911e6337a0a11077c863b6885b",
+    }),
+})
+
 MANUAL_FILES = (
     Path(".claude/CLAUDE.md"),
     Path(".config/opencode/AGENTS.md"),
@@ -101,8 +125,6 @@ MANUAL_FILES = (
 )
 START_MARKER = b"<!-- SESSION-SKILL-ARCHITECTURE:MANUAL -->"
 END_MARKER = b"<!-- /SESSION-SKILL-ARCHITECTURE:MANUAL -->"
-GATEKEEPER_START_MARKER = b"<!-- SDD-AUTO-GATEKEEPER-POLICY:MANUAL -->"
-GATEKEEPER_END_MARKER = b"<!-- /SDD-AUTO-GATEKEEPER-POLICY:MANUAL -->"
 
 
 def _block_re(name: bytes) -> re.Pattern[bytes]:
@@ -113,16 +135,8 @@ def _block_re(name: bytes) -> re.Pattern[bytes]:
 
 
 BLOCK_RE = _block_re(b"SESSION-SKILL-ARCHITECTURE:MANUAL")
-GATEKEEPER_BLOCK_RE = _block_re(b"SDD-AUTO-GATEKEEPER-POLICY:MANUAL")
 MANUAL_BLOCKS = (
     ("session-routing.md", START_MARKER, END_MARKER, BLOCK_RE, True),
-    (
-        "sdd-auto-gatekeeper-policy.md",
-        GATEKEEPER_START_MARKER,
-        GATEKEEPER_END_MARKER,
-        GATEKEEPER_BLOCK_RE,
-        False,
-    ),
 )
 MANAGED_MARKER_RE = re.compile(
     rb"<!--\s*(/?)((?:gentle-ai|section):[A-Za-z0-9_.-]+)\s*-->"
@@ -385,8 +399,12 @@ def desired_manual_content(path: Path, replacements: dict[bytes, bytes]) -> byte
 
 def preflight(home: Path, root: Path) -> None:
     replacements = render_manual_blocks(root)
+    retired_files = retired_skill_files(root)
     for runtime_root in installed_skill_roots(home):
         _validate_directory_path(runtime_root, "runtime skill")
+        _validate_retired_file_archive(runtime_root)
+        for relative in retired_files:
+            _validate_file_destination(runtime_root, runtime_root / relative, "retired skill file")
         for retired_skill in RETIRED_SKILLS:
             _validate_retired_skill_destination(runtime_root, runtime_root / retired_skill)
         for skill, relative, _ in source_files(root):
@@ -478,8 +496,13 @@ def build_plan(home: Path, root: Path | None = None) -> list[Change]:
     root = root or repo_root()
     preflight(home, root)
     replacements = render_manual_blocks(root)
+    retired_files = retired_skill_files(root)
     changes: list[Change] = []
     for runtime_root in installed_skill_roots(home):
+        for relative, digests in retired_files.items():
+            destination = runtime_root / relative
+            if _matches_retired_file(destination, digests):
+                changes.append(Change(destination, "retired-skill-file"))
         for retired_skill in RETIRED_SKILLS:
             destination = runtime_root / retired_skill
             if _lexists(destination):
@@ -516,6 +539,42 @@ def _atomic_copy(source: Path, destination: Path, runtime_root: Path) -> None:
 
 def retired_skill_archive_root(runtime_root: Path) -> Path:
     return _absolute(runtime_root) / RETIRED_SKILL_ARCHIVE
+
+
+def retired_skill_files(root: Path) -> dict[str, frozenset[str]]:
+    current = {(Path(skill) / relative).as_posix() for skill, relative, _ in source_files(root)}
+    return {relative: digests for relative, digests in RETIRED_SKILL_FILES.items()
+            if relative not in current}
+
+
+def _validate_retired_file_archive(runtime_root: Path) -> Path:
+    archive = retired_skill_archive_root(runtime_root) / "files"
+    _validate_directory_path(archive, "retired skill file archive")
+    _assert_inside(runtime_root, archive, "retired skill file archive")
+    return archive
+
+
+def _matches_retired_file(path: Path, digests: frozenset[str]) -> bool:
+    return path.is_file() and hashlib.sha256(path.read_bytes()).hexdigest() in digests
+
+
+def _archive_retired_skill_file(runtime_root: Path, relative: str, digests: frozenset[str]) -> None:
+    destination = runtime_root / relative
+    _validate_file_destination(runtime_root, destination, "retired skill file")
+    archive = _validate_retired_file_archive(runtime_root)
+    if not _matches_retired_file(destination, digests):
+        return
+    archive.mkdir(parents=True, exist_ok=True)
+    # An exclusive private directory prevents timestamp collisions and ensures
+    # os.replace never overwrites an existing backup, including concurrent runs.
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    private = Path(tempfile.mkdtemp(prefix=f"{stamp}-", dir=archive))
+    target = private / relative
+    _validate_file_destination(private, target, "retired skill file backup")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    _validate_file_destination(runtime_root, destination, "retired skill file")
+    if _matches_retired_file(destination, digests):
+        os.replace(destination, target)
 
 
 def _archive_retired_skill(runtime_root: Path, destination: Path) -> None:
@@ -592,6 +651,14 @@ def apply(home: Path, root: Path | None = None) -> list[Change]:
         _atomic_copy(etapa_hook_source(root), etapa_hook_path(home), home / ".claude")
     if firma_hook_path(home) in change_paths:
         _atomic_copy(root / "tools/hooks/torre-firma.sh", firma_hook_path(home), home / ".claude")
+    # Retire individual obsolete copies only after ordinary installation succeeds.
+    # Re-read ownership after planning: a user edit made meanwhile must survive.
+    retired_files = retired_skill_files(root)
+    retired_paths = {change.path for change in changes if change.kind == "retired-skill-file"}
+    for runtime_root in installed_skill_roots(home):
+        for relative, digests in retired_files.items():
+            if runtime_root / relative in retired_paths:
+                _archive_retired_skill_file(runtime_root, relative, digests)
     return changes
 
 

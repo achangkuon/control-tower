@@ -4,8 +4,9 @@ For Session retirement, run only after the responsible parent records a dispatch
 delivery in `openspec/plan.yaml`. The human's approval of the Session dispatch authorizes
 that retirement in advance, and only when all six applicable checks pass for that Sesión.
 Issue-patch retirement instead follows its separate section below; never apply the Session
-`COMPLETO` check to a patch. Read the worker declaration from the
-repository `AGENTS.md`; it remains the source for the worker's persistent worktree and tab.
+`COMPLETO` check to a patch. Read the worker declaration from `worker-pool.md` for Control Tower;
+another repository declares its own pool in its `AGENTS.md`. That declaration remains the source
+for the worker's persistent worktree and tab; a missing or incomplete declaration stops retirement.
 
 Dispatch and retirement both cite and follow `references/retiro.md`'s `## Shared lock protocol`
 exactly. All checks and retirement decisions happen only under the lock it proves owned.

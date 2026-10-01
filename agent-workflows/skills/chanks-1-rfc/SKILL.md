@@ -1,6 +1,6 @@
 ---
 name: chanks-1-rfc
-description: "Trigger: escribir RFC, elegir stack, arquitectura de proyecto. Decide una solución técnica right-sized a partir de un PRD aprobado."
+description: "Trigger: Chanks etapa 1, escribir el RFC de un proyecto con PRD aprobado. Decide una solución técnica right-sized a partir de un PRD aprobado."
 license: Apache-2.0
 metadata:
   author: gentleman-programming

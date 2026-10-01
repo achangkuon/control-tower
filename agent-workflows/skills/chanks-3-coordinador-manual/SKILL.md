@@ -1,13 +1,19 @@
 ---
 name: chanks-3-coordinador-manual
-description: "Trigger: route one already human-approved Pi manual batch while the Torre is off, then accept its terminal evidence without owning worker execution."
+description: "Trigger: V2 only; explicitly requested chanks-3-coordinador-manual or approved Pi manual batch routing through Herdr with the Torre off. Route the batch and accept terminal evidence; ordinary parallel work uses chanks-3-paralelo."
+disable-model-invocation: true
 license: Apache-2.0
 metadata:
   author: emili
-  version: "2.0"
+  version: "3.0"
 ---
 
 ## Activation Contract
+
+V2 only. Load this skill only when the human explicitly names it or explicitly asks to route a
+Pi manual batch through Herdr. For ordinary parallel work use `chanks-3-paralelo`. Chanks decides
+what is worked on and what runs in parallel; Gentle AI decides how a Session is implemented,
+checked, reviewed and committed. Nothing in this skill overrides Gentle AI.
 
 This is the deliberate stateless Tranche 3 router and explicit Tower-off manual fallback after V1.
 For a Session batch, load it only after one human approval binds the parallel count, exact LISTO Sesión IDs, and exact Pi
@@ -39,8 +45,9 @@ Pi session ID freshly verified against the assigned Herdr tab, Intercom live ros
 worker worktree and issue/branch binding. Verify the reported immutable commit against
 the exact worker branch and approved files before serial integration; an uncertain result
 preserves the candidate and worker, never infers completion or resends. Main integrates
-only the verified candidate, gathers patch closure through `chanks-5-session-doc`, and
-retires through `references/retiro.md`'s patch checks. A patch never changes Radar
+only the verified candidate, gathers patch closure through
+`../chanks-3-despacho-herdr/references/issue-patch-closure.md`, and retires through the
+dispatch skill's `references/retiro.md` patch checks. A patch never changes Radar
 Session progress or `openspec/plan.yaml`; absent planned-work closure declare
 «nada que registrar». No review outcome grants delivery authorization.
 
@@ -57,9 +64,9 @@ handoff B is sent without waiting for worker A, and Main returns after both deli
 ## Terminal-Event Mode
 
 Accept only inbound `COMPLETED`, `BLOCKED`, or `FAILED` events that identify the exact assigned Sesión,
-worker, and worker evidence. Each implementer owns implementation, self-verification, native RDD, and
-Module commits. Main must not inspect, review, correct, rerun tests or RDD, or mutate the worker
-candidate. Before terminal handling, fresh Intercom and Herdr readbacks must prove the sender matches the
+worker, and worker evidence. Gentle AI decides how a Session is implemented, checked, reviewed and
+committed; the parent spot-checks what Gentle AI requires before integrating. Main never mutates the
+worker candidate. Nothing in this skill overrides Gentle AI. Before terminal handling, fresh Intercom and Herdr readbacks must prove the sender matches the
 human-approved/dispatched exact alias and cwd/worktree, and the post-launch verified exact Pi session ID; Git readback must prove the
 reported commit is the dispatched worktree candidate before integration. Any missing, mismatched, or unavailable
 readback stops: no integration, retry, remapping, or inferred terminal.
@@ -140,8 +147,7 @@ evidence** and carries **no automatic retry, remapping, permission, release, or 
 human resolves it, and the grant is kept meanwhile rather than handed to someone else half
 written.
 
-**Main coordinates and integrates.** It does not inspect to issue a second technical judgement,
-correct code, or rerun the worker's tests. The effective controls are consumed from the Chanks
+**Main coordinates and integrates.** The effective controls are consumed from the Chanks
 core, never reimplemented here, and the refusal is an absence rather than a message: a Sesión
 whose request was denied has no writable path to that file, so the write does not happen —
 including from a process its command spawns.
@@ -178,5 +184,8 @@ closure, or retirement; otherwise preserve and report worker evidence.
 ## References
 
 - `../chanks-3-despacho-herdr/SKILL.md`
-- `../chanks-5-session-doc/SKILL.md`
+- `../chanks-3-despacho-herdr/assets/worker-handoff.md`
+- `../chanks-3-despacho-herdr/references/issue-patch-closure.md`
+- `../chanks-3-despacho-herdr/references/dispatch-protocol.md`
+- `../chanks-5-session-doc/SKILL.md` — Session closure only
 - `herdr` skill

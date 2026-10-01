@@ -1,6 +1,6 @@
 ---
 name: chanks-1-project-kickoff
-description: "Trigger: proyecto nuevo, project kickoff, arrancar desde cero. Ordena terreno→PRD→RFC→REQUIREMENTS con gates humanos."
+description: "Trigger: Chanks etapa 1, project kickoff de Chanks, arrancar un proyecto desde cero con el flujo de Chanks. Ordena terreno→PRD→RFC→REQUIREMENTS con gates humanos."
 license: Apache-2.0
 metadata:
   author: gentleman-programming

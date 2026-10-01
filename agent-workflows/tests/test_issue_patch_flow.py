@@ -56,10 +56,13 @@ class IssuePatchContractTests(unittest.TestCase):
         self.assertNotIn("Under the acquired lock, right after lock acquisition, this skill invokes", activation)
 
     def test_policy_is_approved_alternative_not_a_session_forgery(self):
-        self.assert_terms(self.policy, "autorización humana por issue", "base Git exacta",
+        pool = read(DISPATCH / "references/worker-pool.md")
+        self.assert_terms(pool, "autorización humana por issue", "base Git exacta",
                           "archivos exactos", "Cimientos y Recursos", "cada Sesión activa",
                           "Ausencia, alcance desconocido, colisión o deriva",
                           "no se inventa Sesión LISTO", "no prueba que se haya lanzado")
+        self.assertNotIn("autorización humana por issue", self.policy)
+        self.assertIn("references/worker-pool.md", self.policy)
         self.assertEqual(self.policy.count("schema: delivery-policy"), 1)
         self.assertNotIn("issue_patch:", self.policy)
 
@@ -83,8 +86,9 @@ class IssuePatchContractTests(unittest.TestCase):
                           "a collision refuses the patch, not the Session",
                           "recheck base, active sets", "before its first write",
                           "after any scope/base change")
-        self.assert_terms(self.routing, "not an admission exception", "every active Session",
-                          "unknown or conflicting scope stops only the patch")
+        self.assertNotIn("issue-resolver", self.routing)
+        self.assertNotIn("Issue-Patch", self.routing)
+        self.assertNotIn("chanks-3-despacho-herdr", self.routing)
 
     def test_launched_pi_identity_precedes_send_and_tab_is_not_session_id(self):
         self.assertLess(self.mode.index("Launch a new Pi agent"),
@@ -124,18 +128,25 @@ class IssuePatchContractTests(unittest.TestCase):
                           "close the exact agent", "fresh Git/Herdr readback",
                           "never require Radar `COMPLETO`")
 
-    def test_closure_has_no_session_progress_and_keeps_install_gate(self):
-        self.assert_terms(self.closure, "Issue-Patch Closure", "exact human approval",
-                          "ancestor of integrated master", "delivered paths",
-                          "missing required human confirmation", "named tests", "nada que registrar",
-                          "never add a patch Session", "radar archivar",
-                          "return issue closure evidence separately")
+    def test_closure_skill_is_session_only_and_the_router_keeps_the_patch_rules(self):
+        self.assertNotIn("Issue-Patch Closure", self.closure)
+        self.assertNotIn("Herdr", self.closure)
+        self.assert_terms(self.closure, "nada que registrar", "`radar archivar <ID>`")
         self.assert_terms(self.router, "never changes Radar Session progress",
-                          "nada que registrar", "No review outcome grants delivery")
+                          "nada que registrar", "No review outcome grants delivery",
+                          "references/issue-patch-closure.md")
+        closure = read(DISPATCH / "references/issue-patch-closure.md")
+        self.assert_terms(closure, "named tests that demonstrate the original symptom",
+                          "ancestor of integrated master", "nada que registrar")
+        self.assertIn("references/issue-patch-closure.md", self.dispatch)
+        self.assertNotIn("applicable native review", self.handoff)
+        self.assert_terms(self.handoff, "Gentle AI decides how the patch is implemented, checked, reviewed and committed")
 
     def test_session_contract_remains_session_only(self):
-        self.assertIn('"route": "chanks-3-session-kickoff"', self.routing)
-        self.assertIn('"start": {"states": ["LISTO"]}', self.routing)
+        self.assertNotIn("SESSION-ADMISSION-CONTRACT", self.routing)
+        contract = read(ROOT / "skills/chanks-3-session-kickoff/references/admission-contract.md")
+        self.assertIn('"route": "chanks-3-session-kickoff"', contract)
+        self.assertIn('"start": {"states": ["LISTO"]}', contract)
         self.assertIn('`radar.despacho/v1` marker', self.dispatch)
         self.assertIn('`issue-resolver` only handles a human-selected Session', self.dispatch)
         self.assertIn("## Six checks", self.retire)
