@@ -101,3 +101,10 @@ Native review per candidate: T1 commit range and the accumulated branch range we
 - Integration first, merged functional checks next, then fresh read-only preflights/preservation baseline and primary → installer → Hermes → snapshot apply. Applicable runner: full Python discovery and Bun; this deployment has no new behavior RED unless conflict reconciliation introduces new logic.
 - Pi sessions cannot be identified safely from generic Node names. Never stop all Node processes; leave terminal/UI restart to the maintainer unless a graceful positively identified local mechanism is found.
 - Read-only registry refresh and actual installed checks follow; no model/API conversations or GitHub operation inferred from local installation permission.
+
+## Live deployment progress and bounded correction
+
+- Local merge commit `1b49f36` preserves both Main Pi overlay updates and retirement branch. Mechanical conflicts resolved; focused 179 tests and independent 159 tests pass; Bun 1703 pass. Full Python 416 tests has one skip and one pre-existing environmental composition failure: Main-pinned Pi commit absent from local source checkout.
+- Primary applied 3 changes; installer applied 120 own-only changes. Postcheck passes: 25 central skills match source, 25 valid Claude links, four deferred skills archived with baseline bytes. Gentle AI and unrelated skill-tree entries are unchanged. Private hash/mode manifests under `.claude/.skill-backups/deploy-own-2026-10-01/`.
+- Hermes and snapshot remain untouched: fresh Hermes preflight wrongly requires active central copies of the four skills just retired by the installer.
+- [ ] T3-fix — Correct the central roster prerequisite to active own skills, with a deterministic regression for real installer → Hermes order and negative missing-active-skill control. Route: delegated writer (helper/tests); small scoped bug fix within authorized installation. Strict observed RED before GREEN; focused test_personal_config/test_install and independent verifier. Never restore the deferred active folders. Native assessment applies to this new work unit, not the previously skipped helper candidate.
