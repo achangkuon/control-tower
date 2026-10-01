@@ -171,8 +171,7 @@ never inferred or silently recast as an external blocker.
 
 `chanks-2-planificador-granular` is retained by ID for compatibility but prepares a native Session;
 it does not technically decompose product work. It confirms territory, crossings/Cimientos,
-coordination, the four Encargo parts, exact files when known, decisions, authority, and review-size
-forecast. ODD is the default technical execution path. Native ODD creates its own document and
+coordination, the four Encargo parts, exact files when known, decisions, and authority. ODD is the default technical execution path. Native ODD creates its own document and
 Engram continuity record under Gentle AI ownership; those records are subordinate to Radar plan
 status.
 
@@ -183,14 +182,13 @@ legacy fields into a native Session.
 
 When a human explicitly selects SDD for a native Session, run only Gentle AI's existing native SDD
 flow after its actual preflight and authority gates. `archive` is a native SDD control after delivery;
-it is not required for ODD. Strict TDD is forwarded from effective explicit configuration, never
-inferred from test presence. Stage 4 belongs to Gentle AI: Chanks prescribes nothing about review
+it is not required for ODD. Stage 4 belongs to Gentle AI: Chanks prescribes nothing about review
 timing, consent, or delivery gates, and archive controls remain native SDD controls.
 
 ## 16. Resume
 
-Every start/continue/resume first has fresh valid Radar admission bound to exact HEAD, Session ID,
-and digests of exact command stdout. A native Encargo Session resumes the **same Session identity**
+Every start/continue/resume first has fresh valid Radar admission for that Session and the
+current HEAD. A native Encargo Session resumes the **same Session identity**
 by reconciling its native ODD record, actual code, and observed evidence. It does not require a
 first pending Chanks Module. A legacy Session keeps its first pending Módulo resume rule. Rejected
 states have no fallback to kickoff, decision closure, or a repository executable.
@@ -236,8 +234,8 @@ rewrite a frozen product archive. Report unknown historical evidence rather than
 ## 19. Chanks inventory
 
 `chanks-0-` is cross-cutting, including `chanks-0-mensajes-visibles`; `chanks-2-planificador-granular`
-prepares Sessions; `chanks-3-*` admits/routes only; `chanks-4-puente` translates into the authorized
-native flow; and `chanks-5-session-doc` gathers closure evidence. These IDs are compatibility names,
+prepares Sessions; `chanks-3-*` admits/routes only; `chanks-4-puente` hands the Session to Gentle AI
+and receives its delivered commit; and `chanks-5-session-doc` closes a delivered Session. These IDs are compatibility names,
 not hierarchy levels or runtime authority.
 
 ## 20. Compliance checklist
@@ -249,4 +247,4 @@ not hierarchy levels or runtime authority.
 - [ ] Native resume reconciles same identity, record, code and evidence; legacy resume uses first pending Módulo.
 - [ ] No forecast claims a live lock, worker assignment, or topology control.
 - [ ] Technical ODD/Engram records remain subordinate to Radar product authority.
-- [ ] Delivery requires actual Git evidence and ordinary policy; review never authorizes delivery.
+- [ ] Delivery requires actual Git evidence and ordinary repository policy.

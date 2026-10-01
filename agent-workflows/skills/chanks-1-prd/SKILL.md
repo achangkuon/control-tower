@@ -1,6 +1,6 @@
 ---
 name: chanks-1-prd
-description: "Trigger: escribir o actualizar PRD. Define problema, usuario, alcance y resultados de producto sin decidir tecnología."
+description: "Trigger: Chanks etapa 1, escribir o actualizar el PRD de Chanks. Define problema, usuario, alcance y resultados de producto sin decidir tecnología."
 license: Apache-2.0
 metadata:
   author: gentleman-programming

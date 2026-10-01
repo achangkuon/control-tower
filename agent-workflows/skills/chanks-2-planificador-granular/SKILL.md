@@ -1,10 +1,10 @@
 ---
 name: chanks-2-planificador-granular
-description: "Trigger: planificar, preparar Sesión, enumerar Sesiones. Prepare approved native Session coordination without technical decomposition."
+description: "Trigger: Chanks etapa 2, preparar Sesión, enumerar Sesiones del plan. Prepare approved native Session coordination without technical decomposition."
 license: Apache-2.0
 metadata:
   author: gentleman-programming
-  version: "6.0"
+  version: "7.0"
 ---
 
 ## Activation Contract
@@ -24,7 +24,11 @@ parent; do not write the plan or generated view.
   Expansion later needs approved scope and fresh compatibility before affected mutation.
 - Draft exactly `pedido_contexto`, `resultado_comportamiento`, `restricciones_decisiones`, and
   `referencias`. Keep outcome/constraint meaning inside them.
-- ODD is default. Only an explicit human `solicitud_sdd` can request native SDD; complexity never does.
+- ODD is Gentle AI's default technical path. Record `solicitud_sdd` in the Encargo only when the
+  human explicitly asked for SDD; never infer it from complexity. What happens with it is Gentle AI's
+  decision.
+- Visible-message suggestions (`../chanks-0-mensajes-visibles/SKILL.md`) load only when the human asks
+  for them, never as a planning step.
 - Legacy Module/Task contracts remain historical/technical evidence and are not rewritten here.
 - Announce `chanks-3-session-kickoff` as the next stage only after approved scope, complete
   authority, exact-file evidence, and the responsible parent's plan write; fresh Radar admission
@@ -37,14 +41,8 @@ parent; do not write the plan or generated view.
 | Territory, authority, and four-part Encargo are known | Return prepared native Session delta. |
 | Exact files remain unknown | Return incomplete Encargo and the missing evidence; do not authorize mutation. |
 | Scope/file expansion or incompatible resource forecast | Return the approval and compatibility decision needed. |
-| Explicit human `solicitud_sdd` | Preserve it and hand off to existing native SDD preflight later. |
+| Explicit human `solicitud_sdd` | Preserve it in the Encargo. |
 | Missing or contradictory authority | Return one human decision package; do not infer it. |
-
-## Visible Messages Preamble
-
-After approved product scope is clear, load `../chanks-0-mensajes-visibles/SKILL.md` for its
-nonblocking cosmetic suggestion or `No messages needed`. Carry it to the same feature's
-implementation Session; this does not add product planning, authority, or a step.
 
 ## Execution Steps
 
@@ -60,7 +58,7 @@ implementation Session; this does not add product planning, authority, or a step
 
 ## Output Contract
 
-Return prepared coordination, four-part Encargo, file/compatibility evidence, size forecast, human
+Return prepared coordination, four-part Encargo, file/compatibility evidence, human
 decisions, and the exact parent-record delta. State whether it is complete or incomplete; do not
 claim planning status, a lock, technical task decomposition, or execution authority. Announce
 `chanks-3-session-kickoff` only when its evidence-backed handoff conditions are met.

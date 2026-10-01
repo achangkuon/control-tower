@@ -463,14 +463,14 @@ class InstallerTests(unittest.TestCase):
     def test_native_kickoff_reconciles_identity_without_inventing_a_route(self):
         content = (ROOT / "skills/chanks-3-session-kickoff/SKILL.md").read_text(encoding="utf-8")
         hard_rules = content.split("## Hard Rules", 1)[1].split("## Decision Gates", 1)[0]
-        execution = content.split("## Execution Steps", 1)[1].split("## Output Contract", 1)[0]
 
         self.assertIn("same Session identity", hard_rules)
         self.assertIn("first pending Módulo for legacy", hard_rules)
-        self.assertIn("explicit human `solicitud_sdd`", hard_rules)
-        self.assertNotIn("three canonical routes", hard_rules)
-        self.assertIn("native record, code, and evidence", execution)
-        self.assertIn("Do not write a route revalidation for native ODD", execution)
+        self.assertIn("native record, code, and evidence", hard_rules)
+        self.assertNotIn("three canonical routes", content)
+        # SDD-vs-ODD selection is Gentle AI's: kickoff admits, it never routes.
+        self.assertNotIn("solicitud_sdd", content)
+        self.assertNotIn("route revalidation", content)
 
 
     def test_all_tower_skills_are_archived_without_installing_candidates(self):
@@ -671,34 +671,8 @@ class StageFiveSkillInventoryTests(unittest.TestCase):
         )
         self.assertEqual(
             {relative for skill, relative in installed if skill == "chanks-5-session-doc"},
-            {"SKILL.md", "assets/project-notion-map.json",
-             "assets/session-doc.schema.json", "references/links.md"},
+            {"SKILL.md"},
         )
-
-
-class SessionDocSchemaTest(unittest.TestCase):
-    """The oneOf contract gates session closure, so its matrix is pinned here."""
-
-    SCHEMA = ROOT / "skills/chanks-5-session-doc/assets/session-doc.schema.json"
-    HEX, DASHED = "387e23cc934581f99b44eb519210c801", "387e23cc-9345-81f9-9b44-eb519210c801"
-    SCRIPT = ("const A=require('ajv'),f=require('fs');const v=new A({strict:false}).compile("
-              "JSON.parse(f.readFileSync(process.argv[1],'utf8')));console.log("
-              "JSON.parse(process.argv[2]).map(d=>!!v(d)).join(','))")
-
-    def test_closure_gate_matrix(self):
-        cases = [({"notion_page_id": self.HEX}, True),
-                 ({"notion_page_id": self.DASHED}, True),  # the shape Notion's UI shows
-                 ({"notion": {"enabled": False}}, True),
-                 ({"notion_page_id": self.HEX, "notion": {"enabled": False}}, False),
-                 ({"notion": {"enabled": True}}, False),
-                 ({"notion_page_id": "not-a-page-id"}, False),
-                 ({}, False)]
-        run = subprocess.run(
-            ["bun", "-e", self.SCRIPT, str(self.SCHEMA), json.dumps([c[0] for c in cases])],
-            capture_output=True, text=True, cwd=ROOT.parent)
-        self.assertEqual(run.returncode, 0, run.stderr)
-        self.assertEqual(run.stdout.strip().split(","),
-                         [str(c[1]).lower() for c in cases], cases)
 
 
 if __name__ == "__main__":

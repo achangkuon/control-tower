@@ -9,12 +9,9 @@ metadata:
 
 ## Activation Contract
 
-Load when the maintainer asks for a simpler explanation, says he is not a programmer,
+Load only when the maintainer asks for a simpler explanation, says he is not a programmer,
 does not understand an option he must choose between, or requests a status/audit
 report he will read as a product owner rather than as an engineer.
-
-Also load unprompted when presenting an always-escalate decision, an audit result,
-or a trade-off between approaches to this maintainer.
 
 ## Hard Rules
 

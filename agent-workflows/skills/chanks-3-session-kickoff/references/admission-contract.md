@@ -33,7 +33,8 @@ always-loaded instruction block so it loads only when `chanks-3-session-kickoff`
 ```
 <!-- /SESSION-ADMISSION-CONTRACT:CANONICAL -->
 
-The bundle binds current `HEAD`, Session ID, and exact stdout digests. `start` requires `LISTO`;
-`continue`/`resume` require same Session identity plus native ODD record, code, and evidence for
-Encargo, or first pending Módulo for legacy. Every rejected state returns only state, blocker, and
-Zone-ordered `LISTO` choices; there is no fallback to kickoff or decision closure.
+`chanks-3-session-kickoff/SKILL.md` states the operative rule in plain form: run the installed
+`radar status --json` and `radar sesion <ID>`; `start` requires `LISTO`; `continue`/`resume` require
+`LISTO` or `EN CURSO` and the same Session. Every rejected state returns only state, blocker, and
+Zone-ordered `LISTO` choices; there is no fallback to kickoff or decision closure. The `binding`
+field above is kept for compatibility with consumers that already read this JSON.

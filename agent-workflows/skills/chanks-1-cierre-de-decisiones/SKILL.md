@@ -1,6 +1,6 @@
 ---
 name: chanks-1-cierre-de-decisiones
-description: "Trigger: decisiones abiertas, cerrar decisiones, decision sweep. Presenta resoluciones humanas y returns a bounded delta to the responsible parent."
+description: "Trigger: Chanks etapa 1, cerrar las decisiones abiertas de una Sesión, decision sweep. Presenta resoluciones humanas y returns a bounded delta to the responsible parent."
 license: Apache-2.0
 metadata:
   author: achangkuon

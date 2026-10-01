@@ -101,14 +101,14 @@ class GenericBuilderFlowTests(unittest.TestCase):
 
         for obsolete in ("PI-ADMISSION-HANDOFF", "CHANKS_PI_ADMISSION", "pi-switch.mjs",
                          "chanks_request_activation", "activation key", "planning key",
-                         "human click", "host envelope", "host-attested"):
+                         "human click", "host envelope", "host-attested", "S159",
+                         "SHA-256"):
             self.assertNotIn(obsolete, kickoff.lower() if obsolete.islower() else kickoff)
-        for evidence in ("installed Radar", "named approved Session", "HEAD", "SHA-256",
-                         "exact stdout", "stage 4", "💪"):
+        for evidence in ("installed Radar", "named approved Session", "HEAD",
+                         "radar status --json", "radar sesion <ID>", "stage 4", "💪"):
             self.assertIn(evidence, kickoff)
         self.assertIn("only on successful transition", kickoff)
         self.assertIn("never on refusal", kickoff)
-        self.assertIn("S159", kickoff)
         for planning_skill in (autoridad, planner):
             self.assertNotIn("chanks_request_activation", planning_skill)
             self.assertNotIn("llave de planificación", planning_skill.lower())
@@ -116,17 +116,37 @@ class GenericBuilderFlowTests(unittest.TestCase):
             self.assertNotIn("clic de activación", planning_skill.lower())
             self.assertNotIn("activation click", planning_skill.lower())
 
+    def test_kickoff_keeps_the_installed_radar_as_the_only_admission_binary(self):
+        kickoff = " ".join(read("skills/chanks-3-session-kickoff/SKILL.md").split())
+        self.assertIn("Radar is the only admission binary", kickoff)
+        self.assertIn("never a binary built or found in a repository checkout", kickoff)
+        self.assertIn("$HOME/.local/bin/radar", kickoff)
+
+    def test_kickoff_states_admission_once_in_its_simple_form(self):
+        kickoff = " ".join(read("skills/chanks-3-session-kickoff/SKILL.md").split())
+        self.assertIn("`start` requires `LISTO`", kickoff)
+        self.assertIn("`continue`/`resume` require `LISTO` or `EN CURSO`", kickoff)
+        self.assertIn("references/admission-contract.md", kickoff)
+        self.assertEqual(kickoff.count("radar status --json"), 1)
+
+    def test_kickoff_marks_the_session_en_curso_with_radar_marcar(self):
+        kickoff = " ".join(read("skills/chanks-3-session-kickoff/SKILL.md").split())
+        for phrase in ("radar marcar <ID> --worktree <absolute", "`EN CURSO`", "branch that already has commits",
+                       "primary checkout", "chanks-3-paralelo"):
+            self.assertIn(phrase, kickoff)
+
     def test_native_resume_reconciles_same_identity_but_legacy_keeps_pending_module(self):
         support = read("skills/chanks-0-agente-soporte/SKILL.md")
         kickoff = read("skills/chanks-3-session-kickoff/SKILL.md")
         handoff = read("skills/chanks-0-agente-soporte/assets/assignment-implementation.md")
         brief = read("skills/chanks-0-agente-soporte/assets/brief-diario.md")
 
-        for source in (support, kickoff, handoff, brief):
+        for source in (kickoff, handoff):
             self.assertIn("same Session identity", source)
             self.assertIn("first pending Módulo for legacy", source)
-            self.assertIn("SHA-256", source)
-            self.assertIn("SHA-256", source)
+        for source in (support, handoff, brief):
+            self.assertNotIn("SHA-256", source)
+            self.assertIn("chanks-3-session-kickoff", source)
         self.assertIn("native record, code, and evidence", kickoff)
         self.assertIn("never execute a repository binary", support)
         self.assertIn("no fallback from a rejected state", " ".join(kickoff.split()).lower())
@@ -138,20 +158,23 @@ class GenericBuilderFlowTests(unittest.TestCase):
 
         for phrase in (
             "native ODD technical record", "does not become a second product plan",
-            "explicit human `solicitud_sdd`", "Strict TDD", "per work-unit commit",
-            "final pending unit before closure", "parent-record delta",
+            "parent-record delta", "delivered commit",
         ):
             self.assertIn(phrase, bridge)
         for obsolete in ("PI-EXECUTION-REBIND", "host-admitted", "one Session review",
-                         "prepare_new_change.py", "planningHome", "Módulo commits"):
+                         "prepare_new_change.py", "planningHome", "Módulo commits",
+                         "per work-unit commit", "final pending unit", "Strict TDD",
+                         "RDD", "consent", "Forward configured"):
             self.assertNotIn(obsolete, bridge)
-        self.assertIn("review outcome never authorizes delivery", bridge)
+        self.assertIn("Gentle AI wins", bridge)
         self.assertIn("ordinary delivery policy", closure)
         self.assertIn("actual delivery evidence", closure)
         self.assertNotIn("per work-unit commit", canon)
         self.assertNotIn("final pending unit before closure", canon)
         self.assertNotIn("one Session review", canon)
         self.assertNotIn("no per-task or per-Módulo reviewer loop", canon)
+        self.assertNotIn("review-size forecast", canon)
+        self.assertNotIn("Strict TDD", canon)
         self.assertIn("archive controls remain native SDD controls", canon)
 
     def test_s156_planning_handoff_and_review_reference(self):
@@ -203,53 +226,50 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertNotIn("Mantené el cupo", errors)
         self.assertNotIn("registro de avance", errors)
 
-    def test_closure_requires_repository_reinstall_evidence_or_explicit_exemption(self):
+    def test_closure_closes_one_session_through_radar_and_nothing_else(self):
         closure = read("skills/chanks-5-session-doc/SKILL.md")
+        compact = " ".join(closure.split())
         for rule in (
-            "Read the repository's `AGENTS.md`",
-            "delivered changed paths",
-            "If no reinstall rule is declared, explicitly report none",
-            "no delivered path matches, report no reinstall applicable",
-            "If the policy cannot be read, report",
-            "record the executed reinstall command and its verification result",
-            "if no check is prescribed, obtain an observed verification",
-            "do not declare the Session closed",
-            "Ask for explicit human confirmation before reinstalling skills",
-            "sync can terminate open Pi sessions",
-            "do not execute installers in this skill",
+            "`entrega.commit`", "ancestor", "`radar archivar <ID>`", "`radar check`",
+            "`radar render`", "`radar desmarcar <ID>`", "Only the responsible parent writes `openspec/plan.yaml`",
+            "nada que registrar",
         ):
             with self.subTest(rule=rule):
-                self.assertIn(rule, closure)
-        # The frozen product snapshot below retains the former path and bytes.
+                self.assertIn(rule, compact)
+        for gone in ("reinstall", "AGENTS.md", "Issue-Patch", "Herdr", "Pi sessions", "Notion",
+                     "installers", "chanks-7"):
+            with self.subTest(gone=gone):
+                self.assertNotIn(gone, closure)
         self.assertTrue(closure.startswith("---\nname: chanks-5-session-doc\n"))
+        skill_dir = SKILLS / "chanks-5-session-doc"
+        self.assertEqual(sorted(p.relative_to(skill_dir).as_posix() for p in skill_dir.rglob("*") if p.is_file()),
+                         ["SKILL.md"])
 
     def test_control_tower_session_doc_exemption_names_the_actual_configuration_file(self):
         policy = (ROOT.parent / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("`.session-doc.json`", policy)
         self.assertNotIn(".chanks-7-session-doc.json", policy)
 
-    def test_stage_five_delivery_policy_reads_declaration_and_routes_without_universal_gates(self):
+    def test_stage_five_delivery_policy_reads_declaration_and_prescribes_no_gentle_how(self):
         policy = read("skills/chanks-5-politica-de-entrega/SKILL.md")
         self.assertTrue(policy.startswith("---\nname: chanks-5-politica-de-entrega\n"))
-        for phrase in ("stage 5", "delivery-policy", "AGENTS.md", "work-unit-commits",
-                       "branch-pr", "chained-pr", "direct-push", "pull-request",
+        for phrase in ("stage 5", "delivery-policy", "AGENTS.md", "direct-push", "pull-request",
                        "issue-first", "missing", "contradictorias"):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, policy)
         for contract in (
             "En etapas 1–2", "No alteres pisos de seguridad", "Con confirmación",
             "sin evidencia suficiente", "señales contradictorias", "no supongas PR",
-            "Para `direct-push`, enrutá a `work-unit-commits`",
-            "sin cargar `branch-pr` ni `chained-pr`",
-            "Para `pull-request`, enrutá a `work-unit-commits` y `branch-pr`",
-            "usá `chained-pr` sólo cuando la política local o una decisión humana",
             "issue-first como requisito sólo donde el repositorio lo adopte",
+            "prevalece la política local",
             "Chanks no agrega regla de tamaño",
             "guía nativa de Gentle AI",
         ):
             with self.subTest(contract=contract):
                 self.assertIn(contract, policy)
-        self.assertNotIn("400", policy)
+        for gone in ("work-unit-commits", "branch-pr", "chained-pr", "enrutá a", "400"):
+            with self.subTest(gone=gone):
+                self.assertNotIn(gone, policy)
 
     def test_manual_coordinator_and_dispatch_remain_topology_only(self):
         coordinator = read("skills/chanks-3-coordinador-manual/SKILL.md")
@@ -335,26 +355,20 @@ class GenericBuilderFlowTests(unittest.TestCase):
 
         self.assertIn("it never imposes Módulos", bridge)
         self.assertIn("historical legacy evidence", bridge.lower())
-        self.assertIn("per work-unit commit", bridge)
+        self.assertNotIn("per work-unit commit", bridge)
         self.assertIn("Only legacy `full-sdd` runs", canon)
         self.assertIn("Gentle AI's native SDD pipeline", canon)
         self.assertIn("direct` and `design-tasks` remain non-SDD", canon)
         self.assertIn("review", canon)
         self.assertIn("Stage 4 belongs to Gentle AI", canon)
 
-    def test_authorized_legacy_full_sdd_reaches_existing_native_controls(self):
+    def test_bridge_passes_sdd_fields_through_without_choosing_a_route(self):
         bridge = " ".join(read("skills/chanks-4-puente/SKILL.md").split())
-        self.assertIn("authorized legacy `full-sdd`", bridge.lower())
-        self.assertIn("Gentle AI's existing native SDD controls", bridge)
-        self.assertIn("native SDD is exclusive to explicit human `solicitud_sdd`", bridge)
-        self.assertNotIn("prepare_new_change.py", bridge)
-
-    def test_sdd_exception_delegates_to_native_controls_without_embedded_recipe(self):
-        bridge = " ".join(read("skills/chanks-4-puente/SKILL.md").split())
-        self.assertIn("explicit human `solicitud_sdd`", bridge)
-        self.assertIn("native SDD preflight, authority, and archive controls", bridge)
-        self.assertNotIn("sdd-status", bridge)
-        self.assertNotIn("prepare_new_change.py", bridge)
+        self.assertIn("`solicitud_sdd`", bridge)
+        self.assertIn("legacy `ruta`", bridge)
+        self.assertIn("exactly as written", bridge)
+        for gone in ("sdd-status", "prepare_new_change.py", "preflight", "native SDD is exclusive"):
+            self.assertNotIn(gone, bridge)
 
     def test_no_debt_scope_rule_preserves_authorized_in_session_adjustments(self):
         canon = " ".join(read("skills/_shared/plan-naming-convention.md").split())
@@ -382,7 +396,7 @@ class GenericBuilderFlowTests(unittest.TestCase):
         handoff = read("skills/chanks-0-agente-soporte/assets/assignment-implementation.md")
         canon = read("skills/_shared/plan-naming-convention.md")
 
-        for phrase in ("native ODD", "historical legacy evidence", "Strict TDD",
+        for phrase in ("native ODD", "historical legacy evidence",
                        "exact authorized files", "observed execution", "parent-record delta"):
             self.assertIn(phrase.lower(), bridge.lower())
         self.assertIn("has not adopted plan management", support)
@@ -393,27 +407,17 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertIn("no-debt closure", canon.lower())
         self.assertIn("incomplete Encargo retains known declarations", canon)
 
-    def test_s157_handoff_requires_review_ready_and_preserves_seal(self):
-        handoff = " ".join(read("skills/chanks-0-agente-soporte/assets/assignment-implementation.md").split())
-        for phrase in ("listo para revisión", "all ODD tasks are checked", "full unattended seal",
-                       "expiry", "base", "permissions", "commit ceiling", "RDD consent policy",
-                       "independent revalidation", "Session", "worker", "checks", "commits",
-                       "changed paths", "review outcomes", "stopped decisions", "budget"):
-            self.assertIn(phrase, handoff)
-        self.assertIn("neither signal nor report authorizes delivery", handoff.lower())
-
-    def test_sealed_terminal_wake_report_is_unconditional_but_review_ready_is_not(self):
-        handoff = " ".join(read("skills/chanks-0-agente-soporte/assets/assignment-implementation.md").split())
-        self.assertIn("Only after all ODD tasks are checked, send", handoff)
-        self.assertIn("`listo para revisión`", handoff)
-        self.assertIn("For every sealed terminal outcome — COMPLETED, BLOCKED, or FAILED — send", handoff)
-        self.assertIn("even when ODD tasks are unfinished", handoff)
-        self.assertLess(handoff.index("`listo para revisión`"), handoff.index("For every sealed terminal outcome"))
+    def test_implementation_handoff_carries_no_v2_machinery(self):
+        handoff = read("skills/chanks-0-agente-soporte/assets/assignment-implementation.md")
+        for gone in ("PI_SESSION_ID", "APPROVED_ALIAS", "Intercom", "listo para revisión",
+                     "seal", "RDD", "SHA-256", "TDD"):
+            with self.subTest(gone=gone):
+                self.assertNotIn(gone, handoff)
+        self.assertIn("Gentle AI", handoff)
 
     def test_worker_revalidation_tolerates_only_the_dispatch_markers_listo_to_en_curso(self):
         skill = read("skills/chanks-4-unattended-implementation/SKILL.md")
         sealing = read("skills/chanks-4-unattended-implementation/references/sealing-and-routing.md")
-        handoff = " ".join(read("skills/chanks-0-agente-soporte/assets/assignment-implementation.md").split())
 
         self.assertIn("Worker-side revalidation after dispatch tolerates exactly one drift", skill)
         self.assertIn("references/sealing-and-routing.md", skill)
@@ -428,13 +432,6 @@ class GenericBuilderFlowTests(unittest.TestCase):
             "Before dispatch, with no marker on disk",
         ):
             self.assertIn(phrase, sealing)
-
-        self.assertIn(
-            "tolerating only the dispatch marker's own `LISTO` to `EN CURSO` change",
-            handoff,
-        )
-        self.assertIn("chanks/despachos/<ID>.json", handoff)
-        self.assertIn("or any other drift, grants nothing", handoff)
 
     def test_frozen_product_snapshot_matches_the_pre_migration_builder(self):
         snapshot = ROOT.parent / "product" / "tower" / "generic"
@@ -452,6 +449,117 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertTrue(set(INSTALLER.SKILLS).isdisjoint(forbidden))
         self.assertTrue(all(source.is_relative_to(SKILLS) for _, _, source in INSTALLER.source_files(ROOT)))
         self.assertFalse((ROOT / "skills/torre-control-entregas").exists())
+
+
+STAGE_SKILL_GLOBS = (
+    "chanks-0-agente-soporte", "chanks-0-explicalo-simple", "chanks-0-mensajes-visibles",
+    "chanks-0-session-context-loader", "chanks-1-*", "chanks-2-planificador-granular",
+    "chanks-3-session-kickoff", "chanks-4-puente", "chanks-5-*",
+)
+FORBIDDEN_IN_STAGE_SKILLS = (
+    "--base-ref", "per work-unit commit", "Forward configured", "four lenses", "cuatro lentes",
+    "chanks-7-", "chanks-6-", "PI_SESSION_ID", "outrank", "mayor precedencia", "cuatro agentes",
+)
+
+
+def stage_skill_dirs():
+    found = sorted({path for pattern in STAGE_SKILL_GLOBS for path in SKILLS.glob(pattern) if path.is_dir()})
+    assert found, "no stage skill folders found"
+    return found
+
+
+def stage_skill_texts():
+    for folder in stage_skill_dirs():
+        for path in sorted(folder.rglob("*")):
+            if path.is_file() and path.suffix in {".md", ".json"}:
+                yield path, path.read_text(encoding="utf-8")
+
+
+class StageSkillBoundaryTests(unittest.TestCase):
+    """Stages 1, 2, 3 (kickoff), 4 (bridge) and 5 hold the what, never Gentle AI's how."""
+
+    def test_stage_skills_carry_none_of_the_collision_phrases(self):
+        for path, text in stage_skill_texts():
+            for phrase in FORBIDDEN_IN_STAGE_SKILLS:
+                with self.subTest(file=path.relative_to(SKILLS).as_posix(), phrase=phrase):
+                    self.assertNotIn(phrase, text)
+
+    def test_digest_ceremony_lives_only_in_the_admission_reference(self):
+        for path, text in stage_skill_texts():
+            if path.name == "admission-contract.md":
+                continue
+            with self.subTest(file=path.relative_to(SKILLS).as_posix()):
+                self.assertNotIn("SHA-256", text)
+        canon = read("skills/_shared/plan-naming-convention.md")
+        for phrase in FORBIDDEN_IN_STAGE_SKILLS + ("SHA-256", "digests of exact"):
+            with self.subTest(canon=phrase):
+                self.assertNotIn(phrase, canon)
+
+    def test_triggers_fire_only_on_an_explicit_stage_request(self):
+        explicit = {"chanks-0-explicalo-simple"}
+        for folder in stage_skill_dirs():
+            text = (folder / "SKILL.md").read_text(encoding="utf-8")
+            lines = text.splitlines()
+            with self.subTest(skill=folder.name):
+                self.assertEqual(lines[0], "---")
+                self.assertTrue(lines[1].startswith("name: "), lines[1])
+                self.assertTrue(lines[2].startswith('description: "Trigger:'), lines[2])
+                if folder.name not in explicit:
+                    self.assertIn("Chanks", lines[2])
+        autoridad = read("skills/chanks-1-autoridad/SKILL.md").splitlines()[2]
+        for broad in ("idea,", "feature,", "proyecto nuevo"):
+            self.assertNotIn(broad, autoridad)
+        self.assertNotIn("nueva feature", read("skills/chanks-1-feature/SKILL.md").splitlines()[2])
+        self.assertNotIn("diagnóstico", read("skills/chanks-1-descubrimiento/SKILL.md").splitlines()[2])
+
+    def test_explicalo_simple_never_loads_unprompted(self):
+        skill = read("skills/chanks-0-explicalo-simple/SKILL.md")
+        self.assertNotIn("unprompted", skill)
+        self.assertIn("Load only when", skill)
+
+    def test_adoption_reads_known_errors_on_demand_and_names_every_runtime(self):
+        skill = read("skills/chanks-1-adopcion/SKILL.md")
+        errors = read("skills/chanks-1-adopcion/references/errores-conocidos.md")
+        self.assertNotIn("Cargá `references/errores-conocidos.md` antes de ejecutar", skill)
+        self.assertIn("cuando aparezca", skill)
+        self.assertIn("todos los runtimes", skill)
+        self.assertIn("todos los runtimes", errors)
+
+    def test_planner_loads_no_other_skill_before_planning(self):
+        planner = read("skills/chanks-2-planificador-granular/SKILL.md")
+        self.assertNotIn("## Visible Messages Preamble", planner)
+        self.assertIn("only when the human asks", planner)
+        self.assertNotIn("size forecast", planner)
+        steps = planner.split("## Execution Steps", 1)[1].split("## Output Contract", 1)[0]
+        self.assertEqual(
+            [line.split(".", 1)[0] for line in steps.splitlines() if line[:1].isdigit() and ". " in line],
+            [str(number) for number in range(1, 9)],
+        )
+
+    def test_context_loader_keeps_only_the_radar_specific_rules(self):
+        skill = read("skills/chanks-0-session-context-loader/SKILL.md")
+        for phrase in ("radar status", "memoria", "No selecciones Sesión"):
+            self.assertIn(phrase, skill)
+        for gone in ("topic key", "sdd/{change}", "mem_"):
+            self.assertNotIn(gone, skill)
+
+    def test_orphan_support_files_are_gone(self):
+        support = SKILLS / "chanks-0-agente-soporte"
+        self.assertEqual(
+            sorted(p.relative_to(support).as_posix() for p in support.rglob("*") if p.is_file()),
+            ["SKILL.md", "assets/assignment-implementation.md", "assets/brief-diario.md"],
+        )
+
+    def test_flow_docs_name_the_boundary_block_and_make_no_review_claims(self):
+        for relative in ("EJECUCION-EN-PARALELO.md", "FLUJO-END-TO-END.md"):
+            text = read(relative)
+            with self.subTest(doc=relative):
+                self.assertNotIn("Durable Session Skill Routing", text)
+                self.assertNotIn("cuatro lentes", text)
+                self.assertNotIn("chanks-6-", text)
+                self.assertNotIn("chanks-7-", text)
+        self.assertIn("Chanks and Gentle AI boundary", read("EJECUCION-EN-PARALELO.md"))
+        self.assertIn("Chanks and Gentle AI boundary", read("FLUJO-END-TO-END.md"))
 
 
 if __name__ == "__main__":

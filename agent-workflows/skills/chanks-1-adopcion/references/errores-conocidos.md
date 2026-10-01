@@ -31,11 +31,11 @@ error → por qué duele → qué hacer en vez → evidencia.
    is 0 fail").
 
 4. **Dejar desactualizados los archivos de instrucciones de los otros agentes.**
-   Codex y opencode quedaron con un bloque pre-migración que se autodeclara de mayor
-   precedencia que cualquier bloque gestionado o skill, así que ganaba sobre el canon
-   correcto que esos mismos agentes ya tenían instalado. Además, `gentle-ai sync`
-   puede sobreescribir bloques manuales de Codex sin marcadores `<!-- -->`.
-   → Actualizá los cuatro archivos de agente (Claude, Codex, opencode, Pi) en la
+   Codex y opencode quedaron con un bloque pre-migración que seguía instruyendo el
+   modelo anterior junto al canon correcto que esos mismos agentes ya tenían
+   instalado. Además, `gentle-ai sync` puede sobreescribir bloques manuales de Codex
+   sin marcadores `<!-- -->`.
+   → Actualizá los archivos de instrucciones de todos los runtimes en la
    misma entrega que la activación, y snapshoteá los bloques manuales antes de un
    `sync`/`install`.
    Evidencia: auditoría de propagación 2026-09-10 (memoria

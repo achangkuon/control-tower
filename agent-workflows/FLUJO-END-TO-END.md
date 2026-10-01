@@ -58,7 +58,7 @@ Siete tramos. Una idea entra por el 1 y sale entregada y cerrada por el 7.
         │             una pipeline SDD, tres puertas de entrada, verify y archive comunes
         ▼             produce: Módulos commiteados, cada uno revertible solo
   ⑤  REVISIÓN         ¿está bien hecho?
-        │             RDD encendida → cuatro lentes (4R), siempre
+        │             la revisión la decide Gentle AI (su RDD, sus lentes)
         ▼             produce: aprobado, o una decisión abierta que bloquea
   ⑥  ENTREGA          ¿cómo sale?
         │             la política es un dato del repo · MAIN mueve la rama
@@ -236,8 +236,8 @@ archiva y nace otra con `reemplaza`.
 El tramo más barato de los siete: **cero skills propias**. Es capa 1 pura — la revisión
 adversarial de gentle-ai.
 
-**RDD encendida → cuatro lentes (4R), siempre.** Judgment Day queda anotada como salida
-declarada para cuando RDD está apagada, pero no es el default.
+**La revisión la decide Gentle AI.** Chanks no fija cuándo se revisa, cuántas lentes se usan ni
+qué pasa cuando la revisión está apagada.
 
 **Un escalamiento de la revisión se anota como una decisión abierta que contamina los criterios
 de aceptación.** Con eso la Sesión se calcula 🔴 BLOQUEADO sola, con la maquinaria que ya
@@ -312,7 +312,7 @@ Esto es qué de los siete tramos ya está cubierto, qué cae en las fases vacía
 | Un solo dato editable (`openspec/plan.yaml`) y una vista generada (`ROADMAP.md`) | Fase 2b + 3 | 6, 7 |
 | Detección de entrega leyendo Git: el commit declarado debe resolver y ser ancestro | `tools/plan` | 7 |
 | Partición de control-tower validada: 10 Zonas + Cimientos, 441 archivos, cero huérfanos | `PLANO-CONTROL-TOWER.md` | 1 |
-| `chanks-0-agente-soporte` v3.0 y `chanks-7-session-doc` v3.0 escritas para este modelo | Fase 3 | 7 |
+| `chanks-0-agente-soporte` v3.0 y `chanks-5-session-doc` v3.0 escritas para este modelo | Fase 3 | 7 |
 | **El Horizonte** — loop planner N+1 / implementer N | control-tower `S5.3` ✅ COMPLETO, `continuation/` | Horizonte |
 
 **El Horizonte no hay que inventarlo, hay que conectarlo.** El producto ya lo implementa; el
@@ -397,7 +397,7 @@ comunes y obligatorios para las tres**.
 
 **Por qué importa:** hoy una Sesión `direct` **no pasa por `verify`**. Ése era el agujero de
 revisión en la ruta más usada, y es lo que hace que el tramo 5 sea barato: si todas las rutas
-terminan en `verify`, la revisión 4R aplica a todas sin escribir nada nuevo.
+terminan en `verify`, la revisión de Gentle AI aplica a todas sin escribir nada nuevo.
 
 **Alcance de la corrección:** canon §15, `chanks-3-session-kickoff` (pasos 5 y siguientes), y la
 construcción de `chanks-4-puente`, que es quien traduce ruta → fase de entrada.
@@ -493,7 +493,7 @@ nunca más.** Es el ítem más urgente de todo este documento.
 
 Las cinco piezas que nombran `STATUS.md` o `master-index` y hay que corregir, en orden:
 `doc-guard.sh` → `AGENTS.md` → `project-kickoff` (deja de crear `master-index.md`) →
-`chanks-6-politica-de-entrega` (cambia su orden de detección) → `chanks-1-cierre-de-decisiones` (pasa a mandar
+`chanks-5-politica-de-entrega` (cambia su orden de detección) → `chanks-1-cierre-de-decisiones` (pasa a mandar
 delta a Support).
 
 ---
@@ -551,7 +551,7 @@ Está gobernado por dependencias reales, no por el número de tramo.
    que ya se escribieron. **C2 y C6 se hacen juntas**: reescriben las mismas piezas —
    canon §15, `chanks-3-session-kickoff` y el conjunto de rutas de la herramienta.
 4. Aplicar el resultado sobre `plan-naming-convention.md` y sobre los bloques
-   «Plan Naming Standard» y «Durable Session Skill Routing» de `~/.claude/CLAUDE.md` —
+   «Plan Naming Standard» y «Chanks and Gentle AI boundary» de `~/.claude/CLAUDE.md` —
    la Fase 1 pendiente, ahora reconciliada.
 5. Propagar a los cuatro agentes y **verificar que los bloques manuales sobrevivan**
    (Codex pierde los suyos siempre: snapshot antes, `check` después).
@@ -578,8 +578,8 @@ Está gobernado por dependencias reales, no por el número de tramo.
 11. **Tramo 2** — dos adaptaciones + las dos referencias compartidas.
 12. **Tramo 3** — achicar `chanks-3-session-kickoff` a cuatro pasos; el brief suma el runtime del asiento.
 13. **Tramo 4** — nace `chanks-4-puente`; se disuelven las tres.
-14. **Tramos 5, 6, 7** — casi nada de código: una regla de configuración (RDD → 4R), la
-    adaptación de `torre-control-entregas`, y `chanks-7-session-doc`/`chanks-0-agente-soporte` que ya están.
+14. **Tramos 5, 6, 7** — casi nada de código: una regla de configuración (la revisión queda en Gentle AI), la
+    adaptación de `torre-control-entregas`, y `chanks-5-session-doc`/`chanks-0-agente-soporte` que ya están.
 
 ### Paso 5 — Conectar la maquinaria
 

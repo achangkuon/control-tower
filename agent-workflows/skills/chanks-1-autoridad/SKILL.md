@@ -1,6 +1,6 @@
 ---
 name: chanks-1-autoridad
-description: "Trigger: autoridad, idea, feature, descubrimiento, heredado, adopción, proyecto nuevo. Enruta el trabajo de autoridad a una variante nominal."
+description: "Trigger: Chanks etapa 1 Definir, trabajo de autoridad del plan (alcance aprobado y Zonas), pedido explícitamente. Enruta el trabajo de autoridad a una variante nominal."
 license: Apache-2.0
 metadata:
   author: gentleman-programming

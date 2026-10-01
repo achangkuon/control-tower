@@ -1,6 +1,6 @@
 ---
 name: chanks-1-brain-dump
-description: "Trigger: brain dump, idea suelta, volcado de idea. Convierte material amorfo en una propuesta de alcance sin decidir por el usuario."
+description: "Trigger: Chanks etapa 1, brain dump, volcado de una idea suelta pedido explícitamente. Convierte material amorfo en una propuesta de alcance sin decidir por el usuario."
 license: Apache-2.0
 metadata:
   author: gentleman-programming

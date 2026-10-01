@@ -1,96 +1,52 @@
 ---
 name: chanks-5-session-doc
-description: "Trigger: final session closure, close session, document session. Gather post-delivery evidence for the responsible parent."
+description: "Trigger: Chanks etapa 5, cerrar Sesión, close session, registrar entrega.commit. Close one delivered Session in openspec/plan.yaml through Radar."
 license: Apache-2.0
 metadata:
   author: gentleman-programming
-  version: "6.0"
+  version: "7.0"
 ---
 
 ## Activation Contract
 
-Activate after configured checks, applicable review handling, and delivery. Gather closure evidence;
-the responsible parent records confirmed plan evidence and generates the view under ordinary policy.
+Stage 5 (close). Activate after Gentle AI delivered the Session's commit. Closing records that commit
+in the plan and updates Radar's view of the Session; it does not implement, review, deliver or
+install anything.
 
 ## Hard Rules
 
-- Read plan evidence only through `../chanks-0-agente-soporte/SKILL.md`; never write the plan or ROADMAP.
-- Closure requires actual delivery evidence: a resolving immutable `entrega.commit` ancestor of
-  integrated HEAD, plus observed checks against the Encargo outcome/constraints. `entrega.pr` is
-  optional only when it exists.
-- Native ODD document/Engram continuity is subordinate technical evidence, not closure or product status.
-- Review follows Gentle AI native policy. A decline/provider fallback is reported, never hidden;
-  review outcome never authorizes delivery and does not create a deadlock.
-- Only explicitly selected native SDD follows its existing archive controls after delivery. Do not
-  claim future enforcement or create per-task/per-Módulo review loops.
-- This skill gathers evidence and coordinates outstanding work; do not execute installers in this skill.
-  The responsible parent arranges execution under repository policy and records the observed result.
-- Preserve documentation configuration failures as evidence; do not reverse completed delivery.
-
-## Issue-Patch Closure (not Session closure)
-
-For an issue patch routed through `chanks-3-despacho-herdr`'s Issue-Patch Mode,
-collect the exact human approval (issue, base, outcome, worker, files, Cimientos,
-Recursos), reproduced symptom, worker identity and terminal evidence, checks,
-review result, full immutable commit, branch and serial integration evidence.
-Require fresh Git proof that the reported candidate commit belongs to the exact
-issue branch/worker and is an ancestor of integrated master; verify changed files
-against approved scope. Close the issue only against named tests that demonstrate the
-original symptom is repaired at the integrated immutable commit, not on a promise,
-report or outbound send. Missing evidence, conflict, identity drift or failed checks
-leave the patch open and preserve the worker. Review is not delivery permission.
-Check actual delivered paths against `AGENTS.md` reinstall rules exactly as above;
-missing required human confirmation, installation or verification is pending closure.
-
-When no planned work is closed, declare «nada que registrar»; never add a patch
-Session, write `openspec/plan.yaml`, call `radar archivar`, require Radar `COMPLETO`,
-or increment plan progress for a patch. Return issue closure evidence separately
-from Session `entrega.commit` delta. Only then request patch retirement under
-`../chanks-3-despacho-herdr/references/retiro.md`. This documentation does not
-prove execution, installation, or live Herdr retirement.
-
-## Decision Gates
-
-| Condition | Action |
-|---|---|
-| Check/outcome evidence fails | Do not close; return exact failure. |
-| Commit is absent or not integrated | Do not close; preserve pending delta. |
-| Review declined/unavailable | Report applicable policy fallback; ordinary delivery evidence still decides closure. |
-| A required reinstall, its successful verification, or skill-install confirmation is missing | Do not close; report the exact pending command, verification, or human confirmation. |
-| Evidence is valid, including any required reinstall evidence | Return closure evidence and exact parent-record delta. |
+- Read plan evidence only through `../chanks-0-agente-soporte/SKILL.md`. Only the responsible parent
+  writes `openspec/plan.yaml`; a delegated helper returns the exact delta instead. Never edit
+  `openspec/ROADMAP.md` by hand.
+- Closure requires actual delivery evidence: a resolving immutable `entrega.commit` that is an
+  ancestor of the primary branch's integrated HEAD, plus observed checks against the Encargo
+  outcome and constraints. `entrega.pr` is optional only when it exists. Ordinary delivery policy
+  decides how the commit got there.
+- Gentle AI's technical record for a native Encargo is subordinate evidence, never closure or
+  product status.
+- A failed check or a commit that is absent or not integrated leaves the Session open; report the
+  exact failure and keep the pending delta.
 
 ## Execution Steps
 
-1. Gather native Encargo outcome/constraint evidence, configured TDD/check results, commit, integrated HEAD, and optional PR.
-2. Confirm commit resolution and ancestry; distinguish actual delivery from review information.
-3. Read the repository's `AGENTS.md` for post-delivery reinstall policy. Compare the actual
-   delivered changed paths (not just the current dirty tree) with every declared path rule; collect
-   every matching tool command and its prescribed verification. If the policy cannot be read, report
-   the missing evidence rather than assuming no rule.
-4. If no reinstall rule is declared, explicitly report none and require no reinstall. If rules
-   exist but no delivered path matches, report no reinstall applicable and the paths checked.
-   For each matching rule, record the executed reinstall command and its verification result
-   (including observed success); if no check is prescribed, obtain an observed verification of the
-   installed tool. If execution or verification is missing, name the pending command/check; do not declare the Session closed
-   until required reinstall and verification evidence exist. Do not treat a proposed command as run.
-5. Ask for explicit human confirmation before reinstalling skills: sync can terminate open Pi sessions.
-   Without that confirmation, report the approval and reinstall as pending; never infer approval
-   from delivery or from this skill. The parent coordinates any authorized execution after delivery.
-6. For explicit native SDD, gather existing archive evidence after delivery; otherwise return native ODD continuity only as subordinate evidence.
-7. Return `entrega.commit`/optional PR delta. After the parent records confirmed delivery in
-   `openspec/plan.yaml`, instruct the parent to run `radar archivar <ID>` for that completed,
-   master-integrated Session, then `radar check` and `radar render`. The archiver writes
-   `openspec/archive/sesiones/<ID>.md` and leaves one reference in the live plan. Never
-   archive an open Session or batch-archive older Sessions as part of this closure.
-   The parent owns these writes and their separate delivery evidence.
+1. Gather the Encargo outcome and constraint evidence, the checks Gentle AI observed, the commit, the
+   integrated HEAD, and the optional PR.
+2. Confirm the commit resolves and is an ancestor of the primary branch
+   (`git merge-base --is-ancestor <commit> <primary>`).
+3. The parent records `entrega.commit` (and `entrega.pr` when it exists) on the Session in
+   `openspec/plan.yaml`.
+4. For that completed, integrated Session run `radar archivar <ID>`, then `radar check`, then
+   `radar render`. Never archive an open Session or batch-archive older ones.
+5. If the Session carries a marker (`radar marcar`), run `radar desmarcar <ID>` and remove its
+   dedicated worktree once the commit is integrated.
+6. When a delivery closed no planned work, say so as a standalone line, `nada que registrar`, instead
+   of inventing a Session or a closure.
 
 ## Output Contract
 
-Return outcome/check evidence, commit/HEAD/PR evidence, review result or fallback, applicable native
-SDD archive evidence, Radar archive/check/render results or pending parent commands, reinstall policy source, matched delivered paths, executed
-commands and verification results (or explicit none/pending work), human skill-install confirmation
-when applicable, closure outcome/failure, and the exact evidence the responsible parent must record.
-State that ordinary delivery policy and Chanks close gates still apply.
+Return outcome and check evidence, commit/HEAD/PR evidence, the Radar archive/check/render and
+`desmarcar` results (or the pending parent commands), the closure outcome or failure, and the exact
+evidence the responsible parent must record. State that ordinary delivery policy still applies.
 
 ## References
 

@@ -125,12 +125,10 @@ class IssuePatchContractTests(unittest.TestCase):
                           "close the exact agent", "fresh Git/Herdr readback",
                           "never require Radar `COMPLETO`")
 
-    def test_closure_has_no_session_progress_and_keeps_install_gate(self):
-        self.assert_terms(self.closure, "Issue-Patch Closure", "exact human approval",
-                          "ancestor of integrated master", "delivered paths",
-                          "missing required human confirmation", "named tests", "nada que registrar",
-                          "never add a patch Session", "radar archivar",
-                          "return issue closure evidence separately")
+    def test_closure_skill_is_session_only_and_the_router_keeps_the_patch_rules(self):
+        self.assertNotIn("Issue-Patch Closure", self.closure)
+        self.assertNotIn("Herdr", self.closure)
+        self.assert_terms(self.closure, "nada que registrar", "`radar archivar <ID>`")
         self.assert_terms(self.router, "never changes Radar Session progress",
                           "nada que registrar", "No review outcome grants delivery")
 

@@ -1,10 +1,10 @@
 ---
 name: chanks-0-agente-soporte
-description: "Trigger: support, brief, capacity, conflicts, assignments, radar. Provide read-only planning evidence to a responsible parent."
+description: "Trigger: Chanks soporte de planificación, brief de planificación, capacidad y conflictos entre Sesiones, evidencia de radar. Provide read-only planning evidence to a responsible parent."
 license: Apache-2.0
 metadata:
   author: gentleman-programming
-  version: "6.0"
+  version: "7.0"
 ---
 
 ## Activation Contract
@@ -20,23 +20,11 @@ read-only: it advises the responsible parent and never becomes a dispatcher, pla
 - A repository with no `openspec/plan.yaml` has not adopted plan management, which is a human choice
   and not a fault. Say what the request needs it for, offer to start adoption, and stop. Never
   improvise a substitute record or adopt it without the human saying yes.
-- Bind admission to current `HEAD`, requested Session ID, and SHA-256 digests of exact command
-  stdout. Radar remains product authority; no ODD document or Engram record changes plan status.
+- Radar remains product authority; no ODD document or Engram record changes plan status. Admission
+  to start, continue or resume a Session is stated once, in `../chanks-3-session-kickoff/SKILL.md`.
 - Preserve human choice for scope, files, risks, authority, and contradictions. Compatible seats
   are a parallel-safety verdict (§13), not a live lock, assignment, or topology instruction.
-- Do not implement, deliver, dispatch, create external sessions, mutate planning data, or infer a
-  missing provider-discovery footprint.
-
-## Admission Evidence Bundle
-
-Return a fresh bundle before any manual start/continue/resume. `start` requires `LISTO`.
-`continue`/`resume` accept `LISTO` or `EN CURSO` only when the discriminator is explicit:
-`encargo` means same Session identity plus reconciliation of native ODD record, code, and evidence;
-legacy means first pending Módulo for legacy. Every other state returns only state, blocker, and
-Zone-ordered `LISTO` choices, never a fallback skill.
-
-Include requested state/blocker, Zone-ordered choices, compatible seats, queue rows/length, choice
-count, and exact output bytes digest binding. `seats`, queues, and choices never assign agents.
+- Do not implement, deliver, dispatch, create external sessions, or mutate planning data.
 
 ## Parallel Alternatives From The Snapshot
 
@@ -53,7 +41,7 @@ When the request is what could run in parallel — resuming work, planning a bat
 - `escenarios` separates the two claims people conflate: `desbloquea` is whose declared dependencies
   a closure would satisfy, and `quedan_listo` is who would actually derive to `LISTO` under every
   criterion and the active priority. `siguen_sin_abrir` carries the state and the reason for the rest.
-- Each Sesión row now also carries its `archivos`, `cimientos`, `recurso`, and `depende_de`, which are
+- Each Sesión row also carries its `archivos`, `cimientos`, `recurso`, and `depende_de`, which are
   the declarations every verdict above is derived from.
 
 All of this is a forecast over the current plan and base. It reserves nothing, assigns no agent,
@@ -69,25 +57,27 @@ evidence for a person to read; it is never the machine path and never an authori
 | Confirmed plan change | Return exact old/new delta and authority to the responsible parent. |
 | Incomplete files or scope expansion | Return human approval plus fresh compatibility requirement. |
 | Missing/contradictory authority | Stop with the named human decision package. |
-| Approved ordinary bounded implementation | Issue one bounded implementation handoff; do not dispatch or assign an agent. |
+| Approved Session ready for stage 4 | Issue one bounded implementation handoff; do not dispatch or assign an agent. |
 
 ## Execution Steps
 
 1. Capture trusted Radar and repository evidence.
 2. Distinguish native Encargo coordination from legacy historical Module evidence.
-3. Report dependencies, exact-file/Cimiento/Recurso compatibility, risks, checks, and unresolved human choices.
+3. Report dependencies, exact-file/Cimiento/Recurso compatibility, risks, and unresolved human choices.
 4. Issue one bounded implementation handoff using `assets/assignment-implementation.md` only when the
-   human-approved Session and fresh admission bundle identify a selected implementer; issuance is not
-   dispatch, runtime assignment, delivery, or plan mutation.
+   human-approved Session passed admission and a selected implementer is identified; issuance is not
+   dispatch, delivery, or plan mutation.
 5. Return only a preconditioned proposed delta; the responsible parent records confirmed plan evidence.
 
 ## Output Contract
 
-Return sources, admission binding, capacity/conflicts, brief, issued bounded implementation handoff when
-approved, proposed delta, human decisions, and evidence gaps. State that Radar is product authority and
-the responsible parent records changes.
+Return sources, the Radar state and Zone-ordered `LISTO` choices relevant to the request,
+capacity/conflicts, brief, issued bounded implementation handoff when approved, proposed delta, human
+decisions, and evidence gaps. Seats, queues, and choices never assign agents. State that Radar is
+product authority and the responsible parent records changes.
 
 ## References
 
 - `assets/brief-diario.md`
 - `assets/assignment-implementation.md`
+- `../chanks-3-session-kickoff/SKILL.md`

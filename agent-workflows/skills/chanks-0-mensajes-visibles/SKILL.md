@@ -1,6 +1,6 @@
 ---
 name: chanks-0-mensajes-visibles
-description: "Trigger: visible messages, mensajes visibles, product copy. Suggest small relevant messages for an approved feature before planning."
+description: "Trigger: Chanks mensajes visibles, visible messages for an approved feature, only on explicit request. Suggest small relevant messages for that feature."
 license: Apache-2.0
 metadata:
   author: gentleman-programming
@@ -9,8 +9,8 @@ metadata:
 
 ## Activation Contract
 
-Load after user ideas or points are clarified and approved, before granular planning. Make one
-lightweight cosmetic classification for the same feature; this is not a parent router or a planning step.
+Load only when the human asks for visible messages for an approved feature. Make one lightweight
+cosmetic classification for that feature; this is not a parent router or a planning step.
 
 ## Hard Rules
 

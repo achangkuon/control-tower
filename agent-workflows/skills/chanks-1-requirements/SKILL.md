@@ -1,6 +1,6 @@
 ---
 name: chanks-1-requirements
-description: "Trigger: requisitos técnicos, REQUIREMENTS, contratos de implementación. Traduce PRD y RFC aprobados a criterios técnicos binarios."
+description: "Trigger: Chanks etapa 1, escribir REQUIREMENTS a partir de PRD y RFC aprobados. Traduce PRD y RFC aprobados a criterios técnicos binarios."
 license: Apache-2.0
 metadata:
   author: gentleman-programming
