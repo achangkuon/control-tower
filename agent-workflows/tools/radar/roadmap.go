@@ -52,6 +52,16 @@ type Alternativa struct {
 	Recurso   []string
 }
 
+// alternativaDe carries the exact declarations of one Sesión, whatever its
+// state, so clasificarPar can compare any two records.
+func alternativaDe(s *Sesion) Alternativa {
+	return Alternativa{
+		Sesion: s.ID, Zona: s.Zona, Resultado: s.Resultado,
+		Prioridad: s.Prioridad, Archivos: copiaOrdenada(s.Archivos),
+		Cimientos: copiaOrdenada(s.Cimientos), Recurso: copiaOrdenada(s.Recurso),
+	}
+}
+
 // Par is the verdict on one unordered combination, with the exact evidence that
 // produced it. A verdict without the offending path is not reviewable.
 type Par struct {
@@ -131,11 +141,7 @@ func (p *Plan) roadmapConEstados(root, head string, estados map[string]string, c
 			if !existe {
 				continue
 			}
-			alternativas = append(alternativas, Alternativa{
-				Sesion: s.ID, Zona: s.Zona, Resultado: s.Resultado,
-				Prioridad: s.Prioridad, Archivos: copiaOrdenada(s.Archivos),
-				Cimientos: copiaOrdenada(s.Cimientos), Recurso: copiaOrdenada(s.Recurso),
-			})
+			alternativas = append(alternativas, alternativaDe(s))
 		}
 	}
 	pares := make([]Par, 0)

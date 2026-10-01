@@ -89,6 +89,21 @@ class ParaleloTests(unittest.TestCase):
             "chanks-5-session-doc",
         )
 
+    def test_radar_refusals_are_protection_and_cimiento_pairs_cannot_share_a_lot(self):
+        self.assert_phrases(
+            "radar refuses to mark a Session that collides with one already `EN CURSO` or reuses a worktree",
+            "a refusal is expected protection, not an error to work around",
+            "`cimiento-compartido` pairs cannot share a lot in v1",
+        )
+        self.assertNotIn("explicit acceptance", self.text)
+
+    def test_hand_over_names_the_feature_document_with_the_session_id(self):
+        self.assert_phrases(
+            "`odd/tasks/<id>-<feature>.md`",
+            "lowercase Session ID",
+            "exactly one `odd/tasks/<id>*.md`",
+        )
+
     def test_integration_is_serial(self):
         self.assert_phrases("serial", "one Session at a time", "repository's own delivery policy")
 

@@ -29,8 +29,8 @@ more `LISTO` Sessions worked at the same time. One Session alone goes through
    - `compatibilidad[]`: one entry per `LISTO` pair (`a`, `b`, `clase`, `motivo`, `detalle`). `clase` is
      `compatible` (disjoint files, no shared Cimiento or Recurso), `cimiento-compartido` (only with
      coordinated intervention on that exact file; tell the human), `solapa-archivos`,
-     `recurso-excluyente` or `indeterminado`. Only `compatible`, and `cimiento-compartido` with
-     the human's explicit acceptance, may share a lot. Every pair in the lot must qualify.
+     `recurso-excluyente` or `indeterminado`. Only `compatible` pairs may share a lot;
+     `cimiento-compartido` pairs cannot share a lot in V1. Every pair in the lot must be `compatible`.
    - `escenarios[]` and `asientos[]` are forecasts of what unblocks and what capacity exists.
 2. **Propose a lot** of compatible `LISTO` Sessions, in Zona order, with each pair's `clase` and
    `motivo`. Then STOP and wait for the human to approve the exact Session IDs. That approval is
@@ -39,10 +39,14 @@ more `LISTO` Sessions worked at the same time. One Session alone goes through
 3. **Mark each approved Session.** Create one git worktree on its own branch, under the user's
    home as a sibling of the repository (never under `/tmp`), then run
    `radar marcar <ID> --worktree <absolute path>`. The Session now shows `EN CURSO`.
-   A Radar refusal stops that Session only; report its reason and continue with the others.
+   Radar refuses to mark a Session that collides with one already `EN CURSO` or reuses a worktree
+   or branch: a refusal is expected protection, not an error to work around. A refusal stops that
+   Session only; report its reason and continue with the others.
 4. **Dispatch.** One Gentle AI subagent (or a separate agent terminal) per marked Session. Hand
-   over only the Session ID, the `radar sesion <ID>` output (Encargo and authorized files) and the
-   worktree path.
+   over only the Session ID, the `radar sesion <ID>` output (Encargo and authorized files), the
+   worktree path, and the request to name the ODD feature document `odd/tasks/<id>-<feature>.md`
+   with the lowercase Session ID as prefix, because Radar's stage 5 looks for exactly one
+   `odd/tasks/<id>*.md` in the marked worktree.
 5. **When a Session's work reports finished:** `radar marcar <ID> --listo`.
 6. **Integrate serially**, one Session at a time, following the repository's own delivery policy.
    Closing is stage 5 (`chanks-5-session-doc`). After closure run `radar desmarcar <ID>` and

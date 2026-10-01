@@ -418,20 +418,56 @@ func directorioDespachos(common string, crear bool) (string, error) {
 	return current, nil
 }
 
-func marcadorExiste(common, id string) (bool, error) {
+// marcadorNodo Lstat-s <despachos>/<ID>.json. A nil info means nothing is there;
+// the path is returned either way so a refusal can name it.
+func marcadorNodo(common, id string) (string, os.FileInfo, error) {
 	dir, err := directorioDespachos(common, false)
 	if errors.Is(err, os.ErrNotExist) {
-		return false, nil
+		return "", nil, nil
 	}
 	if err != nil {
-		return false, err
+		return "", nil, err
 	}
-	if _, err := os.Lstat(filepath.Join(dir, id+".json")); errors.Is(err, os.ErrNotExist) {
-		return false, nil
-	} else if err != nil {
-		return false, err
+	path := filepath.Join(dir, id+".json")
+	info, err := os.Lstat(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return path, nil, nil
 	}
-	return true, nil
+	return path, info, err
+}
+
+// rechazoPorColision refuses a Session that would share a lot with another Session
+// that is already EN CURSO (live marker), reusing clasificarPar on the two Sesión
+// records: only `compatible` passes. Orphan and invalid markers are not live.
+func (p *Plan) rechazoPorColision(obs dispatchObservation, s *Sesion) error {
+	for _, other := range p.Sesiones {
+		if other.ID == s.ID || !obs.live[other.ID] {
+			continue
+		}
+		if par := clasificarPar(alternativaDe(&other), alternativaDe(s)); par.Clase != Compatible {
+			return fmt.Errorf("la Sesión %s no se marca: choca con %s, que ya está EN CURSO (%s: %s; %s)",
+				s.ID, other.ID, par.Clase, par.Motivo, strings.Join(par.Detalle, ", "))
+		}
+	}
+	return nil
+}
+
+// rechazoPorWorktreeUsado refuses a worktree path or branch that any other
+// marker, live or orphan, already names. The primary checkout is covered too.
+func rechazoPorWorktreeUsado(obs dispatchObservation, p *Plan, m despacho) error {
+	for _, other := range p.Sesiones {
+		o := obs.markers[other.ID]
+		if o == nil || other.ID == m.Sesion {
+			continue
+		}
+		if o.Worktree == m.Worktree {
+			return fmt.Errorf("el worktree %s ya lo usa %s; cada Sesión necesita el suyo", m.Worktree, other.ID)
+		}
+		if o.Branch == m.Branch {
+			return fmt.Errorf("la rama %s ya la usa %s; cada Sesión necesita la suya", m.Branch, other.ID)
+		}
+	}
+	return nil
 }
 
 // escribirMarcador writes the marker through a same-directory temp file. A new
@@ -512,9 +548,11 @@ func cmdMarcar(w io.Writer, p *Plan, root, id, worktree, worker string) error {
 	if err != nil {
 		return err
 	}
-	if exists, err := marcadorExiste(common, id); err != nil {
+	if path, info, err := marcadorNodo(common, id); err != nil {
 		return err
-	} else if exists {
+	} else if info != nil && !info.Mode().IsRegular() {
+		return fmt.Errorf("%s no es un archivo regular y radar desmarcar no lo quita; quítalo a mano", path)
+	} else if info != nil {
 		return fmt.Errorf("ya existe un marcador de despacho para %s; usa radar desmarcar %s", id, id)
 	}
 	if state := p.EstadosAt(root, head)[id]; state != Listo {
@@ -548,6 +586,13 @@ func cmdMarcar(w io.Writer, p *Plan, root, id, worktree, worker string) error {
 	m := despacho{Schema: "radar.despacho/v1", Sesion: id, Worktree: worktree, Branch: branch, Worker: worker}
 	if !despachoVivo(root, m) {
 		return fmt.Errorf("el worktree %s no cumple el contrato de despacho vivo", worktree)
+	}
+	obs := p.observarDespachos(root)
+	if err := rechazoPorWorktreeUsado(obs, p, m); err != nil {
+		return err
+	}
+	if err := p.rechazoPorColision(obs, p.SesionPorID()[id]); err != nil {
+		return err
 	}
 	if err := escribirMarcador(common, m, false); err != nil {
 		return err
