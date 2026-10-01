@@ -2,6 +2,7 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+import re
 import sys
 import unittest
 
@@ -236,14 +237,69 @@ class GenericBuilderFlowTests(unittest.TestCase):
         ):
             with self.subTest(rule=rule):
                 self.assertIn(rule, compact)
-        for gone in ("reinstall", "AGENTS.md", "Issue-Patch", "Herdr", "Pi sessions", "Notion",
+        for gone in ("reinstall", "Issue-Patch", "Herdr", "Pi sessions",
                      "installers", "chanks-7"):
             with self.subTest(gone=gone):
                 self.assertNotIn(gone, closure)
         self.assertTrue(closure.startswith("---\nname: chanks-5-session-doc\n"))
         skill_dir = SKILLS / "chanks-5-session-doc"
         self.assertEqual(sorted(p.relative_to(skill_dir).as_posix() for p in skill_dir.rglob("*") if p.is_file()),
-                         ["SKILL.md"])
+                         ["SKILL.md", "assets/project-notion-map.json", "assets/session-doc.schema.json",
+                          "references/notion-closure.md"])
+
+    def test_single_session_handoff_and_readiness_reach_stage_five(self):
+        kickoff = " ".join(read("skills/chanks-3-session-kickoff/SKILL.md").split())
+        bridge = " ".join(read("skills/chanks-4-puente/SKILL.md").split())
+        for source in (kickoff, bridge):
+            self.assertIn("references/session-readiness.md", source)
+        self.assertIn("`radar marcar <ID> --listo`", bridge)
+        self.assertIn("verified commit and completed-task evidence", bridge)
+        self.assertIn("A refusal leaves stage 5 pending", bridge)
+        readiness = " ".join(read("skills/chanks-4-puente/references/session-readiness.md").split())
+        for phrase in ("lowercase Session ID", "`odd/tasks/<id>.md`", "`odd/tasks/<id>-<feature>.md`",
+                       "exactly one", "at least one checked task", "no unchecked tasks",
+                       "resolves in Git", "same marked checkout", "no additional review"):
+            self.assertIn(phrase, readiness)
+        self.assertNotIn("<id>*.md", readiness)
+        self.assertIn("One Session does not require parallel machinery", readiness)
+
+    def test_generic_notion_closure_preserves_known_maps_on_demand(self):
+        skill = read("skills/chanks-5-session-doc/SKILL.md")
+        reference = " ".join(read("skills/chanks-5-session-doc/references/notion-closure.md").split())
+        project_map = json.loads(read("skills/chanks-5-session-doc/assets/project-notion-map.json"))
+        schema = json.loads(read("skills/chanks-5-session-doc/assets/session-doc.schema.json"))
+        self.assertIn("only when the project uses Notion and local policy permits it", skill)
+        self.assertNotIn("assets/project-notion-map.json", skill)
+        self.assertNotIn("assets/session-doc.schema.json", skill)
+        self.assertIn("Control Tower", reference)
+        self.assertIn("never search, consult, create, or update Notion", reference)
+        self.assertIn("absence of `.session-doc.json` is intentional", reference)
+        self.assertIn("only on demand", reference)
+        self.assertIn("committed pointer is the source of truth", reference)
+        self.assertIn("unknown project", reference)
+        self.assertFalse((ROOT.parent / ".session-doc.json").exists())
+        self.assertEqual([project["notion_page_id"] for project in project_map["projects"]],
+                         ["387e23cc934581f99b44eb519210c801", "38be23cc9345801099ecd67402e32992",
+                          "38be23cc93458067800ce1721df78d50"])
+        self.assertEqual([project["match"] for project in project_map["projects"]],
+                         [["Servi-Task-U", "Servitask", "servi-task", "servitask"],
+                          ["ecom-ecuador", "Ecom-Ecuador", "ECOM-EC"],
+                          ["Finanzas-Personales", "finanzas-personales"]])
+        self.assertEqual(schema["properties"]["notion"]["properties"]["enabled"]["const"], False)
+        self.assertEqual(len(schema["oneOf"]), 2)
+        page_pattern = schema["properties"]["notion_page_id"]["pattern"]
+        for project in project_map["projects"]:
+            self.assertRegex(project["notion_page_id"], page_pattern)
+        self.assertRegex("387e23cc-9345-81f9-9b44-eb519210c801", page_pattern)
+        self.assertIsNone(re.fullmatch(page_pattern, "unknown-page"))
+        self.assertIn("chanks-5-session-doc", schema["title"])
+
+    def test_planning_reference_defers_all_technical_execution_policy(self):
+        judgment = read("skills/chanks-2-planificador-granular/references/juicio-de-ruta.md")
+        self.assertIn("Gentle AI owns technical execution policy", judgment)
+        for prescription in ("Strict TDD", "Technical checks/review follow", "Engram recovery",
+                             "native preflight", "review outcome never authorizes delivery"):
+            self.assertNotIn(prescription, judgment)
 
     def test_control_tower_session_doc_exemption_names_the_actual_configuration_file(self):
         policy = (ROOT.parent / "AGENTS.md").read_text(encoding="utf-8")
@@ -480,7 +536,7 @@ class GenericBuilderFlowTests(unittest.TestCase):
 STAGE_SKILL_GLOBS = (
     "chanks-0-agente-soporte", "chanks-0-explicalo-simple", "chanks-0-mensajes-visibles",
     "chanks-0-session-context-loader", "chanks-1-*", "chanks-2-planificador-granular",
-    "chanks-3-session-kickoff", "chanks-4-puente", "chanks-5-*",
+    "chanks-3-session-kickoff", "chanks-3-paralelo", "chanks-4-puente", "chanks-5-*",
 )
 FORBIDDEN_IN_STAGE_SKILLS = (
     "--base-ref", "per work-unit commit", "Forward configured", "four lenses", "cuatro lentes",
@@ -494,15 +550,34 @@ def stage_skill_dirs():
     return found
 
 
+def approved_stage_activation(name, description):
+    if name.startswith("chanks-1-"):
+        return description.startswith("Chanks etapa 1,") or description.startswith("Chanks etapa 1 Definir,")
+    prefixes = {
+        "chanks-0-agente-soporte": "Chanks soporte de planificación,",
+        "chanks-0-explicalo-simple": "explicámelo más fácil,",
+        "chanks-0-mensajes-visibles": "Chanks mensajes visibles,",
+        "chanks-0-session-context-loader": "Chanks cargar contexto del plan,",
+        "chanks-2-planificador-granular": "Chanks etapa 2,",
+        "chanks-3-session-kickoff": "Chanks etapa 3,",
+        "chanks-3-paralelo": "parallel sessions,",
+        "chanks-4-puente": "Chanks etapa 4,",
+        "chanks-5-politica-de-entrega": "Chanks política de entrega,",
+        "chanks-5-session-doc": "Chanks etapa 5,",
+    }
+    prefix = prefixes.get(name)
+    return prefix is not None and description.startswith(prefix)
+
+
 def stage_skill_texts():
     for folder in stage_skill_dirs():
         for path in sorted(folder.rglob("*")):
-            if path.is_file() and path.suffix in {".md", ".json"}:
+            if path.is_file() and path.suffix in {".md", ".json", ".py"}:
                 yield path, path.read_text(encoding="utf-8")
 
 
 class StageSkillBoundaryTests(unittest.TestCase):
-    """Stages 1, 2, 3 (kickoff), 4 (bridge) and 5 hold the what, never Gentle AI's how."""
+    """Stages 1–5, including parallel admission and support files, preserve the boundary."""
 
     def test_stage_skills_carry_none_of_the_collision_phrases(self):
         for path, text in stage_skill_texts():
@@ -510,9 +585,18 @@ class StageSkillBoundaryTests(unittest.TestCase):
                 with self.subTest(file=path.relative_to(SKILLS).as_posix(), phrase=phrase):
                     self.assertNotIn(phrase, text)
 
+    def test_scan_covers_parallel_and_python_support_files(self):
+        self.assertIn(SKILLS / "chanks-3-paralelo", stage_skill_dirs())
+        paths = {path.relative_to(SKILLS).as_posix() for path, _ in stage_skill_texts()}
+        self.assertIn("chanks-3-paralelo/SKILL.md", paths)
+        self.assertIn("chanks-4-puente/scripts/prepare_new_change.py", paths)
+        self.assertIn("chanks-3-session-kickoff/references/admission-contract.md", paths)
+
     def test_digest_ceremony_lives_only_in_the_admission_reference(self):
         for path, text in stage_skill_texts():
-            if path.name == "admission-contract.md":
+            # Only the canonical admission payload retains historical digest fields.
+            # A same-named file elsewhere must not bypass the stage boundary.
+            if path == SKILLS / "chanks-3-session-kickoff/references/admission-contract.md":
                 continue
             with self.subTest(file=path.relative_to(SKILLS).as_posix()):
                 self.assertNotIn("SHA-256", text)
@@ -522,7 +606,6 @@ class StageSkillBoundaryTests(unittest.TestCase):
                 self.assertNotIn(phrase, canon)
 
     def test_triggers_fire_only_on_an_explicit_stage_request(self):
-        explicit = {"chanks-0-explicalo-simple"}
         for folder in stage_skill_dirs():
             text = (folder / "SKILL.md").read_text(encoding="utf-8")
             lines = text.splitlines()
@@ -530,13 +613,24 @@ class StageSkillBoundaryTests(unittest.TestCase):
                 self.assertEqual(lines[0], "---")
                 self.assertTrue(lines[1].startswith("name: "), lines[1])
                 self.assertTrue(lines[2].startswith('description: "Trigger:'), lines[2])
-                if folder.name not in explicit:
-                    self.assertIn("Chanks", lines[2])
+                description = lines[2][len('description: "Trigger: '):-1]
+                self.assertTrue(approved_stage_activation(folder.name, description), description)
         autoridad = read("skills/chanks-1-autoridad/SKILL.md").splitlines()[2]
         for broad in ("idea,", "feature,", "proyecto nuevo"):
             self.assertNotIn(broad, autoridad)
         self.assertNotIn("nueva feature", read("skills/chanks-1-feature/SKILL.md").splitlines()[2])
         self.assertNotIn("diagnóstico", read("skills/chanks-1-descubrimiento/SKILL.md").splitlines()[2])
+
+    def test_activation_requires_the_approved_request_not_a_chanks_token(self):
+        for name, description in (
+            ("chanks-1-autoridad", "Chanks decides how to build any feature."),
+            ("chanks-3-paralelo", "Chanks, implement any approved Session."),
+            ("chanks-4-puente", "Chanks, write code and review a change."),
+            ("chanks-5-session-doc", "Chanks, finish any development request."),
+            ("chanks-0-mensajes-visibles", "Chanks, suggest messages while planning."),
+        ):
+            with self.subTest(name=name):
+                self.assertFalse(approved_stage_activation(name, description))
 
     def test_explicalo_simple_never_loads_unprompted(self):
         skill = read("skills/chanks-0-explicalo-simple/SKILL.md")

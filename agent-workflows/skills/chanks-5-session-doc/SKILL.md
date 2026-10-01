@@ -26,6 +26,8 @@ install anything.
   product status.
 - A failed check or a commit that is absent or not integrated leaves the Session open; report the
   exact failure and keep the pending delta.
+- Load `references/notion-closure.md` only when the project uses Notion and local policy permits it.
+  Local prohibitions win; never treat absent configuration as permission or load its assets by default.
 
 ## Execution Steps
 
@@ -52,3 +54,4 @@ evidence the responsible parent must record. State that ordinary delivery policy
 
 - `../chanks-4-puente/SKILL.md`
 - `../chanks-0-agente-soporte/SKILL.md`
+- `references/notion-closure.md` — optional project projection, only under the gate above.

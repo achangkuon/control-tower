@@ -101,8 +101,12 @@ class ParaleloTests(unittest.TestCase):
         self.assert_phrases(
             "`odd/tasks/<id>-<feature>.md`",
             "lowercase Session ID",
-            "exactly one `odd/tasks/<id>*.md`",
+            "`odd/tasks/<id>.md`",
+            "exactly one matching document",
         )
+        self.assertNotIn("<id>*.md", self.skill)
+        self.assert_phrases("chanks-4-puente", "verified commit and completed-task evidence",
+                            "radar marcar <ID> --listo", "a refusal leaves stage 5 pending")
 
     def test_integration_is_serial(self):
         self.assert_phrases("serial", "one Session at a time", "repository's own delivery policy")

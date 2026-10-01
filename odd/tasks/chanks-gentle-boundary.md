@@ -43,7 +43,7 @@ Stage ownership: 1 Definir, 2 Preparar, 3 Paralelo and 5 Cerrar belong to Chanks
 - [x] T3b — Write `chanks-3-paralelo` (name approved): V1 dispatch through Gentle AI subagents, one git worktree per Session; Radar compatibility, human-approved lot, `radar marcar`, serial integration, close in `plan.yaml`.
 - [ ] T4 — Reopened after failed independent verification; original implementation follows. Slim the stage 1, 2 and 5 skills and the stage-4 handoff, keeping every skill (the maintainer keeps his staged flow). Done (delegated writer, strict TDD): 38 files, +399/−558. `chanks-4-puente` now only hands the Session to Gentle AI and receives the commit; admission stated once in `chanks-3-session-kickoff`, which re-homes the "installed Radar is the only admission binary" rule and uses `radar marcar`; `chanks-5-session-doc` reduced to closing a Session through Radar (9986 → 2606 B), its Notion assets and schema deleted; `chanks-0-agente-soporte` 13104 → 7815 B with three orphans deleted; stage-1 triggers made explicit; stale `chanks-6/7` names and flow-doc claims fixed. Observed RED: 71 assertions across 32 `test_builder_flow` tests plus one each in `test_mensajes_visibles` and `test_issue_patch_flow`; no RED was observed for the re-targeted `test_install` assertions. GREEN: mode-fixed Python suite 316 tests with only the pre-existing failure; `bun test ./agent-workflows` 356 pass; whole `bun test` 1660 pass / 0 fail. Parent spot check: four Python files 59 OK, 356 pass, no live consumer of the deleted files (only the frozen-snapshot SHA table names them). Process note: the writer rewrote test files with small Python scripts instead of Edit/Write. Gaps for T5: issue-patch closure rules left `chanks-5-session-doc` and must still live in the Herdr skill; `radar marcar` on the primary checkout is accepted by the code but untested.
 - [x] T3c — Committed as `9c70299`; recorded findings remain pending a separate decision. Radar: `marcar` refuses a Session that collides in files or resources with a Session already `EN CURSO` and refuses a worktree already used by another marker (maintainer decision after the independent verification of T3a); cover the untested branches the verifier listed; `chanks-3-paralelo` asks for the ODD feature document to carry the Session ID in its name so stage 5 is reachable.
-- [ ] T5 — Mark the V2 skills (Herdr dispatch, coordinador-manual, unattended, jornada) as V2-only and not model-invoked by default. Candidate functionally verified; local work-unit commit and native assessment pending.
+- [x] T5 — Mark the V2 skills (Herdr dispatch, coordinador-manual, unattended, jornada) as V2-only and not model-invoked by default. Functionally verified and committed locally as `bec4ec17b6b2f88691a9afe8e8315810b7cbb165`; native medium review granted, approved without findings, and acknowledged; exact commit remains local only.
 - [ ] T6 — Install and propagate to Claude Code, OpenCode, Pi and Codex, verify per agent; Hermes last.
 
 ## Mapping findings
@@ -79,7 +79,7 @@ The maintainer authorized continuing local changes after context recovery. Prese
 
 Four pending units: T5, T4a, T4b and T6. T4 is an umbrella reopened because its implementation failed independent verification, not a new product plan. Radar race/orphan findings stay deferred; this continuation begins with skills recovery rather than silently expanding Radar behavior.
 
-- [ ] T4a — Restore single-Session readiness (`radar marcar <ID> --listo`), generic on-demand Notion map/schema with Control Tower's local prohibition intact, and planning-reference boundary rules. Strengthen stage activation and file-surface tests, including parallel skill and `.py` references. Route: delegated writer (multiple non-trivial files; preparation mapping delegated). Acceptance: no lost generic capability, no Chanks-owned implementation/review policy, reachable stage 5. Checks: relevant Python tests, full Python suite with baseline comparison, `bun test`, whitespace and local-reference checks. Forecast: about 350–650 authored lines including restored assets.
+- [ ] T4a — Candidate functionally verified; local commit/native assessment pending. Restore single-Session readiness (`radar marcar <ID> --listo`), generic on-demand Notion map/schema with Control Tower's local prohibition intact, and planning-reference boundary rules. Strengthen stage activation and file-surface tests, including parallel skill and `.py` references. Route: delegated writer (multiple non-trivial files; preparation mapping delegated). Acceptance: no lost generic capability, no Chanks-owned implementation/review policy, reachable stage 5. Checks: relevant Python tests, full Python suite with baseline comparison, `bun test`, whitespace and local-reference checks. Forecast: about 350–650 authored lines including restored assets.
 - [ ] T4b — Prune removed installed skill files using proven ownership, without deleting unrelated files or weakening symlink/path protections. Route: delegated mapping and writer (installer plus tests). Acceptance: stale owned files are removed, unmanaged files are preserved, isolated install fixtures only. Checks: observed RED/GREEN installer regressions, full Python suite with environmental baseline, `bun test`, whitespace. Forecast: about 150–300 authored lines. Resolve any real ownership ambiguity before deletion semantics change.
 
 T5 route: delegated writer; 4+ file preparation/mapping and 2+ non-trivial writer triggers. Inherited candidate: 597 authored changed lines including task-record changes, before small corrections. Finish V2-only/default non-invocation, restored worker/issue handoffs and relocated pool consumers; keep schema compatibility and consent explicit. Strengthen the per-skill pointer regression and description/structure checks before corrections. Historical T5 RED was not observed by this runtime and will not be claimed; new corrections require observed RED/GREEN.
@@ -107,4 +107,86 @@ Final checks:
 
 ## Next step
 
-Create the verified T5 local work-unit commit and consume the native assessment/consent transition. Continue T4a/T4b only after that applicable gate. T6 remains human-confirmation gated.
+Create the verified local T4a work-unit commit, then assess only that new committed range against reviewed boundary `bec4ec17b6b2f88691a9afe8e8315810b7cbb165` and follow native transitions. Continue T4b only after that gate and safe ownership mapping. T6 remains human-confirmation gated.
+
+## T5 commit and native checkpoint
+
+- Local work-unit commit: `bec4ec17b6b2f88691a9afe8e8315810b7cbb165`, `fix(skills): isolate V2 flows and restore worker handoffs`. Nineteen paths, +576/-97 = 673 authored lines including the execution record; 620 behavior/test lines. No install, sync, remote operation, merge or push.
+- Running committed work-unit churn from branch point `33e14ce4ae131943728f9132f55a251f30f3d6bd`: +2623/-1065 = 3688. Accumulated base-to-HEAD diff: +2584/-1026 = 3610. No PR slices in this no-PR repository.
+- Native postcommit assessment: medium, `executable_change` in `AGENTS.md`; review due `slice_budget_reached`. Exact returned preflight STATUS executed, then exact `review.start --consent=relay` executed to obtain the human envelope. No reviewer launched and no consent answered.
+- Review candidate: only `9c70299..bec4ec1`, not the accumulated feature branch. Base tree `710e8d1025dc88a8445b2641d98bbcbfa8667a80`, candidate tree `220f50b4a7390dc1cbfcce35fdf0b7cc44df1ce0`, target `sha256:90349e7ce88da673ba1c2a423cfeb24cbefd228a6e19ce4c581eaf0153b3e837`, lineage `review-ee5f719b2f10238d`.
+- Consent checkpoint is pending, not approved/declined. This postcommit evidence update is the only dirty file; it is excluded from the explicitly committed-only candidate.
+- Consent is a candidate-review decision: granted reviews only this commit, adds time and helps find regressions; declined skips only this candidate under ordinary policy and does not disable future reviews. Contaminates only native review of T5; does not authorize installation or delivery.
+
+### Native consent envelope (exact, for recovery)
+
+```json
+{
+  "schema": "gentle-ai.review-integration.consent/v3",
+  "contract": "gentle-ai.review-integration/v2",
+  "operation": "review.start",
+  "action": "consent_required",
+  "agent": "codex",
+  "blocking": true,
+  "target_identity": "sha256:90349e7ce88da673ba1c2a423cfeb24cbefd228a6e19ce4c581eaf0153b3e837",
+  "projection": "workspace",
+  "risk_level": "medium",
+  "changed_files": 19,
+  "changed_lines": 673,
+  "headline": "Gentle AI can review this change before you call it done.",
+  "reason": "Review can help detect regressions in these changes.",
+  "value": "Reviewing takes a little longer and makes the result safer.",
+  "risk_evidence": [
+    "this change is not purely passive documentation, so it gets one consolidated review.",
+    "an executable change in AGENTS.md"
+  ],
+  "choices": [
+    {
+      "answer": "granted",
+      "label": "Review this change",
+      "effect": "Reviews only this change; later medium- or high-risk changes ask again, and delivery needs separate approval.",
+      "invocation": "gentle-ai review start --contract gentle-ai.review-integration/v2 --cwd /home/emili/projects/control-tower/Worktrees/chanks-frontera --target sha256:90349e7ce88da673ba1c2a423cfeb24cbefd228a6e19ce4c581eaf0153b3e837 --target-evidence v1:base-diff:workspace:710e8d1025dc88a8445b2641d98bbcbfa8667a80:220f50b4a7390dc1cbfcce35fdf0b7cc44df1ce0:sha256:391b845cbd5c2624848d34b515f0a1643dc7996bc278080fd5d8e3e84bec779d --projection workspace --agent codex --lineage review-ee5f719b2f10238d --base-ref 710e8d1025dc88a8445b2641d98bbcbfa8667a80 --committed-only --consent granted"
+    },
+    {
+      "answer": "declined",
+      "label": "Skip this time",
+      "effect": "Skips only this change; no review record is created, and future reviews stay enabled.",
+      "invocation": "gentle-ai review start --contract gentle-ai.review-integration/v2 --cwd /home/emili/projects/control-tower/Worktrees/chanks-frontera --target sha256:90349e7ce88da673ba1c2a423cfeb24cbefd228a6e19ce4c581eaf0153b3e837 --target-evidence v1:base-diff:workspace:710e8d1025dc88a8445b2641d98bbcbfa8667a80:220f50b4a7390dc1cbfcce35fdf0b7cc44df1ce0:sha256:391b845cbd5c2624848d34b515f0a1643dc7996bc278080fd5d8e3e84bec779d --projection workspace --agent codex --lineage review-ee5f719b2f10238d --base-ref 710e8d1025dc88a8445b2641d98bbcbfa8667a80 --committed-only --consent declined"
+    }
+  ],
+  "off_path": {
+    "note": "To turn reviews off for good, run 'gentle-ai review mode disable'.",
+    "command": "gentle-ai review mode disable"
+  }
+}
+```
+
+## T5 native review started (2026-10-01)
+
+The maintainer answered `si` to reviewing only `bec4ec1`; granted consent was recorded in Engram #12389. Fresh STATUS matched the saved target/lineage and committed-only trees. The exact saved granted invocation created native medium review `review-ee5f719b2f10238d`, selected lens `review-reliability`, correction budget 200. This is not approval and grants no installation or delivery.
+
+Provider repository context: `rctx2_b76f7822b05adc834780bf66c43b236b3f6e785f9d03b6e81a5ba0a7b4a235c0`. Reviewing capture subject: `sha256:223a6b95386b8044c9d0a4a76ceca6cde86be1a1dab718027b1b5674f9516ffb`, expected revision `sha256:2dc1b689b11878d9f7a9b137e361bfee91f697dd0458870edc624ff6810af278`.
+
+Installed compiled Codex runtime rejects `capture-result --materialize` with `mutation_outcome: not_started`, `retry_safe: true`; it materializes its own reviewer internally. Executed the provider-carried `capture-result` arguments without that unsupported flag, preserving every binding and `--agent=codex`. Native reviewer capture is running; follow fresh native STATUS on completion. Never replace it with a parent-authored reviewer result. The task record remains the sole dirty file, excluded from this committed-only review.
+
+## T5 native review completed (2026-10-01)
+
+Native compiled Codex `review-reliability` inspected all nineteen immutable patches and returned no findings. It ran no commands or external-file reads; this review does not independently establish runtime activation/dispatch. Existing functional checks and the explicit T6 deferral remain unchanged. Native final event returned `state: approved`; executed its exact acknowledgement command successfully, `action: acknowledged`, `authority: burned`.
+
+Result hash: `sha256:1967dc39ed7dd1fee95f0d4d53ca8f0191f903c7a8fe4ce4c82000130eb93104`. Consumed revision: `sha256:abe42ce09855c05831d368c712a7d9d46fe1c6107b79f0fb152b71b1bf91c7ea`. Lineage and target unchanged. Reviewed boundary advances from `9c70299` to `bec4ec17b6b2f88691a9afe8e8315810b7cbb165`; future review consent is separate. No installation, merge, propagation or push. Native reviewer approval applies only to T5, not T4 or the accumulated branch.
+
+## T4a verification (2026-10-01)
+
+Delegated combined preparation/writer restored single-Session stage-5 coordination through a shared readiness reference. It passes the exact lowercase `odd/tasks/<id>.md` or `odd/tasks/<id>-<feature>.md` locator, checks immutable same-branch commit, real checked task evidence (at least one checked task/no unchecked task), observed outcome/check evidence and Session/checkout identity before the installed `radar marcar <ID> --listo -C <repo>`. It confirms `radar etapa` offers stage 5 and leaves refusals pending. `--listo` itself does not prove tasks complete; no new authority or technical review is claimed. CLI/source compatibility verified through CodeGraph; no installed runtime command was executed.
+
+Generic Notion map/schema restored from `ab959f5^`, preserving payload apart from `chanks-7` to `chanks-5` metadata. The compact optional reference prioritizes local prohibitions, valid project configuration, explicit documentary authorization and readback. Control Tower's local prohibition and intentionally absent `.session-doc.json` remain untouched. No Notion call or global configuration write. Removed technical HOW prescriptions from planning judgment. Strengthened actual activation/parallel/`.py` boundary tests, narrowed digest exception to the canonical admission reference, retained the legacy SDD helper unchanged.
+
+Test surface includes one exact `StageFiveSkillInventoryTests` expectation in `test_install.py`, necessary to retain the restored three support files; installer source/pruning untouched. Twelve behavior/test paths: +292/-28 = 320 authored lines, excluding this record.
+
+Observed RED before source corrections: 50 tests, four contract failures and one missing-asset error. Additional observed RED: inventory expected only `SKILL.md` despite restored generic support; changed only that exact expected set. Final focused builder/parallel/legacy-bridge Python checks: 61 tests OK, one existing native-SDD-binary skip.
+
+Final full Python command `python3 -m unittest discover -s agent-workflows/tests -p 'test_*.py'`: raw baseline 339 tests / 3 failures / 73 errors / 1 skip; candidate 344 / 2 failures / 73 errors / 1 skip, no new failure/error names. Disposable normalized baseline 339 and candidate 344 both have one `GenuineCompositionTests.test_fresh_normal_startup_and_policy` failure and one unavailable-native-SDD-binary skip. Four live tool modes remain 775; normalization only in disposable fixture copies. Baseline/candidate raw count differences in startup behavior are environmental, not claimed fixed.
+
+`bun test ./agent-workflows`: 356 pass. `bun test`: 1660 pass, zero fail. `git diff --check`, local references, JSON syntax and historical payload comparison: clean. External Draft7 schema validator unavailable (`jsonschema` absent); no dependency installed. Runtime harness: N/A for this instruction/reference unit; live agent/Notion activation deferred to authorized T6, never inferred from text tests. Temporary evidence `/tmp/chanks-t4a-*`, fixture `/tmp/chanks-t4a-fixtures-w9f61eb0`; durable results recorded here and Engram #12390–#12392.
+
+Rollback: restore eight tracked behavior/test paths to `bec4ec1`, remove four new/restored readiness/Notion files, preserve this execution record and the seven previous commits. No install, sync, merge, push or review started for T4a by the writer.

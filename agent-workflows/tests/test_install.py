@@ -671,7 +671,8 @@ class StageFiveSkillInventoryTests(unittest.TestCase):
         )
         self.assertEqual(
             {relative for skill, relative in installed if skill == "chanks-5-session-doc"},
-            {"SKILL.md"},
+            {"SKILL.md", "assets/project-notion-map.json", "assets/session-doc.schema.json",
+             "references/notion-closure.md"},
         )
 
 

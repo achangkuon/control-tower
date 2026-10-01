@@ -44,10 +44,12 @@ more `LISTO` Sessions worked at the same time. One Session alone goes through
    Session only; report its reason and continue with the others.
 4. **Dispatch.** One Gentle AI subagent (or a separate agent terminal) per marked Session. Hand
    over only the Session ID, the `radar sesion <ID>` output (Encargo and authorized files), the
-   worktree path, and the request to name the ODD feature document `odd/tasks/<id>-<feature>.md`
-   with the lowercase Session ID as prefix, because Radar's stage 5 looks for exactly one
-   `odd/tasks/<id>*.md` in the marked worktree.
-5. **When a Session's work reports finished:** `radar marcar <ID> --listo`.
+   worktree path, and the request to name the ODD feature document `odd/tasks/<id>.md` or
+   `odd/tasks/<id>-<feature>.md` with the lowercase Session ID as prefix. Radar requires exactly one
+   matching document in the marked worktree; see `../chanks-4-puente/references/session-readiness.md`.
+5. **When Gentle AI returns verified commit and completed-task evidence:** hand it to
+   `chanks-4-puente` to coordinate `radar marcar <ID> --listo` and confirm stage 5. A refusal leaves
+   stage 5 pending for that Session, never changes the rest of the approved lot.
 6. **Integrate serially**, one Session at a time, following the repository's own delivery policy.
    Closing is stage 5 (`chanks-5-session-doc`). After closure run `radar desmarcar <ID>` and
    remove that Session's worktree.
