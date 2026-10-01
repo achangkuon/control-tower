@@ -209,7 +209,7 @@ The maintainer confirmed resuming unit 4 only in Main, using isolated tests and 
 
 ### Current project-registry task
 
-- [ ] G4 — Implement and verify the informational registry and explicit local-operation wrappers within the approved 570-line source/test ceiling; complete native candidate review and record a separately authorized reversible work-unit checkpoint. IN PROGRESS: implementation, corrected native review and final independent spot check passed; a separately authorized work-unit commit/push remains pending.
+- [x] G4 — Implement and verify the informational registry and explicit local-operation wrappers within the approved 570-line source/test ceiling; complete native candidate review and record a separately authorized reversible work-unit checkpoint. DONE: 555 product/test lines verified, corrected native review approved and acknowledged; reversible product commit `71b6cc539446b7c6a199001f0c5b9aa8d24df5c0` delivered normally. Installer units 5–6 and dependent Sessions remain unclosed.
 
 ### Project-registry evidence and pending checkpoint
 
@@ -224,4 +224,14 @@ The maintainer confirmed resuming unit 4 only in Main, using isolated tests and 
 - A malformed correction binding was rejected before capture; separate incident diagnosis confirmed unchanged Git/hashes and fresh bound STATUS reoffered the slot, then the exact capture succeeded. An acknowledgement input was rejected as controller-only, with mutation false; the exact facade continuation without that input then succeeded. No recovery/reset or invented authority was used.
 - Tests use isolated disposable fixtures and trusted copied release source; no actual installation, downloads, HOME product-state changes or later units. No staging, commit or push. This passive post-review record changes no reviewed product bytes. Final spot-check evidence is retained under Engram topic `tower-v1/projects-unit4-final-verification` once observed.
 
-Next: request normal commit/push authority for G4 plus its technical checkpoint. Installer units 5–6 and dependent benchmark/README remain pending. Nothing to register as a completed product Session.
+### Observed project-registry delivery closure
+
+- Maintainer explicitly approved normal commit/push and technical checkpoint with «Si apruebo el push». This authorizes G4 delivery only, not unit 5, installation or closure of S174.
+- Fresh independent preflight reproduced focused 43 pass / 257 assertions and V1 153 pass / 2,237 assertions, with no failures; reviewed hashes, empty index, whitespace, 555-line product scope and published baseline matched. Installed Radar exited 0 with 0 errors / 63 warnings; no warning-equivalence claim. A model-authored diagnostics-free predicate incorrectly treated warnings as blocking; separate read-only diagnosis confirmed the actual activated `.githooks` policy blocks Radar command failure, not warning text. No warnings, repository policy or hooks were modified or suppressed.
+- Product work-unit commit: `71b6cc539446b7c6a199001f0c5b9aa8d24df5c0`, `feat(tower): register explicit V1 project operations`; exactly three paths, 591 additions / 1 deletion (555 source/tests plus subordinate technical evidence and one passive punctuation edit). Exact-path staging and normal commit, no bypass or amendment; reviewed product bytes retained.
+- Normal product push succeeded. Hook: 1,703 pass / 0 fail, 9,957 assertions across 114 files, 118.44 seconds; installed Radar 0 errors / 63 warnings. Ignored report generation succeeded for `71b6cc5` but honestly retained the historical 1,660-test cache from another commit, not fresh suite evidence.
+- Fresh `HEAD`, `origin/master` and `git ls-remote origin refs/heads/master` all matched `71b6cc539446b7c6a199001f0c5b9aa8d24df5c0`; tree clean. This records actual publication, not approval alone.
+- This passive completion record changes no reviewed product bytes. Publish it normally, then refresh ignored report/cache with documented `bun agent-workflows/radiografia/run.mjs --with-tests` for the resulting HEAD; final checkpoint identity, remote equality and report evidence are retained in Engram. Historical judgement remains untouched; do not repair or restamp it.
+- Nothing to register as a completed product Session: G4 closes installer unit 4 of 6 only. Installer units 5–6, two isolated Pi/Claude Code benchmark units and final README remain pending. No real installation, release download, HOME product-state change, general repair, emoji change or later unit was performed.
+
+Next product checkpoint: only in authorized continuity after fresh installed Radar reconciliation, resume unit 5 (closed scriptable commands and fail-closed errors). Do not auto-continue or close S174; benchmark and final README remain dependent.
