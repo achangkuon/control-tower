@@ -160,8 +160,9 @@ Global synchronization and fresh-session verification remain outstanding after s
 - `~/.codex/skills`
 
 It also owns one manual prompt-policy block in the Claude, OpenCode, Codex,
-and Pi instruction files: `SESSION-SKILL-ARCHITECTURE:MANUAL` points to the
-canonical router. It is a prompt instruction, not executable Gentle AI
+and Pi instruction files: `SESSION-SKILL-ARCHITECTURE:MANUAL` states the
+Chanks and Gentle AI boundary in under 2 KB; the Session admission contract
+loads lazily from `chanks-3-session-kickoff/references/admission-contract.md`. It is a prompt instruction, not executable Gentle AI
 enforcement. The installer no longer ships an SDD gatekeeper block: how SDD is
 run belongs to Gentle AI. A gatekeeper block already present in an instruction
 file is left untouched.
@@ -193,7 +194,7 @@ discovery surfaces; this repository is the canonical source.
 
 ```text
 skills/                         canonical generic user-owned skills
-templates/session-routing.md    manual routing block template
+templates/session-routing.md    manual boundary block template (<= 2000 bytes)
 tools/install.py                install, check, and dry-run implementation
 tests/test_install.py           focused standard-library tests
 ```

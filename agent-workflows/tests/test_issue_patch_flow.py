@@ -83,8 +83,9 @@ class IssuePatchContractTests(unittest.TestCase):
                           "a collision refuses the patch, not the Session",
                           "recheck base, active sets", "before its first write",
                           "after any scope/base change")
-        self.assert_terms(self.routing, "not an admission exception", "every active Session",
-                          "unknown or conflicting scope stops only the patch")
+        self.assertNotIn("issue-resolver", self.routing)
+        self.assertNotIn("Issue-Patch", self.routing)
+        self.assertNotIn("chanks-3-despacho-herdr", self.routing)
 
     def test_launched_pi_identity_precedes_send_and_tab_is_not_session_id(self):
         self.assertLess(self.mode.index("Launch a new Pi agent"),
@@ -134,8 +135,10 @@ class IssuePatchContractTests(unittest.TestCase):
                           "nada que registrar", "No review outcome grants delivery")
 
     def test_session_contract_remains_session_only(self):
-        self.assertIn('"route": "chanks-3-session-kickoff"', self.routing)
-        self.assertIn('"start": {"states": ["LISTO"]}', self.routing)
+        self.assertNotIn("SESSION-ADMISSION-CONTRACT", self.routing)
+        contract = read(ROOT / "skills/chanks-3-session-kickoff/references/admission-contract.md")
+        self.assertIn('"route": "chanks-3-session-kickoff"', contract)
+        self.assertIn('"start": {"states": ["LISTO"]}', contract)
         self.assertIn('`radar.despacho/v1` marker', self.dispatch)
         self.assertIn('`issue-resolver` only handles a human-selected Session', self.dispatch)
         self.assertIn("## Six checks", self.retire)

@@ -742,7 +742,7 @@ class DespachoHerdrRetireTests(unittest.TestCase):
 
 
 class DespachoHerdrRoutingTests(unittest.TestCase):
-    def test_installed_routing_links_dispatch_and_retirement(self):
+    def test_installed_routing_does_not_route_to_dispatch_or_retirement(self):
         import tempfile
 
         with tempfile.TemporaryDirectory() as raw:
@@ -758,50 +758,11 @@ class DespachoHerdrRoutingTests(unittest.TestCase):
                 self.assertIsNotNone(match, path)
                 assert match is not None
                 text = " ".join(match.group().decode("utf-8").split())
-                self.assertLess(text.index("human approval binds"), text.index("`chanks-3-coordinador-manual`"), path)
-                self.assertIn("explicit Herdr request made with the Torre off", text, path)
-                self.assertIn("not Torre dispatch", text, path)
-                self.assertLess(text.index("closure evidence"), text.index("retire mode"), path)
-                self.assertIn("responsible parent loads `chanks-3-coordinador-manual`", text, path)
-                self.assertIn(f"delegates approved dispatch to `{SKILL_NAME}`", text, path)
-                self.assertNotIn("may load", text, path)
-                self.assertIn("parallel-safety verdict", text, path)
-                self.assertIn("reserve nothing live", text, path)
-                self.assertIn("Manual pre-V1 dispatch accepts Pi workers only", text, path)
-                self.assertIn("Herdr owns only authorized seats and process topology", text, path)
-                self.assertIn("Pi Intercom is message transport", text, path)
-                self.assertIn("fire-and-forget `send`", text, path)
-                self.assertIn("returns after one delivery result per exact Sesión/worker handoff", text, path)
-                self.assertIn("Main performs no ordinary `herdr agent wait`, `prompt --wait`, poll, or `intercom ask`", text, path)
-                self.assertIn("`COMPLETED`, `BLOCKED`, or `FAILED`", text, path)
-                self.assertIn("worker-initiated blocking request", text, path)
-                self.assertIn("fails closed before dispatch is declared", text, path)
-                self.assertIn("provisional cross-runtime bridge", text, path)
-                self.assertIn("the future tower V1 remains the heterogeneous and hybrid owner", text, path)
-                self.assertIn("Ordinary Intercom `send` has no wait timeout", text, path)
-                self.assertIn("worker-initiated human-decision `ask` timeout preserves the worktree and candidate as `BLOCKED`", text, path)
-                self.assertIn("does not guess the answer or report completion", text, path)
-                self.assertIn("before each handoff, one fresh Intercom live-roster readback verifies the same session ID", text, path)
-                self.assertEqual(text.count("one fresh Intercom live-roster readback"), 1, path)
-                self.assertIn("exact Pi worker alias, exact cwd/worktree, runtime, and kind for each Session—but not a Pi session ID", text, path)
-                self.assertIn("After launch, Main reads the actual Pi session ID from Herdr JSON", text, path)
-                self.assertIn("one fresh Intercom live-roster readback verifies the same session ID", text, path)
-                self.assertIn("A missing, ambiguous or mismatched identity sends nothing and uses the pre-send owned rollback rule", text, path)
-                self.assertIn("later disconnect creates no polling, retry, inferred completion, transport fallback, or", text, path)
-                self.assertIn("human reactivation and reapproval are required", text, path)
-                self.assertIn("Every progress and terminal `send` identifies the exact Sesión and worker", text, path)
-                self.assertIn("Main answers only an exact inbound human-decision request with `reply`", text, path)
-                self.assertIn("never an unthreaded substitute or its own `ask`", text, path)
-                self.assertIn("Main never initiates `ask`", text, path)
-                self.assertIn("Herdr JSON proves only seat and process identity", text, path)
-                self.assertIn("Intercom delivery results prove only message delivery", text, path)
-                self.assertIn("neither grants authority or proves work completion", text, path)
-                self.assertIn("worker reports terminal result evidence", text, path)
-                self.assertIn("Fresh Intercom and Herdr readbacks must prove the sender matches the human-approved worker binding and the post-launch verified Pi session ID", text, path)
-                self.assertIn("reported commit is the dispatched worktree candidate before integration", text, path)
-                self.assertIn("no integration, retry, remapping, or inferred terminal", text, path)
-                self.assertIn("Two approved Pi workers receive independent fire-and-forget handoffs", text, path)
-                self.assertIn("Main sends worker 2 without waiting for worker 1", text, path)
+                for skill in (SKILL_NAME, "chanks-3-coordinador-manual"):
+                    self.assertNotIn(skill, text, path)
+                for mechanic in ("Torre", "fire-and-forget", "intercom ask", "retire mode", "may load"):
+                    self.assertNotIn(mechanic, text, path)
+                self.assertIn("Herdr dispatch, Pi Intercom and sealed unattended execution are V2", text, path)
 
 
 if __name__ == "__main__":

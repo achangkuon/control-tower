@@ -256,18 +256,23 @@ class GenericBuilderFlowTests(unittest.TestCase):
         dispatch = read("skills/chanks-3-despacho-herdr/SKILL.md")
         template = read("templates/session-routing.md")
 
-        for source in (coordinator, dispatch, template):
+        for source in (coordinator, dispatch):
             self.assertIn("same Session identity", source)
             self.assertIn("first pending Módulo for legacy", source)
         self.assertIn("does not own ODD continuity", coordinator)
         self.assertIn("does not grant execution authority", dispatch)
-        self.assertIn("no fake topology control", template)
+        self.assertNotIn("same Session identity", template)
+        self.assertNotIn("topology control", template)
 
     def test_manual_admission_contract_is_closed_and_conditional(self):
         template = read("templates/session-routing.md")
-        contract, start, _ = admission_contract(template)
-        self.assertEqual(template.count(ADMISSION_CONTRACT_START), 1)
-        self.assertEqual(template.count(ADMISSION_CONTRACT_END), 1)
+        kickoff = read("skills/chanks-3-session-kickoff/SKILL.md")
+        source = read("skills/chanks-3-session-kickoff/references/admission-contract.md")
+        contract, _, _ = admission_contract(source)
+        self.assertNotIn(ADMISSION_CONTRACT_START, template)
+        self.assertEqual(source.count(ADMISSION_CONTRACT_START), 1)
+        self.assertEqual(source.count(ADMISSION_CONTRACT_END), 1)
+        self.assertIn("references/admission-contract.md", kickoff)
         self.assertEqual(contract, {
             "intents": ["start", "continue", "resume"],
             "evidence": {
@@ -304,7 +309,7 @@ class GenericBuilderFlowTests(unittest.TestCase):
             },
             "tower_boundary": "manual-only; no Tower runtime or skills",
         })
-        self.assertLess(start, template.index("Primary authority for starting or continuing"))
+        self.assertIn("chanks-3-session-kickoff", template)
 
     def test_support_preserves_read_only_adoption_and_handoff_boundaries(self):
         support = read("skills/chanks-0-agente-soporte/SKILL.md")

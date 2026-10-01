@@ -23,6 +23,8 @@ admits execution, not a new selection, worker dispatch, plan update, or runtime 
   discriminator. Native Encargo reconciles the same Session identity with native record, code,
   and evidence. Legacy resumes at first pending Módulo for legacy. There is no fallback from a
   rejected state: report state, blocker, and Zone-ordered LISTO choices only.
+  The canonical admission contract (intents, evidence binding, admissible states) is in
+  `references/admission-contract.md`; read it before admitting.
 - Preserve Git contamination and shared-resource evidence; a forecast is not a live lock.
   Check exact authorized files and Cimiento/Recurso compatibility before mutation. Scope expansion
   needs human approval and fresh compatibility. ODD is default; SDD needs
@@ -57,5 +59,6 @@ Pi runtime write-unblocking, or delivery authority was created.
 
 ## References
 
+- `references/admission-contract.md`
 - `../chanks-0-agente-soporte/SKILL.md`
 - `../chanks-4-puente/SKILL.md`

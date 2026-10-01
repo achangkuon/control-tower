@@ -39,9 +39,11 @@ class CoordinadorManualTests(unittest.TestCase):
         self.assertTrue(self.skill.startswith(f"---\nname: {SKILL_NAME}\n"))
         self.assertIn(f"`{SKILL_NAME}`", read("README.md"))
         routing = read("templates/session-routing.md")
-        self.assertIn('"route": "chanks-3-session-kickoff"', routing)
-        self.assertIn(f"loads `{SKILL_NAME}`", routing)
-        self.assertIn("`chanks-3-despacho-herdr`", routing)
+        contract = read("skills/chanks-3-session-kickoff/references/admission-contract.md")
+        self.assertIn('"route": "chanks-3-session-kickoff"', contract)
+        self.assertNotIn('"route"', routing)
+        self.assertNotIn(SKILL_NAME, routing)
+        self.assertNotIn("chanks-3-despacho-herdr", routing)
 
     def test_approval_is_a_complete_exact_pi_binding_and_the_router_is_stateless(self):
         self.assert_phrases(
