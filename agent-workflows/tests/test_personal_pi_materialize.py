@@ -88,5 +88,19 @@ class MaterializeTests(unittest.TestCase):
         self.assertNotEqual(self.run_materialize("provenance").returncode, 0)
 
 
+class PinnedManifestTests(unittest.TestCase):
+    """The shipped manifest and patch must agree and name the v1.0.0 port."""
+
+    ROOT = Path(__file__).resolve().parents[1] / "personal-pi"
+
+    def test_shipped_patch_matches_manifest_and_v1_base(self):
+        manifest = json.loads((self.ROOT / "manifest.json").read_text())
+        patch = (self.ROOT / "patches/0001-tool-call-annotations.patch").read_bytes()
+        self.assertEqual(hashlib.sha256(patch).hexdigest(), manifest["patch_sha256"])
+        self.assertEqual(manifest["base_commit"], "a13d35a742c6ef8462812a28fbe1d8c8b7431c32")
+        self.assertEqual(manifest["result_tree"], "936c4a5c941b2e3d94439896d31b8a62bb0c2dd4")
+        self.assertEqual(len(manifest["selected_paths"]), 13)
+
+
 if __name__ == "__main__":
     unittest.main()
