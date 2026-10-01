@@ -185,6 +185,30 @@ Use `--check` to fail when runtime copies drift. Use `--dry-run` to print the
 planned changes without writing anything. Both modes accept `--home PATH` for
 isolated verification.
 
+### Retiring obsolete skill files
+
+Removed files inside retained skills are retired only when their relative path
+and SHA-256 match an explicit historical entry in `RETIRED_SKILL_FILES`. Modified,
+unlisted, or missing files stay untouched; current source files always win over
+tombstones, including reintroduced paths and restored Notion assets. Future
+removals must extend the registry with reviewed canonical hashes; there is no
+mutable ownership database or recursive directory cleanup.
+
+`--check` and `--dry-run` report matching copies as `retired-skill-file` without
+mutation. After ordinary installation succeeds, apply rechecks the path and
+digest and moves matching bytes to
+`<runtime-root>/.retired-skills/files/<timestamp-unique>/<original-relative-path>`.
+Each backup has a private collision-safe directory. To undo retirement, inspect
+the backup and move it back to its original relative path without overwriting
+new user content. Empty skill directories remain in place.
+
+Known obsolete destinations and archive ancestors are validated before writes:
+symlinks, wrong types, and path escapes fail closed. A content edit after planning
+is preserved by the final digest check; this is not a lock or a guarantee against
+concurrent writers changing paths between validation and rename. Run installation
+without other processes editing the same skill files. Existing whole-skill
+retirement remains separate.
+
 Do not edit `sdd-*`, the Gentle AI files inside `_shared`,
 `gentle-orchestrator`, `opencode.json`, or any content inside
 `<!-- gentle-ai:* -->` markers. Runtime copies are adapters and

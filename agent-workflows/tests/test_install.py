@@ -1,4 +1,5 @@
 import contextlib
+import hashlib
 import importlib.util
 import io
 import json
@@ -577,6 +578,254 @@ class InstallerTests(unittest.TestCase):
         INSTALLER.apply(self.home, ROOT)
         self.assertFalse(retired.exists())
         self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
+
+
+class RetiredSkillFileTests(unittest.TestCase):
+    # Portable byte fixtures exercise the same digest/path registry without depending
+    # on Git history. Historical digest identities are pinned separately below.
+    HISTORICAL_DIGESTS = {
+        "chanks-0-agente-soporte/assets/assignment-readonly.md": (
+            "1066822ccc072dc21cd5dd67965cbbcf0a03b186d276a70b593d26e4e0c8d72f",
+            "9b35256b723d835665783739526a12497bf037c822521c498850a3bf253bc622",
+        ),
+        "chanks-0-agente-soporte/references/contrato-no-interferencia.md": (
+            "c9f5b2db842d9b4751ab2a86a94cd7c30d7d538f433f4165674a5db88d6edf61",
+            "b2c15bc842cc310b06489f3160d4e75a9ca111cf59bab525d1024000de7e981e",
+        ),
+        "chanks-0-agente-soporte/references/unidad-ejecutable.md": (
+            "2d78b7322467476ce1e8c127f5ce746c62e9adb392d4ec8c8d4bac2cd8baf322",
+            "a5362b5289abf87269ffbf879ab55976205cf0485cfa2c4e4132b20e5626a612",
+        ),
+        "chanks-5-session-doc/references/links.md": (
+            "6d75a865769a7561193f06bb5f2f86f39d65b1911e6337a0a11077c863b6885b",
+        ),
+    }
+
+    def setUp(self):
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tempdir.cleanup)
+        self.home = Path(self.tempdir.name) / "home"
+        InstallerTests._seed_runtime(self)
+        self.source = Path(self.tempdir.name) / "source"
+        shutil.copytree(ROOT, self.source)
+        for relative in (
+            "tools/carril", "tools/hooks/chanks-etapa.sh",
+            "tools/hooks/torre-firma.sh", "tools/pi/pi-npm-host-peers",
+        ):
+            (self.source / relative).chmod(0o755)
+        self.payloads = {
+            relative: tuple(f"old fixture {relative} v{index}\n".encode()
+                            for index in range(len(digests)))
+            for relative, digests in self.HISTORICAL_DIGESTS.items()
+        }
+        self.registry = {
+            relative: frozenset(hashlib.sha256(payload).hexdigest() for payload in payloads)
+            for relative, payloads in self.payloads.items()
+        }
+
+    def seed(self, runtime, relative, payload=None):
+        destination = runtime / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(payload if payload is not None else self.payloads[relative][0])
+        return destination
+
+    def snapshot(self):
+        return tuple(
+            (str(path.relative_to(self.home)),
+             os.readlink(path) if path.is_symlink() else
+             (path.read_bytes() if path.is_file() else None))
+            for path in sorted(self.home.rglob("*"))
+        )
+
+    def archived(self, runtime, relative):
+        return list((runtime / ".retired-skills/files").glob(f"*/{relative}"))
+
+    def registry_patch(self):
+        return mock.patch.object(INSTALLER, "RETIRED_SKILL_FILES", self.registry, create=True)
+
+    def test_tombstones_pin_only_all_known_historical_versions(self):
+        self.assertEqual(
+            dict(INSTALLER.RETIRED_SKILL_FILES),
+            {relative: frozenset(digests)
+             for relative, digests in self.HISTORICAL_DIGESTS.items()},
+        )
+
+    def test_all_known_paths_and_versions_archive_identical_bytes_in_every_runtime(self):
+        with self.registry_patch():
+            for version in range(2):
+                seeded = []
+                for runtime in INSTALLER.runtime_skill_roots(self.home):
+                    for relative, payloads in self.payloads.items():
+                        payload = payloads[min(version, len(payloads) - 1)]
+                        seeded.append((runtime, relative, payload, self.seed(runtime, relative, payload)))
+                planned = INSTALLER.build_plan(self.home, self.source)
+                self.assertEqual(
+                    {change.path for change in planned if change.kind == "retired-skill-file"},
+                    {path for _, _, _, path in seeded},
+                )
+                INSTALLER.apply(self.home, self.source)
+                for runtime, relative, payload, path in seeded:
+                    self.assertFalse(path.exists())
+                    self.assertTrue(path.parent.is_dir(), "leave empty skill directories intact")
+                    backups = self.archived(runtime, relative)
+                    self.assertEqual(len(backups), version + 1)
+                    self.assertIn(payload, [backup.read_bytes() for backup in backups])
+                self.assertEqual(INSTALLER.apply(self.home, self.source), [])
+                self.assertEqual(INSTALLER.build_plan(self.home, self.source), [])
+
+    def test_modified_unlisted_and_missing_files_are_not_retired(self):
+        preserved = []
+        for runtime in INSTALLER.runtime_skill_roots(self.home):
+            for relative in self.payloads:
+                preserved.append(self.seed(runtime, relative, b"user edit\x00\n"))
+            preserved.append(self.seed(runtime, "chanks-0-agente-soporte/references/my-notes.md", b"user edit\x00\n"))
+        with self.registry_patch():
+            self.assertFalse(any(change.kind == "retired-skill-file"
+                                 for change in INSTALLER.build_plan(self.home, self.source)))
+            INSTALLER.apply(self.home, self.source)
+            for path in preserved:
+                self.assertEqual(path.read_bytes(), b"user edit\x00\n")
+            for path in preserved:
+                path.unlink()
+            self.assertEqual(INSTALLER.build_plan(self.home, self.source), [])
+
+    def test_reintroduced_source_and_restored_notion_are_never_retirement_candidates(self):
+        runtime = INSTALLER.runtime_skill_roots(self.home)[0]
+        relative = next(iter(self.payloads))
+        self.seed(runtime, relative)
+        self.seed(self.source / "skills", relative, b"reintroduced canonical\n")
+        with self.registry_patch():
+            planned = INSTALLER.build_plan(self.home, self.source)
+            self.assertFalse(any(change.kind == "retired-skill-file" for change in planned))
+            INSTALLER.apply(self.home, self.source)
+        self.assertEqual((runtime / relative).read_bytes(), b"reintroduced canonical\n")
+        for _, nested, source in INSTALLER.source_files(self.source):
+            if "notion" in str(nested) or "session-doc" in source.name:
+                installed = runtime / source.relative_to(self.source / "skills")
+                self.assertEqual(installed.read_bytes(), source.read_bytes())
+        self.assertEqual(self.archived(runtime, relative), [])
+
+    def test_unsafe_retired_and_archive_paths_fail_before_any_writes(self):
+        relative = next(iter(self.payloads))
+        external = Path(self.tempdir.name) / "external"
+        external.mkdir()
+        sentinel = external / "sentinel"
+        sentinel.write_bytes(b"outside owned surface")
+        for unsafe in (relative, str(Path(relative).parent), ".retired-skills", ".retired-skills/files"):
+            for kind in ("symlink", "wrong-type"):
+                with self.subTest(unsafe=unsafe, kind=kind):
+                    shutil.rmtree(self.home)
+                    InstallerTests._seed_runtime(self)
+                    runtime = INSTALLER.runtime_skill_roots(self.home)[0]
+                    target = runtime / unsafe
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    if kind == "symlink":
+                        target.symlink_to(external, target_is_directory=True)
+                    elif unsafe == relative:
+                        target.mkdir()
+                    else:
+                        target.write_bytes(b"not a directory")
+                    before = self.snapshot()
+                    with self.registry_patch(), self.assertRaises(INSTALLER.InstallError):
+                        INSTALLER.apply(self.home, self.source)
+                    self.assertEqual(self.snapshot(), before)
+                    self.assertEqual(sentinel.read_bytes(), b"outside owned surface")
+                    self.assertEqual(list(external.iterdir()), [sentinel])
+                    if target.is_symlink() or target.is_file():
+                        target.unlink()
+                    else:
+                        target.rmdir()
+
+    def test_escaping_tombstone_fails_before_any_writes(self):
+        self.registry["../outside.md"] = frozenset()
+        before = self.snapshot()
+        with self.registry_patch(), self.assertRaises(INSTALLER.InstallError):
+            INSTALLER.apply(self.home, self.source)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_changed_digest_after_planning_is_preserved(self):
+        runtime = INSTALLER.runtime_skill_roots(self.home)[0]
+        relative = next(iter(self.payloads))
+        path = self.seed(runtime, relative)
+        original_copy = INSTALLER._atomic_copy
+
+        def edit_then_copy(*args):
+            path.write_bytes(b"changed after plan\n")
+            return original_copy(*args)
+
+        with self.registry_patch(), mock.patch.object(INSTALLER, "_atomic_copy", side_effect=edit_then_copy):
+            INSTALLER.apply(self.home, self.source)
+        self.assertEqual(path.read_bytes(), b"changed after plan\n")
+        self.assertEqual(self.archived(runtime, relative), [])
+
+    def test_late_install_failure_leaves_obsolete_file_active(self):
+        runtime = INSTALLER.runtime_skill_roots(self.home)[0]
+        relative = next(iter(self.payloads))
+        path = self.seed(runtime, relative)
+        with self.registry_patch(), mock.patch.object(INSTALLER, "install_pi_extension", side_effect=OSError("late failure")):
+            with self.assertRaisesRegex(OSError, "late failure"):
+                INSTALLER.apply(self.home, self.source)
+        self.assertEqual(path.read_bytes(), self.payloads[relative][0])
+        self.assertEqual(self.archived(runtime, relative), [])
+
+    def test_archive_error_preserves_original_and_existing_backup(self):
+        runtime = INSTALLER.runtime_skill_roots(self.home)[0]
+        relative = next(iter(self.payloads))
+        path = self.seed(runtime, relative)
+        with self.registry_patch():
+            INSTALLER.apply(self.home, self.source)
+            old_backup = self.archived(runtime, relative)[0]
+            self.seed(runtime, relative)
+            with mock.patch.object(INSTALLER.os, "replace", side_effect=OSError("archive failure")):
+                with self.assertRaisesRegex(OSError, "archive failure"):
+                    INSTALLER.apply(self.home, self.source)
+            self.assertEqual(path.read_bytes(), self.payloads[relative][0])
+            self.assertEqual(old_backup.read_bytes(), self.payloads[relative][0])
+
+    def test_same_timestamp_retirements_preserve_both_backups(self):
+        runtime = INSTALLER.runtime_skill_roots(self.home)[0]
+        relative = next(iter(self.payloads))
+        with self.registry_patch(), mock.patch.object(INSTALLER, "datetime") as clock:
+            clock.now.return_value.strftime.return_value = "20261001T000000Z"
+            for payload in self.payloads[relative]:
+                self.seed(runtime, relative, payload)
+                INSTALLER.apply(self.home, self.source)
+        backups = self.archived(runtime, relative)
+        self.assertEqual(len(backups), 2)
+        self.assertEqual({path.read_bytes() for path in backups}, set(self.payloads[relative]))
+        self.assertTrue(all(path.relative_to(runtime / ".retired-skills/files").parts[0]
+                            .startswith("20261001T000000Z-") for path in backups))
+
+    def test_cli_dry_run_check_apply_and_clean_check_use_real_historical_bytes(self):
+        # Exact immutable 929ac91 links.md blob, not a fabricated ownership fixture.
+        historical = (
+            "# Skills y herramientas relacionadas\n\n"
+            "- `cognitive-doc-design` — estructura la narrativa de cierre para lectura rápida.\n"
+            "- `chanks-4-puente` — aporta evidencia de `verify`, entrega y, en `full-sdd`, `archive`.\n"
+            "- `chanks-0-agente-soporte` — aplica el delta de evidencia y ejecuta `radar check`/`radar render`.\n"
+            "- Notion MCP `notion-fetch` — lee la página antes de editar.\n"
+            "- Notion MCP `notion-update-page` — actualiza o inserta contenido; nunca reemplaza toda la página.\n"
+        ).encode()
+        relative = "chanks-5-session-doc/references/links.md"
+        self.assertEqual(hashlib.sha256(historical).hexdigest(), self.HISTORICAL_DIGESTS[relative][0])
+        runtime = INSTALLER.runtime_skill_roots(self.home)[0]
+        path = self.seed(runtime, relative, historical)
+        before = self.snapshot()
+        command = [sys.executable, str(self.source / "tools/install.py"), "--home", str(self.home)]
+        for flag, code, prefix in (("--dry-run", 0, "WOULD_UPDATE"), ("--check", 1, "DRIFT")):
+            result = subprocess.run(command + [flag], capture_output=True, text=True, check=False,
+                                    env={**os.environ, "HOME": str(self.home)})
+            self.assertEqual(result.returncode, code, result.stderr)
+            self.assertIn(f"{prefix} retired-skill-file: {path}", result.stdout)
+            self.assertEqual(self.snapshot(), before)
+        applied = subprocess.run(command, capture_output=True, text=True, check=False,
+                                 env={**os.environ, "HOME": str(self.home)})
+        self.assertEqual(applied.returncode, 0, applied.stderr)
+        self.assertFalse(path.exists())
+        self.assertEqual([backup.read_bytes() for backup in self.archived(runtime, relative)], [historical])
+        clean = subprocess.run(command + ["--check"], capture_output=True, text=True, check=False,
+                               env={**os.environ, "HOME": str(self.home)})
+        self.assertEqual(clean.returncode, 0, clean.stdout + clean.stderr)
 
 
 class SessionBoundaryBlockTests(unittest.TestCase):

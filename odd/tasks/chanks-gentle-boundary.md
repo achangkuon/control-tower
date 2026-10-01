@@ -79,8 +79,8 @@ The maintainer authorized continuing local changes after context recovery. Prese
 
 Four pending units: T5, T4a, T4b and T6. T4 is an umbrella reopened because its implementation failed independent verification, not a new product plan. Radar race/orphan findings stay deferred; this continuation begins with skills recovery rather than silently expanding Radar behavior.
 
-- [ ] T4a — Candidate functionally verified; local commit/native assessment pending. Restore single-Session readiness (`radar marcar <ID> --listo`), generic on-demand Notion map/schema with Control Tower's local prohibition intact, and planning-reference boundary rules. Strengthen stage activation and file-surface tests, including parallel skill and `.py` references. Route: delegated writer (multiple non-trivial files; preparation mapping delegated). Acceptance: no lost generic capability, no Chanks-owned implementation/review policy, reachable stage 5. Checks: relevant Python tests, full Python suite with baseline comparison, `bun test`, whitespace and local-reference checks. Forecast: about 350–650 authored lines including restored assets.
-- [ ] T4b — Prune removed installed skill files using proven ownership, without deleting unrelated files or weakening symlink/path protections. Route: delegated mapping and writer (installer plus tests). Acceptance: stale owned files are removed, unmanaged files are preserved, isolated install fixtures only. Checks: observed RED/GREEN installer regressions, full Python suite with environmental baseline, `bun test`, whitespace. Forecast: about 150–300 authored lines. Resolve any real ownership ambiguity before deletion semantics change.
+- [x] T4a — Functionally verified and committed locally as `55fae88c93a336117f157fffd2585fcb52ff4846`; native high-risk review explicitly declined for this candidate; ordinary functional evidence retained, no review approval claimed. Restore single-Session readiness (`radar marcar <ID> --listo`), generic on-demand Notion map/schema with Control Tower's local prohibition intact, and planning-reference boundary rules. Strengthen stage activation and file-surface tests, including parallel skill and `.py` references. Route: delegated writer (multiple non-trivial files; preparation mapping delegated). Acceptance: no lost generic capability, no Chanks-owned implementation/review policy, reachable stage 5. Checks: relevant Python tests, full Python suite with baseline comparison, `bun test`, whitespace and local-reference checks. Forecast: about 350–650 authored lines including restored assets.
+- [ ] T4b — Candidate functionally verified; local commit/native assessment pending. Prune removed installed skill files using proven ownership, without deleting unrelated files or weakening symlink/path protections. Route: delegated mapping and writer (installer plus tests). Acceptance: stale owned files are removed, unmanaged files are preserved, isolated install fixtures only. Checks: observed RED/GREEN installer regressions, full Python suite with environmental baseline, `bun test`, whitespace. Forecast: about 150–300 authored lines. Resolve any real ownership ambiguity before deletion semantics change.
 
 T5 route: delegated writer; 4+ file preparation/mapping and 2+ non-trivial writer triggers. Inherited candidate: 597 authored changed lines including task-record changes, before small corrections. Finish V2-only/default non-invocation, restored worker/issue handoffs and relocated pool consumers; keep schema compatibility and consent explicit. Strengthen the per-skill pointer regression and description/structure checks before corrections. Historical T5 RED was not observed by this runtime and will not be claimed; new corrections require observed RED/GREEN.
 
@@ -107,7 +107,7 @@ Final checks:
 
 ## Next step
 
-Create the verified local T4a work-unit commit, then assess only that new committed range against reviewed boundary `bec4ec17b6b2f88691a9afe8e8315810b7cbb165` and follow native transitions. Continue T4b only after that gate and safe ownership mapping. T6 remains human-confirmation gated.
+T4a candidate review was explicitly declined and the exact native skip completed. T4b is now functionally verified; create its local work-unit commit and consume native assessment/consent transitions for the new pending range. Source edits are finished for the known skills scope after that commit; live activation still requires authorization. T6 remains human-confirmation gated; integration/remote delivery remain separately unauthorized. Last genuinely reviewed boundary remains `bec4ec1`; never fabricate approval for `55fae88` or re-prompt this exact declined candidate.
 
 ## T5 commit and native checkpoint
 
@@ -190,3 +190,95 @@ Final full Python command `python3 -m unittest discover -s agent-workflows/tests
 `bun test ./agent-workflows`: 356 pass. `bun test`: 1660 pass, zero fail. `git diff --check`, local references, JSON syntax and historical payload comparison: clean. External Draft7 schema validator unavailable (`jsonschema` absent); no dependency installed. Runtime harness: N/A for this instruction/reference unit; live agent/Notion activation deferred to authorized T6, never inferred from text tests. Temporary evidence `/tmp/chanks-t4a-*`, fixture `/tmp/chanks-t4a-fixtures-w9f61eb0`; durable results recorded here and Engram #12390–#12392.
 
 Rollback: restore eight tracked behavior/test paths to `bec4ec1`, remove four new/restored readiness/Notion files, preserve this execution record and the seven previous commits. No install, sync, merge, push or review started for T4a by the writer.
+
+## T4a commit and pending native consent
+
+Local work-unit `55fae88c93a336117f157fffd2585fcb52ff4846`, `fix(chanks): restore session readiness and optional closure support`: thirteen paths, +377/-31 = 408 authored lines including this execution record; 320 behavior/test lines. Running work-unit churn from the branch point is 4096 authored additions+deletions (previous3688 plus408), with no generated files. No PR slices, install, sync, merge, push or remote operation.
+
+Native assessment of ONLY `bec4ec1..55fae88`: high, `process_boundary` signal `shell_process` in `agent-workflows/tests/test_install.py`; review due `high_risk`. The actual test change only updates the exact expected restored asset inventory; no installer/process-launch source was modified. Native risk selection is retained, never lowered by model interpretation. Exact returned preflight STATUS and consent relay command were executed; no reviewer launched and no consent answer inferred.
+
+Target `sha256:00b4a8986d014e420f65fe3defd427813850d9d24f0eecd0bddb1171d9bae884`, lineage `review-b750dd44d1c01659`, base tree `220f50b4a7390dc1cbfcce35fdf0b7cc44df1ce0`, candidate tree `22d9349fd0baa6de6b8e4ed69db916ee3fef7f0e`. Last reviewed boundary remains `bec4ec1`; T4b and T6 are still pending. This postcommit task-evidence update is the only dirty file and is excluded by committed-only selectors.
+
+Decision class: native candidate-review consent. Contaminates only review of T4a; neither answer authorizes installation/delivery or changes the global RDD mode. Granted adds review time to help detect execution problems; declined skips only this candidate under ordinary policy. Exact recovery choices follow.
+
+### T4a native consent envelope (exact)
+
+```json
+{
+  "schema": "gentle-ai.review-integration.consent/v3",
+  "contract": "gentle-ai.review-integration/v2",
+  "operation": "review.start",
+  "action": "consent_required",
+  "agent": "codex",
+  "blocking": true,
+  "target_identity": "sha256:00b4a8986d014e420f65fe3defd427813850d9d24f0eecd0bddb1171d9bae884",
+  "projection": "workspace",
+  "risk_level": "high",
+  "changed_files": 13,
+  "changed_lines": 408,
+  "headline": "Gentle AI can review this change before you call it done.",
+  "reason": "Review can help detect execution issues in these changes.",
+  "value": "Reviewing takes a little longer and makes the result safer.",
+  "risk_evidence": [
+    "code that starts other processes in agent-workflows/tests/test_install.py"
+  ],
+  "choices": [
+    {
+      "answer": "granted",
+      "label": "Review this change",
+      "effect": "Reviews only this change; later medium- or high-risk changes ask again, and delivery needs separate approval.",
+      "invocation": "gentle-ai review start --contract gentle-ai.review-integration/v2 --cwd /home/emili/projects/control-tower/Worktrees/chanks-frontera --target sha256:00b4a8986d014e420f65fe3defd427813850d9d24f0eecd0bddb1171d9bae884 --target-evidence v1:base-diff:workspace:220f50b4a7390dc1cbfcce35fdf0b7cc44df1ce0:22d9349fd0baa6de6b8e4ed69db916ee3fef7f0e:sha256:571c67e671ebcb2e0ab3cf36da1d80c99747c7ed6c1dcef421bd87cc3733a843 --projection workspace --agent codex --lineage review-b750dd44d1c01659 --base-ref 220f50b4a7390dc1cbfcce35fdf0b7cc44df1ce0 --committed-only --consent granted"
+    },
+    {
+      "answer": "declined",
+      "label": "Skip this time",
+      "effect": "Skips only this change; no review record is created, and future reviews stay enabled.",
+      "invocation": "gentle-ai review start --contract gentle-ai.review-integration/v2 --cwd /home/emili/projects/control-tower/Worktrees/chanks-frontera --target sha256:00b4a8986d014e420f65fe3defd427813850d9d24f0eecd0bddb1171d9bae884 --target-evidence v1:base-diff:workspace:220f50b4a7390dc1cbfcce35fdf0b7cc44df1ce0:22d9349fd0baa6de6b8e4ed69db916ee3fef7f0e:sha256:571c67e671ebcb2e0ab3cf36da1d80c99747c7ed6c1dcef421bd87cc3733a843 --projection workspace --agent codex --lineage review-b750dd44d1c01659 --base-ref 220f50b4a7390dc1cbfcce35fdf0b7cc44df1ce0 --committed-only --consent declined"
+    }
+  ],
+  "off_path": {
+    "note": "To turn reviews off for good, run 'gentle-ai review mode disable'.",
+    "command": "gentle-ai review mode disable"
+  }
+}
+```
+
+## T4a review declined and remaining scope (2026-10-01)
+
+Maintainer answered `omitimos` for ONLY T4a `55fae88`, then asked how much work remains. Fresh native STATUS matched the exact target; executed the saved `--consent declined` invocation. Provider returned `action: declined`, `consent: declined_this_candidate`, `lenses_required: false`; no native review record or approval created. Global RDD remains on and future distinct candidate consent stays separate. Decision saved in Engram #12394. No code tests or implementation rerun in this status-only turn.
+
+Remaining known skills scope: one correction unit T4b (safe ownership-based stale-file pruning, installer regressions and functional checks), followed by T6 installation/propagation and verification in Claude Code, OpenCode, Pi and Codex, with Hermes last. Installation still needs explicit approval because it disrupts open Pi sessions and must run from Main, not this worktree. Bringing the feature into Main/master and any push also need separate authorization. No reliable minute estimate is claimed before ownership mapping and activation conditions are established.
+
+Radar concurrent-mark/orphan/other findings remain separately deferred and are not silently included in this skills completion estimate. Existing Python environment failures/skip and unavailable external schema validator stay documented, not advertised as fixed. No install, propagation, merge, push or remote operation performed. The task record remains the sole dirty file after the verified source commits.
+
+## T4b authorized design and checks (2026-10-01)
+
+The maintainer explicitly resumed local implementation with `Dale, continuamos`. Narrow read-only mapping (delegated, mandatory preparation/4+ file context trigger) established that `install.py` has no per-file ownership manifest, but it already archives retired whole skills through `os.replace` under `<runtime-root>/.retired-skills/`. Use explicit immutable historical path/SHA256 tombstones for the four net removed owned files plus a separate guarded reversible file-retirement helper. This solves existing installations without inventing a mutable runtime ownership database or recursively deleting user content. Tradeoff: future known removals must maintain the tombstone registry; unknown or modified files deliberately survive.
+
+Source edit surface for T4b: `agent-workflows/tools/install.py`, `agent-workflows/tests/test_install.py`, `agent-workflows/README.md`. Route: delegated bounded writer (installer, tests and docs are multiple non-trivial files), preparation mapping delegated first. Forecast: about 200–350 authored lines; heuristic only, no artificial splitting or code golf. Parent owns this record and native review. Strict TDD remains from `openspec/config.yaml`; primary `bun test`, focused `PYTHONPATH=agent-workflows/tests python3 -m unittest test_install`, full Python discovery as above.
+
+Owned tombstones, relative to each runtime skill root:
+- `chanks-0-agente-soporte/assets/assignment-readonly.md`: `1066822ccc072dc21cd5dd67965cbbcf0a03b186d276a70b593d26e4e0c8d72f` (`1b3a53b`) or `9b35256b723d835665783739526a12497bf037c822521c498850a3bf253bc622` (`f7612de`).
+- `chanks-0-agente-soporte/references/contrato-no-interferencia.md`: `c9f5b2db842d9b4751ab2a86a94cd7c30d7d538f433f4165674a5db88d6edf61` (`1b3a53b`) or `b2c15bc842cc310b06489f3160d4e75a9ca111cf59bab525d1024000de7e981e` (`f7612de`).
+- `chanks-0-agente-soporte/references/unidad-ejecutable.md`: `2d78b7322467476ce1e8c127f5ce746c62e9adb392d4ec8c8d4bac2cd8baf322` (`1b3a53b`) or `a5362b5289abf87269ffbf879ab55976205cf0485cfa2c4e4132b20e5626a612` (`f7612de`).
+- `chanks-5-session-doc/references/links.md`: `6d75a865769a7561193f06bb5f2f86f39d65b1911e6337a0a11077c863b6885b` (`929ac91`).
+
+Digests recovered directly from immutable Git blobs; `ab959f5` removed these files. Restored Notion assets are current source, never retirement candidates. Current source inventory excludes a tombstone even if that path returns later.
+
+Preflight validates every known destination and archive ancestor before any source/manual write: reject symlink components, wrong types and path escapes. Plan `retired-skill-file` only for a regular file whose content matches a known historical digest. Missing, modified and unlisted files remain untouched. At the end of successful apply, revalidate path and digest and move exact historical copies into collision-safe `.retired-skills/files/` backups preserving relative identity. Reuse the archive surface, not the whole-directory helper; do not inherit its unguarded archive-parent behavior or expand into unrelated whole-skill refactoring. Do not delete empty directories.
+
+Observed RED before source fixes must cover: all four paths/known variants across four runtime roots; modified and unlisted files preserved; current-source overlap and restored Notion protected; symlink file/parent/archive parent and wrong types rejected before writes with external sentinels intact; digest changes after planning preserved; earlier apply failure leaves obsolete copies active; archive collision preserves both copies and subsequent runs are idempotent. CLI proof in copied-source/temporary-home fixtures: `--dry-run` and `--check` detect known obsolete copies without mutation, isolated apply archives them and a subsequent check succeeds. No real HOME install or runtime activation.
+
+Functional closure: focused regressions, full raw/normalized Python baseline comparison, `bun test ./agent-workflows`, `bun test`, whitespace and exact black-box fixture evidence. No live chmod: the four tool modes remain 775; expected 755 only in disposable copies. Existing startup-policy failure and native-SDD-binary skip remain disclosed. Mapping discovery #12397 and summary #12398. T6 integration/installation/propagation and any push remain separately human-gated.
+
+## T4b functional verification (2026-10-01)
+
+Implemented exactly three behavior/test/doc paths: `agent-workflows/tools/install.py` +76, `agent-workflows/tests/test_install.py` +249, `agent-workflows/README.md` +24 = 349 authored additions. Immutable historical path+digest tombstones gate retirement; current-source overlap excludes reintroduced/restored files. Modified, unlisted and missing copies survive. Known file/archive destinations are guarded in preflight; after ordinary apply succeeds the helper revalidates path/digest and archives matched bytes in private collision-safe timestamp directories. Concurrent-writer protection is explicitly not guaranteed: install without other processes editing the same skill paths. No recursive cleanup or mutable ownership manifest.
+
+Strict-TDD evidence: `PYTHONPATH=agent-workflows/tests python3 -m unittest test_install.RetiredSkillFileTests` observed RED before production edits (10 tests, nine failures/two errors through subcases). Final regression class 11 OK. Disposable mode-normalized full installer suite 115 OK. Full discovery raw baseline344/candidate355 both three failures/73 errors/one skip; normalized baseline344/candidate355 both one existing `GenuineCompositionTests.test_fresh_normal_startup_and_policy` failure and one unavailable-native-SDD-binary skip. Exact failure/error names unchanged. Four live source modes remain 775; no live chmod.
+
+`bun test ./agent-workflows`: 356 pass/zero fail. Initial clean-HOME full Bun failed 1654 pass/six failures/one error because its harness lacked the default core facade and Go cache. Its Go build inadvertently downloaded public yaml.v3 into the disposable cache; this violated the worker's no-network scope and was disclosed, not hidden. No credentials/real HOME/cache used. Corrected real copied-source facade, disposable dependency cache, `GOPROXY=off`, `GOTOOLCHAIN=local` gave fail-closed eight pass and pre-push twelve pass. Worker full Bun reported1660/0 but a zsh logging tail failed (`status` is read-only); inner exit was not claimed. Parent reran the unchanged candidate directly without that wrapper: `env HOME=/tmp/t4b-proof-73txulhi/bun-home GOMODCACHE=/tmp/t4b-proof-73txulhi/home/go/pkg/mod GOCACHE=/tmp/t4b-proof-73txulhi/bun-home/.cache/go-build GOPROXY=off GOTOOLCHAIN=local bun test`, actual exit0, 1660 pass/zero fail/9700 expectations/113 files (113.62s). Whitespace clean. Final verification offline; no claim of zero network activity across the earlier failed attempt.
+
+Real black-box CLI proof uses only a copied installer and temporary `--home`. Two rounds seed all seven immutable Git-blob versions across four runtime roots: each dry-run exits0/check exits1 and detects sixteen historical copies without mutation; each isolated apply exits0 and produces sixteen byte-identical archives; subsequent check exits0. Parent independently read the artifact and hashed all32 backups: exactly the seven expected historical digests, no unknown content. Evidence: `/tmp/t4b-proof-73txulhi/historical-cli-evidence.json`, `bun-all-parent-direct.log` and raw/normalized fixture logs. This proves installer behavior in isolated homes, not live agent activation.
+
+Rollback: remove only these three T4b source diffs; runtime rollback inspects a private backup and restores its original relative path without overwriting newer user content. Parent task record excluded from source rollback. Engram bugfix #12401, environment discoveries #12407/#12408, completion #12409. No real installation, propagation, merge or push.
