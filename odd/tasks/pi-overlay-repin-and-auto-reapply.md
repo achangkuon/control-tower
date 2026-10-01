@@ -53,7 +53,7 @@ The port was mechanical (`git apply --3way`); no independent review was run for 
   `pi.registerToolCallAnnotation` is a function; otherwise it loads normally and tells the user once, at session
   start, that labels are off and which command restores them. Gates and event handling are unchanged.
   Route: delegated writer.
-- [ ] T3 — Rebuild tool. Add `agent-workflows/tools/pi/pi-overlay-rebuild` and install it to
+- [x] T3 — Rebuild tool. Add `agent-workflows/tools/pi/pi-overlay-rebuild` and install it to
   `~/.pi/agent/bin/`. It detects an unpatched global Pi, materializes the overlay for the installed version,
   builds, verifies, swaps `dist` with a backup, smoke-tests, and rolls back on failure. Route: delegated writer.
 - [ ] T4 — Automatic trigger. `tools/pi/pi-npm-host-peers` runs the rebuild tool after a successful global
@@ -83,3 +83,7 @@ The port was mechanical (`git apply --3way`); no independent review was run for 
   `pi.registerToolCallAnnotation is not a function` at extension load. GREEN: registration guarded by a
   `typeof` check and a one-time `session_start` warning via `ctx.ui.notify`; `tests.test_install` 116 tests OK.
   Commit: see git log (`fix(pi): keep chanks controls loadable ...`).
+- T3 done. RED: `tests.test_pi_overlay_rebuild` 14 errors (tool absent) and `PiOverlayRebuildInstallTests` failing
+  (no installer entries). GREEN: both pass; `tests.test_install` + `tests.test_pi_overlay_rebuild` 134 tests OK.
+  Node pin `v24.21.0` SHA-256 `fd8e59d5...cb2d6` read from the official SHASUMS256.txt. Extra flag `--backup-root`
+  added for hermetic tests. Commit: see git log (`feat(pi): add pi-overlay-rebuild ...`).

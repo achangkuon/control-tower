@@ -1,5 +1,6 @@
 import contextlib
 import hashlib
+import importlib.machinery
 import importlib.util
 import io
 import json
@@ -1791,6 +1792,61 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         self.assertNotIn("pi.chanksAutoridad", body)
         self.assertNotIn("pi.chanksConfinamiento", body)
         self.assertNotIn("gobernar(pi.", body)
+
+
+class PiOverlayRebuildInstallTests(unittest.TestCase):
+    """The overlay rebuild tool is deployed with the manifest and patch it needs."""
+
+    def setUp(self):
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tempdir.cleanup)
+        self.home = Path(self.tempdir.name)
+        self.tool = self.home / ".pi/agent/bin/pi-overlay-rebuild"
+        self.data = self.home / ".pi/agent/bin/pi-overlay"
+
+    def _install(self):
+        INSTALLER.install_pi_overlay_rebuild(self.home, ROOT)
+
+    def test_tool_manifest_and_patch_are_installed_next_to_each_other(self):
+        self._install()
+        self.assertEqual(self.tool.read_bytes(), (ROOT / "tools/pi/pi-overlay-rebuild").read_bytes())
+        self.assertEqual(stat.S_IMODE(self.tool.stat().st_mode), 0o755)
+        self.assertEqual((self.data / "manifest.json").read_bytes(),
+                         (ROOT / "personal-pi/manifest.json").read_bytes())
+        patch = "0001-tool-call-annotations.patch"
+        self.assertEqual((self.data / patch).read_bytes(),
+                         (ROOT / "personal-pi/patches" / patch).read_bytes())
+
+    def test_installed_tool_defaults_to_the_installed_data(self):
+        self._install()
+        loader = importlib.machinery.SourceFileLoader("installed_overlay_tool", str(self.tool))
+        spec = importlib.util.spec_from_loader("installed_overlay_tool", loader)
+        module = importlib.util.module_from_spec(spec)
+        loader.exec_module(module)
+        manifest, patch = module.default_overlay_paths()
+        self.assertEqual(manifest, self.data.resolve() / "manifest.json")
+        self.assertEqual(patch, self.data.resolve() / "0001-tool-call-annotations.patch")
+
+    def test_plan_reports_missing_and_drifted_files_then_goes_quiet(self):
+        kinds = {c.kind for c in INSTALLER.pi_overlay_rebuild_changes(self.home, ROOT)}
+        self.assertEqual(kinds, {"pi-overlay-tool", "pi-overlay-data"})
+        self._install()
+        self.assertEqual(INSTALLER.pi_overlay_rebuild_changes(self.home, ROOT), [])
+        (self.data / "manifest.json").write_bytes(b"{}\n")
+        self.assertEqual([c.path for c in INSTALLER.pi_overlay_rebuild_changes(self.home, ROOT)],
+                         [self.data / "manifest.json"])
+        self.tool.chmod(0o644)
+        self.assertIn(self.tool, [c.path for c in INSTALLER.pi_overlay_rebuild_changes(self.home, ROOT)])
+
+    def test_apply_deploys_and_rerun_is_idempotent(self):
+        InstallerTests._seed_runtime(self)
+        INSTALLER.apply(self.home, ROOT)
+        self.assertTrue(self.tool.is_file())
+        self.assertTrue((self.data / "manifest.json").is_file())
+        before = (self.tool.read_bytes(), (self.data / "manifest.json").read_bytes())
+        INSTALLER.apply(self.home, ROOT)
+        self.assertEqual(before, (self.tool.read_bytes(), (self.data / "manifest.json").read_bytes()))
+        self.assertEqual(INSTALLER.pi_overlay_rebuild_changes(self.home, ROOT), [])
 
 
 class PiNpmHostPeersTests(unittest.TestCase):

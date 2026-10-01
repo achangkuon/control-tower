@@ -518,6 +518,7 @@ def build_plan(home: Path, root: Path | None = None) -> list[Change]:
     changes.extend(carril_changes(home, root))
     changes.extend(pi_extension_changes(home, root))
     changes.extend(pi_npm_host_peers_changes(home, root))
+    changes.extend(pi_overlay_rebuild_changes(home, root))
     changes.extend(etapa_hook_changes(home, root))
     changes.extend(firma_hook_changes(home, root))
     return changes
@@ -647,6 +648,8 @@ def apply(home: Path, root: Path | None = None) -> list[Change]:
         install_pi_extension(home, root)
     if pi_npm_wrapper_path(home) in change_paths or pi_settings_path(home) in change_paths:
         install_pi_npm_host_peers(home, root)
+    if any(change.kind in ("pi-overlay-tool", "pi-overlay-data") for change in changes):
+        install_pi_overlay_rebuild(home, root)
     if etapa_hook_path(home) in change_paths:
         _atomic_copy(etapa_hook_source(root), etapa_hook_path(home), home / ".claude")
     if firma_hook_path(home) in change_paths:
@@ -1055,6 +1058,57 @@ def install_pi_npm_host_peers(home: Path, root: Path | None = None) -> None:
                 print(result.stderr.strip(), file=sys.stderr)
         except (OSError, subprocess.SubprocessError) as exc:
             print(f"WARNING: Pi host-peer repair skipped: {exc}", file=sys.stderr)
+
+
+# --- Pi overlay rebuild tool -------------------------------------------------
+# pi-overlay-rebuild re-applies the private annotation overlay after Pi updates itself. The
+# installed tool finds its manifest and patch in a sibling directory, so both are deployed too.
+
+PI_OVERLAY_TOOL_SOURCE = Path("tools/pi/pi-overlay-rebuild")
+PI_OVERLAY_TOOL_RELATIVE = Path(".pi/agent/bin/pi-overlay-rebuild")
+PI_OVERLAY_DATA_RELATIVE = Path(".pi/agent/bin/pi-overlay")
+PI_OVERLAY_DATA_SOURCES = {
+    "manifest.json": Path("personal-pi/manifest.json"),
+    "0001-tool-call-annotations.patch": Path("personal-pi/patches/0001-tool-call-annotations.patch"),
+}
+
+
+def pi_overlay_rebuild_path(home: Path) -> Path:
+    return home / PI_OVERLAY_TOOL_RELATIVE
+
+
+def _pi_overlay_entries(home: Path, root: Path) -> list[tuple[Path, Path, str, int]]:
+    tool = root / PI_OVERLAY_TOOL_SOURCE
+    if not tool.is_file() or stat.S_IMODE(tool.stat().st_mode) != 0o755:
+        raise InstallError("Pi overlay rebuild tool source must be a regular executable 755 file")
+    entries = [(tool, pi_overlay_rebuild_path(home), "pi-overlay-tool", 0o755)]
+    for name, relative in PI_OVERLAY_DATA_SOURCES.items():
+        source = root / relative
+        if not source.is_file():
+            raise InstallError(f"Pi overlay data source is missing: {relative}")
+        entries.append((source, home / PI_OVERLAY_DATA_RELATIVE / name, "pi-overlay-data", 0o644))
+    return entries
+
+
+def pi_overlay_rebuild_changes(home: Path, root: Path | None = None) -> list[Change]:
+    root = root or repo_root()
+    return [
+        Change(target, kind)
+        for source, target, kind, mode in _pi_overlay_entries(home, root)
+        if not (
+            target.is_file()
+            and target.read_bytes() == source.read_bytes()
+            and stat.S_IMODE(target.stat().st_mode) == mode
+        )
+    ]
+
+
+def install_pi_overlay_rebuild(home: Path, root: Path | None = None) -> None:
+    root = root or repo_root()
+    for source, target, _, mode in _pi_overlay_entries(home, root):
+        if not (target.is_file() and target.read_bytes() == source.read_bytes()):
+            _atomic_copy(source, target, home / ".pi")
+        os.chmod(target, mode)
 
 
 def main(argv: list[str] | None = None) -> int:
