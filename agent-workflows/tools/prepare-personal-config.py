@@ -168,7 +168,8 @@ def _owned_bytes(path: Path, expected_hash: str, label: str) -> bytes | None:
 def _central_roster(home: Path, repo_root: Path) -> None:
     central = home / ".agents/skills"
     _no_symlink(central)
-    roster = install.OWN_SKILLS + install.V3_DEFERRED_SKILLS
+    # V3-deferred skills are intentionally absent from the central active roster after install.
+    roster = install.OWN_SKILLS
     for name in roster:
         source = repo_root / "agent-workflows/skills" / name
         installed = central / name

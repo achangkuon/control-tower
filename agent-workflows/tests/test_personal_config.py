@@ -197,13 +197,87 @@ class PersonalConfigMigrationTests(unittest.TestCase):
         self.assertTrue((self.home / ".hermes/skills/chanks-0-jornada").is_dir())
 
     def test_hermes_requires_central_roster_before_config_or_archive(self):
-        self.write(".hermes/config.yaml", b"skills: {}\n")
+        self.write(".hermes/config.yaml", b"skills:\n  external_dirs: []\n")
+        self.write(".hermes/SOUL.md", self.soul_with_unattended())
         (self.home / ".agents/skills").mkdir(parents=True)
-        self.make_skill_rosters()
+        hermes_skills = self.home / ".hermes/skills"
+        for skill in install.OWN_SKILLS + install.V3_DEFERRED_SKILLS:
+            shutil.copytree(ROOT / "agent-workflows/skills" / skill, hermes_skills / skill)
+        before = {path.relative_to(self.home).as_posix(): (path.read_bytes(), path.stat().st_mode & 0o777)
+                  for path in self.home.rglob("*") if path.is_file()}
         with self.assertRaises(personal.MigrationError):
-            personal.plan_stage("hermes", self.home, repo_root=ROOT, hermes_python=self.hermes_python,
-                                subprocess_runner=self.yaml_runner([]))
+            personal.apply_stage("hermes", self.home, repo_root=ROOT,
+                                 hermes_python=personal.HERMES_YAML_PYTHON)
+        after = {path.relative_to(self.home).as_posix(): (path.read_bytes(), path.stat().st_mode & 0o777)
+                 for path in self.home.rglob("*") if path.is_file()}
+        self.assertEqual(after, before)
         self.assertTrue((self.home / ".hermes/skills/chanks-0-jornada").is_dir())
+
+    def test_installer_then_hermes_archives_deferred_skills_and_keeps_active_central_roster(self):
+        if not personal.HERMES_YAML_PYTHON.is_file():
+            self.skipTest("installed Hermes Python/PyYAML interpreter is unavailable")
+        self.write(".hermes/config.yaml", b"skills:\n  creation_nudge_interval: 15\nother:\n  enabled: true\n")
+        self.write(".hermes/SOUL.md", self.soul_with_unattended())
+        hermes_skills = self.home / ".hermes/skills"
+        for skill in install.OWN_SKILLS + install.V3_DEFERRED_SKILLS:
+            shutil.copytree(ROOT / "agent-workflows/skills" / skill, hermes_skills / skill)
+        (hermes_skills / "third-party").mkdir(parents=True)
+        (hermes_skills / "third-party/SKILL.md").write_text("# Retain third-party\n", encoding="utf-8")
+
+        install.apply(self.home, ROOT / "agent-workflows")
+        central = self.home / ".agents/skills"
+        central_names = {path.name for path in central.iterdir()}
+        self.assertTrue(set(install.OWN_SKILLS) <= central_names)
+        self.assertEqual(len(install.OWN_SKILLS), 25)
+        self.assertFalse(set(install.V3_DEFERRED_SKILLS) & central_names)
+        self.assertTrue(all((central / name).is_dir() for name in install.OWN_SKILLS))
+        self.assertTrue(all(not (central / name).exists() for name in install.V3_DEFERRED_SKILLS))
+        hermes_before = {
+            name: {path.relative_to(hermes_skills / name).as_posix(): path.read_bytes()
+                   for path in (hermes_skills / name).rglob("*") if path.is_file()}
+            for name in install.OWN_SKILLS + install.V3_DEFERRED_SKILLS
+        }
+
+        personal.apply_stage("hermes", self.home, repo_root=ROOT,
+                             hermes_python=personal.HERMES_YAML_PYTHON)
+
+        retired = self.home / ".hermes/.retired-skills"
+        for name, expected in hermes_before.items():
+            archived = retired / name
+            self.assertFalse((hermes_skills / name).exists())
+            self.assertEqual({path.relative_to(archived).as_posix(): path.read_bytes()
+                              for path in archived.rglob("*") if path.is_file()}, expected)
+        self.assertTrue((hermes_skills / "third-party").is_dir())
+        self.assertTrue(all((central / name).is_dir() for name in install.OWN_SKILLS))
+        config = personal._hermes_yaml(personal.HERMES_YAML_PYTHON,
+                                       (self.home / ".hermes/config.yaml").read_bytes(),
+                                       str(central))
+        self.assertIn(str(central).encode(), config)
+        self.assertIn(b"creation_nudge_interval: 15", config)
+        for name in install.OWN_SKILLS:
+            source = ROOT / "agent-workflows/skills" / name
+            installed = central / name
+            expected = {path.relative_to(source).as_posix(): path.read_bytes()
+                        for path in source.rglob("*") if path.is_file()}
+            actual = {path.relative_to(installed).as_posix(): path.read_bytes()
+                      for path in installed.rglob("*") if path.is_file()}
+            self.assertEqual(actual, expected, name)
+        first_snapshot = {path.relative_to(self.home).as_posix(): path.read_bytes()
+                          for path in self.home.rglob("*") if path.is_file()}
+        personal.apply_stage("hermes", self.home, repo_root=ROOT,
+                             hermes_python=personal.HERMES_YAML_PYTHON)
+        self.assertEqual({path.relative_to(self.home).as_posix(): path.read_bytes()
+                          for path in self.home.rglob("*") if path.is_file()}, first_snapshot)
+
+        active_file = next(path for path in (central / install.OWN_SKILLS[0]).rglob("*") if path.is_file())
+        active_file.write_bytes(active_file.read_bytes() + b"corruption\n")
+        corrupted_snapshot = {path.relative_to(self.home).as_posix(): path.read_bytes()
+                              for path in self.home.rglob("*") if path.is_file()}
+        with self.assertRaises(personal.MigrationError):
+            personal.apply_stage("hermes", self.home, repo_root=ROOT,
+                                 hermes_python=personal.HERMES_YAML_PYTHON)
+        self.assertEqual({path.relative_to(self.home).as_posix(): path.read_bytes()
+                          for path in self.home.rglob("*") if path.is_file()}, corrupted_snapshot)
 
     def test_hermes_preserves_absent_unattended_block_and_rejects_bad_markers(self):
         self.write(".hermes/config.yaml", b"skills: {}\n")
