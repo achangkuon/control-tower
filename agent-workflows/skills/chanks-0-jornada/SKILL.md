@@ -1,13 +1,19 @@
 ---
 name: chanks-0-jornada
-description: "Trigger: empezamos la jornada, cerramos la jornada, open workday, close workday. Open or close the workday through the jornada.sh Tower tool."
+description: "Trigger: V2 only; load only when the human explicitly says empezamos la jornada, cerramos la jornada, open workday or close workday, or explicitly asks for the jornada.sh tooling. Open or close the workday through the jornada.sh Tower tool."
+disable-model-invocation: true
 license: Apache-2.0
 metadata:
   author: emili
-  version: "1.1"
+  version: "2.0"
 ---
 
 ## Activation Contract
+
+V2 only. Load this skill only when the human explicitly asks to open or close the workday or
+explicitly asks for the `jornada.sh` tooling, or when `chanks-3-despacho-herdr` invokes it as its
+stage-3 entry. For ordinary parallel work use `chanks-3-paralelo`. Nothing in this skill overrides
+Gentle AI.
 
 Activate on "empezamos la jornada" (open) or "cerramos la jornada" (close), and their English
 equivalents (open workday / close workday). This skill invokes `jornada.sh` as a Tower tool; it

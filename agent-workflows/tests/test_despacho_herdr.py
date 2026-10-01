@@ -69,7 +69,8 @@ class DespachoHerdrDispatchTests(unittest.TestCase):
 
     def test_persistent_declared_pool_replaces_ephemeral_session_worktrees(self):
         self.assert_phrases(
-            "complete reusable worker-pool declaration from repository `AGENTS.md`",
+            "complete reusable worker-pool declaration before any pool operation",
+            "`references/worker-pool.md` for Control Tower",
             "missing or incomplete declaration fails closed",
             "never falls back to ephemeral per-Session worktrees",
             "no hardcoded package manager, worker count, or worker names",
@@ -80,7 +81,7 @@ class DespachoHerdrDispatchTests(unittest.TestCase):
             self.assertNotIn(forbidden, combined, forbidden)
 
     def test_control_tower_pool_declaration_is_complete_and_local(self):
-        pool = section((ROOT.parent / "AGENTS.md").read_text(encoding="utf-8"), "## Operación local: pool manual, fricciones y herramientas")
+        pool = read(f"skills/{SKILL_NAME}/references/worker-pool.md")
         expected_workers = ("issue-resolver", "implementer-1", "implementer-2", "implementer-3")
         for worker in expected_workers:
             self.assertIn(f"`{worker}`", pool)
@@ -260,7 +261,7 @@ class DespachoHerdrDispatchTests(unittest.TestCase):
         )
 
     def test_herdr_failures_fail_closed(self):
-        self.assert_phrases("`HERDR_ENV=1`", "subagent flow", "owned rollback rule")
+        self.assert_phrases("`HERDR_ENV=1`", "stop; offer `chanks-3-paralelo`", "owned rollback rule")
 
     def test_no_torre_coupling_and_no_answer_for_the_human(self):
         self.assert_phrases(
@@ -763,6 +764,235 @@ class DespachoHerdrRoutingTests(unittest.TestCase):
                 for mechanic in ("Torre", "fire-and-forget", "intercom ask", "retire mode", "may load"):
                     self.assertNotIn(mechanic, text, path)
                 self.assertIn("Herdr dispatch, Pi Intercom and sealed unattended execution are V2", text, path)
+
+
+V2_SKILLS = (
+    "chanks-3-despacho-herdr",
+    "chanks-3-coordinador-manual",
+    "chanks-4-unattended-implementation",
+    "chanks-0-jornada",
+)
+
+
+def compact(source):
+    return " ".join(source.split())
+
+
+class V2SkillsAreExplicitOnlyTests(unittest.TestCase):
+    def test_each_v2_skill_declares_v2_and_is_not_model_invoked(self):
+        for name in V2_SKILLS:
+            with self.subTest(skill=name):
+                text = read(f"skills/{name}/SKILL.md")
+                lines = text.splitlines()
+                self.assertEqual(lines[0], "---")
+                self.assertEqual(lines[1], f"name: {name}")
+                self.assertTrue(lines[2].startswith('description: "Trigger:'), lines[2])
+                self.assertIn("V2", lines[2])
+                self.assertIn("explicitly", lines[2])
+                header = text.split("\n---\n", 1)[0]
+                self.assertIn("disable-model-invocation: true", header)
+                body = text.split("\n---\n", 1)[1]
+                status = compact(section(body, "## Activation Contract"))
+                self.assertIn("V2 only", status)
+                self.assertIn("`chanks-3-paralelo`", status)
+                self.assertIn("overrides Gentle AI", status)
+
+    def test_v2_metadata_and_activation_follow_the_skill_style_contract(self):
+        for name in V2_SKILLS:
+            text = read(f"skills/{name}/SKILL.md")
+            description = text.splitlines()[2].removeprefix('description: "').removesuffix('"')
+            body = text.split("\n---\n", 1)[1]
+            with self.subTest(skill=name, field="description"):
+                self.assertLessEqual(len(description), 250)
+            with self.subTest(skill=name, field="activation"):
+                self.assertEqual(re.findall(r"^## .+$", body, re.MULTILINE)[0],
+                                 "## Activation Contract")
+                self.assertNotIn("## V2 status", body)
+
+    def test_dispatch_falls_back_to_the_parallel_skill_not_a_missing_flow(self):
+        skill = read(f"skills/{SKILL_NAME}/SKILL.md")
+        self.assertNotIn("subagent flow", skill)
+        self.assertGreaterEqual(skill.count("`chanks-3-paralelo`"), 3)
+        self.assertEqual(skill.count("Stop; offer `chanks-3-paralelo`"), 1)
+        self.assertEqual(skill.count("Stop and offer `chanks-3-paralelo`"), 1)
+
+
+class DispatchProtocolIsSelfContainedTests(unittest.TestCase):
+    """The rules that used to live in the always-loaded block now live in the V2 skills."""
+
+    def setUp(self):
+        self.dispatch = compact(read(f"skills/{SKILL_NAME}/SKILL.md"))
+        self.coordinator = compact(read("skills/chanks-3-coordinador-manual/SKILL.md"))
+        self.protocol = compact(read(f"skills/{SKILL_NAME}/references/dispatch-protocol.md"))
+
+    def test_rules_stated_in_the_dispatch_skill(self):
+        for phrase in (
+            "explicit Herdr requests with the Torre off, not Torre dispatch",
+            "Manual pre-V1 dispatch accepts Pi workers only",
+            "Herdr owns only the authorized seats and process topology",
+            "Pi Intercom is only the message transport",
+            "fire-and-forget",
+            "Main performs no ordinary `herdr agent wait`, `prompt --wait`, poll, or `intercom ask`",
+            "terminal `COMPLETED`, `BLOCKED`, or `FAILED` events",
+            "blocking request initiated by the worker",
+            "fail closed before declaring the Sesión dispatched",
+            "No retries, persistent queue, roster, state, autonomous resume, non-Pi fallback, or provisional cross-runtime bridge",
+            "Tower V1 remains the future heterogeneous and hybrid owner",
+            "Ordinary Intercom `send` has no wait timeout",
+            "worker-initiated human-decision `ask` timeout preserves the worktree and candidate as `BLOCKED`",
+            "Main does not guess the answer or report completion",
+            "one fresh Intercom live-roster readback",
+            "Never predict or pre-approve a Pi session ID",
+            "any failure uses the pre-send owned rollback rule",
+            "A later disconnect creates no polling, retry, inferred completion, transport fallback, or autonomous resume",
+            "Human reactivation and reapproval are required",
+            "Every progress and terminal `send` identifies the exact Sesión and worker",
+            "Main answers only an exact inbound human-decision request with `reply`",
+            "never an unthreaded substitute or its own `ask`",
+            "Main never initiates `ask`",
+            "Herdr JSON proves only seat and process identity",
+            "Intercom delivery results prove only message delivery",
+            "neither grants authority or proves work completion",
+            "The worker reports terminal result evidence",
+            "Two approved Pi workers receive independent fire-and-forget handoffs",
+            "Main sends worker 2 without waiting for worker 1",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, self.dispatch)
+
+    def test_rules_stated_in_the_coordinator_skill(self):
+        for phrase in (
+            "Manual pre-V1 batches are Pi-only",
+            "fresh Intercom and Herdr readbacks must prove the sender matches the human-approved/dispatched exact alias and cwd/worktree, and the post-launch verified exact Pi session ID",
+            "Git readback must prove the reported commit is the dispatched worktree candidate before integration",
+            "Any missing, mismatched, or unavailable readback stops: no integration, retry, remapping, or inferred terminal",
+            "Main returns after both delivery results",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, self.coordinator)
+
+    def test_rules_that_were_missing_now_live_in_the_dispatch_protocol_reference(self):
+        for phrase in (
+            "returns after one delivery result per exact Sesión/worker handoff",
+            "Radar compatible capacity is the parallel-safety verdict",
+            "Forecasts reserve nothing live",
+            "A declared Recurso requires confirmed exclusive or serial execution evidence before mutation",
+            "release only actual resources demonstrably acquired",
+            "Closure evidence returns to the responsible parent before retire mode",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, self.protocol)
+        self.assertIn("references/dispatch-protocol.md", self.dispatch)
+
+
+class WorkerHandoffAssetTests(unittest.TestCase):
+    def setUp(self):
+        self.handoff = compact(read(f"skills/{SKILL_NAME}/assets/worker-handoff.md"))
+
+    def test_handoff_requires_review_ready_signal_and_preserves_the_seal(self):
+        for phrase in (
+            "`listo para revisión`", "all ODD tasks are checked", "full unattended seal",
+            "expiry", "base", "permissions", "commit ceiling", "independent revalidation",
+            "Session", "worker", "checks", "commits", "changed paths", "review outcomes",
+            "stopped decisions", "budget",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, self.handoff)
+        self.assertIn("neither signal nor report authorizes delivery", self.handoff.lower())
+
+    def test_terminal_wake_report_is_unconditional_but_review_ready_is_not(self):
+        self.assertIn("Only after all ODD tasks are checked, send", self.handoff)
+        self.assertIn("For every sealed terminal outcome — COMPLETED, BLOCKED, or FAILED — send", self.handoff)
+        self.assertIn("even when ODD tasks are unfinished", self.handoff)
+        self.assertLess(self.handoff.index("`listo para revisión`"),
+                        self.handoff.index("For every sealed terminal outcome"))
+
+    def test_revalidation_tolerates_only_the_dispatch_markers_own_change(self):
+        self.assertIn("tolerating only the dispatch marker's own `LISTO` to `EN CURSO` change", self.handoff)
+        self.assertIn("chanks/despachos/<ID>.json", self.handoff)
+        self.assertIn("or any other drift, grants nothing", self.handoff)
+
+    def test_handoff_never_answers_gentle_ai_on_the_humans_behalf(self):
+        self.assertNotIn("consent policy", self.handoff.lower())
+        self.assertIn("consent envelope", self.handoff)
+        self.assertIn("stops that Session", self.handoff)
+        for gone in ("TDD", "Forward configured"):
+            self.assertNotIn(gone, self.handoff)
+
+    def test_v2_skills_point_at_the_handoff_asset(self):
+        for name in (SKILL_NAME, "chanks-3-coordinador-manual", "chanks-4-unattended-implementation"):
+            with self.subTest(skill=name):
+                skill_path = ROOT / "skills" / name / "SKILL.md"
+                links = re.findall(r"`([^`]+assets/worker-handoff\.md|assets/worker-handoff\.md)`",
+                                   skill_path.read_text(encoding="utf-8"))
+                self.assertTrue(links, f"{name} must link its own handoff directly")
+                for link in links:
+                    self.assertEqual((skill_path.parent / link).resolve(),
+                                     (ROOT / "skills" / SKILL_NAME / "assets/worker-handoff.md").resolve())
+                    self.assertTrue((skill_path.parent / link).is_file(), link)
+        self.assertNotIn("assignment-implementation.md", read(f"skills/{SKILL_NAME}/SKILL.md"))
+        self.assertNotIn("assignment-implementation.md",
+                         read("skills/chanks-4-unattended-implementation/references/night-mode.md"))
+
+    def test_night_mode_handoff_link_resolves_from_the_reference_directory(self):
+        night = ROOT / "skills/chanks-4-unattended-implementation/references/night-mode.md"
+        links = re.findall(r"`([^`]+assets/worker-handoff\.md)`", night.read_text(encoding="utf-8"))
+        self.assertEqual(len(links), 1)
+        self.assertEqual((night.parent / links[0]).resolve(),
+                         (ROOT / "skills" / SKILL_NAME / "assets/worker-handoff.md").resolve())
+        self.assertTrue((night.parent / links[0]).is_file())
+
+
+class IssuePatchClosureReferenceTests(unittest.TestCase):
+    def setUp(self):
+        self.closure = compact(read(f"skills/{SKILL_NAME}/references/issue-patch-closure.md"))
+
+    def test_closure_rules_live_in_the_dispatch_skill(self):
+        for phrase in (
+            "exact human approval (issue, base, outcome, worker, files, Cimientos, Recursos)",
+            "reproduced symptom", "worker identity and terminal evidence",
+            "full immutable commit, branch and serial integration evidence",
+            "is an ancestor of integrated master",
+            "verify changed files against approved scope",
+            "Close the issue only against named tests that demonstrate the original symptom is repaired at the integrated immutable commit",
+            "not on a promise, report or outbound send",
+            "Missing evidence, conflict, identity drift or failed checks leave the patch open and preserve the worker",
+            "declare «nada que registrar»",
+            "call `radar archivar`",
+            "Return issue closure evidence separately from Session `entrega.commit` delta",
+            "Only then request patch retirement",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, self.closure)
+
+    def test_dispatch_and_coordinator_point_at_the_closure_reference(self):
+        self.assertIn("references/issue-patch-closure.md", read(f"skills/{SKILL_NAME}/SKILL.md"))
+        coordinator = read("skills/chanks-3-coordinador-manual/SKILL.md")
+        self.assertIn("references/issue-patch-closure.md", coordinator)
+        self.assertNotIn("gathers patch closure through `chanks-5-session-doc`", compact(coordinator))
+
+
+class WorkerPoolReferenceTests(unittest.TestCase):
+    def test_pool_declaration_moved_out_of_agents_md(self):
+        agents = (ROOT.parent / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertNotIn("implementer-1", agents)
+        self.assertNotIn("bun install --frozen-lockfile", agents)
+        self.assertIn("references/worker-pool.md", agents)
+        self.assertIn("V2", agents)
+        pointer = agents.split("## Operación local", 1)[1].split("\n## ", 1)[0]
+        self.assertLessEqual(len([line for line in pointer.splitlines() if line.startswith("V2") or "V2" in line]), 6)
+        self.assertIn("agent-workflows/tools/install-radar.sh", agents)
+
+    def test_dispatch_skill_reads_the_declaration_from_the_reference(self):
+        skill = compact(read(f"skills/{SKILL_NAME}/SKILL.md"))
+        self.assertIn("references/worker-pool.md", skill)
+
+    def test_retirement_uses_the_same_repository_specific_pool_locator(self):
+        retirement = compact(read(f"skills/{SKILL_NAME}/references/retiro.md"))
+        self.assertIn("`worker-pool.md` for Control Tower", retirement)
+        self.assertIn("another repository", retirement)
+        self.assertIn("`AGENTS.md`", retirement)
+        self.assertNotIn("repository `AGENTS.md`; it remains the source", retirement)
 
 
 if __name__ == "__main__":

@@ -56,10 +56,13 @@ class IssuePatchContractTests(unittest.TestCase):
         self.assertNotIn("Under the acquired lock, right after lock acquisition, this skill invokes", activation)
 
     def test_policy_is_approved_alternative_not_a_session_forgery(self):
-        self.assert_terms(self.policy, "autorización humana por issue", "base Git exacta",
+        pool = read(DISPATCH / "references/worker-pool.md")
+        self.assert_terms(pool, "autorización humana por issue", "base Git exacta",
                           "archivos exactos", "Cimientos y Recursos", "cada Sesión activa",
                           "Ausencia, alcance desconocido, colisión o deriva",
                           "no se inventa Sesión LISTO", "no prueba que se haya lanzado")
+        self.assertNotIn("autorización humana por issue", self.policy)
+        self.assertIn("references/worker-pool.md", self.policy)
         self.assertEqual(self.policy.count("schema: delivery-policy"), 1)
         self.assertNotIn("issue_patch:", self.policy)
 
@@ -130,7 +133,14 @@ class IssuePatchContractTests(unittest.TestCase):
         self.assertNotIn("Herdr", self.closure)
         self.assert_terms(self.closure, "nada que registrar", "`radar archivar <ID>`")
         self.assert_terms(self.router, "never changes Radar Session progress",
-                          "nada que registrar", "No review outcome grants delivery")
+                          "nada que registrar", "No review outcome grants delivery",
+                          "references/issue-patch-closure.md")
+        closure = read(DISPATCH / "references/issue-patch-closure.md")
+        self.assert_terms(closure, "named tests that demonstrate the original symptom",
+                          "ancestor of integrated master", "nada que registrar")
+        self.assertIn("references/issue-patch-closure.md", self.dispatch)
+        self.assertNotIn("applicable native review", self.handoff)
+        self.assert_terms(self.handoff, "Gentle AI decides how the patch is implemented, checked, reviewed and committed")
 
     def test_session_contract_remains_session_only(self):
         self.assertNotIn("SESSION-ADMISSION-CONTRACT", self.routing)

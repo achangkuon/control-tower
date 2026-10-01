@@ -77,14 +77,23 @@ class CoordinadorManualTests(unittest.TestCase):
             "terminal B enters integration only after A completes serial integration, closure, and retirement",
         )
 
-    def test_terminal_events_keep_implementation_rdd_and_module_commits_with_the_worker(self):
+    def test_terminal_events_leave_how_to_implement_and_review_to_gentle_ai(self):
+        for gone in ("Module commits", "Main must not inspect", "rerun tests or RDD",
+                     "second technical judgement", "rerun the worker's tests"):
+            self.assertNotIn(gone, self.skill, gone)
+        self.assert_phrases(
+            "Gentle AI decides how a Session is implemented, checked, reviewed and committed",
+            "the parent spot-checks what Gentle AI requires before integrating",
+            "nothing in this skill overrides Gentle AI",
+        )
+
+    def test_terminal_events_are_accepted_only_from_the_verified_worker(self):
         self.assert_phrases(
             "accept only inbound `COMPLETED`, `BLOCKED`, or `FAILED`",
             "fresh Intercom and Herdr readbacks must prove the sender matches the human-approved/dispatched exact alias and cwd/worktree, and the post-launch verified exact Pi session ID",
             "Git readback must prove the reported commit is the dispatched worktree candidate before integration",
             "Any missing, mismatched, or unavailable readback stops: no integration, retry, remapping, or inferred terminal",
-            "implementer owns implementation, self-verification, native RDD, and Module commits",
-            "Main must not inspect, review, correct, rerun tests or RDD, or mutate the worker candidate",
+            "Main never mutates the worker candidate",
             "integrate one completed Sesión at a time",
             "integration conflict stops and escalates without resolution",
             "BLOCKED and FAILED preserve the worker and worktree and report the worker evidence",

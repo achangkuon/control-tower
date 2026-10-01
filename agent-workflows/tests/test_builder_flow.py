@@ -433,6 +433,32 @@ class GenericBuilderFlowTests(unittest.TestCase):
         ):
             self.assertIn(phrase, sealing)
 
+    def test_unattended_seal_never_answers_gentle_ai_consent_for_the_human(self):
+        base = "skills/chanks-4-unattended-implementation"
+        texts = {
+            path: " ".join(read(f"{base}/{path}").split())
+            for path in ("SKILL.md", "references/sealing-and-routing.md",
+                         "references/night-mode.md", "references/runtime-standalone.md")
+        }
+        for path, text in texts.items():
+            for gone in ("granted in advance", "granted_in_advance", "high` risk is granted",
+                         "`medium` is declined", "RDD consent policy", "RDD reviews run or skipped",
+                         "work-unit-commits"):
+                with self.subTest(file=path, gone=gone):
+                    self.assertNotIn(gone, text)
+        skill = texts["SKILL.md"]
+        self.assertIn("V2 only", skill)
+        for phrase in (
+            "consent envelope, a correction it cannot make, or any decision stops that Session",
+            "one self-contained decision block",
+            "other dispatched Sessions continue independently",
+            "`review_policy` fields in the schema are inert",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, skill)
+        self.assertIn("inert", texts["references/sealing-and-routing.md"])
+        self.assertIn("../../chanks-3-despacho-herdr/assets/worker-handoff.md", texts["references/night-mode.md"])
+
     def test_frozen_product_snapshot_matches_the_pre_migration_builder(self):
         snapshot = ROOT.parent / "product" / "tower" / "generic"
         self.assertTrue(snapshot.is_dir(), "missing frozen product snapshot")

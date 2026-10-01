@@ -9,7 +9,6 @@
 | Dispatch | `chanks-3-despacho-herdr` assigns a Pi worker, worktree, and branch, with the Torre off, and carries the seal inside its own handoff. |
 | Admission | The dispatched worker's own `chanks-3-session-kickoff` run supplies its fresh admission bundle before it edits anything. |
 | Implementation | The dispatched worker implements the sealed Session with ODD; `solicitud_sdd` is the only exception, and only on explicit human request. |
-| Commit shape | `work-unit-commits` still shapes each commit the worker makes on its own `work/<ID>` branch. |
 | Plan evidence | The responsible parent records confirmed evidence; only Main writes `openspec/plan.yaml`. |
 
 A child returns facts to its caller. No child creates a peer, external session, live claim, queue,
@@ -32,8 +31,10 @@ Validate the JSON schema, then return `NOT_READY` if any predicate fails:
    branch) or `none`; `permissions.prohibitions.commit` matches it exactly, and every other
    prohibition — push, PR create/update, merge, release, deploy, database mutation, global
    closure, `openspec/plan.yaml` writes, and any Sesión outside the sealed one — stays `true`.
-5. `review_policy` is fixed to the maintainer's standing decision: `high` grants in advance,
-   `medium` declines, `passive` needs no consent. The worker may not renegotiate any of the three.
+5. `review_policy` is inert in V2-pending state. The schema still requires it, so it carries its
+   fixed legacy constants, but it grants and declines nothing: the human answers every Gentle AI
+   consent envelope, and a worker that meets one stops that Session. Do not change the schema
+   here; retiring these fields is a follow-up.
 6. Read/edit/command allowlists are bounded to this Session's declared scope; every command
    matches the allowlist pattern — repo test/check commands, `git`, and `radar`.
 7. `expires_at` is explicit. JSON Schema validates its shape but cannot prove that `expires_at` is later than `sealed_at`,
@@ -66,8 +67,7 @@ worker's independent revalidation tolerates exactly that one change and nothing 
 4. `radar_status_stdout_sha256` proves only the snapshot Radar showed at seal time; the worker
    never recompares it after dispatch. Instead it requires that a fresh `radar status --json`
    lists this Session `EN CURSO` with no blocker.
-5. Every other check in the seal gate above — expiry, permissions, delivery ceiling, the RDD
-   consent policy, and rejection of any other drift (encargo text, files, decisions, base) — is
+5. Every other check in the seal gate above — expiry, permissions, delivery ceiling, and rejection of any other drift (encargo text, files, decisions, base) — is
    unchanged and still invalidates the seal on any mismatch.
 
 Before dispatch, with no marker on disk, both digests still match byte-for-byte with zero
@@ -83,5 +83,5 @@ standalone sealed approval only: it neither launches work nor authorizes dispatc
 
 Return contract ID/digest and expiry; repository/branch/base (`base_sha` doubles as the rollback
 boundary); `sesion_id`; the two Radar stdout digests; `solicitud_sdd` status; the sealed delivery
-ceiling and RDD consent policy; required verification commands; human approval; and blockers.
+ceiling; required verification commands; human approval; and blockers.
 Preserve all available evidence when not ready or blocked.
