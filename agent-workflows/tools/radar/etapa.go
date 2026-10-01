@@ -16,8 +16,11 @@ import (
 )
 
 // despacho is an internal observation, not an assignment or planning record.
-// Producers must persist the Intercom receipt projection before advertising
-// review readiness. Radar never writes, repairs or removes a marker.
+// Producers must persist a review-ready witness (an Intercom receipt
+// projection, or the explicit "local" witness) before advertising review
+// readiness. `radar marcar` and `radar desmarcar` are the only commands that
+// write or remove a marker, and only the exact <ID>.json file; Radar never
+// repairs one and no other command writes under the Git common directory.
 type despacho struct {
 	Schema      string         `json:"schema"`
 	Sesion      string         `json:"sesion"`
@@ -27,8 +30,10 @@ type despacho struct {
 	ReviewReady *reviewWitness `json:"review_ready,omitempty"`
 }
 
-// reviewWitness is a coordinator-persisted projection of one received Intercom
-// "listo para revisión" message, bound to this exact dispatch identity.
+// reviewWitness is a persisted projection of one "listo para revisión" signal
+// bound to this exact dispatch identity: a received Intercom message
+// (transport "intercom", written by the V2 coordinator) or the local
+// attestation written by `radar marcar <ID> --listo` (transport "local").
 type reviewWitness struct {
 	Transport  string `json:"transport"`
 	Type       string `json:"type"`
@@ -117,12 +122,12 @@ func leerDespacho(root, id string) (*despacho, error) {
 	if err := decoder.Decode(new(any)); err != io.EOF {
 		return nil, fmt.Errorf("marcador de despacho contiene datos adicionales")
 	}
-	if m.Schema != "radar.despacho/v1" || m.Sesion != id || m.Worker == "" || strings.ContainsAny(m.Worker, " /\\\t\n\r") || !filepath.IsAbs(m.Worktree) || filepath.Clean(m.Worktree) != m.Worktree ||
+	if m.Schema != "radar.despacho/v1" || m.Sesion != id || !workerValido(m.Worker) || !filepath.IsAbs(m.Worktree) || filepath.Clean(m.Worktree) != m.Worktree ||
 		!strings.HasPrefix(m.Branch, "refs/heads/") || strings.ContainsAny(m.Branch, " \t\n\r~^:?*[\\") || strings.Contains(m.Branch, "..") || strings.HasSuffix(m.Branch, "/") {
 		return nil, fmt.Errorf("contrato de despacho inválido")
 	}
 	if w := m.ReviewReady; w != nil {
-		if w.Transport != "intercom" || w.Type != "listo para revisión" || w.MessageID == "" || strings.ContainsAny(w.MessageID, " \t\n\r") || w.Sesion != m.Sesion || w.Worker != m.Worker || w.Worktree != m.Worktree || w.Branch != m.Branch {
+		if (w.Transport != "intercom" && w.Transport != "local") || w.Type != "listo para revisión" || w.MessageID == "" || strings.ContainsAny(w.MessageID, " \t\n\r") || w.Sesion != m.Sesion || w.Worker != m.Worker || w.Worktree != m.Worktree || w.Branch != m.Branch {
 			return nil, fmt.Errorf("testigo de revisión no corresponde al despacho")
 		}
 		if _, err := time.Parse(time.RFC3339, w.ReceivedAt); err != nil {
@@ -378,4 +383,244 @@ func cmdEtapa(w io.Writer, p *Plan, root, id string) error {
 		}
 	}
 	return json.NewEncoder(w).Encode(offer)
+}
+
+func workerValido(w string) bool { return w != "" && !strings.ContainsAny(w, " /\\\t\n\r") }
+
+func idDespachoValido(id string) error {
+	if !dispatchID.MatchString(id) || id == "." || id == ".." {
+		return fmt.Errorf("ID de despacho inválido: %q", id)
+	}
+	return nil
+}
+
+// directorioDespachos returns <common>/chanks/despachos after Lstat-checking
+// every component: a symlink or non-directory is refused, never followed. With
+// crear, a missing component is created (0700) only after its parent passed;
+// otherwise a missing component yields os.ErrNotExist so callers mutate nothing.
+func directorioDespachos(common string, crear bool) (string, error) {
+	current := common
+	for _, part := range []string{"", "chanks", "despachos"} {
+		current = filepath.Join(current, part)
+		info, err := os.Lstat(current)
+		if errors.Is(err, os.ErrNotExist) && crear {
+			if err = os.Mkdir(current, 0o700); err == nil {
+				info, err = os.Lstat(current)
+			}
+		}
+		if err != nil {
+			return "", err
+		}
+		if !info.IsDir() {
+			return "", fmt.Errorf("ruta de despacho es un enlace simbólico o no es directorio: %s", current)
+		}
+	}
+	return current, nil
+}
+
+func marcadorExiste(common, id string) (bool, error) {
+	dir, err := directorioDespachos(common, false)
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if _, err := os.Lstat(filepath.Join(dir, id+".json")); errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// escribirMarcador writes the marker through a same-directory temp file. A new
+// marker is published with link(2), which fails if the name exists, so a
+// concurrent writer is never overwritten; an update replaces by rename.
+func escribirMarcador(common string, m despacho, reemplazar bool) error {
+	dir, err := directorioDespachos(common, true)
+	if err != nil {
+		return err
+	}
+	data, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+	tmp := filepath.Join(dir, fmt.Sprintf(".%s.json.tmp-%d", m.Sesion, os.Getpid()))
+	file, err := os.OpenFile(tmp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmp)
+	_, err = file.Write(append(data, '\n'))
+	if err == nil {
+		err = file.Sync()
+	}
+	if closeErr := file.Close(); err == nil {
+		err = closeErr
+	}
+	if err != nil {
+		return err
+	}
+	final := filepath.Join(dir, m.Sesion+".json")
+	if reemplazar {
+		return os.Rename(tmp, final)
+	}
+	if err := os.Link(tmp, final); err != nil {
+		if errors.Is(err, os.ErrExist) {
+			return fmt.Errorf("ya existe un marcador de despacho para %s", m.Sesion)
+		}
+		return err
+	}
+	return nil
+}
+
+func saneaWorker(base string) string {
+	w := strings.Map(func(r rune) rune {
+		if strings.ContainsRune(" /\\\t\n\r", r) {
+			return '-'
+		}
+		return r
+	}, base)
+	if w == "" || w == "." || w == ".." {
+		return "worker"
+	}
+	return w
+}
+
+func commonDir(dir string) (string, error) {
+	return gitOutput(dir, "rev-parse", "--path-format=absolute", "--git-common-dir")
+}
+
+// cmdMarcar marks a LISTO Session EN CURSO by writing the dispatch marker the
+// readers already accept. Every check runs before the first mutation.
+func cmdMarcar(w io.Writer, p *Plan, root, id, worktree, worker string) error {
+	if err := idDespachoValido(id); err != nil {
+		return err
+	}
+	if _, ok := p.SesionPorID()[id]; !ok {
+		return fmt.Errorf("la Sesión %s no existe", id)
+	}
+	head, err := gitHEAD(root)
+	if err != nil {
+		return fmt.Errorf("no se pudo fijar HEAD: %w", err)
+	}
+	if err := validarAt(p, root, head, "marcar"); err != nil {
+		return err
+	}
+	common, err := commonDir(root)
+	if err != nil {
+		return err
+	}
+	if exists, err := marcadorExiste(common, id); err != nil {
+		return err
+	} else if exists {
+		return fmt.Errorf("ya existe un marcador de despacho para %s; usa radar desmarcar %s", id, id)
+	}
+	if state := p.EstadosAt(root, head)[id]; state != Listo {
+		return fmt.Errorf("la Sesión %s está %s; sólo se marca una Sesión LISTO", id, state)
+	}
+	if !filepath.IsAbs(worktree) || filepath.Clean(worktree) != worktree {
+		return fmt.Errorf("el worktree debe ser una ruta absoluta normalizada: %q", worktree)
+	}
+	if info, err := os.Lstat(worktree); err != nil || !info.IsDir() {
+		return fmt.Errorf("el worktree %s no existe o no es un directorio", worktree)
+	}
+	if top, err := gitOutput(worktree, "rev-parse", "--show-toplevel"); err != nil || top != worktree {
+		return fmt.Errorf("el worktree %s no es la raíz canónica de un worktree Git", worktree)
+	}
+	if other, err := commonDir(worktree); err != nil || other != common {
+		return fmt.Errorf("el worktree %s no comparte el repositorio de %s", worktree, root)
+	}
+	branch, err := gitOutput(worktree, "symbolic-ref", "--quiet", "HEAD")
+	if err != nil {
+		return fmt.Errorf("el worktree %s tiene HEAD detached; se requiere una rama", worktree)
+	}
+	if _, err := gitOutput(root, "show-ref", "--verify", branch); err != nil {
+		return fmt.Errorf("la rama %s del worktree no existe todavía (sin commits)", branch)
+	}
+	if worker == "" {
+		worker = saneaWorker(filepath.Base(worktree))
+	}
+	if !workerValido(worker) {
+		return fmt.Errorf("worker inválido %q: no admite espacios ni barras", worker)
+	}
+	m := despacho{Schema: "radar.despacho/v1", Sesion: id, Worktree: worktree, Branch: branch, Worker: worker}
+	if !despachoVivo(root, m) {
+		return fmt.Errorf("el worktree %s no cumple el contrato de despacho vivo", worktree)
+	}
+	if err := escribirMarcador(common, m, false); err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(w, "✓ %s marcada EN CURSO (worker %s, rama %s)\n", id, worker, branch)
+	return err
+}
+
+// cmdMarcarListo records the local review-ready witness on a live marker so
+// stage 5 is reachable without Intercom.
+func cmdMarcarListo(w io.Writer, p *Plan, root, id string) error {
+	if err := idDespachoValido(id); err != nil {
+		return err
+	}
+	m, err := leerDespacho(root, id)
+	if err != nil {
+		return fmt.Errorf("marcador de %s inválido: %w", id, err)
+	}
+	if m == nil {
+		return fmt.Errorf("no existe un marcador para %s; usa radar marcar primero", id)
+	}
+	if !despachoVivo(root, *m) {
+		return fmt.Errorf("el marcador de %s es huérfano: su worktree o rama ya no existen", id)
+	}
+	if m.ReviewReady != nil {
+		return fmt.Errorf("%s ya está marcada lista para revisión", id)
+	}
+	now := time.Now().UTC()
+	m.ReviewReady = &reviewWitness{Transport: "local", Type: "listo para revisión", MessageID: fmt.Sprintf("local-%d", now.UnixNano()), Sesion: id,
+		ReceivedAt: now.Format(time.RFC3339), Worker: m.Worker, Worktree: m.Worktree, Branch: m.Branch}
+	common, err := commonDir(root)
+	if err != nil {
+		return err
+	}
+	if err := escribirMarcador(common, *m, true); err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(w, "✓ %s lista para revisión (testigo local)\n", id)
+	return err
+}
+
+// cmdDesmarcar removes exactly <despachos>/<ID>.json. It also removes an
+// orphan or invalid marker (that is its purpose) but never a symlink or other
+// non-regular node, and never touches worktrees, branches or the plan.
+func cmdDesmarcar(w io.Writer, root, id string) error {
+	if err := idDespachoValido(id); err != nil {
+		return err
+	}
+	common, err := commonDir(root)
+	if err != nil {
+		return err
+	}
+	dir, err := directorioDespachos(common, false)
+	if errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("no existe un marcador para %s", id)
+	}
+	if err != nil {
+		return err
+	}
+	path := filepath.Join(dir, id+".json")
+	info, err := os.Lstat(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("no existe un marcador para %s", id)
+	}
+	if err != nil {
+		return err
+	}
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("el marcador de %s no es un archivo regular; no se quita", id)
+	}
+	if err := os.Remove(path); err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(w, "✓ %s desmarcada\n", id)
+	return err
 }
