@@ -2,6 +2,42 @@
 
 > Subordinate ODD execution record. `openspec/plan.yaml` remains the sole product-plan authority. This work closes no enumerated Session: the maintainer authorized it directly in conversation on 2026-10-01, outside any plan Session.
 
+## Current checkpoint — local deployment completed; no push
+
+T6 is complete within authorized local scope (#12425): canonical skills/routing deployed to Claude Code, OpenCode, Pi and Codex; Radar installed offline; local registry regenerated; Hermes installed LAST. Backups, custom/unmanaged content and Gentle-managed instruction bytes preserved. User must reopen existing agent sessions to load updated instructions; fresh authenticated/model conversations were NOT tested. No product-plan Session closed, no remote operation or push.
+
+### Live verification and recovery
+
+Evidence root: `/home/emili/.local/state/chanks-boundary/20261001T170307Z-scoped-driver/`. Final `live-final-preservation-proof.json` SHA256 `53e2e8d11dcb216c6f43d9dd98f25aa225a5cbc69745da3e8c9bba6de5f17d2d`; parent independently read all component proofs, verified their eleven artifact hashes, 176 primary/46 Hermes copied bytes, 16 primary/three Hermes file archives and two intact Hermes directory snapshots. Deployment source HEAD was `d8d12d0db62623896327e445908ac8e26403cb8f`; no source or product-plan bytes changed.
+
+| Component | Observed outcome |
+| --- | --- |
+| Primary | Exact scoped apply exit0: 176 canonical copies/four manuals/16 recognized file archives. Readback exit0, zero operations/conflicts. |
+| Radar | Offline build/install; actual installed help/check/status/etapa exit0. SHA256 `0fba2ea09bbe2e0de4d815d3e03ffc71479deeafd38040b3f326e8272f082070`, mode0755. Main check0errors/63warnings (external Engram evidence and stale declared routes); not a zero-warning claim. |
+| Radar isolated runtime | Installed CLI check0; stages3→marcar/4→--listo/5→desmarcar/3. Duplicate marcar exit1 preserves marker bytes. Production Session markers untouched; concurrency safety NOT proven. |
+| Registry | Local extension `__testing.regenerateRegistry(Main,true)` exit0; 51 indexed skills, 27 canonical Chanks paths/bytes verified. Main/.atl/skill-registry.md and cache backed up; full registry Engram#6159 exact readback, topic skill-registry/capture_prompt:false. |
+| Hermes LAST | Exact apply exit0: 46 copies/one SOUL routing seed/three file archives/two intact retired directories. All57 canonical bytes/modes verified; unmanaged/custom files and original98130-byte SOUL prefix preserved. Readback exit0, zero operations/conflicts. |
+| Final scoped readbacks | Both primary/Hermes exit0, zero operations/conflicts; entire affected trees equal postapply snapshots. Radar/registry/Pi-controls and tracked Main bytes unchanged. |
+| Default installer --check | Exit1 ONLY `DRIFT pi-extension: /home/emili/.pi/agent/extensions/chanks-controls.ts`. This deliberately excluded extension is unchanged; no broad apply or automatic scope expansion. |
+
+Backups: `live-primary-apply/backup`, `live-hermes-apply/backup`, `live-radar/radar-before`, `live-registry/{skill-registry.md,.skill-registry.cache.json}`. Exact scoped rollback commands live in PROPOSED-COMMANDS.md; restore only while current paths still match postapply bytes/modes/links, never overwrite newer edits. No rollback was performed. No dependency install, authenticated/model-agent launch, setup/update/sync or remote/push in this deployment.
+
+Preserved initial harness failures: Python dataclass import lacked sys.modules registration (remaining manual proof completed via static AST); Radar fixture omitted plan.yaml ownership (isolated foundation corrected); registry SKILLS expression was not a literal (verified from pinned source manifest without regenerating twice); absent /bin/zsh prevented Hermes child start (exact apply executed once via /bin/sh). The import refreshed ignored tools/__pycache__/install.cpython-314.pyc; derived-cache write disclosed, tracked source bytes unchanged. Historical source-suite Python startup failure, native-SDD-binary skip and unavailable external Draft7 validator remain; full source suites were not rerun for filesystem-only installation.
+
+T6 work-unit identity: local integration `d8d12d0db62623896327e445908ac8e26403cb8f` plus this one-file completion record on continuation branch `feat/chanks-gentle-boundary-activation`. Route: delegated mapping/preparation and bounded live writer (4+ files/install boundary); inline parent mechanical evidence/checklist reconciliation. Completion record forecast200–300 authored lines; exception-ok/no PR policy unchanged. Running authored work-unit count: 4825 before this record (ten named feature units, including passive6a15f7e); final count and native doc-only assessment are preserved in `closure-git-stat.json` and `closure-assess.json` under the evidence root. The merge is not double-counted; unrelated Tower commits are excluded. Doc-only assessment base is integration d8d12d0, not an invented full-target approval. Next: reopen agents; separately authorized work would be needed for deferred Radar warnings or excluded Pi-controls drift. Push remains unauthorized.
+
+Parent independent readback concluded on 2026-10-01: native installer acknowledgement `05-reopen-ack.json` is acknowledged/authority:burned, consumed revision `sha256:bf0d1e69b759addd5ce7a2dadf9b4ba38f0faa4dcb0c29ae536ca7070b7c8abb`. Exact reopening applied once; three usable installer results and four previous approved receipts preserved. Fresh reliability approved but repeated the false cross-slice asset premise as informational WARNING; approval stands, no correction offered. Improved reviewer input and absence of warnings are NOT claimed. Source/target/high risk/budget200 unchanged.
+
+All five executable partition scopes approved and acknowledged; execution-record slice6 assessed passive/non_executable_only, one path/234 lines, review_due:false, no fabricated approval. Parent read `05-reopen-final-proof.json`, SHA256 `0781e6c6ca212b97db50da32ff07cdc78d5765acbadb1ac040513833df70506e`, and independently compared Git final trees: 70 unique paths/4191 lines; projected final tree `332bf8b47518ad1dc7f90de529891422c51efcf2` equals Main d8d12d0. Three unrelated Tower paths preserved; NO original-full-target receipt claimed. Evidence directory and historical failed transitions below remain recoverable, not current blockers.
+
+The following pending-worker paragraphs describe the pre-readback checkpoint, now concluded. Authorization #12425 local deployment and #12497 limited native reopening are fulfilled as verified above. Parent owns full task mirror; no product-plan Session closed. All later unchecked/no-install paragraphs are historical checkpoints, not current blockers.
+
+Apply authorization update: maintainer explicitly answered `Si, dale` after the plain-language proposal to repeat only the incorrectly blocked installer review, preserving four approvals and making no source/skill/install change. Grant #12497 authorizes applying the EXACT previously prepared same-lineage plan as actor `Chanks`, quarantining only `review-reliability` plus its dependent inconclusive refuter, then following actual native continuation. No fabricated approval, global/future consent, unrelated authority edit, source correction or push. Parent reloaded full task/observation and plan before mutation; bounded native transport worker owns exact token carry/readback, parent owns product decisions and mirror. Prior T6 local installation remains authorized only after actual review closure.
+
+Actor `SI, Chanks ponle` #12485 enabled preparation only; #12497 later enabled exact apply. Prepared `/home/emili/.local/state/chanks-boundary/20261001T173423Z-native-slices/05-reopen-prepare-Chanks.json`, SHA256 `7fcdb7c67e3ee00ec7021498d6f60959239a9f4e19adb00bc5504bf0f80bcf8c`, companion `.command`; external `plan.required_maintainer_authorization` exact token, never edit/regenerate/abbreviate. Retain installer target/lineage/revision, usable risk/resilience/readability slots, frozen scope/risk/budget200 and four burned receipts. Worker executing, parent readback pending; no applied/approved/T6-complete claim in this record.
+
+Frozen Main d8d12d0db62623896327e445908ac8e26403cb8f unchanged; canonical locator Main/odd/tasks/chanks-gentle-boundary.md. Unrelated Main semaphore context read-only, no product-plan mutation. Parent appends verified native outcome after independent readback; slice6 remains unstarted in this checkpoint. Historical actor/consent/review-or-skip questions are resolved, not current asks. T6 remains unchecked; no live install/push/remote work.
+
 ## Objective
 
 Make the maintainer's personal configuration (Chanks instruction blocks and skills) stop colliding with Gentle AI, so his flow stays usable as a parallel-work layer on top of Gentle AI.
@@ -44,26 +80,22 @@ All dates below are 2026-10-01. Completed source units remain local; source comp
 - [x] T3b — `8fa49e0`: delegated writer, strict TDD; approved `chanks-3-paralelo` (63 lines/3453B), registry/README and block pointer (1305B). V1 subagents, worktree per human-approved Session, Radar marking, serial integration, plan closure. RED 10 errors/GREEN 10 OK; normalized Python 307 only pre-existing startup failure; Bun 1660 pass. Live Radar activation not exercised.
 - [x] T4 — `ab959f5`: delegated writer, strict TDD; 38 files +399/-558. Stages 1/2/5 slimmed while retaining staged skills; stage 4 hands over/receives commit; kickoff owns admission/installed-Radar rule; support 13104→7815B; closure 9986→2606B; stale stage 6/7/flow names removed. RED 71 assertions across 32 builder tests plus visible-message/issue-patch failures; no RED claimed for retargeted installer assertions. Normalized Python 316 only pre-existing failure; focused 59 OK; Bun 356/full 1660 pass; whitespace clean. Writer used small Python rewrite scripts. Independent verification FAILED: lost worker/issue handoffs, readiness, generic Notion support, residual planning HOW, weak parallel/`.py` activation coverage and stale installed files. T5/T4a/T4b recover these known source defects; live activation remains T6.
 - [x] T3c — `9c70299`: delegated writer, strict TDD; human-approved file/resource/worktree collision refusals and missing branches; parallel record carries Session ID for stage 5. Independent verifier passed with findings; deferred Radar defects listed below, not silently fixed.
-- [x] T5 — `bec4ec17b6b2f88691a9afe8e8315810b7cbb165`: delegated preparation/writer; V2-only explicit activation for Herdr/manual/unattended/jornada, no default model invocation; restored worker/issue handoffs and pool consumers. Functional proof and native approval/ack below.
-- [x] T4a — `55fae88c93a336117f157fffd2585fcb52ff4846`: delegated preparation/writer; restore single-Session readiness, optional generic Notion support and planning boundary; strengthen activation/parallel/`.py` tests. Acceptance: reachable stage 5, no lost generic capability or Chanks-owned implementation/review policy. Checks and exact-candidate decline below. Forecast 350–650 authored lines.
-- [x] T4b — `935123c9a4bf3041f9321b192c045022d43cc5a6`: delegated mapping/writer; ownership-based reversible stale-file retirement preserving unmanaged content/path protections. Isolated fixtures only; RED/GREEN, Python baseline comparison, Bun and whitespace proof below. Forecast 150–300, refined 200–350 authored lines. Distinct range native review approved and acknowledged; no installation/delivery authority.
-- [ ] T6 — Human-gated integration into Main/master, install skills and Radar, propagate/verify Claude Code, OpenCode, Pi and Codex; Hermes last. Resolve open Pi sessions before reinstall. Separate authorization still required for push.
+- [x] T5 — bec4ec17b6b2f88691a9afe8e8315810b7cbb165; delegated preparation/writer, V2 isolation and handoffs; exact checks/approval below.
+- [x] T4a — 55fae88c93a336117f157fffd2585fcb52ff4846; delegated preparation/writer, readiness/optional closure/planning boundary; forecast350–650, exact checks/decline below.
+- [x] T4b — 935123c9a4bf3041f9321b192c045022d43cc5a6; delegated mapping/writer, reversible owned-file retirement; forecast150–300 refined200–350, exact checks/approved range below.
+- [x] T6 — Explicitly authorized local Main/master integration d8d12d0, skills/routing/Radar deployment and ordinary verification for Claude Code/OpenCode/Pi/Codex; Hermes LAST, intact backups and final zero scoped drift. Open-Pi disruption disclosed before grant. Fresh model-session activation not run; excluded Pi-controls drift and known warnings remain documented. Push unauthorized.
 
 ## Mapping, authorization and recovery boundaries
 
-Initial mapping (historical, not current installed-state proof): installer generated required session-routing and optional gatekeeper blocks; other manual blocks lived only globally. The 26 skills/canon sources are in `agent-workflows/skills/`; frozen SHA-pinned `product/tower/generic/` is never edited. Codex had no manual blocks; initial code reading predicted missing required seed would refuse installation, not executed. Installer renders `{{REPO_ROOT}}`; reinstall must run from Main, not this worktree. Initial Radar derives `EN CURSO` from live `radar.despacho/v1` under `<git-common-dir>/chanks/despachos/`; absent marker stays `LISTO` and closes via `entrega.commit`. T3 adds local marking/readiness.
+Historical mapping:26 skills/canon sources in agent-workflows/skills/, pinned product/tower/generic/ never edited. Installer generated required routing/optional gatekeeper; other manual blocks global. Absent Codex seed refusal predicted, not exercised. Installer {{REPO_ROOT}} requires Main install. Original Radar radar.despacho/v1 in <git-common-dir>/chanks/despachos/, absent marker LISTO, closure entrega.commit; T3 adds local witness.
 
-Initial baseline: Python 291/76 failures/errors (installer 75, Herdr 1; mode-related), workflows Bun 356 pass; full Bun initially unavailable without node_modules. Four source tool modes remain 775, installer expects 755. Normalize only disposable fixtures, never silently chmod live sources. Persistent normalized startup-policy failure and unavailable native-SDD-binary skip are NOT fixed.
+Baseline Python291/76 failures/errors(installer75, Herdr1, modes),workflows Bun356; full Bun initially lacked node_modules. Feature four tool modes775 versus installer755:disposable normalization only. Startup-policy failure/native-SDD skip remain; Main later already755.
 
-Branch point: `33e14ce4ae131943728f9132f55a251f30f3d6bd` (origin/master). Six historical commits T1b/T2/T3a/T3b/T4/T3c were each declined for their own native candidate; declines do not authorize later candidates or disable RDD. A whole-branch review was offered but never granted. RDD remains on from global deciding source; initial continuation boundary 9c70299 advances only on actual native terminal authority.
+Branch point33e14ce4ae131943728f9132f55a251f30f3d6bd(origin/master). T1b/T2/T3a/T3b/T4/T3c candidates individually declined; whole branch offered/never granted. Global RDD on; source reviewed boundaries9c70299→bec4ec1→935123c. Continuation/Dale, continuamos did not grant deployment, later#12425 did. T4 independent failure recovered by T5/T4a/T4b. Spanish-facing artifacts retain language; record English.
 
-The maintainer authorized local continuation after usage-limit recovery, later `Dale, continuamos` for T4b. Neither authorizes installation, skill propagation, merge, push, remote operations or further global-instruction edits. Keep inherited work, one coherent checked work-unit commit at a time. T4 was reopened after independent failure; T5/T4a/T4b source recovery is complete. Existing Spanish-facing artifacts retain their language; this subordinate technical record is English.
+Routes:delegated writers T1a/T1b/T2/T3/T4/T5(2+ non-trivial files); T5/T4a/T4b mapping/preparation(4+ files/preparation). T5 inherited597 lines; inherited RED not observed by Codex, never claimed. T6 parent decisions/delegated deployment, strict TDD above.
 
-Route evidence: T1a/T1b/T2/T3/T4/T5 each used bounded delegated writers (2+ non-trivial files); T5/T4a/T4b also delegated preparation/mapping (4+ file and preparation triggers). T5 inherited 597 authored lines before correction. Strict TDD source/runners above; historical inherited T5 RED not observed by Codex, never invented. T6 parent coordinates after human confirmation.
-
-Delivery strategy: `exception-ok` under repository no-PR/no-chained-PR policy; coherent units, no code golf/artificial 400-line splitting or Chanks size prompts. No remote delivery authorized. Running work-unit churn: T5 +2623/-1065=3688 (accumulated branch diff 3610); T4a 4096; T4b 4543. Generated files excluded; no PR slices. Task evidence working edits are excluded from frozen committed-only review.
-
-Mirror: `odd/chanks-gentle-boundary/tasks`, observation#12383, locator `Worktrees/chanks-frontera/odd/tasks/chanks-gentle-boundary.md`. Earlier saves failed with “multiple active runtime sessions match the current project”; no invented session identity. Parent owns mirror reconciliation/readback.
+Delivery exception-ok, no PR/chained PR/artificial400 splitting/Chanks size prompts. Churn T5 +2623/-1065=3688(branch diff3610),T4a4096, T4b4543; generated excluded. Dirty record outside frozen review. Mirror odd/chanks-gentle-boundary/tasks#12383, canonical Main/odd/tasks/chanks-gentle-boundary.md, feature copy historical. Duplicate-session MCP failure/server-directed engram save --project control-tower fallback, no invented identity. Parent mirror/readback; push/remote unauthorized.
 
 ## Deferred Radar findings (not authorized by skills recovery)
 
@@ -74,7 +106,7 @@ T3c verification found:
 - Live Session without declared `archivos` blocks every other Session (intended, undocumented).
 - Parallel skill's `odd/tasks/<id>*.md` wording is looser than `tareasCerradas`.
 
-These remain pending a separate decision; they are not part of the known skills completion estimate. No reliable minute estimate is promised before activation conditions.
+These remain pending a separate decision; they are not part of the known skills completion estimate.
 
 ## T5 verification (2026-10-01, Codex)
 
@@ -87,7 +119,7 @@ Observed new RED: Herdr 74 tests/13 contract failures plus existing mode error; 
 - 18 behavior/instruction paths,+529/-91=620 authored lines excluding record. Runtime harness N/A for reference/instruction unit; no live Herdr dispatch/agent activation.
 - Rollback 14 tracked behavior/test paths to 9c70299 and remove four new Herdr reference/handoff files, preserving earlier commits/record.
 - Existing skill-body/section style debt and global registry refresh remain incomplete; no install/sync/merge/push.
-- Evidence `/tmp/chanks-t5-fixtures-hsnyek8h`, `/tmp/chanks-t5-*-final.log`, `/tmp/chanks-t5-baseline-{raw,normalized}.log`; durable Engram#12385/#12386 bugfixes,#12387 completion.
+- Evidence `/tmp/chanks-t5-fixtures-hsnyek8h`, `/tmp/chanks-t5-*-final.log`, `/tmp/chanks-t5-baseline-{raw, normalized}.log`; durable Engram#12385/#12386 bugfixes,#12387 completion.
 
 ## T5 commit and concluded native review
 
@@ -97,13 +129,12 @@ Maintainer answered `si`, grant Engram#12389; fresh STATUS matched target/lineag
 
 - Target: `sha256:90349e7ce88da673ba1c2a423cfeb24cbefd228a6e19ce4c581eaf0153b3e837`; lineage `review-ee5f719b2f10238d`.
 - Base tree: `710e8d1025dc88a8445b2641d98bbcbfa8667a80`; candidate tree: `220f50b4a7390dc1cbfcce35fdf0b7cc44df1ce0`; evidence diff: `sha256:391b845cbd5c2624848d34b515f0a1643dc7996bc278080fd5d8e3e84bec779d`.
-- Provider context: `rctx2_b76f7822b05adc834780bf66c43b236b3f6e785f9d03b6e81a5ba0a7b4a235c0`.
-- Capture subject: `sha256:223a6b95386b8044c9d0a4a76ceca6cde86be1a1dab718027b1b5674f9516ffb`; expected revision: `sha256:2dc1b689b11878d9f7a9b137e361bfee91f697dd0458870edc624ff6810af278`.
+- Historical capture provider/subject/expected revision: recoverable in frozen Main d8d12d0 Git task record.
 - Result: `sha256:1967dc39ed7dd1fee95f0d4d53ca8f0191f903c7a8fe4ce4c82000130eb93104`; consumed revision: `sha256:abe42ce09855c05831d368c712a7d9d46fe1c6107b79f0fb152b71b1bf91c7ea`.
 
 Compiled Codex rejected `capture-result --materialize` (`not_started`, `retry_safe:true`); provider-carried arguments were executed without that unsupported flag, preserving every binding/agent. Native runtime materialized its reviewer internally; no parent-authored result substituted.
 
-Native reviewer inspected all 19 immutable patches, no findings, no commands/external-file reads. Final `state:approved`; exact acknowledgement succeeded, `action:acknowledged`, `authority:burned`. Reviewed boundary advances 9c70299→bec4ec1. Approval covers T5 only, not T4/whole branch, and does not independently establish runtime activation/dispatch or grant installation/delivery. T6 remains deferred.
+Native reviewer inspected all 19 immutable patches, no findings, no commands/external-file reads. Final `state:approved`; exact acknowledgement succeeded, `action:acknowledged`, `authority:burned`. Reviewed boundary advances 9c70299→bec4ec1. Approval covers T5 only, not T4/whole branch, and does not independently establish runtime activation/dispatch or grant installation/delivery. T6 was deferred at this historical source-review checkpoint.
 
 ## T4a verification (2026-10-01)
 
@@ -129,9 +160,7 @@ Maintainer answered `omitimos` for ONLY this exact candidate. Fresh STATUS match
 
 ## T4b authorized design and checks (2026-10-01)
 
-After `Dale, continuamos`, delegated preparation/4+ file mapping found no per-file ownership manifest; whole-skill retirement already uses `os.replace` in `<runtime-root>/.retired-skills/`. Chosen: immutable historical path/SHA256 tombstones for four removed files and a guarded reversible file helper, not a mutable ownership database or recursive deletion. Tradeoff: future removals require registry maintenance; unknown/modified files survive.
-
-T4b surface: `agent-workflows/tools/install.py`, `agent-workflows/tests/test_install.py`, `agent-workflows/README.md`. Delegated writer after mapping: multiple non-trivial files. Forecast 200–350, advisory only. Parent owns record/review. Strict TDD from config; focused `PYTHONPATH=agent-workflows/tests python3 -m unittest test_install`, primary Bun/full Python above.
+Dale, continuamos authorized source continuation, not deployment. Delegated4+ file mapping/writer#12397/#12398:no ownership manifest, existing whole-skill os.replace retirement. Chosen immutable historical path/SHA tombstones plus guarded reversible helper, not mutable database/recursive deletion. Tradeoff:future registry maintenance, unknown bytes survive. install.py/test_install.py/README.md; forecast150–300 refined200–350(advisory),strict TDD/focused installer runner above, parent record/review.
 
 Owned tombstones, relative to each runtime skill root:
 - `chanks-0-agente-soporte/assets/assignment-readonly.md`: `1066822ccc072dc21cd5dd67965cbbcf0a03b186d276a70b593d26e4e0c8d72f` (`1b3a53b`) or `9b35256b723d835665783739526a12497bf037c822521c498850a3bf253bc622` (`f7612de`).
@@ -139,31 +168,27 @@ Owned tombstones, relative to each runtime skill root:
 - `chanks-0-agente-soporte/references/unidad-ejecutable.md`: `2d78b7322467476ce1e8c127f5ce746c62e9adb392d4ec8c8d4bac2cd8baf322` (`1b3a53b`) or `a5362b5289abf87269ffbf879ab55976205cf0485cfa2c4e4132b20e5626a612` (`f7612de`).
 - `chanks-5-session-doc/references/links.md`: `6d75a865769a7561193f06bb5f2f86f39d65b1911e6337a0a11077c863b6885b` (`929ac91`).
 
-Digests recovered directly from immutable Git blobs; `ab959f5` removed these files. Restored Notion assets are current source, never retirement candidates. Current source inventory excludes a tombstone even if that path returns later.
-
-Preflight validates every known destination and archive ancestor before any source/manual write: reject symlink components, wrong types and path escapes. Plan `retired-skill-file` only for a regular file whose content matches a known historical digest. Missing, modified and unlisted files remain untouched. At the end of successful apply, revalidate path and digest and move exact historical copies into collision-safe `.retired-skills/files/` backups preserving relative identity. Reuse the archive surface, not the whole-directory helper; do not inherit its unguarded archive-parent behavior or expand into unrelated whole-skill refactoring. Do not delete empty directories.
-
-Acceptance/check scope: all four historical paths/variants across four runtimes; preserve modified/unlisted/current-source/Notion files; reject symlink file/parents/archive or wrong types before writes with sentinels intact; preserve digest changes and failed earlier apply; collision backups/idempotency. Copied installer/temporary-home CLI dry-run/check/apply proof only, no real HOME activation. Focused/full raw-normalized Python, workflows/full Bun, whitespace checks below; no live chmod. Mapping Engram#12397/#12398. T6 remains human-gated.
+Immutable Git blobs prove digests; ab959f5 removed paths. Current-source inventory excludes reintroduced/restored paths, including Notion. Preflight all known destination/archive ancestors before writes:reject symlinks/types/escapes. Plan retired-skill-file only known regular-file digest; missing/modified/unlisted untouched. After successful apply, revalidate path/digest, move into private collision-safe .retired-skills/files/ preserving relative identity; never use whole-directory helper's unguarded archive-parent behavior, delete empty dirs or expand scope. Checks:four paths/variants/four runtimes, preservation/sentinels, late digest change/failed apply, collision backups/idempotency. Copied installer/temp-home only, no live activation/chmod.
 
 ## T4b functional verification (2026-10-01)
 
-Implemented exactly three behavior/test/doc paths: `agent-workflows/tools/install.py` +76, `agent-workflows/tests/test_install.py` +249, `agent-workflows/README.md` +24 = 349 authored additions. Immutable historical path+digest tombstones gate retirement; current-source overlap excludes reintroduced/restored files. Modified, unlisted and missing copies survive. Known file/archive destinations are guarded in preflight; after ordinary apply succeeds the helper revalidates path/digest and archives matched bytes in private collision-safe timestamp directories. Concurrent-writer protection is explicitly not guaranteed: install without other processes editing the same skill paths. No recursive cleanup or mutable ownership manifest.
+Three paths:install.py+76, test_install.py+249, README.md+24=349 additions. Ownership/guards/archive behavior above implemented; concurrent writers unsupported, install without same-path editors. No recursive cleanup/mutable manifest.
 
 Strict-TDD evidence: `PYTHONPATH=agent-workflows/tests python3 -m unittest test_install.RetiredSkillFileTests` observed RED before production edits (10 tests, nine failures/two errors through subcases). Final regression class 11 OK. Disposable mode-normalized full installer suite 115 OK. Full discovery raw baseline 344/candidate 355 both three failures/73 errors/one skip; normalized baseline 344/candidate 355 both one existing `GenuineCompositionTests.test_fresh_normal_startup_and_policy` failure and one unavailable-native-SDD-binary skip. Exact failure/error names unchanged. Four live source modes remain 775; no live chmod.
 
-`bun test ./agent-workflows`: 356 pass/zero fail. Initial clean-HOME full Bun failed 1654 pass/six failures/one error because its harness lacked the default core facade and Go cache. Its Go build inadvertently downloaded public yaml.v3 into the disposable cache; this violated the worker's no-network scope and was disclosed, not hidden. No credentials/real HOME/cache used. Corrected real copied-source facade, disposable dependency cache, `GOPROXY=off`, `GOTOOLCHAIN=local` gave fail-closed eight pass and pre-push twelve pass. Worker full Bun reported 1660/0 but a zsh logging tail failed (`status` is read-only); inner exit was not claimed. Parent reran the unchanged candidate directly without that wrapper: `env HOME=/tmp/t4b-proof-73txulhi/bun-home GOMODCACHE=/tmp/t4b-proof-73txulhi/home/go/pkg/mod GOCACHE=/tmp/t4b-proof-73txulhi/bun-home/.cache/go-build GOPROXY=off GOTOOLCHAIN=local bun test`, actual exit 0, 1660 pass/zero fail/9700 expectations/113 files (113.62s). Whitespace clean. Final verification offline; no claim of zero network activity across the earlier failed attempt.
+Workflows Bun356/0. Initial clean-HOME full Bun1654 pass/six failures/one error:missing core facade/Go cache. Public yaml.v3 download into disposable cache violated delegated no-network scope, disclosed; no credentials/real HOME/cache. Corrected copied facade/cache with GOPROXY=off/GOTOOLCHAIN=local:fail-closed8/pre-push12 pass. Worker1660/0 report had zsh logging-tail failure(status read-only),inner exit not claimed. Parent reran the unchanged candidate directly without that wrapper: `env HOME=/tmp/t4b-proof-73txulhi/bun-home GOMODCACHE=/tmp/t4b-proof-73txulhi/home/go/pkg/mod GOCACHE=/tmp/t4b-proof-73txulhi/bun-home/.cache/go-build GOPROXY=off GOTOOLCHAIN=local bun test`, actual exit 0, 1660 pass/zero fail/9700 expectations/113 files (113.62s). Whitespace clean. Final verification offline; no claim of zero network activity across the earlier failed attempt.
 
-Real black-box CLI proof uses only a copied installer and temporary `--home`. Two rounds seed all seven immutable Git-blob versions across four runtime roots: each dry-run exits 0/check exits 1 and detects sixteen historical copies without mutation; each isolated apply exits 0 and produces sixteen byte-identical archives; subsequent check exits 0. Parent independently read the artifact and hashed all 32 backups: exactly the seven expected historical digests, no unknown content. Evidence: `/tmp/t4b-proof-73txulhi/historical-cli-evidence.json`, `bun-all-parent-direct.log` and raw/normalized fixture logs. This proves installer behavior in isolated homes, not live agent activation.
+Copied-installer/temp --home CLI, two rounds/seven immutable variants/four runtimes:dry-run exit0/check1 finds16 copies without mutation; isolated apply0 creates16 identical archives, subsequent check0. Parent hashed32 backups, exact seven known digests/no unknown content. /tmp/t4b-proof-73txulhi/historical-cli-evidence.json, bun-all-parent-direct.log, raw/normalized logs. Isolated-home proof, not activation.
 
 Rollback: remove only these three T4b source diffs; runtime rollback inspects a private backup and restores its original relative path without overwriting newer user content. Parent task record excluded from source rollback. Engram bugfix #12401, environment discoveries #12407/#12408, completion #12409. No real installation, propagation, merge or push.
 
-## T4b commit and native range review
-
 ## T6 local integration checkpoint (2026-10-01)
 
-Authorized local merge of feature checkpoint `6a15f7e00ea8d91995d39bb8ee1bc3c8c34987d9` into clean Main `8ee9a2bdf3cc992176746752783c743946f4906d` completed without conflicts and is pending its conventional merge commit. Recovery ref `recovery/chanks-boundary-pre-t6` preserves the premerge Main. Three unrelated new Tower paths remain unchanged. Delegated ordinary integrated checks: offline full Bun exit 0, 1703 pass/zero fail, 9957 expectations/114 files (130.06s); offline Radar `go test -count=1 ./...` exit 0 (15.174s). Main Python discovery exit 1, 355 tests/one inherited `GenuineCompositionTests.test_fresh_normal_startup_and_policy` failure (missing `PI_SOURCE`/`QUIET_SOURCE`), one unavailable native-SDD-binary skip, zero errors (57.292s). No chmod or source correction. Both whitespace checks clean; staged/unstaged candidate bytes preserved by test worker. Evidence `/tmp/chanks-t6-integrated-tests-J8VTmi`.
+Authorized local merge of feature checkpoint `6a15f7e00ea8d91995d39bb8ee1bc3c8c34987d9` into clean Main `8ee9a2bdf3cc992176746752783c743946f4906d` completed conflict-free, committed locally as d8d12d0db62623896327e445908ac8e26403cb8f. Recovery ref `recovery/chanks-boundary-pre-t6` preserves the premerge Main. Three unrelated new Tower paths remain unchanged. Delegated ordinary integrated checks: offline full Bun exit 0, 1703 pass/zero fail, 9957 expectations/114 files (130.06s); offline Radar `go test -count=1 ./...` exit 0 (15.174s). Main Python discovery exit 1, 355 tests/one inherited `GenuineCompositionTests.test_fresh_normal_startup_and_policy` failure (missing `PI_SOURCE`/`QUIET_SOURCE`), one unavailable native-SDD-binary skip, zero errors (57.292s). No chmod or source correction. Both whitespace checks clean; staged/unstaged candidate bytes preserved by test worker. Evidence `/tmp/chanks-t6-integrated-tests-J8VTmi`.
 
-Scoped deployment driver is being prepared/proved externally with disposable homes; no live installation yet. Native merged-candidate assessment follows commit against premerge Main, not the earlier feature receipt. T6 remains unchecked until actual canonical/routing/archive/Radar/registry/Hermes evidence is observed. No push or remote work.
+Canonical continuation is Main/odd/tasks/chanks-gentle-boundary.md; feature copy historical. T6 remains unchecked until actual canonical/routing/archive/Radar/registry/Hermes proof. No live install/push/remote work.
+
+## T4b commit and native range review
 
 Local work-unit `935123c9a4bf3041f9321b192c045022d43cc5a6`, `fix(installer): archive only recognized obsolete skill files`: four paths, +444/-3 = 447 authored lines including the execution record; 349 source/tests/docs. Running work-unit churn from branch point: 4543 (previous 4096 plus 447). Known source recovery T4/T4a/T4b/T5 is functionally complete; native approval/acknowledgement is recorded below. T6 is not activated.
 
@@ -171,11 +196,9 @@ Native assessment against last actually reviewed boundary `bec4ec1`: high `proce
 
 Target `sha256:2a716d266c2c60e3bbad338ea7c604e7918360988948e819258ab063c4989955`, lineage `review-d1ecf057a0866f4c`, base tree `220f50b4a7390dc1cbfcce35fdf0b7cc44df1ce0`, candidate tree `df9ffd2a7a557d6cb191fd2c86747e789e35b247`. Candidate consent remains human-owned; neither answer changes global RDD or authorizes installation, integration or push. The postcommit task evidence is the sole dirty file, excluded from committed-only selectors.
 
-Remaining delivery: after this candidate decision/gate, T6 requires explicit authorization to bring the result into Main/master, install skills and Radar, propagate and verify four agents, Hermes last; open Pi sessions must be addressed before reinstall. Push remains separately unauthorized. Radar race/orphan findings remain deferred outside known skills source completion.
+## T6 historical authorization and concluded T4b result
 
-## Current checkpoint and next step (2026-10-01)
-
-T6 authorization update: the maintainer explicitly answered `SI` to local integration, installation and agent verification, without push, after disclosure of open-Pi disruption. Grant recorded in Engram #12425. T6 is now authorized but not completed: reconcile clean Main `8ee9a2b` with feature `935123c`, preserve unrelated Tower work, install only from Main, verify Claude/OpenCode/Pi/Codex, then Hermes last. No remote execution or transfer is authorized. Route: delegated preparation mapping (4+ files, installation-boundary research); bounded delegated deployment after evidence reconciliation. Strict TDD source/runners unchanged; deployment/configuration checks are ordinary functional checks unless a source correction is required. Rollback requires pre-install backups and exact merge/install identities. Historical pending-authorization paragraphs below describe the earlier checkpoint, not the current grant.
+T6 grant #12425: explicit SI permits local integration/install/agent verification after open-Pi disruption disclosure, not push/remote. Delegated preparation (4+ files/install boundary), then bounded deployment. Strict TDD unchanged; ordinary deployment checks unless source correction. Backups/exact identities/open-Pi handling required. Integration later completed locally; live install/Hermes remain pending, as recorded below.
 
 T6 mapping (Engram #12429): clean Main `8ee9a2b` has two new Tower commits with three nonoverlapping paths; read-only three-tree inspection found no conflicts. Main source executables are already 755, so no chmod is needed. Use guarded existing installer helpers for canonical files/routing and recognized file retirement, not default apply (changes Pi controls), setup (pulls remotely), or broad sync (deletes whole skills and reaches Windows/Hermes). Preserve unmanaged files and all surrounding instruction bytes; seed absent Codex/Hermes routing append-only. Validate scoped driver in disposable home before live deployment. Back up exact affected paths, modes and absent-path inventory; install Radar offline from Main, verify in disposable Git fixture, regenerate local registry without starting an agent. Hermes separate final stage, with intact archival of its two retired directories. Fresh authenticated/model-session activation is not inferred from filesystem/fixture checks. Integration gets independent native assessment against Main `8ee9a2b`; source-review receipts do not approve merged bytes. Rollback aborts uncommitted merge or reverts exact integration commit; runtime restoration is guarded against overwriting newer edits.
 
@@ -187,48 +210,44 @@ Consumed revision `sha256:fc89b19c6323185ed2bc7646c534850fc37b8d31c716d6a49a07d5
 - Readability: `sha256:2f79eb34b920a9eb43560539afb862c8bd17a2f29deef639b1708aa02cc025ac`.
 - Reliability: `sha256:d8dc9d1643d3ae1aff9b8837bef71015b31da8e160d0dcdd9c67ffe3675641b4`.
 
-All lenses inspected 15 immutable patches, no commands/external reads/test reruns. Review does not prove live activation. Parent owns native authority/mirror; no parent-authored reviewer substitute. The original consent envelope below is preserved verbatim for identity recovery, now concluded, not a prompt/replay permission. Doc-only working edits remain outside frozen committed-only candidate.
+All lenses inspected 15 immutable patches, no commands/external reads/test reruns. Review does not prove live activation. Parent owns native authority/mirror; no parent-authored reviewer substitute. The old full packets are concluded historical identity evidence, not a prompt/replay permission. Doc-only working edits remain outside frozen committed-only candidate.
 
-Next: request separate explicit T6 authorization for integration into Main/master, safe open-Pi handling, Main-based skills/Radar install, propagation/verification of four agents, Hermes last. `revisamos` grants NONE of these, nor push/remote permission. Deferred Radar findings stay outside scope. Persistent Python failures/skip, unavailable schema validator and pending live activation remain disclosed.
+Concluded T4b/full-merge packets remain at frozen Main Git `d8d12d0db62623896327e445908ac8e26403cb8f:odd/tasks/chanks-gentle-boundary.md`; historical identity evidence, not replay permission.
 
-### T4b pending-range native consent envelope (exact)
 
-```json
-{
-  "schema": "gentle-ai.review-integration.consent/v3",
-  "contract": "gentle-ai.review-integration/v2",
-  "operation": "review.start",
-  "action": "consent_required",
-  "agent": "codex",
-  "blocking": true,
-  "target_identity": "sha256:2a716d266c2c60e3bbad338ea7c604e7918360988948e819258ab063c4989955",
-  "projection": "workspace",
-  "risk_level": "high",
-  "changed_files": 15,
-  "changed_lines": 851,
-  "headline": "Gentle AI can review this change before you call it done.",
-  "reason": "Review can help detect execution issues in these changes.",
-  "value": "Reviewing takes a little longer and makes the result safer.",
-  "risk_evidence": [
-    "code that starts other processes in agent-workflows/tests/test_install.py"
-  ],
-  "choices": [
-    {
-      "answer": "granted",
-      "label": "Review this change",
-      "effect": "Reviews only this change; later medium- or high-risk changes ask again, and delivery needs separate approval.",
-      "invocation": "gentle-ai review start --contract gentle-ai.review-integration/v2 --cwd /home/emili/projects/control-tower/Worktrees/chanks-frontera --target sha256:2a716d266c2c60e3bbad338ea7c604e7918360988948e819258ab063c4989955 --target-evidence v1:base-diff:workspace:220f50b4a7390dc1cbfcce35fdf0b7cc44df1ce0:df9ffd2a7a557d6cb191fd2c86747e789e35b247:sha256:79f5ebdb81b510f9a57ff9af3ba039205c41d3df3b4c0cb68acb5ee868569c98 --projection workspace --agent codex --lineage review-d1ecf057a0866f4c --base-ref 220f50b4a7390dc1cbfcce35fdf0b7cc44df1ce0 --committed-only --consent granted"
-    },
-    {
-      "answer": "declined",
-      "label": "Skip this time",
-      "effect": "Skips only this change; no review record is created, and future reviews stay enabled.",
-      "invocation": "gentle-ai review start --contract gentle-ai.review-integration/v2 --cwd /home/emili/projects/control-tower/Worktrees/chanks-frontera --target sha256:2a716d266c2c60e3bbad338ea7c604e7918360988948e819258ab063c4989955 --target-evidence v1:base-diff:workspace:220f50b4a7390dc1cbfcce35fdf0b7cc44df1ce0:df9ffd2a7a557d6cb191fd2c86747e789e35b247:sha256:79f5ebdb81b510f9a57ff9af3ba039205c41d3df3b4c0cb68acb5ee868569c98 --projection workspace --agent codex --lineage review-d1ecf057a0866f4c --base-ref 220f50b4a7390dc1cbfcce35fdf0b7cc44df1ce0 --committed-only --consent declined"
-    }
-  ],
-  "off_path": {
-    "note": "To turn reviews off for good, run 'gentle-ai review mode disable'.",
-    "command": "gentle-ai review mode disable"
-  }
-}
-```
+
+## Frozen partition and native continuation
+
+### Partitioned native review checkpoint (2026-10-01)
+
+Bounded native transport built six conventional synthetic projection commits in `Worktrees/chanks-review-slices` without changing Main or earlier refs. Durable evidence under the maintainer's home: `.local/state/chanks-boundary/20261001T173423Z-native-slices/{LEDGER.md, manifest.json}`. Parent read back results and exact final coverage: all 70 paths/4191 lines, final tree `332bf8b47518ad1dc7f90de529891422c51efcf2` equals frozen `d8d12d0`. Intermediate projections are not runnable releases.
+
+| Slice | Projection commit | Native lineage | Observed outcome |
+| --- | --- | --- | --- |
+| Radar | `abd980a6f2ccc0367231a45a0c6dbe219fbd1593` | `review-bc33183fdf5596cc` | Four lenses approved; exact acknowledgement burned |
+| V2 handoffs | `1cb1f79d2996c70ea016dfdf03ce1eb5c5b3e3ed` | `review-50fed5ef9030f4ad` | Reliability approved; acknowledgement burned |
+| V1 foundation | `d673b1189fd25c4d586efb255f3674c6e5c69973` | `review-970bd22d52c6f482` | Reliability approved; acknowledgement burned; assessment under_budget, reviewed by explicit user request |
+| V1 Session boundary | `9a075e5cd4b1ad040dc6c9020a15a439881f0c6c` | `review-6aaf5bdc1737ba9f` | Reliability approved; acknowledgement burned |
+| Installer | `7a93e30fd35534132e40592597f6e6e4d35ce6c2` | `review-3b43dbb81b46334f` | Three retained lenses + fresh reliability approved; exact acknowledgement burned; false premise remains WARNING |
+| Execution record | `95fd025d4a464c8f96e7090879dc308718825374` | none | Native passive/non_executable_only; no reviewer or approval fabricated |
+
+Native nonblocking advisories remain deferred and unfixed: two Radar concurrency causes (simultaneous cross-Session admission; stale --listo resurrects cancellation or overwrites replacement), inferential V2 attended-worker terminal reporting, unnamed-Session context-loader sequence, and missing explicit reinstall-evidence gate in closure. Native explicitly says these approved receipts stand with no correction offered; do not re-review those exact candidates or claim zero warnings/concurrency safety. Parent retained informational evidence, not automatic scope expansion. Reviewers inspected patches only, no commands/tests; historical functional evidence remains separate.
+
+Installer stop: native `R3-001` CRITICAL/inferential at `test_install.py:263` assumes the deleted gatekeeper template is retained because its deletion is not in this slice. Parent verified the immutable base `8466c3...`, candidate `bd2998...` and final Main all lack `agent-workflows/templates/sdd-auto-gatekeeper-policy.md`; deletion belongs to preceding slice 4. Actual focused Main command `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=agent-workflows/tests python3 -m unittest test_install.InstallerTests.test_gatekeeper_policy_is_no_longer_owned_by_the_installer`: one test OK, exit 0. This disproves that premise but does NOT replace native refutation or grant approval. Native internally admitted an inconclusive refuter (missing full template inventory / sandbox not Git).
+
+Installer target `sha256:043f5ac3a3b19326c3157e22b208852fe6c8b025c46fe03afc5807a69983b430`, lineage review-3b43dbb81b46334f, pre-reopen revision `sha256:017da3110e7d66e261fbdc58181b4d06e106193a70abb2e905cac3f5539ba931`, high/high_risk, budget200. Historical STATUS stop/corrupted_or_unverifiable_authority versus inspection valid:true/22 entries/zero diagnostics; bytes unchanged, repair preflight unsupported, no source fix/authority edit/abandonment. Actor-less prepare stopped, resolved #12485; #12497 apply now authorized but actual worker outcome pending parent readback. #12463/#12464/#12478/#12480/#12481 evidence. MCP duplicate-session failures, server-directed independent engram save --project control-tower fallback, no invented identity. Parent mirror/authority, native roles only.
+
+REvisamos#12451 grants partition, not skip. Read-only#12453 confirms HEAD selectors, not arbitrary --target-ref. Delegated synthetic exact FINAL blobs/modes from d8d12d0, root premerge8ee9a2b; no Main/source/history rewrite. Disjoint counts Radar6/1106, V2 16/637, V1 foundation25/323, V1 boundary19/1193, installer3/698, record1/234, total70/4191, each path once, three unrelated Tower paths preserved. Exact cumulative trees: `f762c7c038726f1362a31ebd09316eab898e7961`, `6d8139d514f9e1fcae7f3d7fb9230fc9c13cf5f7`, `c382ec025b945134686d5c4a49709d4667007c36`, `8466c3ab7fdd9c462233ae67d771b85de3b024c5`, `bd2998f7b317b48e6353c67a919915248c6e42b4`, final `332bf8b47518ad1dc7f90de529891422c51efcf2` exactly equals frozen integration. Intermediate projections NOT releases, cross-slice dependencies disclosed. Native preflight determines fit, not model estimates/patch length. No reviewer substitution, declined-target replay or source correction without parent reconciliation. Coverage never fabricates full-target receipt; stop on native refusal/findings, no live install until closure.
+
+Full merge: high process_boundary/high_risk, 70 paths/4191 lines, workspace/committed-only/Codex; target `sha256:f722954c47698ee7f9afbdeca137d187939388ca5a06b2c7d69d4c4b1e2b2ce1`, lineage review-51a3400842cb4395, base tree `42b8914db5a441b259290c5a8ce84eb54f84e774`, candidate `332bf8b47518ad1dc7f90de529891422c51efcf2`, diff `sha256:b6966aa32c5f9271d5a21c581df00e1ba36d7ac70caeaa3c3e678a1d5d08d909`. `Si` #12444 granted exact invocation, native lens_context_budget_exceeded/not_started/authority_applicability:not_evaluated/stop/retry_safe:true. No authority/reviewer/partial approval/ack, nothing to abandon/repair; no retry/truncated evidence/converted decline. #12451 partition grant resolved old review-or-skip question; narrower receipts never fabricate full-target approval.
+
+External scoped driver preparation completed, no live apply: `.local/state/chanks-boundary/20261001T170307Z-scoped-driver/scoped_deploy.py` under the maintainer's home, SHA256 `b4d8e329cc48526b11f4e42734e0a69e55a0744b3155c12cb35200a079990902`. Parent read back proof and digest. `proof-final/proof.json` records disposable primary/Hermes apply and idempotency, preserved unmanaged/modified stale bytes, intact file/directory archive readback, unknown-customization backup/refusal, symlink/root/type/malformed-seed rejection and newer-edit-safe exact rollback (bytes/modes/absences). Initial fixture harness exception-class mismatch was corrected; no live skill writes in any round. Actual HOME read-only plans have zero conflicts: primary 176 canonical copies/four manuals/16 recognized files; Hermes 46 copies/SOUL routing seed/three recognized files/two intact directory archives. `.agents/skills` is a real directory, no link change. `PROPOSED-COMMANDS.md` holds exact apply/readback/rollback invocations bound to Main `d8d12d0`; do not use them before actual native review closure. Offline Radar/registry are separate, Hermes last. Filesystem proof is not authenticated/model-agent activation.
+
+
+Slices1–4 exact acknowledged consumed revisions (`01-ack.json`–`04-ack.json` in evidence directory, targets/results retained there/manifest; all action:acknowledged, authority:burned):
+- 1: `sha256:31c06d827cd664dec5ac7a19aafa2af083e31e99dad5d46b29e0b4d7ac458cab`.
+- 2: `sha256:1d2ec2bbc33f61ae3612b1b26479b83c70938952bb2b4f68417f6c3a25a5b560`.
+- 3: `sha256:808db5340daf693ee083bc5258f282e6e6d67af74712fae4942b54501cc36efd`.
+- 4: `sha256:2a6a3e7b915c54892d50b6f59d6277aa1e653a7bb7d1fb251ee3223172b7713b`.
+
+Native warning IDs/locations, all nonblocking/unfixed: Radar reliability R3-concurrent-admission/R3-ready-resurrects-dispatch(etapa.go:385-672), resilience R4-concurrent-dispatch:511/R4-stale-ready-update:509; V2 R3-attended-terminal(worker-handoff.md:48-52); V1 foundation R3-unnamed-session(context-loader SKILL.md:37-39); V1 boundary R3-closure-reinstall(session-doc SKILL.md:14). Causes above, no scope expansion.
