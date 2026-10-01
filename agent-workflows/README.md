@@ -187,6 +187,32 @@ enforcement. The installer no longer ships an SDD gatekeeper block: how SDD is
 run belongs to Gentle AI. A gatekeeper block already present in an instruction
 file is left untouched.
 
+### Existing personal blocks: targeted preparation
+
+The installer also corrects three **existing** personal instruction blocks:
+`AGENT-PROPAGATION-MAP:MANUAL`, `doc-guard-rule` and
+`EXPLAIN-TO-MAINTAINER:MANUAL`. Their canonical templates live under `templates/`.
+Propagation names the repository as the editable own-skill source and
+`~/.agents/skills` as the central installation, without copying Gentle AI assets.
+Closure names `chanks-5-session-doc`; explanation uses the central
+`chanks-0-explicalo-simple` reference. Project-specific documentation destinations
+and opt-outs still take precedence.
+
+These three blocks are **replace-if-present**: an absent block stays absent,
+including on Codex. This is not a blanket rewrite of personal instructions.
+The required session-routing block keeps its existing behavior; Hermes is not
+added to this installer's instruction targets.
+
+Before any runtime write, preflight rejects duplicate, unclosed, overlapping,
+non-line-delimited or managed-nested targeted blocks. Opening markers may be
+unannotated or carry exactly the existing annotation
+`(manual — NOT gentle-ai managed; do not overwrite on sync)`; unsupported
+annotations fail closed rather than being mistaken for absence. Unrelated
+personal content, managed bytes and existing instruction file modes are preserved;
+symlinked instruction destinations are refused. Repeated fixture installs are
+idempotent. Source tests do not authorize live installation or prove behavior in a
+fresh conversation: those remain separate maintainer-authorized checks.
+
 Gentle AI `sync` or `install` may rewrite instruction surfaces; survival is not
 guaranteed. Before either operation, back up the manual blocks. Afterwards,
 inspect the actual diff, restore only when the canonical blocks were lost, run

@@ -138,9 +138,14 @@ START_MARKER = b"<!-- SESSION-SKILL-ARCHITECTURE:MANUAL -->"
 END_MARKER = b"<!-- /SESSION-SKILL-ARCHITECTURE:MANUAL -->"
 
 
-def _block_re(name: bytes) -> re.Pattern[bytes]:
+MANUAL_ANNOTATION = " (manual — NOT gentle-ai managed; do not overwrite on sync)".encode()
+
+
+def _block_re(name: bytes, *, annotated: bool = False) -> re.Pattern[bytes]:
+    annotation = rb"(?:" + re.escape(MANUAL_ANNOTATION) + rb")?" if annotated else b""
     return re.compile(
-        rb"^<!-- " + name + rb" -->\r?\n.*?^<!-- /" + name + rb" -->(?:\r?\n|$)",
+        rb"^<!-- " + re.escape(name) + annotation + rb" -->\r?\n.*?^<!-- /"
+        + re.escape(name) + rb" -->(?:\r?\n|$)",
         re.DOTALL | re.MULTILINE,
     )
 
@@ -148,6 +153,14 @@ def _block_re(name: bytes) -> re.Pattern[bytes]:
 BLOCK_RE = _block_re(b"SESSION-SKILL-ARCHITECTURE:MANUAL")
 MANUAL_BLOCKS = (
     ("session-routing.md", START_MARKER, END_MARKER, BLOCK_RE, True),
+) + tuple(
+    (template, b"<!-- " + name + b" -->", b"<!-- /" + name + b" -->",
+     _block_re(name, annotated=True), False)
+    for template, name in (
+        ("agent-propagation-map.md", b"AGENT-PROPAGATION-MAP:MANUAL"),
+        ("doc-guard-rule.md", b"doc-guard-rule"),
+        ("explain-to-maintainer.md", b"EXPLAIN-TO-MAINTAINER:MANUAL"),
+    )
 )
 MANAGED_MARKER_RE = re.compile(
     rb"<!--\s*(/?)((?:gentle-ai|section):[A-Za-z0-9_.-]+)\s*-->"
@@ -349,6 +362,14 @@ def _managed_ranges(content: bytes, path: Path) -> list[tuple[int, int]]:
     return ranges
 
 
+def _owned_marker_counts(content: bytes, start: bytes) -> tuple[int, int]:
+    # Count the exact marker name even when its syntax is malformed. Do not treat
+    # an unsupported annotation as absence, or confuse a similarly named block.
+    name = start[len(b"<!-- "):-len(b" -->")]
+    tokens = re.findall(rb"<!--\s*(/?)" + re.escape(name) + rb"(?=[\s>]|$)", content)
+    return tokens.count(b""), tokens.count(b"/")
+
+
 def _replace_owned_block(
     content: bytes,
     replacement: bytes,
@@ -358,12 +379,9 @@ def _replace_owned_block(
     pattern: re.Pattern[bytes],
     required: bool,
 ) -> bytes:
-    start_count, end_count = content.count(start), content.count(end)
+    start_count, end_count = _owned_marker_counts(content, start)
     if start_count == 0 and end_count == 0 and not required:
-        separator = b"" if not content or content.endswith(b"\n\n") else (
-            b"\n" if content.endswith(b"\n") else b"\n\n"
-        )
-        return content + separator + replacement
+        return content
     if start_count != 1 or end_count != 1:
         raise InstallError(f"expected exactly one owned manual block in {path}: {start.decode()}")
     matches = list(pattern.finditer(content))
@@ -390,7 +408,7 @@ def _owned_block_matches(
     managed_ranges = _managed_ranges(content, path)
     present: list[tuple[bytes, re.Match[bytes]]] = []
     for _, start, end, pattern, required in MANUAL_BLOCKS:
-        start_count, end_count = content.count(start), content.count(end)
+        start_count, end_count = _owned_marker_counts(content, start)
         if start_count == 0 and end_count == 0 and not required:
             matches_by_start[start] = None
             continue
@@ -416,6 +434,8 @@ def _owned_block_matches(
 
 
 def desired_manual_content(path: Path, replacements: dict[bytes, bytes]) -> bytes:
+    # Optional personal blocks are replace-if-present, never new instructions.
+    # Validate all ranges first, then splice backwards to preserve unrelated bytes.
     content = path.read_bytes()
     matches = _owned_block_matches(content, path)
     present = sorted(
@@ -424,12 +444,6 @@ def desired_manual_content(path: Path, replacements: dict[bytes, bytes]) -> byte
     )
     for begin, end, start in present:
         content = content[:begin] + replacements[start] + content[end:]
-    for _, start, _, _, required in MANUAL_BLOCKS:
-        if matches[start] is None and not required:
-            separator = b"" if not content or content.endswith(b"\n\n") else (
-                b"\n" if content.endswith(b"\n") else b"\n\n"
-            )
-            content += separator + replacements[start]
     return content
 
 

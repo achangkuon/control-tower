@@ -272,7 +272,7 @@ class InstallerTests(unittest.TestCase):
 
     def test_gatekeeper_policy_is_no_longer_owned_by_the_installer(self):
         self.assertFalse((ROOT / "templates/sdd-auto-gatekeeper-policy.md").exists())
-        self.assertEqual([entry[0] for entry in INSTALLER.MANUAL_BLOCKS], ["session-routing.md"])
+        self.assertNotIn("sdd-auto-gatekeeper-policy.md", [entry[0] for entry in INSTALLER.MANUAL_BLOCKS])
         self.assertFalse(hasattr(INSTALLER, "GATEKEEPER_START_MARKER"))
         legacy = b"<!-- SDD-AUTO-GATEKEEPER-POLICY:MANUAL -->\nlegacy\n<!-- /SDD-AUTO-GATEKEEPER-POLICY:MANUAL -->\n"
         path = self.home / ".claude/CLAUDE.md"
@@ -280,6 +280,124 @@ class InstallerTests(unittest.TestCase):
         desired = INSTALLER.desired_manual_content(path, INSTALLER.render_manual_blocks(ROOT))
         self.assertIn(legacy, desired)
         self.assertEqual(desired.count(INSTALLER.START_MARKER), 1)
+
+    TARGETED_BLOCKS = (
+        (b"AGENT-PROPAGATION-MAP:MANUAL", "agent-propagation-map.md"),
+        (b"doc-guard-rule", "doc-guard-rule.md"),
+        (b"EXPLAIN-TO-MAINTAINER:MANUAL", "explain-to-maintainer.md"),
+    )
+    MANUAL_ANNOTATION = " (manual — NOT gentle-ai managed; do not overwrite on sync)".encode()
+
+    def _personal_block(self, name, body=b"old personal rule", annotated=True):
+        annotation = self.MANUAL_ANNOTATION if annotated else b""
+        return b"<!-- " + name + annotation + b" -->\n" + body + b"\n<!-- /" + name + b" -->\n"
+
+    def test_personal_templates_correct_sources_and_retired_references(self):
+        replacements = INSTALLER.render_manual_blocks(ROOT)
+        for name, template in self.TARGETED_BLOCKS:
+            with self.subTest(template=template):
+                start = b"<!-- " + name + b" -->"
+                self.assertIn(start, replacements)
+                rendered = replacements.get(start, b"")
+                self.assertEqual(rendered, (ROOT / "templates" / template).read_bytes())
+                self.assertNotIn(b"chanks-7-session-doc", rendered)
+                self.assertNotIn(b"skills/explicalo-simple/", rendered)
+        propagation = replacements[b"<!-- AGENT-PROPAGATION-MAP:MANUAL -->"]
+        self.assertIn(b"agent-workflows/skills/", propagation)
+        self.assertIn(b"~/.agents/skills", propagation)
+        self.assertIn(b"Gentle AI", propagation)
+        self.assertIn(b"independently", propagation)
+        self.assertNotIn(b"sync-skills.sh", propagation)
+        self.assertIn(b"chanks-5-session-doc", replacements[b"<!-- doc-guard-rule -->"])
+        self.assertIn(b"~/.agents/skills/chanks-0-explicalo-simple/SKILL.md",
+                      replacements[b"<!-- EXPLAIN-TO-MAINTAINER:MANUAL -->"])
+
+    def test_existing_personal_blocks_replaced_preserving_bytes_modes_and_idempotence(self):
+        managed = b"<!-- gentle-ai:persona -->\r\nkeep managed bytes\r\n<!-- /gentle-ai:persona -->\r\n"
+        unrelated = b"<!-- OWNER-NOTES:MANUAL -->\nkeep unrelated bytes\n<!-- /OWNER-NOTES:MANUAL -->\n"
+        replacements = INSTALLER.render_manual_blocks(ROOT)
+        for path in INSTALLER.manual_paths(self.home):
+            path.write_bytes(managed + path.read_bytes() + unrelated + b"".join(
+                self._personal_block(name) for name, _ in self.TARGETED_BLOCKS))
+            path.chmod(0o640)
+        INSTALLER.apply(self.home, ROOT)
+        before = {path: path.read_bytes() for path in INSTALLER.manual_paths(self.home)}
+        for path, content in before.items():
+            self.assertTrue(content.startswith(managed))
+            self.assertIn(unrelated, content)
+            self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o640)
+            for name, _ in self.TARGETED_BLOCKS:
+                self.assertIn(replacements[b"<!-- " + name + b" -->"], content)
+                self.assertNotIn(self._personal_block(name), content)
+        self.assertEqual(INSTALLER.apply(self.home, ROOT), [])
+        self.assertEqual(before, {path: path.read_bytes() for path in before})
+
+    def test_missing_personal_blocks_are_not_added_to_any_runtime(self):
+        INSTALLER.apply(self.home, ROOT)
+        for path in INSTALLER.manual_paths(self.home):
+            for name, _ in self.TARGETED_BLOCKS:
+                self.assertNotIn(name, path.read_bytes())
+        self.assertFalse((self.home / ".hermes").exists())
+
+    def test_optional_block_helper_preserves_absence_instead_of_appending(self):
+        content = b"unrelated bytes\n"
+        actual = INSTALLER._replace_owned_block(
+            content, b"replacement", Path("fixture"), b"<!-- OPTIONAL -->",
+            b"<!-- /OPTIONAL -->", INSTALLER._block_re(b"OPTIONAL"), False)
+        self.assertEqual(actual, content)
+
+    def test_targeted_personal_block_rejection_precedes_all_runtime_writes(self):
+        for name, _ in self.TARGETED_BLOCKS:
+            canonical = self._personal_block(name, annotated=False)
+            annotated = self._personal_block(name)
+            cases = {
+                "duplicate": canonical + annotated,
+                "unclosed": b"<!-- " + name + self.MANUAL_ANNOTATION + b" -->\nold\n",
+                "orphan-close": b"<!-- /" + name + b" -->\n",
+                "unclosed-at-eof": b"<!-- " + name,
+                "unsupported-annotation": self._personal_block(name).replace(self.MANUAL_ANNOTATION, b" (guess)"),
+                "inline": b"prefix " + annotated,
+                "nested-managed": b"<!-- gentle-ai:persona -->\n" + annotated + b"<!-- /gentle-ai:persona -->\n",
+                "nested-section": b"<!-- section:persona -->\n" + annotated + b"<!-- /section:persona -->\n",
+                "overlap": b"<!-- " + name + b" -->\n" + INSTALLER.render_manual_block(ROOT) + b"<!-- /" + name + b" -->\n",
+                "reverse-managed": b"<!-- " + name + b" -->\n<!-- gentle-ai:persona -->\nmanaged\n<!-- /gentle-ai:persona -->\n<!-- /" + name + b" -->\n",
+            }
+            for case, invalid in cases.items():
+                with self.subTest(name=name, case=case), tempfile.TemporaryDirectory() as raw:
+                    home = Path(raw)
+                    self._seed_runtime(home)
+                    path = home / ".pi/agent/APPEND_SYSTEM.md"
+                    # Overlap supplies its own required routing block.
+                    path.write_bytes(invalid if case == "overlap" else path.read_bytes() + invalid)
+                    before = {item: item.read_bytes() for item in INSTALLER.manual_paths(home)}
+                    with self.assertRaises(INSTALLER.InstallError):
+                        INSTALLER.apply(home, ROOT)
+                    self.assertEqual(before, {item: item.read_bytes() for item in before})
+                    self.assertFalse((home / ".agents").exists())
+                    self.assertFalse((home / ".local").exists())
+
+    def test_similarly_named_personal_markers_remain_unrelated(self):
+        for name, _ in self.TARGETED_BLOCKS:
+            path = self.home / ".pi/agent/APPEND_SYSTEM.md"
+            unrelated = self._personal_block(name + b"-OTHER")
+            path.write_bytes(path.read_bytes() + unrelated)
+            desired = INSTALLER.desired_manual_content(path, INSTALLER.render_manual_blocks(ROOT))
+            self.assertIn(unrelated, desired)
+
+    def test_personal_instruction_symlinks_are_refused_before_any_write(self):
+        for relative in INSTALLER.MANUAL_FILES:
+            with self.subTest(relative=relative), tempfile.TemporaryDirectory() as raw:
+                home = Path(raw)
+                self._seed_runtime(home)
+                external = home / "external-instructions"
+                protected = (home / relative).read_bytes() + self._personal_block(self.TARGETED_BLOCKS[0][0])
+                external.write_bytes(protected)
+                (home / relative).unlink()
+                (home / relative).symlink_to(external)
+                with self.assertRaises(INSTALLER.InstallError):
+                    INSTALLER.apply(home, ROOT)
+                self.assertEqual(external.read_bytes(), protected)
+                self.assertFalse((home / ".agents").exists())
 
     def test_wrong_type_destination_is_rejected_before_any_mutation(self):
         wrong_type = self.home / ".agents/skills/chanks-4-puente/SKILL.md"
