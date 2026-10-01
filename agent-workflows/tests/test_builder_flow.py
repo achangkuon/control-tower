@@ -148,8 +148,8 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertIn("review outcome never authorizes delivery", bridge)
         self.assertIn("ordinary delivery policy", closure)
         self.assertIn("actual delivery evidence", closure)
-        self.assertIn("per work-unit commit", canon)
-        self.assertIn("final pending unit before closure", canon)
+        self.assertNotIn("per work-unit commit", canon)
+        self.assertNotIn("final pending unit before closure", canon)
         self.assertNotIn("one Session review", canon)
         self.assertNotIn("no per-task or per-Módulo reviewer loop", canon)
         self.assertIn("archive controls remain native SDD controls", canon)
@@ -173,21 +173,31 @@ class GenericBuilderFlowTests(unittest.TestCase):
             self.assertNotIn("planning key", source.lower())
             self.assertNotIn("clic de activación", source.lower())
             self.assertNotIn("activation click", source.lower())
-        self.assertIn("stage 4", canon)
-        self.assertIn("per work-unit commit", canon)
-        self.assertIn("final pending unit before closure", canon)
-        self.assertIn("review outcome never authorizes delivery", canon)
-        for phrase in (
-            "400", "additions plus deletions", "planning or generated artifacts",
-            "sequential verifiable reversible units", "explicit exception", "not a quota",
-        ):
-            self.assertIn(phrase, canon)
-        for phrase in (
-            "400", "adiciones más eliminaciones", "artefactos de planificación o generados",
-            "unidades secuenciales verificables y revertibles", "excepción explícita",
-            "no es un cupo",
-        ):
-            self.assertIn(phrase, errors.lower())
+        self.assertIn("Stage 4 belongs to Gentle AI", canon)
+        self.assertIn(
+            "prescribes nothing about review timing, consent, or delivery gates",
+            " ".join(canon.split()),
+        )
+        self.assertNotIn("per work-unit commit", canon)
+        self.assertNotIn("review outcome never authorizes delivery", canon)
+        agents = (ROOT.parent / "AGENTS.md").read_text(encoding="utf-8")
+        for phrase in ("sequential verifiable reversible units", "explicit exception", "not a quota",
+                       "ask the maintainer"):
+            self.assertNotIn(phrase, canon)
+        self.assertIn("Chanks adds no size rule", canon)
+        self.assertIn("Gentle AI's native guidance", canon)
+        for phrase in ("unidades secuenciales verificables y revertibles", "excepción explícita",
+                       "no es un cupo", "preguntá al maintainer"):
+            self.assertNotIn(phrase, errors.lower())
+        self.assertIn("Chanks no agrega regla de tamaño", errors)
+        self.assertIn("guía nativa de Gentle AI", errors)
+        for phrase in ("pregunta al responsable antes de implementar", "excepción de tamaño"):
+            self.assertNotIn(phrase, agents)
+        self.assertIn("Chanks no agrega regla de tamaño", agents)
+        self.assertIn("guía nativa de Gentle AI", agents)
+        self.assertNotIn("ask the maintainer", planner)
+        self.assertIn("Chanks adds no size rule", planner)
+        self.assertIn("Gentle AI's native guidance", planner)
         self.assertIn("572", errors)
         self.assertIn("969f189", errors)
         self.assertNotIn("Mantené el cupo", errors)
@@ -223,7 +233,7 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertTrue(policy.startswith("---\nname: chanks-5-politica-de-entrega\n"))
         for phrase in ("stage 5", "delivery-policy", "AGENTS.md", "work-unit-commits",
                        "branch-pr", "chained-pr", "direct-push", "pull-request",
-                       "400", "issue-first", "missing", "contradictorias"):
+                       "issue-first", "missing", "contradictorias"):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, policy)
         for contract in (
@@ -233,10 +243,13 @@ class GenericBuilderFlowTests(unittest.TestCase):
             "sin cargar `branch-pr` ni `chained-pr`",
             "Para `pull-request`, enrutá a `work-unit-commits` y `branch-pr`",
             "usá `chained-pr` sólo cuando la política local o una decisión humana",
-            "issue-first como requisito sólo donde el repositorio los adopte",
+            "issue-first como requisito sólo donde el repositorio lo adopte",
+            "Chanks no agrega regla de tamaño",
+            "guía nativa de Gentle AI",
         ):
             with self.subTest(contract=contract):
                 self.assertIn(contract, policy)
+        self.assertNotIn("400", policy)
 
     def test_manual_coordinator_and_dispatch_remain_topology_only(self):
         coordinator = read("skills/chanks-3-coordinador-manual/SKILL.md")
@@ -322,7 +335,7 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertIn("Gentle AI's native SDD pipeline", canon)
         self.assertIn("direct` and `design-tasks` remain non-SDD", canon)
         self.assertIn("review", canon)
-        self.assertIn("outcome never authorizes delivery", canon)
+        self.assertIn("Stage 4 belongs to Gentle AI", canon)
 
     def test_authorized_legacy_full_sdd_reaches_existing_native_controls(self):
         bridge = " ".join(read("skills/chanks-4-puente/SKILL.md").split())

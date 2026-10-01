@@ -82,8 +82,7 @@ class InstallerTests(unittest.TestCase):
             self.assertEqual(original_modes[path], stat.S_IMODE(path.stat().st_mode))
             self.assertIn(ROOT.as_posix().encode(), content)
             self.assertEqual(content.count(INSTALLER.START_MARKER), 1)
-            self.assertEqual(content.count(INSTALLER.GATEKEEPER_START_MARKER), 1)
-            self.assertIsNotNone(INSTALLER.GATEKEEPER_BLOCK_RE.search(content))
+            self.assertNotIn(b"SDD-AUTO-GATEKEEPER-POLICY", content)
 
     def test_installed_manual_admission_contract_exactly_matches_canonical_source(self):
         source = (ROOT / "templates/session-routing.md").read_text(encoding="utf-8")
@@ -187,7 +186,6 @@ class InstallerTests(unittest.TestCase):
         skill_path.write_bytes(skill_path.read_bytes() + b"\nDRIFT\n")
         manual_path = self.home / ".pi/agent/APPEND_SYSTEM.md"
         drifted = manual_path.read_bytes().replace(ROOT.as_posix().encode(), b"/wrong")
-        drifted = drifted.replace(b"Proportional Automatic SDD Gatekeeper", b"Drifted Gatekeeper")
         manual_path.write_bytes(drifted)
         result = subprocess.run(
             [sys.executable, str(SCRIPT), "--check", "--home", str(self.home)],
@@ -267,11 +265,10 @@ class InstallerTests(unittest.TestCase):
         for path in INSTALLER.manual_paths(self.home):
             content = path.read_bytes()
             ranges = INSTALLER._managed_ranges(content, path)
-            for pattern in (INSTALLER.BLOCK_RE, INSTALLER.GATEKEEPER_BLOCK_RE):
-                match = pattern.search(content)
-                self.assertIsNotNone(match)
-                assert match is not None
-                self.assertTrue(all(not (start < match.end() and match.start() < end) for start, end in ranges))
+            match = INSTALLER.BLOCK_RE.search(content)
+            self.assertIsNotNone(match)
+            assert match is not None
+            self.assertTrue(all(not (start < match.end() and match.start() < end) for start, end in ranges))
 
     def test_install_preserves_unrelated_manual_block(self):
         unrelated = b"<!-- OWNER-NOTES:MANUAL -->\nkeep me\n<!-- /OWNER-NOTES:MANUAL -->\n"
@@ -296,10 +293,10 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(path.read_bytes(), nested)
         self.assertFalse((self.home / ".agents").exists())
 
-    def test_rejects_duplicate_gatekeeper_block_before_mutation(self):
+    def test_rejects_duplicate_session_routing_block_before_mutation(self):
         path = self.home / ".pi/agent/APPEND_SYSTEM.md"
-        gatekeeper = (ROOT / "templates/sdd-auto-gatekeeper-policy.md").read_bytes()
-        path.write_bytes(path.read_bytes() + gatekeeper + gatekeeper)
+        block = INSTALLER.render_manual_block(ROOT)
+        path.write_bytes(path.read_bytes() + block + block)
         before = {item: item.read_bytes() for item in INSTALLER.manual_paths(self.home)}
 
         with self.assertRaises(INSTALLER.InstallError):
@@ -307,59 +304,16 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(before, {item: item.read_bytes() for item in INSTALLER.manual_paths(self.home)})
         self.assertFalse((self.home / ".agents").exists())
 
-    def test_rejects_gatekeeper_block_nested_in_section_block_before_mutation(self):
-        path = self.home / ".codex/AGENTS.md"
-        gatekeeper = (ROOT / "templates/sdd-auto-gatekeeper-policy.md").read_bytes()
-        path.write_bytes(
-            path.read_bytes()
-            + b"<!-- section:model-capable -->\n"
-            + gatekeeper
-            + b"<!-- /section:model-capable -->\n"
-        )
-        before = {item: item.read_bytes() for item in INSTALLER.manual_paths(self.home)}
-
-        with self.assertRaises(INSTALLER.InstallError):
-            INSTALLER.apply(self.home, ROOT)
-        self.assertEqual(before, {item: item.read_bytes() for item in INSTALLER.manual_paths(self.home)})
-        self.assertFalse((self.home / ".agents").exists())
-
-    def test_rejects_nested_owned_blocks_before_mutation(self):
+    def test_gatekeeper_policy_is_no_longer_owned_by_the_installer(self):
+        self.assertFalse((ROOT / "templates/sdd-auto-gatekeeper-policy.md").exists())
+        self.assertEqual([entry[0] for entry in INSTALLER.MANUAL_BLOCKS], ["session-routing.md"])
+        self.assertFalse(hasattr(INSTALLER, "GATEKEEPER_START_MARKER"))
+        legacy = b"<!-- SDD-AUTO-GATEKEEPER-POLICY:MANUAL -->\nlegacy\n<!-- /SDD-AUTO-GATEKEEPER-POLICY:MANUAL -->\n"
         path = self.home / ".claude/CLAUDE.md"
-        session = path.read_bytes()
-        gatekeeper = (ROOT / "templates/sdd-auto-gatekeeper-policy.md").read_bytes()
-        malformed_inputs = (
-            (
-                "session-routing",
-                session.replace(
-                    b"- old runtime path\n",
-                    b"- old runtime path\n" + gatekeeper,
-                ),
-            ),
-            (
-                "gatekeeper",
-                INSTALLER.GATEKEEPER_START_MARKER
-                + b"\n"
-                + session
-                + INSTALLER.GATEKEEPER_END_MARKER
-                + b"\n",
-            ),
-        )
-
-        for outer, malformed in malformed_inputs:
-            with self.subTest(outer=outer):
-                self._seed_runtime()
-                path.write_bytes(malformed)
-                before = {
-                    item: item.read_bytes() for item in INSTALLER.manual_paths(self.home)
-                }
-
-                with self.assertRaises(INSTALLER.InstallError):
-                    INSTALLER.apply(self.home, ROOT)
-                self.assertEqual(
-                    before,
-                    {item: item.read_bytes() for item in INSTALLER.manual_paths(self.home)},
-                )
-                self.assertFalse((self.home / ".agents").exists())
+        path.write_bytes(path.read_bytes() + legacy)
+        desired = INSTALLER.desired_manual_content(path, INSTALLER.render_manual_blocks(ROOT))
+        self.assertIn(legacy, desired)
+        self.assertEqual(desired.count(INSTALLER.START_MARKER), 1)
 
     def test_wrong_type_destination_is_rejected_before_any_mutation(self):
         wrong_type = self.home / ".agents/skills/chanks-4-puente/SKILL.md"

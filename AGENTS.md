@@ -173,16 +173,10 @@ Al cerrar una entrega, reinstalá herramientas según las rutas que tocó:
   `solicitud_sdd` humana explícita entra al flujo SDD nativo una vez por Sesión; no se crea un
   motor SDD paralelo. Las rutas/Módulos/Tareas de contratos legacy siguen como evidencia histórica,
   no como requisitos de planificación nativa.
-- Las **400 líneas** son una **referencia de revisión, no un límite duro**, y aplican a
-  todas las rutas. Miden adiciones más eliminaciones del **trabajo implementado** en cada
-  unidad de commit directo: código, tests y skills. No cuentan los artefactos de
-  planificación bajo `openspec/` —proposal, spec, design, tasks— ni los archivos generados.
-- Si el forecast supera 400, el agente **pregunta al responsable antes de implementar**:
-  se parte en unidades secuenciales, cada una en su propio commit directo verificable y
-  revertible, o se acepta una excepción de tamaño. Superar la referencia no es un
-  bloqueo; superarla sin preguntar sí está prohibido. Este repo no usa PRs ni PRs
+- El tamaño y la división de la implementación siguen la **guía nativa de Gentle AI**;
+  **Chanks no agrega regla de tamaño** ni pregunta por tamaño. Este repo no usa PRs ni PRs
   encadenados.
-- Si ese desglose impide que una Sesión conserve un alcance coherente, se divide en dos
+- Si una Sesión no puede conservar un alcance coherente, se divide en dos
   o más Sesiones bajo la coordinación nativa `Zona → Sesión`. No se crea un nivel nuevo;
   Módulo/Tarea sobreviven sólo como evidencia técnica o legacy, nunca como autoridad de escritura nativa.
 

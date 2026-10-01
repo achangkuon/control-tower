@@ -55,9 +55,8 @@ implementation Session; this does not add product planning, authority, or a step
 5. Record Cimientos/Recurso compatibility and required fresh evidence for expansion.
 6. Draft the exact four Encargo parts with outcome/constraint meaning inside them.
 7. Record decisions with evidence, options/consequences, class, `Contamina:`, and checkpoint.
-8. Forecast against 400 authored implementation additions plus deletions (excluding planning
-   and generated artifacts). Before exceeding the reference, ask the maintainer to split into
-   sequential verifiable reversible units or approve an explicit exception; never code-golf.
+8. Leave implementation size and slicing to Gentle AI's native guidance; Chanks adds no size rule
+   and asks no size question. Never code-golf to fit a number.
 
 ## Output Contract
 

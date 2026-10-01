@@ -20,7 +20,7 @@ En etapas 1–2, activa para declarar o reparar el único bloque machine-readabl
 - No alteres pisos de seguridad ni agregues campos fuera del esquema.
 - Repará el bloque existente; no agregues un segundo.
 - En stage 5, sólo leé: ni una declaración ausente ni evidencia contradictoria autoriza escribir o inventar un default.
-- La referencia de 400 líneas y el requisito issue-first de una skill enrutada se aplican sólo si la política de este repositorio los declara; no son bloqueos universales.
+- El tamaño y la división del cambio siguen la guía nativa de Gentle AI; Chanks no agrega regla de tamaño. El requisito issue-first de una skill enrutada se aplica sólo si la política de este repositorio lo declara; no es un bloqueo universal.
 
 ## Decision Gates
 
@@ -47,7 +47,7 @@ En etapas 1–2, activa para declarar o reparar el único bloque machine-readabl
 1. Leé el bloque machine-readable `delivery-policy` del archivo de política del repositorio (por ejemplo, `AGENTS.md`); registrá ruta, campos y valores. No infieras desde el nombre de la rama ni desde una skill genérica si hay un bloque válido.
 2. Si falta el bloque, aplicá la detección de repos existentes en el orden del paso 2; declaralo **missing** y no supongas PR. Si no hay evidencia suficiente o hay señales contradictorias, mostrálas y pedí decisión; un bloque malformado, incompleto o con valores desconocidos no otorga permiso de entrega por omisión. Respetá cualquier fallback restrictivo que declare el repositorio; no lo reinterpretes como una aprobación humana.
 3. Para `direct-push`, enrutá a `work-unit-commits` y a los gates locales de commit/push, sin cargar `branch-pr` ni `chained-pr`. Para `pull-request`, enrutá a `work-unit-commits` y `branch-pr`; usá `chained-pr` sólo cuando la política local o una decisión humana pida dividir cambios grandes en PRs encadenados. No sustituye el gate humano ni los pisos de seguridad.
-4. Interpretá 400 líneas como referencia de revisión y issue-first como requisito sólo donde el repositorio los adopte; ante divergencias entre skills enrutadas y política local, prevalece la política local y se explicita el conflicto, no se inventa un blocker global.
+4. Tomá el tamaño del cambio de la guía nativa de Gentle AI (Chanks no agrega regla de tamaño) y issue-first como requisito sólo donde el repositorio lo adopte; ante divergencias entre skills enrutadas y política local, prevalece la política local y se explicita el conflicto, no se inventa un blocker global.
 
 ## Output Contract
 

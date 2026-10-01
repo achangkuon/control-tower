@@ -101,8 +101,6 @@ MANUAL_FILES = (
 )
 START_MARKER = b"<!-- SESSION-SKILL-ARCHITECTURE:MANUAL -->"
 END_MARKER = b"<!-- /SESSION-SKILL-ARCHITECTURE:MANUAL -->"
-GATEKEEPER_START_MARKER = b"<!-- SDD-AUTO-GATEKEEPER-POLICY:MANUAL -->"
-GATEKEEPER_END_MARKER = b"<!-- /SDD-AUTO-GATEKEEPER-POLICY:MANUAL -->"
 
 
 def _block_re(name: bytes) -> re.Pattern[bytes]:
@@ -113,16 +111,8 @@ def _block_re(name: bytes) -> re.Pattern[bytes]:
 
 
 BLOCK_RE = _block_re(b"SESSION-SKILL-ARCHITECTURE:MANUAL")
-GATEKEEPER_BLOCK_RE = _block_re(b"SDD-AUTO-GATEKEEPER-POLICY:MANUAL")
 MANUAL_BLOCKS = (
     ("session-routing.md", START_MARKER, END_MARKER, BLOCK_RE, True),
-    (
-        "sdd-auto-gatekeeper-policy.md",
-        GATEKEEPER_START_MARKER,
-        GATEKEEPER_END_MARKER,
-        GATEKEEPER_BLOCK_RE,
-        False,
-    ),
 )
 MANAGED_MARKER_RE = re.compile(
     rb"<!--\s*(/?)((?:gentle-ai|section):[A-Za-z0-9_.-]+)\s*-->"
