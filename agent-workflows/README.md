@@ -203,6 +203,37 @@ including on Codex. This is not a blanket rewrite of personal instructions.
 The required session-routing block keeps its existing behavior; Hermes is not
 added to this installer's instruction targets.
 
+### Preparing the personal-runtime retirement
+
+`tools/prepare-personal-config.py` is a separate, opt-in migration for the
+maintainer's configuration. It defaults to a read-only preflight; only an
+explicit `--apply` writes. Every selected stage preflights its complete set of
+changes before applying any of them. It refuses unknown owned-file bytes,
+ambiguous hooks, malformed managed blocks, symlink traversal, and incomplete
+central skill copies rather than guessing.
+
+Run stages in this order when a separately authorized live deployment is
+scheduled:
+
+1. `--stage primary`: retire the maintainer-owned Claude autosync hook, script,
+   and slash command. Do this **before** applying `install.py`, so the old hook
+   cannot propagate the four V3-deferred skills back into runtimes.
+2. Apply the central skills installer and finish the primary instruction
+   corrections.
+3. `--stage hermes --hermes-python <installed-Hermes-Python>` last: validate
+   `skills.external_dirs` with Hermes' own PyYAML, point it at `~/.agents/skills`,
+   update only existing personal blocks, remove only the old unattended-consent
+   block, and archive only real copies of the maintainer's own skills.
+4. `--stage snapshot` after every correction: preserve the prior manual-block
+   restore store at the immutable `boundary-2026-10-01` path, then refresh the
+   compatible snapshot from the five current instruction files.
+
+For example, inspect without writing with
+`python3 tools/prepare-personal-config.py --stage primary --check`. The Hermes
+stage requires the exact installed interpreter explicitly; system Python is
+not assumed to include PyYAML. Fixture tests never apply changes to the real
+home directory.
+
 Before any runtime write, preflight rejects duplicate, unclosed, overlapping,
 non-line-delimited or managed-nested targeted blocks. Opening markers may be
 unannotated or carry exactly the existing annotation
