@@ -180,7 +180,7 @@ Auditoría de solo lectura sobre los cinco runtimes (Claude Code, Codex, OpenCod
 - Los cinco runtimes tienen los 57 archivos de skills idénticos a la fuente. No sobran ni faltan skills.
 - Los cinco archivos de instrucciones personales llevan el bloque corto «Chanks and Gentle AI boundary», idéntico en los cinco. El bloque largo anterior (Herdr, Intercom, coordinador manual) ya no está en ninguno.
 - `chanks-6-politica-de-entrega` y `chanks-7-session-doc` están archivadas bajo `.retired-skills/`.
-- `chanks-3-coordinador-manual` y `chanks-3-despacho-herdr` siguen instaladas **a propósito**: son solo de V2 y llevan `disable-model-invocation: true`. No son restos.
+- `chanks-0-jornada`, `chanks-3-coordinador-manual`, `chanks-3-despacho-herdr` y `chanks-4-unattended-implementation` quedan diferidas a V3 (decisión del 2026-10-01): la fuente se conserva en el repo, el instalador ya no las instala y las copias instaladas se archivan bajo `.retired-skills/`. Antes seguían instaladas con `disable-model-invocation: true`.
 - Ninguna skill de V1 menciona el semáforo.
 - Ninguna Sesión abierta de `torre-v1` depende del semáforo, de Herdr, de Intercom ni de un coordinador Main.
 

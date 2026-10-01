@@ -43,6 +43,10 @@ V2_SKILLS = (
 )
 
 
+def _lexists(path):
+    return os.path.lexists(path)
+
+
 class InstallerTests(unittest.TestCase):
     def setUp(self):
         self.tempdir = tempfile.TemporaryDirectory()
@@ -127,13 +131,20 @@ class InstallerTests(unittest.TestCase):
             for skill in V2_SKILLS:
                 self.assertNotIn(skill, text, path)
 
-    def test_all_runtime_skill_paths_match_canonical_source(self):
+    def test_central_folder_holds_every_skill_and_other_roots_only_the_shared_overlay(self):
         INSTALLER.apply(self.home, ROOT)
-        for runtime_root in INSTALLER.runtime_skill_roots(self.home):
-            for skill, relative, source in INSTALLER.source_files(ROOT):
+        central, claude, opencode, codex = INSTALLER.runtime_skill_roots(self.home)
+        for skill, relative, source in INSTALLER.source_files(ROOT):
+            destination = central / skill / relative
+            self.assertTrue(destination.is_file(), destination)
+            self.assertEqual(source.read_bytes(), destination.read_bytes())
+        for runtime_root in (claude, opencode, codex):
+            for skill, relative, source in INSTALLER.source_files(ROOT, INSTALLER.SHARED):
                 destination = runtime_root / skill / relative
-                self.assertTrue(destination.is_file(), destination)
                 self.assertEqual(source.read_bytes(), destination.read_bytes())
+        for runtime_root in (opencode, codex):
+            for skill in INSTALLER.OWN_SKILLS:
+                self.assertFalse(_lexists(runtime_root / skill), (runtime_root, skill))
 
     def test_check_mode_detects_skill_and_manual_drift(self):
         INSTALLER.apply(self.home, ROOT)
@@ -262,7 +273,7 @@ class InstallerTests(unittest.TestCase):
 
     def test_gatekeeper_policy_is_no_longer_owned_by_the_installer(self):
         self.assertFalse((ROOT / "templates/sdd-auto-gatekeeper-policy.md").exists())
-        self.assertEqual([entry[0] for entry in INSTALLER.MANUAL_BLOCKS], ["session-routing.md"])
+        self.assertNotIn("sdd-auto-gatekeeper-policy.md", [entry[0] for entry in INSTALLER.MANUAL_BLOCKS])
         self.assertFalse(hasattr(INSTALLER, "GATEKEEPER_START_MARKER"))
         legacy = b"<!-- SDD-AUTO-GATEKEEPER-POLICY:MANUAL -->\nlegacy\n<!-- /SDD-AUTO-GATEKEEPER-POLICY:MANUAL -->\n"
         path = self.home / ".claude/CLAUDE.md"
@@ -270,6 +281,124 @@ class InstallerTests(unittest.TestCase):
         desired = INSTALLER.desired_manual_content(path, INSTALLER.render_manual_blocks(ROOT))
         self.assertIn(legacy, desired)
         self.assertEqual(desired.count(INSTALLER.START_MARKER), 1)
+
+    TARGETED_BLOCKS = (
+        (b"AGENT-PROPAGATION-MAP:MANUAL", "agent-propagation-map.md"),
+        (b"doc-guard-rule", "doc-guard-rule.md"),
+        (b"EXPLAIN-TO-MAINTAINER:MANUAL", "explain-to-maintainer.md"),
+    )
+    MANUAL_ANNOTATION = " (manual — NOT gentle-ai managed; do not overwrite on sync)".encode()
+
+    def _personal_block(self, name, body=b"old personal rule", annotated=True):
+        annotation = self.MANUAL_ANNOTATION if annotated else b""
+        return b"<!-- " + name + annotation + b" -->\n" + body + b"\n<!-- /" + name + b" -->\n"
+
+    def test_personal_templates_correct_sources_and_retired_references(self):
+        replacements = INSTALLER.render_manual_blocks(ROOT)
+        for name, template in self.TARGETED_BLOCKS:
+            with self.subTest(template=template):
+                start = b"<!-- " + name + b" -->"
+                self.assertIn(start, replacements)
+                rendered = replacements.get(start, b"")
+                self.assertEqual(rendered, (ROOT / "templates" / template).read_bytes())
+                self.assertNotIn(b"chanks-7-session-doc", rendered)
+                self.assertNotIn(b"skills/explicalo-simple/", rendered)
+        propagation = replacements[b"<!-- AGENT-PROPAGATION-MAP:MANUAL -->"]
+        self.assertIn(b"agent-workflows/skills/", propagation)
+        self.assertIn(b"~/.agents/skills", propagation)
+        self.assertIn(b"Gentle AI", propagation)
+        self.assertIn(b"independently", propagation)
+        self.assertNotIn(b"sync-skills.sh", propagation)
+        self.assertIn(b"chanks-5-session-doc", replacements[b"<!-- doc-guard-rule -->"])
+        self.assertIn(b"~/.agents/skills/chanks-0-explicalo-simple/SKILL.md",
+                      replacements[b"<!-- EXPLAIN-TO-MAINTAINER:MANUAL -->"])
+
+    def test_existing_personal_blocks_replaced_preserving_bytes_modes_and_idempotence(self):
+        managed = b"<!-- gentle-ai:persona -->\r\nkeep managed bytes\r\n<!-- /gentle-ai:persona -->\r\n"
+        unrelated = b"<!-- OWNER-NOTES:MANUAL -->\nkeep unrelated bytes\n<!-- /OWNER-NOTES:MANUAL -->\n"
+        replacements = INSTALLER.render_manual_blocks(ROOT)
+        for path in INSTALLER.manual_paths(self.home):
+            path.write_bytes(managed + path.read_bytes() + unrelated + b"".join(
+                self._personal_block(name) for name, _ in self.TARGETED_BLOCKS))
+            path.chmod(0o640)
+        INSTALLER.apply(self.home, ROOT)
+        before = {path: path.read_bytes() for path in INSTALLER.manual_paths(self.home)}
+        for path, content in before.items():
+            self.assertTrue(content.startswith(managed))
+            self.assertIn(unrelated, content)
+            self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o640)
+            for name, _ in self.TARGETED_BLOCKS:
+                self.assertIn(replacements[b"<!-- " + name + b" -->"], content)
+                self.assertNotIn(self._personal_block(name), content)
+        self.assertEqual(INSTALLER.apply(self.home, ROOT), [])
+        self.assertEqual(before, {path: path.read_bytes() for path in before})
+
+    def test_missing_personal_blocks_are_not_added_to_any_runtime(self):
+        INSTALLER.apply(self.home, ROOT)
+        for path in INSTALLER.manual_paths(self.home):
+            for name, _ in self.TARGETED_BLOCKS:
+                self.assertNotIn(name, path.read_bytes())
+        self.assertFalse((self.home / ".hermes").exists())
+
+    def test_optional_block_helper_preserves_absence_instead_of_appending(self):
+        content = b"unrelated bytes\n"
+        actual = INSTALLER._replace_owned_block(
+            content, b"replacement", Path("fixture"), b"<!-- OPTIONAL -->",
+            b"<!-- /OPTIONAL -->", INSTALLER._block_re(b"OPTIONAL"), False)
+        self.assertEqual(actual, content)
+
+    def test_targeted_personal_block_rejection_precedes_all_runtime_writes(self):
+        for name, _ in self.TARGETED_BLOCKS:
+            canonical = self._personal_block(name, annotated=False)
+            annotated = self._personal_block(name)
+            cases = {
+                "duplicate": canonical + annotated,
+                "unclosed": b"<!-- " + name + self.MANUAL_ANNOTATION + b" -->\nold\n",
+                "orphan-close": b"<!-- /" + name + b" -->\n",
+                "unclosed-at-eof": b"<!-- " + name,
+                "unsupported-annotation": self._personal_block(name).replace(self.MANUAL_ANNOTATION, b" (guess)"),
+                "inline": b"prefix " + annotated,
+                "nested-managed": b"<!-- gentle-ai:persona -->\n" + annotated + b"<!-- /gentle-ai:persona -->\n",
+                "nested-section": b"<!-- section:persona -->\n" + annotated + b"<!-- /section:persona -->\n",
+                "overlap": b"<!-- " + name + b" -->\n" + INSTALLER.render_manual_block(ROOT) + b"<!-- /" + name + b" -->\n",
+                "reverse-managed": b"<!-- " + name + b" -->\n<!-- gentle-ai:persona -->\nmanaged\n<!-- /gentle-ai:persona -->\n<!-- /" + name + b" -->\n",
+            }
+            for case, invalid in cases.items():
+                with self.subTest(name=name, case=case), tempfile.TemporaryDirectory() as raw:
+                    home = Path(raw)
+                    self._seed_runtime(home)
+                    path = home / ".pi/agent/APPEND_SYSTEM.md"
+                    # Overlap supplies its own required routing block.
+                    path.write_bytes(invalid if case == "overlap" else path.read_bytes() + invalid)
+                    before = {item: item.read_bytes() for item in INSTALLER.manual_paths(home)}
+                    with self.assertRaises(INSTALLER.InstallError):
+                        INSTALLER.apply(home, ROOT)
+                    self.assertEqual(before, {item: item.read_bytes() for item in before})
+                    self.assertFalse((home / ".agents").exists())
+                    self.assertFalse((home / ".local").exists())
+
+    def test_similarly_named_personal_markers_remain_unrelated(self):
+        for name, _ in self.TARGETED_BLOCKS:
+            path = self.home / ".pi/agent/APPEND_SYSTEM.md"
+            unrelated = self._personal_block(name + b"-OTHER")
+            path.write_bytes(path.read_bytes() + unrelated)
+            desired = INSTALLER.desired_manual_content(path, INSTALLER.render_manual_blocks(ROOT))
+            self.assertIn(unrelated, desired)
+
+    def test_personal_instruction_symlinks_are_refused_before_any_write(self):
+        for relative in INSTALLER.MANUAL_FILES:
+            with self.subTest(relative=relative), tempfile.TemporaryDirectory() as raw:
+                home = Path(raw)
+                self._seed_runtime(home)
+                external = home / "external-instructions"
+                protected = (home / relative).read_bytes() + self._personal_block(self.TARGETED_BLOCKS[0][0])
+                external.write_bytes(protected)
+                (home / relative).unlink()
+                (home / relative).symlink_to(external)
+                with self.assertRaises(INSTALLER.InstallError):
+                    INSTALLER.apply(home, ROOT)
+                self.assertEqual(external.read_bytes(), protected)
+                self.assertFalse((home / ".agents").exists())
 
     def test_wrong_type_destination_is_rejected_before_any_mutation(self):
         wrong_type = self.home / ".agents/skills/chanks-4-puente/SKILL.md"
@@ -322,7 +451,10 @@ class InstallerTests(unittest.TestCase):
 
             self.assertFalse((home / ".codex").exists())
             for root in (home / ".agents/skills", home / ".claude/skills"):
-                self.assertTrue((root / "chanks-4-unattended-implementation/SKILL.md").is_file())
+                # Claude reaches the central copy through a symlink; is_file follows it.
+                self.assertTrue((root / "chanks-4-puente/SKILL.md").is_file())
+                for deferred in INSTALLER.V3_DEFERRED_SKILLS:
+                    self.assertFalse((root / deferred).exists(), deferred)
                 self.assertFalse((root / "torre-control-entregas").exists())
             self.assertNotIn("torre-control-entregas", INSTALLER.SKILLS)
             self.assertEqual(INSTALLER.build_plan(home, ROOT), [])
@@ -331,7 +463,10 @@ class InstallerTests(unittest.TestCase):
         actual_chanks = {
             path.parent.name for path in (ROOT / "skills").glob("chanks-*/SKILL.md")
         }
-        self.assertEqual(set(INSTALLER.CHANKS_SKILLS), actual_chanks)
+        self.assertEqual(
+            set(INSTALLER.CHANKS_SKILLS) | set(INSTALLER.V3_DEFERRED_SKILLS), actual_chanks
+        )
+        self.assertTrue(set(INSTALLER.CHANKS_SKILLS).isdisjoint(INSTALLER.V3_DEFERRED_SKILLS))
         self.assertTrue(set(INSTALLER.RETIRED_SKILLS).isdisjoint(INSTALLER.SKILLS))
 
     def test_chanks_1_adopcion_is_installed_and_listed(self):
@@ -349,19 +484,59 @@ class InstallerTests(unittest.TestCase):
             for root in (home / ".agents/skills", home / ".claude/skills"):
                 self.assertTrue((root / "chanks-1-adopcion/SKILL.md").is_file())
 
-    def test_chanks_0_jornada_is_installed_and_listed(self):
-        """The workday-open/close skill must ship in the roster and land on disk.
-
-        It calls jornada.sh as a Tower tool for "empezamos/cerramos la jornada"; it
-        needs the same install treatment as every other chanks-0-* skill.
-        """
-        self.assertIn("chanks-0-jornada", INSTALLER.CHANKS_SKILLS)
+    def test_v3_deferred_skills_are_not_installed_but_stay_in_the_repo(self):
+        """The four automatic-Tower skills wait for V3: source kept, never installed."""
+        self.assertEqual(
+            set(INSTALLER.V3_DEFERRED_SKILLS),
+            {
+                "chanks-0-jornada",
+                "chanks-3-coordinador-manual",
+                "chanks-3-despacho-herdr",
+                "chanks-4-unattended-implementation",
+            },
+        )
+        self.assertTrue(set(INSTALLER.V3_DEFERRED_SKILLS).isdisjoint(INSTALLER.SKILLS))
+        self.assertTrue(set(INSTALLER.V3_DEFERRED_SKILLS).issubset(INSTALLER.RETIRED_SKILLS))
+        installed = {skill for skill, _, _ in INSTALLER.source_files(ROOT)}
+        for skill in INSTALLER.V3_DEFERRED_SKILLS:
+            self.assertTrue((ROOT / "skills" / skill / "SKILL.md").is_file(), skill)
+            self.assertNotIn(skill, installed)
         with tempfile.TemporaryDirectory() as raw:
             home = Path(raw)
             self._seed_runtime(home)
             INSTALLER.apply(home, ROOT)
             for root in (home / ".agents/skills", home / ".claude/skills"):
-                self.assertTrue((root / "chanks-0-jornada/SKILL.md").is_file())
+                for skill in INSTALLER.V3_DEFERRED_SKILLS:
+                    self.assertFalse((root / skill).exists(), skill)
+
+    def test_installed_v3_deferred_copies_are_planned_and_archived(self):
+        roots = INSTALLER.installed_skill_roots(self.home)
+        self.assertTrue(roots)
+        for runtime_root in roots:
+            for skill in INSTALLER.V3_DEFERRED_SKILLS:
+                (runtime_root / skill).mkdir(parents=True)
+                (runtime_root / skill / "SKILL.md").write_text("installed copy\n", encoding="utf-8")
+        planned = {
+            change.path
+            for change in INSTALLER.build_plan(self.home, ROOT)
+            if change.kind == "retired-skill"
+        }
+        for runtime_root in roots:
+            for skill in INSTALLER.V3_DEFERRED_SKILLS:
+                self.assertIn(runtime_root / skill, planned)
+
+        INSTALLER.apply(self.home, ROOT)
+
+        for runtime_root in roots:
+            archive = INSTALLER.retired_skill_archive_root(runtime_root)
+            for skill in INSTALLER.V3_DEFERRED_SKILLS:
+                self.assertFalse((runtime_root / skill).exists(), skill)
+                archived = list(archive.glob(f"{skill}-*"))
+                self.assertEqual(len(archived), 1, skill)
+                self.assertEqual(
+                    (archived[0] / "SKILL.md").read_text(encoding="utf-8"), "installed copy\n"
+                )
+        self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
 
     def test_project_owned_tower_delivery_skill_is_not_distributed(self):
         self.assertNotIn("torre-control-entregas", INSTALLER.SKILLS)
@@ -655,7 +830,9 @@ class RetiredSkillFileTests(unittest.TestCase):
         with self.registry_patch():
             for version in range(2):
                 seeded = []
-                for runtime in INSTALLER.runtime_skill_roots(self.home):
+                # Retired files are retired in the central folder; the other roots
+                # hold links or no own skill at all.
+                for runtime in INSTALLER.runtime_skill_roots(self.home)[:1]:
                     for relative, payloads in self.payloads.items():
                         payload = payloads[min(version, len(payloads) - 1)]
                         seeded.append((runtime, relative, payload, self.seed(runtime, relative, payload)))
@@ -676,7 +853,7 @@ class RetiredSkillFileTests(unittest.TestCase):
 
     def test_modified_unlisted_and_missing_files_are_not_retired(self):
         preserved = []
-        for runtime in INSTALLER.runtime_skill_roots(self.home):
+        for runtime in INSTALLER.runtime_skill_roots(self.home)[:1]:
             for relative in self.payloads:
                 preserved.append(self.seed(runtime, relative, b"user edit\x00\n"))
             preserved.append(self.seed(runtime, "chanks-0-agente-soporte/references/my-notes.md", b"user edit\x00\n"))
@@ -2044,3 +2221,147 @@ class PiNpmOverlayTriggerTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
         self.assertEqual(len([l for l in result.stderr.splitlines() if "pi-overlay-rebuild" in l]), 1, result.stderr)
 
+class CentralSkillsFolderTests(unittest.TestCase):
+    """Own skills live once in ~/.agents/skills; Claude links to them."""
+
+    def setUp(self):
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tempdir.cleanup)
+        self.home = Path(self.tempdir.name)
+        InstallerTests._seed_runtime(self)
+        self.central = self.home / ".agents/skills"
+        self.claude = self.home / ".claude/skills"
+        self.opencode = self.home / ".config/opencode/skills"
+        self.codex = self.home / ".codex/skills"
+
+    def kinds(self, kind):
+        return {c.path for c in INSTALLER.build_plan(self.home, ROOT) if c.kind == kind}
+
+    def test_claude_gets_one_relative_symlink_per_own_skill(self):
+        INSTALLER.apply(self.home, ROOT)
+        for skill in INSTALLER.OWN_SKILLS:
+            link = self.claude / skill
+            self.assertTrue(link.is_symlink(), skill)
+            self.assertEqual(os.readlink(link), f"../../.agents/skills/{skill}")
+            self.assertEqual(link.resolve(), (self.central / skill).resolve())
+            self.assertTrue((link / "SKILL.md").is_file(), skill)
+
+    def test_central_copy_is_a_real_directory_written_as_before(self):
+        INSTALLER.apply(self.home, ROOT)
+        for skill, relative, source in INSTALLER.source_files(ROOT):
+            destination = self.central / skill / relative
+            self.assertFalse(destination.is_symlink())
+            self.assertEqual(source.read_bytes(), destination.read_bytes())
+        for skill in INSTALLER.OWN_SKILLS:
+            self.assertFalse((self.central / skill).is_symlink(), skill)
+
+    def test_opencode_and_codex_receive_no_own_skill(self):
+        INSTALLER.apply(self.home, ROOT)
+        for root in (self.opencode, self.codex):
+            for skill in INSTALLER.OWN_SKILLS:
+                self.assertFalse(_lexists(root / skill), (root, skill))
+            self.assertTrue((root / "_shared/plan-naming-convention.md").is_file())
+
+    def test_shared_overlay_is_still_written_to_all_four_roots(self):
+        INSTALLER.apply(self.home, ROOT)
+        source = (ROOT / "skills/_shared/plan-naming-convention.md").read_bytes()
+        for root in (self.central, self.claude, self.opencode, self.codex):
+            installed = root / "_shared/plan-naming-convention.md"
+            self.assertFalse((root / "_shared").is_symlink())
+            self.assertEqual(installed.read_bytes(), source)
+
+    def test_real_own_copies_are_archived_then_linked(self):
+        for root in (self.claude, self.opencode, self.codex):
+            for skill in INSTALLER.OWN_SKILLS:
+                (root / skill).mkdir(parents=True)
+                (root / skill / "SKILL.md").write_text(f"old {root.name} {skill}\n")
+        planned = INSTALLER.build_plan(self.home, ROOT)
+        archives = {c.path for c in planned if c.kind == "own-skill-archive"}
+        for root in (self.claude, self.opencode, self.codex):
+            for skill in INSTALLER.OWN_SKILLS:
+                self.assertIn(root / skill, archives)
+        INSTALLER.apply(self.home, ROOT)
+        for root in (self.claude, self.opencode, self.codex):
+            archive = INSTALLER.retired_skill_archive_root(root)
+            for skill in INSTALLER.OWN_SKILLS:
+                found = list(archive.glob(f"{skill}-*"))
+                self.assertEqual(len(found), 1, (root, skill))
+                self.assertEqual(
+                    (found[0] / "SKILL.md").read_text(), f"old {root.name} {skill}\n"
+                )
+        for skill in INSTALLER.OWN_SKILLS:
+            self.assertTrue((self.claude / skill).is_symlink())
+            self.assertFalse(_lexists(self.opencode / skill))
+            self.assertFalse(_lexists(self.codex / skill))
+        self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
+
+    def test_correct_symlink_is_idempotent_and_wrong_symlink_is_replaced(self):
+        INSTALLER.apply(self.home, ROOT)
+        self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
+        wrong = self.claude / "chanks-4-puente"
+        wrong.unlink()
+        elsewhere = self.home / "elsewhere"
+        elsewhere.mkdir()
+        wrong.symlink_to(elsewhere, target_is_directory=True)
+        planned = [c for c in INSTALLER.build_plan(self.home, ROOT)]
+        self.assertEqual([(c.path, c.kind) for c in planned], [(wrong, "skill-link-replace")])
+        INSTALLER.apply(self.home, ROOT)
+        self.assertEqual(os.readlink(wrong), "../../.agents/skills/chanks-4-puente")
+        self.assertEqual(list(elsewhere.iterdir()), [])
+        self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
+
+    def test_symlinked_runtime_root_is_still_refused(self):
+        external = self.home / "external"
+        external.mkdir()
+        (self.claude).parent.mkdir(parents=True, exist_ok=True)
+        self.claude.symlink_to(external, target_is_directory=True)
+        with self.assertRaises(INSTALLER.InstallError):
+            INSTALLER.apply(self.home, ROOT)
+        self.assertEqual(list(external.iterdir()), [])
+
+    def test_nothing_is_ever_written_through_a_skill_symlink(self):
+        INSTALLER.apply(self.home, ROOT)
+        before = {p: p.read_bytes() for p in self.central.rglob("*") if p.is_file()}
+        # Drift in the central copy is repaired in the central folder only.
+        target = self.central / "chanks-4-puente/SKILL.md"
+        target.chmod(0o644)
+        target.write_bytes(b"drift")
+        INSTALLER.apply(self.home, ROOT)
+        self.assertEqual(before, {p: p.read_bytes() for p in self.central.rglob("*") if p.is_file()})
+        self.assertTrue((self.claude / "chanks-4-puente").is_symlink())
+
+    def test_non_directory_own_skill_entry_fails_before_any_write(self):
+        self.claude.mkdir(parents=True)
+        (self.claude / "chanks-4-puente").write_bytes(b"a file")
+        with self.assertRaises(INSTALLER.InstallError):
+            INSTALLER.apply(self.home, ROOT)
+        self.assertFalse(self.central.exists())
+
+    def test_absent_runtime_is_skipped(self):
+        shutil.rmtree(self.home / ".claude")
+        INSTALLER.apply(self.home, ROOT)
+        self.assertFalse((self.home / ".claude").exists())
+        self.assertTrue((self.central / "chanks-4-puente/SKILL.md").is_file())
+        self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
+
+    def test_cli_describes_the_new_changes_and_a_second_run_is_clean(self):
+        (self.claude / "chanks-4-puente").mkdir(parents=True)
+        command = [sys.executable, str(SCRIPT), "--home", str(self.home)]
+        dry = subprocess.run(command + ["--dry-run"], capture_output=True, text=True, check=False)
+        self.assertEqual(dry.returncode, 0, dry.stderr)
+        self.assertIn(f"WOULD_UPDATE own-skill-archive: {self.claude / 'chanks-4-puente'}", dry.stdout)
+        self.assertIn(
+            f"WOULD_UPDATE skill-link: {self.claude / 'chanks-4-puente'} "
+            "(-> ../../.agents/skills/chanks-4-puente)",
+            dry.stdout,
+        )
+        self.assertFalse((self.central / "chanks-4-puente").exists())
+        check = subprocess.run(command + ["--check"], capture_output=True, text=True, check=False)
+        self.assertEqual(check.returncode, 1)
+        self.assertIn("DRIFT skill-link:", check.stdout)
+        applied = subprocess.run(command, capture_output=True, text=True, check=False)
+        self.assertEqual(applied.returncode, 0, applied.stderr)
+        again = subprocess.run(command + ["--dry-run"], capture_output=True, text=True, check=False)
+        self.assertIn("NO_CHANGES", again.stdout)
+        clean = subprocess.run(command + ["--check"], capture_output=True, text=True, check=False)
+        self.assertEqual(clean.returncode, 0, clean.stdout + clean.stderr)

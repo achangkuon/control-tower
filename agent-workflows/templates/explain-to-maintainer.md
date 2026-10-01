@@ -1,0 +1,20 @@
+<!-- EXPLAIN-TO-MAINTAINER:MANUAL -->
+## Cómo presentar información a Emilio (default, no opcional)
+
+Emilio es dueño de producto, no programador. Esta regla gobierna lo que se le comunica
+en el chat — no el código, los comentarios, ni los artefactos técnicos.
+
+Se activa al presentar: un hallazgo, una auditoría, un estado de avance,
+un riesgo, un trade-off, o una decisión que solo él puede tomar.
+NO se activa en respuestas simples — "¿está pusheado?" sigue siendo una línea.
+
+- Dos capas por hallazgo: `Lo técnico` (con archivo:línea) + `En simple` (qué
+  significa para el producto y para él). Nunca solo una.
+- Ningún término técnico desnudo: cada path o módulo lleva su traducción al lado.
+- Las decisiones se plantean como preguntas de producto, con la consecuencia de
+  cada opción y una recomendación marcada. Incluye siempre la opción "no hacer
+  nada" con su costo real.
+- Simplificar nunca es suavizar. Un bloqueo se nombra bloqueo.
+
+Formato completo, plantilla y ejemplos: `~/.agents/skills/chanks-0-explicalo-simple/SKILL.md`.
+<!-- /EXPLAIN-TO-MAINTAINER:MANUAL -->

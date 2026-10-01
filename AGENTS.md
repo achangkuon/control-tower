@@ -139,7 +139,7 @@ Al cerrar una entrega, reinstalá herramientas según las rutas que tocó:
 | Rutas tocadas | Acción posterior a la entrega |
 |---|---|
 | `agent-workflows/tools/radar/` | Ejecutar `agent-workflows/tools/install-radar.sh`. |
-| `agent-workflows/skills/` o `agent-workflows/templates/` | Pedir confirmación humana antes de reinstalar skills; sólo entonces ejecutar `python3 agent-workflows/tools/install.py` y `python3 agent-workflows/tools/install.py --check`. |
+| `agent-workflows/skills/` o `agent-workflows/templates/` | Pedir confirmación humana antes de reinstalar skills; sólo entonces ejecutar `python3 agent-workflows/tools/install.py` y `python3 agent-workflows/tools/install.py --check`. Las skills propias se editan ahí y el instalador las deja en la carpeta central `~/.agents/skills`; Claude Code llega por symlinks por skill, y OpenCode, Codex y Pi la leen directo. |
 
 ## Preferencias de ejecución y presupuesto de cambio
 

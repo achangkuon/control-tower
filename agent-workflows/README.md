@@ -129,8 +129,9 @@ Módulo behavior.
 | --- | --- |
 | Shared conventions | `_shared/plan-naming-convention.md` |
 | Chanks planning and bridge | `chanks-1-adopcion`, `chanks-1-autoridad`, `chanks-1-brain-dump`, `chanks-1-descubrimiento`, `chanks-1-feature`, `chanks-1-heredado`, `chanks-1-prd`, `chanks-1-project-kickoff`, `chanks-1-requirements`, `chanks-1-rfc`, `chanks-1-terreno`, `chanks-4-puente` |
-| Session workflow | `chanks-3-session-kickoff`, `chanks-3-paralelo`, `chanks-3-coordinador-manual`, `chanks-3-despacho-herdr`, `chanks-0-session-context-loader`, `chanks-2-planificador-granular`, `chanks-0-agente-soporte`, `chanks-5-session-doc` |
-| Delivery policy | `chanks-4-unattended-implementation`, `chanks-5-politica-de-entrega` |
+| Session workflow | `chanks-3-session-kickoff`, `chanks-3-paralelo`, `chanks-0-session-context-loader`, `chanks-2-planificador-granular`, `chanks-0-agente-soporte`, `chanks-5-session-doc` |
+| Delivery policy | `chanks-5-politica-de-entrega` |
+| Deferred to V3 (source kept, not installed, installed copies archived under `.retired-skills/`) | `chanks-0-jornada`, `chanks-3-coordinador-manual`, `chanks-3-despacho-herdr`, `chanks-4-unattended-implementation` |
 | Decision and communication support | `chanks-1-cierre-de-decisiones`, `chanks-0-explicalo-simple`, `chanks-0-mensajes-visibles`, `chanks-0-skill-composer` |
 
 ### `_shared` is deliberately partial
@@ -152,12 +153,31 @@ Global synchronization and fresh-session verification remain outstanding after s
 
 ## Installation
 
-`tools/install.py` mirrors the canonical skill directories to:
+The rule is single: the maintainer's own skills (the installer roster,
+`CHANKS_SKILLS` and `SUPPORT_SKILLS`) are edited in `agent-workflows/skills/` from
+any agent and installed into one central folder, `~/.agents/skills`.
 
-- `~/.agents/skills`
-- `~/.claude/skills`
-- `~/.config/opencode/skills`
-- `~/.codex/skills`
+- `~/.agents/skills` holds the only real copy of every own skill, written per file
+  and atomically. Pi, OpenCode and Codex read it natively.
+- Claude Code has no skills-path setting, so `~/.claude/skills/<name>` is a relative
+  symlink to `../../.agents/skills/<name>`, one per own skill. A real directory
+  already at that name is archived to `~/.claude/skills/.retired-skills/<name>-<UTC
+  stamp>` and then replaced by the link; a link pointing elsewhere is replaced; the
+  correct link is left alone.
+- `~/.config/opencode/skills` and `~/.codex/skills` no longer receive own skills.
+  Any real copy found there is archived to that root's `.retired-skills/`, never
+  deleted. A symlink found there is left untouched.
+- `_shared/plan-naming-convention.md` keeps its per-root overlay in all four roots:
+  `_shared` is a Gentle AI directory with per-runtime content.
+- Hermes is handled in a later step.
+- Gentle AI skills (`sdd-*` and the rest) are managed by `gentle-ai` per runtime and
+  are not part of this.
+
+`--check` and `--dry-run` report the new change kinds as `own-skill-archive` (a real
+copy to archive), `skill-link` (a missing link to create) and `skill-link-replace`
+(a link pointing elsewhere), the last two with the target. A second run after an
+install reports no changes. The installer still refuses a symlinked runtime root and
+never writes through a skill symlink.
 
 It also owns one manual prompt-policy block in the Claude, OpenCode, Codex,
 and Pi instruction files: `SESSION-SKILL-ARCHITECTURE:MANUAL` states the
@@ -166,6 +186,63 @@ loads lazily from `chanks-3-session-kickoff/references/admission-contract.md`. I
 enforcement. The installer no longer ships an SDD gatekeeper block: how SDD is
 run belongs to Gentle AI. A gatekeeper block already present in an instruction
 file is left untouched.
+
+### Existing personal blocks: targeted preparation
+
+The installer also corrects three **existing** personal instruction blocks:
+`AGENT-PROPAGATION-MAP:MANUAL`, `doc-guard-rule` and
+`EXPLAIN-TO-MAINTAINER:MANUAL`. Their canonical templates live under `templates/`.
+Propagation names the repository as the editable own-skill source and
+`~/.agents/skills` as the central installation, without copying Gentle AI assets.
+Closure names `chanks-5-session-doc`; explanation uses the central
+`chanks-0-explicalo-simple` reference. Project-specific documentation destinations
+and opt-outs still take precedence.
+
+These three blocks are **replace-if-present**: an absent block stays absent,
+including on Codex. This is not a blanket rewrite of personal instructions.
+The required session-routing block keeps its existing behavior; Hermes is not
+added to this installer's instruction targets.
+
+### Preparing the personal-runtime retirement
+
+`tools/prepare-personal-config.py` is a separate, opt-in migration for the
+maintainer's configuration. It defaults to a read-only preflight; only an
+explicit `--apply` writes. Every selected stage preflights its complete set of
+changes before applying any of them. It refuses unknown owned-file bytes,
+ambiguous hooks, malformed managed blocks, symlink traversal, and incomplete
+central skill copies rather than guessing.
+
+Run stages in this order when a separately authorized live deployment is
+scheduled:
+
+1. `--stage primary`: retire the maintainer-owned Claude autosync hook, script,
+   and slash command. Do this **before** applying `install.py`, so the old hook
+   cannot propagate the four V3-deferred skills back into runtimes.
+2. Apply the central skills installer and finish the primary instruction
+   corrections.
+3. `--stage hermes --hermes-python <installed-Hermes-Python>` last: validate
+   `skills.external_dirs` with Hermes' own PyYAML, point it at `~/.agents/skills`,
+   update only existing personal blocks, remove only the old unattended-consent
+   block, and archive only real copies of the maintainer's own skills.
+4. `--stage snapshot` after every correction: preserve the prior manual-block
+   restore store at the immutable `boundary-2026-10-01` path, then refresh the
+   compatible snapshot from the five current instruction files.
+
+For example, inspect without writing with
+`python3 tools/prepare-personal-config.py --stage primary --check`. The Hermes
+stage requires the exact installed interpreter explicitly; system Python is
+not assumed to include PyYAML. Fixture tests never apply changes to the real
+home directory.
+
+Before any runtime write, preflight rejects duplicate, unclosed, overlapping,
+non-line-delimited or managed-nested targeted blocks. Opening markers may be
+unannotated or carry exactly the existing annotation
+`(manual — NOT gentle-ai managed; do not overwrite on sync)`; unsupported
+annotations fail closed rather than being mistaken for absence. Unrelated
+personal content, managed bytes and existing instruction file modes are preserved;
+symlinked instruction destinations are refused. Repeated fixture installs are
+idempotent. Source tests do not authorize live installation or prove behavior in a
+fresh conversation: those remain separate maintainer-authorized checks.
 
 Gentle AI `sync` or `install` may rewrite instruction surfaces; survival is not
 guaranteed. Before either operation, back up the manual blocks. Afterwards,
