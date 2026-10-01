@@ -16,6 +16,7 @@ In scope:
 
 - Skills `chanks-0-jornada`, `chanks-3-coordinador-manual`, `chanks-3-despacho-herdr`, `chanks-4-unattended-implementation`.
 - Pi controls and hooks, only after the maintainer decides which ones leave (T2).
+- Preparation authorized on 2026-10-01: targeted personal instruction templates, reversible autosync retirement, refreshed restore snapshots, and Hermes central discovery/consent cleanup. No live installation, Pi restart, master integration or remote push is authorized by this preparation request.
 
 Out of scope: `openspec/plan.yaml`, Radar, Pista, Windows and Gemini copies, push to GitHub.
 
@@ -42,9 +43,11 @@ Out of scope: `openspec/plan.yaml`, Radar, Pista, Windows and Gemini copies, pus
   - Existing real copies of own skills in `~/.claude/skills`, `~/.config/opencode/skills` and `~/.codex/skills` are archived to `.retired-skills/`, never deleted.
   - `_shared/plan-naming-convention.md` keeps its current per-root overlay: `_shared` is a Gentle AI directory with per-runtime content.
   - Docs state the single rule: own skills are edited in `agent-workflows/skills/` from any agent and installed to the central folder.
-- [ ] T6 — Central source for the maintainer's personal instruction blocks: one template per block in the repo, installed to each runtime, replacing hand-copied blocks. Includes rewriting the propagation block that names Claude's folder as source of truth.
-- [ ] T3 — Hermes, last by maintainer decision: add `~/.agents/skills` through `skills.external_dirs` and archive its copies of own skills.
-- [ ] T4 — Live deployment and verification in a fresh conversation per agent. Requires explicit maintainer authorization. Includes retiring `~/.claude/scripts/sync-skills.sh` and its PostToolUse hook.
+- [x] T6 — Prepare canonical templates for the existing propagation, documentation-close and explanation blocks. Route: delegated writer; preparation/writer triggers (installer, templates, tests and docs). Rewrite own skills source and central installation; fix retired closure/explanation names; replace existing annotated blocks only, preserve absent blocks and all unrelated/Gentle AI bytes. Verify malformed/duplicate/nested marker preflight, idempotence and preservation in fixture homes; include a revertible work-unit commit.
+- [x] T3 — Prepare Hermes migration, last by maintainer decision. Route: delegated writer; helper and tests. Add structured, validated central `skills.external_dirs` configuration before reversibly archiving only own skill copies. Remove only the manual unattended-consent block. Preserve other YAML fields/paths, managed instructions and third-party skills. Use the installed Hermes PyYAML parser through explicit preflight, never a handwritten YAML parser. Fixture tests cover malformed configuration/no mutation and repeat runs; live application remains pending.
+- [x] T4-prep — Prepare reversible retirement of the own sync script, its invocable Claude command and only its exact PostToolUse hook. Route: delegated writer; helper, tests and docs. Archive the previous manual backup store, then capture corrected existing personal blocks after Hermes. Test mixed hooks/unrelated settings preservation, ambiguity refusal, archive integrity and restore simulation; historical boundary backup is immutable.
+- [ ] T4 — Live deployment and verification in a fresh conversation per agent. Explicit installation/restart authorization is still required; no fixture proof substitutes for a real fresh conversation.
+- [ ] T7 — Prepare local worktree dependencies and rerun functional checks. Route: delegated verification; copy local Main dependency bytes offline because package and lock match, do not share a writable dependency symlink. Full Python and Bun checks, real-HOME dry-run with preservation readback; no HOME apply.
 
 ## Progress and evidence
 
@@ -64,8 +67,30 @@ Out of scope: `openspec/plan.yaml`, Radar, Pista, Windows and Gemini copies, pus
   - `bun test`: the same 13 distinct failing `(fail)` lines before and after (57 fail / 1153 pass in the full run). `git diff --check`: clean. Installer never run against the real HOME.
   - Gap: a symlink at an own-skill name in the OpenCode/Codex roots is left untouched (not retired); the maintainer may want it removed.
 
+- T6 source preparation complete, commit `ac9b2004ce0705880a7e3696492751a1959e09d9` (delegated writer; six allowed source surfaces; 242 additions + 15 deletions = 257 authored lines).
+  - Observed RED before behavior edits: four targeted tests failed, 31 subtest failures and two errors. GREEN: installer 134 OK; full Python discovery 374 OK, one native-SDD-binary skip; diff check clean.
+  - Templates fix propagation, closure and explanation references. Existing annotated blocks replace only when present; absence, managed bytes, unrelated content and modes are preserved. Invalid/duplicate/overlapping/managed-nested markers fail before writes. No live deployment.
+  - Native assessment against reviewed boundary `347d901`: high, `process_boundary`, `review_due: true`. User selected review (option 1). Native four-lens review approved without findings and exact acknowledgement burned authority for this candidate (lineage `review-370a4c6df5b0afa0`). Parent spot check independently reran installer 134 OK.
+- T7 environment preparation observed: copied 4415 dependency files (56,682,325 bytes) offline from Main after package/lock byte comparison, with no shared symlinks or inodes. Ignored local dependency copy only; no network or HOME change. Foreground Bun now 1703 pass/0 fail (114 files); the previous missing-dependency failures are resolved. Final all-preparation dry-run and fresh-session verification remain pending.
+
+- T3/T4-prep source preparation complete, commit `eaffbe90afe79d41878ec781cb33cbe88b53a704` (delegated writer; helper, tests and README; 934 additions, one reversible ordering unit). Default read-only; explicit apply required. Primary retires exact own autosync surfaces; Hermes uses its actual PyYAML interpreter, configures discovery before own-copy archival, removes manual consent override; snapshot refresh archives old store and rejects stale instructions. No live application.
+  - Observed RED: helper absent, then duplicate-JSON-key rejection failed before correction. GREEN: 15 focused tests, including actual Hermes parser round-trip and duplicate YAML keys. Writer Bun 1703 pass/0 fail. Independent parent spotcheck 15 pass; full Python 389 tests/one native-SDD-binary skip passed twice.
+  - Earlier full discovery failed the real-HOME integrity assertion at `test_personal_pi_composition.py:207`. At least one observed changed digest belongs to live Pi settings; the external writer is unknown. No evidence connects the helper to that mutation; do not erase the failed runs or label them generic flakes.
+  - Real-HOME dry-runs: primary 3 changes, Hermes 31 changes, installer 120 changes; 3042 monitored entries unchanged. Snapshot dry-run correctly refuses the still-stale Claude block before installer corrections. This is sequencing proof, not completed live migration or fresh-session proof.
+  - Native assessment high (`dangerous_sink`, `process_boundary`), due for `ac9b200..eaffbe9`. Exact START preflight returned candidate consent for target `sha256:a3adb1f0c9d121bf6e9198b2b7eae1c97e5a0d16f5a41b5f929510ff84bcce21`, lineage `review-036a94e7975789fa`; user chose review (1/granted). Native START refused with `candidate_context_unavailable`, phase `native_committed`, mutation outcome unknown, retry unsafe; cause rejects negotiated risk reason `dangerous_sink`. Exact replay recovered the typed failure after an initial response-parse error. User selected handoff option 2 (continue without reporting). Exact captured decline ran once: exit 0, `action: declined`, `consent: declined_this_candidate`, exact target match. Read-only native STATUS re-entry completed; no further START. No GitHub operation; RDD remains on. This candidate is skipped, not approved. Existing independent high-tier verification remains applicable; prior T6 approval stays separate.
+
+## Current authorization and verification checkpoint
+
+- The parent reconciled this file with Engram observation 12556: the old mirror was stale, not conflicting product authority. Completed T1/T2/T5 evidence is preserved.
+- Reviewed boundary: `ac9b200` after T6; prior boundary: `347d901`. Native high-risk four-lens review of `8c9e360..347d901` was approved and acknowledged (lineage `review-59cf1c2c1dd89e55`). Its only advisory is interrupted archival/link migration; no correction transition or re-review is required for that exact candidate.
+- Independent Python checks: installer 127 OK; related modules 166 OK; discovery 367 OK, one native-SDD-binary skip.
+- Bun baseline correction: initial worktree 1153 pass/57 fail/44 errors was missing `yaml`/`ajv`. After isolated offline setup, the worktree matches Main at 1703 pass/0 fail. Package/lock bytes remain identical; no dependency-source changes.
+- Effective TDD remains strict, source: existing feature/session configuration. Require observed RED before implementation, GREEN and refactor; do not reconstruct RED retrospectively. Exact runners remain listed under Constraints.
+- Forecast for remaining preparation: approximately 800–1400 authored additions/deletions, advisory only. Delivery strategy: `exception-ok` under the repository direct-push/no-PR policy; cohesive work-unit commits, no size-only splits or chained PRs. Actual master integration and push remain separate authorization.
+- Preserve Gentle AI, third-party Pi components, Radar stage notice, unrelated settings and instruction blocks. Do not mutate the product plan or historical backups. Documentation defaults to English; retain explicitly Spanish existing artifact context where extended.
+
 ## Next step
 
-T6, then T3, T4.
+T6 review is closed. T3/T4-prep source and independent preparation checks are complete; the exact eaffbe9 native review was skipped by the human after the provider START refusal. The validated candidate-scoped decline and native STATUS re-entry allow ordinary preparation continuation without reporting or disabling RDD. No live application is authorized. T7 retains the correctly refused pre-install snapshot dry-run and pending post-install readback; T4 fresh conversations remain untested. Next, request separate authorization for local master integration and installation (including Pi session restart). Remote push is not part of that request. Revalidate current live preflights immediately before any authorized application.
 
 Native review per candidate: T1 commit range and the accumulated branch range were both declined by the maintainer (2026-10-01); tier high (`process_boundary` in `test_install.py`).
