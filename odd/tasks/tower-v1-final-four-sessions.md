@@ -309,7 +309,7 @@ Maintainer decision: the ordinary-question check uses a real model through an op
 - Plan ID correction: S175 already identifies an unrelated planned Session, so the builder took the next free permanent ID, S182. Maintainer approved the S182 plan entry on 2026-10-02 (Radar check 0 errors / 63 warnings; S182 LISTO).
 - Authorized files: `product/tower/v1/release-build.mjs`, `product/tower/v1/test/release-build.test.mjs`. Build only from an exact clean commit, deterministic bytes and SHA-256, self-validation through bootstrap verification, output outside the repository, no publish/tag.
 
-- [x] R1 — Implement, verify and review the deterministic release builder. Reviewed; awaiting authorized delivery.
+- [x] R1 — Implement, verify and review the deterministic release builder. DONE: delivered `3824b73`, push hook 1,799 pass / 0 fail, archived 2026-10-02.
 
 ### R1 evidence
 
@@ -317,3 +317,7 @@ Maintainer decision: the ordinary-question check uses a real model through an op
 - 30 members in bytewise path order with fixed key order; reads bytes from the commit tree only, refuses dirty worktrees, self-validates through `bootstrapVerifiedRelease` with an injected runner, writes exclusively (`wx`, 0644) outside the repository.
 - Real dry builds from a local clone of `51c372b`: two runs produced identical 438,596-byte assets with SHA-256 `e4be8288bed019f5f79f0558218bbfbe41a703d77d3fbc84b0f2277885494402`. That asset predates the builder commit; the release asset must be rebuilt from the final release commit.
 - Native review `review-f8ffee750ff0470c`: medium/reliability, 282 lines, approved and acknowledged. Non-blocking follow-ups: `R3-incomplete-output` (a failed write can leave a partial output file) and `R3-lazy-fetch` (partial clones could trigger a promisor fetch).
+
+### S182 closure
+
+- `entrega.commit: 3824b73ffa516abe15fe2d848a183b97a5edfb2f` recorded; `radar archivar S182` succeeded; check 0 errors / 63 warnings; ROADMAP regenerated. All Tower V1 Sessions, including the builder, are closed. Next: the release itself (tag, asset build from the final commit, private GitHub Release upload, SHA-256 through a second channel) is a separate, explicitly authorized outward action.
