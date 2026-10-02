@@ -1023,7 +1023,7 @@
 - Encargo:
   - Pedido y contexto: El hook acepta candidatos desde PATH, RADAR&#95;BIN y una ruta fija sin comprobar su destino real; un binario plantado dentro del checkout puede sustituir al Radar instalado antes del push. Mantener la promesa vigente de ejecutarlo fuera del checkout sin cambiar la admisión ni lanzar un push real.
   - Resultado y comportamiento: Resolver también rutas relativas y symlinks, rechazar cada candidato cuyo destino real esté dentro del checkout y continuar con el próximo candidato seguro. Si no hay Radar seguro, conservar advertencia y paso permitido; un plan inválido sigue rechazado y se conserva el tratamiento del timeout y el gate actual de la suite. Probar rutas maliciosas y un Radar externo permitido con fixtures, sin ejecutar binarios plantados ni un push real.
-  - Restricciones y decisiones: Sólo los dos archivos y Cimientos declarados; sin ampliar permisos, admisión ni alcance de seguridad. Prueba enfocada: bun test test/pre-push-plan-gate.test.mjs. Pronóstico de 80–180 líneas authored; revalidar antes de implementar y preguntar si supera 400.
+  - Restricciones y decisiones: Sólo los dos archivos y Cimientos declarados; sin ampliar permisos, admisión ni alcance de seguridad. Prueba enfocada: bun test test/pre-push-plan-gate.test.mjs. Pronóstico de 80–180 líneas authored; revalidar antes de implementar. El tamaño sigue la guía nativa de Gentle AI, que usa unas 400 líneas authored como referencia; no es una restricción de esta Sesión.
   - Referencias: .githooks/pre-push líneas 101–117 y test/pre-push-plan-gate.test.mjs líneas 233–257; hallazgo validado de candidatos PATH/RADAR&#95;BIN/ruta fija.
 
 ### S176 — Invalidar el verde anterior cuando una nueva suite no produce resumen.

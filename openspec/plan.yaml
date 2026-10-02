@@ -2272,8 +2272,9 @@ sesiones:
       restricciones_decisiones: >-
         Sólo los dos archivos y Cimientos declarados; sin ampliar permisos, admisión
         ni alcance de seguridad. Prueba enfocada: bun test test/pre-push-plan-gate.test.mjs.
-        Pronóstico de 80–180 líneas authored; revalidar antes de implementar y
-        preguntar si supera 400.
+        Pronóstico de 80–180 líneas authored; revalidar antes de implementar. El
+        tamaño sigue la guía nativa de Gentle AI, que usa unas 400 líneas authored
+        como referencia; no es una restricción de esta Sesión.
       referencias: >-
         .githooks/pre-push líneas 101–117 y test/pre-push-plan-gate.test.mjs
         líneas 233–257; hallazgo validado de candidatos PATH/RADAR_BIN/ruta fija.
