@@ -407,7 +407,7 @@ Maintainer reported the V1 menu aborting (CR LF Enter) and approved on 2026-10-0
 - Read-only audit of Gentle AI v4.0.0 (MIT; Engram 12980): Go + Bubbletea/Bubbles/Lipgloss state machine; Welcome → Detection → Selection → Review → Progress → Complete; detection of OS, shell, tools, dependency versions and agent configs; per-screen footers, Esc back, alt screen, resize-aware, no mouse.
 - Decisions (Engram 12981): Go + Bubbletea TUI, Spanish UI text; Bun keeps lifecycle authority. Planned S187 (read-only `status` JSON), S188 (Go home screen), S189 (wizards and projects), S190 (per-platform verified binaries, default launch, v1.1.0 release, partner and macOS tests). Radar: 0 errors; S187 LISTO.
 
-- [ ] S187 — read-only `status` command.
+- [x] S187 — read-only `status` command. DONE: `c67dc1b`, push hook 1,840 pass / 0 fail, archived.
 - [ ] S188 — Go home screen.
 - [ ] S189 — wizards and projects.
 - [ ] S190 — packaging, default launch, v1.1.0.

@@ -2101,38 +2101,7 @@ sesiones:
 
   - {id: S186, entrega: {commit: 7723d7e15322980b535401ee500839fd895a9c19}, historico: openspec/archive/sesiones/S186.md}
 
-  - id: S187
-    zona: producto-torre
-    prioridad: torre-v1
-    resultado: "torre-control status devuelve, sólo leyendo, el estado completo que necesita la pantalla de inicio."
-    autoridad: "Emilio aprobó el 2026-10-02 en esta Conversación el rediseño del instalador al estilo Gentle AI en Go + Bubbletea y en español, dividido en S187–S190 (Engram 12980, 12981)."
-    depende_de: [S185]
-    archivos: [product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs]
-    cimientos: []
-    recurso: []
-    encargo:
-      pedido_contexto: >-
-        La nueva interfaz visual necesita mostrar en su inicio el estado del motor, los
-        proyectos, los requisitos y los agentes, como el instalador de Gentle AI y el
-        bloque Estado de setup.sh. Hoy esa información está repartida y parte no se
-        expone.
-      resultado_comportamiento: >-
-        Un comando cerrado nuevo, status, imprime una sola línea JSON con esquema
-        versionado: motor global (instalado o no, versión activa y anterior, salud),
-        proyectos registrados con su salud en vivo, requisitos gh (con sesión), Bun,
-        Git y Go con versión o ausencia, agentes detectados (Claude Code, Pi, Codex,
-        OpenCode) distinguiendo ejecutable presente de configuración presente, y
-        sistema operativo y shell. No escribe nada: no usa el doctor de proyecto
-        registrado (publica membresía) ni prepara directorios.
-      restricciones_decisiones: >-
-        Sólo los dos archivos declarados; sin módulos nuevos. Cada sonda con tiempo
-        límite; una sonda que falla se informa sin abortar el resto. Pruebas aisladas
-        sin tocar el HOME real. Pronóstico de 120–250 líneas authored; el tamaño
-        sigue la guía nativa de Gentle AI y no es una restricción de esta Sesión.
-      referencias: >-
-        Auditoría del instalador de Gentle AI v4.0.0 (internal/system/detect.go,
-        deps.go, config_scan.go); setup.sh líneas 49–62 y 110–145; global.mjs
-        doctorGlobal y projects.mjs listProjects.
+  - {id: S187, entrega: {commit: c67dc1b494e064b3a89614fbad79d9ec2a5c4552}, historico: openspec/archive/sesiones/S187.md}
 
   - id: S188
     zona: producto-torre
