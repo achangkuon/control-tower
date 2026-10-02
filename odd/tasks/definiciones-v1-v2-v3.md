@@ -71,7 +71,7 @@ Out of scope: groups C and D, any live installation or agent restart, push to Gi
   - `openspec/plan.yaml` `S175`: the 400-line figure becomes a Gentle AI reference, not a question to ask. Historical `autoridad` texts are not rewritten.
   - `docs/architecture/control-tower-lazy-pi-distribution.md`: correct the statement that `chanks-controls.ts` is installed.
   - Acceptance: `radar check` reports 0 errors; `radar sesion S175` shows no instruction to ask above 400 lines; `openspec/ROADMAP.md` regenerated when it changes.
-- [ ] T8 — Historical documents (D2). Route: delegated writer.
+- [x] T8 — Historical documents (D2). Route: delegated writer. Closed with one accepted exception: `openspec/plan.yaml:1584` keeps the old path inside the `archivos` of delivered Session `S158`, because delivered history is not rewritten.
   - `agent-workflows/EJECUCION-EN-PARALELO.md` and `agent-workflows/MIGRACION-ZONAS.md` get a banner (historical, what replaced them, pointer to `docs/architecture/definiciones-v1-v2-v3.md`) and move to `agent-workflows/historico/`; live references follow.
   - `agent-workflows/FLUJO-END-TO-END.md` stays in place; its header separates the current part from the frozen analysis.
   - `docs/flujo/chanks-guia-de-etapas.html` gets a visible banner: projection of the flow with V2, not a description of V1 (D4).
