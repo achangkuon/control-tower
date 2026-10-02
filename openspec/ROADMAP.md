@@ -4,14 +4,15 @@
 ## 📍 Punto de retoma
 - Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S167, S172, S173, S174, S182, S183, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Torre V1 · Adopción project-local reversible.
-- Próximo trabajo ejecutable: Producto Torre #1 → S184 — Un socio con acceso al repo instala torre-control con un solo comando gh, en Linux y Mac, sin clonar el repositorio..
+- Próximo trabajo ejecutable: Método #2 → S186 — El instalador de skills tiene su propio comando torre-setup y nunca reemplaza el comando torre-control de la Torre V1..
 - Decisión pendiente: S12.2 — ¿Cómo avanza la revisión de un artefacto fijado por digest?.
 
 ## Estado y próximo trabajo
+- Método #2 → S186 — El instalador de skills tiene su propio comando torre-setup y nunca reemplaza el comando torre-control de la Torre V1.
 - Producto Torre #1 → S184 — Un socio con acceso al repo instala torre-control con un solo comando gh, en Linux y Mac, sin clonar el repositorio.
 
 ## Avance
-- **Total:** 89% (110/123 S)
+- **Total:** 88% (110/125 S)
 - 4 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
@@ -24,8 +25,8 @@
 - **Hosts:** 42% (3/7 S)
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 95% (39/41 S)
-- **Producto Torre:** 88% (8/9 S)
+- **Método:** 92% (39/42 S)
+- **Producto Torre:** 80% (8/10 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -63,9 +64,11 @@
 
 ### Método (metodo)
 1. **S176** · 📋 PLANIFICADO · espera-atascada (S175) · prioridad Resolución de problemas · Generales · Invalidar el verde anterior cuando una nueva suite no produce resumen.
+2. **S186** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · El instalador de skills tiene su propio comando torre-setup y nunca reemplaza el comando torre-control de la Torre V1.
 
 ### Producto Torre (producto-torre)
 1. **S184** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · Un socio con acceso al repo instala torre-control con un solo comando gh, en Linux y Mac, sin clonar el repositorio.
+2. **S185** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · El menú de torre-control se maneja con flechas y Enter, con colores, y no aborta cuando la terminal envía el Enter como CR LF.
 
 ## Bloqueos
 - **S178:** Encargo incompleto: falta planificar · falta-planificar (S178)
@@ -1050,6 +1053,34 @@
   - Resultado y comportamiento: Un único comando pegable, con gh autenticado, tag fijo y el SHA-256 que el mantenedor comunica por un segundo canal, descarga desde el Release privado lo necesario, verifica el SHA-256 antes de ejecutar cualquier byte descargado e instala el motor global sin clonar el repositorio. Funciona en Linux y macOS, comprueba requisitos (gh, Bun, Git, Go) y dice cuál falta. El README suma una guía para socios: requisitos, el comando, cómo adoptar un proyecto y abrirlo en Claude Code y Pi, y cómo deshacer. Una prueba guiada en una Mac real queda registrada con su resultado; hasta pasarla, el README declara macOS como no probado.
   - Restricciones y decisiones: Se mantiene la decisión de S174: gh autenticado, tag exacto, sin latest, sin descargas sin verificar y sin atajos tipo install.sh fuera de esa verificación; el instalador de un comando es el mismo camino seguro, no un fallback. Release privado; no se publica en Homebrew. Sólo los archivos declarados y README.md como Cimiento. Pruebas aisladas sin red real. Pronóstico de 250–450 líneas authored; el tamaño sigue la guía nativa de Gentle AI y no es una restricción de esta Sesión. Publicar la nueva release es una decisión humana aparte.
   - Referencias: product/tower/v1/release.mjs, bootstrap.mjs, cli.mjs y release-build.mjs; instalación de Gentle AI vía Homebrew como referencia de experiencia; hallazgos de la prueba real del 2026-10-02 (Engram 12940).
+
+### S185 — El menú de torre-control se maneja con flechas y Enter, con colores, y no aborta cuando la terminal envía el Enter como CR LF.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs
+  - Depende de: S183
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Al usar torre-control sin argumentos en la terminal del mantenedor, el menú numérico aborta en la segunda pregunta con «menu input missing or invalid»: el Enter llega como CR LF, la TTY lo convierte en dos saltos de línea y la línea vacía responde la pregunta siguiente (cli.mjs líneas 127–132; reproducido con una pseudo-terminal). El mantenedor esperaba la experiencia visual del instalador anterior (setup.sh: flechas, colores, pantalla propia).
+  - Resultado y comportamiento: En una terminal interactiva, el menú muestra las mismas acciones cerradas, se navega con flechas y se elige con Enter, con resaltado y colores, y restaura siempre el estado de la terminal al salir, al fallar o con Ctrl-C. Las preguntas de texto (tag, asset, SHA-256, raíz del proyecto y palabras de confirmación) aceptan Enter como LF, CR o CR LF sin respuestas vacías fantasma. Si la terminal no admite el modo visual, cae a un menú numérico simple que también tolera esos finales de línea. Funciona en Linux y macOS.
+  - Restricciones y decisiones: Sólo los dos archivos declarados; sin módulos nuevos ni dependencias, para no cambiar los miembros del Release. El menú sigue siendo una fachada de los mismos comandos cerrados, con las mismas confirmaciones escritas; no agrega acciones. Pruebas deterministas con una pseudo-terminal o entradas inyectadas, incluida la regresión CR LF. Pronóstico de 150–300 líneas authored; el tamaño sigue la guía nativa de Gentle AI y no es una restricción de esta Sesión. Llega a los usuarios con una release nueva, decisión humana aparte.
+  - Referencias: product/tower/v1/cli.mjs líneas 117–163; agent-workflows/tools/setup.sh líneas 382–520 como referencia visual; reproducción CR LF del 2026-10-02.
+
+### S186 — El instalador de skills tiene su propio comando torre-setup y nunca reemplaza el comando torre-control de la Torre V1.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/setup.sh, agent-workflows/tests/test&#95;setup&#95;launcher.py
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: setup.sh genera el lanzador ~/.local/bin/torre-control al instalar skills y con --link (líneas 44, 276–299 y 333). Desde que torre-control es el motor V1 instalado, usar ese menú para actualizar skills reemplazaría el lanzador V1 y dejaría su estado global inconsistente.
+  - Resultado y comportamiento: El lanzador por defecto de setup.sh se llama torre-setup. Instalar skills o --link crean o actualizan sólo ~/.local/bin/torre-setup, y se niegan a escribir torre-control: si el nombre configurado fuese torre-control y ese archivo existe, no lo tocan y explican por qué. Los textos de ayuda y los mensajes nombran torre-setup.
+  - Restricciones y decisiones: Sólo los dos archivos declarados. No migra ni borra lanzadores existentes: el mantenedor ya tiene torre-control V1 y no tiene torre-setup. Pruebas con HOME y BIN&#95;DIR desechables, sin tocar el HOME real. Pronóstico de 60–150 líneas authored; el tamaño sigue la guía nativa de Gentle AI y no es una restricción de esta Sesión.
+  - Referencias: agent-workflows/tools/setup.sh líneas 1–44, 276–299, 333, 363 y 521; migración del lanzador legacy en product/tower/v1/global.mjs.
 
 ### S175 — Resolver Radar fuera del checkout antes del push.
 - Coordinación:
@@ -3864,7 +3895,7 @@ Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workfl
   - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
 
 ## Capacidad
-1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: producto-torre.
+2 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: metodo, producto-torre.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
