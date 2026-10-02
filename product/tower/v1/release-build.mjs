@@ -11,7 +11,8 @@ import { MAX_RELEASE_BYTES } from "./release.mjs";
 const defaultRepo = fileURLToPath(new URL("../../../", import.meta.url));
 const memberLimit = 1024 * 1024;
 const aggregateLimit = 8 * memberLimit;
-const optionNames = ["repo", "commit", "out"];
+const optionNames = ["repo", "commit", "out", "tag", "installer-out"];
+const installerPath = "product/tower/v1/install.mjs";
 // ASCII paths: default sort is bytewise, never locale-sensitive. Serialization key order
 // is schema,members and path,type,encoding,byteLength,sha256,bytes; no timestamps/newline.
 const paths = [...new Set([...BUNDLE_MEMBERS.map(({ source }) => source), ...[
@@ -47,27 +48,44 @@ function outputPath(out, repo) {
   fail("out already exists; overwrite is forbidden");
 }
 
+/** Deterministic standalone asset; a unique, exact sentinel prevents accidental restamping. */
+export function stampInstaller(source, { tag, sha256 }) {
+  if (typeof tag !== "string" || tag.length > 128 || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(tag) ||
+      tag.includes("..") || tag.endsWith(".") || tag.toLowerCase() === "latest" || !/^[a-f0-9]{64}$/.test(sha256)) {
+    fail("invalid installer stamp tag or SHA-256");
+  }
+  if (typeof source !== "string" || source.match(/^const PINNED = null;$/gm)?.length !== 1) fail("unstamped installer marker must occur exactly once");
+  const pinned = { repository: "achangkuon/control-tower", tag, asset: "tower-v1.json", sha256, paths };
+  return source.replace(/^const PINNED = null;$/m, () => `const PINNED = ${JSON.stringify(pinned)};`);
+}
+
 /** Build from immutable commit-tree blobs; bootstrap is the final wire-format authority.
  * No network, working-file reads, Git mutations, or filesystem writes before admission.
- * Returns the receipt; only main prints it. The output parent must already exist.
+ * Returns the receipt; only main prints it. The output parents must already exist.
  */
 export function buildRelease(options) {
   if (!options || typeof options !== "object" || Array.isArray(options) ||
       Object.keys(options).some((key) => !optionNames.includes(key))) fail("invalid build options");
-  const { repo = defaultRepo, commit = "HEAD", out } = options;
+  const { repo = defaultRepo, commit = "HEAD", out, tag, "installer-out": installerOut } = options;
+  const withInstaller = Object.hasOwn(options, "tag") || Object.hasOwn(options, "installer-out");
+  if (withInstaller && (!tag || !installerOut)) fail("--tag and --installer-out must be supplied together");
+  if (withInstaller && basename(out ?? "") !== "tower-v1.json") fail("installer requires envelope asset name tower-v1.json");
   if (typeof repo !== "string" || !repo || typeof commit !== "string" || !commit ||
       commit.startsWith("-") || /[\0\r\n]/.test(commit)) fail("invalid repository or commit");
   const root = realpathSync(resolve(repo));
   if (git(root, ["rev-parse", "--show-toplevel"]).toString("utf8").trim() !== root) fail("repo must be a worktree root");
   const target = outputPath(out, root);
+  const installerTarget = withInstaller ? outputPath(installerOut, root) : null;
+  if (installerTarget === target) fail("installer and envelope outputs must differ");
   clean(root);
   const sha = git(root, ["rev-parse", "--verify", "--end-of-options", `${commit}^{commit}`]).toString("utf8").trim();
   if (!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(sha)) fail("git returned an invalid commit");
   const entries = new Map();
-  const tree = git(root, ["ls-tree", "-rlz", "--full-tree", sha, "--", ...paths]).toString("utf8");
+  const readPaths = withInstaller ? [...paths, installerPath] : paths;
+  const tree = git(root, ["ls-tree", "-rlz", "--full-tree", sha, "--", ...readPaths]).toString("utf8");
   for (const record of tree.split("\0").filter(Boolean)) {
     const match = record.match(/^(100644|100755) blob [a-f0-9]+ +([0-9]+)\t(.+)$/);
-    if (!match || !paths.includes(match[3]) || entries.has(match[3])) fail("release member is not a regular file");
+    if (!match || !readPaths.includes(match[3]) || entries.has(match[3])) fail("release member is not a regular file");
     entries.set(match[3], Number(match[2]));
   }
   let aggregate = 0;
@@ -88,10 +106,23 @@ export function buildRelease(options) {
   const sha256 = digest(bytes);
   bootstrapVerifiedRelease({ repository: "example/control-tower", tag: "v1", asset: "tower-v1.json", sha256,
     runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : bytes }) });
+  let installer;
+  if (withInstaller) {
+    const size = entries.get(installerPath);
+    if (!Number.isSafeInteger(size) || size < 0 || size > memberLimit) fail("missing or oversized installer member");
+    const source = git(root, ["show", `${sha}:${installerPath}`]);
+    if (source.length !== size) fail("installer size divergence");
+    installer = Buffer.from(stampInstaller(new TextDecoder("utf-8", { fatal: true }).decode(source), { tag, sha256 }));
+  }
   clean(root);
   const fd = openSync(target, "wx", 0o644);
   try { writeFileSync(fd, bytes); fchmodSync(fd, 0o644); } finally { closeSync(fd); }
-  return { schema: "tower.v1.release-build/1", commit: sha, asset: basename(out), bytes: bytes.length, sha256 };
+  if (installer) {
+    const installerFd = openSync(installerTarget, "wx", 0o644);
+    try { writeFileSync(installerFd, installer); fchmodSync(installerFd, 0o644); } finally { closeSync(installerFd); }
+  }
+  return { schema: "tower.v1.release-build/1", commit: sha, asset: basename(out), bytes: bytes.length, sha256,
+    ...(installer ? { installerSha256: digest(installer) } : {}) };
 }
 
 export function main(argv, io = {}) {

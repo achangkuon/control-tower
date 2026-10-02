@@ -22,8 +22,9 @@ y GitHub CLI (`gh`) autenticado en `github.com` con acceso al repositorio privad
 requiere Go y sus dependencias disponibles.
 
 **Todavía no se ha publicado un Release.** Los ejemplos siguientes son plantillas,
-no identifican una versión disponible. El mantenedor comunica el tag, el nombre
-exacto del asset y su SHA-256 por un segundo canal de confianza.
+no identifican una versión disponible. Para instalar sin checkout, el mantenedor
+comunica el tag exacto y **un SHA-256 del instalador** por un segundo canal de
+confianza. El instalador verificado fija a su vez el digest del manifiesto.
 
 **Nunca tome el SHA-256 de la misma página del Release que suministra el asset.**
 La CLI exige el digest, pero no puede comprobar cómo se obtuvo. Debe ser un
@@ -32,12 +33,17 @@ alternativa de descarga cuando falla la adquisición autenticada.
 
 ### Instalar el motor global
 
-Desde una copia revisada de este repositorio, sustituya los valores entre
-ángulos por los comunicados por el mantenedor:
+La ruta principal no requiere checkout: siga la [Guía para socios](#guía-para-socios)
+para descargar, verificar y ejecutar el instalador con un solo comando.
+
+Como alternativa para mantenedores, desde una copia revisada del repositorio:
 
 ```bash
-bun product/tower/v1/cli.mjs install --tag '<TAG>' --asset '<ASSET>' --sha256 '<SHA256_DEL_SEGUNDO_CANAL>'
+bun product/tower/v1/cli.mjs install --tag '<TAG>' --asset tower-v1.json --sha256 '<SHA256_DEL_MANIFIESTO>'
 ```
+
+Esta alternativa exige el SHA-256 independiente del **manifiesto**, no el del
+instalador; tampoco permite ejecutar bytes sin verificar.
 
 La descarga usa `gh`, verifica el SHA-256 antes de interpretar el asset y valida
 un manifiesto positivo de rutas y archivos permitidos, con límites de tamaño.
@@ -49,8 +55,8 @@ Solo después publica la versión y activa el lanzador.
 | `~/.local/share/torre-control/v1` | Estado global y versiones retenidas |
 | `~/.local/share/torre-control/projects` | Registro informativo de proyectos |
 
-Los ejemplos posteriores usan la ruta completa del lanzador; no dependen de que
-`~/.local/bin` esté en `PATH`.
+Los siguientes ejemplos de diagnóstico usan la ruta completa del lanzador;
+no dependen de que `~/.local/bin` esté en `PATH`.
 
 ### Adoptar un proyecto y verificar
 
@@ -71,6 +77,84 @@ flujo de confianza o mediante `--approve`; consulte [Adopción por host](#adopci
 Un diagnóstico global sano devuelve `status: "healthy"`; sin instalación devuelve
 `status: "absent"`. El diagnóstico de proyecto entrega el resultado local bajo
 `localResult` y el resultado del registro bajo `registry`.
+
+## Guía para socios
+
+### Preparar el entorno
+
+| Plataforma | Estado | Requisitos |
+|---|---|---|
+| Linux | Probado en WSL | Bun, Git, Go, `gh` autenticado y `shasum` (Perl); instalarlos con el gestor de paquetes o sus guías oficiales |
+| macOS | **NO probado todavía**; pendiente de prueba guiada | Bun, Git, Go y `gh`; `shasum` viene con el sistema. Homebrew puede instalar los requisitos: `brew install oven-sh/bun/bun git go gh` |
+| Windows | Solo vía WSL | Usar la terminal y los requisitos de Linux dentro de WSL |
+
+Torre de Control **no se distribuye por Homebrew**. Claude Code o Pi deben estar
+instalados por separado. La compilación posterior de Radar necesita las
+dependencias Go disponibles. Autentique `gh` con `gh auth login` y compruebe
+`gh auth status`: su cuenta debe tener acceso al repositorio privado.
+
+### Instalar con un comando
+
+Pida al mantenedor el `<TAG>` exacto y `<SHA_DEL_INSTALADOR>` por un segundo canal
+de confianza. **Nunca obtenga el SHA de la página del Release.** Sustituya ambos
+marcadores antes de pegar esta línea en bash o zsh, en Linux o macOS:
+
+```bash
+d=$(mktemp -d) && gh release download '<TAG>' -R achangkuon/control-tower -p torre-install.mjs -D "$d" && printf '%s  %s\n' '<SHA_DEL_INSTALADOR>' "$d/torre-install.mjs" | shasum -a 256 -c - && bun "$d/torre-install.mjs"
+```
+
+En Linux sin Perl, sustituya `shasum -a 256 -c -` por `sha256sum -c -`.
+Si la descarga o el checksum falla, el instalador **no se ejecuta**: deténgase
+y confirme los datos con el mantenedor. No use `latest` ni scripts alternativos.
+El directorio `$d` conserva el instalador descargado para inspección; los
+temporales internos del instalador se eliminan al terminar.
+
+El instalador comprueba los requisitos y descarga el manifiesto `tower-v1.json`
+del tag fijado. Verifica su SHA-256 antes de leer JSON, verifica cada miembro y
+solo entonces invoca la instalación V1, que descarga y valida nuevamente.
+Para una prueba guiada sin instalación global, cambie únicamente el último
+comando por `bun "$d/torre-install.mjs" --dry-run`: sí descarga y verifica.
+
+### Activar PATH, adoptar y abrir el host
+
+macOS no incluye `~/.local/bin` en PATH de forma predeterminada. Añada esta línea
+a `~/.zshrc` (zsh) o `~/.bashrc` (bash), y ejecútela también en la terminal actual:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+torre-control project init --project /ruta/absoluta/proyecto --trust trusted
+torre-control project doctor --project /ruta/absoluta/proyecto
+cd /ruta/absoluta/proyecto
+claude
+# O, en lugar de Claude Code:
+pi --approve
+```
+
+Revise el proyecto antes de declararlo confiable; `--trust trusted` no aprueba
+por sí solo la confianza del host. Para deshacer la adopción, use
+`torre-control project uninstall --project /ruta/absoluta/proyecto`.
+`project cleanup --project /ruta/absoluta/proyecto` solo retira un journal
+residual intacto, no una adopción activa. Para revertir el motor global, use
+`torre-control rollback`; no existe desinstalación global ni poda pública en V1.
+
+### Publicar: procedimiento para el mantenedor
+
+Después de revisar y entregar un commit limpio que incluya el instalador,
+cree una carpeta de salida **fuera del repositorio**, con ambos archivos aún
+ausentes. Sustituya commit, tag y rutas; no publique desde un árbol modificado:
+
+```bash
+bun product/tower/v1/release-build.mjs --commit '<COMMIT>' --out /ruta/externa/tower-v1.json --tag '<TAG>' --installer-out /ruta/externa/torre-install.mjs
+gh release create '<TAG>' --repo achangkuon/control-tower --target '<COMMIT>' /ruta/externa/tower-v1.json /ruta/externa/torre-install.mjs
+```
+
+El constructor lee ambos contenidos del commit, sella exactamente una línea
+`const PINNED` con repositorio, tag, asset, digest del manifiesto y rutas
+permitidas, y rechaza sobrescrituras. El instalador no es miembro del manifiesto.
+La línea JSON contiene `sha256` (manifiesto) e `installerSha256` (instalador).
+Comunique **`installerSha256` y el tag** al socio por el segundo canal, no solo
+en las notas del Release. Sin las nuevas banderas, el constructor sigue
+produciendo únicamente el manifiesto.
 
 ## Comandos entregados
 

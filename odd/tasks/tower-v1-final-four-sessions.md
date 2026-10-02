@@ -349,3 +349,11 @@ Maintainer approved on 2026-10-02 executing S183, S184 and the v1.0.1 release in
 - Retained legacy backups are validated against their own stored evidence (canonical base64, SHA-256, integer mode, exact three-line generated shape with a safe absolute canonical path); install-time migration still requires the exact known legacy launcher; v1.0.0 state schema unchanged. Permission errors name the directory, its mode and the `chmod 755` / `umask 022` remedy, or the other owner; only directories the CLI creates are normalized to 0755.
 - Read-only check against the maintainer's real v1.0.0 state with the new code: `doctorGlobal` healthy both with an installed-copy repository path (previously failing) and the checkout path; installation bytes unchanged.
 - Native review `review-5fd7cc7828f97bfe`: medium/reliability, 195 lines, approved without findings and acknowledged.
+
+### S184 evidence
+
+- Writer: new `install.mjs` 103 + `test/install.test.mjs` 121; `release-build.mjs` +37/-6 and its test +37/-1; README +91/-7. RED 7 behavioral failures; GREEN 18 focused pass; proxy-first run 18 pass; V1 suite 264 pass on the second run (first run had one transient benchmark capture `blocked` instead of `measured`, unchanged file — recurring capture flake, follow-up).
+- Chain of trust: partners verify one installer SHA-256 (second channel) before running it; the stamped installer pins repository, tag, envelope asset, envelope SHA-256 and the 30 canonical paths, verifies the envelope before parsing, extracts privately and delegates to the S174 `cli.mjs install`, which re-acquires and fully validates. Unstamped source refuses to run. `--dry-run` supports the guided Mac test.
+- One-liner: `d=$(mktemp -d) && gh release download '<TAG>' -R achangkuon/control-tower -p torre-install.mjs -D "$d" && printf '%s  %s\n' '<SHA_DEL_INSTALADOR>' "$d/torre-install.mjs" | shasum -a 256 -c - && bun "$d/torre-install.mjs"`.
+- README: partner guide, platform table (Linux tested on WSL; macOS NOT tested yet; Windows only through WSL), maintainer release procedure.
+- Native review `review-ca97deaed8cd4524`: medium/reliability, 403 lines, approved and acknowledged. Non-blocking: `R3-partial-release-output` (release-build can leave a partial output on write failure) and `R3-real-install-unproved` (tests use doubles; the real install is proven only after publication).

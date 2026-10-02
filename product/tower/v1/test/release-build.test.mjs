@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { BUNDLE_MEMBERS } from "../bundle.mjs";
 import { bootstrapVerifiedRelease } from "../bootstrap.mjs";
-import { buildRelease, main } from "../release-build.mjs";
+import { buildRelease, main, stampInstaller } from "../release-build.mjs";
 
 const paths = [...BUNDLE_MEMBERS.map(({ source }) => source), ...[
   "adoption", "bundle", "project-files", "bootstrap", "release", "global", "projects", "cli",
@@ -31,12 +31,48 @@ function fixture(run, change = () => {}) {
       mkdirSync(dirname(join(repo, path)), { recursive: true });
       writeFileSync(join(repo, path), Buffer.from([0, 255, 1, 2]));
     }
+    const installer = "product/tower/v1/install.mjs";
+    writeFileSync(join(repo, installer), readFileSync(new URL("../install.mjs", import.meta.url)));
     change(repo);
     git(repo, "add", ".");
     git(repo, "-c", "core.hooksPath=/dev/null", "commit", "--quiet", "-m", "fixture");
     return run({ root, repo, commit: git(repo, "rev-parse", "HEAD"), out: join(root, "tower-v1.json") });
   } finally { rmSync(root, { recursive: true, force: true }); }
 }
+
+test("stamping is exact once, pins immutable envelope and emits deterministic separate installer", () => fixture(({ repo, out, root, commit }) => {
+  const installerOut = join(root, "torre-install.mjs");
+  const receipt = buildRelease({ repo, out, tag: "v1.0.1", "installer-out": installerOut });
+  const source = readFileSync(installerOut, "utf8");
+  const pinned = JSON.parse(source.match(/^const PINNED = (.+);$/m)[1]);
+  expect(pinned).toEqual({ repository: "achangkuon/control-tower", tag: "v1.0.1", asset: "tower-v1.json", sha256: receipt.sha256, paths });
+  expect(receipt.installerSha256).toBe(digest(source));
+  expect(lstatSync(installerOut).mode & 0o777).toBe(0o644);
+  expect(JSON.parse(readFileSync(out)).members.some(({ path }) => path.endsWith("/install.mjs"))).toBe(false);
+  mkdirSync(join(root, "second"));
+  const second = buildRelease({ repo, commit, out: join(root, "second/tower-v1.json"), tag: "v1.0.1", "installer-out": installerOut + ".second" });
+  expect(second.installerSha256).toBe(receipt.installerSha256);
+  expect(readFileSync(installerOut + ".second", "utf8")).toBe(source);
+  expect(() => stampInstaller(source, pinned)).toThrow(/stamp/i);
+  expect(() => stampInstaller("const PINNED = null;\nconst PINNED = null;", pinned)).toThrow(/stamp/i);
+}));
+
+test("installer flags and source admission fail before writing either output", () => {
+  for (const kind of ["tag-only", "out-only", "latest", "path", "exists", "missing", "symlink", "unstampable"]) fixture(({ repo, out, root }) => {
+    const installerOut = kind === "path" ? join(repo, "installer.mjs") : join(root, "installer.mjs");
+    if (kind === "exists") writeFileSync(installerOut, "preserve");
+    const options = { repo, out, tag: kind === "latest" ? "latest" : "v1.0.1", "installer-out": installerOut };
+    if (kind === "tag-only") delete options["installer-out"];
+    if (kind === "out-only") delete options.tag;
+    expect(() => buildRelease(options)).toThrow();
+    expect(existsSync(out)).toBe(false);
+  }, (repo) => {
+    const file = join(repo, "product/tower/v1/install.mjs");
+    if (["missing", "symlink"].includes(kind)) rmSync(file);
+    if (kind === "symlink") symlinkSync("cli.mjs", file);
+    if (kind === "unstampable") writeFileSync(file, "// no stamp marker");
+  });
+});
 
 test("deterministic bytes, fixed keys and exact membership admitted by bootstrap", () => fixture(({ repo, commit, out, root }) => {
   const first = buildRelease({ repo, out }), second = buildRelease({ repo, commit, out: join(root, "second.json") });
