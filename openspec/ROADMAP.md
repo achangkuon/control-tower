@@ -11,7 +11,7 @@
 - Producto Torre #1 → S184 — Un socio con acceso al repo instala torre-control con un solo comando gh, en Linux y Mac, sin clonar el repositorio.
 
 ## Avance
-- **Total:** 89% (112/125 S)
+- **Total:** 86% (112/129 S)
 - 4 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
@@ -25,7 +25,7 @@
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
 - **Método:** 95% (40/42 S)
-- **Producto Torre:** 90% (9/10 S)
+- **Producto Torre:** 64% (9/14 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -66,6 +66,10 @@
 
 ### Producto Torre (producto-torre)
 1. **S184** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · Un socio con acceso al repo instala torre-control con un solo comando gh, en Linux y Mac, sin clonar el repositorio.
+2. **S187** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · torre-control status devuelve, sólo leyendo, el estado completo que necesita la pantalla de inicio.
+3. **S188** · 📋 PLANIFICADO · espera-natural (S187) · prioridad Torre V1 · Adopción project-local reversible · Una interfaz de terminal en Go muestra el inicio de la Torre: logo, versión, estado y menú en español.
+4. **S189** · 📋 PLANIFICADO · espera-natural (S187) · prioridad Torre V1 · Adopción project-local reversible · La interfaz Go guía paso a paso instalar, actualizar, volver atrás y administrar proyectos.
+5. **S190** · 📋 PLANIFICADO · espera-natural (S187) · prioridad Torre V1 · Adopción project-local reversible · La interfaz Go llega verificada a cada máquina Linux y Mac y torre-control la abre por defecto, publicada como v1.1.0.
 
 ## Bloqueos
 - **S178:** Encargo incompleto: falta planificar · falta-planificar (S178)
@@ -1078,6 +1082,62 @@
   - Resultado y comportamiento: El lanzador por defecto de setup.sh se llama torre-setup. Instalar skills o --link crean o actualizan sólo ~/.local/bin/torre-setup, y se niegan a escribir torre-control: si el nombre configurado fuese torre-control y ese archivo existe, no lo tocan y explican por qué. Los textos de ayuda y los mensajes nombran torre-setup.
   - Restricciones y decisiones: Sólo los dos archivos declarados. No migra ni borra lanzadores existentes: el mantenedor ya tiene torre-control V1 y no tiene torre-setup. Pruebas con HOME y BIN&#95;DIR desechables, sin tocar el HOME real. Pronóstico de 60–150 líneas authored; el tamaño sigue la guía nativa de Gentle AI y no es una restricción de esta Sesión.
   - Referencias: agent-workflows/tools/setup.sh líneas 1–44, 276–299, 333, 363 y 521; migración del lanzador legacy en product/tower/v1/global.mjs.
+
+### S187 — torre-control status devuelve, sólo leyendo, el estado completo que necesita la pantalla de inicio.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs
+  - Depende de: S185
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: La nueva interfaz visual necesita mostrar en su inicio el estado del motor, los proyectos, los requisitos y los agentes, como el instalador de Gentle AI y el bloque Estado de setup.sh. Hoy esa información está repartida y parte no se expone.
+  - Resultado y comportamiento: Un comando cerrado nuevo, status, imprime una sola línea JSON con esquema versionado: motor global (instalado o no, versión activa y anterior, salud), proyectos registrados con su salud en vivo, requisitos gh (con sesión), Bun, Git y Go con versión o ausencia, agentes detectados (Claude Code, Pi, Codex, OpenCode) distinguiendo ejecutable presente de configuración presente, y sistema operativo y shell. No escribe nada: no usa el doctor de proyecto registrado (publica membresía) ni prepara directorios.
+  - Restricciones y decisiones: Sólo los dos archivos declarados; sin módulos nuevos. Cada sonda con tiempo límite; una sonda que falla se informa sin abortar el resto. Pruebas aisladas sin tocar el HOME real. Pronóstico de 120–250 líneas authored; el tamaño sigue la guía nativa de Gentle AI y no es una restricción de esta Sesión.
+  - Referencias: Auditoría del instalador de Gentle AI v4.0.0 (internal/system/detect.go, deps.go, config&#95;scan.go); setup.sh líneas 49–62 y 110–145; global.mjs doctorGlobal y projects.mjs listProjects.
+
+### S188 — Una interfaz de terminal en Go muestra el inicio de la Torre: logo, versión, estado y menú en español.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S187)
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/tui/go.mod, product/tower/v1/tui/go.sum, product/tower/v1/tui/main.go, product/tower/v1/tui/model.go, product/tower/v1/tui/home.go, product/tower/v1/tui/styles.go, product/tower/v1/tui/model&#95;test.go
+  - Depende de: S187
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: El menú de torre-control es una lista técnica que falla en algunas terminales y no orienta al usuario. El mantenedor quiere la experiencia del instalador de Gentle AI (Go, Bubbletea, Lipgloss, MIT): copiar patrones, no código.
+  - Resultado y comportamiento: Un programa Go con Bubbletea abre en pantalla completa: logo de la torre, versión, bloque Estado alimentado por torre-control status (motor, proyectos, requisitos, agentes), menú en español con flechas o j/k, Enter, q para salir, r para refrescar, pie de ayuda por pantalla, Diagnóstico y Ayuda. Las acciones que modifican algo ejecutan los mismos comandos cerrados de torre-control y siempre vuelven al inicio con un resultado legible. Se adapta al tamaño de la terminal y funciona sin color (NO&#95;COLOR).
+  - Restricciones y decisiones: Sólo los archivos declarados. La Torre en Bun sigue siendo la única autoridad del ciclo de vida; la interfaz no agrega acciones ni escribe estado por su cuenta. Pruebas con go test sobre el modelo (teclas, pantallas, salida de comandos simulada). Se ejecuta desde el repositorio; distribuirla es S190. Pronóstico de 300–500 líneas authored; el tamaño sigue la guía nativa de Gentle AI y no es una restricción de esta Sesión.
+  - Referencias: gentle-ai v4.0.0 internal/tui (model.go, router.go, styles, screens/welcome.go y detection.go); setup.sh líneas 382–520 (logo y Estado); capturas del mantenedor del 2026-10-02.
+
+### S189 — La interfaz Go guía paso a paso instalar, actualizar, volver atrás y administrar proyectos.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S187)
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/tui/model.go, product/tower/v1/tui/wizard.go, product/tower/v1/tui/projects.go, product/tower/v1/tui/wizard&#95;test.go, product/tower/v1/tui/projects&#95;test.go
+  - Depende de: S188
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Tras S188 el inicio existe, pero instalar, actualizar, volver atrás y administrar proyectos siguen siendo comandos escritos.
+  - Resultado y comportamiento: Asistentes con Volver (Esc) y validación en línea: instalar o actualizar (requisitos, tag, SHA-256 tecleado por el humano, revisión, progreso por etapas, resultado con próximos pasos), volver a la versión anterior con resumen y confirmación, y Proyectos (lista con salud, adoptar con ruta absoluta y confianza explícita, revisar, desinstalar y limpiar con las mismas palabras de confirmación). Los errores se muestran en español en la pantalla correspondiente, conservando lo escrito.
+  - Restricciones y decisiones: Sólo los archivos declarados. Cada acción ejecuta exactamente un comando cerrado de torre-control; ningún valor de seguridad se completa automáticamente; el progreso no inventa porcentajes. Pruebas con go test y comandos simulados. Pronóstico de 350–550 líneas authored; el tamaño sigue la guía nativa de Gentle AI y no es una restricción de esta Sesión.
+  - Referencias: gentle-ai v4.0.0 screens/review.go, installing.go y complete.go; cli.mjs comandos cerrados y confirmaciones.
+
+### S190 — La interfaz Go llega verificada a cada máquina Linux y Mac y torre-control la abre por defecto, publicada como v1.1.0.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S187)
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs, product/tower/v1/install.mjs, product/tower/v1/test/install.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs, README.md, product/tower/v1/INSTALL-AGENTS.md
+  - Depende de: S189
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Un programa Go pesa varios MB por sistema y no cabe en el paquete actual (límite de 1 MiB por miembro). Debe llegar a los socios con el mismo modelo de confianza: un solo SHA-256 por segundo canal y verificación antes de ejecutar.
+  - Resultado y comportamiento: El constructor de releases compila la interfaz para Linux y macOS (amd64 y arm64) desde un commit limpio, como assets separados cuyos SHA-256 quedan fijados en el instalador sellado. El instalador baja y verifica sólo el binario de la plataforma antes de usarlo y lo instala junto a la versión activa. torre-control sin argumentos en una terminal abre la interfaz; si no está disponible o falla al iniciar, cae al menú actual. README y la guía para agentes se actualizan. Se publica la release v1.1.0 y se repite la prueba de socio de punta a punta; la prueba en Mac queda registrada.
+  - Restricciones y decisiones: Se mantiene S174: gh autenticado, tag exacto, nada sin verificar. Release privado, decisión de publicar aparte. Sólo los archivos declarados y README.md como Cimiento. Pronóstico de 300–500 líneas authored; el tamaño sigue la guía nativa de Gentle AI y no es una restricción de esta Sesión.
+  - Referencias: release-build.mjs, install.mjs, global.mjs (lanzador y almacén de versiones), bootstrap.mjs límites de miembros; S184 pendiente de la prueba en Mac.
 
 ### S175 — Resolver Radar fuera del checkout antes del push.
 - Coordinación:

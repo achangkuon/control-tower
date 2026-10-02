@@ -400,3 +400,14 @@ Maintainer reported the V1 menu aborting (CR LF Enter) and approved on 2026-10-0
 - Partner end-to-end on a fresh disposable HOME with the exact one-liner: installer checksum OK, global install, project adopted; the installed v1.0.2 menu driven through a pty with arrow keys and a CR LF Enter selected `project doctor`, accepted a CR LF root, returned healthy and emitted the terminal-restore sequence.
 - Maintainer machine updated through its own v1.0.1 launcher (`update --tag v1.0.2`): active v1.0.2, previous v1.0.1, `doctor` healthy, demo project healthy, configuration snapshot unchanged. `setup.sh --link` created `~/.local/bin/torre-setup`; `torre-control` bytes unchanged. Disposable trial directories removed.
 - README and the agent runbook now name v1.0.2 and document the v1.0.0–v1.0.1 menu error. Pending: guided macOS test (S184 closure).
+
+## Installer TUI redesign (S187–S190)
+
+- Maintainer feedback on v1.0.2 (2026-10-02): the hand-built menu still aborts text prompts and exits on a mouse click in their real terminal (Herdr inside Windows Terminal), not reproducible in a pty (split CR LF, SGR mouse and focus events all pass); a raw byte capture was requested. They want the Gentle AI installer experience.
+- Read-only audit of Gentle AI v4.0.0 (MIT; Engram 12980): Go + Bubbletea/Bubbles/Lipgloss state machine; Welcome → Detection → Selection → Review → Progress → Complete; detection of OS, shell, tools, dependency versions and agent configs; per-screen footers, Esc back, alt screen, resize-aware, no mouse.
+- Decisions (Engram 12981): Go + Bubbletea TUI, Spanish UI text; Bun keeps lifecycle authority. Planned S187 (read-only `status` JSON), S188 (Go home screen), S189 (wizards and projects), S190 (per-platform verified binaries, default launch, v1.1.0 release, partner and macOS tests). Radar: 0 errors; S187 LISTO.
+
+- [ ] S187 — read-only `status` command.
+- [ ] S188 — Go home screen.
+- [ ] S189 — wizards and projects.
+- [ ] S190 — packaging, default launch, v1.1.0.

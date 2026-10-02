@@ -2101,6 +2101,137 @@ sesiones:
 
   - {id: S186, entrega: {commit: 7723d7e15322980b535401ee500839fd895a9c19}, historico: openspec/archive/sesiones/S186.md}
 
+  - id: S187
+    zona: producto-torre
+    prioridad: torre-v1
+    resultado: "torre-control status devuelve, sólo leyendo, el estado completo que necesita la pantalla de inicio."
+    autoridad: "Emilio aprobó el 2026-10-02 en esta Conversación el rediseño del instalador al estilo Gentle AI en Go + Bubbletea y en español, dividido en S187–S190 (Engram 12980, 12981)."
+    depende_de: [S185]
+    archivos: [product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs]
+    cimientos: []
+    recurso: []
+    encargo:
+      pedido_contexto: >-
+        La nueva interfaz visual necesita mostrar en su inicio el estado del motor, los
+        proyectos, los requisitos y los agentes, como el instalador de Gentle AI y el
+        bloque Estado de setup.sh. Hoy esa información está repartida y parte no se
+        expone.
+      resultado_comportamiento: >-
+        Un comando cerrado nuevo, status, imprime una sola línea JSON con esquema
+        versionado: motor global (instalado o no, versión activa y anterior, salud),
+        proyectos registrados con su salud en vivo, requisitos gh (con sesión), Bun,
+        Git y Go con versión o ausencia, agentes detectados (Claude Code, Pi, Codex,
+        OpenCode) distinguiendo ejecutable presente de configuración presente, y
+        sistema operativo y shell. No escribe nada: no usa el doctor de proyecto
+        registrado (publica membresía) ni prepara directorios.
+      restricciones_decisiones: >-
+        Sólo los dos archivos declarados; sin módulos nuevos. Cada sonda con tiempo
+        límite; una sonda que falla se informa sin abortar el resto. Pruebas aisladas
+        sin tocar el HOME real. Pronóstico de 120–250 líneas authored; el tamaño
+        sigue la guía nativa de Gentle AI y no es una restricción de esta Sesión.
+      referencias: >-
+        Auditoría del instalador de Gentle AI v4.0.0 (internal/system/detect.go,
+        deps.go, config_scan.go); setup.sh líneas 49–62 y 110–145; global.mjs
+        doctorGlobal y projects.mjs listProjects.
+
+  - id: S188
+    zona: producto-torre
+    prioridad: torre-v1
+    resultado: "Una interfaz de terminal en Go muestra el inicio de la Torre: logo, versión, estado y menú en español."
+    autoridad: "Emilio aprobó el 2026-10-02 en esta Conversación el rediseño del instalador al estilo Gentle AI en Go + Bubbletea y en español, dividido en S187–S190."
+    depende_de: [S187]
+    archivos: [product/tower/v1/tui/go.mod, product/tower/v1/tui/go.sum, product/tower/v1/tui/main.go, product/tower/v1/tui/model.go, product/tower/v1/tui/home.go, product/tower/v1/tui/styles.go, product/tower/v1/tui/model_test.go]
+    cimientos: []
+    recurso: []
+    encargo:
+      pedido_contexto: >-
+        El menú de torre-control es una lista técnica que falla en algunas terminales
+        y no orienta al usuario. El mantenedor quiere la experiencia del instalador de
+        Gentle AI (Go, Bubbletea, Lipgloss, MIT): copiar patrones, no código.
+      resultado_comportamiento: >-
+        Un programa Go con Bubbletea abre en pantalla completa: logo de la torre,
+        versión, bloque Estado alimentado por torre-control status (motor, proyectos,
+        requisitos, agentes), menú en español con flechas o j/k, Enter, q para salir,
+        r para refrescar, pie de ayuda por pantalla, Diagnóstico y Ayuda. Las acciones
+        que modifican algo ejecutan los mismos comandos cerrados de torre-control y
+        siempre vuelven al inicio con un resultado legible. Se adapta al tamaño de la
+        terminal y funciona sin color (NO_COLOR).
+      restricciones_decisiones: >-
+        Sólo los archivos declarados. La Torre en Bun sigue siendo la única autoridad
+        del ciclo de vida; la interfaz no agrega acciones ni escribe estado por su
+        cuenta. Pruebas con go test sobre el modelo (teclas, pantallas, salida de
+        comandos simulada). Se ejecuta desde el repositorio; distribuirla es S190.
+        Pronóstico de 300–500 líneas authored; el tamaño sigue la guía nativa de
+        Gentle AI y no es una restricción de esta Sesión.
+      referencias: >-
+        gentle-ai v4.0.0 internal/tui (model.go, router.go, styles, screens/welcome.go
+        y detection.go); setup.sh líneas 382–520 (logo y Estado); capturas del
+        mantenedor del 2026-10-02.
+
+  - id: S189
+    zona: producto-torre
+    prioridad: torre-v1
+    resultado: "La interfaz Go guía paso a paso instalar, actualizar, volver atrás y administrar proyectos."
+    autoridad: "Emilio aprobó el 2026-10-02 en esta Conversación el rediseño del instalador al estilo Gentle AI en Go + Bubbletea y en español, dividido en S187–S190."
+    depende_de: [S188]
+    archivos: [product/tower/v1/tui/model.go, product/tower/v1/tui/wizard.go, product/tower/v1/tui/projects.go, product/tower/v1/tui/wizard_test.go, product/tower/v1/tui/projects_test.go]
+    cimientos: []
+    recurso: []
+    encargo:
+      pedido_contexto: >-
+        Tras S188 el inicio existe, pero instalar, actualizar, volver atrás y
+        administrar proyectos siguen siendo comandos escritos.
+      resultado_comportamiento: >-
+        Asistentes con Volver (Esc) y validación en línea: instalar o actualizar
+        (requisitos, tag, SHA-256 tecleado por el humano, revisión, progreso por
+        etapas, resultado con próximos pasos), volver a la versión anterior con
+        resumen y confirmación, y Proyectos (lista con salud, adoptar con ruta
+        absoluta y confianza explícita, revisar, desinstalar y limpiar con las mismas
+        palabras de confirmación). Los errores se muestran en español en la pantalla
+        correspondiente, conservando lo escrito.
+      restricciones_decisiones: >-
+        Sólo los archivos declarados. Cada acción ejecuta exactamente un comando
+        cerrado de torre-control; ningún valor de seguridad se completa
+        automáticamente; el progreso no inventa porcentajes. Pruebas con go test y
+        comandos simulados. Pronóstico de 350–550 líneas authored; el tamaño sigue la
+        guía nativa de Gentle AI y no es una restricción de esta Sesión.
+      referencias: >-
+        gentle-ai v4.0.0 screens/review.go, installing.go y complete.go; cli.mjs
+        comandos cerrados y confirmaciones.
+
+  - id: S190
+    zona: producto-torre
+    prioridad: torre-v1
+    resultado: "La interfaz Go llega verificada a cada máquina Linux y Mac y torre-control la abre por defecto, publicada como v1.1.0."
+    autoridad: "Emilio aprobó el 2026-10-02 en esta Conversación el rediseño del instalador al estilo Gentle AI en Go + Bubbletea y en español, dividido en S187–S190."
+    depende_de: [S189]
+    archivos: [product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs, product/tower/v1/install.mjs, product/tower/v1/test/install.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs, README.md, product/tower/v1/INSTALL-AGENTS.md]
+    cimientos: [README.md]
+    recurso: []
+    encargo:
+      pedido_contexto: >-
+        Un programa Go pesa varios MB por sistema y no cabe en el paquete actual
+        (límite de 1 MiB por miembro). Debe llegar a los socios con el mismo modelo de
+        confianza: un solo SHA-256 por segundo canal y verificación antes de ejecutar.
+      resultado_comportamiento: >-
+        El constructor de releases compila la interfaz para Linux y macOS (amd64 y
+        arm64) desde un commit limpio, como assets separados cuyos SHA-256 quedan
+        fijados en el instalador sellado. El instalador baja y verifica sólo el
+        binario de la plataforma antes de usarlo y lo instala junto a la versión
+        activa. torre-control sin argumentos en una terminal abre la interfaz; si no
+        está disponible o falla al iniciar, cae al menú actual. README y la guía para
+        agentes se actualizan. Se publica la release v1.1.0 y se repite la prueba de
+        socio de punta a punta; la prueba en Mac queda registrada.
+      restricciones_decisiones: >-
+        Se mantiene S174: gh autenticado, tag exacto, nada sin verificar. Release
+        privado, decisión de publicar aparte. Sólo los archivos declarados y
+        README.md como Cimiento. Pronóstico de 300–500 líneas authored; el tamaño
+        sigue la guía nativa de Gentle AI y no es una restricción de esta Sesión.
+      referencias: >-
+        release-build.mjs, install.mjs, global.mjs (lanzador y almacén de
+        versiones), bootstrap.mjs límites de miembros; S184 pendiente de la prueba en
+        Mac.
+
   - id: S175
     prioridad: resolucion-problemas-generales
     zona: cimientos
