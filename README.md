@@ -26,8 +26,9 @@ y GitHub CLI (`gh`) autenticado en `github.com` con acceso al repositorio privad
 `achangkuon/control-tower`. Radar se distribuye como fuentes Go; su compilación
 requiere Go y sus dependencias disponibles.
 
-**Todavía no se ha publicado un Release.** Los ejemplos siguientes son plantillas,
-no identifican una versión disponible. Para instalar sin checkout, el mantenedor
+Las versiones se publican como Releases privados de `achangkuon/control-tower`
+(la vigente es `v1.0.1`). Los ejemplos usan marcadores como `<TAG>`; nunca
+tome valores de seguridad de esta página. Para instalar sin checkout, el mantenedor
 comunica el tag exacto y **un SHA-256 del instalador** por un segundo canal de
 confianza. El instalador verificado fija a su vez el digest del manifiesto.
 

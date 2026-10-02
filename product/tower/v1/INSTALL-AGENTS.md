@@ -99,10 +99,15 @@ with the package SHA-256 from the maintainer.
 
 ## Step 4 — Put `torre-control` on the PATH
 
-Check `command -v torre-control`. If it prints nothing, ask the human whether to add
-`export PATH="$HOME/.local/bin:$PATH"` to their shell startup file (`~/.zshrc` on macOS,
-`~/.bashrc` or `~/.zshrc` on Linux). After their approval, append it and run the same line in
-the current shell. macOS does not include `~/.local/bin` by default.
+Check `command -v torre-control`. If it prints nothing, find the human's login shell with
+`basename "$SHELL"`: `zsh` uses `~/.zshrc` (the default on macOS), `bash` uses `~/.bashrc`.
+Ask the human whether to add `export PATH="$HOME/.local/bin:$PATH"` to that file. After their
+approval, append it (only if it is not already there) and run the same line in the current
+shell. macOS does not include `~/.local/bin` by default.
+
+If `command -v torre-control` already prints a path other than
+`$HOME/.local/bin/torre-control`, tell the human: another `torre-control` comes first in the
+PATH and would shadow this installation.
 
 ## Step 5 — Verify the global installation
 
