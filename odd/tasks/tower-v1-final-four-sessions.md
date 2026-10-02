@@ -309,4 +309,11 @@ Maintainer decision: the ordinary-question check uses a real model through an op
 - Plan ID correction: S175 already identifies an unrelated planned Session, so the builder took the next free permanent ID, S182. Maintainer approved the S182 plan entry on 2026-10-02 (Radar check 0 errors / 63 warnings; S182 LISTO).
 - Authorized files: `product/tower/v1/release-build.mjs`, `product/tower/v1/test/release-build.test.mjs`. Build only from an exact clean commit, deterministic bytes and SHA-256, self-validation through bootstrap verification, output outside the repository, no publish/tag.
 
-- [ ] R1 — Implement, verify and review the deterministic release builder.
+- [x] R1 — Implement, verify and review the deterministic release builder. Reviewed; awaiting authorized delivery.
+
+### R1 evidence
+
+- Writer: `release-build.mjs` 117 + `test/release-build.test.mjs` 165 = 282 authored lines, 9 tests. RED 0 pass / 1 fail / 1 error (module absent); GREEN 7, final 9 pass / 76 assertions; proxy-first PATH run 9 pass; V1 suite 249 pass; whitespace clean.
+- 30 members in bytewise path order with fixed key order; reads bytes from the commit tree only, refuses dirty worktrees, self-validates through `bootstrapVerifiedRelease` with an injected runner, writes exclusively (`wx`, 0644) outside the repository.
+- Real dry builds from a local clone of `51c372b`: two runs produced identical 438,596-byte assets with SHA-256 `e4be8288bed019f5f79f0558218bbfbe41a703d77d3fbc84b0f2277885494402`. That asset predates the builder commit; the release asset must be rebuilt from the final release commit.
+- Native review `review-f8ffee750ff0470c`: medium/reliability, 282 lines, approved and acknowledged. Non-blocking follow-ups: `R3-incomplete-output` (a failed write can leave a partial output file) and `R3-lazy-fetch` (partial clones could trigger a promisor fetch).
