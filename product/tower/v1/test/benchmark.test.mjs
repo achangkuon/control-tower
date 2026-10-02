@@ -4,7 +4,11 @@ import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
-import { runBenchmark, createCapture, main } from "../benchmark.mjs";
+import { runBenchmark as benchmark, createCapture, main } from "../benchmark.mjs";
+import * as benchmarkModule from "../benchmark.mjs";
+
+// B1 host tests do not build Radar; B2 exercises the default separately.
+const runBenchmark = (options = {}) => benchmark({ radar: false, ...options });
 
 const gitProxy = fileURLToPath(new URL("../../../../test/helpers/bin", import.meta.url));
 
@@ -72,7 +76,7 @@ test("hanging fixture git times out and blocks before host execution", async () 
     writeFileSync(join(bin, "git"), `#!${process.execPath}\nprocess.on('SIGTERM', () => {});\nsetInterval(() => {}, 1000);\n`, { mode: 0o755 });
     let invoked = false;
     const start = performance.now();
-    const result = (await runBenchmark({ hosts: ["pi"], env: { PATH: `${bin}${delimiter}${env.PATH}` }, timeoutMs: 250,
+    const result = (await runBenchmark({ hosts: ["pi"], env: { PATH: [gitProxy, bin, env.PATH].join(delimiter) }, timeoutMs: 250,
       spawn: async () => { invoked = true; throw new Error("unexpected host execution"); } })).hosts.pi;
     expect(performance.now() - start).toBeLessThan(3000);
     expect(invoked).toBe(false);
@@ -85,6 +89,7 @@ test("hanging fixture git times out and blocks before host execution", async () 
 test("invalid process timeouts fail closed before creating fixtures", async () => {
   for (const timeoutMs of [0, -1, NaN, Infinity, 0.5, 2147483648]) {
     await expect(runBenchmark({ timeoutMs })).rejects.toThrow("invalid options");
+    await expect(benchmarkModule.runRadarContrast({ timeoutMs })).rejects.toThrow("invalid options");
   }
 });
 
@@ -182,7 +187,7 @@ test("real-model paired hosts use recording anthropic route without persisting k
 
 test("SSE partial tool arguments detect Radar and ordinary listings do not", async () => {
   const upstream = Bun.serve({ hostname: "127.0.0.1", port: 0, fetch() {
-    return new Response('data: {"type":"content_block_start","content_block":{"type":"tool_use","name":"Bash","input":{}}}\n\ndata: {"type":"content_block_delta","delta":{"partial_json":"{\\"command\\":\\"bun .control-tower/radar/run\\"}"}}\n\n');
+    return new Response('data: {"type":"content_block_start","content_block":{"type":"tool_use","name":"Bash","input":{}}}\n\ndata: {"type":"content_block_delta","delta":{"partial_json":"{\\"command\\":\\"go run ./.control-tower/radar\\"}"}}\n\n');
   } });
   const capture = createCapture({ host: "claude", realModel: true, upstream: upstream.url.origin });
   try {
@@ -201,6 +206,194 @@ test("tool schema listings never count as invocation and later unexpected reques
     await fetch(capture.url + "/unknown", {method:"POST", body:"{}"});
     expect(() => capture.measure()).toThrow("ambiguous");
   } finally { capture.stop(); }
+});
+
+test("Radar execution requires decoded executable position, not shell mentions", async () => {
+  const commands = [
+    ["echo radar", false], ["cat radar.go", false], ["grep radar README.md", false],
+    ["bun .control-tower/radar/run", false], ["echo 'radar; radar status'", false],
+    ["echo radar && cat radar.go", false], ["go run other.go radar", false],
+    ['echo x"radar; radar status"', false], ["echo radar\\; radar status", false],
+    ["echo 'radar", false], ['"/tmp/bin/radar" status', true],
+    ["radar status", true], ["/tmp/bin/radar status", true],
+    ["cat README.md; radar status", true], ["false || radar status", true],
+    ["echo ok | radar status", true], ["echo ok\nradar status", true],
+    ["go run .control-tower/radar status", true],
+    ["go run './.control-tower/radar' status", true],
+  ];
+  for (const [command, detected] of commands) {
+    const capture = createCapture({ host: "pi" });
+    try {
+      await fetch(capture.url + "/v1/chat/completions", { method: "POST", body: JSON.stringify({
+        messages: [{ role: "user", content: "ordinary" }, { role: "assistant", tool_calls: [
+          { type: "function", function: { name: "bash", arguments: JSON.stringify({ command }) } },
+        ] }],
+      }) });
+      expect(capture.signals().includes("radar execution"), command).toBe(detected);
+    } finally { capture.stop(); }
+  }
+});
+
+const contrast = (options = {}) => benchmarkModule.runRadarContrast({ env: { PATH: process.env.PATH }, ...options });
+function radarSpawn(observations, alter = (_cmd, outcome) => outcome) {
+  return async (cmd, options) => {
+    observations.push({ cmd, ...options });
+    expect(options.timeoutMs).toBeGreaterThan(0);
+    if (cmd[1] === "env") {
+      expect(cmd.slice(1)).toEqual(["env", "GOMODCACHE"]);
+      return { code: 0, stdout: "/fake/operator-module-cache\n", stderr: "" };
+    }
+    expect(options.env.GOMODCACHE).toBe("/fake/operator-module-cache");
+    expect(options.env.GOFLAGS).toBe("-mod=readonly");
+    expect(options.env.GOPROXY).toBe("off");
+    expect(options.env.GOTOOLCHAIN).toBe("local");
+    expect(options.env.HOME).not.toBe(process.env.HOME);
+    if (cmd[1] === "build") {
+      expect(cmd[2]).toBe("-o");
+      expect(cmd[3].startsWith(options.cwd + "/")).toBe(false);
+      return alter(cmd, { code: 0, stdout: "", stderr: "" });
+    }
+    const git = (...args) => spawnSync("git", args, { cwd: options.cwd, env: options.env,
+      timeout: options.timeoutMs, killSignal: "SIGKILL" }).stdout.toString().trim();
+    expect(git("status", "--porcelain")).toBe("");
+    expect(existsSync(join(options.cwd, ".control-tower/radar/go.mod"))).toBe(true);
+    const { readFileSync } = await import("node:fs");
+    const plan = join(options.cwd, "openspec/plan.yaml");
+    const content = existsSync(plan) ? readFileSync(plan, "utf8") : "";
+    const outcome = !content ? { code: 1, stdout: "", stderr: "missing plan\n" }
+      : content.includes("schema_version: 2") ? { code: 1, stdout: "", stderr: "unsupported schema\n" }
+      : { code: 0, stdout: JSON.stringify({ schema: "radar.snapshot/v1", head: git("rev-parse", "HEAD"), avance: { total: 0, cerradas: 0 } }), stderr: "" };
+    if (content.includes("schema_version: 3")) {
+      for (const path of ["README.md", "openspec/", ".control-tower/", ".control-tower-adoption-v1/", ".agents/", ".claude/"]) expect(content).toContain(path);
+      expect(content).toContain("sesiones: []");
+    }
+    return alter(cmd, outcome);
+  };
+}
+
+test("Radar resolves the operator module cache before isolating both offline builds", async () => {
+  const operator = { PATH: process.env.PATH, HOME: "/operator-home", GOPATH: "/operator-go" };
+  const observations = [];
+  const report = await contrast({ env: operator, spawn: radarSpawn(observations) });
+  expect(observations[0].cmd.slice(1)).toEqual(["env", "GOMODCACHE"]);
+  expect(observations[0].env.HOME).toBe(operator.HOME);
+  expect(observations[0].env.GOPATH).toBe(operator.GOPATH);
+  expect(report.cases.every(c => c.status === "equal")).toBe(true);
+  for (const build of observations.filter(o => o.cmd[1] === "build")) {
+    expect(build.env.GOMODCACHE).toBe("/fake/operator-module-cache");
+    expect(build.env.GOCACHE).not.toStartWith("/operator-");
+  }
+  for (const outcome of [{ code: 1, stdout: "", stderr: "cache unavailable" },
+    { code: 0, stdout: "", stderr: "" }, { code: 0, stdout: "relative/cache", stderr: "" }]) {
+    let calls = 0;
+    const blocked = await contrast({ spawn: async () => { calls++; return outcome; } });
+    expect(calls).toBe(1);
+    expect(blocked.cases.every(c => c.status === "blocked" && /GOMODCACHE resolution failed/.test(c.reason))).toBe(true);
+  }
+});
+
+test("Radar builds independently outside fixtures and compares all three cases without changing HEAD", async () => {
+  const observations = [];
+  const radar = await contrast({ spawn: radarSpawn(observations) });
+  expect(radar.flow.source).toContain(".control-tower/radar");
+  expect(radar.canonical.source).toEndWith("agent-workflows/tools/radar");
+  expect(radar.cases.map(c => [c.name, c.status])).toEqual([
+    ["valid", "equal"], ["missing-plan", "equal"], ["schema-v2", "equal"],
+  ]);
+  const builds = observations.filter(o => o.cmd[1] === "build");
+  expect(builds).toHaveLength(2);
+  expect(builds[0].cmd[3]).not.toBe(builds[1].cmd[3]);
+  for (const c of radar.cases) {
+    expect(c.head.afterFlow).toBe(c.head.before);
+    expect(c.head.afterCanonical).toBe(c.head.before);
+  }
+  for (const o of observations.filter(o => o.cmd[1] !== "env")) expect(existsSync(o.env.HOME)).toBe(false);
+});
+
+for (const field of ["code", "stdout", "stderr", "semantic", "schema", "head"]) test(`Radar retains ${field} differences`, async () => {
+  const radar = await contrast({ spawn: radarSpawn([], (cmd, outcome) => {
+    if (!cmd[0].endsWith("canonical-radar") || cmd[1] !== "status") return outcome;
+    if (field === "code") return { ...outcome, code: 7 };
+    if (field === "stderr") return { ...outcome, stderr: "changed".repeat(1000) };
+    if (field === "stdout") return { ...outcome, stdout: "changed" };
+    if (outcome.code !== 0) return outcome;
+    const json = JSON.parse(outcome.stdout);
+    if (field === "semantic") json.avance.total = 1;
+    else json[field] = "changed";
+    return { ...outcome, stdout: JSON.stringify(json) };
+  }) });
+  expect(radar.cases[0].status).toBe("different");
+  expect(JSON.stringify(radar.cases[0].diff).length).toBeLessThan(3000);
+});
+
+test("matching JSON null is not a valid Radar snapshot", async () => {
+  const radar = await contrast({ spawn: radarSpawn([], (cmd, outcome) =>
+    cmd[1] === "status" && outcome.code === 0 ? { ...outcome, stdout: "null" } : outcome) });
+  expect(radar.cases[0].status).toBe("different");
+  expect(radar.cases[0].diff).toContain("unexpected snapshot schema");
+});
+
+test("Radar blocked reasons never silently substitute adopted sources", async () => {
+  expect((await contrast({ env: { PATH: "" } })).cases.every(c => c.status === "blocked" && /go missing/.test(c.reason))).toBe(true);
+  let invoked = false;
+  const missing = await contrast({ canonicalSource: "/nonexistent/canonical-radar", spawn: async () => { invoked = true; } });
+  expect(invoked).toBe(false);
+  expect(missing.cases.every(c => /canonical source missing/.test(c.reason))).toBe(true);
+  const failure = await contrast({ spawn: async (cmd) => cmd[1] === "env" ?
+    { code: 0, stdout: "/fake/operator-module-cache", stderr: "" } :
+    { code: 1, stdout: "", stderr: "x".repeat(10000) + "OFFLINE" } });
+  expect(failure.cases.every(c => c.status === "blocked" && c.reason.endsWith("OFFLINE") && c.reason.length < 2200)).toBe(true);
+});
+
+test("Radar observes HEAD after each invocation and never drops differing stderr prefixes", async () => {
+  const observations = [];
+  const spawn = radarSpawn(observations, (cmd, outcome) => ({ ...outcome,
+    stderr: cmd[1] === "status" ? `${cmd[0].endsWith("canonical-radar") ? "other" : "first"}${"x".repeat(3000)}` : "",
+  }));
+  const radar = await contrast({ spawn: async (cmd, options) => {
+    const outcome = await spawn(cmd, options);
+    if (cmd[0].endsWith("flow-radar") && cmd[1] === "status") {
+      const changed = spawnSync("git", ["-c", "user.name=Benchmark", "-c", "user.email=benchmark@example.invalid",
+        "commit", "--allow-empty", "-qm", "mutation sentinel"], { cwd: options.cwd, env: options.env,
+        timeout: options.timeoutMs, killSignal: "SIGKILL" });
+      expect(changed.status).toBe(0);
+    }
+    return outcome;
+  } });
+  for (const c of radar.cases) {
+    expect(c.status).toBe("different");
+    expect(c.diff).toContain("fixture HEAD changed");
+    expect(c.diff).toContain("stderr differs");
+    expect(c.flow.stderr).toBe(c.canonical.stderr); // Equal bounded tails must NOT mask full-stream differences.
+  }
+});
+
+test("hanging Radar build uses the same bounded process helper and cleans its temp root", async () => {
+  await fake("normal", async ({ env, root }) => {
+    writeFileSync(join(root, "bin/go"), `#!${process.execPath}\nif (process.argv[2] === 'env') { console.log('/fake/operator-module-cache'); process.exit(0); }\nprocess.on('SIGTERM', () => {});\nsetInterval(() => {}, 1000);\n`, { mode: 0o755 });
+    const start = performance.now();
+    const radar = await contrast({ env, timeoutMs: 250 });
+    expect(performance.now() - start).toBeLessThan(3000);
+    expect(radar.cases.every(c => c.status === "blocked" && /timed out.*250/.test(c.reason))).toBe(true);
+  });
+});
+
+test("default Radar report and --radar retain one-line JSON and explicit limits", async () => {
+  await fake("normal", async ({ env }) => {
+    const spawn = async (cmd) => cmd[1] === "env" ? { code: 0, stdout: "/fake/operator-module-cache", stderr: "" } :
+      cmd[1] === "build" ? { code: 1, stdout: "", stderr: "offline fixture" } : { code: 1, stdout: "", stderr: "host stderr" };
+    const report = await benchmark({ env, hosts: ["pi"], spawn });
+    expect(report.radar.cases).toHaveLength(3);
+    expect(report.limits.join(" ")).toMatch(/security.*side effects.*reversibility/);
+    expect(report.limits.join(" ")).toContain("host request bytes");
+    expect(report.limits.join(" ")).toContain("not_measured");
+    expect(report.hosts.pi.reason).toContain("host stderr");
+    let out = "", err = "";
+    expect(await main(["--hosts", "pi", "--radar"], { env, spawn, stdout: { write: s => out += s }, stderr: { write: s => err += s } })).toBe(1);
+    expect(out.trim().split("\n")).toHaveLength(1);
+    expect(JSON.parse(out).radar.cases).toHaveLength(3);
+    expect(err).toContain("blocked");
+  });
 });
 
 test("closed CLI failures use stderr and exit 1", async () => {

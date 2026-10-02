@@ -1,8 +1,10 @@
 #!/usr/bin/env bun
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, isAbsolute, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { isDeepStrictEqual } from "node:util";
 import { initProject } from "./adoption.mjs";
 
 const DEFAULT_PROMPT = "What does this project do?";
@@ -17,6 +19,35 @@ const definition = {
 const text = (value) => typeof value === "string" ? value : Array.isArray(value) ?
   value.filter((item) => item.type === "text" || item.type === "input_text").map((item) => item.text ?? "").join("") : "";
 
+// Conservative shell segments: quoted mentions remain arguments, never new commands.
+function runsRadar(input) {
+  if (typeof input === "string") { try { input = JSON.parse(input); } catch { return false; } }
+  if (typeof input?.command !== "string") return false;
+  let segment = [], word = "", quote = "", detected = false;
+  const flush = () => { if (word) segment.push(word); word = ""; };
+  const end = () => {
+    flush();
+    detected ||= basename(segment[0] ?? "") === "radar" ||
+      (basename(segment[0] ?? "") === "go" && segment[1] === "run" && /(?:^|\/)\.control-tower\/radar\/?$/.test(segment[2] ?? ""));
+    segment = [];
+  };
+  const command = input.command;
+  for (let i = 0; i < command.length; i++) {
+    const char = command[i];
+    if (char === "\\" && quote !== "'") { word += command[++i] ?? ""; continue; }
+    if (quote) { if (char === quote) quote = ""; else word += char; continue; }
+    if (char === "'" || char === '"') { quote = char; continue; }
+    if (char === ";" || char === "|" || char === "\n" || (char === "&" && command[i + 1] === "&")) {
+      end();
+      if (char === command[i + 1] && ["&", "|"].includes(char)) i++;
+    } else if (/\s/.test(char)) flush();
+    else word += char;
+  }
+  if (quote) return false; // Incomplete shell text cannot prove an execution.
+  end();
+  return detected;
+}
+
 function toolSignals(stream) {
   const signals = new Set();
   const inspect = (value) => {
@@ -26,7 +57,7 @@ function toolSignals(stream) {
       const name = call.name ?? "", input = JSON.stringify(call.input ?? call.arguments ?? {});
       if (/control[-_]tower/i.test(name) || (/skill/i.test(name) && /control-tower/i.test(input))) signals.add("control-tower invocation");
       if (/read|bash|exec|shell/i.test(name) && /(?:\.agents|\.claude)[/\\]+skills[/\\]+control-tower/i.test(input)) signals.add("control-tower skill read");
-      if (/bash|exec|shell/i.test(name) && /(?:\.control-tower[/\\]+radar|\bradar\b)/i.test(input)) signals.add("radar execution");
+      if (/bash|exec|shell/i.test(name) && runsRadar(call.input ?? call.arguments)) signals.add("radar execution");
     }
     // Tool definitions and system listings describe availability, not execution.
     for (const [field, child] of Object.entries(value)) if (!["tools", "system"].includes(field) && child && typeof child === "object") inspect(child);
@@ -97,13 +128,13 @@ async function spawnHost(cmd, { timeoutMs, ...options }) {
   let timedOut = false;
   const timer = setTimeout(() => { timedOut = true; proc.kill("SIGKILL"); }, timeoutMs);
   try {
-    const [code, stdout] = await Promise.all([proc.exited, new Response(proc.stdout).text(), new Response(proc.stderr).text()]);
+    const [code, stdout, stderr] = await Promise.all([proc.exited, new Response(proc.stdout).text(), new Response(proc.stderr).text()]);
     if (timedOut) throw new Error(`host process timed out after ${timeoutMs}ms`);
-    return { code, stdout };
+    return { code, stdout, stderr };
   } finally { clearTimeout(timer); }
 }
 
-function fixture(root, adopted, env, timeoutMs) {
+function fixture(root, adopted, env, timeoutMs, plan = null) {
   mkdirSync(root);
   const git = (...args) => {
     const result = spawnSync("git", ["-c", "user.name=Benchmark", "-c", "user.email=benchmark@example.invalid", ...args],
@@ -114,19 +145,104 @@ function fixture(root, adopted, env, timeoutMs) {
   writeFileSync(join(root, "README.md"), "# Fixture\nA disposable benchmark project.\n");
   git("init", "-q"); git("add", "."); git("commit", "-qm", "seed");
   if (adopted) initProject({ projectRoot: root, trustResolution: "trusted" });
+  if (plan !== null) { mkdirSync(join(root, "openspec")); writeFileSync(join(root, "openspec/plan.yaml"), plan); }
   // Claude injects status: both arms MUST be clean with equal commit counts/messages.
   // The second commit is empty only in the non-adopter; all adoption output is committed.
   git("add", "."); git("commit", "--allow-empty", "-qm", "prepare arm");
 }
 
-/** Independent host results are a seam for B2's later Radar contrast, not a static-size proxy. */
+const canonicalRadar = fileURLToPath(new URL("../../../agent-workflows/tools/radar", import.meta.url));
+const radarCases = ["valid", "missing-plan", "schema-v2"];
+const tail = (value) => String(value ?? "").slice(-2048);
+const minimalPlan = (version) => `schema: plan\nschema_version: ${version}\nproducto: benchmark\ncimientos:\n  rutas: [README.md, openspec/, .control-tower/, .control-tower-adoption-v1/, .agents/, .claude/]\nsesiones: []\n`;
+
+// Compare full streams before bounding report excerpts; never normalize semantic fields.
+function compareRadar(name, flow, canonical, head) {
+  const diff = [];
+  for (const field of ["code", "stdout", "stderr"]) if (flow[field] !== canonical[field]) diff.push(`${field} differs`);
+  if (head.before !== head.afterFlow || head.before !== head.afterCanonical) diff.push("fixture HEAD changed");
+  if (name === "valid") {
+    let left, right;
+    try { left = JSON.parse(flow.stdout); right = JSON.parse(canonical.stdout); }
+    catch { diff.push("valid case did not emit JSON on both sides"); }
+    if (!isDeepStrictEqual(left, right)) diff.push("JSON differs (all semantic fields retained)");
+    if (left?.schema !== "radar.snapshot/v1" || right?.schema !== "radar.snapshot/v1") diff.push("unexpected snapshot schema");
+    if (left?.head !== right?.head || left?.head !== head.before) diff.push("snapshot HEAD mismatch");
+    if (flow.code !== 0 || canonical.code !== 0) diff.push("valid case exited nonzero");
+  } else if (flow.code === 0 || canonical.code === 0) diff.push("error case exited zero");
+  const bounded = (outcome) => ({ code: outcome.code, stdout: tail(outcome.stdout), stderr: tail(outcome.stderr) });
+  return { name, status: diff.length ? "different" : "equal", flow: bounded(flow), canonical: bounded(canonical), head,
+    ...(diff.length ? { diff } : {}) };
+}
+
+/** Flow builds installed sources; canonical builds repository sources independently.
+ * The operator module cache is reused offline; writable build caches remain disposable.
+ * canonicalSource and spawn are test seams, not CLI overrides or fallback paths.
+ */
+export async function runRadarContrast({ env = process.env, spawn = spawnHost, timeoutMs = DEFAULT_TIMEOUT_MS,
+  canonicalSource = canonicalRadar } = {}) {
+  if (!Number.isInteger(timeoutMs) || timeoutMs <= 0 || timeoutMs > 2147483647) throw new Error("invalid options");
+  const result = { flow: { source: "<fixture>/.control-tower/radar", command: "go build; <flow-bin> status --json -C <fixture>" },
+    canonical: { source: canonicalSource, command: "go build; <canonical-bin> status --json -C <fixture>" }, cases: [] };
+  const blocked = (reason) => { result.cases = radarCases.map(name => ({ name, status: "blocked", reason })); return result; };
+  const go = Bun.which("go", { PATH: env.PATH ?? "" });
+  if (!go) return blocked("go missing");
+  if (!existsSync(join(canonicalSource, "go.mod"))) return blocked("canonical source missing (no adopted-copy fallback)");
+  const base = mkdtempSync(join(tmpdir(), "tower-radar-"));
+  try {
+    let resolved;
+    try {
+      resolved = await spawn([go, "env", "GOMODCACHE"], { cwd: canonicalSource, timeoutMs,
+        env: { ...env, GOFLAGS: "-mod=readonly", GOPROXY: "off", GOTOOLCHAIN: "local" } });
+    } catch (error) { return blocked(`GOMODCACHE resolution failed: ${tail(error.message)}`); }
+    const moduleCache = resolved.stdout?.trim() ?? "";
+    if (resolved.code !== 0 || !isAbsolute(moduleCache) || /[\r\n\0]/.test(moduleCache))
+      return blocked(`GOMODCACHE resolution failed: ${tail(resolved.stderr) || "invalid absolute cache path"}`);
+    const isolated = { PATH: env.PATH ?? "", HOME: join(base, "home"), TMPDIR: join(base, "tmp"),
+      GOMODCACHE: moduleCache, GOCACHE: join(base, "go-cache"), GOPATH: join(base, "go-path"), GOFLAGS: "-mod=readonly", GOPROXY: "off",
+      GOSUMDB: "off", GOTOOLCHAIN: "local", GIT_CONFIG_NOSYSTEM: "1", GIT_CONFIG_GLOBAL: "/dev/null" };
+    for (const field of ["HOME", "TMPDIR", "GOCACHE", "GOPATH"]) mkdirSync(isolated[field]);
+    const roots = radarCases.map(name => join(base, name));
+    for (const [i, root] of roots.entries()) fixture(root, true, isolated, timeoutMs,
+      i === 1 ? null : minimalPlan(i === 2 ? 2 : 3));
+    const bins = [join(base, "flow-radar"), join(base, "canonical-radar")];
+    const sources = [join(roots[0], ".control-tower/radar"), canonicalSource];
+    for (const [i, source] of sources.entries()) {
+      const build = await spawn([go, "build", "-o", bins[i], "."], { cwd: source, env: isolated, timeoutMs });
+      if (build.code !== 0) return blocked(`${i ? "canonical" : "flow"} build failed: ${tail(build.stderr)}`);
+    }
+    const readHead = (cwd) => {
+      const git = spawnSync("git", ["rev-parse", "HEAD"], { cwd, env: isolated, timeout: timeoutMs, killSignal: "SIGKILL", encoding: "utf8" });
+      if (git.error || git.status !== 0) throw new Error("fixture HEAD unavailable");
+      return git.stdout.trim();
+    };
+    for (const [i, cwd] of roots.entries()) {
+      try {
+        const before = readHead(cwd);
+        const options = { cwd, env: isolated, timeoutMs };
+        const flow = await spawn([bins[0], "status", "--json", "-C", cwd], options);
+        const afterFlow = readHead(cwd);
+        const canonical = await spawn([bins[1], "status", "--json", "-C", cwd], options);
+        const afterCanonical = readHead(cwd);
+        result.cases.push(compareRadar(radarCases[i], flow, canonical, { before, afterFlow, afterCanonical }));
+      } catch (error) { result.cases.push({ name: radarCases[i], status: "blocked", reason: tail(error.message) }); }
+    }
+    return result;
+  } catch (error) { return blocked(`Radar setup/build blocked: ${tail(error.message)}`); }
+  finally { rmSync(base, { recursive: true, force: true }); }
+}
+
+/** Independent host request captures and deterministic Radar contrast. */
 export async function runBenchmark({ hosts = ["pi", "claude"], realModel = false, prompt = DEFAULT_PROMPT,
-  env = process.env, binaries = {}, spawn = spawnHost, upstream, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
+  env = process.env, binaries = {}, spawn = spawnHost, upstream, timeoutMs = DEFAULT_TIMEOUT_MS, radar = true } = {}) {
   if (!Array.isArray(hosts) || !hosts.length || new Set(hosts).size !== hosts.length || hosts.some((h) => !["pi", "claude"].includes(h))) throw new Error("invalid hosts");
-  if (typeof prompt !== "string" || !prompt || typeof realModel !== "boolean" ||
+  if (typeof prompt !== "string" || !prompt || typeof realModel !== "boolean" || typeof radar !== "boolean" ||
     !Number.isInteger(timeoutMs) || timeoutMs <= 0 || timeoutMs > 2147483647) throw new Error("invalid options");
   if (realModel && !env.ANTHROPIC_API_KEY) throw new Error("--real-model requires ANTHROPIC_API_KEY in environment");
-  const report = { schema: "tower.v1.benchmark/1", mode: realModel ? "real-model" : "capture-only", prompt, definition, hosts: {} };
+  const report = { schema: "tower.v1.benchmark/1", mode: realModel ? "real-model" : "capture-only", prompt, definition, hosts: {},
+    limits: ["Captures prove only the observed flow, not security, absence of side effects or lifecycle reversibility.",
+      "Bytes are host request bytes for this host version/model/prompt/HEAD; not token counts or general savings.",
+      "Behavior is not_measured without the real-model key."] };
   const base = mkdtempSync(join(tmpdir(), "tower-benchmark-"));
   try {
     for (const host of hosts) {
@@ -155,11 +271,12 @@ export async function runBenchmark({ hosts = ["pi", "claude"], realModel = false
             }
             reason = "host binary missing or version unavailable";
             const version = await spawn([binary, "--version"], { cwd, env: isolated, timeoutMs });
-            if (version.code !== 0 || !version.stdout.trim()) throw new Error(reason);
+            if (version.code !== 0 || !version.stdout.trim()) throw new Error(`${reason}: ${tail(version.stderr)}`);
             versions.push(version.stdout.trim());
             reason = "host execution failed";
             const outcome = await spawn([binary, ...args], { cwd, env: isolated, timeoutMs });
-            arms.push(capture.measure()); signals.push(...capture.signals());
+            try { arms.push(capture.measure()); } catch (error) { throw new Error(`${error.message}: ${tail(outcome.stderr)}`); }
+            signals.push(...capture.signals());
             if (realModel && outcome.code !== 0) throw new Error("real-model response incomplete");
           } finally { capture.stop(); }
         }
@@ -174,6 +291,8 @@ export async function runBenchmark({ hosts = ["pi", "claude"], realModel = false
       }
     }
   } finally { rmSync(base, { recursive: true, force: true }); }
+  report.radar = radar ? await runRadarContrast({ env, spawn, timeoutMs }) :
+    { flow: { source: "<fixture>/.control-tower/radar" }, canonical: { source: canonicalRadar }, cases: radarCases.map(name => ({ name, status: "blocked", reason: "Radar disabled by caller" })) };
   // Also guard operator-supplied prompts and host diagnostics against credential echo.
   return JSON.parse(JSON.stringify(report, (_field, value) => typeof value === "string" && env.ANTHROPIC_API_KEY ?
     value.split(env.ANTHROPIC_API_KEY).join("[REDACTED]") : value));
@@ -184,15 +303,18 @@ export async function main(argv, { stdout = process.stdout, stderr = process.std
     const parsed = {}, seen = new Set();
     for (let i = 0; i < argv.length; i++) {
       const flag = argv[i];
-      if (!["--hosts", "--real-model", "--prompt"].includes(flag) || seen.has(flag)) throw new Error("invalid or duplicate flag");
+      if (!["--hosts", "--real-model", "--prompt", "--radar"].includes(flag) || seen.has(flag)) throw new Error("invalid or duplicate flag");
       seen.add(flag);
       if (flag === "--real-model") { parsed.realModel = true; continue; }
+      if (flag === "--radar") { parsed.radar = true; continue; }
       const value = argv[++i];
       if (!value || value.startsWith("--")) throw new Error("missing flag value");
       if (flag === "--hosts") parsed.hosts = value.split(","); else parsed.prompt = value;
     }
     const report = await runBenchmark({ ...options, ...parsed }); stdout.write(`${JSON.stringify(report)}\n`);
-    if (Object.values(report.hosts).some((result) => result.status === "blocked")) { stderr.write("Invalid Tower benchmark CLI: host blocked; see report\n"); return 1; }
+    if (Object.values(report.hosts).some((result) => result.status === "blocked") || report.radar.cases.some(c => c.status !== "equal")) {
+      stderr.write("Invalid Tower benchmark CLI: host or Radar blocked/different; see report\n"); return 1;
+    }
     return 0;
   } catch { stderr.write("Invalid Tower benchmark CLI: invalid options or unavailable required key\n"); return 1; }
 }
