@@ -45,7 +45,7 @@ Observed after integration (all commands exit 0): `$HOME/.local/bin/radar check 
 - [x] Deliver the reviewed planning candidate (`262d1cebc65da96db5f46131f6748231ad86fd94`).
 - [x] Implement, verify, review, deliver, and archive S172 (`8caaacf33e98ce236676533198761723154d6eef`; native review `review-99464decff2e806b`).
 - [x] Re-run Radar and execute S174 only while it remains `LISTO`; six sequential units. DONE: delivered `088cf3a` and archived 2026-10-02.
-- [ ] Re-run Radar and execute S173 only after S174 is delivered and Radar admits it; two sequential units.
+- [x] Re-run Radar and execute S173 only after S174 is delivered and Radar admits it; two sequential units. DONE: delivered `4dcf7dd` and archived 2026-10-02.
 - [ ] Re-run Radar and execute S150 only after S173 is delivered and Radar admits it; one documentation unit.
 
 S172 strict-TDD evidence: the focused suite first failed with 19 pass / 3 fail because `cleanupProject` and the `cleanup` CLI did not exist, then passed with 23 pass / 0 fail. Independent verification passed; the reviewed diff was 126 authored lines across the two authorized files. The pre-push suite passed 1602 tests. Tests used disposable roots and isolated HOME/XDG/TMP state only. Radar archived S172 and admitted S174; the 63 existing warnings remain unchanged.
@@ -276,8 +276,8 @@ Observed spike (disposable `/tmp/s173-spike-sTX9`, no model cost, Engram 12889/1
 
 Maintainer decision: the ordinary-question check uses a real model through an operator-supplied API key in the environment, for that check only. Without the key the behavioral result is reported as not measured, never inferred. Byte measurement never needs a real model.
 
-- [ ] B1 — Isolation, loopback capture boundary for Pi and Claude Code, and ordinary-question arm (optional real-model forwarding).
-- [ ] B2 — Independent Radar contrast, failure modes and proxy-free report, keeping B1 green.
+- [x] B1 — Isolation, loopback capture boundary for Pi and Claude Code, and ordinary-question arm (optional real-model forwarding).
+- [x] B2 — Independent Radar contrast, failure modes and proxy-free report, keeping B1 green.
 
 ### B1 evidence
 
@@ -293,3 +293,9 @@ Maintainer decision: the ordinary-question check uses a real model through an op
 - Real run: valid minimal v3 plan, missing plan and `schema_version: 2` are all `equal` (exit code, stdout, stderr), schema `radar.snapshot/v1`, fixture HEAD unchanged after both invocations. Hosts measured as in B1 (Pi +689, Claude Code +113 request bytes); behavior `not_measured` without the real-model key. Report carries explicit `limits`.
 - `R3-radar-false-positive` fixed: only executable-position Radar invocations count. One transient B1 capture failure was observed once and did not recur.
 - Native review `review-25496646300b0872`: medium/reliability, 349 lines, approved and acknowledged. Non-blocking follow-ups: `R3-real-contrast-coverage` (unit tests fake the Radar build; real contrast is proven by the manual run) and `R3-shell-prefixes` (`env X=1 radar` or `sudo radar` is not detected).
+
+### S173 closure
+
+- Maintainer decision (Engram 12892): close S173 without the real-model run; the ordinary-question check is reported as `not_measured` in V1 and the README must state it. The harness keeps `--real-model` for a later operator run.
+- Delivered `a14701a`, `b0d4ab8`, `4dcf7dd`; full suite at `4dcf7dd` 1,790 pass / 0 fail (201.98 s), push hook 1,790 pass. `entrega.commit: 4dcf7dd9badc52392f2a925e54fa60c7d49c0ff5` recorded; `radar archivar S173` succeeded, check 0 errors / 63 warnings, ROADMAP regenerated. S150 becomes admissible.
+- Follow-ups outside V1 Sessions: git test proxy should strip every occurrence of its directory; `test/lifecycle.test.mjs` CT-R12-S1 runs close to its 5 s timeout; benchmark shell-prefix detection; real-model behavioral run.

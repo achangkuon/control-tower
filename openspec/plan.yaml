@@ -2097,58 +2097,7 @@ sesiones:
 
   - {id: S174, entrega: {commit: 088cf3a3c96098e47d44315f30d8ef0a89640057}, historico: openspec/archive/sesiones/S174.md}
 
-  - id: S173
-    zona: producto-torre
-    prioridad: torre-v1
-    resultado: "Benchmark aislado Pi y Claude Code, adopter vs non-adopter: bytes realmente cargados por cada host, pregunta ordinaria y fidelidad Radar contra invocación canónica independiente."
-    autoridad: "Emilio eligió explícitamente en esta Conversación medición real por host y rechazo de proxies."
-    depende_de: [S174]
-    cimientos: []
-    recurso: []
-    archivos:
-      - product/tower/v1/benchmark.mjs
-      - product/tower/v1/test/benchmark.test.mjs
-    encargo:
-      pedido_contexto: >-
-        Tras S172 y S174 entregadas, V1 necesita una comparación reproducible del
-        adopter y el non-adopter en Pi y Claude Code bajo condiciones idénticas por host.
-        Contar bytes de archivos estáticos no prueba qué cargó realmente cada host.
-      resultado_comportamiento: >-
-        Harness de raíces y fixtures desechables compara ambos brazos bajo el mismo
-        host aislado, prompt y HEAD. La medida autoritativa de contexto inicial son
-        los bytes que cada host real demuestra haber cargado mediante un límite
-        observable confiable; los tamaños estáticos sólo explican diferencias. Si un
-        host no expone ese límite, el benchmark bloquea/falla sin publicar proxy.
-        Envía la misma pregunta ordinaria de texto libre en ambos brazos y detecta
-        selección o ejecución accidental de control-tower. Compara la salida Radar
-        del flujo con una invocación canónica independiente para el mismo fixture/HEAD,
-        incluidos los errores. Registra observaciones y límites: capturas de pantalla
-        o transcripción sólo demuestran el flujo observado, no seguridad, ausencia de
-        efectos ni reversibilidad del lifecycle.
-      restricciones_decisiones: >-
-        Dos unidades secuenciales reversibles con pruebas: 1) aislamiento, límites
-        observables de Pi/Claude y pregunta ordinaria; 2) contraste independiente Radar,
-        fallos y reporte sin proxies, manteniendo verde la primera. Pronóstico de 400–600
-        líneas authored totales; el tamaño sigue la guía nativa de Gentle AI y no es una
-        restricción de esta Sesión. Sólo dos archivos declarados;
-        Cimientos/Recursos vacíos: toda corrida usa raíces/fixtures desechables,
-        nunca HOME, journals o destinos reales. No mide routing, procesos, sockets,
-        operaciones Git de producto ni rollback.
-      referencias: >-
-        S8.13 y S172 (reversibilidad), S174 (interfaces finales), contrato de snapshot
-        de Radar en agent-workflows/tools/radar/; comprobar versión real de ambos hosts
-        y sus límites observables al ejecutar. Ninguna referencia amplía archivos.
-    decisiones:
-      - tipo: resuelta
-        pregunta: "¿Se pueden usar bytes estáticos como medida principal de contexto inicial?"
-        resolucion: "No: medir únicamente los bytes cuya carga demuestre el host real en Pi y Claude Code, o bloquear la publicación si no hay frontera observable confiable. Los tamaños estáticos son sólo explicación."
-        autoridad: "Elección explícita de Emilio en esta Conversación."
-        clase: contrato-visible-del-producto; dependencias-o-evidencia-contradictorias
-        falsificador: "Se presenta un conteo estático o una captura como medición autoritativa de bytes cargados sin prueba del host."
-        descartadas:
-          - opcion: "Publicar la suma de tamaños de archivos como proxy cuando falta instrumentación del host."
-            razon: "No demuestra qué cargó Pi o Claude Code en esa corrida."
-        contaminaba: [S173, S150]
+  - {id: S173, entrega: {commit: 4dcf7dd9badc52392f2a925e54fa60c7d49c0ff5}, historico: openspec/archive/sesiones/S173.md}
 
   - id: S175
     prioridad: resolucion-problemas-generales
