@@ -174,6 +174,14 @@ MANUAL_BLOCKS = (
         ("explain-to-maintainer.md", b"EXPLAIN-TO-MAINTAINER:MANUAL"),
     )
 )
+# Personal blocks a runtime receives when it lacks them (maintainer decision B3,
+# 2026-10-01). Every other optional block stays replace-if-present. The Hermes helper
+# (prepare-personal-config.py) applies the same list to SOUL.md.
+ADDED_WHEN_ABSENT_BLOCKS = (
+    b"<!-- doc-guard-rule -->",
+    b"<!-- EXPLAIN-TO-MAINTAINER:MANUAL -->",
+)
+ADDED_WHEN_ABSENT_FILES = (Path(".codex/AGENTS.md"),)
 MANAGED_MARKER_RE = re.compile(
     rb"<!--\s*(/?)((?:gentle-ai|section):[A-Za-z0-9_.-]+)\s*-->"
 )
@@ -445,8 +453,29 @@ def _owned_block_matches(
     return matches_by_start
 
 
-def desired_manual_content(path: Path, replacements: dict[bytes, bytes]) -> bytes:
-    # Optional personal blocks are replace-if-present, never new instructions.
+def append_absent_blocks(
+    content: bytes, replacements: dict[bytes, bytes], absent: tuple[bytes, ...]
+) -> bytes:
+    """Append each absent block at the end of the file, after one blank line. Existing
+    bytes are never rewritten; the caller has already proved these markers are absent."""
+    for start in absent:
+        if content and not content.endswith(b"\n"):
+            content += b"\n"
+        if content and not content.endswith(b"\n\n"):
+            content += b"\n"
+        content += replacements[start]
+    return content
+
+
+def adds_absent_blocks(home: Path, path: Path) -> bool:
+    return any(path == home / relative for relative in ADDED_WHEN_ABSENT_FILES)
+
+
+def desired_manual_content(
+    path: Path, replacements: dict[bytes, bytes], *, add_absent: bool = False
+) -> bytes:
+    # Optional personal blocks are replace-if-present, never new instructions, except the
+    # ADDED_WHEN_ABSENT_BLOCKS of a runtime that opts in through `add_absent`.
     # Validate all ranges first, then splice backwards to preserve unrelated bytes.
     content = path.read_bytes()
     matches = _owned_block_matches(content, path)
@@ -456,6 +485,9 @@ def desired_manual_content(path: Path, replacements: dict[bytes, bytes]) -> byte
     )
     for begin, end, start in present:
         content = content[:begin] + replacements[start] + content[end:]
+    if add_absent:
+        absent = tuple(start for start in ADDED_WHEN_ABSENT_BLOCKS if matches[start] is None)
+        content = append_absent_blocks(content, replacements, absent)
     return content
 
 
@@ -486,7 +518,7 @@ def preflight(home: Path, root: Path) -> None:
         _validate_file_destination(
             path.parent, path, "runtime instruction file", require_existing=True
         )
-        desired_manual_content(path, replacements)
+        desired_manual_content(path, replacements, add_absent=adds_absent_blocks(home, path))
     for runtime_root, destination in retired_control_files(home):
         _validate_retired_control(runtime_root, destination)
 
@@ -618,7 +650,8 @@ def build_plan(home: Path, root: Path | None = None) -> list[Change]:
             if not destination.is_file() or destination.read_bytes() != source.read_bytes():
                 changes.append(Change(destination, "skill"))
     for path in installed_manual_paths(home):
-        desired = desired_manual_content(path, replacements)
+        desired = desired_manual_content(
+            path, replacements, add_absent=adds_absent_blocks(home, path))
         if path.read_bytes() != desired:
             changes.append(Change(path, "manual"))
     changes.extend(carril_changes(home, root))
@@ -796,7 +829,9 @@ def apply(home: Path, root: Path | None = None) -> list[Change]:
                 _atomic_copy(source, destination, runtime_root)
     for path in installed_manual_paths(home):
         if path in change_paths:
-            _atomic_write(path, desired_manual_content(path, replacements), path.parent)
+            desired = desired_manual_content(
+                path, replacements, add_absent=adds_absent_blocks(home, path))
+            _atomic_write(path, desired, path.parent)
     for runtime_root in installed_skill_roots(home):
         for retired_skill in RETIRED_SKILLS:
             destination = runtime_root / retired_skill

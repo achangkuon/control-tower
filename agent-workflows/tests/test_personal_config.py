@@ -285,12 +285,71 @@ class PersonalConfigMigrationTests(unittest.TestCase):
         soul = self.write(".hermes/SOUL.md", b"personal text\n")
         planned = personal.plan_stage("hermes", self.home, repo_root=ROOT, hermes_python=self.hermes_python,
                                       subprocess_runner=self.yaml_runner([]))
-        self.assertFalse(any(path == soul for path, _, _ in planned))
+        desired = [data for path, data, _ in planned if path == soul]
+        self.assertEqual(len(desired), 1)
+        self.assertTrue(desired[0].startswith(b"personal text\n"))
+        self.assertNotIn(b"UNATTENDED-SEALED-CONSENT", desired[0])
         self.assertEqual(soul.read_bytes(), b"personal text\n")
         self.write(".hermes/SOUL.md", self.soul_with_routing() + b"<!-- UNATTENDED-SEALED-CONSENT:MANUAL -->\nx\n")
         with self.assertRaises(personal.MigrationError):
             personal.plan_stage("hermes", self.home, repo_root=ROOT, hermes_python=self.hermes_python,
                                 subprocess_runner=self.yaml_runner())
+
+    HERMES_ADDED = (b"doc-guard-rule", b"EXPLAIN-TO-MAINTAINER:MANUAL")
+
+    def hermes(self, action=personal.apply_stage):
+        return action("hermes", self.home, repo_root=ROOT, hermes_python=self.hermes_python,
+                      subprocess_runner=self.yaml_runner([]))
+
+    def test_hermes_soul_receives_absent_blocks_once_and_repeat_is_idempotent(self):
+        self.write(".hermes/config.yaml", b"skills: {}\n")
+        self.make_skill_rosters()
+        managed = b"<!-- gentle-ai:persona -->\nkeep managed bytes\n<!-- /gentle-ai:persona -->\n"
+        original = managed + self.soul_with_routing()
+        soul = self.write(".hermes/SOUL.md", original)
+        replacements = install.render_manual_blocks(ROOT / "agent-workflows")
+        self.hermes()
+        content = soul.read_bytes()
+        self.assertTrue(content.startswith(managed + b"before\n"))
+        self.assertIn(b"\nafter\n\n", content)
+        blocks = [replacements[b"<!-- " + name + b" -->"] for name in self.HERMES_ADDED]
+        self.assertTrue(content.endswith(blocks[0] + b"\n" + blocks[1]))
+        for name in self.HERMES_ADDED:
+            self.assertEqual(content.count(b"<!-- " + name + b" -->"), 1)
+        self.assertNotIn(b"AGENT-PROPAGATION-MAP:MANUAL", content)
+        self.assertEqual(soul.stat().st_mode & 0o777, 0o640)
+        self.assertFalse(any(path == soul for path, _, _ in self.hermes(personal.plan_stage)))
+        self.hermes()
+        self.assertEqual(soul.read_bytes(), content)
+
+    def test_hermes_existing_block_is_replaced_in_place_not_duplicated(self):
+        self.write(".hermes/config.yaml", b"skills: {}\n")
+        self.make_skill_rosters()
+        stale = b"<!-- doc-guard-rule -->\nstale rule\n<!-- /doc-guard-rule -->\n"
+        soul = self.write(".hermes/SOUL.md", stale + self.soul_with_routing())
+        replacements = install.render_manual_blocks(ROOT / "agent-workflows")
+        self.hermes()
+        content = soul.read_bytes()
+        self.assertTrue(content.startswith(replacements[b"<!-- doc-guard-rule -->"]))
+        self.assertEqual(content.count(b"<!-- doc-guard-rule -->"), 1)
+        self.assertTrue(content.endswith(replacements[b"<!-- EXPLAIN-TO-MAINTAINER:MANUAL -->"]))
+
+    def test_hermes_malformed_marker_of_an_added_block_is_refused_before_any_write(self):
+        self.write(".hermes/config.yaml", b"skills: {}\n")
+        self.make_skill_rosters()
+        cases = {
+            "unclosed": b"<!-- doc-guard-rule -->\nold rule\n",
+            "stray-end": b"<!-- /EXPLAIN-TO-MAINTAINER:MANUAL -->\n",
+            "managed-nested": b"<!-- gentle-ai:x -->\n<!-- doc-guard-rule -->\nold\n"
+                              b"<!-- /doc-guard-rule -->\n<!-- /gentle-ai:x -->\n",
+        }
+        for case, invalid in cases.items():
+            with self.subTest(case=case):
+                soul = self.write(".hermes/SOUL.md", self.soul_with_routing() + invalid)
+                before = soul.read_bytes()
+                with self.assertRaises(personal.MigrationError):
+                    self.hermes()
+                self.assertEqual(soul.read_bytes(), before)
 
     def test_snapshot_archives_previous_store_once_and_refreshes_compatible_blocks(self):
         self.make_instruction_files()

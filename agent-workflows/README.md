@@ -198,10 +198,28 @@ Closure names `chanks-5-session-doc`; explanation uses the central
 `chanks-0-explicalo-simple` reference. Project-specific documentation destinations
 and opt-outs still take precedence.
 
-These three blocks are **replace-if-present**: an absent block stays absent,
-including on Codex. This is not a blanket rewrite of personal instructions.
-The required session-routing block keeps its existing behavior; Hermes is not
-added to this installer's instruction targets.
+These three blocks are **replace-if-present**: an absent block stays absent. This
+is not a blanket rewrite of personal instructions. The required session-routing
+block keeps its existing behavior; Hermes is not added to this installer's
+instruction targets.
+
+Two runtimes are the exception (maintainer decision B3, 2026-10-01). They also
+**receive** the blocks listed in `ADDED_WHEN_ABSENT_BLOCKS` when they lack them:
+
+| Runtime | File | Written by | Blocks added when absent |
+|---|---|---|---|
+| Codex | `~/.codex/AGENTS.md` | `tools/install.py` | `doc-guard-rule`, `EXPLAIN-TO-MAINTAINER:MANUAL` |
+| Hermes | `~/.hermes/SOUL.md` | `tools/prepare-personal-config.py --stage hermes` | `doc-guard-rule`, `EXPLAIN-TO-MAINTAINER:MANUAL` |
+
+An added block is appended at the end of the file after one blank line; no existing
+byte is rewritten. A block already present is replaced in place, never duplicated,
+and a second run changes nothing. A half-present, inline or managed-nested marker
+is refused before any write. `AGENT-PROPAGATION-MAP:MANUAL` is not added anywhere.
+
+The plan-naming block is **not** added yet: its wording has no template in this
+repository, so there is nothing canonical to install. Add
+`templates/plan-naming-standard.md`, register it in `MANUAL_BLOCKS` and list its
+marker in `ADDED_WHEN_ABSENT_BLOCKS` to complete the set.
 
 ### Preparing the personal-runtime retirement
 
@@ -222,8 +240,8 @@ scheduled:
    corrections.
 3. `--stage hermes --hermes-python <installed-Hermes-Python>` last: validate
    `skills.external_dirs` with Hermes' own PyYAML, point it at `~/.agents/skills`,
-   update only existing personal blocks, remove only the old unattended-consent
-   block, and archive only real copies of the maintainer's own skills.
+   update existing personal blocks, add the two blocks above when absent, remove
+   only the old unattended-consent block, and archive only real copies of the maintainer's own skills.
 4. `--stage snapshot` after every correction: preserve the prior manual-block
    restore store at the immutable `boundary-2026-10-01` path, then refresh the
    compatible snapshot from the five current instruction files.

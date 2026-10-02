@@ -204,16 +204,22 @@ def _remove_unattended(content: bytes, path: Path) -> bytes:
 
 
 def _desired_existing_manual_content(content: bytes, path: Path,
-                                     replacements: dict[bytes, bytes]) -> bytes:
-    """Apply installer templates only to blocks already present in this file."""
+                                     replacements: dict[bytes, bytes], *,
+                                     add_absent: bool = False) -> bytes:
+    """Apply installer templates to blocks already present in this file. With `add_absent`
+    (the Hermes stage), also append the installer's ADDED_WHEN_ABSENT_BLOCKS the file lacks.
+    Every other absent block stays absent."""
     ranges = []
     try:
         managed_ranges = install._managed_ranges(content, path)
     except install.InstallError as exc:
         raise MigrationError(f"malformed managed marker nesting in {path}") from exc
+    absent = []
     for _, start, end, pattern, _required in install.MANUAL_BLOCKS:
         starts, ends = install._owned_marker_counts(content, start)
         if starts == 0 and ends == 0:
+            if add_absent and start in install.ADDED_WHEN_ABSENT_BLOCKS:
+                absent.append(start)
             continue
         if starts != 1 or ends != 1:
             raise MigrationError(f"malformed Hermes personal block in {path}: {start.decode()}")
@@ -232,7 +238,8 @@ def _desired_existing_manual_content(content: bytes, path: Path,
         content = install._replace_owned_block(
             content, replacements[start], path, start, end, pattern, required=False
         )
-    return content
+    ordered_absent = tuple(start for start in install.ADDED_WHEN_ABSENT_BLOCKS if start in absent)
+    return install.append_absent_blocks(content, replacements, ordered_absent)
 
 
 def _yaml_process(interpreter: Path, source: str, central: str,
@@ -363,7 +370,8 @@ def _stage_hermes(home: Path, repo_root: Path, interpreter: Path,
         raise MigrationError("Hermes config.yaml and SOUL.md must both exist")
     updated_yaml = _hermes_yaml(interpreter, config_data, str(home / ".agents/skills"), subprocess_runner)
     replacements = install.render_manual_blocks(repo_root / "agent-workflows")
-    propagated_soul = _desired_existing_manual_content(soul_data, soul, replacements)
+    propagated_soul = _desired_existing_manual_content(
+        soul_data, soul, replacements, add_absent=True)
     updated_soul = _remove_unattended(propagated_soul, soul)
     actions = []
     if updated_yaml != config_data:

@@ -333,12 +333,74 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(INSTALLER.apply(self.home, ROOT), [])
         self.assertEqual(before, {path: path.read_bytes() for path in before})
 
-    def test_missing_personal_blocks_are_not_added_to_any_runtime(self):
+    ADDED_TO_CODEX = (b"doc-guard-rule", b"EXPLAIN-TO-MAINTAINER:MANUAL")
+
+    def test_missing_personal_blocks_are_added_only_to_codex(self):
         INSTALLER.apply(self.home, ROOT)
+        codex = self.home / ".codex/AGENTS.md"
         for path in INSTALLER.manual_paths(self.home):
             for name, _ in self.TARGETED_BLOCKS:
-                self.assertNotIn(name, path.read_bytes())
+                expected = path == codex and name in self.ADDED_TO_CODEX
+                self.assertEqual(name in path.read_bytes(), expected, (path, name))
         self.assertFalse((self.home / ".hermes").exists())
+
+    def test_codex_receives_absent_blocks_once_preserving_existing_bytes(self):
+        codex = self.home / ".codex/AGENTS.md"
+        managed = b"<!-- gentle-ai:persona -->\r\nkeep managed bytes\r\n<!-- /gentle-ai:persona -->\r\n"
+        unrelated = b"<!-- OWNER-NOTES:MANUAL -->\nkeep unrelated bytes\n<!-- /OWNER-NOTES:MANUAL -->"
+        codex.write_bytes(managed + codex.read_bytes() + unrelated)  # no trailing newline
+        codex.chmod(0o640)
+        replacements = INSTALLER.render_manual_blocks(ROOT)
+        plan = INSTALLER.build_plan(self.home, ROOT)
+        self.assertIn((codex, "manual"), [(change.path, change.kind) for change in plan])
+        INSTALLER.apply(self.home, ROOT)
+        content = codex.read_bytes()
+        self.assertTrue(content.startswith(managed))
+        self.assertIn(unrelated + b"\n\n", content)
+        self.assertEqual(stat.S_IMODE(codex.stat().st_mode), 0o640)
+        blocks = [replacements[b"<!-- " + name + b" -->"] for name in self.ADDED_TO_CODEX]
+        self.assertTrue(content.endswith(blocks[0] + b"\n" + blocks[1]))
+        for name in self.ADDED_TO_CODEX:
+            self.assertEqual(content.count(b"<!-- " + name + b" -->"), 1)
+            self.assertEqual(content.count(b"<!-- /" + name + b" -->"), 1)
+        self.assertNotIn(b"AGENT-PROPAGATION-MAP:MANUAL", content)
+        self.assertEqual(INSTALLER.apply(self.home, ROOT), [])
+        self.assertEqual(codex.read_bytes(), content)
+
+    def test_codex_existing_block_is_replaced_in_place_and_only_the_absent_one_is_added(self):
+        codex = self.home / ".codex/AGENTS.md"
+        codex.write_bytes(self._personal_block(b"doc-guard-rule") + codex.read_bytes())
+        replacements = INSTALLER.render_manual_blocks(ROOT)
+        INSTALLER.apply(self.home, ROOT)
+        content = codex.read_bytes()
+        self.assertTrue(content.startswith(replacements[b"<!-- doc-guard-rule -->"]))
+        self.assertTrue(content.endswith(replacements[b"<!-- EXPLAIN-TO-MAINTAINER:MANUAL -->"]))
+        self.assertEqual(content.count(b"<!-- doc-guard-rule -->"), 1)
+
+    def test_codex_malformed_marker_of_an_added_block_is_refused_before_any_write(self):
+        cases = {
+            "unclosed": b"<!-- doc-guard-rule -->\nold rule\n",
+            "stray-end": b"<!-- /EXPLAIN-TO-MAINTAINER:MANUAL -->\n",
+            "inline": b"text <!-- doc-guard-rule -->\nold\n<!-- /doc-guard-rule -->\n",
+            "managed-nested": b"<!-- gentle-ai:x -->\n" + self._personal_block(b"doc-guard-rule")
+                              + b"<!-- /gentle-ai:x -->\n",
+        }
+        for case, invalid in cases.items():
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as location:
+                home = Path(location)
+                self._seed_runtime(home)
+                codex = home / ".codex/AGENTS.md"
+                codex.write_bytes(codex.read_bytes() + invalid)
+                before = {item: item.read_bytes() for item in INSTALLER.manual_paths(home)}
+                with self.assertRaises(INSTALLER.InstallError):
+                    INSTALLER.apply(home, ROOT)
+                self.assertEqual(before, {item: item.read_bytes() for item in before})
+                self.assertFalse((home / ".agents").exists())
+
+    def test_added_blocks_never_carry_complete_managed_marker_tags(self):
+        replacements = INSTALLER.render_manual_blocks(ROOT)
+        for start in INSTALLER.ADDED_WHEN_ABSENT_BLOCKS:
+            self.assertIsNone(INSTALLER.MANAGED_MARKER_RE.search(replacements[start]), start)
 
     def test_optional_block_helper_preserves_absence_instead_of_appending(self):
         content = b"unrelated bytes\n"
