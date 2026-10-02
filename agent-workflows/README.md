@@ -196,16 +196,16 @@ file is left untouched.
 
 ### Existing personal blocks: targeted preparation
 
-The installer also corrects three **existing** personal instruction blocks:
-`AGENT-PROPAGATION-MAP:MANUAL`, `doc-guard-rule` and
-`EXPLAIN-TO-MAINTAINER:MANUAL`. Their canonical templates live under `templates/`.
+The installer also corrects four **existing** personal instruction blocks:
+`AGENT-PROPAGATION-MAP:MANUAL`, `doc-guard-rule`,
+`EXPLAIN-TO-MAINTAINER:MANUAL` and `PLAN-NAMING:GLOBAL`. Their canonical templates live under `templates/`.
 Propagation names the repository as the editable own-skill source and
 `~/.agents/skills` as the central installation, without copying Gentle AI assets.
 Closure names `chanks-5-session-doc`; explanation uses the central
 `chanks-0-explicalo-simple` reference. Project-specific documentation destinations
 and opt-outs still take precedence.
 
-These three blocks are **replace-if-present**: an absent block stays absent. This
+These four blocks are **replace-if-present**: an absent block stays absent. This
 is not a blanket rewrite of personal instructions. The required session-routing
 block keeps its existing behavior; Hermes is not added to this installer's
 instruction targets.
@@ -215,23 +215,34 @@ Two runtimes are the exception (maintainer decision B3, 2026-10-01). They also
 
 | Runtime | File | Written by | Blocks added when absent |
 |---|---|---|---|
-| Codex | `~/.codex/AGENTS.md` | `tools/install.py` | `doc-guard-rule`, `EXPLAIN-TO-MAINTAINER:MANUAL` |
-| Hermes | `~/.hermes/SOUL.md` | `tools/prepare-personal-config.py --stage hermes` | `doc-guard-rule`, `EXPLAIN-TO-MAINTAINER:MANUAL` |
+| Codex | `~/.codex/AGENTS.md` | `tools/install.py` | `doc-guard-rule`, `EXPLAIN-TO-MAINTAINER:MANUAL`, `PLAN-NAMING:GLOBAL` |
+| Hermes | `~/.hermes/SOUL.md` | `tools/prepare-personal-config.py --stage hermes` | `doc-guard-rule`, `EXPLAIN-TO-MAINTAINER:MANUAL`, `PLAN-NAMING:GLOBAL` |
 
 An added block is appended at the end of the file after one blank line; no existing
 byte is rewritten. A block already present is replaced in place, never duplicated,
 and a second run changes nothing. A half-present, inline or managed-nested marker
 is refused before any write. `AGENT-PROPAGATION-MAP:MANUAL` is not added anywhere.
 
-The plan-naming block (`PLAN-NAMING:GLOBAL`) is **not** added yet. It has no
-template in this repository, and on 2026-10-01 the three installed copies were
-found to differ: the Claude Code and OpenCode copies each name their own runtime
-path to the canon, and the Pi copy carries an older, shorter wording. Because a
-registered block is replaced in place wherever it exists, one template would
-rewrite at least two of those runtimes. The maintainer first chooses the
-canonical wording and how the runtime path is expressed; then add
-`templates/plan-naming.md`, register it in `MANUAL_BLOCKS` and list its marker in
-`ADDED_WHEN_ABSENT_BLOCKS` to complete the set.
+The plan-naming block (`PLAN-NAMING:GLOBAL`) is one text in all five runtimes
+(maintainer decision of 2026-10-01). `templates/plan-naming.md` holds the wording
+that Claude Code had installed. Only the line that names the canon file varies: the
+template carries a `{{PLAN_NAMING_CANON}}` placeholder that the installer resolves
+per personal file, to the skill root where it writes `_shared/` for that runtime
+(`PLAN_NAMING_CANON_ROOTS` in `tools/install.py`):
+
+| Runtime | Canon path named in the block |
+|---|---|
+| Claude Code | `~/.claude/skills/_shared/plan-naming-convention.md` |
+| OpenCode | `~/.config/opencode/skills/_shared/plan-naming-convention.md` |
+| Codex | `~/.codex/skills/_shared/plan-naming-convention.md` |
+| Pi | `~/.agents/skills/_shared/plan-naming-convention.md` |
+| Hermes | `~/.agents/skills/_shared/plan-naming-convention.md` |
+
+Pi and Hermes get no `_shared/` overlay of their own from this installer; both read
+the central folder, which every install writes. A copy that differs from the unified
+text, such as Pi's older and shorter wording, is replaced in place on the next
+install. The snapshot stage compares each runtime against its own rendering, so a
+block that names another runtime's path counts as stale.
 
 ### Preparing the personal-runtime retirement
 

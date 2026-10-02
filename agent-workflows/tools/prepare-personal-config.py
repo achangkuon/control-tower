@@ -209,6 +209,7 @@ def _desired_existing_manual_content(content: bytes, path: Path,
     """Apply installer templates to blocks already present in this file. With `add_absent`
     (the Hermes stage), also append the installer's ADDED_WHEN_ABSENT_BLOCKS the file lacks.
     Every other absent block stays absent."""
+    replacements = install.blocks_for(path, replacements)
     ranges = []
     try:
         managed_ranges = install._managed_ranges(content, path)
@@ -410,7 +411,10 @@ def _capture_blocks(path: Path) -> list[tuple[str, str]]:
     except UnicodeDecodeError as exc:
         raise MigrationError(f"instruction file is not UTF-8: {path}") from exc
     blocks = []
-    expected_blocks = install.render_manual_blocks(ROOT / "agent-workflows")
+    # Each runtime is compared against its own rendering: the plan-naming block names
+    # a different canon path per personal file.
+    expected_blocks = install.blocks_for(
+        path, install.render_manual_blocks(ROOT / "agent-workflows"))
     expected_by_name = {
         start.decode()[len("<!-- "):-len(" -->")]: content.decode()
         for start, content in expected_blocks.items()

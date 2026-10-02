@@ -295,7 +295,11 @@ class PersonalConfigMigrationTests(unittest.TestCase):
             personal.plan_stage("hermes", self.home, repo_root=ROOT, hermes_python=self.hermes_python,
                                 subprocess_runner=self.yaml_runner())
 
-    HERMES_ADDED = (b"doc-guard-rule", b"EXPLAIN-TO-MAINTAINER:MANUAL")
+    HERMES_ADDED = (b"doc-guard-rule", b"EXPLAIN-TO-MAINTAINER:MANUAL", b"PLAN-NAMING:GLOBAL")
+
+    def blocks(self, relative):
+        return install.blocks_for(
+            self.home / relative, install.render_manual_blocks(ROOT / "agent-workflows"))
 
     def hermes(self, action=personal.apply_stage):
         return action("hermes", self.home, repo_root=ROOT, hermes_python=self.hermes_python,
@@ -307,13 +311,15 @@ class PersonalConfigMigrationTests(unittest.TestCase):
         managed = b"<!-- gentle-ai:persona -->\nkeep managed bytes\n<!-- /gentle-ai:persona -->\n"
         original = managed + self.soul_with_routing()
         soul = self.write(".hermes/SOUL.md", original)
-        replacements = install.render_manual_blocks(ROOT / "agent-workflows")
+        replacements = self.blocks(".hermes/SOUL.md")
         self.hermes()
         content = soul.read_bytes()
         self.assertTrue(content.startswith(managed + b"before\n"))
-        self.assertIn(b"\nafter\n\n", content)
         blocks = [replacements[b"<!-- " + name + b" -->"] for name in self.HERMES_ADDED]
-        self.assertTrue(content.endswith(blocks[0] + b"\n" + blocks[1]))
+        self.assertTrue(content.endswith(b"\nafter\n\n" + b"\n".join(blocks)))
+        self.assertIn(b"    ~/.agents/skills/_shared/plan-naming-convention.md   (copia runtime;",
+                      content)
+        self.assertNotIn(b"{{", content)
         for name in self.HERMES_ADDED:
             self.assertEqual(content.count(b"<!-- " + name + b" -->"), 1)
         self.assertNotIn(b"AGENT-PROPAGATION-MAP:MANUAL", content)
@@ -327,12 +333,13 @@ class PersonalConfigMigrationTests(unittest.TestCase):
         self.make_skill_rosters()
         stale = b"<!-- doc-guard-rule -->\nstale rule\n<!-- /doc-guard-rule -->\n"
         soul = self.write(".hermes/SOUL.md", stale + self.soul_with_routing())
-        replacements = install.render_manual_blocks(ROOT / "agent-workflows")
+        replacements = self.blocks(".hermes/SOUL.md")
         self.hermes()
         content = soul.read_bytes()
         self.assertTrue(content.startswith(replacements[b"<!-- doc-guard-rule -->"]))
         self.assertEqual(content.count(b"<!-- doc-guard-rule -->"), 1)
-        self.assertTrue(content.endswith(replacements[b"<!-- EXPLAIN-TO-MAINTAINER:MANUAL -->"]))
+        self.assertTrue(content.endswith(replacements[b"<!-- PLAN-NAMING:GLOBAL -->"]))
+        self.assertEqual(content.count(b"<!-- PLAN-NAMING:GLOBAL -->"), 1)
 
     def test_hermes_malformed_marker_of_an_added_block_is_refused_before_any_write(self):
         self.write(".hermes/config.yaml", b"skills: {}\n")
@@ -342,6 +349,11 @@ class PersonalConfigMigrationTests(unittest.TestCase):
             "stray-end": b"<!-- /EXPLAIN-TO-MAINTAINER:MANUAL -->\n",
             "managed-nested": b"<!-- gentle-ai:x -->\n<!-- doc-guard-rule -->\nold\n"
                               b"<!-- /doc-guard-rule -->\n<!-- /gentle-ai:x -->\n",
+            "plan-naming-unclosed": b"<!-- PLAN-NAMING:GLOBAL -->\nold rule\n",
+            "plan-naming-stray-end": b"<!-- /PLAN-NAMING:GLOBAL -->\n",
+            "plan-naming-duplicate": 2 * b"<!-- PLAN-NAMING:GLOBAL -->\nold\n<!-- /PLAN-NAMING:GLOBAL -->\n",
+            "plan-naming-managed-nested": b"<!-- section:x -->\n<!-- PLAN-NAMING:GLOBAL -->\nold\n"
+                                          b"<!-- /PLAN-NAMING:GLOBAL -->\n<!-- /section:x -->\n",
         }
         for case, invalid in cases.items():
             with self.subTest(case=case):
@@ -366,6 +378,37 @@ class PersonalConfigMigrationTests(unittest.TestCase):
         second = {p.relative_to(self.home): p.read_bytes() for p in (self.home / ".claude/.skill-backups/manual-blocks").rglob("*") if p.is_file()}
         self.assertEqual(first, second)
         self.assertTrue(archive.exists())
+
+    PLAN_NAMING = b"<!-- PLAN-NAMING:GLOBAL -->"
+    INSTRUCTION_FILES = (".claude/CLAUDE.md", ".codex/AGENTS.md", ".config/opencode/AGENTS.md",
+                         ".pi/agent/APPEND_SYSTEM.md", ".hermes/SOUL.md")
+
+    def test_snapshot_accepts_each_runtime_carrying_its_own_plan_naming_path(self):
+        self.make_instruction_files()
+        for relative in self.INSTRUCTION_FILES:
+            path = self.home / relative
+            path.write_bytes(path.read_bytes() + self.blocks(relative)[self.PLAN_NAMING])
+        personal.apply_stage("snapshot", self.home, repo_root=ROOT)
+        snapshot = personal.load_snapshot(self.home / ".claude/.skill-backups/manual-blocks")
+        self.assertIn("~/.claude/skills/_shared/", snapshot["claude"]["PLAN-NAMING:GLOBAL"])
+        self.assertIn("~/.codex/skills/_shared/", snapshot["codex"]["PLAN-NAMING:GLOBAL"])
+        self.assertIn("~/.agents/skills/_shared/", snapshot["pi"]["PLAN-NAMING:GLOBAL"])
+        self.assertIn("~/.agents/skills/_shared/", snapshot["hermes"]["PLAN-NAMING:GLOBAL"])
+
+    def test_snapshot_refuses_a_plan_naming_block_with_another_runtime_path_or_old_wording(self):
+        stale_blocks = {
+            "other-runtime-path": self.blocks(".claude/CLAUDE.md")[self.PLAN_NAMING],
+            "old-wording": b"<!-- PLAN-NAMING:GLOBAL -->\nThe sole authority is:\n"
+                           b"<!-- /PLAN-NAMING:GLOBAL -->\n",
+        }
+        for case, stale in stale_blocks.items():
+            with self.subTest(case=case):
+                self.make_instruction_files()
+                pi = self.home / ".pi/agent/APPEND_SYSTEM.md"
+                pi.write_bytes(pi.read_bytes() + stale)
+                with self.assertRaisesRegex(personal.MigrationError, "stale"):
+                    personal.apply_stage("snapshot", self.home, repo_root=ROOT)
+                self.assertFalse((self.home / ".claude/.skill-backups/manual-blocks").exists())
 
     def test_snapshot_refuses_stale_unattended_block_without_changing_store(self):
         self.make_instruction_files()

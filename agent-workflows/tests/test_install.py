@@ -333,7 +333,8 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(INSTALLER.apply(self.home, ROOT), [])
         self.assertEqual(before, {path: path.read_bytes() for path in before})
 
-    ADDED_TO_CODEX = (b"doc-guard-rule", b"EXPLAIN-TO-MAINTAINER:MANUAL")
+    PLAN_NAMING = b"PLAN-NAMING:GLOBAL"
+    ADDED_TO_CODEX = (b"doc-guard-rule", b"EXPLAIN-TO-MAINTAINER:MANUAL", PLAN_NAMING)
 
     def test_missing_personal_blocks_are_added_only_to_codex(self):
         INSTALLER.apply(self.home, ROOT)
@@ -342,6 +343,7 @@ class InstallerTests(unittest.TestCase):
             for name, _ in self.TARGETED_BLOCKS:
                 expected = path == codex and name in self.ADDED_TO_CODEX
                 self.assertEqual(name in path.read_bytes(), expected, (path, name))
+            self.assertEqual(self.PLAN_NAMING in path.read_bytes(), path == codex, path)
         self.assertFalse((self.home / ".hermes").exists())
 
     def test_codex_receives_absent_blocks_once_preserving_existing_bytes(self):
@@ -350,7 +352,7 @@ class InstallerTests(unittest.TestCase):
         unrelated = b"<!-- OWNER-NOTES:MANUAL -->\nkeep unrelated bytes\n<!-- /OWNER-NOTES:MANUAL -->"
         codex.write_bytes(managed + codex.read_bytes() + unrelated)  # no trailing newline
         codex.chmod(0o640)
-        replacements = INSTALLER.render_manual_blocks(ROOT)
+        replacements = INSTALLER.blocks_for(codex, INSTALLER.render_manual_blocks(ROOT))
         plan = INSTALLER.build_plan(self.home, ROOT)
         self.assertIn((codex, "manual"), [(change.path, change.kind) for change in plan])
         INSTALLER.apply(self.home, ROOT)
@@ -359,7 +361,7 @@ class InstallerTests(unittest.TestCase):
         self.assertIn(unrelated + b"\n\n", content)
         self.assertEqual(stat.S_IMODE(codex.stat().st_mode), 0o640)
         blocks = [replacements[b"<!-- " + name + b" -->"] for name in self.ADDED_TO_CODEX]
-        self.assertTrue(content.endswith(blocks[0] + b"\n" + blocks[1]))
+        self.assertTrue(content.endswith(unrelated + b"\n\n" + b"\n".join(blocks)))
         for name in self.ADDED_TO_CODEX:
             self.assertEqual(content.count(b"<!-- " + name + b" -->"), 1)
             self.assertEqual(content.count(b"<!-- /" + name + b" -->"), 1)
@@ -370,12 +372,132 @@ class InstallerTests(unittest.TestCase):
     def test_codex_existing_block_is_replaced_in_place_and_only_the_absent_one_is_added(self):
         codex = self.home / ".codex/AGENTS.md"
         codex.write_bytes(self._personal_block(b"doc-guard-rule") + codex.read_bytes())
-        replacements = INSTALLER.render_manual_blocks(ROOT)
+        replacements = INSTALLER.blocks_for(codex, INSTALLER.render_manual_blocks(ROOT))
         INSTALLER.apply(self.home, ROOT)
         content = codex.read_bytes()
         self.assertTrue(content.startswith(replacements[b"<!-- doc-guard-rule -->"]))
-        self.assertTrue(content.endswith(replacements[b"<!-- EXPLAIN-TO-MAINTAINER:MANUAL -->"]))
+        self.assertTrue(content.endswith(
+            replacements[b"<!-- EXPLAIN-TO-MAINTAINER:MANUAL -->"] + b"\n"
+            + replacements[b"<!-- PLAN-NAMING:GLOBAL -->"]))
         self.assertEqual(content.count(b"<!-- doc-guard-rule -->"), 1)
+
+    PLAN_NAMING_START = b"<!-- PLAN-NAMING:GLOBAL -->"
+    CANON_LINE = ("    {}   (copia runtime; se instala desde "
+                  "control-tower/Main/agent-workflows/)\n")
+    CANON_BY_FILE = {
+        ".claude/CLAUDE.md": "~/.claude/skills/_shared/plan-naming-convention.md",
+        ".config/opencode/AGENTS.md": "~/.config/opencode/skills/_shared/plan-naming-convention.md",
+        ".codex/AGENTS.md": "~/.codex/skills/_shared/plan-naming-convention.md",
+        ".pi/agent/APPEND_SYSTEM.md": "~/.agents/skills/_shared/plan-naming-convention.md",
+        ".hermes/SOUL.md": "~/.agents/skills/_shared/plan-naming-convention.md",
+    }
+
+    def _plan_naming(self, relative):
+        return INSTALLER.blocks_for(
+            self.home / relative, INSTALLER.render_manual_blocks(ROOT))[self.PLAN_NAMING_START]
+
+    def test_plan_naming_block_is_one_text_that_varies_only_in_the_canon_path_line(self):
+        self.assertIn("plan-naming.md", [entry[0] for entry in INSTALLER.MANUAL_BLOCKS])
+        self.assertIn(self.PLAN_NAMING_START, INSTALLER.ADDED_WHEN_ABSENT_BLOCKS)
+        template = (ROOT / "templates/plan-naming.md").read_text(encoding="utf-8")
+        self.assertEqual(template.count("{{PLAN_NAMING_CANON}}"), 1)
+        self.assertEqual(template.count("plan-naming-convention.md"), 0)
+        self.assertIn("The single source of truth is:", template)
+        self.assertIn("Status: ACTIVE.", template)
+        self.assertIsNone(INSTALLER.MANAGED_MARKER_RE.search(template.encode()))
+        for relative, canon in self.CANON_BY_FILE.items():
+            with self.subTest(relative=relative):
+                expected = template.replace(
+                    self.CANON_LINE.format("{{PLAN_NAMING_CANON}}"), self.CANON_LINE.format(canon))
+                self.assertNotEqual(expected, template)
+                self.assertEqual(self._plan_naming(relative), expected.encode())
+
+    def test_plan_naming_canon_path_is_a_location_the_installer_writes(self):
+        self.assertTrue((ROOT / "skills/_shared/plan-naming-convention.md").is_file())
+        written = {
+            INSTALLER._relative_root(self.home, runtime_root)
+            for runtime_root in INSTALLER.runtime_skill_roots(self.home)
+            if "_shared" in INSTALLER.skills_for_root(self.home, runtime_root)
+        }
+        for relative, skills_root in INSTALLER.PLAN_NAMING_CANON_ROOTS.items():
+            with self.subTest(relative=relative):
+                self.assertIn(skills_root, written)
+                self.assertEqual(
+                    INSTALLER.plan_naming_canon(self.home / relative),
+                    self.CANON_BY_FILE[relative.as_posix()])
+        self.assertEqual(
+            {path.as_posix() for path in INSTALLER.PLAN_NAMING_CANON_ROOTS}, set(self.CANON_BY_FILE))
+        # A file the installer does not know still gets a location that is always written.
+        self.assertEqual(INSTALLER.plan_naming_canon(Path("fixture")),
+                         "~/.agents/skills/_shared/plan-naming-convention.md")
+
+    def test_unresolved_plan_naming_placeholder_is_never_written(self):
+        INSTALLER.apply(self.home, ROOT)
+        for path in INSTALLER.manual_paths(self.home):
+            self.assertNotIn(b"{{", path.read_bytes(), path)
+
+    PI_OLD_PLAN_NAMING = (
+        b"<!-- PLAN-NAMING:GLOBAL -->\n## Plan Naming Standard\n\nThe sole authority is:\n\n"
+        b"    ~/.claude/skills/_shared/plan-naming-convention.md\n\n"
+        b"Guardrails: one product plan.\n<!-- /PLAN-NAMING:GLOBAL -->\n")
+
+    def test_existing_plan_naming_blocks_converge_on_the_unified_text(self):
+        claude = self.home / ".claude/CLAUDE.md"
+        opencode = self.home / ".config/opencode/AGENTS.md"
+        pi = self.home / ".pi/agent/APPEND_SYSTEM.md"
+        reference = self._plan_naming(".claude/CLAUDE.md")
+        # OpenCode starts from the reference wording with another runtime's path line.
+        seeded = {claude: reference, opencode: reference, pi: self.PI_OLD_PLAN_NAMING}
+        for path, block in seeded.items():
+            path.write_bytes(b"prefix\n" + block + path.read_bytes() + b"suffix\n")
+        INSTALLER.apply(self.home, ROOT)
+        for path, relative in ((claude, ".claude/CLAUDE.md"),
+                               (opencode, ".config/opencode/AGENTS.md"),
+                               (pi, ".pi/agent/APPEND_SYSTEM.md")):
+            content = path.read_bytes()
+            self.assertTrue(content.startswith(b"prefix\n" + self._plan_naming(relative)), path)
+            self.assertTrue(content.endswith(b"suffix\n"), path)
+            self.assertEqual(content.count(self.PLAN_NAMING_START), 1, path)
+        self.assertNotIn(b"The sole authority is", pi.read_bytes())
+        changed = [
+            (old, new) for old, new in zip(
+                reference.splitlines(), self._plan_naming(".config/opencode/AGENTS.md").splitlines())
+            if old != new
+        ]
+        self.assertEqual(len(changed), 1)
+        self.assertEqual(INSTALLER.apply(self.home, ROOT), [])
+
+    def test_reference_plan_naming_block_in_claude_plans_no_change(self):
+        INSTALLER.apply(self.home, ROOT)
+        claude = self.home / ".claude/CLAUDE.md"
+        claude.write_bytes(claude.read_bytes() + self._plan_naming(".claude/CLAUDE.md"))
+        self.assertNotIn(claude, [change.path for change in INSTALLER.build_plan(self.home, ROOT)])
+
+    def test_malformed_plan_naming_markers_are_refused_before_any_write(self):
+        block = self._plan_naming(".claude/CLAUDE.md")
+        cases = {
+            "unclosed": b"<!-- PLAN-NAMING:GLOBAL -->\nold rule\n",
+            "stray-end": b"<!-- /PLAN-NAMING:GLOBAL -->\n",
+            "duplicate": block + block,
+            "inline": b"text " + block,
+            "managed-nested": b"<!-- gentle-ai:x -->\n" + block + b"<!-- /gentle-ai:x -->\n",
+            "wraps-managed": block.replace(
+                b"## Plan Naming Standard\n",
+                b"<!-- section:x -->\nmanaged\n<!-- /section:x -->\n"),
+        }
+        for relative in INSTALLER.MANUAL_FILES:
+            for case, invalid in cases.items():
+                with self.subTest(relative=relative, case=case), \
+                        tempfile.TemporaryDirectory() as location:
+                    home = Path(location)
+                    self._seed_runtime(home)
+                    target = home / relative
+                    target.write_bytes(target.read_bytes() + invalid)
+                    before = {item: item.read_bytes() for item in INSTALLER.manual_paths(home)}
+                    with self.assertRaises(INSTALLER.InstallError):
+                        INSTALLER.apply(home, ROOT)
+                    self.assertEqual(before, {item: item.read_bytes() for item in before})
+                    self.assertFalse((home / ".agents").exists())
 
     def test_codex_malformed_marker_of_an_added_block_is_refused_before_any_write(self):
         cases = {

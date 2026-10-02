@@ -182,6 +182,7 @@ MANUAL_BLOCKS = (
         ("agent-propagation-map.md", b"AGENT-PROPAGATION-MAP:MANUAL"),
         ("doc-guard-rule.md", b"doc-guard-rule"),
         ("explain-to-maintainer.md", b"EXPLAIN-TO-MAINTAINER:MANUAL"),
+        ("plan-naming.md", b"PLAN-NAMING:GLOBAL"),
     )
 )
 # Personal blocks a runtime receives when it lacks them (maintainer decision B3,
@@ -190,8 +191,23 @@ MANUAL_BLOCKS = (
 ADDED_WHEN_ABSENT_BLOCKS = (
     b"<!-- doc-guard-rule -->",
     b"<!-- EXPLAIN-TO-MAINTAINER:MANUAL -->",
+    b"<!-- PLAN-NAMING:GLOBAL -->",
 )
 ADDED_WHEN_ABSENT_FILES = (Path(".codex/AGENTS.md"),)
+
+# The plan-naming block is one text in every runtime (maintainer decision of 2026-10-01).
+# Only the line naming the canon file varies: each personal file points at the skill root
+# where this installer writes `_shared/` for that runtime. Pi and Hermes have no skill root
+# of their own here; they read the central folder, which every install writes.
+PLAN_NAMING_PLACEHOLDER = "{{PLAN_NAMING_CANON}}"
+PLAN_NAMING_CANON_FILE = "_shared/plan-naming-convention.md"
+PLAN_NAMING_CANON_ROOTS = MappingProxyType({
+    Path(".claude/CLAUDE.md"): ".claude/skills",
+    Path(".config/opencode/AGENTS.md"): ".config/opencode/skills",
+    Path(".codex/AGENTS.md"): ".codex/skills",
+    Path(".pi/agent/APPEND_SYSTEM.md"): ".agents/skills",
+    Path(".hermes/SOUL.md"): ".agents/skills",
+})
 MANAGED_MARKER_RE = re.compile(
     rb"<!--\s*(/?)((?:gentle-ai|section):[A-Za-z0-9_.-]+)\s*-->"
 )
@@ -354,7 +370,29 @@ def _validate_retired_skill_destination(runtime_root: Path, destination: Path) -
         raise InstallError(f"expected directory for retired runtime skill: {destination}")
 
 
+def plan_naming_canon(personal_file: Path) -> str:
+    """The canon path a personal instruction file names. The file is recognized by its
+    trailing components, so a fixture home resolves like the real one; an unknown file
+    gets the central folder, the one location every install writes."""
+    skills_root = CENTRAL_SKILLS_RELATIVE
+    for relative, candidate in PLAN_NAMING_CANON_ROOTS.items():
+        if personal_file.parts[-len(relative.parts):] == relative.parts:
+            skills_root = candidate
+            break
+    return f"~/{skills_root}/{PLAN_NAMING_CANON_FILE}"
+
+
+def blocks_for(personal_file: Path, replacements: dict[bytes, bytes]) -> dict[bytes, bytes]:
+    """Resolve the per-runtime placeholder for one personal file. Blocks without the
+    placeholder come back unchanged, so resolving twice is harmless."""
+    canon = plan_naming_canon(personal_file).encode("utf-8")
+    placeholder = PLAN_NAMING_PLACEHOLDER.encode("utf-8")
+    return {start: block.replace(placeholder, canon) for start, block in replacements.items()}
+
+
 def render_manual_blocks(root: Path) -> dict[bytes, bytes]:
+    """Render every template. The per-runtime placeholder stays unresolved here;
+    `blocks_for` resolves it for the personal file being written."""
     rendered_blocks = {}
     for template_name, start, _, _, _ in MANUAL_BLOCKS:
         template_path = root / "templates" / template_name
@@ -487,6 +525,7 @@ def desired_manual_content(
     # Optional personal blocks are replace-if-present, never new instructions, except the
     # ADDED_WHEN_ABSENT_BLOCKS of a runtime that opts in through `add_absent`.
     # Validate all ranges first, then splice backwards to preserve unrelated bytes.
+    replacements = blocks_for(path, replacements)
     content = path.read_bytes()
     matches = _owned_block_matches(content, path)
     present = sorted(
