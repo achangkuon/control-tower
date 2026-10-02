@@ -46,7 +46,7 @@ Observed after integration (all commands exit 0): `$HOME/.local/bin/radar check 
 - [x] Implement, verify, review, deliver, and archive S172 (`8caaacf33e98ce236676533198761723154d6eef`; native review `review-99464decff2e806b`).
 - [x] Re-run Radar and execute S174 only while it remains `LISTO`; six sequential units. DONE: delivered `088cf3a` and archived 2026-10-02.
 - [x] Re-run Radar and execute S173 only after S174 is delivered and Radar admits it; two sequential units. DONE: delivered `4dcf7dd` and archived 2026-10-02.
-- [ ] Re-run Radar and execute S150 only after S173 is delivered and Radar admits it; one documentation unit.
+- [x] Re-run Radar and execute S150 only after S173 is delivered and Radar admits it; one documentation unit. DONE: delivered `59dc208` and archived 2026-10-02.
 
 S172 strict-TDD evidence: the focused suite first failed with 19 pass / 3 fail because `cleanupProject` and the `cleanup` CLI did not exist, then passed with 23 pass / 0 fail. Independent verification passed; the reviewed diff was 126 authored lines across the two authorized files. The pre-push suite passed 1602 tests. Tests used disposable roots and isolated HOME/XDG/TMP state only. Radar archived S172 and admitted S174; the 63 existing warnings remain unchanged.
 
@@ -299,3 +299,7 @@ Maintainer decision: the ordinary-question check uses a real model through an op
 - Maintainer decision (Engram 12892): close S173 without the real-model run; the ordinary-question check is reported as `not_measured` in V1 and the README must state it. The harness keeps `--real-model` for a later operator run.
 - Delivered `a14701a`, `b0d4ab8`, `4dcf7dd`; full suite at `4dcf7dd` 1,790 pass / 0 fail (201.98 s), push hook 1,790 pass. `entrega.commit: 4dcf7dd9badc52392f2a925e54fa60c7d49c0ff5` recorded; `radar archivar S173` succeeded, check 0 errors / 63 warnings, ROADMAP regenerated. S150 becomes admissible.
 - Follow-ups outside V1 Sessions: git test proxy should strip every occurrence of its directory; `test/lifecycle.test.mjs` CT-R12-S1 runs close to its 5 s timeout; benchmark shell-prefix detection; real-model behavioral run.
+
+### S150 closure
+
+- README.md rewritten (320 lines, neutral Spanish) from delivered sources only, with a per-claim source checklist; states no release is published yet, SHA-256 must come from a second channel, first install runs from a repository checkout, and the behavioral check is not measured. Native review `review-03f865f38e91cd20`: low risk (non-executable), approved and acknowledged. Push hook 0 failures. `entrega.commit: 59dc20826ff2ef2ee522406e50e8f3ce434cb5a2` recorded and S150 archived; Tower V1 Sessions complete. Next: plan S175 (release envelope builder) before the release.
