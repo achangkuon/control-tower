@@ -148,7 +148,7 @@ class InstallerTests(unittest.TestCase):
 
     def test_check_mode_detects_skill_and_manual_drift(self):
         INSTALLER.apply(self.home, ROOT)
-        skill_path = self.home / ".agents/skills/chanks-3-session-kickoff/SKILL.md"
+        skill_path = self.home / ".agents/skills/chanks-2-planificador-granular/SKILL.md"
         skill_path.chmod(0o644)
         skill_path.write_bytes(skill_path.read_bytes() + b"\nDRIFT\n")
         manual_path = self.home / ".pi/agent/APPEND_SYSTEM.md"
@@ -161,7 +161,7 @@ class InstallerTests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(result.returncode, 1)
-        self.assertIn("chanks-3-session-kickoff/SKILL.md", result.stdout)
+        self.assertIn("chanks-2-planificador-granular/SKILL.md", result.stdout)
         self.assertIn("APPEND_SYSTEM.md", result.stdout)
 
     def test_carril_launcher_is_installed_and_check_detects_drift(self):
@@ -198,7 +198,7 @@ class InstallerTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0)
         self.assertIn("WOULD_UPDATE", result.stdout)
-        self.assertFalse((self.home / ".agents/skills/chanks-3-session-kickoff/SKILL.md").exists())
+        self.assertFalse((self.home / ".agents/skills/chanks-2-planificador-granular/SKILL.md").exists())
         self.assertFalse((self.home / ".local/bin/carril").exists())
 
     def test_rejects_symlinked_runtime_parent_without_touching_external_sentinel(self):
@@ -213,12 +213,12 @@ class InstallerTests(unittest.TestCase):
         with self.assertRaises(INSTALLER.InstallError):
             INSTALLER.apply(self.home, ROOT)
         self.assertEqual(sentinel.read_bytes(), b"protected")
-        self.assertFalse((external / "chanks-3-session-kickoff").exists())
+        self.assertFalse((external / "chanks-2-planificador-granular").exists())
 
     def test_rejects_symlinked_destination_without_touching_external_sentinel(self):
         external = Path(self.tempdir.name) / "external-file"
         external.write_bytes(b"protected")
-        destination = self.home / ".agents/skills/chanks-3-session-kickoff/SKILL.md"
+        destination = self.home / ".agents/skills/chanks-2-planificador-granular/SKILL.md"
         destination.parent.mkdir(parents=True)
         destination.symlink_to(external)
 
@@ -472,7 +472,7 @@ class InstallerTests(unittest.TestCase):
         with self.assertRaises(INSTALLER.InstallError):
             INSTALLER.apply(self.home, ROOT)
         self.assertEqual(before, {path: path.read_bytes() for path in INSTALLER.manual_paths(self.home)})
-        self.assertFalse((self.home / ".agents/skills/chanks-3-session-kickoff").exists())
+        self.assertFalse((self.home / ".agents/skills/chanks-2-planificador-granular").exists())
         self.assertEqual(sentinel.read_bytes(), b"protected")
 
     def test_wrong_type_skill_directory_is_rejected_before_any_mutation(self):
@@ -484,7 +484,7 @@ class InstallerTests(unittest.TestCase):
         with self.assertRaises(INSTALLER.InstallError):
             INSTALLER.apply(self.home, ROOT)
         self.assertEqual(before, {path: path.read_bytes() for path in INSTALLER.manual_paths(self.home)})
-        self.assertFalse((self.home / ".agents/skills/chanks-3-session-kickoff").exists())
+        self.assertFalse((self.home / ".agents/skills/chanks-2-planificador-granular").exists())
         self.assertEqual(wrong_type.read_bytes(), b"protected")
 
     def test_missing_instruction_file_fails_without_runtime_mutation(self):
@@ -526,9 +526,13 @@ class InstallerTests(unittest.TestCase):
             path.parent.name for path in (ROOT / "skills").glob("chanks-*/SKILL.md")
         }
         self.assertEqual(
-            set(INSTALLER.CHANKS_SKILLS) | set(INSTALLER.V3_DEFERRED_SKILLS), actual_chanks
+            set(INSTALLER.CHANKS_SKILLS) | set(INSTALLER.DEFERRED_SKILLS), actual_chanks
         )
-        self.assertTrue(set(INSTALLER.CHANKS_SKILLS).isdisjoint(INSTALLER.V3_DEFERRED_SKILLS))
+        self.assertTrue(set(INSTALLER.CHANKS_SKILLS).isdisjoint(INSTALLER.DEFERRED_SKILLS))
+        self.assertEqual(
+            INSTALLER.DEFERRED_SKILLS,
+            INSTALLER.V2_DEFERRED_SKILLS + INSTALLER.V3_DEFERRED_SKILLS,
+        )
         self.assertTrue(set(INSTALLER.RETIRED_SKILLS).isdisjoint(INSTALLER.SKILLS))
 
     def test_chanks_1_adopcion_is_installed_and_listed(self):
@@ -570,6 +574,64 @@ class InstallerTests(unittest.TestCase):
             for root in (home / ".agents/skills", home / ".claude/skills"):
                 for skill in INSTALLER.V3_DEFERRED_SKILLS:
                     self.assertFalse((root / skill).exists(), skill)
+
+    def test_v2_deferred_kickoff_is_not_installed_but_stays_in_the_repo(self):
+        """The formal Session start waits for V2 (Pista): source kept, never installed."""
+        self.assertEqual(INSTALLER.V2_DEFERRED_SKILLS, ("chanks-3-session-kickoff",))
+        self.assertTrue(set(INSTALLER.V2_DEFERRED_SKILLS).isdisjoint(INSTALLER.SKILLS))
+        self.assertTrue(set(INSTALLER.V2_DEFERRED_SKILLS).isdisjoint(INSTALLER.V3_DEFERRED_SKILLS))
+        self.assertTrue(set(INSTALLER.V2_DEFERRED_SKILLS).issubset(INSTALLER.RETIRED_SKILLS))
+        installed = {skill for skill, _, _ in INSTALLER.source_files(ROOT)}
+        for skill in INSTALLER.V2_DEFERRED_SKILLS:
+            self.assertTrue((ROOT / "skills" / skill / "SKILL.md").is_file(), skill)
+            self.assertNotIn(skill, installed)
+        planned = [
+            change for change in INSTALLER.build_plan(self.home, ROOT)
+            if "chanks-3-session-kickoff" in change.path.parts
+        ]
+        self.assertEqual(planned, [])
+        INSTALLER.apply(self.home, ROOT)
+        for root in INSTALLER.installed_skill_roots(self.home):
+            for skill in INSTALLER.V2_DEFERRED_SKILLS:
+                self.assertFalse(_lexists(root / skill), (root, skill))
+
+    def test_installed_v2_deferred_copies_are_planned_and_archived_reversibly(self):
+        roots = INSTALLER.installed_skill_roots(self.home)
+        self.assertTrue(roots)
+        source = ROOT / "skills/chanks-3-session-kickoff"
+        for runtime_root in roots:
+            shutil.copytree(source, runtime_root / "chanks-3-session-kickoff")
+
+        dry_run = subprocess.run(
+            [sys.executable, str(SCRIPT), "--dry-run", "--home", str(self.home)],
+            capture_output=True, text=True, check=False,
+        )
+        self.assertEqual(dry_run.returncode, 0, dry_run.stdout + dry_run.stderr)
+        kickoff_lines = [
+            line for line in dry_run.stdout.splitlines() if "chanks-3-session-kickoff" in line
+        ]
+        self.assertEqual(len(kickoff_lines), len(roots), dry_run.stdout)
+        for line in kickoff_lines:
+            self.assertIn("retired-skill", line)
+        for runtime_root in roots:
+            self.assertTrue((runtime_root / "chanks-3-session-kickoff/SKILL.md").is_file())
+
+        INSTALLER.apply(self.home, ROOT)
+
+        for runtime_root in roots:
+            self.assertFalse((runtime_root / "chanks-3-session-kickoff").exists())
+            archived = list(
+                INSTALLER.retired_skill_archive_root(runtime_root).glob("chanks-3-session-kickoff-*")
+            )
+            self.assertEqual(len(archived), 1, runtime_root)
+            self.assertEqual(
+                (archived[0] / "SKILL.md").read_bytes(), (source / "SKILL.md").read_bytes()
+            )
+            self.assertEqual(
+                (archived[0] / "references/admission-contract.md").read_bytes(),
+                (source / "references/admission-contract.md").read_bytes(),
+            )
+        self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
 
     def test_installed_v3_deferred_copies_are_planned_and_archived(self):
         roots = INSTALLER.installed_skill_roots(self.home)
@@ -697,7 +759,7 @@ class InstallerTests(unittest.TestCase):
                     INSTALLER.apply(home, ROOT)
 
                 self.assertEqual(retired.read_bytes(), b"user-file")
-                self.assertFalse((home / ".agents/skills/chanks-3-session-kickoff").exists())
+                self.assertFalse((home / ".agents/skills/chanks-2-planificador-granular").exists())
 
     def test_native_kickoff_reconciles_identity_without_inventing_a_route(self):
         content = (ROOT / "skills/chanks-3-session-kickoff/SKILL.md").read_text(encoding="utf-8")
@@ -1104,13 +1166,13 @@ class SessionBoundaryBlockTests(unittest.TestCase):
         for how in ("--base-ref", "400", "work-unit", "Review before"):
             self.assertNotIn(how, self.template)
 
-    def test_admission_contract_lives_in_the_kickoff_skill_and_is_installed(self):
+    def test_admission_contract_lives_in_the_kickoff_skill_and_waits_for_v2(self):
         reference = ROOT / "skills/chanks-3-session-kickoff/references/admission-contract.md"
         self.assertTrue(reference.is_file())
         self.assertIn("references/admission-contract.md",
                       (ROOT / "skills/chanks-3-session-kickoff/SKILL.md").read_text(encoding="utf-8"))
         installed = {(skill, relative.as_posix()) for skill, relative, _ in INSTALLER.source_files(ROOT)}
-        self.assertIn(("chanks-3-session-kickoff", "references/admission-contract.md"), installed)
+        self.assertNotIn(("chanks-3-session-kickoff", "references/admission-contract.md"), installed)
         self.assertNotIn("SESSION-ADMISSION-CONTRACT", self.template)
 
     def test_block_nested_in_another_marked_block_is_rejected_before_mutation(self):
@@ -1577,7 +1639,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
     def test_inline_request_badges_and_per_session_stage_observations(self):
         self._set_switch(False)
         skill_root = self.home / ".agents/skills"
-        skill = skill_root / "chanks-3-session-kickoff/SKILL.md"
+        skill = skill_root / "chanks-2-planificador-granular/SKILL.md"
         skill.parent.mkdir(parents=True)
         skill.write_text("# safe", encoding="utf8")
         outside = self.home / "elsewhere/SKILL.md"
@@ -1592,7 +1654,7 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         ]
         outcome = self._run_shim({"bashCommand": "radar etapa S164 -C .", "stageCalls": observations, "skillPath": str(skill)})
         self.assertIn("🗼 Torre · radar etapa · solicitado", outcome["displayed"].get(outcome["before"]["bash"]["id"], str(outcome["tools"])))
-        self.assertIn("💪 Chanks · chanks-3-session-kickoff · lectura solicitada", outcome["displayed"][outcome["skillRead"]["id"]])
+        self.assertIn("💪 Chanks · chanks-2-planificador-granular · lectura solicitada", outcome["displayed"][outcome["skillRead"]["id"]])
         self.assertEqual(outcome["messages"].count("💪 Chanks · Etapa 2 · Preparar"), 1)
         self.assertFalse(any("Radar etapa ·" in message or "🗼 Torre · radar etapa" in message for message in outcome["messages"]))
         self.assertNotIn("💪 Chanks · Etapa 9 · Falso", outcome["messages"])

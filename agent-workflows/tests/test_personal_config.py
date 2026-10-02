@@ -201,7 +201,7 @@ class PersonalConfigMigrationTests(unittest.TestCase):
         self.write(".hermes/SOUL.md", self.soul_with_unattended())
         (self.home / ".agents/skills").mkdir(parents=True)
         hermes_skills = self.home / ".hermes/skills"
-        for skill in install.OWN_SKILLS + install.V3_DEFERRED_SKILLS:
+        for skill in install.OWN_SKILLS + install.DEFERRED_SKILLS:
             shutil.copytree(ROOT / "agent-workflows/skills" / skill, hermes_skills / skill)
         before = {path.relative_to(self.home).as_posix(): (path.read_bytes(), path.stat().st_mode & 0o777)
                   for path in self.home.rglob("*") if path.is_file()}
@@ -219,7 +219,7 @@ class PersonalConfigMigrationTests(unittest.TestCase):
         self.write(".hermes/config.yaml", b"skills:\n  creation_nudge_interval: 15\nother:\n  enabled: true\n")
         self.write(".hermes/SOUL.md", self.soul_with_unattended())
         hermes_skills = self.home / ".hermes/skills"
-        for skill in install.OWN_SKILLS + install.V3_DEFERRED_SKILLS:
+        for skill in install.OWN_SKILLS + install.DEFERRED_SKILLS:
             shutil.copytree(ROOT / "agent-workflows/skills" / skill, hermes_skills / skill)
         (hermes_skills / "third-party").mkdir(parents=True)
         (hermes_skills / "third-party/SKILL.md").write_text("# Retain third-party\n", encoding="utf-8")
@@ -228,14 +228,14 @@ class PersonalConfigMigrationTests(unittest.TestCase):
         central = self.home / ".agents/skills"
         central_names = {path.name for path in central.iterdir()}
         self.assertTrue(set(install.OWN_SKILLS) <= central_names)
-        self.assertEqual(len(install.OWN_SKILLS), 25)
-        self.assertFalse(set(install.V3_DEFERRED_SKILLS) & central_names)
+        self.assertEqual(len(install.OWN_SKILLS), 24)
+        self.assertFalse(set(install.DEFERRED_SKILLS) & central_names)
         self.assertTrue(all((central / name).is_dir() for name in install.OWN_SKILLS))
-        self.assertTrue(all(not (central / name).exists() for name in install.V3_DEFERRED_SKILLS))
+        self.assertTrue(all(not (central / name).exists() for name in install.DEFERRED_SKILLS))
         hermes_before = {
             name: {path.relative_to(hermes_skills / name).as_posix(): path.read_bytes()
                    for path in (hermes_skills / name).rglob("*") if path.is_file()}
-            for name in install.OWN_SKILLS + install.V3_DEFERRED_SKILLS
+            for name in install.OWN_SKILLS + install.DEFERRED_SKILLS
         }
 
         personal.apply_stage("hermes", self.home, repo_root=ROOT,
@@ -385,11 +385,11 @@ class PersonalConfigMigrationTests(unittest.TestCase):
         self.assertNotIn("chanks-4-unattended-implementation", repr(snapshot))
 
     def make_skill_rosters(self):
-        for skill in install.OWN_SKILLS + install.V3_DEFERRED_SKILLS:
+        for skill in install.OWN_SKILLS + install.DEFERRED_SKILLS:
             path = self.home / ".agents/skills" / skill
             shutil.copytree(ROOT / "agent-workflows/skills" / skill, path)
         (self.home / ".hermes/skills/third-party").mkdir(parents=True)
-        for skill in install.V3_DEFERRED_SKILLS + ("chanks-1-prd",):
+        for skill in install.DEFERRED_SKILLS + ("chanks-1-prd",):
             path = self.home / ".hermes/skills" / skill
             path.mkdir(parents=True)
             (path / "SKILL.md").write_text(f"# {skill}\n", encoding="utf-8")

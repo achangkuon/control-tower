@@ -44,11 +44,18 @@ CHANKS_SKILLS = (
     "chanks-0-skill-composer",
     "chanks-1-cierre-de-decisiones",
     "chanks-2-planificador-granular",
-    "chanks-3-session-kickoff",
     "chanks-3-paralelo",
     "chanks-4-puente",
     "chanks-5-politica-de-entrega",
     "chanks-5-session-doc",
+)
+
+# The formal Session start is deferred until V2 (Pista), maintainer decision B2 of
+# 2026-10-01: V1 starts a Session organically and tracks no "in progress" state. The
+# source stays under skills/, byte-identical, so V2 can install it again; it is not
+# installed, and a copy already installed is archived through RETIRED_SKILLS.
+V2_DEFERRED_SKILLS = (
+    "chanks-3-session-kickoff",
 )
 
 # Automatic-Tower skills deferred until V3. Their sources stay under skills/ but
@@ -60,6 +67,9 @@ V3_DEFERRED_SKILLS = (
     "chanks-3-despacho-herdr",
     "chanks-4-unattended-implementation",
 )
+
+# Every skill whose source is kept but which no version-1 install writes.
+DEFERRED_SKILLS = V2_DEFERRED_SKILLS + V3_DEFERRED_SKILLS
 
 # Non-Chanks support skills.
 SUPPORT_SKILLS = (
@@ -100,7 +110,7 @@ RETIRED_SKILLS = (
     "torre-control",
     "torre-control-soporte",
     "torre-control-entregas",
-) + V3_DEFERRED_SKILLS
+) + DEFERRED_SKILLS
 
 # Retiring a runtime copy must never destroy bytes the user owns: a locally
 # customized skill sharing a retired name is archived beside the runtime root

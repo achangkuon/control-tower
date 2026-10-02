@@ -168,7 +168,7 @@ def _owned_bytes(path: Path, expected_hash: str, label: str) -> bytes | None:
 def _central_roster(home: Path, repo_root: Path) -> None:
     central = home / ".agents/skills"
     _no_symlink(central)
-    # V3-deferred skills are intentionally absent from the central active roster after install.
+    # V2- and V3-deferred skills are intentionally absent from the central active roster after install.
     roster = install.OWN_SKILLS
     for name in roster:
         source = repo_root / "agent-workflows/skills" / name
@@ -378,7 +378,7 @@ def _stage_hermes(home: Path, repo_root: Path, interpreter: Path,
         actions.append((config, updated_yaml, _mode(config)))
     if updated_soul != soul_data:
         actions.append((soul, updated_soul, _mode(soul)))
-    for name in install.OWN_SKILLS + install.V3_DEFERRED_SKILLS:
+    for name in install.OWN_SKILLS + install.DEFERRED_SKILLS:
         source = home / ".hermes/skills" / name
         destination = home / ".hermes/.retired-skills" / name
         _no_symlink(source)

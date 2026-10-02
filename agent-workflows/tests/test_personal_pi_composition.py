@@ -53,7 +53,7 @@ const ui = { requestRender() {} };
 const options = { getCallAnnotations: (name, args) => runner.getToolCallAnnotations(name, args) };
 const call = (name, args, definition) => new ToolExecutionComponent(name, "probe", args, options, definition, ui, process.cwd());
 const annotatedRead = stripAnsi(call("read", { path: skill }, read).render(220).join("\n"));
-assert.match(annotatedRead, /💪 Chanks · chanks-3-session-kickoff · lectura solicitada/);
+assert.match(annotatedRead, /💪 Chanks · chanks-2-planificador-granular · lectura solicitada/);
 assert.match(annotatedRead, /read/);
 const normalBash = stripAnsi(call("bash", { command: "radar status" }, bash).render(220).join("\n"));
 assert.match(normalBash, /🗼 Torre · radar status · solicitado/);
@@ -165,7 +165,7 @@ class GenuineCompositionTests(unittest.TestCase):
             spec.loader.exec_module(installer)
             installer.install_pi_extension(home, ROOT / "agent-workflows")
             controls = installer.pi_extension_path(home)
-            skill = home / ".agents/skills/chanks-3-session-kickoff/SKILL.md"
+            skill = home / ".agents/skills/chanks-2-planificador-granular/SKILL.md"
             skill.parent.mkdir(parents=True)
             skill.write_text("# fixture\n")
             # Startup uses normal extension discovery, never -ne. RPC get_state proves a
