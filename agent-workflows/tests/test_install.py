@@ -940,7 +940,7 @@ class RetiredSkillFileTests(unittest.TestCase):
         runtime = INSTALLER.runtime_skill_roots(self.home)[0]
         relative = next(iter(self.payloads))
         path = self.seed(runtime, relative)
-        with self.registry_patch(), mock.patch.object(INSTALLER, "install_pi_extension", side_effect=OSError("late failure")):
+        with self.registry_patch(), mock.patch.object(INSTALLER, "install_pi_npm_host_peers", side_effect=OSError("late failure")):
             with self.assertRaisesRegex(OSError, "late failure"):
                 INSTALLER.apply(self.home, self.source)
         self.assertEqual(path.read_bytes(), self.payloads[relative][0])
@@ -1326,7 +1326,7 @@ class PiNativeAdmissionContractTests(unittest.TestCase):
             self.assertEqual(target.stat().st_mode & 0o777, 0o755)
             self.assertEqual(INSTALLER.etapa_hook_changes(home, ROOT), [])
 
-    def test_tool_signature_hook_is_copied_but_never_wired_to_settings(self):
+    def test_tool_signature_hook_is_not_installed_and_settings_stay_untouched(self):
         with tempfile.TemporaryDirectory() as location:
             home = Path(location)
             (home / ".claude").mkdir()
@@ -1341,13 +1341,10 @@ class PiNativeAdmissionContractTests(unittest.TestCase):
             settings = home / ".claude/settings.json"
             settings.write_text('{"hooks": {"PreToolUse": []}}', encoding="utf8")
             INSTALLER.apply(home, ROOT)
-            target = home / ".claude/hooks/torre-firma.sh"
-            self.assertEqual(target.read_bytes(), (ROOT / "tools/hooks/torre-firma.sh").read_bytes())
-            self.assertEqual(target.stat().st_mode & 0o777, 0o755)
+            self.assertFalse(_lexists(home / ".claude/hooks/torre-firma.sh"))
+            self.assertTrue((ROOT / "tools/hooks/torre-firma.sh").is_file())
             self.assertEqual(settings.read_text(encoding="utf8"), '{"hooks": {"PreToolUse": []}}')
             self.assertEqual(INSTALLER.build_plan(home, ROOT), [])
-            target.write_text("stale", encoding="utf8")
-            self.assertIn(target, [change.path for change in INSTALLER.build_plan(home, ROOT)])
 
     def test_no_activation_tool_or_confirmation_path(self):
         body = INSTALLER.desired_pi_extension(ROOT).decode("utf8")
@@ -1969,6 +1966,131 @@ class PiAuthorityExtensionTests(unittest.TestCase):
         self.assertNotIn("pi.chanksAutoridad", body)
         self.assertNotIn("pi.chanksConfinamiento", body)
         self.assertNotIn("gobernar(pi.", body)
+
+
+class RetiredControlFileTests(unittest.TestCase):
+    """The write lock (Pi extension) and the Tower signature hook are deferred to later
+    versions: sources stay in the repository, installed copies are archived reversibly."""
+
+    def setUp(self):
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tempdir.cleanup)
+        self.home = Path(self.tempdir.name)
+        InstallerTests._seed_runtime(self)
+        self.extension = self.home / ".pi/agent/extensions/chanks-controls.ts"
+        self.signature = self.home / ".claude/hooks/torre-firma.sh"
+
+    def seed_installed_copies(self):
+        payloads = {self.extension: b"// installed write lock\n", self.signature: b"#!/bin/sh\n# installed\n"}
+        for path, payload in payloads.items():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(payload)
+        self.signature.chmod(0o755)
+        return payloads
+
+    def archived(self, path):
+        runtime = self.home / (".pi/agent" if path == self.extension else ".claude")
+        return sorted((runtime / INSTALLER.RETIRED_CONTROL_ARCHIVE).glob(f"*/**/{path.name}"))
+
+    def snapshot(self):
+        return {
+            path.relative_to(self.home).as_posix(): path.read_bytes()
+            for path in sorted(self.home.rglob("*")) if path.is_file()
+        }
+
+    def test_fresh_home_plans_and_writes_neither_control_file(self):
+        plan = INSTALLER.build_plan(self.home, ROOT)
+        self.assertNotIn(self.extension, [change.path for change in plan])
+        self.assertNotIn(self.signature, [change.path for change in plan])
+        self.assertFalse({"pi-extension", "signature-hook", "retired-control"} & {c.kind for c in plan})
+        INSTALLER.apply(self.home, ROOT)
+        self.assertFalse(_lexists(self.extension))
+        self.assertFalse(_lexists(self.signature))
+        self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
+
+    def test_stage_notice_hook_is_still_installed(self):
+        plan = INSTALLER.build_plan(self.home, ROOT)
+        stage = INSTALLER.etapa_hook_path(self.home)
+        self.assertIn((stage, "stage-hook"), [(c.path, c.kind) for c in plan])
+        INSTALLER.apply(self.home, ROOT)
+        self.assertEqual(stage.read_bytes(), (ROOT / "tools/hooks/chanks-etapa.sh").read_bytes())
+        self.assertEqual(stat.S_IMODE(stage.stat().st_mode), 0o755)
+
+    def test_installed_copies_are_planned_for_archive_not_rewrite(self):
+        self.seed_installed_copies()
+        plan = INSTALLER.build_plan(self.home, ROOT)
+        kinds = {change.path: change.kind for change in plan}
+        self.assertEqual(kinds[self.extension], "retired-control")
+        self.assertEqual(kinds[self.signature], "retired-control")
+        self.assertFalse({"pi-extension", "signature-hook"} & set(kinds.values()))
+
+    def test_dry_run_reports_the_archive_and_writes_nothing(self):
+        self.seed_installed_copies()
+        before = self.snapshot()
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            code = INSTALLER.main(["--dry-run", "--home", str(self.home)])
+        self.assertEqual(code, 0)
+        self.assertIn(f"WOULD_UPDATE retired-control: {self.extension}", output.getvalue())
+        self.assertIn(f"WOULD_UPDATE retired-control: {self.signature}", output.getvalue())
+        self.assertEqual(self.snapshot(), before)
+
+    def test_apply_archives_installed_copies_byte_identical_and_is_idempotent(self):
+        payloads = self.seed_installed_copies()
+        INSTALLER.apply(self.home, ROOT)
+        for path, payload in payloads.items():
+            self.assertFalse(_lexists(path), path)
+            backups = self.archived(path)
+            self.assertEqual(len(backups), 1, path)
+            self.assertEqual(backups[0].read_bytes(), payload)
+        self.assertEqual(stat.S_IMODE(self.archived(self.signature)[0].stat().st_mode), 0o755)
+        self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
+        before = self.snapshot()
+        self.assertEqual(INSTALLER.apply(self.home, ROOT), [])
+        self.assertEqual(self.snapshot(), before)
+
+    def test_archived_copy_is_not_discoverable_as_a_pi_extension(self):
+        self.seed_installed_copies()
+        INSTALLER.apply(self.home, ROOT)
+        extensions = self.home / ".pi/agent/extensions"
+        self.assertEqual(list(extensions.rglob("*.ts")), [])
+
+    def test_a_second_retirement_never_overwrites_an_earlier_backup(self):
+        self.seed_installed_copies()
+        INSTALLER.apply(self.home, ROOT)
+        self.extension.write_bytes(b"// reinstalled by hand\n")
+        INSTALLER.apply(self.home, ROOT)
+        self.assertEqual(
+            sorted(backup.read_bytes() for backup in self.archived(self.extension)),
+            [b"// installed write lock\n", b"// reinstalled by hand\n"],
+        )
+
+    def test_symlinked_control_file_is_refused_without_changes(self):
+        outside = Path(self.tempdir.name) / "outside.ts"
+        self.extension.parent.mkdir(parents=True)
+        self.addCleanup(outside.unlink, missing_ok=True)
+        outside.write_bytes(b"// foreign\n")
+        self.extension.symlink_to(outside)
+        before = self.snapshot()
+        with self.assertRaises(INSTALLER.InstallError):
+            INSTALLER.apply(self.home, ROOT)
+        self.assertTrue(self.extension.is_symlink())
+        self.assertEqual(outside.read_bytes(), b"// foreign\n")
+        self.assertEqual(self.snapshot(), before)
+
+    def test_archive_failure_leaves_the_installed_copy_in_place(self):
+        payloads = self.seed_installed_copies()
+        INSTALLER.apply(self.home, ROOT)
+        self.extension.write_bytes(payloads[self.extension])
+        with mock.patch.object(INSTALLER.os, "replace", side_effect=OSError("archive failure")):
+            with self.assertRaisesRegex(OSError, "archive failure"):
+                INSTALLER.apply(self.home, ROOT)
+        self.assertEqual(self.extension.read_bytes(), payloads[self.extension])
+        self.assertEqual(len(self.archived(self.extension)), 1)
+
+    def test_retired_sources_stay_in_the_repository(self):
+        self.assertTrue((ROOT / "tools/hooks/torre-firma.sh").is_file())
+        self.assertIn(b"gobernar", INSTALLER.desired_pi_extension(ROOT))
 
 
 class PiOverlayRebuildInstallTests(unittest.TestCase):

@@ -128,6 +128,18 @@ RETIRED_SKILL_FILES = MappingProxyType({
     }),
 })
 
+# Control pieces deferred to later versions (maintainer decision B4, 2026-10-01): the Pi
+# write lock belongs to V2 and the Claude Tower signature hook to V3. Their sources stay in
+# the repository; the installer no longer writes them, and a copy already installed is
+# moved under the runtime's archive directory, never deleted. Each entry is
+# (runtime root, path inside it). The archive sits outside `extensions/` so Pi cannot
+# auto-discover an archived shim.
+RETIRED_CONTROL_ARCHIVE = ".retired-controls"
+RETIRED_CONTROL_FILES = (
+    (Path(".pi/agent"), Path("extensions/chanks-controls.ts")),
+    (Path(".claude"), Path("hooks/torre-firma.sh")),
+)
+
 MANUAL_FILES = (
     Path(".claude/CLAUDE.md"),
     Path(".config/opencode/AGENTS.md"),
@@ -475,6 +487,8 @@ def preflight(home: Path, root: Path) -> None:
             path.parent, path, "runtime instruction file", require_existing=True
         )
         desired_manual_content(path, replacements)
+    for runtime_root, destination in retired_control_files(home):
+        _validate_retired_control(runtime_root, destination)
 
 
 CARRIL_SOURCE = Path("tools/carril")
@@ -529,21 +543,51 @@ def etapa_hook_changes(home: Path, root: Path) -> list[Change]:
 
 
 def firma_hook_path(home: Path) -> Path:
+    """Where the Tower signature hook used to be installed. It is retired through
+    RETIRED_CONTROL_FILES; its source stays at tools/hooks/torre-firma.sh."""
     return home / ".claude/hooks/torre-firma.sh"
 
 
-def firma_hook_changes(home: Path, root: Path) -> list[Change]:
-    if not (home / ".claude").is_dir():
-        return []
-    source = root / "tools/hooks/torre-firma.sh"
-    if not source.is_file() or stat.S_IMODE(source.stat().st_mode) != 0o755:
-        raise InstallError("Tower signature hook source must be a regular executable 755 file")
-    target = firma_hook_path(home)
-    _validate_directory_path(target.parent, "signature hook directory")
-    _validate_file_destination(home / ".claude", target, "signature hook")
-    if target.is_file() and target.read_bytes() == source.read_bytes() and stat.S_IMODE(target.stat().st_mode) == 0o755:
-        return []
-    return [Change(target, "signature-hook")]
+def retired_control_files(home: Path) -> tuple[tuple[Path, Path], ...]:
+    return tuple((home / runtime, home / runtime / relative)
+                 for runtime, relative in RETIRED_CONTROL_FILES)
+
+
+def _validate_retired_control(runtime_root: Path, destination: Path) -> Path | None:
+    """Return the archive directory, or None when the runtime has no copy to retire."""
+    if not _lexists(destination):
+        return None
+    _validate_file_destination(runtime_root, destination, "retired control file")
+    archive = _absolute(runtime_root) / RETIRED_CONTROL_ARCHIVE
+    _validate_directory_path(archive, "retired control archive")
+    _assert_inside(runtime_root, archive, "retired control archive")
+    return archive
+
+
+def retired_control_changes(home: Path) -> list[Change]:
+    return [
+        Change(destination, "retired-control")
+        for runtime_root, destination in retired_control_files(home)
+        if _validate_retired_control(runtime_root, destination) is not None
+    ]
+
+
+def _archive_retired_control(runtime_root: Path, destination: Path) -> None:
+    archive = _validate_retired_control(runtime_root, destination)
+    if archive is None:
+        return
+    archive.mkdir(parents=True, exist_ok=True)
+    # A private directory per run means os.replace can never land on an earlier backup.
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    private = Path(tempfile.mkdtemp(prefix=f"{stamp}-", dir=archive))
+    target = private / destination.relative_to(runtime_root)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        os.replace(destination, target)
+    except OSError:
+        # Leave no empty backup behind when the move itself fails.
+        shutil.rmtree(private, ignore_errors=True)
+        raise
 
 
 OWN_SKILL_ENTRY_KINDS = ("own-skill-archive", "skill-link", "skill-link-replace")
@@ -578,11 +622,10 @@ def build_plan(home: Path, root: Path | None = None) -> list[Change]:
         if path.read_bytes() != desired:
             changes.append(Change(path, "manual"))
     changes.extend(carril_changes(home, root))
-    changes.extend(pi_extension_changes(home, root))
     changes.extend(pi_npm_host_peers_changes(home, root))
     changes.extend(pi_overlay_rebuild_changes(home, root))
     changes.extend(etapa_hook_changes(home, root))
-    changes.extend(firma_hook_changes(home, root))
+    changes.extend(retired_control_changes(home))
     return changes
 
 
@@ -771,16 +814,18 @@ def apply(home: Path, root: Path | None = None) -> list[Change]:
     if carril_path(home) in change_paths:
         _atomic_copy(carril_source(root), carril_path(home), home / ".local")
         os.chmod(carril_path(home), 0o755)
-    if pi_extension_path(home) in change_paths:
-        install_pi_extension(home, root)
     if pi_npm_wrapper_path(home) in change_paths or pi_settings_path(home) in change_paths:
         install_pi_npm_host_peers(home, root)
     if any(change.kind in ("pi-overlay-tool", "pi-overlay-data") for change in changes):
         install_pi_overlay_rebuild(home, root)
     if etapa_hook_path(home) in change_paths:
         _atomic_copy(etapa_hook_source(root), etapa_hook_path(home), home / ".claude")
-    if firma_hook_path(home) in change_paths:
-        _atomic_copy(root / "tools/hooks/torre-firma.sh", firma_hook_path(home), home / ".claude")
+    # Deferred control pieces are archived last, like other retirements: a failed install
+    # must leave the previously installed copy active.
+    retired_controls = {change.path for change in changes if change.kind == "retired-control"}
+    for runtime_root, destination in retired_control_files(home):
+        if destination in retired_controls:
+            _archive_retired_control(runtime_root, destination)
     # Retire individual obsolete copies only after ordinary installation succeeds.
     # Re-read ownership after planning: a user edit made meanwhile must survive.
     retired_files = retired_skill_files(root)
@@ -793,6 +838,10 @@ def apply(home: Path, root: Path | None = None) -> list[Change]:
 
 
 # --- S144: the Pi extension shim -------------------------------------------
+#
+# Deferred to V2 (maintainer decision B4, 2026-10-01): `build_plan` and `apply` no longer
+# install this shim, and an installed copy is archived through RETIRED_CONTROL_FILES. The
+# renderer below is kept as the source of the write lock and is still used by `tools/carril`.
 #
 # Pi auto-discovers extensions only as `~/.pi/agent/extensions/*.ts` or `*/index.ts`, so the
 # adapter — which is `.mjs` — cannot be the extension file itself. The shim below is generated

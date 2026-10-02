@@ -262,6 +262,25 @@ Use `--check` to fail when runtime copies drift. Use `--dry-run` to print the
 planned changes without writing anything. Both modes accept `--home PATH` for
 isolated verification.
 
+### Control pieces deferred to later versions
+
+The installer no longer writes two control pieces. Their sources stay in this
+repository, and a copy already installed is archived, never deleted.
+
+| Piece | Deferred to | Installed path | Source kept at |
+|---|---|---|---|
+| Pi write lock | V2 | `~/.pi/agent/extensions/chanks-controls.ts` | `PI_EXTENSION_TEMPLATE` in `tools/install.py` and `chanks/pi-*.mjs` |
+| Claude Tower signature hook | V3 | `~/.claude/hooks/torre-firma.sh` | `tools/hooks/torre-firma.sh` |
+
+The stage notice hook `chanks-etapa.sh` is unaffected and is still installed.
+
+`--check` and `--dry-run` report an installed copy as `retired-control` without
+mutation. After ordinary installation succeeds, apply moves it to
+`<runtime-root>/.retired-controls/<timestamp-unique>/<original-relative-path>`,
+where the runtime root is `~/.pi/agent` or `~/.claude`. The Pi archive sits outside
+`extensions/`, so Pi does not discover the archived shim. A symlink at either path
+is refused before any write. To undo, move the backup to its original path.
+
 ### Retiring obsolete skill files
 
 Removed files inside retained skills are retired only when their relative path
