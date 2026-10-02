@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { initProject } from "./adoption.mjs";
 
 const DEFAULT_PROMPT = "What does this project do?";
+const DEFAULT_TIMEOUT_MS = 45000;
 const bytes = (text) => Buffer.byteLength(text, "utf8");
 const definition = {
   requestBodyBytes: "Raw bytes of FIRST qualifying POST; retries ignored; not token counts.",
@@ -91,20 +92,24 @@ export function createCapture({ host, realModel = false, key = "", upstream = "h
     } };
 }
 
-async function spawnHost(cmd, options) {
+async function spawnHost(cmd, { timeoutMs, ...options }) {
   const proc = Bun.spawn(cmd, { ...options, stdout: "pipe", stderr: "pipe" });
-  const timer = setTimeout(() => proc.kill(), 45000);
+  let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; proc.kill("SIGKILL"); }, timeoutMs);
   try {
     const [code, stdout] = await Promise.all([proc.exited, new Response(proc.stdout).text(), new Response(proc.stderr).text()]);
+    if (timedOut) throw new Error(`host process timed out after ${timeoutMs}ms`);
     return { code, stdout };
   } finally { clearTimeout(timer); }
 }
 
-function fixture(root, adopted, env) {
+function fixture(root, adopted, env, timeoutMs) {
   mkdirSync(root);
   const git = (...args) => {
-    const result = spawnSync("git", ["-c", "user.name=Benchmark", "-c", "user.email=benchmark@example.invalid", ...args], { cwd: root, env });
-    if (result.status !== 0) throw new Error("fixture git failed");
+    const result = spawnSync("git", ["-c", "user.name=Benchmark", "-c", "user.email=benchmark@example.invalid", ...args],
+      { cwd: root, env, timeout: timeoutMs, killSignal: "SIGKILL" });
+    if (result.error?.code === "ETIMEDOUT") throw new Error(`fixture git ${args[0]} timed out after ${timeoutMs}ms`);
+    if (result.error || result.status !== 0) throw new Error(`fixture git ${args[0]} failed`);
   };
   writeFileSync(join(root, "README.md"), "# Fixture\nA disposable benchmark project.\n");
   git("init", "-q"); git("add", "."); git("commit", "-qm", "seed");
@@ -116,9 +121,10 @@ function fixture(root, adopted, env) {
 
 /** Independent host results are a seam for B2's later Radar contrast, not a static-size proxy. */
 export async function runBenchmark({ hosts = ["pi", "claude"], realModel = false, prompt = DEFAULT_PROMPT,
-  env = process.env, binaries = {}, spawn = spawnHost, upstream } = {}) {
+  env = process.env, binaries = {}, spawn = spawnHost, upstream, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
   if (!Array.isArray(hosts) || !hosts.length || new Set(hosts).size !== hosts.length || hosts.some((h) => !["pi", "claude"].includes(h))) throw new Error("invalid hosts");
-  if (typeof prompt !== "string" || !prompt || typeof realModel !== "boolean") throw new Error("invalid options");
+  if (typeof prompt !== "string" || !prompt || typeof realModel !== "boolean" ||
+    !Number.isInteger(timeoutMs) || timeoutMs <= 0 || timeoutMs > 2147483647) throw new Error("invalid options");
   if (realModel && !env.ANTHROPIC_API_KEY) throw new Error("--real-model requires ANTHROPIC_API_KEY in environment");
   const report = { schema: "tower.v1.benchmark/1", mode: realModel ? "real-model" : "capture-only", prompt, definition, hosts: {} };
   const base = mkdtempSync(join(tmpdir(), "tower-benchmark-"));
@@ -135,7 +141,7 @@ export async function runBenchmark({ hosts = ["pi", "claude"], realModel = false
           const home = join(arm, "home"), cfg = join(arm, "cfg"), temp = join(arm, "tmp");
           for (const dir of [home, cfg, temp]) mkdirSync(dir);
           const isolated = { PATH: env.PATH ?? "", HOME: home, TMPDIR: temp, GIT_CONFIG_NOSYSTEM: "1", GIT_CONFIG_GLOBAL: "/dev/null" };
-          const cwd = join(arm, "project"); fixture(cwd, adopted, isolated);
+          const cwd = join(arm, "project"); fixture(cwd, adopted, isolated, timeoutMs);
           const capture = createCapture({ host, realModel, key: realModel ? env.ANTHROPIC_API_KEY : "", upstream });
           try {
             let args;
@@ -148,11 +154,11 @@ export async function runBenchmark({ hosts = ["pi", "claude"], realModel = false
               args = ["--offline", "--no-extensions", "--no-session", "--approve", "--provider", "capture", "--model", realModel ? "claude-sonnet-4-20250514" : "capture-model", "-p", prompt];
             }
             reason = "host binary missing or version unavailable";
-            const version = await spawn([binary, "--version"], { cwd, env: isolated });
+            const version = await spawn([binary, "--version"], { cwd, env: isolated, timeoutMs });
             if (version.code !== 0 || !version.stdout.trim()) throw new Error(reason);
             versions.push(version.stdout.trim());
             reason = "host execution failed";
-            const outcome = await spawn([binary, ...args], { cwd, env: isolated });
+            const outcome = await spawn([binary, ...args], { cwd, env: isolated, timeoutMs });
             arms.push(capture.measure()); signals.push(...capture.signals());
             if (realModel && outcome.code !== 0) throw new Error("real-model response incomplete");
           } finally { capture.stop(); }

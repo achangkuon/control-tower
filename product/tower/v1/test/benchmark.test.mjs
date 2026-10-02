@@ -1,16 +1,21 @@
 import { expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { runBenchmark, createCapture, main } from "../benchmark.mjs";
 
-async function fake(mode, fn) {
+const gitProxy = fileURLToPath(new URL("../../../../test/helpers/bin", import.meta.url));
+
+async function fake(mode, fn, inheritedPath = process.env.PATH) {
   const root = mkdtempSync(join(tmpdir(), "tower-bench-test-"));
   const bin = join(root, "bin"); mkdirSync(bin);
   const script = `#!${process.execPath}
 import { existsSync, readFileSync } from 'node:fs';
 const adopted = existsSync('.agents/skills/control-tower/SKILL.md');
+process.on('SIGTERM', () => {});
+if (${JSON.stringify(mode)} === 'hang-version' && process.argv.includes('--version')) await new Promise(() => setInterval(() => {}, 1000));
 if (process.argv.includes('--version')) { console.log(${JSON.stringify(mode)} === 'version' && adopted ? 'fake-2' : 'fake-1'); process.exit(0); }
 const host = process.argv[1].endsWith('/pi') ? 'pi' : 'claude';
 const config = host === 'pi' ? JSON.parse(readFileSync(process.env.PI_CODING_AGENT_DIR + '/models.json')).providers.capture : null;
@@ -22,11 +27,66 @@ if (${JSON.stringify(mode)} !== 'none') {
   await fetch(base + path, {method:'POST', body:JSON.stringify(body), headers:{'x-api-key':'fake-secret'}});
   await fetch(base + path, {method:'POST', body:JSON.stringify({...body, system:'retry ignored'})});
 }
+if (${JSON.stringify(mode)} === 'hang-run') await new Promise(() => setInterval(() => {}, 1000));
 `;
   for (const host of ["pi", "claude"]) writeFileSync(join(bin, host), script, { mode: 0o755 });
-  try { await fn({ env: { PATH: `${bin}:${process.env.PATH}` }, root }); }
+  // The suite's git proxy strips itself only from the front of PATH.
+  const entries = inheritedPath.split(delimiter);
+  let leading = 0;
+  while (leading < entries.length) {
+    try { if (realpathSync(entries[leading] || ".") !== realpathSync(gitProxy)) break; }
+    catch { break; }
+    leading++;
+  }
+  const path = [...entries.slice(0, leading), bin, ...entries.slice(leading)].join(delimiter);
+  try { await fn({ env: { PATH: path }, root }); }
   finally { rmSync(root, { recursive: true, force: true }); }
 }
+
+test("leading git proxies stay ahead of fake hosts and fixtures complete", async () => {
+  await fake("normal", async ({ env, root }) => {
+    const entries = env.PATH.split(delimiter), hostIndex = entries.indexOf(join(root, "bin"));
+    expect(entries.slice(0, 2)).toEqual([gitProxy, gitProxy]);
+    expect(hostIndex).toBeGreaterThanOrEqual(2);
+    for (const entry of entries.slice(0, hostIndex)) expect(realpathSync(entry)).toBe(realpathSync(gitProxy));
+    const result = (await runBenchmark({ env, hosts: ["pi"] })).hosts.pi;
+    expect(result.status).toBe("measured");
+  }, [gitProxy, gitProxy, process.env.PATH].join(delimiter));
+});
+
+for (const mode of ["hang-version", "hang-run"]) test(`hanging host ${mode} times out without measurements`, async () => {
+  await fake(mode, async ({ env }) => {
+    const start = performance.now();
+    const result = (await runBenchmark({ env, hosts: ["pi"], timeoutMs: 250 })).hosts.pi;
+    expect(performance.now() - start).toBeLessThan(3000);
+    expect(result.status).toBe("blocked");
+    expect(result.reason).toMatch(/host .*timed out.*250/);
+    expect(result).not.toHaveProperty("delta");
+    expect(JSON.stringify(result)).not.toContain("Bytes");
+  });
+});
+
+test("hanging fixture git times out and blocks before host execution", async () => {
+  await fake("normal", async ({ env, root }) => {
+    const bin = join(root, "hanging-git"); mkdirSync(bin);
+    writeFileSync(join(bin, "git"), `#!${process.execPath}\nprocess.on('SIGTERM', () => {});\nsetInterval(() => {}, 1000);\n`, { mode: 0o755 });
+    let invoked = false;
+    const start = performance.now();
+    const result = (await runBenchmark({ hosts: ["pi"], env: { PATH: `${bin}${delimiter}${env.PATH}` }, timeoutMs: 250,
+      spawn: async () => { invoked = true; throw new Error("unexpected host execution"); } })).hosts.pi;
+    expect(performance.now() - start).toBeLessThan(3000);
+    expect(invoked).toBe(false);
+    expect(result.status).toBe("blocked");
+    expect(result.reason).toMatch(/fixture git .*timed out.*250/);
+    expect(result).not.toHaveProperty("delta");
+  });
+});
+
+test("invalid process timeouts fail closed before creating fixtures", async () => {
+  for (const timeoutMs of [0, -1, NaN, Infinity, 0.5, 2147483648]) {
+    await expect(runBenchmark({ timeoutMs })).rejects.toThrow("invalid options");
+  }
+});
 
 test("paired clean fixtures, isolated environment, first inference bytes and retries", async () => {
   await fake("normal", async ({ env }) => {
@@ -34,7 +94,8 @@ test("paired clean fixtures, isolated environment, first inference bytes and ret
     const spawn = async (cmd, options) => {
       expect(options.env.HOME).not.toBe(process.env.HOME);
       expect(options.env).not.toHaveProperty("SECRET_SENTINEL");
-      const git = (...args) => spawnSync("git", args, { cwd: options.cwd, env: options.env }).stdout.toString().trim();
+      const git = (...args) => spawnSync("git", args,
+        { cwd: options.cwd, env: options.env, timeout: options.timeoutMs, killSignal: "SIGKILL" }).stdout.toString().trim();
       expect(git("status", "--porcelain")).toBe("");
       expect(git("rev-list", "--count", "HEAD")).toBe("2");
       expect(git("log", "--format=%s")).toBe("prepare arm\nseed");
