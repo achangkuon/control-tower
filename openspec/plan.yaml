@@ -1203,7 +1203,8 @@ sesiones:
         sólo comandos e interfaces efectivamente entregados por S174 y sólo resultados medidos
         por S173 (bytes cargados por cada host, pregunta ordinaria y fidelidad Radar). Las
         capturas prueban el flujo observado, nunca seguridad ni reversibilidad. Nombra las
-        exclusiones de V2 sin prometer routing, procesos, sockets o supervisión en V1.
+        exclusiones de V2 (Pista) y V3 (Torre automática) sin prometer routing, procesos,
+        sockets o supervisión en V1.
       restricciones_decisiones: >-
         Una unidad documental reversible; pronóstico de 200–350 líneas authored. El tamaño
         sigue la guía nativa de Gentle AI y no es una restricción de esta Sesión. README.md
