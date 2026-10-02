@@ -359,3 +359,17 @@ templates/session-routing.md    manual boundary block template (<= 2000 bytes)
 tools/install.py                install, check, and dry-run implementation
 tests/test_install.py           focused standard-library tests
 ```
+
+### Historical documents
+
+`historico/` holds documents about the previous system. They are kept for traceability and
+are not instructions for current work; each one opens with a banner that says what replaced it.
+
+| Document | What it was | Replaced by |
+| --- | --- | --- |
+| `historico/EJECUCION-EN-PARALELO.md` | Coordination contract for a three-agent build in September 2026 | `chanks-3-paralelo` and the version definitions |
+| `historico/MIGRACION-ZONAS.md` | Progress record of the migration to the Zona model | `openspec/plan.yaml` and `_shared/plan-naming-convention.md` |
+
+The current flow per version (V1 without semaphore, V2 Pista, V3 automatic Tower) is defined in
+[`docs/architecture/definiciones-v1-v2-v3.md`](../docs/architecture/definiciones-v1-v2-v3.md).
+`FLUJO-END-TO-END.md` stays in place because a live skill cites it; only its header is current.

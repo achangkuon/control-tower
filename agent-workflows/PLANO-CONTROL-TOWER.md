@@ -1,6 +1,6 @@
 # Plano de zonas — control-tower
 
-> **Prueba del modelo contra la realidad.** Fase 2 de [MIGRACION-ZONAS.md](MIGRACION-ZONAS.md).
+> **Prueba del modelo contra la realidad.** Fase 2 de [MIGRACION-ZONAS.md](historico/MIGRACION-ZONAS.md).
 > Dibujado a mano sobre `/home/emili/projects/control-tower/Main` el 2026-09-01.
 > **Es un borrador.** Nada de control-tower fue modificado.
 
@@ -151,5 +151,5 @@ Vale volver a mirarla entonces: si sigue arriba del 40%, algo no se generó.
 ## Lo que falta antes de cerrar la Fase 2
 
 - [x] Resolver el dueño de `mcp.mjs` y `workspace/`
-- [ ] Decidir cómo se reasignan las Sesiones a zonas (ver MIGRACION-ZONAS.md)
+- [ ] Decidir cómo se reasignan las Sesiones a zonas (ver historico/MIGRACION-ZONAS.md)
 - [ ] Verificar la partición contra los archivos reales con la herramienta, no a ojo

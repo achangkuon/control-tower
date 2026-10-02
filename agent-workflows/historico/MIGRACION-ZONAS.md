@@ -1,9 +1,23 @@
+> **DOCUMENTO HISTÓRICO — no describe el flujo vigente.** Este registro siguió la migración al
+> modelo de Zonas, que ya terminó. Sus fases, estados y tareas pendientes no son instrucciones
+> para el trabajo actual. Lo reemplazan el plan (`openspec/plan.yaml`), el canon
+> `agent-workflows/skills/_shared/plan-naming-convention.md` y las definiciones de versión.
+>
+> Flujo vigente: V1 no tiene semáforo, ni arranque formal de Sesión, ni marcas de despacho; el
+> trabajo paralelo ocurre dentro de una sola conversación. V2 es Pista (entrega ordenada) y V3 es
+> la Torre automática. La referencia vigente es
+> [`docs/architecture/definiciones-v1-v2-v3.md`](../../docs/architecture/definiciones-v1-v2-v3.md);
+> el plan editable es [`openspec/plan.yaml`](../../openspec/plan.yaml).
+>
+> Se conserva solo para trazabilidad. Movido a `agent-workflows/historico/` el 2026-10-01
+> (decisión D2).
+
 # Historical record: migración al modelo de zonas
 
 > **Historical, non-operative record.** This document preserves migration-era status, flow, and
 > delivery claims; it is not an authority for current planning, execution, or product state.
-> The current editable planning authority is [`openspec/plan.yaml`](../openspec/plan.yaml);
-> [`openspec/ROADMAP.md`](../openspec/ROADMAP.md) is its generated view. The current generic
+> The current editable planning authority is [`openspec/plan.yaml`](../../openspec/plan.yaml);
+> [`openspec/ROADMAP.md`](../../openspec/ROADMAP.md) is its generated view. The current generic
 > method sources are `agent-workflows/skills/_shared/plan-naming-convention.md` and the active
 > skills under `agent-workflows/skills/`.
 >
@@ -275,7 +289,7 @@ corrección final quedó aprobada en `review-4ec24941df920cc5` y la unificación
 
 ## Qué no se toca en esta reconciliación documental
 
-- [FLUJO-END-TO-END.md](FLUJO-END-TO-END.md), que sigue siendo la autoridad del flujo.
+- [FLUJO-END-TO-END.md](../FLUJO-END-TO-END.md), que sigue siendo la autoridad del flujo.
 - Fase B: esta edición solo deja registrada su próxima acción; no crea `openspec/plan.yaml`, no genera
   `openspec/ROADMAP.md` y no retira vistas legacy.
 - Fase C: gate de recursos vivos, medidor, conexión del Horizonte a MAIN, freeze terminal y `S9.9`.

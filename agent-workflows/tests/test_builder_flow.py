@@ -702,14 +702,14 @@ class StageSkillBoundaryTests(unittest.TestCase):
         )
 
     def test_flow_docs_name_the_boundary_block_and_make_no_review_claims(self):
-        for relative in ("EJECUCION-EN-PARALELO.md", "FLUJO-END-TO-END.md"):
+        for relative in ("historico/EJECUCION-EN-PARALELO.md", "FLUJO-END-TO-END.md"):
             text = read(relative)
             with self.subTest(doc=relative):
                 self.assertNotIn("Durable Session Skill Routing", text)
                 self.assertNotIn("cuatro lentes", text)
                 self.assertNotIn("chanks-6-", text)
                 self.assertNotIn("chanks-7-", text)
-        self.assertIn("Chanks and Gentle AI boundary", read("EJECUCION-EN-PARALELO.md"))
+        self.assertIn("Chanks and Gentle AI boundary", read("historico/EJECUCION-EN-PARALELO.md"))
         self.assertIn("Chanks and Gentle AI boundary", read("FLUJO-END-TO-END.md"))
 
 

@@ -1,4 +1,4 @@
-# Partición de control-tower — Fase 2 de MIGRACION-ZONAS.md
+# Partición de control-tower — Fase 2 de agent-workflows/historico/MIGRACION-ZONAS.md
 #
 # Segunda pasada. La primera puso en zonas cosas que en realidad toca cualquier
 # feature: `bin/torre`, `console/`, `skills/`, `README.md`. Al moverlas a

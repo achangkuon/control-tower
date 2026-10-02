@@ -1,6 +1,6 @@
 # Asignación de las 24 Sesiones abiertas de control-tower
 
-> Fase 2 de [MIGRACION-ZONAS.md](MIGRACION-ZONAS.md). Asignadas por el `Área` que cada
+> Fase 2 de [MIGRACION-ZONAS.md](historico/MIGRACION-ZONAS.md). Asignadas por el `Área` que cada
 > Sesión declara en su `STATUS.md`, nunca por el plan del que venían.
 > control-tower no fue modificado.
 

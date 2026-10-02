@@ -28,7 +28,7 @@ and which rebuilds with `go build`. Nothing else exists outside Git.
 
 ## B. File contents — 85 of 86 byte-identical
 
-One file differs: `MIGRACION-ZONAS.md`. **Control Tower's copy is the newer one.** The standalone
+One file differs: `MIGRACION-ZONAS.md` (kept since 2026-10-01 at `agent-workflows/historico/MIGRACION-ZONAS.md`). **Control Tower's copy is the newer one.** The standalone
 copy still reads *"la rama sigue sin push"*; Control Tower's records Fase A as closed and delivered,
 naming the review lineages, the subtree merge, and the post-delivery radiografía at 1167 PASS / 0
 FAIL. The standalone is behind, not ahead.

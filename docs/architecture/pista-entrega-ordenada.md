@@ -214,7 +214,7 @@ Prioridad baja: copias viejas y documentos.
 | # | Qué | Evidencia |
 |---|---|---|
 | N12 | Skills viejas en Windows y Gemini (26 directorios, incluidas `chanks-6` y `chanks-7`) | `/mnt/c/Users/emili/*/skills`, `~/.gemini/config/skills` |
-| N15 | Documentos fuente sin aviso de históricos | `agent-workflows/EJECUCION-EN-PARALELO.md:3`, `docs/flujo/chanks-guia-de-etapas.html:30,33,69,72`, `agent-workflows/README.md:132-133` |
+| N15 | Documentos fuente sin aviso de históricos | `agent-workflows/historico/EJECUCION-EN-PARALELO.md:17`, `docs/flujo/chanks-guia-de-etapas.html:30,33,69,72`, `agent-workflows/README.md:132-133` |
 | N16 | Codex y Hermes no tienen los bloques de cierre documental, nombres de plan ni explicación simple | Inventario de bloques por runtime. No se sabe si es intencional |
 | N17 | `chanks-3-paralelo` no dice si cada Sesión del lote pasa por la admisión del arranque | `chanks-3-paralelo/SKILL.md:39-52` contra `chanks-3-session-kickoff/SKILL.md:12-29` |
 | N18 | Registros de skills que apuntan a rutas archivadas | `~/.atl/skill-registry.md`, `~/projects/.atl/skill-registry.md`, `ecom-ecuador/Main/.atl/skill-registry.md:59-60` |

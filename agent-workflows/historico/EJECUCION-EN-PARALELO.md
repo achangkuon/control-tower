@@ -1,10 +1,24 @@
+> **DOCUMENTO HISTÓRICO — no describe el flujo vigente.** Este contrato repartió una obra de
+> septiembre de 2026 entre un coordinador (MAIN) y tres agentes, con puerta serial y carriles.
+> Ese reparto ya terminó y no es una instrucción para el trabajo actual. Lo reemplazan la skill
+> `chanks-3-paralelo` (trabajo paralelo de V1) y las definiciones de versión.
+>
+> Flujo vigente: V1 no tiene semáforo, ni arranque formal de Sesión, ni marcas de despacho; el
+> trabajo paralelo ocurre dentro de una sola conversación. V2 es Pista (entrega ordenada) y V3 es
+> la Torre automática. La referencia vigente es
+> [`docs/architecture/definiciones-v1-v2-v3.md`](../../docs/architecture/definiciones-v1-v2-v3.md);
+> el plan editable es [`openspec/plan.yaml`](../../openspec/plan.yaml).
+>
+> Se conserva solo para trazabilidad. Movido a `agent-workflows/historico/` el 2026-10-01
+> (decisión D2).
+
 # Ejecución en paralelo — contrato de coordinación
 
 > **Para quién es este archivo:** para el agente que coordina (MAIN) con la **Torre apagada**,
 > y para los tres agentes que implementan. Es el contrato: qué toca cada uno, qué **no** toca,
 > y en qué orden.
 >
-> **La autoridad del alcance** es [FLUJO-END-TO-END.md](FLUJO-END-TO-END.md). Este archivo no
+> **La autoridad del alcance** es [FLUJO-END-TO-END.md](../FLUJO-END-TO-END.md). Este archivo no
 > redefine nada: solo reparte. Si los dos se contradicen, gana el otro.
 >
 > Escrito el 2026-09-02 sobre `agent-workflows@74b4d42` · `control-tower@ed81454` ·
@@ -207,4 +221,4 @@ no se infiere desde el bloqueo histórico.
 - No construye el medidor, el Horizonte lado MAIN ni el freeze terminal — Fase C.
 - No toca `Servi-Task-U`.
 - No reabre ninguna de las ocho correcciones: están decididas y su autoridad está en
-  [FLUJO-END-TO-END.md](FLUJO-END-TO-END.md) §3.3.
+  [FLUJO-END-TO-END.md](../FLUJO-END-TO-END.md) §3.3.

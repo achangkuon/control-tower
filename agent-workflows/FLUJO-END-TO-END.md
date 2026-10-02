@@ -1,5 +1,18 @@
 # Historical Control Tower flow
 
+> **How to read this file (2026-10-01).**
+>
+> | Part | Status |
+> | --- | --- |
+> | This header, down to the first horizontal rule | Current. It states what applies today. |
+> | Sections 0 onward, below that rule | Frozen historical analysis written on 2026-09-02. Not an instruction for current work. Only file paths were updated after documents moved. |
+>
+> The current flow per version is defined in
+> [`docs/architecture/definiciones-v1-v2-v3.md`](../docs/architecture/definiciones-v1-v2-v3.md):
+> V1 has no semaphore, no formal Session start and no dispatch markers; V2 is Pista; V3 is the
+> automatic Tower. The companion documents `historico/EJECUCION-EN-PARALELO.md` and `historico/MIGRACION-ZONAS.md`
+> are historical and live under [`historico/`](historico/).
+>
 > **Frozen product documentation.** The original candidate is also preserved byte-for-byte at
 > `product/tower/generic/FLUJO-END-TO-END.md`. It explains prior product choreography only;
 > it does not direct the current generic builder, which uses a human-directed responsible parent,
@@ -306,7 +319,7 @@ cierre para siempre.
 
 ## 3. El cruce — los siete tramos contra lo que ya está construido
 
-`MIGRACION-ZONAS.md` tiene siete fases. Las 1(parcial), 2, 2b y 3 están hechas y verificadas.
+`historico/MIGRACION-ZONAS.md` tiene siete fases. Las 1(parcial), 2, 2b y 3 están hechas y verificadas.
 Esto es qué de los siete tramos ya está cubierto, qué cae en las fases vacías, y qué **choca**.
 
 ### 3.1 Ya construido — el tramo lo confirma, no hay trabajo
@@ -414,7 +427,7 @@ construcción de `chanks-4-puente`, que es quien traduce ruta → fase de entrad
 #### 🔴 C3 — `session-plan` existe en v2.1 y la Fase 5 planea adaptarla; el tramo 4 la disuelve
 
 **Choca con:** `skills/session-plan/SKILL.md` (v2.1, viva y cableada en
-`chanks-3-session-kickoff:54`) y con la tarea pendiente de Fase 5 en `MIGRACION-ZONAS.md`:
+`chanks-3-session-kickoff:54`) y con la tarea pendiente de Fase 5 en `historico/MIGRACION-ZONAS.md`:
 *«`session-plan` — consume el dato en vez de leer markdown»*.
 
 **Decisión del tramo 4:** `session-plan` **se disuelve**, junto con
@@ -428,7 +441,7 @@ queda apuntando al vacío.
 
 #### 🟠 C4 — la Fase 4 pide «crear la skill madre de planificación»; el tramo 2 decide que no hay madre
 
-**Choca con:** `MIGRACION-ZONAS.md`, Fase 4: *«Crear la skill madre de planificación — la vía
+**Choca con:** `historico/MIGRACION-ZONAS.md`, Fase 4: *«Crear la skill madre de planificación — la vía
 única variable»*.
 
 **Decisión del tramo 2:** **no hay madre en el tramo 2.** Los ocho pasos corren siempre y en
@@ -539,7 +552,7 @@ lo que antes cubría el método propio.
 Está gobernado por dependencias reales, no por el número de tramo.
 
 > **El reparto concreto entre agentes vive en
-> [EJECUCION-EN-PARALELO.md](EJECUCION-EN-PARALELO.md)**: las tres fases que fijó el maintainer,
+> [EJECUCION-EN-PARALELO.md](historico/EJECUCION-EN-PARALELO.md)**: las tres fases que fijó el maintainer,
 > la puerta serial, los tres carriles con su partición exacta de rutas, los Cimientos de esta
 > obra y el protocolo con la Torre apagada.
 
