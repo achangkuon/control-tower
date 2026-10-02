@@ -66,7 +66,7 @@ shasum -a 256 /dev/null || sha256sum /dev/null
 ## Step 2 — Get the tag and the installer SHA-256 from the human
 
 Ask: *"Please paste the Tower version (tag) and the installer SHA-256 that the maintainer
-sent you."* The tag looks like `v1.0.1`; the SHA-256 is 64 lowercase hexadecimal
+sent you."* The tag looks like `v1.0.2`; the SHA-256 is 64 lowercase hexadecimal
 characters. Check the format before continuing.
 
 ## Step 3 — Run the one-command installer
@@ -174,6 +174,7 @@ installer SHA-256. Ask the maintainer for it through the same second channel.
 | `... is owned by another user` | A home directory belongs to another user | Stop; the human must fix ownership. |
 | `Invalid Tower CLI: Invalid Tower global lifecycle: unknown launcher` | `~/.local/bin/torre-control` already exists and is not a launcher the installer recognizes | It is preserved on purpose. Stop and ask the human what that file is; never delete or overwrite it. |
 | `Invalid Tower CLI: Invalid Tower global lifecycle: retained launcher backup` | Only with v1.0.0 on machines that had the older launcher | Update to v1.0.1 or newer. |
+| `Invalid Tower CLI: usage: menu input missing or invalid; aborted` right after choosing a menu entry | v1.0.0–v1.0.1 menu misreads an Enter sent as CR LF | Update to v1.0.2 or newer, or use the explicit subcommands. |
 | `torre-control: command not found` | `~/.local/bin` is not on the PATH | Step 4. |
 | Exit status 1 with a JSON line and a registry error after `project ...` | The project operation succeeded but the project list could not be updated | Report it; rerun `torre-control project doctor --project <ABS_PATH>`. |
 

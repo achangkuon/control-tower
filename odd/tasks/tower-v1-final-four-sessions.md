@@ -379,7 +379,7 @@ Maintainer reported the V1 menu aborting (CR LF Enter) and approved on 2026-10-0
 
 - [x] S186 — setup.sh launcher becomes `torre-setup` and never writes `torre-control`. DONE: `7723d7e` (bun hook 1,814 pass; Python launcher tests 11 pass), archived.
 - [x] S185 — Arrow-key colored V1 menu tolerant of LF, CR and CR LF. DONE: `a86b4cb`, push hook 1,824 pass / 0 fail, archived.
-- [ ] v1.0.2 — Build, publish privately, verify partner flow, update this machine.
+- [x] v1.0.2 — Build, publish privately, verify partner flow, update this machine. DONE 2026-10-02.
 
 ### S186 evidence
 
@@ -393,3 +393,10 @@ Maintainer reported the V1 menu aborting (CR LF Enter) and approved on 2026-10-0
 - Visual menu (arrows, j/k, Enter, q/Esc/Ctrl-C, colors honoring NO_COLOR, alternate screen, hidden cursor) over the same closed commands and confirmations; terminal restored via try/finally plus SIGINT/exit handlers before dispatch. Shared reader treats CR, LF and CR LF as one Enter; raw-mode empty answers abort; the numbered fallback (`TOWER_MENU=plain`, dumb terminals, no raw mode) allows two retries to absorb an icrnl extra newline.
 - Real pty smokes from the checkout: Down x8 + Enter ran `list` (healthy demo project, restore escapes observed); plain menu with `6\r\n` and a CR LF root ran `project doctor` (healthy) — the exact sequence that aborted before.
 - Native review `review-31a1664c095c9d77`: medium/reliability, approved and acknowledged; non-blocking `R3-001` (process-level SIGINT/exit handlers, `cli.mjs:142-143`).
+
+### v1.0.2 release
+
+- Built from clean `1ba5543508844feaaec2c67433114dcade3dc8c0` with `--tag v1.0.2`: `tower-v1.json` 446,892 bytes and stamped `torre-install.mjs` 7,996 bytes; SHA-256 values given to the maintainer in the conversation only. Private Release `v1.0.2` created with both assets.
+- Partner end-to-end on a fresh disposable HOME with the exact one-liner: installer checksum OK, global install, project adopted; the installed v1.0.2 menu driven through a pty with arrow keys and a CR LF Enter selected `project doctor`, accepted a CR LF root, returned healthy and emitted the terminal-restore sequence.
+- Maintainer machine updated through its own v1.0.1 launcher (`update --tag v1.0.2`): active v1.0.2, previous v1.0.1, `doctor` healthy, demo project healthy, configuration snapshot unchanged. `setup.sh --link` created `~/.local/bin/torre-setup`; `torre-control` bytes unchanged. Disposable trial directories removed.
+- README and the agent runbook now name v1.0.2 and document the v1.0.0–v1.0.1 menu error. Pending: guided macOS test (S184 closure).
