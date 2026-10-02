@@ -58,7 +58,7 @@ zonas:
     rutas: [product/tower/]
 
 # Orden de trabajo aprobado por Emilio el 2026-09-14: primero se cierra el Método V1, después se
-# construye, prueba, instala y usa la Torre V1, y recién entonces se construye la V2. Radar sólo
+# construye, prueba, instala y usa la Torre V1, y recién entonces se construye lo siguiente. Radar sólo
 # ofrece trabajo LISTO de la primera prioridad con Sesiones abiertas (S127).
 # Emilio aprobó adelantar S145 → S143 → S144 → S146 (Engram 11171/11173).
 # Dos prioridades explícitas conservan el orden relativo del resto; las demás
@@ -66,14 +66,23 @@ zonas:
 #
 # Replanteo aprobado por el maintainer: Torre V1 es adopción project-local para Pi y
 # Claude Code mediante una única skill control-tower, referencias lazy y lifecycle
-# reversible. No depende de semáforo, package Pi ni runtime routing. Torre V2 queda como
-# resultado opcional: varias Sesiones trabajan durante horas en tabs separadas mientras
-# Main y las tabs muestran finalización, stalls o decisiones humanas. La observación
-# remota usa Moshi + Tailscale; Telegram queda fuera.
+# reversible. No depende de package Pi ni runtime routing.
+#
+# Definición de versiones aprobada por el maintainer el 2026-10-01
+# (docs/architecture/definiciones-v1-v2-v3.md):
+# - V1 no tiene semáforo, reserva de Sesiones ni candado de escritura. S149 queda como
+#   historia entregada y no define la V1 vigente.
+# - V2 es Pista: entrega ordenada por proyecto, donde varias conversaciones independientes
+#   entregan por una sola puerta. Todavía no tiene Sesiones enumeradas.
+# - V3 es la Torre automática: varias Sesiones trabajan durante horas en tabs separadas
+#   mientras Main y las tabs muestran finalización, stalls o decisiones humanas. La
+#   observación remota usa Moshi + Tailscale; Telegram queda fuera. Recibe también la
+#   resolución de problemas que antes se clasificaba como V2.
 #
 # Orden de remediación aprobado por el maintainer: completar Torre V1; resolver problemas
-# generales, de V1 y de V2 existentes; construir Torre V2; resolver problemas del sistema
-# anterior. Estas categorías no crean ni reasignan Sesiones por sí solas.
+# generales y de V1; construir Pista V2; resolver problemas de la Torre V3 y construirla;
+# resolver problemas del sistema anterior. Estas categorías no crean ni reasignan Sesiones
+# por sí solas.
 prioridades:
   - id: metodo-v1-radar-prioritario
     nombre: Método V1 · Radar prioritario
@@ -87,10 +96,12 @@ prioridades:
     nombre: Resolución de problemas · Generales
   - id: resolucion-problemas-v1
     nombre: Resolución de problemas · Torre V1
-  - id: resolucion-problemas-v2
-    nombre: Resolución de problemas · Torre V2
-  - id: torre-v2
-    nombre: Torre V2 · Tabs de trabajo prolongado visibles
+  - id: pista-v2
+    nombre: Pista V2 · Entrega ordenada
+  - id: resolucion-problemas-v3
+    nombre: Resolución de problemas · Torre V3
+  - id: torre-v3
+    nombre: Torre V3 · Tabs de trabajo prolongado visibles
   - id: resolucion-problemas-anteriores
     nombre: Resolución de problemas · Sistema anterior
 
@@ -288,7 +299,7 @@ sesiones:
   - {id: S4.11, entrega: {commit: 6ddf6bc77d236dffad5b8ec625379117a91ce0b3}, historico: openspec/archive/sesiones/S4.11.md}
 
   - id: S4.12
-    prioridad: torre-v2
+    prioridad: torre-v3
     zona: hosts
     diferida: true
     resultado: "Reporte de caída de Pi: detener y conservar rama/worktree/candidato sin recuperación automática"
@@ -698,7 +709,7 @@ sesiones:
             criterios: ["REFACTOR: topología duplicada eliminada, readback/fallback estabilizado y convergencia probada."]
 
   - id: S9.8
-    prioridad: torre-v2
+    prioridad: torre-v3
     zona: hosts
     cimientos:
       - product/tower/skills/torre-control/SKILL.md
@@ -824,7 +835,7 @@ sesiones:
             criterios: ["git diff --cached --numstat reports changes only in schemas/delivery-policy-v1.schema.json and test/contracts/s3-2-schemas.test.mjs."]
 
   - id: S107
-    prioridad: torre-v2
+    prioridad: torre-v3
     zona: hosts
     resultado: "Tabs y workers Tower-owned dentro del workspace ligado, con una tab por Session ID, ocupación legible y readback determinista; absorbe S108, S9.2, S119 y S121."
     autoridad: "Resultado opcional Torre V2 y consolidación S108/S9.2/S119/S121 seleccionados explícitamente por el maintainer; conserva las garantías de binding/readback de Engram 11293 y la decisión del 2026-09-13."
@@ -1919,7 +1930,7 @@ sesiones:
   - {id: S160, entrega: {commit: 5eb62d8b350611742a3d7325939b6ca5f5444ca3}, historico: openspec/archive/sesiones/S160.md}
   - {id: S164, entrega: {commit: ee633c7c863502e78d0f2eeef4210f22fcd3b390}, historico: openspec/archive/sesiones/S164.md}
   - id: S165
-    prioridad: torre-v2
+    prioridad: torre-v3
     zona: hosts
     diferida: true
     resultado: "Puente mínimo y aislado Pi–semáforo: un adapter invoca el binario y una extensión registra exactamente las ocho tower_* sin continuation ni routing adicional."
@@ -2051,7 +2062,7 @@ sesiones:
         contaminaba: [S167]
 
   - id: S169
-    prioridad: torre-v2
+    prioridad: torre-v3
     zona: metodo
     diferida: true
     resultado: "chanks-4-unattended-implementation sella un mandato humano de una o más Sesiones LISTO, ordenadas por dependencia (pasos que pueden agrupar Sesiones que corren en paralelo, p. ej. S164+S165), cada una con su propio worker asignado bajo un único vencimiento para todo el mandato, en vez de sólo una Sesión; el coordinador avanza sólo dentro de esa lista y se detiene ante cualquier imprevisto."

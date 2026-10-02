@@ -31,7 +31,7 @@ Zona; el humano elige y el agente no decide.
 
 Al nombrar una Sesión en una conversación o en un artefacto escrito, usá siempre el formato de
 `radar faltan <ID>` — meta, subprioridad, Zona, título y estado —, nunca el ID solo. Por
-ejemplo: `S148 (Torre V2 › cimientos — título, PLANIFICADO)`.
+ejemplo: `S148 (Torre V3 › cimientos — título, PLANIFICADO)`.
 
 Nunca elijas trabajo a partir de la memoria (Engram), de un cambio viejo en
 `openspec/changes/`, del corpus archivado o del número siguiente a la última Sesión
@@ -124,7 +124,7 @@ a tested stable V1 and explicit human authorization.
 ## Operación local: fricciones y herramientas
 
 El despacho por Herdr, los handoffs entre workers Pi y los parches de issue por Herdr son
-**V2**: no forman parte del flujo ordinario. Sus reglas, incluida la declaración del pool
+**V3** (Torre automática): no forman parte del flujo ordinario. Sus reglas, incluida la declaración del pool
 de workers, viven en `agent-workflows/skills/chanks-3-despacho-herdr/`
 (`references/worker-pool.md`). Para trabajo paralelo ordinario usá `chanks-3-paralelo`.
 
@@ -235,7 +235,7 @@ Qué significa cada campo:
 | `merge.authorizing_party` | `human`, `automatic` | Quién autoriza el merge. La autorización sigue siendo obligatoria y atada al candidato inmutable; esto solo define quién la emite. |
 | `delivery.shape` | `direct-push`, `pull-request` | Forma de la entrega remota. No altera el orden commit → verificar tree → congelar SHA. |
 | `delivery.target_branch` | nombre de rama | Destino de la entrega. |
-| `planning.horizon_ceiling` | entero ≥ 1 | Cuántas Sesiones puede planificar por delante el loop autónomo diferido a V2. |
+| `planning.horizon_ceiling` | entero ≥ 1 | Cuántas Sesiones puede planificar por delante el loop autónomo diferido a V3. |
 
 El valor `2` rige sólo ese loop autónomo. La planificación manual —enumeración y
 preparación de Sesiones aprobadas por el humano— no está limitada por ese valor.

@@ -79,7 +79,7 @@ never requires or invents them.
 
 A Session named in conversation or in a written artifact carries its goal, sub-priority, Zone,
 title and state — never a bare ID. `radar faltan <ID>` prints exactly that one line, e.g.
-`S148 (Torre V2 › cimientos — título, PLANIFICADO)`.
+`S148 (Torre V3 › cimientos — título, PLANIFICADO)`.
 
 ## 9. Status
 

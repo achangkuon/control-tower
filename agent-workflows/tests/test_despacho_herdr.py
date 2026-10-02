@@ -979,9 +979,9 @@ class WorkerPoolReferenceTests(unittest.TestCase):
         self.assertNotIn("implementer-1", agents)
         self.assertNotIn("bun install --frozen-lockfile", agents)
         self.assertIn("references/worker-pool.md", agents)
-        self.assertIn("V2", agents)
+        self.assertIn("V3", agents)
         pointer = agents.split("## Operación local", 1)[1].split("\n## ", 1)[0]
-        self.assertLessEqual(len([line for line in pointer.splitlines() if line.startswith("V2") or "V2" in line]), 6)
+        self.assertLessEqual(len([line for line in pointer.splitlines() if "V3" in line]), 6)
         self.assertIn("agent-workflows/tools/install-radar.sh", agents)
 
     def test_dispatch_skill_reads_the_declaration_from_the_reference(self):

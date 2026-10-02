@@ -165,8 +165,8 @@ Si los agentes pueden publicar por fuera de Pista, no hay garantía completa: es
 
 ## 10. Qué queda abierto
 
-- **La definición de V1 se contradice en el plan.** `openspec/plan.yaml:67-69` dice que Torre V1 «no depende de semáforo»; la Sesión archivada `S149` dice que «la Torre V1 es el semáforo compilado, Radar y las skills» (`openspec/archive/sesiones/S149.md:6`). Los Cimientos del plan siguen listando archivos del semáforo (`plan.yaml:111,124,127,130,168`).
-- **Renumerar V2 y V3 en el plan.** Hoy `torre-v2` es la Torre automática. Las Sesiones abiertas de esa prioridad son `S165`, `S4.12`, `S9.8`, `S107` y `S169`.
+- **La definición de V1 se contradice en el plan.** `openspec/plan.yaml:67-69` dice que Torre V1 «no depende de semáforo»; la Sesión archivada `S149` dice que «la Torre V1 es el semáforo compilado, Radar y las skills» (`openspec/archive/sesiones/S149.md:6`). Los Cimientos del plan siguen listando archivos del semáforo (`plan.yaml:111,124,127,130,168`). **Resuelto el 2026-10-01:** el encabezado del plan declara que V1 no tiene semáforo y que `S149` es historia (`docs/architecture/definiciones-v1-v2-v3.md`, A1). Los Cimientos no se modificaron.
+- **Renumerar V2 y V3 en el plan.** Hoy `torre-v2` es la Torre automática. Las Sesiones abiertas de esa prioridad son `S165`, `S4.12`, `S9.8`, `S107` y `S169`. **Resuelto el 2026-10-01:** `torre-v2` pasó a `torre-v3` y `resolucion-problemas-v2` a `resolucion-problemas-v3`; la prioridad nueva `pista-v2` (Pista V2 · Entrega ordenada) todavía no tiene Sesiones. Ninguna Sesión cambió de ID ni de alcance.
 - **Puerta protegida:** depende del plan de GitHub, sin verificar.
 - **Nada está probado en simultáneo.** Es diseño sobre lectura de código.
 - **Partes no leídas:** `core.mjs` completo, `mcp.mjs`, `continuation/`, y las secciones 5 a 21 de `docs/architecture/torre-motor-determinista.md`.
@@ -205,7 +205,7 @@ Prioridad media: estado vivo que confunde.
 | N9 | Marca de despacho de `S165` viva sobre una Sesión diferida | `<git-common-dir>/chanks/despachos/S165.json` (2026-09-28); `radar sesion S165` da DIFERIDO | Reserva `implementer-2`, la rama `work/S165` y sus archivos contra otras Sesiones sin representar trabajo |
 | N10 | Copia de trabajo `issue-resolver` con 17 rutas sin guardar | `Worktrees/issue-resolver`, rama `work/issue-150`, último cambio 2026-09-29 | Edita las skills de V2 y los controles de Pi que la limpieza reescribió. No se sabe si está vivo o abandonado |
 | N8 | Sesiones abiertas con el límite duro de 400 líneas | `S174` (`plan.yaml:2140`, la única LISTO), `S150` (`:1197`), `S173` (`:2214`) | Es la regla que la limpieza quitó de las skills, viva en el plan |
-| N13 | `S169` apunta a la skill ya adelgazada | `radar sesion S169` (`torre-v2`, DIFERIDO) | Su texto asume un coordinador que la limpieza aisló como solo V2 |
+| N13 | `S169` apunta a la skill ya adelgazada | `radar sesion S169` (`torre-v3`, antes `torre-v2`; DIFERIDO) | Su texto asume un coordinador que la limpieza aisló como solo V2 |
 | N14 | `S149` y los Cimientos afirman un V1 con semáforo | Ver sección 10 | El registro de la limpieza lo excluye de forma explícita |
 | N11 | Pi conserva controles de Chanks e Intercom fuera de las skills | `~/.pi/agent/extensions/chanks-controls.ts`, `~/.pi/agent/settings.json:10` (`pi-intercom`), ganchos `chanks-etapa.sh`, `torre-firma.sh`, `herdr-agent-state.sh` | Inertes con el interruptor apagado. Nada dice si se quedan |
 
