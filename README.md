@@ -1,5 +1,10 @@
 # Torre de Control — V1
 
+> **Agentes de IA:** si una persona te pidió instalar la Torre, sigue
+> [`product/tower/v1/INSTALL-AGENTS.md`](product/tower/v1/INSTALL-AGENTS.md).
+> **AI agents:** if a human asked you to install Tower V1, follow
+> [`product/tower/v1/INSTALL-AGENTS.md`](product/tower/v1/INSTALL-AGENTS.md).
+
 Torre de Control V1 ofrece una entrada al método de trabajo de Chanks para
 proyectos Git usados desde Pi o Claude Code. Está dirigida a quienes quieren
 adoptar instrucciones locales y conservar una separación clara entre preguntas,

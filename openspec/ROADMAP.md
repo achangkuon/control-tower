@@ -1041,7 +1041,7 @@
 - Coordinación:
   - Estado derivado: 🟢 LISTO
   - Zona/Área: producto-torre · product/tower/
-  - Archivos autorizados: product/tower/v1/install.mjs, product/tower/v1/test/install.test.mjs, product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs, README.md
+  - Archivos autorizados: product/tower/v1/install.mjs, product/tower/v1/test/install.test.mjs, product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs, README.md, product/tower/v1/INSTALL-AGENTS.md
   - Depende de: S183
   - Recursos: —
   - Ejecución: ODD nativo.

@@ -2062,9 +2062,9 @@ sesiones:
     zona: producto-torre
     prioridad: torre-v1
     resultado: "Un socio con acceso al repo instala torre-control con un solo comando gh, en Linux y Mac, sin clonar el repositorio."
-    autoridad: "Emilio eligió el 2026-10-02 en esta Conversación un instalador de un solo comando con gh, privado, para socios que ya tienen acceso al repositorio, y confirmó que hay una Mac disponible para probarlo."
+    autoridad: "Emilio eligió el 2026-10-02 en esta Conversación un instalador de un solo comando con gh, privado, para socios que ya tienen acceso al repositorio, y confirmó que hay una Mac disponible para probarlo. El mismo día pidió además una guía en el repositorio para que el agente de un socio instale la Torre solo con el enlace de GitHub (product/tower/v1/INSTALL-AGENTS.md)."
     depende_de: [S183]
-    archivos: [product/tower/v1/install.mjs, product/tower/v1/test/install.test.mjs, product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs, README.md]
+    archivos: [product/tower/v1/install.mjs, product/tower/v1/test/install.test.mjs, product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs, README.md, product/tower/v1/INSTALL-AGENTS.md]
     cimientos: [README.md]
     recurso: []
     encargo:

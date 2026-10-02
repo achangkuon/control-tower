@@ -365,3 +365,9 @@ Maintainer approved on 2026-10-02 executing S183, S184 and the v1.0.1 release in
 - Partner end-to-end on a fresh disposable HOME with the real `gh` login and the exact one-liner: installer checksum OK, envelope verified, global install, `doctor` healthy, project adopted and listed. With umask 002 the created directories were 0755. A first attempt with a deliberately group-writable HOME stopped with the new actionable S183 message.
 - Maintainer machine updated from the checkout (`update --tag v1.0.1`): active v1.0.1, previous v1.0.0; installed-launcher `doctor` now healthy (failed on v1.0.0); demo project healthy; configuration snapshot unchanged.
 - Pending: guided macOS test (S184 closure), then mark macOS as tested in README.
+
+### S184 agent install runbook
+
+- Maintainer asked for a repository document so a partner's coding agent can install Tower from the GitHub link alone. S184 `archivos` expanded with `product/tower/v1/INSTALL-AGENTS.md` (docs/ belongs to another Zona); README links it at the top in Spanish and English.
+- Runbook rules: the installer SHA-256 and tag always come from the human (maintainer's second channel), never from GitHub; stop on checksum failure; ask before installing tools, editing shell files or adopting a project. Claims checked against `install.mjs`, `cli.mjs`, `global.mjs` and `adoption.mjs` (uninstall removes the journal; cleanup only for an intact residual journal; no global uninstall command in V1).
+- Native review `review-bbe17af08173b01b`: approved and acknowledged; its two non-blocking notes (existing-install reference, path quoting) were fixed afterwards as a passive text edit.
