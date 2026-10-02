@@ -110,6 +110,137 @@ for (const argv of invalid) test(`closed usage rejects ${JSON.stringify(argv)}`,
   expect(readdirSync(f.home)).toEqual([]);
 });
 
+test("status reports the closed schema without changing disposable HOME", () => {
+  const f = fixture(), before = snapshot(f), calls = [];
+  const outputs = { gh: "gh version 2.90.1 (2026-01-01)", bun: "1.3.9\n",
+    git: "git version 2.54.0", go: "go version go1.26.4 linux/amd64" };
+  const result = invoke(f, ["status"], { bunVersion: null,
+    runner: (command, args, options) => {
+      calls.push([command, args]);
+      expect(options.env.HOME).toBe(f.home);
+      expect(options.timeout).toBeGreaterThan(0);
+      expect(options.timeout).toBeLessThanOrEqual(3000);
+      return { status: 0, stdout: outputs[command] };
+    }, fsProbes: { executable: (name) => name === "pi", config: (path) => path === join(f.home, ".pi") } });
+  success(result);
+  expect(result.value).toEqual({ schema: "tower.v1.status/1",
+    engine: { installed: false, status: "absent", active: null, previous: null }, projects: [],
+    prerequisites: { gh: { present: true, version: "2.90.1", authenticated: true },
+      bun: { present: true, version: "1.3.9" }, git: { present: true, version: "2.54.0" },
+      go: { present: true, version: "1.26.4" } },
+    agents: { claude: { executable: false, config: false }, pi: { executable: true, config: true },
+      codex: { executable: false, config: false }, opencode: { executable: false, config: false } },
+    system: { os: process.platform, arch: process.arch, shell: null }, version: null });
+  expect(calls).toEqual([["gh", ["--version"]], ["gh", ["auth", "status", "--hostname", "github.com"]],
+    ["bun", ["--version"]], ["git", ["--version"]], ["go", ["version"]]]);
+  expect(snapshot(f)).toEqual(before);
+});
+
+test("status isolates failed probes, bounds errors and never calls registered doctor", () => {
+  const f = fixture(); ready(f);
+  const before = snapshot(f), calls = [];
+  const result = invoke(f, ["status"], { bunVersion: "1.3.14", operations: {
+    doctorGlobal: () => { throw new Error("engine\nprivate"); },
+    listProjects: () => { throw new Error("x".repeat(2000)); },
+    doctorRegisteredProject: () => { throw new Error("must not publish"); },
+  }, runner: (name, args) => {
+    calls.push([name, args]);
+    if (name === "gh" && args[0] === "--version") return { status: 0, stdout: "gh version 2.9.0 (date)" };
+    if (name === "gh") return { status: 1 };
+    if (name === "git") return { status: null, error: Object.assign(new Error("timeout\nsecret"), { code: "ETIMEDOUT" }) };
+    throw new Error("missing\nsecret");
+  }, fsProbes: { executable: () => { throw new Error("denied"); }, config: () => false } });
+  success(result);
+  expect(result.value.engine).toEqual({ installed: false, status: "error", active: null, previous: null, error: "engine" });
+  expect(result.value.projects.error).toHaveLength(440);
+  expect(result.value.prerequisites).toEqual({ gh: { present: true, version: "2.9.0", authenticated: false,
+    error: "gh probe failed (1)" }, bun: { present: true, version: "1.3.14" },
+    git: { present: true, error: "timeout" }, go: { present: false, error: "missing" } });
+  expect(calls.map(([name]) => name)).toEqual(["gh", "gh", "git", "go"]);
+  expect(snapshot(f)).toEqual(before);
+});
+
+test("status overrides, engine identity and project projection are exact", () => {
+  const f = fixture(), stateRoot = join(f.root, "state"), launcherPath = join(f.root, "launcher");
+  const registryRoot = join(f.root, "registry"), sha = "a".repeat(64), seen = [];
+  const deps = { env: { ...f.env, SHELL: "/bin/zsh" },
+    runner: () => ({ status: 0, stdout: "unknown" }), operations: {
+      doctorGlobal: (options) => { seen.push(options); return { status: "healthy", active: sha, previous: null }; },
+      listProjects: (options) => { seen.push(options); return [{ projectRoot: "/example", registered: true, status: "missing", error: new Error("ignored") }]; },
+    }, fsProbes: { executable: () => false, config: () => false } };
+  const argv = ["status", "--registry", registryRoot, "--launcher", launcherPath, "--state", stateRoot];
+  const result = invoke(f, argv, { ...deps, enginePath: join(stateRoot, "versions", sha, "product/tower/v1/cli.mjs") });
+  success(result);
+  expect(seen).toEqual([{ stateRoot, launcherPath }, { registryRoot }]);
+  expect(result.value.engine.installed).toBe(true);
+  expect(result.value.version).toBe(sha);
+  expect(result.value.projects).toEqual([{ projectRoot: "/example", status: "missing" }]);
+  expect(result.value.system.shell).toBe("zsh");
+  expect(result.value.prerequisites.git).toEqual({ present: true, error: "unrecognized version output" });
+  expect(invoke(f, argv, deps).value.version).toBeNull();
+  expect(readdirSync(f.home)).toEqual([]);
+});
+
+test("status PATH lookup checks executable files and known config directories without execution", () => {
+  const f = fixture(), bin = join(f.home, "bin"); mkdirSync(bin);
+  writeFileSync(join(bin, "claude"), "must not execute", { mode: 0o755 });
+  writeFileSync(join(bin, "codex"), "not executable", { mode: 0o600 });
+  mkdirSync(join(bin, "pi"));
+  mkdirSync(join(f.home, ".claude")); mkdirSync(join(f.home, ".config"));
+  mkdirSync(join(f.home, ".config", "opencode")); writeFileSync(join(f.home, ".codex"), "not a directory");
+  const before = snapshot(f);
+  const result = invoke(f, ["status"], { env: { ...f.env, PATH: `${new URL("../../../../test/helpers/bin", import.meta.url).pathname}:${bin}` },
+    runner: () => ({ status: 0, stdout: "unknown" }) });
+  success(result);
+  expect(result.value.agents).toEqual({ claude: { executable: true, config: true },
+    pi: { executable: false, config: false }, codex: { executable: false, config: false },
+    opencode: { executable: false, config: true } });
+  expect(snapshot(f)).toEqual(before);
+});
+
+test("status live-reconciles installed engine and projects without changing any bytes", () => {
+  const f = fixture(), r = release(), root = project(f);
+  success(invoke(f, pinned("install", r), { runner: r.runner }));
+  success(invoke(f, ["project", "init", "--project", root, "--trust", "trusted"]));
+  writeFileSync(join(root, ".control-tower-adoption-v1", "state.json"), "{}");
+  const before = snapshot(f);
+  const result = invoke(f, ["status"], { runner: () => ({ status: 0, stdout: "unknown" }) });
+  success(result);
+  expect(result.value.engine).toEqual({ installed: true, status: "healthy", active: r.sha, previous: null });
+  expect(result.value.projects).toEqual([{ projectRoot: root, status: "invalid" }]);
+  expect(snapshot(f)).toEqual(before);
+});
+
+for (const args of [["extra"], ["--tag", "v1"], ["--project", "/tmp/x"], ["--registry"],
+  ["--state", "relative"], ["--launcher", "/"], ["--registry", "relative"],
+  ["--state", "/same", "--launcher", "/same"], ["--state", "/x", "--state", "/y"]]) {
+  test(`status rejects invalid usage ${JSON.stringify(args)} before probing`, () => {
+    const f = fixture(); let calls = 0;
+    failed(invoke(f, ["status", ...args], { runner: () => { calls++; } }));
+    expect(calls).toBe(0); expect(readdirSync(f.home)).toEqual([]);
+  });
+}
+
+test("status accepts alternate version formats and reports absent executables", () => {
+  const f = fixture();
+  const result = invoke(f, ["status"], { bunVersion: null, runner: (name) => name === "git" ?
+    { status: null, error: Object.assign(new Error("not found"), { code: "ENOENT" }) } :
+    { status: 0, stdout: { gh: "gh version 2.90.1-pre.2 (date)", bun: " 1.4.0-canary.1\n",
+      go: "go version go1.27rc1 linux/amd64" }[name] } });
+  success(result);
+  expect(result.value.prerequisites).toEqual({ gh: { present: true, version: "2.90.1-pre.2", authenticated: true },
+    bun: { present: true, version: "1.4.0-canary.1" }, git: { present: false, error: "not found" },
+    go: { present: true, version: "1.27rc1" } });
+});
+
+test("status unexpected output errors exit 1", () => {
+  const f = fixture(); let stderr = "";
+  expect(main(["status"], { env: f.env, runner: () => ({ status: 1 }),
+    stdout: { write: () => { throw new Error("output failure"); } },
+    stderr: { write: (text) => { stderr += text; } } })).toBe(1);
+  expect(stderr).toBe("Invalid Tower CLI: output failure\n");
+});
+
 test("HOME is explicit, absolute and safe even with all overrides", () => {
   for (const HOME of [undefined, "", "relative", "/", "/tmp/../tmp", "/tmp/line\nbreak"]) {
     const f = fixture();

@@ -411,3 +411,10 @@ Maintainer reported the V1 menu aborting (CR LF Enter) and approved on 2026-10-0
 - [ ] S188 — Go home screen.
 - [ ] S189 — wizards and projects.
 - [ ] S190 — packaging, default launch, v1.1.0.
+
+### S187 evidence
+
+- Writer +203/-5 in `cli.mjs` and its test. RED 70 pass / 1 fail (unknown command); GREEN 71; final 86 pass; proxy-first V1 suite 290 pass; whitespace clean.
+- `status` prints one `tower.v1.status/1` line: engine (read-only `doctorGlobal`), projects (`listProjects`, live and read-only), prerequisites gh (version + authenticated), bun, git, go, agents claude/pi/codex/opencode (PATH executable vs HOME config), system (os, arch, shell), version. Probes are bounded (2 s, SIGKILL), failures reported in place; never calls registered project doctor or prepares directories (byte-identical HOME test).
+- Real read-only run on the maintainer machine: engine healthy v1.0.2, demo project healthy, gh 2.95.0 authenticated, bun 1.3.14, git 2.54.0, go 1.26.4, all four agents present; installation hash unchanged.
+- Native review `review-a9b4c52a13d2cca5`: medium/reliability, approved without findings and acknowledged.

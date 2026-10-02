@@ -1,6 +1,8 @@
 #!/usr/bin/env bun
-import { chmodSync, lstatSync, mkdirSync } from "node:fs";
-import { dirname, isAbsolute, join, parse, resolve, sep } from "node:path";
+import { accessSync, chmodSync, constants, lstatSync, mkdirSync, statSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { basename, delimiter, dirname, isAbsolute, join, parse, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 import { installGlobal, updateGlobal, doctorGlobal, rollbackGlobal } from "./global.mjs";
 import { initRegisteredProject, doctorRegisteredProject, uninstallRegisteredProject,
   cleanupRegisteredProject, listProjects } from "./projects.mjs";
@@ -19,12 +21,12 @@ const owns = (object, key) => Object.hasOwn(object, key);
 function parseArguments(argv) {
   if (!Array.isArray(argv) || argv.some((arg) => typeof arg !== "string")) usage("string arguments required");
   const [command, ...tail] = argv;
-  if (!command) usage("command required (install, update, doctor, rollback, project, list)");
+  if (!command) usage("command required (install, update, doctor, rollback, project, list, status)");
   let subcommand;
   if (command === "project") {
     subcommand = tail.shift();
     if (!owns(projects, subcommand)) usage("unknown or missing project command");
-  } else if (!owns(globals, command) && command !== "list") usage("unknown command");
+  } else if (!owns(globals, command) && !["list", "status"].includes(command)) usage("unknown command");
   const required = command === "project" ? ["--project", ...(subcommand === "init" ? ["--trust"] : [])] :
     ["install", "update"].includes(command) ? ["--tag", "--asset", "--sha256"] : [];
   const allowed = new Set([...common, ...required]);
@@ -111,6 +113,66 @@ function reportError(stderr, error, prefix = "") {
     stderr.write(`${JSON.stringify({ type: "tower.cli.recovery/1", errors,
       omitted: Math.max(0, error.errors.length - errors.length) })}\n`);
   }
+}
+
+const statusProbes = {
+  executable: (name, env) => (env.PATH ?? "").split(delimiter).some((directory) => {
+    const path = join(directory || ".", name);
+    try { accessSync(path, constants.X_OK); return statSync(path).isFile(); } catch { return false; }
+  }),
+  config: (path) => {
+    try { return statSync(path).isDirectory(); } catch { return false; }
+  },
+};
+
+/** Read-only snapshot; runner receives bounded spawn options, fs probes never execute agents. */
+export function collectStatus({ home, stateRoot, launcherPath, registryRoot, flags = {} }, deps = {}) {
+  const { env = process.env, runner = spawnSync, bunVersion = process.versions.bun,
+    enginePath = fileURLToPath(import.meta.url) } = deps;
+  const api = { ...operations, ...deps.operations }, fs = { ...statusProbes, ...deps.fsProbes };
+  let engine, projectList;
+  try {
+    const result = absentGlobalDefaults(home, stateRoot, launcherPath, flags) ?
+      { status: "absent", active: null, previous: null } : api.doctorGlobal({ stateRoot, launcherPath });
+    engine = { installed: result.status === "healthy", ...result };
+  } catch (error) {
+    engine = { installed: false, status: "error", active: null, previous: null, error: message(error) };
+  }
+  try {
+    const missing = !owns(flags, "--registry") && !defaultParent(home, dirname(registryRoot), false);
+    projectList = missing ? [] : api.listProjects({ registryRoot }).map(({ projectRoot, status }) => ({ projectRoot, status }));
+  } catch (error) { projectList = { error: message(error) }; }
+  const probe = (command, args) => {
+    try {
+      const result = runner(command, args, { env, encoding: "utf8", timeout: 2000,
+        killSignal: "SIGKILL", maxBuffer: 64 * 1024, stdio: ["ignore", "pipe", "pipe"] });
+      if (result.error || result.status !== 0) return {
+        present: result.error?.code !== "ENOENT", error: message(result.error ??
+          new Error(`${command} probe failed (${result.signal ?? result.status})`)) };
+      return { present: true, output: String(result.stdout ?? "").slice(0, 64 * 1024) };
+    } catch (error) { return { present: false, error: message(error) }; }
+  };
+  const prerequisite = (name, args, pattern) => {
+    const result = name === "bun" && bunVersion ? { present: true, output: bunVersion } : probe(name, args);
+    if (result.error) return result;
+    const version = result.output.trim().match(pattern)?.[1];
+    return { present: true, ...(version ? { version } : { error: "unrecognized version output" }) };
+  };
+  const gh = prerequisite("gh", ["--version"], /\bgh version\s+(\d+\.\d+\.\d+(?:[-+][\w.-]+)?)/);
+  const auth = probe("gh", ["auth", "status", "--hostname", "github.com"]);
+  gh.authenticated = !auth.error;
+  if (auth.error && !gh.error) gh.error = auth.error;
+  const prerequisites = { gh,
+    bun: prerequisite("bun", ["--version"], /^(\d+\.\d+\.\d+(?:[-+][\w.-]+)?)/),
+    git: prerequisite("git", ["--version"], /\bgit version\s+(\d+\.\d+(?:\.[\w.-]+)?)/),
+    go: prerequisite("go", ["version"], /\bgo version go(\d+\.\d+(?:\.\d+)?(?:rc\d+|beta\d+)?)/) };
+  const safe = (fn) => { try { return Boolean(fn()); } catch { return false; } };
+  const agents = Object.fromEntries([["claude", ".claude"], ["pi", ".pi"], ["codex", ".codex"],
+    ["opencode", ".config/opencode"]].map(([name, path]) => [name, {
+    executable: safe(() => fs.executable(name, env)), config: safe(() => fs.config(join(home, path))) }]));
+  return { schema: "tower.v1.status/1", engine, projects: projectList, prerequisites, agents,
+    system: { os: process.platform, arch: process.arch, shell: env.SHELL ? basename(env.SHELL) : null },
+    version: engine.active && enginePath === join(stateRoot, "versions", engine.active, "product/tower/v1/cli.mjs") ? engine.active : null };
 }
 
 const cancelled = Symbol("menu cancelled");
@@ -298,7 +360,12 @@ export function main(argv, deps = {}) {
     const registryRoot = flags["--registry"] ?? join(share, "projects");
     const api = { ...operations, ...deps.operations };
     let result;
-    if (command === "project" || command === "list") {
+    if (command === "status") {
+      for (const path of [stateRoot, launcherPath, registryRoot]) homePath({ HOME: path });
+      if (stateRoot === launcherPath || stateRoot.startsWith(launcherPath + sep) ||
+          launcherPath.startsWith(stateRoot + sep)) usage("overlapping paths");
+      result = collectStatus({ home, stateRoot, launcherPath, registryRoot, flags }, deps);
+    } else if (command === "project" || command === "list") {
       // Registered project doctor writes membership; it is intentionally not read-only.
       const missing = !owns(flags, "--registry") &&
         !defaultParent(home, dirname(registryRoot), command !== "list");
