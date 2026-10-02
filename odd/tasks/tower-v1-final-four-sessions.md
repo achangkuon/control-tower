@@ -247,11 +247,19 @@ Maintainer decisions recorded before writes (Engram 12872):
 
 Unit 5 scope: only `product/tower/v1/cli.mjs` and `product/tower/v1/test/cli.test.mjs`. Closed scriptable commands for global install/update/doctor/rollback, explicit-root project init/doctor/uninstall/cleanup and list; fail-closed errors, including registry failure after local success. Mapping forecast 380–470 authored lines; the per-unit size is a Gentle AI reference, not a Session cap (decision A4). No menu, real installation, download or HOME mutation in tests.
 
-- [ ] G5 — Implement, verify and review the closed command surface, then record a separately authorized work-unit checkpoint.
-- [ ] G6 — Interactive menu and fault-injected integration tests on the same files.
+- [x] G5 — Implement, verify and review the closed command surface, then record a separately authorized work-unit checkpoint. DONE: maintainer authorized commit/push and continuation; product commit `4296aca6285b5d73bb9da18ef8de939e4049e943` pushed to master. Independent full suite at that HEAD: 1,743 pass / 0 fail, 10,292 assertions, 115 files, 120.13 s.
+- [ ] G6 — Interactive menu and fault-injected integration tests on the same files. Implemented, verified and reviewed; awaiting authorized work-unit checkpoint.
 
 ### Closed-command unit evidence
 
 - Writer delivered `cli.mjs` 117 + `test/cli.test.mjs` 274 = 391 authored lines, 40 tests. Observed RED: 0 pass / 1 fail / 1 error (module absent); GREEN 36, final 40 pass / 0 fail. V1 suite 193 pass / 0 fail. Whitespace clean on both new files; scope exactly the two product files plus this record.
 - Design: registry default `~/.local/share/torre-control/projects`, a sibling of `v1`, because the global lifecycle owns the whole state root. Only default parent directories are created (never override paths); `--state`, `--launcher`, `--registry` override. No arguments fails closed until unit 6 adds the menu.
 - Native review `review-ee9aae351b99b052`: medium/reliability, 405 changed lines, approved and acknowledged (authority burned). Two non-blocking warnings carried into G6: `R3-default-preparation` (read-only `doctor`/`list` still create default parent directories, `cli.mjs:98-99`) and `R3-recovery-evidence` (AggregateError recovery evidence is reduced to a one-line message, `cli.mjs:70-72`).
+
+### Menu and integration unit evidence
+
+- Writer changed `cli.mjs` +99/-10 and `test/cli.test.mjs` +258/-5. Observed RED 42 pass / 11 fail, GREEN 53, final 57 pass / 0 fail; V1 suite 210 pass / 0 fail. `git diff --check` clean; scope exactly the two product files plus this record; no new `/tmp/tower-cli-*` fixtures remain (322 pre-existing directories from earlier runs were preserved, not deleted).
+- Menu opens only when stdin and stdout are TTYs and dispatches through the same closed commands; otherwise no arguments still fails closed. SHA is always typed; project roots are explicit absolute paths. `update`, `rollback`, project `uninstall` and `cleanup` require typing UPDATE, ROLLBACK, UNINSTALL or CLEANUP. Explicit exit returns 0; invalid input or EOF returns 1 with no effect.
+- G5 warnings resolved: global `doctor` and `list` no longer create default directories; project `doctor` stays mutating because its registered wrapper publishes registry membership. AggregateError adds one bounded stderr JSON line `tower.cli.recovery/1` (at most eight single-line messages of 240 characters plus an omitted count, no stacks).
+- Isolated integration tests drive real dispatch over the real global/projects modules with injected gh doubles and fault hooks: install/doctor/update/rollback round trip, SHA mismatch before state change, activation fault compensation, unknown launcher preserved, explicit-root project lifecycle with registry failure after local success, and menu-driven install and declined destructive action. No real HOME, download or release-code execution.
+- Native review `review-b5be2515a6eea570`: medium/reliability, 374 changed lines, approved with no findings and acknowledged (authority burned).

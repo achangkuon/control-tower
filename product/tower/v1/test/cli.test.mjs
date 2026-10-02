@@ -1,28 +1,54 @@
-import { expect, test } from "bun:test";
+import { expect, test as bunTest } from "bun:test";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync,
-  symlinkSync, writeFileSync } from "node:fs";
+  rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { main } from "../cli.mjs";
 import { BUNDLE_MEMBERS } from "../bundle.mjs";
 import { initRegisteredProject, doctorRegisteredProject } from "../projects.mjs";
-import { restoreProjectFiles } from "../project-files.mjs";
+import { captureProjectFiles, restoreProjectFiles } from "../project-files.mjs";
+import { updateGlobal } from "../global.mjs";
+
+// Every fixture, including loop-created ones, is reclaimed even on assertion failure.
+const roots = [];
+const environmentKeys = ["HOME", "XDG_DATA_HOME", "XDG_CONFIG_HOME", "XDG_CACHE_HOME",
+  "GH_CONFIG_DIR", "GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM", "GIT_CONFIG_NOSYSTEM"];
+const test = (name, fn) => bunTest(name, async () => {
+  const environment = Object.fromEntries(environmentKeys.map((key) => [key, process.env[key]]));
+  try { await fn(); }
+  finally {
+    try { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }); }
+    finally {
+      for (const key of environmentKeys) {
+        if (environment[key] === undefined) delete process.env[key];
+        else process.env[key] = environment[key];
+      }
+    }
+  }
+});
 
 const entry = new URL("../cli.mjs", import.meta.url).pathname;
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
 // Only disposable roots are used, including subprocess HOME, Git and GitHub configuration.
 function fixture() {
   const root = mkdtempSync("/tmp/tower-cli-");
+  roots.push(root);
   const home = join(root, "home");
   mkdirSync(home, { mode: 0o700 });
   const env = { PATH: process.env.PATH, HOME: home, XDG_DATA_HOME: join(root, "data"),
     XDG_CONFIG_HOME: join(root, "config"), XDG_CACHE_HOME: join(root, "cache"),
     GH_CONFIG_DIR: join(root, "gh"), GIT_CONFIG_GLOBAL: "/dev/null",
     GIT_CONFIG_SYSTEM: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" };
+  // Adoption's Git subprocesses inherit process.env, unlike the injected gh runner.
+  for (const key of environmentKeys) process.env[key] = env[key];
   const share = join(home, ".local", "share", "torre-control");
   return { root, home, env, share, state: join(share, "v1"),
     registry: join(share, "projects"), launcher: join(home, ".local", "bin", "torre-control") };
+}
+function ready(f) {
+  mkdirSync(join(f.home, ".local", "bin"), { recursive: true, mode: 0o700 });
+  mkdirSync(f.share, { recursive: true, mode: 0o700 });
 }
 function invoke(f, argv, extra = {}) {
   let stdout = "", stderr = "";
@@ -99,6 +125,7 @@ test("pinned install, update, offline doctor and rollback use real global lifecy
   expect(first.calls).toEqual([["gh", ["auth", "status", "--active", "--hostname", "github.com"]],
     ["gh", ["release", "download", "v1-test", "--repo", "achangkuon/control-tower",
       "--pattern", "tower.json", "--output", "-"]]]);
+  success(invoke(f, ["doctor"]));
   const updated = invoke(f, pinned("update", second), { runner: second.runner });
   success(updated);
   expect(updated.value).toMatchObject({ active: second.sha, previous: first.sha });
@@ -182,6 +209,8 @@ test("registered init, doctor, list and uninstall preserve local results and rec
   expect(invoke(f, ["list"]).value[0].status).toBe("unadopted");
   expect(readFileSync(join(f.registry, "registry.json"))).toEqual(before);
   expect(readFileSync(join(path, "sentinel"), "utf8")).toBe("unrelated");
+  // Uninstall already removed the journal: cleanup must fail closed, not invent residue.
+  failed(invoke(f, local("cleanup")));
 });
 
 test("cleanup wrapper delegates for fully restored journal residue", () => {
@@ -238,10 +267,17 @@ for (const error of [new TypeError("type\r\nstack"), new Error("x".repeat(2000))
   new AggregateError([new Error("inner")], "compensation\nfailed")]) {
   test(`bounded single-line thrown ${error.name}`, () => {
     const f = fixture();
+    ready(f);
     const result = invoke(f, ["doctor"], { operations: { doctorGlobal: () => { throw error; } } });
-    failed(result);
+    if (error instanceof AggregateError) {
+      expect(result.code).toBe(1);
+      expect(result.stdout).toBe("");
+      const lines = result.stderr.trimEnd().split("\n");
+      expect(lines).toHaveLength(2);
+      expect(lines[0]).toContain("carries recovery evidence");
+      expect(JSON.parse(lines[1])).toEqual({ type: "tower.cli.recovery/1", errors: ["inner"], omitted: 0 });
+    } else failed(result);
     expect(result.stderr.length).toBeLessThanOrEqual(600);
-    if (error instanceof AggregateError) expect(result.stderr).toContain("carries recovery evidence");
   });
 }
 
@@ -255,6 +291,223 @@ test("real entrypoint: usage failure and empty list use only isolated environmen
   expect(listed.stdout).toBe("[]\n");
   expect(listed.stderr).toBe("");
   expect(existsSync(f.registry)).toBe(false);
+});
+
+const snapshot = (f) => captureProjectFiles(f.root, readdirSync(f.root));
+async function menu(f, lines, extra = {}) {
+  let stdout = "", stderr = "";
+  const prompts = [];
+  const code = await main([], { env: f.env,
+    stdin: { isTTY: true }, stdout: { isTTY: true, write: (text) => { stdout += text; } },
+    stderr: { write: (text) => { stderr += text; } },
+    readLine: (prompt) => { prompts.push(prompt); return lines.shift() ?? null; }, ...extra });
+  const last = stdout.trimEnd().split("\n").at(-1);
+  return { code, stdout, stderr, prompts, value: last?.startsWith("{") || last?.startsWith("[") ? JSON.parse(last) : undefined };
+}
+
+test("fresh default doctor and list do not prepare HOME", () => {
+  const f = fixture(), before = snapshot(f);
+  const checked = invoke(f, ["doctor"]);
+  success(checked);
+  expect(checked.value).toEqual({ status: "absent", active: null, previous: null });
+  success(invoke(f, ["list"]));
+  expect(snapshot(f)).toEqual(before);
+});
+
+test("read-only defaults validate existing ancestors without creating missing siblings", () => {
+  const f = fixture();
+  mkdirSync(join(f.home, ".local"), { mode: 0o700 });
+  const before = snapshot(f);
+  success(invoke(f, ["doctor"]));
+  success(invoke(f, ["list"]));
+  expect(snapshot(f)).toEqual(before);
+});
+
+test("project doctor remains a registered writer at the CLI level", () => {
+  const f = fixture(), path = project(f);
+  success(invoke(f, ["project", "init", "--project", path, "--trust", "trusted",
+    "--registry", join(f.root, "separate-registry")]));
+  expect(existsSync(f.registry)).toBe(false);
+  const checked = invoke(f, ["project", "doctor", "--project", path]);
+  success(checked);
+  expect(checked.value.registry.status).toBe("recorded");
+  expect(existsSync(join(f.registry, "registry.json"))).toBe(true);
+});
+
+test("SHA mismatch on update leaves complete installed state and launcher untouched", () => {
+  const f = fixture(), first = release(), second = release("b");
+  success(invoke(f, pinned("install", first), { runner: first.runner }));
+  const before = snapshot(f);
+  failed(invoke(f, pinned("update", { sha: "0".repeat(64) }), { runner: second.runner }));
+  expect(snapshot(f)).toEqual(before);
+});
+
+test("activation failure after state rename compensates launcher, pointers and publication", () => {
+  const f = fixture(), first = release(), second = release("b");
+  success(invoke(f, pinned("install", first), { runner: first.runner }));
+  const before = snapshot(f);
+  failed(invoke(f, pinned("update", second), { runner: second.runner,
+    operations: { updateGlobal: (options) => updateGlobal({ ...options,
+      fault: (point) => { if (point === "state-active") throw new Error("activation failed"); } }) } }));
+  expect(snapshot(f)).toEqual(before);
+  expect(invoke(f, ["doctor"]).value.active).toBe(first.sha);
+});
+
+test("unknown default launcher is preserved and blocks installation", () => {
+  const f = fixture(), r = release();
+  mkdirSync(join(f.home, ".local", "bin"), { recursive: true, mode: 0o700 });
+  mkdirSync(join(f.home, ".local", "share", "torre-control"), { recursive: true, mode: 0o700 });
+  writeFileSync(f.launcher, "unknown launcher\n", { mode: 0o755 });
+  const before = snapshot(f);
+  failed(invoke(f, pinned("install", r), { runner: r.runner }));
+  expect(snapshot(f)).toEqual(before);
+});
+
+test("real compensation failure emits inner errors and retains journal evidence", () => {
+  const f = fixture(), first = release(), second = release("b");
+  success(invoke(f, pinned("install", first), { runner: first.runner }));
+  const result = invoke(f, pinned("update", second), { runner: second.runner,
+    operations: { updateGlobal: (options) => updateGlobal({ ...options,
+      fault: (point) => { if (["state-active", "compensation"].includes(point)) throw new Error(`injected ${point}`); } }) } });
+  expect(result.code).toBe(1);
+  const lines = result.stderr.trimEnd().split("\n");
+  expect(lines).toHaveLength(2);
+  expect(JSON.parse(lines[1])).toEqual({ type: "tower.cli.recovery/1",
+    errors: ["injected state-active", "injected compensation"], omitted: 0 });
+  expect(result.stderr).not.toContain("\n    at ");
+  expect(existsSync(join(f.state, ".transaction", "recovery.json"))).toBe(true);
+});
+
+test("AggregateError evidence bounds count, message length and line breaks", () => {
+  const f = fixture();
+  ready(f);
+  const error = new AggregateError(Array.from({ length: 20 }, () => new Error("x".repeat(1000) + "\nprivate stack")), "failure");
+  const result = invoke(f, ["doctor"], { operations: { doctorGlobal: () => { throw error; } } });
+  expect(result.code).toBe(1);
+  const lines = result.stderr.trimEnd().split("\n");
+  expect(lines).toHaveLength(2);
+  const evidence = JSON.parse(lines[1]);
+  expect(evidence.errors).toHaveLength(8);
+  expect(evidence.omitted).toBe(12);
+  expect(evidence.errors.every((text) => text.length === 240 && !/[\r\n]/.test(text))).toBe(true);
+  expect(result.stderr.length).toBeLessThan(2600);
+});
+
+test("no-argument menu requires both TTYs; explicit commands never read a menu", async () => {
+  const f = fixture();
+  for (const [input, output] of [[false, false], [false, true], [true, false]]) {
+    const result = await menu(f, ["10"], { stdin: { isTTY: input },
+      stdout: { isTTY: output, write: () => {} } });
+    expect(result.code).toBe(1);
+    expect(result.prompts).toEqual([]);
+  }
+  success(invoke(f, ["list"], { stdin: { isTTY: true },
+    readLine: () => { throw new Error("scriptable command opened menu"); } }));
+  expect(readdirSync(f.home)).toEqual([]);
+});
+
+test("menu install uses typed pinned SHA and never adopts a project", async () => {
+  const f = fixture(), r = release();
+  const result = await menu(f, ["1", "v1-test", "tower.json", r.sha], { runner: r.runner });
+  expect(result.code).toBe(0);
+  expect(result.stderr).toBe("");
+  expect(result.value).toMatchObject({ status: "installed", active: r.sha });
+  expect(result.prompts).toEqual(["Choice: ", "Tag: ", "Asset: ", "SHA256 (type the trusted digest): "]);
+  expect(existsSync(f.registry)).toBe(false);
+});
+
+test("menu entries are only closed dispatch commands with exact required inputs", async () => {
+  const entries = [
+    ["2", ["v1-test", "tower.json", "a".repeat(64), "UPDATE"], "updateGlobal"],
+    ["3", [], "doctorGlobal"], ["4", ["ROLLBACK"], "rollbackGlobal"],
+    ["5", ["/explicit/project", "trusted"], "initRegisteredProject"],
+    ["6", ["/explicit/project"], "doctorRegisteredProject"],
+    ["7", ["/explicit/project", "UNINSTALL"], "uninstallRegisteredProject"],
+    ["8", ["/explicit/project", "CLEANUP"], "cleanupRegisteredProject"],
+    ["9", [], "listProjects"],
+  ];
+  for (const [choice, answers, operation] of entries) {
+    const f = fixture(), calls = [];
+    ready(f);
+    const result = await menu(f, [choice, ...answers], { operations: { [operation]: (options) => {
+      calls.push(options);
+      return operation.endsWith("Project") ? { localResult: {}, registry: { status: "recorded" } } : {};
+    } } });
+    expect(result.code).toBe(0);
+    expect(calls).toHaveLength(1);
+    expect(result.prompts).toHaveLength(1 + answers.length);
+    if (choice === "2") expect(calls[0].acquire.sha256).toBe("a".repeat(64));
+    if (["5", "6", "7", "8"].includes(choice)) expect(calls[0].projectRoot).toBe("/explicit/project");
+  }
+});
+
+test("destructive menu actions decline without any effect or acquisition", async () => {
+  for (const [choice, answers] of [["2", ["v1-test", "tower.json", "a".repeat(64)]],
+    ["4", []], ["7", ["/explicit/project"]], ["8", ["/explicit/project"]]]) {
+    for (const confirmation of ["yes", "", null]) {
+      const f = fixture(), r = release();
+      success(invoke(f, pinned("install", r), { runner: r.runner }));
+      const before = snapshot(f), calls = r.calls.length;
+      const result = await menu(f, [choice, ...answers, confirmation], { runner: r.runner });
+      expect(result.code).toBe(1);
+      expect(snapshot(f)).toEqual(before);
+      expect(r.calls).toHaveLength(calls);
+    }
+  }
+});
+
+test("exit, EOF, invalid choices and incomplete menu inputs never dispatch", async () => {
+  for (const lines of [["10"], [], ["unknown"], ["0"], ["11"], ["1"],
+    ["1", "v1-test", "tower.json", ""], ["5", "relative", "trusted"], ["5", "/explicit/project", "yes"]]) {
+    const f = fixture(), before = snapshot(f), r = release();
+    const explicitExit = lines[0] === "10";
+    const result = await menu(f, lines, { runner: r.runner });
+    expect(result.code).toBe(explicitExit ? 0 : 1);
+    expect(snapshot(f)).toEqual(before);
+    expect(r.calls).toEqual([]);
+  }
+});
+
+test("read-only missing defaults never hide foreign launchers or unsafe overrides", () => {
+  const f = fixture();
+  mkdirSync(join(f.home, ".local", "bin"), { recursive: true, mode: 0o700 });
+  writeFileSync(f.launcher, "foreign launcher", { mode: 0o755 });
+  const before = snapshot(f);
+  failed(invoke(f, ["doctor"]));
+  failed(invoke(f, ["doctor", "--state", "relative"]));
+  failed(invoke(f, ["doctor", "--state", join(f.root, "missing", "state")]));
+  expect(snapshot(f)).toEqual(before);
+});
+
+test("successful empty read-only overrides do not prepare defaults", () => {
+  const f = fixture(), before = snapshot(f);
+  success(invoke(f, ["doctor", "--state", join(f.root, "state"), "--launcher", join(f.root, "launcher")]));
+  success(invoke(f, ["list", "--registry", join(f.root, "registry")]));
+  expect(snapshot(f)).toEqual(before);
+});
+
+test("registry compensation AggregateError also prints bounded recovery errors", () => {
+  const f = fixture(), path = project(f);
+  const result = invoke(f, ["project", "init", "--project", path, "--trust", "trusted"], {
+    operations: { initRegisteredProject: (options) => initRegisteredProject({ ...options,
+      fault: (point) => { if (["before-rename", "before-temp-cleanup"].includes(point)) throw new Error(`injected ${point}`); } }) },
+  });
+  expect(result.code).toBe(1);
+  expect(result.value).toMatchObject({ localResult: { status: "installed" }, registry: { status: "failed" } });
+  const lines = result.stderr.trimEnd().split("\n");
+  expect(lines).toHaveLength(2);
+  expect(JSON.parse(lines[1]).errors).toEqual(["injected before-rename", "injected before-temp-cleanup"]);
+  expect(result.stderr).not.toContain("\n    at ");
+});
+
+test("menu confirmation accepted dispatches a real rollback", async () => {
+  const f = fixture(), first = release(), second = release("b");
+  success(invoke(f, pinned("install", first), { runner: first.runner }));
+  success(invoke(f, pinned("update", second), { runner: second.runner }));
+  const result = await menu(f, ["4", "ROLLBACK"]);
+  expect(result.code).toBe(0);
+  expect(result.value).toMatchObject({ active: first.sha, previous: second.sha });
+  expect(invoke(f, ["doctor"]).value.active).toBe(first.sha);
 });
 
 test("passive import performs no filesystem, subprocess or output I/O", () => {
