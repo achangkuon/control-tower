@@ -2056,6 +2056,82 @@ sesiones:
 
   - {id: S182, entrega: {commit: 3824b73ffa516abe15fe2d848a183b97a5edfb2f}, historico: openspec/archive/sesiones/S182.md}
 
+  - id: S183
+    zona: producto-torre
+    prioridad: torre-v1
+    resultado: "El torre-control instalado reconoce el respaldo del lanzador legacy y explica con claridad un rechazo por permisos."
+    autoridad: "Emilio aprobó el 2026-10-02 en esta Conversación preparar la Torre V1 para socios tras probarla en su máquina (Engram 12940)."
+    depende_de: [S182]
+    archivos: [product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs]
+    cimientos: []
+    recurso: []
+    encargo:
+      pedido_contexto: >-
+        Al instalar v1.0.0 en la máquina del mantenedor, la migración del lanzador
+        legacy funcionó y guardó su respaldo, pero doctor, update y rollback
+        ejecutados desde el lanzador instalado fallan con «retained launcher backup»:
+        global.mjs recalcula la ruta del repositorio legacy relativa a la copia
+        instalada (líneas 12, 103 y 118–123) y ya no coincide con el respaldo.
+        Además, con umask 002 la instalación falla con «unsafe default directory
+        ownership or permissions», sin decir qué hacer.
+      resultado_comportamiento: >-
+        doctor, update y rollback funcionan igual desde el lanzador instalado que
+        desde el repositorio cuando existe un respaldo legacy retenido, y rollback
+        restaura exactamente el lanzador original. El respaldo se valida contra su
+        propia evidencia guardada, sin aceptar bytes alterados. Un rechazo por
+        permisos nombra la carpeta afectada y la corrección (permisos 755 o umask
+        022) sin relajar la comprobación.
+      restricciones_decisiones: >-
+        Sólo los cuatro archivos declarados. No relaja ninguna validación de
+        seguridad ni migra lanzadores desconocidos. Prueba de regresión que
+        reproduce la instalación desde un checkout y la operación posterior desde la
+        copia instalada, en HOME aislado. Pronóstico de 120–250 líneas authored; el
+        tamaño sigue la guía nativa de Gentle AI y no es una restricción de esta
+        Sesión. Requiere una nueva release para llegar a quien ya instaló.
+      referencias: >-
+        product/tower/v1/global.mjs líneas 12, 97–123; product/tower/v1/cli.mjs
+        líneas 55–68; evidencia de la instalación real del 2026-10-02 en
+        odd/tasks/tower-v1-final-four-sessions.md.
+
+  - id: S184
+    zona: producto-torre
+    prioridad: torre-v1
+    resultado: "Un socio con acceso al repo instala torre-control con un solo comando gh, en Linux y Mac, sin clonar el repositorio."
+    autoridad: "Emilio eligió el 2026-10-02 en esta Conversación un instalador de un solo comando con gh, privado, para socios que ya tienen acceso al repositorio, y confirmó que hay una Mac disponible para probarlo."
+    depende_de: [S183]
+    archivos: [product/tower/v1/install.mjs, product/tower/v1/test/install.test.mjs, product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs, README.md]
+    cimientos: [README.md]
+    recurso: []
+    encargo:
+      pedido_contexto: >-
+        Hoy la primera instalación exige clonar el repositorio privado y correr un
+        comando largo con Bun. El mantenedor quiere compartir la Torre con socios
+        que ya tienen acceso al repo, con una experiencia de un solo comando como
+        Gentle AI, en Linux y Mac. Sólo está probada en Linux (WSL).
+      resultado_comportamiento: >-
+        Un único comando pegable, con gh autenticado, tag fijo y el SHA-256 que el
+        mantenedor comunica por un segundo canal, descarga desde el Release privado
+        lo necesario, verifica el SHA-256 antes de ejecutar cualquier byte
+        descargado e instala el motor global sin clonar el repositorio. Funciona en
+        Linux y macOS, comprueba requisitos (gh, Bun, Git, Go) y dice cuál falta. El
+        README suma una guía para socios: requisitos, el comando, cómo adoptar un
+        proyecto y abrirlo en Claude Code y Pi, y cómo deshacer. Una prueba guiada
+        en una Mac real queda registrada con su resultado; hasta pasarla, el README
+        declara macOS como no probado.
+      restricciones_decisiones: >-
+        Se mantiene la decisión de S174: gh autenticado, tag exacto, sin latest,
+        sin descargas sin verificar y sin atajos tipo install.sh fuera de esa
+        verificación; el instalador de un comando es el mismo camino seguro, no un
+        fallback. Release privado; no se publica en Homebrew. Sólo los archivos
+        declarados y README.md como Cimiento. Pruebas aisladas sin red real.
+        Pronóstico de 250–450 líneas authored; el tamaño sigue la guía nativa de
+        Gentle AI y no es una restricción de esta Sesión. Publicar la nueva release
+        es una decisión humana aparte.
+      referencias: >-
+        product/tower/v1/release.mjs, bootstrap.mjs, cli.mjs y release-build.mjs;
+        instalación de Gentle AI vía Homebrew como referencia de experiencia;
+        hallazgos de la prueba real del 2026-10-02 (Engram 12940).
+
   - id: S175
     prioridad: resolucion-problemas-generales
     zona: cimientos

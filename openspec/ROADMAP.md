@@ -3,15 +3,15 @@
 
 ## 📍 Punto de retoma
 - Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S167, S172, S173, S174, S182, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
-- Prioridad activa: Resolución de problemas · Generales.
-- Próximo trabajo ejecutable: cimientos #1 → S175 — Resolver Radar fuera del checkout antes del push..
+- Prioridad activa: Torre V1 · Adopción project-local reversible.
+- Próximo trabajo ejecutable: Producto Torre #1 → S183 — El torre-control instalado reconoce el respaldo del lanzador legacy y explica con claridad un rechazo por permisos..
 - Decisión pendiente: S12.2 — ¿Cómo avanza la revisión de un artefacto fijado por digest?.
 
 ## Estado y próximo trabajo
-- cimientos #1 → S175 — Resolver Radar fuera del checkout antes del push.
+- Producto Torre #1 → S183 — El torre-control instalado reconoce el respaldo del lanzador legacy y explica con claridad un rechazo por permisos.
 
 ## Avance
-- **Total:** 90% (109/121 S)
+- **Total:** 88% (109/123 S)
 - 4 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
@@ -25,7 +25,7 @@
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
 - **Método:** 95% (39/41 S)
-- **Producto Torre:** 100% (7/7 S)
+- **Producto Torre:** 77% (7/9 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -41,8 +41,7 @@
 - Sin Sesiones abiertas.
 
 ### cimientos (cimientos)
-1. **S175** · 🟢 LISTO · prioridad Resolución de problemas · Generales · Resolver Radar fuera del checkout antes del push.
-2. **S177** · 📋 PLANIFICADO · espera-natural (S175) · prioridad Resolución de problemas · Generales · Distinguir diseño histórico y autoridad vigente en el ROADMAP raíz.
+1. **S177** · 📋 PLANIFICADO · espera-atascada (S175) · prioridad Resolución de problemas · Generales · Distinguir diseño histórico y autoridad vigente en el ROADMAP raíz.
 
 ### Contratos (contratos)
 - Sin Sesiones abiertas.
@@ -63,10 +62,11 @@
 - Sin Sesiones abiertas.
 
 ### Método (metodo)
-1. **S176** · 📋 PLANIFICADO · espera-natural (S175) · prioridad Resolución de problemas · Generales · Invalidar el verde anterior cuando una nueva suite no produce resumen.
+1. **S176** · 📋 PLANIFICADO · espera-atascada (S175) · prioridad Resolución de problemas · Generales · Invalidar el verde anterior cuando una nueva suite no produce resumen.
 
 ### Producto Torre (producto-torre)
-- Sin Sesiones abiertas.
+1. **S183** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · El torre-control instalado reconoce el respaldo del lanzador legacy y explica con claridad un rechazo por permisos.
+2. **S184** · 📋 PLANIFICADO · espera-natural (S183) · prioridad Torre V1 · Adopción project-local reversible · Un socio con acceso al repo instala torre-control con un solo comando gh, en Linux y Mac, sin clonar el repositorio.
 
 ## Bloqueos
 - **S178:** Encargo incompleto: falta planificar · falta-planificar (S178)
@@ -1024,9 +1024,37 @@
   - Restricciones y decisiones: Sólo los dos archivos declarados; no modifica release.mjs, bootstrap.mjs, global.mjs ni cli.mjs, y el empaquetador no forma parte del asset. No publica ni crea tags: publicar el Release y comunicar el SHA-256 por un segundo canal son acciones humanas separadas. Pruebas aisladas con repositorios desechables y prueba de ida y vuelta contra bootstrapVerifiedRelease con un runner simulado, sin red. Pronóstico de 150–280 líneas authored; el tamaño sigue la guía nativa de Gentle AI y no es una restricción de esta Sesión.
   - Referencias: product/tower/v1/bootstrap.mjs (RELEASE&#95;SCHEMA, RELEASE&#95;PATHS, límites y validación), product/tower/v1/bundle.mjs (BUNDLE&#95;MEMBERS), product/tower/v1/release.mjs y los fixtures de product/tower/v1/test/bootstrap.test.mjs y global.test.mjs. Ninguna referencia amplía archivos.
 
-### S175 — Resolver Radar fuera del checkout antes del push.
+### S183 — El torre-control instalado reconoce el respaldo del lanzador legacy y explica con claridad un rechazo por permisos.
 - Coordinación:
   - Estado derivado: 🟢 LISTO
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs
+  - Depende de: S182
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Al instalar v1.0.0 en la máquina del mantenedor, la migración del lanzador legacy funcionó y guardó su respaldo, pero doctor, update y rollback ejecutados desde el lanzador instalado fallan con «retained launcher backup»: global.mjs recalcula la ruta del repositorio legacy relativa a la copia instalada (líneas 12, 103 y 118–123) y ya no coincide con el respaldo. Además, con umask 002 la instalación falla con «unsafe default directory ownership or permissions», sin decir qué hacer.
+  - Resultado y comportamiento: doctor, update y rollback funcionan igual desde el lanzador instalado que desde el repositorio cuando existe un respaldo legacy retenido, y rollback restaura exactamente el lanzador original. El respaldo se valida contra su propia evidencia guardada, sin aceptar bytes alterados. Un rechazo por permisos nombra la carpeta afectada y la corrección (permisos 755 o umask 022) sin relajar la comprobación.
+  - Restricciones y decisiones: Sólo los cuatro archivos declarados. No relaja ninguna validación de seguridad ni migra lanzadores desconocidos. Prueba de regresión que reproduce la instalación desde un checkout y la operación posterior desde la copia instalada, en HOME aislado. Pronóstico de 120–250 líneas authored; el tamaño sigue la guía nativa de Gentle AI y no es una restricción de esta Sesión. Requiere una nueva release para llegar a quien ya instaló.
+  - Referencias: product/tower/v1/global.mjs líneas 12, 97–123; product/tower/v1/cli.mjs líneas 55–68; evidencia de la instalación real del 2026-10-02 en odd/tasks/tower-v1-final-four-sessions.md.
+
+### S184 — Un socio con acceso al repo instala torre-control con un solo comando gh, en Linux y Mac, sin clonar el repositorio.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S183)
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/install.mjs, product/tower/v1/test/install.test.mjs, product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs, README.md
+  - Depende de: S183
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Hoy la primera instalación exige clonar el repositorio privado y correr un comando largo con Bun. El mantenedor quiere compartir la Torre con socios que ya tienen acceso al repo, con una experiencia de un solo comando como Gentle AI, en Linux y Mac. Sólo está probada en Linux (WSL).
+  - Resultado y comportamiento: Un único comando pegable, con gh autenticado, tag fijo y el SHA-256 que el mantenedor comunica por un segundo canal, descarga desde el Release privado lo necesario, verifica el SHA-256 antes de ejecutar cualquier byte descargado e instala el motor global sin clonar el repositorio. Funciona en Linux y macOS, comprueba requisitos (gh, Bun, Git, Go) y dice cuál falta. El README suma una guía para socios: requisitos, el comando, cómo adoptar un proyecto y abrirlo en Claude Code y Pi, y cómo deshacer. Una prueba guiada en una Mac real queda registrada con su resultado; hasta pasarla, el README declara macOS como no probado.
+  - Restricciones y decisiones: Se mantiene la decisión de S174: gh autenticado, tag exacto, sin latest, sin descargas sin verificar y sin atajos tipo install.sh fuera de esa verificación; el instalador de un comando es el mismo camino seguro, no un fallback. Release privado; no se publica en Homebrew. Sólo los archivos declarados y README.md como Cimiento. Pruebas aisladas sin red real. Pronóstico de 250–450 líneas authored; el tamaño sigue la guía nativa de Gentle AI y no es una restricción de esta Sesión. Publicar la nueva release es una decisión humana aparte.
+  - Referencias: product/tower/v1/release.mjs, bootstrap.mjs, cli.mjs y release-build.mjs; instalación de Gentle AI vía Homebrew como referencia de experiencia; hallazgos de la prueba real del 2026-10-02 (Engram 12940).
+
+### S175 — Resolver Radar fuera del checkout antes del push.
+- Coordinación:
+  - Estado derivado: 🟡 DIFERIDO
   - Zona/Área: cimientos · —
   - Archivos autorizados: .githooks/pre-push, test/pre-push-plan-gate.test.mjs
   - Depende de: S150
@@ -1040,7 +1068,7 @@
 
 ### S176 — Invalidar el verde anterior cuando una nueva suite no produce resumen.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-natural (S175)
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S175)
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/radiografia/cli.mjs, agent-workflows/test/cli.test.mjs
   - Depende de: S175
@@ -1054,7 +1082,7 @@
 
 ### S177 — Distinguir diseño histórico y autoridad vigente en el ROADMAP raíz.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-natural (S175)
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S175)
   - Zona/Área: cimientos · —
   - Archivos autorizados: ROADMAP.md
   - Depende de: S176
@@ -3837,7 +3865,7 @@ Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workfl
   - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
 
 ## Capacidad
-1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: cimientos.
+1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: producto-torre.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
