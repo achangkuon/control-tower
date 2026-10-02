@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { lstatSync, mkdirSync } from "node:fs";
+import { chmodSync, lstatSync, mkdirSync } from "node:fs";
 import { createInterface } from "node:readline";
 import { dirname, isAbsolute, join, parse, resolve, sep } from "node:path";
 import { installGlobal, updateGlobal, doctorGlobal, rollbackGlobal } from "./global.mjs";
@@ -58,13 +58,21 @@ function defaultParent(home, target, create = true) {
     catch (error) { if (error.code !== "ENOENT") throw error; }
     if (!entry && !create && current.startsWith(home + sep)) return false;
     if (!entry && current.startsWith(home + sep)) {
-      mkdirSync(current, { mode: 0o700 });
+      mkdirSync(current, { mode: 0o755 });
+      // Normalize only directories we just created; umask must not choose their final mode.
+      chmodSync(current, 0o755);
       entry = lstatSync(current);
     }
     if (!entry?.isDirectory() || entry.isSymbolicLink()) throw new Error("unsafe default directory or ancestor");
-    if ((current === home || current.startsWith(home + sep)) &&
-        ((process.getuid && entry.uid !== process.getuid()) || entry.mode & 0o022)) {
-      throw new Error("unsafe default directory ownership or permissions");
+    if (current === home || current.startsWith(home + sep)) {
+      if (process.getuid && entry.uid !== process.getuid()) {
+        throw new Error(`default directory ${current} is owned by another user`);
+      }
+      if (entry.mode & 0o022) {
+        const fixPath = /^[A-Za-z0-9_./-]+$/.test(current) ? current : `'${current.replaceAll("'", "'\\''")}'`;
+        throw new Error(`default directory ${current} is group- or world-writable ` +
+          `(mode ${(entry.mode & 0o7777).toString(8)}); run: chmod 755 ${fixPath} (or set umask 022 before installing)`);
+      }
     }
   }
   return true;

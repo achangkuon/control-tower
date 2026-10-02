@@ -115,13 +115,19 @@ function original(record, options) {
   if (!record.bytes.equals(legacy(options))) fail("unknown launcher");
   return { kind: "legacy", mode: record.mode, bytes: record.bytes.toString("base64"), sha256: hash(record.bytes) };
 }
-function originalRecord(value, options) {
+function originalRecord(value) {
   if (keys(value, "kind") && value.kind === "absent") return null;
-  const expected = legacy(options);
   if (!keys(value, "kind,mode,bytes,sha256") || value.kind !== "legacy" ||
       !Number.isInteger(value.mode) || value.mode < 0 || value.mode > 0o7777 ||
-      value.bytes !== expected.toString("base64") || value.sha256 !== hash(expected)) fail("retained launcher backup");
-  return { mode: value.mode, bytes: expected };
+      typeof value.bytes !== "string") fail("retained launcher backup");
+  const bytes = Buffer.from(value.bytes, "base64");
+  if (value.bytes !== bytes.toString("base64") || value.sha256 !== hash(bytes)) fail("retained launcher backup");
+  // Retained v1.0.0 evidence belongs to the original checkout, not this module's location.
+  // Extract only an inert canonical path, then require the entire exact three-line shape.
+  const match = /\nexec "([^"`$\r\n]+)\/tools\/setup\.sh" "\$@"\n$/.exec(bytes.toString("utf8"));
+  if (!match || !canonical(match[1]) ||
+      !bytes.equals(legacy({ knownLegacyRepository: match[1] }))) fail("retained launcher backup");
+  return { mode: value.mode, bytes };
 }
 
 // The stable launcher reads exactly one state record. It never evaluates state-derived code
@@ -207,7 +213,7 @@ function validateVersion(path, id) {
   }
   return provenance;
 }
-function inspect(options, transaction = null) {
+function inspect(options, transaction = null, restoredOriginal) {
   const { stateRoot, launcherPath } = options;
   for (const path of [join(stateRoot, ".lock"), join(stateRoot, ".transaction"), launcherPath + ".tower-v1-lock"]) {
     if (stat(path)) {
@@ -241,8 +247,11 @@ function inspect(options, transaction = null) {
         !versions.has(state.active) || state.previous !== null && !versions.has(state.previous)) fail("state or pointer drift");
     const expectedProvenance = [...versions.values()].sort((a, b) => a.sha256.localeCompare(b.sha256));
     if (!Array.isArray(state.provenance) || !encode(state.provenance).equals(encode(expectedProvenance))) fail("activated provenance drift");
-    originalRecord(state.original, options);
+    originalRecord(state.original);
     if (!launcherRecord || launcherRecord.mode !== 0o755 || !launcherRecord.bytes.equals(launcher(options))) fail("active launcher drift");
+  } else if (restoredOriginal !== undefined) {
+    // Rollback readback must use the same retained evidence as restoration, not install-time discovery.
+    if (!equalRecord(launcherRecord, originalRecord(restoredOriginal))) fail("restored launcher drift");
   } else original(launcherRecord, options);
   return { state, stateRecord, launcherRecord, versions, rootStat };
 }
@@ -391,7 +400,7 @@ function mutate(options, operation, release = null) {
     if (next === null) {
       // First rollback: restore/remove command first, then retire state; compensate in reverse.
       t.notify("launcher");
-      const restored = originalRecord(before.state.original, options);
+      const restored = originalRecord(before.state.original);
       afterLauncher = replace(options.launcherPath, restored?.bytes ?? null, restored?.mode ?? 0o755,
         afterLauncher, t.temporaryLauncher);
       afterState = replace(statePath, null, 0o600, afterState, join(t.transactionPath, "state.next"));
@@ -407,7 +416,7 @@ function mutate(options, operation, release = null) {
       }
     }
     t.notify("readback");
-    inspect(options, t);
+    inspect(options, t, operation === "rollback" && next === null ? before.state.original : undefined);
     t.notify("finish");
     // Keep published versions, but release only artifacts whose ownership still matches.
     const retained = new Set([options.stateRoot, store]);

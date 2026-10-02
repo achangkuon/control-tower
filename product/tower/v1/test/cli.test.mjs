@@ -1,7 +1,7 @@
-import { expect, test as bunTest } from "bun:test";
+import { expect, spyOn, test as bunTest } from "bun:test";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync,
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, statSync,
   rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { main } from "../cli.mjs";
@@ -87,7 +87,7 @@ const pinned = (command, r) => [command, "--tag", "v1-test", "--asset", "tower.j
 function project(f) {
   const path = join(f.root, "project");
   mkdirSync(path);
-  expect(spawnSync("git", ["init", "--quiet", path], { env: f.env }).status).toBe(0);
+  expect(spawnSync("git", ["init", "--quiet", path], { env: f.env, timeout: 10_000 }).status).toBe(0);
   writeFileSync(join(path, "sentinel"), "unrelated");
   return path;
 }
@@ -194,6 +194,51 @@ test("default directory preparation never follows a symlink", () => {
   expect(readdirSync(external)).toEqual([]);
 });
 
+test("writable default directories name the path, mode and fix without changing permissions", () => {
+  for (const mode of [0o775, 0o757]) {
+    const f = fixture(), r = release(), path = join(f.home, ".local");
+    mkdirSync(path);
+    chmodSync(path, mode);
+    const before = snapshot(f);
+    for (const argv of [pinned("install", r), ["doctor"], ["list"]]) {
+      const result = invoke(f, argv, { runner: r.runner });
+      failed(result);
+      expect(result.stderr).toBe(`Invalid Tower CLI: default directory ${path} is group- or world-writable ` +
+        `(mode ${mode.toString(8)}); run: chmod 755 ${path} (or set umask 022 before installing)\n`);
+      expect(snapshot(f)).toEqual(before);
+    }
+    expect(r.calls).toEqual([]);
+  }
+});
+
+test("default directory ownership mismatch identifies the directory and another user", () => {
+  const f = fixture(), before = snapshot(f), uid = process.getuid();
+  const owner = spyOn(process, "getuid").mockReturnValue(uid + 1);
+  try {
+    const result = invoke(f, ["list"]);
+    failed(result);
+    expect(result.stderr).toBe(`Invalid Tower CLI: default directory ${f.home} is owned by another user\n`);
+  } finally { owner.mockRestore(); }
+  expect(snapshot(f)).toEqual(before);
+});
+
+test("created default parents are 755 under umask 002 and 077; existing directories retain their modes", () => {
+  for (const mask of [0o002, 0o077]) {
+    const f = fixture(), r = release(), existing = join(f.home, ".local");
+    mkdirSync(existing, { mode: 0o700 });
+    chmodSync(existing, 0o700);
+    const previous = process.umask(mask);
+    try { success(invoke(f, pinned("install", r), { runner: r.runner })); }
+    finally { process.umask(previous); }
+    expect(statSync(f.home).mode & 0o777).toBe(0o700);
+    expect(statSync(existing).mode & 0o777).toBe(0o700);
+    for (const path of [join(existing, "share"), f.share, join(existing, "bin")]) {
+      expect(statSync(path).mode & 0o777).toBe(0o755);
+    }
+    success(invoke(f, ["doctor"]));
+  }
+});
+
 test("registered init, doctor, list and uninstall preserve local results and reconcile live state", () => {
   const f = fixture(), path = project(f);
   const local = (op) => ["project", op, "--project", path];
@@ -283,10 +328,10 @@ for (const error of [new TypeError("type\r\nstack"), new Error("x".repeat(2000))
 
 test("real entrypoint: usage failure and empty list use only isolated environment", () => {
   const f = fixture();
-  const usage = spawnSync(process.execPath, [entry], { env: f.env, encoding: "utf8" });
+  const usage = spawnSync(process.execPath, [entry], { env: f.env, encoding: "utf8", timeout: 10_000 });
   failed({ code: usage.status, stdout: usage.stdout, stderr: usage.stderr });
   expect(readdirSync(f.home)).toEqual([]);
-  const listed = spawnSync(process.execPath, [entry, "list"], { env: f.env, encoding: "utf8" });
+  const listed = spawnSync(process.execPath, [entry, "list"], { env: f.env, encoding: "utf8", timeout: 10_000 });
   expect(listed.status).toBe(0);
   expect(listed.stdout).toBe("[]\n");
   expect(listed.stderr).toBe("");
@@ -519,7 +564,7 @@ test("passive import performs no filesystem, subprocess or output I/O", () => {
     spies.push(spyOn(cp,'spawnSync'),spyOn(process.stdout,'write'),spyOn(process.stderr,'write'));
     await import(${JSON.stringify(entry)});
     if (spies.some(s => s.mock.calls.length)) process.exitCode = 9;`;
-  const result = spawnSync(process.execPath, ["--eval", script], { env: f.env, encoding: "utf8" });
+  const result = spawnSync(process.execPath, ["--eval", script], { env: f.env, encoding: "utf8", timeout: 10_000 });
   expect(result.status).toBe(0);
   expect(result.stdout).toBe("");
   expect(result.stderr).toBe("");

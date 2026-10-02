@@ -334,3 +334,18 @@ Maintainer decision: the ordinary-question check uses a real model through an op
 - Real install on the maintainer machine (2026-10-02, Engram 12940): v1.0.0 installed from the checkout with `umask 022`; the exact legacy launcher was migrated with a retained backup (extra copy in `~/.local/state/torre-v1-install-proof/`); a hash snapshot of global skills, agent instructions and the legacy engine store was identical before and after. Demo project `~/projects/torre-demo` adopted and healthy.
 - Found: installed-launcher `doctor`/`update`/`rollback` reject the retained legacy backup (path recomputed relative to the installed copy); umask 002 yields an unclear permissions error; partners need a one-command install; macOS untested.
 - Maintainer decisions: private one-command install through authenticated `gh` (partners already have repository access), a Mac is available for a guided test, and partner readiness goes before the general problem-resolution priority. Planned S183 (installed-launcher legacy backup + permissions message) and S184 (one-command gh install, partner guide, Mac test) under priority `torre-v1`.
+
+## S183 / S184 / v1.0.1 execution
+
+Maintainer approved on 2026-10-02 executing S183, S184 and the v1.0.1 release in order, delivering each only after approved review and a green full suite, stopping on any failure or open decision.
+
+- [ ] S183 — Installed launcher accepts the retained legacy backup; clear permissions error.
+- [ ] S184 — One-command gh install, partner guide, macOS status.
+- [ ] v1.0.1 — Build from the final commit, publish privately, verify end to end, update this machine.
+
+### S183 evidence
+
+- Writer +165/-22 across the four files. RED 103 pass / 5 fail; GREEN 108 pass; proxy-first PATH run 108 pass; V1 suite 255 pass; whitespace clean.
+- Retained legacy backups are validated against their own stored evidence (canonical base64, SHA-256, integer mode, exact three-line generated shape with a safe absolute canonical path); install-time migration still requires the exact known legacy launcher; v1.0.0 state schema unchanged. Permission errors name the directory, its mode and the `chmod 755` / `umask 022` remedy, or the other owner; only directories the CLI creates are normalized to 0755.
+- Read-only check against the maintainer's real v1.0.0 state with the new code: `doctorGlobal` healthy both with an installed-copy repository path (previously failing) and the checkout path; installation bytes unchanged.
+- Native review `review-5fd7cc7828f97bfe`: medium/reliability, 195 lines, approved without findings and acknowledged.
