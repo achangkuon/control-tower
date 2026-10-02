@@ -2054,6 +2054,47 @@ sesiones:
 
   - {id: S173, entrega: {commit: 4dcf7dd9badc52392f2a925e54fa60c7d49c0ff5}, historico: openspec/archive/sesiones/S173.md}
 
+  - id: S182
+    zona: producto-torre
+    prioridad: torre-v1
+    resultado: "Construir de forma reproducible el asset del Release V1 de torre-control y su SHA-256, sin publicarlo."
+    autoridad: "Emilio decidió en esta Conversación (2026-10-02, Engram 12872) crear una Sesión nueva para el empaquetador del Release V1: sólo construir y calcular el SHA-256, sin publicar."
+    depende_de: [S174]
+    archivos: [product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs]
+    cimientos: []
+    recurso: []
+    encargo:
+      pedido_contexto: >-
+        S174 entregó la adquisición y verificación del asset del Release privado
+        (sobre JSON tower.v1.release/1 con miembros base64 de rutas canónicas),
+        pero ningún código del repositorio construye ese asset ni calcula su
+        SHA-256; hoy sólo existe en fixtures de prueba. Sin él no hay Release V1
+        instalable.
+      resultado_comportamiento: >-
+        Un comando local construye el asset desde el árbol de un commit exacto y
+        limpio (nunca desde archivos sin commitear), con exactamente los miembros
+        que bootstrap.mjs admite, en orden y codificación deterministas: el mismo
+        commit produce los mismos bytes y el mismo SHA-256. Antes de escribir,
+        valida el resultado con la misma verificación de bootstrap.mjs. Escribe el
+        asset en una ruta explícita fuera del árbol del repositorio e imprime una
+        línea JSON con commit, nombre del asset, bytes y SHA-256. Falla cerrado
+        ante árbol sucio, miembro ausente, extra o fuera de límites.
+      restricciones_decisiones: >-
+        Sólo los dos archivos declarados; no modifica release.mjs, bootstrap.mjs,
+        global.mjs ni cli.mjs, y el empaquetador no forma parte del asset. No
+        publica ni crea tags: publicar el Release y comunicar el SHA-256 por un
+        segundo canal son acciones humanas separadas. Pruebas aisladas con
+        repositorios desechables y prueba de ida y vuelta contra
+        bootstrapVerifiedRelease con un runner simulado, sin red. Pronóstico de
+        150–280 líneas authored; el tamaño sigue la guía nativa de Gentle AI y no
+        es una restricción de esta Sesión.
+      referencias: >-
+        product/tower/v1/bootstrap.mjs (RELEASE_SCHEMA, RELEASE_PATHS, límites y
+        validación), product/tower/v1/bundle.mjs (BUNDLE_MEMBERS),
+        product/tower/v1/release.mjs y los fixtures de
+        product/tower/v1/test/bootstrap.test.mjs y global.test.mjs. Ninguna
+        referencia amplía archivos.
+
   - id: S175
     prioridad: resolucion-problemas-generales
     zona: cimientos

@@ -243,7 +243,7 @@ The maintainer asked on 2026-10-02 to finish the remaining Tower V1 work in orde
 Maintainer decisions recorded before writes (Engram 12872):
 
 - `torre-control` defaults: launcher `~/.local/bin/torre-control` (only the exact known generated legacy launcher is migrated), global state `~/.local/share/torre-control/v1`, project registry under that state, release repository `achangkuon/control-tower`. Explicit flags may override; no cwd inference.
-- No repository code builds or hashes the V1 release envelope. It becomes a new small Session S175 (build only, no publish), planned separately before the release. S174 files do not grow for it.
+- No repository code builds or hashes the V1 release envelope. It becomes a new small Session (build only, no publish; final ID S182 because S175 was already taken), planned separately before the release. S174 files do not grow for it.
 
 Unit 5 scope: only `product/tower/v1/cli.mjs` and `product/tower/v1/test/cli.test.mjs`. Closed scriptable commands for global install/update/doctor/rollback, explicit-root project init/doctor/uninstall/cleanup and list; fail-closed errors, including registry failure after local success. Mapping forecast 380–470 authored lines; the per-unit size is a Gentle AI reference, not a Session cap (decision A4). No menu, real installation, download or HOME mutation in tests.
 
@@ -303,3 +303,10 @@ Maintainer decision: the ordinary-question check uses a real model through an op
 ### S150 closure
 
 - README.md rewritten (320 lines, neutral Spanish) from delivered sources only, with a per-claim source checklist; states no release is published yet, SHA-256 must come from a second channel, first install runs from a repository checkout, and the behavioral check is not measured. Native review `review-03f865f38e91cd20`: low risk (non-executable), approved and acknowledged. Push hook 0 failures. `entrega.commit: 59dc20826ff2ef2ee522406e50e8f3ce434cb5a2` recorded and S150 archived; Tower V1 Sessions complete. Next: plan S175 (release envelope builder) before the release.
+
+## S182 release builder
+
+- Plan ID correction: S175 already identifies an unrelated planned Session, so the builder took the next free permanent ID, S182. Maintainer approved the S182 plan entry on 2026-10-02 (Radar check 0 errors / 63 warnings; S182 LISTO).
+- Authorized files: `product/tower/v1/release-build.mjs`, `product/tower/v1/test/release-build.test.mjs`. Build only from an exact clean commit, deterministic bytes and SHA-256, self-validation through bootstrap verification, output outside the repository, no publish/tag.
+
+- [ ] R1 — Implement, verify and review the deterministic release builder.
