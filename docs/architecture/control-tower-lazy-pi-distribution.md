@@ -167,8 +167,13 @@ El instalador:
 1. escribe las skills siempre en `~/.agents/skills`;
 2. las replica en raíces globales de Claude, OpenCode y Codex cuando existen;
 3. actualiza instrucciones globales, incluido `~/.pi/agent/APPEND_SYSTEM.md`;
-4. genera `~/.pi/agent/extensions/chanks-controls.ts`;
-5. inserta imports absolutos hacia el checkout actual.
+4. generaba `~/.pi/agent/extensions/chanks-controls.ts` en el snapshot de autoría;
+5. insertaba en ese archivo imports absolutos hacia el checkout actual.
+
+> **Corrección (2026-10-01):** los pasos 4 y 5 ya no ocurren. Por la decisión B4 de
+> `docs/architecture/definiciones-v1-v2-v3.md`, el instalador dejó de generar
+> `chanks-controls.ts` (el candado de escritura pasa a V2) y archiva de forma reversible la
+> copia instalada bajo `~/.pi/agent/.retired-controls/`. La fuente se conserva en el repositorio.
 
 `agent-workflows/tools/setup.sh` prepara los archivos globales y delega al instalador. El `install.sh` legacy también lo invoca.
 
@@ -447,7 +452,7 @@ La comparación debe separar hechos, interpretación y decisión.
 - Pi anuncia metadatos de todas las skills descubiertas.
 - El instalador actual copia 28 skills Control Tower a superficies globales.
 - `APPEND_SYSTEM.md` agrega contexto global sustancial.
-- `chanks-controls.ts` se genera globalmente con imports absolutos.
+- `chanks-controls.ts` se generaba globalmente con imports absolutos; desde el 2026-10-01 el instalador ya no lo genera (decisión B4).
 - existen hooks con trabajo real en startup o eventos.
 - `.pi/settings.json` está vacío intencionalmente.
 - existe un Pi package parcial en `extensions/pi/package.json`.
