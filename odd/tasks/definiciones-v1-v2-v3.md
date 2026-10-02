@@ -93,6 +93,11 @@ Out of scope: groups C and D, any live installation or agent restart, push to Gi
 - Closing verification: `go test ./...` in `agent-workflows/tools/radar`: ok. `git diff --stat master -- agent-workflows/tools/radar agent-workflows/skills/chanks-3-session-kickoff`: empty. `python3 -m unittest discover -s agent-workflows/tests`: 440 tests, 1 failure (known `test_personal_pi_composition`), 1 skipped. `bun test`: not run, `node_modules` is absent.
 - Outside the allowed surfaces, not edited: `agent-workflows/EJECUCION-EN-PARALELO.md` and `agent-workflows/MIGRACION-ZONAS.md` still mention the kickoff in historical migration notes; `product/tower/generic/**` is the frozen snapshot.
 
+- Native review: the maintainer declined both candidates (`sha256:11cb4298…` and `sha256:8bc3ba18…`, tier high, `process_boundary` in `install.py`). Two independent read-only verifiers passed with findings; the S150 wording finding was fixed in `5928a1f`. This change is not review-approved.
+- 2026-10-01, maintainer authorized integration, installation and push. Fast-forwarded `master` to `7793a1f`. `install.py`: applied; `install.py --check`: OK. Hermes stage with the Hermes interpreter: 1 change applied, recheck 0. Snapshot stage: 1 change applied, recheck 0; `manual-blocks.py check`: OK for all five runtimes.
+- Installed state read back: the five personal files carry the documentation-close, plan-naming and plain-explanation blocks and no longer name the formal start; `chanks-controls.ts` and `torre-firma.sh` sit under `.retired-controls/`; `chanks-3-session-kickoff` is not installed; `chanks-etapa.sh` stays registered.
+- Not verified: a fresh conversation in each runtime, and `bun test` outside the pre-push hook.
+
 ## Next step
 
-Maintainer authorization to install: `python3 agent-workflows/tools/install.py`, then `--check`, and the Hermes stage with its explicit interpreter. Until then Pi keeps its old plan-naming wording and the snapshot stage refuses it as stale.
+Group D of the decision record: update the Windows and Gemini copies, update or archive the old documents, and regenerate the skill registries.
