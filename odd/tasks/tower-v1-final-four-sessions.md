@@ -339,7 +339,7 @@ Maintainer decision: the ordinary-question check uses a real model through an op
 
 Maintainer approved on 2026-10-02 executing S183, S184 and the v1.0.1 release in order, delivering each only after approved review and a green full suite, stopping on any failure or open decision.
 
-- [ ] S183 — Installed launcher accepts the retained legacy backup; clear permissions error.
+- [x] S183 — Installed launcher accepts the retained legacy backup; clear permissions error. DONE: `c9c31a5`, push hook 1,805 pass / 0 fail, archived.
 - [ ] S184 — One-command gh install, partner guide, macOS status.
 - [ ] v1.0.1 — Build from the final commit, publish privately, verify end to end, update this machine.
 
