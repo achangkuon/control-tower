@@ -1,6 +1,5 @@
 #!/usr/bin/env bun
 import { chmodSync, lstatSync, mkdirSync } from "node:fs";
-import { createInterface } from "node:readline";
 import { dirname, isAbsolute, join, parse, resolve, sep } from "node:path";
 import { installGlobal, updateGlobal, doctorGlobal, rollbackGlobal } from "./global.mjs";
 import { initRegisteredProject, doctorRegisteredProject, uninstallRegisteredProject,
@@ -114,28 +113,145 @@ function reportError(stderr, error, prefix = "") {
   }
 }
 
+const cancelled = Symbol("menu cancelled");
+const restoreScreen = "\x1b[?25h\x1b[?1049l";
+
+// One byte queue spans selection and prompts, including CR LF split across data events.
+function menuInput(stdin, stdout) {
+  let queue = [], wake, ended = false, error, skipLF = false, raw = false, screen = false, closed = false;
+  const notify = () => { wake?.(); };
+  const data = (chunk) => {
+    for (const char of String(chunk)) {
+      if (skipLF && char === "\n") { skipLF = false; continue; }
+      skipLF = char === "\r";
+      queue.push(char === "\r" ? "\n" : char);
+    }
+    if (queue.length > 65536) { error = new Error("menu input too large; aborted"); queue = []; }
+    if (queue.length || error) notify();
+  };
+  const end = () => { ended = true; notify(); };
+  const failed = (cause) => { error = cause; notify(); };
+  const restore = () => {
+    // Independent best-effort restoration: a failed tty call must not hide the cursor.
+    if (raw) { raw = false; try { stdin.setRawMode(false); } catch {} }
+    if (screen) { screen = false; try { stdout.write(restoreScreen); } catch {} }
+  };
+  const stop = () => { restore(); error = cancelled; queue = []; notify(); };
+  stdin.setEncoding("utf8");
+  stdin.on("data", data).on("end", end).on("error", failed);
+  process.on("SIGINT", stop);
+  process.on("exit", stop);
+  const next = async (timeout) => {
+    if (!queue.length && !ended && !error) await new Promise((resolve) => {
+      let timer;
+      wake = () => { clearTimeout(timer); wake = undefined; resolve(); };
+      if (timeout !== undefined) timer = setTimeout(wake, timeout);
+    });
+    if (error) throw error;
+    return queue.shift() ?? null;
+  };
+  return {
+    next, restore,
+    raw: () => {
+      if (typeof stdin.setRawMode !== "function") return false;
+      raw = true;
+      try { stdin.setRawMode(true); return true; }
+      catch { restore(); return false; }
+    },
+    screen: () => { screen = true; stdout.write("\x1b[?1049h\x1b[?25l"); },
+    line: async (echo) => {
+      let answer = "";
+      while (true) {
+        const char = await next();
+        if (char === null) return null;
+        if (char === "\x03" || char === "\x04") throw cancelled;
+        if (char === "\n") { if (echo) stdout.write("\r\n"); return answer; }
+        if (char === "\x7f" || char === "\b") {
+          if (answer) { answer = [...answer].slice(0, -1).join(""); if (echo) stdout.write("\b \b"); }
+        } else if (char >= " " && char !== "\x7f") {
+          answer += char;
+          if (answer.length > 4096) usage("menu input too large; aborted");
+          if (echo) stdout.write(char);
+        } else usage("invalid menu input; aborted");
+      }
+    },
+    close: () => {
+      if (closed) return;
+      closed = true;
+      restore();
+      stdin.off("data", data).off("end", end).off("error", failed);
+      stdin.pause();
+      process.off("SIGINT", stop);
+      process.off("exit", stop);
+    },
+  };
+}
+
+async function selectMenu(input, stdout, entries, env) {
+  let selected = 0;
+  const draw = () => {
+    const color = !owns(env, "NO_COLOR");
+    stdout.write("\x1b[H\x1b[K Tower V1\r\n" + entries.map((args, index) =>
+      `\x1b[K ${index === selected ? ">" : " "} ${color && index === selected ? "\x1b[1;36m" : ""}` +
+      args.join(" ") + `${color && index === selected ? "\x1b[0m" : ""}\r\n`).join("") +
+      "\x1b[K Up/Down or k/j · Enter select · q/Esc exit\r\n\x1b[J");
+  };
+  input.screen();
+  try {
+    while (true) {
+      draw();
+      let key = await input.next();
+      if (key === null) usage("menu input missing; aborted");
+      if (key === "q" || key === "\x03") return "10";
+      if (key === "\n") return String(selected + 1);
+      if (key === "\x1b") {
+        const prefix = await input.next(60);
+        if (prefix !== "[" && prefix !== "O") return "10";
+        key = await input.next(60);
+      }
+      if (key === "A" || key === "k") selected = (selected + entries.length - 1) % entries.length;
+      if (key === "B" || key === "j") selected = (selected + 1) % entries.length;
+    }
+  } finally { input.restore(); }
+}
+
 // One selection, one invocation of the same closed dispatcher. No menu-only operations.
 async function runMenu(deps) {
-  const { stdin = process.stdin, stdout = process.stdout, stderr = process.stderr } = deps;
-  let reader;
+  const { stdin = process.stdin, stdout = process.stdout, stderr = process.stderr, env = process.env } = deps;
+  let input, raw = false;
   try {
-    const readLine = deps.readLine ?? (() => {
-      reader = createInterface({ input: stdin, terminal: false });
-      const lines = reader[Symbol.asyncIterator]();
-      return async () => { const line = await lines.next(); return line.done ? null : line.value; };
-    })();
+    if (!deps.readLine) {
+      input = menuInput(stdin, stdout);
+      raw = env.TERM !== "dumb" && input.raw();
+    }
+    const readLine = deps.readLine ?? (() => input.line(raw));
     const ask = async (prompt) => {
-      stdout.write(`${prompt}\n`);
-      const answer = await readLine(prompt);
-      if (typeof answer !== "string" || !answer || answer.length > 4096 || /[\0\r\n]/.test(answer))
-        usage("menu input missing or invalid; aborted");
-      return answer;
+      // Raw empty answers abort immediately. Cooked mode permits at most two retries:
+      // icrnl can turn CR LF into LF LF; a blank line must never confirm an action.
+      for (let attempt = 0; attempt < (raw || deps.readLine ? 1 : 3); attempt++) {
+        stdout.write(prompt + (raw ? "\r\n" : "\n"));
+        const answer = await readLine(prompt);
+        if (answer === "" && !raw && !deps.readLine) continue;
+        if (typeof answer !== "string" || !answer || answer.length > 4096 || /[\0\r\n]/.test(answer))
+          usage("menu input missing or invalid; aborted");
+        return answer;
+      }
+      usage("menu input missing or invalid; aborted");
     };
     const entries = [["install"], ["update"], ["doctor"], ["rollback"],
       ["project", "init"], ["project", "doctor"], ["project", "uninstall"],
       ["project", "cleanup"], ["list"]];
-    stdout.write(entries.map((args, index) => `${index + 1}. ${args.join(" ")}`).join("\n") + "\n10. exit\n");
-    const choice = await ask("Choice: ");
+    let choice;
+    if (raw && env.TERM !== "dumb" && env.TOWER_MENU !== "plain") {
+      choice = await selectMenu(input, stdout, [...entries, ["exit"]], env);
+      // Selection restores cooked mode and scrollback before any text prompts.
+      if (choice !== "10" && !["3", "9"].includes(choice)) raw = input.raw();
+    } else {
+      const newline = raw ? "\r\n" : "\n";
+      stdout.write(entries.map((args, index) => `${index + 1}. ${args.join(" ")}`).join(newline) +
+        `${newline}10. exit${newline}`);
+      choice = await ask("Choice: ");
+    }
     if (choice === "10") return 0;
     if (!/^[1-9]$/.test(choice)) usage("invalid menu choice; aborted");
     const argv = [...entries[Number(choice) - 1]], [command, subcommand] = argv;
@@ -155,11 +271,13 @@ async function runMenu(deps) {
       const word = action.toUpperCase();
       if (await ask(`Type ${word} to confirm: `) !== word) usage("confirmation declined; aborted");
     }
+    input?.close(); // No raw mode or signal handler may survive into lifecycle dispatch.
     return main(argv, deps);
   } catch (error) {
+    if (error === cancelled) return 0;
     reportError(stderr, error);
     return 1;
-  } finally { reader?.close(); }
+  } finally { input?.close(); }
 }
 
 /** Testable dispatcher: injected environment, output sinks, gh runner and operation doubles.

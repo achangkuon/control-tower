@@ -1,6 +1,7 @@
 import { expect, spyOn, test as bunTest } from "bun:test";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import { PassThrough } from "node:stream";
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, statSync,
   rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -553,6 +554,156 @@ test("menu confirmation accepted dispatches a real rollback", async () => {
   expect(result.code).toBe(0);
   expect(result.value).toMatchObject({ active: first.sha, previous: second.sha });
   expect(invoke(f, ["doctor"]).value.active).toBe(first.sha);
+});
+
+// Emit bytes only after the menu has subscribed; each run has a bounded EOF.
+async function ttyMenu(f, chunks, extra = {}) {
+  const stdin = extra.stdin ?? new PassThrough();
+  stdin.isTTY = true;
+  const modes = [];
+  if (!extra.stdin) stdin.setRawMode = (mode) => { modes.push(mode); stdin.isRaw = mode; };
+  let stdout = "", stderr = "";
+  const pending = main([], { env: { ...f.env, TERM: "xterm" }, stdin,
+    stdout: { isTTY: true, write: (text) => { stdout += text; } },
+    stderr: { write: (text) => { stderr += text; } }, ...extra });
+  for (const chunk of chunks) {
+    await new Promise((resolve) => setTimeout(resolve, 2));
+    if (typeof chunk === "function") await chunk(stdin);
+    else stdin.write(chunk);
+  }
+  stdin.end();
+  const code = await pending;
+  return { code, stdout, stderr, modes, stdin };
+}
+function restored(result) {
+  expect(result.modes.at(-1)).toBe(false);
+  expect(result.stdout).toContain("\x1b[?25h\x1b[?1049l");
+  expect(result.stdin.listenerCount("data")).toBe(0);
+}
+
+test("visual arrows and CR LF select list, restore before dispatch and honor NO_COLOR", async () => {
+  for (const noColor of [false, true]) {
+    const f = fixture(), before = snapshot(f);
+    const result = await ttyMenu(f, ["\x1b[B".repeat(8), "\r", "\n"], {
+      env: { ...f.env, TERM: "xterm", ...(noColor ? { NO_COLOR: "" } : {}) },
+    });
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain("[]\n");
+    expect(/\x1b\[[0-9;]*m/.test(result.stdout)).toBe(!noColor);
+    restored(result);
+    expect(snapshot(f)).toEqual(before);
+  }
+});
+
+test("visual SS3/split arrows and edited project root tolerate split CR LF", async () => {
+  const f = fixture(), calls = [];
+  const result = await ttyMenu(f, ["\x1b", "O", "B", "j".repeat(5), "\x1bOA", "\r", "\n",
+    "/explicit/projecX\x7ft\r", "\n"], { operations: {
+    doctorRegisteredProject: (options) => { calls.push(options); return { registry: { status: "recorded" } }; },
+  } });
+  expect(result.stderr).toBe("");
+  expect(result.code).toBe(0);
+  expect(calls).toHaveLength(1);
+  expect(calls[0].projectRoot).toBe("/explicit/project");
+  restored(result);
+});
+
+for (const key of ["q", "\x1b", "\x03"]) test(`visual cancellation ${JSON.stringify(key)} has no effect`, async () => {
+  const f = fixture(), before = snapshot(f);
+  const result = await ttyMenu(f, [key]);
+  expect(result.code).toBe(0);
+  restored(result);
+  expect(snapshot(f)).toEqual(before);
+});
+
+test("visual exceptions, EOF, SIGINT and process exit restore the terminal", async () => {
+  for (const event of ["error", "end", "SIGINT", "exit"]) {
+    const f = fixture(), before = snapshot(f);
+    const counts = [process.listenerCount("SIGINT"), process.listenerCount("exit")];
+    const result = await ttyMenu(f, [(stdin) => {
+      if (event === "error") stdin.emit("error", new Error("injected input error"));
+      else if (event === "end") stdin.end();
+      else process.emit(event);
+    }]);
+    expect(result.code).toBe(event === "error" || event === "end" ? 1 : 0);
+    restored(result);
+    expect([process.listenerCount("SIGINT"), process.listenerCount("exit")]).toEqual(counts);
+    expect(snapshot(f)).toEqual(before);
+  }
+});
+
+test("numbered fallback fixes CR LF and cooked icrnl double LF for project doctor", async () => {
+  for (const mode of ["plain", "dumb", "missing", "throws"]) {
+    const f = fixture(), calls = [];
+    const cooked = mode === "missing" || mode === "throws";
+    const result = await ttyMenu(f, [cooked ? "6\n\n" : "6\r\n", "/explicit/project\r\n"], {
+      env: { ...f.env, TERM: mode === "dumb" ? "dumb" : "xterm", TOWER_MENU: mode === "plain" ? "plain" : "" },
+      ...(cooked ? { stdin: Object.assign(new PassThrough(), { isTTY: true,
+        ...(mode === "throws" ? { setRawMode: () => { throw new Error("unavailable"); } } : {}) }) } : {}),
+      operations: { doctorRegisteredProject: (options) => {
+        calls.push(options); return { registry: { status: "recorded" } };
+      } },
+    });
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain("6. project doctor");
+    expect(result.stdout).not.toContain("\x1b[?1049h");
+    expect(calls[0].projectRoot).toBe("/explicit/project");
+  }
+});
+
+test("raw confirmations decline and bounded empty answers/EOF never dispatch", async () => {
+  for (const chunks of [["jjj\r\n", "no\r\n"], ["jjj\n", "\n\n\n"], ["jjj\r"]]) {
+    const f = fixture(), before = snapshot(f);
+    const result = await ttyMenu(f, chunks, { operations: {
+      rollbackGlobal: () => { throw new Error("must not dispatch"); },
+    } });
+    expect(result.code).toBe(1);
+    restored(result);
+    expect(snapshot(f)).toEqual(before);
+  }
+});
+
+test("selection restores before dispatch even when the selected operation throws", async () => {
+  const f = fixture();
+  ready(f);
+  const stdin = Object.assign(new PassThrough(), { isTTY: true });
+  let raw = false, output = "", errors = "", called = false;
+  stdin.setRawMode = (mode) => { raw = mode; };
+  const pending = main([], { env: { ...f.env, TERM: "xterm" }, stdin,
+    stdout: { isTTY: true, write: (text) => { output += text; } },
+    stderr: { write: (text) => { errors += text; } }, operations: {
+      listProjects: () => {
+        called = true;
+        expect(raw).toBe(false);
+        expect(output.endsWith("\x1b[?25h\x1b[?1049l")).toBe(true);
+        expect(stdin.listenerCount("data")).toBe(0);
+        throw new Error("dispatch failed");
+      },
+    } });
+  stdin.write("j".repeat(8) + "\r\n");
+  expect(await pending).toBe(1);
+  expect(called).toBe(true);
+  expect(errors).toContain("dispatch failed");
+  expect(raw).toBe(false);
+  stdin.end();
+});
+
+test("standalone Esc timeout, raw prompt Ctrl-C and cooked empty retry bound", async () => {
+  for (const chunks of [["\x1b", async () => { await new Promise((resolve) => setTimeout(resolve, 80)); }],
+    ["jjj\r\n", "\x03"]]) {
+    const f = fixture(), before = snapshot(f);
+    const result = await ttyMenu(f, chunks);
+    expect(result.code).toBe(0);
+    restored(result);
+    expect(snapshot(f)).toEqual(before);
+  }
+  const f = fixture(), before = snapshot(f);
+  const result = await ttyMenu(f, ["\n\n\n"], {
+    stdin: Object.assign(new PassThrough(), { isTTY: true }),
+  });
+  expect(result.code).toBe(1);
+  expect(result.stdout.match(/Choice: /g)).toHaveLength(3);
+  expect(snapshot(f)).toEqual(before);
 });
 
 test("passive import performs no filesystem, subprocess or output I/O", () => {

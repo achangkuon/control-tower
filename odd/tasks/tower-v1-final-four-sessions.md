@@ -386,3 +386,10 @@ Maintainer reported the V1 menu aborting (CR LF Enter) and approved on 2026-10-0
 - Writer: `setup.sh` +40/-10, new `agent-workflows/tests/test_setup_launcher.py` 140 lines (180 authored). RED 10 tests / 12 failure records; GREEN 11 pass (`python3 -m unittest discover -s agent-workflows/tests -p test_setup_launcher.py`); `bash -n` clean; shellcheck unavailable.
 - Default launcher `torre-setup`; `torre-control` is reserved and never written (refused with an explanation; `--link` returns non-zero, skills install still succeeds with a warning); an existing `torre-setup` is overwritten only when it is the exact generated launcher. `install_tower` delegates to the legacy Tower `install.sh`, which writes `torre`, not `torre-control`. Real HOME untouched.
 - Native review `review-a24086acaa163f08`: high risk (shell/process boundary), four lenses (risk, resilience, readability, reliability), approved without findings and acknowledged.
+
+### S185 evidence
+
+- Writer: `cli.mjs` +134/-16, `test/cli.test.mjs` +151. RED 60 pass / 8 fail; GREEN 68, final 70 pass; proxy-first run 70 pass; V1 suite 274 pass.
+- Visual menu (arrows, j/k, Enter, q/Esc/Ctrl-C, colors honoring NO_COLOR, alternate screen, hidden cursor) over the same closed commands and confirmations; terminal restored via try/finally plus SIGINT/exit handlers before dispatch. Shared reader treats CR, LF and CR LF as one Enter; raw-mode empty answers abort; the numbered fallback (`TOWER_MENU=plain`, dumb terminals, no raw mode) allows two retries to absorb an icrnl extra newline.
+- Real pty smokes from the checkout: Down x8 + Enter ran `list` (healthy demo project, restore escapes observed); plain menu with `6\r\n` and a CR LF root ran `project doctor` (healthy) — the exact sequence that aborted before.
+- Native review `review-31a1664c095c9d77`: medium/reliability, approved and acknowledged; non-blocking `R3-001` (process-level SIGINT/exit handlers, `cli.mjs:142-143`).
