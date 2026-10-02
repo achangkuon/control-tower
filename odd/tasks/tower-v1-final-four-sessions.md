@@ -321,3 +321,10 @@ Maintainer decision: the ordinary-question check uses a real model through an op
 ### S182 closure
 
 - `entrega.commit: 3824b73ffa516abe15fe2d848a183b97a5edfb2f` recorded; `radar archivar S182` succeeded; check 0 errors / 63 warnings; ROADMAP regenerated. All Tower V1 Sessions, including the builder, are closed. Next: the release itself (tag, asset build from the final commit, private GitHub Release upload, SHA-256 through a second channel) is a separate, explicitly authorized outward action.
+
+## V1 release
+
+- Maintainer authorized publishing v1.0.0 on 2026-10-02. Asset built with `release-build.mjs` from clean `b11e49b2edbc3838ab15cd99b397e4d5b52a9209`: `tower-v1.json`, 438,596 bytes, 30 members. SHA-256 is delivered to the maintainer through the conversation (second channel) and deliberately omitted from the release notes and this repository.
+- Private GitHub Release `v1.0.0` created on `achangkuon/control-tower`, target `b11e49b`, not draft or prerelease, one asset `tower-v1.json` (438,596 bytes); tag resolves to `b11e49b`.
+- End-to-end check through the shipped acquisition path (`bootstrapVerifiedRelease`, authenticated `gh`, exact tag): correct digest admitted (schema `tower.v1.release/1`, 30 members including `cli.mjs`); an all-zero digest was rejected with `GitHub Release SHA-256 mismatch`. Nothing was installed and HOME was not modified.
+- Not done, separate decisions: installing on this machine (the existing `~/.local/bin/torre-control` is migrated only if it is the exact known generated launcher; otherwise install blocks and preserves it), the real-model behavioral benchmark run, and the recorded follow-ups (git test proxy, CT-R12-S1 timeout margin, benchmark shell prefixes, builder partial-output cleanup).
