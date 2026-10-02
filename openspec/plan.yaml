@@ -1205,7 +1205,8 @@ sesiones:
         capturas prueban el flujo observado, nunca seguridad ni reversibilidad. Nombra las
         exclusiones de V2 sin prometer routing, procesos, sockets o supervisión en V1.
       restricciones_decisiones: >-
-        Una unidad documental reversible de 200–350 líneas authored, máximo 400. README.md
+        Una unidad documental reversible; pronóstico de 200–350 líneas authored. El tamaño
+        sigue la guía nativa de Gentle AI y no es una restricción de esta Sesión. README.md
         es el único archivo y Cimiento; Recursos vacíos. Preparar la Sesión no habilita
         ejecución anticipada: depende de S173 y exige verificar interfaces/mediciones contra
         entregas efectivas, sin inventar cifras ni usar capturas como prueba de seguridad.
@@ -2140,15 +2141,16 @@ sesiones:
         se reemplaza un launcher desconocido ni se importa otro estado legacy. Tests
         usan dobles aislados de HOME/XDG/Git/GitHub sin tocar estado real.
       restricciones_decisiones: >-
-        Seis unidades secuenciales, cada una verde, verificable y reversible de máximo
-        400 líneas authored con pruebas; pronóstico total 1.800–2.300. 1) descarga
+        Seis unidades secuenciales, cada una verde, verificable y reversible, con
+        pruebas; pronóstico total de 1.800–2.300 líneas authored. 1) descarga
         autenticada y verificación previa al parseo (release y test); 2) manifiesto
         positivo e ingreso acotado (bootstrap y test); 3) versionado global,
         activación/rollback y migración exacta compensable (global y test); 4) registro
         informativo y wrappers de proyecto (projects y test); 5) comandos cerrados y
         errores fail-closed (cli y test); 6) menú y pruebas de integración con fallos
         inyectados sobre las mismas rutas declaradas. Cada unidad se prueba antes de
-        continuar; si un corte excede 400, pedir decisión humana antes de implementar.
+        continuar. El tamaño de cada unidad sigue la guía nativa de Gentle AI, que usa
+        unas 400 líneas authored como referencia; no es una restricción de esta Sesión.
         No muta HOME real en pruebas, no importa estado legacy y nunca usa el índice
         como autorización de adopción. Sólo los diez archivos declarados están autorizados.
       referencias: >-
@@ -2186,10 +2188,10 @@ sesiones:
         contaminaba: [S174]
       - tipo: resuelta
         pregunta: "¿Cómo se reparte el presupuesto de implementación del instalador?"
-        resolucion: "Seis unidades secuenciales independientemente verdes y reversibles de hasta 400 líneas authored cada una; total previsto 1.800–2.300."
+        resolucion: "Seis unidades secuenciales independientemente verdes y reversibles; total previsto de 1.800–2.300 líneas authored. El tamaño de cada unidad es una referencia de Gentle AI y no un máximo de la Sesión (decisión A4 del 2026-10-01, docs/architecture/definiciones-v1-v2-v3.md)."
         autoridad: "Elección explícita de Emilio en esta Conversación."
         clase: expansion-de-alcance
-        falsificador: "Una unidad supera 400 líneas sin nueva decisión o depende de una unidad previa no verde."
+        falsificador: "Una unidad depende de una unidad previa no verde o no puede revertirse por separado."
         contaminaba: [S174]
 
   - id: S173
@@ -2221,10 +2223,11 @@ sesiones:
         o transcripción sólo demuestran el flujo observado, no seguridad, ausencia de
         efectos ni reversibilidad del lifecycle.
       restricciones_decisiones: >-
-        Dos unidades secuenciales reversibles con pruebas, 400–600 líneas authored
-        totales y cada una máximo 400: 1) aislamiento, límites observables de Pi/Claude
-        y pregunta ordinaria; 2) contraste independiente Radar, fallos y reporte
-        sin proxies, manteniendo verde la primera. Sólo dos archivos declarados;
+        Dos unidades secuenciales reversibles con pruebas: 1) aislamiento, límites
+        observables de Pi/Claude y pregunta ordinaria; 2) contraste independiente Radar,
+        fallos y reporte sin proxies, manteniendo verde la primera. Pronóstico de 400–600
+        líneas authored totales; el tamaño sigue la guía nativa de Gentle AI y no es una
+        restricción de esta Sesión. Sólo dos archivos declarados;
         Cimientos/Recursos vacíos: toda corrida usa raíces/fixtures desechables,
         nunca HOME, journals o destinos reales. No mide routing, procesos, sockets,
         operaciones Git de producto ni rollback.

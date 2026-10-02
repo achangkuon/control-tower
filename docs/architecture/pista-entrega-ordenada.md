@@ -204,7 +204,7 @@ Prioridad media: estado vivo que confunde.
 |---|---|---|---|
 | N9 | Marca de despacho de `S165` viva sobre una Sesión diferida | `<git-common-dir>/chanks/despachos/S165.json` (2026-09-28); `radar sesion S165` da DIFERIDO | Reserva `implementer-2`, la rama `work/S165` y sus archivos contra otras Sesiones sin representar trabajo |
 | N10 | Copia de trabajo `issue-resolver` con 17 rutas sin guardar | `Worktrees/issue-resolver`, rama `work/issue-150`, último cambio 2026-09-29 | Edita las skills de V2 y los controles de Pi que la limpieza reescribió. No se sabe si está vivo o abandonado |
-| N8 | Sesiones abiertas con el límite duro de 400 líneas | `S174` (`plan.yaml:2140`, la única LISTO), `S150` (`:1197`), `S173` (`:2214`) | Es la regla que la limpieza quitó de las skills, viva en el plan |
+| N8 | Sesiones abiertas con el límite duro de 400 líneas | `S174` (`plan.yaml:2140`, la única LISTO), `S150` (`:1197`), `S173` (`:2214`) | Es la regla que la limpieza quitó de las skills, viva en el plan. **Resuelto el 2026-10-01:** las tres Sesiones conservan su desglose en unidades y tratan el tamaño como referencia de Gentle AI |
 | N13 | `S169` apunta a la skill ya adelgazada | `radar sesion S169` (`torre-v3`, antes `torre-v2`; DIFERIDO) | Su texto asume un coordinador que la limpieza aisló como solo V2 |
 | N14 | `S149` y los Cimientos afirman un V1 con semáforo | Ver sección 10 | El registro de la limpieza lo excluye de forma explícita |
 | N11 | Pi conserva controles de Chanks e Intercom fuera de las skills | `~/.pi/agent/extensions/chanks-controls.ts`, `~/.pi/agent/settings.json:10` (`pi-intercom`), ganchos `chanks-etapa.sh`, `torre-firma.sh`, `herdr-agent-state.sh` | Inertes con el interruptor apagado. Nada dice si se quedan |
