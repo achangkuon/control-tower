@@ -44,7 +44,7 @@ Observed after integration (all commands exit 0): `$HOME/.local/bin/radar check 
 
 - [x] Deliver the reviewed planning candidate (`262d1cebc65da96db5f46131f6748231ad86fd94`).
 - [x] Implement, verify, review, deliver, and archive S172 (`8caaacf33e98ce236676533198761723154d6eef`; native review `review-99464decff2e806b`).
-- [ ] Re-run Radar and execute S174 only while it remains `LISTO`; six sequential units.
+- [x] Re-run Radar and execute S174 only while it remains `LISTO`; six sequential units. DONE: delivered `088cf3a` and archived 2026-10-02.
 - [ ] Re-run Radar and execute S173 only after S174 is delivered and Radar admits it; two sequential units.
 - [ ] Re-run Radar and execute S150 only after S173 is delivered and Radar admits it; one documentation unit.
 
@@ -248,7 +248,7 @@ Maintainer decisions recorded before writes (Engram 12872):
 Unit 5 scope: only `product/tower/v1/cli.mjs` and `product/tower/v1/test/cli.test.mjs`. Closed scriptable commands for global install/update/doctor/rollback, explicit-root project init/doctor/uninstall/cleanup and list; fail-closed errors, including registry failure after local success. Mapping forecast 380–470 authored lines; the per-unit size is a Gentle AI reference, not a Session cap (decision A4). No menu, real installation, download or HOME mutation in tests.
 
 - [x] G5 — Implement, verify and review the closed command surface, then record a separately authorized work-unit checkpoint. DONE: maintainer authorized commit/push and continuation; product commit `4296aca6285b5d73bb9da18ef8de939e4049e943` pushed to master. Independent full suite at that HEAD: 1,743 pass / 0 fail, 10,292 assertions, 115 files, 120.13 s.
-- [ ] G6 — Interactive menu and fault-injected integration tests on the same files. Implemented, verified and reviewed; awaiting authorized work-unit checkpoint.
+- [ ] G6 — Interactive menu and fault-injected integration tests on the same files. DONE: maintainer authorized commit/push and S174 closure; product commit `088cf3a3c96098e47d44315f30d8ef0a89640057` pushed. Independent full suite at that HEAD: 1,760 pass / 0 fail, 10,538 assertions, 115 files, 122.70 s; ancestor of `origin/master`.
 
 ### Closed-command unit evidence
 
@@ -263,3 +263,7 @@ Unit 5 scope: only `product/tower/v1/cli.mjs` and `product/tower/v1/test/cli.tes
 - G5 warnings resolved: global `doctor` and `list` no longer create default directories; project `doctor` stays mutating because its registered wrapper publishes registry membership. AggregateError adds one bounded stderr JSON line `tower.cli.recovery/1` (at most eight single-line messages of 240 characters plus an omitted count, no stacks).
 - Isolated integration tests drive real dispatch over the real global/projects modules with injected gh doubles and fault hooks: install/doctor/update/rollback round trip, SHA mismatch before state change, activation fault compensation, unknown launcher preserved, explicit-root project lifecycle with registry failure after local success, and menu-driven install and declined destructive action. No real HOME, download or release-code execution.
 - Native review `review-b5be2515a6eea570`: medium/reliability, 374 changed lines, approved with no findings and acknowledged (authority burned).
+
+### S174 closure
+
+- `entrega.commit: 088cf3a3c96098e47d44315f30d8ef0a89640057` recorded in `openspec/plan.yaml`; `radar archivar S174` succeeded, `radar check` 0 errors / 63 pre-existing warnings, ROADMAP regenerated. Radar now admits S173 as LISTO. Next: S173 two units, then S175 planning (release packager), then S150.

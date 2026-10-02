@@ -2,16 +2,16 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S167, S172, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S167, S172, S174, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Torre V1 · Adopción project-local reversible.
-- Próximo trabajo ejecutable: Producto Torre #1 → S174 — torre-control instala/actualiza y revierte el motor V1 global desde un Release privado verificado, ofrece menú y comandos cerrados, y delega adopción local explícita a S8.13/S172..
+- Próximo trabajo ejecutable: Producto Torre #1 → S173 — Benchmark aislado Pi y Claude Code, adopter vs non-adopter: bytes realmente cargados por cada host, pregunta ordinaria y fidelidad Radar contra invocación canónica independiente..
 - Decisión pendiente: S12.2 — ¿Cómo avanza la revisión de un artefacto fijado por digest?.
 
 ## Estado y próximo trabajo
-- Producto Torre #1 → S174 — torre-control instala/actualiza y revierte el motor V1 global desde un Release privado verificado, ofrece menú y comandos cerrados, y delega adopción local explícita a S8.13/S172.
+- Producto Torre #1 → S173 — Benchmark aislado Pi y Claude Code, adopter vs non-adopter: bytes realmente cargados por cada host, pregunta ordinaria y fidelidad Radar contra invocación canónica independiente.
 
 ## Avance
-- **Total:** 87% (105/120 S)
+- **Total:** 88% (106/120 S)
 - 4 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
@@ -25,7 +25,7 @@
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
 - **Método:** 95% (39/41 S)
-- **Producto Torre:** 66% (4/6 S)
+- **Producto Torre:** 83% (5/6 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -41,9 +41,9 @@
 - Sin Sesiones abiertas.
 
 ### cimientos (cimientos)
-1. **S150** · 📋 PLANIFICADO · espera-natural (S174) · prioridad Torre V1 · Adopción project-local reversible · README de la V1 final entregada: instalador global privado torre-control, adopción project-local separada para Pi y Claude Code, gateway control-tower único y resultados medidos sin claims de seguridad inferidos.
-2. **S175** · 📋 PLANIFICADO · espera-natural (S174) · prioridad Resolución de problemas · Generales · Resolver Radar fuera del checkout antes del push.
-3. **S177** · 📋 PLANIFICADO · espera-natural (S174) · prioridad Resolución de problemas · Generales · Distinguir diseño histórico y autoridad vigente en el ROADMAP raíz.
+1. **S150** · 📋 PLANIFICADO · espera-natural (S173) · prioridad Torre V1 · Adopción project-local reversible · README de la V1 final entregada: instalador global privado torre-control, adopción project-local separada para Pi y Claude Code, gateway control-tower único y resultados medidos sin claims de seguridad inferidos.
+2. **S175** · 📋 PLANIFICADO · espera-natural (S173) · prioridad Resolución de problemas · Generales · Resolver Radar fuera del checkout antes del push.
+3. **S177** · 📋 PLANIFICADO · espera-natural (S173) · prioridad Resolución de problemas · Generales · Distinguir diseño histórico y autoridad vigente en el ROADMAP raíz.
 
 ### Contratos (contratos)
 - Sin Sesiones abiertas.
@@ -64,11 +64,10 @@
 - Sin Sesiones abiertas.
 
 ### Método (metodo)
-1. **S176** · 📋 PLANIFICADO · espera-natural (S174) · prioridad Resolución de problemas · Generales · Invalidar el verde anterior cuando una nueva suite no produce resumen.
+1. **S176** · 📋 PLANIFICADO · espera-natural (S173) · prioridad Resolución de problemas · Generales · Invalidar el verde anterior cuando una nueva suite no produce resumen.
 
 ### Producto Torre (producto-torre)
-1. **S174** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · torre-control instala/actualiza y revierte el motor V1 global desde un Release privado verificado, ofrece menú y comandos cerrados, y delega adopción local explícita a S8.13/S172.
-2. **S173** · 📋 PLANIFICADO · espera-natural (S174) · prioridad Torre V1 · Adopción project-local reversible · Benchmark aislado Pi y Claude Code, adopter vs non-adopter: bytes realmente cargados por cada host, pregunta ordinaria y fidelidad Radar contra invocación canónica independiente.
+1. **S173** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · Benchmark aislado Pi y Claude Code, adopter vs non-adopter: bytes realmente cargados por cada host, pregunta ordinaria y fidelidad Radar contra invocación canónica independiente.
 
 ## Bloqueos
 - **S178:** Encargo incompleto: falta planificar · falta-planificar (S178)
@@ -479,7 +478,7 @@
 
 ### S150 — README de la V1 final entregada: instalador global privado torre-control, adopción project-local separada para Pi y Claude Code, gateway control-tower único y resultados medidos sin claims de seguridad inferidos.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-natural (S174)
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S173)
   - Zona/Área: cimientos · —
   - Archivos autorizados: README.md
   - Depende de: S173
@@ -955,7 +954,7 @@
 
 ### S174 — torre-control instala/actualiza y revierte el motor V1 global desde un Release privado verificado, ofrece menú y comandos cerrados, y delega adopción local explícita a S8.13/S172.
 - Coordinación:
-  - Estado derivado: 🟢 LISTO
+  - Estado derivado: 📚 ARCHIVADO
   - Zona/Área: producto-torre · product/tower/
   - Archivos autorizados: product/tower/v1/bootstrap.mjs, product/tower/v1/release.mjs, product/tower/v1/global.mjs, product/tower/v1/projects.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/bootstrap.test.mjs, product/tower/v1/test/release.test.mjs, product/tower/v1/test/global.test.mjs, product/tower/v1/test/projects.test.mjs, product/tower/v1/test/cli.test.mjs
   - Depende de: S172
@@ -994,7 +993,7 @@
 
 ### S173 — Benchmark aislado Pi y Claude Code, adopter vs non-adopter: bytes realmente cargados por cada host, pregunta ordinaria y fidelidad Radar contra invocación canónica independiente.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-natural (S174)
+  - Estado derivado: 🟢 LISTO
   - Zona/Área: producto-torre · product/tower/
   - Archivos autorizados: product/tower/v1/benchmark.mjs, product/tower/v1/test/benchmark.test.mjs
   - Depende de: S174
@@ -1014,7 +1013,7 @@
 
 ### S175 — Resolver Radar fuera del checkout antes del push.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-natural (S174)
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S173)
   - Zona/Área: cimientos · —
   - Archivos autorizados: .githooks/pre-push, test/pre-push-plan-gate.test.mjs
   - Depende de: S150
@@ -1028,7 +1027,7 @@
 
 ### S176 — Invalidar el verde anterior cuando una nueva suite no produce resumen.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-natural (S174)
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S173)
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/radiografia/cli.mjs, agent-workflows/test/cli.test.mjs
   - Depende de: S175
@@ -1042,7 +1041,7 @@
 
 ### S177 — Distinguir diseño histórico y autoridad vigente en el ROADMAP raíz.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-natural (S174)
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S173)
   - Zona/Área: cimientos · —
   - Archivos autorizados: ROADMAP.md
   - Depende de: S176
