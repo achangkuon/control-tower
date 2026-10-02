@@ -340,8 +340,8 @@ Maintainer decision: the ordinary-question check uses a real model through an op
 Maintainer approved on 2026-10-02 executing S183, S184 and the v1.0.1 release in order, delivering each only after approved review and a green full suite, stopping on any failure or open decision.
 
 - [x] S183 — Installed launcher accepts the retained legacy backup; clear permissions error. DONE: `c9c31a5`, push hook 1,805 pass / 0 fail, archived.
-- [ ] S184 — One-command gh install, partner guide, macOS status.
-- [ ] v1.0.1 — Build from the final commit, publish privately, verify end to end, update this machine.
+- [ ] S184 — One-command gh install, partner guide, macOS status. Delivered `53accb8` (push hook 1,814 pass / 0 fail); stays open until the guided macOS test result is recorded.
+- [x] v1.0.1 — Build from the final commit, publish privately, verify end to end, update this machine. DONE 2026-10-02.
 
 ### S183 evidence
 
@@ -357,3 +357,11 @@ Maintainer approved on 2026-10-02 executing S183, S184 and the v1.0.1 release in
 - One-liner: `d=$(mktemp -d) && gh release download '<TAG>' -R achangkuon/control-tower -p torre-install.mjs -D "$d" && printf '%s  %s\n' '<SHA_DEL_INSTALADOR>' "$d/torre-install.mjs" | shasum -a 256 -c - && bun "$d/torre-install.mjs"`.
 - README: partner guide, platform table (Linux tested on WSL; macOS NOT tested yet; Windows only through WSL), maintainer release procedure.
 - Native review `review-ca97deaed8cd4524`: medium/reliability, 403 lines, approved and acknowledged. Non-blocking: `R3-partial-release-output` (release-build can leave a partial output on write failure) and `R3-real-install-unproved` (tests use doubles; the real install is proven only after publication).
+
+### v1.0.1 release
+
+- Built from clean `53accb813740f037777e89e24da945fdeaf2c669` with `--tag v1.0.1`: `tower-v1.json` 440,340 bytes and stamped `torre-install.mjs` 7,996 bytes. SHA-256 values were given to the maintainer in the conversation only.
+- Private Release `v1.0.1` created (target `53accb8`, not draft) with both assets.
+- Partner end-to-end on a fresh disposable HOME with the real `gh` login and the exact one-liner: installer checksum OK, envelope verified, global install, `doctor` healthy, project adopted and listed. With umask 002 the created directories were 0755. A first attempt with a deliberately group-writable HOME stopped with the new actionable S183 message.
+- Maintainer machine updated from the checkout (`update --tag v1.0.1`): active v1.0.1, previous v1.0.0; installed-launcher `doctor` now healthy (failed on v1.0.0); demo project healthy; configuration snapshot unchanged.
+- Pending: guided macOS test (S184 closure), then mark macOS as tested in README.
