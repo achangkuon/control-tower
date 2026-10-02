@@ -235,3 +235,23 @@ The maintainer confirmed resuming unit 4 only in Main, using isolated tests and 
 - Nothing to register as a completed product Session: G4 closes installer unit 4 of 6 only. Installer units 5–6, two isolated Pi/Claude Code benchmark units and final README remain pending. No real installation, release download, HOME product-state change, general repair, emoji change or later unit was performed.
 
 Next product checkpoint: only in authorized continuity after fresh installed Radar reconciliation, resume unit 5 (closed scriptable commands and fail-closed errors). Do not auto-continue or close S174; benchmark and final README remain dependent.
+
+## Authorized closed-command unit resumption
+
+The maintainer asked on 2026-10-02 to finish the remaining Tower V1 work in order (S174 → S173 → S150) and release. Fresh preflight: clean `master...origin/master` at `9fef984`; installed Radar shows S174 🟢 LISTO with S172 archived. Units 1–4 are delivered (`121e728`, `deacfe6`, `42b4352`, `71b6cc5`).
+
+Maintainer decisions recorded before writes (Engram 12872):
+
+- `torre-control` defaults: launcher `~/.local/bin/torre-control` (only the exact known generated legacy launcher is migrated), global state `~/.local/share/torre-control/v1`, project registry under that state, release repository `achangkuon/control-tower`. Explicit flags may override; no cwd inference.
+- No repository code builds or hashes the V1 release envelope. It becomes a new small Session S175 (build only, no publish), planned separately before the release. S174 files do not grow for it.
+
+Unit 5 scope: only `product/tower/v1/cli.mjs` and `product/tower/v1/test/cli.test.mjs`. Closed scriptable commands for global install/update/doctor/rollback, explicit-root project init/doctor/uninstall/cleanup and list; fail-closed errors, including registry failure after local success. Mapping forecast 380–470 authored lines; the per-unit size is a Gentle AI reference, not a Session cap (decision A4). No menu, real installation, download or HOME mutation in tests.
+
+- [ ] G5 — Implement, verify and review the closed command surface, then record a separately authorized work-unit checkpoint.
+- [ ] G6 — Interactive menu and fault-injected integration tests on the same files.
+
+### Closed-command unit evidence
+
+- Writer delivered `cli.mjs` 117 + `test/cli.test.mjs` 274 = 391 authored lines, 40 tests. Observed RED: 0 pass / 1 fail / 1 error (module absent); GREEN 36, final 40 pass / 0 fail. V1 suite 193 pass / 0 fail. Whitespace clean on both new files; scope exactly the two product files plus this record.
+- Design: registry default `~/.local/share/torre-control/projects`, a sibling of `v1`, because the global lifecycle owns the whole state root. Only default parent directories are created (never override paths); `--state`, `--launcher`, `--registry` override. No arguments fails closed until unit 6 adds the menu.
+- Native review `review-ee9aae351b99b052`: medium/reliability, 405 changed lines, approved and acknowledged (authority burned). Two non-blocking warnings carried into G6: `R3-default-preparation` (read-only `doctor`/`list` still create default parent directories, `cli.mjs:98-99`) and `R3-recovery-evidence` (AggregateError recovery evidence is reduced to a one-line message, `cli.mjs:70-72`).
